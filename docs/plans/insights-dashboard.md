@@ -1,6 +1,6 @@
 # Insights dashboard: associative (QlikView-style) cost, tool-call and security analysis
 
-Status: **in progress (Phase 9.11)**. §10 lists what shipped and the known
+Status: **complete (Phase 9.11)**. §10 lists what shipped and the known
 limitations.
 
 ## 1. Context
@@ -198,8 +198,9 @@ The engine runs on a tree of tables:
    *alternative*, and everything else is *excluded*.
 
 Layout is full width: on the left, a column of list boxes (Provider,
-Date, Hour, Session, Model, Trigger event, Tool, Tool kind, Program,
-Outcome, Failure category, Finding kind, Severity, Finding category).
+Date, Hour, Session, Model, Trigger event, Usage data, Tool, Tool kind,
+Program, Outcome, Failure category, Signal type, Severity, Signal
+category).
 On the right:
 
 - the Current selections bar
@@ -258,7 +259,26 @@ Every unit is test-first:
 
 ## 10. What shipped / known limitations
 
-Everything in §3–§6 shipped.
+Everything in §3–§6 shipped. Running the dashboard against a real Claude
+Code session log (dogfooding) led to these changes:
+
+- **False positive fixed: an interpreter running its own program.**
+  `curl … | python3 -c "…"` (or `node -e`, or `python3 script.py`) reads
+  the download as *data*. `shell.pipe-to-shell` and
+  `shell.decode-and-exec` now match only an interpreter that executes its
+  stdin: bare, `-s` or `-`.
+- **False positive fixed: heredoc bodies that are only data.** A
+  command that writes a test fixture or doc through
+  `python3 - <<'EOF' … EOF` or `cat > f <<EOF` merely *mentions* a risky
+  command. Heredoc bodies are dropped before command rules run, unless a
+  shell consumes them (`bash <<EOF`, `sudo sh -s <<EOF`). An unterminated
+  (truncated) heredoc runs to the end of the text.
+- **Reachability.** When the active provider has no sessions, Analyze
+  mode shows its empty state, which used to hide the view switch. The
+  empty state now offers "Open the dashboard across all providers".
+- The UI requests up to 200 sessions per provider (the API default stays
+  50). A day whose AI Credits are all unknown is left out of the daily
+  chart instead of being drawn as 0.
 
 Known limitations:
 

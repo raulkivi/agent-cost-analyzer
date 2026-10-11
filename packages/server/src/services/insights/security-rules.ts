@@ -45,8 +45,24 @@ export interface SecurityRuleMatch {
 
 // --- matching helpers -------------------------------------------------------
 
+// A heredoc body is data for whatever reads it — `python3 - <<'EOF'` or
+// `cat > notes.md <<EOF` writing a test fixture or doc that merely
+// *mentions* `curl … | bash` isn't running it. Bodies fed to a shell
+// (`bash <<EOF`, `sudo sh -s <<EOF`) do execute, so those are kept. An
+// unterminated heredoc (the command was truncated) runs to the end.
+const HEREDOC = /(?<!<)<<(?!<)-?[ \t]*(['"]?)(\w+)\1([^\n]*)(?:\n(?:[\s\S]*?\n)?[ \t]*\2[ \t]*(?=\n|$)|\n[\s\S]*$|$)/g;
+const SHELL_READS_HEREDOC = /^(?:sudo\s+(?:-\S+\s+)*)?(?:ba|z|da|k)?sh(?:\s+-s?)?\s*$/;
+
+function withoutDataHeredocs(command: string): string {
+  return command.replace(HEREDOC, (match, quote: string, tag: string, rest: string, offset: number) => {
+    const lineStart = command.lastIndexOf("\n", offset) + 1;
+    const consumer = command.slice(lineStart, offset).split(/\||;|&&|\|\|/).pop()!.trim();
+    return SHELL_READS_HEREDOC.test(consumer) ? match : `<<${quote}${tag}${quote}${rest}\n${tag}`;
+  });
+}
+
 function shellCommand(subject: SecuritySubject): string | undefined {
-  return subject.kind === "shell" ? subject.command : undefined;
+  return subject.kind === "shell" && subject.command !== undefined ? withoutDataHeredocs(subject.command) : undefined;
 }
 
 function shellMatcher(...patterns: RegExp[]) {
@@ -60,14 +76,18 @@ function firstMatching(texts: (string | undefined)[], pattern: RegExp): string |
   return texts.find((text): text is string => text !== undefined && pattern.test(text)) ?? null;
 }
 
-const SHELL_INTERPRETER = String.raw`(?:sudo\s+(?:-\S+\s+)*)?(?:(?:ba|z|da|k)?sh|python[0-9.]*|perl|ruby|node)\b`;
+// An interpreter that executes its *stdin*: bare, or with `-s`/`-` (args
+// after that go to the script). `python3 -c …`, `node -e …` or
+// `python3 script.py` run their own program and only read the piped
+// download as data, so they don't match.
+const SHELL_INTERPRETER = String.raw`(?:sudo\s+(?:-\S+\s+)*)?(?:(?:ba|z|da|k)?sh|python[0-9.]*|perl|ruby|node)(?:\s+-s?(?=\s|$)[^|;&\n]*)?\s*(?=$|[;&|)\n])`;
 
 const PIPE_TO_SHELL = new RegExp(String.raw`\b(?:curl|wget)\b[^|;&\n]*\|\s*${SHELL_INTERPRETER}`);
 const DECODE_TO_SHELL = new RegExp(String.raw`\bbase64\s+(?:-d|-D|--decode)\b[^;&\n]*\|\s*${SHELL_INTERPRETER}`);
 const EVAL_SUBSHELL = /\beval\s+["']?\$\(/;
 
 const RM_RECURSIVE_FORCE =
-  /\brm\s+(?:-[a-zA-Z]*(?:[rR][a-zA-Z]*f|f[a-zA-Z]*[rR])[a-zA-Z]*|(?:-[rR]|--recursive)\s+(?:-f|--force)|(?:-f|--force)\s+(?:-[rR]|--recursive))(?=\s|$)(.*)$/;
+  /\brm\s+(?:-[a-zA-Z]*(?:[rR][a-zA-Z]*f|f[a-zA-Z]*[rR])[a-zA-Z]*|(?:-[rR]|--recursive)\s+(?:-f|--force)|(?:-f|--force)\s+(?:-[rR]|--recursive))(?=\s|$)([^\n]*)/;
 const ROOT_TARGET = /^["']?(?:\/|\/\*|~|~\/|~\/\*|\$HOME|\$HOME\/|\$HOME\/\*|\$\{HOME\})["']?$/;
 
 function rmRecursiveForceTargets(subject: SecuritySubject): string[] | null {

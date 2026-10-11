@@ -1150,6 +1150,42 @@ unknown with a reason, never "0 failures".
 **Dependencies**: Phase 9.5 (inspector pairing), Phase 9.9 (Claude Code
 provider).
 
+## Phase 9.11 — Insights dashboard (associative, cross-provider, security signals)
+
+Full design: [plans/insights-dashboard.md](plans/insights-dashboard.md).
+
+- Domain: `InsightsDataset`, a flat star schema (sessions, turns, tool
+  calls, findings) with `null` for unknown token figures, plus
+  `InsightFinding` (kind, category, severity, rule id, what, when, why,
+  redacted evidence).
+- Server: `services/insights/*`. `buildInsightRows` flattens sessions
+  from **every** registered provider (`LogProviderRegistry.listProviders`).
+  It feeds injected `FindingDetector`s: `SecurityScanner` (an ordered
+  `SecurityRule` table, open/closed), `AnomalyDetector` (robust z-score
+  on session metrics, n ≥ 8), and `BehaviorChangeDetector` (first use of a
+  program, tool or model after a baseline). These are served by
+  `InsightsService` at `GET /api/insights`. A provider that is unavailable
+  or fails is reported, never fatal.
+- Web: a generic associative engine (`lib/associative/*`: selected,
+  possible, alternative and excluded states, selection reducers, and
+  Back history), the insights model, measures and a "What happened"
+  narrative (`lib/insights/*`). A new full-width **Dashboard** center
+  view offers list boxes, current selections, KPIs with coverage,
+  clickable charts, a signals table and the most expensive sessions. It
+  stays reachable when the active provider has no sessions.
+
+**Exit criterion**: `GET /api/insights` returns one schema-valid dataset
+across every provider, with the real-capture Claude Code fixture's 13 tool
+calls. Each security rule has positive and negative tests, including
+regression tests for false positives found on real data (an interpreter
+running its own `-c`/script, heredoc bodies that are only data). A
+list-box or chart click narrows every KPI, chart and list box
+associatively, and Back undoes it. Unknown AI Credits are never summed or
+charted as 0.
+
+**Dependencies**: Phase 9.10 (tool-call outcomes and kinds), Phase 9.9
+(Claude Code provider).
+
 ## Phase 10 — VS Code extension packaging (future, out of MVP scope)
 
 Not part of the initial build (vision §5 "future path"); tracked here only
@@ -1188,6 +1224,7 @@ flowchart LR
     P9 --> P99["Phase 9.9<br/>Claude Code CLI provider"]
     P95 --> P99
     P99 --> P910["Phase 9.10<br/>Tool-call audit + MCP"]
+    P910 --> P911["Phase 9.11<br/>Insights dashboard"]
     P95 --> P10["Phase 10<br/>VS Code extension (future)"]
     P5 --> P10
 ```
