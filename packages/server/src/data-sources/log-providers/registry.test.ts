@@ -149,4 +149,12 @@ describe("LogProviderRegistry", () => {
     expect(registry.getActiveProviderId()).toBe("vscode");
     expect(() => registry.getProvider("nope")).toThrow(UnknownLogProviderIdError);
   });
+
+  it("listProviders returns every registered provider in registration order", () => {
+    const vscode = new StubProvider("vscode", "VS Code", { available: true });
+    const other = new StubProvider("other", "Other", { available: false });
+    const registry = new LogProviderRegistry([vscode, other], dir);
+
+    expect(registry.listProviders()).toEqual([vscode, other]);
+  });
 });

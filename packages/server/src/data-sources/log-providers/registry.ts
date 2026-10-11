@@ -56,6 +56,12 @@ export class LogProviderRegistry {
     return provider;
   }
 
+  // Every registered provider, regardless of the active selection — used by
+  // the cross-provider insights dashboard (Phase 9.11).
+  listProviders(): LogProvider[] {
+    return [...this.providers.values()];
+  }
+
   setActive(providerId: string): void {
     if (!this.providers.has(providerId)) {
       throw new UnknownLogProviderIdError(providerId);
