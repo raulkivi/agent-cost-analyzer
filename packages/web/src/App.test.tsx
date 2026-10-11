@@ -4,6 +4,7 @@ import type { ConfigStatus } from "@copilot-cost-analyzer/domain";
 import { App } from "./App.js";
 import { makeTurn } from "./test-support/turn-fixture.js";
 import { makeAuditRollup, makeSessionAudit } from "./test-support/audit-fixture.js";
+import { sampleInsightsDataset } from "./test-support/insights-fixture.js";
 
 const scenario = {
   id: "cache-basics",
@@ -154,6 +155,9 @@ function fakeFetch(url: string, init?: { method?: string; body?: string }) {
   }
   if (url === "/api/sessions/session-1/audit") {
     return Promise.resolve({ ok: true, json: () => Promise.resolve(makeSessionAudit({ sessionId: "session-1" })) });
+  }
+  if (url.startsWith("/api/insights")) {
+    return Promise.resolve({ ok: true, json: () => Promise.resolve(sampleInsightsDataset()) });
   }
   if (url.startsWith("/api/audit")) {
     const rollup = makeAuditRollup({
@@ -594,6 +598,40 @@ describe("App", () => {
       switchToAnalyze();
 
       expect(screen.getByLabelText("Turns")).toBeChecked();
+    });
+  });
+
+  describe("insights dashboard (Phase 9.11)", () => {
+    it("offers a full-width Dashboard view in Analyze mode, across every provider", async () => {
+      render(<App />);
+      switchToAnalyze();
+      await screen.findByRole("button", { name: "Fix the bug" });
+
+      fireEvent.click(screen.getByLabelText("Dashboard"));
+
+      expect(await screen.findByRole("group", { name: "AI Credits" })).toHaveTextContent("5.50");
+      expect(fetch).toHaveBeenCalledWith(expect.stringMatching(/^\/api\/insights\?since=\d{4}-\d{2}-\d{2}&limit=200$/));
+      // Full width: the session list and the right column step aside for the dashboard's own list boxes.
+      expect(screen.getByLabelText("Explanation")).not.toBeVisible();
+      expect(screen.getByRole("button", { name: "Fix the bug", hidden: true })).not.toBeVisible();
+    });
+  });
+
+  describe("insights dashboard when the active provider has no sessions", () => {
+    it("still reaches the cross-provider dashboard from the empty state", async () => {
+      vi.stubGlobal(
+        "fetch",
+        vi.fn((url: string, init?: { body?: string }) =>
+          url === "/api/sessions" ? Promise.resolve({ ok: true, json: () => Promise.resolve([]) }) : fakeFetch(url, init),
+        ),
+      );
+      render(<App />);
+      switchToAnalyze();
+
+      fireEvent.click(await screen.findByRole("button", { name: "Open the dashboard across all providers" }));
+
+      expect(await screen.findByRole("group", { name: "AI Credits" })).toHaveTextContent("5.50");
+      expect(screen.getByLabelText("Dashboard")).toBeChecked();
     });
   });
 });

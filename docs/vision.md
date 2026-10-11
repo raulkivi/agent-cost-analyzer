@@ -175,7 +175,13 @@ showing the behavioral-proxy fallback silently.
   failed and why (missing utility, wrong directory, bad arguments, …), and
   what that failure recovery cost — because failed calls are a direct,
   avoidable driver of token spend. It is exposed in the UI and through a
-  local, read-only MCP server.
+  local, read-only MCP server. A second extension (Phase 9.11,
+  [plans/insights-dashboard.md](plans/insights-dashboard.md)) is a
+  QlikView-style **insights dashboard** across every provider. It
+  associates cost, tool calls and **security signals** (risky commands,
+  credential access, statistical anomalies, first-time behaviour) and says
+  what happened, when and why. The signals are prompts to look, not
+  intrusion detection, and the dashboard stays read-only and local.
 - Not scoped to editing or replaying sessions (no `/rewind`-style mutation of
   real logs) — it's a read-only viewer/analyzer.
 - No dependency on the cloud-synced (DuckDB) store — the app only reads local

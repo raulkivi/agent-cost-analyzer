@@ -51,6 +51,11 @@ cards with corner registration marks, Barlow/Barlow Condensed type.*
   cross-session rollup, audit charts) and its read-only MCP server
   (`scripts/mcp-server.sh`; see the User Guide's "Querying the audit from
   Claude Code").
+- [Insights dashboard plan](docs/plans/insights-dashboard.md) — design and
+  decisions for the QlikView-style associative dashboard across every
+  provider: cost and tokens, tool calls and failures, and security
+  signals (risky commands, anomalies, behaviour changes) that say what
+  happened, when and why.
 - [pi-system-prompt-logger](packages/pi-system-prompt-logger/README.md) —
   optional Pi coding-agent extension, vendored in this repo, that captures
   pi's assembled system prompt to a JSONL sidecar log so Analyze mode's

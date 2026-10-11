@@ -287,8 +287,9 @@ the page after starting a chat session in VS Code.
 
 ### Auditing tool calls
 
-Analyze mode's center column has a **Turns / Tool audit / All sessions**
-switch. It shows what the agent actually ran and why calls failed: a
+Analyze mode's center column has a **Turns / Tool audit / All sessions /
+Dashboard** switch (Dashboard is described in "The insights dashboard"
+below). It shows what the agent actually ran and why calls failed: a
 missing utility, a wrong working directory, bad arguments, a missing
 dependency, git state, a blocked permission, and so on. Every
 classification shows the rule that matched and a short, redacted excerpt
@@ -345,6 +346,67 @@ claude mcp add copilot-cost-analyzer -- /absolute/path/to/copilot-cost-analyzer/
 The `audit_session` prompt asks the model to explain a session's failures
 and suggest fixes. Every tool takes an optional `provider` (for example
 `"claude-code"`). The server reads local logs only and writes nothing.
+
+### The insights dashboard
+
+**Dashboard**, the fourth view on Analyze mode's center switch, works like
+QlikView. It loads the most recent sessions (up to 200 per provider) from
+**every** log provider at once, not just the selected source. It stays
+reachable even when the selected source has no sessions: the empty state
+offers **Open the dashboard across all providers**. Pick 7, 30 or 90 days,
+or all time.
+
+**List boxes** (left) hold every field: provider, date, hour (UTC),
+session, model, trigger event, usage data, tool, tool kind, program,
+outcome, failure category, signal type, severity and signal category.
+Click a value to select only it; Ctrl/⌘-click to add or remove values.
+Every other list box then colours its values:
+
+| Colour | Meaning |
+|---|---|
+| Green | Selected |
+| White | Associated with the current selections |
+| Light grey | Alternative: another value in a field you've already filtered |
+| Dark grey | Excluded by the current selections |
+
+The grey values answer "which providers had **no** failures?" or "which
+models never triggered a signal?" at a glance. Charts are selection
+surfaces too: click a day, a model, a tool, a failure category or a
+program bar to select it. **Current selections** lists every filter.
+Clear one with its ✕, undo the last change with **Back**, or press
+**Clear all**.
+
+What the view shows for the current selection:
+
+- **What happened**: a plain-language summary covering which sessions
+  and when, AI Credits and cache share, tool-call failures and their main
+  cause, the most severe signal, anomalies and behaviour changes.
+- **KPI tiles**: AI Credits, sessions, turns, cache hit ratio, output
+  tokens, tool calls, failure rate and security signals. Figures that a
+  log source didn't record are never counted as 0. Each tile says how many
+  turns or calls were known.
+- **AI Credits by day**, **Tokens by model**, **Tool calls by tool**, **Why
+  calls failed** and **Shell programs**.
+- **Signals to review**: for each signal, what happened, when, why it was
+  flagged (with a redacted excerpt of the command or path as evidence) and
+  where. Click "where" to select that session. There are three kinds:
+  - *Security signals* flag commands worth a second look: a download
+    piped into a shell, decoded or `eval`'d code, `rm -rf` (on `/` or `~`
+    as high), force push, `git reset --hard`, `sudo`, permissive `chmod`,
+    access to SSH keys, cloud credentials or `.env` files, changes to shell
+    profiles, crontab or services, writes under `/etc` or `/usr`, uploads
+    with `curl -d`/`-T`, raw sockets (`nc`, `socat`), `ssh`/`scp`,
+    installing a named package, and any action you or a policy denied.
+  - *Anomalies* flag sessions far above the norm for AI Credits, output
+    tokens, tool calls or failure rate (robust z-score over at least 8
+    sessions). The reason states the value, the median and the sample size.
+  - *Behaviour changes* flag the first use of a program, tool or model
+    after the earliest sessions.
+
+  Signals are prompts to look, not verdicts. Mentioning a dangerous
+  command inside a heredoc that isn't run by a shell (for example a test
+  fixture or a doc being written) isn't flagged.
+- **Most expensive sessions**: click one to select it.
 
 ## License
 

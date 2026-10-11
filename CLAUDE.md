@@ -31,7 +31,11 @@ content here.
   audit — classified per-call outcomes, `GET /api/sessions/:id/audit`,
   `/tool-calls`, `GET /api/audit`, a read-only stdio MCP server in
   `packages/server/src/mcp/` launched via `scripts/mcp-server.sh`, and the
-  web Tool audit / All sessions views; see docs/plans/tool-call-audit.md)
+  web Tool audit / All sessions views; see docs/plans/tool-call-audit.md),
+  Phase 9.11 complete (insights dashboard: `GET /api/insights` across every
+  provider, `services/insights/*` security/anomaly/behaviour-change
+  detectors, a generic associative engine in `packages/web/src/lib/associative/`
+  and the web Dashboard view; see docs/plans/insights-dashboard.md)
   — npm workspaces with
   `packages/domain`
   (zod schemas + types for every architecture.md §5 shape, including

@@ -8,6 +8,7 @@ import { AdviceExportDialog } from "./components/AdviceExportDialog.js";
 import { AdviceExportTriggerBar } from "./components/AdviceExportTriggerBar.js";
 import { AppHeader } from "./components/AppHeader.js";
 import { AuditRollupPanel } from "./components/AuditRollupPanel.js";
+import { InsightsDashboard } from "./components/insights/InsightsDashboard.js";
 import { SessionAuditPanel } from "./components/SessionAuditPanel.js";
 import { ConfigWarningBanner } from "./components/ConfigWarningBanner.js";
 import { ExplanationPanel } from "./components/ExplanationPanel.js";
@@ -35,12 +36,14 @@ const RIGHT_TAB_OPTIONS = [
   { value: "tools", label: "Tools" },
 ] as const;
 
-// Analyze-mode center views (Phase 9.10): the existing turns table, one
-// session's tool-call audit, or the cross-session audit.
+// Analyze-mode center views: the existing turns table, one session's
+// tool-call audit, the cross-session audit (Phase 9.10), or the
+// cross-provider associative insights dashboard (Phase 9.11).
 const CENTER_VIEW_OPTIONS = [
   { value: "turns", label: "Turns" },
   { value: "session-audit", label: "Tool audit" },
   { value: "rollup", label: "All sessions" },
+  { value: "dashboard", label: "Dashboard" },
 ] as const;
 
 type CenterView = (typeof CENTER_VIEW_OPTIONS)[number]["value"];
@@ -136,9 +139,15 @@ export function App() {
   }, []);
 
   const selectedTurn = session?.turns[selectedTurnIndex] ?? null;
+  // "All sessions" hides the right column; the dashboard brings its own
+  // list boxes, so it hides the session list as well.
+  const showDashboard = mode === "analyze" && centerView === "dashboard";
+  const hideRightColumn = mode === "analyze" && (centerView === "rollup" || showDashboard);
   const listForMode = mode === "learn" ? scenarios : sessions;
   const listLoaded = mode === "learn" ? scenariosLoaded : sessionsLoaded;
-  const showEmptyState = listLoaded && listForMode.length === 0;
+  // The dashboard reads every provider, so an empty active provider must
+  // not hide it.
+  const showEmptyState = listLoaded && listForMode.length === 0 && !showDashboard;
   const allAiCreditsKnown =
     session !== null && session.turns.length > 0 && session.turns.every((turn) => turn.usage.costAiCredits.known);
   // toolInventory only comes from a parsed main.jsonl; a turn's toolCalls
@@ -287,6 +296,16 @@ export function App() {
             <p className="text-muted" style={{ fontSize: 13, margin: 0 }}>
               {EMPTY_STATES[mode].body}
             </p>
+            {mode === "analyze" && (
+              <button
+                type="button"
+                className="btn btn-secondary"
+                style={{ marginTop: "var(--space-3)" }}
+                onClick={() => setCenterView("dashboard")}
+              >
+                Open the dashboard across all providers
+              </button>
+            )}
           </Blueprint>
         </div>
       ) : (
@@ -299,7 +318,7 @@ export function App() {
             alignItems: "start",
           }}
         >
-          <div>
+          <div style={showDashboard ? { display: "none" } : undefined}>
             <SessionList
               mode={mode}
               sessions={listForMode}
@@ -316,7 +335,15 @@ export function App() {
             />
           </div>
 
-          <div style={centerView === "rollup" && mode === "analyze" ? { gridColumn: "2 / 4" } : undefined}>
+          <div
+            style={
+              showDashboard
+                ? { gridColumn: "1 / 4" }
+                : hideRightColumn
+                  ? { gridColumn: "2 / 4" }
+                  : undefined
+            }
+          >
             {mode === "analyze" && (
               <SegmentedControl
                 name="center-view"
@@ -327,7 +354,9 @@ export function App() {
               />
             )}
             <div style={mode === "analyze" ? { marginTop: "var(--space-3)" } : undefined}>
-            {mode === "analyze" && centerView === "rollup" ? (
+            {showDashboard ? (
+              <InsightsDashboard />
+            ) : mode === "analyze" && centerView === "rollup" ? (
               <AuditRollupPanel onOpenSession={handleOpenSessionAudit} key={activeProviderId} />
             ) : mode === "analyze" && centerView === "session-audit" ? (
               session ? (
@@ -385,7 +414,7 @@ export function App() {
             </div>
           </div>
 
-          <div style={centerView === "rollup" && mode === "analyze" ? { display: "none" } : undefined}>
+          <div style={hideRightColumn ? { display: "none" } : undefined}>
             {mode === "analyze" ? (
               <SegmentedControl
                 name="right-tab"

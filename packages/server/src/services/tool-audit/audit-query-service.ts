@@ -39,7 +39,7 @@ export interface ToolCallFilter {
 export const DEFAULT_ROLLUP_SESSION_LIMIT = 50;
 export const MAX_ROLLUP_SESSION_LIMIT = 500;
 
-function inRange(startedAt: string | undefined, since?: string, until?: string): boolean {
+export function inRange(startedAt: string | undefined, since?: string, until?: string): boolean {
   if (!since && !until) {
     return true;
   }

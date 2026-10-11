@@ -322,3 +322,69 @@ a { color: var(--color-accent); text-underline-offset: 3px; }
 .audit-grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: var(--space-4); }
 .mono { font-family: monospace; font-size: 12px; }
 .failure-badge { display: inline-flex; align-items: center; gap: 2px; margin-left: 6px; font-size: 11px; color: #b02a2a; font-weight: 500; }
+
+/* — Insights dashboard (Phase 9.11, docs/plans/insights-dashboard.md):
+     QlikView's associative colours — selected green, possible white,
+     alternative light grey, excluded dark grey. State is also carried by
+     aria-selected, a title and the legend, never by colour alone. — */
+.insights-layout { display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: var(--space-4); align-items: start; }
+@media (max-width: 900px) { .insights-layout { grid-template-columns: 1fr; } }
+.insights-listboxes {
+  display: flex; flex-direction: column; gap: var(--space-3);
+  position: sticky; top: var(--space-2); max-height: calc(100vh - var(--space-8)); overflow: auto;
+}
+.insights-listbox-group { display: flex; flex-direction: column; gap: var(--space-2); }
+.insights-main { display: flex; flex-direction: column; gap: var(--space-4); min-width: 0; }
+.insights-narrative { margin: 0; padding-left: 1.2em; font-size: 13px; display: flex; flex-direction: column; gap: 4px; }
+
+.listbox { border: 1px solid var(--color-divider); background: #ffffff; }
+.listbox-header {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--space-2);
+  padding: 2px var(--space-2); background: var(--color-surface); border-bottom: 1px solid var(--color-divider);
+}
+.listbox-title { font-family: var(--font-heading); font-weight: var(--font-heading-weight); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; }
+.listbox-clear { font-size: 11px; padding: 0 4px; }
+.listbox-search { width: 100%; box-sizing: border-box; font-size: 12px; padding: 2px var(--space-2); border: 0; border-bottom: 1px solid var(--color-divider); }
+.listbox-values { list-style: none; margin: 0; padding: 0; max-height: 156px; overflow: auto; }
+.listbox-value {
+  display: flex; justify-content: space-between; gap: var(--space-2);
+  padding: 2px var(--space-2); font-size: 12px; cursor: pointer; user-select: none;
+  border-bottom: 1px solid color-mix(in srgb, var(--color-text) 6%, transparent);
+}
+.listbox-value:focus-visible { outline: 2px solid var(--color-accent); outline-offset: -2px; }
+.listbox-value--selected { background: #2e7d32; color: #ffffff; }
+.listbox-value--possible { background: #ffffff; color: var(--color-text); }
+.listbox-value--possible:hover { background: var(--color-accent-100); }
+.listbox-value--alternative { background: #dcdcde; color: var(--color-text); }
+.listbox-value--excluded { background: #a9a9ac; color: #1d1f20; }
+.listbox-count { font-variant-numeric: tabular-nums; opacity: 0.75; }
+.listbox-empty { font-size: 12px; margin: 0; padding: 2px var(--space-2); }
+.listbox-legend { display: flex; flex-wrap: wrap; gap: var(--space-2); list-style: none; margin: 0; padding: 0; font-size: 11px; }
+.listbox-legend li { display: inline-flex; align-items: center; gap: 4px; }
+.listbox-swatch { display: inline-block; width: 10px; height: 10px; border: 1px solid var(--color-divider); }
+
+.current-selections {
+  display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap;
+  padding: var(--space-2) var(--space-3); border: 1px solid var(--color-divider);
+}
+.current-selections-hint { font-size: 12px; }
+.current-selections-list { display: flex; flex-wrap: wrap; gap: var(--space-2); list-style: none; margin: 0; padding: 0; flex: 1; min-width: 0; }
+.selection-chip {
+  display: inline-flex; align-items: center; gap: 4px; max-width: 360px;
+  background: #2e7d32; color: #ffffff; padding: 2px 2px 2px 8px; font-size: 12px;
+}
+.selection-chip-clear { background: none; border: 0; color: inherit; cursor: pointer; padding: 0 4px; font-size: 11px; }
+.selection-chip-clear:focus-visible { outline: 2px solid #ffffff; outline-offset: -2px; }
+.current-selections-actions { margin-left: auto; display: flex; gap: var(--space-2); }
+
+.severity-tag { display: inline-block; padding: 1px 6px; font-size: 11px; font-weight: 600; white-space: nowrap; }
+.severity-tag--critical { background: #7a1616; color: #ffffff; }
+.severity-tag--high { background: #d03b3b; color: #ffffff; }
+.severity-tag--medium { background: #eba524; color: #1d1f20; }
+.severity-tag--low { background: #b5d9fd; color: #1d1f20; }
+.severity-tag--info { background: var(--color-neutral-200); color: #1d1f20; }
+.findings-table td { vertical-align: top; }
+.findings-evidence {
+  display: block; margin-top: 2px; max-width: 420px; white-space: pre-wrap; word-break: break-all;
+  color: color-mix(in srgb, var(--color-text) 75%, transparent);
+}

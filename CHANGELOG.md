@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- Insights dashboard (Phase 9.11): a new **Dashboard** view in Analyze mode
+  that works like QlikView across every log provider at once. Click any
+  value in a list box or any bar, and every list box, KPI and chart
+  narrows to what's associated with it. Values are coloured
+  selected/possible/alternative/excluded, with current selections, Back
+  and Clear all. KPIs report coverage instead of treating unknown AI
+  Credits as 0. A "What happened" summary and a **Signals to review**
+  table flag risky commands (pipe-to-shell, decode-and-exec, `rm -rf`,
+  force push, `sudo`, credential files, persistence, system-path writes,
+  data upload, raw sockets, package installs, denied actions), statistical
+  anomalies and first-time behaviour, each with when, why and redacted
+  evidence. New endpoint: `GET /api/insights`. Plan:
+  `docs/plans/insights-dashboard.md`.
 - Community health files: `CODE_OF_CONDUCT.md`, `CONTRIBUTING.md`, issue forms and a
   pull request template.
 

@@ -156,6 +156,7 @@ outbound network calls.
 | `services/session-enricher` | Converts a selected provider's normalized structural/usage records into `Session`/`Turn` values; it does not know whether they originated in VS Code, mitmproxy, Anthropic, or OpenAI |
 | `platform/vscode-paths` | Resolves the active VS Code variant's user-data directory across OSes (Linux/macOS/Windows, Stable/Insiders) so `sqlite`, `jsonl`, and `vscode-settings` all locate the right files without duplicating detection logic |
 | `data-sources/vscode-settings` | Reads and merges the user (and workspace, if present) `settings.json` (JSONC) to read the prerequisite Copilot Chat debug-logging settings |
+| `services/insights` | Phase 9.11 ([plans/insights-dashboard.md](plans/insights-dashboard.md)): flattens sessions from every registered provider into the `InsightsDataset` star schema and runs injected `FindingDetector` strategies: rule-based security signals (`SecurityRule` table), robust z-score anomalies, and first-use behaviour changes. Pure apart from `InsightsService`, which loads providers through a narrow `listProviders()` port |
 | `services/config-check` | Runs at server startup and on demand (§6.3): checks `agentDebugLog.fileLogging.enabled` and `maxRetainedSessionLogs` against constraints 8/10, producing actionable `ConfigWarning`s |
 | `domain` | The shared normalized TypeScript types (§5), plus schema validation, used by every other module and re-exported to the frontend build |
 | `api` | Thin REST layer (§8) that calls into `domain`/services and returns JSON; no business logic lives here |
@@ -240,6 +241,12 @@ interface ToolCallOutcome {
 }
 // SessionAudit / AuditRollup (packages/domain/src/session-audit.ts) are
 // server-computed aggregates over these records — see §8's audit endpoints.
+// InsightsDataset (packages/domain/src/insights.ts, Phase 9.11) flattens
+// sessions/turns/tool calls from every provider into keyed rows (unknown
+// token figures are null, never 0) plus InsightFindings, each carrying
+// what (title), when (at), why and redacted evidence; the browser's
+// associative engine links them (sessions ← turns ← toolCalls,
+// sessions ← findings).
 
 interface Turn {
   index: number;
@@ -1495,6 +1502,7 @@ sources themselves.
 | `GET /api/sessions/:id/audit` | `SessionAudit` (Phase 9.10, [plans/tool-call-audit.md](plans/tool-call-audit.md)): per-status totals, failure rate over known outcomes (`null` when none known), by-tool/program/category breakdowns, per-turn outcome counts, every classified call, retry groups, failure-recovery cost, and outcome coverage. Optional `?provider=<id>` audits a provider other than the active one (400 if unknown); 404 for an unknown session |
 | `GET /api/sessions/:id/tool-calls` | `{ total, calls: AuditedToolCall[] }`: one session's classified tool calls, filtered by `status`/`category` (comma-separated enum lists), `tool`, `program`, `turn`, `limit`, `provider`. 400 on an invalid value |
 | `GET /api/audit` | `AuditRollup` over the most recent sessions (`limit`, default 50, max 500) whose `startedAt` falls in `since`..`until` (ISO date or timestamp, compared at the bound's precision): totals, top failing commands, daily counts, per-session summary, category/program/tool breakdowns. Optional `provider` |
+| `GET /api/insights` | `InsightsDataset` (Phase 9.11, [plans/insights-dashboard.md](plans/insights-dashboard.md)): the most recent sessions from **every** registered provider (`limit` per provider, default 50, max 500; `since`/`until` as for `/api/audit`; optional `provider` restricts to one, 400 if unknown), flattened to session/turn/tool-call rows, plus security, anomaly and behaviour-change findings. Each provider's availability, error or truncation is reported in `providers[]`; one failing provider never fails the response |
 | `GET /api/config/status` | `ConfigStatus` — current prerequisite-setting check results and any `warnings[]` (§6.3), including the effective `minRetainedSessionLogsThreshold` |
 | `PUT /api/config/retention-threshold` | Sets the persisted `minRetainedSessionLogsThreshold` override (body: `{ value: number }`, must be a positive integer, else 400); returns the fresh `ConfigStatus` so the caller can update both the header control and the warning banner from one response |
 
@@ -1543,6 +1551,8 @@ copilot-cost-analyzer/
         services/
           session-enricher/
           config-check/
+          tool-audit/    # Phase 9.10 outcome classification + audit builders
+          insights/      # Phase 9.11 dataset builder + finding detectors
         platform/
           vscode-paths/
           pi-agent-paths/
@@ -1555,6 +1565,8 @@ copilot-cost-analyzer/
         state/
         api-client/
         charts/
+        lib/associative/ # Phase 9.11 generic associative selection engine (no React)
+        lib/insights/    # Phase 9.11 insights model, measures, narrative
     pi-system-prompt-logger/ # vendored Pi coding-agent extension: captures the
                               # assembled system prompt to a JSONL sidecar log,
                               # optionally consumed by server/pi-agent (§6.2.5)

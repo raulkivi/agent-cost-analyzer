@@ -22,6 +22,11 @@ import { composeLogProviders, type LogProviderCompositionOptions } from "./compo
 import { AuditQueryService } from "./services/tool-audit/audit-query-service.js";
 import { parseSessionRangeQuery, parseToolCallFilterQuery } from "./services/tool-audit/audit-query-params.js";
 import { createLoopbackHostGuard } from "./http/loopback-host-guard.js";
+import { AnomalyDetector } from "./services/insights/anomaly-detector.js";
+import { BehaviorChangeDetector } from "./services/insights/behavior-change-detector.js";
+import { InsightsService } from "./services/insights/insights-service.js";
+import { SecurityScanner } from "./services/insights/security-scanner.js";
+import { DEFAULT_SECURITY_RULES } from "./services/insights/security-rules.js";
 
 const APP_VERSION = (
   JSON.parse(
@@ -49,6 +54,11 @@ export function createApp(options: CreateAppOptions = {}): Express {
     resolvedAppSettingsDir,
   } = composeLogProviders(compositionOptions);
   const auditQueries = new AuditQueryService(registry);
+  const insights = new InsightsService(registry, [
+    new SecurityScanner(DEFAULT_SECURITY_RULES),
+    new AnomalyDetector(),
+    new BehaviorChangeDetector(),
+  ]);
 
   // Used only by GET /api/sessions/:id/system-prompt below, which stays
   // wired directly to the VS Code session store/main.jsonl path rather than
@@ -208,6 +218,23 @@ export function createApp(options: CreateAppOptions = {}): Express {
       res.json(await auditQueries.getRollup(range.value));
     } catch (error) {
       sendAuditError(res, error, "audit rollup");
+    }
+  });
+
+  // Insights dashboard (Phase 9.11, docs/plans/insights-dashboard.md): one
+  // flat, redacted dataset across every provider (not just the active one)
+  // plus security/anomaly/behaviour-change findings; the browser runs the
+  // associative selection engine over it. `limit` is per provider.
+  app.get("/api/insights", async (req, res) => {
+    const range = parseSessionRangeQuery(req.query);
+    if (!range.ok) {
+      res.status(400).json({ error: range.error });
+      return;
+    }
+    try {
+      res.json(await insights.getDataset(range.value));
+    } catch (error) {
+      sendAuditError(res, error, "insights");
     }
   });
 

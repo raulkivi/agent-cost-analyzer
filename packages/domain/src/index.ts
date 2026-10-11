@@ -62,3 +62,21 @@ export {
   turnInspectorDetailSchema,
   type TurnInspectorDetail,
 } from "./turn-inspector.js";
+export {
+  insightSessionRowSchema,
+  insightTurnRowSchema,
+  insightToolCallRowSchema,
+  findingKindSchema,
+  findingSeveritySchema,
+  insightFindingSchema,
+  insightProviderStatusSchema,
+  insightsDatasetSchema,
+  type InsightSessionRow,
+  type InsightTurnRow,
+  type InsightToolCallRow,
+  type FindingKind,
+  type FindingSeverity,
+  type InsightFinding,
+  type InsightProviderStatus,
+  type InsightsDataset,
+} from "./insights.js";
