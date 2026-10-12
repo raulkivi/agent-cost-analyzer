@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { failureCategorySchema, toolCallStatusSchema } from "@copilot-cost-analyzer/domain";
+import { failureCategorySchema, toolCallStatusSchema, toolKindSchema } from "@copilot-cost-analyzer/domain";
 import type { SessionRangeFilter, ToolCallFilter } from "./audit-query-service.js";
 
 // Field schemas shared by the HTTP query parser below and the MCP tool
@@ -10,6 +10,7 @@ export const isoDateBoundSchema = z
   .regex(/^\d{4}-\d{2}-\d{2}(?:T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:\d{2})?)?$/, "Expected an ISO date (YYYY-MM-DD) or timestamp");
 export const limitSchema = z.number().int().positive().max(1000);
 export const turnIndexSchema = z.number().int().nonnegative();
+export const offsetSchema = z.number().int().nonnegative();
 
 type ParseResult<T> = { ok: true; value: T } | { ok: false; error: string };
 
@@ -40,8 +41,10 @@ const toolCallFilterSchema = z.object({
   status: z.array(toolCallStatusSchema).optional(),
   failureCategory: z.array(failureCategorySchema).optional(),
   tool: z.string().optional(),
+  kind: z.array(toolKindSchema).optional(),
   program: z.string().optional(),
   turnIndex: turnIndexSchema.optional(),
+  offset: offsetSchema.optional(),
   limit: limitSchema.optional(),
 });
 
@@ -65,8 +68,10 @@ export function parseToolCallFilterQuery(query: Query): ParseResult<ToolCallFilt
         status: list(query, "status"),
         failureCategory: list(query, "category"),
         tool: stringParam(query, "tool"),
+        kind: list(query, "kind"),
         program: stringParam(query, "program"),
         turnIndex: integer(query, "turn"),
+        offset: integer(query, "offset"),
         limit: integer(query, "limit"),
       }),
     ),

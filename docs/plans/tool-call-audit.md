@@ -365,14 +365,19 @@ failed most this week and why?"
   `AuditQueryService`, which operates on normalized `Session`s and is
   therefore provider-agnostic.
 - **Tools.** All are read-only and annotated `readOnlyHint: true`, and all
-  return JSON text plus `structuredContent`:
+  return JSON text plus `structuredContent`. Phase 9.12
+  ([mcp-tools-v2.md](mcp-tools-v2.md)) added cost, findings and turn
+  tools, server instructions, output schemas, a `query` on
+  `list_sessions` and `kind`/`offset` on `list_tool_calls`, and moved the
+  server to `mcp/mcp-server.ts`. The table below is the Phase 9.10 set as
+  it stands now:
 
   | Tool | Input | Returns |
   |---|---|---|
   | `list_log_providers` | none | providers, availability, and active id |
-  | `list_sessions` | `provider?`, `since?`, `until?`, `limit?` (default 20) | session summaries, most recent first (id, title, startedAt, turnCount, providerId) |
+  | `list_sessions` | `provider?`, `query?`, `since?`, `until?`, `limit?` (default 20) | `total` matches plus session summaries, most recent first (id, title, startedAt, turnCount, model, providerId) |
   | `get_session_audit` | `sessionId`, `provider?`, `includeCalls?` | `SessionAudit`; the per-call `calls` list is omitted unless `includeCalls` is true |
-  | `list_tool_calls` | `sessionId`, `provider?`, `status?`, `failureCategory?`, `tool?`, `program?`, `turnIndex?`, `limit?` (default 50) | filtered, classified tool calls with excerpts and turn indexes, plus `total` (matches before `limit` is applied) |
+  | `list_tool_calls` | `sessionId`, `provider?`, `status?`, `failureCategory?`, `kind?`, `tool?`, `program?`, `turnIndex?`, `offset?`, `limit?` (default 50) | filtered, classified tool calls with excerpts and turn indexes, plus `total` (matches before `offset`/`limit`) and the `offset` used |
   | `get_audit_rollup` | `provider?`, `since?`, `until?`, `limit?` (default 50, max 500) | cross-session `AuditRollup` (totals, top failing commands and programs, categories over time) |
 
 - **Prompt.** `audit_session` is a canned prompt that asks the model to

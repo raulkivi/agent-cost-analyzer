@@ -35,7 +35,11 @@ content here.
   Phase 9.11 complete (insights dashboard: `GET /api/insights` across every
   provider, `services/insights/*` security/anomaly/behaviour-change
   detectors, a generic associative engine in `packages/web/src/lib/associative/`
-  and the web Dashboard view; see docs/plans/insights-dashboard.md)
+  and the web Dashboard view; see docs/plans/insights-dashboard.md),
+  Phase 9.12 complete (MCP tools v2: `get_session_cost`, `get_cost_rollup`,
+  `list_findings`, `get_turn`, cost/security prompts, server instructions
+  and output schemas; the MCP server is split into tool-group modules in
+  `packages/server/src/mcp/`; see docs/plans/mcp-tools-v2.md)
   — npm workspaces with
   `packages/domain`
   (zod schemas + types for every architecture.md §5 shape, including

@@ -42,6 +42,23 @@ describe("AuditQueryService", () => {
     expect(await service.listToolCalls("missing", {})).toBeNull();
   });
 
+  it("filters tool calls by kind and pages them with offset", async () => {
+    const service = new AuditQueryService(lookup(new FakeProvider("fake", sessions)));
+
+    expect((await service.listToolCalls("mid", { kind: ["shell"] }))?.total).toBe(2);
+    expect((await service.listToolCalls("mid", { kind: ["web"] }))?.total).toBe(0);
+    const page = await service.listToolCalls("new", { offset: 1, limit: 1 });
+    expect(page?.total).toBe(2);
+    expect(page?.calls.map((c) => c.call.argsSummary)).toEqual(["npm test"]);
+  });
+
+  it("filters sessions by a case-insensitive title or id query", async () => {
+    const service = new AuditQueryService(lookup(new FakeProvider("fake", sessions)));
+
+    expect((await service.listSessions({ query: "SESSION MID" })).map((s) => s.id)).toEqual(["mid"]);
+    expect((await service.listSessions({ query: "old" })).map((s) => s.id)).toEqual(["old"]);
+  });
+
   it("builds a rollup over the most recent sessions in range", async () => {
     const provider = new FakeProvider("fake", sessions);
     const service = new AuditQueryService(lookup(provider));

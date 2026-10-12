@@ -327,9 +327,11 @@ failures.
 
 ### Querying the audit from Claude Code (MCP)
 
-The same audit is available as a local, read-only MCP server, so you can
-ask an agent about your own sessions ("which commands failed most this
-week, and why?"). Run `npm install` in this repo, then register the server:
+The analyzer is also available as a local, read-only MCP server, so you
+can ask an agent about your own sessions: "what drove my spend this
+week?", "which commands failed most, and why?", "did my agents do
+anything risky?". Run `npm install` in this repo, then register the
+server:
 
 ```bash
 claude mcp add copilot-cost-analyzer -- /absolute/path/to/copilot-cost-analyzer/scripts/mcp-server.sh
@@ -338,14 +340,27 @@ claude mcp add copilot-cost-analyzer -- /absolute/path/to/copilot-cost-analyzer/
 | Tool | What it returns |
 |---|---|
 | `list_log_providers` | Available log sources and which one is active |
-| `list_sessions` | Sessions, most recent first, optionally within a date window |
-| `get_session_audit` | One session's audit. Set `includeCalls` to also get every classified call |
-| `list_tool_calls` | One session's calls, filtered by status, failure category, tool, program, or turn |
-| `get_audit_rollup` | Cross-session totals, top failing commands, and per-day counts |
+| `list_sessions` | Sessions, most recent first. Search titles and ids with `query`, filter by date; `total` says how many matched |
+| `get_turn` | One turn: prompt and response (secrets redacted, truncated), usage, triggered event and tool calls |
+| `get_session_cost` | One session's tokens and AI Credits with coverage, cache hit ratio, spend per model, the most expensive turns, cost events and context overhead |
+| `get_cost_rollup` | Spend across **every** provider by provider, model and day, plus the most expensive sessions |
+| `get_session_audit` | One session's tool-call audit. Set `includeCalls` to also get every classified call |
+| `list_tool_calls` | One session's calls, filtered by status, failure category, tool kind, tool, program or turn, paged with `offset`/`limit` |
+| `get_audit_rollup` | Cross-session tool-call totals, top failing commands and per-day counts for one provider |
+| `list_findings` | Security, anomaly and behaviour-change findings across every provider, most severe first, with what, when, why and redacted evidence |
 
-The `audit_session` prompt asks the model to explain a session's failures
-and suggest fixes. Every tool takes an optional `provider` (for example
-`"claude-code"`). The server reads local logs only and writes nothing.
+Three prompts start common reviews: `audit_session` (why a session's tool
+calls failed), `review_costs` (what drives your spend and how to cut it)
+and `security_review` (risky agent actions and the guardrails that would
+prevent them).
+
+Per-session tools take an optional `provider` (for example
+`"claude-code"`) and otherwise use the source selected in the web app.
+`get_cost_rollup` and `list_findings` read every available provider
+unless you pass one. A `null` figure means the log doesn't record it; it
+is never treated as zero. The server reads local logs only and writes
+nothing. Everything a tool returns goes into the agent's context, so free
+text is redacted and truncated first.
 
 ### The insights dashboard
 

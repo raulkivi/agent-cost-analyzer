@@ -1186,6 +1186,32 @@ charted as 0.
 **Dependencies**: Phase 9.10 (tool-call outcomes and kinds), Phase 9.9
 (Claude Code provider).
 
+## Phase 9.12 — MCP tools v2: cost, findings, turn drill-down, UX pass
+
+Full design: [plans/mcp-tools-v2.md](plans/mcp-tools-v2.md).
+
+- Domain: `SessionCost`, `CostRollup` (per-measure totals with turn
+  coverage, `null` for unknown), `TurnView`, `FindingsQueryResult`.
+- Server: pure builders `services/cost/*` (shared `cost-aggregation`),
+  `services/insights/findings-query.ts` and
+  `services/session-view/turn-view-builder.ts` (redacted, bounded text),
+  composed by `services/analysis/AnalysisQueryService` over
+  `ProviderLookup` and the insights dataset. `AuditQueryService` gains a
+  title/id `query` and `kind`/`offset` tool-call filters (also on
+  `GET /api/sessions/:id/tool-calls`).
+- MCP: new `get_session_cost`, `get_cost_rollup`, `list_findings` and
+  `get_turn` tools; `review_costs` and `security_review` prompts; server
+  instructions; an `outputSchema` on every tool; actionable errors. The
+  server is split into tool-group modules.
+
+**Exit criterion**: `tools/list` returns 9 read-only tools, each with an
+output schema. For the real-capture Claude Code fixture over stdio,
+`get_session_cost` reports token totals with full coverage and AI Credits
+as unknown (`null`), never 0.
+
+**Dependencies**: Phase 9.10 (MCP server, audit), Phase 9.11 (insights
+dataset and detectors).
+
 ## Phase 10 — VS Code extension packaging (future, out of MVP scope)
 
 Not part of the initial build (vision §5 "future path"); tracked here only
@@ -1225,6 +1251,7 @@ flowchart LR
     P95 --> P99
     P99 --> P910["Phase 9.10<br/>Tool-call audit + MCP"]
     P910 --> P911["Phase 9.11<br/>Insights dashboard"]
+    P911 --> P912["Phase 9.12<br/>MCP tools v2"]
     P95 --> P10["Phase 10<br/>VS Code extension (future)"]
     P5 --> P10
 ```
