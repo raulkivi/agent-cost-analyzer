@@ -5,11 +5,13 @@ import type {
   Session,
   SessionAudit,
   ToolCallStatus,
+  ToolKind,
 } from "@copilot-cost-analyzer/domain";
 import type { LogProvider } from "../../data-sources/log-providers/log-provider.js";
 import { buildAuditRollup } from "./audit-rollup-builder.js";
 import { buildSessionAudit } from "./session-audit-builder.js";
 import { statusOf } from "./outcome-tally.js";
+import { resolveToolKind } from "./tool-kind-resolver.js";
 
 // The narrow slice of LogProviderRegistry this service needs (DIP) — the
 // HTTP API and the MCP server both construct it over the same registry.
@@ -24,6 +26,8 @@ export interface SessionRangeFilter {
   // bound's own precision ("2026-09-20" includes that whole day).
   since?: string;
   until?: string;
+  // Case-insensitive substring of the session title or id.
+  query?: string;
   limit?: number;
 }
 
@@ -31,8 +35,10 @@ export interface ToolCallFilter {
   status?: ToolCallStatus[];
   failureCategory?: FailureCategory[];
   tool?: string;
+  kind?: ToolKind[];
   program?: string;
   turnIndex?: number;
+  offset?: number;
   limit?: number;
 }
 
@@ -62,6 +68,7 @@ function matches(audited: AuditedToolCall, filter: ToolCallFilter): boolean {
     (!filter.status || filter.status.includes(statusOf(call))) &&
     (!filter.failureCategory || (category !== undefined && filter.failureCategory.includes(category))) &&
     (!filter.tool || call.name === filter.tool) &&
+    (!filter.kind || filter.kind.includes(call.kind ?? resolveToolKind(call.name))) &&
     (!filter.program || call.shell?.program === filter.program) &&
     (filter.turnIndex === undefined || audited.turnIndex === filter.turnIndex)
   );
@@ -78,8 +85,10 @@ export class AuditQueryService {
 
   async listSessions(filter: SessionRangeFilter): Promise<Session[]> {
     const sessions = await this.provider(filter.providerId).listSessions();
+    const query = filter.query?.toLowerCase();
     const inWindow = sessions
       .filter((session) => inRange(session.startedAt, filter.since, filter.until))
+      .filter((session) => !query || session.title.toLowerCase().includes(query) || session.id.toLowerCase().includes(query))
       .sort((a, b) => (b.startedAt ?? "").localeCompare(a.startedAt ?? ""));
     return filter.limit !== undefined ? inWindow.slice(0, filter.limit) : inWindow;
   }
@@ -99,7 +108,11 @@ export class AuditQueryService {
       return null;
     }
     const matching = audit.calls.filter((audited) => matches(audited, filter));
-    return { total: matching.length, calls: filter.limit !== undefined ? matching.slice(0, filter.limit) : matching };
+    const offset = filter.offset ?? 0;
+    return {
+      total: matching.length,
+      calls: matching.slice(offset, filter.limit !== undefined ? offset + filter.limit : undefined),
+    };
   }
 
   async getRollup(filter: SessionRangeFilter): Promise<AuditRollup> {

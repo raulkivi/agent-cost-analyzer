@@ -71,6 +71,11 @@ export {
   insightFindingSchema,
   insightProviderStatusSchema,
   insightsDatasetSchema,
+  enrichedFindingSchema,
+  severityCountsSchema,
+  findingsQueryResultSchema,
+  type EnrichedFinding,
+  type FindingsQueryResult,
   type InsightSessionRow,
   type InsightTurnRow,
   type InsightToolCallRow,
@@ -80,3 +85,20 @@ export {
   type InsightProviderStatus,
   type InsightsDataset,
 } from "./insights.js";
+export {
+  measureTotalSchema,
+  costMeasuresSchema,
+  costRankingSchema,
+  modelCostSchema,
+  turnCostSchema,
+  contextOverheadSchema,
+  sessionCostSchema,
+  costRollupSchema,
+  type MeasureTotal,
+  type CostMeasures,
+  type CostFigures,
+  type CostRanking,
+  type SessionCost,
+  type CostRollup,
+} from "./cost.js";
+export { turnViewToolCallSchema, turnViewSchema, type TurnView } from "./turn-view.js";

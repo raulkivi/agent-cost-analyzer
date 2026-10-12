@@ -105,3 +105,31 @@ export const insightsDatasetSchema = z.object({
 });
 
 export type InsightsDataset = z.infer<typeof insightsDatasetSchema>;
+
+// Phase 9.12 (docs/plans/mcp-tools-v2.md §4): the MCP list_findings result —
+// findings resolved to their session so a client never has to join keys.
+export const enrichedFindingSchema = insightFindingSchema.extend({
+  providerId: z.string(),
+  sessionId: z.string(),
+  sessionTitle: z.string(),
+});
+
+export type EnrichedFinding = z.infer<typeof enrichedFindingSchema>;
+
+export const severityCountsSchema = z.object({
+  info: z.number(),
+  low: z.number(),
+  medium: z.number(),
+  high: z.number(),
+  critical: z.number(),
+});
+
+export const findingsQueryResultSchema = z.object({
+  generatedAt: z.string(),
+  providers: z.array(insightProviderStatusSchema),
+  total: z.number(), // matches before maxResults
+  bySeverity: severityCountsSchema, // over all matches
+  findings: z.array(enrichedFindingSchema), // most severe first
+});
+
+export type FindingsQueryResult = z.infer<typeof findingsQueryResultSchema>;

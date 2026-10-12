@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- MCP tools v2 (Phase 9.12): `get_session_cost` (token and AI Credits
+  totals with coverage, cache hit ratio, spend per model, the most
+  expensive turns, cost events, context overhead), `get_cost_rollup`
+  (spend across every provider by provider, model and day, plus the top
+  sessions), `list_findings` (security, anomaly and behaviour-change
+  findings) and `get_turn` (one turn, redacted and bounded). New
+  `review_costs` and `security_review` prompts. The server now sends
+  workflow instructions, declares an output schema for every tool and
+  returns errors that name the next step. `list_sessions` gains a title/id
+  `query` and a `total`; `list_tool_calls` gains `kind` and `offset` (also
+  on `GET /api/sessions/:id/tool-calls`). Plan: `docs/plans/mcp-tools-v2.md`.
+
 ### Security
 - Removed the captured turn examples from `Design/examples/`; the 0.8.0 entry said they were removed, but they were still in the repository. Replaced the captured Copilot system prompt (`Design/SystemPrompt.txt`) with a synthetic fixture, `packages/web/fixtures/system-prompt-sample.txt`, used by the parser tests and the design-sync preview.
 

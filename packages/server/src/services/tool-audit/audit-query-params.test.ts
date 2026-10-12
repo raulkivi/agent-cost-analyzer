@@ -11,6 +11,15 @@ describe("parseToolCallFilterQuery", () => {
     });
   });
 
+  it("parses tool kinds and an offset", () => {
+    expect(parseToolCallFilterQuery({ kind: "shell,web", offset: "20" })).toEqual({
+      ok: true,
+      value: { kind: ["shell", "web"], offset: 20 },
+    });
+    expect(parseToolCallFilterQuery({ kind: "teleport" }).ok).toBe(false);
+    expect(parseToolCallFilterQuery({ offset: "-1" }).ok).toBe(false);
+  });
+
   it("returns an empty filter for no params", () => {
     expect(parseToolCallFilterQuery({})).toEqual({ ok: true, value: {} });
   });

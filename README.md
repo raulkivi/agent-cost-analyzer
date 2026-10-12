@@ -51,6 +51,10 @@ cards with corner registration marks, Barlow/Barlow Condensed type.*
   cross-session rollup, audit charts) and its read-only MCP server
   (`scripts/mcp-server.sh`; see the User Guide's "Querying the audit from
   Claude Code").
+- [MCP tools v2 plan](docs/plans/mcp-tools-v2.md) — assessment of the MCP
+  tools and the Phase 9.12 additions: session and cross-provider cost,
+  security/anomaly/behaviour findings, a one-turn drill-down, server
+  instructions and output schemas.
 - [Insights dashboard plan](docs/plans/insights-dashboard.md) — design and
   decisions for the QlikView-style associative dashboard across every
   provider: cost and tokens, tool calls and failures, and security

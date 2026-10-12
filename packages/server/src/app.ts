@@ -22,11 +22,7 @@ import { composeLogProviders, type LogProviderCompositionOptions } from "./compo
 import { AuditQueryService } from "./services/tool-audit/audit-query-service.js";
 import { parseSessionRangeQuery, parseToolCallFilterQuery } from "./services/tool-audit/audit-query-params.js";
 import { createLoopbackHostGuard } from "./http/loopback-host-guard.js";
-import { AnomalyDetector } from "./services/insights/anomaly-detector.js";
-import { BehaviorChangeDetector } from "./services/insights/behavior-change-detector.js";
-import { InsightsService } from "./services/insights/insights-service.js";
-import { SecurityScanner } from "./services/insights/security-scanner.js";
-import { DEFAULT_SECURITY_RULES } from "./services/insights/security-rules.js";
+import { createInsightsService } from "./composition/create-insights-service.js";
 
 const APP_VERSION = (
   JSON.parse(
@@ -54,11 +50,7 @@ export function createApp(options: CreateAppOptions = {}): Express {
     resolvedAppSettingsDir,
   } = composeLogProviders(compositionOptions);
   const auditQueries = new AuditQueryService(registry);
-  const insights = new InsightsService(registry, [
-    new SecurityScanner(DEFAULT_SECURITY_RULES),
-    new AnomalyDetector(),
-    new BehaviorChangeDetector(),
-  ]);
+  const insights = createInsightsService(registry);
 
   // Used only by GET /api/sessions/:id/system-prompt below, which stays
   // wired directly to the VS Code session store/main.jsonl path rather than

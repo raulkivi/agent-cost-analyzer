@@ -242,7 +242,9 @@ Every unit is test-first:
 
 ## 8. Out of scope (follow-ups)
 
-- MCP tools for findings (`list_security_findings`) over the same service.
+- ~~MCP tools for findings (`list_security_findings`) over the same service.~~
+  Shipped in Phase 9.12 as `list_findings`, which covers all three finding
+  kinds ([mcp-tools-v2.md](mcp-tools-v2.md)).
 - Turn-level linking of findings (needs a graph engine rather than a tree).
 - Persisting selections and bookmarks (QlikView "bookmarks").
 - A per-day spike detector (the daily chart already shows spikes; a

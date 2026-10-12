@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { insightFindingSchema, insightsDatasetSchema, insightTurnRowSchema } from "./insights.js";
+import { findingsQueryResultSchema, insightFindingSchema, insightsDatasetSchema, insightTurnRowSchema } from "./insights.js";
 
 function sampleDataset() {
   return {
@@ -91,5 +91,19 @@ describe("insightsDatasetSchema", () => {
       error: "database is locked",
     } as (typeof dataset.providers)[number]);
     expect(insightsDatasetSchema.parse(dataset).providers[1]).toMatchObject({ error: "database is locked" });
+  });
+});
+
+describe("findingsQueryResultSchema", () => {
+  it("accepts findings enriched with their session's provider and title", () => {
+    const { findings, providers, generatedAt } = sampleDataset();
+    const result = {
+      generatedAt,
+      providers,
+      total: 1,
+      bySeverity: { info: 0, low: 0, medium: 0, high: 0, critical: 1 },
+      findings: findings.map((finding) => ({ ...finding, providerId: "claude-code", sessionId: "s1", sessionTitle: "Fix tests" })),
+    };
+    expect(findingsQueryResultSchema.parse(result)).toEqual(result);
   });
 });
