@@ -83,10 +83,10 @@ describe("buildTextSegments", () => {
   });
 });
 
-describe("buildTextSegments against the real captured example", () => {
+describe("buildTextSegments against a full-size synthetic prompt", () => {
   const fixturePath = path.resolve(
     path.dirname(fileURLToPath(import.meta.url)),
-    "../../../../Design/SystemPrompt.txt",
+    "../../fixtures/system-prompt-sample.txt",
   );
   const text = readFileSync(fixturePath, "utf-8");
 

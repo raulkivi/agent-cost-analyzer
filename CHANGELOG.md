@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Security
+- Removed the captured turn examples from `Design/examples/`; the 0.8.0 entry said they were removed, but they were still in the repository. Replaced the captured Copilot system prompt (`Design/SystemPrompt.txt`) with a synthetic fixture, `packages/web/fixtures/system-prompt-sample.txt`, used by the parser tests and the design-sync preview.
 
 ## [0.8.0] - 2026-10-12
 ### Added
