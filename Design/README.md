@@ -6,7 +6,7 @@
 ## About the Design Files
 `Session Analyser.dc.html` is a **design reference built in HTML** (a custom component format used by the design tool) — not production code. Recreate it in React against the existing `packages/web/src/components/*` and `theme.css` tokens; reuse `Blueprint`, `Tag`, `SegmentedControl` rather than porting markup verbatim.
 
-The mock is populated with the two real captures in `examples/` (a 3-round turn and a 6-round turn), so layout decisions are tested against real payload shapes and lengths rather than invented data.
+The mock is populated with a 3-round turn and a 6-round turn modelled on real captures, so layout decisions are tested against realistic payload shapes and lengths. The captures themselves are not kept in the repository.
 
 ## Fidelity
 High-fidelity for layout, spacing, and interaction structure. Map colors/type to `theme.css` custom properties — don't lift literal hex values.

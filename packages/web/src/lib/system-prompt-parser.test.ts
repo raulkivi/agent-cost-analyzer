@@ -173,10 +173,10 @@ describe("parseSystemPrompt", () => {
   });
 });
 
-describe("parseSystemPrompt against the real captured example", () => {
+describe("parseSystemPrompt against a full-size synthetic prompt", () => {
   const fixturePath = path.resolve(
     path.dirname(fileURLToPath(import.meta.url)),
-    "../../../../Design/SystemPrompt.txt",
+    "../../fixtures/system-prompt-sample.txt",
   );
   const text = readFileSync(fixturePath, "utf-8");
 
