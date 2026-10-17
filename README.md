@@ -1,5 +1,7 @@
 # GitHub Copilot Chat Cost & Token Usage Analyzer
 
+Independent project; not affiliated with or endorsed by GitHub or Microsoft.
+
 A local app that helps you optimize the cost of agentic coding with GitHub
 Copilot Chat. It explains how Copilot Chat's prompt caching, token
 accounting, and tool calls actually work under the hood, then gives you the
