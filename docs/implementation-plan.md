@@ -1236,7 +1236,7 @@ plan's §6.
 | 10.6 | Native Sessions/Setup sidebar, status bar, selection sync | Done (#67) |
 | 10.7 | Accessibility, responsive layout, AsyncView, local fonts, walkthrough, l10n | Done (#69) |
 | 10.8 | Copilot-only MCP server in the extension, plus UI follow-ups from 10.7 | Done (#71); real Copilot agent-mode check in 10.9 |
-| 10.9 | Integration tests in real VS Code, performance budgets, usability run, packaging | Done (#72 pending merge; integration suite green in CI); owner's manual checks open |
+| 10.9 | Integration tests in real VS Code, performance budgets, usability run, packaging | Done (#72; integration suite green in CI); owner's manual checks open |
 | 10.10 | Documentation: extension README/listing, extension user guide, two-product README and User Guide | Not started |
 
 **Not yet verified**: the extension has run only on the Electron build
