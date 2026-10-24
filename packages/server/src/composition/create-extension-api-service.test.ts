@@ -3,17 +3,19 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { productProfileSchema } from "@copilot-cost-analyzer/domain";
 import { InMemoryAppSettingsStore } from "../test-support/in-memory-app-settings-store.js";
+import type { SettingsSource } from "../services/config-check/settings-source.js";
 import { createExtensionApiService } from "./create-extension-api-service.js";
 
 const fixturesDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../fixtures/learn-scenarios");
 
-function buildService(appSettings = new InMemoryAppSettingsStore()) {
+function buildService(appSettings = new InMemoryAppSettingsStore(), settingsSource?: SettingsSource) {
   return createExtensionApiService({
     sessionStoreDbPath: path.join("/nonexistent", "state.vscdb"),
     debugLogsDirPaths: [],
     agentTracesDbPath: null,
     vscodeSettingsPath: null,
     appSettings,
+    settingsSource,
     learnScenariosFixturesDir: fixturesDir,
     appVersion: "0.1.0-test",
   });
@@ -57,5 +59,30 @@ describe("createExtensionApiService (extension composition, vscode-extension.md 
     await buildService(appSettings).setRetentionThreshold(300);
 
     expect(appSettings.readMinRetainedSessionLogsThreshold()).toBe(300);
+  });
+
+  it("reads the config status through the injected SettingsSource (G6)", async () => {
+    const values: Record<string, unknown> = {
+      "github.copilot.chat.agentDebugLog.fileLogging.enabled": true,
+      "github.copilot.chat.agentDebugLog.fileLogging.maxRetainedSessionLogs": 250,
+      "github.copilot.chat.otel.dbSpanExporter.enabled": true,
+    };
+    const source: SettingsSource = {
+      get: (id) => values[id],
+      describe: () => ({ located: true, userSettingsPath: "/u/settings.json" }),
+    };
+    const service = buildService(new InMemoryAppSettingsStore(), source);
+
+    expect(await service.getConfigStatus()).toMatchObject({ vscodeUserSettingsPath: "/u/settings.json", maxRetainedSessionLogs: 250, warnings: [] });
+
+    values["github.copilot.chat.agentDebugLog.fileLogging.enabled"] = false;
+
+    expect((await service.getConfigStatus()).warnings.map((warning) => warning.code)).toEqual(["logging-disabled"]);
+  });
+
+  it("falls back to the settings.json file reader without a SettingsSource", async () => {
+    const status = await buildService().getConfigStatus();
+
+    expect(status.warnings.map((warning) => warning.code)).toEqual(["settings-not-found"]);
   });
 });
