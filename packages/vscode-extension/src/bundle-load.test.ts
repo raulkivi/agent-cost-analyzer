@@ -18,8 +18,18 @@ const VSCODE_STUB = `
 const commands = new Map();
 const panels = [];
 class Uri { constructor(fsPath) { this.fsPath = fsPath; } static file(p) { return new Uri(p); } }
+const settings = {};
+const configListeners = new Set();
 module.exports = {
-  __commands: commands, __panels: panels, Uri, ViewColumn: { Active: -1 },
+  __commands: commands, __panels: panels, __settings: settings, Uri, ViewColumn: { Active: -1 },
+  __changeConfiguration(ids) {
+    const event = { affectsConfiguration: (section) => ids.some((id) => id === section || id.startsWith(section + ".")) };
+    for (const listener of [...configListeners]) listener(event);
+  },
+  workspace: {
+    getConfiguration: () => ({ get: (id) => settings[id] }),
+    onDidChangeConfiguration(listener) { configListeners.add(listener); return { dispose() { configListeners.delete(listener); } }; },
+  },
   commands: { registerCommand(id, fn) { commands.set(id, fn); return { dispose() { commands.delete(id); } }; } },
   window: {
     createWebviewPanel(viewType, title, column, options) {
@@ -42,9 +52,18 @@ module.exports = {
 };
 `;
 
+interface Posted {
+  kind: string;
+  id?: string;
+  name?: string;
+  ok?: boolean;
+  result?: unknown;
+  error?: { status: number };
+}
+
 interface StubPanel {
   options: unknown;
-  posted: { id: string; ok: boolean; result?: unknown }[];
+  posted: Posted[];
   webview: { html: string };
   send(message: unknown): void;
 }
@@ -52,6 +71,8 @@ interface StubPanel {
 interface VscodeStub {
   __commands: Map<string, () => void>;
   __panels: StubPanel[];
+  __settings: Record<string, unknown>;
+  __changeConfiguration(ids: string[]): void;
 }
 
 // Loads the real bundle as VS Code would (CommonJS require, `vscode` from
@@ -60,8 +81,10 @@ interface VscodeStub {
 // can't, e.g. a dependency whose dynamic require() esbuild can't follow.
 describe("the built extension bundle", () => {
   let installDir: string;
+  let userDataDir: string;
   let vscode: VscodeStub;
   let subscriptions: { dispose(): void }[];
+  let globalState: Map<string, unknown>;
 
   beforeAll(async () => {
     installDir = mkdtempSync(path.join(tmpdir(), "ai-credits-analyzer-install-"));
@@ -73,6 +96,13 @@ describe("the built extension bundle", () => {
       path.join(installDir, "media", "manifest.json"),
       JSON.stringify({ "index.html": { file: "assets/index.js", isEntry: true, css: ["assets/index.css"] } }),
     );
+    // VS Code's user-data dir with a Copilot Chat session store, laid out as
+    // <userData>/User/globalStorage/<extension-id>; only globalStorageUri
+    // tells the extension where it is.
+    userDataDir = path.join(installDir, "user-data");
+    const copilotStorage = path.join(userDataDir, "User", "globalStorage", "github.copilot-chat");
+    mkdirSync(copilotStorage, { recursive: true });
+    writeFileSync(path.join(copilotStorage, "session-store.db"), "");
     cpSync(learnFixturesDir, path.join(installDir, "media", "learn-scenarios"), { recursive: true });
 
     const requireFromInstall = createRequire(path.join(installDir, "package.json"));
@@ -81,8 +111,14 @@ describe("the built extension bundle", () => {
       activate(context: unknown): void;
     };
     subscriptions = [];
+    globalState = new Map();
     extension.activate({
       extensionPath: installDir,
+      globalStorageUri: { fsPath: path.join(userDataDir, "User", "globalStorage", "raulkivi.ai-credits-analyzer") },
+      globalState: {
+        get: (key: string) => globalState.get(key),
+        update: async (key: string, value: unknown) => void globalState.set(key, value),
+      },
       subscriptions,
       extension: { packageJSON: { version: "0.1.0" } },
     });
@@ -109,5 +145,54 @@ describe("the built extension bundle", () => {
     const reply = panel.posted.find((r) => r.id === "learn");
     expect(reply?.ok).toBe(true);
     expect((reply?.result as unknown[]).length).toBeGreaterThan(0);
+  });
+
+  async function call(method: string, params?: unknown): Promise<Posted> {
+    const panel = vscode.__panels[0]!;
+    const id = `${method}-${panel.posted.length}`;
+    panel.send({ kind: "request", id, method, params });
+    await expect.poll(() => panel.posted.find((reply) => reply.id === id)).toBeDefined();
+    return panel.posted.find((reply) => reply.id === id)!;
+  }
+
+  it("answers invalid params with 400", async () => {
+    const reply = await call("getSession", { id: 7 });
+
+    expect(reply).toMatchObject({ ok: false, error: { status: 400 } });
+  });
+
+  it("finds the Copilot session store under the user-data dir derived from globalStorageUri (D4)", async () => {
+    const reply = await call("getLogProviderStatus");
+
+    const status = reply.result as { providers: { id: string; available: boolean }[] };
+    expect(status.providers).toEqual([expect.objectContaining({ id: "vscode", available: true })]);
+  });
+
+  it("judges the effective VS Code settings, including later changes (G6)", async () => {
+    vscode.__settings["github.copilot.chat.agentDebugLog.fileLogging.enabled"] = true;
+    vscode.__settings["github.copilot.chat.agentDebugLog.fileLogging.maxRetainedSessionLogs"] = 200;
+    vscode.__settings["github.copilot.chat.otel.dbSpanExporter.enabled"] = true;
+    expect((await call("getConfigStatus")).result).toMatchObject({ warnings: [], loggingEnabled: true });
+
+    vscode.__settings["github.copilot.chat.agentDebugLog.fileLogging.enabled"] = false;
+
+    expect((await call("getConfigStatus")).result).toMatchObject({ loggingEnabled: false });
+  });
+
+  it("keeps the retention threshold in globalState (D5)", async () => {
+    await call("setRetentionThreshold", { value: 300 });
+
+    expect(globalState.get("aiCreditsAnalyzer.minRetainedSessionLogsThreshold")).toBe(300);
+  });
+
+  it("posts a configChanged event to the open panel when a watched Copilot setting changes", () => {
+    const panel = vscode.__panels[0]!;
+    panel.posted.length = 0;
+
+    vscode.__changeConfiguration(["editor.fontSize"]);
+    expect(panel.posted).toEqual([]);
+
+    vscode.__changeConfiguration(["github.copilot.chat.agentDebugLog.fileLogging.maxRetainedSessionLogs"]);
+    expect(panel.posted).toEqual([{ kind: "event", name: "configChanged" }]);
   });
 });

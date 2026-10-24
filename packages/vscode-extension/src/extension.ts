@@ -10,6 +10,9 @@ export function activate(context: vscode.ExtensionContext): void {
   const extension = composeExtension({
     extensionPath: context.extensionPath,
     extensionVersion: String((context.extension.packageJSON as { version: unknown }).version),
+    globalStoragePath: context.globalStorageUri.fsPath,
+    globalState: context.globalState,
+    workspace: vscode.workspace,
   });
   context.subscriptions.push(extension, vscode.commands.registerCommand(OPEN_COMMAND, () => extension.openPanel()));
 }
