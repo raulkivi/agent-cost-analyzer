@@ -104,11 +104,12 @@ Set up and run the GitHub Copilot Chat Cost & Token Usage Analyzer:
 
 - Node.js 22+ (the server uses the built-in, still-experimental
   `node:sqlite` module).
-- Linux, with VS Code (Stable or Insiders) and the GitHub Copilot Chat
-  extension installed. The app only reads local files VS Code already
-  writes — the local session-store SQLite database and per-session debug
-  logs — so it works fully offline. (Other platforms aren't wired up yet;
-  see [architecture.md](docs/architecture.md).)
+- Linux, macOS or Windows, with VS Code (Stable or Insiders) and the GitHub
+  Copilot Chat extension installed. The app only reads local files VS Code
+  already writes — the local session-store SQLite database and per-session
+  debug logs — so it works fully offline. The macOS and Windows paths are
+  not yet verified against a real install (see
+  [architecture.md](docs/architecture.md)).
 
 **Install and run**
 
@@ -161,8 +162,9 @@ runtime, never hardcoded:
   - **Session list** comes from `session-store.db`, a SQLite database
     under VS Code's `globalStorage`:
     `~/.config/Code - Insiders/User/globalStorage/github.copilot-chat/session-store.db`
-    (falls back to `~/.config/Code/...` — Stable — if Insiders isn't
-    installed).
+    on Linux, `~/Library/Application Support/Code - Insiders/...` on macOS,
+    `%APPDATA%\Code - Insiders\...` on Windows (falls back to the Stable
+    `Code` folder in each case if Insiders isn't installed).
   - **Per-turn token/cache detail** comes from `main.jsonl`, written
     per-workspace rather than globally. Since a session's workspace isn't
     known ahead of time, the app scans every folder under
@@ -176,8 +178,9 @@ runtime, never hardcoded:
     off by default, see
     [Enabling richer cache-write/reasoning numbers](#enabling-richer-cache-writereasoning-numbers-optional)
     below.
-  - Linux only for now (other platforms are a documented follow-up, not a
-    redesign — see [architecture.md](docs/architecture.md)).
+  - macOS and Windows paths are implemented but not yet verified against a
+    real install. Multi-profile VS Code setups are not supported on any OS
+    (see [architecture.md](docs/architecture.md)).
 
 - **mitmproxy** — reads `.har` capture files you export yourself after
   recording LLM-provider traffic with mitmproxy (see
@@ -215,7 +218,11 @@ data, so this setting has to be turned on explicitly:
 1. Open your VS Code user `settings.json` (Command Palette → **Preferences:
    Open User Settings (JSON)**), normally at
    `~/.config/Code/User/settings.json` (Stable) or
-   `~/.config/Code - Insiders/User/settings.json` (Insiders) on Linux.
+   `~/.config/Code - Insiders/User/settings.json` (Insiders) on Linux,
+   `~/Library/Application Support/Code/User/settings.json` (Stable) or
+   `~/Library/Application Support/Code - Insiders/User/settings.json`
+   (Insiders) on macOS, and `%APPDATA%\Code\User\settings.json` or
+   `%APPDATA%\Code - Insiders\User\settings.json` on Windows.
 2. Add:
    ```json
    "github.copilot.chat.agentDebugLog.fileLogging.enabled": true,

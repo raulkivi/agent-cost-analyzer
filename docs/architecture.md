@@ -516,9 +516,14 @@ way that weren't previously documented:
   matching what agentic-coding-explained.md §18.3 and vision.md §4 said all
   along. See the Phase 4 note below for how the adapter handles not knowing
   a session's workspace hash ahead of time. `<user-data-dir>` resolution
-  (§13's open question) is currently: prefer `~/.config/Code - Insiders`,
-  fall back to `~/.config/Code`, Linux only — other platforms return "not
-  found" until a later phase.
+  (§13's open question, issue #22) is currently: prefer the Insiders
+  folder, fall back to the Stable `Code` folder, on all three OSes —
+  `~/.config/Code - Insiders` and `~/.config/Code` on Linux,
+  `~/Library/Application Support/Code - Insiders` and `.../Code` on macOS,
+  `%APPDATA%\Code - Insiders` and `%APPDATA%\Code` on Windows (falling back
+  to `<home>\AppData\Roaming` when `APPDATA` is unset). These candidate paths
+  match VS Code's documented settings-file locations and are unit-tested
+  only; they are not yet verified against a real macOS or Windows install.
 - `sessions` has no `title`/`model` column, but `Session` requires both:
   `title` falls back through `summary → repository → cwd → "Session <id>"`;
   `model` is the literal string `"unknown"` on both `Session.model` and
@@ -1815,10 +1820,11 @@ Carried over from vision §7 plus new ones raised while designing this layer:
   guessing at its shape.
 - How `platform/vscode-paths` should behave when multiple VS Code
   variants/installs exist on one machine (Stable + Insiders, or several
-  profiles) — Phase 3 resolved this minimally (Linux only: prefer Insiders,
-  fall back to Stable, no per-workspace matching), not the deeper
-  auto-detect-by-workspace or explicit-configuration approaches; still open
-  for macOS/Windows and for multi-profile setups on any platform.
+  profiles) — Phase 3 resolved this minimally (prefer Insiders, fall back to
+  Stable, no per-workspace matching), not the deeper auto-detect-by-workspace
+  or explicit-configuration approaches. Issue #22 added the macOS and Windows
+  candidate paths (unverified on a real install). Multi-profile setups remain
+  open on every OS.
 - Whether large sessions need per-turn lazy loading (§11.1) or whole-session
   payloads stay acceptable in practice.
 - Express vs. Fastify for the server (functionally interchangeable here;

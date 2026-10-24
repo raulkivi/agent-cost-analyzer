@@ -72,6 +72,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - New `GET /api/product` returns the product profile ("Agent Cost
   Analyzer").
 
+### Fixed
+- Analyze mode finds VS Code's Copilot Chat logs on macOS and Windows, not
+  only Linux (#22).
+
 ### Security
 - Upgraded `zod` to 4.6.7 (GHSA-mrhx-c7xc-m3w5: memory exhaustion when
   validating oversized constrained collections). The domain package and the
