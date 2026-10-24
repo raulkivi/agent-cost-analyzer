@@ -388,3 +388,14 @@ a { color: var(--color-accent); text-underline-offset: 3px; }
   display: block; margin-top: 2px; max-width: 420px; white-space: pre-wrap; word-break: break-all;
   color: color-mix(in srgb, var(--color-text) 75%, transparent);
 }
+
+/* — reduced motion (Phase 10 plan §3.5 Accessibility): no transition,
+     animation (the loading bar's included) or smooth scroll. !important so
+     it also wins over inline styles such as the icicle's flex transition. — */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    transition: none !important;
+    animation: none !important;
+    scroll-behavior: auto !important;
+  }
+}

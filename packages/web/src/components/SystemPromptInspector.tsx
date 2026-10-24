@@ -6,6 +6,7 @@ import { describeTag } from "../lib/system-prompt-descriptions.js";
 import { assignIcicleColors, assignTextColors, buildMenu } from "../lib/system-prompt-menu.js";
 import type { MenuEntry } from "../lib/system-prompt-menu.js";
 import { parseSystemPrompt } from "../lib/system-prompt-parser.js";
+import { scrollBehavior } from "../lib/reduced-motion.js";
 import type { PromptNode } from "../lib/system-prompt-parser.js";
 import { buildPrettyTextSegments } from "../lib/system-prompt-pretty.js";
 import { buildTextSegments } from "../lib/system-prompt-text.js";
@@ -135,7 +136,7 @@ export function SystemPromptInspector({
 
   function selectNode(node: PromptNode): void {
     setSelectedId(node.id);
-    document.getElementById(nodeDomId(node.id))?.scrollIntoView({ behavior: "smooth", block: "start" });
+    document.getElementById(nodeDomId(node.id))?.scrollIntoView({ behavior: scrollBehavior(), block: "start" });
   }
 
   return (
