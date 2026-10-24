@@ -125,4 +125,40 @@ describe("AdviceExportDialog", () => {
     fireEvent.click(screen.getByTestId("advice-dialog-backdrop"));
     expect(onClose).toHaveBeenCalled();
   });
+
+  describe("host capabilities and product profile (vscode-extension.md G8, G10)", () => {
+    it("copies through the copyToClipboard it is given (the extension host's clipboard), not the browser's", async () => {
+      const sessions = [makeSession()];
+      const copyToClipboard = vi.fn().mockResolvedValue(undefined);
+      render(<AdviceExportDialog sessions={sessions} open onClose={vi.fn()} copyToClipboard={copyToClipboard} />);
+
+      fireEvent.click(screen.getByRole("button", { name: "Copy advice prompt" }));
+
+      expect(copyToClipboard).toHaveBeenCalledWith(buildAdviceBundle(sessions, { includeToolArgs: false }));
+      expect(writeText).not.toHaveBeenCalled();
+      expect(await screen.findByRole("button", { name: "Copied!" })).toBeInTheDocument();
+    });
+
+    it("doesn't claim a copy the host refused", async () => {
+      const copyToClipboard = vi.fn().mockRejectedValue(new Error("Request to copyToClipboard failed with status 400"));
+      render(<AdviceExportDialog sessions={[makeSession()]} open onClose={vi.fn()} copyToClipboard={copyToClipboard} />);
+
+      fireEvent.click(screen.getByRole("button", { name: "Copy advice prompt" }));
+
+      await vi.waitFor(() => expect(copyToClipboard).toHaveBeenCalled());
+      expect(screen.queryByText("Copied!")).not.toBeInTheDocument();
+    });
+
+    it.each(["Agent Cost Analyzer", "AI Credits Analyzer"])("names %s in the bundle it previews and copies", async (productName) => {
+      const sessions = [makeSession()];
+      render(<AdviceExportDialog sessions={sessions} open onClose={vi.fn()} productName={productName} />);
+
+      fireEvent.click(screen.getByRole("button", { name: "Preview" }));
+      expect(screen.getByTestId("advice-preview")).toHaveTextContent(`Exported from ${productName}.`);
+
+      fireEvent.click(screen.getByRole("button", { name: "Copy advice prompt" }));
+      expect(writeText).toHaveBeenCalledWith(buildAdviceBundle(sessions, { includeToolArgs: false, productName }));
+      expect(await screen.findByText("Copied!")).toBeInTheDocument();
+    });
+  });
 });

@@ -186,4 +186,56 @@ describe("AppHeader", () => {
 
     expect(onRetentionThresholdChange).toHaveBeenCalledWith(300);
   });
+
+  describe("product profile (vscode-extension.md §3.3, G10)", () => {
+    it.each(["Agent Cost Analyzer", "AI Credits Analyzer"])("shows the product's display name %s as the wordmark", (displayName) => {
+      render(
+        <AppHeader
+          mode="learn"
+          onModeChange={vi.fn()}
+          hasConfigWarnings={false}
+          onConfigClick={vi.fn()}
+          displayName={displayName}
+        />,
+      );
+
+      expect(screen.getByText(displayName)).toBeInTheDocument();
+      expect(screen.queryByText("Session Analyzer")).not.toBeInTheDocument();
+    });
+
+    it("shows the provider select in Analyze mode when the product has one (standalone)", () => {
+      render(
+        <AppHeader
+          mode="analyze"
+          onModeChange={vi.fn()}
+          hasConfigWarnings={false}
+          onConfigClick={vi.fn()}
+          providers={providers}
+          activeProviderId="vscode"
+          onProviderChange={vi.fn()}
+          providerSelect={true}
+        />,
+      );
+
+      expect(screen.getByRole("combobox", { name: "Log provider" })).toBeInTheDocument();
+    });
+
+    it("hides the provider select when the product has a single provider (extension)", () => {
+      render(
+        <AppHeader
+          mode="analyze"
+          onModeChange={vi.fn()}
+          hasConfigWarnings={false}
+          onConfigClick={vi.fn()}
+          providers={providers}
+          activeProviderId="vscode"
+          onProviderChange={vi.fn()}
+          providerSelect={false}
+        />,
+      );
+
+      expect(screen.queryByRole("combobox", { name: "Log provider" })).not.toBeInTheDocument();
+      expect(screen.queryByText("Source")).not.toBeInTheDocument();
+    });
+  });
 });

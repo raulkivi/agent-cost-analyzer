@@ -91,6 +91,18 @@ describe("buildAdviceBundle", () => {
     expect(bundle).not.toMatch(/1 sessions/);
   });
 
+  it("names the product the bundle was exported from, after the preamble, when given one", () => {
+    const bundle = buildAdviceBundle([makeSession()], { productName: "AI Credits Analyzer" });
+
+    expect(bundle).toMatch(/^I'm looking for advice/);
+    expect(bundle.split("\n")[0]).toContain("Exported from AI Credits Analyzer.");
+    expect(jsonPayload(bundle)).toHaveLength(1);
+  });
+
+  it("leaves the product out when none is given, so the bundle reads as before", () => {
+    expect(buildAdviceBundle([makeSession()])).not.toContain("Exported from");
+  });
+
   it("includes session-level metadata fields", () => {
     const [entry] = jsonPayload(
       buildAdviceBundle([

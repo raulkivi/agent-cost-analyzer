@@ -20,6 +20,10 @@ interface SystemPromptInspectorProps {
   model?: string;
   providerId?: string;
   onClose: () => void;
+  // Opens the raw prompt text in the host's editor (vscode-extension.md G8).
+  // Passed only when the product offers it and the host can open a
+  // document; without it there's no such action.
+  onOpenInEditor?: (text: string) => void;
 }
 
 type LoadState =
@@ -79,6 +83,7 @@ export function SystemPromptInspector({
   model,
   providerId,
   onClose,
+  onOpenInEditor,
 }: SystemPromptInspectorProps) {
   const [state, setState] = useState<LoadState>({ status: "loading" });
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -146,6 +151,16 @@ export function SystemPromptInspector({
         )}
         <h4 style={{ margin: 0 }}>System prompt inspector</h4>
         {model && <Tag variant="accent">{model}</Tag>}
+        {onOpenInEditor && state.status === "ready" && (
+          <button
+            type="button"
+            className="btn btn-secondary"
+            style={{ marginLeft: "auto" }}
+            onClick={() => onOpenInEditor(state.text)}
+          >
+            Open prompt in editor
+          </button>
+        )}
       </div>
 
       {state.status === "loading" && <p className="text-muted">Loading system prompt…</p>}

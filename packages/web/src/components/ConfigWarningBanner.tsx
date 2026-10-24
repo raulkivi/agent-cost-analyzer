@@ -4,9 +4,24 @@ import { Blueprint } from "./ui/Blueprint.js";
 interface ConfigWarningBannerProps {
   warnings: ConfigWarning[];
   onDismiss: () => void;
+  // Opens a warning's setting in the host's settings UI (vscode-extension.md
+  // G8). Passed only when the product offers setting fixes and the host can
+  // open a setting; without it there are no fix buttons.
+  onFixSetting?: (settingId: string) => void;
 }
 
-export function ConfigWarningBanner({ warnings, onDismiss }: ConfigWarningBannerProps) {
+// Fix-button wording per warning, after the first-run mock-up
+// (docs/plans/mockups/vscode-extension/FirstRun.dc.html): "Enable" for an
+// off switch, "Change" for a number. Debug logging, the one fix every
+// session depends on, is the primary action.
+const FIX_ACTIONS: Record<ConfigWarning["code"], { label: string; variant: "btn-primary" | "btn-secondary" }> = {
+  "logging-disabled": { label: "Enable", variant: "btn-primary" },
+  "retention-too-low": { label: "Change", variant: "btn-secondary" },
+  "agent-traces-unavailable": { label: "Enable", variant: "btn-secondary" },
+  "settings-not-found": { label: "Open setting", variant: "btn-secondary" },
+};
+
+export function ConfigWarningBanner({ warnings, onDismiss, onFixSetting }: ConfigWarningBannerProps) {
   if (warnings.length === 0) {
     return null;
   }
@@ -64,6 +79,20 @@ export function ConfigWarningBanner({ warnings, onDismiss }: ConfigWarningBanner
                   ))}
                 </ol>
               </div>
+              {onFixSetting && (
+                <button
+                  type="button"
+                  className={`btn ${FIX_ACTIONS[warning.code].variant}`}
+                  style={{ flex: "none", marginLeft: "auto" }}
+                  // The visible verb plus the setting it opens, so each
+                  // button's name is unique and starts with its label.
+                  aria-label={`${FIX_ACTIONS[warning.code].label} ${warning.settingId}`}
+                  title={`Open ${warning.settingId} in Settings`}
+                  onClick={() => onFixSetting(warning.settingId)}
+                >
+                  {FIX_ACTIONS[warning.code].label}
+                </button>
+              )}
             </div>
           );
         })}

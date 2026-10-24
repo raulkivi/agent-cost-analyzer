@@ -76,13 +76,25 @@ function queryFor(preset: RangePreset, now: Date): InsightsQuery {
 interface InsightsDashboardProps {
   loadDataset?: (query: InsightsQuery) => Promise<InsightsDataset>;
   now?: Date;
+  // ProductProfile.features.crossProviderInsights (vscode-extension.md G10):
+  // false for a single-provider product, which then gets no Provider list
+  // box or column and no cross-provider wording.
+  crossProvider?: boolean;
+}
+
+// The list boxes, without the Provider facet for a single-provider product.
+function listBoxGroups(crossProvider: boolean) {
+  return crossProvider
+    ? LIST_BOX_GROUPS
+    : LIST_BOX_GROUPS.map((group) => ({ ...group, fields: group.fields.filter((fieldId) => fieldId !== FIELD.provider) }));
 }
 
 // Phase 9.11 (docs/plans/insights-dashboard.md): a QlikView-style
-// associative dashboard across every log provider — list boxes, current
+// associative dashboard across every log provider (or the only one, in a
+// single-provider product) — list boxes, current
 // selections with Back, KPIs, clickable charts, and security/anomaly/
 // behaviour-change signals that say what happened, when and why.
-export function InsightsDashboard({ loadDataset = fetchInsights, now }: InsightsDashboardProps) {
+export function InsightsDashboard({ loadDataset = fetchInsights, now, crossProvider = true }: InsightsDashboardProps) {
   const [preset, setPreset] = useState<RangePreset>("30");
   const [state, setState] = useState<LoadState>({ kind: "loading" });
   const [nowTime] = useState(() => (now ?? new Date()).getTime());
@@ -101,16 +113,22 @@ export function InsightsDashboard({ loadDataset = fetchInsights, now }: Insights
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-4)" }}>
       <div style={{ display: "flex", alignItems: "center", gap: "var(--space-3)", flexWrap: "wrap" }}>
-        <h3 style={{ margin: 0 }}>Insights across all providers</h3>
+        <h3 style={{ margin: 0 }}>{crossProvider ? "Insights across all providers" : "Insights"}</h3>
         <SegmentedControl name="insights-range" options={RANGE_OPTIONS} value={preset} onChange={setPreset} />
       </div>
-      {state.kind === "loading" && <p className="text-muted" style={{ fontSize: 13 }}>Loading sessions from every provider…</p>}
+      {state.kind === "loading" && (
+        <p className="text-muted" style={{ fontSize: 13 }}>
+          {crossProvider ? "Loading sessions from every provider…" : "Loading sessions…"}
+        </p>
+      )}
       {state.kind === "error" && (
         <p role="alert" style={{ fontSize: 13, color: "var(--color-accent-800)" }}>
           Could not load insights: {state.message}
         </p>
       )}
-      {state.kind === "ready" && <DashboardBody dataset={state.dataset} key={state.dataset.generatedAt + preset} />}
+      {state.kind === "ready" && (
+        <DashboardBody dataset={state.dataset} crossProvider={crossProvider} key={state.dataset.generatedAt + preset} />
+      )}
     </div>
   );
 }
@@ -138,7 +156,7 @@ function ProviderNotes({ dataset }: { dataset: InsightsDataset }) {
   );
 }
 
-function DashboardBody({ dataset }: { dataset: InsightsDataset }) {
+function DashboardBody({ dataset, crossProvider }: { dataset: InsightsDataset; crossProvider: boolean }) {
   const model = useMemo(() => createInsightsModel(dataset), [dataset]);
   const engine = useMemo(() => createAssociativeEngine(model), [model]);
   const [history, setHistory] = useState(emptyHistory);
@@ -149,7 +167,9 @@ function DashboardBody({ dataset }: { dataset: InsightsDataset }) {
     return (
       <>
         <ProviderNotes dataset={dataset} />
-        <p className="text-muted" style={{ fontSize: 13 }}>No sessions in this date range from any provider.</p>
+        <p className="text-muted" style={{ fontSize: 13 }}>
+          {crossProvider ? "No sessions in this date range from any provider." : "No sessions in this date range."}
+        </p>
       </>
     );
   }
@@ -181,7 +201,7 @@ function DashboardBody({ dataset }: { dataset: InsightsDataset }) {
   return (
     <div className="insights-layout">
       <aside className="insights-listboxes" aria-label="Fields">
-        {LIST_BOX_GROUPS.map((group) => (
+        {listBoxGroups(crossProvider).map((group) => (
           <div key={group.title} className="insights-listbox-group">
             <h6 style={{ margin: 0 }}>{group.title}</h6>
             {group.fields.map((fieldId) => (
@@ -219,7 +239,7 @@ function DashboardBody({ dataset }: { dataset: InsightsDataset }) {
           <section role="region" aria-label="What happened">
             <div className="card-kicker">What happened</div>
             <ul className="insights-narrative">
-              {buildNarrative(view).map((line) => (
+              {buildNarrative(view, { crossProvider }).map((line) => (
                 <li key={line}>{line}</li>
               ))}
             </ul>
@@ -356,7 +376,7 @@ function DashboardBody({ dataset }: { dataset: InsightsDataset }) {
             <thead>
               <tr>
                 <th>Session</th>
-                <th>Provider</th>
+                {crossProvider && <th>Provider</th>}
                 <th>Started</th>
                 <th>Turns</th>
                 <th>AI Credits</th>
@@ -370,7 +390,7 @@ function DashboardBody({ dataset }: { dataset: InsightsDataset }) {
                       {session.title}
                     </button>
                   </td>
-                  <td>{session.providerLabel}</td>
+                  {crossProvider && <td>{session.providerLabel}</td>}
                   <td>{session.date ?? "—"}</td>
                   <td>{turns}</td>
                   <td>

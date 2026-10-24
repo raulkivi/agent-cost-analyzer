@@ -181,4 +181,36 @@ describe("WebviewTransport", () => {
       await assertion;
     });
   });
+
+  describe("host commands (G8)", () => {
+    it("posts a command envelope with its own unique id", () => {
+      const { transport, sent } = setup();
+      void transport.call("listSessions").catch(() => undefined);
+      void transport.command("openSetting", { settingId: "a.b" }).catch(() => undefined);
+      expect(sent[1]).toMatchObject({ kind: "command", command: "openSetting", args: { settingId: "a.b" } });
+      expect(sent[1].id).not.toBe(sent[0].id);
+    });
+
+    it("resolves when the host reports ok", async () => {
+      const { transport, sent, win } = setup();
+      const pending = transport.command("copyToClipboard", { text: "x" });
+      win.dispatch({ kind: "response", id: sent[0].id, ok: true });
+      await expect(pending).resolves.toBeUndefined();
+    });
+
+    it("rejects with the command name and status when the host refuses", async () => {
+      const { transport, sent, win } = setup();
+      const pending = transport.command("openSetting", { settingId: "x" });
+      win.dispatch({ kind: "response", id: sent[0].id, ok: false, error: { status: 400, message: "no" } });
+      await expect(pending).rejects.toThrow("Request to openSetting failed with status 400");
+    });
+
+    it("times out like a request", async () => {
+      const { transport } = setup(1000);
+      const pending = transport.command("openTextDocument", { content: "x", language: "plaintext" });
+      const assertion = expect(pending).rejects.toThrow("Request to openTextDocument timed out after 1000 ms");
+      await vi.advanceTimersByTimeAsync(1000);
+      await assertion;
+    });
+  });
 });

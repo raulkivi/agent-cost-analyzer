@@ -164,4 +164,36 @@ describe("SystemPromptInspector", () => {
 
     expect(onClose).toHaveBeenCalled();
   });
+
+  // vscode-extension.md G8/step 10.5: only where the product offers it and
+  // the host can open a document.
+  describe("Open prompt in editor", () => {
+    it("has no such action without onOpenInEditor (standalone)", async () => {
+      stubFetchText(SAMPLE_TEXT);
+      render(<SystemPromptInspector sessionId="session-1" onClose={() => {}} />);
+      await screen.findByRole("button", { name: /security requirements/i });
+
+      expect(screen.queryByRole("button", { name: "Open prompt in editor" })).not.toBeInTheDocument();
+    });
+
+    it("opens the raw system prompt text, unformatted, as a plain-text document", async () => {
+      stubFetchText(SAMPLE_TEXT);
+      const onOpenInEditor = vi.fn();
+      render(<SystemPromptInspector sessionId="session-1" onClose={() => {}} onOpenInEditor={onOpenInEditor} />);
+      await screen.findByRole("button", { name: /security requirements/i });
+
+      fireEvent.click(screen.getByRole("button", { name: "Open prompt in editor" }));
+
+      expect(onOpenInEditor).toHaveBeenCalledWith(SAMPLE_TEXT);
+    });
+
+    it("offers it only once the prompt has loaded", async () => {
+      stubFetchText("", false, 404);
+      render(<SystemPromptInspector sessionId="session-1" onClose={() => {}} onOpenInEditor={vi.fn()} />);
+
+      expect(screen.queryByRole("button", { name: "Open prompt in editor" })).not.toBeInTheDocument();
+      await screen.findByText(/no system prompt captured/i);
+      expect(screen.queryByRole("button", { name: "Open prompt in editor" })).not.toBeInTheDocument();
+    });
+  });
 });

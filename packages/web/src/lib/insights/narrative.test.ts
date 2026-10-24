@@ -15,6 +15,12 @@ describe("buildNarrative", () => {
     ]);
   });
 
+  it("doesn't name providers for a single-provider product (crossProvider false, G10)", () => {
+    const [first] = buildNarrative(dataset, { crossProvider: false });
+
+    expect(first).toBe("3 sessions, 2026-10-09 → 2026-10-10.");
+  });
+
   it("states plainly when usage is unknown, nothing failed and nothing was flagged", () => {
     const turns = dataset.turns.map((turn) => ({ ...turn, aiCredits: null, cacheRead: null }));
     const toolCalls = dataset.toolCalls.map((call) => ({ ...call, status: "success" as const, failureCategory: undefined }));

@@ -3,6 +3,9 @@ import { sumTokenCounts } from "@copilot-cost-analyzer/domain";
 
 export interface BuildAdviceBundleOptions {
   includeToolArgs?: boolean;
+  // The exporting product's display name (ProductProfile.displayName);
+  // omitted, the bundle doesn't name one.
+  productName?: string;
 }
 
 function tokenCountValue(tokenCount: TokenCount): number | "unknown" {
@@ -99,7 +102,8 @@ export function buildAdviceBundle(sessions: Session[], options: BuildAdviceBundl
     `I'm looking for advice on how to improve my AI coding-agent workflow (prompting, tool usage, ` +
     `caching, context management). Below is aggregated metadata from ${count} session${count === 1 ? "" : "s"} ` +
     `— no chat message content is included. Please identify inefficiencies (prompt bloat, poor cache reuse, ` +
-    `unused tools, excessive compaction/rewinds, etc.) and suggest concrete changes.`;
+    `unused tools, excessive compaction/rewinds, etc.) and suggest concrete changes.` +
+    (options.productName ? ` Exported from ${options.productName}.` : "");
   const payload = sessions.map((session) => buildSessionMeta(session, includeToolArgs));
 
   return `${preamble}\n\n\`\`\`json\n${JSON.stringify(payload, null, 2)}\n\`\`\`\n`;

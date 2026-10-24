@@ -1,8 +1,9 @@
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { ConfigStatus } from "@copilot-cost-analyzer/domain";
+import type { ConfigStatus, ProductProfile } from "@copilot-cost-analyzer/domain";
 import { App } from "./App.js";
 import { getApiTransport, resetApiTransport, setApiTransport } from "./api-client/current-transport.js";
+import { resetHostCapabilities, setHostCapabilities } from "./host/current-host-capabilities.js";
 import { makeTurn } from "./test-support/turn-fixture.js";
 import { makeAuditRollup, makeSessionAudit } from "./test-support/audit-fixture.js";
 import { sampleInsightsDataset } from "./test-support/insights-fixture.js";
@@ -121,7 +122,23 @@ let logProviderStatus = {
   activeProviderId: "vscode",
 };
 
+// GET /api/product; null answers 404 (an older server), so the app falls
+// back to today's standalone UI — which every test outside the "product
+// profile" block below relies on.
+let productProfile: ProductProfile | null = null;
+const SYSTEM_PROMPT_TEXT = "You are a helpful assistant.\n<rules>Be brief.</rules>";
+
 function fakeFetch(url: string, init?: { method?: string; body?: string }) {
+  if (url === "/api/product") {
+    return Promise.resolve(
+      productProfile
+        ? { ok: true, json: () => Promise.resolve(productProfile) }
+        : { ok: false, status: 404, json: () => Promise.resolve({ error: "Not found" }) },
+    );
+  }
+  if (url === "/api/sessions/session-1/system-prompt") {
+    return Promise.resolve({ ok: true, text: () => Promise.resolve(SYSTEM_PROMPT_TEXT) });
+  }
   if (url === "/api/health") {
     return Promise.resolve({
       ok: true,
@@ -198,6 +215,7 @@ function switchToAnalyze() {
 describe("App", () => {
   beforeEach(() => {
     configStatus = cleanConfigStatus;
+    productProfile = null;
     logProviderStatus = {
       providers: [
         { id: "vscode", label: "VS Code", available: true },
@@ -211,6 +229,7 @@ describe("App", () => {
   afterEach(() => {
     vi.unstubAllGlobals();
     resetApiTransport();
+    resetHostCapabilities();
   });
 
   it("renders a successful health check from the server, including the app version", async () => {
@@ -683,6 +702,189 @@ describe("App", () => {
 
       expect(await screen.findByRole("group", { name: "AI Credits" })).toHaveTextContent("5.50");
       expect(screen.getByLabelText("Dashboard")).toBeChecked();
+    });
+  });
+
+  // vscode-extension.md §3.3, G8, G10: the UI renders from the profile the
+  // backend reports, and the host's capabilities, never from a product check.
+  describe("product profile and host capabilities", () => {
+    const loggingWarning = {
+      code: "logging-disabled" as const,
+      severity: "required" as const,
+      settingId: "github.copilot.chat.agentDebugLog.fileLogging.enabled",
+      currentValue: false,
+      recommendedValue: true,
+      message: "GitHub Copilot Chat debug logging is disabled.",
+      helpSteps: ["Turn it on."],
+    };
+    const standaloneProfile: ProductProfile = {
+      productId: "standalone",
+      displayName: "Agent Cost Analyzer",
+      version: "0.8.0",
+      features: { providerSelect: true, crossProviderInsights: true, settingFixes: false, openInEditor: false },
+    };
+    const extensionProfile: ProductProfile = {
+      productId: "vscode-extension",
+      displayName: "AI Credits Analyzer",
+      version: "0.1.0",
+      features: { providerSelect: false, crossProviderInsights: false, settingFixes: true, openInEditor: true },
+    };
+
+    function editorHost() {
+      const capabilities = {
+        copyToClipboard: vi.fn().mockResolvedValue(undefined),
+        openSetting: vi.fn().mockResolvedValue(undefined),
+        openTextDocument: vi.fn().mockResolvedValue(undefined),
+      };
+      setHostCapabilities(capabilities);
+      return capabilities;
+    }
+
+    it("fetches the profile once at startup", async () => {
+      productProfile = standaloneProfile;
+      render(<App />);
+
+      expect(await screen.findByText("Agent Cost Analyzer")).toBeInTheDocument();
+      expect(vi.mocked(fetch).mock.calls.filter(([url]) => url === "/api/product")).toHaveLength(1);
+    });
+
+    it("falls back to today's standalone UI, quietly, when the profile can't be fetched", async () => {
+      configStatus = { ...cleanConfigStatus, warnings: [loggingWarning] };
+      editorHost();
+      render(<App />);
+
+      expect(await screen.findByText(loggingWarning.message)).toBeInTheDocument();
+      expect(screen.getByText("Session Analyzer")).toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: /^Enable / })).not.toBeInTheDocument();
+      expect(screen.queryByText(/failed with status 404/)).not.toBeInTheDocument();
+      switchToAnalyze();
+      expect(await screen.findByRole("combobox", { name: "Log provider" })).toBeInTheDocument();
+    });
+
+    describe("standalone profile", () => {
+      it("shows its display name and the provider select, and no Fix buttons", async () => {
+        productProfile = standaloneProfile;
+        configStatus = { ...cleanConfigStatus, warnings: [loggingWarning] };
+        render(<App />);
+
+        expect(await screen.findByText("Agent Cost Analyzer")).toBeInTheDocument();
+        expect(screen.getByText(loggingWarning.message)).toBeInTheDocument();
+        expect(screen.queryByRole("button", { name: /^Enable / })).not.toBeInTheDocument();
+        switchToAnalyze();
+        expect(await screen.findByRole("combobox", { name: "Log provider" })).toBeInTheDocument();
+      });
+
+      it("has no open-in-editor action in the system prompt inspector", async () => {
+        productProfile = standaloneProfile;
+        render(<App />);
+        switchToAnalyze();
+        fireEvent.click(await screen.findByRole("button", { name: "Fix the bug" }));
+        await screen.findByText("analyze turn explanation");
+        fireEvent.click(screen.getByLabelText("System prompt"));
+        fireEvent.click(screen.getByRole("button", { name: "Open system prompt inspector" }));
+
+        expect(await screen.findByRole("button", { name: /rules/i })).toBeInTheDocument();
+        expect(screen.queryByRole("button", { name: "Open prompt in editor" })).not.toBeInTheDocument();
+      });
+    });
+
+    describe("extension profile", () => {
+      it("shows its display name and no provider select", async () => {
+        productProfile = extensionProfile;
+        editorHost();
+        render(<App />);
+
+        expect(await screen.findByText("AI Credits Analyzer")).toBeInTheDocument();
+        switchToAnalyze();
+        await screen.findByRole("button", { name: "Fix the bug" });
+        expect(screen.queryByRole("combobox", { name: "Log provider" })).not.toBeInTheDocument();
+      });
+
+      it("Fix on a logging-disabled warning asks the host to open that setting", async () => {
+        productProfile = extensionProfile;
+        configStatus = { ...cleanConfigStatus, warnings: [loggingWarning] };
+        const host = editorHost();
+        render(<App />);
+
+        fireEvent.click(
+          await screen.findByRole("button", { name: "Enable github.copilot.chat.agentDebugLog.fileLogging.enabled" }),
+        );
+
+        expect(host.openSetting).toHaveBeenCalledWith("github.copilot.chat.agentDebugLog.fileLogging.enabled");
+      });
+
+      it("shows the error when the host refuses to open a setting", async () => {
+        productProfile = extensionProfile;
+        configStatus = { ...cleanConfigStatus, warnings: [loggingWarning] };
+        const host = editorHost();
+        host.openSetting.mockRejectedValue(new Error("Request to openSetting failed with status 400"));
+        render(<App />);
+
+        fireEvent.click(await screen.findByRole("button", { name: /^Enable / }));
+
+        expect(await screen.findByText("Request to openSetting failed with status 400")).toBeInTheDocument();
+      });
+
+      it("hides Fix buttons when the host can't open settings, even if the product offers them", async () => {
+        productProfile = extensionProfile;
+        configStatus = { ...cleanConfigStatus, warnings: [loggingWarning] };
+        setHostCapabilities({ copyToClipboard: vi.fn() });
+        render(<App />);
+
+        expect(await screen.findByText("AI Credits Analyzer")).toBeInTheDocument();
+        expect(screen.getByText(loggingWarning.message)).toBeInTheDocument();
+        expect(screen.queryByRole("button", { name: /^Enable / })).not.toBeInTheDocument();
+      });
+
+      it("opens the raw system prompt in an editor from the inspector", async () => {
+        productProfile = extensionProfile;
+        const host = editorHost();
+        render(<App />);
+        await screen.findByText("AI Credits Analyzer");
+        switchToAnalyze();
+        fireEvent.click(await screen.findByRole("button", { name: "Fix the bug" }));
+        await screen.findByText("analyze turn explanation");
+        fireEvent.click(screen.getByLabelText("System prompt"));
+        fireEvent.click(screen.getByRole("button", { name: "Open system prompt inspector" }));
+
+        fireEvent.click(await screen.findByRole("button", { name: "Open prompt in editor" }));
+
+        expect(host.openTextDocument).toHaveBeenCalledWith(SYSTEM_PROMPT_TEXT, "plaintext");
+      });
+
+      it("copies the advice bundle, naming the product, through the host's clipboard", async () => {
+        productProfile = extensionProfile;
+        const host = editorHost();
+        render(<App />);
+        await screen.findByText("AI Credits Analyzer");
+        switchToAnalyze();
+        fireEvent.click(await screen.findByRole("checkbox", { name: /Fix the bug/ }));
+        fireEvent.click(await screen.findByRole("button", { name: "Export advice" }));
+
+        fireEvent.click(screen.getByRole("button", { name: "Copy advice prompt" }));
+
+        await waitFor(() => expect(host.copyToClipboard).toHaveBeenCalledTimes(1));
+        expect(host.copyToClipboard.mock.calls[0]?.[0]).toContain("Exported from AI Credits Analyzer.");
+      });
+
+      it("titles the dashboard without cross-provider wording", async () => {
+        productProfile = extensionProfile;
+        editorHost();
+        vi.stubGlobal(
+          "fetch",
+          vi.fn((url: string, init?: { body?: string }) =>
+            url === "/api/sessions" ? Promise.resolve({ ok: true, json: () => Promise.resolve([]) }) : fakeFetch(url, init),
+          ),
+        );
+        render(<App />);
+        await screen.findByText("AI Credits Analyzer");
+        switchToAnalyze();
+
+        fireEvent.click(await screen.findByRole("button", { name: "Open the dashboard" }));
+
+        expect(await screen.findByRole("heading", { name: "Insights" })).toBeInTheDocument();
+        expect(screen.queryByRole("listbox", { name: "Provider" })).not.toBeInTheDocument();
+      });
     });
   });
 });

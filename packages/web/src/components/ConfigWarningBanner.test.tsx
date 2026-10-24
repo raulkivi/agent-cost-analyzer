@@ -92,4 +92,63 @@ describe("ConfigWarningBanner", () => {
     expect(marker?.getAttribute("style")).toContain("var(--color-accent-2-800)");
     expect(marker?.getAttribute("style")).not.toContain("var(--color-accent-800)");
   });
+
+  // vscode-extension.md G8/step 10.5: one-click fixes, extension only. The
+  // banner gets onFixSetting only when the product offers setting fixes
+  // and the host can open a setting.
+  describe("Fix buttons", () => {
+    it("shows no fix button without onFixSetting (standalone)", () => {
+      render(<ConfigWarningBanner warnings={[warning, otherWarning, optionalWarning]} onDismiss={vi.fn()} />);
+
+      expect(screen.getAllByRole("button")).toHaveLength(1);
+      expect(screen.getByRole("button", { name: "Dismiss" })).toBeInTheDocument();
+    });
+
+    it("labels each warning's button the way the first-run mock-up does", () => {
+      render(
+        <ConfigWarningBanner warnings={[otherWarning, warning, optionalWarning]} onDismiss={vi.fn()} onFixSetting={vi.fn()} />,
+      );
+
+      expect(screen.getByRole("button", { name: `Enable ${otherWarning.settingId}` })).toHaveTextContent(/^Enable$/);
+      expect(screen.getByRole("button", { name: `Change ${warning.settingId}` })).toHaveTextContent(/^Change$/);
+      expect(screen.getByRole("button", { name: `Enable ${optionalWarning.settingId}` })).toHaveTextContent(/^Enable$/);
+    });
+
+    it("opens a logging-disabled warning's setting", () => {
+      const onFixSetting = vi.fn();
+      render(<ConfigWarningBanner warnings={[otherWarning]} onDismiss={vi.fn()} onFixSetting={onFixSetting} />);
+
+      fireEvent.click(screen.getByRole("button", { name: "Enable github.copilot.chat.agentDebugLog.fileLogging.enabled" }));
+
+      expect(onFixSetting).toHaveBeenCalledWith("github.copilot.chat.agentDebugLog.fileLogging.enabled");
+    });
+
+    it("opens the retention setting from its Change button", () => {
+      const onFixSetting = vi.fn();
+      render(<ConfigWarningBanner warnings={[warning]} onDismiss={vi.fn()} onFixSetting={onFixSetting} />);
+
+      fireEvent.click(screen.getByRole("button", { name: `Change ${warning.settingId}` }));
+
+      expect(onFixSetting).toHaveBeenCalledWith(warning.settingId);
+    });
+
+    it("offers to open the setting when settings.json wasn't found", () => {
+      const onFixSetting = vi.fn();
+      const notFound: ConfigWarning = { ...otherWarning, code: "settings-not-found", message: "No settings.json." };
+      render(<ConfigWarningBanner warnings={[notFound]} onDismiss={vi.fn()} onFixSetting={onFixSetting} />);
+
+      fireEvent.click(screen.getByRole("button", { name: `Open setting ${notFound.settingId}` }));
+
+      expect(onFixSetting).toHaveBeenCalledWith(notFound.settingId);
+    });
+
+    it("does not dismiss the banner when a fix is clicked", () => {
+      const onDismiss = vi.fn();
+      render(<ConfigWarningBanner warnings={[otherWarning]} onDismiss={onDismiss} onFixSetting={vi.fn()} />);
+
+      fireEvent.click(screen.getByRole("button", { name: `Enable ${otherWarning.settingId}` }));
+
+      expect(onDismiss).not.toHaveBeenCalled();
+    });
+  });
 });
