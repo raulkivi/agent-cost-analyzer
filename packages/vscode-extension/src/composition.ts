@@ -7,6 +7,9 @@ import { watchConfigChanges, type ConfigurationChangeSource } from "./config/con
 import type { Translate } from "./l10n/localize.js";
 import { McpServerDefinitionSource } from "./mcp/mcp-server-definitions.js";
 import { WalkthroughOffer, type WalkthroughLauncher } from "./onboarding/walkthrough-offer.js";
+import { RpcTrace } from "./diagnostics/rpc-trace.js";
+import { createTestHookHandlers } from "./diagnostics/test-hooks.js";
+import { PerformanceRecorder } from "./performance/performance-recorder.js";
 import { AnalyzerPanel, type Disposable } from "./panel/analyzer-panel.js";
 import { createNonce } from "./panel/nonce.js";
 import { buildPanelHtml, type ViteManifest } from "./panel/panel-html.js";
@@ -57,6 +60,9 @@ export interface ComposedExtension extends Disposable {
   // The MCP server definitions VS Code asks for (D7), gated by the
   // aiCreditsAnalyzer.mcp.enabled setting: extension.ts registers them.
   mcpServers: McpServerDefinitionSource;
+  // The integration tests' internal commands (diagnostics/test-hooks.ts),
+  // by command id: extension.ts registers them in ExtensionMode.Test only.
+  testHookHandlers: Record<string, (...args: unknown[]) => unknown>;
 }
 
 function readManifest(mediaDir: string): ViteManifest {
@@ -85,6 +91,10 @@ export function composeExtension({
     console.warn(`AI Credits Analyzer: unrecognised VS Code storage layout "${globalStoragePath}"; no Copilot logs will be read`);
   }
   const logPaths = copilotLogPathsFromUserDataDir(userDataDir);
+  // The §3.5 timing marks and the webview's answered requests, read by the
+  // integration tests' hooks; both are small and bounded.
+  const timings = new PerformanceRecorder(() => globalThis.performance.now());
+  const rpcTrace = new RpcTrace();
   // The per-workspace debug-logs folders are listed now and again on every
   // sidebar refresh, so a workspace first opened after activation is read
   // without a reload; the provider asks for the current list on each lookup.
@@ -106,12 +116,18 @@ export function composeExtension({
     hostCommands: new HostCommandHandler(hostCommands, () => api.getConfigStatus(), {
       onInternalError: (command, error) => console.error(`AI Credits Analyzer: ${command} failed`, error),
     }),
+    performanceMarks: timings,
   });
   const panel = new AnalyzerPanel({
     createPanel: createVscodeWebviewPanel,
     mediaDir,
     renderHtml: (context) => buildPanelHtml({ manifest: readManifest(mediaDir), nonce: createNonce(), ...context }),
-    handleMessage: (message) => dispatcher.dispatch(message),
+    handleMessage: async (message) => {
+      const reply = await dispatcher.dispatch(message);
+      rpcTrace.observe(message, reply);
+      return reply;
+    },
+    onPageLoad: () => timings.pageLoading(),
   });
 
   const sidebar = new SidebarController(
@@ -122,7 +138,14 @@ export function composeExtension({
         debugLogsDirPaths = copilotDebugLogsDirPaths(userDataDir);
       },
     },
-    { translate, onInternalError: (source, error) => console.error(`AI Credits Analyzer: ${source} failed`, error) },
+    {
+      translate,
+      onInternalError: (source, error) => console.error(`AI Credits Analyzer: ${source} failed`, error),
+      timing: {
+        now: () => globalThis.performance.now(),
+        sessionsTreeBuilt: (durationMs) => timings.recordDuration("sessions-tree", durationMs),
+      },
+    },
   );
   const commands = new ExtensionCommands({
     panel,
@@ -161,6 +184,7 @@ export function composeExtension({
     sidebar,
     offerWalkthrough: () => walkthroughOffer.offerOnce(),
     mcpServers,
+    testHookHandlers: createTestHookHandlers({ performance: timings, rpcTrace, sidebar, mcpServers }),
     dispose: () => {
       configWatch.dispose();
       mcpServers.dispose();

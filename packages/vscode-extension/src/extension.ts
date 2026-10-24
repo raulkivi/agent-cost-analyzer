@@ -38,6 +38,14 @@ export function activate(context: vscode.ExtensionContext): void {
         : handler;
     context.subscriptions.push(vscode.commands.registerCommand(command, run));
   }
+  // The integration tests' internal commands (diagnostics/test-hooks.ts):
+  // only in the Extension Development Host that @vscode/test-electron
+  // starts, never in an installed copy.
+  if (context.extensionMode === vscode.ExtensionMode.Test) {
+    for (const [command, handler] of Object.entries(extension.testHookHandlers)) {
+      context.subscriptions.push(vscode.commands.registerCommand(command, handler));
+    }
+  }
   context.subscriptions.push(
     registerSessionsView<vscode.TreeItem>(vscode, extension.sidebar, vscode.l10n.t),
     registerSetupView<vscode.TreeItem>(vscode, extension.sidebar),
