@@ -887,4 +887,92 @@ describe("App", () => {
       });
     });
   });
+
+  describe("selectSession host event (the extension's sidebar, D10)", () => {
+    // The HTTP transport's requests, plus a WebviewTransport's host events.
+    function hostEvents() {
+      const http = getApiTransport();
+      const handlers = new Set<(payload: unknown) => void>();
+      setApiTransport({
+        call: (method, params) => http.call(method, params),
+        onEvent: (name, handler) => {
+          if (name !== "selectSession") return () => undefined;
+          handlers.add(handler);
+          return () => void handlers.delete(handler);
+        },
+      });
+      return (payload: unknown) => act(() => handlers.forEach((handler) => handler(payload)));
+    }
+
+    it("switches from Learn to Analyze mode, then selects and fetches the session like a click in the list", async () => {
+      const emit = hostEvents();
+      render(<App />);
+      await screen.findByRole("button", { name: "Cache Basics" });
+
+      emit({ sessionId: "session-1" });
+
+      expect(await screen.findByText("analyze turn explanation")).toBeInTheDocument();
+      expect(screen.getByLabelText("Analyze")).toBeChecked();
+      expect(fetch).toHaveBeenCalledWith("/api/sessions/session-1");
+    });
+
+    it("selects the session when already in Analyze mode, keeping it selected", async () => {
+      const emit = hostEvents();
+      render(<App />);
+      switchToAnalyze();
+      await screen.findByRole("button", { name: "Fix the bug" });
+
+      emit({ sessionId: "session-2" });
+
+      expect(await screen.findByText("no-inventory turn explanation")).toBeInTheDocument();
+    });
+
+    it("shows the requested right-panel tab once the session has loaded", async () => {
+      const emit = hostEvents();
+      render(<App />);
+      await screen.findByRole("button", { name: "Cache Basics" });
+
+      emit({ sessionId: "session-1", tab: "tools" });
+
+      await waitFor(() => expect(screen.getByLabelText("Tools")).toBeChecked());
+      expect(await screen.findByText("read_file")).toBeInTheDocument();
+    });
+
+    it("shows the session's tool audit when asked for that view", async () => {
+      const emit = hostEvents();
+      render(<App />);
+      await screen.findByRole("button", { name: "Cache Basics" });
+
+      emit({ sessionId: "session-1", view: "session-audit" });
+
+      expect(await screen.findByRole("group", { name: "Failure rate" })).toHaveTextContent("75%");
+      expect(screen.getByLabelText("Tool audit")).toBeChecked();
+    });
+
+    it("opens the advice export dialog on just that session when asked", async () => {
+      const emit = hostEvents();
+      render(<App />);
+      await screen.findByRole("button", { name: "Cache Basics" });
+
+      emit({ sessionId: "session-1", adviceDialog: true });
+
+      expect(await screen.findByText("Export advice bundle")).toBeInTheDocument();
+      expect(screen.getByRole("checkbox", { name: /Fix the bug/ })).toBeChecked();
+      expect(screen.getByRole("checkbox", { name: /No system-prompt data/ })).not.toBeChecked();
+    });
+
+    it("ignores a payload that isn't a valid selection", async () => {
+      const emit = hostEvents();
+      render(<App />);
+      await screen.findByRole("button", { name: "Cache Basics" });
+      vi.mocked(fetch).mockClear();
+
+      emit({ sessionId: "" });
+      emit({ sessionId: "session-1", tab: "settings" });
+      emit(undefined);
+
+      expect(screen.getByLabelText("Learn")).toBeChecked();
+      expect(fetch).not.toHaveBeenCalled();
+    });
+  });
 });
