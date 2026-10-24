@@ -101,6 +101,30 @@ export const rpcCancelSchema = z.object({
 
 export type RpcCancel = z.infer<typeof rpcCancelSchema>;
 
+// webview -> host: one of the web app's timing marks (vscode-extension.md
+// §3.5 Performance), posted once per page as it's emitted.
+//   { kind: "perfMark", name, timeMs }
+// `timeMs` is the mark's time in ms since the page started
+// (performance.mark's startTime). One-way: no id and no reply, so a mark
+// never waits on, or delays, a request. The host validates it like
+// everything else from the webview and silently drops anything malformed;
+// it only records marks (step 10.9's integration tests read them), so the
+// names are an allow-list and the time is bounded.
+export const performanceMarkNameSchema = z.enum(["first-render", "data-ready"]);
+
+export type PerformanceMarkName = z.infer<typeof performanceMarkNameSchema>;
+
+// A day: far beyond any real mark, and small enough to stay meaningful.
+export const MAX_PERFORMANCE_MARK_TIME_MS = 24 * 60 * 60 * 1000;
+
+export const rpcPerformanceMarkSchema = z.object({
+  kind: z.literal("perfMark"),
+  name: performanceMarkNameSchema,
+  timeMs: z.number().finite().nonnegative().max(MAX_PERFORMANCE_MARK_TIME_MS),
+});
+
+export type RpcPerformanceMark = z.infer<typeof rpcPerformanceMarkSchema>;
+
 // host -> webview, one reply per request. `status` matches the HTTP API's,
 // so the web code handles "unknown session" (404) the same on both transports.
 export type RpcResponse =

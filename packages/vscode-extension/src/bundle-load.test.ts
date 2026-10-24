@@ -94,6 +94,7 @@ module.exports = {
     registerMcpServerDefinitionProvider(id, provider) { mcpProviders.set(id, provider); return { dispose() { mcpProviders.delete(id); } }; },
   },
   TreeItemCollapsibleState: { None: 0, Collapsed: 1, Expanded: 2 },
+  ExtensionMode: { Production: 1, Development: 2, Test: 3 },
   StatusBarAlignment: { Left: 1, Right: 2 },
   __treeViews: treeViews, __statusBarItems: statusBarItems, __progress: progress, __l10nMessages: l10nMessages,
   __commands: commands, __panels: panels, __settings: settings, Uri, ViewColumn: { Active: -1 },
@@ -224,6 +225,12 @@ interface StubMcpDefinition {
   version: string;
 }
 
+interface StubTimingMark {
+  name: string;
+  durationMs: number;
+  pageTimeMs?: number;
+}
+
 interface VscodeStub {
   McpStdioServerDefinition: new (...args: unknown[]) => unknown;
   __mcpProviders: Map<string, StubMcpProvider>;
@@ -289,6 +296,7 @@ describe("the built extension bundle", () => {
         update: async (key: string, value: unknown) => void globalState.set(key, value),
       },
       subscriptions,
+      extensionMode: 1, // Production
       extension: { id: "raulkivi.ai-credits-analyzer", packageJSON: { version: "0.1.0" } },
     });
   }, 60_000);
@@ -666,5 +674,81 @@ describe("the built extension bundle", () => {
         await client.close();
       }
     }, 60_000);
+  });
+
+  // Step 10.9's integration-test seam: internal commands, registered only
+  // when VS Code runs the extension in ExtensionMode.Test. Last, since it
+  // activates the bundle a second time.
+  describe("test hooks (ExtensionMode.Test only)", () => {
+    const INTERNAL = "aiCreditsAnalyzer.internal.";
+    let testSubscriptions: { dispose(): void }[];
+
+    const run = <T>(command: string, ...args: unknown[]) => vscode.__commands.get(command)!(...args) as T;
+
+    it("registers none in production", () => {
+      expect([...vscode.__commands.keys()].filter((id) => id.startsWith(INTERNAL))).toEqual([]);
+    });
+
+    it("registers them in ExtensionMode.Test", () => {
+      const requireFromInstall = createRequire(path.join(installDir, "package.json"));
+      delete requireFromInstall.cache[requireFromInstall.resolve("./dist/extension.js")];
+      const extension = requireFromInstall("./dist/extension.js") as { activate(context: unknown): void };
+      testSubscriptions = [];
+      extension.activate({
+        extensionPath: installDir,
+        globalStorageUri: { fsPath: path.join(userDataDir, "User", "globalStorage", "raulkivi.ai-credits-analyzer") },
+        globalState: { get: () => true, update: async () => undefined },
+        subscriptions: testSubscriptions,
+        extensionMode: 3, // Test
+        extension: { id: "raulkivi.ai-credits-analyzer", packageJSON: { version: "0.1.0" } },
+      });
+
+      expect([...vscode.__commands.keys()].filter((id) => id.startsWith(INTERNAL)).sort()).toEqual([
+        "aiCreditsAnalyzer.internal.mcpServerDefinitions",
+        "aiCreditsAnalyzer.internal.perfMarks",
+        "aiCreditsAnalyzer.internal.resetDiagnostics",
+        "aiCreditsAnalyzer.internal.rpcTrace",
+        "aiCreditsAnalyzer.internal.sessionsTree",
+      ]);
+    });
+
+    it("times the Sessions tree of the first refresh, and lists its session", async () => {
+      await expect.poll(() => run<StubTimingMark[]>(`${INTERNAL}perfMarks`).map((mark) => mark.name)).toContain("sessions-tree");
+
+      const tree = run<{ kind: string; children?: { label: string }[] }[]>(`${INTERNAL}sessionsTree`);
+      expect(tree.flatMap((node) => node.children ?? []).map((node) => node.label)).toEqual(["Fix the bug"]);
+    });
+
+    it("records the webview's timing marks from the page load, and its answered requests", async () => {
+      run(`${INTERNAL}resetDiagnostics`);
+      await run(COMMAND_IDS.open);
+      const panel = vscode.__panels.at(-1)!;
+
+      panel.send({ kind: "perfMark", name: "first-render", timeMs: 42 });
+      panel.send({ kind: "perfMark", name: "made-up", timeMs: 1 });
+      panel.send({ kind: "request", id: "h", method: "getHealth" });
+      await expect.poll(() => panel.posted.some((reply) => reply.id === "h")).toBe(true);
+
+      const marks = run<StubTimingMark[]>(`${INTERNAL}perfMarks`);
+      expect(marks).toEqual([{ name: "first-render", durationMs: expect.any(Number), pageTimeMs: 42 }]);
+      expect(marks[0]!.durationMs).toBeGreaterThanOrEqual(0);
+      expect(run(`${INTERNAL}rpcTrace`)).toEqual([{ method: "getHealth", ok: true }]);
+    });
+
+    it("reads the MCP server definitions the provider offers", () => {
+      vscode.__settings["aiCreditsAnalyzer.mcp.enabled"] = false;
+      expect(run(`${INTERNAL}mcpServerDefinitions`)).toEqual([]);
+
+      vscode.__settings["aiCreditsAnalyzer.mcp.enabled"] = true;
+      expect(run<{ label: string }[]>(`${INTERNAL}mcpServerDefinitions`).map((definition) => definition.label)).toEqual([
+        "AI Credits Analyzer",
+      ]);
+    });
+
+    it("disposes them with the extension", () => {
+      for (const subscription of testSubscriptions) subscription.dispose();
+
+      expect([...vscode.__commands.keys()].filter((id) => id.startsWith(INTERNAL))).toEqual([]);
+    });
   });
 });

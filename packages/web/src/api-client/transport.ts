@@ -1,4 +1,4 @@
-import type { ApiMethod, HostCommand, HostCommandArgs, HostEventName } from "@copilot-cost-analyzer/domain";
+import type { ApiMethod, HostCommand, HostCommandArgs, HostEventName, PerformanceMarkName } from "@copilot-cost-analyzer/domain";
 
 // Every named operation the UI performs against its backend: the domain's
 // shared `ApiMethod` names, which the extension host's request allow-list
@@ -25,6 +25,10 @@ export interface ApiTransport {
   // Likewise only the webview transport has one; the UI reaches it through
   // the HostCapabilities port (host/host-capabilities.ts), never directly.
   command?<C extends HostCommand>(command: C, args: HostCommandArgs[C]): Promise<void>;
+  // Tells the host one of the web app's timing marks (domain rpc.ts,
+  // perfMark; vscode-extension.md §3.5 Performance). Only the webview
+  // transport has a host to tell; main.tsx wires it to the page's marks.
+  reportPerformanceMark?(name: PerformanceMarkName, timeMs: number): void;
   // The host's per-view state persistence (a VS Code webview's
   // getState/setState), for UI preferences such as the turns table's
   // columns; the UI reaches it through state/view-state-storage.ts.

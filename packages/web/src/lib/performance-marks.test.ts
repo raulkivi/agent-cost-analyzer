@@ -60,4 +60,33 @@ describe("performance marks (vscode-extension.md §3.5 Performance, step 10.9 bu
     expect(() => marks.mark("first-render")).not.toThrow();
     expect(marks.read()).toEqual({});
   });
+
+  it("reports each emitted mark once, with its time, to the reporter (the host, in the extension)", () => {
+    const performance = fakePerformance();
+    const report = vi.fn();
+    const marks = createPerformanceMarks(performance, report);
+
+    performance.tick(80);
+    marks.mark("first-render");
+    marks.mark("first-render");
+    performance.tick(20);
+    marks.mark("data-ready");
+
+    expect(report.mock.calls).toEqual([
+      ["first-render", 80],
+      ["data-ready", 100],
+    ]);
+  });
+
+  it("reports nothing without a Performance API, and survives a reporter that throws", () => {
+    const report = vi.fn();
+    createPerformanceMarks(undefined, report).mark("first-render");
+    expect(report).not.toHaveBeenCalled();
+
+    const marks = createPerformanceMarks(fakePerformance(), () => {
+      throw new Error("host gone");
+    });
+    expect(() => marks.mark("first-render")).not.toThrow();
+    expect(marks.read()).toEqual({ "first-render": 0 });
+  });
 });

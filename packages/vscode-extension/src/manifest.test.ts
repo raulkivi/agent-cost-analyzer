@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { COMMAND_IDS, VIEW_IDS } from "./commands/command-ids.js";
 import { WATCHED_SETTING_IDS } from "./config/config-change-watcher.js";
+import { INTERNAL_COMMAND_IDS } from "./diagnostics/test-hooks.js";
 import { MCP_ENABLED_SETTING_ID, MCP_PROVIDER_ID } from "./mcp/mcp-server-definitions.js";
 import { SESSION_CONTEXT_VALUE, SETUP_WARNING_CONTEXT_VALUE } from "./vscode/vscode-sidebar-views.js";
 
@@ -87,6 +88,15 @@ describe("package.json contributions (vscode-extension.md §3.5)", () => {
 
   it("contributes exactly the commands the code registers", () => {
     expect([...contributedCommands].sort()).toEqual(Object.values(COMMAND_IDS).sort());
+  });
+
+  it("never contributes, or names anywhere, the internal test-hook commands (step 10.9)", () => {
+    const manifestText = readFileSync(path.join(packageDir, "package.json"), "utf-8");
+
+    for (const id of Object.values(INTERNAL_COMMAND_IDS)) {
+      expect(contributedCommands.has(id), id).toBe(false);
+    }
+    expect(manifestText).not.toContain("aiCreditsAnalyzer.internal");
   });
 
   it("contributes every command that menus, welcome views and keybindings reference", () => {

@@ -313,4 +313,45 @@ describe("AnalyzerPanel", () => {
       expect(() => panel.postWhenReady(selectSession)).not.toThrow();
     });
   });
+
+  // When the webview's timing marks start (performance/performance-recorder.ts).
+  describe("onPageLoad", () => {
+    it("fires once as a new panel's page is loaded, before its HTML is set", () => {
+      const htmlAtLoad: string[] = [];
+      let created: FakePanel[] = [];
+      const onPageLoad = vi.fn(() => htmlAtLoad.push(created[0]?.webview.html ?? "no panel"));
+      const { panel, panels } = setup({ onPageLoad });
+      created = panels;
+
+      panel.open();
+
+      expect(onPageLoad).toHaveBeenCalledTimes(1);
+      expect(htmlAtLoad).toEqual([""]);
+      expect(panels[0]!.webview.html).not.toBe("");
+    });
+
+    it("fires again when a hidden panel is shown (its page loads afresh), but not for a reveal of a visible one", () => {
+      const onPageLoad = vi.fn();
+      const { panel, panels } = setup({ onPageLoad });
+      panel.open();
+
+      panel.open();
+      expect(onPageLoad).toHaveBeenCalledTimes(1);
+
+      panels[0]!.setVisible(false);
+      expect(onPageLoad).toHaveBeenCalledTimes(1);
+      panels[0]!.setVisible(true);
+      expect(onPageLoad).toHaveBeenCalledTimes(2);
+    });
+
+    it("doesn't fire for a view-state change of a panel that stays visible (e.g. it became active)", () => {
+      const onPageLoad = vi.fn();
+      const { panel, panels } = setup({ onPageLoad });
+      panel.open();
+
+      panels[0]!.setVisible(true);
+
+      expect(onPageLoad).toHaveBeenCalledTimes(1);
+    });
+  });
 });

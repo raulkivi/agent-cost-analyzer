@@ -8,6 +8,9 @@ build/
 packages/vscode-extension/media/
 # The packaged extension (npm run package, step 10.9)
 *.vsix
+# The extension's integration-test bundles, and @vscode/test-cli's VS Code downloads
+packages/vscode-extension/out/
+packages/vscode-extension/.vscode-test/
 *.tsbuildinfo
 
 # Test coverage

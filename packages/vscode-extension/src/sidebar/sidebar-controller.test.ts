@@ -248,3 +248,43 @@ describe("SidebarController translation (vscode-extension.md §3.5 Localization)
     expect(controller.sessionsTree()[0]).toMatchObject({ label: "COULDN'T READ YOUR COPILOT CHAT SESSIONS" });
   });
 });
+
+// §3.5 Performance: "Sessions tree in under 500 ms" (step 10.9's budgets).
+describe("SidebarController timing", () => {
+  function timedSetup(listSessions: SidebarSources["listSessions"]) {
+    let clock = 0;
+    const sessionsTreeBuilt = vi.fn();
+    const controller = new SidebarController(
+      {
+        relistLogSources: () => void (clock += 5),
+        listSessions: async () => {
+          clock += 100;
+          return listSessions();
+        },
+        getConfigStatus: async () => status([]),
+      },
+      { now: () => NOW, timeZone: "UTC", onInternalError: () => undefined, timing: { now: () => clock, sessionsTreeBuilt } },
+    );
+    return { controller, sessionsTreeBuilt };
+  }
+
+  it("reports how long a full refresh took, from its start to the Sessions tree's nodes being built", async () => {
+    const { controller, sessionsTreeBuilt } = timedSetup(async () => [session("a")]);
+
+    await controller.refresh();
+
+    expect(sessionsTreeBuilt).toHaveBeenCalledTimes(1);
+    expect(sessionsTreeBuilt).toHaveBeenCalledWith(105);
+  });
+
+  it("reports nothing when the sessions couldn't be read, or for a config-only refresh", async () => {
+    const { controller, sessionsTreeBuilt } = timedSetup(async () => {
+      throw new Error("boom");
+    });
+
+    await controller.refresh();
+    await controller.refreshConfig();
+
+    expect(sessionsTreeBuilt).not.toHaveBeenCalled();
+  });
+});

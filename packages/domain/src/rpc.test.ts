@@ -7,7 +7,10 @@ import {
   hostCommandSchema,
   hostEventNameSchema,
   MAX_HOST_COMMAND_TEXT_LENGTH,
+  MAX_PERFORMANCE_MARK_TIME_MS,
+  performanceMarkNameSchema,
   rpcCancelSchema,
+  rpcPerformanceMarkSchema,
   rpcCommandSchema,
   rpcRequestSchema,
   selectSessionPayloadSchema,
@@ -238,6 +241,42 @@ describe("rpcCancelSchema", () => {
   it("is exported from the package entry point", () => {
     expect(domain.rpcCancelSchema).toBeDefined();
     expect(domain.rpcCancelSchema).toBe(rpcCancelSchema);
+  });
+});
+
+describe("rpcPerformanceMarkSchema (vscode-extension.md §3.5 Performance, step 10.9)", () => {
+  it("names only the webview's two timing marks", () => {
+    expect(performanceMarkNameSchema.options).toEqual(["first-render", "data-ready"]);
+  });
+
+  it("accepts a mark with its time in ms since the page started", () => {
+    expect(rpcPerformanceMarkSchema.parse({ kind: "perfMark", name: "first-render", timeMs: 123.4 })).toEqual({
+      kind: "perfMark",
+      name: "first-render",
+      timeMs: 123.4,
+    });
+    expect(rpcPerformanceMarkSchema.safeParse({ kind: "perfMark", name: "data-ready", timeMs: 0 }).success).toBe(true);
+  });
+
+  it("rejects an unknown name, a time that isn't a finite, non-negative, bounded number, and other kinds", () => {
+    for (const bad of [
+      { kind: "perfMark", name: "interaction", timeMs: 1 },
+      { kind: "perfMark", name: "first-render" },
+      { kind: "perfMark", name: "first-render", timeMs: "1" },
+      { kind: "perfMark", name: "first-render", timeMs: -1 },
+      { kind: "perfMark", name: "first-render", timeMs: Number.NaN },
+      { kind: "perfMark", name: "first-render", timeMs: Number.POSITIVE_INFINITY },
+      { kind: "perfMark", name: "first-render", timeMs: MAX_PERFORMANCE_MARK_TIME_MS + 1 },
+      { kind: "request", name: "first-render", timeMs: 1 },
+    ]) {
+      expect(rpcPerformanceMarkSchema.safeParse(bad).success).toBe(false);
+    }
+  });
+
+  it("is exported from the package entry point", () => {
+    expect(domain.rpcPerformanceMarkSchema).toBe(rpcPerformanceMarkSchema);
+    expect(domain.performanceMarkNameSchema).toBe(performanceMarkNameSchema);
+    expect(domain.MAX_PERFORMANCE_MARK_TIME_MS).toBe(MAX_PERFORMANCE_MARK_TIME_MS);
   });
 });
 
