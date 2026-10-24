@@ -17,8 +17,9 @@ Progress (2026-10-24):
 | 10.5 | Product profile in the UI, host commands, VS Code theme | Done (#66) |
 | 10.6 | Native Sessions/Setup sidebar, status bar, selection sync | Done (#67) |
 | 10.7 | Accessibility, responsive layout, AsyncView, local fonts, walkthrough, l10n | Done (#69) |
-| 10.8 | Copilot-only MCP server in the extension, plus UI follow-ups from 10.7 | Done (PR pending); real Copilot agent-mode check in 10.9 |
-| 10.9 | Integration tests in real VS Code, performance budgets, usability run, packaging | Not started |
+| 10.8 | Copilot-only MCP server in the extension, plus UI follow-ups from 10.7 | Done (#71); real Copilot agent-mode check in 10.9 |
+| 10.9 | Integration tests in real VS Code, performance budgets, usability run, packaging | Done (#72 pending merge; integration suite green in CI); owner's manual checks open |
+| 10.10 | Documentation: extension README/listing, extension user guide, two-product README and User Guide | Not started |
 
 
 ## 1. Context
@@ -243,7 +244,7 @@ another company's trademark in the product name.
 - `displayName`: `AI Credits Analyzer`. `name` (the Marketplace id under
   the publisher): `ai-credits-analyzer`. The Marketplace rejects a
   `displayName` already in use, so confirm it's free before the first
-  publish (step 10.9). If it's taken, fall back to "AI Credits Analyzer
+  publish (step 10.10). If it's taken, fall back to "AI Credits Analyzer
   for VS Code" rather than adding "Copilot".
 - `description`: names the use case, e.g. "See where your GitHub Copilot
   Chat tokens and AI Credits go: prompt caching, per-turn cost, tool-call
@@ -1052,9 +1053,18 @@ is verified in jsdom at those widths, not visually.
   calls `vscode.lm.registerMcpServerDefinitionProvider`. The command is
   `process.execPath` with `ELECTRON_RUN_AS_NODE=1`. The change event fires
   only when `aiCreditsAnalyzer.mcp.enabled` changes.
-- The setting is `scope: "machine"`, so a cloned repo's
-  `.vscode/settings.json` can't turn it on (not in the original plan; added
-  in review).
+- Setting scope: merged as `scope: "machine"`, then changed after the
+  merge (owner's decision, 2026-10-24) to the default scope plus a trust
+  guard. The manifest declares `capabilities.untrustedWorkspaces`
+  `supported: "limited"` with `restrictedConfigurations:
+  ["aiCreditsAnalyzer.mcp.enabled"]`, so in Restricted Mode an untrusted
+  workspace's `.vscode/settings.json` can't turn the server on; a trusted
+  workspace can. This also lets the extension run in Restricted Mode,
+  where an extension that declares nothing is disabled.
+- Fixed after the merge: the turn inspector's round selection could snap
+  back to round 0 when data arrived just after a click, because the reset
+  ran on every load-state change (a 10.8 regression from the Cancel
+  wiring). The selection now belongs to the loaded detail.
 - Walkthrough step 5 is real: it links the setting and completes on
   `onSettingChanged:aiCreditsAnalyzer.mcp.enabled`; `mcp.md` explains what
   the model sees. `fixSetting` accepts the setting; the webview's
@@ -1117,7 +1127,9 @@ axe table tests and two column-chooser guard tests green on first run.
 - The manual usability script from §3.5 (first run, logging off, no
   sessions, a large session, keyboard only, high contrast), run once by
   the owner in a real VS Code, with notes and screenshots in the PR.
-  (Moved here from 10.7.)
+  (Moved here from 10.7.) The script, the MCP agent-mode check and the
+  remote check are in
+  [vscode-extension-manual-checks.md](vscode-extension-manual-checks.md).
 - `@vscode/test-cli` + `@vscode/test-electron` integration suite, run
   against the `stable` VS Code build (D9). It
   activates the extension, opens the panel, checks that the Sessions view
@@ -1136,6 +1148,194 @@ axe table tests and two column-chooser guard tests green on first run.
   "Install from VSIX…" and passes the 10.4-10.8 exit checks
   with no repo checkout present.
 
+**Status (2026-10-24): code done and green in a real VS Code in CI; the
+owner's manual checks are open.**
+
+*First real run (#72's CI, `extension` job):* stable VS Code under
+`xvfb-run`, all 7 integration tests passed in 3 s: activation (105 ms),
+panel round-trips (438 ms), Sessions view and open session (516 ms), the
+§3.5 budgets (301 ms), and the three MCP tests. The job then packaged
+the VSIX (35 files, 2.59 MB) and uploaded it as the `vsix` artifact.
+
+*Performance marks and budgets:*
+- `{kind:"perfMark", name, timeMs}` (domain `rpc.ts`): one-way, names
+  allow-listed (`first-render`, `data-ready`), `timeMs` finite, 0-24 h.
+  The webview's `createPerformanceMarks` reports each mark once through
+  `WebviewTransport.reportPerformanceMark`; the standalone app is
+  unchanged.
+- The host's `MessageDispatcher` validates and forwards marks to a pure
+  `PerformanceRecorder` (injected clock, last 100 marks). A webview mark is
+  timed on the host from `AnalyzerPanel.onPageLoad`, so webview start-up
+  counts. `SidebarController` times a full Sessions refresh.
+- `evaluateBudgets` judges the latest mark of each name against §3.5:
+  first-render and data-ready < 1000 ms, Sessions tree < 500 ms. A missing
+  mark fails. "Interactions < 100 ms" has no mark and isn't measured.
+
+*Integration suite* (`@vscode/test-cli` 0.0.15, `@vscode/test-electron`
+3.1.0, mocha 12 via a root override because mocha 11 pulls in vulnerable
+`diff`/`serialize-javascript`):
+- Stable VS Code, `--disable-extensions`, a seeded temp user-data dir with
+  `settings.json` and 200 Copilot sessions (one with a real debug log),
+  built by `scripts/integration-fixture.mts` from the server's seeding
+  helpers.
+- Tests: activation registers every command; the panel round-trips
+  `getHealth`, `getProductProfile`, `listLearnScenarios`,
+  `getConfigStatus`, `listSessions`; the Sessions view lists all 200 and
+  `openSession` makes the webview load that session; the §3.5 budgets;
+  MCP off → no server, on → one server that, started from its own
+  definition with VS Code's Electron as Node, lists 9 tools and answers
+  `get_session_cost`, off again → none.
+- Test hooks (`aiCreditsAnalyzer.internal.*`: perf marks, an RPC trace of
+  method/outcome only, the Sessions tree, MCP definitions, reset) are
+  registered only when `extensionMode === Test` and never contributed; a
+  manifest test and the bundle-load test check both.
+- CI: a second job, `extension`, builds, runs the unit tests, runs the
+  suite under `xvfb-run`, packages the VSIX and uploads it as the `vsix`
+  artifact.
+
+*Packaging:*
+- `createMcpServer` takes an `McpIdentity`; the extension's server is
+  `ai-credits-analyzer` with Copilot-only instructions and argument
+  descriptions. The standalone server is byte-for-byte unchanged (pinned
+  by a test). Tool names, schemas and prompts are identical.
+- Both bundles are minified: `extension.js` 4.37 → 3.32 MB,
+  `mcp-stdio.js` 5.15 → 3.68 MB. `bundle-size.test.ts` holds per-bundle
+  budgets (4 MB, 4.25 MB) and a deflate estimate of the package (< 5 MB).
+- `.vscodeignore` is an allow-list (vsce lets any `!` pattern win, so
+  `dist/` is allowed file by file to keep metafiles out).
+  `packaging.test.ts` runs `vsce ls` offline and checks exactly those
+  files ship, plus the listing prerequisites. `npm run package` gives
+  `ai-credits-analyzer-0.1.0.vsix`: 35 files, 2.59 MB. The extension
+  ships the MIT `LICENSE`.
+
+*Release workflows (§7.2):* `release-extension.yml` (`ext-v*`) and
+`release-app.yml` (`app-v*`). Pure, tested helpers in
+`scripts/release-checks.mts` (tag → version, odd minor → pre-release,
+D9 engine = current stable, changelog section) behind `release-check.mts`
+and `release-notes.mts`. The extension job builds, tests (unit and
+integration), packages, then publishes from the `release` environment:
+Marketplace through `azure/login` + `vsce publish --azure-credential`,
+Open VSX through `ovsx` with `OVSX_PAT`, and a GitHub Release with the
+VSIX. Actions are pinned by commit SHA.
+
+*Manual checks:* the usability script, the MCP agent-mode check (10.8's
+exit), the remote check and the screenshot list are in
+[vscode-extension-manual-checks.md](vscode-extension-manual-checks.md),
+for the owner to run on the CI-built VSIX and record in the PR.
+
+*Not verified here:*
+- The integration suite can't run in the development container (VS Code
+  can't be downloaded there); it runs in CI (see above). Locally:
+  it typechecks, a unit test bundles and loads it with a stub `vscode`
+  (all 7 tests register), `vscode-test --list-configuration` resolves,
+  and the fixture is read back through the extension's own `ApiService`.
+- The release workflows: they run only on tags. The first `ext-v*` tag is
+  also the first test of Entra ID sign-in on GitHub Actions (§7.0).
+
+*Deviations:*
+- data-ready marks the Learn scenario list (the app starts in Learn mode);
+  the 200 sessions load on mount but data-ready doesn't wait for them.
+- Marks and the RPC trace are recorded in production too (bounded, no
+  payloads); only reading them is limited to Test mode.
+- Integration-test esbuild options are separate
+  (`scripts/integration-test-options.mts`): several entry points, outdir,
+  inline sourcemaps.
+- `npm audit` reports `@azure/msal-node` 6.0.1 (GHSA-xcx6-jx8p-x3h5,
+  authorization-code flow) under `@vscode/vsce` → `@azure/identity`. Dev
+  only, never shipped; packaging never signs in and publishing uses the
+  `az` CLI credential. No `@azure/identity` that vsce 4 accepts avoids the
+  range; vsce 3.9.2 avoids it but adds native `keytar`. Open for the
+  owner's decision.
+
+*TDD exceptions to red-first:* guard tests green on first run (perfMark
+drop cases, the internal-commands manifest check, "none in production");
+the integration suite, its config, build script, tsconfig and the CI and
+release workflow YAML have no red step (only a real run tests them); the
+server-side identity tests failed only on the missing import before going
+green; listing-prerequisite tests passed on first run.
+
+*Tests:* 2,541 → 2,647 (domain 129, server 1,037, web 982, pi-logger 15,
+extension 484).
+
+### 10.10 Documentation and Marketplace listing
+
+Added 2026-10-24 after a review of the docs. The plan already named the
+listing contents (§3.4, §7.2), but no step wrote them, and the root
+README and User Guide still describe only the standalone app under its
+old name. This step runs after 10.9, because it needs the packaged build
+and the owner's screenshots from a real VS Code, and before the first
+publish (§7.2).
+
+Docs aren't test-driven, so the exit is backed by automated doc checks,
+written test-first like any other code (`scripts/` or a Vitest suite in
+`packages/vscode-extension`, run by `npm test`).
+
+**Defaults (open to change before the step starts):** the extension guide
+lives in the repo as `docs/vscode-extension-guide.md` and the extension
+README links to it, because the Marketplace page has to stay short. The
+root README takes the name **Agent Cost Analyzer**; the repo name
+`copilot-cost-analyzer` stays.
+
+- **Extension README** (`packages/vscode-extension/README.md`, which is the
+  Marketplace and Open VSX page): what it does in one paragraph, a hero
+  screenshot, features (panel, Sessions/Setup sidebar, status bar,
+  insights, tool audit, MCP server), getting started (install, the
+  walkthrough, turning on Copilot debug logging), settings and commands,
+  the privacy statement ("reads local Copilot Chat logs only; no network;
+  no telemetry"), requirements (current stable VS Code, D9), a link to the
+  full guide, and a link to Agent Cost Analyzer for users of other agents.
+  It follows §3.4: Copilot is named only to describe what the extension
+  works with.
+- **Extension user guide** (`docs/vscode-extension-guide.md`):
+  - install from the Marketplace, Open VSX or a VSIX, and uninstall;
+  - the first-run walkthrough;
+  - the analyzer panel and how it maps to the standalone app's views;
+  - the Sessions and Setup sidebar, the status-bar item and selection sync;
+  - every command and setting, with what each Fix button changes;
+  - the MCP server: turning it on, what Copilot agent mode can ask, what
+    data goes to the model, and turning it off;
+  - Remote-SSH, WSL and Dev Containers (from 10.9's remote check);
+  - accessibility (keyboard, "View as table", high contrast, narrow
+    panels);
+  - troubleshooting: no sessions, logging off, "unknown" costs, a locked
+    database;
+  - privacy and what the extension reads.
+- **Extension changelog** (`packages/vscode-extension/CHANGELOG.md`), with
+  its own versions (D8), starting at the first published version. The
+  root `CHANGELOG.md` stays the standalone app's.
+- **Root README:** retitled to Agent Cost Analyzer, with a short "Which
+  product should I use?" section near the top: VS Code with Copilot Chat
+  goes to the extension; Claude Code, pi or mitmproxy captures go to the
+  standalone app. Setup and "Using the app" stay standalone; the doc index
+  gains the extension guide.
+- **User Guide** (`docs/UserGuide.md`): the new name, a pointer to the
+  extension guide, and the 10.7-10.8 features it doesn't cover yet
+  ("View as table", Cancel, narrow and medium layouts, keyboard use).
+- **Threat model** (`docs/threat-model.md`): the extension's surfaces:
+  the webview (CSP, nonce, `connect-src 'none'`), the RPC and host
+  command allow-lists, the read-only document provider, and the MCP child
+  process (argument validation, the setting's trust guard (`restrictedConfigurations`), data sent to
+  the chat model).
+- **CONTRIBUTING:** the `vscode-extension` package, how to build it, run it
+  with F5 in an Extension Development Host, and run its unit and
+  integration tests.
+- **Screenshots:** taken by the owner in a real VS Code during 10.9's
+  usability run (dark and light theme, panel, sidebar, walkthrough, MCP in
+  agent mode), saved in `docs/images/vscode/` as PNG. The extension README
+  refers to them by absolute HTTPS URL (§7.0 listing prerequisites).
+- **Doc checks (automated):**
+  - every command, setting and view contributed in `package.json` appears
+    in the extension guide;
+  - the extension README uses only absolute HTTPS image URLs, no SVG
+    images, and no relative links that vsce can't rewrite;
+  - the extension README and guide never put "Copilot" in the product's
+    name;
+  - every relative link in the changed docs resolves to an existing file
+    and heading.
+- **Exit:** the doc checks pass; `vsce package` shows the README,
+  CHANGELOG and icon correctly (checked in the packaged `extension/`
+  folder); and the owner reviews the rendered extension README and guide.
+
 ## 7. Deployment
 
 ### 7.0 Publisher setup (one-time, manual, before step 10.3)
@@ -1148,8 +1348,8 @@ personal account can own one; no company or organization is needed.
 **Status (2026-10-24):** the VS Code Marketplace publisher `raulkivi` is
 registered (marketplace.visualstudio.com/manage/publishers/raulkivi).
 Still to do:
-- **VS Code Marketplace:** steps 2-4 below (Azure DevOps organization,
-  PAT, `VSCE_PAT` secret), or step 5's Entra ID route instead.
+- **VS Code Marketplace:** the Entra ID setup below (global PATs retire
+  on 1 December 2026).
 - **Open VSX:** the whole section below.
 - **Listing:** the listing prerequisites.
 
@@ -1159,37 +1359,59 @@ Still to do:
   and the `publisher` field in `packages/vscode-extension/package.json`
   must match it. Display name: the owner's name.
 
-**VS Code Marketplace**
+**VS Code Marketplace** (revised 2026-10-24)
 
-1. Sign in with a personal Microsoft account at
-   `https://marketplace.visualstudio.com/manage` and create the
-   publisher: id `raulkivi`, display name, and optionally a description,
-   website (the GitHub repo) and support link.
-2. Create a free Azure DevOps organization with the same Microsoft
-   account. It's needed only to issue the publishing token.
-3. Create a Personal Access Token there, scoped to **Marketplace →
-   Manage**, with organization "All accessible organizations" (vsce
-   requires that), and the longest lifetime allowed (up to 1 year).
-   Put a calendar reminder for rotation (R5).
-4. Check locally with `npx @vscode/vsce login raulkivi`, then store the
-   token as the `VSCE_PAT` secret in the protected `release` GitHub
-   environment (§7.2), never as a plain repository secret.
-5. Check the current vsce docs at setup time: Microsoft is moving
-   Marketplace auth toward Microsoft Entra ID (`vsce publish
-   --azure-credential` with a federated GitHub identity), which removes
-   the long-lived PAT. Use it if it's available for personal accounts.
+Azure DevOps retires global PATs on **1 December 2026**, and the
+Marketplace PAT route (`VSCE_PAT`) needs one. So the release workflow
+signs in with **Microsoft Entra ID** (`vsce publish --azure-credential`,
+vsce ≥ 2.26.1) through GitHub OIDC, with no long-lived secret. A PAT is
+only a stop-gap if the first publish happens before that date and Entra
+ID isn't set up yet.
+
+1. Publisher `raulkivi`: done.
+2. In the Azure portal (same Microsoft account; a free tenant is enough),
+   create an **app registration**, e.g. `ai-credits-analyzer-release`.
+   Note its *Application (client) ID* and *Directory (tenant) ID*.
+3. Under that app: *Certificates & secrets → Federated credentials → Add*,
+   scenario *GitHub Actions deploying Azure resources*: organization
+   `raulkivi`, repository `copilot-cost-analyzer`, entity type
+   *Environment*, environment `release`. Only release jobs in that
+   environment can then sign in.
+4. Add the app as a **member of the publisher**: at
+   `marketplace.visualstudio.com/manage/publishers/raulkivi` → *Members*,
+   add it (by its service principal / object id, as the current docs
+   describe) with the *Contributor* role.
+5. In GitHub: *Settings → Environments → New environment* `release`, with
+   yourself as required reviewer and deployment limited to `ext-v*` tags.
+   Add environment **variables** (not secrets) `AZURE_CLIENT_ID` and
+   `AZURE_TENANT_ID`. The workflow uses `azure/login` with
+   `allow-no-subscriptions: true` and `id-token: write`, then
+   `vsce publish --azure-credential`.
+6. Microsoft documents this for Azure Pipelines; on GitHub Actions it's
+   reported working by other projects, so the first real publish is the
+   test. Fallback: an Azure DevOps PAT (Marketplace → Manage, "All
+   accessible organizations") as the `VSCE_PAT` secret in `release`, valid
+   only until 1 December 2026.
+7. Don't use `vsce publish --oidc` (trusted publishing); it isn't
+   available yet.
 
 **Open VSX** (VSCodium, Cursor, Gitpod and others)
 
-1. Sign in at `https://open-vsx.org` with GitHub, then link an
-   eclipse.org account and accept the Eclipse Publisher Agreement. Open
-   VSX requires this before publishing.
-2. Create an access token in the Open VSX user settings, and run
-   `npx ovsx create-namespace raulkivi -p <token>` once. The namespace
-   must equal the `publisher` field.
-3. Store the token as `OVSX_PAT` in the same `release` environment.
-4. Optional: request namespace ownership verification so the listing
-   shows as verified rather than unverified.
+1. Sign in at `https://open-vsx.org` with GitHub. In *Settings → Profile*,
+   log in with an eclipse.org account (create one if needed; its GitHub
+   username must match) and sign the **Eclipse Foundation Open VSX
+   Publisher Agreement** (not the Eclipse Contributor Agreement).
+2. *Settings → Access Tokens → Generate New Token*. Copy it once.
+3. Create the namespace once, locally:
+   `npx ovsx create-namespace raulkivi -p <token>`. It must equal the
+   `publisher` field.
+4. Claim the namespace: until ownership is granted, anyone can publish
+   into it. Open an issue at `github.com/EclipseFdn/open-vsx.org` (type
+   "Claim namespace ownership") naming `raulkivi`.
+5. Generate a separate token for CI (Open VSX 1.3 can scope a token to
+   the namespace and to publishing only; use that). Store it as the
+   `OVSX_PAT` **secret** in the `release` environment.
+6. Check: `npx ovsx verify-pat raulkivi -p <token>`.
 
 **Listing prerequisites checked before the first publish (step 10.9)**
 
@@ -1205,8 +1427,9 @@ Still to do:
   controls, DNS verification, and a publisher that has existed for a
   while. Not needed for v1.
 
-**Exit:** `vsce login raulkivi` and `ovsx verify-pat raulkivi` both
-succeed, and both secrets exist in the `release` environment.
+**Exit:** the `release` environment holds `AZURE_CLIENT_ID`,
+`AZURE_TENANT_ID` (variables) and `OVSX_PAT` (secret); `ovsx verify-pat
+raulkivi` succeeds; the Entra ID app is a member of the publisher.
 
 ### 7.1 CI (every PR)
 
@@ -1235,9 +1458,9 @@ suite only, to cover the D4 path derivation for real.
    itself never does (constraint 1).
 2. Build and test as in CI. The integration tests run on that same
    stable build.
-3. `vsce publish --packagePath *.vsix` with `VSCE_PAT` (Azure DevOps PAT
-   with Marketplace "Manage" scope) as a repository secret, in a
-   protected `release` environment with required reviewers.
+3. `azure/login` (OIDC, `allow-no-subscriptions`), then
+   `vsce publish --azure-credential --packagePath *.vsix`, in the
+   protected `release` environment with required reviewers (§7.0).
 4. `ovsx publish *.vsix` with `OVSX_PAT` for Open VSX (VSCodium, Cursor,
    and others).
 5. Attach the `.vsix` to a GitHub Release named after the extension.
@@ -1245,8 +1468,9 @@ suite only, to cover the D4 path derivation for real.
 - **Versioning:** the version lives in `packages/vscode-extension/package.json`
   and starts at `0.1.0`. Use the Marketplace pre-release channel
   (`--pre-release`, odd minor) until 10.9's remote check passes, then
-  publish a stable even minor.
-- **Marketplace listing:** README (Learn/Analyze/dashboard screenshots), a
+  publish a stable even minor. Nothing is published before 10.10's
+  documentation is done.
+- **Marketplace listing** (written in step 10.10): README (Learn/Analyze/dashboard screenshots), a
   privacy statement ("reads local Copilot Chat logs only; no network; no
   telemetry"), `CHANGELOG.md`, and the description, categories and
   keywords from §3.4. It links to the standalone app for users of other

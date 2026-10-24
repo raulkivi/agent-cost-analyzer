@@ -12,7 +12,7 @@ const VERSION = "9.9.9-test";
 interface JsonRpcMessage {
   jsonrpc: string;
   id?: number;
-  result?: { serverInfo?: { version: string }; tools?: { name: string; outputSchema?: { type: string } }[] };
+  result?: { serverInfo?: { name: string; version: string }; tools?: { name: string; outputSchema?: { type: string } }[] };
 }
 
 // Runs the bundle as VS Code would (the extension's McpStdioServerDefinition,
@@ -75,7 +75,7 @@ describe("the built MCP server bundle", () => {
     const messages = lines.map((line) => JSON.parse(line) as JsonRpcMessage);
 
     expect(messages.every((message) => message.jsonrpc === "2.0")).toBe(true);
-    expect(messages.find((message) => message.id === 1)?.result?.serverInfo?.version).toBe(VERSION);
+    expect(messages.find((message) => message.id === 1)?.result?.serverInfo).toEqual(expect.objectContaining({ name: "ai-credits-analyzer", version: VERSION }));
     const tools = messages.find((message) => message.id === 2)?.result?.tools ?? [];
     expect(tools.map((tool) => tool.name).sort()).toEqual([
       "get_audit_rollup",

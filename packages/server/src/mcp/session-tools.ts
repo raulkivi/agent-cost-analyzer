@@ -3,7 +3,7 @@ import { z } from "zod";
 import { logProviderStatusSchema, turnViewSchema } from "@copilot-cost-analyzer/domain";
 import { DEFAULT_MAX_TEXT_CHARS } from "../services/session-view/turn-view-builder.js";
 import { limitSchema, turnIndexSchema } from "../services/tool-audit/audit-query-params.js";
-import type { McpServerDeps } from "./mcp-server.js";
+import type { McpToolDeps } from "./mcp-server.js";
 import { json, providerArg, READ_ONLY, sessionIdArg, sinceArg, toolError, unknownSession, untilArg, type Guard } from "./tool-helpers.js";
 
 const DEFAULT_SESSION_LIST_LIMIT = 20;
@@ -17,13 +17,12 @@ const sessionSummarySchema = z.object({
   providerId: z.string().optional(),
 });
 
-export function registerSessionTools(server: McpServer, deps: McpServerDeps, guarded: Guard): void {
+export function registerSessionTools(server: McpServer, deps: McpToolDeps, guarded: Guard): void {
   server.registerTool(
     "list_log_providers",
     {
       title: "List log providers",
-      description:
-        "Lists the local agent-log sources (VS Code Copilot Chat, Claude Code CLI, pi, mitmproxy captures), whether each is available and why not, and which one is active. Use it to pick a `provider` argument or to explain why a source has no sessions.",
+      description: `Lists the local agent-log sources (${deps.identity.logSourcesDescription}), whether each is available and why not, and which one is active. Use it to pick a \`provider\` argument or to explain why a source has no sessions.`,
       outputSchema: logProviderStatusSchema,
       annotations: READ_ONLY,
     },
@@ -37,7 +36,7 @@ export function registerSessionTools(server: McpServer, deps: McpServerDeps, gua
       description:
         "Finds agent sessions of one provider, most recent first: start here to get the session ids every other per-session tool needs. Filter by a title/id substring and a start-date window. `total` is the number of matches before `limit`, so you can tell whether to narrow the search.",
       inputSchema: {
-        provider: providerArg,
+        provider: providerArg(deps.identity),
         query: z.string().min(1).optional().describe("Case-insensitive substring of the session title or id."),
         since: sinceArg,
         until: untilArg,
@@ -72,7 +71,7 @@ export function registerSessionTools(server: McpServer, deps: McpServerDeps, gua
       inputSchema: {
         sessionId: sessionIdArg,
         turnIndex: turnIndexSchema.describe("0-based turn index, e.g. from get_session_cost's topTurns or list_tool_calls."),
-        provider: providerArg,
+        provider: providerArg(deps.identity),
         maxTextChars: z
           .number()
           .int()

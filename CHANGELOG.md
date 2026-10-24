@@ -11,13 +11,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **AI Credits Analyzer:** a Copilot-only MCP server that Copilot Chat
     agent mode can use (the same 9 read-only tools as the standalone
     server, Copilot sessions only). Off until you turn on
-    `aiCreditsAnalyzer.mcp.enabled` in your user settings; walkthrough
-    step 5 explains what it shares.
+    `aiCreditsAnalyzer.mcp.enabled`; a workspace you haven't trusted can't
+    turn it on. Walkthrough step 5 explains what it shares.
   - **Both products:**
     - "View as table" for every chart;
     - keyboard access to the system-prompt diagram;
     - the column chooser closes on an outside click;
     - Cancel for long loads (insights, tool audit, turn inspector).
+- Phase 10.9, AI Credits Analyzer (not yet published).
+  - Integration tests in a real VS Code, with performance budgets, run in
+    CI; each CI run builds an installable `.vsix`.
+  - Smaller, minified extension package (2.6 MB) with only the files it
+    needs.
+  - The extension's MCP server has its own name, `ai-credits-analyzer`,
+    and Copilot-only instructions.
+  - Release workflows: `ext-v*` tags publish the extension to the VS Code
+    Marketplace and Open VSX; `app-v*` tags make a GitHub Release of the
+    standalone app.
+### Fixed
+- The turn inspector's round picker could jump back to round 0 right after
+  you picked another round.
 
 ## [0.9.0] - 2026-10-24
 ### Added

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import type {
   ContentPlaceholder,
@@ -228,11 +228,11 @@ export function TurnInspector({
   useFocusReturn(backButton);
   useEscapeKey(onClose);
   const [format, setFormat] = useState<PayloadFormat>("pretty");
-  const [selectedRound, setSelectedRound] = useState(0);
-
-  useEffect(() => {
-    setSelectedRound(0);
-  }, [sessionId, turnIndex, load]);
+  // The picked round belongs to the detail it was picked in, so a newly
+  // loaded turn starts at round 0 without a reset effect racing a click.
+  const [roundPick, setRoundPick] = useState<{ detail: TurnInspectorDetail; round: number } | null>(null);
+  const loadedDetail = state.status === "ready" ? state.detail : undefined;
+  const selectedRound = roundPick && roundPick.detail === loadedDetail ? roundPick.round : 0;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-3)", padding: "var(--space-4)" }}>
@@ -299,7 +299,7 @@ export function TurnInspector({
                       name="turnRound"
                       options={roundOptions}
                       value={String(round.request.index)}
-                      onChange={(value) => setSelectedRound(Number(value))}
+                      onChange={(value) => setRoundPick({ detail, round: Number(value) })}
                     />
                     <span className="text-muted" style={{ fontSize: 12 }}>
                       {detail.rounds.length} rounds in this turn

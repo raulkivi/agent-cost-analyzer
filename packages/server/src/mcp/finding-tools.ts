@@ -4,13 +4,13 @@ import { findingKindSchema, findingSeveritySchema, findingsQueryResultSchema } f
 import { DEFAULT_MAX_FINDINGS } from "../services/insights/findings-query.js";
 import { DEFAULT_ROLLUP_SESSION_LIMIT } from "../services/tool-audit/audit-query-service.js";
 import { limitSchema } from "../services/tool-audit/audit-query-params.js";
-import type { McpServerDeps } from "./mcp-server.js";
+import type { McpToolDeps } from "./mcp-server.js";
 import { json, READ_ONLY, sessionsPerProviderArg, sinceArg, untilArg, type Guard } from "./tool-helpers.js";
 
 // Phase 9.12 (docs/plans/mcp-tools-v2.md §4): the Phase 9.11 detectors'
 // findings over MCP (replaces the planned list_security_findings).
 
-export function registerFindingTools(server: McpServer, deps: McpServerDeps, guarded: Guard): void {
+export function registerFindingTools(server: McpServer, deps: McpToolDeps, guarded: Guard): void {
   server.registerTool(
     "list_findings",
     {

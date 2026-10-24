@@ -1,4 +1,4 @@
-import type { HostCommand, HostCommandArgs, HostEventName } from "@copilot-cost-analyzer/domain";
+import type { HostCommand, HostCommandArgs, HostEventName, PerformanceMarkName } from "@copilot-cost-analyzer/domain";
 import { abortError } from "./abort.js";
 import type { ApiMethodName, ApiTransport, ViewStatePersistence } from "./transport.js";
 
@@ -70,6 +70,12 @@ export class WebviewTransport implements ApiTransport {
   // request; the host's reply carries no result.
   async command<C extends HostCommand>(command: C, args: HostCommandArgs[C]): Promise<void> {
     await this.send<unknown>(command, (id) => ({ kind: "command", id, command, args }));
+  }
+
+  // One of the web app's timing marks (domain rpc.ts, perfMark), for the
+  // host to record. One-way: no id, no reply, nothing pending.
+  reportPerformanceMark(name: PerformanceMarkName, timeMs: number): void {
+    this.host.postMessage({ kind: "perfMark", name, timeMs });
   }
 
   private send<T>(name: ApiMethodName | HostCommand, envelope: (id: string) => unknown, signal?: AbortSignal): Promise<T> {

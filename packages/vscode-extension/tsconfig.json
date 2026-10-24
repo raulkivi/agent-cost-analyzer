@@ -9,5 +9,7 @@
     "module": "ESNext",
     "types": ["node", "vscode"]
   },
-  "include": ["src", "scripts", "vitest.config.mts"]
+  "include": ["src", "scripts", "vitest.config.mts"],
+  // The real-VS Code integration suite has its own tsconfig (mocha globals).
+  "exclude": ["src/test/integration"]
 }

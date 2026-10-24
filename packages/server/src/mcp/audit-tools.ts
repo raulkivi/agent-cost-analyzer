@@ -10,7 +10,7 @@ import {
 } from "@copilot-cost-analyzer/domain";
 import { DEFAULT_ROLLUP_SESSION_LIMIT } from "../services/tool-audit/audit-query-service.js";
 import { limitSchema, offsetSchema, turnIndexSchema } from "../services/tool-audit/audit-query-params.js";
-import type { McpServerDeps } from "./mcp-server.js";
+import type { McpToolDeps } from "./mcp-server.js";
 import {
   json,
   providerArg,
@@ -27,7 +27,7 @@ import {
 
 const DEFAULT_TOOL_CALL_LIMIT = 50;
 
-export function registerAuditTools(server: McpServer, deps: McpServerDeps, guarded: Guard): void {
+export function registerAuditTools(server: McpServer, deps: McpToolDeps, guarded: Guard): void {
   server.registerTool(
     "get_session_audit",
     {
@@ -36,7 +36,7 @@ export function registerAuditTools(server: McpServer, deps: McpServerDeps, guard
         "Summarises how one session's tool calls went: totals by outcome (success/error/interrupted/denied/unknown), failure rate, breakdowns by tool, shell program and failure category (command-not-found, wrong-directory, invalid-arguments, dependency-missing, git-state, ...), per-turn counts, retried commands, the tokens spent recovering from failures, and outcome coverage. Start here for \"why did the agent struggle?\"; use list_tool_calls for the individual calls.",
       inputSchema: {
         sessionId: sessionIdArg,
-        provider: providerArg,
+        provider: providerArg(deps.identity),
         includeCalls: z
           .boolean()
           .optional()
@@ -68,7 +68,7 @@ export function registerAuditTools(server: McpServer, deps: McpServerDeps, guard
         "Lists one session's tool calls with outcome, exit code, failure category, a redacted stderr excerpt, the command and program, and the turn index. Filter by outcome, failure category, tool kind (shell, file-write, web, mcp, subagent, ...), tool name, shell program or turn; page with offset/limit (`total` counts every match).",
       inputSchema: {
         sessionId: sessionIdArg,
-        provider: providerArg,
+        provider: providerArg(deps.identity),
         status: z.array(toolCallStatusSchema).optional().describe('Keep only these outcomes, e.g. ["error","interrupted","denied"].'),
         failureCategory: z.array(failureCategorySchema).optional().describe("Keep only these failure categories."),
         kind: z.array(toolKindSchema).optional().describe('Keep only these tool kinds, e.g. ["shell"] or ["web","mcp"].'),
@@ -99,7 +99,7 @@ export function registerAuditTools(server: McpServer, deps: McpServerDeps, guard
       description:
         "Aggregates tool-call outcomes across one provider's most recent sessions in a date window: totals, failure rate, the top failing commands (and in how many sessions they failed), failures per day, a per-session summary, and breakdowns by tool, program and failure category. Use it for \"which commands keep failing?\".",
       inputSchema: {
-        provider: providerArg,
+        provider: providerArg(deps.identity),
         since: sinceArg,
         until: untilArg,
         limit: sessionsPerProviderArg(DEFAULT_ROLLUP_SESSION_LIMIT),

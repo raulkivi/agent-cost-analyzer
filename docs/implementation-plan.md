@@ -1215,14 +1215,14 @@ dataset and detectors).
 ## Phase 10 — AI Credits Analyzer VS Code extension (in scope since 2026-10-24)
 
 Full plan: [plans/vscode-extension.md](plans/vscode-extension.md)
-(steps 10.0-10.9, each with its own exit criterion, plus CI and Marketplace
+(steps 10.0-10.10, each with its own exit criterion, plus CI and Marketplace
 deployment). The extension, **AI Credits Analyzer**, is a separate,
 Copilot-only product that shares code with the standalone app (**Agent Cost
 Analyzer**, vision §5). The standalone app keeps every provider. Brought
 into scope on 2026-10-24. Previously this was a deferred "future path".
 
 **Status (2026-10-24)**: steps 10.0-10.8 done (10.8's real Copilot agent-mode
-check moves to 10.9), 10.9 not started. Each step's details and deviations are in its status note in the
+check moves to 10.9), 10.9 code done (its integration suite passes in a real VS Code in CI; the owner's manual checks are open), 10.10 (documentation) not started. Each step's details and deviations are in its status note in the
 plan's §6.
 
 | Step | What | State |
@@ -1235,14 +1235,15 @@ plan's §6.
 | 10.5 | Product profile in the UI, host commands, VS Code theme | Done (#66) |
 | 10.6 | Native Sessions/Setup sidebar, status bar, selection sync | Done (#67) |
 | 10.7 | Accessibility, responsive layout, AsyncView, local fonts, walkthrough, l10n | Done (#69) |
-| 10.8 | Copilot-only MCP server in the extension, plus UI follow-ups from 10.7 | Done (PR pending); real Copilot agent-mode check in 10.9 |
-| 10.9 | Integration tests in real VS Code, performance budgets, usability run, packaging | Not started |
+| 10.8 | Copilot-only MCP server in the extension, plus UI follow-ups from 10.7 | Done (#71); real Copilot agent-mode check in 10.9 |
+| 10.9 | Integration tests in real VS Code, performance budgets, usability run, packaging | Done (#72 pending merge; integration suite green in CI); owner's manual checks open |
+| 10.10 | Documentation: extension README/listing, extension user guide, two-product README and User Guide | Not started |
 
 **Not yet verified**: the extension has run only on the Electron build
 that VS Code ships, not in a real VS Code. VS Code can't be downloaded in
 the development container, so step 10.9's CI integration tests cover it.
 **Publishing**: the Marketplace publisher `raulkivi` is registered. The
-`VSCE_PAT`/Open VSX tokens and the icon are still to do (plan §7.0).
+Marketplace sign-in (Entra ID, since global PATs retire on 1 December 2026), the Open VSX token and the icon are still to do (plan §7.0).
 
 **Exit criterion**: the plan's §10.
 

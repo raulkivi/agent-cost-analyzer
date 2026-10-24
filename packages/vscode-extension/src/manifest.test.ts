@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { COMMAND_IDS, VIEW_IDS } from "./commands/command-ids.js";
 import { WATCHED_SETTING_IDS } from "./config/config-change-watcher.js";
+import { INTERNAL_COMMAND_IDS } from "./diagnostics/test-hooks.js";
 import { MCP_ENABLED_SETTING_ID, MCP_PROVIDER_ID } from "./mcp/mcp-server-definitions.js";
 import { SESSION_CONTEXT_VALUE, SETUP_WARNING_CONTEXT_VALUE } from "./vscode/vscode-sidebar-views.js";
 
@@ -40,6 +41,9 @@ interface ConfigurationSection {
 
 interface Manifest {
   displayName: string;
+  capabilities?: {
+    untrustedWorkspaces?: { supported: boolean | "limited"; description?: string; restrictedConfigurations?: string[] };
+  };
   description: string;
   activationEvents?: string[];
   contributes: {
@@ -84,6 +88,15 @@ describe("package.json contributions (vscode-extension.md §3.5)", () => {
 
   it("contributes exactly the commands the code registers", () => {
     expect([...contributedCommands].sort()).toEqual(Object.values(COMMAND_IDS).sort());
+  });
+
+  it("never contributes, or names anywhere, the internal test-hook commands (step 10.9)", () => {
+    const manifestText = readFileSync(path.join(packageDir, "package.json"), "utf-8");
+
+    for (const id of Object.values(INTERNAL_COMMAND_IDS)) {
+      expect(contributedCommands.has(id), id).toBe(false);
+    }
+    expect(manifestText).not.toContain("aiCreditsAnalyzer.internal");
   });
 
   it("contributes every command that menus, welcome views and keybindings reference", () => {
@@ -199,6 +212,14 @@ describe("package.json contributions (vscode-extension.md §3.5)", () => {
     }
   });
 
+  it("runs in Restricted Mode but ignores an untrusted workspace's value for the MCP setting", () => {
+    const untrusted = manifest.capabilities?.untrustedWorkspaces;
+
+    expect(untrusted?.supported).toBe("limited");
+    expect(untrusted?.restrictedConfigurations).toEqual([MCP_ENABLED_SETTING_ID]);
+    expect(text(untrusted?.description)).toMatch(/MCP server/);
+  });
+
   it("keeps the MCP server off by default, and says plainly what turning it on sends to the model", () => {
     const property = [contributes.configuration ?? []].flat().find((section) => section.properties[MCP_ENABLED_SETTING_ID])?.properties[
       MCP_ENABLED_SETTING_ID
@@ -206,9 +227,9 @@ describe("package.json contributions (vscode-extension.md §3.5)", () => {
     const description = text(property?.markdownDescription);
 
     expect(property).toMatchObject({ type: "boolean", default: false });
-    // A workspace's .vscode/settings.json can't turn it on: only the user
-    // (or their remote machine's settings) can.
-    expect(property?.scope).toBe("machine");
+    // Default scope (the owner's choice, 2026-10-24): it's set like any
+    // other setting, so no explicit scope is declared.
+    expect(property?.scope).toBeUndefined();
     for (const words of ["read-only", "redacted", "Copilot Chat session data", "costs", "tool calls", "findings", "turn text"]) {
       expect(description, words).toContain(words);
     }

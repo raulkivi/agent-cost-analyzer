@@ -63,7 +63,7 @@ cards with corner registration marks, Barlow/Barlow Condensed type.*
   signals (risky commands, anomalies, behaviour changes) that say what
   happened, when and why.
 - [VS Code extension plan](docs/plans/vscode-extension.md) — Phase 10
-  (in progress: steps 10.0-10.8 done, 10.9 remaining): AI Credits
+  (in progress: steps 10.0-10.9 code done, 10.10 remaining): AI Credits
   Analyzer, a separate, Copilot-only VS Code extension in
   `packages/vscode-extension` that shares code with this standalone app
   (Agent Cost Analyzer). It covers the code analysis, the test-first steps

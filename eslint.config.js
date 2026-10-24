@@ -6,6 +6,8 @@ export default tseslint.config(
     ignores: [
       "**/dist/**",
       "packages/vscode-extension/media/**",
+      "packages/vscode-extension/out/**",
+      "packages/vscode-extension/.vscode-test/**",
       "**/node_modules/**",
       "**/coverage/**",
       ".design-sync/previews/**",
@@ -25,6 +27,7 @@ export default tseslint.config(
             "*.js",
             "packages/*/vitest.config.ts",
             "packages/*/vite.config.ts",
+            "packages/vscode-extension/.vscode-test.mjs",
           ],
         },
         tsconfigRootDir: import.meta.dirname,
