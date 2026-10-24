@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- Phase 10 plan (`docs/plans/vscode-extension.md`): AI Credits Analyzer,
+  a separate Copilot-only VS Code extension that shares code with the
+  standalone app (Agent Cost Analyzer). Covers the code analysis, decisions
+  D1-D10, test-first steps 10.0-10.9, UX and accessibility standards, UI
+  mock-ups (`docs/plans/mockups/vscode-extension/`), and CI and Marketplace
+  / Open VSX deployment.
 - MCP tools v2 (Phase 9.12): `get_session_cost` (token and AI Credits
   totals with coverage, cache hit ratio, spend per model, the most
   expensive turns, cost events, context overhead), `get_cost_rollup`
