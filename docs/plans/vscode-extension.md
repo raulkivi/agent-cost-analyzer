@@ -437,6 +437,25 @@ identically.
 - **Exit:** the web suite is green and `rg 'fetch\(' packages/web/src`
   finds matches only in `api-client/http-transport.ts`.
 
+**Status (2026-10-24): done.**
+- **Transport.** `api-client/transport.ts` defines `ApiTransport` and a
+  local `ApiMethodName` union. That union mirrors the domain's `ApiMethod`,
+  which arrives in 10.1.
+- **Adapters.** `HttpTransport` (`http-transport.ts`, the only `fetch` in
+  the web package) keeps today's URLs, verbs and error messages.
+  `WebviewTransport` (`webview-transport.ts`) adds request ids, timeouts,
+  out-of-order replies and `onEvent` for host events. Both pass one shared
+  contract suite.
+- **How api-client gets its transport.** `current-transport.ts` is a
+  module-level setter/getter that defaults to HTTP, so no component
+  changed. `main.tsx` installs the result of `selectTransport(window)`, and
+  the health check moved to `api-client/health.ts` (G2).
+- **Tests.** Web tests went from 409 to 514, and every existing test passes
+  unchanged.
+- **Param keys the host must match in 10.4.** `id`, `sessionId` and
+  `turnIndex`, `value` (retention threshold), and the audit, tool-call and
+  insights query fields as named in the HTTP API.
+
 ### 10.3 Extension skeleton, Copilot composition root, build
 
 - **Composition (G11), tests first.** Split `composeLogProviders` into
