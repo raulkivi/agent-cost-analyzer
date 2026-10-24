@@ -54,6 +54,7 @@ function harness(): ContractHarness {
   const { transport, setAutoReply } = setup();
   return {
     transport,
+    hang: () => setAutoReply(() => undefined),
     succeedWith: (value) =>
       setAutoReply((req) => ({ kind: "response", id: req.id, ok: true, result: value })),
     failWith: (status) =>
@@ -239,5 +240,82 @@ describe("WebviewTransport", () => {
       await vi.advanceTimersByTimeAsync(1000);
       await assertion;
     });
+  });
+});
+
+// Cancellation (domain rpc.ts, kind "cancel"): the call rejects at once and
+// the host is told to forget the request.
+describe("WebviewTransport cancellation", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("posts a cancel for the request's id when the signal aborts", async () => {
+    const { transport, sent } = setup();
+    const controller = new AbortController();
+    const pending = transport.call("getInsights", {}, controller.signal).catch((error: unknown) => error);
+
+    controller.abort();
+
+    expect(sent).toHaveLength(2);
+    expect(sent[1]).toEqual({ kind: "cancel", id: sent[0].id });
+    expect(await pending).toMatchObject({ name: "AbortError" });
+  });
+
+  it("posts nothing at all for a signal that was already aborted", async () => {
+    const { transport, sent } = setup();
+    const controller = new AbortController();
+    controller.abort();
+
+    await expect(transport.call("getInsights", {}, controller.signal)).rejects.toMatchObject({ name: "AbortError" });
+
+    expect(sent).toEqual([]);
+  });
+
+  it("ignores the host's late reply to a cancelled request", async () => {
+    const { transport, sent, win } = setup();
+    const controller = new AbortController();
+    const pending = transport.call("getInsights", {}, controller.signal).catch((error: unknown) => error);
+    controller.abort();
+    await pending;
+
+    expect(() => win.dispatch({ kind: "response", id: sent[0].id, ok: true, result: {} })).not.toThrow();
+  });
+
+  it("does not time out a cancelled request later", async () => {
+    const { transport } = setup(1000);
+    const controller = new AbortController();
+    const pending = transport.call("getInsights", {}, controller.signal).catch((error: unknown) => error);
+    controller.abort();
+    await pending;
+
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it("posts no cancel for a request that already finished", async () => {
+    const { transport, sent, setAutoReply } = setup();
+    setAutoReply((req) => ({ kind: "response", id: req.id, ok: true, result: 1 }));
+    const controller = new AbortController();
+
+    await transport.call("getInsights", {}, controller.signal);
+    controller.abort();
+
+    expect(sent).toHaveLength(1);
+  });
+
+  it("leaves other pending requests alone", async () => {
+    const { transport, sent, win } = setup();
+    const controller = new AbortController();
+    const cancelled = transport.call("getInsights", {}, controller.signal).catch((error: unknown) => error);
+    const other = transport.call("getHealth");
+
+    controller.abort();
+    await cancelled;
+    win.dispatch({ kind: "response", id: sent[1].id, ok: true, result: "fine" });
+
+    await expect(other).resolves.toBe("fine");
   });
 });

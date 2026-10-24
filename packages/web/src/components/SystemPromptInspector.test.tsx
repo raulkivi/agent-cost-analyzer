@@ -191,12 +191,12 @@ describe("SystemPromptInspector", () => {
     fireEvent.click(screen.getByRole("radio", { name: "Icicle" }));
 
     expect(screen.getByRole("radio", { name: "Icicle" })).toBeChecked();
-    const diagram = screen.getByRole("img", { name: /prompt composition icicle diagram/i });
+    const diagram = screen.getByRole("group", { name: /prompt composition icicle diagram/i });
     expect(diagram).toBeInTheDocument();
 
     fireEvent.click(within(diagram).getByText("Security Requirements"));
 
-    expect(screen.getByRole("button", { name: /security requirements/i })).toBeInTheDocument();
+    expect(within(diagram).getByRole("button", { name: /^Security Requirements/ })).toHaveAttribute("aria-pressed", "true");
     expect(screen.getByText(/owasp top 10/i)).toBeInTheDocument();
   });
 

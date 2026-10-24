@@ -1221,6 +1221,29 @@ Copilot-only product that shares code with the standalone app (**Agent Cost
 Analyzer**, vision §5). The standalone app keeps every provider. Brought
 into scope on 2026-10-24. Previously this was a deferred "future path".
 
+**Status (2026-10-24)**: steps 10.0-10.8 done (10.8's real Copilot agent-mode
+check moves to 10.9), 10.9 not started. Each step's details and deviations are in its status note in the
+plan's §6.
+
+| Step | What | State |
+|---|---|---|
+| 10.0 | Runtime check: `node:sqlite` works in VS Code's Electron | Done (#57) |
+| 10.1 | Transport-neutral `ApiService` (server) | Done (#57) |
+| 10.2 | `ApiTransport` seam (web: HTTP or webview) | Done (#57) |
+| 10.3 | Extension package, Copilot-only composition, build, bundle boundary | Done (#63) |
+| 10.4 | VS Code-derived paths and settings, persisted settings, param validation | Done (#64) |
+| 10.5 | Product profile in the UI, host commands, VS Code theme | Done (#66) |
+| 10.6 | Native Sessions/Setup sidebar, status bar, selection sync | Done (#67) |
+| 10.7 | Accessibility, responsive layout, AsyncView, local fonts, walkthrough, l10n | Done (#69) |
+| 10.8 | Copilot-only MCP server in the extension, plus UI follow-ups from 10.7 | Done (PR pending); real Copilot agent-mode check in 10.9 |
+| 10.9 | Integration tests in real VS Code, performance budgets, usability run, packaging | Not started |
+
+**Not yet verified**: the extension has run only on the Electron build
+that VS Code ships, not in a real VS Code. VS Code can't be downloaded in
+the development container, so step 10.9's CI integration tests cover it.
+**Publishing**: the Marketplace publisher `raulkivi` is registered. The
+`VSCE_PAT`/Open VSX tokens and the icon are still to do (plan §7.0).
+
 **Exit criterion**: the plan's §10.
 
 **Dependencies**: Phase 5 (config check), Phase 9 (provider registry),

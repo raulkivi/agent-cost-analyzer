@@ -106,14 +106,25 @@ function invoke(api: DispatcherApi, method: ApiMethod, params: Params): Promise<
 // Host commands (G8) go to their own handler, never to ApiService. The
 // webview is untrusted content, so nothing else gets through and no
 // internal error detail goes back to it.
+//
+// A `cancel` message (domain rpc.ts) makes the dispatcher forget a request
+// that is still running: its reply, success or failure, is dropped, so
+// nothing is posted for that id. The ApiService call itself isn't
+// interrupted — it reads log files synchronously, so there is nothing to
+// abort part-way — and its work simply finishes unheard.
 export class MessageDispatcher {
+  // Ids of the requests being answered, and the subset the webview cancelled.
+  private readonly running = new Set<string>();
+  private readonly cancelled = new Set<string>();
+
   constructor(
     private readonly api: DispatcherApi,
     private readonly options: MessageDispatcherOptions = {},
   ) {}
 
   // The reply to post back, or undefined for a message that is neither a
-  // request nor a host command. Commands never reach ApiService.
+  // request nor a host command, for a cancel, and for a cancelled request.
+  // Commands never reach ApiService.
   async dispatch(message: unknown): Promise<RpcResponse | RpcCommandResponse | undefined> {
     if (!isRecord(message) || typeof message.id !== "string") {
       return undefined;
@@ -123,6 +134,12 @@ export class MessageDispatcher {
       return this.options.hostCommands
         ? this.options.hostCommands.handle({ ...message, id })
         : failure(id, 400, "Host commands are not available");
+    }
+    if (message.kind === "cancel") {
+      // Only a request still running is remembered, so a cancel that lost
+      // the race with its reply doesn't suppress a later request with that id.
+      if (this.running.has(message.id)) this.cancelled.add(message.id);
+      return undefined;
     }
     if (message.kind !== "request") {
       return undefined;
@@ -141,13 +158,24 @@ export class MessageDispatcher {
     if (!parsed.success) {
       return failure(id, 400, describeInvalidParams(method.data, parsed.error));
     }
+    this.running.add(id);
     try {
-      return { kind: "response", id, ok: true, result: await invoke(this.api, method.data, parsed.data as Params) };
+      const reply = await this.answer(id, method.data, parsed.data as Params);
+      return this.cancelled.has(id) ? undefined : reply;
+    } finally {
+      this.running.delete(id);
+      this.cancelled.delete(id);
+    }
+  }
+
+  private async answer(id: string, method: ApiMethod, params: Params): Promise<RpcResponse> {
+    try {
+      return { kind: "response", id, ok: true, result: await invoke(this.api, method, params) };
     } catch (error) {
       if (error instanceof ApiError) {
         return failure(id, statusForApiError(error), error.message);
       }
-      this.options.onInternalError?.(method.data, error);
+      this.options.onInternalError?.(method, error);
       return failure(id, 500, INTERNAL_ERROR_MESSAGE);
     }
   }

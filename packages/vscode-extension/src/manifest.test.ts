@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { COMMAND_IDS, VIEW_IDS } from "./commands/command-ids.js";
 import { WATCHED_SETTING_IDS } from "./config/config-change-watcher.js";
+import { MCP_ENABLED_SETTING_ID, MCP_PROVIDER_ID } from "./mcp/mcp-server-definitions.js";
 import { SESSION_CONTEXT_VALUE, SETUP_WARNING_CONTEXT_VALUE } from "./vscode/vscode-sidebar-views.js";
 
 const packageDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -30,7 +31,11 @@ interface Walkthrough {
 }
 
 interface ConfigurationSection {
-  properties: Record<string, { markdownDescription?: string; order?: number; enum?: unknown[]; markdownEnumDescriptions?: string[] }>;
+  title?: string;
+  properties: Record<
+    string,
+    { type?: string; default?: unknown; scope?: string; markdownDescription?: string; order?: number; enum?: unknown[]; markdownEnumDescriptions?: string[] }
+  >;
 }
 
 interface Manifest {
@@ -46,6 +51,7 @@ interface Manifest {
     viewsWelcome?: { view: string; contents: string; when?: string }[];
     walkthroughs?: Walkthrough[];
     configuration?: ConfigurationSection | ConfigurationSection[];
+    mcpServerDefinitionProviders?: { id: string; label: string }[];
   };
 }
 
@@ -174,13 +180,15 @@ describe("package.json contributions (vscode-extension.md §3.5)", () => {
     expect(welcome(VIEW_IDS.sessions)).toContain(COMMAND_IDS.openLearnMode);
   });
 
-  it("contributes no setting the code doesn't read, and holds any it adds to the §3.5 rules", () => {
+  it("contributes exactly the settings the code reads, held to the §3.5 rules", () => {
     const configurations = [contributes.configuration ?? []].flat();
     const properties = configurations.flatMap((section) => Object.entries(section.properties));
 
-    // No aiCreditsAnalyzer.* setting is read by the code yet (the MCP switch
-    // arrives with step 10.8), so none is contributed.
-    expect(properties.map(([id]) => id)).toEqual([]);
+    // The MCP switch (step 10.8) is the only aiCreditsAnalyzer.* setting.
+    expect(properties.map(([id]) => id)).toEqual([MCP_ENABLED_SETTING_ID]);
+    for (const section of configurations) {
+      expect(text(section.title)).toBe("AI Credits Analyzer");
+    }
     for (const [id, property] of properties) {
       expect(id.startsWith("aiCreditsAnalyzer."), id).toBe(true);
       expect(property.markdownDescription, id).toMatch(/^%[A-Za-z0-9._-]+%$/);
@@ -189,6 +197,27 @@ describe("package.json contributions (vscode-extension.md §3.5)", () => {
         expect(property.markdownEnumDescriptions?.length, id).toBe(property.enum.length);
       }
     }
+  });
+
+  it("keeps the MCP server off by default, and says plainly what turning it on sends to the model", () => {
+    const property = [contributes.configuration ?? []].flat().find((section) => section.properties[MCP_ENABLED_SETTING_ID])?.properties[
+      MCP_ENABLED_SETTING_ID
+    ];
+    const description = text(property?.markdownDescription);
+
+    expect(property).toMatchObject({ type: "boolean", default: false });
+    // A workspace's .vscode/settings.json can't turn it on: only the user
+    // (or their remote machine's settings) can.
+    expect(property?.scope).toBe("machine");
+    for (const words of ["read-only", "redacted", "Copilot Chat session data", "costs", "tool calls", "findings", "turn text"]) {
+      expect(description, words).toContain(words);
+    }
+    expect(description).toMatch(/sent to whichever model the chat uses/);
+  });
+
+  it("contributes the MCP server definition provider the code registers, with a label", () => {
+    expect(contributes.mcpServerDefinitionProviders?.map((provider) => provider.id)).toEqual([MCP_PROVIDER_ID]);
+    expect(text(contributes.mcpServerDefinitionProviders?.[0]?.label)).toBe("AI Credits Analyzer");
   });
 
   it("activates when VS Code has started, so the status bar shows today's AI Credits", () => {
@@ -221,6 +250,11 @@ function userVisibleStrings(): { where: string; value: unknown }[] {
     ]),
     ...contributes.viewsContainers.activitybar.map((container) => ({ where: `${container.id} container title`, value: container.title })),
     ...contributedViews.map((view) => ({ where: `${view.id} name`, value: view.name })),
+    ...(contributes.mcpServerDefinitionProviders ?? []).map((provider) => ({ where: `${provider.id} label`, value: provider.label })),
+    ...[contributes.configuration ?? []].flat().flatMap((section) => [
+      { where: "configuration title", value: section.title },
+      ...Object.entries(section.properties).map(([id, property]) => ({ where: `${id} description`, value: property.markdownDescription })),
+    ]),
     ...(contributes.viewsWelcome ?? []).map((welcome) => ({ where: `${welcome.view} welcome`, value: welcome.contents })),
     ...(contributes.walkthroughs ?? []).flatMap((entry) => [
       { where: `${entry.id} title`, value: entry.title },
@@ -319,9 +353,24 @@ describe("Get Started walkthrough (vscode-extension.md §3.5 Onboarding, §3.6 b
     expect(links(3)).toEqual([{ command: COMMAND_IDS.openLearnMode, args: [] }]);
   });
 
-  it("describes the MCP step honestly: no command to run until the server ships", () => {
-    expect(commandLinks(text(steps[4]!.description))).toEqual([]);
-    expect(text(steps[4]!.description)).toMatch(/later version/i);
+  it("links the MCP step to fixSetting with the MCP setting, and says it's off until turned on", () => {
+    const description = text(steps[4]!.description);
+
+    expect(commandLinks(description)).toEqual([{ command: COMMAND_IDS.fixSetting, args: [MCP_ENABLED_SETTING_ID] }]);
+    expect(description).not.toMatch(/later version/i);
+    expect(description).toMatch(/off until you turn it on/i);
+  });
+
+  it("explains, in the MCP step's page, the setting and the data it sends to the model", () => {
+    const page = readFileSync(path.join(packageDir, steps[4]!.media.markdown!), "utf-8");
+
+    expect(page).not.toMatch(/later version/i);
+    expect(page).toContain(MCP_ENABLED_SETTING_ID);
+    for (const words of ["read-only", "redacted", "costs", "tool calls", "findings", "turn text", "whichever model"]) {
+      expect(page, words).toContain(words);
+    }
+    // The page is shown as Markdown: no command links or remote content there.
+    expect(page).not.toMatch(/command:|https?:\/\/|<script|<img/i);
   });
 
   it("completes steps from the settings and commands they are about", () => {
@@ -330,11 +379,13 @@ describe("Get Started walkthrough (vscode-extension.md §3.5 Onboarding, §3.6 b
       [`onSettingChanged:${RETENTION_SETTING}`],
       [`onCommand:${COMMAND_IDS.openSession}`, `onCommand:${COMMAND_IDS.open}`],
       [`onCommand:${COMMAND_IDS.openLearnMode}`],
-      ["onStepSelected"],
+      [`onSettingChanged:${MCP_ENABLED_SETTING_ID}`],
     ]);
   });
 
-  it("names, in completionEvents, only contributed commands, the watched Copilot settings, or onStepSelected", () => {
+  it("names, in completionEvents, only contributed commands, the watched Copilot settings, contributed settings, or onStepSelected", () => {
+    const contributedSettings = [contributes.configuration ?? []].flat().flatMap((section) => Object.keys(section.properties));
+    const settings = [...WATCHED_SETTING_IDS, ...contributedSettings];
     const events = steps.flatMap((step) => step.completionEvents ?? []);
 
     expect(events.length).toBeGreaterThan(0);
@@ -347,7 +398,7 @@ describe("Get Started walkthrough (vscode-extension.md §3.5 Onboarding, §3.6 b
       if (kind === "onCommand") {
         expect(contributedCommands.has(target), event).toBe(true);
       } else if (kind === "onSettingChanged") {
-        expect((WATCHED_SETTING_IDS as readonly string[]).includes(target), event).toBe(true);
+        expect(settings.includes(target), event).toBe(true);
       } else {
         expect.fail(`unexpected completion event ${event}`);
       }

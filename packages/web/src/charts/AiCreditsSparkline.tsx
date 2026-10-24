@@ -1,6 +1,7 @@
 import { scaleLinear } from "d3-scale";
 import { line as d3Line } from "d3-shape";
 import type { Turn } from "@copilot-cost-analyzer/domain";
+import { ViewAsTable } from "./ViewAsTable.js";
 
 const WIDTH = 200;
 const HEIGHT = 30;
@@ -10,7 +11,27 @@ interface AiCreditsSparklineProps {
   turns: Turn[];
 }
 
+// The sparkline with its "View as table" switch: every turn's credits as
+// the sparkline's own figures (2 decimals), unknown turns as "unknown".
 export function AiCreditsSparkline({ turns }: AiCreditsSparklineProps) {
+  const table = {
+    caption: "AI Credits per turn",
+    rowHeader: "Turn",
+    columns: ["AI Credits"],
+    rows: turns.map((turn) => ({
+      key: String(turn.index),
+      header: String(turn.index),
+      cells: [turn.usage.costAiCredits.known ? turn.usage.costAiCredits.value.toFixed(2) : null],
+    })),
+  };
+  return (
+    <ViewAsTable table={table}>
+      <Sparkline turns={turns} />
+    </ViewAsTable>
+  );
+}
+
+function Sparkline({ turns }: AiCreditsSparklineProps) {
   const knownPoints = turns.flatMap((turn, index) =>
     turn.usage.costAiCredits.known ? [{ index, aiCredits: turn.usage.costAiCredits.value }] : [],
   );

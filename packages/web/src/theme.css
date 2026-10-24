@@ -304,6 +304,10 @@ a { color: var(--color-accent-text); text-underline-offset: 3px; }
 .chart-column:hover .chart-band, .chart-column:focus-visible .chart-band { fill: color-mix(in srgb, var(--color-text) 6%, transparent); }
 .chart-band--selected, .chart-column:hover .chart-band--selected { fill: var(--color-accent-100); }
 .chart-column:focus-visible .chart-band { stroke: var(--color-accent); stroke-width: 2; }
+/* The system-prompt icicle's cells take focus (arrow keys, §3.5): the global
+   focus ring, drawn inside the cell so a neighbour or the clipped row edge
+   can't hide it. */
+.icicle-cell:focus-visible { outline-offset: -3px; }
 .chart-tooltip {
   position: absolute; z-index: 5; min-width: 140px; pointer-events: none;
   padding: var(--space-2) var(--space-3); font-size: 12px;

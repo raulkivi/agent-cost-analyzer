@@ -90,5 +90,7 @@ content here.
   `Session.systemPrompt` and the system prompt inspector for those pi
   sessions; `npm run configure`/`unconfigure` install/remove it, see
   architecture.md §6.2.5). Phase 10 (AI Credits Analyzer, a separate
-  Copilot-only VS Code extension sharing this code) is in progress — see
-  docs/plans/vscode-extension.md for steps 10.0-10.9.
+  Copilot-only VS Code extension in `packages/vscode-extension` sharing
+  this code) is in progress: steps 10.0-10.8 done, 10.9
+  (real-VS Code integration tests, packaging) not started. The progress
+  table and per-step status notes are in docs/plans/vscode-extension.md.

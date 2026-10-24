@@ -7,6 +7,7 @@ import {
   hostCommandSchema,
   hostEventNameSchema,
   MAX_HOST_COMMAND_TEXT_LENGTH,
+  rpcCancelSchema,
   rpcCommandSchema,
   rpcRequestSchema,
   selectSessionPayloadSchema,
@@ -223,6 +224,20 @@ describe("host commands (vscode-extension.md G8)", () => {
     expect(domain.hostCommandArgsSchemas).toBe(hostCommandArgsSchemas);
     expect(domain.rpcCommandSchema).toBe(rpcCommandSchema);
     expect(domain.MAX_HOST_COMMAND_TEXT_LENGTH).toBe(MAX_HOST_COMMAND_TEXT_LENGTH);
+  });
+});
+
+describe("rpcCancelSchema", () => {
+  it("accepts a cancel message for a request id and rejects malformed ones", () => {
+    expect(rpcCancelSchema.safeParse({ kind: "cancel", id: "req-1" }).success).toBe(true);
+    for (const bad of [{ kind: "cancel" }, { kind: "cancel", id: 1 }, { kind: "request", id: "req-1" }]) {
+      expect(rpcCancelSchema.safeParse(bad).success).toBe(false);
+    }
+  });
+
+  it("is exported from the package entry point", () => {
+    expect(domain.rpcCancelSchema).toBeDefined();
+    expect(domain.rpcCancelSchema).toBe(rpcCancelSchema);
   });
 });
 

@@ -6,7 +6,9 @@ import { fileURLToPath } from "node:url";
 import { DatabaseSync } from "node:sqlite";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { build } from "esbuild";
-import { extensionBundleOptions } from "../scripts/esbuild-options.mts";
+import { Client } from "@modelcontextprotocol/sdk/client/index.js";
+import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
+import { extensionBundleOptions, mcpServerBundleOptions } from "../scripts/esbuild-options.mts";
 import { COMMAND_IDS, VIEW_IDS } from "./commands/command-ids.js";
 
 const serverFixturesDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../server/fixtures");
@@ -81,8 +83,16 @@ class EventEmitter {
   fire(event) { for (const fn of [...this.listeners]) fn(event); }
   dispose() { this.listeners.clear(); }
 }
+const mcpProviders = new Map();
+class McpStdioServerDefinition {
+  constructor(label, command, args, env, version) { this.label = label; this.command = command; this.args = args; this.env = env; this.version = version; }
+}
 module.exports = {
-  TreeItem, ThemeIcon, ThemeColor, EventEmitter,
+  TreeItem, ThemeIcon, ThemeColor, EventEmitter, McpStdioServerDefinition,
+  __mcpProviders: mcpProviders,
+  lm: {
+    registerMcpServerDefinitionProvider(id, provider) { mcpProviders.set(id, provider); return { dispose() { mcpProviders.delete(id); } }; },
+  },
   TreeItemCollapsibleState: { None: 0, Collapsed: 1, Expanded: 2 },
   StatusBarAlignment: { Left: 1, Right: 2 },
   __treeViews: treeViews, __statusBarItems: statusBarItems, __progress: progress, __l10nMessages: l10nMessages,
@@ -201,7 +211,22 @@ interface StubStatusBarItem {
   backgroundColor?: { id: string };
 }
 
+interface StubMcpProvider {
+  onDidChangeMcpServerDefinitions?(listener: () => void): { dispose(): void };
+  provideMcpServerDefinitions(token?: unknown): unknown[] | Promise<unknown[]>;
+}
+
+interface StubMcpDefinition {
+  label: string;
+  command: string;
+  args: string[];
+  env: Record<string, string>;
+  version: string;
+}
+
 interface VscodeStub {
+  McpStdioServerDefinition: new (...args: unknown[]) => unknown;
+  __mcpProviders: Map<string, StubMcpProvider>;
   __commands: Map<string, (...args: unknown[]) => unknown>;
   __treeViews: Map<string, StubTreeView>;
   __statusBarItems: StubStatusBarItem[];
@@ -231,6 +256,8 @@ describe("the built extension bundle", () => {
   beforeAll(async () => {
     installDir = mkdtempSync(path.join(tmpdir(), "ai-credits-analyzer-install-"));
     await build({ ...extensionBundleOptions(path.join(installDir, "dist")), logLevel: "silent" });
+    await build({ ...mcpServerBundleOptions(path.join(installDir, "dist")), logLevel: "silent" });
+    writeFileSync(path.join(installDir, "package.json"), JSON.stringify({ name: "ai-credits-analyzer", version: "0.1.0" }));
     mkdirSync(path.join(installDir, "node_modules", "vscode"), { recursive: true });
     writeFileSync(path.join(installDir, "node_modules", "vscode", "index.js"), VSCODE_STUB);
     mkdirSync(path.join(installDir, "media"));
@@ -310,6 +337,17 @@ describe("the built extension bundle", () => {
     await expect.poll(() => panel.posted.find((reply) => reply.id === id)).toBeDefined();
     return panel.posted.find((reply) => reply.id === id)!;
   }
+
+  it("posts no reply for a request the webview cancelled, and still answers the next one", async () => {
+    const panel = vscode.__panels[0]!;
+
+    panel.send({ kind: "request", id: "cancelled", method: "getInsights", params: {} });
+    panel.send({ kind: "cancel", id: "cancelled" });
+    const health = await call("getHealth");
+
+    expect(health.ok).toBe(true);
+    expect(panel.posted.filter((reply) => reply.id === "cancelled")).toEqual([]);
+  });
 
   it("answers invalid params with 400", async () => {
     const reply = await call("getSession", { id: 7 });
@@ -570,5 +608,63 @@ describe("the built extension bundle", () => {
       );
       expect(vscode.__executed).toHaveLength(before + 1);
     });
+  });
+
+  describe("MCP server definitions (D7)", () => {
+    const MCP_ENABLED = "aiCreditsAnalyzer.mcp.enabled";
+    const provider = () => vscode.__mcpProviders.get("aiCreditsAnalyzer.mcp")!;
+    const definitions = async () => (await provider().provideMcpServerDefinitions({})) as StubMcpDefinition[];
+
+    it("registers the contributed provider, which offers no server while the setting is off", async () => {
+      expect([...vscode.__mcpProviders.keys()]).toEqual(["aiCreditsAnalyzer.mcp"]);
+
+      expect(await definitions()).toEqual([]);
+    });
+
+    it("offers one stdio server, run by the host's own executable as Node, once the setting is on", async () => {
+      vscode.__settings[MCP_ENABLED] = true;
+
+      const offered = await definitions();
+
+      expect(offered).toHaveLength(1);
+      expect(offered[0]).toBeInstanceOf(vscode.McpStdioServerDefinition);
+      expect(offered[0]).toEqual({
+        label: "AI Credits Analyzer",
+        command: process.execPath,
+        args: [path.join(installDir, "dist", "mcp-stdio.js"), "--user-data-dir", userDataDir],
+        env: { ELECTRON_RUN_AS_NODE: "1" },
+        version: "0.1.0",
+      });
+    });
+
+    it("tells VS Code the definitions changed when the setting flips, and not for other settings", async () => {
+      let changes = 0;
+      const subscription = provider().onDidChangeMcpServerDefinitions!(() => changes++);
+
+      vscode.__changeConfiguration(["editor.fontSize"]);
+      expect(changes).toBe(0);
+
+      vscode.__settings[MCP_ENABLED] = false;
+      vscode.__changeConfiguration([MCP_ENABLED]);
+      expect(changes).toBe(1);
+      expect(await definitions()).toEqual([]);
+      subscription.dispose();
+    });
+
+    it("starts the defined server, which lists the 9 tools over the Copilot provider", async () => {
+      vscode.__settings[MCP_ENABLED] = true;
+      const [definition] = await definitions();
+      const client = new Client({ name: "bundle-load", version: "1.0.0" });
+      await client.connect(
+        new StdioClientTransport({ command: definition!.command, args: definition!.args, env: definition!.env, stderr: "ignore" }),
+      );
+      try {
+        expect((await client.listTools()).tools).toHaveLength(9);
+        const status = await client.callTool({ name: "list_log_providers", arguments: {} });
+        expect((status.structuredContent as { providers: { id: string }[] }).providers.map((entry) => entry.id)).toEqual(["vscode"]);
+      } finally {
+        await client.close();
+      }
+    }, 60_000);
   });
 });

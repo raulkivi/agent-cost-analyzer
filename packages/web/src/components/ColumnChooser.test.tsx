@@ -73,4 +73,60 @@ describe("ColumnChooser (§3.5 Layout, mock-up board 1)", () => {
     expect(screen.queryByRole("group", { name: "Visible columns" })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Columns" })).toHaveFocus();
   });
+
+  describe("outside click", () => {
+    function renderBesideButton() {
+      render(
+        <>
+          <button type="button">Elsewhere</button>
+          <Stateful initial={["turn"]} />
+        </>,
+      );
+    }
+
+    it("closes on a pointerdown outside, leaving the focus where the click put it", async () => {
+      const user = userEvent.setup();
+      renderBesideButton();
+      await user.click(screen.getByRole("button", { name: "Columns" }));
+      expect(screen.getByRole("group", { name: "Visible columns" })).toBeInTheDocument();
+
+      await user.click(screen.getByRole("button", { name: "Elsewhere" }));
+
+      expect(screen.queryByRole("group", { name: "Visible columns" })).not.toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Columns" })).toHaveAttribute("aria-expanded", "false");
+      expect(screen.getByRole("button", { name: "Elsewhere" })).toHaveFocus();
+    });
+
+    it("closes on a pointerdown on the page's background without taking the focus", async () => {
+      const user = userEvent.setup();
+      renderBesideButton();
+      await user.click(screen.getByRole("button", { name: "Columns" }));
+
+      await user.click(document.body);
+
+      expect(screen.queryByRole("group", { name: "Visible columns" })).not.toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Columns" })).not.toHaveFocus();
+    });
+
+    it("stays open for a pointerdown inside the panel", async () => {
+      const user = userEvent.setup();
+      renderBesideButton();
+      await user.click(screen.getByRole("button", { name: "Columns" }));
+
+      await user.click(screen.getByRole("checkbox", { name: "Model" }));
+      await user.click(screen.getByText("Visible columns"));
+
+      expect(screen.getByRole("group", { name: "Visible columns" })).toBeInTheDocument();
+    });
+
+    it("lets the Columns button itself toggle, rather than closing and reopening", async () => {
+      const user = userEvent.setup();
+      renderBesideButton();
+      await user.click(screen.getByRole("button", { name: "Columns" }));
+
+      await user.click(screen.getByRole("button", { name: "Columns" }));
+
+      expect(screen.queryByRole("group", { name: "Visible columns" })).not.toBeInTheDocument();
+    });
+  });
 });

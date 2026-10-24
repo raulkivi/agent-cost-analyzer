@@ -73,7 +73,10 @@ body.vscode-dark .table tbody tr:focus-visible,
 body.vscode-high-contrast .table tbody tr:focus-visible,
 body.vscode-light .selection-chip-clear:focus-visible,
 body.vscode-dark .selection-chip-clear:focus-visible,
-body.vscode-high-contrast .selection-chip-clear:focus-visible {
+body.vscode-high-contrast .selection-chip-clear:focus-visible,
+body.vscode-light .icicle-cell:focus-visible,
+body.vscode-dark .icicle-cell:focus-visible,
+body.vscode-high-contrast .icicle-cell:focus-visible {
   outline-color: var(--vscode-focusBorder, var(--color-accent));
 }
 body.vscode-light .chart-column:focus-visible .chart-band,

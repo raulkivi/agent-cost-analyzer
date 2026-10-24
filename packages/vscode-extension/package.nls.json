@@ -28,7 +28,10 @@
   "walkthrough.step.learnCaching.title": "Learn how prompt caching saves AI Credits",
   "walkthrough.step.learnCaching.description": "See, with sample sessions, why cached tokens cost less. Learn mode doesn't read your logs.\n[Open Learn mode](command:aiCreditsAnalyzer.openLearnMode)",
   "walkthrough.step.askCopilot.title": "Ask Copilot about your costs (MCP, optional)",
-  "walkthrough.step.askCopilot.description": "Coming in a later version: ask Copilot Chat about your costs through a read-only MCP server that answers from the same local logs. It will stay off until you turn it on in settings. Nothing is shared with any model today.",
+  "walkthrough.step.askCopilot.description": "Ask Copilot Chat about your costs through a read-only MCP server that answers from the same local logs. It stays off until you turn it on. When on, redacted session data (costs, tool calls, findings, turn text) is sent to the model you chat with.\n[Open the setting](command:aiCreditsAnalyzer.fixSetting?%5B%22aiCreditsAnalyzer.mcp.enabled%22%5D)",
   "walkthrough.title": "Get started with AI Credits Analyzer",
-  "walkthrough.description": "See where your Copilot Chat tokens and AI Credits go, from logs on your own machine."
+  "walkthrough.description": "See where your Copilot Chat tokens and AI Credits go, from logs on your own machine.",
+  "configuration.title": "AI Credits Analyzer",
+  "configuration.mcp.enabled.markdownDescription": "Offer Copilot Chat a read-only MCP server that answers questions about your Copilot Chat sessions from your local logs.\n\n**When on, read-only and redacted Copilot Chat session data (costs, tool calls, findings, turn text) is sent to whichever model the chat uses.** Secrets found in that text are redacted first, and the server never writes, runs commands or reaches the network. Off by default; workspace settings can't turn it on.",
+  "mcpServerDefinitionProvider.label": "AI Credits Analyzer"
 }
