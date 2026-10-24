@@ -36,6 +36,15 @@
   "engines": {
     "vscode": "^1.143.0"
   },
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": "limited",
+      "description": "%capabilities.untrustedWorkspaces.description%",
+      "restrictedConfigurations": [
+        "aiCreditsAnalyzer.mcp.enabled"
+      ]
+    }
+  },
   "activationEvents": [
     "onStartupFinished"
   ],
@@ -131,7 +140,6 @@
         "aiCreditsAnalyzer.mcp.enabled": {
           "type": "boolean",
           "default": false,
-          "scope": "machine",
           "order": 1,
           "markdownDescription": "%configuration.mcp.enabled.markdownDescription%"
         }

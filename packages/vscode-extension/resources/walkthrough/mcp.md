@@ -7,7 +7,8 @@ cost?" or "which commands keep failing?" in Copilot Chat, through a
 ## Turn it on
 
 Set **`aiCreditsAnalyzer.mcp.enabled`** to on in your user settings. It's
-off by default, and a workspace's settings can't turn it on. Copilot
+off by default. A workspace's settings can turn it on only once you trust
+that workspace; in Restricted Mode they're ignored. Copilot
 Chat can then use the AI Credits Analyzer tools in agent mode. Turn the
 setting off again and the server is no longer offered.
 

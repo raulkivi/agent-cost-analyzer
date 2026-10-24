@@ -1053,9 +1053,18 @@ is verified in jsdom at those widths, not visually.
   calls `vscode.lm.registerMcpServerDefinitionProvider`. The command is
   `process.execPath` with `ELECTRON_RUN_AS_NODE=1`. The change event fires
   only when `aiCreditsAnalyzer.mcp.enabled` changes.
-- The setting is `scope: "machine"`, so a cloned repo's
-  `.vscode/settings.json` can't turn it on (not in the original plan; added
-  in review).
+- Setting scope: merged as `scope: "machine"`, then changed after the
+  merge (owner's decision, 2026-10-24) to the default scope plus a trust
+  guard. The manifest declares `capabilities.untrustedWorkspaces`
+  `supported: "limited"` with `restrictedConfigurations:
+  ["aiCreditsAnalyzer.mcp.enabled"]`, so in Restricted Mode an untrusted
+  workspace's `.vscode/settings.json` can't turn the server on; a trusted
+  workspace can. This also lets the extension run in Restricted Mode,
+  where an extension that declares nothing is disabled.
+- Fixed after the merge: the turn inspector's round selection could snap
+  back to round 0 when data arrived just after a click, because the reset
+  ran on every load-state change (a 10.8 regression from the Cancel
+  wiring). The selection now belongs to the loaded detail.
 - Walkthrough step 5 is real: it links the setting and completes on
   `onSettingChanged:aiCreditsAnalyzer.mcp.enabled`; `mcp.md` explains what
   the model sees. `fixSetting` accepts the setting; the webview's
@@ -1194,7 +1203,7 @@ root README takes the name **Agent Cost Analyzer**; the repo name
 - **Threat model** (`docs/threat-model.md`): the extension's surfaces:
   the webview (CSP, nonce, `connect-src 'none'`), the RPC and host
   command allow-lists, the read-only document provider, and the MCP child
-  process (argument validation, the `machine`-scoped setting, data sent to
+  process (argument validation, the setting's trust guard (`restrictedConfigurations`), data sent to
   the chat model).
 - **CONTRIBUTING:** the `vscode-extension` package, how to build it, run it
   with F5 in an Extension Development Host, and run its unit and
