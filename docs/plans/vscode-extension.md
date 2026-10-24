@@ -368,7 +368,7 @@ identically.
   unchanged.
 - New workspace, `packages/vscode-extension`:
   - `package.json` with `name` and `displayName` from §3.4, `publisher`
-    (§9 Q1), its own `version` (D8), `engines.vscode` per D9,
+    `raulkivi` (§7.0), its own `version` (D8), `engines.vscode` per D9,
     `main: ./dist/extension.js`, `extensionKind: ["workspace"]`, and
     contributed command `aiCreditsAnalyzer.open`. Commands activate
     implicitly, with no `*` activation. It also adds an `icon`. The
@@ -557,6 +557,68 @@ first with fakes. Only thin registration code touches the `vscode` API.
 
 ## 7. Deployment
 
+### 7.0 Publisher setup (one-time, manual, before step 10.3)
+
+The extension is published under the owner's **personal account**. The
+Marketplace still requires a *publisher*: the namespace in the extension
+id (`<publisher>.<name>`) and the identity shown on the listing. A
+personal account can own one; no company or organization is needed.
+
+- **Publisher id: `raulkivi`** (proposed, matching the GitHub handle).
+  The id is permanent and must be unique, using lowercase letters, digits
+  and hyphens. The extension id becomes `raulkivi.ai-credits-analyzer`,
+  and the `publisher` field in `packages/vscode-extension/package.json`
+  must match it. Display name: the owner's name.
+
+**VS Code Marketplace**
+
+1. Sign in with a personal Microsoft account at
+   `https://marketplace.visualstudio.com/manage` and create the
+   publisher: id `raulkivi`, display name, and optionally a description,
+   website (the GitHub repo) and support link.
+2. Create a free Azure DevOps organization with the same Microsoft
+   account. It's needed only to issue the publishing token.
+3. Create a Personal Access Token there, scoped to **Marketplace →
+   Manage**, with organization "All accessible organizations" (vsce
+   requires that), and the longest lifetime allowed (up to 1 year).
+   Put a calendar reminder for rotation (R5).
+4. Check locally with `npx @vscode/vsce login raulkivi`, then store the
+   token as the `VSCE_PAT` secret in the protected `release` GitHub
+   environment (§7.2), never as a plain repository secret.
+5. Check the current vsce docs at setup time: Microsoft is moving
+   Marketplace auth toward Microsoft Entra ID (`vsce publish
+   --azure-credential` with a federated GitHub identity), which removes
+   the long-lived PAT. Use it if it's available for personal accounts.
+
+**Open VSX** (VSCodium, Cursor, Gitpod and others)
+
+1. Sign in at `https://open-vsx.org` with GitHub, then link an
+   eclipse.org account and accept the Eclipse Publisher Agreement. Open
+   VSX requires this before publishing.
+2. Create an access token in the Open VSX user settings, and run
+   `npx ovsx create-namespace raulkivi -p <token>` once. The namespace
+   must equal the `publisher` field.
+3. Store the token as `OVSX_PAT` in the same `release` environment.
+4. Optional: request namespace ownership verification so the listing
+   shows as verified rather than unverified.
+
+**Listing prerequisites checked before the first publish (step 10.8)**
+
+- `icon`: a PNG of at least 128×128 px. The Marketplace rejects SVG icons.
+  The Activity Bar icon (10.6) is a separate monochrome SVG.
+- `repository`, `bugs`, `homepage` and `license` (MIT) set in
+  `package.json`. vsce warns or fails without them.
+- README images use absolute HTTPS URLs (vsce rewrites relative links
+  only when `repository` is set) and no SVG images, which the
+  Marketplace blocks unless they come from trusted badge providers.
+- `displayName` "AI Credits Analyzer" isn't already taken (§3.4).
+- Optional, later: the verified-publisher badge needs a domain the owner
+  controls, DNS verification, and a publisher that has existed for a
+  while. Not needed for v1.
+
+**Exit:** `vsce login raulkivi` and `ovsx verify-pat raulkivi` both
+succeed, and both secrets exist in the `release` environment.
+
 ### 7.1 CI (every PR)
 
 Extend `.github/workflows/ci.yml` with a second job, `extension`, on
@@ -610,7 +672,7 @@ changelog sits at the repo root.
 
 ### 7.3 Manual and sideload distribution
 
-Until a publisher is set up, the `.vsix` from the CI artifact or the
+Until the publisher (§7.0) is set up, the `.vsix` from the CI artifact or the
 GitHub Release installs with
 `code --install-extension <name>-<version>.vsix`.
 
@@ -628,15 +690,18 @@ GitHub Release installs with
 
 ## 9. Open questions (need a decision before the step named)
 
-1. **Publisher id** (before 10.3).
+None. Every decision needed before step 10.0 is made. The publisher id
+`raulkivi` (§7.0) is proposed and becomes final when it's registered.
 
 Settled on 2026-10-24: the extension is Copilot-only; it includes the
 tool audit and insights dashboard; both products ship an MCP server; the
 products have separate names (AI Credits Analyzer and Agent Cost
 Analyzer, §3.4) and independent versions; and the standalone app keeps
 VS Code support. The minimum VS Code version is the current stable at
-each release (D9). The extension has a native sidebar (Sessions, Setup)
-and a status-bar item in v1, with analysis in the editor panel (D10).
+each release (D9). The extension is published under the owner's
+personal account, with its own publisher id (§7.0). It has a native
+sidebar (Sessions, Setup) and a status-bar item in v1, with analysis in
+the editor panel (D10).
 
 ## 10. Exit criterion (Phase 10 as a whole)
 
