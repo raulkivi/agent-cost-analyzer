@@ -125,6 +125,24 @@
         "contents": "%welcome.setup%"
       }
     ],
+    "configuration": {
+      "title": "%configuration.title%",
+      "properties": {
+        "aiCreditsAnalyzer.mcp.enabled": {
+          "type": "boolean",
+          "default": false,
+          "scope": "machine",
+          "order": 1,
+          "markdownDescription": "%configuration.mcp.enabled.markdownDescription%"
+        }
+      }
+    },
+    "mcpServerDefinitionProviders": [
+      {
+        "id": "aiCreditsAnalyzer.mcp",
+        "label": "%mcpServerDefinitionProvider.label%"
+      }
+    ],
     "walkthroughs": [
       {
         "id": "aiCreditsAnalyzer.getStarted",
@@ -188,7 +206,7 @@
               "markdown": "resources/walkthrough/mcp.md"
             },
             "completionEvents": [
-              "onStepSelected"
+              "onSettingChanged:aiCreditsAnalyzer.mcp.enabled"
             ]
           }
         ]
@@ -267,6 +285,7 @@
   "devDependencies": {
     "@copilot-cost-analyzer/domain": "*",
     "@copilot-cost-analyzer/server": "*",
+    "@modelcontextprotocol/sdk": "^1.32.1",
     "@types/vscode": "1.140.0",
     "esbuild": "^0.28.2",
     "vitest": "^5.0.3"

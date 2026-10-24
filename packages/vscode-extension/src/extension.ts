@@ -4,6 +4,7 @@ import { composeExtension } from "./composition.js";
 import { ReadOnlyDocumentStore } from "./documents/read-only-document-store.js";
 import { registerReadOnlyDocuments } from "./vscode/vscode-read-only-documents.js";
 import { createVscodeHostCommands } from "./vscode/vscode-host-commands.js";
+import { registerMcpServerDefinitions } from "./vscode/vscode-mcp-server-definitions.js";
 import { registerSessionsView, registerSetupView } from "./vscode/vscode-sidebar-views.js";
 import { registerStatusBar } from "./vscode/vscode-status-bar.js";
 import { createVscodeWalkthrough } from "./vscode/vscode-walkthrough.js";
@@ -19,6 +20,7 @@ export function activate(context: vscode.ExtensionContext): void {
   const extension = composeExtension({
     extensionPath: context.extensionPath,
     extensionVersion: String((context.extension.packageJSON as { version: unknown }).version),
+    execPath: process.execPath,
     globalStoragePath: context.globalStorageUri.fsPath,
     globalState: context.globalState,
     workspace: vscode.workspace,
@@ -40,6 +42,8 @@ export function activate(context: vscode.ExtensionContext): void {
     registerSessionsView<vscode.TreeItem>(vscode, extension.sidebar, vscode.l10n.t),
     registerSetupView<vscode.TreeItem>(vscode, extension.sidebar),
     registerStatusBar(vscode, extension.sidebar),
+    // Offers VS Code the Copilot-only MCP server while its setting is on (D7).
+    registerMcpServerDefinitions<vscode.McpStdioServerDefinition>(vscode, extension.mcpServers),
   );
   // The first read, so the status bar shows without a view being opened. It
   // never rejects: failures are shown by the views themselves.
