@@ -1,5 +1,6 @@
 import type { ConfigStatus } from "@copilot-cost-analyzer/domain";
 import { describe, expect, it, vi } from "vitest";
+import { upperCaseTranslate } from "../l10n/upper-case-translate.js";
 import { COMMAND_IDS } from "./command-ids.js";
 import { ExtensionCommands } from "./extension-commands.js";
 
@@ -196,5 +197,21 @@ describe("ExtensionCommands", () => {
       await handlers[COMMAND_IDS.openSession]!("s1");
       expect(panel.postWhenReady).toHaveBeenCalledWith(selectSession({ sessionId: "s1" }));
     });
+  });
+});
+
+describe("ExtensionCommands error messages (vscode-extension.md §3.5 Localization)", () => {
+  it("translates the messages VS Code shows when a command is refused", async () => {
+    const panel = { open: vi.fn(), postWhenReady: vi.fn() };
+    const commands = new ExtensionCommands({
+      panel,
+      sidebar: { refresh: async () => undefined },
+      hostCommands: { openSetting: async () => undefined },
+      readConfigStatus: async () => statusWith(LOGGING_SETTING),
+      t: upperCaseTranslate,
+    });
+
+    await expect(commands.openSession(42)).rejects.toThrow("A SESSION ID IS NEEDED TO OPEN A SESSION, WITH AN OPTIONAL TAB OR VIEW");
+    await expect(commands.fixSetting("editor.fontSize")).rejects.toThrow(`SETTING "editor.fontSize" CAN'T BE OPENED FROM THE ANALYZER`);
   });
 });

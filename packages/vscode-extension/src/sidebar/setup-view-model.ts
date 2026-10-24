@@ -1,4 +1,5 @@
 import type { ConfigStatus } from "@copilot-cost-analyzer/domain";
+import { identityTranslate, type Translate } from "../l10n/localize.js";
 
 // One Setup-view row per config warning (vscode-extension.md D10, step
 // 10.6). Pure and free of `vscode`: vscode/vscode-setup-view.ts renders it.
@@ -10,7 +11,7 @@ export interface SetupWarningNode {
   settingId: string;
   label: string;
   // Severity as text as well as an icon: never colour alone (§3.5).
-  description: "Required" | "Optional";
+  description: string;
   icon: "warning" | "info";
   tooltip: string;
   ariaLabel: string;
@@ -18,19 +19,20 @@ export interface SetupWarningNode {
 
 // No nodes at all means "nothing to fix", which is what makes VS Code show
 // the view's welcome content.
-export function buildSetupTree(status: ConfigStatus | undefined): SetupWarningNode[] {
+export function buildSetupTree(status: ConfigStatus | undefined, t: Translate = identityTranslate): SetupWarningNode[] {
   return (status?.warnings ?? []).map((warning) => {
     const required = warning.severity === "required";
+    const severity = required ? t("Required") : t("Optional");
     const steps = warning.helpSteps.map((step, index) => `${index + 1}. ${step}`).join("\n");
     return {
       kind: "warning",
       id: `${warning.code}:${warning.settingId}`,
       settingId: warning.settingId,
       label: warning.message,
-      description: required ? "Required" : "Optional",
+      description: severity,
       icon: required ? "warning" : "info",
       tooltip: steps === "" ? warning.message : `${warning.message}\n\n${steps}`,
-      ariaLabel: `${required ? "Required" : "Optional"}: ${warning.message}`,
+      ariaLabel: t("{0}: {1}", severity, warning.message),
     };
   });
 }

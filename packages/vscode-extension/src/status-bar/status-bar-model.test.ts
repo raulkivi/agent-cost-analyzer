@@ -1,5 +1,6 @@
 import type { ConfigWarning, Session } from "@copilot-cost-analyzer/domain";
 import { describe, expect, it } from "vitest";
+import { upperCaseTranslate as T } from "../l10n/upper-case-translate.js";
 import { buildStatusBarState, buildTodayStatus } from "./status-bar-model.js";
 
 function session(id: string, startedAt: string | undefined, cost: number | null): Session {
@@ -142,5 +143,33 @@ describe("buildStatusBarState", () => {
 
     expect(state?.text).toBe("$(graph) 4.00 AI Credits today");
     expect(state?.warning).toBe(false);
+  });
+});
+
+describe("translation (vscode-extension.md §3.5 Localization)", () => {
+  it("translates today's text, tooltip and screen-reader label, for one session and for several", () => {
+    const status = buildTodayStatus([session("a", TODAY, 4), session("b", TODAY, null)], NOW, "UTC", T);
+    const single = buildTodayStatus([session("a", TODAY, null)], NOW, "UTC", T);
+
+    expect(status).toEqual({
+      text: "$(graph) 4.00 AI CREDITS TODAY",
+      tooltip: "1 OF 2 SESSIONS TODAY HAVE COST DATA",
+      ariaLabel: "AI CREDITS TODAY: 4.00, 1 OF 2 SESSIONS TODAY HAVE COST DATA. OPEN ANALYZER.",
+    });
+    expect(single).toEqual({
+      text: "$(graph) AI CREDITS: UNKNOWN",
+      tooltip: "0 OF 1 SESSION TODAY HAS COST DATA",
+      ariaLabel: "AI CREDITS TODAY: UNKNOWN, 0 OF 1 SESSION TODAY HAS COST DATA. OPEN ANALYZER.",
+    });
+  });
+
+  it("translates the setup-needed state but keeps the warning's own message", () => {
+    const state = buildStatusBarState({ sessions: [], now: NOW, warnings: [warning("required", "Debug logging is off.")], timeZone: "UTC", t: T });
+
+    expect(state).toMatchObject({
+      text: "$(warning) AI CREDITS: SETUP NEEDED",
+      tooltip: "Debug logging is off.\nCLICK TO OPEN SETUP.",
+      ariaLabel: "AI CREDITS ANALYZER NEEDS SETUP. OPEN SETUP.",
+    });
   });
 });

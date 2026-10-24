@@ -4,6 +4,7 @@ import {
   type HostEvent,
   type SelectSessionPayload,
 } from "@copilot-cost-analyzer/domain";
+import { identityTranslate, type Translate } from "../l10n/localize.js";
 import { WATCHED_SETTING_IDS } from "../config/config-change-watcher.js";
 import { allowedSettingIds } from "../rpc/host-command-handler.js";
 import { COMMAND_IDS } from "./command-ids.js";
@@ -19,6 +20,8 @@ export interface ExtensionCommandsDeps {
   sidebar: { refresh(): Promise<void> };
   hostCommands: { openSetting(settingId: string): Promise<void> };
   readConfigStatus(): Promise<ConfigStatus>;
+  // Translates the messages VS Code shows when a command is refused.
+  t?: Translate;
 }
 
 type Handler = (...args: unknown[]) => unknown;
@@ -38,7 +41,11 @@ function stringArg(arg: unknown, field: string): unknown {
 // nodes, menus and other extensions, so every one is validated like the
 // webview's messages are.
 export class ExtensionCommands {
-  constructor(private readonly deps: ExtensionCommandsDeps) {}
+  private readonly t: Translate;
+
+  constructor(private readonly deps: ExtensionCommandsDeps) {
+    this.t = deps.t ?? identityTranslate;
+  }
 
   open(): void {
     this.deps.panel.open();
@@ -80,7 +87,7 @@ export class ExtensionCommands {
     const arg = stringArg(target, "settingId");
     const settingId = typeof arg === "string" && arg !== "" ? arg : WATCHED_SETTING_IDS[0];
     if (!(await allowedSettingIds(this.deps.readConfigStatus)).has(settingId)) {
-      throw new Error(`Setting "${settingId}" can't be opened from the analyzer`);
+      throw new Error(this.t('Setting "{0}" can\'t be opened from the analyzer', settingId));
     }
     await this.deps.hostCommands.openSetting(settingId);
   }
@@ -101,7 +108,7 @@ export class ExtensionCommands {
   private select(candidate: unknown): void {
     const payload = selectSessionPayloadSchema.safeParse(candidate);
     if (!payload.success) {
-      throw new Error("A session id is needed to open a session, with an optional tab or view");
+      throw new Error(this.t("A session id is needed to open a session, with an optional tab or view"));
     }
     this.deps.panel.open();
     this.deps.panel.postWhenReady(selectSessionEvent(payload.data));

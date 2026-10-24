@@ -1,4 +1,5 @@
 import type { ConfigStatus, Session } from "@copilot-cost-analyzer/domain";
+import { identityTranslate, type Translate } from "../l10n/localize.js";
 import type { Disposable } from "../panel/analyzer-panel.js";
 import { buildStatusBarState, type StatusBarState } from "../status-bar/status-bar-model.js";
 import { buildSessionsTree, sessionsLoadErrorTree, type SessionsTreeNode } from "./sessions-tree-model.js";
@@ -20,6 +21,9 @@ export interface SidebarControllerOptions {
   // default.
   now?: () => Date;
   timeZone?: string;
+  // Translates the strings the trees and the status bar show (vscode.l10n.t
+  // in the extension); English as written by default.
+  translate?: Translate;
   // Hears every failure of a source; the views only show a generic error.
   onInternalError?: (source: "listSessions" | "getConfigStatus" | "relistLogSources", error: unknown) => void;
 }
@@ -68,13 +72,13 @@ export class SidebarController {
       return [];
     }
     if (this.sessions === "error") {
-      return sessionsLoadErrorTree();
+      return sessionsLoadErrorTree(this.translate());
     }
-    return buildSessionsTree(this.sessions, this.now(), this.options.timeZone);
+    return buildSessionsTree(this.sessions, this.now(), this.options.timeZone, this.translate());
   }
 
   setupTree(): SetupWarningNode[] {
-    return buildSetupTree(this.configStatus);
+    return buildSetupTree(this.configStatus, this.translate());
   }
 
   statusBar(): StatusBarState | undefined {
@@ -83,7 +87,12 @@ export class SidebarController {
       now: this.now(),
       warnings: this.configStatus?.warnings ?? [],
       timeZone: this.options.timeZone,
+      t: this.translate(),
     });
+  }
+
+  private translate(): Translate {
+    return this.options.translate ?? identityTranslate;
   }
 
   private now(): Date {

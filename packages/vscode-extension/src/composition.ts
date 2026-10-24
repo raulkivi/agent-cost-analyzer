@@ -4,6 +4,7 @@ import type { HostEvent } from "@copilot-cost-analyzer/domain";
 import { createExtensionApiService } from "@copilot-cost-analyzer/server/src/composition/create-extension-api-service";
 import { ExtensionCommands } from "./commands/extension-commands.js";
 import { watchConfigChanges, type ConfigurationChangeSource } from "./config/config-change-watcher.js";
+import type { Translate } from "./l10n/localize.js";
 import { AnalyzerPanel, type Disposable } from "./panel/analyzer-panel.js";
 import { createNonce } from "./panel/nonce.js";
 import { buildPanelHtml, type ViteManifest } from "./panel/panel-html.js";
@@ -30,6 +31,9 @@ export interface ExtensionCompositionInput {
   // What the editor does for the webview's host commands (G8):
   // vscode/vscode-host-commands.ts over the real API.
   hostCommands: HostCommands;
+  // Translates the host's user-visible strings (vscode.l10n.t): the seam that
+  // keeps the models free of `vscode` (§3.5 Localization).
+  translate: Translate;
 }
 
 export interface ComposedExtension extends Disposable {
@@ -54,6 +58,7 @@ export function composeExtension({
   globalState,
   workspace,
   hostCommands,
+  translate,
 }: ExtensionCompositionInput): ComposedExtension {
   const mediaDir = path.join(extensionPath, "media");
   // Copilot only (vscode-extension.md §3.1). Every log path comes from the
@@ -101,13 +106,14 @@ export function composeExtension({
         debugLogsDirPaths = copilotDebugLogsDirPaths(userDataDir);
       },
     },
-    { onInternalError: (source, error) => console.error(`AI Credits Analyzer: ${source} failed`, error) },
+    { translate, onInternalError: (source, error) => console.error(`AI Credits Analyzer: ${source} failed`, error) },
   );
   const commands = new ExtensionCommands({
     panel,
     sidebar,
     hostCommands,
     readConfigStatus: () => api.getConfigStatus(),
+    t: translate,
   });
 
   // A change to either Copilot logging setting makes the webview re-fetch

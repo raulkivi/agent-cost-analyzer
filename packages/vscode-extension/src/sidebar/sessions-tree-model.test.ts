@@ -1,5 +1,6 @@
 import type { Session } from "@copilot-cost-analyzer/domain";
 import { describe, expect, it } from "vitest";
+import { upperCaseTranslate as T } from "../l10n/upper-case-translate.js";
 import { buildSessionsTree, sessionsLoadErrorTree } from "./sessions-tree-model.js";
 
 function session(overrides: Partial<Session> & { id: string }): Session {
@@ -253,6 +254,61 @@ describe("sessionsLoadErrorTree", () => {
         kind: "message",
         label: "Couldn't read your Copilot Chat sessions",
         description: "Nothing was changed. Refresh to retry.",
+        icon: "error",
+      },
+    ]);
+  });
+});
+
+describe("translation (vscode-extension.md §3.5 Localization)", () => {
+  it("translates the day labels, the cost text, the tooltip and the screen-reader label, but not the title or model", () => {
+    const tree = buildSessionsTree(
+      [
+        session({ id: "a", title: "Refactor", startedAt: "2026-10-24T14:02:00Z", turnCount: 12 }),
+        session({ id: "b", title: "Other", startedAt: "2026-10-23T14:02:00Z", turnCount: 1, costAiCredits: { known: false, reason: "x" } }),
+        session({ id: "c", title: "None", model: "unknown" }),
+      ],
+      NOW,
+      "UTC",
+      T,
+    );
+
+    expect(tree.map((group) => group.label)).toEqual(["TODAY", "YESTERDAY", "UNDATED"]);
+    expect(tree[0]?.children[0]).toMatchObject({
+      label: "Refactor",
+      tooltip: "Refactor\n12 TURNS · STARTED 2026-10-24 14:02 · claude-sonnet-5\n1.00 AI CREDITS",
+      ariaLabel: "Refactor, 1.00 AI CREDITS, 12 TURNS",
+    });
+    expect(tree[1]?.children[0]).toMatchObject({
+      description: "AI CREDITS UNKNOWN",
+      tooltip: "Other\n1 TURN · STARTED 2026-10-23 14:02 · claude-sonnet-5\nAI CREDITS UNKNOWN",
+      ariaLabel: "Other, AI CREDITS UNKNOWN, 1 TURN",
+    });
+    expect(tree[2]?.children[0]?.tooltip).toBe("None\n12 TURNS · START TIME UNKNOWN\n1.00 AI CREDITS");
+  });
+
+  it("translates the group totals' unknown counts", () => {
+    const [mixed, none] = buildSessionsTree(
+      [
+        session({ id: "a", startedAt: "2026-10-24T09:00:00Z", costAiCredits: { known: true, value: 2 } }),
+        session({ id: "b", startedAt: "2026-10-24T08:00:00Z", costAiCredits: { known: false, reason: "x" } }),
+        session({ id: "c", startedAt: "2026-10-23T08:00:00Z", costAiCredits: { known: false, reason: "x" } }),
+      ],
+      NOW,
+      "UTC",
+      T,
+    );
+
+    expect(mixed?.description).toBe("2.00 · 1 UNKNOWN");
+    expect(none?.description).toBe("1 UNKNOWN");
+  });
+
+  it("translates the load error", () => {
+    expect(sessionsLoadErrorTree(T)).toEqual([
+      {
+        kind: "message",
+        label: "COULDN'T READ YOUR COPILOT CHAT SESSIONS",
+        description: "NOTHING WAS CHANGED. REFRESH TO RETRY.",
         icon: "error",
       },
     ]);

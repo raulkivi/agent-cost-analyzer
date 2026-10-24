@@ -17,6 +17,7 @@ export function activate(context: vscode.ExtensionContext): void {
     globalState: context.globalState,
     workspace: vscode.workspace,
     hostCommands: createVscodeHostCommands(vscode),
+    translate: vscode.l10n.t,
   });
   context.subscriptions.push(extension);
 
@@ -29,7 +30,7 @@ export function activate(context: vscode.ExtensionContext): void {
     context.subscriptions.push(vscode.commands.registerCommand(command, run));
   }
   context.subscriptions.push(
-    registerSessionsView<vscode.TreeItem>(vscode, extension.sidebar),
+    registerSessionsView<vscode.TreeItem>(vscode, extension.sidebar, vscode.l10n.t),
     registerSetupView<vscode.TreeItem>(vscode, extension.sidebar),
     registerStatusBar(vscode, extension.sidebar),
   );

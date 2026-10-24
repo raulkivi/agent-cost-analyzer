@@ -66,6 +66,7 @@ const shown = [];
 const treeViews = new Map();
 const statusBarItems = [];
 const progress = [];
+const l10nMessages = [];
 class TreeItem { constructor(label, collapsibleState) { this.label = label; this.collapsibleState = collapsibleState; } }
 class ThemeIcon { constructor(id) { this.id = id; } }
 class ThemeColor { constructor(id) { this.id = id; } }
@@ -78,12 +79,15 @@ module.exports = {
   TreeItem, ThemeIcon, ThemeColor, EventEmitter,
   TreeItemCollapsibleState: { None: 0, Collapsed: 1, Expanded: 2 },
   StatusBarAlignment: { Left: 1, Right: 2 },
-  __treeViews: treeViews, __statusBarItems: statusBarItems, __progress: progress,
+  __treeViews: treeViews, __statusBarItems: statusBarItems, __progress: progress, __l10nMessages: l10nMessages,
   __commands: commands, __panels: panels, __settings: settings, Uri, ViewColumn: { Active: -1 },
   __executed: executed, __clipboard: clipboard, __documents: documents, __shown: shown,
   __changeConfiguration(ids) {
     const event = { affectsConfiguration: (section) => ids.some((id) => id === section || id.startsWith(section + ".")) };
     for (const listener of [...configListeners]) listener(event);
+  },
+  l10n: {
+    t(message, ...args) { l10nMessages.push(message); return message.replace(/\\{(\\d+)\\}/g, (p, i) => (args[Number(i)] === undefined ? p : String(args[Number(i)]))); },
   },
   env: { clipboard: { writeText(text) { clipboard.push(text); return Promise.resolve(); } } },
   workspace: {
@@ -180,6 +184,7 @@ interface VscodeStub {
   __treeViews: Map<string, StubTreeView>;
   __statusBarItems: StubStatusBarItem[];
   __progress: { location: { viewId: string } }[];
+  __l10nMessages: string[];
   __panels: StubPanel[];
   __settings: Record<string, unknown>;
   __executed: unknown[][];
@@ -402,6 +407,15 @@ describe("the built extension bundle", () => {
       await expect.poll(() => sessionRows().length).toBe(1);
 
       expect(sessionRows()[0]).toMatchObject({ label: "Fix the bug", description: "AI Credits unknown" });
+    });
+
+    it("routes the host's user-visible strings through vscode.l10n.t (the Localize seam)", async () => {
+      await expect.poll(() => sessionRows().length).toBe(1);
+
+      // The tree's labels, a row's text and its click command.
+      expect(vscode.__l10nMessages).toEqual(
+        expect.arrayContaining(["Today", "AI Credits unknown", "{0} turn", "started {0} {1}", "Open"]),
+      );
     });
 
     it("shows a Setup row and 'setup needed' in the status bar while a required setting is off, and clears both when fixed", async () => {
