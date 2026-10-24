@@ -1,10 +1,11 @@
-import { useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import type { AuditRollup } from "@copilot-cost-analyzer/domain";
 import { fetchAuditRollup, type RollupQuery } from "../api-client/audit.js";
 import { HorizontalBars } from "../charts/HorizontalBars.js";
 import { StackedColumns } from "../charts/StackedColumns.js";
 import { CATEGORY_LABELS, STATUS_META, failedCountOf, formatCompact, formatFailureRate } from "../lib/audit-format.js";
-import { AsyncView } from "./ui/AsyncView.js";
+import { useCancellableLoad } from "../lib/use-cancellable-load.js";
+import { AsyncView, cancelledEmptyState } from "./ui/AsyncView.js";
 import { Blueprint } from "./ui/Blueprint.js";
 import { SegmentedControl } from "./ui/SegmentedControl.js";
 import { StatTile } from "./ui/StatTile.js";
@@ -26,11 +27,9 @@ const PROGRAM_SERIES = [
 
 interface AuditRollupPanelProps {
   onOpenSession: (sessionId: string) => void;
-  loadRollup?: (query: RollupQuery) => Promise<AuditRollup>;
+  loadRollup?: (query: RollupQuery, signal: AbortSignal) => Promise<AuditRollup>;
   now?: Date;
 }
-
-type LoadState = { kind: "loading" } | { kind: "error"; message: string } | { kind: "ready"; rollup: AuditRollup };
 
 function queryFor(preset: RangePreset, now: Date): RollupQuery {
   if (preset === "all") {
@@ -45,22 +44,16 @@ function queryFor(preset: RangePreset, now: Date): RollupQuery {
 // which sessions were worst — each session links to its own audit.
 export function AuditRollupPanel({ onOpenSession, loadRollup = fetchAuditRollup, now }: AuditRollupPanelProps) {
   const [preset, setPreset] = useState<RangePreset>("30");
-  const [state, setState] = useState<LoadState>({ kind: "loading" });
-  const [attempt, setAttempt] = useState(0);
   // Captured once: a fresh `new Date()` per render would change the effect's
   // dependency every render and refetch forever.
   const [nowTime] = useState(() => (now ?? new Date()).getTime());
 
-  useEffect(() => {
-    let cancelled = false;
-    setState({ kind: "loading" });
-    loadRollup(queryFor(preset, new Date(nowTime)))
-      .then((rollup) => !cancelled && setState({ kind: "ready", rollup }))
-      .catch((error: Error) => !cancelled && setState({ kind: "error", message: error.message }));
-    return () => {
-      cancelled = true;
-    };
-  }, [preset, loadRollup, nowTime, attempt]);
+  // Cancellable (Cancel on the skeleton): see useCancellableLoad.
+  const loadFor = useCallback(
+    (signal: AbortSignal) => loadRollup(queryFor(preset, new Date(nowTime)), signal),
+    [preset, loadRollup, nowTime],
+  );
+  const { state, cancel, retry } = useCancellableLoad(loadFor);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-4)" }}>
@@ -69,27 +62,36 @@ export function AuditRollupPanel({ onOpenSession, loadRollup = fetchAuditRollup,
         <SegmentedControl name="audit-range" options={RANGE_OPTIONS} value={preset} onChange={setPreset} />
       </div>
       <AsyncView
-        status={state.kind === "ready" ? (state.rollup.sessionCount === 0 ? "empty" : "ready") : state.kind}
+        status={
+          state.kind === "ready"
+            ? state.data.sessionCount === 0
+              ? "empty"
+              : "ready"
+            : state.kind === "cancelled"
+              ? "empty"
+              : state.kind
+        }
         loadingText="Loading audit…"
         readyText="Audit loaded."
         skeleton="table"
-        error={
-          state.kind === "error"
-            ? { title: `Could not load the audit: ${state.message}`, onRetry: () => setAttempt((current) => current + 1) }
-            : undefined
+        onCancel={cancel}
+        error={state.kind === "error" ? { title: `Could not load the audit: ${state.message}`, onRetry: retry } : undefined}
+        empty={
+          state.kind === "cancelled"
+            ? cancelledEmptyState(retry)
+            : {
+                title: "No sessions in this date range.",
+                body: "No session with tool calls started in this range.",
+                action: preset === "all" ? undefined : { label: "Show all time", onClick: () => setPreset("all") },
+              }
         }
-        empty={{
-          title: "No sessions in this date range.",
-          body: "No session with tool calls started in this range.",
-          action: preset === "all" ? undefined : { label: "Show all time", onClick: () => setPreset("all") },
-        }}
         partial={
-          state.kind === "ready" && state.rollup.outcomeCoverage.unknown > 0
-            ? `Outcome unknown for ${state.rollup.outcomeCoverage.unknown} of ${state.rollup.totals.toolCalls} tool calls: ${state.rollup.outcomeCoverage.unknownReasons.join(" ")}`
+          state.kind === "ready" && state.data.outcomeCoverage.unknown > 0
+            ? `Outcome unknown for ${state.data.outcomeCoverage.unknown} of ${state.data.totals.toolCalls} tool calls: ${state.data.outcomeCoverage.unknownReasons.join(" ")}`
             : undefined
         }
       >
-        {state.kind === "ready" && <RollupBody rollup={state.rollup} onOpenSession={onOpenSession} />}
+        {state.kind === "ready" && <RollupBody rollup={state.data} onOpenSession={onOpenSession} />}
       </AsyncView>
     </div>
   );

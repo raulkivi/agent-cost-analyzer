@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import type {
   ContentPlaceholder,
@@ -8,10 +8,11 @@ import type {
 } from "@copilot-cost-analyzer/domain";
 import { fetchTurnInspectorDetail } from "../api-client/sessions.js";
 import { useEscapeKey, useFocusReturn } from "../lib/focus.js";
+import { useCancellableLoad } from "../lib/use-cancellable-load.js";
 import { TRIGGER_LABELS } from "../lib/trigger-labels.js";
 import { buildPrettyTokens, PAYLOAD_TOKEN_COLORS, unescapeText } from "../lib/turn-payload-pretty.js";
 import type { PayloadToken } from "../lib/turn-payload-pretty.js";
-import { AsyncView } from "./ui/AsyncView.js";
+import { AsyncView, cancelledEmptyState } from "./ui/AsyncView.js";
 import { Blueprint } from "./ui/Blueprint.js";
 import { SegmentedControl } from "./ui/SegmentedControl.js";
 import { Tag } from "./ui/Tag.js";
@@ -31,6 +32,8 @@ interface TurnInspectorProps {
 type LoadState =
   | { status: "loading" }
   | { status: "error" }
+  // The person pressed Cancel on the loading skeleton.
+  | { status: "cancelled" }
   // Nothing to fetch: the session has no usage data at all (logging off).
   | { status: "not-captured" }
   | { status: "ready"; detail: TurnInspectorDetail };
@@ -204,10 +207,22 @@ export function TurnInspector({
   usageDataAvailable,
   onClose,
 }: TurnInspectorProps) {
-  const [state, setState] = useState<LoadState>(
-    usageDataAvailable ? { status: "loading" } : { status: "not-captured" },
+  // Nothing to load when the session has no usage data; otherwise the
+  // fetch is cancellable (Cancel on the skeleton).
+  const loadDetail = useCallback(
+    (signal: AbortSignal) => fetchTurnInspectorDetail(sessionId, turnIndex, signal),
+    [sessionId, turnIndex],
   );
-  const [attempt, setAttempt] = useState(0);
+  const { state: load, cancel, retry } = useCancellableLoad(loadDetail, usageDataAvailable);
+  const state: LoadState = !usageDataAvailable
+    ? { status: "not-captured" }
+    : load.kind === "ready"
+      ? { status: "ready", detail: load.data }
+      : load.kind === "error"
+        ? { status: "error" }
+        : load.kind === "cancelled"
+          ? { status: "cancelled" }
+          : { status: "loading" };
   // §3.5: focus starts on Back and returns to the opener; Escape closes.
   const backButton = useRef<HTMLButtonElement>(null);
   useFocusReturn(backButton);
@@ -217,23 +232,7 @@ export function TurnInspector({
 
   useEffect(() => {
     setSelectedRound(0);
-    if (!usageDataAvailable) {
-      setState({ status: "not-captured" });
-      return;
-    }
-    let canceled = false;
-    setState({ status: "loading" });
-    fetchTurnInspectorDetail(sessionId, turnIndex)
-      .then((detail) => {
-        if (!canceled) setState({ status: "ready", detail });
-      })
-      .catch(() => {
-        if (!canceled) setState({ status: "error" });
-      });
-    return () => {
-      canceled = true;
-    };
-  }, [sessionId, turnIndex, usageDataAvailable, attempt]);
+  }, [sessionId, turnIndex, load]);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-3)", padding: "var(--space-4)" }}>
@@ -255,17 +254,22 @@ export function TurnInspector({
 
       <AsyncView
         status={
-          state.status === "not-captured" || (state.status === "ready" && state.detail.rounds.length === 0)
+          state.status === "not-captured" ||
+          state.status === "cancelled" ||
+          (state.status === "ready" && state.detail.rounds.length === 0)
             ? "empty"
             : state.status
         }
         loadingText="Loading turn detail…"
         readyText="Turn detail loaded."
-        error={{ title: LOAD_FAILED_MESSAGE, onRetry: () => setAttempt((current) => current + 1) }}
+        onCancel={cancel}
+        error={{ title: LOAD_FAILED_MESSAGE, onRetry: retry }}
         empty={
-          state.status === "not-captured"
-            ? { title: "No request or response captured", body: NO_LOGGING_MESSAGE }
-            : { title: "No model request", body: NO_ROUND_TRIP_MESSAGE }
+          state.status === "cancelled"
+            ? cancelledEmptyState(retry)
+            : state.status === "not-captured"
+              ? { title: "No request or response captured", body: NO_LOGGING_MESSAGE }
+              : { title: "No model request", body: NO_ROUND_TRIP_MESSAGE }
         }
       >
         {state.status === "ready" &&

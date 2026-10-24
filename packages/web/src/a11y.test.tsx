@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { ConfigStatus, ProductProfile, Session } from "@copilot-cost-analyzer/domain";
 import { App } from "./App.js";
 import { resetApiTransport } from "./api-client/current-transport.js";
-import { AsyncView } from "./components/ui/AsyncView.js";
+import { AsyncView, cancelledEmptyState } from "./components/ui/AsyncView.js";
 import { resetHostCapabilities, setHostCapabilities } from "./host/current-host-capabilities.js";
 import { resetViewStateStorage } from "./state/current-view-state-storage.js";
 import { makeAuditRollup, makeSessionAudit } from "./test-support/audit-fixture.js";
@@ -400,7 +400,7 @@ describe.each(Object.keys(THEMES) as ThemeName[])("axe: no WCAG 2.2 AA violation
     await expectNoViolations();
   });
 
-  it("error and partial AsyncView states", async () => {
+  it("error, partial and cancelled AsyncView states", async () => {
     render(
       <main>
         <AsyncView
@@ -411,6 +411,7 @@ describe.each(Object.keys(THEMES) as ThemeName[])("axe: no WCAG 2.2 AA violation
         <AsyncView status="ready" loadingText="Loading…" partial="AI Credits are unknown for 1 of 4 sessions.">
           <p>totals</p>
         </AsyncView>
+        <AsyncView status="empty" loadingText="Loading…" empty={cancelledEmptyState(vi.fn())} />
       </main>,
     );
 

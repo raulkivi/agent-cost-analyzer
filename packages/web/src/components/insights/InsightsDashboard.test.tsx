@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { sampleInsightsDataset } from "../../test-support/insights-fixture.js";
 import { InsightsDashboard } from "./InsightsDashboard.js";
@@ -23,7 +24,7 @@ describe("InsightsDashboard", () => {
     const { loadDataset } = renderDashboard();
 
     expect(await screen.findByRole("group", { name: "AI Credits" })).toHaveTextContent("5.50");
-    expect(loadDataset).toHaveBeenCalledWith({ since: "2026-09-11", limit: 200 });
+    expect(loadDataset).toHaveBeenCalledWith({ since: "2026-09-11", limit: 200 }, expect.any(AbortSignal));
     expect(tile("AI Credits")).toHaveTextContent("3 of 4 turns known");
     expect(tile("Sessions")).toHaveTextContent("3");
     expect(tile("Cache hit ratio")).toHaveTextContent("80%");
@@ -103,7 +104,7 @@ describe("InsightsDashboard", () => {
 
     fireEvent.click(screen.getByLabelText("All time"));
 
-    await waitFor(() => expect(loadDataset).toHaveBeenLastCalledWith({ limit: 200 }));
+    await waitFor(() => expect(loadDataset).toHaveBeenLastCalledWith({ limit: 200 }, expect.any(AbortSignal)));
     await waitFor(() => expect(screen.queryByRole("listitem", { name: /Provider/ })).not.toBeInTheDocument());
   });
 
@@ -131,7 +132,7 @@ describe("InsightsDashboard", () => {
 
     fireEvent.click(await screen.findByRole("button", { name: "Show all time" }));
 
-    await waitFor(() => expect(loadDataset).toHaveBeenLastCalledWith({ limit: 200 }));
+    await waitFor(() => expect(loadDataset).toHaveBeenLastCalledWith({ limit: 200 }, expect.any(AbortSignal)));
   });
 
   it("warns, as partial data, when a provider failed to load or was cut short", async () => {
@@ -185,5 +186,25 @@ describe("InsightsDashboard", () => {
 
       expect(await screen.findByText("No sessions in this date range.")).toBeInTheDocument();
     });
+  });
+
+  it("lets a slow load be cancelled, says so without an error alert, and retries", async () => {
+    const user = userEvent.setup();
+    const signals: AbortSignal[] = [];
+    const loadDataset = vi.fn((_query: unknown, signal: AbortSignal) => {
+      signals.push(signal);
+      return signals.length === 1 ? new Promise<never>(() => undefined) : Promise.resolve(sampleInsightsDataset());
+    });
+    render(<InsightsDashboard loadDataset={loadDataset} now={NOW} />);
+
+    await user.click(await screen.findByRole("button", { name: "Cancel" }));
+
+    expect(signals[0].aborted).toBe(true);
+    expect(screen.getByRole("heading", { name: "Loading cancelled" })).toBeInTheDocument();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Retry" }));
+
+    expect(await screen.findByRole("group", { name: "AI Credits" })).toBeInTheDocument();
+    expect(loadDataset).toHaveBeenCalledTimes(2);
   });
 });

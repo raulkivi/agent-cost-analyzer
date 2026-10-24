@@ -886,7 +886,7 @@ describe("App", () => {
       fireEvent.click(screen.getByLabelText("Dashboard"));
 
       expect(await screen.findByRole("group", { name: "AI Credits" })).toHaveTextContent("5.50");
-      expect(fetch).toHaveBeenCalledWith(expect.stringMatching(/^\/api\/insights\?since=\d{4}-\d{2}-\d{2}&limit=200$/));
+      expect(fetch).toHaveBeenCalledWith(expect.stringMatching(/^\/api\/insights\?since=\d{4}-\d{2}-\d{2}&limit=200$/), { signal: expect.any(AbortSignal) });
       // Full width: the session list and the right column step aside for the dashboard's own list boxes.
       expect(screen.getByLabelText("Explanation")).not.toBeVisible();
       expect(screen.getByRole("button", { name: "Fix the bug", hidden: true })).not.toBeVisible();

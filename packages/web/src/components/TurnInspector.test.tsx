@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { TurnInspectorDetail } from "@copilot-cost-analyzer/domain";
 import { TurnInspector } from "./TurnInspector.js";
@@ -111,7 +112,7 @@ describe("TurnInspector", () => {
     expect(screen.getByText("Response · round 0")).toBeInTheDocument();
     expect(screen.queryByText("Request · round 1")).not.toBeInTheDocument();
     expect(screen.queryByText("Response · round 1")).not.toBeInTheDocument();
-    expect(fetch).toHaveBeenCalledWith("/api/sessions/session-1/turns/3");
+    expect(fetch).toHaveBeenCalledWith("/api/sessions/session-1/turns/3", { signal: expect.any(AbortSignal) });
   });
 
   it("switches rounds via the round selector without refetching", async () => {
@@ -343,5 +344,30 @@ describe("TurnInspector", () => {
     fireEvent.click(screen.getByRole("button", { name: /back to session/i }));
 
     expect(onClose).toHaveBeenCalled();
+  });
+
+  it("lets a slow load be cancelled, says so without an error alert, and retries", async () => {
+    const user = userEvent.setup();
+    const fetchStub = vi
+      .fn()
+      .mockImplementationOnce(
+        (_url: string, init: { signal: AbortSignal }) =>
+          new Promise((_resolve, reject) => {
+            init.signal.addEventListener("abort", () => reject(new DOMException("aborted", "AbortError")));
+          }),
+      )
+      .mockResolvedValue({ ok: true, status: 200, json: () => Promise.resolve(TWO_ROUND_DETAIL) });
+    vi.stubGlobal("fetch", fetchStub);
+    render(<TurnInspector sessionId="session-1" turnIndex={3} usageDataAvailable={true} onClose={() => {}} />);
+
+    await user.click(await screen.findByRole("button", { name: "Cancel" }));
+
+    expect(fetchStub.mock.calls[0][1].signal.aborted).toBe(true);
+    expect(screen.getByRole("heading", { name: "Loading cancelled" })).toBeInTheDocument();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Retry" }));
+
+    expect(await screen.findByText("Request · round 0")).toBeInTheDocument();
+    expect(fetchStub).toHaveBeenCalledTimes(2);
   });
 });
