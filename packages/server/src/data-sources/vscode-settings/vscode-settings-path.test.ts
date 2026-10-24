@@ -2,7 +2,7 @@ import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { resolveVscodeSettingsPath } from "./vscode-settings-path.js";
+import { resolveVscodeSettingsPath, userSettingsFilePath } from "./vscode-settings-path.js";
 
 describe("resolveVscodeSettingsPath", () => {
   let fakeHome: string;
@@ -40,5 +40,11 @@ describe("resolveVscodeSettingsPath", () => {
     expect(
       resolveVscodeSettingsPath({ platform: "linux", homeDir: fakeHome }),
     ).toBe(settingsPath);
+  });
+});
+
+describe("userSettingsFilePath", () => {
+  it("builds <userData>/User/settings.json without touching the disk", () => {
+    expect(userSettingsFilePath(path.join("/x", "Code"))).toBe(path.join("/x", "Code", "User", "settings.json"));
   });
 });

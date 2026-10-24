@@ -180,4 +180,43 @@ describe("AnalyzerPanel", () => {
     expect(panels[0]!.webview.messageSubscription.dispose).toHaveBeenCalled();
     expect(() => panel.dispose()).not.toThrow();
   });
+
+  describe("post (host events)", () => {
+    it("posts the message to the open panel's webview", async () => {
+      const { panel, panels } = setup();
+      panel.open();
+
+      panel.post({ kind: "event", name: "configChanged" });
+
+      await vi.waitFor(() => expect(panels[0]!.webview.posted).toEqual([{ kind: "event", name: "configChanged" }]));
+    });
+
+    it("does nothing when no panel is open, or after it was closed", () => {
+      const { panel, panels } = setup();
+
+      expect(() => panel.post({ kind: "event", name: "configChanged" })).not.toThrow();
+      panel.open();
+      panels[0]!.dispose();
+      panel.post({ kind: "event", name: "configChanged" });
+
+      expect(panels[0]!.webview.posted).toEqual([]);
+    });
+
+    it("drops a message that can't be delivered rather than leaving a rejection unhandled", async () => {
+      const onUnhandled = vi.fn();
+      process.on("unhandledRejection", onUnhandled);
+      try {
+        const { panel, panels } = setup();
+        panel.open();
+        panels[0]!.webview.postMessage = () => Promise.reject(new Error("webview disposed"));
+
+        panel.post({ kind: "event", name: "configChanged" });
+        await new Promise((resolve) => setTimeout(resolve, 10));
+
+        expect(onUnhandled).not.toHaveBeenCalled();
+      } finally {
+        process.off("unhandledRejection", onUnhandled);
+      }
+    });
+  });
 });

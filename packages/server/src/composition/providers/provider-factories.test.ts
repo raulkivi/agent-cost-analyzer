@@ -1,5 +1,7 @@
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import path from "node:path";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { createClaudeCodeProvider } from "./create-claude-code-provider.js";
 import { createMitmproxyProvider } from "./create-mitmproxy-provider.js";
 import { createPiAgentProvider } from "./create-pi-agent-provider.js";
@@ -16,6 +18,37 @@ describe("per-provider factories", () => {
 
     expect([vscode.id, mitmproxy.id, piAgent.id, claudeCode.id]).toEqual(["vscode", "mitmproxy", "pi-agent", "claude-code"]);
     expect((await vscode.checkAvailability()).available).toBe(false);
+  });
+
+  describe("with an installed session store on this machine's default path", () => {
+    let fakeHome: string | undefined;
+
+    afterEach(() => {
+      vi.unstubAllEnvs();
+      if (fakeHome) rmSync(fakeHome, { recursive: true, force: true });
+    });
+
+    function installDefaultSessionStore(): void {
+      fakeHome = mkdtempSync(path.join(tmpdir(), "provider-factories-home-"));
+      const dir = path.join(fakeHome, ".config", "Code", "User", "globalStorage", "github.copilot-chat");
+      mkdirSync(dir, { recursive: true });
+      writeFileSync(path.join(dir, "session-store.db"), "");
+      vi.stubEnv("HOME", fakeHome);
+    }
+
+    it("resolves the default when no session store path is given", async () => {
+      installDefaultSessionStore();
+
+      expect((await createVscodeProvider({ debugLogsDirPaths: [], agentTracesDbPath: null }).checkAvailability()).available).toBe(true);
+    });
+
+    it("keeps an explicit null session store path (the extension's 'none') rather than resolving the default", async () => {
+      installDefaultSessionStore();
+
+      expect(
+        (await createVscodeProvider({ sessionStoreDbPath: null, debugLogsDirPaths: [], agentTracesDbPath: null }).checkAvailability()).available,
+      ).toBe(false);
+    });
   });
 
   it("keeps an explicit null settings path rather than resolving the default", () => {

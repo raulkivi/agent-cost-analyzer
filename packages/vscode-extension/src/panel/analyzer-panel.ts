@@ -92,6 +92,14 @@ export class AnalyzerPanel implements Disposable {
     }
   }
 
+  // Pushes an unsolicited message (a host event, plan §4) to the open
+  // panel, if any. Dropped when there's no panel or it can't be delivered:
+  // a hidden panel isn't retained (§5), so it reloads and fetches fresh
+  // state when it's shown again.
+  post(message: unknown): void {
+    this.current?.panel.webview.postMessage(message).then(undefined, () => undefined);
+  }
+
   dispose(): void {
     // Disposing fires onDidDispose, which releases it.
     this.current?.panel.dispose();

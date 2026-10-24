@@ -108,4 +108,14 @@ export {
   type ProductFeatures,
   type ProductProfile,
 } from "./product-profile.js";
-export { apiMethodSchema, type ApiMethod } from "./rpc.js";
+export {
+  apiMethodSchema,
+  apiMethodParamsSchemas,
+  rpcRequestSchema,
+  hostEventNameSchema,
+  type ApiMethod,
+  type RpcRequest,
+  type RpcResponse,
+  type HostEventName,
+  type HostEvent,
+} from "./rpc.js";

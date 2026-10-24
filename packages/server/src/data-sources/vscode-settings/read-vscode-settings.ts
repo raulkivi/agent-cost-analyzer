@@ -1,5 +1,5 @@
-import { readFileSync } from "node:fs";
-import { parse as parseJsonc } from "jsonc-parser";
+import type { SettingsSource } from "../../services/config-check/settings-source.js";
+import { JsoncFileSettingsSource } from "./jsonc-file-settings-source.js";
 
 // Deprecated alias, still honored by VS Code (architecture.md §7).
 const LOGGING_ENABLED_SETTING_ID =
@@ -19,37 +19,23 @@ export interface VscodeSettingsSnapshot {
   agentTracesEnabled: boolean;
 }
 
-const NOT_FOUND_SNAPSHOT: VscodeSettingsSnapshot = {
-  loggingEnabled: false,
-  maxRetainedSessionLogs: null,
-  agentTracesEnabled: false,
-};
+// What the config check judges, from whichever SettingsSource it was given.
+export function snapshotFromSettings(settings: SettingsSource): VscodeSettingsSnapshot {
+  const loggingEnabled =
+    settings.get(LOGGING_ENABLED_SETTING_ID) === true ||
+    settings.get(LOGGING_ENABLED_SETTING_ID_DEPRECATED) === true;
+
+  const maxRetainedRaw = settings.get(MAX_RETAINED_SESSION_LOGS_SETTING_ID);
+  const maxRetainedSessionLogs =
+    typeof maxRetainedRaw === "number" ? maxRetainedRaw : null;
+
+  const agentTracesEnabled = settings.get(AGENT_TRACES_ENABLED_SETTING_ID) === true;
+
+  return { loggingEnabled, maxRetainedSessionLogs, agentTracesEnabled };
+}
 
 export function readVscodeSettings(
   settingsPath: string | null,
 ): VscodeSettingsSnapshot {
-  if (!settingsPath) {
-    return NOT_FOUND_SNAPSHOT;
-  }
-
-  let raw: string;
-  try {
-    raw = readFileSync(settingsPath, "utf8");
-  } catch {
-    return NOT_FOUND_SNAPSHOT;
-  }
-
-  const settings = (parseJsonc(raw) ?? {}) as Record<string, unknown>;
-
-  const loggingEnabled =
-    settings[LOGGING_ENABLED_SETTING_ID] === true ||
-    settings[LOGGING_ENABLED_SETTING_ID_DEPRECATED] === true;
-
-  const maxRetainedRaw = settings[MAX_RETAINED_SESSION_LOGS_SETTING_ID];
-  const maxRetainedSessionLogs =
-    typeof maxRetainedRaw === "number" ? maxRetainedRaw : null;
-
-  const agentTracesEnabled = settings[AGENT_TRACES_ENABLED_SETTING_ID] === true;
-
-  return { loggingEnabled, maxRetainedSessionLogs, agentTracesEnabled };
+  return snapshotFromSettings(new JsoncFileSettingsSource(settingsPath));
 }

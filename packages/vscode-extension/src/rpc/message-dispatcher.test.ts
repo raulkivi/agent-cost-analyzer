@@ -139,19 +139,52 @@ describe("MessageDispatcher (vscode-extension.md §4)", () => {
     expect(api.getInsights).toHaveBeenCalledWith({});
   });
 
-  it("rejects a missing or non-string id with 400", async () => {
+  it.each([
+    ["getSession", {}, "id"],
+    ["getSession", { id: 7 }, "id"],
+    ["getSystemPromptText", { id: "" }, "id"],
+    ["getLearnScenario", { id: null }, "id"],
+    ["getTurnDetail", { sessionId: 7, turnIndex: 0 }, "sessionId"],
+    ["getSessionAudit", {}, "sessionId"],
+    ["listToolCalls", { sessionId: "s1", status: [1] }, "status"],
+    ["getAuditRollup", { limit: { n: 1 } }, "limit"],
+    ["getInsights", { since: 5 }, "since"],
+  ])("rejects %s params %j with a 400 that names the field %s, without calling the service", async (method, params, field) => {
     const api = fakeApi();
+
+    const response = await new MessageDispatcher(api).dispatch(request(method, params));
+
+    expect(response).toMatchObject({ ok: false, error: { status: 400 } });
+    const message = (response as { error: { message: string } }).error.message;
+    expect(message).toContain(`Invalid params for ${method}`);
+    expect(message).toContain(field);
+    for (const call of Object.values(api)) {
+      expect(call).not.toHaveBeenCalled();
+    }
+  });
+
+  it("leaves the turn index and retention value to ApiService, so its messages stay the source of the 400s", async () => {
+    const api = fakeApi({
+      getTurnDetail: vi.fn(async () => {
+        throw new BadRequestError('"x" is not a valid turn index.');
+      }),
+    });
     const dispatcher = new MessageDispatcher(api);
 
-    expect(await dispatcher.dispatch(request("getSession", {}))).toMatchObject({
+    expect(await dispatcher.dispatch(request("getTurnDetail", { sessionId: "s1", turnIndex: "x" }))).toMatchObject({
       ok: false,
-      error: { status: 400, message: 'Missing string param "id"' },
+      error: { status: 400, message: '"x" is not a valid turn index.' },
     });
-    expect(await dispatcher.dispatch(request("getTurnDetail", { sessionId: 7, turnIndex: 0 }))).toMatchObject({
-      ok: false,
-      error: { status: 400, message: 'Missing string param "sessionId"' },
-    });
-    expect(api.getSession).not.toHaveBeenCalled();
+    await dispatcher.dispatch(request("setRetentionThreshold", { value: -1 }));
+    expect(api.setRetentionThreshold).toHaveBeenCalledWith(-1);
+  });
+
+  it("does not pass unlisted fields on to the service", async () => {
+    const api = fakeApi();
+
+    await new MessageDispatcher(api).dispatch(request("getAuditRollup", { since: "2026-01-01", hacker: "x" }));
+
+    expect(api.getAuditRollup).toHaveBeenCalledWith({ since: "2026-01-01" });
   });
 
   it.each([["text"], [[1, 2]], [null]])("rejects params that aren't an object (%j) with 400", async (params) => {

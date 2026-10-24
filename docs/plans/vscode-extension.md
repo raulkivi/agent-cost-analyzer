@@ -606,6 +606,52 @@ identically.
   workspace-level override. The tool audit and insights dashboard render
   for those sessions.
 
+**Status (2026-10-24): done.**
+- **Param validation.** Per-method param schemas (`apiMethodParamsSchemas`)
+  and the `RpcRequest`, `RpcResponse` and `HostEvent` types now live in
+  `packages/domain/src/rpc.ts`.
+  - The dispatcher answers 400 `Invalid params for <method>: …` and strips
+    unknown fields.
+  - The turn index, the retention value and the provider id stay with
+    `ApiService`, so its messages are unchanged.
+  - An empty id now gets 400 instead of 404.
+- **Paths (D4, G5).**
+  - `userDataDirFromGlobalStorage` maps `<userData>/User/globalStorage/<id>`
+    to `<userData>`. It's tested for Linux, macOS, Windows, Insiders,
+    portable (both OSes) and the remote server, and returns null for any
+    other shape.
+  - `copilotLogPathsFromUserDataDir` derives the session store,
+    agent-traces, debug-log dirs and `settings.json` from shared server
+    helpers.
+  - An unrecognised layout reads no Copilot data and logs a warning. It
+    never falls back to this machine's defaults.
+- **Settings (G6).** `SettingsSource` port (`get`, `describe`), shared by
+  `JsoncFileSettingsSource` (the standalone default; HTTP API unchanged)
+  and `VscodeSettingsSource`, with one contract suite.
+- **Persisted settings (D5).** `GlobalStateAppSettingsStore`: a cached
+  synchronous read, background `update` with an `onError` hook, and the
+  `describeAppSettingsStoreContract` suite. `SessionAppSettingsStore` is
+  removed.
+- **Config events.** `watchConfigChanges` → `AnalyzerPanel.post` →
+  `configChanged` → `onHostEvent` in the web app, which refetches the config
+  status. The HTTP transport has no events, so the standalone app is
+  unaffected.
+- **Bundle-load test.** It covers the whole path with a stub `vscode`.
+- **Not verified here.** Real sessions in a VS Code dev host, and a real
+  workspace override. VS Code can't be downloaded in this container, so the
+  10.9 CI integration tests cover them.
+- **TDD note.** Four modules had their tests written alongside the code
+  rather than seen failing first: `userDataDirFromGlobalStorage`,
+  `copilotLogPathsFromUserDataDir`, `VscodeSettingsSource` and
+  `GlobalStateAppSettingsStore`. Their tests cover the cases listed above.
+- **Known limits.**
+  - Debug-log folders are listed at activation; 10.6's refresh re-lists
+    them.
+  - Folder-level settings in multi-root workspaces aren't read.
+  - `readVscodeSettings` is now only used by its own tests.
+- **Tests.** 1,663 → 1,781 (domain 113, server 1,014, web 532, extension
+  107).
+
 ### 10.5 Product profile in the UI and extension-only UX
 
 Starts after the mock-up review gate (§3.6).
@@ -669,7 +715,10 @@ first with fakes. Only thin registration code touches the `vscode` API.
   empty input, and stable ordering. `SessionsTreeProvider` adapts the
   model to `vscode.TreeDataProvider` and reads `ApiService.listSessions`.
   It refreshes on the Refresh button and when the view becomes visible,
-  with no background polling or file watchers in v1.
+  with no background polling or file watchers in v1. A refresh also
+  re-lists the per-workspace `debug-logs` folders, which 10.4 lists once
+  at activation. Without that, a workspace first opened after activation
+  only appears after a reload.
 - **Selection sync.** `openSession(id)` opens the panel if it's closed,
   then posts `selectSession`. The web app handles it like a click in its
   own session list. Test the web handler (the event selects the session

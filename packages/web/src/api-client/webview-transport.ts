@@ -1,3 +1,4 @@
+import type { HostEventName } from "@copilot-cost-analyzer/domain";
 import type { ApiMethodName, ApiTransport } from "./transport.js";
 
 // The slice of acquireVsCodeApi()'s result this transport needs.
@@ -10,9 +11,6 @@ export interface MessageSource {
   addEventListener(type: "message", listener: (event: { data: unknown }) => void): void;
   removeEventListener(type: "message", listener: (event: { data: unknown }) => void): void;
 }
-
-// Unsolicited host -> webview notifications (plan §4 `HostEvent`).
-export type HostEventName = "configChanged" | "themeChanged" | "selectSession";
 
 export interface WebviewTransportOptions {
   // How long a request may wait for its response; insights over large

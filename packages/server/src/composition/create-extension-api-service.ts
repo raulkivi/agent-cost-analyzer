@@ -1,12 +1,17 @@
 import type { ProductProfile } from "@copilot-cost-analyzer/domain";
 import { loadLearnScenarios } from "../data-sources/learn-scenarios/loader.js";
 import { checkConfig } from "../services/config-check/config-check.js";
+import type { SettingsSource } from "../services/config-check/settings-source.js";
 import { ApiService } from "../services/api/api-service.js";
 import { AuditQueryService } from "../services/tool-audit/audit-query-service.js";
 import { composeCopilotProviders, type CopilotProviderCompositionOptions } from "./compose-copilot-providers.js";
 import { createInsightsService } from "./create-insights-service.js";
 
 export interface ExtensionApiServiceOptions extends CopilotProviderCompositionOptions {
+  // The effective VS Code settings the config check judges (G6: the
+  // extension passes one over vscode.workspace.getConfiguration()). Omitted,
+  // the check reads the settings.json at vscodeSettingsPath.
+  settingsSource?: SettingsSource;
   // G4 (vscode-extension.md §2.2): required, because the extension runs as
   // a single CJS bundle with no usable import.meta.url to default from.
   learnScenariosFixturesDir: string;
@@ -36,7 +41,7 @@ export function extensionProductProfile(version: string): ProductProfile {
 // it never imports the Express app or any non-Copilot provider; the
 // extension's bundle-boundary test enforces that.
 export function createExtensionApiService(options: ExtensionApiServiceOptions): ApiService {
-  const { learnScenariosFixturesDir, appVersion, ...compositionOptions } = options;
+  const { learnScenariosFixturesDir, appVersion, settingsSource, ...compositionOptions } = options;
   const { registry, appSettings, resolvedVscodeSettingsPath } = composeCopilotProviders(compositionOptions);
 
   return new ApiService({
@@ -45,7 +50,7 @@ export function createExtensionApiService(options: ExtensionApiServiceOptions): 
     insights: createInsightsService(registry),
     settings: appSettings,
     checkConfig: (minRetainedSessionLogsThreshold) =>
-      checkConfig({ settingsPath: resolvedVscodeSettingsPath, minRetainedSessionLogsThreshold }),
+      checkConfig({ settings: settingsSource, settingsPath: resolvedVscodeSettingsPath, minRetainedSessionLogsThreshold }),
     learnScenarios: loadLearnScenarios({ fixturesDir: learnScenariosFixturesDir }),
     appVersion,
     productProfile: extensionProductProfile(appVersion),

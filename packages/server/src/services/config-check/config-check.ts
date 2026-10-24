@@ -1,6 +1,8 @@
 import type { ConfigStatus, ConfigWarning } from "@copilot-cost-analyzer/domain";
-import { readVscodeSettings } from "../../data-sources/vscode-settings/read-vscode-settings.js";
+import { snapshotFromSettings } from "../../data-sources/vscode-settings/read-vscode-settings.js";
+import { JsoncFileSettingsSource } from "../../data-sources/vscode-settings/jsonc-file-settings-source.js";
 import { resolveVscodeSettingsPath } from "../../data-sources/vscode-settings/vscode-settings-path.js";
+import type { SettingsSource } from "./settings-source.js";
 
 const LOGGING_ENABLED_SETTING_ID =
   "github.copilot.chat.agentDebugLog.fileLogging.enabled";
@@ -30,6 +32,9 @@ function buildSettingsNotFoundWarning(): ConfigWarning {
     ],
   };
 }
+
+// How the help steps name the file when the source doesn't know its path.
+const GENERIC_SETTINGS_LABEL = "your VS Code user settings.json";
 
 function buildLoggingDisabledWarning(settingsPath: string): ConfigWarning {
   return {
@@ -88,6 +93,9 @@ function buildAgentTracesUnavailableWarning(settingsPath: string): ConfigWarning
 }
 
 export interface CheckConfigOptions {
+  // Where to read the settings from; wins over settingsPath/platform/homeDir.
+  // Omitted reads the user settings.json file (the standalone app's source).
+  settings?: SettingsSource;
   // string | null overrides resolution outright (used by tests and the API layer,
   // which resolves the path once at server boot); omitted resolves it fresh.
   settingsPath?: string | null;
@@ -98,41 +106,44 @@ export interface CheckConfigOptions {
 }
 
 export function checkConfig(options: CheckConfigOptions = {}): ConfigStatus {
-  const settingsPath =
-    options.settingsPath !== undefined
-      ? options.settingsPath
-      : resolveVscodeSettingsPath(options);
-  const settings = readVscodeSettings(settingsPath);
+  const source =
+    options.settings ??
+    new JsoncFileSettingsSource(
+      options.settingsPath !== undefined ? options.settingsPath : resolveVscodeSettingsPath(options),
+    );
+  const { located, userSettingsPath } = source.describe();
+  const settingsLabel = userSettingsPath ?? GENERIC_SETTINGS_LABEL;
+  const settings = snapshotFromSettings(source);
   const now = options.now ?? (() => new Date().toISOString());
   const minRetainedSessionLogsThreshold =
     options.minRetainedSessionLogsThreshold ?? MIN_RETAINED_SESSION_LOGS;
 
   const warnings: ConfigWarning[] = [];
-  if (!settingsPath) {
+  if (!located) {
     warnings.push(buildSettingsNotFoundWarning());
   } else {
     if (!settings.loggingEnabled) {
-      warnings.push(buildLoggingDisabledWarning(settingsPath));
+      warnings.push(buildLoggingDisabledWarning(settingsLabel));
     }
     const effectiveMaxRetained =
       settings.maxRetainedSessionLogs ?? DEFAULT_RETAINED_SESSION_LOGS;
     if (effectiveMaxRetained < minRetainedSessionLogsThreshold) {
       warnings.push(
         buildRetentionTooLowWarning(
-          settingsPath,
+          settingsLabel,
           effectiveMaxRetained,
           minRetainedSessionLogsThreshold,
         ),
       );
     }
     if (!settings.agentTracesEnabled) {
-      warnings.push(buildAgentTracesUnavailableWarning(settingsPath));
+      warnings.push(buildAgentTracesUnavailableWarning(settingsLabel));
     }
   }
 
   return {
     checkedAt: now(),
-    vscodeUserSettingsPath: settingsPath,
+    vscodeUserSettingsPath: userSettingsPath,
     loggingEnabled: settings.loggingEnabled,
     maxRetainedSessionLogs: settings.maxRetainedSessionLogs,
     minRetainedSessionLogsThreshold,
