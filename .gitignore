@@ -6,6 +6,8 @@ dist/
 build/
 # The extension's webview build (vite build --mode extension) and learn fixtures
 packages/vscode-extension/media/
+# The packaged extension (npm run package, step 10.9)
+*.vsix
 *.tsbuildinfo
 
 # Test coverage
