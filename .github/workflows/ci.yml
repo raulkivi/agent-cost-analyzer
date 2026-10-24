@@ -51,6 +51,12 @@ jobs:
       # Includes the bundle-boundary and bundle-load tests.
       - run: npm test --workspace=packages/vscode-extension
       - run: xvfb-run -a npm run test:integration --workspace=packages/vscode-extension
+      # The webview in Chromium with VS Code's Dark Modern, Light Modern and
+      # High Contrast colours at 600-1600 px: nothing cut off on the right,
+      # every text readable (step 10.11).
+      - run: npx playwright install --with-deps chromium
+        working-directory: packages/vscode-extension
+      - run: npm run test:ui --workspace=packages/vscode-extension
 
       # The .vsix the owner installs for the manual checks
       # (docs/plans/vscode-extension-manual-checks.md).

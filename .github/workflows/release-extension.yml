@@ -48,6 +48,9 @@ jobs:
       - run: npm run build
       - run: npm test
       - run: xvfb-run -a npm run test:integration --workspace=packages/vscode-extension
+      - run: npx playwright install --with-deps chromium
+        working-directory: packages/vscode-extension
+      - run: npm run test:ui --workspace=packages/vscode-extension
 
       - name: Package
         env:
