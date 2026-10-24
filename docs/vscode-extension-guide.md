@@ -125,6 +125,13 @@ these differences:
   Code's clipboard.
 - The insights dashboard covers Copilot Chat sessions only, so it has no
   Provider list box.
+- In Analyze mode the panel has no session list of its own: pick a session
+  in the **Sessions** view in the side bar, and the panel gives that room
+  to the turns. Learn mode keeps its scenario list in the panel.
+- The panel follows your VS Code theme: its colours, font, form controls
+  and scrollbars. It has no brand header of its own (the editor tab names
+  it), and in High Contrast the selected option is outlined in the theme's
+  active-border colour.
 
 Everything else works as the [User Guide](UserGuide.md) describes:
 

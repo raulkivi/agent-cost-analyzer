@@ -6,7 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Changed
+- Phase 10.11, after a UX review of the VS Code panel.
+  - Nothing is cut off on the right at any width: the layout follows the
+    room left for the turns, and the turns table scrolls inside its column.
+  - The system prompt inspector's section colours read in light, dark and
+    high-contrast themes, and its columns stack in narrow panels.
+  - In VS Code: no duplicate session list in Analyze mode (use the side
+    bar), no extra brand header or status line, native form controls and
+    scrollbars, and a visible selection in High Contrast.
+  - Session cards no longer repeat "Learn" or "Analyze"; the header no
+    longer says "GitHub Copilot Chat"; the dashboard shows the insights
+    before its filters in narrow windows.
 ### Added
+- A UI check (`npm run test:ui`) that runs the extension's webview in
+  Chromium with VS Code's themes and fails on cut-off content or
+  unreadable text.
 - Phase 10.8.
   - **AI Credits Analyzer:** a Copilot-only MCP server that Copilot Chat
     agent mode can use (the same 9 read-only tools as the standalone

@@ -22,6 +22,7 @@ Progress (2026-10-24):
 | 10.8 | Copilot-only MCP server in the extension, plus UI follow-ups from 10.7 | Done (#71); server verified in CI (10.9); Copilot agent mode in the owner's manual checks |
 | 10.9 | Integration tests in real VS Code, performance budgets, usability run, packaging | Done (#72; integration suite green in CI); owner's manual checks open |
 | 10.10 | Documentation: extension README/listing, extension user guide, two-product README and User Guide | Done (#73); screenshots and owner review open |
+| 10.11 | UX review for VS Code: panel fits any width, readable in light, dark and High Contrast, native look, automated UI check | Done (PR pending) |
 
 
 ## 1. Context
@@ -1258,6 +1259,93 @@ green; listing-prerequisite tests passed on first run.
 
 *Tests:* 2,541 → 2,647 (domain 129, server 1,037, web 982, pi-logger 15,
 extension 484).
+
+### 10.11 UX review for VS Code (owner's report, 2026-10-24)
+
+The owner's first local test found two problems: content cut off on the
+right of the editor panel ("the design wasn't suitable for a VS Code
+extension"), and the system prompt inspector's coloured text hard to read
+in a dark theme. Both must work in light and dark themes. A critical review
+of every view followed.
+
+**Status (2026-10-24): done.**
+
+*How it was found and checked.* A new **UI check**
+(`packages/vscode-extension/scripts/ui-check/`, `npm run test:ui`) runs the
+real webview build in Chromium, answered by the real `MessageDispatcher`
+and `ApiService` over a seeded Copilot fixture, with VS Code's Dark Modern,
+Light Modern and High Contrast variables and its default webview styles
+(including the 20 px page padding). Seven views (Learn, a Learn scenario,
+a session, the system prompt inspector, its icicle, the turn inspector, the
+dashboard) at 600, 900, 1200 and 1600 px in each theme: 84 combinations.
+It fails on anything sticking out past the panel's right edge (clipped
+content counts; content inside a scroll box that fits doesn't) and on any
+text under WCAG AA against the ground it is actually painted on (SVG text
+included). Its pure parts (`contrast.mts`, `judge.mts`) are unit-tested.
+Before the fixes it failed 30 of 84; after, 0. CI runs it in the
+`extension` job (and the release workflow) after installing Playwright's
+Chromium (`playwright` 1.63.0 pinned).
+
+*Findings and fixes (in priority order):*
+1. **Content cut off on the right** (owner's issue 1). The grid's centre
+   was `1fr` (it can't shrink below the turns table's ~965 px), the table
+   only scrolled below wide widths, and the layout thresholds ignored the
+   session list column and VS Code's page padding. At 1280 px the right
+   column was entirely off-screen. Fix: the centre is `minmax(0, 1fr)`, the
+   table always scrolls inside its column, and `layoutFor(width,
+   { listColumn })` picks the layout from the room left for the turns
+   (wide from 960 px of content, medium from 480 px).
+2. **The panel duplicated the sidebar's session list** (280 px, and at
+   narrow widths it stacked above the data). New `ProductProfile` feature
+   `sessionSidebar` (extension: true): in Analyze mode the panel shows no
+   list of its own and points to the Sessions view; Learn keeps its
+   scenario list.
+3. **Unreadable prompt colours in dark** (owner's issue 2). The text-pane
+   tints were mixed with white and their text pinned dark. They are now
+   mixed with transparent, so they sit on the theme's own ground, and the
+   text keeps the theme's colour. Tests check the theme text at 4.5:1 on
+   every tint in Dark Modern, Light Modern and High Contrast.
+4. **Black SVG caption** ("not enough credit data") in dark: it now uses
+   the theme's muted text colour.
+5. **Other contrast failures found by checking real theme colours:** the
+   "Info" severity tag (dark text on a dark ground in dark themes), and
+   alert numbers and failure badges in Light Modern (its
+   `errorForeground` is 3.4:1 on white). `theme-contrast.test.ts` now also
+   checks Dark Modern, Light Modern and High Contrast, not only the
+   fallback palette.
+6. **Not VS Code-like:** a brand block and a "GitHub Copilot Chat" caption
+   under the editor tab that already names the panel (the caption was also
+   wrong for the all-provider standalone app, so it's gone in both), a
+   server status line, Industry corner marks on every card, uppercase card
+   labels, and a 240 px retention field. In VS Code the brand, the status
+   line and the corner marks are hidden, card labels are normal case, form
+   controls and scrollbars follow the theme (`color-scheme`), and the
+   retention field is 6em wide.
+7. **High Contrast showed no selection:** a checked option used the
+   theme's black button colour on the black page. It now has the theme's
+   active-border outline (`contrastActiveBorder`).
+8. **Timeline slider:** a white track in dark, an invisible thumb in High
+   Contrast. VS Code draws it from theme colours.
+9. **Cards repeated the mode** ("ANALYZE · just now" on every card): the
+   kicker is now just the category or the time.
+10. **System prompt inspector** had fixed 280/1fr/320 px columns (83 px
+    past a 600 px panel): it stacks by its own width (`inspectorLayout`).
+11. **Dashboard at medium widths** stacked every filter list above the
+    insights: a slimmer filter column down to 720 px, then insights first.
+12. The standalone page title still had the old name.
+
+*Not changed (checked):* every session card's checkbox already has an
+accessible name and a tooltip.
+
+*TDD exceptions:* the dashboard's breakpoints and order (CSS media
+queries, which jsdom can't apply) are covered only by the UI check's
+screenshots and overflow check; the UI check's own browser glue
+(`webview-harness.mts`, `probe.mts`) has no unit tests, and two of its
+hand-computed contrast expectations were wrong at first (the code was
+right).
+
+*Tests:* 2,698 → 2,871 unit tests (domain 130, server 1,037, web 1,141,
+pi-logger 15, extension 548), plus the UI check (84 combinations).
 
 ### 10.10 Documentation and Marketplace listing
 
