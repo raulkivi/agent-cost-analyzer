@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- Phase 10.4, AI Credits Analyzer (not yet published).
+  - Copilot Chat log paths are derived from VS Code's own storage location,
+    so the extension works on Linux, macOS, Windows, Insiders, portable and
+    remote installs.
+  - Settings are read through VS Code, workspace overrides included, and
+    the extension's own settings persist across restarts.
+  - Changing a Copilot logging setting refreshes the open panel's warnings.
+  - Webview requests are validated per method.
 - Phase 10.3: `packages/vscode-extension`, the skeleton of AI Credits
   Analyzer (`raulkivi.ai-credits-analyzer`, not yet published). It has an
   "AI Credits Analyzer: Open" command, a webview panel with a strict CSP, a
@@ -32,6 +40,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   on `GET /api/sessions/:id/tool-calls`). Plan: `docs/plans/mcp-tools-v2.md`.
 
 ### Changed
+- The config check reads settings through a `SettingsSource` port. The
+  standalone app still reads the user `settings.json`, and its output is
+  unchanged.
 - Root `engines.node` raised to `>=22.18`. The extension's build scripts
   are `.mts` files that Node runs directly.
 - Phase 10.1/10.2 groundwork for the AI Credits Analyzer extension. The HTTP

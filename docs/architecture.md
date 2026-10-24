@@ -1400,6 +1400,16 @@ sequenceDiagram
     UI->>UI: render ConfigWarningBanner if warnings.length > 0
 ```
 
+Since Phase 10.4, `checkConfig` reads settings through a `SettingsSource`
+port (`services/config-check/settings-source.ts`):
+- **Standalone app:** the default adapter is `JsoncFileSettingsSource`, the
+  user `settings.json` reader shown above.
+- **VS Code extension:** `VscodeSettingsSource` reads
+  `vscode.workspace.getConfiguration()`, so it sees the effective value
+  including workspace overrides.
+- **Change events:** the extension re-checks when either Copilot logging
+  setting changes and tells the webview through a `configChanged` event.
+
 Two prerequisites are checked, each producing its own `ConfigWarning` when
 unmet:
 
