@@ -250,6 +250,17 @@ describe("the built extension bundle", () => {
       expect(vscode.__executed).toHaveLength(before);
     });
 
+    it("opens a setting only a current warning names, and only while it does", async () => {
+      const openAgentTraces = (id: string) =>
+        send({ kind: "command", id, command: "openSetting", args: { settingId: "github.copilot.chat.otel.dbSpanExporter.enabled" } });
+
+      vscode.__settings["github.copilot.chat.otel.dbSpanExporter.enabled"] = false;
+      expect(await openAgentTraces("traces-warned")).toMatchObject({ ok: true });
+
+      vscode.__settings["github.copilot.chat.otel.dbSpanExporter.enabled"] = true;
+      expect(await openAgentTraces("traces-fixed")).toMatchObject({ ok: false, error: { status: 400 } });
+    });
+
     it("copies to VS Code's clipboard and opens text in an untitled editor", async () => {
       expect(await send({ kind: "command", id: "copy", command: "copyToClipboard", args: { text: "bundle" } })).toMatchObject({
         ok: true,
