@@ -1,0 +1,11 @@
+{
+  // The integration suite runs under mocha in a real VS Code (step 10.9),
+  // so it type-checks with mocha's globals, which the unit tests (vitest)
+  // must not see; the package tsconfig excludes this folder.
+  "extends": "../../../tsconfig.json",
+  "compilerOptions": {
+    "types": ["node", "vscode", "mocha"]
+  },
+  "include": ["./**/*.ts"],
+  "exclude": []
+}

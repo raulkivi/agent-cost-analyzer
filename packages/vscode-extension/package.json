@@ -288,7 +288,8 @@
   "scripts": {
     "build": "npm run build:extension --prefix ../web && node scripts/build.mts",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit -p tsconfig.json"
+    "test:integration": "node scripts/build-integration-tests.mts && vscode-test",
+    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p src/test/integration/tsconfig.json"
   },
   "devDependencies": {
     "@copilot-cost-analyzer/domain": "*",
