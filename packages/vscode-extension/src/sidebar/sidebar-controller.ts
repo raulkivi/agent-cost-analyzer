@@ -26,6 +26,10 @@ export interface SidebarControllerOptions {
   translate?: Translate;
   // Hears every failure of a source; the views only show a generic error.
   onInternalError?: (source: "listSessions" | "getConfigStatus" | "relistLogSources", error: unknown) => void;
+  // Times each full refresh that read the sessions, from its start to the
+  // Sessions tree's nodes being built (§3.5 Performance: under 500 ms).
+  // `now` is a monotonic clock in ms.
+  timing?: { now(): number; sessionsTreeBuilt(durationMs: number): void };
 }
 
 // The data behind the Sessions tree, the Setup view and the status bar:
@@ -100,13 +104,27 @@ export class SidebarController {
   }
 
   private async runFullRefresh(): Promise<void> {
+    const startedAt = this.options.timing?.now();
     try {
       this.sources.relistLogSources();
     } catch (error) {
       this.options.onInternalError?.("relistLogSources", error);
     }
     await Promise.all([this.readSessions(), this.readConfigStatus()]);
+    this.reportSessionsTreeTime(startedAt);
     this.notify();
+  }
+
+  // Builds the tree once more just to time it: the views build their own
+  // when they're told of the change, and the nodes depend on the time of
+  // that read ("Today"), so they aren't cached.
+  private reportSessionsTreeTime(startedAt: number | undefined): void {
+    const { timing } = this.options;
+    if (!timing || startedAt === undefined || !Array.isArray(this.sessions)) {
+      return;
+    }
+    this.sessionsTree();
+    timing.sessionsTreeBuilt(timing.now() - startedAt);
   }
 
   private async readSessions(): Promise<void> {
