@@ -927,13 +927,13 @@ describe("App", () => {
       productId: "standalone",
       displayName: "Agent Cost Analyzer",
       version: "0.8.0",
-      features: { providerSelect: true, crossProviderInsights: true, settingFixes: false, openInEditor: false },
+      features: { providerSelect: true, crossProviderInsights: true, settingFixes: false, openInEditor: false, sessionSidebar: false },
     };
     const extensionProfile: ProductProfile = {
       productId: "vscode-extension",
       displayName: "AI Credits Analyzer",
       version: "0.1.0",
-      features: { providerSelect: false, crossProviderInsights: false, settingFixes: true, openInEditor: true },
+      features: { providerSelect: false, crossProviderInsights: false, settingFixes: true, openInEditor: true, sessionSidebar: false },
     };
 
     function editorHost() {
@@ -1135,6 +1135,49 @@ describe("App", () => {
       });
       return (payload: unknown) => act(() => handlers.forEach((handler) => handler(payload)));
     }
+
+    // Step 10.11: the extension's sidebar lists the sessions, so its
+    // Analyze mode gives the panel's list column to the turns.
+    describe("when the host lists the sessions in its sidebar (sessionSidebar)", () => {
+      const sidebarProfile: ProductProfile = {
+        productId: "vscode-extension",
+        displayName: "AI Credits Analyzer",
+        version: "0.1.0",
+        features: { providerSelect: false, crossProviderInsights: false, settingFixes: true, openInEditor: true, sessionSidebar: true },
+      };
+
+      it("shows no session list of its own in Analyze mode, and points to the sidebar until a session is picked", async () => {
+        productProfile = sidebarProfile;
+        hostEvents();
+        render(<App />);
+        await screen.findByText("AI Credits Analyzer");
+        switchToAnalyze();
+
+        expect(await screen.findByText(/pick a session in the sessions view/i)).toBeInTheDocument();
+        expect(screen.queryByRole("button", { name: "Fix the bug" })).not.toBeInTheDocument();
+        expect(screen.queryByPlaceholderText("Search…")).not.toBeInTheDocument();
+      });
+
+      it("opens the session the sidebar picks", async () => {
+        productProfile = sidebarProfile;
+        const emit = hostEvents();
+        render(<App />);
+        await screen.findByText("AI Credits Analyzer");
+
+        emit({ sessionId: "session-1" });
+
+        expect(await screen.findByText("analyze turn explanation")).toBeInTheDocument();
+        expect(screen.queryByRole("button", { name: "Fix the bug" })).not.toBeInTheDocument();
+      });
+
+      it("keeps the Learn scenario list, which has no sidebar", async () => {
+        productProfile = sidebarProfile;
+        hostEvents();
+        render(<App />);
+
+        expect(await screen.findByRole("button", { name: "Cache Basics" })).toBeInTheDocument();
+      });
+    });
 
     it("switches from Learn to Analyze mode, then selects and fetches the session like a click in the list", async () => {
       const emit = hostEvents();

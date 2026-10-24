@@ -9,9 +9,10 @@ import { PAYLOAD_TOKEN_COLORS } from "./lib/turn-payload-pretty.js";
 // Text contrast of the theme's own colour pairs (vscode-extension.md §3.5:
 // at least 4.5:1). jsdom computes no colours, so axe's color-contrast rule
 // can't run in the component tests; this checks the stylesheets instead,
-// for the standalone app (theme.css) and for a webview whose theme defines
-// none of the --vscode-* variables (theme-vscode.css's fallbacks). A real
-// VS Code theme's own colours are its author's to keep legible.
+// for the standalone app (theme.css), for a webview whose theme defines
+// none of the --vscode-* variables (theme-vscode.css's fallbacks), and for
+// VS Code's own default themes (Dark Modern, Light Modern, High Contrast):
+// step 10.11 found text that only failed with a real theme's colours.
 
 const srcDir = path.dirname(fileURLToPath(import.meta.url));
 const AA_TEXT = 4.5;
@@ -39,7 +40,77 @@ function parseRules(css: string): Rule[] {
 const standaloneRules = parseRules(readFileSync(path.join(srcDir, "theme.css"), "utf-8"));
 const vscodeRules = parseRules(readFileSync(path.join(srcDir, "theme-vscode.css"), "utf-8"));
 
-type Theme = "standalone" | "vscode-fallback";
+type Theme = "standalone" | "vscode-fallback" | "vscode-dark-modern" | "vscode-light-modern" | "vscode-high-contrast";
+
+// The --vscode-* variables VS Code's default themes give a webview (the
+// ones theme-vscode.css reads; the extension's UI check uses the same).
+const VSCODE_THEME_VARS: Partial<Record<Theme, { bodyClass: string; vars: Record<string, string> }>> = {
+  "vscode-dark-modern": {
+    bodyClass: "vscode-dark",
+    vars: {
+      "--vscode-editor-background": "#1f1f1f",
+      "--vscode-editor-foreground": "#cccccc",
+      "--vscode-input-background": "#313131",
+      "--vscode-input-border": "#3c3c3c",
+      "--vscode-input-foreground": "#cccccc",
+      "--vscode-panel-border": "#2b2b2b",
+      "--vscode-button-background": "#0078d4",
+      "--vscode-button-foreground": "#ffffff",
+      "--vscode-button-hoverBackground": "#026ec1",
+      "--vscode-descriptionForeground": "#9d9d9d",
+      "--vscode-textLink-foreground": "#4daafc",
+      "--vscode-focusBorder": "#0078d4",
+      "--vscode-list-activeSelectionBackground": "#04395e",
+      "--vscode-list-activeSelectionForeground": "#ffffff",
+      "--vscode-errorForeground": "#f85149",
+    },
+  },
+  "vscode-light-modern": {
+    bodyClass: "vscode-light",
+    vars: {
+      "--vscode-editor-background": "#ffffff",
+      "--vscode-editor-foreground": "#3b3b3b",
+      "--vscode-input-background": "#ffffff",
+      "--vscode-input-border": "#cecece",
+      "--vscode-input-foreground": "#3b3b3b",
+      "--vscode-panel-border": "#e5e5e5",
+      "--vscode-button-background": "#005fb8",
+      "--vscode-button-foreground": "#ffffff",
+      "--vscode-button-hoverBackground": "#0258a8",
+      "--vscode-descriptionForeground": "#3b3b3b",
+      "--vscode-textLink-foreground": "#005fb8",
+      "--vscode-focusBorder": "#005fb8",
+      "--vscode-list-activeSelectionBackground": "#e8e8e8",
+      "--vscode-list-activeSelectionForeground": "#000000",
+      "--vscode-errorForeground": "#f85149",
+    },
+  },
+  "vscode-high-contrast": {
+    bodyClass: "vscode-high-contrast",
+    vars: {
+      "--vscode-editor-background": "#000000",
+      "--vscode-editor-foreground": "#ffffff",
+      "--vscode-input-background": "#000000",
+      "--vscode-input-border": "#6fc3df",
+      "--vscode-input-foreground": "#ffffff",
+      "--vscode-panel-border": "#6fc3df",
+      "--vscode-contrastBorder": "#6fc3df",
+      "--vscode-button-background": "#000000",
+      "--vscode-button-foreground": "#ffffff",
+      "--vscode-descriptionForeground": "#ffffff",
+      "--vscode-textLink-foreground": "#21a6ff",
+      "--vscode-focusBorder": "#f38518",
+      "--vscode-list-activeSelectionBackground": "#000000",
+      "--vscode-list-activeSelectionForeground": "#ffffff",
+      "--vscode-errorForeground": "#f48771",
+    },
+  },
+};
+
+function bodyClassOf(theme: Theme): string | undefined {
+  if (theme === "standalone") return undefined;
+  return VSCODE_THEME_VARS[theme]?.bodyClass ?? "vscode-dark";
+}
 
 // The last declaration of `property` for `selector`; in a webview,
 // theme-vscode.css's `body.vscode-dark <selector>` rule wins.
@@ -47,14 +118,16 @@ function declared(theme: Theme, selector: string, property: string): string | un
   const lookup = (rules: Rule[], wanted: string) =>
     rules.filter((rule) => rule.selectors.includes(wanted) && rule.declarations.has(property)).at(-1)?.declarations.get(property);
   const base = lookup(standaloneRules, selector);
-  return theme === "vscode-fallback" ? (lookup(vscodeRules, `body.vscode-dark ${selector}`) ?? base) : base;
+  const bodyClass = bodyClassOf(theme);
+  return bodyClass ? (lookup(vscodeRules, `body.${bodyClass} ${selector}`) ?? base) : base;
 }
 
 function tokens(theme: Theme): Record<string, string> {
   const root = Object.fromEntries(standaloneRules.find((rule) => rule.selectors.includes(":root"))!.declarations);
-  if (theme === "standalone") return root;
-  const body = vscodeRules.find((rule) => rule.selectors.includes("body.vscode-dark") && rule.declarations.has("--color-bg"))!;
-  return { ...root, ...Object.fromEntries(body.declarations) };
+  const bodyClass = bodyClassOf(theme);
+  if (!bodyClass) return root;
+  const body = vscodeRules.find((rule) => rule.selectors.includes(`body.${bodyClass}`) && rule.declarations.has("--color-bg"))!;
+  return { ...root, ...Object.fromEntries(body.declarations), ...(VSCODE_THEME_VARS[theme]?.vars ?? {}) };
 }
 
 function color(theme: Theme, value: string, backdrop?: Rgb): Rgb {
@@ -75,7 +148,7 @@ function ruleRatio(theme: Theme, selector: string, ground?: string, colorPropert
   return ratio(theme, foreground, background);
 }
 
-const THEMES: Theme[] = ["standalone", "vscode-fallback"];
+const THEMES: Theme[] = ["standalone", "vscode-fallback", "vscode-dark-modern", "vscode-light-modern", "vscode-high-contrast"];
 // Every ground muted or accent text sits on: the page, inputs and list-box
 // headers, and selected rows, cards and the config banner.
 const GROUNDS = ["var(--color-bg)", "var(--color-surface)", "var(--color-accent-100)"];

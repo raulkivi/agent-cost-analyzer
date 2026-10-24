@@ -217,6 +217,7 @@ a { color: var(--color-accent-text); text-underline-offset: 3px; }
   padding: var(--space-3) var(--space-4);
   border-bottom: 1px solid var(--color-divider);
 }
+.nav-brand-block { display: flex; align-items: center; gap: var(--space-3); }
 .nav-brand-placeholder { width: 140px; height: 32px; }
 .nav-brand {
   font-family: var(--font-heading); font-weight: var(--font-heading-weight);
@@ -351,7 +352,15 @@ a { color: var(--color-accent-text); text-underline-offset: 3px; }
      alternative light grey, excluded dark grey. State is also carried by
      aria-selected, a title and the legend, never by colour alone. — */
 .insights-layout { display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: var(--space-4); align-items: start; }
-@media (max-width: 900px) { .insights-layout { grid-template-columns: 1fr; } }
+/* Narrower panels (step 10.11): a slimmer filter column first; below
+   720 px the insights come first and the filters follow, so the answer is
+   on screen without scrolling past every list box. */
+@media (max-width: 1000px) { .insights-layout { grid-template-columns: 200px minmax(0, 1fr); } }
+@media (max-width: 720px) {
+  .insights-layout { grid-template-columns: minmax(0, 1fr); }
+  .insights-main { order: 1; }
+  .insights-listboxes { order: 2; position: static; max-height: none; }
+}
 .insights-listboxes {
   display: flex; flex-direction: column; gap: var(--space-3);
   position: sticky; top: var(--space-2); max-height: calc(100vh - var(--space-8)); overflow: auto;
@@ -405,7 +414,7 @@ a { color: var(--color-accent-text); text-underline-offset: 3px; }
 .severity-tag--high { background: #d03b3b; color: #ffffff; }
 .severity-tag--medium { background: #eba524; color: #1d1f20; }
 .severity-tag--low { background: #b5d9fd; color: #1d1f20; }
-.severity-tag--info { background: var(--color-neutral-200); color: #1d1f20; }
+.severity-tag--info { background: var(--color-neutral-200); color: var(--color-text); }
 .findings-table td { vertical-align: top; }
 .findings-evidence {
   display: block; margin-top: 2px; max-width: 420px; white-space: pre-wrap; word-break: break-all;

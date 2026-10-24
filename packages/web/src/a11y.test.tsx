@@ -139,7 +139,7 @@ const extensionProfile: ProductProfile = {
   productId: "vscode-extension",
   displayName: "AI Credits Analyzer",
   version: "0.1.0",
-  features: { providerSelect: false, crossProviderInsights: false, settingFixes: true, openInEditor: true },
+  features: { providerSelect: false, crossProviderInsights: false, settingFixes: true, openInEditor: true, sessionSidebar: false },
 };
 
 interface Backend {

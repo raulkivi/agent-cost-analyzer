@@ -15,6 +15,9 @@ The first release.
 
 ### Added
 
+- **A panel that fits the editor:** it follows your VS Code theme (light,
+  dark and high contrast) and any panel width, without cutting anything
+  off; pick sessions in the side bar's Sessions view.
 - **Analyzer panel** for your GitHub Copilot Chat sessions, read from the
   logs on your machine: a per-turn table of uncached input, cache read and
   write, tool, vision, reasoning and output tokens, AI Credits and a

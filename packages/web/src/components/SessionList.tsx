@@ -16,11 +16,11 @@ interface SessionListProps {
   onToggleAdvice?: (session: Session) => void;
 }
 
-function kicker(mode: Mode, session: Session): string {
-  if (mode === "learn") {
-    return session.category ? `Learn · ${session.category}` : "Learn";
-  }
-  return session.startedAt ? `Analyze · ${formatRelativeTime(session.startedAt)}` : "Analyze";
+// The card's small label: a scenario's category, or when a session started.
+// Not the mode, which the mode switch already shows (step 10.11).
+function kicker(mode: Mode, session: Session): string | undefined {
+  if (mode === "learn") return session.category;
+  return session.startedAt ? formatRelativeTime(session.startedAt) : undefined;
 }
 
 // Keys that move focus through the cards (§3.5 Accessibility), to an index.
@@ -127,7 +127,7 @@ export function SessionList({
                   onFocus={() => setFocusedId(session.id)}
                   style={{ paddingRight: onToggleAdvice ? 26 : undefined }}
                 >
-                  <div className="card-kicker">{kicker(mode, session)}</div>
+                  {kicker(mode, session) && <div className="card-kicker">{kicker(mode, session)}</div>}
                   <div className="card-title truncate" style={{ fontSize: 15, marginTop: 2 }}>
                     {session.title}
                   </div>

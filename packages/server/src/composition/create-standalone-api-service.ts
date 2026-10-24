@@ -27,6 +27,7 @@ export function standaloneProductProfile(version: string): ProductProfile {
       crossProviderInsights: true,
       settingFixes: false,
       openInEditor: false,
+      sessionSidebar: false,
     },
   };
 }

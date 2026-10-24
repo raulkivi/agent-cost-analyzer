@@ -78,6 +78,7 @@ export const VSCODE_THEMES: Record<"dark" | "light" | "hc", VscodeTheme> = {
       "--vscode-input-foreground": "#ffffff",
       "--vscode-panel-border": "#6fc3df",
       "--vscode-contrastBorder": "#6fc3df",
+      "--vscode-contrastActiveBorder": "#f38518",
       "--vscode-button-background": "#000000",
       "--vscode-button-foreground": "#ffffff",
       "--vscode-descriptionForeground": "#ffffff",

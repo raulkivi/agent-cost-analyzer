@@ -3,14 +3,16 @@ import type { ReactNode } from "react";
 import { fetchSystemPromptText } from "../api-client/sessions.js";
 import { PromptCompositionIcicle } from "../charts/PromptCompositionIcicle.js";
 import { useEscapeKey, useFocusReturn } from "../lib/focus.js";
+import { inspectorLayout } from "../lib/inspector-layout.js";
 import { describeTag } from "../lib/system-prompt-descriptions.js";
-import { assignIcicleColors, assignTextColors, buildMenu, SEGMENT_TEXT_COLOR } from "../lib/system-prompt-menu.js";
+import { assignIcicleColors, assignTextColors, buildMenu } from "../lib/system-prompt-menu.js";
 import type { MenuEntry } from "../lib/system-prompt-menu.js";
 import { parseSystemPrompt } from "../lib/system-prompt-parser.js";
 import { scrollBehavior } from "../lib/reduced-motion.js";
 import type { PromptNode } from "../lib/system-prompt-parser.js";
 import { buildPrettyTextSegments } from "../lib/system-prompt-pretty.js";
 import { buildTextSegments } from "../lib/system-prompt-text.js";
+import { useContainerWidth } from "../lib/use-container-width.js";
 import type { TextSegment } from "../lib/system-prompt-text.js";
 import { AsyncView } from "./ui/AsyncView.js";
 import { Blueprint } from "./ui/Blueprint.js";
@@ -70,7 +72,6 @@ function renderSegments(segments: TextSegment[], selectedNodeId: string | null):
         data-testid={nodeDomId(segment.nodeId)}
         style={{
           background: segment.color,
-          color: SEGMENT_TEXT_COLOR,
           outline: isSelected ? "2px solid var(--color-text)" : undefined,
           outlineOffset: isSelected ? "-2px" : undefined,
         }}
@@ -90,6 +91,9 @@ export function SystemPromptInspector({
   onOpenInEditor,
 }: SystemPromptInspectorProps) {
   const [state, setState] = useState<LoadState>({ status: "loading" });
+  // Its columns follow its own width (step 10.11).
+  const [containerRef, containerWidth] = useContainerWidth<HTMLDivElement>();
+  const columns = inspectorLayout(containerWidth);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [format, setFormat] = useState<PromptFormat>("pretty");
   const [attempt, setAttempt] = useState(0);
@@ -148,7 +152,10 @@ export function SystemPromptInspector({
   }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-3)", padding: "var(--space-4)" }}>
+    <div
+      ref={containerRef}
+      style={{ display: "flex", flexDirection: "column", gap: "var(--space-3)", padding: "var(--space-4)" }}
+    >
       <div style={{ display: "flex", alignItems: "center", gap: "var(--space-3)", flexWrap: "wrap" }}>
         <button ref={backButton} type="button" className="btn btn-secondary" onClick={onClose}>
           ← Back to session
@@ -188,9 +195,10 @@ export function SystemPromptInspector({
       >
         {state.status === "ready" && parsed && (
           <div
+            data-testid="inspector-columns"
             style={{
               display: "grid",
-              gridTemplateColumns: "280px 1fr 320px",
+              gridTemplateColumns: columns.columns,
               gap: "var(--space-4)",
               alignItems: "start",
             }}
@@ -271,7 +279,14 @@ export function SystemPromptInspector({
               )}
             </Blueprint>
 
-            <Blueprint style={{ padding: "var(--space-3)", maxHeight: "70vh", overflow: "auto" }}>
+            <Blueprint
+              style={{
+                padding: "var(--space-3)",
+                maxHeight: "70vh",
+                overflow: "auto",
+                gridColumn: columns.descriptionSpansRow ? "1 / -1" : undefined,
+              }}
+            >
               <div className="card-kicker" style={{ marginBottom: "var(--space-2)" }}>
                 Component description
               </div>

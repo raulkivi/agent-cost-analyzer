@@ -156,13 +156,17 @@ body.vscode-high-contrast .listbox-value--alternative {
 }
 
 /* — alerts: the theme's error colour instead of a fixed dark red — */
-body.vscode-light .stat-tile-value--alert,
 body.vscode-dark .stat-tile-value--alert,
 body.vscode-high-contrast .stat-tile-value--alert,
-body.vscode-light .failure-badge,
 body.vscode-dark .failure-badge,
 body.vscode-high-contrast .failure-badge {
   color: var(--vscode-errorForeground, #b02a2a);
+}
+/* Light themes' errorForeground is a bright red made for icons and squiggles
+   (Light Modern's #f85149 is 3.4:1 on white), too light for text. */
+body.vscode-light .stat-tile-value--alert,
+body.vscode-light .failure-badge {
+  color: #b02a2a;
 }
 
 /* — high contrast: the theme's contrast border on every frame — */
@@ -173,4 +177,75 @@ body.vscode-high-contrast .blueprint,
 body.vscode-high-contrast .listbox,
 body.vscode-high-contrast .stat-tile {
   border-color: var(--vscode-contrastBorder, var(--color-divider));
+}
+
+/* — VS Code-native chrome (step 10.11, the mock-ups in plan §3.6): the
+     editor tab already names the panel, so no second brand or server status
+     line; no Industry corner marks; native form controls and scrollbars in
+     the theme's own scheme; card labels in normal case like VS Code's own
+     panels. — */
+body.vscode-light .blueprint > .corner,
+body.vscode-dark .blueprint > .corner,
+body.vscode-high-contrast .blueprint > .corner,
+body.vscode-light .nav-brand-block,
+body.vscode-dark .nav-brand-block,
+body.vscode-high-contrast .nav-brand-block,
+body.vscode-light .app-status,
+body.vscode-dark .app-status,
+body.vscode-high-contrast .app-status {
+  display: none;
+}
+body.vscode-light {
+  color-scheme: light;
+}
+body.vscode-dark,
+body.vscode-high-contrast {
+  color-scheme: dark;
+}
+body.vscode-light .card-kicker,
+body.vscode-dark .card-kicker,
+body.vscode-high-contrast .card-kicker {
+  text-transform: none;
+  letter-spacing: normal;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+/* — the timeline: Chromium draws a light track beside any accent colour
+     (glaring in a dark theme), and High Contrast's button colour is black
+     (an invisible thumb), so the track and thumb come from theme colours. — */
+body.vscode-light .timeline-range,
+body.vscode-dark .timeline-range,
+body.vscode-high-contrast .timeline-range {
+  appearance: none;
+  height: 16px;
+  background: transparent;
+}
+body.vscode-light .timeline-range::-webkit-slider-runnable-track,
+body.vscode-dark .timeline-range::-webkit-slider-runnable-track,
+body.vscode-high-contrast .timeline-range::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--vscode-scrollbarSlider-background, var(--color-divider));
+}
+body.vscode-high-contrast .timeline-range::-webkit-slider-runnable-track {
+  outline: 1px solid var(--vscode-contrastBorder, var(--color-divider));
+}
+body.vscode-light .timeline-range::-webkit-slider-thumb,
+body.vscode-dark .timeline-range::-webkit-slider-thumb,
+body.vscode-high-contrast .timeline-range::-webkit-slider-thumb {
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  margin-top: -5px;
+  border-radius: 50%;
+  background: var(--vscode-focusBorder, var(--color-accent));
+}
+
+/* — High Contrast: its button background is black, like the page, so the
+     checked option and pressed chips get the theme's active-item outline. — */
+body.vscode-high-contrast .seg-opt:has(input:checked),
+body.vscode-high-contrast .filter-chip[aria-pressed="true"] {
+  outline: 2px solid var(--vscode-contrastActiveBorder, #f38518);
+  outline-offset: -2px;
 }

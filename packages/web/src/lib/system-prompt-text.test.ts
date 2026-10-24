@@ -73,13 +73,13 @@ describe("buildTextSegments", () => {
     expect(flattenText(segments)).toBe(text);
   });
 
-  it("uses a light, uniform text-background tint rather than the nav swatch's full-saturation hue", () => {
+  it("uses a faint, uniform text-background tint over the theme's own ground rather than the nav swatch's full-saturation hue", () => {
     const text = "<foo>hello world</foo>";
 
     const [node] = build(text);
 
     if (node.kind !== "node") throw new Error("unreachable");
-    expect(node.color).toMatch(/^color-mix\(in srgb, #2a78d6 16%, white\)$/);
+    expect(node.color).toMatch(/^color-mix\(in srgb, #2a78d6 16%, transparent\)$/);
   });
 });
 

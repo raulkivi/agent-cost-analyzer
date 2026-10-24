@@ -13,6 +13,9 @@ export const productFeaturesSchema = z.object({
   settingFixes: z.boolean(),
   // system prompt -> editor document
   openInEditor: z.boolean(),
+  // the host lists the sessions in its own sidebar, so the Analyze mode
+  // view gives that column to the turns (step 10.11)
+  sessionSidebar: z.boolean(),
 });
 
 export type ProductFeatures = z.infer<typeof productFeaturesSchema>;

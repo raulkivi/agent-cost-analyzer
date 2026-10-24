@@ -167,3 +167,61 @@ describe("VS Code theme mapping (vscode-extension.md step 10.5)", () => {
     expect(main.indexOf('import "./theme.css"')).toBeGreaterThanOrEqual(0);
   });
 });
+
+// Step 10.11: inside VS Code the panel looks like the editor around it (the
+// mock-ups, plan §3.6): no Industry corner marks, no second brand under the
+// editor tab, no server status line, native form controls and scrollbars.
+describe("VS Code-native chrome (step 10.11)", () => {
+  const rules = parseRules(readVscodeTheme());
+  const declared = (selector: string, property: string) =>
+    VSCODE_BODY_CLASSES.map(
+      (bodyClass) =>
+        rules
+          .filter((rule) => rule.selectors.includes(`body.${bodyClass} ${selector}`) && rule.declarations.has(property))
+          .at(-1)
+          ?.declarations.get(property),
+    );
+
+  it.each([".blueprint > .corner", ".nav-brand-block", ".app-status"])("hides %s in every theme", (selector) => {
+    expect(declared(selector, "display")).toEqual(["none", "none", "none"]);
+  });
+
+  it("gives native controls and scrollbars the theme's own colour scheme", () => {
+    const scheme = (bodyClass: string) =>
+      rules.filter((rule) => rule.selectors.includes(`body.${bodyClass}`)).find((rule) => rule.declarations.has("color-scheme"))
+        ?.declarations.get("color-scheme");
+
+    expect(scheme("vscode-light")).toBe("light");
+    expect(scheme("vscode-dark")).toBe("dark");
+    expect(scheme("vscode-high-contrast")).toBe("dark");
+  });
+
+  // Chromium draws a light track beside any accent colour, glaring in a
+  // dark theme, and High Contrast's button colour is black (an invisible
+  // thumb): the timeline draws its own track and thumb from theme colours.
+  it("draws the timeline's track and thumb in the theme's colours", () => {
+    for (const part of ["::-webkit-slider-runnable-track", "::-webkit-slider-thumb"]) {
+      const background = declared(`.timeline-range${part}`, "background");
+      expect(background.every((value) => value?.includes("var(--vscode-")), part).toBe(true);
+    }
+    expect(declared(".timeline-range", "appearance")).toEqual(["none", "none", "none"]);
+  });
+
+  it("writes card labels in normal case, like VS Code's own panels", () => {
+    expect(declared(".card-kicker", "text-transform")).toEqual(["none", "none", "none"]);
+  });
+
+  // High Contrast's button background is black, the page's own colour, so a
+  // checked option or pressed chip looked like the rest; VS Code's own
+  // High Contrast marks the active item with an outline instead.
+  it.each([".seg-opt:has(input:checked)", '.filter-chip[aria-pressed="true"]'])(
+    "outlines %s in High Contrast with the theme's active border",
+    (selector) => {
+      const outline = rules
+        .filter((rule) => rule.selectors.includes(`body.vscode-high-contrast ${selector}`) && rule.declarations.has("outline"))
+        .at(-1)
+        ?.declarations.get("outline");
+      expect(outline).toMatch(/var\(--vscode-contrastActiveBorder/);
+    },
+  );
+});
