@@ -20,7 +20,8 @@
     "packages/domain",
     "packages/server",
     "packages/web",
-    "packages/pi-system-prompt-logger"
+    "packages/pi-system-prompt-logger",
+    "packages/vscode-extension"
   ],
   "scripts": {
     "dev": "npm run dev --workspace=packages/server & npm run dev --workspace=packages/web",
