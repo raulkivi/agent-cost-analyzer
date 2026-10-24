@@ -1,5 +1,5 @@
 import { useRef } from "react";
-import type { KeyboardEvent, ReactNode } from "react";
+import type { CSSProperties, KeyboardEvent, ReactNode } from "react";
 import type { TokenCount, Turn } from "@copilot-cost-analyzer/domain";
 import { sumTokenCounts } from "@copilot-cost-analyzer/domain";
 import { isFailedStatus } from "@copilot-cost-analyzer/domain";
@@ -11,13 +11,13 @@ import { Tag } from "./ui/Tag.js";
 const CUMULATIVE_COST_UNKNOWN_REASON =
   "Cumulative AI Credits is unavailable because at least one earlier turn's cost is unknown.";
 
-export function formatTokenCount(tokenCount: TokenCount): string {
+function formatTokenCount(tokenCount: TokenCount): string {
   return tokenCount.known ? tokenCount.value.toLocaleString() : "—";
 }
 
 // Tool-call count plus a failure badge (Phase 9.10 audit) — icon + number +
 // accessible label, so a failed turn stands out without relying on colour.
-export function ToolCallsCell({ turn }: { turn: Turn }) {
+function ToolCallsCell({ turn }: { turn: Turn }) {
   const failed = turn.toolCalls.filter((call) => call.outcome && isFailedStatus(call.outcome.status)).length;
   return (
     <>
@@ -31,13 +31,13 @@ export function ToolCallsCell({ turn }: { turn: Turn }) {
   );
 }
 
-export function formatRoundsCount(roundsCount: number | undefined): string {
+function formatRoundsCount(roundsCount: number | undefined): string {
   return roundsCount === undefined ? "—" : roundsCount.toLocaleString();
 }
 
 // Running total through and including this row — all-or-nothing (an
 // earlier turn with unknown cost makes every later row's total unknown too).
-export function cumulativeCostThrough(turns: Turn[], turnIndex: number): TokenCount {
+function cumulativeCostThrough(turns: Turn[], turnIndex: number): TokenCount {
   return sumTokenCounts(
     turns.slice(0, turnIndex + 1).map((turn) => turn.usage.costAiCredits),
     CUMULATIVE_COST_UNKNOWN_REASON,
@@ -50,40 +50,40 @@ interface CellProps {
   turns: Turn[];
 }
 
-// One <td> per column id; the details drawer reuses the same formatting.
-const CELLS: Record<TurnColumnId, (props: CellProps) => ReactNode> = {
-  turn: ({ turn }) => <td>{turn.index}</td>,
-  trigger: ({ turn }) => (
-    <td className="truncate" style={{ maxWidth: 100 }}>
-      {turn.triggeredEvent ? (
-        <Tag variant="outline">{TRIGGER_LABELS[turn.triggeredEvent]}</Tag>
-      ) : (
-        <span className="text-muted">—</span>
-      )}
-    </td>
-  ),
-  rounds: ({ turn }) => <td>{formatRoundsCount(turn.usage.roundsCount)}</td>,
-  calls: ({ turn }) => (
-    <td style={{ whiteSpace: "nowrap" }}>
-      <ToolCallsCell turn={turn} />
-    </td>
-  ),
-  uncachedInput: ({ turn }) => <td>{formatTokenCount(turn.usage.uncachedInput)}</td>,
-  cacheRead: ({ turn }) => <td>{formatTokenCount(turn.usage.cacheRead)}</td>,
-  cacheWrite: ({ turn }) => <td>{formatTokenCount(turn.usage.cacheWrite)}</td>,
-  tool: ({ turn }) => <td>{formatTokenCount(turn.usage.tool)}</td>,
-  vision: ({ turn }) => <td>{formatTokenCount(turn.usage.vision)}</td>,
-  reasoning: ({ turn }) => <td>{formatTokenCount(turn.usage.reasoning)}</td>,
-  output: ({ turn }) => <td>{formatTokenCount(turn.usage.output)}</td>,
-  aiCredits: ({ turn }) => <td>{formatAiCredits(turn.usage.costAiCredits)}</td>,
-  cumulative: ({ turns, turnIndex }) => (
-    <td className="text-muted">{formatAiCredits(cumulativeCostThrough(turns, turnIndex))}</td>
-  ),
-  model: ({ turn }) => (
-    <td className="text-muted truncate" style={{ fontSize: 12, maxWidth: 110 }}>
-      {turn.usage.model}
-    </td>
-  ),
+// Each column's value for a turn; the table and the narrow layout's details
+// drawer (TurnMetrics) format it the same way.
+const VALUES: Record<TurnColumnId, (props: CellProps) => ReactNode> = {
+  turn: ({ turn }) => turn.index,
+  trigger: ({ turn }) =>
+    turn.triggeredEvent ? (
+      <Tag variant="outline">{TRIGGER_LABELS[turn.triggeredEvent]}</Tag>
+    ) : (
+      <span className="text-muted">—</span>
+    ),
+  rounds: ({ turn }) => formatRoundsCount(turn.usage.roundsCount),
+  calls: ({ turn }) => <ToolCallsCell turn={turn} />,
+  uncachedInput: ({ turn }) => formatTokenCount(turn.usage.uncachedInput),
+  cacheRead: ({ turn }) => formatTokenCount(turn.usage.cacheRead),
+  cacheWrite: ({ turn }) => formatTokenCount(turn.usage.cacheWrite),
+  tool: ({ turn }) => formatTokenCount(turn.usage.tool),
+  vision: ({ turn }) => formatTokenCount(turn.usage.vision),
+  reasoning: ({ turn }) => formatTokenCount(turn.usage.reasoning),
+  output: ({ turn }) => formatTokenCount(turn.usage.output),
+  aiCredits: ({ turn }) => formatAiCredits(turn.usage.costAiCredits),
+  cumulative: ({ turns, turnIndex }) => formatAiCredits(cumulativeCostThrough(turns, turnIndex)),
+  model: ({ turn }) => turn.usage.model,
+};
+
+export function TurnColumnValue({ column, ...props }: CellProps & { column: TurnColumnId }) {
+  return <>{VALUES[column](props)}</>;
+}
+
+// The table cell's own look, per column.
+const CELL_STYLES: Partial<Record<TurnColumnId, { className?: string; style?: CSSProperties }>> = {
+  trigger: { className: "truncate", style: { maxWidth: 100 } },
+  calls: { style: { whiteSpace: "nowrap" } },
+  cumulative: { className: "text-muted" },
+  model: { className: "text-muted truncate", style: { fontSize: 12, maxWidth: 110 } },
 };
 
 const LABELS = new Map<TurnColumnId, string>(TURN_COLUMNS.map((column) => [column.id, column.label]));
@@ -164,10 +164,11 @@ export function TurnsTable({
             onClick={() => onSelectTurn(turnIndex)}
             onKeyDown={(event) => handleKeyDown(event, turnIndex)}
           >
-            {columns.map((id) => {
-              const Cell = CELLS[id];
-              return <Cell key={id} turn={turn} turnIndex={turnIndex} turns={turns} />;
-            })}
+            {columns.map((id) => (
+              <td key={id} {...CELL_STYLES[id]}>
+                <TurnColumnValue column={id} turn={turn} turnIndex={turnIndex} turns={turns} />
+              </td>
+            ))}
           </tr>
         ))}
       </tbody>

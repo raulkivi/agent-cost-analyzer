@@ -683,6 +683,99 @@ describe("App", () => {
     expect(screen.getByRole("button", { name: "Inspect request/response" })).toHaveFocus();
   });
 
+  // §3.5 Layout: by the panel's width (mock-up board 4 for narrow).
+  describe("layout by panel width", () => {
+    // A ResizeObserver that reports `width` for whatever it observes.
+    function panelWidth(width: number) {
+      vi.stubGlobal(
+        "ResizeObserver",
+        class {
+          constructor(private readonly callback: ResizeObserverCallback) {}
+          observe(target: Element) {
+            this.callback([{ target, contentRect: { width } } as unknown as ResizeObserverEntry], this as unknown as ResizeObserver);
+          }
+          unobserve() {}
+          disconnect() {}
+        },
+      );
+    }
+
+    async function openAnalyzeSession() {
+      render(<App />);
+      switchToAnalyze();
+      fireEvent.click(await screen.findByRole("button", { name: "Fix the bug" }));
+      await screen.findAllByRole("columnheader");
+    }
+
+    it("keeps today's three columns at 1280 px", async () => {
+      panelWidth(1280);
+      await openAnalyzeSession();
+
+      expect(screen.getByRole("main")).toHaveAttribute("data-layout", "wide");
+      expect(screen.getByLabelText("Explanation")).toBeVisible();
+      expect(screen.getByLabelText("Tool audit")).toBeInTheDocument();
+      expect(screen.queryByRole("combobox", { name: "View" })).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "Details" })).not.toBeInTheDocument();
+      expect(screen.getAllByRole("columnheader")).toHaveLength(14);
+    });
+
+    it("moves the right column into a drawer at 900 px", async () => {
+      const user = userEvent.setup();
+      panelWidth(900);
+      await openAnalyzeSession();
+
+      expect(screen.getByRole("main")).toHaveAttribute("data-layout", "medium");
+      expect(screen.queryByLabelText("Explanation")).not.toBeInTheDocument();
+      const details = screen.getByRole("button", { name: "Details" });
+      expect(details).toHaveAttribute("aria-expanded", "false");
+
+      await user.click(details);
+      const drawer = screen.getByRole("region", { name: /^Turn 0 details$/ });
+      expect(within(drawer).getByText("analyze turn explanation")).toBeInTheDocument();
+      expect(within(drawer).getByLabelText("System prompt")).toBeInTheDocument();
+
+      await user.keyboard("{Escape}");
+      expect(screen.queryByRole("region", { name: /details/ })).not.toBeInTheDocument();
+      expect(details).toHaveFocus();
+    });
+
+    it("at 640 px: 2×2 KPIs, a view select, the priority columns and a details drawer with the rest", async () => {
+      const user = userEvent.setup();
+      panelWidth(640);
+      await openAnalyzeSession();
+
+      expect(screen.getByRole("main")).toHaveAttribute("data-layout", "narrow");
+      for (const name of ["AI Credits", "Cache read", "Turns", "Tool calls"]) {
+        expect(screen.getByRole("group", { name })).toBeInTheDocument();
+      }
+      expect(screen.getAllByRole("columnheader").map((cell) => cell.textContent)).toEqual([
+        "Turn",
+        "Trigger",
+        "AI Credits",
+        "Cumulative",
+      ]);
+      expect(screen.queryByRole("button", { name: "Columns" })).not.toBeInTheDocument();
+
+      screen.getAllByRole("row")[1]!.focus();
+      await user.keyboard("{Enter}");
+      const drawer = screen.getByRole("region", { name: /^Turn 0 details$/ });
+      expect(within(drawer).getByText("Model")).toBeInTheDocument();
+      expect(within(drawer).getByText("analyze turn explanation")).toBeInTheDocument();
+
+      const view = screen.getByRole("combobox", { name: "View" });
+      await user.selectOptions(view, "All sessions");
+      expect(await screen.findByRole("table", { name: "Sessions" })).toBeInTheDocument();
+    });
+
+    it("lays out the narrowest supported panel, 360 px, as narrow", async () => {
+      panelWidth(360);
+      await openAnalyzeSession();
+
+      expect(screen.getByRole("main")).toHaveAttribute("data-layout", "narrow");
+      expect(screen.getByRole("combobox", { name: "View" })).toBeInTheDocument();
+    });
+  });
+
   // §3.5 Layout: "users choose and keep the visible columns".
   describe("turns table columns", () => {
     it("shows every column until the user chooses, as before", async () => {

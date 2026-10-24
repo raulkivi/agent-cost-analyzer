@@ -418,6 +418,31 @@ a { color: var(--color-accent-text); text-underline-offset: 3px; }
 .column-chooser-panel > legend { float: left; width: 100%; margin-bottom: 4px; padding: 0; }
 .column-chooser-option { display: flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer; }
 
+/* — layout by panel width (§3.5 Layout, mock-up board 4): drawers, the
+     narrow view select and 2×2 KPIs. Wide widths use none of these. — */
+.table-scroll { overflow-x: auto; }
+.view-select { display: flex; align-items: center; gap: var(--space-2); font-size: 13px; }
+.view-select > .input { flex: 1; min-height: 30px; }
+.kpi-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-2); margin-bottom: var(--space-3); }
+.drawer {
+  display: flex; flex-direction: column; gap: var(--space-2); padding: var(--space-3);
+  background: var(--color-bg); border: 1px solid var(--color-accent);
+}
+.drawer--side {
+  position: fixed; top: 0; right: 0; bottom: 0; z-index: 20; width: min(380px, 100%);
+  overflow-y: auto; border-width: 0 0 0 1px; box-shadow: var(--shadow-lg);
+}
+.drawer--inline { margin-top: var(--space-3); }
+.drawer-header { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); }
+.drawer-title { margin: 0; font-size: 16px; }
+.turn-metrics {
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px 12px; margin: 0;
+  font-size: 13px; font-variant-numeric: tabular-nums;
+}
+.turn-metrics dt { font-size: 12px; }
+.turn-metrics dd { margin: 0; }
+main[data-layout="narrow"] .nav { flex-wrap: wrap; gap: var(--space-2); }
+
 /* — visually hidden, still read by screen readers (live regions) — */
 .sr-only {
   position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;

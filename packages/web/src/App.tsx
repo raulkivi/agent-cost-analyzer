@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import type { CSSProperties } from "react";
 import {
   selectSessionPayloadSchema,
   type ConfigWarning,
@@ -19,6 +20,9 @@ import { AdviceExportTriggerBar } from "./components/AdviceExportTriggerBar.js";
 import { AppHeader } from "./components/AppHeader.js";
 import { AuditRollupPanel } from "./components/AuditRollupPanel.js";
 import { ColumnChooser } from "./components/ColumnChooser.js";
+import { SessionKpiTiles } from "./components/SessionKpiTiles.js";
+import { TurnMetrics } from "./components/TurnMetrics.js";
+import { Drawer } from "./components/ui/Drawer.js";
 import { InsightsDashboard } from "./components/insights/InsightsDashboard.js";
 import { SessionAuditPanel } from "./components/SessionAuditPanel.js";
 import { ConfigWarningBanner } from "./components/ConfigWarningBanner.js";
@@ -37,7 +41,9 @@ import { Tag } from "./components/ui/Tag.js";
 import { AiCreditsSparkline } from "./charts/AiCreditsSparkline.js";
 import { getHostCapabilities } from "./host/current-host-capabilities.js";
 import { performanceMarks as pagePerformanceMarks, type PerformanceMarks } from "./lib/performance-marks.js";
-import { ALL_TURN_COLUMNS, parseTurnColumns, type TurnColumnId } from "./lib/turn-columns.js";
+import { layoutFor, type Layout } from "./lib/layout.js";
+import { ALL_TURN_COLUMNS, hiddenTurnColumns, parseTurnColumns, turnColumnsFor, type TurnColumnId } from "./lib/turn-columns.js";
+import { useContainerWidth } from "./lib/use-container-width.js";
 import { getViewStateStorage } from "./state/current-view-state-storage.js";
 import { useSessionStore, type RightTab } from "./state/session-store.js";
 
@@ -70,6 +76,22 @@ type SessionLoad =
 
 // The view-state storage key for the turns table's chosen columns.
 const TURN_COLUMNS_KEY = "turnColumns";
+
+// §3.5 Layout: list, centre and right column at wide widths (as always);
+// list and centre at medium, with the right column in a drawer; one column
+// at narrow widths.
+const GRID_COLUMNS: Record<Layout, string> = {
+  wide: "280px 1fr 340px",
+  medium: "240px minmax(0, 1fr)",
+  narrow: "minmax(0, 1fr)",
+};
+
+// The centre column spans whatever the session list and right column leave.
+function centerColumnStyle(layout: Layout, showDashboard: boolean, hideRightColumn: boolean): CSSProperties | undefined {
+  if (layout === "narrow") return undefined;
+  if (showDashboard) return { gridColumn: layout === "wide" ? "1 / 4" : "1 / 3" };
+  return layout === "wide" && hideRightColumn ? { gridColumn: "2 / 4" } : undefined;
+}
 
 // What the UI does until the product profile arrives, or when the backend
 // can't report one: the standalone app as it has always been (no setting
@@ -137,6 +159,11 @@ export function App({ performanceMarks = pagePerformanceMarks }: AppProps = {}) 
     setActiveProviderId,
   } = useSessionStore();
   const latestSessionRequestId = useRef(0);
+  // §3.5 Layout: by the panel's own width, not the window's.
+  const [containerRef, containerWidth] = useContainerWidth<HTMLElement>();
+  const layout = layoutFor(containerWidth);
+  // The right column's drawer (medium) or the turn details drawer (narrow).
+  const [detailsOpen, setDetailsOpen] = useState(false);
 
   useEffect(() => {
     performanceMarks.mark("first-render");
@@ -239,6 +266,8 @@ export function App({ performanceMarks = pagePerformanceMarks }: AppProps = {}) 
   // list boxes, so it hides the session list as well.
   const showDashboard = mode === "analyze" && centerView === "dashboard";
   const hideRightColumn = mode === "analyze" && (centerView === "rollup" || showDashboard);
+  const visibleColumns = turnColumnsFor(layout, chosenColumns);
+  const showDetailsDrawer = layout !== "wide" && detailsOpen && !hideRightColumn && selectedTurn !== null;
   const listLoad = mode === "learn" ? scenarioList : sessionList;
   const listForMode = listLoad.status === "ready" ? listLoad.items : [];
   const listLoaded = listLoad.status === "ready";
@@ -297,6 +326,7 @@ export function App({ performanceMarks = pagePerformanceMarks }: AppProps = {}) 
     setInspectorOpen(false);
     setTurnInspectorOpen(false);
     setCenterView("turns");
+    setDetailsOpen(false);
     setMode(next);
   }
 
@@ -385,8 +415,48 @@ export function App({ performanceMarks = pagePerformanceMarks }: AppProps = {}) 
     setTurnInspectorOpen(true);
   }
 
+  // The right column: the tabs and their panels. Beside the table at wide
+  // widths; in a drawer otherwise (§3.5 Layout).
+  const rightColumn = (
+    <>
+      {mode === "analyze" ? (
+        <SegmentedControl
+          name="right-tab"
+          options={RIGHT_TAB_OPTIONS}
+          value={rightTab}
+          onChange={setRightTab}
+          className="right-tab-seg"
+        />
+      ) : (
+        <h6 style={{ margin: "0 0 0 var(--space-1)" }}>Explanation</h6>
+      )}
+      <div style={{ marginTop: "var(--space-2)" }}>
+        {(mode === "learn" || rightTab === "explanation") && (
+          <ExplanationPanel
+            turn={selectedTurn}
+            mode={mode}
+            toolCallsAvailable={toolCallsAvailable}
+            onOpenTurnInspector={
+              mode === "analyze" && session ? () => setTurnInspectorOpen(true) : undefined
+            }
+          />
+        )}
+        {mode === "analyze" && rightTab === "system-prompt" && (
+          <SystemPromptBreakdown
+            components={session?.systemPrompt ?? []}
+            providerId={session?.providerId}
+            onOpenInspector={session ? () => setInspectorOpen(true) : undefined}
+          />
+        )}
+        {mode === "analyze" && rightTab === "tools" && (
+          <ToolInventoryPanel entries={session?.toolInventory ?? []} />
+        )}
+      </div>
+    </>
+  );
+
   return (
-    <main>
+    <main ref={containerRef} data-layout={layout}>
       <AppHeader
         mode={mode}
         onModeChange={handleModeChange}
@@ -469,7 +539,7 @@ export function App({ performanceMarks = pagePerformanceMarks }: AppProps = {}) 
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "280px 1fr 340px",
+              gridTemplateColumns: GRID_COLUMNS[layout],
               gap: "var(--space-4)",
               padding: "var(--space-4)",
               alignItems: "start",
@@ -513,24 +583,32 @@ export function App({ performanceMarks = pagePerformanceMarks }: AppProps = {}) 
               />
             </div>
 
-            <div
-              style={
-                showDashboard
-                  ? { gridColumn: "1 / 4" }
-                  : hideRightColumn
-                    ? { gridColumn: "2 / 4" }
-                    : undefined
-              }
-            >
-              {mode === "analyze" && (
-                <SegmentedControl
-                  name="center-view"
-                  options={CENTER_VIEW_OPTIONS}
-                  value={centerView}
-                  onChange={setCenterView}
-                  className="center-view-seg"
-                />
-              )}
+            <div style={centerColumnStyle(layout, showDashboard, hideRightColumn)}>
+              {mode === "analyze" &&
+                (layout === "narrow" ? (
+                  <label className="view-select">
+                    <span className="text-muted">View</span>
+                    <select
+                      className="input"
+                      value={centerView}
+                      onChange={(event) => setCenterView(event.target.value as CenterView)}
+                    >
+                      {CENTER_VIEW_OPTIONS.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                ) : (
+                  <SegmentedControl
+                    name="center-view"
+                    options={CENTER_VIEW_OPTIONS}
+                    value={centerView}
+                    onChange={setCenterView}
+                    className="center-view-seg"
+                  />
+                ))}
               <div style={mode === "analyze" ? { marginTop: "var(--space-3)" } : undefined}>
               {showDashboard ? (
                 <InsightsDashboard crossProvider={features.crossProviderInsights} />
@@ -590,16 +668,49 @@ export function App({ performanceMarks = pagePerformanceMarks }: AppProps = {}) 
                         AI Credits: unavailable
                       </span>
                     )}
-                    <div style={{ marginLeft: "auto" }}>
-                      <ColumnChooser visible={chosenColumns} onChange={handleColumnsChange} />
+                    <div style={{ marginLeft: "auto", display: "flex", gap: "var(--space-2)", alignItems: "center" }}>
+                      {layout !== "narrow" && <ColumnChooser visible={chosenColumns} onChange={handleColumnsChange} />}
+                      {layout !== "wide" && (
+                        <button
+                          type="button"
+                          className="btn btn-secondary"
+                          style={{ fontSize: 12, padding: "2px 8px" }}
+                          aria-expanded={showDetailsDrawer}
+                          onClick={() => setDetailsOpen((current) => !current)}
+                        >
+                          Details
+                        </button>
+                      )}
                     </div>
                   </div>
-                  <TurnsTable
-                    turns={session.turns}
-                    selectedTurnIndex={selectedTurnIndex}
-                    onSelectTurn={selectTurn}
-                    columns={chosenColumns}
-                  />
+                  {layout === "narrow" && <SessionKpiTiles turns={session.turns} />}
+                  {/* Below wide widths the table scrolls inside its column;
+                      at wide widths it sizes the column, as it always has. */}
+                  <div className={layout === "wide" ? undefined : "table-scroll"}>
+                    <TurnsTable
+                      turns={session.turns}
+                      selectedTurnIndex={selectedTurnIndex}
+                      onSelectTurn={selectTurn}
+                      onOpenTurn={layout === "wide" ? undefined : () => setDetailsOpen(true)}
+                      columns={visibleColumns}
+                    />
+                  </div>
+                  {showDetailsDrawer && selectedTurn && (
+                    <Drawer
+                      title={`Turn ${selectedTurn.index} details`}
+                      placement={layout === "narrow" ? "inline" : "side"}
+                      onClose={() => setDetailsOpen(false)}
+                    >
+                      {layout === "narrow" && (
+                        <TurnMetrics
+                          turns={session.turns}
+                          turnIndex={selectedTurnIndex}
+                          columns={hiddenTurnColumns(visibleColumns)}
+                        />
+                      )}
+                      {rightColumn}
+                    </Drawer>
+                  )}
                   <div style={{ marginTop: "var(--space-4)" }}>
                     <TimelineScrubber
                       turnCount={session.turns.length}
@@ -616,41 +727,9 @@ export function App({ performanceMarks = pagePerformanceMarks }: AppProps = {}) 
               </div>
             </div>
 
-            <div style={hideRightColumn ? { display: "none" } : undefined}>
-              {mode === "analyze" ? (
-                <SegmentedControl
-                  name="right-tab"
-                  options={RIGHT_TAB_OPTIONS}
-                  value={rightTab}
-                  onChange={setRightTab}
-                  className="right-tab-seg"
-                />
-              ) : (
-                <h6 style={{ margin: "0 0 0 var(--space-1)" }}>Explanation</h6>
-              )}
-              <div style={{ marginTop: "var(--space-2)" }}>
-                {(mode === "learn" || rightTab === "explanation") && (
-                  <ExplanationPanel
-                    turn={selectedTurn}
-                    mode={mode}
-                    toolCallsAvailable={toolCallsAvailable}
-                    onOpenTurnInspector={
-                      mode === "analyze" && session ? () => setTurnInspectorOpen(true) : undefined
-                    }
-                  />
-                )}
-                {mode === "analyze" && rightTab === "system-prompt" && (
-                  <SystemPromptBreakdown
-                    components={session?.systemPrompt ?? []}
-                    providerId={session?.providerId}
-                    onOpenInspector={session ? () => setInspectorOpen(true) : undefined}
-                  />
-                )}
-                {mode === "analyze" && rightTab === "tools" && (
-                  <ToolInventoryPanel entries={session?.toolInventory ?? []} />
-                )}
-              </div>
-            </div>
+            {layout === "wide" && (
+              <div style={hideRightColumn ? { display: "none" } : undefined}>{rightColumn}</div>
+            )}
           </div>
         )}
       </div>
