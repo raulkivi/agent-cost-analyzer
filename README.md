@@ -82,7 +82,7 @@ This repo builds two products from one codebase:
   signals (risky commands, anomalies, behaviour changes) that say what
   happened, when and why.
 - [VS Code extension plan](docs/plans/vscode-extension.md) — Phase 10
-  (in progress: steps 10.0-10.9 done, 10.10 documentation in progress): AI Credits
+  (in progress: steps 10.0-10.9 done, 10.10 documentation written, screenshots pending): AI Credits
   Analyzer, a separate, Copilot-only VS Code extension in
   `packages/vscode-extension` that shares code with this standalone app
   (Agent Cost Analyzer). It covers the code analysis, the test-first steps

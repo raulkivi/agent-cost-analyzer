@@ -28,6 +28,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Release workflows: `ext-v*` tags publish the extension to the VS Code
     Marketplace and Open VSX; `app-v*` tags make a GitHub Release of the
     standalone app.
+- Phase 10.10: documentation for both products.
+  - The README is now Agent Cost Analyzer's, with a "Which product should
+    I use?" section, and says how the Claude Code provider finds its logs.
+  - An AI Credits Analyzer guide (`docs/vscode-extension-guide.md`), its
+    Marketplace README and its own changelog.
+  - The User Guide covers charts as tables, Cancel, narrow and medium
+    windows, keyboard use and reduced motion.
+  - The threat model covers the extension; CONTRIBUTING covers building
+    and testing it.
 ### Fixed
 - The turn inspector's round picker could jump back to round 0 right after
   you picked another round.
