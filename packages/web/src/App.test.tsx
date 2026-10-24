@@ -4,6 +4,8 @@ import type { ConfigStatus, ProductProfile } from "@copilot-cost-analyzer/domain
 import { App } from "./App.js";
 import { getApiTransport, resetApiTransport, setApiTransport } from "./api-client/current-transport.js";
 import { resetHostCapabilities, setHostCapabilities } from "./host/current-host-capabilities.js";
+import { resetViewStateStorage, setViewStateStorage } from "./state/current-view-state-storage.js";
+import { memoryViewStateStorage } from "./state/view-state-storage.js";
 import { makeTurn } from "./test-support/turn-fixture.js";
 import { makeAuditRollup, makeSessionAudit } from "./test-support/audit-fixture.js";
 import { sampleInsightsDataset } from "./test-support/insights-fixture.js";
@@ -230,6 +232,7 @@ describe("App", () => {
     vi.unstubAllGlobals();
     resetApiTransport();
     resetHostCapabilities();
+    resetViewStateStorage();
   });
 
   it("renders a successful health check from the server, including the app version", async () => {
@@ -608,6 +611,33 @@ describe("App", () => {
 
     await screen.findByRole("button", { name: "Fix the bug" });
     expect(screen.queryByText(/selected for advice/)).not.toBeInTheDocument();
+  });
+
+  // §3.5 Layout: "users choose and keep the visible columns".
+  describe("turns table columns", () => {
+    it("shows every column until the user chooses, as before", async () => {
+      render(<App />);
+      fireEvent.click(await screen.findByRole("button", { name: "Cache Basics" }));
+
+      expect(await screen.findAllByRole("columnheader")).toHaveLength(14);
+      expect(screen.getByText("Showing 14 of 14 columns")).toBeInTheDocument();
+    });
+
+    it("restores the kept choice and keeps a new one in view-state storage", async () => {
+      const storage = memoryViewStateStorage();
+      storage.set("turnColumns", ["turn", "aiCredits"]);
+      setViewStateStorage(storage);
+      render(<App />);
+      fireEvent.click(await screen.findByRole("button", { name: "Cache Basics" }));
+
+      expect((await screen.findAllByRole("columnheader")).map((cell) => cell.textContent)).toEqual(["Turn", "AI Credits"]);
+
+      fireEvent.click(screen.getByRole("button", { name: "Columns" }));
+      fireEvent.click(screen.getByRole("checkbox", { name: "Model" }));
+
+      expect(storage.get("turnColumns")).toEqual(["turn", "aiCredits", "model"]);
+      expect(screen.getAllByRole("columnheader")).toHaveLength(3);
+    });
   });
 
   // vscode-extension.md §3.5 Performance: the host reads these (step 10.9).

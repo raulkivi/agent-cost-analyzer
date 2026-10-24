@@ -18,6 +18,7 @@ import { AdviceExportDialog } from "./components/AdviceExportDialog.js";
 import { AdviceExportTriggerBar } from "./components/AdviceExportTriggerBar.js";
 import { AppHeader } from "./components/AppHeader.js";
 import { AuditRollupPanel } from "./components/AuditRollupPanel.js";
+import { ColumnChooser } from "./components/ColumnChooser.js";
 import { InsightsDashboard } from "./components/insights/InsightsDashboard.js";
 import { SessionAuditPanel } from "./components/SessionAuditPanel.js";
 import { ConfigWarningBanner } from "./components/ConfigWarningBanner.js";
@@ -35,6 +36,8 @@ import { Tag } from "./components/ui/Tag.js";
 import { AiCreditsSparkline } from "./charts/AiCreditsSparkline.js";
 import { getHostCapabilities } from "./host/current-host-capabilities.js";
 import { performanceMarks as pagePerformanceMarks, type PerformanceMarks } from "./lib/performance-marks.js";
+import { ALL_TURN_COLUMNS, parseTurnColumns, type TurnColumnId } from "./lib/turn-columns.js";
+import { getViewStateStorage } from "./state/current-view-state-storage.js";
 import { useSessionStore, type RightTab } from "./state/session-store.js";
 
 const RIGHT_TAB_OPTIONS = [
@@ -54,6 +57,9 @@ const CENTER_VIEW_OPTIONS = [
 ] as const;
 
 type CenterView = (typeof CENTER_VIEW_OPTIONS)[number]["value"];
+
+// The view-state storage key for the turns table's chosen columns.
+const TURN_COLUMNS_KEY = "turnColumns";
 
 // What the UI does until the product profile arrives, or when the backend
 // can't report one: the standalone app as it has always been (no setting
@@ -99,6 +105,10 @@ export function App({ performanceMarks = pagePerformanceMarks }: AppProps = {}) 
   const [providers, setProviders] = useState<LogProviderDescriptor[]>([]);
   const [centerView, setCenterView] = useState<CenterView>("turns");
   const [productProfile, setProductProfile] = useState<ProductProfile | null>(null);
+  // The turns table's chosen columns, kept between visits (§3.5 Layout).
+  const [chosenColumns, setChosenColumns] = useState<TurnColumnId[]>(
+    () => parseTurnColumns(getViewStateStorage().get(TURN_COLUMNS_KEY)) ?? ALL_TURN_COLUMNS,
+  );
   const {
     session,
     selectedTurnIndex,
@@ -340,6 +350,11 @@ export function App({ performanceMarks = pagePerformanceMarks }: AppProps = {}) 
     openAnalyzeSession(sessionId);
   }
 
+  function handleColumnsChange(columns: TurnColumnId[]): void {
+    setChosenColumns(columns);
+    getViewStateStorage().set(TURN_COLUMNS_KEY, columns);
+  }
+
   function handleInspectTurn(turnPosition: number): void {
     selectTurn(turnPosition);
     setTurnInspectorOpen(true);
@@ -508,8 +523,16 @@ export function App({ performanceMarks = pagePerformanceMarks }: AppProps = {}) 
                       AI Credits: unavailable
                     </span>
                   )}
+                  <div style={{ marginLeft: "auto" }}>
+                    <ColumnChooser visible={chosenColumns} onChange={handleColumnsChange} />
+                  </div>
                 </div>
-                <TurnsTable turns={session.turns} selectedTurnIndex={selectedTurnIndex} onSelectTurn={selectTurn} />
+                <TurnsTable
+                  turns={session.turns}
+                  selectedTurnIndex={selectedTurnIndex}
+                  onSelectTurn={selectTurn}
+                  columns={chosenColumns}
+                />
                 <div style={{ marginTop: "var(--space-4)" }}>
                   <TimelineScrubber
                     turnCount={session.turns.length}
