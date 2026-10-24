@@ -234,6 +234,7 @@ export function App({ performanceMarks = pagePerformanceMarks }: AppProps = {}) 
       : undefined;
 
   const selectedTurn = session?.turns[selectedTurnIndex] ?? null;
+  const inspectorShown = session !== null && (inspectorOpen || turnInspectorOpen);
   // "All sessions" hides the right column; the dashboard brings its own
   // list boxes, so it hides the session list as well.
   const showDashboard = mode === "analyze" && centerView === "dashboard";
@@ -437,216 +438,222 @@ export function App({ performanceMarks = pagePerformanceMarks }: AppProps = {}) 
           usageDataAvailable={session.usageDataAvailable}
           onClose={() => setTurnInspectorOpen(false)}
         />
-      ) : showEmptyState ? (
-        <div style={{ padding: "var(--space-8) var(--space-4)", display: "flex", justifyContent: "center" }}>
-          <Blueprint style={{ maxWidth: 460 }}>
-            <AsyncView
-              status="empty"
-              loadingText=""
-              empty={{
-                title: EMPTY_STATES[mode].title,
-                body: EMPTY_STATES[mode].body,
-                action:
-                  mode === "analyze"
-                    ? {
-                        label: features.crossProviderInsights
-                          ? "Open the dashboard across all providers"
-                          : "Open the dashboard",
-                        onClick: () => setCenterView("dashboard"),
-                      }
-                    : undefined,
-              }}
-            />
-          </Blueprint>
-        </div>
-      ) : (
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "280px 1fr 340px",
-            gap: "var(--space-4)",
-            padding: "var(--space-4)",
-            alignItems: "start",
-          }}
-        >
-          <div style={showDashboard ? { display: "none" } : undefined}>
-            <AsyncView
-              status={listLoad.status}
-              loadingText={mode === "learn" ? "Loading scenarios…" : "Loading sessions…"}
-              readyText={`${listForMode.length} ${mode === "learn" ? "scenarios" : "sessions"} loaded.`}
-              skeleton="list"
-              error={
-                listLoad.status === "error"
-                  ? {
-                      title: mode === "learn" ? "Couldn't load the Learn scenarios" : "Couldn't load the session list",
-                      details: listLoad.message,
-                      onRetry: () =>
-                        mode === "learn"
-                          ? setScenarioAttempt((current) => current + 1)
-                          : setSessionAttempt((current) => current + 1),
-                    }
-                  : undefined
-              }
-            >
-              <SessionList
-                mode={mode}
-                sessions={listForMode}
-                selectedSessionId={session?.id ?? null}
-                onSelect={handleSelectSession}
-                adviceSelection={adviceSelection}
-                onToggleAdvice={handleToggleAdvice}
-              />
-            </AsyncView>
-            <AdviceExportTriggerBar count={adviceSessions.length} onExport={() => setAdviceDialogOpen(true)} />
-            <AdviceExportDialog
-              sessions={adviceSessions}
-              open={adviceDialogOpen}
-              onClose={() => setAdviceDialogOpen(false)}
-              copyToClipboard={host.copyToClipboard}
-              productName={productProfile?.displayName}
-            />
-          </div>
+      ) : null}
 
-          <div
-            style={
-              showDashboard
-                ? { gridColumn: "1 / 4" }
-                : hideRightColumn
-                  ? { gridColumn: "2 / 4" }
-                  : undefined
-            }
-          >
-            {mode === "analyze" && (
-              <SegmentedControl
-                name="center-view"
-                options={CENTER_VIEW_OPTIONS}
-                value={centerView}
-                onChange={setCenterView}
-                className="center-view-seg"
-              />
-            )}
-            <div style={mode === "analyze" ? { marginTop: "var(--space-3)" } : undefined}>
-            {showDashboard ? (
-              <InsightsDashboard crossProvider={features.crossProviderInsights} />
-            ) : mode === "analyze" && centerView === "rollup" ? (
-              <AuditRollupPanel onOpenSession={handleOpenSessionAudit} key={activeProviderId} />
-            ) : mode === "analyze" && centerView === "session-audit" ? (
-              session ? (
-                <SessionAuditPanel
-                  sessionId={session.id}
-                  selectedTurnIndex={selectedTurnIndex}
-                  onSelectTurn={selectTurn}
-                  onInspectTurn={handleInspectTurn}
-                  onShowAllSessions={() => setCenterView("rollup")}
-                />
-              ) : (
-                <p className="text-muted" style={{ fontSize: 13 }}>
-                  Select a session to audit its tool calls.
-                </p>
-              )
-            ) : sessionLoad.status !== "idle" ? (
+      {/* Kept (hidden) while an inspector is open, so the control that opened
+          it is still there to take focus back when it closes (§3.5). */}
+      <div hidden={inspectorShown}>
+        {showEmptyState ? (
+          <div style={{ padding: "var(--space-8) var(--space-4)", display: "flex", justifyContent: "center" }}>
+            <Blueprint style={{ maxWidth: 460 }}>
               <AsyncView
-                status={sessionLoad.status}
-                loadingText="Loading session…"
-                skeleton="table"
+                status="empty"
+                loadingText=""
+                empty={{
+                  title: EMPTY_STATES[mode].title,
+                  body: EMPTY_STATES[mode].body,
+                  action:
+                    mode === "analyze"
+                      ? {
+                          label: features.crossProviderInsights
+                            ? "Open the dashboard across all providers"
+                            : "Open the dashboard",
+                          onClick: () => setCenterView("dashboard"),
+                        }
+                      : undefined,
+                }}
+              />
+            </Blueprint>
+          </div>
+        ) : (
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "280px 1fr 340px",
+              gap: "var(--space-4)",
+              padding: "var(--space-4)",
+              alignItems: "start",
+            }}
+          >
+            <div style={showDashboard ? { display: "none" } : undefined}>
+              <AsyncView
+                status={listLoad.status}
+                loadingText={mode === "learn" ? "Loading scenarios…" : "Loading sessions…"}
+                readyText={`${listForMode.length} ${mode === "learn" ? "scenarios" : "sessions"} loaded.`}
+                skeleton="list"
                 error={
-                  sessionLoad.status === "error"
+                  listLoad.status === "error"
                     ? {
-                        title: "Couldn't open this session",
-                        details: sessionLoad.message,
-                        onRetry: () => openAnalyzeSession(sessionLoad.sessionId),
+                        title: mode === "learn" ? "Couldn't load the Learn scenarios" : "Couldn't load the session list",
+                        details: listLoad.message,
+                        onRetry: () =>
+                          mode === "learn"
+                            ? setScenarioAttempt((current) => current + 1)
+                            : setSessionAttempt((current) => current + 1),
                       }
                     : undefined
                 }
-              />
-            ) : session ? (
-              <>
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "var(--space-2)",
-                    flexWrap: "wrap",
-                    marginBottom: "var(--space-3)",
-                  }}
-                >
-                  <h3 className="truncate" style={{ margin: 0, maxWidth: 360 }}>
-                    {session.title}
-                  </h3>
-                  <Tag variant="accent">{session.model}</Tag>
-                  <Tag variant={session.usageDataAvailable ? "accent" : "outline"}>
-                    {session.usageDataAvailable ? "usage: known" : "usage: unavailable"}
-                  </Tag>
-                  {allAiCreditsKnown ? (
-                    <AiCreditsSparkline turns={session.turns} />
-                  ) : (
-                    <span className="text-muted" style={{ fontSize: 12 }}>
-                      AI Credits: unavailable
-                    </span>
-                  )}
-                  <div style={{ marginLeft: "auto" }}>
-                    <ColumnChooser visible={chosenColumns} onChange={handleColumnsChange} />
-                  </div>
-                </div>
-                <TurnsTable
-                  turns={session.turns}
-                  selectedTurnIndex={selectedTurnIndex}
-                  onSelectTurn={selectTurn}
-                  columns={chosenColumns}
+              >
+                <SessionList
+                  mode={mode}
+                  sessions={listForMode}
+                  selectedSessionId={session?.id ?? null}
+                  onSelect={handleSelectSession}
+                  adviceSelection={adviceSelection}
+                  onToggleAdvice={handleToggleAdvice}
                 />
-                <div style={{ marginTop: "var(--space-4)" }}>
-                  <TimelineScrubber
-                    turnCount={session.turns.length}
+              </AsyncView>
+              <AdviceExportTriggerBar count={adviceSessions.length} onExport={() => setAdviceDialogOpen(true)} />
+              <AdviceExportDialog
+                sessions={adviceSessions}
+                open={adviceDialogOpen}
+                onClose={() => setAdviceDialogOpen(false)}
+                copyToClipboard={host.copyToClipboard}
+                productName={productProfile?.displayName}
+              />
+            </div>
+
+            <div
+              style={
+                showDashboard
+                  ? { gridColumn: "1 / 4" }
+                  : hideRightColumn
+                    ? { gridColumn: "2 / 4" }
+                    : undefined
+              }
+            >
+              {mode === "analyze" && (
+                <SegmentedControl
+                  name="center-view"
+                  options={CENTER_VIEW_OPTIONS}
+                  value={centerView}
+                  onChange={setCenterView}
+                  className="center-view-seg"
+                />
+              )}
+              <div style={mode === "analyze" ? { marginTop: "var(--space-3)" } : undefined}>
+              {showDashboard ? (
+                <InsightsDashboard crossProvider={features.crossProviderInsights} />
+              ) : mode === "analyze" && centerView === "rollup" ? (
+                <AuditRollupPanel onOpenSession={handleOpenSessionAudit} key={activeProviderId} />
+              ) : mode === "analyze" && centerView === "session-audit" ? (
+                session ? (
+                  <SessionAuditPanel
+                    sessionId={session.id}
                     selectedTurnIndex={selectedTurnIndex}
                     onSelectTurn={selectTurn}
+                    onInspectTurn={handleInspectTurn}
+                    onShowAllSessions={() => setCenterView("rollup")}
                   />
-                </div>
-              </>
-            ) : (
-              <p className="text-muted" style={{ fontSize: 13 }}>
-                Select a {mode === "learn" ? "scenario" : "session"} to view its turns.
-              </p>
-            )}
-            </div>
-          </div>
-
-          <div style={hideRightColumn ? { display: "none" } : undefined}>
-            {mode === "analyze" ? (
-              <SegmentedControl
-                name="right-tab"
-                options={RIGHT_TAB_OPTIONS}
-                value={rightTab}
-                onChange={setRightTab}
-                className="right-tab-seg"
-              />
-            ) : (
-              <h6 style={{ margin: "0 0 0 var(--space-1)" }}>Explanation</h6>
-            )}
-            <div style={{ marginTop: "var(--space-2)" }}>
-              {(mode === "learn" || rightTab === "explanation") && (
-                <ExplanationPanel
-                  turn={selectedTurn}
-                  mode={mode}
-                  toolCallsAvailable={toolCallsAvailable}
-                  onOpenTurnInspector={
-                    mode === "analyze" && session ? () => setTurnInspectorOpen(true) : undefined
+                ) : (
+                  <p className="text-muted" style={{ fontSize: 13 }}>
+                    Select a session to audit its tool calls.
+                  </p>
+                )
+              ) : sessionLoad.status !== "idle" ? (
+                <AsyncView
+                  status={sessionLoad.status}
+                  loadingText="Loading session…"
+                  skeleton="table"
+                  error={
+                    sessionLoad.status === "error"
+                      ? {
+                          title: "Couldn't open this session",
+                          details: sessionLoad.message,
+                          onRetry: () => openAnalyzeSession(sessionLoad.sessionId),
+                        }
+                      : undefined
                   }
                 />
+              ) : session ? (
+                <>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "var(--space-2)",
+                      flexWrap: "wrap",
+                      marginBottom: "var(--space-3)",
+                    }}
+                  >
+                    <h3 className="truncate" style={{ margin: 0, maxWidth: 360 }}>
+                      {session.title}
+                    </h3>
+                    <Tag variant="accent">{session.model}</Tag>
+                    <Tag variant={session.usageDataAvailable ? "accent" : "outline"}>
+                      {session.usageDataAvailable ? "usage: known" : "usage: unavailable"}
+                    </Tag>
+                    {allAiCreditsKnown ? (
+                      <AiCreditsSparkline turns={session.turns} />
+                    ) : (
+                      <span className="text-muted" style={{ fontSize: 12 }}>
+                        AI Credits: unavailable
+                      </span>
+                    )}
+                    <div style={{ marginLeft: "auto" }}>
+                      <ColumnChooser visible={chosenColumns} onChange={handleColumnsChange} />
+                    </div>
+                  </div>
+                  <TurnsTable
+                    turns={session.turns}
+                    selectedTurnIndex={selectedTurnIndex}
+                    onSelectTurn={selectTurn}
+                    columns={chosenColumns}
+                  />
+                  <div style={{ marginTop: "var(--space-4)" }}>
+                    <TimelineScrubber
+                      turnCount={session.turns.length}
+                      selectedTurnIndex={selectedTurnIndex}
+                      onSelectTurn={selectTurn}
+                    />
+                  </div>
+                </>
+              ) : (
+                <p className="text-muted" style={{ fontSize: 13 }}>
+                  Select a {mode === "learn" ? "scenario" : "session"} to view its turns.
+                </p>
               )}
-              {mode === "analyze" && rightTab === "system-prompt" && (
-                <SystemPromptBreakdown
-                  components={session?.systemPrompt ?? []}
-                  providerId={session?.providerId}
-                  onOpenInspector={session ? () => setInspectorOpen(true) : undefined}
+              </div>
+            </div>
+
+            <div style={hideRightColumn ? { display: "none" } : undefined}>
+              {mode === "analyze" ? (
+                <SegmentedControl
+                  name="right-tab"
+                  options={RIGHT_TAB_OPTIONS}
+                  value={rightTab}
+                  onChange={setRightTab}
+                  className="right-tab-seg"
                 />
+              ) : (
+                <h6 style={{ margin: "0 0 0 var(--space-1)" }}>Explanation</h6>
               )}
-              {mode === "analyze" && rightTab === "tools" && (
-                <ToolInventoryPanel entries={session?.toolInventory ?? []} />
-              )}
+              <div style={{ marginTop: "var(--space-2)" }}>
+                {(mode === "learn" || rightTab === "explanation") && (
+                  <ExplanationPanel
+                    turn={selectedTurn}
+                    mode={mode}
+                    toolCallsAvailable={toolCallsAvailable}
+                    onOpenTurnInspector={
+                      mode === "analyze" && session ? () => setTurnInspectorOpen(true) : undefined
+                    }
+                  />
+                )}
+                {mode === "analyze" && rightTab === "system-prompt" && (
+                  <SystemPromptBreakdown
+                    components={session?.systemPrompt ?? []}
+                    providerId={session?.providerId}
+                    onOpenInspector={session ? () => setInspectorOpen(true) : undefined}
+                  />
+                )}
+                {mode === "analyze" && rightTab === "tools" && (
+                  <ToolInventoryPanel entries={session?.toolInventory ?? []} />
+                )}
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </main>
   );
 }

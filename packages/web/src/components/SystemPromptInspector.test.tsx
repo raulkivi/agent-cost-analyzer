@@ -85,6 +85,19 @@ describe("SystemPromptInspector", () => {
     expect(await screen.findByText(/no system prompt/i)).toBeInTheDocument();
   });
 
+  // §3.5 Accessibility: Escape closes the inspector; focus starts on Back.
+  it("closes on Escape and starts with focus on the back button", async () => {
+    stubFetchText(SAMPLE_TEXT);
+    const onClose = vi.fn();
+    render(<SystemPromptInspector sessionId="session-1" onClose={onClose} />);
+    await screen.findByRole("button", { name: /security requirements/i });
+
+    expect(screen.getByRole("button", { name: /back to session/i })).toHaveFocus();
+    fireEvent.keyDown(document.activeElement!, { key: "Escape" });
+
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
   // §3.5 States (AsyncView).
   it("reports a failed load as an alert that changed nothing, and retries", async () => {
     vi.stubGlobal(

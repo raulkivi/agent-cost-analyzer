@@ -126,6 +126,25 @@ describe("VS Code theme mapping (vscode-extension.md step 10.5)", () => {
     expect(tokenRule(parseRules(readVscodeTheme())).declarations.get(token)).toMatch(new RegExp(`^var\\(${variable},`));
   });
 
+  // §3.5: focus is always visible in the editor's own focus colour. A more
+  // specific theme.css focus rule would otherwise outrank the generic one.
+  it("gives every theme.css focus outline the editor's focus border colour", () => {
+    const standalone = parseRules(readFileSync(path.join(srcDir, "theme.css"), "utf-8"));
+    const vscode = parseRules(readVscodeTheme());
+    const focusSelectors = standalone
+      .flatMap((rule) => rule.selectors)
+      .filter((selector) => selector.includes(":focus-visible") && !selector.startsWith("@"));
+
+    expect(focusSelectors.length).toBeGreaterThan(0);
+    for (const selector of focusSelectors) {
+      for (const bodyClass of VSCODE_BODY_CLASSES) {
+        const rule = vscode.find((candidate) => candidate.selectors.includes(`body.${bodyClass} ${selector}`));
+        const mapped = [...(rule?.declarations.values() ?? [])].some((value) => value.includes("var(--vscode-focusBorder"));
+        expect(mapped, `body.${bodyClass} ${selector}`).toBe(true);
+      }
+    }
+  });
+
   it("falls back to the Industry palette wherever a --vscode-* variable is missing", () => {
     const uses = readVscodeTheme().match(/var\(--vscode-[\w-]+[^)]?/g) ?? [];
 

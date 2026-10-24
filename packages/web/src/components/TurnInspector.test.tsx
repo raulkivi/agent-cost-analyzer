@@ -318,6 +318,19 @@ describe("TurnInspector", () => {
     });
   });
 
+  // §3.5 Accessibility: Escape closes the inspector; focus starts on Back.
+  it("closes on Escape and starts with focus on the back button", async () => {
+    stubFetchJson(TWO_ROUND_DETAIL);
+    const onClose = vi.fn();
+    render(<TurnInspector sessionId="session-1" turnIndex={3} usageDataAvailable={true} onClose={onClose} />);
+    await screen.findByText("Request · round 0");
+
+    expect(screen.getByRole("button", { name: /back to session/i })).toHaveFocus();
+    fireEvent.keyDown(document.activeElement!, { key: "Escape" });
+
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
   it("calls onClose when the back button is activated", async () => {
     stubFetchJson(TWO_ROUND_DETAIL);
     const onClose = vi.fn();

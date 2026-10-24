@@ -1,4 +1,5 @@
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { ConfigStatus, ProductProfile } from "@copilot-cost-analyzer/domain";
 import { App } from "./App.js";
@@ -663,6 +664,23 @@ describe("App", () => {
 
     await screen.findByRole("button", { name: "Fix the bug" });
     expect(screen.queryByText(/selected for advice/)).not.toBeInTheDocument();
+  });
+
+  // §3.5 Accessibility: Escape closes an inspector and focus goes back to
+  // the control that opened it (the page behind is kept, not rebuilt).
+  it("closes the turn inspector on Escape and returns focus to its opener", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    switchToAnalyze();
+    await user.click(await screen.findByRole("button", { name: "Fix the bug" }));
+    await screen.findByText("analyze turn explanation");
+
+    await user.click(screen.getByRole("button", { name: "Inspect request/response" }));
+    expect(await screen.findByRole("button", { name: /back to session/i })).toHaveFocus();
+    await user.keyboard("{Escape}");
+
+    expect(screen.queryByRole("button", { name: /back to session/i })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Inspect request/response" })).toHaveFocus();
   });
 
   // §3.5 Layout: "users choose and keep the visible columns".

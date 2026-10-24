@@ -64,8 +64,22 @@ body.vscode-dark .seg-opt:has(input:focus-visible),
 body.vscode-high-contrast .seg-opt:has(input:focus-visible),
 body.vscode-light .listbox-value:focus-visible,
 body.vscode-dark .listbox-value:focus-visible,
-body.vscode-high-contrast .listbox-value:focus-visible {
+body.vscode-high-contrast .listbox-value:focus-visible,
+body.vscode-light .session-card-button:focus-visible,
+body.vscode-dark .session-card-button:focus-visible,
+body.vscode-high-contrast .session-card-button:focus-visible,
+body.vscode-light .table tbody tr:focus-visible,
+body.vscode-dark .table tbody tr:focus-visible,
+body.vscode-high-contrast .table tbody tr:focus-visible,
+body.vscode-light .selection-chip-clear:focus-visible,
+body.vscode-dark .selection-chip-clear:focus-visible,
+body.vscode-high-contrast .selection-chip-clear:focus-visible {
   outline-color: var(--vscode-focusBorder, var(--color-accent));
+}
+body.vscode-light .chart-column:focus-visible .chart-band,
+body.vscode-dark .chart-column:focus-visible .chart-band,
+body.vscode-high-contrast .chart-column:focus-visible .chart-band {
+  stroke: var(--vscode-focusBorder, var(--color-accent));
 }
 body.vscode-light .input:focus-visible,
 body.vscode-dark .input:focus-visible,

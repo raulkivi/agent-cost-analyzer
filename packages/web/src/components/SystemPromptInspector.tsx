@@ -1,7 +1,8 @@
-import { Fragment, useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { fetchSystemPromptText } from "../api-client/sessions.js";
 import { PromptCompositionIcicle } from "../charts/PromptCompositionIcicle.js";
+import { useEscapeKey, useFocusReturn } from "../lib/focus.js";
 import { describeTag } from "../lib/system-prompt-descriptions.js";
 import { assignIcicleColors, assignTextColors, buildMenu, SEGMENT_TEXT_COLOR } from "../lib/system-prompt-menu.js";
 import type { MenuEntry } from "../lib/system-prompt-menu.js";
@@ -92,6 +93,10 @@ export function SystemPromptInspector({
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [format, setFormat] = useState<PromptFormat>("pretty");
   const [attempt, setAttempt] = useState(0);
+  // §3.5: focus starts on Back and returns to the opener; Escape closes.
+  const backButton = useRef<HTMLButtonElement>(null);
+  useFocusReturn(backButton);
+  useEscapeKey(onClose);
 
   useEffect(() => {
     let canceled = false;
@@ -145,7 +150,7 @@ export function SystemPromptInspector({
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-3)", padding: "var(--space-4)" }}>
       <div style={{ display: "flex", alignItems: "center", gap: "var(--space-3)", flexWrap: "wrap" }}>
-        <button type="button" className="btn btn-secondary" onClick={onClose}>
+        <button ref={backButton} type="button" className="btn btn-secondary" onClick={onClose}>
           ← Back to session
         </button>
         {sessionTitle && (

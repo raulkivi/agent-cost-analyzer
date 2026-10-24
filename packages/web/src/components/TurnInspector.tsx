@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import type {
   ContentPlaceholder,
@@ -7,6 +7,7 @@ import type {
   TurnInspectorDetail,
 } from "@copilot-cost-analyzer/domain";
 import { fetchTurnInspectorDetail } from "../api-client/sessions.js";
+import { useEscapeKey, useFocusReturn } from "../lib/focus.js";
 import { TRIGGER_LABELS } from "../lib/trigger-labels.js";
 import { buildPrettyTokens, PAYLOAD_TOKEN_COLORS, unescapeText } from "../lib/turn-payload-pretty.js";
 import type { PayloadToken } from "../lib/turn-payload-pretty.js";
@@ -207,6 +208,10 @@ export function TurnInspector({
     usageDataAvailable ? { status: "loading" } : { status: "not-captured" },
   );
   const [attempt, setAttempt] = useState(0);
+  // §3.5: focus starts on Back and returns to the opener; Escape closes.
+  const backButton = useRef<HTMLButtonElement>(null);
+  useFocusReturn(backButton);
+  useEscapeKey(onClose);
   const [format, setFormat] = useState<PayloadFormat>("pretty");
   const [selectedRound, setSelectedRound] = useState(0);
 
@@ -233,7 +238,7 @@ export function TurnInspector({
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-3)", padding: "var(--space-4)" }}>
       <div style={{ display: "flex", alignItems: "center", gap: "var(--space-3)", flexWrap: "wrap" }}>
-        <button type="button" className="btn btn-secondary" onClick={onClose}>
+        <button ref={backButton} type="button" className="btn btn-secondary" onClick={onClose}>
           ← Back to session
         </button>
         {sessionTitle && (
