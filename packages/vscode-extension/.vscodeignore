@@ -1,0 +1,16 @@
+# What `vsce package` leaves out (step 10.9). Everything is bundled into
+# dist/ (G9), so this allow-list is the whole .vsix; package.json is always
+# included. vsce lets a "!" pattern win over any ignore pattern, whatever
+# the order, so the allow-list can't be followed by exclusions: dist/ is
+# allowed file by file, which keeps out the esbuild metafiles
+# (dist/meta*.json) and any sourcemap. packaging.test.ts checks the result.
+**
+!dist/extension.js
+!dist/mcp-stdio.js
+!media/**
+!resources/**
+!package.nls.json
+!README.md
+!LICENSE
+!CHANGELOG.md
+!icon.png

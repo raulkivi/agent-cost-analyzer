@@ -2,6 +2,7 @@ import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
 import type { LogProviderStatus } from "@copilot-cost-analyzer/domain";
 import { UnknownLogProviderIdError } from "../data-sources/log-providers/registry.js";
+import type { McpIdentity } from "./mcp-identity.js";
 import { isoDateBoundSchema, limitSchema } from "../services/tool-audit/audit-query-params.js";
 
 // Shared building blocks for the MCP tool groups (docs/plans/mcp-tools-v2.md
@@ -12,12 +13,11 @@ export const READ_ONLY = { readOnlyHint: true, destructiveHint: false, idempoten
 
 export const MAX_ROLLUP_SESSIONS = 500;
 
-export const providerArg = z
-  .string()
-  .optional()
-  .describe(
-    'Log provider id, e.g. "claude-code", "vscode", "pi-agent", "mitmproxy" (see list_log_providers). Defaults to the provider active in the web app.',
-  );
+// The one argument whose wording names log sources, so it follows the
+// product's identity (mcp-identity.ts).
+export function providerArg(identity: McpIdentity) {
+  return z.string().optional().describe(identity.providerArgDescription);
+}
 
 export const sessionIdArg = z.string().min(1).describe("Session id from list_sessions.");
 

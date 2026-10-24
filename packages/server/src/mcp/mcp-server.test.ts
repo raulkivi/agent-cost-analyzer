@@ -15,7 +15,8 @@ import { SecurityScanner } from "../services/insights/security-scanner.js";
 import { DEFAULT_SECURITY_RULES } from "../services/insights/security-rules.js";
 import { AuditQueryService } from "../services/tool-audit/audit-query-service.js";
 import { FakeProvider, lookup, sampleSessions, session, shell } from "../test-support/audit-fakes.js";
-import { createMcpServer } from "./mcp-server.js";
+import { createMcpServer, type McpServerDeps } from "./mcp-server.js";
+import { STANDALONE_MCP_IDENTITY, type McpIdentity } from "./mcp-identity.js";
 
 const providerStatus: LogProviderStatus = {
   activeProviderId: "fake",
@@ -244,5 +245,66 @@ describe("MCP server", () => {
       const result = await client.callTool({ name: "list_tool_calls", arguments: { sessionId: "mid", status: ["bogus"] } });
       expect(result.isError).toBe(true);
     });
+  });
+});
+
+const providerArgOf = (tools: { name: string; inputSchema: unknown }[], tool: string): string =>
+  (tools.find((t) => t.name === tool)!.inputSchema as { properties: { provider: { description: string } } }).properties.provider.description;
+
+// What the standalone server has always said, pinned as literals: the
+// extension's identity option must not change a byte of it.
+describe("MCP server identity (vscode-extension.md step 10.9)", () => {
+  function deps(identity?: McpIdentity): McpServerDeps {
+    const provider = new FakeProvider("fake", sessions);
+    const providers = lookup(provider);
+    const insights = new InsightsService({ listProviders: () => [provider] }, [new SecurityScanner(DEFAULT_SECURITY_RULES)]);
+    return {
+      auditQueries: new AuditQueryService(providers),
+      analysisQueries: new AnalysisQueryService(providers, insights),
+      getProviderStatus: async () => providerStatus,
+      version: "0.0.0-test",
+      ...(identity ? { identity } : {}),
+    };
+  }
+
+  async function connectTo(identity?: McpIdentity): Promise<Client> {
+    const server = createMcpServer(deps(identity));
+    const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+    const client = new Client({ name: "test-client", version: "1.0.0" });
+    await Promise.all([server.connect(serverTransport), client.connect(clientTransport)]);
+    return client;
+  }
+
+  it("keeps the standalone server's name, instructions and provider texts when no identity is given", async () => {
+    const client = await connectTo();
+    const { tools } = await client.listTools();
+
+    expect(client.getServerVersion()?.name).toBe("copilot-cost-analyzer");
+    expect(client.getInstructions()).toContain("(GitHub Copilot Chat in VS Code, Claude Code CLI, pi, mitmproxy captures)");
+    expect(client.getInstructions()).toBe(STANDALONE_MCP_IDENTITY.instructions);
+    expect(tools.find((t) => t.name === "list_log_providers")!.description).toContain("(VS Code Copilot Chat, Claude Code CLI, pi, mitmproxy captures)");
+    expect(providerArgOf(tools, "list_sessions")).toBe(
+      'Log provider id, e.g. "claude-code", "vscode", "pi-agent", "mitmproxy" (see list_log_providers). Defaults to the provider active in the web app.',
+    );
+    await client.close();
+  });
+
+  it("applies a given identity's name, instructions and provider texts", async () => {
+    const identity: McpIdentity = {
+      name: "other-product",
+      instructions: "Other instructions.",
+      logSourcesDescription: "the other source",
+      providerArgDescription: "Other provider text.",
+    };
+    const client = await connectTo(identity);
+    const { tools } = await client.listTools();
+
+    expect(client.getServerVersion()?.name).toBe("other-product");
+    expect(client.getInstructions()).toBe("Other instructions.");
+    expect(tools.find((t) => t.name === "list_log_providers")!.description).toContain("Lists the local agent-log sources (the other source),");
+    for (const tool of ["list_sessions", "get_session_audit", "get_session_cost"]) {
+      expect(providerArgOf(tools, tool), tool).toBe("Other provider text.");
+    }
+    await client.close();
   });
 });

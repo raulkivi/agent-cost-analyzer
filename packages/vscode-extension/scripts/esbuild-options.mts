@@ -21,6 +21,10 @@ function nodeBundleOptions(entry: string, outfile: string) {
     // runtime (the bundle-load test catches this).
     mainFields: ["module", "main"],
     outfile,
+    // Minified (step 10.9) to keep the .vsix small; no sourcemap is
+    // emitted, so none can ship. The bundle tests build with these same
+    // options, so they exercise the minified code.
+    minify: true,
     metafile: true,
     logLevel: "warning",
     // The server's import.meta.url uses only resolve defaults the extension
