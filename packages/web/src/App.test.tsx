@@ -610,6 +610,19 @@ describe("App", () => {
     expect(screen.queryByText(/selected for advice/)).not.toBeInTheDocument();
   });
 
+  // vscode-extension.md §3.5 Performance: the host reads these (step 10.9).
+  it("marks first-render on mount, then data-ready once the first list is on screen", async () => {
+    const mark = vi.fn();
+    render(<App performanceMarks={{ mark, read: () => ({}) }} />);
+
+    expect(mark).toHaveBeenCalledWith("first-render");
+    expect(mark).not.toHaveBeenCalledWith("data-ready");
+
+    await screen.findByRole("button", { name: "Cache Basics" });
+    await waitFor(() => expect(mark).toHaveBeenCalledWith("data-ready"));
+    expect(mark.mock.calls.map(([name]) => name)).toEqual(["first-render", "data-ready"]);
+  });
+
   describe("tool-call audit views (Phase 9.10)", () => {
     it("offers the audit view switch only in Analyze mode", async () => {
       render(<App />);

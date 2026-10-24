@@ -34,6 +34,7 @@ import { SegmentedControl } from "./components/ui/SegmentedControl.js";
 import { Tag } from "./components/ui/Tag.js";
 import { AiCreditsSparkline } from "./charts/AiCreditsSparkline.js";
 import { getHostCapabilities } from "./host/current-host-capabilities.js";
+import { performanceMarks as pagePerformanceMarks, type PerformanceMarks } from "./lib/performance-marks.js";
 import { useSessionStore, type RightTab } from "./state/session-store.js";
 
 const RIGHT_TAB_OPTIONS = [
@@ -75,7 +76,13 @@ const EMPTY_STATES = {
   },
 } as const;
 
-export function App() {
+interface AppProps {
+  // Where the §3.5 timing marks go; the page's own Performance API unless a
+  // test passes a fake.
+  performanceMarks?: PerformanceMarks;
+}
+
+export function App({ performanceMarks = pagePerformanceMarks }: AppProps = {}) {
   const [health, setHealth] = useState<HealthResponse | null>(null);
   const [scenarios, setScenarios] = useState<Session[]>([]);
   const [scenariosLoaded, setScenariosLoaded] = useState(false);
@@ -105,6 +112,10 @@ export function App() {
     setActiveProviderId,
   } = useSessionStore();
   const latestSessionRequestId = useRef(0);
+
+  useEffect(() => {
+    performanceMarks.mark("first-render");
+  }, [performanceMarks]);
 
   // Once at startup. A failure is not an error the user can act on (e.g. an
   // older server without GET /api/product): the fallback features apply.
@@ -204,6 +215,13 @@ export function App() {
   const hideRightColumn = mode === "analyze" && (centerView === "rollup" || showDashboard);
   const listForMode = mode === "learn" ? scenarios : sessions;
   const listLoaded = mode === "learn" ? scenariosLoaded : sessionsLoaded;
+
+  // After the commit that put the first session or scenario list on screen.
+  useEffect(() => {
+    if (listLoaded) {
+      performanceMarks.mark("data-ready");
+    }
+  }, [listLoaded, performanceMarks]);
   // The dashboard reads every provider, so an empty active provider must
   // not hide it.
   const showEmptyState = listLoaded && listForMode.length === 0 && !showDashboard;
