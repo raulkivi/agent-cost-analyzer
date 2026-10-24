@@ -26,7 +26,14 @@ interface AppHeaderProps {
   // can omit them entirely.
   minRetainedSessionLogsThreshold?: number;
   onRetentionThresholdChange?: (value: number) => void;
+  // From the ProductProfile (vscode-extension.md §3.3): the wordmark, and
+  // whether the product offers a provider select at all (false when it has
+  // exactly one provider). Omitted, the header looks as it always has.
+  displayName?: string;
+  providerSelect?: boolean;
 }
+
+const DEFAULT_DISPLAY_NAME = "Session Analyzer";
 
 export function AppHeader({
   mode,
@@ -38,6 +45,8 @@ export function AppHeader({
   onProviderChange,
   minRetainedSessionLogsThreshold,
   onRetentionThresholdChange,
+  displayName = DEFAULT_DISPLAY_NAME,
+  providerSelect = true,
 }: AppHeaderProps) {
   return (
     <header className="nav">
@@ -46,14 +55,14 @@ export function AppHeader({
           style={{ width: 32, height: 32, flex: "none", background: "var(--color-accent-900)" }}
         />
         <div>
-          <div className="nav-brand">Session Analyzer</div>
+          <div className="nav-brand">{displayName}</div>
           <div style={{ fontSize: 11, color: "color-mix(in srgb, var(--color-text) 55%, transparent)" }}>
             GitHub Copilot Chat
           </div>
         </div>
       </div>
       <SegmentedControl name="mode" options={MODE_OPTIONS} value={mode} onChange={onModeChange} />
-      {mode === "analyze" && providers.length > 0 && onProviderChange && (
+      {providerSelect && mode === "analyze" && providers.length > 0 && onProviderChange && (
         <label style={{ display: "flex", alignItems: "center", gap: "var(--space-1)", marginLeft: "var(--space-2)" }}>
           <span className="text-muted" style={{ fontSize: 11 }}>
             Source

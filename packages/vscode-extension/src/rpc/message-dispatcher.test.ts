@@ -204,4 +204,44 @@ describe("MessageDispatcher (vscode-extension.md §4)", () => {
     expect(await new MessageDispatcher(api).dispatch(message)).toBeUndefined();
     expect(api.getHealth).not.toHaveBeenCalled();
   });
+
+  describe("host commands (G8)", () => {
+    it("hands a command message to the host-command handler and returns its reply", async () => {
+      const reply = { kind: "response" as const, id: "cmd-1", ok: true as const };
+      const hostCommands = { handle: vi.fn(async () => reply) };
+      const message = { kind: "command", id: "cmd-1", command: "copyToClipboard", args: { text: "x" } };
+
+      const response = await new MessageDispatcher(fakeApi(), { hostCommands }).dispatch(message);
+
+      expect(hostCommands.handle).toHaveBeenCalledWith(message);
+      expect(response).toBe(reply);
+    });
+
+    it("answers a command with 400 when the host has no host commands", async () => {
+      const response = await new MessageDispatcher(fakeApi()).dispatch({ kind: "command", id: "cmd-1", command: "copyToClipboard" });
+
+      expect(response).toEqual({
+        kind: "response",
+        id: "cmd-1",
+        ok: false,
+        error: { status: 400, message: "Host commands are not available" },
+      });
+    });
+
+    it("ignores a command without a string id", async () => {
+      const hostCommands = { handle: vi.fn() };
+
+      expect(await new MessageDispatcher(fakeApi(), { hostCommands }).dispatch({ kind: "command", command: "copyToClipboard" })).toBeUndefined();
+      expect(hostCommands.handle).not.toHaveBeenCalled();
+    });
+
+    it("never routes a command to ApiService, even one named like a method", async () => {
+      const api = fakeApi();
+      const hostCommands = { handle: vi.fn(async () => ({ kind: "response" as const, id: "c", ok: true as const })) };
+
+      await new MessageDispatcher(api, { hostCommands }).dispatch({ kind: "command", id: "c", command: "listSessions" });
+
+      expect(api.listSessions).not.toHaveBeenCalled();
+    });
+  });
 });

@@ -683,6 +683,54 @@ Starts after the mock-up review gate (§3.6).
   The extension shows no provider select, and the standalone app looks
   unchanged.
 
+**Status (2026-10-24): done.**
+- **Product profile (G10).** The web app fetches the `ProductProfile` once.
+  If that fails, it falls back to today's standalone UI. Flags reach
+  components only as props:
+  - `AppHeader`: `displayName`, `providerSelect`.
+  - `InsightsDashboard` and the narrative: `crossProvider` drops the
+    Provider list box and column and the "every provider" wording.
+  - `AdviceExportDialog` and `buildAdviceBundle`: `productName`.
+- **Standalone app.** Its header now reads "Agent Cost Analyzer", taken
+  from its profile (§3.4).
+- **Host commands (G8).** The protocol lives in `packages/domain/src/rpc.ts`:
+  `{kind:"command", id, command, args}`, answered with the same response
+  shape as API calls.
+  - The allow-list is `openSetting`, `copyToClipboard` and
+    `openTextDocument` (`plaintext`, `markdown` or `json`). Text is capped at
+    5 Mi UTF-16 units.
+  - `HostCommandHandler` accepts `openSetting` only for setting ids in the
+    current `ConfigStatus` warnings or the two watched Copilot settings.
+    Everything else gets 400.
+  - `createVscodeHostCommands` calls `workbench.action.openSettings`,
+    `env.clipboard.writeText` and `openTextDocument`/`showTextDocument`.
+  - The extension profile now sets `settingFixes` and `openInEditor` to
+    true.
+- **Web side.** The `HostCapabilities` port (`host/`) has a standalone
+  version (browser clipboard only) and one built on the transport.
+  - `ConfigWarningBanner` labels its buttons per the mock-ups: Enable,
+    Change, or Open setting.
+  - `SystemPromptInspector` adds "Open prompt in editor".
+- **Theme.** `theme-vscode.css` maps theme tokens to `--vscode-*`
+  variables, with every rule scoped under `body.vscode-light`,
+  `body.vscode-dark` or `body.vscode-high-contrast` and every variable
+  falling back to the Industry value. The fonts follow
+  `--vscode-font-family` and `--vscode-font-size`. The standalone CSS
+  output only gained scoped rules: the old CSS is a byte-for-byte prefix of
+  the new.
+- **Bundle-load test.** It covers: Fix sends
+  `…fileLogging.enabled` and the host calls `openSettings` with it; a
+  disallowed id gets 400; clipboard and document round trips work.
+- **Handed to 10.7.**
+  - Hold the header until the profile resolves (no fallback flash).
+  - A read-only system-prompt document.
+  - A contrast check on dark themes.
+- **TDD.** Every new module and behaviour was seen failing first. The
+  exceptions are a refactor done while tests were green
+  (`describe-issues.ts`) and the last bundle-load case, which was written
+  after the code.
+- **Tests.** 1,781 → 1,895 (domain 120, web 601, extension 145).
+
 ### 10.6 Native sidebar and status bar (D10)
 
 Everything here is built on pure, `vscode`-free modules that are tested
@@ -775,6 +823,13 @@ Implements §3.5 against the reviewed mock-ups (§3.6). Most of it lives in
   - `vscode.l10n` for host strings.
   - G12: the extension build drops the Google Fonts import and uses
     `--vscode-font-family`; the standalone app bundles Barlow locally.
+  - Hold the header until the `ProductProfile` resolves (or fails), so the
+    extension never flashes the standalone fallback (the "Session Analyzer"
+    wordmark and a provider select). Found in 10.5.
+  - Open the system prompt as a read-only document, using a content
+    provider with its own URI scheme. In 10.5 it's untitled but editable.
+  - Contrast check of the system-prompt inspector's pastel segment colours
+    on dark themes (axe).
 - **Performance:** the webview posts timing marks (first render, data
   ready) to the host. The integration tests (10.9) assert the §3.5
   budgets.

@@ -1,34 +1,47 @@
 import { useEffect, useState } from "react";
 import type { Session } from "@copilot-cost-analyzer/domain";
+import { standaloneHostCapabilities } from "../host/host-capabilities.js";
 import { buildAdviceBundle } from "../lib/build-advice-bundle.js";
 
 interface AdviceExportDialogProps {
   sessions: Session[];
   open: boolean;
   onClose: () => void;
+  // The host's clipboard (HostCapabilities, vscode-extension.md G8);
+  // defaults to the browser's, as in the standalone app.
+  copyToClipboard?: (text: string) => Promise<void>;
+  // ProductProfile.displayName, named in the bundle (G10).
+  productName?: string;
 }
 
-export function AdviceExportDialog({ sessions, open, onClose }: AdviceExportDialogProps) {
+const browserCopy = standaloneHostCapabilities().copyToClipboard;
+
+export function AdviceExportDialog({
+  sessions,
+  open,
+  onClose,
+  copyToClipboard = browserCopy,
+  productName,
+}: AdviceExportDialogProps) {
   const [includeToolArgs, setIncludeToolArgs] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     setCopied(false);
-  }, [sessions, includeToolArgs]);
+  }, [sessions, includeToolArgs, productName]);
 
   if (!open) {
     return null;
   }
 
-  const bundle = buildAdviceBundle(sessions, { includeToolArgs });
+  const bundle = buildAdviceBundle(sessions, { includeToolArgs, productName });
   const missingDetailCount = sessions.filter(
     (candidate) => candidate.turnCount > 0 && candidate.turns.length === 0,
   ).length;
 
   function handleCopy(): void {
-    navigator.clipboard
-      .writeText(bundle)
+    copyToClipboard(bundle)
       .then(() => setCopied(true))
       .catch(() => setCopied(false));
   }

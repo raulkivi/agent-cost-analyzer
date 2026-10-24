@@ -33,7 +33,13 @@ function listed(items: string[]): string {
   return items.length > MAX_LISTED ? `${shown.join("; ")}; and ${items.length - MAX_LISTED} more` : shown.join("; ");
 }
 
-export function buildNarrative(view: InsightRowsView): string[] {
+export interface NarrativeOptions {
+  // false for a single-provider product (ProductProfile, G10): the summary
+  // then doesn't say which providers the sessions came from.
+  crossProvider?: boolean;
+}
+
+export function buildNarrative(view: InsightRowsView, { crossProvider = true }: NarrativeOptions = {}): string[] {
   if (view.sessions.length === 0) {
     return ["No sessions match the current selections."];
   }
@@ -45,7 +51,8 @@ export function buildNarrative(view: InsightRowsView): string[] {
   const dates = view.sessions.flatMap((session) => (session.date ? [session.date] : [])).sort();
   const span =
     dates.length === 0 ? "" : dates[0] === dates[dates.length - 1] ? `, on ${dates[0]}` : `, ${dates[0]} → ${dates[dates.length - 1]}`;
-  lines.push(`${kpis.sessions} session${kpis.sessions === 1 ? "" : "s"} across ${joinWithAnd(providers)}${span}.`);
+  const across = crossProvider ? ` across ${joinWithAnd(providers)}` : "";
+  lines.push(`${kpis.sessions} session${kpis.sessions === 1 ? "" : "s"}${across}${span}.`);
 
   if (kpis.turns > 0) {
     const { aiCredits } = kpis;

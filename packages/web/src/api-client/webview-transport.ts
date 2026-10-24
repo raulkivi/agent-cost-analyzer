@@ -1,4 +1,4 @@
-import type { HostEventName } from "@copilot-cost-analyzer/domain";
+import type { HostCommand, HostCommandArgs, HostEventName } from "@copilot-cost-analyzer/domain";
 import type { ApiMethodName, ApiTransport } from "./transport.js";
 
 // The slice of acquireVsCodeApi()'s result this transport needs.
@@ -21,7 +21,8 @@ export interface WebviewTransportOptions {
 const DEFAULT_TIMEOUT_MS = 60_000;
 
 interface Pending {
-  method: ApiMethodName;
+  // The method or host command, for error messages.
+  method: ApiMethodName | HostCommand;
   resolve(result: unknown): void;
   reject(error: Error): void;
   timer: ReturnType<typeof setTimeout>;
@@ -50,15 +51,25 @@ export class WebviewTransport implements ApiTransport {
   }
 
   call<T>(method: ApiMethodName, params?: unknown): Promise<T> {
+    return this.send<T>(method, (id) => ({ kind: "request", id, method, params }));
+  }
+
+  // A host command (domain rpc.ts, G8): same ids, timeout and errors as a
+  // request; the host's reply carries no result.
+  async command<C extends HostCommand>(command: C, args: HostCommandArgs[C]): Promise<void> {
+    await this.send<unknown>(command, (id) => ({ kind: "command", id, command, args }));
+  }
+
+  private send<T>(name: ApiMethodName | HostCommand, envelope: (id: string) => unknown): Promise<T> {
     const id = `req-${++this.nextId}`;
     return new Promise<T>((resolve, reject) => {
       const timer = setTimeout(() => {
         this.pending.delete(id);
-        reject(new Error(`Request to ${method} timed out after ${this.timeoutMs} ms`));
+        reject(new Error(`Request to ${name} timed out after ${this.timeoutMs} ms`));
       }, this.timeoutMs);
       // Registered before posting: a host may answer synchronously.
-      this.pending.set(id, { method, resolve: resolve as (result: unknown) => void, reject, timer });
-      this.host.postMessage({ kind: "request", id, method, params });
+      this.pending.set(id, { method: name, resolve: resolve as (result: unknown) => void, reject, timer });
+      this.host.postMessage(envelope(id));
     });
   }
 

@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from "react";
-import type { ConfigWarning, LogProviderDescriptor, Session } from "@copilot-cost-analyzer/domain";
+import type { ConfigWarning, LogProviderDescriptor, ProductFeatures, ProductProfile, Session } from "@copilot-cost-analyzer/domain";
 import { fetchConfigStatus, updateRetentionThreshold } from "./api-client/config-status.js";
 import { onHostEvent } from "./api-client/host-events.js";
 import { fetchHealth, type HealthResponse } from "./api-client/health.js";
 import { fetchLearnScenarios } from "./api-client/learn-scenarios.js";
 import { fetchLogProviderStatus, setActiveLogProvider } from "./api-client/log-providers.js";
+import { fetchProductProfile } from "./api-client/product-profile.js";
 import { fetchSession, fetchSessions } from "./api-client/sessions.js";
 import { AdviceExportDialog } from "./components/AdviceExportDialog.js";
 import { AdviceExportTriggerBar } from "./components/AdviceExportTriggerBar.js";
@@ -25,6 +26,7 @@ import { Blueprint } from "./components/ui/Blueprint.js";
 import { SegmentedControl } from "./components/ui/SegmentedControl.js";
 import { Tag } from "./components/ui/Tag.js";
 import { AiCreditsSparkline } from "./charts/AiCreditsSparkline.js";
+import { getHostCapabilities } from "./host/current-host-capabilities.js";
 import { useSessionStore } from "./state/session-store.js";
 
 const RIGHT_TAB_OPTIONS = [
@@ -44,6 +46,16 @@ const CENTER_VIEW_OPTIONS = [
 ] as const;
 
 type CenterView = (typeof CENTER_VIEW_OPTIONS)[number]["value"];
+
+// What the UI does until the product profile arrives, or when the backend
+// can't report one: the standalone app as it has always been (no setting
+// fixes or open-in-editor, which need a host). See vscode-extension.md §3.3.
+const FALLBACK_FEATURES: ProductFeatures = {
+  providerSelect: true,
+  crossProviderInsights: true,
+  settingFixes: false,
+  openInEditor: false,
+};
 
 const EMPTY_STATES = {
   learn: {
@@ -72,6 +84,7 @@ export function App() {
   const [turnInspectorOpen, setTurnInspectorOpen] = useState(false);
   const [providers, setProviders] = useState<LogProviderDescriptor[]>([]);
   const [centerView, setCenterView] = useState<CenterView>("turns");
+  const [productProfile, setProductProfile] = useState<ProductProfile | null>(null);
   const {
     session,
     selectedTurnIndex,
@@ -85,6 +98,14 @@ export function App() {
     setActiveProviderId,
   } = useSessionStore();
   const latestSessionRequestId = useRef(0);
+
+  // Once at startup. A failure is not an error the user can act on (e.g. an
+  // older server without GET /api/product): the fallback features apply.
+  useEffect(() => {
+    fetchProductProfile()
+      .then(setProductProfile)
+      .catch(() => undefined);
+  }, []);
 
   useEffect(() => {
     fetchHealth()
@@ -140,6 +161,25 @@ export function App() {
     loadConfigStatus();
     return onHostEvent("configChanged", loadConfigStatus);
   }, []);
+
+  // The profile's flags and the host's capabilities become plain props:
+  // each component only gets the callback or flag it needs (ISP), and an
+  // affordance shows only when the product offers it and the host can do it.
+  const features = productProfile?.features ?? FALLBACK_FEATURES;
+  const host = getHostCapabilities();
+  const { openSetting, openTextDocument } = host;
+  const handleFixSetting =
+    features.settingFixes && openSetting
+      ? (settingId: string) => {
+          openSetting(settingId).catch((error: Error) => setFetchError(error.message));
+        }
+      : undefined;
+  const handleOpenPromptInEditor =
+    features.openInEditor && openTextDocument
+      ? (text: string) => {
+          openTextDocument(text, "plaintext").catch((error: Error) => setFetchError(error.message));
+        }
+      : undefined;
 
   const selectedTurn = session?.turns[selectedTurnIndex] ?? null;
   // "All sessions" hides the right column; the dashboard brings its own
@@ -257,6 +297,8 @@ export function App() {
         onProviderChange={handleProviderChange}
         minRetainedSessionLogsThreshold={retentionThreshold}
         onRetentionThresholdChange={handleRetentionThresholdChange}
+        displayName={productProfile?.displayName}
+        providerSelect={features.providerSelect}
       />
       <p className="text-muted" style={{ fontSize: 11, margin: "var(--space-2) var(--space-4) 0" }}>
         {health ? `status: ${health.status} · v${health.version}` : "Checking server…"}
@@ -270,7 +312,11 @@ export function App() {
         </p>
       )}
       {showConfigBanner && (
-        <ConfigWarningBanner warnings={configWarnings} onDismiss={() => setShowConfigBanner(false)} />
+        <ConfigWarningBanner
+          warnings={configWarnings}
+          onDismiss={() => setShowConfigBanner(false)}
+          onFixSetting={handleFixSetting}
+        />
       )}
 
       {inspectorOpen && session ? (
@@ -280,6 +326,7 @@ export function App() {
           model={session.model}
           providerId={session.providerId}
           onClose={() => setInspectorOpen(false)}
+          onOpenInEditor={handleOpenPromptInEditor}
         />
       ) : turnInspectorOpen && session ? (
         <TurnInspector
@@ -306,7 +353,7 @@ export function App() {
                 style={{ marginTop: "var(--space-3)" }}
                 onClick={() => setCenterView("dashboard")}
               >
-                Open the dashboard across all providers
+                {features.crossProviderInsights ? "Open the dashboard across all providers" : "Open the dashboard"}
               </button>
             )}
           </Blueprint>
@@ -335,6 +382,8 @@ export function App() {
               sessions={adviceSessions}
               open={adviceDialogOpen}
               onClose={() => setAdviceDialogOpen(false)}
+              copyToClipboard={host.copyToClipboard}
+              productName={productProfile?.displayName}
             />
           </div>
 
@@ -358,7 +407,7 @@ export function App() {
             )}
             <div style={mode === "analyze" ? { marginTop: "var(--space-3)" } : undefined}>
             {showDashboard ? (
-              <InsightsDashboard />
+              <InsightsDashboard crossProvider={features.crossProviderInsights} />
             ) : mode === "analyze" && centerView === "rollup" ? (
               <AuditRollupPanel onOpenSession={handleOpenSessionAudit} key={activeProviderId} />
             ) : mode === "analyze" && centerView === "session-audit" ? (

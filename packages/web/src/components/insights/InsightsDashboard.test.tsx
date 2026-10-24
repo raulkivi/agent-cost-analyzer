@@ -116,4 +116,40 @@ describe("InsightsDashboard", () => {
     renderDashboard(vi.fn().mockResolvedValue({ ...sampleInsightsDataset(), sessions: [], turns: [], toolCalls: [], findings: [] }));
     expect(await screen.findByText(/No sessions in this date range/)).toBeInTheDocument();
   });
+
+  // vscode-extension.md G10: the extension reads one provider, so the
+  // dashboard drops the provider facet and the cross-provider wording.
+  describe("crossProvider", () => {
+    function renderSingleProvider(loadDataset = vi.fn().mockResolvedValue(sampleInsightsDataset())) {
+      render(<InsightsDashboard loadDataset={loadDataset} now={NOW} crossProvider={false} />);
+    }
+
+    it("titles itself across all providers by default (standalone)", async () => {
+      renderDashboard();
+      await screen.findByRole("group", { name: "AI Credits" });
+
+      expect(screen.getByRole("heading", { name: "Insights across all providers" })).toBeInTheDocument();
+      expect(screen.getByRole("listbox", { name: "Provider" })).toBeInTheDocument();
+      expect(screen.getByRole("columnheader", { name: "Provider" })).toBeInTheDocument();
+    });
+
+    it("has no provider wording, Provider list box or Provider column when false", async () => {
+      renderSingleProvider();
+      expect(screen.getByText("Loading sessions…")).toBeInTheDocument();
+      await screen.findByRole("group", { name: "AI Credits" });
+
+      expect(screen.getByRole("heading", { name: "Insights" })).toBeInTheDocument();
+      expect(screen.queryByText(/all providers|every provider|any provider/)).not.toBeInTheDocument();
+      expect(screen.queryByRole("listbox", { name: "Provider" })).not.toBeInTheDocument();
+      expect(screen.getByRole("listbox", { name: "Date" })).toBeInTheDocument();
+      expect(screen.queryByRole("columnheader", { name: "Provider" })).not.toBeInTheDocument();
+      expect(screen.getByRole("region", { name: "What happened" })).toHaveTextContent("3 sessions, 2026-10-09 → 2026-10-10.");
+    });
+
+    it("has a provider-free empty state when false", async () => {
+      renderSingleProvider(vi.fn().mockResolvedValue({ ...sampleInsightsDataset(), sessions: [], turns: [], toolCalls: [], findings: [] }));
+
+      expect(await screen.findByText("No sessions in this date range.")).toBeInTheDocument();
+    });
+  });
 });

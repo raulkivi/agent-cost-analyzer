@@ -100,3 +100,48 @@ export const hostEventNameSchema = z.enum(["configChanged", "themeChanged", "sel
 export type HostEventName = z.infer<typeof hostEventNameSchema>;
 
 export type HostEvent = { kind: "event"; name: HostEventName; payload?: unknown };
+
+// webview -> host: a host command (vscode-extension.md G8) — something only
+// the editor can do for the UI, behind the web app's HostCapabilities port.
+// Deliberately not ApiService methods: they act on the editor, not on log
+// data, and the standalone app has no host to send them to. The protocol is
+// the request/response pair above with its own kind:
+//   { kind: "command", id, command, args } -> { kind: "response", id, ok }
+// Replies share the response shape, so the webview transport correlates
+// both by id. The host validates them like requests — `command` against
+// this allow-list, `args` with the command's schema — and answers anything
+// else with 400; the webview is untrusted content. Which setting ids
+// openSetting may open is the host's policy (it depends on the current
+// config status), so it isn't encoded here.
+export const hostCommandSchema = z.enum(["openSetting", "copyToClipboard", "openTextDocument"]);
+
+export type HostCommand = z.infer<typeof hostCommandSchema>;
+
+// Upper bound on clipboard text and document content, in UTF-16 code units
+// (5 MiB of ASCII): far above any system prompt or advice bundle, well
+// below what would stall the extension host.
+export const MAX_HOST_COMMAND_TEXT_LENGTH = 5 * 1024 * 1024;
+
+const boundedText = z.string().max(MAX_HOST_COMMAND_TEXT_LENGTH);
+
+export const hostCommandArgsSchemas = {
+  openSetting: z.object({ settingId: z.string().min(1) }),
+  copyToClipboard: z.object({ text: boundedText }),
+  openTextDocument: z.object({ content: boundedText, language: z.enum(["plaintext", "markdown", "json"]) }),
+} as const satisfies Record<HostCommand, z.ZodType>;
+
+export type HostCommandArgs = { [C in HostCommand]: z.infer<(typeof hostCommandArgsSchemas)[C]> };
+
+export const rpcCommandSchema = z.object({
+  kind: z.literal("command"),
+  id: z.string(),
+  command: hostCommandSchema,
+  args: z.unknown().optional(),
+});
+
+export type RpcCommand = z.infer<typeof rpcCommandSchema>;
+
+// host -> webview, one reply per command: done, or why not.
+export type RpcCommandResponse =
+  | { kind: "response"; id: string; ok: true }
+  | { kind: "response"; id: string; ok: false; error: { status: 400 | 500; message: string } };
