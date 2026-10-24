@@ -19,6 +19,7 @@ Progress (2026-10-24):
 | 10.7 | Accessibility, responsive layout, AsyncView, local fonts, walkthrough, l10n | Done (#69) |
 | 10.8 | Copilot-only MCP server in the extension, plus UI follow-ups from 10.7 | Done (#71); real Copilot agent-mode check in 10.9 |
 | 10.9 | Integration tests in real VS Code, performance budgets, usability run, packaging | Not started |
+| 10.10 | Documentation: extension README/listing, extension user guide, two-product README and User Guide | Not started |
 
 
 ## 1. Context
@@ -243,7 +244,7 @@ another company's trademark in the product name.
 - `displayName`: `AI Credits Analyzer`. `name` (the Marketplace id under
   the publisher): `ai-credits-analyzer`. The Marketplace rejects a
   `displayName` already in use, so confirm it's free before the first
-  publish (step 10.9). If it's taken, fall back to "AI Credits Analyzer
+  publish (step 10.10). If it's taken, fall back to "AI Credits Analyzer
   for VS Code" rather than adding "Copilot".
 - `description`: names the use case, e.g. "See where your GitHub Copilot
   Chat tokens and AI Credits go: prompt caching, per-turn cost, tool-call
@@ -1136,6 +1137,85 @@ axe table tests and two column-chooser guard tests green on first run.
   "Install from VSIX…" and passes the 10.4-10.8 exit checks
   with no repo checkout present.
 
+### 10.10 Documentation and Marketplace listing
+
+Added 2026-10-24 after a review of the docs. The plan already named the
+listing contents (§3.4, §7.2), but no step wrote them, and the root
+README and User Guide still describe only the standalone app under its
+old name. This step runs after 10.9, because it needs the packaged build
+and the owner's screenshots from a real VS Code, and before the first
+publish (§7.2).
+
+Docs aren't test-driven, so the exit is backed by automated doc checks,
+written test-first like any other code (`scripts/` or a Vitest suite in
+`packages/vscode-extension`, run by `npm test`).
+
+**Defaults (open to change before the step starts):** the extension guide
+lives in the repo as `docs/vscode-extension-guide.md` and the extension
+README links to it, because the Marketplace page has to stay short. The
+root README takes the name **Agent Cost Analyzer**; the repo name
+`copilot-cost-analyzer` stays.
+
+- **Extension README** (`packages/vscode-extension/README.md`, which is the
+  Marketplace and Open VSX page): what it does in one paragraph, a hero
+  screenshot, features (panel, Sessions/Setup sidebar, status bar,
+  insights, tool audit, MCP server), getting started (install, the
+  walkthrough, turning on Copilot debug logging), settings and commands,
+  the privacy statement ("reads local Copilot Chat logs only; no network;
+  no telemetry"), requirements (current stable VS Code, D9), a link to the
+  full guide, and a link to Agent Cost Analyzer for users of other agents.
+  It follows §3.4: Copilot is named only to describe what the extension
+  works with.
+- **Extension user guide** (`docs/vscode-extension-guide.md`):
+  - install from the Marketplace, Open VSX or a VSIX, and uninstall;
+  - the first-run walkthrough;
+  - the analyzer panel and how it maps to the standalone app's views;
+  - the Sessions and Setup sidebar, the status-bar item and selection sync;
+  - every command and setting, with what each Fix button changes;
+  - the MCP server: turning it on, what Copilot agent mode can ask, what
+    data goes to the model, and turning it off;
+  - Remote-SSH, WSL and Dev Containers (from 10.9's remote check);
+  - accessibility (keyboard, "View as table", high contrast, narrow
+    panels);
+  - troubleshooting: no sessions, logging off, "unknown" costs, a locked
+    database;
+  - privacy and what the extension reads.
+- **Extension changelog** (`packages/vscode-extension/CHANGELOG.md`), with
+  its own versions (D8), starting at the first published version. The
+  root `CHANGELOG.md` stays the standalone app's.
+- **Root README:** retitled to Agent Cost Analyzer, with a short "Which
+  product should I use?" section near the top: VS Code with Copilot Chat
+  goes to the extension; Claude Code, pi or mitmproxy captures go to the
+  standalone app. Setup and "Using the app" stay standalone; the doc index
+  gains the extension guide.
+- **User Guide** (`docs/UserGuide.md`): the new name, a pointer to the
+  extension guide, and the 10.7-10.8 features it doesn't cover yet
+  ("View as table", Cancel, narrow and medium layouts, keyboard use).
+- **Threat model** (`docs/threat-model.md`): the extension's surfaces:
+  the webview (CSP, nonce, `connect-src 'none'`), the RPC and host
+  command allow-lists, the read-only document provider, and the MCP child
+  process (argument validation, the `machine`-scoped setting, data sent to
+  the chat model).
+- **CONTRIBUTING:** the `vscode-extension` package, how to build it, run it
+  with F5 in an Extension Development Host, and run its unit and
+  integration tests.
+- **Screenshots:** taken by the owner in a real VS Code during 10.9's
+  usability run (dark and light theme, panel, sidebar, walkthrough, MCP in
+  agent mode), saved in `docs/images/vscode/` as PNG. The extension README
+  refers to them by absolute HTTPS URL (§7.0 listing prerequisites).
+- **Doc checks (automated):**
+  - every command, setting and view contributed in `package.json` appears
+    in the extension guide;
+  - the extension README uses only absolute HTTPS image URLs, no SVG
+    images, and no relative links that vsce can't rewrite;
+  - the extension README and guide never put "Copilot" in the product's
+    name;
+  - every relative link in the changed docs resolves to an existing file
+    and heading.
+- **Exit:** the doc checks pass; `vsce package` shows the README,
+  CHANGELOG and icon correctly (checked in the packaged `extension/`
+  folder); and the owner reviews the rendered extension README and guide.
+
 ## 7. Deployment
 
 ### 7.0 Publisher setup (one-time, manual, before step 10.3)
@@ -1245,8 +1325,9 @@ suite only, to cover the D4 path derivation for real.
 - **Versioning:** the version lives in `packages/vscode-extension/package.json`
   and starts at `0.1.0`. Use the Marketplace pre-release channel
   (`--pre-release`, odd minor) until 10.9's remote check passes, then
-  publish a stable even minor.
-- **Marketplace listing:** README (Learn/Analyze/dashboard screenshots), a
+  publish a stable even minor. Nothing is published before 10.10's
+  documentation is done.
+- **Marketplace listing** (written in step 10.10): README (Learn/Analyze/dashboard screenshots), a
   privacy statement ("reads local Copilot Chat logs only; no network; no
   telemetry"), `CHANGELOG.md`, and the description, categories and
   keywords from §3.4. It links to the standalone app for users of other
