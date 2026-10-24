@@ -1,9 +1,5 @@
 import type { LogProviderDescriptor, LogProviderStatus } from "@copilot-cost-analyzer/domain";
-import {
-  DEFAULT_ACTIVE_PROVIDER_ID,
-  readActiveProviderId,
-  writeActiveProviderId,
-} from "./app-settings.js";
+import { DEFAULT_ACTIVE_PROVIDER_ID, type AppSettingsStore } from "./app-settings.js";
 import type { LogProvider } from "./log-provider.js";
 
 export class UnknownLogProviderIdError extends Error {
@@ -24,10 +20,11 @@ export class LogProviderRegistry {
   private readonly providers: Map<string, LogProvider>;
   private activeId: string;
 
-  constructor(providers: LogProvider[], private readonly settingsDir: string) {
+  constructor(providers: LogProvider[], private readonly settings: AppSettingsStore) {
     this.providers = new Map(providers.map((provider) => [provider.id, provider]));
-    const persisted = readActiveProviderId(settingsDir);
-    this.activeId = this.providers.has(persisted) ? persisted : DEFAULT_ACTIVE_PROVIDER_ID;
+    const persisted = settings.readActiveProviderId();
+    this.activeId =
+      persisted !== undefined && this.providers.has(persisted) ? persisted : DEFAULT_ACTIVE_PROVIDER_ID;
   }
 
   getActiveProviderId(): string {
@@ -67,7 +64,7 @@ export class LogProviderRegistry {
       throw new UnknownLogProviderIdError(providerId);
     }
     this.activeId = providerId;
-    writeActiveProviderId(this.settingsDir, providerId);
+    this.settings.writeActiveProviderId(providerId);
   }
 
   private async listDescriptors(): Promise<LogProviderDescriptor[]> {

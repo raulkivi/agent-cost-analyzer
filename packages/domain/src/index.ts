@@ -102,3 +102,10 @@ export {
   type CostRollup,
 } from "./cost.js";
 export { turnViewToolCallSchema, turnViewSchema, type TurnView } from "./turn-view.js";
+export {
+  productFeaturesSchema,
+  productProfileSchema,
+  type ProductFeatures,
+  type ProductProfile,
+} from "./product-profile.js";
+export { apiMethodSchema, type ApiMethod } from "./rpc.js";

@@ -14,6 +14,7 @@ import { resolvePiAgentSessionsDir } from "../platform/pi-agent-paths/resolve-pi
 import { resolvePiSystemPromptLogPath } from "../platform/pi-agent-paths/resolve-pi-system-prompt-log-path.js";
 import { resolveClaudeCodeProjectsDir } from "../platform/claude-code-paths/resolve-claude-code-projects-dir.js";
 import { LogProviderRegistry } from "../data-sources/log-providers/registry.js";
+import { FileAppSettingsStore } from "../data-sources/log-providers/app-settings.js";
 import type { LogProvider } from "../data-sources/log-providers/log-provider.js";
 
 export interface LogProviderCompositionOptions {
@@ -32,9 +33,10 @@ export interface LogProviderCompositionOptions {
   additionalLogProviders?: LogProvider[];
 }
 
-// Shared wiring for every entry point that reads sessions (the HTTP app in
-// app.ts and the stdio MCP server in mcp/stdio.ts): resolves each local
-// source path (overridable for tests) and builds the provider registry.
+// Shared wiring for every entry point that reads sessions (the HTTP app's
+// ApiService in create-standalone-api-service.ts and the stdio MCP server in
+// mcp/stdio.ts): resolves each local source path (overridable for tests)
+// and builds the provider registry over the file-backed app settings.
 export function composeLogProviders(options: LogProviderCompositionOptions = {}) {
   const resolvedDbPath =
     options.sessionStoreDbPath ?? resolveSessionStoreDbPath();
@@ -85,16 +87,15 @@ export function composeLogProviders(options: LogProviderCompositionOptions = {})
   const claudeCodeProvider = new ClaudeCodeLogProvider({
     projectsDirPath: resolvedClaudeCodeProjectsDirPath,
   });
+  const appSettings = new FileAppSettingsStore(resolvedAppSettingsDir);
   const registry = new LogProviderRegistry(
     [vscodeProvider, mitmproxyProvider, piAgentProvider, claudeCodeProvider, ...(options.additionalLogProviders ?? [])],
-    resolvedAppSettingsDir,
+    appSettings,
   );
 
   return {
     registry,
-    piAgentProvider,
-    resolvedDbPath,
-    resolvedDebugLogsDirPaths,
+    appSettings,
     resolvedVscodeSettingsPath,
     resolvedAppSettingsDir,
   };
