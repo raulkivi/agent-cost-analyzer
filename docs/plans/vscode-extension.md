@@ -17,7 +17,7 @@ Progress (2026-10-24):
 | 10.5 | Product profile in the UI, host commands, VS Code theme | Done (#66) |
 | 10.6 | Native Sessions/Setup sidebar, status bar, selection sync | Done (#67) |
 | 10.7 | Accessibility, responsive layout, AsyncView, local fonts, walkthrough, l10n | Done (#69) |
-| 10.8 | Copilot-only MCP server in the extension, plus UI follow-ups from 10.7 | Done (PR pending); real Copilot agent-mode check in 10.9 |
+| 10.8 | Copilot-only MCP server in the extension, plus UI follow-ups from 10.7 | Done (#71); real Copilot agent-mode check in 10.9 |
 | 10.9 | Integration tests in real VS Code, performance budgets, usability run, packaging | Not started |
 
 
