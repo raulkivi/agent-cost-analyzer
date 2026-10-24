@@ -48,6 +48,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Upgraded `zod` to 4.6.7 (GHSA-mrhx-c7xc-m3w5: memory exhaustion when
   validating oversized constrained collections). The domain package and the
   planned extension bundle depend on it.
+- Forced `undici` to 8.12.3 with a root `overrides` entry (GHSA-xjj6-f33q-929c,
+  GHSA-4qv8-2p9j-2685, GHSA-f72v-6w45-q472: denial of service and
+  Subresource Integrity bypass). It is pulled in by `jsdom` and by
+  `@earendil-works/pi-coding-agent`, which pins 8.10.2.
 - Removed the captured turn examples from `Design/examples/`; the 0.8.0 entry said they were removed, but they were still in the repository. Replaced the captured Copilot system prompt (`Design/SystemPrompt.txt`) with a synthetic fixture, `packages/web/fixtures/system-prompt-sample.txt`, used by the parser tests and the design-sync preview.
 
 ## [0.8.0] - 2026-10-12
