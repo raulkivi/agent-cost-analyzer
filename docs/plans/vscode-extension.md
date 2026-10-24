@@ -371,6 +371,29 @@ identically.
   fall back to a `SqliteReader` port with a WASM adapter (`sql.js`, latest
   stable, §11.6), chosen before step 10.4.
 
+**Status (2026-10-24): done. Keep `node:sqlite`; no WASM fallback.**
+- **Versions.**
+  - Stable VS Code is 1.143.0, inferred from the newest `microsoft/vscode`
+    release tag; `update.code.visualstudio.com` is blocked from the dev
+    container.
+  - It ships Electron 43.7.7 (`.npmrc` `target`, the same for 1.141-1.143),
+    which bundles Node 24.21.0 (electron `DEPS`).
+- **`node:sqlite`.** Under `ELECTRON_RUN_AS_NODE=1` with that Electron,
+  `require('node:sqlite')` works without flags or warnings.
+  `new DatabaseSync(path, { readOnly: true })` reads rows, and a write on
+  that handle throws "attempt to write a readonly database".
+- **Bundling.** esbuild keeps `node:` builtins external by default, and the
+  bundled CJS file ran under the same Electron.
+- **MCP API.** `vscode.lm.registerMcpServerDefinitionProvider`,
+  `McpStdioServerDefinition` and the `mcpServerDefinitionProviders`
+  contribution are in the stable API (`@types/vscode` 1.140.0, the newest
+  typings published).
+- **Packaging note.** vsce requires `@types/vscode` ≤ `engines.vscode`, so
+  D9's `^<current stable>` can be ahead of the newest typings.
+- **Not verified here.** The real extension host, because VS Code can't be
+  downloaded in this container. The 10.9 integration tests run in CI, where
+  it can, and confirm it.
+
 ### 10.1 Transport-neutral `ApiService` (server)
 
 - Tests first: `services/api/api-service.test.ts` covers every method from

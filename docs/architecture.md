@@ -1769,6 +1769,12 @@ this architecture that means:
   settingId)` to jump straight to the relevant setting — something the
   standalone web app has no way to do since it has no VS Code API access.
 
+**Runtime check (Phase 10.0, 2026-10-24).** Current stable VS Code
+(1.143.0) ships Electron 43.7.7 with Node 24.21.0. `node:sqlite`
+read-only access works there without flags, so the extension keeps the
+same SQLite adapters as the standalone app. No WASM fallback is needed.
+Details: [plans/vscode-extension.md](plans/vscode-extension.md) step 10.0.
+
 ## 13. Open architecture decisions
 
 Carried over from vision §7 plus new ones raised while designing this layer:
