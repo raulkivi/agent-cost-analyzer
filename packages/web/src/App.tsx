@@ -1,5 +1,12 @@
 import { useEffect, useRef, useState } from "react";
-import type { ConfigWarning, LogProviderDescriptor, ProductFeatures, ProductProfile, Session } from "@copilot-cost-analyzer/domain";
+import {
+  selectSessionPayloadSchema,
+  type ConfigWarning,
+  type LogProviderDescriptor,
+  type ProductFeatures,
+  type ProductProfile,
+  type Session,
+} from "@copilot-cost-analyzer/domain";
 import { fetchConfigStatus, updateRetentionThreshold } from "./api-client/config-status.js";
 import { onHostEvent } from "./api-client/host-events.js";
 import { fetchHealth, type HealthResponse } from "./api-client/health.js";
@@ -27,7 +34,7 @@ import { SegmentedControl } from "./components/ui/SegmentedControl.js";
 import { Tag } from "./components/ui/Tag.js";
 import { AiCreditsSparkline } from "./charts/AiCreditsSparkline.js";
 import { getHostCapabilities } from "./host/current-host-capabilities.js";
-import { useSessionStore } from "./state/session-store.js";
+import { useSessionStore, type RightTab } from "./state/session-store.js";
 
 const RIGHT_TAB_OPTIONS = [
   { value: "explanation", label: "Explanation" },
@@ -162,6 +169,15 @@ export function App() {
     return onHostEvent("configChanged", loadConfigStatus);
   }, []);
 
+  // The extension's sidebar picked a session (D10, the selectSession event):
+  // handled like a click in the session list. The subscription is made once;
+  // it calls whichever handler the latest render built.
+  const selectSessionFromHost = useRef<(payload: unknown) => void>(() => undefined);
+  useEffect(() => {
+    selectSessionFromHost.current = handleSelectSessionEvent;
+  });
+  useEffect(() => onHostEvent("selectSession", (payload) => selectSessionFromHost.current(payload)), []);
+
   // The profile's flags and the host's capabilities become plain props:
   // each component only gets the callback or flag it needs (ISP), and an
   // affordance shows only when the product offers it and the host can do it.
@@ -255,7 +271,9 @@ export function App() {
     }
   }
 
-  function openAnalyzeSession(sessionId: string): void {
+  // `tab` is applied once the session has loaded: loading a session resets
+  // the right column to its first tab.
+  function openAnalyzeSession(sessionId: string, tab?: RightTab): void {
     const requestId = ++latestSessionRequestId.current;
     fetchSession(sessionId)
       .then((result) => {
@@ -264,6 +282,9 @@ export function App() {
         // after a faster later one and overwrite it.
         if (requestId === latestSessionRequestId.current) {
           loadSession(result);
+          if (tab) {
+            setRightTab(tab);
+          }
         }
       })
       .catch((error: Error) => {
@@ -271,6 +292,27 @@ export function App() {
           setFetchError(error.message);
         }
       });
+  }
+
+  function handleSelectSessionEvent(payload: unknown): void {
+    const parsed = selectSessionPayloadSchema.safeParse(payload);
+    if (!parsed.success) {
+      return;
+    }
+    const { sessionId, tab, view, adviceDialog } = parsed.data;
+    if (mode !== "analyze") {
+      handleModeChange("analyze");
+    }
+    setInspectorOpen(false);
+    setTurnInspectorOpen(false);
+    // The dashboard and the all-sessions audit have no selected session to
+    // show, so they give way to the turns; a session audit stays.
+    setCenterView(view ?? (mode === "analyze" && centerView === "session-audit" ? "session-audit" : "turns"));
+    if (adviceDialog) {
+      setAdviceSelection(new Set([sessionId]));
+      setAdviceDialogOpen(true);
+    }
+    openAnalyzeSession(sessionId, tab);
   }
 
   function handleOpenSessionAudit(sessionId: string): void {

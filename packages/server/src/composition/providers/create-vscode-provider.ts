@@ -9,7 +9,8 @@ import { VscodeLogProvider } from "../../data-sources/log-providers/vscode/vscod
 // explicit null means "none".
 export interface VscodeProviderPaths {
   sessionStoreDbPath?: string | null;
-  debugLogsDirPaths?: string[];
+  // A function is asked on every lookup (see VscodeLogProviderOptions).
+  debugLogsDirPaths?: string[] | (() => string[]);
   agentTracesDbPath?: string | null;
 }
 

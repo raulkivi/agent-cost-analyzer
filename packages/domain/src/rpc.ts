@@ -101,6 +101,21 @@ export type HostEventName = z.infer<typeof hostEventNameSchema>;
 
 export type HostEvent = { kind: "event"; name: HostEventName; payload?: unknown };
 
+// The selectSession event's payload (D10): the sidebar picked a session, and
+// the web app handles it like a click in its own session list. `tab` is the
+// Analyze mode right column's tab; `view` the center view ("Show tool audit"
+// asks for "session-audit"); `adviceDialog` opens the advice-export dialog
+// on this session ("Copy advice bundle"). Only these values are accepted, so
+// the webview ignores anything else the host could post.
+export const selectSessionPayloadSchema = z.object({
+  sessionId: z.string().min(1),
+  tab: z.enum(["explanation", "system-prompt", "tools"]).optional(),
+  view: z.enum(["turns", "session-audit"]).optional(),
+  adviceDialog: z.boolean().optional(),
+});
+
+export type SelectSessionPayload = z.infer<typeof selectSessionPayloadSchema>;
+
 // webview -> host: a host command (vscode-extension.md G8) — something only
 // the editor can do for the UI, behind the web app's HostCapabilities port.
 // Deliberately not ApiService methods: they act on the editor, not on log

@@ -304,3 +304,50 @@ describe("VscodeLogProvider.lookupSystemPromptText", () => {
     await expect(provider(null).lookupSystemPromptText("session-1")).resolves.toEqual({ status: "unknown-session" });
   });
 });
+
+// The extension lists the per-workspace debug-logs folders again on Refresh
+// (vscode-extension.md 10.6), so the provider accepts a lister and asks it
+// each time it looks a session's main.jsonl up.
+describe("VscodeLogProvider with a debug-logs lister", () => {
+  let dir: string;
+  let debugLogsDirPath: string;
+
+  beforeEach(() => {
+    dir = mkdtempSync(path.join(tmpdir(), "vscode-log-provider-lister-"));
+    seedFixtureDb(path.join(dir, "session-store.db"));
+    debugLogsDirPath = path.join(dir, "debug-logs");
+  });
+
+  afterEach(() => {
+    rmSync(dir, { recursive: true, force: true });
+  });
+
+  it("finds a session's logs in a folder the lister only returns later", async () => {
+    let listed: string[] = [];
+    const provider = new VscodeLogProvider({
+      sessionStoreDbPath: path.join(dir, "session-store.db"),
+      debugLogsDirPaths: () => listed,
+      agentTracesDbPath: null,
+    });
+    const sessionLogDir = path.join(debugLogsDirPath, "session-1");
+    mkdirSync(sessionLogDir, { recursive: true });
+    writeFileSync(
+      path.join(sessionLogDir, "main.jsonl"),
+      [
+        { v: 1, ts: 1, dur: 0, sid: "session-1", type: "session_start", name: "session_start", spanId: "a", status: "ok", attrs: {} },
+        { v: 1, ts: 2, dur: 5, sid: "session-1", type: "llm_request", name: "llm_request", spanId: "b", status: "ok", attrs: { model: "claude-sonnet-5", systemPromptFile: "system_prompt_0.json", toolsFile: "tools_0.json" } },
+      ]
+        .map((line) => JSON.stringify(line))
+        .join("\n") + "\n",
+    );
+    writeFileSync(
+      path.join(sessionLogDir, "system_prompt_0.json"),
+      JSON.stringify({ content: JSON.stringify([{ type: "text", content: "Late prompt." }]) }),
+    );
+    await expect(provider.lookupSystemPromptText("session-1")).resolves.toEqual({ status: "not-captured" });
+
+    listed = [debugLogsDirPath];
+
+    await expect(provider.lookupSystemPromptText("session-1")).resolves.toEqual({ status: "found", text: "Late prompt." });
+  });
+});

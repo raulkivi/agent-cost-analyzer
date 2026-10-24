@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- Phase 10.6, AI Credits Analyzer (not yet published).
+  - An Activity Bar sidebar with a Sessions list (grouped by day, AI
+    Credits or "unknown" per session) and a Setup view with Fix buttons.
+  - A status-bar item showing today's known AI Credits, with coverage in
+    its tooltip.
+  - Picking a session in the sidebar opens it in the analyzer panel.
+  - Refresh also picks up workspaces opened after VS Code started.
 - Phase 10.5, AI Credits Analyzer (not yet published).
   - Config warnings have Enable/Change buttons that open the exact VS Code
     setting.

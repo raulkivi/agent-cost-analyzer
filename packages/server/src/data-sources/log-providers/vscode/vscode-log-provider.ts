@@ -42,7 +42,10 @@ import type { SystemPromptTextLookup, SystemPromptTextReader } from "../system-p
 
 export interface VscodeLogProviderOptions {
   sessionStoreDbPath: string | null;
-  debugLogsDirPaths: string[];
+  // The per-workspace debug-logs folders. A function is asked on every
+  // lookup, so a host can add workspaces opened after startup (the
+  // extension's Refresh) without rebuilding the provider.
+  debugLogsDirPaths: string[] | (() => string[]);
   agentTracesDbPath: string | null;
 }
 
@@ -62,6 +65,11 @@ export class VscodeLogProvider implements LogProvider, SystemPromptTextReader {
   readonly label = "VS Code (local Copilot Chat)";
 
   constructor(private readonly options: VscodeLogProviderOptions) {}
+
+  private debugLogsDirPaths(): string[] {
+    const { debugLogsDirPaths } = this.options;
+    return typeof debugLogsDirPaths === "function" ? debugLogsDirPaths() : debugLogsDirPaths;
+  }
 
   private openDb(): DatabaseSync | null {
     const { sessionStoreDbPath } = this.options;
@@ -91,7 +99,7 @@ export class VscodeLogProvider implements LogProvider, SystemPromptTextReader {
   // session's cost to unavailable rather than failing the whole list.
   private async summarizeSessionWithCost(row: SessionRow): Promise<Session> {
     try {
-      const mainJsonlPath = resolveMainJsonlPath(this.options.debugLogsDirPaths, row.id);
+      const mainJsonlPath = resolveMainJsonlPath(this.debugLogsDirPaths(), row.id);
       let mainJsonlAvailability: MainJsonlAvailability = "missing";
       let turnUsages: (TurnUsage | null)[] = [];
       if (mainJsonlPath) {
@@ -137,7 +145,7 @@ export class VscodeLogProvider implements LogProvider, SystemPromptTextReader {
 
       const turnRows = getTurnRows(db, sessionRow.id);
       const fileRows = getSessionFileRows(db, sessionRow.id);
-      const mainJsonlPath = resolveMainJsonlPath(this.options.debugLogsDirPaths, sessionRow.id);
+      const mainJsonlPath = resolveMainJsonlPath(this.debugLogsDirPaths(), sessionRow.id);
 
       let mainJsonlAvailability: MainJsonlAvailability = "missing";
       let turnUsages: (TurnUsage | null)[] = [];
@@ -195,7 +203,7 @@ export class VscodeLogProvider implements LogProvider, SystemPromptTextReader {
         return null;
       }
 
-      const mainJsonlPath = resolveMainJsonlPath(this.options.debugLogsDirPaths, sessionId);
+      const mainJsonlPath = resolveMainJsonlPath(this.debugLogsDirPaths(), sessionId);
       const result = mainJsonlPath
         ? await readMainJsonlEnvelopesForTurn(mainJsonlPath, turnIndex)
         : null;
@@ -229,7 +237,7 @@ export class VscodeLogProvider implements LogProvider, SystemPromptTextReader {
         return { status: "unknown-session" };
       }
 
-      const mainJsonlPath = resolveMainJsonlPath(this.options.debugLogsDirPaths, sessionRow.id);
+      const mainJsonlPath = resolveMainJsonlPath(this.debugLogsDirPaths(), sessionRow.id);
       if (!mainJsonlPath) {
         return { status: "not-captured" };
       }

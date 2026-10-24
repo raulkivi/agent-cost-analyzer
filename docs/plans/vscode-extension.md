@@ -645,8 +645,8 @@ identically.
   `copilotLogPathsFromUserDataDir`, `VscodeSettingsSource` and
   `GlobalStateAppSettingsStore`. Their tests cover the cases listed above.
 - **Known limits.**
-  - Debug-log folders are listed at activation; 10.6's refresh re-lists
-    them.
+  - Debug-log folders were listed only at activation. Resolved in 10.6:
+    every full refresh re-lists them.
   - Folder-level settings in multi-root workspaces aren't read.
   - `readVscodeSettings` is now only used by its own tests.
 - **Tests.** 1,663 → 1,781 (domain 113, server 1,014, web 532, extension
@@ -796,6 +796,59 @@ first with fakes. Only thin registration code touches the `vscode` API.
   coverage in the tooltip. Every tree and status-bar model has unit
   tests, and none of the model modules import `vscode`.
 
+**Status (2026-10-24): done.**
+- **Sidebar.** An Activity Bar container `aiCreditsAnalyzer`
+  (`resources/activity-bar.svg`, `currentColor`) with the native
+  **Sessions** and **Setup** TreeViews and their welcome views.
+- **Pure models** (none imports `vscode`):
+  - `buildSessionsTree`: local-day groups (Today, Yesterday, ISO dates,
+    Undated last; never a made-up date). Rows show "4.82" or "AI Credits
+    unknown". Group totals count only known costs ("12.40 · 1 unknown").
+  - `buildSetupTree`: one node per warning, marked "Required" or "Optional"
+    with an icon, plus an inline and context-menu Fix.
+  - `buildStatusBarState`: "$(graph) 12.40 AI Credits today", with coverage
+    in the tooltip; "AI Credits: unknown"; hidden when no session started
+    today; "$(warning) AI Credits: setup needed" when a required warning
+    exists, which opens the Setup view.
+- **Debug-log re-listing.** `VscodeLogProvider` accepts a `() => string[]`
+  lister (the standalone app still passes arrays). Every full refresh
+  re-lists the per-workspace `debug-logs` folders: the Refresh command, the
+  view becoming visible, and activation. A bundle-load test proves a
+  workspace created after activation appears after Refresh.
+- **Selection sync.** `openSession`, `showToolAudit` and `copyAdviceBundle`
+  open the panel and `postWhenReady` a `selectSession` event
+  (`{sessionId, tab?, view?, adviceDialog?}`, schema in domain). If the
+  webview isn't ready, the event is held and delivered on its first
+  message. Readiness resets when the panel is hidden. The web app handles
+  the event like a click in its own session list.
+- **Commands.** `refreshSessions` (under `withProgress`), `openSession`,
+  `showToolAudit`, `copyAdviceBundle`, `fixSetting` (same allow-list as
+  `openSetting`) and `openLearnMode`, all in the "AI Credits Analyzer"
+  category with codicons. Commands that need arguments are hidden from the
+  Command Palette. A manifest test checks ids, categories, menus, welcome
+  links and views.
+- **Deviations from the text above.**
+  - Activation is `onStartupFinished`, so the status bar has data. That
+    reads the session list once per VS Code start.
+  - "Show tool audit" opens the Tool audit centre view (`view`), not a
+    right-panel tab.
+  - "Copy advice bundle" opens the session with the advice dialog open,
+    because the bundle builder needs fully fetched sessions and lives in the
+    web code.
+  - The Setup welcome view reads "No setup problems found…", since an empty
+    tree means nothing needs fixing. Warnings show as rows.
+  - `openLearnMode` only opens the panel.
+  - Day labels and the status bar update on the next refresh, not at
+    midnight.
+- **Not verified here.** A real VS Code dev host; 10.9's CI tests cover it.
+- **TDD.** Exceptions to red-first: `setup-view-model`, and the bundle-load
+  checks, which were written after the code; the relist and visibility
+  checks were mutation-tested. One "ignores an invalid payload" test passed
+  before its code existed. One export was a refactor done while tests were
+  green.
+- **Tests.** 1,895 → 2,025 (domain 123, server 1,015, web 607, extension
+  265).
+
 ### 10.7 UX polish, accessibility and onboarding (§3.5)
 
 Implements §3.5 against the reviewed mock-ups (§3.6). Most of it lives in
@@ -893,7 +946,15 @@ Marketplace still requires a *publisher*: the namespace in the extension
 id (`<publisher>.<name>`) and the identity shown on the listing. A
 personal account can own one; no company or organization is needed.
 
-- **Publisher id: `raulkivi`** (proposed, matching the GitHub handle).
+**Status (2026-10-24):** the VS Code Marketplace publisher `raulkivi` is
+registered (marketplace.visualstudio.com/manage/publishers/raulkivi).
+Still to do:
+- **VS Code Marketplace:** steps 2-4 below (Azure DevOps organization,
+  PAT, `VSCE_PAT` secret), or step 5's Entra ID route instead.
+- **Open VSX:** the whole section below.
+- **Listing:** the listing prerequisites.
+
+- **Publisher id: `raulkivi`** (registered, matching the GitHub handle).
   The id is permanent and must be unique, using lowercase letters, digits
   and hyphens. The extension id becomes `raulkivi.ai-credits-analyzer`,
   and the `publisher` field in `packages/vscode-extension/package.json`
@@ -1019,8 +1080,8 @@ GitHub Release installs with
 
 ## 9. Open questions (need a decision before the step named)
 
-None. Every decision needed before step 10.0 is made. The publisher id
-`raulkivi` (§7.0) is proposed and becomes final when it's registered.
+None. Every decision needed before step 10.0 is made. The Marketplace
+publisher id `raulkivi` is registered (§7.0).
 
 Settled on 2026-10-24: the extension is Copilot-only; it includes the
 tool audit and insights dashboard; both products ship an MCP server; the

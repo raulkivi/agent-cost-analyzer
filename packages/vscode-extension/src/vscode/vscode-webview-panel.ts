@@ -26,6 +26,7 @@ export function createVscodeWebviewPanel(options: WebviewPanelOptions): WebviewP
       onDidReceiveMessage: (listener) => webview.onDidReceiveMessage(listener),
     },
     reveal: () => panel.reveal(),
+    onDidChangeVisibility: (listener) => panel.onDidChangeViewState((event) => listener(event.webviewPanel.visible)),
     onDidDispose: (listener) => panel.onDidDispose(listener),
     dispose: () => panel.dispose(),
   };

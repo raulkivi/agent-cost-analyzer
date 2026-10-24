@@ -2,7 +2,7 @@ import { mkdirSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { copilotLogPathsFromUserDataDir } from "./copilot-log-paths.js";
+import { copilotDebugLogsDirPaths, copilotLogPathsFromUserDataDir } from "./copilot-log-paths.js";
 
 describe("copilotLogPathsFromUserDataDir (vscode-extension.md D4)", () => {
   let userDataDir: string;
@@ -45,5 +45,37 @@ describe("copilotLogPathsFromUserDataDir (vscode-extension.md D4)", () => {
       agentTracesDbPath: null,
       vscodeSettingsPath: null,
     });
+  });
+});
+
+describe("copilotDebugLogsDirPaths (re-listed on the sidebar's Refresh)", () => {
+  let userDataDir: string;
+
+  beforeEach(() => {
+    userDataDir = mkdtempSync(path.join(tmpdir(), "copilot-debug-logs-paths-"));
+  });
+
+  afterEach(() => {
+    rmSync(userDataDir, { recursive: true, force: true });
+  });
+
+  it("lists the workspaces that exist now, so one first opened later shows up on the next call", () => {
+    expect(copilotDebugLogsDirPaths(userDataDir)).toEqual([]);
+
+    mkdirSync(path.join(userDataDir, "User", "workspaceStorage", "w1"), { recursive: true });
+
+    expect(copilotDebugLogsDirPaths(userDataDir)).toEqual([
+      path.join(userDataDir, "User", "workspaceStorage", "w1", "GitHub.copilot-chat", "debug-logs"),
+    ]);
+  });
+
+  it("is the same list copilotLogPathsFromUserDataDir starts with", () => {
+    mkdirSync(path.join(userDataDir, "User", "workspaceStorage", "w1"), { recursive: true });
+
+    expect(copilotLogPathsFromUserDataDir(userDataDir).debugLogsDirPaths).toEqual(copilotDebugLogsDirPaths(userDataDir));
+  });
+
+  it("is empty for an unknown user-data dir", () => {
+    expect(copilotDebugLogsDirPaths(null)).toEqual([]);
   });
 });

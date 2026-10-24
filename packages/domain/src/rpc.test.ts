@@ -9,6 +9,7 @@ import {
   MAX_HOST_COMMAND_TEXT_LENGTH,
   rpcCommandSchema,
   rpcRequestSchema,
+  selectSessionPayloadSchema,
   type HostEvent,
   type RpcCommandResponse,
   type RpcResponse,
@@ -222,5 +223,32 @@ describe("host commands (vscode-extension.md G8)", () => {
     expect(domain.hostCommandArgsSchemas).toBe(hostCommandArgsSchemas);
     expect(domain.rpcCommandSchema).toBe(rpcCommandSchema);
     expect(domain.MAX_HOST_COMMAND_TEXT_LENGTH).toBe(MAX_HOST_COMMAND_TEXT_LENGTH);
+  });
+});
+
+describe("selectSessionPayloadSchema", () => {
+  it("accepts a session id alone, or with a right tab, a center view and the advice dialog", () => {
+    expect(selectSessionPayloadSchema.safeParse({ sessionId: "s1" }).success).toBe(true);
+    expect(
+      selectSessionPayloadSchema.safeParse({ sessionId: "s1", tab: "tools", view: "session-audit", adviceDialog: true }).success,
+    ).toBe(true);
+  });
+
+  it("rejects an empty id, an unknown tab or view, and a non-object", () => {
+    for (const bad of [
+      { sessionId: "" },
+      {},
+      { sessionId: "s1", tab: "settings" },
+      { sessionId: "s1", view: "dashboard" },
+      { sessionId: "s1", adviceDialog: "yes" },
+      "s1",
+      null,
+    ]) {
+      expect(selectSessionPayloadSchema.safeParse(bad).success).toBe(false);
+    }
+  });
+
+  it("is exported from the domain index", () => {
+    expect(domain.selectSessionPayloadSchema).toBe(selectSessionPayloadSchema);
   });
 });
