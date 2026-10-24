@@ -4,6 +4,7 @@ import { composeExtension } from "./composition.js";
 import { createVscodeHostCommands } from "./vscode/vscode-host-commands.js";
 import { registerSessionsView, registerSetupView } from "./vscode/vscode-sidebar-views.js";
 import { registerStatusBar } from "./vscode/vscode-status-bar.js";
+import { createVscodeWalkthrough } from "./vscode/vscode-walkthrough.js";
 
 // Entry point (package.json "main" → dist/extension.js). Activation is
 // implicit, on the first contributed command or view, and on startup so the
@@ -18,6 +19,7 @@ export function activate(context: vscode.ExtensionContext): void {
     workspace: vscode.workspace,
     hostCommands: createVscodeHostCommands(vscode),
     translate: vscode.l10n.t,
+    walkthrough: createVscodeWalkthrough(vscode, context.extension.id),
   });
   context.subscriptions.push(extension);
 
@@ -37,6 +39,8 @@ export function activate(context: vscode.ExtensionContext): void {
   // The first read, so the status bar shows without a view being opened. It
   // never rejects: failures are shown by the views themselves.
   void extension.sidebar.refresh();
+  // The Get Started walkthrough, once and without a notification.
+  void extension.offerWalkthrough();
 }
 
 // Everything is disposed through context.subscriptions.

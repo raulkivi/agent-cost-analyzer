@@ -4,8 +4,9 @@ import {
   type HostEvent,
   type SelectSessionPayload,
 } from "@copilot-cost-analyzer/domain";
-import { identityTranslate, type Translate } from "../l10n/localize.js";
 import { WATCHED_SETTING_IDS } from "../config/config-change-watcher.js";
+import { identityTranslate, type Translate } from "../l10n/localize.js";
+import type { WalkthroughLauncher } from "../onboarding/walkthrough-offer.js";
 import { allowedSettingIds } from "../rpc/host-command-handler.js";
 import { COMMAND_IDS } from "./command-ids.js";
 
@@ -19,6 +20,8 @@ export interface ExtensionCommandsDeps {
   panel: CommandPanel;
   sidebar: { refresh(): Promise<void> };
   hostCommands: { openSetting(settingId: string): Promise<void> };
+  // Opens the Get Started walkthrough (vscode/vscode-walkthrough.ts).
+  walkthrough: WalkthroughLauncher;
   readConfigStatus(): Promise<ConfigStatus>;
   // Translates the messages VS Code shows when a command is refused.
   t?: Translate;
@@ -54,6 +57,10 @@ export class ExtensionCommands {
   // The web app starts in Learn mode, so opening the panel is enough.
   openLearnMode(): void {
     this.deps.panel.open();
+  }
+
+  openWalkthrough(): Promise<void> {
+    return this.deps.walkthrough.open();
   }
 
   refreshSessions(): Promise<void> {
@@ -97,6 +104,7 @@ export class ExtensionCommands {
     return {
       [COMMAND_IDS.open]: () => this.open(),
       [COMMAND_IDS.openLearnMode]: () => this.openLearnMode(),
+      [COMMAND_IDS.openWalkthrough]: () => this.openWalkthrough(),
       [COMMAND_IDS.refreshSessions]: () => this.refreshSessions(),
       [COMMAND_IDS.openSession]: (target, options) => this.openSession(target, options),
       [COMMAND_IDS.showToolAudit]: (target) => this.showToolAudit(target),

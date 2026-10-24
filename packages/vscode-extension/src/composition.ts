@@ -5,6 +5,7 @@ import { createExtensionApiService } from "@copilot-cost-analyzer/server/src/com
 import { ExtensionCommands } from "./commands/extension-commands.js";
 import { watchConfigChanges, type ConfigurationChangeSource } from "./config/config-change-watcher.js";
 import type { Translate } from "./l10n/localize.js";
+import { WalkthroughOffer, type WalkthroughLauncher } from "./onboarding/walkthrough-offer.js";
 import { AnalyzerPanel, type Disposable } from "./panel/analyzer-panel.js";
 import { createNonce } from "./panel/nonce.js";
 import { buildPanelHtml, type ViteManifest } from "./panel/panel-html.js";
@@ -34,6 +35,9 @@ export interface ExtensionCompositionInput {
   // Translates the host's user-visible strings (vscode.l10n.t): the seam that
   // keeps the models free of `vscode` (§3.5 Localization).
   translate: Translate;
+  // Opens the Get Started walkthrough: vscode/vscode-walkthrough.ts over the
+  // real API.
+  walkthrough: WalkthroughLauncher;
 }
 
 export interface ComposedExtension extends Disposable {
@@ -43,6 +47,9 @@ export interface ComposedExtension extends Disposable {
   // The data behind the Sessions and Setup views and the status bar:
   // extension.ts registers their views over it, and starts its first read.
   sidebar: SidebarController;
+  // Opens the Get Started walkthrough on the first activation only, with no
+  // notification; extension.ts calls it once on activation. Never rejects.
+  offerWalkthrough(): Promise<void>;
 }
 
 function readManifest(mediaDir: string): ViteManifest {
@@ -59,6 +66,7 @@ export function composeExtension({
   workspace,
   hostCommands,
   translate,
+  walkthrough,
 }: ExtensionCompositionInput): ComposedExtension {
   const mediaDir = path.join(extensionPath, "media");
   // Copilot only (vscode-extension.md §3.1). Every log path comes from the
@@ -112,6 +120,7 @@ export function composeExtension({
     panel,
     sidebar,
     hostCommands,
+    walkthrough,
     readConfigStatus: () => api.getConfigStatus(),
     t: translate,
   });
@@ -124,9 +133,14 @@ export function composeExtension({
     void sidebar.refreshConfig();
   });
 
+  const walkthroughOffer = new WalkthroughOffer(globalState, walkthrough, {
+    onError: (error) => console.error("AI Credits Analyzer: could not offer the walkthrough", error),
+  });
+
   return {
     commandHandlers: commands.handlers(),
     sidebar,
+    offerWalkthrough: () => walkthroughOffer.offerOnce(),
     dispose: () => {
       configWatch.dispose();
       panel.dispose();

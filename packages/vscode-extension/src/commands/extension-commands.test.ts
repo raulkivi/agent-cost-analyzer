@@ -29,13 +29,29 @@ function setup(readConfigStatus: () => Promise<ConfigStatus> = async () => statu
   const panel = { open: vi.fn(), postWhenReady: vi.fn() };
   const sidebar = { refresh: vi.fn(async () => undefined) };
   const hostCommands = { openSetting: vi.fn(async () => undefined) };
-  const commands = new ExtensionCommands({ panel, sidebar, hostCommands, readConfigStatus });
-  return { commands, panel, sidebar, hostCommands };
+  const walkthrough = { open: vi.fn(async () => undefined) };
+  const commands = new ExtensionCommands({ panel, sidebar, hostCommands, walkthrough, readConfigStatus });
+  return { commands, panel, sidebar, hostCommands, walkthrough };
 }
 
 const selectSession = (payload: unknown) => ({ kind: "event", name: "selectSession", payload });
 
 describe("ExtensionCommands", () => {
+  describe("openWalkthrough", () => {
+    it("opens the Get Started walkthrough and nothing else", async () => {
+      const { commands, walkthrough, panel } = setup();
+
+      await commands.openWalkthrough();
+
+      expect(walkthrough.open).toHaveBeenCalledTimes(1);
+      expect(panel.open).not.toHaveBeenCalled();
+    });
+
+    it("is registered under its contributed id", () => {
+      expect(Object.keys(setup().commands.handlers())).toContain(COMMAND_IDS.openWalkthrough);
+    });
+  });
+
   describe("openSession", () => {
     it("opens the panel once and posts selectSession once, after opening", async () => {
       const { commands, panel } = setup();
@@ -207,6 +223,7 @@ describe("ExtensionCommands error messages (vscode-extension.md §3.5 Localizati
       panel,
       sidebar: { refresh: async () => undefined },
       hostCommands: { openSetting: async () => undefined },
+      walkthrough: { open: async () => undefined },
       readConfigStatus: async () => statusWith(LOGGING_SETTING),
       t: upperCaseTranslate,
     });

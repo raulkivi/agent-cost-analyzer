@@ -86,6 +86,12 @@
         "title": "%command.openLearnMode.title%",
         "category": "%category%",
         "icon": "$(mortar-board)"
+      },
+      {
+        "command": "aiCreditsAnalyzer.openWalkthrough",
+        "title": "%command.openWalkthrough.title%",
+        "category": "%category%",
+        "icon": "$(book)"
       }
     ],
     "viewsContainers": {
@@ -117,6 +123,75 @@
       {
         "view": "aiCreditsAnalyzer.setup",
         "contents": "%welcome.setup%"
+      }
+    ],
+    "walkthroughs": [
+      {
+        "id": "aiCreditsAnalyzer.getStarted",
+        "title": "%walkthrough.title%",
+        "description": "%walkthrough.description%",
+        "steps": [
+          {
+            "id": "aiCreditsAnalyzer.enableLogging",
+            "title": "%walkthrough.step.enableLogging.title%",
+            "description": "%walkthrough.step.enableLogging.description%",
+            "media": {
+              "image": "resources/walkthrough/enable-logging.svg",
+              "altText": "%walkthrough.step.enableLogging.altText%"
+            },
+            "completionEvents": [
+              "onSettingChanged:github.copilot.chat.agentDebugLog.fileLogging.enabled"
+            ]
+          },
+          {
+            "id": "aiCreditsAnalyzer.keepSessions",
+            "title": "%walkthrough.step.keepSessions.title%",
+            "description": "%walkthrough.step.keepSessions.description%",
+            "media": {
+              "image": "resources/walkthrough/keep-sessions.svg",
+              "altText": "%walkthrough.step.keepSessions.altText%"
+            },
+            "completionEvents": [
+              "onSettingChanged:github.copilot.chat.agentDebugLog.fileLogging.maxRetainedSessionLogs"
+            ]
+          },
+          {
+            "id": "aiCreditsAnalyzer.openSession",
+            "title": "%walkthrough.step.openSession.title%",
+            "description": "%walkthrough.step.openSession.description%",
+            "media": {
+              "image": "resources/walkthrough/sessions-view.svg",
+              "altText": "%walkthrough.step.openSession.altText%"
+            },
+            "completionEvents": [
+              "onCommand:aiCreditsAnalyzer.openSession",
+              "onCommand:aiCreditsAnalyzer.open"
+            ]
+          },
+          {
+            "id": "aiCreditsAnalyzer.learnCaching",
+            "title": "%walkthrough.step.learnCaching.title%",
+            "description": "%walkthrough.step.learnCaching.description%",
+            "media": {
+              "image": "resources/walkthrough/prompt-caching.svg",
+              "altText": "%walkthrough.step.learnCaching.altText%"
+            },
+            "completionEvents": [
+              "onCommand:aiCreditsAnalyzer.openLearnMode"
+            ]
+          },
+          {
+            "id": "aiCreditsAnalyzer.askCopilot",
+            "title": "%walkthrough.step.askCopilot.title%",
+            "description": "%walkthrough.step.askCopilot.description%",
+            "media": {
+              "markdown": "resources/walkthrough/mcp.md"
+            },
+            "completionEvents": [
+              "onStepSelected"
+            ]
+          }
+        ]
       }
     ],
     "menus": {

@@ -239,7 +239,7 @@ describe("the built extension bundle", () => {
         update: async (key: string, value: unknown) => void globalState.set(key, value),
       },
       subscriptions,
-      extension: { packageJSON: { version: "0.1.0" } },
+      extension: { id: "raulkivi.ai-credits-analyzer", packageJSON: { version: "0.1.0" } },
     });
   }, 60_000);
 
@@ -253,6 +253,13 @@ describe("the built extension bundle", () => {
 
     expect(vscode.__panels).toHaveLength(1);
     expect(vscode.__panels[0]?.webview.html).toContain("connect-src 'none'");
+  });
+
+  it("offers the Get Started walkthrough once, on the first activation, without a notification", async () => {
+    const walkthrough = ["workbench.action.openWalkthrough", "raulkivi.ai-credits-analyzer#aiCreditsAnalyzer.getStarted"];
+
+    await expect.poll(() => vscode.__executed.filter((call) => call[0] === walkthrough[0])).toEqual([walkthrough]);
+    expect(globalState.get("aiCreditsAnalyzer.walkthroughOffered")).toBe(true);
   });
 
   it("serves Learn mode over the message bridge", async () => {
