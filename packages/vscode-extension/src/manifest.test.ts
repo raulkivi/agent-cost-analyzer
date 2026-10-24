@@ -121,7 +121,7 @@ describe("package.json contributions (vscode-extension.md §3.5)", () => {
     }
   });
 
-  it("contributes exactly the Sessions and Setup views the code registers", () => {
+  it("contributes exactly the Sessions, Learn and Setup views the code registers", () => {
     expect(contributedViews.map((view) => view.id).sort()).toEqual(Object.values(VIEW_IDS).sort());
   });
 
@@ -181,7 +181,7 @@ describe("package.json contributions (vscode-extension.md §3.5)", () => {
     const hidden = (contributes.menus?.commandPalette ?? []).filter((entry) => entry.when === "false").map((entry) => entry.command);
 
     expect(hidden.sort()).toEqual(
-      [COMMAND_IDS.openSession, COMMAND_IDS.showToolAudit, COMMAND_IDS.copyAdviceBundle, COMMAND_IDS.fixSetting].sort(),
+      [COMMAND_IDS.openSession, COMMAND_IDS.openScenario, COMMAND_IDS.showToolAudit, COMMAND_IDS.copyAdviceBundle, COMMAND_IDS.fixSetting].sort(),
     );
   });
 

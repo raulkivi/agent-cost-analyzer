@@ -76,6 +76,11 @@ export class ExtensionCommands {
     this.select({ sessionId: stringArg(target, "sessionId"), tab, view });
   }
 
+  // A click in the Learn view (step 10.12): the scenario, in Learn mode.
+  async openScenario(target?: unknown): Promise<void> {
+    this.select({ sessionId: stringArg(target, "scenarioId"), mode: "learn" });
+  }
+
   async showToolAudit(target?: unknown): Promise<void> {
     this.select({ sessionId: stringArg(target, "sessionId"), view: "session-audit" });
   }
@@ -110,6 +115,7 @@ export class ExtensionCommands {
       [COMMAND_IDS.openWalkthrough]: () => this.openWalkthrough(),
       [COMMAND_IDS.refreshSessions]: () => this.refreshSessions(),
       [COMMAND_IDS.openSession]: (target, options) => this.openSession(target, options),
+      [COMMAND_IDS.openScenario]: (target) => this.openScenario(target),
       [COMMAND_IDS.showToolAudit]: (target) => this.showToolAudit(target),
       [COMMAND_IDS.copyAdviceBundle]: (target) => this.copyAdviceBundle(target),
       [COMMAND_IDS.fixSetting]: (target) => this.fixSetting(target),

@@ -144,10 +144,13 @@ export type HostEvent = { kind: "event"; name: HostEventName; payload?: unknown 
 // the web app handles it like a click in its own session list. `tab` is the
 // Analyze mode right column's tab; `view` the center view ("Show tool audit"
 // asks for "session-audit"); `adviceDialog` opens the advice-export dialog
-// on this session ("Copy advice bundle"). Only these values are accepted, so
-// the webview ignores anything else the host could post.
+// on this session ("Copy advice bundle"); `mode` is "learn" for a scenario
+// the sidebar's Learn view picked (step 10.12), else Analyze. Only these
+// values are accepted, so the webview ignores anything else the host could
+// post.
 export const selectSessionPayloadSchema = z.object({
   sessionId: z.string().min(1),
+  mode: z.enum(["learn", "analyze"]).optional(),
   tab: z.enum(["explanation", "system-prompt", "tools"]).optional(),
   view: z.enum(["turns", "session-audit"]).optional(),
   adviceDialog: z.boolean().optional(),

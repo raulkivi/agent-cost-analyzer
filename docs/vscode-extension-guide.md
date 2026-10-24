@@ -125,9 +125,9 @@ these differences:
   Code's clipboard.
 - The insights dashboard covers Copilot Chat sessions only, so it has no
   Provider list box.
-- In Analyze mode the panel has no session list of its own: pick a session
-  in the **Sessions** view in the side bar, and the panel gives that room
-  to the turns. Learn mode keeps its scenario list in the panel.
+- The panel has no list of its own: pick a session in the **Sessions**
+  view or a scenario in the **Learn** view in the side bar, and the panel
+  gives that room to the turns.
 - The panel follows your VS Code theme: its colours, font, form controls
   and scrollbars. It has no brand header of its own (the editor tab names
   it), and in High Contrast the selected option is outlined in the theme's
@@ -164,7 +164,7 @@ than counting as successes or failures.
 ## The side bar and status bar
 
 The extension adds an **AI Credits Analyzer** icon to the Activity Bar. Its
-side bar has two views.
+side bar has three views: Sessions, Learn and Setup.
 
 <!-- screenshot: sidebar.png -->
 
@@ -192,6 +192,15 @@ workspaces you opened for the first time after VS Code started.
 
 When there are no sessions with token data yet, the view says so and
 offers **Open Learn mode** and **Get started**.
+
+### Learn view (`aiCreditsAnalyzer.learn`)
+
+The 18 bundled Learn scenarios, grouped by what they teach (prompt
+caching, cache TTL, compaction, model switches and so on). Each row shows
+the scenario's turn count and AI Credits. Select a scenario to open it in
+the panel's Learn mode, the same way the Sessions view opens a session.
+The scenarios ship with the extension, so this view works before you have
+any sessions of your own.
 
 ### Setup view (`aiCreditsAnalyzer.setup`)
 
@@ -260,6 +269,7 @@ bar and are hidden from the Command Palette.
 | Open | `aiCreditsAnalyzer.open` | Opens the analyzer panel |
 | Refresh | `aiCreditsAnalyzer.refreshSessions` | Reloads the Sessions view, the Setup view and the status bar |
 | Open Session | `aiCreditsAnalyzer.openSession` | Opens the panel on a session (side bar only) |
+| Open Scenario | `aiCreditsAnalyzer.openScenario` | Opens the panel on a Learn scenario (Learn view only) |
 | Show Tool Audit | `aiCreditsAnalyzer.showToolAudit` | Opens the panel on a session's tool audit (side bar only) |
 | Copy Advice Bundle | `aiCreditsAnalyzer.copyAdviceBundle` | Opens the panel on a session with the advice dialog open (side bar only) |
 | Fix Setting | `aiCreditsAnalyzer.fixSetting` | Opens the Settings editor on a setting a Setup row names, or the debug-logging setting (side bar and walkthrough only) |

@@ -19,9 +19,11 @@ Microsoft.
   Credits per turn and a running total. A plain-language explanation of
   each turn, the system prompt broken into its parts, the tools that were
   loaded and used, and a request/response inspector per turn.
-- **Sessions and Setup side bar.** Your Copilot Chat sessions grouped by
-  day with their AI Credits totals. Setup lists any Copilot Chat logging
-  setting that needs changing, with a Fix button that opens it.
+- **Sessions, Learn and Setup side bar.** Your Copilot Chat sessions
+  grouped by day with their AI Credits totals, and the Learn scenarios
+  grouped by topic; pick one to open it in the panel. Setup lists any
+  Copilot Chat logging setting that needs changing, with a Fix button that
+  opens it.
 - **Status bar.** Today's AI Credits, with how many of today's sessions
   have cost data.
 - **Insights dashboard.** Spend by day and model, cache hit ratio, tool
@@ -29,8 +31,9 @@ Microsoft.
   sessions and first-time use of a tool or model.
 - **Tool audit.** Every tool call in a session, why failed calls failed,
   and retried commands, plus a roll-up across sessions.
-- **Learn mode.** 18 sample sessions that show how prompt caching, context
-  compaction, model switches and other events change what a turn costs.
+- **Learn mode.** 18 sample sessions, in the Learn view, that show how
+  prompt caching, context compaction, model switches and other events
+  change what a turn costs.
 - **MCP server for Copilot agent mode** (off by default). Ask Copilot Chat
   "what did my last session cost?" and it answers from the same local logs
   through nine read-only tools.
@@ -74,6 +77,7 @@ All commands are in the **AI Credits Analyzer** category.
 | Open Learn Mode | Opens the panel in Learn mode |
 | Open Get Started Walkthrough | Opens the walkthrough |
 | Open Session, Show Tool Audit, Copy Advice Bundle | On a session in the Sessions view |
+| Open Scenario | On a scenario in the Learn view |
 | Fix Setting | On a row in the Setup view: opens that setting |
 
 ## Settings

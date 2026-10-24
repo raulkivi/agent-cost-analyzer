@@ -133,6 +133,9 @@ interface AppProps {
 export function App({ performanceMarks = pagePerformanceMarks }: AppProps = {}) {
   const [health, setHealth] = useState<HealthResponse | null>(null);
   const [scenarioList, setScenarioList] = useState<ListLoad>({ status: "loading" });
+  // A scenario the sidebar's Learn view picked, opened once the scenarios
+  // have loaded (step 10.12).
+  const [pendingScenarioId, setPendingScenarioId] = useState<string | null>(null);
   const [scenarioAttempt, setScenarioAttempt] = useState(0);
   const [sessionList, setSessionList] = useState<ListLoad>({ status: "loading" });
   const [sessionAttempt, setSessionAttempt] = useState(0);
@@ -241,6 +244,17 @@ export function App({ performanceMarks = pagePerformanceMarks }: AppProps = {}) 
     return onHostEvent("configChanged", loadConfigStatus);
   }, []);
 
+  useEffect(() => {
+    if (pendingScenarioId === null || scenarioList.status !== "ready") return;
+    const picked = scenarioList.items.find((item) => item.id === pendingScenarioId);
+    setPendingScenarioId(null);
+    if (picked) {
+      setInspectorOpen(false);
+      setTurnInspectorOpen(false);
+      loadSession(picked);
+    }
+  }, [pendingScenarioId, scenarioList, loadSession]);
+
   // The extension's sidebar picked a session (D10, the selectSession event):
   // handled like a click in the session list. The subscription is made once;
   // it calls whichever handler the latest render built.
@@ -273,9 +287,9 @@ export function App({ performanceMarks = pagePerformanceMarks }: AppProps = {}) 
   const inspectorShown = session !== null && (inspectorOpen || turnInspectorOpen);
   // "All sessions" hides the right column; the dashboard brings its own
   // list boxes, so it hides the session list as well.
-  // The extension's sidebar lists the sessions, so its Analyze mode gives
-  // that column to the turns; Learn's scenarios have no sidebar.
-  const listColumn = !(mode === "analyze" && features.sessionSidebar);
+  // The extension's sidebar lists the sessions (Sessions view) and the
+  // scenarios (Learn view), so the panel gives that column to the turns.
+  const listColumn = !features.sessionSidebar;
   const layout = layoutFor(containerWidth, { listColumn });
   const showDashboard = mode === "analyze" && centerView === "dashboard";
   const hideRightColumn = mode === "analyze" && (centerView === "rollup" || showDashboard);
@@ -396,6 +410,13 @@ export function App({ performanceMarks = pagePerformanceMarks }: AppProps = {}) 
       return;
     }
     const { sessionId, tab, view, adviceDialog } = parsed.data;
+    if (parsed.data.mode === "learn") {
+      // A scenario from the sidebar's Learn view: opened from the loaded
+      // scenarios, or as soon as they arrive.
+      if (mode !== "learn") handleModeChange("learn");
+      setPendingScenarioId(sessionId);
+      return;
+    }
     if (mode !== "analyze") {
       handleModeChange("analyze");
     }
@@ -740,7 +761,9 @@ export function App({ performanceMarks = pagePerformanceMarks }: AppProps = {}) 
                 <p className="text-muted" style={{ fontSize: 13 }}>
                   {listColumn
                     ? `Select a ${mode === "learn" ? "scenario" : "session"} to view its turns.`
-                    : "Pick a session in the Sessions view in the side bar to see its turns."}
+                    : mode === "learn"
+                      ? "Pick a scenario in the Learn view in the side bar to see its turns."
+                      : "Pick a session in the Sessions view in the side bar to see its turns."}
                 </p>
               )}
               </div>

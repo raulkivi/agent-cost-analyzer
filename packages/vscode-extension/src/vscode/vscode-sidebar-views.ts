@@ -1,6 +1,7 @@
 import { COMMAND_IDS, VIEW_IDS } from "../commands/command-ids.js";
 import { identityTranslate, type Translate } from "../l10n/localize.js";
 import type { Disposable } from "../panel/analyzer-panel.js";
+import type { LearnTreeNode } from "../sidebar/learn-tree-model.js";
 import type { SessionsTreeNode } from "../sidebar/sessions-tree-model.js";
 import type { SetupWarningNode } from "../sidebar/setup-view-model.js";
 import type { SidebarController } from "../sidebar/sidebar-controller.js";
@@ -114,6 +115,48 @@ export function registerSessionsView<Item extends TreeItemLike>(
           item.iconPath = new vscode.ThemeIcon("comment-discussion");
           item.accessibilityInformation = { label: node.ariaLabel };
           item.command = { command: COMMAND_IDS.openSession, title: t("Open"), arguments: [node.sessionId] };
+          return item;
+        }
+        case "message": {
+          const item = new vscode.TreeItem(node.label, None);
+          item.description = node.description;
+          item.iconPath = new vscode.ThemeIcon(node.icon);
+          return item;
+        }
+      }
+    },
+    onVisible: () => void controller.refresh(),
+  });
+}
+
+// The Learn view (step 10.12): the bundled scenarios by category; a click
+// opens the scenario in the panel's Learn mode. Refreshes when it becomes
+// visible (the scenarios themselves are read only once).
+export function registerLearnView<Item extends TreeItemLike>(
+  vscode: VscodeTreeApi<Item>,
+  controller: SidebarController,
+  t: Translate = identityTranslate,
+): Disposable {
+  const { None, Collapsed, Expanded } = vscode.TreeItemCollapsibleState;
+  return registerView<LearnTreeNode, Item>(vscode, controller, VIEW_IDS.learn, {
+    roots: () => controller.learnTree(),
+    childrenOf: (node) => (node.kind === "category" ? node.children : []),
+    toItem: (node) => {
+      switch (node.kind) {
+        case "category": {
+          const item = new vscode.TreeItem(node.label, node.expanded ? Expanded : Collapsed);
+          item.id = `category:${node.id}`;
+          item.description = node.description;
+          return item;
+        }
+        case "scenario": {
+          const item = new vscode.TreeItem(node.label, None);
+          item.id = `scenario:${node.scenarioId}`;
+          item.description = node.description;
+          item.tooltip = node.tooltip;
+          item.iconPath = new vscode.ThemeIcon("mortar-board");
+          item.accessibilityInformation = { label: node.ariaLabel };
+          item.command = { command: COMMAND_IDS.openScenario, title: t("Open"), arguments: [node.scenarioId] };
           return item;
         }
         case "message": {

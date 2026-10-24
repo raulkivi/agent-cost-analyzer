@@ -2,7 +2,7 @@ import type { Session } from "@copilot-cost-analyzer/domain";
 import { describe, expect, it, vi } from "vitest";
 import { upperCaseTranslate } from "../l10n/upper-case-translate.js";
 import { SidebarController } from "../sidebar/sidebar-controller.js";
-import { registerSetupView, registerSessionsView, type VscodeTreeApi, type TreeItemLike } from "./vscode-sidebar-views.js";
+import { registerLearnView, registerSetupView, registerSessionsView, type VscodeTreeApi, type TreeItemLike } from "./vscode-sidebar-views.js";
 
 class FakeTreeItem implements TreeItemLike {
   description?: string;
@@ -89,6 +89,9 @@ function session(id: string, cost: number | null): Session {
 
 function controllerWith(options: { sessions?: Session[]; warnings?: boolean } = {}) {
   const listSessions = vi.fn(async () => options.sessions ?? [session("a", 4.82), session("b", null)]);
+  const listLearnScenarios = vi.fn(async (): Promise<Session[]> => [
+    { ...session("cache-basics", 0.19), mode: "learn", title: "Cache Basics", category: "Prompt caching", turnCount: 8 },
+  ]);
   const getConfigStatus = vi.fn(async () => ({
     checkedAt: "x",
     vscodeUserSettingsPath: null,
@@ -110,11 +113,51 @@ function controllerWith(options: { sessions?: Session[]; warnings?: boolean } = 
       : [],
   }));
   const controller = new SidebarController(
-    { relistLogSources: () => undefined, listSessions, getConfigStatus },
+    { relistLogSources: () => undefined, listSessions, listLearnScenarios, getConfigStatus },
     { now: () => new Date("2026-10-24T15:00:00Z"), timeZone: "UTC" },
   );
-  return { controller, listSessions, getConfigStatus };
+  return { controller, listSessions, listLearnScenarios, getConfigStatus };
 }
+
+// Step 10.12: the scenarios in the sidebar, like the sessions.
+describe("registerLearnView", () => {
+  it("registers the Learn view and shows categories, then scenarios that open in Learn mode", async () => {
+    const { api, views } = fakeVscode();
+    const { controller } = controllerWith();
+    registerLearnView(api, controller);
+    await controller.refresh();
+    const { provider } = views[0]!;
+
+    const [category] = provider.getChildren();
+    const [scenario] = provider.getChildren(category);
+    const item = provider.getTreeItem(scenario);
+
+    expect(views[0]?.viewId).toBe("aiCreditsAnalyzer.learn");
+    expect(provider.getTreeItem(category)).toMatchObject({ label: "Prompt caching", collapsibleState: 2, id: "category:Prompt caching" });
+    expect(item).toMatchObject({
+      label: "Cache Basics",
+      description: "8 turns · 0.19 AI Credits",
+      collapsibleState: 0,
+      id: "scenario:cache-basics",
+      command: { command: "aiCreditsAnalyzer.openScenario", arguments: ["cache-basics"] },
+      accessibilityInformation: { label: "Cache Basics, Prompt caching, 8 turns · 0.19 AI Credits" },
+    });
+    expect((item.iconPath as FakeThemeIcon).id).toBe("mortar-board");
+  });
+
+  it("shows the error message node when the scenarios can't be read", async () => {
+    const { api, views } = fakeVscode();
+    const { controller, listLearnScenarios } = controllerWith();
+    listLearnScenarios.mockRejectedValue(new Error("boom"));
+    registerLearnView(api, controller);
+    await controller.refresh();
+
+    const item = views[0]!.provider.getTreeItem(views[0]!.provider.getChildren()[0]);
+
+    expect(item.label).toBe("Couldn't load the Learn scenarios");
+    expect((item.iconPath as FakeThemeIcon).id).toBe("error");
+  });
+});
 
 describe("registerSessionsView", () => {
   it("registers the Sessions view and shows groups, then sessions, as tree items", async () => {

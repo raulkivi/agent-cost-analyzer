@@ -22,7 +22,8 @@ Progress (2026-10-24):
 | 10.8 | Copilot-only MCP server in the extension, plus UI follow-ups from 10.7 | Done (#71); server verified in CI (10.9); Copilot agent mode in the owner's manual checks |
 | 10.9 | Integration tests in real VS Code, performance budgets, usability run, packaging | Done (#72; integration suite green in CI); owner's manual checks open |
 | 10.10 | Documentation: extension README/listing, extension user guide, two-product README and User Guide | Done (#73); screenshots and owner review open |
-| 10.11 | UX review for VS Code: panel fits any width, readable in light, dark and High Contrast, native look, automated UI check | Done (PR pending) |
+| 10.11 | UX review for VS Code: panel fits any width, readable in light, dark and High Contrast, native look, automated UI check | Done (#77) |
+| 10.12 | Learn scenarios in the side bar (a Learn view), like the Sessions view; the panel has no list of its own | Done (PR pending) |
 
 
 ## 1. Context
@@ -1260,6 +1261,35 @@ green; listing-prerequisite tests passed on first run.
 *Tests:* 2,541 → 2,647 (domain 129, server 1,037, web 982, pi-logger 15,
 extension 484).
 
+### 10.12 Learn scenarios in the side bar (owner's request, 2026-10-24)
+
+After 10.11 the owner found the Analyze presentation right (sessions in
+the side bar's Sessions view, the panel's full width for the turns) and
+asked for Learn to work the same way.
+
+**Status (2026-10-24): done.**
+
+- A **Learn view** (`aiCreditsAnalyzer.learn`) between Sessions and Setup:
+  the 18 bundled scenarios grouped by category, in the server's order,
+  each with its turn count and AI Credits (unknown as unknown). Pure model
+  `sidebar/learn-tree-model.ts`; `SidebarController.learnTree()` reads the
+  scenarios once (they ship with the extension) and retries after a failed
+  read; `registerLearnView` renders it.
+- A click runs **Open Scenario** (`aiCreditsAnalyzer.openScenario`, hidden
+  from the Command Palette), which posts `selectSession` with the new
+  `mode: "learn"` (domain `selectSessionPayloadSchema`).
+- The web app: `ProductProfile.sessionSidebar` now drops the panel's list
+  in both modes. A `mode: "learn"` event switches to Learn and opens the
+  scenario from the loaded list, or as soon as it loads. With nothing
+  picked, the panel points to the Learn view. The standalone app keeps its
+  in-panel lists.
+- The UI check opens its Learn scenario the way the Learn view does; 84/84.
+- Not done: **Open Learn Mode** doesn't reveal the Learn view (it needs a
+  view-focus seam through the composition root); its welcome links already
+  sit in the side bar next to it.
+
+*Tests:* 2,871 → 2,892 (domain 131, web 1,143, extension 566).
+
 ### 10.11 UX review for VS Code (owner's report, 2026-10-24)
 
 The owner's first local test found two problems: content cut off on the
@@ -1284,7 +1314,7 @@ text under WCAG AA against the ground it is actually painted on (SVG text
 included). Its pure parts (`contrast.mts`, `judge.mts`) are unit-tested.
 Before the fixes it failed 30 of 84; after, 0. CI runs it in the
 `extension` job (and the release workflow) after installing Playwright's
-Chromium (`playwright` 1.63.0 pinned).
+Chromium (`playwright` 1.63.0 pinned). Merged as #77.
 
 *Findings and fixes (in priority order):*
 1. **Content cut off on the right** (owner's issue 1). The grid's centre

@@ -52,6 +52,39 @@ describe("ExtensionCommands", () => {
     });
   });
 
+  // Step 10.12: a click in the Learn view.
+  describe("openScenario", () => {
+    it("opens the panel and posts selectSession in Learn mode", async () => {
+      const { commands, panel } = setup();
+
+      await commands.openScenario("cache-basics");
+
+      expect(panel.open).toHaveBeenCalledTimes(1);
+      expect(panel.postWhenReady).toHaveBeenCalledWith(selectSession({ sessionId: "cache-basics", mode: "learn" }));
+    });
+
+    it("takes the scenario id from a Learn tree node", async () => {
+      const { commands, panel } = setup();
+
+      await commands.openScenario({ kind: "scenario", scenarioId: "ttl", label: "x" });
+
+      expect(panel.postWhenReady).toHaveBeenCalledWith(selectSession({ sessionId: "ttl", mode: "learn" }));
+    });
+
+    it("rejects, and opens nothing, without a scenario id", async () => {
+      const { commands, panel } = setup();
+
+      for (const target of [undefined, "", 42, { kind: "scenario" }]) {
+        await expect(commands.openScenario(target)).rejects.toThrow(/session/i);
+      }
+      expect(panel.open).not.toHaveBeenCalled();
+    });
+
+    it("is registered under its contributed id", () => {
+      expect(Object.keys(setup().commands.handlers())).toContain("aiCreditsAnalyzer.openScenario");
+    });
+  });
+
   describe("openSession", () => {
     it("opens the panel once and posts selectSession once, after opening", async () => {
       const { commands, panel } = setup();

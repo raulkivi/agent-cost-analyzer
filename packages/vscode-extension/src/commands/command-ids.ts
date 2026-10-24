@@ -4,6 +4,7 @@ export const COMMAND_IDS = {
   open: "aiCreditsAnalyzer.open",
   refreshSessions: "aiCreditsAnalyzer.refreshSessions",
   openSession: "aiCreditsAnalyzer.openSession",
+  openScenario: "aiCreditsAnalyzer.openScenario",
   showToolAudit: "aiCreditsAnalyzer.showToolAudit",
   copyAdviceBundle: "aiCreditsAnalyzer.copyAdviceBundle",
   fixSetting: "aiCreditsAnalyzer.fixSetting",
@@ -13,6 +14,7 @@ export const COMMAND_IDS = {
 
 export const VIEW_IDS = {
   sessions: "aiCreditsAnalyzer.sessions",
+  learn: "aiCreditsAnalyzer.learn",
   setup: "aiCreditsAnalyzer.setup",
 } as const;
 

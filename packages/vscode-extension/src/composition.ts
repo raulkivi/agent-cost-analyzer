@@ -133,6 +133,7 @@ export function composeExtension({
   const sidebar = new SidebarController(
     {
       listSessions: () => api.listSessions(),
+      listLearnScenarios: () => api.listLearnScenarios(),
       getConfigStatus: () => api.getConfigStatus(),
       relistLogSources: () => {
         debugLogsDirPaths = copilotDebugLogsDirPaths(userDataDir);

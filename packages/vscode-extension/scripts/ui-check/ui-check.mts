@@ -45,10 +45,9 @@ const SCENARIOS: Scenario[] = [
   { name: "learn", run: async () => undefined },
   {
     name: "learn-scenario",
-    run: async (page, harness) => {
-      await page.getByText("Cache Basics", { exact: false }).first().click();
-      await harness.settle(page);
-    },
+    // As the sidebar's Learn view opens it (step 10.12).
+    run: async (page, harness) =>
+      harness.postHostEvent(page, "selectSession", { sessionId: "cache-basics", mode: "learn" }),
   },
   {
     name: "session",
