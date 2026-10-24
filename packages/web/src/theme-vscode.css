@@ -1,0 +1,153 @@
+/* VS Code theme mapping (vscode-extension.md step 10.5, §3.5 "VS Code fit").
+   Inside a VS Code webview the <body> carries the active theme kind as a
+   class — vscode-light, vscode-dark or vscode-high-contrast (a light
+   high-contrast theme adds vscode-high-contrast too) — and VS Code defines
+   --vscode-* variables for the theme's colours and font. Here theme.css's
+   tokens are re-pointed at those variables, with the Industry palette as
+   each one's fallback.
+
+   Every rule is scoped under one of those body classes, so the standalone
+   app, whose body has none of them, renders exactly as theme.css alone
+   (theme-vscode.test.ts checks this). Loaded after theme.css (main.tsx).
+
+   Tokens are set on <body>, so they override :root's for the whole page.
+   Colour-mixed tokens derive the theme's tints from the same variables;
+   the full contrast audit per theme is step 10.7's (§3.5 Accessibility). */
+
+body.vscode-light,
+body.vscode-dark,
+body.vscode-high-contrast {
+  --color-bg: var(--vscode-editor-background, #f2f2f3);
+  --color-text: var(--vscode-editor-foreground, #1d1f20);
+  --color-surface: var(--vscode-input-background, #e9e9ea);
+  --color-divider: var(--vscode-panel-border, color-mix(in srgb, #1d1f20 16%, transparent));
+  --color-accent: var(--vscode-button-background, #5980a6);
+
+  /* The ramp steps theme.css pairs as light ground + dark text (tags, the
+     config banner, selected rows), re-derived so they stay legible on a
+     dark editor background too. */
+  --color-accent-100: color-mix(in srgb, var(--vscode-focusBorder, #5980a6) 20%, var(--vscode-editor-background, #f2f2f3));
+  --color-accent-800: var(--vscode-editor-foreground, #2c455d);
+  --color-accent-2-100: color-mix(in srgb, var(--vscode-descriptionForeground, #728fab) 16%, var(--vscode-editor-background, #f2f2f3));
+  --color-accent-2-800: var(--vscode-descriptionForeground, #314457);
+  --color-neutral-100: color-mix(in srgb, var(--vscode-editor-foreground, #1d1f20) 8%, var(--vscode-editor-background, #f2f2f3));
+  --color-neutral-200: color-mix(in srgb, var(--vscode-editor-foreground, #1d1f20) 14%, var(--vscode-editor-background, #f2f2f3));
+  --color-neutral-800: var(--vscode-editor-foreground, #424244);
+
+  /* The editor's UI font and size (G12: the extension build ships no
+     Barlow, so these were the system fallback until now). */
+  --font-body: var(--vscode-font-family, "Barlow", system-ui, sans-serif);
+  --font-heading: var(--vscode-font-family, "Barlow Condensed", system-ui, sans-serif);
+  font-size: var(--vscode-font-size, 15px);
+}
+
+body.vscode-light .text-muted,
+body.vscode-dark .text-muted,
+body.vscode-high-contrast .text-muted {
+  color: var(--vscode-descriptionForeground, color-mix(in srgb, var(--color-text) 55%, transparent));
+}
+
+/* — focus: always the editor's own focus colour — */
+body.vscode-light :focus-visible,
+body.vscode-dark :focus-visible,
+body.vscode-high-contrast :focus-visible {
+  outline-color: var(--vscode-focusBorder, var(--color-accent));
+}
+body.vscode-light .seg-opt:has(input:focus-visible),
+body.vscode-dark .seg-opt:has(input:focus-visible),
+body.vscode-high-contrast .seg-opt:has(input:focus-visible),
+body.vscode-light .listbox-value:focus-visible,
+body.vscode-dark .listbox-value:focus-visible,
+body.vscode-high-contrast .listbox-value:focus-visible {
+  outline-color: var(--vscode-focusBorder, var(--color-accent));
+}
+body.vscode-light .input:focus-visible,
+body.vscode-dark .input:focus-visible,
+body.vscode-high-contrast .input:focus-visible {
+  border-color: var(--vscode-focusBorder, var(--color-accent));
+}
+
+/* — buttons and "on" states: the theme's button colours, whose foreground
+     is made for that background (theme.css uses --color-bg, which is the
+     editor background here) — */
+body.vscode-light .btn-primary,
+body.vscode-dark .btn-primary,
+body.vscode-high-contrast .btn-primary {
+  background: var(--vscode-button-background, var(--color-accent));
+  border-color: var(--vscode-button-background, var(--color-accent));
+  color: var(--vscode-button-foreground, var(--color-bg));
+}
+body.vscode-light .btn-primary:hover,
+body.vscode-dark .btn-primary:hover,
+body.vscode-high-contrast .btn-primary:hover {
+  background: var(--vscode-button-hoverBackground, var(--color-accent-600));
+}
+body.vscode-light .seg-opt:has(input:checked),
+body.vscode-dark .seg-opt:has(input:checked),
+body.vscode-high-contrast .seg-opt:has(input:checked),
+body.vscode-light .filter-chip[aria-pressed="true"],
+body.vscode-dark .filter-chip[aria-pressed="true"],
+body.vscode-high-contrast .filter-chip[aria-pressed="true"] {
+  color: var(--vscode-button-foreground, var(--color-bg));
+}
+
+/* — inputs — */
+body.vscode-light .input,
+body.vscode-dark .input,
+body.vscode-high-contrast .input {
+  background: var(--vscode-input-background, var(--color-surface));
+  border-color: var(--vscode-input-border, var(--color-divider));
+  color: var(--vscode-input-foreground, var(--color-text));
+}
+
+/* — selection: the theme's active list selection (theme.css's QlikView
+     green). State is also carried by aria-selected and the legend. — */
+body.vscode-light .listbox-value--selected,
+body.vscode-dark .listbox-value--selected,
+body.vscode-high-contrast .listbox-value--selected,
+body.vscode-light .selection-chip,
+body.vscode-dark .selection-chip,
+body.vscode-high-contrast .selection-chip {
+  background: var(--vscode-list-activeSelectionBackground, #2e7d32);
+  color: var(--vscode-list-activeSelectionForeground, #ffffff);
+}
+/* theme.css hard-codes a white list-box ground; follow the editor's. */
+body.vscode-light .listbox,
+body.vscode-dark .listbox,
+body.vscode-high-contrast .listbox,
+body.vscode-light .listbox-value--possible,
+body.vscode-dark .listbox-value--possible,
+body.vscode-high-contrast .listbox-value--possible {
+  background: var(--vscode-editor-background, #ffffff);
+}
+body.vscode-light .listbox-value--possible:hover,
+body.vscode-dark .listbox-value--possible:hover,
+body.vscode-high-contrast .listbox-value--possible:hover {
+  background: var(--color-accent-100);
+}
+/* The light-grey "alternative" ground keeps dark text in every theme. */
+body.vscode-light .listbox-value--alternative,
+body.vscode-dark .listbox-value--alternative,
+body.vscode-high-contrast .listbox-value--alternative {
+  color: #1d1f20;
+}
+
+/* — alerts: the theme's error colour instead of a fixed dark red — */
+body.vscode-light .stat-tile-value--alert,
+body.vscode-dark .stat-tile-value--alert,
+body.vscode-high-contrast .stat-tile-value--alert,
+body.vscode-light .failure-badge,
+body.vscode-dark .failure-badge,
+body.vscode-high-contrast .failure-badge {
+  color: var(--vscode-errorForeground, #b02a2a);
+}
+
+/* — high contrast: the theme's contrast border on every frame — */
+body.vscode-high-contrast .btn,
+body.vscode-high-contrast .input,
+body.vscode-high-contrast .card,
+body.vscode-high-contrast .blueprint,
+body.vscode-high-contrast .listbox,
+body.vscode-high-contrast .stat-tile {
+  border-color: var(--vscode-contrastBorder, var(--color-divider));
+}

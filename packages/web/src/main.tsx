@@ -1,6 +1,7 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import "./theme.css";
+import "./theme-vscode.css";
 import { App } from "./App.js";
 import { setApiTransport } from "./api-client/current-transport.js";
 import { selectTransport } from "./api-client/select-transport.js";
