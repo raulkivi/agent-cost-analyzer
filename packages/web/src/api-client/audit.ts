@@ -1,5 +1,5 @@
 import type { AuditRollup, SessionAudit } from "@copilot-cost-analyzer/domain";
-import { getJson } from "./http.js";
+import { getApiTransport } from "./current-transport.js";
 
 export interface RollupQuery {
   since?: string;
@@ -8,16 +8,10 @@ export interface RollupQuery {
 }
 
 export function fetchSessionAudit(sessionId: string): Promise<SessionAudit> {
-  return getJson<SessionAudit>(`/api/sessions/${encodeURIComponent(sessionId)}/audit`);
+  return getApiTransport().call<SessionAudit>("getSessionAudit", { sessionId });
 }
 
+// Unset / empty filters are dropped by the transport.
 export function fetchAuditRollup(query: RollupQuery): Promise<AuditRollup> {
-  const params = new URLSearchParams();
-  for (const [key, value] of Object.entries(query)) {
-    if (value !== undefined && value !== "") {
-      params.set(key, String(value));
-    }
-  }
-  const search = params.toString();
-  return getJson<AuditRollup>(search ? `/api/audit?${search}` : "/api/audit");
+  return getApiTransport().call<AuditRollup>("getAuditRollup", query);
 }

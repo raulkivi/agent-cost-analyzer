@@ -1,10 +1,10 @@
 import type { LogProviderStatus } from "@copilot-cost-analyzer/domain";
-import { getJson, putJson } from "./http.js";
+import { getApiTransport } from "./current-transport.js";
 
 export function fetchLogProviderStatus(): Promise<LogProviderStatus> {
-  return getJson<LogProviderStatus>("/api/log-providers");
+  return getApiTransport().call<LogProviderStatus>("getLogProviderStatus");
 }
 
 export function setActiveLogProvider(id: string): Promise<LogProviderStatus> {
-  return putJson<LogProviderStatus>("/api/log-providers/active", { id });
+  return getApiTransport().call<LogProviderStatus>("setActiveLogProvider", { id });
 }
