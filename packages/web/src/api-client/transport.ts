@@ -20,4 +20,15 @@ export interface ApiTransport {
   // Likewise only the webview transport has one; the UI reaches it through
   // the HostCapabilities port (host/host-capabilities.ts), never directly.
   command?<C extends HostCommand>(command: C, args: HostCommandArgs[C]): Promise<void>;
+  // The host's per-view state persistence (a VS Code webview's
+  // getState/setState), for UI preferences such as the turns table's
+  // columns; the UI reaches it through state/view-state-storage.ts.
+  viewState?: ViewStatePersistence;
+}
+
+// The slice of acquireVsCodeApi()'s result that persists a webview's state
+// across hide/show and reloads.
+export interface ViewStatePersistence {
+  getState(): unknown;
+  setState(state: unknown): void;
 }

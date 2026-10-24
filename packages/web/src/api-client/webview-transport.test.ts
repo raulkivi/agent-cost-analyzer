@@ -63,6 +63,33 @@ function harness(): ContractHarness {
 
 describeApiTransportContract("WebviewTransport", harness);
 
+// acquireVsCodeApi() can be called once per webview, and the transport is
+// what calls it, so it also hands on the webview's state persistence
+// (getState/setState) for the UI's view-state storage (§3.5 Layout).
+describe("WebviewTransport view state", () => {
+  it("exposes the webview API's getState/setState as viewState", () => {
+    let state: unknown = { columns: ["turn"] };
+    const api = {
+      postMessage: vi.fn(),
+      getState: () => state,
+      setState: (next: unknown) => {
+        state = next;
+      },
+    };
+    const transport = new WebviewTransport(api, new FakeWindow());
+
+    expect(transport.viewState?.getState()).toEqual({ columns: ["turn"] });
+    transport.viewState?.setState({ columns: ["model"] });
+    expect(state).toEqual({ columns: ["model"] });
+  });
+
+  it("has no viewState when the host API has no state persistence", () => {
+    const transport = new WebviewTransport({ postMessage: vi.fn() }, new FakeWindow());
+
+    expect(transport.viewState).toBeUndefined();
+  });
+});
+
 describe("WebviewTransport", () => {
   beforeEach(() => {
     vi.useFakeTimers();
