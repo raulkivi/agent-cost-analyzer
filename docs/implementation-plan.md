@@ -1,6 +1,13 @@
-# Implementation Plan: GitHub Copilot Chat Cost & Token Usage Analyzer
+# Implementation Plan: Agent Cost Analyzer and AI Credits Analyzer
 
 This plan sequences [architecture.md](architecture.md) into buildable phases.
+Phases 0-9.12 build the standalone app, **Agent Cost Analyzer** (every
+provider). Phase 10 builds **AI Credits Analyzer**, a Copilot-only VS Code
+extension sharing the same code (vision §5).
+
+**Overall status (2026-10-24):** every phase's code and docs are merged to
+`main`. Still open: Phase 9.6's check against a real captured pi session,
+and Phase 10's owner tasks before the first release (see its section).
 Each phase has a goal, concrete deliverables, an exit criterion (how you know
 it's done), and its dependencies. Phases are ordered so the riskiest/least
 certain work (real `main.jsonl` parsing) happens after there's already a
@@ -1149,6 +1156,8 @@ unknown with a reason, never "0 failures".
 **Dependencies**: Phase 9.5 (inspector pairing), Phase 9.9 (Claude Code
 provider).
 
+**Status: complete** (#38).
+
 ## Phase 9.11 — Insights dashboard (associative, cross-provider, security signals)
 
 Full design: [plans/insights-dashboard.md](plans/insights-dashboard.md).
@@ -1185,6 +1194,8 @@ charted as 0.
 **Dependencies**: Phase 9.10 (tool-call outcomes and kinds), Phase 9.9
 (Claude Code provider).
 
+**Status: complete** (#47).
+
 ## Phase 9.12 — MCP tools v2: cost, findings, turn drill-down, UX pass
 
 Full design: [plans/mcp-tools-v2.md](plans/mcp-tools-v2.md).
@@ -1211,6 +1222,8 @@ as unknown (`null`), never 0.
 **Dependencies**: Phase 9.10 (MCP server, audit), Phase 9.11 (insights
 dataset and detectors).
 
+**Status: complete** (#51).
+
 ## Phase 10 — AI Credits Analyzer VS Code extension (in scope since 2026-10-24)
 
 Full plan: [plans/vscode-extension.md](plans/vscode-extension.md)
@@ -1220,9 +1233,10 @@ Copilot-only product that shares code with the standalone app (**Agent Cost
 Analyzer**, vision §5). The standalone app keeps every provider. Brought
 into scope on 2026-10-24. Previously this was a deferred "future path".
 
-**Status (2026-10-24)**: steps 10.0-10.8 done (10.8's real Copilot agent-mode
-check moves to 10.9), 10.9 code done (its integration suite passes in a real VS Code in CI; the owner's manual checks are open), 10.10 (documentation) written, with screenshots and the owner's review open. Each step's details and deviations are in its status note in the
-plan's §6.
+**Status (2026-10-24)**: every step's code and docs are merged (#57-#74).
+The integration suite passes in a real stable VS Code in CI, and every CI
+run builds an installable `.vsix`. Not yet published. Each step's details
+and deviations are in its status note in the plan's §6.
 
 | Step | What | State |
 |---|---|---|
@@ -1238,11 +1252,26 @@ plan's §6.
 | 10.9 | Integration tests in real VS Code, performance budgets, usability run, packaging | Done (#72; integration suite green in CI); owner's manual checks open |
 | 10.10 | Documentation: extension README/listing, extension user guide, two-product README and User Guide | Done (#73); screenshots and owner review open |
 
-**Not yet verified**: the extension has run only on the Electron build
-that VS Code ships, not in a real VS Code. VS Code can't be downloaded in
-the development container, so step 10.9's CI integration tests cover it.
-**Publishing**: the Marketplace publisher `raulkivi` is registered. The
-Marketplace sign-in (Entra ID, since global PATs retire on 1 December 2026), the Open VSX token and the icon are still to do (plan §7.0).
+**Verified in CI** (step 10.9): activation, the panel's data, the
+Sessions view, the §3.5 performance budgets with 200 sessions, and the MCP
+server (off, on with 9 tools and `get_session_cost`, off again).
+
+**Open before the first release** (owner):
+1. The manual checks
+   ([plans/vscode-extension-manual-checks.md](plans/vscode-extension-manual-checks.md)):
+   the usability script, Copilot agent mode using the MCP server
+   (including the Restricted Mode guard), and the Remote-SSH/WSL and Dev
+   Container check.
+2. The 8 screenshots, then the docs' `<!-- screenshot -->` markers are
+   replaced with the images; the owner's review of the extension README
+   and guide.
+3. A decision on the dev-only `@azure/msal-node` advisory
+   ([threat-model.md](threat-model.md) §7).
+4. Publishing setup (plan §7.0): the Entra ID app and the `release`
+   environment (global PATs retire on 1 December 2026), the Open VSX
+   namespace and `OVSX_PAT`, and the icon (PNG, at least 128 px).
+5. The first release: tag `ext-v0.1.0` (odd minor, so the pre-release
+   channel).
 
 **Exit criterion**: the plan's §10.
 
