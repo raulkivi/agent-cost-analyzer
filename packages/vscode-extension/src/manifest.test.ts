@@ -14,6 +14,8 @@ interface MenuEntry {
 }
 
 interface Manifest {
+  displayName: string;
+  description: string;
   activationEvents?: string[];
   contributes: {
     commands: { command: string; title: string; category?: string; icon?: string }[];
@@ -25,10 +27,18 @@ interface Manifest {
   };
 }
 
+const nls = JSON.parse(readFileSync(path.join(packageDir, "package.nls.json"), "utf-8")) as Record<string, string>;
 const manifest = JSON.parse(readFileSync(path.join(packageDir, "package.json"), "utf-8")) as Manifest;
 const { contributes } = manifest;
 const contributedCommands = new Set(contributes.commands.map((command) => command.command));
 const contributedViews = Object.values(contributes.views).flat();
+
+// A manifest string as the user reads it: a `%key%` placeholder resolved
+// through package.nls.json, any other string as it is.
+function text(value: string | undefined): string {
+  const key = /^%([A-Za-z0-9._-]+)%$/.exec(value ?? "")?.[1];
+  return key === undefined ? (value ?? "") : (nls[key] ?? "");
+}
 
 // Every `command:` link in a welcome view's markdown.
 function welcomeCommands(contents: string): string[] {
@@ -38,9 +48,9 @@ function welcomeCommands(contents: string): string[] {
 describe("package.json contributions (vscode-extension.md §3.5)", () => {
   it("puts every command under the category 'AI Credits Analyzer' with a codicon", () => {
     for (const command of contributes.commands) {
-      expect(command.category, command.command).toBe("AI Credits Analyzer");
+      expect(text(command.category), command.command).toBe("AI Credits Analyzer");
       expect(command.icon, command.command).toMatch(/^\$\([a-z0-9-]+\)$/);
-      expect(command.title, command.command).not.toBe("");
+      expect(text(command.title), command.command).not.toBe("");
     }
   });
 
@@ -51,7 +61,7 @@ describe("package.json contributions (vscode-extension.md §3.5)", () => {
   it("contributes every command that menus, welcome views and keybindings reference", () => {
     const referenced = [
       ...Object.values(contributes.menus ?? {}).flatMap((entries) => entries.map((entry) => entry.command)),
-      ...(contributes.viewsWelcome ?? []).flatMap((welcome) => welcomeCommands(welcome.contents)),
+      ...(contributes.viewsWelcome ?? []).flatMap((welcome) => welcomeCommands(text(welcome.contents))),
       ...(contributes.keybindings ?? []).map((binding) => binding.command),
     ];
 
@@ -136,7 +146,7 @@ describe("package.json contributions (vscode-extension.md §3.5)", () => {
 
   it("links the Setup welcome to fixSetting and the Sessions welcome to Learn mode", () => {
     const welcome = (view: string) =>
-      (contributes.viewsWelcome ?? []).filter((entry) => entry.view === view).flatMap((entry) => welcomeCommands(entry.contents));
+      (contributes.viewsWelcome ?? []).filter((entry) => entry.view === view).flatMap((entry) => welcomeCommands(text(entry.contents)));
 
     expect(welcome(VIEW_IDS.setup)).toContain(COMMAND_IDS.fixSetting);
     expect(welcome(VIEW_IDS.sessions)).toContain(COMMAND_IDS.openLearnMode);
@@ -144,5 +154,65 @@ describe("package.json contributions (vscode-extension.md §3.5)", () => {
 
   it("activates when VS Code has started, so the status bar shows today's AI Credits", () => {
     expect(manifest.activationEvents).toEqual(["onStartupFinished"]);
+  });
+});
+
+// Every `%key%` placeholder anywhere in the manifest, however deep.
+function placeholders(value: unknown): string[] {
+  if (typeof value === "string") {
+    return /^%[A-Za-z0-9._-]+%$/.test(value) ? [value.slice(1, -1)] : [];
+  }
+  if (Array.isArray(value)) {
+    return value.flatMap(placeholders);
+  }
+  return typeof value === "object" && value !== null ? Object.values(value).flatMap(placeholders) : [];
+}
+
+// The manifest's user-visible strings (the fields VS Code shows in the UI),
+// which must all be placeholders (vscode-extension.md §3.5 Localization).
+// Identifiers, command ids, `when` clauses and the Marketplace keywords and
+// categories are not translated.
+function userVisibleStrings(): { where: string; value: unknown }[] {
+  return [
+    { where: "displayName", value: manifest.displayName },
+    { where: "description", value: manifest.description },
+    ...contributes.commands.flatMap((command) => [
+      { where: `${command.command} title`, value: command.title },
+      { where: `${command.command} category`, value: command.category },
+    ]),
+    ...contributes.viewsContainers.activitybar.map((container) => ({ where: `${container.id} container title`, value: container.title })),
+    ...contributedViews.map((view) => ({ where: `${view.id} name`, value: view.name })),
+    ...(contributes.viewsWelcome ?? []).map((welcome) => ({ where: `${welcome.view} welcome`, value: welcome.contents })),
+  ];
+}
+
+describe("package.nls.json (vscode-extension.md §3.5 Localization)", () => {
+  it("leaves no user-visible string in package.json as a literal", () => {
+    for (const { where, value } of userVisibleStrings()) {
+      expect(placeholders(value), where).toHaveLength(1);
+    }
+  });
+
+  it("defines every key the manifest uses", () => {
+    const used = placeholders(manifest);
+
+    expect(used.length).toBeGreaterThan(0);
+    for (const key of used) {
+      expect(nls[key], key).toEqual(expect.any(String));
+      expect(nls[key], key).not.toBe("");
+    }
+  });
+
+  it("uses every key it defines", () => {
+    const used = new Set(placeholders(manifest));
+
+    expect(Object.keys(nls).filter((key) => !used.has(key))).toEqual([]);
+  });
+
+  it("keeps the command links in the welcome texts intact", () => {
+    for (const welcome of contributes.viewsWelcome ?? []) {
+      const key = placeholders(welcome.contents)[0]!;
+      expect(welcomeCommands(nls[key] ?? "").length, key).toBeGreaterThan(0);
+    }
   });
 });

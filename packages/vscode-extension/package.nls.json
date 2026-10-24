@@ -1,0 +1,17 @@
+{
+  "displayName": "AI Credits Analyzer",
+  "description": "See where your GitHub Copilot Chat tokens and AI Credits go: prompt caching, per-turn cost, tool-call failures and insights, from your local logs.",
+  "command.open.title": "Open",
+  "category": "AI Credits Analyzer",
+  "command.refreshSessions.title": "Refresh",
+  "command.openSession.title": "Open Session",
+  "command.showToolAudit.title": "Show Tool Audit",
+  "command.copyAdviceBundle.title": "Copy Advice Bundle",
+  "command.fixSetting.title": "Fix Setting",
+  "command.openLearnMode.title": "Open Learn Mode",
+  "viewsContainer.title": "AI Credits Analyzer",
+  "view.sessions.name": "Sessions",
+  "view.setup.name": "Setup",
+  "welcome.sessions": "No Copilot Chat sessions with token data yet.\n\nWhile you wait, see how caching and AI Credits work with sample sessions.\n[Open Learn mode](command:aiCreditsAnalyzer.openLearnMode)",
+  "welcome.setup": "No setup problems found. Sessions record token data while Copilot Chat debug logging is on and enough sessions are kept.\n[Review the debug logging setting](command:aiCreditsAnalyzer.fixSetting)"
+}

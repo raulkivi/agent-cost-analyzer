@@ -1,7 +1,7 @@
 {
   "name": "ai-credits-analyzer",
-  "displayName": "AI Credits Analyzer",
-  "description": "See where your GitHub Copilot Chat tokens and AI Credits go: prompt caching, per-turn cost, tool-call failures and insights, from your local logs.",
+  "displayName": "%displayName%",
+  "description": "%description%",
   "version": "0.1.0",
   "publisher": "raulkivi",
   "private": true,
@@ -47,44 +47,44 @@
     "commands": [
       {
         "command": "aiCreditsAnalyzer.open",
-        "title": "Open",
-        "category": "AI Credits Analyzer",
+        "title": "%command.open.title%",
+        "category": "%category%",
         "icon": "$(graph)"
       },
       {
         "command": "aiCreditsAnalyzer.refreshSessions",
-        "title": "Refresh",
-        "category": "AI Credits Analyzer",
+        "title": "%command.refreshSessions.title%",
+        "category": "%category%",
         "icon": "$(refresh)"
       },
       {
         "command": "aiCreditsAnalyzer.openSession",
-        "title": "Open Session",
-        "category": "AI Credits Analyzer",
+        "title": "%command.openSession.title%",
+        "category": "%category%",
         "icon": "$(go-to-file)"
       },
       {
         "command": "aiCreditsAnalyzer.showToolAudit",
-        "title": "Show Tool Audit",
-        "category": "AI Credits Analyzer",
+        "title": "%command.showToolAudit.title%",
+        "category": "%category%",
         "icon": "$(checklist)"
       },
       {
         "command": "aiCreditsAnalyzer.copyAdviceBundle",
-        "title": "Copy Advice Bundle",
-        "category": "AI Credits Analyzer",
+        "title": "%command.copyAdviceBundle.title%",
+        "category": "%category%",
         "icon": "$(copy)"
       },
       {
         "command": "aiCreditsAnalyzer.fixSetting",
-        "title": "Fix Setting",
-        "category": "AI Credits Analyzer",
+        "title": "%command.fixSetting.title%",
+        "category": "%category%",
         "icon": "$(wrench)"
       },
       {
         "command": "aiCreditsAnalyzer.openLearnMode",
-        "title": "Open Learn Mode",
-        "category": "AI Credits Analyzer",
+        "title": "%command.openLearnMode.title%",
+        "category": "%category%",
         "icon": "$(mortar-board)"
       }
     ],
@@ -92,7 +92,7 @@
       "activitybar": [
         {
           "id": "aiCreditsAnalyzer",
-          "title": "AI Credits Analyzer",
+          "title": "%viewsContainer.title%",
           "icon": "resources/activity-bar.svg"
         }
       ]
@@ -101,22 +101,22 @@
       "aiCreditsAnalyzer": [
         {
           "id": "aiCreditsAnalyzer.sessions",
-          "name": "Sessions"
+          "name": "%view.sessions.name%"
         },
         {
           "id": "aiCreditsAnalyzer.setup",
-          "name": "Setup"
+          "name": "%view.setup.name%"
         }
       ]
     },
     "viewsWelcome": [
       {
         "view": "aiCreditsAnalyzer.sessions",
-        "contents": "No Copilot Chat sessions with token data yet.\n\nWhile you wait, see how caching and AI Credits work with sample sessions.\n[Open Learn mode](command:aiCreditsAnalyzer.openLearnMode)"
+        "contents": "%welcome.sessions%"
       },
       {
         "view": "aiCreditsAnalyzer.setup",
-        "contents": "No setup problems found. Sessions record token data while Copilot Chat debug logging is on and enough sessions are kept.\n[Review the debug logging setting](command:aiCreditsAnalyzer.fixSetting)"
+        "contents": "%welcome.setup%"
       }
     ],
     "menus": {
