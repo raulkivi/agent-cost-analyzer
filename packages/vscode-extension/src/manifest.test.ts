@@ -29,6 +29,10 @@ interface Walkthrough {
   steps: WalkthroughStep[];
 }
 
+interface ConfigurationSection {
+  properties: Record<string, { markdownDescription?: string; order?: number; enum?: unknown[]; markdownEnumDescriptions?: string[] }>;
+}
+
 interface Manifest {
   displayName: string;
   description: string;
@@ -41,6 +45,7 @@ interface Manifest {
     views: Record<string, { id: string; name: string }[]>;
     viewsWelcome?: { view: string; contents: string; when?: string }[];
     walkthroughs?: Walkthrough[];
+    configuration?: ConfigurationSection | ConfigurationSection[];
   };
 }
 
@@ -167,6 +172,23 @@ describe("package.json contributions (vscode-extension.md §3.5)", () => {
 
     expect(welcome(VIEW_IDS.setup)).toContain(COMMAND_IDS.fixSetting);
     expect(welcome(VIEW_IDS.sessions)).toContain(COMMAND_IDS.openLearnMode);
+  });
+
+  it("contributes no setting the code doesn't read, and holds any it adds to the §3.5 rules", () => {
+    const configurations = [contributes.configuration ?? []].flat();
+    const properties = configurations.flatMap((section) => Object.entries(section.properties));
+
+    // No aiCreditsAnalyzer.* setting is read by the code yet (the MCP switch
+    // arrives with step 10.8), so none is contributed.
+    expect(properties.map(([id]) => id)).toEqual([]);
+    for (const [id, property] of properties) {
+      expect(id.startsWith("aiCreditsAnalyzer."), id).toBe(true);
+      expect(property.markdownDescription, id).toMatch(/^%[A-Za-z0-9._-]+%$/);
+      expect(property.order, id).toEqual(expect.any(Number));
+      if (property.enum !== undefined) {
+        expect(property.markdownEnumDescriptions?.length, id).toBe(property.enum.length);
+      }
+    }
   });
 
   it("activates when VS Code has started, so the status bar shows today's AI Credits", () => {

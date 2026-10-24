@@ -56,12 +56,18 @@ function seedSessionStore(dbPath: string): void {
 const VSCODE_STUB = `
 const commands = new Map();
 const panels = [];
-class Uri { constructor(fsPath) { this.fsPath = fsPath; } static file(p) { return new Uri(p); } }
+class Uri {
+  constructor(fsPath) { this.fsPath = fsPath; }
+  static file(p) { return new Uri(p); }
+  static from({ scheme, path }) { const uri = new Uri(path); uri.scheme = scheme; uri.path = path; return uri; }
+  toString() { return this.scheme + ":" + this.path; }
+}
 const settings = {};
 const configListeners = new Set();
 const executed = [];
 const clipboard = [];
 const documents = [];
+const contentProviders = new Map();
 const shown = [];
 const treeViews = new Map();
 const statusBarItems = [];
@@ -81,7 +87,7 @@ module.exports = {
   StatusBarAlignment: { Left: 1, Right: 2 },
   __treeViews: treeViews, __statusBarItems: statusBarItems, __progress: progress, __l10nMessages: l10nMessages,
   __commands: commands, __panels: panels, __settings: settings, Uri, ViewColumn: { Active: -1 },
-  __executed: executed, __clipboard: clipboard, __documents: documents, __shown: shown,
+  __executed: executed, __clipboard: clipboard, __documents: documents, __shown: shown, __contentProviders: contentProviders,
   __changeConfiguration(ids) {
     const event = { affectsConfiguration: (section) => ids.some((id) => id === section || id.startsWith(section + ".")) };
     for (const listener of [...configListeners]) listener(event);
@@ -92,7 +98,23 @@ module.exports = {
   env: { clipboard: { writeText(text) { clipboard.push(text); return Promise.resolve(); } } },
   workspace: {
     getConfiguration: () => ({ get: (id) => settings[id] }),
-    openTextDocument(options) { const document = { ...options }; documents.push(document); return Promise.resolve(document); },
+    // A URI is opened through the content provider of its scheme, as VS Code
+    // does; anything else is an untitled document.
+    async openTextDocument(arg) {
+      if (arg instanceof Uri) {
+        const text = await contentProviders.get(arg.scheme).provideTextDocumentContent(arg);
+        const document = { uri: arg, text };
+        documents.push(document);
+        return document;
+      }
+      const document = { ...arg };
+      documents.push(document);
+      return document;
+    },
+    registerTextDocumentContentProvider(scheme, provider) {
+      contentProviders.set(scheme, provider);
+      return { dispose() { contentProviders.delete(scheme); } };
+    },
     onDidChangeConfiguration(listener) { configListeners.add(listener); return { dispose() { configListeners.delete(listener); } }; },
   },
   commands: {
@@ -189,8 +211,9 @@ interface VscodeStub {
   __settings: Record<string, unknown>;
   __executed: unknown[][];
   __clipboard: string[];
-  __documents: { content: string; language: string }[];
-  __shown: unknown[];
+  __documents: { uri?: { scheme: string; path: string }; text?: string; content?: string; language?: string }[];
+  __shown: { uri?: { scheme: string; path: string }; text?: string }[];
+  __contentProviders: Map<string, { provideTextDocumentContent(uri: unknown): string }>;
   __changeConfiguration(ids: string[]): void;
 }
 
@@ -372,17 +395,49 @@ describe("the built extension bundle", () => {
       expect(await openAgentTraces("traces-fixed")).toMatchObject({ ok: false, error: { status: 400 } });
     });
 
-    it("copies to VS Code's clipboard and opens text in an untitled editor", async () => {
+    it("copies to VS Code's clipboard", async () => {
       expect(await send({ kind: "command", id: "copy", command: "copyToClipboard", args: { text: "bundle" } })).toMatchObject({
         ok: true,
       });
+
+      expect(vscode.__clipboard).toEqual(["bundle"]);
+    });
+
+    it("opens text as a read-only document served by the extension's content provider, never an untitled editor", async () => {
+      expect(vscode.__contentProviders.has("ai-credits-analyzer-doc")).toBe(true);
+
       expect(
         await send({ kind: "command", id: "doc", command: "openTextDocument", args: { content: "prompt", language: "plaintext" } }),
       ).toMatchObject({ ok: true });
 
-      expect(vscode.__clipboard).toEqual(["bundle"]);
-      expect(vscode.__documents).toEqual([{ content: "prompt", language: "plaintext" }]);
+      // Opened by URI, so its text came through the provider; shown once.
+      expect(vscode.__documents).toHaveLength(1);
+      expect(vscode.__documents[0]).toMatchObject({ uri: { scheme: "ai-credits-analyzer-doc", path: expect.stringMatching(/\.txt$/) }, text: "prompt" });
+      expect(vscode.__documents[0]).not.toHaveProperty("content");
       expect(vscode.__shown).toEqual(vscode.__documents);
+    });
+
+    it("serves each opened document under its own URI, and an empty one for a URI it no longer holds", async () => {
+      await send({ kind: "command", id: "doc-2", command: "openTextDocument", args: { content: "# advice", language: "markdown" } });
+
+      const [first, second] = vscode.__shown;
+      expect(second?.uri?.path).toMatch(/\.md$/);
+      expect(second?.text).toBe("# advice");
+      const provider = vscode.__contentProviders.get("ai-credits-analyzer-doc")!;
+      expect(provider.provideTextDocumentContent(first?.uri)).toBe("prompt");
+      expect(provider.provideTextDocumentContent({ path: "/never-opened.txt" })).toBe("");
+    });
+
+    it("refuses over-long document text with 400 before it reaches the editor", async () => {
+      const reply = await send({
+        kind: "command",
+        id: "doc-big",
+        command: "openTextDocument",
+        args: { content: "x".repeat(5 * 1024 * 1024 + 1), language: "plaintext" },
+      });
+
+      expect(reply).toMatchObject({ ok: false, error: { status: 400 } });
+      expect(vscode.__shown).toHaveLength(2);
     });
 
     it("rejects a command that isn't on the allow-list with 400", async () => {

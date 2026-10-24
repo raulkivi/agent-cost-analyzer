@@ -1,6 +1,8 @@
 import * as vscode from "vscode";
 import { COMMAND_IDS, VIEW_IDS } from "./commands/command-ids.js";
 import { composeExtension } from "./composition.js";
+import { ReadOnlyDocumentStore } from "./documents/read-only-document-store.js";
+import { registerReadOnlyDocuments } from "./vscode/vscode-read-only-documents.js";
 import { createVscodeHostCommands } from "./vscode/vscode-host-commands.js";
 import { registerSessionsView, registerSetupView } from "./vscode/vscode-sidebar-views.js";
 import { registerStatusBar } from "./vscode/vscode-status-bar.js";
@@ -11,17 +13,20 @@ import { createVscodeWalkthrough } from "./vscode/vscode-walkthrough.js";
 // status bar has today's AI Credits; everything is built by the composition
 // root.
 export function activate(context: vscode.ExtensionContext): void {
+  // The text of the read-only documents (system prompt, advice bundle) the
+  // webview opens, served to the editor by a content provider.
+  const documents = new ReadOnlyDocumentStore();
   const extension = composeExtension({
     extensionPath: context.extensionPath,
     extensionVersion: String((context.extension.packageJSON as { version: unknown }).version),
     globalStoragePath: context.globalStorageUri.fsPath,
     globalState: context.globalState,
     workspace: vscode.workspace,
-    hostCommands: createVscodeHostCommands(vscode),
+    hostCommands: createVscodeHostCommands(vscode, documents),
     translate: vscode.l10n.t,
     walkthrough: createVscodeWalkthrough(vscode, context.extension.id),
   });
-  context.subscriptions.push(extension);
+  context.subscriptions.push(extension, registerReadOnlyDocuments(vscode, documents));
 
   for (const [command, handler] of Object.entries(extension.commandHandlers)) {
     // The Refresh command shows progress on the Sessions view while it reads.
