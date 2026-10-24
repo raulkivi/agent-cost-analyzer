@@ -1,10 +1,10 @@
 import type { Session } from "@copilot-cost-analyzer/domain";
-import { getJson } from "./http.js";
+import { getApiTransport } from "./current-transport.js";
 
 export function fetchLearnScenarios(): Promise<Session[]> {
-  return getJson<Session[]>("/api/learn/scenarios");
+  return getApiTransport().call<Session[]>("listLearnScenarios");
 }
 
 export function fetchLearnScenario(id: string): Promise<Session> {
-  return getJson<Session>(`/api/learn/scenarios/${id}`);
+  return getApiTransport().call<Session>("getLearnScenario", { id });
 }

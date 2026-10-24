@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { ConfigWarning, LogProviderDescriptor, Session } from "@copilot-cost-analyzer/domain";
 import { fetchConfigStatus, updateRetentionThreshold } from "./api-client/config-status.js";
+import { fetchHealth, type HealthResponse } from "./api-client/health.js";
 import { fetchLearnScenarios } from "./api-client/learn-scenarios.js";
 import { fetchLogProviderStatus, setActiveLogProvider } from "./api-client/log-providers.js";
 import { fetchSession, fetchSessions } from "./api-client/sessions.js";
@@ -24,11 +25,6 @@ import { SegmentedControl } from "./components/ui/SegmentedControl.js";
 import { Tag } from "./components/ui/Tag.js";
 import { AiCreditsSparkline } from "./charts/AiCreditsSparkline.js";
 import { useSessionStore } from "./state/session-store.js";
-
-interface HealthResponse {
-  status: string;
-  version: string;
-}
 
 const RIGHT_TAB_OPTIONS = [
   { value: "explanation", label: "Explanation" },
@@ -90,8 +86,7 @@ export function App() {
   const latestSessionRequestId = useRef(0);
 
   useEffect(() => {
-    fetch("/api/health")
-      .then((res) => res.json() as Promise<HealthResponse>)
+    fetchHealth()
       .then(setHealth)
       .catch((error: Error) => setFetchError(error.message));
   }, []);
