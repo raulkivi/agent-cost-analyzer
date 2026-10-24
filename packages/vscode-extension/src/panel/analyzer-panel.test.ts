@@ -38,6 +38,18 @@ class FakePanel implements WebviewPanelHandle {
   readonly reveal = vi.fn();
   disposed = false;
   private disposeListener: (() => void) | undefined;
+  private visibilityListener: ((visible: boolean) => void) | undefined;
+
+  onDidChangeVisibility(listener: (visible: boolean) => void): Disposable {
+    this.visibilityListener = listener;
+    return { dispose: () => undefined };
+  }
+
+  // Like VS Code, with retainContextWhenHidden off: hiding destroys the
+  // webview's page, and showing it loads the page again.
+  setVisible(visible: boolean): void {
+    this.visibilityListener?.(visible);
+  }
 
   onDidDispose(listener: () => void): Disposable {
     this.disposeListener = listener;
@@ -217,6 +229,88 @@ describe("AnalyzerPanel", () => {
       } finally {
         process.off("unhandledRejection", onUnhandled);
       }
+    });
+  });
+
+  describe("postWhenReady (a host event that must not be lost, e.g. selectSession)", () => {
+    const selectSession = { kind: "event", name: "selectSession", payload: { sessionId: "s1" } };
+
+    it("posts at once when the webview has already sent a message", async () => {
+      const { panel, panels } = setup();
+      panel.open();
+      panels[0]!.webview.messageListener?.({ kind: "request", id: "1" });
+
+      panel.postWhenReady(selectSession);
+
+      await vi.waitFor(() => expect(panels[0]!.webview.posted).toContainEqual(selectSession));
+    });
+
+    it("holds the message of a just-created panel until the webview's first message, then posts it once", async () => {
+      const { panel, panels } = setup();
+      panel.open();
+
+      panel.postWhenReady(selectSession);
+      await new Promise((resolve) => setTimeout(resolve, 10));
+      expect(panels[0]!.webview.posted).toEqual([]);
+
+      panels[0]!.webview.messageListener?.({ kind: "request", id: "1" });
+      panels[0]!.webview.messageListener?.({ kind: "request", id: "2" });
+
+      await vi.waitFor(() => expect(panels[0]!.webview.posted.filter((m) => m === selectSession)).toHaveLength(1));
+    });
+
+    it("keeps only the latest held message", async () => {
+      const { panel, panels } = setup();
+      panel.open();
+      const other = { kind: "event", name: "selectSession", payload: { sessionId: "s2" } };
+
+      panel.postWhenReady(selectSession);
+      panel.postWhenReady(other);
+      panels[0]!.webview.messageListener?.({ kind: "request", id: "1" });
+
+      await vi.waitFor(() => expect(panels[0]!.webview.posted).toContainEqual(other));
+      expect(panels[0]!.webview.posted).not.toContainEqual(selectSession);
+    });
+
+    it("holds the message again while the panel is hidden, because its page reloads when shown", async () => {
+      const { panel, panels } = setup();
+      panel.open();
+      panels[0]!.webview.messageListener?.({ kind: "request", id: "1" });
+      await vi.waitFor(() => expect(panels[0]!.webview.posted).toHaveLength(1));
+      panels[0]!.setVisible(false);
+
+      panel.postWhenReady(selectSession);
+      panels[0]!.setVisible(true);
+      await new Promise((resolve) => setTimeout(resolve, 10));
+      expect(panels[0]!.webview.posted).not.toContainEqual(selectSession);
+
+      panels[0]!.webview.messageListener?.({ kind: "request", id: "2" });
+
+      await vi.waitFor(() => expect(panels[0]!.webview.posted).toContainEqual(selectSession));
+    });
+
+    it("does not carry a held message, or readiness, over to a panel opened later", async () => {
+      const { panel, panels } = setup();
+      panel.open();
+      panel.postWhenReady(selectSession);
+      panels[0]!.dispose();
+
+      panel.open();
+      await new Promise((resolve) => setTimeout(resolve, 10));
+      expect(panels[1]!.webview.posted).toEqual([]);
+      panel.postWhenReady(selectSession);
+      await new Promise((resolve) => setTimeout(resolve, 10));
+      expect(panels[1]!.webview.posted).toEqual([]);
+
+      panels[1]!.webview.messageListener?.({ kind: "request", id: "1" });
+
+      await vi.waitFor(() => expect(panels[1]!.webview.posted).toContainEqual(selectSession));
+    });
+
+    it("does nothing when no panel is open", () => {
+      const { panel } = setup();
+
+      expect(() => panel.postWhenReady(selectSession)).not.toThrow();
     });
   });
 });

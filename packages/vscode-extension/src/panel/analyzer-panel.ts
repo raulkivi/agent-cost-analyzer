@@ -19,6 +19,8 @@ export interface PanelWebview {
 export interface WebviewPanelHandle {
   readonly webview: PanelWebview;
   reveal(): void;
+  // Fires when the panel is hidden (false) or shown again (true).
+  onDidChangeVisibility(listener: (visible: boolean) => void): Disposable;
   onDidDispose(listener: () => void): Disposable;
   dispose(): void;
 }
@@ -47,6 +49,18 @@ export interface AnalyzerPanelDeps {
   handleMessage(message: unknown): Promise<unknown>;
 }
 
+interface OpenPanel {
+  panel: WebviewPanelHandle;
+  subscriptions: Disposable[];
+  // True once the current page of the webview has sent a message, i.e. its
+  // script is running and listening. False for a new panel, and again while
+  // it's hidden, since a hidden panel's page is destroyed (§5) and loads
+  // afresh when shown.
+  ready: boolean;
+  // The latest message postWhenReady held back until the page is ready.
+  pending: { message: unknown } | undefined;
+}
+
 const VIEW_TYPE = "aiCreditsAnalyzer.panel";
 const TITLE = "AI Credits Analyzer";
 
@@ -55,7 +69,7 @@ const TITLE = "AI Credits Analyzer";
 // scripts on, media/ as the only local resource root (the webview never
 // gets file URIs for user logs), and no retainContextWhenHidden.
 export class AnalyzerPanel implements Disposable {
-  private current: { panel: WebviewPanelHandle; subscriptions: Disposable[] } | undefined;
+  private current: OpenPanel | undefined;
 
   constructor(private readonly deps: AnalyzerPanelDeps) {}
 
@@ -72,13 +86,24 @@ export class AnalyzerPanel implements Disposable {
       retainContextWhenHidden: false,
     });
     const { webview } = panel;
-    const current = {
+    const current: OpenPanel = {
       panel,
-      subscriptions: [
-        webview.onDidReceiveMessage((message) => void this.reply(webview, message)),
-        panel.onDidDispose(() => this.release(current)),
-      ],
+      subscriptions: [],
+      ready: false,
+      pending: undefined,
     };
+    current.subscriptions.push(
+      webview.onDidReceiveMessage((message) => {
+        this.markReady(current);
+        void this.reply(webview, message);
+      }),
+      panel.onDidChangeVisibility((visible) => {
+        if (!visible) {
+          current.ready = false;
+        }
+      }),
+      panel.onDidDispose(() => this.release(current)),
+    );
     this.current = current;
     try {
       webview.html = this.deps.renderHtml({
@@ -100,12 +125,39 @@ export class AnalyzerPanel implements Disposable {
     this.current?.panel.webview.postMessage(message).then(undefined, () => undefined);
   }
 
+  // Like post, for a message that must arrive (the sidebar's selectSession):
+  // a webview that is still loading, or was hidden and is loading again,
+  // isn't listening yet, so the latest such message is held and delivered
+  // when the page first writes to the host. Its first request is a reliable
+  // signal: the web app subscribes to host events in the same effect pass
+  // that makes its first request.
+  postWhenReady(message: unknown): void {
+    const { current } = this;
+    if (!current) {
+      return;
+    }
+    if (current.ready) {
+      this.post(message);
+    } else {
+      current.pending = { message };
+    }
+  }
+
   dispose(): void {
     // Disposing fires onDidDispose, which releases it.
     this.current?.panel.dispose();
   }
 
-  private release(current: { subscriptions: Disposable[] }): void {
+  private markReady(current: OpenPanel): void {
+    current.ready = true;
+    const held = current.pending;
+    current.pending = undefined;
+    if (held && this.current === current) {
+      this.post(held.message);
+    }
+  }
+
+  private release(current: OpenPanel): void {
     if (this.current === current) {
       this.current = undefined;
     }

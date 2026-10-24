@@ -35,8 +35,9 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 // warns about, plus the two Copilot logging settings the check always
 // judges (so a fix still works if the status can't be read right now).
 // Anything else is refused: the webview is untrusted content, and an open
-// setting id would let it steer the user to any setting at all.
-async function allowedSettingIds(readConfigStatus: () => Promise<ConfigStatus>): Promise<Set<string>> {
+// setting id would let it steer the user to any setting at all. The
+// sidebar's fixSetting command applies the same rule.
+export async function allowedSettingIds(readConfigStatus: () => Promise<ConfigStatus>): Promise<Set<string>> {
   const allowed = new Set<string>(WATCHED_SETTING_IDS);
   try {
     for (const warning of (await readConfigStatus()).warnings) {
