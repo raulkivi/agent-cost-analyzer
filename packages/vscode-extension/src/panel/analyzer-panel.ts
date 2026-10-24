@@ -47,6 +47,10 @@ export interface AnalyzerPanelDeps {
   renderHtml(context: PanelHtmlContext): string;
   // Each message from the webview; a defined result is posted back.
   handleMessage(message: unknown): Promise<unknown>;
+  // A page is about to load into the panel: a new panel's, or a hidden
+  // one's shown again. The webview's timing marks are measured from here
+  // (performance/performance-recorder.ts).
+  onPageLoad?(): void;
 }
 
 interface OpenPanel {
@@ -57,6 +61,9 @@ interface OpenPanel {
   // it's hidden, since a hidden panel's page is destroyed (§5) and loads
   // afresh when shown.
   ready: boolean;
+  // Whether the panel was visible at its last view-state change: a change
+  // that keeps it visible (it became active, moved) reloads nothing.
+  visible: boolean;
   // The latest message postWhenReady held back until the page is ready.
   pending: { message: unknown } | undefined;
 }
@@ -90,6 +97,7 @@ export class AnalyzerPanel implements Disposable {
       panel,
       subscriptions: [],
       ready: false,
+      visible: true,
       pending: undefined,
     };
     current.subscriptions.push(
@@ -98,13 +106,18 @@ export class AnalyzerPanel implements Disposable {
         void this.reply(webview, message);
       }),
       panel.onDidChangeVisibility((visible) => {
+        const shownAgain = visible && !current.visible;
+        current.visible = visible;
         if (!visible) {
           current.ready = false;
+        } else if (shownAgain && this.current === current) {
+          this.deps.onPageLoad?.();
         }
       }),
       panel.onDidDispose(() => this.release(current)),
     );
     this.current = current;
+    this.deps.onPageLoad?.();
     try {
       webview.html = this.deps.renderHtml({
         cspSource: webview.cspSource,
