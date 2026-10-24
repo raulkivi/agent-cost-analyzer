@@ -11,7 +11,12 @@ export type ApiMethodName = ApiMethod;
 // http-transport.ts; getSystemPromptText resolves to a string, every other
 // method to its JSON result.
 export interface ApiTransport {
-  call<T>(method: ApiMethodName, params?: unknown): Promise<T>;
+  //
+  // `signal` makes the call cancellable: when it aborts, the call rejects
+  // with an AbortError (api-client/abort.ts) and the transport stops waiting
+  // for the answer — the HTTP transport hands it to fetch, the webview
+  // transport tells the host to forget the request (domain rpc.ts, cancel).
+  call<T>(method: ApiMethodName, params?: unknown, signal?: AbortSignal): Promise<T>;
   // Host-pushed notifications (plan §4); returns the unsubscribe function.
   // Only the webview transport has a host that sends any, so the HTTP
   // transport leaves it out — subscribe through host-events.ts.

@@ -7,11 +7,11 @@ export interface RollupQuery {
   limit?: number;
 }
 
-export function fetchSessionAudit(sessionId: string): Promise<SessionAudit> {
-  return getApiTransport().call<SessionAudit>("getSessionAudit", { sessionId });
+export function fetchSessionAudit(sessionId: string, signal?: AbortSignal): Promise<SessionAudit> {
+  return getApiTransport().call<SessionAudit>("getSessionAudit", { sessionId }, signal);
 }
 
-// Unset / empty filters are dropped by the transport.
-export function fetchAuditRollup(query: RollupQuery): Promise<AuditRollup> {
-  return getApiTransport().call<AuditRollup>("getAuditRollup", query);
+// Unset / empty filters are dropped by the transport. `signal` cancels the load.
+export function fetchAuditRollup(query: RollupQuery, signal?: AbortSignal): Promise<AuditRollup> {
+  return getApiTransport().call<AuditRollup>("getAuditRollup", query, signal);
 }

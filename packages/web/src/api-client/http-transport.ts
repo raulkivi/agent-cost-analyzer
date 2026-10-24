@@ -76,15 +76,20 @@ export class HttpTransport implements ApiTransport {
   // call time so a test's stubbed fetch is honoured.
   constructor(private readonly fetchImpl: FetchLike = (...args) => fetch(...args)) {}
 
-  async call<T>(method: ApiMethodName, params?: unknown): Promise<T> {
+  async call<T>(method: ApiMethodName, params?: unknown, signal?: AbortSignal): Promise<T> {
     const request = toRequest(method, params);
+    // A plain GET passes no init at all unless there is a signal to hand on.
+    const signalInit = signal ? { signal } : undefined;
     const response =
       request.put === undefined
-        ? await this.fetchImpl(request.url)
+        ? signalInit
+          ? await this.fetchImpl(request.url, signalInit)
+          : await this.fetchImpl(request.url)
         : await this.fetchImpl(request.url, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(request.put),
+            ...signalInit,
           });
     if (!response.ok) {
       throw new Error(`Request to ${request.url} failed with status ${response.status}`);

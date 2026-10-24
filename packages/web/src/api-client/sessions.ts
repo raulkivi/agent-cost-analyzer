@@ -20,6 +20,10 @@ export function fetchSystemPromptText(id: string): Promise<string> {
   return getApiTransport().call<string>("getSystemPromptText", { id });
 }
 
-export function fetchTurnInspectorDetail(sessionId: string, turnIndex: number): Promise<TurnInspectorDetail> {
-  return getApiTransport().call<TurnInspectorDetail>("getTurnDetail", { sessionId, turnIndex });
+export function fetchTurnInspectorDetail(
+  sessionId: string,
+  turnIndex: number,
+  signal?: AbortSignal,
+): Promise<TurnInspectorDetail> {
+  return getApiTransport().call<TurnInspectorDetail>("getTurnDetail", { sessionId, turnIndex }, signal);
 }

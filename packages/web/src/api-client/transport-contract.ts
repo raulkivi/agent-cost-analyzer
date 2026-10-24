@@ -9,6 +9,9 @@ export interface ContractHarness {
   succeedWith(value: unknown): void;
   // The backend answers the next request with an error of this status.
   failWith(status: number): void;
+  // The backend never answers the next request (but, like a real one,
+  // lets the transport give up on it).
+  hang(): void;
 }
 
 // Every method with representative params; the harness answers any of them.
@@ -60,6 +63,48 @@ export function describeApiTransportContract(name: string, makeHarness: () => Co
       const harness = makeHarness();
       harness.failWith(404);
       await expect(harness.transport.call(method, params)).rejects.toThrow(/failed with status 404/);
+    });
+
+    describe("cancellation (an AbortSignal)", () => {
+      it("rejects with an AbortError when the signal aborts while waiting", async () => {
+        const harness = makeHarness();
+        harness.hang();
+        const controller = new AbortController();
+
+        const pending = harness.transport.call("getInsights", {}, controller.signal);
+        controller.abort();
+
+        await expect(pending).rejects.toMatchObject({ name: "AbortError" });
+      });
+
+      it("rejects with an AbortError when the signal was already aborted", async () => {
+        const harness = makeHarness();
+        harness.hang();
+        const controller = new AbortController();
+        controller.abort();
+
+        await expect(harness.transport.call("getInsights", {}, controller.signal)).rejects.toMatchObject({
+          name: "AbortError",
+        });
+      });
+
+      it("resolves normally when the signal never aborts", async () => {
+        const harness = makeHarness();
+        harness.succeedWith({ ok: 1 });
+
+        await expect(harness.transport.call("getInsights", {}, new AbortController().signal)).resolves.toEqual({ ok: 1 });
+      });
+
+      it("ignores an abort after the call has finished", async () => {
+        const harness = makeHarness();
+        harness.succeedWith({ ok: 1 });
+        const controller = new AbortController();
+
+        const result = await harness.transport.call("getInsights", {}, controller.signal);
+        controller.abort();
+
+        expect(result).toEqual({ ok: 1 });
+      });
     });
   });
 }

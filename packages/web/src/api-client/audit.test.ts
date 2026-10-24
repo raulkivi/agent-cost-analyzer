@@ -33,4 +33,13 @@ describe("audit api-client", () => {
     await fetchAuditRollup({});
     expect(fetch).toHaveBeenCalledWith("/api/audit");
   });
+
+  it("hands an AbortSignal to the session audit and the rollup", async () => {
+    stubFetch({});
+    const controller = new AbortController();
+    await fetchSessionAudit("s1", controller.signal);
+    expect(fetch).toHaveBeenLastCalledWith("/api/sessions/s1/audit", { signal: controller.signal });
+    await fetchAuditRollup({ limit: 5 }, controller.signal);
+    expect(fetch).toHaveBeenLastCalledWith("/api/audit?limit=5", { signal: controller.signal });
+  });
 });

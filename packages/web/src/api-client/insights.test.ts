@@ -21,4 +21,11 @@ describe("insights api-client", () => {
     await fetchInsights({});
     expect(fetch).toHaveBeenCalledWith("/api/insights");
   });
+
+  it("hands an AbortSignal to the request", async () => {
+    stubFetch({});
+    const controller = new AbortController();
+    await fetchInsights({ since: "2026-09-11" }, controller.signal);
+    expect(fetch).toHaveBeenCalledWith("/api/insights?since=2026-09-11", { signal: controller.signal });
+  });
 });
