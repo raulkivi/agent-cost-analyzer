@@ -1,7 +1,9 @@
 import {
   apiMethodParamsSchemas,
   apiMethodSchema,
+  rpcPerformanceMarkSchema,
   type ApiMethod,
+  type PerformanceMarkName,
   type RpcCommandResponse,
   type RpcResponse,
 } from "@copilot-cost-analyzer/domain";
@@ -18,12 +20,20 @@ export interface HostCommandSink {
   handle(message: { id: string; command?: unknown; args?: unknown }): Promise<RpcCommandResponse>;
 }
 
+// Records the webview's timing marks (domain rpc.ts, perfMark); in the
+// extension a PerformanceRecorder (performance/performance-recorder.ts).
+export interface PerformanceMarkSink {
+  recordWebviewMark(name: PerformanceMarkName, pageTimeMs: number): void;
+}
+
 export interface MessageDispatcherOptions {
   // Hears every error that isn't one of ApiService's typed errors; the
   // webview only ever gets a generic 500 for those.
   onInternalError?: (method: ApiMethod, error: unknown) => void;
   // Without it, every host command is answered with 400.
   hostCommands?: HostCommandSink;
+  // Without it, timing marks are ignored.
+  performanceMarks?: PerformanceMarkSink;
 }
 
 type Params = Record<string, unknown>;
@@ -103,7 +113,8 @@ function invoke(api: DispatcherApi, method: ApiMethod, params: Params): Promise<
 // The extension host's end of the webview RPC (vscode-extension.md §4,
 // D1): validates each request's method against the domain's allow-list,
 // calls ApiService, and maps its typed errors to the HTTP API's statuses.
-// Host commands (G8) go to their own handler, never to ApiService. The
+// Host commands (G8) go to their own handler, never to ApiService, and a
+// valid timing mark (perfMark) only to the performance recorder. The
 // webview is untrusted content, so nothing else gets through and no
 // internal error detail goes back to it.
 //
@@ -123,9 +134,14 @@ export class MessageDispatcher {
   ) {}
 
   // The reply to post back, or undefined for a message that is neither a
-  // request nor a host command, for a cancel, and for a cancelled request.
+  // request nor a host command, for a cancel or a timing mark, and for a
+  // cancelled request.
   // Commands never reach ApiService.
   async dispatch(message: unknown): Promise<RpcResponse | RpcCommandResponse | undefined> {
+    if (isRecord(message) && message.kind === "perfMark") {
+      this.recordPerformanceMark(message);
+      return undefined;
+    }
     if (!isRecord(message) || typeof message.id !== "string") {
       return undefined;
     }
@@ -165,6 +181,14 @@ export class MessageDispatcher {
     } finally {
       this.running.delete(id);
       this.cancelled.delete(id);
+    }
+  }
+
+  // One-way, so a malformed mark is dropped without a reply.
+  private recordPerformanceMark(message: unknown): void {
+    const mark = rpcPerformanceMarkSchema.safeParse(message);
+    if (mark.success) {
+      this.options.performanceMarks?.recordWebviewMark(mark.data.name, mark.data.timeMs);
     }
   }
 

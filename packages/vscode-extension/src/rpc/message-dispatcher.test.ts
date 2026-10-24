@@ -334,4 +334,35 @@ describe("MessageDispatcher (vscode-extension.md §4)", () => {
       expect(await reply).toEqual({ kind: "response", id: "req-1", ok: true, result: {} });
     });
   });
+
+  // Timing marks (domain rpc.ts, perfMark; step 10.9): one-way, recorded
+  // and never answered.
+  describe("perfMark", () => {
+    it("hands a valid mark to the recorder and posts no reply", async () => {
+      const performanceMarks = { recordWebviewMark: vi.fn() };
+      const api = fakeApi();
+
+      const reply = await new MessageDispatcher(api, { performanceMarks }).dispatch({ kind: "perfMark", name: "first-render", timeMs: 210 });
+
+      expect(reply).toBeUndefined();
+      expect(performanceMarks.recordWebviewMark).toHaveBeenCalledWith("first-render", 210);
+      expect(api.getHealth).not.toHaveBeenCalled();
+    });
+
+    it.each([
+      ["an unknown name", { kind: "perfMark", name: "anything", timeMs: 1 }],
+      ["a time that isn't a number", { kind: "perfMark", name: "data-ready", timeMs: "1" }],
+      ["a negative time", { kind: "perfMark", name: "data-ready", timeMs: -5 }],
+      ["no time", { kind: "perfMark", name: "data-ready" }],
+    ])("drops a mark with %s, silently", async (_label, message) => {
+      const performanceMarks = { recordWebviewMark: vi.fn() };
+
+      expect(await new MessageDispatcher(fakeApi(), { performanceMarks }).dispatch(message)).toBeUndefined();
+      expect(performanceMarks.recordWebviewMark).not.toHaveBeenCalled();
+    });
+
+    it("ignores marks when nothing records them", async () => {
+      expect(await new MessageDispatcher(fakeApi()).dispatch({ kind: "perfMark", name: "first-render", timeMs: 1 })).toBeUndefined();
+    });
+  });
 });
