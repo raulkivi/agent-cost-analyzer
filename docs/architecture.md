@@ -1,4 +1,4 @@
-# Architecture: GitHub Copilot Chat Cost & Token Usage Analyzer
+# Architecture: Agent Cost Analyzer and AI Credits Analyzer
 
 ## 1. Purpose & scope
 
@@ -1797,6 +1797,25 @@ registry. See the plan's §3 for the decisions (D1-D10).
 - **Extension-only UI.** A native sidebar (Sessions, Setup), a status-bar
   AI Credits item, a Get Started walkthrough, and localization through
   `vscode.l10n`.
+
+**As built (steps 10.8-10.10).**
+- **MCP server.** The extension offers a Copilot-only stdio MCP server
+  (`dist/mcp-stdio.js`) through `vscode.lm.registerMcpServerDefinitionProvider`,
+  started with VS Code's own Electron as Node. It has the same 9 read-only
+  tools as the standalone server under its own name (`ai-credits-analyzer`)
+  and Copilot-only instructions. Its only input is a validated
+  `--user-data-dir`. It's off until `aiCreditsAnalyzer.mcp.enabled` is on,
+  and an untrusted workspace can't turn it on (`restrictedConfigurations`).
+- **Tests in a real VS Code.** A `@vscode/test-cli` suite runs on stable
+  VS Code in CI. The webview posts its timing marks to the host, which
+  checks the §3.5 performance budgets. Test-only commands exist only in
+  `ExtensionMode.Test`.
+- **Packaging and release.** Minified bundles in an allow-listed `.vsix`
+  (about 2.6 MB). `ext-v*` tags publish to the Marketplace (Entra ID) and
+  Open VSX; `app-v*` tags make a GitHub Release of the standalone app.
+- **Docs.** The extension's README is its Marketplace page; the full
+  guide is [vscode-extension-guide.md](vscode-extension-guide.md). Its
+  security surfaces are in [threat-model.md](threat-model.md) §6.
 
 **Runtime check (Phase 10.0, 2026-10-24).** Current stable VS Code
 (1.143.0) ships Electron 43.7.7 with Node 24.21.0. `node:sqlite`

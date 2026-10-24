@@ -1,6 +1,8 @@
 # VS Code extension: implementation and deployment plan
 
-Status: **in progress (Phase 10).** This plan expands
+Status: **code and docs complete (Phase 10, #57-#74); not yet released.**
+The owner's tasks before the first release are listed in
+[implementation-plan.md](../implementation-plan.md) Phase 10. This plan expands
 [implementation-plan.md](../implementation-plan.md) Phase 10 and
 [architecture.md](../architecture.md) §12 into concrete, test-first steps.
 Each step's status is recorded under its heading in §6.
@@ -17,7 +19,7 @@ Progress (2026-10-24):
 | 10.5 | Product profile in the UI, host commands, VS Code theme | Done (#66) |
 | 10.6 | Native Sessions/Setup sidebar, status bar, selection sync | Done (#67) |
 | 10.7 | Accessibility, responsive layout, AsyncView, local fonts, walkthrough, l10n | Done (#69) |
-| 10.8 | Copilot-only MCP server in the extension, plus UI follow-ups from 10.7 | Done (#71); real Copilot agent-mode check in 10.9 |
+| 10.8 | Copilot-only MCP server in the extension, plus UI follow-ups from 10.7 | Done (#71); server verified in CI (10.9); Copilot agent mode in the owner's manual checks |
 | 10.9 | Integration tests in real VS Code, performance budgets, usability run, packaging | Done (#72; integration suite green in CI); owner's manual checks open |
 | 10.10 | Documentation: extension README/listing, extension user guide, two-product README and User Guide | Done (#73); screenshots and owner review open |
 

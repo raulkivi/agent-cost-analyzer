@@ -25,11 +25,13 @@ their content here.
   met.
 - Commit all changes to git as soon as a phase's exit criterion is met,
   before starting the next phase.
-- Repo status: Phase 0 (repo scaffolding) and Phase 1 (domain model &
-  schema package) complete — npm workspaces with `packages/domain` (zod
-  schemas + types for every architecture.md §5 shape), `packages/server`
-  (Express health check), `packages/web` (Vite + React), Vitest wired with
-  TDD-first tests. Phase 2 (Learn mode) is next.
+- Repo status: every phase's code and docs are merged (Phases 0-9.12, the
+  standalone app Agent Cost Analyzer; Phase 10, the AI Credits Analyzer
+  VS Code extension in `packages/vscode-extension`). Still open: Phase
+  9.6's check against a real captured pi session, and the owner's tasks
+  before the extension's first release. The per-phase status is in
+  `docs/implementation-plan.md`; the extension's progress table is in
+  `docs/plans/vscode-extension.md`.
 
 ## Architecture diagrams
 
