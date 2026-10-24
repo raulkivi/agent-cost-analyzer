@@ -1214,6 +1214,10 @@ dataset and detectors).
 
 ## Phase 10 — VS Code extension packaging (future, out of MVP scope)
 
+Full plan: [plans/vscode-extension.md](plans/vscode-extension.md)
+(steps 10.0-10.7, each with its own exit criterion, plus CI and Marketplace
+deployment). Not started.
+
 Not part of the initial build (vision §5 "future path"); tracked here only
 so the seam stays intentional:
 

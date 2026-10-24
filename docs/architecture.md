@@ -1738,6 +1738,9 @@ module should be justified against these before being added:
 
 ## 12. Future path: VS Code extension packaging
 
+Detailed implementation and deployment plan:
+[plans/vscode-extension.md](plans/vscode-extension.md).
+
 Per vision §5, the app may later be repackaged as a VS Code webview. Under
 this architecture that means:
 
