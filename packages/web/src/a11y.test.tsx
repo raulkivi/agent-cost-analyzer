@@ -293,6 +293,67 @@ describe.each(Object.keys(THEMES) as ThemeName[])("axe: no WCAG 2.2 AA violation
     await expectNoViolations();
   });
 
+  // "View as table" (§3.5): every chart's table twin passes axe too.
+  function viewAllChartsAsTables(): number {
+    const toggles = screen.getAllByRole("button", { name: "View as table" });
+    for (const toggle of toggles) fireEvent.click(toggle);
+    return toggles.length;
+  }
+
+  it("Dashboard, every chart viewed as a table", async () => {
+    await openAnalyzeSession();
+    fireEvent.click(screen.getByLabelText("Dashboard"));
+    await screen.findByRole("group", { name: "AI Credits" });
+
+    const count = viewAllChartsAsTables();
+
+    expect(count).toBeGreaterThan(1);
+    expect(screen.getAllByRole("table", { name: /./ }).length).toBeGreaterThanOrEqual(count);
+    await expectNoViolations();
+  });
+
+  it("Tool audit, every chart viewed as a table", async () => {
+    await openAnalyzeSession();
+    fireEvent.click(screen.getByLabelText("Tool audit"));
+    await screen.findByRole("group", { name: "Failure rate" });
+
+    viewAllChartsAsTables();
+
+    await expectNoViolations();
+  });
+
+  it("All sessions, every chart viewed as a table", async () => {
+    await openAnalyzeSession();
+    fireEvent.click(screen.getByLabelText("All sessions"));
+    await screen.findByRole("table", { name: "Sessions" });
+
+    viewAllChartsAsTables();
+
+    await expectNoViolations();
+  });
+
+  it("the AI Credits sparkline viewed as a table", async () => {
+    await openAnalyzeSession();
+
+    fireEvent.click(screen.getByRole("button", { name: "View as table" }));
+
+    expect(screen.getByRole("table", { name: "AI Credits per turn" })).toBeInTheDocument();
+    await expectNoViolations();
+  });
+
+  it("the system prompt icicle viewed as a table", async () => {
+    await openAnalyzeSession();
+    fireEvent.click(screen.getByLabelText("System prompt"));
+    fireEvent.click(screen.getByRole("button", { name: "Open system prompt inspector" }));
+    await screen.findByRole("button", { name: /rules/i });
+    fireEvent.click(screen.getByLabelText("Icicle"));
+
+    fireEvent.click(screen.getByRole("button", { name: "View as table" }));
+
+    expect(screen.getByRole("table", { name: "Prompt composition" })).toBeInTheDocument();
+    await expectNoViolations();
+  });
+
   it("AdviceExportDialog, with its preview", async () => {
     await openAnalyzeSession();
     fireEvent.click(screen.getByRole("checkbox", { name: /Fix the bug/ }));

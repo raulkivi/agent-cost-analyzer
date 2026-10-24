@@ -274,6 +274,8 @@ function DashboardBody({ dataset, crossProvider }: { dataset: InsightsDataset; c
           <div className="card-kicker">AI Credits by day</div>
           <TrendColumns
             ariaLabel="AI Credits by day"
+            axisLabel="Day"
+            valueLabel="AI Credits"
             // A day with no known figure is left out, never drawn as 0 (constraint 6).
             columns={aiCreditsByDay(view.sessions, view.turns)
               .filter((day) => day.known > 0)

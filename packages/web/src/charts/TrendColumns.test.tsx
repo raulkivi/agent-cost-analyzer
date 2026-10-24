@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { TrendColumns } from "./TrendColumns.js";
 
@@ -27,9 +27,21 @@ describe("TrendColumns", () => {
 
   it("offers a table view with the same numbers", () => {
     render(<TrendColumns ariaLabel="Trend" columns={columns} format={(value) => value.toFixed(2)} />);
-    fireEvent.click(screen.getByRole("button", { name: "Show table" }));
+    fireEvent.click(screen.getByRole("button", { name: "View as table" }));
     expect(screen.getByRole("table")).toHaveTextContent("10-09");
     expect(screen.getByRole("table")).toHaveTextContent("5.00");
+  });
+
+  it("labels the table's columns and keeps the note, with the chart's rounding", () => {
+    render(<TrendColumns ariaLabel="AI Credits by day" axisLabel="Day" valueLabel="AI Credits" columns={columns} format={(value) => value.toFixed(2)} />);
+    fireEvent.click(screen.getByRole("button", { name: "View as table" }));
+
+    const table = screen.getByRole("table", { name: "AI Credits by day" });
+    expect(within(table).getByRole("columnheader", { name: "Day" })).toHaveAttribute("scope", "col");
+    expect(within(table).getByRole("columnheader", { name: "AI Credits" })).toBeInTheDocument();
+    expect(within(table).getByRole("rowheader", { name: "10-10" })).toBeInTheDocument();
+    expect(within(table).getByText("0.50")).toBeInTheDocument();
+    expect(within(table).getByText("2 of 2 turns known")).toBeInTheDocument();
   });
 
   it("shows the empty text without data", () => {

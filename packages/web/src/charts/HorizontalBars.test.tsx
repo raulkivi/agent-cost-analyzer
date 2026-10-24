@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { HorizontalBars } from "./HorizontalBars.js";
 
@@ -63,6 +63,35 @@ describe("HorizontalBars", () => {
     fireEvent.click(row);
     expect(onSelect).toHaveBeenCalledWith("timeout");
     expect(row).toHaveAttribute("aria-pressed", "true");
+  });
+
+  it("offers the same rows as a captioned table, with totals and unknown for a missing value", () => {
+    render(
+      <HorizontalBars
+        ariaLabel="Programs"
+        series={series}
+        rows={[
+          { key: "npm", label: "npm", values: { ok: 9, failed: 3 } },
+          { key: "git", label: "git", values: { ok: 6 } },
+        ]}
+      />,
+    );
+    const toggle = screen.getByRole("button", { name: "View as table" });
+    expect(toggle).toHaveAttribute("aria-pressed", "false");
+
+    fireEvent.click(toggle);
+
+    expect(toggle).toHaveAttribute("aria-pressed", "true");
+    const table = screen.getByRole("table", { name: "Programs" });
+    expect(within(table).getAllByRole("columnheader").map((h) => h.textContent)).toEqual(["Category", "Succeeded", "Failed", "Total"]);
+    expect(within(within(table).getByRole("rowheader", { name: "npm" }).closest("tr")!).getAllByRole("cell").map((c) => c.textContent)).toEqual(["9", "3", "12"]);
+    expect(within(within(table).getByRole("rowheader", { name: "git" }).closest("tr")!).getAllByRole("cell").map((c) => c.textContent)).toEqual(["6", "unknown", "6"]);
+    expect(screen.getByRole("group", { name: "Programs" })).toBeInTheDocument();
+  });
+
+  it("has no toggle without rows", () => {
+    render(<HorizontalBars ariaLabel="x" series={series} rows={[]} />);
+    expect(screen.queryByRole("button", { name: "View as table" })).not.toBeInTheDocument();
   });
 
   it("renders an empty state", () => {
