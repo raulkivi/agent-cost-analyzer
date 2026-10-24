@@ -5,6 +5,22 @@ Status: **in progress (Phase 10).** This plan expands
 [architecture.md](../architecture.md) §12 into concrete, test-first steps.
 Each step's status is recorded under its heading in §6.
 
+Progress (2026-10-24):
+
+| Step | What | State |
+|---|---|---|
+| 10.0 | Runtime check: `node:sqlite` works in VS Code's Electron | Done (#57) |
+| 10.1 | Transport-neutral `ApiService` (server) | Done (#57) |
+| 10.2 | `ApiTransport` seam (web: HTTP or webview) | Done (#57) |
+| 10.3 | Extension package, Copilot-only composition, build, bundle boundary | Done (#63) |
+| 10.4 | VS Code-derived paths and settings, persisted settings, param validation | Done (#64) |
+| 10.5 | Product profile in the UI, host commands, VS Code theme | Done (#66) |
+| 10.6 | Native Sessions/Setup sidebar, status bar, selection sync | Done (#67) |
+| 10.7 | Accessibility, responsive layout, AsyncView, local fonts, walkthrough, l10n | Done (#69) |
+| 10.8 | Copilot-only MCP server in the extension, plus UI follow-ups from 10.7 | In progress |
+| 10.9 | Integration tests in real VS Code, performance budgets, usability run, packaging | Not started |
+
+
 ## 1. Context
 
 The app ships today as two local processes: an Express API on

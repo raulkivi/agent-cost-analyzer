@@ -1773,25 +1773,30 @@ with every provider. A bundle-boundary test fails if Claude Code, pi or
 mitmproxy code reaches the extension bundle. The UI adapts through a
 `ProductProfile` the host supplies, never through product checks inside
 components. Both products ship the same MCP tools, each over its own
-registry. See the plan's §3 for the decisions (D1-D8).
+registry. See the plan's §3 for the decisions (D1-D10).
 
-Per vision §5, the app may later be repackaged as a VS Code webview. Under
-this architecture that means:
-
-- `packages/web` (the SPA) is reused largely as-is inside the webview.
-- `packages/server`'s HTTP layer is replaced by the extension host calling
-  `data-sources/*` and `services/*` directly in-process (via message passing
-  to the webview instead of `fetch`), but the `sqlite`/`jsonl` adapters and
-  `session-enricher` logic do not need to change, since they already only
-  depend on `domain` types and local file/DB paths.
-- The `api-client` module in `packages/web` is the single seam that would be
-  swapped (HTTP calls → `postMessage`/`acquireVsCodeApi` calls); no component
-  or chart code should need to change.
-- `services/config-check`'s warnings (§6.3) get strictly better in the
-  extension form: instead of only text `helpSteps`, a warning's fix action
-  can call `vscode.commands.executeCommand('workbench.action.openSettings',
-  settingId)` to jump straight to the relevant setting — something the
-  standalone web app has no way to do since it has no VS Code API access.
+**As built (steps 10.0-10.7).**
+- **Webview.** `packages/web` runs unchanged inside the webview. Only its
+  `api-client` seam differs: an `ApiTransport` that uses HTTP in the
+  standalone app and `postMessage` in VS Code. Components never check
+  which product they're in. They render from the `ProductProfile` and get
+  host-only actions (open a setting, clipboard, open a read-only document)
+  through a `HostCapabilities` port.
+- **No HTTP server in the extension.** The extension host
+  (`packages/vscode-extension`) calls the same transport-neutral
+  `ApiService` that `app.ts` wraps for HTTP. A `MessageDispatcher`
+  validates every webview request and host command against the schemas in
+  `packages/domain/src/rpc.ts`.
+- **Shared adapters.** The `sqlite`/`jsonl` adapters and `session-enricher`
+  are reused unchanged. Copilot Chat log paths are derived from VS Code's
+  own `globalStorageUri`, and settings are read through VS Code's merged
+  configuration via the `SettingsSource` port.
+- **Setting fixes.** Config warnings get one-click fixes through
+  `workbench.action.openSettings`. Only setting ids that appear in the
+  current warnings are allowed.
+- **Extension-only UI.** A native sidebar (Sessions, Setup), a status-bar
+  AI Credits item, a Get Started walkthrough, and localization through
+  `vscode.l10n`.
 
 **Runtime check (Phase 10.0, 2026-10-24).** Current stable VS Code
 (1.143.0) ships Electron 43.7.7 with Node 24.21.0. `node:sqlite`

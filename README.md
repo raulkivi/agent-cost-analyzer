@@ -63,10 +63,12 @@ cards with corner registration marks, Barlow/Barlow Condensed type.*
   signals (risky commands, anomalies, behaviour changes) that say what
   happened, when and why.
 - [VS Code extension plan](docs/plans/vscode-extension.md) — Phase 10
-  (not started): AI Credits Analyzer, a separate, Copilot-only VS Code
-  extension that shares code with this standalone app (Agent Cost Analyzer). Covers the code analysis, the test-first
-  steps, the product boundary, and shipping to the Marketplace and Open
-  VSX.
+  (in progress: steps 10.0-10.7 done, 10.8-10.9 remaining): AI Credits
+  Analyzer, a separate, Copilot-only VS Code extension in
+  `packages/vscode-extension` that shares code with this standalone app
+  (Agent Cost Analyzer). It covers the code analysis, the test-first steps
+  with their status, the product boundary, and shipping to the Marketplace
+  and Open VSX.
 - [pi-system-prompt-logger](packages/pi-system-prompt-logger/README.md) —
   optional Pi coding-agent extension, vendored in this repo, that captures
   pi's assembled system prompt to a JSONL sidecar log so Analyze mode's
