@@ -5,6 +5,8 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import type { Session, TurnInspectorDetail } from "@copilot-cost-analyzer/domain";
 import { LogProviderRegistry, UnknownLogProviderIdError } from "./registry.js";
 import type { LogProvider, LogProviderAvailability } from "./log-provider.js";
+import { FileAppSettingsStore, type AppSettingsStore } from "./app-settings.js";
+import { InMemoryAppSettingsStore } from "../../test-support/in-memory-app-settings-store.js";
 
 class StubProvider implements LogProvider {
   constructor(
@@ -32,9 +34,11 @@ class StubProvider implements LogProvider {
 
 describe("LogProviderRegistry", () => {
   let dir: string;
+  let settings: AppSettingsStore;
 
   beforeEach(() => {
     dir = mkdtempSync(path.join(tmpdir(), "log-provider-registry-"));
+    settings = new FileAppSettingsStore(dir);
   });
 
   afterEach(() => {
@@ -44,7 +48,7 @@ describe("LogProviderRegistry", () => {
   it("defaults the active provider to 'vscode' on first run", () => {
     const registry = new LogProviderRegistry(
       [new StubProvider("vscode", "VS Code", { available: true })],
-      dir,
+      settings,
     );
 
     expect(registry.getActiveProviderId()).toBe("vscode");
@@ -59,7 +63,7 @@ describe("LogProviderRegistry", () => {
           unavailableReason: "no captures configured",
         }),
       ],
-      dir,
+      settings,
     );
 
     const status = await registry.getStatus();
@@ -81,18 +85,33 @@ describe("LogProviderRegistry", () => {
       new StubProvider("vscode", "VS Code", { available: true }),
       new StubProvider("mitmproxy", "mitmproxy", { available: true }),
     ];
-    const first = new LogProviderRegistry(providers(), dir);
+    const first = new LogProviderRegistry(providers(), settings);
     first.setActive("mitmproxy");
 
-    const second = new LogProviderRegistry(providers(), dir);
+    const second = new LogProviderRegistry(providers(), new FileAppSettingsStore(dir));
 
     expect(second.getActiveProviderId()).toBe("mitmproxy");
+  });
+
+  it("reads and persists the active id through whatever AppSettingsStore it was given (D5)", () => {
+    const store = new InMemoryAppSettingsStore({ activeProviderId: "mitmproxy" });
+    const providers = () => [
+      new StubProvider("vscode", "VS Code", { available: true }),
+      new StubProvider("mitmproxy", "mitmproxy", { available: true }),
+    ];
+    const registry = new LogProviderRegistry(providers(), store);
+
+    expect(registry.getActiveProviderId()).toBe("mitmproxy");
+
+    registry.setActive("vscode");
+
+    expect(store.readActiveProviderId()).toBe("vscode");
   });
 
   it("throws UnknownLogProviderIdError when setting an unregistered id", () => {
     const registry = new LogProviderRegistry(
       [new StubProvider("vscode", "VS Code", { available: true })],
-      dir,
+      settings,
     );
 
     expect(() => registry.setActive("does-not-exist")).toThrow(UnknownLogProviderIdError);
@@ -104,13 +123,13 @@ describe("LogProviderRegistry", () => {
         new StubProvider("vscode", "VS Code", { available: true }),
         new StubProvider("mitmproxy", "mitmproxy", { available: true }),
       ],
-      dir,
+      settings,
     );
     stale.setActive("mitmproxy");
 
     const registry = new LogProviderRegistry(
       [new StubProvider("vscode", "VS Code", { available: true })],
-      dir,
+      settings,
     );
 
     expect(registry.getActiveProviderId()).toBe("vscode");
@@ -129,7 +148,7 @@ describe("LogProviderRegistry", () => {
         new StubProvider("mitmproxy", "mitmproxy", { available: true }),
         thirdProvider,
       ],
-      dir,
+      settings,
     );
 
     registry.setActive("test-only");
@@ -143,7 +162,7 @@ describe("LogProviderRegistry", () => {
   it("getProvider looks a provider up by id without changing the active one", () => {
     const vscode = new StubProvider("vscode", "VS Code", { available: true });
     const other = new StubProvider("other", "Other", { available: true });
-    const registry = new LogProviderRegistry([vscode, other], dir);
+    const registry = new LogProviderRegistry([vscode, other], settings);
 
     expect(registry.getProvider("other")).toBe(other);
     expect(registry.getActiveProviderId()).toBe("vscode");
@@ -153,7 +172,7 @@ describe("LogProviderRegistry", () => {
   it("listProviders returns every registered provider in registration order", () => {
     const vscode = new StubProvider("vscode", "VS Code", { available: true });
     const other = new StubProvider("other", "Other", { available: false });
-    const registry = new LogProviderRegistry([vscode, other], dir);
+    const registry = new LogProviderRegistry([vscode, other], settings);
 
     expect(registry.listProviders()).toEqual([vscode, other]);
   });

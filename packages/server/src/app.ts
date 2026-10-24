@@ -13,10 +13,6 @@ import {
 import { getSessionRow, openReadOnlyDb } from "./data-sources/sqlite/session-store.js";
 import { resolveSystemPromptText } from "./services/session-enricher/analyze-mode-extras.js";
 import { checkConfig } from "./services/config-check/config-check.js";
-import {
-  readMinRetainedSessionLogsThreshold,
-  writeMinRetainedSessionLogsThreshold,
-} from "./data-sources/log-providers/app-settings.js";
 import { UnknownLogProviderIdError } from "./data-sources/log-providers/registry.js";
 import { composeLogProviders, type LogProviderCompositionOptions } from "./composition/compose-log-providers.js";
 import { AuditQueryService } from "./services/tool-audit/audit-query-service.js";
@@ -47,7 +43,7 @@ export function createApp(options: CreateAppOptions = {}): Express {
     resolvedDbPath,
     resolvedDebugLogsDirPaths,
     resolvedVscodeSettingsPath,
-    resolvedAppSettingsDir,
+    appSettings,
   } = composeLogProviders(compositionOptions);
   const auditQueries = new AuditQueryService(registry);
   const insights = createInsightsService(registry);
@@ -74,7 +70,7 @@ export function createApp(options: CreateAppOptions = {}): Express {
     res.json(
       checkConfig({
         settingsPath: resolvedVscodeSettingsPath,
-        minRetainedSessionLogsThreshold: readMinRetainedSessionLogsThreshold(resolvedAppSettingsDir),
+        minRetainedSessionLogsThreshold: appSettings.readMinRetainedSessionLogsThreshold(),
       }),
     );
   });
@@ -85,11 +81,11 @@ export function createApp(options: CreateAppOptions = {}): Express {
       res.status(400).json({ error: "Request body must include a positive integer \"value\"." });
       return;
     }
-    writeMinRetainedSessionLogsThreshold(resolvedAppSettingsDir, value);
+    appSettings.writeMinRetainedSessionLogsThreshold(value);
     res.json(
       checkConfig({
         settingsPath: resolvedVscodeSettingsPath,
-        minRetainedSessionLogsThreshold: readMinRetainedSessionLogsThreshold(resolvedAppSettingsDir),
+        minRetainedSessionLogsThreshold: appSettings.readMinRetainedSessionLogsThreshold(),
       }),
     );
   });

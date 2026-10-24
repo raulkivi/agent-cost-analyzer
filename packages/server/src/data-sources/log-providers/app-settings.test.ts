@@ -2,8 +2,10 @@ import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { describeAppSettingsStoreContract } from "./app-settings-store-contract.js";
 import {
   DEFAULT_ACTIVE_PROVIDER_ID,
+  FileAppSettingsStore,
   readActiveProviderId,
   readMinRetainedSessionLogsThreshold,
   writeActiveProviderId,
@@ -108,5 +110,38 @@ describe("app-settings (retention threshold persistence)", () => {
     } finally {
       rmSync(dir2, { recursive: true, force: true });
     }
+  });
+});
+
+describe("FileAppSettingsStore", () => {
+  let dir: string;
+
+  beforeEach(() => {
+    dir = mkdtempSync(path.join(tmpdir(), "app-settings-store-"));
+  });
+
+  afterEach(() => {
+    rmSync(dir, { recursive: true, force: true });
+  });
+
+  describeAppSettingsStoreContract("FileAppSettingsStore", {
+    buildEmptyStore: () => new FileAppSettingsStore(mkdtempSync(path.join(dir, "store-"))),
+    reopen: (store) => new FileAppSettingsStore((store as FileAppSettingsStore).settingsDir),
+  });
+
+  it("reads and writes the same settings.json the standalone app always used", () => {
+    writeActiveProviderId(dir, "mitmproxy");
+    const store = new FileAppSettingsStore(dir);
+
+    store.writeMinRetainedSessionLogsThreshold(300);
+
+    expect(store.readActiveProviderId()).toBe("mitmproxy");
+    expect(readMinRetainedSessionLogsThreshold(dir)).toBe(300);
+  });
+
+  it("reads undefined (not the default id) for a corrupt settings file", () => {
+    writeFileSync(path.join(dir, "settings.json"), "{not valid json", "utf-8");
+
+    expect(new FileAppSettingsStore(dir).readActiveProviderId()).toBeUndefined();
   });
 });

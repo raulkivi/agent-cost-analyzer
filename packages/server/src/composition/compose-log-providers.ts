@@ -14,6 +14,7 @@ import { resolvePiAgentSessionsDir } from "../platform/pi-agent-paths/resolve-pi
 import { resolvePiSystemPromptLogPath } from "../platform/pi-agent-paths/resolve-pi-system-prompt-log-path.js";
 import { resolveClaudeCodeProjectsDir } from "../platform/claude-code-paths/resolve-claude-code-projects-dir.js";
 import { LogProviderRegistry } from "../data-sources/log-providers/registry.js";
+import { FileAppSettingsStore } from "../data-sources/log-providers/app-settings.js";
 import type { LogProvider } from "../data-sources/log-providers/log-provider.js";
 
 export interface LogProviderCompositionOptions {
@@ -85,13 +86,15 @@ export function composeLogProviders(options: LogProviderCompositionOptions = {})
   const claudeCodeProvider = new ClaudeCodeLogProvider({
     projectsDirPath: resolvedClaudeCodeProjectsDirPath,
   });
+  const appSettings = new FileAppSettingsStore(resolvedAppSettingsDir);
   const registry = new LogProviderRegistry(
     [vscodeProvider, mitmproxyProvider, piAgentProvider, claudeCodeProvider, ...(options.additionalLogProviders ?? [])],
-    resolvedAppSettingsDir,
+    appSettings,
   );
 
   return {
     registry,
+    appSettings,
     piAgentProvider,
     resolvedDbPath,
     resolvedDebugLogsDirPaths,
