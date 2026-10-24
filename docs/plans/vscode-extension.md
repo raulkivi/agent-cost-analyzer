@@ -20,7 +20,7 @@ share most of their code (vision §5).
 
 | | **Extension** | **Standalone app** |
 |---|---|---|
-| Working name (§9 Q1) | "Cost Analyzer for GitHub Copilot" | "Agent Cost Analyzer" |
+| Working name (§9 Q1) | "AI Credits Analyzer" (no "Copilot" in the name, §3.4) | "Agent Cost Analyzer" |
 | Audience | VS Code + GitHub Copilot Chat users (Marketplace, Open VSX) | Developers using several coding agents |
 | Log providers | **VS Code / Copilot Chat only** | VS Code, Claude Code, pi, mitmproxy (all of today's providers) |
 | Learn mode | yes | yes |
@@ -179,7 +179,7 @@ A new schema in `packages/domain`, returned by `getProductProfile` (and by
 
 ```ts
 type ProductProfile = {
-  productId: "copilot-extension" | "standalone";
+  productId: "vscode-extension" | "standalone";
   displayName: string;
   version: string;
   features: {
@@ -193,6 +193,30 @@ type ProductProfile = {
 
 The web app reads this once at startup. Components take the flags they
 need as props (ISP), so no component knows which product it's in.
+
+### 3.4 Naming and Marketplace metadata
+
+The extension's name doesn't include "GitHub Copilot". On the VS Code
+Marketplace the audience is already VS Code users, and Copilot support is
+stated where people search and read instead. This also avoids putting
+another company's trademark in the product name.
+
+- `displayName`: the product name only (working name "AI Credits
+  Analyzer", §9 Q1). The `name` (the Marketplace id) is its kebab-case
+  form, e.g. `ai-credits-analyzer`.
+- `description`: names the use case, e.g. "See where your GitHub Copilot
+  Chat tokens and AI Credits go: prompt caching, per-turn cost, tool-call
+  failures and insights, from your local logs."
+- `keywords` (Marketplace allows at most 30): `copilot`, `github copilot`,
+  `copilot chat`, `ai credits`, `tokens`, `token usage`, `cost`,
+  `prompt caching`, `llm`, `agent`, `mcp`.
+- `categories`: `Visualization`, `AI`, `Chat`, `Other` (only values VS Code
+  accepts for this field).
+- Command, setting and view ids use the product prefix
+  (`aiCreditsAnalyzer.*`), never `copilot*`. Renaming them is free until
+  the first publish, so they follow the final name from §9 Q1.
+- The README and listing refer to GitHub Copilot only to describe what
+  the extension works with.
 
 ## 4. Message protocol
 
@@ -317,7 +341,7 @@ identically.
   - `package.json` with `name` and `displayName` from §9 Q1, `publisher`
     (§9 Q2), its own `version` (D8), `engines.vscode` from 10.0,
     `main: ./dist/extension.js`, `extensionKind: ["workspace"]`, and
-    contributed command `copilotCostAnalyzer.open`. Commands activate
+    contributed command `aiCreditsAnalyzer.open`. Commands activate
     implicitly, with no `*` activation. It also adds a status-bar entry
     point and an `icon`.
   - `src/extension.ts` with `activate`/`deactivate`, wired through a
@@ -412,7 +436,7 @@ identically.
   (contribution `mcpServerDefinitionProviders`). The command is
   `process.execPath` with `ELECTRON_RUN_AS_NODE=1`, so users don't need a
   separate Node install.
-- Gate it behind a setting, `copilotCostAnalyzer.mcp.enabled` (default
+- Gate it behind a setting, `aiCreditsAnalyzer.mcp.enabled` (default
   `false`, with a description that explains what data it exposes),
   because it returns redacted session data to whichever model the chat
   uses (architecture §11.2).
@@ -473,8 +497,9 @@ suite only, to cover the D4 path derivation for real.
   publish a stable even minor.
 - **Marketplace listing:** README (Learn/Analyze/dashboard screenshots), a
   privacy statement ("reads local Copilot Chat logs only; no network; no
-  telemetry"), `CHANGELOG.md`, categories `Visualization` and `Other`, and
-  keywords. It links to the standalone app for users of other agents.
+  telemetry"), `CHANGELOG.md`, and the description, categories and
+  keywords from §3.4. It links to the standalone app for users of other
+  agents.
 
 **Standalone app, on tag `app-v*`.** A GitHub Release with notes only (it
 runs from source), and the root `package.json` version bump. Its
@@ -504,9 +529,9 @@ GitHub Release installs with
 ## 9. Open questions (need a decision before the step named)
 
 1. **Final product names** (before 10.3). The working names are
-   "Cost Analyzer for GitHub Copilot" (extension, following the
-   "X for GitHub Copilot" pattern) and "Agent Cost Analyzer" (standalone).
-   Check GitHub's trademark guidance for the extension name. The repo
+   "AI Credits Analyzer" (extension) and "Agent Cost Analyzer"
+   (standalone). Alternatives for the extension: "Chat Cost Analyzer",
+   "Token Cost Lens". Neither name includes "Copilot" (§3.4). The repo
    name, the internal `@copilot-cost-analyzer/*` package scope and the
    app settings directory stay as they are, to avoid a migration.
 2. **Publisher id** (before 10.3).
