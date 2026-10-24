@@ -171,6 +171,14 @@ flowchart LR
 - **D8: Independent versions and names.** Each product has its own
   version, changelog, tag prefix and listing. The shared packages stay
   private and unversioned.
+- **D9: Minimum VS Code version = the current stable release at the time
+  of each release** (decided 2026-10-24). Every extension release sets
+  `engines.vscode` to `^<current stable>` (e.g. `^1.112.0`). This keeps
+  one supported runtime, so there's no compatibility matrix: one Electron
+  and Node version for `node:sqlite` (R1) and one VS Code API level for
+  MCP registration (D7). The trade-off is that users on an older VS Code
+  keep the last extension version that was compatible with their editor.
+  The Marketplace handles this automatically.
 
 ### 3.3 `ProductProfile`
 
@@ -280,8 +288,7 @@ identically.
 
 ### 10.0 Spike: runtime check (time-boxed, about half a day)
 
-- In a throwaway extension on the minimum supported VS Code version
-  (proposal: the release from 3 months before the start date), confirm
+- In a throwaway extension on the current stable VS Code (D9), confirm
   that `require('node:sqlite')` works in the extension host, read-only,
   without flags (R1). Also confirm that an esbuild CJS bundle of
   `VscodeLogProvider` loads, and that `vscode.lm.registerMcpServerDefinitionProvider`
@@ -346,7 +353,7 @@ identically.
   unchanged.
 - New workspace, `packages/vscode-extension`:
   - `package.json` with `name` and `displayName` from §3.4, `publisher`
-    (§9 Q1), its own `version` (D8), `engines.vscode` from 10.0,
+    (§9 Q1), its own `version` (D8), `engines.vscode` per D9,
     `main: ./dist/extension.js`, `extensionKind: ["workspace"]`, and
     contributed command `aiCreditsAnalyzer.open`. Commands activate
     implicitly, with no `*` activation. It also adds a status-bar entry
@@ -453,7 +460,8 @@ identically.
 
 ### 10.7 Integration tests, remote check, packaging
 
-- `@vscode/test-cli` + `@vscode/test-electron` integration suite. It
+- `@vscode/test-cli` + `@vscode/test-electron` integration suite, run
+  against the `stable` VS Code build (D9). It
   activates the extension, opens the panel, and round-trips `getHealth`,
   `getProductProfile`, `listLearnScenarios` and `getConfigStatus` (temp
   user-data dir with a seeded `settings.json` and `temp-sqlite-db`
@@ -490,13 +498,19 @@ suite only, to cover the D4 path derivation for real.
 **Extension, on tag `ext-v*`.** New workflow
 `.github/workflows/release-extension.yml`:
 
-1. Build and test as in CI.
-2. `vsce publish --packagePath *.vsix` with `VSCE_PAT` (Azure DevOps PAT
+1. **Engine check (D9).** A script reads the current stable version from
+   `https://update.code.visualstudio.com/api/releases/stable` and fails
+   the release if `engines.vscode` doesn't match it. The fix is a one-line
+   bump in the release PR. Only CI makes this network call; the extension
+   itself never does (constraint 1).
+2. Build and test as in CI. The integration tests run on that same
+   stable build.
+3. `vsce publish --packagePath *.vsix` with `VSCE_PAT` (Azure DevOps PAT
    with Marketplace "Manage" scope) as a repository secret, in a
    protected `release` environment with required reviewers.
-3. `ovsx publish *.vsix` with `OVSX_PAT` for Open VSX (VSCodium, Cursor,
+4. `ovsx publish *.vsix` with `OVSX_PAT` for Open VSX (VSCodium, Cursor,
    and others).
-4. Attach the `.vsix` to a GitHub Release named after the extension.
+5. Attach the `.vsix` to a GitHub Release named after the extension.
 
 - **Versioning:** the version lives in `packages/vscode-extension/package.json`
   and starts at `0.1.0`. Use the Marketplace pre-release channel
@@ -536,16 +550,15 @@ GitHub Release installs with
 ## 9. Open questions (need a decision before the step named)
 
 1. **Publisher id** (before 10.3).
-2. **Minimum VS Code version** (10.0): this depends on `node:sqlite` and on
-   the MCP definition-provider API.
-3. **Webview placement:** an editor-area panel only, or also an
+2. **Webview placement:** an editor-area panel only, or also an
    activity-bar view with the session list? Proposal: panel only in v1.
 
 Settled on 2026-10-24: the extension is Copilot-only; it includes the
 tool audit and insights dashboard; both products ship an MCP server; the
 products have separate names (AI Credits Analyzer and Agent Cost
 Analyzer, §3.4) and independent versions; and the standalone app keeps
-VS Code support.
+VS Code support. The minimum VS Code version is the current stable at
+each release (D9).
 
 ## 10. Exit criterion (Phase 10 as a whole)
 
