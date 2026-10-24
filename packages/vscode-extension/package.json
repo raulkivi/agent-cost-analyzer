@@ -1,0 +1,65 @@
+{
+  "name": "ai-credits-analyzer",
+  "displayName": "AI Credits Analyzer",
+  "description": "See where your GitHub Copilot Chat tokens and AI Credits go: prompt caching, per-turn cost, tool-call failures and insights, from your local logs.",
+  "version": "0.1.0",
+  "publisher": "raulkivi",
+  "private": true,
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/raulkivi/copilot-cost-analyzer.git"
+  },
+  "homepage": "https://github.com/raulkivi/copilot-cost-analyzer#readme",
+  "bugs": {
+    "url": "https://github.com/raulkivi/copilot-cost-analyzer/issues"
+  },
+  "keywords": [
+    "copilot",
+    "github copilot",
+    "copilot chat",
+    "ai credits",
+    "tokens",
+    "token usage",
+    "cost",
+    "prompt caching",
+    "llm",
+    "agent",
+    "mcp"
+  ],
+  "categories": [
+    "Visualization",
+    "AI",
+    "Chat",
+    "Other"
+  ],
+  "engines": {
+    "vscode": "^1.143.0"
+  },
+  "extensionKind": [
+    "workspace"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "aiCreditsAnalyzer.open",
+        "title": "Open",
+        "category": "AI Credits Analyzer",
+        "icon": "$(graph)"
+      }
+    ]
+  },
+  "scripts": {
+    "build": "npm run build:extension --prefix ../web && node scripts/build.mts",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "devDependencies": {
+    "@copilot-cost-analyzer/domain": "*",
+    "@copilot-cost-analyzer/server": "*",
+    "@types/vscode": "1.140.0",
+    "esbuild": "^0.28.2",
+    "vitest": "^5.0.3"
+  }
+}

@@ -5,6 +5,7 @@ export default tseslint.config(
   {
     ignores: [
       "**/dist/**",
+      "packages/vscode-extension/media/**",
       "**/node_modules/**",
       "**/coverage/**",
       ".design-sync/previews/**",

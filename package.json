@@ -6,7 +6,7 @@
   "license": "MIT",
   "type": "module",
   "engines": {
-    "node": ">=22"
+    "node": ">=22.18"
   },
   "repository": {
     "type": "git",
@@ -20,7 +20,8 @@
     "packages/domain",
     "packages/server",
     "packages/web",
-    "packages/pi-system-prompt-logger"
+    "packages/pi-system-prompt-logger",
+    "packages/vscode-extension"
   ],
   "scripts": {
     "dev": "npm run dev --workspace=packages/server & npm run dev --workspace=packages/web",

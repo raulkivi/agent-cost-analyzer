@@ -1,0 +1,13 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    // Type-check only: esbuild bundles src/extension.ts (scripts/build.mts),
+    // and Node runs the .mts build scripts directly, which import each other
+    // with their .mts extensions.
+    "noEmit": true,
+    "allowImportingTsExtensions": true,
+    "module": "ESNext",
+    "types": ["node", "vscode"]
+  },
+  "include": ["src", "scripts", "vitest.config.mts"]
+}

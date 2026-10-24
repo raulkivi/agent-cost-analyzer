@@ -4,6 +4,8 @@ node_modules/
 # Build output
 dist/
 build/
+# The extension's webview build (vite build --mode extension) and learn fixtures
+packages/vscode-extension/media/
 *.tsbuildinfo
 
 # Test coverage

@@ -1,21 +1,12 @@
-import { resolveSessionStoreDbPath } from "../data-sources/sqlite/session-store-path.js";
-import { listWorkspaceDebugLogsDirPaths } from "../data-sources/jsonl/session-log-path.js";
-import { resolveAgentTracesDbPath } from "../data-sources/agent-traces/agent-traces-db-path.js";
-import { resolveVscodeSettingsPath } from "../data-sources/vscode-settings/vscode-settings-path.js";
-import { VscodeLogProvider } from "../data-sources/log-providers/vscode/vscode-log-provider.js";
-import { MitmproxyLogProvider } from "../data-sources/log-providers/mitmproxy/mitmproxy-log-provider.js";
-import { defaultMitmExchangeDecoders } from "../data-sources/log-providers/mitmproxy/decoders/default-decoders.js";
-import { resolveMitmproxyCapturesDir } from "../data-sources/log-providers/mitmproxy/resolve-mitmproxy-captures-dir.js";
-import { PiAgentLogProvider } from "../data-sources/pi-agent/pi-agent-log-provider.js";
-import { ClaudeCodeLogProvider } from "../data-sources/claude-code/claude-code-log-provider.js";
 import { resolveAppSettingsDir } from "../platform/app-settings-dir/resolve-app-settings-dir.js";
 import { migrateLegacyAppSettingsDir } from "../platform/app-settings-dir/migrate-legacy-app-settings-dir.js";
-import { resolvePiAgentSessionsDir } from "../platform/pi-agent-paths/resolve-pi-agent-sessions-dir.js";
-import { resolvePiSystemPromptLogPath } from "../platform/pi-agent-paths/resolve-pi-system-prompt-log-path.js";
-import { resolveClaudeCodeProjectsDir } from "../platform/claude-code-paths/resolve-claude-code-projects-dir.js";
 import { LogProviderRegistry } from "../data-sources/log-providers/registry.js";
 import { FileAppSettingsStore } from "../data-sources/log-providers/app-settings.js";
 import type { LogProvider } from "../data-sources/log-providers/log-provider.js";
+import { createVscodeProvider, resolveVscodeSettingsPathOption } from "./providers/create-vscode-provider.js";
+import { createMitmproxyProvider } from "./providers/create-mitmproxy-provider.js";
+import { createPiAgentProvider } from "./providers/create-pi-agent-provider.js";
+import { createClaudeCodeProvider } from "./providers/create-claude-code-provider.js";
 
 export interface LogProviderCompositionOptions {
   sessionStoreDbPath?: string;
@@ -33,63 +24,29 @@ export interface LogProviderCompositionOptions {
   additionalLogProviders?: LogProvider[];
 }
 
-// Shared wiring for every entry point that reads sessions (the HTTP app's
-// ApiService in create-standalone-api-service.ts and the stdio MCP server in
-// mcp/stdio.ts): resolves each local source path (overridable for tests)
-// and builds the provider registry over the file-backed app settings.
+// The standalone app's composition root, shared by every entry point that
+// reads sessions (the HTTP app's ApiService in
+// create-standalone-api-service.ts and the stdio MCP server in
+// mcp/stdio.ts): every provider, built by the same per-provider factories
+// the extension's Copilot-only root (compose-copilot-providers.ts) uses,
+// over the file-backed app settings. Each path is overridable for tests.
 export function composeLogProviders(options: LogProviderCompositionOptions = {}) {
-  const resolvedDbPath =
-    options.sessionStoreDbPath ?? resolveSessionStoreDbPath();
-  const resolvedDebugLogsDirPaths =
-    options.debugLogsDirPaths ?? listWorkspaceDebugLogsDirPaths();
-  const resolvedVscodeSettingsPath =
-    options.vscodeSettingsPath !== undefined
-      ? options.vscodeSettingsPath
-      : resolveVscodeSettingsPath();
-  const resolvedAgentTracesDbPath =
-    options.agentTracesDbPath !== undefined
-      ? options.agentTracesDbPath
-      : resolveAgentTracesDbPath();
+  const vscodeProvider = createVscodeProvider(options);
+  const resolvedVscodeSettingsPath = resolveVscodeSettingsPathOption(options.vscodeSettingsPath);
   if (!options.appSettingsDir) {
     migrateLegacyAppSettingsDir();
   }
   const resolvedAppSettingsDir = options.appSettingsDir ?? resolveAppSettingsDir();
-  const resolvedMitmproxyCapturesDirPath =
-    options.mitmproxyCapturesDirPath !== undefined
-      ? options.mitmproxyCapturesDirPath
-      : resolveMitmproxyCapturesDir(resolvedAppSettingsDir);
-  const resolvedPiAgentSessionsDirPath =
-    options.piAgentSessionsDirPath !== undefined
-      ? options.piAgentSessionsDirPath
-      : resolvePiAgentSessionsDir();
-  const resolvedSystemPromptLogPath =
-    options.systemPromptLogPath !== undefined
-      ? options.systemPromptLogPath
-      : resolvePiSystemPromptLogPath();
-  const resolvedClaudeCodeProjectsDirPath =
-    options.claudeCodeProjectsDirPath !== undefined
-      ? options.claudeCodeProjectsDirPath
-      : resolveClaudeCodeProjectsDir();
 
-  const vscodeProvider = new VscodeLogProvider({
-    sessionStoreDbPath: resolvedDbPath,
-    debugLogsDirPaths: resolvedDebugLogsDirPaths,
-    agentTracesDbPath: resolvedAgentTracesDbPath,
-  });
-  const mitmproxyProvider = new MitmproxyLogProvider({
-    capturesDirPath: resolvedMitmproxyCapturesDirPath,
-    decoders: defaultMitmExchangeDecoders,
-  });
-  const piAgentProvider = new PiAgentLogProvider({
-    sessionsDirPath: resolvedPiAgentSessionsDirPath,
-    systemPromptLogPath: resolvedSystemPromptLogPath,
-  });
-  const claudeCodeProvider = new ClaudeCodeLogProvider({
-    projectsDirPath: resolvedClaudeCodeProjectsDirPath,
-  });
   const appSettings = new FileAppSettingsStore(resolvedAppSettingsDir);
   const registry = new LogProviderRegistry(
-    [vscodeProvider, mitmproxyProvider, piAgentProvider, claudeCodeProvider, ...(options.additionalLogProviders ?? [])],
+    [
+      vscodeProvider,
+      createMitmproxyProvider({ ...options, appSettingsDir: resolvedAppSettingsDir }),
+      createPiAgentProvider(options),
+      createClaudeCodeProvider(options),
+      ...(options.additionalLogProviders ?? []),
+    ],
     appSettings,
   );
 

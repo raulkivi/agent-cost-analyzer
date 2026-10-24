@@ -533,6 +533,52 @@ identically.
   boundary test passes, and running the extension (F5) opens a panel
   showing Learn mode.
 
+**Status (2026-10-24): done.**
+- **Composition.** `composeLogProviders` is split into per-provider
+  factories (`composition/providers/`). `composeCopilotProviders` registers
+  only `vscode`, and `createExtensionApiService` composes the extension's
+  `ApiService` with the "AI Credits Analyzer" `ProductProfile` (setting
+  fixes and open-in-editor stay off until 10.5).
+- **New package.** `packages/vscode-extension` (`raulkivi.ai-credits-analyzer`
+  0.1.0, `engines.vscode ^1.143.0`, `@types/vscode` 1.140.0) contains:
+  - a composition root, `src/composition.ts`;
+  - a singleton panel with the §5 CSP (`panel-html.ts`, `analyzer-panel.ts`);
+  - one `vscode` adapter;
+  - a `MessageDispatcher` that validates the method against
+    `apiMethodSchema`, maps typed errors to 400/404/500, and returns a
+    generic 500 for anything else. This moved forward from 10.4; per-method
+    zod param schemas remain in 10.4.
+- **Settings.** An in-memory `SessionAppSettingsStore` until 10.4's
+  globalState store.
+- **Build.**
+  - esbuild bundle: `scripts/esbuild-options.mts`, CJS,
+    `mainFields: ["module", "main"]`, because jsonc-parser's UMD build
+    can't be bundled.
+  - `vite build --mode extension` writes to `media/` with a relative base
+    and `media/manifest.json`. The learn fixtures are copied to
+    `media/learn-scenarios`.
+  - The build scripts are `.mts` files run directly by Node, which needs
+    Node ≥ 22.18. The root `engines` is raised to match.
+- **G12.** A Vite plugin strips remote CSS `@import`s, in extension mode
+  only. The standalone build is byte-identical.
+- **Bundle-boundary test.** Built in memory from the same options. It
+  failed with 37 leaked inputs on the standalone composition root and
+  flags Express. `bundle-load.test.ts` loads the built bundle with a stub
+  `vscode` and serves Learn mode.
+- **Electron check.** Under Electron 43.7.7: activation, open/reveal, and
+  Learn scenarios over the bridge all work. Setting the provider to
+  `claude-code` gives 400.
+- **Sizes.** `dist/extension.js` is 4.3 MB unminified (mostly gpt-tokenizer
+  and zod) and `media/` is 0.57 MB. Trimming against the 5 MB budget is in
+  10.9.
+- **Deferred.**
+  - The `icon` (PNG ≥ 128 px) moves to 10.9.
+  - VS Code-derived paths and globalState settings are 10.4.
+  - The boundary test covers `dist/mcp-stdio.js` in 10.8.
+  - The real-VS Code F5 check is 10.9, because VS Code can't be downloaded
+    here.
+- **Tests.** 1,590 → 1,663 (server 990, web 528, extension 48).
+
 ### 10.4 Host dispatcher and VS Code adapters
 
 - `src/rpc/message-dispatcher.ts`: tests first. Unknown method → 400,

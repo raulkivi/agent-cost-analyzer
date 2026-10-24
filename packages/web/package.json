@@ -8,6 +8,7 @@
     "dev": "vite",
     "test": "vitest run",
     "build": "vite build",
+    "build:extension": "vite build --mode extension",
     "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.app.json"
   },
   "dependencies": {

@@ -1521,7 +1521,7 @@ The server binds to `localhost` only (see §11.2).
 
 | Layer | Choice | Rationale |
 |---|---|---|
-| Backend language/runtime | TypeScript on Node.js | Same language as frontend and shared domain package; good SQLite and streaming support |
+| Backend language/runtime | TypeScript on Node.js ≥ 22.18 | Same language as frontend and shared domain package; good SQLite and streaming support. 22.18 is the first release that runs `.mts` build scripts directly (type stripping on by default), which the VS Code extension's build uses |
 | Local HTTP server | Express (or Fastify) | Minimal REST surface (§8); no need for anything heavier |
 | SQLite access | `node:sqlite` (`DatabaseSync`, read-only connection) | Built into Node.js (experimental) — synchronous, well-suited to local read-only queries against the store described in vision §18.1, no native-addon dependency to install/audit |
 | `main.jsonl` parsing | Node streams + `readline`, hand-rolled extractor registry (§7) | No fixed schema exists to codegen against; defensive parsing needs full control |
