@@ -93,6 +93,6 @@ content here.
   Copilot-only VS Code extension in `packages/vscode-extension` sharing
   this code) is in progress: steps 10.0-10.8 done, 10.9
   (real-VS Code integration tests, packaging, release workflows) code
-  done with the owner's manual checks open, 10.10 (documentation) not
-  started. The progress
+  done with the owner's manual checks open, 10.10 (documentation)
+  written with screenshots and the owner's review open. The progress
   table and per-step status notes are in docs/plans/vscode-extension.md.

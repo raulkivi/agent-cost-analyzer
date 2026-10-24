@@ -1,10 +1,16 @@
 # User Guide
 
-A walkthrough of the Cost & Token Usage Analyzer's two modes — **Learn** (guided,
-bundled example sessions) and **Analyze** (your own real GitHub Copilot
-Chat sessions) — with screenshots of every major feature. For install
-steps, see the [README](../README.md); for the app's design/architecture,
-see [architecture.md](architecture.md).
+A walkthrough of the Agent Cost Analyzer's two modes — **Learn** (guided,
+bundled example sessions) and **Analyze** (your own real sessions from VS
+Code Copilot Chat, Claude Code, pi or mitmproxy captures) — with
+screenshots of every major feature. For install steps, see the
+[README](../README.md); for the app's design/architecture, see
+[architecture.md](architecture.md).
+
+**Using VS Code with GitHub Copilot Chat?** The AI Credits Analyzer
+extension shows the same views inside VS Code. See the
+[VS Code extension guide](vscode-extension-guide.md). This guide covers the
+standalone app, which also reads Claude Code, pi and mitmproxy sessions.
 
 ## Getting started
 
@@ -92,6 +98,12 @@ happened mid-session — a `compaction` event (shown above), a `tool
 change`, a `model switch`, `/clear`, `/rewind`, cache expiry, or a
 session fork. Most turns have no trigger and show a muted em dash instead.
 
+The **Columns** button above the table (next to "Showing n of 14 columns")
+opens the column chooser: untick any column to hide it, except **Turn**,
+which names the row and always stays. Your choice is remembered. It is
+not offered in the narrow layout; see
+[Narrow and medium windows](#narrow-and-medium-windows).
+
 ### Stepping through turns
 
 Click any row, or drag the **Timeline** scrubber at the bottom of the
@@ -121,7 +133,7 @@ only reads local files.
 
 ### Choosing a log provider
 
-Analyze mode reads from one of three local sources, picked via the **Source**
+Analyze mode reads from one of four local sources, picked via the **Source**
 dropdown that appears in the header once you're in Analyze mode. The same
 header area also holds the **Retention** field described below:
 
@@ -136,6 +148,8 @@ header area also holds the **Retention** field described below:
   single capture is automatically split into separate sessions wherever
   there's a 30+ minute idle gap between requests, so unrelated runs left
   recording in the background don't get mixed into one session.
+- **Claude Code** — reads the Claude Code CLI's own session files directly
+  from `~/.claude/projects/`, one session per file, no capture step needed.
 - **pi coding agent** — reads session logs written by the [pi coding
   agent](https://pi.dev) directly from `~/.pi/agent/sessions/`, no capture
   step needed. Because a pi session can branch (fork/rewind to try a
@@ -301,8 +315,8 @@ of the real error as evidence.
   outcome is known), shell commands, retried commands, recovery rounds, and
   output tokens spent in turns that had a failure.
 - **Outcomes per turn.** Stacked columns per turn. Hover or focus a column
-  for its counts, and click a column to select that turn. **Show table**
-  shows the same numbers as a table.
+  for its counts, and click a column to select that turn. **View as
+  table** shows the same numbers as a table.
 - **Why calls failed** and **Shell programs.** Ranked bars. Click a bar to
   filter the call table below; click it again to clear the filter.
 - **Tool calls table.** Filter chips by outcome, plus the command, outcome,
@@ -422,6 +436,63 @@ What the view shows for the current selection:
   command inside a heredoc that isn't run by a shell (for example a test
   fixture or a doc being written) isn't flagged.
 - **Most expensive sessions**: click one to select it.
+
+## Charts as tables
+
+Every chart has a **View as table** button in its toolbar: the AI Credits
+sparkline, the prompt composition diagram, the tool-audit and dashboard
+columns, and the ranked bars. It swaps the chart for a table of the same
+numbers, and pressing it again returns to the chart. Use it when a chart is
+hard to read (colour, size, a screen reader) or when you want exact values.
+
+## Long loads and cancelling
+
+While the dashboard, the all-sessions audit or a turn's detail loads, a
+progress bar and skeleton show with a **Cancel** button. Cancelling replaces
+the view with "Loading cancelled" and a **Retry** button. Nothing is changed
+either way: these views only read your logs. A load that fails shows the
+error with **Try again** and **Copy details**.
+
+## Narrow and medium windows
+
+The layout follows the width of the app, not only the window:
+
+- **Wide (1100 px and up)** — the three columns described above.
+- **Medium (700-1099 px)** — the right column becomes a drawer. Select a
+  turn and press **Details** (or press Enter on a row) to open it; **Esc**
+  or its close button closes it and returns focus. The turns table scrolls
+  sideways and keeps the **Columns** chooser.
+- **Narrow (under 700 px)** — the center switch becomes a **View** dropdown,
+  the session's KPIs show as 2x2 tiles, and the turns table keeps only
+  Turn, Trigger, AI Credits and Cumulative. The other columns appear in the
+  **Details** drawer for the selected turn. The column chooser isn't offered.
+
+The layout works down to 360 px wide.
+
+## Keyboard use
+
+- **Session list and turns table** — one Tab stop each. Use Up/Down,
+  Home and End to move, and Enter or Space to select. In the medium and
+  narrow layouts, Enter on a turn also opens its Details drawer.
+- **Timeline scrubber** — a slider: arrow keys step through turns.
+- **Column chooser** — Tab to **Columns**, Enter to open, Esc to close and
+  return to the button.
+- **Dialogs and drawers** — the advice export dialog traps focus and closes
+  with Esc; drawers take focus when they open, give it back when they
+  close, and never trap Tab.
+- **System prompt diagram** (the zoomable composition diagram in the
+  [system prompt inspector](#the-system-prompt-inspector)) — one Tab stop.
+  Left/Right move along a level, Home/End jump to the first or last cell,
+  Down goes to a section's first child, Up goes to its parent, and Enter or
+  Space does what a click does: zooms into the section (and selects it), or
+  zooms back out from the focused one.
+- **Charts** — hover tooltips also appear on focus; Enter selects, as a
+  click does.
+
+## Reduced motion
+
+If your system asks for reduced motion (`prefers-reduced-motion`), the app
+turns off transitions, the loading bar's animation and smooth scrolling.
 
 ## License
 

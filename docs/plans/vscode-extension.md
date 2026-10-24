@@ -18,8 +18,8 @@ Progress (2026-10-24):
 | 10.6 | Native Sessions/Setup sidebar, status bar, selection sync | Done (#67) |
 | 10.7 | Accessibility, responsive layout, AsyncView, local fonts, walkthrough, l10n | Done (#69) |
 | 10.8 | Copilot-only MCP server in the extension, plus UI follow-ups from 10.7 | Done (#71); real Copilot agent-mode check in 10.9 |
-| 10.9 | Integration tests in real VS Code, performance budgets, usability run, packaging | Done (#72 pending merge; integration suite green in CI); owner's manual checks open |
-| 10.10 | Documentation: extension README/listing, extension user guide, two-product README and User Guide | Not started |
+| 10.9 | Integration tests in real VS Code, performance budgets, usability run, packaging | Done (#72; integration suite green in CI); owner's manual checks open |
+| 10.10 | Documentation: extension README/listing, extension user guide, two-product README and User Guide | Done (PR pending); screenshots and owner review open |
 
 
 ## 1. Context
@@ -1335,6 +1335,76 @@ root README takes the name **Agent Cost Analyzer**; the repo name
 - **Exit:** the doc checks pass; `vsce package` shows the README,
   CHANGELOG and icon correctly (checked in the packaged `extension/`
   folder); and the owner reviews the rendered extension README and guide.
+
+**Status (2026-10-24): written and checked; screenshots and the owner's
+review are open.**
+
+*Written:*
+- `packages/vscode-extension/README.md`, the Marketplace and Open VSX
+  page: summary, features, getting started, commands, settings, privacy
+  (local Copilot Chat logs only, no network or telemetry, never writes
+  logs or settings, Fix only opens a setting, what the MCP server sends
+  when on, the trust guard), requirements, links (all absolute HTTPS) and
+  a pointer to Agent Cost Analyzer.
+- `docs/vscode-extension-guide.md`: install and uninstall, the
+  walkthrough, the panel (linking the User Guide's sections rather than
+  repeating them), the sidebar, Fix buttons per warning, status bar,
+  every command and setting, the MCP server, remote windows (stated as
+  not yet manually verified), accessibility, troubleshooting, and the
+  exact files read.
+- `packages/vscode-extension/CHANGELOG.md` with its own versions (D8):
+  `[Unreleased]` and an undated `[0.1.0]`, which `release-notes.mts`
+  extracts.
+- Root `README.md` retitled Agent Cost Analyzer, with "Which product
+  should I use?", the doc index, and the Claude Code entry under "How
+  each provider finds your logs" (it was missing).
+- `docs/UserGuide.md`: the new name, a pointer to the extension guide,
+  Claude Code as a source, the column chooser, and sections on charts as
+  tables, cancelling long loads, narrow and medium windows, keyboard use
+  and reduced motion.
+- `docs/threat-model.md`: §6 extension surfaces (webview CSP and
+  `localResourceRoots`, the RPC and host-command allow-lists, read-only
+  documents, settings, the MCP child process and its setting, test hooks)
+  and §7 residual risks (the `@azure/msal-node` advisory, open for the
+  owner's decision; the webview's `style-src 'unsafe-inline'`).
+- `CONTRIBUTING.md`: building, F5, unit and integration tests, packaging
+  and the manual checks.
+
+*Doc checks* (`src/docs.test.ts` over pure helpers in
+`src/docs/markdown.ts`: GitHub heading slugs, anchors, link extraction):
+every contributed command, setting and view is in the guide; the
+extension README has only absolute HTTPS links and images, no SVG, and
+any URL into this repo's `main` names an existing file and heading; no
+"Copilot" in the product's name; every relative link and anchor in the
+root README, User Guide, extension guide, CONTRIBUTING, threat model and
+extension CHANGELOG resolves. Mutation-checked: 7 deliberate breakages
+each failed a test.
+
+*Packaging:* the VSIX now ships the README and CHANGELOG (37 files,
+2.6 MB), with no vsce warnings.
+
+*Corrections found while writing (checked in code):*
+- Fix buttons and `openSetting` only open the Settings editor; the
+  extension never writes VS Code settings. The `settings-not-found`
+  warning can't occur in the extension.
+- The panel follows VS Code's UI font (`--vscode-font-family`), not the
+  editor font.
+
+*Open:*
+- Screenshots: the docs carry `<!-- screenshot: <name>.png -->` markers;
+  the images (manual-checks §4) are added after the owner's run. The doc
+  checks then require each referenced image to exist.
+- The owner reviews the rendered README and guide.
+- No `icon` yet (owner).
+- The guide's install routes via Marketplace/Open VSX work only once
+  published.
+- Not tried in a browser: that the column choice is remembered and that
+  the timeline scrubber takes arrow keys (both follow from the code).
+
+*TDD:* the Markdown helpers and doc checks were red first (missing module,
+then 20 failures on the missing docs); the prose isn't test-driven.
+
+*Tests:* 2,647 → 2,698 (extension 535).
 
 ## 7. Deployment
 
