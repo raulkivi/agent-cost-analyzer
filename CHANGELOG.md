@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- Phase 10.5, AI Credits Analyzer (not yet published).
+  - Config warnings have Enable/Change buttons that open the exact VS Code
+    setting.
+  - The system prompt opens in an editor tab, and copying uses VS Code's
+    clipboard.
+  - The UI follows your VS Code theme and font.
+  - Provider pickers and cross-provider wording are hidden, because the
+    extension reads only Copilot Chat logs.
 - Phase 10.4, AI Credits Analyzer (not yet published).
   - Copilot Chat log paths are derived from VS Code's own storage location,
     so the extension works on Linux, macOS, Windows, Insiders, portable and
@@ -40,6 +48,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   on `GET /api/sessions/:id/tool-calls`). Plan: `docs/plans/mcp-tools-v2.md`.
 
 ### Changed
+- The standalone app's header now shows its product name, "Agent Cost
+  Analyzer", from `GET /api/product`.
 - The config check reads settings through a `SettingsSource` port. The
   standalone app still reads the user `settings.json`, and its output is
   unchanged.
