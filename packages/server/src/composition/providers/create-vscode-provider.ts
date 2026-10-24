@@ -5,9 +5,10 @@ import { resolveVscodeSettingsPath } from "../../data-sources/vscode-settings/vs
 import { VscodeLogProvider } from "../../data-sources/log-providers/vscode/vscode-log-provider.js";
 
 // Each path is overridable (tests, and the extension's VS Code-supplied
-// paths, D4); an omitted one resolves to this machine's default.
+// paths, D4); an omitted one resolves to this machine's default, and an
+// explicit null means "none".
 export interface VscodeProviderPaths {
-  sessionStoreDbPath?: string;
+  sessionStoreDbPath?: string | null;
   debugLogsDirPaths?: string[];
   agentTracesDbPath?: string | null;
 }
@@ -16,7 +17,7 @@ export interface VscodeProviderPaths {
 // (vscode-extension.md G11).
 export function createVscodeProvider(paths: VscodeProviderPaths = {}): VscodeLogProvider {
   return new VscodeLogProvider({
-    sessionStoreDbPath: paths.sessionStoreDbPath ?? resolveSessionStoreDbPath(),
+    sessionStoreDbPath: paths.sessionStoreDbPath !== undefined ? paths.sessionStoreDbPath : resolveSessionStoreDbPath(),
     debugLogsDirPaths: paths.debugLogsDirPaths ?? listWorkspaceDebugLogsDirPaths(),
     agentTracesDbPath: paths.agentTracesDbPath !== undefined ? paths.agentTracesDbPath : resolveAgentTracesDbPath(),
   });

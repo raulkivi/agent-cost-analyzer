@@ -2,7 +2,7 @@ import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { resolveCopilotChatGlobalStorageFile } from "./copilot-chat-global-storage-path.js";
+import { copilotChatGlobalStoragePath, resolveCopilotChatGlobalStorageFile } from "./copilot-chat-global-storage-path.js";
 
 describe("resolveCopilotChatGlobalStorageFile", () => {
   let fakeHome: string;
@@ -80,5 +80,13 @@ describe("resolveCopilotChatGlobalStorageFile", () => {
         homeDir: fakeHome,
       }),
     ).toBe(path.join(globalStorageDir, "session-store.db"));
+  });
+});
+
+describe("copilotChatGlobalStoragePath", () => {
+  it("builds the path under a given user-data dir without touching the disk", () => {
+    expect(copilotChatGlobalStoragePath(path.join("/x", "Code"), "session-store.db")).toBe(
+      path.join("/x", "Code", "User", "globalStorage", "github.copilot-chat", "session-store.db"),
+    );
   });
 });

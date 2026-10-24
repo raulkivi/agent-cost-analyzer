@@ -7,6 +7,13 @@ interface ResolveCopilotChatGlobalStorageFileOptions {
   homeDir?: string;
 }
 
+// The path of a file under Copilot Chat's globalStorage inside a known
+// user-data dir, whether or not it exists yet — the extension hands this
+// to a provider that opens it lazily (vscode-extension.md D4).
+export function copilotChatGlobalStoragePath(userDataDir: string, fileName: string): string {
+  return path.join(userDataDir, "User", "globalStorage", "github.copilot-chat", fileName);
+}
+
 // Shared path construction for any file the GitHub Copilot Chat extension
 // writes under its own globalStorage directory (session-store.db,
 // agent-traces.db, ...) — one place so the directory segments can't drift
@@ -20,12 +27,6 @@ export function resolveCopilotChatGlobalStorageFile(
     return null;
   }
 
-  const filePath = path.join(
-    userDataDir,
-    "User",
-    "globalStorage",
-    "github.copilot-chat",
-    fileName,
-  );
+  const filePath = copilotChatGlobalStoragePath(userDataDir, fileName);
   return existsSync(filePath) ? filePath : null;
 }

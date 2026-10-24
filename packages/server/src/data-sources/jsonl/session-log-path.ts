@@ -3,6 +3,9 @@ import path from "node:path";
 import { resolveUserDataDir } from "../../platform/vscode-paths/resolve-user-data-dir.js";
 
 interface ListWorkspaceDebugLogsDirPathsOptions {
+  // A user-data dir known up front (the extension derives it from VS Code,
+  // D4); when given, platform and homeDir are not consulted.
+  userDataDir?: string;
   platform?: NodeJS.Platform;
   homeDir?: string;
 }
@@ -23,7 +26,7 @@ const SESSION_ID_PATTERN = /^[a-zA-Z0-9-]+$/;
 export function listWorkspaceDebugLogsDirPaths(
   options: ListWorkspaceDebugLogsDirPathsOptions = {},
 ): string[] {
-  const userDataDir = resolveUserDataDir(options);
+  const userDataDir = options.userDataDir ?? resolveUserDataDir(options);
   if (!userDataDir) {
     return [];
   }

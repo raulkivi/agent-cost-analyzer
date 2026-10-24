@@ -7,6 +7,11 @@ interface ResolveVscodeSettingsPathOptions {
   homeDir?: string;
 }
 
+// <userData>/User/settings.json, whether or not it exists.
+export function userSettingsFilePath(userDataDir: string): string {
+  return path.join(userDataDir, "User", "settings.json");
+}
+
 export function resolveVscodeSettingsPath(
   options: ResolveVscodeSettingsPathOptions = {},
 ): string | null {
@@ -15,6 +20,6 @@ export function resolveVscodeSettingsPath(
     return null;
   }
 
-  const settingsPath = path.join(userDataDir, "User", "settings.json");
+  const settingsPath = userSettingsFilePath(userDataDir);
   return existsSync(settingsPath) ? settingsPath : null;
 }

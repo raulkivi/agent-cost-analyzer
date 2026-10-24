@@ -112,3 +112,27 @@ describe("resolveMainJsonlPath", () => {
     expect(resolveMainJsonlPath([], "session-1")).toBeNull();
   });
 });
+
+describe("listWorkspaceDebugLogsDirPaths with an explicit userDataDir (vscode-extension.md D4)", () => {
+  let userDataDir: string;
+
+  beforeEach(() => {
+    userDataDir = mkdtempSync(path.join(tmpdir(), "session-log-path-userdata-"));
+  });
+
+  afterEach(() => {
+    rmSync(userDataDir, { recursive: true, force: true });
+  });
+
+  it("lists that dir's workspaces, ignoring the machine's default VS Code install", () => {
+    mkdirSync(path.join(userDataDir, "User", "workspaceStorage", "abc"), { recursive: true });
+
+    expect(listWorkspaceDebugLogsDirPaths({ userDataDir, platform: "darwin", homeDir: "/nonexistent" })).toEqual([
+      path.join(userDataDir, "User", "workspaceStorage", "abc", "GitHub.copilot-chat", "debug-logs"),
+    ]);
+  });
+
+  it("returns [] when it has no workspaceStorage yet", () => {
+    expect(listWorkspaceDebugLogsDirPaths({ userDataDir })).toEqual([]);
+  });
+});
