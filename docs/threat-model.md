@@ -3,6 +3,9 @@
 Reviewed against the codebase as of `e7bd2c2` (2026-09-09). Verified by
 reading the actual routes, SQL access, session-ID resolution, redaction
 logic, and network bindings — not assumed from the architecture docs alone.
+Section 6 (the AI Credits Analyzer VS Code extension) was reviewed
+against `5d3c7c1` (2026-10-24) the same way, by reading
+`packages/vscode-extension/src`.
 
 ## 1. System summary
 
@@ -116,3 +119,29 @@ closed by the Host-header guard in §4) showed an exploitable gap —
 the existing patterns (parameterized queries, hash-based session IDs
 instead of path concatenation, strict same-origin binding, no raw-HTML
 rendering) are all real, deliberate mitigations already in place.
+
+## 6. VS Code extension surfaces (AI Credits Analyzer)
+
+The extension (`packages/vscode-extension`) runs the same analysis code
+without the HTTP server: no port is opened, so sections 3 and 4's loopback
+and CORS findings don't apply to it. It adds the surfaces below. The
+trust boundary is VS Code's: the extension host (trusted code, running as
+the OS user), the webview (untrusted content, treated like a web page) and
+an optional MCP child process.
+
+| Surface | Threat | Verified finding |
+|---|---|---|
+| Webview (`panel/panel-html.ts`, `panel/analyzer-panel.ts`) | XSS, script injection, data exfiltration from the UI | **Mitigated.** The page's CSP is `default-src 'none'; script-src 'nonce-<n>'; style-src <cspSource> 'unsafe-inline'; img-src <cspSource> data:; font-src <cspSource>; connect-src 'none'`. Scripts need the per-render nonce, which is validated as base64 before it is used. `connect-src 'none'` makes "no network from the UI" enforced rather than a convention. `localResourceRoots` is only the extension's `media/` folder, so the webview can't load the user's log files. `retainContextWhenHidden` is off. `style-src` allows inline styles, which is a residual risk only for styling, not script. |
+| Webview to host RPC (`rpc/message-dispatcher.ts`) | A compromised or prompt-injected webview calling the host | **Mitigated.** The webview is treated as untrusted. Each request's `method` must be in the domain's allow-list (`apiMethodSchema`) and its params must pass that method's zod schema, else the host replies 400; ApiService validates the values again. Internal errors reach the webview only as a generic 500. `cancel` just makes the host drop a pending reply. `perfMark` is one-way: its name must be `first-render` or `data-ready`, its time a finite number between 0 and 24 hours, and a malformed one is dropped with no reply. |
+| Host commands (`rpc/host-command-handler.ts`, `vscode/vscode-host-commands.ts`) | Using the webview to steer the editor | **Mitigated.** Only `openSetting`, `copyToClipboard` and `openTextDocument` exist, each with a zod-checked argument shape. `openSetting` is allowed only for the settings the current config status warns about plus the two Copilot logging settings, so the webview can't point the user at an arbitrary setting. `openTextDocument` text is capped at 5 Mi characters and the language is one of plaintext, markdown or json. |
+| Read-only documents (`vscode/vscode-read-only-documents.ts`, `documents/read-only-document-store.ts`) | Editing or saving content by accident; unbounded memory | **Mitigated.** A system prompt or advice bundle opens through a `TextDocumentContentProvider` under its own URI scheme, so the editor can't edit or save it and no file is written. The backing store holds at most 20 documents and drops the oldest; each path is used once, so a stale link can't show a newer document. |
+| Settings changes | Silent changes to the user's VS Code configuration | **Mitigated.** The extension never writes VS Code settings. The Setup view's Fix buttons and the webview's `openSetting` only open VS Code's Settings editor on the named setting (`workbench.action.openSettings`); the user makes the change. The extension's own state (active provider, retention threshold, walkthrough shown) is kept in `globalState`. |
+| MCP child process (`mcp/stdio.ts`, `mcp/mcp-server-args.ts`, `mcp/mcp-server-definitions.ts`) | Argument injection, file reads outside VS Code's logs, network use, leaking data to a model | **Mitigated, with the data flow accepted.** VS Code starts `dist/mcp-stdio.js` itself, without a shell. Its one input is `--user-data-dir <path>`, checked before anything is read: exactly that flag and value, an absolute, already-normalized path (no `..`, no doubled or trailing separator, not the root, no control characters) that contains VS Code's `User` folder; otherwise it exits 2. The only environment variable the extension passes is `ELECTRON_RUN_AS_NODE=1`; the code reads no other environment input. stdout carries JSON-RPC only; diagnostics go to stderr. All tools are annotated read-only and the process makes no network calls and writes no files. Free text it returns is redacted and truncated first. By design, what a tool returns goes to whichever chat model the user is using, which is why the server is off by default. |
+| `aiCreditsAnalyzer.mcp.enabled` | Workspace-controlled opt-in to the data flow above | **Mitigated, with a trusted-workspace case accepted.** The setting defaults to `false`, and is listed in `capabilities.untrustedWorkspaces.restrictedConfigurations`, so a workspace in Restricted Mode can't turn it on through `.vscode/settings.json`. A workspace the user has chosen to trust can, and that is accepted: trusting a workspace already lets it run code and tasks. Turning it off removes the server without a reload. |
+| Test hooks (`diagnostics/test-hooks.ts`, `extension.ts`) | A command that exposes internals in a normal install | **Mitigated.** The `aiCreditsAnalyzer.internal.*` commands (timing marks, RPC trace, tree nodes, MCP definitions) are registered only when VS Code runs the extension in `ExtensionMode.Test`, and `package.json` never contributes them. An installed copy has none, and the extension returns no API object for other extensions. |
+
+## 7. Residual risks
+
+| Risk | Detail | Status |
+|---|---|---|
+| `npm audit`: GHSA-xcx6-jx8p-x3h5 in `@azure/msal-node` 6.0.1 | Pulled in only by the dev-only `@vscode/vsce` through `@azure/identity`. It is never shipped in the VSIX (`vsce package --no-dependencies`, and the bundle is built by esbuild). Packaging never signs in. Publishing signs in through the `az` CLI credential, not the authorization-code flow the advisory affects. No `@azure/identity` version that vsce 4 accepts avoids it. | **Open, owner decision pending.** Recommendation: accept as dev-only and unreachable, and revisit when vsce updates its dependency. |

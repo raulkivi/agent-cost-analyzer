@@ -1,6 +1,6 @@
 # Contributing
 
-Thanks for helping improve Copilot Cost Analyzer. This is a personal project
+Thanks for helping improve Agent Cost Analyzer (this repo, `copilot-cost-analyzer`, also builds the AI Credits Analyzer VS Code extension). This is a personal project
 maintained on a best-effort basis, so replies may take a few days.
 
 By participating you agree to follow the [Code of Conduct](CODE_OF_CONDUCT.md).
@@ -36,7 +36,41 @@ npm run dev      # server and web app together
 
 The repo is an npm workspace: `packages/domain` (shared zod schemas),
 `packages/server` (Express API and log providers), `packages/web` (Vite and
-React UI) and `packages/pi-system-prompt-logger` (optional Pi extension).
+React UI), `packages/pi-system-prompt-logger` (optional Pi extension) and
+`packages/vscode-extension` (the AI Credits Analyzer VS Code extension, which
+reuses the other packages).
+
+## Working on the VS Code extension
+
+The extension is in `packages/vscode-extension`; see the
+[extension guide](docs/vscode-extension-guide.md) for what it does. From the
+repo root, after `npm ci`:
+
+```sh
+npm run build --workspace=packages/vscode-extension   # builds the web app in extension mode first, then bundles the extension into dist/
+npm test --workspace=packages/vscode-extension        # unit tests (Vitest, no VS Code needed; CI runs them after the build)
+npm run test:integration --workspace=packages/vscode-extension   # downloads and drives a real VS Code
+npm run package --workspace=packages/vscode-extension # writes a .vsix next to the package
+```
+
+- **Run it with F5.** The repo ignores `.vscode/`, so there is no checked-in
+  launch configuration. Open `packages/vscode-extension` as the VS Code
+  folder, add a `.vscode/launch.json` locally with an `extensionHost`
+  configuration whose `args` include
+  `--extensionDevelopmentPath=${workspaceFolder}`, build as above, then
+  press F5. A new Extension Development Host window opens with the
+  extension loaded; reload that window after each build.
+- **Integration tests** need a display and download VS Code on first run.
+  CI runs them under `xvfb-run`; on a headless Linux machine do the same:
+  `xvfb-run -a npm run test:integration --workspace=packages/vscode-extension`.
+  Run `npm run build` first.
+- **Install a VSIX.** After `npm run package`, use *Extensions: Install from
+  VSIX...* in the Command Palette and pick the file. The extension isn't
+  published to a marketplace yet, so this is how to try a build.
+- **Manual checks.** Some things no test can drive (the usability script, the
+  MCP server in Copilot agent mode, remote windows). Release candidates are
+  checked by hand against
+  [docs/plans/vscode-extension-manual-checks.md](docs/plans/vscode-extension-manual-checks.md).
 
 ## Making a change
 
