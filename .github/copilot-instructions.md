@@ -69,3 +69,10 @@ against the implementation and tests:
 - Keep diagrams focused by concern rather than creating one unreadable graph.
   Update the corresponding explanatory text and tests when a relationship or
   invariant changes.
+
+<!-- mermaid-ai-skills:start -->
+## Mermaid Diagrams
+
+When the user asks to create, edit, or visualize a diagram, follow the
+instructions in `.github/instructions/mermaid.instructions.md`.
+<!-- mermaid-ai-skills:end -->
