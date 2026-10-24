@@ -47,3 +47,5 @@ ds-bundle/
 .idea
 .vscode
 mitm/
+# Claude Code sub-agent worktrees (temporary, local only)
+.claude/worktrees/

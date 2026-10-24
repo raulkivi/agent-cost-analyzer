@@ -10,6 +10,7 @@ export default tseslint.config(
       ".design-sync/previews/**",
       "ds-bundle/**",
       ".ds-sync/**",
+      ".claude/worktrees/**",
       "packages/web/ds-sync-entry.ts",
     ],
   },
