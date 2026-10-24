@@ -17,7 +17,7 @@ Progress (2026-10-24):
 | 10.5 | Product profile in the UI, host commands, VS Code theme | Done (#66) |
 | 10.6 | Native Sessions/Setup sidebar, status bar, selection sync | Done (#67) |
 | 10.7 | Accessibility, responsive layout, AsyncView, local fonts, walkthrough, l10n | Done (#69) |
-| 10.8 | Copilot-only MCP server in the extension, plus UI follow-ups from 10.7 | In progress |
+| 10.8 | Copilot-only MCP server in the extension, plus UI follow-ups from 10.7 | Done (PR pending); real Copilot agent-mode check in 10.9 |
 | 10.9 | Integration tests in real VS Code, performance budgets, usability run, packaging | Not started |
 
 
@@ -1023,8 +1023,93 @@ is verified in jsdom at those widths, not visually.
   read-only tools, and `get_session_cost` answers for a real Copilot
   session. With it off, no server is registered.
 
+**Status (2026-10-24): done, except the real-VS Code exit check.**
+
+*MCP server:*
+- `createMcpServices(registry, version)` is now the single wiring of the
+  MCP services; the standalone `mcp/stdio.ts` uses it.
+  `createCopilotMcpServices({sessionStoreDbPath, debugLogsDirPaths,
+  agentTracesDbPath, appVersion})` runs it over `composeCopilotProviders`
+  with a settings store that never writes. Tests: same 9 tools, prompts
+  and instructions as the standalone server (`toEqual`); only `vscode`
+  is listed; `get_cost_rollup` reports only `vscode`; every `provider`
+  argument naming another provider gets the standard "unknown provider"
+  error.
+- `src/mcp/stdio.ts` is bundled as `dist/mcp-stdio.js` (plus
+  `dist/meta-mcp-stdio.json`). Its only input is `--user-data-dir <path>`
+  (`parseMcpServerArgs`): an absolute, normalized path with a `User`
+  folder, no control characters, no other arguments, no env vars. A bad
+  command line exits with 2 and a usage line on stderr; stdout carries
+  only JSON-RPC.
+- The bundle-boundary test runs over both bundles. A deliberate
+  `composeLogProviders` entry made it fail with 37 leaked modules. The
+  MCP bundle contains none of the host's `vscode/`, `panel/`, `sidebar/`
+  or `rpc/` code. A bundle-level test spawns the real `dist/mcp-stdio.js`
+  and speaks raw JSON-RPC.
+- Registration: contribution `mcpServerDefinitionProviders`
+  (`aiCreditsAnalyzer.mcp`). The decision logic
+  (`mcp-server-definitions.ts`) has no `vscode` import; a thin adapter
+  calls `vscode.lm.registerMcpServerDefinitionProvider`. The command is
+  `process.execPath` with `ELECTRON_RUN_AS_NODE=1`. The change event fires
+  only when `aiCreditsAnalyzer.mcp.enabled` changes.
+- The setting is `scope: "machine"`, so a cloned repo's
+  `.vscode/settings.json` can't turn it on (not in the original plan; added
+  in review).
+- Walkthrough step 5 is real: it links the setting and completes on
+  `onSettingChanged:aiCreditsAnalyzer.mcp.enabled`; `mcp.md` explains what
+  the model sees. `fixSetting` accepts the setting; the webview's
+  `openSetting` allow-list doesn't.
+
+*UI follow-ups from 10.7:*
+- `ChartDataTable` (caption, column and row headers; `null` shows
+  "unknown", never 0) and a `ViewAsTable` toggle (`aria-pressed`) on all
+  five charts: sparkline, horizontal bars, stacked columns, trend columns
+  and the icicle. Axe passes in all four theme fixtures in table view.
+- The icicle is `role="group"` of `role="button"` cells with a roving
+  tabindex: Left/Right along a level, Home/End, Down to the first child,
+  Up to the parent, Enter/Space as a click.
+- The column chooser closes on an outside `pointerdown` (focus stays
+  where it is); Escape still returns focus to the toggle.
+- Cancel: `{kind:"cancel", id}` (`rpcCancelSchema`) in the webview RPC;
+  `ApiTransport.call(method, params?, signal?)`; `HttpTransport` passes the
+  signal to `fetch`; `WebviewTransport` posts the cancel and rejects with
+  `AbortError`. The host dispatcher drops the reply to a cancelled request;
+  the synchronous `ApiService` call itself isn't interrupted. A shared
+  `useCancellableLoad` hook gives Insights, the audit rollup and the turn
+  inspector a Cancel button and a "Loading cancelled" state with Retry.
+
+*Deviations:*
+- The exit check (Copilot agent mode lists the tools, `get_session_cost`
+  on a real session) needs a real VS Code and moves to 10.9. It's
+  verified here by spawning the bundle and through the stubbed
+  `vscode.lm` in `bundle-load.test.ts`.
+- The extension's MCP server reuses `createMcpServer` unchanged, so its
+  name (`copilot-cost-analyzer`), instructions and `provider` argument
+  descriptions still mention the other providers. A product-specific
+  name and instructions are a small option on `createMcpServer`, for 10.9.
+- `dist/mcp-stdio.js` is 5.15 MB and `dist/extension.js` 4.37 MB
+  unminified; the 5 MB VSIX budget is handled in 10.9 (minify;
+  `.vscodeignore` must also exclude `meta-mcp-stdio.json`).
+- Node prints an `ExperimentalWarning` for SQLite on stderr at startup.
+- The signal is threaded only through the four long-load api-client
+  functions; `SessionAuditPanel` has no Cancel.
+- No guard for a missing `vscode.lm` (D9 makes it always present).
+- New devDependency: `@modelcontextprotocol/sdk` in the extension.
+
+*TDD exceptions to red-first:* three refactors done while green (`stdio.ts`
+onto `createMcpServices`, the shared esbuild options, a generic adapter);
+the `copilot-session-store` test helper written with its code; the new
+axe table tests and two column-chooser guard tests green on first run.
+
+*Tests:* 2,380 → 2,541 (domain 125, server 1,033, web 978, extension 390).
+
 ### 10.9 Integration tests, remote check, packaging
 
+- Carried over from 10.8: the integration suite checks that, with
+  `aiCreditsAnalyzer.mcp.enabled` on, Copilot Chat agent mode lists the 9
+  tools and `get_session_cost` answers for a real Copilot session (off:
+  no server). Give the extension's MCP server its own name and
+  Copilot-only instructions through an option on `createMcpServer`.
 - Performance budgets from §3.5. The webview posts its "first-render"
   and "data-ready" timing marks (emitted since 10.7) to the host through a
   host event or command. The integration suite asserts the budgets from

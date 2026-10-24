@@ -1221,8 +1221,8 @@ Copilot-only product that shares code with the standalone app (**Agent Cost
 Analyzer**, vision §5). The standalone app keeps every provider. Brought
 into scope on 2026-10-24. Previously this was a deferred "future path".
 
-**Status (2026-10-24)**: steps 10.0-10.7 done, 10.8 in progress, 10.9 not
-started. Each step's details and deviations are in its status note in the
+**Status (2026-10-24)**: steps 10.0-10.8 done (10.8's real Copilot agent-mode
+check moves to 10.9), 10.9 not started. Each step's details and deviations are in its status note in the
 plan's §6.
 
 | Step | What | State |
@@ -1235,7 +1235,7 @@ plan's §6.
 | 10.5 | Product profile in the UI, host commands, VS Code theme | Done (#66) |
 | 10.6 | Native Sessions/Setup sidebar, status bar, selection sync | Done (#67) |
 | 10.7 | Accessibility, responsive layout, AsyncView, local fonts, walkthrough, l10n | Done (#69) |
-| 10.8 | Copilot-only MCP server in the extension, plus UI follow-ups from 10.7 | In progress |
+| 10.8 | Copilot-only MCP server in the extension, plus UI follow-ups from 10.7 | Done (PR pending); real Copilot agent-mode check in 10.9 |
 | 10.9 | Integration tests in real VS Code, performance budgets, usability run, packaging | Not started |
 
 **Not yet verified**: the extension has run only on the Electron build

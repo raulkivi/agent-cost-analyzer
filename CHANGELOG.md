@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- Phase 10.8.
+  - **AI Credits Analyzer:** a Copilot-only MCP server that Copilot Chat
+    agent mode can use (the same 9 read-only tools as the standalone
+    server, Copilot sessions only). Off until you turn on
+    `aiCreditsAnalyzer.mcp.enabled` in your user settings; walkthrough
+    step 5 explains what it shares.
+  - **Both products:**
+    - "View as table" for every chart;
+    - keyboard access to the system-prompt diagram;
+    - the column chooser closes on an outside click;
+    - Cancel for long loads (insights, tool audit, turn inspector).
 
 ## [0.9.0] - 2026-10-24
 ### Added
