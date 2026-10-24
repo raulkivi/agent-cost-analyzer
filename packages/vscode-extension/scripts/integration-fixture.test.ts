@@ -6,7 +6,8 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { createExtensionApiService } from "@copilot-cost-analyzer/server/src/composition/create-extension-api-service";
 import { InMemoryAppSettingsStore } from "@copilot-cost-analyzer/server/src/test-support/in-memory-app-settings-store";
 import { copilotLogPathsFromUserDataDir } from "../src/platform/copilot-log-paths.js";
-import { createIntegrationFixture, INTEGRATION_FIXTURE_ENV } from "./integration-fixture.mts";
+import { parseIntegrationFixture } from "./integration-fixture-env.mts";
+import { createIntegrationFixture } from "./integration-fixture.mts";
 
 const learnScenariosFixturesDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../server/fixtures/learn-scenarios");
 const NOW = new Date("2026-10-24T12:00:00Z");
@@ -80,7 +81,9 @@ describe("createIntegrationFixture (step 10.9)", () => {
     expect(() => createIntegrationFixture(rootDir, { sessionCount: 0 })).toThrow(/at least 1/);
   });
 
-  it("names the environment variable the suite reads it from", () => {
-    expect(INTEGRATION_FIXTURE_ENV).toBe("AI_CREDITS_ANALYZER_INTEGRATION_FIXTURE");
+  it("describes itself in the form the suite reads back from the environment", () => {
+    const fixture = createIntegrationFixture(rootDir, { sessionCount: 1, now: NOW });
+
+    expect(parseIntegrationFixture(JSON.stringify(fixture))).toEqual(fixture);
   });
 });

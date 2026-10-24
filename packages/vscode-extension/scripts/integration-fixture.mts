@@ -11,18 +11,7 @@ import {
   USAGE_SESSION_ID,
   writeUsageDebugLog,
 } from "../../server/src/test-support/copilot-session-store.ts";
-
-// How the suite, inside VS Code, learns about the fixture: JSON in this
-// environment variable (@vscode/test-cli passes `env` on to VS Code).
-export const INTEGRATION_FIXTURE_ENV = "AI_CREDITS_ANALYZER_INTEGRATION_FIXTURE";
-
-export interface IntegrationFixture {
-  userDataDir: string;
-  // The session with a debug log: real token and AI Credits numbers.
-  usageSessionId: string;
-  usageSessionTitle: string;
-  sessionCount: number;
-}
+import type { IntegrationFixture } from "./integration-fixture-env.mts";
 
 export interface IntegrationFixtureOptions {
   // Sessions in the store, the usage session included. 200 by default:
