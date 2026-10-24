@@ -40,7 +40,7 @@ describe("buildPanelHtml (vscode-extension.md §5)", () => {
 
   it("puts the nonce on every script tag", () => {
     const html = render();
-    const scripts = html.match(/<script\b[^>]*>/g) ?? [];
+    const scripts = html.match(/<script\b[^>]*>/gi) ?? [];
 
     expect(scripts.length).toBeGreaterThan(0);
     for (const tag of scripts) {
