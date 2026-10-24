@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { makeAuditRollup } from "../test-support/audit-fixture.js";
 import { AuditRollupPanel } from "./AuditRollupPanel.js";
@@ -16,7 +17,7 @@ describe("AuditRollupPanel", () => {
     const { loadRollup } = renderPanel();
 
     expect(await screen.findByRole("group", { name: "Sessions" })).toHaveTextContent("2");
-    expect(loadRollup).toHaveBeenCalledWith({ since: "2026-08-28" });
+    expect(loadRollup).toHaveBeenCalledWith({ since: "2026-08-28" }, expect.any(AbortSignal));
     expect(screen.getByRole("group", { name: "Failure rate" })).toHaveTextContent("40%");
     expect(screen.getByRole("group", { name: "Most failing program" })).toHaveTextContent("npm");
   });
@@ -35,10 +36,10 @@ describe("AuditRollupPanel", () => {
     await screen.findByRole("group", { name: "Sessions" });
 
     fireEvent.click(screen.getByLabelText("7 days"));
-    await waitFor(() => expect(loadRollup).toHaveBeenLastCalledWith({ since: "2026-09-20" }));
+    await waitFor(() => expect(loadRollup).toHaveBeenLastCalledWith({ since: "2026-09-20" }, expect.any(AbortSignal)));
 
     fireEvent.click(screen.getByLabelText("All time"));
-    await waitFor(() => expect(loadRollup).toHaveBeenLastCalledWith({}));
+    await waitFor(() => expect(loadRollup).toHaveBeenLastCalledWith({}, expect.any(AbortSignal)));
   });
 
   it("charts outcomes per day", async () => {
@@ -102,7 +103,27 @@ describe("AuditRollupPanel", () => {
 
     fireEvent.click(await screen.findByRole("button", { name: "Show all time" }));
 
-    await waitFor(() => expect(loadRollup).toHaveBeenLastCalledWith({}));
+    await waitFor(() => expect(loadRollup).toHaveBeenLastCalledWith({}, expect.any(AbortSignal)));
     expect(screen.getByLabelText("All time")).toBeChecked();
+  });
+
+  it("lets a slow load be cancelled, says so without an error alert, and retries", async () => {
+    const user = userEvent.setup();
+    const signals: AbortSignal[] = [];
+    const loadRollup = vi.fn((_query: unknown, signal: AbortSignal) => {
+      signals.push(signal);
+      return signals.length === 1 ? new Promise<never>(() => undefined) : Promise.resolve(makeAuditRollup());
+    });
+    render(<AuditRollupPanel loadRollup={loadRollup} onOpenSession={vi.fn()} now={NOW} />);
+
+    await user.click(await screen.findByRole("button", { name: "Cancel" }));
+
+    expect(signals[0].aborted).toBe(true);
+    expect(screen.getByRole("heading", { name: "Loading cancelled" })).toBeInTheDocument();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Retry" }));
+
+    expect(await screen.findByRole("group", { name: "Sessions" })).toBeInTheDocument();
+    expect(loadRollup).toHaveBeenCalledTimes(2);
   });
 });

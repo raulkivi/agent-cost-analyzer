@@ -19,7 +19,9 @@ interface AsyncViewProps {
   readyText?: string;
   // Roughly the final view's shape, so nothing jumps when data arrives.
   skeleton?: SkeletonShape;
-  // Only where the call can really be cancelled; otherwise no Cancel.
+  // Only where the call can really be cancelled (an AbortSignal reaches the
+  // transport, api-client/transport.ts); otherwise no Cancel. Afterwards show
+  // status "empty" with cancelledEmptyState().
   onCancel?: () => void;
   // Why it's empty, plus a next step.
   empty?: { title: string; body: ReactNode; action?: { label: string; onClick: () => void } };
@@ -33,7 +35,17 @@ interface AsyncViewProps {
   children?: ReactNode;
 }
 
-const SKELETON_ROWS: Record<SkeletonShape, number> = { list: 4, table: 6, panel: 3 };
+// What a cancelled load shows: the empty state, not the error alert (the
+// person asked for it), with Retry as the next step.
+export function cancelledEmptyState(onRetry: () => void): NonNullable<AsyncViewProps["empty"]> {
+  return {
+    title: "Loading cancelled",
+    body: "Nothing was changed: this view only reads your logs.",
+    action: { label: "Retry", onClick: onRetry },
+  };
+}
+
+const SKELETON_ROWS:Record<SkeletonShape, number> = { list: 4, table: 6, panel: 3 };
 
 function Skeleton({ shape, loadingText, onCancel }: { shape: SkeletonShape; loadingText: string; onCancel?: () => void }) {
   return (

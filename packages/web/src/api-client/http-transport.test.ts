@@ -22,8 +22,11 @@ function fakeFetch(status = 200, value: unknown = {}) {
 
 function harness(): ContractHarness {
   let outcome = { status: 200, value: {} as unknown };
+  let hangingImpl: typeof fetch | undefined;
   const impl = ((url: string, init?: FetchInit) =>
-    fakeFetch(outcome.status, outcome.value).impl(url as never, init as never)) as unknown as typeof fetch;
+    hangingImpl
+      ? hangingImpl(url, init as never)
+      : fakeFetch(outcome.status, outcome.value).impl(url as never, init as never)) as unknown as typeof fetch;
   return {
     transport: new HttpTransport(impl),
     succeedWith: (value) => {
@@ -31,6 +34,15 @@ function harness(): ContractHarness {
     },
     failWith: (status) => {
       outcome = { status, value: undefined };
+    },
+    hang: () => {
+      // Like fetch: pending until its signal aborts, then an AbortError.
+      hangingImpl = ((_url: string, init?: { signal?: AbortSignal }) =>
+        new Promise((_resolve, reject) => {
+          const abort = () => reject(new DOMException("aborted", "AbortError"));
+          if (init?.signal?.aborted) abort();
+          init?.signal?.addEventListener("abort", abort);
+        })) as unknown as typeof fetch;
     },
   };
 }
@@ -80,6 +92,22 @@ describe("HttpTransport URL mapping", () => {
       // Plain GETs keep passing no init, exactly as http.ts always did.
       expect(init).toBeUndefined();
     }
+  });
+
+  it("hands the signal to fetch, with the PUT's own init when it has one", async () => {
+    const controller = new AbortController();
+    const get = fakeFetch();
+    await new HttpTransport(get.impl).call("getInsights", {}, controller.signal);
+    expect(get.calls[0][1]).toEqual({ signal: controller.signal });
+
+    const put = fakeFetch();
+    await new HttpTransport(put.impl).call("setRetentionThreshold", { value: 300 }, controller.signal);
+    expect(put.calls[0][1]).toEqual({
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ value: 300 }),
+      signal: controller.signal,
+    });
   });
 
   it("names the failing URL in the error, as http.ts always did", async () => {

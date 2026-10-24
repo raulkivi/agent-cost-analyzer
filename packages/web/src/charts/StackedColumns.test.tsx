@@ -65,11 +65,24 @@ describe("StackedColumns", () => {
   it("offers a table view of the same data", () => {
     render(<StackedColumns ariaLabel="x" columns={columns} axisLabel="Turn" />);
 
-    fireEvent.click(screen.getByRole("button", { name: "Show table" }));
+    fireEvent.click(screen.getByRole("button", { name: "View as table" }));
 
     const table = screen.getByRole("table");
     expect(within(table).getAllByRole("row")).toHaveLength(4);
     expect(within(table).getByRole("columnheader", { name: "Failed" })).toBeInTheDocument();
+  });
+
+  it("captions the table with the chart's label and toggles with aria-pressed", () => {
+    render(<StackedColumns ariaLabel="Tool outcomes per turn" columns={columns} axisLabel="Turn" />);
+    const toggle = screen.getByRole("button", { name: "View as table" });
+    expect(toggle).toHaveAttribute("aria-pressed", "false");
+
+    fireEvent.click(toggle);
+
+    expect(toggle).toHaveAttribute("aria-pressed", "true");
+    const table = screen.getByRole("table", { name: "Tool outcomes per turn" });
+    expect(within(table).getByRole("rowheader", { name: "0" })).toBeInTheDocument();
+    expect(within(table).getAllByRole("row")[1]).toHaveTextContent("19"); // 1 succeeded, 9 failed
   });
 
   it("renders an empty state with no columns", () => {

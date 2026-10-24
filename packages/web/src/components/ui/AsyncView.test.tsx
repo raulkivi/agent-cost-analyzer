@@ -1,6 +1,6 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { AsyncView, SKELETON_DELAY_MS } from "./AsyncView.js";
+import { AsyncView, cancelledEmptyState, SKELETON_DELAY_MS } from "./AsyncView.js";
 
 // §3.5 States, mock-up board 5 (States.dc.html).
 describe("AsyncView", () => {
@@ -153,5 +153,16 @@ describe("AsyncView", () => {
     expect(note).toHaveTextContent("Partial data");
     expect(note).toHaveTextContent(/unknown for 1 of 4 sessions/);
     expect(screen.getByText("totals")).toBeInTheDocument();
+  });
+
+  it("shows a cancelled load as an empty state with Retry, not an error alert", () => {
+    const onRetry = vi.fn();
+    render(<AsyncView status="empty" loadingText="Loading…" empty={cancelledEmptyState(onRetry)} />);
+
+    expect(screen.getByRole("heading", { name: "Loading cancelled" })).toBeInTheDocument();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+
+    expect(onRetry).toHaveBeenCalledTimes(1);
   });
 });

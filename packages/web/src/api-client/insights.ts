@@ -7,7 +7,7 @@ export interface InsightsQuery {
   limit?: number; // per provider
 }
 
-// Unset / empty filters are dropped by the transport.
-export function fetchInsights(query: InsightsQuery): Promise<InsightsDataset> {
-  return getApiTransport().call<InsightsDataset>("getInsights", query);
+// Unset / empty filters are dropped by the transport. `signal` cancels the load.
+export function fetchInsights(query: InsightsQuery, signal?: AbortSignal): Promise<InsightsDataset> {
+  return getApiTransport().call<InsightsDataset>("getInsights", query, signal);
 }

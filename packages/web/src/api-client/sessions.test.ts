@@ -94,4 +94,13 @@ describe("sessions api-client", () => {
 
     await expect(fetchTurnInspectorDetail("session-1", 99)).rejects.toThrow(/404/);
   });
+
+  it("hands an AbortSignal to the turn inspector request", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, json: () => Promise.resolve(turnDetail) }));
+    const controller = new AbortController();
+
+    await fetchTurnInspectorDetail("session-1", 2, controller.signal);
+
+    expect(fetch).toHaveBeenCalledWith("/api/sessions/session-1/turns/2", { signal: controller.signal });
+  });
 });

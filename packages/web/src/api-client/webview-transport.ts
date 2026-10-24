@@ -1,4 +1,5 @@
 import type { HostCommand, HostCommandArgs, HostEventName } from "@copilot-cost-analyzer/domain";
+import { abortError } from "./abort.js";
 import type { ApiMethodName, ApiTransport, ViewStatePersistence } from "./transport.js";
 
 // The slice of acquireVsCodeApi()'s result this transport needs; the state
@@ -58,8 +59,11 @@ export class WebviewTransport implements ApiTransport {
     source.addEventListener("message", (event) => this.handleMessage(event.data));
   }
 
-  call<T>(method: ApiMethodName, params?: unknown): Promise<T> {
-    return this.send<T>(method, (id) => ({ kind: "request", id, method, params }));
+  // With a signal, aborting rejects the call with an AbortError, forgets its
+  // id (a late reply is then ignored like any unknown one) and posts
+  // { kind: "cancel", id } so the host drops the request too.
+  call<T>(method: ApiMethodName, params?: unknown, signal?: AbortSignal): Promise<T> {
+    return this.send<T>(method, (id) => ({ kind: "request", id, method, params }), signal);
   }
 
   // A host command (domain rpc.ts, G8): same ids, timeout and errors as a
@@ -68,15 +72,36 @@ export class WebviewTransport implements ApiTransport {
     await this.send<unknown>(command, (id) => ({ kind: "command", id, command, args }));
   }
 
-  private send<T>(name: ApiMethodName | HostCommand, envelope: (id: string) => unknown): Promise<T> {
+  private send<T>(name: ApiMethodName | HostCommand, envelope: (id: string) => unknown, signal?: AbortSignal): Promise<T> {
+    if (signal?.aborted) return Promise.reject(abortError());
     const id = `req-${++this.nextId}`;
     return new Promise<T>((resolve, reject) => {
+      const onAbort = () => {
+        if (!this.pending.delete(id)) return;
+        clearTimeout(timer);
+        this.host.postMessage({ kind: "cancel", id });
+        reject(abortError());
+      };
+      const release = () => signal?.removeEventListener("abort", onAbort);
       const timer = setTimeout(() => {
         this.pending.delete(id);
+        release();
         reject(new Error(`Request to ${name} timed out after ${this.timeoutMs} ms`));
       }, this.timeoutMs);
+      signal?.addEventListener("abort", onAbort, { once: true });
       // Registered before posting: a host may answer synchronously.
-      this.pending.set(id, { method: name, resolve: resolve as (result: unknown) => void, reject, timer });
+      this.pending.set(id, {
+        method: name,
+        resolve: (result) => {
+          release();
+          resolve(result as T);
+        },
+        reject: (error) => {
+          release();
+          reject(error);
+        },
+        timer,
+      });
       this.host.postMessage(envelope(id));
     });
   }

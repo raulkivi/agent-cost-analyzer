@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import type {
   FailureCategory,
   InsightFinding,
@@ -25,7 +25,8 @@ import {
   type InsightRowsView,
 } from "../../lib/insights/measures.js";
 import { buildNarrative } from "../../lib/insights/narrative.js";
-import { AsyncView } from "../ui/AsyncView.js";
+import { useCancellableLoad } from "../../lib/use-cancellable-load.js";
+import { AsyncView, cancelledEmptyState } from "../ui/AsyncView.js";
 import { Blueprint } from "../ui/Blueprint.js";
 import { SegmentedControl } from "../ui/SegmentedControl.js";
 import { StatTile } from "../ui/StatTile.js";
@@ -64,8 +65,6 @@ const TOOL_SERIES = [
 const FAILED_SERIES = [{ id: "failed", label: "Failed", color: STATUS_META.error.color }];
 const CALLS_SERIES = [{ id: "calls", label: "Calls", color: STATUS_META.success.color }];
 
-type LoadState = { kind: "loading" } | { kind: "error"; message: string } | { kind: "ready"; dataset: InsightsDataset };
-
 function queryFor(preset: RangePreset, now: Date): InsightsQuery {
   if (preset === "all") {
     return { limit: SESSIONS_PER_PROVIDER };
@@ -75,7 +74,7 @@ function queryFor(preset: RangePreset, now: Date): InsightsQuery {
 }
 
 interface InsightsDashboardProps {
-  loadDataset?: (query: InsightsQuery) => Promise<InsightsDataset>;
+  loadDataset?: (query: InsightsQuery, signal: AbortSignal) => Promise<InsightsDataset>;
   now?: Date;
   // ProductProfile.features.crossProviderInsights (vscode-extension.md G10):
   // false for a single-provider product, which then gets no Provider list
@@ -97,20 +96,14 @@ function listBoxGroups(crossProvider: boolean) {
 // behaviour-change signals that say what happened, when and why.
 export function InsightsDashboard({ loadDataset = fetchInsights, now, crossProvider = true }: InsightsDashboardProps) {
   const [preset, setPreset] = useState<RangePreset>("30");
-  const [state, setState] = useState<LoadState>({ kind: "loading" });
-  const [attempt, setAttempt] = useState(0);
   const [nowTime] = useState(() => (now ?? new Date()).getTime());
-
-  useEffect(() => {
-    let cancelled = false;
-    setState({ kind: "loading" });
-    loadDataset(queryFor(preset, new Date(nowTime)))
-      .then((dataset) => !cancelled && setState({ kind: "ready", dataset }))
-      .catch((error: Error) => !cancelled && setState({ kind: "error", message: error.message }));
-    return () => {
-      cancelled = true;
-    };
-  }, [preset, loadDataset, nowTime, attempt]);
+  // The load is cancellable (Cancel on its skeleton): the signal reaches the
+  // transport, which stops waiting (and tells the extension host to).
+  const loadFor = useCallback(
+    (signal: AbortSignal) => loadDataset(queryFor(preset, new Date(nowTime)), signal),
+    [preset, loadDataset, nowTime],
+  );
+  const { state, cancel, retry } = useCancellableLoad(loadFor);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-4)" }}>
@@ -119,24 +112,35 @@ export function InsightsDashboard({ loadDataset = fetchInsights, now, crossProvi
         <SegmentedControl name="insights-range" options={RANGE_OPTIONS} value={preset} onChange={setPreset} />
       </div>
       <AsyncView
-        status={state.kind === "ready" ? (state.dataset.sessions.length === 0 ? "empty" : "ready") : state.kind}
+        status={
+          state.kind === "ready"
+            ? state.data.sessions.length === 0
+              ? "empty"
+              : "ready"
+            : state.kind === "cancelled"
+              ? "empty"
+              : state.kind
+        }
         loadingText={crossProvider ? "Loading sessions from every provider…" : "Loading sessions…"}
         readyText="Insights loaded."
         skeleton="table"
+        onCancel={cancel}
         error={
-          state.kind === "error"
-            ? { title: `Could not load insights: ${state.message}`, onRetry: () => setAttempt((current) => current + 1) }
-            : undefined
+          state.kind === "error" ? { title: `Could not load insights: ${state.message}`, onRetry: retry } : undefined
         }
-        empty={{
-          title: crossProvider ? "No sessions in this date range from any provider." : "No sessions in this date range.",
-          body: (state.kind === "ready" && providerNotes(state.dataset).join(" · ")) || "Sessions started before the range aren't counted.",
-          action: preset === "all" ? undefined : { label: "Show all time", onClick: () => setPreset("all") },
-        }}
-        partial={state.kind === "ready" ? providerNotes(state.dataset).join(" · ") || undefined : undefined}
+        empty={
+          state.kind === "cancelled"
+            ? cancelledEmptyState(retry)
+            : {
+                title: crossProvider ? "No sessions in this date range from any provider." : "No sessions in this date range.",
+                body: (state.kind === "ready" && providerNotes(state.data).join(" · ")) || "Sessions started before the range aren't counted.",
+                action: preset === "all" ? undefined : { label: "Show all time", onClick: () => setPreset("all") },
+              }
+        }
+        partial={state.kind === "ready" ? providerNotes(state.data).join(" · ") || undefined : undefined}
       >
         {state.kind === "ready" && (
-          <DashboardBody dataset={state.dataset} crossProvider={crossProvider} key={state.dataset.generatedAt + preset} />
+          <DashboardBody dataset={state.data} crossProvider={crossProvider} key={state.data.generatedAt + preset} />
         )}
       </AsyncView>
     </div>
@@ -274,6 +278,8 @@ function DashboardBody({ dataset, crossProvider }: { dataset: InsightsDataset; c
           <div className="card-kicker">AI Credits by day</div>
           <TrendColumns
             ariaLabel="AI Credits by day"
+            axisLabel="Day"
+            valueLabel="AI Credits"
             // A day with no known figure is left out, never drawn as 0 (constraint 6).
             columns={aiCreditsByDay(view.sessions, view.turns)
               .filter((day) => day.known > 0)
