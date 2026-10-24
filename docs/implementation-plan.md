@@ -1222,7 +1222,7 @@ Analyzer**, vision §5). The standalone app keeps every provider. Brought
 into scope on 2026-10-24. Previously this was a deferred "future path".
 
 **Status (2026-10-24)**: steps 10.0-10.8 done (10.8's real Copilot agent-mode
-check moves to 10.9), 10.9 code done (its integration suite runs first in CI; the owner's manual checks are open), 10.10 (documentation) not started. Each step's details and deviations are in its status note in the
+check moves to 10.9), 10.9 code done (its integration suite passes in a real VS Code in CI; the owner's manual checks are open), 10.10 (documentation) not started. Each step's details and deviations are in its status note in the
 plan's §6.
 
 | Step | What | State |
@@ -1236,7 +1236,7 @@ plan's §6.
 | 10.6 | Native Sessions/Setup sidebar, status bar, selection sync | Done (#67) |
 | 10.7 | Accessibility, responsive layout, AsyncView, local fonts, walkthrough, l10n | Done (#69) |
 | 10.8 | Copilot-only MCP server in the extension, plus UI follow-ups from 10.7 | Done (#71); real Copilot agent-mode check in 10.9 |
-| 10.9 | Integration tests in real VS Code, performance budgets, usability run, packaging | Done (PR pending); the integration suite runs first in CI; owner's manual checks open |
+| 10.9 | Integration tests in real VS Code, performance budgets, usability run, packaging | Done (#72 pending merge; integration suite green in CI); owner's manual checks open |
 | 10.10 | Documentation: extension README/listing, extension user guide, two-product README and User Guide | Not started |
 
 **Not yet verified**: the extension has run only on the Electron build

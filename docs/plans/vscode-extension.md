@@ -18,7 +18,7 @@ Progress (2026-10-24):
 | 10.6 | Native Sessions/Setup sidebar, status bar, selection sync | Done (#67) |
 | 10.7 | Accessibility, responsive layout, AsyncView, local fonts, walkthrough, l10n | Done (#69) |
 | 10.8 | Copilot-only MCP server in the extension, plus UI follow-ups from 10.7 | Done (#71); real Copilot agent-mode check in 10.9 |
-| 10.9 | Integration tests in real VS Code, performance budgets, usability run, packaging | Done (PR pending); the integration suite runs first in CI; owner's manual checks open |
+| 10.9 | Integration tests in real VS Code, performance budgets, usability run, packaging | Done (#72 pending merge; integration suite green in CI); owner's manual checks open |
 | 10.10 | Documentation: extension README/listing, extension user guide, two-product README and User Guide | Not started |
 
 
@@ -1148,8 +1148,14 @@ axe table tests and two column-chooser guard tests green on first run.
   "Install from VSIX…" and passes the 10.4-10.8 exit checks
   with no repo checkout present.
 
-**Status (2026-10-24): code done; first real-VS Code run happens in CI,
-and the owner's manual checks are open.**
+**Status (2026-10-24): code done and green in a real VS Code in CI; the
+owner's manual checks are open.**
+
+*First real run (#72's CI, `extension` job):* stable VS Code under
+`xvfb-run`, all 7 integration tests passed in 3 s: activation (105 ms),
+panel round-trips (438 ms), Sessions view and open session (516 ms), the
+§3.5 budgets (301 ms), and the three MCP tests. The job then packaged
+the VSIX (35 files, 2.59 MB) and uploaded it as the `vsix` artifact.
 
 *Performance marks and budgets:*
 - `{kind:"perfMark", name, timeMs}` (domain `rpc.ts`): one-way, names
@@ -1218,13 +1224,11 @@ exit), the remote check and the screenshot list are in
 for the owner to run on the CI-built VSIX and record in the PR.
 
 *Not verified here:*
-- The integration suite has never run: VS Code can't be downloaded in the
-  development container. Its first run is this PR's CI. Verified instead:
+- The integration suite can't run in the development container (VS Code
+  can't be downloaded there); it runs in CI (see above). Locally:
   it typechecks, a unit test bundles and loads it with a stub `vscode`
   (all 7 tests register), `vscode-test --list-configuration` resolves,
   and the fixture is read back through the extension's own `ApiService`.
-- The budgets on CI hardware under xvfb (first-render/data-ready are
-  timed on a warm reopen of the panel).
 - The release workflows: they run only on tags. The first `ext-v*` tag is
   also the first test of Entra ID sign-in on GitHub Actions (§7.0).
 
