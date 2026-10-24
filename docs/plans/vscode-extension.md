@@ -19,7 +19,7 @@ Progress (2026-10-24):
 | 10.7 | Accessibility, responsive layout, AsyncView, local fonts, walkthrough, l10n | Done (#69) |
 | 10.8 | Copilot-only MCP server in the extension, plus UI follow-ups from 10.7 | Done (#71); real Copilot agent-mode check in 10.9 |
 | 10.9 | Integration tests in real VS Code, performance budgets, usability run, packaging | Done (#72; integration suite green in CI); owner's manual checks open |
-| 10.10 | Documentation: extension README/listing, extension user guide, two-product README and User Guide | Done (PR pending); screenshots and owner review open |
+| 10.10 | Documentation: extension README/listing, extension user guide, two-product README and User Guide | Done (#73); screenshots and owner review open |
 
 
 ## 1. Context
