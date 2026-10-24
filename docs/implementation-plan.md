@@ -1212,24 +1212,21 @@ as unknown (`null`), never 0.
 **Dependencies**: Phase 9.10 (MCP server, audit), Phase 9.11 (insights
 dataset and detectors).
 
-## Phase 10 — VS Code extension packaging (future, out of MVP scope)
+## Phase 10 — AI Credits Analyzer VS Code extension (in scope since 2026-10-24)
 
 Full plan: [plans/vscode-extension.md](plans/vscode-extension.md)
 (steps 10.0-10.9, each with its own exit criterion, plus CI and Marketplace
-deployment). Not started. The extension is a separate, Copilot-only product
-that shares code with the standalone app (vision §5); the standalone app
-keeps every provider.
+deployment). The extension, **AI Credits Analyzer**, is a separate,
+Copilot-only product that shares code with the standalone app (**Agent Cost
+Analyzer**, vision §5). The standalone app keeps every provider. Brought
+into scope on 2026-10-24. Previously this was a deferred "future path".
 
-Not part of the initial build (vision §5 "future path"); tracked here only
-so the seam stays intentional:
+**Exit criterion**: the plan's §10.
 
-- Swap `api-client`'s HTTP calls for `postMessage`/`acquireVsCodeApi`.
-- Move `data-sources/*`/`services/*` calls in-process into the extension
-  host instead of behind Express.
-- Upgrade `config-check` warnings to one-click fixes via
-  `vscode.commands.executeCommand('workbench.action.openSettings', ...)`.
-
-**Dependencies**: everything above; deliberately deferred.
+**Dependencies**: Phase 5 (config check), Phase 9 (provider registry),
+Phase 9.5 (turn inspector), Phases 9.10-9.12 (audit, insights, MCP). All
+are complete. Phase 9.6's outstanding real-capture check is **not** a
+dependency: the extension ships no pi code (plan §3.1).
 
 ## Summary dependency graph
 
@@ -1258,6 +1255,7 @@ flowchart LR
     P99 --> P910["Phase 9.10<br/>Tool-call audit + MCP"]
     P910 --> P911["Phase 9.11<br/>Insights dashboard"]
     P911 --> P912["Phase 9.12<br/>MCP tools v2"]
-    P95 --> P10["Phase 10<br/>VS Code extension (future)"]
+    P95 --> P10["Phase 10<br/>AI Credits Analyzer extension"]
     P5 --> P10
+    P912 --> P10
 ```

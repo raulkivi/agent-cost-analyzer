@@ -1,9 +1,9 @@
 # VS Code extension: implementation and deployment plan
 
-Status: **planned (Phase 10), not started.** This plan expands
+Status: **in progress (Phase 10).** This plan expands
 [implementation-plan.md](../implementation-plan.md) Phase 10 and
 [architecture.md](../architecture.md) §12 into concrete, test-first steps.
-Nothing here is implemented yet.
+Each step's status is recorded under its heading in §6.
 
 ## 1. Context
 
@@ -298,6 +298,9 @@ light, high contrast).
 **Review gate:** the mock-ups are reviewed and their comments resolved
 before step 10.5 starts. Agreed changes are made on the canvas and in
 the versioned copies in the same change.
+
+**Status:** approved by the owner on 2026-10-24 with no change requests.
+The gate is passed.
 
 ## 4. Message protocol
 

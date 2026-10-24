@@ -89,5 +89,6 @@ content here.
   session files without in-file system messages, populating
   `Session.systemPrompt` and the system prompt inspector for those pi
   sessions; `npm run configure`/`unconfigure` install/remove it, see
-  architecture.md §6.2.5). Phase 10 (VS Code extension packaging) is
-  future/out of MVP scope — see implementation-plan.md.
+  architecture.md §6.2.5). Phase 10 (AI Credits Analyzer, a separate
+  Copilot-only VS Code extension sharing this code) is in progress — see
+  docs/plans/vscode-extension.md for steps 10.0-10.9.

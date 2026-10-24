@@ -1736,7 +1736,7 @@ module should be justified against these before being added:
   a comment in `package.json`/the PR noting the advisory being tracked and
   why it can't yet be resolved.
 
-## 12. Future path: VS Code extension packaging
+## 12. VS Code extension (AI Credits Analyzer, Phase 10)
 
 Detailed implementation and deployment plan:
 [plans/vscode-extension.md](plans/vscode-extension.md).
