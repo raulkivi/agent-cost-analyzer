@@ -39,7 +39,7 @@ function Sparkline({ turns }: AiCreditsSparklineProps) {
   if (knownPoints.length < 2) {
     return (
       <svg role="img" aria-label="AI Credits sparkline: not enough data" width={WIDTH} height={HEIGHT}>
-        <text data-testid="ai-credits-sparkline-empty" x={PADDING} y={HEIGHT / 2}>
+        <text data-testid="ai-credits-sparkline-empty" x={PADDING} y={HEIGHT / 2} fill="var(--color-text-muted)">
           not enough credit data
         </text>
       </svg>

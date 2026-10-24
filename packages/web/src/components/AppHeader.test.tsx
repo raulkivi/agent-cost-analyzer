@@ -3,13 +3,34 @@ import { describe, expect, it, vi } from "vitest";
 import { AppHeader } from "./AppHeader.js";
 
 describe("AppHeader", () => {
-  it("renders the wordmark and caption", () => {
+  // Step 10.11: no "GitHub Copilot Chat" caption: the standalone app reads
+  // every provider, and the extension's editor tab already names it. The
+  // brand sits in one block the VS Code theme can hide.
+  it("renders the wordmark in its own block, without a Copilot-only caption", () => {
     render(
       <AppHeader mode="learn" onModeChange={vi.fn()} hasConfigWarnings={false} onConfigClick={vi.fn()} />,
     );
 
-    expect(screen.getByText("Session Analyzer")).toBeInTheDocument();
-    expect(screen.getByText("GitHub Copilot Chat")).toBeInTheDocument();
+    expect(screen.getByText("Session Analyzer").closest(".nav-brand-block")).not.toBeNull();
+    // Laid out by the stylesheet, not inline, so the VS Code theme's
+    // display: none can win over it.
+    expect((screen.getByText("Session Analyzer").closest(".nav-brand-block") as HTMLElement).style.display).toBe("");
+    expect(screen.queryByText("GitHub Copilot Chat")).not.toBeInTheDocument();
+  });
+
+  it("keeps the retention field as narrow as its number", () => {
+    render(
+      <AppHeader
+        mode="analyze"
+        onModeChange={vi.fn()}
+        hasConfigWarnings={false}
+        onConfigClick={vi.fn()}
+        minRetainedSessionLogsThreshold={200}
+        onRetentionThresholdChange={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByLabelText("Retention threshold").style.width).toBe("6em");
   });
 
   it("renders a Learn/Analyze mode switch reflecting the current mode", () => {

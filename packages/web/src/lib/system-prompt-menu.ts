@@ -17,11 +17,6 @@ export const CATEGORICAL_PALETTE = [
 
 export const NEUTRAL_COLOR = "#7a7a7d"; // matches theme.css --color-neutral-600
 
-// Text on the text pane's pastel segments (assignTextColors). Fixed rather
-// than the theme's text colour: the grounds are mixed with white in every
-// theme, so a dark theme's light text would be unreadable on them (§3.5).
-export const SEGMENT_TEXT_COLOR = "#1d1f20";
-
 // Menu/coloring stops at depth 3 (root tag > its subtag > that subtag's own
 // entries, e.g. <skills> > <skill> > — matching the "tags and subtags"
 // granularity a reader actually wants to navigate by. Anything deeper
@@ -164,16 +159,18 @@ export function assignIcicleColors(root: PromptNode): Map<string, string> {
   return colors;
 }
 
-// Raw/pretty-print text-pane background colors: a light, uniform tint
+// Raw/pretty-print text-pane background colors: a faint, uniform tint
 // regardless of nesting depth — full-saturation hue directly behind 12px
 // monospace body text reads poorly, so every block gets the same light
 // treatment, just distinguishing tagged blocks (16%) from untagged
-// preamble/trailing free text (12%).
+// preamble/trailing free text (12%). Mixed with transparent, not white, so
+// the tint sits on the theme's own ground and the theme's own text colour
+// reads on it in light, dark and high-contrast themes alike (§3.5).
 export function assignTextColors(root: PromptNode): Map<string, string> {
   const hues = assignHues(root, MAX_MENU_DEPTH);
   const colors = new Map<string, string>();
   for (const [id, { hue, tagged }] of hues) {
-    colors.set(id, `color-mix(in srgb, ${hue} ${tagged ? 16 : 12}%, white)`);
+    colors.set(id, `color-mix(in srgb, ${hue} ${tagged ? 16 : 12}%, transparent)`);
   }
   return colors;
 }

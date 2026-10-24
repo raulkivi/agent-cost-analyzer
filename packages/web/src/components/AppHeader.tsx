@@ -55,21 +55,19 @@ export function AppHeader({
 }: AppHeaderProps) {
   return (
     <header className="nav">
-      <div style={{ display: "flex", alignItems: "center", gap: "var(--space-3)", marginRight: "auto" }}>
+      {/* The brand; the VS Code theme hides it, since the editor tab
+          already names the panel (step 10.11). */}
+      <div className="nav-brand-block">
         <Blueprint
           style={{ width: 32, height: 32, flex: "none", background: "var(--color-accent-900)" }}
         />
         {profilePending ? (
           <div data-testid="brand-placeholder" aria-busy="true" className="nav-brand-placeholder" />
         ) : (
-          <div>
-            <div className="nav-brand">{displayName}</div>
-            <div style={{ fontSize: 11, color: "var(--color-text-muted)" }}>
-              GitHub Copilot Chat
-            </div>
-          </div>
+          <div className="nav-brand">{displayName}</div>
         )}
       </div>
+      <div style={{ marginRight: "auto" }} />
       <SegmentedControl name="mode" options={MODE_OPTIONS} value={mode} onChange={onModeChange} />
       {!profilePending && providerSelect && mode === "analyze" && providers.length > 0 && onProviderChange && (
         <label style={{ display: "flex", alignItems: "center", gap: "var(--space-1)", marginLeft: "var(--space-2)" }}>
@@ -99,6 +97,7 @@ export function AppHeader({
           <input
             aria-label="Retention threshold"
             className="input"
+            style={{ width: "6em" }}
             type="number"
             min={1}
             step={1}

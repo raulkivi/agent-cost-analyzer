@@ -33,6 +33,7 @@ export function extensionProductProfile(version: string): ProductProfile {
       crossProviderInsights: false,
       settingFixes: true,
       openInEditor: true,
+      sessionSidebar: true,
     },
   };
 }

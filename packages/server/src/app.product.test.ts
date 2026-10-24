@@ -37,6 +37,7 @@ describe("GET /api/product", () => {
         crossProviderInsights: true,
         settingFixes: false,
         openInEditor: false,
+        sessionSidebar: false,
       },
     });
   });

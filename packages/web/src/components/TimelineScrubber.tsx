@@ -36,6 +36,7 @@ export function TimelineScrubber({ turnCount, selectedTurnIndex, onSelectTurn }:
       <input
         type="range"
         role="slider"
+        className="timeline-range"
         aria-labelledby={labelId}
         aria-valuetext={position}
         min={0}

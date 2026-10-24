@@ -155,9 +155,10 @@ describe("SystemPromptInspector", () => {
     expect(screen.getByText(/owasp top 10/i)).toBeInTheDocument();
   });
 
-  // §3.5 (handed over from 10.5): the pastel grounds stay light in a dark
-  // theme, so their text is pinned dark rather than the theme's light text.
-  it("pins dark text on every pastel text-pane segment", async () => {
+  // §3.5, step 10.11: the segment tints sit on the theme's own ground, so
+  // their text keeps the theme's own colour (light in a dark theme, dark in
+  // a light one) instead of a fixed dark that glares on a dark editor.
+  it("keeps the theme's text colour on every text-pane segment", async () => {
     stubFetchText(SAMPLE_TEXT);
     render(<SystemPromptInspector sessionId="session-1" onClose={() => {}} />);
     await screen.findByRole("button", { name: /security requirements/i });
@@ -165,8 +166,30 @@ describe("SystemPromptInspector", () => {
     const segments = document.querySelectorAll<HTMLElement>('[data-testid^="prompt-node-"]');
     expect(segments.length).toBeGreaterThan(0);
     for (const segment of segments) {
-      expect(segment.style.color).toBe("rgb(29, 31, 32)");
+      expect(segment.style.color).toBe("");
+      expect(segment.style.background).toMatch(/transparent/);
     }
+  });
+
+  // Step 10.11: at 600 px the fixed three columns pushed the page 83 px past
+  // the panel; they stack by the inspector's own width now.
+  it("stacks its columns in a narrow panel", async () => {
+    vi.stubGlobal(
+      "ResizeObserver",
+      class {
+        constructor(private readonly callback: ResizeObserverCallback) {}
+        observe(target: Element) {
+          this.callback([{ target, contentRect: { width: 600 } } as unknown as ResizeObserverEntry], this as unknown as ResizeObserver);
+        }
+        unobserve() {}
+        disconnect() {}
+      },
+    );
+    stubFetchText(SAMPLE_TEXT);
+    render(<SystemPromptInspector sessionId="session-1" onClose={() => {}} />);
+    await screen.findByRole("button", { name: /security requirements/i });
+
+    expect(screen.getByTestId("inspector-columns").style.gridTemplateColumns).toBe("minmax(0, 1fr)");
   });
 
   it("indents a depth-2 nav entry via a single padding shorthand, not a separate paddingLeft a later padding could clobber", async () => {

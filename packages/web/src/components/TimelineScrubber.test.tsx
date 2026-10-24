@@ -35,4 +35,11 @@ describe("TimelineScrubber", () => {
     const slider = screen.getByRole("slider", { name: "Timeline" });
     expect(slider).toHaveAttribute("aria-valuetext", "Turn 3 of 5");
   });
+
+  // The VS Code theme styles it by this class (step 10.11).
+  it("marks its range input for the theme's track and thumb", () => {
+    render(<TimelineScrubber turnCount={3} selectedTurnIndex={0} onSelectTurn={vi.fn()} />);
+
+    expect(screen.getByRole("slider")).toHaveClass("timeline-range");
+  });
 });

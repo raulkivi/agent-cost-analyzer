@@ -455,17 +455,24 @@ error with **Try again** and **Copy details**.
 
 ## Narrow and medium windows
 
-The layout follows the width of the app, not only the window:
+The layout follows the room the app leaves for the turns: its width minus
+the session list column, when that column is shown. Nothing is ever cut
+off on the right; a table wider than its column scrolls sideways inside it.
 
-- **Wide (1100 px and up)** — the three columns described above.
-- **Medium (700-1099 px)** — the right column becomes a drawer. Select a
-  turn and press **Details** (or press Enter on a row) to open it; **Esc**
-  or its close button closes it and returns focus. The turns table scrolls
-  sideways and keeps the **Columns** chooser.
-- **Narrow (under 700 px)** — the center switch becomes a **View** dropdown,
+- **Wide** (about 1250 px and up with the session list, 1000 px without) —
+  the three columns described above.
+- **Medium** (from about 770 px with the session list, 510 px without) —
+  the right column becomes a drawer. Select a turn and press **Details** (or
+  press Enter on a row) to open it; **Esc** or its close button closes it
+  and returns focus. The turns table keeps the **Columns** chooser.
+- **Narrow** (below that) — the center switch becomes a **View** dropdown,
   the session's KPIs show as 2x2 tiles, and the turns table keeps only
   Turn, Trigger, AI Credits and Cumulative. The other columns appear in the
   **Details** drawer for the selected turn. The column chooser isn't offered.
+
+The system prompt inspector stacks its structure, text and description
+columns the same way, and the insights dashboard puts its filter lists in
+a slimmer column, then (below 720 px) after the insights.
 
 The layout works down to 360 px wide.
 

@@ -1227,7 +1227,7 @@ dataset and detectors).
 ## Phase 10 — AI Credits Analyzer VS Code extension (in scope since 2026-10-24)
 
 Full plan: [plans/vscode-extension.md](plans/vscode-extension.md)
-(steps 10.0-10.10, each with its own exit criterion, plus CI and Marketplace
+(steps 10.0-10.11, each with its own exit criterion, plus CI and Marketplace
 deployment). The extension, **AI Credits Analyzer**, is a separate,
 Copilot-only product that shares code with the standalone app (**Agent Cost
 Analyzer**, vision §5). The standalone app keeps every provider. Brought
@@ -1251,6 +1251,7 @@ and deviations are in its status note in the plan's §6.
 | 10.8 | Copilot-only MCP server in the extension, plus UI follow-ups from 10.7 | Done (#71); real Copilot agent-mode check in 10.9 |
 | 10.9 | Integration tests in real VS Code, performance budgets, usability run, packaging | Done (#72; integration suite green in CI); owner's manual checks open |
 | 10.10 | Documentation: extension README/listing, extension user guide, two-product README and User Guide | Done (#73); screenshots and owner review open |
+| 10.11 | UX review for VS Code: panel fits any width, readable in light, dark and High Contrast, native look, automated UI check | Done (PR pending) |
 
 **Verified in CI** (step 10.9): activation, the panel's data, the
 Sessions view, the §3.5 performance budgets with 200 sessions, and the MCP

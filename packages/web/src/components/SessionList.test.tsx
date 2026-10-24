@@ -64,18 +64,21 @@ describe("SessionList", () => {
     expect(screen.queryByText(/AI Credits/)).not.toBeInTheDocument();
   });
 
-  it("renders the Learn kicker with category when present, falling back to bare 'Learn'", () => {
+  // Step 10.11: the mode switch already says Learn or Analyze, so the
+  // kicker no longer repeats it on every card.
+  it("renders the Learn kicker as the category alone, and none without one", () => {
     const sessions = [
       makeSession({ id: "s1", title: "First", category: "Prompt caching" }),
       makeSession({ id: "s2", title: "Second" }),
     ];
     render(<SessionList mode="learn" sessions={sessions} selectedSessionId={null} onSelect={vi.fn()} />);
 
-    expect(screen.getByText("Learn · Prompt caching")).toBeInTheDocument();
-    expect(screen.getByText("Learn")).toBeInTheDocument();
+    expect(screen.getByText("Prompt caching")).toBeInTheDocument();
+    expect(screen.queryByText(/^Learn/)).not.toBeInTheDocument();
+    expect(document.querySelectorAll(".card-kicker")).toHaveLength(1);
   });
 
-  it("renders the Analyze kicker with relative time when startedAt is present, falling back to bare 'Analyze'", () => {
+  it("renders the Analyze kicker as the relative time alone, and none without one", () => {
     const sessions = [
       makeSession({
         id: "s1",
@@ -87,8 +90,9 @@ describe("SessionList", () => {
     ];
     render(<SessionList mode="analyze" sessions={sessions} selectedSessionId={null} onSelect={vi.fn()} />);
 
-    expect(screen.getByText("Analyze · 2 days ago")).toBeInTheDocument();
-    expect(screen.getByText("Analyze")).toBeInTheDocument();
+    expect(screen.getByText("2 days ago")).toBeInTheDocument();
+    expect(screen.queryByText(/^Analyze/)).not.toBeInTheDocument();
+    expect(document.querySelectorAll(".card-kicker")).toHaveLength(1);
   });
 
   it("calls onSelect with the clicked session", () => {

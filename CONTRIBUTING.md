@@ -50,6 +50,7 @@ repo root, after `npm ci`:
 npm run build --workspace=packages/vscode-extension   # builds the web app in extension mode first, then bundles the extension into dist/
 npm test --workspace=packages/vscode-extension        # unit tests (Vitest, no VS Code needed; CI runs them after the build)
 npm run test:integration --workspace=packages/vscode-extension   # downloads and drives a real VS Code
+npm run test:ui --workspace=packages/vscode-extension            # the webview in Chromium, in VS Code's themes and widths
 npm run package --workspace=packages/vscode-extension # writes a .vsix next to the package
 ```
 
@@ -64,6 +65,12 @@ npm run package --workspace=packages/vscode-extension # writes a .vsix next to t
   CI runs them under `xvfb-run`; on a headless Linux machine do the same:
   `xvfb-run -a npm run test:integration --workspace=packages/vscode-extension`.
   Run `npm run build` first.
+- **UI check.** `npm run test:ui` needs the build and Playwright's
+  Chromium (`npx playwright install chromium` once). It fails on anything
+  cut off on the right or text under WCAG AA, in Dark Modern, Light Modern
+  and High Contrast at 600-1600 px. Add `-- --screenshots <dir>` to keep a
+  screenshot of every combination, or `-- --only "session · dark"` to run a
+  few.
 - **Install a VSIX.** After `npm run package`, use *Extensions: Install from
   VSIX...* in the Command Palette and pick the file. The extension isn't
   published to a marketplace yet, so this is how to try a build.

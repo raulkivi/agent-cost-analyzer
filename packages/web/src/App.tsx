@@ -41,7 +41,7 @@ import { Tag } from "./components/ui/Tag.js";
 import { AiCreditsSparkline } from "./charts/AiCreditsSparkline.js";
 import { getHostCapabilities } from "./host/current-host-capabilities.js";
 import { performanceMarks as pagePerformanceMarks, type PerformanceMarks } from "./lib/performance-marks.js";
-import { layoutFor, type Layout } from "./lib/layout.js";
+import { LIST_COLUMN_WIDTH, layoutFor, type Layout } from "./lib/layout.js";
 import { ALL_TURN_COLUMNS, hiddenTurnColumns, parseTurnColumns, turnColumnsFor, type TurnColumnId } from "./lib/turn-columns.js";
 import { useContainerWidth } from "./lib/use-container-width.js";
 import { getViewStateStorage } from "./state/current-view-state-storage.js";
@@ -77,20 +77,29 @@ type SessionLoad =
 // The view-state storage key for the turns table's chosen columns.
 const TURN_COLUMNS_KEY = "turnColumns";
 
-// §3.5 Layout: list, centre and right column at wide widths (as always);
+// §3.5 Layout: list (when shown), centre and right column at wide widths;
 // list and centre at medium, with the right column in a drawer; one column
-// at narrow widths.
-const GRID_COLUMNS: Record<Layout, string> = {
-  wide: "280px 1fr 340px",
-  medium: "240px minmax(0, 1fr)",
-  narrow: "minmax(0, 1fr)",
-};
+// at narrow widths. The centre is minmax(0, 1fr) so the turns table scrolls
+// inside it instead of widening the page past the panel (step 10.11).
+const RIGHT_COLUMN_WIDTH = 320;
+
+function gridColumns(layout: Layout, listColumn: boolean): string {
+  const list = listColumn ? `${LIST_COLUMN_WIDTH}px ` : "";
+  if (layout === "wide") return `${list}minmax(0, 1fr) ${RIGHT_COLUMN_WIDTH}px`;
+  if (layout === "medium") return `${list}minmax(0, 1fr)`;
+  return "minmax(0, 1fr)";
+}
 
 // The centre column spans whatever the session list and right column leave.
-function centerColumnStyle(layout: Layout, showDashboard: boolean, hideRightColumn: boolean): CSSProperties | undefined {
+function centerColumnStyle(
+  layout: Layout,
+  listColumn: boolean,
+  showDashboard: boolean,
+  hideRightColumn: boolean,
+): CSSProperties | undefined {
   if (layout === "narrow") return undefined;
-  if (showDashboard) return { gridColumn: layout === "wide" ? "1 / 4" : "1 / 3" };
-  return layout === "wide" && hideRightColumn ? { gridColumn: "2 / 4" } : undefined;
+  if (showDashboard) return { gridColumn: "1 / -1" };
+  return layout === "wide" && hideRightColumn ? { gridColumn: listColumn ? "2 / -1" : "1 / -1" } : undefined;
 }
 
 // What the UI does until the product profile arrives, or when the backend
@@ -101,6 +110,7 @@ const FALLBACK_FEATURES: ProductFeatures = {
   crossProviderInsights: true,
   settingFixes: false,
   openInEditor: false,
+  sessionSidebar: false,
 };
 
 const EMPTY_STATES = {
@@ -161,7 +171,6 @@ export function App({ performanceMarks = pagePerformanceMarks }: AppProps = {}) 
   const latestSessionRequestId = useRef(0);
   // §3.5 Layout: by the panel's own width, not the window's.
   const [containerRef, containerWidth] = useContainerWidth<HTMLElement>();
-  const layout = layoutFor(containerWidth);
   // The right column's drawer (medium) or the turn details drawer (narrow).
   const [detailsOpen, setDetailsOpen] = useState(false);
 
@@ -264,6 +273,10 @@ export function App({ performanceMarks = pagePerformanceMarks }: AppProps = {}) 
   const inspectorShown = session !== null && (inspectorOpen || turnInspectorOpen);
   // "All sessions" hides the right column; the dashboard brings its own
   // list boxes, so it hides the session list as well.
+  // The extension's sidebar lists the sessions, so its Analyze mode gives
+  // that column to the turns; Learn's scenarios have no sidebar.
+  const listColumn = !(mode === "analyze" && features.sessionSidebar);
+  const layout = layoutFor(containerWidth, { listColumn });
   const showDashboard = mode === "analyze" && centerView === "dashboard";
   const hideRightColumn = mode === "analyze" && (centerView === "rollup" || showDashboard);
   const visibleColumns = turnColumnsFor(layout, chosenColumns);
@@ -471,7 +484,7 @@ export function App({ performanceMarks = pagePerformanceMarks }: AppProps = {}) 
         providerSelect={features.providerSelect}
         profilePending={!profileSettled}
       />
-      <p className="text-muted" style={{ fontSize: 11, margin: "var(--space-2) var(--space-4) 0" }}>
+      <p className="text-muted app-status" style={{ fontSize: 11, margin: "var(--space-2) var(--space-4) 0" }}>
         {health ? `status: ${health.status} · v${health.version}` : "Checking server…"}
       </p>
       {fetchError && (
@@ -539,12 +552,13 @@ export function App({ performanceMarks = pagePerformanceMarks }: AppProps = {}) 
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: GRID_COLUMNS[layout],
+              gridTemplateColumns: gridColumns(layout, listColumn),
               gap: "var(--space-4)",
               padding: "var(--space-4)",
               alignItems: "start",
             }}
           >
+            {listColumn && (
             <div style={showDashboard ? { display: "none" } : undefined}>
               <AsyncView
                 status={listLoad.status}
@@ -574,16 +588,19 @@ export function App({ performanceMarks = pagePerformanceMarks }: AppProps = {}) 
                 />
               </AsyncView>
               <AdviceExportTriggerBar count={adviceSessions.length} onExport={() => setAdviceDialogOpen(true)} />
-              <AdviceExportDialog
-                sessions={adviceSessions}
-                open={adviceDialogOpen}
-                onClose={() => setAdviceDialogOpen(false)}
-                copyToClipboard={host.copyToClipboard}
-                productName={productProfile?.displayName}
-              />
             </div>
+            )}
+            {/* Outside the list: the sidebar's "Copy advice bundle" opens it
+                too, when there is no list column. */}
+            <AdviceExportDialog
+              sessions={adviceSessions}
+              open={adviceDialogOpen}
+              onClose={() => setAdviceDialogOpen(false)}
+              copyToClipboard={host.copyToClipboard}
+              productName={productProfile?.displayName}
+            />
 
-            <div style={centerColumnStyle(layout, showDashboard, hideRightColumn)}>
+            <div style={centerColumnStyle(layout, listColumn, showDashboard, hideRightColumn)}>
               {mode === "analyze" &&
                 (layout === "narrow" ? (
                   <label className="view-select">
@@ -684,9 +701,9 @@ export function App({ performanceMarks = pagePerformanceMarks }: AppProps = {}) 
                     </div>
                   </div>
                   {layout === "narrow" && <SessionKpiTiles turns={session.turns} />}
-                  {/* Below wide widths the table scrolls inside its column;
-                      at wide widths it sizes the column, as it always has. */}
-                  <div className={layout === "wide" ? undefined : "table-scroll"}>
+                  {/* The table scrolls inside its column at every width, so
+                      it never pushes the page past the panel (step 10.11). */}
+                  <div className="table-scroll">
                     <TurnsTable
                       turns={session.turns}
                       selectedTurnIndex={selectedTurnIndex}
@@ -721,7 +738,9 @@ export function App({ performanceMarks = pagePerformanceMarks }: AppProps = {}) 
                 </>
               ) : (
                 <p className="text-muted" style={{ fontSize: 13 }}>
-                  Select a {mode === "learn" ? "scenario" : "session"} to view its turns.
+                  {listColumn
+                    ? `Select a ${mode === "learn" ? "scenario" : "session"} to view its turns.`
+                    : "Pick a session in the Sessions view in the side bar to see its turns."}
                 </p>
               )}
               </div>

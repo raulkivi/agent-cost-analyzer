@@ -12,6 +12,7 @@ describe("productProfileSchema", () => {
       crossProviderInsights: true,
       settingFixes: false,
       openInEditor: false,
+      sessionSidebar: false,
     },
   };
 
@@ -29,6 +30,7 @@ describe("productProfileSchema", () => {
         crossProviderInsights: false,
         settingFixes: true,
         openInEditor: true,
+        sessionSidebar: true,
       },
     };
 
@@ -42,6 +44,13 @@ describe("productProfileSchema", () => {
   it("rejects a profile missing a feature flag", () => {
     const features: Partial<typeof standalone.features> = { ...standalone.features };
     delete features.openInEditor;
+
+    expect(() => productProfileSchema.parse({ ...standalone, features })).toThrow();
+  });
+
+  it("rejects a profile without sessionSidebar (step 10.11)", () => {
+    const features: Partial<typeof standalone.features> = { ...standalone.features };
+    delete features.sessionSidebar;
 
     expect(() => productProfileSchema.parse({ ...standalone, features })).toThrow();
   });

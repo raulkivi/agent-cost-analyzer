@@ -30,6 +30,14 @@ describe("AiCreditsSparkline", () => {
     expect(screen.queryByTestId("ai-credits-sparkline-path")).not.toBeInTheDocument();
   });
 
+  // Step 10.11: SVG text without a fill is painted black, unreadable on a
+  // dark theme; the caption takes the theme's muted text colour.
+  it("paints the not-enough-data caption in the theme's muted text colour", () => {
+    render(<AiCreditsSparkline turns={[makeTurn()]} />);
+
+    expect(screen.getByTestId("ai-credits-sparkline-empty")).toHaveAttribute("fill", "var(--color-text-muted)");
+  });
+
   it("offers every turn's AI Credits as a table, rounded to 2 places, unknown as unknown", () => {
     const turns = [
       makeTurn({ index: 0, usage: { ...makeTurn().usage, costAiCredits: { known: true, value: 0.0149 } } }),

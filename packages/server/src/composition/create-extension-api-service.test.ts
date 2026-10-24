@@ -34,6 +34,7 @@ describe("createExtensionApiService (extension composition, vscode-extension.md 
         crossProviderInsights: false,
         settingFixes: true,
         openInEditor: true,
+        sessionSidebar: true,
       },
     });
     expect(await service.getHealth()).toEqual({ status: "ok", version: "0.1.0-test" });
