@@ -234,6 +234,18 @@ runtime, never hardcoded:
   unpopulated either way (see
   [architecture.md §6.2.5](docs/architecture.md#625-pi-agent-provider-flow)).
 
+- **[Claude Code](https://claude.com/claude-code) CLI** — reads Claude
+  Code's own session JSONL files directly; no export step and no setting
+  needed. Claude Code writes every session to `~/.claude/projects/`, one
+  subfolder per project (named from the project's path with slashes
+  replaced by dashes) and one `<session-id>.jsonl` file per session. Each
+  file becomes one session in the app, following the file's own pointer to
+  its active branch. Per-turn usage, including cache read/write and
+  reasoning tokens, comes from the file; the system prompt and tool
+  inventory tabs stay empty for Claude Code sessions. Subagent transcripts
+  (`<session-id>/subagents/`) aren't read (see
+  [architecture.md §6.2.6](docs/architecture.md#626-claude-code-cli-provider-flow)).
+
 ## Enabling GitHub Copilot Chat debug logging
 
 Analyze mode's real per-turn token/cache numbers (uncached input, cache
