@@ -86,6 +86,21 @@ export const rpcRequestSchema = z.object({
 
 export type RpcRequest = z.infer<typeof rpcRequestSchema>;
 
+// webview -> host: the webview no longer wants the answer to request `id`
+// (its AbortSignal fired, e.g. the person pressed Cancel on a long load).
+//   { kind: "cancel", id }
+// The host drops the request and posts no reply for that id. It is best
+// effort: the ApiService call itself isn't interrupted (it reads log files
+// synchronously), so the work may finish; only its reply is forgotten. The
+// webview rejects its own pending call at once and ignores any late reply.
+// A cancel for an id the host has already answered, or never saw, is ignored.
+export const rpcCancelSchema = z.object({
+  kind: z.literal("cancel"),
+  id: z.string(),
+});
+
+export type RpcCancel = z.infer<typeof rpcCancelSchema>;
+
 // host -> webview, one reply per request. `status` matches the HTTP API's,
 // so the web code handles "unknown session" (404) the same on both transports.
 export type RpcResponse =

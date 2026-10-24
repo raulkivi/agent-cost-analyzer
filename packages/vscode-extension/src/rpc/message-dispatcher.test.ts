@@ -244,4 +244,94 @@ describe("MessageDispatcher (vscode-extension.md §4)", () => {
       expect(api.listSessions).not.toHaveBeenCalled();
     });
   });
+
+  describe("cancel", () => {
+    // An ApiService method that answers only when the test says so.
+    function slowApi() {
+      let finish: (value: unknown) => void = () => undefined;
+      let fail: (error: unknown) => void = () => undefined;
+      const getInsights = vi.fn(
+        () =>
+          new Promise<never>((resolve, reject) => {
+            finish = resolve as (value: unknown) => void;
+            fail = reject;
+          }),
+      );
+      return { api: fakeApi({ getInsights }), finish: (value: unknown) => finish(value), fail: (error: unknown) => fail(error) };
+    }
+
+    it("answers a cancel message with no reply", async () => {
+      const dispatcher = new MessageDispatcher(fakeApi());
+
+      expect(await dispatcher.dispatch({ kind: "cancel", id: "req-1" })).toBeUndefined();
+    });
+
+    it("posts no reply for a request cancelled before the service answered", async () => {
+      const { api, finish } = slowApi();
+      const dispatcher = new MessageDispatcher(api);
+      const reply = dispatcher.dispatch(request("getInsights", {}));
+
+      await dispatcher.dispatch({ kind: "cancel", id: "req-1" });
+      finish({ sessions: [] });
+
+      expect(await reply).toBeUndefined();
+    });
+
+    it("posts no error reply for a cancelled request that then fails", async () => {
+      const { api, fail } = slowApi();
+      const onInternalError = vi.fn();
+      const dispatcher = new MessageDispatcher(api, { onInternalError });
+      const reply = dispatcher.dispatch(request("getInsights", {}));
+
+      await dispatcher.dispatch({ kind: "cancel", id: "req-1" });
+      fail(new Error("boom"));
+
+      expect(await reply).toBeUndefined();
+    });
+
+    it("leaves other requests in flight alone", async () => {
+      const { api, finish } = slowApi();
+      const dispatcher = new MessageDispatcher(api);
+      const reply = dispatcher.dispatch({ kind: "request", id: "req-2", method: "getInsights", params: {} });
+
+      await dispatcher.dispatch({ kind: "cancel", id: "req-1" });
+      finish({ sessions: [] });
+
+      expect(await reply).toEqual({ kind: "response", id: "req-2", ok: true, result: { sessions: [] } });
+    });
+
+    it("forgets a cancel for an id it isn't running, so a later request with that id is answered", async () => {
+      const dispatcher = new MessageDispatcher(fakeApi());
+
+      await dispatcher.dispatch({ kind: "cancel", id: "req-1" });
+      const response = await dispatcher.dispatch(request("getHealth"));
+
+      expect(response).toEqual({ kind: "response", id: "req-1", ok: true, result: { status: "ok", version: "0.1.0" } });
+    });
+
+    it("forgets a cancel once the request finished, so a reused id is answered", async () => {
+      const { api, finish } = slowApi();
+      const dispatcher = new MessageDispatcher(api);
+      const first = dispatcher.dispatch(request("getInsights", {}));
+      await dispatcher.dispatch({ kind: "cancel", id: "req-1" });
+      finish({});
+      await first;
+
+      const second = dispatcher.dispatch(request("getInsights", {}));
+      finish({ again: true });
+
+      expect(await second).toEqual({ kind: "response", id: "req-1", ok: true, result: { again: true } });
+    });
+
+    it("ignores a cancel without a string id", async () => {
+      const { api, finish } = slowApi();
+      const dispatcher = new MessageDispatcher(api);
+      const reply = dispatcher.dispatch(request("getInsights", {}));
+
+      expect(await dispatcher.dispatch({ kind: "cancel" })).toBeUndefined();
+      finish({});
+
+      expect(await reply).toEqual({ kind: "response", id: "req-1", ok: true, result: {} });
+    });
+  });
 });

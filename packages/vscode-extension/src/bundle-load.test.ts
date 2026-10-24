@@ -311,6 +311,17 @@ describe("the built extension bundle", () => {
     return panel.posted.find((reply) => reply.id === id)!;
   }
 
+  it("posts no reply for a request the webview cancelled, and still answers the next one", async () => {
+    const panel = vscode.__panels[0]!;
+
+    panel.send({ kind: "request", id: "cancelled", method: "getInsights", params: {} });
+    panel.send({ kind: "cancel", id: "cancelled" });
+    const health = await call("getHealth");
+
+    expect(health.ok).toBe(true);
+    expect(panel.posted.filter((reply) => reply.id === "cancelled")).toEqual([]);
+  });
+
   it("answers invalid params with 400", async () => {
     const reply = await call("getSession", { id: 7 });
 
