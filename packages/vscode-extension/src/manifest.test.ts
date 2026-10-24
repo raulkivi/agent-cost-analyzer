@@ -34,7 +34,7 @@ interface ConfigurationSection {
   title?: string;
   properties: Record<
     string,
-    { type?: string; default?: unknown; markdownDescription?: string; order?: number; enum?: unknown[]; markdownEnumDescriptions?: string[] }
+    { type?: string; default?: unknown; scope?: string; markdownDescription?: string; order?: number; enum?: unknown[]; markdownEnumDescriptions?: string[] }
   >;
 }
 
@@ -206,6 +206,9 @@ describe("package.json contributions (vscode-extension.md §3.5)", () => {
     const description = text(property?.markdownDescription);
 
     expect(property).toMatchObject({ type: "boolean", default: false });
+    // A workspace's .vscode/settings.json can't turn it on: only the user
+    // (or their remote machine's settings) can.
+    expect(property?.scope).toBe("machine");
     for (const words of ["read-only", "redacted", "Copilot Chat session data", "costs", "tool calls", "findings", "turn text"]) {
       expect(description, words).toContain(words);
     }

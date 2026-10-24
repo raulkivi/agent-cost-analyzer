@@ -131,6 +131,7 @@
         "aiCreditsAnalyzer.mcp.enabled": {
           "type": "boolean",
           "default": false,
+          "scope": "machine",
           "order": 1,
           "markdownDescription": "%configuration.mcp.enabled.markdownDescription%"
         }
