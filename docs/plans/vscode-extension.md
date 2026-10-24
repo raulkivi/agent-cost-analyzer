@@ -946,7 +946,15 @@ Marketplace still requires a *publisher*: the namespace in the extension
 id (`<publisher>.<name>`) and the identity shown on the listing. A
 personal account can own one; no company or organization is needed.
 
-- **Publisher id: `raulkivi`** (proposed, matching the GitHub handle).
+**Status (2026-10-24):** the VS Code Marketplace publisher `raulkivi` is
+registered (marketplace.visualstudio.com/manage/publishers/raulkivi).
+Still to do:
+- **VS Code Marketplace:** steps 2-4 below (Azure DevOps organization,
+  PAT, `VSCE_PAT` secret), or step 5's Entra ID route instead.
+- **Open VSX:** the whole section below.
+- **Listing:** the listing prerequisites.
+
+- **Publisher id: `raulkivi`** (registered, matching the GitHub handle).
   The id is permanent and must be unique, using lowercase letters, digits
   and hyphens. The extension id becomes `raulkivi.ai-credits-analyzer`,
   and the `publisher` field in `packages/vscode-extension/package.json`
@@ -1072,8 +1080,8 @@ GitHub Release installs with
 
 ## 9. Open questions (need a decision before the step named)
 
-None. Every decision needed before step 10.0 is made. The publisher id
-`raulkivi` (§7.0) is proposed and becomes final when it's registered.
+None. Every decision needed before step 10.0 is made. The Marketplace
+publisher id `raulkivi` is registered (§7.0).
 
 Settled on 2026-10-24: the extension is Copilot-only; it includes the
 tool audit and insights dashboard; both products ship an MCP server; the
