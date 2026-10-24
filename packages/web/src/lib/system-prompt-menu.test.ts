@@ -6,7 +6,9 @@ import {
   buildMenu,
   CATEGORICAL_PALETTE,
   NEUTRAL_COLOR,
+  SEGMENT_TEXT_COLOR,
 } from "./system-prompt-menu.js";
+import { contrastRatio, parseColor, readableTextOn, resolveCssColor } from "./contrast.js";
 
 describe("buildMenu labels", () => {
   it("labels a repeated container's child using its own <name> content", () => {
@@ -210,5 +212,35 @@ describe("assignIcicleColors", () => {
 
     const skills = root.children[0];
     expect(colors.get(skills.id)).toBe(CATEGORICAL_PALETTE[0]);
+  });
+});
+
+// §3.5: text on the inspector's colours stays at 4.5:1 or more in every
+// theme. The pastel text-pane grounds are mixed with white, so a dark
+// theme's light editor text (Dark Modern's #cccccc) would sit near 1.3:1
+// on them; the segments pin their own dark text instead.
+describe("system prompt colour contrast", () => {
+  const DARK_THEME_TEXT = parseColor("#cccccc");
+  const text = "intro<a><b><c>x</c></b></a><d>y</d><e>z</e><f>1</f><g>2</g><h>3</h><i>4</i><j>5</j><k>6</k>";
+  const { root } = parseSystemPrompt(text);
+
+  it("is needed: a dark theme's text on the pastel segments falls under 4.5:1", () => {
+    for (const ground of assignTextColors(root).values()) {
+      expect(contrastRatio(DARK_THEME_TEXT, resolveCssColor(ground))).toBeLessThan(4.5);
+    }
+  });
+
+  it("pins segment text to a colour that reads at 4.5:1 on every pastel ground", () => {
+    expect(assignTextColors(root).size).toBeGreaterThan(CATEGORICAL_PALETTE.length);
+    for (const ground of assignTextColors(root).values()) {
+      expect(contrastRatio(parseColor(SEGMENT_TEXT_COLOR), resolveCssColor(ground))).toBeGreaterThanOrEqual(4.5);
+    }
+  });
+
+  it("gives every icicle fill, at every depth, a label colour at 4.5:1 or more", () => {
+    const fills = [...assignIcicleColors(root).values(), ...CATEGORICAL_PALETTE, NEUTRAL_COLOR];
+    for (const fill of fills) {
+      expect(contrastRatio(parseColor(readableTextOn(fill)), resolveCssColor(fill))).toBeGreaterThanOrEqual(4.5);
+    }
   });
 });

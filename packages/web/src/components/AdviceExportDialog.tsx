@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import type { Session } from "@copilot-cost-analyzer/domain";
 import { standaloneHostCapabilities } from "../host/host-capabilities.js";
 import { buildAdviceBundle } from "../lib/build-advice-bundle.js";
+import { useEscapeKey, useFocusTrap } from "../lib/focus.js";
 
 interface AdviceExportDialogProps {
   sessions: Session[];
@@ -34,6 +35,54 @@ export function AdviceExportDialog({
   if (!open) {
     return null;
   }
+  return (
+    <OpenAdviceExportDialog
+      sessions={sessions}
+      onClose={onClose}
+      copyToClipboard={copyToClipboard}
+      productName={productName}
+      includeToolArgs={includeToolArgs}
+      onIncludeToolArgsChange={setIncludeToolArgs}
+      previewOpen={previewOpen}
+      onTogglePreview={() => setPreviewOpen((next) => !next)}
+      copied={copied}
+      onCopied={setCopied}
+    />
+  );
+}
+
+interface OpenAdviceExportDialogProps {
+  sessions: Session[];
+  onClose: () => void;
+  copyToClipboard: (text: string) => Promise<void>;
+  productName?: string;
+  includeToolArgs: boolean;
+  onIncludeToolArgsChange: (include: boolean) => void;
+  previewOpen: boolean;
+  onTogglePreview: () => void;
+  copied: boolean;
+  onCopied: (copied: boolean) => void;
+}
+
+// The open dialog, mounted only while open so its focus trap starts and
+// ends with it (§3.5: dialogs trap focus while open, Escape closes them,
+// and focus goes back to the opener).
+function OpenAdviceExportDialog({
+  sessions,
+  onClose,
+  copyToClipboard,
+  productName,
+  includeToolArgs,
+  onIncludeToolArgsChange,
+  previewOpen,
+  onTogglePreview,
+  copied,
+  onCopied,
+}: OpenAdviceExportDialogProps) {
+  const dialog = useRef<HTMLDivElement>(null);
+  const titleId = useId();
+  useFocusTrap(dialog);
+  useEscapeKey(onClose);
 
   const bundle = buildAdviceBundle(sessions, { includeToolArgs, productName });
   const missingDetailCount = sessions.filter(
@@ -42,8 +91,8 @@ export function AdviceExportDialog({
 
   function handleCopy(): void {
     copyToClipboard(bundle)
-      .then(() => setCopied(true))
-      .catch(() => setCopied(false));
+      .then(() => onCopied(true))
+      .catch(() => onCopied(false));
   }
 
   return (
@@ -52,8 +101,18 @@ export function AdviceExportDialog({
       data-testid="advice-dialog-backdrop"
       onClick={onClose}
     >
-      <div className="dialog" style={{ maxWidth: 560 }} onClick={(event) => event.stopPropagation()}>
-        <div className="dialog-title">Export advice bundle</div>
+      <div
+        ref={dialog}
+        className="dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        style={{ maxWidth: 560 }}
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div id={titleId} className="dialog-title">
+          Export advice bundle
+        </div>
         <div className="dialog-body">
           <p className="text-muted" style={{ fontSize: 12, margin: "0 0 var(--space-2)" }}>
             Paste this into an LLM chat for advice on your agentic-coding workflow. Chat message text is never
@@ -75,7 +134,7 @@ export function AdviceExportDialog({
               type="checkbox"
               aria-label="Include tool call args"
               checked={includeToolArgs}
-              onChange={(event) => setIncludeToolArgs(event.target.checked)}
+              onChange={(event) => onIncludeToolArgsChange(event.target.checked)}
             />
             Include tool call args (may contain text snippets)
           </label>
@@ -98,7 +157,7 @@ export function AdviceExportDialog({
           )}
         </div>
         <div className="dialog-actions">
-          <button type="button" className="btn btn-ghost" onClick={() => setPreviewOpen((next) => !next)}>
+          <button type="button" className="btn btn-ghost" onClick={onTogglePreview}>
             {previewOpen ? "Hide preview" : "Preview"}
           </button>
           <button type="button" className="btn btn-secondary" onClick={onClose}>

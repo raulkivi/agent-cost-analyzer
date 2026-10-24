@@ -1,5 +1,5 @@
 // @vitest-environment node
-import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { mkdtempSync, readdirSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -52,6 +52,17 @@ describe("web build in extension mode (vscode-extension.md G7, G12)", () => {
       const css = readFileSync(path.join(outDir, cssFile), "utf-8");
       expect(css).not.toContain("fonts.googleapis.com");
       expect(css).not.toMatch(/@import[^;]*https?:/);
+    }
+  });
+
+  // The webview uses the editor's font (--vscode-font-family), so the
+  // standalone app's bundled Barlow would be dead weight in the .vsix.
+  it("ships no font files and no @font-face", () => {
+    const assets = readdirSync(path.join(outDir, "assets"));
+
+    expect(assets.filter((name) => /\.(woff2?|ttf|otf)$/.test(name))).toEqual([]);
+    for (const cssFile of manifest["index.html"]?.css ?? []) {
+      expect(readFileSync(path.join(outDir, cssFile), "utf-8")).not.toContain("@font-face");
     }
   });
 

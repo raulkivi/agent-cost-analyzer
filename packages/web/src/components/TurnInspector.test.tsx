@@ -280,6 +280,57 @@ describe("TurnInspector", () => {
     expect(await screen.findByText(/made no request to the model/i)).toBeInTheDocument();
   });
 
+  // §3.5 States (AsyncView).
+  describe("states", () => {
+    it("explains an uncaptured session as an empty state, not an error", () => {
+      vi.stubGlobal("fetch", vi.fn());
+
+      render(<TurnInspector sessionId="session-1" turnIndex={0} usageDataAvailable={false} onClose={() => {}} />);
+
+      expect(screen.getByRole("heading", { name: "No request or response captured" })).toBeInTheDocument();
+      expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    });
+
+    it("says a load failed, that nothing changed, and retries", async () => {
+      vi.stubGlobal(
+        "fetch",
+        vi
+          .fn()
+          .mockResolvedValueOnce({ ok: false, status: 500, json: () => Promise.resolve({ error: "boom" }) })
+          .mockResolvedValue({ ok: true, status: 200, json: () => Promise.resolve(TWO_ROUND_DETAIL) }),
+      );
+      render(<TurnInspector sessionId="session-1" turnIndex={3} usageDataAvailable={true} onClose={() => {}} />);
+
+      const alert = await screen.findByRole("alert");
+      expect(alert).toHaveTextContent("Failed to load this turn's request/response data.");
+      expect(alert).toHaveTextContent(/nothing was changed/i);
+      fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+
+      expect(await screen.findByText("Request · round 0")).toBeInTheDocument();
+    });
+
+    it("shows a turn without a model request as an empty state", async () => {
+      stubFetchJson({ turnIndex: 0, userMessage: [], rounds: [] });
+
+      render(<TurnInspector sessionId="session-1" turnIndex={0} usageDataAvailable={true} onClose={() => {}} />);
+
+      expect(await screen.findByRole("heading", { name: "No model request" })).toBeInTheDocument();
+    });
+  });
+
+  // §3.5 Accessibility: Escape closes the inspector; focus starts on Back.
+  it("closes on Escape and starts with focus on the back button", async () => {
+    stubFetchJson(TWO_ROUND_DETAIL);
+    const onClose = vi.fn();
+    render(<TurnInspector sessionId="session-1" turnIndex={3} usageDataAvailable={true} onClose={onClose} />);
+    await screen.findByText("Request · round 0");
+
+    expect(screen.getByRole("button", { name: /back to session/i })).toHaveFocus();
+    fireEvent.keyDown(document.activeElement!, { key: "Escape" });
+
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
   it("calls onClose when the back button is activated", async () => {
     stubFetchJson(TWO_ROUND_DETAIL);
     const onClose = vi.fn();

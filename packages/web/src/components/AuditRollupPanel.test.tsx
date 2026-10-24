@@ -84,4 +84,25 @@ describe("AuditRollupPanel", () => {
     renderPanel(vi.fn().mockRejectedValue(new Error("offline")));
     expect(await screen.findByRole("alert")).toHaveTextContent("offline");
   });
+
+  // §3.5 States (AsyncView).
+  it("retries a failed load", async () => {
+    const { loadRollup } = renderPanel(vi.fn().mockRejectedValueOnce(new Error("offline")).mockResolvedValue(makeAuditRollup()));
+
+    fireEvent.click(await screen.findByRole("button", { name: "Try again" }));
+
+    expect(await screen.findByRole("group", { name: "Sessions" })).toHaveTextContent("2");
+    expect(loadRollup).toHaveBeenCalledTimes(2);
+  });
+
+  it("offers all time as the empty range's next step", async () => {
+    const { loadRollup } = renderPanel(
+      vi.fn().mockResolvedValue(makeAuditRollup({ sessionCount: 0, sessions: [], daily: [], failureRate: null })),
+    );
+
+    fireEvent.click(await screen.findByRole("button", { name: "Show all time" }));
+
+    await waitFor(() => expect(loadRollup).toHaveBeenLastCalledWith({}));
+    expect(screen.getByLabelText("All time")).toBeChecked();
+  });
 });

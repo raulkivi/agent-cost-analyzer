@@ -17,6 +17,11 @@ export const CATEGORICAL_PALETTE = [
 
 export const NEUTRAL_COLOR = "#7a7a7d"; // matches theme.css --color-neutral-600
 
+// Text on the text pane's pastel segments (assignTextColors). Fixed rather
+// than the theme's text colour: the grounds are mixed with white in every
+// theme, so a dark theme's light text would be unreadable on them (§3.5).
+export const SEGMENT_TEXT_COLOR = "#1d1f20";
+
 // Menu/coloring stops at depth 3 (root tag > its subtag > that subtag's own
 // entries, e.g. <skills> > <skill> > — matching the "tags and subtags"
 // granularity a reader actually wants to navigate by. Anything deeper

@@ -31,6 +31,10 @@ interface AppHeaderProps {
   // exactly one provider). Omitted, the header looks as it always has.
   displayName?: string;
   providerSelect?: boolean;
+  // True until the ProductProfile resolves or fails: the brand area stays
+  // empty and there's no provider select, so the extension never flashes
+  // the standalone wordmark or select first (step 10.7, found in 10.5).
+  profilePending?: boolean;
 }
 
 const DEFAULT_DISPLAY_NAME = "Session Analyzer";
@@ -47,6 +51,7 @@ export function AppHeader({
   onRetentionThresholdChange,
   displayName = DEFAULT_DISPLAY_NAME,
   providerSelect = true,
+  profilePending = false,
 }: AppHeaderProps) {
   return (
     <header className="nav">
@@ -54,15 +59,19 @@ export function AppHeader({
         <Blueprint
           style={{ width: 32, height: 32, flex: "none", background: "var(--color-accent-900)" }}
         />
-        <div>
-          <div className="nav-brand">{displayName}</div>
-          <div style={{ fontSize: 11, color: "color-mix(in srgb, var(--color-text) 55%, transparent)" }}>
-            GitHub Copilot Chat
+        {profilePending ? (
+          <div data-testid="brand-placeholder" aria-busy="true" className="nav-brand-placeholder" />
+        ) : (
+          <div>
+            <div className="nav-brand">{displayName}</div>
+            <div style={{ fontSize: 11, color: "var(--color-text-muted)" }}>
+              GitHub Copilot Chat
+            </div>
           </div>
-        </div>
+        )}
       </div>
       <SegmentedControl name="mode" options={MODE_OPTIONS} value={mode} onChange={onModeChange} />
-      {providerSelect && mode === "analyze" && providers.length > 0 && onProviderChange && (
+      {!profilePending && providerSelect && mode === "analyze" && providers.length > 0 && onProviderChange && (
         <label style={{ display: "flex", alignItems: "center", gap: "var(--space-1)", marginLeft: "var(--space-2)" }}>
           <span className="text-muted" style={{ fontSize: 11 }}>
             Source

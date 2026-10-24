@@ -4,6 +4,7 @@ import { fetchAuditRollup, type RollupQuery } from "../api-client/audit.js";
 import { HorizontalBars } from "../charts/HorizontalBars.js";
 import { StackedColumns } from "../charts/StackedColumns.js";
 import { CATEGORY_LABELS, STATUS_META, failedCountOf, formatCompact, formatFailureRate } from "../lib/audit-format.js";
+import { AsyncView } from "./ui/AsyncView.js";
 import { Blueprint } from "./ui/Blueprint.js";
 import { SegmentedControl } from "./ui/SegmentedControl.js";
 import { StatTile } from "./ui/StatTile.js";
@@ -45,6 +46,7 @@ function queryFor(preset: RangePreset, now: Date): RollupQuery {
 export function AuditRollupPanel({ onOpenSession, loadRollup = fetchAuditRollup, now }: AuditRollupPanelProps) {
   const [preset, setPreset] = useState<RangePreset>("30");
   const [state, setState] = useState<LoadState>({ kind: "loading" });
+  const [attempt, setAttempt] = useState(0);
   // Captured once: a fresh `new Date()` per render would change the effect's
   // dependency every render and refetch forever.
   const [nowTime] = useState(() => (now ?? new Date()).getTime());
@@ -58,7 +60,7 @@ export function AuditRollupPanel({ onOpenSession, loadRollup = fetchAuditRollup,
     return () => {
       cancelled = true;
     };
-  }, [preset, loadRollup, nowTime]);
+  }, [preset, loadRollup, nowTime, attempt]);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-4)" }}>
@@ -66,21 +68,34 @@ export function AuditRollupPanel({ onOpenSession, loadRollup = fetchAuditRollup,
         <h3 style={{ margin: 0 }}>Tool-call audit across sessions</h3>
         <SegmentedControl name="audit-range" options={RANGE_OPTIONS} value={preset} onChange={setPreset} />
       </div>
-      {state.kind === "loading" && <p className="text-muted" style={{ fontSize: 13 }}>Loading audit…</p>}
-      {state.kind === "error" && (
-        <p role="alert" style={{ fontSize: 13, color: "var(--color-accent-800)" }}>
-          Could not load the audit: {state.message}
-        </p>
-      )}
-      {state.kind === "ready" && <RollupBody rollup={state.rollup} onOpenSession={onOpenSession} />}
+      <AsyncView
+        status={state.kind === "ready" ? (state.rollup.sessionCount === 0 ? "empty" : "ready") : state.kind}
+        loadingText="Loading audit…"
+        readyText="Audit loaded."
+        skeleton="table"
+        error={
+          state.kind === "error"
+            ? { title: `Could not load the audit: ${state.message}`, onRetry: () => setAttempt((current) => current + 1) }
+            : undefined
+        }
+        empty={{
+          title: "No sessions in this date range.",
+          body: "No session with tool calls started in this range.",
+          action: preset === "all" ? undefined : { label: "Show all time", onClick: () => setPreset("all") },
+        }}
+        partial={
+          state.kind === "ready" && state.rollup.outcomeCoverage.unknown > 0
+            ? `Outcome unknown for ${state.rollup.outcomeCoverage.unknown} of ${state.rollup.totals.toolCalls} tool calls: ${state.rollup.outcomeCoverage.unknownReasons.join(" ")}`
+            : undefined
+        }
+      >
+        {state.kind === "ready" && <RollupBody rollup={state.rollup} onOpenSession={onOpenSession} />}
+      </AsyncView>
     </div>
   );
 }
 
 function RollupBody({ rollup, onOpenSession }: { rollup: AuditRollup; onOpenSession: (id: string) => void }) {
-  if (rollup.sessionCount === 0) {
-    return <p className="text-muted" style={{ fontSize: 13 }}>No sessions in this date range.</p>;
-  }
   const failed = failedCountOf(rollup.totals);
   const worstProgram = [...rollup.byShellProgram].sort((a, b) => b.failed - a.failed)[0];
 
@@ -101,13 +116,6 @@ function RollupBody({ rollup, onOpenSession }: { rollup: AuditRollup; onOpenSess
           note={worstProgram && worstProgram.failed > 0 ? `${worstProgram.failed} of ${worstProgram.calls} calls failed` : undefined}
         />
       </div>
-
-      {rollup.outcomeCoverage.unknown > 0 && (
-        <p className="text-muted" style={{ fontSize: 12, margin: 0 }}>
-          Outcome unknown for {rollup.outcomeCoverage.unknown} of {rollup.totals.toolCalls} tool calls:{" "}
-          {rollup.outcomeCoverage.unknownReasons.join(" ")}
-        </p>
-      )}
 
       <Blueprint className="audit-section">
         <div className="card-kicker">Tool-call outcomes per day</div>

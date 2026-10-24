@@ -3,13 +3,15 @@ export interface PayloadToken {
   color: string;
 }
 
-// Matches Design/README.md's token table exactly — don't hard-code hex,
-// map straight to the "Industry" theme custom properties.
+// Design/README.md's token table, except numbers and punctuation, which
+// use the text-safe roles (accent-600 and a 62% text mix fell under 4.5:1;
+// theme-contrast.test.ts). Don't hard-code hex: map straight to the
+// "Industry" theme custom properties.
 export const PAYLOAD_TOKEN_COLORS = {
   key: "var(--color-accent-800)",
   str: "var(--color-text)",
-  num: "var(--color-accent-600)",
-  punc: "color-mix(in srgb, var(--color-text) 62%, transparent)",
+  num: "var(--color-accent-text)",
+  punc: "var(--color-text-muted)",
   plain: "var(--color-text)",
 } as const;
 

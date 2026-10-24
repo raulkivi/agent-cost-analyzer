@@ -37,6 +37,46 @@ describe("SessionAuditPanel", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent("boom");
   });
 
+  // §3.5 States (AsyncView).
+  it("retries a failed load", async () => {
+    const loadAudit = vi.fn().mockRejectedValueOnce(new Error("boom")).mockResolvedValue(makeSessionAudit());
+    renderPanel({ loadAudit });
+
+    fireEvent.click(await screen.findByRole("button", { name: "Try again" }));
+
+    expect(await screen.findByRole("group", { name: "Tool calls" })).toHaveTextContent("4");
+    expect(loadAudit).toHaveBeenCalledTimes(2);
+  });
+
+  it("explains a session with no tool calls and offers the cross-session audit", async () => {
+    const onShowAllSessions = vi.fn();
+    renderPanel({
+      onShowAllSessions,
+      loadAudit: vi.fn().mockResolvedValue(
+        makeSessionAudit({
+          totals: { toolCalls: 0, succeeded: 0, failed: 0, interrupted: 0, denied: 0, unknown: 0 },
+          calls: [],
+        }),
+      ),
+    });
+
+    expect(await screen.findByRole("heading", { name: "No tool calls in this session" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "View all sessions" }));
+    expect(onShowAllSessions).toHaveBeenCalledTimes(1);
+  });
+
+  it("shows incomplete outcome coverage as a partial-data warning", async () => {
+    renderPanel({
+      loadAudit: vi.fn().mockResolvedValue(
+        makeSessionAudit({
+          outcomeCoverage: { known: 3, unknown: 1, unknownReasons: ["No result recorded."] },
+        }),
+      ),
+    });
+
+    expect(await screen.findByRole("note")).toHaveTextContent(/Partial data.*Outcome unknown for 1 of 4 tool calls/);
+  });
+
   it("warns when outcome coverage is incomplete instead of implying zero failures", async () => {
     renderPanel({
       loadAudit: vi.fn().mockResolvedValue(

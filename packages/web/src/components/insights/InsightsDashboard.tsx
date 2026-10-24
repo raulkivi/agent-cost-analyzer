@@ -25,6 +25,7 @@ import {
   type InsightRowsView,
 } from "../../lib/insights/measures.js";
 import { buildNarrative } from "../../lib/insights/narrative.js";
+import { AsyncView } from "../ui/AsyncView.js";
 import { Blueprint } from "../ui/Blueprint.js";
 import { SegmentedControl } from "../ui/SegmentedControl.js";
 import { StatTile } from "../ui/StatTile.js";
@@ -97,6 +98,7 @@ function listBoxGroups(crossProvider: boolean) {
 export function InsightsDashboard({ loadDataset = fetchInsights, now, crossProvider = true }: InsightsDashboardProps) {
   const [preset, setPreset] = useState<RangePreset>("30");
   const [state, setState] = useState<LoadState>({ kind: "loading" });
+  const [attempt, setAttempt] = useState(0);
   const [nowTime] = useState(() => (now ?? new Date()).getTime());
 
   useEffect(() => {
@@ -108,7 +110,7 @@ export function InsightsDashboard({ loadDataset = fetchInsights, now, crossProvi
     return () => {
       cancelled = true;
     };
-  }, [preset, loadDataset, nowTime]);
+  }, [preset, loadDataset, nowTime, attempt]);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-4)" }}>
@@ -116,25 +118,34 @@ export function InsightsDashboard({ loadDataset = fetchInsights, now, crossProvi
         <h3 style={{ margin: 0 }}>{crossProvider ? "Insights across all providers" : "Insights"}</h3>
         <SegmentedControl name="insights-range" options={RANGE_OPTIONS} value={preset} onChange={setPreset} />
       </div>
-      {state.kind === "loading" && (
-        <p className="text-muted" style={{ fontSize: 13 }}>
-          {crossProvider ? "Loading sessions from every provider…" : "Loading sessions…"}
-        </p>
-      )}
-      {state.kind === "error" && (
-        <p role="alert" style={{ fontSize: 13, color: "var(--color-accent-800)" }}>
-          Could not load insights: {state.message}
-        </p>
-      )}
-      {state.kind === "ready" && (
-        <DashboardBody dataset={state.dataset} crossProvider={crossProvider} key={state.dataset.generatedAt + preset} />
-      )}
+      <AsyncView
+        status={state.kind === "ready" ? (state.dataset.sessions.length === 0 ? "empty" : "ready") : state.kind}
+        loadingText={crossProvider ? "Loading sessions from every provider…" : "Loading sessions…"}
+        readyText="Insights loaded."
+        skeleton="table"
+        error={
+          state.kind === "error"
+            ? { title: `Could not load insights: ${state.message}`, onRetry: () => setAttempt((current) => current + 1) }
+            : undefined
+        }
+        empty={{
+          title: crossProvider ? "No sessions in this date range from any provider." : "No sessions in this date range.",
+          body: (state.kind === "ready" && providerNotes(state.dataset).join(" · ")) || "Sessions started before the range aren't counted.",
+          action: preset === "all" ? undefined : { label: "Show all time", onClick: () => setPreset("all") },
+        }}
+        partial={state.kind === "ready" ? providerNotes(state.dataset).join(" · ") || undefined : undefined}
+      >
+        {state.kind === "ready" && (
+          <DashboardBody dataset={state.dataset} crossProvider={crossProvider} key={state.dataset.generatedAt + preset} />
+        )}
+      </AsyncView>
     </div>
   );
 }
 
-function ProviderNotes({ dataset }: { dataset: InsightsDataset }) {
-  const notes = dataset.providers.flatMap((provider) => {
+// Providers whose sessions are missing or cut short: partial data (§3.5).
+function providerNotes(dataset: InsightsDataset): string[] {
+  return dataset.providers.flatMap((provider) => {
     if (!provider.available) {
       return [`${provider.label}: ${provider.unavailableReason ?? "not available"}`];
     }
@@ -146,14 +157,6 @@ function ProviderNotes({ dataset }: { dataset: InsightsDataset }) {
     }
     return [];
   });
-  if (notes.length === 0) {
-    return null;
-  }
-  return (
-    <p className="text-muted" style={{ fontSize: 12, margin: 0 }}>
-      {notes.join(" · ")}
-    </p>
-  );
 }
 
 function DashboardBody({ dataset, crossProvider }: { dataset: InsightsDataset; crossProvider: boolean }) {
@@ -162,17 +165,6 @@ function DashboardBody({ dataset, crossProvider }: { dataset: InsightsDataset; c
   const [history, setHistory] = useState(emptyHistory);
   const selections = history.present;
   const evaluation = useMemo(() => engine.evaluate(selections), [engine, selections]);
-
-  if (dataset.sessions.length === 0) {
-    return (
-      <>
-        <ProviderNotes dataset={dataset} />
-        <p className="text-muted" style={{ fontSize: 13 }}>
-          {crossProvider ? "No sessions in this date range from any provider." : "No sessions in this date range."}
-        </p>
-      </>
-    );
-  }
 
   const view: InsightRowsView = {
     sessions: evaluation.rows<InsightSessionRow>(TABLE.sessions),
@@ -233,7 +225,6 @@ function DashboardBody({ dataset, crossProvider }: { dataset: InsightsDataset; c
           onClearAll={() => setHistory((current) => commit(current, clearAll()))}
           onBack={() => setHistory(back)}
         />
-        <ProviderNotes dataset={dataset} />
 
         <Blueprint className="audit-section">
           <section role="region" aria-label="What happened">

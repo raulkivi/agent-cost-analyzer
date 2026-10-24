@@ -1,4 +1,6 @@
+import { useState } from "react";
 import { fireEvent, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Session } from "@copilot-cost-analyzer/domain";
 import { buildAdviceBundle } from "../lib/build-advice-bundle.js";
@@ -24,7 +26,9 @@ describe("AdviceExportDialog", () => {
 
   beforeEach(() => {
     writeText = vi.fn().mockResolvedValue(undefined);
-    Object.assign(navigator, { clipboard: { writeText } });
+    // defineProperty, not assignment: user-event's setup() installs its own
+    // getter-only clipboard stub, which a plain assignment can't replace.
+    Object.defineProperty(navigator, "clipboard", { value: { writeText }, configurable: true });
   });
 
   afterEach(() => {
@@ -159,6 +163,55 @@ describe("AdviceExportDialog", () => {
       fireEvent.click(screen.getByRole("button", { name: "Copy advice prompt" }));
       expect(writeText).toHaveBeenCalledWith(buildAdviceBundle(sessions, { includeToolArgs: false, productName }));
       expect(await screen.findByText("Copied!")).toBeInTheDocument();
+    });
+  });
+
+  // §3.5 Accessibility: a modal dialog, by keyboard.
+  describe("keyboard and focus", () => {
+    function Host() {
+      const [open, setOpen] = useState(false);
+      return (
+        <>
+          <button type="button" onClick={() => setOpen(true)}>
+            Export advice
+          </button>
+          <AdviceExportDialog sessions={[makeSession()]} open={open} onClose={() => setOpen(false)} />
+        </>
+      );
+    }
+
+    it("is a labelled modal dialog", () => {
+      render(<AdviceExportDialog sessions={[makeSession()]} open onClose={vi.fn()} />);
+
+      const dialog = screen.getByRole("dialog", { name: "Export advice bundle" });
+      expect(dialog).toHaveAttribute("aria-modal", "true");
+    });
+
+    it("traps Tab inside while open, then gives focus back to its opener", async () => {
+      const user = userEvent.setup();
+      render(<Host />);
+      await user.click(screen.getByRole("button", { name: "Export advice" }));
+
+      const dialog = screen.getByRole("dialog");
+      expect(dialog).toContainElement(document.activeElement as HTMLElement);
+      for (let step = 0; step < 6; step++) {
+        await user.tab();
+        expect(dialog).toContainElement(document.activeElement as HTMLElement);
+      }
+
+      await user.click(screen.getByRole("button", { name: "Close" }));
+      expect(screen.getByRole("button", { name: "Export advice" })).toHaveFocus();
+    });
+
+    it("closes on Escape", async () => {
+      const user = userEvent.setup();
+      render(<Host />);
+      await user.click(screen.getByRole("button", { name: "Export advice" }));
+
+      await user.keyboard("{Escape}");
+
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Export advice" })).toHaveFocus();
     });
   });
 });

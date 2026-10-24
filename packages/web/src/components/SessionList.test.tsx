@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import type { Session } from "@copilot-cost-analyzer/domain";
 import { SessionList } from "./SessionList.js";
@@ -172,5 +173,75 @@ describe("SessionList", () => {
 
     expect(onToggleAdvice).toHaveBeenCalledWith(sessions[0]);
     expect(onSelect).not.toHaveBeenCalled();
+  });
+
+  // §3.5 Accessibility: arrow keys move through the list, Enter opens.
+  describe("keyboard", () => {
+    const sessions = [
+      makeSession({ id: "s1", title: "First" }),
+      makeSession({ id: "s2", title: "Second" }),
+      makeSession({ id: "s3", title: "Third" }),
+    ];
+
+    function renderList(onSelect = vi.fn(), selectedSessionId: string | null = null) {
+      render(
+        <>
+          <SessionList
+            mode="learn"
+            sessions={sessions}
+            selectedSessionId={selectedSessionId}
+            onSelect={onSelect}
+            adviceSelection={new Set()}
+            onToggleAdvice={vi.fn()}
+          />
+          <button type="button">after</button>
+        </>,
+      );
+      return onSelect;
+    }
+
+    it("keeps the card and its advice checkbox apart, so neither control is nested in the other", () => {
+      renderList();
+
+      const card = screen.getByRole("button", { name: "First" });
+      expect(card).not.toContainElement(screen.getByRole("checkbox", { name: /First/ }));
+    });
+
+    it("is one stop in the Tab order (the selected card, then its checkbox), entered after the search box", async () => {
+      const user = userEvent.setup();
+      renderList(vi.fn(), "s2");
+
+      await user.click(screen.getByPlaceholderText("Search…"));
+      await user.tab();
+      expect(screen.getByRole("button", { name: "Second" })).toHaveFocus();
+      await user.tab();
+      expect(screen.getByRole("checkbox", { name: /Second/ })).toHaveFocus();
+      await user.tab();
+      expect(screen.getByRole("button", { name: "after" })).toHaveFocus();
+    });
+
+    it("moves focus with ArrowDown/ArrowUp, Home and End, and opens with Enter", async () => {
+      const user = userEvent.setup();
+      const onSelect = renderList();
+      screen.getByRole("button", { name: "First" }).focus();
+
+      await user.keyboard("{ArrowDown}");
+      expect(screen.getByRole("button", { name: "Second" })).toHaveFocus();
+      expect(onSelect).not.toHaveBeenCalled();
+      await user.keyboard("{End}");
+      expect(screen.getByRole("button", { name: "Third" })).toHaveFocus();
+      await user.keyboard("{ArrowUp}{Home}");
+      expect(screen.getByRole("button", { name: "First" })).toHaveFocus();
+
+      await user.keyboard("{ArrowDown}{Enter}");
+      expect(onSelect).toHaveBeenCalledWith(sessions[1]);
+    });
+
+    it("marks the open session for assistive tech", () => {
+      renderList(vi.fn(), "s3");
+
+      expect(screen.getByRole("button", { name: "Third" })).toHaveAttribute("aria-current", "true");
+      expect(screen.getByRole("button", { name: "First" })).not.toHaveAttribute("aria-current");
+    });
   });
 });
