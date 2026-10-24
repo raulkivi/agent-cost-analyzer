@@ -27,7 +27,7 @@ share most of their code (vision §5).
 | Analyze mode, turn inspector, system prompt | yes | yes |
 | Tool audit, insights dashboard | **yes** (over the Copilot provider only) | yes (across every provider) |
 | MCP server | **yes**, Copilot data only, registered with VS Code | yes, stdio (`npm run mcp`), every provider |
-| Extension-only UX | one-click setting fixes, VS Code merged settings, VS Code-supplied paths | — |
+| Extension-only UX | Activity Bar sidebar (sessions, setup), status-bar AI Credits, one-click setting fixes, VS Code merged settings, VS Code-supplied paths | — |
 | Delivery | `.vsix` from the Marketplace / Open VSX | `npm start` from the repo |
 | Version | independent (`ext-v*` tags) | independent (`app-v*` tags) |
 
@@ -79,7 +79,7 @@ network calls, so neither product sends telemetry.
 | G6 | The config check reads only the user `settings.json` (workspace merge not implemented, Phase 5 note). | `services/config-check` | `SettingsSource` port with a `vscode.workspace.getConfiguration` adapter (10.4) |
 | G7 | The Vite build emits `/assets/...` absolute URLs and no manifest. Webviews need `asWebviewUri` URLs and a strict CSP. | `packages/web/vite.config.ts`, `index.html` | Extension build mode with `base: './'` and `build.manifest` (10.3) |
 | G8 | `navigator.clipboard` (advice export) isn't reliable in every webview host. | `AdviceExportDialog.tsx:30` | `HostCapabilities` port: clipboard, open setting, open text document (10.5) |
-| G9 | ESM-only workspace (`"type": "module"`), with `domain` exporting TypeScript source. | all `package.json` | esbuild bundle to CJS `dist/extension.js` and `dist/mcp-stdio.js` (10.3, 10.6) |
+| G9 | ESM-only workspace (`"type": "module"`), with `domain` exporting TypeScript source. | all `package.json` | esbuild bundle to CJS `dist/extension.js` and `dist/mcp-stdio.js` (10.3, 10.7) |
 | G10 | The UI assumes a multi-provider product: the header provider select, "across every provider" wording on the dashboard, and the provider column. It also says nothing about which product it is. | `AppHeader.tsx`, `components/insights/*` | `ProductProfile` sent by the host; the UI renders from it, never from `isExtension` checks (10.5) |
 | G11 | `composeLogProviders` imports all four providers statically, so any bundle that imports it includes them. | `composition/compose-log-providers.ts` | Split per-provider factories, plus a `composeCopilotProviders` root (10.3) |
 
@@ -146,7 +146,8 @@ flowchart LR
   `getProductProfile`. `ApiService` doesn't know which product it runs in;
   it only sees the registry it was given.
 - **D3: A new workspace, `packages/vscode-extension`.** It holds only
-  VS Code glue: activation, panel, dispatcher, VS Code adapters, the
+  VS Code glue: activation, panel, sidebar trees, dispatcher, VS Code
+  adapters, the
   Copilot composition root, the MCP definition provider and packaging. It's
   the only package that imports `vscode`.
 - **D4: Paths come from VS Code.**
@@ -163,10 +164,10 @@ flowchart LR
 - **D6: `extensionKind: ["workspace"]`.** Copilot Chat writes its logs
   where its own extension host runs. On Remote-SSH, WSL and Dev Containers
   that's the remote side, so this extension must run there too to see the
-  same files. Validate in step 10.7.
+  same files. Validate in step 10.8.
 - **D7: Copilot-only MCP in the extension.** The extension registers an MCP
   server definition with VS Code whose process composes only the Copilot
-  provider (step 10.6). The tool list and schemas are identical to the
+  provider (step 10.7). The tool list and schemas are identical to the
   standalone server's; only the data behind them differs.
 - **D8: Independent versions and names.** Each product has its own
   version, changelog, tag prefix and listing. The shared packages stay
@@ -179,6 +180,16 @@ flowchart LR
   MCP registration (D7). The trade-off is that users on an older VS Code
   keep the last extension version that was compatible with their editor.
   The Marketplace handles this automatically.
+- **D10: Native sidebar for navigation, editor panel for analysis**
+  (decided 2026-10-24). The extension adds an Activity Bar icon whose view
+  container holds native TreeViews (not webviews): **Sessions** and
+  **Setup** in v1, **Findings** and **Learn scenarios** in a later minor
+  release. A status-bar item shows today's AI Credits. Anything wide (the
+  turns table, charts, dashboard, audit, inspector) stays in the editor
+  panel, because the side bar is only 250-400 px wide. Picking a session
+  in the tree opens or switches the panel to it. Tree code is VS Code-only
+  and lives in `packages/vscode-extension`; it reads through the same
+  `ApiService`, so the numbers can't differ from the panel's.
 
 ### 3.3 `ProductProfile`
 
@@ -214,7 +225,7 @@ another company's trademark in the product name.
 - `displayName`: `AI Credits Analyzer`. `name` (the Marketplace id under
   the publisher): `ai-credits-analyzer`. The Marketplace rejects a
   `displayName` already in use, so confirm it's free before the first
-  publish (step 10.7). If it's taken, fall back to "AI Credits Analyzer
+  publish (step 10.8). If it's taken, fall back to "AI Credits Analyzer
   for VS Code" rather than adding "Copilot".
 - `description`: names the use case, e.g. "See where your GitHub Copilot
   Chat tokens and AI Credits go: prompt caching, per-turn cost, tool-call
@@ -245,7 +256,11 @@ type RpcResponse =
   | { kind: "response"; id: string; ok: true; result: unknown }
   | { kind: "response"; id: string; ok: false; error: { status: 400 | 404 | 500; message: string } };
 // host -> webview, unsolicited (e.g. settings changed -> refetch config status)
-type HostEvent = { kind: "event"; name: "configChanged" | "themeChanged"; payload?: unknown };
+type HostEvent = {
+  kind: "event";
+  name: "configChanged" | "themeChanged" | "selectSession"; // selectSession: the sidebar picked a session (D10)
+  payload?: unknown;
+};
 ```
 
 - The host validates `method` against an allow-list and validates
@@ -356,8 +371,8 @@ identically.
     (§9 Q1), its own `version` (D8), `engines.vscode` per D9,
     `main: ./dist/extension.js`, `extensionKind: ["workspace"]`, and
     contributed command `aiCreditsAnalyzer.open`. Commands activate
-    implicitly, with no `*` activation. It also adds a status-bar entry
-    point and an `icon`.
+    implicitly, with no `*` activation. It also adds an `icon`. The
+    sidebar and status bar come in step 10.6.
   - `src/extension.ts` with `activate`/`deactivate`, wired through a
     composition root (`src/composition.ts`) as the only place that
     constructs concrete classes. It uses `composeCopilotProviders`, never
@@ -437,7 +452,69 @@ identically.
   The extension shows no provider select, and the standalone app looks
   unchanged.
 
-### 10.6 Copilot-only MCP server in the extension (D7)
+### 10.6 Native sidebar and status bar (D10)
+
+Everything here is built on pure, `vscode`-free modules that are tested
+first with fakes. Only thin registration code touches the `vscode` API.
+
+- **Contributions** (`package.json`):
+  - `viewsContainers.activitybar`: `aiCreditsAnalyzer` with a monochrome
+    SVG icon.
+  - `views`: `aiCreditsAnalyzer.sessions` ("Sessions") and
+    `aiCreditsAnalyzer.setup` ("Setup").
+  - `viewsWelcome` for both views.
+  - `menus.view/title`: Refresh and Open analyzer.
+  - `menus.view/item/context`: Open, Show tool audit, Copy advice bundle.
+  - Commands `aiCreditsAnalyzer.refreshSessions`,
+    `aiCreditsAnalyzer.openSession` (args: session id and an optional
+    right-panel tab, used by "Show tool audit") and
+    `aiCreditsAnalyzer.fixSetting` (arg: setting id; defaults to the
+    debug-logging setting).
+- **Sessions tree, tests first.** `sessions-tree-model.ts` is a pure
+  function from `Session[]` plus `now` to tree nodes:
+  - Group by day ("Today", "Yesterday", then ISO dates), newest first.
+  - Label is the session title. Description is the AI Credits total
+    rounded to 2 decimals, or "AI Credits unknown" when
+    `costAiCredits.known` is false (constraint 6, never "0").
+  - Tooltip shows the turn count, start time and model.
+  - Sessions without `startedAt` go in an "Undated" group, never a
+    fabricated date.
+
+  Tests cover grouping across midnight and time zones, unknown cost,
+  empty input, and stable ordering. `SessionsTreeProvider` adapts the
+  model to `vscode.TreeDataProvider` and reads `ApiService.listSessions`.
+  It refreshes on the Refresh button and when the view becomes visible,
+  with no background polling or file watchers in v1.
+- **Selection sync.** `openSession(id)` opens the panel if it's closed,
+  then posts `selectSession`. The web app handles it like a click in its
+  own session list. Test the web handler (the event selects the session
+  and fetches it) and the host command (it creates the panel once and
+  posts once).
+- **Setup view, tests first.** `setup-view-model.ts` maps `ConfigStatus`
+  to either an empty tree, which shows the `viewsWelcome` content, or one
+  node per warning. Each node has a severity icon and an inline **Fix**
+  action that runs `openSetting(settingId)` from step 10.5. Welcome
+  content: "Debug logging is off, so sessions have no token data.
+  [Enable logging](command:aiCreditsAnalyzer.fixSetting)". It refreshes on
+  the `configChanged` signal from step 10.4.
+- **Status bar, tests first.** `status-bar-model.ts` is a pure function
+  from today's sessions to `{ text, tooltip }`:
+  - It sums only known `costAiCredits`, and the tooltip names the
+    coverage ("3 of 5 sessions have cost data").
+  - It shows "AI Credits: unknown" when none are known, and is hidden
+    when there are no sessions today.
+  - Clicking it opens the panel.
+- **Later minor release, not in v1:** a **Findings** tree, like the
+  Problems view: insights findings by severity, click → session and turn.
+  Also a **Learn scenarios** tree.
+- **Exit:** in a dev host the Activity Bar icon shows the Sessions tree
+  with real Copilot sessions grouped by day. Clicking one opens the panel
+  on that session. With debug logging off, the Setup view's Enable button
+  opens the setting. The status bar shows today's known AI Credits with
+  coverage in the tooltip. Every tree and status-bar model has unit
+  tests, and none of the model modules import `vscode`.
+
+### 10.7 Copilot-only MCP server in the extension (D7)
 
 - Tests first: `createCopilotMcpServices()` builds the same services as
   `mcp/stdio.ts` over `composeCopilotProviders`. Test that `tools/list`
@@ -458,11 +535,13 @@ identically.
   read-only tools, and `get_session_cost` answers for a real Copilot
   session. With it off, no server is registered.
 
-### 10.7 Integration tests, remote check, packaging
+### 10.8 Integration tests, remote check, packaging
 
 - `@vscode/test-cli` + `@vscode/test-electron` integration suite, run
   against the `stable` VS Code build (D9). It
-  activates the extension, opens the panel, and round-trips `getHealth`,
+  activates the extension, opens the panel, checks that the Sessions view
+  lists the seeded session and that selecting it opens the panel on it,
+  and round-trips `getHealth`,
   `getProductProfile`, `listLearnScenarios` and `getConfigStatus` (temp
   user-data dir with a seeded `settings.json` and `temp-sqlite-db`
   fixture).
@@ -473,8 +552,8 @@ identically.
   `README.md`, `LICENSE`, `CHANGELOG.md`, `icon.png`) and a size budget
   (proposal: under 5 MB).
 - **Exit:** `<name>-<version>.vsix` installs into a clean VS Code via
-  "Install from VSIX…" and passes the 10.4/10.5/10.6 exit checks with no
-  repo checkout present.
+  "Install from VSIX…" and passes the 10.4/10.5/10.6/10.7 exit checks
+  with no repo checkout present.
 
 ## 7. Deployment
 
@@ -514,7 +593,7 @@ suite only, to cover the D4 path derivation for real.
 
 - **Versioning:** the version lives in `packages/vscode-extension/package.json`
   and starts at `0.1.0`. Use the Marketplace pre-release channel
-  (`--pre-release`, odd minor) until 10.7's remote check passes, then
+  (`--pre-release`, odd minor) until 10.8's remote check passes, then
   publish a stable even minor.
 - **Marketplace listing:** README (Learn/Analyze/dashboard screenshots), a
   privacy statement ("reads local Copilot Chat logs only; no network; no
@@ -541,7 +620,7 @@ GitHub Release installs with
 |---|---|---|
 | R1 | `node:sqlite` is missing or flagged in the extension host's Electron/Node. | Spike 10.0. Fallback: a `SqliteReader` port with a WASM adapter, used only by the extension. |
 | R2 | The webview `postMessage` payload for a large insights dataset is slow. | Insights already accept `limit`. Measure in 10.4, and stream by provider if needed (§11.1 open question). |
-| R3 | Copilot Chat's storage layout differs on remote hosts. | D6 plus the manual remote check in 10.7. The provider reports "unavailable" with a reason, never a crash (§11.3). |
+| R3 | Copilot Chat's storage layout differs on remote hosts. | D6 plus the manual remote check in 10.8. The provider reports "unavailable" with a reason, never a crash (§11.3). |
 | R4 | Bundling ESM code that relies on `import.meta.url`. | G4 refactor in 10.1, and an integration test that loads the bundled file. |
 | R5 | Marketplace PAT leakage. | Protected environment, PAT scoped to Marketplace only, rotated yearly. Open VSX token separate. |
 | R6 | Non-Copilot code leaks into the extension through a shared import. | Bundle-boundary test in CI (§3.1). Move to Option B if it keeps failing. |
@@ -550,15 +629,14 @@ GitHub Release installs with
 ## 9. Open questions (need a decision before the step named)
 
 1. **Publisher id** (before 10.3).
-2. **Webview placement:** an editor-area panel only, or also an
-   activity-bar view with the session list? Proposal: panel only in v1.
 
 Settled on 2026-10-24: the extension is Copilot-only; it includes the
 tool audit and insights dashboard; both products ship an MCP server; the
 products have separate names (AI Credits Analyzer and Agent Cost
 Analyzer, §3.4) and independent versions; and the standalone app keeps
 VS Code support. The minimum VS Code version is the current stable at
-each release (D9).
+each release (D9). The extension has a native sidebar (Sessions, Setup)
+and a status-bar item in v1, with analysis in the editor panel (D10).
 
 ## 10. Exit criterion (Phase 10 as a whole)
 
@@ -567,7 +645,9 @@ extension from the Marketplace or a `.vsix`. Its "Open" command shows
 Learn mode. On Linux, macOS and Windows it shows the user's real Copilot
 Chat sessions in Analyze mode, the tool audit and the insights dashboard,
 with the same numbers as the standalone app for the same session. A
-`logging-disabled` warning's Fix button opens that exact setting. With
+`logging-disabled` warning's Fix button opens that exact setting. The
+Activity Bar icon opens a Sessions tree, and picking a session opens it in
+the panel. With
 MCP enabled, Copilot Chat lists the same 9 read-only tools, backed by
 Copilot data only. The bundle-boundary test proves no Claude Code, pi or
 mitmproxy code ships in the `.vsix`. The webview makes no network
