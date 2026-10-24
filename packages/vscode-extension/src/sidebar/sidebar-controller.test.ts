@@ -51,6 +51,7 @@ function setup(overrides: Partial<SidebarSources> = {}) {
       return [session("a", 4), session("b", null)];
     }),
     getConfigStatus: vi.fn(async () => status([])),
+    listLearnScenarios: vi.fn(async () => [{ ...session("cache-basics"), mode: "learn" as const, category: "Prompt caching" }]),
     ...overrides,
   };
   const onInternalError = vi.fn();
@@ -189,7 +190,7 @@ describe("SidebarController", () => {
   it("reads 'today' at the time of each query, not of the refresh", async () => {
     let now = NOW;
     const controller = new SidebarController(
-      { relistLogSources: () => undefined, listSessions: async () => [session("a", 4)], getConfigStatus: async () => status([]) },
+      { relistLogSources: () => undefined, listSessions: async () => [session("a", 4)], listLearnScenarios: async () => [], getConfigStatus: async () => status([]) },
       { now: () => now, timeZone: "UTC" },
     );
     await controller.refresh();
@@ -219,6 +220,7 @@ describe("SidebarController translation (vscode-extension.md §3.5 Localization)
       {
         relistLogSources: () => undefined,
         listSessions: async () => [session("a", null)],
+        listLearnScenarios: async () => [],
         getConfigStatus: async () => status([warning("optional")]),
       },
       { now: () => NOW, timeZone: "UTC", translate: upperCaseTranslate },
@@ -239,6 +241,7 @@ describe("SidebarController translation (vscode-extension.md §3.5 Localization)
           throw new Error("boom");
         },
         getConfigStatus: async () => status([]),
+        listLearnScenarios: async () => [],
       },
       { now: () => NOW, timeZone: "UTC", translate: upperCaseTranslate, onInternalError: () => undefined },
     );
@@ -262,6 +265,7 @@ describe("SidebarController timing", () => {
           return listSessions();
         },
         getConfigStatus: async () => status([]),
+        listLearnScenarios: async () => [],
       },
       { now: () => NOW, timeZone: "UTC", onInternalError: () => undefined, timing: { now: () => clock, sessionsTreeBuilt } },
     );
@@ -286,5 +290,41 @@ describe("SidebarController timing", () => {
     await controller.refreshConfig();
 
     expect(sessionsTreeBuilt).not.toHaveBeenCalled();
+  });
+});
+
+// Step 10.12: the Learn view's scenarios. They ship with the extension and
+// never change, so they're read once, not on every refresh.
+describe("the Learn tree", () => {
+  it("is empty until the first refresh, then lists the scenarios by category", async () => {
+    const { controller } = setup();
+    expect(controller.learnTree()).toEqual([]);
+
+    await controller.refresh();
+
+    const [group] = controller.learnTree();
+    expect(group).toMatchObject({ kind: "category", label: "Prompt caching" });
+  });
+
+  it("reads the scenarios once, however often the sidebar refreshes", async () => {
+    const { controller, sources } = setup();
+
+    await controller.refresh();
+    await controller.refresh();
+
+    expect(sources.listLearnScenarios).toHaveBeenCalledTimes(1);
+  });
+
+  it("shows an error, reports it, and tries again on the next refresh when the scenarios can't be read", async () => {
+    const failing = vi.fn().mockRejectedValueOnce(new Error("boom")).mockResolvedValue([]);
+    const { controller, onInternalError } = setup({ listLearnScenarios: failing });
+
+    await controller.refresh();
+    expect(controller.learnTree()).toMatchObject([{ kind: "message", icon: "error" }]);
+    expect(onInternalError).toHaveBeenCalledWith("listLearnScenarios", expect.any(Error));
+
+    await controller.refresh();
+    expect(controller.learnTree()).toEqual([]);
+    expect(failing).toHaveBeenCalledTimes(2);
   });
 });

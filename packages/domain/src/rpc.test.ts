@@ -295,11 +295,18 @@ describe("selectSessionPayloadSchema", () => {
       { sessionId: "s1", tab: "settings" },
       { sessionId: "s1", view: "dashboard" },
       { sessionId: "s1", adviceDialog: "yes" },
+      { sessionId: "s1", mode: "dashboard" },
       "s1",
       null,
     ]) {
       expect(selectSessionPayloadSchema.safeParse(bad).success).toBe(false);
     }
+  });
+
+  // Step 10.12: the sidebar's Learn view opens scenarios the same way.
+  it("accepts a mode, learn for a Learn scenario and analyze (the default) for a session", () => {
+    expect(selectSessionPayloadSchema.safeParse({ sessionId: "cache-basics", mode: "learn" }).success).toBe(true);
+    expect(selectSessionPayloadSchema.safeParse({ sessionId: "s1", mode: "analyze" }).success).toBe(true);
   });
 
   it("is exported from the domain index", () => {

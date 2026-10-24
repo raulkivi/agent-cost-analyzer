@@ -73,6 +73,12 @@
         "icon": "$(go-to-file)"
       },
       {
+        "command": "aiCreditsAnalyzer.openScenario",
+        "title": "%command.openScenario.title%",
+        "category": "%category%",
+        "icon": "$(go-to-file)"
+      },
+      {
         "command": "aiCreditsAnalyzer.showToolAudit",
         "title": "%command.showToolAudit.title%",
         "category": "%category%",
@@ -119,6 +125,10 @@
           "name": "%view.sessions.name%"
         },
         {
+          "id": "aiCreditsAnalyzer.learn",
+          "name": "%view.learn.name%"
+        },
+        {
           "id": "aiCreditsAnalyzer.setup",
           "name": "%view.setup.name%"
         }
@@ -128,6 +138,10 @@
       {
         "view": "aiCreditsAnalyzer.sessions",
         "contents": "%welcome.sessions%"
+      },
+      {
+        "view": "aiCreditsAnalyzer.learn",
+        "contents": "%welcome.learn%"
       },
       {
         "view": "aiCreditsAnalyzer.setup",
@@ -227,6 +241,10 @@
           "when": "false"
         },
         {
+          "command": "aiCreditsAnalyzer.openScenario",
+          "when": "false"
+        },
+        {
           "command": "aiCreditsAnalyzer.showToolAudit",
           "when": "false"
         },
@@ -253,6 +271,11 @@
         {
           "command": "aiCreditsAnalyzer.refreshSessions",
           "when": "view == aiCreditsAnalyzer.setup",
+          "group": "navigation@1"
+        },
+        {
+          "command": "aiCreditsAnalyzer.open",
+          "when": "view == aiCreditsAnalyzer.learn",
           "group": "navigation@1"
         }
       ],

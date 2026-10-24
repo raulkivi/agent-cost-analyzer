@@ -5,7 +5,7 @@ import { ReadOnlyDocumentStore } from "./documents/read-only-document-store.js";
 import { registerReadOnlyDocuments } from "./vscode/vscode-read-only-documents.js";
 import { createVscodeHostCommands } from "./vscode/vscode-host-commands.js";
 import { registerMcpServerDefinitions } from "./vscode/vscode-mcp-server-definitions.js";
-import { registerSessionsView, registerSetupView } from "./vscode/vscode-sidebar-views.js";
+import { registerLearnView, registerSessionsView, registerSetupView } from "./vscode/vscode-sidebar-views.js";
 import { registerStatusBar } from "./vscode/vscode-status-bar.js";
 import { createVscodeWalkthrough } from "./vscode/vscode-walkthrough.js";
 
@@ -48,6 +48,7 @@ export function activate(context: vscode.ExtensionContext): void {
   }
   context.subscriptions.push(
     registerSessionsView<vscode.TreeItem>(vscode, extension.sidebar, vscode.l10n.t),
+    registerLearnView<vscode.TreeItem>(vscode, extension.sidebar, vscode.l10n.t),
     registerSetupView<vscode.TreeItem>(vscode, extension.sidebar),
     registerStatusBar(vscode, extension.sidebar),
     // Offers VS Code the Copilot-only MCP server while its setting is on (D7).

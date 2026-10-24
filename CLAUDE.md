@@ -96,5 +96,5 @@ content here.
   done with the owner's manual checks open, 10.10 (documentation)
   written with screenshots and the owner's review open, 10.11 (UX review
   for VS Code: fits any panel width, readable in every theme, UI check)
-  done. The progress
+  and 10.12 (Learn scenarios in a side bar Learn view) done. The progress
   table and per-step status notes are in docs/plans/vscode-extension.md.

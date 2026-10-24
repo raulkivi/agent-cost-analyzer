@@ -43,6 +43,7 @@ function setup(sessions: Session[], required: boolean) {
     {
       relistLogSources: () => undefined,
       listSessions: async () => sessions,
+      listLearnScenarios: async () => [],
       getConfigStatus: async () => ({
         checkedAt: "x",
         vscodeUserSettingsPath: null,

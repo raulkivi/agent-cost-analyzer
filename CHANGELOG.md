@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Changed
+- Phase 10.12: in AI Credits Analyzer, the Learn scenarios are listed in a
+  Learn view in the side bar, like sessions in the Sessions view, so the
+  panel uses its full width in Learn mode too.
 - Phase 10.11, after a UX review of the VS Code panel.
   - Nothing is cut off on the right at any width: the layout follows the
     room left for the turns, and the turns table scrolls inside its column.

@@ -1170,12 +1170,38 @@ describe("App", () => {
         expect(screen.queryByRole("button", { name: "Fix the bug" })).not.toBeInTheDocument();
       });
 
-      it("keeps the Learn scenario list, which has no sidebar", async () => {
+      // Step 10.12: the sidebar's Learn view lists the scenarios too.
+      it("shows no scenario list of its own in Learn mode, and points to the sidebar's Learn view", async () => {
         productProfile = sidebarProfile;
         hostEvents();
         render(<App />);
+        await screen.findByText("AI Credits Analyzer");
 
-        expect(await screen.findByRole("button", { name: "Cache Basics" })).toBeInTheDocument();
+        expect(await screen.findByText(/pick a scenario in the learn view/i)).toBeInTheDocument();
+        expect(screen.queryByRole("button", { name: "Cache Basics" })).not.toBeInTheDocument();
+      });
+
+      it("opens the scenario the sidebar's Learn view picks, in Learn mode", async () => {
+        productProfile = sidebarProfile;
+        const emit = hostEvents();
+        render(<App />);
+        await screen.findByText("AI Credits Analyzer");
+        switchToAnalyze();
+
+        emit({ sessionId: "cache-basics", mode: "learn" });
+
+        expect(await screen.findByText("first turn explanation")).toBeInTheDocument();
+        expect(screen.getByLabelText("Learn")).toBeChecked();
+      });
+
+      it("opens a scenario picked before the scenarios have loaded, once they arrive", async () => {
+        productProfile = sidebarProfile;
+        const emit = hostEvents();
+        render(<App />);
+
+        emit({ sessionId: "cache-basics", mode: "learn" });
+
+        expect(await screen.findByText("first turn explanation")).toBeInTheDocument();
       });
     });
 
