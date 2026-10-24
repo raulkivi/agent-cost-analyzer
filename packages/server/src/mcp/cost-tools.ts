@@ -4,7 +4,7 @@ import { costRollupSchema, sessionCostSchema } from "@copilot-cost-analyzer/doma
 import { DEFAULT_TOP_SESSIONS } from "../services/cost/cost-rollup-builder.js";
 import { DEFAULT_TOP_TURNS } from "../services/cost/session-cost-builder.js";
 import { DEFAULT_ROLLUP_SESSION_LIMIT } from "../services/tool-audit/audit-query-service.js";
-import type { McpServerDeps } from "./mcp-server.js";
+import type { McpToolDeps } from "./mcp-server.js";
 import {
   json,
   providerArg,
@@ -19,7 +19,7 @@ import {
 
 // Phase 9.12 (docs/plans/mcp-tools-v2.md §4.1).
 
-export function registerCostTools(server: McpServer, deps: McpServerDeps, guarded: Guard): void {
+export function registerCostTools(server: McpServer, deps: McpToolDeps, guarded: Guard): void {
   server.registerTool(
     "get_session_cost",
     {
@@ -28,7 +28,7 @@ export function registerCostTools(server: McpServer, deps: McpServerDeps, guarde
         "Explains what one session cost and why: token totals (uncached input, cache write, cache read, reasoning, output) and AI Credits, each with turn coverage; cache hit ratio; spend per model; the most expensive turns; cost-relevant events (compaction, cache expiry, model switch, ...); and context overhead (system-prompt parts, tools defined but never used). null means unknown, never zero — see unavailableReasons.",
       inputSchema: {
         sessionId: sessionIdArg,
-        provider: providerArg,
+        provider: providerArg(deps.identity),
         topTurns: z.number().int().min(1).max(50).optional().describe(`How many of the most expensive turns to return (default ${DEFAULT_TOP_TURNS}).`),
       },
       outputSchema: sessionCostSchema,

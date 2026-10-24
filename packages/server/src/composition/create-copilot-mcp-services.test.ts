@@ -8,7 +8,8 @@ import { costRollupSchema, logProviderStatusSchema } from "@copilot-cost-analyze
 import { createMcpServer, type McpServerDeps } from "../mcp/mcp-server.js";
 import { seedCopilotSessionStore, USAGE_SESSION_ID, writeUsageDebugLog } from "../test-support/copilot-session-store.js";
 import { composeLogProviders } from "./compose-log-providers.js";
-import { createCopilotMcpServices } from "./create-copilot-mcp-services.js";
+import { STANDALONE_MCP_IDENTITY } from "../mcp/mcp-identity.js";
+import { COPILOT_MCP_IDENTITY, createCopilotMcpServices } from "./create-copilot-mcp-services.js";
 import { createMcpServices } from "./mcp-services.js";
 
 type ToolResult = Awaited<ReturnType<Client["callTool"]>>;
@@ -80,19 +81,53 @@ describe("createCopilotMcpServices (the extension's MCP server, vscode-extension
     rmSync(dir, { recursive: true, force: true });
   });
 
+  // Names and the texts that name log sources are the only intended
+  // difference (mcp/mcp-identity.ts); everything else must match exactly.
+  const withoutIdentityText = (tools: Awaited<ReturnType<Client["listTools"]>>["tools"]) =>
+    tools.map((tool) => {
+      const { description, inputSchema, ...rest } = tool;
+      const properties = Object.fromEntries(
+        Object.entries((inputSchema.properties ?? {}) as Record<string, object>).map(([key, value]) => [
+          key,
+          key === "provider" ? { ...value, description: undefined } : value,
+        ]),
+      );
+      return { ...rest, description: tool.name === "list_log_providers" ? undefined : description, inputSchema: { ...inputSchema, properties } };
+    });
+
   it("lists the same 9 tools as the standalone server, with the same input and output schemas", async () => {
     const { tools } = await copilot.listTools();
 
     expect(tools).toHaveLength(9);
-    expect(tools).toEqual((await standalone.listTools()).tools);
+    expect(withoutIdentityText(tools)).toEqual(withoutIdentityText((await standalone.listTools()).tools));
     for (const tool of tools) {
       expect(tool.outputSchema?.type, tool.name).toBe("object");
     }
   });
 
-  it("offers the same prompts and instructions as the standalone server", async () => {
+  it("offers the same prompts as the standalone server", async () => {
     expect((await copilot.listPrompts()).prompts).toEqual((await standalone.listPrompts()).prompts);
-    expect(copilot.getInstructions()).toBe(standalone.getInstructions());
+  });
+
+  it("is named ai-credits-analyzer and speaks only of Copilot", async () => {
+    const { tools } = await copilot.listTools();
+    const texts = [
+      copilot.getInstructions() ?? "",
+      ...tools.flatMap((tool) => [
+        tool.description ?? "",
+        JSON.stringify((tool.inputSchema.properties as { provider?: { description?: string } }).provider?.description ?? ""),
+      ]),
+    ].join("\n");
+
+    expect(copilot.getServerVersion()?.name).toBe("ai-credits-analyzer");
+    expect(copilot.getInstructions()).toBe(COPILOT_MCP_IDENTITY.instructions);
+    expect(texts).not.toMatch(/Claude Code|\bpi\b|pi-agent|mitmproxy/i);
+    expect(texts).toContain("GitHub Copilot");
+  });
+
+  it("leaves the standalone server's name and instructions untouched", () => {
+    expect(standalone.getServerVersion()?.name).toBe("copilot-cost-analyzer");
+    expect(standalone.getInstructions()).toBe(STANDALONE_MCP_IDENTITY.instructions);
   });
 
   it("reports the extension's version", () => {
