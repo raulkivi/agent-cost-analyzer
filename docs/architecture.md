@@ -148,7 +148,7 @@ outbound network calls.
 | `data-sources/sqlite` | Read-only queries against the local Copilot Chat session store (`sessions`, `turns`, `checkpoints`, `session_files`, `session_refs`) per vision §4/18.1 |
 | `data-sources/jsonl` | Streams a session's `main.jsonl`, extracts request/response spans, and pulls out token/cache usage from each event's `attrs` — defensively, per §7 below. `turn-inspector-reader.ts` (Phase 9.5) is a second, on-demand, bounded read of the same file for one turn's wide-content `attrs` (§6.2.4) |
 | `data-sources/log-providers` | Owns the `LogProvider` registry, exposes provider descriptors, persists the active provider in app-owned local settings, and presents one provider-neutral session-reading interface to the API/services layer. `build-content-parts.ts` (Phase 9.5) is a provider-neutral placeholder-detection helper shared by both concrete providers' `readTurnDetail` (§6.2.4) |
-| `data-sources/log-providers/vscode` | Adapts the existing SQLite and `main.jsonl` readers into the `LogProvider` interface; VS Code-specific paths, settings, and event extraction stay here. Also owns the optional `agent-traces.db` cache-write/reasoning enrichment (Phase 8.5) — folded in here, not a separate provider id or a direct `app.ts` path (decided 2026-08-10, see `docs/providers/log-provider-alternatives.md`) — and `turn-inspector-builder.ts` (Phase 9.5), which turns one turn's isolated envelopes into a `TurnInspectorDetail` (§6.2.4) |
+| `data-sources/log-providers/vscode` | Adapts the existing SQLite and `main.jsonl` readers into the `LogProvider` interface; VS Code-specific paths, settings, and event extraction stay here. Also owns the optional `agent-traces.db` cache-write/reasoning enrichment (Phase 8.5) — folded in here, not a separate provider id or a direct `app.ts` path (decided 2026-08-10, see `implementation-plan.md` Phase 9) — and `turn-inspector-builder.ts` (Phase 9.5), which turns one turn's isolated envelopes into a `TurnInspectorDetail` (§6.2.4) |
 | `data-sources/log-providers/mitmproxy` | Reads local mitmproxy capture files and dispatches each intercepted LLM request/response to the vendor decoder that recognizes its SDK/protocol shape |
 | `data-sources/log-providers/mitmproxy/decoders` | Independent vendor decoders (initially Anthropic and OpenAI) that convert a matched exchange into provider-neutral intermediate records; an unrecognized exchange is reported as unavailable, never guessed |
 | `data-sources/pi-agent` | Reads the [pi coding agent](https://pi.dev)'s own JSONL session format (`~/.pi/agent/sessions/`) directly — no OS-level store dependency. Reconstructs pi's branchable entry tree, groups a branch into turns, and extracts usage already normalized per message by pi itself (no vendor wire-protocol decoding needed, unlike mitmproxy) |
@@ -1259,7 +1259,7 @@ format directly:
 `~/.claude/projects/<encoded-cwd>/<session-id>.jsonl`, one file per
 session, no proxy/certificate setup required — the same low-friction
 argument that put `agent-traces.db` ahead of mitmproxy for Copilot data
-(`docs/providers/log-provider-alternatives.md` §4). Unlike pi-agent
+(`docs/copilot-chat-source-investigation.md` §5). Unlike pi-agent
 (§6.2.5), every shape this provider depends on — the tree structure, the
 per-response `usage` object, `toolUseResult`, `attachment`, `last-prompt`,
 `ai-title` — was confirmed directly against real captures on this machine

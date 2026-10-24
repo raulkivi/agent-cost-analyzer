@@ -1,7 +1,7 @@
 # Handoff: Turn Inspector (request/response) — UX design
 
 ## Overview
-`TurnInspector.tsx` and its "Inspect request/response" entry point in `ExplanationPanel.tsx` shipped with no design coverage — they aren't mentioned in `docs/design-review-2026-08-10.md`. This package designs that view and fixes issues found in the shipped implementation. Everything else is unchanged; the earlier `design_handoff_session_analyser_ux_v2` package still governs the System Prompt Inspector, Advice Export, Tool Inventory, and AI Credits work.
+`TurnInspector.tsx` and its "Inspect request/response" entry point in `ExplanationPanel.tsx` shipped with no design coverage. This package designs that view and fixes issues found in the shipped implementation. Everything else is unchanged; the earlier `design_handoff_session_analyser_ux_v2` package still governs the System Prompt Inspector, Advice Export, Tool Inventory, and AI Credits work.
 
 ## About the Design Files
 `Session Analyser.dc.html` is a **design reference built in HTML** (a custom component format used by the design tool) — not production code. Recreate it in React against the existing `packages/web/src/components/*` and `theme.css` tokens; reuse `Blueprint`, `Tag`, `SegmentedControl` rather than porting markup verbatim.

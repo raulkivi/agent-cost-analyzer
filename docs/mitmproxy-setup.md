@@ -7,8 +7,8 @@ configuration convention"); this doc is the missing *how* — installing
 mitmproxy, trusting its CA, routing traffic through it, exporting HAR, and
 placing the file.
 
-**Read this first:** [`log-provider-alternatives.md`](providers/log-provider-alternatives.md)
-(#4, "Decision" section) — as of 2026-08-10, `mitmproxy` is Phase 9's
+**Read this first:** as of 2026-08-10 (see
+[implementation-plan.md](implementation-plan.md) Phase 9), `mitmproxy` is Phase 9's
 provider for **non-Copilot coding agents that call vendor APIs directly**
 (Claude Code, aider, etc.), not the recommended path for GitHub Copilot
 Chat's own token/cache data. Copilot Chat's traffic is GitHub-routed

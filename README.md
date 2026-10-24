@@ -58,9 +58,6 @@ This repo builds two products from one codebase:
 - [Copilot Chat source investigation](docs/copilot-chat-source-investigation.md) —
   findings from inspecting the Copilot Chat extension's own source for
   richer cache/token-usage log data than `main.jsonl` carries.
-- [Log provider alternatives](docs/providers/log-provider-alternatives.md) — ranked,
-  actionable recommendations for Phase 9+ `LogProvider` work that follow
-  from the source investigation above.
 - [mitmproxy setup](docs/mitmproxy-setup.md) — how to install mitmproxy,
   trust its CA, capture LLM-provider traffic, and export it as a `.har`
   file the app's `mitmproxy` provider can read.

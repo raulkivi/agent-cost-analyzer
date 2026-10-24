@@ -684,7 +684,7 @@ shipped.
 
 **Status (2026-08-10) update: this phase's `app.ts`-level wiring is planned
 to be refactored, not left in place.** A follow-up review
-(`docs/providers/log-provider-alternatives.md`) recommended, and this was confirmed as
+(`docs/copilot-chat-source-investigation.md` §5) recommended, and this was confirmed as
 the decision to build against, that `agent-traces.db` access moves into
 Phase 9's `VscodeLogProvider` adapter rather than staying a direct `app.ts`
 path or becoming its own provider id — see the Phase 9 section below. This
@@ -694,8 +694,8 @@ phase.
 
 ## Phase 9 — Extensible log providers and mitmproxy ingestion
 
-**See also**: `docs/providers/log-provider-alternatives.md` for the `agent-traces.db`
-sourcing decision referenced below.
+**See also**: `docs/copilot-chat-source-investigation.md` §5 for the evidence
+behind the `agent-traces.db` sourcing decision referenced below.
 
 **Goal**: make Analyze mode source-extensible without changing its session
 endpoints or shared UI, then add mitmproxy as the second provider.
@@ -748,8 +748,7 @@ contracts in favor
 of `LogProvider` returning the actual `Session` type directly. Summary:
 `VscodeLogProvider` (`data-sources/log-providers/vscode/`) is a refactor of
 the existing Phases 3-6/8.5 code (agent-traces.db enrichment folded in, not
-a separate provider id, resolving the open question from
-`docs/providers/log-provider-alternatives.md`); `MitmproxyLogProvider`
+a separate provider id, resolving the 2026-08-10 sourcing question); `MitmproxyLogProvider`
 (`data-sources/log-providers/mitmproxy/`) reads HAR files from a
 conventional `<app-settings-dir>/mitmproxy-captures/` directory, redacts
 credential headers, and dispatches each exchange through an Anthropic/
