@@ -158,6 +158,18 @@ describe("AnalyzerPanel", () => {
     expect(panels[1]!.reveal).not.toHaveBeenCalled();
   });
 
+  it("closes the panel again when its HTML can't be built, so the next open retries", () => {
+    const renderHtml = vi.fn(() => {
+      throw new Error("no manifest");
+    });
+    const { panel, panels, createPanel } = setup({ renderHtml });
+
+    expect(() => panel.open()).toThrow("no manifest");
+    expect(panels[0]!.disposed).toBe(true);
+    expect(() => panel.open()).toThrow("no manifest");
+    expect(createPanel).toHaveBeenCalledTimes(2);
+  });
+
   it("disposes the open panel when it's disposed itself (deactivate)", () => {
     const { panel, panels } = setup();
     panel.open();

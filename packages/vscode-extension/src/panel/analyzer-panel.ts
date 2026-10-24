@@ -80,10 +80,16 @@ export class AnalyzerPanel implements Disposable {
       ],
     };
     this.current = current;
-    webview.html = this.deps.renderHtml({
-      cspSource: webview.cspSource,
-      assetUri: (relativePath) => webview.asWebviewUri(path.join(this.deps.mediaDir, ...relativePath.split("/"))),
-    });
+    try {
+      webview.html = this.deps.renderHtml({
+        cspSource: webview.cspSource,
+        assetUri: (relativePath) => webview.asWebviewUri(path.join(this.deps.mediaDir, ...relativePath.split("/"))),
+      });
+    } catch (error) {
+      // Don't leave a blank panel behind for open() to reveal.
+      panel.dispose();
+      throw error;
+    }
   }
 
   dispose(): void {
