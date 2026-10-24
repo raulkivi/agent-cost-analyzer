@@ -74,20 +74,24 @@ describe("extractLoadedSkillNames", () => {
 });
 
 describe("buildSystemPromptBreakdown", () => {
-  it("builds one component per real, structurally-known source, each token count unavailable (real log template)", async () => {
+  it("builds one component per real, structurally-known source; built-in and tool-definitions carry an estimated token count, the rest stay unavailable (real log template)", async () => {
     const envelopes = await readMainJsonlEnvelopes(samplePath);
+    const toolDefinitionsText = JSON.stringify([
+      { type: "function", name: "read_file", description: "d", parameters: {} },
+    ]);
 
     const components = buildSystemPromptBreakdown(
       envelopes,
       "You are an expert AI programming assistant.",
       4,
+      toolDefinitionsText,
     );
 
     expect(components).toEqual([
       {
         kind: "built-in",
         label: "Base system prompt (43 characters)",
-        tokenCount: { known: false, reason: PROMPT_TOKEN_COUNT_UNAVAILABLE_REASON },
+        tokenCount: { known: true, value: expect.any(Number), estimated: true },
       },
       {
         kind: "repo-instructions",
@@ -117,12 +121,24 @@ describe("buildSystemPromptBreakdown", () => {
       {
         kind: "tool-definitions",
         label: "Tool definitions (4 tools)",
-        tokenCount: { known: false, reason: PROMPT_TOKEN_COUNT_UNAVAILABLE_REASON },
+        tokenCount: { known: true, value: expect.any(Number), estimated: true },
       },
     ]);
   });
 
   it("omits the built-in and tool-definitions components when their source data is unavailable", () => {
-    expect(buildSystemPromptBreakdown([], null, null)).toEqual([]);
+    expect(buildSystemPromptBreakdown([], null, null, null)).toEqual([]);
+  });
+
+  it("leaves the tool-definitions token count unavailable when the tool count is known but the raw definitions text couldn't be read", () => {
+    const components = buildSystemPromptBreakdown([], null, 4, null);
+
+    expect(components).toEqual([
+      {
+        kind: "tool-definitions",
+        label: "Tool definitions (4 tools)",
+        tokenCount: { known: false, reason: PROMPT_TOKEN_COUNT_UNAVAILABLE_REASON },
+      },
+    ]);
   });
 });

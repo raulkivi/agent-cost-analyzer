@@ -1,0 +1,105 @@
+{
+  "id": "reasoning-budget-toggle",
+  "mode": "learn",
+  "title": "Toggling Extended Thinking Mid-Session",
+  "model": "example-model",
+  "usageDataAvailable": true,
+  "turnCount": 5,
+  "category": "Reasoning settings",
+  "turns": [
+    {
+      "index": 1,
+      "userMessage": "Let's design the retry logic for the payment webhook handler.",
+      "assistantResponse": "Sure, looking at the current webhook handler.",
+      "toolCalls": [],
+      "usage": {
+        "uncachedInput": { "known": true, "value": 500 },
+        "cacheWrite": { "known": true, "value": 3500 },
+        "cacheRead": { "known": true, "value": 0 },
+        "tool": { "known": true, "value": 0 },
+        "vision": { "known": true, "value": 0 },
+        "reasoning": { "known": true, "value": 150 },
+        "output": { "known": true, "value": 150 },
+        "costAiCredits": { "known": true, "value": 0.0289 },
+        "model": "example-model"
+      },
+      "explanation": "Normal first turn — writes the static prefix plus this turn's own content. Extended thinking is off; reasoning tokens are at their normal baseline."
+    },
+    {
+      "index": 2,
+      "userMessage": "It should use exponential backoff with jitter.",
+      "assistantResponse": "Got it, planning exponential backoff with jitter.",
+      "toolCalls": [],
+      "usage": {
+        "uncachedInput": { "known": true, "value": 200 },
+        "cacheWrite": { "known": true, "value": 600 },
+        "cacheRead": { "known": true, "value": 3500 },
+        "tool": { "known": true, "value": 0 },
+        "vision": { "known": true, "value": 0 },
+        "reasoning": { "known": true, "value": 120 },
+        "output": { "known": true, "value": 180 },
+        "costAiCredits": { "known": true, "value": 0.011 },
+        "model": "example-model"
+      },
+      "explanation": "Normal turn reusing/extending the cache."
+    },
+    {
+      "index": 3,
+      "userMessage": "This retry logic has a lot of edge cases — turn on extended thinking for this part.",
+      "assistantResponse": "Switching to extended thinking mode for this design.",
+      "toolCalls": [],
+      "usage": {
+        "uncachedInput": { "known": true, "value": 4150 },
+        "cacheWrite": { "known": true, "value": 4650 },
+        "cacheRead": { "known": true, "value": 0 },
+        "tool": { "known": true, "value": 0 },
+        "vision": { "known": true, "value": 0 },
+        "reasoning": { "known": true, "value": 900 },
+        "output": { "known": true, "value": 250 },
+        "costAiCredits": { "known": true, "value": 0.0671 },
+        "model": "example-model"
+      },
+      "explanation": "Enabling extended thinking mid-session changes the request's shape (the thinking-budget parameter is rendered directly into the prompt), which Anthropic documents as an invalidating trigger — the same class of 'toggling anything rendered into the prompt itself' as a tool_choice change. The prior 4,100-token cache is lost and resent uncached, on top of which reasoning tokens jump sharply (900 vs a typical 120-150) now that the model is spending a much larger budget deliberating before responding.",
+      "triggeredEvent": "reasoning-toggle"
+    },
+    {
+      "index": 4,
+      "userMessage": "Good — now write the code.",
+      "assistantResponse": "Writing the retry logic now.",
+      "toolCalls": [
+        { "name": "replace_string_in_file", "argsSummary": "src/webhooks/payment-retry.ts" }
+      ],
+      "usage": {
+        "uncachedInput": { "known": true, "value": 130 },
+        "cacheWrite": { "known": true, "value": 700 },
+        "cacheRead": { "known": true, "value": 4650 },
+        "tool": { "known": true, "value": 200 },
+        "vision": { "known": true, "value": 0 },
+        "reasoning": { "known": true, "value": 400 },
+        "output": { "known": true, "value": 220 },
+        "costAiCredits": { "known": true, "value": 0.0177 },
+        "model": "example-model"
+      },
+      "explanation": "Normal turn under the new (still elevated) reasoning budget; the cache rebuilds under the current settings, but reasoning tokens stay high while extended thinking remains on."
+    },
+    {
+      "index": 5,
+      "userMessage": "That's solid — turn extended thinking back off, we're done with the tricky part.",
+      "assistantResponse": "Turning extended thinking back off.",
+      "toolCalls": [],
+      "usage": {
+        "uncachedInput": { "known": true, "value": 5420 },
+        "cacheWrite": { "known": true, "value": 5800 },
+        "cacheRead": { "known": true, "value": 0 },
+        "tool": { "known": true, "value": 0 },
+        "vision": { "known": true, "value": 0 },
+        "reasoning": { "known": true, "value": 100 },
+        "output": { "known": true, "value": 120 },
+        "costAiCredits": { "known": true, "value": 0.0667 },
+        "model": "example-model"
+      },
+      "explanation": "Turning extended thinking back off invalidates the cache again, for the same reason turning it on did — any change to the thinking-budget setting alters the request shape, in either direction. Toggling a setting like this mid-session costs a full cache-miss turn twice: once to enable it, once to disable it — worth deciding up front rather than flipping mid-task.",
+      "triggeredEvent": "reasoning-toggle"
+    }
+  ]
+}

@@ -98,6 +98,8 @@ A session contains:
 > unaffected. Either way, this is a **silent** trigger: nothing about it looks
 > like a deliberate change (no explicit model/tool switch), so an AI Credits
 > spike from simply opening a new kind of file can be surprising.
+>
+> Extracted as a standalone doc: [scenarios/11-silent-instructions-pullin.md](scenarios/11-silent-instructions-pullin.md).
 
 ```mermaid
 flowchart TD
@@ -169,7 +171,10 @@ Relationship to turn/session:
   zero, for a purely conversational turn).
 - Each tool call/response pair adds messages to the model's context, so it consumes
   additional request tokens on the *next* model invocation within that same turn (the
-  model re-reads the whole trajectory so far to decide the next step).
+  model re-reads the whole trajectory so far to decide the next step). Each such
+  model invocation — ending in either another tool call or the turn's final answer
+  — is a **round**; a turn that reads a file, greps for a symbol, then answers is
+  three rounds.
 - Tool calls do not span sessions — they exist only within the turn that issued them,
   but their *effects* (edited files, terminal state) persist for the rest of the
   session.
@@ -229,6 +234,8 @@ How it works in practice:
 > the same *mechanism* as Section 12's MCP-tool-change example, just triggered
 > even earlier in the prefix — so in practice it's total invalidation every time,
 > not just a partial one.
+>
+> Extracted as a standalone doc: [scenarios/10-instructions-edit.md](scenarios/10-instructions-edit.md).
 
 > **Are instructions/tool definitions duplicated once per turn?** No. Any single
 > request's context window contains exactly **one copy** of the system prompt and
@@ -355,6 +362,11 @@ Why this saves AI Credits:
 - Subagents can also run with a **different, cheaper model** suited to the
   narrower task (e.g. a fast search-oriented model), while the parent session keeps
   using a more capable (and expensive) model only for the tasks that truly need it.
+
+> Extracted as standalone docs: [scenarios/12-inline-exploration-bloat.md](scenarios/12-inline-exploration-bloat.md)
+> (what the parent's turn 2 would have cost *without* isolating this work in a subagent) and
+> [scenarios/18-subagent-cheaper-model.md](scenarios/18-subagent-cheaper-model.md) (a subagent
+> deliberately running a cheaper model than its parent).
 
 ```mermaid
 flowchart TD
@@ -943,6 +955,12 @@ forking: each would have to rebuild the same trunk independently (2 × 0.0513 AI
 gap *is* the saving forking provides: shared setup gets paid for once and reused,
 not re-purchased per branch.
 
+> Nothing about forking is limited to a single split, or to happening only at
+> the original trunk — a branch can fork again, and the new fork point becomes
+> its own shared trunk for a fresh pair of sub-branches, compounding the same
+> saving one level deeper. Extracted as a standalone doc:
+> [scenarios/17-session-forking-multi-branch.md](scenarios/17-session-forking-multi-branch.md).
+
 ---
 
 ## 17. Cache optimal usage: TTLs, invalidation, and best practices
@@ -980,6 +998,10 @@ The practical takeaway is the same regardless of the exact number: **assume
 your cache is fragile on the order of minutes, not hours**, no matter which
 model you're using — a pause of roughly 5+ minutes is close to a universal
 danger zone across every provider Copilot uses.
+
+> Extracted as a standalone doc: [scenarios/13-cache-ttl-1-hour-breakpoint.md](scenarios/13-cache-ttl-1-hour-breakpoint.md)
+> — the same 10-turn smoke-break arc as Section 17.2, but paying Anthropic's ~2x
+> cache-write premium for the 1-hour breakpoint so the break no longer causes a miss.
 
 ### 17.2 10-turn example: a 5+ minute smoke break between turns 7 and 8
 
@@ -1058,7 +1080,9 @@ pricing.
   effort/thinking-budget changes, web-search or citation toggles, `tool_choice`
   changes, and images appearing/disappearing anywhere in the conversation are
   all explicitly documented (by Anthropic) as invalidating triggers, even
-  though none of them feel like "changing the setup."
+  though none of them feel like "changing the setup." Extracted as standalone
+  docs: [scenarios/15-image-attachment-invalidation.md](scenarios/15-image-attachment-invalidation.md)
+  and [scenarios/16-reasoning-budget-toggle.md](scenarios/16-reasoning-budget-toggle.md).
 - **Non-deterministic tool-call serialization** — Anthropic's own
   troubleshooting guidance flags that some languages (e.g. Swift, Go) randomize
   JSON key order when serializing tool-call arguments, which silently breaks
@@ -1529,6 +1553,33 @@ cache — the two are independent:
   whether something changed, and lean on a project-indexing MCP server's own
   hash/mtime-based change detection rather than assuming the model itself (or
   Copilot's prompt cache) recognizes "I already read this."
+
+---
+
+### 17.12 Combined and cascading triggers: when do invalidations stack?
+
+Sections 11-16 (and 17.3's toggle list) each describe a single trigger in
+isolation — one model switch, one TTL lapse, one tool change. Real sessions
+don't always cooperate: a model switch can be followed, a couple of turns
+later, by an idle gap that outlasts the *new* model's TTL, or a tool change
+can land right before the user steps away for a long break. When two triggers
+land close together in the same session, their AI Credits impact doesn't just
+add — it **compounds**, because the second invalidation re-pays whatever
+pricier state the first one already put in effect (e.g. a post-model-switch
+session's cache-expiry miss is billed at the new, pricier model's rates, not
+the original cheaper ones).
+
+> Extracted as a standalone doc: [scenarios/14-cascading-model-switch-then-ttl-lapse.md](scenarios/14-cascading-model-switch-then-ttl-lapse.md)
+> — a model switch (Section 11) immediately followed by a TTL lapse (Section
+> 17.1/17.2) in the same session, showing the compounding directly.
+
+The practical mitigation is the same one Section 17.4 already recommends for
+a single trigger, just more load-bearing once triggers can stack: **decide on
+model/tools/instructions up front**, and treat a long pause as a deliberate
+`/clear` or session boundary rather than letting it land in the middle of
+already-disrupted state. A session that pays one invalidation tax cleanly and
+then stabilizes is cheaper than one where a second, unrelated trigger lands
+before the cache has recovered from the first.
 
 ---
 

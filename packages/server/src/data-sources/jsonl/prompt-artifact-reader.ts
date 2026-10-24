@@ -96,3 +96,13 @@ export async function readToolDefinitionNames(
     )
     .map((entry) => entry.name);
 }
+
+// The full, unfiltered tool-definition entries — used where the actual
+// definition content matters (e.g. estimating the token size of what was
+// sent), as opposed to readToolDefinitionNames' name-only projection.
+export async function readToolDefinitionsRaw(
+  dirPath: string,
+  fileName: string,
+): Promise<unknown[] | null> {
+  return readArtifactContentArray(dirPath, fileName);
+}

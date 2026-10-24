@@ -33,41 +33,35 @@ their content here.
 
 ## Architecture diagrams
 
-Use Mermaid diagrams in `docs/architecture.md` as a required aid for system
-understanding and architectural validation. Diagrams are a structural view of
-the ontology, not a replacement for precise prose: every important component
-and relationship must also have a stable name, responsibility, and constraint
-in the surrounding documentation.
+Maintain Mermaid diagrams in `docs/architecture.md` as a required aid for
+system understanding and validation. They're a structural view of the
+ontology, not a substitute for precise prose — every important component and
+relationship needs a stable name, responsibility, and constraint in the
+surrounding text too.
 
-Keep these diagram types current whenever the affected architecture changes:
+Keep these diagram types current as the architecture evolves:
 
-- **System context diagram** — users, the application, external systems, and
-  trust or network boundaries.
-- **Container/component diagram** — packages or deployable/runtime components,
-  their responsibilities, dependencies, and data stores.
-- **Sequence diagram** — each important end-to-end workflow, including the
-  direction of calls, response data, failure paths, and asynchronous
-  boundaries.
-- **Domain model diagram** — domain entities/value objects, ownership,
-  cardinality, and key relationships represented by the shared schemas.
-- **Data-flow diagram** — source files or providers, parsing/normalization
-  stages, API boundaries, and the UI consumers of normalized data.
+- **System context** — users, the application, external systems, trust/network boundaries.
+- **Container/component** — packages or runtime components, responsibilities, dependencies, data stores.
+- **Sequence** — each key end-to-end workflow: call direction, response data, failure paths, async boundaries.
+- **Domain model** — entities/value objects, ownership, cardinality, key relationships from the shared schemas.
+- **Data-flow** — source files/providers, parsing/normalization stages, API boundaries, UI consumers.
 
-Before completing an architecture-affecting change, validate the diagrams
+Before completing an architecture-affecting change, validate diagrams
 against the implementation and tests:
 
-- Every diagram node maps to a real module, package, service, actor, or
-  external dependency; remove stale or speculative nodes.
+- Every node maps to a real module, package, service, actor, or external
+  dependency — remove stale or speculative nodes.
 - Every arrow is directional and labeled with its relationship or payload;
-  do not use unlabeled arrows for semantically important dependencies.
-- The diagrams agree with module boundaries, public API contracts, domain
-  schemas, and the actual runtime flow. Treat disagreement as an architecture
-  defect to resolve, not as harmless documentation drift.
-- Important constraints are visible either in the diagram or immediately
-  beside it: local-only boundaries, ownership, sync/async behavior,
-  unavailable-data behavior, security boundaries, and provider extensibility.
-- Keep diagrams focused by concern rather than creating one unreadable graph.
-  Update the corresponding explanatory text and tests when a relationship or
+  never leave semantically important dependencies unlabeled.
+- Diagrams agree with module boundaries, public API contracts, domain
+  schemas, and actual runtime flow — treat disagreement as an architecture
+  defect, not harmless drift.
+- Key constraints (local-only boundaries, ownership, sync/async behavior,
+  unavailable-data behavior, security boundaries, provider extensibility)
+  are visible in the diagram or immediately beside it.
+- Keep diagrams focused by concern rather than one unreadable graph; update
+  the matching explanatory text and tests whenever a relationship or
   invariant changes.
 
 <!-- mermaid-ai-skills:start -->

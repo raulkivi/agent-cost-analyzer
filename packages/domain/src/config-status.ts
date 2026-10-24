@@ -6,6 +6,7 @@ export const configStatusSchema = z.object({
   vscodeUserSettingsPath: z.string().nullable(),
   loggingEnabled: z.boolean(),
   maxRetainedSessionLogs: z.number().nullable(),
+  minRetainedSessionLogsThreshold: z.number(),
   warnings: z.array(configWarningSchema),
 });
 

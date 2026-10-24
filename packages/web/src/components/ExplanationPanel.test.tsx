@@ -1,5 +1,5 @@
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { fireEvent, render, screen } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
 import { makeTurn } from "../test-support/turn-fixture.js";
 import { ExplanationPanel } from "./ExplanationPanel.js";
 
@@ -51,6 +51,32 @@ describe("ExplanationPanel", () => {
     expect(screen.getByText("No tools called this turn.")).toBeInTheDocument();
   });
 
+  it("does not render an inspect-request/response button in learn mode", () => {
+    render(
+      <ExplanationPanel turn={makeTurn()} mode="learn" onOpenTurnInspector={() => {}} />,
+    );
+
+    expect(screen.queryByRole("button", { name: /inspect request\/response/i })).not.toBeInTheDocument();
+  });
+
+  it("renders an inspect-request/response button in analyze mode and calls onOpenTurnInspector when clicked", () => {
+    const onOpenTurnInspector = vi.fn();
+
+    render(
+      <ExplanationPanel
+        turn={makeTurn()}
+        mode="analyze"
+        toolCallsAvailable={true}
+        onOpenTurnInspector={onOpenTurnInspector}
+      />,
+    );
+
+    const button = screen.getByRole("button", { name: /inspect request\/response/i });
+    fireEvent.click(button);
+
+    expect(onOpenTurnInspector).toHaveBeenCalled();
+  });
+
   it("lists each tool call's name and touched files in analyze mode", () => {
     const turn = makeTurn({
       toolCalls: [
@@ -63,5 +89,23 @@ describe("ExplanationPanel", () => {
     expect(screen.getByText("read_file")).toBeInTheDocument();
     expect(screen.getByText("src/a.ts")).toBeInTheDocument();
     expect(screen.getByText("src/b.ts")).toBeInTheDocument();
+  });
+
+  it("shows each tool call's outcome and shell command in analyze mode", () => {
+    const turn = makeTurn({
+      toolCalls: [
+        {
+          name: "Bash",
+          argsSummary: "foo --version",
+          shell: { command: "foo --version", program: "foo" },
+          outcome: { status: "error", exitCode: 127, failureCategory: "command-not-found" },
+        },
+      ],
+    });
+
+    render(<ExplanationPanel turn={turn} mode="analyze" toolCallsAvailable={true} />);
+
+    expect(screen.getByText("Failed · Command not found")).toBeInTheDocument();
+    expect(screen.getByText("foo --version")).toBeInTheDocument();
   });
 });

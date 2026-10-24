@@ -1,0 +1,123 @@
+{
+  "id": "cascading-model-switch-then-ttl-lapse",
+  "mode": "learn",
+  "title": "Cascading Triggers: A Model Switch Followed by a Cache-Expiry",
+  "model": "model-a",
+  "usageDataAvailable": true,
+  "turnCount": 6,
+  "category": "Combined triggers",
+  "turns": [
+    {
+      "index": 1,
+      "userMessage": "Let's refactor the notifications service to use an event bus.",
+      "assistantResponse": "Sure, looking at the notifications service now.",
+      "toolCalls": [],
+      "usage": {
+        "uncachedInput": { "known": true, "value": 500 },
+        "cacheWrite": { "known": true, "value": 3500 },
+        "cacheRead": { "known": true, "value": 0 },
+        "tool": { "known": true, "value": 0 },
+        "vision": { "known": true, "value": 0 },
+        "reasoning": { "known": true, "value": 150 },
+        "output": { "known": true, "value": 150 },
+        "costAiCredits": { "known": true, "value": 0.0289 },
+        "model": "model-a"
+      },
+      "explanation": "Normal first turn under Model A — writes the static prefix plus this turn's own content."
+    },
+    {
+      "index": 2,
+      "userMessage": "Use an in-process event emitter for now, not a message queue.",
+      "assistantResponse": "Got it, using an in-process event emitter.",
+      "toolCalls": [],
+      "usage": {
+        "uncachedInput": { "known": true, "value": 200 },
+        "cacheWrite": { "known": true, "value": 600 },
+        "cacheRead": { "known": true, "value": 3500 },
+        "tool": { "known": true, "value": 0 },
+        "vision": { "known": true, "value": 0 },
+        "reasoning": { "known": true, "value": 120 },
+        "output": { "known": true, "value": 180 },
+        "costAiCredits": { "known": true, "value": 0.011 },
+        "model": "model-a"
+      },
+      "explanation": "Normal turn reusing/extending Model A's cache."
+    },
+    {
+      "index": 3,
+      "userMessage": "Switch to the more capable model — this refactor is getting complex.",
+      "assistantResponse": "Switching models now and continuing with the full context.",
+      "toolCalls": [],
+      "usage": {
+        "uncachedInput": { "known": true, "value": 4300 },
+        "cacheWrite": { "known": true, "value": 4850 },
+        "cacheRead": { "known": true, "value": 0 },
+        "tool": { "known": true, "value": 0 },
+        "vision": { "known": true, "value": 0 },
+        "reasoning": { "known": true, "value": 250 },
+        "output": { "known": true, "value": 300 },
+        "costAiCredits": { "known": true, "value": 0.108 },
+        "model": "model-b"
+      },
+      "explanation": "Model switch: Model A's 4,100-token cache is worthless to Model B, so the whole history plus the new message is resent as uncached input, and Model B writes its own first cache entry from scratch at its own, pricier rates — identical mechanics to a standalone model-switch scenario.",
+      "triggeredEvent": "model-switch"
+    },
+    {
+      "index": 4,
+      "userMessage": "Looks great — go ahead and start on the event bus interface. I'll be back in a bit.",
+      "assistantResponse": "Starting on the event bus interface now.",
+      "toolCalls": [
+        { "name": "replace_string_in_file", "argsSummary": "src/events/event-bus.ts" }
+      ],
+      "usage": {
+        "uncachedInput": { "known": true, "value": 120 },
+        "cacheWrite": { "known": true, "value": 470 },
+        "cacheRead": { "known": true, "value": 4850 },
+        "tool": { "known": true, "value": 300 },
+        "vision": { "known": true, "value": 0 },
+        "reasoning": { "known": true, "value": 150 },
+        "output": { "known": true, "value": 200 },
+        "costAiCredits": { "known": true, "value": 0.0243 },
+        "model": "model-b"
+      },
+      "explanation": "Normal turn under Model B; cache builds up again. The user then steps away for over 5 minutes before the next turn — long enough to exceed Model B's default TTL too, on top of the model switch that already happened just two turns ago."
+    },
+    {
+      "index": 5,
+      "userMessage": "Ok I'm back — continue with the event bus interface.",
+      "assistantResponse": "Picking this back up — continuing with the event bus interface.",
+      "toolCalls": [],
+      "usage": {
+        "uncachedInput": { "known": true, "value": 5380 },
+        "cacheWrite": { "known": true, "value": 5900 },
+        "cacheRead": { "known": true, "value": 0 },
+        "tool": { "known": true, "value": 0 },
+        "vision": { "known": true, "value": 0 },
+        "reasoning": { "known": true, "value": 200 },
+        "output": { "known": true, "value": 180 },
+        "costAiCredits": { "known": true, "value": 0.1242 },
+        "model": "model-b"
+      },
+      "explanation": "Second invalidation in three turns, and it compounds: the idle gap exceeds Model B's TTL, so the entire 5,320-token history built up since the model switch is evicted and must be resent uncached — at Model B's pricier rates, since the earlier model switch never reverted. This turn (0.1242 AI Credits) is the most expensive in the session by far: it pays both the 'no warm cache' tax and the 'expensive model' tax at once. A single-trigger session (just a model switch, or just a TTL lapse) never stacks costs this way — cascading triggers are worse than the sum of either alone would suggest, because each subsequent trigger keeps re-paying the pricier post-switch rates.",
+      "triggeredEvent": "cache-expiry"
+    },
+    {
+      "index": 6,
+      "userMessage": "Perfect, that's everything for now.",
+      "assistantResponse": "Sounds good — the event bus interface is in place.",
+      "toolCalls": [],
+      "usage": {
+        "uncachedInput": { "known": true, "value": 80 },
+        "cacheWrite": { "known": true, "value": 310 },
+        "cacheRead": { "known": true, "value": 5900 },
+        "tool": { "known": true, "value": 0 },
+        "vision": { "known": true, "value": 0 },
+        "reasoning": { "known": true, "value": 90 },
+        "output": { "known": true, "value": 140 },
+        "costAiCredits": { "known": true, "value": 0.0167 },
+        "model": "model-b"
+      },
+      "explanation": "Cache finally recovers to normal healthy growth — but only after paying for both cascading triggers earlier in the session. Total session AI Credits here run well above either a model-switch-only scenario (about 0.176 AI Credits total via a comparable arc) or a TTL-lapse-only scenario (about 0.167 AI Credits total) alone, because this session paid both taxes back to back."
+    }
+  ]
+}

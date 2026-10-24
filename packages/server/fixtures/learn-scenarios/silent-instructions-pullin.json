@@ -1,0 +1,107 @@
+{
+  "id": "silent-instructions-pullin",
+  "mode": "learn",
+  "title": "A New File Type Silently Changes the Prompt",
+  "model": "example-model",
+  "usageDataAvailable": true,
+  "turnCount": 5,
+  "category": "Instructions change",
+  "turns": [
+    {
+      "index": 1,
+      "userMessage": "Let's build a new REST endpoint for exporting reports.",
+      "assistantResponse": "Sure, looking at the API layer.",
+      "toolCalls": [],
+      "usage": {
+        "uncachedInput": { "known": true, "value": 500 },
+        "cacheWrite": { "known": true, "value": 3500 },
+        "cacheRead": { "known": true, "value": 0 },
+        "tool": { "known": true, "value": 0 },
+        "vision": { "known": true, "value": 0 },
+        "reasoning": { "known": true, "value": 150 },
+        "output": { "known": true, "value": 150 },
+        "costAiCredits": { "known": true, "value": 0.0289 },
+        "model": "example-model"
+      },
+      "explanation": "Normal first turn — writes the static system prompt/instructions plus this turn's own content. No path-scoped `.instructions.md` files are relevant yet, since no matching file type has been touched."
+    },
+    {
+      "index": 2,
+      "userMessage": "Use the existing pagination helper for the export list.",
+      "assistantResponse": "Sure, reusing the existing pagination helper.",
+      "toolCalls": [
+        { "name": "read_file", "argsSummary": "src/api/pagination.ts" }
+      ],
+      "usage": {
+        "uncachedInput": { "known": true, "value": 200 },
+        "cacheWrite": { "known": true, "value": 600 },
+        "cacheRead": { "known": true, "value": 3500 },
+        "tool": { "known": true, "value": 100 },
+        "vision": { "known": true, "value": 0 },
+        "reasoning": { "known": true, "value": 120 },
+        "output": { "known": true, "value": 180 },
+        "costAiCredits": { "known": true, "value": 0.0115 },
+        "model": "example-model"
+      },
+      "explanation": "Normal turn; reads/extends the cache built by turn 1. Still no `.sql` files touched."
+    },
+    {
+      "index": 3,
+      "userMessage": "Also add a migration for the new export_jobs table.",
+      "assistantResponse": "Adding the migration — I'll follow the SQL migration conventions.",
+      "toolCalls": [
+        { "name": "create_file", "argsSummary": "migrations/0042_export_jobs.sql" }
+      ],
+      "usage": {
+        "uncachedInput": { "known": true, "value": 4200 },
+        "cacheWrite": { "known": true, "value": 4700 },
+        "cacheRead": { "known": true, "value": 0 },
+        "tool": { "known": true, "value": 150 },
+        "vision": { "known": true, "value": 0 },
+        "reasoning": { "known": true, "value": 210 },
+        "output": { "known": true, "value": 200 },
+        "costAiCredits": { "known": true, "value": 0.0573 },
+        "model": "example-model"
+      },
+      "explanation": "This is the first turn to touch a *.sql file — which silently pulls in a path-scoped .instructions.md (applyTo: **/*.sql) that turns 1-2 never triggered. Nothing about the user's message looks like a config change, but because the client groups this block with the other stable instructions near the top of the prompt, inserting it breaks the prefix match at that position — invalidating everything cached after it, all prior conversation included, even though none of that conversation actually changed. The full 4,100-token history must be resent uncached, and a new cache builds from scratch including the newly-included instructions block. Unlike an explicit model switch or MCP tool change, this turn carries no visible trigger tag in the turns table — that's the whole danger: the cache reset looks, from the UI, just like an ordinary turn, yet costs about 5x as much."
+    },
+    {
+      "index": 4,
+      "userMessage": "Add an index on export_jobs.created_at too.",
+      "assistantResponse": "Adding the index to the migration.",
+      "toolCalls": [
+        { "name": "replace_string_in_file", "argsSummary": "migrations/0042_export_jobs.sql" }
+      ],
+      "usage": {
+        "uncachedInput": { "known": true, "value": 140 },
+        "cacheWrite": { "known": true, "value": 650 },
+        "cacheRead": { "known": true, "value": 4700 },
+        "tool": { "known": true, "value": 200 },
+        "vision": { "known": true, "value": 0 },
+        "reasoning": { "known": true, "value": 130 },
+        "output": { "known": true, "value": 160 },
+        "costAiCredits": { "known": true, "value": 0.0125 },
+        "model": "example-model"
+      },
+      "explanation": "Normal turn under the newly-included SQL instructions block; the cache rebuilds under the new prefix, same shape as any healthy cache-building turn."
+    },
+    {
+      "index": 5,
+      "userMessage": "Great, that's everything.",
+      "assistantResponse": "Sounds good, let me know if you need anything else.",
+      "toolCalls": [],
+      "usage": {
+        "uncachedInput": { "known": true, "value": 70 },
+        "cacheWrite": { "known": true, "value": 230 },
+        "cacheRead": { "known": true, "value": 5350 },
+        "tool": { "known": true, "value": 0 },
+        "vision": { "known": true, "value": 0 },
+        "reasoning": { "known": true, "value": 70 },
+        "output": { "known": true, "value": 100 },
+        "costAiCredits": { "known": true, "value": 0.007 },
+        "model": "example-model"
+      },
+      "explanation": "Cache continues building normally under the new prefix, with no further disruption — but nothing in this session ever visibly flagged that turn 3's spike happened at all."
+    }
+  ]
+}

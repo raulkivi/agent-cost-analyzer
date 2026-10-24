@@ -1,0 +1,8 @@
+{"type":"session","version":3,"id":"22222222-2222-2222-2222-222222222222","timestamp":"2026-08-02T09:00:00.000Z","cwd":"/home/user/my-project"}
+{"type":"message","id":"f1","parentId":"22222222-2222-2222-2222-222222222222","message":{"role":"user","content":"Refactor the logger module."}}
+{"type":"message","id":"f2","parentId":"f1","message":{"role":"assistant","model":"claude-sonnet-5","provider":"anthropic","api":"messages","content":[{"type":"text","text":"Done — extracted a Logger class."}],"usage":{"input":400,"output":90,"cacheRead":0,"cacheWrite":0,"totalTokens":490}}}
+{"type":"message","id":"f3a","parentId":"f2","message":{"role":"user","content":"Now add unit tests for it."}}
+{"type":"message","id":"f4a","parentId":"f3a","message":{"role":"assistant","model":"claude-sonnet-5","provider":"anthropic","api":"messages","content":[{"type":"text","text":"Added logger.test.ts."}],"usage":{"input":200,"output":70,"cacheRead":400,"cacheWrite":0,"totalTokens":270}}}
+{"type":"branch_summary","id":"f3b","parentId":"f2","fromId":"f3a","summary":"Rewound to try a docs-first approach instead."}
+{"type":"message","id":"f4b","parentId":"f3b","message":{"role":"user","content":"Actually, write docs for it instead."}}
+{"type":"message","id":"f5b","parentId":"f4b","message":{"role":"assistant","model":"claude-sonnet-5","provider":"anthropic","api":"messages","content":[{"type":"text","text":"Added logger docs to README."}],"usage":{"input":180,"output":60,"cacheRead":400,"cacheWrite":0,"totalTokens":240}}}

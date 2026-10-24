@@ -19,6 +19,7 @@ const syntheticMultiEventPath = path.join(
 );
 const missingPath = path.join(fixturesDir, "does-not-exist.jsonl");
 const parseFailuresOnlyPath = path.join(fixturesDir, "parse-failures-only.jsonl");
+const llmRequestSamplePath = path.join(fixturesDir, "llm-request-sample.jsonl");
 
 describe("readMainJsonlEnvelopes", () => {
   it("returns an empty array when the file doesn't exist", async () => {
@@ -55,6 +56,15 @@ describe("readMainJsonlEnvelopes", () => {
 
     expect(envelopes[0].attrs).toBeUndefined();
     expect(envelopes[1].attrs).toBeUndefined();
+  });
+
+  // Agent-traces enrichment (Phase 8.5) joins main.jsonl llm_request entries
+  // to agent-traces.db spans by responseId — it must survive this allow-list
+  // projection like the other usage fields already do.
+  it("keeps responseId, since llm-request-extractor.ts now reads it", async () => {
+    const [envelope] = await readMainJsonlEnvelopes(llmRequestSamplePath);
+
+    expect(envelope.attrs?.responseId).toBe("redacted-response-id");
   });
 });
 

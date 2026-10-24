@@ -21,6 +21,7 @@ describe("readVscodeSettings", () => {
     expect(readVscodeSettings(null)).toEqual({
       loggingEnabled: false,
       maxRetainedSessionLogs: null,
+      agentTracesEnabled: false,
     });
   });
 
@@ -37,6 +38,7 @@ describe("readVscodeSettings", () => {
     expect(readVscodeSettings(settingsPath)).toEqual({
       loggingEnabled: true,
       maxRetainedSessionLogs: 200,
+      agentTracesEnabled: false,
     });
   });
 
@@ -46,6 +48,7 @@ describe("readVscodeSettings", () => {
     expect(readVscodeSettings(settingsPath)).toEqual({
       loggingEnabled: false,
       maxRetainedSessionLogs: null,
+      agentTracesEnabled: false,
     });
   });
 
@@ -78,6 +81,7 @@ describe("readVscodeSettings", () => {
     expect(readVscodeSettings(unreadablePath)).toEqual({
       loggingEnabled: false,
       maxRetainedSessionLogs: null,
+      agentTracesEnabled: false,
     });
   });
 
@@ -87,6 +91,25 @@ describe("readVscodeSettings", () => {
     expect(readVscodeSettings(settingsPath)).toEqual({
       loggingEnabled: false,
       maxRetainedSessionLogs: null,
+      agentTracesEnabled: false,
     });
+  });
+
+  it("recognizes github.copilot.chat.otel.dbSpanExporter.enabled as agentTracesEnabled", () => {
+    writeFileSync(
+      settingsPath,
+      JSON.stringify({ "github.copilot.chat.otel.dbSpanExporter.enabled": true }),
+    );
+
+    expect(readVscodeSettings(settingsPath).agentTracesEnabled).toBe(true);
+  });
+
+  it("treats agentTracesEnabled as false when the setting is present but not exactly true", () => {
+    writeFileSync(
+      settingsPath,
+      JSON.stringify({ "github.copilot.chat.otel.dbSpanExporter.enabled": "true" }),
+    );
+
+    expect(readVscodeSettings(settingsPath).agentTracesEnabled).toBe(false);
   });
 });

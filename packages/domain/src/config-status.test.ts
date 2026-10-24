@@ -8,6 +8,7 @@ describe("configStatusSchema", () => {
       vscodeUserSettingsPath: "/home/user/.config/Code/User/settings.json",
       loggingEnabled: true,
       maxRetainedSessionLogs: 200,
+      minRetainedSessionLogsThreshold: 200,
       warnings: [],
     };
 
@@ -20,9 +21,11 @@ describe("configStatusSchema", () => {
       vscodeUserSettingsPath: null,
       loggingEnabled: false,
       maxRetainedSessionLogs: null,
+      minRetainedSessionLogsThreshold: 200,
       warnings: [
         {
           code: "settings-not-found",
+          severity: "required",
           settingId: "github.copilot.chat.agentDebugLog.fileLogging.enabled",
           currentValue: null,
           recommendedValue: true,
@@ -33,5 +36,17 @@ describe("configStatusSchema", () => {
     };
 
     expect(configStatusSchema.parse(sample)).toEqual(sample);
+  });
+
+  it("rejects a status missing minRetainedSessionLogsThreshold", () => {
+    const sample = {
+      checkedAt: "2026-08-08T00:00:00.000Z",
+      vscodeUserSettingsPath: "/home/user/.config/Code/User/settings.json",
+      loggingEnabled: true,
+      maxRetainedSessionLogs: 200,
+      warnings: [],
+    };
+
+    expect(() => configStatusSchema.parse(sample)).toThrow();
   });
 });

@@ -1,0 +1,127 @@
+{
+  "id": "session-forking-multi-branch",
+  "mode": "learn",
+  "title": "Forking Twice: A Nested Branch from Within a Branch",
+  "model": "example-model",
+  "usageDataAvailable": true,
+  "turnCount": 6,
+  "category": "Forking",
+  "turns": [
+    {
+      "index": 1,
+      "userMessage": "Let's plan out the caching layer for the API.",
+      "assistantResponse": "Sure, exploring the code to plan it out.",
+      "toolCalls": [],
+      "usage": {
+        "uncachedInput": { "known": true, "value": 500 },
+        "cacheWrite": { "known": true, "value": 3500 },
+        "cacheRead": { "known": true, "value": 0 },
+        "tool": { "known": true, "value": 0 },
+        "vision": { "known": true, "value": 0 },
+        "reasoning": { "known": true, "value": 150 },
+        "output": { "known": true, "value": 150 },
+        "costAiCredits": { "known": true, "value": 0.0289 },
+        "model": "example-model"
+      },
+      "explanation": "Normal first turn — writes the static prefix plus this turn's own content. This is the start of the shared trunk every branch (and every branch-of-a-branch) will inherit."
+    },
+    {
+      "index": 2,
+      "userMessage": "Sounds good, go ahead.",
+      "assistantResponse": "Continuing with the plan.",
+      "toolCalls": [
+        { "name": "read_file", "argsSummary": "src/api/handlers.ts" }
+      ],
+      "usage": {
+        "uncachedInput": { "known": true, "value": 200 },
+        "cacheWrite": { "known": true, "value": 600 },
+        "cacheRead": { "known": true, "value": 3500 },
+        "tool": { "known": true, "value": 100 },
+        "vision": { "known": true, "value": 0 },
+        "reasoning": { "known": true, "value": 120 },
+        "output": { "known": true, "value": 180 },
+        "costAiCredits": { "known": true, "value": 0.0115 },
+        "model": "example-model"
+      },
+      "explanation": "Normal turn, still on the shared trunk; reads/extends the cache built by turn 1."
+    },
+    {
+      "index": 3,
+      "userMessage": "I want to compare two caching strategies before committing to one — fork here so we can try both.",
+      "assistantResponse": "Forking the session here. I'll try a Redis-based approach in one branch and an in-memory LRU approach in the other.",
+      "toolCalls": [],
+      "usage": {
+        "uncachedInput": { "known": true, "value": 220 },
+        "cacheWrite": { "known": true, "value": 520 },
+        "cacheRead": { "known": true, "value": 4100 },
+        "tool": { "known": true, "value": 0 },
+        "vision": { "known": true, "value": 0 },
+        "reasoning": { "known": true, "value": 140 },
+        "output": { "known": true, "value": 160 },
+        "costAiCredits": { "known": true, "value": 0.0109 },
+        "model": "example-model"
+      },
+      "explanation": "First fork point: starts a second, independent continuation (Branch B, an in-memory LRU approach, not detailed further here) from this exact prefix (cache size 4,620). Branch A continues below and will itself fork again in turn 5 — the first fork doesn't stop later branches from forking further.",
+      "triggeredEvent": "fork"
+    },
+    {
+      "index": 4,
+      "userMessage": "(Branch A) Try the Redis-based caching strategy.",
+      "assistantResponse": "Implementing a Redis-based caching strategy.",
+      "toolCalls": [
+        { "name": "replace_string_in_file", "argsSummary": "add Redis-backed cache client to src/api/cache.ts" }
+      ],
+      "usage": {
+        "uncachedInput": { "known": true, "value": 150 },
+        "cacheWrite": { "known": true, "value": 1000 },
+        "cacheRead": { "known": true, "value": 4620 },
+        "tool": { "known": true, "value": 500 },
+        "vision": { "known": true, "value": 0 },
+        "reasoning": { "known": true, "value": 160 },
+        "output": { "known": true, "value": 190 },
+        "costAiCredits": { "known": true, "value": 0.0171 },
+        "model": "example-model"
+      },
+      "explanation": "Branch A, turn 4: reads the shared 4,620-token trunk as a cache hit, then diverges with its own Redis-specific content. Branch B (not shown) reads that identical trunk independently, on its own path."
+    },
+    {
+      "index": 5,
+      "userMessage": "(Branch A) Before finalizing, let's fork again here to compare write-through vs write-back caching for the Redis layer.",
+      "assistantResponse": "Forking again from this point — I'll try write-through in one branch and write-back in the other.",
+      "toolCalls": [],
+      "usage": {
+        "uncachedInput": { "known": true, "value": 140 },
+        "cacheWrite": { "known": true, "value": 480 },
+        "cacheRead": { "known": true, "value": 5620 },
+        "tool": { "known": true, "value": 0 },
+        "vision": { "known": true, "value": 0 },
+        "reasoning": { "known": true, "value": 130 },
+        "output": { "known": true, "value": 150 },
+        "costAiCredits": { "known": true, "value": 0.0107 },
+        "model": "example-model"
+      },
+      "explanation": "A second fork, this time from inside Branch A instead of from the original trunk. This nested fork point (cache size 6,100 = the original trunk plus everything Branch A added) is itself now a shared trunk for two new sub-branches (write-through vs write-back) — exactly the same mechanics as the first fork, just one level deeper. Both new sub-branches inherit this full 6,100-token history as a warm cache hit; nothing needs to be rebuilt, and Branch B (from turn 3) is completely unaffected.",
+      "triggeredEvent": "fork"
+    },
+    {
+      "index": 6,
+      "userMessage": "(Branch A.1 — write-through) Implement the write-through variant.",
+      "assistantResponse": "Implementing the write-through caching variant.",
+      "toolCalls": [
+        { "name": "replace_string_in_file", "argsSummary": "src/api/cache.ts (write-through variant)" }
+      ],
+      "usage": {
+        "uncachedInput": { "known": true, "value": 90 },
+        "cacheWrite": { "known": true, "value": 350 },
+        "cacheRead": { "known": true, "value": 6100 },
+        "tool": { "known": true, "value": 300 },
+        "vision": { "known": true, "value": 0 },
+        "reasoning": { "known": true, "value": 100 },
+        "output": { "known": true, "value": 140 },
+        "costAiCredits": { "known": true, "value": 0.0108 },
+        "model": "example-model"
+      },
+      "explanation": "Branch A.1 reads the full 6,100-token nested trunk (original trunk + Branch A's own work + the second fork point) as a cache hit, then diverges with its own write-through-specific content. A parallel Branch A.2 (write-back, not shown) reads that identical nested trunk independently. Branch A.1's total on top of the nested trunk is about 0.0108 AI Credits; its full session cost (0.0289 + 0.0115 + 0.0109 + 0.0171 + 0.0107 + 0.0108 = 0.0899 AI Credits) reuses the original trunk once and the Branch-A-specific work once, rather than paying for either a second time. Running three entirely separate sessions for Branch B, Branch A.1, and Branch A.2 from scratch would instead pay for the trunk three times and Branch A's own work twice — nesting the fork compounds the savings further down the tree, not just at the first split."
+    }
+  ]
+}

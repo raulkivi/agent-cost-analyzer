@@ -1,4 +1,4 @@
-import type { ConfigWarning } from "@gh-cp-chat-analyser/domain";
+import type { ConfigWarning } from "@copilot-cost-analyzer/domain";
 import { Blueprint } from "./ui/Blueprint.js";
 
 interface ConfigWarningBannerProps {
@@ -24,40 +24,49 @@ export function ConfigWarningBanner({ warnings, onDismiss }: ConfigWarningBanner
       }}
     >
       <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-2)", flex: 1 }}>
-        {warnings.map((warning) => (
-          <div key={warning.code} style={{ display: "flex", alignItems: "flex-start", gap: "var(--space-3)" }}>
-            <div
-              style={{
-                width: 18,
-                height: 18,
-                flex: "none",
-                border: "1px solid var(--color-accent-800)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: 12,
-                fontFamily: "var(--font-heading)",
-                color: "var(--color-accent-800)",
-              }}
-            >
-              !
+        {warnings.map((warning) => {
+          // Optional warnings (e.g. agent-traces-unavailable) are additive
+          // enrichments the app works fully without — a muted tone keeps
+          // them visually distinct from required warnings, which block all
+          // usage data until fixed.
+          const tone =
+            warning.severity === "optional" ? "--color-accent-2" : "--color-accent";
+          return (
+            <div key={warning.code} style={{ display: "flex", alignItems: "flex-start", gap: "var(--space-3)" }}>
+              <div
+                data-severity={warning.severity}
+                style={{
+                  width: 18,
+                  height: 18,
+                  flex: "none",
+                  border: `1px solid var(${tone}-800)`,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: 12,
+                  fontFamily: "var(--font-heading)",
+                  color: `var(${tone}-800)`,
+                }}
+              >
+                !
+              </div>
+              <div style={{ fontSize: 13 }}>
+                <p style={{ margin: 0 }}>
+                  <strong>{warning.message}</strong>
+                </p>
+                <p style={{ margin: "4px 0 0" }}>
+                  {warning.settingId}: current {String(warning.currentValue)}, recommended{" "}
+                  {String(warning.recommendedValue)}
+                </p>
+                <ol style={{ margin: "4px 0 0", paddingLeft: 18 }}>
+                  {warning.helpSteps.map((step) => (
+                    <li key={step}>{step}</li>
+                  ))}
+                </ol>
+              </div>
             </div>
-            <div style={{ fontSize: 13 }}>
-              <p style={{ margin: 0 }}>
-                <strong>{warning.message}</strong>
-              </p>
-              <p style={{ margin: "4px 0 0" }}>
-                {warning.settingId}: current {String(warning.currentValue)}, recommended{" "}
-                {String(warning.recommendedValue)}
-              </p>
-              <ol style={{ margin: "4px 0 0", paddingLeft: 18 }}>
-                {warning.helpSteps.map((step) => (
-                  <li key={step}>{step}</li>
-                ))}
-              </ol>
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
       <button className="btn btn-ghost" style={{ flex: "none" }} onClick={onDismiss}>
         Dismiss

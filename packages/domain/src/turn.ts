@@ -10,6 +10,9 @@ export const triggeredEventSchema = z.enum([
   "rewind",
   "fork",
   "cache-expiry",
+  "instructions-change",
+  "image-change",
+  "reasoning-toggle",
 ]);
 
 export const turnSchema = z.object({

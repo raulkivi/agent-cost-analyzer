@@ -1,15 +1,23 @@
 import { useEffect, useRef, useState } from "react";
-import type { ConfigWarning, Session } from "@gh-cp-chat-analyser/domain";
-import { fetchConfigStatus } from "./api-client/config-status.js";
+import type { ConfigWarning, LogProviderDescriptor, Session } from "@copilot-cost-analyzer/domain";
+import { fetchConfigStatus, updateRetentionThreshold } from "./api-client/config-status.js";
 import { fetchLearnScenarios } from "./api-client/learn-scenarios.js";
+import { fetchLogProviderStatus, setActiveLogProvider } from "./api-client/log-providers.js";
 import { fetchSession, fetchSessions } from "./api-client/sessions.js";
+import { AdviceExportDialog } from "./components/AdviceExportDialog.js";
+import { AdviceExportTriggerBar } from "./components/AdviceExportTriggerBar.js";
 import { AppHeader } from "./components/AppHeader.js";
+import { AuditRollupPanel } from "./components/AuditRollupPanel.js";
+import { InsightsDashboard } from "./components/insights/InsightsDashboard.js";
+import { SessionAuditPanel } from "./components/SessionAuditPanel.js";
 import { ConfigWarningBanner } from "./components/ConfigWarningBanner.js";
 import { ExplanationPanel } from "./components/ExplanationPanel.js";
 import { SessionList } from "./components/SessionList.js";
 import { SystemPromptBreakdown } from "./components/SystemPromptBreakdown.js";
+import { SystemPromptInspector } from "./components/SystemPromptInspector.js";
 import { TimelineScrubber } from "./components/TimelineScrubber.js";
 import { ToolInventoryPanel } from "./components/ToolInventoryPanel.js";
+import { TurnInspector } from "./components/TurnInspector.js";
 import { TurnsTable } from "./components/TurnsTable.js";
 import { Blueprint } from "./components/ui/Blueprint.js";
 import { SegmentedControl } from "./components/ui/SegmentedControl.js";
@@ -27,6 +35,18 @@ const RIGHT_TAB_OPTIONS = [
   { value: "system-prompt", label: "System prompt" },
   { value: "tools", label: "Tools" },
 ] as const;
+
+// Analyze-mode center views: the existing turns table, one session's
+// tool-call audit, the cross-session audit (Phase 9.10), or the
+// cross-provider associative insights dashboard (Phase 9.11).
+const CENTER_VIEW_OPTIONS = [
+  { value: "turns", label: "Turns" },
+  { value: "session-audit", label: "Tool audit" },
+  { value: "rollup", label: "All sessions" },
+  { value: "dashboard", label: "Dashboard" },
+] as const;
+
+type CenterView = (typeof CENTER_VIEW_OPTIONS)[number]["value"];
 
 const EMPTY_STATES = {
   learn: {
@@ -46,10 +66,27 @@ export function App() {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [sessionsLoaded, setSessionsLoaded] = useState(false);
   const [configWarnings, setConfigWarnings] = useState<ConfigWarning[]>([]);
+  const [retentionThreshold, setRetentionThreshold] = useState<number | undefined>(undefined);
   const [showConfigBanner, setShowConfigBanner] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
-  const { session, selectedTurnIndex, mode, rightTab, loadSession, selectTurn, setMode, setRightTab } =
-    useSessionStore();
+  const [adviceSelection, setAdviceSelection] = useState<Set<string>>(new Set());
+  const [adviceDialogOpen, setAdviceDialogOpen] = useState(false);
+  const [inspectorOpen, setInspectorOpen] = useState(false);
+  const [turnInspectorOpen, setTurnInspectorOpen] = useState(false);
+  const [providers, setProviders] = useState<LogProviderDescriptor[]>([]);
+  const [centerView, setCenterView] = useState<CenterView>("turns");
+  const {
+    session,
+    selectedTurnIndex,
+    mode,
+    rightTab,
+    activeProviderId,
+    loadSession,
+    selectTurn,
+    setMode,
+    setRightTab,
+    setActiveProviderId,
+  } = useSessionStore();
   const latestSessionRequestId = useRef(0);
 
   useEffect(() => {
@@ -69,24 +106,48 @@ export function App() {
   }, []);
 
   useEffect(() => {
+    fetchLogProviderStatus()
+      .then((status) => {
+        setProviders(status.providers);
+        setActiveProviderId(status.activeProviderId);
+      })
+      .catch((error: Error) => setFetchError(error.message));
+    // Only ever needs to run once — subsequent provider changes go through
+    // handleProviderChange below, which already has the fresh status.
+  }, []);
+
+  // Re-fetches whenever the active Analyze-mode provider changes, so the
+  // list reflects whichever provider GET /api/sessions currently reads from
+  // (architecture.md §5's "reloads the same GET /api/sessions resource").
+  useEffect(() => {
+    setSessionsLoaded(false);
     fetchSessions()
       .then((result) => {
         setSessions(result);
         setSessionsLoaded(true);
       })
       .catch((error: Error) => setFetchError(error.message));
-  }, []);
+  }, [activeProviderId]);
 
   useEffect(() => {
     fetchConfigStatus()
-      .then((status) => setConfigWarnings(status.warnings))
+      .then((status) => {
+        setConfigWarnings(status.warnings);
+        setRetentionThreshold(status.minRetainedSessionLogsThreshold);
+      })
       .catch((error: Error) => setFetchError(error.message));
   }, []);
 
   const selectedTurn = session?.turns[selectedTurnIndex] ?? null;
+  // "All sessions" hides the right column; the dashboard brings its own
+  // list boxes, so it hides the session list as well.
+  const showDashboard = mode === "analyze" && centerView === "dashboard";
+  const hideRightColumn = mode === "analyze" && (centerView === "rollup" || showDashboard);
   const listForMode = mode === "learn" ? scenarios : sessions;
   const listLoaded = mode === "learn" ? scenariosLoaded : sessionsLoaded;
-  const showEmptyState = listLoaded && listForMode.length === 0;
+  // The dashboard reads every provider, so an empty active provider must
+  // not hide it.
+  const showEmptyState = listLoaded && listForMode.length === 0 && !showDashboard;
   const allAiCreditsKnown =
     session !== null && session.turns.length > 0 && session.turns.every((turn) => turn.usage.costAiCredits.known);
   // toolInventory only comes from a parsed main.jsonl; a turn's toolCalls
@@ -94,36 +155,105 @@ export function App() {
   // data means tool-call detail is available for the selected turn.
   const toolCallsAvailable =
     (selectedTurn?.toolCalls.length ?? 0) > 0 || (session?.toolInventory?.length ?? 0) > 0;
+  // Use the fully-fetched session (with turns/systemPrompt/toolInventory) in
+  // place of its lightweight list summary when it's the currently open one —
+  // fetchSessions() only returns per-session summaries, so the advice bundle
+  // would otherwise report an empty turn history for Analyze-mode sessions.
+  const adviceSessions = listForMode
+    .filter((candidate) => adviceSelection.has(candidate.id))
+    .map((candidate) => (session?.id === candidate.id ? session : candidate));
+
+  function handleProviderChange(id: string): void {
+    setActiveLogProvider(id)
+      .then((status) => {
+        setProviders(status.providers);
+        setActiveProviderId(status.activeProviderId);
+      })
+      .catch((error: Error) => setFetchError(error.message));
+  }
+
+  function handleRetentionThresholdChange(value: number): void {
+    updateRetentionThreshold(value)
+      .then((status) => {
+        setConfigWarnings(status.warnings);
+        setRetentionThreshold(status.minRetainedSessionLogsThreshold);
+      })
+      .catch((error: Error) => setFetchError(error.message));
+  }
+
+  function handleModeChange(next: typeof mode): void {
+    setAdviceSelection(new Set());
+    setAdviceDialogOpen(false);
+    setInspectorOpen(false);
+    setTurnInspectorOpen(false);
+    setCenterView("turns");
+    setMode(next);
+  }
+
+  function handleToggleAdvice(picked: Session): void {
+    setAdviceSelection((current) => {
+      const next = new Set(current);
+      if (next.has(picked.id)) {
+        next.delete(picked.id);
+      } else {
+        next.add(picked.id);
+      }
+      return next;
+    });
+  }
 
   function handleSelectSession(picked: Session): void {
+    setInspectorOpen(false);
+    setTurnInspectorOpen(false);
     if (mode === "analyze") {
-      const requestId = ++latestSessionRequestId.current;
-      fetchSession(picked.id)
-        .then((result) => {
-          // Ignore a response for a session the user has since navigated
-          // away from — otherwise a slower earlier request can resolve
-          // after a faster later one and overwrite it.
-          if (requestId === latestSessionRequestId.current) {
-            loadSession(result);
-          }
-        })
-        .catch((error: Error) => {
-          if (requestId === latestSessionRequestId.current) {
-            setFetchError(error.message);
-          }
-        });
+      openAnalyzeSession(picked.id);
     } else {
       loadSession(picked);
     }
+  }
+
+  function openAnalyzeSession(sessionId: string): void {
+    const requestId = ++latestSessionRequestId.current;
+    fetchSession(sessionId)
+      .then((result) => {
+        // Ignore a response for a session the user has since navigated
+        // away from — otherwise a slower earlier request can resolve
+        // after a faster later one and overwrite it.
+        if (requestId === latestSessionRequestId.current) {
+          loadSession(result);
+        }
+      })
+      .catch((error: Error) => {
+        if (requestId === latestSessionRequestId.current) {
+          setFetchError(error.message);
+        }
+      });
+  }
+
+  function handleOpenSessionAudit(sessionId: string): void {
+    setInspectorOpen(false);
+    setTurnInspectorOpen(false);
+    setCenterView("session-audit");
+    openAnalyzeSession(sessionId);
+  }
+
+  function handleInspectTurn(turnPosition: number): void {
+    selectTurn(turnPosition);
+    setTurnInspectorOpen(true);
   }
 
   return (
     <main>
       <AppHeader
         mode={mode}
-        onModeChange={setMode}
+        onModeChange={handleModeChange}
         hasConfigWarnings={configWarnings.length > 0}
         onConfigClick={() => setShowConfigBanner(true)}
+        providers={providers}
+        activeProviderId={activeProviderId}
+        onProviderChange={handleProviderChange}
+        minRetainedSessionLogsThreshold={retentionThreshold}
+        onRetentionThresholdChange={handleRetentionThresholdChange}
       />
       <p className="text-muted" style={{ fontSize: 11, margin: "var(--space-2) var(--space-4) 0" }}>
         {health ? `status: ${health.status} · v${health.version}` : "Checking server…"}
@@ -140,7 +270,24 @@ export function App() {
         <ConfigWarningBanner warnings={configWarnings} onDismiss={() => setShowConfigBanner(false)} />
       )}
 
-      {showEmptyState ? (
+      {inspectorOpen && session ? (
+        <SystemPromptInspector
+          sessionId={session.id}
+          sessionTitle={session.title}
+          model={session.model}
+          providerId={session.providerId}
+          onClose={() => setInspectorOpen(false)}
+        />
+      ) : turnInspectorOpen && session ? (
+        <TurnInspector
+          sessionId={session.id}
+          turnIndex={selectedTurnIndex}
+          sessionTitle={session.title}
+          triggeredEvent={selectedTurn?.triggeredEvent}
+          usageDataAvailable={session.usageDataAvailable}
+          onClose={() => setTurnInspectorOpen(false)}
+        />
+      ) : showEmptyState ? (
         <div style={{ padding: "var(--space-8) var(--space-4)", display: "flex", justifyContent: "center" }}>
           <Blueprint style={{ maxWidth: 420, padding: "var(--space-4)", textAlign: "center" }}>
             <div className="card-title" style={{ marginBottom: 6 }}>
@@ -149,6 +296,16 @@ export function App() {
             <p className="text-muted" style={{ fontSize: 13, margin: 0 }}>
               {EMPTY_STATES[mode].body}
             </p>
+            {mode === "analyze" && (
+              <button
+                type="button"
+                className="btn btn-secondary"
+                style={{ marginTop: "var(--space-3)" }}
+                onClick={() => setCenterView("dashboard")}
+              >
+                Open the dashboard across all providers
+              </button>
+            )}
           </Blueprint>
         </div>
       ) : (
@@ -161,15 +318,60 @@ export function App() {
             alignItems: "start",
           }}
         >
-          <SessionList
-            mode={mode}
-            sessions={listForMode}
-            selectedSessionId={session?.id ?? null}
-            onSelect={handleSelectSession}
-          />
+          <div style={showDashboard ? { display: "none" } : undefined}>
+            <SessionList
+              mode={mode}
+              sessions={listForMode}
+              selectedSessionId={session?.id ?? null}
+              onSelect={handleSelectSession}
+              adviceSelection={adviceSelection}
+              onToggleAdvice={handleToggleAdvice}
+            />
+            <AdviceExportTriggerBar count={adviceSessions.length} onExport={() => setAdviceDialogOpen(true)} />
+            <AdviceExportDialog
+              sessions={adviceSessions}
+              open={adviceDialogOpen}
+              onClose={() => setAdviceDialogOpen(false)}
+            />
+          </div>
 
-          <div>
-            {session ? (
+          <div
+            style={
+              showDashboard
+                ? { gridColumn: "1 / 4" }
+                : hideRightColumn
+                  ? { gridColumn: "2 / 4" }
+                  : undefined
+            }
+          >
+            {mode === "analyze" && (
+              <SegmentedControl
+                name="center-view"
+                options={CENTER_VIEW_OPTIONS}
+                value={centerView}
+                onChange={setCenterView}
+                className="center-view-seg"
+              />
+            )}
+            <div style={mode === "analyze" ? { marginTop: "var(--space-3)" } : undefined}>
+            {showDashboard ? (
+              <InsightsDashboard />
+            ) : mode === "analyze" && centerView === "rollup" ? (
+              <AuditRollupPanel onOpenSession={handleOpenSessionAudit} key={activeProviderId} />
+            ) : mode === "analyze" && centerView === "session-audit" ? (
+              session ? (
+                <SessionAuditPanel
+                  sessionId={session.id}
+                  selectedTurnIndex={selectedTurnIndex}
+                  onSelectTurn={selectTurn}
+                  onInspectTurn={handleInspectTurn}
+                />
+              ) : (
+                <p className="text-muted" style={{ fontSize: 13 }}>
+                  Select a session to audit its tool calls.
+                </p>
+              )
+            ) : session ? (
               <>
                 <div
                   style={{
@@ -209,9 +411,10 @@ export function App() {
                 Select a {mode === "learn" ? "scenario" : "session"} to view its turns.
               </p>
             )}
+            </div>
           </div>
 
-          <div>
+          <div style={hideRightColumn ? { display: "none" } : undefined}>
             {mode === "analyze" ? (
               <SegmentedControl
                 name="right-tab"
@@ -225,10 +428,21 @@ export function App() {
             )}
             <div style={{ marginTop: "var(--space-2)" }}>
               {(mode === "learn" || rightTab === "explanation") && (
-                <ExplanationPanel turn={selectedTurn} mode={mode} toolCallsAvailable={toolCallsAvailable} />
+                <ExplanationPanel
+                  turn={selectedTurn}
+                  mode={mode}
+                  toolCallsAvailable={toolCallsAvailable}
+                  onOpenTurnInspector={
+                    mode === "analyze" && session ? () => setTurnInspectorOpen(true) : undefined
+                  }
+                />
               )}
               {mode === "analyze" && rightTab === "system-prompt" && (
-                <SystemPromptBreakdown components={session?.systemPrompt ?? []} />
+                <SystemPromptBreakdown
+                  components={session?.systemPrompt ?? []}
+                  providerId={session?.providerId}
+                  onOpenInspector={session ? () => setInspectorOpen(true) : undefined}
+                />
               )}
               {mode === "analyze" && rightTab === "tools" && (
                 <ToolInventoryPanel entries={session?.toolInventory ?? []} />

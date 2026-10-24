@@ -1,16 +1,45 @@
-import type { TokenCount, Turn } from "@gh-cp-chat-analyser/domain";
+import type { TokenCount, Turn } from "@copilot-cost-analyzer/domain";
+import { sumTokenCounts } from "@copilot-cost-analyzer/domain";
+import { isFailedStatus } from "@copilot-cost-analyzer/domain";
+import { formatAiCredits } from "../lib/format-ai-credits.js";
 import { onKeyActivate } from "../lib/on-key-activate.js";
 import { TRIGGER_LABELS } from "../lib/trigger-labels.js";
 import { Tag } from "./ui/Tag.js";
+
+const CUMULATIVE_COST_UNKNOWN_REASON =
+  "Cumulative AI Credits is unavailable because at least one earlier turn's cost is unknown.";
 
 function formatTokenCount(tokenCount: TokenCount): string {
   return tokenCount.known ? tokenCount.value.toLocaleString() : "—";
 }
 
-function formatAiCredits(tokenCount: TokenCount): string {
-  return tokenCount.known
-    ? tokenCount.value.toFixed(6).replace(/\.?0+$/, "")
-    : "—";
+// Tool-call count plus a failure badge (Phase 9.10 audit) — icon + number +
+// accessible label, so a failed turn stands out without relying on colour.
+function ToolCallsCell({ turn }: { turn: Turn }) {
+  const failed = turn.toolCalls.filter((call) => call.outcome && isFailedStatus(call.outcome.status)).length;
+  return (
+    <>
+      {turn.toolCalls.length}
+      {failed > 0 && (
+        <span className="failure-badge" aria-label={`${failed} of ${turn.toolCalls.length} tool calls failed`}>
+          <span aria-hidden="true">✕{failed}</span>
+        </span>
+      )}
+    </>
+  );
+}
+
+function formatRoundsCount(roundsCount: number | undefined): string {
+  return roundsCount === undefined ? "—" : roundsCount.toLocaleString();
+}
+
+// Running total through and including this row — all-or-nothing (an
+// earlier turn with unknown cost makes every later row's total unknown too).
+function cumulativeCostThrough(turns: Turn[], turnIndex: number): TokenCount {
+  return sumTokenCounts(
+    turns.slice(0, turnIndex + 1).map((turn) => turn.usage.costAiCredits),
+    CUMULATIVE_COST_UNKNOWN_REASON,
+  );
 }
 
 interface TurnsTableProps {
@@ -26,6 +55,8 @@ export function TurnsTable({ turns, selectedTurnIndex, onSelectTurn }: TurnsTabl
         <tr>
           <th>Turn</th>
           <th>Trigger</th>
+          <th>Rounds</th>
+          <th>Calls</th>
           <th>Uncached in</th>
           <th>Cache read</th>
           <th>Cache write</th>
@@ -34,6 +65,7 @@ export function TurnsTable({ turns, selectedTurnIndex, onSelectTurn }: TurnsTabl
           <th>Reasoning</th>
           <th>Output</th>
           <th>AI Credits</th>
+          <th>Cumulative</th>
           <th>Model</th>
         </tr>
       </thead>
@@ -58,6 +90,10 @@ export function TurnsTable({ turns, selectedTurnIndex, onSelectTurn }: TurnsTabl
                 <span className="text-muted">—</span>
               )}
             </td>
+            <td>{formatRoundsCount(turn.usage.roundsCount)}</td>
+            <td style={{ whiteSpace: "nowrap" }}>
+              <ToolCallsCell turn={turn} />
+            </td>
             <td>{formatTokenCount(turn.usage.uncachedInput)}</td>
             <td>{formatTokenCount(turn.usage.cacheRead)}</td>
             <td>{formatTokenCount(turn.usage.cacheWrite)}</td>
@@ -66,6 +102,7 @@ export function TurnsTable({ turns, selectedTurnIndex, onSelectTurn }: TurnsTabl
             <td>{formatTokenCount(turn.usage.reasoning)}</td>
             <td>{formatTokenCount(turn.usage.output)}</td>
             <td>{formatAiCredits(turn.usage.costAiCredits)}</td>
+            <td className="text-muted">{formatAiCredits(cumulativeCostThrough(turns, turnIndex))}</td>
             <td className="text-muted truncate" style={{ fontSize: 12, maxWidth: 110 }}>
               {turn.usage.model}
             </td>

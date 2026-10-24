@@ -1,8 +1,10 @@
-import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { ConfigStatus } from "@gh-cp-chat-analyser/domain";
+import type { ConfigStatus } from "@copilot-cost-analyzer/domain";
 import { App } from "./App.js";
 import { makeTurn } from "./test-support/turn-fixture.js";
+import { makeAuditRollup, makeSessionAudit } from "./test-support/audit-fixture.js";
+import { sampleInsightsDataset } from "./test-support/insights-fixture.js";
 
 const scenario = {
   id: "cache-basics",
@@ -15,6 +17,7 @@ const scenario = {
     makeTurn({ index: 2, explanation: "second turn explanation" }),
   ],
   turnCount: 2,
+  costAiCredits: { known: false as const, reason: "not extracted" },
 };
 
 const sessionSummary = {
@@ -25,6 +28,7 @@ const sessionSummary = {
   usageDataAvailable: false,
   turns: [],
   turnCount: 0,
+  costAiCredits: { known: false as const, reason: "not extracted" },
 };
 
 const fullSession = {
@@ -65,6 +69,7 @@ const sessionSummaryNoInventory = {
   usageDataAvailable: false,
   turns: [],
   turnCount: 1,
+  costAiCredits: { known: false as const, reason: "not extracted" },
 };
 
 const fullSessionNoInventory = {
@@ -94,6 +99,7 @@ const sessionSummaryError = {
   usageDataAvailable: false,
   turns: [],
   turnCount: 0,
+  costAiCredits: { known: false as const, reason: "not extracted" },
 };
 
 const cleanConfigStatus = {
@@ -101,12 +107,20 @@ const cleanConfigStatus = {
   vscodeUserSettingsPath: "/home/user/.config/Code/User/settings.json",
   loggingEnabled: true,
   maxRetainedSessionLogs: 200,
+  minRetainedSessionLogsThreshold: 200,
   warnings: [],
 };
 
 let configStatus: ConfigStatus = cleanConfigStatus;
+let logProviderStatus = {
+  providers: [
+    { id: "vscode", label: "VS Code", available: true },
+    { id: "mitmproxy", label: "mitmproxy", available: true },
+  ],
+  activeProviderId: "vscode",
+};
 
-function fakeFetch(url: string) {
+function fakeFetch(url: string, init?: { method?: string; body?: string }) {
   if (url === "/api/health") {
     return Promise.resolve({
       ok: true,
@@ -115,6 +129,14 @@ function fakeFetch(url: string) {
   }
   if (url === "/api/learn/scenarios") {
     return Promise.resolve({ ok: true, json: () => Promise.resolve([scenario]) });
+  }
+  if (url === "/api/log-providers") {
+    return Promise.resolve({ ok: true, json: () => Promise.resolve(logProviderStatus) });
+  }
+  if (url === "/api/log-providers/active") {
+    const { id } = JSON.parse(init?.body ?? "{}") as { id: string };
+    logProviderStatus = { ...logProviderStatus, activeProviderId: id };
+    return Promise.resolve({ ok: true, json: () => Promise.resolve(logProviderStatus) });
   }
   if (url === "/api/sessions") {
     return Promise.resolve({
@@ -131,7 +153,38 @@ function fakeFetch(url: string) {
   if (url === "/api/sessions/session-error") {
     return Promise.resolve({ ok: false, status: 500, json: () => Promise.resolve({ error: "boom" }) });
   }
+  if (url === "/api/sessions/session-1/audit") {
+    return Promise.resolve({ ok: true, json: () => Promise.resolve(makeSessionAudit({ sessionId: "session-1" })) });
+  }
+  if (url.startsWith("/api/insights")) {
+    return Promise.resolve({ ok: true, json: () => Promise.resolve(sampleInsightsDataset()) });
+  }
+  if (url.startsWith("/api/audit")) {
+    const rollup = makeAuditRollup({
+      sessions: [{ sessionId: "session-1", title: "Fix the bug", toolCalls: 4, failed: 3, unknown: 0 }],
+    });
+    return Promise.resolve({ ok: true, json: () => Promise.resolve(rollup) });
+  }
   if (url === "/api/config/status") {
+    return Promise.resolve({ ok: true, json: () => Promise.resolve(configStatus) });
+  }
+  if (url === "/api/config/retention-threshold") {
+    const { value } = JSON.parse(init?.body ?? "{}") as { value: number };
+    const warnings =
+      value > (configStatus.maxRetainedSessionLogs ?? 0)
+        ? [
+            {
+              code: "retention-too-low" as const,
+              severity: "required" as const,
+              settingId: "github.copilot.chat.agentDebugLog.fileLogging.maxRetainedSessionLogs",
+              currentValue: configStatus.maxRetainedSessionLogs,
+              recommendedValue: value,
+              message: `Only the last ${configStatus.maxRetainedSessionLogs} sessions' logs are retained on disk.`,
+              helpSteps: [`Set maxRetainedSessionLogs to ${value} in settings.json`],
+            },
+          ]
+        : [];
+    configStatus = { ...configStatus, minRetainedSessionLogsThreshold: value, warnings };
     return Promise.resolve({ ok: true, json: () => Promise.resolve(configStatus) });
   }
   return Promise.reject(new Error(`Unhandled fetch url in test: ${url}`));
@@ -144,6 +197,13 @@ function switchToAnalyze() {
 describe("App", () => {
   beforeEach(() => {
     configStatus = cleanConfigStatus;
+    logProviderStatus = {
+      providers: [
+        { id: "vscode", label: "VS Code", available: true },
+        { id: "mitmproxy", label: "mitmproxy", available: true },
+      ],
+      activeProviderId: "vscode",
+    };
     vi.stubGlobal("fetch", vi.fn(fakeFetch));
   });
 
@@ -189,6 +249,39 @@ describe("App", () => {
 
     expect(await screen.findByRole("button", { name: "Fix the bug" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Cache Basics" })).not.toBeInTheDocument();
+  });
+
+  it("selecting a different log provider clears the selected session and refetches the session list", async () => {
+    render(<App />);
+
+    switchToAnalyze();
+    fireEvent.click(await screen.findByRole("button", { name: "Fix the bug" }));
+    await screen.findByText("analyze turn explanation");
+
+    const providerSelect = await screen.findByLabelText("Log provider");
+    const fetchCallsBefore = (fetch as unknown as { mock: { calls: unknown[][] } }).mock.calls.length;
+
+    fireEvent.change(providerSelect, { target: { value: "mitmproxy" } });
+
+    await waitFor(() =>
+      expect(fetch).toHaveBeenCalledWith(
+        "/api/log-providers/active",
+        expect.objectContaining({ method: "PUT" }),
+      ),
+    );
+    await waitFor(() => {
+      const fetchCallsAfter = (fetch as unknown as { mock: { calls: unknown[][] } }).mock.calls.length;
+      expect(fetchCallsAfter).toBeGreaterThan(fetchCallsBefore);
+    });
+    expect(screen.queryByText("analyze turn explanation")).not.toBeInTheDocument();
+  });
+
+  it("does not render a provider select in Learn mode", async () => {
+    render(<App />);
+
+    await screen.findByRole("button", { name: "Cache Basics" });
+
+    expect(screen.queryByLabelText("Log provider")).not.toBeInTheDocument();
   });
 
   it("lets the user pick a real Analyze session and renders the shared layout", async () => {
@@ -328,6 +421,7 @@ describe("App", () => {
       warnings: [
         {
           code: "retention-too-low",
+          severity: "required",
           settingId: "github.copilot.chat.agentDebugLog.fileLogging.maxRetainedSessionLogs",
           currentValue: 50,
           recommendedValue: 200,
@@ -343,12 +437,43 @@ describe("App", () => {
     ).toBeInTheDocument();
   });
 
+  it("shows the fetched retention threshold in the header on load", async () => {
+    configStatus = { ...cleanConfigStatus, minRetainedSessionLogsThreshold: 300 };
+    render(<App />);
+
+    expect(await screen.findByLabelText("Retention threshold")).toHaveValue(300);
+  });
+
+  it("changing the retention threshold triggers the PUT and updates the header and warning state", async () => {
+    configStatus = { ...cleanConfigStatus, maxRetainedSessionLogs: 250, warnings: [] };
+    render(<App />);
+
+    const input = await screen.findByLabelText("Retention threshold");
+    expect(input).toHaveValue(200);
+    expect(screen.queryByText(/sessions' logs are retained on disk/)).not.toBeInTheDocument();
+
+    fireEvent.change(input, { target: { value: "300" } });
+    fireEvent.blur(input);
+
+    await waitFor(() =>
+      expect(fetch).toHaveBeenCalledWith(
+        "/api/config/retention-threshold",
+        expect.objectContaining({ method: "PUT", body: JSON.stringify({ value: 300 }) }),
+      ),
+    );
+    expect(await screen.findByLabelText("Retention threshold")).toHaveValue(300);
+    expect(
+      await screen.findByText("Only the last 250 sessions' logs are retained on disk."),
+    ).toBeInTheDocument();
+  });
+
   it("dismisses the config warning banner via its Dismiss button and can reopen it via the Config button", async () => {
     configStatus = {
       ...cleanConfigStatus,
       warnings: [
         {
           code: "retention-too-low",
+          severity: "required",
           settingId: "github.copilot.chat.agentDebugLog.fileLogging.maxRetainedSessionLogs",
           currentValue: 50,
           recommendedValue: 200,
@@ -372,5 +497,141 @@ describe("App", () => {
 
     expect(await screen.findByText("Config ✓")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Config" })).not.toBeInTheDocument();
+  });
+
+  it("lets the user select sessions for an AI advice bundle, open the export dialog, and copy it", async () => {
+    Object.assign(navigator, { clipboard: { writeText: vi.fn().mockResolvedValue(undefined) } });
+    render(<App />);
+
+    switchToAnalyze();
+    fireEvent.click(await screen.findByRole("checkbox", { name: /Fix the bug/ }));
+
+    expect(await screen.findByText("1 session selected for advice")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Export advice" }));
+
+    expect(screen.getByText("Export advice bundle")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Copy advice prompt" })).toBeInTheDocument();
+  });
+
+  it("uses the fully-fetched session detail (turns, system prompt) for the advice bundle, not the lightweight list summary", async () => {
+    Object.assign(navigator, { clipboard: { writeText: vi.fn().mockResolvedValue(undefined) } });
+    render(<App />);
+
+    switchToAnalyze();
+    fireEvent.click(await screen.findByRole("button", { name: "Fix the bug" }));
+    await screen.findByText("analyze turn explanation");
+
+    fireEvent.click(screen.getByRole("checkbox", { name: /Fix the bug/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Export advice" }));
+    fireEvent.click(screen.getByRole("button", { name: "Preview" }));
+
+    expect(screen.getByTestId("advice-preview")).toHaveTextContent("Base system prompt (100 characters)");
+  });
+
+  it("clears the advice selection when switching modes", async () => {
+    render(<App />);
+
+    fireEvent.click(await screen.findByRole("checkbox", { name: /Cache Basics/ }));
+    expect(await screen.findByText("1 session selected for advice")).toBeInTheDocument();
+
+    switchToAnalyze();
+
+    await screen.findByRole("button", { name: "Fix the bug" });
+    expect(screen.queryByText(/selected for advice/)).not.toBeInTheDocument();
+  });
+
+  describe("tool-call audit views (Phase 9.10)", () => {
+    it("offers the audit view switch only in Analyze mode", async () => {
+      render(<App />);
+      await screen.findByRole("button", { name: "Cache Basics" });
+      expect(screen.queryByLabelText("Tool audit")).not.toBeInTheDocument();
+
+      switchToAnalyze();
+
+      expect(screen.getByLabelText("Turns")).toBeChecked();
+      expect(screen.getByLabelText("Tool audit")).toBeInTheDocument();
+      expect(screen.getByLabelText("All sessions")).toBeInTheDocument();
+    });
+
+    it("shows the selected session's tool-call audit", async () => {
+      render(<App />);
+      switchToAnalyze();
+      fireEvent.click(await screen.findByRole("button", { name: "Fix the bug" }));
+      await screen.findByText("analyze turn explanation");
+
+      fireEvent.click(screen.getByLabelText("Tool audit"));
+
+      expect(await screen.findByRole("group", { name: "Failure rate" })).toHaveTextContent("75%");
+      expect(fetch).toHaveBeenCalledWith("/api/sessions/session-1/audit");
+    });
+
+    it("asks for a session before showing a session audit", async () => {
+      render(<App />);
+      switchToAnalyze();
+      await screen.findByRole("button", { name: "Fix the bug" });
+
+      fireEvent.click(screen.getByLabelText("Tool audit"));
+
+      expect(screen.getByText("Select a session to audit its tool calls.")).toBeInTheDocument();
+    });
+
+    it("shows the cross-session audit and opens a session from it into its own audit", async () => {
+      render(<App />);
+      switchToAnalyze();
+      await screen.findByRole("button", { name: "Fix the bug" });
+
+      fireEvent.click(screen.getByLabelText("All sessions"));
+      const sessionsTable = await screen.findByRole("table", { name: "Sessions" });
+      fireEvent.click(within(sessionsTable).getByRole("button", { name: "Fix the bug" }));
+
+      expect(await screen.findByRole("group", { name: "Failure rate" })).toHaveTextContent("75%");
+      expect(screen.getByLabelText("Tool audit")).toBeChecked();
+    });
+
+    it("resets to the turns view when switching modes", async () => {
+      render(<App />);
+      switchToAnalyze();
+      await screen.findByRole("button", { name: "Fix the bug" });
+      fireEvent.click(screen.getByLabelText("All sessions"));
+
+      fireEvent.click(screen.getByLabelText("Learn"));
+      switchToAnalyze();
+
+      expect(screen.getByLabelText("Turns")).toBeChecked();
+    });
+  });
+
+  describe("insights dashboard (Phase 9.11)", () => {
+    it("offers a full-width Dashboard view in Analyze mode, across every provider", async () => {
+      render(<App />);
+      switchToAnalyze();
+      await screen.findByRole("button", { name: "Fix the bug" });
+
+      fireEvent.click(screen.getByLabelText("Dashboard"));
+
+      expect(await screen.findByRole("group", { name: "AI Credits" })).toHaveTextContent("5.50");
+      expect(fetch).toHaveBeenCalledWith(expect.stringMatching(/^\/api\/insights\?since=\d{4}-\d{2}-\d{2}&limit=200$/));
+      // Full width: the session list and the right column step aside for the dashboard's own list boxes.
+      expect(screen.getByLabelText("Explanation")).not.toBeVisible();
+      expect(screen.getByRole("button", { name: "Fix the bug", hidden: true })).not.toBeVisible();
+    });
+  });
+
+  describe("insights dashboard when the active provider has no sessions", () => {
+    it("still reaches the cross-provider dashboard from the empty state", async () => {
+      vi.stubGlobal(
+        "fetch",
+        vi.fn((url: string, init?: { body?: string }) =>
+          url === "/api/sessions" ? Promise.resolve({ ok: true, json: () => Promise.resolve([]) }) : fakeFetch(url, init),
+        ),
+      );
+      render(<App />);
+      switchToAnalyze();
+
+      fireEvent.click(await screen.findByRole("button", { name: "Open the dashboard across all providers" }));
+
+      expect(await screen.findByRole("group", { name: "AI Credits" })).toHaveTextContent("5.50");
+      expect(screen.getByLabelText("Dashboard")).toBeChecked();
+    });
   });
 });

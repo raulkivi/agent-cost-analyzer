@@ -1,4 +1,4 @@
-import type { TriggeredEvent } from "@gh-cp-chat-analyser/domain";
+import type { TriggeredEvent } from "@copilot-cost-analyzer/domain";
 
 export const TRIGGER_LABELS: Record<TriggeredEvent, string> = {
   "model-switch": "model switch",
@@ -8,4 +8,7 @@ export const TRIGGER_LABELS: Record<TriggeredEvent, string> = {
   rewind: "/rewind",
   fork: "fork",
   "cache-expiry": "cache expiry",
+  "instructions-change": "instructions change",
+  "image-change": "image change",
+  "reasoning-toggle": "reasoning toggle",
 };

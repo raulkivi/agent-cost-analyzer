@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { sessionSchema } from "@gh-cp-chat-analyser/domain";
+import { sessionSchema } from "@copilot-cost-analyzer/domain";
 import { getLearnScenario, listLearnScenarios } from "./loader.js";
 
 describe("learn-scenarios loader", () => {
   it("lists bundled scenarios as valid learn-mode Sessions", () => {
     const scenarios = listLearnScenarios();
 
-    expect(scenarios.length).toBeGreaterThanOrEqual(9);
+    expect(scenarios.length).toBeGreaterThanOrEqual(18);
     for (const scenario of scenarios) {
       expect(() => sessionSchema.parse(scenario)).not.toThrow();
       expect(scenario.mode).toBe("learn");

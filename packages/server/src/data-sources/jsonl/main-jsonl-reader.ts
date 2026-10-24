@@ -17,8 +17,9 @@ export interface JsonlEnvelope {
 }
 
 // Every `attrs` key any extractor in this codebase reads (llm-request-
-// extractor.ts's inputTokens/outputTokens/cachedTokens/copilotUsageNanoAiu/model, app.ts's
-// systemPromptFile/toolsFile, system-prompt-breakdown.ts's details).
+// extractor.ts's inputTokens/outputTokens/cachedTokens/copilotUsageNanoAiu/model/
+// responseId, app.ts's systemPromptFile/toolsFile, system-prompt-breakdown.ts's
+// details).
 // `attrs` is otherwise an undocumented, per-provider payload that can carry
 // arbitrarily large content (raw prompt/tool-call data) nothing here reads
 // — a 2026-08-08 code/security review's high finding. Dropping
@@ -30,32 +31,46 @@ const KNOWN_ATTRS_KEYS = [
   "cachedTokens",
   "copilotUsageNanoAiu",
   "model",
+  "responseId",
   "systemPromptFile",
   "toolsFile",
   "details",
 ] as const;
 
-function projectAttrs(
-  attrs: unknown,
-): Record<string, unknown> | undefined {
-  if (typeof attrs !== "object" || attrs === null) {
-    return undefined;
-  }
+export type AttrsProjector = (attrs: unknown) => Record<string, unknown> | undefined;
 
-  const source = attrs as Record<string, unknown>;
-  const projected: Record<string, unknown> = {};
-  let hasKnownKey = false;
-  for (const key of KNOWN_ATTRS_KEYS) {
-    if (key in source) {
-      projected[key] = source[key];
-      hasKnownKey = true;
+// Factory rather than one fixed function so a second read path (turn-
+// inspector-reader.ts) can keep its own allow-list without duplicating this
+// key-filtering logic — only the key list differs between paths.
+export function createAttrsProjector(keys: readonly string[]): AttrsProjector {
+  return (attrs: unknown) => {
+    if (typeof attrs !== "object" || attrs === null) {
+      return undefined;
     }
-  }
 
-  return hasKnownKey ? projected : undefined;
+    const source = attrs as Record<string, unknown>;
+    const projected: Record<string, unknown> = {};
+    let hasKnownKey = false;
+    for (const key of keys) {
+      if (key in source) {
+        projected[key] = source[key];
+        hasKnownKey = true;
+      }
+    }
+
+    return hasKnownKey ? projected : undefined;
+  };
 }
 
-function parseEnvelopeLine(line: string): JsonlEnvelope | null {
+const projectAttrs = createAttrsProjector(KNOWN_ATTRS_KEYS);
+
+// Exported so turn-inspector-reader.ts's bounded wide-attrs read can reuse
+// this line-parsing/JSON-shape logic with a different attrsProjector instead
+// of duplicating it.
+export function parseEnvelopeLine(
+  line: string,
+  attrsProjector: AttrsProjector = projectAttrs,
+): JsonlEnvelope | null {
   const trimmed = line.trim();
   if (!trimmed) {
     return null;
@@ -69,7 +84,7 @@ function parseEnvelopeLine(line: string): JsonlEnvelope | null {
       typeof (parsed as { type?: unknown }).type === "string"
     ) {
       const envelope = parsed as JsonlEnvelope;
-      return { ...envelope, attrs: projectAttrs(envelope.attrs) };
+      return { ...envelope, attrs: attrsProjector(envelope.attrs) };
     }
     return null;
   } catch {

@@ -23,6 +23,7 @@ describe("extractLlmRequestUsage", () => {
       output: 892,
       aiCredits: 2.79598,
       model: "claude-sonnet-5",
+      responseId: "redacted-response-id",
     });
   });
 
@@ -43,7 +44,42 @@ describe("extractLlmRequestUsage", () => {
       output: 183,
       aiCredits: null,
       model: "claude-sonnet-5",
+      responseId: null,
     });
+  });
+
+  // Agent-traces enrichment (Phase 8.5) joins this back to agent-traces.db
+  // spans by responseId — an older/unrecognized shape without it must not
+  // throw, just degrade to null (constraint 6: never fabricate a join key).
+  it("extracts responseId when present, distinct from the model/token fields", () => {
+    const usage = extractLlmRequestUsage({
+      type: "llm_request",
+      attrs: {
+        model: "gpt-4o",
+        inputTokens: 100,
+        outputTokens: 10,
+        cachedTokens: 0,
+        responseId: "abc-123",
+      },
+    });
+
+    expect(usage?.responseId).toBe("abc-123");
+  });
+
+  it("returns a null responseId when the attr is missing or not a string", () => {
+    expect(
+      extractLlmRequestUsage({
+        type: "llm_request",
+        attrs: { inputTokens: 100, outputTokens: 10 },
+      })?.responseId,
+    ).toBeNull();
+
+    expect(
+      extractLlmRequestUsage({
+        type: "llm_request",
+        attrs: { inputTokens: 100, outputTokens: 10, responseId: 42 },
+      })?.responseId,
+    ).toBeNull();
   });
 
   it("returns null for a non-llm_request envelope", () => {

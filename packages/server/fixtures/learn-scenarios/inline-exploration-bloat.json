@@ -1,0 +1,112 @@
+{
+  "id": "inline-exploration-bloat",
+  "mode": "learn",
+  "title": "Exploring Inline vs. Isolating in a Subagent",
+  "model": "example-model",
+  "usageDataAvailable": true,
+  "turnCount": 5,
+  "category": "Subagents",
+  "turns": [
+    {
+      "index": 1,
+      "userMessage": "Add a caching layer to the API and write tests for it.",
+      "assistantResponse": "I'll start by exploring the repository structure and the existing API code to plan the caching layer.",
+      "toolCalls": [
+        { "name": "read_file", "argsSummary": "src/api/handlers.ts" },
+        { "name": "grep_search", "argsSummary": "existing cache usage across src/" }
+      ],
+      "usage": {
+        "uncachedInput": { "known": true, "value": 950 },
+        "cacheWrite": { "known": true, "value": 4500 },
+        "cacheRead": { "known": true, "value": 0 },
+        "tool": { "known": true, "value": 0 },
+        "vision": { "known": true, "value": 0 },
+        "reasoning": { "known": true, "value": 300 },
+        "output": { "known": true, "value": 250 },
+        "costAiCredits": { "known": true, "value": 0.0411 },
+        "model": "example-model"
+      },
+      "explanation": "Identical to turn 1 of the Cache Basics scenario — same task, same starting point. The difference begins next turn."
+    },
+    {
+      "index": 2,
+      "userMessage": "Here's a screenshot of the bug I'm seeing.",
+      "assistantResponse": "Let me search the codebase directly and read the matched files to find the root cause.",
+      "toolCalls": [
+        { "name": "grep_search", "argsSummary": "error message from the screenshot across src/" },
+        { "name": "semantic_search", "argsSummary": "related handling code near the failing feature" },
+        { "name": "read_file", "argsSummary": "full contents of the matched files" }
+      ],
+      "usage": {
+        "uncachedInput": { "known": true, "value": 300 },
+        "cacheWrite": { "known": true, "value": 7090 },
+        "cacheRead": { "known": true, "value": 4500 },
+        "tool": { "known": true, "value": 0 },
+        "vision": { "known": true, "value": 700 },
+        "reasoning": { "known": true, "value": 200 },
+        "output": { "known": true, "value": 180 },
+        "costAiCredits": { "known": true, "value": 0.0573 },
+        "model": "example-model"
+      },
+      "explanation": "Same investigation as Cache Basics turn 2, but done inline instead of via runSubagent: all ~7,090 tokens of the search-and-read trajectory (that a subagent would have kept in its own isolated session) get written directly into the parent's cache. This turn alone already costs about 2.5x what the subagent version cost (0.0573 vs 0.0227 AI Credits) — and unlike a one-time subagent call, this bloat is now a permanent part of the parent's cache that every future turn must read."
+    },
+    {
+      "index": 3,
+      "userMessage": "Great, please implement the fix using that root cause.",
+      "assistantResponse": "Applying the fix to the affected files based on what I found.",
+      "toolCalls": [
+        { "name": "replace_string_in_file", "argsSummary": "apply fix to src/api/cache.ts" }
+      ],
+      "usage": {
+        "uncachedInput": { "known": true, "value": 150 },
+        "cacheWrite": { "known": true, "value": 1080 },
+        "cacheRead": { "known": true, "value": 11590 },
+        "tool": { "known": true, "value": 400 },
+        "vision": { "known": true, "value": 0 },
+        "reasoning": { "known": true, "value": 250 },
+        "output": { "known": true, "value": 280 },
+        "costAiCredits": { "known": true, "value": 0.0232 },
+        "model": "example-model"
+      },
+      "explanation": "Same fix as Cache Basics turn 3, but this turn's cache read (11,590) is nearly double that scenario's (5,980) — the inline exploration from turn 2 is now baked permanently into the prefix every future turn has to re-read."
+    },
+    {
+      "index": 4,
+      "userMessage": "Now run the test suite.",
+      "assistantResponse": "Running the test suite now.",
+      "toolCalls": [
+        { "name": "run_in_terminal", "argsSummary": "npm test (verbose output)" }
+      ],
+      "usage": {
+        "uncachedInput": { "known": true, "value": 100 },
+        "cacheWrite": { "known": true, "value": 2350 },
+        "cacheRead": { "known": true, "value": 12670 },
+        "tool": { "known": true, "value": 1800 },
+        "vision": { "known": true, "value": 0 },
+        "reasoning": { "known": true, "value": 150 },
+        "output": { "known": true, "value": 300 },
+        "costAiCredits": { "known": true, "value": 0.0373 },
+        "model": "example-model"
+      },
+      "explanation": "Same verbose test run as Cache Basics turn 4 — but every turn from here on inherits the extra ~5,610 tokens (11,590 vs 5,980) that inline exploration added back in turn 2, so this and every future turn's cache-read AI Credits run permanently higher."
+    },
+    {
+      "index": 5,
+      "userMessage": "Thanks, that's everything!",
+      "assistantResponse": "You're welcome — let me know if you need anything else.",
+      "toolCalls": [],
+      "usage": {
+        "uncachedInput": { "known": true, "value": 60 },
+        "cacheWrite": { "known": true, "value": 180 },
+        "cacheRead": { "known": true, "value": 15020 },
+        "tool": { "known": true, "value": 0 },
+        "vision": { "known": true, "value": 0 },
+        "reasoning": { "known": true, "value": 30 },
+        "output": { "known": true, "value": 90 },
+        "costAiCredits": { "known": true, "value": 0.0105 },
+        "model": "example-model"
+      },
+      "explanation": "Session running total for this inline-exploration path is noticeably higher than Cache Basics' isolated-subagent path through the same 5 turns — concretely, turn 2 alone cost 0.0573 AI Credits inline vs 0.0227 AI Credits (parent) + 0.0338 AI Credits (subagent, isolated and bounded) = a real but isolated 0.0338 AI Credits that never taxes turns 3-5. The inline path pays a smaller one-time subagent bill never, but a larger permanent cache-read tax on every turn after — over a long session, isolating exploratory work in a subagent keeps winning by a growing margin."
+    }
+  ]
+}

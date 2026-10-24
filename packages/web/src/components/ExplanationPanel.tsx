@@ -1,16 +1,29 @@
-import type { Turn } from "@gh-cp-chat-analyser/domain";
+import type { Turn } from "@copilot-cost-analyzer/domain";
 import type { Mode } from "../state/session-store.js";
 import { TRIGGER_LABELS } from "../lib/trigger-labels.js";
 import { Blueprint } from "./ui/Blueprint.js";
+import { StatusTag } from "./ui/StatusTag.js";
 import { Tag } from "./ui/Tag.js";
 
 interface ExplanationPanelProps {
   turn: Turn | null;
   mode: Mode;
   toolCallsAvailable?: boolean;
+  // Analyze mode only (both LogProvider implementations, per turn-inspector-
+  // plan.md §5.7) — Learn mode sessions have no backing log source to
+  // inspect.
+  onOpenTurnInspector?: () => void;
 }
 
-function ToolCallsThisTurn({ turn, toolCallsAvailable }: { turn: Turn; toolCallsAvailable: boolean }) {
+function ToolCallsThisTurn({
+  turn,
+  toolCallsAvailable,
+  onOpenTurnInspector,
+}: {
+  turn: Turn;
+  toolCallsAvailable: boolean;
+  onOpenTurnInspector?: () => void;
+}) {
   return (
     <div
       style={{
@@ -21,14 +34,33 @@ function ToolCallsThisTurn({ turn, toolCallsAvailable }: { turn: Turn; toolCalls
     >
       <div
         style={{
-          fontSize: 11,
-          textTransform: "uppercase",
-          letterSpacing: "0.06em",
-          color: "color-mix(in srgb, var(--color-text) 60%, transparent)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: "var(--space-2)",
           marginBottom: 6,
         }}
       >
-        Tool calls this turn
+        <div
+          style={{
+            fontSize: 11,
+            textTransform: "uppercase",
+            letterSpacing: "0.06em",
+            color: "color-mix(in srgb, var(--color-text) 60%, transparent)",
+          }}
+        >
+          Tool calls this turn
+        </div>
+        {onOpenTurnInspector && (
+          <button
+            type="button"
+            className="btn btn-secondary"
+            style={{ fontSize: 11, padding: "2px 8px" }}
+            onClick={onOpenTurnInspector}
+          >
+            Inspect request/response
+          </button>
+        )}
       </div>
       {!toolCallsAvailable ? (
         <p className="text-muted" style={{ fontSize: 12, margin: 0 }}>
@@ -48,6 +80,16 @@ function ToolCallsThisTurn({ turn, toolCallsAvailable }: { turn: Turn; toolCalls
               <Tag variant="neutral" style={{ fontFamily: "monospace" }}>
                 {toolCall.name}
               </Tag>
+              {toolCall.outcome && <StatusTag outcome={toolCall.outcome} />}
+              {toolCall.shell && (
+                <span
+                  title={toolCall.shell.command}
+                  className="mono truncate"
+                  style={{ maxWidth: 220, display: "inline-block", verticalAlign: "bottom" }}
+                >
+                  {toolCall.shell.command}
+                </span>
+              )}
               {(toolCall.filesTouched ?? []).map((file) => (
                 <span
                   key={file}
@@ -66,7 +108,12 @@ function ToolCallsThisTurn({ turn, toolCallsAvailable }: { turn: Turn; toolCalls
   );
 }
 
-export function ExplanationPanel({ turn, mode, toolCallsAvailable = false }: ExplanationPanelProps) {
+export function ExplanationPanel({
+  turn,
+  mode,
+  toolCallsAvailable = false,
+  onOpenTurnInspector,
+}: ExplanationPanelProps) {
   if (!turn) {
     return (
       <Blueprint style={{ padding: "var(--space-3)" }}>
@@ -84,7 +131,13 @@ export function ExplanationPanel({ turn, mode, toolCallsAvailable = false }: Exp
         </Tag>
       )}
       <p style={{ fontSize: 14, margin: "8px 0 0" }}>{turn.explanation}</p>
-      {mode === "analyze" && <ToolCallsThisTurn turn={turn} toolCallsAvailable={toolCallsAvailable} />}
+      {mode === "analyze" && (
+        <ToolCallsThisTurn
+          turn={turn}
+          toolCallsAvailable={toolCallsAvailable}
+          onOpenTurnInspector={onOpenTurnInspector}
+        />
+      )}
     </Blueprint>
   );
 }

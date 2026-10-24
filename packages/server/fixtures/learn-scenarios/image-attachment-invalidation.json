@@ -1,0 +1,105 @@
+{
+  "id": "image-attachment-invalidation",
+  "mode": "learn",
+  "title": "An Image Attachment Invalidates the Cache",
+  "model": "example-model",
+  "usageDataAvailable": true,
+  "turnCount": 5,
+  "category": "Vision tokens",
+  "turns": [
+    {
+      "index": 1,
+      "userMessage": "Let's improve the error messages on the upload form.",
+      "assistantResponse": "Sure, looking at the upload form's error handling.",
+      "toolCalls": [],
+      "usage": {
+        "uncachedInput": { "known": true, "value": 500 },
+        "cacheWrite": { "known": true, "value": 3500 },
+        "cacheRead": { "known": true, "value": 0 },
+        "tool": { "known": true, "value": 0 },
+        "vision": { "known": true, "value": 0 },
+        "reasoning": { "known": true, "value": 150 },
+        "output": { "known": true, "value": 150 },
+        "costAiCredits": { "known": true, "value": 0.0289 },
+        "model": "example-model"
+      },
+      "explanation": "Normal first turn — writes the static prefix plus this turn's own content. No image has appeared in the conversation yet."
+    },
+    {
+      "index": 2,
+      "userMessage": "Make the file-too-large message mention the actual size limit.",
+      "assistantResponse": "Got it, updating that message.",
+      "toolCalls": [
+        { "name": "read_file", "argsSummary": "src/upload/errors.ts" }
+      ],
+      "usage": {
+        "uncachedInput": { "known": true, "value": 200 },
+        "cacheWrite": { "known": true, "value": 600 },
+        "cacheRead": { "known": true, "value": 3500 },
+        "tool": { "known": true, "value": 100 },
+        "vision": { "known": true, "value": 0 },
+        "reasoning": { "known": true, "value": 120 },
+        "output": { "known": true, "value": 180 },
+        "costAiCredits": { "known": true, "value": 0.011 },
+        "model": "example-model"
+      },
+      "explanation": "Normal turn; reads/extends the cache built by turn 1."
+    },
+    {
+      "index": 3,
+      "userMessage": "Here's what the error looks like right now — [screenshot attached].",
+      "assistantResponse": "Thanks, I can see the message is truncated in the toast — let me widen it.",
+      "toolCalls": [],
+      "usage": {
+        "uncachedInput": { "known": true, "value": 4200 },
+        "cacheWrite": { "known": true, "value": 4700 },
+        "cacheRead": { "known": true, "value": 0 },
+        "tool": { "known": true, "value": 0 },
+        "vision": { "known": true, "value": 700 },
+        "reasoning": { "known": true, "value": 180 },
+        "output": { "known": true, "value": 190 },
+        "costAiCredits": { "known": true, "value": 0.0594 },
+        "model": "example-model"
+      },
+      "explanation": "Attaching an image doesn't just add vision tokens on top of an otherwise-normal turn — Anthropic explicitly documents images appearing (or disappearing) anywhere in the conversation as an invalidating trigger in their own right, because it changes the shape of the message content at the point it's inserted, not just its size. The prior 4,100-token cache is lost and resent uncached, and a new cache (now including this image) is written from scratch — on top of the normal 700-token vision cost the image itself adds.",
+      "triggeredEvent": "image-change"
+    },
+    {
+      "index": 4,
+      "userMessage": "That's better, thanks.",
+      "assistantResponse": "Glad that's clearer now.",
+      "toolCalls": [],
+      "usage": {
+        "uncachedInput": { "known": true, "value": 70 },
+        "cacheWrite": { "known": true, "value": 220 },
+        "cacheRead": { "known": true, "value": 4700 },
+        "tool": { "known": true, "value": 0 },
+        "vision": { "known": true, "value": 0 },
+        "reasoning": { "known": true, "value": 60 },
+        "output": { "known": true, "value": 90 },
+        "costAiCredits": { "known": true, "value": 0.0063 },
+        "model": "example-model"
+      },
+      "explanation": "Normal turn; the image from turn 3 is now baked into the cache like any other content — no further disruption from it."
+    },
+    {
+      "index": 5,
+      "userMessage": "Actually one more thing — here's the same error on mobile [screenshot attached].",
+      "assistantResponse": "I see — the toast is even more cramped on the narrow viewport, let me adjust the breakpoint too.",
+      "toolCalls": [],
+      "usage": {
+        "uncachedInput": { "known": true, "value": 5000 },
+        "cacheWrite": { "known": true, "value": 5300 },
+        "cacheRead": { "known": true, "value": 0 },
+        "tool": { "known": true, "value": 0 },
+        "vision": { "known": true, "value": 650 },
+        "reasoning": { "known": true, "value": 160 },
+        "output": { "known": true, "value": 170 },
+        "costAiCredits": { "known": true, "value": 0.0663 },
+        "model": "example-model"
+      },
+      "explanation": "A second image, later in the same session, triggers the same invalidation again — this isn't a one-time 'first attachment' cost, it's per-occurrence. A session that goes back and forth attaching several screenshots over its lifetime pays this tax every single time an image enters (or leaves) the conversation, not just once.",
+      "triggeredEvent": "image-change"
+    }
+  ]
+}

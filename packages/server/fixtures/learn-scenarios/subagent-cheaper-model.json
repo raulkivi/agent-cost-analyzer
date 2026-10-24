@@ -1,0 +1,69 @@
+{
+  "id": "subagent-cheaper-model",
+  "mode": "learn",
+  "title": "A Subagent Running a Cheaper Model",
+  "model": "model-a",
+  "usageDataAvailable": true,
+  "turnCount": 3,
+  "category": "Subagents",
+  "turns": [
+    {
+      "index": 1,
+      "userMessage": "(subagent task) Find every call site of the deprecated formatCurrency() helper across the repo.",
+      "assistantResponse": "Searching the codebase for all call sites.",
+      "toolCalls": [
+        { "name": "grep_search", "argsSummary": "formatCurrency( usages across src/" }
+      ],
+      "usage": {
+        "uncachedInput": { "known": true, "value": 250 },
+        "cacheWrite": { "known": true, "value": 1200 },
+        "cacheRead": { "known": true, "value": 0 },
+        "tool": { "known": true, "value": 500 },
+        "vision": { "known": true, "value": 0 },
+        "reasoning": { "known": true, "value": 150 },
+        "output": { "known": true, "value": 110 },
+        "costAiCredits": { "known": true, "value": 0.0152 },
+        "model": "model-a"
+      },
+      "explanation": "This subagent runs on a cheaper, faster model (model-a) than the parent session's model-b — a deliberate choice for a narrow, mechanical search task that doesn't need the parent's more capable (and pricier) model. Like any subagent, it has its own isolated context; this first turn writes its own static prefix plus new content."
+    },
+    {
+      "index": 2,
+      "userMessage": "(subagent task, continued) Confirm which call sites pass a currency code and which rely on the default.",
+      "assistantResponse": "Checking each call site's arguments.",
+      "toolCalls": [
+        { "name": "read_file", "argsSummary": "full contents of the files matched in the previous search" }
+      ],
+      "usage": {
+        "uncachedInput": { "known": true, "value": 100 },
+        "cacheWrite": { "known": true, "value": 300 },
+        "cacheRead": { "known": true, "value": 1200 },
+        "tool": { "known": true, "value": 700 },
+        "vision": { "known": true, "value": 0 },
+        "reasoning": { "known": true, "value": 120 },
+        "output": { "known": true, "value": 90 },
+        "costAiCredits": { "known": true, "value": 0.0094 },
+        "model": "model-a"
+      },
+      "explanation": "Normal cache-building turn within the subagent's own, cheap-model session."
+    },
+    {
+      "index": 3,
+      "userMessage": "(subagent task, continued) Summarize the findings for the parent session.",
+      "assistantResponse": "12 call sites found; 9 pass an explicit currency code, 3 rely on the default (which is being removed). Returning a compact summary to the parent.",
+      "toolCalls": [],
+      "usage": {
+        "uncachedInput": { "known": true, "value": 50 },
+        "cacheWrite": { "known": true, "value": 150 },
+        "cacheRead": { "known": true, "value": 1500 },
+        "tool": { "known": true, "value": 0 },
+        "vision": { "known": true, "value": 0 },
+        "reasoning": { "known": true, "value": 80 },
+        "output": { "known": true, "value": 160 },
+        "costAiCredits": { "known": true, "value": 0.0055 },
+        "model": "model-a"
+      },
+      "explanation": "Final subagent turn: synthesizes a compact summary that crosses back to the parent. If this same exploration had instead run inline in the parent session under model-b's pricier rates (as in the Inline Exploration Bloat scenario), the equivalent work would cost several times more — isolating it in a subagent saves twice over: once by keeping it out of the parent's permanent cache, and again by letting it run on a model whose rate matches the task's actual difficulty rather than the parent's. This subagent's total spend across all three turns is about 0.0301 AI Credits — cheap because both the isolation and the model choice were suited to a narrow, mechanical search task."
+    }
+  ]
+}

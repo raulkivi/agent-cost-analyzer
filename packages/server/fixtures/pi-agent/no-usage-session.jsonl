@@ -1,0 +1,3 @@
+{"type":"session","version":2,"id":"33333333-3333-3333-3333-333333333333","timestamp":"2026-07-01T08:00:00.000Z","cwd":"/home/user/older-project"}
+{"type":"message","id":"g1","parentId":"33333333-3333-3333-3333-333333333333","message":{"role":"user","content":"Say hello."}}
+{"type":"message","id":"g2","parentId":"g1","message":{"role":"assistant","model":"claude-sonnet-5","provider":"anthropic","api":"messages","content":[{"type":"text","text":"Hello!"}]}}

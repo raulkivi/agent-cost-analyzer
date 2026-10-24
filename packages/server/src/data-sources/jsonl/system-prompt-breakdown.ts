@@ -1,6 +1,7 @@
-import type { SystemPromptComponent, TokenCount } from "@gh-cp-chat-analyser/domain";
-import { unavailableTokenCount } from "@gh-cp-chat-analyser/domain";
+import type { SystemPromptComponent, TokenCount } from "@copilot-cost-analyzer/domain";
+import { unavailableTokenCount } from "@copilot-cost-analyzer/domain";
 import type { JsonlEnvelope } from "./main-jsonl-reader.js";
+import { estimateTokenCount } from "./token-estimator.js";
 
 export const PROMPT_TOKEN_COUNT_UNAVAILABLE_REASON =
   "GitHub Copilot Chat's local debug log does not break down input tokens " +
@@ -76,17 +77,23 @@ export function extractLoadedSkillNames(envelopes: JsonlEnvelope[]): string[] {
 // Builds the Analyze-mode-only SystemPromptComponent[] (architecture.md §5)
 // from every real, structurally-known source this phase's research spike
 // confirmed exists: the system-prompt/tools artifacts (prompt-artifact-
-// reader.ts) and the discovery/generic log templates above. Per constraint
-// 6, every component's tokenCount is explicitly unavailable rather than an
-// estimated character-to-token conversion — main.jsonl genuinely doesn't
-// expose a per-component breakdown of the request's inputTokens. No
-// "path-scoped-instructions" component is ever produced yet (§13 open
+// reader.ts) and the discovery/generic log templates above. main.jsonl
+// itself never exposes a per-component breakdown of the request's
+// inputTokens (constraint 6), so a component's tokenCount is only ever
+// `known: true` when the component's *own real captured text* is available
+// to run through a local tokenizer (token-estimator.ts) — always flagged
+// `estimated: true` since it's a different tokenizer than the one that
+// actually billed the request. repo-instructions/skill-manifest names are
+// parsed out of a fixed-template log line, never the file/manifest content
+// itself, so there's nothing to tokenize for those — they stay unavailable.
+// No "path-scoped-instructions" component is ever produced yet (§13 open
 // question): no real captured log has shown an applyTo-scoped instruction
 // actually applying, so there's no confirmed template to parse defensively.
 export function buildSystemPromptBreakdown(
   envelopes: JsonlEnvelope[],
   systemPromptText: string | null,
   toolCount: number | null,
+  toolDefinitionsText: string | null,
 ): SystemPromptComponent[] {
   const components: SystemPromptComponent[] = [];
 
@@ -94,7 +101,7 @@ export function buildSystemPromptBreakdown(
     components.push({
       kind: "built-in",
       label: `Base system prompt (${systemPromptText.length.toLocaleString()} characters)`,
-      tokenCount: unavailable(),
+      tokenCount: estimateTokenCount(systemPromptText),
     });
   }
 
@@ -118,7 +125,7 @@ export function buildSystemPromptBreakdown(
     components.push({
       kind: "tool-definitions",
       label: `Tool definitions (${toolCount} tools)`,
-      tokenCount: unavailable(),
+      tokenCount: toolDefinitionsText !== null ? estimateTokenCount(toolDefinitionsText) : unavailable(),
     });
   }
 

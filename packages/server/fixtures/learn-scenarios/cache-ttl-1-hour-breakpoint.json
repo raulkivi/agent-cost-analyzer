@@ -1,0 +1,197 @@
+{
+  "id": "cache-ttl-1-hour-breakpoint",
+  "mode": "learn",
+  "title": "Cache TTL: Surviving a Break with the 1-Hour Breakpoint",
+  "model": "example-model",
+  "usageDataAvailable": true,
+  "turnCount": 10,
+  "category": "Cache TTL",
+  "turns": [
+    {
+      "index": 1,
+      "userMessage": "Let's add pagination to the search results endpoint.",
+      "assistantResponse": "Sure, looking at the search endpoint now.",
+      "toolCalls": [],
+      "usage": {
+        "uncachedInput": { "known": true, "value": 400 },
+        "cacheWrite": { "known": true, "value": 3000 },
+        "cacheRead": { "known": true, "value": 0 },
+        "tool": { "known": true, "value": 0 },
+        "vision": { "known": true, "value": 0 },
+        "reasoning": { "known": true, "value": 0 },
+        "output": { "known": true, "value": 200 },
+        "costAiCredits": { "known": true, "value": 0.0425 },
+        "model": "example-model"
+      },
+      "explanation": "Normal first turn — writes the static prefix plus this turn's own content. This session uses Anthropic's optional 1-hour cache breakpoint instead of the 5-minute default, which costs about 2x the normal cache-write rate but survives much longer idle gaps."
+    },
+    {
+      "index": 2,
+      "userMessage": "Use cursor-based pagination, not offset-based.",
+      "assistantResponse": "Got it, planning cursor-based pagination.",
+      "toolCalls": [],
+      "usage": {
+        "uncachedInput": { "known": true, "value": 150 },
+        "cacheWrite": { "known": true, "value": 500 },
+        "cacheRead": { "known": true, "value": 3000 },
+        "tool": { "known": true, "value": 0 },
+        "vision": { "known": true, "value": 0 },
+        "reasoning": { "known": true, "value": 0 },
+        "output": { "known": true, "value": 150 },
+        "costAiCredits": { "known": true, "value": 0.0108 },
+        "model": "example-model"
+      },
+      "explanation": "Normal turn; reads/extends the cache from turn 1 (cache reads are priced the same regardless of which breakpoint wrote them)."
+    },
+    {
+      "index": 3,
+      "userMessage": "Go ahead and look at how the results are currently fetched.",
+      "assistantResponse": "Checking the current results-fetching code.",
+      "toolCalls": [
+        { "name": "read_file", "argsSummary": "src/search/results.ts" },
+        { "name": "grep_search", "argsSummary": "offset usage across src/search" }
+      ],
+      "usage": {
+        "uncachedInput": { "known": true, "value": 140 },
+        "cacheWrite": { "known": true, "value": 450 },
+        "cacheRead": { "known": true, "value": 3500 },
+        "tool": { "known": true, "value": 300 },
+        "vision": { "known": true, "value": 0 },
+        "reasoning": { "known": true, "value": 0 },
+        "output": { "known": true, "value": 180 },
+        "costAiCredits": { "known": true, "value": 0.0122 },
+        "model": "example-model"
+      },
+      "explanation": "Explores the code with a couple of tool calls; cache continues building normally under the 1-hour breakpoint."
+    },
+    {
+      "index": 4,
+      "userMessage": "Implement the cursor-based pagination.",
+      "assistantResponse": "Implementing cursor-based pagination now.",
+      "toolCalls": [
+        { "name": "replace_string_in_file", "argsSummary": "src/search/results.ts" },
+        { "name": "run_in_terminal", "argsSummary": "npm test -- search" }
+      ],
+      "usage": {
+        "uncachedInput": { "known": true, "value": 130 },
+        "cacheWrite": { "known": true, "value": 600 },
+        "cacheRead": { "known": true, "value": 3950 },
+        "tool": { "known": true, "value": 500 },
+        "vision": { "known": true, "value": 0 },
+        "reasoning": { "known": true, "value": 0 },
+        "output": { "known": true, "value": 200 },
+        "costAiCredits": { "known": true, "value": 0.0156 },
+        "model": "example-model"
+      },
+      "explanation": "Applies an edit and runs a quick check — a normal, healthy cache-building turn."
+    },
+    {
+      "index": 5,
+      "userMessage": "Tests pass, nice.",
+      "assistantResponse": "Great, the pagination change is working.",
+      "toolCalls": [],
+      "usage": {
+        "uncachedInput": { "known": true, "value": 120 },
+        "cacheWrite": { "known": true, "value": 400 },
+        "cacheRead": { "known": true, "value": 4550 },
+        "tool": { "known": true, "value": 0 },
+        "vision": { "known": true, "value": 0 },
+        "reasoning": { "known": true, "value": 0 },
+        "output": { "known": true, "value": 160 },
+        "costAiCredits": { "known": true, "value": 0.0103 },
+        "model": "example-model"
+      },
+      "explanation": "Normal follow-up turn."
+    },
+    {
+      "index": 6,
+      "userMessage": "Now update the API docs for the new cursor param.",
+      "assistantResponse": "Updating the API docs to describe the cursor parameter.",
+      "toolCalls": [],
+      "usage": {
+        "uncachedInput": { "known": true, "value": 110 },
+        "cacheWrite": { "known": true, "value": 380 },
+        "cacheRead": { "known": true, "value": 4950 },
+        "tool": { "known": true, "value": 0 },
+        "vision": { "known": true, "value": 0 },
+        "reasoning": { "known": true, "value": 0 },
+        "output": { "known": true, "value": 150 },
+        "costAiCredits": { "known": true, "value": 0.01 },
+        "model": "example-model"
+      },
+      "explanation": "Normal follow-up turn."
+    },
+    {
+      "index": 7,
+      "userMessage": "That's all for this part, looks good.",
+      "assistantResponse": "Glad it's working — the cache is healthy at this point.",
+      "toolCalls": [],
+      "usage": {
+        "uncachedInput": { "known": true, "value": 130 },
+        "cacheWrite": { "known": true, "value": 420 },
+        "cacheRead": { "known": true, "value": 5330 },
+        "tool": { "known": true, "value": 0 },
+        "vision": { "known": true, "value": 0 },
+        "reasoning": { "known": true, "value": 0 },
+        "output": { "known": true, "value": 170 },
+        "costAiCredits": { "known": true, "value": 0.0111 },
+        "model": "example-model"
+      },
+      "explanation": "Normal follow-up turn — cache is healthy (5,750 tokens after this write). The user then steps away for the same 5+ minute smoke break as in the default-TTL scenario — but this time the session bought the 1-hour cache breakpoint back on turn 1, so the provider's retention window (60 minutes) comfortably outlasts the break."
+    },
+    {
+      "index": 8,
+      "userMessage": "Ok, next let's add rate limiting to the same endpoint.",
+      "assistantResponse": "Sure — picking this back up and looking at rate limiting for the endpoint.",
+      "toolCalls": [],
+      "usage": {
+        "uncachedInput": { "known": true, "value": 130 },
+        "cacheWrite": { "known": true, "value": 430 },
+        "cacheRead": { "known": true, "value": 5750 },
+        "tool": { "known": true, "value": 0 },
+        "vision": { "known": true, "value": 0 },
+        "reasoning": { "known": true, "value": 0 },
+        "output": { "known": true, "value": 170 },
+        "costAiCredits": { "known": true, "value": 0.0115 },
+        "model": "example-model"
+      },
+      "explanation": "No cache miss. Even though the same 5+ minute break happened as in the default-TTL version of this scenario, the 1-hour breakpoint bought back on turn 1 is still valid — this turn reads the full 5,750-token cache exactly like any normal turn. Compare this directly to the default-TTL Cache TTL scenario's turn 8 (a ~8.5x spike at 0.0746 AI Credits from a full cache miss): the only difference is which breakpoint the session paid for."
+    },
+    {
+      "index": 9,
+      "userMessage": "Use a sliding-window limiter.",
+      "assistantResponse": "Using a sliding-window rate limiter.",
+      "toolCalls": [],
+      "usage": {
+        "uncachedInput": { "known": true, "value": 120 },
+        "cacheWrite": { "known": true, "value": 430 },
+        "cacheRead": { "known": true, "value": 6180 },
+        "tool": { "known": true, "value": 0 },
+        "vision": { "known": true, "value": 0 },
+        "reasoning": { "known": true, "value": 0 },
+        "output": { "known": true, "value": 150 },
+        "costAiCredits": { "known": true, "value": 0.0113 },
+        "model": "example-model"
+      },
+      "explanation": "Normal turn; cache keeps growing uninterrupted."
+    },
+    {
+      "index": 10,
+      "userMessage": "Perfect, thanks.",
+      "assistantResponse": "You're welcome!",
+      "toolCalls": [],
+      "usage": {
+        "uncachedInput": { "known": true, "value": 90 },
+        "cacheWrite": { "known": true, "value": 300 },
+        "cacheRead": { "known": true, "value": 6610 },
+        "tool": { "known": true, "value": 0 },
+        "vision": { "known": true, "value": 0 },
+        "reasoning": { "known": true, "value": 0 },
+        "output": { "known": true, "value": 120 },
+        "costAiCredits": { "known": true, "value": 0.0093 },
+        "model": "example-model"
+      },
+      "explanation": "Normal turn — fully healthy cache-growth behavior throughout, with no cache-miss tax anywhere in the session. Total session AI Credits here run higher per-turn than the default-TTL baseline (the 2x write premium is paid on every turn, not just the risky one) — but the trade-off pays for itself the moment a break like this one actually happens: this session avoids the ~0.066 AI Credits, 8.5x spike that hit the default-TTL version at turn 8. Whether the 1-hour breakpoint is worth it depends on how often a session's idle gaps actually exceed 5 minutes."
+    }
+  ]
+}

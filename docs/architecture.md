@@ -1,4 +1,4 @@
-# Architecture: GitHub Copilot Chat Session Analyser
+# Architecture: GitHub Copilot Chat Cost & Token Usage Analyzer
 
 ## 1. Purpose & scope
 
@@ -17,8 +17,9 @@ These constraints shape every decision below and should be checked against
 before deviating from this document:
 
 1. **Local-only, offline-first.** No dependency on the cloud-synced (DuckDB)
-   store or any network service. Only the local SQLite session store and
-   local `main.jsonl` debug-log files are read (vision §4, §6).
+   store or any network service. Only local sources reachable through a
+   configured log provider — the SQLite session store, local `main.jsonl`
+   debug-log files, and local mitmproxy captures — are read (vision §4, §6).
 2. **A local server is required.** The browser cannot read arbitrary local
    files (SQLite DB, `.jsonl` logs) directly, so a small local process must
    read them and serve normalized data to the UI (vision §5).
@@ -34,7 +35,12 @@ before deviating from this document:
 6. **Explicit "unavailable", never fabricated.** If a session's `attrs` lack
    usage data, the app must say per-token figures are unavailable and fall
    back to behavioral proxies (turn counts, duration, checkpoints) instead of
-   showing zeros or estimates (vision §4).
+   showing zeros or estimates (vision §4). One narrow, deliberate exception
+   (§6.2.2 Phase 6 addendum): a `TokenCount` may carry `estimated: true` when
+   it's a real local-tokenizer count run over real captured text — never a
+   fabricated number or a char-count-divided-by-N guess — and every place
+   that renders it labels it visibly as an estimate. Still forbidden
+   wherever the underlying text itself isn't captured.
 7. **Single-developer, single-machine.** No multi-tenant concerns, no auth
    system — but still no unnecessary exposure of the local filesystem (see
    §11.2 Security).
@@ -63,12 +69,16 @@ before deviating from this document:
     they verify, never retrofitted after the fact (§11.4). Every module
     boundary in §4/§10 is drawn along SOLID lines, not by convenience
     (§11.5).
-12. **Analyze ingestion is provider-extensible.** VS Code local logs and
-  mitmproxy captures are both supported log providers. A provider converts
-  its source into the normalized domain model through a provider-local
-  decoder pipeline; adding one must not change the session API contract or
-  frontend components. mitmproxy decoders are vendor-specific (at least
-  Anthropic and OpenAI) because their SDK wire formats differ.
+12. **Analyze ingestion is provider-extensible.** VS Code local logs,
+  mitmproxy captures, and the [pi coding agent](https://pi.dev)'s own JSONL
+  session logs are all supported log providers. A provider converts its
+  source into the normalized domain model through a provider-local decoder
+  pipeline; adding one must not change the session API contract or frontend
+  components. mitmproxy decoders are vendor-specific (at least Anthropic and
+  OpenAI) because their SDK wire formats differ. Unlike the other two, pi
+  already normalizes its own token usage per message, so its provider reads
+  and interprets that native format directly rather than decoding a raw
+  vendor wire protocol.
 
 ## 3. High-level system overview
 
@@ -82,34 +92,48 @@ flowchart TB
     subgraph Local["Local machine — single Node.js process"]
         API["Local HTTP server<br/>(REST API)"]
         Domain["Domain/normalization layer<br/>(Session, Turn, TurnUsage, ...)"]
-        SQLiteAdapter["SQLite adapter<br/>(read-only)"]
-        JsonlAdapter["main.jsonl adapter<br/>(streaming, defensive parser)"]
+        Registry{"Log-provider registry<br/>(active provider selection)"}
+        VscodeProvider["VS Code provider<br/>(SQLite + main.jsonl adapter)"]
+        MitmProvider["mitmproxy provider<br/>+ vendor decoder registry"]
+        PiAgentProvider["pi-agent provider<br/>(native JSONL, branch-aware)"]
         ScenarioAdapter["Learn scenario adapter<br/>(bundled fixtures)"]
         SettingsAdapter["VS Code settings adapter<br/>(reads settings.json)"]
         ConfigCheck["Config-check service<br/>(runs at startup + on demand)"]
+        AppSettings["App-owned settings adapter<br/>(active provider, read/write)"]
     end
 
     subgraph Disk["Local filesystem"]
         DB[("Local Copilot Chat<br/>SQLite session store")]
         Logs[("debug-logs/&lt;session-id&gt;/<br/>main.jsonl")]
+        Capture[("mitmproxy capture<br/>(user-configured path)")]
+        PiSessions[("~/.pi/agent/sessions/<br/>*.jsonl")]
         Fixtures[("Bundled Learn-mode<br/>scenario files")]
         Settings[("VS Code user<br/>settings.json")]
+        AppConfig[("App-owned local settings file")]
     end
 
     UI <-->|"JSON over HTTP<br/>(localhost only)"| API
     API --> Domain
-    Domain --> SQLiteAdapter --> DB
-    Domain --> JsonlAdapter --> Logs
+    API --> Registry
+    Registry --> VscodeProvider --> DB
+    VscodeProvider --> Logs
+    Registry --> MitmProvider --> Capture
+    Registry --> PiAgentProvider --> PiSessions
     Domain --> ScenarioAdapter --> Fixtures
+    Registry --> AppSettings --> AppConfig
     API --> ConfigCheck --> SettingsAdapter --> Settings
     ConfigCheck -.->|warnings| Banner
+    VscodeProvider --> Domain
+    MitmProvider --> Domain
+    PiAgentProvider --> Domain
 ```
 
-The browser never talks to SQLite or the filesystem directly — every read
-goes through the local server's API, which normalizes both Learn-mode
-scenarios and Analyze-mode real sessions into the **same domain shape**
-(§5) before returning them. This is what lets the frontend stay ignorant of
-where data came from, satisfying constraint 3.
+The browser never talks to SQLite, mitmproxy captures, or the filesystem
+directly — every read goes through the local server's API, which normalizes
+Learn-mode scenarios and Analyze-mode sessions from whichever log provider is
+active into the **same domain shape** (§5) before returning them. This is
+what lets the frontend stay ignorant of where data came from, satisfying
+constraint 3. See §6.2.1 for the provider boundary in detail.
 
 ## 4. Component breakdown
 
@@ -122,15 +146,17 @@ outbound network calls.
 | Module | Responsibility |
 |---|---|
 | `data-sources/sqlite` | Read-only queries against the local Copilot Chat session store (`sessions`, `turns`, `checkpoints`, `session_files`, `session_refs`) per vision §4/18.1 |
-| `data-sources/jsonl` | Streams a session's `main.jsonl`, extracts request/response spans, and pulls out token/cache usage from each event's `attrs` — defensively, per §7 below |
-| `data-sources/log-providers` | Owns the `LogProvider` registry, exposes provider descriptors, persists the active provider in app-owned local settings, and presents one provider-neutral session-reading interface to the API/services layer |
-| `data-sources/log-providers/vscode` | Adapts the existing SQLite and `main.jsonl` readers into the `LogProvider` interface; VS Code-specific paths, settings, and event extraction stay here |
+| `data-sources/jsonl` | Streams a session's `main.jsonl`, extracts request/response spans, and pulls out token/cache usage from each event's `attrs` — defensively, per §7 below. `turn-inspector-reader.ts` (Phase 9.5) is a second, on-demand, bounded read of the same file for one turn's wide-content `attrs` (§6.2.4) |
+| `data-sources/log-providers` | Owns the `LogProvider` registry, exposes provider descriptors, persists the active provider in app-owned local settings, and presents one provider-neutral session-reading interface to the API/services layer. `build-content-parts.ts` (Phase 9.5) is a provider-neutral placeholder-detection helper shared by both concrete providers' `readTurnDetail` (§6.2.4) |
+| `data-sources/log-providers/vscode` | Adapts the existing SQLite and `main.jsonl` readers into the `LogProvider` interface; VS Code-specific paths, settings, and event extraction stay here. Also owns the optional `agent-traces.db` cache-write/reasoning enrichment (Phase 8.5) — folded in here, not a separate provider id or a direct `app.ts` path (decided 2026-08-10, see `docs/providers/log-provider-alternatives.md`) — and `turn-inspector-builder.ts` (Phase 9.5), which turns one turn's isolated envelopes into a `TurnInspectorDetail` (§6.2.4) |
 | `data-sources/log-providers/mitmproxy` | Reads local mitmproxy capture files and dispatches each intercepted LLM request/response to the vendor decoder that recognizes its SDK/protocol shape |
 | `data-sources/log-providers/mitmproxy/decoders` | Independent vendor decoders (initially Anthropic and OpenAI) that convert a matched exchange into provider-neutral intermediate records; an unrecognized exchange is reported as unavailable, never guessed |
+| `data-sources/pi-agent` | Reads the [pi coding agent](https://pi.dev)'s own JSONL session format (`~/.pi/agent/sessions/`) directly — no OS-level store dependency. Reconstructs pi's branchable entry tree, groups a branch into turns, and extracts usage already normalized per message by pi itself (no vendor wire-protocol decoding needed, unlike mitmproxy) |
 | `data-sources/learn-scenarios` | Loads bundled scenario fixtures (seeded from [agentic-coding-explained.md](agentic-coding-explained.md)) that already conform to the domain model, so Learn mode needs no parsing/enrichment step |
 | `services/session-enricher` | Converts a selected provider's normalized structural/usage records into `Session`/`Turn` values; it does not know whether they originated in VS Code, mitmproxy, Anthropic, or OpenAI |
 | `platform/vscode-paths` | Resolves the active VS Code variant's user-data directory across OSes (Linux/macOS/Windows, Stable/Insiders) so `sqlite`, `jsonl`, and `vscode-settings` all locate the right files without duplicating detection logic |
 | `data-sources/vscode-settings` | Reads and merges the user (and workspace, if present) `settings.json` (JSONC) to read the prerequisite Copilot Chat debug-logging settings |
+| `services/insights` | Phase 9.11 ([plans/insights-dashboard.md](plans/insights-dashboard.md)): flattens sessions from every registered provider into the `InsightsDataset` star schema and runs injected `FindingDetector` strategies: rule-based security signals (`SecurityRule` table), robust z-score anomalies, and first-use behaviour changes. Pure apart from `InsightsService`, which loads providers through a narrow `listProviders()` port |
 | `services/config-check` | Runs at server startup and on demand (§6.3): checks `agentDebugLog.fileLogging.enabled` and `maxRetainedSessionLogs` against constraints 8/10, producing actionable `ConfigWarning`s |
 | `domain` | The shared normalized TypeScript types (§5), plus schema validation, used by every other module and re-exported to the frontend build |
 | `api` | Thin REST layer (§8) that calls into `domain`/services and returns JSON; no business logic lives here |
@@ -145,10 +171,12 @@ SQLite, `main.jsonl`, or scenario fixtures.
 |---|---|
 | `components/AppHeader` | Brand mark/wordmark, the Learn/Analyze mode `SegmentedControl`, a provider `Select` in Analyze mode, and the Config button (or a static "Config ✓" tag when there are no warnings) |
 | `components/SessionList` | Left panel: searchable, scrollable list of `Session` cards (Learn scenarios or Analyze sessions, per mode) with a category/relative-time kicker and turn count |
-| `components/TurnsTable` | Center panel: one row per turn — Turn, Trigger, Uncached in, Cache read, Cache write, Tool, Vision, Reasoning, Output, AI Credits, Model |
-| `components/ExplanationPanel` | Right panel: plain-language explanation for the selected turn, plus (Analyze mode only) a "Tool calls this turn" block listing that turn's tool calls and touched files |
+| `components/TurnsTable` | Center panel: one row per turn — Turn, Trigger, Rounds, Uncached in, Cache read, Cache write, Tool, Vision, Reasoning, Output, AI Credits, Cumulative, Model |
+| `components/ExplanationPanel` | Right panel: plain-language explanation for the selected turn, plus (Analyze mode only) a "Tool calls this turn" block listing that turn's tool calls and touched files, and an "Inspect request/response" button opening `TurnInspector` |
+| `components/TurnInspector` | Analyze-mode-only, full-page view (replaces the 3-column layout, not a tab), structured like `SystemPromptInspector`: one Request/Response `Blueprint` card pair per LLM round-trip for the selected turn, reasoning shown inline under the response with no toggle, oversized/file/image content rendered as `Tag`-styled placeholder chips instead of raw text. No provider-specific branching — both `LogProvider`s implement `readTurnDetail` (§6.2.4) |
 | `components/TimelineScrubber` | Bottom slider driving the shared "selected turn" state |
-| `components/SystemPromptBreakdown` | Analyze-mode-only: token contribution per system-prompt component, rendered as a proportional bar-meter |
+| `components/SystemPromptBreakdown` | Analyze-mode-only: token contribution per system-prompt component (real or, where labeled, tokenizer-estimated), rendered as a proportional bar-meter; opens `SystemPromptInspector` for the base prompt. Its empty state (no components) is provider-aware: the VS Code-specific "enable `agentDebugLog.fileLogging.enabled`" hint only shows for `providerId: "vscode"`; `mitmproxy` sessions, which never capture a system-prompt artifact, get a provider-neutral message; `pi-agent` sessions get a message pointing at the optional sidecar-log extension (§6.2.5) and, unlike other providers, always show the "Open system prompt inspector" button even with no components yet, so the inspector's own message can explain how to enable capture |
+| `components/SystemPromptInspector` | Analyze-mode-only, full-page form (replaces the 3-column layout, not a tab): a three-pane view over the raw captured system-prompt text — a colored hierarchical tag/subtag menu (left), the byte-for-byte raw text with matching per-section background colors (center, scrolls to the clicked menu entry), and a description panel (right) explaining the selected tag, honestly labeled `Sourced` (with links) or `Not independently sourced` per constraint 6's spirit. Built entirely client-side from `lib/system-prompt-parser.ts` (defensive tag-tree parser), `lib/system-prompt-menu.ts` (labels + an 8-hue categorical palette), `lib/system-prompt-text.ts` (lossless colored-segment renderer), and `lib/system-prompt-descriptions.ts` (the tag glossary) — no new API surface, reuses `GET /api/sessions/:id/system-prompt` |
 | `components/ToolInventoryPanel` | Analyze-mode-only: tools loaded vs. tools actually invoked |
 | `components/ConfigWarningBanner` | Dismissible banner shown when `GET /api/config/status` reports unmet prerequisites; renders the exact setting name, current vs. recommended value, and step-by-step fix instructions (§6.3) |
 | `components/ui/*` | Shared design-system primitives (`Blueprint`, `Tag`, `SegmentedControl`) used across the components above, per the "Industry" design tokens in `theme.css` |
@@ -171,7 +199,9 @@ them cleanly; fields that may be genuinely unknown (constraint 6) are typed
 as an explicit union rather than defaulted to zero.
 
 ```ts
-type TokenCount = { known: true; value: number } | { known: false; reason: string };
+type TokenCount =
+  | { known: true; value: number; estimated?: boolean } // estimated ⇒ real tokenizer count over real captured text, not a billed figure (constraint 6)
+  | { known: false; reason: string };
 
 interface TurnUsage {
   uncachedInput: TokenCount;
@@ -183,14 +213,40 @@ interface TurnUsage {
   output: TokenCount;
   costAiCredits: TokenCount;
   model: string;
+  roundsCount?: number; // LLM request/response round-trips this turn made; absent when the source doesn't compute it
 }
 
 interface ToolCallRecord {
+  id?: string; // Analyze mode only — tool_use id / toolCallId
   name: string;
-  argsSummary: string;
+  kind?: "shell" | "file-read" | "file-write" | "search" | "web" | "mcp" | "subagent" | "other";
+  argsSummary: string; // bounded (≤ 300 chars) and redacted — never a Write's whole file content
+  shell?: { command: string; program?: string; cwd?: string };
+  outcome?: ToolCallOutcome; // Phase 9.10 tool-call audit
+  startedAt?: string;
+  durationMs?: number;
+  roundIndex?: number; // which LLM round in the turn issued it
   filesTouched?: string[]; // Analyze mode only
   tokenCount?: TokenCount; // Analyze mode only
 }
+
+// Phase 9.10 (plans/tool-call-audit.md). "unknown" requires a reason
+// (constraint 6); only error/interrupted/denied carry a failureCategory.
+interface ToolCallOutcome {
+  status: "success" | "error" | "interrupted" | "denied" | "unknown";
+  reason?: string;
+  exitCode?: number; // only when the source states it explicitly
+  failureCategory?: FailureCategory; // command-not-found, wrong-directory, invalid-arguments, dependency-missing, git-state, …
+  classificationEvidence?: { ruleId: string; excerpt: string /* ≤ 200 chars, redacted */ };
+}
+// SessionAudit / AuditRollup (packages/domain/src/session-audit.ts) are
+// server-computed aggregates over these records — see §8's audit endpoints.
+// InsightsDataset (packages/domain/src/insights.ts, Phase 9.11) flattens
+// sessions/turns/tool calls from every provider into keyed rows (unknown
+// token figures are null, never 0) plus InsightFindings, each carrying
+// what (title), when (at), why and redacted evidence; the browser's
+// associative engine links them (sessions ← turns ← toolCalls,
+// sessions ← findings).
 
 interface Turn {
   index: number;
@@ -252,6 +308,36 @@ provider implementation. Changing the active provider clears the selected
 Analyze session and reloads the same `GET /api/sessions` resource; Learn mode
 is unaffected.
 
+`TurnInspectorDetail` (Phase 9.5) is a per-turn analog of
+`SystemPromptComponent`, deliberately **not** a field on `Turn` itself — it's
+fetched on demand via `GET /api/sessions/:id/turns/:turnIndex` (§8) rather
+than sent with every turn up front, since this content (the turn's actual
+LLM request/response round-trip(s)) can be arbitrarily large:
+
+```ts
+type ContentPlaceholder = {
+  placeholder: true;
+  kind: "file" | "image";
+  path?: string;
+  sizeBytes?: number;
+};
+
+type MessageContentPart = { kind: "text"; text: string } | ContentPlaceholder;
+
+interface TurnInspectorDetail {
+  turnIndex: number;
+  userMessage: MessageContentPart[];
+  rounds: {
+    request: { index: number; addedMessages: MessageContentPart[]; toolCalls: { name: string; args: MessageContentPart[]; result: MessageContentPart[] }[] };
+    response: { index: number; response: MessageContentPart[]; reasoning?: MessageContentPart[] };
+  }[];
+}
+```
+
+`rounds: []` is a valid, non-error value (the turn genuinely made no model
+request), distinct from `readTurnDetail` returning `null` (the session or
+turn index doesn't exist at all) — see §6.2.4.
+
 Note this is the same reasoning as the "AI Credits split" in vision §6 — each
 `TokenCount` slot maps 1:1 onto a term in that section's AI Credits formula.
 
@@ -274,6 +360,7 @@ interface ConfigStatus {
   vscodeUserSettingsPath: string | null; // null if no install/user-data-dir found
   loggingEnabled: boolean;
   maxRetainedSessionLogs: number | null; // null ⇒ VS Code default (50) applies
+  minRetainedSessionLogsThreshold: number; // effective threshold in force: persisted override, or 200 default
   warnings: ConfigWarning[];
 }
 ```
@@ -476,15 +563,21 @@ this slice:
   `generic`, `tool_call`, `llm_request`, and `agent_response` spans. Only
   `llm_request` carries usage numbers, in `attrs`: `model`, `inputTokens`
   (the request's total input, cached + uncached), `outputTokens`,
-  `cachedTokens` (the subset of `inputTokens` served from cache), and
+  `cachedTokens` (the subset of `inputTokens` served from cache),
+  `responseId` (Phase 8.5's join key into the optional `agent-traces.db`
+  enrichment below — otherwise unused by this adapter), and
   `copilotUsageNanoAiu` (request usage in nano-AIU), plus non-usage fields
   (`ttft`, `debugName`,
   `requestOptions`, `requestShape`, `systemPromptFile`, `toolsFile`, and the
   full prompt/message content in `userRequest`/`inputMessages`, which the
   adapter never reads). There is **no separate cache-write figure, and no
   tool/vision/reasoning token breakdown** in this event shape — those
-  `TurnUsage` fields stay `{ known: false }` for every turn, not just when
-  extraction fails. `copilotUsageNanoAiu` converts directly to AI Credits:
+  `TurnUsage` fields stay `{ known: false }` for every turn sourced from
+  `main.jsonl` alone, not just when extraction fails. Phase 8.5 added a
+  second, optional local source, `agent-traces.db`, that can populate
+  `cacheWrite`/`reasoning` when available (see the Phase 8.5 implementation
+  note below) — `tool`/`vision` remain unavailable from any known local
+  source. `copilotUsageNanoAiu` converts directly to AI Credits:
   $1\ \text{AI Credit}=10^9\ \text{nano-AIU}$. The extractor normalizes each
   request with that conversion and `extractTurnUsages` sums every request in
   the turn into `costAiCredits`. If any request lacks a numeric value, the
@@ -595,7 +688,10 @@ confirm:
 - `tool_call` events' `attrs` carry only `args`/`result` (both redacted in
   fixtures) — no token count, confirming `ToolCallRecord.tokenCount` must
   stay unavailable regardless of extraction success, the same permanent-gap
-  pattern as Phase 4's `cacheWrite`/`tool`/`vision`/`reasoning`.
+  pattern as `TurnUsage.tool`/`vision` (Phase 4). `cacheWrite`/`reasoning`
+  were also a permanent gap from `main.jsonl` alone as of this phase, but
+  Phase 8.5 later added a second, optional local source that can populate
+  them — see that phase's implementation note below.
   `data-sources/jsonl/tool-inventory.ts`'s `extractInvokedToolNamesByTurn`
   reuses `groupEnvelopesByUserMessage`'s positional join to attribute each
   `tool_call` to a SQLite turn index; `buildToolInventory` unions that
@@ -625,6 +721,652 @@ confirm:
   `system_prompt_0.json`/`tools_0.json` pair (145 real tool definitions) and
   real `tool_call` events round-trip correctly through
   `GET /api/sessions/:id`.
+
+**Implementation note (Phase 6 addendum, complete).** After the Phase 6 spike
+above shipped every `SystemPromptComponent.tokenCount` as permanently
+`unavailable`, a follow-up request asked specifically for a labeled estimate
+wherever the underlying text is actually available, plus a way to inspect
+that text directly instead of only a token count:
+
+- `data-sources/jsonl/token-estimator.ts` wraps `gpt-tokenizer`'s
+  `o200k_base` encoding — the same encoding VS Code's own model catalog
+  (`models.json`) names for Claude models, i.e. the client-side
+  prompt-budget estimator Copilot Chat itself relies on, not the real
+  Anthropic-side tokenizer that actually bills the request. `TokenCount`
+  gained an optional `estimated` flag (`domain/token-count.ts`'s
+  `estimatedTokenCount`) precisely so this stays distinguishable from a real
+  billed figure per constraint 6, rather than silently upgrading to
+  `known: true` indistinguishable from measured usage.
+- Only two of the five `SystemPromptComponent` kinds ever get an estimate:
+  `built-in` (the full system-prompt text is already read in full by
+  `prompt-artifact-reader.ts`) and `tool-definitions` (the full tool-def
+  JSON array, via the new `readToolDefinitionsRaw`, stringified before
+  tokenizing). `repo-instructions`/`skill-manifest` stay unavailable — only
+  filenames are ever parsed out of the fixed-template log line (per the
+  spike above), never the file/manifest content itself, so there is nothing
+  to tokenize for those regardless of policy.
+- `GET /api/sessions/:id/system-prompt` (§8) returns the captured base
+  system prompt's raw text as `text/plain`, reusing the same
+  artifact-source resolution as `buildAnalyzeModeExtras`
+  (`analyze-mode-extras.ts`'s `resolveSystemPromptText`) — 404 when no
+  artifact was captured for the session. `SystemPromptBreakdown.tsx` marks
+  any estimated figure with a `~` prefix plus an explanatory tooltip so it
+  never reads with the same confidence as a real measured count, and (per
+  the addendum immediately below) opens `SystemPromptInspector` — rather
+  than a bare new tab — whenever a `built-in` component is present.
+
+**Implementation note (Phase 6 second addendum, complete).** A follow-up
+request asked to present the raw system prompt as a dedicated three-pane
+form — a colored hierarchical tag/subtag menu, the raw text itself with
+matching colors, and a description panel — rather than a plain-text tab:
+
+- The prompt is not valid XML (it's prose that happens to contain tags), so
+  `lib/system-prompt-parser.ts` is a defensive, non-strict tag-tree parser
+  rather than an XML parser: it tolerates and safely ignores stray
+  angle-bracket text that isn't real markup (confirmed against this app's
+  own real captured prompt, which contains both a literal
+  `<your-model-id>` placeholder with no closing tag anywhere, and a prose
+  aside — "the `<file>` element" — reusing a name, `file`, that *is* real
+  markup elsewhere in the same document). Two signals, computed from the
+  document itself rather than any hardcoded tag name, separate real markup
+  from noise: an opening tag must sit at a tag boundary (start of text,
+  after a newline, or immediately after another tag's `>`), and its name
+  must have at least one matching close somewhere in the document. A
+  genuine structural error (an unclosed or crossed real tag) degrades to a
+  single unparsed section covering the whole text — never a guessed
+  structure — verified by round-tripping the parser's output back to the
+  exact original text, including against the real captured example.
+- `lib/system-prompt-menu.ts` derives a label per tag (its own `<name>`/
+  `<file>` child content or a `filePath` attribute where present — real
+  captured content, never invented — otherwise the tag name formatted as
+  Title Case) and a color, capped at menu/nesting depth 3 (tag → subtag →
+  that subtag's own repeated entries, e.g. `skills` → `skill` → its
+  `<name>`) using the dataviz skill's validated 8-hue categorical palette;
+  a repeated tag name reuses its family's hue, and nested tags tint it
+  lighter via `color-mix` rather than claiming an unrelated hue.
+- `lib/system-prompt-descriptions.ts` is a glossary keyed by tag name,
+  grounded in a source-level read of the public `microsoft/vscode-copilot-chat`
+  repository (the captured prompt matches its `Claude46SonnetPrompt`/
+  `Claude46OptimizedBasePrompt` templates almost verbatim) and VS Code's
+  custom-instructions/Agent-Skills/subagents docs. Each entry is explicitly
+  `sourced: true` (with the URL shown in the UI) or, for the small number
+  of tags with no confirmed source (e.g. the two `<instructions>` tags are
+  disambiguated by structure — the second one wraps `skills`/`agents`/
+  `attachment` — and preamble/trailing-text sections), `sourced: false`
+  with an honest "not independently sourced" label rather than a
+  fabricated-sounding explanation. An unrecognized tag name gets a plain
+  "no description available" fallback, the same never-fabricate posture as
+  constraint 6, generalized from token counts to explanatory text.
+- `SystemPromptInspector.tsx` composes these three modules client-side —
+  fetching only the existing `GET /api/sessions/:id/system-prompt` text —
+  and replaces the 3-column layout (not a tab within it) while open;
+  clicking a menu entry calls `scrollIntoView` on that section's `<span>`
+  in the text panel and outlines it.
+
+**Implementation note (Phase 8.5, complete).** A source-level investigation
+of the Copilot Chat extension itself
+([docs/copilot-chat-source-investigation.md](copilot-chat-source-investigation.md))
+found and empirically confirmed a second, optional local file, `agent-traces.db`
+— a SQLite OTel span store the extension can write, gated behind VS Code
+setting `github.copilot.chat.otel.dbSpanExporter.enabled` (default off,
+same non-retroactive caveat as `agentDebugLog.fileLogging.enabled`). Unlike
+`main.jsonl`, its spans carry real cache-write (`gen_ai.usage.cache_creation.input_tokens`,
+in a generic `span_attributes` key/value table) and reasoning-token
+(`reasoning_tokens`, a denormalized column) values — confirmed non-zero and
+internally coherent against a real capture on the development machine.
+
+- `data-sources/agent-traces/agent-traces-reader.ts` reads it read-only via
+  `node:sqlite` (same pattern as `data-sources/sqlite/session-store.ts`),
+  joining `main.jsonl`'s `llm_request.attrs.responseId` (added to
+  `main-jsonl-reader.ts`'s `KNOWN_ATTRS_KEYS` allow-list this phase — it was
+  previously stripped, silently, before any extractor could see it) against
+  the span's `gen_ai.response.id` attribute — confirmed to hold the exact
+  same value. `data-sources/agent-traces/agent-traces-db-path.ts` resolves
+  the file's path via the same `globalStorage/github.copilot-chat/`
+  directory construction `session-store-path.ts` already used, now shared
+  through `data-sources/sqlite/copilot-chat-global-storage-path.ts`.
+- This data source is explicitly optional and best-effort: a missing,
+  locked, or corrupt `agent-traces.db` degrades to an empty result (never
+  fabricated, never throws), and a `responseId` with no matching span
+  degrades that turn's `cacheWrite`/`reasoning` to
+  `{ known: false, reason: AGENT_TRACES_UNAVAILABLE_REASON }` — a distinct,
+  actionable reason from `tool`/`vision`'s `USAGE_CATEGORY_NOT_EXPOSED_REASON`,
+  since this gap (unlike that one) has something the user can do about it.
+  `session-usage-spans.ts`'s `extractTurnUsages` sums both fields across
+  every `llm_request` in a turn, all-or-nothing per turn — the same shape
+  already used for `costAiCredits`.
+- A new, optional-severity `ConfigWarning` (`config-warning.ts`'s `code:
+  "agent-traces-unavailable"`) surfaces the setting via the existing
+  `GET /api/config/status` check, gated the same way as the other three
+  (`config-check.ts`). `severity: "required" | "optional"` was added to
+  `ConfigWarning` (non-defaulted — every existing warning had to declare it
+  explicitly) so the frontend (`ConfigWarningBanner.tsx`) can render this
+  one with a visually muted tone (reusing the existing `--color-accent-2-*`
+  token pair, not a new one) rather than the same urgency as a warning that
+  blocks all usage data.
+
+**Refactor complete (Phase 9, see §6.2.3's implementation note below).**
+This section's `app.ts`-level wiring (`data-sources/agent-traces` read
+directly by `app.ts`, alongside `data-sources/sqlite`/`data-sources/jsonl`)
+has been moved: `data-sources/log-providers/vscode/vscode-log-provider.ts`
+now owns this enrichment as an internal detail of the VS Code provider —
+`app.ts` no longer imports `data-sources/agent-traces` or
+`data-sources/sqlite`/`data-sources/jsonl` directly for session reads, only
+through `VscodeLogProvider`. `agent-traces.db` is still not a separate
+`LogProvider` id, per the 2026-08-10 decision.
+
+#### 6.2.3 mitmproxy provider flow
+
+```mermaid
+sequenceDiagram
+    participant UI as Frontend
+    participant API as Local server API
+    participant Mitm as mitmproxy adapter
+    participant Reg as MitmExchangeDecoder registry
+    participant Anth as Anthropic decoder
+    participant OAI as OpenAI decoder
+    participant Enr as session-enricher
+    participant Cap as Local capture file (HAR)
+
+    UI->>API: GET /api/sessions (active provider = mitmproxy)
+    API->>Mitm: listSessions()
+    Mitm->>Cap: read configured capture path
+    Cap-->>Mitm: HAR entries
+    Mitm->>Mitm: redact credential headers; group entries into sessions
+    Mitm-->>API: session summaries
+    API-->>UI: session list
+
+    UI->>API: GET /api/sessions/:id
+    API->>Mitm: readSession(id)
+    loop each HAR entry in session
+        Mitm->>Reg: recognizes(exchange)?
+        alt Anthropic shape
+            Reg->>Anth: decode(exchange)
+            Anth-->>Reg: normalized record (SSE reassembled)
+        else OpenAI shape
+            Reg->>OAI: decode(exchange)
+            OAI-->>Reg: normalized record (SSE reassembled)
+        else no decoder recognizes it
+            Reg-->>Mitm: unavailable ("unrecognized vendor")
+        end
+    end
+    Mitm-->>API: normalized records (usage known/unavailable per exchange)
+    API->>Enr: enrich(normalized records, id)
+    Enr-->>API: Turn[] with usage marked known/unavailable
+    API-->>UI: Session (mode = "analyze", providerId = "mitmproxy")
+```
+
+Credential headers (`authorization`, `x-api-key`, `api-key`,
+`proxy-authorization`, `cookie`) are stripped at the `Mitm` boundary before
+any record reaches a decoder, the enricher, or the API — never stored,
+decoded, or forwarded to the frontend, per §11.2. A decoder that recognizes
+an exchange but finds no usage field on it (e.g. a streamed OpenAI response
+without `stream_options.include_usage`) marks that exchange's usage
+`unavailable` with a specific reason, exactly like the jsonl path (§7) — it
+never estimates. An exchange no registered decoder recognizes is surfaced the
+same way, tagged with an "unrecognized vendor" reason, and does not prevent
+the rest of the session from loading.
+
+**Implementation note (Phase 9, complete).** Built TDD-first, module by
+module. Facts and decisions from this slice, including a few deliberate
+departures from the original design sketch's illustrative contracts where
+implementation revealed a simpler shape:
+
+- **`LogProvider` returns the actual `Session` domain type directly**,
+  rather than the sub-plan §7's separate `ProviderSessionSummary`/
+  `NormalizedSession` shapes: `listSessions(): Promise<Session[]>` (summaries,
+  `turns: []`, matching the existing `GET /api/sessions` contract) and
+  `readSession(id): Promise<Session | null>` (`null` ⇒ the API layer's
+  existing 404 handling; a thrown/rejected error ⇒ its existing 500
+  handling). Since `Session` is already the one normalized contract the
+  API/UI consume (§5), inserting a second intermediate shape between a
+  provider and it would be pure translation overhead with nothing left to
+  normalize — `packages/server/src/data-sources/log-providers/log-provider.ts`
+  records this reasoning inline. `RawMitmExchange`/`MitmExchangeDecoder`
+  (mitmproxy-internal, never escaping `data-sources/log-providers/mitmproxy`)
+  are implemented as specified.
+- `VscodeLogProvider` (`data-sources/log-providers/vscode/`) is a direct
+  refactor of the Phase 3-6/8.5 `app.ts` route bodies into a class — the
+  underlying `sqlite`/`jsonl`/`session-enricher`/`agent-traces` modules and
+  their existing tests are unchanged. `GET /api/sessions/:id/system-prompt`
+  deliberately stays wired directly to the SQLite/`main.jsonl` path rather
+  than going through `LogProvider` — a captured system-prompt artifact is a
+  VS Code-specific concept mitmproxy sessions have no equivalent of, and this
+  endpoint was already outside the Phase 9 requirements' scope.
+- The provider registry (`data-sources/log-providers/registry.ts`) is
+  constructed once per `createApp()` call with explicit provider instances
+  (`[vscodeProvider, mitmproxyProvider, ...additionalLogProviders]`) — no
+  dynamic loading, matching §6.2.1. `platform/app-settings-dir` resolves an
+  OS-conventional per-user config directory (Linux: `$XDG_CONFIG_HOME` or
+  `~/.config`; macOS: `~/Library/Application Support`; Windows: `%APPDATA%`)
+  containing `settings.json` (`{ activeProviderId }`); a missing or corrupt
+  file degrades to the `"vscode"` default rather than crashing startup.
+- **mitmproxy capture configuration convention**: the app looks for `.har`
+  files in `<app-settings-dir>/mitmproxy-captures/` (`resolve-mitmproxy-
+  captures-dir.ts`) rather than a single user-supplied path setting — there
+  is no capture-path configuration UI in this phase (only the provider
+  *select*, per the requirements), so a fixed, documented directory the user
+  drops HAR exports into avoids inventing a second app-settings value ahead
+  of need (§13 still tracks whether the settings file should ever grow
+  beyond `activeProviderId`). See
+  [mitmproxy-setup.md](mitmproxy-setup.md) for how to actually install
+  mitmproxy, trust its CA, capture traffic, and produce that HAR file. One
+  `.har` file is split into one or more sessions by an idle-gap heuristic
+  (§13, resolved): a gap between two consecutive HAR entries'
+  `startedDateTime` greater than a threshold (default 30 minutes,
+  `MitmproxyLogProviderOptions.idleGapThresholdMs`) starts a new session —
+  `split-entries-by-idle-gap.ts`. A session's id is
+  `<computeHarSessionId(filePath)>-<segmentIndex>` (`session-id.ts`) — the
+  file-hash part is still the same stat-based path+mtime hash as before, so
+  a re-exported/overwritten file at the same path still gets fresh ids
+  rather than reusing stale content. A file whose entries never have a gap
+  over the threshold still produces exactly one session, titled with the
+  bare filename unchanged; N>1 sessions are titled `<filename> (session i
+  of N)`.
+- `MitmExchangeDecoder.recognizes()` works from `RawMitmExchange`'s headers/
+  body alone — there is no request URL in the redacted-exchange shape
+  (deliberately: mitmproxy hosts vary and the decoder boundary shouldn't
+  need to special-case them), so Anthropic is recognized via the
+  `anthropic-version` request header or a `"type":"message"`/
+  `message_start` response shape, and OpenAI via the `openai-organization`/
+  `openai-project` request headers or a `"chat.completion"`-prefixed
+  `object` field.
+- Every non-Copilot vendor exchange's `costAiCredits` is permanently
+  `unavailable` (a distinct reason from the jsonl path's) — AI Credits are
+  GitHub Copilot's own billing unit with no defined conversion for a direct
+  Anthropic/OpenAI API call, so computing one would be constraint-6
+  fabrication, not a gap to close later.
+- Fixtures are hand-authored synthetic HAR files (never a real captured key
+  or prompt) under `packages/server/fixtures/mitmproxy/`, covering every
+  case §9 of the sub-plan lists: non-streamed and streamed Anthropic,
+  OpenAI streamed with/without `stream_options.include_usage`, an
+  unrecognized-vendor shape, malformed SSE, and a credentials-bearing
+  exchange for the redaction test.
+- Frontend: `AppHeader` gained an optional Analyze-mode-only provider
+  `<select>` (native element, not a new `components/ui/*` primitive — used
+  in exactly one place); `state/session-store.ts` gained `activeProviderId`/
+  `setActiveProviderId` (clears the selected session the same way `setMode`
+  does); `App.tsx` refetches `GET /api/sessions` whenever the active
+  provider id changes. No session-list/table/panel/chart component branches
+  on provider id, per the exit criterion.
+- The OCP proof (sub-plan §8 step 9) is a registry-level test
+  (`registry.test.ts`): a third, in-memory `LogProvider` is registered
+  alongside `vscode`/`mitmproxy` and served correctly with zero changes to
+  `LogProviderRegistry`, the `LogProvider` interface, or any other
+  production file.
+
+#### 6.2.4 Turn request/response inspector (Phase 9.5)
+
+A per-turn analog of `SystemPromptInspector` (§4.2): drills into one turn's
+actual LLM request/response round-trip(s) instead of the session-level
+system prompt, scoped to only the content that turn added. `readTurnDetail`
+(`sessionId, turnIndex): Promise<TurnInspectorDetail | null>`) joins
+`checkAvailability`/`listSessions`/`readSession` as a fourth required
+`LogProvider` method — both `VscodeLogProvider` and `MitmproxyLogProvider`
+implement it. `null` means only "the session or turn index doesn't exist"
+(matching `readSession`'s null-for-404 convention); a turn that exists but
+made no model request is a valid, non-null `TurnInspectorDetail` with
+`rounds: []`.
+
+**`main.jsonl`'s memory/security constraint (VS Code provider).** The
+existing whole-session `readMainJsonlFile` path trims every envelope's
+`attrs` down to a small `KNOWN_ATTRS_KEYS` allow-list (§7) specifically
+*because* the dropped fields (`user_message.attrs.content`,
+`llm_request.attrs.userRequest`/`inputMessages`,
+`agent_response.attrs.response`/`reasoning`, `tool_call.attrs.args`/
+`result`) can carry arbitrarily large raw content — the 2026-08-08
+security-review fix this phase deliberately doesn't reopen. Instead,
+`turn-inspector-reader.ts`'s `readMainJsonlEnvelopesForTurn` is a **second,
+separate, on-demand** stream of the same file, through its own
+`WIDE_ATTRS_KEYS` projector, that isolates only the envelopes belonging to
+one `user_message`-to-`user_message` span (the requested `turnIndex`) and
+stops reading once that span ends — bounded to one turn's content in memory
+regardless of session length, and only invoked when a user explicitly opens
+the inspector for that turn.
+
+**Per-round content diffing.** One SQLite turn can contain several
+`llm_request`/`agent_response` round-trips (the agent looping through tool
+calls before a final answer — already true of `session-usage-spans.ts`'s
+positional turn grouping). Each round's `llm_request.attrs.inputMessages`
+carries the *entire* accumulated conversation so far, so showing it verbatim
+on a later round would re-dump every earlier round's content. The rule:
+diff each round's message array against the previous round's (or, for a
+turn's first round, the previous turn's last round) by array **length** —
+`inputMessages.slice(prevLength)` — never by re-parsing message contents,
+since the array only ever grows.
+
+**Confirmed real shape (differs from this phase's initial investigation
+notes).** Verified against this
+machine's own real, unredacted `main.jsonl`: `llm_request.attrs.inputMessages`
+and `agent_response.attrs.response` are not raw arrays but **JSON-encoded
+strings** of a `[{ role, parts: [{ type, content? }, ...] }, ...]` array — a
+second layer of stringification on top of the already-JSON log line (the
+same pattern already known for `requestShape`, §6.2 note above). A "text" or
+"reasoning" part carries its text in a `content` string field; a "tool_call"
+or "tool_call_response" part has no single string field and is stringified
+whole via `build-content-parts.ts`'s defensive fallback instead. Content
+that isn't a JSON-encoded message array at all (an older/unrecognized shape,
+or this repo's own privacy-redacted test fixture, which blanks these fields
+to short placeholder strings) is surfaced best-effort as a single text part
+rather than silently dropped.
+
+**Placeholder detection** (`build-content-parts.ts`, provider-neutral,
+shared by both providers): any string content part over
+`PLACEHOLDER_THRESHOLD_CHARS` (2000, a named exported constant) becomes a
+`{ kind: "file", sizeBytes }` placeholder regardless of source; a `tool_call`
+whose name is a confirmed file-reading tool (`read_file`, the only one
+observed in a real capture so far) gets `path` populated from its args even
+under the size threshold; a `type: "image"`/data-URI content block becomes a
+`{ kind: "image" }` placeholder, best-effort (no real image-bearing capture
+has been found on this machine to confirm the shape against).
+
+**mitmproxy provider**: a HAR entry is already one complete, self-contained
+request/response pair with no cross-request `inputMessages`-growth
+invariant to diff against, so `MitmproxyLogProvider.readTurnDetail` returns
+exactly one round — the full raw `requestBody`/`responseBody` text
+(already redacted, from the same `harEntryToRawExchange` the decoder
+registry uses) run through `build-content-parts.ts` — bypassing the
+`MitmExchangeDecoder` registry entirely, since decoders normalize usage by
+discarding message content, which is exactly what this feature needs back.
+
+**API/frontend**: `GET /api/sessions/:id/turns/:turnIndex` (§8) validates
+`turnIndex` as a non-negative integer (400 otherwise), calls the active
+provider's `readTurnDetail`, and maps `null` to 404. `components/TurnInspector`
+(§4.2) renders it; the empty state picks between two distinct messages using
+a signal the UI already has before the fetch — `Session.usageDataAvailable`
+(known from the `GET /api/sessions/:id` call made before the inspector could
+be opened) — rather than needing a second signal from this endpoint: `false`
+⇒ the actionable "enable logging" copy shown immediately, without waiting on
+the fetch; `true` but `rounds: []` ⇒ "This turn made no request to the
+model."
+
+#### 6.2.5 pi-agent provider flow
+
+A third `LogProvider`, `PiAgentLogProvider`
+(`data-sources/pi-agent/pi-agent-log-provider.ts`), reads the
+[pi coding agent](https://pi.dev)'s own JSONL session format
+(`https://pi.dev/docs/latest/session-format`) directly:
+`~/.pi/agent/sessions/--<cwd-with-slashes-as-dashes>--/<timestamp>_<uuid>.jsonl`,
+one file per session. Unlike the VS Code and mitmproxy providers, pi already
+normalizes token usage per message (pi-ai's `Usage`:
+`input`/`output`/`cacheRead`/`cacheWrite`/`reasoning`), so there is no vendor wire-format
+decoding to do — the raw JSONL line already is the normalized event.
+
+**pi sessions are a branchable tree, not a linear history.** Every entry
+(besides the header) carries `id`/`parentId`, because fork/rewind operations
+create siblings sharing an ancestor. Since `Session.turns` is a flat array
+(§5) and constraint 12 forbids changing that contract, `PiAgentLogProvider`
+produces **one `Session` per leaf branch** — the same "one file → N
+sessions" precedent already set by the mitmproxy provider's idle-gap split
+(§6.2.3). `session-tree.ts`'s `findLeafEntryIds`/`walkBranch` do the tree
+reconstruction; a file with no forks still yields exactly one session. A
+multi-leaf file's sessions are titled `<name> (branch i of N)`, and a leaf's
+id is `<file hash>__branch__<leaf entry id>` (`session-id.ts`) — a
+`__branch__` separator rather than mitmproxy's numeric `-<segmentIndex>`
+suffix, since pi's own leaf ids are typically uuids that already contain
+hyphens.
+
+**Turn boundaries and usage** follow the same "group by user message"
+pattern already used for VS Code's `main.jsonl` (`turn-grouper.ts`'s
+`groupBranchEntriesByUserMessage`, mirroring `groupEnvelopesByUserMessage`).
+Entries before the first user message (the leading system message, an early
+`usage` entry) become the first turn's `precedingEntries`, so usage they
+carry isn't dropped; per-round consumers (inspector, tool calls) only read a
+turn's own `entries`. `usage-extractor.ts` sums every usage-bearing entry in
+a turn's span into `uncachedInput`/`output`/`cacheRead`/`cacheWrite` — a
+turn can contain several round-trips when the agent loops through tool
+calls before answering, same reasoning as the VS Code provider's per-turn
+`llm_request` summing. pi's schema has five usage carriers, all of which
+pi itself counts toward session totals, so all are summed:
+
+| Carrier | Schema reference (vendored package) | Notes |
+|---|---|---|
+| `AssistantMessage.usage` | `docs/message-types.md` "AssistantMessage"/"Usage" | Always present; a missing one makes the turn's figure unknown. Only these count toward `roundsCount` (main-model round-trips the inspector pairs). |
+| `ToolResultMessage.usage` | `docs/message-types.md` "ToolResultMessage" | Optional: nested model work by the tool. |
+| `usage` entry (`kind`, e.g. `cache_warm`) | `docs/session-format.md` "UsageEntry"; `dist/core/session-manager.d.ts` `UsageEntry` | Usage outside any assistant message; any `kind` counts. Appended as a child of the leaf and advances it (`SessionManager.appendUsage` → `_appendEntry`), so it sits inline on its branch. |
+| `compaction.usage` | `docs/session-format.md` "CompactionEntry" | Optional: the LLM call that generated the summary. |
+| `branch_summary.usage` | `docs/session-format.md` "BranchSummaryEntry" | Optional: same. |
+
+**Attribution rule:** non-assistant usage is attributed to the turn whose
+span (its user message up to the next one) contains the entry; before the
+first user message, to the first turn. A `branch_summary` is written just
+before the user message that continues the new branch, so its usage lands
+on the previous turn of that branch.
+
+**Reasoning** comes from `Usage.reasoning` (pi-ai `dist/types.d.ts`
+`Usage`): optional, set only by providers that report a breakdown, and
+already included in `output` (never added on top). A usage with
+`output === 0` and no `reasoning` field contributes 0 (reasoning ⊆
+output); any other usage without the field makes the turn's `reasoning`
+unknown.
+
+**Verified against the published schema shipped in the vendored
+`@earendil-works/pi-coding-agent` 0.87.1** (`docs/session-format.md`,
+`docs/message-types.md`, pi-ai `dist/types.d.ts`, `dist/core/
+session-manager.d.ts`/`.js`), pinned by the schema-faithful fixture
+`fixtures/pi-agent/schema-v3-session.jsonl`. Still **not** a real captured
+session — the project's usual practice of pinning extractors against a
+real, redacted capture remains outstanding for this provider. Consequences:
+
+- `tool` and `vision` token counts are `{ known: false }` — confirmed: pi's
+  `Usage` has no field separating them from `input`/`output`.
+- `costAiCredits` (both per-turn and session-level) is permanently
+  `{ known: false }`, the same precedent as the mitmproxy provider's
+  non-Copilot vendors (§6.2.3) — AI Credits is a Copilot-specific billing
+  unit with no defined conversion for pi's own USD cost (`Usage.cost`).
+- `readTurnDetail` (`turn-inspector-builder.ts`) needs no VS-Code-style
+  array-length diffing across rounds — pi's JSONL entries are already
+  incremental (each is only its own new content). Content-block fields
+  follow the schema: `text` on `TextContent`, `thinking` on
+  `ThinkingContent`, `id`/`name`/`arguments` on `ToolCall`
+  (`pi-message.ts`'s `toolCallArgumentsOf` also accepts the pre-schema
+  `args` spelling the older hand-authored fixtures use).
+- Fork vs. rewind disambiguation is approximate: a turn immediately
+  following a tree branch point (an entry claimed as `parentId` by more than
+  one other entry) is always tagged `triggeredEvent: "fork"`; a real
+  `branch_summary` entry's more specific intent isn't yet distinguished.
+
+**`systemPrompt` and `toolInventory` come from the session file itself when
+it has system messages.** pi persists the prompt and tool loadout as
+`role: "system"` messages (`docs/session-format.md` "SessionMessageEntry";
+`docs/message-types.md` "SystemMessage"): the first request persists one
+with every prompt section (`sections`) and tool declaration (`toolsAdded`);
+later ones append `content`, patch `sections` by name (`null` removes one),
+list `toolsAdded`/`toolsRemoved`, or reset with `replace: true`; a
+`compaction` entry's optional `systemMessage` is a complete checkpoint.
+`system-message-replay.ts`'s `replaySystemMessages` replays them along the
+branch exactly like pi-ai's `getCurrentSystemMessage`/`getSystemMessageText`
+(`dist/utils/transcript.js`, `dist/utils/text.js`) into the final prompt
+text and tool set, plus every tool declared anywhere on the branch.
+`system-prompt-components.ts`'s `buildPiSystemPromptComponentsFromState`
+turns that into components: a `built-in` component for the base `content`
+and one per named section (section names are pi's own and free-form, so
+they are not mapped onto `repo-instructions`/`skill-manifest`), and a
+`tool-definitions` component — all with real `estimateTokenCount` counts,
+since every part's text is captured. `toolInventory` reuses
+`jsonl/tool-inventory.ts`'s `buildToolInventory` over the declared tool
+names and each turn's invoked tool calls (a tool removed mid-session still
+counts as loaded, since it was available when used). Sessions with no
+system message (recorded before pi persisted them) leave both unset and
+fall back to the sidecar below for `systemPrompt`; `toolInventory` stays
+unset for them.
+
+**Sidecar fallback: `systemPrompt` via an optional sidecar log
+(Phase 9.8).** `packages/pi-system-prompt-logger` (§10) is a vendored Pi
+extension that captures the fully assembled system prompt plus selected
+tools/skills/context files — which older pi session files lack — to a
+separate JSONL sidecar log
+(`~/.pi/agent/logs/system-prompts.jsonl`, or `$PI_SYSTEM_PROMPT_LOG_PATH`)
+from outside pi's own session format. `PiAgentLogProvider` optionally reads
+it:
+
+- `system-prompt-sidecar-reader.ts`'s `readSystemPromptSidecarIndex` streams
+  the sidecar log into a `Map` keyed by each record's resolved `sessionFile`
+  path — the only reliable join key, since `session-id.ts`'s
+  `computePiFileHash` is a one-way hash and a `Session.id` can't be reversed
+  back to a file path. **Known simplification pending real-data
+  verification**: if a forked/rewound session's file has multiple sidecar
+  records (one per branch), the earliest-captured one wins and is applied to
+  every branch — the sidecar's own `sessionId` field vs. a session file's
+  own `header.id` are an unconfirmed equivalence, so `sessionFile` sidesteps
+  that uncertainty rather than resolving it.
+- `system-prompt-components.ts`'s `buildPiSystemPromptComponents` turns a
+  matched record into `SystemPromptComponent[]`, mirroring
+  `buildSystemPromptBreakdown`'s VS Code shape: one `built-in` component
+  with a *real* `estimateTokenCount` count (pi captured the full text,
+  unlike VS Code's per-artifact split), one `repo-instructions` component
+  per `contextFilePaths` entry and one `skill-manifest` per `skillNames`
+  entry (both name-only/`unavailableTokenCount`, since the sidecar never
+  captured per-item content), and one `tool-definitions` component sized by
+  `selectedTools.length` when present.
+- A new `PiAgentLogProvider.readSystemPromptText(sessionId)` method — not on
+  the shared `LogProvider` interface (ISP: `VscodeLogProvider`/
+  `MitmproxyLogProvider` have no equivalent) — returns the replayed in-file
+  prompt text when the branch has system messages, else the matched sidecar
+  record's raw text, or `null`. `app.ts`'s `GET /api/sessions/:id/system-prompt`
+  branches on `registry.getActiveProviderId() === "pi-agent"` before
+  touching the VS-Code-only session-store path, delegating to this method
+  (same 200 text/plain / 404 JSON contract either way, so the frontend needs
+  no provider-specific response parsing).
+
+No in-file system message and no sidecar match (extension not installed, or
+this session predates capture) leaves `Session.systemPrompt` unset exactly as
+before Phase 9.8 — `components/
+SystemPromptBreakdown`'s "Open system prompt inspector" button always
+renders for `pi-agent` sessions regardless (unlike other providers, which
+gate it on a `built-in` component being present), and opening it without a
+match shows a plain-text message pointing at `npm run configure` rather
+than the VS Code-specific hint.
+
+#### 6.2.6 Claude Code CLI provider flow
+
+A fourth `LogProvider`, `ClaudeCodeLogProvider`
+(`data-sources/claude-code/claude-code-log-provider.ts`), reads the
+[Claude Code CLI](https://claude.com/claude-code)'s own JSONL session
+format directly:
+`~/.claude/projects/<encoded-cwd>/<session-id>.jsonl`, one file per
+session, no proxy/certificate setup required — the same low-friction
+argument that put `agent-traces.db` ahead of mitmproxy for Copilot data
+(`docs/providers/log-provider-alternatives.md` §4). Unlike pi-agent
+(§6.2.5), every shape this provider depends on — the tree structure, the
+per-response `usage` object, `toolUseResult`, `attachment`, `last-prompt`,
+`ai-title` — was confirmed directly against real captures on this machine
+(including this repo's own session logs), not inferred from published
+docs, so there is no "provisional pending a real captured session" caveat
+here.
+
+**Claude Code sessions are a branchable tree, like pi's, but with an
+authoritative active-branch pointer pi's format lacks.** Every entry
+carries `uuid`/`parentUuid` (forks happen on message-edit/resend), reconstructed by
+`session-tree.ts`'s `findLeafUuids`/`walkBranch`, direct ports of pi's
+tree-walk functions. Unlike pi-agent, `ClaudeCodeLogProvider` produces
+**one `Session` per file, not one per leaf branch**: a `type: "last-prompt"`
+entry's `leafUuid` field names the single authoritative active branch
+directly (`resolveActiveLeafUuid`, falling back to the last-occurring leaf
+when no such entry exists yet), so there is no need to guess/expose every
+fork as its own session the way the mitmproxy idle-gap split and
+pi-agent's per-leaf split both do. This also matches Claude Code's own UI
+mental model: one file is one conversation, possibly edited, not several.
+
+**Turns are grouped by real user messages, but "real" needs its own
+predicate here.** `type: "user"` is shared by two different things in this
+format: a genuine human turn, and a tool-result-delivery line the CLI
+writes back after running a tool call. `turn-grouper.ts`'s
+`isRealUserMessage` distinguishes them (message content is a string, or an
+array containing at least one non-`tool_result` block) before
+`groupBranchEntriesByUserMessage` (otherwise a direct port of pi's turn
+grouper) opens a new turn.
+
+**Round grouping is the one genuinely new algorithm — pi has no
+equivalent.** pi writes one JSONL entry per assistant response; Claude
+Code writes one *line per content block* of a response, chained by
+`parentUuid` and sharing one `message.id`. Under parallel tool calls, a
+real capture (this repo's own logs) shows a `tool_result` line for an
+earlier block sitting *between* that block and the next `tool_use` block
+of the *same* response — line adjacency cannot define a round, but
+grouping by `message.id` survives the interleaving. `round-grouper.ts`'s
+`groupTurnEntriesByRound` does this grouping; `findToolResultFor` scans
+every `user` entry in the turn (not just one round) for the matching
+`tool_use_id`, correctly reuniting calls and results regardless of what
+sits between them.
+
+**Usage summation must happen once per round, not once per entry** — a
+real capture confirms the full `usage` object is repeated identically
+across every content-block entry sharing one `message.id` (it describes
+the whole response, not the individual block), so `usage-extractor.ts`
+takes one representative entry's `usage` per round before summing across
+rounds. `uncachedInput`/`cacheWrite`/`cacheRead`/`output` sum
+`input_tokens`/`cache_creation_input_tokens`/`cache_read_input_tokens`/
+`output_tokens`; `reasoning` sums `output_tokens_details.thinking_tokens`,
+marked known (a confirmed real field, a subset of `output`, not
+additive). `tool`, `vision`, and `costAiCredits` (per-turn and
+session-level) stay permanently `{ known: false }` — no field separates
+tool/vision token cost from the rest, and no AI Credits conversion exists
+for a non-Copilot CLI, same precedent as mitmproxy's and pi-agent's
+non-Copilot cost handling.
+
+**`triggeredEvent` detects only `"fork"` in v1**, via a direct port of
+pi's fork-point detection (`findForkPointIds`: any `uuid` claimed by more
+than one entry's `parentUuid`). This needed one real-data-driven
+refinement beyond a literal port, though: a real capture shows parallel
+tool calls *also* produce `parentUuid` multiplicities structurally (one
+child continues the same response, another is that block's own
+`tool_result`) — but neither child is ever a genuine new user turn.
+Checking specifically against a turn's own `userMessageEntry.parentUuid`
+(mirroring how pi-agent-log-provider.ts already consumes its own fork
+points, rather than testing every entry indiscriminately) is sufficient to
+avoid misreporting parallel-tool-call structure as a fork: a real
+message-edit/resend is the only case that puts a genuine user turn on both
+sides of a fork point. No confirmed on-disk marker exists yet for the
+other `triggeredEvent` enum values (model-switch, compaction, clear,
+rewind, cache-expiry, instructions-change, image-change,
+reasoning-toggle) — shipped without rather than guessed, per constraint 6.
+
+**`Session.systemPrompt` and `Session.toolInventory` are left unset,
+always — a confirmed absence, not a pending gap.** Exhaustive grepping of
+real captures on this machine found the base system prompt is never
+written to disk anywhere by Claude Code CLI (only per-turn dynamic
+`attachment` injections are captured, which feed `readTurnDetail`'s
+`addedMessages`, not the session-level system prompt). This differs from
+pi-agent (§6.2.5), whose session files persist the prompt as system
+messages (with an optional vendored sidecar-logger extension as the
+fallback for older files) — no equivalent exists (or is planned) for
+Claude Code CLI, so there is no third branch on `GET
+/api/sessions/:id/system-prompt`: `claude-code` sessions fall through to
+the same 404 path `mitmproxy` sessions already use. `toolInventory` stays
+unset for the same "keep v1 scoped to the two requested features" reason,
+not a data-availability gap.
+
+`readTurnDetail` (`turn-inspector-builder.ts`) reuses
+`build-content-parts.ts`'s `buildContentPart` throughout, and — unlike
+pi-agent's builder, which ships it empty — actually populates the
+top-level `userMessage` field, following the `vscode` builder's
+precedent. A tool call's `result` prefers the richer `toolUseResult`
+sibling field (present alongside `message` on the tool-result-delivery
+entry itself) over the raw `tool_result` content block when present, since
+real captures show it often carries more structure (e.g. a `Read` call's
+`{ type, file: { filePath, content } }`). `tool-results/<id>.txt` overflow
+files referenced from an oversized `<persisted-output>` preview are not
+dereferenced — the inline preview text is treated as ordinary oversized
+text, already turned into a placeholder by `buildContentPart`'s existing
+size threshold. Subagent transcripts (a session's sibling
+`<session-id>/subagents/agent-*.jsonl` directory) are out of scope for v1;
+`platform/claude-code-paths/resolve-claude-code-projects-dir.ts`'s
+`listClaudeCodeSessionFiles` walks exactly two levels
+(`projectsDir/<encoded-cwd>/<session-id>.jsonl`) and never recurses into
+that sibling directory, excluding them structurally rather than by
+filename convention.
+
+**Tool-call outcomes (Phase 9.10).** Confirmed against a real capture
+(`fixtures/claude-code-audit/`): a failed call's `tool_result` has
+`is_error: true` and content starting `Exit code N\n`; a harness timeout is
+`Exit code 143\nCommand timed out after …`; a success's `toolUseResult` is
+`{ stdout, stderr, interrupted, … }`. With N **parallel** tool calls, each
+`tool_result` entry is parented to its own `tool_use` entry, so N-1 results
+sit *off* the `last-prompt` branch — `tool-result-index.ts` therefore pairs
+results by `tool_use_id` across the whole file (the turn inspector uses the
+same file-wide search). `tool-call-extractor.ts` turns each pair into a
+classified `ToolCallRecord` via the shared `services/tool-audit/*` helpers.
 
 ### 6.3 Startup configuration check
 
@@ -668,7 +1410,7 @@ This check runs **once at server startup** — so a CLI user sees the warning
 in the terminal immediately, before ever opening the browser — and again on
 **every `GET /api/config/status` call**, so the frontend banner reflects
 current state even if the user fixes settings and reloads VS Code without
-restarting the analyser's own server. It never blocks startup or any other
+restarting the analyzer's own server. It never blocks startup or any other
 endpoint: this is guidance, not a hard failure, applying constraint 6's
 "explicit, not fabricated" philosophy to the app's own health rather than
 to token data.
@@ -741,9 +1483,11 @@ small retry/tolerance window rather than treating that as missing data.
 
 ## 8. API design
 
-A minimal, read-only REST surface. No mutation endpoints exist — the app
-never writes to the SQLite store or the log files (vision §6 non-goal:
-read-only viewer).
+A minimal REST surface, almost entirely read-only — the app never writes to
+the SQLite store or the log files (vision §6 non-goal: read-only viewer).
+The two `PUT` endpoints below are the exceptions: both write only to the
+app's own `settings.json` (§11.2), never to VS Code's or the log/SQLite
+sources themselves.
 
 | Method & path | Returns |
 |---|---|
@@ -753,8 +1497,14 @@ read-only viewer).
 | `PUT /api/log-providers/active` | Selects an available provider by generic provider id; returns the updated `LogProviderStatus` |
 | `GET /api/sessions` | `Session[]` summaries from the active log provider; the endpoint and response shape do not vary by provider |
 | `GET /api/sessions/:id` | Full enriched `Session` from the active provider (mode=`analyze`), including `usageDataAvailable` |
-| `GET /api/sessions/:id/turns/:turnIndex` | Single `Turn` with full tool-call/file detail (used for on-demand deep dives, avoiding sending every turn's full detail up front) |
-| `GET /api/config/status` | `ConfigStatus` — current prerequisite-setting check results and any `warnings[]` (§6.3) |
+| `GET /api/sessions/:id/system-prompt` | Raw `text/plain` of the session's captured base system prompt (Phase 6 addendum); 404 if no system-prompt artifact was captured |
+| `GET /api/sessions/:id/turns/:turnIndex` | `TurnInspectorDetail` — one turn's actual LLM request/response round-trip(s), scoped to only the content that turn added (Phase 9.5, §6.2.4); used for on-demand deep dives, avoiding sending every turn's full detail up front. 404 if the session or turn index doesn't exist; 400 for a non-numeric/negative `turnIndex` |
+| `GET /api/sessions/:id/audit` | `SessionAudit` (Phase 9.10, [plans/tool-call-audit.md](plans/tool-call-audit.md)): per-status totals, failure rate over known outcomes (`null` when none known), by-tool/program/category breakdowns, per-turn outcome counts, every classified call, retry groups, failure-recovery cost, and outcome coverage. Optional `?provider=<id>` audits a provider other than the active one (400 if unknown); 404 for an unknown session |
+| `GET /api/sessions/:id/tool-calls` | `{ total, calls: AuditedToolCall[] }`: one session's classified tool calls, filtered by `status`/`category`/`kind` (comma-separated enum lists), `tool`, `program`, `turn`, paged by `offset`/`limit`, optional `provider`. 400 on an invalid value |
+| `GET /api/audit` | `AuditRollup` over the most recent sessions (`limit`, default 50, max 500) whose `startedAt` falls in `since`..`until` (ISO date or timestamp, compared at the bound's precision): totals, top failing commands, daily counts, per-session summary, category/program/tool breakdowns. Optional `provider` |
+| `GET /api/insights` | `InsightsDataset` (Phase 9.11, [plans/insights-dashboard.md](plans/insights-dashboard.md)): the most recent sessions from **every** registered provider (`limit` per provider, default 50, max 500; `since`/`until` as for `/api/audit`; optional `provider` restricts to one, 400 if unknown), flattened to session/turn/tool-call rows, plus security, anomaly and behaviour-change findings. Each provider's availability, error or truncation is reported in `providers[]`; one failing provider never fails the response |
+| `GET /api/config/status` | `ConfigStatus` — current prerequisite-setting check results and any `warnings[]` (§6.3), including the effective `minRetainedSessionLogsThreshold` |
+| `PUT /api/config/retention-threshold` | Sets the persisted `minRetainedSessionLogsThreshold` override (body: `{ value: number }`, must be a positive integer, else 400); returns the fresh `ConfigStatus` so the caller can update both the header control and the warning banner from one response |
 
 The server binds to `localhost` only (see §11.2).
 
@@ -770,6 +1520,7 @@ The server binds to `localhost` only (see §11.2).
 | Frontend framework | React + TypeScript + Vite | Fast local dev loop; component model matches the panel breakdown in §4.2 |
 | Visualization | D3.js | Explicitly suggested in vision §5; fine-grained control over the turns table's per-token-type bars and the scrubber |
 | Settings parsing | `jsonc-parser` (same library VS Code itself uses) | `settings.json` allows comments/trailing commas; a strict `JSON.parse` would break on real-world files (§6.3) |
+| Token estimation | `gpt-tokenizer` (`o200k_base` encoding), pure JS/no native build step | Matches VS Code's own model-catalog encoding for Claude models (§6.2.2 Phase 6 addendum); only ever used to produce an explicitly `estimated: true` `TokenCount`, never a substitute for real usage data |
 | Monorepo tooling | npm workspaces | Small project; avoids adding a build-orchestration tool (Turborepo/Nx) before it's needed |
 
 These are default choices consistent with the constraints, not locked in —
@@ -778,7 +1529,7 @@ see §13 for what's still open.
 ## 10. Proposed project structure
 
 ```
-gh-cp-chat-analyser/
+copilot-cost-analyzer/
   docs/
     vision.md
     architecture.md
@@ -792,6 +1543,7 @@ gh-cp-chat-analyser/
             vscode/
             mitmproxy/
               decoders/
+          pi-agent/
           sqlite/
           jsonl/
           learn-scenarios/
@@ -799,16 +1551,25 @@ gh-cp-chat-analyser/
         services/
           session-enricher/
           config-check/
+          tool-audit/    # Phase 9.10 outcome classification + audit builders
+          insights/      # Phase 9.11 dataset builder + finding detectors
         platform/
           vscode-paths/
+          pi-agent-paths/
+        http/          # cross-cutting Express middleware (loopback Host guard, §11.2)
         api/
-      fixtures/        # bundled Learn-mode scenario files + jsonl test fixtures (§7)
+      fixtures/        # bundled Learn-mode scenario files + jsonl/mitmproxy/pi-agent test fixtures
     web/
       src/
         components/
         state/
         api-client/
         charts/
+        lib/associative/ # Phase 9.11 generic associative selection engine (no React)
+        lib/insights/    # Phase 9.11 insights model, measures, narrative
+    pi-system-prompt-logger/ # vendored Pi coding-agent extension: captures the
+                              # assembled system prompt to a JSONL sidecar log,
+                              # optionally consumed by server/pi-agent (§6.2.5)
   package.json          # workspaces root
 ```
 
@@ -831,6 +1592,22 @@ gh-cp-chat-analyser/
 - The local server binds to `localhost`/loopback only — never `0.0.0.0` —
   since it exposes session contents (which may include file paths, code
   snippets, terminal output).
+- **Host-header allow-list (DNS-rebinding defence).** Loopback binding plus
+  no CORS stops a cross-origin page from reading responses — but a DNS
+  rebinding attack re-points the attacker's own hostname at `127.0.0.1`,
+  making their page *same-origin* with this server, so neither defence
+  applies. The browser still sends the attacker's hostname in `Host`, so
+  `http/loopback-host-guard.ts`'s `createLoopbackHostGuard` (registered
+  first in `app.ts`, before any route) answers `403` with a JSON `error`
+  unless `Host` is literally `localhost`, `127.0.0.1` or `[::1]` on an
+  allowed port. `server.ts` passes the allowed ports — its own `3001` and
+  the Vite dev server's `5173`, since `vite.config.ts`'s `/api` proxy has no
+  `changeOrigin` and forwards the browser's `Host` unchanged (that port is
+  pinned with `strictPort` so the allow-list can't drift). `createApp()`
+  without `allowedHostPorts` (tests on an ephemeral port) still requires a
+  loopback hostname, any port. Only the raw `Host` header is read, never
+  `X-Forwarded-Host` (`trust proxy` stays off). The Vite dev server itself
+  rejects non-loopback hosts via its own default `server.allowedHosts`.
 - `sessionId` (and any other path parameter used to build a filesystem path
   under `debug-logs/`) is validated against an allow-list pattern before use,
   to prevent path traversal into arbitrary files on disk.
@@ -840,9 +1617,27 @@ gh-cp-chat-analyser/
 - No outbound network calls anywhere in the server (constraint 1) — this is
   also a security property, not just a product one: nothing in a session log
   (which can contain sensitive repo content) ever leaves the machine.
+- The stdio MCP server (Phase 9.10/9.12) returns data into the client
+  model's context, which is usually a hosted model. Its free text (turn
+  prompts and responses, command and evidence excerpts) is therefore
+  passed through `redactSecrets` and bounded before it is returned, and
+  its tools are all read-only and never reach the network
+  ([plans/mcp-tools-v2.md](plans/mcp-tools-v2.md) §6).
 - No secrets are logged; any credentials that happen to appear in captured
   terminal-output tool results are treated as opaque strings, never parsed or
   echoed into error messages.
+- The mitmproxy provider strips known credential-bearing headers
+  (`authorization`, `x-api-key`, `api-key`, `proxy-authorization`, `cookie`)
+  from every captured exchange before it reaches a decoder, the enricher, or
+  the API response — these never reach the frontend (§6.2.3).
+- The mitmproxy capture path is user-configured, so it is resolved to an
+  absolute path and validated the same way `sessionId` is (allow-list/no
+  traversal); a path that doesn't resolve to a readable file marks that
+  provider `unavailable` with a reason, never a server crash.
+- The app's own settings (currently only the active log-provider id) are the
+  one thing this app ever writes to local disk — stored in an app-owned
+  config directory, never inside VS Code's `settings.json`, session store, or
+  a captured-log directory.
 - Only the latest stable, non-vulnerable version of each dependency may be
   added or upgraded to (see §11.6); a dependency with a known unpatched
   vulnerability is not introduced regardless of how minor its role is.
@@ -884,6 +1679,13 @@ refactored — red-green-refactor, not tests bolted on afterward.
   against VS Code and mitmproxy fixtures before wiring either provider into
   the registry. Write each vendor decoder's failing captured-exchange test
   before implementing it, including unknown-vendor and missing-usage cases.
+- Test files are type-checked like production code: `npm run typecheck`
+  runs `tsc --noEmit` over every workspace including its tests, and CI runs
+  it alongside lint/build/test (Vitest strips types without checking them,
+  so a test can pass while its fixtures no longer match the domain types).
+  `packages/web` checks twice: `tsconfig.json` (app + tests, with Node types
+  for tests that read fixtures from disk) and `tsconfig.app.json` (app code
+  only, browser types only, so app code can't silently import `node:*`).
 
 ### 11.5 Code quality: SOLID
 
@@ -979,9 +1781,6 @@ Carried over from vision §7 plus new ones raised while designing this layer:
   fall back to Stable, no per-workspace matching), not the deeper
   auto-detect-by-workspace or explicit-configuration approaches; still open
   for macOS/Windows and for multi-profile setups on any platform.
-- Whether the 200-session retention minimum (constraint 10) should stay a
-  hard-coded constant in `config-check`, or become an app-level
-  configurable threshold.
 - Whether large sessions need per-turn lazy loading (§11.1) or whole-session
   payloads stay acceptable in practice.
 - Express vs. Fastify for the server (functionally interchangeable here;
@@ -990,10 +1789,46 @@ Carried over from vision §7 plus new ones raised while designing this layer:
   fixtures with computed fields (author ergonomics vs. easy schema
   validation) — leaning JSON validated by the `domain` zod schema so
   non-engineers could in principle contribute scenarios later.
+- Whether a real captured pi session matches the published schema the
+  pi-agent provider (§6.2.5) is now verified against (vendored
+  `@earendil-works/pi-coding-agent` 0.87.1 docs/types) — reasoning comes
+  from `Usage.reasoning`, `ToolResultMessage.usage` shares the `Usage`
+  shape, and vision/tool tokens are confirmed absent; pinning against a
+  real, redacted capture remains the same discipline every other extractor
+  in this app was built under (§7, §11.4).
 - How aggressively to keep seeded Learn scenarios in sync with
   [agentic-coding-explained.md](agentic-coding-explained.md) as it evolves —
   the vision doc doesn't mandate automated drift-checking, but a periodic
   manual review is worth deciding on explicitly.
+
+**Resolved:** whether the app-owned settings file should ever hold more than
+the active provider id — yes. It now also holds
+`minRetainedSessionLogsThreshold` (below), read-merge-write through a shared
+private helper in `app-settings.ts` so neither key clobbers the other on
+write.
+
+**Resolved:** whether the 200-session retention minimum (constraint 10)
+should stay a hard-coded constant in `config-check`, or become an app-level
+configurable threshold — configurable. `ConfigStatus` gained a required
+`minRetainedSessionLogsThreshold: number` field (§5): the persisted override
+from `settings.json` if one was ever written, else `config-check`'s own
+`200` default. It's surfaced as an always-visible numeric input in
+`AppHeader`, next to the Config button/tag, in both Learn and Analyze mode
+regardless of whether a `retention-too-low` warning is currently showing
+(commit-on-blur, not per-keystroke), backed by `GET /api/config/status`
+(now including the field) and the new `PUT /api/config/retention-threshold`
+(§8).
+
+**Resolved:** whether one mitmproxy capture file should always equal one
+session — no. A file is now split into one or more sessions by an idle-gap
+heuristic: a gap between consecutive HAR entries greater than 30 minutes
+(default, configurable via `MitmproxyLogProviderOptions.idleGapThresholdMs`)
+starts a new session (`split-entries-by-idle-gap.ts`). 30 minutes was
+chosen as comfortably above the ~5-minute in-session pauses this app's own
+Learn-mode cache-TTL scenarios already treat as normal, while still
+separating genuinely distinct, manually-started captures. See §6.2.3's
+mitmproxy capture configuration convention note above for the resulting id
+scheme and title convention.
 
 **Raised by the Phase 8 design handoff, resolved in the v2 handoff
 (`Design/GitHub chat analyser design 2.zip`) and implemented as designed**

@@ -1,25 +1,29 @@
 {
-  "name": "@gh-cp-chat-analyser/server",
+  "name": "@copilot-cost-analyzer/server",
   "private": true,
-  "version": "0.2.0",
+  "version": "0.8.0",
   "license": "MIT",
   "type": "module",
   "main": "./src/server.ts",
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "test": "vitest run",
-    "build": "tsc -p tsconfig.json"
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "mcp": "tsx src/mcp/stdio.ts"
   },
   "dependencies": {
-    "@gh-cp-chat-analyser/domain": "*",
-    "express": "^4.21.2",
+    "@copilot-cost-analyzer/domain": "*",
+    "@modelcontextprotocol/sdk": "^1.32.1",
+    "express": "^5.3.0",
+    "gpt-tokenizer": "^4.0.0",
     "jsonc-parser": "^3.3.1"
   },
   "devDependencies": {
     "@types/express": "^5.0.0",
-    "@types/supertest": "^6.0.2",
-    "supertest": "^7.0.0",
-    "tsx": "^4.19.2",
-    "vitest": "^4.1.10"
+    "@types/supertest": "^7.2.1",
+    "supertest": "^7.3.1",
+    "tsx": "^4.23.15",
+    "vitest": "^5.0.3"
   }
 }

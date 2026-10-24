@@ -31,6 +31,7 @@ describe("sessionSchema", () => {
       model: "gpt-4o",
       turns: [turn],
       turnCount: 1,
+      costAiCredits: { known: true, value: 2.79598 },
       usageDataAvailable: false,
     };
 
@@ -49,6 +50,7 @@ describe("sessionSchema", () => {
         { kind: "built-in", label: "core instructions", tokenCount: { known: true, value: 500 } },
       ],
       toolInventory: [{ name: "read_file", loaded: true, invokedInTurns: [0] }],
+      costAiCredits: { known: true, value: 2.79598 },
       usageDataAvailable: true,
     };
 
@@ -63,6 +65,7 @@ describe("sessionSchema", () => {
       model: "gpt-4o",
       turns: [turn],
       turnCount: 1,
+      costAiCredits: { known: true, value: 2.79598 },
       usageDataAvailable: false,
       category: "Prompt caching",
     };
@@ -73,6 +76,7 @@ describe("sessionSchema", () => {
       model: "gpt-4o",
       turns: [turn],
       turnCount: 1,
+      costAiCredits: { known: true, value: 2.79598 },
       usageDataAvailable: true,
       startedAt: "2026-08-06T12:00:00.000Z",
     };
@@ -89,7 +93,24 @@ describe("sessionSchema", () => {
       model: "gpt-4o",
       turns: [],
       turnCount: 12,
+      costAiCredits: { known: false, reason: "not extracted" },
       usageDataAvailable: false,
+    };
+
+    expect(sessionSchema.parse(sample)).toEqual(sample);
+  });
+
+  it("accepts an Analyze-mode session with a providerId", () => {
+    const sample = {
+      id: "session-123",
+      mode: "analyze",
+      providerId: "mitmproxy",
+      title: "Real session",
+      model: "gpt-4o",
+      turns: [turn],
+      turnCount: 1,
+      costAiCredits: { known: true, value: 2.79598 },
+      usageDataAvailable: true,
     };
 
     expect(sessionSchema.parse(sample)).toEqual(sample);
@@ -102,6 +123,7 @@ describe("sessionSchema", () => {
       title: "Real session",
       model: "gpt-4o",
       turns: [],
+      costAiCredits: { known: false, reason: "not extracted" },
       usageDataAvailable: true,
     };
 

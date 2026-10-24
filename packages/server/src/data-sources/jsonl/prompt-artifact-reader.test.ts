@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import {
   readSystemPromptText,
   readToolDefinitionNames,
+  readToolDefinitionsRaw,
 } from "./prompt-artifact-reader.js";
 
 const fixturesDir = path.resolve(
@@ -86,5 +87,27 @@ describe("readToolDefinitionNames", () => {
     const names = await readToolDefinitionNames(fixturesDir, "..");
 
     expect(names).toBeNull();
+  });
+});
+
+describe("readToolDefinitionsRaw", () => {
+  it("returns the full tool-definition entries (not just names) from the referenced tools file", async () => {
+    const entries = await readToolDefinitionsRaw(fixturesDir, "tools_0.json");
+
+    expect(entries).not.toBeNull();
+    expect(entries).toHaveLength(4);
+    expect(entries?.[0]).toMatchObject({ name: "create_file" });
+  });
+
+  it("returns null when the file does not exist", async () => {
+    const entries = await readToolDefinitionsRaw(fixturesDir, "tools_missing.json");
+
+    expect(entries).toBeNull();
+  });
+
+  it("returns null instead of reading when the file name contains a path separator", async () => {
+    const entries = await readToolDefinitionsRaw(fixturesDir, "sub/../tools_0.json");
+
+    expect(entries).toBeNull();
   });
 });

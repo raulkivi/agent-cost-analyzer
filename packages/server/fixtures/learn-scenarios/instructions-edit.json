@@ -1,0 +1,106 @@
+{
+  "id": "instructions-edit",
+  "mode": "learn",
+  "title": "Editing Custom Instructions Mid-Session",
+  "model": "example-model",
+  "usageDataAvailable": true,
+  "turnCount": 5,
+  "category": "Instructions change",
+  "turns": [
+    {
+      "index": 1,
+      "userMessage": "Let's add input validation to the signup form.",
+      "assistantResponse": "Sure, looking at the signup form now.",
+      "toolCalls": [],
+      "usage": {
+        "uncachedInput": { "known": true, "value": 500 },
+        "cacheWrite": { "known": true, "value": 3500 },
+        "cacheRead": { "known": true, "value": 0 },
+        "tool": { "known": true, "value": 0 },
+        "vision": { "known": true, "value": 0 },
+        "reasoning": { "known": true, "value": 150 },
+        "output": { "known": true, "value": 150 },
+        "costAiCredits": { "known": true, "value": 0.0289 },
+        "model": "example-model"
+      },
+      "explanation": "Normal first turn — writes the static system prompt/instructions plus this turn's own content."
+    },
+    {
+      "index": 2,
+      "userMessage": "Validate email format and require a password of at least 8 characters.",
+      "assistantResponse": "Got it, adding those validation rules.",
+      "toolCalls": [
+        { "name": "read_file", "argsSummary": "src/forms/signup.ts" }
+      ],
+      "usage": {
+        "uncachedInput": { "known": true, "value": 200 },
+        "cacheWrite": { "known": true, "value": 600 },
+        "cacheRead": { "known": true, "value": 3500 },
+        "tool": { "known": true, "value": 100 },
+        "vision": { "known": true, "value": 0 },
+        "reasoning": { "known": true, "value": 120 },
+        "output": { "known": true, "value": 180 },
+        "costAiCredits": { "known": true, "value": 0.0115 },
+        "model": "example-model"
+      },
+      "explanation": "Normal turn; reads/extends the cache built by turn 1."
+    },
+    {
+      "index": 3,
+      "userMessage": "I just added a note to copilot-instructions.md: always write a Zod schema for new form fields. Continue with that in mind.",
+      "assistantResponse": "Understood — I'll add a Zod schema for the new signup fields going forward.",
+      "toolCalls": [],
+      "usage": {
+        "uncachedInput": { "known": true, "value": 4150 },
+        "cacheWrite": { "known": true, "value": 4700 },
+        "cacheRead": { "known": true, "value": 0 },
+        "tool": { "known": true, "value": 0 },
+        "vision": { "known": true, "value": 0 },
+        "reasoning": { "known": true, "value": 200 },
+        "output": { "known": true, "value": 220 },
+        "costAiCredits": { "known": true, "value": 0.0562 },
+        "model": "example-model"
+      },
+      "explanation": "Editing copilot-instructions.md invalidates the cache at the very front of the prefix — the system prompt/instructions sit at byte 0, so the match breaks right at the start. Unlike an MCP tool change (which invalidates everything after the tool-definitions block, further into the prefix), an instructions edit invalidates literally everything before it too, since prefix matching can't skip over the changed part and resume later. The entire prior 4,100-token history must be resent as uncached input, and a brand-new cache is written from scratch under the updated instructions — the same underlying mechanism as a tool change, just triggered even earlier in the prefix, so in practice it's total invalidation every time.",
+      "triggeredEvent": "instructions-change"
+    },
+    {
+      "index": 4,
+      "userMessage": "Apply the schema to the login form too.",
+      "assistantResponse": "Adding the same Zod-schema convention to the login form.",
+      "toolCalls": [
+        { "name": "replace_string_in_file", "argsSummary": "src/forms/login.ts" }
+      ],
+      "usage": {
+        "uncachedInput": { "known": true, "value": 130 },
+        "cacheWrite": { "known": true, "value": 600 },
+        "cacheRead": { "known": true, "value": 4700 },
+        "tool": { "known": true, "value": 300 },
+        "vision": { "known": true, "value": 0 },
+        "reasoning": { "known": true, "value": 140 },
+        "output": { "known": true, "value": 170 },
+        "costAiCredits": { "known": true, "value": 0.0129 },
+        "model": "example-model"
+      },
+      "explanation": "Normal turn on the post-edit baseline; the cache rebuilds under the updated instructions, same shape as any healthy cache-building turn."
+    },
+    {
+      "index": 5,
+      "userMessage": "Looks good, thanks.",
+      "assistantResponse": "Glad it's working well.",
+      "toolCalls": [],
+      "usage": {
+        "uncachedInput": { "known": true, "value": 70 },
+        "cacheWrite": { "known": true, "value": 220 },
+        "cacheRead": { "known": true, "value": 5300 },
+        "tool": { "known": true, "value": 0 },
+        "vision": { "known": true, "value": 0 },
+        "reasoning": { "known": true, "value": 60 },
+        "output": { "known": true, "value": 90 },
+        "costAiCredits": { "known": true, "value": 0.0066 },
+        "model": "example-model"
+      },
+      "explanation": "Cache continues growing normally under the new instructions, with no further disruption."
+    }
+  ]
+}

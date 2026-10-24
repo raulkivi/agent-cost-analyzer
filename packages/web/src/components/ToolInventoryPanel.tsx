@@ -1,6 +1,5 @@
-import type { ToolInventoryEntry } from "@gh-cp-chat-analyser/domain";
+import type { ToolInventoryEntry } from "@copilot-cost-analyzer/domain";
 import { Blueprint } from "./ui/Blueprint.js";
-import { Tag } from "./ui/Tag.js";
 
 interface ToolInventoryPanelProps {
   entries: ToolInventoryEntry[];
@@ -23,18 +22,26 @@ export function ToolInventoryPanel({ entries }: ToolInventoryPanelProps) {
               <span
                 title={entry.name}
                 className="truncate"
-                style={{ flex: 1, fontFamily: "monospace", fontSize: 12, maxWidth: 150 }}
+                style={{ flex: 1, fontFamily: "monospace", fontSize: 12 }}
               >
                 {entry.name}
               </span>
-              <Tag variant={entry.loaded ? "neutral" : "outline"}>
-                {entry.loaded ? "loaded" : "not loaded"}
-              </Tag>
-              <Tag variant={entry.invokedInTurns.length > 0 ? "accent" : "neutral"}>
-                {entry.invokedInTurns.length > 0
-                  ? `used in ${entry.invokedInTurns.length} turns`
-                  : "not invoked"}
-              </Tag>
+              <span
+                role="img"
+                aria-label={entry.loaded ? "Loaded" : "Not loaded"}
+                title={entry.loaded ? "Loaded" : "Not loaded"}
+                className={`tool-status-dot${entry.loaded ? " tool-status-dot--loaded" : ""}`}
+              />
+              <span
+                title={
+                  entry.invokedInTurns.length > 0
+                    ? `Used in ${entry.invokedInTurns.length} turn${entry.invokedInTurns.length === 1 ? "" : "s"}`
+                    : "Not invoked"
+                }
+                className="tool-usage-count"
+              >
+                {entry.invokedInTurns.length > 0 ? entry.invokedInTurns.length : ""}
+              </span>
             </div>
           ))}
         </div>

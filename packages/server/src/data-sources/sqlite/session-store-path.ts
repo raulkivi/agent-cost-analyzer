@@ -1,6 +1,4 @@
-import { existsSync } from "node:fs";
-import path from "node:path";
-import { resolveUserDataDir } from "../../platform/vscode-paths/resolve-user-data-dir.js";
+import { resolveCopilotChatGlobalStorageFile } from "./copilot-chat-global-storage-path.js";
 
 interface ResolveSessionStoreDbPathOptions {
   platform?: NodeJS.Platform;
@@ -10,17 +8,5 @@ interface ResolveSessionStoreDbPathOptions {
 export function resolveSessionStoreDbPath(
   options: ResolveSessionStoreDbPathOptions = {},
 ): string | null {
-  const userDataDir = resolveUserDataDir(options);
-  if (!userDataDir) {
-    return null;
-  }
-
-  const dbPath = path.join(
-    userDataDir,
-    "User",
-    "globalStorage",
-    "github.copilot-chat",
-    "session-store.db",
-  );
-  return existsSync(dbPath) ? dbPath : null;
+  return resolveCopilotChatGlobalStorageFile("session-store.db", options);
 }

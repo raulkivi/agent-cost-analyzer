@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import type { Session } from "@gh-cp-chat-analyser/domain";
+import type { Session } from "@copilot-cost-analyzer/domain";
 import { SessionList } from "./SessionList.js";
 
 function makeSession(overrides: Partial<Session> = {}): Session {
@@ -11,6 +11,7 @@ function makeSession(overrides: Partial<Session> = {}): Session {
     model: "gpt-4o",
     turns: [{ index: 0 } as Session["turns"][number], { index: 1 } as Session["turns"][number]],
     turnCount: 2,
+    costAiCredits: { known: false, reason: "not extracted" },
     usageDataAvailable: false,
     ...overrides,
   };
@@ -41,6 +42,25 @@ describe("SessionList", () => {
     render(<SessionList mode="analyze" sessions={sessions} selectedSessionId={null} onSelect={vi.fn()} />);
 
     expect(screen.getByText("7 turns")).toBeInTheDocument();
+  });
+
+  it("renders a session's AI Credits total, rounded to 2 decimal places, when known", () => {
+    const sessions = [
+      makeSession({ id: "s1", title: "First", costAiCredits: { known: true, value: 12.3456 } }),
+    ];
+    render(<SessionList mode="analyze" sessions={sessions} selectedSessionId={null} onSelect={vi.fn()} />);
+
+    expect(screen.getByText("2 turns · 12.35 AI Credits")).toBeInTheDocument();
+  });
+
+  it("omits AI Credits from the card meta line when the session's cost is unknown", () => {
+    const sessions = [
+      makeSession({ id: "s1", title: "First", costAiCredits: { known: false, reason: "not extracted" } }),
+    ];
+    render(<SessionList mode="analyze" sessions={sessions} selectedSessionId={null} onSelect={vi.fn()} />);
+
+    expect(screen.getByText("2 turns")).toBeInTheDocument();
+    expect(screen.queryByText(/AI Credits/)).not.toBeInTheDocument();
   });
 
   it("renders the Learn kicker with category when present, falling back to bare 'Learn'", () => {
@@ -107,5 +127,50 @@ describe("SessionList", () => {
     fireEvent.change(screen.getByPlaceholderText("Search…"), { target: { value: "zzz" } });
 
     expect(screen.getByText("No matches.")).toBeInTheDocument();
+  });
+
+  it("does not render advice-selection checkboxes when onToggleAdvice is omitted", () => {
+    const sessions = [makeSession({ id: "s1", title: "First" })];
+    render(<SessionList mode="learn" sessions={sessions} selectedSessionId={null} onSelect={vi.fn()} />);
+
+    expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
+  });
+
+  it("renders an advice-selection checkbox per session, checked per adviceSelection, when onToggleAdvice is provided", () => {
+    const sessions = [makeSession({ id: "s1", title: "First" }), makeSession({ id: "s2", title: "Second" })];
+    render(
+      <SessionList
+        mode="learn"
+        sessions={sessions}
+        selectedSessionId={null}
+        onSelect={vi.fn()}
+        adviceSelection={new Set(["s2"])}
+        onToggleAdvice={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole("checkbox", { name: /First/ })).not.toBeChecked();
+    expect(screen.getByRole("checkbox", { name: /Second/ })).toBeChecked();
+  });
+
+  it("calls onToggleAdvice (not onSelect) when a session's advice checkbox is clicked", () => {
+    const onSelect = vi.fn();
+    const onToggleAdvice = vi.fn();
+    const sessions = [makeSession({ id: "s1", title: "First" })];
+    render(
+      <SessionList
+        mode="learn"
+        sessions={sessions}
+        selectedSessionId={null}
+        onSelect={onSelect}
+        adviceSelection={new Set()}
+        onToggleAdvice={onToggleAdvice}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("checkbox", { name: /First/ }));
+
+    expect(onToggleAdvice).toHaveBeenCalledWith(sessions[0]);
+    expect(onSelect).not.toHaveBeenCalled();
   });
 });

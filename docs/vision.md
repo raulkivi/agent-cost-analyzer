@@ -1,4 +1,4 @@
-# Vision: GitHub Copilot Chat Session Analyser
+# Vision: GitHub Copilot Chat Cost & Token Usage Analyzer
 
 ## 1. Problem
 
@@ -103,7 +103,7 @@ mitmproxy captures. It never depends on the cloud-synced store, so it works
 fully offline and requires no `chat.sessionSync.enabled` opt-in.
 
 Per [agentic-coding-explained.md §18](agentic-coding-explained.md#18-where-to-find-the-logs-data-sources-for-token-cache-and-ai-credits-analysis),
-the two in-scope sources are:
+the in-scope sources are:
 
 | Source | Gives us | Caveat |
 |---|---|---|
@@ -169,7 +169,19 @@ showing the behavioral-proxy fallback silently.
 
 - Not a replacement for the `/chronicle` skill's standup/search features —
   this app is about visual, turn-by-turn exploration of cache/token/AI Credits
-  mechanics, not activity reporting.
+  mechanics, not general activity reporting. The one deliberate extension
+  (Phase 9.10, [plans/tool-call-audit.md](plans/tool-call-audit.md)) is a
+  **tool-call audit**: which tools and shell commands an agent ran, how many
+  failed and why (missing utility, wrong directory, bad arguments, …), and
+  what that failure recovery cost — because failed calls are a direct,
+  avoidable driver of token spend. It is exposed in the UI and through a
+  local, read-only MCP server. A second extension (Phase 9.11,
+  [plans/insights-dashboard.md](plans/insights-dashboard.md)) is a
+  QlikView-style **insights dashboard** across every provider. It
+  associates cost, tool calls and **security signals** (risky commands,
+  credential access, statistical anomalies, first-time behaviour) and says
+  what happened, when and why. The signals are prompts to look, not
+  intrusion detection, and the dashboard stays read-only and local.
 - Not scoped to editing or replaying sessions (no `/rewind`-style mutation of
   real logs) — it's a read-only viewer/analyzer.
 - No dependency on the cloud-synced (DuckDB) store — the app only reads local

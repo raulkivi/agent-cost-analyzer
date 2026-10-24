@@ -4,8 +4,8 @@ import type {
   ToolCallRecord,
   Turn,
   TurnUsage,
-} from "@gh-cp-chat-analyser/domain";
-import { unavailableTokenCount } from "@gh-cp-chat-analyser/domain";
+} from "@copilot-cost-analyzer/domain";
+import { sumTokenCounts, unavailableTokenCount } from "@copilot-cost-analyzer/domain";
 import type {
   SessionFileRow,
   SessionRow,
@@ -45,6 +45,26 @@ function reasonForAvailability(availability: MainJsonlAvailability): string {
   return USAGE_UNAVAILABLE_REASON;
 }
 
+// A session's total AI Credits, all-or-nothing across its turns (constraint
+// 6: no silently-partial total). Used by the list endpoint, which only has
+// turnUsages (extracted straight from main.jsonl) and no SQLite turnRows to
+// build real Turn objects from — buildSession below aggregates from the
+// built turns instead, since that's the authoritative per-turn source once
+// they exist.
+export function computeSessionCost(
+  mainJsonlAvailability: MainJsonlAvailability,
+  turnUsages: (TurnUsage | null)[],
+): TokenCount {
+  const fallback = unavailableTokenCount(reasonForAvailability(mainJsonlAvailability));
+  if (mainJsonlAvailability !== "events-present" || turnUsages.length === 0) {
+    return fallback;
+  }
+  return sumTokenCounts(
+    turnUsages.map((usage) => usage?.costAiCredits ?? fallback),
+    USAGE_UNAVAILABLE_REASON,
+  );
+}
+
 function deriveTitle(row: SessionRow): string {
   return row.summary || row.repository || row.cwd || `Session ${row.id}`;
 }
@@ -56,7 +76,7 @@ function unavailableToolCallTokenCount(): TokenCount {
 // SQLite's session_files rows only cover tools that touched a file — tools
 // like manage_todo_list/run_in_terminal never appear there. invokedToolNames
 // (from main.jsonl's tool_call events, jsonl/tool-inventory.ts) fills that
-// gap; a name already covered by a file-based entry isn't duplicated. Every
+// gap, one record per invocation (see buildToolCalls). Every
 // entry's tokenCount is explicit-unavailable (constraint 6): neither source
 // records a per-tool-call token figure.
 // fileRows is pre-grouped by turn_index once per buildSession call (rather
@@ -98,18 +118,46 @@ function buildToolCalls(
     tokenCount: unavailableToolCallTokenCount(),
   }));
 
-  const invokedOnlyNames = Array.from(
-    new Set(invokedToolNames.filter((name) => !filesByToolName.has(name))),
-  );
-  const invokedOnlyCalls: ToolCallRecord[] = invokedOnlyNames.map((name) => ({
-    name,
-    argsSummary: "",
-    tokenCount: unavailableToolCallTokenCount(),
-  }));
+  // One record per jsonl tool_call invocation (Phase 9.10 audit: counts must
+  // not be deduped by name). A file-based record already stands for the
+  // first invocation of its tool, so only the remaining invocations are
+  // added; a name with files but no jsonl invocation stays one record, since
+  // SQLite alone can't say how many calls touched those files.
+  const remainingByName = new Map<string, number>();
+  for (const name of invokedToolNames) {
+    remainingByName.set(name, (remainingByName.get(name) ?? 0) + 1);
+  }
+  for (const name of filesByToolName.keys()) {
+    const remaining = remainingByName.get(name);
+    if (remaining !== undefined) {
+      remainingByName.set(name, remaining - 1);
+    }
+  }
+  const invokedOnlyCalls: ToolCallRecord[] = [];
+  for (const name of invokedToolNames) {
+    const remaining = remainingByName.get(name) ?? 0;
+    if (remaining <= 0) {
+      continue;
+    }
+    remainingByName.set(name, remaining - 1);
+    invokedOnlyCalls.push({ name, argsSummary: "", tokenCount: unavailableToolCallTokenCount() });
+  }
 
-  return [...fileBasedCalls, ...invokedOnlyCalls];
+  // Keep each file-based record next to that tool's extra invocations.
+  const ordered: ToolCallRecord[] = [];
+  for (const fileCall of fileBasedCalls) {
+    ordered.push(fileCall, ...invokedOnlyCalls.filter((call) => call.name === fileCall.name));
+  }
+  const fileNames = new Set(filesByToolName.keys());
+  return [...ordered, ...invokedOnlyCalls.filter((call) => !fileNames.has(call.name))];
 }
 
+// Total fallback for a turn with zero extracted llm_request spans — with no
+// requests there's nothing to join against agent-traces.db either, so every
+// field (including cacheWrite/reasoning, Phase 8.5) staying unavailable here
+// is still correct; this is "no usage data of any kind for this turn," not
+// specifically "cache-write/reasoning unavailable" (see session-usage-spans.ts
+// for that more specific case).
 function buildUnavailableUsage(fallbackTokenCount: TokenCount): TurnUsage {
   return {
     uncachedInput: fallbackTokenCount,
@@ -158,7 +206,10 @@ function buildTurn(
   };
 }
 
-export function buildSessionSummary(row: SessionRow): Session {
+export function buildSessionSummary(
+  row: SessionRow,
+  costAiCredits: TokenCount = unavailableTokenCount(USAGE_UNAVAILABLE_REASON),
+): Session {
   return {
     id: row.id,
     mode: "analyze",
@@ -166,6 +217,7 @@ export function buildSessionSummary(row: SessionRow): Session {
     model: UNKNOWN_MODEL,
     turns: [],
     turnCount: row.turn_count,
+    costAiCredits,
     usageDataAvailable: false,
     ...(row.created_at ? { startedAt: row.created_at } : {}),
   };
@@ -201,8 +253,22 @@ export function buildSession(enrichment: AnalyzeEnrichment): Session {
 
   const fileRowsByTurn = groupFileRowsByTurn(fileRows);
 
+  const turns = turnRows.map((turnRow) =>
+    buildTurn(
+      turnRow,
+      fileRowsByTurn,
+      turnUsages[turnRow.turn_index],
+      fallbackTokenCount,
+      invokedToolNamesByTurn[turnRow.turn_index] ?? [],
+    ),
+  );
+  const costAiCredits = sumTokenCounts(
+    turns.map((turn) => turn.usage.costAiCredits),
+    USAGE_UNAVAILABLE_REASON,
+  );
+
   return {
-    ...buildSessionSummary(sessionRow),
+    ...buildSessionSummary(sessionRow, costAiCredits),
     model:
       knownUsages.length > 0
         ? knownUsages[knownUsages.length - 1].model
@@ -211,14 +277,6 @@ export function buildSession(enrichment: AnalyzeEnrichment): Session {
     systemPrompt,
     toolInventory,
     turnCount: turnRows.length,
-    turns: turnRows.map((turnRow) =>
-      buildTurn(
-        turnRow,
-        fileRowsByTurn,
-        turnUsages[turnRow.turn_index],
-        fallbackTokenCount,
-        invokedToolNamesByTurn[turnRow.turn_index] ?? [],
-      ),
-    ),
+    turns,
   };
 }

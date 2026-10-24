@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import type { ToolInventoryEntry } from "@gh-cp-chat-analyser/domain";
+import type { ToolInventoryEntry } from "@copilot-cost-analyzer/domain";
 import { ToolInventoryPanel } from "./ToolInventoryPanel.js";
 
 describe("ToolInventoryPanel", () => {
@@ -17,17 +17,17 @@ describe("ToolInventoryPanel", () => {
     expect(screen.getByText("create_file")).toBeInTheDocument();
   });
 
-  it("distinguishes loaded from not-loaded tools", () => {
+  it("distinguishes loaded from not-loaded tools via an accessible status indicator", () => {
     const entries: ToolInventoryEntry[] = [
       { name: "some_new_tool", loaded: false, invokedInTurns: [0] },
     ];
 
     render(<ToolInventoryPanel entries={entries} />);
 
-    expect(screen.getByText("not loaded")).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: "Not loaded" })).toBeInTheDocument();
   });
 
-  it("shows 'used in N turns' for an invoked tool and 'not invoked' otherwise", () => {
+  it("shows the turn count for an invoked tool and leaves it blank when not invoked", () => {
     const entries: ToolInventoryEntry[] = [
       { name: "read_file", loaded: true, invokedInTurns: [0, 1] },
       { name: "create_file", loaded: true, invokedInTurns: [] },
@@ -35,8 +35,11 @@ describe("ToolInventoryPanel", () => {
 
     render(<ToolInventoryPanel entries={entries} />);
 
-    expect(screen.getByText("used in 2 turns")).toBeInTheDocument();
-    expect(screen.getByText("not invoked")).toBeInTheDocument();
+    const usedCount = screen.getByTitle("Used in 2 turns");
+    expect(usedCount).toHaveTextContent("2");
+
+    const notInvoked = screen.getByTitle("Not invoked");
+    expect(notInvoked).toHaveTextContent("");
   });
 
   it("shows a fallback message when no inventory is available", () => {
