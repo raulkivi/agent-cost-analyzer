@@ -92,6 +92,7 @@ content here.
   architecture.md §6.2.5). Phase 10 (AI Credits Analyzer, a separate
   Copilot-only VS Code extension in `packages/vscode-extension` sharing
   this code) is in progress: steps 10.0-10.8 done, 10.9
-  (real-VS Code integration tests, packaging) and 10.10 (documentation)
-  not started. The progress
+  (real-VS Code integration tests, packaging, release workflows) code
+  done with the owner's manual checks open, 10.10 (documentation) not
+  started. The progress
   table and per-step status notes are in docs/plans/vscode-extension.md.

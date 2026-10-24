@@ -18,7 +18,7 @@ Progress (2026-10-24):
 | 10.6 | Native Sessions/Setup sidebar, status bar, selection sync | Done (#67) |
 | 10.7 | Accessibility, responsive layout, AsyncView, local fonts, walkthrough, l10n | Done (#69) |
 | 10.8 | Copilot-only MCP server in the extension, plus UI follow-ups from 10.7 | Done (#71); real Copilot agent-mode check in 10.9 |
-| 10.9 | Integration tests in real VS Code, performance budgets, usability run, packaging | Not started |
+| 10.9 | Integration tests in real VS Code, performance budgets, usability run, packaging | Done (PR pending); the integration suite runs first in CI; owner's manual checks open |
 | 10.10 | Documentation: extension README/listing, extension user guide, two-product README and User Guide | Not started |
 
 
@@ -1147,6 +1147,111 @@ axe table tests and two column-chooser guard tests green on first run.
 - **Exit:** `<name>-<version>.vsix` installs into a clean VS Code via
   "Install from VSIX…" and passes the 10.4-10.8 exit checks
   with no repo checkout present.
+
+**Status (2026-10-24): code done; first real-VS Code run happens in CI,
+and the owner's manual checks are open.**
+
+*Performance marks and budgets:*
+- `{kind:"perfMark", name, timeMs}` (domain `rpc.ts`): one-way, names
+  allow-listed (`first-render`, `data-ready`), `timeMs` finite, 0-24 h.
+  The webview's `createPerformanceMarks` reports each mark once through
+  `WebviewTransport.reportPerformanceMark`; the standalone app is
+  unchanged.
+- The host's `MessageDispatcher` validates and forwards marks to a pure
+  `PerformanceRecorder` (injected clock, last 100 marks). A webview mark is
+  timed on the host from `AnalyzerPanel.onPageLoad`, so webview start-up
+  counts. `SidebarController` times a full Sessions refresh.
+- `evaluateBudgets` judges the latest mark of each name against §3.5:
+  first-render and data-ready < 1000 ms, Sessions tree < 500 ms. A missing
+  mark fails. "Interactions < 100 ms" has no mark and isn't measured.
+
+*Integration suite* (`@vscode/test-cli` 0.0.15, `@vscode/test-electron`
+3.1.0, mocha 12 via a root override because mocha 11 pulls in vulnerable
+`diff`/`serialize-javascript`):
+- Stable VS Code, `--disable-extensions`, a seeded temp user-data dir with
+  `settings.json` and 200 Copilot sessions (one with a real debug log),
+  built by `scripts/integration-fixture.mts` from the server's seeding
+  helpers.
+- Tests: activation registers every command; the panel round-trips
+  `getHealth`, `getProductProfile`, `listLearnScenarios`,
+  `getConfigStatus`, `listSessions`; the Sessions view lists all 200 and
+  `openSession` makes the webview load that session; the §3.5 budgets;
+  MCP off → no server, on → one server that, started from its own
+  definition with VS Code's Electron as Node, lists 9 tools and answers
+  `get_session_cost`, off again → none.
+- Test hooks (`aiCreditsAnalyzer.internal.*`: perf marks, an RPC trace of
+  method/outcome only, the Sessions tree, MCP definitions, reset) are
+  registered only when `extensionMode === Test` and never contributed; a
+  manifest test and the bundle-load test check both.
+- CI: a second job, `extension`, builds, runs the unit tests, runs the
+  suite under `xvfb-run`, packages the VSIX and uploads it as the `vsix`
+  artifact.
+
+*Packaging:*
+- `createMcpServer` takes an `McpIdentity`; the extension's server is
+  `ai-credits-analyzer` with Copilot-only instructions and argument
+  descriptions. The standalone server is byte-for-byte unchanged (pinned
+  by a test). Tool names, schemas and prompts are identical.
+- Both bundles are minified: `extension.js` 4.37 → 3.32 MB,
+  `mcp-stdio.js` 5.15 → 3.68 MB. `bundle-size.test.ts` holds per-bundle
+  budgets (4 MB, 4.25 MB) and a deflate estimate of the package (< 5 MB).
+- `.vscodeignore` is an allow-list (vsce lets any `!` pattern win, so
+  `dist/` is allowed file by file to keep metafiles out).
+  `packaging.test.ts` runs `vsce ls` offline and checks exactly those
+  files ship, plus the listing prerequisites. `npm run package` gives
+  `ai-credits-analyzer-0.1.0.vsix`: 35 files, 2.59 MB. The extension
+  ships the MIT `LICENSE`.
+
+*Release workflows (§7.2):* `release-extension.yml` (`ext-v*`) and
+`release-app.yml` (`app-v*`). Pure, tested helpers in
+`scripts/release-checks.mts` (tag → version, odd minor → pre-release,
+D9 engine = current stable, changelog section) behind `release-check.mts`
+and `release-notes.mts`. The extension job builds, tests (unit and
+integration), packages, then publishes from the `release` environment:
+Marketplace through `azure/login` + `vsce publish --azure-credential`,
+Open VSX through `ovsx` with `OVSX_PAT`, and a GitHub Release with the
+VSIX. Actions are pinned by commit SHA.
+
+*Manual checks:* the usability script, the MCP agent-mode check (10.8's
+exit), the remote check and the screenshot list are in
+[vscode-extension-manual-checks.md](vscode-extension-manual-checks.md),
+for the owner to run on the CI-built VSIX and record in the PR.
+
+*Not verified here:*
+- The integration suite has never run: VS Code can't be downloaded in the
+  development container. Its first run is this PR's CI. Verified instead:
+  it typechecks, a unit test bundles and loads it with a stub `vscode`
+  (all 7 tests register), `vscode-test --list-configuration` resolves,
+  and the fixture is read back through the extension's own `ApiService`.
+- The budgets on CI hardware under xvfb (first-render/data-ready are
+  timed on a warm reopen of the panel).
+- The release workflows: they run only on tags. The first `ext-v*` tag is
+  also the first test of Entra ID sign-in on GitHub Actions (§7.0).
+
+*Deviations:*
+- data-ready marks the Learn scenario list (the app starts in Learn mode);
+  the 200 sessions load on mount but data-ready doesn't wait for them.
+- Marks and the RPC trace are recorded in production too (bounded, no
+  payloads); only reading them is limited to Test mode.
+- Integration-test esbuild options are separate
+  (`scripts/integration-test-options.mts`): several entry points, outdir,
+  inline sourcemaps.
+- `npm audit` reports `@azure/msal-node` 6.0.1 (GHSA-xcx6-jx8p-x3h5,
+  authorization-code flow) under `@vscode/vsce` → `@azure/identity`. Dev
+  only, never shipped; packaging never signs in and publishing uses the
+  `az` CLI credential. No `@azure/identity` that vsce 4 accepts avoids the
+  range; vsce 3.9.2 avoids it but adds native `keytar`. Open for the
+  owner's decision.
+
+*TDD exceptions to red-first:* guard tests green on first run (perfMark
+drop cases, the internal-commands manifest check, "none in production");
+the integration suite, its config, build script, tsconfig and the CI and
+release workflow YAML have no red step (only a real run tests them); the
+server-side identity tests failed only on the missing import before going
+green; listing-prerequisite tests passed on first run.
+
+*Tests:* 2,541 → 2,647 (domain 129, server 1,037, web 982, pi-logger 15,
+extension 484).
 
 ### 10.10 Documentation and Marketplace listing
 
