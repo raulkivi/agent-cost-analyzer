@@ -5,6 +5,7 @@ import { createExtensionApiService } from "@copilot-cost-analyzer/server/src/com
 import { ExtensionCommands } from "./commands/extension-commands.js";
 import { watchConfigChanges, type ConfigurationChangeSource } from "./config/config-change-watcher.js";
 import type { Translate } from "./l10n/localize.js";
+import { McpServerDefinitionSource } from "./mcp/mcp-server-definitions.js";
 import { WalkthroughOffer, type WalkthroughLauncher } from "./onboarding/walkthrough-offer.js";
 import { AnalyzerPanel, type Disposable } from "./panel/analyzer-panel.js";
 import { createNonce } from "./panel/nonce.js";
@@ -22,6 +23,9 @@ export interface ExtensionCompositionInput {
   // The installed extension's root (context.extensionPath): dist/, media/.
   extensionPath: string;
   extensionVersion: string;
+  // process.execPath in the extension host: VS Code's own Electron, which
+  // runs the MCP child process as Node (D7).
+  execPath: string;
   // context.globalStorageUri.fsPath: where every Copilot log path is
   // derived from (D4).
   globalStoragePath: string;
@@ -50,6 +54,9 @@ export interface ComposedExtension extends Disposable {
   // Opens the Get Started walkthrough on the first activation only, with no
   // notification; extension.ts calls it once on activation. Never rejects.
   offerWalkthrough(): Promise<void>;
+  // The MCP server definitions VS Code asks for (D7), gated by the
+  // aiCreditsAnalyzer.mcp.enabled setting: extension.ts registers them.
+  mcpServers: McpServerDefinitionSource;
 }
 
 function readManifest(mediaDir: string): ViteManifest {
@@ -61,6 +68,7 @@ function readManifest(mediaDir: string): ViteManifest {
 export function composeExtension({
   extensionPath,
   extensionVersion,
+  execPath,
   globalStoragePath,
   globalState,
   workspace,
@@ -137,12 +145,25 @@ export function composeExtension({
     onError: (error) => console.error("AI Credits Analyzer: could not offer the walkthrough", error),
   });
 
+  // The MCP child process gets the same user-data dir (D4) as an argument,
+  // since it has no `vscode` API to ask.
+  const mcpServers = new McpServerDefinitionSource({
+    workspace,
+    userDataDir,
+    extensionPath,
+    execPath,
+    version: extensionVersion,
+    onWarning: (message) => console.warn(message),
+  });
+
   return {
     commandHandlers: commands.handlers(),
     sidebar,
     offerWalkthrough: () => walkthroughOffer.offerOnce(),
+    mcpServers,
     dispose: () => {
       configWatch.dispose();
+      mcpServers.dispose();
       panel.dispose();
     },
   };

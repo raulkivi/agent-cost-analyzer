@@ -125,6 +125,23 @@
         "contents": "%welcome.setup%"
       }
     ],
+    "configuration": {
+      "title": "%configuration.title%",
+      "properties": {
+        "aiCreditsAnalyzer.mcp.enabled": {
+          "type": "boolean",
+          "default": false,
+          "order": 1,
+          "markdownDescription": "%configuration.mcp.enabled.markdownDescription%"
+        }
+      }
+    },
+    "mcpServerDefinitionProviders": [
+      {
+        "id": "aiCreditsAnalyzer.mcp",
+        "label": "%mcpServerDefinitionProvider.label%"
+      }
+    ],
     "walkthroughs": [
       {
         "id": "aiCreditsAnalyzer.getStarted",

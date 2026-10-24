@@ -30,5 +30,8 @@
   "walkthrough.step.askCopilot.title": "Ask Copilot about your costs (MCP, optional)",
   "walkthrough.step.askCopilot.description": "Coming in a later version: ask Copilot Chat about your costs through a read-only MCP server that answers from the same local logs. It will stay off until you turn it on in settings. Nothing is shared with any model today.",
   "walkthrough.title": "Get started with AI Credits Analyzer",
-  "walkthrough.description": "See where your Copilot Chat tokens and AI Credits go, from logs on your own machine."
+  "walkthrough.description": "See where your Copilot Chat tokens and AI Credits go, from logs on your own machine.",
+  "configuration.title": "AI Credits Analyzer",
+  "configuration.mcp.enabled.markdownDescription": "Offer Copilot Chat a read-only MCP server that answers questions about your Copilot Chat sessions from your local logs.\n\n**When on, read-only and redacted Copilot Chat session data (costs, tool calls, findings, turn text) is sent to whichever model the chat uses.** Secrets found in that text are redacted first, and the server never writes, runs commands or reaches the network. Off by default.",
+  "mcpServerDefinitionProvider.label": "AI Credits Analyzer"
 }
