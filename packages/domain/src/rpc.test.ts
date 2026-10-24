@@ -3,9 +3,14 @@ import * as domain from "./index.js";
 import {
   apiMethodSchema,
   apiMethodParamsSchemas,
+  hostCommandArgsSchemas,
+  hostCommandSchema,
   hostEventNameSchema,
+  MAX_HOST_COMMAND_TEXT_LENGTH,
+  rpcCommandSchema,
   rpcRequestSchema,
   type HostEvent,
+  type RpcCommandResponse,
   type RpcResponse,
 } from "./rpc.js";
 
@@ -150,5 +155,72 @@ describe("rpcRequestSchema, RpcResponse and HostEvent (vscode-extension.md §4)"
     const event: HostEvent = { kind: "event", name: "configChanged" };
 
     expect([ok.ok, failed.ok, event.name]).toEqual([true, false, "configChanged"]);
+  });
+});
+
+describe("host commands (vscode-extension.md G8)", () => {
+  it("allow-lists exactly the three HostCapabilities commands", () => {
+    expect(hostCommandSchema.options).toEqual(["openSetting", "copyToClipboard", "openTextDocument"]);
+    expect(Object.keys(hostCommandArgsSchemas).sort()).toEqual([...hostCommandSchema.options].sort());
+  });
+
+  it("accepts a command message and rejects malformed ones", () => {
+    expect(
+      rpcCommandSchema.safeParse({ kind: "command", id: "c1", command: "openSetting", args: { settingId: "a.b" } }).success,
+    ).toBe(true);
+    for (const bad of [
+      { kind: "command", command: "openSetting" },
+      { kind: "command", id: 1, command: "openSetting" },
+      { kind: "command", id: "c1", command: "runShell" },
+      { kind: "request", id: "c1", command: "openSetting" },
+    ]) {
+      expect(rpcCommandSchema.safeParse(bad).success).toBe(false);
+    }
+  });
+
+  it("openSetting takes one non-empty setting id", () => {
+    const schema = hostCommandArgsSchemas.openSetting;
+
+    expect(schema.safeParse({ settingId: "github.copilot.chat.agentDebugLog.fileLogging.enabled" }).success).toBe(true);
+    for (const bad of [{}, { settingId: "" }, { settingId: 7 }, { settingId: ["a"] }]) {
+      expect(schema.safeParse(bad).success).toBe(false);
+    }
+  });
+
+  it("bounds clipboard text and document content at 5 MB of text", () => {
+    const atLimit = "x".repeat(MAX_HOST_COMMAND_TEXT_LENGTH);
+    const overLimit = `${atLimit}x`;
+
+    expect(MAX_HOST_COMMAND_TEXT_LENGTH).toBe(5 * 1024 * 1024);
+    expect(hostCommandArgsSchemas.copyToClipboard.safeParse({ text: atLimit }).success).toBe(true);
+    expect(hostCommandArgsSchemas.copyToClipboard.safeParse({ text: overLimit }).success).toBe(false);
+    expect(hostCommandArgsSchemas.openTextDocument.safeParse({ content: atLimit, language: "plaintext" }).success).toBe(true);
+    expect(hostCommandArgsSchemas.openTextDocument.safeParse({ content: overLimit, language: "plaintext" }).success).toBe(false);
+  });
+
+  it("opens documents only in an allow-listed language", () => {
+    const schema = hostCommandArgsSchemas.openTextDocument;
+
+    for (const language of ["plaintext", "markdown", "json"]) {
+      expect(schema.safeParse({ content: "x", language }).success).toBe(true);
+    }
+    for (const bad of [{ content: "x" }, { content: "x", language: "html" }, { content: 1, language: "plaintext" }]) {
+      expect(schema.safeParse(bad).success).toBe(false);
+    }
+  });
+
+  it("types a command response: ok, or a status and message", () => {
+    const ok: RpcCommandResponse = { kind: "response", id: "c1", ok: true };
+    const failed: RpcCommandResponse = { kind: "response", id: "c1", ok: false, error: { status: 400, message: "no" } };
+
+    expect([ok.ok, failed.ok]).toEqual([true, false]);
+  });
+
+  it("is exported from the domain index", () => {
+    expect(domain.hostCommandSchema).toBeDefined();
+    expect(domain.hostCommandSchema).toBe(hostCommandSchema);
+    expect(domain.hostCommandArgsSchemas).toBe(hostCommandArgsSchemas);
+    expect(domain.rpcCommandSchema).toBe(rpcCommandSchema);
+    expect(domain.MAX_HOST_COMMAND_TEXT_LENGTH).toBe(MAX_HOST_COMMAND_TEXT_LENGTH);
   });
 });
