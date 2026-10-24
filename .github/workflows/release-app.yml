@@ -1,0 +1,49 @@
+name: Release Agent Cost Analyzer
+
+# A GitHub Release for the standalone app on an `app-v<major>.<minor>.<patch>`
+# tag (vscode-extension.md §7.2). It runs from source, so there's nothing
+# to upload: the notes are the root CHANGELOG.md's section for the version.
+
+on:
+  push:
+    tags: ["app-v*"]
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # the GitHub Release
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # The tag must name the root package.json's version.
+      - id: check
+        env:
+          TAG: ${{ github.ref_name }}
+        run: node packages/vscode-extension/scripts/release-check.mts "$TAG" app-v package.json >> "$GITHUB_OUTPUT"
+
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run build
+      - run: npm test
+
+      - name: GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+          VERSION: ${{ steps.check.outputs.version }}
+        run: |
+          node packages/vscode-extension/scripts/release-notes.mts CHANGELOG.md "$VERSION" > release-notes.md
+          gh release create "$TAG" --title "Agent Cost Analyzer $VERSION" --notes-file release-notes.md --verify-tag
