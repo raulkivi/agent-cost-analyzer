@@ -429,8 +429,8 @@ as 0. Common reasons:
 - cache-write and reasoning tokens need the optional
   `github.copilot.chat.otel.dbSpanExporter.enabled` setting.
 
-Totals add up only known costs and say how many are unknown, so a total
-is never lower because a figure was missing.
+Totals add up only known costs and say how many are unknown, so you can
+tell when a total leaves sessions out.
 
 ### The sessions don't load, or the database seems locked
 
