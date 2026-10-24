@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
+import { readableTextOn } from "../lib/contrast.js";
 import { assignIcicleColors } from "../lib/system-prompt-menu.js";
 import { parseSystemPrompt } from "../lib/system-prompt-parser.js";
 import { PromptCompositionIcicle } from "./PromptCompositionIcicle.js";
@@ -152,6 +153,22 @@ describe("PromptCompositionIcicle", () => {
 
     expect(mainLabel).toHaveStyle({ fontWeight: "600" });
     expect(stats).toHaveStyle({ fontWeight: "400" });
+  });
+
+  // §3.5: a fixed theme text colour falls under 4.5:1 on the mid-tone hues
+  // (and on every hue in a dark theme), so the label follows the fill.
+  it("colours each cell's label and stats line for contrast with its own fill", () => {
+    const { root } = renderIcicle(SAMPLE_TEXT);
+    const colors = assignIcicleColors(root);
+
+    for (const node of root.children) {
+      const cell = screen.getByTestId(`icicle-node-${node.id}`);
+      const expected = readableTextOn(colors.get(node.id)!);
+      for (const line of Array.from(cell.children) as HTMLElement[]) {
+        expect(line.style.color).toBe(expected === "#ffffff" ? "rgb(255, 255, 255)" : "rgb(0, 0, 0)");
+        expect(line).not.toHaveClass("text-muted");
+      }
+    }
   });
 
   it("highlights the currently selected node with a distinct border", () => {

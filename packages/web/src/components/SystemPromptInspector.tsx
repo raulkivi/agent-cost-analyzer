@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import { fetchSystemPromptText } from "../api-client/sessions.js";
 import { PromptCompositionIcicle } from "../charts/PromptCompositionIcicle.js";
 import { describeTag } from "../lib/system-prompt-descriptions.js";
-import { assignIcicleColors, assignTextColors, buildMenu } from "../lib/system-prompt-menu.js";
+import { assignIcicleColors, assignTextColors, buildMenu, SEGMENT_TEXT_COLOR } from "../lib/system-prompt-menu.js";
 import type { MenuEntry } from "../lib/system-prompt-menu.js";
 import { parseSystemPrompt } from "../lib/system-prompt-parser.js";
 import { scrollBehavior } from "../lib/reduced-motion.js";
@@ -68,6 +68,7 @@ function renderSegments(segments: TextSegment[], selectedNodeId: string | null):
         data-testid={nodeDomId(segment.nodeId)}
         style={{
           background: segment.color,
+          color: SEGMENT_TEXT_COLOR,
           outline: isSelected ? "2px solid var(--color-text)" : undefined,
           outlineOffset: isSelected ? "-2px" : undefined,
         }}

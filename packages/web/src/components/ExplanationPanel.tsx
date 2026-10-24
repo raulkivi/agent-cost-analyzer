@@ -46,7 +46,7 @@ function ToolCallsThisTurn({
             fontSize: 11,
             textTransform: "uppercase",
             letterSpacing: "0.06em",
-            color: "color-mix(in srgb, var(--color-text) 60%, transparent)",
+            color: "var(--color-text-muted)",
           }}
         >
           Tool calls this turn

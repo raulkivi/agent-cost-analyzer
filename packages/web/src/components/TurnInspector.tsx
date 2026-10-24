@@ -42,7 +42,7 @@ const SUB_LABEL_STYLE = {
   fontSize: 10,
   textTransform: "uppercase" as const,
   letterSpacing: "0.06em",
-  color: "color-mix(in srgb, var(--color-text) 55%, transparent)",
+  color: "var(--color-text-muted)",
 };
 
 const PAYLOAD_PRE_STYLE = {

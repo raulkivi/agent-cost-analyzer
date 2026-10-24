@@ -12,6 +12,14 @@
   --color-accent-2: #728fab;
   --color-divider: color-mix(in srgb, #1d1f20 16%, transparent);
 
+  /* Text-safe roles (WCAG AA, 4.5:1 — theme-contrast.test.ts): muted text,
+     accent-coloured text, and the accent ground under --color-bg text
+     (primary buttons, checked segments, pressed chips). --color-accent
+     itself (3.7:1 on --color-bg) stays for outlines, carets and marks. */
+  --color-text-muted: color-mix(in srgb, var(--color-text) 70%, transparent);
+  --color-accent-text: #416180;
+  --color-accent-fill: #416180;
+
   /* Tonal ramps — generated in OKLCH on one shared lightness scale, so the
      same step of any role matches the others in visual value. */
   --color-neutral-100: #f5f5f8;
@@ -88,8 +96,8 @@ h4 { font-size: 20px; }
 h5 { font-size: 16px; }
 h6 { font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; }
 p { margin: 0 0 var(--space-3); }
-a { color: var(--color-accent); text-underline-offset: 3px; }
-.text-muted { color: color-mix(in srgb, var(--color-text) 55%, transparent); }
+a { color: var(--color-accent-text); text-underline-offset: 3px; }
+.text-muted { color: var(--color-text-muted); }
 :focus { outline: none; }
 :focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
 ::selection { background: color-mix(in srgb, var(--color-accent) 30%, transparent); }
@@ -126,20 +134,20 @@ a { color: var(--color-accent); text-underline-offset: 3px; }
   border-radius: var(--radius-md);
 }
 .btn:disabled { opacity: 0.45; cursor: not-allowed; }
-.btn-primary { background: var(--color-accent); color: var(--color-bg); }
-.btn-primary:hover { background: var(--color-accent-600); }
-.btn-primary:active { background: var(--color-accent-700); }
+.btn-primary { background: var(--color-accent-fill); color: var(--color-bg); }
+.btn-primary:hover { background: var(--color-accent-800); }
+.btn-primary:active { background: var(--color-accent-900); }
 .btn-secondary { border-color: var(--color-divider); }
 .btn-secondary:hover { background: color-mix(in srgb, var(--color-text) 7%, transparent); }
 .btn-secondary:active { background: color-mix(in srgb, var(--color-text) 14%, transparent); }
-.btn-ghost { color: var(--color-accent); padding-inline: var(--space-1); }
+.btn-ghost { color: var(--color-accent-text); padding-inline: var(--space-1); }
 .btn-ghost:hover { background: color-mix(in srgb, var(--color-accent) 10%, transparent); }
 .btn-ghost:active { background: color-mix(in srgb, var(--color-accent) 18%, transparent); }
 
 /* — forms — */
 .field > label {
   display: block; font-size: 12px; margin-bottom: 5px;
-  color: color-mix(in srgb, var(--color-text) 70%, transparent);
+  color: var(--color-text-muted);
 }
 .input {
   width: 100%; min-height: 36px; padding: 6px 10px; font: inherit;
@@ -161,7 +169,7 @@ a { color: var(--color-accent); text-underline-offset: 3px; }
   position: absolute; opacity: 0; width: 0; height: 0; pointer-events: none;
 }
 .seg-opt + .seg-opt { border-left: 1px solid var(--color-divider); }
-.seg-opt:has(input:checked) { background: var(--color-accent); color: var(--color-bg); }
+.seg-opt:has(input:checked) { background: var(--color-accent-fill); color: var(--color-bg); }
 .seg-opt:not(:has(input:checked)):hover { background: color-mix(in srgb, var(--color-text) 7%, transparent); }
 .seg-opt:has(input:focus-visible) { outline: 2px solid var(--color-accent); outline-offset: -2px; }
 
@@ -170,14 +178,14 @@ a { color: var(--color-accent); text-underline-offset: 3px; }
   display: flex; flex-direction: column; gap: var(--space-2);
   padding: var(--space-3); border-radius: var(--radius-md); background: var(--color-surface);
 }
-.card-kicker { font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-accent); }
+.card-kicker { font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-accent-text); }
 .card-title {
   font-family: var(--font-heading); font-weight: var(--font-heading-weight);
   font-size: 17px; line-height: 1.2;
 }
 .card-meta {
   display: flex; align-items: center; gap: 6px; font-size: 11px;
-  color: color-mix(in srgb, var(--color-text) 50%, transparent);
+  color: var(--color-text-muted);
 }
 
 /* — tags — */
@@ -189,7 +197,7 @@ a { color: var(--color-accent); text-underline-offset: 3px; }
 .tag-accent { background: var(--color-accent-100); color: var(--color-accent-800); }
 .tag-accent-2 { background: var(--color-accent-2-100); color: var(--color-accent-2-800); }
 .tag-neutral { background: var(--color-neutral-100); color: var(--color-neutral-800); }
-.tag-outline { border: 1px solid var(--color-accent); color: var(--color-accent); }
+.tag-outline { border: 1px solid var(--color-accent-text); color: var(--color-accent-text); }
 
 /* — tool inventory: compact loaded/used indicators — */
 .tool-status-dot {
@@ -236,7 +244,7 @@ a { color: var(--color-accent); text-underline-offset: 3px; }
 .table { width: 100%; border-collapse: collapse; font-size: 14px; }
 .table th {
   text-align: left; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
-  color: color-mix(in srgb, var(--color-text) 60%, transparent);
+  color: var(--color-text-muted);
   padding: var(--space-2); border-bottom: 1px solid var(--color-divider);
 }
 .table td {
@@ -261,7 +269,7 @@ a { color: var(--color-accent); text-underline-offset: 3px; }
    system's transparent treatment. */
 .dialog { background: var(--color-bg); border: 1px solid var(--color-divider); }
 .btn { border: 1px solid var(--color-divider); }
-.btn-primary { border-color: var(--color-accent); }
+.btn-primary { border-color: var(--color-accent-fill); }
 .btn-ghost { border-color: transparent; }
 
 /* — tool-call audit charts (Phase 9.10). Marks follow the dataviz spec:
@@ -279,7 +287,7 @@ a { color: var(--color-accent); text-underline-offset: 3px; }
 .chart-svg { display: block; overflow: visible; }
 .chart-grid { stroke: var(--color-neutral-300); stroke-width: 1; }
 .chart-baseline { stroke: var(--color-neutral-500); stroke-width: 1; }
-.chart-axis-text { font-size: 10px; fill: color-mix(in srgb, var(--color-text) 60%, transparent); font-variant-numeric: tabular-nums; }
+.chart-axis-text { font-size: 10px; fill: var(--color-text-muted); font-variant-numeric: tabular-nums; }
 .chart-column { cursor: pointer; outline: none; }
 .chart-band { fill: transparent; }
 .chart-column:hover .chart-band, .chart-column:focus-visible .chart-band { fill: color-mix(in srgb, var(--color-text) 6%, transparent); }
@@ -309,15 +317,15 @@ a { color: var(--color-accent); text-underline-offset: 3px; }
 /* — audit stat tiles and status tags — */
 .stat-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(118px, 1fr)); gap: var(--space-2); }
 .stat-tile { display: flex; flex-direction: column; gap: 2px; padding: var(--space-2) var(--space-3); border: 1px solid var(--color-divider); }
-.stat-tile-label { font-size: 11px; color: color-mix(in srgb, var(--color-text) 65%, transparent); }
+.stat-tile-label { font-size: 11px; color: var(--color-text-muted); }
 .stat-tile-value { font-size: 24px; font-weight: 500; line-height: 1.15; font-variant-numeric: proportional-nums; }
 .stat-tile-value--alert { color: #b02a2a; }
-.stat-tile-note { font-size: 11px; color: color-mix(in srgb, var(--color-text) 55%, transparent); }
+.stat-tile-note { font-size: 11px; color: var(--color-text-muted); }
 .status-tag { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; padding: 2px 8px; border: 1px solid var(--color-divider); white-space: nowrap; }
 .status-tag-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
 .filter-chips { display: flex; flex-wrap: wrap; gap: var(--space-1); align-items: center; }
 .filter-chip { font-size: 12px; padding: 2px 8px; border: 1px solid var(--color-divider); background: transparent; cursor: pointer; font-family: inherit; color: inherit; }
-.filter-chip[aria-pressed="true"] { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-bg); }
+.filter-chip[aria-pressed="true"] { background: var(--color-accent-fill); border-color: var(--color-accent-fill); color: var(--color-bg); }
 .audit-section { display: flex; flex-direction: column; gap: var(--space-2); padding: var(--space-3); }
 .audit-grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: var(--space-4); }
 .mono { font-family: monospace; font-size: 12px; }
@@ -357,7 +365,7 @@ a { color: var(--color-accent); text-underline-offset: 3px; }
 .listbox-value--possible:hover { background: var(--color-accent-100); }
 .listbox-value--alternative { background: #dcdcde; color: var(--color-text); }
 .listbox-value--excluded { background: #a9a9ac; color: #1d1f20; }
-.listbox-count { font-variant-numeric: tabular-nums; opacity: 0.75; }
+.listbox-count { font-variant-numeric: tabular-nums; }
 .listbox-empty { font-size: 12px; margin: 0; padding: 2px var(--space-2); }
 .listbox-legend { display: flex; flex-wrap: wrap; gap: var(--space-2); list-style: none; margin: 0; padding: 0; font-size: 11px; }
 .listbox-legend li { display: inline-flex; align-items: center; gap: 4px; }

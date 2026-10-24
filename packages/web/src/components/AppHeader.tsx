@@ -56,7 +56,7 @@ export function AppHeader({
         />
         <div>
           <div className="nav-brand">{displayName}</div>
-          <div style={{ fontSize: 11, color: "color-mix(in srgb, var(--color-text) 55%, transparent)" }}>
+          <div style={{ fontSize: 11, color: "var(--color-text-muted)" }}>
             GitHub Copilot Chat
           </div>
         </div>

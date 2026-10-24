@@ -123,6 +123,20 @@ describe("SystemPromptInspector", () => {
     expect(screen.getByText(/owasp top 10/i)).toBeInTheDocument();
   });
 
+  // §3.5 (handed over from 10.5): the pastel grounds stay light in a dark
+  // theme, so their text is pinned dark rather than the theme's light text.
+  it("pins dark text on every pastel text-pane segment", async () => {
+    stubFetchText(SAMPLE_TEXT);
+    render(<SystemPromptInspector sessionId="session-1" onClose={() => {}} />);
+    await screen.findByRole("button", { name: /security requirements/i });
+
+    const segments = document.querySelectorAll<HTMLElement>('[data-testid^="prompt-node-"]');
+    expect(segments.length).toBeGreaterThan(0);
+    for (const segment of segments) {
+      expect(segment.style.color).toBe("rgb(29, 31, 32)");
+    }
+  });
+
   it("indents a depth-2 nav entry via a single padding shorthand, not a separate paddingLeft a later padding could clobber", async () => {
     stubFetchText(SAMPLE_TEXT);
     render(<SystemPromptInspector sessionId="session-1" onClose={() => {}} />);

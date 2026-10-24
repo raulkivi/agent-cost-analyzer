@@ -103,6 +103,29 @@ describe("VS Code theme mapping (vscode-extension.md step 10.5)", () => {
     expect(declarationsUsing(rules, variable)).toContain(property);
   });
 
+  // A custom property's var() resolves where it's declared: a :root token
+  // derived from --color-text would keep the Industry text colour on body,
+  // where the webview's own --color-text lives, unless it's declared again.
+  it("redeclares every theme.css token that derives from another token", () => {
+    const standalone = parseRules(readFileSync(path.join(srcDir, "theme.css"), "utf-8"));
+    const root = standalone.find((rule) => rule.selectors.includes(":root"));
+    const derived = [...(root?.declarations ?? [])].filter(([, value]) => value.includes("var(--color-")).map(([name]) => name);
+    const { declarations } = tokenRule(parseRules(readVscodeTheme()));
+
+    expect(derived.length).toBeGreaterThan(0);
+    for (const name of derived) {
+      expect(declarations.has(name), name).toBe(true);
+    }
+  });
+
+  it.each([
+    ["--color-text-muted", "--vscode-descriptionForeground"],
+    ["--color-accent-text", "--vscode-textLink-foreground"],
+    ["--color-accent-fill", "--vscode-button-background"],
+  ])("maps the text-safe role %s to %s", (token, variable) => {
+    expect(tokenRule(parseRules(readVscodeTheme())).declarations.get(token)).toMatch(new RegExp(`^var\\(${variable},`));
+  });
+
   it("falls back to the Industry palette wherever a --vscode-* variable is missing", () => {
     const uses = readVscodeTheme().match(/var\(--vscode-[\w-]+[^)]?/g) ?? [];
 

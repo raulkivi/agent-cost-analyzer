@@ -20,7 +20,7 @@ export function TimelineScrubber({ turnCount, selectedTurnIndex, onSelectTurn }:
         <div
           style={{
             fontSize: 12,
-            color: "color-mix(in srgb, var(--color-text) 60%, transparent)",
+            color: "var(--color-text-muted)",
             letterSpacing: "0.06em",
             textTransform: "uppercase",
           }}

@@ -11,8 +11,8 @@
    (theme-vscode.test.ts checks this). Loaded after theme.css (main.tsx).
 
    Tokens are set on <body>, so they override :root's for the whole page.
-   Colour-mixed tokens derive the theme's tints from the same variables;
-   the full contrast audit per theme is step 10.7's (§3.5 Accessibility). */
+   Colour-mixed tokens derive the theme's tints from the same variables.
+   Every fallback keeps text at 4.5:1 or more (theme-contrast.test.ts). */
 
 body.vscode-light,
 body.vscode-dark,
@@ -22,6 +22,12 @@ body.vscode-high-contrast {
   --color-surface: var(--vscode-input-background, #e9e9ea);
   --color-divider: var(--vscode-panel-border, color-mix(in srgb, #1d1f20 16%, transparent));
   --color-accent: var(--vscode-button-background, #5980a6);
+
+  /* theme.css's text-safe roles, declared again here: a :root token's
+     var(--color-text) would otherwise keep the Industry text colour. */
+  --color-text-muted: var(--vscode-descriptionForeground, color-mix(in srgb, var(--vscode-editor-foreground, #1d1f20) 70%, transparent));
+  --color-accent-text: var(--vscode-textLink-foreground, #416180);
+  --color-accent-fill: var(--vscode-button-background, #416180);
 
   /* The ramp steps theme.css pairs as light ground + dark text (tags, the
      config banner, selected rows), re-derived so they stay legible on a
@@ -44,7 +50,7 @@ body.vscode-high-contrast {
 body.vscode-light .text-muted,
 body.vscode-dark .text-muted,
 body.vscode-high-contrast .text-muted {
-  color: var(--vscode-descriptionForeground, color-mix(in srgb, var(--color-text) 55%, transparent));
+  color: var(--vscode-descriptionForeground, color-mix(in srgb, var(--color-text) 70%, transparent));
 }
 
 /* — focus: always the editor's own focus colour — */
@@ -73,8 +79,8 @@ body.vscode-high-contrast .input:focus-visible {
 body.vscode-light .btn-primary,
 body.vscode-dark .btn-primary,
 body.vscode-high-contrast .btn-primary {
-  background: var(--vscode-button-background, var(--color-accent));
-  border-color: var(--vscode-button-background, var(--color-accent));
+  background: var(--vscode-button-background, var(--color-accent-fill));
+  border-color: var(--vscode-button-background, var(--color-accent-fill));
   color: var(--vscode-button-foreground, var(--color-bg));
 }
 body.vscode-light .btn-primary:hover,
