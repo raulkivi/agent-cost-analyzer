@@ -38,7 +38,7 @@ describe("theme.css (vscode-extension.md §3.5)", () => {
   it("stacks the dialog backdrop above the side drawer", () => {
     const css = readTheme();
     const zIndex = (selector: string) =>
-      Number(new RegExp(`${selector.replace(/[.-]/g, "\\$&")}\\s*\\{[^}]*z-index:\\s*(\\d+)`).exec(css)?.[1] ?? NaN);
+      Number(new RegExp(`${selector.replace(/[.*+?^${}()|[\]\\-]/g, "\\$&")}\\s*\\{[^}]*z-index:\\s*(\\d+)`).exec(css)?.[1] ?? NaN);
 
     expect(zIndex(".dialog-backdrop")).toBeGreaterThan(zIndex(".drawer--side"));
   });
