@@ -1,4 +1,4 @@
-# Vision: GitHub Copilot Chat Cost & Token Usage Analyzer
+# Vision: Agent Cost Analyzer and AI Credits Analyzer
 
 ## 1. Problem
 
