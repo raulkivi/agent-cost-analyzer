@@ -27,7 +27,11 @@ function renderedHeadingText(raw: string): string {
     .replace(/\s+#+\s*$/, "")
     .replace(/!?\[([^\]]*)\]\([^)]*\)/g, "$1")
     .replace(/`([^`]*)`/g, "$1")
-    .replace(/<[^>]+>/g, "")
+    // An HTML tag starts with a letter or "/"; "a < b > c" is plain text.
+    .replace(/<\/?[A-Za-z][^>]*>/g, "")
+    // A nested or broken tag (e.g. "<scr<b>ipt>") and plain-text brackets
+    // leave "<" or ">" behind; GitHub's slug drops them, so drop them too.
+    .replace(/[<>]/g, "")
     .replace(/(\*\*|__)(.+?)\1/g, "$2")
     .replace(/\*(.+?)\*/g, "$1")
     .replace(/(^|[^\p{L}\p{N}])_(.+?)_(?![\p{L}\p{N}])/gu, "$1$2");

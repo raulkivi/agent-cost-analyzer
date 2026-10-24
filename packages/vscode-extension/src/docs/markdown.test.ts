@@ -27,6 +27,10 @@ describe("headingAnchors", () => {
     expect([...anchors]).toEqual(["title", "the-aicreditsanalyzermcpenabled-setting", "linked-and-bold", "emphasis-here"]);
   });
 
+  it("leaves no angle bracket from a nested or broken tag in the slug", () => {
+    expect([...headingAnchors("## Use <scr<b>ipt> here\n## a < b > c")]).toEqual(["use-ipt-here", "a--b--c"]);
+  });
+
   it("numbers repeated headings the way GitHub does", () => {
     expect([...headingAnchors("## Steps\n## Steps\n## Steps")]).toEqual(["steps", "steps-1", "steps-2"]);
   });
