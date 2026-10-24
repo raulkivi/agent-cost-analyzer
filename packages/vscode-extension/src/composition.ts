@@ -6,6 +6,7 @@ import { watchConfigChanges, type ConfigurationChangeSource } from "./config/con
 import { AnalyzerPanel, type Disposable } from "./panel/analyzer-panel.js";
 import { createNonce } from "./panel/nonce.js";
 import { buildPanelHtml, type ViteManifest } from "./panel/panel-html.js";
+import { HostCommandHandler, type HostCommands } from "./rpc/host-command-handler.js";
 import { MessageDispatcher } from "./rpc/message-dispatcher.js";
 import { copilotLogPathsFromUserDataDir } from "./platform/copilot-log-paths.js";
 import { userDataDirFromGlobalStorage } from "./platform/vscode-user-data-dir.js";
@@ -24,6 +25,9 @@ export interface ExtensionCompositionInput {
   globalState: Memento;
   // vscode.workspace: the effective settings (G6) and their change events.
   workspace: ConfigurationReader & ConfigurationChangeSource;
+  // What the editor does for the webview's host commands (G8):
+  // vscode/vscode-host-commands.ts over the real API.
+  hostCommands: HostCommands;
 }
 
 export interface ComposedExtension extends Disposable {
@@ -42,6 +46,7 @@ export function composeExtension({
   globalStoragePath,
   globalState,
   workspace,
+  hostCommands,
 }: ExtensionCompositionInput): ComposedExtension {
   const mediaDir = path.join(extensionPath, "media");
   // Copilot only (vscode-extension.md §3.1). Every log path comes from the
@@ -63,6 +68,11 @@ export function composeExtension({
   });
   const dispatcher = new MessageDispatcher(api, {
     onInternalError: (method, error) => console.error(`AI Credits Analyzer: ${method} failed`, error),
+    // openSetting may only open what the current config status warns about
+    // (plus the two Copilot logging settings).
+    hostCommands: new HostCommandHandler(hostCommands, () => api.getConfigStatus(), {
+      onInternalError: (command, error) => console.error(`AI Credits Analyzer: ${command} failed`, error),
+    }),
   });
   const panel = new AnalyzerPanel({
     createPanel: createVscodeWebviewPanel,

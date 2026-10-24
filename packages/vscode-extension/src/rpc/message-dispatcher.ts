@@ -1,14 +1,29 @@
-import { apiMethodParamsSchemas, apiMethodSchema, type ApiMethod, type RpcResponse } from "@copilot-cost-analyzer/domain";
+import {
+  apiMethodParamsSchemas,
+  apiMethodSchema,
+  type ApiMethod,
+  type RpcCommandResponse,
+  type RpcResponse,
+} from "@copilot-cost-analyzer/domain";
 import type { ApiQuery, ApiService } from "@copilot-cost-analyzer/server/src/services/api/api-service";
 import { ApiError, statusForApiError } from "@copilot-cost-analyzer/server/src/services/api/api-errors";
+import { describeIssues } from "./describe-issues.js";
 
 // The ApiService surface the webview may call (vscode-extension.md D2).
 export type DispatcherApi = Pick<ApiService, ApiMethod>;
+
+// Handles the webview's host commands (domain rpc.ts, G8); in the extension
+// a HostCommandHandler (rpc/host-command-handler.ts).
+export interface HostCommandSink {
+  handle(message: { id: string; command?: unknown; args?: unknown }): Promise<RpcCommandResponse>;
+}
 
 export interface MessageDispatcherOptions {
   // Hears every error that isn't one of ApiService's typed errors; the
   // webview only ever gets a generic 500 for those.
   onInternalError?: (method: ApiMethod, error: unknown) => void;
+  // Without it, every host command is answered with 400.
+  hostCommands?: HostCommandSink;
 }
 
 type Params = Record<string, unknown>;
@@ -88,7 +103,8 @@ function invoke(api: DispatcherApi, method: ApiMethod, params: Params): Promise<
 // The extension host's end of the webview RPC (vscode-extension.md §4,
 // D1): validates each request's method against the domain's allow-list,
 // calls ApiService, and maps its typed errors to the HTTP API's statuses.
-// The webview is untrusted content, so nothing else gets through and no
+// Host commands (G8) go to their own handler, never to ApiService. The
+// webview is untrusted content, so nothing else gets through and no
 // internal error detail goes back to it.
 export class MessageDispatcher {
   constructor(
@@ -96,9 +112,19 @@ export class MessageDispatcher {
     private readonly options: MessageDispatcherOptions = {},
   ) {}
 
-  // The reply to post back, or undefined for a message that isn't a request.
-  async dispatch(message: unknown): Promise<RpcResponse | undefined> {
-    if (!isRecord(message) || message.kind !== "request" || typeof message.id !== "string") {
+  // The reply to post back, or undefined for a message that is neither a
+  // request nor a host command. Commands never reach ApiService.
+  async dispatch(message: unknown): Promise<RpcResponse | RpcCommandResponse | undefined> {
+    if (!isRecord(message) || typeof message.id !== "string") {
+      return undefined;
+    }
+    if (message.kind === "command") {
+      const { id } = message;
+      return this.options.hostCommands
+        ? this.options.hostCommands.handle({ ...message, id })
+        : failure(id, 400, "Host commands are not available");
+    }
+    if (message.kind !== "request") {
       return undefined;
     }
     const { id } = message;
@@ -128,8 +154,7 @@ export class MessageDispatcher {
 }
 
 function describeInvalidParams(method: ApiMethod, error: { issues: { path: PropertyKey[]; message: string }[] }): string {
-  const issues = error.issues.map((issue) => (issue.path.length > 0 ? `${issue.path.map(String).join(".")}: ${issue.message}` : issue.message));
-  return `Invalid params for ${method}: ${issues.join("; ")}`;
+  return `Invalid params for ${method}: ${describeIssues(error.issues)}`;
 }
 
 function failure(id: string, status: 400 | 404 | 500, message: string): RpcResponse {

@@ -20,18 +20,29 @@ const panels = [];
 class Uri { constructor(fsPath) { this.fsPath = fsPath; } static file(p) { return new Uri(p); } }
 const settings = {};
 const configListeners = new Set();
+const executed = [];
+const clipboard = [];
+const documents = [];
+const shown = [];
 module.exports = {
   __commands: commands, __panels: panels, __settings: settings, Uri, ViewColumn: { Active: -1 },
+  __executed: executed, __clipboard: clipboard, __documents: documents, __shown: shown,
   __changeConfiguration(ids) {
     const event = { affectsConfiguration: (section) => ids.some((id) => id === section || id.startsWith(section + ".")) };
     for (const listener of [...configListeners]) listener(event);
   },
+  env: { clipboard: { writeText(text) { clipboard.push(text); return Promise.resolve(); } } },
   workspace: {
     getConfiguration: () => ({ get: (id) => settings[id] }),
+    openTextDocument(options) { const document = { ...options }; documents.push(document); return Promise.resolve(document); },
     onDidChangeConfiguration(listener) { configListeners.add(listener); return { dispose() { configListeners.delete(listener); } }; },
   },
-  commands: { registerCommand(id, fn) { commands.set(id, fn); return { dispose() { commands.delete(id); } }; } },
+  commands: {
+    registerCommand(id, fn) { commands.set(id, fn); return { dispose() { commands.delete(id); } }; },
+    executeCommand(id, ...args) { executed.push([id, ...args]); return Promise.resolve(); },
+  },
   window: {
+    showTextDocument(document) { shown.push(document); return Promise.resolve({}); },
     createWebviewPanel(viewType, title, column, options) {
       let onMessage;
       const panel = {
@@ -72,6 +83,10 @@ interface VscodeStub {
   __commands: Map<string, () => void>;
   __panels: StubPanel[];
   __settings: Record<string, unknown>;
+  __executed: unknown[][];
+  __clipboard: string[];
+  __documents: { content: string; language: string }[];
+  __shown: unknown[];
   __changeConfiguration(ids: string[]): void;
 }
 
@@ -147,6 +162,13 @@ describe("the built extension bundle", () => {
     expect((reply?.result as unknown[]).length).toBeGreaterThan(0);
   });
 
+  async function send(message: { kind: string; id: string; [key: string]: unknown }): Promise<Posted> {
+    const panel = vscode.__panels[0]!;
+    panel.send(message);
+    await expect.poll(() => panel.posted.find((reply) => reply.id === message.id)).toBeDefined();
+    return panel.posted.find((reply) => reply.id === message.id)!;
+  }
+
   async function call(method: string, params?: unknown): Promise<Posted> {
     const panel = vscode.__panels[0]!;
     const id = `${method}-${panel.posted.length}`;
@@ -194,5 +216,57 @@ describe("the built extension bundle", () => {
 
     vscode.__changeConfiguration(["github.copilot.chat.agentDebugLog.fileLogging.maxRetainedSessionLogs"]);
     expect(panel.posted).toEqual([{ kind: "event", name: "configChanged" }]);
+  });
+
+  describe("host commands (G8)", () => {
+    it("opens the Settings editor on a logging-disabled warning's setting (the Fix button)", async () => {
+      vscode.__settings["github.copilot.chat.agentDebugLog.fileLogging.enabled"] = false;
+
+      const reply = await send({
+        kind: "command",
+        id: "fix-logging",
+        command: "openSetting",
+        args: { settingId: "github.copilot.chat.agentDebugLog.fileLogging.enabled" },
+      });
+
+      expect(reply).toEqual({ kind: "response", id: "fix-logging", ok: true });
+      expect(vscode.__executed).toContainEqual([
+        "workbench.action.openSettings",
+        "github.copilot.chat.agentDebugLog.fileLogging.enabled",
+      ]);
+    });
+
+    it("rejects a setting id that no warning names with 400, and runs nothing", async () => {
+      const before = vscode.__executed.length;
+
+      const reply = await send({
+        kind: "command",
+        id: "fix-other",
+        command: "openSetting",
+        args: { settingId: "terminal.integrated.shellArgs.linux" },
+      });
+
+      expect(reply).toMatchObject({ ok: false, error: { status: 400 } });
+      expect(vscode.__executed).toHaveLength(before);
+    });
+
+    it("copies to VS Code's clipboard and opens text in an untitled editor", async () => {
+      expect(await send({ kind: "command", id: "copy", command: "copyToClipboard", args: { text: "bundle" } })).toMatchObject({
+        ok: true,
+      });
+      expect(
+        await send({ kind: "command", id: "doc", command: "openTextDocument", args: { content: "prompt", language: "plaintext" } }),
+      ).toMatchObject({ ok: true });
+
+      expect(vscode.__clipboard).toEqual(["bundle"]);
+      expect(vscode.__documents).toEqual([{ content: "prompt", language: "plaintext" }]);
+      expect(vscode.__shown).toEqual(vscode.__documents);
+    });
+
+    it("rejects a command that isn't on the allow-list with 400", async () => {
+      const reply = await send({ kind: "command", id: "shell", command: "executeCommand", args: { id: "workbench.action.terminal.new" } });
+
+      expect(reply).toMatchObject({ ok: false, error: { status: 400 } });
+    });
   });
 });

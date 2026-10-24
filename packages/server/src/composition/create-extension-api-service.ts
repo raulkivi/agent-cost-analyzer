@@ -20,8 +20,9 @@ export interface ExtensionApiServiceOptions extends CopilotProviderCompositionOp
 
 // The extension's product profile (vscode-extension.md §3.3): only the
 // Copilot provider is registered, so there's no provider select and no
-// cross-provider wording. settingFixes and openInEditor stay false until
-// step 10.5 implements the HostCapabilities behind them.
+// cross-provider wording. The extension host implements the openSetting and
+// openTextDocument host commands (step 10.5), so setting fixes and
+// open-in-editor are on.
 export function extensionProductProfile(version: string): ProductProfile {
   return {
     productId: "vscode-extension",
@@ -30,8 +31,8 @@ export function extensionProductProfile(version: string): ProductProfile {
     features: {
       providerSelect: false,
       crossProviderInsights: false,
-      settingFixes: false,
-      openInEditor: false,
+      settingFixes: true,
+      openInEditor: true,
     },
   };
 }

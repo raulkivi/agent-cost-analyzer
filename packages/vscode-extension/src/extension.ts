@@ -1,5 +1,6 @@
 import * as vscode from "vscode";
 import { composeExtension } from "./composition.js";
+import { createVscodeHostCommands } from "./vscode/vscode-host-commands.js";
 
 const OPEN_COMMAND = "aiCreditsAnalyzer.open";
 
@@ -13,6 +14,7 @@ export function activate(context: vscode.ExtensionContext): void {
     globalStoragePath: context.globalStorageUri.fsPath,
     globalState: context.globalState,
     workspace: vscode.workspace,
+    hostCommands: createVscodeHostCommands(vscode),
   });
   context.subscriptions.push(extension, vscode.commands.registerCommand(OPEN_COMMAND, () => extension.openPanel()));
 }
