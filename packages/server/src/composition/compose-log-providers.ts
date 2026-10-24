@@ -33,9 +33,10 @@ export interface LogProviderCompositionOptions {
   additionalLogProviders?: LogProvider[];
 }
 
-// Shared wiring for every entry point that reads sessions (the HTTP app in
-// app.ts and the stdio MCP server in mcp/stdio.ts): resolves each local
-// source path (overridable for tests) and builds the provider registry.
+// Shared wiring for every entry point that reads sessions (the HTTP app's
+// ApiService in create-standalone-api-service.ts and the stdio MCP server in
+// mcp/stdio.ts): resolves each local source path (overridable for tests)
+// and builds the provider registry over the file-backed app settings.
 export function composeLogProviders(options: LogProviderCompositionOptions = {}) {
   const resolvedDbPath =
     options.sessionStoreDbPath ?? resolveSessionStoreDbPath();
@@ -95,9 +96,6 @@ export function composeLogProviders(options: LogProviderCompositionOptions = {})
   return {
     registry,
     appSettings,
-    piAgentProvider,
-    resolvedDbPath,
-    resolvedDebugLogsDirPaths,
     resolvedVscodeSettingsPath,
     resolvedAppSettingsDir,
   };
