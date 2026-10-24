@@ -1127,7 +1127,9 @@ axe table tests and two column-chooser guard tests green on first run.
 - The manual usability script from §3.5 (first run, logging off, no
   sessions, a large session, keyboard only, high contrast), run once by
   the owner in a real VS Code, with notes and screenshots in the PR.
-  (Moved here from 10.7.)
+  (Moved here from 10.7.) The script, the MCP agent-mode check and the
+  remote check are in
+  [vscode-extension-manual-checks.md](vscode-extension-manual-checks.md).
 - `@vscode/test-cli` + `@vscode/test-electron` integration suite, run
   against the `stable` VS Code build (D9). It
   activates the extension, opens the panel, checks that the Sessions view
