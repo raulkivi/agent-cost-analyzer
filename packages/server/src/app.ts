@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync } from "node:fs";
 import type { DatabaseSync } from "node:sqlite";
 import express, { type Express } from "express";
 import {
@@ -19,12 +19,9 @@ import { AuditQueryService } from "./services/tool-audit/audit-query-service.js"
 import { parseSessionRangeQuery, parseToolCallFilterQuery } from "./services/tool-audit/audit-query-params.js";
 import { createLoopbackHostGuard } from "./http/loopback-host-guard.js";
 import { createInsightsService } from "./composition/create-insights-service.js";
+import { readAppVersion } from "./composition/app-version.js";
 
-const APP_VERSION = (
-  JSON.parse(
-    readFileSync(new URL("../package.json", import.meta.url), "utf-8"),
-  ) as { version: string }
-).version;
+const APP_VERSION = readAppVersion();
 
 export interface CreateAppOptions extends LogProviderCompositionOptions {
   // Ports a request's Host header may name (DNS-rebinding guard,

@@ -9,10 +9,12 @@ import {
   type TokenCount,
 } from "@copilot-cost-analyzer/domain";
 
-const fixturesDir = path.resolve(
-  path.dirname(fileURLToPath(import.meta.url)),
-  "../../../fixtures/learn-scenarios",
-);
+// Resolved only when no fixturesDir is injected (G4, vscode-extension.md
+// §2.2): a single-file bundle has no usable import.meta.url, so it passes
+// its own directory instead, and this must not run at import time.
+function defaultFixturesDir(): string {
+  return path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../../fixtures/learn-scenarios");
+}
 
 const SCENARIO_COST_UNKNOWN_REASON =
   "AI Credits total is unavailable because at least one turn in this scenario has an unknown cost.";
@@ -28,7 +30,19 @@ function deriveScenarioCost(raw: unknown): TokenCount {
   );
 }
 
-function loadScenarios(): Map<string, Session> {
+export interface LearnScenarioCatalog {
+  list(): Session[];
+  get(id: string): Session | undefined;
+}
+
+export interface LoadLearnScenariosOptions {
+  fixturesDir?: string;
+}
+
+// Reads and validates every fixture once, up front — callers load the
+// catalog at startup so an invalid bundled fixture still breaks startup.
+export function loadLearnScenarios(options: LoadLearnScenariosOptions = {}): LearnScenarioCatalog {
+  const fixturesDir = options.fixturesDir ?? defaultFixturesDir();
   const scenarios = new Map<string, Session>();
   const files = readdirSync(fixturesDir).filter((file) => file.endsWith(".json"));
 
@@ -49,15 +63,25 @@ function loadScenarios(): Map<string, Session> {
     scenarios.set(scenario.id, scenario);
   }
 
-  return scenarios;
+  return {
+    list: () => Array.from(scenarios.values()),
+    get: (id) => scenarios.get(id),
+  };
 }
 
-const scenarios = loadScenarios();
+let defaultCatalog: LearnScenarioCatalog | undefined;
 
+function getDefaultCatalog(): LearnScenarioCatalog {
+  defaultCatalog ??= loadLearnScenarios();
+  return defaultCatalog;
+}
+
+// The bundled scenarios from the default fixtures directory, loaded on
+// first use.
 export function listLearnScenarios(): Session[] {
-  return Array.from(scenarios.values());
+  return getDefaultCatalog().list();
 }
 
 export function getLearnScenario(id: string): Session | undefined {
-  return scenarios.get(id);
+  return getDefaultCatalog().get(id);
 }
