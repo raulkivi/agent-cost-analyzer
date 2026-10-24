@@ -23,7 +23,7 @@ function ToolCallsCell({ turn }: { turn: Turn }) {
     <>
       {turn.toolCalls.length}
       {failed > 0 && (
-        <span className="failure-badge" aria-label={`${failed} of ${turn.toolCalls.length} tool calls failed`}>
+        <span className="failure-badge" role="img" aria-label={`${failed} of ${turn.toolCalls.length} tool calls failed`}>
           <span aria-hidden="true">✕{failed}</span>
         </span>
       )}

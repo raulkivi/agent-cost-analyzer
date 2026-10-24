@@ -235,6 +235,19 @@ describe("TurnsTable", () => {
     expect(screen.queryByLabelText(/of 1 tool calls failed/)).not.toBeInTheDocument();
   });
 
+  // axe (§3.5): aria-label is only allowed on an element with a role.
+  it("gives the failure badge an image role, so its label is a permitted name", () => {
+    const turns = [
+      makeTurn({
+        index: 0,
+        toolCalls: [{ name: "Bash", argsSummary: "x", outcome: { status: "error", failureCategory: "command-not-found" } }],
+      }),
+    ];
+    render(<TurnsTable turns={turns} selectedTurnIndex={0} onSelectTurn={() => {}} />);
+
+    expect(screen.getByRole("img", { name: "1 of 1 tool calls failed" })).toHaveClass("failure-badge");
+  });
+
   // §3.5 Layout: the column chooser and the narrow layout's priority columns.
   it("renders only the given columns, header and cells alike", () => {
     const turns = [makeTurn({ index: 1 })];
