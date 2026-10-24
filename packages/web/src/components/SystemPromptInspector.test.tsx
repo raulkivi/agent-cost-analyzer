@@ -85,6 +85,25 @@ describe("SystemPromptInspector", () => {
     expect(await screen.findByText(/no system prompt/i)).toBeInTheDocument();
   });
 
+  // §3.5 States (AsyncView).
+  it("reports a failed load as an alert that changed nothing, and retries", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi
+        .fn()
+        .mockResolvedValueOnce({ ok: false, status: 404, text: () => Promise.resolve("") })
+        .mockResolvedValue({ ok: true, status: 200, text: () => Promise.resolve(SAMPLE_TEXT) }),
+    );
+    render(<SystemPromptInspector sessionId="session-1" onClose={() => {}} />);
+
+    const alert = await screen.findByRole("alert");
+    expect(alert).toHaveTextContent("Couldn't load the system prompt");
+    expect(alert).toHaveTextContent(/nothing was changed/i);
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+
+    expect(await screen.findByRole("button", { name: /security requirements/i })).toBeInTheDocument();
+  });
+
   it("shows a pi-agent-specific message mentioning npm run configure, with no VS Code hint and no link, on fetch failure", async () => {
     stubFetchText("", false, 404);
 

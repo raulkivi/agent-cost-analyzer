@@ -13,6 +13,7 @@ import {
 } from "../lib/audit-format.js";
 import { Blueprint } from "./ui/Blueprint.js";
 import { StatTile } from "./ui/StatTile.js";
+import { AsyncView } from "./ui/AsyncView.js";
 import { StatusTag } from "./ui/StatusTag.js";
 
 interface SessionAuditPanelProps {
@@ -22,6 +23,8 @@ interface SessionAuditPanelProps {
   onSelectTurn: (turnPosition: number) => void;
   onInspectTurn: (turnPosition: number) => void;
   loadAudit?: (sessionId: string) => Promise<SessionAudit>;
+  // The empty state's next step: the cross-session audit.
+  onShowAllSessions?: () => void;
 }
 
 const DEFAULT_STATUS_FILTER: ToolCallStatus[] = ["error", "interrupted", "denied"];
@@ -61,45 +64,77 @@ export function SessionAuditPanel({
   onSelectTurn,
   onInspectTurn,
   loadAudit = fetchSessionAudit,
+  onShowAllSessions,
 }: SessionAuditPanelProps) {
   const [state, setState] = useState<LoadState>({ kind: "loading" });
-  const [statusFilter, setStatusFilter] = useState<ToolCallStatus[]>(DEFAULT_STATUS_FILTER);
-  const [categoryFilter, setCategoryFilter] = useState<FailureCategory | null>(null);
-  const [programFilter, setProgramFilter] = useState<string | null>(null);
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
     setState({ kind: "loading" });
-    setCategoryFilter(null);
-    setProgramFilter(null);
-    setStatusFilter(DEFAULT_STATUS_FILTER);
     loadAudit(sessionId)
       .then((audit) => !cancelled && setState({ kind: "ready", audit }))
       .catch((error: Error) => !cancelled && setState({ kind: "error", message: error.message }));
     return () => {
       cancelled = true;
     };
-  }, [sessionId, loadAudit]);
+  }, [sessionId, loadAudit, attempt]);
 
   const audit = state.kind === "ready" ? state.audit : null;
+  return (
+    <AsyncView
+      status={state.kind === "ready" ? (state.audit.totals.toolCalls === 0 ? "empty" : "ready") : state.kind}
+      loadingText="Loading tool-call audit…"
+      readyText="Tool-call audit loaded."
+      skeleton="table"
+      error={
+        state.kind === "error"
+          ? {
+              title: `Could not load the tool-call audit: ${state.message}`,
+              onRetry: () => setAttempt((current) => current + 1),
+            }
+          : undefined
+      }
+      empty={{
+        title: "No tool calls in this session",
+        body: "The agent answered without running tools, so there is nothing to audit here.",
+        action: onShowAllSessions ? { label: "View all sessions", onClick: onShowAllSessions } : undefined,
+      }}
+      partial={
+        audit && audit.outcomeCoverage.unknown > 0
+          ? `Outcome unknown for ${audit.outcomeCoverage.unknown} of ${audit.totals.toolCalls} tool calls: ${audit.outcomeCoverage.unknownReasons.join(" ")}`
+          : undefined
+      }
+    >
+      {audit && (
+        // Keyed by session: a new session starts with the default filters.
+        <SessionAuditBody
+          key={sessionId}
+          data={audit}
+          selectedTurnIndex={selectedTurnIndex}
+          onSelectTurn={onSelectTurn}
+          onInspectTurn={onInspectTurn}
+        />
+      )}
+    </AsyncView>
+  );
+}
+
+function SessionAuditBody({
+  data,
+  selectedTurnIndex,
+  onSelectTurn,
+  onInspectTurn,
+}: Pick<SessionAuditPanelProps, "selectedTurnIndex" | "onSelectTurn" | "onInspectTurn"> & { data: SessionAudit }) {
+  const [statusFilter, setStatusFilter] = useState<ToolCallStatus[]>(DEFAULT_STATUS_FILTER);
+  const [categoryFilter, setCategoryFilter] = useState<FailureCategory | null>(null);
+  const [programFilter, setProgramFilter] = useState<string | null>(null);
   // Turn.index → array position, for callbacks into the app's turn selection.
   const positionOfTurn = useMemo(
-    () => new Map((audit?.perTurn ?? []).map((row, position) => [row.turnIndex, position])),
-    [audit],
+    () => new Map(data.perTurn.map((row, position) => [row.turnIndex, position])),
+    [data],
   );
 
-  if (state.kind === "loading") {
-    return <p className="text-muted" style={{ fontSize: 13 }}>Loading tool-call audit…</p>;
-  }
-  if (state.kind === "error") {
-    return (
-      <p role="alert" style={{ fontSize: 13, color: "var(--color-accent-800)" }}>
-        Could not load the tool-call audit: {state.message}
-      </p>
-    );
-  }
-
-  const { audit: data } = state;
   const knownOutcomes = data.outcomeCoverage.known;
   const failed = failedCountOf(data.totals);
   const shellCalls = data.byShellProgram.reduce((sum, row) => sum + row.calls, 0);
@@ -135,13 +170,6 @@ export function SessionAuditPanel({
         />
         <StatTile label="Output tokens in affected turns" {...affectedTurnsTokens(data)} />
       </div>
-
-      {data.outcomeCoverage.unknown > 0 && (
-        <p className="text-muted" style={{ fontSize: 12, margin: 0 }}>
-          Outcome unknown for {data.outcomeCoverage.unknown} of {data.totals.toolCalls} tool calls:{" "}
-          {data.outcomeCoverage.unknownReasons.join(" ")}
-        </p>
-      )}
 
       <Blueprint className="audit-section">
         <div className="card-kicker">Tool-call outcomes per turn</div>

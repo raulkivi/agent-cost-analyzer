@@ -30,6 +30,7 @@ import { TimelineScrubber } from "./components/TimelineScrubber.js";
 import { ToolInventoryPanel } from "./components/ToolInventoryPanel.js";
 import { TurnInspector } from "./components/TurnInspector.js";
 import { TurnsTable } from "./components/TurnsTable.js";
+import { AsyncView } from "./components/ui/AsyncView.js";
 import { Blueprint } from "./components/ui/Blueprint.js";
 import { SegmentedControl } from "./components/ui/SegmentedControl.js";
 import { Tag } from "./components/ui/Tag.js";
@@ -57,6 +58,15 @@ const CENTER_VIEW_OPTIONS = [
 ] as const;
 
 type CenterView = (typeof CENTER_VIEW_OPTIONS)[number]["value"];
+
+// A session or scenario list's fetch (§3.5 States).
+type ListLoad = { status: "loading" } | { status: "error"; message: string } | { status: "ready"; items: Session[] };
+
+// The open Analyze session's fetch; idle once it's loaded (or none is).
+type SessionLoad =
+  | { status: "idle" }
+  | { status: "loading"; sessionId: string }
+  | { status: "error"; sessionId: string; message: string };
 
 // The view-state storage key for the turns table's chosen columns.
 const TURN_COLUMNS_KEY = "turnColumns";
@@ -90,10 +100,12 @@ interface AppProps {
 
 export function App({ performanceMarks = pagePerformanceMarks }: AppProps = {}) {
   const [health, setHealth] = useState<HealthResponse | null>(null);
-  const [scenarios, setScenarios] = useState<Session[]>([]);
-  const [scenariosLoaded, setScenariosLoaded] = useState(false);
-  const [sessions, setSessions] = useState<Session[]>([]);
-  const [sessionsLoaded, setSessionsLoaded] = useState(false);
+  const [scenarioList, setScenarioList] = useState<ListLoad>({ status: "loading" });
+  const [scenarioAttempt, setScenarioAttempt] = useState(0);
+  const [sessionList, setSessionList] = useState<ListLoad>({ status: "loading" });
+  const [sessionAttempt, setSessionAttempt] = useState(0);
+  // The open Analyze session's own fetch, for the turns view's states.
+  const [sessionLoad, setSessionLoad] = useState<SessionLoad>({ status: "idle" });
   const [configWarnings, setConfigWarnings] = useState<ConfigWarning[]>([]);
   const [retentionThreshold, setRetentionThreshold] = useState<number | undefined>(undefined);
   const [showConfigBanner, setShowConfigBanner] = useState(true);
@@ -142,13 +154,11 @@ export function App({ performanceMarks = pagePerformanceMarks }: AppProps = {}) 
   }, []);
 
   useEffect(() => {
+    setScenarioList({ status: "loading" });
     fetchLearnScenarios()
-      .then((result) => {
-        setScenarios(result);
-        setScenariosLoaded(true);
-      })
-      .catch((error: Error) => setFetchError(error.message));
-  }, []);
+      .then((items) => setScenarioList({ status: "ready", items }))
+      .catch((error: Error) => setScenarioList({ status: "error", message: error.message }));
+  }, [scenarioAttempt]);
 
   useEffect(() => {
     fetchLogProviderStatus()
@@ -165,14 +175,15 @@ export function App({ performanceMarks = pagePerformanceMarks }: AppProps = {}) 
   // list reflects whichever provider GET /api/sessions currently reads from
   // (architecture.md §5's "reloads the same GET /api/sessions resource").
   useEffect(() => {
-    setSessionsLoaded(false);
+    let cancelled = false;
+    setSessionList({ status: "loading" });
     fetchSessions()
-      .then((result) => {
-        setSessions(result);
-        setSessionsLoaded(true);
-      })
-      .catch((error: Error) => setFetchError(error.message));
-  }, [activeProviderId]);
+      .then((items) => !cancelled && setSessionList({ status: "ready", items }))
+      .catch((error: Error) => !cancelled && setSessionList({ status: "error", message: error.message }));
+    return () => {
+      cancelled = true;
+    };
+  }, [activeProviderId, sessionAttempt]);
 
   // Loads on mount, and again whenever the host says the Copilot logging
   // settings changed (the extension's configChanged event; the standalone
@@ -223,8 +234,9 @@ export function App({ performanceMarks = pagePerformanceMarks }: AppProps = {}) 
   // list boxes, so it hides the session list as well.
   const showDashboard = mode === "analyze" && centerView === "dashboard";
   const hideRightColumn = mode === "analyze" && (centerView === "rollup" || showDashboard);
-  const listForMode = mode === "learn" ? scenarios : sessions;
-  const listLoaded = mode === "learn" ? scenariosLoaded : sessionsLoaded;
+  const listLoad = mode === "learn" ? scenarioList : sessionList;
+  const listForMode = listLoad.status === "ready" ? listLoad.items : [];
+  const listLoaded = listLoad.status === "ready";
 
   // After the commit that put the first session or scenario list on screen.
   useEffect(() => {
@@ -253,6 +265,9 @@ export function App({ performanceMarks = pagePerformanceMarks }: AppProps = {}) 
   function handleProviderChange(id: string): void {
     setActiveLogProvider(id)
       .then((status) => {
+        // The store drops the open session; drop its pending fetch too.
+        latestSessionRequestId.current++;
+        setSessionLoad({ status: "idle" });
         setProviders(status.providers);
         setActiveProviderId(status.activeProviderId);
       })
@@ -269,6 +284,9 @@ export function App({ performanceMarks = pagePerformanceMarks }: AppProps = {}) 
   }
 
   function handleModeChange(next: typeof mode): void {
+    // A pending or failed Analyze session fetch belongs to the old mode.
+    latestSessionRequestId.current++;
+    setSessionLoad({ status: "idle" });
     setAdviceSelection(new Set());
     setAdviceDialogOpen(false);
     setInspectorOpen(false);
@@ -303,6 +321,7 @@ export function App({ performanceMarks = pagePerformanceMarks }: AppProps = {}) 
   // the right column to its first tab.
   function openAnalyzeSession(sessionId: string, tab?: RightTab): void {
     const requestId = ++latestSessionRequestId.current;
+    setSessionLoad({ status: "loading", sessionId });
     fetchSession(sessionId)
       .then((result) => {
         // Ignore a response for a session the user has since navigated
@@ -310,6 +329,7 @@ export function App({ performanceMarks = pagePerformanceMarks }: AppProps = {}) 
         // after a faster later one and overwrite it.
         if (requestId === latestSessionRequestId.current) {
           loadSession(result);
+          setSessionLoad({ status: "idle" });
           if (tab) {
             setRightTab(tab);
           }
@@ -317,7 +337,7 @@ export function App({ performanceMarks = pagePerformanceMarks }: AppProps = {}) 
       })
       .catch((error: Error) => {
         if (requestId === latestSessionRequestId.current) {
-          setFetchError(error.message);
+          setSessionLoad({ status: "error", sessionId, message: error.message });
         }
       });
   }
@@ -414,23 +434,24 @@ export function App({ performanceMarks = pagePerformanceMarks }: AppProps = {}) 
         />
       ) : showEmptyState ? (
         <div style={{ padding: "var(--space-8) var(--space-4)", display: "flex", justifyContent: "center" }}>
-          <Blueprint style={{ maxWidth: 420, padding: "var(--space-4)", textAlign: "center" }}>
-            <div className="card-title" style={{ marginBottom: 6 }}>
-              {EMPTY_STATES[mode].title}
-            </div>
-            <p className="text-muted" style={{ fontSize: 13, margin: 0 }}>
-              {EMPTY_STATES[mode].body}
-            </p>
-            {mode === "analyze" && (
-              <button
-                type="button"
-                className="btn btn-secondary"
-                style={{ marginTop: "var(--space-3)" }}
-                onClick={() => setCenterView("dashboard")}
-              >
-                {features.crossProviderInsights ? "Open the dashboard across all providers" : "Open the dashboard"}
-              </button>
-            )}
+          <Blueprint style={{ maxWidth: 460 }}>
+            <AsyncView
+              status="empty"
+              loadingText=""
+              empty={{
+                title: EMPTY_STATES[mode].title,
+                body: EMPTY_STATES[mode].body,
+                action:
+                  mode === "analyze"
+                    ? {
+                        label: features.crossProviderInsights
+                          ? "Open the dashboard across all providers"
+                          : "Open the dashboard",
+                        onClick: () => setCenterView("dashboard"),
+                      }
+                    : undefined,
+              }}
+            />
           </Blueprint>
         </div>
       ) : (
@@ -444,14 +465,33 @@ export function App({ performanceMarks = pagePerformanceMarks }: AppProps = {}) 
           }}
         >
           <div style={showDashboard ? { display: "none" } : undefined}>
-            <SessionList
-              mode={mode}
-              sessions={listForMode}
-              selectedSessionId={session?.id ?? null}
-              onSelect={handleSelectSession}
-              adviceSelection={adviceSelection}
-              onToggleAdvice={handleToggleAdvice}
-            />
+            <AsyncView
+              status={listLoad.status}
+              loadingText={mode === "learn" ? "Loading scenarios…" : "Loading sessions…"}
+              readyText={`${listForMode.length} ${mode === "learn" ? "scenarios" : "sessions"} loaded.`}
+              skeleton="list"
+              error={
+                listLoad.status === "error"
+                  ? {
+                      title: mode === "learn" ? "Couldn't load the Learn scenarios" : "Couldn't load the session list",
+                      details: listLoad.message,
+                      onRetry: () =>
+                        mode === "learn"
+                          ? setScenarioAttempt((current) => current + 1)
+                          : setSessionAttempt((current) => current + 1),
+                    }
+                  : undefined
+              }
+            >
+              <SessionList
+                mode={mode}
+                sessions={listForMode}
+                selectedSessionId={session?.id ?? null}
+                onSelect={handleSelectSession}
+                adviceSelection={adviceSelection}
+                onToggleAdvice={handleToggleAdvice}
+              />
+            </AsyncView>
             <AdviceExportTriggerBar count={adviceSessions.length} onExport={() => setAdviceDialogOpen(true)} />
             <AdviceExportDialog
               sessions={adviceSessions}
@@ -498,6 +538,21 @@ export function App({ performanceMarks = pagePerformanceMarks }: AppProps = {}) 
                   Select a session to audit its tool calls.
                 </p>
               )
+            ) : sessionLoad.status !== "idle" ? (
+              <AsyncView
+                status={sessionLoad.status}
+                loadingText="Loading session…"
+                skeleton="table"
+                error={
+                  sessionLoad.status === "error"
+                    ? {
+                        title: "Couldn't open this session",
+                        details: sessionLoad.message,
+                        onRetry: () => openAnalyzeSession(sessionLoad.sessionId),
+                      }
+                    : undefined
+                }
+              />
             ) : session ? (
               <>
                 <div

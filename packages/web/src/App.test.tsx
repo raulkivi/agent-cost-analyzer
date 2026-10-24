@@ -340,6 +340,58 @@ describe("App", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent(/failed/i);
   });
 
+  // §3.5 States: the session list and the turns view use AsyncView.
+  describe("loading, error and empty states", () => {
+    it("reports a failed session list with Retry, which loads it again", async () => {
+      let failures = 1;
+      vi.stubGlobal(
+        "fetch",
+        vi.fn((url: string, init?: { body?: string }) =>
+          url === "/api/sessions" && failures-- > 0
+            ? Promise.resolve({ ok: false, status: 500, json: () => Promise.resolve({ error: "locked" }) })
+            : fakeFetch(url, init),
+        ),
+      );
+      render(<App />);
+      switchToAnalyze();
+
+      const alert = await screen.findByRole("alert");
+      expect(alert).toHaveTextContent("Couldn't load the session list");
+      expect(alert).toHaveTextContent(/nothing was changed/i);
+      fireEvent.click(within(alert).getByRole("button", { name: "Try again" }));
+
+      expect(await screen.findByRole("button", { name: "Fix the bug" })).toBeInTheDocument();
+    });
+
+    it("reports a failed session in the turns view, with Retry", async () => {
+      render(<App />);
+      switchToAnalyze();
+      fireEvent.click(await screen.findByRole("button", { name: "Broken session" }));
+
+      const alert = await screen.findByRole("alert");
+      expect(alert).toHaveTextContent("Couldn't open this session");
+      const fetchCalls = () =>
+        (fetch as unknown as { mock: { calls: unknown[][] } }).mock.calls.filter(([url]) => url === "/api/sessions/session-error").length;
+      expect(fetchCalls()).toBe(1);
+      fireEvent.click(within(alert).getByRole("button", { name: "Try again" }));
+      await waitFor(() => expect(fetchCalls()).toBe(2));
+    });
+
+    it("says why the session list is empty, with a next step (AsyncView's empty state)", async () => {
+      vi.stubGlobal(
+        "fetch",
+        vi.fn((url: string, init?: { body?: string }) =>
+          url === "/api/sessions" ? Promise.resolve({ ok: true, json: () => Promise.resolve([]) }) : fakeFetch(url, init),
+        ),
+      );
+      render(<App />);
+      switchToAnalyze();
+
+      expect(await screen.findByRole("heading", { name: "No Copilot Chat sessions found yet" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Open the dashboard across all providers" })).toBeInTheDocument();
+    });
+  });
+
   it("shows only the most-recently-selected session when an earlier session's fetch resolves after a later one", async () => {
     let resolveFirst: () => void = () => {};
     let resolveSecond: () => void = () => {};

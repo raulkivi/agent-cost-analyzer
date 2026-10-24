@@ -112,6 +112,40 @@ describe("InsightsDashboard", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent("Could not load insights: boom");
   });
 
+  // §3.5 States (AsyncView).
+  it("retries a failed load", async () => {
+    const { loadDataset } = renderDashboard(
+      vi.fn().mockRejectedValueOnce(new Error("boom")).mockResolvedValue(sampleInsightsDataset()),
+    );
+
+    fireEvent.click(await screen.findByRole("button", { name: "Try again" }));
+
+    expect(await screen.findByRole("group", { name: "AI Credits" })).toHaveTextContent("5.50");
+    expect(loadDataset).toHaveBeenCalledTimes(2);
+  });
+
+  it("offers all time as the empty range's next step", async () => {
+    const { loadDataset } = renderDashboard(
+      vi.fn().mockResolvedValue({ ...sampleInsightsDataset(), sessions: [], turns: [], toolCalls: [], findings: [] }),
+    );
+
+    fireEvent.click(await screen.findByRole("button", { name: "Show all time" }));
+
+    await waitFor(() => expect(loadDataset).toHaveBeenLastCalledWith({ limit: 200 }));
+  });
+
+  it("warns, as partial data, when a provider failed to load or was cut short", async () => {
+    const dataset = sampleInsightsDataset();
+    renderDashboard(
+      vi.fn().mockResolvedValue({
+        ...dataset,
+        providers: dataset.providers.map((provider, index) => (index === 0 ? { ...provider, error: "locked" } : provider)),
+      }),
+    );
+
+    expect(await screen.findByRole("note")).toHaveTextContent(/Partial data.*failed to load \(locked\)/);
+  });
+
   it("shows an empty state when no provider has sessions", async () => {
     renderDashboard(vi.fn().mockResolvedValue({ ...sampleInsightsDataset(), sessions: [], turns: [], toolCalls: [], findings: [] }));
     expect(await screen.findByText(/No sessions in this date range/)).toBeInTheDocument();
