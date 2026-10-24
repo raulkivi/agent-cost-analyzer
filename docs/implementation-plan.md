@@ -1216,7 +1216,9 @@ dataset and detectors).
 
 Full plan: [plans/vscode-extension.md](plans/vscode-extension.md)
 (steps 10.0-10.7, each with its own exit criterion, plus CI and Marketplace
-deployment). Not started.
+deployment). Not started. The extension is a separate, Copilot-only product
+that shares code with the standalone app (vision §5); the standalone app
+keeps every provider.
 
 Not part of the initial build (vision §5 "future path"); tracked here only
 so the seam stays intentional:

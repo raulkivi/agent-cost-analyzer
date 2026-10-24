@@ -63,9 +63,10 @@ cards with corner registration marks, Barlow/Barlow Condensed type.*
   signals (risky commands, anomalies, behaviour changes) that say what
   happened, when and why.
 - [VS Code extension plan](docs/plans/vscode-extension.md) — Phase 10
-  (not started): analysis of the current code, the steps to package the
-  app as a VS Code extension test-first, and how to ship it to the
-  Marketplace and Open VSX.
+  (not started): a separate, Copilot-only VS Code extension that shares
+  code with this standalone app. Covers the code analysis, the test-first
+  steps, the product boundary, and shipping to the Marketplace and Open
+  VSX.
 - [pi-system-prompt-logger](packages/pi-system-prompt-logger/README.md) —
   optional Pi coding-agent extension, vendored in this repo, that captures
   pi's assembled system prompt to a JSONL sidecar log so Analyze mode's

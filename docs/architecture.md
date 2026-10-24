@@ -1741,6 +1741,16 @@ module should be justified against these before being added:
 Detailed implementation and deployment plan:
 [plans/vscode-extension.md](plans/vscode-extension.md).
 
+**Two products (decided 2026-10-24, vision §5).** The extension is a
+separate, Copilot-only product. It composes its registry with a second
+composition root, `composeCopilotProviders()`, which registers only
+`VscodeLogProvider`. The standalone app keeps `composeLogProviders()`
+with every provider. A bundle-boundary test fails if Claude Code, pi or
+mitmproxy code reaches the extension bundle. The UI adapts through a
+`ProductProfile` the host supplies, never through product checks inside
+components. Both products ship the same MCP tools, each over its own
+registry. See the plan's §3 for the decisions (D1-D8).
+
 Per vision §5, the app may later be repackaged as a VS Code webview. Under
 this architecture that means:
 

@@ -159,11 +159,21 @@ showing the behavioral-proxy fallback silently.
 - **Visualization**: the turns table, timeline scrubber, and token/AI Credits
   charts can be built with JS visualization libraries such as D3.js or
   similar — no specific library is mandated yet.
-- **Future path**: the app may later be repackaged as a shared VS Code
-  extension (e.g. a webview). To keep that option open cheaply, the
-  visualization layer should stay decoupled from the local data-loading layer
-  (SQLite/`main.jsonl` access) so it can be swapped for the extension's own
-  data access without rewriting the UI.
+- **Two products, one codebase** (decided 2026-10-24, Phase 10,
+  [plans/vscode-extension.md](plans/vscode-extension.md)):
+  - a **VS Code extension** for GitHub Copilot Chat users, published to
+    the VS Code Marketplace and Open VSX. It reads Copilot Chat logs only
+    (no Claude Code, pi or mitmproxy support) and includes Learn and
+    Analyze modes, the tool audit, the insights dashboard and a
+    Copilot-only MCP server;
+  - the **standalone app** (this local web app), which stays a superset:
+    every log provider, including VS Code, and its own stdio MCP server.
+
+  The two have separate names and independent versions. They share the
+  domain model, UI components, services and the VS Code provider. To keep
+  that cheap, the visualization layer stays decoupled from the local
+  data-loading layer (SQLite/`main.jsonl` access), so the extension can
+  supply its own data access without rewriting the UI.
 
 ## 6. Non-goals
 
