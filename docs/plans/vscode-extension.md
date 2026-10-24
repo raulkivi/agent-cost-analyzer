@@ -955,7 +955,7 @@ built in two parallel halves.
 (dev); `@fontsource/barlow` and `@fontsource/barlow-condensed` 5.3.0.
 `npm audit` reports 0.
 
-*Still open, not built in this step:*
+*Still open (moved to 10.8 and 10.9 on 2026-10-24):*
 - "View as table" for charts.
 - Keyboard access to icicle cells; the structure menu is the keyboard
   path for now.
@@ -992,13 +992,31 @@ is verified in jsdom at those widths, not visually.
   `false`, with a description that explains what data it exposes),
   because it returns redacted session data to whichever model the chat
   uses (architecture §11.2).
+- **UI follow-ups carried over from 10.7** (shared web code, TDD as
+  usual):
+  - "View as table" for each chart. It shows the chart's data in an
+    accessible table and passes the axe suite.
+  - Keyboard access to the system-prompt icicle cells: arrow keys move
+    between cells, and Enter selects the same section as a click.
+  - The turns-table column chooser closes on an outside click, as well as
+    on Escape.
+  - Cancel in `AsyncView` for long loads. This needs an abortable call
+    (an `AbortSignal` through `ApiTransport` and the host dispatcher), or
+    the button stays hidden.
 - **Exit:** with the setting on, Copilot Chat agent mode lists the 9
   read-only tools, and `get_session_cost` answers for a real Copilot
   session. With it off, no server is registered.
 
 ### 10.9 Integration tests, remote check, packaging
 
-- Performance budgets from §3.5, using the timing marks from 10.7.
+- Performance budgets from §3.5. The webview posts its "first-render"
+  and "data-ready" timing marks (emitted since 10.7) to the host through a
+  host event or command. The integration suite asserts the budgets from
+  them. (Moved here from 10.7.)
+- The manual usability script from §3.5 (first run, logging off, no
+  sessions, a large session, keyboard only, high contrast), run once by
+  the owner in a real VS Code, with notes and screenshots in the PR.
+  (Moved here from 10.7.)
 - `@vscode/test-cli` + `@vscode/test-electron` integration suite, run
   against the `stable` VS Code build (D9). It
   activates the extension, opens the panel, checks that the Sessions view
