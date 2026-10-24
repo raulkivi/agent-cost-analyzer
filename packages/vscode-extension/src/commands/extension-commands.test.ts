@@ -176,6 +176,16 @@ describe("ExtensionCommands", () => {
       expect(hostCommands.openSetting).toHaveBeenCalledWith(LOGGING_SETTING);
     });
 
+    it("opens the extension's own MCP setting (the walkthrough's MCP step), even when the config status can't be read", async () => {
+      const { commands, hostCommands } = setup(async () => {
+        throw new Error("unreadable");
+      });
+
+      await commands.fixSetting("aiCreditsAnalyzer.mcp.enabled");
+
+      expect(hostCommands.openSetting).toHaveBeenCalledWith("aiCreditsAnalyzer.mcp.enabled");
+    });
+
     it("falls back to the default for an argument that isn't a setting id", async () => {
       const { commands, hostCommands } = setup();
 

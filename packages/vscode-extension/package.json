@@ -205,7 +205,7 @@
               "markdown": "resources/walkthrough/mcp.md"
             },
             "completionEvents": [
-              "onStepSelected"
+              "onSettingChanged:aiCreditsAnalyzer.mcp.enabled"
             ]
           }
         ]

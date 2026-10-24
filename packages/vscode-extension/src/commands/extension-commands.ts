@@ -6,6 +6,7 @@ import {
 } from "@copilot-cost-analyzer/domain";
 import { WATCHED_SETTING_IDS } from "../config/config-change-watcher.js";
 import { identityTranslate, type Translate } from "../l10n/localize.js";
+import { MCP_ENABLED_SETTING_ID } from "../mcp/mcp-server-definitions.js";
 import type { WalkthroughLauncher } from "../onboarding/walkthrough-offer.js";
 import { allowedSettingIds } from "../rpc/host-command-handler.js";
 import { COMMAND_IDS } from "./command-ids.js";
@@ -89,11 +90,13 @@ export class ExtensionCommands {
   // Opens the setting a Setup node (or a welcome link, with no argument)
   // names: the debug-logging setting by default. Only the settings a
   // current warning names, or the two Copilot logging settings, may be
-  // opened (the webview's openSetting rule).
+  // opened (the webview's openSetting rule), plus the extension's own MCP
+  // switch, which the walkthrough's MCP step links to. Opening a setting
+  // never changes it: turning the MCP server on stays the user's call.
   async fixSetting(target?: unknown): Promise<void> {
     const arg = stringArg(target, "settingId");
     const settingId = typeof arg === "string" && arg !== "" ? arg : WATCHED_SETTING_IDS[0];
-    if (!(await allowedSettingIds(this.deps.readConfigStatus)).has(settingId)) {
+    if (settingId !== MCP_ENABLED_SETTING_ID && !(await allowedSettingIds(this.deps.readConfigStatus)).has(settingId)) {
       throw new Error(this.t('Setting "{0}" can\'t be opened from the analyzer', settingId));
     }
     await this.deps.hostCommands.openSetting(settingId);

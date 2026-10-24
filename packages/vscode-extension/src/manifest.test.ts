@@ -350,9 +350,24 @@ describe("Get Started walkthrough (vscode-extension.md §3.5 Onboarding, §3.6 b
     expect(links(3)).toEqual([{ command: COMMAND_IDS.openLearnMode, args: [] }]);
   });
 
-  it("describes the MCP step honestly: no command to run until the server ships", () => {
-    expect(commandLinks(text(steps[4]!.description))).toEqual([]);
-    expect(text(steps[4]!.description)).toMatch(/later version/i);
+  it("links the MCP step to fixSetting with the MCP setting, and says it's off until turned on", () => {
+    const description = text(steps[4]!.description);
+
+    expect(commandLinks(description)).toEqual([{ command: COMMAND_IDS.fixSetting, args: [MCP_ENABLED_SETTING_ID] }]);
+    expect(description).not.toMatch(/later version/i);
+    expect(description).toMatch(/off until you turn it on/i);
+  });
+
+  it("explains, in the MCP step's page, the setting and the data it sends to the model", () => {
+    const page = readFileSync(path.join(packageDir, steps[4]!.media.markdown!), "utf-8");
+
+    expect(page).not.toMatch(/later version/i);
+    expect(page).toContain(MCP_ENABLED_SETTING_ID);
+    for (const words of ["read-only", "redacted", "costs", "tool calls", "findings", "turn text", "whichever model"]) {
+      expect(page, words).toContain(words);
+    }
+    // The page is shown as Markdown: no command links or remote content there.
+    expect(page).not.toMatch(/command:|https?:\/\/|<script|<img/i);
   });
 
   it("completes steps from the settings and commands they are about", () => {
@@ -361,11 +376,13 @@ describe("Get Started walkthrough (vscode-extension.md §3.5 Onboarding, §3.6 b
       [`onSettingChanged:${RETENTION_SETTING}`],
       [`onCommand:${COMMAND_IDS.openSession}`, `onCommand:${COMMAND_IDS.open}`],
       [`onCommand:${COMMAND_IDS.openLearnMode}`],
-      ["onStepSelected"],
+      [`onSettingChanged:${MCP_ENABLED_SETTING_ID}`],
     ]);
   });
 
-  it("names, in completionEvents, only contributed commands, the watched Copilot settings, or onStepSelected", () => {
+  it("names, in completionEvents, only contributed commands, the watched Copilot settings, contributed settings, or onStepSelected", () => {
+    const contributedSettings = [contributes.configuration ?? []].flat().flatMap((section) => Object.keys(section.properties));
+    const settings = [...WATCHED_SETTING_IDS, ...contributedSettings];
     const events = steps.flatMap((step) => step.completionEvents ?? []);
 
     expect(events.length).toBeGreaterThan(0);
@@ -378,7 +395,7 @@ describe("Get Started walkthrough (vscode-extension.md §3.5 Onboarding, §3.6 b
       if (kind === "onCommand") {
         expect(contributedCommands.has(target), event).toBe(true);
       } else if (kind === "onSettingChanged") {
-        expect((WATCHED_SETTING_IDS as readonly string[]).includes(target), event).toBe(true);
+        expect(settings.includes(target), event).toBe(true);
       } else {
         expect.fail(`unexpected completion event ${event}`);
       }
