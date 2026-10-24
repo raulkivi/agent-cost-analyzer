@@ -1215,7 +1215,7 @@ dataset and detectors).
 ## Phase 10 — VS Code extension packaging (future, out of MVP scope)
 
 Full plan: [plans/vscode-extension.md](plans/vscode-extension.md)
-(steps 10.0-10.8, each with its own exit criterion, plus CI and Marketplace
+(steps 10.0-10.9, each with its own exit criterion, plus CI and Marketplace
 deployment). Not started. The extension is a separate, Copilot-only product
 that shares code with the standalone app (vision §5); the standalone app
 keeps every provider.

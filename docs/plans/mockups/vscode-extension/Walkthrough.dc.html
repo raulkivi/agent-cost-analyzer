@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>AI Credits Analyzer, Get Started walkthrough</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:#4daafc}a:hover{color:#7cc0ff}
+</style>
+</helmet>
+<div style="width: 1280px; height: 800px; box-sizing: border-box; display: flex; flex-direction: column; font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; font-size: 13px; background: #1f1f1f; color: #cccccc; overflow: hidden">
+  <div style="height: 35px; display: flex; background: #181818; border-bottom: 1px solid #2b2b2b">
+    <div style="display: flex; align-items: center; padding: 0 12px; background: #1f1f1f; border-top: 1px solid #0078d4; border-right: 1px solid #2b2b2b">Welcome</div>
+  </div>
+  <div style="flex-grow: 1; display: flex; gap: 48px; padding: 40px 64px; min-height: 0">
+    <section aria-labelledby="wt-title" style="width: 520px; flex-shrink: 0; display: flex; flex-direction: column; gap: 14px">
+      <a href="#" style="font-size: 13px">‹ Go back</a>
+      <h1 id="wt-title" style="margin: 0; font-size: 24px; font-weight: 600">Get started with AI Credits Analyzer</h1>
+      <p style="margin: 0; color: #b4b4b4; line-height: 1.5">See where your Copilot Chat tokens and AI Credits go, from logs on your own machine.</p>
+      <div role="progressbar" aria-label="Walkthrough progress" aria-valuenow="1" aria-valuemin="0" aria-valuemax="5" style="height: 4px; background: #313131; border-radius: 2px"><div style="width: 20%; height: 4px; background: #0078d4; border-radius: 2px"></div></div>
+      <ol style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 4px">
+        <sc-for list="{{steps}}" as="s" hint-placeholder-count="5">
+          <li style="display: flex; gap: 12px; padding: 12px 14px; border-radius: 4px; background: {{s.bg}}; border: 1px solid {{s.border}}">
+            <span aria-label="{{s.state}}" style="width: 18px; height: 18px; flex-shrink: 0; border-radius: 9px; border: 1px solid {{s.ring}}; background: {{s.fill}}; display: flex; align-items: center; justify-content: center; margin-top: 1px">
+              <sc-if value="{{s.done}}" hint-placeholder-val="{{false}}"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="3"><path d="M5 12l5 5 9-10"></path></svg></sc-if>
+            </span>
+            <div style="display: flex; flex-direction: column; gap: 8px; flex-grow: 1">
+              <strong style="font-weight: 600; color: {{s.titleFg}}">{{s.title}}</strong>
+              <sc-if value="{{s.open}}" hint-placeholder-val="{{false}}">
+                <p style="margin: 0; line-height: 1.5; color: #b4b4b4">{{s.body}}</p>
+                <div style="display: flex; gap: 8px"><button style="height: 28px; padding: 0 12px; border: 0; border-radius: 2px; background: #0078d4; color: #ffffff; font: inherit">{{s.action}}</button></div>
+              </sc-if>
+            </div>
+          </li>
+        </sc-for>
+      </ol>
+      <label style="display: flex; gap: 8px; align-items: center; margin-top: auto; color: #9d9d9d"><input type="checkbox" checked="checked"> Mark done when the setting changes</label>
+    </section>
+    <figure aria-label="Illustration: the Sessions view after logging is enabled" style="margin: 0; flex-grow: 1; min-width: 0; display: flex; align-items: center; justify-content: center; border: 1px solid #2b2b2b; border-radius: 6px; background: #181818">
+      <div style="width: 300px; display: flex; flex-direction: column; border: 1px solid #2b2b2b; border-radius: 4px; background: #1f1f1f; padding: 8px 0">
+        <span style="padding: 4px 14px; font-size: 11px; font-weight: 700; letter-spacing: 0.04em">SESSIONS</span>
+        <span style="padding: 4px 14px; font-weight: 600">Today</span>
+        <div style="display: flex; justify-content: space-between; padding: 4px 14px 4px 28px; background: #04395e; color: #ffffff"><span>Refactor token cache</span><span>4.82</span></div>
+        <div style="display: flex; justify-content: space-between; padding: 4px 14px 4px 28px"><span>Fix flaky audit test</span><span style="color: #9d9d9d">3.17</span></div>
+        <div style="display: flex; justify-content: space-between; padding: 4px 14px 4px 28px"><span>Rename settings dir</span><span style="color: #9d9d9d">unknown</span></div>
+        <figcaption style="padding: 12px 14px 4px; color: #9d9d9d; line-height: 1.5">Each session shows its AI Credits total. "unknown" means the log had no cost data.</figcaption>
+      </div>
+    </figure>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":800}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var raw = [
+      { title: 'Enable Copilot Chat debug logging', done: true },
+      { title: 'Keep at least 200 sessions', open: true, body: 'Copilot Chat keeps the last 50 session logs by default. 200 gives enough history to spot trends and anomalies.', action: 'Keep 200 sessions' },
+      { title: 'Open your first session' },
+      { title: 'Learn how prompt caching saves AI Credits' },
+      { title: 'Ask Copilot about your costs (MCP, optional)' }
+    ];
+    var steps = raw.map(function (s) {
+      return {
+        title: s.title, body: s.body || '', action: s.action || '', done: !!s.done, open: !!s.open,
+        state: s.done ? 'Done' : 'Not done',
+        bg: s.open ? '#252526' : 'transparent', border: s.open ? '#2b2b2b' : 'transparent',
+        ring: s.done ? '#0078d4' : '#9d9d9d', fill: s.done ? '#0078d4' : 'transparent',
+        titleFg: s.done ? '#9d9d9d' : '#cccccc'
+      };
+    });
+    return { steps: steps, false: false };
+  }
+}
+</script>
+</body>
+</html>

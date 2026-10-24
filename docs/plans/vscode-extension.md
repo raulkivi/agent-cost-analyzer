@@ -79,9 +79,11 @@ network calls, so neither product sends telemetry.
 | G6 | The config check reads only the user `settings.json` (workspace merge not implemented, Phase 5 note). | `services/config-check` | `SettingsSource` port with a `vscode.workspace.getConfiguration` adapter (10.4) |
 | G7 | The Vite build emits `/assets/...` absolute URLs and no manifest. Webviews need `asWebviewUri` URLs and a strict CSP. | `packages/web/vite.config.ts`, `index.html` | Extension build mode with `base: './'` and `build.manifest` (10.3) |
 | G8 | `navigator.clipboard` (advice export) isn't reliable in every webview host. | `AdviceExportDialog.tsx:30` | `HostCapabilities` port: clipboard, open setting, open text document (10.5) |
-| G9 | ESM-only workspace (`"type": "module"`), with `domain` exporting TypeScript source. | all `package.json` | esbuild bundle to CJS `dist/extension.js` and `dist/mcp-stdio.js` (10.3, 10.7) |
+| G9 | ESM-only workspace (`"type": "module"`), with `domain` exporting TypeScript source. | all `package.json` | esbuild bundle to CJS `dist/extension.js` and `dist/mcp-stdio.js` (10.3, 10.8) |
 | G10 | The UI assumes a multi-provider product: the header provider select, "across every provider" wording on the dashboard, and the provider column. It also says nothing about which product it is. | `AppHeader.tsx`, `components/insights/*` | `ProductProfile` sent by the host; the UI renders from it, never from `isExtension` checks (10.5) |
 | G11 | `composeLogProviders` imports all four providers statically, so any bundle that imports it includes them. | `composition/compose-log-providers.ts` | Split per-provider factories, plus a `composeCopilotProviders` root (10.3) |
+| G12 | `theme.css` loads Barlow fonts from Google Fonts. The webview CSP blocks that (and it's a network call, constraint 1). | `packages/web/src/theme.css:5` | Extension build uses the VS Code font; the standalone app bundles the fonts locally (10.7) |
+| G13 | No accessibility checks, one layout breakpoint (900 px, dashboard only), no `prefers-reduced-motion`, and loading/empty/error states differ per view. | `packages/web/src/*` | UX standards §3.5, step 10.7 |
 
 ## 3. Target architecture
 
@@ -164,10 +166,10 @@ flowchart LR
 - **D6: `extensionKind: ["workspace"]`.** Copilot Chat writes its logs
   where its own extension host runs. On Remote-SSH, WSL and Dev Containers
   that's the remote side, so this extension must run there too to see the
-  same files. Validate in step 10.8.
+  same files. Validate in step 10.9.
 - **D7: Copilot-only MCP in the extension.** The extension registers an MCP
   server definition with VS Code whose process composes only the Copilot
-  provider (step 10.7). The tool list and schemas are identical to the
+  provider (step 10.8). The tool list and schemas are identical to the
   standalone server's; only the data behind them differs.
 - **D8: Independent versions and names.** Each product has its own
   version, changelog, tag prefix and listing. The shared packages stay
@@ -225,7 +227,7 @@ another company's trademark in the product name.
 - `displayName`: `AI Credits Analyzer`. `name` (the Marketplace id under
   the publisher): `ai-credits-analyzer`. The Marketplace rejects a
   `displayName` already in use, so confirm it's free before the first
-  publish (step 10.8). If it's taken, fall back to "AI Credits Analyzer
+  publish (step 10.9). If it's taken, fall back to "AI Credits Analyzer
   for VS Code" rather than adding "Copilot".
 - `description`: names the use case, e.g. "See where your GitHub Copilot
   Chat tokens and AI Credits go: prompt caching, per-turn cost, tool-call
@@ -243,6 +245,59 @@ another company's trademark in the product name.
   `ProductProfile.displayName` (step 10.5). The repo name, the internal
   `@copilot-cost-analyzer/*` package scope and the app settings directory
   stay as they are, to avoid a migration.
+
+### 3.5 UX and accessibility standards
+
+Decided 2026-10-24. These rules apply to every surface of the extension.
+The UI code is shared, so they also apply to the standalone app.
+"Test" means an automated check that fails CI; "manual" means a step in
+the per-release usability script.
+
+| Area | Rule | Check |
+|---|---|---|
+| VS Code fit | Follow the VS Code UX guidelines (code.visualstudio.com/api/ux-guidelines). Every command sits under the category "AI Credits Analyzer". | Test (manifest test) |
+| VS Code fit | Contributions use codicons. The webview uses the bundled `@vscode/codicons` font and `--vscode-*` colour, font and focus variables. | Test (manifest test) + manual |
+| VS Code fit | Don't use the Webview UI Toolkit, which Microsoft deprecated in 2025. Build on plain CSS variables and the shared `components/ui/*` primitives. | Review |
+| VS Code fit | No unprompted notifications. Setup lives in the Setup view and the walkthrough. Host work over 1 s shows `withProgress` on the view; webview work shows inline progress. | Review + manual |
+| VS Code fit | Settings have `markdownDescription`, `order` and enum descriptions. | Test (manifest test) |
+| Onboarding | A Get Started walkthrough (`contributes.walkthroughs`) has 5 steps: enable logging, keep 200 sessions, open a session, Learn mode, MCP (optional). Steps complete through `completionEvents` (`onSettingChanged:…`, `onCommand:…`). | Test (manifest test) + manual |
+| Accessibility | WCAG 2.2 AA. axe-core reports no violations for every view in dark, light and high-contrast themes. | Test (`vitest-axe`) |
+| Accessibility | Everything works by keyboard. Arrow keys move through lists and the turns table, Enter opens, and Escape closes the inspector and drawers. Focus is always visible (`--vscode-focusBorder`) and never trapped. | Test (`@testing-library/user-event`) + manual |
+| Accessibility | Every chart has a text alternative: an `aria-label` summary plus a "View as table" toggle. | Test |
+| Accessibility | Text contrast is at least 4.5:1. High-contrast themes show `--vscode-contrastBorder` outlines. Severity and status are never shown by colour alone (icon plus text). | Test (axe) + manual |
+| Accessibility | `prefers-reduced-motion` turns off transitions and animated progress. Async results are announced through an `aria-live="polite"` region. | Test |
+| Layout | Layout depends on the panel's width, not the window's. At 1100 px and up: table plus right column. From 700 to 1099 px: the right column becomes a drawer. Below 700 px: priority columns (Turn, Trigger, AI Credits, Cumulative), a details drawer, and a view `<select>`. Minimum width 360 px. Users choose and keep the visible columns. | Test (pure `layoutFor(width)`) + manual |
+| States | Every data view uses one `AsyncView` pattern. **Loading:** a skeleton matching the final layout, shown after 300 ms so it doesn't flash, with Cancel for long loads. **Empty:** says why, plus a next step. **Error:** what failed, that nothing was changed, Retry and Copy details. **Partial:** a warning, never a zero (constraint 6). | Test |
+| Content | Sentence case and plain language. Units are always shown. AI Credits have 2 decimals and use tabular numbers. Dates are relative ("Today 14:02") with the absolute time in a tooltip. | Review |
+| Performance | First render of the panel in under 1 s with 200 sessions. Sessions tree in under 500 ms. Interactions respond in under 100 ms. | Test (integration timing) |
+| Localization | Host strings use `vscode.l10n` / `package.nls.json`, and webview strings go through one messages module. English only for now. | Test (no unused or missing keys) |
+| Usability | No telemetry, so each release runs a short manual script: first run, logging off, no sessions, a large session, keyboard only, high contrast. Screenshots go in the release PR. | Manual |
+
+### 3.6 UI mock-ups (for review)
+
+The mock-ups are on a Design canvas:
+**https://claude.ai/artifact/KXwmLWv77nG1arL5gENFYe**. The link is private
+until the owner shares it from the page's Share menu. Reviewers comment
+on the canvas. The source files are versioned in
+[mockups/vscode-extension/](mockups/vscode-extension/). They're
+`.dc.html` files rendered by the canvas, not standalone pages.
+
+All numbers in the mock-ups are sample data. Colours follow VS Code's
+default Dark Modern theme. The first board has a theme switch (dark,
+light, high contrast).
+
+| # | Board | Shows | Plan link |
+|---|---|---|---|
+| 1 | Session analysis | Activity Bar icon; Sessions tree grouped by day with AI Credits (and "unknown"); Setup view; panel with KPIs, view tabs, turns table with a column chooser, Explanation/System prompt/Tools column; status-bar AI Credits | D10, 10.5, 10.6 |
+| 2 | First run | Setup view with Enable and Keep 200 buttons; Sessions welcome view pointing to Learn mode; panel with a 3-step checklist; status bar "setup needed" | 10.4-10.6, §3.5 Onboarding |
+| 3 | Get Started walkthrough | 5 steps with progress, the current step open, and an illustration of the Sessions view | §3.5 Onboarding, 10.7 |
+| 4 | Narrow panel (640 px) | 2×2 KPIs, view select, priority columns, and a details drawer with the hidden metrics | §3.5 Layout, 10.7 |
+| 5 | Loading, empty and error states | Skeleton with progress and Cancel; empty state with why and a next step; error with Retry; partial-data warning | §3.5 States, 10.7 |
+| 6 | Dashboard and Findings tree | Findings tree (later minor); dashboard with selection chips and Back, KPIs with coverage, a per-day chart with "View as table", a Model list box, signals | 10.5, D10 later minor |
+
+**Review gate:** the mock-ups are reviewed and their comments resolved
+before step 10.5 starts. Agreed changes are made on the canvas and in
+the versioned copies in the same change.
 
 ## 4. Message protocol
 
@@ -425,6 +480,8 @@ identically.
 
 ### 10.5 Product profile in the UI and extension-only UX
 
+Starts after the mock-up review gate (§3.6).
+
 - **`ProductProfile` (G10), tests first:**
   - `AppHeader` hides the provider select when
     `features.providerSelect` is false.
@@ -514,7 +571,46 @@ first with fakes. Only thin registration code touches the `vscode` API.
   coverage in the tooltip. Every tree and status-bar model has unit
   tests, and none of the model modules import `vscode`.
 
-### 10.7 Copilot-only MCP server in the extension (D7)
+### 10.7 UX polish, accessibility and onboarding (§3.5)
+
+Implements §3.5 against the reviewed mock-ups (§3.6). Most of it lives in
+`packages/web`, so the standalone app gets the same improvements.
+
+- **Tests first:**
+  - `vitest-axe` runs for every view in three theme fixtures (dark,
+    light, high contrast, set through `--vscode-*` variables on `body`).
+  - Keyboard tests with `user-event`: Tab order, arrow keys in lists and
+    the turns table, Enter to open, Escape to close.
+  - A pure `layoutFor(width)` with cases at 360, 640, 900, 1100 and
+    1280 px. A `useContainerWidth` hook (ResizeObserver) feeds it.
+  - The `AsyncView` component covers loading (with the 300 ms delay),
+    empty, error with Retry, and partial.
+  - The reduced-motion stylesheet is checked.
+  - A manifest test checks that every command has the category, every
+    walkthrough step's command and media exist, `completionEvents` name
+    contributed settings or commands, and every `%key%` exists in
+    `package.nls.json`.
+- **Build:**
+  - Narrow layouts with a column chooser (kept in webview state).
+  - A details drawer for small widths, and "View as table" for charts.
+  - `AsyncView` adopted by every data view.
+  - The walkthrough (`contributes.walkthroughs` plus Markdown/SVG media).
+  - `vscode.l10n` for host strings.
+  - G12: the extension build drops the Google Fonts import and uses
+    `--vscode-font-family`; the standalone app bundles Barlow locally.
+- **Performance:** the webview posts timing marks (first render, data
+  ready) to the host. The integration tests (10.9) assert the §3.5
+  budgets.
+- **Exit:**
+  - axe reports no violations in all three themes.
+  - The keyboard-only script passes.
+  - The panel is usable at 360, 640 and 1280 px and matches mock-ups 1-6
+    as approved.
+  - The walkthrough marks steps done when settings change.
+  - The manual usability script has run once, with its notes in the PR.
+  - The standalone app passes the same axe and keyboard tests.
+
+### 10.8 Copilot-only MCP server in the extension (D7)
 
 - Tests first: `createCopilotMcpServices()` builds the same services as
   `mcp/stdio.ts` over `composeCopilotProviders`. Test that `tools/list`
@@ -535,8 +631,9 @@ first with fakes. Only thin registration code touches the `vscode` API.
   read-only tools, and `get_session_cost` answers for a real Copilot
   session. With it off, no server is registered.
 
-### 10.8 Integration tests, remote check, packaging
+### 10.9 Integration tests, remote check, packaging
 
+- Performance budgets from §3.5, using the timing marks from 10.7.
 - `@vscode/test-cli` + `@vscode/test-electron` integration suite, run
   against the `stable` VS Code build (D9). It
   activates the extension, opens the panel, checks that the Sessions view
@@ -552,7 +649,7 @@ first with fakes. Only thin registration code touches the `vscode` API.
   `README.md`, `LICENSE`, `CHANGELOG.md`, `icon.png`) and a size budget
   (proposal: under 5 MB).
 - **Exit:** `<name>-<version>.vsix` installs into a clean VS Code via
-  "Install from VSIX…" and passes the 10.4/10.5/10.6/10.7 exit checks
+  "Install from VSIX…" and passes the 10.4-10.8 exit checks
   with no repo checkout present.
 
 ## 7. Deployment
@@ -602,7 +699,7 @@ personal account can own one; no company or organization is needed.
 4. Optional: request namespace ownership verification so the listing
    shows as verified rather than unverified.
 
-**Listing prerequisites checked before the first publish (step 10.8)**
+**Listing prerequisites checked before the first publish (step 10.9)**
 
 - `icon`: a PNG of at least 128×128 px. The Marketplace rejects SVG icons.
   The Activity Bar icon (10.6) is a separate monochrome SVG.
@@ -655,7 +752,7 @@ suite only, to cover the D4 path derivation for real.
 
 - **Versioning:** the version lives in `packages/vscode-extension/package.json`
   and starts at `0.1.0`. Use the Marketplace pre-release channel
-  (`--pre-release`, odd minor) until 10.8's remote check passes, then
+  (`--pre-release`, odd minor) until 10.9's remote check passes, then
   publish a stable even minor.
 - **Marketplace listing:** README (Learn/Analyze/dashboard screenshots), a
   privacy statement ("reads local Copilot Chat logs only; no network; no
@@ -682,7 +779,7 @@ GitHub Release installs with
 |---|---|---|
 | R1 | `node:sqlite` is missing or flagged in the extension host's Electron/Node. | Spike 10.0. Fallback: a `SqliteReader` port with a WASM adapter, used only by the extension. |
 | R2 | The webview `postMessage` payload for a large insights dataset is slow. | Insights already accept `limit`. Measure in 10.4, and stream by provider if needed (§11.1 open question). |
-| R3 | Copilot Chat's storage layout differs on remote hosts. | D6 plus the manual remote check in 10.8. The provider reports "unavailable" with a reason, never a crash (§11.3). |
+| R3 | Copilot Chat's storage layout differs on remote hosts. | D6 plus the manual remote check in 10.9. The provider reports "unavailable" with a reason, never a crash (§11.3). |
 | R4 | Bundling ESM code that relies on `import.meta.url`. | G4 refactor in 10.1, and an integration test that loads the bundled file. |
 | R5 | Marketplace PAT leakage. | Protected environment, PAT scoped to Marketplace only, rotated yearly. Open VSX token separate. |
 | R6 | Non-Copilot code leaks into the extension through a shared import. | Bundle-boundary test in CI (§3.1). Move to Option B if it keeps failing. |
@@ -712,7 +809,9 @@ Chat sessions in Analyze mode, the tool audit and the insights dashboard,
 with the same numbers as the standalone app for the same session. A
 `logging-disabled` warning's Fix button opens that exact setting. The
 Activity Bar icon opens a Sessions tree, and picking a session opens it in
-the panel. With
+the panel. axe reports no violations in dark, light and high-contrast
+themes, the panel works by keyboard alone and at 360 px wide, and the
+walkthrough completes. With
 MCP enabled, Copilot Chat lists the same 9 read-only tools, backed by
 Copilot data only. The bundle-boundary test proves no Claude Code, pi or
 mitmproxy code ships in the `.vsix`. The webview makes no network
