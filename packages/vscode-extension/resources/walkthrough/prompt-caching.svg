@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 270" width="480" height="270" role="img" font-family="Segoe UI, system-ui, sans-serif" font-size="14">
+  <rect width="480" height="270" rx="6" fill="#1f1f1f"/>
+  <rect x="24" y="28" width="432" height="214" rx="4" fill="#252526" stroke="#3c3c3c"/>
+  <text x="44" y="62" fill="#cccccc" font-weight="600">Same request, with and without caching</text>
+  <text x="44" y="102" fill="#9d9d9d" font-size="12">No cache</text>
+  <rect x="130" y="86" width="300" height="22" rx="2" fill="#d18616"/>
+  <text x="44" y="150" fill="#9d9d9d" font-size="12">Cached</text>
+  <rect x="130" y="134" width="84" height="22" rx="2" fill="#0078d4"/>
+  <rect x="214" y="134" width="216" height="22" rx="2" fill="#4d4d4d"/>
+  <text x="222" y="150" fill="#cccccc" font-size="12">cached tokens cost less</text>
+  <rect x="44" y="184" width="392" height="40" rx="3" fill="#1f1f1f" stroke="#3c3c3c"/>
+  <text x="58" y="209" fill="#cccccc" font-size="12">Keep the start of your prompt stable so more of it is cached.</text>
+</svg>

@@ -1,9 +1,12 @@
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { ConfigStatus, ProductProfile } from "@copilot-cost-analyzer/domain";
 import { App } from "./App.js";
 import { getApiTransport, resetApiTransport, setApiTransport } from "./api-client/current-transport.js";
 import { resetHostCapabilities, setHostCapabilities } from "./host/current-host-capabilities.js";
+import { resetViewStateStorage, setViewStateStorage } from "./state/current-view-state-storage.js";
+import { memoryViewStateStorage } from "./state/view-state-storage.js";
 import { makeTurn } from "./test-support/turn-fixture.js";
 import { makeAuditRollup, makeSessionAudit } from "./test-support/audit-fixture.js";
 import { sampleInsightsDataset } from "./test-support/insights-fixture.js";
@@ -230,6 +233,7 @@ describe("App", () => {
     vi.unstubAllGlobals();
     resetApiTransport();
     resetHostCapabilities();
+    resetViewStateStorage();
   });
 
   it("renders a successful health check from the server, including the app version", async () => {
@@ -335,6 +339,58 @@ describe("App", () => {
     fireEvent.click(await screen.findByRole("button", { name: "Broken session" }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent(/failed/i);
+  });
+
+  // §3.5 States: the session list and the turns view use AsyncView.
+  describe("loading, error and empty states", () => {
+    it("reports a failed session list with Retry, which loads it again", async () => {
+      let failures = 1;
+      vi.stubGlobal(
+        "fetch",
+        vi.fn((url: string, init?: { body?: string }) =>
+          url === "/api/sessions" && failures-- > 0
+            ? Promise.resolve({ ok: false, status: 500, json: () => Promise.resolve({ error: "locked" }) })
+            : fakeFetch(url, init),
+        ),
+      );
+      render(<App />);
+      switchToAnalyze();
+
+      const alert = await screen.findByRole("alert");
+      expect(alert).toHaveTextContent("Couldn't load the session list");
+      expect(alert).toHaveTextContent(/nothing was changed/i);
+      fireEvent.click(within(alert).getByRole("button", { name: "Try again" }));
+
+      expect(await screen.findByRole("button", { name: "Fix the bug" })).toBeInTheDocument();
+    });
+
+    it("reports a failed session in the turns view, with Retry", async () => {
+      render(<App />);
+      switchToAnalyze();
+      fireEvent.click(await screen.findByRole("button", { name: "Broken session" }));
+
+      const alert = await screen.findByRole("alert");
+      expect(alert).toHaveTextContent("Couldn't open this session");
+      const fetchCalls = () =>
+        (fetch as unknown as { mock: { calls: unknown[][] } }).mock.calls.filter(([url]) => url === "/api/sessions/session-error").length;
+      expect(fetchCalls()).toBe(1);
+      fireEvent.click(within(alert).getByRole("button", { name: "Try again" }));
+      await waitFor(() => expect(fetchCalls()).toBe(2));
+    });
+
+    it("says why the session list is empty, with a next step (AsyncView's empty state)", async () => {
+      vi.stubGlobal(
+        "fetch",
+        vi.fn((url: string, init?: { body?: string }) =>
+          url === "/api/sessions" ? Promise.resolve({ ok: true, json: () => Promise.resolve([]) }) : fakeFetch(url, init),
+        ),
+      );
+      render(<App />);
+      switchToAnalyze();
+
+      expect(await screen.findByRole("heading", { name: "No Copilot Chat sessions found yet" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Open the dashboard across all providers" })).toBeInTheDocument();
+    });
   });
 
   it("shows only the most-recently-selected session when an earlier session's fetch resolves after a later one", async () => {
@@ -610,6 +666,156 @@ describe("App", () => {
     expect(screen.queryByText(/selected for advice/)).not.toBeInTheDocument();
   });
 
+  // §3.5 Accessibility: Escape closes an inspector and focus goes back to
+  // the control that opened it (the page behind is kept, not rebuilt).
+  it("closes the turn inspector on Escape and returns focus to its opener", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    switchToAnalyze();
+    await user.click(await screen.findByRole("button", { name: "Fix the bug" }));
+    await screen.findByText("analyze turn explanation");
+
+    await user.click(screen.getByRole("button", { name: "Inspect request/response" }));
+    expect(await screen.findByRole("button", { name: /back to session/i })).toHaveFocus();
+    await user.keyboard("{Escape}");
+
+    expect(screen.queryByRole("button", { name: /back to session/i })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Inspect request/response" })).toHaveFocus();
+  });
+
+  // §3.5 Layout: by the panel's width (mock-up board 4 for narrow).
+  describe("layout by panel width", () => {
+    // A ResizeObserver that reports `width` for whatever it observes.
+    function panelWidth(width: number) {
+      vi.stubGlobal(
+        "ResizeObserver",
+        class {
+          constructor(private readonly callback: ResizeObserverCallback) {}
+          observe(target: Element) {
+            this.callback([{ target, contentRect: { width } } as unknown as ResizeObserverEntry], this as unknown as ResizeObserver);
+          }
+          unobserve() {}
+          disconnect() {}
+        },
+      );
+    }
+
+    async function openAnalyzeSession() {
+      render(<App />);
+      switchToAnalyze();
+      fireEvent.click(await screen.findByRole("button", { name: "Fix the bug" }));
+      await screen.findAllByRole("columnheader");
+    }
+
+    it("keeps today's three columns at 1280 px", async () => {
+      panelWidth(1280);
+      await openAnalyzeSession();
+
+      expect(screen.getByRole("main")).toHaveAttribute("data-layout", "wide");
+      expect(screen.getByLabelText("Explanation")).toBeVisible();
+      expect(screen.getByLabelText("Tool audit")).toBeInTheDocument();
+      expect(screen.queryByRole("combobox", { name: "View" })).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "Details" })).not.toBeInTheDocument();
+      expect(screen.getAllByRole("columnheader")).toHaveLength(14);
+    });
+
+    it("moves the right column into a drawer at 900 px", async () => {
+      const user = userEvent.setup();
+      panelWidth(900);
+      await openAnalyzeSession();
+
+      expect(screen.getByRole("main")).toHaveAttribute("data-layout", "medium");
+      expect(screen.queryByLabelText("Explanation")).not.toBeInTheDocument();
+      const details = screen.getByRole("button", { name: "Details" });
+      expect(details).toHaveAttribute("aria-expanded", "false");
+
+      await user.click(details);
+      const drawer = screen.getByRole("region", { name: /^Turn 0 details$/ });
+      expect(within(drawer).getByText("analyze turn explanation")).toBeInTheDocument();
+      expect(within(drawer).getByLabelText("System prompt")).toBeInTheDocument();
+
+      await user.keyboard("{Escape}");
+      expect(screen.queryByRole("region", { name: /details/ })).not.toBeInTheDocument();
+      expect(details).toHaveFocus();
+    });
+
+    it("at 640 px: 2×2 KPIs, a view select, the priority columns and a details drawer with the rest", async () => {
+      const user = userEvent.setup();
+      panelWidth(640);
+      await openAnalyzeSession();
+
+      expect(screen.getByRole("main")).toHaveAttribute("data-layout", "narrow");
+      for (const name of ["AI Credits", "Cache read", "Turns", "Tool calls"]) {
+        expect(screen.getByRole("group", { name })).toBeInTheDocument();
+      }
+      expect(screen.getAllByRole("columnheader").map((cell) => cell.textContent)).toEqual([
+        "Turn",
+        "Trigger",
+        "AI Credits",
+        "Cumulative",
+      ]);
+      expect(screen.queryByRole("button", { name: "Columns" })).not.toBeInTheDocument();
+
+      screen.getAllByRole("row")[1]!.focus();
+      await user.keyboard("{Enter}");
+      const drawer = screen.getByRole("region", { name: /^Turn 0 details$/ });
+      expect(within(drawer).getByText("Model")).toBeInTheDocument();
+      expect(within(drawer).getByText("analyze turn explanation")).toBeInTheDocument();
+
+      const view = screen.getByRole("combobox", { name: "View" });
+      await user.selectOptions(view, "All sessions");
+      expect(await screen.findByRole("table", { name: "Sessions" })).toBeInTheDocument();
+    });
+
+    it("lays out the narrowest supported panel, 360 px, as narrow", async () => {
+      panelWidth(360);
+      await openAnalyzeSession();
+
+      expect(screen.getByRole("main")).toHaveAttribute("data-layout", "narrow");
+      expect(screen.getByRole("combobox", { name: "View" })).toBeInTheDocument();
+    });
+  });
+
+  // §3.5 Layout: "users choose and keep the visible columns".
+  describe("turns table columns", () => {
+    it("shows every column until the user chooses, as before", async () => {
+      render(<App />);
+      fireEvent.click(await screen.findByRole("button", { name: "Cache Basics" }));
+
+      expect(await screen.findAllByRole("columnheader")).toHaveLength(14);
+      expect(screen.getByText("Showing 14 of 14 columns")).toBeInTheDocument();
+    });
+
+    it("restores the kept choice and keeps a new one in view-state storage", async () => {
+      const storage = memoryViewStateStorage();
+      storage.set("turnColumns", ["turn", "aiCredits"]);
+      setViewStateStorage(storage);
+      render(<App />);
+      fireEvent.click(await screen.findByRole("button", { name: "Cache Basics" }));
+
+      expect((await screen.findAllByRole("columnheader")).map((cell) => cell.textContent)).toEqual(["Turn", "AI Credits"]);
+
+      fireEvent.click(screen.getByRole("button", { name: "Columns" }));
+      fireEvent.click(screen.getByRole("checkbox", { name: "Model" }));
+
+      expect(storage.get("turnColumns")).toEqual(["turn", "aiCredits", "model"]);
+      expect(screen.getAllByRole("columnheader")).toHaveLength(3);
+    });
+  });
+
+  // vscode-extension.md §3.5 Performance: the host reads these (step 10.9).
+  it("marks first-render on mount, then data-ready once the first list is on screen", async () => {
+    const mark = vi.fn();
+    render(<App performanceMarks={{ mark, read: () => ({}) }} />);
+
+    expect(mark).toHaveBeenCalledWith("first-render");
+    expect(mark).not.toHaveBeenCalledWith("data-ready");
+
+    await screen.findByRole("button", { name: "Cache Basics" });
+    await waitFor(() => expect(mark).toHaveBeenCalledWith("data-ready"));
+    expect(mark.mock.calls.map(([name]) => name)).toEqual(["first-render", "data-ready"]);
+  });
+
   describe("tool-call audit views (Phase 9.10)", () => {
     it("offers the audit view switch only in Analyze mode", async () => {
       render(<App />);
@@ -746,6 +952,32 @@ describe("App", () => {
 
       expect(await screen.findByText("Agent Cost Analyzer")).toBeInTheDocument();
       expect(vi.mocked(fetch).mock.calls.filter(([url]) => url === "/api/product")).toHaveLength(1);
+    });
+
+    it("holds the brand and provider select until the profile resolves, so neither product flashes", async () => {
+      let resolveProfile: () => void = () => {};
+      const gate = new Promise<void>((resolve) => {
+        resolveProfile = resolve;
+      });
+      productProfile = extensionProfile;
+      vi.stubGlobal(
+        "fetch",
+        vi.fn((url: string, init?: { body?: string }) =>
+          url === "/api/product" ? gate.then((): Promise<unknown> => fakeFetch(url, init)) : fakeFetch(url, init),
+        ),
+      );
+      render(<App />);
+      switchToAnalyze();
+      await screen.findByRole("button", { name: "Fix the bug" });
+
+      expect(screen.queryByText("Session Analyzer")).not.toBeInTheDocument();
+      expect(screen.queryByRole("combobox", { name: "Log provider" })).not.toBeInTheDocument();
+
+      resolveProfile();
+
+      expect(await screen.findByText("AI Credits Analyzer")).toBeInTheDocument();
+      expect(screen.queryByText("Session Analyzer")).not.toBeInTheDocument();
+      expect(screen.queryByRole("combobox", { name: "Log provider" })).not.toBeInTheDocument();
     });
 
     it("falls back to today's standalone UI, quietly, when the profile can't be fetched", async () => {

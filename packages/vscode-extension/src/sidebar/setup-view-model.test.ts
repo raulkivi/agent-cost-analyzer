@@ -1,5 +1,6 @@
 import type { ConfigStatus, ConfigWarning } from "@copilot-cost-analyzer/domain";
 import { describe, expect, it } from "vitest";
+import { upperCaseTranslate as T } from "../l10n/upper-case-translate.js";
 import { buildSetupTree } from "./setup-view-model.js";
 
 function warning(overrides: Partial<ConfigWarning>): ConfigWarning {
@@ -91,5 +92,17 @@ describe("buildSetupTree", () => {
     const [node] = buildSetupTree(status([warning({ helpSteps: [], message: "Logging is off." })]));
 
     expect(node?.tooltip).toBe("Logging is off.");
+  });
+});
+
+describe("translation (vscode-extension.md §3.5 Localization)", () => {
+  it("translates the severity text and the screen-reader label, but not the warning's own message", () => {
+    const [required, optional] = buildSetupTree(
+      status([warning({ message: "Logging is off." }), warning({ severity: "optional", settingId: "x", message: "Keep more." })]),
+      T,
+    );
+
+    expect(required).toMatchObject({ description: "REQUIRED", ariaLabel: "REQUIRED: Logging is off." });
+    expect(optional).toMatchObject({ description: "OPTIONAL", ariaLabel: "OPTIONAL: Keep more." });
   });
 });

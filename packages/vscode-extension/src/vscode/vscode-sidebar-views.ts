@@ -1,4 +1,5 @@
 import { COMMAND_IDS, VIEW_IDS } from "../commands/command-ids.js";
+import { identityTranslate, type Translate } from "../l10n/localize.js";
 import type { Disposable } from "../panel/analyzer-panel.js";
 import type { SessionsTreeNode } from "../sidebar/sessions-tree-model.js";
 import type { SetupWarningNode } from "../sidebar/setup-view-model.js";
@@ -87,7 +88,11 @@ function registerView<T, Item extends TreeItemLike>(
 
 // The Sessions view: day groups of sessions; a click opens the session in
 // the panel. Refreshes (all of it) when it becomes visible.
-export function registerSessionsView<Item extends TreeItemLike>(vscode: VscodeTreeApi<Item>, controller: SidebarController): Disposable {
+export function registerSessionsView<Item extends TreeItemLike>(
+  vscode: VscodeTreeApi<Item>,
+  controller: SidebarController,
+  t: Translate = identityTranslate,
+): Disposable {
   const { None, Collapsed, Expanded } = vscode.TreeItemCollapsibleState;
   return registerView<SessionsTreeNode, Item>(vscode, controller, VIEW_IDS.sessions, {
     roots: () => controller.sessionsTree(),
@@ -108,7 +113,7 @@ export function registerSessionsView<Item extends TreeItemLike>(vscode: VscodeTr
           item.contextValue = SESSION_CONTEXT_VALUE;
           item.iconPath = new vscode.ThemeIcon("comment-discussion");
           item.accessibilityInformation = { label: node.ariaLabel };
-          item.command = { command: COMMAND_IDS.openSession, title: "Open", arguments: [node.sessionId] };
+          item.command = { command: COMMAND_IDS.openSession, title: t("Open"), arguments: [node.sessionId] };
           return item;
         }
         case "message": {

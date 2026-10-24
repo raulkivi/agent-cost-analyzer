@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import type { HierarchyNode } from "d3-hierarchy";
 import { hierarchy as d3Hierarchy } from "d3-hierarchy";
+import { readableTextOn } from "../lib/contrast.js";
 import { labelForNode, MAX_MENU_DEPTH, NEUTRAL_COLOR } from "../lib/system-prompt-menu.js";
 import type { PromptNode } from "../lib/system-prompt-parser.js";
 
@@ -152,7 +153,7 @@ export function PromptCompositionIcicle({
                     font: "inherit",
                     fontSize: 12,
                     cursor: "pointer",
-                    color: "var(--color-accent)",
+                    color: "var(--color-accent-text)",
                     fontWeight: 400,
                   }}
                 >
@@ -172,6 +173,9 @@ export function PromptCompositionIcicle({
               {row.map((node) => {
                 const isFocusRow = !node.parent;
                 const fill = colors.get(node.data.id) ?? NEUTRAL_COLOR;
+                // Black or white, whichever reads on this fill (§3.5): the
+                // theme's text colour doesn't, on mid-tone or dark-theme cells.
+                const labelColor = readableTextOn(fill);
                 const label = labelFor(node);
                 const isSelected = node.data.id === selectedId;
                 const value = node.value ?? 0;
@@ -199,10 +203,10 @@ export function PromptCompositionIcicle({
                       transition: "flex-grow 200ms ease",
                     }}
                   >
-                    <div className="truncate" style={{ fontSize: 11, fontWeight: 600, color: "var(--color-text)" }}>
+                    <div className="truncate" style={{ fontSize: 11, fontWeight: 600, color: labelColor }}>
                       {label}
                     </div>
-                    <div className="truncate text-muted" style={{ fontSize: 9, fontWeight: 400 }}>
+                    <div className="truncate" style={{ fontSize: 9, fontWeight: 400, color: labelColor }}>
                       {`${value} chars · ${formatShare(value, hierarchyRoot.value ?? 0)}`}
                     </div>
                   </div>

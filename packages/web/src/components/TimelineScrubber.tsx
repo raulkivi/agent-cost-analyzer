@@ -1,3 +1,4 @@
+import { useId } from "react";
 import { Blueprint } from "./ui/Blueprint.js";
 
 interface TimelineScrubberProps {
@@ -7,6 +8,8 @@ interface TimelineScrubberProps {
 }
 
 export function TimelineScrubber({ turnCount, selectedTurnIndex, onSelectTurn }: TimelineScrubberProps) {
+  const labelId = useId();
+  const position = `Turn ${Math.min(selectedTurnIndex + 1, turnCount)} of ${turnCount}`;
   return (
     <Blueprint style={{ padding: "var(--space-3)" }}>
       <div
@@ -18,22 +21,23 @@ export function TimelineScrubber({ turnCount, selectedTurnIndex, onSelectTurn }:
         }}
       >
         <div
+          id={labelId}
           style={{
             fontSize: 12,
-            color: "color-mix(in srgb, var(--color-text) 60%, transparent)",
+            color: "var(--color-text-muted)",
             letterSpacing: "0.06em",
             textTransform: "uppercase",
           }}
         >
           Timeline
         </div>
-        <div style={{ fontSize: 12 }}>
-          Turn {Math.min(selectedTurnIndex + 1, turnCount)} of {turnCount}
-        </div>
+        <div style={{ fontSize: 12 }}>{position}</div>
       </div>
       <input
         type="range"
         role="slider"
+        aria-labelledby={labelId}
+        aria-valuetext={position}
         min={0}
         max={Math.max(turnCount - 1, 0)}
         value={selectedTurnIndex}

@@ -1,5 +1,6 @@
 import type { Session } from "@copilot-cost-analyzer/domain";
 import { describe, expect, it, vi } from "vitest";
+import { upperCaseTranslate } from "../l10n/upper-case-translate.js";
 import { SidebarController } from "../sidebar/sidebar-controller.js";
 import { registerSetupView, registerSessionsView, type VscodeTreeApi, type TreeItemLike } from "./vscode-sidebar-views.js";
 
@@ -244,5 +245,19 @@ describe("registerSetupView", () => {
 
     await vi.waitFor(() => expect(getConfigStatus).toHaveBeenCalledTimes(1));
     expect(listSessions).not.toHaveBeenCalled();
+  });
+});
+
+describe("translation of the view items (vscode-extension.md §3.5 Localization)", () => {
+  it("titles a session's click command through the translate function", async () => {
+    const { api, views } = fakeVscode();
+    const { controller } = controllerWith();
+    registerSessionsView(api, controller, upperCaseTranslate);
+    await controller.refresh();
+    const { provider } = views[0]!;
+    const [group] = provider.getChildren();
+    const [first] = provider.getChildren(group);
+
+    expect(provider.getTreeItem(first).command).toMatchObject({ command: "aiCreditsAnalyzer.openSession", title: "OPEN" });
   });
 });

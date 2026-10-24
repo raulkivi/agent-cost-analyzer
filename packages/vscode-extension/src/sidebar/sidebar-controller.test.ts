@@ -1,5 +1,6 @@
 import type { ConfigStatus, ConfigWarning, Session } from "@copilot-cost-analyzer/domain";
 import { describe, expect, it, vi } from "vitest";
+import { upperCaseTranslate } from "../l10n/upper-case-translate.js";
 import { SidebarController, type SidebarSources } from "./sidebar-controller.js";
 
 const NOW = new Date("2026-10-24T15:00:00Z");
@@ -209,5 +210,41 @@ describe("SidebarController", () => {
 
     expect(extra).not.toHaveBeenCalled();
     expect(onChange).toHaveBeenCalled();
+  });
+});
+
+describe("SidebarController translation (vscode-extension.md §3.5 Localization)", () => {
+  it("renders the trees and the status bar through the translate function it was given", async () => {
+    const controller = new SidebarController(
+      {
+        relistLogSources: () => undefined,
+        listSessions: async () => [session("a", null)],
+        getConfigStatus: async () => status([warning("optional")]),
+      },
+      { now: () => NOW, timeZone: "UTC", translate: upperCaseTranslate },
+    );
+
+    await controller.refresh();
+
+    expect(controller.sessionsTree()[0]).toMatchObject({ label: "TODAY", description: "1 UNKNOWN" });
+    expect(controller.setupTree()[0]).toMatchObject({ description: "OPTIONAL" });
+    expect(controller.statusBar()?.text).toBe("$(graph) AI CREDITS: UNKNOWN");
+  });
+
+  it("translates the load error", async () => {
+    const controller = new SidebarController(
+      {
+        relistLogSources: () => undefined,
+        listSessions: async () => {
+          throw new Error("boom");
+        },
+        getConfigStatus: async () => status([]),
+      },
+      { now: () => NOW, timeZone: "UTC", translate: upperCaseTranslate, onInternalError: () => undefined },
+    );
+
+    await controller.refresh();
+
+    expect(controller.sessionsTree()[0]).toMatchObject({ label: "COULDN'T READ YOUR COPILOT CHAT SESSIONS" });
   });
 });

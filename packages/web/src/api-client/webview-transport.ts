@@ -1,8 +1,9 @@
 import type { HostCommand, HostCommandArgs, HostEventName } from "@copilot-cost-analyzer/domain";
-import type { ApiMethodName, ApiTransport } from "./transport.js";
+import type { ApiMethodName, ApiTransport, ViewStatePersistence } from "./transport.js";
 
-// The slice of acquireVsCodeApi()'s result this transport needs.
-export interface HostMessagePoster {
+// The slice of acquireVsCodeApi()'s result this transport needs; the state
+// methods are optional so a bare poster (tests, other hosts) still works.
+export interface HostMessagePoster extends Partial<ViewStatePersistence> {
   postMessage(message: unknown): void;
 }
 
@@ -40,6 +41,9 @@ export class WebviewTransport implements ApiTransport {
   private readonly eventHandlers = new Map<HostEventName, Set<(payload: unknown) => void>>();
   private readonly timeoutMs: number;
   private nextId = 0;
+  // The webview's own state persistence, when its API has one: the
+  // transport holds the only acquireVsCodeApi() result there can be.
+  readonly viewState?: ViewStatePersistence;
 
   constructor(
     private readonly host: HostMessagePoster,
@@ -47,6 +51,10 @@ export class WebviewTransport implements ApiTransport {
     options: WebviewTransportOptions = {},
   ) {
     this.timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+    const { getState, setState } = host;
+    if (getState && setState) {
+      this.viewState = { getState: () => getState.call(host), setState: (state) => setState.call(host, state) };
+    }
     source.addEventListener("message", (event) => this.handleMessage(event.data));
   }
 

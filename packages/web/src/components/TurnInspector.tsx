@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import type {
   ContentPlaceholder,
@@ -7,9 +7,11 @@ import type {
   TurnInspectorDetail,
 } from "@copilot-cost-analyzer/domain";
 import { fetchTurnInspectorDetail } from "../api-client/sessions.js";
+import { useEscapeKey, useFocusReturn } from "../lib/focus.js";
 import { TRIGGER_LABELS } from "../lib/trigger-labels.js";
 import { buildPrettyTokens, PAYLOAD_TOKEN_COLORS, unescapeText } from "../lib/turn-payload-pretty.js";
 import type { PayloadToken } from "../lib/turn-payload-pretty.js";
+import { AsyncView } from "./ui/AsyncView.js";
 import { Blueprint } from "./ui/Blueprint.js";
 import { SegmentedControl } from "./ui/SegmentedControl.js";
 import { Tag } from "./ui/Tag.js";
@@ -29,6 +31,8 @@ interface TurnInspectorProps {
 type LoadState =
   | { status: "loading" }
   | { status: "error" }
+  // Nothing to fetch: the session has no usage data at all (logging off).
+  | { status: "not-captured" }
   | { status: "ready"; detail: TurnInspectorDetail };
 
 type PayloadFormat = "pretty" | "raw";
@@ -42,7 +46,7 @@ const SUB_LABEL_STYLE = {
   fontSize: 10,
   textTransform: "uppercase" as const,
   letterSpacing: "0.06em",
-  color: "color-mix(in srgb, var(--color-text) 55%, transparent)",
+  color: "var(--color-text-muted)",
 };
 
 const PAYLOAD_PRE_STYLE = {
@@ -56,7 +60,7 @@ const PAYLOAD_PRE_STYLE = {
 
 const NO_LOGGING_MESSAGE =
   "No request/response data captured for this session — enable agentDebugLog.fileLogging.enabled and reload VS Code.";
-const NO_ROUND_TRIP_MESSAGE = "This turn made no request to the model.";
+const NO_ROUND_TRIP_MESSAGE = "This turn made no request to the model, so there is no request or response to show.";
 const LOAD_FAILED_MESSAGE = "Failed to load this turn's request/response data.";
 const ENCRYPTED_REASONING_TEXT = "[encrypted]";
 
@@ -201,15 +205,20 @@ export function TurnInspector({
   onClose,
 }: TurnInspectorProps) {
   const [state, setState] = useState<LoadState>(
-    usageDataAvailable ? { status: "loading" } : { status: "error" },
+    usageDataAvailable ? { status: "loading" } : { status: "not-captured" },
   );
+  const [attempt, setAttempt] = useState(0);
+  // §3.5: focus starts on Back and returns to the opener; Escape closes.
+  const backButton = useRef<HTMLButtonElement>(null);
+  useFocusReturn(backButton);
+  useEscapeKey(onClose);
   const [format, setFormat] = useState<PayloadFormat>("pretty");
   const [selectedRound, setSelectedRound] = useState(0);
 
   useEffect(() => {
     setSelectedRound(0);
     if (!usageDataAvailable) {
-      setState({ status: "error" });
+      setState({ status: "not-captured" });
       return;
     }
     let canceled = false;
@@ -224,12 +233,12 @@ export function TurnInspector({
     return () => {
       canceled = true;
     };
-  }, [sessionId, turnIndex, usageDataAvailable]);
+  }, [sessionId, turnIndex, usageDataAvailable, attempt]);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-3)", padding: "var(--space-4)" }}>
       <div style={{ display: "flex", alignItems: "center", gap: "var(--space-3)", flexWrap: "wrap" }}>
-        <button type="button" className="btn btn-secondary" onClick={onClose}>
+        <button ref={backButton} type="button" className="btn btn-secondary" onClick={onClose}>
           ← Back to session
         </button>
         {sessionTitle && (
@@ -244,104 +253,112 @@ export function TurnInspector({
         </div>
       </div>
 
-      {state.status === "loading" && <p className="text-muted">Loading turn detail…</p>}
-      {state.status === "error" && (
-        <p className="text-muted">{usageDataAvailable ? LOAD_FAILED_MESSAGE : NO_LOGGING_MESSAGE}</p>
-      )}
-      {state.status === "ready" && state.detail.rounds.length === 0 && (
-        <p className="text-muted">{NO_ROUND_TRIP_MESSAGE}</p>
-      )}
+      <AsyncView
+        status={
+          state.status === "not-captured" || (state.status === "ready" && state.detail.rounds.length === 0)
+            ? "empty"
+            : state.status
+        }
+        loadingText="Loading turn detail…"
+        readyText="Turn detail loaded."
+        error={{ title: LOAD_FAILED_MESSAGE, onRetry: () => setAttempt((current) => current + 1) }}
+        empty={
+          state.status === "not-captured"
+            ? { title: "No request or response captured", body: NO_LOGGING_MESSAGE }
+            : { title: "No model request", body: NO_ROUND_TRIP_MESSAGE }
+        }
+      >
+        {state.status === "ready" &&
+          state.detail.rounds.length > 0 &&
+          (() => {
+            const { detail } = state;
+            const round = detail.rounds.find((r) => r.request.index === selectedRound) ?? detail.rounds[0];
+            const roundOptions = detail.rounds.map((r) => ({
+              value: String(r.request.index),
+              label: `Round ${r.request.index}`,
+            }));
 
-      {state.status === "ready" &&
-        state.detail.rounds.length > 0 &&
-        (() => {
-          const { detail } = state;
-          const round = detail.rounds.find((r) => r.request.index === selectedRound) ?? detail.rounds[0];
-          const roundOptions = detail.rounds.map((r) => ({
-            value: String(r.request.index),
-            label: `Round ${r.request.index}`,
-          }));
-
-          return (
-            <>
-              {detail.userMessage.length > 0 && (
-                <Blueprint style={{ padding: "var(--space-3)" }}>
-                  <div className="card-kicker" style={{ marginBottom: "var(--space-2)" }}>
-                    User message
-                  </div>
-                  <UserMessageView parts={detail.userMessage} />
-                </Blueprint>
-              )}
-
-              {detail.rounds.length > 1 && (
-                <div style={{ display: "flex", alignItems: "center", gap: "var(--space-3)", flexWrap: "wrap" }}>
-                  <SegmentedControl
-                    name="turnRound"
-                    options={roundOptions}
-                    value={String(round.request.index)}
-                    onChange={(value) => setSelectedRound(Number(value))}
-                  />
-                  <span className="text-muted" style={{ fontSize: 12 }}>
-                    {detail.rounds.length} rounds in this turn
-                  </span>
-                </div>
-              )}
-
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--space-4)" }}>
-                <Blueprint style={{ padding: "var(--space-3)" }}>
-                  <div className="card-kicker" style={{ marginBottom: "var(--space-2)" }}>
-                    Request · round {round.request.index}
-                  </div>
-                  <ToolCallsView toolCalls={round.request.toolCalls} format={format} />
-                  {round.request.addedMessages.length > 0 && (
-                    <>
-                      <SubLabel>Added messages</SubLabel>
-                      <ContentPartsView parts={round.request.addedMessages} format={format} maxHeight={260} />
-                    </>
-                  )}
-                </Blueprint>
-                <Blueprint style={{ padding: "var(--space-3)" }}>
-                  <div className="card-kicker" style={{ marginBottom: "var(--space-2)" }}>
-                    Response · round {round.response.index}
-                  </div>
-                  <ContentPartsView parts={round.response.response} format={format} maxHeight={320} />
-                  {round.response.reasoning && isEncryptedReasoning(round.response.reasoning) && (
-                    <div
-                      style={{
-                        marginTop: "var(--space-2)",
-                        borderTop: "1px solid var(--color-divider)",
-                        paddingTop: "var(--space-2)",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "var(--space-2)",
-                      }}
-                    >
-                      <div className="card-kicker">Reasoning</div>
-                      <Tag variant="outline">encrypted</Tag>
-                      <span className="text-muted" style={{ fontSize: 11 }}>
-                        withheld by the provider
-                      </span>
+            return (
+              <>
+                {detail.userMessage.length > 0 && (
+                  <Blueprint style={{ padding: "var(--space-3)" }}>
+                    <div className="card-kicker" style={{ marginBottom: "var(--space-2)" }}>
+                      User message
                     </div>
-                  )}
-                  {round.response.reasoning && !isEncryptedReasoning(round.response.reasoning) && (
-                    <div
-                      style={{
-                        marginTop: "var(--space-2)",
-                        borderTop: "1px solid var(--color-divider)",
-                        paddingTop: "var(--space-2)",
-                      }}
-                    >
-                      <div className="card-kicker" style={{ marginBottom: "var(--space-2)" }}>
-                        Reasoning
+                    <UserMessageView parts={detail.userMessage} />
+                  </Blueprint>
+                )}
+
+                {detail.rounds.length > 1 && (
+                  <div style={{ display: "flex", alignItems: "center", gap: "var(--space-3)", flexWrap: "wrap" }}>
+                    <SegmentedControl
+                      name="turnRound"
+                      options={roundOptions}
+                      value={String(round.request.index)}
+                      onChange={(value) => setSelectedRound(Number(value))}
+                    />
+                    <span className="text-muted" style={{ fontSize: 12 }}>
+                      {detail.rounds.length} rounds in this turn
+                    </span>
+                  </div>
+                )}
+
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--space-4)" }}>
+                  <Blueprint style={{ padding: "var(--space-3)" }}>
+                    <div className="card-kicker" style={{ marginBottom: "var(--space-2)" }}>
+                      Request · round {round.request.index}
+                    </div>
+                    <ToolCallsView toolCalls={round.request.toolCalls} format={format} />
+                    {round.request.addedMessages.length > 0 && (
+                      <>
+                        <SubLabel>Added messages</SubLabel>
+                        <ContentPartsView parts={round.request.addedMessages} format={format} maxHeight={260} />
+                      </>
+                    )}
+                  </Blueprint>
+                  <Blueprint style={{ padding: "var(--space-3)" }}>
+                    <div className="card-kicker" style={{ marginBottom: "var(--space-2)" }}>
+                      Response · round {round.response.index}
+                    </div>
+                    <ContentPartsView parts={round.response.response} format={format} maxHeight={320} />
+                    {round.response.reasoning && isEncryptedReasoning(round.response.reasoning) && (
+                      <div
+                        style={{
+                          marginTop: "var(--space-2)",
+                          borderTop: "1px solid var(--color-divider)",
+                          paddingTop: "var(--space-2)",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "var(--space-2)",
+                        }}
+                      >
+                        <div className="card-kicker">Reasoning</div>
+                        <Tag variant="outline">encrypted</Tag>
+                        <span className="text-muted" style={{ fontSize: 11 }}>
+                          withheld by the provider
+                        </span>
                       </div>
-                      <ContentPartsView parts={round.response.reasoning} format={format} maxHeight={200} />
-                    </div>
-                  )}
-                </Blueprint>
-              </div>
-            </>
-          );
-        })()}
+                    )}
+                    {round.response.reasoning && !isEncryptedReasoning(round.response.reasoning) && (
+                      <div
+                        style={{
+                          marginTop: "var(--space-2)",
+                          borderTop: "1px solid var(--color-divider)",
+                          paddingTop: "var(--space-2)",
+                        }}
+                      >
+                        <div className="card-kicker" style={{ marginBottom: "var(--space-2)" }}>
+                          Reasoning
+                        </div>
+                        <ContentPartsView parts={round.response.reasoning} format={format} maxHeight={200} />
+                      </div>
+                    )}
+                  </Blueprint>
+                </div>
+              </>
+            );
+          })()}
+      </AsyncView>
     </div>
   );
 }

@@ -5,6 +5,8 @@ import {
   type SelectSessionPayload,
 } from "@copilot-cost-analyzer/domain";
 import { WATCHED_SETTING_IDS } from "../config/config-change-watcher.js";
+import { identityTranslate, type Translate } from "../l10n/localize.js";
+import type { WalkthroughLauncher } from "../onboarding/walkthrough-offer.js";
 import { allowedSettingIds } from "../rpc/host-command-handler.js";
 import { COMMAND_IDS } from "./command-ids.js";
 
@@ -18,7 +20,11 @@ export interface ExtensionCommandsDeps {
   panel: CommandPanel;
   sidebar: { refresh(): Promise<void> };
   hostCommands: { openSetting(settingId: string): Promise<void> };
+  // Opens the Get Started walkthrough (vscode/vscode-walkthrough.ts).
+  walkthrough: WalkthroughLauncher;
   readConfigStatus(): Promise<ConfigStatus>;
+  // Translates the messages VS Code shows when a command is refused.
+  t?: Translate;
 }
 
 type Handler = (...args: unknown[]) => unknown;
@@ -38,7 +44,11 @@ function stringArg(arg: unknown, field: string): unknown {
 // nodes, menus and other extensions, so every one is validated like the
 // webview's messages are.
 export class ExtensionCommands {
-  constructor(private readonly deps: ExtensionCommandsDeps) {}
+  private readonly t: Translate;
+
+  constructor(private readonly deps: ExtensionCommandsDeps) {
+    this.t = deps.t ?? identityTranslate;
+  }
 
   open(): void {
     this.deps.panel.open();
@@ -47,6 +57,10 @@ export class ExtensionCommands {
   // The web app starts in Learn mode, so opening the panel is enough.
   openLearnMode(): void {
     this.deps.panel.open();
+  }
+
+  openWalkthrough(): Promise<void> {
+    return this.deps.walkthrough.open();
   }
 
   refreshSessions(): Promise<void> {
@@ -80,7 +94,7 @@ export class ExtensionCommands {
     const arg = stringArg(target, "settingId");
     const settingId = typeof arg === "string" && arg !== "" ? arg : WATCHED_SETTING_IDS[0];
     if (!(await allowedSettingIds(this.deps.readConfigStatus)).has(settingId)) {
-      throw new Error(`Setting "${settingId}" can't be opened from the analyzer`);
+      throw new Error(this.t('Setting "{0}" can\'t be opened from the analyzer', settingId));
     }
     await this.deps.hostCommands.openSetting(settingId);
   }
@@ -90,6 +104,7 @@ export class ExtensionCommands {
     return {
       [COMMAND_IDS.open]: () => this.open(),
       [COMMAND_IDS.openLearnMode]: () => this.openLearnMode(),
+      [COMMAND_IDS.openWalkthrough]: () => this.openWalkthrough(),
       [COMMAND_IDS.refreshSessions]: () => this.refreshSessions(),
       [COMMAND_IDS.openSession]: (target, options) => this.openSession(target, options),
       [COMMAND_IDS.showToolAudit]: (target) => this.showToolAudit(target),
@@ -101,7 +116,7 @@ export class ExtensionCommands {
   private select(candidate: unknown): void {
     const payload = selectSessionPayloadSchema.safeParse(candidate);
     if (!payload.success) {
-      throw new Error("A session id is needed to open a session, with an optional tab or view");
+      throw new Error(this.t("A session id is needed to open a session, with an optional tab or view"));
     }
     this.deps.panel.open();
     this.deps.panel.postWhenReady(selectSessionEvent(payload.data));

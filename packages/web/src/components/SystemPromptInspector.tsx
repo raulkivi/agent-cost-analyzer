@@ -1,15 +1,18 @@
-import { Fragment, useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { fetchSystemPromptText } from "../api-client/sessions.js";
 import { PromptCompositionIcicle } from "../charts/PromptCompositionIcicle.js";
+import { useEscapeKey, useFocusReturn } from "../lib/focus.js";
 import { describeTag } from "../lib/system-prompt-descriptions.js";
-import { assignIcicleColors, assignTextColors, buildMenu } from "../lib/system-prompt-menu.js";
+import { assignIcicleColors, assignTextColors, buildMenu, SEGMENT_TEXT_COLOR } from "../lib/system-prompt-menu.js";
 import type { MenuEntry } from "../lib/system-prompt-menu.js";
 import { parseSystemPrompt } from "../lib/system-prompt-parser.js";
+import { scrollBehavior } from "../lib/reduced-motion.js";
 import type { PromptNode } from "../lib/system-prompt-parser.js";
 import { buildPrettyTextSegments } from "../lib/system-prompt-pretty.js";
 import { buildTextSegments } from "../lib/system-prompt-text.js";
 import type { TextSegment } from "../lib/system-prompt-text.js";
+import { AsyncView } from "./ui/AsyncView.js";
 import { Blueprint } from "./ui/Blueprint.js";
 import { SegmentedControl } from "./ui/SegmentedControl.js";
 import { Tag } from "./ui/Tag.js";
@@ -67,6 +70,7 @@ function renderSegments(segments: TextSegment[], selectedNodeId: string | null):
         data-testid={nodeDomId(segment.nodeId)}
         style={{
           background: segment.color,
+          color: SEGMENT_TEXT_COLOR,
           outline: isSelected ? "2px solid var(--color-text)" : undefined,
           outlineOffset: isSelected ? "-2px" : undefined,
         }}
@@ -88,6 +92,11 @@ export function SystemPromptInspector({
   const [state, setState] = useState<LoadState>({ status: "loading" });
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [format, setFormat] = useState<PromptFormat>("pretty");
+  const [attempt, setAttempt] = useState(0);
+  // §3.5: focus starts on Back and returns to the opener; Escape closes.
+  const backButton = useRef<HTMLButtonElement>(null);
+  useFocusReturn(backButton);
+  useEscapeKey(onClose);
 
   useEffect(() => {
     let canceled = false;
@@ -111,7 +120,7 @@ export function SystemPromptInspector({
     return () => {
       canceled = true;
     };
-  }, [sessionId, providerId]);
+  }, [sessionId, providerId, attempt]);
 
   const parsed = useMemo(
     () => (state.status === "ready" ? parseSystemPrompt(state.text) : null),
@@ -135,13 +144,13 @@ export function SystemPromptInspector({
 
   function selectNode(node: PromptNode): void {
     setSelectedId(node.id);
-    document.getElementById(nodeDomId(node.id))?.scrollIntoView({ behavior: "smooth", block: "start" });
+    document.getElementById(nodeDomId(node.id))?.scrollIntoView({ behavior: scrollBehavior(), block: "start" });
   }
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-3)", padding: "var(--space-4)" }}>
       <div style={{ display: "flex", alignItems: "center", gap: "var(--space-3)", flexWrap: "wrap" }}>
-        <button type="button" className="btn btn-secondary" onClick={onClose}>
+        <button ref={backButton} type="button" className="btn btn-secondary" onClick={onClose}>
           ← Back to session
         </button>
         {sessionTitle && (
@@ -163,133 +172,145 @@ export function SystemPromptInspector({
         )}
       </div>
 
-      {state.status === "loading" && <p className="text-muted">Loading system prompt…</p>}
-      {state.status === "error" && <p className="text-muted">{state.message}</p>}
-
-      {state.status === "ready" && parsed && (
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "280px 1fr 320px",
-            gap: "var(--space-4)",
-            alignItems: "start",
-          }}
-        >
-          <Blueprint
-            style={{ padding: "var(--space-3)", maxHeight: "70vh", overflow: "auto" }}
+      <AsyncView
+        status={state.status}
+        loadingText="Loading system prompt…"
+        readyText="System prompt loaded."
+        error={
+          state.status === "error"
+            ? {
+                title: "Couldn't load the system prompt",
+                details: state.message,
+                onRetry: () => setAttempt((current) => current + 1),
+              }
+            : undefined
+        }
+      >
+        {state.status === "ready" && parsed && (
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "280px 1fr 320px",
+              gap: "var(--space-4)",
+              alignItems: "start",
+            }}
           >
-            <div className="card-kicker" style={{ marginBottom: "var(--space-2)" }}>
-              Structure
-            </div>
-            <nav style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-              {menu.map((entry) => (
-                <button
-                  key={entry.node.id}
-                  type="button"
-                  onClick={() => selectNode(entry.node)}
-                  title={entry.fullPath}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 6,
-                    background: entry.node.id === selectedId ? "var(--color-surface)" : "transparent",
-                    border: "none",
-                    borderRadius: 0,
-                    cursor: "pointer",
-                    font: "inherit",
-                    fontSize: 12,
-                    textAlign: "left",
-                    color: "var(--color-text)",
-                    padding: navButtonPadding(entry.node.depth),
-                  }}
-                >
-                  <span
-                    aria-hidden="true"
-                    style={{ width: 8, height: 8, flexShrink: 0, background: entry.color }}
-                  />
-                  <span className="truncate">{entry.label}</span>
-                </button>
-              ))}
-            </nav>
-          </Blueprint>
-
-          <Blueprint style={{ padding: "var(--space-3)", maxHeight: "70vh", overflow: "auto" }}>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                gap: "var(--space-2)",
-                marginBottom: "var(--space-2)",
-              }}
+            <Blueprint
+              style={{ padding: "var(--space-3)", maxHeight: "70vh", overflow: "auto" }}
             >
-              <div className="card-kicker">{format === "icicle" ? "Composition" : "Raw text"}</div>
-              <SegmentedControl name="promptFormat" options={FORMAT_OPTIONS} value={format} onChange={setFormat} />
-            </div>
-            {format === "icicle" ? (
-              <PromptCompositionIcicle
-                root={parsed.root}
-                text={state.text}
-                malformed={parsed.malformed}
-                colors={icicleColors}
-                selectedId={selectedId}
-                onSelect={selectNode}
-              />
-            ) : (
-              <pre
+              <div className="card-kicker" style={{ marginBottom: "var(--space-2)" }}>
+                Structure
+              </div>
+              <nav style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                {menu.map((entry) => (
+                  <button
+                    key={entry.node.id}
+                    type="button"
+                    onClick={() => selectNode(entry.node)}
+                    title={entry.fullPath}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6,
+                      background: entry.node.id === selectedId ? "var(--color-surface)" : "transparent",
+                      border: "none",
+                      borderRadius: 0,
+                      cursor: "pointer",
+                      font: "inherit",
+                      fontSize: 12,
+                      textAlign: "left",
+                      color: "var(--color-text)",
+                      padding: navButtonPadding(entry.node.depth),
+                    }}
+                  >
+                    <span
+                      aria-hidden="true"
+                      style={{ width: 8, height: 8, flexShrink: 0, background: entry.color }}
+                    />
+                    <span className="truncate">{entry.label}</span>
+                  </button>
+                ))}
+              </nav>
+            </Blueprint>
+
+            <Blueprint style={{ padding: "var(--space-3)", maxHeight: "70vh", overflow: "auto" }}>
+              <div
                 style={{
-                  margin: 0,
-                  whiteSpace: "pre-wrap",
-                  wordBreak: "break-word",
-                  fontFamily: "monospace",
-                  fontSize: 12,
-                  lineHeight: 1.6,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: "var(--space-2)",
+                  marginBottom: "var(--space-2)",
                 }}
               >
-                {renderSegments(segments, selectedId)}
-              </pre>
-            )}
-          </Blueprint>
+                <div className="card-kicker">{format === "icicle" ? "Composition" : "Raw text"}</div>
+                <SegmentedControl name="promptFormat" options={FORMAT_OPTIONS} value={format} onChange={setFormat} />
+              </div>
+              {format === "icicle" ? (
+                <PromptCompositionIcicle
+                  root={parsed.root}
+                  text={state.text}
+                  malformed={parsed.malformed}
+                  colors={icicleColors}
+                  selectedId={selectedId}
+                  onSelect={selectNode}
+                />
+              ) : (
+                <pre
+                  style={{
+                    margin: 0,
+                    whiteSpace: "pre-wrap",
+                    wordBreak: "break-word",
+                    fontFamily: "monospace",
+                    fontSize: 12,
+                    lineHeight: 1.6,
+                  }}
+                >
+                  {renderSegments(segments, selectedId)}
+                </pre>
+              )}
+            </Blueprint>
 
-          <Blueprint style={{ padding: "var(--space-3)", maxHeight: "70vh", overflow: "auto" }}>
-            <div className="card-kicker" style={{ marginBottom: "var(--space-2)" }}>
-              Component description
-            </div>
-            {!selectedEntry ? (
-              <p className="text-muted" style={{ fontSize: 13, margin: 0 }}>
-                Select a section on the left to see what it does.
-              </p>
-            ) : (
-              (() => {
-                const description = describeTag(selectedEntry.node.tagName, selectedEntry.node, selectedEntry.label);
-                return (
-                  <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-2)" }}>
-                    <div className="card-title" style={{ fontSize: 15 }}>
-                      {selectedEntry.label}
+            <Blueprint style={{ padding: "var(--space-3)", maxHeight: "70vh", overflow: "auto" }}>
+              <div className="card-kicker" style={{ marginBottom: "var(--space-2)" }}>
+                Component description
+              </div>
+              {!selectedEntry ? (
+                <p className="text-muted" style={{ fontSize: 13, margin: 0 }}>
+                  Select a section on the left to see what it does.
+                </p>
+              ) : (
+                (() => {
+                  const description = describeTag(selectedEntry.node.tagName, selectedEntry.node, selectedEntry.label);
+                  return (
+                    <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-2)" }}>
+                      <div className="card-title" style={{ fontSize: 15 }}>
+                        {selectedEntry.label}
+                      </div>
+                      <p style={{ fontSize: 13, margin: 0 }}>{description.description}</p>
+                      <span
+                        className={`tag ${description.sourced ? "tag-accent" : "tag-outline"}`}
+                        style={{ alignSelf: "flex-start" }}
+                      >
+                        {description.sourced ? "Sourced" : "Not independently sourced"}
+                      </span>
+                      {description.sourceUrls.length > 0 && (
+                        <ul style={{ margin: 0, paddingLeft: "var(--space-4)", fontSize: 11 }}>
+                          {description.sourceUrls.map((url) => (
+                            <li key={url} className="text-muted">
+                              {url}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
                     </div>
-                    <p style={{ fontSize: 13, margin: 0 }}>{description.description}</p>
-                    <span
-                      className={`tag ${description.sourced ? "tag-accent" : "tag-outline"}`}
-                      style={{ alignSelf: "flex-start" }}
-                    >
-                      {description.sourced ? "Sourced" : "Not independently sourced"}
-                    </span>
-                    {description.sourceUrls.length > 0 && (
-                      <ul style={{ margin: 0, paddingLeft: "var(--space-4)", fontSize: 11 }}>
-                        {description.sourceUrls.map((url) => (
-                          <li key={url} className="text-muted">
-                            {url}
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
-                );
-              })()
-            )}
-          </Blueprint>
-        </div>
-      )}
+                  );
+                })()
+              )}
+            </Blueprint>
+          </div>
+        )}
+      </AsyncView>
     </div>
   );
 }

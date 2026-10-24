@@ -1,4 +1,5 @@
 import type { ConfigWarning, Session } from "@copilot-cost-analyzer/domain";
+import { identityTranslate, type Translate } from "../l10n/localize.js";
 import { COMMAND_IDS, FOCUS_SETUP_VIEW_COMMAND } from "../commands/command-ids.js";
 import { dayKeyOf } from "../time/local-time.js";
 
@@ -31,7 +32,7 @@ function sessionStartedOn(session: Session, dayKey: string, timeZone: string | u
 // Today's AI Credits: only known costs are summed (an unknown one is never a
 // 0), and the tooltip says how many sessions that covers. Hidden (undefined)
 // when no session started today.
-export function buildTodayStatus(sessions: Session[], now: Date, timeZone?: string): TodayStatus | undefined {
+export function buildTodayStatus(sessions: Session[], now: Date, timeZone?: string, t: Translate = identityTranslate): TodayStatus | undefined {
   const today = dayKeyOf(now, timeZone);
   const todays = sessions.filter((session) => sessionStartedOn(session, today, timeZone));
   if (todays.length === 0) {
@@ -45,13 +46,17 @@ export function buildTodayStatus(sessions: Session[], now: Date, timeZone?: stri
       total += session.costAiCredits.value;
     }
   }
-  const single = todays.length === 1;
-  const coverage = `${known} of ${todays.length} ${single ? "session" : "sessions"} today ${single ? "has" : "have"} cost data`;
-  const amount = known === 0 ? "unknown" : total.toFixed(2);
+  // Whole messages for one session and several, not word suffixes.
+  const coverage =
+    todays.length === 1
+      ? t("{0} of {1} session today has cost data", known, todays.length)
+      : t("{0} of {1} sessions today have cost data", known, todays.length);
+  const amount = known === 0 ? t("unknown") : total.toFixed(2);
   return {
-    text: known === 0 ? "$(graph) AI Credits: unknown" : `$(graph) ${amount} AI Credits today`,
+    // The codicon stays outside the message: a translator must not see it.
+    text: `$(graph) ${known === 0 ? t("AI Credits: unknown") : t("{0} AI Credits today", amount)}`,
     tooltip: coverage,
-    ariaLabel: `AI Credits today: ${amount}, ${coverage}. Open analyzer.`,
+    ariaLabel: t("AI Credits today: {0}, {1}. Open analyzer.", amount, coverage),
   };
 }
 
@@ -61,21 +66,22 @@ export interface StatusBarInput {
   // The current config warnings; a required one takes the item over.
   warnings: ConfigWarning[];
   timeZone?: string;
+  t?: Translate;
 }
 
 // A required config warning means no usable numbers, so the item says so and
 // opens the Setup view; otherwise it's today's status and opens the panel.
-export function buildStatusBarState({ sessions, now, warnings, timeZone }: StatusBarInput): StatusBarState | undefined {
+export function buildStatusBarState({ sessions, now, warnings, timeZone, t = identityTranslate }: StatusBarInput): StatusBarState | undefined {
   const required = warnings.find((warning) => warning.severity === "required");
   if (required) {
     return {
-      text: "$(warning) AI Credits: setup needed",
-      tooltip: `${required.message}\nClick to open Setup.`,
-      ariaLabel: "AI Credits Analyzer needs setup. Open setup.",
+      text: `$(warning) ${t("AI Credits: setup needed")}`,
+      tooltip: `${required.message}\n${t("Click to open Setup.")}`,
+      ariaLabel: t("AI Credits Analyzer needs setup. Open setup."),
       command: FOCUS_SETUP_VIEW_COMMAND,
       warning: true,
     };
   }
-  const today = buildTodayStatus(sessions, now, timeZone);
+  const today = buildTodayStatus(sessions, now, timeZone, t);
   return today && { ...today, command: COMMAND_IDS.open, warning: false };
 }

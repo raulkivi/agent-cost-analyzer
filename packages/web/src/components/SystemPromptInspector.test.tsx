@@ -85,6 +85,38 @@ describe("SystemPromptInspector", () => {
     expect(await screen.findByText(/no system prompt/i)).toBeInTheDocument();
   });
 
+  // §3.5 Accessibility: Escape closes the inspector; focus starts on Back.
+  it("closes on Escape and starts with focus on the back button", async () => {
+    stubFetchText(SAMPLE_TEXT);
+    const onClose = vi.fn();
+    render(<SystemPromptInspector sessionId="session-1" onClose={onClose} />);
+    await screen.findByRole("button", { name: /security requirements/i });
+
+    expect(screen.getByRole("button", { name: /back to session/i })).toHaveFocus();
+    fireEvent.keyDown(document.activeElement!, { key: "Escape" });
+
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  // §3.5 States (AsyncView).
+  it("reports a failed load as an alert that changed nothing, and retries", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi
+        .fn()
+        .mockResolvedValueOnce({ ok: false, status: 404, text: () => Promise.resolve("") })
+        .mockResolvedValue({ ok: true, status: 200, text: () => Promise.resolve(SAMPLE_TEXT) }),
+    );
+    render(<SystemPromptInspector sessionId="session-1" onClose={() => {}} />);
+
+    const alert = await screen.findByRole("alert");
+    expect(alert).toHaveTextContent("Couldn't load the system prompt");
+    expect(alert).toHaveTextContent(/nothing was changed/i);
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+
+    expect(await screen.findByRole("button", { name: /security requirements/i })).toBeInTheDocument();
+  });
+
   it("shows a pi-agent-specific message mentioning npm run configure, with no VS Code hint and no link, on fetch failure", async () => {
     stubFetchText("", false, 404);
 
@@ -121,6 +153,20 @@ describe("SystemPromptInspector", () => {
 
     expect(Element.prototype.scrollIntoView).toHaveBeenCalled();
     expect(screen.getByText(/owasp top 10/i)).toBeInTheDocument();
+  });
+
+  // §3.5 (handed over from 10.5): the pastel grounds stay light in a dark
+  // theme, so their text is pinned dark rather than the theme's light text.
+  it("pins dark text on every pastel text-pane segment", async () => {
+    stubFetchText(SAMPLE_TEXT);
+    render(<SystemPromptInspector sessionId="session-1" onClose={() => {}} />);
+    await screen.findByRole("button", { name: /security requirements/i });
+
+    const segments = document.querySelectorAll<HTMLElement>('[data-testid^="prompt-node-"]');
+    expect(segments.length).toBeGreaterThan(0);
+    for (const segment of segments) {
+      expect(segment.style.color).toBe("rgb(29, 31, 32)");
+    }
   });
 
   it("indents a depth-2 nav entry via a single padding shorthand, not a separate paddingLeft a later padding could clobber", async () => {

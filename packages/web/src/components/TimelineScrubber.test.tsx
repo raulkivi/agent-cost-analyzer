@@ -27,4 +27,12 @@ describe("TimelineScrubber", () => {
     expect(screen.getByText("Timeline")).toBeInTheDocument();
     expect(screen.getByText("Turn 3 of 5")).toBeInTheDocument();
   });
+
+  // axe (§3.5): a form control needs a name; the value reads as a turn.
+  it("names the slider after its label and says which turn it's on", () => {
+    render(<TimelineScrubber turnCount={5} selectedTurnIndex={2} onSelectTurn={() => {}} />);
+
+    const slider = screen.getByRole("slider", { name: "Timeline" });
+    expect(slider).toHaveAttribute("aria-valuetext", "Turn 3 of 5");
+  });
 });

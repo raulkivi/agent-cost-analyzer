@@ -1,4 +1,6 @@
+import { useState } from "react";
 import { fireEvent, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { makeTurn } from "../test-support/turn-fixture.js";
 import { TurnsTable } from "./TurnsTable.js";
@@ -231,5 +233,91 @@ describe("TurnsTable", () => {
 
     expect(screen.getByLabelText("2 of 3 tool calls failed")).toHaveTextContent("✕2");
     expect(screen.queryByLabelText(/of 1 tool calls failed/)).not.toBeInTheDocument();
+  });
+
+  // axe (§3.5): aria-label is only allowed on an element with a role.
+  it("gives the failure badge an image role, so its label is a permitted name", () => {
+    const turns = [
+      makeTurn({
+        index: 0,
+        toolCalls: [{ name: "Bash", argsSummary: "x", outcome: { status: "error", failureCategory: "command-not-found" } }],
+      }),
+    ];
+    render(<TurnsTable turns={turns} selectedTurnIndex={0} onSelectTurn={() => {}} />);
+
+    expect(screen.getByRole("img", { name: "1 of 1 tool calls failed" })).toHaveClass("failure-badge");
+  });
+
+  // §3.5 Layout: the column chooser and the narrow layout's priority columns.
+  it("renders only the given columns, header and cells alike", () => {
+    const turns = [makeTurn({ index: 1 })];
+
+    render(
+      <TurnsTable turns={turns} selectedTurnIndex={0} onSelectTurn={() => {}} columns={["turn", "aiCredits", "model"]} />,
+    );
+
+    expect(screen.getAllByRole("columnheader").map((cell) => cell.textContent)).toEqual(["Turn", "AI Credits", "Model"]);
+    expect(screen.getAllByRole("row")[1]!.querySelectorAll("td")).toHaveLength(3);
+  });
+
+  // §3.5 Accessibility: arrow keys move through the rows, Enter opens.
+  describe("keyboard", () => {
+    const turns = [makeTurn({ index: 1 }), makeTurn({ index: 2 }), makeTurn({ index: 3 })];
+
+    function StatefulTable({ onOpenTurn }: { onOpenTurn?: (turnIndex: number) => void }) {
+      const [selected, setSelected] = useState(0);
+      return (
+        <>
+          <button type="button">before</button>
+          <TurnsTable turns={turns} selectedTurnIndex={selected} onSelectTurn={setSelected} onOpenTurn={onOpenTurn} />
+          <button type="button">after</button>
+        </>
+      );
+    }
+
+    const bodyRows = () => screen.getAllByRole("row").slice(1);
+
+    it("is one Tab stop, entered at the selected row (roving tabindex)", async () => {
+      const user = userEvent.setup();
+      render(<StatefulTable />);
+
+      await user.click(screen.getByRole("button", { name: "before" }));
+      await user.tab();
+      expect(bodyRows()[0]).toHaveFocus();
+      await user.tab();
+      expect(screen.getByRole("button", { name: "after" })).toHaveFocus();
+    });
+
+    it("moves focus and selection with ArrowDown/ArrowUp, Home and End", async () => {
+      const user = userEvent.setup();
+      render(<StatefulTable />);
+      bodyRows()[0]!.focus();
+
+      await user.keyboard("{ArrowDown}");
+      expect(bodyRows()[1]).toHaveFocus();
+      expect(bodyRows()[1]).toHaveAttribute("aria-selected", "true");
+
+      await user.keyboard("{End}");
+      expect(bodyRows()[2]).toHaveFocus();
+      await user.keyboard("{ArrowDown}");
+      expect(bodyRows()[2]).toHaveFocus();
+
+      await user.keyboard("{ArrowUp}");
+      expect(bodyRows()[1]).toHaveFocus();
+      await user.keyboard("{Home}");
+      expect(bodyRows()[0]).toHaveFocus();
+      expect(bodyRows()[0]).toHaveAttribute("aria-selected", "true");
+    });
+
+    it("opens the focused turn with Enter", async () => {
+      const user = userEvent.setup();
+      const onOpenTurn = vi.fn();
+      render(<StatefulTable onOpenTurn={onOpenTurn} />);
+      bodyRows()[0]!.focus();
+
+      await user.keyboard("{ArrowDown}{Enter}");
+
+      expect(onOpenTurn).toHaveBeenCalledWith(1);
+    });
   });
 });

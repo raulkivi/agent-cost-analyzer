@@ -237,5 +237,29 @@ describe("AppHeader", () => {
       expect(screen.queryByRole("combobox", { name: "Log provider" })).not.toBeInTheDocument();
       expect(screen.queryByText("Source")).not.toBeInTheDocument();
     });
+
+    // Step 10.7 (from 10.5): until the profile resolves or fails, the header
+    // can't know the product, so it shows neither product's brand.
+    it("holds an empty brand area and no provider select while the profile is pending", () => {
+      render(
+        <AppHeader
+          mode="analyze"
+          onModeChange={vi.fn()}
+          hasConfigWarnings={false}
+          onConfigClick={vi.fn()}
+          providers={providers}
+          activeProviderId="vscode"
+          onProviderChange={vi.fn()}
+          profilePending
+        />,
+      );
+
+      expect(screen.queryByText("Session Analyzer")).not.toBeInTheDocument();
+      expect(screen.queryByText("GitHub Copilot Chat")).not.toBeInTheDocument();
+      expect(screen.queryByRole("combobox", { name: "Log provider" })).not.toBeInTheDocument();
+      expect(screen.getByTestId("brand-placeholder")).toHaveAttribute("aria-busy", "true");
+      // The mode switch doesn't depend on the product.
+      expect(screen.getByLabelText("Analyze")).toBeChecked();
+    });
   });
 });
