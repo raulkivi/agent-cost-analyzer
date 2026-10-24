@@ -1,8 +1,8 @@
 /* Industry — design-system tokens and component classes, ported from the
    design handoff (Design/GitHub chat analyser design 2.zip,
    design_handoff_session_analyser_ui/styles.css). This file is the source
-   of truth for the app's look; retune tokens/classes here, not inline. */
-@import url('https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;700&family=Barlow+Condensed:wght@400;600&display=swap');
+   of truth for the app's look; retune tokens/classes here, not inline.
+   Barlow and Barlow Condensed are bundled locally (fonts.ts), never fetched. */
 
 :root {
   --color-bg: #f2f2f3;
