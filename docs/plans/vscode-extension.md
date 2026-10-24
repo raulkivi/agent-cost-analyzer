@@ -1237,8 +1237,8 @@ personal account can own one; no company or organization is needed.
 **Status (2026-10-24):** the VS Code Marketplace publisher `raulkivi` is
 registered (marketplace.visualstudio.com/manage/publishers/raulkivi).
 Still to do:
-- **VS Code Marketplace:** steps 2-4 below (Azure DevOps organization,
-  PAT, `VSCE_PAT` secret), or step 5's Entra ID route instead.
+- **VS Code Marketplace:** the Entra ID setup below (global PATs retire
+  on 1 December 2026).
 - **Open VSX:** the whole section below.
 - **Listing:** the listing prerequisites.
 
@@ -1248,37 +1248,59 @@ Still to do:
   and the `publisher` field in `packages/vscode-extension/package.json`
   must match it. Display name: the owner's name.
 
-**VS Code Marketplace**
+**VS Code Marketplace** (revised 2026-10-24)
 
-1. Sign in with a personal Microsoft account at
-   `https://marketplace.visualstudio.com/manage` and create the
-   publisher: id `raulkivi`, display name, and optionally a description,
-   website (the GitHub repo) and support link.
-2. Create a free Azure DevOps organization with the same Microsoft
-   account. It's needed only to issue the publishing token.
-3. Create a Personal Access Token there, scoped to **Marketplace →
-   Manage**, with organization "All accessible organizations" (vsce
-   requires that), and the longest lifetime allowed (up to 1 year).
-   Put a calendar reminder for rotation (R5).
-4. Check locally with `npx @vscode/vsce login raulkivi`, then store the
-   token as the `VSCE_PAT` secret in the protected `release` GitHub
-   environment (§7.2), never as a plain repository secret.
-5. Check the current vsce docs at setup time: Microsoft is moving
-   Marketplace auth toward Microsoft Entra ID (`vsce publish
-   --azure-credential` with a federated GitHub identity), which removes
-   the long-lived PAT. Use it if it's available for personal accounts.
+Azure DevOps retires global PATs on **1 December 2026**, and the
+Marketplace PAT route (`VSCE_PAT`) needs one. So the release workflow
+signs in with **Microsoft Entra ID** (`vsce publish --azure-credential`,
+vsce ≥ 2.26.1) through GitHub OIDC, with no long-lived secret. A PAT is
+only a stop-gap if the first publish happens before that date and Entra
+ID isn't set up yet.
+
+1. Publisher `raulkivi`: done.
+2. In the Azure portal (same Microsoft account; a free tenant is enough),
+   create an **app registration**, e.g. `ai-credits-analyzer-release`.
+   Note its *Application (client) ID* and *Directory (tenant) ID*.
+3. Under that app: *Certificates & secrets → Federated credentials → Add*,
+   scenario *GitHub Actions deploying Azure resources*: organization
+   `raulkivi`, repository `copilot-cost-analyzer`, entity type
+   *Environment*, environment `release`. Only release jobs in that
+   environment can then sign in.
+4. Add the app as a **member of the publisher**: at
+   `marketplace.visualstudio.com/manage/publishers/raulkivi` → *Members*,
+   add it (by its service principal / object id, as the current docs
+   describe) with the *Contributor* role.
+5. In GitHub: *Settings → Environments → New environment* `release`, with
+   yourself as required reviewer and deployment limited to `ext-v*` tags.
+   Add environment **variables** (not secrets) `AZURE_CLIENT_ID` and
+   `AZURE_TENANT_ID`. The workflow uses `azure/login` with
+   `allow-no-subscriptions: true` and `id-token: write`, then
+   `vsce publish --azure-credential`.
+6. Microsoft documents this for Azure Pipelines; on GitHub Actions it's
+   reported working by other projects, so the first real publish is the
+   test. Fallback: an Azure DevOps PAT (Marketplace → Manage, "All
+   accessible organizations") as the `VSCE_PAT` secret in `release`, valid
+   only until 1 December 2026.
+7. Don't use `vsce publish --oidc` (trusted publishing); it isn't
+   available yet.
 
 **Open VSX** (VSCodium, Cursor, Gitpod and others)
 
-1. Sign in at `https://open-vsx.org` with GitHub, then link an
-   eclipse.org account and accept the Eclipse Publisher Agreement. Open
-   VSX requires this before publishing.
-2. Create an access token in the Open VSX user settings, and run
-   `npx ovsx create-namespace raulkivi -p <token>` once. The namespace
-   must equal the `publisher` field.
-3. Store the token as `OVSX_PAT` in the same `release` environment.
-4. Optional: request namespace ownership verification so the listing
-   shows as verified rather than unverified.
+1. Sign in at `https://open-vsx.org` with GitHub. In *Settings → Profile*,
+   log in with an eclipse.org account (create one if needed; its GitHub
+   username must match) and sign the **Eclipse Foundation Open VSX
+   Publisher Agreement** (not the Eclipse Contributor Agreement).
+2. *Settings → Access Tokens → Generate New Token*. Copy it once.
+3. Create the namespace once, locally:
+   `npx ovsx create-namespace raulkivi -p <token>`. It must equal the
+   `publisher` field.
+4. Claim the namespace: until ownership is granted, anyone can publish
+   into it. Open an issue at `github.com/EclipseFdn/open-vsx.org` (type
+   "Claim namespace ownership") naming `raulkivi`.
+5. Generate a separate token for CI (Open VSX 1.3 can scope a token to
+   the namespace and to publishing only; use that). Store it as the
+   `OVSX_PAT` **secret** in the `release` environment.
+6. Check: `npx ovsx verify-pat raulkivi -p <token>`.
 
 **Listing prerequisites checked before the first publish (step 10.9)**
 
@@ -1294,8 +1316,9 @@ Still to do:
   controls, DNS verification, and a publisher that has existed for a
   while. Not needed for v1.
 
-**Exit:** `vsce login raulkivi` and `ovsx verify-pat raulkivi` both
-succeed, and both secrets exist in the `release` environment.
+**Exit:** the `release` environment holds `AZURE_CLIENT_ID`,
+`AZURE_TENANT_ID` (variables) and `OVSX_PAT` (secret); `ovsx verify-pat
+raulkivi` succeeds; the Entra ID app is a member of the publisher.
 
 ### 7.1 CI (every PR)
 
@@ -1324,9 +1347,9 @@ suite only, to cover the D4 path derivation for real.
    itself never does (constraint 1).
 2. Build and test as in CI. The integration tests run on that same
    stable build.
-3. `vsce publish --packagePath *.vsix` with `VSCE_PAT` (Azure DevOps PAT
-   with Marketplace "Manage" scope) as a repository secret, in a
-   protected `release` environment with required reviewers.
+3. `azure/login` (OIDC, `allow-no-subscriptions`), then
+   `vsce publish --azure-credential --packagePath *.vsix`, in the
+   protected `release` environment with required reviewers (§7.0).
 4. `ovsx publish *.vsix` with `OVSX_PAT` for Open VSX (VSCodium, Cursor,
    and others).
 5. Attach the `.vsix` to a GitHub Release named after the extension.

@@ -1243,7 +1243,7 @@ plan's §6.
 that VS Code ships, not in a real VS Code. VS Code can't be downloaded in
 the development container, so step 10.9's CI integration tests cover it.
 **Publishing**: the Marketplace publisher `raulkivi` is registered. The
-`VSCE_PAT`/Open VSX tokens and the icon are still to do (plan §7.0).
+Marketplace sign-in (Entra ID, since global PATs retire on 1 December 2026), the Open VSX token and the icon are still to do (plan §7.0).
 
 **Exit criterion**: the plan's §10.
 
