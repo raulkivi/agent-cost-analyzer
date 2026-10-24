@@ -235,3 +235,72 @@ describe("VscodeLogProvider.readTurnDetail", () => {
     expect(detail!.rounds).toEqual([]);
   });
 });
+
+// The SystemPromptTextReader capability (vscode-extension.md G1): the
+// main.jsonl system-prompt artifact behind GET /api/sessions/:id/system-prompt,
+// moved here from app.ts.
+describe("VscodeLogProvider.lookupSystemPromptText", () => {
+  let dir: string;
+  let dbPath: string;
+  let debugLogsDirPath: string;
+
+  beforeEach(() => {
+    dir = mkdtempSync(path.join(tmpdir(), "vscode-log-provider-system-prompt-"));
+    dbPath = path.join(dir, "session-store.db");
+    debugLogsDirPath = path.join(dir, "debug-logs");
+    seedFixtureDb(dbPath);
+  });
+
+  afterEach(() => {
+    rmSync(dir, { recursive: true, force: true });
+  });
+
+  function provider(sessionStoreDbPath: string | null = dbPath): VscodeLogProvider {
+    return new VscodeLogProvider({ sessionStoreDbPath, debugLogsDirPaths: [debugLogsDirPath], agentTracesDbPath: null });
+  }
+
+  function writeMainJsonl(lines: object[]): void {
+    const sessionLogDir = path.join(debugLogsDirPath, "session-1");
+    mkdirSync(sessionLogDir, { recursive: true });
+    writeFileSync(path.join(sessionLogDir, "main.jsonl"), lines.map((line) => JSON.stringify(line)).join("\n") + "\n");
+  }
+
+  it("returns the raw system prompt text from the session's system_prompt artifact", async () => {
+    writeMainJsonl([
+      { v: 1, ts: 1, dur: 0, sid: "session-1", type: "session_start", name: "session_start", spanId: "a", status: "ok", attrs: {} },
+      {
+        v: 1, ts: 2, dur: 5, sid: "session-1", type: "llm_request", name: "llm_request", spanId: "b", status: "ok",
+        attrs: { model: "claude-sonnet-5", systemPromptFile: "system_prompt_0.json", toolsFile: "tools_0.json" },
+      },
+    ]);
+    writeFileSync(
+      path.join(debugLogsDirPath, "session-1", "system_prompt_0.json"),
+      JSON.stringify({ content: JSON.stringify([{ type: "text", content: "You are a helpful assistant." }]) }),
+    );
+
+    await expect(provider().lookupSystemPromptText("session-1")).resolves.toEqual({
+      status: "found",
+      text: "You are a helpful assistant.",
+    });
+  });
+
+  it("reports not-captured for a known session whose main.jsonl has no system-prompt artifact", async () => {
+    writeMainJsonl([
+      { v: 1, ts: 1, dur: 0, sid: "session-1", type: "session_start", name: "session_start", spanId: "a", status: "ok", attrs: {} },
+    ]);
+
+    await expect(provider().lookupSystemPromptText("session-1")).resolves.toEqual({ status: "not-captured" });
+  });
+
+  it("reports not-captured for a known session with no main.jsonl at all", async () => {
+    await expect(provider().lookupSystemPromptText("session-1")).resolves.toEqual({ status: "not-captured" });
+  });
+
+  it("reports unknown-session for an id the store doesn't have", async () => {
+    await expect(provider().lookupSystemPromptText("does-not-exist")).resolves.toEqual({ status: "unknown-session" });
+  });
+
+  it("reports unknown-session when there is no session store at all", async () => {
+    await expect(provider(null).lookupSystemPromptText("session-1")).resolves.toEqual({ status: "unknown-session" });
+  });
+});

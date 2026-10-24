@@ -59,3 +59,40 @@ export function writeMinRetainedSessionLogsThreshold(
 ): void {
   writeSettingsFile(settingsDir, { minRetainedSessionLogsThreshold });
 }
+
+// App-owned settings port (vscode-extension.md D5): the registry persists
+// the active provider and ApiService the retention threshold through this,
+// so each product keeps its own settings where it likes — the standalone
+// app in its settings.json (FileAppSettingsStore below), the extension in
+// its globalState. Reads return undefined for "nothing usable persisted";
+// each caller owns its own default. Every implementation must pass
+// describeAppSettingsStoreContract (app-settings-store-contract.ts).
+export interface AppSettingsStore {
+  readActiveProviderId(): string | undefined;
+  writeActiveProviderId(activeProviderId: string): void;
+  readMinRetainedSessionLogsThreshold(): number | undefined;
+  writeMinRetainedSessionLogsThreshold(minRetainedSessionLogsThreshold: number): void;
+}
+
+// The standalone app's default store: the same settings.json in
+// resolveAppSettingsDir() that the functions above have always used.
+export class FileAppSettingsStore implements AppSettingsStore {
+  constructor(readonly settingsDir: string) {}
+
+  readActiveProviderId(): string | undefined {
+    const raw = readSettingsFile(this.settingsDir);
+    return typeof raw.activeProviderId === "string" ? raw.activeProviderId : undefined;
+  }
+
+  writeActiveProviderId(activeProviderId: string): void {
+    writeActiveProviderId(this.settingsDir, activeProviderId);
+  }
+
+  readMinRetainedSessionLogsThreshold(): number | undefined {
+    return readMinRetainedSessionLogsThreshold(this.settingsDir);
+  }
+
+  writeMinRetainedSessionLogsThreshold(minRetainedSessionLogsThreshold: number): void {
+    writeMinRetainedSessionLogsThreshold(this.settingsDir, minRetainedSessionLogsThreshold);
+  }
+}

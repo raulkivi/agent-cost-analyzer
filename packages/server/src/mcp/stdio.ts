@@ -1,7 +1,7 @@
-import { readFileSync } from "node:fs";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { composeLogProviders } from "../composition/compose-log-providers.js";
 import { createInsightsService } from "../composition/create-insights-service.js";
+import { readAppVersion } from "../composition/app-version.js";
 import { AnalysisQueryService } from "../services/analysis/analysis-query-service.js";
 import { AuditQueryService } from "../services/tool-audit/audit-query-service.js";
 import { createMcpServer } from "./mcp-server.js";
@@ -9,7 +9,7 @@ import { createMcpServer } from "./mcp-server.js";
 // stdio entry point for `claude mcp add` (see docs/plans/tool-call-audit.md
 // §10 and scripts/mcp-server.sh). stdout carries JSON-RPC only — anything
 // diagnostic must go to stderr.
-const { version } = JSON.parse(readFileSync(new URL("../../package.json", import.meta.url), "utf-8")) as { version: string };
+const version = readAppVersion();
 
 const { registry } = composeLogProviders();
 const server = createMcpServer({

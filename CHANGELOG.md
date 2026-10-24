@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- Phase 10 plan (`docs/plans/vscode-extension.md`): AI Credits Analyzer,
+  a separate Copilot-only VS Code extension that shares code with the
+  standalone app (Agent Cost Analyzer). Covers the code analysis, decisions
+  D1-D10, test-first steps 10.0-10.9, UX and accessibility standards, UI
+  mock-ups (`docs/plans/mockups/vscode-extension/`), and CI and Marketplace
+  / Open VSX deployment.
 - MCP tools v2 (Phase 9.12): `get_session_cost` (token and AI Credits
   totals with coverage, cache hit ratio, spend per model, the most
   expensive turns, cost events, context overhead), `get_cost_rollup`
@@ -19,7 +25,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `query` and a `total`; `list_tool_calls` gains `kind` and `offset` (also
   on `GET /api/sessions/:id/tool-calls`). Plan: `docs/plans/mcp-tools-v2.md`.
 
+### Changed
+- Phase 10.1/10.2 groundwork for the AI Credits Analyzer extension. The HTTP
+  routes are now a thin layer over a transport-neutral `ApiService`, and
+  the web client reaches its backend through an `ApiTransport` (HTTP, or
+  `postMessage` inside a VS Code webview). The HTTP API is unchanged, with
+  one exception: `GET /api/sessions/:id/system-prompt` with the mitmproxy or
+  Claude Code provider active now always answers 404, instead of returning
+  a VS Code session's prompt.
+- New `GET /api/product` returns the product profile ("Agent Cost
+  Analyzer").
+
 ### Security
+- Upgraded `zod` to 4.6.7 (GHSA-mrhx-c7xc-m3w5: memory exhaustion when
+  validating oversized constrained collections). The domain package and the
+  planned extension bundle depend on it.
 - Removed the captured turn examples from `Design/examples/`; the 0.8.0 entry said they were removed, but they were still in the repository. Replaced the captured Copilot system prompt (`Design/SystemPrompt.txt`) with a synthetic fixture, `packages/web/fixtures/system-prompt-sample.txt`, used by the parser tests and the design-sync preview.
 
 ## [0.8.0] - 2026-10-12

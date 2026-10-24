@@ -1,10 +1,10 @@
 import type { ConfigStatus } from "@copilot-cost-analyzer/domain";
-import { getJson, putJson } from "./http.js";
+import { getApiTransport } from "./current-transport.js";
 
 export function fetchConfigStatus(): Promise<ConfigStatus> {
-  return getJson<ConfigStatus>("/api/config/status");
+  return getApiTransport().call<ConfigStatus>("getConfigStatus");
 }
 
 export function updateRetentionThreshold(value: number): Promise<ConfigStatus> {
-  return putJson<ConfigStatus>("/api/config/retention-threshold", { value });
+  return getApiTransport().call<ConfigStatus>("setRetentionThreshold", { value });
 }

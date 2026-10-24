@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>AI Credits Analyzer, session analysis</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:#4daafc}a:hover{color:#7cc0ff}
+</style>
+</helmet>
+<div style="width: 1280px; height: 800px; box-sizing: border-box; display: flex; flex-direction: column; font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; font-size: 13px; background: {{t.bg}}; color: {{t.text}}; overflow: hidden">
+  <div style="display: flex; flex-grow: 1; min-height: 0">
+    <nav aria-label="Activity Bar" style="width: 48px; flex-shrink: 0; background: {{t.act}}; border-right: 1px solid {{t.border}}; display: flex; flex-direction: column; align-items: center; gap: 4px; padding-top: 6px">
+      <button aria-label="Explorer" style="width: 48px; height: 44px; border: 0; background: transparent; color: {{t.muted}}; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M7 3h7l5 5v13H7z"></path><path d="M14 3v5h5"></path></svg></button>
+      <button aria-label="Search" style="width: 48px; height: 44px; border: 0; background: transparent; color: {{t.muted}}; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="6"></circle><path d="M20 20l-4.5-4.5"></path></svg></button>
+      <button aria-label="AI Credits Analyzer" aria-current="true" style="width: 48px; height: 44px; border: 0; border-left: 2px solid {{t.focus}}; background: transparent; color: {{t.text}}; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 20V10"></path><path d="M10 20V4"></path><path d="M16 20v-7"></path><path d="M21 20H3"></path></svg></button>
+    </nav>
+    <aside aria-label="AI Credits Analyzer sidebar" style="width: 280px; flex-shrink: 0; background: {{t.side}}; border-right: 1px solid {{t.border}}; display: flex; flex-direction: column">
+      <div style="height: 35px; display: flex; align-items: center; justify-content: space-between; padding: 0 8px 0 20px; font-size: 11px; letter-spacing: 0.04em; color: {{t.muted}}">
+        <span>AI CREDITS ANALYZER</span>
+        <div style="display: flex; gap: 2px">
+          <button aria-label="Refresh sessions" style="width: 28px; height: 28px; border: 0; background: transparent; color: {{t.text}}; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M20 12a8 8 0 1 1-2.3-5.6"></path><path d="M20 4v5h-5"></path></svg></button>
+          <button aria-label="Open analyzer" style="width: 28px; height: 28px; border: 0; background: transparent; color: {{t.text}}; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M14 4h6v6"></path><path d="M20 4l-9 9"></path><path d="M18 14v6H4V6h6"></path></svg></button>
+        </div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 4px; height: 22px; padding: 0 8px; font-size: 11px; font-weight: 700; letter-spacing: 0.04em; border-top: 1px solid {{t.border}}">
+        <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"></path></svg>
+        <span>SESSIONS</span>
+      </div>
+      <div style="padding: 6px 12px 6px 20px">
+        <label for="filter" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Filter sessions</label>
+        <input id="filter" placeholder="Filter sessions" style="width: 100%; box-sizing: border-box; height: 26px; padding: 0 8px; background: {{t.input}}; color: {{t.text}}; border: 1px solid {{t.border}}; border-radius: 2px; font: inherit">
+      </div>
+      <div role="tree" aria-label="Sessions" style="display: flex; flex-direction: column; flex-grow: 1; overflow: hidden">
+        <sc-for list="{{groups}}" as="g" hint-placeholder-count="2">
+          <div style="display: flex; flex-direction: column">
+            <div style="display: flex; align-items: center; gap: 4px; height: 22px; padding-left: 12px; color: {{t.text}}">
+              <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"></path></svg>
+              <span style="font-weight: 600">{{g.label}}</span>
+              <span style="margin-left: auto; padding-right: 12px; color: {{t.muted}}">{{g.total}}</span>
+            </div>
+            <sc-for list="{{g.items}}" as="s" hint-placeholder-count="3">
+              <div role="treeitem" aria-selected="{{s.sel}}" style="display: flex; align-items: center; gap: 6px; height: 22px; padding: 0 12px 0 34px; background: {{s.bg}}; color: {{s.fg}}; outline: {{s.outline}}; outline-offset: -1px">
+                <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 5h16v11H9l-5 4z"></path></svg>
+                <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex-grow: 1">{{s.title}}</span>
+                <span style="color: {{s.descFg}}; font-variant-numeric: tabular-nums; white-space: nowrap">{{s.cost}}</span>
+              </div>
+            </sc-for>
+          </div>
+        </sc-for>
+      </div>
+      <div style="display: flex; align-items: center; gap: 4px; height: 22px; padding: 0 8px; font-size: 11px; font-weight: 700; letter-spacing: 0.04em; border-top: 1px solid {{t.border}}">
+        <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"></path></svg>
+        <span>SETUP</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 6px; height: 22px; padding: 0 12px 0 22px; margin-bottom: 8px">
+        <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="{{t.good}}" stroke-width="2"><path d="M5 12l5 5 9-10"></path></svg>
+        <span>Debug logging on · keeps 200 sessions</span>
+      </div>
+    </aside>
+    <main style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column">
+      <div role="tablist" aria-label="Editor tabs" style="height: 35px; display: flex; background: {{t.side}}; border-bottom: 1px solid {{t.border}}">
+        <div role="tab" aria-selected="true" style="display: flex; align-items: center; gap: 6px; padding: 0 12px; background: {{t.bg}}; border-top: 1px solid {{t.focus}}; border-right: 1px solid {{t.border}}">
+          <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 20V10"></path><path d="M10 20V4"></path><path d="M16 20v-7"></path></svg>
+          <span>AI Credits Analyzer</span>
+        </div>
+        <div role="tab" aria-selected="false" style="display: flex; align-items: center; padding: 0 12px; color: {{t.muted}}; border-right: 1px solid {{t.border}}">token-cache.ts</div>
+      </div>
+      <div style="flex-grow: 1; min-height: 0; display: flex; flex-direction: column; padding: 16px 20px; gap: 14px">
+        <header style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px">
+          <div style="display: flex; flex-direction: column; gap: 2px">
+            <h1 style="margin: 0; font-size: 20px; font-weight: 600">Refactor token cache</h1>
+            <span style="color: {{t.muted}}">Today 14:02 · 12 turns · claude-sonnet-5 · Copilot Chat</span>
+          </div>
+          <div role="radiogroup" aria-label="Mode" style="display: flex; border: 1px solid {{t.border}}; border-radius: 2px">
+            <button role="radio" aria-checked="false" style="height: 28px; padding: 0 14px; border: 0; background: transparent; color: {{t.text}}; font: inherit">Learn</button>
+            <button role="radio" aria-checked="true" style="height: 28px; padding: 0 14px; border: 0; background: {{t.btn}}; color: {{t.btnText}}; font: inherit">Analyze</button>
+          </div>
+        </header>
+        <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px">
+          <sc-for list="{{kpis}}" as="k" hint-placeholder-count="4">
+            <div style="display: flex; flex-direction: column; gap: 2px; padding: 10px 12px; border: 1px solid {{t.border}}; border-radius: 4px; background: {{t.card}}">
+              <span style="color: {{t.muted}}; font-size: 12px">{{k.label}}</span>
+              <span style="font-size: 22px; font-weight: 600; font-variant-numeric: tabular-nums">{{k.value}}</span>
+              <span style="color: {{t.muted}}; font-size: 12px">{{k.note}}</span>
+            </div>
+          </sc-for>
+        </div>
+        <div role="tablist" aria-label="Session views" style="display: flex; gap: 18px; border-bottom: 1px solid {{t.border}}">
+          <sc-for list="{{views}}" as="v" hint-placeholder-count="4">
+            <button role="tab" aria-selected="{{v.sel}}" style="height: 30px; padding: 0 2px; border: 0; border-bottom: 2px solid {{v.line}}; background: transparent; color: {{v.fg}}; font: inherit">{{v.label}}</button>
+          </sc-for>
+        </div>
+        <div style="flex-grow: 1; min-height: 0; display: flex; gap: 16px">
+          <div style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px">
+            <div style="display: flex; justify-content: space-between; align-items: center">
+              <span style="color: {{t.muted}}">Showing 8 of 13 columns</span>
+              <button style="height: 26px; padding: 0 10px; border: 1px solid {{t.border}}; border-radius: 2px; background: transparent; color: {{t.text}}; font: inherit; display: flex; align-items: center; gap: 6px"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 6h16M4 12h16M4 18h16"></path></svg>Columns</button>
+            </div>
+            <div style="overflow: auto; border: 1px solid {{t.border}}; border-radius: 4px">
+              <table style="width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums">
+                <thead>
+                  <tr style="background: {{t.card}}; color: {{t.muted}}; text-align: right">
+                    <th scope="col" style="padding: 6px 8px; text-align: left; font-weight: 600">Turn</th>
+                    <th scope="col" style="padding: 6px 8px; text-align: left; font-weight: 600">Trigger</th>
+                    <th scope="col" style="padding: 6px 8px; font-weight: 600">Uncached in</th>
+                    <th scope="col" style="padding: 6px 8px; font-weight: 600">Cache read</th>
+                    <th scope="col" style="padding: 6px 8px; font-weight: 600">Output</th>
+                    <th scope="col" style="padding: 6px 8px; font-weight: 600">AI Credits</th>
+                    <th scope="col" style="padding: 6px 8px; font-weight: 600">Cumulative</th>
+                    <th scope="col" style="padding: 6px 8px; text-align: left; font-weight: 600">Model</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <sc-for list="{{rows}}" as="r" hint-placeholder-count="8">
+                    <tr aria-selected="{{r.sel}}" style="background: {{r.bg}}; color: {{r.fg}}; text-align: right; border-top: 1px solid {{t.border}}; outline: {{r.outline}}; outline-offset: -1px">
+                      <td style="padding: 5px 8px; text-align: left">{{r.n}}</td>
+                      <td style="padding: 5px 8px; text-align: left; white-space: nowrap">{{r.trigger}}</td>
+                      <td style="padding: 5px 8px">{{r.unc}}</td>
+                      <td style="padding: 5px 8px">{{r.cache}}</td>
+                      <td style="padding: 5px 8px">{{r.out}}</td>
+                      <td style="padding: 5px 8px; font-weight: 600">{{r.cost}}</td>
+                      <td style="padding: 5px 8px">{{r.cum}}</td>
+                      <td style="padding: 5px 8px; text-align: left; white-space: nowrap">{{r.model}}</td>
+                    </tr>
+                  </sc-for>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <section aria-label="Turn details" style="width: 300px; flex-shrink: 0; display: flex; flex-direction: column; gap: 10px; padding: 12px; border: 1px solid {{t.border}}; border-radius: 4px; background: {{t.card}}">
+            <div role="tablist" aria-label="Turn detail tabs" style="display: flex; gap: 14px; border-bottom: 1px solid {{t.border}}">
+              <button role="tab" aria-selected="true" style="height: 26px; padding: 0; border: 0; border-bottom: 2px solid {{t.focus}}; background: transparent; color: {{t.text}}; font: inherit">Explanation</button>
+              <button role="tab" aria-selected="false" style="height: 26px; padding: 0; border: 0; background: transparent; color: {{t.muted}}; font: inherit">System prompt</button>
+              <button role="tab" aria-selected="false" style="height: 26px; padding: 0; border: 0; background: transparent; color: {{t.muted}}; font: inherit">Tools</button>
+            </div>
+            <h2 style="margin: 0; font-size: 14px; font-weight: 600">Turn 7 · cache miss</h2>
+            <p style="margin: 0; line-height: 1.5">The model changed from gpt-4.1 to claude-sonnet-5, so the whole 18.2k-token prompt prefix was sent again as uncached input.</p>
+            <p style="margin: 0; line-height: 1.5; color: {{t.muted}}">Tip: stay on one model within a session to keep the cache warm.</p>
+            <div style="display: flex; gap: 8px; margin-top: auto">
+              <button style="height: 28px; padding: 0 12px; border: 0; border-radius: 2px; background: {{t.btn}}; color: {{t.btnText}}; font: inherit">Inspect request</button>
+              <button style="height: 28px; padding: 0 12px; border: 1px solid {{t.border}}; border-radius: 2px; background: transparent; color: {{t.text}}; font: inherit">Open prompt in editor</button>
+            </div>
+          </section>
+        </div>
+      </div>
+    </main>
+  </div>
+  <footer style="height: 22px; flex-shrink: 0; display: flex; align-items: center; justify-content: flex-end; gap: 14px; padding: 0 10px; background: {{t.status}}; color: {{t.statusText}}; border-top: 1px solid {{t.border}}; font-size: 12px">
+    <span>Ln 1, Col 1</span>
+    <button aria-label="AI Credits today: 12.40, 3 of 4 sessions have cost data. Open analyzer." style="height: 22px; padding: 0 6px; border: 0; background: transparent; color: {{t.statusText}}; font: inherit; display: flex; align-items: center; gap: 4px"><svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20V10"></path><path d="M10 20V4"></path><path d="M16 20v-7"></path></svg>12.40 AI Credits today</button>
+  </footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["dark","light","high-contrast"],"default":"dark"},"$preview":{"width":1280,"height":800}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var themes = {
+      dark: { bg: '#1f1f1f', side: '#181818', act: '#181818', card: '#252526', border: '#2b2b2b', text: '#cccccc', muted: '#9d9d9d', focus: '#0078d4', btn: '#0078d4', btnText: '#ffffff', input: '#313131', sel: '#04395e', selText: '#ffffff', status: '#181818', statusText: '#cccccc', good: '#89d185' },
+      light: { bg: '#ffffff', side: '#f8f8f8', act: '#f8f8f8', card: '#f8f8f8', border: '#e5e5e5', text: '#3b3b3b', muted: '#616161', focus: '#005fb8', btn: '#005fb8', btnText: '#ffffff', input: '#ffffff', sel: '#e8e8e8', selText: '#000000', status: '#f8f8f8', statusText: '#3b3b3b', good: '#2e7d32' },
+      'high-contrast': { bg: '#000000', side: '#000000', act: '#000000', card: '#000000', border: '#6fc3df', text: '#ffffff', muted: '#ffffff', focus: '#f38518', btn: '#000000', btnText: '#ffffff', input: '#000000', sel: '#000000', selText: '#ffffff', status: '#000000', statusText: '#ffffff', good: '#89d185' }
+    };
+    var name = this.props.theme ?? 'dark';
+    var t = themes[name] || themes.dark;
+    var hc = name === 'high-contrast';
+    function item(title, cost, sel) {
+      return { title: title, cost: cost, sel: sel ? 'true' : 'false', bg: sel ? t.sel : 'transparent', fg: sel ? t.selText : t.text, descFg: sel ? t.selText : t.muted, outline: sel ? '1px solid ' + t.focus : 'none' };
+    }
+    var groups = [
+      { label: 'Today', total: '12.40 · 1 unknown', items: [item('Refactor token cache', '4.82', true), item('Fix flaky audit test', '3.17', false), item('Explain insights rules', '4.41', false), item('Rename settings dir', 'unknown', false)] },
+      { label: 'Yesterday', total: '9.96', items: [item('Add pi provider fixtures', '6.08', false), item('Review MCP schemas', '3.88', false)] },
+      { label: '2026-10-21', total: '2.75', items: [item('Theme token clean-up', '2.75', false)] }
+    ];
+    var kpis = [
+      { label: 'AI Credits', value: '4.82', note: 'all 12 turns have cost data' },
+      { label: 'Cache read share', value: '71%', note: 'of input tokens' },
+      { label: 'Turns', value: '12', note: '31 LLM round-trips' },
+      { label: 'Tool calls', value: '34', note: '3 failed · 0.41 AI Credits spent recovering' }
+    ];
+    var views = ['Turns', 'Tool audit', 'All sessions', 'Dashboard'].map(function (l, i) {
+      return { label: l, sel: i === 0 ? 'true' : 'false', line: i === 0 ? t.focus : 'transparent', fg: i === 0 ? t.text : t.muted };
+    });
+    var data = [
+      ['1', 'User prompt', '9.4k', '0', '612', '0.38', '0.38', 'gpt-4.1'],
+      ['2', 'Tool result', '1.1k', '9.4k', '388', '0.09', '0.47', 'gpt-4.1'],
+      ['3', 'Tool result', '0.9k', '10.5k', '204', '0.08', '0.55', 'gpt-4.1'],
+      ['4', 'User prompt', '1.6k', '11.4k', '930', '0.21', '0.76', 'gpt-4.1'],
+      ['5', 'Tool result', '0.7k', '13.0k', '415', '0.11', '0.87', 'gpt-4.1'],
+      ['6', 'Tool result', '0.8k', '13.7k', '298', '0.10', '0.97', 'gpt-4.1'],
+      ['7', 'User prompt', '18.2k', '0', '1.4k', '1.62', '2.59', 'claude-sonnet-5'],
+      ['8', 'Tool result', '1.2k', '18.2k', '640', '0.31', '2.90', 'claude-sonnet-5']
+    ];
+    var rows = data.map(function (d) {
+      var sel = d[0] === '7';
+      return { n: d[0], trigger: d[1], unc: d[2], cache: d[3], out: d[4], cost: d[5], cum: d[6], model: d[7], sel: sel ? 'true' : 'false', bg: sel ? t.sel : 'transparent', fg: sel ? t.selText : t.text, outline: sel ? '1px solid ' + t.focus : 'none' };
+    });
+    if (hc) { t.btn = '#000000'; }
+    return { t: t, groups: groups, kpis: kpis, views: views, rows: rows };
+  }
+}
+</script>
+</body>
+</html>

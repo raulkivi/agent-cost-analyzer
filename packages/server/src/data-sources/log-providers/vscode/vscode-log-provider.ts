@@ -30,6 +30,7 @@ import {
 } from "../../sqlite/session-store.js";
 import {
   buildAnalyzeModeExtras,
+  resolveSystemPromptText,
 } from "../../../services/session-enricher/analyze-mode-extras.js";
 import {
   buildSession,
@@ -37,6 +38,7 @@ import {
   computeSessionCost,
 } from "../../../services/session-enricher/session-enricher.js";
 import type { LogProvider, LogProviderAvailability } from "../log-provider.js";
+import type { SystemPromptTextLookup, SystemPromptTextReader } from "../system-prompt-text-reader.js";
 
 export interface VscodeLogProviderOptions {
   sessionStoreDbPath: string | null;
@@ -55,7 +57,7 @@ const PROVIDER_ID = "vscode";
 // route layer (architecture.md §6.2.1/§4.1's Phase 9 row, and the
 // 2026-08-10 decision to fold Phase 8.5's agent-traces.db read in here
 // rather than leaving it as a parallel app.ts-level path).
-export class VscodeLogProvider implements LogProvider {
+export class VscodeLogProvider implements LogProvider, SystemPromptTextReader {
   readonly id = PROVIDER_ID;
   readonly label = "VS Code (local Copilot Chat)";
 
@@ -203,6 +205,40 @@ export class VscodeLogProvider implements LogProvider {
       }
 
       return buildTurnInspectorDetail(turnIndex, result.turnEnvelopes, result.previousInputMessagesLength);
+    } finally {
+      db.close();
+    }
+  }
+
+  // Raw, uninterpreted text of the base system prompt captured for this
+  // session (the SystemPromptTextReader capability, vscode-extension.md G1)
+  // — the "inspect as text file" counterpart to the estimated token count
+  // in SystemPromptBreakdown, read from the system_prompt artifact
+  // main.jsonl points to. Moved here from app.ts's route unchanged: SQLite
+  // decides whether the session exists, and a known session without a
+  // main.jsonl or without that artifact is not-captured.
+  async lookupSystemPromptText(sessionId: string): Promise<SystemPromptTextLookup> {
+    const db = this.openDb();
+    if (!db) {
+      return { status: "unknown-session" };
+    }
+
+    try {
+      const sessionRow = getSessionRow(db, sessionId);
+      if (!sessionRow) {
+        return { status: "unknown-session" };
+      }
+
+      const mainJsonlPath = resolveMainJsonlPath(this.options.debugLogsDirPaths, sessionRow.id);
+      if (!mainJsonlPath) {
+        return { status: "not-captured" };
+      }
+      const { envelopes, rawLineCount } = await readMainJsonlFile(mainJsonlPath);
+      if (classifyEnvelopesAvailability(envelopes, rawLineCount) !== "events-present") {
+        return { status: "not-captured" };
+      }
+      const text = await resolveSystemPromptText(envelopes, mainJsonlPath);
+      return text === null ? { status: "not-captured" } : { status: "found", text };
     } finally {
       db.close();
     }

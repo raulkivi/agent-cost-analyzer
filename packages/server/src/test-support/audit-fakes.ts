@@ -1,4 +1,4 @@
-import { unavailableTokenCount, type Session, type ToolCallRecord } from "@copilot-cost-analyzer/domain";
+import { unavailableTokenCount, type Session, type ToolCallRecord, type TurnInspectorDetail } from "@copilot-cost-analyzer/domain";
 import type { LogProvider } from "../data-sources/log-providers/log-provider.js";
 import { UnknownLogProviderIdError } from "../data-sources/log-providers/registry.js";
 import type { ProviderLookup } from "../services/tool-audit/audit-query-service.js";
@@ -59,14 +59,14 @@ export class FakeProvider implements LogProvider {
   async checkAvailability() {
     return { available: true };
   }
-  async listSessions() {
+  async listSessions(): Promise<Session[]> {
     return this.sessions.map((s) => ({ ...s, turns: [] }));
   }
-  async readSession(id: string) {
+  async readSession(id: string): Promise<Session | null> {
     this.reads += 1;
     return this.sessions.find((s) => s.id === id) ?? null;
   }
-  async readTurnDetail() {
+  async readTurnDetail(): Promise<TurnInspectorDetail | null> {
     return null;
   }
 }

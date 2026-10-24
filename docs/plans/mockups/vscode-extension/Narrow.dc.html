@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>AI Credits Analyzer, narrow panel</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:#4daafc}a:hover{color:#7cc0ff}
+</style>
+</helmet>
+<div style="width: 640px; height: 800px; box-sizing: border-box; display: flex; flex-direction: column; font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; font-size: 13px; background: #1f1f1f; color: #cccccc; overflow: hidden">
+  <div style="height: 35px; flex-shrink: 0; display: flex; background: #181818; border-bottom: 1px solid #2b2b2b">
+    <div style="display: flex; align-items: center; padding: 0 12px; background: #1f1f1f; border-top: 1px solid #0078d4; border-right: 1px solid #2b2b2b">AI Credits Analyzer</div>
+  </div>
+  <div style="flex-grow: 1; min-height: 0; display: flex; flex-direction: column; gap: 12px; padding: 14px 16px">
+    <header style="display: flex; flex-direction: column; gap: 2px">
+      <h1 style="margin: 0; font-size: 18px; font-weight: 600">Refactor token cache</h1>
+      <span style="color: #9d9d9d">Today 14:02 · 12 turns · claude-sonnet-5</span>
+    </header>
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px">
+      <div style="padding: 8px 10px; border: 1px solid #2b2b2b; border-radius: 4px; background: #252526; display: flex; justify-content: space-between; align-items: baseline"><span style="color: #9d9d9d">AI Credits</span><strong style="font-size: 18px; font-variant-numeric: tabular-nums">4.82</strong></div>
+      <div style="padding: 8px 10px; border: 1px solid #2b2b2b; border-radius: 4px; background: #252526; display: flex; justify-content: space-between; align-items: baseline"><span style="color: #9d9d9d">Cache read</span><strong style="font-size: 18px; font-variant-numeric: tabular-nums">71%</strong></div>
+      <div style="padding: 8px 10px; border: 1px solid #2b2b2b; border-radius: 4px; background: #252526; display: flex; justify-content: space-between; align-items: baseline"><span style="color: #9d9d9d">Turns</span><strong style="font-size: 18px; font-variant-numeric: tabular-nums">12</strong></div>
+      <div style="padding: 8px 10px; border: 1px solid #2b2b2b; border-radius: 4px; background: #252526; display: flex; justify-content: space-between; align-items: baseline"><span style="color: #9d9d9d">Tool calls</span><strong style="font-size: 18px; font-variant-numeric: tabular-nums">34 · 3 failed</strong></div>
+    </div>
+    <div style="display: flex; gap: 8px; align-items: center">
+      <label for="view" style="color: #9d9d9d">View</label>
+      <select id="view" style="height: 26px; flex-grow: 1; background: #313131; color: #cccccc; border: 1px solid #3c3c3c; border-radius: 2px; font: inherit"><option>Turns</option><option>Tool audit</option><option>All sessions</option><option>Dashboard</option></select>
+    </div>
+    <div style="border: 1px solid #2b2b2b; border-radius: 4px; overflow: hidden">
+      <table style="width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums">
+        <thead><tr style="background: #252526; color: #9d9d9d"><th scope="col" style="padding: 6px 8px; text-align: left; font-weight: 600">Turn</th><th scope="col" style="padding: 6px 8px; text-align: left; font-weight: 600">Trigger</th><th scope="col" style="padding: 6px 8px; text-align: right; font-weight: 600">AI Credits</th><th scope="col" style="padding: 6px 8px; text-align: right; font-weight: 600">Cumulative</th><th scope="col" style="width: 28px"><span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Details</span></th></tr></thead>
+        <tbody>
+          <sc-for list="{{rows}}" as="r" hint-placeholder-count="6">
+            <tr style="border-top: 1px solid #2b2b2b; background: {{r.bg}}; color: {{r.fg}}"><td style="padding: 5px 8px">{{r.n}}</td><td style="padding: 5px 8px">{{r.trigger}}</td><td style="padding: 5px 8px; text-align: right; font-weight: 600">{{r.cost}}</td><td style="padding: 5px 8px; text-align: right">{{r.cum}}</td><td style="padding: 0 4px"><button aria-label="{{r.label}}" aria-expanded="{{r.sel}}" style="width: 24px; height: 24px; border: 0; background: transparent; color: inherit; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="{{r.chev}}"></path></svg></button></td></tr>
+          </sc-for>
+        </tbody>
+      </table>
+    </div>
+    <section aria-label="Turn 7 details" style="margin-top: auto; display: flex; flex-direction: column; gap: 10px; padding: 12px 14px; border: 1px solid #0078d4; border-radius: 4px; background: #252526">
+      <div style="display: flex; justify-content: space-between; align-items: center"><h2 style="margin: 0; font-size: 14px; font-weight: 600">Turn 7 · cache miss</h2><button aria-label="Close details" style="width: 28px; height: 28px; border: 0; background: transparent; color: #cccccc; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"></path></svg></button></div>
+      <dl style="margin: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px 12px; font-variant-numeric: tabular-nums">
+        <div><dt style="color: #9d9d9d">Uncached in</dt><dd style="margin: 0">18.2k</dd></div>
+        <div><dt style="color: #9d9d9d">Cache read</dt><dd style="margin: 0">0</dd></div>
+        <div><dt style="color: #9d9d9d">Output</dt><dd style="margin: 0">1.4k</dd></div>
+        <div><dt style="color: #9d9d9d">Rounds / calls</dt><dd style="margin: 0">3 / 5</dd></div>
+        <div><dt style="color: #9d9d9d">Reasoning</dt><dd style="margin: 0">unknown</dd></div>
+        <div><dt style="color: #9d9d9d">Model</dt><dd style="margin: 0">claude-sonnet-5</dd></div>
+      </dl>
+      <p style="margin: 0; line-height: 1.5">The model changed, so the whole 18.2k-token prefix was sent again uncached.</p>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap"><button style="height: 28px; padding: 0 12px; border: 0; border-radius: 2px; background: #0078d4; color: #ffffff; font: inherit">Inspect request</button><button style="height: 28px; padding: 0 12px; border: 1px solid #3c3c3c; border-radius: 2px; background: transparent; color: #cccccc; font: inherit">System prompt</button></div>
+    </section>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":640,"height":800}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var d = [['4', 'User prompt', '0.21', '0.76'], ['5', 'Tool result', '0.11', '0.87'], ['6', 'Tool result', '0.10', '0.97'], ['7', 'User prompt', '1.62', '2.59'], ['8', 'Tool result', '0.31', '2.90'], ['9', 'Tool result', '0.27', '3.17']];
+    var rows = d.map(function (x) {
+      var sel = x[0] === '7';
+      return { n: x[0], trigger: x[1], cost: x[2], cum: x[3], sel: sel ? 'true' : 'false', bg: sel ? '#04395e' : 'transparent', fg: sel ? '#ffffff' : '#cccccc', chev: sel ? 'M6 15l6-6 6 6' : 'M6 9l6 6 6-6', label: 'Turn ' + x[0] + ' details' };
+    });
+    return { rows: rows };
+  }
+}
+</script>
+</body>
+</html>

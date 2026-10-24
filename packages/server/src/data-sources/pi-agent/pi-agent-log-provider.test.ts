@@ -331,6 +331,30 @@ describe("PiAgentLogProvider", () => {
 
       await expect(provider.readSystemPromptText("does-not-exist")).resolves.toBeNull();
     });
+
+    // The SystemPromptTextReader capability (vscode-extension.md G1) over
+    // readSystemPromptText: pi has no separate "unknown session" signal
+    // for this view, so both a missing record and an unknown id read as
+    // not-captured — the same 404 message the API has always sent for pi.
+    it("lookupSystemPromptText reports the captured text for a matching sidecar record", async () => {
+      const normalSessionPath = path.join(fixturesDir, "normal-session.jsonl");
+      const systemPromptLogPath = writeSidecarLog(normalSessionPath);
+      const provider = new PiAgentLogProvider({ sessionsDirPath: fixturesDir, systemPromptLogPath });
+
+      await expect(provider.lookupSystemPromptText(computePiFileHash(normalSessionPath))).resolves.toEqual({
+        status: "found",
+        text: "You are Pi.",
+      });
+    });
+
+    it("lookupSystemPromptText reports not-captured for a missing record and for an unknown id", async () => {
+      const systemPromptLogPath = writeSidecarLog("/some/other/session.jsonl");
+      const provider = new PiAgentLogProvider({ sessionsDirPath: fixturesDir, systemPromptLogPath });
+      const id = computePiFileHash(path.join(fixturesDir, "normal-session.jsonl"));
+
+      await expect(provider.lookupSystemPromptText(id)).resolves.toEqual({ status: "not-captured" });
+      await expect(provider.lookupSystemPromptText("does-not-exist")).resolves.toEqual({ status: "not-captured" });
+    });
   });
 });
 
