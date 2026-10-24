@@ -1,8 +1,10 @@
 // Timing marks for the §3.5 performance budgets (vscode-extension.md):
 // "first-render" when the app first paints, "data-ready" when the first
 // session or scenario list is on screen. They go through the standard
-// Performance API, so the host reads them with getEntriesByName (or
-// read() below); step 10.9's integration tests assert the budgets.
+// Performance API (read() below reads them back), and each is also handed
+// to an optional reporter as it's emitted: in the extension, the webview
+// transport posts it to the host, where step 10.9's integration tests
+// assert the budgets.
 export const PERFORMANCE_MARKS = { firstRender: "first-render", dataReady: "data-ready" } as const;
 
 export type PerformanceMarkName = (typeof PERFORMANCE_MARKS)[keyof typeof PERFORMANCE_MARKS];
@@ -21,13 +23,23 @@ export interface PerformanceMarks {
   read(): Partial<Record<PerformanceMarkName, number>>;
 }
 
-export function createPerformanceMarks(performance: MarkablePerformance | undefined): PerformanceMarks {
+// Hears each mark once, with its time in ms since the page started.
+export type PerformanceMarkReporter = (name: PerformanceMarkName, timeMs: number) => void;
+
+export function createPerformanceMarks(performance: MarkablePerformance | undefined, report?: PerformanceMarkReporter): PerformanceMarks {
   const emitted = new Set<PerformanceMarkName>();
   return {
     mark(name) {
       if (!performance || emitted.has(name)) return;
       emitted.add(name);
       performance.mark(name);
+      const entry = performance.getEntriesByName(name)[0];
+      if (!entry || !report) return;
+      try {
+        report(name, entry.startTime);
+      } catch {
+        // Timing is diagnostics: a host that can't hear it never breaks the UI.
+      }
     },
     read() {
       const times: Partial<Record<PerformanceMarkName, number>> = {};

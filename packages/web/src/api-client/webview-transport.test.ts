@@ -319,3 +319,26 @@ describe("WebviewTransport cancellation", () => {
     await expect(other).resolves.toBe("fine");
   });
 });
+
+// Timing marks (domain rpc.ts, kind "perfMark"; vscode-extension.md §3.5):
+// fire-and-forget, so nothing waits for, or times out on, a reply.
+describe("WebviewTransport performance marks", () => {
+  it("posts a perfMark message with the mark's name and time, and no id", () => {
+    const { transport, sent } = setup();
+
+    transport.reportPerformanceMark("first-render", 120.5);
+
+    expect(sent).toEqual([{ kind: "perfMark", name: "first-render", timeMs: 120.5 }]);
+  });
+
+  it("leaves request ids and pending requests alone", async () => {
+    const { transport, sent, win } = setup();
+    const pending = transport.call<string>("getHealth");
+
+    transport.reportPerformanceMark("data-ready", 300);
+    win.dispatch({ kind: "response", id: sent[0].id, ok: true, result: "ok" });
+
+    await expect(pending).resolves.toBe("ok");
+    expect(sent[1]).not.toHaveProperty("id");
+  });
+});
