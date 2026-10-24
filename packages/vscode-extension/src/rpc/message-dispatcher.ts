@@ -1,14 +1,9 @@
-import { apiMethodSchema, type ApiMethod } from "@copilot-cost-analyzer/domain";
+import { apiMethodParamsSchemas, apiMethodSchema, type ApiMethod, type RpcResponse } from "@copilot-cost-analyzer/domain";
 import type { ApiQuery, ApiService } from "@copilot-cost-analyzer/server/src/services/api/api-service";
-import { ApiError, BadRequestError, statusForApiError } from "@copilot-cost-analyzer/server/src/services/api/api-errors";
+import { ApiError, statusForApiError } from "@copilot-cost-analyzer/server/src/services/api/api-errors";
 
 // The ApiService surface the webview may call (vscode-extension.md D2).
 export type DispatcherApi = Pick<ApiService, ApiMethod>;
-
-// Host -> webview reply to one request (vscode-extension.md §4).
-export type RpcResponse =
-  | { kind: "response"; id: string; ok: true; result: unknown }
-  | { kind: "response"; id: string; ok: false; error: { status: 400 | 404 | 500; message: string } };
 
 export interface MessageDispatcherOptions {
   // Hears every error that isn't one of ApiService's typed errors; the
@@ -24,12 +19,9 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
+// A string param the method's schema (domain rpc.ts) has already required.
 function stringParam(params: Params, key: string): string {
-  const value = params[key];
-  if (typeof value !== "string") {
-    throw new BadRequestError(`Missing string param "${key}"`);
-  }
-  return value;
+  return params[key] as string;
 }
 
 // The query fields exactly as the HTTP transport's query string carries
@@ -53,9 +45,9 @@ function sessionQuery(params: Params): [string, ApiQuery] {
 }
 
 // Calls the ApiService method, with params under the keys the web
-// transports use (packages/web/src/api-client/http-transport.ts). Only the
-// ids are checked here; per-method zod schemas for params arrive in step
-// 10.4, and until then ApiService's own validation covers the rest.
+// transports use (packages/web/src/api-client/http-transport.ts). The
+// params were already shape-checked against the method's schema, and
+// ApiService's own validation covers the values.
 function invoke(api: DispatcherApi, method: ApiMethod, params: Params): Promise<unknown> {
   switch (method) {
     case "listSessions":
@@ -119,8 +111,12 @@ export class MessageDispatcher {
     if (!isRecord(params)) {
       return failure(id, 400, "params must be an object");
     }
+    const parsed = apiMethodParamsSchemas[method.data].safeParse(params);
+    if (!parsed.success) {
+      return failure(id, 400, describeInvalidParams(method.data, parsed.error));
+    }
     try {
-      return { kind: "response", id, ok: true, result: await invoke(this.api, method.data, params) };
+      return { kind: "response", id, ok: true, result: await invoke(this.api, method.data, parsed.data as Params) };
     } catch (error) {
       if (error instanceof ApiError) {
         return failure(id, statusForApiError(error), error.message);
@@ -129,6 +125,11 @@ export class MessageDispatcher {
       return failure(id, 500, INTERNAL_ERROR_MESSAGE);
     }
   }
+}
+
+function describeInvalidParams(method: ApiMethod, error: { issues: { path: PropertyKey[]; message: string }[] }): string {
+  const issues = error.issues.map((issue) => (issue.path.length > 0 ? `${issue.path.map(String).join(".")}: ${issue.message}` : issue.message));
+  return `Invalid params for ${method}: ${issues.join("; ")}`;
 }
 
 function failure(id: string, status: 400 | 404 | 500, message: string): RpcResponse {
