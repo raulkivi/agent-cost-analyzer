@@ -33,6 +33,26 @@ describe("useEscapeKey", () => {
     expect(onEscape).not.toHaveBeenCalled();
   });
 
+  // A drawer can stay mounted under an inspector opened from it: one
+  // Escape closes only the inspector, the view on top.
+  it("closes only the most recently opened view", async () => {
+    const user = userEvent.setup();
+    const closeDrawer = vi.fn();
+    const closeInspector = vi.fn();
+    const { rerender } = render(<Probe onEscape={closeDrawer} />);
+    rerender(
+      <>
+        <Probe onEscape={closeDrawer} />
+        <Probe onEscape={closeInspector} />
+      </>,
+    );
+
+    await user.keyboard("{Escape}");
+
+    expect(closeInspector).toHaveBeenCalledTimes(1);
+    expect(closeDrawer).not.toHaveBeenCalled();
+  });
+
   it("leaves an Escape that an inner control already handled (a popover closing) alone", async () => {
     const user = userEvent.setup();
     const onEscape = vi.fn();

@@ -9,9 +9,19 @@ import type { RefObject } from "react";
 const FOCUSABLE =
   'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
-// Calls `onEscape` for an Escape pressed anywhere in the page, unless a
-// control inside already handled it (stopped it, as the column chooser does
-// when it closes itself first).
+// The open views' Escape handlers, oldest first: one Escape closes only the
+// view on top (an inspector opened from a drawer that stays mounted).
+const escapeStack: { current: () => void }[] = [];
+
+function handleEscape(event: KeyboardEvent): void {
+  if (event.key === "Escape" && !event.defaultPrevented) {
+    escapeStack[escapeStack.length - 1]?.current();
+  }
+}
+
+// Calls `onEscape` for an Escape pressed anywhere in the page, when this is
+// the most recently opened view and no control inside already handled it
+// (stopped it, as the column chooser does when it closes itself first).
 export function useEscapeKey(onEscape: () => void, enabled = true): void {
   const latest = useRef(onEscape);
   useEffect(() => {
@@ -19,13 +29,12 @@ export function useEscapeKey(onEscape: () => void, enabled = true): void {
   });
   useEffect(() => {
     if (!enabled) return;
-    function handle(event: KeyboardEvent): void {
-      if (event.key === "Escape" && !event.defaultPrevented) {
-        latest.current();
-      }
-    }
-    document.addEventListener("keydown", handle);
-    return () => document.removeEventListener("keydown", handle);
+    if (escapeStack.length === 0) document.addEventListener("keydown", handleEscape);
+    escapeStack.push(latest);
+    return () => {
+      escapeStack.splice(escapeStack.indexOf(latest), 1);
+      if (escapeStack.length === 0) document.removeEventListener("keydown", handleEscape);
+    };
   }, [enabled]);
 }
 

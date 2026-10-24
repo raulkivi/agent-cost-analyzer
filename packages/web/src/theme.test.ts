@@ -33,6 +33,16 @@ describe("theme.css (vscode-extension.md §3.5)", () => {
     expect(css).not.toMatch(/@import[^;]*(https?:)?\/\//);
   });
 
+  // The medium layout's side drawer is fixed over the page; a modal dialog
+  // opened while it's open must sit above it.
+  it("stacks the dialog backdrop above the side drawer", () => {
+    const css = readTheme();
+    const zIndex = (selector: string) =>
+      Number(new RegExp(`${selector.replace(/[.-]/g, "\\$&")}\\s*\\{[^}]*z-index:\\s*(\\d+)`).exec(css)?.[1] ?? NaN);
+
+    expect(zIndex(".dialog-backdrop")).toBeGreaterThan(zIndex(".drawer--side"));
+  });
+
   describe("reduced motion", () => {
     const block = () => mediaBlock(readTheme(), /\(prefers-reduced-motion:\s*reduce\)/);
 

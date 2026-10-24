@@ -235,7 +235,7 @@ a { color: var(--color-accent-text); text-underline-offset: 3px; }
 
 /* — dialog — */
 .dialog-backdrop {
-  position: fixed; inset: 0; display: grid; place-items: center;
+  position: fixed; inset: 0; z-index: 30; display: grid; place-items: center;
   padding: var(--space-4);
   background: color-mix(in srgb, var(--color-neutral-900) 50%, transparent);
 }
