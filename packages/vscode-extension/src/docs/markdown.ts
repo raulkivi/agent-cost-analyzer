@@ -20,18 +20,27 @@ export function githubSlug(text: string): string {
     .replace(/ /g, "-");
 }
 
+// HTML tags go, repeated until none is left, so a nested tag such as
+// "<scr<b>ipt>" can't reassemble into one. A tag starts with a letter or
+// "/" ("a < b > c" is plain text). Leftover "<" and ">" go too: GitHub's
+// slug drops them.
+function stripHtmlTags(text: string): string {
+  let previous: string;
+  do {
+    previous = text;
+    text = text.replace(/<\/?[A-Za-z][^>]*>/g, "");
+  } while (text !== previous);
+  return text.replace(/[<>]/g, "");
+}
+
 // The text a heading renders as: links and images become their text, code
 // spans their content, emphasis markers and HTML tags go.
 function renderedHeadingText(raw: string): string {
-  return raw
+  const withoutMarkup = raw
     .replace(/\s+#+\s*$/, "")
     .replace(/!?\[([^\]]*)\]\([^)]*\)/g, "$1")
-    .replace(/`([^`]*)`/g, "$1")
-    // An HTML tag starts with a letter or "/"; "a < b > c" is plain text.
-    .replace(/<\/?[A-Za-z][^>]*>/g, "")
-    // A nested or broken tag (e.g. "<scr<b>ipt>") and plain-text brackets
-    // leave "<" or ">" behind; GitHub's slug drops them, so drop them too.
-    .replace(/[<>]/g, "")
+    .replace(/`([^`]*)`/g, "$1");
+  return stripHtmlTags(withoutMarkup)
     .replace(/(\*\*|__)(.+?)\1/g, "$2")
     .replace(/\*(.+?)\*/g, "$1")
     .replace(/(^|[^\p{L}\p{N}])_(.+?)_(?![\p{L}\p{N}])/gu, "$1$2");
