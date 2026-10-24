@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- Phase 10.3: `packages/vscode-extension`, the skeleton of AI Credits
+  Analyzer (`raulkivi.ai-credits-analyzer`, not yet published). It has an
+  "AI Credits Analyzer: Open" command, a webview panel with a strict CSP, a
+  message bridge to the shared `ApiService`, and a Copilot-only
+  composition root. A bundle-boundary test keeps Claude Code, pi,
+  mitmproxy and Express code out of the extension bundle.
 - Phase 10 plan (`docs/plans/vscode-extension.md`): AI Credits Analyzer,
   a separate Copilot-only VS Code extension that shares code with the
   standalone app (Agent Cost Analyzer). Covers the code analysis, decisions
@@ -26,6 +32,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   on `GET /api/sessions/:id/tool-calls`). Plan: `docs/plans/mcp-tools-v2.md`.
 
 ### Changed
+- Root `engines.node` raised to `>=22.18`. The extension's build scripts
+  are `.mts` files that Node runs directly.
 - Phase 10.1/10.2 groundwork for the AI Credits Analyzer extension. The HTTP
   routes are now a thin layer over a transport-neutral `ApiService`, and
   the web client reaches its backend through an `ApiTransport` (HTTP, or
