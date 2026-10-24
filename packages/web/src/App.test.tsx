@@ -2,6 +2,7 @@ import { act, fireEvent, render, screen, waitFor, within } from "@testing-librar
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { ConfigStatus } from "@copilot-cost-analyzer/domain";
 import { App } from "./App.js";
+import { getApiTransport, resetApiTransport, setApiTransport } from "./api-client/current-transport.js";
 import { makeTurn } from "./test-support/turn-fixture.js";
 import { makeAuditRollup, makeSessionAudit } from "./test-support/audit-fixture.js";
 import { sampleInsightsDataset } from "./test-support/insights-fixture.js";
@@ -209,6 +210,7 @@ describe("App", () => {
 
   afterEach(() => {
     vi.unstubAllGlobals();
+    resetApiTransport();
   });
 
   it("renders a successful health check from the server, including the app version", async () => {
@@ -435,6 +437,55 @@ describe("App", () => {
     expect(
       await screen.findByText("Only the last 50 sessions' logs are retained on disk."),
     ).toBeInTheDocument();
+  });
+
+  it("re-fetches the config status when the host reports configChanged (extension webview)", async () => {
+    // The HTTP transport's requests, plus the host-event subscription a
+    // WebviewTransport has.
+    const http = getApiTransport();
+    const handlers = new Set<(payload: unknown) => void>();
+    setApiTransport({
+      call: (method, params) => http.call(method, params),
+      onEvent: (name, handler) => {
+        if (name !== "configChanged") return () => undefined;
+        handlers.add(handler);
+        return () => void handlers.delete(handler);
+      },
+    });
+    render(<App />);
+    await waitFor(() => expect(fetch).toHaveBeenCalledWith("/api/config/status"));
+    expect(screen.queryByText("Only the last 50 sessions' logs are retained on disk.")).not.toBeInTheDocument();
+
+    configStatus = {
+      ...cleanConfigStatus,
+      maxRetainedSessionLogs: null,
+      warnings: [
+        {
+          code: "retention-too-low",
+          severity: "required",
+          settingId: "github.copilot.chat.agentDebugLog.fileLogging.maxRetainedSessionLogs",
+          currentValue: 50,
+          recommendedValue: 200,
+          message: "Only the last 50 sessions' logs are retained on disk.",
+          helpSteps: ["Set maxRetainedSessionLogs to 200 in settings.json"],
+        },
+      ],
+    };
+    act(() => handlers.forEach((handler) => handler(undefined)));
+
+    expect(await screen.findByText("Only the last 50 sessions' logs are retained on disk.")).toBeInTheDocument();
+  });
+
+  it("stops listening for host events when unmounted", async () => {
+    const http = getApiTransport();
+    const unsubscribe = vi.fn();
+    setApiTransport({ call: (method, params) => http.call(method, params), onEvent: () => unsubscribe });
+    const { unmount } = render(<App />);
+    await waitFor(() => expect(fetch).toHaveBeenCalledWith("/api/config/status"));
+
+    unmount();
+
+    expect(unsubscribe).toHaveBeenCalled();
   });
 
   it("shows the fetched retention threshold in the header on load", async () => {

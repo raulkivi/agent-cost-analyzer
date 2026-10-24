@@ -1,4 +1,4 @@
-import type { ApiMethod } from "@copilot-cost-analyzer/domain";
+import type { ApiMethod, HostEventName } from "@copilot-cost-analyzer/domain";
 
 // Every named operation the UI performs against its backend: the domain's
 // shared `ApiMethod` names, which the extension host's request allow-list
@@ -12,4 +12,8 @@ export type ApiMethodName = ApiMethod;
 // method to its JSON result.
 export interface ApiTransport {
   call<T>(method: ApiMethodName, params?: unknown): Promise<T>;
+  // Host-pushed notifications (plan §4); returns the unsubscribe function.
+  // Only the webview transport has a host that sends any, so the HTTP
+  // transport leaves it out — subscribe through host-events.ts.
+  onEvent?(name: HostEventName, handler: (payload: unknown) => void): () => void;
 }

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { ConfigWarning, LogProviderDescriptor, Session } from "@copilot-cost-analyzer/domain";
 import { fetchConfigStatus, updateRetentionThreshold } from "./api-client/config-status.js";
+import { onHostEvent } from "./api-client/host-events.js";
 import { fetchHealth, type HealthResponse } from "./api-client/health.js";
 import { fetchLearnScenarios } from "./api-client/learn-scenarios.js";
 import { fetchLogProviderStatus, setActiveLogProvider } from "./api-client/log-providers.js";
@@ -124,13 +125,20 @@ export function App() {
       .catch((error: Error) => setFetchError(error.message));
   }, [activeProviderId]);
 
+  // Loads on mount, and again whenever the host says the Copilot logging
+  // settings changed (the extension's configChanged event; the standalone
+  // app's HTTP transport never sends one).
   useEffect(() => {
-    fetchConfigStatus()
-      .then((status) => {
-        setConfigWarnings(status.warnings);
-        setRetentionThreshold(status.minRetainedSessionLogsThreshold);
-      })
-      .catch((error: Error) => setFetchError(error.message));
+    function loadConfigStatus(): void {
+      fetchConfigStatus()
+        .then((status) => {
+          setConfigWarnings(status.warnings);
+          setRetentionThreshold(status.minRetainedSessionLogsThreshold);
+        })
+        .catch((error: Error) => setFetchError(error.message));
+    }
+    loadConfigStatus();
+    return onHostEvent("configChanged", loadConfigStatus);
   }, []);
 
   const selectedTurn = session?.turns[selectedTurnIndex] ?? null;
