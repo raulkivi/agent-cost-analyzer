@@ -1,5 +1,6 @@
 import type { ConfigStatus } from "@copilot-cost-analyzer/domain";
 import { describe, expect, it, vi } from "vitest";
+import { upperCaseTranslate } from "../l10n/upper-case-translate.js";
 import { COMMAND_IDS } from "./command-ids.js";
 import { ExtensionCommands } from "./extension-commands.js";
 
@@ -28,13 +29,29 @@ function setup(readConfigStatus: () => Promise<ConfigStatus> = async () => statu
   const panel = { open: vi.fn(), postWhenReady: vi.fn() };
   const sidebar = { refresh: vi.fn(async () => undefined) };
   const hostCommands = { openSetting: vi.fn(async () => undefined) };
-  const commands = new ExtensionCommands({ panel, sidebar, hostCommands, readConfigStatus });
-  return { commands, panel, sidebar, hostCommands };
+  const walkthrough = { open: vi.fn(async () => undefined) };
+  const commands = new ExtensionCommands({ panel, sidebar, hostCommands, walkthrough, readConfigStatus });
+  return { commands, panel, sidebar, hostCommands, walkthrough };
 }
 
 const selectSession = (payload: unknown) => ({ kind: "event", name: "selectSession", payload });
 
 describe("ExtensionCommands", () => {
+  describe("openWalkthrough", () => {
+    it("opens the Get Started walkthrough and nothing else", async () => {
+      const { commands, walkthrough, panel } = setup();
+
+      await commands.openWalkthrough();
+
+      expect(walkthrough.open).toHaveBeenCalledTimes(1);
+      expect(panel.open).not.toHaveBeenCalled();
+    });
+
+    it("is registered under its contributed id", () => {
+      expect(Object.keys(setup().commands.handlers())).toContain(COMMAND_IDS.openWalkthrough);
+    });
+  });
+
   describe("openSession", () => {
     it("opens the panel once and posts selectSession once, after opening", async () => {
       const { commands, panel } = setup();
@@ -196,5 +213,22 @@ describe("ExtensionCommands", () => {
       await handlers[COMMAND_IDS.openSession]!("s1");
       expect(panel.postWhenReady).toHaveBeenCalledWith(selectSession({ sessionId: "s1" }));
     });
+  });
+});
+
+describe("ExtensionCommands error messages (vscode-extension.md §3.5 Localization)", () => {
+  it("translates the messages VS Code shows when a command is refused", async () => {
+    const panel = { open: vi.fn(), postWhenReady: vi.fn() };
+    const commands = new ExtensionCommands({
+      panel,
+      sidebar: { refresh: async () => undefined },
+      hostCommands: { openSetting: async () => undefined },
+      walkthrough: { open: async () => undefined },
+      readConfigStatus: async () => statusWith(LOGGING_SETTING),
+      t: upperCaseTranslate,
+    });
+
+    await expect(commands.openSession(42)).rejects.toThrow("A SESSION ID IS NEEDED TO OPEN A SESSION, WITH AN OPTIONAL TAB OR VIEW");
+    await expect(commands.fixSetting("editor.fontSize")).rejects.toThrow(`SETTING "editor.fontSize" CAN'T BE OPENED FROM THE ANALYZER`);
   });
 });

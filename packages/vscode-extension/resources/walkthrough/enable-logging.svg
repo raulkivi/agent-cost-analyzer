@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 270" width="480" height="270" role="img" font-family="Segoe UI, system-ui, sans-serif" font-size="14">
+  <rect width="480" height="270" rx="6" fill="#1f1f1f"/>
+  <rect x="24" y="28" width="432" height="214" rx="4" fill="#252526" stroke="#3c3c3c"/>
+  <text x="44" y="62" fill="#9d9d9d" font-size="12">GitHub › Copilot › Chat › Agent Debug Log › File Logging</text>
+  <text x="44" y="96" fill="#cccccc" font-weight="600">Enabled</text>
+  <text x="44" y="118" fill="#9d9d9d" font-size="12">Write Copilot Chat debug logs to files on this machine.</text>
+  <rect x="44" y="136" width="44" height="24" rx="12" fill="#0078d4"/>
+  <circle cx="76" cy="148" r="9" fill="#ffffff"/>
+  <text x="100" y="153" fill="#cccccc">On</text>
+  <rect x="44" y="184" width="392" height="40" rx="3" fill="#1f1f1f" stroke="#3c3c3c"/>
+  <text x="58" y="209" fill="#cccccc" font-size="12">Token and AI Credits data is recorded for new chat sessions.</text>
+</svg>

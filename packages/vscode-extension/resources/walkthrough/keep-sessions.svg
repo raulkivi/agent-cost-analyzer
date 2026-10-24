@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 270" width="480" height="270" role="img" font-family="Segoe UI, system-ui, sans-serif" font-size="14">
+  <rect width="480" height="270" rx="6" fill="#1f1f1f"/>
+  <rect x="24" y="28" width="432" height="214" rx="4" fill="#252526" stroke="#3c3c3c"/>
+  <text x="44" y="62" fill="#9d9d9d" font-size="12">GitHub › Copilot › Chat › Agent Debug Log › File Logging</text>
+  <text x="44" y="96" fill="#cccccc" font-weight="600">Max Retained Session Logs</text>
+  <text x="44" y="118" fill="#9d9d9d" font-size="12">How many session logs Copilot Chat keeps.</text>
+  <rect x="44" y="134" width="96" height="28" rx="2" fill="#3c3c3c" stroke="#0078d4"/>
+  <text x="58" y="153" fill="#cccccc">200</text>
+  <text x="44" y="196" fill="#9d9d9d" font-size="12">Default 50</text>
+  <g fill="#0078d4">
+    <rect x="44" y="208" width="6" height="18" rx="1"/><rect x="56" y="208" width="6" height="18" rx="1"/>
+    <rect x="68" y="208" width="6" height="18" rx="1"/><rect x="80" y="208" width="6" height="18" rx="1"/>
+    <rect x="92" y="208" width="6" height="18" rx="1"/>
+  </g>
+  <g fill="#4d4d4d">
+    <rect x="104" y="208" width="6" height="18" rx="1"/><rect x="116" y="208" width="6" height="18" rx="1"/>
+    <rect x="128" y="208" width="6" height="18" rx="1"/><rect x="140" y="208" width="6" height="18" rx="1"/>
+    <rect x="152" y="208" width="6" height="18" rx="1"/><rect x="164" y="208" width="6" height="18" rx="1"/>
+    <rect x="176" y="208" width="6" height="18" rx="1"/><rect x="188" y="208" width="6" height="18" rx="1"/>
+  </g>
+  <text x="212" y="222" fill="#cccccc" font-size="12">More history to spot trends</text>
+</svg>

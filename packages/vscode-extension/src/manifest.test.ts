@@ -3,6 +3,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { COMMAND_IDS, VIEW_IDS } from "./commands/command-ids.js";
+import { WATCHED_SETTING_IDS } from "./config/config-change-watcher.js";
 import { SESSION_CONTEXT_VALUE, SETUP_WARNING_CONTEXT_VALUE } from "./vscode/vscode-sidebar-views.js";
 
 const packageDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -13,7 +14,28 @@ interface MenuEntry {
   group?: string;
 }
 
+interface WalkthroughStep {
+  id: string;
+  title: string;
+  description: string;
+  media: { image?: string; altText?: string; markdown?: string };
+  completionEvents?: string[];
+}
+
+interface Walkthrough {
+  id: string;
+  title: string;
+  description: string;
+  steps: WalkthroughStep[];
+}
+
+interface ConfigurationSection {
+  properties: Record<string, { markdownDescription?: string; order?: number; enum?: unknown[]; markdownEnumDescriptions?: string[] }>;
+}
+
 interface Manifest {
+  displayName: string;
+  description: string;
   activationEvents?: string[];
   contributes: {
     commands: { command: string; title: string; category?: string; icon?: string }[];
@@ -22,13 +44,23 @@ interface Manifest {
     viewsContainers: { activitybar: { id: string; title: string; icon: string }[] };
     views: Record<string, { id: string; name: string }[]>;
     viewsWelcome?: { view: string; contents: string; when?: string }[];
+    walkthroughs?: Walkthrough[];
+    configuration?: ConfigurationSection | ConfigurationSection[];
   };
 }
 
+const nls = JSON.parse(readFileSync(path.join(packageDir, "package.nls.json"), "utf-8")) as Record<string, string>;
 const manifest = JSON.parse(readFileSync(path.join(packageDir, "package.json"), "utf-8")) as Manifest;
 const { contributes } = manifest;
 const contributedCommands = new Set(contributes.commands.map((command) => command.command));
 const contributedViews = Object.values(contributes.views).flat();
+
+// A manifest string as the user reads it: a `%key%` placeholder resolved
+// through package.nls.json, any other string as it is.
+function text(value: string | undefined): string {
+  const key = /^%([A-Za-z0-9._-]+)%$/.exec(value ?? "")?.[1];
+  return key === undefined ? (value ?? "") : (nls[key] ?? "");
+}
 
 // Every `command:` link in a welcome view's markdown.
 function welcomeCommands(contents: string): string[] {
@@ -38,9 +70,9 @@ function welcomeCommands(contents: string): string[] {
 describe("package.json contributions (vscode-extension.md §3.5)", () => {
   it("puts every command under the category 'AI Credits Analyzer' with a codicon", () => {
     for (const command of contributes.commands) {
-      expect(command.category, command.command).toBe("AI Credits Analyzer");
+      expect(text(command.category), command.command).toBe("AI Credits Analyzer");
       expect(command.icon, command.command).toMatch(/^\$\([a-z0-9-]+\)$/);
-      expect(command.title, command.command).not.toBe("");
+      expect(text(command.title), command.command).not.toBe("");
     }
   });
 
@@ -51,7 +83,7 @@ describe("package.json contributions (vscode-extension.md §3.5)", () => {
   it("contributes every command that menus, welcome views and keybindings reference", () => {
     const referenced = [
       ...Object.values(contributes.menus ?? {}).flatMap((entries) => entries.map((entry) => entry.command)),
-      ...(contributes.viewsWelcome ?? []).flatMap((welcome) => welcomeCommands(welcome.contents)),
+      ...(contributes.viewsWelcome ?? []).flatMap((welcome) => welcomeCommands(text(welcome.contents))),
       ...(contributes.keybindings ?? []).map((binding) => binding.command),
     ];
 
@@ -136,13 +168,225 @@ describe("package.json contributions (vscode-extension.md §3.5)", () => {
 
   it("links the Setup welcome to fixSetting and the Sessions welcome to Learn mode", () => {
     const welcome = (view: string) =>
-      (contributes.viewsWelcome ?? []).filter((entry) => entry.view === view).flatMap((entry) => welcomeCommands(entry.contents));
+      (contributes.viewsWelcome ?? []).filter((entry) => entry.view === view).flatMap((entry) => welcomeCommands(text(entry.contents)));
 
     expect(welcome(VIEW_IDS.setup)).toContain(COMMAND_IDS.fixSetting);
     expect(welcome(VIEW_IDS.sessions)).toContain(COMMAND_IDS.openLearnMode);
   });
 
+  it("contributes no setting the code doesn't read, and holds any it adds to the §3.5 rules", () => {
+    const configurations = [contributes.configuration ?? []].flat();
+    const properties = configurations.flatMap((section) => Object.entries(section.properties));
+
+    // No aiCreditsAnalyzer.* setting is read by the code yet (the MCP switch
+    // arrives with step 10.8), so none is contributed.
+    expect(properties.map(([id]) => id)).toEqual([]);
+    for (const [id, property] of properties) {
+      expect(id.startsWith("aiCreditsAnalyzer."), id).toBe(true);
+      expect(property.markdownDescription, id).toMatch(/^%[A-Za-z0-9._-]+%$/);
+      expect(property.order, id).toEqual(expect.any(Number));
+      if (property.enum !== undefined) {
+        expect(property.markdownEnumDescriptions?.length, id).toBe(property.enum.length);
+      }
+    }
+  });
+
   it("activates when VS Code has started, so the status bar shows today's AI Credits", () => {
     expect(manifest.activationEvents).toEqual(["onStartupFinished"]);
+  });
+});
+
+// Every `%key%` placeholder anywhere in the manifest, however deep.
+function placeholders(value: unknown): string[] {
+  if (typeof value === "string") {
+    return /^%[A-Za-z0-9._-]+%$/.test(value) ? [value.slice(1, -1)] : [];
+  }
+  if (Array.isArray(value)) {
+    return value.flatMap(placeholders);
+  }
+  return typeof value === "object" && value !== null ? Object.values(value).flatMap(placeholders) : [];
+}
+
+// The manifest's user-visible strings (the fields VS Code shows in the UI),
+// which must all be placeholders (vscode-extension.md §3.5 Localization).
+// Identifiers, command ids, `when` clauses and the Marketplace keywords and
+// categories are not translated.
+function userVisibleStrings(): { where: string; value: unknown }[] {
+  return [
+    { where: "displayName", value: manifest.displayName },
+    { where: "description", value: manifest.description },
+    ...contributes.commands.flatMap((command) => [
+      { where: `${command.command} title`, value: command.title },
+      { where: `${command.command} category`, value: command.category },
+    ]),
+    ...contributes.viewsContainers.activitybar.map((container) => ({ where: `${container.id} container title`, value: container.title })),
+    ...contributedViews.map((view) => ({ where: `${view.id} name`, value: view.name })),
+    ...(contributes.viewsWelcome ?? []).map((welcome) => ({ where: `${welcome.view} welcome`, value: welcome.contents })),
+    ...(contributes.walkthroughs ?? []).flatMap((entry) => [
+      { where: `${entry.id} title`, value: entry.title },
+      { where: `${entry.id} description`, value: entry.description },
+      ...entry.steps.flatMap((step) => [
+        { where: `${step.id} title`, value: step.title },
+        { where: `${step.id} description`, value: step.description },
+        ...(step.media.image === undefined ? [] : [{ where: `${step.id} alt text`, value: step.media.altText }]),
+      ]),
+    ]),
+  ];
+}
+
+describe("package.nls.json (vscode-extension.md §3.5 Localization)", () => {
+  it("leaves no user-visible string in package.json as a literal", () => {
+    for (const { where, value } of userVisibleStrings()) {
+      expect(placeholders(value), where).toHaveLength(1);
+    }
+  });
+
+  it("defines every key the manifest uses", () => {
+    const used = placeholders(manifest);
+
+    expect(used.length).toBeGreaterThan(0);
+    for (const key of used) {
+      expect(nls[key], key).toEqual(expect.any(String));
+      expect(nls[key], key).not.toBe("");
+    }
+  });
+
+  it("uses every key it defines", () => {
+    const used = new Set(placeholders(manifest));
+
+    expect(Object.keys(nls).filter((key) => !used.has(key))).toEqual([]);
+  });
+
+  it("keeps the command links in the welcome texts intact", () => {
+    for (const welcome of contributes.viewsWelcome ?? []) {
+      const key = placeholders(welcome.contents)[0]!;
+      expect(welcomeCommands(nls[key] ?? "").length, key).toBeGreaterThan(0);
+    }
+  });
+});
+
+const walkthrough = contributes.walkthroughs?.[0];
+const steps = walkthrough?.steps ?? [];
+const LOGGING_SETTING = WATCHED_SETTING_IDS[0];
+const RETENTION_SETTING = WATCHED_SETTING_IDS[1];
+
+// The `command:` links of a step's markdown, with their decoded JSON args.
+function commandLinks(markdown: string): { command: string; args: unknown[] }[] {
+  return [...markdown.matchAll(/\(command:([^)?\s]+)(?:\?([^)\s]*))?\)/g)].map((match) => ({
+    command: match[1]!,
+    args: match[2] === undefined ? [] : (JSON.parse(decodeURIComponent(match[2])) as unknown[]),
+  }));
+}
+
+describe("Get Started walkthrough (vscode-extension.md §3.5 Onboarding, §3.6 board 3)", () => {
+  it("contributes one walkthrough with the agreed id and title", () => {
+    expect(contributes.walkthroughs).toHaveLength(1);
+    expect(walkthrough?.id).toBe("aiCreditsAnalyzer.getStarted");
+    expect(text(walkthrough?.title)).toBe("Get started with AI Credits Analyzer");
+    expect(text(walkthrough?.description)).not.toBe("");
+  });
+
+  it("has the five steps of the mock-up, in order", () => {
+    expect(steps.map((step) => text(step.title))).toEqual([
+      "Enable Copilot Chat debug logging",
+      "Keep at least 200 sessions",
+      "Open your first session",
+      "Learn how prompt caching saves AI Credits",
+      "Ask Copilot about your costs (MCP, optional)",
+    ]);
+    expect(new Set(steps.map((step) => step.id)).size).toBe(5);
+    for (const step of steps) {
+      expect(step.id.startsWith("aiCreditsAnalyzer."), step.id).toBe(true);
+      expect(text(step.description), step.id).not.toBe("");
+    }
+  });
+
+  it("links, from its steps, only to contributed commands", () => {
+    const links = steps.flatMap((step) => commandLinks(text(step.description)));
+
+    expect(links.length).toBeGreaterThan(0);
+    for (const link of links) {
+      expect(contributedCommands.has(link.command), link.command).toBe(true);
+    }
+  });
+
+  it("links steps 1-4 to fixSetting with the logging and retention settings, to Open, and to Learn mode", () => {
+    const links = (index: number) => commandLinks(text(steps[index]!.description));
+
+    expect(links(0)).toEqual([{ command: COMMAND_IDS.fixSetting, args: [LOGGING_SETTING] }]);
+    expect(links(1)).toEqual([{ command: COMMAND_IDS.fixSetting, args: [RETENTION_SETTING] }]);
+    expect(links(2)).toEqual([{ command: COMMAND_IDS.open, args: [] }]);
+    expect(links(3)).toEqual([{ command: COMMAND_IDS.openLearnMode, args: [] }]);
+  });
+
+  it("describes the MCP step honestly: no command to run until the server ships", () => {
+    expect(commandLinks(text(steps[4]!.description))).toEqual([]);
+    expect(text(steps[4]!.description)).toMatch(/later version/i);
+  });
+
+  it("completes steps from the settings and commands they are about", () => {
+    expect(steps.map((step) => step.completionEvents)).toEqual([
+      [`onSettingChanged:${LOGGING_SETTING}`],
+      [`onSettingChanged:${RETENTION_SETTING}`],
+      [`onCommand:${COMMAND_IDS.openSession}`, `onCommand:${COMMAND_IDS.open}`],
+      [`onCommand:${COMMAND_IDS.openLearnMode}`],
+      ["onStepSelected"],
+    ]);
+  });
+
+  it("names, in completionEvents, only contributed commands, the watched Copilot settings, or onStepSelected", () => {
+    const events = steps.flatMap((step) => step.completionEvents ?? []);
+
+    expect(events.length).toBeGreaterThan(0);
+    for (const event of events) {
+      const [kind = "", ...rest] = event.split(":");
+      const target = rest.join(":");
+      if (event === "onStepSelected") {
+        continue;
+      }
+      if (kind === "onCommand") {
+        expect(contributedCommands.has(target), event).toBe(true);
+      } else if (kind === "onSettingChanged") {
+        expect((WATCHED_SETTING_IDS as readonly string[]).includes(target), event).toBe(true);
+      } else {
+        expect.fail(`unexpected completion event ${event}`);
+      }
+    }
+  });
+
+  it("gives every step media that exists outside media/ (the build regenerates media/)", () => {
+    for (const step of steps) {
+      const media = step.media.image ?? step.media.markdown;
+      expect(media, step.id).toBeDefined();
+      expect(media!.startsWith("resources/walkthrough/"), step.id).toBe(true);
+      expect(existsSync(path.join(packageDir, media!)), media).toBe(true);
+    }
+  });
+
+  it("gives each image an alt text and keeps the SVGs local: no external reference, no script", () => {
+    const images = steps.filter((step) => step.media.image !== undefined);
+
+    expect(images.length).toBeGreaterThan(0);
+    for (const step of images) {
+      expect(text(step.media.altText), step.id).not.toBe("");
+      expect(step.media.image!.endsWith(".svg"), step.id).toBe(true);
+      const svg = readFileSync(path.join(packageDir, step.media.image!), "utf-8");
+      expect(svg, step.id).toMatch(/^<svg\b/);
+      expect(svg, step.id).not.toMatch(/https?:\/\/(?!www\.w3\.org\/)|<script|<image|href=/i);
+    }
+  });
+
+  it("points the Sessions welcome view at the walkthrough", () => {
+    const links = (contributes.viewsWelcome ?? [])
+      .filter((entry) => entry.view === VIEW_IDS.sessions)
+      .flatMap((entry) => welcomeCommands(text(entry.contents)));
+
+    expect(links).toContain(COMMAND_IDS.openWalkthrough);
+  });
+
+  it("offers the walkthrough as a command", () => {
+    const command = contributes.commands.find((entry) => entry.command === COMMAND_IDS.openWalkthrough);
+
+    expect(text(command?.title)).toBe("Open Get Started Walkthrough");
   });
 });

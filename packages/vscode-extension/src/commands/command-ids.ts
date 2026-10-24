@@ -8,6 +8,7 @@ export const COMMAND_IDS = {
   copyAdviceBundle: "aiCreditsAnalyzer.copyAdviceBundle",
   fixSetting: "aiCreditsAnalyzer.fixSetting",
   openLearnMode: "aiCreditsAnalyzer.openLearnMode",
+  openWalkthrough: "aiCreditsAnalyzer.openWalkthrough",
 } as const;
 
 export const VIEW_IDS = {
