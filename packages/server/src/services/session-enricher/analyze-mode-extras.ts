@@ -36,9 +36,9 @@ function findArtifactSource(envelopes: JsonlEnvelope[]): ArtifactSource | undefi
   );
 }
 
-// Shared by buildAnalyzeModeExtras below and the GET /api/sessions/:id/
-// system-prompt route, which needs the raw text on its own without the rest
-// of the extras.
+// Shared by buildAnalyzeModeExtras below and
+// VscodeLogProvider.lookupSystemPromptText (the system-prompt view), which
+// needs the raw text on its own without the rest of the extras.
 export async function resolveSystemPromptText(
   envelopes: JsonlEnvelope[],
   mainJsonlPath: string,

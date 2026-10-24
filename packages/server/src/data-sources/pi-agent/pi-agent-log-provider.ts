@@ -10,6 +10,7 @@ import {
   type TurnUsage,
 } from "@copilot-cost-analyzer/domain";
 import type { LogProvider, LogProviderAvailability } from "../log-providers/log-provider.js";
+import type { SystemPromptTextLookup, SystemPromptTextReader } from "../log-providers/system-prompt-text-reader.js";
 import { listPiAgentSessionFiles } from "../../platform/pi-agent-paths/resolve-pi-agent-sessions-dir.js";
 import { assistantMessageOf, messageOf } from "./pi-message.js";
 import { readPiSessionFile, type PiRawEntry, type PiSessionHeader } from "./pi-jsonl-reader.js";
@@ -121,7 +122,7 @@ function resolveTitle(
 // (constraint 12 forbids changing that contract), one Session is produced
 // per leaf branch — the same "one file -> N sessions" precedent already set
 // by the mitmproxy provider's idle-gap split.
-export class PiAgentLogProvider implements LogProvider {
+export class PiAgentLogProvider implements LogProvider, SystemPromptTextReader {
   readonly id = PROVIDER_ID;
   readonly label = "pi coding agent";
 
@@ -284,11 +285,19 @@ export class PiAgentLogProvider implements LogProvider {
     return buildTurnInspectorDetail(turnIndex, group);
   }
 
+  // The SystemPromptTextReader capability over readSystemPromptText below.
+  // Both an unknown id and a session with nothing captured read as
+  // not-captured, matching the 404 message the API has always sent for pi.
+  async lookupSystemPromptText(sessionId: string): Promise<SystemPromptTextLookup> {
+    const text = await this.readSystemPromptText(sessionId);
+    return text === null ? { status: "not-captured" } : { status: "found", text };
+  }
+
   // Raw captured system-prompt text for the "inspect as text" view
   // (SystemPromptInspector) — not part of the shared LogProvider interface
-  // (ISP: VscodeLogProvider/MitmproxyLogProvider have no equivalent), same
-  // precedent as the VS-Code-only system-prompt route special-casing
-  // VscodeLogProvider directly. The in-file system prompt (replayed along
+  // (ISP: MitmproxyLogProvider/ClaudeCodeLogProvider have no equivalent);
+  // exposed to the API through lookupSystemPromptText above, the optional
+  // SystemPromptTextReader capability. The in-file system prompt (replayed along
   // this branch) wins; otherwise re-reads the sidecar log fresh each call,
   // same "no caching layer" posture as readTurnDetail.
   async readSystemPromptText(sessionId: string): Promise<string | null> {
