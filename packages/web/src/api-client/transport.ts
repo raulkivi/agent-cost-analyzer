@@ -1,23 +1,9 @@
-// Every named operation the UI performs against its backend. Mirrors the
-// domain package's `ApiMethod` (shared with the extension host's request
-// allow-list) and will be replaced by it once that lands.
-export type ApiMethodName =
-  | "listSessions"
-  | "getSession"
-  | "getTurnDetail"
-  | "getSystemPromptText"
-  | "getConfigStatus"
-  | "setRetentionThreshold"
-  | "listLearnScenarios"
-  | "getLearnScenario"
-  | "getLogProviderStatus"
-  | "setActiveLogProvider"
-  | "getSessionAudit"
-  | "listToolCalls"
-  | "getAuditRollup"
-  | "getInsights"
-  | "getHealth"
-  | "getProductProfile";
+import type { ApiMethod } from "@copilot-cost-analyzer/domain";
+
+// Every named operation the UI performs against its backend: the domain's
+// shared `ApiMethod` names, which the extension host's request allow-list
+// also uses.
+export type ApiMethodName = ApiMethod;
 
 // Port between api-client and whatever carries requests to the backend: HTTP
 // to the standalone server, or postMessage to the VS Code extension host.

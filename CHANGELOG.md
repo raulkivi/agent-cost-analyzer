@@ -25,6 +25,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `query` and a `total`; `list_tool_calls` gains `kind` and `offset` (also
   on `GET /api/sessions/:id/tool-calls`). Plan: `docs/plans/mcp-tools-v2.md`.
 
+### Changed
+- Phase 10.1/10.2 groundwork for the AI Credits Analyzer extension. The HTTP
+  routes are now a thin layer over a transport-neutral `ApiService`, and
+  the web client reaches its backend through an `ApiTransport` (HTTP, or
+  `postMessage` inside a VS Code webview). The HTTP API is unchanged, with
+  one exception: `GET /api/sessions/:id/system-prompt` with the mitmproxy or
+  Claude Code provider active now always answers 404, instead of returning
+  a VS Code session's prompt.
+- New `GET /api/product` returns the product profile ("Agent Cost
+  Analyzer").
+
 ### Security
 - Upgraded `zod` to 4.6.7 (GHSA-mrhx-c7xc-m3w5: memory exhaustion when
   validating oversized constrained collections). The domain package and the

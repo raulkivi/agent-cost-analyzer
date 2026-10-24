@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { apiMethodSchema } from "@copilot-cost-analyzer/domain";
 import type { ApiMethodName, ApiTransport } from "./transport.js";
 
 // What a transport's fake backend does with the next request.
@@ -34,6 +35,10 @@ const CASES: Array<[ApiMethodName, unknown]> = [
 // which one it is running on.
 export function describeApiTransportContract(name: string, makeHarness: () => ContractHarness): void {
   describe(`${name} satisfies the ApiTransport contract`, () => {
+    it("exercises every domain ApiMethod", () => {
+      expect(CASES.map(([method]) => method).sort()).toEqual([...apiMethodSchema.options].sort());
+    });
+
     it.each(CASES.filter(([method]) => method !== "getSystemPromptText"))(
       "%s resolves with the backend's JSON result",
       async (method, params) => {

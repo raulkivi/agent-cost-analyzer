@@ -420,6 +420,43 @@ identically.
   `app.ts` holds no business logic, and existing HTTP API responses are
   byte-identical.
 
+**Status (2026-10-24): done.**
+- **`ApiService`** (`services/api/api-service.ts`) has the 16 `ApiMethod`
+  methods (`packages/domain/src/rpc.ts`). It takes raw inputs and the raw
+  query object, and validates them with the existing parsers, so both
+  transports get the same 400 messages.
+- **Errors.** `BadRequestError`, `NotFoundError` and `InternalError` extend
+  `ApiError` (`api-errors.ts`), and `statusForApiError` maps them to
+  statuses.
+- **Composition and the HTTP layer.**
+  `composition/create-standalone-api-service.ts` builds the service.
+  `app.ts` only picks inputs and maps errors; any other error still goes
+  to Express's default handler.
+- **Regression check.** The existing `app*.test.ts` files are unchanged and
+  green. A temporary side-by-side harness compared about 1,760 requests
+  across all 4 providers and found identical status, content type and
+  body. It also caught and fixed one `text/plain` 404 regression.
+- **G1.** The optional `SystemPromptTextReader` capability
+  (`lookupSystemPromptText`: found, not-captured or unknown-session) is
+  implemented by `VscodeLogProvider` and `PiAgentLogProvider`.
+  - **Intended change:** with mitmproxy or claude-code active, every id now
+    returns 404 "Unknown session id". Before, VS Code ids fell through to
+    the VS Code store.
+- **D5.** `AppSettingsStore` (active provider id and retention threshold)
+  has a `FileAppSettingsStore` default, plus a reusable contract suite
+  (`describeAppSettingsStoreContract`). `LogProviderRegistry` takes the
+  store.
+- **G4.** `loadLearnScenarios({ fixturesDir })` and
+  `readAppVersion(packageJsonPath?)` (also used by `mcp/stdio.ts`) resolve
+  `import.meta.url` only when nothing is injected.
+- **ProductProfile.** The schema is in `domain`. `GET /api/product`
+  returns the standalone profile ("Agent Cost Analyzer").
+- **Follow-up after merge.** The web `ApiMethodName` is now the domain's
+  `ApiMethod`, and the transport contract test checks it covers every
+  method.
+- **Tests.** 1,390 before, 1,590 after the 10.1 + 10.2 merge (domain 82,
+  server 977, web 516, pi-logger 15).
+
 ### 10.2 `ApiTransport` seam (web)
 
 - Tests first: `api-client/transport.test.ts` defines an

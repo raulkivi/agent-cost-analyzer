@@ -1223,11 +1223,18 @@ it:
   the shared `LogProvider` interface (ISP: `VscodeLogProvider`/
   `MitmproxyLogProvider` have no equivalent) — returns the replayed in-file
   prompt text when the branch has system messages, else the matched sidecar
-  record's raw text, or `null`. `app.ts`'s `GET /api/sessions/:id/system-prompt`
-  branches on `registry.getActiveProviderId() === "pi-agent"` before
-  touching the VS-Code-only session-store path, delegating to this method
-  (same 200 text/plain / 404 JSON contract either way, so the frontend needs
-  no provider-specific response parsing).
+  record's raw text, or `null`. Since Phase 10.1, `GET
+  /api/sessions/:id/system-prompt` no longer branches on the provider id.
+  Providers that have a system-prompt artifact implement the optional
+  `SystemPromptTextReader` capability
+  (`data-sources/log-providers/system-prompt-text-reader.ts`):
+  - `lookupSystemPromptText(id)` returns found, not-captured or
+    unknown-session.
+  - `PiAgentLogProvider` wraps this method, and `VscodeLogProvider` owns the
+    session-store/`main.jsonl` lookup that used to live in `app.ts`.
+  - `ApiService` asks only the active provider. The contract is the same 200
+    text/plain / 404 JSON either way, so the frontend needs no
+    provider-specific response parsing.
 
 No in-file system message and no sidecar match (extension not installed, or
 this session predates capture) leaves `Session.systemPrompt` unset exactly as
@@ -1332,8 +1339,10 @@ pi-agent (§6.2.5), whose session files persist the prompt as system
 messages (with an optional vendored sidecar-logger extension as the
 fallback for older files) — no equivalent exists (or is planned) for
 Claude Code CLI, so there is no third branch on `GET
-/api/sessions/:id/system-prompt`: `claude-code` sessions fall through to
-the same 404 path `mitmproxy` sessions already use. `toolInventory` stays
+/api/sessions/:id/system-prompt`: `claude-code`, like `mitmproxy`, doesn't
+implement `SystemPromptTextReader`, so every id answers 404 `Unknown
+session id`. Since Phase 10.1, a VS Code session id no longer returns its
+VS Code prompt while another provider is active. `toolInventory` stays
 unset for the same "keep v1 scoped to the two requested features" reason,
 not a data-availability gap.
 
