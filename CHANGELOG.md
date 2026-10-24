@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- Phase 10.7.
+  - **Both products:**
+    - automated accessibility checks (axe) in light, dark and
+      high-contrast themes, with every violation fixed;
+    - text contrast of at least 4.5:1;
+    - full keyboard navigation;
+    - narrow and medium layouts with a column chooser;
+    - one consistent loading, empty, error and partial-data view with
+      Retry;
+    - reduced-motion support.
+  - **AI Credits Analyzer:**
+    - a Get Started walkthrough that opens once on first run;
+    - localizable strings;
+    - the system prompt opens read-only.
 - Phase 10.6, AI Credits Analyzer (not yet published).
   - An Activity Bar sidebar with a Sessions list (grouped by day, AI
     Credits or "unknown" per session) and a Setup view with Fix buttons.
@@ -55,6 +69,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   on `GET /api/sessions/:id/tool-calls`). Plan: `docs/plans/mcp-tools-v2.md`.
 
 ### Changed
+- The standalone app bundles its Barlow fonts instead of loading them from
+  Google Fonts, so it makes no network requests at all.
+- Accent text, primary buttons and muted text are slightly darker, to
+  reach 4.5:1 contrast.
 - The standalone app's header now shows its product name, "Agent Cost
   Analyzer", from `GET /api/product`.
 - The config check reads settings through a `SettingsSource` port. The

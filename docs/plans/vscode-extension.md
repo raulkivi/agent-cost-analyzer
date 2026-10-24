@@ -895,6 +895,86 @@ Implements §3.5 against the reviewed mock-ups (§3.6). Most of it lives in
   - The manual usability script has run once, with its notes in the PR.
   - The standalone app passes the same axe and keyboard tests.
 
+**Status (2026-10-24): done, with the items below still open.** It was
+built in two parallel halves.
+
+*Web (shared by both products):*
+- **Accessibility.**
+  - `a11y.test.tsx` runs axe-core 4.14 over every view in four fixtures:
+    standalone, `vscode-dark`, `vscode-light` and `vscode-high-contrast`.
+  - It fixed an unlabelled timeline slider and a badge without a role. The
+    keyboard work fixed a nested-interactive session card, an unlabelled
+    search box and a dialog without a role.
+- **Contrast.** axe can't check colour contrast in jsdom, so
+  `theme-contrast.test.ts` checks every text/background pair at ≥ 4.5:1.
+  - New tokens `--color-text-muted` (70 %), `--color-accent-text` and
+    `--color-accent-fill` (`#416180`). The standalone accent text and
+    primary buttons are slightly darker as a result.
+  - The system-prompt pastel segments now use dark text: worst 12.7:1,
+    previously 1.47:1 under Dark Modern.
+- **Keyboard and focus.** Arrow keys and Enter in lists and the turns
+  table. Escape closes the top view only. Dialogs trap focus and restore it
+  on close. Focus outlines use `--vscode-focusBorder` in webviews.
+- **Layout.**
+  - `layoutFor(width)` returns wide (≥ 1100), medium (700-1099) or narrow
+    (< 700). `useContainerWidth` feeds it.
+  - Medium: the right column becomes a side drawer.
+  - Narrow: priority columns, an inline details drawer, a View `<select>`
+    and 2×2 KPIs. Minimum width is 360 px.
+  - A column chooser keeps its choice in webview state or `localStorage`.
+- **States.** `AsyncView` handles loading (skeleton after 300 ms), empty
+  (why plus a next step), error (Retry, Copy details, "nothing was
+  changed") and partial (a warning, never 0), with a polite live region.
+  Every data view uses it.
+- **Header hold.** The brand and provider select are hidden until the
+  `ProductProfile` settles, so there's no fallback flash.
+- **Motion and fonts.** A `prefers-reduced-motion` block. G12: Barlow is
+  bundled locally (`@fontsource`, used weights only, about 110 KB that a
+  browser actually fetches). The extension build omits the fonts. Neither
+  build references Google Fonts.
+- **Performance marks.** "first-render" and "data-ready".
+
+*Extension:*
+- **Walkthrough.** `aiCreditsAnalyzer.getStarted` has 5 steps, following
+  mock-up board 3.
+  - Completion events: the two logging settings, open, and Learn mode.
+    Step 5 (MCP) reads "Coming in a later version" until 10.8.
+  - Media lives in `resources/walkthrough/`.
+- **Walkthrough on first run (decided 2026-10-24).** It opens once, on
+  first activation, as an editor tab, never as a notification. A
+  `globalState` flag keeps it from repeating, and an `openWalkthrough`
+  command reopens it.
+- **Localization.** Every user-visible manifest string is in
+  `package.nls.json` (28 keys). Host strings go through a `Translate` seam
+  over `vscode.l10n.t`. Tests fail on a missing, unused or literal string.
+- **Read-only prompt document.** The system prompt opens through a
+  `TextDocumentContentProvider` (scheme `ai-credits-analyzer-doc`) backed
+  by a bounded store: 20 documents, 5 Mi each.
+
+*Dependencies:* `axe-core` 4.14.0 and `@testing-library/user-event` 14.6.8
+(dev); `@fontsource/barlow` and `@fontsource/barlow-condensed` 5.3.0.
+`npm audit` reports 0.
+
+*Still open, not built in this step:*
+- "View as table" for charts.
+- Keyboard access to icicle cells; the structure menu is the keyboard
+  path for now.
+- The column chooser doesn't close on an outside click.
+- Posting the performance marks to the host (for 10.9's budgets).
+- Cancel in `AsyncView`; no call can be aborted yet.
+- The manual usability script, which needs a person in a real VS Code.
+
+The exit criterion's "usable at 360/640/1280 px and matches mock-ups 1-6"
+is verified in jsdom at those widths, not visually.
+
+*TDD exceptions to red-first:*
+- The `SessionKpiTiles` test was written together with its code.
+- Two guard tests were green before their code existed.
+- Some wiring has no test of its own.
+- One refactor was done while tests were green.
+
+*Tests:* 2,025 → 2,380 (web 900, extension 327).
+
 ### 10.8 Copilot-only MCP server in the extension (D7)
 
 - Tests first: `createCopilotMcpServices()` builds the same services as
