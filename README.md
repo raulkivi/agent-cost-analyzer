@@ -63,8 +63,8 @@ cards with corner registration marks, Barlow/Barlow Condensed type.*
   signals (risky commands, anomalies, behaviour changes) that say what
   happened, when and why.
 - [VS Code extension plan](docs/plans/vscode-extension.md) — Phase 10
-  (not started): a separate, Copilot-only VS Code extension that shares
-  code with this standalone app. Covers the code analysis, the test-first
+  (not started): AI Credits Analyzer, a separate, Copilot-only VS Code
+  extension that shares code with this standalone app (Agent Cost Analyzer). Covers the code analysis, the test-first
   steps, the product boundary, and shipping to the Marketplace and Open
   VSX.
 - [pi-system-prompt-logger](packages/pi-system-prompt-logger/README.md) —

@@ -20,7 +20,7 @@ share most of their code (vision §5).
 
 | | **Extension** | **Standalone app** |
 |---|---|---|
-| Working name (§9 Q1) | "AI Credits Analyzer" (no "Copilot" in the name, §3.4) | "Agent Cost Analyzer" |
+| Name (§3.4) | **AI Credits Analyzer** | **Agent Cost Analyzer** |
 | Audience | VS Code + GitHub Copilot Chat users (Marketplace, Open VSX) | Developers using several coding agents |
 | Log providers | **VS Code / Copilot Chat only** | VS Code, Claude Code, pi, mitmproxy (all of today's providers) |
 | Learn mode | yes | yes |
@@ -201,9 +201,13 @@ Marketplace the audience is already VS Code users, and Copilot support is
 stated where people search and read instead. This also avoids putting
 another company's trademark in the product name.
 
-- `displayName`: the product name only (working name "AI Credits
-  Analyzer", §9 Q1). The `name` (the Marketplace id) is its kebab-case
-  form, e.g. `ai-credits-analyzer`.
+- **Names (decided 2026-10-24):** the extension is **AI Credits
+  Analyzer** and the standalone app is **Agent Cost Analyzer**.
+- `displayName`: `AI Credits Analyzer`. `name` (the Marketplace id under
+  the publisher): `ai-credits-analyzer`. The Marketplace rejects a
+  `displayName` already in use, so confirm it's free before the first
+  publish (step 10.7). If it's taken, fall back to "AI Credits Analyzer
+  for VS Code" rather than adding "Copilot".
 - `description`: names the use case, e.g. "See where your GitHub Copilot
   Chat tokens and AI Credits go: prompt caching, per-turn cost, tool-call
   failures and insights, from your local logs."
@@ -213,10 +217,13 @@ another company's trademark in the product name.
 - `categories`: `Visualization`, `AI`, `Chat`, `Other` (only values VS Code
   accepts for this field).
 - Command, setting and view ids use the product prefix
-  (`aiCreditsAnalyzer.*`), never `copilot*`. Renaming them is free until
-  the first publish, so they follow the final name from §9 Q1.
+  (`aiCreditsAnalyzer.*`), never `copilot*`.
 - The README and listing refer to GitHub Copilot only to describe what
   the extension works with.
+- The standalone app shows "Agent Cost Analyzer" through
+  `ProductProfile.displayName` (step 10.5). The repo name, the internal
+  `@copilot-cost-analyzer/*` package scope and the app settings directory
+  stay as they are, to avoid a migration.
 
 ## 4. Message protocol
 
@@ -338,8 +345,8 @@ identically.
   registry lists exactly `["vscode"]`, and the standalone registry is
   unchanged.
 - New workspace, `packages/vscode-extension`:
-  - `package.json` with `name` and `displayName` from §9 Q1, `publisher`
-    (§9 Q2), its own `version` (D8), `engines.vscode` from 10.0,
+  - `package.json` with `name` and `displayName` from §3.4, `publisher`
+    (§9 Q1), its own `version` (D8), `engines.vscode` from 10.0,
     `main: ./dist/extension.js`, `extensionKind: ["workspace"]`, and
     contributed command `aiCreditsAnalyzer.open`. Commands activate
     implicitly, with no `*` activation. It also adds a status-bar entry
@@ -528,22 +535,17 @@ GitHub Release installs with
 
 ## 9. Open questions (need a decision before the step named)
 
-1. **Final product names** (before 10.3). The working names are
-   "AI Credits Analyzer" (extension) and "Agent Cost Analyzer"
-   (standalone). Alternatives for the extension: "Chat Cost Analyzer",
-   "Token Cost Lens". Neither name includes "Copilot" (§3.4). The repo
-   name, the internal `@copilot-cost-analyzer/*` package scope and the
-   app settings directory stay as they are, to avoid a migration.
-2. **Publisher id** (before 10.3).
-3. **Minimum VS Code version** (10.0): this depends on `node:sqlite` and on
+1. **Publisher id** (before 10.3).
+2. **Minimum VS Code version** (10.0): this depends on `node:sqlite` and on
    the MCP definition-provider API.
-4. **Webview placement:** an editor-area panel only, or also an
+3. **Webview placement:** an editor-area panel only, or also an
    activity-bar view with the session list? Proposal: panel only in v1.
 
 Settled on 2026-10-24: the extension is Copilot-only; it includes the
 tool audit and insights dashboard; both products ship an MCP server; the
-products have separate names and independent versions; and the
-standalone app keeps VS Code support.
+products have separate names (AI Credits Analyzer and Agent Cost
+Analyzer, §3.4) and independent versions; and the standalone app keeps
+VS Code support.
 
 ## 10. Exit criterion (Phase 10 as a whole)
 

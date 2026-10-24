@@ -161,12 +161,12 @@ showing the behavioral-proxy fallback silently.
   similar — no specific library is mandated yet.
 - **Two products, one codebase** (decided 2026-10-24, Phase 10,
   [plans/vscode-extension.md](plans/vscode-extension.md)):
-  - a **VS Code extension** for GitHub Copilot Chat users, published to
+  - **AI Credits Analyzer**, a VS Code extension for GitHub Copilot Chat users, published to
     the VS Code Marketplace and Open VSX. It reads Copilot Chat logs only
     (no Claude Code, pi or mitmproxy support) and includes Learn and
     Analyze modes, the tool audit, the insights dashboard and a
     Copilot-only MCP server;
-  - the **standalone app** (this local web app), which stays a superset:
+  - **Agent Cost Analyzer**, the standalone app (this local web app), which stays a superset:
     every log provider, including VS Code, and its own stdio MCP server.
 
   The two have separate names and independent versions. They share the
