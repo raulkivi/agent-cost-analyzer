@@ -843,6 +843,32 @@ describe("App", () => {
       expect(vi.mocked(fetch).mock.calls.filter(([url]) => url === "/api/product")).toHaveLength(1);
     });
 
+    it("holds the brand and provider select until the profile resolves, so neither product flashes", async () => {
+      let resolveProfile: () => void = () => {};
+      const gate = new Promise<void>((resolve) => {
+        resolveProfile = resolve;
+      });
+      productProfile = extensionProfile;
+      vi.stubGlobal(
+        "fetch",
+        vi.fn((url: string, init?: { body?: string }) =>
+          url === "/api/product" ? gate.then((): Promise<unknown> => fakeFetch(url, init)) : fakeFetch(url, init),
+        ),
+      );
+      render(<App />);
+      switchToAnalyze();
+      await screen.findByRole("button", { name: "Fix the bug" });
+
+      expect(screen.queryByText("Session Analyzer")).not.toBeInTheDocument();
+      expect(screen.queryByRole("combobox", { name: "Log provider" })).not.toBeInTheDocument();
+
+      resolveProfile();
+
+      expect(await screen.findByText("AI Credits Analyzer")).toBeInTheDocument();
+      expect(screen.queryByText("Session Analyzer")).not.toBeInTheDocument();
+      expect(screen.queryByRole("combobox", { name: "Log provider" })).not.toBeInTheDocument();
+    });
+
     it("falls back to today's standalone UI, quietly, when the profile can't be fetched", async () => {
       configStatus = { ...cleanConfigStatus, warnings: [loggingWarning] };
       editorHost();

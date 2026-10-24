@@ -117,6 +117,9 @@ export function App({ performanceMarks = pagePerformanceMarks }: AppProps = {}) 
   const [providers, setProviders] = useState<LogProviderDescriptor[]>([]);
   const [centerView, setCenterView] = useState<CenterView>("turns");
   const [productProfile, setProductProfile] = useState<ProductProfile | null>(null);
+  // Whether the profile has resolved or failed: until then the header holds
+  // its brand area (no product's wordmark or provider select can flash).
+  const [profileSettled, setProfileSettled] = useState(false);
   // The turns table's chosen columns, kept between visits (§3.5 Layout).
   const [chosenColumns, setChosenColumns] = useState<TurnColumnId[]>(
     () => parseTurnColumns(getViewStateStorage().get(TURN_COLUMNS_KEY)) ?? ALL_TURN_COLUMNS,
@@ -144,7 +147,8 @@ export function App({ performanceMarks = pagePerformanceMarks }: AppProps = {}) 
   useEffect(() => {
     fetchProductProfile()
       .then(setProductProfile)
-      .catch(() => undefined);
+      .catch(() => undefined)
+      .finally(() => setProfileSettled(true));
   }, []);
 
   useEffect(() => {
@@ -394,6 +398,7 @@ export function App({ performanceMarks = pagePerformanceMarks }: AppProps = {}) 
         onRetentionThresholdChange={handleRetentionThresholdChange}
         displayName={productProfile?.displayName}
         providerSelect={features.providerSelect}
+        profilePending={!profileSettled}
       />
       <p className="text-muted" style={{ fontSize: 11, margin: "var(--space-2) var(--space-4) 0" }}>
         {health ? `status: ${health.status} · v${health.version}` : "Checking server…"}
@@ -532,6 +537,7 @@ export function App({ performanceMarks = pagePerformanceMarks }: AppProps = {}) 
                   selectedTurnIndex={selectedTurnIndex}
                   onSelectTurn={selectTurn}
                   onInspectTurn={handleInspectTurn}
+                  onShowAllSessions={() => setCenterView("rollup")}
                 />
               ) : (
                 <p className="text-muted" style={{ fontSize: 13 }}>

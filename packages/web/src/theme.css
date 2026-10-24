@@ -217,6 +217,7 @@ a { color: var(--color-accent-text); text-underline-offset: 3px; }
   padding: var(--space-3) var(--space-4);
   border-bottom: 1px solid var(--color-divider);
 }
+.nav-brand-placeholder { width: 140px; height: 32px; }
 .nav-brand {
   font-family: var(--font-heading); font-weight: var(--font-heading-weight);
   font-size: 18px; margin-right: auto;
