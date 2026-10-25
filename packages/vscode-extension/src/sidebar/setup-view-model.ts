@@ -1,4 +1,4 @@
-import type { ConfigStatus } from "@copilot-cost-analyzer/domain";
+import type { ConfigStatus } from "@agent-cost-analyzer/domain";
 import { identityTranslate, type Translate } from "../l10n/localize.js";
 
 // One Setup-view row per config warning (vscode-extension.md D10, step

@@ -17,9 +17,6 @@ advice from an AI chat of your choice.
 *The "Industry" design system: steel-blue accent, hairline "blueprint"
 cards with corner registration marks, Barlow/Barlow Condensed type.*
 
-(The repository is still called `copilot-cost-analyzer`; the product is
-Agent Cost Analyzer.)
-
 ## Which product should I use?
 
 This repo builds two products from one codebase:
@@ -105,7 +102,7 @@ have it install and run the app for you:
 
 ```
 Set up and run the Agent Cost Analyzer:
-1. Clone https://github.com/raulkivi/copilot-cost-analyzer.git (or use the
+1. Clone https://github.com/raulkivi/agent-cost-analyzer.git (or use the
    existing checkout if already in this repo) and cd into it.
 2. Confirm Node.js 22+ is installed (the server uses node:sqlite).
 3. Run `npm install`, then `npm run dev` to start the API server
@@ -137,8 +134,8 @@ Set up and run the Agent Cost Analyzer:
 **Install and run**
 
 ```sh
-git clone https://github.com/raulkivi/copilot-cost-analyzer.git
-cd copilot-cost-analyzer
+git clone https://github.com/raulkivi/agent-cost-analyzer.git
+cd agent-cost-analyzer
 npm install
 npm run dev        # starts the API server (127.0.0.1:3001) and the web app (127.0.0.1:5173)
 ```
@@ -210,9 +207,9 @@ runtime, never hardcoded:
   [mitmproxy setup](docs/mitmproxy-setup.md)). There's no OS-level
   discovery here — you manually drop the exported `.har` file into this
   app's own settings directory, under a `mitmproxy-captures` subfolder:
-  `~/.config/copilot-cost-analyzer/mitmproxy-captures/` on Linux (respects
-  `$XDG_CONFIG_HOME`), `~/Library/Application Support/copilot-cost-analyzer/...`
-  on macOS, `%APPDATA%/copilot-cost-analyzer/...` on Windows. Each `.har` is
+  `~/.config/agent-cost-analyzer/mitmproxy-captures/` on Linux (respects
+  `$XDG_CONFIG_HOME`), `~/Library/Application Support/agent-cost-analyzer/...`
+  on macOS, `%APPDATA%/agent-cost-analyzer/...` on Windows. Each `.har` is
   split into one or more sessions by idle gaps in the captured traffic.
 
 - **[pi coding agent](https://pi.dev)** — reads pi's own session JSONL

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { BadRequestError, NotFoundError } from "@copilot-cost-analyzer/server/src/services/api/api-errors";
+import { BadRequestError, NotFoundError } from "@agent-cost-analyzer/server/src/services/api/api-errors";
 import { MessageDispatcher, type DispatcherApi } from "./message-dispatcher.js";
 
 function fakeApi(overrides: Partial<DispatcherApi> = {}): DispatcherApi {

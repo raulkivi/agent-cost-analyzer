@@ -1,5 +1,5 @@
-import type { Session, TokenCount, TriggeredEvent, Turn } from "@copilot-cost-analyzer/domain";
-import { sumTokenCounts } from "@copilot-cost-analyzer/domain";
+import type { Session, TokenCount, TriggeredEvent, Turn } from "@agent-cost-analyzer/domain";
+import { sumTokenCounts } from "@agent-cost-analyzer/domain";
 
 export interface BuildAdviceBundleOptions {
   includeToolArgs?: boolean;

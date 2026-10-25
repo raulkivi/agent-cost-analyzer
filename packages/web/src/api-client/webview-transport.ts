@@ -1,4 +1,4 @@
-import type { HostCommand, HostCommandArgs, HostEventName, PerformanceMarkName } from "@copilot-cost-analyzer/domain";
+import type { HostCommand, HostCommandArgs, HostEventName, PerformanceMarkName } from "@agent-cost-analyzer/domain";
 import { abortError } from "./abort.js";
 import type { ApiMethodName, ApiTransport, ViewStatePersistence } from "./transport.js";
 

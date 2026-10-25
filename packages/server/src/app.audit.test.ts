@@ -4,7 +4,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import request from "supertest";
-import { auditRollupSchema, sessionAuditSchema } from "@copilot-cost-analyzer/domain";
+import { auditRollupSchema, sessionAuditSchema } from "@agent-cost-analyzer/domain";
 import { createApp } from "./app.js";
 import { computeClaudeCodeFileHash } from "./data-sources/claude-code/session-id.js";
 

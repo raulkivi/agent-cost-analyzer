@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { toolCallOutcomeSchema } from "@copilot-cost-analyzer/domain";
+import { toolCallOutcomeSchema } from "@agent-cost-analyzer/domain";
 import { buildToolCallOutcome } from "./outcome-builder.js";
 
 describe("buildToolCallOutcome", () => {

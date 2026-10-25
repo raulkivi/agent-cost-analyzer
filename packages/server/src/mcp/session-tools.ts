@@ -1,6 +1,6 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import { logProviderStatusSchema, turnViewSchema } from "@copilot-cost-analyzer/domain";
+import { logProviderStatusSchema, turnViewSchema } from "@agent-cost-analyzer/domain";
 import { DEFAULT_MAX_TEXT_CHARS } from "../services/session-view/turn-view-builder.js";
 import { limitSchema, turnIndexSchema } from "../services/tool-audit/audit-query-params.js";
 import type { McpToolDeps } from "./mcp-server.js";

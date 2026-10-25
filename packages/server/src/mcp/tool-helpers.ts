@@ -1,6 +1,6 @@
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
-import type { LogProviderStatus } from "@copilot-cost-analyzer/domain";
+import type { LogProviderStatus } from "@agent-cost-analyzer/domain";
 import { UnknownLogProviderIdError } from "../data-sources/log-providers/registry.js";
 import type { McpIdentity } from "./mcp-identity.js";
 import { isoDateBoundSchema, limitSchema } from "../services/tool-audit/audit-query-params.js";

@@ -30,7 +30,7 @@ if [ -f "$PROFILE" ] && grep -qF "$MARKER" "$PROFILE"; then
   echo "Removed the alias from ${PROFILE}"
   echo "Run 'source ${PROFILE}' (or open a new terminal) for this to take effect."
 else
-  echo "No copilot-cost-analyzer alias found in ${PROFILE} — nothing to do."
+  echo "No agent-cost-analyzer alias found in ${PROFILE} — nothing to do."
 fi
 
 PI_EXTENSIONS_DIR="${CPCHAT_PI_EXTENSIONS_DIR:-$HOME/.pi/agent/extensions}"

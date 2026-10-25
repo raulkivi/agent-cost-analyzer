@@ -1,5 +1,5 @@
-import type { TokenCount, TurnUsage } from "@copilot-cost-analyzer/domain";
-import { unavailableTokenCount as unavailable } from "@copilot-cost-analyzer/domain";
+import type { TokenCount, TurnUsage } from "@agent-cost-analyzer/domain";
+import { unavailableTokenCount as unavailable } from "@agent-cost-analyzer/domain";
 import type { JsonlEnvelope } from "./main-jsonl-reader.js";
 import {
   extractLlmRequestUsage,

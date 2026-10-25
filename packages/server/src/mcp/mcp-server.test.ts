@@ -8,7 +8,7 @@ import {
   sessionCostSchema,
   turnViewSchema,
   type LogProviderStatus,
-} from "@copilot-cost-analyzer/domain";
+} from "@agent-cost-analyzer/domain";
 import { AnalysisQueryService } from "../services/analysis/analysis-query-service.js";
 import { InsightsService } from "../services/insights/insights-service.js";
 import { SecurityScanner } from "../services/insights/security-scanner.js";
@@ -279,7 +279,7 @@ describe("MCP server identity (vscode-extension.md step 10.9)", () => {
     const client = await connectTo();
     const { tools } = await client.listTools();
 
-    expect(client.getServerVersion()?.name).toBe("copilot-cost-analyzer");
+    expect(client.getServerVersion()?.name).toBe("agent-cost-analyzer");
     expect(client.getInstructions()).toContain("(GitHub Copilot Chat in VS Code, Claude Code CLI, pi, mitmproxy captures)");
     expect(client.getInstructions()).toBe(STANDALONE_MCP_IDENTITY.instructions);
     expect(tools.find((t) => t.name === "list_log_providers")!.description).toContain("(VS Code Copilot Chat, Claude Code CLI, pi, mitmproxy captures)");

@@ -1,4 +1,4 @@
-import type { Session, TurnInspectorDetail } from "@copilot-cost-analyzer/domain";
+import type { Session, TurnInspectorDetail } from "@agent-cost-analyzer/domain";
 import { describeLogProviderContract } from "./contract.js";
 import type { LogProvider, LogProviderAvailability } from "./log-provider.js";
 

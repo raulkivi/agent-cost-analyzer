@@ -1,4 +1,4 @@
-import type { ConfigWarning, Session } from "@copilot-cost-analyzer/domain";
+import type { ConfigWarning, Session } from "@agent-cost-analyzer/domain";
 import { identityTranslate, type Translate } from "../l10n/localize.js";
 import { COMMAND_IDS, FOCUS_SETUP_VIEW_COMMAND } from "../commands/command-ids.js";
 import { dayKeyOf } from "../time/local-time.js";

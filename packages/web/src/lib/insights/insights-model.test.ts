@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { InsightSessionRow, InsightTurnRow } from "@copilot-cost-analyzer/domain";
+import type { InsightSessionRow, InsightTurnRow } from "@agent-cost-analyzer/domain";
 import { createAssociativeEngine } from "../associative/engine.js";
 import { sampleInsightsDataset } from "../../test-support/insights-fixture.js";
 import { FIELD, createInsightsModel, LIST_BOX_GROUPS } from "./insights-model.js";

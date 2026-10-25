@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
-import { costRollupSchema, sessionCostSchema } from "@copilot-cost-analyzer/domain";
+import { costRollupSchema, sessionCostSchema } from "@agent-cost-analyzer/domain";
 
 // End-to-end: spawns the real stdio entry point (what `claude mcp add`
 // runs) against a temporary HOME holding the real-capture Claude Code

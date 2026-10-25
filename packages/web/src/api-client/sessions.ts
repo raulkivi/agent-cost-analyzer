@@ -1,4 +1,4 @@
-import type { Session, TurnInspectorDetail } from "@copilot-cost-analyzer/domain";
+import type { Session, TurnInspectorDetail } from "@agent-cost-analyzer/domain";
 import { getApiTransport } from "./current-transport.js";
 
 export function fetchSessions(): Promise<Session[]> {

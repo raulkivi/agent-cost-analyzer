@@ -1,4 +1,4 @@
-import type { AppSettingsStore } from "@copilot-cost-analyzer/server/src/data-sources/log-providers/app-settings";
+import type { AppSettingsStore } from "@agent-cost-analyzer/server/src/data-sources/log-providers/app-settings";
 
 // The slice of vscode.Memento (context.globalState) the store needs.
 export interface Memento {

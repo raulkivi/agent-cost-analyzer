@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import type { ProductProfile } from "@copilot-cost-analyzer/domain";
+import type { ProductProfile } from "@agent-cost-analyzer/domain";
 import { resetApiTransport, setApiTransport } from "./current-transport.js";
 import { fetchProductProfile } from "./product-profile.js";
 

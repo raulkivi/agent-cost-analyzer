@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import type { KeyboardEvent } from "react";
-import type { Session } from "@copilot-cost-analyzer/domain";
+import type { Session } from "@agent-cost-analyzer/domain";
 import type { Mode } from "../state/session-store.js";
 import { formatAiCredits } from "../lib/format-ai-credits.js";
 import { formatRelativeTime } from "../lib/format-relative-time.js";

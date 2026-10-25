@@ -1,4 +1,4 @@
-import { unavailableTokenCount, type Session, type ToolCallRecord, type Turn, type TurnUsage } from "@copilot-cost-analyzer/domain";
+import { unavailableTokenCount, type Session, type ToolCallRecord, type Turn, type TurnUsage } from "@agent-cost-analyzer/domain";
 import { parseShellCommand } from "../services/tool-audit/shell-command-parser.js";
 import type { ProviderSessions } from "../services/insights/insights-dataset-builder.js";
 

@@ -1,5 +1,5 @@
-import type { Turn } from "@copilot-cost-analyzer/domain";
-import { isFailedStatus } from "@copilot-cost-analyzer/domain";
+import type { Turn } from "@agent-cost-analyzer/domain";
+import { isFailedStatus } from "@agent-cost-analyzer/domain";
 
 // One KPI tile's text: the value, plus a coverage note when only some turns
 // had the data. A value nothing supports reads "unknown", never 0

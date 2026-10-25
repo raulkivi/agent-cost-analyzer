@@ -6,7 +6,7 @@ import type {
   SessionAudit,
   ToolCallStatus,
   ToolKind,
-} from "@copilot-cost-analyzer/domain";
+} from "@agent-cost-analyzer/domain";
 import type { LogProvider } from "../../data-sources/log-providers/log-provider.js";
 import { buildAuditRollup } from "./audit-rollup-builder.js";
 import { buildSessionAudit } from "./session-audit-builder.js";

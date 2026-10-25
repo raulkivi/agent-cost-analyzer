@@ -1,4 +1,4 @@
-import type { CostRollup, InsightsDataset } from "@copilot-cost-analyzer/domain";
+import type { CostRollup, InsightsDataset } from "@agent-cost-analyzer/domain";
 import { byCostDescending, cacheHitRatio, costFigures, costMeasures, groupBy, rankingFor, type TurnFigures } from "./cost-aggregation.js";
 
 // Phase 9.12 (docs/plans/mcp-tools-v2.md §4.1): the dashboard's flat

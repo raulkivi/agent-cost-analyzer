@@ -1,6 +1,6 @@
-import { listWorkspaceDebugLogsDirPaths } from "@copilot-cost-analyzer/server/src/data-sources/jsonl/session-log-path";
-import { copilotChatGlobalStoragePath } from "@copilot-cost-analyzer/server/src/data-sources/sqlite/copilot-chat-global-storage-path";
-import { userSettingsFilePath } from "@copilot-cost-analyzer/server/src/data-sources/vscode-settings/vscode-settings-path";
+import { listWorkspaceDebugLogsDirPaths } from "@agent-cost-analyzer/server/src/data-sources/jsonl/session-log-path";
+import { copilotChatGlobalStoragePath } from "@agent-cost-analyzer/server/src/data-sources/sqlite/copilot-chat-global-storage-path";
+import { userSettingsFilePath } from "@agent-cost-analyzer/server/src/data-sources/vscode-settings/vscode-settings-path";
 
 // The path options composeCopilotProviders takes, all derived from VS Code's
 // user-data dir (D4). The standalone app's resolvers are reused so the

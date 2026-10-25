@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { insightFindingSchema, type ToolCallRecord } from "@copilot-cost-analyzer/domain";
+import { insightFindingSchema, type ToolCallRecord } from "@agent-cost-analyzer/domain";
 import { analyzeSession, bash, providerSessions, turn, usage } from "../../test-support/insights-fakes.js";
 import { AnomalyDetector, robustZScore } from "./anomaly-detector.js";
 import { BehaviorChangeDetector } from "./behavior-change-detector.js";

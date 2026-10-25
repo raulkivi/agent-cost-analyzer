@@ -4,7 +4,7 @@ import {
   type OutcomeTotals,
   type ToolCallRecord,
   type ToolCallStatus,
-} from "@copilot-cost-analyzer/domain";
+} from "@agent-cost-analyzer/domain";
 
 // Shared counting primitives for the session and rollup builders.
 

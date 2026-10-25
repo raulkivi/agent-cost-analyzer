@@ -1,4 +1,4 @@
-import type { Session } from "@copilot-cost-analyzer/domain";
+import type { Session } from "@agent-cost-analyzer/domain";
 import { describe, expect, it, vi } from "vitest";
 import { upperCaseTranslate } from "../l10n/upper-case-translate.js";
 import { SidebarController } from "../sidebar/sidebar-controller.js";

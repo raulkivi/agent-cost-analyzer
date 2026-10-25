@@ -1,4 +1,4 @@
-import { MAX_HOST_COMMAND_TEXT_LENGTH } from "@copilot-cost-analyzer/domain";
+import { MAX_HOST_COMMAND_TEXT_LENGTH } from "@agent-cost-analyzer/domain";
 import { describe, expect, it } from "vitest";
 import { ReadOnlyDocumentStore } from "./read-only-document-store.js";
 

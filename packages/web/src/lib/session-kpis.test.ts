@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { Turn } from "@copilot-cost-analyzer/domain";
+import type { Turn } from "@agent-cost-analyzer/domain";
 import { makeTurn } from "../test-support/turn-fixture.js";
 import { sessionKpis } from "./session-kpis.js";
 

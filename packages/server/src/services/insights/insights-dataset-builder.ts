@@ -6,8 +6,8 @@ import type {
   TokenCount,
   ToolCallRecord,
   Turn,
-} from "@copilot-cost-analyzer/domain";
-import { MAX_EVIDENCE_EXCERPT_LENGTH } from "@copilot-cost-analyzer/domain";
+} from "@agent-cost-analyzer/domain";
+import { MAX_EVIDENCE_EXCERPT_LENGTH } from "@agent-cost-analyzer/domain";
 import { excerptOf } from "../tool-audit/output-redactor.js";
 import { statusOf } from "../tool-audit/outcome-tally.js";
 import { resolveToolKind } from "../tool-audit/tool-kind-resolver.js";

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { describeAppSettingsStoreContract } from "@copilot-cost-analyzer/server/src/data-sources/log-providers/app-settings-store-contract";
+import { describeAppSettingsStoreContract } from "@agent-cost-analyzer/server/src/data-sources/log-providers/app-settings-store-contract";
 import { GlobalStateAppSettingsStore, type Memento } from "./global-state-app-settings-store.js";
 
 // A Memento that, like VS Code's, takes the new value immediately and

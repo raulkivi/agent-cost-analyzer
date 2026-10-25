@@ -6,7 +6,7 @@ import {
   type TokenCount,
   type Turn,
   type TurnUsage,
-} from "@copilot-cost-analyzer/domain";
+} from "@agent-cost-analyzer/domain";
 import { buildSessionCost } from "./session-cost-builder.js";
 
 const k = (value: number, estimated?: boolean): TokenCount => ({ known: true, value, ...(estimated ? { estimated } : {}) });

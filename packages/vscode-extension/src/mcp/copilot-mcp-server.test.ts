@@ -8,7 +8,7 @@ import {
   seedCopilotSessionStore,
   USAGE_SESSION_ID,
   writeUsageDebugLog,
-} from "@copilot-cost-analyzer/server/src/test-support/copilot-session-store";
+} from "@agent-cost-analyzer/server/src/test-support/copilot-session-store";
 import { createCopilotMcpServer } from "./copilot-mcp-server.js";
 
 type ToolResult = Awaited<ReturnType<Client["callTool"]>>;

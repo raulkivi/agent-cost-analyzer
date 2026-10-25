@@ -1,4 +1,4 @@
-import type { ConfigStatus } from "@copilot-cost-analyzer/domain";
+import type { ConfigStatus } from "@agent-cost-analyzer/domain";
 import { getApiTransport } from "./current-transport.js";
 
 export function fetchConfigStatus(): Promise<ConfigStatus> {

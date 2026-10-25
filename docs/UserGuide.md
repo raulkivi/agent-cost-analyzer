@@ -348,7 +348,7 @@ anything risky?". Run `npm install` in this repo, then register the
 server:
 
 ```bash
-claude mcp add copilot-cost-analyzer -- /absolute/path/to/copilot-cost-analyzer/scripts/mcp-server.sh
+claude mcp add agent-cost-analyzer -- /absolute/path/to/agent-cost-analyzer/scripts/mcp-server.sh
 ```
 
 | Tool | What it returns |

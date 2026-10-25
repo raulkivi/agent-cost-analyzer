@@ -1,7 +1,7 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { productProfileSchema } from "@copilot-cost-analyzer/domain";
+import { productProfileSchema } from "@agent-cost-analyzer/domain";
 import { InMemoryAppSettingsStore } from "../test-support/in-memory-app-settings-store.js";
 import type { SettingsSource } from "../services/config-check/settings-source.js";
 import { createExtensionApiService } from "./create-extension-api-service.js";

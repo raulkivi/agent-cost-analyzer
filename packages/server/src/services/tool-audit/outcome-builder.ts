@@ -1,4 +1,4 @@
-import { isFailedStatus, type ToolCallOutcome, type ToolCallStatus, type ToolKind } from "@copilot-cost-analyzer/domain";
+import { isFailedStatus, type ToolCallOutcome, type ToolCallStatus, type ToolKind } from "@agent-cost-analyzer/domain";
 import { classifyFailure, defaultFailureRules, type FailureRule } from "./failure-classifier.js";
 
 export interface RawToolOutcome {

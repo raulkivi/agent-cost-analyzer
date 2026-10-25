@@ -8,7 +8,7 @@ import {
   type Turn,
   type TurnInspectorDetail,
   type TurnUsage,
-} from "@copilot-cost-analyzer/domain";
+} from "@agent-cost-analyzer/domain";
 import type { LogProvider, LogProviderAvailability } from "../log-providers/log-provider.js";
 import type { SystemPromptTextLookup, SystemPromptTextReader } from "../log-providers/system-prompt-text-reader.js";
 import { listPiAgentSessionFiles } from "../../platform/pi-agent-paths/resolve-pi-agent-sessions-dir.js";

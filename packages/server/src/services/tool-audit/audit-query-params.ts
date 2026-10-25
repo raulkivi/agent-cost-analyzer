@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { failureCategorySchema, toolCallStatusSchema, toolKindSchema } from "@copilot-cost-analyzer/domain";
+import { failureCategorySchema, toolCallStatusSchema, toolKindSchema } from "@agent-cost-analyzer/domain";
 import type { SessionRangeFilter, ToolCallFilter } from "./audit-query-service.js";
 
 // Field schemas shared by the HTTP query parser below and the MCP tool

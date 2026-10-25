@@ -1,4 +1,4 @@
-import type { CostRollup, FindingsQueryResult, InsightsDataset, SessionCost, TurnView } from "@copilot-cost-analyzer/domain";
+import type { CostRollup, FindingsQueryResult, InsightsDataset, SessionCost, TurnView } from "@agent-cost-analyzer/domain";
 import type { LogProvider } from "../../data-sources/log-providers/log-provider.js";
 import { buildCostRollup, type CostRollupOptions } from "../cost/cost-rollup-builder.js";
 import { buildSessionCost, type SessionCostOptions } from "../cost/session-cost-builder.js";

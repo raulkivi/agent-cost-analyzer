@@ -1,7 +1,7 @@
 import { statSync } from "node:fs";
 import path from "node:path";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { readAppVersion } from "@copilot-cost-analyzer/server/src/composition/app-version";
+import { readAppVersion } from "@agent-cost-analyzer/server/src/composition/app-version";
 import { createCopilotMcpServer } from "./copilot-mcp-server.js";
 import { parseMcpServerArgs } from "./mcp-server-args.js";
 

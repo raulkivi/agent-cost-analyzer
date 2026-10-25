@@ -9,7 +9,7 @@ import type {
   InsightTurnRow,
   ToolCallStatus,
   TriggeredEvent,
-} from "@copilot-cost-analyzer/domain";
+} from "@agent-cost-analyzer/domain";
 import type { AssociativeModel, FieldDef } from "../associative/data-model.js";
 import { CATEGORY_LABELS, STATUS_META } from "../audit-format.js";
 import { TRIGGER_LABELS } from "../trigger-labels.js";

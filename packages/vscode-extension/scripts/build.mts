@@ -18,7 +18,7 @@ const mcpServer = await build(mcpServerBundleOptions(distDir));
 writeFileSync(path.join(distDir, "meta-mcp-stdio.json"), JSON.stringify(mcpServer.metafile, null, 2));
 
 // Fixtures are data, not code, so they're copied rather than bundled.
-const serverDir = path.dirname(createRequire(import.meta.url).resolve("@copilot-cost-analyzer/server/package.json"));
+const serverDir = path.dirname(createRequire(import.meta.url).resolve("@agent-cost-analyzer/server/package.json"));
 const learnScenariosDir = path.join(extensionPackageDir, "media", "learn-scenarios");
 rmSync(learnScenariosDir, { recursive: true, force: true });
 mkdirSync(path.dirname(learnScenariosDir), { recursive: true });

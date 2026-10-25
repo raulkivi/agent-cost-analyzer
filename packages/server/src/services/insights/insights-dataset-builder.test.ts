@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { estimatedTokenCount, type ToolCallRecord } from "@copilot-cost-analyzer/domain";
+import { estimatedTokenCount, type ToolCallRecord } from "@agent-cost-analyzer/domain";
 import { analyzeSession, bash, providerSessions, turn, usage } from "../../test-support/insights-fakes.js";
 import { buildInsightRows } from "./insights-dataset-builder.js";
 

@@ -1,4 +1,4 @@
-import { unavailableTokenCount, type Session, type ToolCallRecord, type TurnInspectorDetail } from "@copilot-cost-analyzer/domain";
+import { unavailableTokenCount, type Session, type ToolCallRecord, type TurnInspectorDetail } from "@agent-cost-analyzer/domain";
 import type { LogProvider } from "../data-sources/log-providers/log-provider.js";
 import { UnknownLogProviderIdError } from "../data-sources/log-providers/registry.js";
 import type { ProviderLookup } from "../services/tool-audit/audit-query-service.js";

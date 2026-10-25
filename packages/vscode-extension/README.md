@@ -101,7 +101,7 @@ All commands are in the **AI Credits Analyzer** category.
   doesn't reach the network. In Restricted Mode, an untrusted workspace's
   settings can't turn it on.
 
-[What the extension reads, file by file](https://github.com/raulkivi/copilot-cost-analyzer/blob/main/docs/vscode-extension-guide.md#privacy-and-what-the-extension-reads).
+[What the extension reads, file by file](https://github.com/raulkivi/agent-cost-analyzer/blob/main/docs/vscode-extension-guide.md#privacy-and-what-the-extension-reads).
 
 ## Requirements
 
@@ -111,23 +111,23 @@ All commands are in the **AI Credits Analyzer** category.
 
 ## Documentation
 
-- [Extension guide](https://github.com/raulkivi/copilot-cost-analyzer/blob/main/docs/vscode-extension-guide.md):
+- [Extension guide](https://github.com/raulkivi/agent-cost-analyzer/blob/main/docs/vscode-extension-guide.md):
   installing, every command and setting, the MCP server, remote windows,
   accessibility and troubleshooting.
-- [User Guide](https://github.com/raulkivi/copilot-cost-analyzer/blob/main/docs/UserGuide.md):
+- [User Guide](https://github.com/raulkivi/agent-cost-analyzer/blob/main/docs/UserGuide.md):
   the analysis views in detail.
-- [Changelog](https://github.com/raulkivi/copilot-cost-analyzer/blob/main/packages/vscode-extension/CHANGELOG.md)
-- [Report an issue](https://github.com/raulkivi/copilot-cost-analyzer/issues)
+- [Changelog](https://github.com/raulkivi/agent-cost-analyzer/blob/main/packages/vscode-extension/CHANGELOG.md)
+- [Report an issue](https://github.com/raulkivi/agent-cost-analyzer/issues)
 
 ## Using Claude Code, pi or mitmproxy?
 
 This extension reads GitHub Copilot Chat's logs only. For Claude Code CLI
 sessions, pi coding agent sessions or mitmproxy captures of LLM API
 traffic, use
-[Agent Cost Analyzer](https://github.com/raulkivi/copilot-cost-analyzer#readme),
+[Agent Cost Analyzer](https://github.com/raulkivi/agent-cost-analyzer#readme),
 the standalone app from the same repository. It has the same views and
 reads VS Code Copilot Chat sessions too.
 
 ## License
 
-[MIT](https://github.com/raulkivi/copilot-cost-analyzer/blob/main/LICENSE)
+[MIT](https://github.com/raulkivi/agent-cost-analyzer/blob/main/LICENSE)

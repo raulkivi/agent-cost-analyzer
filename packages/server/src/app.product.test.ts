@@ -4,7 +4,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import request from "supertest";
-import { productProfileSchema } from "@copilot-cost-analyzer/domain";
+import { productProfileSchema } from "@agent-cost-analyzer/domain";
 import { createApp } from "./app.js";
 
 const { version } = JSON.parse(

@@ -1,4 +1,4 @@
-import type { InsightProviderStatus, InsightsDataset } from "@copilot-cost-analyzer/domain";
+import type { InsightProviderStatus, InsightsDataset } from "@agent-cost-analyzer/domain";
 import type { LogProvider } from "../../data-sources/log-providers/log-provider.js";
 import { UnknownLogProviderIdError } from "../../data-sources/log-providers/registry.js";
 import { DEFAULT_ROLLUP_SESSION_LIMIT, inRange, MAX_ROLLUP_SESSION_LIMIT, type SessionRangeFilter } from "../tool-audit/audit-query-service.js";

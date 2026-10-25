@@ -1,5 +1,5 @@
-import type { TurnUsage } from "@copilot-cost-analyzer/domain";
-import { unavailableTokenCount } from "@copilot-cost-analyzer/domain";
+import type { TurnUsage } from "@agent-cost-analyzer/domain";
+import { unavailableTokenCount } from "@agent-cost-analyzer/domain";
 import { isSseResponse, parseSseEvents } from "../sse.js";
 import {
   AI_CREDITS_UNAVAILABLE_REASON,

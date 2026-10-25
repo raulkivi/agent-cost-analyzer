@@ -1,4 +1,4 @@
-import type { ToolCallOutcome } from "@copilot-cost-analyzer/domain";
+import type { ToolCallOutcome } from "@agent-cost-analyzer/domain";
 import { CATEGORY_LABELS, STATUS_META } from "../../lib/audit-format.js";
 
 interface StatusTagProps {

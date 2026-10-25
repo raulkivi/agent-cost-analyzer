@@ -1,4 +1,4 @@
-import type { InsightFinding, InsightSessionRow, InsightToolCallRow, InsightTurnRow } from "@copilot-cost-analyzer/domain";
+import type { InsightFinding, InsightSessionRow, InsightToolCallRow, InsightTurnRow } from "@agent-cost-analyzer/domain";
 import type { InsightRows, ProviderSessions } from "./insights-dataset-builder.js";
 
 // Phase 9.11 (docs/plans/insights-dashboard.md §4): every detector is an

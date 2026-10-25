@@ -2,7 +2,7 @@ import { useState } from "react";
 import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { Session } from "@copilot-cost-analyzer/domain";
+import type { Session } from "@agent-cost-analyzer/domain";
 import { buildAdviceBundle } from "../lib/build-advice-bundle.js";
 import { makeTurn } from "../test-support/turn-fixture.js";
 import { AdviceExportDialog } from "./AdviceExportDialog.js";

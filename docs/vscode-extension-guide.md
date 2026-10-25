@@ -45,7 +45,7 @@ Any of these installs the same extension, `raulkivi.ai-credits-analyzer`:
   **AI Credits Analyzer** in the editor's Extensions view, or install it
   from [open-vsx.org](https://open-vsx.org/extension/raulkivi/ai-credits-analyzer).
 - **VSIX file:** download `ai-credits-analyzer-<version>.vsix` from a
-  [GitHub Release](https://github.com/raulkivi/copilot-cost-analyzer/releases).
+  [GitHub Release](https://github.com/raulkivi/agent-cost-analyzer/releases).
   In the Extensions view, open the **…** menu, choose **Install from
   VSIX…** and pick the file, or run
   `code --install-extension ai-credits-analyzer-<version>.vsix`.

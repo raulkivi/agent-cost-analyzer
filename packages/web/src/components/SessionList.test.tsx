@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
-import type { Session } from "@copilot-cost-analyzer/domain";
+import type { Session } from "@agent-cost-analyzer/domain";
 import { SessionList } from "./SessionList.js";
 
 function makeSession(overrides: Partial<Session> = {}): Session {

@@ -1,4 +1,4 @@
-import type { Turn } from "@copilot-cost-analyzer/domain";
+import type { Turn } from "@agent-cost-analyzer/domain";
 
 export function makeTurn(overrides: Partial<Turn> = {}): Turn {
   return {

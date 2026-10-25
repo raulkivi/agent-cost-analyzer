@@ -1,6 +1,6 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { createCopilotMcpServices } from "@copilot-cost-analyzer/server/src/composition/create-copilot-mcp-services";
-import { createMcpServer } from "@copilot-cost-analyzer/server/src/mcp/mcp-server";
+import { createCopilotMcpServices } from "@agent-cost-analyzer/server/src/composition/create-copilot-mcp-services";
+import { createMcpServer } from "@agent-cost-analyzer/server/src/mcp/mcp-server";
 import { copilotDebugLogsDirPaths, copilotLogPathsFromUserDataDir } from "../platform/copilot-log-paths.js";
 
 export interface CopilotMcpServerOptions {

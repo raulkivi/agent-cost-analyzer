@@ -1,4 +1,4 @@
-import type { ToolCallRecord } from "@copilot-cost-analyzer/domain";
+import type { ToolCallRecord } from "@agent-cost-analyzer/domain";
 import { summarizeToolArgs } from "../../services/tool-audit/args-summary.js";
 import { buildToolCallOutcome } from "../../services/tool-audit/outcome-builder.js";
 import { excerptOf } from "../../services/tool-audit/output-redactor.js";

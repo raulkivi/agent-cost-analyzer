@@ -6,9 +6,9 @@ import {
   type PerformanceMarkName,
   type RpcCommandResponse,
   type RpcResponse,
-} from "@copilot-cost-analyzer/domain";
-import type { ApiQuery, ApiService } from "@copilot-cost-analyzer/server/src/services/api/api-service";
-import { ApiError, statusForApiError } from "@copilot-cost-analyzer/server/src/services/api/api-errors";
+} from "@agent-cost-analyzer/domain";
+import type { ApiQuery, ApiService } from "@agent-cost-analyzer/server/src/services/api/api-service";
+import { ApiError, statusForApiError } from "@agent-cost-analyzer/server/src/services/api/api-errors";
 import { describeIssues } from "./describe-issues.js";
 
 // The ApiService surface the webview may call (vscode-extension.md D2).

@@ -4,7 +4,7 @@ import type {
   InsightsDataset,
   InsightToolCallRow,
   InsightTurnRow,
-} from "@copilot-cost-analyzer/domain";
+} from "@agent-cost-analyzer/domain";
 
 // A small two-provider dataset for insights tests:
 //   cc:s1  (Claude Code, 2026-10-09 09:00) — 2 turns, curl|sh (critical) + a failed rg

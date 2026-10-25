@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { costRollupSchema, type InsightsDataset, type InsightTurnRow } from "@copilot-cost-analyzer/domain";
+import { costRollupSchema, type InsightsDataset, type InsightTurnRow } from "@agent-cost-analyzer/domain";
 import { buildCostRollup } from "./cost-rollup-builder.js";
 
 function turnRow(sessionKey: string, turnIndex: number, overrides: Partial<InsightTurnRow> = {}): InsightTurnRow {

@@ -8,11 +8,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/raulkivi/copilot-cost-analyzer.git"
+    "url": "git+https://github.com/raulkivi/agent-cost-analyzer.git"
   },
-  "homepage": "https://github.com/raulkivi/copilot-cost-analyzer#readme",
+  "homepage": "https://github.com/raulkivi/agent-cost-analyzer#readme",
   "bugs": {
-    "url": "https://github.com/raulkivi/copilot-cost-analyzer/issues"
+    "url": "https://github.com/raulkivi/agent-cost-analyzer/issues"
   },
   "keywords": [
     "copilot",
@@ -317,8 +317,8 @@
     "test:ui": "tsx scripts/ui-check/ui-check.mts"
   },
   "devDependencies": {
-    "@copilot-cost-analyzer/domain": "*",
-    "@copilot-cost-analyzer/server": "*",
+    "@agent-cost-analyzer/domain": "*",
+    "@agent-cost-analyzer/server": "*",
     "@modelcontextprotocol/sdk": "^1.32.1",
     "@types/mocha": "^10.0.10",
     "@types/vscode": "1.140.0",

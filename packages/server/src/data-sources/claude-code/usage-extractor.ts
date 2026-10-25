@@ -1,5 +1,5 @@
-import { sumTokenCounts, unavailableTokenCount, type TokenCount } from "@copilot-cost-analyzer/domain";
-import type { TurnUsage } from "@copilot-cost-analyzer/domain";
+import { sumTokenCounts, unavailableTokenCount, type TokenCount } from "@agent-cost-analyzer/domain";
+import type { TurnUsage } from "@agent-cost-analyzer/domain";
 import type { ClaudeCodeRawEntry } from "./claude-code-jsonl-reader.js";
 import { groupTurnEntriesByRound, type ClaudeCodeRound } from "./round-grouper.js";
 import type { ClaudeCodeTurnGroup } from "./turn-grouper.js";

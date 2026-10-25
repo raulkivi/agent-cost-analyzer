@@ -4,7 +4,7 @@ import path from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
-import { costRollupSchema, logProviderStatusSchema } from "@copilot-cost-analyzer/domain";
+import { costRollupSchema, logProviderStatusSchema } from "@agent-cost-analyzer/domain";
 import { createMcpServer, type McpServerDeps } from "../mcp/mcp-server.js";
 import { seedCopilotSessionStore, USAGE_SESSION_ID, writeUsageDebugLog } from "../test-support/copilot-session-store.js";
 import { composeLogProviders } from "./compose-log-providers.js";
@@ -126,7 +126,7 @@ describe("createCopilotMcpServices (the extension's MCP server, vscode-extension
   });
 
   it("leaves the standalone server's name and instructions untouched", () => {
-    expect(standalone.getServerVersion()?.name).toBe("copilot-cost-analyzer");
+    expect(standalone.getServerVersion()?.name).toBe("agent-cost-analyzer");
     expect(standalone.getInstructions()).toBe(STANDALONE_MCP_IDENTITY.instructions);
   });
 

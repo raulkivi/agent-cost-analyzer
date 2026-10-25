@@ -15,4 +15,4 @@ const { registry } = composeLogProviders();
 const server = createMcpServer(createMcpServices(registry, version));
 
 await server.connect(new StdioServerTransport());
-console.error(`copilot-cost-analyzer MCP server ${version} ready on stdio (read-only, local logs only).`);
+console.error(`agent-cost-analyzer MCP server ${version} ready on stdio (read-only, local logs only).`);

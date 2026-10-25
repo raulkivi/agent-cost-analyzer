@@ -6,7 +6,7 @@ import type {
   ToolInventoryEntry,
   TurnInspectorDetail,
   TurnUsage,
-} from "@copilot-cost-analyzer/domain";
+} from "@agent-cost-analyzer/domain";
 import {
   classifyEnvelopesAvailability,
   readMainJsonlFile,

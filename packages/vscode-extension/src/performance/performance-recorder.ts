@@ -1,4 +1,4 @@
-import type { PerformanceMarkName } from "@copilot-cost-analyzer/domain";
+import type { PerformanceMarkName } from "@agent-cost-analyzer/domain";
 
 // What the host times itself: the Sessions tree, from the start of a full
 // refresh to its nodes being built (sidebar/sidebar-controller.ts).

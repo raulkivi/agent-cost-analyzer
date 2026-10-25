@@ -263,9 +263,10 @@ another company's trademark in the product name.
 - The README and listing refer to GitHub Copilot only to describe what
   the extension works with.
 - The standalone app shows "Agent Cost Analyzer" through
-  `ProductProfile.displayName` (step 10.5). The repo name, the internal
-  `@copilot-cost-analyzer/*` package scope and the app settings directory
-  stay as they are, to avoid a migration.
+  `ProductProfile.displayName` (step 10.5). The repo name and the
+  `@agent-cost-analyzer/*` package scope were renamed on 2026-10-25 to match
+  the product. The app settings directory stays as it is, to avoid a
+  migration.
 
 ### 3.5 UX and accessibility standards
 
@@ -1098,7 +1099,7 @@ is verified in jsdom at those widths, not visually.
   verified here by spawning the bundle and through the stubbed
   `vscode.lm` in `bundle-load.test.ts`.
 - The extension's MCP server reuses `createMcpServer` unchanged, so its
-  name (`copilot-cost-analyzer`), instructions and `provider` argument
+  name (`agent-cost-analyzer`), instructions and `provider` argument
   descriptions still mention the other providers. A product-specific
   name and instructions are a small option on `createMcpServer`, for 10.9.
 - `dist/mcp-stdio.js` is 5.15 MB and `dist/extension.js` 4.37 MB
@@ -1393,8 +1394,8 @@ written test-first like any other code (`scripts/` or a Vitest suite in
 **Defaults (open to change before the step starts):** the extension guide
 lives in the repo as `docs/vscode-extension-guide.md` and the extension
 README links to it, because the Marketplace page has to stay short. The
-root README takes the name **Agent Cost Analyzer**; the repo name
-`copilot-cost-analyzer` stays.
+root README takes the name **Agent Cost Analyzer**; the repo was renamed
+from `copilot-cost-analyzer` to `agent-cost-analyzer` on 2026-10-25.
 
 - **Extension README** (`packages/vscode-extension/README.md`, which is the
   Marketplace and Open VSX page): what it does in one paragraph, a hero
@@ -1564,7 +1565,7 @@ ID isn't set up yet.
    Note its *Application (client) ID* and *Directory (tenant) ID*.
 3. Under that app: *Certificates & secrets → Federated credentials → Add*,
    scenario *GitHub Actions deploying Azure resources*: organization
-   `raulkivi`, repository `copilot-cost-analyzer`, entity type
+   `raulkivi`, repository `agent-cost-analyzer`, entity type
    *Environment*, environment `release`. Only release jobs in that
    environment can then sign in.
 4. Add the app as a **member of the publisher**: at

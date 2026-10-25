@@ -1,4 +1,4 @@
-import type { ToolKind } from "@copilot-cost-analyzer/domain";
+import type { ToolKind } from "@agent-cost-analyzer/domain";
 
 // Maps each harness's own tool names (Claude Code, VS Code Copilot Chat,
 // pi, Codex-style) onto one provider-neutral kind. Table-driven so adding a

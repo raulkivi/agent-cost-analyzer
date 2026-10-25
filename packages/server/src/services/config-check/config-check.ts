@@ -1,4 +1,4 @@
-import type { ConfigStatus, ConfigWarning } from "@copilot-cost-analyzer/domain";
+import type { ConfigStatus, ConfigWarning } from "@agent-cost-analyzer/domain";
 import { snapshotFromSettings } from "../../data-sources/vscode-settings/read-vscode-settings.js";
 import { JsoncFileSettingsSource } from "../../data-sources/vscode-settings/jsonc-file-settings-source.js";
 import { resolveVscodeSettingsPath } from "../../data-sources/vscode-settings/vscode-settings-path.js";

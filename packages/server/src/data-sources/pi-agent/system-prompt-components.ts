@@ -1,7 +1,7 @@
 import {
   unavailableTokenCount,
   type SystemPromptComponent,
-} from "@copilot-cost-analyzer/domain";
+} from "@agent-cost-analyzer/domain";
 import { estimateTokenCount } from "../jsonl/token-estimator.js";
 import type { PiSystemPromptSidecarRecord } from "./system-prompt-sidecar-reader.js";
 import type { PiSystemPromptState } from "./system-message-replay.js";

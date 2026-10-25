@@ -1,4 +1,4 @@
-import type { FindingSeverity, ToolCallStatus, ToolKind } from "@copilot-cost-analyzer/domain";
+import type { FindingSeverity, ToolCallStatus, ToolKind } from "@agent-cost-analyzer/domain";
 
 // Phase 9.11 (docs/plans/insights-dashboard.md §4.1): rule-based security
 // *signals* over normalized tool calls. Each rule is an independent

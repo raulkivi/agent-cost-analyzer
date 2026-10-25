@@ -1,8 +1,8 @@
 import { useRef } from "react";
 import type { CSSProperties, KeyboardEvent, ReactNode } from "react";
-import type { TokenCount, Turn } from "@copilot-cost-analyzer/domain";
-import { sumTokenCounts } from "@copilot-cost-analyzer/domain";
-import { isFailedStatus } from "@copilot-cost-analyzer/domain";
+import type { TokenCount, Turn } from "@agent-cost-analyzer/domain";
+import { sumTokenCounts } from "@agent-cost-analyzer/domain";
+import { isFailedStatus } from "@agent-cost-analyzer/domain";
 import { formatAiCredits } from "../lib/format-ai-credits.js";
 import { TRIGGER_LABELS } from "../lib/trigger-labels.js";
 import { ALL_TURN_COLUMNS, TURN_COLUMNS, type TurnColumnId } from "../lib/turn-columns.js";

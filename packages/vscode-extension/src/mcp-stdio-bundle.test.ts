@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { build } from "esbuild";
-import { seedCopilotSessionStore } from "@copilot-cost-analyzer/server/src/test-support/copilot-session-store";
+import { seedCopilotSessionStore } from "@agent-cost-analyzer/server/src/test-support/copilot-session-store";
 import { mcpServerBundleOptions } from "../scripts/esbuild-options.mts";
 
 const VERSION = "9.9.9-test";

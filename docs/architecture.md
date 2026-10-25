@@ -1553,7 +1553,7 @@ see §13 for what's still open.
 ## 10. Proposed project structure
 
 ```
-copilot-cost-analyzer/
+agent-cost-analyzer/
   docs/
     vision.md
     architecture.md

@@ -7,7 +7,7 @@ import {
   sessionAuditSchema,
   toolCallStatusSchema,
   toolKindSchema,
-} from "@copilot-cost-analyzer/domain";
+} from "@agent-cost-analyzer/domain";
 import { DEFAULT_ROLLUP_SESSION_LIMIT } from "../services/tool-audit/audit-query-service.js";
 import { limitSchema, offsetSchema, turnIndexSchema } from "../services/tool-audit/audit-query-params.js";
 import type { McpToolDeps } from "./mcp-server.js";

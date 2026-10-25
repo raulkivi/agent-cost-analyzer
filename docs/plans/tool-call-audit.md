@@ -358,7 +358,7 @@ failed most this week and why?"
   constraint 1 and §11.2.
 - **Entry point**: `npm run mcp` runs `packages/server/src/mcp/stdio.ts`.
   To register it with Claude Code:
-  `claude mcp add copilot-cost-analyzer -- npm run mcp --prefix <repo> --silent`.
+  `claude mcp add agent-cost-analyzer -- npm run mcp --prefix <repo> --silent`.
 - **Composition**: provider registry construction moves out of `createApp`
   into `composition/create-log-provider-registry.ts`, so the HTTP app and
   the MCP server share one wiring (SRP/DIP). Both depend on one

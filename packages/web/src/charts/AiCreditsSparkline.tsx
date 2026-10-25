@@ -1,6 +1,6 @@
 import { scaleLinear } from "d3-scale";
 import { line as d3Line } from "d3-shape";
-import type { Turn } from "@copilot-cost-analyzer/domain";
+import type { Turn } from "@agent-cost-analyzer/domain";
 import { ViewAsTable } from "./ViewAsTable.js";
 
 const WIDTH = 200;

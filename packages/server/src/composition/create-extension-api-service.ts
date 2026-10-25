@@ -1,4 +1,4 @@
-import type { ProductProfile } from "@copilot-cost-analyzer/domain";
+import type { ProductProfile } from "@agent-cost-analyzer/domain";
 import { loadLearnScenarios } from "../data-sources/learn-scenarios/loader.js";
 import { checkConfig } from "../services/config-check/config-check.js";
 import type { SettingsSource } from "../services/config-check/settings-source.js";

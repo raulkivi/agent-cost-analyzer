@@ -4,7 +4,7 @@ import type {
   FindingsQueryResult,
   InsightFinding,
   InsightsDataset,
-} from "@copilot-cost-analyzer/domain";
+} from "@agent-cost-analyzer/domain";
 
 // Phase 9.12 (docs/plans/mcp-tools-v2.md §4): filters and orders the
 // dashboard's findings for the MCP list_findings tool. Pure.
