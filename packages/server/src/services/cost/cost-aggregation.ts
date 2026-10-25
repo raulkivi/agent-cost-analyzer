@@ -1,4 +1,4 @@
-import type { CostFigures, CostMeasures, CostRanking, InsightTurnRow, MeasureTotal } from "@copilot-cost-analyzer/domain";
+import type { CostFigures, CostMeasures, CostRanking, InsightTurnRow, MeasureTotal } from "@agent-cost-analyzer/domain";
 
 // Shared, pure aggregation over flat turn rows (the dashboard's
 // InsightTurnRow shape) for the session and cross-session cost builders

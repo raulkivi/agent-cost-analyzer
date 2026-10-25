@@ -60,7 +60,7 @@ representative at an online or offline event.
 
 Instances of abusive, harassing, or otherwise unacceptable behavior may be
 reported to the community leaders responsible for enforcement through
-[GitHub private vulnerability reporting](https://github.com/raulkivi/copilot-cost-analyzer/security/advisories/new),
+[GitHub private vulnerability reporting](https://github.com/raulkivi/agent-cost-analyzer/security/advisories/new),
 which is visible only to the maintainers. Please state in the report that it
 concerns the Code of Conduct rather than a security issue.
 

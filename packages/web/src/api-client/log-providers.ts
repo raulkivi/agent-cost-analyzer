@@ -1,4 +1,4 @@
-import type { LogProviderStatus } from "@copilot-cost-analyzer/domain";
+import type { LogProviderStatus } from "@agent-cost-analyzer/domain";
 import { getApiTransport } from "./current-transport.js";
 
 export function fetchLogProviderStatus(): Promise<LogProviderStatus> {

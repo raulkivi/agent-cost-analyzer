@@ -1,4 +1,4 @@
-import type { AuditRollup, SessionAudit } from "@copilot-cost-analyzer/domain";
+import type { AuditRollup, SessionAudit } from "@agent-cost-analyzer/domain";
 import { getApiTransport } from "./current-transport.js";
 
 export interface RollupQuery {

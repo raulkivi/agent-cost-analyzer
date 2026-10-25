@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { MAX_HOST_COMMAND_TEXT_LENGTH, type ConfigStatus, type ConfigWarning } from "@copilot-cost-analyzer/domain";
+import { MAX_HOST_COMMAND_TEXT_LENGTH, type ConfigStatus, type ConfigWarning } from "@agent-cost-analyzer/domain";
 import { HostCommandHandler, type HostCommands } from "./host-command-handler.js";
 
 const LOGGING_ENABLED = "github.copilot.chat.agentDebugLog.fileLogging.enabled";

@@ -1,4 +1,4 @@
-import type { ToolInventoryEntry } from "@copilot-cost-analyzer/domain";
+import type { ToolInventoryEntry } from "@agent-cost-analyzer/domain";
 import { Blueprint } from "./ui/Blueprint.js";
 
 interface ToolInventoryPanelProps {

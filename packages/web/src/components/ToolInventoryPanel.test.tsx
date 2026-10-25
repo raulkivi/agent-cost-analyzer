@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import type { ToolInventoryEntry } from "@copilot-cost-analyzer/domain";
+import type { ToolInventoryEntry } from "@agent-cost-analyzer/domain";
 import { ToolInventoryPanel } from "./ToolInventoryPanel.js";
 
 describe("ToolInventoryPanel", () => {

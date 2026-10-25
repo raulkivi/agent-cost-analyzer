@@ -1,5 +1,5 @@
-import type { SystemPromptComponent, TokenCount } from "@copilot-cost-analyzer/domain";
-import { unavailableTokenCount } from "@copilot-cost-analyzer/domain";
+import type { SystemPromptComponent, TokenCount } from "@agent-cost-analyzer/domain";
+import { unavailableTokenCount } from "@agent-cost-analyzer/domain";
 import type { JsonlEnvelope } from "./main-jsonl-reader.js";
 import { estimateTokenCount } from "./token-estimator.js";
 

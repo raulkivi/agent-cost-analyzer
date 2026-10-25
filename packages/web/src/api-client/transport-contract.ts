@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { apiMethodSchema } from "@copilot-cost-analyzer/domain";
+import { apiMethodSchema } from "@agent-cost-analyzer/domain";
 import type { ApiMethodName, ApiTransport } from "./transport.js";
 
 // What a transport's fake backend does with the next request.

@@ -1,4 +1,4 @@
-import { MAX_EVIDENCE_EXCERPT_LENGTH, type InsightFinding, type ToolCallRecord } from "@copilot-cost-analyzer/domain";
+import { MAX_EVIDENCE_EXCERPT_LENGTH, type InsightFinding, type ToolCallRecord } from "@agent-cost-analyzer/domain";
 import { excerptOf } from "../tool-audit/output-redactor.js";
 import { statusOf } from "../tool-audit/outcome-tally.js";
 import { resolveToolKind } from "../tool-audit/tool-kind-resolver.js";

@@ -1,4 +1,4 @@
-import type { Session } from "@copilot-cost-analyzer/domain";
+import type { Session } from "@agent-cost-analyzer/domain";
 import { describe, expect, it } from "vitest";
 import { upperCaseTranslate as T } from "../l10n/upper-case-translate.js";
 import { buildSessionsTree, sessionsLoadErrorTree } from "./sessions-tree-model.js";

@@ -1,4 +1,4 @@
-import type { Turn } from "@copilot-cost-analyzer/domain";
+import type { Turn } from "@agent-cost-analyzer/domain";
 import { sessionKpis } from "../lib/session-kpis.js";
 import { StatTile } from "./ui/StatTile.js";
 

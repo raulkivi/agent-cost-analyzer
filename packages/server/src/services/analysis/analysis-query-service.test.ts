@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { InsightsDataset } from "@copilot-cost-analyzer/domain";
+import type { InsightsDataset } from "@agent-cost-analyzer/domain";
 import type { SessionRangeFilter } from "../tool-audit/audit-query-service.js";
 import { FakeProvider, lookup, sampleSessions } from "../../test-support/audit-fakes.js";
 import { AnalysisQueryService, type InsightsSource } from "./analysis-query-service.js";

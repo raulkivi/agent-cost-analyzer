@@ -1,4 +1,4 @@
-import type { InsightsDataset } from "@copilot-cost-analyzer/domain";
+import type { InsightsDataset } from "@agent-cost-analyzer/domain";
 import { getApiTransport } from "./current-transport.js";
 
 export interface InsightsQuery {

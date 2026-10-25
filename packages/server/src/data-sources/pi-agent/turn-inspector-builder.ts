@@ -1,4 +1,4 @@
-import type { TurnInspectorDetail } from "@copilot-cost-analyzer/domain";
+import type { TurnInspectorDetail } from "@agent-cost-analyzer/domain";
 import { buildContentPart } from "../log-providers/build-content-parts.js";
 import {
   assistantMessageOf,

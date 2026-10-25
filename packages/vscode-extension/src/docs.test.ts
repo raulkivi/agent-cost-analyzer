@@ -18,8 +18,8 @@ const GUIDE = "docs/vscode-extension-guide.md";
 const LINKED_DOCS = ["README.md", "docs/UserGuide.md", GUIDE, "CONTRIBUTING.md", "docs/threat-model.md", EXTENSION_CHANGELOG];
 
 // Absolute URLs into this repo's main branch, which must name files that exist.
-const REPO_URL = /^https:\/\/github\.com\/raulkivi\/copilot-cost-analyzer\/(?:blob|tree)\/main\/([^#?]*)(?:[?#].*)?$/;
-const RAW_URL = /^https:\/\/raw\.githubusercontent\.com\/raulkivi\/copilot-cost-analyzer\/(?:refs\/heads\/)?main\/([^#?]*)/;
+const REPO_URL = /^https:\/\/github\.com\/raulkivi\/agent-cost-analyzer\/(?:blob|tree)\/main\/([^#?]*)(?:[?#].*)?$/;
+const RAW_URL = /^https:\/\/raw\.githubusercontent\.com\/raulkivi\/agent-cost-analyzer\/(?:refs\/heads\/)?main\/([^#?]*)/;
 
 function read(relativePath: string): string {
   return readFileSync(path.join(repoRoot, relativePath), "utf-8");

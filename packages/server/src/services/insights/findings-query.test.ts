@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { findingsQueryResultSchema, type InsightFinding, type InsightsDataset } from "@copilot-cost-analyzer/domain";
+import { findingsQueryResultSchema, type InsightFinding, type InsightsDataset } from "@agent-cost-analyzer/domain";
 import { queryFindings } from "./findings-query.js";
 
 function finding(key: string, overrides: Partial<InsightFinding> = {}): InsightFinding {

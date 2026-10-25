@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { describeSettingsSourceContract } from "@copilot-cost-analyzer/server/src/services/config-check/settings-source-contract";
-import { checkConfig } from "@copilot-cost-analyzer/server/src/services/config-check/config-check";
+import { describeSettingsSourceContract } from "@agent-cost-analyzer/server/src/services/config-check/settings-source-contract";
+import { checkConfig } from "@agent-cost-analyzer/server/src/services/config-check/config-check";
 import { VscodeSettingsSource, type ConfigurationReader } from "./vscode-settings-source.js";
 
 // vscode.workspace.getConfiguration() as it behaves for a dotted id: the

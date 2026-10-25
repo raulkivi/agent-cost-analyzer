@@ -1,4 +1,4 @@
-import { MAX_EVIDENCE_EXCERPT_LENGTH, type Session, type ToolCallRecord, type TurnView } from "@copilot-cost-analyzer/domain";
+import { MAX_EVIDENCE_EXCERPT_LENGTH, type Session, type ToolCallRecord, type TurnView } from "@agent-cost-analyzer/domain";
 import { statusOf } from "../tool-audit/outcome-tally.js";
 import { excerptOf, redactSecrets } from "../tool-audit/output-redactor.js";
 import { resolveToolKind } from "../tool-audit/tool-kind-resolver.js";

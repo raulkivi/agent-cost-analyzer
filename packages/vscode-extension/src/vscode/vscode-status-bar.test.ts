@@ -1,4 +1,4 @@
-import type { Session } from "@copilot-cost-analyzer/domain";
+import type { Session } from "@agent-cost-analyzer/domain";
 import { describe, expect, it } from "vitest";
 import { SidebarController } from "../sidebar/sidebar-controller.js";
 import { registerStatusBar, type StatusBarItemLike, type VscodeStatusBarApi } from "./vscode-status-bar.js";

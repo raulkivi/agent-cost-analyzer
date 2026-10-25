@@ -1,4 +1,4 @@
-import type { HostEventName } from "@copilot-cost-analyzer/domain";
+import type { HostEventName } from "@agent-cost-analyzer/domain";
 import { getApiTransport } from "./current-transport.js";
 
 // Subscribes to a host-pushed event (e.g. configChanged -> re-fetch the

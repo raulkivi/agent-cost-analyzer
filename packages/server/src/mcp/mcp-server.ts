@@ -1,5 +1,5 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { LogProviderStatus } from "@copilot-cost-analyzer/domain";
+import type { LogProviderStatus } from "@agent-cost-analyzer/domain";
 import type { AnalysisQueryService } from "../services/analysis/analysis-query-service.js";
 import type { AuditQueryService } from "../services/tool-audit/audit-query-service.js";
 import { STANDALONE_MCP_IDENTITY, type McpIdentity } from "./mcp-identity.js";

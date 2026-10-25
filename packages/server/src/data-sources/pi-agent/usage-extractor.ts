@@ -1,5 +1,5 @@
-import { sumTokenCounts, unavailableTokenCount, type TokenCount } from "@copilot-cost-analyzer/domain";
-import type { ToolCallRecord, TurnUsage } from "@copilot-cost-analyzer/domain";
+import { sumTokenCounts, unavailableTokenCount, type TokenCount } from "@agent-cost-analyzer/domain";
+import type { ToolCallRecord, TurnUsage } from "@agent-cost-analyzer/domain";
 import {
   assistantMessageOf,
   findToolCallBlock,

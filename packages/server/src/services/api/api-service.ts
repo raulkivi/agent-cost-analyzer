@@ -8,7 +8,7 @@ import type {
   Session,
   SessionAudit,
   TurnInspectorDetail,
-} from "@copilot-cost-analyzer/domain";
+} from "@agent-cost-analyzer/domain";
 import type { AppSettingsStore } from "../../data-sources/log-providers/app-settings.js";
 import type { LearnScenarioCatalog } from "../../data-sources/learn-scenarios/loader.js";
 import type { LogProvider } from "../../data-sources/log-providers/log-provider.js";

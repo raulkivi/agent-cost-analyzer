@@ -5,7 +5,7 @@ import {
   type InsightSessionRow,
   type InsightToolCallRow,
   type InsightTurnRow,
-} from "@copilot-cost-analyzer/domain";
+} from "@agent-cost-analyzer/domain";
 
 // KPI and chart maths over the *possible* rows of the current selection.
 // Unknown figures (null) are never summed as 0: every total carries its

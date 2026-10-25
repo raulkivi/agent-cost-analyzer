@@ -1,4 +1,4 @@
-import type { Turn } from "@copilot-cost-analyzer/domain";
+import type { Turn } from "@agent-cost-analyzer/domain";
 import { TURN_COLUMNS, type TurnColumnId } from "../lib/turn-columns.js";
 import { TurnColumnValue } from "./TurnsTable.js";
 

@@ -1,4 +1,4 @@
-import { MAX_HOST_COMMAND_TEXT_LENGTH } from "@copilot-cost-analyzer/domain";
+import { MAX_HOST_COMMAND_TEXT_LENGTH } from "@agent-cost-analyzer/domain";
 import type { DocumentLanguage } from "../rpc/host-command-handler.js";
 
 // The file type the editor picks the document's language from.

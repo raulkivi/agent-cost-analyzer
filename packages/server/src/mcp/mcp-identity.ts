@@ -17,7 +17,7 @@ export interface McpIdentity {
 }
 
 export const STANDALONE_MCP_IDENTITY: McpIdentity = {
-  name: "copilot-cost-analyzer",
+  name: "agent-cost-analyzer",
   instructions: [
     "Read-only analyzer of local AI coding-agent logs (GitHub Copilot Chat in VS Code, Claude Code CLI, pi, mitmproxy captures). It never writes, executes or reaches the network.",
     "Workflow: find a session with list_sessions (query/since/until), then drill in with get_session_cost (spend), get_session_audit and list_tool_calls (tool-call failures), and get_turn (one turn's prompt, response, usage and calls). For trends use get_cost_rollup, get_audit_rollup and list_findings (security, anomalies, behaviour changes).",

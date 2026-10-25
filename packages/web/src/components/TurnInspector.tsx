@@ -5,7 +5,7 @@ import type {
   MessageContentPart,
   TriggeredEvent,
   TurnInspectorDetail,
-} from "@copilot-cost-analyzer/domain";
+} from "@agent-cost-analyzer/domain";
 import { fetchTurnInspectorDetail } from "../api-client/sessions.js";
 import { useEscapeKey, useFocusReturn } from "../lib/focus.js";
 import { useCancellableLoad } from "../lib/use-cancellable-load.js";

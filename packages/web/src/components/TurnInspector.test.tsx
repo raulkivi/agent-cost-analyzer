@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import type { TurnInspectorDetail } from "@copilot-cost-analyzer/domain";
+import type { TurnInspectorDetail } from "@agent-cost-analyzer/domain";
 import { TurnInspector } from "./TurnInspector.js";
 
 const TWO_ROUND_DETAIL: TurnInspectorDetail = {

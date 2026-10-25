@@ -3,7 +3,7 @@ import {
   type ConfigStatus,
   type HostEvent,
   type SelectSessionPayload,
-} from "@copilot-cost-analyzer/domain";
+} from "@agent-cost-analyzer/domain";
 import { WATCHED_SETTING_IDS } from "../config/config-change-watcher.js";
 import { identityTranslate, type Translate } from "../l10n/localize.js";
 import { MCP_ENABLED_SETTING_ID } from "../mcp/mcp-server-definitions.js";

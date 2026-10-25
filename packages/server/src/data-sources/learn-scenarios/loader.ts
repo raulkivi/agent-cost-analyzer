@@ -7,7 +7,7 @@ import {
   unavailableTokenCount,
   type Session,
   type TokenCount,
-} from "@copilot-cost-analyzer/domain";
+} from "@agent-cost-analyzer/domain";
 
 // Resolved only when no fixturesDir is injected (G4, vscode-extension.md
 // §2.2): a single-file bundle has no usable import.meta.url, so it passes

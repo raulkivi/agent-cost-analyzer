@@ -9,19 +9,19 @@ describe("resolveAppSettingsDir", () => {
       env: { XDG_CONFIG_HOME: "/home/dev/.custom-config" },
     });
 
-    expect(dir).toBe("/home/dev/.custom-config/copilot-cost-analyzer");
+    expect(dir).toBe("/home/dev/.custom-config/agent-cost-analyzer");
   });
 
   it("falls back to ~/.config on Linux when XDG_CONFIG_HOME is unset", () => {
     const dir = resolveAppSettingsDir({ platform: "linux", homeDir: "/home/dev", env: {} });
 
-    expect(dir).toBe("/home/dev/.config/copilot-cost-analyzer");
+    expect(dir).toBe("/home/dev/.config/agent-cost-analyzer");
   });
 
   it("uses Library/Application Support on macOS", () => {
     const dir = resolveAppSettingsDir({ platform: "darwin", homeDir: "/Users/dev", env: {} });
 
-    expect(dir).toBe("/Users/dev/Library/Application Support/copilot-cost-analyzer");
+    expect(dir).toBe("/Users/dev/Library/Application Support/agent-cost-analyzer");
   });
 
   it("uses APPDATA on Windows when set", () => {
@@ -32,7 +32,7 @@ describe("resolveAppSettingsDir", () => {
     });
 
     expect(dir).toBe(
-      "C:\\Users\\dev\\AppData\\Roaming\\copilot-cost-analyzer",
+      "C:\\Users\\dev\\AppData\\Roaming\\agent-cost-analyzer",
     );
   });
 });

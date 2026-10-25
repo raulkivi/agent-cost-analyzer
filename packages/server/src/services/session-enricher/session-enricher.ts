@@ -4,8 +4,8 @@ import type {
   ToolCallRecord,
   Turn,
   TurnUsage,
-} from "@copilot-cost-analyzer/domain";
-import { sumTokenCounts, unavailableTokenCount } from "@copilot-cost-analyzer/domain";
+} from "@agent-cost-analyzer/domain";
+import { sumTokenCounts, unavailableTokenCount } from "@agent-cost-analyzer/domain";
 import type {
   SessionFileRow,
   SessionRow,

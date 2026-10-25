@@ -1,4 +1,4 @@
-import type { FailureCategory, ToolCallStatus } from "@copilot-cost-analyzer/domain";
+import type { FailureCategory, ToolCallStatus } from "@agent-cost-analyzer/domain";
 
 // Outcome is a *state*, so it gets a status encoding rather than a
 // categorical one. Success deliberately wears the app's own steel-blue

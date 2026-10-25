@@ -7,7 +7,7 @@ import {
   type Session,
   type ToolCallRecord,
   type Turn,
-} from "@copilot-cost-analyzer/domain";
+} from "@agent-cost-analyzer/domain";
 import { ClaudeCodeLogProvider } from "../../data-sources/claude-code/claude-code-log-provider.js";
 import { computeClaudeCodeFileHash } from "../../data-sources/claude-code/session-id.js";
 import { buildSessionAudit } from "./session-audit-builder.js";

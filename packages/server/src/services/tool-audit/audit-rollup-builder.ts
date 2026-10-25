@@ -1,4 +1,4 @@
-import type { AuditRollup, FailureCategory, OutcomeTotals, SessionAudit } from "@copilot-cost-analyzer/domain";
+import type { AuditRollup, FailureCategory, OutcomeTotals, SessionAudit } from "@agent-cost-analyzer/domain";
 import {
   addToTotals,
   emptyTotals,

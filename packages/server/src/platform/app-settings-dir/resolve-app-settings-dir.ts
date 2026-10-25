@@ -7,12 +7,16 @@ interface ResolveAppSettingsDirOptions {
   env?: Record<string, string | undefined>;
 }
 
-const APP_DIR_NAME = "copilot-cost-analyzer";
+const APP_DIR_NAME = "agent-cost-analyzer";
 
-// Pre-2026-09-25 directory name (the app was called gh-cp-chat-analyser).
-// Exposed so migrate-legacy-app-settings-dir.ts can find and move any
-// existing local data without duplicating the per-platform logic below.
-export const LEGACY_APP_DIR_NAME = "gh-cp-chat-analyser";
+// Previous directory names, newest first: copilot-cost-analyzer (renamed
+// 2026-10-25) and gh-cp-chat-analyser (renamed 2026-09-25). Exposed so
+// migrate-legacy-app-settings-dir.ts can find and move any existing local
+// data without duplicating the per-platform logic below.
+export const LEGACY_APP_DIR_NAMES = [
+  "copilot-cost-analyzer",
+  "gh-cp-chat-analyser",
+] as const;
 
 // Uses path.posix/path.win32 explicitly rather than the bare path module
 // (which follows the actual runtime OS, not the `platform` option) so
@@ -45,9 +49,10 @@ export function resolveAppSettingsDir(options: ResolveAppSettingsDirOptions = {}
   return resolveDirForAppName(APP_DIR_NAME, options);
 }
 
-// Pre-rename equivalent of resolveAppSettingsDir, for migration only.
-export function resolveLegacyAppSettingsDir(
+// Pre-rename equivalents of resolveAppSettingsDir, newest first, for
+// migration only.
+export function resolveLegacyAppSettingsDirs(
   options: ResolveAppSettingsDirOptions = {},
-): string {
-  return resolveDirForAppName(LEGACY_APP_DIR_NAME, options);
+): string[] {
+  return LEGACY_APP_DIR_NAMES.map((name) => resolveDirForAppName(name, options));
 }

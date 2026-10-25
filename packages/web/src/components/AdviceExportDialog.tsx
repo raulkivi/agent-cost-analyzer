@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef, useState } from "react";
-import type { Session } from "@copilot-cost-analyzer/domain";
+import type { Session } from "@agent-cost-analyzer/domain";
 import { standaloneHostCapabilities } from "../host/host-capabilities.js";
 import { buildAdviceBundle } from "../lib/build-advice-bundle.js";
 import { useEscapeKey, useFocusTrap } from "../lib/focus.js";

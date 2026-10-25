@@ -7,7 +7,7 @@ import {
   type ProductFeatures,
   type ProductProfile,
   type Session,
-} from "@copilot-cost-analyzer/domain";
+} from "@agent-cost-analyzer/domain";
 import { fetchConfigStatus, updateRetentionThreshold } from "./api-client/config-status.js";
 import { onHostEvent } from "./api-client/host-events.js";
 import { fetchHealth, type HealthResponse } from "./api-client/health.js";

@@ -8,7 +8,7 @@ import {
   type SessionAudit,
   type TokenCount,
   type Turn,
-} from "@copilot-cost-analyzer/domain";
+} from "@agent-cost-analyzer/domain";
 import {
   addToTotals,
   emptyTotals,

@@ -70,4 +70,4 @@ Note the known design-system bug flagged previously and still unfixed: `.card, .
 - `styles.css` — static reference copy of the design-system tokens
 
 ## How to see it in the mock
-Analyze mode → "copilot-cost-analyzer — Phase 4 build" → select turn 1 or 2 → "Inspect request/response".
+Analyze mode → "agent-cost-analyzer — Phase 4 build" → select turn 1 or 2 → "Inspect request/response".

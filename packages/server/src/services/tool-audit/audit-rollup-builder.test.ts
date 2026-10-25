@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { auditRollupSchema, unavailableTokenCount, type SessionAudit, type ToolCallRecord } from "@copilot-cost-analyzer/domain";
+import { auditRollupSchema, unavailableTokenCount, type SessionAudit, type ToolCallRecord } from "@agent-cost-analyzer/domain";
 import { buildAuditRollup } from "./audit-rollup-builder.js";
 
 function call(command: string, status: "success" | "error", startedAt: string, category?: "command-not-found"): ToolCallRecord {

@@ -1,4 +1,4 @@
-import { MAX_EVIDENCE_EXCERPT_LENGTH, type FailureCategory, type ToolKind } from "@copilot-cost-analyzer/domain";
+import { MAX_EVIDENCE_EXCERPT_LENGTH, type FailureCategory, type ToolKind } from "@agent-cost-analyzer/domain";
 import { excerptOf } from "./output-redactor.js";
 
 // Rule-based failure classification (docs/plans/tool-call-audit.md §6).

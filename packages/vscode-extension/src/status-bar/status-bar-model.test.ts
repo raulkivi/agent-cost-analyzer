@@ -1,4 +1,4 @@
-import type { ConfigWarning, Session } from "@copilot-cost-analyzer/domain";
+import type { ConfigWarning, Session } from "@agent-cost-analyzer/domain";
 import { describe, expect, it } from "vitest";
 import { upperCaseTranslate as T } from "../l10n/upper-case-translate.js";
 import { buildStatusBarState, buildTodayStatus } from "./status-bar-model.js";

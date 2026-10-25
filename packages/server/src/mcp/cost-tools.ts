@@ -1,6 +1,6 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import { costRollupSchema, sessionCostSchema } from "@copilot-cost-analyzer/domain";
+import { costRollupSchema, sessionCostSchema } from "@agent-cost-analyzer/domain";
 import { DEFAULT_TOP_SESSIONS } from "../services/cost/cost-rollup-builder.js";
 import { DEFAULT_TOP_TURNS } from "../services/cost/session-cost-builder.js";
 import { DEFAULT_ROLLUP_SESSION_LIMIT } from "../services/tool-audit/audit-query-service.js";

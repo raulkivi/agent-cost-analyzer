@@ -1,4 +1,4 @@
-import type { AuditRollup, SessionAudit, ToolCallRecord } from "@copilot-cost-analyzer/domain";
+import type { AuditRollup, SessionAudit, ToolCallRecord } from "@agent-cost-analyzer/domain";
 
 function bash(command: string, program: string, outcome: ToolCallRecord["outcome"]): ToolCallRecord {
   return { name: "Bash", kind: "shell", argsSummary: command, shell: { command, program }, outcome };

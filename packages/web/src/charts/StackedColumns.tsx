@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { scaleLinear } from "d3-scale";
-import type { ToolCallStatus } from "@copilot-cost-analyzer/domain";
+import type { ToolCallStatus } from "@agent-cost-analyzer/domain";
 import { STATUS_META, STATUS_ORDER } from "../lib/audit-format.js";
 import { activateOnEnterOrSpace, ChartLegend, roundedTopRectPath } from "./chart-parts.js";
 import { ViewAsTable } from "./ViewAsTable.js";

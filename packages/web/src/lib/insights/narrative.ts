@@ -1,4 +1,4 @@
-import type { FailureCategory, InsightFinding } from "@copilot-cost-analyzer/domain";
+import type { FailureCategory, InsightFinding } from "@agent-cost-analyzer/domain";
 import { CATEGORY_LABELS } from "../audit-format.js";
 import { SEVERITY_ORDER } from "./insights-model.js";
 import { computeKpis, countBy, type InsightRowsView } from "./measures.js";

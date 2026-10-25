@@ -1,4 +1,4 @@
-import type { LogProviderDescriptor, LogProviderStatus } from "@copilot-cost-analyzer/domain";
+import type { LogProviderDescriptor, LogProviderStatus } from "@agent-cost-analyzer/domain";
 import { DEFAULT_ACTIVE_PROVIDER_ID, type AppSettingsStore } from "./app-settings.js";
 import type { LogProvider } from "./log-provider.js";
 

@@ -1,4 +1,4 @@
-import type { ToolCallStatus } from "@copilot-cost-analyzer/domain";
+import type { ToolCallStatus } from "@agent-cost-analyzer/domain";
 import type { ClaudeCodeRawEntry } from "./claude-code-jsonl-reader.js";
 
 export interface ClaudeCodeToolResultRef {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { Session } from "@copilot-cost-analyzer/domain";
+import type { Session } from "@agent-cost-analyzer/domain";
 import { makeTurn } from "../test-support/turn-fixture.js";
 import { buildAdviceBundle } from "./build-advice-bundle.js";
 

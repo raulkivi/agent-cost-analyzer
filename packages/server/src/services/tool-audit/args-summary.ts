@@ -1,4 +1,4 @@
-import type { ToolKind } from "@copilot-cost-analyzer/domain";
+import type { ToolKind } from "@agent-cost-analyzer/domain";
 import { excerptOf } from "./output-redactor.js";
 
 // Bounded, redacted one-line description of a tool call's input (plan F7):

@@ -1,4 +1,4 @@
-import { isFailedStatus, type InsightFinding, type InsightSessionRow } from "@copilot-cost-analyzer/domain";
+import { isFailedStatus, type InsightFinding, type InsightSessionRow } from "@agent-cost-analyzer/domain";
 import { callsOfSession, indexRows, type DetectorInput, type FindingDetector, type RowIndex } from "./finding-detector.js";
 
 // Session-level outliers by robust z-score (docs/plans/insights-dashboard.md

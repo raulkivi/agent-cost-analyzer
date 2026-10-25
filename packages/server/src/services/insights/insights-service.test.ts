@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { insightsDatasetSchema } from "@copilot-cost-analyzer/domain";
+import { insightsDatasetSchema } from "@agent-cost-analyzer/domain";
 import type { LogProvider } from "../../data-sources/log-providers/log-provider.js";
 import { UnknownLogProviderIdError } from "../../data-sources/log-providers/registry.js";
 import { FakeProvider } from "../../test-support/audit-fakes.js";

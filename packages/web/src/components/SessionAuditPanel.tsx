@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import type { AuditedToolCall, FailureCategory, SessionAudit, ToolCallStatus } from "@copilot-cost-analyzer/domain";
+import type { AuditedToolCall, FailureCategory, SessionAudit, ToolCallStatus } from "@agent-cost-analyzer/domain";
 import { fetchSessionAudit } from "../api-client/audit.js";
 import { HorizontalBars } from "../charts/HorizontalBars.js";
 import { StackedColumns } from "../charts/StackedColumns.js";

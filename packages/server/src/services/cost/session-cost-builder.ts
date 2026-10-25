@@ -1,4 +1,4 @@
-import type { Session, SessionCost, TokenCount } from "@copilot-cost-analyzer/domain";
+import type { Session, SessionCost, TokenCount } from "@agent-cost-analyzer/domain";
 import { buildInsightRows } from "../insights/insights-dataset-builder.js";
 import { excerptOf } from "../tool-audit/output-redactor.js";
 import {

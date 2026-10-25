@@ -1,7 +1,7 @@
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { ConfigStatus, ProductProfile } from "@copilot-cost-analyzer/domain";
+import type { ConfigStatus, ProductProfile } from "@agent-cost-analyzer/domain";
 import { App } from "./App.js";
 import { getApiTransport, resetApiTransport, setApiTransport } from "./api-client/current-transport.js";
 import { resetHostCapabilities, setHostCapabilities } from "./host/current-host-capabilities.js";

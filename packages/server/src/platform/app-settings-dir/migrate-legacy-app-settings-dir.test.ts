@@ -14,26 +14,46 @@ function fakeFs(existingPaths: Set<string>) {
 
 describe("migrateLegacyAppSettingsDir", () => {
   const options = { platform: "linux" as const, homeDir: "/home/dev", env: {} };
-  const currentDir = "/home/dev/.config/copilot-cost-analyzer";
-  const legacyDir = "/home/dev/.config/gh-cp-chat-analyser";
+  const currentDir = "/home/dev/.config/agent-cost-analyzer";
+  const copilotDir = "/home/dev/.config/copilot-cost-analyzer";
+  const oldestDir = "/home/dev/.config/gh-cp-chat-analyser";
 
-  it("renames the legacy directory to the current one when only the legacy dir exists", () => {
-    const { existsSync, renameSync } = fakeFs(new Set([legacyDir]));
+  it("renames copilot-cost-analyzer to the current directory when only it exists", () => {
+    const { existsSync, renameSync } = fakeFs(new Set([copilotDir]));
 
     migrateLegacyAppSettingsDir({ ...options, existsSync, renameSync });
 
-    expect(renameSync).toHaveBeenCalledWith(legacyDir, currentDir);
+    expect(renameSync).toHaveBeenCalledTimes(1);
+    expect(renameSync).toHaveBeenCalledWith(copilotDir, currentDir);
+  });
+
+  it("renames gh-cp-chat-analyser to the current directory when only it exists", () => {
+    const { existsSync, renameSync } = fakeFs(new Set([oldestDir]));
+
+    migrateLegacyAppSettingsDir({ ...options, existsSync, renameSync });
+
+    expect(renameSync).toHaveBeenCalledTimes(1);
+    expect(renameSync).toHaveBeenCalledWith(oldestDir, currentDir);
+  });
+
+  it("renames only the newest legacy directory when both exist", () => {
+    const { existsSync, renameSync } = fakeFs(new Set([copilotDir, oldestDir]));
+
+    migrateLegacyAppSettingsDir({ ...options, existsSync, renameSync });
+
+    expect(renameSync).toHaveBeenCalledTimes(1);
+    expect(renameSync).toHaveBeenCalledWith(copilotDir, currentDir);
   });
 
   it("does nothing when the current directory already exists", () => {
-    const { existsSync, renameSync } = fakeFs(new Set([currentDir, legacyDir]));
+    const { existsSync, renameSync } = fakeFs(new Set([currentDir, copilotDir, oldestDir]));
 
     migrateLegacyAppSettingsDir({ ...options, existsSync, renameSync });
 
     expect(renameSync).not.toHaveBeenCalled();
   });
 
-  it("does nothing when neither directory exists", () => {
+  it("does nothing when no directory exists", () => {
     const { existsSync, renameSync } = fakeFs(new Set());
 
     migrateLegacyAppSettingsDir({ ...options, existsSync, renameSync });

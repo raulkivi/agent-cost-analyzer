@@ -1,6 +1,6 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import { findingKindSchema, findingSeveritySchema, findingsQueryResultSchema } from "@copilot-cost-analyzer/domain";
+import { findingKindSchema, findingSeveritySchema, findingsQueryResultSchema } from "@agent-cost-analyzer/domain";
 import { DEFAULT_MAX_FINDINGS } from "../services/insights/findings-query.js";
 import { DEFAULT_ROLLUP_SESSION_LIMIT } from "../services/tool-audit/audit-query-service.js";
 import { limitSchema } from "../services/tool-audit/audit-query-params.js";

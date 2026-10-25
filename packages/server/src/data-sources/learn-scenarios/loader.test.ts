@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { sessionSchema } from "@copilot-cost-analyzer/domain";
+import { sessionSchema } from "@agent-cost-analyzer/domain";
 import { getLearnScenario, listLearnScenarios, loadLearnScenarios } from "./loader.js";
 
 const bundledFixturesDir = path.resolve(

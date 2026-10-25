@@ -2,7 +2,7 @@ import path from "node:path";
 import type {
   SystemPromptComponent,
   ToolInventoryEntry,
-} from "@copilot-cost-analyzer/domain";
+} from "@agent-cost-analyzer/domain";
 import {
   readSystemPromptText,
   readToolDefinitionNames,

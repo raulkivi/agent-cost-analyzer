@@ -1,4 +1,4 @@
-import type { HostCommandArgs } from "@copilot-cost-analyzer/domain";
+import type { HostCommandArgs } from "@agent-cost-analyzer/domain";
 import type { ApiTransport } from "../api-client/transport.js";
 
 export type DocumentLanguage = HostCommandArgs["openTextDocument"]["language"];

@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react";
-import type { AuditRollup } from "@copilot-cost-analyzer/domain";
+import type { AuditRollup } from "@agent-cost-analyzer/domain";
 import { fetchAuditRollup, type RollupQuery } from "../api-client/audit.js";
 import { HorizontalBars } from "../charts/HorizontalBars.js";
 import { StackedColumns } from "../charts/StackedColumns.js";

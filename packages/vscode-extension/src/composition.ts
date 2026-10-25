@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
-import type { HostEvent } from "@copilot-cost-analyzer/domain";
-import { createExtensionApiService } from "@copilot-cost-analyzer/server/src/composition/create-extension-api-service";
+import type { HostEvent } from "@agent-cost-analyzer/domain";
+import { createExtensionApiService } from "@agent-cost-analyzer/server/src/composition/create-extension-api-service";
 import { ExtensionCommands } from "./commands/extension-commands.js";
 import { watchConfigChanges, type ConfigurationChangeSource } from "./config/config-change-watcher.js";
 import type { Translate } from "./l10n/localize.js";

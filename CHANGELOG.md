@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Changed
+- Renamed the repository and npm workspace scope from `copilot-cost-analyzer`
+  to `agent-cost-analyzer`, matching the product name. GitHub redirects the
+  old URLs. The MCP server now reports its name as `agent-cost-analyzer`.
+  The settings directory (and its `mitmproxy-captures/` folder) is now
+  `agent-cost-analyzer`; an existing `copilot-cost-analyzer` or
+  `gh-cp-chat-analyser` directory is moved there on first start.
 - Phase 10.12: in AI Credits Analyzer, the Learn scenarios are listed in a
   Learn view in the side bar, like sessions in the Sessions view, so the
   panel uses its full width in Learn mode too.

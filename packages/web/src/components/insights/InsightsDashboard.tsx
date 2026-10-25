@@ -6,7 +6,7 @@ import type {
   InsightsDataset,
   InsightToolCallRow,
   InsightTurnRow,
-} from "@copilot-cost-analyzer/domain";
+} from "@agent-cost-analyzer/domain";
 import { fetchInsights, type InsightsQuery } from "../../api-client/insights.js";
 import { HorizontalBars } from "../../charts/HorizontalBars.js";
 import { TrendColumns } from "../../charts/TrendColumns.js";

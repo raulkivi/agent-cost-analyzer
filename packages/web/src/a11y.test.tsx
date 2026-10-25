@@ -1,6 +1,6 @@
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { ConfigStatus, ProductProfile, Session } from "@copilot-cost-analyzer/domain";
+import type { ConfigStatus, ProductProfile, Session } from "@agent-cost-analyzer/domain";
 import { App } from "./App.js";
 import { resetApiTransport } from "./api-client/current-transport.js";
 import { AsyncView, cancelledEmptyState } from "./components/ui/AsyncView.js";

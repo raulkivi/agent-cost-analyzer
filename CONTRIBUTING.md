@@ -1,6 +1,6 @@
 # Contributing
 
-Thanks for helping improve Agent Cost Analyzer (this repo, `copilot-cost-analyzer`, also builds the AI Credits Analyzer VS Code extension). This is a personal project
+Thanks for helping improve Agent Cost Analyzer (this repo, `agent-cost-analyzer`, also builds the AI Credits Analyzer VS Code extension). This is a personal project
 maintained on a best-effort basis, so replies may take a few days.
 
 By participating you agree to follow the [Code of Conduct](CODE_OF_CONDUCT.md).
@@ -24,8 +24,8 @@ If your change conflicts with them, update the relevant doc in the same PR.
 You need Node.js 22 or newer.
 
 ```sh
-git clone https://github.com/raulkivi/copilot-cost-analyzer
-cd copilot-cost-analyzer
+git clone https://github.com/raulkivi/agent-cost-analyzer
+cd agent-cost-analyzer
 npm ci
 npm test         # vitest for every workspace
 npm run lint     # eslint across the repo

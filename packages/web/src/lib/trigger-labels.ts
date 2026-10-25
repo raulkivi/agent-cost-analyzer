@@ -1,4 +1,4 @@
-import type { TriggeredEvent } from "@copilot-cost-analyzer/domain";
+import type { TriggeredEvent } from "@agent-cost-analyzer/domain";
 
 export const TRIGGER_LABELS: Record<TriggeredEvent, string> = {
   "model-switch": "model switch",

@@ -6,7 +6,7 @@ import {
   type ProductProfile,
   type Session,
   type TurnInspectorDetail,
-} from "@copilot-cost-analyzer/domain";
+} from "@agent-cost-analyzer/domain";
 import { FakeProvider, sampleSessions } from "../../test-support/audit-fakes.js";
 import { InMemoryAppSettingsStore } from "../../test-support/in-memory-app-settings-store.js";
 import { LogProviderRegistry, UnknownLogProviderIdError } from "../../data-sources/log-providers/registry.js";

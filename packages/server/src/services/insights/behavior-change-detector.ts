@@ -1,4 +1,4 @@
-import type { FindingSeverity, InsightFinding, InsightSessionRow } from "@copilot-cost-analyzer/domain";
+import type { FindingSeverity, InsightFinding, InsightSessionRow } from "@agent-cost-analyzer/domain";
 import { indexRows, type DetectorInput, type FindingDetector } from "./finding-detector.js";
 
 // First appearance of a program, tool or model after a baseline window

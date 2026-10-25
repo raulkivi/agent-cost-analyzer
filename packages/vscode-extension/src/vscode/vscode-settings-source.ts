@@ -1,4 +1,4 @@
-import type { SettingsSource, SettingsSourceDescription } from "@copilot-cost-analyzer/server/src/services/config-check/settings-source";
+import type { SettingsSource, SettingsSourceDescription } from "@agent-cost-analyzer/server/src/services/config-check/settings-source";
 
 // The slice of `vscode.workspace` the source needs; extension.ts passes the
 // real one, tests a fake.

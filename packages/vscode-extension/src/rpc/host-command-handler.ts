@@ -5,7 +5,7 @@ import {
   type HostCommand,
   type HostCommandArgs,
   type RpcCommandResponse,
-} from "@copilot-cost-analyzer/domain";
+} from "@agent-cost-analyzer/domain";
 import { WATCHED_SETTING_IDS } from "../config/config-change-watcher.js";
 import { describeIssues } from "./describe-issues.js";
 

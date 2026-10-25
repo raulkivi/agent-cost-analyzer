@@ -1,4 +1,4 @@
-import type { ConfigStatus } from "@copilot-cost-analyzer/domain";
+import type { ConfigStatus } from "@agent-cost-analyzer/domain";
 import { describe, expect, it, vi } from "vitest";
 import { upperCaseTranslate } from "../l10n/upper-case-translate.js";
 import { COMMAND_IDS } from "./command-ids.js";

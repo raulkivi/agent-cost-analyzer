@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { InsightFinding } from "@copilot-cost-analyzer/domain";
+import type { InsightFinding } from "@agent-cost-analyzer/domain";
 import { FINDING_KIND_LABELS, findingCategoryLabel, SEVERITY_LABELS, SEVERITY_ORDER } from "../../lib/insights/insights-model.js";
 import { formatWhen } from "../../lib/insights/narrative.js";
 

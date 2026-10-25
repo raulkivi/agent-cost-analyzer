@@ -1,4 +1,4 @@
-import type { ConfigStatus, ConfigWarning } from "@copilot-cost-analyzer/domain";
+import type { ConfigStatus, ConfigWarning } from "@agent-cost-analyzer/domain";
 import { describe, expect, it } from "vitest";
 import { upperCaseTranslate as T } from "../l10n/upper-case-translate.js";
 import { buildSetupTree } from "./setup-view-model.js";

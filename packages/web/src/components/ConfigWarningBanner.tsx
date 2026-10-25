@@ -1,4 +1,4 @@
-import type { ConfigWarning } from "@copilot-cost-analyzer/domain";
+import type { ConfigWarning } from "@agent-cost-analyzer/domain";
 import { Blueprint } from "./ui/Blueprint.js";
 
 interface ConfigWarningBannerProps {

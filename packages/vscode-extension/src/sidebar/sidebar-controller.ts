@@ -1,4 +1,4 @@
-import type { ConfigStatus, Session } from "@copilot-cost-analyzer/domain";
+import type { ConfigStatus, Session } from "@agent-cost-analyzer/domain";
 import { identityTranslate, type Translate } from "../l10n/localize.js";
 import type { Disposable } from "../panel/analyzer-panel.js";
 import { buildStatusBarState, type StatusBarState } from "../status-bar/status-bar-model.js";
