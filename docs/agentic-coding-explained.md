@@ -101,19 +101,23 @@ A session contains:
 >
 > Extracted as a standalone doc: [scenarios/11-silent-instructions-pullin.md](scenarios/11-silent-instructions-pullin.md).
 
+![1. What is an agentic coding session?](diagrams/1-what-is-an-agentic-coding-session.drawio.svg)
+
+<!-- mermaid-source: diagrams/1-what-is-an-agentic-coding-session.drawio.svg
 ```mermaid
 flowchart TD
     S["Agentic Session<br/>(id, model, workspace, timestamps)"]
-    S --> M["System Context<br/>instructions / agent config / skills"]
-    S --> T1["Turn 1"]
-    S --> T2["Turn 2"]
-    S --> T3["Turn N ..."]
-    S --> U["Session Usage<br/>(sum of all turn tokens/AI Credits)"]
+    S --&gt; M["System Context<br/>instructions / agent config / skills"]
+    S --&gt; T1["Turn 1"]
+    S --&gt; T2["Turn 2"]
+    S --&gt; T3["Turn N ..."]
+    S --&gt; U["Session Usage<br/>(sum of all turn tokens/AI Credits)"]
 
-    T1 --> T1u["User message"]
-    T1 --> T1c["Tool calls"]
-    T1 --> T1r["Assistant response"]
+    T1 --&gt; T1u["User message"]
+    T1 --&gt; T1c["Tool calls"]
+    T1 --&gt; T1r["Assistant response"]
 ```
+-->
 
 ---
 
@@ -137,19 +141,23 @@ A turn typically contains:
 - **Per-turn token usage** (request tokens, response tokens, cache tokens — see
   below).
 
+![2. What is a turn?](diagrams/2-what-is-a-turn.drawio.svg)
+
+<!-- mermaid-source: diagrams/2-what-is-a-turn.drawio.svg
 ```mermaid
 flowchart TD
     Turn["Turn"]
-    Turn --> UM["User message<br/>(+ attachments)"]
-    Turn --> REQ["Model request<br/>(history + system prompt + new message)"]
-    REQ --> R1["Reasoning / planning"]
-    R1 --> TC1["Tool call #1"]
-    TC1 --> TR1["Tool response #1"]
-    TR1 --> TC2["Tool call #2"]
-    TC2 --> TR2["Tool response #2"]
-    TR2 --> FA["Final assistant message"]
-    Turn --> Usage["Turn usage<br/>(request/response/cache tokens)"]
+    Turn --&gt; UM["User message<br/>(+ attachments)"]
+    Turn --&gt; REQ["Model request<br/>(history + system prompt + new message)"]
+    REQ --&gt; R1["Reasoning / planning"]
+    R1 --&gt; TC1["Tool call #1"]
+    TC1 --&gt; TR1["Tool response #1"]
+    TR1 --&gt; TC2["Tool call #2"]
+    TC2 --&gt; TR2["Tool response #2"]
+    TR2 --&gt; FA["Final assistant message"]
+    Turn --&gt; Usage["Turn usage<br/>(request/response/cache tokens)"]
 ```
+-->
 
 Turns are **cumulative**: turn *N*'s request includes the visible history of turns
 `1..N-1` (messages, and often tool calls/results), which is why token usage tends to
@@ -179,6 +187,9 @@ Relationship to turn/session:
   but their *effects* (edited files, terminal state) persist for the rest of the
   session.
 
+![3. What is a tool call and a tool response?](diagrams/3-what-is-a-tool-call-and-a-tool-response.drawio.svg)
+
+<!-- mermaid-source: diagrams/3-what-is-a-tool-call-and-a-tool-response.drawio.svg
 ```mermaid
 sequenceDiagram
     participant U as User
@@ -190,11 +201,12 @@ sequenceDiagram
     loop until no more tool calls
         M->>C: Tool call (name + args)
         C->>TL: Execute tool
-        TL-->>C: Result
-        C-->>M: Tool response (appended to context)
+        TL--&gt;>C: Result
+        C--&gt;>M: Tool response (appended to context)
     end
-    M-->>U: Final assistant message
+    M--&gt;>U: Final assistant message
 ```
+-->
 
 ---
 
@@ -253,6 +265,9 @@ This is why long, stable sessions are cheaper per-turn than the first turn: the 
 of history is a cache hit, and only the new user message + new tool results are
 "fresh" tokens.
 
+![4. Prompt / file caching and how it saves AI Credits](diagrams/4-prompt-file-caching-and-how-it-saves-ai-credits.drawio.svg)
+
+<!-- mermaid-source: diagrams/4-prompt-file-caching-and-how-it-saves-ai-credits.drawio.svg
 ```mermaid
 flowchart LR
     subgraph "Turn 1 request"
@@ -268,6 +283,7 @@ flowchart LR
     A3 -. cache write .-> B1
     B4 -. cache write .-> C1
 ```
+-->
 
 ---
 
@@ -294,19 +310,23 @@ Accumulation:
   turn's (uncached request + cache-read request + response) tokens, priced
   according to the model's rate for each token type.
 
+![5. Request tokens, response tokens, and how they accumulate](diagrams/5-request-tokens-response-tokens-and-how-they-accumulate.drawio.svg)
+
+<!-- mermaid-source: diagrams/5-request-tokens-response-tokens-and-how-they-accumulate.drawio.svg
 ```mermaid
 flowchart TD
     subgraph Session Totals
         direction TB
         TT["Total request tokens = Σ turn request tokens<br/>Total response tokens = Σ turn response tokens"]
     end
-    T1["Turn 1: req=500, resp=300"] --> Sum1["Running total: req=500, resp=300"]
-    Sum1 --> T2["Turn 2: req=900 (incl. cached 500), resp=250"]
-    T2 --> Sum2["Running total: req=1400, resp=550"]
-    Sum2 --> T3["Turn 3: req=1600 (incl. cached 900), resp=400"]
-    T3 --> Sum3["Running total: req=3000, resp=950"]
-    Sum3 --> TT
+    T1["Turn 1: req=500, resp=300"] --&gt; Sum1["Running total: req=500, resp=300"]
+    Sum1 --&gt; T2["Turn 2: req=900 (incl. cached 500), resp=250"]
+    T2 --&gt; Sum2["Running total: req=1400, resp=550"]
+    Sum2 --&gt; T3["Turn 3: req=1600 (incl. cached 900), resp=400"]
+    T3 --&gt; Sum3["Running total: req=3000, resp=950"]
+    Sum3 --&gt; TT
 ```
+-->
 
 ---
 
@@ -368,57 +388,65 @@ Why this saves AI Credits:
 > [scenarios/18-subagent-cheaper-model.md](scenarios/18-subagent-cheaper-model.md) (a subagent
 > deliberately running a cheaper model than its parent).
 
+![7. How subagents work, and how they reduce AI Credits spend](diagrams/7-how-subagents-work-and-how-they-reduce-ai-credits-spend.drawio.svg)
+
+<!-- mermaid-source: diagrams/7-how-subagents-work-and-how-they-reduce-ai-credits-spend.drawio.svg
 ```mermaid
 flowchart TD
     subgraph "Parent Session"
         PT["Turn: 'Find all usages of X and fix them'"]
-        PT --> Call["Tool call: runSubagent(explore X)"]
+        PT --&gt; Call["Tool call: runSubagent(explore X)"]
         Call -.->|isolated context, not merged| Sub
-        Result["Tool response: compact summary"] --> PT2["Turn continues with summary only"]
+        Result["Tool response: compact summary"] --&gt; PT2["Turn continues with summary only"]
     end
 
     subgraph "Subagent (separate session)"
-        Sub["Subagent turn 1: search"] --> Sub2["Subagent turn 2: read files"]
-        Sub2 --> Sub3["Subagent turn 3: synthesize"]
-        Sub3 --> Result
+        Sub["Subagent turn 1: search"] --&gt; Sub2["Subagent turn 2: read files"]
+        Sub2 --&gt; Sub3["Subagent turn 3: synthesize"]
+        Sub3 --&gt; Result
     end
 
     style Sub fill:#eef,stroke:#557
     style Sub2 fill:#eef,stroke:#557
     style Sub3 fill:#eef,stroke:#557
 ```
+-->
 
 ---
 
 ## 8. Full tree view: Session → Turns → Tool Calls → Content
 
+![8. Full tree view: Session → Turns → Tool Calls → Content](diagrams/8-full-tree-view-session-turns-tool-calls-content.drawio.svg)
+
+<!-- mermaid-source: diagrams/8-full-tree-view-session-turns-tool-calls-content.drawio.svg
 ```mermaid
 graph TD
     Session["📁 Session<br/>id, model, workspace, usage totals"]
 
-    Session --> Turn1["📄 Turn 1"]
-    Session --> Turn2["📄 Turn 2"]
-    Session --> TurnN["📄 Turn N"]
+    Session --&gt; Turn1["📄 Turn 1"]
+    Session --&gt; Turn2["📄 Turn 2"]
+    Session --&gt; TurnN["📄 Turn N"]
 
-    Turn1 --> Turn1_User["👤 User message"]
-    Turn1 --> Turn1_Tool1["🔧 Tool call: read_file"]
-    Turn1_Tool1 --> Turn1_Tool1_Args["args: {path, range}"]
-    Turn1_Tool1 --> Turn1_Tool1_Resp["📤 Tool response: file contents"]
-    Turn1 --> Turn1_Tool2["🔧 Tool call: grep_search"]
-    Turn1_Tool2 --> Turn1_Tool2_Args["args: {query, pattern}"]
-    Turn1_Tool2 --> Turn1_Tool2_Resp["📤 Tool response: matches"]
-    Turn1 --> Turn1_Assistant["🤖 Assistant final message"]
-    Turn1 --> Turn1_Usage["📊 Usage: request/response/cache tokens"]
+    Turn1 --&gt; Turn1_User["👤 User message"]
+    Turn1 --&gt; Turn1_Tool1["🔧 Tool call: read_file"]
+    Turn1_Tool1 --&gt; Turn1_Tool1_Args["args: {path, range}"]
+    Turn1_Tool1 --&gt; Turn1_Tool1_Resp["📤 Tool response: file contents"]
+    Turn1 --&gt; Turn1_Tool2["🔧 Tool call: grep_search"]
+    Turn1_Tool2 --&gt; Turn1_Tool2_Args["args: {query, pattern}"]
+    Turn1_Tool2 --&gt; Turn1_Tool2_Resp["📤 Tool response: matches"]
+    Turn1 --&gt; Turn1_Assistant["🤖 Assistant final message"]
+    Turn1 --&gt; Turn1_Usage["📊 Usage: request/response/cache tokens"]
 
-    Turn2 --> Turn2_User["👤 User message"]
-    Turn2 --> Turn2_SubAgent["🔧 Tool call: runSubagent"]
-    Turn2_SubAgent --> Turn2_SubSession["📁 Subagent session<br/>(own turns, own tool calls)"]
-    Turn2_SubAgent --> Turn2_SubResp["📤 Tool response: summary"]
-    Turn2 --> Turn2_Assistant["🤖 Assistant final message"]
-    Turn2 --> Turn2_Usage["📊 Usage"]
+    Turn2 --&gt; Turn2_User["👤 User message"]
+    Turn2 --&gt; Turn2_SubAgent["🔧 Tool call: runSubagent"]
+    Turn2_SubAgent --&gt; Turn2_SubSession["📁 Subagent session<br/>(own turns, own tool calls)"]
+    Turn2_SubAgent --&gt; Turn2_SubResp["📤 Tool response: summary"]
+    Turn2 --&gt; Turn2_Assistant["🤖 Assistant final message"]
+    Turn2 --&gt; Turn2_Usage["📊 Usage"]
 
-    TurnN --> TurnN_dots["..."]
+    TurnN --&gt; TurnN_dots["..."]
 ```
+-->
 
 ---
 
@@ -546,6 +574,9 @@ AI Credits, *more* than the 0.0338 AI Credits the isolated subagent actually
 spent. Isolating exploratory work in a subagent keeps both the parent's context
 window and its long-run cache-driven AI Credits usage smaller.
 
+![Scenario 1: cache basics, 8-turn session](scenarios/diagrams/scenario-1-cache-basics-8-turn-session.drawio.svg)
+
+<!-- mermaid-source: scenarios/diagrams/scenario-1-cache-basics-8-turn-session.drawio.svg
 ```mermaid
 sequenceDiagram
     participant U as User
@@ -562,7 +593,7 @@ sequenceDiagram
     Note over Sub: Subagent turn 1 — search (2350 tokens, own cache)
     Note over Sub: Subagent turn 2 — read files (2740 tokens)
     Note over Sub: Subagent turn 3 — synthesize (2000 tokens)
-    Sub-->>S: compact summary only (~100 tokens - 7090 internal tokens stay isolated)
+    Sub--&gt;>S: compact summary only (~100 tokens - 7090 internal tokens stay isolated)
 
     Note over S: Turn 3 — cache_read=5980, cache_write=1080,<br/>uncached_in=150, tool=400, reasoning=250, output=280<br/>cache size after: 7060
     U->>S: "Implement the fix"
@@ -585,8 +616,9 @@ sequenceDiagram
 
     Note over S: Turn 8 — cache_read=12240, cache_write=180,<br/>uncached_in=60, reasoning=30, output=90<br/>cache size after: 12420
     U->>S: "Thanks, that's everything!"
-    S-->>U: Final summary, no tool calls
+    S--&gt;>U: Final summary, no tool calls
 ```
+-->
 
 ```mermaid
 xychart-beta
@@ -914,14 +946,18 @@ intact as a live fallback (instead of `/rewind`'s all-or-nothing discard), or to
 **parallelize** work — e.g. handing one branch to a teammate or a background
 agent — from a context that's already warmed up.
 
+![Scenario 8: Session Forking](scenarios/diagrams/scenario-8-session-forking.drawio.svg)
+
+<!-- mermaid-source: scenarios/diagrams/scenario-8-session-forking.drawio.svg
 ```mermaid
 flowchart TD
-    T1["Turn 1"] --> T2["Turn 2"] --> T3["Turn 3<br/>(fork point, cache size 4620)"]
-    T3 -->|fork| A4["Branch A - Turn 4<br/>tries Redis-based caching"]
-    A4 --> A5["Branch A - Turn 5"]
-    T3 -->|fork| B4["Branch B - Turn 4<br/>tries in-memory LRU caching"]
-    B4 --> B5["Branch B - Turn 5"]
+    T1["Turn 1"] --&gt; T2["Turn 2"] --&gt; T3["Turn 3<br/>(fork point, cache size 4620)"]
+    T3 --&gt;|fork| A4["Branch A - Turn 4<br/>tries Redis-based caching"]
+    A4 --&gt; A5["Branch A - Turn 5"]
+    T3 --&gt;|fork| B4["Branch B - Turn 4<br/>tries in-memory LRU caching"]
+    B4 --&gt; B5["Branch B - Turn 5"]
 ```
+-->
 
 **Shared trunk** (both branches inherit this identically):
 
@@ -1028,6 +1064,9 @@ provider's default TTL from Section 17.1.
 | 9 | Normal turn; new cache rebuilds from the post-break baseline | 430 | 6200 | 6630 | 120 | 0 | 0 | 150 | **6900** | **0.0086 AI Credits** |
 | 10 | Normal turn | 300 | 6630 | 6930 | 90 | 0 | 0 | 120 | **7140** | **0.0074 AI Credits** |
 
+![Scenario 9: Cache TTL — A 5+ Minute Smoke Break](scenarios/diagrams/scenario-9-cache-ttl-a-5-minute-smoke-break.drawio.svg)
+
+<!-- mermaid-source: scenarios/diagrams/scenario-9-cache-ttl-a-5-minute-smoke-break.drawio.svg
 ```mermaid
 sequenceDiagram
     participant U as User
@@ -1041,6 +1080,7 @@ sequenceDiagram
     U->>S: "Ok, next let's..."
     Note over S: Turn 9 — cache_read=6200, back to normal shape
 ```
+-->
 
 What the break actually costs in AI Credits: had the cache stayed warm, turn 8
 would have looked like turn 7 — roughly 430 write / 5750 read / 130 uncached /

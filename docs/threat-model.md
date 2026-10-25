@@ -17,6 +17,9 @@ sitting on the local disk (VS Code's SQLite session store, mitmproxy
 `.har` captures, the pi coding-agent's own JSONL sessions, Claude Code
 CLI's JSONL sessions).
 
+![1. System summary](diagrams/1-system-summary.drawio.svg)
+
+<!-- mermaid-source: diagrams/1-system-summary.drawio.svg
 ```mermaid
 flowchart TB
     subgraph localhost["Single OS user's machine (sole trust boundary)"]
@@ -31,14 +34,15 @@ flowchart TB
         end
         piext["pi-system-prompt-logger\n(3rd-party extension runtime\ninside the pi agent process)"]
     end
-    browser <-->|same-origin, proxied /api| server
-    server --> vscodedb
-    server --> har
-    server --> pijsonl
-    server --> ccjsonl
-    server <--> settings
+    browser <--&gt;|same-origin, proxied /api| server
+    server --&gt; vscodedb
+    server --&gt; har
+    server --&gt; pijsonl
+    server --&gt; ccjsonl
+    server <--&gt; settings
     piext -.->|writes sidecar JSONL,\nconsumed later| pijsonl
 ```
+-->
 
 ## 2. Assets
 

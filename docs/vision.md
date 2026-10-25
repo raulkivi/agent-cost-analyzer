@@ -76,10 +76,13 @@ In addition to the shared layout, Analyze mode adds:
 
 ### 3.3 Shared layout
 
+![3.3 Shared layout](diagrams/3-3-shared-layout.drawio.svg)
+
+<!-- mermaid-source: diagrams/3-3-shared-layout.drawio.svg
 ```mermaid
 flowchart TB
     Header["Header: brand mark, wordmark,<br/>Learn/Analyze mode switch, Config button"]
-    Header --> Main
+    Header --&gt; Main
     subgraph Main["Three-column body (shared layout)"]
         direction LR
         List["Session list<br/>(searchable scenario/session cards)"]
@@ -88,6 +91,7 @@ flowchart TB
         List --- Center --- Right
     end
 ```
+-->
 
 Applies to both modes identically; Analyze mode additionally tabs the right
 panel between Explanation, System prompt breakdown, and Tool inventory.

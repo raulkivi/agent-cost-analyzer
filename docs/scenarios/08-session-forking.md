@@ -37,14 +37,18 @@ intact as a live fallback (instead of `/rewind`'s all-or-nothing discard), or to
 **parallelize** work — e.g. handing one branch to a teammate or a background
 agent — from a context that's already warmed up.
 
+![Scenario 8: Session Forking](diagrams/scenario-8-session-forking.drawio.svg)
+
+<!-- mermaid-source: diagrams/scenario-8-session-forking.drawio.svg
 ```mermaid
 flowchart TD
-    T1["Turn 1"] --> T2["Turn 2"] --> T3["Turn 3<br/>(fork point, cache size 4620)"]
-    T3 -->|fork| A4["Branch A - Turn 4<br/>tries Redis-based caching"]
-    A4 --> A5["Branch A - Turn 5"]
-    T3 -->|fork| B4["Branch B - Turn 4<br/>tries in-memory LRU caching"]
-    B4 --> B5["Branch B - Turn 5"]
+    T1["Turn 1"] --&gt; T2["Turn 2"] --&gt; T3["Turn 3<br/>(fork point, cache size 4620)"]
+    T3 --&gt;|fork| A4["Branch A - Turn 4<br/>tries Redis-based caching"]
+    A4 --&gt; A5["Branch A - Turn 5"]
+    T3 --&gt;|fork| B4["Branch B - Turn 4<br/>tries in-memory LRU caching"]
+    B4 --&gt; B5["Branch B - Turn 5"]
 ```
+-->
 
 **Shared trunk** (both branches inherit this identically):
 

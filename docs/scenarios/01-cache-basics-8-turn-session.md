@@ -95,6 +95,9 @@ cache actually delivered, since each turn re-reads the whole growing history.
 That reuse — reading far more than was ever written — is precisely what keeps the
 **running session AI Credits** growing slower than the **session total** token count.
 
+![Scenario 1: cache basics, 8-turn session](diagrams/scenario-1-cache-basics-8-turn-session.drawio.svg)
+
+<!-- mermaid-source: diagrams/scenario-1-cache-basics-8-turn-session.drawio.svg
 ```mermaid
 sequenceDiagram
     participant U as User
@@ -111,7 +114,7 @@ sequenceDiagram
     Note over Sub: Subagent turn 1 — search (2350 tokens, own cache)
     Note over Sub: Subagent turn 2 — read files (2740 tokens)
     Note over Sub: Subagent turn 3 — synthesize (2000 tokens)
-    Sub-->>S: compact summary only (~100 tokens - 7090 internal tokens stay isolated)
+    Sub--&gt;>S: compact summary only (~100 tokens - 7090 internal tokens stay isolated)
 
     Note over S: Turn 3 — cache_read=5980, cache_write=1080,<br/>uncached_in=150, tool=400, reasoning=250, output=280<br/>cache size after: 7060
     U->>S: "Implement the fix"
@@ -134,8 +137,9 @@ sequenceDiagram
 
     Note over S: Turn 8 — cache_read=12240, cache_write=180,<br/>uncached_in=60, reasoning=30, output=90<br/>cache size after: 12420
     U->>S: "Thanks, that's everything!"
-    S-->>U: Final summary, no tool calls
+    S--&gt;>U: Final summary, no tool calls
 ```
+-->
 
 ```mermaid
 xychart-beta

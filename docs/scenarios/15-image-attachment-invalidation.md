@@ -19,13 +19,17 @@ there, independent of how many vision tokens the image itself costs.
 | 4 | Normal turn; the image is now baked into the cache like any other content | 220 | 4700 | 4920 | 70 | 0 | 60 | 90 | **5140** | **0.0063 AI Credits** |
 | 5 | **Second screenshot attached, later in the session**: the same invalidation happens again — per-occurrence, not one-time | 5300 | 0 | 5300 | 5000 | 650 | 160 | 170 | **11280** | **0.0663 AI Credits** |
 
+![Scenario 15: An Image Attachment Invalidates the Cache](diagrams/scenario-15-an-image-attachment-invalidates-the-cache.drawio.svg)
+
+<!-- mermaid-source: diagrams/scenario-15-an-image-attachment-invalidates-the-cache.drawio.svg
 ```mermaid
 flowchart LR
-    T1["Turn 1<br/>no image"] --> T2["Turn 2<br/>no image"]
-    T2 -->|"image #1 inserted"| T3["Turn 3<br/>cache MISS + vision tokens"]
-    T3 --> T4["Turn 4<br/>image cached normally"]
-    T4 -->|"image #2 inserted"| T5["Turn 5<br/>cache MISS again + vision tokens"]
+    T1["Turn 1<br/>no image"] --&gt; T2["Turn 2<br/>no image"]
+    T2 --&gt;|"image #1 inserted"| T3["Turn 3<br/>cache MISS + vision tokens"]
+    T3 --&gt; T4["Turn 4<br/>image cached normally"]
+    T4 --&gt;|"image #2 inserted"| T5["Turn 5<br/>cache MISS again + vision tokens"]
 ```
+-->
 
 Both invalidating turns (3 and 5) cost roughly 5-6x a normal turn — not
 because either screenshot is especially large, but because each one resets

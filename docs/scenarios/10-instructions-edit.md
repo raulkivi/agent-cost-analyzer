@@ -22,6 +22,9 @@ practice it's total invalidation every time, not just a partial one.
 | 4 | Normal turn on the post-edit baseline; cache rebuilds under the updated instructions | 600 | 4700 | 5300 | 130 | 300 | 140 | 170 | **6040** | **0.0129 AI Credits** |
 | 5 | Normal turn; no further disruption | 220 | 5300 | 5520 | 70 | 0 | 60 | 90 | **5740** | **0.0066 AI Credits** |
 
+![Scenario 10: Editing Custom Instructions Mid-Session](diagrams/scenario-10-editing-custom-instructions-mid-session.drawio.svg)
+
+<!-- mermaid-source: diagrams/scenario-10-editing-custom-instructions-mid-session.drawio.svg
 ```mermaid
 sequenceDiagram
     participant U as User
@@ -33,6 +36,7 @@ sequenceDiagram
     Note over S: Turn 3 — cache_read=0, uncached_input=4150,<br/>cache_write=4700 (full resend + rebuild)
     Note over S: Turn 4 — cache_read=4700, back to normal shape
 ```
+-->
 
 Turn 3 (**0.0562 AI Credits**) is roughly 5x turn 2's cost — comparable in
 scale to an MCP tool change ([Scenario 5](05-mcp-tool-change.md)), but for a

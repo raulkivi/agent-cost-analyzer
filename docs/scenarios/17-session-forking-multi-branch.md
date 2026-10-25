@@ -17,15 +17,19 @@ everything that branch had already added — for a fresh pair of sub-branches.
 | A · 5 | **Second fork, nested inside Branch A**: Branch A.1 (write-through) and A.2 (write-back, not detailed here) both start from this 6100-token prefix — the original trunk *plus* Branch A's own work | 480 | 5620 | 6100 | 140 | 0 | 130 | 150 | **6520** | **0.0107 AI Credits** |
 | A.1 · 6 | Branch A.1 implements the write-through variant, reading the full nested trunk as a cache hit | 350 | 6100 | 6450 | 90 | 300 | 100 | 140 | **7080** | **0.0108 AI Credits** |
 
+![Scenario 17: Forking Twice — A Nested Branch from Within a Branch](diagrams/scenario-17-forking-twice-a-nested-branch-from-within-a-bran.drawio.svg)
+
+<!-- mermaid-source: diagrams/scenario-17-forking-twice-a-nested-branch-from-within-a-bran.drawio.svg
 ```mermaid
 flowchart TD
-    T1["Turn 1"] --> T2["Turn 2"] --> T3["Turn 3<br/>(fork point, cache size 4620)"]
-    T3 -->|fork| A4["Branch A · Turn 4<br/>Redis strategy"]
-    T3 -->|fork| B4["Branch B · Turn 4<br/>in-memory LRU (not detailed)"]
-    A4 --> A5["Branch A · Turn 5<br/>(nested fork point, cache size 6100)"]
-    A5 -->|fork| A1_6["Branch A.1 · Turn 6<br/>write-through"]
-    A5 -->|fork| A2_6["Branch A.2 · Turn 6<br/>write-back (not detailed)"]
+    T1["Turn 1"] --&gt; T2["Turn 2"] --&gt; T3["Turn 3<br/>(fork point, cache size 4620)"]
+    T3 --&gt;|fork| A4["Branch A · Turn 4<br/>Redis strategy"]
+    T3 --&gt;|fork| B4["Branch B · Turn 4<br/>in-memory LRU (not detailed)"]
+    A4 --&gt; A5["Branch A · Turn 5<br/>(nested fork point, cache size 6100)"]
+    A5 --&gt;|fork| A1_6["Branch A.1 · Turn 6<br/>write-through"]
+    A5 --&gt;|fork| A2_6["Branch A.2 · Turn 6<br/>write-back (not detailed)"]
 ```
+-->
 
 Branch A.1's full session cost through turn 6 is **0.0289 + 0.0115 + 0.0109 +
 0.0171 + 0.0107 + 0.0108 = 0.0899 AI Credits** — it reuses the original trunk
