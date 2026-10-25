@@ -19,6 +19,9 @@ rates the first trigger already put in effect.
 | 5 | **B** | **Cache-expiry, cascading on the switch**: the idle gap exceeds B's TTL too; the entire post-switch history is evicted and resent uncached — at B's pricier rates, since the switch never reverted | 5900 | 0 | 5900 | 5380 | 0 | 200 | 180 | **11660** | **0.1242 AI Credits** |
 | 6 | B | Cache finally recovers to normal healthy growth | 310 | 5900 | 6210 | 80 | 0 | 90 | 140 | **6520** | **0.0167 AI Credits** |
 
+![Scenario 14: Cascading Triggers — A Model Switch Followed by a Cache-Expiry](diagrams/scenario-14-cascading-triggers-a-model-switch-followed-by-a.drawio.svg)
+
+<!-- mermaid-source: diagrams/scenario-14-cascading-triggers-a-model-switch-followed-by-a.drawio.svg
 ```mermaid
 sequenceDiagram
     participant U as User
@@ -32,6 +35,7 @@ sequenceDiagram
     Note over S: Turn 5 — CACHE-EXPIRY on top of the switch:<br/>full miss again, still at Model B's rates<br/>0.1242 AI Credits — the most expensive turn
     Note over S: Turn 6 — recovers to normal Model B pricing
 ```
+-->
 
 Turn 5 (**0.1242 AI Credits**) is the most expensive turn in the session —
 more expensive even than the model-switch turn itself — because it pays both

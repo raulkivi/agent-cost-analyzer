@@ -108,6 +108,9 @@ network calls, so neither product sends telemetry.
 
 ## 3. Target architecture
 
+![3. Target architecture](diagrams/3-target-architecture.drawio.svg)
+
+<!-- mermaid-source: diagrams/3-target-architecture.drawio.svg
 ```mermaid
 flowchart LR
   subgraph Shared["Shared code (both products)"]
@@ -119,20 +122,21 @@ flowchart LR
     MCP[createMcpServer]
   end
   subgraph Ext["Extension (packages/vscode-extension)"]
-    CR1[composeCopilotProviders] --> VSP
-    D[MessageDispatcher] --> API
+    CR1[composeCopilotProviders] --&gt; VSP
+    D[MessageDispatcher] --&gt; API
     CAP[VscodeHostCapabilities]
-    MCP1[mcp-stdio entry, Copilot only] --> MCP
+    MCP1[mcp-stdio entry, Copilot only] --&gt; MCP
   end
   subgraph App["Standalone (packages/server)"]
-    CR2[composeLogProviders] --> VSP
-    CR2 --> OTH[ClaudeCode / Pi / Mitmproxy providers]
-    HTTP[Express app.ts] --> API
-    MCP2[mcp/stdio.ts] --> MCP
+    CR2[composeLogProviders] --&gt; VSP
+    CR2 --&gt; OTH[ClaudeCode / Pi / Mitmproxy providers]
+    HTTP[Express app.ts] --&gt; API
+    MCP2[mcp/stdio.ts] --&gt; MCP
   end
-  UI -->|postMessage RPC| D
-  UI -->|HTTP /api| HTTP
+  UI --&gt;|postMessage RPC| D
+  UI --&gt;|HTTP /api| HTTP
 ```
+-->
 
 ### 3.1 Product boundary
 

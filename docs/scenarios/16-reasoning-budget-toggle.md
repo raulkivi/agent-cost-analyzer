@@ -17,6 +17,9 @@ turned on, used, and turned back off within a single session.
 | 4 | Normal turn under the new (elevated) reasoning budget | 700 | 4650 | 5350 | 130 | 200 | 400 | 220 | **6300** | **0.0177 AI Credits** |
 | 5 | **Extended thinking turned back off**: the same invalidation happens again, in the other direction | 5800 | 0 | 5800 | 5420 | 0 | 100 | 120 | **11440** | **0.0667 AI Credits** |
 
+![Scenario 16: Toggling Extended Thinking Mid-Session](diagrams/scenario-16-toggling-extended-thinking-mid-session.drawio.svg)
+
+<!-- mermaid-source: diagrams/scenario-16-toggling-extended-thinking-mid-session.drawio.svg
 ```mermaid
 sequenceDiagram
     participant U as User
@@ -29,6 +32,7 @@ sequenceDiagram
     U->>S: "Turn extended thinking back off"
     Note over S: Turn 5 — toggling OFF invalidates again:<br/>cache MISS, reasoning back to baseline
 ```
+-->
 
 Both toggle turns (3 and 5) cost roughly 6x a normal turn — the setting
 invalidates the cache in **either direction**, so switching it on and then off

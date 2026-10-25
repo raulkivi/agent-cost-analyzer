@@ -132,6 +132,9 @@ cache actually delivered, since each turn re-reads the whole growing history.
 That reuse — reading far more than was ever written — is precisely what keeps the
 **running session AI Credits** growing slower than the **session total** token count.
 
+![Scenario 1: cache basics, 8-turn session](diagrams/scenario-1-cache-basics-8-turn-session.drawio.svg)
+
+<!-- mermaid-source: diagrams/scenario-1-cache-basics-8-turn-session.drawio.svg
 ```mermaid
 sequenceDiagram
     participant U as User
@@ -148,7 +151,7 @@ sequenceDiagram
     Note over Sub: Subagent turn 1 — search (2350 tokens, own cache)
     Note over Sub: Subagent turn 2 — read files (2740 tokens)
     Note over Sub: Subagent turn 3 — synthesize (2000 tokens)
-    Sub-->>S: compact summary only (~100 tokens - 7090 internal tokens stay isolated)
+    Sub--&gt;>S: compact summary only (~100 tokens - 7090 internal tokens stay isolated)
 
     Note over S: Turn 3 — cache_read=5980, cache_write=1080,<br/>uncached_in=150, tool=400, reasoning=250, output=280<br/>cache size after: 7060
     U->>S: "Implement the fix"
@@ -171,8 +174,9 @@ sequenceDiagram
 
     Note over S: Turn 8 — cache_read=12240, cache_write=180,<br/>uncached_in=60, reasoning=30, output=90<br/>cache size after: 12420
     U->>S: "Thanks, that's everything!"
-    S-->>U: Final summary, no tool calls
+    S--&gt;>U: Final summary, no tool calls
 ```
+-->
 
 ```mermaid
 xychart-beta
@@ -509,14 +513,18 @@ intact as a live fallback (instead of `/rewind`'s all-or-nothing discard), or to
 **parallelize** work — e.g. handing one branch to a teammate or a background
 agent — from a context that's already warmed up.
 
+![Scenario 8: Session Forking](diagrams/scenario-8-session-forking.drawio.svg)
+
+<!-- mermaid-source: diagrams/scenario-8-session-forking.drawio.svg
 ```mermaid
 flowchart TD
-    T1["Turn 1"] --> T2["Turn 2"] --> T3["Turn 3<br/>(fork point, cache size 4620)"]
-    T3 -->|fork| A4["Branch A - Turn 4<br/>tries Redis-based caching"]
-    A4 --> A5["Branch A - Turn 5"]
-    T3 -->|fork| B4["Branch B - Turn 4<br/>tries in-memory LRU caching"]
-    B4 --> B5["Branch B - Turn 5"]
+    T1["Turn 1"] --&gt; T2["Turn 2"] --&gt; T3["Turn 3<br/>(fork point, cache size 4620)"]
+    T3 --&gt;|fork| A4["Branch A - Turn 4<br/>tries Redis-based caching"]
+    A4 --&gt; A5["Branch A - Turn 5"]
+    T3 --&gt;|fork| B4["Branch B - Turn 4<br/>tries in-memory LRU caching"]
+    B4 --&gt; B5["Branch B - Turn 5"]
 ```
+-->
 
 **Shared trunk** (both branches inherit this identically):
 
@@ -580,6 +588,9 @@ in-memory; see Section 17.1 of the main doc).
 | 9 | Normal turn; new cache rebuilds from the post-break baseline | 430 | 6200 | 6630 | 120 | 0 | 0 | 150 | **6900** | **0.0086 AI Credits** |
 | 10 | Normal turn | 300 | 6630 | 6930 | 90 | 0 | 0 | 120 | **7140** | **0.0074 AI Credits** |
 
+![Scenario 9: Cache TTL — A 5+ Minute Smoke Break](diagrams/scenario-9-cache-ttl-a-5-minute-smoke-break.drawio.svg)
+
+<!-- mermaid-source: diagrams/scenario-9-cache-ttl-a-5-minute-smoke-break.drawio.svg
 ```mermaid
 sequenceDiagram
     participant U as User
@@ -593,6 +604,7 @@ sequenceDiagram
     U->>S: "Ok, next let's..."
     Note over S: Turn 9 — cache_read=6200, back to normal shape
 ```
+-->
 
 What the break actually costs in AI Credits: had the cache stayed warm, turn 8
 would have looked like turn 7 — roughly 430 write / 5750 read / 130 uncached /
@@ -637,6 +649,9 @@ practice it's total invalidation every time, not just a partial one.
 | 4 | Normal turn on the post-edit baseline; cache rebuilds under the updated instructions | 600 | 4700 | 5300 | 130 | 300 | 140 | 170 | **6040** | **0.0129 AI Credits** |
 | 5 | Normal turn; no further disruption | 220 | 5300 | 5520 | 70 | 0 | 60 | 90 | **5740** | **0.0066 AI Credits** |
 
+![Scenario 10: Editing Custom Instructions Mid-Session](diagrams/scenario-10-editing-custom-instructions-mid-session.drawio.svg)
+
+<!-- mermaid-source: diagrams/scenario-10-editing-custom-instructions-mid-session.drawio.svg
 ```mermaid
 sequenceDiagram
     participant U as User
@@ -648,6 +663,7 @@ sequenceDiagram
     Note over S: Turn 3 — cache_read=0, uncached_input=4150,<br/>cache_write=4700 (full resend + rebuild)
     Note over S: Turn 4 — cache_read=4700, back to normal shape
 ```
+-->
 
 Turn 3 (**0.0562 AI Credits**) is roughly 5x turn 2's cost — comparable in
 scale to an MCP tool change ([Scenario 5](#scenario-5)), but for a
@@ -725,19 +741,23 @@ happened inline in parent turn 2 instead...").
 | 4 | Runs the (verbose) test suite; every turn from here on carries the extra ~5610 tokens turn 2 added | 2350 | 12670 | 15020 | 100 | 0 | 1800 | 150 | 300 | **17370** | **0.0373 AI Credits** |
 | 5 | Final "thanks" message, no new tool calls | 180 | 15020 | 15200 | 60 | 0 | 0 | 30 | 90 | **15380** | **0.0105 AI Credits** |
 
+![Scenario 12: Exploring Inline vs. Isolating in a Subagent](diagrams/scenario-12-exploring-inline-vs-isolating-in-a-subagent.drawio.svg)
+
+<!-- mermaid-source: diagrams/scenario-12-exploring-inline-vs-isolating-in-a-subagent.drawio.svg
 ```mermaid
 flowchart LR
     subgraph Inline["Inline exploration (this scenario)"]
         T2i["Turn 2: cache_write=7090<br/>(all in the parent's permanent cache)"]
-        T2i --> T3i["Turn 3: cache_read=11590"]
-        T3i --> T4i["Turn 4: cache_read=12670"]
+        T2i --&gt; T3i["Turn 3: cache_read=11590"]
+        T3i --&gt; T4i["Turn 4: cache_read=12670"]
     end
     subgraph Isolated["Isolated subagent (Scenario 1/2)"]
         T2s["Turn 2: cache_write=1480<br/>(subagent's 7090 tokens stay off-parent)"]
-        T2s --> T3s["Turn 3: cache_read=5980"]
-        T3s --> T4s["Turn 4: cache_read=7060"]
+        T2s --&gt; T3s["Turn 3: cache_read=5980"]
+        T3s --&gt; T4s["Turn 4: cache_read=7060"]
     end
 ```
+-->
 
 Turn 2 alone costs **0.0573 AI Credits** inline, versus **0.0227 AI Credits**
 (parent) **+ 0.0338 AI Credits** (subagent, isolated) in Scenario 1/2 — a real,
@@ -779,6 +799,9 @@ same 5+ minute smoke break between turns 7 and 8 — but this session pays the
 | 9 | Normal turn; cache keeps growing uninterrupted | 430 | 6180 | 6610 | 120 | 0 | 150 | **6880** | **0.0113 AI Credits** |
 | 10 | Normal turn | 300 | 6610 | 6910 | 90 | 0 | 120 | **7120** | **0.0093 AI Credits** |
 
+![Scenario 13: Cache TTL — Surviving a Break with the 1-Hour Breakpoint](diagrams/scenario-13-cache-ttl-surviving-a-break-with-the-1-hour-brea.drawio.svg)
+
+<!-- mermaid-source: diagrams/scenario-13-cache-ttl-surviving-a-break-with-the-1-hour-brea.drawio.svg
 ```mermaid
 sequenceDiagram
     participant U as User
@@ -790,6 +813,7 @@ sequenceDiagram
     Note over S: 1-hour TTL (bought on turn 1) is still valid —<br/>the 5-minute default would have lapsed, this doesn't
     Note over S: Turn 8 — cache_read=5750 (a normal cache hit,<br/>not a miss)
 ```
+-->
 
 Compare turn 8 directly against [Scenario 9](#scenario-9)'s
 turn 8: same break, same prior cache size, but the default-TTL version pays
@@ -827,6 +851,9 @@ rates the first trigger already put in effect.
 | 5 | **B** | **Cache-expiry, cascading on the switch**: the idle gap exceeds B's TTL too; the entire post-switch history is evicted and resent uncached — at B's pricier rates, since the switch never reverted | 5900 | 0 | 5900 | 5380 | 0 | 200 | 180 | **11660** | **0.1242 AI Credits** |
 | 6 | B | Cache finally recovers to normal healthy growth | 310 | 5900 | 6210 | 80 | 0 | 90 | 140 | **6520** | **0.0167 AI Credits** |
 
+![Scenario 14: Cascading Triggers — A Model Switch Followed by a Cache-Expiry](diagrams/scenario-14-cascading-triggers-a-model-switch-followed-by-a.drawio.svg)
+
+<!-- mermaid-source: diagrams/scenario-14-cascading-triggers-a-model-switch-followed-by-a.drawio.svg
 ```mermaid
 sequenceDiagram
     participant U as User
@@ -840,6 +867,7 @@ sequenceDiagram
     Note over S: Turn 5 — CACHE-EXPIRY on top of the switch:<br/>full miss again, still at Model B's rates<br/>0.1242 AI Credits — the most expensive turn
     Note over S: Turn 6 — recovers to normal Model B pricing
 ```
+-->
 
 Turn 5 (**0.1242 AI Credits**) is the most expensive turn in the session —
 more expensive even than the model-switch turn itself — because it pays both
@@ -877,13 +905,17 @@ there, independent of how many vision tokens the image itself costs.
 | 4 | Normal turn; the image is now baked into the cache like any other content | 220 | 4700 | 4920 | 70 | 0 | 60 | 90 | **5140** | **0.0063 AI Credits** |
 | 5 | **Second screenshot attached, later in the session**: the same invalidation happens again — per-occurrence, not one-time | 5300 | 0 | 5300 | 5000 | 650 | 160 | 170 | **11280** | **0.0663 AI Credits** |
 
+![Scenario 15: An Image Attachment Invalidates the Cache](diagrams/scenario-15-an-image-attachment-invalidates-the-cache.drawio.svg)
+
+<!-- mermaid-source: diagrams/scenario-15-an-image-attachment-invalidates-the-cache.drawio.svg
 ```mermaid
 flowchart LR
-    T1["Turn 1<br/>no image"] --> T2["Turn 2<br/>no image"]
-    T2 -->|"image #1 inserted"| T3["Turn 3<br/>cache MISS + vision tokens"]
-    T3 --> T4["Turn 4<br/>image cached normally"]
-    T4 -->|"image #2 inserted"| T5["Turn 5<br/>cache MISS again + vision tokens"]
+    T1["Turn 1<br/>no image"] --&gt; T2["Turn 2<br/>no image"]
+    T2 --&gt;|"image #1 inserted"| T3["Turn 3<br/>cache MISS + vision tokens"]
+    T3 --&gt; T4["Turn 4<br/>image cached normally"]
+    T4 --&gt;|"image #2 inserted"| T5["Turn 5<br/>cache MISS again + vision tokens"]
 ```
+-->
 
 Both invalidating turns (3 and 5) cost roughly 5-6x a normal turn — not
 because either screenshot is especially large, but because each one resets
@@ -916,6 +948,9 @@ turned on, used, and turned back off within a single session.
 | 4 | Normal turn under the new (elevated) reasoning budget | 700 | 4650 | 5350 | 130 | 200 | 400 | 220 | **6300** | **0.0177 AI Credits** |
 | 5 | **Extended thinking turned back off**: the same invalidation happens again, in the other direction | 5800 | 0 | 5800 | 5420 | 0 | 100 | 120 | **11440** | **0.0667 AI Credits** |
 
+![Scenario 16: Toggling Extended Thinking Mid-Session](diagrams/scenario-16-toggling-extended-thinking-mid-session.drawio.svg)
+
+<!-- mermaid-source: diagrams/scenario-16-toggling-extended-thinking-mid-session.drawio.svg
 ```mermaid
 sequenceDiagram
     participant U as User
@@ -928,6 +963,7 @@ sequenceDiagram
     U->>S: "Turn extended thinking back off"
     Note over S: Turn 5 — toggling OFF invalidates again:<br/>cache MISS, reasoning back to baseline
 ```
+-->
 
 Both toggle turns (3 and 5) cost roughly 6x a normal turn — the setting
 invalidates the cache in **either direction**, so switching it on and then off
@@ -960,15 +996,19 @@ everything that branch had already added — for a fresh pair of sub-branches.
 | A · 5 | **Second fork, nested inside Branch A**: Branch A.1 (write-through) and A.2 (write-back, not detailed here) both start from this 6100-token prefix — the original trunk *plus* Branch A's own work | 480 | 5620 | 6100 | 140 | 0 | 130 | 150 | **6520** | **0.0107 AI Credits** |
 | A.1 · 6 | Branch A.1 implements the write-through variant, reading the full nested trunk as a cache hit | 350 | 6100 | 6450 | 90 | 300 | 100 | 140 | **7080** | **0.0108 AI Credits** |
 
+![Scenario 17: Forking Twice — A Nested Branch from Within a Branch](diagrams/scenario-17-forking-twice-a-nested-branch-from-within-a-bran.drawio.svg)
+
+<!-- mermaid-source: diagrams/scenario-17-forking-twice-a-nested-branch-from-within-a-bran.drawio.svg
 ```mermaid
 flowchart TD
-    T1["Turn 1"] --> T2["Turn 2"] --> T3["Turn 3<br/>(fork point, cache size 4620)"]
-    T3 -->|fork| A4["Branch A · Turn 4<br/>Redis strategy"]
-    T3 -->|fork| B4["Branch B · Turn 4<br/>in-memory LRU (not detailed)"]
-    A4 --> A5["Branch A · Turn 5<br/>(nested fork point, cache size 6100)"]
-    A5 -->|fork| A1_6["Branch A.1 · Turn 6<br/>write-through"]
-    A5 -->|fork| A2_6["Branch A.2 · Turn 6<br/>write-back (not detailed)"]
+    T1["Turn 1"] --&gt; T2["Turn 2"] --&gt; T3["Turn 3<br/>(fork point, cache size 4620)"]
+    T3 --&gt;|fork| A4["Branch A · Turn 4<br/>Redis strategy"]
+    T3 --&gt;|fork| B4["Branch B · Turn 4<br/>in-memory LRU (not detailed)"]
+    A4 --&gt; A5["Branch A · Turn 5<br/>(nested fork point, cache size 6100)"]
+    A5 --&gt;|fork| A1_6["Branch A.1 · Turn 6<br/>write-through"]
+    A5 --&gt;|fork| A2_6["Branch A.2 · Turn 6<br/>write-back (not detailed)"]
 ```
+-->
 
 Branch A.1's full session cost through turn 6 is **0.0289 + 0.0115 + 0.0109 +
 0.0171 + 0.0107 + 0.0108 = 0.0899 AI Credits** — it reuses the original trunk

@@ -19,19 +19,23 @@ happened inline in parent turn 2 instead...").
 | 4 | Runs the (verbose) test suite; every turn from here on carries the extra ~5610 tokens turn 2 added | 2350 | 12670 | 15020 | 100 | 0 | 1800 | 150 | 300 | **17370** | **0.0373 AI Credits** |
 | 5 | Final "thanks" message, no new tool calls | 180 | 15020 | 15200 | 60 | 0 | 0 | 30 | 90 | **15380** | **0.0105 AI Credits** |
 
+![Scenario 12: Exploring Inline vs. Isolating in a Subagent](diagrams/scenario-12-exploring-inline-vs-isolating-in-a-subagent.drawio.svg)
+
+<!-- mermaid-source: diagrams/scenario-12-exploring-inline-vs-isolating-in-a-subagent.drawio.svg
 ```mermaid
 flowchart LR
     subgraph Inline["Inline exploration (this scenario)"]
         T2i["Turn 2: cache_write=7090<br/>(all in the parent's permanent cache)"]
-        T2i --> T3i["Turn 3: cache_read=11590"]
-        T3i --> T4i["Turn 4: cache_read=12670"]
+        T2i --&gt; T3i["Turn 3: cache_read=11590"]
+        T3i --&gt; T4i["Turn 4: cache_read=12670"]
     end
     subgraph Isolated["Isolated subagent (Scenario 1/2)"]
         T2s["Turn 2: cache_write=1480<br/>(subagent's 7090 tokens stay off-parent)"]
-        T2s --> T3s["Turn 3: cache_read=5980"]
-        T3s --> T4s["Turn 4: cache_read=7060"]
+        T2s --&gt; T3s["Turn 3: cache_read=5980"]
+        T3s --&gt; T4s["Turn 4: cache_read=7060"]
     end
 ```
+-->
 
 Turn 2 alone costs **0.0573 AI Credits** inline, versus **0.0227 AI Credits**
 (parent) **+ 0.0338 AI Credits** (subagent, isolated) in Scenario 1/2 — a real,

@@ -23,6 +23,9 @@ same 5+ minute smoke break between turns 7 and 8 — but this session pays the
 | 9 | Normal turn; cache keeps growing uninterrupted | 430 | 6180 | 6610 | 120 | 0 | 150 | **6880** | **0.0113 AI Credits** |
 | 10 | Normal turn | 300 | 6610 | 6910 | 90 | 0 | 120 | **7120** | **0.0093 AI Credits** |
 
+![Scenario 13: Cache TTL — Surviving a Break with the 1-Hour Breakpoint](diagrams/scenario-13-cache-ttl-surviving-a-break-with-the-1-hour-brea.drawio.svg)
+
+<!-- mermaid-source: diagrams/scenario-13-cache-ttl-surviving-a-break-with-the-1-hour-brea.drawio.svg
 ```mermaid
 sequenceDiagram
     participant U as User
@@ -34,6 +37,7 @@ sequenceDiagram
     Note over S: 1-hour TTL (bought on turn 1) is still valid —<br/>the 5-minute default would have lapsed, this doesn't
     Note over S: Turn 8 — cache_read=5750 (a normal cache hit,<br/>not a miss)
 ```
+-->
 
 Compare turn 8 directly against [Scenario 9](09-cache-ttl-smoke-break.md)'s
 turn 8: same break, same prior cache size, but the default-TTL version pays

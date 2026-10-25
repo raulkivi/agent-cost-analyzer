@@ -82,6 +82,9 @@ before deviating from this document:
 
 ## 3. High-level system overview
 
+![3. High-level system overview](diagrams/3-high-level-system-overview.drawio.svg)
+
+<!-- mermaid-source: diagrams/3-high-level-system-overview.drawio.svg
 ```mermaid
 flowchart TB
     subgraph Browser["Browser (SPA)"]
@@ -112,21 +115,22 @@ flowchart TB
         AppConfig[("App-owned local settings file")]
     end
 
-    UI <-->|"JSON over HTTP<br/>(localhost only)"| API
-    API --> Domain
-    API --> Registry
-    Registry --> VscodeProvider --> DB
-    VscodeProvider --> Logs
-    Registry --> MitmProvider --> Capture
-    Registry --> PiAgentProvider --> PiSessions
-    Domain --> ScenarioAdapter --> Fixtures
-    Registry --> AppSettings --> AppConfig
-    API --> ConfigCheck --> SettingsAdapter --> Settings
+    UI <--&gt;|"JSON over HTTP<br/>(localhost only)"| API
+    API --&gt; Domain
+    API --&gt; Registry
+    Registry --&gt; VscodeProvider --&gt; DB
+    VscodeProvider --&gt; Logs
+    Registry --&gt; MitmProvider --&gt; Capture
+    Registry --&gt; PiAgentProvider --&gt; PiSessions
+    Domain --&gt; ScenarioAdapter --&gt; Fixtures
+    Registry --&gt; AppSettings --&gt; AppConfig
+    API --&gt; ConfigCheck --&gt; SettingsAdapter --&gt; Settings
     ConfigCheck -.->|warnings| Banner
-    VscodeProvider --> Domain
-    MitmProvider --> Domain
-    PiAgentProvider --> Domain
+    VscodeProvider --&gt; Domain
+    MitmProvider --&gt; Domain
+    PiAgentProvider --&gt; Domain
 ```
+-->
 
 The browser never talks to SQLite, mitmproxy captures, or the filesystem
 directly — every read goes through the local server's API, which normalizes
@@ -369,6 +373,9 @@ interface ConfigStatus {
 
 ### 6.1 Learn mode
 
+![6.1 Learn mode](diagrams/6-1-learn-mode.drawio.svg)
+
+<!-- mermaid-source: diagrams/6-1-learn-mode.drawio.svg
 ```mermaid
 sequenceDiagram
     participant UI as Frontend
@@ -379,11 +386,12 @@ sequenceDiagram
     UI->>API: GET /api/learn/scenarios
     API->>Scn: list()
     Scn->>Fx: read bundled scenario files
-    Fx-->>Scn: scenario JSON (already domain-shaped)
-    Scn-->>API: Session[] (mode = "learn")
-    API-->>UI: Session[]
+    Fx--&gt;>Scn: scenario JSON (already domain-shaped)
+    Scn--&gt;>API: Session[] (mode = "learn")
+    API--&gt;>UI: Session[]
     UI->>UI: render TurnsTable + ExplanationPanel + Scrubber
 ```
+-->
 
 Learn-mode fixtures are authored directly in the domain shape (§5), so no
 enrichment/parsing step is needed — they exist purely to seed realistic
@@ -411,6 +419,9 @@ vendor omits them; it must never estimate or infer billing figures. Unknown
 vendors and malformed exchanges remain visible as unavailable data without
 preventing other sessions from loading.
 
+![6.2.1 Provider-neutral ingestion](diagrams/6-2-1-provider-neutral-ingestion.drawio.svg)
+
+<!-- mermaid-source: diagrams/6-2-1-provider-neutral-ingestion.drawio.svg
 ```mermaid
 flowchart LR
   subgraph Sources["Local log sources"]
@@ -434,13 +445,14 @@ flowchart LR
     Ui["Shared Analyze UI"]
   end
 
-  VscodeLogs --> VscodeProvider --> Records
-  MitmCapture --> MitmProvider --> DecoderRegistry
-  DecoderRegistry --> AnthropicDecoder --> Records
-  DecoderRegistry --> OpenAiDecoder --> Records
-  DecoderRegistry --> Unknown --> Records
-  Records --> Enricher --> Api --> Ui
+  VscodeLogs --&gt; VscodeProvider --&gt; Records
+  MitmCapture --&gt; MitmProvider --&gt; DecoderRegistry
+  DecoderRegistry --&gt; AnthropicDecoder --&gt; Records
+  DecoderRegistry --&gt; OpenAiDecoder --&gt; Records
+  DecoderRegistry --&gt; Unknown --&gt; Records
+  Records --&gt; Enricher --&gt; Api --&gt; Ui
 ```
+-->
 
 The provider boundary is the architectural seam: source-specific file access
 and vendor protocol decoding end at normalized session records. The enricher,
@@ -449,6 +461,9 @@ not require API or UI changes.
 
 #### 6.2.2 VS Code provider flow
 
+![6.2.2 VS Code provider flow](diagrams/6-2-2-vs-code-provider-flow.drawio.svg)
+
+<!-- mermaid-source: diagrams/6-2-2-vs-code-provider-flow.drawio.svg
 ```mermaid
 sequenceDiagram
     participant UI as Frontend
@@ -462,22 +477,23 @@ sequenceDiagram
     UI->>API: GET /api/sessions
     API->>SQL: listSessions(agent_name = 'GitHub Copilot Chat')
     SQL->>DB: SELECT ...
-    DB-->>SQL: rows
-    SQL-->>API: session summaries
-    API-->>UI: session list
+    DB--&gt;>SQL: rows
+    SQL--&gt;>API: session summaries
+    API--&gt;>UI: session list
 
     UI->>API: GET /api/sessions/:id
     API->>SQL: getTurns(id), getCheckpoints(id), getSessionFiles(id)
     SQL->>DB: SELECT ...
-    DB-->>SQL: rows
+    DB--&gt;>SQL: rows
     API->>Enr: enrich(sqliteTurns, id)
     Enr->>JL: streamUsageSpans(id)
     JL->>Log: read debug-logs/<id>/main.jsonl
-    Log-->>JL: line-delimited events
-    JL-->>Enr: parsed usage spans (or none found)
-    Enr-->>API: Turn[] with usage marked known/unavailable
-    API-->>UI: Session (mode = "analyze")
+    Log--&gt;>JL: line-delimited events
+    JL--&gt;>Enr: parsed usage spans (or none found)
+    Enr--&gt;>API: Turn[] with usage marked known/unavailable
+    API--&gt;>UI: Session (mode = "analyze")
 ```
+-->
 
 If step "parsed usage spans" comes back empty, the enricher distinguishes
 **why** rather than lumping every cause into one generic fallback, since one
@@ -862,6 +878,9 @@ through `VscodeLogProvider`. `agent-traces.db` is still not a separate
 
 #### 6.2.3 mitmproxy provider flow
 
+![6.2.3 mitmproxy provider flow](diagrams/6-2-3-mitmproxy-provider-flow.drawio.svg)
+
+<!-- mermaid-source: diagrams/6-2-3-mitmproxy-provider-flow.drawio.svg
 ```mermaid
 sequenceDiagram
     participant UI as Frontend
@@ -876,10 +895,10 @@ sequenceDiagram
     UI->>API: GET /api/sessions (active provider = mitmproxy)
     API->>Mitm: listSessions()
     Mitm->>Cap: read configured capture path
-    Cap-->>Mitm: HAR entries
+    Cap--&gt;>Mitm: HAR entries
     Mitm->>Mitm: redact credential headers; group entries into sessions
-    Mitm-->>API: session summaries
-    API-->>UI: session list
+    Mitm--&gt;>API: session summaries
+    API--&gt;>UI: session list
 
     UI->>API: GET /api/sessions/:id
     API->>Mitm: readSession(id)
@@ -887,19 +906,20 @@ sequenceDiagram
         Mitm->>Reg: recognizes(exchange)?
         alt Anthropic shape
             Reg->>Anth: decode(exchange)
-            Anth-->>Reg: normalized record (SSE reassembled)
+            Anth--&gt;>Reg: normalized record (SSE reassembled)
         else OpenAI shape
             Reg->>OAI: decode(exchange)
-            OAI-->>Reg: normalized record (SSE reassembled)
+            OAI--&gt;>Reg: normalized record (SSE reassembled)
         else no decoder recognizes it
-            Reg-->>Mitm: unavailable ("unrecognized vendor")
+            Reg--&gt;>Mitm: unavailable ("unrecognized vendor")
         end
     end
-    Mitm-->>API: normalized records (usage known/unavailable per exchange)
+    Mitm--&gt;>API: normalized records (usage known/unavailable per exchange)
     API->>Enr: enrich(normalized records, id)
-    Enr-->>API: Turn[] with usage marked known/unavailable
-    API-->>UI: Session (mode = "analyze", providerId = "mitmproxy")
+    Enr--&gt;>API: Turn[] with usage marked known/unavailable
+    API--&gt;>UI: Session (mode = "analyze", providerId = "mitmproxy")
 ```
+-->
 
 Credential headers (`authorization`, `x-api-key`, `api-key`,
 `proxy-authorization`, `cookie`) are stripped at the `Mitm` boundary before
@@ -1384,6 +1404,9 @@ classified `ToolCallRecord` via the shared `services/tool-audit/*` helpers.
 
 ### 6.3 Startup configuration check
 
+![6.3 Startup configuration check](diagrams/6-3-startup-configuration-check.drawio.svg)
+
+<!-- mermaid-source: diagrams/6-3-startup-configuration-check.drawio.svg
 ```mermaid
 sequenceDiagram
     participant Srv as Server (on boot)
@@ -1395,15 +1418,16 @@ sequenceDiagram
     Srv->>CC: runCheck() — before accepting requests
     CC->>Set: readEffectiveSettings()
     Set->>FS: locate (via platform/vscode-paths) + parse (JSONC)
-    FS-->>Set: raw settings
-    Set-->>CC: { loggingEnabled, maxRetainedSessionLogs, ... }
+    FS--&gt;>Set: raw settings
+    Set--&gt;>CC: { loggingEnabled, maxRetainedSessionLogs, ... }
     CC->>CC: evaluate against constraints 8 & 10
-    CC-->>Srv: ConfigStatus (logged to console if warnings exist)
+    CC--&gt;>Srv: ConfigStatus (logged to console if warnings exist)
 
     UI->>Srv: GET /api/config/status (on app load)
-    Srv-->>UI: ConfigStatus
+    Srv--&gt;>UI: ConfigStatus
     UI->>UI: render ConfigWarningBanner if warnings.length > 0
 ```
+-->
 
 Since Phase 10.4, `checkConfig` reads settings through a `SettingsSource`
 port (`services/config-check/settings-source.ts`):

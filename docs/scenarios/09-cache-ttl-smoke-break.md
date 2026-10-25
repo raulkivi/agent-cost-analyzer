@@ -24,6 +24,9 @@ in-memory; see Section 17.1 of the main doc).
 | 9 | Normal turn; new cache rebuilds from the post-break baseline | 430 | 6200 | 6630 | 120 | 0 | 0 | 150 | **6900** | **0.0086 AI Credits** |
 | 10 | Normal turn | 300 | 6630 | 6930 | 90 | 0 | 0 | 120 | **7140** | **0.0074 AI Credits** |
 
+![Scenario 9: Cache TTL — A 5+ Minute Smoke Break](diagrams/scenario-9-cache-ttl-a-5-minute-smoke-break.drawio.svg)
+
+<!-- mermaid-source: diagrams/scenario-9-cache-ttl-a-5-minute-smoke-break.drawio.svg
 ```mermaid
 sequenceDiagram
     participant U as User
@@ -37,6 +40,7 @@ sequenceDiagram
     U->>S: "Ok, next let's..."
     Note over S: Turn 9 — cache_read=6200, back to normal shape
 ```
+-->
 
 What the break actually costs in AI Credits: had the cache stayed warm, turn 8
 would have looked like turn 7 — roughly 430 write / 5750 read / 130 uncached /

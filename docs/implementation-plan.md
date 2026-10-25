@@ -1284,32 +1284,36 @@ dependency: the extension ships no pi code (plan §3.1).
 
 ## Summary dependency graph
 
+![Summary dependency graph](diagrams/summary-dependency-graph.drawio.svg)
+
+<!-- mermaid-source: diagrams/summary-dependency-graph.drawio.svg
 ```mermaid
 flowchart LR
-    P0["Phase 0<br/>Scaffolding"] --> P1["Phase 1<br/>Domain model"]
-    P1 --> P2["Phase 2<br/>Learn mode"]
-    P1 --> P3["Phase 3<br/>Analyze: SQLite only"]
-    P3 --> P4["Phase 4<br/>main.jsonl parsing"]
-    P3 --> P5["Phase 5<br/>Config check"]
-    P4 --> P6["Phase 6<br/>Analyze extras"]
-    P2 --> P7["Phase 7<br/>Viz polish"]
-    P4 --> P7
-    P6 --> P8["Phase 8<br/>Design system polish"]
-    P7 --> P8
-    P6 --> P85["Phase 8.5<br/>Agent-traces enrichment"]
-    P8 --> P9["Phase 9<br/>Log providers + mitmproxy"]
-    P6 --> P9
-    P85 --> P9
-    P9 --> P95["Phase 9.5<br/>Turn inspector"]
-    P95 --> P96["Phase 9.6<br/>pi-agent provider"]
-    P96 --> P97["Phase 9.7<br/>Vendor pi-system-prompt-logger"]
-    P97 --> P98["Phase 9.8<br/>Consume pi-system-prompt-logger sidecar"]
-    P9 --> P99["Phase 9.9<br/>Claude Code CLI provider"]
-    P95 --> P99
-    P99 --> P910["Phase 9.10<br/>Tool-call audit + MCP"]
-    P910 --> P911["Phase 9.11<br/>Insights dashboard"]
-    P911 --> P912["Phase 9.12<br/>MCP tools v2"]
-    P95 --> P10["Phase 10<br/>AI Credits Analyzer extension"]
-    P5 --> P10
-    P912 --> P10
+    P0["Phase 0<br/>Scaffolding"] --&gt; P1["Phase 1<br/>Domain model"]
+    P1 --&gt; P2["Phase 2<br/>Learn mode"]
+    P1 --&gt; P3["Phase 3<br/>Analyze: SQLite only"]
+    P3 --&gt; P4["Phase 4<br/>main.jsonl parsing"]
+    P3 --&gt; P5["Phase 5<br/>Config check"]
+    P4 --&gt; P6["Phase 6<br/>Analyze extras"]
+    P2 --&gt; P7["Phase 7<br/>Viz polish"]
+    P4 --&gt; P7
+    P6 --&gt; P8["Phase 8<br/>Design system polish"]
+    P7 --&gt; P8
+    P6 --&gt; P85["Phase 8.5<br/>Agent-traces enrichment"]
+    P8 --&gt; P9["Phase 9<br/>Log providers + mitmproxy"]
+    P6 --&gt; P9
+    P85 --&gt; P9
+    P9 --&gt; P95["Phase 9.5<br/>Turn inspector"]
+    P95 --&gt; P96["Phase 9.6<br/>pi-agent provider"]
+    P96 --&gt; P97["Phase 9.7<br/>Vendor pi-system-prompt-logger"]
+    P97 --&gt; P98["Phase 9.8<br/>Consume pi-system-prompt-logger sidecar"]
+    P9 --&gt; P99["Phase 9.9<br/>Claude Code CLI provider"]
+    P95 --&gt; P99
+    P99 --&gt; P910["Phase 9.10<br/>Tool-call audit + MCP"]
+    P910 --&gt; P911["Phase 9.11<br/>Insights dashboard"]
+    P911 --&gt; P912["Phase 9.12<br/>MCP tools v2"]
+    P95 --&gt; P10["Phase 10<br/>AI Credits Analyzer extension"]
+    P5 --&gt; P10
+    P912 --&gt; P10
 ```
+-->
