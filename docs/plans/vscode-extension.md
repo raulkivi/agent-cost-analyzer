@@ -1253,8 +1253,8 @@ for the owner to run on the CI-built VSIX and record in the PR.
   authorization-code flow) under `@vscode/vsce` → `@azure/identity`. Dev
   only, never shipped; packaging never signs in and publishing uses the
   `az` CLI credential. No `@azure/identity` that vsce 4 accepts avoids the
-  range; vsce 3.9.2 avoids it but adds native `keytar`. Open for the
-  owner's decision.
+  range; vsce 3.9.2 avoids it but adds native `keytar`. Accepted by
+  the owner on 2026-10-27 (threat-model §7).
 
 *TDD exceptions to red-first:* guard tests green on first run (perfMark
 drop cases, the internal-commands manifest check, "none in production");
@@ -1490,8 +1490,8 @@ review are open.**
 - `docs/threat-model.md`: §6 extension surfaces (webview CSP and
   `localResourceRoots`, the RPC and host-command allow-lists, read-only
   documents, settings, the MCP child process and its setting, test hooks)
-  and §7 residual risks (the `@azure/msal-node` advisory, open for the
-  owner's decision; the webview's `style-src 'unsafe-inline'`).
+  and §7 residual risks (the `@azure/msal-node` advisory, accepted by the
+  owner on 2026-10-27; the webview's `style-src 'unsafe-inline'`).
 - `CONTRIBUTING.md`: building, F5, unit and integration tests, packaging
   and the manual checks.
 
