@@ -73,14 +73,14 @@ data (`scripts/ui-check/showcase-fixture.mts`) at 2× scale. Run it again
 after a UI change. `panel-dark.png` shows the panel alone, without the
 side bar.
 
-Done in a real VS Code window: 3 and 4, taken in a throwaway profile seeded with
-the same made-up data (`createShowcaseFixture`, run with
-`--user-data-dir` and `--extensions-dir`).
+Done in a real VS Code window: 3, 4 and 7, taken in a throwaway profile
+seeded with the same made-up data (`createShowcaseFixture`, run with
+`--user-data-dir` and `--extensions-dir`); 7 with Copilot Chat signed in
+and `aiCreditsAnalyzer.mcp.enabled` on.
 
-Open: 7 needs a real VS Code window with Copilot Chat signed in. Use data you're happy to
-publish (no private chat text):
+The list, for retakes:
 
-1. `panel-dark.png`: the panel on a session (Dark Modern), sidebar visible.
+1. `panel-dark.png`: the panel on a session (Dark Modern).
 2. `panel-light.png`: the same in Light Modern.
 3. `sidebar.png`: Sessions and Setup views with the status-bar item.
 4. `walkthrough.png`: the Get Started walkthrough.

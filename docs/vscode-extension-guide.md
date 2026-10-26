@@ -298,7 +298,7 @@ commands keep failing, and why?", "did the agent do anything risky this
 week?". It answers from the same local logs, and its numbers match the
 panel's.
 
-<!-- screenshot: mcp-agent-mode.png -->
+![Copilot Chat in agent mode answering "What did my most expensive session in the last 7 days cost, and what drove it?" from the AI Credits Analyzer tools](images/vscode/mcp-agent-mode.png)
 
 ### Turning it on
 

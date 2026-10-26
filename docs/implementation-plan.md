@@ -1250,7 +1250,7 @@ and deviations are in its status note in the plan's §6.
 | 10.7 | Accessibility, responsive layout, AsyncView, local fonts, walkthrough, l10n | Done (#69) |
 | 10.8 | Copilot-only MCP server in the extension, plus UI follow-ups from 10.7 | Done (#71); real Copilot agent-mode check in 10.9 |
 | 10.9 | Integration tests in real VS Code, performance budgets, usability run, packaging | Done (#72; integration suite green in CI); owner's manual checks open |
-| 10.10 | Documentation: extension README/listing, extension user guide, two-product README and User Guide | Done (#73); panel screenshots generated; side bar, walkthrough and agent-mode screenshots and owner review open |
+| 10.10 | Documentation: extension README/listing, extension user guide, two-product README and User Guide | Done (#73); screenshots done; owner review open |
 | 10.11 | UX review for VS Code: panel fits any width, readable in light, dark and High Contrast, native look, automated UI check | Done (#77) |
 | 10.12 | Learn scenarios in the side bar (a Learn view), like the Sessions view; the panel has no list of its own | Done (#80) |
 
@@ -1264,11 +1264,8 @@ server (off, on with 9 tools and `get_session_cost`, off again).
    the usability script, Copilot agent mode using the MCP server
    (including the Restricted Mode guard), and the Remote-SSH/WSL and Dev
    Container check.
-2. The 3 screenshots that need a real VS Code window (side bar,
-   walkthrough, Copilot agent mode), then their `<!-- screenshot -->`
-   markers are replaced with the images; the owner's review of the
-   extension README and guide. The 5 panel screenshots are generated
-   (`npm run screenshots`, see the manual checks §4).
+2. The owner's review of the extension README and guide. The 8
+   screenshots are in place (manual checks §4).
 3. A decision on the dev-only `@azure/msal-node` advisory
    ([threat-model.md](threat-model.md) §7).
 4. Publishing setup (plan §7.0): the Entra ID app and the `release`
