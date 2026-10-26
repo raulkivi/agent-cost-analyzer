@@ -62,7 +62,7 @@ An unknown figure is shown as unknown, never as 0.
 Logging isn't retroactive: sessions from before you turned it on show
 their figures as unknown.
 
-<!-- screenshot: walkthrough.png -->
+![The Get started with AI Credits Analyzer walkthrough: five steps, with the Copilot Chat debug logging step open](https://raw.githubusercontent.com/raulkivi/agent-cost-analyzer/main/docs/images/vscode/walkthrough.png)
 
 ![VS Code with the AI Credits Analyzer side bar (Sessions grouped by day with their AI Credits, and the Setup view), a session open in the panel, and today's AI Credits in the status bar](https://raw.githubusercontent.com/raulkivi/agent-cost-analyzer/main/docs/images/vscode/sidebar.png)
 

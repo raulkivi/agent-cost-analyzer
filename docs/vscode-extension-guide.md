@@ -71,7 +71,7 @@ notification for it. To open it again later, run **AI Credits Analyzer:
 Open Get Started Walkthrough** from the Command Palette, or use the
 **Get started** link in the Sessions view when it's empty.
 
-<!-- screenshot: walkthrough.png -->
+![The Get started with AI Credits Analyzer walkthrough: five steps, with the Copilot Chat debug logging step open](images/vscode/walkthrough.png)
 
 The walkthrough has five steps. Each one is marked done when you make the
 change it describes:

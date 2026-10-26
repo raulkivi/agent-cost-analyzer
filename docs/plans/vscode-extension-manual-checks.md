@@ -73,11 +73,11 @@ data (`scripts/ui-check/showcase-fixture.mts`) at 2× scale. Run it again
 after a UI change. `panel-dark.png` shows the panel alone, without the
 side bar.
 
-Done in a real VS Code window: 3, taken in a throwaway profile seeded with
+Done in a real VS Code window: 3 and 4, taken in a throwaway profile seeded with
 the same made-up data (`createShowcaseFixture`, run with
 `--user-data-dir` and `--extensions-dir`).
 
-Open: 4 and 7 need a real VS Code window. Use data you're happy to
+Open: 7 needs a real VS Code window with Copilot Chat signed in. Use data you're happy to
 publish (no private chat text):
 
 1. `panel-dark.png`: the panel on a session (Dark Modern), sidebar visible.
