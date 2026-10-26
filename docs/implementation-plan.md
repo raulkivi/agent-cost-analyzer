@@ -1233,7 +1233,7 @@ Copilot-only product that shares code with the standalone app (**Agent Cost
 Analyzer**, vision §5). The standalone app keeps every provider. Brought
 into scope on 2026-10-24. Previously this was a deferred "future path".
 
-**Status (2026-10-24)**: every step's code and docs are merged (#57-#74).
+**Status (2026-10-24)**: every step's code and docs are merged (#57-#80).
 The integration suite passes in a real stable VS Code in CI, and every CI
 run builds an installable `.vsix`. Not yet published. Each step's details
 and deviations are in its status note in the plan's §6.
@@ -1252,7 +1252,7 @@ and deviations are in its status note in the plan's §6.
 | 10.9 | Integration tests in real VS Code, performance budgets, usability run, packaging | Done (#72; integration suite green in CI); owner's manual checks open |
 | 10.10 | Documentation: extension README/listing, extension user guide, two-product README and User Guide | Done (#73); screenshots and owner review open |
 | 10.11 | UX review for VS Code: panel fits any width, readable in light, dark and High Contrast, native look, automated UI check | Done (#77) |
-| 10.12 | Learn scenarios in the side bar (a Learn view), like the Sessions view; the panel has no list of its own | Done (PR pending) |
+| 10.12 | Learn scenarios in the side bar (a Learn view), like the Sessions view; the panel has no list of its own | Done (#80) |
 
 **Verified in CI** (step 10.9): activation, the panel's data, the
 Sessions view, the §3.5 performance budgets with 200 sessions, and the MCP
