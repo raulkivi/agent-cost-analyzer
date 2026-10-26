@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 24 24">
+  <!-- The Activity Bar glyph (activity-bar.svg) on the app's accent colour; rendered to icon.png (rsvg-convert -w 256 -h 256 icon.svg -o icon.png). -->
+  <rect width="24" height="24" rx="5" fill="#5980a6" />
+  <g transform="translate(3.2 3.6) scale(0.7)" fill="none" stroke="#ffffff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4 20V10" />
+    <path d="M10 20V4" />
+    <path d="M16 20v-7" />
+    <path d="M21 20H3" />
+  </g>
+</svg>

@@ -1522,7 +1522,8 @@ each failed a test.
   over the same data. The doc checks require each referenced image to
   exist.
 - The owner reviews the rendered README and guide.
-- No `icon` yet (owner).
+- Icon: `icon.png` (256 px), rendered from `icon.svg`, the Activity Bar
+  glyph on the accent colour.
 - The guide's install routes via Marketplace/Open VSX work only once
   published.
 - Not tried in a browser: that the column choice is remembered and that
@@ -1613,6 +1614,7 @@ ID isn't set up yet.
 **Listing prerequisites checked before the first publish (step 10.9)**
 
 - `icon`: a PNG of at least 128×128 px. The Marketplace rejects SVG icons.
+  Done: `icon.png`, 256 px, checked by `manifest.test.ts`.
   The Activity Bar icon (10.6) is a separate monochrome SVG.
 - `repository`, `bugs`, `homepage` and `license` (MIT) set in
   `package.json`. vsce warns or fails without them.

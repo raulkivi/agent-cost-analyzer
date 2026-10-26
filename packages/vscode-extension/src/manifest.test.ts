@@ -125,6 +125,17 @@ describe("package.json contributions (vscode-extension.md §3.5)", () => {
     expect(contributedViews.map((view) => view.id).sort()).toEqual(Object.values(VIEW_IDS).sort());
   });
 
+  it("has a Marketplace icon: a PNG of at least 128 px (the Marketplace rejects SVG icons, §7.0)", () => {
+    const icon = (manifest as unknown as { icon?: string }).icon;
+
+    expect(icon).toBe("icon.png");
+    const png = readFileSync(path.join(packageDir, icon!));
+    expect(png.subarray(1, 4).toString("ascii")).toBe("PNG");
+    // The IHDR chunk: width and height, big-endian, at bytes 16 and 20.
+    expect(png.readUInt32BE(16)).toBeGreaterThanOrEqual(128);
+    expect(png.readUInt32BE(20)).toBe(png.readUInt32BE(16));
+  });
+
   it("gives the container a monochrome SVG icon outside media/ (the build regenerates media/)", () => {
     const [container] = contributes.viewsContainers.activitybar;
     const icon = container!.icon;

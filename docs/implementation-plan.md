@@ -1268,7 +1268,7 @@ server (off, on with 9 tools and `get_session_cost`, off again).
    screenshots are in place (manual checks §4).
 3. Publishing setup (plan §7.0): the Entra ID app and the `release`
    environment (global PATs retire on 1 December 2026), the Open VSX
-   namespace and `OVSX_PAT`, and the icon (PNG, at least 128 px).
+   namespace and `OVSX_PAT`. The icon is done (`icon.png`, 256 px).
 4. The first release: tag `ext-v0.1.0` (odd minor, so the pre-release
    channel).
 
