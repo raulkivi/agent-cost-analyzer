@@ -2,6 +2,7 @@
 // two weeks of sessions on several models, each with a debug log
 // (main.jsonl) and agent-traces.db rows, so every column has a number. No
 // real chat text. Seeded, so the same `now` gives the same pictures.
+import { createHash } from "node:crypto";
 import { mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
@@ -106,7 +107,10 @@ const BASE_CONTEXT_TOKENS = 14_200;
 const MINUTE_MS = 60 * 1000;
 const HOUR_MS = 60 * MINUTE_MS;
 const DAY_MS = 24 * HOUR_MS;
-const WORKSPACE = "showcase-workspace";
+const WORKSPACE_FOLDER = "file:///work/shop";
+// VS Code names a folder's storage by a 32-hex hash and, at start-up,
+// deletes any other name as a stale empty-window folder.
+const WORKSPACE = createHash("md5").update(WORKSPACE_FOLDER).digest("hex");
 
 // mulberry32: small, seedable, good enough for made-up numbers.
 function randomFrom(seed: number): () => number {
@@ -230,6 +234,8 @@ export function createShowcaseFixture(rootDir: string, options: ShowcaseFixtureO
   const globalStorage = path.join(userDir, "globalStorage", "github.copilot-chat");
   const debugLogsDir = path.join(userDir, "workspaceStorage", WORKSPACE, "GitHub.copilot-chat", "debug-logs");
   mkdirSync(globalStorage, { recursive: true });
+  mkdirSync(debugLogsDir, { recursive: true });
+  writeFileSync(path.join(userDir, "workspaceStorage", WORKSPACE, "workspace.json"), JSON.stringify({ folder: WORKSPACE_FOLDER }));
   writeFileSync(path.join(userDir, "settings.json"), `${JSON.stringify(USER_SETTINGS, null, 2)}\n`);
 
   const store = new DatabaseSync(path.join(globalStorage, "session-store.db"));

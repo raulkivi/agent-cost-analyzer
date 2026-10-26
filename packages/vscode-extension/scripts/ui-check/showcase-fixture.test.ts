@@ -1,4 +1,4 @@
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdtempSync, readdirSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -80,6 +80,16 @@ describe("createShowcaseFixture", () => {
     const credits = async (userDataDir: string) =>
       (await apiOver(userDataDir).listSessions()).map((session) => [session.id, session.costAiCredits]);
     expect(await credits(first.userDataDir)).toEqual(await credits(second.userDataDir));
+  });
+
+  it("names its workspace storage folder as VS Code does for a folder, so VS Code doesn't delete it at start-up", () => {
+    const fixture = createShowcaseFixture(rootDir, { now: NOW });
+
+    const workspaceStorage = path.join(fixture.userDataDir, "User", "workspaceStorage");
+    const folders = readdirSync(workspaceStorage);
+    expect(folders).toHaveLength(1);
+    expect(folders[0]).toMatch(/^[0-9a-f]{32}$/);
+    expect(JSON.parse(readFileSync(path.join(workspaceStorage, folders[0], "workspace.json"), "utf-8"))).toHaveProperty("folder");
   });
 
   it("writes settings that leave nothing for setup to report", async () => {
