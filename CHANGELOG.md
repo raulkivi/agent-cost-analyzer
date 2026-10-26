@@ -62,6 +62,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - The threat model covers the extension; CONTRIBUTING covers building
     and testing it.
 ### Fixed
+- Config warnings no longer show the user's home directory path; the
+  settings.json location in the help steps is shortened to `~`.
 - The turn inspector's round picker could jump back to round 0 right after
   you picked another round.
 

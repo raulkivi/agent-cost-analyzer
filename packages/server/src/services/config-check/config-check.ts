@@ -1,7 +1,9 @@
+import { homedir } from "node:os";
 import type { ConfigStatus, ConfigWarning } from "@agent-cost-analyzer/domain";
 import { snapshotFromSettings } from "../../data-sources/vscode-settings/read-vscode-settings.js";
 import { JsoncFileSettingsSource } from "../../data-sources/vscode-settings/jsonc-file-settings-source.js";
 import { resolveVscodeSettingsPath } from "../../data-sources/vscode-settings/vscode-settings-path.js";
+import { collapseHomeDir } from "../../platform/home-dir/collapse-home-dir.js";
 import type { SettingsSource } from "./settings-source.js";
 
 const LOGGING_ENABLED_SETTING_ID =
@@ -112,7 +114,10 @@ export function checkConfig(options: CheckConfigOptions = {}): ConfigStatus {
       options.settingsPath !== undefined ? options.settingsPath : resolveVscodeSettingsPath(options),
     );
   const { located, userSettingsPath } = source.describe();
-  const settingsLabel = userSettingsPath ?? GENERIC_SETTINGS_LABEL;
+  // Help steps are rendered in the UI, so they show ~ instead of the home dir.
+  const settingsLabel = userSettingsPath
+    ? collapseHomeDir(userSettingsPath, options.homeDir ?? homedir())
+    : GENERIC_SETTINGS_LABEL;
   const settings = snapshotFromSettings(source);
   const now = options.now ?? (() => new Date().toISOString());
   const minRetainedSessionLogsThreshold =
