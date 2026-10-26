@@ -29,10 +29,12 @@ export function isPreReleaseVersion(version: string): boolean {
 }
 
 // The newest version in the answer of
-// https://update.code.visualstudio.com/api/releases/stable.
+// https://update.code.visualstudio.com/api/releases/stable. The answer ends
+// with a few old names such as "0.10.6-release", which are skipped.
 export function latestStableVersion(answer: unknown): string {
-  const versions = Array.isArray(answer) ? answer.filter((v): v is string => typeof v === "string" && !!parse(v)) : [];
-  if (versions.length === 0 || (Array.isArray(answer) && versions.length !== answer.length)) {
+  const isList = Array.isArray(answer) && answer.every((v) => typeof v === "string");
+  const versions = isList ? (answer as string[]).filter((v) => !!parse(v)) : [];
+  if (versions.length === 0) {
     throw new Error("The VS Code update API didn't return a list of stable versions.");
   }
   return versions.reduce((newest, version) => {

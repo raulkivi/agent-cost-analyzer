@@ -37,7 +37,12 @@ describe("latestStableVersion", () => {
     expect(latestStableVersion(["1.142.1", "1.143.0", "1.141.0"])).toBe("1.143.0");
   });
 
+  it("skips the old suffixed names the real answer ends with", () => {
+    expect(latestStableVersion(["1.143.1", "1.143.0", "0.10.6-release", "0.10.1-preview", "0.8.0-preview"])).toBe("1.143.1");
+  });
+
   it("refuses an answer that isn't a list of versions", () => {
+    expect(() => latestStableVersion(["1.143.0", 42])).toThrow(/stable/);
     expect(() => latestStableVersion({ versions: [] })).toThrow(/stable/);
     expect(() => latestStableVersion([])).toThrow(/stable/);
     expect(() => latestStableVersion(["latest"])).toThrow(/stable/);
