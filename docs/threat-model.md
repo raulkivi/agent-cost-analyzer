@@ -1,11 +1,15 @@
 # Threat model
 
-Reviewed against the codebase as of `e7bd2c2` (2026-09-09). Verified by
+Reviewed against the codebase as of `78657f3` (2026-10-26). Verified by
 reading the actual routes, SQL access, session-ID resolution, redaction
-logic, and network bindings — not assumed from the architecture docs alone.
-Section 6 (the AI Credits Analyzer VS Code extension) was reviewed
-against `5d3c7c1` (2026-10-24) the same way, by reading
-`packages/vscode-extension/src`.
+logic, network bindings and both MCP servers — not assumed from the
+architecture docs alone. Sections 1–5 were first written against
+`e7bd2c2` (2026-09-09) and re-checked at `78657f3`; in between, the
+code gained the standalone MCP server, `/api/insights`, the turn route
+and the settings folder move. Section 6 (the AI Credits Analyzer VS Code extension) was
+reviewed against `5d3c7c1` (2026-10-24) by reading
+`packages/vscode-extension/src` and re-checked at `78657f3` (steps 10.11
+and 10.12 added no host command, RPC method or CSP change).
 
 ## 1. System summary
 
@@ -15,7 +19,10 @@ proxy. There is no remote backend, no user accounts, and no network egress
 initiated by the app itself — every "data source" is a file already
 sitting on the local disk (VS Code's SQLite session store, mitmproxy
 `.har` captures, the pi coding-agent's own JSONL sessions, Claude Code
-CLI's JSONL sessions).
+CLI's JSONL sessions). An optional stdio MCP server
+(`packages/server/src/mcp/`, started by `scripts/mcp-server.sh`) reads the
+same files for an MCP client such as Claude Code; it opens no port, but
+its tool results go to that client's chat model.
 
 ![1. System summary](diagrams/1-system-summary.drawio.svg)
 
@@ -23,24 +30,27 @@ CLI's JSONL sessions).
 ```mermaid
 flowchart TB
     subgraph localhost["Single OS user's machine (sole trust boundary)"]
+        piext["pi-system-prompt-logger\n(3rd-party extension runtime\ninside the pi agent process)"]
         browser["Browser tab\n(Vite dev server, 127.0.0.1:5173)"]
         server["Express API\n127.0.0.1:3001, no auth"]
-        subgraph disk["Local files (read by server as the OS user)"]
+        mcpclient["MCP client\n(e.g. Claude Code)"]
+        mcp["MCP stdio server\nread-only, no network"]
+        subgraph disk["Local files (read as the OS user)"]
+            pijsonl["pi coding-agent\n~/.pi/agent/sessions/"]
             vscodedb["VS Code SQLite +\nmain.jsonl / agent-traces.db"]
             har["mitmproxy .har captures\n(arbitrary proxied traffic)"]
-            pijsonl["pi coding-agent\n~/.pi/agent/sessions/"]
             ccjsonl["Claude Code CLI\n~/.claude/projects/"]
-            settings["app's own settings.json\n(only file this app writes)"]
+            settings["app's own settings.json\n(the app's only writes)"]
         end
-        piext["pi-system-prompt-logger\n(3rd-party extension runtime\ninside the pi agent process)"]
     end
-    browser <--&gt;|same-origin, proxied /api| server
-    server --&gt; vscodedb
-    server --&gt; har
-    server --&gt; pijsonl
-    server --&gt; ccjsonl
-    server <--&gt; settings
-    piext -.->|writes sidecar JSONL,\nconsumed later| pijsonl
+    model["The client's chat model, off this machine:\ngets the tool results (redacted, truncated)"]
+    browser <-->|same-origin, proxied /api| server
+    mcpclient <-->|JSON-RPC on stdio| mcp
+    server -->|reads| disk
+    mcp -->|reads the same files| disk
+    piext -.->|sidecar log| pijsonl
+    mcpclient -.-> model
+    server <-->|reads, writes| settings
 ```
 -->
 
@@ -53,7 +63,11 @@ flowchart TB
   provider auth headers, cookies, or other credentials if the user
   proxied real traffic.
 - **The app's own settings file**: active provider selection, retention
-  threshold — low sensitivity, but the only thing the app writes.
+  threshold — low sensitivity, and the only file the app writes. On start
+  (API or MCP server) it may also move a legacy settings folder
+  (`copilot-cost-analyzer` or `gh-cp-chat-analyser`) to the current name,
+  once (`migrate-legacy-app-settings-dir.ts`). The optional pi logger
+  writes its own sidecar log inside the pi process.
 
 ## 3. Trust model (the actual design decision, not a gap)
 
@@ -75,6 +89,12 @@ local tool. The main risk is *regression*: if a future change binds to
 `0.0.0.0` or adds permissive CORS, this silently becomes remotely/LAN
 reachable. See recommendation §5.1.
 
+The standalone MCP server opens no port. The MCP client starts it as a
+child process of the same OS user and talks JSON-RPC over stdin/stdout,
+so whoever can start it can already read the files directly. What it
+adds is a data flow off the machine: tool results go to the client's
+chat model (§4).
+
 ## 4. STRIDE by component (verified against code)
 
 | Component | Threat | Verified finding |
@@ -85,18 +105,23 @@ reachable. See recommendation §5.1.
 | `PUT /api/config/retention-threshold`, `PUT /api/log-providers/active` | Tampering, CSRF from a malicious webpage | **Mitigated by construction.** No CORS middleware is present, and both routes use non-simple methods/content types, so a cross-origin page cannot trigger a real PUT (blocked by the browser's CORS preflight, which the server never satisfies). HTML forms also can't emit PUT. Body values are type/range-validated before being written. |
 | Web SPA rendering of session/turn content | Stored/DOM XSS via a malicious or prompt-injected LLM response captured through mitmproxy | **Mitigated.** No `dangerouslySetInnerHTML`, no markdown-to-raw-HTML pipeline (no `react-markdown`+`rehype-raw`, `marked`, or `DOMPurify` in the web package) was found. All captured content renders as React text nodes, which auto-escape. |
 | mitmproxy HAR ingestion → `redactHeaders` | Information disclosure — captured credentials reaching the UI/exports | **Real, partial gap.** `redact-headers.ts` redacts a fixed denylist (`authorization`, `x-api-key`, `api-key`, `proxy-authorization`, `cookie`, `set-cookie`) at *read* time. It does **not** cover: (a) API keys passed as URL query parameters (a real pattern for some providers, e.g. `?key=...`), and (b) non-standard vendor auth headers outside the fixed list. A user who captures traffic to a provider using either pattern will see the raw credential surfaced in the Turn Inspector / any exported session, even though they reasonably believe "sensitive headers are redacted." |
-| `packages/pi-system-prompt-logger` install | Privilege boundary crossing into a 3rd-party agent runtime | **Accepted, already tracked.** This vendored extension runs inside `@mariozechner/pi-coding-agent`'s own process once installed via `npm run configure`. The upstream package's own known CVEs (predictable temp extension install paths → local privilege escalation; `auth.json` write race) are pi-coding-agent's code, not this repo's, and are already tracked as open Dependabot alerts with no upstream fix — this is a real residual risk of opting into that extension, not a bug introduced here. |
+| `packages/pi-system-prompt-logger` install | Privilege boundary crossing into a 3rd-party agent runtime | **Accepted.** This vendored extension runs inside `@earendil-works/pi-coding-agent`'s own process once installed via `npm run configure`, so installing it extends trust into that runtime. Earlier upstream CVEs (predictable temp extension install paths → local privilege escalation; `auth.json` write race) were tracked as Dependabot alerts under the package's previous name, `@mariozechner/pi-coding-agent`; as of 2026-10-26 no Dependabot alert is open for the pi package. Re-check on each pi upgrade. |
+| Standalone MCP server (`packages/server/src/mcp/`, `scripts/mcp-server.sh`) | Information disclosure to a third-party model; prompt injection from logged content; argument injection | **Mitigated, with the data flow accepted.** Off unless the user registers it with an MCP client. It takes no command-line arguments; its only environment input is where to read, as for the API (the home directory, `APPDATA`, `XDG_CONFIG_HOME`, and `PI_SYSTEM_PROMPT_LOG_PATH` for the pi logger's sidecar), set by the same user who starts it. It opens no port and makes no network calls; stdout carries JSON-RPC only. All 9 tools are annotated read-only, and their arguments are zod-checked (`maxTextChars` 200–20,000; session ids resolve through the same provider lookup as the API, so the path-traversal row above applies). It reads every provider, including mitmproxy captures. Free text it returns (prompts, responses, tool output excerpts) goes through `redactSecrets` and is truncated. Residual: (a) that redaction is pattern-based — GitHub tokens, `sk-` keys, AWS access keys, Slack tokens, JWTs, private keys, bearer/basic credentials and `password=`/`api_key=`-style pairs — so a credential in another format (for example a Google `AIza…` key) can reach the model (§5.4); (b) logged content is untrusted text, so a prompt injection captured in a session can reach the model as a tool result; the tools are read-only, so it can steer the chat but not act through this server. |
+| Legacy settings folder move (`migrate-legacy-app-settings-dir.ts`) | Tampering with files outside the app's folder | **Mitigated.** Runs at start, takes no external input, and only renames the newest existing legacy folder to the current name under the same settings base; it does nothing if the current folder already exists, so it never merges into or overwrites one. |
 | Everything else reachable only via the API | Elevation of privilege | Not found. The server process only ever reads files under the invoking user's own home directory / configured dirs with that user's own OS privileges; no `sudo`, no `child_process.exec`, no setuid patterns anywhere in `packages/server`. |
 
 ## 5. Recommendations (priority order)
 
-**5.1 (Low, preventive) — Guard the loopback-only assumption in code, not
-just convention.**
+**5.1 (Low, preventive; open as of 2026-10-26) — Guard the loopback-only
+assumption in code, not just convention.**
 Nothing currently stops a future change from adding `cors()` or changing
 `host` to `0.0.0.0`, which would turn "trusted because it's loopback"
 into "trusted because nothing" = an unauthenticated LAN service. Consider
 a one-line startup assertion in `server.ts` (refuse to listen if `host`
 isn't a loopback address) so this trust boundary can't drift silently.
+`server.ts` still binds a hard-coded `127.0.0.1` with no such check. The
+Host-header guard (§4) doesn't replace it: a non-browser client on the LAN
+can send `Host: localhost:3001` itself.
 
 **5.2 (Medium, concrete; header patterns done, query-string redaction n/a because captured URLs are not retained) — Widen credential redaction beyond the fixed
 header denylist.**
@@ -111,15 +136,20 @@ pattern.
 
 **5.3 (Info, no action needed) — Third-party runtime risk from
 `pi-system-prompt-logger`.**
-Already visible via Dependabot; no new mitigation available until
-upstream patches `@mariozechner/pi-coding-agent`. Worth a one-line
-callout in `docs/architecture.md`'s existing pi-agent section noting that
-installing the sidecar logger extends trust into that third-party
-runtime.
+Installing the sidecar logger extends trust into
+`@earendil-works/pi-coding-agent`'s runtime. No Dependabot alert is open
+for it as of 2026-10-26; check again when pi is upgraded. Worth a one-line
+callout in `docs/architecture.md`'s existing pi-agent section.
+
+**5.4 (Low, concrete) — Widen `redactSecrets` for MCP tool results.**
+Tool results leave the machine (§4), so add patterns for common key
+formats the list misses, starting with Google API keys (`AIza` plus 35
+characters). Keep erring on masking too much.
 
 Nothing else in the reviewed surface (SQL access, path resolution,
 settings writes, CSRF exposure, XSS exposure, DNS rebinding — the last
-closed by the Host-header guard in §4) showed an exploitable gap —
+closed by the Host-header guard in §4 — and the MCP server's inputs)
+showed an exploitable gap —
 the existing patterns (parameterized queries, hash-based session IDs
 instead of path concatenation, strict same-origin binding, no raw-HTML
 rendering) are all real, deliberate mitigations already in place.
@@ -148,4 +178,4 @@ an optional MCP child process.
 
 | Risk | Detail | Status |
 |---|---|---|
-| `npm audit`: GHSA-xcx6-jx8p-x3h5 in `@azure/msal-node` 6.0.1 | Pulled in only by the dev-only `@vscode/vsce` through `@azure/identity`. It is never shipped in the VSIX (`vsce package --no-dependencies`, and the bundle is built by esbuild). Packaging never signs in. Publishing signs in through the `az` CLI credential, not the authorization-code flow the advisory affects. No `@azure/identity` version that vsce 4 accepts avoids it. | **Open, owner decision pending.** Recommendation: accept as dev-only and unreachable, and revisit when vsce updates its dependency. |
+| `npm audit`: GHSA-xcx6-jx8p-x3h5 in `@azure/msal-node` 6.0.1 | Pulled in only by the dev-only `@vscode/vsce` through `@azure/identity`. It is never shipped in the VSIX (`vsce package --no-dependencies`, and the bundle is built by esbuild). Packaging never signs in. Publishing signs in through the `az` CLI credential, not the authorization-code flow the advisory affects. No `@azure/identity` version that vsce 4 accepts avoids it: re-checked 2026-10-26, vsce 4.0.0 (latest) takes `@azure/identity ^4.13.2`, and both 4.14.0 (latest) and 4.15.0-beta.1 require `msal-node ^6.0.0`; the fix is 7.1.0. `npm audit` reports "fix available", but `npm audit fix --dry-run` leaves the finding. | **Open, owner decision pending.** Recommendation: accept as dev-only and unreachable, and revisit when vsce updates its dependency. |
