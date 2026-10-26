@@ -17,7 +17,7 @@ than repeating it. If you use Claude Code, the pi coding agent or
 mitmproxy captures, use the standalone app instead (see the
 [README](../README.md)).
 
-<!-- screenshot: panel-dark.png -->
+![The AI Credits Analyzer panel in Dark Modern: a session's turns with token, cache and AI Credits columns, and the selected turn's explanation](images/vscode/panel-dark.png)
 
 ## Requirements
 
@@ -157,9 +157,9 @@ Copilot Chat's debug log doesn't record whether a tool call succeeded, so
 in the tool audit those calls show as **Unknown**, with the reason, rather
 than counting as successes or failures.
 
-<!-- screenshot: panel-light.png -->
+![The same panel in Light Modern](images/vscode/panel-light.png)
 
-<!-- screenshot: dashboard.png -->
+![The insights dashboard: what happened, totals, and AI Credits by day](images/vscode/dashboard.png)
 
 ## The side bar and status bar
 
@@ -408,9 +408,9 @@ automatically in dark, light and high-contrast themes.
   screen readers. Long loads (dashboard, tool audit, turn inspector) have
   a **Cancel** button.
 
-<!-- screenshot: narrow.png -->
+![The panel at 640 px: the turns table scrolls inside its column](images/vscode/narrow.png)
 
-<!-- screenshot: high-contrast.png -->
+![The panel in the High Contrast theme](images/vscode/high-contrast.png)
 
 ## Troubleshooting
 

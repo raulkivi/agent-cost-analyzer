@@ -10,7 +10,7 @@ you have any data of your own.
 Independent project; not affiliated with or endorsed by GitHub or
 Microsoft.
 
-<!-- screenshot: panel-dark.png -->
+![The AI Credits Analyzer panel in Dark Modern: a session's turns with token, cache and AI Credits columns, and the selected turn's explanation](https://raw.githubusercontent.com/raulkivi/agent-cost-analyzer/main/docs/images/vscode/panel-dark.png)
 
 ## Features
 
@@ -40,7 +40,7 @@ Microsoft.
 
 An unknown figure is shown as unknown, never as 0.
 
-<!-- screenshot: dashboard.png -->
+![The insights dashboard: what happened, totals, and AI Credits by day](https://raw.githubusercontent.com/raulkivi/agent-cost-analyzer/main/docs/images/vscode/dashboard.png)
 
 ## Getting started
 

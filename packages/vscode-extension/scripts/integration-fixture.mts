@@ -30,7 +30,7 @@ const HOUR_MS = 60 * 60 * 1000;
 // traces on (so the Setup view has nothing to report), the MCP server off
 // (the suite turns it on itself), and nothing that would open an editor or
 // reach the network at start-up.
-const USER_SETTINGS = {
+export const USER_SETTINGS = {
   "github.copilot.chat.agentDebugLog.fileLogging.enabled": true,
   "github.copilot.chat.agentDebugLog.fileLogging.maxRetainedSessionLogs": 200,
   "github.copilot.chat.otel.dbSpanExporter.enabled": true,

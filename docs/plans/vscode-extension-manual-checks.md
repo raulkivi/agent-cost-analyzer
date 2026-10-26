@@ -64,8 +64,17 @@ Record the outcome (and any storage-layout differences, R3) in
 
 ## 4. Screenshots for step 10.10
 
-PNG, real data you're happy to publish (no private chat text), saved to
-`docs/images/vscode/`:
+PNG, saved to `docs/images/vscode/`.
+
+Done: 1, 2, 5, 6 and 8 show only the panel, so
+`npm run screenshots --workspace=packages/vscode-extension` (after
+`npm run build`) renders them from the real webview build over made-up
+data (`scripts/ui-check/showcase-fixture.mts`) at 2× scale. Run it again
+after a UI change. `panel-dark.png` shows the panel alone, without the
+side bar.
+
+Open: 3, 4 and 7 need a real VS Code window. Use data you're happy to
+publish (no private chat text):
 
 1. `panel-dark.png`: the panel on a session (Dark Modern), sidebar visible.
 2. `panel-light.png`: the same in Light Modern.
