@@ -27,6 +27,9 @@ This repo builds two products from one codebase:
   [extension guide](docs/vscode-extension-guide.md). It isn't published to
   the Marketplace yet; until it is, you can build it and install it from a
   VSIX, as described in [CONTRIBUTING.md](CONTRIBUTING.md#working-on-the-vs-code-extension).
+
+  ![The AI Credits Analyzer extension in VS Code: Sessions grouped by day with their AI Credits, a session open in the panel, and today's AI Credits in the status bar](docs/images/vscode/sidebar.png)
+
 - **Using Claude Code, pi, or mitmproxy captures, or want every provider in
   one place?** Use this standalone app, **Agent Cost Analyzer**. It also
   reads VS Code Copilot Chat sessions. Set it up below.
