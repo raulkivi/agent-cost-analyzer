@@ -27,6 +27,10 @@ const MARGIN = { top: 10, right: 8, bottom: 24, left: 40 };
 const STEP = 26;
 const MAX_BAR = 18;
 const MAX_X_LABELS = 20;
+// .chart-axis-text is 10px with tabular figures: about 6px a character,
+// plus a gap so neighbouring labels never touch.
+const LABEL_CHAR_WIDTH = 6;
+const LABEL_GAP = 6;
 const COLOR = "var(--color-accent)";
 
 // One measure over time as columns: click (Ctrl/⌘ to add) selects a column
@@ -52,7 +56,8 @@ export function TrendColumns({
     .nice()
     .range([plotBottom, MARGIN.top]);
   const ticks = y.ticks(4);
-  const labelEvery = Math.ceil(columns.length / MAX_X_LABELS);
+  const widestLabel = Math.max(...columns.map((column) => column.label.length)) * LABEL_CHAR_WIDTH + LABEL_GAP;
+  const labelEvery = Math.max(Math.ceil(columns.length / MAX_X_LABELS), Math.ceil(widestLabel / STEP));
   const hasNotes = columns.some((column) => column.note);
   const describe = (column: TrendColumn) =>
     `${column.label}: ${format(column.value)}${column.note ? ` (${column.note})` : ""}`;

@@ -19,6 +19,17 @@ describe("TrendColumns", () => {
     expect(onSelect).toHaveBeenLastCalledWith("2026-10-10", true);
   });
 
+  it("skips x-axis labels that would run into each other", () => {
+    const days = Array.from({ length: 14 }, (_, index) => {
+      const label = `10-${String(13 + index).padStart(2, "0")}`;
+      return { key: `2026-${label}`, label, value: index };
+    });
+    const { container } = render(<TrendColumns ariaLabel="Trend" columns={days} format={String} />);
+
+    const xLabels = [...container.querySelectorAll(".chart-column text.chart-axis-text")].map((text) => text.textContent);
+    expect(xLabels).toEqual(["10-13", "10-15", "10-17", "10-19", "10-21", "10-23", "10-25"]);
+  });
+
   it("marks selected columns", () => {
     render(<TrendColumns ariaLabel="Trend" columns={columns} format={String} selectedKeys={["2026-10-10"]} />);
     expect(screen.getByRole("button", { name: "10-10: 0.5" })).toHaveAttribute("aria-pressed", "true");

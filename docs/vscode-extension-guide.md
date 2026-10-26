@@ -17,7 +17,7 @@ than repeating it. If you use Claude Code, the pi coding agent or
 mitmproxy captures, use the standalone app instead (see the
 [README](../README.md)).
 
-<!-- screenshot: panel-dark.png -->
+![The AI Credits Analyzer panel in Dark Modern: a session's turns with token, cache and AI Credits columns, and the selected turn's explanation](images/vscode/panel-dark.png)
 
 ## Requirements
 
@@ -71,7 +71,7 @@ notification for it. To open it again later, run **AI Credits Analyzer:
 Open Get Started Walkthrough** from the Command Palette, or use the
 **Get started** link in the Sessions view when it's empty.
 
-<!-- screenshot: walkthrough.png -->
+![The Get started with AI Credits Analyzer walkthrough: five steps, with the Copilot Chat debug logging step open](images/vscode/walkthrough.png)
 
 The walkthrough has five steps. Each one is marked done when you make the
 change it describes:
@@ -157,16 +157,16 @@ Copilot Chat's debug log doesn't record whether a tool call succeeded, so
 in the tool audit those calls show as **Unknown**, with the reason, rather
 than counting as successes or failures.
 
-<!-- screenshot: panel-light.png -->
+![The same panel in Light Modern](images/vscode/panel-light.png)
 
-<!-- screenshot: dashboard.png -->
+![The insights dashboard: what happened, totals, and AI Credits by day](images/vscode/dashboard.png)
 
 ## The side bar and status bar
 
 The extension adds an **AI Credits Analyzer** icon to the Activity Bar. Its
 side bar has three views: Sessions, Learn and Setup.
 
-<!-- screenshot: sidebar.png -->
+![VS Code with the AI Credits Analyzer side bar (Sessions grouped by day with their AI Credits, and the Setup view), a session open in the panel, and today's AI Credits in the status bar](images/vscode/sidebar.png)
 
 ### Sessions view (`aiCreditsAnalyzer.sessions`)
 
@@ -298,7 +298,7 @@ commands keep failing, and why?", "did the agent do anything risky this
 week?". It answers from the same local logs, and its numbers match the
 panel's.
 
-<!-- screenshot: mcp-agent-mode.png -->
+![Copilot Chat in agent mode answering "What did my most expensive session in the last 7 days cost, and what drove it?" from the AI Credits Analyzer tools](images/vscode/mcp-agent-mode.png)
 
 ### Turning it on
 
@@ -408,9 +408,9 @@ automatically in dark, light and high-contrast themes.
   screen readers. Long loads (dashboard, tool audit, turn inspector) have
   a **Cancel** button.
 
-<!-- screenshot: narrow.png -->
+![The panel at 640 px: the turns table scrolls inside its column](images/vscode/narrow.png)
 
-<!-- screenshot: high-contrast.png -->
+![The panel in the High Contrast theme](images/vscode/high-contrast.png)
 
 ## Troubleshooting
 

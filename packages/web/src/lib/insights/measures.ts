@@ -49,7 +49,7 @@ export interface InsightKpis {
   knownOutcomes: number;
   failureRate: number | null;
   securityFindings: number;
-  findingsBySeverity: Record<FindingSeverity, number>;
+  securityFindingsBySeverity: Record<FindingSeverity, number>;
 }
 
 export function cacheHitRatio(turns: readonly InsightTurnRow[]): number | null {
@@ -67,9 +67,10 @@ export function cacheHitRatio(turns: readonly InsightTurnRow[]): number | null {
 export function computeKpis(view: InsightRowsView): InsightKpis {
   const knownOutcomes = view.toolCalls.filter((call) => call.status !== "unknown");
   const failed = knownOutcomes.filter((call) => isFailedStatus(call.status)).length;
-  const findingsBySeverity: Record<FindingSeverity, number> = { critical: 0, high: 0, medium: 0, low: 0, info: 0 };
-  for (const finding of view.findings) {
-    findingsBySeverity[finding.severity] += 1;
+  const securityFindings = view.findings.filter((finding) => finding.kind === "security");
+  const securityFindingsBySeverity: Record<FindingSeverity, number> = { critical: 0, high: 0, medium: 0, low: 0, info: 0 };
+  for (const finding of securityFindings) {
+    securityFindingsBySeverity[finding.severity] += 1;
   }
   return {
     sessions: view.sessions.length,
@@ -81,8 +82,8 @@ export function computeKpis(view: InsightRowsView): InsightKpis {
     failed,
     knownOutcomes: knownOutcomes.length,
     failureRate: knownOutcomes.length > 0 ? failed / knownOutcomes.length : null,
-    securityFindings: view.findings.filter((finding) => finding.kind === "security").length,
-    findingsBySeverity,
+    securityFindings: securityFindings.length,
+    securityFindingsBySeverity,
   };
 }
 

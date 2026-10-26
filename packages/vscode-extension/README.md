@@ -10,7 +10,7 @@ you have any data of your own.
 Independent project; not affiliated with or endorsed by GitHub or
 Microsoft.
 
-<!-- screenshot: panel-dark.png -->
+![The AI Credits Analyzer panel in Dark Modern: a session's turns with token, cache and AI Credits columns, and the selected turn's explanation](https://raw.githubusercontent.com/raulkivi/agent-cost-analyzer/main/docs/images/vscode/panel-dark.png)
 
 ## Features
 
@@ -40,7 +40,7 @@ Microsoft.
 
 An unknown figure is shown as unknown, never as 0.
 
-<!-- screenshot: dashboard.png -->
+![The insights dashboard: what happened, totals, and AI Credits by day](https://raw.githubusercontent.com/raulkivi/agent-cost-analyzer/main/docs/images/vscode/dashboard.png)
 
 ## Getting started
 
@@ -62,9 +62,9 @@ An unknown figure is shown as unknown, never as 0.
 Logging isn't retroactive: sessions from before you turned it on show
 their figures as unknown.
 
-<!-- screenshot: walkthrough.png -->
+![The Get started with AI Credits Analyzer walkthrough: five steps, with the Copilot Chat debug logging step open](https://raw.githubusercontent.com/raulkivi/agent-cost-analyzer/main/docs/images/vscode/walkthrough.png)
 
-<!-- screenshot: sidebar.png -->
+![VS Code with the AI Credits Analyzer side bar (Sessions grouped by day with their AI Credits, and the Setup view), a session open in the panel, and today's AI Credits in the status bar](https://raw.githubusercontent.com/raulkivi/agent-cost-analyzer/main/docs/images/vscode/sidebar.png)
 
 ## Commands
 

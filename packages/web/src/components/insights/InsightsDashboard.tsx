@@ -189,10 +189,10 @@ function DashboardBody({ dataset, crossProvider }: { dataset: InsightsDataset; c
     );
   }
 
-  const severityNote = SEVERITY_ORDER.filter((severity) => kpis.findingsBySeverity[severity] > 0 && severity !== "info")
-    .map((severity) => `${kpis.findingsBySeverity[severity]} ${severity}`)
+  const severityNote = SEVERITY_ORDER.filter((severity) => kpis.securityFindingsBySeverity[severity] > 0 && severity !== "info")
+    .map((severity) => `${kpis.securityFindingsBySeverity[severity]} ${severity}`)
     .join(", ");
-  const highOrWorse = kpis.findingsBySeverity.critical + kpis.findingsBySeverity.high;
+  const highOrWorse = kpis.securityFindingsBySeverity.critical + kpis.securityFindingsBySeverity.high;
 
   return (
     <div className="insights-layout">

@@ -53,12 +53,22 @@ export interface Harness {
   close(): Promise<void>;
 }
 
-export async function startHarness(): Promise<Harness> {
-  if (!existsSync(path.join(mediaDir, "index.html"))) {
-    throw new Error("media/ is not built: run `npm run build --workspace=packages/vscode-extension` first");
-  }
-  const root = mkdtempSync(path.join(os.tmpdir(), "ui-check-"));
-  const fixture = createIntegrationFixture(root, { sessionCount: 40 });
+export interface SeededUserData {
+  userDataDir: string;
+  // The session the scenarios open.
+  usageSessionId: string;
+}
+
+export interface HarnessOptions {
+  // Seeds a VS Code user-data dir under rootDir; the UI check's fixture by default.
+  seed?: (rootDir: string) => SeededUserData;
+  // 2 for sharp screenshots; 1 by default.
+  deviceScaleFactor?: number;
+}
+
+// The integration fixture, plus a system prompt for the inspector scenarios.
+function seedUiCheckFixture(rootDir: string): SeededUserData {
+  const fixture = createIntegrationFixture(rootDir, { sessionCount: 40 });
   const debugDir = path.join(
     fixture.userDataDir,
     "User/workspaceStorage/integration-workspace/GitHub.copilot-chat/debug-logs",
@@ -68,6 +78,15 @@ export async function startHarness(): Promise<Harness> {
     path.join(debugDir, "system_prompt_0.json"),
     JSON.stringify({ content: JSON.stringify([{ type: "text", content: SYSTEM_PROMPT }]) }),
   );
+  return fixture;
+}
+
+export async function startHarness(options: HarnessOptions = {}): Promise<Harness> {
+  if (!existsSync(path.join(mediaDir, "index.html"))) {
+    throw new Error("media/ is not built: run `npm run build --workspace=packages/vscode-extension` first");
+  }
+  const root = mkdtempSync(path.join(os.tmpdir(), "ui-check-"));
+  const fixture = (options.seed ?? seedUiCheckFixture)(root);
 
   const logPaths = copilotLogPathsFromUserDataDir(fixture.userDataDir);
   let activeProviderId: string | undefined;
@@ -121,7 +140,7 @@ export async function startHarness(): Promise<Harness> {
   return {
     usageSessionId: fixture.usageSessionId,
     async open(theme, width, height = 900) {
-      const page = await browser.newPage({ viewport: { width, height } });
+      const page = await browser.newPage({ viewport: { width, height }, deviceScaleFactor: options.deviceScaleFactor ?? 1 });
       page.on("pageerror", (error) => console.error(`page error: ${error.message}`));
       await page.exposeFunction("__toHost", async (message: unknown) => {
         inFlight += 1;
