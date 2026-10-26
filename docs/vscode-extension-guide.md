@@ -166,7 +166,7 @@ than counting as successes or failures.
 The extension adds an **AI Credits Analyzer** icon to the Activity Bar. Its
 side bar has three views: Sessions, Learn and Setup.
 
-<!-- screenshot: sidebar.png -->
+![VS Code with the AI Credits Analyzer side bar (Sessions grouped by day with their AI Credits, and the Setup view), a session open in the panel, and today's AI Credits in the status bar](images/vscode/sidebar.png)
 
 ### Sessions view (`aiCreditsAnalyzer.sessions`)
 

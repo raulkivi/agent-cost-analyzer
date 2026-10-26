@@ -64,7 +64,7 @@ their figures as unknown.
 
 <!-- screenshot: walkthrough.png -->
 
-<!-- screenshot: sidebar.png -->
+![VS Code with the AI Credits Analyzer side bar (Sessions grouped by day with their AI Credits, and the Setup view), a session open in the panel, and today's AI Credits in the status bar](https://raw.githubusercontent.com/raulkivi/agent-cost-analyzer/main/docs/images/vscode/sidebar.png)
 
 ## Commands
 
