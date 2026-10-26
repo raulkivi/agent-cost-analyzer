@@ -316,6 +316,24 @@ describe("checkConfig", () => {
       expect(status.warnings[0]?.helpSteps[0]).not.toContain("null");
     });
 
+    it("shows a settings path under the home directory as ~ in help steps only", () => {
+      const homeDir = "/home/alice";
+      const userSettingsPath = "/home/alice/.config/Code/User/settings.json";
+
+      const status = checkConfig({
+        settings: source({}, userSettingsPath, true),
+        homeDir,
+        now: NOW,
+      });
+
+      expect(status.vscodeUserSettingsPath).toBe(userSettingsPath);
+      for (const warning of status.warnings) {
+        const text = warning.helpSteps.join("\n");
+        expect(text).not.toContain(homeDir);
+      }
+      expect(status.warnings[0]?.helpSteps[0]).toContain("~/.config/Code/User/settings.json");
+    });
+
     it("uses the source in preference to settingsPath", () => {
       writeFileSync(settingsPath, JSON.stringify({}));
 
