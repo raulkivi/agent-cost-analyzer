@@ -62,6 +62,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - The threat model covers the extension; CONTRIBUTING covers building
     and testing it.
 ### Fixed
+- MCP tool results (both products) now also mask Google API keys, Stripe
+  secret and restricted keys, and npm, GitLab and Hugging Face tokens, since
+  those results go to the chat model.
 - Config warnings no longer show the user's home directory path; the
   settings.json location in the help steps is shortened to `~`.
 - The dashboard's Security signals tile listed anomalies and behaviour

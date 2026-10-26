@@ -1266,13 +1266,14 @@ server (off, on with 9 tools and `get_session_cost`, off again).
    Container check.
 2. The owner's review of the extension README and guide. The 8
    screenshots are in place (manual checks §4).
-3. A decision on the dev-only `@azure/msal-node` advisory
-   ([threat-model.md](threat-model.md) §7).
-4. Publishing setup (plan §7.0): the Entra ID app and the `release`
+3. Publishing setup (plan §7.0): the Entra ID app and the `release`
    environment (global PATs retire on 1 December 2026), the Open VSX
    namespace and `OVSX_PAT`, and the icon (PNG, at least 128 px).
-5. The first release: tag `ext-v0.1.0` (odd minor, so the pre-release
+4. The first release: tag `ext-v0.1.0` (odd minor, so the pre-release
    channel).
+
+The dev-only `@azure/msal-node` advisory is accepted
+([threat-model.md](threat-model.md) §7, 2026-10-27).
 
 **Exit criterion**: the plan's §10.
 
