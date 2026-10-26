@@ -67,6 +67,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The dashboard's Security signals tile listed anomalies and behaviour
   changes in its severity note (for example "0" over "2 medium"); it now
   counts security findings only.
+- The dashboard's AI Credits by day chart printed every date label even
+  when they ran into each other (two weeks of data read "10-1310-14…"); it
+  now skips labels to keep them apart.
 - The turn inspector's round picker could jump back to round 0 right after
   you picked another round.
 
