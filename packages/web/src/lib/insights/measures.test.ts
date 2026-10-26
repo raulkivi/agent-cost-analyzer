@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { sampleInsightsDataset, turnRow } from "../../test-support/insights-fixture.js";
+import { findingRow, sampleInsightsDataset, turnRow } from "../../test-support/insights-fixture.js";
 import {
   aiCreditsByDay,
   computeKpis,
@@ -35,8 +35,15 @@ describe("computeKpis", () => {
       knownOutcomes: 2,
       failureRate: 0.5,
       securityFindings: 1,
-      findingsBySeverity: { critical: 1, high: 0, medium: 0, low: 0, info: 1 },
+      securityFindingsBySeverity: { critical: 1, high: 0, medium: 0, low: 0, info: 0 },
     });
+  });
+
+  it("counts only security findings by severity, as the Security signals tile shows them", () => {
+    const anomaly = findingRow("cc:s1", { kind: "anomaly", severity: "medium" });
+    const kpis = computeKpis({ ...dataset, findings: [...dataset.findings, anomaly] });
+    expect(kpis.securityFindings).toBe(1);
+    expect(kpis.securityFindingsBySeverity.medium).toBe(0);
   });
 
   it("computes the cache hit ratio only over turns whose input figures are all known", () => {
