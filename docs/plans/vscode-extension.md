@@ -1,6 +1,6 @@
 # VS Code extension: implementation and deployment plan
 
-Status: **code and docs complete (Phase 10, #57-#74); not yet released.**
+Status: **code and docs complete (Phase 10, #57-#80); not yet released.**
 The owner's tasks before the first release are listed in
 [implementation-plan.md](../implementation-plan.md) Phase 10. This plan expands
 [implementation-plan.md](../implementation-plan.md) Phase 10 and
@@ -23,7 +23,7 @@ Progress (2026-10-24):
 | 10.9 | Integration tests in real VS Code, performance budgets, usability run, packaging | Done (#72; integration suite green in CI); owner's manual checks open |
 | 10.10 | Documentation: extension README/listing, extension user guide, two-product README and User Guide | Done (#73); screenshots and owner review open |
 | 10.11 | UX review for VS Code: panel fits any width, readable in light, dark and High Contrast, native look, automated UI check | Done (#77) |
-| 10.12 | Learn scenarios in the side bar (a Learn view), like the Sessions view; the panel has no list of its own | Done (PR pending) |
+| 10.12 | Learn scenarios in the side bar (a Learn view), like the Sessions view; the panel has no list of its own | Done (#80) |
 
 
 ## 1. Context
