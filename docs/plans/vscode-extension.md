@@ -1224,7 +1224,7 @@ D9 engine = current stable, changelog section) behind `release-check.mts`
 and `release-notes.mts`. The extension job builds, tests (unit and
 integration), packages, then publishes from the `release` environment:
 Marketplace through `azure/login` + `vsce publish --azure-credential`,
-Open VSX through `ovsx` with `OVSX_PAT`, and a GitHub Release with the
+Open VSX through `ovsx --trusted-publishing` (OIDC), and a GitHub Release with the
 VSIX. Actions are pinned by commit SHA.
 
 *Manual checks:* the usability script, the MCP agent-mode check (10.8's
@@ -1599,17 +1599,19 @@ ID isn't set up yet.
    log in with an eclipse.org account (create one if needed; its GitHub
    username must match) and sign the **Eclipse Foundation Open VSX
    Publisher Agreement** (not the Eclipse Contributor Agreement).
-2. *Settings → Access Tokens → Generate New Token*. Copy it once.
+2. *Settings → Access Tokens → Generate New Token*. Copy it once; it is
+   only for creating the namespace.
 3. Create the namespace once, locally:
    `npx ovsx create-namespace raulkivi -p <token>`. It must equal the
-   `publisher` field.
+   `publisher` field. Revoke the token afterwards.
 4. Claim the namespace: until ownership is granted, anyone can publish
    into it. Open an issue at `github.com/EclipseFdn/open-vsx.org` (type
    "Claim namespace ownership") naming `raulkivi`.
-5. Generate a separate token for CI (Open VSX 1.3 can scope a token to
-   the namespace and to publishing only; use that). Store it as the
-   `OVSX_PAT` **secret** in the `release` environment.
-6. Check: `npx ovsx verify-pat raulkivi -p <token>`.
+5. *Settings → Trusted Publishers*: register repository
+   `raulkivi/agent-cost-analyzer`, workflow `release-extension.yml` and
+   environment `release`. CI then exchanges its OIDC ID token for a
+   short-lived publishing token (`ovsx publish --trusted-publishing`,
+   ovsx ≥ 1.1.0), so no `OVSX_PAT` secret is stored.
 
 **Listing prerequisites checked before the first publish (step 10.9)**
 
@@ -1627,8 +1629,9 @@ ID isn't set up yet.
   while. Not needed for v1.
 
 **Exit:** the `release` environment holds `AZURE_CLIENT_ID`,
-`AZURE_TENANT_ID` (variables) and `OVSX_PAT` (secret); `ovsx verify-pat
-raulkivi` succeeds; the Entra ID app is a member of the publisher.
+`AZURE_TENANT_ID` (variables); the `raulkivi` Open VSX namespace exists
+with a trusted publisher for `release-extension.yml` and `release`; the
+Entra ID app is a member of the publisher.
 
 ### 7.1 CI (every PR)
 
@@ -1660,7 +1663,7 @@ suite only, to cover the D4 path derivation for real.
 3. `azure/login` (OIDC, `allow-no-subscriptions`), then
    `vsce publish --azure-credential --packagePath *.vsix`, in the
    protected `release` environment with required reviewers (§7.0).
-4. `ovsx publish *.vsix` with `OVSX_PAT` for Open VSX (VSCodium, Cursor,
+4. `ovsx publish --trusted-publishing *.vsix` for Open VSX (VSCodium, Cursor,
    and others).
 5. Attach the `.vsix` to a GitHub Release named after the extension.
 
