@@ -38,6 +38,23 @@ function buildSettingsNotFoundWarning(): ConfigWarning {
 // How the help steps name the file when the source doesn't know its path.
 const GENERIC_SETTINGS_LABEL = "your VS Code user settings.json";
 
+function buildCopilotChatUnavailableWarning(): ConfigWarning {
+  return {
+    code: "copilot-chat-unavailable",
+    severity: "required",
+    // Not a setting the user can flip: the host opens the Extensions view on
+    // Copilot Chat for it, since the setting isn't registered without the extension.
+    settingId: LOGGING_ENABLED_SETTING_ID,
+    currentValue: false,
+    recommendedValue: true,
+    message: "GitHub Copilot Chat is disabled or not installed, so it writes no logs to analyze.",
+    helpSteps: [
+      "Open the Extensions view and enable GitHub Copilot Chat, or install it.",
+      "Sign in to GitHub Copilot if asked, then reload the VS Code window.",
+    ],
+  };
+}
+
 function buildLoggingDisabledWarning(settingsPath: string): ConfigWarning {
   return {
     code: "logging-disabled",
@@ -113,7 +130,7 @@ export function checkConfig(options: CheckConfigOptions = {}): ConfigStatus {
     new JsoncFileSettingsSource(
       options.settingsPath !== undefined ? options.settingsPath : resolveVscodeSettingsPath(options),
     );
-  const { located, userSettingsPath } = source.describe();
+  const { located, userSettingsPath, copilotChatAvailable } = source.describe();
   // Help steps are rendered in the UI, so they show ~ instead of the home dir.
   const settingsLabel = userSettingsPath
     ? collapseHomeDir(userSettingsPath, options.homeDir ?? homedir())
@@ -127,6 +144,9 @@ export function checkConfig(options: CheckConfigOptions = {}): ConfigStatus {
   if (!located) {
     warnings.push(buildSettingsNotFoundWarning());
   } else {
+    if (copilotChatAvailable === false) {
+      warnings.push(buildCopilotChatUnavailableWarning());
+    }
     if (!settings.loggingEnabled) {
       warnings.push(buildLoggingDisabledWarning(settingsLabel));
     }

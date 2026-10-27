@@ -5,7 +5,10 @@ name: Release AI Credits Analyzer
 # Setup (one-time, §7.0): a `release` environment with required reviewers,
 # variables AZURE_CLIENT_ID and AZURE_TENANT_ID (an Entra ID app with a
 # federated credential for this environment, a member of the `raulkivi`
-# publisher) and the secret OVSX_PAT.
+# publisher) and an Open VSX trusted publisher for this workflow and
+# environment. Open VSX registers a trusted publisher only for an extension
+# that already exists, so the first release publishes there with the secret
+# OVSX_PAT; once the trusted publisher is registered, delete the secret.
 
 on:
   push:
@@ -75,7 +78,7 @@ jobs:
     environment: release
     permissions:
       contents: write # the GitHub Release
-      id-token: write # Entra ID sign-in through OIDC
+      id-token: write # Entra ID and Open VSX sign-in through OIDC
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -110,6 +113,8 @@ jobs:
         working-directory: packages/vscode-extension
         run: npx vsce publish --azure-credential --packagePath ../../vsix/*.vsix
 
+      # ovsx uses OVSX_PAT when it is set; when it is empty, it signs in
+      # through OIDC (trusted publishing).
       - name: Publish to Open VSX
         env:
           OVSX_PAT: ${{ secrets.OVSX_PAT }}

@@ -1224,7 +1224,8 @@ D9 engine = current stable, changelog section) behind `release-check.mts`
 and `release-notes.mts`. The extension job builds, tests (unit and
 integration), packages, then publishes from the `release` environment:
 Marketplace through `azure/login` + `vsce publish --azure-credential`,
-Open VSX through `ovsx` with `OVSX_PAT`, and a GitHub Release with the
+Open VSX through `ovsx` (trusted publishing over OIDC, or `OVSX_PAT`
+for the first release), and a GitHub Release with the
 VSIX. Actions are pinned by commit SHA.
 
 *Manual checks:* the usability script, the MCP agent-mode check (10.8's
@@ -1522,7 +1523,8 @@ each failed a test.
   over the same data. The doc checks require each referenced image to
   exist.
 - The owner reviews the rendered README and guide.
-- No `icon` yet (owner).
+- Icon: `icon.png` (256 px), rendered from `icon.svg`, the Activity Bar
+  glyph on the accent colour.
 - The guide's install routes via Marketplace/Open VSX work only once
   published.
 - Not tried in a browser: that the column choice is remembered and that
@@ -1598,21 +1600,29 @@ ID isn't set up yet.
    log in with an eclipse.org account (create one if needed; its GitHub
    username must match) and sign the **Eclipse Foundation Open VSX
    Publisher Agreement** (not the Eclipse Contributor Agreement).
-2. *Settings → Access Tokens → Generate New Token*. Copy it once.
-3. Create the namespace once, locally:
-   `npx ovsx create-namespace raulkivi -p <token>`. It must equal the
-   `publisher` field.
-4. Claim the namespace: until ownership is granted, anyone can publish
-   into it. Open an issue at `github.com/EclipseFdn/open-vsx.org` (type
-   "Claim namespace ownership") naming `raulkivi`.
-5. Generate a separate token for CI (Open VSX 1.3 can scope a token to
-   the namespace and to publishing only; use that). Store it as the
+2. Create the namespace once: the **+** next to *Namespaces* in Settings,
+   or `npx ovsx create-namespace raulkivi -p <token>` with an access
+   token. It must equal the `publisher` field.
+3. Claim the namespace: until ownership is granted, anyone can publish
+   into it and its extensions can stay inactive. *Claim Ownership* on the
+   namespace page opens an issue at `github.com/EclipseFdn/open-vsx.org`
+   (done: #14833, Option 2, so the Open VSX administrator has Reader
+   access on the Marketplace publisher until the issue closes).
+4. Trusted publishing needs the owner role (granted by the claim) and an
+   extension that already exists, so the first release uses a token:
+   *Settings → Access Tokens → Generate New Token*, stored as the
    `OVSX_PAT` **secret** in the `release` environment.
-6. Check: `npx ovsx verify-pat raulkivi -p <token>`.
+5. After the first release: *Settings → Trusted Publishers*, register
+   repository `raulkivi/agent-cost-analyzer`, workflow
+   `release-extension.yml` and environment `release`. Then delete the
+   `OVSX_PAT` secret and revoke the token. With the secret empty, `ovsx`
+   (≥ 1.1.0) exchanges the workflow's OIDC ID token for a short-lived
+   publishing token.
 
 **Listing prerequisites checked before the first publish (step 10.9)**
 
 - `icon`: a PNG of at least 128×128 px. The Marketplace rejects SVG icons.
+  Done: `icon.png`, 256 px, checked by `manifest.test.ts`.
   The Activity Bar icon (10.6) is a separate monochrome SVG.
 - `repository`, `bugs`, `homepage` and `license` (MIT) set in
   `package.json`. vsce warns or fails without them.
@@ -1625,8 +1635,10 @@ ID isn't set up yet.
   while. Not needed for v1.
 
 **Exit:** the `release` environment holds `AZURE_CLIENT_ID`,
-`AZURE_TENANT_ID` (variables) and `OVSX_PAT` (secret); `ovsx verify-pat
-raulkivi` succeeds; the Entra ID app is a member of the publisher.
+`AZURE_TENANT_ID` (variables) and `OVSX_PAT` (secret, until the trusted
+publisher is registered after the first release); the `raulkivi` Open VSX
+namespace exists and its ownership claim is granted; the Entra ID app is
+a member of the publisher.
 
 ### 7.1 CI (every PR)
 
@@ -1650,16 +1662,17 @@ suite only, to cover the D4 path derivation for real.
 
 1. **Engine check (D9).** A script reads the current stable version from
    `https://update.code.visualstudio.com/api/releases/stable` and fails
-   the release if `engines.vscode` doesn't match it. The fix is a one-line
-   bump in the release PR. Only CI makes this network call; the extension
-   itself never does (constraint 1).
+   the release if `engines.vscode` doesn't match it. The fix is a bump in
+   the release PR, plus the "VS Code X.Y or later" line in the extension
+   README (`docs.test.ts` checks they agree). Only CI makes this network
+   call; the extension itself never does (constraint 1).
 2. Build and test as in CI. The integration tests run on that same
    stable build.
 3. `azure/login` (OIDC, `allow-no-subscriptions`), then
    `vsce publish --azure-credential --packagePath *.vsix`, in the
    protected `release` environment with required reviewers (§7.0).
-4. `ovsx publish *.vsix` with `OVSX_PAT` for Open VSX (VSCodium, Cursor,
-   and others).
+4. `ovsx publish *.vsix` for Open VSX (VSCodium, Cursor, and others):
+   trusted publishing, or `OVSX_PAT` while that secret is set.
 5. Attach the `.vsix` to a GitHub Release named after the extension.
 
 - **Versioning:** the version lives in `packages/vscode-extension/package.json`

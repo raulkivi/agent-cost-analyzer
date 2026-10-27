@@ -108,7 +108,8 @@ module.exports = {
   },
   env: { clipboard: { writeText(text) { clipboard.push(text); return Promise.resolve(); } } },
   workspace: {
-    getConfiguration: () => ({ get: (id) => settings[id] }),
+    // Every setting counts as registered, as with Copilot Chat enabled.
+    getConfiguration: () => ({ get: (id) => settings[id], inspect: (id) => ({ defaultValue: settings[id] ?? null }) }),
     // A URI is opened through the content provider of its scheme, as VS Code
     // does; anything else is an untitled document.
     async openTextDocument(arg) {
@@ -127,6 +128,11 @@ module.exports = {
       return { dispose() { contentProviders.delete(scheme); } };
     },
     onDidChangeConfiguration(listener) { configListeners.add(listener); return { dispose() { configListeners.delete(listener); } }; },
+  },
+  // Copilot Chat is enabled, so the config check has no copilot-chat-unavailable row.
+  extensions: {
+    getExtension: (id) => (id === "GitHub.copilot-chat" ? {} : undefined),
+    onDidChange() { return { dispose() {} }; },
   },
   commands: {
     registerCommand(id, fn) { commands.set(id, fn); return { dispose() { commands.delete(id); } }; },
@@ -412,7 +418,7 @@ describe("the built extension bundle", () => {
       expect(reply).toEqual({ kind: "response", id: "fix-logging", ok: true });
       expect(vscode.__executed).toContainEqual([
         "workbench.action.openSettings",
-        "github.copilot.chat.agentDebugLog.fileLogging.enabled",
+        "@id:github.copilot.chat.agentDebugLog.fileLogging.enabled",
       ]);
     });
 
@@ -609,7 +615,7 @@ describe("the built extension bundle", () => {
       vscode.__settings[LOGGING] = false;
 
       await vscode.__commands.get(COMMAND_IDS.fixSetting)!();
-      expect(vscode.__executed.slice(before)).toEqual([["workbench.action.openSettings", LOGGING]]);
+      expect(vscode.__executed.slice(before)).toEqual([["workbench.action.openSettings", `@id:${LOGGING}`]]);
 
       await expect(vscode.__commands.get(COMMAND_IDS.fixSetting)!("terminal.integrated.shellArgs.linux")).rejects.toThrow(
         /can't be opened/,

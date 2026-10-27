@@ -26,6 +26,7 @@ function read(relativePath: string): string {
 }
 
 const manifest = JSON.parse(readFileSync(path.join(packageDir, "package.json"), "utf-8")) as {
+  engines: { vscode: string };
   contributes: {
     commands: { command: string; title: string }[];
     views: Record<string, { id: string }[]>;
@@ -110,6 +111,14 @@ describe("the extension README works on the Marketplace and Open VSX (§7.0)", (
     });
 
     expect(missing).toEqual([]);
+  });
+
+  // The engine is bumped every release (D9), so a stale minimum would turn
+  // away users the listing says are supported, or the reverse.
+  it("names the minimum VS Code version that engines.vscode requires", () => {
+    const [, major, minor] = /^\^(\d+)\.(\d+)\.\d+$/.exec(manifest.engines.vscode) ?? [];
+
+    expect(read(EXTENSION_README)).toContain(`VS Code ${major}.${minor} or later`);
   });
 });
 

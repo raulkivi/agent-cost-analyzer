@@ -8,16 +8,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-### Fixed
-- MCP tool results (both products) now also mask Google API keys, Stripe
-  secret and restricted keys, and npm, GitLab and Hugging Face tokens, since
-  those results go to the chat model.
-- The dashboard's Security signals tile listed anomalies and behaviour
-  changes in its severity note (for example "0" over "2 medium"); it now
-  counts security findings only.
-- The dashboard's AI Credits by day chart printed every date label even
-  when they ran into each other (two weeks of data read "10-1310-14…"); it
-  now skips labels to keep them apart.
 
 ## [0.1.0]
 

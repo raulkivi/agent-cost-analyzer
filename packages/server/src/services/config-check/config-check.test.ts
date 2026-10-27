@@ -281,6 +281,53 @@ describe("checkConfig", () => {
       expect(status.warnings[0]?.helpSteps[0]).toContain("/u/settings.json");
     });
 
+    it("warns copilot-chat-unavailable first when the source reports Copilot Chat as disabled or missing", () => {
+      const status = checkConfig({
+        settings: {
+          get: (id) => GOOD[id as keyof typeof GOOD],
+          describe: () => ({ located: true, userSettingsPath: "/u/settings.json", copilotChatAvailable: false }),
+        },
+        now: NOW,
+      });
+
+      expect(() => configStatusSchema.parse(status)).not.toThrow();
+      expect(status.warnings).toEqual([
+        expect.objectContaining({
+          code: "copilot-chat-unavailable",
+          severity: "required",
+          settingId: "github.copilot.chat.agentDebugLog.fileLogging.enabled",
+          currentValue: false,
+          recommendedValue: true,
+        }),
+      ]);
+    });
+
+    it("keeps the other warnings after copilot-chat-unavailable", () => {
+      const status = checkConfig({
+        settings: {
+          get: () => undefined,
+          describe: () => ({ located: true, userSettingsPath: "/u/settings.json", copilotChatAvailable: false }),
+        },
+        now: NOW,
+      });
+
+      expect(status.warnings.map((warning) => warning.code)).toEqual([
+        "copilot-chat-unavailable",
+        "logging-disabled",
+        "retention-too-low",
+        "agent-traces-unavailable",
+      ]);
+    });
+
+    it.each([true, undefined])("adds no copilot-chat-unavailable warning when copilotChatAvailable is %s", (copilotChatAvailable) => {
+      const status = checkConfig({
+        settings: { get: (id) => GOOD[id as keyof typeof GOOD], describe: () => ({ located: true, userSettingsPath: null, copilotChatAvailable }) },
+        now: NOW,
+      });
+
+      expect(status.warnings).toEqual([]);
+    });
+
     it("honours the deprecated logging alias", () => {
       const status = checkConfig({
         settings: source({ ...GOOD, "github.copilot.chat.agentDebugLog.fileLogging.enabled": undefined, "github.copilot.chat.agentDebugLog.enabled": true }),

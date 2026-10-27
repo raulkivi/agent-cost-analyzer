@@ -213,13 +213,17 @@ on **Refresh**.
 
 ### Fix buttons and what they change
 
-A Fix button opens the Settings editor on the setting the row names. It
-doesn't change the setting itself: you make the change, and nothing is
+A Fix button opens the Settings editor on exactly the setting the row
+names. A Copilot Chat setting that isn't registered (Copilot Chat is
+disabled or not installed) opens the Extensions view on Copilot Chat
+instead; any other setting the Settings editor can't show opens
+settings.json at that setting. It doesn't change the setting itself: you make the change, and nothing is
 changed without your click. The rows and the panel's config banner use
 the same checks:
 
 | Problem | Severity | Setting that opens | What to change |
 |---|---|---|---|
+| GitHub Copilot Chat is disabled or not installed | Required | `github.copilot.chat.agentDebugLog.fileLogging.enabled` | Fix opens the Extensions view on Copilot Chat: enable or install it, sign in if asked, then reload the window. Copilot writes no logs without it, even when every setting is right. Panel button: **Open Extensions** |
 | Debug logging is off | Required | `github.copilot.chat.agentDebugLog.fileLogging.enabled` | Turn it on. Panel button: **Enable** |
 | Too few sessions kept | Required | `github.copilot.chat.agentDebugLog.fileLogging.maxRetainedSessionLogs` | Set it to at least the **Retention** value (200 by default; Copilot Chat's default is 50). Panel button: **Change** |
 | Cache-write and reasoning tokens unavailable | Optional | `github.copilot.chat.otel.dbSpanExporter.enabled` | Turn it on for two more per-turn figures. Panel button: **Enable** |
@@ -427,6 +431,14 @@ automatically in dark, light and high-contrast themes.
   Chat hasn't created its session store in this profile yet.
 
 Learn mode works without any sessions.
+
+### The Setup view says Copilot Chat is disabled or not installed
+
+The check found no enabled GitHub Copilot Chat extension in this VS Code
+profile, so no logs are written whatever the settings say. Select **Fix**
+to open the Extensions view on Copilot Chat, enable or install it, and
+reload the window if asked. The row clears on its own when the extension
+is enabled.
 
 ### The Setup view says logging is off
 

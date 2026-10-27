@@ -24,6 +24,7 @@ export function activate(context: vscode.ExtensionContext): void {
     globalStoragePath: context.globalStorageUri.fsPath,
     globalState: context.globalState,
     workspace: vscode.workspace,
+    extensions: vscode.extensions,
     hostCommands: createVscodeHostCommands(vscode, documents),
     translate: vscode.l10n.t,
     walkthrough: createVscodeWalkthrough(vscode, context.extension.id),

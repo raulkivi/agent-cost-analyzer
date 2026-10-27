@@ -11,6 +11,11 @@ export interface ConfigurationChangeSource {
   onDidChangeConfiguration(listener: (event: ConfigurationChangeEvent) => void): Disposable;
 }
 
+// The slice of `vscode.extensions` the extension watcher needs.
+export interface ExtensionsChangeSource {
+  onDidChange(listener: () => void): Disposable;
+}
+
 // The settings the config check judges and the Fix steps tell the user to
 // change (services/config-check). The optional agent-traces setting is left
 // out on purpose: it only ever adds a hint, and it's not on the plan's list.
@@ -27,6 +32,19 @@ export function watchConfigChanges(source: ConfigurationChangeSource, notify: ()
     if (!WATCHED_SETTING_IDS.some((settingId) => event.affectsConfiguration(settingId))) {
       return;
     }
+    try {
+      notify();
+    } catch {
+      // The panel may have just been disposed; the next change tries again.
+    }
+  });
+}
+
+// Calls `notify` whenever the set of extensions changes, so enabling or
+// disabling GitHub Copilot Chat refreshes the config status without a
+// reload. A throwing `notify` doesn't end the subscription.
+export function watchExtensionChanges(source: ExtensionsChangeSource, notify: () => void): Disposable {
+  return source.onDidChange(() => {
     try {
       notify();
     } catch {

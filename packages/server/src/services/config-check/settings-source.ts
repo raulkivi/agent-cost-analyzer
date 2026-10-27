@@ -11,6 +11,10 @@ export interface SettingsSourceDescription {
   // The user-level settings.json, for ConfigStatus.vscodeUserSettingsPath
   // and the warnings' help steps; null when it isn't known.
   userSettingsPath: string | null;
+  // False when the GitHub Copilot Chat extension is disabled or not
+  // installed: it then writes no logs whatever the settings say. Undefined
+  // when the source can't tell (the standalone app's settings file).
+  copilotChatAvailable?: boolean;
 }
 
 export interface SettingsSource {

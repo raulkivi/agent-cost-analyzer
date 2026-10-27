@@ -3,7 +3,7 @@ import path from "node:path";
 import type { HostEvent } from "@agent-cost-analyzer/domain";
 import { createExtensionApiService } from "@agent-cost-analyzer/server/src/composition/create-extension-api-service";
 import { ExtensionCommands } from "./commands/extension-commands.js";
-import { watchConfigChanges, type ConfigurationChangeSource } from "./config/config-change-watcher.js";
+import { watchConfigChanges, watchExtensionChanges, type ConfigurationChangeSource, type ExtensionsChangeSource } from "./config/config-change-watcher.js";
 import type { Translate } from "./l10n/localize.js";
 import { McpServerDefinitionSource } from "./mcp/mcp-server-definitions.js";
 import { WalkthroughOffer, type WalkthroughLauncher } from "./onboarding/walkthrough-offer.js";
@@ -19,7 +19,7 @@ import { copilotDebugLogsDirPaths, copilotLogPathsFromUserDataDir } from "./plat
 import { userDataDirFromGlobalStorage } from "./platform/vscode-user-data-dir.js";
 import { SidebarController } from "./sidebar/sidebar-controller.js";
 import { GlobalStateAppSettingsStore, type Memento } from "./settings/global-state-app-settings-store.js";
-import { VscodeSettingsSource, type ConfigurationReader } from "./vscode/vscode-settings-source.js";
+import { VscodeSettingsSource, type ConfigurationReader, type ExtensionsReader } from "./vscode/vscode-settings-source.js";
 import { createVscodeWebviewPanel } from "./vscode/vscode-webview-panel.js";
 
 export interface ExtensionCompositionInput {
@@ -36,6 +36,8 @@ export interface ExtensionCompositionInput {
   globalState: Memento;
   // vscode.workspace: the effective settings (G6) and their change events.
   workspace: ConfigurationReader & ConfigurationChangeSource;
+  // vscode.extensions: whether GitHub Copilot Chat is enabled, and when that changes.
+  extensions: ExtensionsReader & ExtensionsChangeSource;
   // What the editor does for the webview's host commands (G8):
   // vscode/vscode-host-commands.ts over the real API.
   hostCommands: HostCommands;
@@ -78,6 +80,7 @@ export function composeExtension({
   globalStoragePath,
   globalState,
   workspace,
+  extensions,
   hostCommands,
   translate,
   walkthrough,
@@ -105,7 +108,7 @@ export function composeExtension({
     appSettings: new GlobalStateAppSettingsStore(globalState, {
       onError: (setting, error) => console.error(`AI Credits Analyzer: could not save ${setting}`, error),
     }),
-    settingsSource: new VscodeSettingsSource(workspace, logPaths.vscodeSettingsPath),
+    settingsSource: new VscodeSettingsSource(workspace, logPaths.vscodeSettingsPath, extensions),
     learnScenariosFixturesDir: path.join(mediaDir, "learn-scenarios"),
     appVersion: extensionVersion,
   });
@@ -160,10 +163,13 @@ export function composeExtension({
   // A change to either Copilot logging setting makes the webview re-fetch
   // the config status (plan §4's configChanged), and the Setup view and
   // status bar re-read it.
-  const configWatch = watchConfigChanges(workspace, () => {
+  const refreshConfig = () => {
     panel.post({ kind: "event", name: "configChanged" } satisfies HostEvent);
     void sidebar.refreshConfig();
-  });
+  };
+  const configWatch = watchConfigChanges(workspace, refreshConfig);
+  // Enabling or disabling Copilot Chat changes the config check too (G6).
+  const extensionsWatch = watchExtensionChanges(extensions, refreshConfig);
 
   const walkthroughOffer = new WalkthroughOffer(globalState, walkthrough, {
     onError: (error) => console.error("AI Credits Analyzer: could not offer the walkthrough", error),
@@ -188,6 +194,7 @@ export function composeExtension({
     testHookHandlers: createTestHookHandlers({ performance: timings, rpcTrace, sidebar, mcpServers }),
     dispose: () => {
       configWatch.dispose();
+      extensionsWatch.dispose();
       mcpServers.dispose();
       panel.dispose();
     },

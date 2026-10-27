@@ -4,6 +4,7 @@
   "description": "%description%",
   "version": "0.1.0",
   "publisher": "raulkivi",
+  "icon": "icon.png",
   "private": true,
   "license": "MIT",
   "repository": {

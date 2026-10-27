@@ -2,28 +2,73 @@ import { describe, expect, it, vi } from "vitest";
 import { ReadOnlyDocumentStore } from "../documents/read-only-document-store.js";
 import { createVscodeHostCommands, type VscodeHostApi } from "./vscode-host-commands.js";
 
-function fakeVscode() {
+const COPILOT_SETTING = "github.copilot.chat.agentDebugLog.fileLogging.enabled";
+
+function fakeVscode({ registered = true, copilotChatInstalled = true } = {}) {
   const document = { uri: "ai-credits-analyzer-doc:/document-1.txt" };
   const api = {
     commands: { executeCommand: vi.fn(async () => undefined) },
     env: { clipboard: { writeText: vi.fn(async () => undefined) } },
     Uri: { from: vi.fn((components: { scheme: string; path: string }) => ({ ...components })) },
-    workspace: { openTextDocument: vi.fn(async () => document) },
+    workspace: {
+      openTextDocument: vi.fn(async () => document),
+      getConfiguration: vi.fn(() => ({
+        inspect: vi.fn(() => ({ defaultValue: registered ? "default" : undefined })),
+      })),
+    },
     window: { showTextDocument: vi.fn(async () => ({})) },
+    extensions: {
+      getExtension: vi.fn(() => (copilotChatInstalled ? { id: "GitHub.copilot-chat" } : undefined)),
+    },
   } satisfies VscodeHostApi;
   return { api, document, store: new ReadOnlyDocumentStore() };
 }
 
 describe("createVscodeHostCommands (vscode-extension.md G8)", () => {
-  it("opens the Settings editor on the setting id", async () => {
+  it("opens the Settings editor on an exact @id match for a registered setting", async () => {
     const { api, store } = fakeVscode();
 
-    await createVscodeHostCommands(api, store).openSetting("github.copilot.chat.agentDebugLog.fileLogging.enabled");
+    await createVscodeHostCommands(api, store).openSetting(COPILOT_SETTING);
 
-    expect(api.commands.executeCommand).toHaveBeenCalledWith(
-      "workbench.action.openSettings",
-      "github.copilot.chat.agentDebugLog.fileLogging.enabled",
-    );
+    expect(api.commands.executeCommand).toHaveBeenCalledWith("workbench.action.openSettings", `@id:${COPILOT_SETTING}`);
+  });
+
+  it("opens the Settings editor on an exact @id match for a registered Copilot setting even when Copilot Chat is missing", async () => {
+    const { api, store } = fakeVscode({ copilotChatInstalled: false });
+
+    await createVscodeHostCommands(api, store).openSetting(COPILOT_SETTING);
+
+    expect(api.commands.executeCommand).toHaveBeenCalledWith("workbench.action.openSettings", `@id:${COPILOT_SETTING}`);
+  });
+
+  it("opens the Extensions view on Copilot Chat when an unregistered Copilot setting's extension is disabled", async () => {
+    const { api, store } = fakeVscode({ registered: false, copilotChatInstalled: false });
+
+    await createVscodeHostCommands(api, store).openSetting(COPILOT_SETTING);
+
+    expect(api.extensions.getExtension).toHaveBeenCalledWith("GitHub.copilot-chat");
+    expect(api.commands.executeCommand).toHaveBeenCalledWith("workbench.extensions.search", "@id:GitHub.copilot-chat");
+  });
+
+  it("opens settings.json at the key for an unregistered Copilot setting while Copilot Chat is installed", async () => {
+    const { api, store } = fakeVscode({ registered: false, copilotChatInstalled: true });
+
+    await createVscodeHostCommands(api, store).openSetting(COPILOT_SETTING);
+
+    expect(api.commands.executeCommand).toHaveBeenCalledWith("workbench.action.openSettingsJson", {
+      revealSetting: { key: COPILOT_SETTING, edit: false },
+    });
+  });
+
+  it("opens settings.json at the key for an unregistered non-Copilot setting, even when Copilot Chat is missing", async () => {
+    const { api, store } = fakeVscode({ registered: false, copilotChatInstalled: false });
+
+    await createVscodeHostCommands(api, store).openSetting("editor.fontSize");
+
+    expect(api.commands.executeCommand).toHaveBeenCalledWith("workbench.action.openSettingsJson", {
+      revealSetting: { key: "editor.fontSize", edit: false },
+    });
+    expect(api.commands.executeCommand).not.toHaveBeenCalledWith("workbench.extensions.search", expect.anything());
   });
 
   it("writes text to VS Code's clipboard", async () => {

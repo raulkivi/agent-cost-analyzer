@@ -68,6 +68,7 @@ describe(".vscodeignore (step 10.9)", () => {
     "package-lock.json",
     "ai-credits-analyzer-0.1.0.vsix",
     ".gitignore",
+    "icon.svg",
   ];
   let dir: string;
   let listed: string[];
