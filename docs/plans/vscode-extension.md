@@ -1224,7 +1224,8 @@ D9 engine = current stable, changelog section) behind `release-check.mts`
 and `release-notes.mts`. The extension job builds, tests (unit and
 integration), packages, then publishes from the `release` environment:
 Marketplace through `azure/login` + `vsce publish --azure-credential`,
-Open VSX through `ovsx --trusted-publishing` (OIDC), and a GitHub Release with the
+Open VSX through `ovsx` (trusted publishing over OIDC, or `OVSX_PAT`
+for the first release), and a GitHub Release with the
 VSIX. Actions are pinned by commit SHA.
 
 *Manual checks:* the usability script, the MCP agent-mode check (10.8's
@@ -1599,19 +1600,24 @@ ID isn't set up yet.
    log in with an eclipse.org account (create one if needed; its GitHub
    username must match) and sign the **Eclipse Foundation Open VSX
    Publisher Agreement** (not the Eclipse Contributor Agreement).
-2. *Settings → Access Tokens → Generate New Token*. Copy it once; it is
-   only for creating the namespace.
-3. Create the namespace once, locally:
-   `npx ovsx create-namespace raulkivi -p <token>`. It must equal the
-   `publisher` field. Revoke the token afterwards.
-4. Claim the namespace: until ownership is granted, anyone can publish
-   into it. Open an issue at `github.com/EclipseFdn/open-vsx.org` (type
-   "Claim namespace ownership") naming `raulkivi`.
-5. *Settings → Trusted Publishers*: register repository
-   `raulkivi/agent-cost-analyzer`, workflow `release-extension.yml` and
-   environment `release`. CI then exchanges its OIDC ID token for a
-   short-lived publishing token (`ovsx publish --trusted-publishing`,
-   ovsx ≥ 1.1.0), so no `OVSX_PAT` secret is stored.
+2. Create the namespace once: the **+** next to *Namespaces* in Settings,
+   or `npx ovsx create-namespace raulkivi -p <token>` with an access
+   token. It must equal the `publisher` field.
+3. Claim the namespace: until ownership is granted, anyone can publish
+   into it and its extensions can stay inactive. *Claim Ownership* on the
+   namespace page opens an issue at `github.com/EclipseFdn/open-vsx.org`
+   (done: #14833, Option 2, so the Open VSX administrator has Reader
+   access on the Marketplace publisher until the issue closes).
+4. Trusted publishing needs the owner role (granted by the claim) and an
+   extension that already exists, so the first release uses a token:
+   *Settings → Access Tokens → Generate New Token*, stored as the
+   `OVSX_PAT` **secret** in the `release` environment.
+5. After the first release: *Settings → Trusted Publishers*, register
+   repository `raulkivi/agent-cost-analyzer`, workflow
+   `release-extension.yml` and environment `release`. Then delete the
+   `OVSX_PAT` secret and revoke the token. With the secret empty, `ovsx`
+   (≥ 1.1.0) exchanges the workflow's OIDC ID token for a short-lived
+   publishing token.
 
 **Listing prerequisites checked before the first publish (step 10.9)**
 
@@ -1629,9 +1635,10 @@ ID isn't set up yet.
   while. Not needed for v1.
 
 **Exit:** the `release` environment holds `AZURE_CLIENT_ID`,
-`AZURE_TENANT_ID` (variables); the `raulkivi` Open VSX namespace exists
-with a trusted publisher for `release-extension.yml` and `release`; the
-Entra ID app is a member of the publisher.
+`AZURE_TENANT_ID` (variables) and `OVSX_PAT` (secret, until the trusted
+publisher is registered after the first release); the `raulkivi` Open VSX
+namespace exists and its ownership claim is granted; the Entra ID app is
+a member of the publisher.
 
 ### 7.1 CI (every PR)
 
@@ -1663,8 +1670,8 @@ suite only, to cover the D4 path derivation for real.
 3. `azure/login` (OIDC, `allow-no-subscriptions`), then
    `vsce publish --azure-credential --packagePath *.vsix`, in the
    protected `release` environment with required reviewers (§7.0).
-4. `ovsx publish --trusted-publishing *.vsix` for Open VSX (VSCodium, Cursor,
-   and others).
+4. `ovsx publish *.vsix` for Open VSX (VSCodium, Cursor, and others):
+   trusted publishing, or `OVSX_PAT` while that secret is set.
 5. Attach the `.vsix` to a GitHub Release named after the extension.
 
 - **Versioning:** the version lives in `packages/vscode-extension/package.json`
