@@ -1662,9 +1662,10 @@ suite only, to cover the D4 path derivation for real.
 
 1. **Engine check (D9).** A script reads the current stable version from
    `https://update.code.visualstudio.com/api/releases/stable` and fails
-   the release if `engines.vscode` doesn't match it. The fix is a one-line
-   bump in the release PR. Only CI makes this network call; the extension
-   itself never does (constraint 1).
+   the release if `engines.vscode` doesn't match it. The fix is a bump in
+   the release PR, plus the "VS Code X.Y or later" line in the extension
+   README (`docs.test.ts` checks they agree). Only CI makes this network
+   call; the extension itself never does (constraint 1).
 2. Build and test as in CI. The integration tests run on that same
    stable build.
 3. `azure/login` (OIDC, `allow-no-subscriptions`), then

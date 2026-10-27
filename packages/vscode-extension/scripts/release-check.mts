@@ -23,7 +23,7 @@ if (flags.includes("--engine")) {
   const stable = latestStableVersion(await response.json());
   const engine = manifest.engines?.vscode ?? "";
   if (!engineMatchesStable(engine, stable)) {
-    throw new Error(`engines.vscode is ${JSON.stringify(engine)}; D9 needs "^${stable.split(".").slice(0, 2).join(".")}.0" (stable ${stable}).`);
+    throw new Error(`engines.vscode is ${JSON.stringify(engine)}; D9 needs "^${stable.split(".").slice(0, 2).join(".")}.0" (stable ${stable}); also update "VS Code X.Y or later" in README.md.`);
   }
 }
 console.log(`version=${version}`);

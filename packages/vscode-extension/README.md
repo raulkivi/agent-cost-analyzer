@@ -3,10 +3,16 @@
 See where your GitHub Copilot Chat tokens and AI Credits go. AI Credits
 Analyzer reads the logs Copilot Chat writes on your machine and shows each
 session turn by turn: what each turn cost, how much prompt caching saved,
-which tool calls failed and why, and what changed over time. Learn mode
-explains caching and AI Credits with sample sessions, so it's useful before
-you have any data of your own.
+which tool calls failed and why, and how your usage changes over time.
+Learn mode explains caching and AI Credits with sample sessions, so it's
+useful before you have any data of your own.
 
+AI Credits are GitHub Copilot's billing unit for premium requests (not
+dollars). The figures come from Copilot Chat's own logs, not from
+estimates.
+
+This is an early pre-release; please
+[report issues](https://github.com/raulkivi/agent-cost-analyzer/issues).
 Independent project; not affiliated with or endorsed by GitHub or
 Microsoft.
 
@@ -49,13 +55,15 @@ An unknown figure is shown as unknown, never as 0.
    steps below. Reopen it any time with **AI Credits Analyzer: Open Get
    Started Walkthrough**.
 3. Turn on Copilot Chat's debug file logging. Copilot Chat records token
-   and AI Credits data only while it's on, and it's off by default. Open
-   the **Setup** view in the AI Credits Analyzer side bar and select
-   **Fix** on the debug-logging row. It opens
-   `github.copilot.chat.agentDebugLog.fileLogging.enabled` in Settings;
-   turn it on. Also set
-   `github.copilot.chat.agentDebugLog.fileLogging.maxRetainedSessionLogs`
-   to 200 or more, so older logs aren't deleted. Reload the window.
+   and AI Credits data only while it's on, and it's off by default.
+   1. Open the **Setup** view in the AI Credits Analyzer side bar and
+      select **Fix** on the debug-logging row. It opens
+      `github.copilot.chat.agentDebugLog.fileLogging.enabled` in
+      Settings; turn it on.
+   2. Set
+      `github.copilot.chat.agentDebugLog.fileLogging.maxRetainedSessionLogs`
+      to 200 or more, so older logs aren't deleted.
+   3. Run **Developer: Reload Window**.
 4. Chat with Copilot as usual, then select **Refresh** in the **Sessions**
    view and pick a session.
 
@@ -105,8 +113,8 @@ All commands are in the **AI Credits Analyzer** category.
 
 ## Requirements
 
-- The current stable release of VS Code. Each release of the extension
-  requires the VS Code version that was stable when it was published.
+- VS Code 1.143 or later. Each release of the extension requires the VS
+  Code version that was stable when it was published.
 - GitHub Copilot Chat, with debug file logging turned on (see above).
 
 ## Documentation
