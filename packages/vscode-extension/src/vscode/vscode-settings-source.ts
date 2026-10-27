@@ -6,6 +6,14 @@ export interface ConfigurationReader {
   getConfiguration(): { get(section: string): unknown };
 }
 
+// The slice of `vscode.extensions` the source needs. getExtension returns
+// undefined for an extension that is disabled or not installed.
+export interface ExtensionsReader {
+  getExtension(extensionId: string): unknown;
+}
+
+const COPILOT_CHAT_EXTENSION_ID = "GitHub.copilot-chat";
+
 // SettingsSource over vscode.workspace.getConfiguration() (G6): the
 // effective value VS Code itself uses, so user, remote and workspace
 // overrides are all merged in. Reads through on every call, so each config
@@ -17,6 +25,7 @@ export class VscodeSettingsSource implements SettingsSource {
   constructor(
     private readonly workspace: ConfigurationReader,
     private readonly userSettingsPath: string | null,
+    private readonly extensions: ExtensionsReader,
   ) {}
 
   get(settingId: string): unknown {
@@ -24,6 +33,12 @@ export class VscodeSettingsSource implements SettingsSource {
   }
 
   describe(): SettingsSourceDescription {
-    return { located: true, userSettingsPath: this.userSettingsPath };
+    // Settings still read back from settings.json with Copilot Chat disabled,
+    // so the values alone can't show that no logs are being written.
+    return {
+      located: true,
+      userSettingsPath: this.userSettingsPath,
+      copilotChatAvailable: this.extensions.getExtension(COPILOT_CHAT_EXTENSION_ID) !== undefined,
+    };
   }
 }

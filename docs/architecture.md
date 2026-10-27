@@ -351,7 +351,7 @@ demand (§6.3):
 
 ```ts
 interface ConfigWarning {
-  code: "logging-disabled" | "retention-too-low" | "settings-not-found";
+  code: "logging-disabled" | "retention-too-low" | "settings-not-found" | "agent-traces-unavailable" | "copilot-chat-unavailable";
   settingId: string;
   currentValue: unknown;
   recommendedValue: unknown;

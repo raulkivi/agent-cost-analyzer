@@ -33,6 +33,20 @@ describe("configWarningSchema", () => {
     expect(configWarningSchema.parse(sample)).toEqual(sample);
   });
 
+  it("accepts a required-severity copilot-chat-unavailable warning", () => {
+    const sample = {
+      code: "copilot-chat-unavailable",
+      severity: "required",
+      settingId: "github.copilot.chat.agentDebugLog.fileLogging.enabled",
+      currentValue: false,
+      recommendedValue: true,
+      message: "GitHub Copilot Chat is disabled or not installed.",
+      helpSteps: ["Enable GitHub Copilot Chat in the Extensions view"],
+    };
+
+    expect(configWarningSchema.parse(sample)).toEqual(sample);
+  });
+
   it("rejects an invalid code", () => {
     const sample = {
       code: "not-a-real-code",

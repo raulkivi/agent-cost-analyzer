@@ -18,6 +18,7 @@ const FIX_ACTIONS: Record<ConfigWarning["code"], { label: string; variant: "btn-
   "logging-disabled": { label: "Enable", variant: "btn-primary" },
   "retention-too-low": { label: "Change", variant: "btn-secondary" },
   "agent-traces-unavailable": { label: "Enable", variant: "btn-secondary" },
+  "copilot-chat-unavailable": { label: "Open Extensions", variant: "btn-primary" },
   "settings-not-found": { label: "Open setting", variant: "btn-secondary" },
 };
 

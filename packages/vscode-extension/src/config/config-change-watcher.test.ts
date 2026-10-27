@@ -2,8 +2,10 @@ import { describe, expect, it, vi } from "vitest";
 import {
   WATCHED_SETTING_IDS,
   watchConfigChanges,
+  watchExtensionChanges,
   type ConfigurationChangeEvent,
   type ConfigurationChangeSource,
+  type ExtensionsChangeSource,
 } from "./config-change-watcher.js";
 
 class FakeWorkspace implements ConfigurationChangeSource {
@@ -82,6 +84,58 @@ describe("watchConfigChanges (vscode-extension.md §6 step 10.4)", () => {
 
     expect(() => workspace.change(WATCHED_SETTING_IDS[0])).not.toThrow();
     workspace.change(WATCHED_SETTING_IDS[0]);
+    expect(notify).toHaveBeenCalledTimes(2);
+  });
+});
+
+class FakeExtensions implements ExtensionsChangeSource {
+  readonly listeners = new Set<() => void>();
+
+  onDidChange(listener: () => void) {
+    this.listeners.add(listener);
+    return { dispose: () => this.listeners.delete(listener) };
+  }
+
+  change(): void {
+    for (const listener of [...this.listeners]) listener();
+  }
+}
+
+describe("watchExtensionChanges", () => {
+  // Enabling or disabling GitHub Copilot Chat changes what the config check
+  // reports (copilot-chat-unavailable) without touching any setting.
+  it("notifies on every change to the set of extensions", () => {
+    const extensions = new FakeExtensions();
+    const notify = vi.fn();
+    watchExtensionChanges(extensions, notify);
+
+    extensions.change();
+    extensions.change();
+
+    expect(notify).toHaveBeenCalledTimes(2);
+  });
+
+  it("stops notifying once disposed", () => {
+    const extensions = new FakeExtensions();
+    const notify = vi.fn();
+    const subscription = watchExtensionChanges(extensions, notify);
+
+    subscription.dispose();
+    extensions.change();
+
+    expect(notify).not.toHaveBeenCalled();
+    expect(extensions.listeners.size).toBe(0);
+  });
+
+  it("keeps listening after notify throws", () => {
+    const extensions = new FakeExtensions();
+    const notify = vi.fn(() => {
+      throw new Error("panel gone");
+    });
+    watchExtensionChanges(extensions, notify);
+
+    expect(() => extensions.change()).not.toThrow();
+    extensions.change();
     expect(notify).toHaveBeenCalledTimes(2);
   });
 });

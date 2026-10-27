@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { describeSettingsSourceContract } from "@agent-cost-analyzer/server/src/services/config-check/settings-source-contract";
 import { checkConfig } from "@agent-cost-analyzer/server/src/services/config-check/config-check";
-import { VscodeSettingsSource, type ConfigurationReader } from "./vscode-settings-source.js";
+import { VscodeSettingsSource, type ConfigurationReader, type ExtensionsReader } from "./vscode-settings-source.js";
 
 // vscode.workspace.getConfiguration() as it behaves for a dotted id: the
 // effective value, or undefined when nothing (not even a contributed
@@ -10,14 +10,19 @@ function fakeConfiguration(values: Record<string, unknown>): ConfigurationReader
   return { getConfiguration: () => ({ get: (section: string) => values[section] }) };
 }
 
+// vscode.extensions.getExtension: undefined for a disabled or uninstalled extension.
+function fakeExtensions(installedIds: string[] = ["GitHub.copilot-chat"]): ExtensionsReader {
+  return { getExtension: (id) => (installedIds.includes(id) ? {} : undefined) };
+}
+
 describeSettingsSourceContract("VscodeSettingsSource", {
-  build: (values) => new VscodeSettingsSource(fakeConfiguration(values), "/u/User/settings.json"),
+  build: (values) => new VscodeSettingsSource(fakeConfiguration(values), "/u/User/settings.json", fakeExtensions()),
 });
 
 describe("VscodeSettingsSource (vscode-extension.md G6)", () => {
   it("reads the effective value on every call, so a later change (or a workspace override) is seen", () => {
     const values: Record<string, unknown> = { "a.b": 1 };
-    const source = new VscodeSettingsSource(fakeConfiguration(values), null);
+    const source = new VscodeSettingsSource(fakeConfiguration(values), null, fakeExtensions());
 
     expect(source.get("a.b")).toBe(1);
 
@@ -26,11 +31,14 @@ describe("VscodeSettingsSource (vscode-extension.md G6)", () => {
   });
 
   it("is always located, and reports the user settings path it was given (or none)", () => {
-    expect(new VscodeSettingsSource(fakeConfiguration({}), "/u/settings.json").describe()).toEqual({
+    expect(new VscodeSettingsSource(fakeConfiguration({}), "/u/settings.json", fakeExtensions()).describe()).toMatchObject({
       located: true,
       userSettingsPath: "/u/settings.json",
     });
-    expect(new VscodeSettingsSource(fakeConfiguration({}), null).describe()).toEqual({ located: true, userSettingsPath: null });
+    expect(new VscodeSettingsSource(fakeConfiguration({}), null, fakeExtensions()).describe()).toMatchObject({
+      located: true,
+      userSettingsPath: null,
+    });
   });
 
   it("makes the config status follow the effective setting, not the user file", () => {
@@ -39,7 +47,7 @@ describe("VscodeSettingsSource (vscode-extension.md G6)", () => {
       "github.copilot.chat.agentDebugLog.fileLogging.maxRetainedSessionLogs": 200,
       "github.copilot.chat.otel.dbSpanExporter.enabled": true,
     };
-    const source = new VscodeSettingsSource(fakeConfiguration(values), "/u/User/settings.json");
+    const source = new VscodeSettingsSource(fakeConfiguration(values), "/u/User/settings.json", fakeExtensions());
     expect(checkConfig({ settings: source }).warnings).toEqual([]);
 
     // A workspace-level override turns logging off.
@@ -48,5 +56,26 @@ describe("VscodeSettingsSource (vscode-extension.md G6)", () => {
     const status = checkConfig({ settings: source });
     expect(status.loggingEnabled).toBe(false);
     expect(status.warnings.map((warning) => warning.code)).toEqual(["logging-disabled"]);
+  });
+
+  it("reports Copilot Chat as available while the extension is enabled, and unavailable once it is disabled or missing", () => {
+    const installed = ["GitHub.copilot-chat"];
+    const source = new VscodeSettingsSource(fakeConfiguration({}), null, fakeExtensions(installed));
+    expect(source.describe().copilotChatAvailable).toBe(true);
+
+    // Read on every call: disabling the extension is seen without a new source.
+    installed.length = 0;
+    expect(source.describe().copilotChatAvailable).toBe(false);
+  });
+
+  it("makes the config status warn copilot-chat-unavailable even when every setting is right", () => {
+    const values = {
+      "github.copilot.chat.agentDebugLog.fileLogging.enabled": true,
+      "github.copilot.chat.agentDebugLog.fileLogging.maxRetainedSessionLogs": 200,
+      "github.copilot.chat.otel.dbSpanExporter.enabled": true,
+    };
+    const source = new VscodeSettingsSource(fakeConfiguration(values), null, fakeExtensions([]));
+
+    expect(checkConfig({ settings: source }).warnings.map((warning) => warning.code)).toEqual(["copilot-chat-unavailable"]);
   });
 });

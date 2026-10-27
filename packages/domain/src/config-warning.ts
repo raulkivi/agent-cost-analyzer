@@ -6,6 +6,7 @@ export const configWarningSchema = z.object({
     "retention-too-low",
     "settings-not-found",
     "agent-traces-unavailable",
+    "copilot-chat-unavailable",
   ]),
   // required: the app can't produce any usage numbers without it fixed.
   // optional: an additive enrichment (Phase 8.5's cache-write/reasoning

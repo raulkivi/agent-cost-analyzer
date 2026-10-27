@@ -8,9 +8,16 @@ export interface VscodeHostApi<Uri = unknown, Document = unknown> {
   commands: { executeCommand(command: string, ...args: unknown[]): PromiseLike<unknown> };
   env: { clipboard: { writeText(text: string): PromiseLike<void> } };
   Uri: { from(components: { scheme: string; path: string }): Uri };
-  workspace: { openTextDocument(uri: Uri): PromiseLike<Document> };
+  workspace: {
+    openTextDocument(uri: Uri): PromiseLike<Document>;
+    getConfiguration(): { inspect(section: string): { defaultValue?: unknown } | undefined };
+  };
   window: { showTextDocument(document: Document): PromiseLike<unknown> };
+  extensions: { getExtension(extensionId: string): unknown };
 }
+
+const COPILOT_CHAT_EXTENSION_ID = "GitHub.copilot-chat";
+const COPILOT_SETTING_PREFIX = "github.copilot.";
 
 // Thin adapter: HostCommands (rpc/host-command-handler.ts, which validates
 // everything first) over the real VS Code API. A document is read-only: its
@@ -23,7 +30,22 @@ export function createVscodeHostCommands<Uri, Document>(
 ): HostCommands {
   return {
     async openSetting(settingId: string) {
-      await vscode.commands.executeCommand("workbench.action.openSettings", settingId);
+      // A fuzzy search would show near-miss settings, so match the id exactly.
+      if (vscode.workspace.getConfiguration().inspect(settingId)?.defaultValue !== undefined) {
+        await vscode.commands.executeCommand("workbench.action.openSettings", `@id:${settingId}`);
+        return;
+      }
+      // Copilot Chat owns its settings; while it is disabled they are not registered
+      // at all, so point the user at its extension instead.
+      const copilotChatMissing = vscode.extensions.getExtension(COPILOT_CHAT_EXTENSION_ID) === undefined;
+      if (settingId.startsWith(COPILOT_SETTING_PREFIX) && copilotChatMissing) {
+        await vscode.commands.executeCommand("workbench.extensions.search", `@id:${COPILOT_CHAT_EXTENSION_ID}`);
+        return;
+      }
+      // Settings UI cannot show an unregistered key, but settings.json can.
+      await vscode.commands.executeCommand("workbench.action.openSettingsJson", {
+        revealSetting: { key: settingId, edit: false },
+      });
     },
     async copyToClipboard(text: string) {
       await vscode.env.clipboard.writeText(text);
