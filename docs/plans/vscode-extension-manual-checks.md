@@ -69,6 +69,12 @@ in the docs). Findings that need a code fix also go in the run log below.
   Credits with coverage in the tooltip.
 - **1.13 Learn view: passed.** Picking the session from a Learn scenario
   switched the panel to Analyze mode.
+- **1.4 Normal use, default harness: passed** with a VSIX built from
+  `756a26c` (step 10.13). The Agent Host session appeared under Today with
+  its AI Credits, its turns showed tokens and AI Credits, the status bar
+  included it, the turn inspector, system prompt, Tools tab and tool audit
+  said "not available yet", and Setup marked the logging settings optional
+  without "setup needed".
 - **Not yet run:** 1.5-1.12, §2 and §3.
 
 ## 0. Install the candidate

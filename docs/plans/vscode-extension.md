@@ -24,7 +24,8 @@ Progress (2026-10-28):
 | 10.10 | Documentation: extension README/listing, extension user guide, two-product README and User Guide | Done (#73); screenshots done; owner review open |
 | 10.11 | UX review for VS Code: panel fits any width, readable in light, dark and High Contrast, native look, automated UI check | Done (#77) |
 | 10.12 | Learn scenarios in the side bar (a Learn view), like the Sessions view; the panel has no list of its own | Done (#80) |
-| 10.13 | Agent Host sessions: read the sessions VS Code 1.143+ creates by default (manual check 1.4) | Code done (`20c880b`–`0cdb39d`, docs commit); owner's manual check 1.4 with the default harness open; blocks `ext-v0.1.0` |
+| 10.13 | Agent Host sessions: read the sessions VS Code 1.143+ creates by default (manual check 1.4) | Done (`20c880b`–`756a26c`); manual check 1.4 passes with the default harness |
+| 10.14 | Agent Host turn text, tool calls and system prompt from the Copilot CLI event log (`~/.copilot/session-state/<sdkSessionId>/events.jsonl`) | Planned |
 
 
 ## 1. Context
@@ -1279,9 +1280,8 @@ default settings both products show no new sessions. On this machine the
 last classic session is from 2026-09-30; 67 `copilotcli` sessions since
 then are invisible. With the Local harness picked, 1.4 passes.
 
-**Status (2026-10-28): code done (commits `20c880b`–`0cdb39d` and the docs
-commit `docs: Agent Host sessions (step 10.13)`); owner's manual check 1.4
-with the default harness open. Blocks the `ext-v0.1.0` tag.**
+**Status (2026-10-28): done (commits `20c880b`–`756a26c`).** Manual
+check 1.4 passes with the default harness.
 
 **Storage seen on this machine** (Insiders 1.145; pinned by the redacted
 fixtures in `packages/server/fixtures/agent-host/`):
@@ -1356,7 +1356,7 @@ check 1.4 passes with the default harness.
 | 5 | Setup and config-check changes | medium | Sonnet | Done (`4790dc2`) |
 | 6 | "Unavailable" states in inspector, system prompt and tool audit | medium | Sonnet | Done (`da2ac7f`; fixes in `0cdb39d`) |
 | 7 | Docs and changelogs | low | Haiku | Done (docs commit) |
-| 8 | Re-run manual check 1.4 with the default harness | — | owner | Open |
+| 8 | Re-run manual check 1.4 with the default harness | — | owner | Passed (2026-10-28) |
 
 **Settled questions:**
 - `totalNanoAiu` is the classic path's unit (`copilotUsageNanoAiu`,
