@@ -59,6 +59,8 @@ describe("AgentHostSessionSource", () => {
 
     it("lists the catalog's Copilot sessions newest first, skipping deleted and Claude sessions", async () => {
       writeAgentHostCatalog(userDataDir);
+      writeAgentSessionDb(userDataDir, IDS.withTurns);
+      writeAgentSessionDb(userDataDir, IDS.second);
 
       const sessions = await source().listSessions();
 
@@ -87,14 +89,34 @@ describe("AgentHostSessionSource", () => {
       expect(summary.costAiCredits).toEqual({ known: true, value: expected });
     });
 
-    it("keeps a session whose session.db is missing, with its catalog title and unknown cost", async () => {
+    it("leaves out a session without turns (opened, never sent), whether its session.db is missing or empty", async () => {
+      writeAgentHostCatalog(userDataDir);
+      writeAgentSessionDb(userDataDir, IDS.withTurns, sessionRowsWithUsageOnly());
+      expect((await source().listSessions()).map((session) => session.id)).toEqual([IDS.withTurns]);
+
+      writeAgentSessionDb(userDataDir, IDS.second, { ...sessionRows, turns: [] });
+
+      expect((await source().listSessions()).map((session) => session.id)).toEqual([IDS.withTurns]);
+    });
+
+    it("still reads a session without turns by id", async () => {
       writeAgentHostCatalog(userDataDir);
 
-      const summary = (await source().listSessions()).find((session) => session.id === IDS.second)!;
+      const session = await source().readSession(IDS.second);
 
-      expect(summary.title).toBe("Add retry to uploader");
-      expect(summary.turnCount).toBe(0);
-      expect(summary.costAiCredits).toEqual({ known: false, reason: AGENT_HOST_SESSION_DB_MISSING_REASON });
+      expect(session?.title).toBe("Add retry to uploader");
+      expect(session?.turnCount).toBe(0);
+      expect(session?.costAiCredits).toEqual({ known: false, reason: AGENT_HOST_SESSION_DB_MISSING_REASON });
+    });
+
+    it("marks every listed session as an Agent Host session", async () => {
+      writeAgentHostCatalog(userDataDir);
+      writeAgentSessionDb(userDataDir, IDS.withTurns, sessionRowsWithUsageOnly());
+
+      const sessions = await source().listSessions();
+
+      expect(sessions.length).toBeGreaterThan(0);
+      expect(sessions.every((session) => session.copilotHarness === "agent-host")).toBe(true);
     });
 
     it("never resolves a session.db outside agentSessionData for a catalog id that isn't a safe path segment", async () => {
@@ -104,26 +126,23 @@ describe("AgentHostSessionSource", () => {
       // A session.db where a path-traversing id would land.
       writeAgentSessionDbAt(path.join(userDataDir, "escape", "session.db"));
 
-      const [summary] = await source().listSessions();
+      const session = await source().readSession("../escape");
 
-      expect(summary.id).toBe("../escape");
-      expect(summary.turnCount).toBe(0);
-      expect(summary.costAiCredits).toEqual({ known: false, reason: AGENT_HOST_SESSION_DB_MISSING_REASON });
+      expect(session?.id).toBe("../escape");
+      expect(session?.turnCount).toBe(0);
+      expect(session?.costAiCredits).toEqual({ known: false, reason: AGENT_HOST_SESSION_DB_MISSING_REASON });
     });
 
-    it("degrades one unreadable session.db to unknown usage instead of failing the list", async () => {
+    it("leaves out a session whose session.db is unreadable instead of failing the list", async () => {
       writeAgentHostCatalog(userDataDir);
+      writeAgentSessionDb(userDataDir, IDS.second);
       const dbPath = agentSessionDbPath(userDataDir, IDS.withTurns)!;
       mkdirSync(path.dirname(dbPath), { recursive: true });
       writeFileSync(dbPath, "not a database");
 
       const sessions = await source().listSessions();
 
-      expect(sessions).toHaveLength(2);
-      expect(sessions.find((session) => session.id === IDS.withTurns)!.costAiCredits).toEqual({
-        known: false,
-        reason: AGENT_HOST_SESSION_DB_MISSING_REASON,
-      });
+      expect(sessions.map((session) => session.id)).toEqual([IDS.second]);
     });
   });
 

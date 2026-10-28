@@ -46,6 +46,10 @@ describe("buildSessionSummary", () => {
     expect(session.usageDataAvailable).toBe(false);
   });
 
+  it("marks the session as coming from the classic store", () => {
+    expect(buildSessionSummary(sessionRow).copilotHarness).toBe("local");
+  });
+
   it("populates turnCount from the row's turn_count, independent of the (intentionally empty) turns array", () => {
     const session = buildSessionSummary(sessionRow);
 

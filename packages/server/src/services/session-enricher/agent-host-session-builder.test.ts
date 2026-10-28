@@ -118,6 +118,11 @@ describe("buildAgentHostSession", () => {
     expect(session.providerId).toBeUndefined();
   });
 
+  it("marks the session as coming from the Agent Host", () => {
+    expect(buildAgentHostSession({ catalogRow, store }).copilotHarness).toBe("agent-host");
+    expect(buildAgentHostSession({ catalogRow, store: null }).copilotHarness).toBe("agent-host");
+  });
+
   it("numbers the turns in session.db order with empty text and no tool calls", () => {
     const session = buildAgentHostSession({ catalogRow, store });
 
@@ -236,6 +241,7 @@ describe("buildAgentHostSessionSummary", () => {
     const summary = buildAgentHostSessionSummary({ catalogRow, store });
 
     expect(summary.turns).toEqual([]);
+    expect(summary.copilotHarness).toBe("agent-host");
     expect(summary.turnCount).toBe(2);
     expect(summary.costAiCredits).toEqual({ known: true, value: 3 });
     expect(() => sessionSchema.parse(summary)).not.toThrow();

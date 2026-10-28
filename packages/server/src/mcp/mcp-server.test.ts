@@ -308,3 +308,55 @@ describe("MCP server identity (vscode-extension.md step 10.9)", () => {
     await client.close();
   });
 });
+
+describe("MCP server, Agent Host sessions", () => {
+  let client: Client;
+
+  beforeEach(async () => {
+    const agentHost = { ...session("ah", "2026-09-28T08:00:00.000Z", [[]]), copilotHarness: "agent-host" as const };
+    const provider = new FakeProvider("fake", [agentHost]);
+    const providers = lookup(provider);
+    const insights = new InsightsService({ listProviders: () => [provider] }, []);
+    const server = createMcpServer({
+      auditQueries: new AuditQueryService(providers),
+      analysisQueries: new AnalysisQueryService(providers, insights),
+      getProviderStatus: async () => providerStatus,
+      version: "0.0.0-test",
+    });
+    const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+    client = new Client({ name: "test-client", version: "1.0.0" });
+    await Promise.all([server.connect(serverTransport), client.connect(clientTransport)]);
+  });
+
+  afterEach(async () => {
+    await client.close();
+  });
+
+  it("list_sessions marks the session's harness", async () => {
+    const result = (await client.callTool({ name: "list_sessions", arguments: {} })).structuredContent as {
+      sessions: { copilotHarness?: string }[];
+    };
+    expect(result.sessions[0].copilotHarness).toBe("agent-host");
+  });
+
+  it("list_tool_calls and get_session_audit say the tool calls are unavailable rather than empty", async () => {
+    const calls = (await client.callTool({ name: "list_tool_calls", arguments: { sessionId: "ah" } })).structuredContent as {
+      total: number;
+      toolCallsUnavailableReason?: string;
+    };
+    const audit = (await client.callTool({ name: "get_session_audit", arguments: { sessionId: "ah" } })).structuredContent as {
+      toolCallsUnavailableReason?: string;
+    };
+
+    expect(calls.total).toBe(0);
+    expect(calls.toolCallsUnavailableReason).toMatch(/Agent Host/);
+    expect(audit.toolCallsUnavailableReason).toMatch(/Agent Host/);
+  });
+
+  it("get_turn says the turn's text and tool calls are unavailable", async () => {
+    const view = turnViewSchema.parse(jsonOf(await client.callTool({ name: "get_turn", arguments: { sessionId: "ah", turnIndex: 0 } })));
+
+    expect(view.textUnavailableReason).toMatch(/Agent Host/);
+    expect(view.toolCallsUnavailableReason).toMatch(/Agent Host/);
+  });
+});

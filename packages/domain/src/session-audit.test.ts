@@ -35,6 +35,11 @@ describe("sessionAuditSchema", () => {
     expect(sessionAuditSchema.parse({ ...sampleAudit(), failureRate: null }).failureRate).toBeNull();
   });
 
+  it("carries the reason tool calls are unavailable, so an empty list isn't read as zero calls", () => {
+    const audit = { ...sampleAudit(), toolCallsUnavailableReason: "not read yet" };
+    expect(sessionAuditSchema.parse(audit).toolCallsUnavailableReason).toBe("not read yet");
+  });
+
   it("rejects a failure rate outside 0..1", () => {
     expect(() => sessionAuditSchema.parse({ ...sampleAudit(), failureRate: 1.5 })).toThrow();
   });

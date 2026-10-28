@@ -1,11 +1,13 @@
-import type { ToolInventoryEntry } from "@agent-cost-analyzer/domain";
+import type { CopilotHarness, ToolInventoryEntry } from "@agent-cost-analyzer/domain";
+import { AGENT_HOST_TOOL_INVENTORY_UNAVAILABLE } from "../lib/agent-host-unavailable.js";
 import { Blueprint } from "./ui/Blueprint.js";
 
 interface ToolInventoryPanelProps {
   entries: ToolInventoryEntry[];
+  copilotHarness?: CopilotHarness;
 }
 
-export function ToolInventoryPanel({ entries }: ToolInventoryPanelProps) {
+export function ToolInventoryPanel({ entries, copilotHarness }: ToolInventoryPanelProps) {
   return (
     <Blueprint style={{ padding: "var(--space-3)" }}>
       <div className="card-kicker" style={{ marginBottom: "var(--space-3)" }}>
@@ -13,7 +15,9 @@ export function ToolInventoryPanel({ entries }: ToolInventoryPanelProps) {
       </div>
       {entries.length === 0 ? (
         <p className="text-muted" style={{ fontSize: 13, margin: 0 }}>
-          No tool inventory captured for this session.
+          {copilotHarness === "agent-host"
+            ? AGENT_HOST_TOOL_INVENTORY_UNAVAILABLE
+            : "No tool inventory captured for this session."}
         </p>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-2)" }}>

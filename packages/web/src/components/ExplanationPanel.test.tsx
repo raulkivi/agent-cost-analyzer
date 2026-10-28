@@ -4,6 +4,13 @@ import { makeTurn } from "../test-support/turn-fixture.js";
 import { ExplanationPanel } from "./ExplanationPanel.js";
 
 describe("ExplanationPanel", () => {
+  it("says tool calls of an Agent Host session aren't read yet", () => {
+    render(<ExplanationPanel turn={makeTurn()} mode="analyze" copilotHarness="agent-host" />);
+
+    expect(screen.getByText(/Tool calls of Agent Host sessions aren't read yet/)).toBeInTheDocument();
+    expect(screen.queryByText(/No tools called this turn/)).not.toBeInTheDocument();
+  });
+
   it("renders the explanation for the given turn", () => {
     render(<ExplanationPanel turn={makeTurn({ explanation: "why this happened" })} mode="learn" />);
 

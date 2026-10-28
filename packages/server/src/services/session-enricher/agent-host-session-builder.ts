@@ -128,6 +128,7 @@ export function buildAgentHostSession({ catalogRow, store }: AgentHostSessionInp
     turnCount: turns.length,
     costAiCredits: sessionCost(store, turns),
     usageDataAvailable: rows.some(hasUsageRecord),
+    copilotHarness: "agent-host",
     ...(startedAt ? { startedAt } : {}),
   };
 }

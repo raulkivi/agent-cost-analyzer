@@ -12,6 +12,7 @@ import {
 import {
   AGENT_HOST_FIXTURE_SESSION_IDS,
   writeAgentHostCatalog,
+  writeAgentSessionDb,
 } from "@agent-cost-analyzer/server/src/test-support/agent-host-user-data-dir";
 import { createCopilotMcpServer } from "./copilot-mcp-server.js";
 
@@ -60,6 +61,8 @@ describe("createCopilotMcpServer (vscode-extension.md D7)", () => {
 
   it("reads VS Code Agent Host sessions under the same user-data dir, created after it started (step 10.13)", async () => {
     writeAgentHostCatalog(userDataDir);
+    writeAgentSessionDb(userDataDir, AGENT_HOST_FIXTURE_SESSION_IDS.withTurns);
+    writeAgentSessionDb(userDataDir, AGENT_HOST_FIXTURE_SESSION_IDS.second);
 
     const result = await client.callTool({ name: "list_sessions", arguments: {} });
 

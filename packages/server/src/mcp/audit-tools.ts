@@ -78,7 +78,12 @@ export function registerAuditTools(server: McpServer, deps: McpToolDeps, guarded
         offset: offsetSchema.optional().describe("Skip this many matching calls (default 0)."),
         limit: limitSchema.optional().describe(`Maximum calls to return (default ${DEFAULT_TOOL_CALL_LIMIT}).`),
       },
-      outputSchema: z.object({ total: z.number(), offset: z.number(), calls: z.array(auditedToolCallSchema) }),
+      outputSchema: z.object({
+        total: z.number(),
+        offset: z.number(),
+        calls: z.array(auditedToolCallSchema),
+        toolCallsUnavailableReason: z.string().optional(),
+      }),
       annotations: READ_ONLY,
     },
     ({ sessionId, provider, limit, offset, ...filter }) =>
@@ -88,7 +93,7 @@ export function registerAuditTools(server: McpServer, deps: McpToolDeps, guarded
           { ...filter, offset, limit: limit ?? DEFAULT_TOOL_CALL_LIMIT },
           provider,
         );
-        return result ? json({ total: result.total, offset: offset ?? 0, calls: result.calls }) : unknownSession(sessionId, provider);
+        return result ? json({ total: result.total, offset: offset ?? 0, calls: result.calls, ...(result.toolCallsUnavailableReason ? { toolCallsUnavailableReason: result.toolCallsUnavailableReason } : {}) }) : unknownSession(sessionId, provider);
       }),
   );
 

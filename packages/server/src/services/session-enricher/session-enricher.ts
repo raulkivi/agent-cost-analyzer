@@ -225,6 +225,7 @@ export function buildSessionSummary(
     turnCount: row.turn_count,
     costAiCredits,
     usageDataAvailable: false,
+    copilotHarness: "local",
     ...(row.created_at ? { startedAt: row.created_at } : {}),
   };
 }

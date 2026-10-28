@@ -78,6 +78,9 @@ export const sessionAuditSchema = z.object({
     affectedTurnsInputTokens: tokenCountSchema, // uncached + cache write + cache read
   }),
   outcomeCoverage: outcomeCoverageSchema,
+  // Set when the provider doesn't record this session's tool calls at all, so
+  // the empty `calls` reads as "not available", never as "no tool calls".
+  toolCallsUnavailableReason: z.string().optional(),
 });
 
 export type SessionAudit = z.infer<typeof sessionAuditSchema>;

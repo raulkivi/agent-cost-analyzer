@@ -31,4 +31,23 @@ describe("turnViewSchema", () => {
     };
     expect(turnViewSchema.parse(view)).toEqual(view);
   });
+
+  it("accepts the reasons text and tool calls are unavailable", () => {
+    const view = {
+      sessionId: "s1",
+      turnIndex: 0,
+      turnCount: 1,
+      model: "m",
+      userMessage: "",
+      userMessageTruncated: false,
+      assistantResponse: "",
+      assistantResponseTruncated: false,
+      explanation: "",
+      usage,
+      toolCalls: [],
+      textUnavailableReason: "no text",
+      toolCallsUnavailableReason: "no calls",
+    };
+    expect(turnViewSchema.parse(view)).toEqual(view);
+  });
 });

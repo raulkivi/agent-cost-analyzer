@@ -81,12 +81,14 @@ export class AgentHostSessionSource implements CopilotSessionSource {
       : { available: false, unavailableReason: UNAVAILABLE_REASON };
   }
 
+  // Chats opened but never sent have no turns and nothing to analyze, so
+  // they're left out of every list (readSession still finds them by id).
   async listSessions(): Promise<Session[]> {
     return this.withCatalog(
       (catalog) =>
-        listAgentHostSessionRows(catalog).map((catalogRow) =>
-          buildAgentHostSessionSummary({ catalogRow, store: this.readStoreForList(catalogRow.id) }),
-        ),
+        listAgentHostSessionRows(catalog)
+          .map((catalogRow) => buildAgentHostSessionSummary({ catalogRow, store: this.readStoreForList(catalogRow.id) }))
+          .filter((summary) => summary.turnCount > 0),
       [],
     );
   }

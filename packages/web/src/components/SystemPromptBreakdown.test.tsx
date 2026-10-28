@@ -4,6 +4,13 @@ import type { SystemPromptComponent } from "@agent-cost-analyzer/domain";
 import { SystemPromptBreakdown } from "./SystemPromptBreakdown.js";
 
 describe("SystemPromptBreakdown", () => {
+  it("says an Agent Host session's system prompt isn't read yet instead of 'not captured'", () => {
+    render(<SystemPromptBreakdown components={[]} providerId="vscode" copilotHarness="agent-host" />);
+
+    expect(screen.getByText(/system prompt of Agent Host sessions isn't read yet/i)).toBeInTheDocument();
+    expect(screen.queryByText(/agentDebugLog/)).not.toBeInTheDocument();
+  });
+
   it("renders the card kicker and one meter row per component", () => {
     const components: SystemPromptComponent[] = [
       { kind: "built-in", label: "Base system prompt (100 characters)", tokenCount: { known: true, value: 500 } },

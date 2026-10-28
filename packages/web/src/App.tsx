@@ -470,6 +470,7 @@ export function App({ performanceMarks = pagePerformanceMarks }: AppProps = {}) 
             turn={selectedTurn}
             mode={mode}
             toolCallsAvailable={toolCallsAvailable}
+            copilotHarness={session?.copilotHarness}
             onOpenTurnInspector={
               mode === "analyze" && session ? () => setTurnInspectorOpen(true) : undefined
             }
@@ -479,11 +480,12 @@ export function App({ performanceMarks = pagePerformanceMarks }: AppProps = {}) 
           <SystemPromptBreakdown
             components={session?.systemPrompt ?? []}
             providerId={session?.providerId}
+            copilotHarness={session?.copilotHarness}
             onOpenInspector={session ? () => setInspectorOpen(true) : undefined}
           />
         )}
         {mode === "analyze" && rightTab === "tools" && (
-          <ToolInventoryPanel entries={session?.toolInventory ?? []} />
+          <ToolInventoryPanel entries={session?.toolInventory ?? []} copilotHarness={session?.copilotHarness} />
         )}
       </div>
     </>
@@ -540,6 +542,7 @@ export function App({ performanceMarks = pagePerformanceMarks }: AppProps = {}) 
           sessionTitle={session.title}
           triggeredEvent={selectedTurn?.triggeredEvent}
           usageDataAvailable={session.usageDataAvailable}
+          copilotHarness={session.copilotHarness}
           onClose={() => setTurnInspectorOpen(false)}
         />
       ) : null}
@@ -660,6 +663,7 @@ export function App({ performanceMarks = pagePerformanceMarks }: AppProps = {}) 
                     onSelectTurn={selectTurn}
                     onInspectTurn={handleInspectTurn}
                     onShowAllSessions={() => setCenterView("rollup")}
+                    copilotHarness={session.copilotHarness}
                   />
                 ) : (
                   <p className="text-muted" style={{ fontSize: 13 }}>

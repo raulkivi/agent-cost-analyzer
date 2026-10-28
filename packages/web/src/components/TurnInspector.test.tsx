@@ -281,6 +281,26 @@ describe("TurnInspector", () => {
     expect(await screen.findByText(/made no request to the model/i)).toBeInTheDocument();
   });
 
+  it("explains that an Agent Host session's turn isn't available yet, without fetching", () => {
+    const fetchSpy = vi.fn();
+    vi.stubGlobal("fetch", fetchSpy);
+
+    render(
+      <TurnInspector
+        sessionId="session-1"
+        turnIndex={0}
+        usageDataAvailable={true}
+        copilotHarness="agent-host"
+        onClose={() => {}}
+      />,
+    );
+
+    expect(screen.getByRole("heading", { name: "Not available yet" })).toBeInTheDocument();
+    expect(screen.getByText(/Agent Host sessions aren't read yet/)).toBeInTheDocument();
+    expect(screen.queryByText(/enable agentDebugLog/)).not.toBeInTheDocument();
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
   // §3.5 States (AsyncView).
   describe("states", () => {
     it("explains an uncaptured session as an empty state, not an error", () => {

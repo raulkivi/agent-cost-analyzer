@@ -6,7 +6,7 @@ import { createClaudeCodeProvider } from "./create-claude-code-provider.js";
 import { createMitmproxyProvider } from "./create-mitmproxy-provider.js";
 import { createPiAgentProvider } from "./create-pi-agent-provider.js";
 import { createVscodeProvider, resolveVscodeSettingsPathOption } from "./create-vscode-provider.js";
-import { AGENT_HOST_FIXTURE_SESSION_IDS, writeAgentHostCatalog } from "../../test-support/agent-host-user-data-dir.js";
+import { AGENT_HOST_FIXTURE_SESSION_IDS, writeAgentHostCatalog, writeAgentSessionDb } from "../../test-support/agent-host-user-data-dir.js";
 
 // One factory per provider (G11): each lives in its own module, so a
 // composition root that imports one pulls in none of the others.
@@ -83,6 +83,7 @@ describe("per-provider factories", () => {
       fakeHome = mkdtempSync(path.join(tmpdir(), "provider-factories-agent-host-home-"));
       const userDataDir = path.join(fakeHome, ".config", "Code");
       writeAgentHostCatalog(userDataDir);
+      writeAgentSessionDb(userDataDir, AGENT_HOST_FIXTURE_SESSION_IDS.withTurns);
       vi.stubEnv("HOME", fakeHome);
       return userDataDir;
     }
@@ -90,6 +91,7 @@ describe("per-provider factories", () => {
     it("lists the Agent Host sessions under an injected user-data dir", async () => {
       fakeHome = mkdtempSync(path.join(tmpdir(), "provider-factories-agent-host-"));
       writeAgentHostCatalog(fakeHome);
+      writeAgentSessionDb(fakeHome, AGENT_HOST_FIXTURE_SESSION_IDS.withTurns);
 
       const sessions = await createVscodeProvider({ ...classicNone, agentHostUserDataDir: fakeHome }).listSessions();
 
