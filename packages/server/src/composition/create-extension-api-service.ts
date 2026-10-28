@@ -1,5 +1,6 @@
 import type { ProductProfile } from "@agent-cost-analyzer/domain";
 import { loadLearnScenarios } from "../data-sources/learn-scenarios/loader.js";
+import { agentHostCatalogProbe } from "../services/config-check/agent-host-catalog-probe.js";
 import { checkConfig } from "../services/config-check/config-check.js";
 import type { SettingsSource } from "../services/config-check/settings-source.js";
 import { ApiService } from "../services/api/api-service.js";
@@ -52,7 +53,12 @@ export function createExtensionApiService(options: ExtensionApiServiceOptions): 
     insights: createInsightsService(registry),
     settings: appSettings,
     checkConfig: (minRetainedSessionLogsThreshold) =>
-      checkConfig({ settings: settingsSource, settingsPath: resolvedVscodeSettingsPath, minRetainedSessionLogsThreshold }),
+      checkConfig({
+        settings: settingsSource,
+        settingsPath: resolvedVscodeSettingsPath,
+        minRetainedSessionLogsThreshold,
+        agentHostCatalogPresent: agentHostCatalogProbe(compositionOptions.agentHostUserDataDir),
+      }),
     learnScenarios: loadLearnScenarios({ fixturesDir: learnScenariosFixturesDir }),
     appVersion,
     productProfile: extensionProductProfile(appVersion),

@@ -55,16 +55,23 @@ function buildCopilotChatUnavailableWarning(): ConfigWarning {
   };
 }
 
-function buildLoggingDisabledWarning(settingsPath: string): ConfigWarning {
+// Agent Host sessions need none of the classic logging settings, so when a
+// catalog exists those warnings only concern chats run with the Local harness.
+const LOCAL_HARNESS_ONLY = "Only affects chats run with the Local harness; Agent Host chats are unaffected. ";
+
+function buildLoggingDisabledWarning(settingsPath: string, agentHost: boolean): ConfigWarning {
   return {
     code: "logging-disabled",
-    severity: "required",
+    severity: agentHost ? "optional" : "required",
     settingId: LOGGING_ENABLED_SETTING_ID,
     currentValue: false,
     recommendedValue: true,
-    message:
-      "GitHub Copilot Chat debug logging is disabled, so future sessions will have no " +
-      "per-turn usage data to analyze.",
+    message: agentHost
+      ? LOCAL_HARNESS_ONLY +
+        "GitHub Copilot Chat debug logging is disabled, so Local harness sessions will have no " +
+        "per-turn usage data to analyze."
+      : "GitHub Copilot Chat debug logging is disabled, so future sessions will have no " +
+        "per-turn usage data to analyze.",
     helpSteps: [
       `Open ${settingsPath} and add "${LOGGING_ENABLED_SETTING_ID}": true`,
       "Reload the VS Code window for the change to take effect.",
@@ -76,14 +83,16 @@ function buildRetentionTooLowWarning(
   settingsPath: string,
   currentValue: number,
   threshold: number,
+  agentHost: boolean,
 ): ConfigWarning {
   return {
     code: "retention-too-low",
-    severity: "required",
+    severity: agentHost ? "optional" : "required",
     settingId: MAX_RETAINED_SESSION_LOGS_SETTING_ID,
     currentValue,
     recommendedValue: threshold,
     message:
+      (agentHost ? LOCAL_HARNESS_ONLY : "") +
       `Only the last ${currentValue} sessions' logs are retained on disk, which limits ` +
       `how much history Analyze mode can show. At least ${threshold} is recommended.`,
     helpSteps: [
@@ -93,7 +102,7 @@ function buildRetentionTooLowWarning(
   };
 }
 
-function buildAgentTracesUnavailableWarning(settingsPath: string): ConfigWarning {
+function buildAgentTracesUnavailableWarning(settingsPath: string, agentHost: boolean): ConfigWarning {
   return {
     code: "agent-traces-unavailable",
     severity: "optional",
@@ -101,6 +110,7 @@ function buildAgentTracesUnavailableWarning(settingsPath: string): ConfigWarning
     currentValue: false,
     recommendedValue: true,
     message:
+      (agentHost ? LOCAL_HARNESS_ONLY : "") +
       "Cache-write and reasoning-token counts aren't available for Analyze mode " +
       "turns yet — enabling this optional setting unlocks two more usage figures " +
       "for future sessions.",
@@ -122,6 +132,9 @@ export interface CheckConfigOptions {
   homeDir?: string;
   now?: () => string;
   minRetainedSessionLogsThreshold?: number;
+  // Whether an Agent Host session catalog exists; asked once per check.
+  // Omitted means no catalog, so the classic logging warnings stay required.
+  agentHostCatalogPresent?: () => boolean;
 }
 
 export function checkConfig(options: CheckConfigOptions = {}): ConfigStatus {
@@ -140,6 +153,7 @@ export function checkConfig(options: CheckConfigOptions = {}): ConfigStatus {
   const minRetainedSessionLogsThreshold =
     options.minRetainedSessionLogsThreshold ?? MIN_RETAINED_SESSION_LOGS;
 
+  const agentHost = options.agentHostCatalogPresent?.() ?? false;
   const warnings: ConfigWarning[] = [];
   if (!located) {
     warnings.push(buildSettingsNotFoundWarning());
@@ -148,7 +162,7 @@ export function checkConfig(options: CheckConfigOptions = {}): ConfigStatus {
       warnings.push(buildCopilotChatUnavailableWarning());
     }
     if (!settings.loggingEnabled) {
-      warnings.push(buildLoggingDisabledWarning(settingsLabel));
+      warnings.push(buildLoggingDisabledWarning(settingsLabel, agentHost));
     }
     const effectiveMaxRetained =
       settings.maxRetainedSessionLogs ?? DEFAULT_RETAINED_SESSION_LOGS;
@@ -158,11 +172,12 @@ export function checkConfig(options: CheckConfigOptions = {}): ConfigStatus {
           settingsLabel,
           effectiveMaxRetained,
           minRetainedSessionLogsThreshold,
+          agentHost,
         ),
       );
     }
     if (!settings.agentTracesEnabled) {
-      warnings.push(buildAgentTracesUnavailableWarning(settingsLabel));
+      warnings.push(buildAgentTracesUnavailableWarning(settingsLabel, agentHost));
     }
   }
 

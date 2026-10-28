@@ -1,3 +1,5 @@
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
@@ -8,12 +10,12 @@ import { createExtensionApiService } from "./create-extension-api-service.js";
 
 const fixturesDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../fixtures/learn-scenarios");
 
-function buildService(appSettings = new InMemoryAppSettingsStore(), settingsSource?: SettingsSource) {
+function buildService(appSettings = new InMemoryAppSettingsStore(), settingsSource?: SettingsSource, agentHostUserDataDir: string | null = null) {
   return createExtensionApiService({
     sessionStoreDbPath: path.join("/nonexistent", "state.vscdb"),
     debugLogsDirPaths: [],
     agentTracesDbPath: null,
-    agentHostUserDataDir: null,
+    agentHostUserDataDir,
     vscodeSettingsPath: null,
     appSettings,
     settingsSource,
@@ -80,6 +82,26 @@ describe("createExtensionApiService (extension composition, vscode-extension.md 
     values["github.copilot.chat.agentDebugLog.fileLogging.enabled"] = false;
 
     expect((await service.getConfigStatus()).warnings.map((warning) => warning.code)).toEqual(["logging-disabled"]);
+  });
+
+  it("downgrades the classic logging warning once the Agent Host catalog exists", async () => {
+    const userDataDir = mkdtempSync(path.join(tmpdir(), "ext-ah-"));
+    try {
+      const source: SettingsSource = {
+        get: () => undefined,
+        describe: () => ({ located: true, userSettingsPath: "/u/settings.json" }),
+      };
+      const service = buildService(new InMemoryAppSettingsStore(), source, userDataDir);
+      const severity = async () =>
+        (await service.getConfigStatus()).warnings.find((w) => w.code === "logging-disabled")?.severity;
+
+      expect(await severity()).toBe("required");
+      mkdirSync(path.join(userDataDir, "User", "globalStorage"), { recursive: true });
+      writeFileSync(path.join(userDataDir, "User", "globalStorage", "agent-host.db"), "");
+      expect(await severity()).toBe("optional");
+    } finally {
+      rmSync(userDataDir, { recursive: true, force: true });
+    }
   });
 
   it("falls back to the settings.json file reader without a SettingsSource", async () => {

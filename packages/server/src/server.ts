@@ -1,4 +1,6 @@
 import { createApp } from "./app.js";
+import { agentHostCatalogProbe } from "./services/config-check/agent-host-catalog-probe.js";
+import { resolveUserDataDir } from "./platform/vscode-paths/resolve-user-data-dir.js";
 import { checkConfig } from "./services/config-check/config-check.js";
 
 const port = 3001;
@@ -8,7 +10,7 @@ const host = "127.0.0.1";
 // /api here without changeOrigin, so its own Host (port 5173) arrives as-is.
 const viteDevServerPort = 5173;
 
-const configStatus = checkConfig();
+const configStatus = checkConfig({ agentHostCatalogPresent: agentHostCatalogProbe(resolveUserDataDir()) });
 if (configStatus.warnings.length > 0) {
   console.warn("Configuration warnings (see GET /api/config/status for fix steps):");
   for (const warning of configStatus.warnings) {

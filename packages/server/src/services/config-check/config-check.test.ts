@@ -389,4 +389,45 @@ describe("checkConfig", () => {
       expect(status.warnings).toEqual([]);
     });
   });
+
+  describe("with an Agent Host catalog present", () => {
+    const classicOffSettings = {
+      "github.copilot.chat.agentDebugLog.fileLogging.enabled": false,
+      "github.copilot.chat.agentDebugLog.fileLogging.maxRetainedSessionLogs": 10,
+      "github.copilot.chat.otel.dbSpanExporter.enabled": false,
+    };
+
+    it("downgrades the classic logging warnings to optional Local-harness wording", () => {
+      writeFileSync(settingsPath, JSON.stringify(classicOffSettings));
+
+      const status = checkConfig({ settingsPath, now: NOW, agentHostCatalogPresent: () => true });
+
+      expect(status.warnings.map((w) => [w.code, w.severity])).toEqual([
+        ["logging-disabled", "optional"],
+        ["retention-too-low", "optional"],
+        ["agent-traces-unavailable", "optional"],
+      ]);
+      for (const warning of status.warnings) {
+        expect(warning.message).toContain("Local harness");
+      }
+    });
+
+    it("keeps settings-not-found and copilot-chat-unavailable required", () => {
+      expect(
+        checkConfig({ settingsPath: null, now: NOW, agentHostCatalogPresent: () => true }).warnings,
+      ).toEqual([expect.objectContaining({ code: "settings-not-found", severity: "required" })]);
+    });
+
+    it("keeps the warnings required when no catalog exists", () => {
+      writeFileSync(settingsPath, JSON.stringify(classicOffSettings));
+
+      const status = checkConfig({ settingsPath, now: NOW, agentHostCatalogPresent: () => false });
+
+      expect(status.warnings.map((w) => [w.code, w.severity])).toEqual([
+        ["logging-disabled", "required"],
+        ["retention-too-low", "required"],
+        ["agent-traces-unavailable", "optional"],
+      ]);
+    });
+  });
 });
