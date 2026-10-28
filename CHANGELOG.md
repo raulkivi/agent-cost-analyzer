@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- VS Code Agent Host sessions (step 10.13): Copilot chats that VS Code 1.143
+  and later run through the Agent Host are listed with their turns, tokens and
+  AI Credits, beside the classic Copilot Chat sessions. Their prompt and
+  response text, tool calls and system prompt aren't read yet.
 ### Fixed
 - VS Code Agent Host sessions (step 10.13): a session whose `session.db` is
   missing or unreadable stays listed with unknown usage; only chats that were
@@ -14,6 +19,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   rollup tools no longer count Agent Host sessions as having zero tool calls:
   they are left out of the counts and rates, and the audit says how many.
 ### Changed
+- VS Code Agent Host sessions (step 10.13): the Copilot session list holds
+  classic and Agent Host sessions together, newest start first. The debug
+  logging and retention warnings are optional when `agent-host.db` exists,
+  since they only affect Local harness chats ("Only affects chats run with
+  the Local harness; Agent Host chats are unaffected.").
 - Renamed the repository and npm workspace scope from `copilot-cost-analyzer`
   to `agent-cost-analyzer`, matching the product name. GitHub redirects the
   old URLs. The MCP server now reports its name as `agent-cost-analyzer`.

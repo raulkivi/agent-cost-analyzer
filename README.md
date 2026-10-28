@@ -201,6 +201,11 @@ runtime, never hardcoded:
     off by default, see
     [Enabling richer cache-write/reasoning numbers](#enabling-richer-cache-writereasoning-numbers-optional)
     below.
+  - **Agent Host sessions** (VS Code 1.143 and later, where the Copilot
+    harness is the default) come from `globalStorage/agent-host.db` and
+    `agentSessionData/<session>/session.db` in the same user-data folder.
+    They show turns, tokens and AI Credits. Their prompt and response text,
+    tool calls and system prompt aren't read yet.
   - macOS and Windows paths are implemented but not yet verified against a
     real install. Multi-profile VS Code setups are not supported on any OS
     (see [architecture.md](docs/architecture.md)).

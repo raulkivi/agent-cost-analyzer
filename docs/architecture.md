@@ -286,6 +286,7 @@ interface Session {
   usageDataAvailable: boolean; // false ⇒ UI shows behavioral proxies, per constraint 6
   category?: string; // Learn mode only — authored once per fixture, e.g. "Prompt caching"
   startedAt?: string; // Analyze mode only — ISO date, sourced from sessions.created_at
+  copilotHarness?: "local" | "agent-host"; // VS Code (Copilot) sessions only; §6.2.2.1
 }
 ```
 
@@ -876,6 +877,81 @@ now owns this enrichment as an internal detail of the VS Code provider —
 through `VscodeLogProvider`. `agent-traces.db` is still not a separate
 `LogProvider` id, per the 2026-08-10 decision.
 
+#### 6.2.2.1 VS Code Agent Host sessions (step 10.13)
+
+**Why.** VS Code 1.143 made the Copilot harness the default for new
+sessions, and those sessions run through the Agent Host. They write nothing
+to `session-store.db` or `debug-logs/`, so the classic path listed none of
+them. The Agent Host sessions are read from VS Code's user-data dir, next to
+the classic stores, through `AgentHostSessionSource`
+(`data-sources/agent-host/`).
+
+**Stores read.** Both are read-only, and both are opened per call, not at
+startup.
+
+- `User/globalStorage/agent-host.db`, the session catalog:
+  - `sessions_v2`: one row per session. Only `session_uri` values with the
+    `copilotcli:/` prefix are read. `start_time` and `modified_time` are in
+    ms. `payload` is JSON; `data.summary` is the title.
+  - `metadata`: a row `sessionTombstone:<session_uri>` = `true` marks a
+    deleted session. Its `sessions_v2` row stays, and the session is skipped.
+- `agentSessionData/<id>/session.db`, one per session:
+  - `turns`: one row per turn, in insertion order. Holds no text.
+  - `turn_usage.usage`: per turn, JSON. `_meta.turnTokenTotals` gives each
+    model's `inputTokens` (cached tokens included), `cachedTokens` and
+    `outputTokens`. `_meta.copilotUsage.totalNanoAiu` gives the turn's AI
+    Credits, at ÷ 10⁹. The top-level `inputTokens`, `outputTokens` and
+    `cacheReadTokens` describe only the turn's last model call, so they
+    aren't used. `sessionTotalNanoAiu` lags the turns, so it isn't used.
+  - `session_metadata`: `customTitle` (title) and `copilot.model` (model).
+
+**What is unknown, and why.** Each unrecorded figure is `unknown` with a
+reason, never 0.
+
+- Cache-write, reasoning, tool and vision tokens: the store doesn't record
+  them.
+- Turn text (prompt and response), tool calls and the system prompt: these
+  stores don't hold them. The Copilot CLI event log holds them, read in
+  step 10.14.
+- A turn without `totalNanoAiu` has unknown AI Credits. The session total
+  is unknown when any turn's AI Credits are unknown (all-or-nothing, as for
+  classic sessions).
+
+**Marker.** `Session.copilotHarness` is `"agent-host"` on these sessions and
+`"local"` on classic Copilot Chat sessions (§5). The UI and the MCP tools
+use it to say "not available yet" where the classic store has data. Text
+and tool-call reasons are set on the turn or the audit, with the messages
+from `services/tool-audit/tool-calls-availability.ts` and the web's
+`lib/agent-host-unavailable.ts`.
+
+**What lists.**
+
+- A chat whose `session.db` was read and has no turns (opened, never sent)
+  is hidden from every list. `readSession` still finds it by id.
+- A missing or unreadable `session.db` stays listed, with unknown tokens
+  and AI Credits. Unknown is shown, never hidden (constraint 6).
+- The Copilot provider's list is classic and Agent Host sessions together,
+  newest `startedAt` first. A session without a start goes last. Ties keep
+  each store's own order. Every session has `providerId` `vscode`.
+- A lookup by id asks the classic store first. The Agent Host store is asked
+  only for an id the classic store doesn't have.
+- The provider is available when either store exists. With neither, the
+  classic store's reason is reported.
+
+**Paths (D4).** `createVscodeProvider` takes `agentHostUserDataDir`. The
+standalone app defaults it to `resolveUserDataDir()`. The extension derives
+it from VS Code's `globalStorageUri` in `copilotLogPathsFromUserDataDir`,
+and its composition roots require it, so no default install is guessed.
+
+**Rollups and insights.** A session whose tool calls are unknown (Agent
+Host) is left out of the audit rollup's counts and rates, and the rollup
+reports how many as `sessionsWithUnknownToolCalls`. Insight session rows
+carry `toolCallsUnavailable: true`, and their turn rows have
+`toolCallCount: null`. A per-turn cost row's `toolCalls` is `null`, not 0.
+
+**Config check.** When `agent-host.db` exists, the two classic logging
+warnings become optional (§6.3).
+
 #### 6.2.3 mitmproxy provider flow
 
 ![6.2.3 mitmproxy provider flow](diagrams/6-2-3-mitmproxy-provider-flow.drawio.svg)
@@ -1454,6 +1530,18 @@ unmet:
    deep-enough pool of historical sessions to be useful, not just whatever
    happened to run most recently. `helpSteps` includes the exact key/value
    to add.
+
+**Agent Host sessions (step 10.13).** Agent Host sessions need none of the
+classic logging settings. When `agent-host.db` exists, the check asks
+`agentHostCatalogProbe` on every call, so a catalog created after startup is
+seen without a restart. Then:
+
+- `logging-disabled` and `retention-too-low` get `severity: "optional"`.
+  Their messages start with "Only affects chats run with the Local harness;
+  Agent Host chats are unaffected. ".
+- `agent-traces-unavailable` is optional already. It gets the same prefix.
+- Without the catalog, the two prerequisites stay required, with their
+  original messages.
 
 This check runs **once at server startup** — so a CLI user sees the warning
 in the terminal immediately, before ever opening the browser — and again on

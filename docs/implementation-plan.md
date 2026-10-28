@@ -1279,9 +1279,10 @@ server (off, on with 9 tools and `get_session_cost`, off again).
    The Entra ID app, the `release` environment, the Open VSX namespace,
    `OVSX_PAT` and the icon are in place; trusted publishing replaces
    `OVSX_PAT` after the first release.
-4. Step 10.13 (Agent Host sessions): since VS Code 1.143 new sessions
-   run through the Agent Host, which neither product reads yet. Found by
-   manual check 1.4 on 2026-10-28.
+4. Step 10.13 (Agent Host sessions): code done. Since VS Code 1.143 new
+   sessions run through the Agent Host; both products now list them with
+   turns, tokens and AI Credits. The owner's manual check 1.4 with the
+   default harness is open. Found by manual check 1.4 on 2026-10-28.
 5. The first release: tag `ext-v0.1.0` (odd minor, so the pre-release
    channel).
 

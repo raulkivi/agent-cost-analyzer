@@ -24,7 +24,7 @@ Progress (2026-10-28):
 | 10.10 | Documentation: extension README/listing, extension user guide, two-product README and User Guide | Done (#73); screenshots done; owner review open |
 | 10.11 | UX review for VS Code: panel fits any width, readable in light, dark and High Contrast, native look, automated UI check | Done (#77) |
 | 10.12 | Learn scenarios in the side bar (a Learn view), like the Sessions view; the panel has no list of its own | Done (#80) |
-| 10.13 | Agent Host sessions: read the sessions VS Code 1.143+ creates by default (manual check 1.4) | Planned; blocks `ext-v0.1.0` |
+| 10.13 | Agent Host sessions: read the sessions VS Code 1.143+ creates by default (manual check 1.4) | Code done (`20c880b`–`0cdb39d`, docs commit); owner's manual check 1.4 with the default harness open; blocks `ext-v0.1.0` |
 
 
 ## 1. Context
@@ -1279,7 +1279,9 @@ default settings both products show no new sessions. On this machine the
 last classic session is from 2026-09-30; 67 `copilotcli` sessions since
 then are invisible. With the Local harness picked, 1.4 passes.
 
-**Status (2026-10-28): in progress. Blocks the `ext-v0.1.0` tag.**
+**Status (2026-10-28): code done (commits `20c880b`–`0cdb39d` and the docs
+commit `docs: Agent Host sessions (step 10.13)`); owner's manual check 1.4
+with the default harness open. Blocks the `ext-v0.1.0` tag.**
 
 **Storage seen on this machine** (Insiders 1.145; pinned by the redacted
 fixtures in `packages/server/fixtures/agent-host/`):
@@ -1345,16 +1347,16 @@ check 1.4 passes with the default harness.
 
 **Tasks:**
 
-| # | Task | Complexity | Model |
-|---|---|---|---|
-| 1 | Fixtures from real captures; format in architecture.md; hidden acceptance tests for tasks 2 and 3 | medium | Sonnet |
-| 2 | Paths and `agent-host.db` session-list reader (exact spec) | low | setup6 |
-| 3 | `session.db` turn and usage reader, nano-AIU conversion (exact spec) | medium | setup6, Sonnet after two failures |
-| 4 | Agent Host sessions in the Copilot provider, D4 paths for both products | high | Opus |
-| 5 | Setup and config-check changes | medium | Sonnet |
-| 6 | "Unavailable" states in inspector, system prompt and tool audit | medium | Sonnet |
-| 7 | Docs and changelogs | low | Haiku |
-| 8 | Re-run manual check 1.4 with the default harness | — | owner |
+| # | Task | Complexity | Model | Status |
+|---|---|---|---|---|
+| 1 | Fixtures from real captures; format in architecture.md; hidden acceptance tests for tasks 2 and 3 | medium | Sonnet | Done (`20c880b`) |
+| 2 | Paths and `agent-host.db` session-list reader (exact spec) | low | setup6 | Done (`b143a7b`) |
+| 3 | `session.db` turn and usage reader, nano-AIU conversion (exact spec) | medium | setup6, Sonnet after two failures | Done (`0e80c90`) |
+| 4 | Agent Host sessions in the Copilot provider, D4 paths for both products | high | Opus | Done (`60eb9e9`) |
+| 5 | Setup and config-check changes | medium | Sonnet | Done (`4790dc2`) |
+| 6 | "Unavailable" states in inspector, system prompt and tool audit | medium | Sonnet | Done (`da2ac7f`; fixes in `0cdb39d`) |
+| 7 | Docs and changelogs | low | Haiku | Done (docs commit) |
+| 8 | Re-run manual check 1.4 with the default harness | — | owner | Open |
 
 **Settled questions:**
 - `totalNanoAiu` is the classic path's unit (`copilotUsageNanoAiu`,

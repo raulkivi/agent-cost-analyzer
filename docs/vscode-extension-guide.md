@@ -105,6 +105,25 @@ Logging isn't retroactive: only sessions started after you turn it on have
 per-turn numbers. Older sessions still appear, with their figures shown as
 unknown.
 
+### Agent Host sessions (VS Code 1.143 and later)
+
+VS Code 1.143 makes the Copilot harness the default for new chats. Those
+chats run through the Agent Host, which keeps its sessions in its own store
+under VS Code's user-data folder. The extension lists them in the Sessions
+view with their tokens and AI Credits, and they don't depend on the debug
+logging settings above.
+
+- Prompt and response text, tool calls and the system prompt of these
+  sessions aren't available yet. The panel's turn inspector, system prompt
+  inspector, tool inventory and tool audit say so, and show no figures for
+  them.
+- A chat that was opened but never sent has no turns, so it isn't listed.
+- Sessions from the Local harness (the classic Copilot Chat store) and
+  Agent Host sessions are listed together, newest first.
+- The Setup view marks the two logging settings **Optional** while Agent
+  Host sessions exist. Their message reads "Only affects chats run with the
+  Local harness; Agent Host chats are unaffected."
+
 ## The analyzer panel
 
 Run **AI Credits Analyzer: Open** (or select the graph icon in the Sessions
@@ -512,5 +531,7 @@ and `~/.vscode-server/data` (remote). Under that folder it reads:
 | `User/globalStorage/github.copilot-chat/session-store.db` | Copilot Chat's session list (SQLite, opened read-only) |
 | `User/workspaceStorage/<workspace>/GitHub.copilot-chat/debug-logs/` | Each session's debug log, `main.jsonl`, with per-turn usage and AI Credits |
 | `User/globalStorage/github.copilot-chat/agent-traces.db` | Optional: cache-write and reasoning tokens (SQLite, opened read-only) |
+| `User/globalStorage/agent-host.db` | Agent Host session list, for VS Code 1.143 and later (SQLite, opened read-only) |
+| `agentSessionData/<session>/session.db` | Agent Host turns, tokens and AI Credits per session (SQLite, opened read-only) |
 
 Settings are read through VS Code's settings API, not from the file.
