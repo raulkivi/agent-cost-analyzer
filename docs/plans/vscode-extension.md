@@ -24,6 +24,7 @@ Progress (2026-10-28):
 | 10.10 | Documentation: extension README/listing, extension user guide, two-product README and User Guide | Done (#73); screenshots done; owner review open |
 | 10.11 | UX review for VS Code: panel fits any width, readable in light, dark and High Contrast, native look, automated UI check | Done (#77) |
 | 10.12 | Learn scenarios in the side bar (a Learn view), like the Sessions view; the panel has no list of its own | Done (#80) |
+| 10.13 | Agent Host sessions: read the sessions VS Code 1.143+ creates by default (manual check 1.4) | Planned; blocks `ext-v0.1.0` |
 
 
 ## 1. Context
@@ -1265,6 +1266,80 @@ green; listing-prerequisite tests passed on first run.
 
 *Tests:* 2,541 → 2,647 (domain 129, server 1,037, web 982, pi-logger 15,
 extension 484).
+
+### 10.13 Agent Host sessions (manual-check finding, 2026-10-28)
+
+Manual check 1.4 found no sessions after an agent-mode chat. Since VS
+Code 1.143 "the Copilot harness is now the default for new sessions",
+and those sessions "run through the Agent Host"; the Local harness is
+being retired ([release notes](https://code.visualstudio.com/updates/v1_143)).
+Agent Host sessions write nothing to Copilot Chat's `session-store.db`
+or `debug-logs`, the only stores the Copilot provider reads. So on
+default settings both products show no new sessions. On this machine the
+last classic session is from 2026-09-30; 67 `copilotcli` sessions since
+then are invisible. With the Local harness picked, 1.4 passes.
+
+**Status (2026-10-28): planned. Blocks the `ext-v0.1.0` tag.**
+
+**Storage seen on this machine** (Insiders 1.145, provisional until
+pinned by redacted fixtures):
+- `<userData>/User/globalStorage/agent-host.db`: `sessions_v2` (one row
+  per session: `session_uri` `copilotcli:/<id>`, `provider`, `start_time`,
+  `modified_time`, a JSON `payload` with the summary and working
+  directories) and `chats_v2` (the session's chats, title in `metadata`).
+  `provider` is also `claude` for Claude harness sessions.
+- `<userData>/agentSessionData/<id>/session.db`: `turns` (`request_<uuid>`
+  ids), `turn_usage.usage` (JSON: `inputTokens`, `outputTokens`,
+  `cacheReadTokens`, `model`, `copilotUsage.totalNanoAiu`, and
+  `_meta.vscode.modelCall` with duration and time to first token),
+  `session_metadata` (title, model), `terminal_outputs`, `file_edits`.
+- `<userData>/logs/<run>/ahp/*.jsonl`: Agent Host protocol traffic,
+  per run, so not a durable source.
+
+**Deliverables:**
+- Redacted real fixtures for one Agent Host session, and the format
+  documented in architecture.md §6.2.
+- A shared, read-only Agent Host source in `packages/server`: lists
+  sessions from `agent-host.db` and reads turns and usage from each
+  `session.db`, opened lazily like the classic stores.
+- AI Credits from `copilotUsage.totalNanoAiu` (÷ 10⁹, to confirm against
+  Copilot's own usage figure); unknown stays unknown, never 0.
+- The Copilot provider lists classic and Agent Host sessions together,
+  each marked with its harness. Paths come from the user-data dir (D4),
+  so both products pick them up.
+- Setup doesn't report "setup needed" when Agent Host sessions exist,
+  since the classic logging settings don't apply to them.
+- Turn inspector, system prompt and tool audit: show "unavailable" with a
+  reason for Agent Host sessions in this step; richer detail is a
+  follow-up.
+- Docs: architecture.md, both user guides, the extension README and both
+  changelogs.
+
+**Exit criterion:** in VS Code 1.143+ with default settings, a new
+agent-mode session appears in the Sessions view with turns, tokens and AI
+Credits that match Copilot's own figure. Classic sessions still show. The
+standalone app shows the same session with the same numbers. Manual
+check 1.4 passes with the default harness.
+
+**Tasks:**
+
+| # | Task | Complexity | Model |
+|---|---|---|---|
+| 1 | Capture and redact fixtures; document the format | medium | Sonnet |
+| 2 | `agent-host.db` session-list reader (exact spec, hidden tests) | low | setup6 |
+| 3 | `session.db` turn and usage reader, nano-AIU conversion (exact spec, hidden tests) | medium | setup6, Sonnet after two failures |
+| 4 | Merge into the Copilot provider, session identity, D4 paths for both products | high | Opus |
+| 5 | Setup and config-check changes | medium | Sonnet |
+| 6 | "Unavailable" states in inspector, system prompt and tool audit | medium | Sonnet |
+| 7 | Docs and changelogs | low | Haiku |
+| 8 | Re-run manual check 1.4 with the default harness | — | owner |
+
+**Open questions:**
+- Is `totalNanoAiu` the same unit as the AI Credits the panel shows?
+- Do Claude harness sessions (`provider` `claude`) bill Copilot AI
+  Credits, and does a Copilot-only extension list them?
+- Is the Copilot CLI's own per-session state (`sdkSessionId`) a better
+  source for turn content and tool calls than `session.db`?
 
 ### 10.12 Learn scenarios in the side bar (owner's request, 2026-10-24)
 

@@ -96,7 +96,9 @@ content here.
   done with the owner's manual checks open, 10.10 (documentation)
   written with screenshots and the owner's review open, 10.11 (UX review
   for VS Code: fits any panel width, readable in every theme, UI check)
-  and 10.12 (Learn scenarios in a side bar Learn view) done. Release prep
+  and 10.12 (Learn scenarios in a side bar Learn view) done; 10.13
+  (Agent Host sessions, the VS Code 1.143+ default, which neither product
+  reads yet) is planned and blocks the first release. Release prep
   is merged (#90), and publishing setup is done except the Open VSX
   ownership claim; 0.1.0 waits on the manual checks and the owner's
   review before the `ext-v0.1.0` tag. The progress table and per-step
