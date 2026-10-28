@@ -5,11 +5,12 @@ Phases 0-9.12 build the standalone app, **Agent Cost Analyzer** (every
 provider). Phase 10 builds **AI Credits Analyzer**, a Copilot-only VS Code
 extension sharing the same code (vision §5). Phase 11 pins the standalone
 app's pi provider against a real captured session, postponed from Phase 9.6.
+Phase 12 adds branded, interactive MCP Apps views for both products.
 
 **Overall status (2026-10-28):** Phases 0-10 have their code and docs
 merged to `main`, including Phase 10's release prep (#90). Still open:
-Phase 10's owner tasks before the first release (see its section), and
-Phase 11 (not started).
+Phase 10's owner tasks before the first release (see its section),
+Phase 11 (not started) and Phase 12 (planned).
 Each phase has a goal, concrete deliverables, an exit criterion (how you know
 it's done), and its dependencies. Phases are ordered so the riskiest/least
 certain work (real `main.jsonl` parsing) happens after there's already a
@@ -1324,6 +1325,52 @@ Needs pi installed and one real run on the owner's machine.
 
 **Status (2026-10-28)**: not started.
 
+## Phase 12 — MCP Apps: branded, interactive views in the chat
+
+Full design: [plans/mcp-apps.md](plans/mcp-apps.md).
+
+**Goal**: MCP Apps hosts (VS Code Copilot Chat 1.109+, Claude Desktop)
+render a branded, interactive view next to the cost and findings tool
+results, instead of only JSON and the model's prose. Hosts without MCP
+Apps, such as the Claude Code CLI and pi, keep today's text results
+unchanged.
+
+**Deliverables**:
+- One-day spike in VS Code Copilot Chat and Claude Desktop. It records
+  the host style variables each sends, `toolInfo`, `vscode://` links and
+  approval prompts.
+- Server: a `registerAppViews` tool group with:
+  - one `ui://` resource (`text/html;profile=mcp-app`) that the
+    `ViewSource` port serves, with the product brand injected from
+    `McpIdentity`;
+  - `_meta.ui.resourceUri` on `get_session_cost`, `get_cost_rollup` and
+    `list_findings`;
+  - the app-only `get_turn_series` tool;
+  - `@modelcontextprotocol/ext-apps` pinned to 1.7.5, the last line that
+    works with `@modelcontextprotocol/sdk` 1.x.
+- New `packages/mcp-apps` workspace: a single-file Vite build of three
+  views (session cost, spend rollup, findings). They reuse `packages/web`'s
+  UI primitives and charts and are driven by pure view models through an
+  `AppHostPort`.
+- Branding: the host's theme for structure (`theme-mcp-host.css`), the
+  brand for identity and data (`brand.css`: the app icon, product name,
+  corner-mark cards, kicker, accent ramp), light and dark, contrast-tested.
+- Extension: a `vscode://raulkivi.ai-credits-analyzer/session?id=…` URI
+  handler that opens a session from a view. The views ship in the `.vsix`.
+- architecture.md, threat-model.md §6, the User Guide and the extension
+  guide updated.
+
+**Exit criterion**: in VS Code Copilot Chat and Claude Desktop, the three
+views render in light and dark with the product brand. Drill-down works
+without a new model turn. The 9 model-visible tools keep their names,
+schemas and `content`, and Claude Code CLI output is byte-identical.
+Unknown figures show "Unknown", never 0.
+
+**Dependencies**: Phase 9.12 (cost and findings tools), Phase 10 (the
+extension's MCP server and `ext-v0.1.0`, which step 10.13 blocks).
+
+**Status (2026-10-28)**: planned, not started.
+
 ## Summary dependency graph
 
 ![Summary dependency graph](diagrams/summary-dependency-graph.drawio.svg)
@@ -1359,5 +1406,7 @@ flowchart LR
     P912 --&gt; P10
     P96 --&gt; P11["Phase 11<br/>pi real-capture check"]
     P98 --&gt; P11
+    P912 --&gt; P12["Phase 12<br/>MCP Apps views"]
+    P10 --&gt; P12
 ```
 -->
