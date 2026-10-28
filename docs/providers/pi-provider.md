@@ -171,7 +171,8 @@ against a real, redacted captured session. Until one is obtained:
   tagged `triggeredEvent: "fork"`; a real `branch_summary` entry's more
   specific intent isn't distinguished yet.
 
-**Next step for real-data verification:** obtain one redacted real
+**Next step for real-data verification** (implementation-plan.md
+Phase 11): obtain one redacted real
 `~/.pi/agent/sessions/**/*.jsonl` capture, diff its actual field names
 against the fixtures in `packages/server/fixtures/pi-agent/`, and update the
 extractors + this doc + architecture.md §6.2.5 together once confirmed.

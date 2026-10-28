@@ -3,12 +3,13 @@
 This plan sequences [architecture.md](architecture.md) into buildable phases.
 Phases 0-9.12 build the standalone app, **Agent Cost Analyzer** (every
 provider). Phase 10 builds **AI Credits Analyzer**, a Copilot-only VS Code
-extension sharing the same code (vision §5).
+extension sharing the same code (vision §5). Phase 11 pins the standalone
+app's pi provider against a real captured session, postponed from Phase 9.6.
 
-**Overall status (2026-10-28):** every phase's code and docs are merged to
-`main`, including Phase 10's release prep (#90). Still open: Phase 9.6's
-check against a real captured pi session, and Phase 10's owner tasks before
-the first release (see its section).
+**Overall status (2026-10-28):** Phases 0-10 have their code and docs
+merged to `main`, including Phase 10's release prep (#90). Still open:
+Phase 10's owner tasks before the first release (see its section), and
+Phase 11 (not started).
 Each phase has a goal, concrete deliverables, an exit criterion (how you know
 it's done), and its dependencies. Phases are ordered so the riskiest/least
 certain work (real `main.jsonl` parsing) happens after there's already a
@@ -927,6 +928,10 @@ fixture, `fixtures/pi-agent/schema-v3-session.jsonl`, pins all of this;
 pinning against a real, redacted capture remains the one open step. See
 architecture.md §6.2.5.
 
+**Status update (2026-10-28): complete.** The exit criterion is met. The
+real-capture check moved to its own phase,
+[Phase 11](#phase-11--pi-provider-real-capture-verification).
+
 ## Phase 9.7 — Vendor `pi-system-prompt-logger`
 
 **Goal**: bring the previously-standalone `pi-system-prompt-logger` Pi
@@ -1283,8 +1288,41 @@ The dev-only `@azure/msal-node` advisory is accepted
 
 **Dependencies**: Phase 5 (config check), Phase 9 (provider registry),
 Phase 9.5 (turn inspector), Phases 9.10-9.12 (audit, insights, MCP). All
-are complete. Phase 9.6's outstanding real-capture check is **not** a
+are complete. Phase 11 (the pi real-capture check) is **not** a
 dependency: the extension ships no pi code (plan §3.1).
+
+## Phase 11 — pi provider real-capture verification
+
+**Goal**: pin `PiAgentLogProvider` (Phase 9.6, architecture.md §6.2.5)
+against a real, redacted pi session, the one step Phase 9.6 left open.
+Split out of Phase 9.6 on 2026-10-28 so the open pi work is tracked in one
+place.
+
+**Deliverables**:
+- Redacted real `~/.pi/agent/sessions/**/*.jsonl` captures in
+  `packages/server/fixtures/pi-agent/`: one linear session and one with a
+  fork or rewind. Capture them with `pi-system-prompt-logger` installed, so
+  each has its `system-prompts.jsonl` record beside it.
+- The real captures' field names diffed against
+  `fixtures/pi-agent/schema-v3-session.jsonl`. Each mismatch gets a failing
+  test against the real fixture first, then a fix in `usage-extractor.ts`
+  or `turn-inspector-builder.ts`.
+- Decisions on the open items in
+  [providers/pi-provider.md](providers/pi-provider.md): which turn a
+  `branch_summary`'s usage counts toward, fork vs. rewind tagging, the
+  sidecar's earliest-record-wins rule for forked sessions, and `sessionId`
+  vs. `header.id`.
+- architecture.md §6.2.5 and §13, providers/pi-provider.md and this
+  section updated to match.
+
+**Exit criterion**: `describeLogProviderContract` and the pi-agent unit
+tests pass against both real captures, and architecture.md §6.2.5 no longer
+calls the provider provisional.
+
+**Dependencies**: Phase 9.6 (the provider), Phase 9.8 (the sidecar join).
+Needs pi installed and one real run on the owner's machine.
+
+**Status (2026-10-28)**: not started.
 
 ## Summary dependency graph
 
@@ -1319,5 +1357,7 @@ flowchart LR
     P95 --&gt; P10["Phase 10<br/>AI Credits Analyzer extension"]
     P5 --&gt; P10
     P912 --&gt; P10
+    P96 --&gt; P11["Phase 11<br/>pi real-capture check"]
+    P98 --&gt; P11
 ```
 -->

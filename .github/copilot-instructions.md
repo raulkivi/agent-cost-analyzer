@@ -27,9 +27,10 @@ their content here.
   before starting the next phase.
 - Repo status: every phase's code and docs are merged (Phases 0-9.12, the
   standalone app Agent Cost Analyzer; Phase 10, the AI Credits Analyzer
-  VS Code extension in `packages/vscode-extension`). Still open: Phase
-  9.6's check against a real captured pi session, and the owner's tasks
-  before the extension's first release. The per-phase status is in
+  VS Code extension in `packages/vscode-extension`). Still open: the
+  owner's tasks before the extension's first release, and Phase 11 (the
+  pi provider's check against a real captured session, postponed from
+  Phase 9.6). The per-phase status is in
   `docs/implementation-plan.md`; the extension's progress table is in
   `docs/plans/vscode-extension.md`.
 
