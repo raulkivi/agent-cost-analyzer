@@ -9,6 +9,7 @@ import type {
 } from "@agent-cost-analyzer/domain";
 import { MAX_EVIDENCE_EXCERPT_LENGTH } from "@agent-cost-analyzer/domain";
 import { excerptOf } from "../tool-audit/output-redactor.js";
+import { toolCallsUnavailableReason } from "../tool-audit/tool-calls-availability.js";
 import { statusOf } from "../tool-audit/outcome-tally.js";
 import { resolveToolKind } from "../tool-audit/tool-kind-resolver.js";
 
@@ -59,11 +60,12 @@ function sessionRow(source: ProviderSessions, session: Session): InsightSessionR
     title: session.title,
     model: session.model,
     ...(session.startedAt ? { startedAt: session.startedAt } : {}),
+    ...(toolCallsUnavailableReason(session) ? { toolCallsUnavailable: true } : {}),
     ...(validStart ? { date: validStart.toISOString().slice(0, 10), hour: validStart.getUTCHours() } : {}),
   };
 }
 
-function turnRow(sessionKey: string, turn: Turn): InsightTurnRow {
+function turnRow(sessionKey: string, turn: Turn, toolCallsUnknown: boolean): InsightTurnRow {
   const { usage } = turn;
   const counts = [usage.uncachedInput, usage.cacheWrite, usage.cacheRead, usage.reasoning, usage.output, usage.costAiCredits];
   return {
@@ -79,7 +81,7 @@ function turnRow(sessionKey: string, turn: Turn): InsightTurnRow {
     output: figure(usage.output),
     aiCredits: figure(usage.costAiCredits),
     estimated: counts.some(isEstimated),
-    toolCallCount: turn.toolCalls.length,
+    toolCallCount: toolCallsUnknown ? null : turn.toolCalls.length,
   };
 }
 
@@ -110,7 +112,7 @@ export function buildInsightRows(sources: ProviderSessions[]): InsightRows {
       rows.sessions.push(sessionRow(source, session));
       for (const turn of session.turns) {
         const turnKey = turnKeyOf(sessionKey, turn.index);
-        rows.turns.push(turnRow(sessionKey, turn));
+        rows.turns.push(turnRow(sessionKey, turn, toolCallsUnavailableReason(session) !== undefined));
         turn.toolCalls.forEach((call, callIndex) => rows.toolCalls.push(toolCallRow(turnKey, call, callIndex)));
       }
     }

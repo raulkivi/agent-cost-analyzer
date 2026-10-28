@@ -81,14 +81,17 @@ export class AgentHostSessionSource implements CopilotSessionSource {
       : { available: false, unavailableReason: UNAVAILABLE_REASON };
   }
 
-  // Chats opened but never sent have no turns and nothing to analyze, so
-  // they're left out of every list (readSession still finds them by id).
+  // Chats opened but never sent (a session.db that was read and holds no
+  // turns) have nothing to analyze, so they're left out of every list
+  // (readSession still finds them by id). A missing or unreadable session.db
+  // stays listed with unknown usage: unknown is shown, never hidden (constraint 6).
   async listSessions(): Promise<Session[]> {
     return this.withCatalog(
       (catalog) =>
-        listAgentHostSessionRows(catalog)
-          .map((catalogRow) => buildAgentHostSessionSummary({ catalogRow, store: this.readStoreForList(catalogRow.id) }))
-          .filter((summary) => summary.turnCount > 0),
+        listAgentHostSessionRows(catalog).flatMap((catalogRow) => {
+          const store = this.readStoreForList(catalogRow.id);
+          return store !== null && store.turns.length === 0 ? [] : [buildAgentHostSessionSummary({ catalogRow, store })];
+        }),
       [],
     );
   }

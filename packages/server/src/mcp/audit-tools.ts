@@ -102,7 +102,7 @@ export function registerAuditTools(server: McpServer, deps: McpToolDeps, guarded
     {
       title: "Get cross-session tool-call rollup",
       description:
-        "Aggregates tool-call outcomes across one provider's most recent sessions in a date window: totals, failure rate, the top failing commands (and in how many sessions they failed), failures per day, a per-session summary, and breakdowns by tool, program and failure category. Use it for \"which commands keep failing?\".",
+        "Aggregates tool-call outcomes across one provider's most recent sessions in a date window: totals, failure rate, the top failing commands (and in how many sessions they failed), failures per day, a per-session summary, and breakdowns by tool, program and failure category. Sessions whose tool calls are unknown (VS Code Agent Host) are not included in any count or rate; sessionsWithUnknownToolCalls says how many were left out and toolCallsUnavailableReason why. Use it for \"which commands keep failing?\".",
       inputSchema: {
         provider: providerArg(deps.identity),
         since: sinceArg,

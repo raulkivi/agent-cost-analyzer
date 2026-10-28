@@ -21,6 +21,13 @@ interface Occurrence {
   at?: string;
 }
 
+// A tool or program is judged only against sessions with known tool calls.
+function whyFirstUse(dimension: Dimension, earlier: number, earlierWithKnownCalls: number, since: string): string {
+  return dimension === "model" || earlierWithKnownCalls === earlier
+    ? `Not used in any of the ${earlier} earlier sessions (since ${since}).`
+    : `Not used in any of the ${earlierWithKnownCalls} earlier sessions with known tool calls (since ${since}).`;
+}
+
 export class BehaviorChangeDetector implements FindingDetector {
   detect({ rows }: DetectorInput): InsightFinding[] {
     const index = indexRows(rows);
@@ -47,6 +54,9 @@ export class BehaviorChangeDetector implements FindingDetector {
       return occurrences;
     }
 
+    // Tool and program first-use is judged only against sessions whose tool
+    // calls are known; an Agent Host session says nothing about them.
+    const callsKnown = (session: InsightSessionRow) => !session.toolCallsUnavailable;
     const seen = new Set<string>();
     const remember = (occurrence: Occurrence) => seen.add(`${occurrence.dimension}:${occurrence.value}`);
     dated.slice(0, baselineSize).forEach((session) => occurrencesOf(session).forEach(remember));
@@ -55,6 +65,7 @@ export class BehaviorChangeDetector implements FindingDetector {
     const findings: InsightFinding[] = [];
     dated.slice(baselineSize).forEach((session, offset) => {
       const earlier = baselineSize + offset;
+      const earlierWithKnownCalls = dated.slice(0, earlier).filter(callsKnown).length;
       for (const occurrence of occurrencesOf(session)) {
         if (seen.has(`${occurrence.dimension}:${occurrence.value}`)) {
           continue;
@@ -73,7 +84,7 @@ export class BehaviorChangeDetector implements FindingDetector {
           ruleId: `behavior.new-${occurrence.dimension}`,
           title: `First use of ${occurrence.dimension} \`${occurrence.value}\``,
           ...(occurrence.at ? { at: occurrence.at } : {}),
-          why: `Not used in any of the ${earlier} earlier sessions (since ${since}).`,
+          why: whyFirstUse(occurrence.dimension, earlier, earlierWithKnownCalls, since),
         });
       }
     });

@@ -89,7 +89,11 @@ export const auditRollupSchema = z.object({
   providerId: z.string().optional(),
   since: z.string().optional(),
   until: z.string().optional(),
+  // Sessions counted below; sessions whose tool calls are unknown (Agent
+  // Host, step 10.13) are left out of every count and rate, not counted as 0.
   sessionCount: z.number(),
+  sessionsWithUnknownToolCalls: z.number().default(0),
+  toolCallsUnavailableReason: z.string().optional(),
   totals: outcomeTotalsSchema,
   failureRate: failureRateSchema,
   byTool: z.array(toolBreakdownSchema),

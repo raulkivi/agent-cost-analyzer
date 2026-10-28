@@ -1327,6 +1327,13 @@ from the Copilot CLI event log in a follow-up step, 10.14.
   since the classic logging settings don't apply to them.
 - Turn inspector, system prompt and tool audit: "unavailable" with a
   reason (10.14) for Agent Host sessions.
+- Unknown stays shown (constraint 6): only a session whose `session.db`
+  was read and has no turns (opened, never sent) is hidden; a missing or
+  unreadable one is listed with unknown usage. Cross-session audit and
+  insights leave sessions with unknown tool calls out of their counts and
+  report how many (`sessionsWithUnknownToolCalls`).
+- The UI check seeds one Agent Host session and renders its turn inspector
+  and tool audit.
 - Docs: architecture.md, both user guides, the extension README and both
   changelogs.
 

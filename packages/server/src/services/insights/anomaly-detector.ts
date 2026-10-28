@@ -55,13 +55,16 @@ const METRICS: Metric[] = [
     id: "tool-volume",
     label: "Tool calls",
     format: (value) => String(value),
-    valueOf: (session, index) => callsOfSession(index, session).length,
+    valueOf: (session, index) => (session.toolCallsUnavailable ? null : callsOfSession(index, session).length),
   },
   {
     id: "failure-rate",
     label: "Tool-call failure rate",
     format: (value) => `${Math.round(value * 100)}%`,
     valueOf: (session, index) => {
+      if (session.toolCallsUnavailable) {
+        return null;
+      }
       const known = callsOfSession(index, session).filter((call) => call.status !== "unknown");
       return known.length >= MIN_KNOWN_OUTCOMES
         ? known.filter((call) => isFailedStatus(call.status)).length / known.length

@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Fixed
+- VS Code Agent Host sessions (step 10.13): a session whose `session.db` is
+  missing or unreadable stays listed with unknown usage; only chats that were
+  opened but never sent are hidden.
+- The cross-session tool-call audit, the insights detectors and the MCP
+  rollup tools no longer count Agent Host sessions as having zero tool calls:
+  they are left out of the counts and rates, and the audit says how many.
 ### Changed
 - Renamed the repository and npm workspace scope from `copilot-cost-analyzer`
   to `agent-cost-analyzer`, matching the product name. GitHub redirects the

@@ -18,3 +18,9 @@ export const AGENT_HOST_AUDIT_UNAVAILABLE = {
   title: "Tool calls not available yet",
   body: "Tool calls of Agent Host sessions aren't read yet, so there is nothing to audit here. That doesn't mean the agent ran no tools.",
 };
+
+// Sessions whose tool calls are unknown are left out of the cross-session
+// audit's counts and rates, never counted as 0 calls.
+export function agentHostRollupNotIncluded(count: number): string {
+  return `${count} Agent Host ${count === 1 ? "session" : "sessions"} not included: tool calls aren't read yet.`;
+}

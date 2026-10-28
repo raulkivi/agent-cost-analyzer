@@ -89,14 +89,23 @@ describe("AgentHostSessionSource", () => {
       expect(summary.costAiCredits).toEqual({ known: true, value: expected });
     });
 
-    it("leaves out a session without turns (opened, never sent), whether its session.db is missing or empty", async () => {
+    it("leaves out a session whose session.db was read and has no turns (opened, never sent)", async () => {
       writeAgentHostCatalog(userDataDir);
       writeAgentSessionDb(userDataDir, IDS.withTurns, sessionRowsWithUsageOnly());
-      expect((await source().listSessions()).map((session) => session.id)).toEqual([IDS.withTurns]);
-
       writeAgentSessionDb(userDataDir, IDS.second, { ...sessionRows, turns: [] });
 
       expect((await source().listSessions()).map((session) => session.id)).toEqual([IDS.withTurns]);
+    });
+
+    it("keeps a session whose session.db is missing, with unknown usage and its reason", async () => {
+      writeAgentHostCatalog(userDataDir);
+      writeAgentSessionDb(userDataDir, IDS.withTurns, sessionRowsWithUsageOnly());
+
+      const sessions = await source().listSessions();
+
+      expect(sessions.map((session) => session.id)).toEqual([IDS.second, IDS.withTurns]);
+      const missing = sessions.find((session) => session.id === IDS.second)!;
+      expect(missing.costAiCredits).toEqual({ known: false, reason: AGENT_HOST_SESSION_DB_MISSING_REASON });
     });
 
     it("still reads a session without turns by id", async () => {
@@ -133,7 +142,7 @@ describe("AgentHostSessionSource", () => {
       expect(session?.costAiCredits).toEqual({ known: false, reason: AGENT_HOST_SESSION_DB_MISSING_REASON });
     });
 
-    it("leaves out a session whose session.db is unreadable instead of failing the list", async () => {
+    it("degrades one unreadable session.db to unknown usage instead of failing the list", async () => {
       writeAgentHostCatalog(userDataDir);
       writeAgentSessionDb(userDataDir, IDS.second);
       const dbPath = agentSessionDbPath(userDataDir, IDS.withTurns)!;
@@ -142,7 +151,9 @@ describe("AgentHostSessionSource", () => {
 
       const sessions = await source().listSessions();
 
-      expect(sessions.map((session) => session.id)).toEqual([IDS.second]);
+      expect(sessions.map((session) => session.id)).toEqual([IDS.second, IDS.withTurns]);
+      const broken = sessions.find((session) => session.id === IDS.withTurns)!;
+      expect(broken.costAiCredits).toEqual({ known: false, reason: AGENT_HOST_SESSION_DB_MISSING_REASON });
     });
   });
 

@@ -125,11 +125,13 @@ describe("Agent Host sessions through the Copilot provider (step 10.13)", () => 
       await expect(api().getSystemPromptText(IDS.withTurns)).rejects.toThrow(/No system-prompt artifact captured/);
     });
 
-    it("audits a session with no tool calls", async () => {
+    it("audits a session with unknown tool calls and leaves it out of the rollup counts", async () => {
       const audit = sessionAuditSchema.parse(await api().getSessionAudit(IDS.second));
 
       expect(audit.totals.toolCalls).toBe(0);
-      expect((await api().getAuditRollup()).sessionCount).toBe(2);
+      const rollup = await api().getAuditRollup();
+      expect(rollup).toMatchObject({ sessionCount: 0, sessionsWithUnknownToolCalls: 2 });
+      expect(rollup.totals.toolCalls).toBe(0);
     });
 
     it("includes the sessions in the insights dataset", async () => {

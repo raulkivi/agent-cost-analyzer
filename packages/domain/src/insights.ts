@@ -21,6 +21,9 @@ export const insightSessionRowSchema = z.object({
   startedAt: z.string().optional(),
   date: z.string().optional(), // YYYY-MM-DD (UTC) from startedAt
   hour: z.number().int().min(0).max(23).optional(), // UTC hour from startedAt
+  // The provider doesn't read this session's tool calls (Agent Host): its
+  // empty tool-call list means unknown, not zero.
+  toolCallsUnavailable: z.boolean().optional(),
 });
 
 export type InsightSessionRow = z.infer<typeof insightSessionRowSchema>;
@@ -38,7 +41,7 @@ export const insightTurnRowSchema = z.object({
   output: tokenFigureSchema,
   aiCredits: tokenFigureSchema,
   estimated: z.boolean(), // any figure on this turn is a local-tokenizer estimate
-  toolCallCount: z.number(),
+  toolCallCount: z.number().nullable(), // null: tool calls unknown
 });
 
 export type InsightTurnRow = z.infer<typeof insightTurnRowSchema>;
