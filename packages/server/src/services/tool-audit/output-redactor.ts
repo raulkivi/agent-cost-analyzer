@@ -7,14 +7,14 @@ const REDACTED = "[REDACTED]";
 const SECRET_PATTERNS: RegExp[] = [
   /\b(?:ghp|gho|ghu|ghs|ghr)_[A-Za-z0-9]{20,}\b/g,
   /\bgithub_pat_[A-Za-z0-9_]{20,}\b/g,
-  /\bsk-[A-Za-z0-9_-]{16,}\b/g,
+  /\bsk-[A-Za-z0-9_-]{16,}(?![A-Za-z0-9_-])/g,
   /\bAKIA[0-9A-Z]{16}\b/g,
   /\bAIza[0-9A-Za-z_-]{35}(?![0-9A-Za-z_-])/g,
   /\b[rs]k_(?:live|test)_[0-9A-Za-z]{16,}\b/g,
   /\bnpm_[A-Za-z0-9]{36}\b/g,
   /\bglpat-[A-Za-z0-9_-]{20,}/g,
   /\bhf_[A-Za-z0-9]{30,}\b/g,
-  /\bxox[abprs]-[A-Za-z0-9-]{10,}\b/g,
+  /\bxox[abprs]-[A-Za-z0-9-]{10,}(?![A-Za-z0-9-])/g,
   /\beyJ[A-Za-z0-9_-]{5,}\.eyJ[A-Za-z0-9_-]{5,}\.[A-Za-z0-9_-]+/g,
   /-----BEGIN [A-Z ]*PRIVATE KEY-----[\s\S]*?(?:-----END [A-Z ]*PRIVATE KEY-----|$)/g,
 ];

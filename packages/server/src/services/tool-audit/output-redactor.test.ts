@@ -31,6 +31,12 @@ describe("redactSecrets", () => {
     expect(redacted).not.toContain(body(16));
   });
 
+  it("masks a minimum-length sk- or Slack token that ends in a hyphen", () => {
+    expect(redactSecrets("key sk-aaaaaaaaaaaaaaa- end")).not.toContain("sk-aaaaaaaaaaaaaaa");
+    expect(redactSecrets("key xoxa-AAAAAAAAA- end")).not.toContain("xoxa-AAAAAAAAA");
+    expect(redactSecrets("key sk-aaaaaaaaaaaaaaa-.")).not.toContain("sk-aaaaaaaaaaaaaaa");
+  });
+
   it("leaves ordinary error text alone", () => {
     const text = "/bin/bash: line 1: foo: command not found";
     expect(redactSecrets(text)).toBe(text);
