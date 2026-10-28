@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- The MCP server shows as AI Credits Analyzer, with its author, a link
+  to the GitHub repo and the extension's icon, in clients that display
+  them.
+
 ## [0.1.0]
 
 The first release.
