@@ -1734,6 +1734,13 @@ refactored — red-green-refactor, not tests bolted on afterward.
   `packages/web` checks twice: `tsconfig.json` (app + tests, with Node types
   for tests that read fixtures from disk) and `tsconfig.app.json` (app code
   only, browser types only, so app code can't silently import `node:*`).
+- Property-based tests (`*.property.test.ts`, `fast-check`) cover code
+  that takes untrusted input or has a simple invariant: secret and header
+  redaction, the SSE and shell-command parsers, the release checks and
+  `layoutFor`. They sit beside the example tests and run in the same Vitest
+  suites. A property that finds a bug is kept as `it.fails` with its
+  counterexample until the fix's own failing example test lands. Importing
+  `fast-check` directly also satisfies OpenSSF Scorecard's Fuzzing check.
 
 ### 11.5 Code quality: SOLID
 
