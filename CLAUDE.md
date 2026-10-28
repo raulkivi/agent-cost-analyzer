@@ -25,9 +25,9 @@ content here.
   met.
 - Commit all changes to git as soon as a phase's exit criterion is met,
   before starting the next phase.
-- Repo status: Phases 0-9.5 complete, Phase 9.6 verified against pi's
-  published schema (vendored package docs/types) but still pending a real
-  captured session (see below), Phases 9.7-9.10 complete (9.10: tool-call
+- Repo status: Phases 0-9.6 complete (9.6 verified against pi's
+  published schema in the vendored package docs/types; the real-capture
+  check is postponed to Phase 11, not started), Phases 9.7-9.10 complete (9.10: tool-call
   audit — classified per-call outcomes, `GET /api/sessions/:id/audit`,
   `/tool-calls`, `GET /api/audit`, a read-only stdio MCP server in
   `packages/server/src/mcp/` launched via `scripts/mcp-server.sh`, and the
@@ -59,7 +59,7 @@ content here.
   toolResult, `usage` (e.g. cache_warm), compaction and branch_summary
   entries, reads `Usage.reasoning`, and replays in-file system messages into
   `systemPrompt`/`toolInventory`; `tool`/`vision`/`costAiCredits` stay
-  unavailable, and a real captured session is still outstanding, see
+  unavailable, and a real captured session is Phase 11's work, see
   architecture.md §6.2.5), and
   `ClaudeCodeLogProvider` (reads the Claude Code CLI's own JSONL session
   format directly from `~/.claude/projects/`, one `Session` per file using

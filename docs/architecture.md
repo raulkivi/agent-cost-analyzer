@@ -1170,7 +1170,8 @@ unknown.
 `docs/message-types.md`, pi-ai `dist/types.d.ts`, `dist/core/
 session-manager.d.ts`/`.js`), pinned by the schema-faithful fixture
 `fixtures/pi-agent/schema-v3-session.jsonl`. Still **not** a real captured
-session — the project's usual practice of pinning extractors against a
+session (scheduled as implementation-plan.md Phase 11) — the project's
+usual practice of pinning extractors against a
 real, redacted capture remains outstanding for this provider. Consequences:
 
 - `tool` and `vision` token counts are `{ known: false }` — confirmed: pi's
@@ -1887,7 +1888,8 @@ Carried over from vision §7 plus new ones raised while designing this layer:
   from `Usage.reasoning`, `ToolResultMessage.usage` shares the `Usage`
   shape, and vision/tool tokens are confirmed absent; pinning against a
   real, redacted capture remains the same discipline every other extractor
-  in this app was built under (§7, §11.4).
+  in this app was built under (§7, §11.4); scheduled as implementation-plan.md
+  Phase 11.
 - How aggressively to keep seeded Learn scenarios in sync with
   [agentic-coding-explained.md](agentic-coding-explained.md) as it evolves —
   the vision doc doesn't mandate automated drift-checking, but a periodic

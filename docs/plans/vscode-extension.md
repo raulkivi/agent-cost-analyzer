@@ -31,8 +31,7 @@ Progress (2026-10-28):
 The app ships today as two local processes: an Express API on
 `127.0.0.1:3001` (`packages/server`) and a Vite + React SPA
 (`packages/web`). Vision §5 lists one future path: repackage the app as a
-VS Code extension with a webview. Phase 10 is that path, and the last
-phase in the plan.
+VS Code extension with a webview. Phase 10 is that path.
 
 ### 1.1 Two products, one codebase
 
