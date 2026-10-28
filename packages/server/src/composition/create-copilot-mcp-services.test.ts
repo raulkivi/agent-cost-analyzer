@@ -132,6 +132,16 @@ describe("createCopilotMcpServices (the extension's MCP server, vscode-extension
     expect(texts).toContain("GitHub Copilot");
   });
 
+  it("is titled AI Credits Analyzer, by the same author and repo as the standalone server", () => {
+    const info = copilot.getServerVersion()!;
+
+    expect(info.title).toBe("AI Credits Analyzer");
+    expect(info.description).toContain("by Raul Kivi");
+    expect(info.description).not.toMatch(/Claude Code|\bpi\b|mitmproxy/i);
+    expect(info.websiteUrl).toBe("https://github.com/raulkivi/agent-cost-analyzer");
+    expect(info.icons).toEqual(standalone.getServerVersion()!.icons);
+  });
+
   it("leaves the standalone server's name and instructions untouched", () => {
     expect(standalone.getServerVersion()?.name).toBe("agent-cost-analyzer");
     expect(standalone.getInstructions()).toBe(STANDALONE_MCP_IDENTITY.instructions);

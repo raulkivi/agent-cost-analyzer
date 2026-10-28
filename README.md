@@ -73,6 +73,11 @@ This repo builds two products from one codebase:
   tools and the Phase 9.12 additions: session and cross-provider cost,
   security/anomaly/behaviour findings, a one-turn drill-down, server
   instructions and output schemas.
+- [MCP Apps plan](docs/plans/mcp-apps.md) — Phase 12 (planned): branded,
+  interactive views (session cost, spend rollup, findings) that MCP Apps
+  hosts such as VS Code Copilot Chat and Claude Desktop render next to the
+  MCP tool results. Includes the use-case analysis, branding rules and
+  tasks.
 - [Insights dashboard plan](docs/plans/insights-dashboard.md) — design and
   decisions for the QlikView-style associative dashboard across every
   provider: cost and tokens, tool calls and failures, and security

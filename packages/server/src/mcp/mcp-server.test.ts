@@ -289,9 +289,39 @@ describe("MCP server identity (vscode-extension.md step 10.9)", () => {
     await client.close();
   });
 
+  it("brands the standalone server with its title, author, GitHub repo and icon", async () => {
+    const client = await connectTo();
+    const info = client.getServerVersion()!;
+
+    expect(info.title).toBe("Agent Cost Analyzer");
+    expect(info.description).toContain("by Raul Kivi");
+    expect(info.websiteUrl).toBe("https://github.com/raulkivi/agent-cost-analyzer");
+    await client.close();
+  });
+
+  // Data URIs, so clients show the icon without the server reaching the
+  // network; PNG because the spec only asks clients to support raster.
+  it("sends the icon inline as SVG and PNG", async () => {
+    const client = await connectTo();
+    const icons = client.getServerVersion()!.icons!;
+    const decoded = (mimeType: string) => {
+      const icon = icons.find((i) => i.mimeType === mimeType)!;
+      const prefix = `data:${mimeType};base64,`;
+      expect(icon.src.startsWith(prefix), mimeType).toBe(true);
+      return Buffer.from(icon.src.slice(prefix.length), "base64");
+    };
+
+    expect(decoded("image/svg+xml").toString("utf8")).toMatch(/^<svg[\s\S]*<\/svg>\s*$/);
+    expect(decoded("image/png").subarray(1, 4).toString("ascii")).toBe("PNG");
+    expect(icons.find((i) => i.mimeType === "image/png")!.sizes).toEqual(["64x64"]);
+    await client.close();
+  });
+
   it("applies a given identity's name, instructions and provider texts", async () => {
     const identity: McpIdentity = {
       name: "other-product",
+      title: "Other Product",
+      description: "Other description.",
       instructions: "Other instructions.",
       logSourcesDescription: "the other source",
       providerArgDescription: "Other provider text.",
@@ -300,6 +330,8 @@ describe("MCP server identity (vscode-extension.md step 10.9)", () => {
     const { tools } = await client.listTools();
 
     expect(client.getServerVersion()?.name).toBe("other-product");
+    expect(client.getServerVersion()?.title).toBe("Other Product");
+    expect(client.getServerVersion()?.description).toBe("Other description.");
     expect(client.getInstructions()).toBe("Other instructions.");
     expect(tools.find((t) => t.name === "list_log_providers")!.description).toContain("Lists the local agent-log sources (the other source),");
     for (const tool of ["list_sessions", "get_session_audit", "get_session_cost"]) {

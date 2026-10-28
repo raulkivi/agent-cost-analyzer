@@ -21,6 +21,8 @@ export interface CopilotMcpServicesOptions {
 // can't read. The `provider` argument stays, because only "vscode" exists.
 export const COPILOT_MCP_IDENTITY: McpIdentity = {
   name: "ai-credits-analyzer",
+  title: "AI Credits Analyzer",
+  description: "AI Credits, token and tool-call analysis of your local GitHub Copilot Chat sessions, by Raul Kivi.",
   instructions: [
     "Read-only analyzer of local GitHub Copilot Chat logs in VS Code (AI Credits Analyzer). It never writes, executes or reaches the network.",
     "Workflow: find a session with list_sessions (query/since/until), then drill in with get_session_cost (spend), get_session_audit and list_tool_calls (tool-call failures), and get_turn (one turn's prompt, response, usage and calls). For trends use get_cost_rollup, get_audit_rollup and list_findings (security, anomalies, behaviour changes).",

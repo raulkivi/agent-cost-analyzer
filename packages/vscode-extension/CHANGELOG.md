@@ -15,6 +15,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (VS Code 1.143 and later) are listed in the Sessions view with their turns,
   tokens and AI Credits. Their prompt and response text, tool calls and system
   prompt aren't available yet, and the panel says so.
+- The MCP server shows as AI Credits Analyzer, with its author, a link
+  to the GitHub repo and the extension's icon, in clients that display
+  them.
 
 ### Changed
 
