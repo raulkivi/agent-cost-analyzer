@@ -6,7 +6,26 @@ from [vscode-extension.md](vscode-extension.md) §3.5, the remote check
 (D6), and Copilot agent mode using the MCP server (10.8's exit check).
 Record the result in the release PR: tick each line, add notes, and attach
 the screenshots listed at the end (they're also the ones step 10.10 puts
-in the docs).
+in the docs). Findings that need a code fix also go in the run log below.
+
+## Run log
+
+### 0.1.0 (started 2026-10-27, in progress)
+
+- **Deviation:** run in VS Code Insiders 1.144.0, Linux, because this
+  machine has no stable VS Code.
+- **Setup:** VSIX built from `main` installed into a new profile
+  "AI Credits 0.1.0 check".
+- **1.2 Logging off:** two bugs, both in a profile where GitHub Copilot
+  Chat is disabled, so its settings aren't registered. Fixed in #90:
+  - Fix's fuzzy Settings search showed a near-miss setting. It now
+    searches `@id:<setting>` and falls back to the Extensions view or
+    `settings.json`.
+  - Setup reported nothing wrong although Copilot wrote no logs. It now
+    shows the required `copilot-chat-unavailable` warning.
+
+  Re-run 1.2 with a VSIX built from #90 or later.
+- **Not yet run:** the rest of §1, §2 and §3.
 
 ## 0. Install the candidate
 
