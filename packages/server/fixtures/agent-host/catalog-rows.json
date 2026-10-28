@@ -1,0 +1,188 @@
+{
+  "sessions_v2": [
+    {
+      "session_uri": "copilotcli:/3f2a9c10-1111-4a1b-8c01-aaaaaaaaaaa1",
+      "provider": "copilotcli",
+      "start_time": 1790805037911,
+      "external": null,
+      "registration_source": "explicit",
+      "session_generation": null,
+      "source_revision": null,
+      "payload_version": null,
+      "payload_hash": null,
+      "verified": 0,
+      "payload": {
+        "data": {
+          "_meta": {
+            "vscode.session.initiator": {
+              "name": "vscode"
+            }
+          },
+          "changes": {
+            "additions": 10,
+            "deletions": 2,
+            "files": 3
+          },
+          "chats": [
+            {
+              "archived": false,
+              "interactivity": "full",
+              "kind": "default",
+              "order": 0,
+              "summary": "Refactor billing module",
+              "titleSource": "auto",
+              "uri": "ahp-chat://default/Y29waWxvdGNsaTovZXhhbXBsZQ"
+            }
+          ],
+          "isArchived": false,
+          "isChatBacking": false,
+          "isRead": true,
+          "modifiedTime": 1790809488848,
+          "project": {
+            "displayName": "example",
+            "uri": "file:///home/user/src/example"
+          },
+          "summary": "Refactor billing module",
+          "titleSource": "auto",
+          "workingDirectories": [
+            "file:///home/user/src/example"
+          ]
+        },
+        "payloadVersion": 2
+      },
+      "is_chat_backing": 0,
+      "modified_time": 1790809488848
+    },
+    {
+      "session_uri": "copilotcli:/3f2a9c10-2222-4a1b-8c02-bbbbbbbbbbb2",
+      "provider": "copilotcli",
+      "start_time": 1790805513846,
+      "external": null,
+      "registration_source": "explicit",
+      "session_generation": null,
+      "source_revision": null,
+      "payload_version": null,
+      "payload_hash": null,
+      "verified": 0,
+      "payload": {
+        "data": {
+          "_meta": {
+            "vscode.session.initiator": {
+              "name": "vscode"
+            }
+          },
+          "changes": {
+            "additions": 10,
+            "deletions": 2,
+            "files": 3
+          },
+          "chats": [
+            {
+              "archived": false,
+              "interactivity": "full",
+              "kind": "default",
+              "order": 0,
+              "summary": "Add retry to uploader",
+              "titleSource": "auto",
+              "uri": "ahp-chat://default/Y29waWxvdGNsaTovZXhhbXBsZQ"
+            }
+          ],
+          "isArchived": false,
+          "isChatBacking": false,
+          "isRead": true,
+          "modifiedTime": 1790809488968,
+          "project": {
+            "displayName": "example",
+            "uri": "file:///home/user/src/example"
+          },
+          "summary": "Add retry to uploader",
+          "titleSource": "auto",
+          "workingDirectories": [
+            "file:///home/user/src/example"
+          ]
+        },
+        "payloadVersion": 2
+      },
+      "is_chat_backing": 0,
+      "modified_time": 1790809488968
+    },
+    {
+      "session_uri": "copilotcli:/3f2a9c10-3333-4a1b-8c03-ccccccccccc3",
+      "provider": "copilotcli",
+      "start_time": 1790800000000,
+      "external": null,
+      "registration_source": "explicit",
+      "session_generation": null,
+      "source_revision": null,
+      "payload_version": null,
+      "payload_hash": null,
+      "verified": 0,
+      "payload": {
+        "data": {
+          "_meta": {
+            "vscode.session.initiator": {
+              "name": "vscode"
+            }
+          },
+          "changes": {
+            "additions": 10,
+            "deletions": 2,
+            "files": 3
+          },
+          "chats": [
+            {
+              "archived": false,
+              "interactivity": "full",
+              "kind": "default",
+              "order": 0,
+              "summary": "Deleted session",
+              "titleSource": "auto",
+              "uri": "ahp-chat://default/Y29waWxvdGNsaTovZXhhbXBsZQ"
+            }
+          ],
+          "isArchived": false,
+          "isChatBacking": false,
+          "isRead": true,
+          "modifiedTime": 1790801000000,
+          "project": {
+            "displayName": "example",
+            "uri": "file:///home/user/src/example"
+          },
+          "summary": "Deleted session",
+          "titleSource": "auto",
+          "workingDirectories": [
+            "file:///home/user/src/example"
+          ]
+        },
+        "payloadVersion": 2
+      },
+      "is_chat_backing": 0,
+      "modified_time": 1790801000000
+    },
+    {
+      "session_uri": "claude:/3f2a9c10-4444-4a1b-8c04-ddddddddddd4",
+      "provider": "claude",
+      "start_time": 1790806000000,
+      "external": 1,
+      "registration_source": "discovery",
+      "session_generation": null,
+      "source_revision": null,
+      "payload_version": null,
+      "payload_hash": null,
+      "verified": 0,
+      "payload": null,
+      "is_chat_backing": 0,
+      "modified_time": 1790807000000
+    }
+  ],
+  "metadata": [
+    {
+      "key": "sessionTombstone:copilotcli:/3f2a9c10-3333-4a1b-8c03-ccccccccccc3",
+      "value": "true"
+    },
+    {
+      "key": "sessionRegistryBackfilled:copilotcli",
+      "value": "true"
+    }
+  ]
+}

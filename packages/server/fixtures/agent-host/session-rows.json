@@ -1,0 +1,205 @@
+{
+  "turns": [
+    {
+      "id": "request_7c0de000-0000-4000-8000-000000000001",
+      "event_id": "7c0de000-1111-4000-8000-000000000001",
+      "checkpoint_ref": "refs/agents/9a1b2c3d-5555-4e6f-8a07-eeeeeeeeeee5/checkpoints/turn/1"
+    },
+    {
+      "id": "request_7c0de000-0000-4000-8000-000000000002",
+      "event_id": "7c0de000-1111-4000-8000-000000000002",
+      "checkpoint_ref": "refs/agents/9a1b2c3d-5555-4e6f-8a07-eeeeeeeeeee5/checkpoints/turn/2"
+    },
+    {
+      "id": "request_7c0de000-0000-4000-8000-000000000003",
+      "event_id": "7c0de000-1111-4000-8000-000000000003",
+      "checkpoint_ref": "refs/agents/9a1b2c3d-5555-4e6f-8a07-eeeeeeeeeee5/checkpoints/turn/3"
+    },
+    {
+      "id": "request_7c0de000-0000-4000-8000-000000000004",
+      "event_id": "7c0de000-1111-4000-8000-000000000004",
+      "checkpoint_ref": "refs/agents/9a1b2c3d-5555-4e6f-8a07-eeeeeeeeeee5/checkpoints/turn/4"
+    },
+    {
+      "id": "request_7c0de000-0000-4000-8000-000000000005",
+      "event_id": "7c0de000-1111-4000-8000-000000000005",
+      "checkpoint_ref": "refs/agents/9a1b2c3d-5555-4e6f-8a07-eeeeeeeeeee5/checkpoints/turn/5"
+    }
+  ],
+  "turn_usage": [
+    {
+      "turn_id": "request_7c0de000-0000-4000-8000-000000000001",
+      "usage": {
+        "inputTokens": 48857,
+        "outputTokens": 450,
+        "model": "gpt-6-luna",
+        "cacheReadTokens": 48398,
+        "_meta": {
+          "vscode.modelCall": {
+            "schemaVersion": 1,
+            "model": "gpt-6-luna",
+            "durationMs": 5000,
+            "timeToFirstTokenMs": 2000.5,
+            "inputTokens": 48857,
+            "outputTokens": 450,
+            "cacheReadTokens": 48398
+          },
+          "cost": 1,
+          "copilotUsage": {
+            "totalNanoAiu": 1285093000,
+            "sessionTotalNanoAiu": 1208465000
+          },
+          "turnTokenTotals": [
+            {
+              "model": "gpt-6-luna",
+              "inputTokens": 459425,
+              "cachedTokens": 410538,
+              "outputTokens": 5271
+            }
+          ],
+          "directCopilotUsage": {
+            "totalNanoAiu": 1285093000
+          }
+        }
+      }
+    },
+    {
+      "turn_id": "request_7c0de000-0000-4000-8000-000000000002",
+      "usage": {
+        "inputTokens": 279968,
+        "outputTokens": 885,
+        "model": "claude-sonnet-5",
+        "cacheReadTokens": 279694,
+        "_meta": {
+          "vscode.modelCall": {
+            "schemaVersion": 1,
+            "model": "claude-sonnet-5",
+            "durationMs": 5000,
+            "timeToFirstTokenMs": 2000.5,
+            "inputTokens": 279968,
+            "outputTokens": 885,
+            "cacheReadTokens": 279694
+          },
+          "cost": 1,
+          "copilotUsage": {
+            "totalNanoAiu": 246039490000,
+            "sessionTotalNanoAiu": 538656826500
+          },
+          "turnTokenTotals": [
+            {
+              "model": "claude-sonnet-5",
+              "inputTokens": 9899296,
+              "cachedTokens": 9847477,
+              "outputTokens": 36139
+            },
+            {
+              "model": "copilot-search-a",
+              "inputTokens": 59601,
+              "cachedTokens": 35655,
+              "outputTokens": 1297
+            }
+          ],
+          "directCopilotUsage": {
+            "totalNanoAiu": 246039490000
+          }
+        }
+      }
+    },
+    {
+      "turn_id": "request_7c0de000-0000-4000-8000-000000000004",
+      "usage": {
+        "inputTokens": 93747,
+        "outputTokens": 218,
+        "model": "gpt-5.3-codex",
+        "cacheReadTokens": 92672,
+        "_meta": {
+          "vscode.modelCall": {
+            "schemaVersion": 1,
+            "model": "gpt-5.3-codex",
+            "durationMs": 5000,
+            "timeToFirstTokenMs": 2000.5,
+            "inputTokens": 93747,
+            "outputTokens": 218,
+            "cacheReadTokens": 92672
+          },
+          "cost": 1,
+          "copilotUsage": {
+            "totalNanoAiu": 35494578000,
+            "sessionTotalNanoAiu": 35766346500
+          },
+          "turnTokenTotals": [
+            {
+              "model": "gpt-6.1-sol",
+              "inputTokens": 279636,
+              "cachedTokens": 239001,
+              "outputTokens": 8268
+            },
+            {
+              "model": "gpt-5.3-codex",
+              "inputTokens": 187262,
+              "cachedTokens": 92672,
+              "outputTokens": 320
+            }
+          ],
+          "directCopilotUsage": {
+            "totalNanoAiu": 35494578000
+          }
+        }
+      }
+    },
+    {
+      "turn_id": "request_7c0de000-0000-4000-8000-000000000005",
+      "usage": {
+        "inputTokens": 56326,
+        "outputTokens": 174,
+        "model": "gpt-6-luna",
+        "cacheReadTokens": 54782,
+        "_meta": {
+          "vscode.modelCall": {
+            "schemaVersion": 1,
+            "model": "gpt-6-luna",
+            "durationMs": 5000,
+            "timeToFirstTokenMs": 2000.5,
+            "inputTokens": 56326,
+            "outputTokens": 174,
+            "cacheReadTokens": 54782
+          },
+          "cost": 1,
+          "copilotUsage": {
+            "totalNanoAiu": 158271500,
+            "sessionTotalNanoAiu": 2233682000
+          },
+          "turnTokenTotals": [
+            {
+              "model": "gpt-6-luna",
+              "inputTokens": 111111,
+              "cachedTokens": 108174,
+              "outputTokens": 268
+            }
+          ],
+          "directCopilotUsage": {
+            "totalNanoAiu": 158271500
+          }
+        }
+      }
+    }
+  ],
+  "session_metadata": [
+    {
+      "key": "copilot.model",
+      "value": "{\"id\":\"gpt-6-luna\",\"config\":{\"thinkingLevel\":\"medium\",\"contextSize\":272000}}"
+    },
+    {
+      "key": "customTitle",
+      "value": "Example custom title"
+    },
+    {
+      "key": "customTitleSource",
+      "value": "agent"
+    },
+    {
+      "key": "copilot.workingDirectory",
+      "value": "file:///home/user/src/example"
+    }
+  ]
+}
