@@ -1834,8 +1834,10 @@ registry. See the plan's §3 for the decisions (D1-D10).
 - **MCP server.** The extension offers a Copilot-only stdio MCP server
   (`dist/mcp-stdio.js`) through `vscode.lm.registerMcpServerDefinitionProvider`,
   started with VS Code's own Electron as Node. It has the same 9 read-only
-  tools as the standalone server under its own name (`ai-credits-analyzer`)
-  and Copilot-only instructions. Its only input is a validated
+  tools as the standalone server under its own name (`ai-credits-analyzer`),
+  title (AI Credits Analyzer) and Copilot-only instructions. Both servers
+  send the same author, GitHub repo link (`websiteUrl`) and inline SVG/PNG
+  icon in their `initialize` result (`mcp/mcp-branding.ts`). Its only input is a validated
   `--user-data-dir`. It's off until `aiCreditsAnalyzer.mcp.enabled` is on,
   and an untrusted workspace can't turn it on (`restrictedConfigurations`).
 - **Tests in a real VS Code.** A `@vscode/test-cli` suite runs on stable

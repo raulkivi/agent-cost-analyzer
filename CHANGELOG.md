@@ -28,6 +28,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     longer says "GitHub Copilot Chat"; the dashboard shows the insights
     before its filters in narrow windows.
 ### Added
+- The MCP servers identify themselves to clients with a display title
+  (Agent Cost Analyzer, or AI Credits Analyzer in the extension), the
+  author, a link to the GitHub repo and the app icon.
 - A UI check (`npm run test:ui`) that runs the extension's webview in
   Chromium with VS Code's themes and fails on cut-off content or
   unreadable text.
