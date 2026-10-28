@@ -19,7 +19,10 @@ export interface LogProviderContractFixture {
   buildUnavailableProvider: () => LogProvider;
   // A turn index within knownSessionId that has captured round-trip data
   // (Phase 9.5) — used to assert readTurnDetail returns non-empty rounds.
-  turnIndexWithRoundTrip: number;
+  // null for a source that keeps no round-trip data (VS Code Agent Host
+  // sessions, step 10.13): turn 0 of knownSessionId must then exist with
+  // rounds: [].
+  turnIndexWithRoundTrip: number | null;
 }
 
 export function describeLogProviderContract(
@@ -89,17 +92,27 @@ export function describeLogProviderContract(
       ).resolves.toBeNull();
     });
 
-    it("readTurnDetail returns non-empty rounds for a turn with captured round-trip data", async () => {
-      const provider = fixture.buildAvailableProvider();
+    const { turnIndexWithRoundTrip } = fixture;
+    if (turnIndexWithRoundTrip === null) {
+      it("readTurnDetail returns a non-null detail with no rounds for an existing turn of a source without round-trip data", async () => {
+        const provider = fixture.buildAvailableProvider();
 
-      const detail = await provider.readTurnDetail(
-        fixture.knownSessionId,
-        fixture.turnIndexWithRoundTrip,
-      );
+        await expect(provider.readTurnDetail(fixture.knownSessionId, 0)).resolves.toEqual({
+          turnIndex: 0,
+          userMessage: [],
+          rounds: [],
+        });
+      });
+    } else {
+      it("readTurnDetail returns non-empty rounds for a turn with captured round-trip data", async () => {
+        const provider = fixture.buildAvailableProvider();
 
-      expect(detail).not.toBeNull();
-      expect(detail!.turnIndex).toBe(fixture.turnIndexWithRoundTrip);
-      expect(detail!.rounds.length).toBeGreaterThan(0);
-    });
+        const detail = await provider.readTurnDetail(fixture.knownSessionId, turnIndexWithRoundTrip);
+
+        expect(detail).not.toBeNull();
+        expect(detail!.turnIndex).toBe(turnIndexWithRoundTrip);
+        expect(detail!.rounds.length).toBeGreaterThan(0);
+      });
+    }
   });
 }

@@ -39,6 +39,7 @@ import {
 } from "../../../services/session-enricher/session-enricher.js";
 import type { LogProvider, LogProviderAvailability } from "../log-provider.js";
 import type { SystemPromptTextLookup, SystemPromptTextReader } from "../system-prompt-text-reader.js";
+import type { CopilotSessionSource } from "./copilot-session-source.js";
 
 export interface VscodeLogProviderOptions {
   sessionStoreDbPath: string | null;
@@ -47,6 +48,17 @@ export interface VscodeLogProviderOptions {
   // extension's Refresh) without rebuilding the provider.
   debugLogsDirPaths: string[] | (() => string[]);
   agentTracesDbPath: string | null;
+  // VS Code's Agent Host sessions (step 10.13), listed next to the classic
+  // store's; omitted or null means none.
+  agentHostSessions?: CopilotSessionSource | null;
+}
+
+const CLASSIC_UNAVAILABLE_REASON = "No local GitHub Copilot Chat session store was found on this machine.";
+
+// Newest start first across both stores; a session without a start goes
+// last. Array.prototype.sort is stable, so ties keep each store's order.
+function byStartDescending(a: Session, b: Session): number {
+  return (b.startedAt ?? "").localeCompare(a.startedAt ?? "");
 }
 
 const PROVIDER_ID = "vscode";
@@ -59,7 +71,11 @@ const PROVIDER_ID = "vscode";
 // that adding a second provider (mitmproxy) doesn't require touching the
 // route layer (architecture.md §6.2.1/§4.1's Phase 9 row, and the
 // 2026-08-10 decision to fold Phase 8.5's agent-traces.db read in here
-// rather than leaving it as a parallel app.ts-level path).
+// rather than leaving it as a parallel app.ts-level path). Since step 10.13
+// it also lists the sessions of a second Copilot store (VS Code's Agent
+// Host), injected as a CopilotSessionSource: ids are UUIDs in both stores,
+// so each lookup asks the classic store first and the second store only for
+// an id the classic store doesn't have.
 export class VscodeLogProvider implements LogProvider, SystemPromptTextReader {
   readonly id = PROVIDER_ID;
   readonly label = "VS Code (local Copilot Chat)";
@@ -79,17 +95,26 @@ export class VscodeLogProvider implements LogProvider, SystemPromptTextReader {
     return openReadOnlyDb(sessionStoreDbPath);
   }
 
+  private get agentHostSessions(): CopilotSessionSource | null {
+    return this.options.agentHostSessions ?? null;
+  }
+
+  private tag(session: Session): Session {
+    return { ...session, providerId: PROVIDER_ID };
+  }
+
+  // Available when either store can be read; with neither, the classic
+  // store's reason, which the setup guidance is written around.
   async checkAvailability(): Promise<LogProviderAvailability> {
     const db = this.openDb();
-    if (!db) {
-      return {
-        available: false,
-        unavailableReason:
-          "No local GitHub Copilot Chat session store was found on this machine.",
-      };
+    if (db) {
+      db.close();
+      return { available: true };
     }
-    db.close();
-    return { available: true };
+    if ((await this.agentHostSessions?.checkAvailability())?.available) {
+      return { available: true };
+    }
+    return { available: false, unavailableReason: CLASSIC_UNAVAILABLE_REASON };
   }
 
   // costAiCredits per session requires reading each session's main.jsonl (the
@@ -119,6 +144,14 @@ export class VscodeLogProvider implements LogProvider, SystemPromptTextReader {
   }
 
   async listSessions(): Promise<Session[]> {
+    const [classic, agentHost] = await Promise.all([
+      this.listClassicSessions(),
+      this.agentHostSessions?.listSessions() ?? [],
+    ]);
+    return [...classic, ...agentHost.map((session) => this.tag(session))].sort(byStartDescending);
+  }
+
+  private async listClassicSessions(): Promise<Session[]> {
     const db = this.openDb();
     if (!db) {
       return [];
@@ -132,6 +165,15 @@ export class VscodeLogProvider implements LogProvider, SystemPromptTextReader {
   }
 
   async readSession(sessionId: string): Promise<Session | null> {
+    const classic = await this.readClassicSession(sessionId);
+    if (classic) {
+      return classic;
+    }
+    const agentHost = await this.agentHostSessions?.readSession(sessionId);
+    return agentHost ? this.tag(agentHost) : null;
+  }
+
+  private async readClassicSession(sessionId: string): Promise<Session | null> {
     const db = this.openDb();
     if (!db) {
       return null;
@@ -192,14 +234,30 @@ export class VscodeLogProvider implements LogProvider, SystemPromptTextReader {
   // logged, or logging started after this turn ran) is a valid, non-null
   // TurnInspectorDetail with rounds: [].
   async readTurnDetail(sessionId: string, turnIndex: number): Promise<TurnInspectorDetail | null> {
+    const classic = await this.readClassicTurnDetail(sessionId, turnIndex);
+    if (classic !== "unknown-session") {
+      return classic;
+    }
+    return (await this.agentHostSessions?.readTurnDetail(sessionId, turnIndex)) ?? null;
+  }
+
+  // "unknown-session" when the classic store has no such session, so only
+  // then is the second store asked; null is a classic session's missing turn.
+  private async readClassicTurnDetail(
+    sessionId: string,
+    turnIndex: number,
+  ): Promise<TurnInspectorDetail | null | "unknown-session"> {
     const db = this.openDb();
     if (!db) {
-      return null;
+      return "unknown-session";
     }
 
     try {
       const sessionRow = getSessionRow(db, sessionId);
-      if (!sessionRow || turnIndex < 0 || turnIndex >= sessionRow.turn_count) {
+      if (!sessionRow) {
+        return "unknown-session";
+      }
+      if (turnIndex < 0 || turnIndex >= sessionRow.turn_count) {
         return null;
       }
 
@@ -226,6 +284,14 @@ export class VscodeLogProvider implements LogProvider, SystemPromptTextReader {
   // decides whether the session exists, and a known session without a
   // main.jsonl or without that artifact is not-captured.
   async lookupSystemPromptText(sessionId: string): Promise<SystemPromptTextLookup> {
+    const classic = await this.lookupClassicSystemPromptText(sessionId);
+    if (classic.status !== "unknown-session" || !this.agentHostSessions) {
+      return classic;
+    }
+    return this.agentHostSessions.lookupSystemPromptText(sessionId);
+  }
+
+  private async lookupClassicSystemPromptText(sessionId: string): Promise<SystemPromptTextLookup> {
     const db = this.openDb();
     if (!db) {
       return { status: "unknown-session" };

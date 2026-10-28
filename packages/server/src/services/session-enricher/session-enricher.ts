@@ -29,7 +29,8 @@ export const PARSE_FAILURES_REASON =
   "main.jsonl for this session has content, but none of its lines could be " +
   "parsed into a usable event — this looks like a parser regression or a " +
   "corrupted log file, not a settings problem.";
-const UNKNOWN_MODEL = "unknown";
+// The model name shown when no source names one.
+export const UNKNOWN_MODEL = "unknown";
 const STUB_EXPLANATION =
   "Token and AI Credits usage data is not available for this turn (main.jsonl parsing is not implemented yet).";
 export const TOOL_CALL_TOKEN_COUNT_UNAVAILABLE_REASON =
@@ -65,8 +66,13 @@ export function computeSessionCost(
   );
 }
 
+// The title of a session whose source names none.
+export function fallbackSessionTitle(sessionId: string): string {
+  return `Session ${sessionId}`;
+}
+
 function deriveTitle(row: SessionRow): string {
-  return row.summary || row.repository || row.cwd || `Session ${row.id}`;
+  return row.summary || row.repository || row.cwd || fallbackSessionTitle(row.id);
 }
 
 function unavailableToolCallTokenCount(): TokenCount {
@@ -176,7 +182,7 @@ function tokenCountValue(tokenCount: TokenCount): number {
   return tokenCount.known ? tokenCount.value : 0;
 }
 
-function buildAnalyzeExplanation(usage: TurnUsage): string {
+export function buildAnalyzeExplanation(usage: TurnUsage): string {
   const uncachedInput = tokenCountValue(usage.uncachedInput).toLocaleString();
   const cacheRead = tokenCountValue(usage.cacheRead).toLocaleString();
   const output = tokenCountValue(usage.output).toLocaleString();

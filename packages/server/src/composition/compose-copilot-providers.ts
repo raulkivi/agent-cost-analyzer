@@ -7,6 +7,10 @@ import {
 } from "./providers/create-vscode-provider.js";
 
 export interface CopilotProviderCompositionOptions extends VscodeProviderPaths {
+  // Required here: the extension derives it from VS Code's own user-data
+  // dir (D4) or passes null, and never falls back to this machine's
+  // default install.
+  agentHostUserDataDir: string | null;
   vscodeSettingsPath?: string | null;
   // The extension's own store (D5: its globalState), never the standalone
   // app's settings file, so neither product changes the other's settings.

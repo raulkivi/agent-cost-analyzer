@@ -13,6 +13,7 @@ function buildService(appSettings = new InMemoryAppSettingsStore(), settingsSour
     sessionStoreDbPath: path.join("/nonexistent", "state.vscdb"),
     debugLogsDirPaths: [],
     agentTracesDbPath: null,
+    agentHostUserDataDir: null,
     vscodeSettingsPath: null,
     appSettings,
     settingsSource,

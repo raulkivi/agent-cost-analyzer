@@ -237,7 +237,7 @@ describe("GET /api/sessions", () => {
   });
 
   it("returns only GitHub Copilot Chat sessions as schema-valid summaries", async () => {
-    const app = createApp({ appSettingsDir, sessionStoreDbPath: dbPath });
+    const app = createApp({ appSettingsDir, sessionStoreDbPath: dbPath, agentHostUserDataDir: null });
 
     const response = await request(app).get("/api/sessions");
 
@@ -254,6 +254,7 @@ describe("GET /api/sessions", () => {
     const app = createApp({
       appSettingsDir,
       sessionStoreDbPath: path.join(dir, "does-not-exist.db"),
+      agentHostUserDataDir: null,
     });
 
     const response = await request(app).get("/api/sessions");
@@ -277,7 +278,12 @@ describe("GET /api/sessions", () => {
       path.join(sessionLogDir, "main.jsonl"),
       lines.map((line) => JSON.stringify(line)).join("\n") + "\n",
     );
-    const app = createApp({ appSettingsDir, sessionStoreDbPath: dbPath, debugLogsDirPaths: [debugLogsDirPath] });
+    const app = createApp({
+      appSettingsDir,
+      sessionStoreDbPath: dbPath,
+      debugLogsDirPaths: [debugLogsDirPath],
+      agentHostUserDataDir: null,
+    });
 
     const response = await request(app).get("/api/sessions");
 
@@ -291,6 +297,7 @@ describe("GET /api/sessions", () => {
       appSettingsDir,
       sessionStoreDbPath: dbPath,
       debugLogsDirPaths: [path.join(dir, "debug-logs")],
+      agentHostUserDataDir: null,
     });
 
     const response = await request(app).get("/api/sessions");

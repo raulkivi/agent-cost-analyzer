@@ -9,6 +9,10 @@ import {
   USAGE_SESSION_ID,
   writeUsageDebugLog,
 } from "@agent-cost-analyzer/server/src/test-support/copilot-session-store";
+import {
+  AGENT_HOST_FIXTURE_SESSION_IDS,
+  writeAgentHostCatalog,
+} from "@agent-cost-analyzer/server/src/test-support/agent-host-user-data-dir";
 import { createCopilotMcpServer } from "./copilot-mcp-server.js";
 
 type ToolResult = Awaited<ReturnType<Client["callTool"]>>;
@@ -52,6 +56,16 @@ describe("createCopilotMcpServer (vscode-extension.md D7)", () => {
     const result = await client.callTool({ name: "list_sessions", arguments: {} });
 
     expect((result.structuredContent as { sessions: { id: string }[] }).sessions.map((session) => session.id)).toEqual([USAGE_SESSION_ID]);
+  });
+
+  it("reads VS Code Agent Host sessions under the same user-data dir, created after it started (step 10.13)", async () => {
+    writeAgentHostCatalog(userDataDir);
+
+    const result = await client.callTool({ name: "list_sessions", arguments: {} });
+
+    expect((result.structuredContent as { sessions: { id: string }[] }).sessions.map((session) => session.id)).toEqual(
+      expect.arrayContaining([USAGE_SESSION_ID, AGENT_HOST_FIXTURE_SESSION_IDS.withTurns, AGENT_HOST_FIXTURE_SESSION_IDS.second]),
+    );
   });
 
   it("finds a workspace's debug logs created after it started, on the next call", async () => {

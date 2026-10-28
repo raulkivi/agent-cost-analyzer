@@ -1,5 +1,18 @@
 import type { ConfigStatus, ConfigWarning, Session } from "@agent-cost-analyzer/domain";
-import { describe, expect, it, vi } from "vitest";
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import path from "node:path";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { createExtensionApiService } from "@agent-cost-analyzer/server/src/composition/create-extension-api-service";
+import {
+  AGENT_HOST_FIXTURE_SESSION_IDS,
+  readAgentHostFixtureRows,
+  sessionRowsWithUsageOnly,
+  writeAgentHostCatalog,
+  writeAgentSessionDb,
+} from "@agent-cost-analyzer/server/src/test-support/agent-host-user-data-dir";
+import { InMemoryAppSettingsStore } from "@agent-cost-analyzer/server/src/test-support/in-memory-app-settings-store";
+import { copilotLogPathsFromUserDataDir } from "../platform/copilot-log-paths.js";
 import { upperCaseTranslate } from "../l10n/upper-case-translate.js";
 import { SidebarController, type SidebarSources } from "./sidebar-controller.js";
 
@@ -326,5 +339,40 @@ describe("the Learn tree", () => {
     await controller.refresh();
     expect(controller.learnTree()).toEqual([]);
     expect(failing).toHaveBeenCalledTimes(2);
+  });
+});
+
+// Step 10.13: the Sessions view and the status bar over VS Code Agent Host
+// sessions, read the way the extension reads them (every path from the
+// user-data dir, D4).
+describe("SidebarController over VS Code Agent Host sessions", () => {
+  let userDataDir: string;
+
+  beforeEach(() => {
+    userDataDir = mkdtempSync(path.join(tmpdir(), "sidebar-agent-host-"));
+  });
+  afterEach(() => {
+    rmSync(userDataDir, { recursive: true, force: true });
+  });
+
+  it("lists a session started today in the Sessions view and counts its AI Credits in the status bar", async () => {
+    const catalog = readAgentHostFixtureRows("catalog-rows.json");
+    const listed = catalog.sessions_v2.find((row) => row.session_uri === `copilotcli:/${AGENT_HOST_FIXTURE_SESSION_IDS.second}`)!;
+    writeAgentHostCatalog(userDataDir, { ...catalog, sessions_v2: [{ ...listed, start_time: Date.parse("2026-10-24T09:00:00Z") }] });
+    writeAgentSessionDb(userDataDir, AGENT_HOST_FIXTURE_SESSION_IDS.second, sessionRowsWithUsageOnly());
+    const api = createExtensionApiService({
+      ...copilotLogPathsFromUserDataDir(userDataDir),
+      appSettings: new InMemoryAppSettingsStore(),
+      learnScenariosFixturesDir: path.resolve(import.meta.dirname, "../../../server/fixtures/learn-scenarios"),
+      appVersion: "0.1.0-test",
+    });
+    const { controller } = setup({ listSessions: () => api.listSessions() });
+
+    await controller.refresh();
+
+    const [today] = controller.sessionsTree();
+    expect(today).toMatchObject({ kind: "group", label: "Today" });
+    expect(today.kind === "group" && today.children.map((node) => node.label)).toEqual(["Example custom title"]);
+    expect(controller.statusBar()?.text).toBe("$(graph) 282.98 AI Credits today");
   });
 });

@@ -1,4 +1,5 @@
 import type { DatabaseSync } from "node:sqlite";
+import { hasTable } from "../sqlite/has-table.js";
 
 export const NANO_AIU_PER_AI_CREDIT = 1_000_000_000;
 
@@ -24,17 +25,6 @@ export interface AgentHostTurnRow {
 interface TurnDbRow {
   turn_id: string;
   usage: string | null;
-}
-
-// A missing table is a shape of the world (a session database from an older
-// VS Code, or one whose projections never ran), not bad data — probe
-// sqlite_master instead of letting the query throw.
-function hasTable(db: DatabaseSync, name: string): boolean {
-  return (
-    db
-      .prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?")
-      .get(name) !== undefined
-  );
 }
 
 // JSON has no number-of-no-value, so "not a finite number" is decided here:

@@ -1,4 +1,5 @@
 import type { DatabaseSync } from "node:sqlite";
+import { hasTable } from "../sqlite/has-table.js";
 
 export const AGENT_HOST_COPILOT_PROVIDER = "copilotcli";
 
@@ -28,16 +29,6 @@ interface SessionV2DbRow {
 // shape; callers append their own WHERE clause.
 const SELECT_SESSION =
   "SELECT session_uri, payload, start_time, modified_time FROM sessions_v2";
-
-// A missing table is a shape of the world (older VS Code, foreign database),
-// not bad data — probe sqlite_master instead of letting the query throw.
-function hasTable(db: DatabaseSync, name: string): boolean {
-  return (
-    db
-      .prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?")
-      .get(name) !== undefined
-  );
-}
 
 // Session-level summary only: a payload that hides the title inside
 // chats[].summary stays untitled.

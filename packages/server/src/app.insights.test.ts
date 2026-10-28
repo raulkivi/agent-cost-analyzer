@@ -26,6 +26,7 @@ describe("GET /api/insights (Phase 9.11)", () => {
       debugLogsDirPaths: [],
       vscodeSettingsPath: null,
       agentTracesDbPath: null,
+      agentHostUserDataDir: null,
       appSettingsDir: path.join(dir, "settings"),
       mitmproxyCapturesDirPath: null,
       piAgentSessionsDirPath: null,
