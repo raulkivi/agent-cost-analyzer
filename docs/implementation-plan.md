@@ -5,9 +5,10 @@ Phases 0-9.12 build the standalone app, **Agent Cost Analyzer** (every
 provider). Phase 10 builds **AI Credits Analyzer**, a Copilot-only VS Code
 extension sharing the same code (vision §5).
 
-**Overall status (2026-10-24):** every phase's code and docs are merged to
-`main`. Still open: Phase 9.6's check against a real captured pi session,
-and Phase 10's owner tasks before the first release (see its section).
+**Overall status (2026-10-28):** every phase's code and docs are merged to
+`main`, including Phase 10's release prep (#90). Still open: Phase 9.6's
+check against a real captured pi session, and Phase 10's owner tasks before
+the first release (see its section).
 Each phase has a goal, concrete deliverables, an exit criterion (how you know
 it's done), and its dependencies. Phases are ordered so the riskiest/least
 certain work (real `main.jsonl` parsing) happens after there's already a
@@ -1263,14 +1264,15 @@ server (off, on with 9 tools and `get_session_cost`, off again).
    ([plans/vscode-extension-manual-checks.md](plans/vscode-extension-manual-checks.md)):
    the usability script, Copilot agent mode using the MCP server
    (including the Restricted Mode guard), and the Remote-SSH/WSL and Dev
-   Container check.
+   Container check. Started 2026-10-27 on 0.1.0; check 1.2 found two
+   bugs, fixed in #90, and needs a re-run (see the run log there).
 2. The owner's review of the extension README and guide. The 8
    screenshots are in place (manual checks §4).
-3. Publishing setup (plan §7.0): the Entra ID app and the `release`
-   environment (global PATs retire on 1 December 2026), the Open VSX
-   namespace, its ownership claim (#14833) and `OVSX_PAT` for the first
-   release (trusted publishing replaces it afterwards). The icon is done
-   (`icon.png`, 256 px).
+3. Publishing setup (plan §7.0): done on 2026-10-27 except the Open VSX
+   ownership claim (#14833), which waits on the Open VSX administrators.
+   The Entra ID app, the `release` environment, the Open VSX namespace,
+   `OVSX_PAT` and the icon are in place; trusted publishing replaces
+   `OVSX_PAT` after the first release.
 4. The first release: tag `ext-v0.1.0` (odd minor, so the pre-release
    channel).
 

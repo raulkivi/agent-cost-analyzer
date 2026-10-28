@@ -7,7 +7,7 @@ The owner's tasks before the first release are listed in
 [architecture.md](../architecture.md) §12 into concrete, test-first steps.
 Each step's status is recorded under its heading in §6.
 
-Progress (2026-10-24):
+Progress (2026-10-28):
 
 | Step | What | State |
 |---|---|---|
@@ -20,7 +20,7 @@ Progress (2026-10-24):
 | 10.6 | Native Sessions/Setup sidebar, status bar, selection sync | Done (#67) |
 | 10.7 | Accessibility, responsive layout, AsyncView, local fonts, walkthrough, l10n | Done (#69) |
 | 10.8 | Copilot-only MCP server in the extension, plus UI follow-ups from 10.7 | Done (#71); server verified in CI (10.9); Copilot agent mode in the owner's manual checks |
-| 10.9 | Integration tests in real VS Code, performance budgets, usability run, packaging | Done (#72; integration suite green in CI); owner's manual checks open |
+| 10.9 | Integration tests in real VS Code, performance budgets, usability run, packaging | Done (#72; integration suite green in CI); release prep (#90: engine check, icon, Open VSX publishing, Copilot Chat setup fixes); publishing setup done except the Open VSX claim (§7.0); owner's manual checks in progress |
 | 10.10 | Documentation: extension README/listing, extension user guide, two-product README and User Guide | Done (#73); screenshots done; owner review open |
 | 10.11 | UX review for VS Code: panel fits any width, readable in light, dark and High Contrast, native look, automated UI check | Done (#77) |
 | 10.12 | Learn scenarios in the side bar (a Learn view), like the Sessions view; the panel has no list of its own | Done (#80) |
@@ -31,8 +31,8 @@ Progress (2026-10-24):
 The app ships today as two local processes: an Express API on
 `127.0.0.1:3001` (`packages/server`) and a Vite + React SPA
 (`packages/web`). Vision §5 lists one future path: repackage the app as a
-VS Code extension with a webview. Phase 10 is the only phase in the plan
-that hasn't started.
+VS Code extension with a webview. Phase 10 is that path, and the last
+phase in the plan.
 
 ### 1.1 Two products, one codebase
 
@@ -1544,13 +1544,24 @@ Marketplace still requires a *publisher*: the namespace in the extension
 id (`<publisher>.<name>`) and the identity shown on the listing. A
 personal account can own one; no company or organization is needed.
 
-**Status (2026-10-24):** the VS Code Marketplace publisher `raulkivi` is
-registered (marketplace.visualstudio.com/manage/publishers/raulkivi).
-Still to do:
-- **VS Code Marketplace:** the Entra ID setup below (global PATs retire
-  on 1 December 2026).
-- **Open VSX:** the whole section below.
-- **Listing:** the listing prerequisites.
+**Status (2026-10-28):** done except the Open VSX ownership claim
+(#14833), which waits on the Open VSX administrators.
+- **VS Code Marketplace:** publisher `raulkivi` registered
+  (marketplace.visualstudio.com/manage/publishers/raulkivi); Entra ID
+  setup done 2026-10-27.
+- **Open VSX:** agreement signed, namespace created, claim filed and
+  `OVSX_PAT` set (2026-10-27). Step 5's trusted publisher follows the
+  first release.
+- **Listing:** prerequisites in place; `displayName` availability is
+  confirmed by the first publish.
+
+Owner follow-ups after the first release and the granted claim:
+- Register the Open VSX trusted publisher, delete `OVSX_PAT` and revoke
+  its token (Open VSX step 5).
+- Remove the Open VSX administrator's Reader access on the Marketplace
+  publisher (Open VSX step 3).
+- Delete the temporary client secret on the Entra ID app (Marketplace
+  step 4); the release workflow doesn't use it.
 
 - **Publisher id: `raulkivi`** (registered, matching the GitHub handle).
   The id is permanent and must be unique, using lowercase letters, digits
@@ -1571,21 +1582,25 @@ ID isn't set up yet.
 2. In the Azure portal (same Microsoft account; a free tenant is enough),
    create an **app registration**, e.g. `ai-credits-analyzer-release`.
    Note its *Application (client) ID* and *Directory (tenant) ID*.
+   Done: `agent-cost-analyzer-release`, in the Default Directory.
 3. Under that app: *Certificates & secrets → Federated credentials → Add*,
    scenario *GitHub Actions deploying Azure resources*: organization
    `raulkivi`, repository `agent-cost-analyzer`, entity type
    *Environment*, environment `release`. Only release jobs in that
-   environment can then sign in.
+   environment can then sign in. Done: `github-release-environment`.
 4. Add the app as a **member of the publisher**: at
    `marketplace.visualstudio.com/manage/publishers/raulkivi` → *Members*,
-   add it (by its service principal / object id, as the current docs
-   describe) with the *Contributor* role.
+   add it with the *Contributor* role. Done. The Members dialog wants the
+   app's **Azure DevOps profile id**, not its object id: sign in as the
+   app (a temporary client secret) and read `id` from
+   `app.vssps.visualstudio.com/_apis/profile/profiles/me`. Delete the
+   secret afterwards.
 5. In GitHub: *Settings → Environments → New environment* `release`, with
    yourself as required reviewer and deployment limited to `ext-v*` tags.
    Add environment **variables** (not secrets) `AZURE_CLIENT_ID` and
    `AZURE_TENANT_ID`. The workflow uses `azure/login` with
    `allow-no-subscriptions: true` and `id-token: write`, then
-   `vsce publish --azure-credential`.
+   `vsce publish --azure-credential`. Done.
 6. Microsoft documents this for Azure Pipelines; on GitHub Actions it's
    reported working by other projects, so the first real publish is the
    test. Fallback: an Azure DevOps PAT (Marketplace → Manage, "All
@@ -1599,10 +1614,10 @@ ID isn't set up yet.
 1. Sign in at `https://open-vsx.org` with GitHub. In *Settings → Profile*,
    log in with an eclipse.org account (create one if needed; its GitHub
    username must match) and sign the **Eclipse Foundation Open VSX
-   Publisher Agreement** (not the Eclipse Contributor Agreement).
+   Publisher Agreement** (not the Eclipse Contributor Agreement). Done.
 2. Create the namespace once: the **+** next to *Namespaces* in Settings,
    or `npx ovsx create-namespace raulkivi -p <token>` with an access
-   token. It must equal the `publisher` field.
+   token. It must equal the `publisher` field. Done.
 3. Claim the namespace: until ownership is granted, anyone can publish
    into it and its extensions can stay inactive. *Claim Ownership* on the
    namespace page opens an issue at `github.com/EclipseFdn/open-vsx.org`
@@ -1611,7 +1626,7 @@ ID isn't set up yet.
 4. Trusted publishing needs the owner role (granted by the claim) and an
    extension that already exists, so the first release uses a token:
    *Settings → Access Tokens → Generate New Token*, stored as the
-   `OVSX_PAT` **secret** in the `release` environment.
+   `OVSX_PAT` **secret** in the `release` environment. Done.
 5. After the first release: *Settings → Trusted Publishers*, register
    repository `raulkivi/agent-cost-analyzer`, workflow
    `release-extension.yml` and environment `release`. Then delete the
