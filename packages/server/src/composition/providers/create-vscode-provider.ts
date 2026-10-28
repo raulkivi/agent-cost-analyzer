@@ -3,6 +3,8 @@ import { listWorkspaceDebugLogsDirPaths } from "../../data-sources/jsonl/session
 import { resolveAgentTracesDbPath } from "../../data-sources/agent-traces/agent-traces-db-path.js";
 import { resolveVscodeSettingsPath } from "../../data-sources/vscode-settings/vscode-settings-path.js";
 import { VscodeLogProvider } from "../../data-sources/log-providers/vscode/vscode-log-provider.js";
+import { AgentHostSessionSource } from "../../data-sources/agent-host/agent-host-session-source.js";
+import { resolveUserDataDir } from "../../platform/vscode-paths/resolve-user-data-dir.js";
 
 // Each path is overridable (tests, and the extension's VS Code-supplied
 // paths, D4); an omitted one resolves to this machine's default, and an
@@ -12,6 +14,10 @@ export interface VscodeProviderPaths {
   // A function is asked on every lookup (see VscodeLogProviderOptions).
   debugLogsDirPaths?: string[] | (() => string[]);
   agentTracesDbPath?: string | null;
+  // The VS Code user-data dir VS Code's Agent Host stores live under
+  // (step 10.13): User/globalStorage/agent-host.db and
+  // agentSessionData/<id>/session.db.
+  agentHostUserDataDir?: string | null;
 }
 
 // The VS Code / Copilot Chat provider — the only one both products ship
@@ -21,7 +27,15 @@ export function createVscodeProvider(paths: VscodeProviderPaths = {}): VscodeLog
     sessionStoreDbPath: paths.sessionStoreDbPath !== undefined ? paths.sessionStoreDbPath : resolveSessionStoreDbPath(),
     debugLogsDirPaths: paths.debugLogsDirPaths ?? listWorkspaceDebugLogsDirPaths(),
     agentTracesDbPath: paths.agentTracesDbPath !== undefined ? paths.agentTracesDbPath : resolveAgentTracesDbPath(),
+    agentHostSessions: agentHostSessionSource(
+      paths.agentHostUserDataDir !== undefined ? paths.agentHostUserDataDir : resolveUserDataDir(),
+    ),
   });
+}
+
+// No user-data dir, no Agent Host sessions.
+function agentHostSessionSource(userDataDir: string | null): AgentHostSessionSource | null {
+  return userDataDir === null ? null : new AgentHostSessionSource({ userDataDir });
 }
 
 // The VS Code settings.json the config check reads: an explicit null means

@@ -57,7 +57,13 @@ describe("createCopilotMcpServices (the extension's MCP server, vscode-extension
     writeUsageDebugLog(debugLogsDir);
 
     copilot = await connect(
-      createCopilotMcpServices({ sessionStoreDbPath, debugLogsDirPaths: [debugLogsDir], agentTracesDbPath: null, appVersion: "0.1.0-test" }),
+      createCopilotMcpServices({
+        sessionStoreDbPath,
+        debugLogsDirPaths: [debugLogsDir],
+        agentTracesDbPath: null,
+        agentHostUserDataDir: null,
+        appVersion: "0.1.0-test",
+      }),
     );
     // The standalone server as mcp/stdio.ts builds it, over the same Copilot
     // data and no other provider's.
@@ -65,6 +71,7 @@ describe("createCopilotMcpServices (the extension's MCP server, vscode-extension
       sessionStoreDbPath,
       debugLogsDirPaths: [debugLogsDir],
       agentTracesDbPath: null,
+      agentHostUserDataDir: null,
       vscodeSettingsPath: null,
       appSettingsDir: dir,
       mitmproxyCapturesDirPath: null,

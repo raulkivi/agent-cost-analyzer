@@ -65,6 +65,22 @@ describe("SessionAuditPanel", () => {
     expect(onShowAllSessions).toHaveBeenCalledTimes(1);
   });
 
+  it("says tool calls aren't available yet for an Agent Host session, never 'no tool calls'", async () => {
+    renderPanel({
+      copilotHarness: "agent-host",
+      loadAudit: vi.fn().mockResolvedValue(
+        makeSessionAudit({
+          totals: { toolCalls: 0, succeeded: 0, failed: 0, interrupted: 0, denied: 0, unknown: 0 },
+          calls: [],
+        }),
+      ),
+    });
+
+    expect(await screen.findByRole("heading", { name: "Tool calls not available yet" })).toBeInTheDocument();
+    expect(screen.getByText(/doesn't mean the agent ran no tools/)).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "No tool calls in this session" })).not.toBeInTheDocument();
+  });
+
   it("shows incomplete outcome coverage as a partial-data warning", async () => {
     renderPanel({
       loadAudit: vi.fn().mockResolvedValue(

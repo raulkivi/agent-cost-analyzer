@@ -74,6 +74,18 @@ describe("buildSessionAudit", () => {
     expect(() => sessionAuditSchema.parse(audit)).not.toThrow();
   });
 
+  it("says tool calls are unavailable for an Agent Host session, not that there were none", () => {
+    const audit = buildSessionAudit({ ...session([turn(0, [])]), copilotHarness: "agent-host" });
+
+    expect(audit.totals.toolCalls).toBe(0);
+    expect(audit.toolCallsUnavailableReason).toMatch(/Agent Host/);
+  });
+
+  it("leaves the unavailable reason out for a session whose tool calls are recorded", () => {
+    expect(buildSessionAudit({ ...session([turn(0, [])]), copilotHarness: "local" }).toolCallsUnavailableReason).toBeUndefined();
+    expect(buildSessionAudit(session([turn(0, [])])).toolCallsUnavailableReason).toBeUndefined();
+  });
+
   it("treats calls without an outcome as unknown and never reports a fabricated 0% failure rate", () => {
     const audit = buildSessionAudit(session([turn(0, [{ name: "read_file", argsSummary: "" }])]));
 

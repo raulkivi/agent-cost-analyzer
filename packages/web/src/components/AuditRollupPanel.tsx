@@ -4,6 +4,7 @@ import { fetchAuditRollup, type RollupQuery } from "../api-client/audit.js";
 import { HorizontalBars } from "../charts/HorizontalBars.js";
 import { StackedColumns } from "../charts/StackedColumns.js";
 import { CATEGORY_LABELS, STATUS_META, failedCountOf, formatCompact, formatFailureRate } from "../lib/audit-format.js";
+import { agentHostRollupNotIncluded } from "../lib/agent-host-unavailable.js";
 import { useCancellableLoad } from "../lib/use-cancellable-load.js";
 import { AsyncView, cancelledEmptyState } from "./ui/AsyncView.js";
 import { Blueprint } from "./ui/Blueprint.js";
@@ -81,20 +82,29 @@ export function AuditRollupPanel({ onOpenSession, loadRollup = fetchAuditRollup,
             ? cancelledEmptyState(retry)
             : {
                 title: "No sessions in this date range.",
-                body: "No session with tool calls started in this range.",
+                body:
+                  state.kind === "ready" && state.data.sessionsWithUnknownToolCalls > 0
+                    ? `No session with known tool calls started in this range. ${agentHostRollupNotIncluded(state.data.sessionsWithUnknownToolCalls)}`
+                    : "No session with tool calls started in this range.",
                 action: preset === "all" ? undefined : { label: "Show all time", onClick: () => setPreset("all") },
               }
         }
-        partial={
-          state.kind === "ready" && state.data.outcomeCoverage.unknown > 0
-            ? `Outcome unknown for ${state.data.outcomeCoverage.unknown} of ${state.data.totals.toolCalls} tool calls: ${state.data.outcomeCoverage.unknownReasons.join(" ")}`
-            : undefined
-        }
+        partial={state.kind === "ready" ? partialNote(state.data) : undefined}
       >
         {state.kind === "ready" && <RollupBody rollup={state.data} onOpenSession={onOpenSession} />}
       </AsyncView>
     </div>
   );
+}
+
+function partialNote(rollup: AuditRollup): string | undefined {
+  const notes = [
+    rollup.outcomeCoverage.unknown > 0
+      ? `Outcome unknown for ${rollup.outcomeCoverage.unknown} of ${rollup.totals.toolCalls} tool calls: ${rollup.outcomeCoverage.unknownReasons.join(" ")}`
+      : undefined,
+    rollup.sessionsWithUnknownToolCalls > 0 ? agentHostRollupNotIncluded(rollup.sessionsWithUnknownToolCalls) : undefined,
+  ].filter((note): note is string => note !== undefined);
+  return notes.length > 0 ? notes.join(" ") : undefined;
 }
 
 function RollupBody({ rollup, onOpenSession }: { rollup: AuditRollup; onOpenSession: (id: string) => void }) {

@@ -20,6 +20,7 @@ import {
   statusOf,
   unknownReasonOf,
 } from "./outcome-tally.js";
+import { toolCallsUnavailableReason } from "./tool-calls-availability.js";
 
 const NO_AFFECTED_TURNS_REASON = "No turn contained a failed tool call.";
 const AFFECTED_USAGE_UNKNOWN_REASON = "At least one affected turn has no known usage figure.";
@@ -130,6 +131,7 @@ function failureRecoveryCost(session: Session): SessionAudit["failureRecoveryCos
 // Pure: normalized Session in, SessionAudit out — provider-agnostic, since
 // every provider already normalizes into ToolCallRecords.
 export function buildSessionAudit(session: Session): SessionAudit {
+  const unavailableReason = toolCallsUnavailableReason(session);
   const calls = flattenCalls(session);
   const totals = emptyTotals();
   const unknownReasons = new Set<string>();
@@ -153,5 +155,6 @@ export function buildSessionAudit(session: Session): SessionAudit {
     retries: findRetries(calls),
     failureRecoveryCost: failureRecoveryCost(session),
     outcomeCoverage: { known: totals.toolCalls - totals.unknown, unknown: totals.unknown, unknownReasons: [...unknownReasons] },
+    ...(unavailableReason ? { toolCallsUnavailableReason: unavailableReason } : {}),
   };
 }

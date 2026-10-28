@@ -22,6 +22,34 @@ describe("AuditRollupPanel", () => {
     expect(screen.getByRole("group", { name: "Most failing program" })).toHaveTextContent("npm");
   });
 
+  it("says how many Agent Host sessions are not included, since their tool calls are unknown", async () => {
+    renderPanel(vi.fn().mockResolvedValue(makeAuditRollup({ sessionsWithUnknownToolCalls: 2 })));
+
+    expect(await screen.findByRole("note")).toHaveTextContent("2 Agent Host sessions not included: tool calls aren't read yet.");
+  });
+
+  it("uses the singular for one Agent Host session", async () => {
+    renderPanel(vi.fn().mockResolvedValue(makeAuditRollup({ sessionsWithUnknownToolCalls: 1 })));
+
+    expect(await screen.findByRole("note")).toHaveTextContent("1 Agent Host session not included: tool calls aren't read yet.");
+  });
+
+  it("keeps the note when only Agent Host sessions are in range", async () => {
+    renderPanel(
+      vi.fn().mockResolvedValue(
+        makeAuditRollup({ sessionCount: 0, sessionsWithUnknownToolCalls: 3, sessions: [], totals: { toolCalls: 0, succeeded: 0, failed: 0, interrupted: 0, denied: 0, unknown: 0 } }),
+      ),
+    );
+
+    expect(await screen.findByText(/3 Agent Host sessions not included/)).toBeInTheDocument();
+  });
+
+  it("shows no note when every session's tool calls are known", async () => {
+    renderPanel();
+    await screen.findByRole("group", { name: "Sessions" });
+    expect(screen.queryByText(/Agent Host session/)).not.toBeInTheDocument();
+  });
+
   it("loads exactly once without an injected clock (regression: re-render loop)", async () => {
     const loadRollup = vi.fn().mockResolvedValue(makeAuditRollup());
     render(<AuditRollupPanel loadRollup={loadRollup} onOpenSession={vi.fn()} />);

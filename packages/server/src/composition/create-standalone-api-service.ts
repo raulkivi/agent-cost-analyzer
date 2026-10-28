@@ -1,5 +1,7 @@
 import type { ProductProfile } from "@agent-cost-analyzer/domain";
 import { loadLearnScenarios } from "../data-sources/learn-scenarios/loader.js";
+import { agentHostCatalogProbe } from "../services/config-check/agent-host-catalog-probe.js";
+import { resolveUserDataDir } from "../platform/vscode-paths/resolve-user-data-dir.js";
 import { checkConfig } from "../services/config-check/config-check.js";
 import { ApiService } from "../services/api/api-service.js";
 import { AuditQueryService } from "../services/tool-audit/audit-query-service.js";
@@ -39,6 +41,8 @@ export function createStandaloneApiService(options: StandaloneApiServiceOptions 
   const { learnScenariosFixturesDir, appVersion: appVersionOption, ...compositionOptions } = options;
   const { registry, appSettings, resolvedVscodeSettingsPath } = composeLogProviders(compositionOptions);
   const appVersion = appVersionOption ?? readAppVersion();
+  const agentHostUserDataDir =
+    compositionOptions.agentHostUserDataDir !== undefined ? compositionOptions.agentHostUserDataDir : resolveUserDataDir();
 
   return new ApiService({
     registry,
@@ -46,7 +50,11 @@ export function createStandaloneApiService(options: StandaloneApiServiceOptions 
     insights: createInsightsService(registry),
     settings: appSettings,
     checkConfig: (minRetainedSessionLogsThreshold) =>
-      checkConfig({ settingsPath: resolvedVscodeSettingsPath, minRetainedSessionLogsThreshold }),
+      checkConfig({
+        settingsPath: resolvedVscodeSettingsPath,
+        minRetainedSessionLogsThreshold,
+        agentHostCatalogPresent: agentHostCatalogProbe(agentHostUserDataDir),
+      }),
     learnScenarios: loadLearnScenarios({ fixturesDir: learnScenariosFixturesDir }),
     appVersion,
     productProfile: standaloneProductProfile(appVersion),

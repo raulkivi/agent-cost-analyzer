@@ -13,6 +13,9 @@ export interface CopilotLogPaths {
   sessionStoreDbPath: string | null;
   debugLogsDirPaths: string[];
   agentTracesDbPath: string | null;
+  // VS Code's Agent Host stores (step 10.13) are found under the user-data
+  // dir itself, per session, so the provider takes the dir.
+  agentHostUserDataDir: string | null;
   vscodeSettingsPath: string | null;
 }
 
@@ -27,12 +30,19 @@ export function copilotDebugLogsDirPaths(userDataDir: string | null): string[] {
 // never this machine's default install: the extension doesn't guess.
 export function copilotLogPathsFromUserDataDir(userDataDir: string | null): CopilotLogPaths {
   if (userDataDir === null) {
-    return { sessionStoreDbPath: null, debugLogsDirPaths: [], agentTracesDbPath: null, vscodeSettingsPath: null };
+    return {
+      sessionStoreDbPath: null,
+      debugLogsDirPaths: [],
+      agentTracesDbPath: null,
+      agentHostUserDataDir: null,
+      vscodeSettingsPath: null,
+    };
   }
   return {
     sessionStoreDbPath: copilotChatGlobalStoragePath(userDataDir, "session-store.db"),
     debugLogsDirPaths: copilotDebugLogsDirPaths(userDataDir),
     agentTracesDbPath: copilotChatGlobalStoragePath(userDataDir, "agent-traces.db"),
+    agentHostUserDataDir: userDataDir,
     vscodeSettingsPath: userSettingsFilePath(userDataDir),
   };
 }

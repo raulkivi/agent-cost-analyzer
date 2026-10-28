@@ -130,6 +130,20 @@ describe("AnomalyDetector", () => {
     ]);
   });
 
+  it("leaves sessions with unknown tool calls out of the tool-volume sample instead of counting 0", () => {
+    const counts = [3, 4, 3, 5, 4, 3, 4, 60];
+    const known = counts.map((count, index) =>
+      analyzeSession(`s${index}`, undefined, [turn(0, Array.from({ length: count }, () => bash("ls")))]),
+    );
+    // Seven sessions with 0 calls would drag the median down and flag s7 anyway; here they must not count at all.
+    const unknownCalls = Array.from({ length: 7 }, (_, index) => ({
+      ...analyzeSession(`ah${index}`, undefined, [turn(0)]),
+      copilotHarness: "agent-host" as const,
+    }));
+    const findings = new AnomalyDetector().detect(inputFor([providerSessions([...known.slice(0, 7), ...unknownCalls])]));
+    expect(findings.filter((finding) => finding.category === "tool-volume-outlier")).toEqual([]);
+  });
+
   it("never flags a session for being unusually low", () => {
     const sources = [providerSessions(sessionsWithCredits([10, 10.5, 9.5, 10, 11, 9, 10.2, 9.8, 0.01]))];
     expect(new AnomalyDetector().detect(inputFor(sources)).filter((finding) => finding.category === "cost-outlier")).toEqual([]);
@@ -166,6 +180,20 @@ describe("BehaviorChangeDetector", () => {
       toolCallKey: "fake:d:0:0",
     });
     expect(program?.why).toBe("Not used in any of the 3 earlier sessions (since 2026-09-01).");
+  });
+
+  it("counts only sessions with known tool calls as earlier sessions for a tool or program", () => {
+    const agentHost = (id: string, n: number) => ({ ...analyzeSession(id, day(n), [turn(0)]), copilotHarness: "agent-host" as const });
+    const sessions = [
+      analyzeSession("a", day(1), [turn(0, [bash("npm test")])]),
+      analyzeSession("b", day(2), [turn(0, [bash("git status")])]),
+      analyzeSession("c", day(3), [turn(0, [bash("npm run build")])]),
+      agentHost("ah1", 4),
+      analyzeSession("d", day(5), [turn(0, [bash("terraform plan")])]),
+    ];
+    const findings = new BehaviorChangeDetector().detect(inputFor([providerSessions(sessions)]));
+    const program = findings.find((finding) => finding.ruleId === "behavior.new-program");
+    expect(program?.why).toBe("Not used in any of the 3 earlier sessions with known tool calls (since 2026-09-01).");
   });
 
   it("reports nothing when every session is part of the baseline", () => {

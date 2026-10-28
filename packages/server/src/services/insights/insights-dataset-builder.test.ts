@@ -36,6 +36,14 @@ describe("buildInsightRows", () => {
     ]);
   });
 
+  it("marks Agent Host sessions' tool calls as unknown instead of 0", () => {
+    const session = { ...analyzeSession("ah", undefined, [turn(0)]), copilotHarness: "agent-host" as const };
+    const rows = buildInsightRows([providerSessions([session])]);
+
+    expect(rows.sessions[0]).toMatchObject({ toolCallsUnavailable: true });
+    expect(rows.turns[0]?.toolCallCount).toBeNull();
+  });
+
   it("keeps the same session id from two providers apart", () => {
     const rows = buildInsightRows([
       providerSessions([analyzeSession("s1", undefined, [turn(0)])], "a"),

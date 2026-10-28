@@ -78,6 +78,9 @@ export const sessionAuditSchema = z.object({
     affectedTurnsInputTokens: tokenCountSchema, // uncached + cache write + cache read
   }),
   outcomeCoverage: outcomeCoverageSchema,
+  // Set when the provider doesn't record this session's tool calls at all, so
+  // the empty `calls` reads as "not available", never as "no tool calls".
+  toolCallsUnavailableReason: z.string().optional(),
 });
 
 export type SessionAudit = z.infer<typeof sessionAuditSchema>;
@@ -86,7 +89,11 @@ export const auditRollupSchema = z.object({
   providerId: z.string().optional(),
   since: z.string().optional(),
   until: z.string().optional(),
+  // Sessions counted below; sessions whose tool calls are unknown (Agent
+  // Host, step 10.13) are left out of every count and rate, not counted as 0.
   sessionCount: z.number(),
+  sessionsWithUnknownToolCalls: z.number().default(0),
+  toolCallsUnavailableReason: z.string().optional(),
   totals: outcomeTotalsSchema,
   failureRate: failureRateSchema,
   byTool: z.array(toolBreakdownSchema),

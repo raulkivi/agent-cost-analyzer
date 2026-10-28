@@ -1270,8 +1270,9 @@ server (off, on with 9 tools and `get_session_cost`, off again).
    ([plans/vscode-extension-manual-checks.md](plans/vscode-extension-manual-checks.md)):
    the usability script, Copilot agent mode using the MCP server
    (including the Restricted Mode guard), and the Remote-SSH/WSL and Dev
-   Container check. Started 2026-10-27 on 0.1.0; check 1.2 found two
-   bugs, fixed in #90, and needs a re-run (see the run log there).
+   Container check. Started 2026-10-27 on 0.1.0; 1.1-1.4 and 1.13 pass
+   (1.4 only with the Local harness, see item 4); 1.5-1.12, §2 and §3
+   are open (see the run log there).
 2. The owner's review of the extension README and guide. The 8
    screenshots are in place (manual checks §4).
 3. Publishing setup (plan §7.0): done on 2026-10-27 except the Open VSX
@@ -1279,7 +1280,11 @@ server (off, on with 9 tools and `get_session_cost`, off again).
    The Entra ID app, the `release` environment, the Open VSX namespace,
    `OVSX_PAT` and the icon are in place; trusted publishing replaces
    `OVSX_PAT` after the first release.
-4. The first release: tag `ext-v0.1.0` (odd minor, so the pre-release
+4. Done: step 10.13 (Agent Host sessions). Since VS Code 1.143 new
+   sessions run through the Agent Host; both products now list them with
+   turns, tokens and AI Credits. Manual check 1.4 passes with the default
+   harness.
+5. The first release: tag `ext-v0.1.0` (odd minor, so the pre-release
    channel).
 
 The dev-only `@azure/msal-node` advisory is accepted

@@ -13,6 +13,7 @@ function isolatedOptions(dir: string) {
     debugLogsDirPaths: [],
     vscodeSettingsPath: path.join(dir, "settings.json"),
     agentTracesDbPath: null,
+    agentHostUserDataDir: null,
     appSettingsDir: dir,
     mitmproxyCapturesDirPath: null,
     piAgentSessionsDirPath: null,

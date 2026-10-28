@@ -31,6 +31,10 @@ export const turnViewSchema = z.object({
   explanation: z.string(),
   usage: turnUsageSchema,
   toolCalls: z.array(turnViewToolCallSchema),
+  // Set when the provider doesn't record the turn's text / tool calls, so the
+  // empty values read as "not available", not as "empty" / "no tool calls".
+  textUnavailableReason: z.string().optional(),
+  toolCallsUnavailableReason: z.string().optional(),
 });
 
 export type TurnView = z.infer<typeof turnViewSchema>;

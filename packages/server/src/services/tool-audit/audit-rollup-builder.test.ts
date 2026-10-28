@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { auditRollupSchema, unavailableTokenCount, type SessionAudit, type ToolCallRecord } from "@agent-cost-analyzer/domain";
+import { AGENT_HOST_TOOL_CALLS_UNAVAILABLE_REASON } from "./tool-calls-availability.js";
 import { buildAuditRollup } from "./audit-rollup-builder.js";
 
 function call(command: string, status: "success" | "error", startedAt: string, category?: "command-not-found"): ToolCallRecord {
@@ -79,6 +80,25 @@ describe("buildAuditRollup", () => {
       ["a", 2, 1, 0],
       ["b", 3, 2, 1],
     ]);
+  });
+
+  it("leaves sessions whose tool calls are unknown out of the counts and reports how many", () => {
+    const unknownCalls = { ...audit("ah", []), toolCallsUnavailableReason: AGENT_HOST_TOOL_CALLS_UNAVAILABLE_REASON };
+
+    const rollup = buildAuditRollup([...audits, unknownCalls], {});
+
+    expect(rollup.sessionCount).toBe(2);
+    expect(rollup.sessions.map((s) => s.sessionId)).toEqual(["a", "b"]);
+    expect(rollup.sessionsWithUnknownToolCalls).toBe(1);
+    expect(rollup.toolCallsUnavailableReason).toBe(AGENT_HOST_TOOL_CALLS_UNAVAILABLE_REASON);
+    expect(rollup.totals.toolCalls).toBe(5);
+    expect(() => auditRollupSchema.parse(rollup)).not.toThrow();
+  });
+
+  it("reports no unknown-tool-call sessions when every session records its calls", () => {
+    const rollup = buildAuditRollup(audits, {});
+    expect(rollup.sessionsWithUnknownToolCalls).toBe(0);
+    expect(rollup.toolCallsUnavailableReason).toBeUndefined();
   });
 
   it("handles no sessions", () => {

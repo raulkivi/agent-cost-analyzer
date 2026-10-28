@@ -12,6 +12,7 @@ export interface CopilotMcpServicesOptions {
   sessionStoreDbPath: string | null;
   debugLogsDirPaths: NonNullable<VscodeProviderPaths["debugLogsDirPaths"]>;
   agentTracesDbPath: string | null;
+  agentHostUserDataDir: string | null;
   appVersion: string;
 }
 
@@ -60,6 +61,7 @@ export function createCopilotMcpServices(options: CopilotMcpServicesOptions): Mc
     sessionStoreDbPath: options.sessionStoreDbPath,
     debugLogsDirPaths: options.debugLogsDirPaths,
     agentTracesDbPath: options.agentTracesDbPath,
+    agentHostUserDataDir: options.agentHostUserDataDir,
     // The config check isn't an MCP tool, so no settings.json is read.
     vscodeSettingsPath: null,
     appSettings: readOnlyAppSettings,

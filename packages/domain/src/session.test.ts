@@ -116,6 +116,24 @@ describe("sessionSchema", () => {
     expect(sessionSchema.parse(sample)).toEqual(sample);
   });
 
+  it("accepts the Copilot harness a VS Code session came from", () => {
+    const base = {
+      id: "session-123",
+      mode: "analyze",
+      providerId: "vscode",
+      title: "Real session",
+      model: "gpt-4o",
+      turns: [],
+      turnCount: 0,
+      costAiCredits: { known: false, reason: "n/a" },
+      usageDataAvailable: false,
+    };
+
+    expect(sessionSchema.parse({ ...base, copilotHarness: "local" }).copilotHarness).toBe("local");
+    expect(sessionSchema.parse({ ...base, copilotHarness: "agent-host" }).copilotHarness).toBe("agent-host");
+    expect(() => sessionSchema.parse({ ...base, copilotHarness: "cloud" })).toThrow();
+  });
+
   it("rejects an invalid mode", () => {
     const sample = {
       id: "session-123",

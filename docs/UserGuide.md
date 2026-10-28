@@ -141,7 +141,10 @@ header area also holds the **Retention** field described below:
 
 - **VS Code (local Copilot Chat)** — the default. Reads directly from your
   local VS Code Copilot Chat session store (SQLite + debug logs), as
-  described below.
+  described below. From VS Code 1.143, new chats run through the default
+  Copilot harness and its Agent Host; those sessions are listed with their
+  tokens and AI Credits. Their prompt and response text, tool calls and
+  system prompt aren't available yet.
 - **mitmproxy (HAR capture)** — reads a local mitmproxy HAR capture instead,
   for Anthropic/OpenAI API traffic recorded outside VS Code. See
   [mitmproxy-setup.md](mitmproxy-setup.md) for how to record a capture. A

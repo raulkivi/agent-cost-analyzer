@@ -13,6 +13,7 @@ export interface LogProviderCompositionOptions {
   debugLogsDirPaths?: string[];
   vscodeSettingsPath?: string | null;
   agentTracesDbPath?: string | null;
+  agentHostUserDataDir?: string | null;
   appSettingsDir?: string;
   mitmproxyCapturesDirPath?: string | null;
   piAgentSessionsDirPath?: string | null;

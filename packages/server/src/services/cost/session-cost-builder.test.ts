@@ -105,6 +105,12 @@ describe("buildSessionCost", () => {
     expect(cost.topTurns[0]).toMatchObject({ inputTokens: 910, output: 5, aiCredits: null, toolCalls: 0, userMessage: "prompt 1" });
   });
 
+  it("reports unknown, not 0, tool calls per turn for an Agent Host session", () => {
+    const cost = buildSessionCost(session([turn(0)], { copilotHarness: "agent-host" }));
+
+    expect(cost.topTurns[0]?.toolCalls).toBeNull();
+  });
+
   it("ranks by AI Credits when every turn has them", () => {
     const cost = buildSessionCost(
       session([

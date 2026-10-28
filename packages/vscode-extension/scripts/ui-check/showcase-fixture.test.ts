@@ -6,7 +6,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { createExtensionApiService } from "@agent-cost-analyzer/server/src/composition/create-extension-api-service";
 import { InMemoryAppSettingsStore } from "@agent-cost-analyzer/server/src/test-support/in-memory-app-settings-store";
 import { copilotLogPathsFromUserDataDir } from "../../src/platform/copilot-log-paths.js";
-import { createShowcaseFixture } from "./showcase-fixture.mts";
+import { AGENT_HOST_SESSION_ID, AGENT_HOST_SESSION_TITLE, createShowcaseFixture } from "./showcase-fixture.mts";
 
 const learnScenariosFixturesDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../../server/fixtures/learn-scenarios");
 const NOW = new Date("2026-10-24T12:00:00Z");
@@ -71,6 +71,26 @@ describe("createShowcaseFixture", () => {
     expect(session.turns.every((turn) => turn.usage.cacheWrite.known && turn.usage.reasoning.known)).toBe(true);
     expect(session.turns.filter((turn) => turn.toolCalls.length > 0).length).toBeGreaterThanOrEqual(4);
     expect(session.turns.slice(1).every((turn) => turn.usage.cacheRead.known && turn.usage.cacheRead.value > 0)).toBe(true);
+  });
+
+  it("seeds no Agent Host session unless asked, so the Marketplace pictures stay as they are", async () => {
+    const fixture = createShowcaseFixture(rootDir, { now: NOW });
+
+    const sessions = await apiOver(fixture.userDataDir).listSessions();
+    expect(sessions.some((session) => session.copilotHarness === "agent-host")).toBe(false);
+  });
+
+  it("seeds one Agent Host session with a few turns of known usage when asked", async () => {
+    const fixture = createShowcaseFixture(rootDir, { now: NOW, includeAgentHostSession: true });
+
+    const api = apiOver(fixture.userDataDir);
+    const agentHost = (await api.listSessions()).filter((session) => session.copilotHarness === "agent-host");
+    expect(agentHost.map((session) => session.id)).toEqual([AGENT_HOST_SESSION_ID]);
+    const session = await api.getSession(AGENT_HOST_SESSION_ID);
+    expect(session.title).toBe(AGENT_HOST_SESSION_TITLE);
+    expect(session.turns.length).toBeGreaterThanOrEqual(3);
+    expect(session.turns.every((turn) => turn.usage.costAiCredits.known)).toBe(true);
+    expect(NOW.getTime() - Date.parse(session.startedAt!)).toBeLessThan(DAY_MS);
   });
 
   it("is the same data every time for the same moment", async () => {

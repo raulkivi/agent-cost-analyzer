@@ -24,6 +24,8 @@ Progress (2026-10-28):
 | 10.10 | Documentation: extension README/listing, extension user guide, two-product README and User Guide | Done (#73); screenshots done; owner review open |
 | 10.11 | UX review for VS Code: panel fits any width, readable in light, dark and High Contrast, native look, automated UI check | Done (#77) |
 | 10.12 | Learn scenarios in the side bar (a Learn view), like the Sessions view; the panel has no list of its own | Done (#80) |
+| 10.13 | Agent Host sessions: read the sessions VS Code 1.143+ creates by default (manual check 1.4) | Done (`20c880b`–`756a26c`); manual check 1.4 passes with the default harness |
+| 10.14 | Agent Host turn text, tool calls and system prompt from the Copilot CLI event log (`~/.copilot/session-state/<sdkSessionId>/events.jsonl`) | Planned |
 
 
 ## 1. Context
@@ -1265,6 +1267,102 @@ green; listing-prerequisite tests passed on first run.
 
 *Tests:* 2,541 → 2,647 (domain 129, server 1,037, web 982, pi-logger 15,
 extension 484).
+
+### 10.13 Agent Host sessions (manual-check finding, 2026-10-28)
+
+Manual check 1.4 found no sessions after an agent-mode chat. Since VS
+Code 1.143 "the Copilot harness is now the default for new sessions",
+and those sessions "run through the Agent Host"; the Local harness is
+being retired ([release notes](https://code.visualstudio.com/updates/v1_143)).
+Agent Host sessions write nothing to Copilot Chat's `session-store.db`
+or `debug-logs`, the only stores the Copilot provider reads. So on
+default settings both products show no new sessions. On this machine the
+last classic session is from 2026-09-30; 67 `copilotcli` sessions since
+then are invisible. With the Local harness picked, 1.4 passes.
+
+**Status (2026-10-28): done (commits `20c880b`–`756a26c`).** Manual
+check 1.4 passes with the default harness.
+
+**Storage seen on this machine** (Insiders 1.145; pinned by the redacted
+fixtures in `packages/server/fixtures/agent-host/`):
+- `<userData>/User/globalStorage/agent-host.db`: `sessions_v2` (one row
+  per session: `session_uri` `copilotcli:/<id>`, `provider`, `start_time`
+  and `modified_time` in ms, a JSON `payload` whose `data.summary` is the
+  title) and `chats_v2` (the session's chats; `provider_data` carries the
+  Copilot CLI's `sdkSessionId`). A deleted session keeps its row; the
+  `metadata` table marks it `sessionTombstone:<session_uri>` = `true`.
+  `provider` is also `claude` for Claude harness sessions.
+- `<userData>/agentSessionData/<id>/session.db`: `turns` (`request_<uuid>`
+  ids, in insertion order, no text), `turn_usage.usage` per turn, and
+  `session_metadata` (`customTitle`, `copilot.model`). In `usage`, the
+  top-level `inputTokens`/`outputTokens`/`cacheReadTokens` describe only
+  the turn's last model call; the turn's totals are in
+  `_meta.turnTokenTotals` (per model: `inputTokens` including cached,
+  `cachedTokens`, `outputTokens`), and its AI Credits in
+  `_meta.copilotUsage.totalNanoAiu`. `sessionTotalNanoAiu` is a running
+  total that lags the turns, so it isn't used.
+- `<userData>/logs/<run>/ahp/*.jsonl`: Agent Host protocol traffic, per
+  run, so not a durable source.
+- `~/.copilot/session-state/<sdkSessionId>/events.jsonl`: the Copilot
+  CLI's own event log (user and assistant messages, system prompt, tool
+  calls and results, usage per model call). Outside the user-data dir;
+  the source for 10.14.
+
+**Scope (owner's decision, 2026-10-28):** 10.13 reads the user-data-dir
+stores only: session list, turns, tokens and AI Credits. Turn text, the
+turn inspector, system prompt and tool audit for Agent Host sessions come
+from the Copilot CLI event log in a follow-up step, 10.14.
+
+**Deliverables:**
+- Redacted fixtures built from real captures (DDL plus rows), and the
+  format documented in architecture.md §6.2.
+- A shared, read-only Agent Host source in `packages/server`
+  (`data-sources/agent-host/`): lists `copilotcli` sessions from
+  `agent-host.db`, skipping tombstoned ones, and reads turns and usage
+  from each `session.db`, opened lazily like the classic stores.
+- AI Credits from `copilotUsage.totalNanoAiu` ÷ 10⁹, the unit the classic
+  path already uses (`copilotUsageNanoAiu`). A turn without it is
+  unknown, never 0.
+- The Copilot provider lists classic and Agent Host sessions together.
+  Paths come from the user-data dir (D4), so both products pick them up.
+- Setup doesn't report "setup needed" when Agent Host sessions exist,
+  since the classic logging settings don't apply to them.
+- Turn inspector, system prompt and tool audit: "unavailable" with a
+  reason (10.14) for Agent Host sessions.
+- Unknown stays shown (constraint 6): only a session whose `session.db`
+  was read and has no turns (opened, never sent) is hidden; a missing or
+  unreadable one is listed with unknown usage. Cross-session audit and
+  insights leave sessions with unknown tool calls out of their counts and
+  report how many (`sessionsWithUnknownToolCalls`).
+- The UI check seeds one Agent Host session and renders its turn inspector
+  and tool audit.
+- Docs: architecture.md, both user guides, the extension README and both
+  changelogs.
+
+**Exit criterion:** in VS Code 1.143+ with default settings, a new
+agent-mode session appears in the Sessions view with turns, tokens and AI
+Credits matching `totalNanoAiu`. Classic sessions still show. The
+standalone app shows the same session with the same numbers. Manual
+check 1.4 passes with the default harness.
+
+**Tasks:**
+
+| # | Task | Complexity | Model | Status |
+|---|---|---|---|---|
+| 1 | Fixtures from real captures; format in architecture.md; hidden acceptance tests for tasks 2 and 3 | medium | Sonnet | Done (`20c880b`) |
+| 2 | Paths and `agent-host.db` session-list reader (exact spec) | low | setup6 | Done (`b143a7b`) |
+| 3 | `session.db` turn and usage reader, nano-AIU conversion (exact spec) | medium | setup6, Sonnet after two failures | Done (`0e80c90`) |
+| 4 | Agent Host sessions in the Copilot provider, D4 paths for both products | high | Opus | Done (`60eb9e9`) |
+| 5 | Setup and config-check changes | medium | Sonnet | Done (`4790dc2`) |
+| 6 | "Unavailable" states in inspector, system prompt and tool audit | medium | Sonnet | Done (`da2ac7f`; fixes in `0cdb39d`) |
+| 7 | Docs and changelogs | low | Haiku | Done (docs commit) |
+| 8 | Re-run manual check 1.4 with the default harness | — | owner | Passed (2026-10-28) |
+
+**Settled questions:**
+- `totalNanoAiu` is the classic path's unit (`copilotUsageNanoAiu`,
+  ÷ 10⁹ per AI Credit).
+- Claude harness sessions (`provider` `claude`) are left out of 10.13;
+  whether they bill AI Credits is open.
 
 ### 10.12 Learn scenarios in the side bar (owner's request, 2026-10-24)
 

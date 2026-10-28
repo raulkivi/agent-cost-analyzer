@@ -8,6 +8,7 @@ const isolatedPaths = {
   sessionStoreDbPath: path.join("/nonexistent", "state.vscdb"),
   debugLogsDirPaths: [],
   agentTracesDbPath: null,
+  agentHostUserDataDir: null,
   vscodeSettingsPath: path.join("/nonexistent", "settings.json"),
 };
 

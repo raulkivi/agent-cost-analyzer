@@ -77,7 +77,11 @@ function daily(audits: SessionAudit[]): AuditRollup["daily"] {
 }
 
 // Pure: many SessionAudits in, one cross-session AuditRollup out.
-export function buildAuditRollup(audits: SessionAudit[], options: RollupOptions): AuditRollup {
+// Sessions whose tool calls are unknown (constraint 6) are left out of every
+// count and rate and only reported.
+export function buildAuditRollup(allAudits: SessionAudit[], options: RollupOptions): AuditRollup {
+  const audits = allAudits.filter((audit) => audit.toolCallsUnavailableReason === undefined);
+  const unknownReason = allAudits.find((audit) => audit.toolCallsUnavailableReason !== undefined)?.toolCallsUnavailableReason;
   const totals = emptyTotals();
   const byTool = new RankedCounter<string>();
   const byProgram = new RankedCounter<string>();
@@ -97,6 +101,8 @@ export function buildAuditRollup(audits: SessionAudit[], options: RollupOptions)
     ...(options.since ? { since: options.since } : {}),
     ...(options.until ? { until: options.until } : {}),
     sessionCount: audits.length,
+    sessionsWithUnknownToolCalls: allAudits.length - audits.length,
+    ...(unknownReason ? { toolCallsUnavailableReason: unknownReason } : {}),
     totals,
     failureRate: failureRateOf(totals),
     byTool: byTool.ranked().map(({ key, calls, failed, durationMs }) => ({

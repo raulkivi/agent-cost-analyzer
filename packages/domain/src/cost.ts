@@ -55,7 +55,7 @@ export const turnCostSchema = z.object({
   inputTokens: z.number().nullable(),
   output: z.number().nullable(),
   aiCredits: z.number().nullable(),
-  toolCalls: z.number(),
+  toolCalls: z.number().nullable(), // null: tool calls unknown
   userMessage: z.string(), // bounded, redacted excerpt
 });
 

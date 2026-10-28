@@ -72,6 +72,18 @@ describe("AuditQueryService", () => {
     expect(provider.reads).toBe(2);
   });
 
+  it("leaves Agent Host sessions out of the rollup and reports how many", async () => {
+    const agentHost = { ...session("ah", "2026-09-26T08:00:00Z", []), copilotHarness: "agent-host" as const };
+    const service = new AuditQueryService(lookup(new FakeProvider("fake", [...sessions, agentHost])));
+
+    const rollup = await service.getRollup({});
+
+    expect(rollup.sessionCount).toBe(3);
+    expect(rollup.sessionsWithUnknownToolCalls).toBe(1);
+    expect(rollup.sessions.map((s) => s.sessionId)).not.toContain("ah");
+    expect(rollup.toolCallsUnavailableReason).toMatch(/aren't read yet/);
+  });
+
   it("caps the rollup's session count", async () => {
     const service = new AuditQueryService(lookup(new FakeProvider("fake", sessions)));
     expect((await service.getRollup({ limit: 1 })).sessionCount).toBe(1);

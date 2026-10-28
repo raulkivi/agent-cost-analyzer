@@ -1,6 +1,6 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import { logProviderStatusSchema, turnViewSchema } from "@agent-cost-analyzer/domain";
+import { copilotHarnessSchema, logProviderStatusSchema, turnViewSchema } from "@agent-cost-analyzer/domain";
 import { DEFAULT_MAX_TEXT_CHARS } from "../services/session-view/turn-view-builder.js";
 import { limitSchema, turnIndexSchema } from "../services/tool-audit/audit-query-params.js";
 import type { McpToolDeps } from "./mcp-server.js";
@@ -15,6 +15,7 @@ const sessionSummarySchema = z.object({
   turnCount: z.number(),
   model: z.string(),
   providerId: z.string().optional(),
+  copilotHarness: copilotHarnessSchema.optional(),
 });
 
 export function registerSessionTools(server: McpServer, deps: McpToolDeps, guarded: Guard): void {
@@ -57,6 +58,7 @@ export function registerSessionTools(server: McpServer, deps: McpToolDeps, guard
             turnCount: session.turnCount,
             model: session.model,
             ...(session.providerId ? { providerId: session.providerId } : {}),
+            ...(session.copilotHarness ? { copilotHarness: session.copilotHarness } : {}),
           })),
         });
       }),

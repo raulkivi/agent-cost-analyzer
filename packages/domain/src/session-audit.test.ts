@@ -35,17 +35,23 @@ describe("sessionAuditSchema", () => {
     expect(sessionAuditSchema.parse({ ...sampleAudit(), failureRate: null }).failureRate).toBeNull();
   });
 
+  it("carries the reason tool calls are unavailable, so an empty list isn't read as zero calls", () => {
+    const audit = { ...sampleAudit(), toolCallsUnavailableReason: "not read yet" };
+    expect(sessionAuditSchema.parse(audit).toolCallsUnavailableReason).toBe("not read yet");
+  });
+
   it("rejects a failure rate outside 0..1", () => {
     expect(() => sessionAuditSchema.parse({ ...sampleAudit(), failureRate: 1.5 })).toThrow();
   });
 });
 
-describe("auditRollupSchema", () => {
-  it("accepts a cross-session rollup", () => {
-    const rollup = {
+function sampleRollup() {
+  return {
       providerId: "claude-code",
       since: "2026-09-01",
       sessionCount: 2,
+      sessionsWithUnknownToolCalls: 1,
+      toolCallsUnavailableReason: "not read yet",
       totals,
       failureRate: 0.5,
       byTool: [],
@@ -58,6 +64,17 @@ describe("auditRollupSchema", () => {
       sessions: [{ sessionId: "s1", title: "t", startedAt: "2026-09-27T12:00:00Z", toolCalls: 3, failed: 2, unknown: 0 }],
       outcomeCoverage: { known: 3, unknown: 0, unknownReasons: [] },
     };
+}
+
+describe("auditRollupSchema", () => {
+  it("accepts a cross-session rollup", () => {
+    const rollup = sampleRollup();
     expect(auditRollupSchema.parse(rollup)).toEqual(rollup);
+  });
+
+  it("treats a rollup without the unknown-tool-calls count as having none", () => {
+    const { sessionsWithUnknownToolCalls: _omitted, ...rest } = sampleRollup();
+    void _omitted;
+    expect(auditRollupSchema.parse(rest).sessionsWithUnknownToolCalls).toBe(0);
   });
 });

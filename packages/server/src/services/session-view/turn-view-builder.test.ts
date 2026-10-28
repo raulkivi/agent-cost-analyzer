@@ -37,6 +37,21 @@ function session(turns: Partial<Turn>[]): Session {
 }
 
 describe("buildTurnView", () => {
+  it("says text and tool calls are unavailable for an Agent Host turn, so empty values aren't read as empty", () => {
+    const view = buildTurnView({ ...session([{ userMessage: "", assistantResponse: "" }]), copilotHarness: "agent-host" }, 0);
+
+    expect(view?.textUnavailableReason).toMatch(/Agent Host/);
+    expect(view?.toolCallsUnavailableReason).toMatch(/Agent Host/);
+    expect(turnViewSchema.parse(view)).toEqual(view);
+  });
+
+  it("leaves the unavailable reasons out for other sessions", () => {
+    const view = buildTurnView(session([{}]), 0);
+
+    expect(view?.textUnavailableReason).toBeUndefined();
+    expect(view?.toolCallsUnavailableReason).toBeUndefined();
+  });
+
   it("returns one turn with its usage and compact tool calls", () => {
     const view = buildTurnView(
       session([

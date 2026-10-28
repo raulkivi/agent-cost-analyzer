@@ -102,7 +102,7 @@ export class AuditQueryService {
     sessionId: string,
     filter: ToolCallFilter,
     providerId?: string,
-  ): Promise<{ total: number; calls: AuditedToolCall[] } | null> {
+  ): Promise<{ total: number; calls: AuditedToolCall[]; toolCallsUnavailableReason?: string } | null> {
     const audit = await this.getSessionAudit(sessionId, providerId);
     if (!audit) {
       return null;
@@ -112,6 +112,7 @@ export class AuditQueryService {
     return {
       total: matching.length,
       calls: matching.slice(offset, filter.limit !== undefined ? offset + filter.limit : undefined),
+      ...(audit.toolCallsUnavailableReason ? { toolCallsUnavailableReason: audit.toolCallsUnavailableReason } : {}),
     };
   }
 

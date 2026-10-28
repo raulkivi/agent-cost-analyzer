@@ -25,7 +25,57 @@ in the docs). Findings that need a code fix also go in the run log below.
     shows the required `copilot-chat-unavailable` warning.
 
   Re-run 1.2 with a VSIX built from #90 or later.
-- **Not yet run:** the rest of §1, §2 and §3.
+- **2026-10-28:** VSIX rebuilt from `main` at `7b67af9` and installed into
+  the same profile. Insiders had updated to 1.145.0.
+- **1.2 Logging off (re-run): passed.** With Copilot Chat disabled, Setup
+  shows the `copilot-chat-unavailable` warning, and Fix opens the
+  Extensions view or `settings.json`. With Copilot Chat enabled, Setup
+  shows the logging setting as missing, Fix opens exactly that setting,
+  and nothing changes without a click.
+- **Clean environment for 1.1 and 1.3:** a new profile isn't clean,
+  because Copilot Chat's globalStorage and `workspaceStorage` are shared by
+  every profile of an install, so existing sessions still show. These ran
+  in a throwaway Insiders window (`--user-data-dir`, `--extensions-dir`),
+  signed in to Copilot Chat but never used, with the VSIX installed
+  through *Install from VSIX…*.
+- **1.1 First run: passed.** The walkthrough opened once as an editor tab,
+  the Activity Bar icon and the status bar's "setup needed" showed, and it
+  didn't reopen after a second reload.
+- **1.3 No sessions: passed.** The Sessions view said why it was empty and
+  pointed to Learn mode, the Learn view listed 18 scenarios, and Setup
+  showed the logging setting as missing.
+- **1.13 Learn view: scenarios passed.** Each scenario opened in Learn
+  mode at the panel's full width. The switch to a session waits for 1.4.
+- **1.4 Normal use: failed (no sessions appeared).** Insiders 1.145 ran
+  the agent-mode chat through its Agent Host as a `copilotcli` session,
+  stored in `<userData>/User/globalStorage/agent-host.db` and
+  `<userData>/agentSessionData/<id>/session.db` (with `turn_usage`), plus
+  AHP logs in `<userData>/logs/<run>/ahp/*.jsonl`. Copilot Chat's
+  `session-store.db` stayed empty and no `debug-logs` folder was written,
+  and those are the only stores the extension reads. The main Insiders
+  install shows the same switch: its last `session-store.db` session and
+  debug log are from 2026-09-30/10-01, and 67 `copilotcli` sessions since
+  then are invisible to the extension. Stable is affected too: the
+  [1.143 release notes](https://code.visualstudio.com/updates/v1_143) say
+  "The Copilot harness is now the default for new sessions", that its
+  sessions "run through the Agent Host", and that the Local harness is
+  being retired. The extension requires `^1.143.0`, so on default
+  settings it shows no new sessions. **Release blocker for 0.1.0.** Next:
+  retry 1.4 with the Local harness picked, to finish checking the classic
+  path.
+- **1.4 Normal use, Local harness: passed.** With Local picked in the
+  harness picker, the session appeared under Today with its AI Credits,
+  picking it opened the panel, and the status bar showed today's AI
+  Credits with coverage in the tooltip.
+- **1.13 Learn view: passed.** Picking the session from a Learn scenario
+  switched the panel to Analyze mode.
+- **1.4 Normal use, default harness: passed** with a VSIX built from
+  `756a26c` (step 10.13). The Agent Host session appeared under Today with
+  its AI Credits, its turns showed tokens and AI Credits, the status bar
+  included it, the turn inspector, system prompt, Tools tab and tool audit
+  said "not available yet", and Setup marked the logging settings optional
+  without "setup needed".
+- **Not yet run:** 1.5-1.12, §2 and §3.
 
 ## 0. Install the candidate
 

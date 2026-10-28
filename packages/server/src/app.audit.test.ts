@@ -28,6 +28,7 @@ describe("tool-call audit API (Phase 9.10)", () => {
       debugLogsDirPaths: [],
       vscodeSettingsPath: null,
       agentTracesDbPath: null,
+      agentHostUserDataDir: null,
       appSettingsDir: path.join(dir, "settings"),
       mitmproxyCapturesDirPath: null,
       piAgentSessionsDirPath: null,

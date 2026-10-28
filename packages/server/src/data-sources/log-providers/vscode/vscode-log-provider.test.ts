@@ -3,7 +3,16 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import type { Session } from "@agent-cost-analyzer/domain";
+import { AgentHostSessionSource } from "../../agent-host/agent-host-session-source.js";
+import {
+  AGENT_HOST_FIXTURE_SESSION_IDS as AGENT_HOST_IDS,
+  writeAgentHostCatalog,
+  writeAgentSessionDb,
+} from "../../../test-support/agent-host-user-data-dir.js";
 import { describeLogProviderContract } from "../contract.js";
+import type { SystemPromptTextLookup } from "../system-prompt-text-reader.js";
+import type { CopilotSessionSource } from "./copilot-session-source.js";
 import { VscodeLogProvider } from "./vscode-log-provider.js";
 
 const SESSION_STORE_SCHEMA = `
@@ -349,5 +358,152 @@ describe("VscodeLogProvider with a debug-logs lister", () => {
     listed = [debugLogsDirPath];
 
     await expect(provider.lookupSystemPromptText("session-1")).resolves.toEqual({ status: "found", text: "Late prompt." });
+  });
+});
+
+// Step 10.13: the Copilot provider lists VS Code Agent Host sessions next to
+// the classic session store's.
+function agentHostUserDataDir(): string {
+  const userDataDir = mkdtempSync(path.join(tmpdir(), "vscode-log-provider-agent-host-"));
+  writeAgentHostCatalog(userDataDir);
+  writeAgentSessionDb(userDataDir, AGENT_HOST_IDS.withTurns);
+  return userDataDir;
+}
+
+describeLogProviderContract("VscodeLogProvider (Agent Host sessions only)", {
+  buildAvailableProvider: () =>
+    new VscodeLogProvider({
+      sessionStoreDbPath: null,
+      debugLogsDirPaths: [],
+      agentTracesDbPath: null,
+      agentHostSessions: new AgentHostSessionSource({ userDataDir: agentHostUserDataDir() }),
+    }),
+  knownSessionId: AGENT_HOST_IDS.withTurns,
+  unknownSessionId: AGENT_HOST_IDS.deleted,
+  buildUnavailableProvider: () =>
+    new VscodeLogProvider({
+      sessionStoreDbPath: null,
+      debugLogsDirPaths: [],
+      agentTracesDbPath: null,
+      agentHostSessions: new AgentHostSessionSource({
+        userDataDir: mkdtempSync(path.join(tmpdir(), "vscode-log-provider-agent-host-empty-")),
+      }),
+    }),
+  turnIndexWithRoundTrip: null,
+});
+
+function fakeSession(id: string, startedAt: string): Session {
+  return {
+    id,
+    mode: "analyze",
+    title: `Agent Host ${id}`,
+    model: "gpt-6-luna",
+    turns: [],
+    turnCount: 1,
+    costAiCredits: { known: true, value: 1 },
+    usageDataAvailable: true,
+    startedAt,
+  };
+}
+
+// A second store that knows one session, recording what the provider asks.
+class FakeCopilotSessionSource implements CopilotSessionSource {
+  readonly calls: string[] = [];
+
+  constructor(
+    private readonly session: Session,
+    private readonly available = true,
+  ) {}
+
+  async checkAvailability() {
+    return this.available ? { available: true } : { available: false, unavailableReason: "no Agent Host" };
+  }
+  async listSessions() {
+    return [this.session];
+  }
+  async readSession(sessionId: string) {
+    this.calls.push(`readSession ${sessionId}`);
+    return sessionId === this.session.id ? this.session : null;
+  }
+  async readTurnDetail(sessionId: string, turnIndex: number) {
+    this.calls.push(`readTurnDetail ${sessionId}`);
+    return sessionId === this.session.id && turnIndex === 0 ? { turnIndex, userMessage: [], rounds: [] } : null;
+  }
+  async lookupSystemPromptText(sessionId: string): Promise<SystemPromptTextLookup> {
+    this.calls.push(`lookupSystemPromptText ${sessionId}`);
+    return sessionId === this.session.id ? { status: "not-captured" } : { status: "unknown-session" };
+  }
+}
+
+describe("VscodeLogProvider with a second Copilot session source", () => {
+  let dir: string;
+  let dbPath: string;
+
+  beforeEach(() => {
+    dir = mkdtempSync(path.join(tmpdir(), "vscode-log-provider-second-source-"));
+    dbPath = path.join(dir, "session-store.db");
+    seedFixtureDb(dbPath);
+  });
+
+  afterEach(() => {
+    rmSync(dir, { recursive: true, force: true });
+  });
+
+  function provider(source: CopilotSessionSource, sessionStoreDbPath: string | null = dbPath): VscodeLogProvider {
+    return new VscodeLogProvider({ sessionStoreDbPath, debugLogsDirPaths: [], agentTracesDbPath: null, agentHostSessions: source });
+  }
+
+  it("lists both stores' sessions newest start first, every one tagged providerId 'vscode'", async () => {
+    const newer = new FakeCopilotSessionSource(fakeSession("agent-host-1", "2026-10-20T00:00:00.000Z"));
+    const older = new FakeCopilotSessionSource(fakeSession("agent-host-0", "2025-12-01T00:00:00.000Z"));
+
+    expect((await provider(newer).listSessions()).map((s) => [s.id, s.providerId])).toEqual([
+      ["agent-host-1", "vscode"],
+      ["session-1", "vscode"],
+    ]);
+    expect((await provider(older).listSessions()).map((s) => s.id)).toEqual(["session-1", "agent-host-0"]);
+  });
+
+  it("lists the second store's sessions when there is no classic session store", async () => {
+    const source = new FakeCopilotSessionSource(fakeSession("agent-host-1", "2026-10-20T00:00:00.000Z"));
+
+    expect((await provider(source, null).listSessions()).map((s) => s.id)).toEqual(["agent-host-1"]);
+  });
+
+  it("reads a classic session from the classic store without asking the second store", async () => {
+    const source = new FakeCopilotSessionSource(fakeSession("agent-host-1", "2026-10-20T00:00:00.000Z"));
+    const built = provider(source);
+
+    expect((await built.readSession("session-1"))?.title).toBe("Fix the bug");
+    expect(await built.readTurnDetail("session-1", 0)).not.toBeNull();
+    expect((await built.lookupSystemPromptText("session-1")).status).toBe("not-captured");
+    expect(source.calls).toEqual([]);
+  });
+
+  it("reads any other id from the second store, tagged providerId 'vscode'", async () => {
+    const source = new FakeCopilotSessionSource(fakeSession("agent-host-1", "2026-10-20T00:00:00.000Z"));
+    const built = provider(source);
+
+    expect(await built.readSession("agent-host-1")).toMatchObject({ id: "agent-host-1", providerId: "vscode" });
+    await expect(built.readTurnDetail("agent-host-1", 0)).resolves.toEqual({ turnIndex: 0, userMessage: [], rounds: [] });
+    await expect(built.lookupSystemPromptText("agent-host-1")).resolves.toEqual({ status: "not-captured" });
+    await expect(built.readSession("neither")).resolves.toBeNull();
+    await expect(built.readTurnDetail("neither", 0)).resolves.toBeNull();
+    await expect(built.lookupSystemPromptText("neither")).resolves.toEqual({ status: "unknown-session" });
+  });
+
+  it("is available when only the second store exists", async () => {
+    const source = new FakeCopilotSessionSource(fakeSession("agent-host-1", "2026-10-20T00:00:00.000Z"));
+
+    await expect(provider(source, null).checkAvailability()).resolves.toEqual({ available: true });
+  });
+
+  it("keeps the classic unavailable reason when neither store exists", async () => {
+    const source = new FakeCopilotSessionSource(fakeSession("agent-host-1", "2026-10-20T00:00:00.000Z"), false);
+
+    await expect(provider(source, null).checkAvailability()).resolves.toEqual({
+      available: false,
+      unavailableReason: "No local GitHub Copilot Chat session store was found on this machine.",
+    });
   });
 });

@@ -6,6 +6,12 @@ import { createHash } from "node:crypto";
 import { mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
+import {
+  readAgentHostFixtureRows,
+  sessionRowsWithUsageOnly,
+  writeAgentHostCatalog,
+  writeAgentSessionDb,
+} from "../../../server/src/test-support/agent-host-user-data-dir.ts";
 import { COPILOT_SESSION_STORE_SCHEMA } from "../../../server/src/test-support/copilot-session-store.ts";
 import { USER_SETTINGS } from "../integration-fixture.mts";
 
@@ -18,7 +24,13 @@ export interface ShowcaseFixture {
 
 export interface ShowcaseFixtureOptions {
   now?: Date;
+  // Also seed a VS Code Agent Host session (step 10.13), for the UI check's
+  // unavailable states. Off by default: the Marketplace pictures show none.
+  includeAgentHostSession?: boolean;
 }
+
+export const AGENT_HOST_SESSION_ID = "a9e47000-0000-4000-8000-000000000001";
+export const AGENT_HOST_SESSION_TITLE = "Refactor the billing module";
 
 interface ModelRates {
   // AI Credits per token.
@@ -226,6 +238,37 @@ const AGENT_TRACES_SCHEMA = `
   CREATE TABLE span_attributes (span_id TEXT NOT NULL, key TEXT NOT NULL, value TEXT, PRIMARY KEY (span_id, key));
 `;
 
+// agent-host.db with one Copilot session and its session.db: the real table
+// shapes with the redacted sample turns that all have usage, so the session
+// has tokens and AI Credits (its tool calls and text are not read yet).
+export function seedAgentHostSession(userDataDir: string, now: Date): void {
+  const catalog = readAgentHostFixtureRows("catalog-rows.json");
+  const [template] = catalog.sessions_v2;
+  const payload = structuredClone(template.payload) as { data: { summary: string } };
+  payload.data.summary = AGENT_HOST_SESSION_TITLE;
+  const startedAt = now.getTime() - 30 * MINUTE_MS;
+  writeAgentHostCatalog(userDataDir, {
+    sessions_v2: [
+      {
+        ...template,
+        session_uri: `copilotcli:/${AGENT_HOST_SESSION_ID}`,
+        start_time: startedAt,
+        modified_time: now.getTime(),
+        payload,
+      },
+    ],
+    metadata: [],
+  });
+  const sessionRows = sessionRowsWithUsageOnly();
+  // The session.db's own title wins over the catalog's.
+  writeAgentSessionDb(userDataDir, AGENT_HOST_SESSION_ID, {
+    ...sessionRows,
+    session_metadata: sessionRows.session_metadata.map((row) =>
+      row.key === "customTitle" ? { ...row, value: AGENT_HOST_SESSION_TITLE } : row,
+    ),
+  });
+}
+
 // Seeds <rootDir>/user-data, a VS Code user-data dir.
 export function createShowcaseFixture(rootDir: string, options: ShowcaseFixtureOptions = {}): ShowcaseFixture {
   const now = options.now ?? new Date();
@@ -272,6 +315,10 @@ export function createShowcaseFixture(rootDir: string, options: ShowcaseFixtureO
   } finally {
     store.close();
     traces.close();
+  }
+
+  if (options.includeAgentHostSession) {
+    seedAgentHostSession(userDataDir, now);
   }
 
   return { userDataDir, featuredSessionId: sessionId(0), featuredSessionTitle: FEATURED.title };

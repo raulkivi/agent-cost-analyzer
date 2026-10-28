@@ -26,6 +26,8 @@ describe("copilotLogPathsFromUserDataDir (vscode-extension.md D4)", () => {
         path.join(userDataDir, "User", "workspaceStorage", "w2", "GitHub.copilot-chat", "debug-logs"),
       ],
       agentTracesDbPath: path.join(userDataDir, "User", "globalStorage", "github.copilot-chat", "agent-traces.db"),
+      // VS Code's Agent Host stores (step 10.13) live under it too.
+      agentHostUserDataDir: userDataDir,
       vscodeSettingsPath: path.join(userDataDir, "User", "settings.json"),
     });
   });
@@ -43,6 +45,7 @@ describe("copilotLogPathsFromUserDataDir (vscode-extension.md D4)", () => {
       sessionStoreDbPath: null,
       debugLogsDirPaths: [],
       agentTracesDbPath: null,
+      agentHostUserDataDir: null,
       vscodeSettingsPath: null,
     });
   });

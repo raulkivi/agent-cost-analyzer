@@ -12,6 +12,7 @@ import { JsoncFileSettingsSource } from "../../../server/src/data-sources/vscode
 import { copilotLogPathsFromUserDataDir } from "../../src/platform/copilot-log-paths.ts";
 import { MessageDispatcher } from "../../src/rpc/message-dispatcher.ts";
 import { createIntegrationFixture } from "../integration-fixture.mts";
+import { AGENT_HOST_SESSION_ID, seedAgentHostSession } from "./showcase-fixture.mts";
 import { webviewDefaultCss, type VscodeTheme } from "./vscode-themes.mts";
 
 const extensionDir = path.resolve(import.meta.dirname, "../..");
@@ -45,6 +46,8 @@ const SYSTEM_PROMPT = [
 
 export interface Harness {
   usageSessionId: string;
+  // A VS Code Agent Host session (step 10.13), when the seed has one.
+  agentHostSessionId?: string;
   open(theme: VscodeTheme, width: number, height?: number): Promise<Page>;
   postHostEvent(page: Page, name: string, payload?: unknown): Promise<void>;
   // Resolves once no webview request has been in flight for a moment, and
@@ -57,6 +60,7 @@ export interface SeededUserData {
   userDataDir: string;
   // The session the scenarios open.
   usageSessionId: string;
+  agentHostSessionId?: string;
 }
 
 export interface HarnessOptions {
@@ -78,7 +82,9 @@ function seedUiCheckFixture(rootDir: string): SeededUserData {
     path.join(debugDir, "system_prompt_0.json"),
     JSON.stringify({ content: JSON.stringify([{ type: "text", content: SYSTEM_PROMPT }]) }),
   );
-  return fixture;
+  // Newer than every seeded session, so it leads the list.
+  seedAgentHostSession(fixture.userDataDir, new Date());
+  return { ...fixture, agentHostSessionId: AGENT_HOST_SESSION_ID };
 }
 
 export async function startHarness(options: HarnessOptions = {}): Promise<Harness> {
@@ -139,6 +145,7 @@ export async function startHarness(options: HarnessOptions = {}): Promise<Harnes
 
   return {
     usageSessionId: fixture.usageSessionId,
+    agentHostSessionId: fixture.agentHostSessionId,
     async open(theme, width, height = 900) {
       const page = await browser.newPage({ viewport: { width, height }, deviceScaleFactor: options.deviceScaleFactor ?? 1 });
       page.on("pageerror", (error) => console.error(`page error: ${error.message}`));

@@ -75,6 +75,27 @@ const SCENARIOS: Scenario[] = [
     },
   },
   {
+    // A VS Code Agent Host session (step 10.13): the unavailable states.
+    name: "agent-host-turn-inspector",
+    run: async (page, harness) => {
+      await harness.postHostEvent(page, "selectSession", { sessionId: harness.agentHostSessionId });
+      const inspect = page.getByRole("button", { name: /inspect request/i });
+      if (!(await inspect.first().isVisible().catch(() => false))) {
+        await clickFirstVisible(page, harness, [page.getByRole("button", { name: /^details$/i })]);
+      }
+      await inspect.first().click();
+      await harness.settle(page);
+      await page.getByText("Not available yet", { exact: true }).first().waitFor({ timeout: 5000 });
+    },
+  },
+  {
+    name: "agent-host-tool-audit",
+    run: async (page, harness) => {
+      await harness.postHostEvent(page, "selectSession", { sessionId: harness.agentHostSessionId, view: "session-audit" });
+      await page.getByText("Tool calls not available yet", { exact: true }).first().waitFor({ timeout: 5000 });
+    },
+  },
+  {
     name: "dashboard",
     run: async (page, harness) => {
       await harness.postHostEvent(page, "selectSession", { sessionId: harness.usageSessionId });

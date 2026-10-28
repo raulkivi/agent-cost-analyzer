@@ -17,11 +17,12 @@ export interface CopilotMcpServerOptions {
 // process outlives many chats, so the per-workspace debug-logs folders are
 // re-listed on every lookup, and a workspace opened later is still found.
 export function createCopilotMcpServer({ userDataDir, version }: CopilotMcpServerOptions): McpServer {
-  const { sessionStoreDbPath, agentTracesDbPath } = copilotLogPathsFromUserDataDir(userDataDir);
+  const { sessionStoreDbPath, agentTracesDbPath, agentHostUserDataDir } = copilotLogPathsFromUserDataDir(userDataDir);
   return createMcpServer(
     createCopilotMcpServices({
       sessionStoreDbPath,
       agentTracesDbPath,
+      agentHostUserDataDir,
       debugLogsDirPaths: () => copilotDebugLogsDirPaths(userDataDir),
       appVersion: version,
     }),
