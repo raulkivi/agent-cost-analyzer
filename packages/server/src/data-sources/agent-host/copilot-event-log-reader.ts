@@ -36,8 +36,8 @@ export function parseCopilotEventLine(line: string): CopilotEvent | null {
   let data: Record<string, unknown> = isPlainObject(raw.data) ? raw.data : {};
   if (type === "session.binary_asset" && "data" in data) {
     // The base64 payload can be megabytes and no builder needs it.
-    const { data: _payload, ...rest } = data;
-    data = rest;
+    data = { ...data };
+    delete data.data;
   }
   return {
     id,

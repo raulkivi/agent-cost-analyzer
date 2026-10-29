@@ -69,7 +69,7 @@ export function registerSessionTools(server: McpServer, deps: McpToolDeps, guard
     {
       title: "Get one turn",
       description:
-        "Reads one turn of a session: the user prompt and assistant response (secrets redacted, truncated to maxTextChars), its token usage and AI Credits, any triggered event (compaction, model switch, cache expiry, ...) and its tool calls with outcomes. Use it to explain why a turn found by get_session_cost or list_tool_calls was expensive or failed.",
+        "Reads one turn of a session: the user prompt and assistant response (secrets redacted, truncated to maxTextChars), its token usage and AI Credits, any triggered event (compaction, model switch, cache expiry, ...) and its tool calls with outcomes. The text and tool calls are unknown, with a reason, for a VS Code Agent Host turn whose Copilot CLI event log is missing, unreadable or has no match. Use it to explain why a turn found by get_session_cost or list_tool_calls was expensive or failed.",
       inputSchema: {
         sessionId: sessionIdArg,
         turnIndex: turnIndexSchema.describe("0-based turn index, e.g. from get_session_cost's topTurns or list_tool_calls."),
