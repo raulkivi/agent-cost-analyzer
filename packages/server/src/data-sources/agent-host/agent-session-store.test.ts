@@ -9,7 +9,9 @@ import {
   nanoAiuToAiCredits,
   readAgentHostSessionModel,
   readAgentHostSessionTitle,
+  readAgentHostTurnEventIds,
   readAgentHostTurns,
+  type AgentHostTurnEventRef,
   type AgentHostTurnRow,
   type AgentHostTurnUsage,
 } from "./agent-session-store.js";
@@ -620,5 +622,81 @@ describe("nanoAiuToAiCredits", () => {
     expect(nanoAiuToAiCredits(1_285_093_000)).toBe(1.285093);
     expect(nanoAiuToAiCredits(246_039_490_000)).toBe(246.03949);
     expect(nanoAiuToAiCredits(1)).toBe(1e-9);
+  });
+});
+
+// Turns without the event_id column: a session.db from before the join key
+// was projected. The reader must still list every turn.
+const TURNS_NO_EVENT_ID_DDL = `
+  CREATE TABLE turns (
+    id TEXT PRIMARY KEY NOT NULL,
+    checkpoint_ref TEXT
+  )
+`;
+
+describe("readAgentHostTurnEventIds", () => {
+  let dir: string;
+
+  beforeEach(() => {
+    dir = mkdtempSync(path.join(tmpdir(), "agent-session-event-ids-test-"));
+  });
+
+  afterEach(() => {
+    rmSync(dir, { recursive: true, force: true });
+  });
+
+  function scratchDb(): DatabaseSync {
+    return new DatabaseSync(path.join(dir, "session.db"));
+  }
+
+  it("returns [] when there is no turns table", () => {
+    const db = scratchDb();
+    expect(readAgentHostTurnEventIds(db)).toEqual([]);
+  });
+
+  it("lists turns in rowid order with their event_id", () => {
+    const db = scratchDb();
+    db.exec(TURNS_DDL);
+    const insert = db.prepare("INSERT INTO turns (id, event_id) VALUES (?, ?)");
+    insert.run("request_b", "event-b");
+    insert.run("request_a", "event-a");
+
+    const expected: AgentHostTurnEventRef[] = [
+      { turnId: "request_b", eventId: "event-b" },
+      { turnId: "request_a", eventId: "event-a" },
+    ];
+    expect(readAgentHostTurnEventIds(db)).toEqual(expected);
+  });
+
+  it("maps NULL and empty event_id to null", () => {
+    const db = scratchDb();
+    db.exec(TURNS_DDL);
+    const insert = db.prepare("INSERT INTO turns (id, event_id) VALUES (?, ?)");
+    insert.run("request_null", null);
+    insert.run("request_empty", "");
+
+    expect(readAgentHostTurnEventIds(db)).toEqual([
+      { turnId: "request_null", eventId: null },
+      { turnId: "request_empty", eventId: null },
+    ]);
+  });
+
+  it("returns every turn with eventId null when turns has no event_id column", () => {
+    const db = scratchDb();
+    db.exec(TURNS_NO_EVENT_ID_DDL);
+    const insert = db.prepare("INSERT INTO turns (id, checkpoint_ref) VALUES (?, ?)");
+    insert.run("request_2", "refs/x/2");
+    insert.run("request_1", "refs/x/1");
+
+    expect(readAgentHostTurnEventIds(db)).toEqual([
+      { turnId: "request_2", eventId: null },
+      { turnId: "request_1", eventId: null },
+    ]);
+  });
+
+  it("returns [] for an empty turns table", () => {
+    const db = scratchDb();
+    db.exec(TURNS_DDL);
+    expect(readAgentHostTurnEventIds(db)).toEqual([]);
   });
 });
