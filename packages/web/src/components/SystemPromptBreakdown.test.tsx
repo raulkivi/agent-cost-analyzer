@@ -17,6 +17,13 @@ describe("SystemPromptBreakdown", () => {
     expect(screen.queryByText(/agentDebugLog/)).not.toBeInTheDocument();
   });
 
+  it("says the event log has no system prompt when it was read but holds none", () => {
+    render(<SystemPromptBreakdown components={[]} providerId="vscode" eventLogRead />);
+
+    expect(screen.getByText("The Copilot CLI event log for this session has no system prompt.")).toBeInTheDocument();
+    expect(screen.queryByText(/agentDebugLog/)).not.toBeInTheDocument();
+  });
+
   it("renders the card kicker and one meter row per component", () => {
     const components: SystemPromptComponent[] = [
       { kind: "built-in", label: "Base system prompt (100 characters)", tokenCount: { known: true, value: 500 } },

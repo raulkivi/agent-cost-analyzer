@@ -13,6 +13,9 @@ export function eventLogUnavailableReason(
   return log && log.status !== "read" ? log.reason : undefined;
 }
 
+export const AGENT_HOST_NO_SYSTEM_PROMPT =
+  "The Copilot CLI event log for this session has no system prompt.";
+
 export const AGENT_HOST_TOOL_INVENTORY_UNAVAILABLE =
   "The Copilot CLI event log records no tool definitions, so the tool inventory of Agent Host sessions is unknown.";
 
@@ -24,5 +27,5 @@ export const AUDIT_UNAVAILABLE_NOTE = "That doesn't mean the agent ran no tools.
 // Sessions whose tool calls are unknown are left out of the cross-session
 // audit's counts and rates, never counted as 0 calls.
 export function agentHostRollupNotIncluded(count: number): string {
-  return `${count} Agent Host ${count === 1 ? "session" : "sessions"} not included: no Copilot CLI event log.`;
+  return `${count} Agent Host ${count === 1 ? "session" : "sessions"} not included: no readable Copilot CLI event log.`;
 }

@@ -482,6 +482,7 @@ export function App({ performanceMarks = pagePerformanceMarks }: AppProps = {}) 
             components={session?.systemPrompt ?? []}
             providerId={session?.providerId}
             unavailableReason={eventLogUnavailableReason(session)}
+            eventLogRead={session?.copilotEventLog?.status === "read"}
             onOpenInspector={session ? () => setInspectorOpen(true) : undefined}
           />
         )}

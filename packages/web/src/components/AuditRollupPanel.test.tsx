@@ -25,13 +25,13 @@ describe("AuditRollupPanel", () => {
   it("says how many Agent Host sessions are not included, since their tool calls are unknown", async () => {
     renderPanel(vi.fn().mockResolvedValue(makeAuditRollup({ sessionsWithUnknownToolCalls: 2 })));
 
-    expect(await screen.findByRole("note")).toHaveTextContent("2 Agent Host sessions not included: no Copilot CLI event log.");
+    expect(await screen.findByRole("note")).toHaveTextContent("2 Agent Host sessions not included: no readable Copilot CLI event log.");
   });
 
   it("uses the singular for one Agent Host session", async () => {
     renderPanel(vi.fn().mockResolvedValue(makeAuditRollup({ sessionsWithUnknownToolCalls: 1 })));
 
-    expect(await screen.findByRole("note")).toHaveTextContent("1 Agent Host session not included: no Copilot CLI event log.");
+    expect(await screen.findByRole("note")).toHaveTextContent("1 Agent Host session not included: no readable Copilot CLI event log.");
   });
 
   it("keeps the note when only Agent Host sessions are in range", async () => {
