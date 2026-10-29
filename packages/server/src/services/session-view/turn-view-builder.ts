@@ -1,5 +1,5 @@
 import { MAX_EVIDENCE_EXCERPT_LENGTH, type Session, type ToolCallRecord, type TurnView } from "@agent-cost-analyzer/domain";
-import { textUnavailableReason, toolCallsUnavailableReason } from "../tool-audit/tool-calls-availability.js";
+import { turnTextUnavailableReason, turnToolCallsUnavailableReason } from "../tool-audit/tool-calls-availability.js";
 import { statusOf } from "../tool-audit/outcome-tally.js";
 import { excerptOf, redactSecrets } from "../tool-audit/output-redactor.js";
 import { resolveToolKind } from "../tool-audit/tool-kind-resolver.js";
@@ -42,8 +42,8 @@ export function buildTurnView(session: Session, turnIndex: number, options: Turn
     return null;
   }
   const maxChars = options.maxTextChars ?? DEFAULT_MAX_TEXT_CHARS;
-  const textReason = textUnavailableReason(session);
-  const callsReason = toolCallsUnavailableReason(session);
+  const textReason = turnTextUnavailableReason(session, turn);
+  const callsReason = turnToolCallsUnavailableReason(session, turn);
   const user = bounded(turn.userMessage, maxChars);
   const assistant = bounded(turn.assistantResponse, maxChars);
   return {

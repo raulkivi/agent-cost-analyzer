@@ -10,6 +10,11 @@ import {
   writeAgentHostCatalog,
   writeAgentSessionDb,
 } from "../../../test-support/agent-host-user-data-dir.js";
+import {
+  COPILOT_CLI_FIXTURE_HOME,
+  COPILOT_CLI_FIXTURE_SESSION_IDS,
+  writeCopilotCliAgentHostStores,
+} from "../../../test-support/copilot-cli-fixtures.js";
 import { describeLogProviderContract } from "../contract.js";
 import type { SystemPromptTextLookup } from "../system-prompt-text-reader.js";
 import type { CopilotSessionSource } from "./copilot-session-source.js";
@@ -376,7 +381,7 @@ describeLogProviderContract("VscodeLogProvider (Agent Host sessions only)", {
       sessionStoreDbPath: null,
       debugLogsDirPaths: [],
       agentTracesDbPath: null,
-      agentHostSessions: new AgentHostSessionSource({ userDataDir: agentHostUserDataDir() }),
+      agentHostSessions: new AgentHostSessionSource({ userDataDir: agentHostUserDataDir(), copilotHome: null }),
     }),
   knownSessionId: AGENT_HOST_IDS.withTurns,
   unknownSessionId: AGENT_HOST_IDS.deleted,
@@ -387,9 +392,37 @@ describeLogProviderContract("VscodeLogProvider (Agent Host sessions only)", {
       agentTracesDbPath: null,
       agentHostSessions: new AgentHostSessionSource({
         userDataDir: mkdtempSync(path.join(tmpdir(), "vscode-log-provider-agent-host-empty-")),
+        copilotHome: null,
       }),
     }),
   turnIndexWithRoundTrip: null,
+});
+
+// Step 10.14: with the Copilot CLI event log, an Agent Host turn has round-trips.
+describeLogProviderContract("VscodeLogProvider (Agent Host sessions with a Copilot CLI event log)", {
+  buildAvailableProvider: () => {
+    const userDataDir = mkdtempSync(path.join(tmpdir(), "vscode-log-provider-copilot-cli-"));
+    writeCopilotCliAgentHostStores(userDataDir);
+    return new VscodeLogProvider({
+      sessionStoreDbPath: null,
+      debugLogsDirPaths: [],
+      agentTracesDbPath: null,
+      agentHostSessions: new AgentHostSessionSource({ userDataDir, copilotHome: COPILOT_CLI_FIXTURE_HOME }),
+    });
+  },
+  knownSessionId: COPILOT_CLI_FIXTURE_SESSION_IDS.normal,
+  unknownSessionId: AGENT_HOST_IDS.deleted,
+  buildUnavailableProvider: () =>
+    new VscodeLogProvider({
+      sessionStoreDbPath: null,
+      debugLogsDirPaths: [],
+      agentTracesDbPath: null,
+      agentHostSessions: new AgentHostSessionSource({
+        userDataDir: mkdtempSync(path.join(tmpdir(), "vscode-log-provider-agent-host-empty-")),
+        copilotHome: COPILOT_CLI_FIXTURE_HOME,
+      }),
+    }),
+  turnIndexWithRoundTrip: 0,
 });
 
 function fakeSession(id: string, startedAt: string): Session {

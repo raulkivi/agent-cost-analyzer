@@ -25,7 +25,8 @@ Progress (2026-10-28):
 | 10.11 | UX review for VS Code: panel fits any width, readable in light, dark and High Contrast, native look, automated UI check | Done (#77) |
 | 10.12 | Learn scenarios in the side bar (a Learn view), like the Sessions view; the panel has no list of its own | Done (#80) |
 | 10.13 | Agent Host sessions: read the sessions VS Code 1.143+ creates by default (manual check 1.4) | Done (`20c880b`–`756a26c`); manual check 1.4 passes with the default harness |
-| 10.14 | Agent Host turn text, tool calls and system prompt from the Copilot CLI event log (`~/.copilot/session-state/<sdkSessionId>/events.jsonl`) | Planned |
+| 10.14 | Agent Host turn text, tool calls and system prompt from the Copilot CLI event log (`~/.copilot/session-state/<sdkSessionId>/events.jsonl`) | Code done (`2f302b0`–`3911119`, docs commit); owner's manual check (task 11) open |
+| 10.15 | Cache-write and reasoning tokens for Agent Host sessions from `session.usage_record` | Planned |
 
 
 ## 1. Context
@@ -1363,6 +1364,235 @@ check 1.4 passes with the default harness.
   ÷ 10⁹ per AI Credit).
 - Claude harness sessions (`provider` `claude`) are left out of 10.13;
   whether they bill AI Credits is open.
+
+### 10.14 Agent Host turn text, tool calls and system prompt (Copilot CLI event log)
+
+After 10.13, Agent Host sessions show turns, tokens and AI Credits, but
+their turn text, turn inspector, system prompt, Tools tab and tool audit
+say "not available yet". VS Code's stores don't hold that data. The
+Copilot CLI that runs the session writes it to its own event log,
+`<copilotHome>/session-state/<sdkSessionId>/events.jsonl`. 10.14 reads that
+log, read-only and per session, in the shared server code, so both
+products get it.
+
+**Status (2026-10-29): code done (commits `2f302b0`–`3911119` and the docs
+commit `docs: Agent Host turn text, tool calls and system prompt (step
+10.14)`); owner's manual check (task 11) open.**
+
+**Storage seen on this machine** (Insiders 1.145, Copilot CLI 0.0.0 to
+1.0.103; surveyed 2026-10-29 with read-only copies, to be pinned by the
+redacted fixtures of task 1):
+- **Finding the log.** `agent-host.db` holds 70 `copilotcli` sessions. 56
+  have a `chats_v2` row whose `provider_data` JSON carries `sdkSessionId`
+  (and `model`). The `sdkSessionId` never equals the Agent Host session id.
+  53 of those 56 have an `events.jsonl`. The 17 sessions without a log (14
+  with no chat row, 3 with no log dir) all have 0 turns in `session.db`, so
+  10.13 already hides them. No session has more than one chat.
+- **Copilot home.** The Copilot SDK bundled with VS Code resolves it as
+  `configDir ?? process.env.COPILOT_HOME ?? <homedir>/.copilot`, and the log
+  as `<home>/session-state/<id>/events.jsonl`. This machine has 71 session
+  dirs, 60 with an `events.jsonl`. Each dir also has `workspace.yaml`
+  (`id`, `cwd`, `client_name: vscode-agent-host` on 58), `checkpoints/`,
+  `files/` and `research/`.
+- **Line format.** One JSON object per line: `{type, data, id, timestamp,
+  parentId}`. 509 events also carry a top-level `agentId`: they come from a
+  subagent, not the main conversation. 36,248 lines, none malformed. Total
+  92 MB; largest file 17.5 MB, median 668 KB; longest line 554 KB
+  (`permission.requested`). A live session's file is still being appended
+  (`inuse.*.lock` in the dir), so a partial last line is possible.
+- **Turn join key: `session.db` `turns.event_id` = the `user.message`
+  event's `id`.** 164 of 165 turns across the 53 sessions match this way.
+  The other turn has `event_id` NULL and a bare id (no `request_` prefix)
+  equal to the previous turn's `event_id`. It is a second record of an
+  aborted turn. The `request_<uuid>` ids appear nowhere in the log.
+  `interactionId` isn't a usable key: the 6 `delivery: "steering"`
+  messages (each its own turn) share the previous turn's `interactionId`.
+  178 `user.message` events: 175 typed by the user, 3 with `source:
+  "agent-<id>"` (a subagent's prompt, not a turn). So a turn is the slice of
+  the log from its `user.message` to the next turn's `user.message`, in
+  file order.
+- **Inside a turn.** `assistant.turn_start`/`turn_end` (`turnId` "0", "1",
+  ...) bound one model round-trip each. `assistant.message` has `content`
+  (empty on 2,227 of 2,916, which carry only `toolRequests`), `toolRequests
+  [{toolCallId, name, arguments}]`, `reasoningText` (1,419), `phase`
+  (`commentary`/`final_answer`), `model`, `apiCallId`. `user.message` has
+  `content` (what the user typed), `transformedContent` (what the model saw:
+  `<current_datetime>`, `<system_reminder>` and similar added) and
+  `attachments` (`file` 92, `blob` 88 base64 text, `selection` 4,
+  `directory` 1). `session.binary_asset` holds base64 images.
+- **Tool calls.** `tool.execution_start` (`toolCallId`, `toolName`,
+  `arguments`, `turnId`) and `tool.execution_complete` (`success`,
+  `result.content`, `error {code, message}`, `fileEdits`, `interactionId`).
+  3,577 starts, 3,576 completes; 92 failures, all `error.code: "failure"`; 2
+  starts without a complete (interrupted). `permission.completed.result.kind`:
+  2,851 `approved`, 1 `approved-for-location`, 1 `cancelled`. Subagent calls
+  have `parentToolCallId` (82). `external_tool.*` (237) are VS Code-side
+  tools (browser, `rename_chat`) and also get `tool.execution_*` events.
+- **System prompt.** `system.message` (`role: "system"`, `content` 30-60 K
+  characters, `contentBlocks`). 49 files have one, 11 have 2-4: it is
+  re-emitted after a model change or resume, and 3 come from subagents
+  (`agentId`). The prompt is sectioned with XML-like tags (`<tools>`,
+  `<custom_instruction>`, `<available_skills>`, ...).
+- **Tool definitions are not recorded.** No event holds the tool list or
+  schemas. `session.shutdown` carries real `systemTokens`,
+  `toolDefinitionsTokens` and `conversationTokens` (58 of 60 files);
+  `session.usage_record.usage.availableToolCount` gives a count.
+- **Not used in 10.14.** `session.usage_record` (per model call:
+  `cacheWriteTokens`, `reasoningTokens`, ...; only in 17 of 60 files, newer
+  CLIs; joins to `assistant.message` by `apiCallId`), `hook.*`,
+  `permission.requested`, `model.*` (side-model calls such as a classifier;
+  `model.messages_snapshot` is that call's messages, not the conversation),
+  `skill.*`, `subagent.*`, `session.compaction_*` (6; the log keeps every
+  event, so turns stay intact).
+
+**Scope.** Turn text, tool calls with outcomes, the turn inspector and the
+system prompt for Agent Host sessions, from `events.jsonl`. Tokens and AI
+Credits stay from `session.db` (10.13). The Tools tab stays unavailable,
+with a reason that says why (no tool definitions are recorded).
+
+**Deliverables:**
+- Redacted fixtures built from real captures, and the format documented in
+  architecture.md §6.2.2.2.
+- In `data-sources/agent-host/`: the Copilot home and event-log path, the
+  `sdkSessionId` lookup from `chats_v2`, each turn's `event_id`, and a
+  streaming, read-only event-log reader.
+- A pure turn segmenter and pure builders (turn text and tool calls with
+  outcomes, inspector rounds, system prompt), beside
+  `agent-host-session-builder.ts`.
+- `AgentHostSessionSource` reads the log only in `readSession`,
+  `readTurnDetail` and `lookupSystemPromptText`, never in `listSessions`.
+  A parsed log is cached by path, size and mtime.
+- Unknown is never 0 or empty (constraint 6). A missing or unreadable log,
+  or a turn that can't be matched, keeps text and tool calls unknown with a
+  reason, and the session stays out of the audit counts as in 10.13. A
+  session whose log was read shows real data, and an empty tool-call list
+  then means no calls.
+- Tool arguments, results and evidence go through the existing redaction
+  and truncation (`summarizeToolArgs`, `buildToolCallOutcome`,
+  `redactSecrets`), as for the other providers.
+- Both products and both MCP servers get it through the shared composition
+  (`createVscodeProvider`), with the Copilot home resolved the way the CLI
+  resolves it.
+- The web's "not available yet" states for Agent Host sessions only show
+  when the log is missing. The UI check seeds an Agent Host session with a
+  log.
+- Docs: architecture.md, both user guides, the extension README and both
+  changelogs.
+
+**Exit criterion:** in VS Code 1.143+ with default settings, a new
+agent-mode session shows its prompt and response text, its rounds and tool
+calls in the turn inspector, its system prompt in the
+System prompt tab, and its tool calls with outcomes in the tool audit. The
+standalone app and the MCP tools show the same. A session without a log
+still shows "unavailable" with the new reason. Listing sessions opens no
+`events.jsonl`.
+
+**Exact specs for the setup6 tasks.** All paths are under
+`packages/server/src/data-sources/agent-host/`. ESM imports end in `.js`.
+No new dependencies.
+
+*Task 2: paths, `sdkSessionId` and turn event ids.*
+- New `copilot-cli-paths.ts`:
+  - `export function resolveCopilotHome(env: NodeJS.ProcessEnv = process.env, homedir: () => string = os.homedir, pathApi: path.PlatformPath = path): string`.
+    Returns `env.COPILOT_HOME` when it is a non-empty string after trimming,
+    used as given (untrimmed). Otherwise returns `pathApi.join(homedir(), ".copilot")`.
+  - `export function copilotEventLogPath(copilotHome: string, sdkSessionId: string, pathApi: path.PlatformPath = path): string | null`.
+    Returns null unless `sdkSessionId` matches `/^[0-9A-Za-z][0-9A-Za-z-]*$/`
+    (the pattern `agent-host-paths.ts` uses), else
+    `pathApi.join(copilotHome, "session-state", sdkSessionId, "events.jsonl")`.
+- In `agent-host-catalog.ts`:
+  `export function readAgentHostSdkSessionId(db: DatabaseSync, sessionUri: string): string | null`.
+  Returns null when there's no `chats_v2` table (use `hasTable`). Reads
+  `provider_data` from `chats_v2 WHERE owner_session_uri = ?`, ordered by
+  `chat_order IS NULL, chat_order, rowid`. Returns the first row's
+  `sdkSessionId` that parses as JSON into a non-array object whose
+  `sdkSessionId` is a non-empty string. Rows with NULL, non-JSON or other
+  shapes are skipped. Never throws on row content.
+- In `agent-session-store.ts`:
+  `export interface AgentHostTurnEventRef { turnId: string; eventId: string | null }` and
+  `export function readAgentHostTurnEventIds(db: DatabaseSync): AgentHostTurnEventRef[]`.
+  Returns `[]` without a `turns` table. Rows are in `rowid` order, like
+  `readAgentHostTurns`. `eventId` is the `event_id` column, or null when
+  the column is NULL, empty, or missing from the table (check with
+  `PRAGMA table_info(turns)`).
+- Tests: unit tests beside each file (the agent writes them). The hidden
+  `copilot-cli-paths.acceptance.test.ts` and
+  `agent-host-turn-refs.acceptance.test.ts` are run after.
+
+*Task 3: the event-log reader.*
+- New `copilot-event-log-reader.ts`:
+  - Re-exports `CopilotEvent` and `CopilotEventLog` from `copilot-event.ts`
+    (committed ahead of task 3 so tasks 4-7 could start in parallel):
+    `export type { CopilotEvent, CopilotEventLog } from "./copilot-event.js";`.
+  - `export const MAX_EVENT_LINE_CHARS = 8 * 1024 * 1024`.
+  - `export function parseCopilotEventLine(line: string): CopilotEvent | null`.
+    Returns null for a line that isn't JSON, isn't a non-array object, or
+    lacks a non-empty string `id` and `type`. `parentId`, `timestamp` and
+    `agentId` are null unless they are strings. `data` is `{}` unless it is
+    a non-array object. For `type === "session.binary_asset"`, `data.data`
+    (the base64 payload) is dropped.
+  - `export async function readCopilotEventLog(filePath: string, options?: { include?: (type: string) => boolean; maxLineChars?: number }): Promise<CopilotEventLog | null>`.
+    Returns null when the file doesn't exist (`ENOENT` or `ENOTDIR`). Other
+    errors (e.g. `EACCES`, a directory at the path) reject. Streams the file
+    with `fs.createReadStream(filePath, { encoding: "utf8" })` and
+    `readline` (`crlfDelay: Infinity`); never `readFile`. Lines that are
+    empty or whitespace-only are skipped and not counted. A line longer than
+    `maxLineChars` (default `MAX_EVENT_LINE_CHARS`) is counted in
+    `skippedLines` without being parsed. A line `parseCopilotEventLine`
+    rejects is counted too; this covers a partial last line of a file still
+    being written. An event `include` rejects is dropped and not counted.
+    Events keep file order. The reader opens the file read-only and always
+    closes the stream, including on error.
+- Tests: the agent's unit tests, then the hidden
+  `copilot-event-log-reader.acceptance.test.ts` (fixtures from task 1: a
+  normal log, a malformed one with a non-JSON line, a non-object line, a line
+  without `id`, an unknown type and a truncated last line, plus a generated
+  file of 20 MB or more with one line over the cap).
+
+**Turn segmentation rule (task 4).** Resolve each `session.db` turn, in
+`rowid` order, to an event id: `event_id`, else the turn id when it lacks
+the `request_` prefix, else none. A turn matches when that id belongs to a
+`user.message` event. When two turns resolve to the same event, the first
+one takes it. A turn's events are those after its `user.message`, up to the
+next matched turn's `user.message`, in file order. The last turn's events
+run to the end of the file. Events before the first matched turn are
+session-level (`session.start`, the first `system.message`). An unmatched
+turn has unknown text and tool calls, with a reason. Events with a top-level
+`agentId` add their tool calls to the turn, but not their text or rounds.
+
+**Tasks:**
+
+| # | Task | Complexity | Model | Status |
+|---|---|---|---|---|
+| 1 | Redacted fixtures from real captures (`fixtures/agent-host/copilot-cli/`: event logs for a normal session, steering plus abort plus subagent, system-prompt re-emit, and malformed lines; `chats_v2` rows with `provider_data`; matching `turns.event_id` rows including the NULL/bare-id duplicate); format in architecture.md §6.2.2.2; hidden acceptance tests for tasks 2 and 3, kept outside the worktree until each setup6 run is reviewed, then committed with that task's code (as 10.13 did: none in `20c880b`, committed in `b143a7b` and `0e80c90`) | medium | Sonnet | Done |
+| 2 | Copilot home, event-log path, `sdkSessionId` lookup, turn event ids (exact spec above) | low | Haiku (owner, 2026-10-29: no local model in this repo) | Done |
+| 3 | Streaming event-log reader (exact spec above) | medium | Sonnet (owner, 2026-10-29: no local model in this repo) | Done |
+| 4 | Pure turn segmenter (`services/session-enricher/copilot-turn-segmenter.ts`): the rule above; steering, abort, duplicate turn, agent-sourced prompts, subagent events, events before the first turn | medium | Sonnet | Done |
+| 5 | Turn text and tool calls (pure builder): `userMessage` from `content`, `assistantResponse` from main-agent `assistant.message` content; tool-call records (id, name, `resolveToolKind`, `summarizeToolArgs`, shell, `startedAt`, `durationMs`, `roundIndex`, `filesTouched`); outcomes via `buildToolCallOutcome` (completed true → success, false → error classified from `error.message`, permission not approved → denied, start without complete → interrupted when the turn has an `abort`, else unknown with a reason) | medium | Sonnet | Done |
+| 6 | Turn inspector rounds (pure builder): one round per main-agent `assistant.turn_start`; request = `transformedContent` plus attachment placeholders (file paths, blobs, binary assets as placeholders, never inline) for round 0, earlier tool results after that; response = content plus `reasoningText`; reuses `build-content-parts.ts` | medium | Sonnet | Done |
+| 7 | System prompt (pure builder): the latest main-agent `system.message` as the prompt text (`lookupSystemPromptText` → `found`); components: `built-in` with `systemTokens` from the last `session.shutdown`/`session.compaction_start` after that message (real), otherwise estimated with `estimateTokenCount`; `tool-definitions` with `toolDefinitionsTokens` (real), otherwise unknown with a reason | low | Sonnet | Done |
+| 8 | Wire into `AgentHostSessionSource` and both products: event log read lazily in `readSession`/`readTurnDetail`/`lookupSystemPromptText` only (a test proves `listSessions` opens no log); a cache bounded to a few sessions, keyed by path, size and mtime, so audit and insights rollups don't re-parse; `copilotHome` threaded through `createVscodeProvider`, `compose-copilot-providers`, the standalone and extension composition roots and `create-copilot-mcp-services`; a domain marker for "event log read / missing / unreadable" that replaces the harness-only check in `tool-calls-availability.ts` and insights; an unreadable log degrades to unknown, never rejects `readSession` | high | Opus | Done: `Session.copilotEventLog` (`read` / `missing` / `unreadable` with a reason), `Turn.textUnavailableReason`/`toolCallsUnavailableReason` for unmatched turns, `TurnInspectorDetail.unavailableReason`; `CopilotEventLogCache` (4 logs, LRU, keyed by path, size and mtime) parses only the event types the builders read; `copilotHome` is required in the extension's options and the Copilot MCP services, and defaults to `resolveCopilotHome()` elsewhere. Inspector rounds are not passed through `redactSecrets`, like every other provider's inspector (only the MCP turn view redacts) |
+| 9 | Web and MCP: the "not available yet" states in `lib/agent-host-unavailable.ts`, `TurnInspector`, `SystemPromptBreakdown`, `SessionAuditPanel`, `AuditRollupPanel` and the MCP audit and turn tools show only when the log is missing or a turn is unmatched, with the new reasons; the Tools tab reason says that no tool definitions are recorded; UI check seeds an Agent Host session with a log and renders turn text, inspector, system prompt and audit | medium | Sonnet | Done |
+| 10 | Docs and changelogs (architecture.md §6.2.2.1/§6.2.2.2, both user guides, the extension README, both changelogs, this plan's status) | low | Haiku | Done (docs commit) |
+| 11 | Manual check: a new default-harness session in VS Code and the same session in the standalone app show turn text, inspector rounds, system prompt and tool audit; a session whose log dir is moved away shows the new "unavailable" reasons | — | owner | Planned |
+
+**Settled questions:**
+- Join key: `turns.event_id` → `user.message.id` (164 of 165 turns), with
+  the bare turn id as a fallback. `interactionId` and turn order are not
+  used.
+- Tokens and AI Credits stay from `session.db`. The event log adds text,
+  tool calls and the system prompt only.
+- Subagent tool calls (`agentId` / `parentToolCallId`) count in the turn
+  that started the subagent, since the agent ran them.
+- Tools tab (owner, 2026-10-29): stays "unavailable", with a reason that
+  no tool definitions are recorded. A partial inventory of called tools
+  would hide loaded-but-unused tools.
+- Cache-write and reasoning tokens (owner, 2026-10-29): a follow-up step,
+  not 10.14. They stay unknown until then.
+- Copilot home: 10.14 follows the CLI (`COPILOT_HOME`, else
+  `~/.copilot`), with no setting. Add one only if VS Code ever starts the
+  Agent Host with a different `configDir`.
+
 
 ### 10.12 Learn scenarios in the side bar (owner's request, 2026-10-24)
 

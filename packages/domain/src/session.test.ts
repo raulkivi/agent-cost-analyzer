@@ -134,6 +134,31 @@ describe("sessionSchema", () => {
     expect(() => sessionSchema.parse({ ...base, copilotHarness: "cloud" })).toThrow();
   });
 
+  it("accepts whether an Agent Host session's Copilot CLI event log was read, with a reason when it wasn't", () => {
+    const base = {
+      id: "session-123",
+      mode: "analyze",
+      providerId: "vscode",
+      title: "Real session",
+      model: "gpt-4o",
+      turns: [],
+      turnCount: 0,
+      costAiCredits: { known: false, reason: "n/a" },
+      usageDataAvailable: false,
+      copilotHarness: "agent-host",
+    };
+
+    for (const copilotEventLog of [
+      { status: "read" },
+      { status: "missing", reason: "no log" },
+      { status: "unreadable", reason: "EACCES" },
+    ]) {
+      expect(sessionSchema.parse({ ...base, copilotEventLog }).copilotEventLog).toEqual(copilotEventLog);
+    }
+    expect(() => sessionSchema.parse({ ...base, copilotEventLog: { status: "missing" } })).toThrow();
+    expect(() => sessionSchema.parse({ ...base, copilotEventLog: { status: "partial", reason: "x" } })).toThrow();
+  });
+
   it("rejects an invalid mode", () => {
     const sample = {
       id: "session-123",

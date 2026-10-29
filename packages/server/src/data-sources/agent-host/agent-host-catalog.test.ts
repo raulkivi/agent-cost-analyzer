@@ -8,6 +8,7 @@ import {
   AGENT_HOST_COPILOT_PROVIDER,
   getAgentHostSessionRow,
   listAgentHostSessionRows,
+  readAgentHostSdkSessionId,
 } from "./agent-host-catalog.js";
 
 // Real DDL, verbatim from fixtures/agent-host/agent-host.schema.sql.
@@ -336,5 +337,119 @@ describe("getAgentHostSessionRow", () => {
   it("returns undefined when there is no sessions_v2 table", () => {
     const db = new DatabaseSync(dbFile);
     expect(getAgentHostSessionRow(db, "anything")).toBeUndefined();
+  });
+});
+
+// Columns the chat rows carry in agent-host.db; only the ones the reader uses
+// are populated, the rest take their defaults.
+const CHATS_V2_DDL = `
+  CREATE TABLE chats_v2 (
+    chat_uri          TEXT PRIMARY KEY NOT NULL,
+    owner_session_uri TEXT NOT NULL,
+    chat_order        INTEGER,
+    provider_data     TEXT
+  )
+`;
+
+const SDK_OWNER = "copilotcli:/3f2a9c10-1111-4a1b-8c01-aaaaaaaaaaa1";
+
+function chatsDb(
+  rows: { chatUri: string; chatOrder?: number | null; providerData: string | null }[],
+): DatabaseSync {
+  const db = new DatabaseSync(":memory:");
+  db.exec(CHATS_V2_DDL);
+  const insert = db.prepare(
+    "INSERT INTO chats_v2 (chat_uri, owner_session_uri, chat_order, provider_data) VALUES (?, ?, ?, ?)",
+  );
+  for (const row of rows) {
+    insert.run(row.chatUri, SDK_OWNER, row.chatOrder ?? null, row.providerData);
+  }
+  return db;
+}
+
+describe("readAgentHostSdkSessionId", () => {
+  it("returns sdkSessionId from the chat row's provider_data", () => {
+    const db = chatsDb([
+      {
+        chatUri: "chat-1",
+        chatOrder: 0,
+        providerData: '{"sdkSessionId":"5d1a0001-aaaa","model":"gpt-5"}',
+      },
+    ]);
+    expect(readAgentHostSdkSessionId(db, SDK_OWNER)).toBe("5d1a0001-aaaa");
+  });
+
+  it("returns null when the session has no chats_v2 table", () => {
+    const db = new DatabaseSync(":memory:");
+    expect(readAgentHostSdkSessionId(db, SDK_OWNER)).toBeNull();
+  });
+
+  it("returns null when no chat row belongs to the session", () => {
+    const db = chatsDb([
+      {
+        chatUri: "chat-1",
+        providerData: '{"sdkSessionId":"x"}',
+      },
+    ]);
+    expect(readAgentHostSdkSessionId(db, "copilotcli:/someone-else")).toBeNull();
+  });
+
+  it("returns null when the session has no chat rows", () => {
+    const db = chatsDb([]);
+    expect(readAgentHostSdkSessionId(db, SDK_OWNER)).toBeNull();
+  });
+
+  // Each of these is a row the reader must step over rather than throw on.
+  const unusable: [string, string | null][] = [
+    ["NULL provider_data", null],
+    ["provider_data that is not JSON", "not json"],
+    ["a JSON array", "[1]"],
+    ["a JSON scalar", '"5d1a"'],
+    ["a JSON null", "null"],
+    ["an object without sdkSessionId", "{}"],
+    ["an empty sdkSessionId", '{"sdkSessionId":""}'],
+    ["a non-string sdkSessionId", '{"sdkSessionId":5}'],
+  ];
+
+  it.each(unusable)("skips a row with %s and takes the next usable row", (_label, value) => {
+    const db = chatsDb([
+      { chatUri: "bad", chatOrder: 0, providerData: value },
+      { chatUri: "good", chatOrder: 1, providerData: '{"sdkSessionId":"good-id"}' },
+    ]);
+    expect(readAgentHostSdkSessionId(db, SDK_OWNER)).toBe("good-id");
+  });
+
+  it("returns null when every row is unusable", () => {
+    const db = chatsDb([
+      { chatUri: "a", chatOrder: 0, providerData: "[1]" },
+      { chatUri: "b", chatOrder: 1, providerData: "{}" },
+    ]);
+    expect(readAgentHostSdkSessionId(db, SDK_OWNER)).toBeNull();
+  });
+
+  it("orders by chat_order ascending, with NULL chat_order last", () => {
+    const db = chatsDb([
+      { chatUri: "null-order", chatOrder: null, providerData: '{"sdkSessionId":"null"}' },
+      { chatUri: "second", chatOrder: 2, providerData: '{"sdkSessionId":"second"}' },
+      { chatUri: "first", chatOrder: 1, providerData: '{"sdkSessionId":"first"}' },
+    ]);
+    expect(readAgentHostSdkSessionId(db, SDK_OWNER)).toBe("first");
+  });
+
+  it("puts NULL chat_order last even when it was inserted first", () => {
+    const db = chatsDb([
+      { chatUri: "null-order", chatOrder: null, providerData: '{"sdkSessionId":"null"}' },
+      { chatUri: "ordered", chatOrder: 7, providerData: '{"sdkSessionId":"ordered"}' },
+    ]);
+    expect(readAgentHostSdkSessionId(db, SDK_OWNER)).toBe("ordered");
+  });
+
+  it("breaks chat_order ties by rowid", () => {
+    const db = chatsDb([
+      { chatUri: "inserted-first", chatOrder: 3, providerData: '{"sdkSessionId":"first"}' },
+      { chatUri: "inserted-second", chatOrder: 3, providerData: '{"sdkSessionId":"second"}' },
+    ]);
+    // Both rows share chat_order 3; the first inserted wins.
+    expect(readAgentHostSdkSessionId(db, SDK_OWNER)).toBe("first");
   });
 });

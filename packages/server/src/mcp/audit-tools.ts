@@ -65,7 +65,7 @@ export function registerAuditTools(server: McpServer, deps: McpToolDeps, guarded
     {
       title: "List classified tool calls",
       description:
-        "Lists one session's tool calls with outcome, exit code, failure category, a redacted stderr excerpt, the command and program, and the turn index. Filter by outcome, failure category, tool kind (shell, file-write, web, mcp, subagent, ...), tool name, shell program or turn; page with offset/limit (`total` counts every match).",
+        "Lists one session's tool calls with outcome, exit code, failure category, a redacted stderr excerpt, the command and program, and the turn index. Filter by outcome, failure category, tool kind (shell, file-write, web, mcp, subagent, ...), tool name, shell program or turn; page with offset/limit (`total` counts every match). For a VS Code Agent Host session without a Copilot CLI event log the list is empty and toolCallsUnavailableReason says why: the calls are unknown, not zero.",
       inputSchema: {
         sessionId: sessionIdArg,
         provider: providerArg(deps.identity),
@@ -102,7 +102,7 @@ export function registerAuditTools(server: McpServer, deps: McpToolDeps, guarded
     {
       title: "Get cross-session tool-call rollup",
       description:
-        "Aggregates tool-call outcomes across one provider's most recent sessions in a date window: totals, failure rate, the top failing commands (and in how many sessions they failed), failures per day, a per-session summary, and breakdowns by tool, program and failure category. Sessions whose tool calls are unknown (VS Code Agent Host) are not included in any count or rate; sessionsWithUnknownToolCalls says how many were left out and toolCallsUnavailableReason why. Use it for \"which commands keep failing?\".",
+        "Aggregates tool-call outcomes across one provider's most recent sessions in a date window: totals, failure rate, the top failing commands (and in how many sessions they failed), failures per day, a per-session summary, and breakdowns by tool, program and failure category. Sessions whose tool calls are unknown (a VS Code Agent Host session without a Copilot CLI event log) are not included in any count or rate; sessionsWithUnknownToolCalls says how many were left out and toolCallsUnavailableReason why. Use it for \"which commands keep failing?\".",
       inputSchema: {
         provider: providerArg(deps.identity),
         since: sinceArg,

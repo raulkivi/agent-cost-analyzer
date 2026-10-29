@@ -65,18 +65,19 @@ describe("SessionAuditPanel", () => {
     expect(onShowAllSessions).toHaveBeenCalledTimes(1);
   });
 
-  it("says tool calls aren't available yet for an Agent Host session, never 'no tool calls'", async () => {
+  it("says tool calls aren't available, with the reason, never 'no tool calls'", async () => {
     renderPanel({
-      copilotHarness: "agent-host",
       loadAudit: vi.fn().mockResolvedValue(
         makeSessionAudit({
           totals: { toolCalls: 0, succeeded: 0, failed: 0, interrupted: 0, denied: 0, unknown: 0 },
           calls: [],
+          toolCallsUnavailableReason: "No Copilot CLI event log was found for this session.",
         }),
       ),
     });
 
-    expect(await screen.findByRole("heading", { name: "Tool calls not available yet" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Tool calls not available" })).toBeInTheDocument();
+    expect(screen.getByText(/No Copilot CLI event log was found/)).toBeInTheDocument();
     expect(screen.getByText(/doesn't mean the agent ran no tools/)).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "No tool calls in this session" })).not.toBeInTheDocument();
   });

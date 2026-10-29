@@ -113,10 +113,14 @@ under VS Code's user-data folder. The extension lists them in the Sessions
 view with their tokens and AI Credits, and they don't depend on the debug
 logging settings above.
 
-- Prompt and response text, tool calls and the system prompt of these
-  sessions aren't available yet. The panel's turn inspector, system prompt
-  inspector, tool inventory and tool audit say so, and show no figures for
-  them.
+- Prompt and response text, the turn inspector, tool calls and the system
+  prompt come from the Copilot CLI's event log, which the extension reads
+  locally. The log is in `<COPILOT_HOME or ~/.copilot>/session-state/`, and
+  the panel reads it only when you open a session.
+- A session whose log is missing or unreadable shows those figures as not
+  available, with the reason, and it stays out of the tool audit counts.
+- The Tools tab stays unavailable, since the Copilot CLI's log records no tool
+  definitions.
 - A chat that was opened but never sent has no turns, so it isn't listed.
 - Sessions from the Local harness (the classic Copilot Chat store) and
   Agent Host sessions are listed together, newest first.
@@ -533,5 +537,6 @@ and `~/.vscode-server/data` (remote). Under that folder it reads:
 | `User/globalStorage/github.copilot-chat/agent-traces.db` | Optional: cache-write and reasoning tokens (SQLite, opened read-only) |
 | `User/globalStorage/agent-host.db` | Agent Host session list, for VS Code 1.143 and later (SQLite, opened read-only) |
 | `agentSessionData/<session>/session.db` | Agent Host turns, tokens and AI Credits per session (SQLite, opened read-only) |
+| `<COPILOT_HOME or ~/.copilot>/session-state/<sdkSessionId>/events.jsonl` | Agent Host turn text, tool calls and system prompt, from the Copilot CLI's event log (read-only, opened when a session is shown) |
 
 Settings are read through VS Code's settings API, not from the file.

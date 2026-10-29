@@ -179,3 +179,38 @@ export function readAgentHostSessionTitle(db: DatabaseSync): string | null {
 export function nanoAiuToAiCredits(nanoAiu: number): number {
   return nanoAiu / NANO_AIU_PER_AI_CREDIT;
 }
+
+export interface AgentHostTurnEventRef {
+  turnId: string;
+  /** the Copilot CLI event log id the turn joins to, null when not recorded */
+  eventId: string | null;
+}
+
+interface TurnEventDbRow {
+  id: string;
+  event_id: unknown;
+}
+
+// Older session.db files predate the event_id column; every turn is still
+// listed, just without a join key.
+function turnsHaveEventIdColumn(db: DatabaseSync): boolean {
+  const columns = db.prepare("PRAGMA table_info(turns)").all() as unknown as { name: string }[];
+  return columns.some((column) => column.name === "event_id");
+}
+
+export function readAgentHostTurnEventIds(db: DatabaseSync): AgentHostTurnEventRef[] {
+  if (!hasTable(db, "turns")) {
+    return [];
+  }
+  const eventIdSelect = turnsHaveEventIdColumn(db) ? "event_id" : "NULL AS event_id";
+  const dbRows = db
+    .prepare(`SELECT id, ${eventIdSelect} FROM turns ORDER BY rowid`)
+    .all() as unknown as TurnEventDbRow[];
+
+  return dbRows.map((dbRow) => ({
+    turnId: String(dbRow.id),
+    // An empty string is no join key either; the event log never has a "" id.
+    eventId:
+      typeof dbRow.event_id === "string" && dbRow.event_id !== "" ? dbRow.event_id : null,
+  }));
+}

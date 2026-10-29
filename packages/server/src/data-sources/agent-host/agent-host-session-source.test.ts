@@ -1,8 +1,18 @@
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { cpSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { sessionSchema } from "@agent-cost-analyzer/domain";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { sessionSchema, turnInspectorDetailSchema } from "@agent-cost-analyzer/domain";
+import {
+  COPILOT_CLI_FIXTURE_HOME,
+  COPILOT_CLI_FIXTURE_SESSION_IDS as CLI,
+  copilotCliFixtureRows,
+  writeCopilotCliAgentHostStores,
+} from "../../test-support/copilot-cli-fixtures.js";
+import { TURN_EVENT_ALREADY_TAKEN_REASON } from "../../services/session-enricher/copilot-turn-segmenter.js";
+import { copilotEventLogPath } from "./copilot-cli-paths.js";
+import { CopilotEventLogCache, statEventLogFile, type CopilotEventLogLoad } from "./copilot-event-log-cache.js";
+import { readCopilotEventLog } from "./copilot-event-log-reader.js";
 import {
   AGENT_HOST_FIXTURE_SESSION_IDS as IDS,
   fixtureTurnNanoAiu,
@@ -17,7 +27,14 @@ import {
   AGENT_HOST_SESSION_DB_MISSING_REASON,
 } from "../../services/session-enricher/agent-host-session-builder.js";
 import { agentSessionDbPath } from "./agent-host-paths.js";
-import { AgentHostSessionSource } from "./agent-host-session-source.js";
+import {
+  AGENT_HOST_EVENT_LOG_MISSING_REASON,
+  AGENT_HOST_EVENT_LOG_NO_HOME_REASON,
+  AGENT_HOST_EVENT_LOG_UNREADABLE_REASON,
+  AGENT_HOST_NO_SDK_SESSION_ID_REASON,
+  AgentHostSessionSource,
+  type AgentHostSessionSourceOptions,
+} from "./agent-host-session-source.js";
 
 const sessionRows = readAgentHostFixtureRows("session-rows.json");
 const catalogRows = readAgentHostFixtureRows("catalog-rows.json");
@@ -32,7 +49,9 @@ describe("AgentHostSessionSource", () => {
     rmSync(userDataDir, { recursive: true, force: true });
   });
 
-  const source = () => new AgentHostSessionSource({ userDataDir });
+  // The 10.13 tests' catalog has no chats_v2 rows, so no session finds a log.
+  const source = (options: Partial<AgentHostSessionSourceOptions> = {}) =>
+    new AgentHostSessionSource({ userDataDir, copilotHome: COPILOT_CLI_FIXTURE_HOME, ...options });
 
   describe("checkAvailability", () => {
     it("is available once agent-host.db exists, even when it was created after the source", async () => {
@@ -184,6 +203,13 @@ describe("AgentHostSessionSource", () => {
       expect(session.turns[1].usage.output).toEqual({ known: true, value: 36_139 + 1_297 });
     });
 
+    it("marks the event log missing when the catalog records no Copilot CLI session id", async () => {
+      expect((await source().readSession(IDS.withTurns))!.copilotEventLog).toEqual({
+        status: "missing",
+        reason: AGENT_HOST_NO_SDK_SESSION_ID_REASON,
+      });
+    });
+
     it("makes the session total unknown when a turn has no usage record", async () => {
       const session = (await source().readSession(IDS.withTurns))!;
 
@@ -204,13 +230,18 @@ describe("AgentHostSessionSource", () => {
       await expect(source().readTurnDetail(IDS.second, 0)).resolves.toBeNull();
     });
 
-    it("has no round-trips for a turn that exists, since the Agent Host stores no request text", async () => {
-      await expect(source().readTurnDetail(IDS.withTurns, 4)).resolves.toEqual({ turnIndex: 4, userMessage: [], rounds: [] });
+    it("has unknown rounds, with the reason, for a turn of a session without a Copilot CLI session id", async () => {
+      await expect(source().readTurnDetail(IDS.withTurns, 4)).resolves.toEqual({
+        turnIndex: 4,
+        userMessage: [],
+        rounds: [],
+        unavailableReason: AGENT_HOST_NO_SDK_SESSION_ID_REASON,
+      });
     });
   });
 
   describe("lookupSystemPromptText", () => {
-    it("is not-captured for a listed session and unknown-session otherwise", async () => {
+    it("is not-captured for a listed session without a log and unknown-session otherwise", async () => {
       writeAgentHostCatalog(userDataDir);
 
       await expect(source().lookupSystemPromptText(IDS.withTurns)).resolves.toEqual({ status: "not-captured" });
@@ -219,6 +250,153 @@ describe("AgentHostSessionSource", () => {
 
     it("is unknown-session without agent-host.db", async () => {
       await expect(source().lookupSystemPromptText(IDS.withTurns)).resolves.toEqual({ status: "unknown-session" });
+    });
+  });
+  describe("with the Copilot CLI event log (step 10.14)", () => {
+    beforeEach(() => {
+      writeCopilotCliAgentHostStores(userDataDir);
+    });
+
+    const spyLoader = () => ({ load: vi.fn(async (): Promise<CopilotEventLogLoad> => ({ status: "missing" })) });
+
+    it("opens no event log while listing sessions", async () => {
+      const eventLogs = spyLoader();
+
+      const sessions = await source({ eventLogs }).listSessions();
+
+      expect(sessions.length).toBe(5);
+      expect(eventLogs.load).not.toHaveBeenCalled();
+      expect(sessions.every((session) => session.copilotEventLog === undefined)).toBe(true);
+    });
+
+    it("reads a session's turn text, tool calls and system prompt from its log", async () => {
+      const session = (await source().readSession(CLI.normal))!;
+
+      expect(() => sessionSchema.parse(session)).not.toThrow();
+      expect(session.copilotEventLog).toEqual({ status: "read" });
+      expect(session.turns[0]!.userMessage).toBe("Example prompt one: please list the source files.");
+      expect(session.turns.flatMap((turn) => turn.toolCalls).length).toBeGreaterThan(0);
+      expect(session.systemPrompt?.map((component) => component.kind)).toEqual(["built-in", "tool-definitions"]);
+      expect(session.costAiCredits.known).toBe(true);
+    });
+
+    it("keeps an unmatched turn unknown with the segmenter's reason", async () => {
+      const session = (await source().readSession(CLI.steeringAbortSubagent))!;
+
+      expect(session.copilotEventLog).toEqual({ status: "read" });
+      expect(session.turns[4]!.toolCallsUnavailableReason).toBe(TURN_EVENT_ALREADY_TAKEN_REASON);
+    });
+
+    it("marks a session whose log is missing, keeping its tokens and AI Credits", async () => {
+      const session = (await source().readSession(CLI.missingLog))!;
+
+      expect(session.copilotEventLog).toEqual({ status: "missing", reason: AGENT_HOST_EVENT_LOG_MISSING_REASON });
+      expect(session.turns.map((turn) => turn.userMessage)).toEqual(["", ""]);
+      expect(session.costAiCredits.known).toBe(true);
+    });
+
+    it("reads no log without a Copilot home", async () => {
+      const eventLogs = spyLoader();
+
+      const session = (await source({ copilotHome: null, eventLogs }).readSession(CLI.normal))!;
+
+      expect(session.copilotEventLog).toEqual({ status: "missing", reason: AGENT_HOST_EVENT_LOG_NO_HOME_REASON });
+      expect(eventLogs.load).not.toHaveBeenCalled();
+    });
+
+    it("degrades an unreadable log to unknown with the reason instead of rejecting", async () => {
+      const copilotHome = mkdtempSync(path.join(tmpdir(), "copilot-home-"));
+      try {
+        // A directory where events.jsonl should be: the reader rejects (EISDIR).
+        mkdirSync(copilotEventLogPath(copilotHome, copilotCliFixtureRows.sdkSessionIds.normal)!, { recursive: true });
+
+        const session = (await source({ copilotHome }).readSession(CLI.normal))!;
+
+        expect(session.copilotEventLog?.status).toBe("unreadable");
+        expect(session.copilotEventLog).toMatchObject({ reason: expect.stringContaining(AGENT_HOST_EVENT_LOG_UNREADABLE_REASON) });
+        expect(session.turns).toHaveLength(2);
+      } finally {
+        rmSync(copilotHome, { recursive: true, force: true });
+      }
+    });
+
+    it("degrades a loader that rejects, too", async () => {
+      const eventLogs = { load: vi.fn(async (): Promise<CopilotEventLogLoad> => Promise.reject(new Error("boom"))) };
+
+      const session = (await source({ eventLogs }).readSession(CLI.normal))!;
+
+      expect(session.copilotEventLog?.status).toBe("unreadable");
+    });
+
+    it("parses a log once across reads while it is unchanged", async () => {
+      const read = vi.fn((filePath: string) => readCopilotEventLog(filePath));
+      const built = source({ eventLogs: new CopilotEventLogCache({ read, stat: statEventLogFile }) });
+
+      await built.readSession(CLI.normal);
+      await built.readTurnDetail(CLI.normal, 0);
+      await built.lookupSystemPromptText(CLI.normal);
+
+      expect(read).toHaveBeenCalledTimes(1);
+    });
+
+    it("re-parses a log that grew since it was read", async () => {
+      const copilotHome = mkdtempSync(path.join(tmpdir(), "copilot-home-"));
+      try {
+        cpSync(COPILOT_CLI_FIXTURE_HOME, copilotHome, { recursive: true });
+        const read = vi.fn((filePath: string) => readCopilotEventLog(filePath));
+        const built = source({ copilotHome, eventLogs: new CopilotEventLogCache({ read, stat: statEventLogFile }) });
+
+        await built.readSession(CLI.normal);
+        writeFileSync(copilotEventLogPath(copilotHome, copilotCliFixtureRows.sdkSessionIds.normal)!, "\n", { flag: "a" });
+        await built.readSession(CLI.normal);
+
+        expect(read).toHaveBeenCalledTimes(2);
+      } finally {
+        rmSync(copilotHome, { recursive: true, force: true });
+      }
+    });
+
+    describe("readTurnDetail", () => {
+      it("gives a matched turn's rounds", async () => {
+        const detail = (await source().readTurnDetail(CLI.normal, 0))!;
+
+        expect(() => turnInspectorDetailSchema.parse(detail)).not.toThrow();
+        expect(detail.rounds.length).toBeGreaterThan(0);
+        expect(detail.unavailableReason).toBeUndefined();
+      });
+
+      it("gives an unmatched turn, or a turn of a session without a log, unknown rounds with the reason", async () => {
+        await expect(source().readTurnDetail(CLI.steeringAbortSubagent, 4)).resolves.toMatchObject({
+          rounds: [],
+          unavailableReason: TURN_EVENT_ALREADY_TAKEN_REASON,
+        });
+        await expect(source().readTurnDetail(CLI.missingLog, 1)).resolves.toMatchObject({
+          rounds: [],
+          unavailableReason: AGENT_HOST_EVENT_LOG_MISSING_REASON,
+        });
+      });
+
+      it("is null for a turn index the session.db doesn't have, without opening the log", async () => {
+        const eventLogs = spyLoader();
+
+        await expect(source({ eventLogs }).readTurnDetail(CLI.normal, 2)).resolves.toBeNull();
+        expect(eventLogs.load).not.toHaveBeenCalled();
+      });
+    });
+
+    describe("lookupSystemPromptText", () => {
+      it("finds the latest main-agent system prompt", async () => {
+        const lookup = await source().lookupSystemPromptText(CLI.normal);
+
+        expect(lookup.status).toBe("found");
+        expect(lookup.status === "found" && lookup.text).toMatch(/^You are a coding agent/);
+      });
+
+      it("is not-captured when the log is missing or unreadable", async () => {
+        await expect(source().lookupSystemPromptText(CLI.missingLog)).resolves.toEqual({ status: "not-captured" });
+        const eventLogs = { load: vi.fn(async (): Promise<CopilotEventLogLoad> => ({ status: "unreadable", error: new Error("x") })) };
+        await expect(source({ eventLogs }).lookupSystemPromptText(CLI.normal)).resolves.toEqual({ status: "not-captured" });
+      });
     });
   });
 });

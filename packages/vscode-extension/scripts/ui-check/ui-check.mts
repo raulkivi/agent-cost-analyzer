@@ -41,6 +41,24 @@ async function openSystemPromptInspector(page: Page, harness: Harness): Promise<
   await harness.settle(page);
 }
 
+async function openAgentHostInspector(page: Page, harness: Harness, sessionId: string | undefined): Promise<void> {
+  await harness.postHostEvent(page, "selectSession", { sessionId });
+  const inspect = page.getByRole("button", { name: /inspect request/i });
+  if (!(await inspect.first().isVisible().catch(() => false))) {
+    await clickFirstVisible(page, harness, [page.getByRole("button", { name: /^details$/i })]);
+  }
+  await inspect.first().click();
+  await harness.settle(page);
+}
+
+// The right column sits behind "Details" in a narrow panel.
+async function openAgentHostSystemPrompt(page: Page, harness: Harness, sessionId: string | undefined): Promise<void> {
+  await harness.postHostEvent(page, "selectSession", { sessionId, tab: "system-prompt" });
+  if (!(await page.getByText("System prompt breakdown", { exact: true }).first().isVisible().catch(() => false))) {
+    await clickFirstVisible(page, harness, [page.getByRole("button", { name: /^details$/i })]);
+  }
+}
+
 const SCENARIOS: Scenario[] = [
   { name: "learn", run: async () => undefined },
   {
@@ -74,25 +92,49 @@ const SCENARIOS: Scenario[] = [
       await harness.settle(page);
     },
   },
+  // VS Code Agent Host sessions (step 10.14): one with a Copilot CLI event
+  // log read, one without.
   {
-    // A VS Code Agent Host session (step 10.13): the unavailable states.
     name: "agent-host-turn-inspector",
     run: async (page, harness) => {
-      await harness.postHostEvent(page, "selectSession", { sessionId: harness.agentHostSessionId });
-      const inspect = page.getByRole("button", { name: /inspect request/i });
-      if (!(await inspect.first().isVisible().catch(() => false))) {
-        await clickFirstVisible(page, harness, [page.getByRole("button", { name: /^details$/i })]);
-      }
-      await inspect.first().click();
-      await harness.settle(page);
-      await page.getByText("Not available yet", { exact: true }).first().waitFor({ timeout: 5000 });
+      await openAgentHostInspector(page, harness, harness.agentHostSessionId);
+      await page.getByText("Example prompt one: please list the source files.").first().waitFor({ timeout: 5000 });
+    },
+  },
+  {
+    name: "agent-host-system-prompt",
+    run: async (page, harness) => {
+      await openAgentHostSystemPrompt(page, harness, harness.agentHostSessionId);
+      await page.getByText("System prompt breakdown", { exact: true }).first().waitFor({ timeout: 5000 });
+      await page.getByRole("button", { name: /system prompt inspector/i }).first().waitFor({ timeout: 5000 });
     },
   },
   {
     name: "agent-host-tool-audit",
     run: async (page, harness) => {
       await harness.postHostEvent(page, "selectSession", { sessionId: harness.agentHostSessionId, view: "session-audit" });
-      await page.getByText("Tool calls not available yet", { exact: true }).first().waitFor({ timeout: 5000 });
+      await page.getByRole("group", { name: "Tool calls" }).first().waitFor({ timeout: 5000 });
+    },
+  },
+  {
+    name: "agent-host-no-log-turn-inspector",
+    run: async (page, harness) => {
+      await openAgentHostInspector(page, harness, harness.agentHostMissingLogSessionId);
+      await page.getByText("Not available", { exact: true }).first().waitFor({ timeout: 5000 });
+    },
+  },
+  {
+    name: "agent-host-no-log-system-prompt",
+    run: async (page, harness) => {
+      await openAgentHostSystemPrompt(page, harness, harness.agentHostMissingLogSessionId);
+      await page.getByText(/event log/i).first().waitFor({ timeout: 5000 });
+    },
+  },
+  {
+    name: "agent-host-no-log-tool-audit",
+    run: async (page, harness) => {
+      await harness.postHostEvent(page, "selectSession", { sessionId: harness.agentHostMissingLogSessionId, view: "session-audit" });
+      await page.getByText("Tool calls not available", { exact: true }).first().waitFor({ timeout: 5000 });
     },
   },
   {

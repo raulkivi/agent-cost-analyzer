@@ -2,13 +2,12 @@ import { useCallback, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import type {
   ContentPlaceholder,
-  CopilotHarness,
   MessageContentPart,
   TriggeredEvent,
   TurnInspectorDetail,
 } from "@agent-cost-analyzer/domain";
 import { fetchTurnInspectorDetail } from "../api-client/sessions.js";
-import { AGENT_HOST_TURN_INSPECTOR_UNAVAILABLE } from "../lib/agent-host-unavailable.js";
+import { TURN_INSPECTOR_UNAVAILABLE_TITLE } from "../lib/agent-host-unavailable.js";
 import { useEscapeKey, useFocusReturn } from "../lib/focus.js";
 import { useCancellableLoad } from "../lib/use-cancellable-load.js";
 import { TRIGGER_LABELS } from "../lib/trigger-labels.js";
@@ -28,9 +27,6 @@ interface TurnInspectorProps {
   // call the UI made before this could be opened — lets the empty state
   // pick the right message without waiting on this endpoint's own fetch.
   usageDataAvailable: boolean;
-  // Session.copilotHarness: an Agent Host session has no turn text or
-  // round-trips to fetch (yet).
-  copilotHarness?: CopilotHarness;
   onClose: () => void;
 }
 
@@ -41,8 +37,8 @@ type LoadState =
   | { status: "cancelled" }
   // Nothing to fetch: the session has no usage data at all (logging off).
   | { status: "not-captured" }
-  // Nothing to fetch: the provider doesn't read this session's turn text yet.
-  | { status: "not-read-yet" }
+  // The provider says this turn is unknown (detail.unavailableReason).
+  | { status: "unavailable"; reason: string }
   | { status: "ready"; detail: TurnInspectorDetail };
 
 type PayloadFormat = "pretty" | "raw";
@@ -212,23 +208,21 @@ export function TurnInspector({
   sessionTitle,
   triggeredEvent,
   usageDataAvailable,
-  copilotHarness,
   onClose,
 }: TurnInspectorProps) {
-  const notReadYet = copilotHarness === "agent-host";
   // Nothing to load when the session has no usage data; otherwise the
   // fetch is cancellable (Cancel on the skeleton).
   const loadDetail = useCallback(
     (signal: AbortSignal) => fetchTurnInspectorDetail(sessionId, turnIndex, signal),
     [sessionId, turnIndex],
   );
-  const { state: load, cancel, retry } = useCancellableLoad(loadDetail, usageDataAvailable && !notReadYet);
-  const state: LoadState = notReadYet
-    ? { status: "not-read-yet" }
-    : !usageDataAvailable
+  const { state: load, cancel, retry } = useCancellableLoad(loadDetail, usageDataAvailable);
+  const state: LoadState = !usageDataAvailable
     ? { status: "not-captured" }
     : load.kind === "ready"
-      ? { status: "ready", detail: load.data }
+      ? load.data.unavailableReason
+        ? { status: "unavailable", reason: load.data.unavailableReason }
+        : { status: "ready", detail: load.data }
       : load.kind === "error"
         ? { status: "error" }
         : load.kind === "cancelled"
@@ -266,7 +260,7 @@ export function TurnInspector({
       <AsyncView
         status={
           state.status === "not-captured" ||
-          state.status === "not-read-yet" ||
+          state.status === "unavailable" ||
           state.status === "cancelled" ||
           (state.status === "ready" && state.detail.rounds.length === 0)
             ? "empty"
@@ -279,8 +273,8 @@ export function TurnInspector({
         empty={
           state.status === "cancelled"
             ? cancelledEmptyState(retry)
-            : state.status === "not-read-yet"
-              ? AGENT_HOST_TURN_INSPECTOR_UNAVAILABLE
+            : state.status === "unavailable"
+              ? { title: TURN_INSPECTOR_UNAVAILABLE_TITLE, body: state.reason }
               : state.status === "not-captured"
                 ? { title: "No request or response captured", body: NO_LOGGING_MESSAGE }
                 : { title: "No model request", body: NO_ROUND_TRIP_MESSAGE }

@@ -44,6 +44,31 @@ describe("buildInsightRows", () => {
     expect(rows.turns[0]?.toolCallCount).toBeNull();
   });
 
+  it("counts an Agent Host session whose event log was read, except a turn the log can't be matched to", () => {
+    const unmatched = { ...turn(1), toolCallsUnavailableReason: "no user message in the log" };
+    const session = {
+      ...analyzeSession("ah", undefined, [turn(0, [bash("npm test")]), unmatched]),
+      copilotHarness: "agent-host" as const,
+      copilotEventLog: { status: "read" as const },
+    };
+    const rows = buildInsightRows([providerSessions([session])]);
+
+    expect(rows.sessions[0]?.toolCallsUnavailable).toBeUndefined();
+    expect(rows.turns.map((row) => row.toolCallCount)).toEqual([1, null]);
+  });
+
+  it("keeps an Agent Host session whose event log is missing out of tool-call counts", () => {
+    const session = {
+      ...analyzeSession("ah", undefined, [turn(0)]),
+      copilotHarness: "agent-host" as const,
+      copilotEventLog: { status: "missing" as const, reason: "no log" },
+    };
+    const rows = buildInsightRows([providerSessions([session])]);
+
+    expect(rows.sessions[0]).toMatchObject({ toolCallsUnavailable: true });
+    expect(rows.turns[0]?.toolCallCount).toBeNull();
+  });
+
   it("keeps the same session id from two providers apart", () => {
     const rows = buildInsightRows([
       providerSessions([analyzeSession("s1", undefined, [turn(0)])], "a"),

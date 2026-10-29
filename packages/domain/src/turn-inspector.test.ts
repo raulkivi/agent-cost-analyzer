@@ -66,6 +66,12 @@ describe("turnInspectorDetailSchema", () => {
     expect(turnInspectorDetailSchema.parse(sample)).toEqual(sample);
   });
 
+  it("accepts a reason the turn's rounds are unknown, so an empty list isn't read as no requests", () => {
+    const sample = { turnIndex: 2, userMessage: [], rounds: [], unavailableReason: "the event log is missing" };
+
+    expect(turnInspectorDetailSchema.parse(sample)).toEqual(sample);
+  });
+
   it("rejects an unknown content-part kind", () => {
     const sample = {
       turnIndex: 0,

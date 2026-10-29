@@ -4,11 +4,35 @@ import { makeTurn } from "../test-support/turn-fixture.js";
 import { ExplanationPanel } from "./ExplanationPanel.js";
 
 describe("ExplanationPanel", () => {
-  it("says tool calls of an Agent Host session aren't read yet", () => {
-    render(<ExplanationPanel turn={makeTurn()} mode="analyze" copilotHarness="agent-host" />);
+  it("says why a turn's tool calls are unknown, never 'no tools called'", () => {
+    render(
+      <ExplanationPanel
+        turn={makeTurn({ toolCallsUnavailableReason: "No user message in the log matches this turn." })}
+        mode="analyze"
+      />,
+    );
 
-    expect(screen.getByText(/Tool calls of Agent Host sessions aren't read yet/)).toBeInTheDocument();
+    expect(screen.getByText("No user message in the log matches this turn.")).toBeInTheDocument();
     expect(screen.queryByText(/No tools called this turn/)).not.toBeInTheDocument();
+  });
+
+  it("falls back to the session's event-log reason when the turn has none", () => {
+    render(
+      <ExplanationPanel
+        turn={makeTurn()}
+        mode="analyze"
+        eventLogUnavailableReason="No Copilot CLI event log was found for this session."
+      />,
+    );
+
+    expect(screen.getByText("No Copilot CLI event log was found for this session.")).toBeInTheDocument();
+    expect(screen.queryByText(/No tools called this turn/)).not.toBeInTheDocument();
+  });
+
+  it("says no tools were called for a turn whose event log was read", () => {
+    render(<ExplanationPanel turn={makeTurn({ toolCalls: [] })} mode="analyze" toolCallsAvailable />);
+
+    expect(screen.getByText(/No tools called this turn/)).toBeInTheDocument();
   });
 
   it("renders the explanation for the given turn", () => {

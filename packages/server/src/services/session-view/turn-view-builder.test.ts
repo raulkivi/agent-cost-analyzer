@@ -45,6 +45,27 @@ describe("buildTurnView", () => {
     expect(turnViewSchema.parse(view)).toEqual(view);
   });
 
+  it("shows an Agent Host turn's text when its event log was read, and an unmatched turn's own reasons", () => {
+    const view = (turn: Partial<Turn>) =>
+      buildTurnView({ ...session([turn]), copilotHarness: "agent-host", copilotEventLog: { status: "read" } }, 0);
+
+    expect(view({})?.textUnavailableReason).toBeUndefined();
+    expect(view({})?.toolCallsUnavailableReason).toBeUndefined();
+    const unmatched = view({ userMessage: "", textUnavailableReason: "no text", toolCallsUnavailableReason: "no calls" });
+    expect(unmatched?.textUnavailableReason).toBe("no text");
+    expect(unmatched?.toolCallsUnavailableReason).toBe("no calls");
+  });
+
+  it("gives the session's reason for every turn when the event log is missing", () => {
+    const view = buildTurnView(
+      { ...session([{ userMessage: "" }]), copilotHarness: "agent-host", copilotEventLog: { status: "missing", reason: "no log" } },
+      0,
+    );
+
+    expect(view?.textUnavailableReason).toBe("no log");
+    expect(view?.toolCallsUnavailableReason).toBe("no log");
+  });
+
   it("leaves the unavailable reasons out for other sessions", () => {
     const view = buildTurnView(session([{}]), 0);
 

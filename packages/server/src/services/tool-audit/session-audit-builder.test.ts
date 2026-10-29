@@ -81,6 +81,15 @@ describe("buildSessionAudit", () => {
     expect(audit.toolCallsUnavailableReason).toMatch(/Agent Host/);
   });
 
+  it("audits an Agent Host session whose event log was read, and gives the marker's reason when it wasn't", () => {
+    const agentHost = { ...session([turn(0, [])]), copilotHarness: "agent-host" as const };
+
+    expect(buildSessionAudit({ ...agentHost, copilotEventLog: { status: "read" } }).toolCallsUnavailableReason).toBeUndefined();
+    expect(
+      buildSessionAudit({ ...agentHost, copilotEventLog: { status: "unreadable", reason: "EACCES" } }).toolCallsUnavailableReason,
+    ).toBe("EACCES");
+  });
+
   it("leaves the unavailable reason out for a session whose tool calls are recorded", () => {
     expect(buildSessionAudit({ ...session([turn(0, [])]), copilotHarness: "local" }).toolCallsUnavailableReason).toBeUndefined();
     expect(buildSessionAudit(session([turn(0, [])])).toolCallsUnavailableReason).toBeUndefined();

@@ -1,7 +1,20 @@
-import { describe, expect, it } from "vitest";
-import { sessionSchema } from "@agent-cost-analyzer/domain";
+import { beforeAll, describe, expect, it } from "vitest";
+import { sessionSchema, turnInspectorDetailSchema } from "@agent-cost-analyzer/domain";
 import type { AgentHostSessionRow } from "../../data-sources/agent-host/agent-host-catalog.js";
 import type { AgentHostTurnRow, AgentHostTurnUsage } from "../../data-sources/agent-host/agent-session-store.js";
+import { copilotEventLogPath } from "../../data-sources/agent-host/copilot-cli-paths.js";
+import type { CopilotEvent } from "../../data-sources/agent-host/copilot-event.js";
+import { readCopilotEventLog } from "../../data-sources/agent-host/copilot-event-log-reader.js";
+import {
+  COPILOT_CLI_FIXTURE_HOME,
+  copilotCliFixtureRows,
+  copilotCliFixtureTurnRefs,
+  type CopilotCliFixtureName,
+} from "../../test-support/copilot-cli-fixtures.js";
+import { buildAgentHostSystemPrompt } from "./agent-host-system-prompt-builder.js";
+import { buildAgentHostTurnContent, indexToolOutcomeEvents } from "./agent-host-turn-content-builder.js";
+import { buildAgentHostTurnInspector } from "./agent-host-turn-inspector-builder.js";
+import { segmentCopilotTurns, TURN_EVENT_ALREADY_TAKEN_REASON, type MatchedTurn } from "./copilot-turn-segmenter.js";
 import {
   AGENT_HOST_FIELD_NOT_RECORDED_REASON,
   AGENT_HOST_NO_TURNS_REASON,
@@ -12,7 +25,10 @@ import {
   AGENT_HOST_TURN_TOKENS_UNAVAILABLE_REASON,
   buildAgentHostSession,
   buildAgentHostSessionSummary,
+  buildAgentHostTurnDetail,
   buildAgentHostTurnUsage,
+  isAgentHostEventTypeUsed,
+  type AgentHostEventLog,
 } from "./agent-host-session-builder.js";
 
 const catalogRow: AgentHostSessionRow = {
@@ -245,5 +261,149 @@ describe("buildAgentHostSessionSummary", () => {
     expect(summary.turnCount).toBe(2);
     expect(summary.costAiCredits).toEqual({ known: true, value: 3 });
     expect(() => sessionSchema.parse(summary)).not.toThrow();
+  });
+});
+
+describe("with the Copilot CLI event log (step 10.14)", () => {
+  const eventsOf: Partial<Record<CopilotCliFixtureName, CopilotEvent[]>> = {};
+  beforeAll(async () => {
+    for (const name of ["normal", "steeringAbortSubagent"] as const) {
+      const logPath = copilotEventLogPath(COPILOT_CLI_FIXTURE_HOME, copilotCliFixtureRows.sdkSessionIds[name])!;
+      eventsOf[name] = (await readCopilotEventLog(logPath))!.events;
+    }
+  });
+
+  const read = (name: CopilotCliFixtureName): AgentHostEventLog => ({
+    status: "read",
+    events: eventsOf[name]!,
+    turnRefs: copilotCliFixtureTurnRefs(name),
+  });
+  const storeFor = (name: CopilotCliFixtureName) => ({
+    turns: copilotCliFixtureTurnRefs(name).map((ref) => ({ turnId: ref.turnId, usage: usage() })),
+    model: null,
+    title: null,
+  });
+  const matched = (name: CopilotCliFixtureName, index: number): MatchedTurn => {
+    const turn = segmentCopilotTurns(eventsOf[name]!, copilotCliFixtureTurnRefs(name)).turns[index]!;
+    if (!turn.matched) throw new Error("unmatched");
+    return turn;
+  };
+  const missing: AgentHostEventLog = { status: "missing", reason: "The event log is missing." };
+
+  describe("buildAgentHostSession", () => {
+    it("fills each matched turn's text and tool calls and keeps its tokens and AI Credits from session.db", () => {
+      const session = buildAgentHostSession({ catalogRow, store: storeFor("normal"), eventLog: read("normal") });
+
+      expect(() => sessionSchema.parse(session)).not.toThrow();
+      expect(session.copilotEventLog).toEqual({ status: "read" });
+      const expected = buildAgentHostTurnContent(matched("normal", 0), { outcomes: indexToolOutcomeEvents(eventsOf.normal!) });
+      expect(session.turns[0]).toMatchObject({
+        userMessage: expected.userMessage,
+        assistantResponse: expected.assistantResponse,
+        toolCalls: expected.toolCalls,
+      });
+      expect(session.turns[0]!.toolCalls.length).toBeGreaterThan(0);
+      expect(session.turns[0]!.usage).toEqual(buildAgentHostTurnUsage(usage()));
+      expect(session.costAiCredits).toEqual({ known: true, value: 3 });
+    });
+
+    it("drops the not-read note from a matched turn's explanation and sets no unknown reasons", () => {
+      const [first] = buildAgentHostSession({ catalogRow, store: storeFor("normal"), eventLog: read("normal") }).turns;
+
+      expect(first!.explanation).not.toContain(AGENT_HOST_TURN_TEXT_UNAVAILABLE_NOTE);
+      expect(first!.textUnavailableReason).toBeUndefined();
+      expect(first!.toolCallsUnavailableReason).toBeUndefined();
+    });
+
+    it("finds a steered call's completion in the next turn", () => {
+      const session = buildAgentHostSession({ catalogRow, store: storeFor("steeringAbortSubagent"), eventLog: read("steeringAbortSubagent") });
+
+      expect(session.turns[1]!.toolCalls[0]).toMatchObject({ id: "toolu_B3", outcome: { status: "success", exitCode: 0 } });
+    });
+
+    it("keeps an unmatched turn's text and tool calls unknown with the segmenter's reason", () => {
+      const session = buildAgentHostSession({ catalogRow, store: storeFor("steeringAbortSubagent"), eventLog: read("steeringAbortSubagent") });
+      const duplicate = session.turns[4]!;
+
+      expect(duplicate).toMatchObject({
+        userMessage: "",
+        toolCalls: [],
+        textUnavailableReason: TURN_EVENT_ALREADY_TAKEN_REASON,
+        toolCallsUnavailableReason: TURN_EVENT_ALREADY_TAKEN_REASON,
+      });
+      expect(duplicate.explanation).toContain(TURN_EVENT_ALREADY_TAKEN_REASON);
+    });
+
+    it("sets the system prompt from the log, and leaves the tool inventory unset", () => {
+      const session = buildAgentHostSession({ catalogRow, store: storeFor("normal"), eventLog: read("normal") });
+
+      expect(session.systemPrompt).toEqual(buildAgentHostSystemPrompt(eventsOf.normal!)!.components);
+      expect(session.toolInventory).toBeUndefined();
+    });
+
+    it("marks a missing or unreadable log with its reason and explains every turn by it", () => {
+      for (const eventLog of [missing, { status: "unreadable", reason: "The event log can't be read." } as const]) {
+        const session = buildAgentHostSession({ catalogRow, store: storeFor("normal"), eventLog });
+
+        expect(session.copilotEventLog).toEqual(eventLog);
+        expect(session.systemPrompt).toBeUndefined();
+        for (const turn of session.turns) {
+          expect(turn.userMessage).toBe("");
+          expect(turn.toolCalls).toEqual([]);
+          expect(turn.explanation).toContain(eventLog.reason);
+        }
+      }
+    });
+
+    it("sets no marker when the log wasn't read (a list summary)", () => {
+      const session = buildAgentHostSession({ catalogRow, store: storeFor("normal") });
+
+      expect(session.copilotEventLog).toBeUndefined();
+      expect(session.turns[0]!.explanation).toContain(AGENT_HOST_TURN_TEXT_UNAVAILABLE_NOTE);
+    });
+
+    it("keeps the marker on the summary", () => {
+      expect(buildAgentHostSessionSummary({ catalogRow, store: storeFor("normal"), eventLog: missing }).copilotEventLog).toEqual({
+        status: "missing",
+        reason: missing.reason,
+      });
+    });
+  });
+
+  it("builds the same session and turn details from a log read with only the event types it uses", async () => {
+    for (const name of ["normal", "steeringAbortSubagent"] as const) {
+      const logPath = copilotEventLogPath(COPILOT_CLI_FIXTURE_HOME, copilotCliFixtureRows.sdkSessionIds[name])!;
+      const filtered = (await readCopilotEventLog(logPath, { include: isAgentHostEventTypeUsed }))!.events;
+      const filteredLog: AgentHostEventLog = { status: "read", events: filtered, turnRefs: copilotCliFixtureTurnRefs(name) };
+
+      expect(filtered.length).toBeLessThan(eventsOf[name]!.length);
+      expect(buildAgentHostSession({ catalogRow, store: storeFor(name), eventLog: filteredLog })).toEqual(
+        buildAgentHostSession({ catalogRow, store: storeFor(name), eventLog: read(name) }),
+      );
+      for (let index = 0; index < storeFor(name).turns.length; index++) {
+        expect(buildAgentHostTurnDetail(index, filteredLog)).toEqual(buildAgentHostTurnDetail(index, read(name)));
+      }
+    }
+  });
+
+  describe("buildAgentHostTurnDetail", () => {
+    it("is the inspector rounds of a matched turn", () => {
+      const detail = buildAgentHostTurnDetail(1, read("normal"));
+
+      expect(detail).toEqual(buildAgentHostTurnInspector(1, matched("normal", 1)));
+      expect(detail.rounds.length).toBeGreaterThan(0);
+      expect(detail.unavailableReason).toBeUndefined();
+    });
+
+    it("is unknown with the segmenter's reason for an unmatched turn", () => {
+      const detail = buildAgentHostTurnDetail(4, read("steeringAbortSubagent"));
+
+      expect(detail).toEqual({ turnIndex: 4, userMessage: [], rounds: [], unavailableReason: TURN_EVENT_ALREADY_TAKEN_REASON });
+      expect(() => turnInspectorDetailSchema.parse(detail)).not.toThrow();
+    });
+
+    it("is unknown with the log's reason when the log wasn't read", () => {
+      expect(buildAgentHostTurnDetail(0, missing)).toEqual({ turnIndex: 0, userMessage: [], rounds: [], unavailableReason: missing.reason });
+    });
   });
 });
