@@ -25,7 +25,8 @@ Progress (2026-10-28):
 | 10.11 | UX review for VS Code: panel fits any width, readable in light, dark and High Contrast, native look, automated UI check | Done (#77) |
 | 10.12 | Learn scenarios in the side bar (a Learn view), like the Sessions view; the panel has no list of its own | Done (#80) |
 | 10.13 | Agent Host sessions: read the sessions VS Code 1.143+ creates by default (manual check 1.4) | Done (`20c880b`–`756a26c`); manual check 1.4 passes with the default harness |
-| 10.14 | Agent Host turn text, tool calls and system prompt from the Copilot CLI event log (`~/.copilot/session-state/<sdkSessionId>/events.jsonl`) | Planned (tasks below) |
+| 10.14 | Agent Host turn text, tool calls and system prompt from the Copilot CLI event log (`~/.copilot/session-state/<sdkSessionId>/events.jsonl`) | Code done (`2f302b0`–`3911119`, docs commit); owner's manual check (task 11) open |
+| 10.15 | Cache-write and reasoning tokens for Agent Host sessions from `session.usage_record` | Planned |
 
 
 ## 1. Context
@@ -1374,7 +1375,9 @@ Copilot CLI that runs the session writes it to its own event log,
 log, read-only and per session, in the shared server code, so both
 products get it.
 
-**Status (2026-10-29): planned.**
+**Status (2026-10-29): code done (commits `2f302b0`–`3911119` and the docs
+commit `docs: Agent Host turn text, tool calls and system prompt (step
+10.14)`); owner's manual check (task 11) open.**
 
 **Storage seen on this machine** (Insiders 1.145, Copilot CLI 0.0.0 to
 1.0.103; surveyed 2026-10-29 with read-only copies, to be pinned by the
@@ -1477,8 +1480,8 @@ with a reason that says why (no tool definitions are recorded).
   changelogs.
 
 **Exit criterion:** in VS Code 1.143+ with default settings, a new
-agent-mode session shows its prompt and response text in the turns table,
-its rounds and tool calls in the turn inspector, its system prompt in the
+agent-mode session shows its prompt and response text, its rounds and tool
+calls in the turn inspector, its system prompt in the
 System prompt tab, and its tool calls with outcomes in the tool audit. The
 standalone app and the MCP tools show the same. A session without a log
 still shows "unavailable" with the new reason. Listing sessions opens no
@@ -1570,7 +1573,7 @@ turn has unknown text and tool calls, with a reason. Events with a top-level
 | 7 | System prompt (pure builder): the latest main-agent `system.message` as the prompt text (`lookupSystemPromptText` → `found`); components: `built-in` with `systemTokens` from the last `session.shutdown`/`session.compaction_start` after that message (real), otherwise estimated with `estimateTokenCount`; `tool-definitions` with `toolDefinitionsTokens` (real), otherwise unknown with a reason | low | Sonnet | Done |
 | 8 | Wire into `AgentHostSessionSource` and both products: event log read lazily in `readSession`/`readTurnDetail`/`lookupSystemPromptText` only (a test proves `listSessions` opens no log); a cache bounded to a few sessions, keyed by path, size and mtime, so audit and insights rollups don't re-parse; `copilotHome` threaded through `createVscodeProvider`, `compose-copilot-providers`, the standalone and extension composition roots and `create-copilot-mcp-services`; a domain marker for "event log read / missing / unreadable" that replaces the harness-only check in `tool-calls-availability.ts` and insights; an unreadable log degrades to unknown, never rejects `readSession` | high | Opus | Done: `Session.copilotEventLog` (`read` / `missing` / `unreadable` with a reason), `Turn.textUnavailableReason`/`toolCallsUnavailableReason` for unmatched turns, `TurnInspectorDetail.unavailableReason`; `CopilotEventLogCache` (4 logs, LRU, keyed by path, size and mtime) parses only the event types the builders read; `copilotHome` is required in the extension's options and the Copilot MCP services, and defaults to `resolveCopilotHome()` elsewhere. Inspector rounds are not passed through `redactSecrets`, like every other provider's inspector (only the MCP turn view redacts) |
 | 9 | Web and MCP: the "not available yet" states in `lib/agent-host-unavailable.ts`, `TurnInspector`, `SystemPromptBreakdown`, `SessionAuditPanel`, `AuditRollupPanel` and the MCP audit and turn tools show only when the log is missing or a turn is unmatched, with the new reasons; the Tools tab reason says that no tool definitions are recorded; UI check seeds an Agent Host session with a log and renders turn text, inspector, system prompt and audit | medium | Sonnet | Done |
-| 10 | Docs and changelogs (architecture.md §6.2.2.1/§6.2.2.2, both user guides, the extension README, both changelogs, this plan's status) | low | Haiku | Planned |
+| 10 | Docs and changelogs (architecture.md §6.2.2.1/§6.2.2.2, both user guides, the extension README, both changelogs, this plan's status) | low | Haiku | Done (docs commit) |
 | 11 | Manual check: a new default-harness session in VS Code and the same session in the standalone app show turn text, inspector rounds, system prompt and tool audit; a session whose log dir is moved away shows the new "unavailable" reasons | — | owner | Planned |
 
 **Settled questions:**

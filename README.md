@@ -210,7 +210,10 @@ runtime, never hardcoded:
     harness is the default) come from `globalStorage/agent-host.db` and
     `agentSessionData/<session>/session.db` in the same user-data folder.
     They show turns, tokens and AI Credits. Their prompt and response text,
-    tool calls and system prompt aren't read yet.
+    turn inspector, tool calls and system prompt come from the Copilot CLI's
+    event log, `<COPILOT_HOME or ~/.copilot>/session-state/<session>/events.jsonl`,
+    read locally. The Tools tab stays unavailable, since the log records no
+    tool definitions.
   - macOS and Windows paths are implemented but not yet verified against a
     real install. Multi-profile VS Code setups are not supported on any OS
     (see [architecture.md](docs/architecture.md)).

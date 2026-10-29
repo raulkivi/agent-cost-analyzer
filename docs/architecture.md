@@ -912,17 +912,19 @@ reason, never 0.
   them.
 - Turn text (prompt and response), tool calls and the system prompt: these
   stores don't hold them. The Copilot CLI event log holds them, read in
-  step 10.14.
+  step 10.14 (§6.2.2.2). A session whose log is missing or unreadable keeps
+  them unknown, with the reason.
 - A turn without `totalNanoAiu` has unknown AI Credits. The session total
   is unknown when any turn's AI Credits are unknown (all-or-nothing, as for
   classic sessions).
 
 **Marker.** `Session.copilotHarness` is `"agent-host"` on these sessions and
-`"local"` on classic Copilot Chat sessions (§5). The UI and the MCP tools
-use it to say "not available yet" where the classic store has data. Text
-and tool-call reasons are set on the turn or the audit, with the messages
-from `services/tool-audit/tool-calls-availability.ts` and the web's
-`lib/agent-host-unavailable.ts`.
+`"local"` on classic Copilot Chat sessions (§5). The event-log status
+`Session.copilotEventLog` (§6.2.2.2) says whether the log was read. The UI
+and the MCP tools show "not available" only when the log is missing or a
+turn is unmatched. Text and tool-call reasons are set on the turn or the
+audit, with the messages from `services/tool-audit/tool-calls-availability.ts`
+and the web's `lib/agent-host-unavailable.ts`.
 
 **What lists.**
 
@@ -944,10 +946,11 @@ it from VS Code's `globalStorageUri` in `copilotLogPathsFromUserDataDir`,
 and its composition roots require it, so no default install is guessed.
 
 **Rollups and insights.** A session whose tool calls are unknown (Agent
-Host) is left out of the audit rollup's counts and rates, and the rollup
-reports how many as `sessionsWithUnknownToolCalls`. Insight session rows
-carry `toolCallsUnavailable: true`, and their turn rows have
-`toolCallCount: null`. A per-turn cost row's `toolCalls` is `null`, not 0.
+Host, event log not read: §6.2.2.2) is left out of the audit rollup's counts
+and rates, and the rollup reports how many as `sessionsWithUnknownToolCalls`.
+Insight session rows carry `toolCallsUnavailable: true`, and their turn rows
+have `toolCallCount: null`. A per-turn cost row's `toolCalls` is `null`, not
+0. A session whose log was read has real tool calls, so it counts.
 
 **Config check.** When `agent-host.db` exists, the two classic logging
 warnings become optional (§6.3).
@@ -1003,7 +1006,41 @@ change or resume. The latest main-agent one is the prompt. **Tool
 definitions are not recorded** (only their token count), so the Tools tab
 stays unavailable. Not used: `session.usage_record`, `hook.*`,
 `permission.requested`, `model.*`, `skill.*`, `subagent.*`,
-`session.compaction_*` other than the token counts.
+`session.compaction_*` other than the token counts. `session.usage_record`
+(cache-write and reasoning tokens) is the follow-up step 10.15.
+
+**Wiring.**
+
+- **Reads.** `AgentHostSessionSource` opens the log only in `readSession`,
+  `readTurnDetail` and `lookupSystemPromptText`. `listSessions` never opens
+  it (a test proves this).
+- **Status.** `Session.copilotEventLog` is `read`, `missing` or `unreadable`,
+  with a reason for the last two. An unreadable log degrades to unknown and
+  never rejects `readSession`. A list summary has no status.
+- **Unmatched turns.** A turn that can't be matched to the log has
+  `textUnavailableReason` and `toolCallsUnavailableReason` on its `Turn`, and
+  `TurnInspectorDetail.unavailableReason` on the inspector. An empty tool-call
+  list means "no calls" only when the log was read.
+- **Subagents.** Events with a top-level `agentId` add their tool calls to the
+  turn that started the subagent. Their text and inspector rounds are left out.
+- **Cache.** `CopilotEventLogCache` keeps the 4 most recently used parsed logs,
+  keyed by path, size and mtime. It parses only the event types the builders
+  read, so the audit and insights rollups reuse one parse.
+- **Copilot home.** `resolveCopilotHome()` gives `COPILOT_HOME` or `~/.copilot`.
+  `copilotHome` is required in the extension's options and the Copilot MCP
+  services, and defaults to `resolveCopilotHome()` in the standalone app.
+  There's no setting.
+- **Redaction.** Tool arguments and results go through `summarizeToolArgs`,
+  `buildToolCallOutcome` and `redactSecrets`. Inspector rounds aren't
+  redacted, as for every other provider's inspector. Only the MCP turn view
+  redacts.
+- **System prompt.** `systemTokens` comes from the last `session.shutdown` or
+  `session.compaction_start` after the prompt, when present. Otherwise it's
+  estimated and labeled as an estimate. `toolDefinitionsTokens` is real when
+  recorded, else unknown with a reason.
+- **Tools tab.** Stays unavailable. Its reason says that the event log records
+  no tool definitions, so a list of called tools would hide loaded but unused
+  ones. `usage_record.availableToolCount` isn't used.
 
 **Fixtures.** `packages/server/fixtures/agent-host/copilot-cli/`: a Copilot
 home (`session-state/<sdkSessionId>/events.jsonl`) with a normal session, a

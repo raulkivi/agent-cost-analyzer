@@ -9,8 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - VS Code Agent Host sessions (step 10.13): Copilot chats that VS Code 1.143
   and later run through the Agent Host are listed with their turns, tokens and
-  AI Credits, beside the classic Copilot Chat sessions. Their prompt and
-  response text, tool calls and system prompt aren't read yet.
+  AI Credits, beside the classic Copilot Chat sessions.
+- VS Code Agent Host turn text, tool calls and system prompt (step 10.14):
+  prompt and response text, turn inspector rounds, tool calls with outcomes
+  and the system prompt come from the Copilot CLI's event log
+  (`<COPILOT_HOME or ~/.copilot>/session-state/<session>/events.jsonl`), read
+  locally. Tool calls then count in the tool audit and rollups. A session
+  whose log is missing or unreadable shows these as unavailable, with the
+  reason, and stays out of the audit counts. The Tools tab stays unavailable,
+  since the log records no tool definitions.
 ### Fixed
 - VS Code Agent Host sessions (step 10.13): a session whose `session.db` is
   missing or unreadable stays listed with unknown usage; only chats that were
