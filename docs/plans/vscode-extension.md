@@ -1580,19 +1580,15 @@ turn has unknown text and tool calls, with a reason. Events with a top-level
   tool calls and the system prompt only.
 - Subagent tool calls (`agentId` / `parentToolCallId`) count in the turn
   that started the subagent, since the agent ran them.
-
-**Open questions (owner):**
-- Tools tab: keep it "unavailable" (no tool definitions are recorded), as
-  planned? The alternative is a partial inventory built only from the tools
-  that were called. That would hide loaded-but-unused tools, which is what
-  the tab exists to show.
-- Cache-write and reasoning tokens: newer CLIs record them per model call
-  (`session.usage_record`, 17 of 60 logs). Fill them in a follow-up step,
-  or leave them unknown as now? Out of 10.14 as planned.
+- Tools tab (owner, 2026-10-29): stays "unavailable", with a reason that
+  no tool definitions are recorded. A partial inventory of called tools
+  would hide loaded-but-unused tools.
+- Cache-write and reasoning tokens (owner, 2026-10-29): a follow-up step,
+  not 10.14. They stay unknown until then.
 - Copilot home: 10.14 follows the CLI (`COPILOT_HOME`, else
-  `~/.copilot`), with no setting. VS Code could start the Agent Host with a
-  different `configDir`. None is seen on this machine. Add a setting only if
-  that ever happens.
+  `~/.copilot`), with no setting. Add one only if VS Code ever starts the
+  Agent Host with a different `configDir`.
+
 
 ### 10.12 Learn scenarios in the side bar (owner's request, 2026-10-24)
 
