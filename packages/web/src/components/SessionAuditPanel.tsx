@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import type { AuditedToolCall, CopilotHarness, FailureCategory, SessionAudit, ToolCallStatus } from "@agent-cost-analyzer/domain";
+import type { AuditedToolCall, FailureCategory, SessionAudit, ToolCallStatus } from "@agent-cost-analyzer/domain";
 import { fetchSessionAudit } from "../api-client/audit.js";
 import { HorizontalBars } from "../charts/HorizontalBars.js";
 import { StackedColumns } from "../charts/StackedColumns.js";
@@ -11,7 +11,7 @@ import {
   formatCompact,
   formatFailureRate,
 } from "../lib/audit-format.js";
-import { AGENT_HOST_AUDIT_UNAVAILABLE } from "../lib/agent-host-unavailable.js";
+import { AUDIT_UNAVAILABLE_NOTE, AUDIT_UNAVAILABLE_TITLE } from "../lib/agent-host-unavailable.js";
 import { Blueprint } from "./ui/Blueprint.js";
 import { StatTile } from "./ui/StatTile.js";
 import { AsyncView } from "./ui/AsyncView.js";
@@ -26,8 +26,6 @@ interface SessionAuditPanelProps {
   loadAudit?: (sessionId: string) => Promise<SessionAudit>;
   // The empty state's next step: the cross-session audit.
   onShowAllSessions?: () => void;
-  // Session.copilotHarness: an Agent Host session's tool calls aren't read yet.
-  copilotHarness?: CopilotHarness;
 }
 
 const DEFAULT_STATUS_FILTER: ToolCallStatus[] = ["error", "interrupted", "denied"];
@@ -68,7 +66,6 @@ export function SessionAuditPanel({
   onInspectTurn,
   loadAudit = fetchSessionAudit,
   onShowAllSessions,
-  copilotHarness,
 }: SessionAuditPanelProps) {
   const [state, setState] = useState<LoadState>({ kind: "loading" });
   const [attempt, setAttempt] = useState(0);
@@ -100,8 +97,11 @@ export function SessionAuditPanel({
           : undefined
       }
       empty={{
-        ...(copilotHarness === "agent-host" || audit?.toolCallsUnavailableReason
-          ? AGENT_HOST_AUDIT_UNAVAILABLE
+        ...(audit?.toolCallsUnavailableReason
+          ? {
+              title: AUDIT_UNAVAILABLE_TITLE,
+              body: `${audit.toolCallsUnavailableReason} ${AUDIT_UNAVAILABLE_NOTE}`,
+            }
           : {
               title: "No tool calls in this session",
               body: "The agent answered without running tools, so there is nothing to audit here.",

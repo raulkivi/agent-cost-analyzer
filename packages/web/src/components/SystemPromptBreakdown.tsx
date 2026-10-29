@@ -1,5 +1,4 @@
-import type { CopilotHarness, SystemPromptComponent, TokenCount } from "@agent-cost-analyzer/domain";
-import { AGENT_HOST_SYSTEM_PROMPT_UNAVAILABLE } from "../lib/agent-host-unavailable.js";
+import type { SystemPromptComponent, TokenCount } from "@agent-cost-analyzer/domain";
 import { Blueprint } from "./ui/Blueprint.js";
 
 const ESTIMATED_TOOLTIP =
@@ -20,11 +19,11 @@ function barWidthPercent(tokenCount: TokenCount, maxValue: number): number {
 interface SystemPromptBreakdownProps {
   components: SystemPromptComponent[];
   providerId?: string;
-  copilotHarness?: CopilotHarness;
+  unavailableReason?: string;
   onOpenInspector?: () => void;
 }
 
-export function SystemPromptBreakdown({ components, providerId, copilotHarness, onOpenInspector }: SystemPromptBreakdownProps) {
+export function SystemPromptBreakdown({ components, providerId, unavailableReason, onOpenInspector }: SystemPromptBreakdownProps) {
   const maxValue = Math.max(
     0,
     ...components.map((component) => (component.tokenCount.known ? component.tokenCount.value : 0)),
@@ -48,13 +47,12 @@ export function SystemPromptBreakdown({ components, providerId, copilotHarness, 
       </div>
       {components.length === 0 ? (
         <p className="text-muted" style={{ fontSize: 13, margin: 0 }}>
-          {copilotHarness === "agent-host"
-            ? AGENT_HOST_SYSTEM_PROMPT_UNAVAILABLE
-            : providerId === "pi-agent"
-            ? "No system prompt captured for this session yet — open the system prompt inspector for how to enable it."
-            : providerId && providerId !== "vscode"
-              ? "This provider does not capture a system-prompt artifact, so no breakdown is available."
-              : "No prompt artifacts captured for this session — enable agentDebugLog.fileLogging.enabled and reload VS Code."}
+          {unavailableReason ??
+            (providerId === "pi-agent"
+              ? "No system prompt captured for this session yet — open the system prompt inspector for how to enable it."
+              : providerId && providerId !== "vscode"
+                ? "This provider does not capture a system-prompt artifact, so no breakdown is available."
+                : "No prompt artifacts captured for this session — enable agentDebugLog.fileLogging.enabled and reload VS Code.")}
         </p>
       ) : (
         components.map((component) => (

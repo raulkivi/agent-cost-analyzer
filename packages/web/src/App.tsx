@@ -40,6 +40,7 @@ import { SegmentedControl } from "./components/ui/SegmentedControl.js";
 import { Tag } from "./components/ui/Tag.js";
 import { AiCreditsSparkline } from "./charts/AiCreditsSparkline.js";
 import { getHostCapabilities } from "./host/current-host-capabilities.js";
+import { eventLogUnavailableReason } from "./lib/agent-host-unavailable.js";
 import { performanceMarks as pagePerformanceMarks, type PerformanceMarks } from "./lib/performance-marks.js";
 import { LIST_COLUMN_WIDTH, layoutFor, type Layout } from "./lib/layout.js";
 import { ALL_TURN_COLUMNS, hiddenTurnColumns, parseTurnColumns, turnColumnsFor, type TurnColumnId } from "./lib/turn-columns.js";
@@ -470,7 +471,7 @@ export function App({ performanceMarks = pagePerformanceMarks }: AppProps = {}) 
             turn={selectedTurn}
             mode={mode}
             toolCallsAvailable={toolCallsAvailable}
-            copilotHarness={session?.copilotHarness}
+            eventLogUnavailableReason={eventLogUnavailableReason(session)}
             onOpenTurnInspector={
               mode === "analyze" && session ? () => setTurnInspectorOpen(true) : undefined
             }
@@ -480,7 +481,7 @@ export function App({ performanceMarks = pagePerformanceMarks }: AppProps = {}) 
           <SystemPromptBreakdown
             components={session?.systemPrompt ?? []}
             providerId={session?.providerId}
-            copilotHarness={session?.copilotHarness}
+            unavailableReason={eventLogUnavailableReason(session)}
             onOpenInspector={session ? () => setInspectorOpen(true) : undefined}
           />
         )}
@@ -542,7 +543,6 @@ export function App({ performanceMarks = pagePerformanceMarks }: AppProps = {}) 
           sessionTitle={session.title}
           triggeredEvent={selectedTurn?.triggeredEvent}
           usageDataAvailable={session.usageDataAvailable}
-          copilotHarness={session.copilotHarness}
           onClose={() => setTurnInspectorOpen(false)}
         />
       ) : null}
@@ -663,7 +663,6 @@ export function App({ performanceMarks = pagePerformanceMarks }: AppProps = {}) 
                     onSelectTurn={selectTurn}
                     onInspectTurn={handleInspectTurn}
                     onShowAllSessions={() => setCenterView("rollup")}
-                    copilotHarness={session.copilotHarness}
                   />
                 ) : (
                   <p className="text-muted" style={{ fontSize: 13 }}>
