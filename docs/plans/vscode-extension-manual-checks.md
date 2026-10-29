@@ -75,7 +75,8 @@ in the docs). Findings that need a code fix also go in the run log below.
   included it, the turn inspector, system prompt, Tools tab and tool audit
   said "not available yet", and Setup marked the logging settings optional
   without "setup needed".
-- **Not yet run:** 1.5-1.12, §2 and §3.
+- **Not yet run:** 1.5-1.12, §2, §3 and §5 (step 10.14, PR #98; VSIX
+  built from `78654f6` on 2026-10-29, not yet installed).
 
 ## 0. Install the candidate
 
@@ -157,3 +158,54 @@ The list, for retakes:
 6. `narrow.png`: the panel at about 640 px.
 7. `mcp-agent-mode.png`: Copilot agent mode answering with the tools.
 8. `high-contrast.png`: the panel in High Contrast.
+
+## 5. Agent Host event log (step 10.14, task 11)
+
+Checks that VS Code Agent Host sessions (the default Copilot harness since
+1.143) show turn text, inspector rounds, system prompt and tool audit read
+from the Copilot CLI event log,
+`<COPILOT_HOME or ~/.copilot>/session-state/<sdkSessionId>/events.jsonl`.
+Record results in PR #98 (task 11 checkbox) and in the run log above.
+
+**Setup.** Build and install a VSIX from the PR branch into the
+"AI Credits 0.1.0 check" Insiders profile, then run *Developer: Reload
+Window*:
+
+```
+cd packages/vscode-extension && npm run build && npm run package
+code-insiders --profile "AI Credits 0.1.0 check" --install-extension ai-credits-analyzer-0.1.0.vsix --force
+```
+
+**A. VS Code, default harness.** In Copilot Chat agent mode with the
+default harness, start a new session. Ask something that runs a few tools
+(e.g. "list the files in this folder and read package.json"), then send a
+second message. *Refresh* the Sessions view and open the session.
+
+| # | Check | Expected | ✓ / notes |
+|---|---|---|---|
+| 5.1 | Turn inspector (open from the Explanation panel) | Your prompt and the response text; one Request/Response pair per round; tool calls; chips for attachments, never inline base64. | |
+| 5.2 | System prompt tab | The prompt text; "Base system prompt" and "Tool definitions" with real token counts. | |
+| 5.3 | Tools tab | "Unavailable": the event log records no tool definitions. | |
+| 5.4 | Tool audit | The session's tool calls with outcomes (success, error, denied, interrupted). | |
+| 5.5 | Turns table | Tokens and AI Credits as before 10.14. | |
+| 5.6 | All sessions / audit rollup | The session is counted. | |
+
+**B. Standalone app.** Run `npm start` at the repo root, switch to Analyze
+mode and pick the VS Code / Copilot provider.
+
+| # | Check | Expected | ✓ / notes |
+|---|---|---|---|
+| 5.7 | Same session | Listed with the same AI Credits; inspector, system prompt and tool audit match A. | |
+
+**C. Missing log.** Find the session's log folder: the newest dir in
+`~/.copilot/session-state/` (`ls -t ~/.copilot/session-state | head -1`).
+Confirm it's the right one: its `events.jsonl` has your prompt in the
+first `user.message` line. Rename the folder (add `.moved`), refresh the
+Sessions view and reopen the session.
+
+| # | Check | Expected | ✓ / notes |
+|---|---|---|---|
+| 5.8 | Inspector, system prompt, tool audit | Each says "not available" with a reason naming the Copilot CLI event log. | |
+| 5.9 | Turns table | Turns, tokens and AI Credits still show. | |
+| 5.10 | Audit rollup | "1 Agent Host session not included: no readable Copilot CLI event log." | |
+| 5.11 | Restore | Rename the folder back and refresh: the session shows its data again. | |
