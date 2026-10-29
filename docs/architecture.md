@@ -952,6 +952,66 @@ carry `toolCallsUnavailable: true`, and their turn rows have
 **Config check.** When `agent-host.db` exists, the two classic logging
 warnings become optional (§6.3).
 
+#### 6.2.2.2 Copilot CLI event log (step 10.14)
+
+**Why.** Agent Host sessions keep no text in VS Code's stores (§6.2.2.1).
+The Copilot CLI that runs them writes its own event log. 10.14 reads it,
+read-only, for turn text, tool calls, the inspector rounds and the system
+prompt. Tokens and AI Credits stay from `session.db`.
+
+**Finding the log.** `<copilotHome>/session-state/<sdkSessionId>/events.jsonl`.
+`copilotHome` is `COPILOT_HOME` when set and non-empty, else `~/.copilot`
+(how the bundled Copilot SDK resolves it). `sdkSessionId` is in `agent-host.db`
+`chats_v2.provider_data` (JSON, with `model`); it never equals the Agent Host
+session id. A session without a chat row, or whose log is missing, has
+unknown text and tool calls. The log is outside the user-data dir.
+
+**Line format.** One JSON object per line: `{type, data, id, timestamp,
+parentId}`, plus `agentId` on events from a subagent. A live session's file
+is still appended to, so the last line may be partial; a line that isn't
+a JSON object with a string `id` and `type` is skipped and counted. Lines run
+to 0.5 MB (`permission.requested`) and files to ~18 MB, so the log is
+streamed line by line. `session.binary_asset.data` (base64) is dropped on
+read.
+
+**Turn join key.** `session.db` `turns.event_id` equals the `id` of the turn's
+`user.message` event. The `request_<uuid>` turn ids appear nowhere in the log,
+and `interactionId` isn't a key: a `delivery: "steering"` message (its own
+turn) shares the previous turn's `interactionId`. An aborted turn has a
+second `turns` row: `event_id` NULL and a bare id (no `request_` prefix) equal
+to the previous row's `event_id`. A `user.message` with `source: "agent-<id>"`
+is a subagent's prompt, not a turn. A turn's events run from its
+`user.message` to the next turn's, in file order.
+
+**Events used.**
+
+| Type | Fields used |
+|---|---|
+| `user.message` | `content` (typed), `transformedContent` (what the model saw), `attachments` (`file`, `blob` with base64 `data`, `selection`, `directory`), `delivery` (`idle`, `steering`), `source`, `interactionId` |
+| `assistant.turn_start` / `turn_end` | `turnId` ("0", "1", ...): one model round-trip |
+| `assistant.message` | `content` (often empty), `toolRequests[{toolCallId, name, arguments}]`, `reasoningText`, `phase`, `model`, `apiCallId`, `parentToolCallId` (subagent) |
+| `tool.execution_start` | `toolCallId`, `toolName`, `arguments`, `turnId`, `parentToolCallId` |
+| `tool.execution_complete` | `toolCallId`, `success`, `result.content`, `error{code, message}`, `fileEdits`, `shellExecution.exitCode` |
+| `permission.completed` | `toolCallId`, `result.kind` (`approved`, `approved-for-location`, `cancelled`, ...) |
+| `abort` | `reason`; a start with no complete in an aborted turn is interrupted |
+| `system.message` | `role: "system"`, `content` (30-60 K characters, XML-like sections), `agentId` when a subagent's |
+| `session.shutdown`, `session.compaction_start` | `systemTokens`, `toolDefinitionsTokens`, `conversationTokens` (real counts) |
+| `session.binary_asset` | image payload: shown as a placeholder only |
+
+A file holds one `system.message`, or several: it is re-emitted after a model
+change or resume. The latest main-agent one is the prompt. **Tool
+definitions are not recorded** (only their token count), so the Tools tab
+stays unavailable. Not used: `session.usage_record`, `hook.*`,
+`permission.requested`, `model.*`, `skill.*`, `subagent.*`,
+`session.compaction_*` other than the token counts.
+
+**Fixtures.** `packages/server/fixtures/agent-host/copilot-cli/`: a Copilot
+home (`session-state/<sdkSessionId>/events.jsonl`) with a normal session, a
+steering plus abort plus duplicate-turn plus subagent session, a re-emitted
+system prompt, and a malformed log; `rows.json` holds the matching
+`chats_v2` and `turns` rows. All text is synthetic; structure, ids and field
+names follow real captures.
+
 #### 6.2.3 mitmproxy provider flow
 
 ![6.2.3 mitmproxy provider flow](diagrams/6-2-3-mitmproxy-provider-flow.drawio.svg)

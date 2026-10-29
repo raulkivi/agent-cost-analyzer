@@ -1560,7 +1560,7 @@ turn has unknown text and tool calls, with a reason. Events with a top-level
 
 | # | Task | Complexity | Model | Status |
 |---|---|---|---|---|
-| 1 | Redacted fixtures from real captures (`fixtures/agent-host/copilot-cli/`: event logs for a normal session, steering plus abort plus subagent, system-prompt re-emit, and malformed lines; `chats_v2` rows with `provider_data`; matching `turns.event_id` rows including the NULL/bare-id duplicate); format in architecture.md §6.2.2.2; hidden acceptance tests for tasks 2 and 3, kept outside the worktree until each setup6 run is reviewed, then committed with that task's code (as 10.13 did: none in `20c880b`, committed in `b143a7b` and `0e80c90`) | medium | Sonnet | Planned |
+| 1 | Redacted fixtures from real captures (`fixtures/agent-host/copilot-cli/`: event logs for a normal session, steering plus abort plus subagent, system-prompt re-emit, and malformed lines; `chats_v2` rows with `provider_data`; matching `turns.event_id` rows including the NULL/bare-id duplicate); format in architecture.md §6.2.2.2; hidden acceptance tests for tasks 2 and 3, kept outside the worktree until each setup6 run is reviewed, then committed with that task's code (as 10.13 did: none in `20c880b`, committed in `b143a7b` and `0e80c90`) | medium | Sonnet | Done |
 | 2 | Copilot home, event-log path, `sdkSessionId` lookup, turn event ids (exact spec above) | low | setup6 | Planned |
 | 3 | Streaming event-log reader (exact spec above) | medium | setup6, Sonnet after two failures | Planned |
 | 4 | Pure turn segmenter (`copilot-turn-segmenter.ts`): the rule above; steering, abort, duplicate turn, agent-sourced prompts, subagent events, events before the first turn | medium | Sonnet | Planned |
