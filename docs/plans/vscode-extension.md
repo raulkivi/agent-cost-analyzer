@@ -1518,8 +1518,9 @@ No new dependencies.
 
 *Task 3: the event-log reader.*
 - New `copilot-event-log-reader.ts`:
-  - `export interface CopilotEvent { id: string; type: string; parentId: string | null; timestamp: string | null; agentId: string | null; data: Record<string, unknown> }`.
-  - `export interface CopilotEventLog { events: CopilotEvent[]; skippedLines: number }`.
+  - Re-exports `CopilotEvent` and `CopilotEventLog` from `copilot-event.ts`
+    (committed ahead of task 3 so tasks 4-7 could start in parallel):
+    `export type { CopilotEvent, CopilotEventLog } from "./copilot-event.js";`.
   - `export const MAX_EVENT_LINE_CHARS = 8 * 1024 * 1024`.
   - `export function parseCopilotEventLine(line: string): CopilotEvent | null`.
     Returns null for a line that isn't JSON, isn't a non-array object, or
