@@ -15,6 +15,7 @@ import { createNonce } from "./panel/nonce.js";
 import { buildPanelHtml, type ViteManifest } from "./panel/panel-html.js";
 import { HostCommandHandler, type HostCommands } from "./rpc/host-command-handler.js";
 import { MessageDispatcher } from "./rpc/message-dispatcher.js";
+import { resolveCopilotHome } from "@agent-cost-analyzer/server/src/data-sources/agent-host/copilot-cli-paths";
 import { copilotDebugLogsDirPaths, copilotLogPathsFromUserDataDir } from "./platform/copilot-log-paths.js";
 import { userDataDirFromGlobalStorage } from "./platform/vscode-user-data-dir.js";
 import { SidebarController } from "./sidebar/sidebar-controller.js";
@@ -104,6 +105,9 @@ export function composeExtension({
   let debugLogsDirPaths = logPaths.debugLogsDirPaths;
   const api = createExtensionApiService({
     ...logPaths,
+    // Not under the user-data dir: the Copilot CLI that runs Agent Host
+    // sessions writes their event logs to its own home (step 10.14).
+    copilotHome: resolveCopilotHome(),
     debugLogsDirPaths: () => debugLogsDirPaths,
     appSettings: new GlobalStateAppSettingsStore(globalState, {
       onError: (setting, error) => console.error(`AI Credits Analyzer: could not save ${setting}`, error),

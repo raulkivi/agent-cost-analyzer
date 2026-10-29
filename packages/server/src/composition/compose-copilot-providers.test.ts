@@ -9,6 +9,7 @@ const isolatedPaths = {
   debugLogsDirPaths: [],
   agentTracesDbPath: null,
   agentHostUserDataDir: null,
+  copilotHome: null,
   vscodeSettingsPath: path.join("/nonexistent", "settings.json"),
 };
 

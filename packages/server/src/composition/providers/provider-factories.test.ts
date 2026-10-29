@@ -1,12 +1,17 @@
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createClaudeCodeProvider } from "./create-claude-code-provider.js";
 import { createMitmproxyProvider } from "./create-mitmproxy-provider.js";
 import { createPiAgentProvider } from "./create-pi-agent-provider.js";
 import { createVscodeProvider, resolveVscodeSettingsPathOption } from "./create-vscode-provider.js";
 import { AGENT_HOST_FIXTURE_SESSION_IDS, writeAgentHostCatalog, writeAgentSessionDb } from "../../test-support/agent-host-user-data-dir.js";
+import {
+  COPILOT_CLI_FIXTURE_HOME,
+  COPILOT_CLI_FIXTURE_SESSION_IDS,
+  writeCopilotCliAgentHostStores,
+} from "../../test-support/copilot-cli-fixtures.js";
 
 // One factory per provider (G11): each lives in its own module, so a
 // composition root that imports one pulls in none of the others.
@@ -114,6 +119,43 @@ describe("per-provider factories", () => {
 
       expect((await provider.checkAvailability()).available).toBe(false);
       await expect(provider.listSessions()).resolves.toEqual([]);
+    });
+  });
+
+  // Step 10.14: the Copilot CLI event log, under the Copilot home.
+  describe("Copilot CLI event log", () => {
+    let userDataDir: string;
+    const classicNone = { sessionStoreDbPath: null, debugLogsDirPaths: [], agentTracesDbPath: null };
+
+    beforeEach(() => {
+      userDataDir = mkdtempSync(path.join(tmpdir(), "provider-factories-copilot-home-"));
+      writeCopilotCliAgentHostStores(userDataDir);
+    });
+    afterEach(() => {
+      vi.unstubAllEnvs();
+      rmSync(userDataDir, { recursive: true, force: true });
+    });
+
+    it("reads a session's event log under an injected Copilot home", async () => {
+      const provider = createVscodeProvider({ ...classicNone, agentHostUserDataDir: userDataDir, copilotHome: COPILOT_CLI_FIXTURE_HOME });
+
+      expect((await provider.readSession(COPILOT_CLI_FIXTURE_SESSION_IDS.normal))?.copilotEventLog).toEqual({ status: "read" });
+    });
+
+    it("resolves the Copilot home the way the CLI does when none is given", async () => {
+      vi.stubEnv("COPILOT_HOME", COPILOT_CLI_FIXTURE_HOME);
+
+      const provider = createVscodeProvider({ ...classicNone, agentHostUserDataDir: userDataDir });
+
+      expect((await provider.readSession(COPILOT_CLI_FIXTURE_SESSION_IDS.normal))?.copilotEventLog).toEqual({ status: "read" });
+    });
+
+    it("keeps an explicit null Copilot home rather than resolving the default", async () => {
+      vi.stubEnv("COPILOT_HOME", COPILOT_CLI_FIXTURE_HOME);
+
+      const provider = createVscodeProvider({ ...classicNone, agentHostUserDataDir: userDataDir, copilotHome: null });
+
+      expect((await provider.readSession(COPILOT_CLI_FIXTURE_SESSION_IDS.normal))?.copilotEventLog?.status).toBe("missing");
     });
   });
 

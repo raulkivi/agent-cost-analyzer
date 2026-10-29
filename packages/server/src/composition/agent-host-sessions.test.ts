@@ -25,6 +25,8 @@ import {
   writeAgentSessionDb,
 } from "../test-support/agent-host-user-data-dir.js";
 import { InMemoryAppSettingsStore } from "../test-support/in-memory-app-settings-store.js";
+import { COPILOT_CLI_FIXTURE_HOME } from "../test-support/copilot-cli-fixtures.js";
+import { AGENT_HOST_NO_SDK_SESSION_ID_REASON } from "../data-sources/agent-host/agent-host-session-source.js";
 import { createCopilotMcpServices } from "./create-copilot-mcp-services.js";
 import { createExtensionApiService } from "./create-extension-api-service.js";
 import { createStandaloneApiService } from "./create-standalone-api-service.js";
@@ -53,7 +55,15 @@ describe("Agent Host sessions through the Copilot provider (step 10.13)", () => 
     // The full fixture, whose third turn has no turn_usage row.
     writeAgentSessionDb(userDataDir, IDS.withTurns, sessionRows);
 
-    const noClassicLogs = { sessionStoreDbPath: null, debugLogsDirPaths: [], agentTracesDbPath: null, agentHostUserDataDir: userDataDir };
+    // The catalog fixture has no chats_v2 rows, so no session finds a Copilot
+    // CLI event log (step 10.14's own test: agent-host-event-log.test.ts).
+    const noClassicLogs = {
+      sessionStoreDbPath: null,
+      debugLogsDirPaths: [],
+      agentTracesDbPath: null,
+      agentHostUserDataDir: userDataDir,
+      copilotHome: COPILOT_CLI_FIXTURE_HOME,
+    };
     extension = createExtensionApiService({
       ...noClassicLogs,
       vscodeSettingsPath: null,
@@ -120,8 +130,13 @@ describe("Agent Host sessions through the Copilot provider (step 10.13)", () => 
       expect(session.costAiCredits.known).toBe(false);
     });
 
-    it("gives an existing turn an empty inspector detail and a known session no system prompt", async () => {
-      await expect(api().getTurnDetail(IDS.withTurns, 0)).resolves.toEqual({ turnIndex: 0, userMessage: [], rounds: [] });
+    it("gives an existing turn an unknown inspector detail and a known session no system prompt", async () => {
+      await expect(api().getTurnDetail(IDS.withTurns, 0)).resolves.toEqual({
+        turnIndex: 0,
+        userMessage: [],
+        rounds: [],
+        unavailableReason: AGENT_HOST_NO_SDK_SESSION_ID_REASON,
+      });
       await expect(api().getSystemPromptText(IDS.withTurns)).rejects.toThrow(/No system-prompt artifact captured/);
     });
 

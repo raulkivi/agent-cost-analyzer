@@ -16,6 +16,7 @@ function buildService(appSettings = new InMemoryAppSettingsStore(), settingsSour
     debugLogsDirPaths: [],
     agentTracesDbPath: null,
     agentHostUserDataDir,
+    copilotHome: null,
     vscodeSettingsPath: null,
     appSettings,
     settingsSource,

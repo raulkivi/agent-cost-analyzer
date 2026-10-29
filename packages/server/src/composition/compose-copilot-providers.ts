@@ -11,6 +11,9 @@ export interface CopilotProviderCompositionOptions extends VscodeProviderPaths {
   // dir (D4) or passes null, and never falls back to this machine's
   // default install.
   agentHostUserDataDir: string | null;
+  // Required too, so every caller says where the event logs are read from
+  // (the extension passes resolveCopilotHome(), as the CLI resolves it).
+  copilotHome: string | null;
   vscodeSettingsPath?: string | null;
   // The extension's own store (D5: its globalState), never the standalone
   // app's settings file, so neither product changes the other's settings.

@@ -99,6 +99,8 @@ export async function startHarness(options: HarnessOptions = {}): Promise<Harnes
   let threshold: number | undefined;
   const api = createExtensionApiService({
     ...logPaths,
+    // No event logs yet: step 10.14 task 9 seeds a Copilot home with one.
+    copilotHome: null,
     debugLogsDirPaths: () => logPaths.debugLogsDirPaths,
     appSettings: {
       readActiveProviderId: () => activeProviderId,
