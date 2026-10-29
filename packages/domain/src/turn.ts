@@ -23,6 +23,11 @@ export const turnSchema = z.object({
   usage: turnUsageSchema,
   explanation: z.string(),
   triggeredEvent: triggeredEventSchema.optional(),
+  // Set when the provider couldn't read this turn's text / tool calls (e.g.
+  // an Agent Host turn the Copilot CLI event log can't be matched to), so
+  // the empty values read as unknown, not as empty (constraint 6).
+  textUnavailableReason: z.string().optional(),
+  toolCallsUnavailableReason: z.string().optional(),
 });
 
 export type TriggeredEvent = z.infer<typeof triggeredEventSchema>;
