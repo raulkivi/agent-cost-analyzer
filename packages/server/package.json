@@ -14,9 +14,9 @@
   },
   "dependencies": {
     "@agent-cost-analyzer/domain": "*",
-    "@modelcontextprotocol/sdk": "^1.32.1",
+    "@modelcontextprotocol/sdk": "^1.32.2",
     "express": "^5.3.0",
-    "gpt-tokenizer": "^4.0.0",
+    "gpt-tokenizer": "^4.1.0",
     "jsonc-parser": "^3.3.1"
   },
   "devDependencies": {
@@ -24,6 +24,6 @@
     "@types/supertest": "^7.2.1",
     "supertest": "^7.3.1",
     "tsx": "^4.23.15",
-    "vitest": "^5.0.3"
+    "vitest": "^5.0.5"
   }
 }
