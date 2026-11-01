@@ -1,0 +1,71 @@
+# CODEOWNERS
+#
+# GitHub requests a review from the owners listed here on every pull request
+# that touches a matching path. With "Require review from Code Owners" turned
+# on in the branch protection rule (or ruleset) for `main`, a pull request
+# cannot merge until a code owner approves it.
+#
+# Rules:
+# - The LAST matching pattern wins, so the catch-all comes first and the
+#   more specific, security-sensitive paths come after it.
+# - Every owner must be a user or team with write access, or GitHub ignores
+#   the line. Use real handles only; never add bots or placeholder names.
+# - Sensitive paths are listed explicitly even though they share the
+#   default owner today. That way, adding a co-maintainer to the catch-all
+#   later does not quietly let them approve changes to CI, releases,
+#   dependencies or the redaction code on their own.
+
+# ---------------------------------------------------------------------------
+# Default owner for everything
+# ---------------------------------------------------------------------------
+*                                   @raulkivi
+
+# ---------------------------------------------------------------------------
+# Repository governance: who can approve what, and the security policy.
+# Owning CODEOWNERS itself stops a pull request from removing its own
+# required reviewers.
+# ---------------------------------------------------------------------------
+/.github/CODEOWNERS                 @raulkivi
+/SECURITY.md                        @raulkivi
+/CONTRIBUTING.md                    @raulkivi
+/LICENSE                            @raulkivi
+/docs/threat-model.md               @raulkivi
+
+# ---------------------------------------------------------------------------
+# CI/CD and automation: workflows run with repository tokens and publishing
+# secrets, so any change here is a supply-chain risk.
+# ---------------------------------------------------------------------------
+/.github/workflows/                 @raulkivi
+/.github/dependabot.yml             @raulkivi
+
+# Agent instructions steer the AI reviewers and coding agents that run on PRs.
+/.github/copilot-instructions.md    @raulkivi
+/.github/instructions/              @raulkivi
+/CLAUDE.md                          @raulkivi
+/.claude/                           @raulkivi
+
+# ---------------------------------------------------------------------------
+# Dependencies and build configuration: new or changed packages, install
+# scripts and lockfile edits.
+# ---------------------------------------------------------------------------
+package.json                        @raulkivi
+/package-lock.json                  @raulkivi
+/scripts/                           @raulkivi
+
+# ---------------------------------------------------------------------------
+# Release and publishing of the VS Code extension (Marketplace / Open VSX).
+# ---------------------------------------------------------------------------
+/packages/vscode-extension/package.json   @raulkivi
+/packages/vscode-extension/scripts/       @raulkivi
+
+# ---------------------------------------------------------------------------
+# Code that handles sensitive local data: redaction of captured traffic and
+# tool output, security detectors, and the MCP server exposed to agents.
+# ---------------------------------------------------------------------------
+/packages/server/src/data-sources/log-providers/mitmproxy/   @raulkivi
+/packages/server/src/services/tool-audit/                    @raulkivi
+/packages/server/src/services/insights/                      @raulkivi
+/packages/server/src/mcp/                                    @raulkivi
+
+# Vendored pi extension that is installed into the user's agent setup.
+/packages/pi-system-prompt-logger/  @raulkivi

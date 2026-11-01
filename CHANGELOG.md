@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   and later run through the Agent Host are listed with their turns, tokens and
   AI Credits, beside the classic Copilot Chat sessions. Their prompt and
   response text, tool calls and system prompt aren't read yet.
+- `.github/CODEOWNERS`: every change needs the maintainer's review, and
+  security-sensitive paths (workflows, dependencies, release scripts, agent
+  instructions, redaction and MCP code) are listed explicitly.
 ### Fixed
 - VS Code Agent Host sessions (step 10.13): a session whose `session.db` is
   missing or unreadable stays listed with unknown usage; only chats that were
