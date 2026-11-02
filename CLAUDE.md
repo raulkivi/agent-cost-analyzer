@@ -101,7 +101,7 @@ content here.
   tokens and AI Credits in both products) done; 10.14 (their turn text,
   tool calls and system prompt from the Copilot CLI event log) done;
   owner's manual check passed; 10.15 (cache-write and reasoning tokens for
-  Agent Host sessions) is next. Release prep
+  Agent Host sessions, from the event log's usage records) code done, owner's manual check open. Release prep
   is merged (#90), and publishing setup is done except the Open VSX
   ownership claim; 0.1.0 waits on the manual checks and the owner's
   review before the `ext-v0.1.0` tag. The progress table and per-step
