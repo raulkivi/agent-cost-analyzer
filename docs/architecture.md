@@ -923,8 +923,8 @@ reason, never 0.
 **Marker.** `Session.copilotHarness` is `"agent-host"` on these sessions and
 `"local"` on classic Copilot Chat sessions (§5). The event-log status
 `Session.copilotEventLog` (§6.2.2.2) says whether the log was read. The UI
-and the MCP tools show "not available" only when the log is missing or a
-turn is unmatched. Text and tool-call reasons are set on the turn or the
+and the MCP tools show "not available" only when the log is missing or
+unreadable, or a turn is unmatched. Text and tool-call reasons are set on the turn or the
 audit, with the messages from `services/tool-audit/tool-calls-availability.ts`
 and the web's `lib/agent-host-unavailable.ts`.
 
@@ -962,7 +962,8 @@ warnings become optional (§6.3).
 **Why.** Agent Host sessions keep no text in VS Code's stores (§6.2.2.1).
 The Copilot CLI that runs them writes its own event log. 10.14 reads it,
 read-only, for turn text, tool calls, the inspector rounds and the system
-prompt. Tokens and AI Credits stay from `session.db`.
+prompt. Step 10.15 adds cache-write and reasoning tokens from it. Uncached
+input, cache read, output and AI Credits stay from `session.db`.
 
 **Finding the log.** `<copilotHome>/session-state/<sdkSessionId>/events.jsonl`.
 `copilotHome` is `COPILOT_HOME` when set and non-empty, else `~/.copilot`
@@ -1000,7 +1001,7 @@ is a subagent's prompt, not a turn. A turn's events run from its
 | `permission.completed` | `toolCallId`, `result.kind` (`approved`, `approved-for-location`, `cancelled`, ...) |
 | `abort` | `reason`; a start with no complete in an aborted turn is interrupted |
 | `system.message` | `role: "system"`, `content` (30-60 K characters, XML-like sections), `agentId` when a subagent's |
-| `session.usage_record` | `data.apiCallId` and `data.usage`: `inputTokens` (includes cache reads and writes), `cacheReadTokens`, `cacheWriteTokens`, `reasoningTokens` (a subset of `outputTokens`), `outputTokens`, `cacheDetailsReported`, `copilotUsage.totalNanoAiu`; one per model call, before its `assistant.message` (Copilot CLI 1.0.95 and later; step 10.15) |
+| `session.usage_record` | `data.usage`: `inputTokens` (includes cache reads and writes), `cacheReadTokens`, `cacheWriteTokens`, `reasoningTokens` (a subset of `outputTokens`), `outputTokens`, `cacheDetailsReported`, `apiCallId` (parsed, not used to match); one per model call, before its `assistant.message` (Copilot CLI 1.0.95 and later; step 10.15). `copilotUsage` isn't used: AI Credits stay from `session.db` |
 | `session.shutdown`, `session.compaction_start` | `systemTokens`, `toolDefinitionsTokens`, `conversationTokens` (real counts) |
 | `session.binary_asset` | image payload: shown as a placeholder only |
 

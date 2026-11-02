@@ -146,9 +146,11 @@ header area also holds the **Retention** field described below:
   tokens and AI Credits. Their prompt and response text, turn inspector, tool
   calls and system prompt come from the Copilot CLI's event log, read locally.
   Cache-write and reasoning tokens come from the same log's per-call usage
-  records (Copilot CLI 1.0.95 and later); older logs have none, so those turns
-  show them as unavailable, with the reason. The Tools tab stays unavailable,
-  since the log records no tool definitions.
+  records (Copilot CLI 1.0.95 and later). They're used only when the records
+  add up to the turn's token totals; otherwise both show as unknown, with the
+  reason. Tool and vision tokens stay unknown. The Tools tab stays
+  unavailable, since the log records no tool definitions. Agent Host
+  sessions need none of the settings below.
 - **mitmproxy (HAR capture)** — reads a local mitmproxy HAR capture instead,
   for Anthropic/OpenAI API traffic recorded outside VS Code. See
   [mitmproxy-setup.md](mitmproxy-setup.md) for how to record a capture. A
@@ -179,9 +181,11 @@ data isn't currently reachable (e.g. no capture file found yet).
 ### Enabling full per-turn numbers
 
 By default, VS Code's Copilot Chat debug log doesn't record token/cache
-usage, so Analyze mode's numbers are limited until you turn on a setting.
-The app checks this automatically and shows a banner explaining exactly
-what's missing and how to fix it:
+usage, so Analyze mode's numbers for Local harness chats are limited until
+you turn on a setting. The app checks this automatically and shows a
+banner explaining exactly what's missing and how to fix it. Once VS Code
+has an Agent Host store (`agent-host.db`), these warnings are optional and
+say they only affect Local harness chats:
 
 ![The config warning banner: exact setting name, current vs. recommended value, and numbered fix steps](images/guide-config-banner.png)
 

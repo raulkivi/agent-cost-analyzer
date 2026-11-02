@@ -86,8 +86,10 @@ change it describes:
 
 ### Turning on debug logging
 
-Copilot Chat writes token and AI Credits usage only while its debug file
-logging is on. It's off by default.
+For chats run with the Local harness, Copilot Chat writes token and AI
+Credits usage only while its debug file logging is on. It's off by default.
+Agent Host chats don't need it (see
+[Agent Host sessions](#agent-host-sessions-vs-code-1143-and-later)).
 
 1. Open the **Setup** view in the AI Credits Analyzer side bar, or the
    walkthrough's first step.
@@ -117,19 +119,24 @@ logging settings above.
   prompt come from the Copilot CLI's event log, which the extension reads
   locally. The log is in `<COPILOT_HOME or ~/.copilot>/session-state/`, and
   the panel reads it only when you open a session.
+- Uncached input, cache read, output and AI Credits come from the Agent
+  Host's own per-session database.
 - Cache-write and reasoning tokens come from the same log's per-call usage
-  records, so they need Copilot CLI 1.0.95 or later. A turn without records,
-  or whose records don't add up to the session's totals, shows them as not
-  available, with the reason. No setting is needed for them.
-- A session whose log is missing or unreadable shows those figures as not
-  available, with the reason, and it stays out of the tool audit counts.
+  records, so they need Copilot CLI 1.0.95 or later. They're used only when
+  the records add up to the turn's token totals; otherwise both show as
+  unknown, with the reason. No setting is needed for them.
+- Tool and vision tokens stay unknown.
+- A session whose log is missing or unreadable shows its text, tool calls
+  and system prompt as not available, and its cache-write and reasoning
+  tokens as unknown, with the reason. It stays out of the tool audit counts.
 - The Tools tab stays unavailable, since the Copilot CLI's log records no tool
   definitions.
 - A chat that was opened but never sent has no turns, so it isn't listed.
 - Sessions from the Local harness (the classic Copilot Chat store) and
   Agent Host sessions are listed together, newest first.
-- The Setup view marks the two logging settings **Optional** while Agent
-  Host sessions exist. Their message reads "Only affects chats run with the
+- The Setup view marks the two logging settings **Optional** once VS Code
+  has an Agent Host store (`User/globalStorage/agent-host.db`). Their
+  message reads "Only affects chats run with the
   Local harness; Agent Host chats are unaffected."
 
 ## The analyzer panel
@@ -254,6 +261,9 @@ the same checks:
 | Debug logging is off | Required | `github.copilot.chat.agentDebugLog.fileLogging.enabled` | Turn it on. Panel button: **Enable** |
 | Too few sessions kept | Required | `github.copilot.chat.agentDebugLog.fileLogging.maxRetainedSessionLogs` | Set it to at least the **Retention** value (200 by default; Copilot Chat's default is 50). Panel button: **Change** |
 | Cache-write and reasoning tokens unavailable | Optional | `github.copilot.chat.otel.dbSpanExporter.enabled` | Turn it on for two more per-turn figures in Local harness chats. Agent Host chats don't need it. Panel button: **Enable** |
+
+Once VS Code has an Agent Host store, the debug-logging and retention rows
+are Optional, since they only affect chats run with the Local harness.
 
 After a change, reload the window. Only sessions started afterwards get
 the new data.
@@ -479,11 +489,15 @@ effective value.
 "Unknown" means the log doesn't contain that figure. It's never counted
 as 0. Common reasons:
 
-- the session was recorded before debug logging was on;
-- Copilot Chat deleted the session's debug log (raise
-  `github.copilot.chat.agentDebugLog.fileLogging.maxRetainedSessionLogs`);
+- for Local harness chats, the session was recorded before debug logging
+  was on;
+- for Local harness chats, Copilot Chat deleted the session's debug log
+  (raise `github.copilot.chat.agentDebugLog.fileLogging.maxRetainedSessionLogs`);
 - for Local harness chats, cache-write and reasoning tokens need the optional
-  `github.copilot.chat.otel.dbSpanExporter.enabled` setting.
+  `github.copilot.chat.otel.dbSpanExporter.enabled` setting;
+- for Agent Host chats, cache-write and reasoning tokens need per-call usage
+  records (Copilot CLI 1.0.95 and later) that add up to the turn's totals,
+  and tool and vision tokens are never recorded.
 
 Totals add up only known costs and say how many are unknown, so you can
 tell when a total leaves sessions out.
