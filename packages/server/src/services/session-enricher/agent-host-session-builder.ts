@@ -23,6 +23,7 @@ import {
   type AgentHostTurnContent,
 } from "./agent-host-turn-content-builder.js";
 import { buildAgentHostTurnInspector } from "./agent-host-turn-inspector-builder.js";
+import { buildAgentHostTurnTokenDetail, type AgentHostTurnTokenDetail } from "./agent-host-turn-token-detail-builder.js";
 import { segmentCopilotTurns, TURN_EVENT_NOT_FOUND_REASON, type SegmentedTurn } from "./copilot-turn-segmenter.js";
 import { buildAnalyzeExplanation, fallbackSessionTitle, UNKNOWN_MODEL } from "./session-enricher.js";
 
@@ -32,8 +33,8 @@ import { buildAnalyzeExplanation, fallbackSessionTitle, UNKNOWN_MODEL } from "./
 // text, tool calls and the system prompt from the Copilot CLI event log.
 // Pure: the readers in data-sources/agent-host/ do the I/O.
 
-export const AGENT_HOST_FIELD_NOT_RECORDED_REASON =
-  "VS Code's Agent Host doesn't record this token count (only input, cached input and output tokens per turn).";
+// Tool and vision only: cache write and reasoning come from the event log.
+export const AGENT_HOST_FIELD_NOT_RECORDED_REASON = "VS Code's Agent Host doesn't record this token count.";
 export const AGENT_HOST_TURN_TOKENS_UNAVAILABLE_REASON =
   "VS Code's Agent Host recorded no token totals for this turn.";
 export const AGENT_HOST_TURN_COST_UNAVAILABLE_REASON =
@@ -45,6 +46,8 @@ export const AGENT_HOST_SESSION_DB_MISSING_REASON =
   "This session's Agent Host database (agentSessionData/<session>/session.db) is missing or unreadable, so its turns and usage are unknown.";
 // Only when the event log wasn't opened (a list summary's turns); a read,
 // missing or unreadable log explains itself.
+export const AGENT_HOST_USAGE_RECORDS_NOT_READ_REASON =
+  "This Agent Host session's Copilot CLI event log wasn't read, so this turn's cache-write and reasoning tokens are unknown.";
 export const AGENT_HOST_TURN_TEXT_UNAVAILABLE_NOTE =
   "This Agent Host session's Copilot CLI event log wasn't read, so this turn shows only its tokens and AI Credits.";
 
@@ -57,7 +60,7 @@ export interface AgentHostSessionStoreContents {
 
 // Every event type the builders above read. The source parses only these,
 // which drops the bulk of a log (permission.requested lines reach 500 KB,
-// hook.*, model.*, session.usage_record), so cached logs stay small. A
+// hook.*, model.*), so cached logs stay small. A
 // builder that starts reading another type must add it here.
 const EVENT_TYPES_USED = new Set([
   "user.message",
@@ -71,6 +74,7 @@ const EVENT_TYPES_USED = new Set([
   "session.shutdown",
   "session.compaction_start",
   "session.binary_asset",
+  "session.usage_record",
 ]);
 
 export function isAgentHostEventTypeUsed(type: string): boolean {
@@ -95,19 +99,24 @@ function known(value: number): TokenCount {
   return { known: true, value };
 }
 
-export function buildAgentHostTurnUsage(usage: AgentHostTurnUsage | null): TurnUsage {
+// detail comes from the event log's usage records; without it (the log wasn't
+// read) cache write and reasoning are unknown.
+export function buildAgentHostTurnUsage(usage: AgentHostTurnUsage | null, detail?: AgentHostTurnTokenDetail): TurnUsage {
   const notRecorded = unavailableTokenCount(AGENT_HOST_FIELD_NOT_RECORDED_REASON);
+  const notRead = unavailableTokenCount(AGENT_HOST_USAGE_RECORDS_NOT_READ_REASON);
+  const cacheWrite = detail?.cacheWrite ?? notRead;
   const noTokens = unavailableTokenCount(AGENT_HOST_TURN_TOKENS_UNAVAILABLE_REASON);
   const tokens = usage?.tokens ?? null;
   const nanoAiu = usage?.nanoAiu ?? null;
   return {
-    // The Agent Host's input count includes the cache hits.
-    uncachedInput: tokens ? known(Math.max(tokens.input - tokens.cached, 0)) : noTokens,
-    cacheWrite: notRecorded,
+    // The Agent Host's input count includes the cache hits and, when known,
+    // the cache writes, so the three input parts still sum to it.
+    uncachedInput: tokens ? known(Math.max(tokens.input - tokens.cached - (cacheWrite.known ? cacheWrite.value : 0), 0)) : noTokens,
+    cacheWrite,
     cacheRead: tokens ? known(tokens.cached) : noTokens,
     tool: notRecorded,
     vision: notRecorded,
-    reasoning: notRecorded,
+    reasoning: detail?.reasoning ?? notRead,
     output: tokens ? known(tokens.output) : noTokens,
     costAiCredits:
       nanoAiu === null ? unavailableTokenCount(AGENT_HOST_TURN_COST_UNAVAILABLE_REASON) : known(nanoAiuToAiCredits(nanoAiu)),
@@ -118,8 +127,24 @@ export function buildAgentHostTurnUsage(usage: AgentHostTurnUsage | null): TurnU
 // How each turn's text and tool calls were found: from the log, unknown for
 // a stated reason, or not looked up at all.
 type TurnContentSource =
-  | { kind: "content"; content: AgentHostTurnContent }
-  | { kind: "unavailable"; note: string };
+  // turn is the segmentation the content came from, reused for the token detail.
+  | { kind: "content"; content: AgentHostTurnContent; turn: SegmentedTurn }
+  // note explains the missing text; usageReason, the missing usage records.
+  | { kind: "unavailable"; note: string; usageReason: string };
+
+function unknownTokenDetail(reason: string): AgentHostTurnTokenDetail {
+  return { cacheWrite: unavailableTokenCount(reason), reasoning: unavailableTokenCount(reason) };
+}
+
+function turnTokenDetail(row: AgentHostTurnRow, source: TurnContentSource): AgentHostTurnTokenDetail {
+  if (source.kind === "unavailable") {
+    return unknownTokenDetail(source.usageReason);
+  }
+  if (!source.turn.matched) {
+    return unknownTokenDetail(source.turn.reason);
+  }
+  return buildAgentHostTurnTokenDetail(source.turn.events, row.usage?.tokens ?? null);
+}
 
 function buildExplanation(row: AgentHostTurnRow, usage: TurnUsage, note: string | undefined): string {
   const tokens = row.usage?.tokens ? buildAnalyzeExplanation(usage) : AGENT_HOST_TURN_TOKENS_UNAVAILABLE_REASON;
@@ -127,7 +152,7 @@ function buildExplanation(row: AgentHostTurnRow, usage: TurnUsage, note: string 
 }
 
 function buildTurn(row: AgentHostTurnRow, index: number, source: TurnContentSource): Turn {
-  const usage = buildAgentHostTurnUsage(row.usage);
+  const usage = buildAgentHostTurnUsage(row.usage, turnTokenDetail(row, source));
   if (source.kind === "unavailable") {
     return { index, userMessage: "", assistantResponse: "", toolCalls: [], usage, explanation: buildExplanation(row, usage, source.note) };
   }
@@ -153,10 +178,14 @@ function segmentedTurnsById(log: Extract<AgentHostEventLog, { status: "read" }>)
 
 function turnContentSources(rows: AgentHostTurnRow[], eventLog: AgentHostEventLog | undefined): TurnContentSource[] {
   if (eventLog === undefined) {
-    return rows.map(() => ({ kind: "unavailable", note: AGENT_HOST_TURN_TEXT_UNAVAILABLE_NOTE }));
+    return rows.map(() => ({
+      kind: "unavailable",
+      note: AGENT_HOST_TURN_TEXT_UNAVAILABLE_NOTE,
+      usageReason: AGENT_HOST_USAGE_RECORDS_NOT_READ_REASON,
+    }));
   }
   if (eventLog.status !== "read") {
-    return rows.map(() => ({ kind: "unavailable", note: eventLog.reason }));
+    return rows.map(() => ({ kind: "unavailable", note: eventLog.reason, usageReason: eventLog.reason }));
   }
   const segmented = segmentedTurnsById(eventLog);
   // Over the whole log: a steering message splits a turn, so a call can
@@ -165,7 +194,7 @@ function turnContentSources(rows: AgentHostTurnRow[], eventLog: AgentHostEventLo
   return rows.map((row) => {
     const turn = segmented.get(row.turnId) ?? { turnId: row.turnId, matched: false, reason: TURN_EVENT_NOT_FOUND_REASON };
     const content = turn.matched ? buildAgentHostTurnContent(turn, { outcomes }) : buildUnmatchedAgentHostTurnContent(turn);
-    return { kind: "content", content };
+    return { kind: "content", content, turn };
   });
 }
 
