@@ -13,16 +13,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - VS Code Agent Host turn text, tool calls and system prompt (step 10.14):
   prompt and response text, turn inspector rounds, tool calls with outcomes
   and the system prompt come from the Copilot CLI's event log
-  (`<COPILOT_HOME or ~/.copilot>/session-state/<session>/events.jsonl`), read
+  (`<COPILOT_HOME or ~/.copilot>/session-state/<sdkSessionId>/events.jsonl`), read
   locally. Tool calls then count in the tool audit and rollups. A session
   whose log is missing or unreadable shows these as unavailable, with the
   reason, and stays out of the audit counts. The Tools tab stays unavailable,
   since the log records no tool definitions.
 - VS Code Agent Host cache-write and reasoning tokens (step 10.15): per turn,
   from the Copilot CLI's per-call usage records in its event log (Copilot CLI
-  1.0.95 and later). Uncached input, cache write and cache read add up to the
-  input total. A turn whose records are missing or don't add up to its
-  session totals shows them as unavailable, with the reason.
+  1.0.95 and later). The records are used only when they add up to the
+  turn's token totals in `session.db`; otherwise both figures are unknown,
+  with the reason. Uncached input, cache write and cache read still add up
+  to `session.db`'s input total.
 - `.github/CODEOWNERS`: every change needs the maintainer's review, and
   security-sensitive paths (workflows, dependencies, release scripts, agent
   instructions, redaction and MCP code) are listed explicitly.

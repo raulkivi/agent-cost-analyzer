@@ -54,8 +54,9 @@ An unknown figure is shown as unknown, never as 0.
 2. The **Get Started** walkthrough opens once. It walks you through the
    steps below. Reopen it any time with **AI Credits Analyzer: Open Get
    Started Walkthrough**.
-3. Turn on Copilot Chat's debug file logging. Copilot Chat records token
-   and AI Credits data only while it's on, and it's off by default.
+3. Turn on Copilot Chat's debug file logging. Chats run with the Local
+   harness record token and AI Credits data only while it's on, and it's
+   off by default. Agent Host chats (below) don't need it.
    1. Open the **Setup** view in the AI Credits Analyzer side bar and
       select **Fix** on the debug-logging row. It opens
       `github.copilot.chat.agentDebugLog.fileLogging.enabled` in
@@ -75,13 +76,14 @@ and those run through the Agent Host. Their sessions are listed with their
 tokens and AI Credits. Their prompt and response text, turn inspector, tool
 calls and system prompt come from the Copilot CLI's event log, read locally.
 Cache-write and reasoning tokens come from the same log's per-call usage
-records, which Copilot CLI 1.0.95 and later write. A turn without records, or
-whose records don't add up to the session's totals, shows them as not
-available, with the reason.
+records, which Copilot CLI 1.0.95 and later write. They're used only when the
+records add up to the turn's token totals; otherwise both show as unknown,
+with the reason. Tool and vision tokens stay unknown.
 The Tools tab stays unavailable, since the log records no tool definitions.
-If a session's log is missing, the panel shows those as not available, with
-the reason.
-When Agent Host sessions exist, Setup marks the two logging settings
+If a session's log is missing or unreadable, its text, tool calls and
+system prompt show as not available, and its cache-write and reasoning
+tokens as unknown, with the reason.
+Once VS Code has an Agent Host store, Setup marks the two logging settings
 optional: "Only affects chats run with the Local harness; Agent Host chats
 are unaffected."
 
@@ -130,7 +132,8 @@ All commands are in the **AI Credits Analyzer** category.
 
 - VS Code 1.143 or later. Each release of the extension requires the VS
   Code version that was stable when it was published.
-- GitHub Copilot Chat, with debug file logging turned on (see above).
+- GitHub Copilot Chat. Chats run with the Local harness also need debug
+  file logging turned on (see above).
 
 ## Documentation
 

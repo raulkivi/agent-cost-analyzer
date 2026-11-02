@@ -17,13 +17,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Agent Host turn text and tool calls.** Prompt and response text, the turn
   inspector, tool calls with outcomes and the system prompt for these chats
   come from the Copilot CLI's event log, read locally. A session whose log is
-  missing shows these as not available, with the reason. The Tools tab stays
+  missing or unreadable shows these as not available, with the reason. The Tools tab stays
   unavailable, since the log records no tool definitions.
 - **Agent Host cache-write and reasoning tokens.** For chats from the default
   harness, the Cache write and Reasoning columns come from the Copilot CLI's
-  per-call usage records (Copilot CLI 1.0.95 and later). A turn without
-  records, or whose records don't add up to the session's totals, shows them
-  as not available, with the reason. The optional
+  per-call usage records (Copilot CLI 1.0.95 and later). They're used only
+  when the records add up to the turn's token totals; otherwise both show as
+  unknown, with the reason. The optional
   `github.copilot.chat.otel.dbSpanExporter.enabled` setting doesn't apply to
   these chats.
 - The MCP server shows as AI Credits Analyzer, with its author, a link

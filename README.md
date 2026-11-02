@@ -117,8 +117,8 @@ Set up and run the Agent Cost Analyzer:
    (127.0.0.1:3001) and web app (127.0.0.1:5173); open the web app URL
    when both are up.
 4. Check `GET /api/config/status` and report any config warnings.
-5. If Analyze mode needs full per-turn token/cache numbers, add to VS
-   Code's user settings.json and reload the window:
+5. If Analyze mode needs full per-turn token/cache numbers for Local
+   harness chats, add to VS Code's user settings.json and reload the window:
    "github.copilot.chat.agentDebugLog.fileLogging.enabled": true,
    "github.copilot.chat.agentDebugLog.fileLogging.maxRetainedSessionLogs": 200,
    "github.copilot.chat.otel.dbSpanExporter.enabled": true (optional, adds
@@ -209,13 +209,17 @@ runtime, never hardcoded:
   - **Agent Host sessions** (VS Code 1.143 and later, where the Copilot
     harness is the default) come from `globalStorage/agent-host.db` and
     `agentSessionData/<session>/session.db` in the same user-data folder.
-    They show turns, tokens and AI Credits. Their prompt and response text,
-    turn inspector, tool calls and system prompt come from the Copilot CLI's
-    event log, `<COPILOT_HOME or ~/.copilot>/session-state/<session>/events.jsonl`,
-    read locally. Cache-write and reasoning tokens come from the log's
-    per-call usage records (Copilot CLI 1.0.95 and later), not from
-    `agent-traces.db`. The Tools tab stays unavailable, since the log records
-    no tool definitions.
+    `session.db` gives each turn's uncached input, cache read, output and AI
+    Credits. Prompt and response text, the turn inspector, tool calls and the
+    system prompt come from the Copilot CLI's event log,
+    `<COPILOT_HOME or ~/.copilot>/session-state/<sdkSessionId>/events.jsonl`,
+    read locally when a session is opened. Cache-write and reasoning tokens
+    come from the log's per-call usage records (Copilot CLI 1.0.95 and later),
+    not from `agent-traces.db`. They're used only when the records add up to
+    the turn's token totals in `session.db`; otherwise they're unknown, with
+    the reason. Tool and vision tokens stay unknown. The Tools tab stays
+    unavailable, since the log records no tool definitions. These sessions
+    need none of the settings below.
   - macOS and Windows paths are implemented but not yet verified against a
     real install. Multi-profile VS Code setups are not supported on any OS
     (see [architecture.md](docs/architecture.md)).
@@ -288,8 +292,10 @@ Only *future* sessions started after this reload will have full token/cache
 detail — logging is not retroactive. The app checks this automatically on
 startup: if the setting is missing, off, or the retention is too low, a
 warning banner explains exactly what to fix and where (see
-`GET /api/config/status`). Sessions recorded before enabling it still show
-up in Analyze mode, just without per-token figures.
+`GET /api/config/status`). When `agent-host.db` exists, these two warnings
+are optional instead, since they only affect chats run with the Local
+harness. Sessions recorded before enabling it still show up in Analyze
+mode, just without per-token figures.
 
 ## Enabling richer cache-write/reasoning numbers (optional)
 
