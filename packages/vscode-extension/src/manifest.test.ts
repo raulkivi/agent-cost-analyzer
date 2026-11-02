@@ -367,6 +367,17 @@ describe("Get Started walkthrough (vscode-extension.md §3.5 Onboarding, §3.6 b
     }
   });
 
+  it("says debug logging matters for Local harness chats only, in the walkthrough and the Setup welcome", () => {
+    const step = text(steps[0]?.description);
+    const setup = text((contributes.viewsWelcome ?? []).find((entry) => entry.view === VIEW_IDS.setup)?.contents);
+
+    for (const copy of [step, setup]) {
+      expect(copy).toContain("Local harness");
+      expect(copy).toContain("Agent Host");
+    }
+    expect(step).not.toContain("only records token");
+  });
+
   it("links, from its steps, only to contributed commands", () => {
     const links = steps.flatMap((step) => commandLinks(text(step.description)));
 

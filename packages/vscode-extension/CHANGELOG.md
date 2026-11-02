@@ -37,6 +37,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Sessions order.** Sessions from the classic and Agent Host stores are
   listed together, newest start first.
 
+### Fixed
+
+- The Setup view and the first walkthrough step no longer say Copilot Chat
+  debug logging is needed for token data. It matters only for Local harness
+  chats; Agent Host chats (the VS Code default) need no setting.
+
 ## [0.1.0]
 
 The first release.
