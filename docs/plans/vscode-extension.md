@@ -25,7 +25,7 @@ Progress (2026-10-28):
 | 10.11 | UX review for VS Code: panel fits any width, readable in light, dark and High Contrast, native look, automated UI check | Done (#77) |
 | 10.12 | Learn scenarios in the side bar (a Learn view), like the Sessions view; the panel has no list of its own | Done (#80) |
 | 10.13 | Agent Host sessions: read the sessions VS Code 1.143+ creates by default (manual check 1.4) | Done (`20c880b`–`756a26c`); manual check 1.4 passes with the default harness |
-| 10.14 | Agent Host turn text, tool calls and system prompt from the Copilot CLI event log (`~/.copilot/session-state/<sdkSessionId>/events.jsonl`) | Code done (`2f302b0`–`3911119`, docs commit); owner's manual check (task 11) open |
+| 10.14 | Agent Host turn text, tool calls and system prompt from the Copilot CLI event log (`~/.copilot/session-state/<sdkSessionId>/events.jsonl`) | Code done (`2f302b0`–`3911119`, docs commit); owner's manual check (task 11) passed 2026-11-02 |
 | 10.15 | Cache-write and reasoning tokens for Agent Host sessions from `session.usage_record` | Planned |
 
 
@@ -1377,7 +1377,7 @@ products get it.
 
 **Status (2026-10-29): code done (commits `2f302b0`–`3911119` and the docs
 commit `docs: Agent Host turn text, tool calls and system prompt (step
-10.14)`); owner's manual check (task 11) open.**
+10.14)`); owner's manual check (task 11) passed.**
 
 **Storage seen on this machine** (Insiders 1.145, Copilot CLI 0.0.0 to
 1.0.103; surveyed 2026-10-29 with read-only copies, to be pinned by the
