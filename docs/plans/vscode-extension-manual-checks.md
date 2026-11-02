@@ -85,8 +85,26 @@ in the docs). Findings that need a code fix also go in the run log below.
   the sum of the event log's usage records (196,786) and `get_session_cost`
   over stdio; an older session showed both as "—" with the "no per-call
   usage records" reason. The Dashboard's input totals weren't read.
-- **Not yet run:** 1.5-1.12, §2 in Copilot agent mode (the server itself
-  answered over stdio, 9 tools) and §3.
+- **1.5, 1.6, 1.7, 1.9 in Chrome only (2026-11-03):** run against the
+  standalone app at `localhost:5173`, not in VS Code, so they stay open
+  for VS Code.
+  - 1.5: the 52-turn session rendered all 53 rows in 174 ms; selecting a
+    turn updated the Explanation in 38 ms; no horizontal overflow.
+  - 1.6: the Dashboard shows Cancel while loading; Cancel gives "Loading
+    cancelled" with Retry, and Retry loads it. The all-provider load took
+    about 30 s with partial data (Claude Code CLI limited to its 200 most
+    recent sessions).
+  - 1.7: all 348 focusable elements show a visible focus style; Enter
+    opens the column chooser, Escape closes it and returns focus to
+    Columns; "View as table" is an inline toggle (`aria-pressed`) that
+    Escape leaves on. The full Tab order and the system prompt diagram's
+    arrow keys weren't tested.
+  - 1.9: at 640 px the sessions list stacks above the panel with no
+    horizontal overflow; Columns is replaced by Details. Chrome's minimum
+    width is 500 px, so 360 px wasn't tested.
+- **Not yet run:** 1.5-1.7 and 1.9 in VS Code; 1.8, 1.10-1.13 (1.12
+  last); §2.1-2.6 in Copilot agent mode (the server itself answered over
+  stdio, 9 tools); §3.
 
 ## 0. Install the candidate
 
