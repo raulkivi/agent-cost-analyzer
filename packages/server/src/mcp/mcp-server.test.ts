@@ -345,7 +345,11 @@ describe("MCP server, Agent Host sessions", () => {
   let client: Client;
 
   beforeEach(async () => {
-    const agentHost = { ...session("ah", "2026-09-28T08:00:00.000Z", [[]]), copilotHarness: "agent-host" as const };
+    const agentHost = {
+      ...session("ah", "2026-09-28T08:00:00.000Z", [[]]),
+      copilotHarness: "agent-host" as const,
+      copilotEventLog: { status: "missing" as const, reason: "No Copilot CLI event log was found for this session." },
+    };
     const provider = new FakeProvider("fake", [agentHost]);
     const providers = lookup(provider);
     const insights = new InsightsService({ listProviders: () => [provider] }, []);
@@ -381,14 +385,14 @@ describe("MCP server, Agent Host sessions", () => {
     };
 
     expect(calls.total).toBe(0);
-    expect(calls.toolCallsUnavailableReason).toMatch(/Agent Host/);
-    expect(audit.toolCallsUnavailableReason).toMatch(/Agent Host/);
+    expect(calls.toolCallsUnavailableReason).toMatch(/Copilot CLI event log/);
+    expect(audit.toolCallsUnavailableReason).toMatch(/Copilot CLI event log/);
   });
 
   it("get_turn says the turn's text and tool calls are unavailable", async () => {
     const view = turnViewSchema.parse(jsonOf(await client.callTool({ name: "get_turn", arguments: { sessionId: "ah", turnIndex: 0 } })));
 
-    expect(view.textUnavailableReason).toMatch(/Agent Host/);
-    expect(view.toolCallsUnavailableReason).toMatch(/Agent Host/);
+    expect(view.textUnavailableReason).toMatch(/Copilot CLI event log/);
+    expect(view.toolCallsUnavailableReason).toMatch(/Copilot CLI event log/);
   });
 });

@@ -28,6 +28,7 @@ describe("createShowcaseFixture", () => {
   function apiOver(userDataDir: string) {
     return createExtensionApiService({
       ...copilotLogPathsFromUserDataDir(userDataDir),
+      copilotHome: null,
       appSettings: new InMemoryAppSettingsStore(),
       learnScenariosFixturesDir,
       appVersion: "0.0.0-test",

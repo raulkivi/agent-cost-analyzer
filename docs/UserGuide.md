@@ -143,8 +143,9 @@ header area also holds the **Retention** field described below:
   local VS Code Copilot Chat session store (SQLite + debug logs), as
   described below. From VS Code 1.143, new chats run through the default
   Copilot harness and its Agent Host; those sessions are listed with their
-  tokens and AI Credits. Their prompt and response text, tool calls and
-  system prompt aren't available yet.
+  tokens and AI Credits. Their prompt and response text, turn inspector, tool
+  calls and system prompt come from the Copilot CLI's event log, read locally.
+  The Tools tab stays unavailable, since the log records no tool definitions.
 - **mitmproxy (HAR capture)** — reads a local mitmproxy HAR capture instead,
   for Anthropic/OpenAI API traffic recorded outside VS Code. See
   [mitmproxy-setup.md](mitmproxy-setup.md) for how to record a capture. A

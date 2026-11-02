@@ -362,6 +362,7 @@ describe("SidebarController over VS Code Agent Host sessions", () => {
     writeAgentSessionDb(userDataDir, AGENT_HOST_FIXTURE_SESSION_IDS.second, sessionRowsWithUsageOnly());
     const api = createExtensionApiService({
       ...copilotLogPathsFromUserDataDir(userDataDir),
+      copilotHome: null,
       appSettings: new InMemoryAppSettingsStore(),
       learnScenariosFixturesDir: path.resolve(import.meta.dirname, "../../../server/fixtures/learn-scenarios"),
       appVersion: "0.1.0-test",

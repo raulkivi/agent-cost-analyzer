@@ -1,5 +1,8 @@
-import type { CopilotHarness, SystemPromptComponent, TokenCount } from "@agent-cost-analyzer/domain";
-import { AGENT_HOST_SYSTEM_PROMPT_UNAVAILABLE } from "../lib/agent-host-unavailable.js";
+import type {
+  SystemPromptComponent,
+  TokenCount,
+} from "@agent-cost-analyzer/domain";
+import { AGENT_HOST_NO_SYSTEM_PROMPT } from "../lib/agent-host-unavailable.js";
 import { Blueprint } from "./ui/Blueprint.js";
 
 const ESTIMATED_TOOLTIP =
@@ -20,20 +23,45 @@ function barWidthPercent(tokenCount: TokenCount, maxValue: number): number {
 interface SystemPromptBreakdownProps {
   components: SystemPromptComponent[];
   providerId?: string;
-  copilotHarness?: CopilotHarness;
+  unavailableReason?: string;
+  eventLogRead?: boolean; // Agent Host session whose event log was read
   onOpenInspector?: () => void;
 }
 
-export function SystemPromptBreakdown({ components, providerId, copilotHarness, onOpenInspector }: SystemPromptBreakdownProps) {
+export function SystemPromptBreakdown({
+  components,
+  providerId,
+  unavailableReason,
+  eventLogRead,
+  onOpenInspector,
+}: SystemPromptBreakdownProps) {
   const maxValue = Math.max(
     0,
-    ...components.map((component) => (component.tokenCount.known ? component.tokenCount.value : 0)),
+    ...components.map((component) =>
+      component.tokenCount.known ? component.tokenCount.value : 0,
+    ),
   );
-  const hasBuiltIn = components.some((component) => component.kind === "built-in");
+  const hasBuiltIn = components.some(
+    (component) => component.kind === "built-in",
+  );
 
   return (
-    <Blueprint style={{ padding: "var(--space-3)", display: "flex", flexDirection: "column", gap: "var(--space-3)" }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "var(--space-2)" }}>
+    <Blueprint
+      style={{
+        padding: "var(--space-3)",
+        display: "flex",
+        flexDirection: "column",
+        gap: "var(--space-3)",
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: "var(--space-2)",
+        }}
+      >
         <div className="card-kicker">System prompt breakdown</div>
         {onOpenInspector && (hasBuiltIn || providerId === "pi-agent") && (
           <button
@@ -48,29 +76,45 @@ export function SystemPromptBreakdown({ components, providerId, copilotHarness, 
       </div>
       {components.length === 0 ? (
         <p className="text-muted" style={{ fontSize: 13, margin: 0 }}>
-          {copilotHarness === "agent-host"
-            ? AGENT_HOST_SYSTEM_PROMPT_UNAVAILABLE
-            : providerId === "pi-agent"
-            ? "No system prompt captured for this session yet — open the system prompt inspector for how to enable it."
-            : providerId && providerId !== "vscode"
-              ? "This provider does not capture a system-prompt artifact, so no breakdown is available."
-              : "No prompt artifacts captured for this session — enable agentDebugLog.fileLogging.enabled and reload VS Code."}
+          {unavailableReason ??
+            (eventLogRead
+              ? AGENT_HOST_NO_SYSTEM_PROMPT
+              : providerId === "pi-agent"
+                ? "No system prompt captured for this session yet — open the system prompt inspector for how to enable it."
+                : providerId && providerId !== "vscode"
+                  ? "This provider does not capture a system-prompt artifact, so no breakdown is available."
+                  : "No prompt artifacts captured for this session — enable agentDebugLog.fileLogging.enabled and reload VS Code.")}
         </p>
       ) : (
         components.map((component) => (
           <div key={`${component.kind}-${component.label}`}>
-            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginBottom: 3 }}>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                fontSize: 12,
+                marginBottom: 3,
+              }}
+            >
               <span>{component.label}</span>
               <span
                 className="text-muted"
                 title={
-                  component.tokenCount.known && component.tokenCount.estimated ? ESTIMATED_TOOLTIP : undefined
+                  component.tokenCount.known && component.tokenCount.estimated
+                    ? ESTIMATED_TOOLTIP
+                    : undefined
                 }
               >
                 {formatTokenCount(component.tokenCount)}
               </span>
             </div>
-            <div style={{ height: 5, background: "var(--color-surface)", border: "1px solid var(--color-divider)" }}>
+            <div
+              style={{
+                height: 5,
+                background: "var(--color-surface)",
+                border: "1px solid var(--color-divider)",
+              }}
+            >
               <div
                 data-testid={`prompt-bar-fill-${component.label}`}
                 style={{

@@ -13,8 +13,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Agent Host sessions.** Chats from VS Code's default Copilot harness
   (VS Code 1.143 and later) are listed in the Sessions view with their turns,
-  tokens and AI Credits. Their prompt and response text, tool calls and system
-  prompt aren't available yet, and the panel says so.
+  tokens and AI Credits.
+- **Agent Host turn text and tool calls.** Prompt and response text, the turn
+  inspector, tool calls with outcomes and the system prompt for these chats
+  come from the Copilot CLI's event log, read locally. A session whose log is
+  missing shows these as not available, with the reason. The Tools tab stays
+  unavailable, since the log records no tool definitions.
 - The MCP server shows as AI Credits Analyzer, with its author, a link
   to the GitHub repo and the extension's icon, in clients that display
   them.

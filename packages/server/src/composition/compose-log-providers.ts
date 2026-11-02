@@ -14,6 +14,8 @@ export interface LogProviderCompositionOptions {
   vscodeSettingsPath?: string | null;
   agentTracesDbPath?: string | null;
   agentHostUserDataDir?: string | null;
+  // Omitted, resolved as the Copilot CLI does (see VscodeProviderPaths).
+  copilotHome?: string | null;
   appSettingsDir?: string;
   mitmproxyCapturesDirPath?: string | null;
   piAgentSessionsDirPath?: string | null;

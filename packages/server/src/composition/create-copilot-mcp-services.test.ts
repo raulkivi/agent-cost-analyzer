@@ -62,6 +62,7 @@ describe("createCopilotMcpServices (the extension's MCP server, vscode-extension
         debugLogsDirPaths: [debugLogsDir],
         agentTracesDbPath: null,
         agentHostUserDataDir: null,
+        copilotHome: null,
         appVersion: "0.1.0-test",
       }),
     );

@@ -1,0 +1,202 @@
+{
+  "sdkSessionIds": {
+    "normal": "5d1a0001-aaaa-4bbb-8ccc-000000000001",
+    "steeringAbortSubagent": "5d1a0002-aaaa-4bbb-8ccc-000000000002",
+    "systemPromptReemit": "5d1a0003-aaaa-4bbb-8ccc-000000000003",
+    "malformed": "5d1a0004-aaaa-4bbb-8ccc-000000000004",
+    "missingLog": "5d1a0005-aaaa-4bbb-8ccc-000000000005"
+  },
+  "chats_v2": [
+    {
+      "chat_uri": "ahp-chat://default/chat1-0",
+      "owner_session_uri": "copilotcli:/9a1b2c3d-5555-4e6f-8a07-000000000001",
+      "chat_order": 0,
+      "provider_data": "{\"sdkSessionId\": \"5d1a0001-aaaa-4bbb-8ccc-000000000001\", \"model\": {\"id\": \"claude-sonnet-5\", \"config\": {\"thinkingLevel\": \"high\", \"contextSize\": 936000}}}",
+      "metadata": "{}",
+      "metadata_hash": "h"
+    },
+    {
+      "chat_uri": "ahp-chat://default/chat2-0",
+      "owner_session_uri": "copilotcli:/9a1b2c3d-5555-4e6f-8a07-000000000002",
+      "chat_order": 0,
+      "provider_data": "{\"sdkSessionId\": \"5d1a0002-aaaa-4bbb-8ccc-000000000002\", \"model\": {\"id\": \"claude-sonnet-5\", \"config\": {\"thinkingLevel\": \"high\", \"contextSize\": 936000}}}",
+      "metadata": "{}",
+      "metadata_hash": "h"
+    },
+    {
+      "chat_uri": "ahp-chat://default/chat3-0",
+      "owner_session_uri": "copilotcli:/9a1b2c3d-5555-4e6f-8a07-000000000003",
+      "chat_order": 0,
+      "provider_data": "{\"sdkSessionId\": \"5d1a0003-aaaa-4bbb-8ccc-000000000003\", \"model\": {\"id\": \"claude-sonnet-5\", \"config\": {\"thinkingLevel\": \"high\", \"contextSize\": 936000}}}",
+      "metadata": "{}",
+      "metadata_hash": "h"
+    },
+    {
+      "chat_uri": "ahp-chat://default/chat4-0",
+      "owner_session_uri": "copilotcli:/9a1b2c3d-5555-4e6f-8a07-000000000004",
+      "chat_order": 0,
+      "provider_data": "{\"sdkSessionId\": \"5d1a0004-aaaa-4bbb-8ccc-000000000004\", \"model\": {\"id\": \"claude-sonnet-5\", \"config\": {\"thinkingLevel\": \"high\", \"contextSize\": 936000}}}",
+      "metadata": "{}",
+      "metadata_hash": "h"
+    },
+    {
+      "chat_uri": "ahp-chat://default/chat5-0",
+      "owner_session_uri": "copilotcli:/9a1b2c3d-5555-4e6f-8a07-000000000005",
+      "chat_order": 0,
+      "provider_data": "{\"sdkSessionId\": \"5d1a0005-aaaa-4bbb-8ccc-000000000005\", \"model\": {\"id\": \"claude-sonnet-5\", \"config\": {\"thinkingLevel\": \"high\", \"contextSize\": 936000}}}",
+      "metadata": "{}",
+      "metadata_hash": "h"
+    },
+    {
+      "chat_uri": "ahp-chat://default/chat6-0",
+      "owner_session_uri": "copilotcli:/9a1b2c3d-5555-4e6f-8a07-000000000006",
+      "chat_order": 0,
+      "provider_data": null,
+      "metadata": "{}",
+      "metadata_hash": "h"
+    },
+    {
+      "chat_uri": "ahp-chat://default/chat6-1",
+      "owner_session_uri": "copilotcli:/9a1b2c3d-5555-4e6f-8a07-000000000006",
+      "chat_order": 1,
+      "provider_data": "{not json",
+      "metadata": "{}",
+      "metadata_hash": "h"
+    },
+    {
+      "chat_uri": "ahp-chat://default/chat6-2",
+      "owner_session_uri": "copilotcli:/9a1b2c3d-5555-4e6f-8a07-000000000006",
+      "chat_order": 2,
+      "provider_data": "[1]",
+      "metadata": "{}",
+      "metadata_hash": "h"
+    },
+    {
+      "chat_uri": "ahp-chat://default/chat6-3",
+      "owner_session_uri": "copilotcli:/9a1b2c3d-5555-4e6f-8a07-000000000006",
+      "chat_order": 3,
+      "provider_data": "{\"model\": {\"id\": \"x\"}}",
+      "metadata": "{}",
+      "metadata_hash": "h"
+    },
+    {
+      "chat_uri": "ahp-chat://default/chat6-4",
+      "owner_session_uri": "copilotcli:/9a1b2c3d-5555-4e6f-8a07-000000000006",
+      "chat_order": 4,
+      "provider_data": "{\"sdkSessionId\": \"\"}",
+      "metadata": "{}",
+      "metadata_hash": "h"
+    },
+    {
+      "chat_uri": "ahp-chat://default/chat6-5",
+      "owner_session_uri": "copilotcli:/9a1b2c3d-5555-4e6f-8a07-000000000006",
+      "chat_order": 5,
+      "provider_data": "{\"sdkSessionId\": \"5d1a0006-aaaa-4bbb-8ccc-000000000006\", \"model\": {\"id\": \"claude-sonnet-5\", \"config\": {\"thinkingLevel\": \"high\", \"contextSize\": 936000}}}",
+      "metadata": "{}",
+      "metadata_hash": "h"
+    },
+    {
+      "chat_uri": "ahp-chat://default/chat7-null",
+      "owner_session_uri": "copilotcli:/9a1b2c3d-5555-4e6f-8a07-000000000007",
+      "chat_order": null,
+      "provider_data": "{\"sdkSessionId\": \"5d1a0007-aaaa-4bbb-8ccc-0000000000b2\", \"model\": {\"id\": \"claude-sonnet-5\", \"config\": {\"thinkingLevel\": \"high\", \"contextSize\": 936000}}}",
+      "metadata": "{}",
+      "metadata_hash": "h"
+    },
+    {
+      "chat_uri": "ahp-chat://default/chat7-1",
+      "owner_session_uri": "copilotcli:/9a1b2c3d-5555-4e6f-8a07-000000000007",
+      "chat_order": 1,
+      "provider_data": "{\"sdkSessionId\": \"5d1a0007-aaaa-4bbb-8ccc-0000000000a1\", \"model\": {\"id\": \"claude-sonnet-5\", \"config\": {\"thinkingLevel\": \"high\", \"contextSize\": 936000}}}",
+      "metadata": "{}",
+      "metadata_hash": "h"
+    }
+  ],
+  "turns": {
+    "normal": [
+      {
+        "id": "request_0b7e7658-9ae0-5b5d-8f17-0595833104fa",
+        "event_id": "6ed55219-0549-56f3-b876-c6168419fa90",
+        "checkpoint_ref": "refs/agents/x/checkpoints/turn/1"
+      },
+      {
+        "id": "request_04ad94a0-0886-51c4-b65e-c405ddaac409",
+        "event_id": "a339f331-87bb-5085-b0ee-60950721fc4c",
+        "checkpoint_ref": "refs/agents/x/checkpoints/turn/2"
+      }
+    ],
+    "steeringAbortSubagent": [
+      {
+        "id": "request_f003a558-3031-5e10-aca5-d896e886bb5a",
+        "event_id": "3256b79f-df3d-5baf-b15d-e6db1b0cb57f",
+        "checkpoint_ref": "refs/agents/x/checkpoints/turn/1"
+      },
+      {
+        "id": "request_0c830b60-9f0c-5c4c-a9d8-48bace19cec9",
+        "event_id": "e972cd16-6b38-5ec1-b149-649a431fadd0",
+        "checkpoint_ref": "refs/agents/x/checkpoints/turn/2"
+      },
+      {
+        "id": "request_6c1a7f72-cf36-56d9-8705-e8401410e9a6",
+        "event_id": "694c4f86-2d53-5944-b97f-6f4612c8202f",
+        "checkpoint_ref": "refs/agents/x/checkpoints/turn/3"
+      },
+      {
+        "id": "request_84facbe8-2f1f-5192-81e0-679117b90b6e",
+        "event_id": "dc0093bf-4516-52c5-8be6-1cdbd707a209",
+        "checkpoint_ref": "refs/agents/x/checkpoints/turn/4"
+      },
+      {
+        "id": "dc0093bf-4516-52c5-8be6-1cdbd707a209",
+        "event_id": null,
+        "checkpoint_ref": "refs/agents/x/checkpoints/turn/5"
+      }
+    ],
+    "systemPromptReemit": [
+      {
+        "id": "request_6138499e-6801-564e-97db-2ad4edad5288",
+        "event_id": "494a05c0-bf14-53c8-a7f9-a47663f73807",
+        "checkpoint_ref": "refs/agents/x/checkpoints/turn/1"
+      },
+      {
+        "id": "request_aa0bfb0b-0529-5ee3-b09a-30bd40b42f47",
+        "event_id": "d21ee2fa-83cd-5597-bfa6-b0c584db7aac",
+        "checkpoint_ref": "refs/agents/x/checkpoints/turn/2"
+      },
+      {
+        "id": "request_8b9d4541-9fb1-58a8-9d19-a8aaa727dec0",
+        "event_id": "cbf0bbaf-294d-5008-9867-d8888d6baeec",
+        "checkpoint_ref": "refs/agents/x/checkpoints/turn/3"
+      }
+    ],
+    "malformed": [
+      {
+        "id": "request_2c9cadd6-a80e-5b23-973f-4c4ccdf1b1cd",
+        "event_id": "b3af4b7c-77c5-5c21-9883-b0673525ae1e",
+        "checkpoint_ref": "refs/agents/x/checkpoints/turn/1"
+      }
+    ],
+    "unmatched": [
+      {
+        "id": "request_95fcfca7-4406-53b1-87e2-50b0e7dc275d",
+        "event_id": "10ca80d5-8bbb-5460-859a-9ac733d86969",
+        "checkpoint_ref": "refs/agents/x/checkpoints/turn/1"
+      },
+      {
+        "id": "9fec686a-acf8-5a6c-a725-f498c004be95",
+        "event_id": null,
+        "checkpoint_ref": "refs/agents/x/checkpoints/turn/2"
+      }
+    ]
+  },
+  "expected": {
+    "malformed": {
+      "events": 8,
+      "skippedLines": 6,
+      "hasUnknownType": true
+    },
+    "steeringAbortSubagent": {
+      "skippedLines": 0
+    }
+  }
+}

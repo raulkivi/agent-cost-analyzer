@@ -41,7 +41,8 @@ const turnResponseRoundSchema = z.object({
 });
 
 // rounds: [] is a valid, non-error value — it means this turn genuinely made
-// no model request, not that data is missing.
+// no model request, not that data is missing — unless unavailableReason is
+// set, which says the rounds are unknown and why (constraint 6).
 export const turnInspectorDetailSchema = z.object({
   turnIndex: z.number(),
   userMessage: z.array(messageContentPartSchema),
@@ -51,6 +52,7 @@ export const turnInspectorDetailSchema = z.object({
       response: turnResponseRoundSchema,
     }),
   ),
+  unavailableReason: z.string().optional(),
 });
 
 export type TurnInspectorDetail = z.infer<typeof turnInspectorDetailSchema>;

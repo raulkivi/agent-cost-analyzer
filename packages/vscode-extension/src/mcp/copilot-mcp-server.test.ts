@@ -1,7 +1,7 @@
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import {
@@ -14,7 +14,12 @@ import {
   writeAgentHostCatalog,
   writeAgentSessionDb,
 } from "@agent-cost-analyzer/server/src/test-support/agent-host-user-data-dir";
-import { createCopilotMcpServer } from "./copilot-mcp-server.js";
+import {
+  COPILOT_CLI_FIXTURE_HOME,
+  COPILOT_CLI_FIXTURE_SESSION_IDS,
+  writeCopilotCliAgentHostStores,
+} from "@agent-cost-analyzer/server/src/test-support/copilot-cli-fixtures";
+import { createCopilotMcpServer, type CopilotMcpServerOptions } from "./copilot-mcp-server.js";
 
 type ToolResult = Awaited<ReturnType<Client["callTool"]>>;
 
@@ -77,5 +82,53 @@ describe("createCopilotMcpServer (vscode-extension.md D7)", () => {
     writeUsageDebugLog(path.join(userDataDir, "User", "workspaceStorage", "late-workspace", "GitHub.copilot-chat", "debug-logs"));
 
     expect(costOf(await client.callTool({ name: "get_session_cost", arguments: { sessionId: USAGE_SESSION_ID } }))).toBeGreaterThan(0);
+  });
+});
+
+// Step 10.14: the Copilot CLI's home isn't under the user-data dir; the child
+// process resolves it from the environment the extension host passes on.
+describe("createCopilotMcpServer with Agent Host event logs (step 10.14)", () => {
+  let userDataDir: string;
+
+  beforeAll(() => {
+    userDataDir = mkdtempSync(path.join(tmpdir(), "copilot-mcp-server-event-log-"));
+    writeCopilotCliAgentHostStores(userDataDir);
+  });
+  afterAll(() => {
+    vi.unstubAllEnvs();
+    rmSync(userDataDir, { recursive: true, force: true });
+  });
+
+  async function turnText(options: CopilotMcpServerOptions): Promise<{ userMessage: string; textUnavailableReason?: string }> {
+    const server = createCopilotMcpServer(options);
+    const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+    const client = new Client({ name: "test-client", version: "1.0.0" });
+    await Promise.all([server.connect(serverTransport), client.connect(clientTransport)]);
+    try {
+      const result = await client.callTool({
+        name: "get_turn",
+        arguments: { sessionId: COPILOT_CLI_FIXTURE_SESSION_IDS.normal, turnIndex: 0 },
+      });
+      return result.structuredContent as { userMessage: string; textUnavailableReason?: string };
+    } finally {
+      await client.close();
+    }
+  }
+
+  it("reads a turn's text from the event log under COPILOT_HOME", async () => {
+    vi.stubEnv("COPILOT_HOME", COPILOT_CLI_FIXTURE_HOME);
+
+    const view = await turnText({ userDataDir, version: "0.1.0-test" });
+
+    expect(view.userMessage).toBe("Example prompt one: please list the source files.");
+    expect(view.textUnavailableReason).toBeUndefined();
+  });
+
+  it("reads no event log for an explicit null Copilot home", async () => {
+    vi.stubEnv("COPILOT_HOME", COPILOT_CLI_FIXTURE_HOME);
+
+    const view = await turnText({ userDataDir, version: "0.1.0-test", copilotHome: null });
+
+    expect(view.textUnavailableReason).toMatch(/Copilot CLI home/);
   });
 });

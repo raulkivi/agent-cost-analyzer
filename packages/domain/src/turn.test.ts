@@ -41,6 +41,21 @@ describe("turnSchema", () => {
     expect(turnSchema.parse(sample)).toEqual(sample);
   });
 
+  it("accepts the reasons a turn's text and tool calls are unknown", () => {
+    const sample = {
+      index: 0,
+      userMessage: "",
+      assistantResponse: "",
+      toolCalls: [],
+      usage,
+      explanation: "tokens only",
+      textUnavailableReason: "no user message in the log",
+      toolCallsUnavailableReason: "no user message in the log",
+    };
+
+    expect(turnSchema.parse(sample)).toEqual(sample);
+  });
+
   it("rejects an invalid triggeredEvent value", () => {
     const sample = {
       index: 0,
