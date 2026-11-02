@@ -4,7 +4,8 @@
     "steeringAbortSubagent": "5d1a0002-aaaa-4bbb-8ccc-000000000002",
     "systemPromptReemit": "5d1a0003-aaaa-4bbb-8ccc-000000000003",
     "malformed": "5d1a0004-aaaa-4bbb-8ccc-000000000004",
-    "missingLog": "5d1a0005-aaaa-4bbb-8ccc-000000000005"
+    "missingLog": "5d1a0005-aaaa-4bbb-8ccc-000000000005",
+    "usageRecords": "5d1a0008-aaaa-4bbb-8ccc-000000000008"
   },
   "chats_v2": [
     {
@@ -110,6 +111,14 @@
       "provider_data": "{\"sdkSessionId\": \"5d1a0007-aaaa-4bbb-8ccc-0000000000a1\", \"model\": {\"id\": \"claude-sonnet-5\", \"config\": {\"thinkingLevel\": \"high\", \"contextSize\": 936000}}}",
       "metadata": "{}",
       "metadata_hash": "h"
+    },
+    {
+      "chat_uri": "ahp-chat://default/chat8-0",
+      "owner_session_uri": "copilotcli:/9a1b2c3d-5555-4e6f-8a07-000000000008",
+      "chat_order": 0,
+      "provider_data": "{\"sdkSessionId\": \"5d1a0008-aaaa-4bbb-8ccc-000000000008\", \"model\": {\"id\": \"claude-sonnet-5\", \"config\": {\"thinkingLevel\": \"high\", \"contextSize\": 936000}}}",
+      "metadata": "{}",
+      "metadata_hash": "h"
     }
   ],
   "turns": {
@@ -187,6 +196,28 @@
         "event_id": null,
         "checkpoint_ref": "refs/agents/x/checkpoints/turn/2"
       }
+    ],
+    "usageRecords": [
+      {
+        "id": "request_38c6b068-ad54-59f9-8439-9a15d8753997",
+        "event_id": "dfa97266-ed63-5309-a6e3-04cfdf5bdcdb",
+        "checkpoint_ref": "refs/agents/x/checkpoints/turn/1"
+      },
+      {
+        "id": "request_dff2e4c7-667f-56d4-88b8-33c37080ccc9",
+        "event_id": "d031fd49-f965-5c19-9d94-6674851115d8",
+        "checkpoint_ref": "refs/agents/x/checkpoints/turn/2"
+      },
+      {
+        "id": "request_8a72a7be-910e-5f9e-a506-2b0e8c33bb9d",
+        "event_id": "a335d70a-502c-53c5-9236-6f8a567c7511",
+        "checkpoint_ref": "refs/agents/x/checkpoints/turn/3"
+      },
+      {
+        "id": "request_6cf25651-a5dd-5d09-8632-4772bdb1ab24",
+        "event_id": "d7b67cb9-b9a9-550e-adc0-4f7b5c4cac05",
+        "checkpoint_ref": "refs/agents/x/checkpoints/turn/4"
+      }
     ]
   },
   "expected": {
@@ -197,6 +228,175 @@
     },
     "steeringAbortSubagent": {
       "skippedLines": 0
-    }
+    },
+    "usageRecords": [
+      {
+        "cacheWrite": 300,
+        "reasoning": 30
+      },
+      {
+        "cacheWrite": null,
+        "reasoning": null,
+        "reason": "records-incomplete"
+      },
+      {
+        "cacheWrite": null,
+        "reasoning": null,
+        "reason": "records-missing"
+      },
+      {
+        "cacheWrite": null,
+        "reasoning": 40,
+        "reason": "not-reported"
+      }
+    ]
+  },
+  "turnUsage": {
+    "usageRecords": [
+      {
+        "turn_id": "request_38c6b068-ad54-59f9-8439-9a15d8753997",
+        "usage": {
+          "inputTokens": 2500,
+          "outputTokens": 200,
+          "model": "claude-sonnet-5",
+          "cacheReadTokens": 1600,
+          "_meta": {
+            "vscode.modelCall": {
+              "schemaVersion": 1,
+              "model": "claude-sonnet-5",
+              "durationMs": 5000,
+              "timeToFirstTokenMs": 2000.5,
+              "inputTokens": 2500,
+              "outputTokens": 200,
+              "cacheReadTokens": 1600
+            },
+            "cost": 1,
+            "copilotUsage": {
+              "totalNanoAiu": 1000000000,
+              "sessionTotalNanoAiu": 1000000000
+            },
+            "turnTokenTotals": [
+              {
+                "model": "claude-sonnet-5",
+                "inputTokens": 2500,
+                "cachedTokens": 1600,
+                "outputTokens": 200
+              }
+            ],
+            "directCopilotUsage": {
+              "totalNanoAiu": 1000000000
+            }
+          }
+        }
+      },
+      {
+        "turn_id": "request_dff2e4c7-667f-56d4-88b8-33c37080ccc9",
+        "usage": {
+          "inputTokens": 3300,
+          "outputTokens": 220,
+          "model": "claude-sonnet-5",
+          "cacheReadTokens": 2300,
+          "_meta": {
+            "vscode.modelCall": {
+              "schemaVersion": 1,
+              "model": "claude-sonnet-5",
+              "durationMs": 5000,
+              "timeToFirstTokenMs": 2000.5,
+              "inputTokens": 3300,
+              "outputTokens": 220,
+              "cacheReadTokens": 2300
+            },
+            "cost": 1,
+            "copilotUsage": {
+              "totalNanoAiu": 1100000000,
+              "sessionTotalNanoAiu": 1100000000
+            },
+            "turnTokenTotals": [
+              {
+                "model": "claude-sonnet-5",
+                "inputTokens": 3300,
+                "cachedTokens": 2300,
+                "outputTokens": 220
+              }
+            ],
+            "directCopilotUsage": {
+              "totalNanoAiu": 1100000000
+            }
+          }
+        }
+      },
+      {
+        "turn_id": "request_8a72a7be-910e-5f9e-a506-2b0e8c33bb9d",
+        "usage": {
+          "inputTokens": 800,
+          "outputTokens": 50,
+          "model": "claude-sonnet-5",
+          "cacheReadTokens": 0,
+          "_meta": {
+            "vscode.modelCall": {
+              "schemaVersion": 1,
+              "model": "claude-sonnet-5",
+              "durationMs": 5000,
+              "timeToFirstTokenMs": 2000.5,
+              "inputTokens": 800,
+              "outputTokens": 50,
+              "cacheReadTokens": 0
+            },
+            "cost": 1,
+            "copilotUsage": {
+              "totalNanoAiu": 250000000,
+              "sessionTotalNanoAiu": 250000000
+            },
+            "turnTokenTotals": [
+              {
+                "model": "claude-sonnet-5",
+                "inputTokens": 800,
+                "cachedTokens": 0,
+                "outputTokens": 50
+              }
+            ],
+            "directCopilotUsage": {
+              "totalNanoAiu": 250000000
+            }
+          }
+        }
+      },
+      {
+        "turn_id": "request_6cf25651-a5dd-5d09-8632-4772bdb1ab24",
+        "usage": {
+          "inputTokens": 2000,
+          "outputTokens": 100,
+          "model": "claude-sonnet-5",
+          "cacheReadTokens": 1500,
+          "_meta": {
+            "vscode.modelCall": {
+              "schemaVersion": 1,
+              "model": "claude-sonnet-5",
+              "durationMs": 5000,
+              "timeToFirstTokenMs": 2000.5,
+              "inputTokens": 2000,
+              "outputTokens": 100,
+              "cacheReadTokens": 1500
+            },
+            "cost": 1,
+            "copilotUsage": {
+              "totalNanoAiu": 700000000,
+              "sessionTotalNanoAiu": 700000000
+            },
+            "turnTokenTotals": [
+              {
+                "model": "claude-sonnet-5",
+                "inputTokens": 2000,
+                "cachedTokens": 1500,
+                "outputTokens": 100
+              }
+            ],
+            "directCopilotUsage": {
+              "totalNanoAiu": 700000000
+            }
+          }
+        }
+      }
+    ]
   }
 }

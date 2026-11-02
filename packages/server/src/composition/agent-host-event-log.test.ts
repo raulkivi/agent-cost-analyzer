@@ -115,7 +115,7 @@ describe("Agent Host sessions with the Copilot CLI event log (step 10.14)", () =
       expect(audit.toolCallsUnavailableReason).toBeUndefined();
       expect(audit.totals.toolCalls).toBeGreaterThan(0);
       const rollup = await api().getAuditRollup({ since: "2000-01-01" });
-      expect(rollup).toMatchObject({ sessionCount: 4, sessionsWithUnknownToolCalls: 1 });
+      expect(rollup).toMatchObject({ sessionCount: 5, sessionsWithUnknownToolCalls: 1 });
       expect(rollup.toolCallsUnavailableReason).toBe(AGENT_HOST_EVENT_LOG_MISSING_REASON);
       expect(rollup.totals.toolCalls).toBeGreaterThan(0);
     });

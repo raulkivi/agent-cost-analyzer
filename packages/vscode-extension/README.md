@@ -74,6 +74,10 @@ VS Code 1.143 and later make the Copilot harness the default for new chats,
 and those run through the Agent Host. Their sessions are listed with their
 tokens and AI Credits. Their prompt and response text, turn inspector, tool
 calls and system prompt come from the Copilot CLI's event log, read locally.
+Cache-write and reasoning tokens come from the same log's per-call usage
+records, which Copilot CLI 1.0.95 and later write. A turn without records, or
+whose records don't add up to the session's totals, shows them as not
+available, with the reason.
 The Tools tab stays unavailable, since the log records no tool definitions.
 If a session's log is missing, the panel shows those as not available, with
 the reason.

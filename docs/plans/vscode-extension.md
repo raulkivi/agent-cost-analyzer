@@ -26,7 +26,7 @@ Progress (2026-10-28):
 | 10.12 | Learn scenarios in the side bar (a Learn view), like the Sessions view; the panel has no list of its own | Done (#80) |
 | 10.13 | Agent Host sessions: read the sessions VS Code 1.143+ creates by default (manual check 1.4) | Done (`20c880b`–`756a26c`); manual check 1.4 passes with the default harness |
 | 10.14 | Agent Host turn text, tool calls and system prompt from the Copilot CLI event log (`~/.copilot/session-state/<sdkSessionId>/events.jsonl`) | Code done (`2f302b0`–`3911119`, docs commit); owner's manual check (task 11) passed 2026-11-02 |
-| 10.15 | Cache-write and reasoning tokens for Agent Host sessions from `session.usage_record` | Planned |
+| 10.15 | Cache-write and reasoning tokens for Agent Host sessions from `session.usage_record` | Tasks 1-4 and 6 done (docs); task 5 (web and MCP tests) and manual check 7 open |
 
 
 ## 1. Context
@@ -1593,6 +1593,182 @@ turn has unknown text and tool calls, with a reason. Events with a top-level
   `~/.copilot`), with no setting. Add one only if VS Code ever starts the
   Agent Host with a different `configDir`.
 
+### 10.15 Cache-write and reasoning tokens for Agent Host sessions (`session.usage_record`)
+
+After 10.14, an Agent Host turn's Cache write and Reasoning columns are
+unknown ("VS Code's Agent Host doesn't record this token count"), and every
+input total that adds uncached input, cache write and cache read is unknown
+too. The Copilot CLI event log records both figures per model call in
+`session.usage_record`. 10.15 reads them from the log 10.14 already opens,
+in the shared server code, so both products and both MCP servers get them.
+
+**Status (2026-11-02): tasks 1-4 and 6 done; task 5 and manual check 7 open.**
+
+**Data seen on this machine** (Insiders 1.145, Copilot CLI 0.0.0 to
+1.0.103; surveyed 2026-11-02 read-only, `session.db` files copied first):
+- **Coverage.** 21 of 65 `events.jsonl` files hold `session.usage_record`
+  events, 146 in all. Every file from Copilot CLI 1.0.95 or later has them
+  (one 1.0.103 file excepted); none before. 11 of the 21 belong to sessions
+  in `agent-host.db` (20 turns); no `chats_v2` row points to the other 10.
+  Older sessions keep unknown figures.
+- **Line format.** `{type, data, id, timestamp, parentId}`; no event had a
+  top-level `agentId`. 2.1-3.0 K characters per line. Everything is in
+  `data.usage`: `inputTokens`, `cacheReadTokens`, `cacheWriteTokens`,
+  `reasoningTokens`, `outputTokens` (all integers, on all 146), `model`,
+  `apiCallId`, `cacheDetailsReported` (all `true`), `copilotUsage
+  {totalNanoAiu, tokenDetails[{tokenType, tokenCount, batchSize,
+  costPerBatch, model}]}`, `initiator` (`user` 33, `agent` 113),
+  `interactionType` (all `conversation-agent`), `finishReason`, `isByok`
+  (all false), `accounting.sourceSessionId` (always the log's
+  `sdkSessionId`), plus timing, transport and tool-count fields not needed
+  here.
+- **One record per model call.** Each record's `apiCallId` matches exactly
+  one main-agent `assistant.message` `apiCallId`, and every
+  `assistant.message` `apiCallId` in those files has a record (146 of 146,
+  no duplicates). The record comes before its `assistant.message`; its
+  `parentId` is the round's `assistant.turn_start` (145) or the
+  `user.message` (1). No record was found before the first turn, and
+  `model.*` side calls have none.
+- **Sums match `session.db`.** For all 20 catalogued turns, the records
+  between the turn's `user.message` and the next turn's (10.14's
+  segmentation) sum exactly to `session.db`'s `_meta.turnTokenTotals`:
+  Σ`inputTokens` = `inputTokens`, Σ`cacheReadTokens` = `cachedTokens`,
+  Σ`outputTokens` = `outputTokens`, and Σ`totalNanoAiu` =
+  `copilotUsage.totalNanoAiu`.
+- **Token semantics.** `inputTokens` includes cache reads and cache writes:
+  `tokenDetails` `input` = `inputTokens` − `cacheReadTokens` −
+  `cacheWriteTokens` on all 83 catalogued records, and `cacheRead +
+  cacheWrite ≤ input` on all 146. `outputTokens` includes reasoning:
+  `reasoningTokens ≤ outputTokens` on all 146, and the billed `output`
+  `tokenDetails` count equals `outputTokens`. So reasoning is a subset of
+  output, as for Claude Code (architecture.md §6.2.6).
+- **Values.** `cacheWriteTokens > 0` on all 146 (OpenAI-family and Claude
+  models alike). `reasoningTokens > 0` on 116; 0 on 30, all with the field
+  present (one Claude model reported 0).
+- **Not observed.** Subagent records (no file with records had `agentId`
+  events), `cacheDetailsReported: false`, and BYOK models. The design
+  covers them through the reconciliation rule below rather than guesses.
+
+**Scope.** Cache-write and reasoning tokens per Agent Host turn, from
+`session.usage_record`, when the log is read. Uncached input, cache read,
+output and AI Credits stay from `session.db` (10.13). Per-round usage in
+the turn inspector, the records' timing fields and `availableToolCount` are
+out of scope.
+
+**Design.**
+- **Domain: no change.** `TurnUsage.cacheWrite` and `reasoning` are already
+  `TokenCount`s, filled by `VscodeLogProvider` from `agent-traces.db`
+  (Phase 8.5) and by the Claude Code and pi providers. Rollups, insights,
+  the turns table, KPIs and the MCP cost tools read them generically, so
+  they pick the figures up without code changes.
+- **Parse (pure, new).** `readCopilotCallUsage` turns one
+  `session.usage_record` event into a typed per-call record, or null.
+- **Reconcile (pure, new).** `buildAgentHostTurnTokenDetail` sums a turn's
+  records and accepts them only when their input, cache-read and output sums
+  equal `session.db`'s totals for the turn. That proves the records cover
+  every call `session.db` counted, subagent calls included, without
+  assuming how subagents log. All-or-nothing per turn, like
+  `aggregateAgentTraceUsage` on the classic path (constraint 6).
+- **Uncached input.** `session-kpis.ts`, `insights/measures.ts` and
+  `cost-aggregation.ts` take input as `uncachedInput + cacheWrite +
+  cacheRead`. With cache write known, Agent Host `uncachedInput` becomes
+  `input − cached − cacheWrite` (the `tokenDetails` `input` count), so total
+  input still equals `session.db`'s `inputTokens`. With cache write unknown
+  it stays `input − cached`, as now.
+- **Reasoning** is a subset of output: `output` is unchanged.
+- **Wiring.** `agent-host-session-builder.ts` adds `session.usage_record` to
+  `EVENT_TYPES_USED` (about 3 K characters per call, so cached logs stay
+  small) and passes each matched turn's events, from the one segmentation it
+  already runs, to the reconciler. `AgentHostSessionSource` needs no change:
+  the log is still opened only in `readSession`, `readTurnDetail` and
+  `lookupSystemPromptText`, never to list.
+- **Reasons (unknown is never 0).** `AGENT_HOST_FIELD_NOT_RECORDED_REASON`
+  stays for tool and vision only. Cache write and reasoning take: the log's
+  own reason when it is missing or unreadable; the segmenter's reason for an
+  unmatched turn; "no per-call usage records" for a turn without records
+  (Copilot CLI before 1.0.95); "records don't cover the whole turn" when the
+  sums differ from `session.db`'s; "no token totals to check against" when
+  `session.db` has none; "not reported" for a call with
+  `cacheDetailsReported: false` or a missing count. The list summary (no log
+  read) keeps the existing "log wasn't read" note.
+- **Config check: no change.** The `agent-traces-unavailable` warning is
+  already prefixed "Only affects chats run with the Local harness" when
+  Agent Host sessions exist.
+- **Web and MCP: no wording constant changes.** Neither has Agent Host
+  cache-write or reasoning wording of its own; the unknown cells and the MCP
+  `unavailableReasons` show the server's `TokenCount` reasons.
+
+**Exit criterion:** in VS Code 1.143+ with default settings and Copilot CLI
+1.0.95+, a new agent-mode session shows known Cache write and Reasoning for
+each turn, and its input totals (uncached + cache write + cache read) equal
+`session.db`'s input tokens. The standalone app and the MCP cost tools show
+the same numbers. A session from an older CLI shows both as unknown with the
+"no per-call usage records" reason. Listing sessions still opens no
+`events.jsonl`.
+
+**Exact specs.** Paths under `packages/server/`. ESM imports end in `.js`.
+No new dependencies.
+
+*Task 2: `src/services/session-enricher/agent-host-call-usage.ts`.*
+- `export interface CopilotCallUsage { apiCallId: string | null; inputTokens: number; cacheReadTokens: number; outputTokens: number; cacheWriteTokens: number | null; reasoningTokens: number | null }`.
+  `inputTokens` includes cache reads and writes; `outputTokens` includes
+  reasoning.
+- `export function readCopilotCallUsage(event: CopilotEvent): CopilotCallUsage | null`.
+  Returns null unless `event.type === "session.usage_record"`,
+  `event.data.usage` is a non-array object, and its `inputTokens`,
+  `cacheReadTokens` and `outputTokens` are finite numbers ≥ 0.
+  `cacheWriteTokens` is null when `usage.cacheDetailsReported === false` or
+  the value isn't a finite number ≥ 0. `reasoningTokens` is null when it
+  isn't a finite number ≥ 0 (0 is a value). `apiCallId` is null unless a
+  non-empty string. Events with an `agentId` are read like any other. Never
+  throws.
+
+*Task 3: `src/services/session-enricher/agent-host-turn-token-detail-builder.ts`.*
+- `export interface AgentHostTurnTokenDetail { cacheWrite: TokenCount; reasoning: TokenCount }`.
+- `export function buildAgentHostTurnTokenDetail(turnEvents: CopilotEvent[], totals: AgentHostTurnTokens | null): AgentHostTurnTokenDetail`
+  (`AgentHostTurnTokens` from `agent-session-store.ts`). In order:
+  1. `totals` null → both unknown, `AGENT_HOST_USAGE_RECORDS_NO_TOTALS_REASON`.
+  2. No event yields a `readCopilotCallUsage` record → both unknown,
+     `AGENT_HOST_USAGE_RECORDS_MISSING_REASON`.
+  3. Σ`inputTokens` ≠ `totals.input`, Σ`cacheReadTokens` ≠ `totals.cached`
+     or Σ`outputTokens` ≠ `totals.output` → both unknown,
+     `AGENT_HOST_USAGE_RECORDS_INCOMPLETE_REASON`.
+  4. Otherwise each field separately: known sum when every record has it;
+     else unknown, `AGENT_HOST_CACHE_WRITE_NOT_REPORTED_REASON` /
+     `AGENT_HOST_REASONING_NOT_REPORTED_REASON`. Cache write is also unknown
+     (`AGENT_HOST_USAGE_RECORDS_INCOMPLETE_REASON`) when its sum exceeds
+     `totals.input − totals.cached`.
+- The five reason constants are exported from this file, worded for the
+  user (for example "This turn's Copilot CLI event log has no per-call
+  usage records (Copilot CLI 1.0.95 and later write them).").
+
+**Tasks:**
+
+| # | Task | Complexity | Model | Depends on | Status |
+|---|---|---|---|---|---|
+| 1 | Redacted fixtures: new `fixtures/agent-host/copilot-cli/session-state/5d1a0008-aaaa-4bbb-8ccc-000000000008/events.jsonl` (`usageRecords`) with `session.usage_record` events in the real shape (made-up ids, `apiCallId`, `providerCallId`, `serviceRequestId`; `accounting.sourceSessionId` = the fixture id; numbers real or lightly adapted). Turns: (a) two calls whose records sum to the turn's totals, one with `reasoningTokens: 0`; (b) three calls, two records (sums differ); (c) no records (older CLI); (d) one record with `cacheDetailsReported: false`. `rows.json`: `sdkSessionIds.usageRecords`, its `chats_v2` row, `turns.usageRecords`, new `turnUsage.usageRecords` (`turn_usage.usage` JSON with `_meta.turnTokenTotals` and `copilotUsage.totalNanoAiu`), and `expected.usageRecords` (per-turn cache write, reasoning, or which reason). README section; `session.usage_record` row in architecture.md §6.2.2.2's events table. Test first: `src/data-sources/agent-host/usage-record-fixture.test.ts` checks each turn's record sums against `turnUsage` as `expected` says (fails until the fixture exists). Exit: test passes; existing 10.14 tests unchanged | medium | Sonnet | — | Planned |
+| 2 | `readCopilotCallUsage` (exact spec above). Test first: `agent-host-call-usage.test.ts` (wrong type, non-object `usage`, missing or negative or non-finite counts, `cacheDetailsReported: false`, reasoning 0, `agentId` event, a real-shaped record). Exit: tests pass, 100 % branch coverage of the file | low | Haiku | — | Planned |
+| 3 | `buildAgentHostTurnTokenDetail` (exact spec above). Test first: `agent-host-turn-token-detail-builder.test.ts` covering rules 1-4 in order, including cache write over `input − cached`, with hand-built events. Exit: tests pass | medium | Sonnet | 2 (interface only: can start from the spec in parallel, merged after 2) | Planned |
+| 4 | Wire into `agent-host-session-builder.ts`: add `session.usage_record` to `EVENT_TYPES_USED`; `buildAgentHostTurnUsage(usage, detail?: AgentHostTurnTokenDetail)` takes cache write and reasoning from `detail`, and `uncachedInput` = `input − cached − cacheWrite` when cache write is known; `turnContentSources` also returns each row's `SegmentedTurn` so the token detail reuses the one segmentation; unknown reasons as in Design (log reason, unmatched-turn reason, list note); `AGENT_HOST_FIELD_NOT_RECORDED_REASON` reworded for tool and vision only. Test first: in `agent-host-session-builder.test.ts`, the `usageRecords` fixture gives the `expected` per-turn figures and turn (a)'s `uncachedInput + cacheWrite + cacheRead` equals its `session.db` input; a missing log gives the log's reason; in `agent-host-session-source.test.ts`, `readSession` on the fixture returns them and `listSessions` still opens no log. Exit: the server suite passes | medium | Sonnet | 1, 2, 3 | Planned |
+| 5 | Web, MCP and UI check: no wording constants change (Design). Test first: a `get_session_cost` test in `src/mcp/` for the fixture's Agent Host session (cache write and reasoning known with partial turn coverage, input total = `session.db` input), and a `TurnsTable` test that renders an Agent Host turn's known Cache write and Reasoning. Give the UI check's Agent Host session (`webview-harness.mts` with `COPILOT_CLI_FIXTURE_HOME`, `seedAgentHostSession` in `showcase-fixture.mts`) usage records that reconcile with its `session.db` rows, and re-run the UI check. Exit: tests pass; UI check screenshots show both columns filled for that session | low | Sonnet | 4 | Planned |
+| 6 | Docs and changelogs: architecture.md §6.2.2.1 ("What is unknown": cache write and reasoning now from the log) and §6.2.2.2 (`session.usage_record` moves from "Not used" to "Events used", the reconciliation rule, the uncached-input rule, the reasons); `docs/vscode-extension-guide.md` (troubleshooting "cache-write and reasoning tokens need the optional ... setting" applies to Local harness chats only; the files table's `events.jsonl` row adds cache-write and reasoning tokens); `docs/UserGuide.md` Agent Host paragraph; `packages/vscode-extension/README.md` Agent Host section; `[Unreleased]` in `CHANGELOG.md` and `packages/vscode-extension/CHANGELOG.md`; this plan's status. Exit: no doc says Agent Host cache-write or reasoning tokens are unavailable without the reason | low | Haiku | 4 (5 for the UI check note) | Done |
+| 7 | Manual check: a new default-harness session (Copilot CLI 1.0.95+) in VS Code and the same session in the standalone app show Cache write and Reasoning per turn, and Cost/Insights input totals unchanged from before 10.15; `get_session_cost` agrees; an older Agent Host session shows both unknown with the "no per-call usage records" reason; a session whose log dir is moved away shows the missing-log reason | — | owner | 4, 5, 6 | Planned |
+
+Tasks 1 and 2 start at once; 3 starts from its spec in parallel with 2.
+4 joins them. 5 and 6 run in parallel after 4.
+
+**Open questions (need the owner's decision before task 4):**
+- Turns whose records don't reconcile with `session.db`: unknown (proposed,
+  all-or-nothing like the classic path), or the partial sum?
+- A turn with records but no `turn_usage` row: keep unknown (proposed; not
+  seen on this machine), or take all its tokens and AI Credits from the
+  records?
+- Classic path, outside 10.15: `llm-request-extractor.ts` sets
+  `uncachedInput = inputTokens − cachedTokens`, and `agent-traces.db` adds
+  `cacheWrite` on top. If Copilot Chat's `llm_request.inputTokens` also
+  includes cache writes, as the CLI's does, classic input totals count cache
+  writes twice. Check against a real `agent-traces.db` capture, and fix in a
+  separate step if so.
 
 ### 10.12 Learn scenarios in the side bar (owner's request, 2026-10-24)
 

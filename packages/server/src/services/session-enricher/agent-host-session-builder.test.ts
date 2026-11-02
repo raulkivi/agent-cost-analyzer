@@ -1,5 +1,5 @@
 import { beforeAll, describe, expect, it } from "vitest";
-import { sessionSchema, turnInspectorDetailSchema } from "@agent-cost-analyzer/domain";
+import { sessionSchema, turnInspectorDetailSchema, type TokenCount } from "@agent-cost-analyzer/domain";
 import type { AgentHostSessionRow } from "../../data-sources/agent-host/agent-host-catalog.js";
 import type { AgentHostTurnRow, AgentHostTurnUsage } from "../../data-sources/agent-host/agent-session-store.js";
 import { copilotEventLogPath } from "../../data-sources/agent-host/copilot-cli-paths.js";
@@ -14,9 +14,17 @@ import {
 import { buildAgentHostSystemPrompt } from "./agent-host-system-prompt-builder.js";
 import { buildAgentHostTurnContent, indexToolOutcomeEvents } from "./agent-host-turn-content-builder.js";
 import { buildAgentHostTurnInspector } from "./agent-host-turn-inspector-builder.js";
-import { segmentCopilotTurns, TURN_EVENT_ALREADY_TAKEN_REASON, type MatchedTurn } from "./copilot-turn-segmenter.js";
+import { segmentCopilotTurns, TURN_EVENT_ALREADY_TAKEN_REASON, TURN_EVENT_NOT_FOUND_REASON, type MatchedTurn } from "./copilot-turn-segmenter.js";
+import {
+  AGENT_HOST_USAGE_RECORDS_INCOMPLETE_REASON,
+  AGENT_HOST_USAGE_RECORDS_MISSING_REASON,
+  AGENT_HOST_CACHE_WRITE_NOT_REPORTED_REASON,
+  AGENT_HOST_REASONING_NOT_REPORTED_REASON,
+  type AgentHostTurnTokenDetail,
+} from "./agent-host-turn-token-detail-builder.js";
 import {
   AGENT_HOST_FIELD_NOT_RECORDED_REASON,
+  AGENT_HOST_USAGE_RECORDS_NOT_READ_REASON,
   AGENT_HOST_NO_TURNS_REASON,
   AGENT_HOST_SESSION_COST_UNAVAILABLE_REASON,
   AGENT_HOST_SESSION_DB_MISSING_REASON,
@@ -72,10 +80,54 @@ describe("buildAgentHostTurnUsage", () => {
   it("marks the figures the Agent Host doesn't record as unknown, not 0", () => {
     const result = buildAgentHostTurnUsage(usage());
 
-    for (const field of ["cacheWrite", "tool", "vision", "reasoning"] as const) {
+    for (const field of ["tool", "vision"] as const) {
       expect(result[field]).toEqual({ known: false, reason: AGENT_HOST_FIELD_NOT_RECORDED_REASON });
     }
     expect(result.roundsCount).toBeUndefined();
+  });
+
+  it("leaves cache write and reasoning unknown with the not-read note when no token detail is given", () => {
+    const result = buildAgentHostTurnUsage(usage());
+
+    for (const field of ["cacheWrite", "reasoning"] as const) {
+      expect(result[field]).toEqual({ known: false, reason: AGENT_HOST_USAGE_RECORDS_NOT_READ_REASON });
+    }
+  });
+
+  it("takes cache write and reasoning from the token detail and subtracts the cache write from the uncached input", () => {
+    const detail: AgentHostTurnTokenDetail = { cacheWrite: { known: true, value: 150 }, reasoning: { known: true, value: 20 } };
+
+    const result = buildAgentHostTurnUsage(usage(), detail);
+
+    expect(result.cacheWrite).toEqual({ known: true, value: 150 });
+    expect(result.reasoning).toEqual({ known: true, value: 20 });
+    expect(result.uncachedInput).toEqual({ known: true, value: 50 });
+    expect(result.output).toEqual({ known: true, value: 50 });
+  });
+
+  it("keeps uncached input at input minus cached when the detail's cache write is unknown", () => {
+    const reason = "not reported";
+    const detail: AgentHostTurnTokenDetail = { cacheWrite: { known: false, reason }, reasoning: { known: true, value: 0 } };
+
+    const result = buildAgentHostTurnUsage(usage(), detail);
+
+    expect(result.cacheWrite).toEqual({ known: false, reason });
+    expect(result.reasoning).toEqual({ known: true, value: 0 });
+    expect(result.uncachedInput).toEqual({ known: true, value: 200 });
+  });
+
+  it("never reports a negative uncached input when the cache write exceeds what's left", () => {
+    const detail: AgentHostTurnTokenDetail = { cacheWrite: { known: true, value: 900 }, reasoning: { known: true, value: 0 } };
+
+    expect(buildAgentHostTurnUsage(usage(), detail).uncachedInput).toEqual({ known: true, value: 0 });
+  });
+
+  it("ignores the token detail for a turn without token totals", () => {
+    const detail: AgentHostTurnTokenDetail = { cacheWrite: { known: true, value: 5 }, reasoning: { known: true, value: 5 } };
+
+    const result = buildAgentHostTurnUsage(usage({ tokens: null }), detail);
+
+    expect(result.uncachedInput).toEqual({ known: false, reason: AGENT_HOST_TURN_TOKENS_UNAVAILABLE_REASON });
   });
 
   it("keeps the AI Credits when the turn has no token totals", () => {
@@ -303,7 +355,9 @@ describe("with the Copilot CLI event log (step 10.14)", () => {
         toolCalls: expected.toolCalls,
       });
       expect(session.turns[0]!.toolCalls.length).toBeGreaterThan(0);
-      expect(session.turns[0]!.usage).toEqual(buildAgentHostTurnUsage(usage()));
+      // The shared usage() totals don't match this log's per-call records.
+      const unknown = { known: false as const, reason: AGENT_HOST_USAGE_RECORDS_INCOMPLETE_REASON };
+      expect(session.turns[0]!.usage).toEqual(buildAgentHostTurnUsage(usage(), { cacheWrite: unknown, reasoning: unknown }));
       expect(session.costAiCredits).toEqual({ known: true, value: 3 });
     });
 
@@ -384,6 +438,124 @@ describe("with the Copilot CLI event log (step 10.14)", () => {
         expect(buildAgentHostTurnDetail(index, filteredLog)).toEqual(buildAgentHostTurnDetail(index, read(name)));
       }
     }
+  });
+
+  describe("usage records (step 10.15)", () => {
+    interface ExpectedTurn {
+      cacheWrite: number | null;
+      reasoning: number | null;
+      reason?: "records-missing" | "records-incomplete" | "not-reported";
+    }
+    interface FixtureTurnUsage {
+      turn_id: string;
+      usage: {
+        model: string;
+        _meta: { turnTokenTotals: { inputTokens: number; cachedTokens: number; outputTokens: number }[]; copilotUsage: { totalNanoAiu: number } };
+      };
+    }
+    const fixtureRows = copilotCliFixtureRows as unknown as {
+      turnUsage: { usageRecords: FixtureTurnUsage[] };
+      expected: { usageRecords: ExpectedTurn[] };
+    };
+    const expectedTurns = fixtureRows.expected.usageRecords;
+    const totalsOf = (row: FixtureTurnUsage) => row.usage._meta.turnTokenTotals[0]!;
+    const recordsStore = {
+      turns: fixtureRows.turnUsage.usageRecords.map((row) => ({
+        turnId: row.turn_id,
+        usage: {
+          tokens: { input: totalsOf(row).inputTokens, cached: totalsOf(row).cachedTokens, output: totalsOf(row).outputTokens },
+          model: row.usage.model,
+          nanoAiu: row.usage._meta.copilotUsage.totalNanoAiu,
+        },
+      })),
+      model: null,
+      title: null,
+    };
+    let recordsLog: AgentHostEventLog;
+    beforeAll(async () => {
+      const logPath = copilotEventLogPath(COPILOT_CLI_FIXTURE_HOME, copilotCliFixtureRows.sdkSessionIds.usageRecords)!;
+      const events = (await readCopilotEventLog(logPath, { include: isAgentHostEventTypeUsed }))!.events;
+      recordsLog = { status: "read", events, turnRefs: copilotCliFixtureTurnRefs("usageRecords") };
+    });
+
+    const reasonFor = (reason: ExpectedTurn["reason"]) =>
+      ({
+        "records-missing": AGENT_HOST_USAGE_RECORDS_MISSING_REASON,
+        "records-incomplete": AGENT_HOST_USAGE_RECORDS_INCOMPLETE_REASON,
+        "not-reported": AGENT_HOST_CACHE_WRITE_NOT_REPORTED_REASON,
+      })[reason!];
+    const count = (value: number | null, reason: string) => (value === null ? { known: false, reason } : { known: true, value });
+
+    it("reads session.usage_record events", () => {
+      expect(isAgentHostEventTypeUsed("session.usage_record")).toBe(true);
+      expect(recordsLog.status === "read" && recordsLog.events.some((event) => event.type === "session.usage_record")).toBe(true);
+    });
+
+    it("gives each turn the cache write and reasoning the fixture expects, or the reason it can't", () => {
+      const session = buildAgentHostSession({ catalogRow, store: recordsStore, eventLog: recordsLog });
+
+      expect(() => sessionSchema.parse(session)).not.toThrow();
+      expectedTurns.forEach((expected, index) => {
+        const usage = session.turns[index]!.usage;
+        expect(usage.cacheWrite, `turn ${index} cache write`).toEqual(count(expected.cacheWrite, reasonFor(expected.reason)));
+        const reasoningReason = expected.reason === "not-reported" ? AGENT_HOST_REASONING_NOT_REPORTED_REASON : reasonFor(expected.reason);
+        expect(usage.reasoning, `turn ${index} reasoning`).toEqual(count(expected.reasoning, reasoningReason));
+      });
+    });
+
+    it("keeps total input equal to session.db's input when the cache write is known", () => {
+      const session = buildAgentHostSession({ catalogRow, store: recordsStore, eventLog: recordsLog });
+      const usage = session.turns[0]!.usage;
+      const value = (count: TokenCount) => (count.known ? count.value : NaN);
+
+      expect(value(usage.uncachedInput) + value(usage.cacheWrite) + value(usage.cacheRead)).toBe(recordsStore.turns[0]!.usage.tokens.input);
+    });
+
+    it("leaves input at input minus cached for turns whose cache write is unknown", () => {
+      const session = buildAgentHostSession({ catalogRow, store: recordsStore, eventLog: recordsLog });
+
+      session.turns.forEach((turn, index) => {
+        if (expectedTurns[index]!.cacheWrite === null) {
+          const { input, cached } = recordsStore.turns[index]!.usage.tokens;
+          expect(turn.usage.uncachedInput).toEqual({ known: true, value: input - cached });
+        }
+      });
+    });
+
+    it("leaves a turn unknown when session.db recorded no token totals for it", () => {
+      const store = { ...recordsStore, turns: recordsStore.turns.map((row) => ({ ...row, usage: { ...row.usage, tokens: null } })) };
+
+      const session = buildAgentHostSession({ catalogRow, store, eventLog: recordsLog });
+
+      expect(session.turns[0]!.usage.cacheWrite.known).toBe(false);
+      expect(session.turns[0]!.usage.reasoning.known).toBe(false);
+    });
+
+    it("leaves a turn unknown when it has records but no turn_usage row", () => {
+      const store = { ...recordsStore, turns: recordsStore.turns.map((row) => ({ ...row, usage: null })) };
+
+      const session = buildAgentHostSession({ catalogRow, store, eventLog: recordsLog });
+
+      expect(session.turns[0]!.usage.cacheWrite.known).toBe(false);
+    });
+
+    it("gives the log's reason when the log is missing, and the not-read note without a log", () => {
+      const withMissing = buildAgentHostSession({ catalogRow, store: recordsStore, eventLog: missing });
+      const withoutLog = buildAgentHostSession({ catalogRow, store: recordsStore });
+
+      for (const field of ["cacheWrite", "reasoning"] as const) {
+        expect(withMissing.turns[0]!.usage[field]).toEqual({ known: false, reason: missing.reason });
+        expect(withoutLog.turns[0]!.usage[field]).toEqual({ known: false, reason: AGENT_HOST_USAGE_RECORDS_NOT_READ_REASON });
+      }
+    });
+
+    it("gives the segmenter's reason for an unmatched turn", () => {
+      const eventLog: AgentHostEventLog = { ...(recordsLog as Extract<AgentHostEventLog, { status: "read" }>), turnRefs: [] };
+
+      const session = buildAgentHostSession({ catalogRow, store: recordsStore, eventLog });
+
+      expect(session.turns[0]!.usage.cacheWrite).toEqual({ known: false, reason: TURN_EVENT_NOT_FOUND_REASON });
+    });
   });
 
   describe("buildAgentHostTurnDetail", () => {

@@ -264,7 +264,7 @@ describe("AgentHostSessionSource", () => {
 
       const sessions = await source({ eventLogs }).listSessions();
 
-      expect(sessions.length).toBe(5);
+      expect(sessions.length).toBe(6);
       expect(eventLogs.load).not.toHaveBeenCalled();
       expect(sessions.every((session) => session.copilotEventLog === undefined)).toBe(true);
     });
@@ -278,6 +278,14 @@ describe("AgentHostSessionSource", () => {
       expect(session.turns.flatMap((turn) => turn.toolCalls).length).toBeGreaterThan(0);
       expect(session.systemPrompt?.map((component) => component.kind)).toEqual(["built-in", "tool-definitions"]);
       expect(session.costAiCredits.known).toBe(true);
+    });
+
+    it("reads a session's cache-write and reasoning tokens from its usage records", async () => {
+      const session = (await source().readSession(CLI.usageRecords))!;
+
+      expect(session.turns[0]!.usage.cacheWrite).toEqual({ known: true, value: 300 });
+      expect(session.turns[0]!.usage.reasoning).toEqual({ known: true, value: 30 });
+      expect(session.turns[2]!.usage.cacheWrite.known).toBe(false);
     });
 
     it("keeps an unmatched turn unknown with the segmenter's reason", async () => {

@@ -19,12 +19,14 @@ export const COPILOT_CLI_FIXTURE_HOME = path.resolve(
   "../../fixtures/agent-host/copilot-cli",
 );
 
-export type CopilotCliFixtureName = "normal" | "steeringAbortSubagent" | "systemPromptReemit" | "malformed" | "missingLog";
+export type CopilotCliFixtureName = "normal" | "steeringAbortSubagent" | "systemPromptReemit" | "malformed" | "missingLog" | "usageRecords";
 
 interface CopilotCliFixtureRows {
   sdkSessionIds: Record<CopilotCliFixtureName, string>;
   chats_v2: Record<string, unknown>[];
   turns: Record<CopilotCliFixtureName | "unmatched", { id: string; event_id: string | null; checkpoint_ref: string }[]>;
+  // The step 10.15 session's own turn_usage rows (the others share one).
+  turnUsage: { usageRecords: { turn_id: string; usage: unknown }[] };
 }
 
 export const copilotCliFixtureRows = JSON.parse(
@@ -38,6 +40,7 @@ export const COPILOT_CLI_FIXTURE_SESSION_IDS: Record<CopilotCliFixtureName, stri
   systemPromptReemit: "9a1b2c3d-5555-4e6f-8a07-000000000003",
   malformed: "9a1b2c3d-5555-4e6f-8a07-000000000004",
   missingLog: "9a1b2c3d-5555-4e6f-8a07-000000000005",
+  usageRecords: "9a1b2c3d-5555-4e6f-8a07-000000000008",
 };
 
 const FIXTURE_NAMES = Object.keys(COPILOT_CLI_FIXTURE_SESSION_IDS) as CopilotCliFixtureName[];
@@ -66,8 +69,12 @@ function catalogRows(): AgentHostTableRows {
 }
 
 // Every turn gets the 10.13 fixture's first usage row, so tokens and AI
-// Credits are known and the event log only adds text and tool calls.
+// Credits are known and the event log only adds text and tool calls. The
+// usageRecords session has its own rows, which its per-call records reconcile with.
 function sessionRows(name: CopilotCliFixtureName): AgentHostTableRows {
+  if (name === "usageRecords") {
+    return { turns: turnRowsOf(name), turn_usage: copilotCliFixtureRows.turnUsage.usageRecords as Record<string, unknown>[] };
+  }
   const usage = readAgentHostFixtureRows("session-rows.json").turn_usage[0]!.usage;
   const turns = turnRowsOf(name);
   return { turns, turn_usage: turns.map((turn) => ({ turn_id: turn.id, usage })) };

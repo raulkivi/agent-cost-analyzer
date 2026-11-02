@@ -145,7 +145,10 @@ header area also holds the **Retention** field described below:
   Copilot harness and its Agent Host; those sessions are listed with their
   tokens and AI Credits. Their prompt and response text, turn inspector, tool
   calls and system prompt come from the Copilot CLI's event log, read locally.
-  The Tools tab stays unavailable, since the log records no tool definitions.
+  Cache-write and reasoning tokens come from the same log's per-call usage
+  records (Copilot CLI 1.0.95 and later); older logs have none, so those turns
+  show them as unavailable, with the reason. The Tools tab stays unavailable,
+  since the log records no tool definitions.
 - **mitmproxy (HAR capture)** — reads a local mitmproxy HAR capture instead,
   for Anthropic/OpenAI API traffic recorded outside VS Code. See
   [mitmproxy-setup.md](mitmproxy-setup.md) for how to record a capture. A
@@ -201,8 +204,8 @@ can raise or lower it to match how far back you actually want Analyze mode
 to be able to look. Changes save automatically when you click away from
 the field.
 
-Cache-write and reasoning tokens need a *separate*, optional setting on
-top of the one above — see the README's
+For Local harness chats, cache-write and reasoning tokens need a *separate*,
+optional setting on top of the one above — see the README's
 ["Enabling richer cache-write/reasoning numbers"](../README.md#enabling-richer-cache-writereasoning-numbers-optional)
 section for the steps. Skipping it doesn't limit anything else — every
 other Analyze mode figure works the same either way — it just leaves

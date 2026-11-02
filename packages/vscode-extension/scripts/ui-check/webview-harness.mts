@@ -54,6 +54,8 @@ export interface Harness {
   // one whose Copilot CLI event log is read, one whose log is missing.
   agentHostSessionId?: string;
   agentHostMissingLogSessionId?: string;
+  // Step 10.15: one whose log's per-call usage records fill Cache write and Reasoning.
+  agentHostUsageRecordsSessionId?: string;
   open(theme: VscodeTheme, width: number, height?: number): Promise<Page>;
   postHostEvent(page: Page, name: string, payload?: unknown): Promise<void>;
   // Resolves once no webview request has been in flight for a moment, and
@@ -68,6 +70,7 @@ export interface SeededUserData {
   usageSessionId: string;
   agentHostSessionId?: string;
   agentHostMissingLogSessionId?: string;
+  agentHostUsageRecordsSessionId?: string;
 }
 
 export interface HarnessOptions {
@@ -96,6 +99,7 @@ function seedUiCheckFixture(rootDir: string): SeededUserData {
     ...fixture,
     agentHostSessionId: COPILOT_CLI_FIXTURE_SESSION_IDS.normal,
     agentHostMissingLogSessionId: COPILOT_CLI_FIXTURE_SESSION_IDS.missingLog,
+    agentHostUsageRecordsSessionId: COPILOT_CLI_FIXTURE_SESSION_IDS.usageRecords,
   };
 }
 
@@ -160,6 +164,7 @@ export async function startHarness(options: HarnessOptions = {}): Promise<Harnes
     usageSessionId: fixture.usageSessionId,
     agentHostSessionId: fixture.agentHostSessionId,
     agentHostMissingLogSessionId: fixture.agentHostMissingLogSessionId,
+    agentHostUsageRecordsSessionId: fixture.agentHostUsageRecordsSessionId,
     async open(theme, width, height = 900) {
       const page = await browser.newPage({ viewport: { width, height }, deviceScaleFactor: options.deviceScaleFactor ?? 1 });
       page.on("pageerror", (error) => console.error(`page error: ${error.message}`));

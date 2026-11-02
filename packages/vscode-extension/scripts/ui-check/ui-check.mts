@@ -116,6 +116,16 @@ const SCENARIOS: Scenario[] = [
       await page.getByRole("group", { name: "Tool calls" }).first().waitFor({ timeout: 5000 });
     },
   },
+  // Step 10.15: the usageRecords fixture session's first turn reconciles with
+  // its session.db, so its Cache write (300) and Reasoning (30) are known.
+  {
+    name: "agent-host-usage-records",
+    run: async (page, harness) => {
+      await harness.postHostEvent(page, "selectSession", { sessionId: harness.agentHostUsageRecordsSessionId });
+      await page.getByRole("cell", { name: "300", exact: true }).first().waitFor({ timeout: 5000 });
+      await page.getByRole("cell", { name: "30", exact: true }).first().waitFor({ timeout: 5000 });
+    },
+  },
   {
     name: "agent-host-no-log-turn-inspector",
     run: async (page, harness) => {

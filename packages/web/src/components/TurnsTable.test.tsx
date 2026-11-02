@@ -49,6 +49,28 @@ describe("TurnsTable", () => {
     expect(screen.queryByText(/unavailable/i)).not.toBeInTheDocument();
   });
 
+  it("renders an Agent Host turn's known Cache write and Reasoning from its usage records, with an em dash for a turn without them", () => {
+    const base = makeTurn().usage;
+    const reconciled = makeTurn({
+      index: 0,
+      usage: { ...base, uncachedInput: { known: true, value: 600 }, cacheRead: { known: true, value: 1600 }, cacheWrite: { known: true, value: 300 }, reasoning: { known: true, value: 30 } },
+    });
+    const older = makeTurn({
+      index: 1,
+      usage: {
+        ...base,
+        cacheWrite: { known: false, reason: "no per-call usage records" },
+        reasoning: { known: false, reason: "no per-call usage records" },
+      },
+    });
+
+    render(<TurnsTable turns={[reconciled, older]} selectedTurnIndex={0} onSelectTurn={() => {}} />);
+
+    const [first, second] = screen.getAllByRole("row").slice(1).map((row) => Array.from(row.querySelectorAll("td")).map((cell) => cell.textContent));
+    expect([first[6], first[9]]).toEqual(["300", "30"]);
+    expect([second[6], second[9]]).toEqual(["—", "—"]);
+  });
+
   it("renders a trigger tag when triggeredEvent is set, else a muted em dash", () => {
     const turns = [
       makeTurn({ index: 0, triggeredEvent: "compaction" }),
