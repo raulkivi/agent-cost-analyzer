@@ -98,6 +98,11 @@ Pull requests also run a Claude code review, the OpenSSF Scorecard and
 which rejects hidden Unicode characters in code, docs and agent files. Keep to
 plain visible characters.
 
+Every pull request needs a review from a code owner listed in
+[.github/CODEOWNERS](.github/CODEOWNERS). Changes to workflows, dependencies,
+release scripts, agent instructions and the redaction or MCP code always need
+the maintainer's approval.
+
 ## Privacy
 
 The app reads local session logs and never uploads them. When you file an issue

@@ -18,6 +18,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   whose log is missing or unreadable shows these as unavailable, with the
   reason, and stays out of the audit counts. The Tools tab stays unavailable,
   since the log records no tool definitions.
+- `.github/CODEOWNERS`: every change needs the maintainer's review, and
+  security-sensitive paths (workflows, dependencies, release scripts, agent
+  instructions, redaction and MCP code) are listed explicitly.
 ### Fixed
 - VS Code Agent Host sessions (step 10.13): a session whose `session.db` is
   missing or unreadable stays listed with unknown usage; only chats that were
