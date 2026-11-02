@@ -31,6 +31,22 @@ const rows = JSON.parse(readFileSync(new URL("rows.json", FIXTURES), "utf8")) as
 const sdkId = rows.sdkSessionIds.usageRecords!;
 const log = (await readCopilotEventLog(new URL(`session-state/${sdkId}/events.jsonl`, FIXTURES).pathname))!;
 
+// Fields of a `session.usage_record` event's `usage` payload that the checks read.
+// Aliases, not interfaces: event `data` is a Record, and only aliases cast to it.
+type UsageRecord = {
+  apiCallId: string;
+  inputTokens: number;
+  cacheReadTokens: number;
+  cacheWriteTokens: number;
+  reasoningTokens: number;
+  outputTokens: number;
+  cacheDetailsReported: boolean;
+  copilotUsage: { totalNanoAiu: number };
+  accounting: { sourceSessionId: string };
+};
+type UsageRecordData = { usage: UsageRecord };
+type AssistantMessageData = { apiCallId?: string; turnId?: string };
+
 interface Call {
   apiCallId: string;
   input: number;
@@ -52,7 +68,7 @@ function recordsOfTurn(eventId: string | null): Call[] {
     .slice(start, next === -1 ? undefined : next)
     .filter((e) => e.type === "session.usage_record")
     .map((e) => {
-      const u = (e.data as { usage: Record<string, any> }).usage;
+      const u = (e.data as UsageRecordData).usage;
       return {
         apiCallId: u.apiCallId,
         input: u.inputTokens,
@@ -80,9 +96,9 @@ describe("usageRecords fixture", () => {
   it("carries the fixture id as accounting.sourceSessionId and unique apiCallIds", () => {
     const usages = log.events.filter((e) => e.type === "session.usage_record");
     for (const e of usages) {
-      expect((e.data as any).usage.accounting.sourceSessionId).toBe(sdkId);
+      expect((e.data as UsageRecordData).usage.accounting.sourceSessionId).toBe(sdkId);
     }
-    const ids = usages.map((e) => (e.data as any).usage.apiCallId);
+    const ids = usages.map((e) => (e.data as UsageRecordData).usage.apiCallId);
     expect(new Set(ids).size).toBe(ids.length);
   });
 
@@ -90,8 +106,10 @@ describe("usageRecords fixture", () => {
     const events = log.events;
     for (const [i, e] of events.entries()) {
       if (e.type !== "session.usage_record") continue;
-      const id = (e.data as any).usage.apiCallId;
-      const msg = events.findIndex((m) => m.type === "assistant.message" && (m.data as any).apiCallId === id);
+      const id = (e.data as UsageRecordData).usage.apiCallId;
+      const msg = events.findIndex(
+        (m) => m.type === "assistant.message" && (m.data as AssistantMessageData).apiCallId === id,
+      );
       expect(msg).toBeGreaterThan(i);
     }
   });
@@ -143,7 +161,7 @@ describe("usageRecords fixture", () => {
     expect(recordsOfTurn(turns[0]!.event_id).some((c) => c.reasoning === 0)).toBe(true);
     expect(recordsOfTurn(turns[1]!.event_id)).toHaveLength(2);
     const turn1Calls = log.events.filter(
-      (e) => e.type === "assistant.message" && (e.data as any).turnId === "1",
+      (e) => e.type === "assistant.message" && (e.data as AssistantMessageData).turnId === "1",
     );
     expect(turn1Calls).toHaveLength(3);
   });

@@ -908,8 +908,10 @@ startup.
 **What is unknown, and why.** Each unrecorded figure is `unknown` with a
 reason, never 0.
 
-- Cache-write, reasoning, tool and vision tokens: the store doesn't record
-  them.
+- Tool and vision tokens: the store doesn't record them.
+- Cache-write and reasoning tokens: from the Copilot CLI event log's
+  `session.usage_record` events, per turn, when they reconcile with
+  `session.db` (step 10.15, §6.2.2.2). Otherwise unknown, with the reason.
 - Turn text (prompt and response), tool calls and the system prompt: these
   stores don't hold them. The Copilot CLI event log holds them, read in
   step 10.14 (§6.2.2.2). A session whose log is missing or unreadable keeps
@@ -1005,10 +1007,8 @@ is a subagent's prompt, not a turn. A turn's events run from its
 A file holds one `system.message`, or several: it is re-emitted after a model
 change or resume. The latest main-agent one is the prompt. **Tool
 definitions are not recorded** (only their token count), so the Tools tab
-stays unavailable. Not used: `session.usage_record`, `hook.*`,
-`permission.requested`, `model.*`, `skill.*`, `subagent.*`,
-`session.compaction_*` other than the token counts. `session.usage_record`
-(cache-write and reasoning tokens) is the follow-up step 10.15.
+stays unavailable. Not used: `hook.*`, `permission.requested`, `model.*`,
+`skill.*`, `subagent.*`, `session.compaction_*` other than the token counts.
 
 **Wiring.**
 
@@ -1018,6 +1018,34 @@ stays unavailable. Not used: `session.usage_record`, `hook.*`,
 - **Status.** `Session.copilotEventLog` is `read`, `missing` or `unreadable`,
   with a reason for the last two. An unreadable log degrades to unknown and
   never rejects `readSession`. A list summary has no status.
+- **Token detail (step 10.15).** Cache-write and reasoning tokens come from
+  each turn's `session.usage_record` events, the segmentation above. A
+  record is read by `readCopilotCallUsage`; a record without a usable
+  `inputTokens`, `cacheReadTokens` or `outputTokens` is ignored, which
+  leaves the turn's sums short.
+  - **Reconciliation (all-or-nothing).** The records are used only when the
+    turn's Σ`inputTokens`, Σ`cacheReadTokens` and Σ`outputTokens` equal
+    `session.db`'s `input`, `cached` and `output` for the turn. Equal sums
+    show the records cover every call `session.db` counted, subagent calls
+    included, without assuming how subagents log.
+  - **Known per figure.** Cache-write (Σ`cacheWriteTokens`) and reasoning
+    (Σ`reasoningTokens`) are known only when every record has the count. A
+    record with `cacheDetailsReported: false` has no cache-write count.
+  - **Uncached input.** With cache-write known, uncached input is `input −
+    cached − cacheWrite`; otherwise it stays `input − cached`, which then
+    includes cache writes. Either way uncached + cache write + cache read
+    equals `session.db`'s `input`. Reasoning is a subset of output, so
+    output is unchanged.
+  - **Reasons.** Unknown is never 0. A turn's cache-write and reasoning take
+    the first that applies:
+    - the log's own reason, when the log is missing or unreadable;
+    - the segmenter's reason, for a turn that doesn't match the log;
+    - "log wasn't read", in a session list (the log isn't opened);
+    - no token totals in `session.db` for the turn;
+    - no usage records in the turn: Copilot CLI before 1.0.95 writes none;
+    - the records' sums differ from `session.db`, or cache write exceeds
+      `input − cached`: the records don't cover the whole turn;
+    - a call without a cache-write or reasoning count: "not reported".
 - **Unmatched turns.** A turn that can't be matched to the log has
   `textUnavailableReason` and `toolCallsUnavailableReason` on its `Turn`, and
   `TurnInspectorDetail.unavailableReason` on the inspector. An empty tool-call

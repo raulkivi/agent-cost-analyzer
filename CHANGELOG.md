@@ -18,6 +18,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   whose log is missing or unreadable shows these as unavailable, with the
   reason, and stays out of the audit counts. The Tools tab stays unavailable,
   since the log records no tool definitions.
+- VS Code Agent Host cache-write and reasoning tokens (step 10.15): per turn,
+  from the Copilot CLI's per-call usage records in its event log (Copilot CLI
+  1.0.95 and later). Uncached input, cache write and cache read add up to the
+  input total. A turn whose records are missing or don't add up to its
+  session totals shows them as unavailable, with the reason.
 - `.github/CODEOWNERS`: every change needs the maintainer's review, and
   security-sensitive paths (workflows, dependencies, release scripts, agent
   instructions, redaction and MCP code) are listed explicitly.
