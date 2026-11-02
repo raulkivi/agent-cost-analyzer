@@ -2047,8 +2047,9 @@ Marketplace still requires a *publisher*: the namespace in the extension
 id (`<publisher>.<name>`) and the identity shown on the listing. A
 personal account can own one; no company or organization is needed.
 
-**Status (2026-10-28):** done except the Open VSX ownership claim
-(#14833), which waits on the Open VSX administrators.
+**Status (2026-11-02):** done. The Open VSX ownership claim (#14833) was
+granted on 2026-10-28. Open: the owner revokes the Open VSX
+administrator's Reader access on the Marketplace publisher.
 - **VS Code Marketplace:** publisher `raulkivi` registered
   (marketplace.visualstudio.com/manage/publishers/raulkivi); Entra ID
   setup done 2026-10-27.
