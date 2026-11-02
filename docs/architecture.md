@@ -998,6 +998,7 @@ is a subagent's prompt, not a turn. A turn's events run from its
 | `permission.completed` | `toolCallId`, `result.kind` (`approved`, `approved-for-location`, `cancelled`, ...) |
 | `abort` | `reason`; a start with no complete in an aborted turn is interrupted |
 | `system.message` | `role: "system"`, `content` (30-60 K characters, XML-like sections), `agentId` when a subagent's |
+| `session.usage_record` | `data.apiCallId` and `data.usage`: `inputTokens` (includes cache reads and writes), `cacheReadTokens`, `cacheWriteTokens`, `reasoningTokens` (a subset of `outputTokens`), `outputTokens`, `cacheDetailsReported`, `copilotUsage.totalNanoAiu`; one per model call, before its `assistant.message` (Copilot CLI 1.0.95 and later; step 10.15) |
 | `session.shutdown`, `session.compaction_start` | `systemTokens`, `toolDefinitionsTokens`, `conversationTokens` (real counts) |
 | `session.binary_asset` | image payload: shown as a placeholder only |
 
