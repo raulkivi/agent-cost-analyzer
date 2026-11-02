@@ -26,7 +26,7 @@ Progress (2026-10-28):
 | 10.12 | Learn scenarios in the side bar (a Learn view), like the Sessions view; the panel has no list of its own | Done (#80) |
 | 10.13 | Agent Host sessions: read the sessions VS Code 1.143+ creates by default (manual check 1.4) | Done (`20c880b`–`756a26c`); manual check 1.4 passes with the default harness |
 | 10.14 | Agent Host turn text, tool calls and system prompt from the Copilot CLI event log (`~/.copilot/session-state/<sdkSessionId>/events.jsonl`) | Code done (`2f302b0`–`3911119`, docs commit); owner's manual check (task 11) passed 2026-11-02 |
-| 10.15 | Cache-write and reasoning tokens for Agent Host sessions from `session.usage_record` | Code done (#102); owner's manual check (task 7) open |
+| 10.15 | Cache-write and reasoning tokens for Agent Host sessions from `session.usage_record` | Done (#102); owner's manual check (task 7) passed 2026-11-02 |
 
 
 ## 1. Context
@@ -1602,7 +1602,7 @@ too. The Copilot CLI event log records both figures per model call in
 `session.usage_record`. 10.15 reads them from the log 10.14 already opens,
 in the shared server code, so both products and both MCP servers get them.
 
-**Status (2026-11-02): code done and merged (#102, tasks 1-6); owner's manual check (task 7) open.**
+**Status (2026-11-02): done (#102, tasks 1-6); owner's manual check (task 7) passed.**
 
 **Data seen on this machine** (Insiders 1.145, Copilot CLI 0.0.0 to
 1.0.103; surveyed 2026-11-02 read-only, `session.db` files copied first):
@@ -1752,7 +1752,7 @@ No new dependencies.
 | 4 | Wire into `agent-host-session-builder.ts`: add `session.usage_record` to `EVENT_TYPES_USED`; `buildAgentHostTurnUsage(usage, detail?: AgentHostTurnTokenDetail)` takes cache write and reasoning from `detail`, and `uncachedInput` = `input − cached − cacheWrite` when cache write is known; `turnContentSources` also returns each row's `SegmentedTurn` so the token detail reuses the one segmentation; unknown reasons as in Design (log reason, unmatched-turn reason, list note); `AGENT_HOST_FIELD_NOT_RECORDED_REASON` reworded for tool and vision only. Test first: in `agent-host-session-builder.test.ts`, the `usageRecords` fixture gives the `expected` per-turn figures and turn (a)'s `uncachedInput + cacheWrite + cacheRead` equals its `session.db` input; a missing log gives the log's reason; in `agent-host-session-source.test.ts`, `readSession` on the fixture returns them and `listSessions` still opens no log. Exit: the server suite passes | medium | Sonnet | 1, 2, 3 | Done |
 | 5 | Web, MCP and UI check: no wording constants change (Design). Test first: a `get_session_cost` test in `src/mcp/` for the fixture's Agent Host session (cache write and reasoning known with partial turn coverage, input total = `session.db` input), and a `TurnsTable` test that renders an Agent Host turn's known Cache write and Reasoning. Give the UI check's Agent Host session (`webview-harness.mts` with `COPILOT_CLI_FIXTURE_HOME`, `seedAgentHostSession` in `showcase-fixture.mts`) usage records that reconcile with its `session.db` rows, and re-run the UI check. Exit: tests pass; UI check screenshots show both columns filled for that session | low | Sonnet | 4 | Done |
 | 6 | Docs and changelogs: architecture.md §6.2.2.1 ("What is unknown": cache write and reasoning now from the log) and §6.2.2.2 (`session.usage_record` moves from "Not used" to "Events used", the reconciliation rule, the uncached-input rule, the reasons); `docs/vscode-extension-guide.md` (troubleshooting "cache-write and reasoning tokens need the optional ... setting" applies to Local harness chats only; the files table's `events.jsonl` row adds cache-write and reasoning tokens); `docs/UserGuide.md` Agent Host paragraph; `packages/vscode-extension/README.md` Agent Host section; `[Unreleased]` in `CHANGELOG.md` and `packages/vscode-extension/CHANGELOG.md`; this plan's status. Exit: no doc says Agent Host cache-write or reasoning tokens are unavailable without the reason | low | Haiku | 4 (5 for the UI check note) | Done |
-| 7 | Manual check: a new default-harness session (Copilot CLI 1.0.95+) in VS Code and the same session in the standalone app show Cache write and Reasoning per turn, and Cost/Insights input totals unchanged from before 10.15; `get_session_cost` agrees; an older Agent Host session shows both unknown with the "no per-call usage records" reason; a session whose log dir is moved away shows the missing-log reason | — | owner | 4, 5, 6 | Planned |
+| 7 | Manual check: a new default-harness session (Copilot CLI 1.0.95+) in VS Code and the same session in the standalone app show Cache write and Reasoning per turn, and Cost/Insights input totals unchanged from before 10.15; `get_session_cost` agrees; an older Agent Host session shows both unknown with the "no per-call usage records" reason; a session whose log dir is moved away shows the missing-log reason | — | owner | 4, 5, 6 | Done |
 
 Tasks 1 and 2 start at once; 3 starts from its spec in parallel with 2.
 4 joins them. 5 and 6 run in parallel after 4.

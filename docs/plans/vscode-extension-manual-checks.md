@@ -77,7 +77,16 @@ in the docs). Findings that need a code fix also go in the run log below.
   without "setup needed".
 - **5.1-5.11 Agent Host event log: passed** (2026-11-02, Insiders, profile
   "AI Credits 0.1.0 check", VSIX built from `89eafea`, step 10.14, PR #98).
-- **Not yet run:** 1.5-1.12, §2 and §3.
+- **10.15 Agent Host cache-write and reasoning (task 7): passed**
+  (2026-11-02, Insiders, VSIX built from `31a587f`, after reloading the
+  window). A new default-harness session (Copilot CLI 1.0.103) showed
+  Cache write and Reasoning in the panel and the standalone app with the
+  same numbers; total input (uncached + cache write + cache read) matched
+  the sum of the event log's usage records (196,786) and `get_session_cost`
+  over stdio; an older session showed both as "—" with the "no per-call
+  usage records" reason. The Dashboard's input totals weren't read.
+- **Not yet run:** 1.5-1.12, §2 in Copilot agent mode (the server itself
+  answered over stdio, 9 tools) and §3.
 
 ## 0. Install the candidate
 
