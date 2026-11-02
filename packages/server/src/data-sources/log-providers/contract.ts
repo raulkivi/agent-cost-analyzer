@@ -97,7 +97,9 @@ export function describeLogProviderContract(
       it("readTurnDetail returns a non-null detail with no rounds for an existing turn of a source without round-trip data", async () => {
         const provider = fixture.buildAvailableProvider();
 
-        await expect(provider.readTurnDetail(fixture.knownSessionId, 0)).resolves.toEqual({
+        // unavailableReason may say why the rounds are unknown (e.g. an Agent
+        // Host session without its Copilot CLI event log).
+        await expect(provider.readTurnDetail(fixture.knownSessionId, 0)).resolves.toMatchObject({
           turnIndex: 0,
           userMessage: [],
           rounds: [],

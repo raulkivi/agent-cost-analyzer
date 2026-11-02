@@ -113,10 +113,18 @@ under VS Code's user-data folder. The extension lists them in the Sessions
 view with their tokens and AI Credits, and they don't depend on the debug
 logging settings above.
 
-- Prompt and response text, tool calls and the system prompt of these
-  sessions aren't available yet. The panel's turn inspector, system prompt
-  inspector, tool inventory and tool audit say so, and show no figures for
-  them.
+- Prompt and response text, the turn inspector, tool calls and the system
+  prompt come from the Copilot CLI's event log, which the extension reads
+  locally. The log is in `<COPILOT_HOME or ~/.copilot>/session-state/`, and
+  the panel reads it only when you open a session.
+- Cache-write and reasoning tokens come from the same log's per-call usage
+  records, so they need Copilot CLI 1.0.95 or later. A turn without records,
+  or whose records don't add up to the session's totals, shows them as not
+  available, with the reason. No setting is needed for them.
+- A session whose log is missing or unreadable shows those figures as not
+  available, with the reason, and it stays out of the tool audit counts.
+- The Tools tab stays unavailable, since the Copilot CLI's log records no tool
+  definitions.
 - A chat that was opened but never sent has no turns, so it isn't listed.
 - Sessions from the Local harness (the classic Copilot Chat store) and
   Agent Host sessions are listed together, newest first.
@@ -245,7 +253,7 @@ the same checks:
 | GitHub Copilot Chat is disabled or not installed | Required | `github.copilot.chat.agentDebugLog.fileLogging.enabled` | Fix opens the Extensions view on Copilot Chat: enable or install it, sign in if asked, then reload the window. Copilot writes no logs without it, even when every setting is right. Panel button: **Open Extensions** |
 | Debug logging is off | Required | `github.copilot.chat.agentDebugLog.fileLogging.enabled` | Turn it on. Panel button: **Enable** |
 | Too few sessions kept | Required | `github.copilot.chat.agentDebugLog.fileLogging.maxRetainedSessionLogs` | Set it to at least the **Retention** value (200 by default; Copilot Chat's default is 50). Panel button: **Change** |
-| Cache-write and reasoning tokens unavailable | Optional | `github.copilot.chat.otel.dbSpanExporter.enabled` | Turn it on for two more per-turn figures. Panel button: **Enable** |
+| Cache-write and reasoning tokens unavailable | Optional | `github.copilot.chat.otel.dbSpanExporter.enabled` | Turn it on for two more per-turn figures in Local harness chats. Agent Host chats don't need it. Panel button: **Enable** |
 
 After a change, reload the window. Only sessions started afterwards get
 the new data.
@@ -474,7 +482,7 @@ as 0. Common reasons:
 - the session was recorded before debug logging was on;
 - Copilot Chat deleted the session's debug log (raise
   `github.copilot.chat.agentDebugLog.fileLogging.maxRetainedSessionLogs`);
-- cache-write and reasoning tokens need the optional
+- for Local harness chats, cache-write and reasoning tokens need the optional
   `github.copilot.chat.otel.dbSpanExporter.enabled` setting.
 
 Totals add up only known costs and say how many are unknown, so you can
@@ -530,8 +538,9 @@ and `~/.vscode-server/data` (remote). Under that folder it reads:
 |---|---|
 | `User/globalStorage/github.copilot-chat/session-store.db` | Copilot Chat's session list (SQLite, opened read-only) |
 | `User/workspaceStorage/<workspace>/GitHub.copilot-chat/debug-logs/` | Each session's debug log, `main.jsonl`, with per-turn usage and AI Credits |
-| `User/globalStorage/github.copilot-chat/agent-traces.db` | Optional: cache-write and reasoning tokens (SQLite, opened read-only) |
+| `User/globalStorage/github.copilot-chat/agent-traces.db` | Optional: cache-write and reasoning tokens for Local harness chats (SQLite, opened read-only) |
 | `User/globalStorage/agent-host.db` | Agent Host session list, for VS Code 1.143 and later (SQLite, opened read-only) |
 | `agentSessionData/<session>/session.db` | Agent Host turns, tokens and AI Credits per session (SQLite, opened read-only) |
+| `<COPILOT_HOME or ~/.copilot>/session-state/<sdkSessionId>/events.jsonl` | Agent Host turn text, tool calls, system prompt, and cache-write and reasoning tokens (per-call usage records), from the Copilot CLI's event log (read-only, opened when a session is shown) |
 
 Settings are read through VS Code's settings API, not from the file.

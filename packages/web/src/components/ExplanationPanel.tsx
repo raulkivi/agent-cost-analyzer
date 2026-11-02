@@ -1,6 +1,5 @@
-import type { CopilotHarness, Turn } from "@agent-cost-analyzer/domain";
+import type { Turn } from "@agent-cost-analyzer/domain";
 import type { Mode } from "../state/session-store.js";
-import { AGENT_HOST_TURN_TOOL_CALLS_UNAVAILABLE } from "../lib/agent-host-unavailable.js";
 import { TRIGGER_LABELS } from "../lib/trigger-labels.js";
 import { Blueprint } from "./ui/Blueprint.js";
 import { StatusTag } from "./ui/StatusTag.js";
@@ -10,7 +9,7 @@ interface ExplanationPanelProps {
   turn: Turn | null;
   mode: Mode;
   toolCallsAvailable?: boolean;
-  copilotHarness?: CopilotHarness;
+  eventLogUnavailableReason?: string;
   // Analyze mode only (both LogProvider implementations, per turn-inspector-
   // plan.md §5.7) — Learn mode sessions have no backing log source to
   // inspect.
@@ -20,12 +19,12 @@ interface ExplanationPanelProps {
 function ToolCallsThisTurn({
   turn,
   toolCallsAvailable,
-  copilotHarness,
+  eventLogUnavailableReason,
   onOpenTurnInspector,
 }: {
   turn: Turn;
   toolCallsAvailable: boolean;
-  copilotHarness?: CopilotHarness;
+  eventLogUnavailableReason?: string;
   onOpenTurnInspector?: () => void;
 }) {
   return (
@@ -68,9 +67,9 @@ function ToolCallsThisTurn({
       </div>
       {!toolCallsAvailable ? (
         <p className="text-muted" style={{ fontSize: 12, margin: 0 }}>
-          {copilotHarness === "agent-host"
-            ? AGENT_HOST_TURN_TOOL_CALLS_UNAVAILABLE
-            : "Tool-call detail unavailable for this session."}
+          {turn.toolCallsUnavailableReason ??
+            eventLogUnavailableReason ??
+            "Tool-call detail unavailable for this session."}
         </p>
       ) : turn.toolCalls.length === 0 ? (
         <p className="text-muted" style={{ fontSize: 12, margin: 0 }}>
@@ -118,7 +117,7 @@ export function ExplanationPanel({
   turn,
   mode,
   toolCallsAvailable = false,
-  copilotHarness,
+  eventLogUnavailableReason,
   onOpenTurnInspector,
 }: ExplanationPanelProps) {
   if (!turn) {
@@ -142,7 +141,7 @@ export function ExplanationPanel({
         <ToolCallsThisTurn
           turn={turn}
           toolCallsAvailable={toolCallsAvailable}
-          copilotHarness={copilotHarness}
+          eventLogUnavailableReason={eventLogUnavailableReason}
           onOpenTurnInspector={onOpenTurnInspector}
         />
       )}

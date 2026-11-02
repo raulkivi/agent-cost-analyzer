@@ -4,10 +4,23 @@ import type { SystemPromptComponent } from "@agent-cost-analyzer/domain";
 import { SystemPromptBreakdown } from "./SystemPromptBreakdown.js";
 
 describe("SystemPromptBreakdown", () => {
-  it("says an Agent Host session's system prompt isn't read yet instead of 'not captured'", () => {
-    render(<SystemPromptBreakdown components={[]} providerId="vscode" copilotHarness="agent-host" />);
+  it("shows the event-log reason instead of 'not captured' when the log wasn't read", () => {
+    render(
+      <SystemPromptBreakdown
+        components={[]}
+        providerId="vscode"
+        unavailableReason="No Copilot CLI event log was found for this session."
+      />,
+    );
 
-    expect(screen.getByText(/system prompt of Agent Host sessions isn't read yet/i)).toBeInTheDocument();
+    expect(screen.getByText("No Copilot CLI event log was found for this session.")).toBeInTheDocument();
+    expect(screen.queryByText(/agentDebugLog/)).not.toBeInTheDocument();
+  });
+
+  it("says the event log has no system prompt when it was read but holds none", () => {
+    render(<SystemPromptBreakdown components={[]} providerId="vscode" eventLogRead />);
+
+    expect(screen.getByText("The Copilot CLI event log for this session has no system prompt.")).toBeInTheDocument();
     expect(screen.queryByText(/agentDebugLog/)).not.toBeInTheDocument();
   });
 

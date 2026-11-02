@@ -9,7 +9,7 @@ import type {
 } from "@agent-cost-analyzer/domain";
 import { MAX_EVIDENCE_EXCERPT_LENGTH } from "@agent-cost-analyzer/domain";
 import { excerptOf } from "../tool-audit/output-redactor.js";
-import { toolCallsUnavailableReason } from "../tool-audit/tool-calls-availability.js";
+import { toolCallsUnavailableReason, turnToolCallsUnavailableReason } from "../tool-audit/tool-calls-availability.js";
 import { statusOf } from "../tool-audit/outcome-tally.js";
 import { resolveToolKind } from "../tool-audit/tool-kind-resolver.js";
 
@@ -112,7 +112,7 @@ export function buildInsightRows(sources: ProviderSessions[]): InsightRows {
       rows.sessions.push(sessionRow(source, session));
       for (const turn of session.turns) {
         const turnKey = turnKeyOf(sessionKey, turn.index);
-        rows.turns.push(turnRow(sessionKey, turn, toolCallsUnavailableReason(session) !== undefined));
+        rows.turns.push(turnRow(sessionKey, turn, turnToolCallsUnavailableReason(session, turn) !== undefined));
         turn.toolCalls.forEach((call, callIndex) => rows.toolCalls.push(toolCallRow(turnKey, call, callIndex)));
       }
     }

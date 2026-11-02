@@ -210,7 +210,12 @@ runtime, never hardcoded:
     harness is the default) come from `globalStorage/agent-host.db` and
     `agentSessionData/<session>/session.db` in the same user-data folder.
     They show turns, tokens and AI Credits. Their prompt and response text,
-    tool calls and system prompt aren't read yet.
+    turn inspector, tool calls and system prompt come from the Copilot CLI's
+    event log, `<COPILOT_HOME or ~/.copilot>/session-state/<session>/events.jsonl`,
+    read locally. Cache-write and reasoning tokens come from the log's
+    per-call usage records (Copilot CLI 1.0.95 and later), not from
+    `agent-traces.db`. The Tools tab stays unavailable, since the log records
+    no tool definitions.
   - macOS and Windows paths are implemented but not yet verified against a
     real install. Multi-profile VS Code setups are not supported on any OS
     (see [architecture.md](docs/architecture.md)).
@@ -290,10 +295,11 @@ up in Analyze mode, just without per-token figures.
 
 Two more per-turn figures — cache-write and reasoning tokens — aren't
 exposed by `main.jsonl` at all, no matter how the setting above is
-configured. They come from a second, separate optional local source,
-`agent-traces.db`, that Copilot Chat can also write. This is purely
-additive: the app works fully without it, just showing those two figures
-as unavailable.
+configured. For chats run through the Local harness they come from a second,
+separate optional local source, `agent-traces.db`, that Copilot Chat can also
+write. This is purely additive: the app works fully without it, just showing
+those two figures as unavailable. Agent Host sessions don't need it; their
+figures come from the Copilot CLI's event log.
 
 1. Open your VS Code user `settings.json` (same file as above).
 2. Add:

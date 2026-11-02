@@ -144,3 +144,44 @@ export function getAgentHostSessionRow(
   }
   return toRow(dbRow) ?? undefined;
 }
+
+// provider_data is JSON text written by VS Code, so a row that does not hold an
+// object with a usable sdkSessionId is skipped, never raised.
+function readSdkSessionIdFromProviderData(providerData: unknown): string | null {
+  if (typeof providerData !== "string") {
+    return null;
+  }
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(providerData);
+  } catch {
+    return null;
+  }
+  if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
+    return null;
+  }
+  const sdkSessionId = (parsed as Record<string, unknown>).sdkSessionId;
+  return typeof sdkSessionId === "string" && sdkSessionId !== "" ? sdkSessionId : null;
+}
+
+// The Copilot CLI's session id for an Agent Host session. It never equals the
+// Agent Host id, so the chat row is the only link to the event log.
+export function readAgentHostSdkSessionId(db: DatabaseSync, sessionUri: string): string | null {
+  if (!hasTable(db, "chats_v2")) {
+    return null;
+  }
+  // Rows without a chat_order sort last; rowid breaks ties in insertion order.
+  const rows = db
+    .prepare(
+      "SELECT provider_data FROM chats_v2 WHERE owner_session_uri = ? " +
+        "ORDER BY chat_order IS NULL, chat_order, rowid",
+    )
+    .all(sessionUri) as unknown as { provider_data: unknown }[];
+  for (const row of rows) {
+    const sdkSessionId = readSdkSessionIdFromProviderData(row.provider_data);
+    if (sdkSessionId !== null) {
+      return sdkSessionId;
+    }
+  }
+  return null;
+}

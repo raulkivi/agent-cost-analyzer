@@ -1,3 +1,6 @@
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
@@ -15,6 +18,13 @@ import { SecurityScanner } from "../services/insights/security-scanner.js";
 import { DEFAULT_SECURITY_RULES } from "../services/insights/security-rules.js";
 import { AuditQueryService } from "../services/tool-audit/audit-query-service.js";
 import { FakeProvider, lookup, sampleSessions, session, shell } from "../test-support/audit-fakes.js";
+import type { LogProvider } from "../data-sources/log-providers/log-provider.js";
+import { AgentHostSessionSource } from "../data-sources/agent-host/agent-host-session-source.js";
+import {
+  COPILOT_CLI_FIXTURE_HOME,
+  COPILOT_CLI_FIXTURE_SESSION_IDS,
+  writeCopilotCliAgentHostStores,
+} from "../test-support/copilot-cli-fixtures.js";
 import { createMcpServer, type McpServerDeps } from "./mcp-server.js";
 import { STANDALONE_MCP_IDENTITY, type McpIdentity } from "./mcp-identity.js";
 
@@ -345,7 +355,11 @@ describe("MCP server, Agent Host sessions", () => {
   let client: Client;
 
   beforeEach(async () => {
-    const agentHost = { ...session("ah", "2026-09-28T08:00:00.000Z", [[]]), copilotHarness: "agent-host" as const };
+    const agentHost = {
+      ...session("ah", "2026-09-28T08:00:00.000Z", [[]]),
+      copilotHarness: "agent-host" as const,
+      copilotEventLog: { status: "missing" as const, reason: "No Copilot CLI event log was found for this session." },
+    };
     const provider = new FakeProvider("fake", [agentHost]);
     const providers = lookup(provider);
     const insights = new InsightsService({ listProviders: () => [provider] }, []);
@@ -381,14 +395,67 @@ describe("MCP server, Agent Host sessions", () => {
     };
 
     expect(calls.total).toBe(0);
-    expect(calls.toolCallsUnavailableReason).toMatch(/Agent Host/);
-    expect(audit.toolCallsUnavailableReason).toMatch(/Agent Host/);
+    expect(calls.toolCallsUnavailableReason).toMatch(/Copilot CLI event log/);
+    expect(audit.toolCallsUnavailableReason).toMatch(/Copilot CLI event log/);
   });
 
   it("get_turn says the turn's text and tool calls are unavailable", async () => {
     const view = turnViewSchema.parse(jsonOf(await client.callTool({ name: "get_turn", arguments: { sessionId: "ah", turnIndex: 0 } })));
 
-    expect(view.textUnavailableReason).toMatch(/Agent Host/);
-    expect(view.toolCallsUnavailableReason).toMatch(/Agent Host/);
+    expect(view.textUnavailableReason).toMatch(/Copilot CLI event log/);
+    expect(view.toolCallsUnavailableReason).toMatch(/Copilot CLI event log/);
+  });
+});
+
+describe("MCP server, Agent Host usage records (step 10.15)", () => {
+  let client: Client;
+  let userDataDir: string;
+  const sessionId = COPILOT_CLI_FIXTURE_SESSION_IDS.usageRecords;
+
+  beforeEach(async () => {
+    userDataDir = mkdtempSync(path.join(tmpdir(), "mcp-agent-host-"));
+    writeCopilotCliAgentHostStores(userDataDir);
+    const source = new AgentHostSessionSource({ userDataDir, copilotHome: COPILOT_CLI_FIXTURE_HOME });
+    const provider: LogProvider = {
+      id: "fake",
+      label: "Fake",
+      checkAvailability: () => source.checkAvailability(),
+      listSessions: async () => (await source.listSessions()).map((s) => ({ ...s, providerId: "fake" })),
+      readSession: async (id) => {
+        const read = await source.readSession(id);
+        return read && { ...read, providerId: "fake" };
+      },
+      readTurnDetail: (id, turnIndex) => source.readTurnDetail(id, turnIndex),
+    };
+    const providers = lookup(provider);
+    const insights = new InsightsService({ listProviders: () => [provider] }, []);
+    const server = createMcpServer({
+      auditQueries: new AuditQueryService(providers),
+      analysisQueries: new AnalysisQueryService(providers, insights),
+      getProviderStatus: async () => providerStatus,
+      version: "0.0.0-test",
+    });
+    const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+    client = new Client({ name: "test-client", version: "1.0.0" });
+    await Promise.all([server.connect(serverTransport), client.connect(clientTransport)]);
+  });
+
+  afterEach(async () => {
+    await client.close();
+    rmSync(userDataDir, { recursive: true, force: true });
+  });
+
+  it("get_session_cost reports cache write and reasoning with the turns that reconcile, input total matching session.db", async () => {
+    const cost = sessionCostSchema.parse(jsonOf(await client.callTool({ name: "get_session_cost", arguments: { sessionId } })));
+
+    // Turn 0 reconciles (cache write 300, reasoning 30); turn 3 has only reasoning (40).
+    expect(cost.totals.cacheWrite).toMatchObject({ value: 300, knownTurns: 1, turns: 4 });
+    expect(cost.totals.reasoning).toMatchObject({ value: 70, knownTurns: 2, turns: 4 });
+    // Turn 0: uncached 600 + cache write 300 + cache read 1600 = session.db's 2500 input.
+    // Uncached input stays known on every turn (input - cached, minus cache write where known).
+    expect(cost.totals.uncachedInput).toMatchObject({ value: 600 + 1000 + 800 + 500, knownTurns: 4 });
+    expect(cost.totals.cacheRead.value).toBe(1600 + 2300 + 0 + 1500);
+    expect(cost.totals.inputTokens).toMatchObject({ value: 2500, knownTurns: 1, turns: 4 });
+    expect(cost.unavailableReasons.some((reason) => /usage records/i.test(reason))).toBe(true);
   });
 });

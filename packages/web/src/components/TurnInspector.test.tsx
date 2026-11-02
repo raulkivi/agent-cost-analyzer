@@ -281,24 +281,27 @@ describe("TurnInspector", () => {
     expect(await screen.findByText(/made no request to the model/i)).toBeInTheDocument();
   });
 
-  it("explains that an Agent Host session's turn isn't available yet, without fetching", () => {
-    const fetchSpy = vi.fn();
-    vi.stubGlobal("fetch", fetchSpy);
-
-    render(
-      <TurnInspector
-        sessionId="session-1"
-        turnIndex={0}
-        usageDataAvailable={true}
-        copilotHarness="agent-host"
-        onClose={() => {}}
-      />,
+  it("shows the detail's unavailable reason, not 'no model request', for an unknown turn", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: () =>
+          Promise.resolve({
+            turnIndex: 0,
+            userMessage: [],
+            rounds: [],
+            unavailableReason: "No Copilot CLI event log was found for this session.",
+          } satisfies TurnInspectorDetail),
+      }),
     );
 
-    expect(screen.getByRole("heading", { name: "Not available yet" })).toBeInTheDocument();
-    expect(screen.getByText(/Agent Host sessions aren't read yet/)).toBeInTheDocument();
-    expect(screen.queryByText(/enable agentDebugLog/)).not.toBeInTheDocument();
-    expect(fetchSpy).not.toHaveBeenCalled();
+    render(<TurnInspector sessionId="session-1" turnIndex={0} usageDataAvailable={true} onClose={() => {}} />);
+
+    expect(await screen.findByRole("heading", { name: "Not available" })).toBeInTheDocument();
+    expect(screen.getByText("No Copilot CLI event log was found for this session.")).toBeInTheDocument();
+    expect(screen.queryByText(/made no request to the model/i)).not.toBeInTheDocument();
   });
 
   // §3.5 States (AsyncView).

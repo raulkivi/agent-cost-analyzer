@@ -4,10 +4,10 @@ import type { ToolInventoryEntry } from "@agent-cost-analyzer/domain";
 import { ToolInventoryPanel } from "./ToolInventoryPanel.js";
 
 describe("ToolInventoryPanel", () => {
-  it("says an Agent Host session's tool inventory isn't read yet instead of 'not captured'", () => {
+  it("says the Copilot CLI event log records no tool definitions for an Agent Host session", () => {
     render(<ToolInventoryPanel entries={[]} copilotHarness="agent-host" />);
 
-    expect(screen.getByText(/tool inventory of Agent Host sessions isn't read yet/i)).toBeInTheDocument();
+    expect(screen.getByText(/event log records no tool definitions/i)).toBeInTheDocument();
     expect(screen.queryByText(/No tool inventory captured/)).not.toBeInTheDocument();
   });
 

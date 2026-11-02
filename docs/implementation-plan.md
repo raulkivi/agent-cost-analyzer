@@ -1275,8 +1275,9 @@ server (off, on with 9 tools and `get_session_cost`, off again).
    are open (see the run log there).
 2. The owner's review of the extension README and guide. The 8
    screenshots are in place (manual checks §4).
-3. Publishing setup (plan §7.0): done on 2026-10-27 except the Open VSX
-   ownership claim (#14833), which waits on the Open VSX administrators.
+3. Publishing setup (plan §7.0): done on 2026-10-27; the Open VSX
+   ownership claim (#14833) was granted on 2026-10-28, and the owner revoked the
+   Open VSX administrator's Reader access on 2026-11-02.
    The Entra ID app, the `release` environment, the Open VSX namespace,
    `OVSX_PAT` and the icon are in place; trusted publishing replaces
    `OVSX_PAT` after the first release.
