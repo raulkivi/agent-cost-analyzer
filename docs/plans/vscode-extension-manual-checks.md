@@ -75,8 +75,9 @@ in the docs). Findings that need a code fix also go in the run log below.
   included it, the turn inspector, system prompt, Tools tab and tool audit
   said "not available yet", and Setup marked the logging settings optional
   without "setup needed".
-- **Not yet run:** 1.5-1.12, §2, §3 and §5 (step 10.14, PR #98; VSIX
-  built from `78654f6` on 2026-10-29, not yet installed).
+- **5.1-5.11 Agent Host event log: passed** (2026-11-02, Insiders, profile
+  "AI Credits 0.1.0 check", VSIX built from `89eafea`, step 10.14, PR #98).
+- **Not yet run:** 1.5-1.12, §2 and §3.
 
 ## 0. Install the candidate
 
