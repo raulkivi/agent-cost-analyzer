@@ -1377,6 +1377,39 @@ extension's MCP server and `ext-v0.1.0`, which step 10.13 blocks).
 
 **Status (2026-10-28)**: planned, not started.
 
+## Phase 13 — Vendor-aware Learn simulation (VS Code first)
+
+Full design: [plans/vendor-aware-learn-simulation.md](plans/vendor-aware-learn-simulation.md).
+
+**Goal**: replay any Learn scenario on any model GitHub Copilot offers.
+That vendor's sourced cache rules (TTL, prefix layers, invalidation scope,
+cache-write charges) and GitHub's per-token AI credit prices decide each
+turn's cache outcome and cost. This replaces the hand-computed fixture
+numbers that the [Learn scenarios fact-check](learn-scenarios-fact-check.md)
+found wrong (R-01–R-04).
+
+**Deliverables** (steps 13.0–13.10 in the plan):
+- Vendor-neutral `ScenarioScript`s for the 18 scenarios, and sourced
+  `VendorProfile` data for every vendor and model in GitHub's Copilot price
+  table.
+- A pure simulator in `services/learn-simulation/`: one `CacheModel`
+  strategy per caching kind, plus an invalidation policy and a pricer.
+- `ApiService` and extension RPC calls to simulate and compare.
+- In the VS Code extension's Learn mode: a vendor/model picker, a "Cache"
+  column, a "How vendors differ" card, a Vendors tab, sources footers and
+  an assumptions popover. The standalone app gets them last (13.10).
+
+**Exit criterion**: in the VS Code extension, every Learn scenario can be
+replayed on every model in GitHub's Copilot price table. Each turn's cache
+outcome and AI credits come from the simulator and that vendor's sourced
+rules, and every vendor-specific figure links to a dated source or says
+unknown.
+
+**Dependencies**: Phase 10 (the extension, its Learn view from step 10.12
+and `ext-v0.1.0`). Not Phase 11 or 12.
+
+**Status (2026-11-03)**: proposed, not started; open questions in the plan's §9.
+
 ## Summary dependency graph
 
 ![Summary dependency graph](diagrams/summary-dependency-graph.drawio.svg)
@@ -1414,5 +1447,6 @@ flowchart LR
     P98 --&gt; P11
     P912 --&gt; P12["Phase 12<br/>MCP Apps views"]
     P10 --&gt; P12
+    P10 --&gt; P13["Phase 13<br/>Vendor-aware Learn simulation"]
 ```
 -->

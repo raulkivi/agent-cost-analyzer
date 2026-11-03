@@ -109,6 +109,12 @@ narratives, in four places each: fixture, per-scenario doc,
 all-scenarios.md and agentic doc tables, plus some diagrams. They are left
 for the owner to approve.
 
+**Decision (2026-11-03).** The owner chose true per-vendor simulation over
+hand edits. R-01 to R-04 will be fixed by construction in Phase 13
+([plans/vendor-aware-learn-simulation.md](plans/vendor-aware-learn-simulation.md),
+rules S2, S5 and S8). The numbers below remain the reference for its
+Anthropic golden tests.
+
 ### R-01: bill a cache miss once, not twice
 
 Anthropic's [prompt caching FAQ](https://platform.claude.com/docs/en/build-with-claude/prompt-caching)
