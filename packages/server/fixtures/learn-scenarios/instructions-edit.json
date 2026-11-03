@@ -58,10 +58,10 @@
         "vision": { "known": true, "value": 0 },
         "reasoning": { "known": true, "value": 200 },
         "output": { "known": true, "value": 220 },
-        "costAiCredits": { "known": true, "value": 0.0562 },
+        "costAiCredits": { "known": true, "value": 0.0564 },
         "model": "example-model"
       },
-      "explanation": "Editing copilot-instructions.md invalidates the cache at the very front of the prefix — the system prompt/instructions sit at byte 0, so the match breaks right at the start. Unlike an MCP tool change (which invalidates everything after the tool-definitions block, further into the prefix), an instructions edit invalidates literally everything before it too, since prefix matching can't skip over the changed part and resume later. The entire prior 4,100-token history must be resent as uncached input, and a brand-new cache is written from scratch under the updated instructions — the same underlying mechanism as a tool change, just triggered even earlier in the prefix, so in practice it's total invalidation every time.",
+      "explanation": "Editing copilot-instructions.md invalidates the cache near the very front of the prefix — the instructions live in the system prompt, right after the tool definitions, so the match breaks there and every later block (all prior history) misses too, since prefix matching can't skip over the changed part and resume later. Only the tool definitions ahead of it could still be read from cache, and only if a breakpoint caches them on their own; this example assumes none does. The entire prior 4,100-token history must be resent as uncached input, and a brand-new cache is written from scratch under the updated instructions — the same underlying mechanism as a tool change, one block later in the prefix (a tool change invalidates even the tool definitions themselves).",
       "triggeredEvent": "instructions-change"
     },
     {

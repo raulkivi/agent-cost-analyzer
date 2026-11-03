@@ -21,7 +21,7 @@ appear in the running app, see [User Guide § Learn mode](../UserGuide.md#learn-
 7. [Scenario 7: `/rewind` (or Editing a Previous Turn in VS Code)](#scenario-7) — Rolling a session back to an earlier turn and continuing from there, discarding (and often reverting) everything after that point.
 8. [Scenario 8: Session Forking](#scenario-8) — Branching a new, independent session from a shared history point while the original session keeps going too.
 9. [Scenario 9: Cache TTL — A 5+ Minute Smoke Break](#scenario-9) — Extends Scenario 1 to 10 turns to show a cache expiring mid-session after a 5+ minute idle gap, and the cost of rebuilding it.
-10. [Scenario 10: Editing Custom Instructions Mid-Session](#scenario-10) — Editing `copilot-instructions.md`/`AGENTS.md` mid-session breaks the cache at byte 0, since instructions sit at the very front of the prefix.
+10. [Scenario 10: Editing Custom Instructions Mid-Session](#scenario-10) — Editing `copilot-instructions.md`/`AGENTS.md` mid-session breaks the cache from the system prompt onward — the instructions sit right after the tool definitions, at the front of the prefix.
 11. [Scenario 11: A New File Type Silently Changes the Prompt](#scenario-11) — A path-scoped `.instructions.md` file (`applyTo` glob) silently entering or leaving the prompt as different files get touched turn to turn.
 12. [Scenario 12: Exploring Inline vs. Isolating in a Subagent](#scenario-12) — Contrasts Scenario 1/2's isolated-subagent exploration against doing the same investigation inline in the parent session.
 13. [Scenario 13: Cache TTL — Surviving a Break with the 1-Hour Breakpoint](#scenario-13) — Replays Scenario 9's exact idle gap, but with the optional 1-hour TTL breakpoint (~2x normal cache-write price) instead of the default 5-minute one.
@@ -192,6 +192,16 @@ xychart-beta
     bar "Output text" [250, 180, 280, 300, 260, 120, 200, 90]
 ```
 
+**Sources** (checked 2026-11-03):
+
+- [Anthropic: prompt caching pricing](https://platform.claude.com/docs/en/build-with-claude/prompt-caching#pricing): cache write 1.25x / read 0.1x base input; illustrative rates
+- [Anthropic: prompt caching](https://platform.claude.com/docs/en/build-with-claude/prompt-caching): prefix reuse, 5-minute lifetime
+- [Anthropic: vision, resolution and token cost](https://platform.claude.com/docs/en/build-with-claude/vision): image token cost
+- [OpenAI: reasoning (billed as output tokens)](https://developers.openai.com/api/docs/guides/reasoning): reasoning billed as output
+- [GitHub: Copilot models and pricing (AI credits, per-token prices)](https://docs.github.com/en/copilot/reference/copilot-billing/models-and-pricing): Copilot bills per token in AI credits
+
+Fact-check: see [learn-scenarios-fact-check.md](../learn-scenarios-fact-check.md#per-scenario-verdicts). Open findings for this scenario: R-04, R-05, R-06.
+
 ---
 
 <a id="scenario-2"></a>
@@ -240,6 +250,15 @@ accumulated history every turn), each turn's own **cache write** stays small and
 roughly proportional to just that turn's new content — and the subagent's entire
 7090-token trajectory never touches the parent's cache at all.
 
+**Sources** (checked 2026-11-03):
+
+- [Claude Code: subagents](https://code.claude.com/docs/en/sub-agents): own context, returns only a summary
+- [Claude Code: subagents and the cache](https://code.claude.com/docs/en/prompt-caching#subagents-and-the-cache): a subagent builds its own cache
+- [VS Code: subagents (incl. selecting the model)](https://code.visualstudio.com/docs/agents/run/subagents#select-the-model-for-a-subagent): VS Code subagents
+- [Anthropic: cache limitations (minimum cacheable length)](https://platform.claude.com/docs/en/build-with-claude/prompt-caching#cache-limitations): minimum cacheable prefix length
+
+Fact-check: see [learn-scenarios-fact-check.md](../learn-scenarios-fact-check.md#per-scenario-verdicts). Open findings for this scenario: N-03, N-04.
+
 ---
 
 <a id="scenario-3"></a>
@@ -283,6 +302,15 @@ though the conversation keeps growing — instead of turn 4 reading 4100+ tokens
 more AI Credits than a normal turn (the compaction "tax"), but turns 4-5 are noticeably
 cheaper than if the raw history had kept growing uncompacted — that trade-off is
 the whole point of compaction.
+
+**Sources** (checked 2026-11-03):
+
+- [Claude Code: manage context within a session](https://code.claude.com/docs/en/sessions#manage-context-within-a-session): `/compact` replaces history with a summary
+- [Claude Code: compacting the conversation](https://code.claude.com/docs/en/prompt-caching#compacting-the-conversation): the compaction request reads the warm prefix from cache
+- [Anthropic: on-demand compaction](https://platform.claude.com/docs/en/build-with-claude/compaction-on-demand): API compaction; the summary replaces the messages
+- [VS Code: compact conversation context](https://code.visualstudio.com/docs/agents/run/sessions/manage-sessions#compact-conversation-context): VS Code automatic compaction and `/compact`
+
+Fact-check: see [learn-scenarios-fact-check.md](../learn-scenarios-fact-check.md#per-scenario-verdicts). No open findings.
 
 ---
 
@@ -329,6 +357,15 @@ because of the switch: a full cache miss forcing 4300 uncached tokens through,
 Turns 4-5 behave like a normal, healthy cache-building session again, just under
 the new, pricier rates.
 
+**Sources** (checked 2026-11-03):
+
+- [Anthropic: cache diagnostics](https://platform.claude.com/docs/en/build-with-claude/cache-diagnostics): "The cache is per-model."
+- [Claude Code: switching models](https://code.claude.com/docs/en/prompt-caching#switching-models): switching models reads the whole history uncached
+- [VS Code: language models](https://code.visualstudio.com/docs/agents/concepts/language-models): switching models mid-chat
+- [Anthropic: prompt caching](https://platform.claude.com/docs/en/build-with-claude/prompt-caching): usage fields: cache read, cache write and input are separate
+
+Fact-check: see [learn-scenarios-fact-check.md](../learn-scenarios-fact-check.md#per-scenario-verdicts). Open findings for this scenario: R-01.
+
 ---
 
 <a id="scenario-5"></a>
@@ -346,9 +383,7 @@ changes.
 
 What this does to tokens/cache/AI Credits:
 
-- **Partial-to-full cache invalidation**: because the tool-definitions block sits
-  early in the prompt, changing it usually invalidates everything cached *after*
-  it too — i.e. most or all of the prior conversation — even though the model and
+- **Full cache invalidation**: the tool definitions are the first block of the prefix, and Anthropic documents that modifying them "invalidates the entire cache" ([Anthropic: what invalidates the cache](https://platform.claude.com/docs/en/build-with-claude/prompt-caching#what-invalidates-the-cache)) — the system prompt and all of the prior conversation — even though the model and
   its rates stay exactly the same.
 - **No rate change**: unlike a model switch, the per-token prices don't change —
   the extra AI Credits spend comes purely from losing the cache, not from a pricier model.
@@ -375,6 +410,14 @@ pattern: **model switches invalidate the cache *and* change the price per token*
 while **tool/instruction changes invalidate the cache but keep the same price per
 token** — both use more AI Credits on the turn of the change, but a model switch usually
 hurts more.
+
+**Sources** (checked 2026-11-03):
+
+- [Anthropic: what invalidates the cache](https://platform.claude.com/docs/en/build-with-claude/prompt-caching#what-invalidates-the-cache): tool definitions come first; changing them invalidates the entire cache
+- [Claude Code: actions that invalidate the cache](https://code.claude.com/docs/en/prompt-caching#actions-that-invalidate-the-cache): Claude Code's tool search keeps the cache on MCP changes
+- [VS Code: tools](https://code.visualstudio.com/docs/agents/run/tools): enabling/disabling tools; 128-tool limit
+
+Fact-check: see [learn-scenarios-fact-check.md](../learn-scenarios-fact-check.md#per-scenario-verdicts). Open findings for this scenario: F-07, R-01.
 
 ---
 
@@ -425,6 +468,13 @@ switch, turn 3 (**0.0113 AI Credits**) isn't a spike at all — it's roughly in 
 with a normal turn, because nothing had to be summarized or resent; the old turns
 were simply never sent again.
 
+**Sources** (checked 2026-11-03):
+
+- [Claude Code: manage context within a session](https://code.claude.com/docs/en/sessions#manage-context-within-a-session): `/clear` starts fresh; the old session is saved and resumable
+- [Claude Code: how the cache is organized](https://code.claude.com/docs/en/prompt-caching#how-the-cache-is-organized): CLAUDE.md and memory are reloaded after `/clear`
+
+Fact-check: see [learn-scenarios-fact-check.md](../learn-scenarios-fact-check.md#per-scenario-verdicts). Open findings for this scenario: N-01.
+
 ---
 
 <a id="scenario-7"></a>
@@ -469,6 +519,14 @@ from turn 2's cache size, not turn 3's larger 5930, so the mistaken turn never
 bloats any future turn's context or AI Credits. Compare that to *not* rewinding and
 instead just sending a correction on top — the model would keep re-reading (and
 re-paying for) that wrong 1830-token detour in every subsequent turn forever.
+
+**Sources** (checked 2026-11-03):
+
+- [Claude Code: rewinding the conversation](https://code.claude.com/docs/en/prompt-caching#rewinding-the-conversation): the next request hits the earlier cache entry
+- [Claude Code: checkpointing](https://code.claude.com/docs/en/checkpointing): what rewind restores; Bash-only changes not tracked
+- [VS Code: restore a checkpoint](https://code.visualstudio.com/docs/agents/run/review-code-edits#restore-a-checkpoint): VS Code checkpoints and editing a previous request
+
+Fact-check: see [learn-scenarios-fact-check.md](../learn-scenarios-fact-check.md#per-scenario-verdicts). No open findings.
 
 ---
 
@@ -558,6 +616,15 @@ forking: each would have to rebuild the same trunk independently (2 × 0.0513 AI
 gap *is* the saving forking provides: shared setup gets paid for once and reused,
 not re-purchased per branch.
 
+**Sources** (checked 2026-11-03):
+
+- [Claude Code: branch a session](https://code.claude.com/docs/en/sessions#branch-a-session): `/branch`, `/fork`, `--fork-session`
+- [Claude Code: subagents and the cache](https://code.claude.com/docs/en/prompt-caching#subagents-and-the-cache): a fork reads the parent's cache
+- [VS Code: fork a chat session](https://code.visualstudio.com/docs/agents/run/sessions/manage-sessions#fork-a-chat-session): VS Code `/fork` and Fork Conversation
+- [Anthropic: prompt caching](https://platform.claude.com/docs/en/build-with-claude/prompt-caching): a cache entry is readable only after the first response starts
+
+Fact-check: see [learn-scenarios-fact-check.md](../learn-scenarios-fact-check.md#per-scenario-verdicts). No open findings.
+
 ---
 
 <a id="scenario-9"></a>
@@ -570,9 +637,7 @@ The example below extends [Scenario 1](#scenario-1)'s style
 to 10 turns, using the same illustrative rates (cache write 0.00625 AI Credits, cache read
 0.0005 AI Credits, uncached input/tool 0.005 AI Credits, reasoning/output 0.015 AI Credits per 1K tokens).
 Turns 1-7 happen back-to-back and build a healthy, growing cache. Then the user
-steps away for a **5+ minute smoke break** before turn 8 — long enough to exceed
-every provider's default TTL (Anthropic: 5 minutes; OpenAI: ~5-10 minutes
-in-memory; see Section 17.1 of the main doc).
+steps away for a **5+ minute smoke break** before turn 8 — long enough to exceed Anthropic's default 5-minute cache lifetime (see Section 17.1 of the main doc; other providers' caches can outlast it — OpenAI's in-memory caching keeps entries 5-10 minutes, and its 24-hour retention and Copilot's Gemini caching much longer).
 
 | Turn | What happens | Cache write | Cache read | Cache size after | Uncached input | Tool | Reasoning | Output text | **Turn total** | **Turn AI Credits** |
 |---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
@@ -584,7 +649,7 @@ in-memory; see Section 17.1 of the main doc).
 | 6 | Normal follow-up turn | 380 | 4950 | 5330 | 110 | 0 | 0 | 150 | **5590** | **0.0077 AI Credits** |
 | 7 | Normal follow-up turn — cache is healthy (5750 tokens) | 420 | 5330 | 5750 | 130 | 0 | 0 | 170 | **6050** | **0.0085 AI Credits** |
 | *(user steps away — smoke break, >5 minutes idle)* | | | | | | | | | | |
-| 8 | **Cache miss**: every provider's TTL has lapsed; the full 5750-token history + new message must be resent as plain uncached input, and a brand-new cache entry is written from scratch | 6200 | 0 | 6200 | 5900 | 0 | 220 | 200 | **12520** | **0.0746 AI Credits** |
+| 8 | **Cache miss**: the 5-minute default TTL has lapsed; the full 5750-token history + new message must be resent as plain uncached input, and a brand-new cache entry is written from scratch | 6200 | 0 | 6200 | 5900 | 0 | 220 | 200 | **12520** | **0.0746 AI Credits** |
 | 9 | Normal turn; new cache rebuilds from the post-break baseline | 430 | 6200 | 6630 | 120 | 0 | 0 | 150 | **6900** | **0.0086 AI Credits** |
 | 10 | Normal turn | 300 | 6630 | 6930 | 90 | 0 | 0 | 120 | **7140** | **0.0074 AI Credits** |
 
@@ -621,6 +686,15 @@ The full message history is still sent and still visible to the model; only the
 full uncached-input price to "rehydrate" it. Every turn after that goes back to
 normal cache-hit pricing.
 
+**Sources** (checked 2026-11-03):
+
+- [Anthropic: prompt caching](https://platform.claude.com/docs/en/build-with-claude/prompt-caching): 5-minute default lifetime, measured from the start of the request
+- [OpenAI: prompt caching](https://developers.openai.com/api/docs/guides/prompt-caching): OpenAI in-memory 5-10 minutes; 24-hour default retention
+- [GitHub: Copilot model hosting (prompt caching per provider)](https://docs.github.com/en/copilot/reference/ai-models/model-hosting): Copilot's Gemini caches are held up to 24 hours
+- [Anthropic: prompt caching](https://platform.claude.com/docs/en/build-with-claude/prompt-caching): a miss bills the history once, as a cache write
+
+Fact-check: see [learn-scenarios-fact-check.md](../learn-scenarios-fact-check.md#per-scenario-verdicts). Open findings for this scenario: F-08, R-01.
+
 ---
 
 <a id="scenario-10"></a>
@@ -629,23 +703,18 @@ normal cache-hit pricing.
 
 > Extracted from [docs/agentic-coding-explained.md](../agentic-coding-explained.md#4-prompt--file-caching-and-how-it-saves-ai-credits), Section 4.
 
-Cache matching works on a **contiguous prefix starting at byte 0**, and the
-system prompt/instructions sit at the very front of it. Editing
-`copilot-instructions.md` (or an `AGENTS.md`-style file) mid-session means the
-match breaks **right at the start** — so, even though the tool definitions and
-every prior conversation turn are unchanged, none of them can match anymore
-either, since prefix matching can't "skip over" the changed part and resume
+Cache matching works on a **contiguous prefix**, built in a fixed order: tool definitions, then the system prompt, then the conversation ([Anthropic: what invalidates the cache](https://platform.claude.com/docs/en/build-with-claude/prompt-caching#what-invalidates-the-cache)). The instructions live in the system prompt, right after the tool definitions. Editing
+`copilot-instructions.md` (or an `AGENTS.md`-style file) mid-session means the match breaks **at the system prompt** — so every prior conversation turn, though unchanged, can't match anymore either (only the tool definitions ahead of it can still be read from cache, and only if a cache breakpoint sits right after them), since prefix matching can't "skip over" the changed part and resume
 later. The result is a **full cache miss**: the next turn resends everything
 (new instructions + all prior history) uncached, then a brand-new cache builds
 from scratch. This is the same *mechanism* as [Scenario 5](#scenario-5)'s
-MCP-tool-change example, just triggered even earlier in the prefix — so in
-practice it's total invalidation every time, not just a partial one.
+MCP-tool-change example, triggered one block later in the prefix: a tool change also invalidates the tool definitions, so it is always a total miss, while an instructions edit is a total miss unless the tool block is cached on its own.
 
 | Turn | What happens | Cache write | Cache read | Cache size after | Uncached input | Tool | Reasoning | Output text | **Turn total** | **Turn AI Credits** |
 |---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
 | 1 | Normal turn; writes static prefix + own content | 3500 | 0 | 3500 | 500 | 0 | 150 | 150 | **4300** | **0.0289 AI Credits** |
 | 2 | Normal turn; reads/extends the cache | 600 | 3500 | 4100 | 200 | 100 | 120 | 180 | **4700** | **0.0115 AI Credits** |
-| 3 | **`copilot-instructions.md` is edited mid-session**: the change sits at byte 0 of the prefix, so nothing before it can match either — a full cache miss, not a partial one | 4700 | 0 | 4700 | 4150 | 0 | 200 | 220 | **9270** | **0.0562 AI Credits** |
+| 3 | **`copilot-instructions.md` is edited mid-session**: the change sits in the system prompt, right after the tool definitions, so the system prompt and all history miss — a full miss here, since nothing caches the tool block on its own | 4700 | 0 | 4700 | 4150 | 0 | 200 | 220 | **9270** | **0.0564 AI Credits** |
 | 4 | Normal turn on the post-edit baseline; cache rebuilds under the updated instructions | 600 | 4700 | 5300 | 130 | 300 | 140 | 170 | **6040** | **0.0129 AI Credits** |
 | 5 | Normal turn; no further disruption | 220 | 5300 | 5520 | 70 | 0 | 60 | 90 | **5740** | **0.0066 AI Credits** |
 
@@ -659,19 +728,22 @@ sequenceDiagram
 
     Note over S: Turn 2 — cache size 4100, healthy
     U->>S: "I just added a note to copilot-instructions.md..."
-    Note over S: Instructions sit at byte 0 of the prefix —<br/>editing it breaks the match at the very start
+    Note over S: Instructions sit right after the tool definitions —<br/>editing them breaks the match from there on
     Note over S: Turn 3 — cache_read=0, uncached_input=4150,<br/>cache_write=4700 (full resend + rebuild)
     Note over S: Turn 4 — cache_read=4700, back to normal shape
 ```
 -->
 
-Turn 3 (**0.0562 AI Credits**) is roughly 5x turn 2's cost — comparable in
-scale to an MCP tool change ([Scenario 5](#scenario-5)), but for a
-subtly different reason: a tool change invalidates everything *after* the
-tool-definitions block, while an instructions edit invalidates *everything*,
-because nothing before the very front of the prefix exists to survive the
-change. Turns 4-5 recover completely normal cache-growth behavior once the new
+Turn 3 (**0.0564 AI Credits**) is roughly 5x turn 2's cost — comparable in
+scale to an MCP tool change ([Scenario 5](#scenario-5)), and for the same reason, one block apart: the tool definitions come first in the prefix, so a tool change invalidates *everything*, while an instructions edit invalidates the system prompt and everything after it — only a separately cached tool block could survive it ([Anthropic: what invalidates the cache](https://platform.claude.com/docs/en/build-with-claude/prompt-caching#what-invalidates-the-cache)). Turns 4-5 recover completely normal cache-growth behavior once the new
 cache — now including the updated instructions — has been (re-)written.
+
+**Sources** (checked 2026-11-03):
+
+- [Anthropic: what invalidates the cache](https://platform.claude.com/docs/en/build-with-claude/prompt-caching#what-invalidates-the-cache): prefix order tools → system → messages
+- [VS Code: custom instructions reference](https://code.visualstudio.com/docs/agents/reference/custom-instructions-reference): `copilot-instructions.md` / `AGENTS.md` inclusion settings
+
+Fact-check: see [learn-scenarios-fact-check.md](../learn-scenarios-fact-check.md#per-scenario-verdicts). Open findings for this scenario: F-01, F-07, R-01.
 
 ---
 
@@ -716,6 +788,13 @@ takeaway (Section 17.4 of the main doc) is to keep an eye on which file types
 pull in path-scoped instructions in a given project, since the first turn that
 touches one will always pay this tax, whether or not anyone was expecting it.
 
+**Sources** (checked 2026-11-03):
+
+- [VS Code: custom instructions reference](https://code.visualstudio.com/docs/agents/reference/custom-instructions-reference): `applyTo` instructions attach automatically (setting-dependent)
+- [Anthropic: what invalidates the cache](https://platform.claude.com/docs/en/build-with-claude/prompt-caching#what-invalidates-the-cache): a system-prompt change invalidates system + messages
+
+Fact-check: see [learn-scenarios-fact-check.md](../learn-scenarios-fact-check.md#per-scenario-verdicts). Open findings for this scenario: N-05, R-01.
+
 ---
 
 <a id="scenario-12"></a>
@@ -739,7 +818,7 @@ happened inline in parent turn 2 instead...").
 | 2 | **Investigates the bug inline** instead of spawning a subagent: the full ~7090-token search-and-read trajectory is written directly into the parent's own cache | 7090 | 4500 | 11590 | 300 | 700 | 0 | 200 | 180 | **12970** | **0.0573 AI Credits** |
 | 3 | Implements the fix; cache read is now 11590, nearly double Scenario 1's 5980 at the same point | 1080 | 11590 | 12670 | 150 | 0 | 400 | 250 | 280 | **13750** | **0.0232 AI Credits** |
 | 4 | Runs the (verbose) test suite; every turn from here on carries the extra ~5610 tokens turn 2 added | 2350 | 12670 | 15020 | 100 | 0 | 1800 | 150 | 300 | **17370** | **0.0373 AI Credits** |
-| 5 | Final "thanks" message, no new tool calls | 180 | 15020 | 15200 | 60 | 0 | 0 | 30 | 90 | **15380** | **0.0105 AI Credits** |
+| 5 | Final "thanks" message, no new tool calls | 180 | 15020 | 15200 | 60 | 0 | 0 | 30 | 90 | **15380** | **0.0107 AI Credits** |
 
 ![Scenario 12: Exploring Inline vs. Isolating in a Subagent](diagrams/scenario-12-exploring-inline-vs-isolating-in-a-subagent.drawio.svg)
 
@@ -770,6 +849,14 @@ shrink, because nothing ever compacts it away. Isolating exploratory work in a
 subagent (Section 7) doesn't just avoid one large turn; it avoids a long tail
 of inflated cache reads for the rest of the session.
 
+**Sources** (checked 2026-11-03):
+
+- [Claude Code: subagents](https://code.claude.com/docs/en/sub-agents): subagents keep exploration out of the parent context
+- [VS Code: subagents (incl. selecting the model)](https://code.visualstudio.com/docs/agents/run/subagents#select-the-model-for-a-subagent): VS Code subagents
+- [Anthropic: vision, resolution and token cost](https://platform.claude.com/docs/en/build-with-claude/vision): image token cost
+
+Fact-check: see [learn-scenarios-fact-check.md](../learn-scenarios-fact-check.md#per-scenario-verdicts). Open findings for this scenario: F-02, R-06.
+
 ---
 
 <a id="scenario-13"></a>
@@ -789,7 +876,7 @@ same 5+ minute smoke break between turns 7 and 8 — but this session pays the
 |---|---|---:|---:|---:|---:|---:|---:|---:|---:|
 | 1 | Normal turn; writes static prefix + own content (2x cache-write rate) | 3000 | 0 | 3000 | 400 | 0 | 200 | **3600** | **0.0425 AI Credits** |
 | 2 | Normal turn; reads/extends the cache | 500 | 3000 | 3500 | 150 | 0 | 150 | **3800** | **0.0108 AI Credits** |
-| 3 | Explores code with a couple of tool calls | 450 | 3500 | 3950 | 140 | 300 | 180 | **4570** | **0.0122 AI Credits** |
+| 3 | Explores code with a couple of tool calls | 450 | 3500 | 3950 | 140 | 300 | 180 | **4570** | **0.0123 AI Credits** |
 | 4 | Applies an edit, runs a quick check | 600 | 3950 | 4550 | 130 | 500 | 200 | **5380** | **0.0156 AI Credits** |
 | 5 | Normal follow-up turn | 400 | 4550 | 4950 | 120 | 0 | 160 | **5230** | **0.0103 AI Credits** |
 | 6 | Normal follow-up turn | 380 | 4950 | 5330 | 110 | 0 | 150 | **5590** | **0.0100 AI Credits** |
@@ -825,6 +912,13 @@ equivalent turn), so the 1-hour breakpoint isn't free insurance — it's a bet
 that idle gaps longer than 5 minutes will happen often enough in this session
 to be worth paying for on every turn, not just the one that would otherwise
 have missed.
+
+**Sources** (checked 2026-11-03):
+
+- [Anthropic: prompt caching pricing](https://platform.claude.com/docs/en/build-with-claude/prompt-caching#pricing): "Cache write tokens with a 1-hour TTL are 2 times the base input tokens price."
+- [Anthropic: prompt caching](https://platform.claude.com/docs/en/build-with-claude/prompt-caching): mixing TTLs; reads priced the same
+
+Fact-check: see [learn-scenarios-fact-check.md](../learn-scenarios-fact-check.md#per-scenario-verdicts). Open findings for this scenario: F-05, R-02.
 
 ---
 
@@ -880,6 +974,14 @@ of a session and structuring long breaks around a single, deliberate
 `/clear` or a fresh session avoids not just one invalidation, but the
 compounding of several.
 
+**Sources** (checked 2026-11-03):
+
+- [Anthropic: cache diagnostics](https://platform.claude.com/docs/en/build-with-claude/cache-diagnostics): the cache is per-model
+- [Anthropic: prompt caching](https://platform.claude.com/docs/en/build-with-claude/prompt-caching): 5-minute default lifetime
+- [GitHub: Copilot models and pricing (AI credits, per-token prices)](https://docs.github.com/en/copilot/reference/copilot-billing/models-and-pricing): per-model token prices
+
+Fact-check: see [learn-scenarios-fact-check.md](../learn-scenarios-fact-check.md#per-scenario-verdicts). Open findings for this scenario: F-06, R-01.
+
 ---
 
 <a id="scenario-15"></a>
@@ -924,6 +1026,14 @@ attaching several screenshots over its lifetime (a common pattern when
 iterating on UI bugs) pays this tax **every time**, not just on the first
 attachment — worth knowing before assuming that only the first image in a
 session is expensive.
+
+**Sources** (checked 2026-11-03):
+
+- [Anthropic: what invalidates the cache](https://platform.claude.com/docs/en/build-with-claude/prompt-caching#what-invalidates-the-cache): images invalidate message blocks only (tools and system stay cached)
+- [Anthropic: vision, resolution and token cost](https://platform.claude.com/docs/en/build-with-claude/vision): image token cost: ⌈w/28⌉×⌈h/28⌉
+- [VS Code: vision in chat context](https://code.visualstudio.com/docs/chat/copilot-chat-context#vision): attaching images in VS Code chat
+
+Fact-check: see [learn-scenarios-fact-check.md](../learn-scenarios-fact-check.md#per-scenario-verdicts). Open findings for this scenario: F-04, R-03, R-06.
 
 ---
 
@@ -973,6 +1083,14 @@ Per Section 17.4 of the main doc, this is squarely a "decide up front" setting
 — enabling it before the session starts (or accepting the elevated reasoning
 cost for the whole session) avoids paying the switch cost at all.
 
+**Sources** (checked 2026-11-03):
+
+- [Anthropic: thinking and prompt caching](https://platform.claude.com/docs/en/build-with-claude/thinking#thinking-and-prompt-caching): thinking config is rendered into the prompt; messages always invalidated, tools/system on some models
+- [VS Code: configure thinking effort](https://code.visualstudio.com/docs/agent-customization/language-models#configure-thinking-effort-and-context-size): changing thinking effort in VS Code
+- [OpenAI: reasoning (billed as output tokens)](https://developers.openai.com/api/docs/guides/reasoning): reasoning billed as output
+
+Fact-check: see [learn-scenarios-fact-check.md](../learn-scenarios-fact-check.md#per-scenario-verdicts). Open findings for this scenario: N-02, R-01.
+
 ---
 
 <a id="scenario-17"></a>
@@ -1021,6 +1139,14 @@ already demonstrates at one level — it isn't a one-time discount, it's a
 discount that applies again at every level a session chooses to branch
 further.
 
+**Sources** (checked 2026-11-03):
+
+- [Claude Code: branch a session](https://code.claude.com/docs/en/sessions#branch-a-session): branching a session
+- [Claude Code: subagents and the cache](https://code.claude.com/docs/en/prompt-caching#subagents-and-the-cache): a fork reads the parent's cache
+- [VS Code: fork a chat session](https://code.visualstudio.com/docs/agents/run/sessions/manage-sessions#fork-a-chat-session): VS Code forking
+
+Fact-check: see [learn-scenarios-fact-check.md](../learn-scenarios-fact-check.md#per-scenario-verdicts). No open findings.
+
 ---
 
 <a id="scenario-18"></a>
@@ -1041,11 +1167,11 @@ subagent task runs on `model-a` (cheaper, faster) instead.
 | Subagent turn | What it does | Cache write | Cache read | Cache size after | Uncached input | Tool | Reasoning | Output text | **Turn total** | **Turn AI Credits** |
 |---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
 | 1 | Searches the codebase (`grep_search`) for every call site of a deprecated helper, on `model-a` | 1200 | 0 | 1200 | 250 | 500 | 150 | 110 | **2210** | **0.0152 AI Credits** |
-| 2 | Reads the matched files in full to check each call site's arguments | 300 | 1200 | 1500 | 100 | 700 | 120 | 90 | **2510** | **0.0094 AI Credits** |
+| 2 | Reads the matched files in full to check each call site's arguments | 300 | 1200 | 1500 | 100 | 700 | 120 | 90 | **2510** | **0.0096 AI Credits** |
 | 3 | Synthesizes the compact summary returned to the parent | 150 | 1500 | 1650 | 50 | 0 | 80 | 160 | **1940** | **0.0055 AI Credits** |
-| **Subagent session total** | | **1650** | **2700** | — | **400** | **1200** | **350** | **360** | **6660** | **0.0301 AI Credits** |
+| **Subagent session total** | | **1650** | **2700** | — | **400** | **1200** | **350** | **360** | **6660** | **0.0303 AI Credits** |
 
-This subagent's total (**0.0301 AI Credits**) is cheap for two independent
+This subagent's total (**0.0303 AI Credits**) is cheap for two independent
 reasons that compound: it's isolated (per Section 7, none of its 6,660
 internal tokens ever touch the parent's cache — the parent only pays for the
 ~100-token compact summary), *and* it runs on a model priced for a narrow,
@@ -1056,6 +1182,14 @@ computes directly — the equivalent work would cost several times more, on top
 of permanently bloating the parent's cache. Choosing a subagent's model
 independently of the parent's is a lever [Scenario 2](#scenario-2)
 doesn't exercise but Section 7 explicitly calls out as available.
+
+**Sources** (checked 2026-11-03):
+
+- [Claude Code: subagents](https://code.claude.com/docs/en/sub-agents): `model:` accepts `haiku`, `sonnet`, … or `inherit`
+- [VS Code: subagents (incl. selecting the model)](https://code.visualstudio.com/docs/agents/run/subagents#select-the-model-for-a-subagent): a subagent model may not exceed the main model's cost tier
+- [Anthropic: cache limitations (minimum cacheable length)](https://platform.claude.com/docs/en/build-with-claude/prompt-caching#cache-limitations): minimum cacheable prefix length
+
+Fact-check: see [learn-scenarios-fact-check.md](../learn-scenarios-fact-check.md#per-scenario-verdicts). Open findings for this scenario: F-03, N-03, N-04.
 
 ---
 

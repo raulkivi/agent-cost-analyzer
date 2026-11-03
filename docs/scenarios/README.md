@@ -23,7 +23,7 @@ running app.
 | 7 | [`/rewind` (or Editing a Previous Turn)](07-rewind.md) | Rolling a session back to an earlier turn and continuing from there, discarding (and often reverting) everything after that point. | — |
 | 8 | [Session Forking](08-session-forking.md) | Branching a new, independent session from a shared history point while the original session keeps going too. | flowchart |
 | 9 | [Cache TTL — A 5+ Minute Smoke Break](09-cache-ttl-smoke-break.md) | Extends Scenario 1 to 10 turns to show a cache expiring mid-session after a 5+ minute idle gap, and the cost of rebuilding it. | sequence |
-| 10 | [Editing Custom Instructions Mid-Session](10-instructions-edit.md) | Editing `copilot-instructions.md`/`AGENTS.md` mid-session breaks the cache at byte 0, since instructions sit at the very front of the prefix. | sequence |
+| 10 | [Editing Custom Instructions Mid-Session](10-instructions-edit.md) | Editing `copilot-instructions.md`/`AGENTS.md` mid-session breaks the cache from the system prompt onward — the instructions sit right after the tool definitions, at the front of the prefix. | sequence |
 | 11 | [A New File Type Silently Changes the Prompt](11-silent-instructions-pullin.md) | A path-scoped `.instructions.md` file (`applyTo` glob) silently entering or leaving the prompt as different files get touched turn to turn. | — |
 | 12 | [Exploring Inline vs. Isolating in a Subagent](12-inline-exploration-bloat.md) | Contrasts Scenario 1/2's isolated-subagent exploration against doing the same investigation inline in the parent session — the token/AI Credits cost of bloating the parent's own cache. | flowchart |
 | 13 | [Cache TTL — Surviving a Break with the 1-Hour Breakpoint](13-cache-ttl-1-hour-breakpoint.md) | Replays Scenario 9's exact idle gap, but with the optional 1-hour TTL breakpoint (at ~2x normal cache-write price) instead of the default 5-minute one. | sequence |
@@ -36,6 +36,11 @@ running app.
 For all 18 scenarios combined into a single document (every table and
 diagram, one after another), see
 [all-scenarios.md](all-scenarios.md).
+
+Each scenario doc ends with a **Sources** list naming the vendor docs behind
+its claims. The full fact-check (verdicts, fixed slips and proposed
+re-models) is in
+[learn-scenarios-fact-check.md](../learn-scenarios-fact-check.md).
 
 See also: [User Guide](../UserGuide.md#learn-mode) for how these scenarios
 appear in the running app, and

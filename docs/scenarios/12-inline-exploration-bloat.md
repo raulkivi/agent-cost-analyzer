@@ -17,7 +17,7 @@ happened inline in parent turn 2 instead...").
 | 2 | **Investigates the bug inline** instead of spawning a subagent: the full ~7090-token search-and-read trajectory is written directly into the parent's own cache | 7090 | 4500 | 11590 | 300 | 700 | 0 | 200 | 180 | **12970** | **0.0573 AI Credits** |
 | 3 | Implements the fix; cache read is now 11590, nearly double Scenario 1's 5980 at the same point | 1080 | 11590 | 12670 | 150 | 0 | 400 | 250 | 280 | **13750** | **0.0232 AI Credits** |
 | 4 | Runs the (verbose) test suite; every turn from here on carries the extra ~5610 tokens turn 2 added | 2350 | 12670 | 15020 | 100 | 0 | 1800 | 150 | 300 | **17370** | **0.0373 AI Credits** |
-| 5 | Final "thanks" message, no new tool calls | 180 | 15020 | 15200 | 60 | 0 | 0 | 30 | 90 | **15380** | **0.0105 AI Credits** |
+| 5 | Final "thanks" message, no new tool calls | 180 | 15020 | 15200 | 60 | 0 | 0 | 30 | 90 | **15380** | **0.0107 AI Credits** |
 
 ![Scenario 12: Exploring Inline vs. Isolating in a Subagent](diagrams/scenario-12-exploring-inline-vs-isolating-in-a-subagent.drawio.svg)
 
@@ -47,3 +47,11 @@ in this scenario runs meaningfully higher than the equivalent turn in Scenario
 shrink, because nothing ever compacts it away. Isolating exploratory work in a
 subagent (Section 7) doesn't just avoid one large turn; it avoids a long tail
 of inflated cache reads for the rest of the session.
+
+**Sources** (checked 2026-11-03):
+
+- [Claude Code: subagents](https://code.claude.com/docs/en/sub-agents): subagents keep exploration out of the parent context
+- [VS Code: subagents (incl. selecting the model)](https://code.visualstudio.com/docs/agents/run/subagents#select-the-model-for-a-subagent): VS Code subagents
+- [Anthropic: vision, resolution and token cost](https://platform.claude.com/docs/en/build-with-claude/vision): image token cost
+
+Fact-check: see [learn-scenarios-fact-check.md](../learn-scenarios-fact-check.md#per-scenario-verdicts). Open findings for this scenario: F-02, R-06.

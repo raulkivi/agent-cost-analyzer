@@ -117,7 +117,7 @@
         "costAiCredits": { "known": true, "value": 0.0167 },
         "model": "model-b"
       },
-      "explanation": "Cache finally recovers to normal healthy growth — but only after paying for both cascading triggers earlier in the session. Total session AI Credits here run well above either a model-switch-only scenario (about 0.176 AI Credits total via a comparable arc) or a TTL-lapse-only scenario (about 0.167 AI Credits total) alone, because this session paid both taxes back to back."
+      "explanation": "Cache finally recovers to normal healthy growth — but only after paying for both cascading triggers earlier in the session. Total session AI Credits here run well above either a model-switch-only scenario (about 0.185 AI Credits total over its 5 turns) or a TTL-lapse-only scenario (about 0.167 AI Credits total) alone, because this session paid both taxes back to back."
     }
   ]
 }

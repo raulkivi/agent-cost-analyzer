@@ -41,3 +41,11 @@ Nesting a fork inside a fork compounds the saving [Scenario 8](08-session-forkin
 already demonstrates at one level — it isn't a one-time discount, it's a
 discount that applies again at every level a session chooses to branch
 further.
+
+**Sources** (checked 2026-11-03):
+
+- [Claude Code: branch a session](https://code.claude.com/docs/en/sessions#branch-a-session): branching a session
+- [Claude Code: subagents and the cache](https://code.claude.com/docs/en/prompt-caching#subagents-and-the-cache): a fork reads the parent's cache
+- [VS Code: fork a chat session](https://code.visualstudio.com/docs/agents/run/sessions/manage-sessions#fork-a-chat-session): VS Code forking
+
+Fact-check: see [learn-scenarios-fact-check.md](../learn-scenarios-fact-check.md#per-scenario-verdicts). No open findings.

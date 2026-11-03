@@ -103,7 +103,7 @@
         "vision": { "known": true, "value": 0 },
         "reasoning": { "known": true, "value": 30 },
         "output": { "known": true, "value": 90 },
-        "costAiCredits": { "known": true, "value": 0.0105 },
+        "costAiCredits": { "known": true, "value": 0.0107 },
         "model": "example-model"
       },
       "explanation": "Session running total for this inline-exploration path is noticeably higher than Cache Basics' isolated-subagent path through the same 5 turns — concretely, turn 2 alone cost 0.0573 AI Credits inline vs 0.0227 AI Credits (parent) + 0.0338 AI Credits (subagent, isolated and bounded) = a real but isolated 0.0338 AI Credits that never taxes turns 3-5. The inline path pays a smaller one-time subagent bill never, but a larger permanent cache-read tax on every turn after — over a long session, isolating exploratory work in a subagent keeps winning by a growing margin."

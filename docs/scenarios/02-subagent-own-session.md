@@ -41,3 +41,12 @@ Even though **cache read** keeps growing in both sessions (each re-reads its own
 accumulated history every turn), each turn's own **cache write** stays small and
 roughly proportional to just that turn's new content — and the subagent's entire
 7090-token trajectory never touches the parent's cache at all.
+
+**Sources** (checked 2026-11-03):
+
+- [Claude Code: subagents](https://code.claude.com/docs/en/sub-agents): own context, returns only a summary
+- [Claude Code: subagents and the cache](https://code.claude.com/docs/en/prompt-caching#subagents-and-the-cache): a subagent builds its own cache
+- [VS Code: subagents (incl. selecting the model)](https://code.visualstudio.com/docs/agents/run/subagents#select-the-model-for-a-subagent): VS Code subagents
+- [Anthropic: cache limitations (minimum cacheable length)](https://platform.claude.com/docs/en/build-with-claude/prompt-caching#cache-limitations): minimum cacheable prefix length
+
+Fact-check: see [learn-scenarios-fact-check.md](../learn-scenarios-fact-check.md#per-scenario-verdicts). Open findings for this scenario: N-03, N-04.

@@ -1377,6 +1377,60 @@ extension's MCP server and `ext-v0.1.0`, which step 10.13 blocks).
 
 **Status (2026-10-28)**: planned, not started.
 
+## Phase 13 — Vendor-aware Learn simulation (VS Code first)
+
+Full design: [plans/vendor-aware-learn-simulation.md](plans/vendor-aware-learn-simulation.md).
+
+**Goal**: replay any Learn scenario on any model GitHub Copilot offers.
+That vendor's sourced cache rules (TTL, prefix layers, invalidation scope,
+cache-write charges) and GitHub's per-token AI credit prices decide each
+turn's cache outcome and cost. This replaces the hand-computed fixture
+numbers that the [Learn scenarios fact-check](learn-scenarios-fact-check.md)
+found wrong (R-01–R-04).
+
+**Deliverables** (steps 13.0–13.10 in the plan):
+- Vendor-neutral `ScenarioScript`s for the 18 scenarios, and sourced
+  `VendorProfile` data for every vendor and model in GitHub's Copilot price
+  table.
+- A pure simulator in `services/learn-simulation/`: one `CacheModel`
+  strategy per caching kind, plus an invalidation policy and a pricer.
+- `ApiService` and extension RPC calls to simulate and compare.
+- In the VS Code extension's Learn mode: a vendor/model picker, a "Cache"
+  column, a "How vendors differ" card, a Vendors tab, sources footers and
+  an assumptions popover. The standalone app gets them last (13.10).
+
+**Exit criterion**: in the VS Code extension, every Learn scenario can be
+replayed on every model in GitHub's Copilot price table whose vendor
+documents its caching, and the calibration tests match the real captures. Each turn's cache
+outcome and AI credits come from the simulator and that vendor's sourced
+rules, and every vendor-specific figure links to a dated source or says
+unknown.
+
+**Dependencies**: Phase 10 (the extension, its Learn view from step 10.12
+and `ext-v0.1.0`). Not Phase 11 or 12.
+
+**Status (2026-11-03)**: planned, not started. The owner's decisions are
+in the plan's §9: Anthropic, OpenAI, Google and xAI are simulated, while
+Moonshot AI and Microsoft are listed but disabled. Work starts after
+`ext-v0.1.0` and ships in extension 0.2.0.
+
+## Phase 14 — Replay real Analyze sessions on another vendor
+
+**Goal**: answer "what would this real session have cost on another
+model?". It reuses Phase 13's simulator on the token shape (sizes, gaps,
+events) of a real Analyze session. Owner decision D18 in
+[plans/vendor-aware-learn-simulation.md](plans/vendor-aware-learn-simulation.md).
+
+**Deliverables**: to be planned when Phase 13 is done. The measured figures
+always stay visible next to the replay, and the replay is labelled
+**Simulated**.
+
+**Exit criterion**: to be set in its plan.
+
+**Dependencies**: Phase 13 (simulator, vendor profiles, calibration).
+
+**Status (2026-11-03)**: planned, not started.
+
 ## Summary dependency graph
 
 ![Summary dependency graph](diagrams/summary-dependency-graph.drawio.svg)
@@ -1414,5 +1468,7 @@ flowchart LR
     P98 --&gt; P11
     P912 --&gt; P12["Phase 12<br/>MCP Apps views"]
     P10 --&gt; P12
+    P10 --&gt; P13["Phase 13<br/>Vendor-aware Learn simulation"]
+    P13 --&gt; P14["Phase 14<br/>Replay Analyze sessions on another vendor"]
 ```
 -->

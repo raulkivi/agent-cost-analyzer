@@ -37,3 +37,12 @@ though the conversation keeps growing — instead of turn 4 reading 4100+ tokens
 more AI Credits than a normal turn (the compaction "tax"), but turns 4-5 are noticeably
 cheaper than if the raw history had kept growing uncompacted — that trade-off is
 the whole point of compaction.
+
+**Sources** (checked 2026-11-03):
+
+- [Claude Code: manage context within a session](https://code.claude.com/docs/en/sessions#manage-context-within-a-session): `/compact` replaces history with a summary
+- [Claude Code: compacting the conversation](https://code.claude.com/docs/en/prompt-caching#compacting-the-conversation): the compaction request reads the warm prefix from cache
+- [Anthropic: on-demand compaction](https://platform.claude.com/docs/en/build-with-claude/compaction-on-demand): API compaction; the summary replaces the messages
+- [VS Code: compact conversation context](https://code.visualstudio.com/docs/agents/run/sessions/manage-sessions#compact-conversation-context): VS Code automatic compaction and `/compact`
+
+Fact-check: see [learn-scenarios-fact-check.md](../learn-scenarios-fact-check.md#per-scenario-verdicts). No open findings.

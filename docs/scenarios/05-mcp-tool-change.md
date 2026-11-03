@@ -11,9 +11,7 @@ changes.
 
 What this does to tokens/cache/AI Credits:
 
-- **Partial-to-full cache invalidation**: because the tool-definitions block sits
-  early in the prompt, changing it usually invalidates everything cached *after*
-  it too — i.e. most or all of the prior conversation — even though the model and
+- **Full cache invalidation**: the tool definitions are the first block of the prefix, and Anthropic documents that modifying them "invalidates the entire cache" ([Anthropic: what invalidates the cache](https://platform.claude.com/docs/en/build-with-claude/prompt-caching#what-invalidates-the-cache)) — the system prompt and all of the prior conversation — even though the model and
   its rates stay exactly the same.
 - **No rate change**: unlike a model switch, the per-token prices don't change —
   the extra AI Credits spend comes purely from losing the cache, not from a pricier model.
@@ -40,3 +38,11 @@ pattern: **model switches invalidate the cache *and* change the price per token*
 while **tool/instruction changes invalidate the cache but keep the same price per
 token** — both use more AI Credits on the turn of the change, but a model switch usually
 hurts more.
+
+**Sources** (checked 2026-11-03):
+
+- [Anthropic: what invalidates the cache](https://platform.claude.com/docs/en/build-with-claude/prompt-caching#what-invalidates-the-cache): tool definitions come first; changing them invalidates the entire cache
+- [Claude Code: actions that invalidate the cache](https://code.claude.com/docs/en/prompt-caching#actions-that-invalidate-the-cache): Claude Code's tool search keeps the cache on MCP changes
+- [VS Code: tools](https://code.visualstudio.com/docs/agents/run/tools): enabling/disabling tools; 128-tool limit
+
+Fact-check: see [learn-scenarios-fact-check.md](../learn-scenarios-fact-check.md#per-scenario-verdicts). Open findings for this scenario: F-07, R-01.
