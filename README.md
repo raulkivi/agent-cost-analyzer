@@ -52,6 +52,9 @@ This repo builds two products from one codebase:
 - [Learn-mode scenarios](docs/scenarios/README.md) — indexed worked examples
   for all 18 bundled scenarios, each with a per-turn token/cache table and,
   where useful, a sequence diagram or bar chart.
+- [Learn scenarios fact-check](docs/learn-scenarios-fact-check.md) — every
+  scenario claim checked against Anthropic, OpenAI, Google, xAI, GitHub and
+  VS Code docs, with sources, fixed slips and proposed re-models.
 - [AI-assisted coding terminology](docs/terminology.md) — alphabetical
   glossary of AI-assisted coding terms, cross-referenced with the reference
   document above.

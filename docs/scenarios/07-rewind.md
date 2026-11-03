@@ -38,3 +38,11 @@ from turn 2's cache size, not turn 3's larger 5930, so the mistaken turn never
 bloats any future turn's context or AI Credits. Compare that to *not* rewinding and
 instead just sending a correction on top — the model would keep re-reading (and
 re-paying for) that wrong 1830-token detour in every subsequent turn forever.
+
+**Sources** (checked 2026-11-03):
+
+- [Claude Code: rewinding the conversation](https://code.claude.com/docs/en/prompt-caching#rewinding-the-conversation): the next request hits the earlier cache entry
+- [Claude Code: checkpointing](https://code.claude.com/docs/en/checkpointing): what rewind restores; Bash-only changes not tracked
+- [VS Code: restore a checkpoint](https://code.visualstudio.com/docs/agents/run/review-code-edits#restore-a-checkpoint): VS Code checkpoints and editing a previous request
+
+Fact-check: see [learn-scenarios-fact-check.md](../learn-scenarios-fact-check.md#per-scenario-verdicts). No open findings.

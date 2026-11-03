@@ -154,3 +154,13 @@ xychart-beta
     bar "Reasoning" [300, 200, 250, 150, 220, 50, 180, 30]
     bar "Output text" [250, 180, 280, 300, 260, 120, 200, 90]
 ```
+
+**Sources** (checked 2026-11-03):
+
+- [Anthropic: prompt caching pricing](https://platform.claude.com/docs/en/build-with-claude/prompt-caching#pricing): cache write 1.25x / read 0.1x base input; illustrative rates
+- [Anthropic: prompt caching](https://platform.claude.com/docs/en/build-with-claude/prompt-caching): prefix reuse, 5-minute lifetime
+- [Anthropic: vision, resolution and token cost](https://platform.claude.com/docs/en/build-with-claude/vision): image token cost
+- [OpenAI: reasoning (billed as output tokens)](https://developers.openai.com/api/docs/guides/reasoning): reasoning billed as output
+- [GitHub: Copilot models and pricing (AI credits, per-token prices)](https://docs.github.com/en/copilot/reference/copilot-billing/models-and-pricing): Copilot bills per token in AI credits
+
+Fact-check: see [learn-scenarios-fact-check.md](../learn-scenarios-fact-check.md#per-scenario-verdicts). Open findings for this scenario: R-04, R-05, R-06.

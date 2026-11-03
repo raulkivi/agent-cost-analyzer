@@ -59,7 +59,7 @@
         "costAiCredits": { "known": true, "value": 0.0579 },
         "model": "example-model"
       },
-      "explanation": "The tool-definitions block sits early in the prompt, so changing the enabled MCP toolset invalidates the cache the same way a model switch does — the prior 4,100-token cache no longer matches and must be resent uncached (4,350 tokens). Unlike a model switch, the per-token rates stay exactly the same, so this spike (~5x a normal turn) is smaller than a model switch's (~10x).",
+      "explanation": "The tool-definitions block is the very first part of the prompt, so changing the enabled MCP toolset invalidates the cache the same way a model switch does — the prior 4,100-token cache no longer matches and must be resent uncached (4,350 tokens). Unlike a model switch, the per-token rates stay exactly the same, so this spike (~5x a normal turn) is smaller than a model switch's (~10x).",
       "triggeredEvent": "tool-change"
     },
     {

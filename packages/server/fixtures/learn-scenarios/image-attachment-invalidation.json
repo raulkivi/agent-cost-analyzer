@@ -36,7 +36,7 @@
         "uncachedInput": { "known": true, "value": 200 },
         "cacheWrite": { "known": true, "value": 600 },
         "cacheRead": { "known": true, "value": 3500 },
-        "tool": { "known": true, "value": 100 },
+        "tool": { "known": true, "value": 0 },
         "vision": { "known": true, "value": 0 },
         "reasoning": { "known": true, "value": 120 },
         "output": { "known": true, "value": 180 },

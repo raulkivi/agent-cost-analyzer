@@ -59,7 +59,7 @@
         "vision": { "known": true, "value": 0 },
         "reasoning": { "known": true, "value": 0 },
         "output": { "known": true, "value": 180 },
-        "costAiCredits": { "known": true, "value": 0.0122 },
+        "costAiCredits": { "known": true, "value": 0.0123 },
         "model": "example-model"
       },
       "explanation": "Explores the code with a couple of tool calls; cache continues building normally under the 1-hour breakpoint."

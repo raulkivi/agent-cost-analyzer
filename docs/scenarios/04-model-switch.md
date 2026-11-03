@@ -38,3 +38,12 @@ because of the switch: a full cache miss forcing 4300 uncached tokens through,
 *and* those tokens (plus every token after) now billed at Model B's higher rates.
 Turns 4-5 behave like a normal, healthy cache-building session again, just under
 the new, pricier rates.
+
+**Sources** (checked 2026-11-03):
+
+- [Anthropic: cache diagnostics](https://platform.claude.com/docs/en/build-with-claude/cache-diagnostics): "The cache is per-model."
+- [Claude Code: switching models](https://code.claude.com/docs/en/prompt-caching#switching-models): switching models reads the whole history uncached
+- [VS Code: language models](https://code.visualstudio.com/docs/agents/concepts/language-models): switching models mid-chat
+- [Anthropic: prompt caching](https://platform.claude.com/docs/en/build-with-claude/prompt-caching): usage fields: cache read, cache write and input are separate
+
+Fact-check: see [learn-scenarios-fact-check.md](../learn-scenarios-fact-check.md#per-scenario-verdicts). Open findings for this scenario: R-01.

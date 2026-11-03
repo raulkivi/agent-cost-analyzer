@@ -47,3 +47,11 @@ batching configuration decisions (model, tools, instructions) at the *start*
 of a session and structuring long breaks around a single, deliberate
 `/clear` or a fresh session avoids not just one invalidation, but the
 compounding of several.
+
+**Sources** (checked 2026-11-03):
+
+- [Anthropic: cache diagnostics](https://platform.claude.com/docs/en/build-with-claude/cache-diagnostics): the cache is per-model
+- [Anthropic: prompt caching](https://platform.claude.com/docs/en/build-with-claude/prompt-caching): 5-minute default lifetime
+- [GitHub: Copilot models and pricing (AI credits, per-token prices)](https://docs.github.com/en/copilot/reference/copilot-billing/models-and-pricing): per-model token prices
+
+Fact-check: see [learn-scenarios-fact-check.md](../learn-scenarios-fact-check.md#per-scenario-verdicts). Open findings for this scenario: F-06, R-01.

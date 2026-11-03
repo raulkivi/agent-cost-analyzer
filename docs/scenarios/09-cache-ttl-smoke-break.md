@@ -6,9 +6,7 @@ The example below extends [Scenario 1](01-cache-basics-8-turn-session.md)'s styl
 to 10 turns, using the same illustrative rates (cache write 0.00625 AI Credits, cache read
 0.0005 AI Credits, uncached input/tool 0.005 AI Credits, reasoning/output 0.015 AI Credits per 1K tokens).
 Turns 1-7 happen back-to-back and build a healthy, growing cache. Then the user
-steps away for a **5+ minute smoke break** before turn 8 — long enough to exceed
-every provider's default TTL (Anthropic: 5 minutes; OpenAI: ~5-10 minutes
-in-memory; see Section 17.1 of the main doc).
+steps away for a **5+ minute smoke break** before turn 8 — long enough to exceed Anthropic's default 5-minute cache lifetime (see Section 17.1 of the main doc; other providers' caches can outlast it — OpenAI's in-memory caching keeps entries 5-10 minutes, and its 24-hour retention and Copilot's Gemini caching much longer).
 
 | Turn | What happens | Cache write | Cache read | Cache size after | Uncached input | Tool | Reasoning | Output text | **Turn total** | **Turn AI Credits** |
 |---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
@@ -20,7 +18,7 @@ in-memory; see Section 17.1 of the main doc).
 | 6 | Normal follow-up turn | 380 | 4950 | 5330 | 110 | 0 | 0 | 150 | **5590** | **0.0077 AI Credits** |
 | 7 | Normal follow-up turn — cache is healthy (5750 tokens) | 420 | 5330 | 5750 | 130 | 0 | 0 | 170 | **6050** | **0.0085 AI Credits** |
 | *(user steps away — smoke break, >5 minutes idle)* | | | | | | | | | | |
-| 8 | **Cache miss**: every provider's TTL has lapsed; the full 5750-token history + new message must be resent as plain uncached input, and a brand-new cache entry is written from scratch | 6200 | 0 | 6200 | 5900 | 0 | 220 | 200 | **12520** | **0.0746 AI Credits** |
+| 8 | **Cache miss**: the 5-minute default TTL has lapsed; the full 5750-token history + new message must be resent as plain uncached input, and a brand-new cache entry is written from scratch | 6200 | 0 | 6200 | 5900 | 0 | 220 | 200 | **12520** | **0.0746 AI Credits** |
 | 9 | Normal turn; new cache rebuilds from the post-break baseline | 430 | 6200 | 6630 | 120 | 0 | 0 | 150 | **6900** | **0.0086 AI Credits** |
 | 10 | Normal turn | 300 | 6630 | 6930 | 90 | 0 | 0 | 120 | **7140** | **0.0074 AI Credits** |
 
@@ -56,3 +54,12 @@ The full message history is still sent and still visible to the model; only the
 *cache* for reusing that history cheaply has expired, so that one turn pays
 full uncached-input price to "rehydrate" it. Every turn after that goes back to
 normal cache-hit pricing.
+
+**Sources** (checked 2026-11-03):
+
+- [Anthropic: prompt caching](https://platform.claude.com/docs/en/build-with-claude/prompt-caching): 5-minute default lifetime, measured from the start of the request
+- [OpenAI: prompt caching](https://developers.openai.com/api/docs/guides/prompt-caching): OpenAI in-memory 5-10 minutes; 24-hour default retention
+- [GitHub: Copilot model hosting (prompt caching per provider)](https://docs.github.com/en/copilot/reference/ai-models/model-hosting): Copilot's Gemini caches are held up to 24 hours
+- [Anthropic: prompt caching](https://platform.claude.com/docs/en/build-with-claude/prompt-caching): a miss bills the history once, as a cache write
+
+Fact-check: see [learn-scenarios-fact-check.md](../learn-scenarios-fact-check.md#per-scenario-verdicts). Open findings for this scenario: F-08, R-01.

@@ -42,7 +42,7 @@
         "vision": { "known": true, "value": 0 },
         "reasoning": { "known": true, "value": 120 },
         "output": { "known": true, "value": 90 },
-        "costAiCredits": { "known": true, "value": 0.0094 },
+        "costAiCredits": { "known": true, "value": 0.0096 },
         "model": "model-a"
       },
       "explanation": "Normal cache-building turn within the subagent's own, cheap-model session."
@@ -63,7 +63,7 @@
         "costAiCredits": { "known": true, "value": 0.0055 },
         "model": "model-a"
       },
-      "explanation": "Final subagent turn: synthesizes a compact summary that crosses back to the parent. If this same exploration had instead run inline in the parent session under model-b's pricier rates (as in the Inline Exploration Bloat scenario), the equivalent work would cost several times more — isolating it in a subagent saves twice over: once by keeping it out of the parent's permanent cache, and again by letting it run on a model whose rate matches the task's actual difficulty rather than the parent's. This subagent's total spend across all three turns is about 0.0301 AI Credits — cheap because both the isolation and the model choice were suited to a narrow, mechanical search task."
+      "explanation": "Final subagent turn: synthesizes a compact summary that crosses back to the parent. If this same exploration had instead run inline in the parent session under model-b's pricier rates (as in the Inline Exploration Bloat scenario), the equivalent work would cost several times more — isolating it in a subagent saves twice over: once by keeping it out of the parent's permanent cache, and again by letting it run on a model whose rate matches the task's actual difficulty rather than the parent's. This subagent's total spend across all three turns is about 0.0303 AI Credits — cheap because both the isolation and the model choice were suited to a narrow, mechanical search task."
     }
   ]
 }

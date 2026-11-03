@@ -14,11 +14,11 @@ subagent task runs on `model-a` (cheaper, faster) instead.
 | Subagent turn | What it does | Cache write | Cache read | Cache size after | Uncached input | Tool | Reasoning | Output text | **Turn total** | **Turn AI Credits** |
 |---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
 | 1 | Searches the codebase (`grep_search`) for every call site of a deprecated helper, on `model-a` | 1200 | 0 | 1200 | 250 | 500 | 150 | 110 | **2210** | **0.0152 AI Credits** |
-| 2 | Reads the matched files in full to check each call site's arguments | 300 | 1200 | 1500 | 100 | 700 | 120 | 90 | **2510** | **0.0094 AI Credits** |
+| 2 | Reads the matched files in full to check each call site's arguments | 300 | 1200 | 1500 | 100 | 700 | 120 | 90 | **2510** | **0.0096 AI Credits** |
 | 3 | Synthesizes the compact summary returned to the parent | 150 | 1500 | 1650 | 50 | 0 | 80 | 160 | **1940** | **0.0055 AI Credits** |
-| **Subagent session total** | | **1650** | **2700** | — | **400** | **1200** | **350** | **360** | **6660** | **0.0301 AI Credits** |
+| **Subagent session total** | | **1650** | **2700** | — | **400** | **1200** | **350** | **360** | **6660** | **0.0303 AI Credits** |
 
-This subagent's total (**0.0301 AI Credits**) is cheap for two independent
+This subagent's total (**0.0303 AI Credits**) is cheap for two independent
 reasons that compound: it's isolated (per Section 7, none of its 6,660
 internal tokens ever touch the parent's cache — the parent only pays for the
 ~100-token compact summary), *and* it runs on a model priced for a narrow,
@@ -29,3 +29,11 @@ computes directly — the equivalent work would cost several times more, on top
 of permanently bloating the parent's cache. Choosing a subagent's model
 independently of the parent's is a lever [Scenario 2](02-subagent-own-session.md)
 doesn't exercise but Section 7 explicitly calls out as available.
+
+**Sources** (checked 2026-11-03):
+
+- [Claude Code: subagents](https://code.claude.com/docs/en/sub-agents): `model:` accepts `haiku`, `sonnet`, … or `inherit`
+- [VS Code: subagents (incl. selecting the model)](https://code.visualstudio.com/docs/agents/run/subagents#select-the-model-for-a-subagent): a subagent model may not exceed the main model's cost tier
+- [Anthropic: cache limitations (minimum cacheable length)](https://platform.claude.com/docs/en/build-with-claude/prompt-caching#cache-limitations): minimum cacheable prefix length
+
+Fact-check: see [learn-scenarios-fact-check.md](../learn-scenarios-fact-check.md#per-scenario-verdicts). Open findings for this scenario: F-03, N-03, N-04.

@@ -41,3 +41,11 @@ of net task complexity, a single "use more reasoning for the hard part" ask.
 Per Section 17.4 of the main doc, this is squarely a "decide up front" setting
 — enabling it before the session starts (or accepting the elevated reasoning
 cost for the whole session) avoids paying the switch cost at all.
+
+**Sources** (checked 2026-11-03):
+
+- [Anthropic: thinking and prompt caching](https://platform.claude.com/docs/en/build-with-claude/thinking#thinking-and-prompt-caching): thinking config is rendered into the prompt; messages always invalidated, tools/system on some models
+- [VS Code: configure thinking effort](https://code.visualstudio.com/docs/agent-customization/language-models#configure-thinking-effort-and-context-size): changing thinking effort in VS Code
+- [OpenAI: reasoning (billed as output tokens)](https://developers.openai.com/api/docs/guides/reasoning): reasoning billed as output
+
+Fact-check: see [learn-scenarios-fact-check.md](../learn-scenarios-fact-check.md#per-scenario-verdicts). Open findings for this scenario: N-02, R-01.

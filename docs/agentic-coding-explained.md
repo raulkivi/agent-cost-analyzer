@@ -236,16 +236,20 @@ How it works in practice:
 
 > **Does editing the instructions file invalidate the whole cache?** Yes, and
 > more totally than most other changes. Cache matching works on a **contiguous
-> prefix starting at byte 0**, and the system prompt/instructions sit at the very
-> front of it. Changing that content means the match breaks **right at the
-> start** — so, even though the tool definitions and every prior conversation
-> turn are unchanged, none of them can match anymore either, since prefix
-> matching can't "skip over" the changed part and resume later. The result is a
-> **full cache miss**: the next turn resends everything (new instructions + all
-> prior history) uncached, then a brand-new cache builds from scratch. This is
-> the same *mechanism* as Section 12's MCP-tool-change example, just triggered
-> even earlier in the prefix — so in practice it's total invalidation every time,
-> not just a partial one.
+> prefix**, built in a fixed order: tool definitions, then the system prompt,
+> then the conversation ([Anthropic: what invalidates the
+> cache](https://platform.claude.com/docs/en/build-with-claude/prompt-caching#what-invalidates-the-cache)).
+> The instructions live in the system prompt, right after the tool
+> definitions. Changing that content means the match breaks **at the system
+> prompt** — so every prior conversation turn, though unchanged, can't match
+> anymore either, since prefix matching can't "skip over" the changed part and
+> resume later (only the tool definitions ahead of it can still be read from
+> cache, and only if a cache breakpoint sits right after them). The result is
+> (close to) a **full cache miss**: the next turn resends everything (new
+> instructions + all prior history), then a brand-new cache builds from
+> scratch. This is the same *mechanism* as Section 12's MCP-tool-change
+> example, triggered one block later in the prefix: a tool change also
+> invalidates the tool definitions, so it is always a total miss.
 >
 > Extracted as a standalone doc: [scenarios/10-instructions-edit.md](scenarios/10-instructions-edit.md).
 
@@ -351,11 +355,19 @@ $$
 where $p_{\text{read}} \ll p_{\text{in}} \le p_{\text{write}} \le p_{\text{out}}$ for
 most providers — which is exactly why caching and minimizing unnecessary
 tool-output verbosity matter for AI Credits. In GitHub Copilot specifically,
-this bill is denominated in **AI Credits** (formerly "premium requests"), not
-USD — see [GitHub Copilot models and
+this bill is denominated in **GitHub AI Credits** ("AI credits"; they
+replaced premium requests on 2026-06-01). Each token type is priced per
+model and the total is converted at **1 AI credit = $0.01 USD**. That is the
+same per-token shape as the formula above, including cache-write prices for
+Anthropic and GPT-5.6+ models. See [GitHub Copilot models and
 pricing](https://docs.github.com/en/copilot/reference/copilot-billing/models-and-pricing)
-for the per-model multipliers that determine how many AI Credits a request
-consumes.
+for the per-model token prices. Per-request multipliers remain only for
+legacy annual plans on request-based billing.
+
+Real prices also differ from this doc's illustrative rates in two ways.
+Anthropic prices output at **5x** input (not the 3x used here), and Opus 5.5
+and Sonnet 5.5 price cache reads at **0.05x** input (not 0.1x)
+([Anthropic pricing](https://platform.claude.com/docs/en/build-with-claude/prompt-caching#pricing)).
 
 ---
 
@@ -751,9 +763,7 @@ changes.
 
 What this does to tokens/cache/AI Credits:
 
-- **Partial-to-full cache invalidation**: because the tool-definitions block sits
-  early in the prompt, changing it usually invalidates everything cached *after*
-  it too — i.e. most or all of the prior conversation — even though the model and
+- **Full cache invalidation**: the tool definitions are the first block of the prefix, and Anthropic documents that modifying them "invalidates the entire cache" ([Anthropic: what invalidates the cache](https://platform.claude.com/docs/en/build-with-claude/prompt-caching#what-invalidates-the-cache)) — the system prompt and all of the prior conversation — even though the model and
   its rates stay exactly the same.
 - **No rate change**: unlike a model switch, the per-token prices don't change —
   the extra AI Credits spend comes purely from losing the cache, not from a
@@ -1026,14 +1036,28 @@ on the model generation:
 | Provider (example models available in Copilot) | Default cache lifetime | Longer-TTL option | Notes |
 |---|---|---|---|
 | **Anthropic** (Claude Opus/Sonnet/Haiku families) | **5 minutes**, refreshed for free on every cache hit | 1-hour TTL available, at ~2x the normal cache-write price | The clock starts at the **request** that reads/writes the entry, not the end of its response — a slow 4-minute response leaves only ~1 minute before the next call must land to keep the hit |
-| **OpenAI** (GPT-5.x families) | Automatic, **in-memory** caching: typically evicted after **5-10 minutes of inactivity**, but can persist up to **~1 hour** off-peak (not a guarantee) | Extended/24-hour retention on some pre-GPT-5.6 model families; GPT-5.6+ uses explicit cache breakpoints with a fixed **30-minute** minimum TTL instead | Behavior isn't as tightly specified as Anthropic's — treat "5-10 minutes" as the safe assumption |
-| **Google** (Gemini 3.x Flash/Pro) | **Implicit caching**, no published fixed TTL at all | None documented | Google's own guidance is just to send similar-prefix requests "in a short amount of time" — there's no stated number to target |
-| **xAI (Grok), Moonshot AI (Kimi), Microsoft (MAI-Code)** | Not publicly documented | — | Treat as unknown/opaque; assume the same 5-10 minute ballpark unless you observe otherwise |
+| **OpenAI** (GPT-5.x / GPT-6 families) | Automatic caching for prompts of 1,024+ tokens. With `in_memory` retention, entries typically stay **5-10 minutes after last use, up to ~1 hour**. Since May 2026, organizations without zero data retention default to **24-hour** retention on models that support it | GPT-5.6+ use `prompt_cache_options` (implicit by default, or explicit breakpoints) with a **30-minute default** TTL and an optional 12-hour TTL. These models also **charge for cache writes** (1.25x input at 30 minutes, 2.5x at 12 hours); earlier OpenAI models don't | Lifetime depends on model and retention mode; `in_memory` is the short case |
+| **Google** (Gemini 3.x/4) | **Implicit caching**, no guaranteed TTL; explicit context caching defaults to **1 hour** | Explicit caching with any TTL | Google's guidance is to send similar-prefix requests "in a short amount of time". For Copilot, GitHub says it uses Google's Durable Caching, "held for up to 24 hours" |
+| **xAI (Grok)** | Documented, but no fixed TTL: entries "can be evicted at any time due to server load or restarts" | Routing hints (`x-grok-conv-id` / `prompt_cache_key`) improve retention | Treat as best-effort |
+| **Moonshot AI (Kimi), Microsoft (MAI-Code)** | Not publicly documented for Copilot | — | Treat as unknown/opaque |
 
-The practical takeaway is the same regardless of the exact number: **assume
-your cache is fragile on the order of minutes, not hours**, no matter which
-model you're using — a pause of roughly 5+ minutes is close to a universal
-danger zone across every provider Copilot uses.
+Sources: [Anthropic prompt caching](https://platform.claude.com/docs/en/build-with-claude/prompt-caching)
+(5-minute default, free refresh on hit, 1-hour TTL at 2x *base input*, TTL
+measured from the start of the request),
+[OpenAI prompt caching](https://developers.openai.com/api/docs/guides/prompt-caching),
+[Gemini context caching](https://ai.google.dev/gemini-api/docs/caching),
+[xAI prompt caching](https://docs.x.ai/developers/advanced-api-usage/prompt-caching/best-practices),
+[GitHub Copilot model hosting](https://docs.github.com/en/copilot/reference/ai-models/model-hosting)
+(Copilot uses Anthropic prompt caching and Google Durable Caching) and
+[GitHub Copilot models and pricing](https://docs.github.com/en/copilot/reference/copilot-billing/models-and-pricing)
+(cache-write prices for Anthropic and GPT-5.6+ models). Checked 2026-11-03;
+see [learn-scenarios-fact-check.md](learn-scenarios-fact-check.md).
+
+The practical takeaway: **with Anthropic models, assume your cache lasts
+about 5 minutes after its last use** unless the 1-hour TTL was bought. Other
+providers' caches range from "can be evicted at any time" (xAI) to 30 minutes
+or 24 hours (newer OpenAI models, Copilot's Gemini caching), so a 5-minute
+pause is a real risk for some models in Copilot but not all of them.
 
 > Extracted as a standalone doc: [scenarios/13-cache-ttl-1-hour-breakpoint.md](scenarios/13-cache-ttl-1-hour-breakpoint.md)
 > — the same 10-turn smoke-break arc as Section 17.2, but paying Anthropic's ~2x
@@ -1047,8 +1071,7 @@ The example below extends Section 9's style to 10 turns, using the same
 illustrative rates (cache write 0.00625 AI Credits, cache read 0.0005 AI Credits, uncached
 input/tool 0.005 AI Credits, reasoning/output 0.015 AI Credits per 1K tokens). Turns 1-7 happen
 back-to-back and build a healthy, growing cache. Then the user steps away for
-a **5+ minute smoke break** before turn 8 — long enough to exceed every
-provider's default TTL from Section 17.1.
+a **5+ minute smoke break** before turn 8 — long enough to exceed Anthropic's default 5-minute cache lifetime from Section 17.1 (other providers' caches can outlast it).
 
 | Turn | What happens | Cache write | Cache read | Cache size after | Uncached input | Tool | Reasoning | Output text | **Turn total** | **Turn AI Credits** |
 |---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
@@ -1060,7 +1083,7 @@ provider's default TTL from Section 17.1.
 | 6 | Normal follow-up turn | 380 | 4950 | 5330 | 110 | 0 | 0 | 150 | **5590** | **0.0077 AI Credits** |
 | 7 | Normal follow-up turn — cache is healthy (5750 tokens) | 420 | 5330 | 5750 | 130 | 0 | 0 | 170 | **6050** | **0.0085 AI Credits** |
 | *(user steps away — smoke break, >5 minutes idle)* | | | | | | | | | | |
-| 8 | **Cache miss**: every provider's TTL has lapsed; the full 5750-token history + new message must be resent as plain uncached input, and a brand-new cache entry is written from scratch | 6200 | 0 | 6200 | 5900 | 0 | 220 | 200 | **12520** | **0.0746 AI Credits** |
+| 8 | **Cache miss**: the 5-minute default TTL has lapsed; the full 5750-token history + new message must be resent as plain uncached input, and a brand-new cache entry is written from scratch | 6200 | 0 | 6200 | 5900 | 0 | 220 | 200 | **12520** | **0.0746 AI Credits** |
 | 9 | Normal turn; new cache rebuilds from the post-break baseline | 430 | 6200 | 6630 | 120 | 0 | 0 | 150 | **6900** | **0.0086 AI Credits** |
 | 10 | Normal turn | 300 | 6630 | 6930 | 90 | 0 | 0 | 120 | **7140** | **0.0074 AI Credits** |
 
@@ -1100,31 +1123,34 @@ pricing.
 ### 17.3 What to avoid: behaviors and technologies that invalidate the cache
 
 - **Editing `copilot-instructions.md`, agent definitions, or `.instructions.md`
-  files mid-session** (Section 4) — this content sits at/near the very front
-  of the prefix, so a change here is close to a **full** cache miss for the
+  files mid-session** (Section 4) — this content sits in the system prompt, right after the tool definitions, so a change here is close to a **full** cache miss for the
   rest of the conversation, no matter how small the edit.
 - **Switching models mid-session** (Section 11) — caches are never shared
   across models (or often even across versions of the same model family), so
   this is always a full miss, plus a rate change.
-- **Enabling/disabling MCP servers or tools mid-session** (Section 12) — tool
-  schemas sit early in the prefix; changing the toolset invalidates everything
-  cached after that point.
+- **Enabling/disabling MCP servers or tools mid-session** (Section 12) — tool schemas are the first block of the prefix, so changing the toolset invalidates the entire cache ([Anthropic](https://platform.claude.com/docs/en/build-with-claude/prompt-caching#what-invalidates-the-cache)). Claude Code's default tool search defers MCP tool schemas and keeps the cache intact ([Claude Code: prompt caching](https://code.claude.com/docs/en/prompt-caching#actions-that-invalidate-the-cache)).
 - **Touching a new file type that pulls in a different `.instructions.md`**
   (Section 4's callout) — a silent, easy-to-miss trigger: nothing about it
   looks like a deliberate config change, but it can invalidate the same way.
 - **Idle time beyond the provider's TTL** — the subject of 17.1/17.2. Anthropic
-  is explicit about 5 minutes by default; OpenAI's automatic in-memory caching
-  is looser ("5-10 minutes, up to ~1 hour off-peak") but similarly short-lived
-  unless the model/tier supports extended retention.
+  is explicit about 5 minutes by default; OpenAI's `in_memory` retention is
+  looser ("5-10 minutes, up to one hour"), while its 24-hour default retention
+  (since May 2026) and GPT-5.6+'s 30-minute default last longer (Section 17.1).
 - **Toggling anything that gets rendered into the prompt itself** — reasoning
   effort/thinking-budget changes, web-search or citation toggles, `tool_choice`
   changes, and images appearing/disappearing anywhere in the conversation are
   all explicitly documented (by Anthropic) as invalidating triggers, even
-  though none of them feel like "changing the setup." Extracted as standalone
+  though none of them feel like "changing the setup." They don't all reach
+  equally far: images and `tool_choice` invalidate only the conversation
+  (tools and system prompt stay cached); web-search/citation toggles
+  invalidate the system prompt and conversation; a thinking-setting change
+  always invalidates the conversation and, on some models, tools and system
+  too ([Anthropic: what invalidates the cache](https://platform.claude.com/docs/en/build-with-claude/prompt-caching#what-invalidates-the-cache)). Extracted as standalone
   docs: [scenarios/15-image-attachment-invalidation.md](scenarios/15-image-attachment-invalidation.md)
   and [scenarios/16-reasoning-budget-toggle.md](scenarios/16-reasoning-budget-toggle.md).
 - **Non-deterministic tool-call serialization** — Anthropic's own
-  troubleshooting guidance flags that some languages (e.g. Swift, Go) randomize
+  troubleshooting guidance ([Anthropic: prompt caching](https://platform.claude.com/docs/en/build-with-claude/prompt-caching))
+  flags that some languages (e.g. Swift, Go) randomize
   JSON key order when serializing tool-call arguments, which silently breaks
   prefix matching. Relevant if you're authoring your own MCP server/tool
   wrapper.

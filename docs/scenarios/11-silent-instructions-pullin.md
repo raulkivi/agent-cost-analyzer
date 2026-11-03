@@ -36,3 +36,10 @@ to the person reading the transcript. This one doesn't. The practical
 takeaway (Section 17.4 of the main doc) is to keep an eye on which file types
 pull in path-scoped instructions in a given project, since the first turn that
 touches one will always pay this tax, whether or not anyone was expecting it.
+
+**Sources** (checked 2026-11-03):
+
+- [VS Code: custom instructions reference](https://code.visualstudio.com/docs/agents/reference/custom-instructions-reference): `applyTo` instructions attach automatically (setting-dependent)
+- [Anthropic: what invalidates the cache](https://platform.claude.com/docs/en/build-with-claude/prompt-caching#what-invalidates-the-cache): a system-prompt change invalidates system + messages
+
+Fact-check: see [learn-scenarios-fact-check.md](../learn-scenarios-fact-check.md#per-scenario-verdicts). Open findings for this scenario: N-05, R-01.

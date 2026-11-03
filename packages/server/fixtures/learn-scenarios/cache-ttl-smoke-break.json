@@ -137,7 +137,7 @@
         "costAiCredits": { "known": true, "value": 0.0085 },
         "model": "example-model"
       },
-      "explanation": "Normal follow-up turn — cache is healthy (5,750 tokens after this write). The user then steps away for a 5+ minute smoke break before the next turn, long enough to exceed every provider's default TTL (Anthropic: 5 minutes; OpenAI: roughly 5-10 minutes in-memory)."
+      "explanation": "Normal follow-up turn — cache is healthy (5,750 tokens after this write). The user then steps away for a 5+ minute smoke break before the next turn, long enough to exceed Anthropic's default 5-minute cache lifetime (other providers' caches can last longer: OpenAI's in-memory caching keeps entries 5-10 minutes, and its 24-hour retention and Copilot's Gemini caching much longer)."
     },
     {
       "index": 8,
@@ -155,7 +155,7 @@
         "costAiCredits": { "known": true, "value": 0.0746 },
         "model": "example-model"
       },
-      "explanation": "Cache miss: every provider's TTL has lapsed while the user was away, so the provider evicted the cache entry for this prefix. The full 5,750-token history plus the new message must be resent as plain uncached input (5,900 tokens), and a brand-new cache entry is written from scratch — about 8.5x the AI Credits a normal turn here would have used (roughly 0.0088 AI Credits if the cache had stayed warm). Nothing about the conversation itself is lost — this is not a /clear or a /rewind; the full message history is still sent and visible to the model. Only the cache for reusing it cheaply had expired, so this one turn pays full price to 'rehydrate' it.",
+      "explanation": "Cache miss: the 5-minute default cache lifetime (Anthropic's) has lapsed while the user was away, so the provider evicted the cache entry for this prefix. The full 5,750-token history plus the new message must be resent as plain uncached input (5,900 tokens), and a brand-new cache entry is written from scratch — about 8.5x the AI Credits a normal turn here would have used (roughly 0.0088 AI Credits if the cache had stayed warm). Nothing about the conversation itself is lost — this is not a /clear or a /rewind; the full message history is still sent and visible to the model. Only the cache for reusing it cheaply had expired, so this one turn pays full price to 'rehydrate' it.",
       "triggeredEvent": "cache-expiry"
     },
     {

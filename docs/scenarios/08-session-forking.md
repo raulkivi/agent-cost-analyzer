@@ -81,3 +81,12 @@ forking: each would have to rebuild the same trunk independently (2 × 0.0513 AI
 **0.1542 AI Credits** — about **0.0513 AI Credits more**, exactly one extra copy of the trunk. That
 gap *is* the saving forking provides: shared setup gets paid for once and reused,
 not re-purchased per branch.
+
+**Sources** (checked 2026-11-03):
+
+- [Claude Code: branch a session](https://code.claude.com/docs/en/sessions#branch-a-session): `/branch`, `/fork`, `--fork-session`
+- [Claude Code: subagents and the cache](https://code.claude.com/docs/en/prompt-caching#subagents-and-the-cache): a fork reads the parent's cache
+- [VS Code: fork a chat session](https://code.visualstudio.com/docs/agents/run/sessions/manage-sessions#fork-a-chat-session): VS Code `/fork` and Fork Conversation
+- [Anthropic: prompt caching](https://platform.claude.com/docs/en/build-with-claude/prompt-caching): a cache entry is readable only after the first response starts
+
+Fact-check: see [learn-scenarios-fact-check.md](../learn-scenarios-fact-check.md#per-scenario-verdicts). No open findings.

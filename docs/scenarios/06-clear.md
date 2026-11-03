@@ -42,3 +42,10 @@ straight back to just the static prefix. And unlike a compaction or a model/tool
 switch, turn 3 (**0.0113 AI Credits**) isn't a spike at all — it's roughly in line
 with a normal turn, because nothing had to be summarized or resent; the old turns
 were simply never sent again.
+
+**Sources** (checked 2026-11-03):
+
+- [Claude Code: manage context within a session](https://code.claude.com/docs/en/sessions#manage-context-within-a-session): `/clear` starts fresh; the old session is saved and resumable
+- [Claude Code: how the cache is organized](https://code.claude.com/docs/en/prompt-caching#how-the-cache-is-organized): CLAUDE.md and memory are reloaded after `/clear`
+
+Fact-check: see [learn-scenarios-fact-check.md](../learn-scenarios-fact-check.md#per-scenario-verdicts). Open findings for this scenario: N-01.

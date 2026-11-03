@@ -38,3 +38,11 @@ attaching several screenshots over its lifetime (a common pattern when
 iterating on UI bugs) pays this tax **every time**, not just on the first
 attachment — worth knowing before assuming that only the first image in a
 session is expensive.
+
+**Sources** (checked 2026-11-03):
+
+- [Anthropic: what invalidates the cache](https://platform.claude.com/docs/en/build-with-claude/prompt-caching#what-invalidates-the-cache): images invalidate message blocks only (tools and system stay cached)
+- [Anthropic: vision, resolution and token cost](https://platform.claude.com/docs/en/build-with-claude/vision): image token cost: ⌈w/28⌉×⌈h/28⌉
+- [VS Code: vision in chat context](https://code.visualstudio.com/docs/chat/copilot-chat-context#vision): attaching images in VS Code chat
+
+Fact-check: see [learn-scenarios-fact-check.md](../learn-scenarios-fact-check.md#per-scenario-verdicts). Open findings for this scenario: F-04, R-03, R-06.
