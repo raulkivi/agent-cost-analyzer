@@ -59,7 +59,7 @@ in the docs). Findings that need a code fix also go in the run log below.
   [1.143 release notes](https://code.visualstudio.com/updates/v1_143) say
   "The Copilot harness is now the default for new sessions", that its
   sessions "run through the Agent Host", and that the Local harness is
-  being retired. The extension requires `^1.143.0`, so on default
+  being retired. The extension requires `^1.144.0`, so on default
   settings it shows no new sessions. **Release blocker for 0.1.0.** Next:
   retry 1.4 with the Local harness picked, to finish checking the classic
   path.

@@ -130,7 +130,7 @@ All commands are in the **AI Credits Analyzer** category.
 
 ## Requirements
 
-- VS Code 1.143 or later. Each release of the extension requires the VS
+- VS Code 1.144 or later. Each release of the extension requires the VS
   Code version that was stable when it was published.
 - GitHub Copilot Chat. Chats run with the Local harness also need debug
   file logging turned on (see above).

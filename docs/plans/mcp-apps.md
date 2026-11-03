@@ -26,7 +26,7 @@ Hosts that matter here:
 
 | Host | Renders MCP Apps | Reaches our server |
 |---|---|---|
-| VS Code Copilot Chat | Yes, stable since 1.109. The extension requires ^1.143, so every extension user has it. | Yes. The extension contributes the server (`mcpServerDefinitionProviders`, step 10.8). |
+| VS Code Copilot Chat | Yes, stable since 1.109. The extension requires ^1.144, so every extension user has it. | Yes. The extension contributes the server (`mcpServerDefinitionProviders`, step 10.8). |
 | Claude Desktop | Yes, with local stdio servers ("Allow / Always allow"). | Yes, through `scripts/mcp-server.sh`. |
 | claude.ai web, ChatGPT | Yes | No. They need a remote server, which constraint 1 rules out. |
 | Claude Code CLI, pi | No (terminal) | Yes. They get the text result, unchanged. |
