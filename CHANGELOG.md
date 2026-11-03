@@ -27,7 +27,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `.github/CODEOWNERS`: every change needs the maintainer's review, and
   security-sensitive paths (workflows, dependencies, release scripts, agent
   instructions, redaction and MCP code) are listed explicitly.
+- Learn scenarios fact-check (`docs/learn-scenarios-fact-check.md`): every
+  scenario claim checked against Anthropic, Claude Code, OpenAI, Google, xAI,
+  GitHub and VS Code docs, with verdicts and sources. Each scenario doc ends
+  with a Sources list. A new test recomputes every Learn turn's AI Credits
+  from its scenario's stated rates.
+- Plan for Phase 13, vendor-aware Learn simulation (VS Code first), and
+  Phase 14, replaying Analyze sessions on another vendor.
 ### Fixed
+- Learn scenarios: five AI Credits arithmetic slips (scenarios 10, 12, 13,
+  15 and 18) and one wrong cross-scenario total (scenario 14).
+- Learn scenarios and docs: the cache prefix order is tools → system →
+  messages, so a tool change invalidates the whole cache (the text had it
+  reversed). A 5-minute break exceeds Anthropic's default cache lifetime,
+  not "every provider's". The provider cache-lifetime table and the
+  Copilot billing description (per-token AI credits) are brought up to
+  date.
 - VS Code Agent Host sessions (step 10.13): a session whose `session.db` is
   missing or unreadable stays listed with unknown usage; only chats that were
   opened but never sent are hidden.
