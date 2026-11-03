@@ -1414,6 +1414,23 @@ in the plan's §9: Anthropic, OpenAI, Google and xAI are simulated, while
 Moonshot AI and Microsoft are listed but disabled. Work starts after
 `ext-v0.1.0` and ships in extension 0.2.0.
 
+## Phase 14 — Replay real Analyze sessions on another vendor
+
+**Goal**: answer "what would this real session have cost on another
+model?". It reuses Phase 13's simulator on the token shape (sizes, gaps,
+events) of a real Analyze session. Owner decision D18 in
+[plans/vendor-aware-learn-simulation.md](plans/vendor-aware-learn-simulation.md).
+
+**Deliverables**: to be planned when Phase 13 is done. The measured figures
+always stay visible next to the replay, and the replay is labelled
+**Simulated**.
+
+**Exit criterion**: to be set in its plan.
+
+**Dependencies**: Phase 13 (simulator, vendor profiles, calibration).
+
+**Status (2026-11-03)**: planned, not started.
+
 ## Summary dependency graph
 
 ![Summary dependency graph](diagrams/summary-dependency-graph.drawio.svg)
@@ -1452,5 +1469,6 @@ flowchart LR
     P912 --&gt; P12["Phase 12<br/>MCP Apps views"]
     P10 --&gt; P12
     P10 --&gt; P13["Phase 13<br/>Vendor-aware Learn simulation"]
+    P13 --&gt; P14["Phase 14<br/>Replay Analyze sessions on another vendor"]
 ```
 -->

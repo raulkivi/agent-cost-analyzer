@@ -60,9 +60,9 @@ findings are then fixed by construction, not by hand edits.
 
 **Non-goals**
 
-- Simulating Analyze-mode (real) sessions. Real sessions keep their
+- Simulating Analyze-mode (real) sessions in this phase. Real sessions keep their
   measured numbers; a "what if on vendor X" replay of real sessions is a
-  possible later phase (§9 Q2).
+  planned follow-up, Phase 14 (§9 D18).
 - Predicting real bills exactly. The output is labelled **Simulated**
   everywhere, and the assumptions it rests on (e.g. where Copilot places
   cache breakpoints) are listed in the UI.
@@ -113,7 +113,18 @@ scenario shows the panel with three additions:
 4. **Sources footer** on every vendor-specific panel: source links and
    "checked 2026-11-03". The footer turns into a warning when the data is
    more than 90 days old.
-5. **Assumptions popover** (the ⓘ in the header). It lists what the
+5. **Costs** are shown in AI credits, matching Copilot billing. A
+   tooltip on every figure and a column in the Vendors tab add the USD
+   equivalent (1 AI credit = $0.01). There is no "illustrative" option:
+   every figure comes from a real model's prices and rules (D16).
+6. **Copilot-only scenarios**: the extension's Learn view lists the 17
+   scenarios that apply to Copilot. Scenario 6 (`/clear`) and scenario 7
+   (`/rewind`) use their VS Code wording: a new chat, and restoring a
+   checkpoint or editing a previous request. Scenario 13 (Anthropic's
+   1-hour cache) is hidden, because Copilot users can't choose it. The
+   standalone app keeps all 18, with Claude Code wording plus the VS Code
+   equivalent (D13, D14).
+7. **Assumptions popover** (the ⓘ in the header). It lists what the
    simulation assumes because no vendor or GitHub doc states it. Example:
    "Copilot places cache breakpoints after tools, after the system prompt
    and after the last message."
@@ -170,6 +181,8 @@ if its caching kind is new.
 ```ts
 ScenarioScript = {
   id, title, category,
+  harnesses: Harness[],       // where the scenario applies (D13)
+  textByHarness?: Partial<Record<Harness, { title?; userMessages?; explanations? }>>,
   sessionKind: "main" | "subagent", parentScenarioId?,
   staticPrefix: { toolsTokens, systemTokens },
   steps: ScriptStep[],
@@ -178,7 +191,8 @@ ScriptStep = {
   index, userMessage, assistantResponse, toolCalls,
   explanation,               // vendor-neutral prose, no numbers
   idleMinutesBefore?: number,
-  newContent: { userTokens, toolResultTokens, visionTokens, reasoningTokens, outputTokens },
+  newContent: { userTokens, toolResultTokens, reasoningTokens, outputTokens,
+                images?: { width: number; height: number }[] },   // D15
   events: ScriptEvent[],
 }
 ScriptEvent =
@@ -193,6 +207,14 @@ ScriptEvent =
   | { type: "fork"; branch: string; fromStep }
   | { type: "extended-ttl" }            // e.g. Anthropic's 1-hour breakpoint
 ```
+
+`Harness = "vscode-local" | "copilot-agent-host" | "claude-code"`.
+
+Text stays in vendor-neutral token counts, and tokenizer differences
+between vendors are out of scope. Images are given as pixel sizes, and each
+vendor profile converts them with its documented formula (Anthropic:
+⌈w/28⌉ × ⌈h/28⌉ with its caps). A vendor without a published formula falls
+back to an estimate marked `estimated: true`.
 
 These events extend the existing `TriggeredEvent` enum
 (`packages/domain/src/turn.ts`) and don't replace it. The simulated
@@ -319,9 +341,9 @@ committed once its exit criterion holds.
 | 13.3 | **Simulator core**: `PromptBuilder`, `Pricer`, `BreakpointCacheModel`; invariants S1–S6 | Property test: S2 conservation holds for random scripts; Anthropic rules S3–S6 each pinned by a named test |
 | 13.4 | **Other cache models and invalidation**: `AutomaticPrefix`, `BestEffort`, `Unknown`; `InvalidationPolicy`; S7–S18 | Each rule has a passing named test; unknown vendors produce unavailable counts, never zeros |
 | 13.5 | **Scripts**: convert the 18 fixtures to `ScenarioScript`; golden snapshots per scenario × simulated vendor's default model | 18 × 4 snapshots reviewed; R-01–R-04 no longer reproducible; the old fixture-arithmetic test is replaced by simulator tests |
-| 13.5a | **Calibration**: one redacted real Claude Code capture and one Copilot (Anthropic-model) capture, reduced to script shape (token sizes, gaps, events; no content) in `fixtures/learn-calibration/` | A calibration test replays each and matches the recorded hit/miss per turn. Cache-read totals must be within a tolerance agreed in 13.0. A mismatch fails the test and is resolved by fixing a rule or an assumption, never by editing the capture |
+| 13.5a | **Calibration**: one redacted real Claude Code capture and one Copilot (Anthropic-model) capture, reduced to script shape (token sizes, gaps, events; no content) in `fixtures/learn-calibration/` | A calibration test replays each and matches the recorded hit/miss per turn, with each turn's cache read **within 5%** of the recorded figure (D12). A mismatch fails the test and is resolved by fixing a rule or an assumption, never by editing the capture |
 | 13.6 | **Service + RPC**: `getScenario(id, modelId)`, `compareScenario(id, modelIds)`, `listVendorProfiles()` in `ApiService`; extension RPC; `ProductProfile.features.vendorSimulation` (extension: on, standalone: off) | Server and extension contract tests pass; bundle-size test passes with the profile data included |
-| 13.7 | **UI, part 1 (first usable cut)**: vendor/model picker (default from Analyze usage; Moonshot/Microsoft disabled with reason), re-simulated turns table, "Cache" column, generated note, sources footer, assumptions popover | Web tests for each component; a11y test; UI check (10.11) green in every theme at narrow width |
+| 13.7 | **UI, part 1 (first usable cut)**: vendor/model picker (default from Analyze usage; Moonshot/Microsoft disabled with reason), re-simulated turns table, "Cache" column, generated note, AI credits with USD tooltips, sources footer, assumptions popover; the extension's Learn view lists the 17 Copilot scenarios with VS Code wording | Web tests for each component; a11y test; UI check (10.11) green in every theme at narrow width |
 | 13.8 | **UI, part 2**: How vendors differ card, Vendors tab (vendor defaults + user-added models; table first, chart optional) | Web tests; manual check in a real VS Code: pick 3 vendors on scenario 15 and confirm the outcomes match the rule register |
 | 13.9 | **Docs and data upkeep**: a script (`npm run scenarios:docs`) regenerates each `docs/scenarios/*.md` table, and all-scenarios.md, from the simulator for the reference model (Claude Sonnet 5.5); a drift test fails if the docs differ. UserGuide and vscode-extension-guide Learn sections; fact-check report closes R-01–R-06; architecture.md updated; the weekly `vendor-prices.yml` workflow | Docs reviewed by the owner; drift test and `docs.test.ts` pass; the workflow's dry run reports no diff against current prices |
 | 13.10 | **Standalone app**: turn the flag on, HTTP routes for the 13.6 calls | Standalone tests pass; Learn shows the same simulated numbers in both products |
@@ -341,7 +363,7 @@ committed once its exit criterion holds.
 
 ## 9. Decisions
 
-From the owner interview, 2026-11-03.
+From the owner interviews, 2026-11-03.
 
 | # | Decision | Applies in |
 |---|---|---|
@@ -356,13 +378,16 @@ From the owner interview, 2026-11-03.
 | D9 | Data upkeep: a weekly CI diff against GitHub's price table opens an issue; cache rules are reviewed by hand | 13.9 |
 | D10 | Calibrate against redacted real captures (Claude Code and Copilot) | 13.5a |
 | D11 | Vendors tab compares each vendor's default model, plus models the user adds | 13.8 |
+| D12 | Calibration tolerance: each turn's cache read within 5% of the recorded figure, plus an exact hit/miss match | 13.5a |
+| D13 | Extension shows Copilot-applicable scenarios only: 6 and 7 stay with VS Code wording, and 13 (1-hour cache) is hidden, leaving 17. The standalone app shows all 18 | 13.5, 13.7 |
+| D14 | One script per scenario with harness-specific text (`textByHarness`); no copies | 13.1, 13.5 |
+| D15 | Content sizes come from real inputs (image pixel sizes); vendor formulas turn them into tokens; no formula means an estimate marked `estimated` | 13.1, 13.4 |
+| D16 | No "Illustrative" option; real models only | 13.7 |
+| D17 | The standalone app gets the simulation inside Phase 13 as its last step (13.10) | 13.10 |
+| D18 | "Replay a real Analyze session on vendor X" is planned as Phase 14 | Phase 14 |
+| D19 | Costs shown in AI credits, with the USD equivalent on hover and in the Vendors tab | 13.7, 13.8 |
 
-Still open:
-
-| # | Question | Needed before |
-|---|---|---|
-| Q1 | The calibration tolerance for cache-read totals (exact hit/miss per turn is already required) | 13.0 |
-| Q2 | Later: offer the same "replay on vendor X" for real Analyze sessions? (out of scope for Phase 13) | after 13.10 |
+Still open: nothing. D12–D19 come from the follow-up interview (same day), and Phase 14 covers Analyze replay.
 
 ## 10. Exit criterion
 
