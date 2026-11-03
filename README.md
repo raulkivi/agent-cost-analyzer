@@ -94,6 +94,9 @@ This repo builds two products from one codebase:
   the checks the owner runs in a real VS Code before each extension
   release: usability script, MCP server in Copilot agent mode, and remote
   windows.
+- [VS Code UI automation plan](docs/plans/vscode-ui-automation.md) —
+  proposed step 10.16: automating the manual checks that need a real
+  VS Code window with `wdio-vscode-service` under xvfb.
 - [pi-system-prompt-logger](packages/pi-system-prompt-logger/README.md) —
   optional Pi coding-agent extension, vendored in this repo, that captures
   pi's assembled system prompt to a JSONL sidecar log so Analyze mode's
