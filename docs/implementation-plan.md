@@ -1400,7 +1400,8 @@ found wrong (R-01–R-04).
   an assumptions popover. The standalone app gets them last (13.10).
 
 **Exit criterion**: in the VS Code extension, every Learn scenario can be
-replayed on every model in GitHub's Copilot price table. Each turn's cache
+replayed on every model in GitHub's Copilot price table whose vendor
+documents its caching, and the calibration tests match the real captures. Each turn's cache
 outcome and AI credits come from the simulator and that vendor's sourced
 rules, and every vendor-specific figure links to a dated source or says
 unknown.
@@ -1408,7 +1409,10 @@ unknown.
 **Dependencies**: Phase 10 (the extension, its Learn view from step 10.12
 and `ext-v0.1.0`). Not Phase 11 or 12.
 
-**Status (2026-11-03)**: proposed, not started; open questions in the plan's §9.
+**Status (2026-11-03)**: planned, not started. The owner's decisions are
+in the plan's §9: Anthropic, OpenAI, Google and xAI are simulated, while
+Moonshot AI and Microsoft are listed but disabled. Work starts after
+`ext-v0.1.0` and ships in extension 0.2.0.
 
 ## Summary dependency graph
 

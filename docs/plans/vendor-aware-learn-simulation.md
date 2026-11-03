@@ -1,9 +1,14 @@
 # Phase 13: Vendor-aware Learn simulation
 
-Status: **Proposed** (2026-11-03), not started. Owner decisions so far:
-cover **every vendor and model GitHub Copilot offers**, do **true
-simulation** (each vendor's own cache rules decide hit or miss, not just its
-prices), and ship in the **VS Code extension first**.
+Status: **Planned** (2026-11-03), not started. It starts after
+`ext-v0.1.0` is tagged and ships in extension 0.2.0. The owner's decisions
+from the 2026-11-03 interview are recorded in [§9](#9-decisions). In short:
+- simulate **every Copilot vendor whose caching is documented** (Anthropic,
+  OpenAI, Google, xAI);
+- list Moonshot AI and Microsoft but disable them;
+- do **true simulation**: each vendor's cache rules decide hit or miss, not
+  just its prices;
+- ship in the **VS Code extension first**.
 
 Background: [learn-scenarios-fact-check.md](../learn-scenarios-fact-check.md)
 found that the 18 Learn scenarios mix vendor-specific behaviour into fixed,
@@ -26,33 +31,38 @@ findings are then fixed by construction, not by hand edits.
 6. [Vendor data and sources](#6-vendor-data-and-sources)
 7. [Implementation steps](#7-implementation-steps-tdd-each-with-an-exit-criterion)
 8. [Risks](#8-risks)
-9. [Open questions](#9-open-questions)
+9. [Decisions](#9-decisions)
 10. [Exit criterion](#10-exit-criterion)
 
 ## 1. Goals and non-goals
 
 **Goals**
 
-1. Any Learn scenario can be replayed on any model Copilot offers: OpenAI,
-   Anthropic, Google, xAI, Microsoft and Moonshot AI, with GitHub's
-   per-token AI credit prices.
+1. Any Learn scenario can be replayed on any Copilot model whose vendor
+   documents its caching: OpenAI, Anthropic, Google and xAI, 27 of the 29
+   models in GitHub's price table, at GitHub's per-token AI credit prices.
+   Moonshot AI (Kimi) and Microsoft (MAI) are listed in the picker but
+   disabled: "Not simulated: caching behaviour isn't documented".
 2. The vendor's documented cache rules decide each turn's cache read, cache
    write and uncached input: TTL, prefix layers, what invalidates what,
    whether writes cost extra, and the minimum cacheable length.
 3. Every vendor-specific number or outcome can be traced to a cited source
-   with a check date. Where a vendor documents nothing, the UI says
-   "unknown" (architecture.md constraint 6). It never borrows another
-   vendor's rule silently.
-4. Compare vendors side by side: same scenario, per-turn outcome and total
+   with a check date. Where a vendor leaves one rule undocumented, the
+   outcome is "unknown" (architecture.md constraint 6). The simulator never
+   borrows another vendor's rule silently. A vendor that documents no
+   caching at all is not simulated (goal 1).
+4. The simulator is calibrated against real, redacted captures: replaying a
+   real session's shape reproduces its recorded cache hits and misses.
+5. Compare vendors side by side: same scenario, per-turn outcome and total
    AI credits per model.
-5. VS Code extension first. The standalone app gets it behind the same
+6. VS Code extension first. The standalone app gets it behind the same
    `ProductProfile` flag in a later step.
 
 **Non-goals**
 
 - Simulating Analyze-mode (real) sessions. Real sessions keep their
   measured numbers; a "what if on vendor X" replay of real sessions is a
-  possible later phase (§9 Q6).
+  possible later phase (§9 Q2).
 - Predicting real bills exactly. The output is labelled **Simulated**
   everywhere, and the assumptions it rests on (e.g. where Copilot places
   cache breakpoints) are listed in the UI.
@@ -76,11 +86,16 @@ scenario shows the panel with three additions:
 ```
 
 1. **Vendor and model picker** in the Learn header. Models are grouped by
-   vendor, in the order of GitHub's price table. Vendors whose caching is
-   undocumented are marked "cache behaviour unknown". The pick is
-   remembered in the webview state. The scenario's second model (the
-   "cheaper model" in scenarios 4, 14 and 18) maps to the vendor's
-   designated cheaper sibling (§4.3).
+   vendor, in the order of GitHub's price table. Moonshot AI and Microsoft
+   models are listed but disabled, with the reason as their description.
+   - **Default model**: the model used most in the user's recent Analyze
+     sessions (Copilot model ids are mapped to price-table names). It falls
+     back to Claude Sonnet 5.5 when there are none or the model isn't
+     simulated.
+   - An explicit pick is remembered in the webview state.
+   - The scenario's second model (the "cheaper model" in scenarios 4, 14
+     and 18) is the vendor's **curated** cheaper sibling (§4.2,
+     `cheaperSiblingId`), reviewed in step 13.0.
 2. **Explanation tab**:
    - the scenario's vendor-neutral prose;
    - a generated line, "On Claude Sonnet 5.5: the image invalidated the
@@ -91,7 +106,8 @@ scenario shows the panel with three additions:
      and a source link.
 3. **Vendors tab**: an accessible table with one row per model and columns
    for total AI credits, cache-hit ratio, misses and the most expensive
-   turn. It can be sorted, and has a per-turn strip of hit/partial/miss
+   turn. It starts with **each simulated vendor's default model**
+   (Anthropic, OpenAI, Google, xAI), and the user can add more models. It can be sorted, and has a per-turn strip of hit/partial/miss
    marks. A chart is optional and comes after the table (10.11's
    "fits any panel width" rule).
 4. **Sources footer** on every vendor-specific panel: source links and
@@ -226,10 +242,11 @@ simulation?: {
 }
 ```
 
-When the caching kind is `unknown`, the cache fields are
-`unavailableTokenCount(reason)` and so is `costAiCredits`. The Vendors tab
-then shows a **bound** next to them, "≤ X AI credits (no caching
-assumed)", labelled as a bound (§9 Q3).
+When one rule a turn depends on is `unknown` for the chosen vendor, that
+turn's cache fields are `unavailableTokenCount(reason)`, and so is its
+`costAiCredits`. Vendors whose whole caching kind is `unknown` aren't
+simulated (§1 goal 1). Their models are returned with `simulated: false`
+and a reason, so the picker can list them disabled.
 
 ## 5. Simulation rules
 
@@ -254,7 +271,7 @@ rule's source id, and the rule is implemented only once that test exists.
 | S14 | `/clear`: messages dropped; tools and system still match (project context only if unchanged) | Claude Code harness | Claude Code: how the cache is organized |
 | S15 | Rewind and fork: the prefix up to the chosen step still matches while within TTL | all | Claude Code: rewinding; subagents and the cache |
 | S16 | Subagent: its own prefix; the parent pays only the returned summary | all | Claude Code / VS Code subagents |
-| S17 | Best-effort and unknown kinds: outcome `unknown` unless the vendor documents otherwise | xAI, Moonshot, Microsoft | xAI caching; GitHub model hosting |
+| S17 | Best-effort kind: prefix matching like S7, with a cache lifetime marked *assumed* (shown in the assumptions popover); unknown kind: not simulated | xAI (best-effort); Moonshot, Microsoft (not simulated) | xAI caching; GitHub model hosting |
 | S18 | Tiered prices: a turn whose input exceeds the threshold uses the higher tier | OpenAI, xAI, Haiku 5.5 | GitHub pricing |
 
 Where Copilot's own behaviour is unknown, the profile's `assumptions`
@@ -267,13 +284,22 @@ example is where Copilot places cache breakpoints.
   input, cached input, cache write, output, tiers). It is converted with
   1 AI credit = $0.01. As of 2026-11-03 it lists 29 models from six
   vendors: OpenAI 10, Anthropic 12, Google 2, xAI 3, Microsoft 1,
-  Moonshot AI 1. Promotional prices (Gemini) carry `promoEndsAt`.
+  Moonshot AI 1. 27 are simulated, and Microsoft's and Moonshot's are listed
+  but disabled. Promotional prices (Gemini) carry `promoEndsAt`.
 - **Cache rules**: the vendor docs cited in the fact-check report's claim
   register.
-- **Freshness**: every `Source` has `checkedAt`. A test fails if any model
-  or rule lacks a source id. The UI warns after 90 days. Updating is a
-  data-only change: edit the JSON, cite the source, run the golden tests,
-  and review the snapshot diff.
+- **Freshness**:
+  - Every `Source` has `checkedAt`, and a test fails if any model or rule
+    lacks a source id.
+  - The UI warns when data is over 90 days old.
+  - A **weekly scheduled workflow** (`.github/workflows/vendor-prices.yml`)
+    diffs the profile prices against GitHub's published
+    `data/tables/copilot/models-and-pricing.yml` in `github/docs`. It opens
+    (or updates) an issue listing added, removed and changed models; it
+    never commits.
+  - Cache-rule changes are reviewed by hand.
+  - Updating is a data-only change: edit the JSON, cite the source, run the
+    golden tests, and review the snapshot diff.
 - **Scale change**: real prices make Learn numbers about 40-100x larger than
   today's illustrative 0.005-credits-per-1K rate. For example, a
   4,500-token cache write on Claude Sonnet 5.5 costs about 1.1 AI credits,
@@ -287,16 +313,17 @@ committed once its exit criterion holds.
 
 | Step | Work | Exit criterion |
 |---|---|---|
-| 13.0 | **Rule register**: turn §5 into a table in the fact-check report, one row per (vendor, rule) with a source or "unknown". Owner reviews it | Every vendor × rule cell has a source id or is marked unknown; owner sign-off |
+| 13.0 | **Rule register**: turn §5 into a table in the fact-check report, one row per (vendor, rule) with a source or "unknown", plus the curated cheaper-sibling list and the Copilot-to-price-table model-id mapping. Owner reviews it | Every vendor × rule cell has a source id or is marked unknown; owner sign-off on rules, siblings and mapping |
 | 13.1 | **Domain schemas**: `ScenarioScript`, `VendorProfile`, `Turn.simulation` (zod) | Schema tests pass; the existing `Turn`/`Session` tests are unchanged |
 | 13.2 | **Vendor data**: six profile files from GitHub prices + cache docs; loader with injectable dir (G4 pattern) | Tests: every Copilot model in the price table is present; every model and rule has a source; prices round-trip |
 | 13.3 | **Simulator core**: `PromptBuilder`, `Pricer`, `BreakpointCacheModel`; invariants S1–S6 | Property test: S2 conservation holds for random scripts; Anthropic rules S3–S6 each pinned by a named test |
 | 13.4 | **Other cache models and invalidation**: `AutomaticPrefix`, `BestEffort`, `Unknown`; `InvalidationPolicy`; S7–S18 | Each rule has a passing named test; unknown vendors produce unavailable counts, never zeros |
-| 13.5 | **Scripts**: convert the 18 fixtures to `ScenarioScript`; golden snapshots per scenario × vendor default model | 18 × 6 snapshots reviewed; R-01–R-04 no longer reproducible; the old fixture-arithmetic test is replaced by simulator tests |
+| 13.5 | **Scripts**: convert the 18 fixtures to `ScenarioScript`; golden snapshots per scenario × simulated vendor's default model | 18 × 4 snapshots reviewed; R-01–R-04 no longer reproducible; the old fixture-arithmetic test is replaced by simulator tests |
+| 13.5a | **Calibration**: one redacted real Claude Code capture and one Copilot (Anthropic-model) capture, reduced to script shape (token sizes, gaps, events; no content) in `fixtures/learn-calibration/` | A calibration test replays each and matches the recorded hit/miss per turn. Cache-read totals must be within a tolerance agreed in 13.0. A mismatch fails the test and is resolved by fixing a rule or an assumption, never by editing the capture |
 | 13.6 | **Service + RPC**: `getScenario(id, modelId)`, `compareScenario(id, modelIds)`, `listVendorProfiles()` in `ApiService`; extension RPC; `ProductProfile.features.vendorSimulation` (extension: on, standalone: off) | Server and extension contract tests pass; bundle-size test passes with the profile data included |
-| 13.7 | **UI, part 1**: vendor/model picker, "Cache" column, generated note, sources footer, assumptions popover | Web tests for each component; a11y test; UI check (10.11) green in every theme at narrow width |
-| 13.8 | **UI, part 2**: How vendors differ card, Vendors tab (table first, chart optional) | Web tests; manual check in a real VS Code: pick 3 vendors on scenario 15 and confirm the outcomes match the rule register |
-| 13.9 | **Docs**: UserGuide and vscode-extension-guide Learn sections, scenario docs (numbers become "simulated on <model>"), fact-check report closes R-01–R-06, architecture.md updated | Docs reviewed by the owner; `docs.test.ts` passes |
+| 13.7 | **UI, part 1 (first usable cut)**: vendor/model picker (default from Analyze usage; Moonshot/Microsoft disabled with reason), re-simulated turns table, "Cache" column, generated note, sources footer, assumptions popover | Web tests for each component; a11y test; UI check (10.11) green in every theme at narrow width |
+| 13.8 | **UI, part 2**: How vendors differ card, Vendors tab (vendor defaults + user-added models; table first, chart optional) | Web tests; manual check in a real VS Code: pick 3 vendors on scenario 15 and confirm the outcomes match the rule register |
+| 13.9 | **Docs and data upkeep**: a script (`npm run scenarios:docs`) regenerates each `docs/scenarios/*.md` table, and all-scenarios.md, from the simulator for the reference model (Claude Sonnet 5.5); a drift test fails if the docs differ. UserGuide and vscode-extension-guide Learn sections; fact-check report closes R-01–R-06; architecture.md updated; the weekly `vendor-prices.yml` workflow | Docs reviewed by the owner; drift test and `docs.test.ts` pass; the workflow's dry run reports no diff against current prices |
 | 13.10 | **Standalone app**: turn the flag on, HTTP routes for the 13.6 calls | Standalone tests pass; Learn shows the same simulated numbers in both products |
 
 ## 8. Risks
@@ -306,25 +333,43 @@ committed once its exit criterion holds.
 | Vendor docs change after release | `checkedAt` everywhere, 90-day UI warning, data-only update path with golden diffs |
 | Copilot's own caching (breakpoint placement, routing) is undocumented | Shown as explicit assumptions; the simulation is labelled, never presented as a bill |
 | "True simulation" suggests more precision than the inputs support | `confidence` per outcome; unknown stays unknown; bounds labelled as bounds |
-| 29 models × 18 scenarios is a large snapshot surface | Golden tests on each vendor's default model only; other models covered by pricer unit tests |
+| 27 simulated models × 18 scenarios is a large snapshot surface | Golden tests on each vendor's default model only; other models covered by pricer unit tests |
 | Extension bundle size | Profiles are small JSON; covered by the existing bundle-size test |
-| Phase 10's 0.1.0 release is still open | Phase 13 starts after `ext-v0.1.0` is tagged and ships in 0.2.0 (§9 Q5) |
+| Real captures leak content | Calibration fixtures keep only token sizes, gaps and event types; redaction reuses the existing redactor and is tested |
+| GitHub renames the price table or changes its format | The weekly workflow fails loudly (issue titled "price diff failed") instead of reporting "no changes" |
+| Phase 10's 0.1.0 release is still open | Phase 13 starts after `ext-v0.1.0` is tagged and ships in 0.2.0 (§9 D6) |
 
-## 9. Open questions
+## 9. Decisions
+
+From the owner interview, 2026-11-03.
+
+| # | Decision | Applies in |
+|---|---|---|
+| D1 | Scope: every Copilot vendor whose caching is documented (Anthropic, OpenAI, Google, xAI). Moonshot AI and Microsoft are listed in the picker but disabled, with "Not simulated: caching behaviour isn't documented" | 13.2, 13.7 |
+| D2 | True simulation: vendor cache rules decide hit and miss, not just prices | 13.3–13.5 |
+| D3 | Default model: the model used most in the user's recent Analyze sessions, falling back to Claude Sonnet 5.5 | 13.7 |
+| D4 | The cheaper model for two-model scenarios is curated per vendor in the profile data and reviewed in 13.0 | 13.0, 13.2 |
+| D5 | xAI is simulated with best-effort caching; its cache lifetime is shown as an assumption | 13.4 |
+| D6 | Release: start after `ext-v0.1.0`, ship in extension 0.2.0 | — |
+| D7 | Scenario docs' tables are generated from the simulator (reference model Claude Sonnet 5.5), with a drift test | 13.9 |
+| D8 | First usable cut: picker + re-simulated table + cache column + sources | 13.7 |
+| D9 | Data upkeep: a weekly CI diff against GitHub's price table opens an issue; cache rules are reviewed by hand | 13.9 |
+| D10 | Calibrate against redacted real captures (Claude Code and Copilot) | 13.5a |
+| D11 | Vendors tab compares each vendor's default model, plus models the user adds | 13.8 |
+
+Still open:
 
 | # | Question | Needed before |
 |---|---|---|
-| Q1 | Default model when a scenario opens: the vendor's default (e.g. Claude Sonnet 5.5), or the model the user last used in Copilot (the extension could read it from Analyze data)? | 13.7 |
-| Q2 | Which model is each vendor's "cheaper sibling" for the 2-model scenarios (e.g. Sonnet 5.5 → Haiku 5.5, GPT-6 Sol → GPT-6 Luna)? | 13.2 |
-| Q3 | For vendors with unknown caching (Moonshot, Microsoft; xAI is best-effort): show only "unknown", or also the labelled "no caching" upper bound? | 13.4 |
-| Q4 | Scenario docs: generate their tables from the simulator for one reference model, or keep the hand-written tables and link to the app? | 13.9 |
-| Q5 | Release: start after `ext-v0.1.0` and ship in 0.2.0 (recommended), or fold into 0.1.0? | 13.0 |
-| Q6 | Later: offer the same "replay on vendor X" for real Analyze sessions? (out of scope for Phase 13) | after 13.10 |
+| Q1 | The calibration tolerance for cache-read totals (exact hit/miss per turn is already required) | 13.0 |
+| Q2 | Later: offer the same "replay on vendor X" for real Analyze sessions? (out of scope for Phase 13) | after 13.10 |
 
 ## 10. Exit criterion
 
 In the VS Code extension, every Learn scenario can be replayed on every
-model in GitHub's Copilot price table. Each turn's cache outcome and AI
+model in GitHub's Copilot price table whose vendor documents its caching.
+Moonshot AI and Microsoft models are listed, disabled, with the reason.
+The calibration tests match the real captures. Each turn's cache outcome and AI
 credits come from the simulator and that vendor's sourced rules. The Vendors
 tab compares models side by side. Every vendor-specific figure links to a
 dated source or says unknown. The fact-check findings R-01 to R-04 can no

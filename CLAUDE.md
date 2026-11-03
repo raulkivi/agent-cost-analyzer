@@ -106,6 +106,6 @@ content here.
   ownership claim was granted 2026-10-28); 0.1.0 waits on the manual checks and the owner's
   review before the `ext-v0.1.0` tag. Phase 13 (vendor-aware Learn simulation,
   VS Code first; see docs/plans/vendor-aware-learn-simulation.md) is
-  proposed, not started; the Learn scenario fact-check it builds on is in
+  planned (owner decisions in its §9), not started until `ext-v0.1.0`; the Learn scenario fact-check it builds on is in
   docs/learn-scenarios-fact-check.md. The progress table and per-step
   status notes are in docs/plans/vscode-extension.md.
