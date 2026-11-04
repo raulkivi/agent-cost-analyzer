@@ -71,6 +71,17 @@ describe("createUiFixture (step 10.16)", () => {
     expect(sessions.length).toBe(fixture.listedSessionCount);
   });
 
+  // VS Code's storage cleaner deletes workspace storage that names no
+  // existing folder, and with it the seeded Copilot debug logs: the usage
+  // session then shows without its numbers.
+  it("names an existing folder for the seeded workspace storage, so VS Code's cleaner keeps it", () => {
+    const fixture = createUiFixture(rootDir, { sessionCount: 1 });
+
+    const workspaceStorage = path.join(fixture.userDataDir, "User", "workspaceStorage", "integration-workspace");
+    const { folder } = JSON.parse(readFileSync(path.join(workspaceStorage, "workspace.json"), "utf-8")) as { folder: string };
+    expect(existsSync(fileURLToPath(folder))).toBe(true);
+  });
+
   it("points the Copilot CLI home at a directory of event logs", () => {
     const fixture = createUiFixture(rootDir, { sessionCount: 1 });
 

@@ -6,6 +6,7 @@
 import { mkdirSync, renameSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
+import { pathToFileURL } from "node:url";
 import { COPILOT_CLI_FIXTURE_HOME, COPILOT_CLI_FIXTURE_SESSION_IDS, writeCopilotCliAgentHostStores } from "../../../server/src/test-support/copilot-cli-fixtures.ts";
 import { createIntegrationFixture, USER_SETTINGS } from "../integration-fixture.mts";
 
@@ -54,6 +55,9 @@ export function createUiFixture(rootDir: string, options: UiFixtureOptions = {})
   const debugDir = path.join(userDir, "workspaceStorage", "integration-workspace", "GitHub.copilot-chat", "debug-logs", base.usageSessionId);
   writeFileSync(path.join(debugDir, "system_prompt_0.json"), JSON.stringify({ content: JSON.stringify([{ type: "text", content: SYSTEM_PROMPT }]) }));
 
+  // VS Code deletes workspace storage that names no existing folder; naming
+  // the fixture's own root keeps the debug logs.
+  writeFileSync(path.join(userDir, "workspaceStorage", "integration-workspace", "workspace.json"), JSON.stringify({ folder: pathToFileURL(rootDir).href }));
   seedLargeSession(path.join(userDir, "globalStorage", "github.copilot-chat", "session-store.db"), now);
   writeCopilotCliAgentHostStores(userDataDir);
 

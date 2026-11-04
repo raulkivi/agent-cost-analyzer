@@ -384,18 +384,21 @@ here.
   on a slow machine. It took the editor group and the keyboard focus from the
   keyboard specs. Seeding the extension's `walkthroughOffered` flag into
   `state.vscdb` did **not** stop it (tried, removed), so
-  `VscodeHost.waitForExtension()` waits for the tab when an earlier launch on
-  the same user-data dir hasn't recorded the offer
-  (`walkthrough-state.ts`, unit-tested), then closes all editors.
-- **Open flake (owner, T15).** The first run after the machine has been idle
-  for a minute or two is slow (3 min instead of 35 s) and has failed one
-  spec each time: `1.11` finds the usage session in the panel without its
-  numbers ("usage: unavailable", while the Sessions tree shows 9.65), so the
-  System prompt breakdown has no inspector button. Warm runs pass. The
-  fixture's debug log is on disk throughout (checked every 5 s for 35 s), so
-  the cause is in how the panel's `getSession` or the log-path list behaves
-  on a slow start, not in the fixture; unresolved. On failure the config now
-  saves a screenshot and VS Code's logs into `test/ui/out/`.
+  `VscodeHost.waitForExtension()` waits for the tab, once per launch, when an
+  earlier launch on the same user-data dir hasn't recorded the offer
+  (`walkthrough-state.ts`, unit-tested), then closes all editors. Doing this on
+  every call (a spec's `setup` runs it per test) closed the panel a test had
+  just opened and failed `1.11` every time; the once-per-launch guard fixed it.
+- **Fixture.** The seeded Copilot workspace storage names the fixture's own
+  folder in a `workspace.json` (a unit-tested guess at VS Code's storage
+  cleaner; the cleaner was never observed deleting it, so the file is
+  precautionary).
+- **Flake record (this machine, Linux, 24 cores).** Before the two fixes
+  above, the first run after a pause of a minute or two failed 1-3 specs in
+  about half the batches (slow starts: 2-3 min instead of 35 s); warm runs
+  passed. After them: 6 of 6 plain runs and 1 of 1 run beside 24 busy loops
+  passed (35 s and 62 s). The owner's 10-run measurement (T15) still decides
+  gating, and a cold CI runner is the case not measured here.
 - **No `actions/cache` for the second download.** Only the wdio download is
   cached (`.wdio-vscode-service`, keyed on `wdio.conf.mts`); the
   integration suite's `.vscode-test/` is unchanged.

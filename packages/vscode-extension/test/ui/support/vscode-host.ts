@@ -77,6 +77,10 @@ export const wdioVscodeHost: VscodeHost = {
     // moment after start-up, taking the editor group and the keyboard focus,
     // later when the machine is slow. Wait for it (a start without one costs
     // the timeout), then close it, so specs begin from an empty editor area.
+    // Once per launch (a spec file is one launch): a later call, from a
+    // spec's setup, must not close the panel a test has just opened.
+    if (startupSettled) return;
+    startupSettled = true;
     const workbench = await browser.getWorkbench();
     if (!walkthroughAlreadyOffered(parseUiFixture(process.env[UI_FIXTURE_ENV]).userDataDir)) {
       await browser
@@ -86,3 +90,5 @@ export const wdioVscodeHost: VscodeHost = {
     await this.command("workbench.action.closeAllEditors");
   },
 };
+
+let startupSettled = false;

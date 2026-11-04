@@ -21,9 +21,10 @@ describe("parseUiFixture (step 10.16)", () => {
   });
 
   it("names the missing field", () => {
-    const { usageSessionId: _omitted, ...rest } = createUiFixtureStub();
+    const withoutId: Partial<ReturnType<typeof createUiFixtureStub>> = createUiFixtureStub();
+    delete withoutId.usageSessionId;
 
-    expect(() => parseUiFixture(JSON.stringify(rest))).toThrow(/usageSessionId must be a non-empty string/);
+    expect(() => parseUiFixture(JSON.stringify(withoutId))).toThrow(/usageSessionId must be a non-empty string/);
   });
 
   it("rejects a non-integer count", () => {
