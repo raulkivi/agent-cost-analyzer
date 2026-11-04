@@ -88,6 +88,9 @@ export const wdioVscodeHost: VscodeHost = {
         .catch(() => undefined);
     }
     await this.command("workbench.action.closeAllEditors");
+    // The Chat view on the right (secondary side bar) takes a fifth of the
+    // window; close it so the panel's room doesn't depend on the runner.
+    await this.command("workbench.action.closeAuxiliaryBar");
   },
 };
 

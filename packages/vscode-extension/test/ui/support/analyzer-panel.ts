@@ -5,6 +5,7 @@
 import { browser } from "@wdio/globals";
 import { COMMAND_IDS } from "../../../src/commands/command-ids.js";
 import { INTERNAL_COMMAND_IDS } from "../../../src/diagnostics/test-hooks.js";
+import { layoutFor } from "../../../../web/src/lib/layout.js";
 import type { VscodeHost } from "./vscode-host.js";
 
 export const PANEL_TITLE = "AI Credits Analyzer";
@@ -117,6 +118,24 @@ export class AnalyzerPanel {
   async openSession(sessionId: string): Promise<void> {
     await this.host.waitForExtension();
     await this.run(COMMAND_IDS.openSession, sessionId);
+    await this.settleLayout();
+  }
+
+  // The responsive layout follows the panel's width through a ResizeObserver,
+  // which runs only in a painted frame, and a runner with no GPU or window
+  // manager paints none by itself: a panel measured while it was still small
+  // stays in the narrow layout (no Columns button, no right-column tabs) after
+  // it has grown. Force frames until the layout matches the width.
+  async settleLayout(): Promise<void> {
+    await this.inside(async (view) => {
+      await browser.waitUntil(
+        async () => {
+          await view.requestFrame();
+          return (await view.layout()) === layoutFor(await view.width(), { listColumn: false });
+        },
+        { timeout: 30_000, interval: 500, timeoutMsg: "the panel's layout did not follow its width" },
+      );
+    });
   }
 
   // Moves keyboard focus into the open panel with the workbench command (the

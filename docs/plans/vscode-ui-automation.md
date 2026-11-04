@@ -326,7 +326,7 @@ pinned stable VS Code 1.145.0 under `xvfb-run -a -s "-screen 0 1600x1000x24"`.
 The spike (T0) went **go**: no patch to the service was needed, and the
 whole suite (6 spec files, one VS Code start per file) takes about 35 s
 with a warm download cache. The `npm audit` delta is the
-open item for the owner (Q1): 19 advisories before (2 high), 50 after (19
+owner decision (Q1, 2026-11-04): accepted, no switch to Playwright. 19 advisories before (2 high), 50 after (19
 high; fastify, `@fastify/static`, `find-my-way`, `serialize-javascript`,
 `basic-ftp`, `extract-zip` via the service and wdio), all in dev
 dependencies that never ship.
@@ -340,7 +340,7 @@ dependencies that never ship.
 | 1.7 | `keyboard.e2e.ts` | Down/Enter in the Sessions tree, Tab walk with a visible focus indicator on every stop, column chooser Enter/Escape and focus return, Pretty/Raw/Icicle radios by arrow keys, arrow keys inside the diagram, View as table `aria-pressed` |
 | 1.8 | `layout-theme.e2e.ts` | Both High Contrast themes: the UI check's probe and judge on the real page (zero findings), focus outline, selected row. Screenshots in `test/ui/out/`. **Manual:** "charts still distinguishable" |
 | 1.9 | `layout-theme.e2e.ts` | 640 px gives `medium`, 360 px gives `narrow` (view `<select>`, no radio group); no sideways scroll once the setup banner is dismissed |
-| 1.10 | `layout-theme.e2e.ts` | Light theme changes the body class and `--vscode-editor-background`; `editor.fontSize` reaches the webview as a variable that nothing uses (Q4, pinned as today's behaviour) |
+| 1.10 | `layout-theme.e2e.ts` | Light theme changes the body class and `--vscode-editor-background`; `editor.fontSize` reaches the webview as a variable that nothing uses (Q4, decided 2026-11-04: the panel follows the workbench font; the spec pins it) |
 | 1.11 | `panel.e2e.ts` | `ai-credits-analyzer-doc` scheme, a typed key leaves it clean, copy puts the prompt on the clipboard (the clipboard works under xvfb) |
 | 1.13 | `views.e2e.ts` | Learn scenario, another, then a session; plus the Sessions count guard (F5) |
 | 2.1, 2.2, 2.6 | `mcp.e2e.ts` | VS Code's own *MCP: List Servers* (`workbench.mcp.listServer`) lists the server without Copilot Chat installed. The 9 tools stay the integration suite's |
@@ -422,7 +422,7 @@ here.
 
 | Task | Status |
 |---|---|
-| T0 | Done, **go**; audit delta awaits Q1 |
+| T0 | Done, **go**; audit delta accepted (Q1) |
 | T1 | Done (`scripts/ui-automation/ui-fixture.mts`, 8 tests) |
 | T2 | Done |
 | T3 | Done (`vscode-host.ts`, `analyzer-panel.ts`, `sidebar-views.ts`, `keyboard.ts`, `mcp-server-list.ts`; `focus-probe.ts` and `panel-width.ts` unit-tested) |
@@ -432,3 +432,18 @@ here.
 | T13 | Done |
 | T14 | Not built (Q5) |
 | T15 | Owner |
+
+### 6.5 First CI run (PR #117) and the fix
+
+On the cold runner 14 of 18 tests passed; both 1.7 tests, 1.5 and 1.11
+failed. The Tab walk showed a `View` select and a `Details` button, i.e. the
+narrow layout, with no `Columns` button, no `Turn 120` text and no `System
+prompt` radio (all wide-layout parts). The cause is the frame problem of §6.2:
+the layout follows the width through a `ResizeObserver`, which runs only in a
+painted frame, and a runner without GPU or window manager paints none by
+itself, so a panel measured while small stays narrow. Locally frames came
+early enough. Fixes: `AnalyzerPanel.openSession` now forces frames until
+`data-layout` equals `layoutFor(width)` (`settleLayout`), and the Chat side
+bar is closed at start-up so the panel's room doesn't depend on the runner.
+Not reproduced locally (screen sizes of 1280x800 and 1600x1000, and 24 busy
+loops, all passed before and after), so the cause is inferred from the log.
