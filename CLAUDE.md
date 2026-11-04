@@ -101,7 +101,9 @@ content here.
   tokens and AI Credits in both products) done; 10.14 (their turn text,
   tool calls and system prompt from the Copilot CLI event log) done;
   owner's manual check passed; 10.15 (cache-write and reasoning tokens for
-  Agent Host sessions, from the event log's usage records) done, owner's manual check passed. Release prep
+  Agent Host sessions, from the event log's usage records) done, owner's manual check passed; 10.16 (UI automation
+  of the manual checks in a real VS Code with `wdio-vscode-service`, `test/ui/`, informational `extension-ui` CI
+  job; see docs/plans/vscode-ui-automation.md §6) code done, owner's decisions open. Release prep
   is merged (#90), and publishing setup is done (the Open VSX
   ownership claim was granted 2026-10-28); 0.1.0 is released (tag `ext-v0.1.0`, 2026-11-03,
   on the Marketplace and Open VSX; some VS Code manual checks stay open, see

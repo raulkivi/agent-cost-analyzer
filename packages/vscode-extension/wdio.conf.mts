@@ -4,11 +4,11 @@
 // first, then `xvfb-run -a -s "-screen 0 1600x1000x24" npm run test:ui:vscode`.
 // It seeds throwaway VS Code user-data dirs (ui-fixture.mts) before VS Code
 // starts, and tells the specs about the main one through the environment.
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import process from "node:process";
-import { saveScreenshot } from "./test/ui/support/screenshots.ts";
+import { OUT_DIR, saveScreenshot } from "./test/ui/support/screenshots.ts";
 import { UI_FIXTURE_ENV } from "./test/ui/support/ui-fixture-env.mts";
 import { createUiFixture } from "./scripts/ui-automation/ui-fixture.mts";
 
@@ -83,9 +83,14 @@ export const config: WebdriverIO.Config = {
   logLevel: "warn",
   mochaOpts: { ui: "tdd", timeout: 120_000 },
   outputDir: path.join(import.meta.dirname, "test/ui/out"),
-  // A screenshot of the window for every failing test, in test/ui/out/ (CI uploads it).
+  // For every failing test, in test/ui/out/ (CI uploads it): a screenshot of
+  // the window, and VS Code's logs (the extension host's console included).
   afterTest: async (test, _context, { passed }) => {
     if (passed) return;
-    await saveScreenshot(`failure-${test.title}`.replace(/[^a-zA-Z0-9.-]+/g, "_").slice(0, 120)).catch(() => undefined);
+    const name = `failure-${test.title}`.replace(/[^a-zA-Z0-9.-]+/g, "_").slice(0, 120);
+    await saveScreenshot(name).catch(() => undefined);
+    for (const [label, { userDataDir }] of [["main", fixture], ["trust", trustFixture]] as const) {
+      if (existsSync(path.join(userDataDir, "logs"))) cpSync(path.join(userDataDir, "logs"), path.join(OUT_DIR, `${name}-logs-${label}`), { recursive: true, force: true });
+    }
   },
 };

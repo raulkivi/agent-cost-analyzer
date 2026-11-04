@@ -5,6 +5,8 @@
 // interface, so specs and page objects don't change.
 import { browser } from "@wdio/globals";
 import { INTERNAL_COMMAND_IDS } from "../../../src/diagnostics/test-hooks.js";
+import { parseUiFixture, UI_FIXTURE_ENV } from "./ui-fixture-env.mts";
+import { walkthroughAlreadyOffered } from "./walkthrough-state.js";
 
 export interface ActiveEditorState {
   scheme: string | undefined;
@@ -71,5 +73,16 @@ export const wdioVscodeHost: VscodeHost = {
       },
       { timeout: 60_000, timeoutMsg: "the extension did not register its commands" },
     );
+    // A fresh VS Code opens a Welcome tab (the Get Started walkthrough) a
+    // moment after start-up, taking the editor group and the keyboard focus,
+    // later when the machine is slow. Wait for it (a start without one costs
+    // the timeout), then close it, so specs begin from an empty editor area.
+    const workbench = await browser.getWorkbench();
+    if (!walkthroughAlreadyOffered(parseUiFixture(process.env[UI_FIXTURE_ENV]).userDataDir)) {
+      await browser
+        .waitUntil(async () => (await workbench.getEditorView().getOpenEditorTitles()).length > 0, { timeout: 20_000, interval: 500 })
+        .catch(() => undefined);
+    }
+    await this.command("workbench.action.closeAllEditors");
   },
 };

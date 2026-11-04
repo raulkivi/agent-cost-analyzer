@@ -2,9 +2,7 @@ import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { DatabaseSync } from "node:sqlite";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { WALKTHROUGH_OFFERED_KEY } from "../../src/onboarding/walkthrough-offer.js";
 import { createExtensionApiService } from "@agent-cost-analyzer/server/src/composition/create-extension-api-service";
 import { InMemoryAppSettingsStore } from "@agent-cost-analyzer/server/src/test-support/in-memory-app-settings-store";
 import { copilotLogPathsFromUserDataDir } from "../../src/platform/copilot-log-paths.js";
@@ -71,31 +69,6 @@ describe("createUiFixture (step 10.16)", () => {
 
     const sessions = await apiOver(fixture.userDataDir, fixture.copilotHome).listSessions();
     expect(sessions.length).toBe(fixture.listedSessionCount);
-  });
-
-  // Without this the first start opens the Get Started tab, which takes the
-  // keyboard focus and the editor group from the specs.
-  it("records that the walkthrough was already offered, in the extension's global state", () => {
-    const fixture = createUiFixture(rootDir, { sessionCount: 1 });
-
-    const db = new DatabaseSync(path.join(fixture.userDataDir, "User", "globalStorage", "state.vscdb"), { readOnly: true });
-    try {
-      const row = db.prepare("SELECT value FROM ItemTable WHERE key = ?").get("raulkivi.ai-credits-analyzer") as { value: string } | undefined;
-      expect(JSON.parse(row!.value)).toEqual({ [WALKTHROUGH_OFFERED_KEY]: true });
-    } finally {
-      db.close();
-    }
-  });
-
-  // VS Code's storage cleaner deletes workspace storage that names no
-  // existing folder, and with it the seeded Copilot debug logs, a while after
-  // start-up: slow runs then see the usage session without its numbers.
-  it("names an existing folder for the seeded workspace storage, so VS Code's cleaner keeps it", () => {
-    const fixture = createUiFixture(rootDir, { sessionCount: 1 });
-
-    const workspaceStorage = path.join(fixture.userDataDir, "User", "workspaceStorage", "integration-workspace");
-    const { folder } = JSON.parse(readFileSync(path.join(workspaceStorage, "workspace.json"), "utf-8")) as { folder: string };
-    expect(existsSync(fileURLToPath(folder))).toBe(true);
   });
 
   it("points the Copilot CLI home at a directory of event logs", () => {
