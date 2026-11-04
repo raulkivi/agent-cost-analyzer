@@ -37,6 +37,15 @@ export const config: WebdriverIO.Config = {
         storagePath: fixture.storagePath,
         userSettings: fixture.userSettings,
         verboseLogging: false,
+        // Under xvfb there is no window manager, so Chromium may treat the
+        // window as occluded and stop producing frames: no
+        // requestAnimationFrame, no ResizeObserver, so the layout never follows
+        // the panel's width (check 1.9).
+        vscodeArgs: {
+          "disable-renderer-backgrounding": true,
+          "disable-backgrounding-occluded-windows": true,
+          "disable-features": "CalculateNativeWinOcclusion",
+        },
       },
     },
   ],

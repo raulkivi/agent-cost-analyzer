@@ -1,18 +1,23 @@
 import { describe, expect, it } from "vitest";
-import { isWithinTolerance, windowWidthFor } from "./panel-width.js";
+import { isWithinTolerance, nextGroupFraction } from "./panel-width.js";
 
-describe("windowWidthFor (check 1.9)", () => {
-  it("adds the chrome around the webview, measured at another window width", () => {
-    // 1600 px window, 1300 px webview: 300 px of chrome.
-    expect(windowWidthFor(640, { windowWidth: 1600, webviewWidth: 1300 })).toBe(940);
+describe("nextGroupFraction (check 1.9)", () => {
+  it("scales the editor group's share of the editor area by target over measured", () => {
+    expect(nextGroupFraction(1, 1500, 750)).toBeCloseTo(0.5);
+    expect(nextGroupFraction(0.5, 800, 400)).toBeCloseTo(0.25);
   });
 
-  it("works for any measuring width", () => {
-    expect(windowWidthFor(360, { windowWidth: 1000, webviewWidth: 700 })).toBe(660);
+  it("grows the share when the panel is too narrow", () => {
+    expect(nextGroupFraction(0.2, 300, 360)).toBeCloseTo(0.24);
   });
 
-  it("refuses a measurement where the webview is wider than the window", () => {
-    expect(() => windowWidthFor(360, { windowWidth: 800, webviewWidth: 900 })).toThrow(/wider than the window/);
+  it("stays within what an editor layout accepts", () => {
+    expect(nextGroupFraction(1, 1500, 5000)).toBe(0.95);
+    expect(nextGroupFraction(0.1, 1000, 10)).toBe(0.05);
+  });
+
+  it("refuses a measurement of zero", () => {
+    expect(() => nextGroupFraction(0.5, 0, 360)).toThrow(/not measured/);
   });
 });
 

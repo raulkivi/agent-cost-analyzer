@@ -71,7 +71,30 @@ export class PanelView {
     return browser.execute((variable) => getComputedStyle(document.documentElement).getPropertyValue(variable).trim(), name);
   }
 
-  width(): Promise<number> {
+  // Under xvfb the workbench window produces no frames of its own accord, so
+  // a resized panel's ResizeObserver callbacks (the responsive layout) never
+  // run. Capturing a screenshot forces one; poll after calling this.
+  async requestFrame(): Promise<void> {
+    await browser.takeScreenshot();
+  }
+
+  async dismissConfigBanner(): Promise<void> {
+    if (await this.hasText("Dismiss")) await this.clickButton("Dismiss");
+  }
+
+  // Puts keyboard focus in the page, as a click in the panel would, on a
+  // spot with no control.
+  async focusPanel(): Promise<void> {
+    await browser.execute(() => {
+      document.body.tabIndex = -1;
+      document.body.focus();
+    });
+    await browser.keys(["Shift"]);
+  }
+
+  // After a frame: before one, a just-resized webview still reports its old size.
+  async width(): Promise<number> {
+    await this.requestFrame();
     return browser.execute(() => window.innerWidth);
   }
 
