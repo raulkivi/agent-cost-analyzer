@@ -31,7 +31,7 @@ export default tseslint.config(
             "packages/*/vitest.config.ts",
             "packages/*/vite.config.ts",
             "packages/vscode-extension/.vscode-test.mjs",
-            "packages/vscode-extension/wdio.conf.mts",
+            "packages/vscode-extension/wdio.conf.mts", "packages/vscode-extension/wdio.copilot.conf.mts",
           ],
         },
         tsconfigRootDir: import.meta.dirname,
