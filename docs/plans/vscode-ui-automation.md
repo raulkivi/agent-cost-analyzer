@@ -346,10 +346,12 @@ dependencies that never ship.
 | 2.1, 2.2, 2.6 | `mcp.e2e.ts` | VS Code's own *MCP: List Servers* (`workbench.mcp.listServer`) lists the server without Copilot Chat installed. The 9 tools stay the integration suite's |
 | 2.5 | `mcp-trust.e2e.ts` | Own capability: Workspace Trust on, a folder whose settings enable the server; untrusted gives no server, the Trust button in the Workspace Trust editor gives one |
 
-**Still manual:** 1.1-1.4, 1.12 (T14 not built, Q5), 2.3, 2.4, §3, §4, the
-README review, 1.8's chart judgement, and 2.1's *Configure Tools* wording
-in Copilot Chat. 2.2's "9 tools" is asserted by the integration suite, not
-here.
+**Still manual:** §3 (remote), §4, the README review, 1.8's chart
+judgement, 2.1's *Configure Tools* wording in Copilot Chat, and Copilot
+agent mode itself (2.3, 2.4, and a real chat for 1.4) except through the
+owner's opt-in suite (§7). 1.1-1.4 and 1.12 were automated in a second pass
+(§6.4, over fixtures); 2.3 and 2.4 only at tool level, in the integration
+suite. 2.2's "9 tools" is asserted by the integration suite, not here.
 
 ### 6.2 Deviations from the plan, and facts it got wrong or left open
 
@@ -402,8 +404,7 @@ here.
 - **No `actions/cache` for the second download.** Only the wdio download is
   cached (`.wdio-vscode-service`, keyed on `wdio.conf.mts`); the
   integration suite's `.vscode-test/` is unchanged.
-- **T14 (1.12) not built;** `test/ui/specs/mcp-trust.e2e.ts` is the only spec
-  with its own VS Code launch.
+- **T14 (1.12)** was built in the second pass (§6.4).
 - **Failure artefacts:** an `afterTest` hook saves a screenshot per failing
   test into `test/ui/out/`, which the CI job uploads.
 
@@ -447,3 +448,70 @@ early enough. Fixes: `AnalyzerPanel.openSession` now forces frames until
 bar is closed at start-up so the panel's room doesn't depend on the runner.
 Not reproduced locally (screen sizes of 1280x800 and 1600x1000, and 24 busy
 loops, all passed before and after), so the cause is inferred from the log.
+
+### 6.4 Second pass: checks 1.1-1.4, 1.12, 2.3, 2.4 and §3 (branch `feat/ui-automation-remaining`)
+
+Feasibility, decided by trying each (VS Code 1.145.0, Linux, xvfb):
+
+| Check | Verdict | How, and what it does not prove |
+|---|---|---|
+| 1.1 | Automated, partly | `first-run.e2e.ts`, a bare user-data dir: the `Welcome` tab with the analyzer's walkthrough opens, no notification about it, icon and "setup needed" show. **Not automated:** "didn't reopen after a second reload". A reload ends the wdio session (the proxy lives in the extension host), and a quit-and-relaunch cannot stand in: under the driver VS Code keeps global state in memory (its log says "Creating shared storage database at ':memory:'"; no `state.vscdb` appeared within 30 s of a quit, in 3 of 3 attempts after an earlier pass that was timing luck), so the second launch always reopens the tab. The logic is `WalkthroughOffer`'s unit tests. Not proven either: a VSIX installed in a *new profile*. |
+| 1.2 | Automated, partly | Both halves: Copilot Chat off (`first-run`: `copilot-chat-unavailable`, Fix opens the Extensions view on the id) and Copilot Chat on (`copilot-available`: Fix opens the Settings editor on exactly the setting). `settings.json` is compared before and after each click. |
+| 1.3 | Automated | `first-run.e2e.ts`: welcome text, "Open Learn mode", 18 scenario rows (the other views collapsed, as the tree is virtualised), Setup warnings. |
+| 1.4 | Automated over a fixture session; real chat opt-in only (§7) | `copilot-available.e2e.ts`. A real Copilot chat needs a signed-in account and a model: not available here. |
+| 1.12 | Automated | `uninstall-installed.e2e.ts` + `uninstall-after.e2e.ts`: `vsce package` builds the VSIX, VS Code's own CLI installs it into the launch's extensions dir, VS Code loads it as a user would (no Test-mode hooks), `workbench.extensions.uninstallExtension` removes it, and a relaunch on the profile shows nothing of it; `settings.json` is byte-identical across the uninstall. Not proven: the Extensions view's button and its reload prompt, and Marketplace installs. 3/3 green, about 3 s each launch. |
+| 2.3, 2.4 | Partly (tool level) | The integration suite starts the MCP server as VS Code does and calls `list_sessions`, `get_session_cost`, `list_log_providers` and `list_sessions` with `provider: "claude-code"`. Copilot choosing and calling the tools needs Copilot: manual, or §7. |
+| §3 | **Not automated** | Investigated, not faked: Remote-SSH and Dev Containers are Marketplace-only, closed-source Microsoft extensions that need an ssh or container host and a server download; WSL needs Windows. `sshd` and Docker exist on this machine and `code serve-web` exists in the CLI (its `--help` ran; it was not started), but `serve-web` only separates the extension host from the UI: it proves neither the remote layouts (R3) nor where Copilot Chat stores sessions on a remote, so a pass would not show D6. Stays manual. |
+
+New facts and the decisions they forced:
+
+- **The Copilot Chat in VS Code 1.145 is built in** (`resources/app/extensions/copilot`, 0.73.0), and **off** in a fresh profile ("disabled globally by the user"), which is why F6's `copilot-chat-unavailable` baseline holds. `workbench.extensions.action.enableAll` turns it on without a restart, even under the service's `--disable-extensions`; the analyzer then sees `GitHub.copilot-chat` and its real settings. So no stand-in extension was needed (one with the same id is skipped "in favour of the builtin"). Signed in or not, it is real Copilot Chat code: once enabled it writes logs into `COPILOT_HOME`, so the fixture now hands out a **copy** of the Copilot CLI fixture home under its own root (before, a run leaked a `logs/` folder into `packages/server/fixtures/`).
+- **wdio loads `wdio.conf.mts` in the launcher and in every worker.** The first-pass config seeded fresh fixtures in each worker, so specs read directories VS Code was not running on (any spec comparing files on disk read a copy; `walkthroughAlreadyOffered` always saw nothing). Only the launcher seeds now and passes its root and fixtures through the environment.
+- **The service rewrites `User/settings.json` at every launch** with its defaults plus `userSettings`, so file comparisons are before/after snapshots, never equality with the fixture.
+- **`--disable-extensions` blocks installed extensions.** 1.12 needs one, so `KeepExtensionsLauncher` (unit-tested, `scripts/ui-automation/keep-extensions-service.mts`) points marked launches at a wrapper that drops the flag. wdio's service hooks run in parallel, so it runs from the config's `onWorkerStart`, after the download. A second development extension cannot be added (the service's shim joins repeated `--extensionDevelopmentPath` flags into one comma-joined path), so the 1.12 launch runs an empty stand-in as its development extension (`test/ui/fixtures/empty-extension`) and the analyzer as the installed VSIX.
+- The wrapper's launch keeps extensions on, so a spec file's mutations to extension state persist between its two launches; each spec file is still one VS Code start.
+
+Run counts, this machine (24 cores): see §6.5.
+
+### 6.5 Run record of the second pass
+
+Full UI suite (12 spec files in 5 launches, 24 tests plus 1 skipped), this machine, Linux, 24 cores, VS Code 1.145.0 under xvfb:
+
+| Run | Result | Time |
+|---|---|---|
+| 1-3, plain | 3 of 3 green | 70 s, 71 s, 80 s |
+| 4, beside 24 busy loops | green | 164 s |
+
+Every launch starts on a freshly seeded user-data directory (a new profile each run), so "fresh profile" holds for every run; the downloaded VS Code stayed cached. Flake observations: an earlier version of the first-run spec failed under load (an unrelated VS Code notification tripped a zero-notifications assertion, now narrowed to notifications about the walkthrough) and the copilot launch's 30 s status-bar wait was too short under load (now 90 s); no flake since. The 1.1 reopen check was dropped for the reason in §6.4. A cold CI runner is still not measured (T15).
+
+### 6.6 Findings for the owner (second pass)
+
+- **Bug, skipped test: a session's AI Credits differ between the Sessions list and its detail.** For the seeded usage session the list (and the Sessions tree, status bar and tooltip numbers built from it) says 9.64735, while the session's detail (the panel's turns, and `get_session_cost` over MCP) says 7.33953. Check 2.3 expects the MCP answer to equal the panel's number. Reproduced in `scripts/ui-automation/ui-fixture-credits.test.ts` (`it.skip`, TODO naming the bug) and `extension.test.ts` (`test.skip`). Which number is right was not investigated.
+- `VscodeHost.waitForExtension` reads the right profile now, but because test mode keeps state in memory it still waits for the Welcome tab on every launch of a profile (as in §6.2).
+- Q5 (uninstall): answered by doing it; it was not flaky in 3 consecutive runs.
+
+## 7. Opt-in real-Copilot suite (owner's machine only)
+
+`npm run test:ui:vscode:copilot` covers checks 1.4, 2.3 and 2.4 with a **real signed-in Copilot agent-mode chat**. It is **not** part of `test:ui:vscode`, the `extension-ui` job or `npm test`; its specs live in `test/ui/copilot-e2e/` (outside the default spec glob) and its config, `wdio.copilot.conf.mts`, exits 0 with a message unless `COPILOT_E2E=1` and `COPILOT_E2E_USER_DATA_DIR` are set, so CI cannot pick it up. It spends real AI Credits.
+
+**Status: written but never run end to end.** The author has no Copilot account. Verified here: it type-checks and lints, the pure parts are unit-tested (`copilot-e2e-env.test.ts`, `profile-copy.test.ts`), it skips cleanly without the env vars, and with `COPILOT_E2E=1` and an empty profile directory it launches VS Code on a copy, enables Copilot Chat, finds no signed-in GitHub account and skips the three tests with a message (copy deleted afterwards). Not verified: everything after sign-in (the chat commands' arguments, `chat.tools.global.autoApprove`, the model picker, the polling).
+
+**One-time setup** (the owner):
+
+1. `npm run build` at the repo root.
+2. `COPILOT_E2E_USER_DATA_DIR=~/.cache/aica-copilot-e2e/user-data npm run test:ui:vscode:copilot:signin --workspace=packages/vscode-extension`. It opens the pinned VS Code on that throwaway dir, with `--password-store=basic` (what the suite uses, so VS Code can read the sign-in back from the copy). Sign in to GitHub, open Copilot Chat in agent mode and **pick the model in the chat's model picker** (Claude Haiku 5.5, or GPT-6 Luna); VS Code remembers it in that profile. Close the window. Selecting a model through the UI is not automated: the picker's selectors are version-dependent and unverified, so the suite does not guess at them.
+
+**Each run:** `COPILOT_E2E=1 COPILOT_E2E_USER_DATA_DIR=<that dir> xvfb-run -a npm run test:ui:vscode:copilot --workspace=packages/vscode-extension` (or on a display). Optional: `COPILOT_E2E_MODEL=gpt-6-luna` (default `claude-haiku-5.5`; the two cost the same, 0.10 in / 0.50 out per 1M tokens).
+
+**What it copies, and deletes afterwards:** only `User/` and `Local State` of that directory into a temp dir (`profile-copy.ts`; never `logs`, caches or crash dumps), refusing a target inside the source. It never reads, parses, prints or commits the sign-in; VS Code reads its own state from the copy. The source is only read.
+
+**What it does:**
+
+1. Enables the built-in Copilot Chat, checks a GitHub account is signed in (it counts accounts, nothing else), and records the sessions already in the Sessions view.
+2. 1.4: a new agent-mode chat with a fixed prompt ("Reply with the single word: ok"). Waits (polling every 5 s, up to 4 minutes, no sleeps) for a new session with **known AI Credits**, then asserts through the MCP tools (`list_sessions`, `get_session_cost`) that it has at least one turn, AI Credits above 0, and that the status bar shows today's credits.
+3. 2.3, 2.4: two more new chats that ask Copilot to call `list_log_providers`, and `list_sessions` with `provider: "claude-code"`; asserts only that the session's tool-call audit (`list_tool_calls`, kind `mcp`) holds a call to that tool. It never asserts on response text.
+4. **Model check:** after each chat it compares the session's model id with `COPILOT_E2E_MODEL` through a normaliser (case, spaces, dots and dashes ignored; a dated suffix is fine). It prints `observed Copilot log id for <model>: <id>` every time, so the owner can add Haiku 5.5's real id to the Copilot log id register (learn-rule-register item 10, where it is only inferred). A different model (not selected, not on the plan, a fallback) **skips** the test with a message naming the model that ran; the spelling never fails a run.
+
+**Cost:** three prompts of a few tokens each on a $0.10/$0.50 per million model: expected well under 1 AI Credit in total; the run prints the measured `AI Credits spent by the sessions of this run: <n>` at the end. Not measured by the author (no run).
+
+**Owner to do once:** the sign-in step above, then the run command; expected result: 3 tests green (or skipped with a message naming the model used). Anything red: attach the output; the first suspects are `chat.tools.global.autoApprove` (the MCP tests time out if agent mode waits for tool approval), the `workbench.action.chat.open` arguments, and the model not being picked.
