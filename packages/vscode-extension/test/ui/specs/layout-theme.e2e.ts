@@ -53,6 +53,7 @@ suite("Themes and font (checks 1.8, 1.10)", () => {
   ] as const) {
     test(`1.8 ${theme}: every text reaches WCAG AA on its ground, and selection and focus are visible`, async () => {
       await useTheme(theme, bodyClass);
+      await panel.focusIntoPanel();
 
       const findings = await panel.inside(async (view) => {
         const probed = await probe(view);

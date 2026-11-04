@@ -82,14 +82,16 @@ export class PanelView {
     if (await this.hasText("Dismiss")) await this.clickButton("Dismiss");
   }
 
-  // Puts keyboard focus in the page, as a click in the panel would, on a
-  // spot with no control.
+  hasFocus(): Promise<boolean> {
+    return browser.execute(() => document.hasFocus());
+  }
+
+  // Puts the page's focus on its body, so the next Tab starts from the top.
   async focusPanel(): Promise<void> {
     await browser.execute(() => {
       document.body.tabIndex = -1;
       document.body.focus();
     });
-    await browser.keys(["Shift"]);
   }
 
   // After a frame: before one, a just-resized webview still reports its old size.
@@ -115,6 +117,29 @@ export class AnalyzerPanel {
   async openSession(sessionId: string): Promise<void> {
     await this.host.waitForExtension();
     await this.run(COMMAND_IDS.openSession, sessionId);
+  }
+
+  // Moves keyboard focus into the open panel with the workbench command (the
+  // way a keyboard user would: the editor group takes focus, and a webview
+  // editor passes it on). The focus arrives a moment later, so ask again until
+  // a Tab moves the page's focus off its body. (document.hasFocus() stays
+  // false under xvfb, which has no window manager to focus the window, even
+  // though key events reach the page.)
+  async focusIntoPanel(): Promise<void> {
+    await browser.waitUntil(
+      async () => {
+        await this.host.command("workbench.action.focusActiveEditorGroup");
+        await browser.pause(300);
+        return this.inside(async (view) => {
+          await view.focusPanel();
+          await browser.keys(["Tab"]);
+          const moved = await browser.execute(() => document.activeElement !== document.body);
+          await view.focusPanel();
+          return moved;
+        });
+      },
+      { timeout: 30_000, interval: 300, timeoutMsg: "keyboard focus did not move into the panel" },
+    );
   }
 
   async openDashboard(): Promise<void> {
