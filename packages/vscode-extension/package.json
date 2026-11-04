@@ -314,9 +314,10 @@
     "package": "vsce package --no-dependencies",
     "test": "vitest run",
     "test:integration": "node scripts/build-integration-tests.mts && vscode-test",
-    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p src/test/integration/tsconfig.json",
+    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p src/test/integration/tsconfig.json && tsc --noEmit -p test/ui/tsconfig.json",
     "test:ui": "tsx scripts/ui-check/ui-check.mts",
-    "screenshots": "tsx scripts/ui-check/screenshots.mts"
+    "screenshots": "tsx scripts/ui-check/screenshots.mts",
+    "test:ui:vscode": "wdio run wdio.conf.mts"
   },
   "devDependencies": {
     "@agent-cost-analyzer/domain": "*",
@@ -327,10 +328,17 @@
     "@vscode/test-cli": "^0.0.15",
     "@vscode/test-electron": "^3.1.0",
     "@vscode/vsce": "^4.0.0",
+    "@wdio/cli": "9.33.1",
+    "@wdio/globals": "9.33.1",
+    "@wdio/local-runner": "9.33.1",
+    "@wdio/mocha-framework": "9.33.1",
+    "@wdio/spec-reporter": "9.33.1",
     "esbuild": "^0.28.2",
     "mocha": "^12.0.3",
     "playwright": "1.64.1",
     "tsx": "4.23.15",
-    "vitest": "^5.0.5"
+    "vitest": "^5.0.5",
+    "wdio-vscode-service": "8.0.0",
+    "webdriverio": "9.33.1"
   }
 }

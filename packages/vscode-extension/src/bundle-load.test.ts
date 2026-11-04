@@ -710,8 +710,10 @@ describe("the built extension bundle", () => {
       });
 
       expect([...vscode.__commands.keys()].filter((id) => id.startsWith(INTERNAL)).sort()).toEqual([
+        "aiCreditsAnalyzer.internal.holdRequests",
         "aiCreditsAnalyzer.internal.mcpServerDefinitions",
         "aiCreditsAnalyzer.internal.perfMarks",
+        "aiCreditsAnalyzer.internal.releaseRequests",
         "aiCreditsAnalyzer.internal.resetDiagnostics",
         "aiCreditsAnalyzer.internal.rpcTrace",
         "aiCreditsAnalyzer.internal.sessionsTree",

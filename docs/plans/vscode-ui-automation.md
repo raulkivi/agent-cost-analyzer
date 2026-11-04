@@ -1,6 +1,7 @@
 # VS Code UI automation of the manual checks
 
-Status: **plan, not started (proposed step 10.16)**. Extends
+Status: **code done on a branch, awaiting the owner's decisions and T15
+(step 10.16)**; §6 records what was built and learned. Extends
 [vscode-extension.md](vscode-extension.md) step 10.9 (integration suite,
 manual checks) and step 10.11 (UI check). Automates the rows of
 [vscode-extension-manual-checks.md](vscode-extension-manual-checks.md)
@@ -317,3 +318,132 @@ passes but a human fails.
    (T14)?
 6. **Q6 Hold hook (T4):** acceptable to add another Test-mode-only hook
    to the shipped bundle for 1.6?
+
+## 6. What was built (2026-11-04, branch `worktree-agent-a096a711cedd6f415`)
+
+Built with the recommended path: `wdio-vscode-service@8.0.0`, run against
+pinned stable VS Code 1.145.0 under `xvfb-run -a -s "-screen 0 1600x1000x24"`.
+The spike (T0) went **go**: no patch to the service was needed, and the
+whole suite (6 spec files, one VS Code start per file) takes about 35 s
+with a warm download cache. The `npm audit` delta is the
+owner decision (Q1, 2026-11-04): accepted, no switch to Playwright. 19 advisories before (2 high), 50 after (19
+high; fastify, `@fastify/static`, `find-my-way`, `serialize-javascript`,
+`basic-ftp`, `extract-zip` via the service and wdio), all in dev
+dependencies that never ship.
+
+### 6.1 Automated, and what stays manual
+
+| Check | Spec | Notes |
+|---|---|---|
+| 1.5 | `panel.e2e.ts` | 150-turn session: 151 rows with the header, `first-render` about 100 ms and `data-ready` about 130 ms against the 1 s budget, selecting a turn about 10 ms against a 500 ms bound, no sideways overflow |
+| 1.6 | `panel.e2e.ts` | The new `holdRequests`/`releaseRequests` hooks hold `getInsights`; Cancel, "Loading cancelled", Retry, dashboard |
+| 1.7 | `keyboard.e2e.ts` | Down/Enter in the Sessions tree, Tab walk with a visible focus indicator on every stop, column chooser Enter/Escape and focus return, Pretty/Raw/Icicle radios by arrow keys, arrow keys inside the diagram, View as table `aria-pressed` |
+| 1.8 | `layout-theme.e2e.ts` | Both High Contrast themes: the UI check's probe and judge on the real page (zero findings), focus outline, selected row. Screenshots in `test/ui/out/`. **Manual:** "charts still distinguishable" |
+| 1.9 | `layout-theme.e2e.ts` | 640 px gives `medium`, 360 px gives `narrow` (view `<select>`, no radio group); no sideways scroll once the setup banner is dismissed |
+| 1.10 | `layout-theme.e2e.ts` | Light theme changes the body class and `--vscode-editor-background`; `editor.fontSize` reaches the webview as a variable that nothing uses (Q4, decided 2026-11-04: the panel follows the workbench font; the spec pins it) |
+| 1.11 | `panel.e2e.ts` | `ai-credits-analyzer-doc` scheme, a typed key leaves it clean, copy puts the prompt on the clipboard (the clipboard works under xvfb) |
+| 1.13 | `views.e2e.ts` | Learn scenario, another, then a session; plus the Sessions count guard (F5) |
+| 2.1, 2.2, 2.6 | `mcp.e2e.ts` | VS Code's own *MCP: List Servers* (`workbench.mcp.listServer`) lists the server without Copilot Chat installed. The 9 tools stay the integration suite's |
+| 2.5 | `mcp-trust.e2e.ts` | Own capability: Workspace Trust on, a folder whose settings enable the server; untrusted gives no server, the Trust button in the Workspace Trust editor gives one |
+
+**Still manual:** 1.1-1.4, 1.12 (T14 not built, Q5), 2.3, 2.4, §3, §4, the
+README review, 1.8's chart judgement, and 2.1's *Configure Tools* wording
+in Copilot Chat. 2.2's "9 tools" is asserted by the integration suite, not
+here.
+
+### 6.2 Deviations from the plan, and facts it got wrong or left open
+
+- **Versions.** `webdriverio@9.33.0` and `@wdio/cli@9.33.0` don't exist;
+  everything wdio is pinned to 9.33.1 (exact, in `package.json`).
+- **F2, F5, F8 verified.** The Test-mode hooks are reachable through
+  `executeWorkbench`; `COPILOT_HOME` set in the config reaches VS Code (the
+  Sessions guard checks it); `vscodeArgs: { disableWorkspaceTrust: false }`
+  plus `security.workspace.trust.enabled: true` in `userSettings` does turn
+  Workspace Trust on. The service's default `startupPrompt` is replaced by
+  `never`.
+- **2.x without Copilot Chat works** (the T0 question): core VS Code lists
+  extension-provided MCP servers.
+- **Webview frames (new, R4).** Under xvfb the workbench produces frames
+  only when asked (about 2 s after), so `ResizeObserver` never ran after a
+  resize and the responsive layout never switched. `PanelView.requestFrame()`
+  takes a screenshot, which forces one; the config also passes
+  `--disable-renderer-backgrounding` and the occlusion flags. Any spec that
+  waits for resize-driven UI must poll with it.
+- **Resizing (1.9).** The driver can't resize Electron's window
+  (`Browser.getWindowForTarget` is missing) and VS Code's minimum is about
+  400 px, so the panel's width is set through `vscode.setEditorLayout`, with
+  a pure `nextGroupFraction` nudging the group's share until the webview
+  measures the target (`panel-width.ts`). The plan's `windowWidthFor` and
+  window sizing were dropped.
+- **Focus (1.7, 1.8).** `document.hasFocus()` stays false without a window
+  manager although keys reach the page, so `focusIntoPanel` runs
+  `workbench.action.focusActiveEditorGroup` until a Tab moves focus off the
+  body.
+- **Start-up Welcome tab.** On a fresh user-data dir VS Code opens a
+  Welcome tab (the Get Started walkthrough) a moment after start-up, later
+  on a slow machine. It took the editor group and the keyboard focus from the
+  keyboard specs. Seeding the extension's `walkthroughOffered` flag into
+  `state.vscdb` did **not** stop it (tried, removed), so
+  `VscodeHost.waitForExtension()` waits for the tab, once per launch, when an
+  earlier launch on the same user-data dir hasn't recorded the offer
+  (`walkthrough-state.ts`, unit-tested), then closes all editors. Doing this on
+  every call (a spec's `setup` runs it per test) closed the panel a test had
+  just opened and failed `1.11` every time; the once-per-launch guard fixed it.
+- **Fixture.** The seeded Copilot workspace storage names the fixture's own
+  folder in a `workspace.json` (a unit-tested guess at VS Code's storage
+  cleaner; the cleaner was never observed deleting it, so the file is
+  precautionary).
+- **Flake record (this machine, Linux, 24 cores).** Before the two fixes
+  above, the first run after a pause of a minute or two failed 1-3 specs in
+  about half the batches (slow starts: 2-3 min instead of 35 s); warm runs
+  passed. After them: 6 of 6 plain runs and 1 of 1 run beside 24 busy loops
+  passed (35 s and 62 s). The owner's 10-run measurement (T15) still decides
+  gating, and a cold CI runner is the case not measured here.
+- **No `actions/cache` for the second download.** Only the wdio download is
+  cached (`.wdio-vscode-service`, keyed on `wdio.conf.mts`); the
+  integration suite's `.vscode-test/` is unchanged.
+- **T14 (1.12) not built;** `test/ui/specs/mcp-trust.e2e.ts` is the only spec
+  with its own VS Code launch.
+- **Failure artefacts:** an `afterTest` hook saves a screenshot per failing
+  test into `test/ui/out/`, which the CI job uploads.
+
+### 6.3 Findings for the owner
+
+- **1.9 bug (skipped test).** With Copilot Chat missing the config warning
+  banner is wider than a 360 px panel (elements reach 404-511 px), so the
+  page scrolls sideways. The suite dismisses the banner for the 1.9 checks
+  and keeps `1.9 the config warning banner fits a 360 px panel` as
+  `test.skip`: unskip it with the fix.
+- **1.10 / Q4.** Confirmed: the panel ignores `editor.fontSize`; the spec
+  pins that.
+- **CI is informational** (`continue-on-error: true`) until T15.
+
+### 6.4 Task status
+
+| Task | Status |
+|---|---|
+| T0 | Done, **go**; audit delta accepted (Q1) |
+| T1 | Done (`scripts/ui-automation/ui-fixture.mts`, 8 tests) |
+| T2 | Done |
+| T3 | Done (`vscode-host.ts`, `analyzer-panel.ts`, `sidebar-views.ts`, `keyboard.ts`, `mcp-server-list.ts`; `focus-probe.ts` and `panel-width.ts` unit-tested) |
+| T4 | Done (`request-gate.ts`, dispatcher option, two hooks; unit, manifest and bundle-load tests) |
+| T5-T11 | Done, see 6.1 |
+| T12 | Done, informational |
+| T13 | Done |
+| T14 | Not built (Q5) |
+| T15 | Owner |
+
+### 6.5 First CI run (PR #117) and the fix
+
+On the cold runner 14 of 18 tests passed; both 1.7 tests, 1.5 and 1.11
+failed. The Tab walk showed a `View` select and a `Details` button, i.e. the
+narrow layout, with no `Columns` button, no `Turn 120` text and no `System
+prompt` radio (all wide-layout parts). The cause is the frame problem of §6.2:
+the layout follows the width through a `ResizeObserver`, which runs only in a
+painted frame, and a runner without GPU or window manager paints none by
+itself, so a panel measured while small stays narrow. Locally frames came
+early enough. Fixes: `AnalyzerPanel.openSession` now forces frames until
+`data-layout` equals `layoutFor(width)` (`settleLayout`), and the Chat side
+bar is closed at start-up so the panel's room doesn't depend on the runner.
+Not reproduced locally (screen sizes of 1280x800 and 1600x1000, and 24 busy
+loops, all passed before and after), so the cause is inferred from the log.

@@ -23,6 +23,10 @@ export const INTERNAL_COMMAND_IDS = {
   mcpServerDefinitions: "aiCreditsAnalyzer.internal.mcpServerDefinitions",
   // Forgets the marks and the trace, so a test reads only its own.
   resetDiagnostics: "aiCreditsAnalyzer.internal.resetDiagnostics",
+  // Holds the host's reply to the named webview methods until released
+  // (step 10.16, check 1.6: a load slow enough to cancel).
+  holdRequests: "aiCreditsAnalyzer.internal.holdRequests",
+  releaseRequests: "aiCreditsAnalyzer.internal.releaseRequests",
 } as const;
 
 export interface TestHookSources {
@@ -30,6 +34,14 @@ export interface TestHookSources {
   rpcTrace: { entries(): RpcTraceEntry[]; clear(): void };
   sidebar: { sessionsTree(): SessionsTreeNode[] };
   mcpServers: { provide(): McpStdioServerSpec[] };
+  requestGate: { hold(methods: readonly string[]): void; release(): void };
+}
+
+function methodNames(value: unknown): string[] {
+  if (!Array.isArray(value) || !value.every((entry) => typeof entry === "string")) {
+    throw new Error("holdRequests takes a list of method names");
+  }
+  return value;
 }
 
 type Handler = (...args: unknown[]) => unknown;
@@ -43,6 +55,8 @@ export function createTestHookHandlers(sources: TestHookSources): Record<string,
     [INTERNAL_COMMAND_IDS.rpcTrace]: () => sources.rpcTrace.entries(),
     [INTERNAL_COMMAND_IDS.sessionsTree]: () => sources.sidebar.sessionsTree(),
     [INTERNAL_COMMAND_IDS.mcpServerDefinitions]: () => sources.mcpServers.provide(),
+    [INTERNAL_COMMAND_IDS.holdRequests]: (methods) => sources.requestGate.hold(methodNames(methods)),
+    [INTERNAL_COMMAND_IDS.releaseRequests]: () => sources.requestGate.release(),
     [INTERNAL_COMMAND_IDS.resetDiagnostics]: () => {
       sources.performance.clear();
       sources.rpcTrace.clear();

@@ -8,6 +8,7 @@ import type { Translate } from "./l10n/localize.js";
 import { McpServerDefinitionSource } from "./mcp/mcp-server-definitions.js";
 import { WalkthroughOffer, type WalkthroughLauncher } from "./onboarding/walkthrough-offer.js";
 import { RpcTrace } from "./diagnostics/rpc-trace.js";
+import { HoldableRequestGate } from "./diagnostics/request-gate.js";
 import { createTestHookHandlers } from "./diagnostics/test-hooks.js";
 import { PerformanceRecorder } from "./performance/performance-recorder.js";
 import { AnalyzerPanel, type Disposable } from "./panel/analyzer-panel.js";
@@ -99,6 +100,7 @@ export function composeExtension({
   // integration tests' hooks; both are small and bounded.
   const timings = new PerformanceRecorder(() => globalThis.performance.now());
   const rpcTrace = new RpcTrace();
+  const requestGate = new HoldableRequestGate();
   // The per-workspace debug-logs folders are listed now and again on every
   // sidebar refresh, so a workspace first opened after activation is read
   // without a reload; the provider asks for the current list on each lookup.
@@ -124,6 +126,7 @@ export function composeExtension({
       onInternalError: (command, error) => console.error(`AI Credits Analyzer: ${command} failed`, error),
     }),
     performanceMarks: timings,
+    requestGate,
   });
   const panel = new AnalyzerPanel({
     createPanel: createVscodeWebviewPanel,
@@ -195,7 +198,7 @@ export function composeExtension({
     sidebar,
     offerWalkthrough: () => walkthroughOffer.offerOnce(),
     mcpServers,
-    testHookHandlers: createTestHookHandlers({ performance: timings, rpcTrace, sidebar, mcpServers }),
+    testHookHandlers: createTestHookHandlers({ performance: timings, rpcTrace, sidebar, mcpServers, requestGate }),
     dispose: () => {
       configWatch.dispose();
       extensionsWatch.dispose();

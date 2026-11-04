@@ -8,6 +8,9 @@ export default tseslint.config(
       "packages/vscode-extension/media/**",
       "packages/vscode-extension/out/**",
       "packages/vscode-extension/.vscode-test/**",
+      // The UI automation's VS Code download and failure artefacts (step 10.16).
+      "packages/vscode-extension/.wdio-vscode-service/**",
+      "packages/vscode-extension/test/ui/out/**",
       "**/node_modules/**",
       "**/coverage/**",
       ".design-sync/previews/**",
@@ -28,6 +31,7 @@ export default tseslint.config(
             "packages/*/vitest.config.ts",
             "packages/*/vite.config.ts",
             "packages/vscode-extension/.vscode-test.mjs",
+            "packages/vscode-extension/wdio.conf.mts",
           ],
         },
         tsconfigRootDir: import.meta.dirname,

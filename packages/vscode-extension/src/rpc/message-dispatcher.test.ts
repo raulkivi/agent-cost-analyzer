@@ -337,6 +337,35 @@ describe("MessageDispatcher (vscode-extension.md §4)", () => {
 
   // Timing marks (domain rpc.ts, perfMark; step 10.9): one-way, recorded
   // and never answered.
+  describe("request gate (step 10.16)", () => {
+    it("answers a request only once the gate lets its method through", async () => {
+      let open: () => void = () => undefined;
+      const requestGate = { waitFor: vi.fn(() => new Promise<void>((resolve) => (open = resolve))) };
+      const api = fakeApi();
+      const reply = new MessageDispatcher(api, { requestGate }).dispatch(request("getInsights", {}));
+
+      await Promise.resolve();
+      expect(requestGate.waitFor).toHaveBeenCalledWith("getInsights");
+      expect(api.getInsights).not.toHaveBeenCalled();
+
+      open();
+      expect(await reply).toMatchObject({ kind: "response", ok: true });
+      expect(api.getInsights).toHaveBeenCalledTimes(1);
+    });
+
+    it("drops the reply of a request cancelled while the gate held it", async () => {
+      let open: () => void = () => undefined;
+      const requestGate = { waitFor: () => new Promise<void>((resolve) => (open = resolve)) };
+      const dispatcher = new MessageDispatcher(fakeApi(), { requestGate });
+      const reply = dispatcher.dispatch(request("getInsights", {}));
+
+      await dispatcher.dispatch({ kind: "cancel", id: "req-1" });
+      open();
+
+      expect(await reply).toBeUndefined();
+    });
+  });
+
   describe("perfMark", () => {
     it("hands a valid mark to the recorder and posts no reply", async () => {
       const performanceMarks = { recordWebviewMark: vi.fn() };

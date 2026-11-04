@@ -1950,6 +1950,19 @@ refactored — red-green-refactor, not tests bolted on afterward.
   `packages/web` checks twice: `tsconfig.json` (app + tests, with Node types
   for tests that read fixtures from disk) and `tsconfig.app.json` (app code
   only, browser types only, so app code can't silently import `node:*`).
+- The VS Code extension has three layers beyond its unit tests: the
+  real-VS Code integration suite (`@vscode/test-cli`, step 10.9), the
+  Playwright UI check of the webview build (step 10.11), and the VS Code UI
+  automation (step 10.16, `packages/vscode-extension/test/ui/`,
+  `wdio-vscode-service` under a virtual display), which drives the real
+  workbench and webview for the manual checks that need them. Its specs
+  reach VS Code through one port (`support/vscode-host.ts`) and the panel
+  and side bar through page objects, so specs hold no selectors; its pure
+  helpers and its fixture are unit-tested in vitest, while the specs, the
+  config and the CI job are TDD exceptions (only a real VS Code run tests
+  them, as in step 10.9). The one production seam it needed is a Test-mode
+  hook that holds webview replies (`aiCreditsAnalyzer.internal.holdRequests`),
+  registered only in `ExtensionMode.Test` like the other hooks.
 - Property-based tests (`*.property.test.ts`, `fast-check`) cover code
   that takes untrusted input or has a simple invariant: secret and header
   redaction, the SSE and shell-command parsers, the release checks and

@@ -7,6 +7,7 @@ function sources(): TestHookSources {
     rpcTrace: { entries: vi.fn(() => [{ method: "getHealth", ok: true }]), clear: vi.fn() },
     sidebar: { sessionsTree: vi.fn(() => []) },
     mcpServers: { provide: vi.fn(() => []) },
+    requestGate: { hold: vi.fn(), release: vi.fn() },
   };
 }
 
@@ -39,5 +40,23 @@ describe("test hooks (step 10.9's integration-test seam)", () => {
 
     expect(from.performance.clear).toHaveBeenCalledTimes(1);
     expect(from.rpcTrace.clear).toHaveBeenCalledTimes(1);
+  });
+
+  it("hold and release forward to the request gate: the held methods, then everything", () => {
+    const from = sources();
+    const handlers = createTestHookHandlers(from);
+
+    handlers[INTERNAL_COMMAND_IDS.holdRequests]!(["getInsights", "getAuditRollup"]);
+    handlers[INTERNAL_COMMAND_IDS.releaseRequests]!();
+
+    expect(from.requestGate.hold).toHaveBeenCalledWith(["getInsights", "getAuditRollup"]);
+    expect(from.requestGate.release).toHaveBeenCalledTimes(1);
+  });
+
+  it("hold refuses anything but a list of method names", () => {
+    const handlers = createTestHookHandlers(sources());
+
+    expect(() => handlers[INTERNAL_COMMAND_IDS.holdRequests]!("getInsights")).toThrow(/list of method names/);
+    expect(() => handlers[INTERNAL_COMMAND_IDS.holdRequests]!([1])).toThrow(/list of method names/);
   });
 });

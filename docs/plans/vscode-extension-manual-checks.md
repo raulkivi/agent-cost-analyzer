@@ -116,6 +116,11 @@ in the docs). Findings that need a code fix also go in the run log below.
 
 ## 1. Usability script (§3.5)
 
+Rows marked **Automated** run in CI as the `extension-ui` job
+(`npm run test:ui:vscode`, [vscode-ui-automation.md](vscode-ui-automation.md),
+step 10.16): run them by hand only when that job is red, or for the parts
+named as still manual. Rows 1.1-1.4, 1.12, 2.3, 2.4, §3 and §4 stay manual.
+
 Use a VS Code profile with GitHub Copilot Chat installed and signed in.
 For a clean first run, use a new profile (*Profiles → New Profile*).
 
@@ -125,26 +130,26 @@ For a clean first run, use a new profile (*Profiles → New Profile*).
 | 1.2 | Logging off | With `github.copilot.chat.agentDebugLog.fileLogging.enabled` off, open the Setup view | Setup shows what's missing with Enable/Fix buttons; each opens the exact setting. Nothing is changed without a click. | |
 | 1.3 | No sessions | A profile where Copilot Chat has never been used | The Sessions welcome view says why it's empty and points to Learn mode. The Learn view lists the 18 scenarios. | |
 | 1.4 | Normal use | Turn logging on, chat with Copilot in agent mode for a few turns, then *Refresh* the Sessions view | The session appears under today with its AI Credits (or "unknown", never 0). Picking it opens the panel on it. The status bar shows today's known AI Credits, with coverage in the tooltip. | |
-| 1.5 | A large session | Open the longest session you have (100+ turns if possible) | The panel renders without a long blank; the loading skeleton shows Cancel; scrolling and selecting turns respond immediately. Note rough timings. | |
-| 1.6 | Cancel | Open the insights dashboard or tool audit on many sessions and press Cancel while it loads | "Loading cancelled" with Retry; Retry loads it. | |
-| 1.7 | Keyboard only | Unplug the mouse: reach the sidebar, open a session, move through the turns table, open the column chooser, the system prompt diagram (arrow keys) and "View as table" on a chart | Everything is reachable; focus is always visible; Escape closes overlays and returns focus. | |
-| 1.8 | High contrast | *Preferences: Color Theme → High Contrast* (dark, then light) | All text and borders readable; selection and focus visible; charts still distinguishable. | |
-| 1.9 | Narrow panel | Drag the panel to about 640 px, then about 360 px | Layout switches (mock-up 4): 2×2 KPIs, view select, priority columns, details drawer. No horizontal page scroll. | |
-| 1.10 | Theme and font | Switch to a light theme and change `editor.fontSize` | The panel follows the theme and font. | |
-| 1.11 | System prompt | From a session's System prompt tab, open it in an editor | Opens read-only in a tab; copying works. | |
-| 1.13 | Learn view | Pick a scenario in the side bar's Learn view, then another; switch to Analyze and pick a session | Each scenario opens in Learn mode with the panel's full width (no list in the panel); a session switches to Analyze. | |
+| 1.5 | A large session | Open the longest session you have (100+ turns if possible) | The panel renders without a long blank; the loading skeleton shows Cancel; scrolling and selecting turns respond immediately. Note rough timings. | Automated: `panel.e2e.ts` (150 turns, §3.5 marks, 500 ms select). Manual only when red or for the feel of scrolling. |
+| 1.6 | Cancel | Open the insights dashboard or tool audit on many sessions and press Cancel while it loads | "Loading cancelled" with Retry; Retry loads it. | Automated: `panel.e2e.ts` (dashboard load held by a Test-mode hook). |
+| 1.7 | Keyboard only | Unplug the mouse: reach the sidebar, open a session, move through the turns table, open the column chooser, the system prompt diagram (arrow keys) and "View as table" on a chart | Everything is reachable; focus is always visible; Escape closes overlays and returns focus. | Automated: `keyboard.e2e.ts`. Manual only when red. |
+| 1.8 | High contrast | *Preferences: Color Theme → High Contrast* (dark, then light) | All text and borders readable; selection and focus visible; charts still distinguishable. | Automated: `layout-theme.e2e.ts` (text contrast, selection, focus). **Still manual:** "charts still distinguishable" (screenshots in `test/ui/out/`). |
+| 1.9 | Narrow panel | Drag the panel to about 640 px, then about 360 px | Layout switches (mock-up 4): 2×2 KPIs, view select, priority columns, details drawer. No horizontal page scroll. | Automated: `layout-theme.e2e.ts` at 640 and 360 px, through the editor layout. The Copilot Chat setup banner is dismissed first: it overflows 360 px (known bug, skipped test). |
+| 1.10 | Theme and font | Switch to a light theme and change `editor.fontSize` | The panel follows the theme and font. | Automated: `layout-theme.e2e.ts`. The font half pins today's behaviour: the panel follows the workbench font, not `editor.fontSize` (plan Q4). |
+| 1.11 | System prompt | From a session's System prompt tab, open it in an editor | Opens read-only in a tab; copying works. | Automated: `panel.e2e.ts`. |
+| 1.13 | Learn view | Pick a scenario in the side bar's Learn view, then another; switch to Analyze and pick a session | Each scenario opens in Learn mode with the panel's full width (no list in the panel); a session switches to Analyze. | Automated: `views.e2e.ts`. |
 | 1.12 | Uninstall | Uninstall the extension and reload | No leftovers in the UI; Copilot Chat settings that were changed through Fix buttons stay as you set them. | |
 
 ## 2. MCP server in Copilot agent mode (10.8 exit)
 
 | # | Steps | Expected | ✓ / notes |
 |---|---|---|---|
-| 2.1 | With `aiCreditsAnalyzer.mcp.enabled` off (default), open Copilot Chat agent mode → *Configure Tools* | No "AI Credits Analyzer" server is listed. | |
-| 2.2 | Turn the setting on in **User** settings | The server appears with 9 read-only tools; its name is `ai-credits-analyzer`. | |
+| 2.1 | With `aiCreditsAnalyzer.mcp.enabled` off (default), open Copilot Chat agent mode → *Configure Tools* | No "AI Credits Analyzer" server is listed. | Automated: `mcp.e2e.ts`, in VS Code's own *MCP: List Servers*. Copilot's *Configure Tools* stays manual. |
+| 2.2 | Turn the setting on in **User** settings | The server appears with 9 read-only tools; its name is `ai-credits-analyzer`. | Automated: `mcp.e2e.ts` (server listed; the 9 tools are the integration suite's, over stdio). |
 | 2.3 | Ask: "What did my last Copilot session cost, and what drove it?" | Copilot calls `list_sessions` / `get_session_cost` and answers with the same AI Credits the panel shows. | |
 | 2.4 | Ask about another agent, e.g. "show my Claude Code sessions" | The tools answer that only `vscode` is available. | |
-| 2.5 | Open an untrusted folder (Restricted Mode) whose `.vscode/settings.json` sets the setting to `true`, with the user setting off | No server is offered. After trusting the folder, it is. | |
-| 2.6 | Turn the setting off again | The server disappears from the tool list. | |
+| 2.5 | Open an untrusted folder (Restricted Mode) whose `.vscode/settings.json` sets the setting to `true`, with the user setting off | No server is offered. After trusting the folder, it is. | Automated: `mcp-trust.e2e.ts` (Restricted Mode, then the Trust button). |
+| 2.6 | Turn the setting off again | The server disappears from the tool list. | Automated: `mcp.e2e.ts`. |
 
 ## 3. Remote check (D6, `extensionKind: ["workspace"]`)
 
