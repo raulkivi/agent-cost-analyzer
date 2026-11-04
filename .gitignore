@@ -11,6 +11,9 @@ packages/vscode-extension/media/
 # The extension's integration-test bundles, and @vscode/test-cli's VS Code downloads
 packages/vscode-extension/out/
 packages/vscode-extension/.vscode-test/
+# The VS Code UI automation (step 10.16): the service's VS Code download, and failure artefacts
+packages/vscode-extension/.wdio-vscode-service/
+packages/vscode-extension/test/ui/out/
 *.tsbuildinfo
 
 # Test coverage
