@@ -52,24 +52,24 @@ suite("First run in a VS Code that has never seen Copilot Chat (checks 1.1, 1.2,
     expect(welcome).toContain("No Copilot Chat sessions with token data yet");
     expect(welcome).toContain("Open Learn mode");
 
-    let scenarios: string[] = [];
-    let seen: string[] = [];
+    // A small window on purpose: zoomed in, the Learn tree shows only a few
+    // of its rows at a time (as on a short CI screen), so the check must walk
+    // the tree rather than count what fits.
+    for (let step = 0; step < 4; step++) await host.command("workbench.action.zoomIn");
+    await sidebar.showAlone("learn");
+    // Loaded: at least one scenario row is drawn (a frame is forced while waiting).
     await browser.waitUntil(
       async () => {
-        // Under xvfb the workbench paints only when asked, and a tree lays out
-        // (and renders the rows that fit) in a painted frame: collapse the other
-        // views again (idempotent) and force a frame each time round.
-        await sidebar.showAlone("learn");
         await browser.takeScreenshot();
-        seen = await sidebar.rowTexts("learn");
-        scenarios = seen.filter((row) => /\d+ turns? ·/.test(row));
-        return scenarios.length >= 18;
+        return (await sidebar.rowTexts("learn")).some((row) => /\d+ turns? ·/.test(row));
       },
-      { timeout: 60_000, interval: 1000, timeoutMsg: "the Learn view did not list its scenarios" },
-    ).catch((error: Error) => {
-      throw new Error(`${error.message}; last seen ${seen.length} rows, ${scenarios.length} of them scenarios: ${JSON.stringify(seen).slice(0, 600)}`, { cause: error });
-    });
+      { timeout: 60_000, interval: 1000, timeoutMsg: "the Learn view did not list any scenario" },
+    );
+    const scenarios = (await sidebar.allRowTexts("learn")).filter((row) => /\d+ turns? ·/.test(row));
+    for (let step = 0; step < 4; step++) await host.command("workbench.action.zoomOut");
     expect(scenarios).toHaveLength(18);
+    // 18 different scenarios, not one row seen twice.
+    expect(new Set(scenarios.map((row) => row.replace(/\d+ turns? ·.*$/, ""))).size).toBe(18);
   });
 
   test("1.3 and 1.2 Setup lists the missing Copilot Chat and the logging settings as warnings, and changes nothing by itself", async () => {

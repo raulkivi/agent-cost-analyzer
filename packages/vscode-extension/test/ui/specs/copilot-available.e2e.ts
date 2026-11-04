@@ -39,7 +39,7 @@ suite("Copilot Chat installed, fixture sessions (checks 1.4, 1.2)", () => {
 
   test("1.4 (fixture session) a session shows under Today with its AI Credits, picking it opens the panel, and the status bar shows today's known AI Credits with coverage", async () => {
     await sidebar.showAlone("sessions");
-    const rows = await sidebar.rowTexts("sessions");
+    const rows = await sidebar.allRowTexts("sessions");
     const usageRow = rows.find((row) => row.startsWith(fixture.usageSessionTitle));
     expect(usageRow).toMatch(/^Fix the bug[1-9]\d*\.\d\d$|^Fix the bug0\.\d*[1-9]$/);
     const credits = usageRow!.slice(fixture.usageSessionTitle.length);

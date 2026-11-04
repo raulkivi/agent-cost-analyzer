@@ -41,6 +41,34 @@ export class SidebarViews {
     }, name);
   }
 
+  // Every row of the view, however short the window: tree rows are virtualised,
+  // so only the ones that fit are in the DOM. Walks the tree with the keyboard
+  // (Home, then PageDown until the focused row stops changing, which is the
+  // end), forcing a frame at each step because an xvfb workbench paints only
+  // when asked, and collects the distinct rows seen on the way, in order.
+  // Moves focus only, never selects, so no scenario or session opens.
+  async allRowTexts(name: keyof typeof SECTION_INDEX): Promise<string[]> {
+    await this.section(name);
+    await browser.executeWorkbench((vscode, id: string) => vscode.commands.executeCommand(id), `aiCreditsAnalyzer.${name}.focus`);
+    const seen: string[] = [];
+    const collect = async (): Promise<void> => {
+      await browser.takeScreenshot();
+      for (const row of await this.rowTexts(name)) if (!seen.includes(row)) seen.push(row);
+    };
+    const focusedRow = (): Promise<string> => browser.execute(() => (document.querySelector(".monaco-list-row.focused") as HTMLElement | null)?.innerText ?? "");
+    await browser.keys(["Home"]);
+    await collect();
+    let previous = await focusedRow();
+    for (let presses = 0; presses < 100; presses++) {
+      await browser.keys(["PageDown"]);
+      await collect();
+      const current = await focusedRow();
+      if (current === previous) return seen;
+      previous = current;
+    }
+    throw new Error(`The ${name} view did not reach its end in 100 PageDowns`);
+  }
+
   // Gives the view the side bar's room by collapsing the other two.
   async showAlone(name: keyof typeof SECTION_INDEX): Promise<void> {
     await this.section(name);
