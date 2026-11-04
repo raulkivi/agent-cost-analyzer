@@ -52,15 +52,23 @@ suite("First run in a VS Code that has never seen Copilot Chat (checks 1.1, 1.2,
     expect(welcome).toContain("No Copilot Chat sessions with token data yet");
     expect(welcome).toContain("Open Learn mode");
 
-    await sidebar.showAlone("learn");
     let scenarios: string[] = [];
+    let seen: string[] = [];
     await browser.waitUntil(
       async () => {
-        scenarios = (await sidebar.rowTexts("learn")).filter((row) => /\d+ turns? ·/.test(row));
+        // Under xvfb the workbench paints only when asked, and a tree lays out
+        // (and renders the rows that fit) in a painted frame: collapse the other
+        // views again (idempotent) and force a frame each time round.
+        await sidebar.showAlone("learn");
+        await browser.takeScreenshot();
+        seen = await sidebar.rowTexts("learn");
+        scenarios = seen.filter((row) => /\d+ turns? ·/.test(row));
         return scenarios.length >= 18;
       },
-      { timeout: 15_000, timeoutMsg: "the Learn view did not list its scenarios" },
-    );
+      { timeout: 60_000, interval: 1000, timeoutMsg: "the Learn view did not list its scenarios" },
+    ).catch((error: Error) => {
+      throw new Error(`${error.message}; last seen ${seen.length} rows, ${scenarios.length} of them scenarios: ${JSON.stringify(seen).slice(0, 600)}`, { cause: error });
+    });
     expect(scenarios).toHaveLength(18);
   });
 
