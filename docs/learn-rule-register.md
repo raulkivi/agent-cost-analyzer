@@ -1,6 +1,6 @@
 # Learn simulation: rule register (Phase 13, step 13.0)
 
-Status: **draft for owner review** (2026-11-04). Exit criterion of step 13.0:
+Status: **draft for owner review** (2026-11-04); owner decisions recorded 2026-11-04. Exit criterion of step 13.0:
 every vendor × rule cell has a source id or is marked unknown, and the owner
 signs off the rules, the cheaper-sibling list and the model-id mapping.
 Plan: [plans/vendor-aware-learn-simulation.md](plans/vendor-aware-learn-simulation.md) §5, §7.
@@ -15,23 +15,23 @@ Caveats: quotes are verbatim from the raw pages unless a row says "unverified"
 JSON embedded in the HTML and are marked. The xAI caching pages are dated
 "Last updated: March 16, 2026". The two-model scenarios are 4, 14 and 18.
 
-## Owner decisions needed
+## Owner decisions
 
-Facts only, from the 2026-11-04 verification pass. No recommendation is made here.
+Facts are from the 2026-11-04 verification pass. The owner decided items 1, 2, 3, 5 and 7 in an interview on 2026-11-04 (marked **Decided**). Items 4, 6 and 8-11 are still open.
 
-1. **Kimi K3 (D1):** keep it disabled, or simulate it best-effort?
+1. **Kimi K3 (D1). Decided 2026-11-04: keep it disabled.** Reword the disabled reason, because "caching behaviour isn't documented" is inaccurate for Kimi in general; use "caching on GitHub's Fireworks deployment isn't documented".
    - GitHub: "Kimi K3 is hosted by GitHub on Fireworks AI."; price $3.00 / $0.30 / $15.00; no write column; no cache statement for Kimi.
    - Moonshot's own API (nothing ties it to the Copilot deployment): automatic prefix cache, TTL 5m default or 1h, hits renew for free, cache write billed $3.00/1M (5m) and $6.00/1M (1h), hit $0.30, miss $3.00.
    - Fireworks generic docs: automatic longest-prefix cache, on by default, retention "at least several minutes" up to "several hours", per replica; minimum length and write fee not stated; serverless cached-token discount "default is 50%, but the exact discount varies by model".
    - GitHub's cached price ($0.30) equals Moonshot's cache-hit price; no doc states this as a link.
    - GitHub's supported-models page lists Kimi K3 among open-weight models disabled by default regardless of the "Default availability" policy (a GitHub policy fact, not an app decision).
    - Open wording: the disabled reason "caching behaviour isn't documented" is inaccurate for Kimi in general (Moonshot and Fireworks document caching); what no doc covers is caching on GitHub's Fireworks deployment. The final wording is the owner's call.
-2. **xAI cheaper sibling (D4):** GitHub prices Grok 4.5, 4.6 and 4.7 identically ($2.00 / $0.50 / $6.00 at <=200K; $4.00 / $1.00 / $12.00 above), so xAI has no cheaper sibling. Skip the two-model scenarios (4, 14, 18) for xAI, or allow a same-model "switch"?
-3. **Long-context threshold, OpenAI (S18):** OpenAI's pricing page toggle is global (Short <=272K, Long >272K) with no per-model exception. GitHub's raw yml lists GPT-5.6 Luna at 200K and every other tiered OpenAI model at 272K. Copilot bills per GitHub's table. GitHub has no GPT-5.5, 5.4, 5.2, 5.1 or 4.1 rows.
+2. **xAI cheaper sibling (D4):** GitHub prices Grok 4.5, 4.6 and 4.7 identically ($2.00 / $0.50 / $6.00 at <=200K; $4.00 / $1.00 / $12.00 above), so xAI has no cheaper sibling. **Decided 2026-11-04: skip the two-model scenarios (4, 14, 18) for xAI.** The picker shows them disabled with the reason "no cheaper model".
+3. **Long-context threshold, OpenAI (S18). Decided 2026-11-04: follow GitHub's table** (GPT-5.6 Luna 200K, other tiered OpenAI models 272K; only models GitHub lists are simulated). OpenAI's pricing page toggle is global (Short <=272K, Long >272K) with no per-model exception. GitHub's raw yml lists GPT-5.6 Luna at 200K and every other tiered OpenAI model at 272K. Copilot bills per GitHub's table. GitHub has no GPT-5.5, 5.4, 5.2, 5.1 or 4.1 rows.
 4. **Long-context output multiplier, OpenAI (S18):** OpenAI's pricing page data (embedded JSON, not rendered text) shows output 2x (GPT-5.6 Luna/Sol, GPT-5.4) and 2.5x (GPT-5.5); GitHub lists 1.5x (Luna $1.20 to $1.80, Sol $20 to $30). The embedded row-to-tier pairing needs a visual check on the live page.
-5. **xAI tier boundary (S18):** xAI: default "< 200k", long "≥ 200k" (exactly 200k is long). GitHub: default "≤ 200K", long "> 200K" (exactly 200K is default). They differ only at exactly 200,000 tokens. xAI's billing page also says "exceed", contradicting its own "reaches".
+5. **xAI tier boundary (S18). Decided 2026-11-04: follow GitHub's table** (default tier at "<= 200K", long tier above 200K). xAI: default "< 200k", long "≥ 200k" (exactly 200k is long). GitHub: default "≤ 200K", long "> 200K" (exactly 200K is default). They differ only at exactly 200,000 tokens. xAI's billing page also says "exceed", contradicting its own "reaches".
 6. **Grok 4.5 cached price:** xAI lists $0.30 (<200k) / $0.60 (≥200k), 0.15x input; GitHub lists $0.50 / $1.00, 0.25x. Grok 4.6 and 4.7 match on both. The cause is not documented. Which price the simulator uses is the owner's call (Copilot bills GitHub's table).
-7. **Claude Code effort change (S11):** the API docs say an effort change always invalidates messages. Claude Code docs say the cache is kept on Opus 5.5, Sonnet 5.5, Haiku 5.5 and Fable 5.1 with an API key or a Claude subscription (Fable 5.1 from v2.1.260), but not on Amazon Bedrock, Google Cloud's Agent Platform, a Claude apps gateway, with `CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS`, or under an organization HIPAA configuration. Copilot behaviour is unknown.
+7. **Claude Code effort change (S11). Decided 2026-11-04: a Claude Code-only override** in the Anthropic profile (harness = claude-code keeps the cache on the listed models; the VS Code and Copilot harnesses follow the API rule, since Copilot behaviour is unknown). the API docs say an effort change always invalidates messages. Claude Code docs say the cache is kept on Opus 5.5, Sonnet 5.5, Haiku 5.5 and Fable 5.1 with an API key or a Claude subscription (Fable 5.1 from v2.1.260), but not on Amazon Bedrock, Google Cloud's Agent Platform, a Claude apps gateway, with `CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS`, or under an organization HIPAA configuration. Copilot behaviour is unknown.
 8. **Fact-check corrections:** OpenAI "24-hour default since May 2026": the default is documented (non-ZDR orgs 24h, ZDR orgs `in_memory`, for models supporting both) but "May 2026" appears nowhere on the page; the date is unsourced. Google F-09 "explicit caching TTL defaults to 1 hour": not found on the caching page (both variants), pricing page, API reference or llms-full.txt; stays unknown.
 9. **Google post-promo prices:** unknown for Gemini 4 Argon (Copilot promo to 2026-12-01; YAML: "Google hasn't shared post-promo pricing yet") and for Gemini 3.8 Flash (Copilot promo through 2026-12-31, documented; Copilot post-promo price unknown; the API price rises to $1.50 / $0.15 / $7.50 on 2027-01-01).
 10. **Copilot log ids:** only five are confirmed (`gpt-6-luna`, `gpt-5.3-codex`, `gpt-6.1-sol`, `claude-sonnet-4.6`, `claude-sonnet-5`); the rest are inferred or unknown. Phase 13.5a real captures should confirm them.
