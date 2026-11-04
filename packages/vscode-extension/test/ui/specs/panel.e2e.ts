@@ -74,7 +74,16 @@ suite("Panel (checks 1.5, 1.6, 1.11)", () => {
     await panel.openSession(fixture.usageSessionId);
     await panel.inside(async (view) => {
       await view.waitForTurnRows(1);
-      await view.showTab("System prompt");
+      // Choose the tab again until its content shows: a click in the first
+      // moments after the page loads can land before React is listening.
+      await browser.waitUntil(
+        async () => {
+          await view.showTab("System prompt");
+          await browser.pause(500);
+          return view.hasText("System prompt breakdown");
+        },
+        { timeout: 30_000, interval: 500, timeoutMsg: "the System prompt tab did not open" },
+      );
       await view.clickButton("Open system prompt inspector");
       await view.clickButton("Open prompt in editor");
     });

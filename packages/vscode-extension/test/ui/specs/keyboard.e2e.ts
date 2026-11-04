@@ -24,8 +24,15 @@ suite("Keyboard only (check 1.7)", () => {
     await host.command("aiCreditsAnalyzer.refreshSessions");
     await host.command("aiCreditsAnalyzer.sessions.focus");
     // Down until the focused row is the usage session's, then Enter.
+    // A freshly started VS Code may still be drawing the view: wait for its rows.
+    await browser.waitUntil(
+      async () => (await browser.execute(() => document.querySelectorAll(".monaco-list-row[aria-label*='AI Credits']").length)) > 0,
+      { timeout: 30_000, timeoutMsg: "the Sessions view drew no session rows" },
+    );
+    await host.command("aiCreditsAnalyzer.sessions.focus");
+    await press("Home");
     let reached = false;
-    for (let presses = 0; presses < 6 && !reached; presses++) {
+    for (let presses = 0; presses < 8 && !reached; presses++) {
       await press("ArrowDown");
       await browser.pause(150);
       const label = await browser.execute(() => (document.querySelector(".monaco-list-row.focused") as HTMLElement | null)?.getAttribute("aria-label") ?? "");
@@ -34,9 +41,15 @@ suite("Keyboard only (check 1.7)", () => {
     expect(reached).toBe(true);
     await press("Enter");
 
+    // Enter again if the first one found the view still starting up.
+    let attempts = 0;
     await browser.waitUntil(
-      async () => (await host.hook<RpcTraceEntry[]>(INTERNAL_COMMAND_IDS.rpcTrace)).some((entry) => entry.method === "getSession" && entry.ok),
-      { timeout: 30_000, timeoutMsg: "Enter on a session row did not open it in the panel" },
+      async () => {
+        const opened = (await host.hook<RpcTraceEntry[]>(INTERNAL_COMMAND_IDS.rpcTrace)).some((entry) => entry.method === "getSession" && entry.ok);
+        if (!opened && ++attempts % 6 === 0) await press("Enter");
+        return opened;
+      },
+      { timeout: 45_000, interval: 500, timeoutMsg: "Enter on a session row did not open it in the panel" },
     );
 
     // Focus moves into the panel by the workbench command, then by Tab only.

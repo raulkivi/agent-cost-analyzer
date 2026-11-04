@@ -6,9 +6,13 @@
 import { mkdirSync, renameSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
+import { pathToFileURL } from "node:url";
+import { WALKTHROUGH_OFFERED_KEY } from "../../src/onboarding/walkthrough-offer.ts";
 import { COPILOT_CLI_FIXTURE_HOME, COPILOT_CLI_FIXTURE_SESSION_IDS, writeCopilotCliAgentHostStores } from "../../../server/src/test-support/copilot-cli-fixtures.ts";
 import { createIntegrationFixture, USER_SETTINGS } from "../integration-fixture.mts";
 
+// The extension's id, which VS Code uses as its globalState key.
+const EXTENSION_ID = "raulkivi.ai-credits-analyzer";
 export const LARGE_SESSION_TURNS = 150;
 export const LARGE_SESSION_ID = "00000000-0000-4000-9000-000000000150";
 // Text the System prompt tab must show for the usage session.
@@ -29,7 +33,7 @@ export interface UiFixture {
   storagePath: string;
   userDataDir: string;
   // wdio:vscodeOptions.userSettings: the service overwrites User/settings.json with these.
-  userSettings: Record<string, unknown>;
+  userSettings: Record<string, string | number | boolean | object>;
   // COPILOT_HOME for the launched VS Code, so the Copilot CLI event log read stays inside the fixture.
   copilotHome: string;
   usageSessionId: string;
@@ -54,6 +58,11 @@ export function createUiFixture(rootDir: string, options: UiFixtureOptions = {})
   const debugDir = path.join(userDir, "workspaceStorage", "integration-workspace", "GitHub.copilot-chat", "debug-logs", base.usageSessionId);
   writeFileSync(path.join(debugDir, "system_prompt_0.json"), JSON.stringify({ content: JSON.stringify([{ type: "text", content: SYSTEM_PROMPT }]) }));
 
+  // VS Code deletes workspace storage that names no existing folder, a while
+  // after start-up; naming the fixture's own root keeps the debug logs.
+  const workspaceStorage = path.join(userDir, "workspaceStorage", "integration-workspace");
+  writeFileSync(path.join(workspaceStorage, "workspace.json"), JSON.stringify({ folder: pathToFileURL(rootDir).href }));
+  seedWalkthroughOffered(path.join(userDir, "globalStorage", "state.vscdb"));
   seedLargeSession(path.join(userDir, "globalStorage", "github.copilot-chat", "session-store.db"), now);
   writeCopilotCliAgentHostStores(userDataDir);
 
@@ -69,6 +78,20 @@ export function createUiFixture(rootDir: string, options: UiFixtureOptions = {})
     systemPromptMarker: SYSTEM_PROMPT_MARKER,
     listedSessionCount: base.sessionCount + 1 + Object.keys(COPILOT_CLI_FIXTURE_SESSION_IDS).length,
   };
+}
+
+// VS Code keeps an extension's globalState in state.vscdb under its id. The
+// first-run walkthrough opens once; marking it offered keeps a Get Started
+// tab from taking the focus and the editor group during the specs.
+function seedWalkthroughOffered(dbPath: string): void {
+  mkdirSync(path.dirname(dbPath), { recursive: true });
+  const db = new DatabaseSync(dbPath);
+  try {
+    db.exec("CREATE TABLE IF NOT EXISTS ItemTable (key TEXT UNIQUE ON CONFLICT REPLACE, value BLOB)");
+    db.prepare("INSERT INTO ItemTable (key, value) VALUES (?, ?)").run(EXTENSION_ID, JSON.stringify({ [WALKTHROUGH_OFFERED_KEY]: true }));
+  } finally {
+    db.close();
+  }
 }
 
 function seedLargeSession(dbPath: string, now: Date): void {

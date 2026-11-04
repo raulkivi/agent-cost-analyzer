@@ -314,7 +314,7 @@
     "package": "vsce package --no-dependencies",
     "test": "vitest run",
     "test:integration": "node scripts/build-integration-tests.mts && vscode-test",
-    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p src/test/integration/tsconfig.json",
+    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p src/test/integration/tsconfig.json && tsc --noEmit -p test/ui/tsconfig.json",
     "test:ui": "tsx scripts/ui-check/ui-check.mts",
     "screenshots": "tsx scripts/ui-check/screenshots.mts",
     "test:ui:vscode": "wdio run wdio.conf.mts"
