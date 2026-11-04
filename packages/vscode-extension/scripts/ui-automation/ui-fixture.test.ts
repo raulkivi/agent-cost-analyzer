@@ -1,4 +1,5 @@
-import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync } from "node:fs";
+import { COPILOT_CLI_FIXTURE_HOME } from "../../../server/src/test-support/copilot-cli-fixtures.ts";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -6,7 +7,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { createExtensionApiService } from "@agent-cost-analyzer/server/src/composition/create-extension-api-service";
 import { InMemoryAppSettingsStore } from "@agent-cost-analyzer/server/src/test-support/in-memory-app-settings-store";
 import { copilotLogPathsFromUserDataDir } from "../../src/platform/copilot-log-paths.js";
-import { LARGE_SESSION_TURNS, createUiFixture } from "./ui-fixture.mts";
+import { LARGE_SESSION_TURNS, createFirstRunFixture, createUiFixture } from "./ui-fixture.mts";
 
 const learnScenariosFixturesDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../../server/fixtures/learn-scenarios");
 
@@ -86,5 +87,43 @@ describe("createUiFixture (step 10.16)", () => {
     const fixture = createUiFixture(rootDir, { sessionCount: 1 });
 
     expect(existsSync(fixture.copilotHome)).toBe(true);
+  });
+
+  // The Copilot Chat that ships in VS Code writes logs into COPILOT_HOME once
+  // enabled (checks 1.2, 1.4): it must be a throwaway copy, not the repo's fixtures.
+  it("hands out a copy of the Copilot CLI event logs under its own root, never the repo's fixture directory", () => {
+    const fixture = createUiFixture(rootDir, { sessionCount: 1 });
+
+    expect(fixture.copilotHome).not.toBe(COPILOT_CLI_FIXTURE_HOME);
+    expect(fixture.copilotHome.startsWith(rootDir)).toBe(true);
+    expect(readdirSync(fixture.copilotHome).sort()).toEqual(readdirSync(COPILOT_CLI_FIXTURE_HOME).filter((name) => name !== "logs").sort());
+  });
+
+  // Checks 1.1-1.3 (first run, no sessions): a VS Code that has never seen
+  // Copilot Chat. A new profile is not enough on a real machine (Copilot
+  // Chat's storage is shared by profiles), so the fixture is a bare user-data dir.
+  describe("createFirstRunFixture", () => {
+    it("holds no Copilot Chat or Agent Host store and no Copilot setting, only quiet start-up settings", () => {
+      const fixture = createFirstRunFixture(rootDir);
+
+      expect(fixture.userDataDir).toBe(path.join(fixture.storagePath, "settings"));
+      expect(existsSync(path.join(fixture.userDataDir, "User", "globalStorage"))).toBe(false);
+      expect(existsSync(path.join(fixture.userDataDir, "User", "workspaceStorage"))).toBe(false);
+      expect(Object.keys(fixture.userSettings).filter((key) => key.startsWith("github.copilot"))).toEqual([]);
+      expect(fixture.userSettings).toMatchObject({ "telemetry.telemetryLevel": "off", "update.mode": "none" });
+    });
+
+    it("leaves the Welcome tab to the extension's own first-run offer", () => {
+      const fixture = createFirstRunFixture(rootDir);
+
+      expect(fixture.userSettings["workbench.startupEditor"]).toBe("none");
+      expect(existsSync(path.join(fixture.userDataDir, "User", "globalStorage", "state.vscdb"))).toBe(false);
+    });
+
+    it("lists no session through the extension's ApiService", async () => {
+      const fixture = createFirstRunFixture(rootDir);
+
+      expect(await apiOver(fixture.userDataDir).listSessions()).toEqual([]);
+    });
   });
 });

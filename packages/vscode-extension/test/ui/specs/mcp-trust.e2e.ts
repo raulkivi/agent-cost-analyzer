@@ -6,9 +6,11 @@
 import { browser, expect } from "@wdio/globals";
 import { INTERNAL_COMMAND_IDS } from "../../../src/diagnostics/test-hooks.js";
 import { McpServerList } from "../support/mcp-server-list.js";
+import { parseUiFixture, TRUST_FIXTURE_ENV } from "../support/ui-fixture-env.mts";
 import { wdioVscodeHost as host } from "../support/vscode-host.js";
 
 const servers = new McpServerList(host);
+const fixture = parseUiFixture(process.env[TRUST_FIXTURE_ENV], TRUST_FIXTURE_ENV);
 
 function isTrusted(): Promise<boolean> {
   return browser.executeWorkbench((vscode) => vscode.workspace.isTrusted);
@@ -16,7 +18,7 @@ function isTrusted(): Promise<boolean> {
 
 suite("MCP server in Restricted Mode (check 2.5)", () => {
   suiteSetup(async () => {
-    await host.waitForExtension();
+    await host.waitForExtension({ userDataDir: fixture.userDataDir });
   });
 
   test("2.5 offers no server while the folder is untrusted, and the server once it is trusted", async () => {

@@ -63,6 +63,8 @@ describe("the integration-test bundle (step 10.9)", () => {
         if (name === "suite" && typeof body === "function") body.call({ timeout: () => undefined });
       };
     }
+    // mocha's `test.skip`, which the suite uses for a known bug.
+    (globals.test as { skip?: unknown }).skip = (title: unknown) => registered.push(`test.skip: ${String(title)}`);
     process.env[INTEGRATION_FIXTURE_ENV] = JSON.stringify({
       userDataDir: path.join(installDir, "user-data"),
       usageSessionId: "1c7604a0-1488-4b5d-880a-f80fd693475e",
@@ -86,6 +88,8 @@ describe("the integration-test bundle (step 10.9)", () => {
         expect.stringMatching(/^test: with the setting on, offers one server/),
       ]),
     );
-    expect(registered.filter((entry) => entry.startsWith("test: "))).toHaveLength(7);
+    expect(registered.filter((entry) => entry.startsWith("test: "))).toHaveLength(8);
+    // The known-bug test (list-vs-detail AI Credits, step 10.16) is registered as skipped.
+    expect(registered.filter((entry) => entry.startsWith("test.skip: "))).toHaveLength(1);
   });
 });

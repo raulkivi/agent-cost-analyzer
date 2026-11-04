@@ -1,0 +1,11 @@
+{
+  "name": "ui-test-host",
+  "publisher": "ai-credits-analyzer-tests",
+  "displayName": "UI test host (does nothing)",
+  "description": "wdio-vscode-service needs one extension under development to start VS Code and serve its proxy. Check 1.12 (uninstall) runs the analyzer as an installed VSIX instead, so this empty one stands in as the development extension.",
+  "version": "0.0.0",
+  "private": true,
+  "engines": {
+    "vscode": "^1.144.0"
+  }
+}
