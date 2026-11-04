@@ -15,6 +15,15 @@ import {
   COPILOT_CLI_FIXTURE_SESSION_IDS,
   writeCopilotCliAgentHostStores,
 } from "../../../test-support/copilot-cli-fixtures.js";
+import {
+  seedCopilotSessionStore,
+  USAGE_SESSION_ID,
+  writeUsageDebugLog,
+} from "../../../test-support/copilot-session-store.js";
+import {
+  STORE_TURN_MISSING_REASON,
+  USAGE_UNAVAILABLE_REASON,
+} from "../../../services/session-enricher/session-enricher.js";
 import { describeLogProviderContract } from "../contract.js";
 import type { SystemPromptTextLookup } from "../system-prompt-text-reader.js";
 import type { CopilotSessionSource } from "./copilot-session-source.js";
@@ -137,6 +146,97 @@ describe("VscodeLogProvider", () => {
   });
 });
 
+// The session store can lag the debug log: a turn that was interrupted (or is
+// still running) has billed llm_requests in main.jsonl but no `turns` row.
+// The list and the detail must say the same, and neither may drop that spend.
+describe("VscodeLogProvider: a session's AI Credits in the list and in its detail", () => {
+  // copilotUsageNanoAiu of the four llm_request lines in
+  // fixtures/jsonl/real-session-with-usage.jsonl, summed by hand: the first
+  // user_message's two requests, then the second's two.
+  const FIRST_TURN_NANO_AIU = 4_543_550_000 + 2_795_980_000;
+  const SECOND_TURN_NANO_AIU = 1_404_890_000 + 902_930_000;
+  const SESSION_AI_CREDITS = (FIRST_TURN_NANO_AIU + SECOND_TURN_NANO_AIU) / 1e9; // 9.64735
+
+  let dir: string;
+  let debugLogsDirPath: string;
+  let dbPath: string;
+
+  beforeEach(() => {
+    dir = mkdtempSync(path.join(tmpdir(), "vscode-log-provider-credits-"));
+    dbPath = path.join(dir, "session-store.db");
+    debugLogsDirPath = path.join(dir, "debug-logs");
+    // One `turns` row; the log has two user_messages.
+    seedCopilotSessionStore(dbPath, "2026-08-08T10:00:00.000Z");
+    writeUsageDebugLog(debugLogsDirPath);
+  });
+
+  afterEach(() => {
+    rmSync(dir, { recursive: true, force: true });
+  });
+
+  function provider(): VscodeLogProvider {
+    return new VscodeLogProvider({ sessionStoreDbPath: dbPath, debugLogsDirPaths: [debugLogsDirPath], agentTracesDbPath: null });
+  }
+
+  it("counts every billed request in the debug log, in the list and in the detail", async () => {
+    const [listed] = await provider().listSessions();
+    const detail = await provider().readSession(USAGE_SESSION_ID);
+
+    expect(listed.costAiCredits.known && listed.costAiCredits.value).toBeCloseTo(SESSION_AI_CREDITS, 9);
+    expect(detail?.costAiCredits.known && detail.costAiCredits.value).toBeCloseTo(SESSION_AI_CREDITS, 9);
+  });
+
+  it("shows the debug-log turn the session store has no row for, with its usage and why its text is missing", async () => {
+    const detail = await provider().readSession(USAGE_SESSION_ID);
+
+    expect(detail?.turns.map((turn) => turn.index)).toEqual([0, 1]);
+    const logOnly = detail!.turns[1];
+    expect(logOnly.usage.costAiCredits.known && logOnly.usage.costAiCredits.value).toBeCloseTo(SECOND_TURN_NANO_AIU / 1e9, 9);
+    expect(logOnly.usage.model).toBe("claude-sonnet-5");
+    expect(logOnly.textUnavailableReason).toBe(STORE_TURN_MISSING_REASON);
+    expect(logOnly.toolCalls.map((call) => call.name)).toEqual(["manage_todo_list", "run_in_terminal"]);
+  });
+
+  it("gives the list the detail's turn count, model and usage availability", async () => {
+    const [listed] = await provider().listSessions();
+    const detail = await provider().readSession(USAGE_SESSION_ID);
+
+    expect(listed.turnCount).toBe(2);
+    expect({ turnCount: listed.turnCount, model: listed.model, usageDataAvailable: listed.usageDataAvailable }).toEqual({
+      turnCount: detail?.turnCount,
+      model: detail?.model,
+      usageDataAvailable: detail?.usageDataAvailable,
+    });
+  });
+
+  it("opens the debug-log turn in the turn inspector", async () => {
+    const detail = await provider().readTurnDetail(USAGE_SESSION_ID, 1);
+
+    expect(detail?.turnIndex).toBe(1);
+    expect(detail?.rounds).toHaveLength(2);
+    await expect(provider().readTurnDetail(USAGE_SESSION_ID, 2)).resolves.toBeNull();
+  });
+
+  it("leaves the total unknown in both when a store turn has no usage in the debug log", async () => {
+    const db = new DatabaseSync(dbPath);
+    for (const turnIndex of [1, 2]) {
+      db.prepare("INSERT INTO turns (session_id, turn_index, user_message, assistant_response, timestamp) VALUES (?, ?, 'q', 'a', NULL)").run(
+        USAGE_SESSION_ID,
+        turnIndex,
+      );
+    }
+    db.close();
+
+    const [listed] = await provider().listSessions();
+    const detail = await provider().readSession(USAGE_SESSION_ID);
+
+    expect(listed.costAiCredits).toEqual({ known: false, reason: USAGE_UNAVAILABLE_REASON });
+    expect(detail?.costAiCredits).toEqual(listed.costAiCredits);
+    expect(listed.turnCount).toBe(3);
+    expect(detail?.turnCount).toBe(3);
+  });
+});
+
 function seedRoundTripLog(debugLogsDirPath: string, sessionId: string): void {
   const sessionLogDir = path.join(debugLogsDirPath, sessionId);
   mkdirSync(sessionLogDir, { recursive: true });
@@ -173,6 +273,22 @@ describeLogProviderContract("VscodeLogProvider", {
       agentTracesDbPath: null,
     }),
   turnIndexWithRoundTrip: 0,
+});
+
+// A real debug log with AI Credits that is one turn ahead of the session store.
+describeLogProviderContract("VscodeLogProvider (debug log ahead of the session store)", {
+  buildAvailableProvider: () => {
+    const dir = mkdtempSync(path.join(tmpdir(), "vscode-log-provider-contract-usage-"));
+    const dbPath = path.join(dir, "session-store.db");
+    seedCopilotSessionStore(dbPath, "2026-08-08T10:00:00.000Z");
+    const debugLogsDirPath = path.join(dir, "debug-logs");
+    writeUsageDebugLog(debugLogsDirPath);
+    return new VscodeLogProvider({ sessionStoreDbPath: dbPath, debugLogsDirPaths: [debugLogsDirPath], agentTracesDbPath: null });
+  },
+  knownSessionId: USAGE_SESSION_ID,
+  unknownSessionId: "does-not-exist",
+  buildUnavailableProvider: () => new VscodeLogProvider({ sessionStoreDbPath: null, debugLogsDirPaths: [], agentTracesDbPath: null }),
+  turnIndexWithRoundTrip: 1,
 });
 
 describe("VscodeLogProvider.readTurnDetail", () => {

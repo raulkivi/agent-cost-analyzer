@@ -4,7 +4,7 @@ import path from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
-import { costRollupSchema, logProviderStatusSchema } from "@agent-cost-analyzer/domain";
+import { costRollupSchema, logProviderStatusSchema, sessionCostSchema } from "@agent-cost-analyzer/domain";
 import { createMcpServer, type McpServerDeps } from "../mcp/mcp-server.js";
 import { seedCopilotSessionStore, USAGE_SESSION_ID, writeUsageDebugLog } from "../test-support/copilot-session-store.js";
 import { composeLogProviders } from "./compose-log-providers.js";
@@ -175,6 +175,24 @@ describe("createCopilotMcpServices (the extension's MCP server, vscode-extension
     expect(rollup.byProvider.map((provider) => provider.providerId)).toEqual(["vscode"]);
     expect(rollup.byProvider[0]!.sessions).toBe(1);
     expect(rollup.totals.aiCredits.value).toBeGreaterThan(0);
+  });
+
+  // Check 2.3: the tools give the AI Credits the Sessions view shows. The
+  // fixture's debug log has a turn the session store has no row for; its
+  // four requests' copilotUsageNanoAiu sum to 9.64735 AI Credits.
+  it("gives the session's AI Credits and turn count the same in list_sessions, get_session_cost and get_cost_rollup", async () => {
+    const SESSION_AI_CREDITS = (4_543_550_000 + 2_795_980_000 + 1_404_890_000 + 902_930_000) / 1e9;
+    const listed = await copilot.callTool({ name: "list_sessions", arguments: {} });
+    const cost = await copilot.callTool({ name: "get_session_cost", arguments: { sessionId: USAGE_SESSION_ID } });
+    const rollup = costRollupSchema.parse((await copilot.callTool({ name: "get_cost_rollup", arguments: {} })).structuredContent);
+    const [summary] = (listed.structuredContent as { sessions: { turnCount: number }[] }).sessions;
+    const sessionCost = sessionCostSchema.parse(cost.structuredContent);
+
+    expect(sessionCost.totals.aiCredits.value).toBeCloseTo(SESSION_AI_CREDITS, 9);
+    expect(sessionCost.totals.aiCredits.knownTurns).toBe(sessionCost.totals.aiCredits.turns);
+    expect(rollup.totals.aiCredits.value).toBeCloseTo(SESSION_AI_CREDITS, 9);
+    expect(sessionCost.turnCount).toBe(2);
+    expect(summary!.turnCount).toBe(sessionCost.turnCount);
   });
 
   it("gives the standalone server's actionable unknown-provider error for an id it doesn't know", async () => {

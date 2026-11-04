@@ -46,24 +46,53 @@ function reasonForAvailability(availability: MainJsonlAvailability): string {
   return USAGE_UNAVAILABLE_REASON;
 }
 
-// A session's total AI Credits, all-or-nothing across its turns (constraint
-// 6: no silently-partial total). Used by the list endpoint, which only has
-// turnUsages (extracted straight from main.jsonl) and no SQLite turnRows to
-// build real Turn objects from — buildSession below aggregates from the
-// built turns instead, since that's the authoritative per-turn source once
-// they exist.
-export function computeSessionCost(
+export const STORE_TURN_MISSING_REASON =
+  "GitHub Copilot Chat's session store has no record of this turn (it was likely interrupted, or was still " +
+  "running when the store was read), so its text is unknown. Its tokens and AI Credits come from the debug log (main.jsonl).";
+
+// Debug-log turns (one per user_message, the positional join of
+// architecture.md §6.2.2) that the session store has no `turns` row for: an
+// interrupted or still-running turn whose requests were billed all the same.
+function logOnlyTurnIndices(
+  storeTurnIndices: readonly number[],
+  turnUsages: readonly (TurnUsage | null)[],
+): number[] {
+  const inStore = new Set(storeTurnIndices);
+  return turnUsages.flatMap((_, index) => (inStore.has(index) ? [] : [index]));
+}
+
+// The session-level figures, shared by the list summary and the full
+// session so the Sessions view, the turns table and the MCP tools agree.
+export interface SessionUsageFigures {
+  turnCount: number;
+  costAiCredits: TokenCount;
+  model: string;
+  usageDataAvailable: boolean;
+}
+
+// Every turn counts: each session-store turn and each debug-log turn the
+// store lacks. AI Credits are all-or-nothing across them (constraint 6: no
+// silently-partial total), and unknown rather than 0 with nothing to sum.
+export function summarizeSessionUsage(
   mainJsonlAvailability: MainJsonlAvailability,
-  turnUsages: (TurnUsage | null)[],
-): TokenCount {
+  storeTurnIndices: readonly number[],
+  turnUsages: readonly (TurnUsage | null)[],
+): SessionUsageFigures {
   const fallback = unavailableTokenCount(reasonForAvailability(mainJsonlAvailability));
-  if (mainJsonlAvailability !== "events-present" || turnUsages.length === 0) {
-    return fallback;
-  }
-  return sumTokenCounts(
-    turnUsages.map((usage) => usage?.costAiCredits ?? fallback),
-    USAGE_UNAVAILABLE_REASON,
-  );
+  const turnIndices = [...storeTurnIndices, ...logOnlyTurnIndices(storeTurnIndices, turnUsages)];
+  const knownUsages = turnUsages.filter((usage): usage is TurnUsage => usage !== null);
+  return {
+    turnCount: turnIndices.length,
+    costAiCredits:
+      mainJsonlAvailability !== "events-present" || turnIndices.length === 0
+        ? fallback
+        : sumTokenCounts(
+            turnIndices.map((index) => turnUsages[index]?.costAiCredits ?? fallback),
+            USAGE_UNAVAILABLE_REASON,
+          ),
+    model: knownUsages.at(-1)?.model ?? UNKNOWN_MODEL,
+    usageDataAvailable: knownUsages.length > 0,
+  };
 }
 
 // The title of a session whose source names none.
@@ -192,39 +221,51 @@ export function buildAnalyzeExplanation(usage: TurnUsage): string {
   );
 }
 
+// row is undefined for a debug-log turn the session store has no row for.
 function buildTurn(
-  row: TurnRow,
+  index: number,
+  row: TurnRow | undefined,
   fileRowsByTurn: Map<number, SessionFileRow[]>,
   usage: TurnUsage | null | undefined,
   fallbackTokenCount: TokenCount,
   invokedToolNames: string[],
 ): Turn {
+  const explanation = usage ? buildAnalyzeExplanation(usage) : STUB_EXPLANATION;
   return {
-    index: row.turn_index,
-    userMessage: row.user_message ?? "",
-    assistantResponse: row.assistant_response ?? "",
-    toolCalls: buildToolCalls(
-      fileRowsByTurn.get(row.turn_index) ?? [],
-      invokedToolNames,
-    ),
+    index,
+    userMessage: row?.user_message ?? "",
+    assistantResponse: row?.assistant_response ?? "",
+    toolCalls: buildToolCalls(fileRowsByTurn.get(index) ?? [], invokedToolNames),
     usage: usage ?? buildUnavailableUsage(fallbackTokenCount),
-    explanation: usage ? buildAnalyzeExplanation(usage) : STUB_EXPLANATION,
+    ...(row
+      ? { explanation }
+      : { explanation: `${explanation} ${STORE_TURN_MISSING_REASON}`, textUnavailableReason: STORE_TURN_MISSING_REASON }),
+  };
+}
+
+// Before any usage is read, the store's own turn count and nothing known.
+function storeOnlyUsageFigures(row: SessionRow): SessionUsageFigures {
+  return {
+    turnCount: row.turn_count,
+    costAiCredits: unavailableTokenCount(USAGE_UNAVAILABLE_REASON),
+    model: UNKNOWN_MODEL,
+    usageDataAvailable: false,
   };
 }
 
 export function buildSessionSummary(
   row: SessionRow,
-  costAiCredits: TokenCount = unavailableTokenCount(USAGE_UNAVAILABLE_REASON),
+  usage: SessionUsageFigures = storeOnlyUsageFigures(row),
 ): Session {
   return {
     id: row.id,
     mode: "analyze",
     title: deriveTitle(row),
-    model: UNKNOWN_MODEL,
+    model: usage.model,
     turns: [],
-    turnCount: row.turn_count,
-    costAiCredits,
-    usageDataAvailable: false,
+    turnCount: usage.turnCount,
+    costAiCredits: usage.costAiCredits,
+    usageDataAvailable: usage.usageDataAvailable,
     copilotHarness: "local",
     ...(row.created_at ? { startedAt: row.created_at } : {}),
   };
@@ -253,37 +294,24 @@ export function buildSession(enrichment: AnalyzeEnrichment): Session {
   const fallbackTokenCount = unavailableTokenCount(
     reasonForAvailability(mainJsonlAvailability),
   );
-
-  const knownUsages = turnUsages.filter(
-    (usage): usage is TurnUsage => usage !== null,
-  );
-
   const fileRowsByTurn = groupFileRowsByTurn(fileRows);
+  const buildAt = (index: number, row: TurnRow | undefined) =>
+    buildTurn(index, row, fileRowsByTurn, turnUsages[index], fallbackTokenCount, invokedToolNamesByTurn[index] ?? []);
 
-  const turns = turnRows.map((turnRow) =>
-    buildTurn(
-      turnRow,
-      fileRowsByTurn,
-      turnUsages[turnRow.turn_index],
-      fallbackTokenCount,
-      invokedToolNamesByTurn[turnRow.turn_index] ?? [],
-    ),
-  );
-  const costAiCredits = sumTokenCounts(
-    turns.map((turn) => turn.usage.costAiCredits),
-    USAGE_UNAVAILABLE_REASON,
-  );
+  const storeTurnIndices = turnRows.map((row) => row.turn_index);
+  // Stable sort: the store's own rows keep their order.
+  const turns = [
+    ...turnRows.map((row) => buildAt(row.turn_index, row)),
+    ...logOnlyTurnIndices(storeTurnIndices, turnUsages).map((index) => buildAt(index, undefined)),
+  ].sort((a, b) => a.index - b.index);
 
   return {
-    ...buildSessionSummary(sessionRow, costAiCredits),
-    model:
-      knownUsages.length > 0
-        ? knownUsages[knownUsages.length - 1].model
-        : UNKNOWN_MODEL,
-    usageDataAvailable: knownUsages.length > 0,
+    ...buildSessionSummary(
+      sessionRow,
+      summarizeSessionUsage(mainJsonlAvailability, storeTurnIndices, turnUsages),
+    ),
     systemPrompt,
     toolInventory,
-    turnCount: turnRows.length,
     turns,
   };
 }

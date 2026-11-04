@@ -25,6 +25,7 @@ import {
   getSessionRow,
   getTurnRows,
   listSessionRows,
+  listTurnIndicesBySession,
   openReadOnlyDb,
   type SessionRow,
 } from "../../sqlite/session-store.js";
@@ -35,7 +36,7 @@ import {
 import {
   buildSession,
   buildSessionSummary,
-  computeSessionCost,
+  summarizeSessionUsage,
 } from "../../../services/session-enricher/session-enricher.js";
 import type { LogProvider, LogProviderAvailability } from "../log-provider.js";
 import type { SystemPromptTextLookup, SystemPromptTextReader } from "../system-prompt-text-reader.js";
@@ -119,10 +120,12 @@ export class VscodeLogProvider implements LogProvider, SystemPromptTextReader {
 
   // costAiCredits per session requires reading each session's main.jsonl (the
   // only source of AI Credits numbers) — an accurate list is worth an extra
-  // file read per session for a local tool with a bounded session count. A
-  // single session's read failing (corrupt/missing file) degrades that
-  // session's cost to unavailable rather than failing the whole list.
-  private async summarizeSessionWithCost(row: SessionRow): Promise<Session> {
+  // file read per session for a local tool with a bounded session count. The
+  // figures come from summarizeSessionUsage, as readSession's do, so the list
+  // and the detail agree. A single session's read failing (corrupt/missing
+  // file) degrades that session's cost to unavailable rather than failing
+  // the whole list.
+  private async summarizeSessionWithCost(row: SessionRow, storeTurnIndices: number[]): Promise<Session> {
     try {
       const mainJsonlPath = resolveMainJsonlPath(this.debugLogsDirPaths(), row.id);
       let mainJsonlAvailability: MainJsonlAvailability = "missing";
@@ -135,7 +138,7 @@ export class VscodeLogProvider implements LogProvider, SystemPromptTextReader {
         }
       }
       return {
-        ...buildSessionSummary(row, computeSessionCost(mainJsonlAvailability, turnUsages)),
+        ...buildSessionSummary(row, summarizeSessionUsage(mainJsonlAvailability, storeTurnIndices, turnUsages)),
         providerId: PROVIDER_ID,
       };
     } catch {
@@ -158,7 +161,10 @@ export class VscodeLogProvider implements LogProvider, SystemPromptTextReader {
     }
     try {
       const rows = listSessionRows(db);
-      return await Promise.all(rows.map((row) => this.summarizeSessionWithCost(row)));
+      const turnIndicesBySession = listTurnIndicesBySession(db);
+      return await Promise.all(
+        rows.map((row) => this.summarizeSessionWithCost(row, turnIndicesBySession.get(row.id) ?? [])),
+      );
     } finally {
       db.close();
     }
@@ -227,12 +233,12 @@ export class VscodeLogProvider implements LogProvider, SystemPromptTextReader {
   }
 
   // null has exactly one meaning here, matching readSession's null-for-404
-  // convention: the session or the turn index doesn't exist per SQLite —
-  // the ground truth for "does this turn exist" in this provider, decoupled
-  // from whether main.jsonl happens to have round-trip data for it. A turn
-  // that exists in SQLite but has no captured round-trip (session never
-  // logged, or logging started after this turn ran) is a valid, non-null
-  // TurnInspectorDetail with rounds: [].
+  // convention: the session or the turn index doesn't exist. A turn exists
+  // when SQLite has it or when main.jsonl has it (a debug-log turn the store
+  // has no row for, which readSession lists too). A turn that exists in
+  // SQLite but has no captured round-trip (session never logged, or logging
+  // started after this turn ran) is a valid, non-null TurnInspectorDetail
+  // with rounds: [].
   async readTurnDetail(sessionId: string, turnIndex: number): Promise<TurnInspectorDetail | null> {
     const classic = await this.readClassicTurnDetail(sessionId, turnIndex);
     if (classic !== "unknown-session") {
@@ -257,7 +263,7 @@ export class VscodeLogProvider implements LogProvider, SystemPromptTextReader {
       if (!sessionRow) {
         return "unknown-session";
       }
-      if (turnIndex < 0 || turnIndex >= sessionRow.turn_count) {
+      if (!Number.isInteger(turnIndex) || turnIndex < 0) {
         return null;
       }
 
@@ -267,7 +273,8 @@ export class VscodeLogProvider implements LogProvider, SystemPromptTextReader {
         : null;
 
       if (!result) {
-        return { turnIndex, userMessage: [], rounds: [] };
+        // Beyond the store's turns, only a debug-log turn exists (readSession's turn set).
+        return turnIndex < sessionRow.turn_count ? { turnIndex, userMessage: [], rounds: [] } : null;
       }
 
       return buildTurnInspectorDetail(turnIndex, result.turnEnvelopes, result.previousInputMessagesLength);

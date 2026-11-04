@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { sessionSchema } from "@agent-cost-analyzer/domain";
+import { sessionSchema, type Session } from "@agent-cost-analyzer/domain";
 import type { LogProvider } from "./log-provider.js";
 
 // Shared assertions every LogProvider must satisfy, regardless of source
@@ -49,6 +49,25 @@ export function describeLogProviderContract(
 
       expect(session).not.toBeNull();
       expect(() => sessionSchema.parse(session)).not.toThrow();
+    });
+
+    // The list (Sessions view, status bar, list_sessions) and the detail
+    // (turns table, get_session_cost, rollups) must report the same session.
+    it("listSessions summaries agree with readSession on AI Credits, turn count, model and usage availability", async () => {
+      const provider = fixture.buildAvailableProvider();
+
+      for (const summary of await provider.listSessions()) {
+        const session = await provider.readSession(summary.id);
+        const figures = (of: Session) => ({
+          id: of.id,
+          costAiCredits: of.costAiCredits,
+          turnCount: of.turnCount,
+          model: of.model,
+          usageDataAvailable: of.usageDataAvailable,
+        });
+        expect(session).not.toBeNull();
+        expect(figures(summary)).toEqual(figures(session!));
+      }
     });
 
     it("readSession returns null for an unknown id, predictably rather than throwing", async () => {

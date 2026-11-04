@@ -13,9 +13,10 @@ import type {
 import {
   buildSession,
   buildSessionSummary,
-  computeSessionCost,
   LOGGING_NEVER_ENABLED_REASON,
   PARSE_FAILURES_REASON,
+  STORE_TURN_MISSING_REASON,
+  summarizeSessionUsage,
   TOOL_CALL_TOKEN_COUNT_UNAVAILABLE_REASON,
   USAGE_UNAVAILABLE_REASON,
 } from "./session-enricher.js";
@@ -94,49 +95,86 @@ describe("buildSessionSummary", () => {
     });
   });
 
-  it("uses the passed-in costAiCredits when provided", () => {
-    expect(
-      buildSessionSummary(sessionRow, { known: true, value: 4.2 }).costAiCredits,
-    ).toEqual({ known: true, value: 4.2 });
+  it("uses the passed-in usage figures when provided", () => {
+    const session = buildSessionSummary(sessionRow, {
+      turnCount: 4,
+      costAiCredits: { known: true, value: 4.2 },
+      model: "claude-sonnet-5",
+      usageDataAvailable: true,
+    });
+
+    expect(session).toMatchObject({
+      turnCount: 4,
+      costAiCredits: { known: true, value: 4.2 },
+      model: "claude-sonnet-5",
+      usageDataAvailable: true,
+      turns: [],
+    });
   });
 });
 
-describe("computeSessionCost", () => {
-  const known = (value: number): TurnUsage =>
-    ({ costAiCredits: { known: true, value } }) as TurnUsage;
+describe("summarizeSessionUsage", () => {
+  const known = (value: number, model = "claude-sonnet-5"): TurnUsage =>
+    ({ costAiCredits: { known: true, value }, model }) as TurnUsage;
   const unknown = (): TurnUsage =>
-    ({ costAiCredits: { known: false, reason: "no data" } }) as TurnUsage;
+    ({ costAiCredits: { known: false, reason: "no data" }, model: "claude-sonnet-5" }) as TurnUsage;
 
-  it("returns unavailable when main.jsonl is missing", () => {
-    expect(computeSessionCost("missing", [])).toEqual({
+  it("is unavailable, with the log's own reason, when main.jsonl has no usage events", () => {
+    expect(summarizeSessionUsage("missing", [0], []).costAiCredits).toEqual({
       known: false,
       reason: USAGE_UNAVAILABLE_REASON,
     });
+    expect(summarizeSessionUsage("logging-never-enabled", [0], []).costAiCredits).toEqual({
+      known: false,
+      reason: LOGGING_NEVER_ENABLED_REASON,
+    });
   });
 
-  it("returns unavailable when events are present but no turn usages were extracted", () => {
-    expect(computeSessionCost("events-present", [])).toEqual({
+  it("is unavailable, not 0, when the session has no turns at all", () => {
+    expect(summarizeSessionUsage("events-present", [], []).costAiCredits).toEqual({
       known: false,
       reason: USAGE_UNAVAILABLE_REASON,
     });
   });
 
   it("sums known costAiCredits across every turn", () => {
-    expect(computeSessionCost("events-present", [known(1.5), known(2.25)])).toEqual({
+    expect(summarizeSessionUsage("events-present", [0, 1], [known(1.5), known(2.25)]).costAiCredits).toEqual({
       known: true,
       value: 3.75,
     });
   });
 
   it("is unavailable if any turn's cost, or a null turn, is unknown", () => {
-    expect(computeSessionCost("events-present", [known(1), null])).toEqual({
+    expect(summarizeSessionUsage("events-present", [0, 1], [known(1), null]).costAiCredits).toEqual({
       known: false,
       reason: USAGE_UNAVAILABLE_REASON,
     });
-    expect(computeSessionCost("events-present", [known(1), unknown()])).toEqual({
+    expect(summarizeSessionUsage("events-present", [0, 1], [known(1), unknown()]).costAiCredits).toEqual({
       known: false,
       reason: USAGE_UNAVAILABLE_REASON,
     });
+  });
+
+  it("counts a debug-log turn the session store has no row for, in the cost and the turn count", () => {
+    const figures = summarizeSessionUsage("events-present", [0], [known(1.5), known(2.25, "gpt-6")]);
+
+    expect(figures).toEqual({
+      turnCount: 2,
+      costAiCredits: { known: true, value: 3.75 },
+      model: "gpt-6",
+      usageDataAvailable: true,
+    });
+  });
+
+  it("is unavailable when a session-store turn has no usage in the debug log", () => {
+    const figures = summarizeSessionUsage("events-present", [0, 1, 2], [known(1.5)]);
+
+    expect(figures.turnCount).toBe(3);
+    expect(figures.costAiCredits).toEqual({ known: false, reason: USAGE_UNAVAILABLE_REASON });
+  });
+
+  it("reports the model and usage availability as unknown when no turn has usage", () => {
+    expect(summarizeSessionUsage("missing", [0, 1], [])).toMatchObject({ model: "unknown", usageDataAvailable: false, turnCount: 2 });
   });
 });
 
@@ -530,6 +568,46 @@ describe("buildSession", () => {
     });
 
     expect(session.model).toBe("gpt-4o-mini");
+  });
+
+  describe("a debug-log turn the session store has no row for (interrupted or still running)", () => {
+    const priced = (value: number): TurnUsage => ({ ...knownUsage, costAiCredits: { known: true, value } });
+    const build = () =>
+      buildSession({
+        sessionRow,
+        turnRows: [turnRows[0]],
+        fileRows: fileRows.filter((row) => row.turn_index === 0),
+        mainJsonlAvailability: "events-present",
+        turnUsages: [priced(1.5), priced(2.25)],
+        invokedToolNamesByTurn: [[], ["run_in_terminal"]],
+      });
+
+    it("adds it as a turn with its usage and tool calls, and says why its text is missing", () => {
+      const session = build();
+
+      expect(() => sessionSchema.parse(session)).not.toThrow();
+      expect(session.turns.map((turn) => turn.index)).toEqual([0, 1]);
+      const logOnly = session.turns[1];
+      expect(logOnly.usage).toEqual(priced(2.25));
+      expect(logOnly.userMessage).toBe("");
+      expect(logOnly.assistantResponse).toBe("");
+      expect(logOnly.textUnavailableReason).toBe(STORE_TURN_MISSING_REASON);
+      expect(logOnly.explanation).toContain(STORE_TURN_MISSING_REASON);
+      expect(logOnly.toolCalls.map((call) => call.name)).toEqual(["run_in_terminal"]);
+      expect(session.turns[0].textUnavailableReason).toBeUndefined();
+    });
+
+    it("counts it in the session's AI Credits and turn count, as the list summary does", () => {
+      const session = build();
+
+      expect(session.costAiCredits).toEqual({ known: true, value: 3.75 });
+      expect(session.turnCount).toBe(2);
+      expect({ ...session, turns: [], systemPrompt: undefined, toolInventory: undefined }).toEqual({
+        ...buildSessionSummary(sessionRow, summarizeSessionUsage("events-present", [0], [priced(1.5), priced(2.25)])),
+        systemPrompt: undefined,
+        toolInventory: undefined,
+      });
+    });
   });
 
   it("keeps Session.model 'unknown' when no turn usage was extracted", () => {
