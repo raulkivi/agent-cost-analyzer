@@ -4,7 +4,7 @@
 import type { Page } from "playwright";
 import type { Probe } from "./judge.mts";
 
-const PROBE_SCRIPT = `(() => {
+export const PROBE_SCRIPT = `(() => {
   const viewportWidth = document.documentElement.clientWidth;
   const label = (el) => {
     const cls = typeof el.className === "string" ? el.className.trim().split(/\\s+/).filter(Boolean).slice(0, 2) : [];
