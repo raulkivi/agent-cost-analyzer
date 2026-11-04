@@ -9,6 +9,7 @@ import {
 } from "@agent-cost-analyzer/domain";
 import type { ApiQuery, ApiService } from "@agent-cost-analyzer/server/src/services/api/api-service";
 import { ApiError, statusForApiError } from "@agent-cost-analyzer/server/src/services/api/api-errors";
+import type { RequestGate } from "../diagnostics/request-gate.js";
 import { describeIssues } from "./describe-issues.js";
 
 // The ApiService surface the webview may call (vscode-extension.md D2).
@@ -34,6 +35,9 @@ export interface MessageDispatcherOptions {
   hostCommands?: HostCommandSink;
   // Without it, timing marks are ignored.
   performanceMarks?: PerformanceMarkSink;
+  // Without it, every method is answered at once; a test can hold chosen
+  // methods back (diagnostics/request-gate.ts).
+  requestGate?: RequestGate;
 }
 
 type Params = Record<string, unknown>;
@@ -176,6 +180,8 @@ export class MessageDispatcher {
     }
     this.running.add(id);
     try {
+      // Awaited only when there is a gate, so production adds no tick.
+      if (this.options.requestGate) await this.options.requestGate.waitFor(method.data);
       const reply = await this.answer(id, method.data, parsed.data as Params);
       return this.cancelled.has(id) ? undefined : reply;
     } finally {
