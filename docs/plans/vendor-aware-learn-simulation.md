@@ -1,7 +1,7 @@
 # Phase 13: Vendor-aware Learn simulation
 
-Status: **Planned** (2026-11-03), not started. It starts after
-`ext-v0.1.0` is tagged and ships in extension 0.2.0. The owner's decisions
+Status: **In progress** (planned 2026-11-03; step 13.0 started 2026-11-04,
+after `ext-v0.1.0` was tagged). It ships in extension 0.2.0. The owner's decisions
 from the 2026-11-03 interview are recorded in [§9](#9-decisions). In short:
 - simulate **every Copilot vendor whose caching is documented** (Anthropic,
   OpenAI, Google, xAI);

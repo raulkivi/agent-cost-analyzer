@@ -1,7 +1,9 @@
 # VS Code extension: implementation and deployment plan
 
-Status: **code and docs complete (Phase 10, #57-#80); not yet released.**
-The owner's tasks before the first release are listed in
+Status: **code and docs complete (Phase 10, #57-#80); 0.1.0 released
+(`ext-v0.1.0`, 2026-11-03).** Some VS Code manual checks stay open, see
+[vscode-extension-manual-checks.md](vscode-extension-manual-checks.md).
+The owner's pre-release tasks are listed in
 [implementation-plan.md](../implementation-plan.md) Phase 10. This plan expands
 [implementation-plan.md](../implementation-plan.md) Phase 10 and
 [architecture.md](../architecture.md) §12 into concrete, test-first steps.

@@ -103,9 +103,10 @@ content here.
   owner's manual check passed; 10.15 (cache-write and reasoning tokens for
   Agent Host sessions, from the event log's usage records) done, owner's manual check passed. Release prep
   is merged (#90), and publishing setup is done (the Open VSX
-  ownership claim was granted 2026-10-28); 0.1.0 waits on the manual checks and the owner's
-  review before the `ext-v0.1.0` tag. Phase 13 (vendor-aware Learn simulation,
+  ownership claim was granted 2026-10-28); 0.1.0 is released (tag `ext-v0.1.0`, 2026-11-03,
+  on the Marketplace and Open VSX; some VS Code manual checks stay open, see
+  docs/plans/vscode-extension-manual-checks.md). Phase 13 (vendor-aware Learn simulation,
   VS Code first; see docs/plans/vendor-aware-learn-simulation.md) is
-  planned (owner decisions D1–D19 in its §9; Phase 14, replaying Analyze sessions on another vendor, follows it), not started until `ext-v0.1.0`; the Learn scenario fact-check it builds on is in
+  in progress, starting with step 13.0 (rule register; owner decisions D1–D19 in its §9; Phase 14, replaying Analyze sessions on another vendor, follows it); the Learn scenario fact-check it builds on is in
   docs/learn-scenarios-fact-check.md. The progress table and per-step
   status notes are in docs/plans/vscode-extension.md.
