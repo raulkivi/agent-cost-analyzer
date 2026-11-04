@@ -73,8 +73,16 @@ suite("Keyboard only (check 1.7)", () => {
 
   test("1.7 the system prompt diagram moves with arrow keys, and View as table toggles aria-pressed", async () => {
     await panel.reset();
+    // The side bar (left over from the first test) leaves the panel too narrow
+    // for the wide layout on a smaller window; in the medium layout the right
+    // column, with its System prompt tab, sits in a drawer the Tab walk never
+    // opens (found in CI). Give the panel the room, then require the layout.
+    await host.command("workbench.action.closeSidebar");
     await panel.openSession(fixture.usageSessionId);
-    await panel.inside((view) => view.waitForTurnRows(1));
+    await panel.inside(async (view) => {
+      await view.waitForTurnRows(1);
+      expect(await view.layout()).toBe("wide");
+    });
     await panel.focusIntoPanel();
 
     await panel.inside(async (view) => {
