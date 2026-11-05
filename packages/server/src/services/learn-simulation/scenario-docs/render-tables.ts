@@ -18,7 +18,10 @@ const cell = (n: number | undefined): string =>
 const credits = (n: number | undefined): string =>
   n === undefined ? NA : n.toFixed(2);
 const escapeCell = (text: string): string =>
-  text.replace(/\s*\n\s*/g, " ").replace(/\|/g, "\\|");
+  text
+    .replace(/\s*\n\s*/g, " ")
+    .replace(/\\/g, "\\\\")
+    .replace(/\|/g, "\\|");
 const bold = (text: string): string => `**${text}**`;
 
 interface Row {

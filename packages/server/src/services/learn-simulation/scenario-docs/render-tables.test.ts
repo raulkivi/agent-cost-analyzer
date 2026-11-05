@@ -123,4 +123,12 @@ describe("renderSessionSection", () => {
     expect(out).toContain('bar "Cache write" [1000, 100]');
     expect(out).toContain('bar "Cache read" [0, 1000]');
   });
+
+  it("escapes a backslash before a pipe so a cell can't break out of its column", () => {
+    const tricky = renderSessionSection(
+      session([{ ...turn(1, "m", 0, 1000, 0, 1), explanation: "path C:\\dir\\| x" }]),
+      options,
+    );
+    expect(tricky).toContain("C:\\\\dir\\\\\\| x");
+  });
 });
