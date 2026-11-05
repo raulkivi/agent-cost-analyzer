@@ -49,15 +49,239 @@
       "url": "https://docs.github.com/en/copilot/reference/copilot-billing/models-and-pricing",
       "quote": "Earlier OpenAI models have no cache write cost.",
       "checkedAt": "2026-11-05"
+    },
+    {
+      "id": "gh-models-pricing-page-7f63f3a-gemini-flash-promo",
+      "title": "GitHub Docs: Models and pricing for GitHub Copilot at github/docs 7f63f3a (2026-09-29), Gemini Flash promotion footnote",
+      "url": "https://github.com/github/docs/blob/7f63f3a5dce5e0caffcc9c4326cdac982c7adc73/content/copilot/reference/copilot-billing/models-and-pricing.md",
+      "quote": "are available at the promotional pricing of $0.75 per 1M input tokens, $0.075 per 1M cached input tokens, and $3.75 per 1M output tokens through December 31, 2026.",
+      "checkedAt": "2026-11-05"
+    },
+    {
+      "id": "gh-models-pricing-page-9245795-argon-promo",
+      "title": "GitHub Docs: Models and pricing for GitHub Copilot at github/docs 9245795 (2026-10-13), Gemini 4 Argon promotion footnote",
+      "url": "https://github.com/github/docs/blob/924579599358cb4235d5d40975ae6d905bc24554/content/copilot/reference/copilot-billing/models-and-pricing.md",
+      "quote": "is available at the promotional pricing of $2.00 per 1M input tokens, $0.10 per 1M cached input tokens, and $10.00 per 1M output tokens until December 1, 2026.",
+      "checkedAt": "2026-11-05"
+    },
+    {
+      "id": "gh-pricing-table-7f63f3a-claude-haiku-4.5",
+      "title": "GitHub Copilot price table at github/docs 7f63f3a (2026-09-29): Claude Haiku 4.5 (entry lines joined by '; ', tiers by ' / ')",
+      "url": "https://github.com/github/docs/blob/7f63f3a5dce5e0caffcc9c4326cdac982c7adc73/data/tables/copilot/models-and-pricing.yml",
+      "quote": "model: Claude Haiku 4.5; input: $1.00; cached_input: $0.10; cache_write: $1.25; output: $5.00",
+      "checkedAt": "2026-11-05"
+    },
+    {
+      "id": "gh-pricing-table-eb975b9-claude-haiku-5.5",
+      "title": "GitHub Copilot price table at github/docs eb975b9 (2026-10-07): Claude Haiku 5.5 (entry lines joined by '; ', tiers by ' / ')",
+      "url": "https://github.com/github/docs/blob/eb975b9c497b7f4bd04a020afe730565a1e33921/data/tables/copilot/models-and-pricing.yml",
+      "quote": "model: Claude Haiku 5.5; threshold: ≤ 100K; input: $0.10; cached_input: $0.01; cache_write: $0.125; output: $0.50 / threshold: > 100K; input: $0.50; cached_input: $0.05; cache_write: $0.625; output: $2.50",
+      "checkedAt": "2026-11-05"
+    },
+    {
+      "id": "gh-pricing-table-7f63f3a-claude-sonnet-4",
+      "title": "GitHub Copilot price table at github/docs 7f63f3a (2026-09-29): Claude Sonnet 4 (entry lines joined by '; ', tiers by ' / ')",
+      "url": "https://github.com/github/docs/blob/7f63f3a5dce5e0caffcc9c4326cdac982c7adc73/data/tables/copilot/models-and-pricing.yml",
+      "quote": "model: Claude Sonnet 4; input: $3.00; cached_input: $0.30; cache_write: $3.75; output: $15.00",
+      "checkedAt": "2026-11-05"
+    },
+    {
+      "id": "gh-pricing-table-7f63f3a-claude-sonnet-4.6",
+      "title": "GitHub Copilot price table at github/docs 7f63f3a (2026-09-29): Claude Sonnet 4.6 (entry lines joined by '; ', tiers by ' / ')",
+      "url": "https://github.com/github/docs/blob/7f63f3a5dce5e0caffcc9c4326cdac982c7adc73/data/tables/copilot/models-and-pricing.yml",
+      "quote": "model: Claude Sonnet 4.6; input: $3.00; cached_input: $0.30; cache_write: $3.75; output: $15.00",
+      "checkedAt": "2026-11-05"
+    },
+    {
+      "id": "gh-pricing-table-7f63f3a-claude-opus-4.8",
+      "title": "GitHub Copilot price table at github/docs 7f63f3a (2026-09-29): Claude Opus 4.8 (entry lines joined by '; ', tiers by ' / ')",
+      "url": "https://github.com/github/docs/blob/7f63f3a5dce5e0caffcc9c4326cdac982c7adc73/data/tables/copilot/models-and-pricing.yml",
+      "quote": "model: Claude Opus 4.8; input: $5.00; cached_input: $0.50; cache_write: $6.25; output: $25.00",
+      "checkedAt": "2026-11-05"
+    },
+    {
+      "id": "gh-pricing-table-7f63f3a-claude-opus-5",
+      "title": "GitHub Copilot price table at github/docs 7f63f3a (2026-09-29): Claude Opus 5 (entry lines joined by '; ', tiers by ' / ')",
+      "url": "https://github.com/github/docs/blob/7f63f3a5dce5e0caffcc9c4326cdac982c7adc73/data/tables/copilot/models-and-pricing.yml",
+      "quote": "model: Claude Opus 5; input: $5.00; cached_input: $0.50; cache_write: $6.25; output: $25.00",
+      "checkedAt": "2026-11-05"
+    },
+    {
+      "id": "gh-pricing-table-7f63f3a-claude-opus-5.5",
+      "title": "GitHub Copilot price table at github/docs 7f63f3a (2026-09-29): Claude Opus 5.5 (entry lines joined by '; ', tiers by ' / ')",
+      "url": "https://github.com/github/docs/blob/7f63f3a5dce5e0caffcc9c4326cdac982c7adc73/data/tables/copilot/models-and-pricing.yml",
+      "quote": "model: Claude Opus 5.5; input: $4.00; cached_input: $0.20; cache_write: $5.00; output: $20.00",
+      "checkedAt": "2026-11-05"
+    },
+    {
+      "id": "gh-pricing-table-7f63f3a-claude-sonnet-5",
+      "title": "GitHub Copilot price table at github/docs 7f63f3a (2026-09-29): Claude Sonnet 5 (entry lines joined by '; ', tiers by ' / ')",
+      "url": "https://github.com/github/docs/blob/7f63f3a5dce5e0caffcc9c4326cdac982c7adc73/data/tables/copilot/models-and-pricing.yml",
+      "quote": "model: Claude Sonnet 5; input: $2.00; cached_input: $0.20; cache_write: $2.50; output: $10.00",
+      "checkedAt": "2026-11-05"
+    },
+    {
+      "id": "gh-pricing-table-7f63f3a-claude-sonnet-5.5",
+      "title": "GitHub Copilot price table at github/docs 7f63f3a (2026-09-29): Claude Sonnet 5.5 (entry lines joined by '; ', tiers by ' / ')",
+      "url": "https://github.com/github/docs/blob/7f63f3a5dce5e0caffcc9c4326cdac982c7adc73/data/tables/copilot/models-and-pricing.yml",
+      "quote": "model: Claude Sonnet 5.5; input: $2.00; cached_input: $0.20; cache_write: $2.50; output: $10.00",
+      "checkedAt": "2026-11-05"
+    },
+    {
+      "id": "gh-pricing-table-eb975b9-claude-sonnet-5.5",
+      "title": "GitHub Copilot price table at github/docs eb975b9 (2026-10-07): Claude Sonnet 5.5 (entry lines joined by '; ', tiers by ' / ')",
+      "url": "https://github.com/github/docs/blob/eb975b9c497b7f4bd04a020afe730565a1e33921/data/tables/copilot/models-and-pricing.yml",
+      "quote": "model: Claude Sonnet 5.5; input: $2.00; cached_input: $0.10; cache_write: $2.50; output: $10.00",
+      "checkedAt": "2026-11-05"
+    },
+    {
+      "id": "gh-pricing-table-7f63f3a-claude-opus-4.8-fast",
+      "title": "GitHub Copilot price table at github/docs 7f63f3a (2026-09-29): Claude Opus 4.8 (fast mode) (preview) (entry lines joined by '; ', tiers by ' / ')",
+      "url": "https://github.com/github/docs/blob/7f63f3a5dce5e0caffcc9c4326cdac982c7adc73/data/tables/copilot/models-and-pricing.yml",
+      "quote": "model: Claude Opus 4.8 (fast mode) (preview); input: $10.00; cached_input: $1.00; cache_write: $12.50; output: $50.00",
+      "checkedAt": "2026-11-05"
+    },
+    {
+      "id": "gh-pricing-table-7f63f3a-claude-fable-5",
+      "title": "GitHub Copilot price table at github/docs 7f63f3a (2026-09-29): Claude Fable 5 (entry lines joined by '; ', tiers by ' / ')",
+      "url": "https://github.com/github/docs/blob/7f63f3a5dce5e0caffcc9c4326cdac982c7adc73/data/tables/copilot/models-and-pricing.yml",
+      "quote": "model: Claude Fable 5; input: $10.00; cached_input: $1.00; cache_write: $12.50; output: $50.00",
+      "checkedAt": "2026-11-05"
+    },
+    {
+      "id": "gh-pricing-table-7f63f3a-claude-fable-5.1",
+      "title": "GitHub Copilot price table at github/docs 7f63f3a (2026-09-29): Claude Fable 5.1 (entry lines joined by '; ', tiers by ' / ')",
+      "url": "https://github.com/github/docs/blob/7f63f3a5dce5e0caffcc9c4326cdac982c7adc73/data/tables/copilot/models-and-pricing.yml",
+      "quote": "model: Claude Fable 5.1; input: $10.00; cached_input: $0.25; cache_write: $12.50; output: $50.00",
+      "checkedAt": "2026-11-05"
+    },
+    {
+      "id": "gh-pricing-table-7f63f3a-gemini-3.8-flash",
+      "title": "GitHub Copilot price table at github/docs 7f63f3a (2026-09-29): Gemini 3.8 Flash (entry lines joined by '; ', tiers by ' / ')",
+      "url": "https://github.com/github/docs/blob/7f63f3a5dce5e0caffcc9c4326cdac982c7adc73/data/tables/copilot/models-and-pricing.yml",
+      "quote": "model: Gemini 3.8 Flash[^gemini-flash-promo]; input: $0.75; cached_input: $0.075; output: $3.75",
+      "checkedAt": "2026-11-05"
+    },
+    {
+      "id": "gh-pricing-table-9245795-gemini-4-argon",
+      "title": "GitHub Copilot price table at github/docs 9245795 (2026-10-13): Gemini 4 Argon (entry lines joined by '; ', tiers by ' / ')",
+      "url": "https://github.com/github/docs/blob/924579599358cb4235d5d40975ae6d905bc24554/data/tables/copilot/models-and-pricing.yml",
+      "quote": "model: Gemini 4 Argon[^gemini-4-argon-promo]; input: $2.00; cached_input: $0.10; output: $10.00",
+      "checkedAt": "2026-11-05"
+    },
+    {
+      "id": "gh-pricing-table-7f63f3a-mai-code-1.1-flash",
+      "title": "GitHub Copilot price table at github/docs 7f63f3a (2026-09-29): MAI-Code-1.1-Flash (entry lines joined by '; ', tiers by ' / ')",
+      "url": "https://github.com/github/docs/blob/7f63f3a5dce5e0caffcc9c4326cdac982c7adc73/data/tables/copilot/models-and-pricing.yml",
+      "quote": "model: MAI-Code-1.1-Flash; input: $0.20; cached_input: $0.02; output: $1.20",
+      "checkedAt": "2026-11-05"
+    },
+    {
+      "id": "gh-pricing-table-7f63f3a-kimi-k3",
+      "title": "GitHub Copilot price table at github/docs 7f63f3a (2026-09-29): Kimi K3 (entry lines joined by '; ', tiers by ' / ')",
+      "url": "https://github.com/github/docs/blob/7f63f3a5dce5e0caffcc9c4326cdac982c7adc73/data/tables/copilot/models-and-pricing.yml",
+      "quote": "model: Kimi K3; input: $3.00; cached_input: $0.30; output: $15.00",
+      "checkedAt": "2026-11-05"
+    },
+    {
+      "id": "gh-pricing-table-7f63f3a-gpt-5.3-codex",
+      "title": "GitHub Copilot price table at github/docs 7f63f3a (2026-09-29): GPT-5.3-Codex (entry lines joined by '; ', tiers by ' / ')",
+      "url": "https://github.com/github/docs/blob/7f63f3a5dce5e0caffcc9c4326cdac982c7adc73/data/tables/copilot/models-and-pricing.yml",
+      "quote": "model: GPT-5.3-Codex; input: $1.75; cached_input: $0.175; cache_write: Not applicable; output: $14.00",
+      "checkedAt": "2026-11-05"
+    },
+    {
+      "id": "gh-pricing-table-7f63f3a-gpt-5.4-nano",
+      "title": "GitHub Copilot price table at github/docs 7f63f3a (2026-09-29): GPT-5.4 nano (entry lines joined by '; ', tiers by ' / ')",
+      "url": "https://github.com/github/docs/blob/7f63f3a5dce5e0caffcc9c4326cdac982c7adc73/data/tables/copilot/models-and-pricing.yml",
+      "quote": "model: GPT-5.4 nano; input: $0.20; cached_input: $0.02; cache_write: Not applicable; output: $1.25",
+      "checkedAt": "2026-11-05"
+    },
+    {
+      "id": "gh-pricing-table-7f63f3a-gpt-5.6-luna",
+      "title": "GitHub Copilot price table at github/docs 7f63f3a (2026-09-29): GPT-5.6 Luna (entry lines joined by '; ', tiers by ' / ')",
+      "url": "https://github.com/github/docs/blob/7f63f3a5dce5e0caffcc9c4326cdac982c7adc73/data/tables/copilot/models-and-pricing.yml",
+      "quote": "model: GPT-5.6 Luna; threshold: ≤ 200K; input: $0.20; cached_input: $0.02; cache_write: $0.25; output: $1.20 / threshold: > 200K; input: $0.40; cached_input: $0.04; cache_write: $0.50; output: $1.80",
+      "checkedAt": "2026-11-05"
+    },
+    {
+      "id": "gh-pricing-table-7f63f3a-gpt-5.6-sol",
+      "title": "GitHub Copilot price table at github/docs 7f63f3a (2026-09-29): GPT-5.6 Sol (entry lines joined by '; ', tiers by ' / ')",
+      "url": "https://github.com/github/docs/blob/7f63f3a5dce5e0caffcc9c4326cdac982c7adc73/data/tables/copilot/models-and-pricing.yml",
+      "quote": "model: GPT-5.6 Sol; threshold: ≤ 272K; input: $4.00; cached_input: $0.40; cache_write: $5.00; output: $20.00 / threshold: > 272K; input: $8.00; cached_input: $0.80; cache_write: $10.00; output: $30.00",
+      "checkedAt": "2026-11-05"
+    },
+    {
+      "id": "gh-pricing-table-7f63f3a-gpt-5.6-terra",
+      "title": "GitHub Copilot price table at github/docs 7f63f3a (2026-09-29): GPT-5.6 Terra (entry lines joined by '; ', tiers by ' / ')",
+      "url": "https://github.com/github/docs/blob/7f63f3a5dce5e0caffcc9c4326cdac982c7adc73/data/tables/copilot/models-and-pricing.yml",
+      "quote": "model: GPT-5.6 Terra; threshold: ≤ 272K; input: $2.00; cached_input: $0.20; cache_write: $2.50; output: $12.00 / threshold: > 272K; input: $4.00; cached_input: $0.40; cache_write: $5.00; output: $18.00",
+      "checkedAt": "2026-11-05"
+    },
+    {
+      "id": "gh-pricing-table-7f63f3a-gpt-6-astra",
+      "title": "GitHub Copilot price table at github/docs 7f63f3a (2026-09-29): GPT-6 Astra (entry lines joined by '; ', tiers by ' / ')",
+      "url": "https://github.com/github/docs/blob/7f63f3a5dce5e0caffcc9c4326cdac982c7adc73/data/tables/copilot/models-and-pricing.yml",
+      "quote": "model: GPT-6 Astra; threshold: ≤ 272K; input: $10.00; cached_input: $1.00; cache_write: $12.50; output: $50.00 / threshold: > 272K; input: $20.00; cached_input: $2.00; cache_write: $25.00; output: $75.00",
+      "checkedAt": "2026-11-05"
+    },
+    {
+      "id": "gh-pricing-table-7f63f3a-gpt-6-luna",
+      "title": "GitHub Copilot price table at github/docs 7f63f3a (2026-09-29): GPT-6 Luna (entry lines joined by '; ', tiers by ' / ')",
+      "url": "https://github.com/github/docs/blob/7f63f3a5dce5e0caffcc9c4326cdac982c7adc73/data/tables/copilot/models-and-pricing.yml",
+      "quote": "model: GPT-6 Luna; threshold: ≤ 272K; input: $0.10; cached_input: $0.01; cache_write: $0.125; output: $0.50 / threshold: > 272K; input: $0.20; cached_input: $0.02; cache_write: $0.25; output: $0.75",
+      "checkedAt": "2026-11-05"
+    },
+    {
+      "id": "gh-pricing-table-7f63f3a-gpt-6-sol",
+      "title": "GitHub Copilot price table at github/docs 7f63f3a (2026-09-29): GPT-6 Sol (entry lines joined by '; ', tiers by ' / ')",
+      "url": "https://github.com/github/docs/blob/7f63f3a5dce5e0caffcc9c4326cdac982c7adc73/data/tables/copilot/models-and-pricing.yml",
+      "quote": "model: GPT-6 Sol; threshold: ≤ 272K; input: $2.00; cached_input: $0.20; cache_write: $2.50; output: $10.00 / threshold: > 272K; input: $4.00; cached_input: $0.40; cache_write: $5.00; output: $15.00",
+      "checkedAt": "2026-11-05"
+    },
+    {
+      "id": "gh-pricing-table-7f63f3a-gpt-6.1-sol",
+      "title": "GitHub Copilot price table at github/docs 7f63f3a (2026-09-29): GPT-6.1 Sol (entry lines joined by '; ', tiers by ' / ')",
+      "url": "https://github.com/github/docs/blob/7f63f3a5dce5e0caffcc9c4326cdac982c7adc73/data/tables/copilot/models-and-pricing.yml",
+      "quote": "model: GPT-6.1 Sol; threshold: ≤ 272K; input: $2.00; cached_input: $0.10; cache_write: $2.50; output: $10.00 / threshold: > 272K; input: $4.00; cached_input: $0.20; cache_write: $5.00; output: $15.00",
+      "checkedAt": "2026-11-05"
+    },
+    {
+      "id": "gh-pricing-table-cc0c29a-gpt-6.1-terra",
+      "title": "GitHub Copilot price table at github/docs cc0c29a (2026-10-26): GPT-6.1 Terra (entry lines joined by '; ', tiers by ' / ')",
+      "url": "https://github.com/github/docs/blob/cc0c29a040c251c48ed65198f108a484c33406fa/data/tables/copilot/models-and-pricing.yml",
+      "quote": "model: GPT-6.1 Terra; threshold: ≤ 272K; input: $1.00; cached_input: $0.05; cache_write: $1.25; output: $5.00 / threshold: > 272K; input: $2.00; cached_input: $0.10; cache_write: $2.50; output: $7.50",
+      "checkedAt": "2026-11-05"
+    },
+    {
+      "id": "gh-pricing-table-7f63f3a-grok-4.5",
+      "title": "GitHub Copilot price table at github/docs 7f63f3a (2026-09-29): Grok 4.5 (entry lines joined by '; ', tiers by ' / ')",
+      "url": "https://github.com/github/docs/blob/7f63f3a5dce5e0caffcc9c4326cdac982c7adc73/data/tables/copilot/models-and-pricing.yml",
+      "quote": "model: Grok 4.5; threshold: ≤ 200K; input: $2.00; cached_input: $0.50; output: $6.00 / threshold: > 200K; input: $4.00; cached_input: $1.00; output: $12.00",
+      "checkedAt": "2026-11-05"
+    },
+    {
+      "id": "gh-pricing-table-7f63f3a-grok-4.6",
+      "title": "GitHub Copilot price table at github/docs 7f63f3a (2026-09-29): Grok 4.6 (entry lines joined by '; ', tiers by ' / ')",
+      "url": "https://github.com/github/docs/blob/7f63f3a5dce5e0caffcc9c4326cdac982c7adc73/data/tables/copilot/models-and-pricing.yml",
+      "quote": "model: Grok 4.6; threshold: ≤ 200K; input: $2.00; cached_input: $0.50; output: $6.00 / threshold: > 200K; input: $4.00; cached_input: $1.00; output: $12.00",
+      "checkedAt": "2026-11-05"
+    },
+    {
+      "id": "gh-pricing-table-7f63f3a-grok-4.7",
+      "title": "GitHub Copilot price table at github/docs 7f63f3a (2026-09-29): Grok 4.7 (entry lines joined by '; ', tiers by ' / ')",
+      "url": "https://github.com/github/docs/blob/7f63f3a5dce5e0caffcc9c4326cdac982c7adc73/data/tables/copilot/models-and-pricing.yml",
+      "quote": "model: Grok 4.7; threshold: ≤ 200K; input: $2.00; cached_input: $0.50; output: $6.00 / threshold: > 200K; input: $4.00; cached_input: $1.00; output: $12.00",
+      "checkedAt": "2026-11-05"
     }
   ],
   "versions": [
     {
-      "id": "github-copilot:claude-haiku-4.5:2026-10-26",
+      "id": "github-copilot:claude-haiku-4.5:2026-10-01",
       "channel": "github-copilot",
       "modelId": "claude-haiku-4.5",
       "currency": "USD",
-      "effectiveFrom": "2026-10-26",
+      "effectiveFrom": "2026-10-01",
       "tiers": [
         {
           "inputUsdPerM": 1.0,
@@ -69,18 +293,19 @@
       ],
       "kind": "list",
       "sourceIds": [
+        "gh-pricing-table-7f63f3a-claude-haiku-4.5",
         "gh-pricing-table",
         "gh-models-pricing-anthropic",
         "anthropic-pc-pricing-1h"
       ],
-      "note": "In force from at least 2026-10-26, the date of the last github/docs commit to the price table in the snapshot (cc0c29a); earlier prices are not sourced yet. extendedCacheWriteUsdPerM (1-hour cache write) is 2x the input price, from Anthropic's prompt-caching docs; GitHub's table has no 1-hour column."
+      "note": "In force on 2026-10-01: the github/docs price table at 7f63f3a (2026-09-29), unchanged until 9c7da1a (2026-10-02), lists it. Unchanged through cc0c29a (2026-10-26), the last commit to the table as of 2026-11-05. extendedCacheWriteUsdPerM (1-hour cache write) is 2x the input price, from Anthropic's prompt-caching docs; GitHub's table has no 1-hour column."
     },
     {
-      "id": "github-copilot:claude-haiku-5.5:2026-10-26",
+      "id": "github-copilot:claude-haiku-5.5:2026-10-07",
       "channel": "github-copilot",
       "modelId": "claude-haiku-5.5",
       "currency": "USD",
-      "effectiveFrom": "2026-10-26",
+      "effectiveFrom": "2026-10-07",
       "tiers": [
         {
           "maxInputTokens": 100000,
@@ -100,19 +325,20 @@
       ],
       "kind": "list",
       "sourceIds": [
+        "gh-pricing-table-eb975b9-claude-haiku-5.5",
         "gh-pricing-table",
         "gh-models-pricing-anthropic",
         "anthropic-pc-pricing-1h",
         "anthropic-pc-tier-length"
       ],
-      "note": "In force from at least 2026-10-26, the date of the last github/docs commit to the price table in the snapshot (cc0c29a); earlier prices are not sourced yet. extendedCacheWriteUsdPerM (1-hour cache write) is 2x the input price, from Anthropic's prompt-caching docs; GitHub's table has no 1-hour column."
+      "note": "Added to the github/docs price table in eb975b9 (2026-10-07). Unchanged through cc0c29a (2026-10-26), the last commit to the table as of 2026-11-05. Until github/docs 8e7396e (2026-10-28) the docs page's Anthropic table had no tier or threshold columns, so it showed this model's two rows unlabelled; the table's data gives the 100K threshold. extendedCacheWriteUsdPerM (1-hour cache write) is 2x the input price, from Anthropic's prompt-caching docs; GitHub's table has no 1-hour column."
     },
     {
-      "id": "github-copilot:claude-sonnet-4:2026-10-26",
+      "id": "github-copilot:claude-sonnet-4:2026-10-01",
       "channel": "github-copilot",
       "modelId": "claude-sonnet-4",
       "currency": "USD",
-      "effectiveFrom": "2026-10-26",
+      "effectiveFrom": "2026-10-01",
       "tiers": [
         {
           "inputUsdPerM": 3.0,
@@ -124,18 +350,19 @@
       ],
       "kind": "list",
       "sourceIds": [
+        "gh-pricing-table-7f63f3a-claude-sonnet-4",
         "gh-pricing-table",
         "gh-models-pricing-anthropic",
         "anthropic-pc-pricing-1h"
       ],
-      "note": "In force from at least 2026-10-26, the date of the last github/docs commit to the price table in the snapshot (cc0c29a); earlier prices are not sourced yet. extendedCacheWriteUsdPerM (1-hour cache write) is 2x the input price, from Anthropic's prompt-caching docs; GitHub's table has no 1-hour column."
+      "note": "In force on 2026-10-01: the github/docs price table at 7f63f3a (2026-09-29), unchanged until 9c7da1a (2026-10-02), lists it. Unchanged through cc0c29a (2026-10-26), the last commit to the table as of 2026-11-05. extendedCacheWriteUsdPerM (1-hour cache write) is 2x the input price, from Anthropic's prompt-caching docs; GitHub's table has no 1-hour column."
     },
     {
-      "id": "github-copilot:claude-sonnet-4.6:2026-10-26",
+      "id": "github-copilot:claude-sonnet-4.6:2026-10-01",
       "channel": "github-copilot",
       "modelId": "claude-sonnet-4.6",
       "currency": "USD",
-      "effectiveFrom": "2026-10-26",
+      "effectiveFrom": "2026-10-01",
       "tiers": [
         {
           "inputUsdPerM": 3.0,
@@ -147,18 +374,19 @@
       ],
       "kind": "list",
       "sourceIds": [
+        "gh-pricing-table-7f63f3a-claude-sonnet-4.6",
         "gh-pricing-table",
         "gh-models-pricing-anthropic",
         "anthropic-pc-pricing-1h"
       ],
-      "note": "In force from at least 2026-10-26, the date of the last github/docs commit to the price table in the snapshot (cc0c29a); earlier prices are not sourced yet. extendedCacheWriteUsdPerM (1-hour cache write) is 2x the input price, from Anthropic's prompt-caching docs; GitHub's table has no 1-hour column."
+      "note": "In force on 2026-10-01: the github/docs price table at 7f63f3a (2026-09-29), unchanged until 9c7da1a (2026-10-02), lists it. Unchanged through cc0c29a (2026-10-26), the last commit to the table as of 2026-11-05. extendedCacheWriteUsdPerM (1-hour cache write) is 2x the input price, from Anthropic's prompt-caching docs; GitHub's table has no 1-hour column."
     },
     {
-      "id": "github-copilot:claude-opus-4.8:2026-10-26",
+      "id": "github-copilot:claude-opus-4.8:2026-10-01",
       "channel": "github-copilot",
       "modelId": "claude-opus-4.8",
       "currency": "USD",
-      "effectiveFrom": "2026-10-26",
+      "effectiveFrom": "2026-10-01",
       "tiers": [
         {
           "inputUsdPerM": 5.0,
@@ -170,18 +398,19 @@
       ],
       "kind": "list",
       "sourceIds": [
+        "gh-pricing-table-7f63f3a-claude-opus-4.8",
         "gh-pricing-table",
         "gh-models-pricing-anthropic",
         "anthropic-pc-pricing-1h"
       ],
-      "note": "In force from at least 2026-10-26, the date of the last github/docs commit to the price table in the snapshot (cc0c29a); earlier prices are not sourced yet. extendedCacheWriteUsdPerM (1-hour cache write) is 2x the input price, from Anthropic's prompt-caching docs; GitHub's table has no 1-hour column."
+      "note": "In force on 2026-10-01: the github/docs price table at 7f63f3a (2026-09-29), unchanged until 9c7da1a (2026-10-02), lists it. Unchanged through cc0c29a (2026-10-26), the last commit to the table as of 2026-11-05. extendedCacheWriteUsdPerM (1-hour cache write) is 2x the input price, from Anthropic's prompt-caching docs; GitHub's table has no 1-hour column."
     },
     {
-      "id": "github-copilot:claude-opus-5:2026-10-26",
+      "id": "github-copilot:claude-opus-5:2026-10-01",
       "channel": "github-copilot",
       "modelId": "claude-opus-5",
       "currency": "USD",
-      "effectiveFrom": "2026-10-26",
+      "effectiveFrom": "2026-10-01",
       "tiers": [
         {
           "inputUsdPerM": 5.0,
@@ -193,18 +422,19 @@
       ],
       "kind": "list",
       "sourceIds": [
+        "gh-pricing-table-7f63f3a-claude-opus-5",
         "gh-pricing-table",
         "gh-models-pricing-anthropic",
         "anthropic-pc-pricing-1h"
       ],
-      "note": "In force from at least 2026-10-26, the date of the last github/docs commit to the price table in the snapshot (cc0c29a); earlier prices are not sourced yet. extendedCacheWriteUsdPerM (1-hour cache write) is 2x the input price, from Anthropic's prompt-caching docs; GitHub's table has no 1-hour column."
+      "note": "In force on 2026-10-01: the github/docs price table at 7f63f3a (2026-09-29), unchanged until 9c7da1a (2026-10-02), lists it. Unchanged through cc0c29a (2026-10-26), the last commit to the table as of 2026-11-05. extendedCacheWriteUsdPerM (1-hour cache write) is 2x the input price, from Anthropic's prompt-caching docs; GitHub's table has no 1-hour column."
     },
     {
-      "id": "github-copilot:claude-opus-5.5:2026-10-26",
+      "id": "github-copilot:claude-opus-5.5:2026-10-01",
       "channel": "github-copilot",
       "modelId": "claude-opus-5.5",
       "currency": "USD",
-      "effectiveFrom": "2026-10-26",
+      "effectiveFrom": "2026-10-01",
       "tiers": [
         {
           "inputUsdPerM": 4.0,
@@ -216,18 +446,19 @@
       ],
       "kind": "list",
       "sourceIds": [
+        "gh-pricing-table-7f63f3a-claude-opus-5.5",
         "gh-pricing-table",
         "gh-models-pricing-anthropic",
         "anthropic-pc-pricing-1h"
       ],
-      "note": "In force from at least 2026-10-26, the date of the last github/docs commit to the price table in the snapshot (cc0c29a); earlier prices are not sourced yet. extendedCacheWriteUsdPerM (1-hour cache write) is 2x the input price, from Anthropic's prompt-caching docs; GitHub's table has no 1-hour column."
+      "note": "In force on 2026-10-01: the github/docs price table at 7f63f3a (2026-09-29), unchanged until 9c7da1a (2026-10-02), lists it. Unchanged through cc0c29a (2026-10-26), the last commit to the table as of 2026-11-05. extendedCacheWriteUsdPerM (1-hour cache write) is 2x the input price, from Anthropic's prompt-caching docs; GitHub's table has no 1-hour column."
     },
     {
-      "id": "github-copilot:claude-sonnet-5:2026-10-26",
+      "id": "github-copilot:claude-sonnet-5:2026-10-01",
       "channel": "github-copilot",
       "modelId": "claude-sonnet-5",
       "currency": "USD",
-      "effectiveFrom": "2026-10-26",
+      "effectiveFrom": "2026-10-01",
       "tiers": [
         {
           "inputUsdPerM": 2.0,
@@ -239,18 +470,43 @@
       ],
       "kind": "list",
       "sourceIds": [
+        "gh-pricing-table-7f63f3a-claude-sonnet-5",
         "gh-pricing-table",
         "gh-models-pricing-anthropic",
         "anthropic-pc-pricing-1h"
       ],
-      "note": "In force from at least 2026-10-26, the date of the last github/docs commit to the price table in the snapshot (cc0c29a); earlier prices are not sourced yet. extendedCacheWriteUsdPerM (1-hour cache write) is 2x the input price, from Anthropic's prompt-caching docs; GitHub's table has no 1-hour column."
+      "note": "In force on 2026-10-01: the github/docs price table at 7f63f3a (2026-09-29), unchanged until 9c7da1a (2026-10-02), lists it. Unchanged through cc0c29a (2026-10-26), the last commit to the table as of 2026-11-05. extendedCacheWriteUsdPerM (1-hour cache write) is 2x the input price, from Anthropic's prompt-caching docs; GitHub's table has no 1-hour column."
     },
     {
-      "id": "github-copilot:claude-sonnet-5.5:2026-10-26",
+      "id": "github-copilot:claude-sonnet-5.5:2026-10-01",
       "channel": "github-copilot",
       "modelId": "claude-sonnet-5.5",
       "currency": "USD",
-      "effectiveFrom": "2026-10-26",
+      "effectiveFrom": "2026-10-01",
+      "effectiveTo": "2026-10-07",
+      "tiers": [
+        {
+          "inputUsdPerM": 2.0,
+          "cachedInputUsdPerM": 0.2,
+          "cacheWriteUsdPerM": 2.5,
+          "extendedCacheWriteUsdPerM": 4.0,
+          "outputUsdPerM": 10.0
+        }
+      ],
+      "kind": "list",
+      "sourceIds": [
+        "gh-pricing-table-7f63f3a-claude-sonnet-5.5",
+        "gh-models-pricing-anthropic",
+        "anthropic-pc-pricing-1h"
+      ],
+      "note": "In force on 2026-10-01: the github/docs price table at 7f63f3a (2026-09-29), unchanged until 9c7da1a (2026-10-02), lists it. Ended by eb975b9 (2026-10-07), which changed cached_input from $0.20 to $0.10. extendedCacheWriteUsdPerM (1-hour cache write) is 2x the input price, from Anthropic's prompt-caching docs; GitHub's table has no 1-hour column."
+    },
+    {
+      "id": "github-copilot:claude-sonnet-5.5:2026-10-07",
+      "channel": "github-copilot",
+      "modelId": "claude-sonnet-5.5",
+      "currency": "USD",
+      "effectiveFrom": "2026-10-07",
       "tiers": [
         {
           "inputUsdPerM": 2.0,
@@ -262,18 +518,19 @@
       ],
       "kind": "list",
       "sourceIds": [
+        "gh-pricing-table-eb975b9-claude-sonnet-5.5",
         "gh-pricing-table",
         "gh-models-pricing-anthropic",
         "anthropic-pc-pricing-1h"
       ],
-      "note": "In force from at least 2026-10-26, the date of the last github/docs commit to the price table in the snapshot (cc0c29a); earlier prices are not sourced yet. extendedCacheWriteUsdPerM (1-hour cache write) is 2x the input price, from Anthropic's prompt-caching docs; GitHub's table has no 1-hour column."
+      "note": "Cached input lowered from $0.20 to $0.10 in github/docs eb975b9 (2026-10-07). Unchanged through cc0c29a (2026-10-26), the last commit to the table as of 2026-11-05. extendedCacheWriteUsdPerM (1-hour cache write) is 2x the input price, from Anthropic's prompt-caching docs; GitHub's table has no 1-hour column."
     },
     {
-      "id": "github-copilot:claude-opus-4.8-fast:2026-10-26",
+      "id": "github-copilot:claude-opus-4.8-fast:2026-10-01",
       "channel": "github-copilot",
       "modelId": "claude-opus-4.8-fast",
       "currency": "USD",
-      "effectiveFrom": "2026-10-26",
+      "effectiveFrom": "2026-10-01",
       "tiers": [
         {
           "inputUsdPerM": 10.0,
@@ -284,17 +541,18 @@
       ],
       "kind": "list",
       "sourceIds": [
+        "gh-pricing-table-7f63f3a-claude-opus-4.8-fast",
         "gh-pricing-table",
         "gh-models-pricing-anthropic"
       ],
-      "note": "In force from at least 2026-10-26, the date of the last github/docs commit to the price table in the snapshot (cc0c29a); earlier prices are not sourced yet."
+      "note": "In force on 2026-10-01: the github/docs price table at 7f63f3a (2026-09-29), unchanged until 9c7da1a (2026-10-02), lists it. Unchanged through cc0c29a (2026-10-26), the last commit to the table as of 2026-11-05."
     },
     {
-      "id": "github-copilot:claude-fable-5:2026-10-26",
+      "id": "github-copilot:claude-fable-5:2026-10-01",
       "channel": "github-copilot",
       "modelId": "claude-fable-5",
       "currency": "USD",
-      "effectiveFrom": "2026-10-26",
+      "effectiveFrom": "2026-10-01",
       "tiers": [
         {
           "inputUsdPerM": 10.0,
@@ -306,18 +564,19 @@
       ],
       "kind": "list",
       "sourceIds": [
+        "gh-pricing-table-7f63f3a-claude-fable-5",
         "gh-pricing-table",
         "gh-models-pricing-anthropic",
         "anthropic-pc-pricing-1h"
       ],
-      "note": "In force from at least 2026-10-26, the date of the last github/docs commit to the price table in the snapshot (cc0c29a); earlier prices are not sourced yet. extendedCacheWriteUsdPerM (1-hour cache write) is 2x the input price, from Anthropic's prompt-caching docs; GitHub's table has no 1-hour column."
+      "note": "In force on 2026-10-01: the github/docs price table at 7f63f3a (2026-09-29), unchanged until 9c7da1a (2026-10-02), lists it. Unchanged through cc0c29a (2026-10-26), the last commit to the table as of 2026-11-05. extendedCacheWriteUsdPerM (1-hour cache write) is 2x the input price, from Anthropic's prompt-caching docs; GitHub's table has no 1-hour column."
     },
     {
-      "id": "github-copilot:claude-fable-5.1:2026-10-26",
+      "id": "github-copilot:claude-fable-5.1:2026-10-01",
       "channel": "github-copilot",
       "modelId": "claude-fable-5.1",
       "currency": "USD",
-      "effectiveFrom": "2026-10-26",
+      "effectiveFrom": "2026-10-01",
       "tiers": [
         {
           "inputUsdPerM": 10.0,
@@ -329,18 +588,19 @@
       ],
       "kind": "list",
       "sourceIds": [
+        "gh-pricing-table-7f63f3a-claude-fable-5.1",
         "gh-pricing-table",
         "gh-models-pricing-anthropic",
         "anthropic-pc-pricing-1h"
       ],
-      "note": "In force from at least 2026-10-26, the date of the last github/docs commit to the price table in the snapshot (cc0c29a); earlier prices are not sourced yet. extendedCacheWriteUsdPerM (1-hour cache write) is 2x the input price, from Anthropic's prompt-caching docs; GitHub's table has no 1-hour column."
+      "note": "In force on 2026-10-01: the github/docs price table at 7f63f3a (2026-09-29), unchanged until 9c7da1a (2026-10-02), lists it. Unchanged through cc0c29a (2026-10-26), the last commit to the table as of 2026-11-05. extendedCacheWriteUsdPerM (1-hour cache write) is 2x the input price, from Anthropic's prompt-caching docs; GitHub's table has no 1-hour column."
     },
     {
-      "id": "github-copilot:gemini-3.8-flash:2026-10-26",
+      "id": "github-copilot:gemini-3.8-flash:2026-10-01",
       "channel": "github-copilot",
       "modelId": "gemini-3.8-flash",
       "currency": "USD",
-      "effectiveFrom": "2026-10-26",
+      "effectiveFrom": "2026-10-01",
       "effectiveTo": "2027-01-01",
       "tiers": [
         {
@@ -353,17 +613,19 @@
       "kind": "promo",
       "promoEndsAt": "2026-12-31",
       "sourceIds": [
+        "gh-pricing-table-7f63f3a-gemini-3.8-flash",
         "gh-pricing-table",
+        "gh-models-pricing-page-7f63f3a-gemini-flash-promo",
         "gh-models-pricing-gemini-flash-promo"
       ],
-      "note": "In force from at least 2026-10-26, the date of the last github/docs commit to the price table in the snapshot (cc0c29a); earlier prices are not sourced yet. Promotional price; GitHub states the promotion's end as 2026-12-31 and has not published the price after it."
+      "note": "In force on 2026-10-01: the github/docs price table at 7f63f3a (2026-09-29), unchanged until 9c7da1a (2026-10-02), lists it. Unchanged through cc0c29a (2026-10-26), the last commit to the table as of 2026-11-05. Promotional price; GitHub states the promotion's end as 2026-12-31 and has not published the price after it."
     },
     {
-      "id": "github-copilot:gemini-4-argon:2026-10-26",
+      "id": "github-copilot:gemini-4-argon:2026-10-13",
       "channel": "github-copilot",
       "modelId": "gemini-4-argon",
       "currency": "USD",
-      "effectiveFrom": "2026-10-26",
+      "effectiveFrom": "2026-10-13",
       "effectiveTo": "2026-12-01",
       "tiers": [
         {
@@ -376,17 +638,19 @@
       "kind": "promo",
       "promoEndsAt": "2026-12-01",
       "sourceIds": [
+        "gh-pricing-table-9245795-gemini-4-argon",
         "gh-pricing-table",
+        "gh-models-pricing-page-9245795-argon-promo",
         "gh-models-pricing-argon-promo"
       ],
-      "note": "In force from at least 2026-10-26, the date of the last github/docs commit to the price table in the snapshot (cc0c29a); earlier prices are not sourced yet. Promotional price; GitHub states the promotion's end as 2026-12-01 and has not published the price after it."
+      "note": "Added to the github/docs price table in 9245795 (2026-10-13). Unchanged through cc0c29a (2026-10-26), the last commit to the table as of 2026-11-05. Promotional price; GitHub states the promotion's end as 2026-12-01 and has not published the price after it."
     },
     {
-      "id": "github-copilot:mai-code-1.1-flash:2026-10-26",
+      "id": "github-copilot:mai-code-1.1-flash:2026-10-01",
       "channel": "github-copilot",
       "modelId": "mai-code-1.1-flash",
       "currency": "USD",
-      "effectiveFrom": "2026-10-26",
+      "effectiveFrom": "2026-10-01",
       "tiers": [
         {
           "inputUsdPerM": 0.2,
@@ -397,16 +661,17 @@
       ],
       "kind": "list",
       "sourceIds": [
+        "gh-pricing-table-7f63f3a-mai-code-1.1-flash",
         "gh-pricing-table"
       ],
-      "note": "In force from at least 2026-10-26, the date of the last github/docs commit to the price table in the snapshot (cc0c29a); earlier prices are not sourced yet."
+      "note": "In force on 2026-10-01: the github/docs price table at 7f63f3a (2026-09-29), unchanged until 9c7da1a (2026-10-02), lists it. Unchanged through cc0c29a (2026-10-26), the last commit to the table as of 2026-11-05."
     },
     {
-      "id": "github-copilot:kimi-k3:2026-10-26",
+      "id": "github-copilot:kimi-k3:2026-10-01",
       "channel": "github-copilot",
       "modelId": "kimi-k3",
       "currency": "USD",
-      "effectiveFrom": "2026-10-26",
+      "effectiveFrom": "2026-10-01",
       "tiers": [
         {
           "inputUsdPerM": 3.0,
@@ -417,16 +682,17 @@
       ],
       "kind": "list",
       "sourceIds": [
+        "gh-pricing-table-7f63f3a-kimi-k3",
         "gh-pricing-table"
       ],
-      "note": "In force from at least 2026-10-26, the date of the last github/docs commit to the price table in the snapshot (cc0c29a); earlier prices are not sourced yet."
+      "note": "In force on 2026-10-01: the github/docs price table at 7f63f3a (2026-09-29), unchanged until 9c7da1a (2026-10-02), lists it. Unchanged through cc0c29a (2026-10-26), the last commit to the table as of 2026-11-05."
     },
     {
-      "id": "github-copilot:gpt-5.3-codex:2026-10-26",
+      "id": "github-copilot:gpt-5.3-codex:2026-10-01",
       "channel": "github-copilot",
       "modelId": "gpt-5.3-codex",
       "currency": "USD",
-      "effectiveFrom": "2026-10-26",
+      "effectiveFrom": "2026-10-01",
       "tiers": [
         {
           "inputUsdPerM": 1.75,
@@ -437,17 +703,18 @@
       ],
       "kind": "list",
       "sourceIds": [
+        "gh-pricing-table-7f63f3a-gpt-5.3-codex",
         "gh-pricing-table",
         "gh-models-pricing-openai"
       ],
-      "note": "In force from at least 2026-10-26, the date of the last github/docs commit to the price table in the snapshot (cc0c29a); earlier prices are not sourced yet."
+      "note": "In force on 2026-10-01: the github/docs price table at 7f63f3a (2026-09-29), unchanged until 9c7da1a (2026-10-02), lists it. Unchanged through cc0c29a (2026-10-26), the last commit to the table as of 2026-11-05."
     },
     {
-      "id": "github-copilot:gpt-5.4-nano:2026-10-26",
+      "id": "github-copilot:gpt-5.4-nano:2026-10-01",
       "channel": "github-copilot",
       "modelId": "gpt-5.4-nano",
       "currency": "USD",
-      "effectiveFrom": "2026-10-26",
+      "effectiveFrom": "2026-10-01",
       "tiers": [
         {
           "inputUsdPerM": 0.2,
@@ -458,17 +725,18 @@
       ],
       "kind": "list",
       "sourceIds": [
+        "gh-pricing-table-7f63f3a-gpt-5.4-nano",
         "gh-pricing-table",
         "gh-models-pricing-openai"
       ],
-      "note": "In force from at least 2026-10-26, the date of the last github/docs commit to the price table in the snapshot (cc0c29a); earlier prices are not sourced yet."
+      "note": "In force on 2026-10-01: the github/docs price table at 7f63f3a (2026-09-29), unchanged until 9c7da1a (2026-10-02), lists it. Unchanged through cc0c29a (2026-10-26), the last commit to the table as of 2026-11-05."
     },
     {
-      "id": "github-copilot:gpt-5.6-luna:2026-10-26",
+      "id": "github-copilot:gpt-5.6-luna:2026-10-01",
       "channel": "github-copilot",
       "modelId": "gpt-5.6-luna",
       "currency": "USD",
-      "effectiveFrom": "2026-10-26",
+      "effectiveFrom": "2026-10-01",
       "tiers": [
         {
           "maxInputTokens": 200000,
@@ -486,17 +754,18 @@
       ],
       "kind": "list",
       "sourceIds": [
+        "gh-pricing-table-7f63f3a-gpt-5.6-luna",
         "gh-pricing-table",
         "gh-models-pricing-openai"
       ],
-      "note": "In force from at least 2026-10-26, the date of the last github/docs commit to the price table in the snapshot (cc0c29a); earlier prices are not sourced yet."
+      "note": "In force on 2026-10-01: the github/docs price table at 7f63f3a (2026-09-29), unchanged until 9c7da1a (2026-10-02), lists it. Unchanged through cc0c29a (2026-10-26), the last commit to the table as of 2026-11-05."
     },
     {
-      "id": "github-copilot:gpt-5.6-sol:2026-10-26",
+      "id": "github-copilot:gpt-5.6-sol:2026-10-01",
       "channel": "github-copilot",
       "modelId": "gpt-5.6-sol",
       "currency": "USD",
-      "effectiveFrom": "2026-10-26",
+      "effectiveFrom": "2026-10-01",
       "tiers": [
         {
           "maxInputTokens": 272000,
@@ -514,17 +783,18 @@
       ],
       "kind": "list",
       "sourceIds": [
+        "gh-pricing-table-7f63f3a-gpt-5.6-sol",
         "gh-pricing-table",
         "gh-models-pricing-openai"
       ],
-      "note": "In force from at least 2026-10-26, the date of the last github/docs commit to the price table in the snapshot (cc0c29a); earlier prices are not sourced yet."
+      "note": "In force on 2026-10-01: the github/docs price table at 7f63f3a (2026-09-29), unchanged until 9c7da1a (2026-10-02), lists it. Unchanged through cc0c29a (2026-10-26), the last commit to the table as of 2026-11-05."
     },
     {
-      "id": "github-copilot:gpt-5.6-terra:2026-10-26",
+      "id": "github-copilot:gpt-5.6-terra:2026-10-01",
       "channel": "github-copilot",
       "modelId": "gpt-5.6-terra",
       "currency": "USD",
-      "effectiveFrom": "2026-10-26",
+      "effectiveFrom": "2026-10-01",
       "tiers": [
         {
           "maxInputTokens": 272000,
@@ -542,17 +812,18 @@
       ],
       "kind": "list",
       "sourceIds": [
+        "gh-pricing-table-7f63f3a-gpt-5.6-terra",
         "gh-pricing-table",
         "gh-models-pricing-openai"
       ],
-      "note": "In force from at least 2026-10-26, the date of the last github/docs commit to the price table in the snapshot (cc0c29a); earlier prices are not sourced yet."
+      "note": "In force on 2026-10-01: the github/docs price table at 7f63f3a (2026-09-29), unchanged until 9c7da1a (2026-10-02), lists it. Unchanged through cc0c29a (2026-10-26), the last commit to the table as of 2026-11-05."
     },
     {
-      "id": "github-copilot:gpt-6-astra:2026-10-26",
+      "id": "github-copilot:gpt-6-astra:2026-10-01",
       "channel": "github-copilot",
       "modelId": "gpt-6-astra",
       "currency": "USD",
-      "effectiveFrom": "2026-10-26",
+      "effectiveFrom": "2026-10-01",
       "tiers": [
         {
           "maxInputTokens": 272000,
@@ -570,17 +841,18 @@
       ],
       "kind": "list",
       "sourceIds": [
+        "gh-pricing-table-7f63f3a-gpt-6-astra",
         "gh-pricing-table",
         "gh-models-pricing-openai"
       ],
-      "note": "In force from at least 2026-10-26, the date of the last github/docs commit to the price table in the snapshot (cc0c29a); earlier prices are not sourced yet."
+      "note": "In force on 2026-10-01: the github/docs price table at 7f63f3a (2026-09-29), unchanged until 9c7da1a (2026-10-02), lists it. Unchanged through cc0c29a (2026-10-26), the last commit to the table as of 2026-11-05."
     },
     {
-      "id": "github-copilot:gpt-6-luna:2026-10-26",
+      "id": "github-copilot:gpt-6-luna:2026-10-01",
       "channel": "github-copilot",
       "modelId": "gpt-6-luna",
       "currency": "USD",
-      "effectiveFrom": "2026-10-26",
+      "effectiveFrom": "2026-10-01",
       "tiers": [
         {
           "maxInputTokens": 272000,
@@ -598,17 +870,18 @@
       ],
       "kind": "list",
       "sourceIds": [
+        "gh-pricing-table-7f63f3a-gpt-6-luna",
         "gh-pricing-table",
         "gh-models-pricing-openai"
       ],
-      "note": "In force from at least 2026-10-26, the date of the last github/docs commit to the price table in the snapshot (cc0c29a); earlier prices are not sourced yet."
+      "note": "In force on 2026-10-01: the github/docs price table at 7f63f3a (2026-09-29), unchanged until 9c7da1a (2026-10-02), lists it. Unchanged through cc0c29a (2026-10-26), the last commit to the table as of 2026-11-05."
     },
     {
-      "id": "github-copilot:gpt-6-sol:2026-10-26",
+      "id": "github-copilot:gpt-6-sol:2026-10-01",
       "channel": "github-copilot",
       "modelId": "gpt-6-sol",
       "currency": "USD",
-      "effectiveFrom": "2026-10-26",
+      "effectiveFrom": "2026-10-01",
       "tiers": [
         {
           "maxInputTokens": 272000,
@@ -626,17 +899,18 @@
       ],
       "kind": "list",
       "sourceIds": [
+        "gh-pricing-table-7f63f3a-gpt-6-sol",
         "gh-pricing-table",
         "gh-models-pricing-openai"
       ],
-      "note": "In force from at least 2026-10-26, the date of the last github/docs commit to the price table in the snapshot (cc0c29a); earlier prices are not sourced yet."
+      "note": "In force on 2026-10-01: the github/docs price table at 7f63f3a (2026-09-29), unchanged until 9c7da1a (2026-10-02), lists it. Unchanged through cc0c29a (2026-10-26), the last commit to the table as of 2026-11-05."
     },
     {
-      "id": "github-copilot:gpt-6.1-sol:2026-10-26",
+      "id": "github-copilot:gpt-6.1-sol:2026-10-01",
       "channel": "github-copilot",
       "modelId": "gpt-6.1-sol",
       "currency": "USD",
-      "effectiveFrom": "2026-10-26",
+      "effectiveFrom": "2026-10-01",
       "tiers": [
         {
           "maxInputTokens": 272000,
@@ -654,10 +928,11 @@
       ],
       "kind": "list",
       "sourceIds": [
+        "gh-pricing-table-7f63f3a-gpt-6.1-sol",
         "gh-pricing-table",
         "gh-models-pricing-openai"
       ],
-      "note": "In force from at least 2026-10-26, the date of the last github/docs commit to the price table in the snapshot (cc0c29a); earlier prices are not sourced yet."
+      "note": "In force on 2026-10-01: the github/docs price table at 7f63f3a (2026-09-29), unchanged until 9c7da1a (2026-10-02), lists it. Unchanged through cc0c29a (2026-10-26), the last commit to the table as of 2026-11-05."
     },
     {
       "id": "github-copilot:gpt-6.1-terra:2026-10-26",
@@ -682,17 +957,18 @@
       ],
       "kind": "list",
       "sourceIds": [
+        "gh-pricing-table-cc0c29a-gpt-6.1-terra",
         "gh-pricing-table",
         "gh-models-pricing-openai"
       ],
-      "note": "In force from at least 2026-10-26, the date of the last github/docs commit to the price table in the snapshot (cc0c29a); earlier prices are not sourced yet."
+      "note": "Added to the github/docs price table in cc0c29a (2026-10-26), the last commit to the table as of 2026-11-05."
     },
     {
-      "id": "github-copilot:grok-4.5:2026-10-26",
+      "id": "github-copilot:grok-4.5:2026-10-01",
       "channel": "github-copilot",
       "modelId": "grok-4.5",
       "currency": "USD",
-      "effectiveFrom": "2026-10-26",
+      "effectiveFrom": "2026-10-01",
       "tiers": [
         {
           "maxInputTokens": 200000,
@@ -710,16 +986,17 @@
       ],
       "kind": "list",
       "sourceIds": [
+        "gh-pricing-table-7f63f3a-grok-4.5",
         "gh-pricing-table"
       ],
-      "note": "In force from at least 2026-10-26, the date of the last github/docs commit to the price table in the snapshot (cc0c29a); earlier prices are not sourced yet."
+      "note": "In force on 2026-10-01: the github/docs price table at 7f63f3a (2026-09-29), unchanged until 9c7da1a (2026-10-02), lists it. Unchanged through cc0c29a (2026-10-26), the last commit to the table as of 2026-11-05."
     },
     {
-      "id": "github-copilot:grok-4.6:2026-10-26",
+      "id": "github-copilot:grok-4.6:2026-10-01",
       "channel": "github-copilot",
       "modelId": "grok-4.6",
       "currency": "USD",
-      "effectiveFrom": "2026-10-26",
+      "effectiveFrom": "2026-10-01",
       "tiers": [
         {
           "maxInputTokens": 200000,
@@ -737,16 +1014,17 @@
       ],
       "kind": "list",
       "sourceIds": [
+        "gh-pricing-table-7f63f3a-grok-4.6",
         "gh-pricing-table"
       ],
-      "note": "In force from at least 2026-10-26, the date of the last github/docs commit to the price table in the snapshot (cc0c29a); earlier prices are not sourced yet."
+      "note": "In force on 2026-10-01: the github/docs price table at 7f63f3a (2026-09-29), unchanged until 9c7da1a (2026-10-02), lists it. Unchanged through cc0c29a (2026-10-26), the last commit to the table as of 2026-11-05."
     },
     {
-      "id": "github-copilot:grok-4.7:2026-10-26",
+      "id": "github-copilot:grok-4.7:2026-10-01",
       "channel": "github-copilot",
       "modelId": "grok-4.7",
       "currency": "USD",
-      "effectiveFrom": "2026-10-26",
+      "effectiveFrom": "2026-10-01",
       "tiers": [
         {
           "maxInputTokens": 200000,
@@ -764,9 +1042,10 @@
       ],
       "kind": "list",
       "sourceIds": [
+        "gh-pricing-table-7f63f3a-grok-4.7",
         "gh-pricing-table"
       ],
-      "note": "In force from at least 2026-10-26, the date of the last github/docs commit to the price table in the snapshot (cc0c29a); earlier prices are not sourced yet."
+      "note": "In force on 2026-10-01: the github/docs price table at 7f63f3a (2026-09-29), unchanged until 9c7da1a (2026-10-02), lists it. Unchanged through cc0c29a (2026-10-26), the last commit to the table as of 2026-11-05."
     }
   ]
 }

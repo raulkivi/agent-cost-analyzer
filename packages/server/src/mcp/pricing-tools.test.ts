@@ -91,7 +91,7 @@ describe("get_price_book", () => {
   it("filters by channel and model, and with `at` returns the version in force then", async () => {
     const listing = await call({ channel: "github-copilot", model: "claude-sonnet-5.5", at: "2026-11-05" });
 
-    expect(listing.versions.map((version) => version.id)).toEqual(["github-copilot:claude-sonnet-5.5:2026-10-26"]);
+    expect(listing.versions.map((version) => version.id)).toEqual(["github-copilot:claude-sonnet-5.5:2026-10-07"]);
     expect(listing.sources.map((source) => source.id)).toContain("gh-pricing-table");
   });
 
@@ -99,7 +99,7 @@ describe("get_price_book", () => {
     const before = await call({ channel: "github-copilot", model: "claude-sonnet-5.5", at: "2026-03-01" });
     expect(before.versions).toEqual([]);
     expect(before.unknown).toEqual([
-      { channel: "github-copilot", modelId: "claude-sonnet-5.5", reason: "no price for claude-sonnet-5.5 on github-copilot before 2026-10-26" },
+      { channel: "github-copilot", modelId: "claude-sonnet-5.5", reason: "no price for claude-sonnet-5.5 on github-copilot before 2026-10-01" },
     ]);
 
     const noChannel = await call({ channel: "openai-api", model: "gpt-6-sol" });

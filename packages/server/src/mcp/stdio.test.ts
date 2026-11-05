@@ -77,7 +77,7 @@ describe("stdio MCP entry point", () => {
 
     expect(result.isError).toBeFalsy();
     expect(priceBookListingSchema.parse(result.structuredContent).versions.map((version) => version.id)).toEqual([
-      "github-copilot:claude-sonnet-5.5:2026-10-26",
+      "github-copilot:claude-sonnet-5.5:2026-10-07",
     ]);
   }, 60_000);
 

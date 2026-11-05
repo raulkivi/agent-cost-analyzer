@@ -27,7 +27,8 @@ describe("bundled price book (step 15.5)", () => {
   it("cites at least one dated https source for every version, GitHub's price table first", () => {
     const byId = new Map(sources.map((cited) => [cited.id, cited]));
     for (const version of versions) {
-      expect(version.sourceIds[0], version.id).toBe("gh-pricing-table");
+      // The table as of the commit that proves the version's start (D8 history).
+      expect(version.sourceIds[0], version.id).toMatch(/^gh-pricing-table/);
       for (const id of version.sourceIds) {
         expect(byId.get(id)?.checkedAt, `${version.id} -> ${id}`).toMatch(/^\d{4}-\d{2}-\d{2}$/);
         expect(byId.get(id)?.url, `${version.id} -> ${id}`).toMatch(/^https:\/\//);

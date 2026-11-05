@@ -91,7 +91,7 @@ describe("price book API", () => {
       .get("/api/price-book")
       .query({ channel: "github-copilot", model: "claude-sonnet-5.5", at: "2026-11-05" });
 
-    expect(response.body.versions.map((version: { id: string }) => version.id)).toEqual(["github-copilot:claude-sonnet-5.5:2026-10-26"]);
+    expect(response.body.versions.map((version: { id: string }) => version.id)).toEqual(["github-copilot:claude-sonnet-5.5:2026-10-07"]);
   });
 
   it("answers 400 for an `at` that isn't an ISO date", async () => {
