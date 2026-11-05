@@ -63,11 +63,15 @@ describe("createExtensionApiService (extension composition, vscode-extension.md 
     expect(status.providers.map((provider) => provider.id)).toEqual(["vscode"]);
   });
 
-  it("serves Learn mode from the injected fixtures dir (G4)", async () => {
-    const scenarios = await buildService().listLearnScenarios();
+  it("serves Learn mode from the simulation: 17 scenarios on the default model (G4, D3, D13)", async () => {
+    const service = buildService();
+    const scenarios = await service.listLearnScenarios();
 
-    expect(scenarios.length).toBeGreaterThan(0);
+    expect(scenarios).toHaveLength(17);
     expect(scenarios.every((scenario) => scenario.mode === "learn")).toBe(true);
+    expect(scenarios.every((s) => s.model === "claude-sonnet-5.5")).toBe(true);
+    expect((await service.getLearnScenario("clear")).turns[0]!.simulation).toBeDefined();
+    await expect(service.getLearnScenario("cache-ttl-1-hour-breakpoint")).rejects.toThrow();
   });
 
   it("keeps the retention threshold in the injected store (D5)", async () => {

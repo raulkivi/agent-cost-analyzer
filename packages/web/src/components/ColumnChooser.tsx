@@ -1,10 +1,13 @@
 import { useEffect, useId, useRef, useState } from "react";
 import type { KeyboardEvent } from "react";
-import { REQUIRED_TURN_COLUMN, TURN_COLUMNS, type TurnColumnId } from "../lib/turn-columns.js";
+import { columnsApplyingTo, REQUIRED_TURN_COLUMN, TURN_COLUMNS, type TurnColumnId } from "../lib/turn-columns.js";
 
 interface ColumnChooserProps {
   visible: readonly TurnColumnId[];
   onChange: (visible: TurnColumnId[]) => void;
+  // The session is simulated, so the Cache column exists; otherwise it is
+  // neither listed nor counted.
+  simulated?: boolean;
 }
 
 // The turns table's column chooser (§3.5 Layout, mock-up board 1): a
@@ -12,7 +15,8 @@ interface ColumnChooserProps {
 // checkbox per column. A disclosure, not a dialog: focus moves freely;
 // Escape closes it, back on its button, and a click outside closes it
 // without touching the focus.
-export function ColumnChooser({ visible, onChange }: ColumnChooserProps) {
+export function ColumnChooser({ visible, onChange, simulated = false }: ColumnChooserProps) {
+  const columns = TURN_COLUMNS.filter((column) => columnsApplyingTo([column.id], simulated).length > 0);
   const [open, setOpen] = useState(false);
   const button = useRef<HTMLButtonElement>(null);
   const panelId = useId();
@@ -45,7 +49,7 @@ export function ColumnChooser({ visible, onChange }: ColumnChooserProps) {
   return (
     <div ref={root} className="column-chooser" onKeyDown={handleKeyDown}>
       <span className="text-muted" style={{ fontSize: 12 }}>
-        Showing {visible.length} of {TURN_COLUMNS.length} columns
+        Showing {columnsApplyingTo(visible, simulated).length} of {columns.length} columns
       </span>
       <button
         ref={button}
@@ -61,7 +65,7 @@ export function ColumnChooser({ visible, onChange }: ColumnChooserProps) {
       {open && (
         <fieldset id={panelId} className="column-chooser-panel">
           <legend className="card-kicker">Visible columns</legend>
-          {TURN_COLUMNS.map((column) => (
+          {columns.map((column) => (
             <label key={column.id} className="column-chooser-option">
               <input
                 type="checkbox"
