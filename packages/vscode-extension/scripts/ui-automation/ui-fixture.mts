@@ -3,7 +3,7 @@
 // (<storagePath>/settings), plus a 150-turn session (check 1.5), a system
 // prompt (1.11) and the Copilot CLI event logs. Node runs this directly
 // (type stripping), like the other fixture modules.
-import { mkdirSync, renameSync, writeFileSync } from "node:fs";
+import { cpSync, mkdirSync, renameSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { pathToFileURL } from "node:url";
@@ -60,12 +60,16 @@ export function createUiFixture(rootDir: string, options: UiFixtureOptions = {})
   writeFileSync(path.join(userDir, "workspaceStorage", "integration-workspace", "workspace.json"), JSON.stringify({ folder: pathToFileURL(rootDir).href }));
   seedLargeSession(path.join(userDir, "globalStorage", "github.copilot-chat", "session-store.db"), now);
   writeCopilotCliAgentHostStores(userDataDir);
+  // A copy: once enabled, the Copilot Chat built in to VS Code writes its own
+  // logs into COPILOT_HOME, which must not be the repo's fixture directory.
+  const copilotHome = path.join(rootDir, "copilot-home");
+  cpSync(COPILOT_CLI_FIXTURE_HOME, copilotHome, { recursive: true, filter: (source) => path.basename(source) !== "logs" });
 
   return {
     storagePath,
     userDataDir,
     userSettings: USER_SETTINGS,
-    copilotHome: COPILOT_CLI_FIXTURE_HOME,
+    copilotHome,
     usageSessionId: base.usageSessionId,
     usageSessionTitle: base.usageSessionTitle,
     largeSessionId: LARGE_SESSION_ID,
@@ -73,6 +77,27 @@ export function createUiFixture(rootDir: string, options: UiFixtureOptions = {})
     systemPromptMarker: SYSTEM_PROMPT_MARKER,
     listedSessionCount: base.sessionCount + 1 + Object.keys(COPILOT_CLI_FIXTURE_SESSION_IDS).length,
   };
+}
+
+export interface FirstRunFixture {
+  storagePath: string;
+  userDataDir: string;
+  // wdio:vscodeOptions.userSettings: quiet start-up and nothing of Copilot's.
+  userSettings: Record<string, string | number | boolean | object>;
+}
+
+// A VS Code that has never seen Copilot Chat (checks 1.1-1.3): a bare
+// user-data dir with no Copilot or Agent Host store, no Copilot setting and no
+// extension state, so the extension's first-run offer and its empty views are
+// what a new user sees. The Get Started walkthrough is left to the extension
+// (`workbench.startupEditor` stays none).
+export function createFirstRunFixture(rootDir: string): FirstRunFixture {
+  const storagePath = path.join(rootDir, "storage");
+  const userDataDir = path.join(storagePath, "settings");
+  const userSettings = Object.fromEntries(Object.entries(USER_SETTINGS).filter(([key]) => !key.startsWith("github.copilot")));
+  mkdirSync(path.join(userDataDir, "User"), { recursive: true });
+  writeFileSync(path.join(userDataDir, "User", "settings.json"), `${JSON.stringify(userSettings, null, 2)}\n`);
+  return { storagePath, userDataDir, userSettings };
 }
 
 function seedLargeSession(dbPath: string, now: Date): void {

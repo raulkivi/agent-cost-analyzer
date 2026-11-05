@@ -23,8 +23,19 @@ export interface VscodeHost {
   setting<T = unknown>(key: string): Promise<T | undefined>;
   activeEditor(): Promise<ActiveEditorState>;
   clipboardText(): Promise<string>;
-  // Resolves once the extension has registered its commands.
-  waitForExtension(): Promise<void>;
+  // Resolves once the extension has registered its commands, and (unless
+  // `keepStartupEditors`) has cleared the start-up Welcome tab away. `userDataDir`
+  // is the launch's own profile, for telling whether a Welcome tab is due (the
+  // main launch's when omitted, else none known: the tab is waited for). A spec
+  // that checks what the first run opens (check 1.1) keeps it.
+  waitForExtension(options?: { keepStartupEditors?: boolean; userDataDir?: string }): Promise<void>;
+  // For launches where the analyzer is installed, not under development (no
+  // Test-mode hooks): resolves once the workbench answers.
+  waitForWorkbench(): Promise<void>;
+  // Registered commands that start with `prefix`.
+  commandsWithPrefix(prefix: string): Promise<string[]>;
+  // The ids of the extensions the extension host runs, whose id starts with `prefix` (any case).
+  extensionIds(prefix: string): Promise<string[]>;
 }
 
 export const wdioVscodeHost: VscodeHost = {
@@ -61,7 +72,26 @@ export const wdioVscodeHost: VscodeHost = {
   async clipboardText() {
     return browser.executeWorkbench((vscode) => vscode.env.clipboard.readText());
   },
-  async waitForExtension() {
+  async waitForWorkbench() {
+    await browser.waitUntil(
+      async () => {
+        try {
+          await (await browser.getWorkbench()).getStatusBar().getItems();
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      { timeout: 60_000, timeoutMsg: "the workbench did not come up" },
+    );
+  },
+  async commandsWithPrefix(prefix) {
+    return browser.executeWorkbench(async (vscode, wanted: string) => (await vscode.commands.getCommands(true)).filter((id: string) => id.startsWith(wanted)), prefix);
+  },
+  async extensionIds(prefix) {
+    return browser.executeWorkbench((vscode, wanted: string) => vscode.extensions.all.map((extension: { id: string }) => extension.id).filter((id: string) => id.toLowerCase().startsWith(wanted.toLowerCase())), prefix);
+  },
+  async waitForExtension(options = {}) {
     await browser.waitUntil(
       async () => {
         try {
@@ -79,10 +109,11 @@ export const wdioVscodeHost: VscodeHost = {
     // the timeout), then close it, so specs begin from an empty editor area.
     // Once per launch (a spec file is one launch): a later call, from a
     // spec's setup, must not close the panel a test has just opened.
-    if (startupSettled) return;
+    if (options.keepStartupEditors === true || startupSettled) return;
     startupSettled = true;
     const workbench = await browser.getWorkbench();
-    if (!walkthroughAlreadyOffered(parseUiFixture(process.env[UI_FIXTURE_ENV]).userDataDir)) {
+    const userDataDir = options.userDataDir ?? (process.env[UI_FIXTURE_ENV] ? parseUiFixture(process.env[UI_FIXTURE_ENV]).userDataDir : undefined);
+    if (userDataDir === undefined || !walkthroughAlreadyOffered(userDataDir)) {
       await browser
         .waitUntil(async () => (await workbench.getEditorView().getOpenEditorTitles()).length > 0, { timeout: 20_000, interval: 500 })
         .catch(() => undefined);

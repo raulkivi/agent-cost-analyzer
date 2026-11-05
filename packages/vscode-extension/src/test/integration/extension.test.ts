@@ -182,6 +182,67 @@ suite("AI Credits Analyzer in a real VS Code (step 10.9)", function () {
       }
     });
 
+    // Checks 2.3 and 2.4 (docs/plans/vscode-extension-manual-checks.md) at the
+    // level of the tools Copilot would call; Copilot agent mode choosing and
+    // calling them stays manual (or the owner's opt-in real-Copilot suite).
+    test("answers the tools behind checks 2.3 and 2.4: the session the panel lists, with its AI Credits, and only the vscode provider", async () => {
+      await setMcpEnabled(true);
+      const [definition] = await waitFor(mcpServerDefinitions, (definitions) => definitions.length > 0, {
+        timeoutMs: WAIT_MS,
+        description: "the MCP server definition",
+      });
+      assert.ok(definition);
+      const client = new Client({ name: "integration-test", version: "1.0.0" });
+      await client.connect(new StdioClientTransport({ command: definition.command, args: definition.args, env: definition.env, stderr: "ignore" }));
+      try {
+        // 2.3: list_sessions finds the session; get_session_cost gives the AI Credits the Sessions view shows.
+        const listed = await client.callTool({ name: "list_sessions", arguments: { query: fixture.usageSessionTitle } });
+        assert.notEqual(listed.isError, true, JSON.stringify(listed.content));
+        const { sessions } = listed.structuredContent as { sessions: { id: string; title: string }[] };
+        assert.ok(
+          sessions.some((session) => session.id === fixture.usageSessionId),
+          "list_sessions finds the seeded usage session",
+        );
+        const cost = await client.callTool({ name: "get_session_cost", arguments: { sessionId: fixture.usageSessionId } });
+        assert.equal(typeof (cost.structuredContent as { totals: { aiCredits: { value: unknown } } }).totals.aiCredits.value, "number");
+        // The Sessions view says 9.65 for this session and get_session_cost 7.34: see the skipped test below.
+
+        // 2.4: another agent's sessions are not offered; the tools say only vscode is available.
+        const providers = await client.callTool({ name: "list_log_providers", arguments: {} });
+        const status = providers.structuredContent as { providers: { id: string }[] };
+        assert.deepEqual(
+          status.providers.map((provider) => provider.id),
+          ["vscode"],
+        );
+        const claude = await client.callTool({ name: "list_sessions", arguments: { provider: "claude-code" } });
+        assert.equal(claude.isError, true);
+        assert.match(JSON.stringify(claude.content), /Known providers: vscode/);
+      } finally {
+        await client.close();
+      }
+    });
+
+    // TODO(bug: list-vs-detail AI Credits mismatch, see scripts/ui-automation/ui-fixture-credits.test.ts):
+    // check 2.3 expects the MCP tool to give the AI Credits the Sessions view shows; unskip with the fix.
+    test.skip("get_session_cost gives the AI Credits the Sessions view shows for the same session", async () => {
+      await setMcpEnabled(true);
+      const [definition] = await waitFor(mcpServerDefinitions, (definitions) => definitions.length > 0, {
+        timeoutMs: WAIT_MS,
+        description: "the MCP server definition",
+      });
+      assert.ok(definition);
+      const client = new Client({ name: "integration-test", version: "1.0.0" });
+      await client.connect(new StdioClientTransport({ command: definition.command, args: definition.args, env: definition.env, stderr: "ignore" }));
+      try {
+        const cost = await client.callTool({ name: "get_session_cost", arguments: { sessionId: fixture.usageSessionId } });
+        const credits = (cost.structuredContent as { totals: { aiCredits: { value: number } } }).totals.aiCredits.value;
+        const shown = sessionNodesOf(await sessionsTree()).find((session) => session.sessionId === fixture.usageSessionId);
+        assert.equal(credits.toFixed(2), shown?.description);
+      } finally {
+        await client.close();
+      }
+    });
+
     test("offers no server again once the setting is turned off", async () => {
       await setMcpEnabled(false);
 

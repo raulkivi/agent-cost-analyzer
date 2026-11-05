@@ -119,17 +119,25 @@ in the docs). Findings that need a code fix also go in the run log below.
 Rows marked **Automated** run in CI as the `extension-ui` job
 (`npm run test:ui:vscode`, [vscode-ui-automation.md](vscode-ui-automation.md),
 step 10.16): run them by hand only when that job is red, or for the parts
-named as still manual. Rows 1.1-1.4, 1.12, 2.3, 2.4, §3 and §4 stay manual.
+named as still manual. Rows 1.1-1.4, 1.12, 2.3 and 2.4 are automated too,
+but over **fixtures, not a real Copilot chat**: the notes say what each does
+not prove. §3 (remote) and §4 stay manual.
+
+**Opt-in real-Copilot suite (owner's machine only, never CI).** Checks 1.4,
+2.3 and 2.4 with a real signed-in Copilot agent-mode chat are covered by
+`npm run test:ui:vscode:copilot` when you run it (it spends a few AI
+Credits; setup and cost in
+[vscode-ui-automation.md](vscode-ui-automation.md) §7). It is not run by CI.
 
 Use a VS Code profile with GitHub Copilot Chat installed and signed in.
 For a clean first run, use a new profile (*Profiles → New Profile*).
 
 | # | Scenario | Steps | Expected | ✓ / notes |
 |---|---|---|---|---|
-| 1.1 | First run | Install into a new profile and reload | The Get Started walkthrough opens once as an editor tab (not a notification). The Activity Bar shows the AI Credits Analyzer icon. The status bar says setup is needed. | |
-| 1.2 | Logging off | With `github.copilot.chat.agentDebugLog.fileLogging.enabled` off, open the Setup view | Setup shows what's missing with Enable/Fix buttons; each opens the exact setting. Nothing is changed without a click. | |
-| 1.3 | No sessions | A profile where Copilot Chat has never been used | The Sessions welcome view says why it's empty and points to Learn mode. The Learn view lists the 18 scenarios. | |
-| 1.4 | Normal use | Turn logging on, chat with Copilot in agent mode for a few turns, then *Refresh* the Sessions view | The session appears under today with its AI Credits (or "unknown", never 0). Picking it opens the panel on it. The status bar shows today's known AI Credits, with coverage in the tooltip. | |
+| 1.1 | First run | Install into a new profile and reload | The Get Started walkthrough opens once as an editor tab (not a notification). The Activity Bar shows the AI Credits Analyzer icon. The status bar says setup is needed. | **Partly automated:** `first-run.e2e.ts` (a bare user-data dir: the tab is `Welcome` showing "Get started with AI Credits Analyzer", opened without a walkthrough/analyzer notification; the Activity Bar icon and "setup needed" are present). **Still manual:** "didn't reopen after a second reload". A reload ends the test session, and under the driver VS Code keeps global state in memory (no state database is written even after a quit), so a second launch cannot tell "offered once" from "state lost"; the logic is unit-tested (`WalkthroughOffer`). **Does not prove:** a VSIX *installed* into a new profile (the extension runs as a development extension here). |
+| 1.2 | Logging off | With `github.copilot.chat.agentDebugLog.fileLogging.enabled` off, open the Setup view | Setup shows what's missing with Enable/Fix buttons; each opens the exact setting. Nothing is changed without a click. | **Automated:** `first-run.e2e.ts` (Copilot Chat off: the `copilot-chat-unavailable` and logging warnings, Fix opens the Extensions view on `@id:GitHub.copilot-chat`) and `copilot-available.e2e.ts` (the built-in Copilot Chat enabled, unsigned: logging turned off, Fix opens the Settings editor on exactly `@id:github.copilot.chat.agentDebugLog.fileLogging.enabled`); both compare `settings.json` before and after the click. **Does not prove:** the "Enable" wording of a button (the inline action is "Fix Setting"). |
+| 1.3 | No sessions | A profile where Copilot Chat has never been used | The Sessions welcome view says why it's empty and points to Learn mode. The Learn view lists the 18 scenarios. | **Automated:** `first-run.e2e.ts` (a bare user-data dir: no Copilot or Agent Host store; welcome text, "Open Learn mode", 18 scenario rows). **Does not prove:** Copilot Chat's own storage layout on a machine that really never used it (a real profile shares Copilot's storage across profiles, see the run log). |
+| 1.4 | Normal use | Turn logging on, chat with Copilot in agent mode for a few turns, then *Refresh* the Sessions view | The session appears under today with its AI Credits (or "unknown", never 0). Picking it opens the panel on it. The status bar shows today's known AI Credits, with coverage in the tooltip. | **Automated over a fixture session, not a real chat:** `copilot-available.e2e.ts` (a seeded Copilot Chat store and the built-in Copilot Chat enabled but not signed in: the session under Today with its credits, "unknown" rows without cost, the panel opens on it, the status bar shows today's credits with "N of M sessions today have cost data"). **Does not prove:** that a real chat writes what the fixture mimics; the opt-in real-Copilot suite does that when you run it. |
 | 1.5 | A large session | Open the longest session you have (100+ turns if possible) | The panel renders without a long blank; the loading skeleton shows Cancel; scrolling and selecting turns respond immediately. Note rough timings. | Automated: `panel.e2e.ts` (150 turns, §3.5 marks, 500 ms select). Manual only when red or for the feel of scrolling. |
 | 1.6 | Cancel | Open the insights dashboard or tool audit on many sessions and press Cancel while it loads | "Loading cancelled" with Retry; Retry loads it. | Automated: `panel.e2e.ts` (dashboard load held by a Test-mode hook). |
 | 1.7 | Keyboard only | Unplug the mouse: reach the sidebar, open a session, move through the turns table, open the column chooser, the system prompt diagram (arrow keys) and "View as table" on a chart | Everything is reachable; focus is always visible; Escape closes overlays and returns focus. | Automated: `keyboard.e2e.ts`. Manual only when red. |
@@ -138,7 +146,7 @@ For a clean first run, use a new profile (*Profiles → New Profile*).
 | 1.10 | Theme and font | Switch to a light theme and change `editor.fontSize` | The panel follows the theme and font. | Automated: `layout-theme.e2e.ts`. The font half pins today's behaviour: the panel follows the workbench font, not `editor.fontSize` (plan Q4). |
 | 1.11 | System prompt | From a session's System prompt tab, open it in an editor | Opens read-only in a tab; copying works. | Automated: `panel.e2e.ts`. |
 | 1.13 | Learn view | Pick a scenario in the side bar's Learn view, then another; switch to Analyze and pick a session | Each scenario opens in Learn mode with the panel's full width (no list in the panel); a session switches to Analyze. | Automated: `views.e2e.ts`. |
-| 1.12 | Uninstall | Uninstall the extension and reload | No leftovers in the UI; Copilot Chat settings that were changed through Fix buttons stay as you set them. | |
+| 1.12 | Uninstall | Uninstall the extension and reload | No leftovers in the UI; Copilot Chat settings that were changed through Fix buttons stay as you set them. | **Automated:** `uninstall-installed.e2e.ts` and `uninstall-after.e2e.ts` (the VSIX from `vsce package` installed into a throwaway profile with VS Code's CLI, loaded as a user has it, then uninstalled with VS Code's own command; after a relaunch no extension, command, Activity Bar icon, status bar item or tab remains; `settings.json` is byte-identical across the uninstall). **Does not prove:** the Extensions view's Uninstall button and "Reload required" prompt (the command is the one behind them), or that a Marketplace-installed copy behaves like a VSIX (no Marketplace is used). |
 
 ## 2. MCP server in Copilot agent mode (10.8 exit)
 
@@ -146,8 +154,8 @@ For a clean first run, use a new profile (*Profiles → New Profile*).
 |---|---|---|---|
 | 2.1 | With `aiCreditsAnalyzer.mcp.enabled` off (default), open Copilot Chat agent mode → *Configure Tools* | No "AI Credits Analyzer" server is listed. | Automated: `mcp.e2e.ts`, in VS Code's own *MCP: List Servers*. Copilot's *Configure Tools* stays manual. |
 | 2.2 | Turn the setting on in **User** settings | The server appears with 9 read-only tools; its name is `ai-credits-analyzer`. | Automated: `mcp.e2e.ts` (server listed; the 9 tools are the integration suite's, over stdio). |
-| 2.3 | Ask: "What did my last Copilot session cost, and what drove it?" | Copilot calls `list_sessions` / `get_session_cost` and answers with the same AI Credits the panel shows. | |
-| 2.4 | Ask about another agent, e.g. "show my Claude Code sessions" | The tools answer that only `vscode` is available. | |
+| 2.3 | Ask: "What did my last Copilot session cost, and what drove it?" | Copilot calls `list_sessions` / `get_session_cost` and answers with the same AI Credits the panel shows. | **Partly automated, tool level only:** the integration suite (`extension.test.ts`) starts the server as VS Code does and calls `list_sessions` and `get_session_cost` for the seeded session. **Does not prove:** Copilot choosing and calling the tools (the opt-in real-Copilot suite does that when run). **Open bug:** the tool says 7.34 AI Credits for the seeded session and the Sessions view 9.65; the "same as the panel" assertion is `test.skip` with a TODO (list-vs-detail mismatch, vscode-ui-automation.md §6.6). |
+| 2.4 | Ask about another agent, e.g. "show my Claude Code sessions" | The tools answer that only `vscode` is available. | **Partly automated, tool level only:** the integration suite calls `list_log_providers` (only `vscode`) and `list_sessions` with `provider: "claude-code"` (an error naming the known provider). **Does not prove:** what Copilot says to the user. |
 | 2.5 | Open an untrusted folder (Restricted Mode) whose `.vscode/settings.json` sets the setting to `true`, with the user setting off | No server is offered. After trusting the folder, it is. | Automated: `mcp-trust.e2e.ts` (Restricted Mode, then the Trust button). |
 | 2.6 | Turn the setting off again | The server disappears from the tool list. | Automated: `mcp.e2e.ts`. |
 
@@ -155,6 +163,15 @@ For a clean first run, use a new profile (*Profiles → New Profile*).
 
 Do at least one of Remote-SSH or WSL, and one Dev Container. Install the
 VSIX into the remote (*Install in <remote>*).
+
+**Not automated, deliberately** (investigated for step 10.16, see
+[vscode-ui-automation.md](vscode-ui-automation.md) §6.4): Remote-SSH and Dev
+Containers are Marketplace-only, closed-source Microsoft extensions that need
+a real ssh or container host and a server download over the network, WSL needs
+Windows, and a local `code serve-web` would only show an extension host apart
+from the UI, not any of these remotes nor where Copilot Chat stores sessions on
+them (R3). A faked stand-in would pass without proving D6, so these rows stay
+manual.
 
 | # | Remote | Steps | Expected | ✓ / notes |
 |---|---|---|---|---|

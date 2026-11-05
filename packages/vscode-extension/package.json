@@ -317,7 +317,9 @@
     "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p src/test/integration/tsconfig.json && tsc --noEmit -p test/ui/tsconfig.json",
     "test:ui": "tsx scripts/ui-check/ui-check.mts",
     "screenshots": "tsx scripts/ui-check/screenshots.mts",
-    "test:ui:vscode": "wdio run wdio.conf.mts"
+    "test:ui:vscode": "wdio run wdio.conf.mts",
+    "test:ui:vscode:copilot": "wdio run wdio.copilot.conf.mts",
+    "test:ui:vscode:copilot:signin": "node scripts/copilot-e2e-signin.mts"
   },
   "devDependencies": {
     "@agent-cost-analyzer/domain": "*",
