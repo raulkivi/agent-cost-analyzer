@@ -42,6 +42,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **The setup warning banner fits a narrow panel.** At 360 px (and 320 px)
   wide, long setting ids wrap and the fix and Dismiss buttons move under the
   text, so the page no longer scrolls sideways.
+- **Debug logging switched on mid-session no longer shifts usage onto the
+  wrong turns.** For a Local harness chat whose debug log starts after the
+  chat's first turn, the panel showed later turns' tokens, AI Credits and
+  tool calls on earlier turns. Turns are now matched on the prompt text; a
+  turn that can't be matched with certainty shows its usage as unknown. The
+  session's total stays unknown while some turns have no usage.
 - **A session's AI Credits are the same in the Sessions view, the status bar,
   the panel and the MCP tools.** For a Local harness chat whose debug log has a
   turn that Copilot Chat's session store has no record of (an interrupted or

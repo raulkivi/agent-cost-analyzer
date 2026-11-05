@@ -25,10 +25,18 @@ import {
   getSessionRow,
   getTurnRows,
   listSessionRows,
-  listTurnIndicesBySession,
+  listTurnsBySession,
   openReadOnlyDb,
   type SessionRow,
+  type TurnKeyRow,
+  type TurnRow,
 } from "../../sqlite/session-store.js";
+import {
+  alignLogTurnsToStore,
+  logTurnDigests,
+  placeByStoreIndex,
+  storeTurnKeys,
+} from "../../jsonl/log-turn-alignment.js";
 import {
   buildAnalyzeModeExtras,
   resolveSystemPromptText,
@@ -125,7 +133,7 @@ export class VscodeLogProvider implements LogProvider, SystemPromptTextReader {
   // and the detail agree. A single session's read failing (corrupt/missing
   // file) degrades that session's cost to unavailable rather than failing
   // the whole list.
-  private async summarizeSessionWithCost(row: SessionRow, storeTurnIndices: number[]): Promise<Session> {
+  private async summarizeSessionWithCost(row: SessionRow, storeTurns: TurnKeyRow[]): Promise<Session> {
     try {
       const mainJsonlPath = resolveMainJsonlPath(this.debugLogsDirPaths(), row.id);
       let mainJsonlAvailability: MainJsonlAvailability = "missing";
@@ -134,9 +142,11 @@ export class VscodeLogProvider implements LogProvider, SystemPromptTextReader {
         const { envelopes, rawLineCount } = await readMainJsonlFile(mainJsonlPath);
         mainJsonlAvailability = classifyEnvelopesAvailability(envelopes, rawLineCount);
         if (mainJsonlAvailability === "events-present") {
-          turnUsages = extractTurnUsages(envelopes);
+          const alignment = alignLogTurnsToStore(logTurnDigests(envelopes), storeTurnKeys(storeTurns));
+          turnUsages = placeByStoreIndex(extractTurnUsages(envelopes), alignment);
         }
       }
+      const storeTurnIndices = storeTurns.map((turn) => turn.turn_index);
       return {
         ...buildSessionSummary(row, summarizeSessionUsage(mainJsonlAvailability, storeTurnIndices, turnUsages)),
         providerId: PROVIDER_ID,
@@ -161,9 +171,9 @@ export class VscodeLogProvider implements LogProvider, SystemPromptTextReader {
     }
     try {
       const rows = listSessionRows(db);
-      const turnIndicesBySession = listTurnIndicesBySession(db);
+      const turnsBySession = listTurnsBySession(db);
       return await Promise.all(
-        rows.map((row) => this.summarizeSessionWithCost(row, turnIndicesBySession.get(row.id) ?? [])),
+        rows.map((row) => this.summarizeSessionWithCost(row, turnsBySession.get(row.id) ?? [])),
       );
     } finally {
       db.close();
@@ -208,9 +218,11 @@ export class VscodeLogProvider implements LogProvider, SystemPromptTextReader {
             this.options.agentTracesDbPath,
             collectResponseIds(envelopes),
           );
-          turnUsages = extractTurnUsages(envelopes, agentTraceUsageByResponseId);
-          ({ invokedToolNamesByTurn, systemPrompt, toolInventory } =
-            await buildAnalyzeModeExtras(envelopes, mainJsonlPath));
+          const alignment = alignLogTurnsToStore(logTurnDigests(envelopes), storeTurnKeys(turnRows));
+          turnUsages = placeByStoreIndex(extractTurnUsages(envelopes, agentTraceUsageByResponseId), alignment);
+          const extras = await buildAnalyzeModeExtras(envelopes, mainJsonlPath);
+          ({ systemPrompt, toolInventory } = extras);
+          invokedToolNamesByTurn = placeByStoreIndex(extras.invokedToolNamesByTurn, alignment);
         }
       }
 
@@ -247,6 +259,16 @@ export class VscodeLogProvider implements LogProvider, SystemPromptTextReader {
     return (await this.agentHostSessions?.readTurnDetail(sessionId, turnIndex)) ?? null;
   }
 
+  // The position among main.jsonl's user_messages of the log turn that is
+  // store turn `turnIndex` (readSession's join), or null when the log has no
+  // such turn or cannot place it with certainty.
+  private async findLogTurnIndex(mainJsonlPath: string, turnRows: TurnRow[], turnIndex: number): Promise<number | null> {
+    const { envelopes } = await readMainJsonlFile(mainJsonlPath);
+    const alignment = alignLogTurnsToStore(logTurnDigests(envelopes), storeTurnKeys(turnRows));
+    const logTurnIndex = alignment.indexOf(turnIndex);
+    return logTurnIndex === -1 ? null : logTurnIndex;
+  }
+
   // "unknown-session" when the classic store has no such session, so only
   // then is the second store asked; null is a classic session's missing turn.
   private async readClassicTurnDetail(
@@ -268,9 +290,13 @@ export class VscodeLogProvider implements LogProvider, SystemPromptTextReader {
       }
 
       const mainJsonlPath = resolveMainJsonlPath(this.debugLogsDirPaths(), sessionId);
-      const result = mainJsonlPath
-        ? await readMainJsonlEnvelopesForTurn(mainJsonlPath, turnIndex)
+      const logTurnIndex = mainJsonlPath
+        ? await this.findLogTurnIndex(mainJsonlPath, getTurnRows(db, sessionId), turnIndex)
         : null;
+      const result =
+        mainJsonlPath && logTurnIndex !== null
+          ? await readMainJsonlEnvelopesForTurn(mainJsonlPath, logTurnIndex)
+          : null;
 
       if (!result) {
         // Beyond the store's turns, only a debug-log turn exists (readSession's turn set).

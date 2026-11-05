@@ -78,18 +78,22 @@ export function getTurnRows(db: DatabaseSync, sessionId: string): TurnRow[] {
     .all(sessionId) as unknown as TurnRow[];
 }
 
-// Every session's turn indices in one query, for the session list: a summary
-// counts the same turns as the full session (session-enricher's
-// summarizeSessionUsage) without reading each session's turn text.
-export function listTurnIndicesBySession(db: DatabaseSync): Map<string, number[]> {
+// A turn without its assistant response or timestamp.
+export type TurnKeyRow = Pick<TurnRow, "turn_index" | "user_message">;
+
+// Every session's turns (index and user message, the keys the debug log is
+// joined on) in one query, for the session list: a summary counts the same
+// turns as the full session (session-enricher's summarizeSessionUsage)
+// without reading each session's responses.
+export function listTurnsBySession(db: DatabaseSync): Map<string, TurnKeyRow[]> {
   const rows = db
-    .prepare("SELECT session_id, turn_index FROM turns ORDER BY session_id, turn_index ASC")
-    .all() as unknown as Pick<TurnRow, "session_id" | "turn_index">[];
-  const bySession = new Map<string, number[]>();
-  for (const row of rows) {
-    const indices = bySession.get(row.session_id) ?? [];
-    indices.push(row.turn_index);
-    bySession.set(row.session_id, indices);
+    .prepare("SELECT session_id, turn_index, user_message FROM turns ORDER BY session_id, turn_index ASC")
+    .all() as unknown as (TurnKeyRow & Pick<TurnRow, "session_id">)[];
+  const bySession = new Map<string, TurnKeyRow[]>();
+  for (const { session_id, ...turn } of rows) {
+    const turns = bySession.get(session_id) ?? [];
+    turns.push(turn);
+    bySession.set(session_id, turns);
   }
   return bySession;
 }

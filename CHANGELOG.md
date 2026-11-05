@@ -38,6 +38,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The setup warning banner fits a 360 px (or 320 px) wide panel: long setting
   ids wrap, and the fix and Dismiss buttons move under the text instead of
   pushing the page sideways.
+- VS Code Local harness sessions where debug logging was switched on
+  mid-session: the log's turns were matched to the session store's turns by
+  position, so earlier turns showed later turns' tokens, AI Credits and tool
+  calls. They are now matched on the user's message text; where no unique
+  match exists the turn's usage is unknown, never a guess. The session's
+  total stays unknown while some turns have no usage.
 - VS Code Local harness sessions: the session list and the session detail
   (turns table, `get_session_cost`, `get_cost_rollup`, insights) now report the
   same AI Credits, turn count, model and usage availability, from one shared

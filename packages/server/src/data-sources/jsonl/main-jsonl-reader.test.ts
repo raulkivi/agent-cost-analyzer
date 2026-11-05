@@ -1,9 +1,11 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
+import { userMessageDigest } from "./log-turn-alignment.js";
 import {
   classifyEnvelopesAvailability,
   classifyMainJsonlAvailability,
+  parseEnvelopeLine,
   readMainJsonlEnvelopes,
   readMainJsonlFile,
 } from "./main-jsonl-reader.js";
@@ -65,6 +67,19 @@ describe("readMainJsonlEnvelopes", () => {
     const [envelope] = await readMainJsonlEnvelopes(llmRequestSamplePath);
 
     expect(envelope.attrs?.responseId).toBe("redacted-response-id");
+  });
+});
+
+describe("parseEnvelopeLine: user_message content", () => {
+  it("keeps a digest of a user_message's text, not the text itself", () => {
+    const envelope = parseEnvelopeLine(JSON.stringify({ type: "user_message", attrs: { content: "fix the bug" } }));
+
+    expect(envelope?.attrs).toEqual({ contentDigest: userMessageDigest("fix the bug") });
+  });
+
+  it("adds no digest to a user_message without text, nor to other events", () => {
+    expect(parseEnvelopeLine(JSON.stringify({ type: "user_message", attrs: {} }))?.attrs).toBeUndefined();
+    expect(parseEnvelopeLine(JSON.stringify({ type: "agent_response", attrs: { content: "x" } }))?.attrs).toBeUndefined();
   });
 });
 
