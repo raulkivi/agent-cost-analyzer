@@ -1,9 +1,11 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { LogProviderStatus } from "@agent-cost-analyzer/domain";
 import type { AnalysisQueryService } from "../services/analysis/analysis-query-service.js";
+import type { AttributionQueries } from "../services/cost-attribution/attribution-query-service.js";
 import type { AuditQueryService } from "../services/tool-audit/audit-query-service.js";
 import { MCP_ICONS, MCP_WEBSITE_URL } from "./mcp-branding.js";
 import { STANDALONE_MCP_IDENTITY, type McpIdentity } from "./mcp-identity.js";
+import { registerAttributionTools } from "./attribution-tools.js";
 import { registerAuditTools } from "./audit-tools.js";
 import { registerCostTools } from "./cost-tools.js";
 import { registerFindingTools } from "./finding-tools.js";
@@ -21,6 +23,10 @@ export interface McpServerDeps {
   auditQueries: AuditQueryService;
   analysisQueries: AnalysisQueryService;
   getProviderStatus: () => Promise<LogProviderStatus>;
+  // Phase 15 step 15.4: repositories and projects (list_repositories,
+  // list_projects, list_sessions' repository/project filters). Absent for a
+  // product without a projects file yet (the extension, until step 15.14).
+  attribution?: AttributionQueries;
   version: string;
   // The name and log-source wording of the product serving the tools;
   // defaults to the standalone server's (mcp-identity.ts).
@@ -53,6 +59,9 @@ export function createMcpServer(deps: McpServerDeps): McpServer {
   registerAuditTools(server, toolDeps, guarded);
   registerCostTools(server, toolDeps, guarded);
   registerFindingTools(server, toolDeps, guarded);
+  if (deps.attribution) {
+    registerAttributionTools(server, toolDeps, deps.attribution, guarded);
+  }
   registerPrompts(server);
 
   return server;

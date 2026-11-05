@@ -4,7 +4,20 @@ import { copilotHarnessSchema, logProviderStatusSchema, turnViewSchema } from "@
 import { DEFAULT_MAX_TEXT_CHARS } from "../services/session-view/turn-view-builder.js";
 import { limitSchema, turnIndexSchema } from "../services/tool-audit/audit-query-params.js";
 import type { McpToolDeps } from "./mcp-server.js";
-import { json, providerArg, READ_ONLY, sessionIdArg, sinceArg, toolError, unknownSession, untilArg, type Guard } from "./tool-helpers.js";
+import { keyMatches } from "../services/cost-attribution/repository-key-privacy.js";
+import {
+  json,
+  projectIdArg,
+  providerArg,
+  READ_ONLY,
+  repositoryArg,
+  sessionIdArg,
+  sinceArg,
+  toolError,
+  unknownSession,
+  untilArg,
+  type Guard,
+} from "./tool-helpers.js";
 
 const DEFAULT_SESSION_LIST_LIMIT = 20;
 
@@ -16,6 +29,15 @@ const sessionSummarySchema = z.object({
   model: z.string(),
   providerId: z.string().optional(),
   copilotHarness: copilotHarnessSchema.optional(),
+});
+
+// Step 15.4: with attribution, each session also names its repository (the
+// redacted key list_repositories returns; null with the reason when
+// Unattributed) and its project (null: none).
+const attributedSessionSummarySchema = sessionSummarySchema.extend({
+  repositoryKey: z.string().nullable(),
+  unattributedReason: z.string().optional(),
+  projectId: z.string().nullable(),
 });
 
 export function registerSessionTools(server: McpServer, deps: McpToolDeps, guarded: Guard): void {
@@ -30,28 +52,44 @@ export function registerSessionTools(server: McpServer, deps: McpToolDeps, guard
     () => guarded(async () => json(await deps.getProviderStatus())),
   );
 
+  const { attribution } = deps;
+  const baseInput = {
+    provider: providerArg(deps.identity),
+    query: z.string().min(1).optional().describe("Case-insensitive substring of the session title or id."),
+    since: sinceArg,
+    until: untilArg,
+    limit: limitSchema.optional().describe(`Maximum sessions to return (default ${DEFAULT_SESSION_LIST_LIMIT}).`),
+  };
+  const attributionInput = {
+    repository: repositoryArg.optional().describe("Only sessions in this repository (a key from list_repositories)."),
+    projectId: projectIdArg.optional().describe("Only sessions in this project (an id from list_projects)."),
+  };
   server.registerTool(
     "list_sessions",
     {
       title: "List sessions",
-      description:
-        "Finds agent sessions of one provider, most recent first: start here to get the session ids every other per-session tool needs. Filter by a title/id substring and a start-date window. `total` is the number of matches before `limit`, so you can tell whether to narrow the search.",
-      inputSchema: {
-        provider: providerArg(deps.identity),
-        query: z.string().min(1).optional().describe("Case-insensitive substring of the session title or id."),
-        since: sinceArg,
-        until: untilArg,
-        limit: limitSchema.optional().describe(`Maximum sessions to return (default ${DEFAULT_SESSION_LIST_LIMIT}).`),
-      },
-      outputSchema: z.object({ total: z.number(), sessions: z.array(sessionSummarySchema) }),
+      description: attribution
+        ? "Finds agent sessions of one provider, most recent first: start here to get the session ids every other per-session tool needs. Filter by a title/id substring, a start-date window, a repository and a project; each session names its repository key (null with unattributedReason when it has none) and project. `total` is the number of matches before `limit`, so you can tell whether to narrow the search."
+        : "Finds agent sessions of one provider, most recent first: start here to get the session ids every other per-session tool needs. Filter by a title/id substring and a start-date window. `total` is the number of matches before `limit`, so you can tell whether to narrow the search.",
+      inputSchema: attribution ? { ...baseInput, ...attributionInput } : baseInput,
+      outputSchema: z.object({ total: z.number(), sessions: z.array(attribution ? attributedSessionSummarySchema : sessionSummarySchema) }),
       annotations: READ_ONLY,
     },
-    ({ provider, query, since, until, limit }) =>
+    (args: { provider?: string; query?: string; since?: string; until?: string; limit?: number; repository?: string; projectId?: string }) =>
       guarded(async () => {
-        const matches = await deps.auditQueries.listSessions({ providerId: provider, query, since, until });
+        const { provider, query, since, until, limit, repository, projectId } = args;
+        const listed = await deps.auditQueries.listSessions({ providerId: provider, query, since, until });
+        const attribute = attribution?.sessionAttributions();
+        const matches = listed
+          .map((session) => ({ session, attributed: attribute?.(session) }))
+          .filter(
+            ({ attributed }) =>
+              (repository === undefined || (attributed?.fullKey != null && keyMatches(attributed.fullKey, repository))) &&
+              (projectId === undefined || attributed?.projectId === projectId),
+          );
         return json({
           total: matches.length,
-          sessions: matches.slice(0, limit ?? DEFAULT_SESSION_LIST_LIMIT).map((session) => ({
+          sessions: matches.slice(0, limit ?? DEFAULT_SESSION_LIST_LIMIT).map(({ session, attributed }) => ({
             id: session.id,
             title: session.title,
             ...(session.startedAt ? { startedAt: session.startedAt } : {}),
@@ -59,6 +97,13 @@ export function registerSessionTools(server: McpServer, deps: McpToolDeps, guard
             model: session.model,
             ...(session.providerId ? { providerId: session.providerId } : {}),
             ...(session.copilotHarness ? { copilotHarness: session.copilotHarness } : {}),
+            ...(attributed
+              ? {
+                  repositoryKey: attributed.repositoryKey,
+                  ...(attributed.unattributedReason ? { unattributedReason: attributed.unattributedReason } : {}),
+                  projectId: attributed.projectId,
+                }
+              : {}),
           })),
         });
       }),
