@@ -1,27 +1,12 @@
-import type {
-  CacheOutcome,
-  CachingKind,
-  Layer,
-} from "@agent-cost-analyzer/domain";
+import type { CacheOutcome, CachingKind } from "@agent-cost-analyzer/domain";
 import type { Prompt } from "../prompt-builder.js";
+import type {
+  CacheModel,
+  CacheRequest,
+  KnownCacheResult,
+} from "../cache-model.js";
 
 type BreakpointKind = Extract<CachingKind, { kind: "breakpoints" }>;
-
-export interface CacheRequest {
-  prompt: Prompt;
-  atMinute: number;
-  // First layer whose content changed since the previous request.
-  invalidatedFrom?: Layer;
-  extendedTtl?: boolean;
-}
-
-export interface CacheResult {
-  cacheRead: number;
-  cacheWrite: number;
-  extendedCacheWrite: number;
-  uncachedInput: number;
-  outcome: CacheOutcome;
-}
 
 interface Entry {
   tokens: number;
@@ -32,12 +17,12 @@ interface Entry {
 // Anthropic-style explicit breakpoints (S3-S6): a request reads the longest
 // still-valid cached prefix, writes up to its last cacheable breakpoint and
 // leaves the remainder uncached.
-export class BreakpointCacheModel {
+export class BreakpointCacheModel implements CacheModel {
   private entry: Entry | undefined;
 
   constructor(private readonly kind: BreakpointKind) {}
 
-  request(req: CacheRequest): CacheResult {
+  request(req: CacheRequest): KnownCacheResult {
     const { prompt } = req;
     const total = prompt.totalTokens;
     const cacheable = this.lastCacheablePrefix(prompt);
