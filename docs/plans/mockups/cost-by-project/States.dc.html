@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Cost tabs, states</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&amp;family=Barlow+Condensed:wght@500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#416180}a:hover{color:#2c455d}
+.bp{position:relative;border:1px solid rgba(29,31,32,.16)}
+.bp>i{position:absolute;width:11px;height:11px;color:rgba(29,31,32,.55)}
+.bp>i::before,.bp>i::after{content:"";position:absolute;background:currentColor}
+.bp>i::before{left:5px;top:0;width:1px;height:100%}
+.bp>i::after{top:5px;left:0;width:100%;height:1px}
+.bp>.tl{top:-6px;left:-6px}.bp>.tr{top:-6px;right:-6px}.bp>.bl{bottom:-6px;left:-6px}.bp>.br{bottom:-6px;right:-6px}
+.btn{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 11px;border:1px solid rgba(29,31,32,.16);border-radius:4px;font:inherit;font-size:13px;color:#1d1f20;background:transparent;cursor:pointer;text-decoration:none}
+.btn-p{background:#416180;border-color:#416180;color:#f2f2f3}
+.kicker{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#416180}
+.muted{color:#5b5c5e}
+.num{font-variant-numeric:tabular-nums}
+.ttl{font-family:'Barlow Condensed',sans-serif;font-weight:600;color:#1d1f20}
+.sk{background:#e2e2e4;border-radius:3px}
+.warn{display:inline-flex;align-items:center;gap:4px;padding:1px 6px;background:#eba524;color:#1d1f20;font-size:11px;font-weight:600;white-space:nowrap}
+.card{padding:16px 18px;display:flex;flex-direction:column;gap:10px}
+</style>
+</helmet>
+<div style="width: 1440px; height: 900px; box-sizing: border-box; padding: 28px 32px; display: flex; flex-direction: column; gap: 18px; background: #f2f2f3; color: #1d1f20; font-family: Barlow, system-ui, sans-serif; font-size: 14px; line-height: 1.45; overflow: hidden">
+  <div style="display: flex; align-items: baseline; gap: 14px">
+    <h1 style="margin: 0; font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 30px; line-height: 1">States of the cost tabs</h1>
+    <span class="muted" style="font-size: 13px">All through the shared AsyncView: loading, empty (why plus a next step), partial (a warning, never 0), error (what failed, nothing changed, Retry).</span>
+  </div>
+  <div style="flex-grow: 1; min-height: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: repeat(2, minmax(0, 1fr)); gap: 20px">
+
+    <section class="bp card" aria-busy="true" aria-labelledby="s1"><i class="tl"></i><i class="tr"></i><i class="bl"></i><i class="br"></i>
+      <span class="kicker">Loading · shown after 300 ms</span>
+      <h2 id="s1" class="ttl" style="margin: 0; font-size: 19px">Cost over time</h2>
+      <div aria-hidden="true" style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px"><div class="sk" style="height: 54px"></div><div class="sk" style="height: 54px"></div><div class="sk" style="height: 54px"></div><div class="sk" style="height: 54px"></div></div>
+      <div aria-hidden="true" class="sk" style="flex-grow: 1; min-height: 120px"></div>
+      <div style="display: flex; align-items: center; gap: 10px; font-size: 13px">
+        <span role="status">Reading 4 providers · 1,284 of 2,960 sessions</span>
+        <button class="btn" style="margin-left: auto">Cancel</button>
+      </div>
+      <p class="muted" style="margin: 0; font-size: 12px">The skeleton matches the final layout. Under reduced motion it does not pulse.</p>
+    </section>
+
+    <section class="bp card" aria-labelledby="s2"><i class="tl"></i><i class="tr"></i><i class="bl"></i><i class="br"></i>
+      <span class="kicker">Empty · no repositories found</span>
+      <h2 id="s2" class="ttl" style="margin: 0; font-size: 19px">No session can be linked to a repository yet</h2>
+      <p style="margin: 0">All 41 sessions in this range come from mitmproxy captures, which record no working folder.</p>
+      <p class="muted" style="margin: 0; font-size: 13px">VS Code, Claude Code and pi sessions are linked automatically from the folder they ran in.</p>
+      <div style="display: flex; gap: 8px; margin-top: auto"><a href="#" class="btn btn-p">Add a capture rule</a><a href="#" class="btn">Choose another provider</a></div>
+    </section>
+
+    <section class="bp card" aria-labelledby="s3"><i class="tl"></i><i class="tr"></i><i class="bl"></i><i class="br"></i>
+      <span class="kicker">Empty · no projects</span>
+      <h2 id="s3" class="ttl" style="margin: 0; font-size: 19px">Group repositories into a project to bill and compare them</h2>
+      <p style="margin: 0">7 repositories found, none in a project. Cost by repository works already; projects add statements and project totals.</p>
+      <ul style="margin: 0; padding-left: 18px; font-size: 13px" class="muted">
+        <li>github.com/example/portal-web · 31,240.00 AI Credits</li>
+        <li>github.com/example/billing-api · 36,400.00</li>
+        <li>5 more</li>
+      </ul>
+      <div style="display: flex; gap: 8px; margin-top: auto"><a href="Projects.dc.html" class="btn btn-p">Create project</a><a href="#" class="btn">Import projects.json</a></div>
+    </section>
+
+    <section class="bp card" aria-labelledby="s4"><i class="tl"></i><i class="tr"></i><i class="bl"></i><i class="br"></i>
+      <span class="kicker">Partial · some cost unknown</span>
+      <h2 id="s4" class="ttl" style="margin: 0; font-size: 19px">Internal tools</h2>
+      <div role="status" style="display: flex; gap: 8px; align-items: flex-start; padding: 8px 10px; border: 1px solid rgba(29,31,32,.16); border-radius: 4px; background: #fff7e6; font-size: 13px">
+        <span class="warn"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 3l9 16H3z"></path><path d="M12 10v4M12 17v.5"></path></svg>Partial</span>
+        <span>17,700.00 AI Credits covers 84% of turns. 148 Claude Code turns have no price for Claude Opus 4.8 before Oct 1. <a href="#">Show them</a></span>
+      </div>
+      <svg role="img" aria-label="Weekly cost of Internal tools with a gap in the week of Sep 22, where cost is unknown." width="400" height="120" viewBox="0 0 400 120" style="display: block; font-family: Barlow, sans-serif">
+        <line x1="10" x2="390" y1="100" y2="100" stroke="rgba(29,31,32,.16)"></line>
+        <path d="M10 76 L40 71 L70 64 L100 66 L130 69 L160 73 L190 78" fill="none" stroke="#1baf7a" stroke-width="2" stroke-linejoin="round"></path>
+        <path d="M250 71 L280 61 L310 57 L340 59 L370 54" fill="none" stroke="#1baf7a" stroke-width="2" stroke-linejoin="round"></path>
+        <rect x="200" y="20" width="40" height="80" fill="none" stroke="rgba(29,31,32,.30)" stroke-dasharray="3 3"></rect>
+        <text x="220" y="14" text-anchor="middle" font-size="11" fill="#5b5c5e">unknown</text>
+      </svg>
+      <p class="muted" style="margin: 0; font-size: 12px">The gap is drawn as a gap. The total is never presented as complete.</p>
+    </section>
+
+    <section class="bp card" aria-labelledby="s5"><i class="tl"></i><i class="tr"></i><i class="bl"></i><i class="br"></i>
+      <span class="kicker">Error</span>
+      <h2 id="s5" class="ttl" style="margin: 0; font-size: 19px">Couldn't read projects.json</h2>
+      <p style="margin: 0">Line 14: "members[2].branches" must be a list of patterns, not a string. Nothing was changed; cost by repository still works.</p>
+      <pre style="margin: 0; padding: 8px 10px; background: #e7e7ea; font-family: ui-monospace, monospace; font-size: 12px; overflow: auto; max-height: 80px">  "branches": "portal/*"
+              ^ expected ["portal/*"]</pre>
+      <div style="display: flex; gap: 8px; margin-top: auto"><button class="btn btn-p">Retry</button><button class="btn">Copy details</button><a href="Projects.dc.html" class="btn">Open the editor</a></div>
+    </section>
+
+    <section class="bp card" aria-labelledby="s6"><i class="tl"></i><i class="tr"></i><i class="bl"></i><i class="br"></i>
+      <span class="kicker">Warning · price book age</span>
+      <h2 id="s6" class="ttl" style="margin: 0; font-size: 19px">Prices last checked 96 days ago</h2>
+      <div role="status" style="display: flex; gap: 8px; align-items: flex-start; padding: 8px 10px; border: 1px solid rgba(29,31,32,.16); border-radius: 4px; background: #fff7e6; font-size: 13px">
+        <span class="warn"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 3l9 16H3z"></path><path d="M12 10v4M12 17v.5"></path></svg>Check prices</span>
+        <span>Priced figures (Claude Code, pi, mitmproxy) use a price book checked on Aug 1, 2026. Billed Copilot figures are not affected.</span>
+      </div>
+      <p class="muted" style="margin: 0; font-size: 13px">Update the app, or add a price version with its source in your projects file.</p>
+      <div style="display: flex; gap: 8px; margin-top: auto"><a href="#" class="btn">Open price book</a><button class="btn">Dismiss for this session</button></div>
+    </section>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

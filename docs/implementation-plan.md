@@ -1471,7 +1471,9 @@ new Dashboard tabs (Cost over time, Compare, Billing), MCP tools, and extension 
 **Status (2026-11-05)**: planned; the owner accepted every recommended
 decision (D1–D10, plan §13). The UI is a set of new Dashboard tabs built on
 the existing design system, UX standards and chart kit (plan §11), with a
-mock-up review gate (step 15.8) before any UI code.
+mock-up review gate (step 15.8) before any UI code. The mock-ups are drawn (2026-11-05,
+[mockups/cost-by-project/](plans/mockups/cost-by-project/)) and await the
+owner's review; the palette tokens of step 15.8 are not started.
 
 ## Summary dependency graph
 

@@ -1,0 +1,318 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Dashboard, cost over time</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&amp;family=Barlow+Condensed:wght@500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#416180}a:hover{color:#2c455d}
+.bp{position:relative;border:1px solid rgba(29,31,32,.16)}
+.bp>i{position:absolute;width:11px;height:11px;color:rgba(29,31,32,.55)}
+.bp>i::before,.bp>i::after{content:"";position:absolute;background:currentColor}
+.bp>i::before{left:5px;top:0;width:1px;height:100%}
+.bp>i::after{top:5px;left:0;width:100%;height:1px}
+.bp>.tl{top:-6px;left:-6px}.bp>.tr{top:-6px;right:-6px}.bp>.bl{bottom:-6px;left:-6px}.bp>.br{bottom:-6px;right:-6px}
+.seg{display:inline-flex;border:1px solid rgba(29,31,32,.16);border-radius:4px;overflow:hidden}
+.seg>label,.seg>button{display:inline-flex;align-items:center;height:30px;padding:0 11px;font:inherit;font-size:13px;color:#1d1f20;background:transparent;border:0;cursor:pointer;position:relative}
+.seg>label+label,.seg>button+button{border-left:1px solid rgba(29,31,32,.16)}
+.seg>label>input{position:absolute;opacity:0;width:1px;height:1px}
+.seg>.on{background:#416180;color:#f2f2f3}
+.btn{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 11px;border:1px solid rgba(29,31,32,.16);border-radius:4px;font:inherit;font-size:13px;color:#1d1f20;background:transparent;cursor:pointer}
+.kicker{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#416180}
+.muted{color:#5b5c5e}
+.num{font-variant-numeric:tabular-nums}
+</style>
+</helmet>
+<div style="width: 1440px; height: 900px; box-sizing: border-box; display: flex; flex-direction: column; background: #f2f2f3; color: #1d1f20; font-family: Barlow, system-ui, sans-serif; font-size: 14px; line-height: 1.45; overflow: hidden">
+  <header style="height: 56px; flex-shrink: 0; display: flex; align-items: center; gap: 20px; padding: 0 24px; border-bottom: 1px solid rgba(29,31,32,.16)">
+    <span style="font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 20px; margin-right: auto">Agent Cost Analyzer</span>
+    <div class="seg" role="radiogroup" aria-label="Mode"><label><input type="radio" name="mode">Learn</label><label class="on"><input type="radio" name="mode" checked>Analyze</label></div>
+    <label style="display: flex; align-items: center; gap: 8px; font-size: 13px">Provider<select style="height: 30px; font: inherit; font-size: 13px; padding: 0 8px; border: 1px solid rgba(29,31,32,.16); border-radius: 4px; background: #f2f2f3; color: #1d1f20"><option>All providers</option></select></label>
+  </header>
+
+  <div style="flex-grow: 1; min-height: 0; display: flex; flex-direction: column; gap: 14px; padding: 16px 24px 20px">
+    <div style="display: flex; align-items: center; gap: 20px">
+      <h1 style="margin: 0; font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 30px; line-height: 1">Dashboard</h1>
+      <div class="seg" role="tablist" aria-label="Dashboard views">
+        <button role="tab" aria-selected="false">Overview</button>
+        <button role="tab" aria-selected="true" class="on">Cost over time</button>
+        <button role="tab" aria-selected="false">Compare</button>
+        <button role="tab" aria-selected="false">Project</button>
+        <button role="tab" aria-selected="false">Billing</button>
+      </div>
+      <div style="margin-left: auto; display: flex; align-items: center; gap: 8px; font-size: 13px">
+        <span class="muted">Selections</span>
+        <span style="display: inline-flex; align-items: center; gap: 4px; height: 26px; padding: 0 2px 0 10px; border: 1px solid #416180; border-radius: 13px">Project: {{selectionText}}<button aria-label="Clear project selection" style="width: 22px; height: 22px; border: 0; background: transparent; color: #1d1f20; display: flex; align-items: center; justify-content: center; cursor: pointer"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"></path></svg></button></span>
+        <button class="btn">Clear all</button>
+        <button class="btn">Back</button>
+      </div>
+    </div>
+
+    <div style="flex-grow: 1; min-height: 0; display: flex; gap: 20px">
+      <aside aria-label="Filters" style="width: 232px; flex-shrink: 0; display: flex; flex-direction: column; gap: 12px; overflow: hidden">
+        <sc-for list="{{boxes}}" as="box" hint-placeholder-count="5">
+          <section class="bp" style="padding: 8px 10px; display: flex; flex-direction: column; gap: 2px">
+            <h2 style="margin: 0 0 4px; font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 15px">{{box.title}}</h2>
+            <sc-for list="{{box.items}}" as="it" hint-placeholder-count="4">
+              <button aria-pressed="{{it.pressed}}" style="{{it.style}}"><span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{it.name}}</span><span class="num">{{it.value}}</span></button>
+            </sc-for>
+          </section>
+        </sc-for>
+      </aside>
+
+      <main style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 14px">
+        <div role="group" aria-label="Chart filters" style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; font-size: 13px">
+          <div class="seg" role="radiogroup" aria-label="Date range"><label><input type="radio" name="range">This month</label><label><input type="radio" name="range">Last month</label><label class="on"><input type="radio" name="range" checked>Last 90 days</label><label><input type="radio" name="range">This year</label><label><input type="radio" name="range">Custom…</label></div>
+          <div class="seg" role="radiogroup" aria-label="Bucket"><label><input type="radio" name="bucket">Day</label><label class="on"><input type="radio" name="bucket" checked>Week</label><label><input type="radio" name="bucket">Month</label></div>
+          <div class="seg" role="radiogroup" aria-label="Currency"><label class="on"><input type="radio" name="cur" checked>AI Credits</label><label><input type="radio" name="cur">USD</label></div>
+          <div class="seg" role="radiogroup" aria-label="Pricing"><label class="on"><input type="radio" name="pricing" checked>As of use</label><label><input type="radio" name="pricing">Today's prices</label></div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px">
+          <sc-for list="{{kpis}}" as="k" hint-placeholder-count="4">
+            <div class="bp" role="group" aria-label="{{k.label}}" style="padding: 10px 14px; display: flex; flex-direction: column; gap: 2px"><i class="tl"></i><i class="tr"></i><i class="bl"></i><i class="br"></i>
+              <span class="kicker">{{k.label}}</span>
+              <span class="num" style="font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 28px; line-height: 1.1">{{k.value}}</span>
+              <span class="muted" style="font-size: 12px">{{k.note}}</span>
+            </div>
+          </sc-for>
+        </div>
+
+        <figure class="bp" style="margin: 0; flex-grow: 1; min-height: 0; padding: 12px 16px; display: flex; flex-direction: column; gap: 6px"><i class="tl"></i><i class="tr"></i><i class="bl"></i><i class="br"></i>
+          <div style="display: flex; align-items: flex-start; gap: 16px">
+            <div style="display: flex; flex-direction: column; gap: 2px">
+              <span class="kicker">Cost over time · weekly · AI Credits · as of use</span>
+              <figcaption style="font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 19px; color: #1d1f20">{{chartTitle}}</figcaption>
+            </div>
+            <sc-if value="{{isThree}}" hint-placeholder-val="{{true}}">
+              <ul aria-label="Legend" style="list-style: none; margin: 4px 0 0; padding: 0; display: flex; gap: 16px; font-size: 13px">
+                <sc-for list="{{legend}}" as="lg" hint-placeholder-count="3">
+                  <li style="display: flex; align-items: center; gap: 6px"><span aria-hidden="true" style="width: 14px; height: 3px; border-radius: 2px; background: {{lg.color}}"></span>{{lg.name}}</li>
+                </sc-for>
+              </ul>
+            </sc-if>
+            <sc-if value="{{isMany}}" hint-placeholder-val="{{false}}">
+              <div class="seg" role="radiogroup" aria-label="Y scale" style="margin-top: 2px"><label class="{{sharedClass}}"><input type="radio" name="scale">Shared scale</label><label class="{{ownClass}}"><input type="radio" name="scale">Own scale</label></div>
+            </sc-if>
+            <button class="btn" style="margin-left: auto">View as table</button>
+          </div>
+
+          <sc-if value="{{isThree}}" hint-placeholder-val="{{true}}">
+            <div style="position: relative; width: 1100px; height: 380px">
+              <svg role="img" aria-label="{{ariaThree}}" width="1100" height="380" viewBox="0 0 1100 380" style="display: block; font-family: Barlow, sans-serif">
+                <sc-for list="{{grid}}" as="g" hint-placeholder-count="5">
+                  <line x1="60" x2="930" y1="{{g.y}}" y2="{{g.y}}" stroke="rgba(29,31,32,.10)" stroke-width="1"></line>
+                  <text x="52" y="{{g.ty}}" text-anchor="end" font-size="11" fill="#5b5c5e">{{g.label}}</text>
+                </sc-for>
+                <sc-for list="{{xlabels}}" as="xl" hint-placeholder-count="7">
+                  <text x="{{xl.x}}" y="372" text-anchor="middle" font-size="11" fill="#5b5c5e">{{xl.label}}</text>
+                </sc-for>
+                <line x1="{{m1x}}" x2="{{m1x}}" y1="40" y2="350" stroke="rgba(29,31,32,.6)" stroke-width="1"></line>
+                <line x1="{{m2x}}" x2="{{m2x}}" y1="40" y2="350" stroke="rgba(29,31,32,.6)" stroke-width="1" stroke-dasharray="4 3"></line>
+                <line x1="{{hx}}" x2="{{hx}}" y1="40" y2="350" stroke="rgba(29,31,32,.35)" stroke-width="1"></line>
+                <sc-for list="{{lines}}" as="ln" hint-placeholder-count="3">
+                  <path d="{{ln.d}}" fill="none" stroke="{{ln.color}}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"></path>
+                  <circle cx="{{ln.ex}}" cy="{{ln.ey}}" r="4" fill="{{ln.color}}" stroke="#f2f2f3" stroke-width="2"></circle>
+                  <circle cx="{{ln.hxp}}" cy="{{ln.hy}}" r="4" fill="{{ln.color}}" stroke="#f2f2f3" stroke-width="2"></circle>
+                  <text x="{{ln.lx}}" y="{{ln.ly}}" font-size="12" fill="#1d1f20">{{ln.name}}</text>
+                  <text x="{{ln.lx}}" y="{{ln.ly2}}" font-size="12" fill="#5b5c5e" style="font-variant-numeric: tabular-nums">{{ln.last}}</text>
+                </sc-for>
+                <text x="{{gapX}}" y="{{gapY}}" text-anchor="middle" font-size="11" fill="#5b5c5e">no priced turns</text>
+              </svg>
+              <button aria-label="Price change on Sep 1: Claude Sonnet 5.5, input and output 20 percent lower. Documented. Source: GitHub Copilot models and pricing." style="position: absolute; left: {{m1tag}}; top: 6px; height: 24px; padding: 0 8px; border: 1px solid #1d1f20; border-radius: 3px; background: #f2f2f3; color: #1d1f20; font: inherit; font-size: 12px; white-space: nowrap; cursor: pointer">Price · Claude Sonnet 5.5 −20%</button>
+              <button aria-label="Observed on Oct 6: GPT-5.5 billed 12 percent above the price book. Inferred, not a documented price change." style="position: absolute; left: {{m2tag}}; top: 6px; height: 24px; padding: 0 8px; border: 1px dashed #1d1f20; border-radius: 3px; background: #f2f2f3; color: #1d1f20; font: inherit; font-size: 12px; white-space: nowrap; cursor: pointer">Observed · GPT-5.5 billed +12%</button>
+              <div role="tooltip" style="position: absolute; left: {{tipLeft}}; top: 92px; width: 230px; padding: 8px 10px; background: #1d1f20; color: #f2f2f3; border-radius: 4px; font-size: 12px; display: flex; flex-direction: column; gap: 3px; box-shadow: 0 3px 10px rgba(43,43,45,.16)">
+                <strong style="font-weight: 600">Week of Oct 20</strong>
+                <sc-for list="{{tipRows}}" as="tr" hint-placeholder-count="3">
+                  <span style="display: flex; align-items: center; gap: 6px"><span aria-hidden="true" style="width: 8px; height: 8px; border-radius: 4px; background: {{tr.color}}"></span>{{tr.name}}<span class="num" style="margin-left: auto">{{tr.value}}</span></span>
+                </sc-for>
+                <span style="color: #c9cacc">Coverage 97% · 2 price versions</span>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{isOne}}" hint-placeholder-val="{{false}}">
+            <div style="display: flex; flex-direction: column; gap: 8px">
+              <div style="position: relative; width: 1100px; height: 270px">
+                <svg role="img" aria-label="{{ariaOne}}" width="1100" height="270" viewBox="0 0 1100 270" style="display: block; font-family: Barlow, sans-serif">
+                  <sc-for list="{{gridOne}}" as="g" hint-placeholder-count="5">
+                    <line x1="60" x2="930" y1="{{g.y}}" y2="{{g.y}}" stroke="rgba(29,31,32,.10)" stroke-width="1"></line>
+                    <text x="52" y="{{g.ty}}" text-anchor="end" font-size="11" fill="#5b5c5e">{{g.label}}</text>
+                  </sc-for>
+                  <sc-for list="{{bars}}" as="b" hint-placeholder-count="13">
+                    <path d="{{b.d}}" fill="#5980a6"></path>
+                    <text x="{{b.x}}" y="262" text-anchor="middle" font-size="11" fill="#5b5c5e">{{b.label}}</text>
+                  </sc-for>
+                  <line x1="{{m1x}}" x2="{{m1x}}" y1="36" y2="240" stroke="rgba(29,31,32,.6)" stroke-width="1"></line>
+                  <line x1="{{m2x}}" x2="{{m2x}}" y1="36" y2="240" stroke="rgba(29,31,32,.6)" stroke-width="1" stroke-dasharray="4 3"></line>
+                </svg>
+                <button aria-label="Price change on Sep 1: Claude Sonnet 5.5, 20 percent lower. Documented." style="position: absolute; left: {{m1tag}}; top: 4px; height: 24px; padding: 0 8px; border: 1px solid #1d1f20; border-radius: 3px; background: #f2f2f3; color: #1d1f20; font: inherit; font-size: 12px; white-space: nowrap">Price · Claude Sonnet 5.5 −20%</button>
+                <button aria-label="Observed on Oct 6: GPT-5.5 billed 12 percent above the price book. Inferred." style="position: absolute; left: {{m2tag}}; top: 4px; height: 24px; padding: 0 8px; border: 1px dashed #1d1f20; border-radius: 3px; background: #f2f2f3; color: #1d1f20; font: inherit; font-size: 12px; white-space: nowrap">Observed · GPT-5.5 billed +12%</button>
+              </div>
+              <div style="border-top: 1px solid rgba(29,31,32,.16); padding-top: 6px">
+                <span class="kicker">Running total · separate chart, never a second axis</span>
+                <svg role="img" aria-label="{{ariaRun}}" width="1100" height="110" viewBox="0 0 1100 110" style="display: block; font-family: Barlow, sans-serif">
+                  <line x1="60" x2="930" y1="90" y2="90" stroke="rgba(29,31,32,.16)" stroke-width="1"></line>
+                  <text x="52" y="94" text-anchor="end" font-size="11" fill="#5b5c5e">0</text>
+                  <text x="52" y="18" text-anchor="end" font-size="11" fill="#5b5c5e">{{runMaxLabel}}</text>
+                  <path d="{{runD}}" fill="none" stroke="#416180" stroke-width="2" stroke-linejoin="round"></path>
+                  <circle cx="{{runEx}}" cy="{{runEy}}" r="4" fill="#416180" stroke="#f2f2f3" stroke-width="2"></circle>
+                  <text x="{{runLx}}" y="{{runLy}}" font-size="12" fill="#1d1f20" style="font-variant-numeric: tabular-nums">{{runLast}}</text>
+                </svg>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{isMany}}" hint-placeholder-val="{{false}}">
+            <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px 18px">
+              <sc-for list="{{panels}}" as="p" hint-placeholder-count="5">
+                <section style="display: flex; flex-direction: column; gap: 2px; padding-top: 6px; border-top: 1px solid rgba(29,31,32,.16)">
+                  <h3 style="margin: 0; display: flex; align-items: baseline; gap: 8px; font-family: Barlow, sans-serif; font-weight: 600; font-size: 14px"><span aria-hidden="true" style="width: 10px; height: 10px; border-radius: 2px; background: {{p.color}}"></span>{{p.name}}<span class="num muted" style="margin-left: auto; font-weight: 400">{{p.total}}</span></h3>
+                  <svg role="img" aria-label="{{p.aria}}" width="350" height="140" viewBox="0 0 350 140" style="display: block; font-family: Barlow, sans-serif">
+                    <line x1="44" x2="340" y1="10" y2="10" stroke="rgba(29,31,32,.10)"></line>
+                    <line x1="44" x2="340" y1="118" y2="118" stroke="rgba(29,31,32,.16)"></line>
+                    <text x="38" y="14" text-anchor="end" font-size="10" fill="#5b5c5e">{{p.maxLabel}}</text>
+                    <text x="38" y="122" text-anchor="end" font-size="10" fill="#5b5c5e">0</text>
+                    <line x1="{{p.m1x}}" x2="{{p.m1x}}" y1="10" y2="118" stroke="rgba(29,31,32,.5)"></line>
+                    <path d="{{p.d}}" fill="none" stroke="{{p.color}}" stroke-width="2" stroke-linejoin="round"></path>
+                    <circle cx="{{p.ex}}" cy="{{p.ey}}" r="4" fill="{{p.color}}" stroke="#f2f2f3" stroke-width="2"></circle>
+                    <text x="44" y="134" font-size="10" fill="#5b5c5e">Aug 4</text>
+                    <text x="340" y="134" text-anchor="end" font-size="10" fill="#5b5c5e">Oct 27</text>
+                  </svg>
+                </section>
+              </sc-for>
+            </div>
+          </sc-if>
+
+          <p class="muted" style="margin: auto 0 0; font-size: 12px">{{footnote}}</p>
+        </figure>
+      </main>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"series":{"editor":"enum","options":["one","three","many"],"default":"three"},"scale":{"editor":"enum","options":["shared","own"],"default":"shared"},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var series = this.props.series ?? 'three';
+    var scale = this.props.scale ?? 'shared';
+    var weeks = ['Aug 4','Aug 11','Aug 18','Aug 25','Sep 1','Sep 8','Sep 15','Sep 22','Sep 29','Oct 6','Oct 13','Oct 20','Oct 27'];
+    var SERIES = ['#2a78d6','#eb6834','#1baf7a','#eda100','#e87ba4'];
+    var projects = [
+      { name: 'Customer portal', vals: [3800,4200,4500,5100,4700,4000,3600,3900,4400,4900,5300,5800,6100] },
+      { name: 'Billing service', vals: [2200,2500,2800,3000,2600,2400,2100,2300,2700,3100,3300,3600,3800] },
+      { name: 'Internal tools', vals: [1000,1200,1500,1400,1300,1100,900,null,1200,1600,1800,1700,2000] },
+      { name: 'Data platform', vals: [600,700,650,800,900,850,700,750,800,950,1000,1100,1150] },
+      { name: 'Mobile app', vals: [300,350,500,450,400,380,420,460,500,520,610,640,700] }
+    ];
+    projects.forEach(function (p, i) { p.color = SERIES[i]; p.total = p.vals.reduce(function (a, v) { return a + (v || 0); }, 0); });
+    function fmt(n) { return n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+    function fmt0(n) { return n.toLocaleString('en-US'); }
+
+    var L = 60, PW = 870, T = 40, PH = 310;
+    function x(i) { return L + i * PW / 12; }
+    function yOf(max, top, h) { return function (v) { return top + h - v / max * h; }; }
+    function path(vals, xf, yf) {
+      var d = '', pen = false;
+      vals.forEach(function (v, i) {
+        if (v === null) { pen = false; return; }
+        d += (pen ? 'L' : 'M') + xf(i).toFixed(1) + ' ' + yf(v).toFixed(1) + ' ';
+        pen = true;
+      });
+      return d;
+    }
+
+    // Three series
+    var y3 = yOf(8000, T, PH);
+    var grid = [0, 2000, 4000, 6000, 8000].map(function (v) { return { y: y3(v), ty: y3(v) + 4, label: fmt0(v) }; });
+    var xlabels = weeks.map(function (w, i) { return { x: x(i), label: w }; }).filter(function (_, i) { return i % 2 === 0; });
+    var three = projects.slice(0, 3);
+    var lines = three.map(function (p) {
+      var last = p.vals[12];
+      return { name: p.name, color: p.color, d: path(p.vals, x, y3), ex: x(12), ey: y3(last), hxp: x(11), hy: y3(p.vals[11]),
+        lx: x(12) + 12, ly: y3(last) - 2, ly2: y3(last) + 13, last: fmt(last) };
+    });
+    var tipRows = three.map(function (p) { return { name: p.name, color: p.color, value: fmt(p.vals[11]) }; });
+
+    // One series
+    var cp = projects[0];
+    var y1 = yOf(8000, 36, 204);
+    var gridOne = [0, 2000, 4000, 6000, 8000].map(function (v) { return { y: y1(v), ty: y1(v) + 4, label: fmt0(v) }; });
+    var bars = cp.vals.map(function (v, i) {
+      var cx = x(i), x0 = cx - 12, x1 = cx + 12, top = y1(v), base = y1(0);
+      return { x: cx, label: i % 2 === 0 ? weeks[i] : '',
+        d: 'M' + x0 + ' ' + base + ' V' + (top + 4) + ' Q' + x0 + ' ' + top + ' ' + (x0 + 4) + ' ' + top + ' H' + (x1 - 4) + ' Q' + x1 + ' ' + top + ' ' + x1 + ' ' + (top + 4) + ' V' + base + ' Z' };
+    });
+    var run = [], acc = 0;
+    cp.vals.forEach(function (v) { acc += v; run.push(acc); });
+    var yr = yOf(64000, 14, 76);
+    var runD = path(run, x, yr);
+
+    // Many series (small multiples)
+    var PX = function (i) { return 44 + i * 296 / 12; };
+    var panels = projects.map(function (p) {
+      var max = scale === 'own' ? Math.ceil(Math.max.apply(null, p.vals.filter(function (v) { return v !== null; })) / 1000) * 1000 : 7000;
+      var yp = yOf(max, 10, 108);
+      return { name: p.name, color: p.color, total: fmt(p.total), d: path(p.vals, PX, yp), ex: PX(12), ey: yp(p.vals[12]),
+        m1x: PX(4), maxLabel: fmt0(max), aria: p.name + ': weekly cost, last 90 days, total ' + fmt(p.total) + ' AI Credits' };
+    });
+
+    var shown = series === 'one' ? [cp] : series === 'three' ? three : projects;
+    var total = shown.reduce(function (a, p) { return a + p.total; }, 0);
+    var selectionText = series === 'one' ? 'Customer portal' : series === 'three' ? '3 of 6' : '5 of 6';
+
+    function box(title, items) { return { title: title, items: items }; }
+    function item(name, value, st) {
+      var base = 'display: flex; justify-content: space-between; gap: 8px; height: 26px; align-items: center; padding: 0 8px; border: 0; border-radius: 2px; font: inherit; font-size: 13px; text-align: left; cursor: pointer; ';
+      var look = st === 'sel' ? 'background: #416180; color: #f2f2f3' : st === 'exc' ? 'background: #e7e7ea; color: #5b5c5e' : 'background: transparent; color: #1d1f20';
+      return { name: name, value: value, pressed: st === 'sel' ? 'true' : 'false', style: base + look };
+    }
+    var selCount = series === 'one' ? 1 : series === 'three' ? 3 : 5;
+    var projItems = projects.map(function (p, i) { return item(p.name, fmt0(p.total), i < selCount ? 'sel' : 'alt'); });
+    projItems.push(item('No project', '3,802', 'alt'));
+    var boxes = [
+      box('Project', projItems),
+      box('Repository', [item('example/portal-web', '31,240', 'pos'), item('example/platform · portal-api', '28,060', 'pos'), item('example/billing-api', '36,400', 'pos'), item('example/infra · portal/*', '1,000', 'pos'), item('example/docs-site', '3,802', 'exc')]),
+      box('Vendor', [item('Anthropic', '71,500', 'pos'), item('OpenAI', '35,430', 'pos'), item('Google', '7,470', 'pos'), item('xAI', '—', 'exc')]),
+      box('Cost basis', [item('Billed', '97,830', 'pos'), item('Reported', '4,180', 'pos'), item('Priced', '12,390', 'pos')]),
+      box('Provider', [item('VS Code', '97,830', 'pos'), item('Claude Code', '12,390', 'pos'), item('pi', '4,180', 'pos'), item('mitmproxy', 'unknown', 'exc')])
+    ];
+
+    var kpis = [
+      { label: 'Total cost', value: fmt(total), note: 'AI Credits · Aug 4 – Nov 2' },
+      { label: 'Change', value: '+18.2%', note: 'vs the previous 90 days' },
+      { label: 'Per active day', value: fmt(total / 61), note: 'AI Credits · 61 active days' },
+      { label: 'Coverage', value: '96%', note: '4,112 of 4,284 turns priced' }
+    ];
+
+    return {
+      isOne: series === 'one', isThree: series === 'three', isMany: series === 'many',
+      sharedClass: scale === 'shared' ? 'on' : '', ownClass: scale === 'own' ? 'on' : '',
+      selectionText: selectionText, boxes: boxes, kpis: kpis,
+      chartTitle: series === 'one' ? 'Customer portal' : series === 'three' ? 'Three projects' : 'Five projects, small multiples',
+      legend: three.map(function (p) { return { name: p.name, color: p.color }; }),
+      grid: grid, xlabels: xlabels, lines: lines, tipRows: tipRows,
+      m1x: x(4), m2x: x(9), hx: x(11), m1tag: (x(4) - 4) + 'px', m2tag: (x(9) - 4) + 'px', tipLeft: (x(11) - 244) + 'px',
+      gapX: x(7), gapY: y3(1050) + 18,
+      ariaThree: 'Line chart of weekly cost in AI Credits for three projects, Aug 4 to Oct 27. Customer portal ends at ' + fmt(6100) + ', Billing service at ' + fmt(3800) + ', Internal tools at ' + fmt(2000) + '; Internal tools has no priced turns in the week of Sep 22. Price change markers on Sep 1 and Oct 6.',
+      gridOne: gridOne, bars: bars,
+      ariaOne: 'Column chart of weekly cost in AI Credits for Customer portal, Aug 4 to Oct 27, from ' + fmt(3800) + ' to ' + fmt(6100) + '.',
+      ariaRun: 'Running total for Customer portal, reaching ' + fmt(run[12]) + ' AI Credits.',
+      runD: runD, runEx: x(12), runEy: yr(run[12]), runLx: x(12) + 12, runLy: yr(run[12]) + 4, runLast: fmt(run[12]), runMaxLabel: fmt0(64000),
+      panels: panels,
+      footnote: series === 'many'
+        ? 'Past four series the lines are not overlaid: one panel per project, on a shared y-scale unless Own scale is chosen. Solid hairline: documented price change on Sep 1.'
+        : 'Solid marker: documented price change (price book). Dashed marker: observed from billed figures, inferred. A week whose cost is all unknown is a gap, never 0. Coverage is on every point in the table view and the tooltip.'
+    };
+  }
+}
+</script>
+</body>
+</html>

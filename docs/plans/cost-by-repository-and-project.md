@@ -556,9 +556,10 @@ separate Costs view. The reasons:
   to 720 px, insights first below that). The new section inherits it.
 
 The Dashboard gains a **SegmentedControl** at the top of its right side:
-*Overview* (today's content), *Cost over time*, *Compare*, *Billing*.
-The selections are shared across all four, so a selection made in one
-stays in force in the others.
+*Overview* (today's content), *Cost over time*, *Compare*, *Project*
+(§11.4) and *Billing*. The selections are shared across all five, so a
+selection made in one stays in force in the others. Below 700 px the
+tabs become a view `select`, as the session view already does.
 
 ### 11.2 Cost over time
 
@@ -680,18 +681,45 @@ The chart kit has no colours for categories today. `TrendColumns` and
 `HorizontalBars` use the accent, and `StackedColumns` uses status colours
 for tool-call outcomes. Vendors and projects need **identity** colours, so
 this phase adds eight categorical tokens (`--color-series-1` to `-8`) to
-`theme.css`, with their own dark-theme steps. In `theme-vscode.css`, the
-first six map to VS Code's own chart colours (`--vscode-charts-blue`,
-`-orange`, `-green`, `-purple`, `-yellow`, `-red`; red goes last because it
-reads as an error), and the last two keep the app's own tokens. Because
-the theme sets those six colours, they must pass the validator in Dark
-Modern, Light Modern and High Contrast as well. They are
-checked with the dataviz validator in light and dark and with
-`theme-contrast.test.ts`. The order is fixed. A project's colour comes
-from its position in the project file, and a vendor's colour from a fixed
-vendor order, so filtering never repaints them. In High Contrast, series
-also carry a texture or a dash pattern, because the theme flattens
-colours.
+`theme.css`. They are the dataviz reference palette, in its fixed order:
+
+| Slot | Hue | Light (Industry ground `#f2f2f3`) | Dark (VS Code Dark Modern `#1f1f1f`) |
+|---|---|---|---|
+| 1 | blue | `#2a78d6` | `#3987e5` |
+| 2 | orange | `#eb6834` | `#d95926` |
+| 3 | aqua | `#1baf7a` | `#199e70` |
+| 4 | yellow | `#eda100` | `#c98500` |
+| 5 | magenta | `#e87ba4` | `#d55181` |
+| 6 | green | `#008300` | `#008300` |
+| 7 | violet | `#6250d6` | `#9085e9` |
+| 8 | red | `#e34948` | `#e66767` |
+
+Validator results (2026-11-05, `validate_palette.js`):
+
+- **Light, on `#f2f2f3`**: lightness, chroma, colour-blind separation
+  (worst adjacent ΔE 9.1) and normal-vision floor all pass. Contrast
+  against the ground is a **warning** for orange, aqua, yellow and magenta
+  (1.9–2.9:1). The validator allows this only with relief, and the design
+  provides it: direct labels on every line up to four series, values in
+  tooltips, and "View as table" on every chart.
+- **Dark, on `#1f1f1f`**: every check passes (worst adjacent ΔE 8.4, all
+  ≥ 3:1).
+- **VS Code's own chart colours fail.** On Dark Modern,
+  `charts.orange`, `green`, `purple` and `yellow` fall outside the
+  lightness band (too light next to blue and red). So, correcting the
+  first draft of this section, `theme-vscode.css` does **not** map series
+  to `--vscode-charts-*`. It uses the dark steps above in dark themes and
+  the light steps in light themes.
+
+In High Contrast, series also differ by dash pattern (solid, `7 4`,
+`2 3`), because the theme flattens colours; board 7 shows it.
+`theme-contrast.test.ts` gets the new tokens in Dark Modern, Light Modern
+and High Contrast. The order is fixed. A project's colour comes from its
+position in the project file, and a vendor's colour from a fixed vendor
+order (Anthropic, OpenAI, Google, xAI, Microsoft, Moonshot AI, …), so
+filtering never repaints them. Waterfall increases and decreases use the
+diverging pair (red `#e34948`, dark blue `#1c5cab`) with a written sign;
+warnings keep the existing severity colours with icon and text.
 
 ### 11.8 Mock-ups and review gate
 
@@ -711,6 +739,30 @@ before any UI code, with versioned copies in
 
 The owner reviews them and their comments are resolved before step 15.9
 starts (§14).
+
+**Status (2026-11-05): drawn, awaiting the owner's review.** The canvas is
+**https://claude.ai/artifact/MEYu54PJ19cnSjsgVquWS9**. It is private until
+the owner shares it from the page's Share menu; reviewers comment on the
+canvas. The versioned copies are in
+[mockups/cost-by-project/](mockups/cost-by-project/) (`.dc.html` files
+rendered by the canvas, not standalone pages). All numbers on the boards
+are sample data. Three boards have a tweak: board 1 switches between one,
+three and many series, board 4 between the draft, confirm and frozen
+states, and board 7 between Dark Modern, Light Modern and High Contrast.
+
+| Board | File | Shows | Plan |
+|---|---|---|---|
+| 1 | `Main.dc.html` | Cost over time: filters row, KPI tiles with coverage, three projects as lines with direct labels, a documented (solid) and an observed (dashed) price marker, a hover tooltip, an unknown week as a gap; one series as columns plus a separate running total; five series as small multiples with shared or own scale | §11.2 |
+| 2a | `Compare.dc.html` | Compare table with Columns and Export, indexed line chart, share-of-total bars | §11.3 |
+| 2b | `CompareNarrow.dc.html` | 640 px: view select, priority columns, Filters button, details drawer | §11.3, vscode-extension.md §3.5 Layout |
+| 3 | `Project.dc.html` | Vendor bars (selectable), models and token types as two charts, August-to-October waterfall with a table, billed-vs-priced finding and per-model gap table | §11.4, §8.4, §6.4 |
+| 4 | `Billing.dc.html` | Draft statement with unknown-cost row, totals, markup, fixed line, fixed-rate EUR, provenance; issue confirmation; frozen with "Differs from issued"; estimate range; issued list | §11.5, §8.5, §8.6 |
+| 5 | `Projects.dc.html` | Unassigned repositories first with a Project select per row, alias and capture-rule cases, project cards with member scopes, an exact-tie error inline and in a summary, Save disabled | §11.5, §7, D1 |
+| 6 | `States.dc.html` | Loading skeleton with Cancel, two empty states, partial, error, stale price book | §11.5 |
+| 7 | `VsCode.dc.html` | Sessions tree grouped by repository, status bar with tooltip, compact Cost over time tab | §11.9 |
+
+Two design changes came out of drawing the boards: a fifth Dashboard tab,
+*Project* (§11.1), and the palette correction above (§11.7).
 
 ### 11.9 VS Code extension (Copilot only)
 
@@ -806,7 +858,7 @@ No UI code (15.9 onwards) starts before the mock-ups in 15.8 are approved.
 | 15.5 | **Price book with history**: `PriceVersion` schema, bundled channel files with sources, user versions, `PriceBook` lookup; Phase 13 profiles read their current prices from it | Overlap/boundary/precedence tests pass; every version has a source; Phase 13 tests unchanged |
 | 15.6 | **CostPricer + basis**: `CostFigure` on every turn row; reconciliation figures for Copilot turns; Cost basis list box | Pricing tests pass; unknown never sums as 0; billed vs priced shown per model-month |
 | 15.7 | **Time series, compare, project breakdown** + their endpoints | Golden outputs for a fixture dataset across three providers and two projects |
-| 15.8 | **Mock-ups and palette** (§11.7, §11.8): the seven boards on a Design canvas with versioned copies; the eight categorical tokens in `theme.css` and `theme-vscode.css` | Owner approves the boards and their comments are resolved; the dataviz validator passes in light and dark; `theme-contrast.test.ts` covers the new tokens in Dark Modern, Light Modern and High Contrast |
+| 15.8 | **Mock-ups and palette** (§11.7, §11.8): the seven boards on a Design canvas with versioned copies (drawn 2026-11-05, awaiting review); the eight categorical tokens in `theme.css` and `theme-vscode.css` (not started) | Owner approves the boards and their comments are resolved; the dataviz validator passes in light and dark; `theme-contrast.test.ts` covers the new tokens in Dark Modern, Light Modern and High Contrast |
 | 15.9 | **Dashboard tabs: Cost over time and Compare**, with price-change markers (§11.1–§11.3) | Component tests incl. "View as table" and unknown-as-gap; `vitest-axe` clean in three themes; keyboard tests; the UI check (`npm run test:ui`) passes for the new tabs at 600–1600 px in three themes; screenshots of the standalone app at desktop and 360 px widths |
 | 15.10 | **Price changes and variance**: `PriceChangeDetector`, observed-change finding, `VarianceAnalyzer`, Project tab (§11.4) | Effects add up exactly (property test); markers match price-book boundaries; same UI checks as 15.9 |
 | 15.11 | **Statements**: builder, freeze, diff, CSV/JSON/Markdown export, Billing tab, Projects editor (§11.5) | Golden statements; a frozen statement survives a price-book update unchanged and the diff is exact; every project can be assigned by keyboard alone; same UI checks as 15.9 |
