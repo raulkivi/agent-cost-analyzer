@@ -1,0 +1,70 @@
+{
+  "id": "subagent-session",
+  "title": "The Subagent's Own Session",
+  "category": "Subagents",
+  "harnesses": ["vscode-local", "copilot-agent-host", "claude-code"],
+  "sessionKind": "subagent",
+  "staticPrefix": {
+    "toolsTokens": 500,
+    "systemTokens": 700
+  },
+  "steps": [
+    {
+      "index": 1,
+      "userMessage": "(subagent task) Find the root cause of the bug shown in the parent session's screenshot.",
+      "assistantResponse": "Searching the codebase for likely causes.",
+      "toolCalls": [
+        {
+          "name": "grep_search",
+          "argsSummary": "error message from the screenshot across src/"
+        },
+        {
+          "name": "semantic_search",
+          "argsSummary": "related handling code near the failing feature"
+        }
+      ],
+      "explanation": "The subagent has its own isolated context, separate from the parent session that spawned it. This first turn writes its own prefix plus new content like any session's first turn; nothing from the parent's cache is inherited or paid for again.",
+      "newContent": {
+        "userTokens": 250,
+        "toolResultTokens": 600,
+        "reasoningTokens": 180,
+        "outputTokens": 120
+      },
+      "events": []
+    },
+    {
+      "index": 2,
+      "userMessage": "(subagent task, continued) Read the matched files in full to confirm the cause.",
+      "assistantResponse": "Reading the matched files to confirm before summarizing.",
+      "toolCalls": [
+        {
+          "name": "read_file",
+          "argsSummary": "full contents of the files matched in the previous search"
+        }
+      ],
+      "explanation": "A normal cache-building turn inside the subagent's own session. It reads back what its first turn wrote and adds a large tool-result spike from reading the matched files in full.",
+      "newContent": {
+        "userTokens": 100,
+        "toolResultTokens": 900,
+        "reasoningTokens": 150,
+        "outputTokens": 90
+      },
+      "events": []
+    },
+    {
+      "index": 3,
+      "userMessage": "(subagent task, continued) Summarize the root cause for the parent session.",
+      "assistantResponse": "The root cause is a stale cache key in the session handler; returning a compact summary to the parent.",
+      "toolCalls": [],
+      "explanation": "Final subagent turn: it writes the compact summary that crosses back to the parent session. The subagent's whole trajectory stays isolated from the parent; the parent only ever sees the small summary.",
+      "newContent": {
+        "userTokens": 50,
+        "toolResultTokens": 0,
+        "reasoningTokens": 100,
+        "outputTokens": 200
+      },
+      "events": []
+    }
+  ],
+  "parentScenarioId": "cache-basics"
+}

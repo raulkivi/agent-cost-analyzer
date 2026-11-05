@@ -1,0 +1,93 @@
+{
+  "id": "mcp-tool-change",
+  "title": "MCP Tool Change Mid-Session",
+  "category": "Tool change",
+  "harnesses": ["vscode-local", "copilot-agent-host", "claude-code"],
+  "sessionKind": "main",
+  "staticPrefix": {
+    "toolsTokens": 1200,
+    "systemTokens": 1800
+  },
+  "steps": [
+    {
+      "index": 1,
+      "userMessage": "Let's plan out the caching layer for the API.",
+      "assistantResponse": "Sure, exploring the code to plan it out.",
+      "toolCalls": [],
+      "explanation": "Normal first turn: writes the static prefix, including the currently enabled toolset, plus this turn's own content.",
+      "newContent": {
+        "userTokens": 500,
+        "toolResultTokens": 0,
+        "reasoningTokens": 150,
+        "outputTokens": 150
+      },
+      "events": []
+    },
+    {
+      "index": 2,
+      "userMessage": "Sounds good, go ahead.",
+      "assistantResponse": "Continuing with the plan.",
+      "toolCalls": [],
+      "explanation": "Normal turn that reuses and extends the cache.",
+      "newContent": {
+        "userTokens": 200,
+        "toolResultTokens": 100,
+        "reasoningTokens": 120,
+        "outputTokens": 180
+      },
+      "events": []
+    },
+    {
+      "index": 3,
+      "userMessage": "I just enabled a new MCP server — use its tools from now on.",
+      "assistantResponse": "Understood, I'll use the newly enabled tools going forward.",
+      "toolCalls": [],
+      "explanation": "The tool definitions come first in the prompt, so changing the enabled toolset invalidates everything after them: the prior cache no longer matches and the whole history is resent uncached. Prices stay the same, so this spike is smaller than a model switch's.",
+      "newContent": {
+        "userTokens": 150,
+        "toolResultTokens": 0,
+        "reasoningTokens": 200,
+        "outputTokens": 220
+      },
+      "events": [
+        {
+          "type": "tools-changed",
+          "deltaTokens": 1500
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "userMessage": "Use the new tool to fetch the latest schema.",
+      "assistantResponse": "Fetching the latest schema with the newly enabled tool.",
+      "toolCalls": [
+        {
+          "name": "newMcpTool.fetchSchema",
+          "argsSummary": "fetch latest API schema via the newly enabled MCP tool"
+        }
+      ],
+      "explanation": "Normal turn under the new toolset; it actually calls one of the newly enabled tools.",
+      "newContent": {
+        "userTokens": 110,
+        "toolResultTokens": 400,
+        "reasoningTokens": 130,
+        "outputTokens": 160
+      },
+      "events": []
+    },
+    {
+      "index": 5,
+      "userMessage": "Great, that's all for now.",
+      "assistantResponse": "Sounds good, let me know if you need anything else.",
+      "toolCalls": [],
+      "explanation": "The cache continues building normally under the new toolset, with no further disruption.",
+      "newContent": {
+        "userTokens": 70,
+        "toolResultTokens": 0,
+        "reasoningTokens": 70,
+        "outputTokens": 100
+      },
+      "events": []
+    }
+  ]
+}

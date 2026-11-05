@@ -1,9 +1,10 @@
 import type { CacheOutcome, CachingKind } from "@agent-cost-analyzer/domain";
 import type { Prompt } from "../prompt-builder.js";
-import type {
-  CacheModel,
-  CacheRequest,
-  KnownCacheResult,
+import {
+  validPrefixTokens,
+  type CacheModel,
+  type CacheRequest,
+  type KnownCacheResult,
 } from "../cache-model.js";
 
 type BreakpointKind = Extract<CachingKind, { kind: "breakpoints" }>;
@@ -31,10 +32,7 @@ export class BreakpointCacheModel implements CacheModel {
       this.entry !== undefined && req.atMinute <= this.entry.expiresAt
         ? this.entry
         : undefined;
-    const validPrefix =
-      req.invalidatedFrom === undefined
-        ? Infinity
-        : prompt.tokensBefore(req.invalidatedFrom);
+    const validPrefix = validPrefixTokens(req);
     const read = Math.min(previous?.tokens ?? 0, validPrefix, cacheable);
     const written = cacheable - read;
 

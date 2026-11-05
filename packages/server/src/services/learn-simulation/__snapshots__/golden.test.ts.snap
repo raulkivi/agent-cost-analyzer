@@ -1,0 +1,598 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`golden simulations (scenario × vendor default model) > cache-basics on anthropic 1`] = `
+"1 claude-sonnet-5.5 miss uncached=0 write=4950 read=0 credits=1.7875
+2 claude-sonnet-5.5 hit uncached=0 write=1350 read=4950 credits=0.7670
+3 claude-sonnet-5.5 hit uncached=0 write=730 read=6300 credits=0.7755
+4 claude-sonnet-5.5 hit uncached=0 write=2180 read=7030 credits=1.0653
+5 claude-sonnet-5.5 hit uncached=0 write=1030 read=9210 credits=0.8296
+6 claude-sonnet-5.5 hit uncached=0 write=340 read=10240 credits=0.3574
+7 claude-sonnet-5.5 hit uncached=0 write=1110 read=10580 credits=0.7633
+8 claude-sonnet-5.5 hit uncached=0 write=260 read=11690 credits=0.3019"
+`;
+
+exports[`golden simulations (scenario × vendor default model) > cache-basics on google 1`] = `
+"1 gemini-4-argon miss uncached=4950 write=0 read=0 credits=1.5400
+2 gemini-4-argon hit uncached=1350 write=0 read=4950 credits=0.6995
+3 gemini-4-argon hit uncached=730 write=0 read=6300 credits=0.7390
+4 gemini-4-argon hit uncached=2180 write=0 read=7030 credits=0.9563
+5 gemini-4-argon hit uncached=1030 write=0 read=9210 credits=0.7781
+6 gemini-4-argon hit uncached=340 write=0 read=10240 credits=0.3404
+7 gemini-4-argon hit uncached=1110 write=0 read=10580 credits=0.7078
+8 gemini-4-argon hit uncached=260 write=0 read=11690 credits=0.2889"
+`;
+
+exports[`golden simulations (scenario × vendor default model) > cache-basics on openai 1`] = `
+"1 gpt-6.1-sol miss uncached=0 write=4950 read=0 credits=1.7875
+2 gpt-6.1-sol hit uncached=0 write=1350 read=4950 credits=0.7670
+3 gpt-6.1-sol hit uncached=0 write=730 read=6300 credits=0.7755
+4 gpt-6.1-sol hit uncached=0 write=2180 read=7030 credits=1.0653
+5 gpt-6.1-sol hit uncached=0 write=1030 read=9210 credits=0.8296
+6 gpt-6.1-sol hit uncached=0 write=340 read=10240 credits=0.3574
+7 gpt-6.1-sol hit uncached=0 write=1110 read=10580 credits=0.7633
+8 gpt-6.1-sol hit uncached=0 write=260 read=11690 credits=0.3019"
+`;
+
+exports[`golden simulations (scenario × vendor default model) > cache-basics on xai 1`] = `
+"1 grok-4.7 miss uncached=4950 write=0 read=0 credits=1.3200
+2 grok-4.7 hit uncached=1350 write=0 read=4950 credits=0.7455
+3 grok-4.7 hit uncached=730 write=0 read=6300 credits=0.7790
+4 grok-4.7 hit uncached=2180 write=0 read=7030 credits=1.0575
+5 grok-4.7 hit uncached=1030 write=0 read=9210 credits=0.9545
+6 grok-4.7 hit uncached=340 write=0 read=10240 credits=0.6820
+7 grok-4.7 hit uncached=1110 write=0 read=10580 credits=0.9790
+8 grok-4.7 hit uncached=260 write=0 read=11690 credits=0.7085"
+`;
+
+exports[`golden simulations (scenario × vendor default model) > cache-ttl-1-hour-breakpoint on anthropic 1`] = `
+"1 claude-sonnet-5.5 miss uncached=0 write=3400 read=0 credits=1.5600
+2 claude-sonnet-5.5 hit uncached=0 write=350 read=3400 credits=0.3240
+3 claude-sonnet-5.5 hit uncached=0 write=550 read=3750 credits=0.4375
+4 claude-sonnet-5.5 hit uncached=0 write=780 read=4300 credits=0.5550
+5 claude-sonnet-5.5 hit uncached=0 write=280 read=5080 credits=0.3228
+6 claude-sonnet-5.5 hit uncached=0 write=260 read=5360 credits=0.3076
+7 claude-sonnet-5.5 hit uncached=0 write=270 read=5620 credits=0.3342
+8 claude-sonnet-5.5 hit uncached=0 write=300 read=5890 credits=0.3489
+9 claude-sonnet-5.5 hit uncached=0 write=290 read=6190 credits=0.3279
+10 claude-sonnet-5.5 hit uncached=0 write=240 read=6480 credits=0.2808"
+`;
+
+exports[`golden simulations (scenario × vendor default model) > cache-ttl-1-hour-breakpoint on google 1`] = `
+"1 gemini-4-argon miss uncached=3400 write=0 read=0 credits=0.8800
+2 gemini-4-argon hit uncached=350 write=0 read=3400 credits=0.2540
+3 gemini-4-argon hit uncached=550 write=0 read=3750 credits=0.3275
+4 gemini-4-argon hit uncached=780 write=0 read=4300 credits=0.3990
+5 gemini-4-argon hit uncached=280 write=0 read=5080 credits=0.2668
+6 gemini-4-argon hit uncached=260 write=0 read=5360 credits=0.2556
+7 gemini-4-argon hit uncached=270 write=0 read=5620 credits=0.2802
+8 gemini-4-argon miss uncached=6190 write=0 read=0 credits=1.4080
+9 gemini-4-argon hit uncached=290 write=0 read=6190 credits=0.2699
+10 gemini-4-argon hit uncached=240 write=0 read=6480 credits=0.2328"
+`;
+
+exports[`golden simulations (scenario × vendor default model) > cache-ttl-1-hour-breakpoint on openai 1`] = `
+"1 gpt-6.1-sol miss uncached=0 write=3400 read=0 credits=1.0500
+2 gpt-6.1-sol hit uncached=0 write=350 read=3400 credits=0.2715
+3 gpt-6.1-sol hit uncached=0 write=550 read=3750 credits=0.3550
+4 gpt-6.1-sol hit uncached=0 write=780 read=4300 credits=0.4380
+5 gpt-6.1-sol hit uncached=0 write=280 read=5080 credits=0.2808
+6 gpt-6.1-sol hit uncached=0 write=260 read=5360 credits=0.2686
+7 gpt-6.1-sol hit uncached=0 write=270 read=5620 credits=0.2937
+8 gpt-6.1-sol hit uncached=0 write=300 read=5890 credits=0.3039
+9 gpt-6.1-sol hit uncached=0 write=290 read=6190 credits=0.2844
+10 gpt-6.1-sol hit uncached=0 write=240 read=6480 credits=0.2448"
+`;
+
+exports[`golden simulations (scenario × vendor default model) > cache-ttl-1-hour-breakpoint on xai 1`] = `
+"1 grok-4.7 miss uncached=3400 write=0 read=0 credits=0.8000
+2 grok-4.7 hit uncached=350 write=0 read=3400 credits=0.3300
+3 grok-4.7 hit uncached=550 write=0 read=3750 credits=0.4055
+4 grok-4.7 hit uncached=780 write=0 read=4300 credits=0.4910
+5 grok-4.7 hit uncached=280 write=0 read=5080 credits=0.4060
+6 grok-4.7 hit uncached=260 write=0 read=5360 credits=0.4100
+7 grok-4.7 hit uncached=270 write=0 read=5620 credits=0.4370
+8 grok-4.7 miss uncached=6190 write=0 read=0 credits=1.3400
+9 grok-4.7 hit uncached=290 write=0 read=6190 credits=0.4575
+10 grok-4.7 hit uncached=240 write=0 read=6480 credits=0.4440"
+`;
+
+exports[`golden simulations (scenario × vendor default model) > cache-ttl-smoke-break on anthropic 1`] = `
+"1 claude-sonnet-5.5 miss uncached=0 write=3400 read=0 credits=1.0500
+2 claude-sonnet-5.5 hit uncached=0 write=250 read=3400 credits=0.2465
+3 claude-sonnet-5.5 hit uncached=0 write=510 read=3650 credits=0.3440
+4 claude-sonnet-5.5 hit uncached=0 write=740 read=4160 credits=0.4266
+5 claude-sonnet-5.5 hit uncached=0 write=390 read=4900 credits=0.3065
+6 claude-sonnet-5.5 hit uncached=0 write=370 read=5290 credits=0.2954
+7 claude-sonnet-5.5 hit uncached=0 write=440 read=5660 credits=0.3366
+8 claude-sonnet-5.5 miss uncached=0 write=6370 read=0 credits=2.0125
+9 claude-sonnet-5.5 hit uncached=0 write=260 read=6370 credits=0.2787
+10 claude-sonnet-5.5 hit uncached=0 write=270 read=6630 credits=0.2538"
+`;
+
+exports[`golden simulations (scenario × vendor default model) > cache-ttl-smoke-break on google 1`] = `
+"1 gemini-4-argon miss uncached=3400 write=0 read=0 credits=0.8800
+2 gemini-4-argon hit uncached=250 write=0 read=3400 credits=0.2340
+3 gemini-4-argon hit uncached=510 write=0 read=3650 credits=0.3185
+4 gemini-4-argon hit uncached=740 write=0 read=4160 credits=0.3896
+5 gemini-4-argon hit uncached=390 write=0 read=4900 credits=0.2870
+6 gemini-4-argon hit uncached=370 write=0 read=5290 credits=0.2769
+7 gemini-4-argon hit uncached=440 write=0 read=5660 credits=0.3146
+8 gemini-4-argon miss uncached=6370 write=0 read=0 credits=1.6940
+9 gemini-4-argon hit uncached=260 write=0 read=6370 credits=0.2657
+10 gemini-4-argon hit uncached=270 write=0 read=6630 credits=0.2403"
+`;
+
+exports[`golden simulations (scenario × vendor default model) > cache-ttl-smoke-break on openai 1`] = `
+"1 gpt-6.1-sol miss uncached=0 write=3400 read=0 credits=1.0500
+2 gpt-6.1-sol hit uncached=0 write=250 read=3400 credits=0.2465
+3 gpt-6.1-sol hit uncached=0 write=510 read=3650 credits=0.3440
+4 gpt-6.1-sol hit uncached=0 write=740 read=4160 credits=0.4266
+5 gpt-6.1-sol hit uncached=0 write=390 read=4900 credits=0.3065
+6 gpt-6.1-sol hit uncached=0 write=370 read=5290 credits=0.2954
+7 gpt-6.1-sol hit uncached=0 write=440 read=5660 credits=0.3366
+8 gpt-6.1-sol hit uncached=0 write=270 read=6100 credits=0.5485
+9 gpt-6.1-sol hit uncached=0 write=260 read=6370 credits=0.2787
+10 gpt-6.1-sol hit uncached=0 write=270 read=6630 credits=0.2538"
+`;
+
+exports[`golden simulations (scenario × vendor default model) > cache-ttl-smoke-break on xai 1`] = `
+"1 grok-4.7 miss uncached=3400 write=0 read=0 credits=0.8000
+2 grok-4.7 hit uncached=250 write=0 read=3400 credits=0.3100
+3 grok-4.7 hit uncached=510 write=0 read=3650 credits=0.3925
+4 grok-4.7 hit uncached=740 write=0 read=4160 credits=0.4760
+5 grok-4.7 hit uncached=390 write=0 read=4900 credits=0.4190
+6 grok-4.7 hit uncached=370 write=0 read=5290 credits=0.4285
+7 grok-4.7 hit uncached=440 write=0 read=5660 credits=0.4730
+8 grok-4.7 miss uncached=6370 write=0 read=0 credits=1.5260
+9 grok-4.7 hit uncached=260 write=0 read=6370 credits=0.4605
+10 grok-4.7 hit uncached=270 write=0 read=6630 credits=0.4575"
+`;
+
+exports[`golden simulations (scenario × vendor default model) > cascading-model-switch-then-ttl-lapse on anthropic 1`] = `
+"1 claude-sonnet-5.5 miss uncached=0 write=3800 read=0 credits=1.2500
+2 claude-sonnet-5.5 hit uncached=0 write=300 read=3800 credits=0.4130
+3 claude-haiku-5.5 miss(tools) uncached=0 write=4430 read=0 credits=0.0829
+4 claude-haiku-5.5 hit uncached=0 write=700 read=4430 credits=0.0307
+5 claude-haiku-5.5 miss uncached=0 write=5430 read=0 credits=0.0869
+6 claude-haiku-5.5 hit uncached=0 write=260 read=5430 credits=0.0202"
+`;
+
+exports[`golden simulations (scenario × vendor default model) > cascading-model-switch-then-ttl-lapse on google 1`] = `
+"1 gemini-4-argon miss uncached=3800 write=0 read=0 credits=1.0600
+2 gemini-4-argon hit uncached=300 write=0 read=3800 credits=0.3980
+3 gemini-3.8-flash unknown uncached=n/a write=n/a read=n/a credits=n/a
+4 gemini-3.8-flash hit uncached=700 write=0 read=4430 credits=0.2170
+5 gemini-3.8-flash miss uncached=5430 write=0 read=0 credits=0.5497
+6 gemini-3.8-flash hit uncached=260 write=0 read=5430 credits=0.1465"
+`;
+
+exports[`golden simulations (scenario × vendor default model) > cascading-model-switch-then-ttl-lapse on openai 1`] = `
+"1 gpt-6.1-sol miss uncached=0 write=3800 read=0 credits=1.2500
+2 gpt-6.1-sol hit uncached=0 write=300 read=3800 credits=0.4130
+3 gpt-6.1-terra miss(tools) uncached=0 write=4430 read=0 credits=0.8287
+4 gpt-6.1-terra hit uncached=0 write=700 read=4430 credits=0.2847
+5 gpt-6.1-terra hit uncached=0 write=300 read=5130 credits=0.2531
+6 gpt-6.1-terra hit uncached=0 write=260 read=5430 credits=0.1746"
+`;
+
+exports[`golden simulations (scenario × vendor default model) > clear on anthropic 1`] = `
+"1 claude-sonnet-5.5 miss uncached=0 write=3500 read=0 credits=1.1750
+2 claude-sonnet-5.5 hit uncached=0 write=450 read=3500 credits=0.4475
+3 claude-sonnet-5.5 partial(messages) uncached=0 write=300 read=3000 credits=0.4050
+4 claude-sonnet-5.5 hit uncached=0 write=290 read=3300 credits=0.3055
+5 claude-sonnet-5.5 hit uncached=0 write=180 read=3590 credits=0.2309"
+`;
+
+exports[`golden simulations (scenario × vendor default model) > clear on google 1`] = `
+"1 gemini-4-argon miss uncached=3500 write=0 read=0 credits=1.0000
+2 gemini-4-argon hit uncached=450 write=0 read=3500 credits=0.4250
+3 gemini-4-argon partial(messages) uncached=300 write=0 read=3000 credits=0.3900
+4 gemini-4-argon hit uncached=290 write=0 read=3300 credits=0.2910
+5 gemini-4-argon hit uncached=180 write=0 read=3590 credits=0.2219"
+`;
+
+exports[`golden simulations (scenario × vendor default model) > clear on openai 1`] = `
+"1 gpt-6.1-sol miss uncached=0 write=3500 read=0 credits=1.1750
+2 gpt-6.1-sol hit uncached=0 write=450 read=3500 credits=0.4475
+3 gpt-6.1-sol partial(messages) uncached=0 write=300 read=3000 credits=0.4050
+4 gpt-6.1-sol hit uncached=0 write=290 read=3300 credits=0.3055
+5 gpt-6.1-sol hit uncached=0 write=180 read=3590 credits=0.2309"
+`;
+
+exports[`golden simulations (scenario × vendor default model) > clear on xai 1`] = `
+"1 grok-4.7 miss uncached=3500 write=0 read=0 credits=0.8800
+2 grok-4.7 hit uncached=450 write=0 read=3500 credits=0.4450
+3 grok-4.7 partial(messages) uncached=300 write=0 read=3000 credits=0.3900
+4 grok-4.7 hit uncached=290 write=0 read=3300 credits=0.3430
+5 grok-4.7 hit uncached=180 write=0 read=3590 credits=0.3055"
+`;
+
+exports[`golden simulations (scenario × vendor default model) > compaction on anthropic 1`] = `
+"1 claude-sonnet-5.5 miss uncached=0 write=3500 read=0 credits=1.1750
+2 claude-sonnet-5.5 hit uncached=0 write=450 read=3500 credits=0.4475
+3 claude-sonnet-5.5 hit uncached=0 write=330 read=3950 credits=0.8220
+4 claude-sonnet-5.5 partial(messages) uncached=0 write=480 read=3000 credits=0.3700
+5 claude-sonnet-5.5 hit uncached=0 write=180 read=3480 credits=0.2298"
+`;
+
+exports[`golden simulations (scenario × vendor default model) > compaction on google 1`] = `
+"1 gemini-4-argon miss uncached=3500 write=0 read=0 credits=1.0000
+2 gemini-4-argon hit uncached=450 write=0 read=3500 credits=0.4250
+3 gemini-4-argon hit uncached=330 write=0 read=3950 credits=0.8055
+4 gemini-4-argon partial(messages) uncached=480 write=0 read=3000 credits=0.3460
+5 gemini-4-argon hit uncached=180 write=0 read=3480 credits=0.2208"
+`;
+
+exports[`golden simulations (scenario × vendor default model) > compaction on openai 1`] = `
+"1 gpt-6.1-sol miss uncached=0 write=3500 read=0 credits=1.1750
+2 gpt-6.1-sol hit uncached=0 write=450 read=3500 credits=0.4475
+3 gpt-6.1-sol hit uncached=0 write=330 read=3950 credits=0.8220
+4 gpt-6.1-sol partial(messages) uncached=0 write=480 read=3000 credits=0.3700
+5 gpt-6.1-sol hit uncached=0 write=180 read=3480 credits=0.2298"
+`;
+
+exports[`golden simulations (scenario × vendor default model) > compaction on xai 1`] = `
+"1 grok-4.7 miss uncached=3500 write=0 read=0 credits=0.8800
+2 grok-4.7 hit uncached=450 write=0 read=3500 credits=0.4450
+3 grok-4.7 hit uncached=330 write=0 read=3950 credits=0.6835
+4 grok-4.7 partial(messages) uncached=480 write=0 read=3000 credits=0.3780
+5 grok-4.7 hit uncached=180 write=0 read=3480 credits=0.3000"
+`;
+
+exports[`golden simulations (scenario × vendor default model) > image-attachment-invalidation on anthropic 1`] = `
+"1 claude-sonnet-5.5 miss uncached=0 write=3800 read=0 credits=1.2500
+2 claude-sonnet-5.5 hit uncached=0 write=650 read=3800 credits=0.5005
+3 claude-sonnet-5.5 partial(messages) uncached=0 write=3064 read=3000 credits=1.1660
+4 claude-sonnet-5.5 hit uncached=0 write=260 read=6064 credits=0.2756
+5 claude-sonnet-5.5 partial(messages) uncached=0 write=3948 read=3000 credits=1.3470"
+`;
+
+exports[`golden simulations (scenario × vendor default model) > image-attachment-invalidation on google 1`] = `
+"1 gemini-4-argon miss uncached=3800 write=0 read=0 credits=1.0600
+2 gemini-4-argon hit uncached=650 write=0 read=3800 credits=0.4680
+3 gemini-4-argon unknown uncached=n/a write=n/a read=n/a credits=n/a
+4 gemini-4-argon hit uncached=260 write=0 read=6064 credits=0.2626
+5 gemini-4-argon unknown uncached=n/a write=n/a read=n/a credits=n/a"
+`;
+
+exports[`golden simulations (scenario × vendor default model) > image-attachment-invalidation on openai 1`] = `
+"1 gpt-6.1-sol miss uncached=0 write=3800 read=0 credits=1.2500
+2 gpt-6.1-sol hit uncached=0 write=650 read=3800 credits=0.5005
+3 gpt-6.1-sol unknown uncached=n/a write=n/a read=n/a credits=n/a
+4 gpt-6.1-sol hit uncached=0 write=260 read=6064 credits=0.2756
+5 gpt-6.1-sol unknown uncached=n/a write=n/a read=n/a credits=n/a"
+`;
+
+exports[`golden simulations (scenario × vendor default model) > image-attachment-invalidation on xai 1`] = `
+"1 grok-4.7 miss uncached=3800 write=0 read=0 credits=0.9400
+2 grok-4.7 hit uncached=650 write=0 read=3800 credits=0.5000
+3 grok-4.7 unknown uncached=n/a write=n/a read=n/a credits=n/a
+4 grok-4.7 hit uncached=260 write=0 read=6064 credits=0.4452
+5 grok-4.7 unknown uncached=n/a write=n/a read=n/a credits=n/a"
+`;
+
+exports[`golden simulations (scenario × vendor default model) > inline-exploration-bloat on anthropic 1`] = `
+"1 claude-sonnet-5.5 miss uncached=0 write=5450 read=0 credits=1.9125
+2 claude-sonnet-5.5 hit uncached=0 write=6440 read=5450 credits=2.0445
+3 claude-sonnet-5.5 hit uncached=0 write=930 read=11890 credits=0.8814
+4 claude-sonnet-5.5 hit uncached=0 write=2300 read=12820 credits=1.1532
+5 claude-sonnet-5.5 hit uncached=0 write=360 read=15120 credits=0.3612"
+`;
+
+exports[`golden simulations (scenario × vendor default model) > inline-exploration-bloat on google 1`] = `
+"1 gemini-4-argon miss uncached=5450 write=0 read=0 credits=1.6400
+2 gemini-4-argon hit uncached=6440 write=0 read=5450 credits=1.7225
+3 gemini-4-argon hit uncached=930 write=0 read=11890 credits=0.8349
+4 gemini-4-argon hit uncached=2300 write=0 read=12820 credits=1.0382
+5 gemini-4-argon hit uncached=360 write=0 read=15120 credits=0.3432"
+`;
+
+exports[`golden simulations (scenario × vendor default model) > inline-exploration-bloat on openai 1`] = `
+"1 gpt-6.1-sol miss uncached=0 write=5450 read=0 credits=1.9125
+2 gpt-6.1-sol hit uncached=0 write=6440 read=5450 credits=2.0445
+3 gpt-6.1-sol hit uncached=0 write=930 read=11890 credits=0.8814
+4 gpt-6.1-sol hit uncached=0 write=2300 read=12820 credits=1.1532
+5 gpt-6.1-sol hit uncached=0 write=360 read=15120 credits=0.3612"
+`;
+
+exports[`golden simulations (scenario × vendor default model) > inline-exploration-bloat on xai 1`] = `
+"1 grok-4.7 miss uncached=5450 write=0 read=0 credits=1.4200
+2 grok-4.7 hit uncached=6440 write=0 read=5450 credits=1.7885
+3 grok-4.7 hit uncached=930 write=0 read=11890 credits=1.0985
+4 grok-4.7 hit uncached=2300 write=0 read=12820 credits=1.3710
+5 grok-4.7 hit uncached=360 write=0 read=15120 credits=0.9000"
+`;
+
+exports[`golden simulations (scenario × vendor default model) > instructions-edit on anthropic 1`] = `
+"1 claude-sonnet-5.5 miss uncached=0 write=4000 read=0 credits=1.3000
+2 claude-sonnet-5.5 hit uncached=0 write=300 read=4000 credits=0.4150
+3 claude-sonnet-5.5 partial(system) uncached=0 write=2930 read=1800 credits=1.1705
+4 claude-sonnet-5.5 hit uncached=0 write=580 read=4730 credits=0.5023
+5 claude-sonnet-5.5 hit uncached=0 write=230 read=5310 credits=0.2606"
+`;
+
+exports[`golden simulations (scenario × vendor default model) > instructions-edit on google 1`] = `
+"1 gemini-4-argon miss uncached=4000 write=0 read=0 credits=1.1000
+2 gemini-4-argon hit uncached=300 write=0 read=4000 credits=0.4000
+3 gemini-4-argon unknown uncached=n/a write=n/a read=n/a credits=n/a
+4 gemini-4-argon hit uncached=580 write=0 read=4730 credits=0.4733
+5 gemini-4-argon hit uncached=230 write=0 read=5310 credits=0.2491"
+`;
+
+exports[`golden simulations (scenario × vendor default model) > instructions-edit on openai 1`] = `
+"1 gpt-6.1-sol miss uncached=0 write=4000 read=0 credits=1.3000
+2 gpt-6.1-sol hit uncached=0 write=300 read=4000 credits=0.4150
+3 gpt-6.1-sol partial(system) uncached=0 write=2930 read=1800 credits=1.1705
+4 gpt-6.1-sol hit uncached=0 write=580 read=4730 credits=0.5023
+5 gpt-6.1-sol hit uncached=0 write=230 read=5310 credits=0.2606"
+`;
+
+exports[`golden simulations (scenario × vendor default model) > instructions-edit on xai 1`] = `
+"1 grok-4.7 miss uncached=4000 write=0 read=0 credits=0.9800
+2 grok-4.7 hit uncached=300 write=0 read=4000 credits=0.4400
+3 grok-4.7 unknown uncached=n/a write=n/a read=n/a credits=n/a
+4 grok-4.7 hit uncached=580 write=0 read=4730 credits=0.5385
+5 grok-4.7 hit uncached=230 write=0 read=5310 credits=0.4015"
+`;
+
+exports[`golden simulations (scenario × vendor default model) > mcp-tool-change on anthropic 1`] = `
+"1 claude-sonnet-5.5 miss uncached=0 write=3500 read=0 credits=1.1750
+2 claude-sonnet-5.5 hit uncached=0 write=450 read=3500 credits=0.4475
+3 claude-sonnet-5.5 miss(tools) uncached=0 write=5780 read=0 credits=1.8650
+4 claude-sonnet-5.5 hit uncached=0 write=730 read=5780 credits=0.5303
+5 claude-sonnet-5.5 hit uncached=0 write=230 read=6510 credits=0.2926"
+`;
+
+exports[`golden simulations (scenario × vendor default model) > mcp-tool-change on google 1`] = `
+"1 gemini-4-argon miss uncached=3500 write=0 read=0 credits=1.0000
+2 gemini-4-argon hit uncached=450 write=0 read=3500 credits=0.4250
+3 gemini-4-argon unknown uncached=n/a write=n/a read=n/a credits=n/a
+4 gemini-4-argon hit uncached=730 write=0 read=5780 credits=0.4938
+5 gemini-4-argon hit uncached=230 write=0 read=6510 credits=0.2811"
+`;
+
+exports[`golden simulations (scenario × vendor default model) > mcp-tool-change on openai 1`] = `
+"1 gpt-6.1-sol miss uncached=0 write=3500 read=0 credits=1.1750
+2 gpt-6.1-sol hit uncached=0 write=450 read=3500 credits=0.4475
+3 gpt-6.1-sol miss(tools) uncached=0 write=5780 read=0 credits=1.8650
+4 gpt-6.1-sol hit uncached=0 write=730 read=5780 credits=0.5303
+5 gpt-6.1-sol hit uncached=0 write=230 read=6510 credits=0.2926"
+`;
+
+exports[`golden simulations (scenario × vendor default model) > mcp-tool-change on xai 1`] = `
+"1 grok-4.7 miss uncached=3500 write=0 read=0 credits=0.8800
+2 grok-4.7 hit uncached=450 write=0 read=3500 credits=0.4450
+3 grok-4.7 unknown uncached=n/a write=n/a read=n/a credits=n/a
+4 grok-4.7 hit uncached=730 write=0 read=5780 credits=0.6090
+5 grok-4.7 hit uncached=230 write=0 read=6510 credits=0.4735"
+`;
+
+exports[`golden simulations (scenario × vendor default model) > model-switch on anthropic 1`] = `
+"1 claude-haiku-5.5 miss uncached=0 write=3500 read=0 credits=0.0588
+2 claude-haiku-5.5 hit uncached=0 write=350 read=3500 credits=0.0229
+3 claude-sonnet-5.5 miss(tools) uncached=0 write=4180 read=0 credits=1.5950
+4 claude-sonnet-5.5 hit uncached=0 write=420 read=4180 credits=0.4968
+5 claude-sonnet-5.5 hit uncached=0 write=280 read=4600 credits=0.3460"
+`;
+
+exports[`golden simulations (scenario × vendor default model) > model-switch on google 1`] = `
+"1 gemini-3.8-flash miss uncached=3500 write=0 read=0 credits=0.3750
+2 gemini-3.8-flash hit uncached=350 write=0 read=3500 credits=0.1650
+3 gemini-4-argon unknown uncached=n/a write=n/a read=n/a credits=n/a
+4 gemini-4-argon hit uncached=420 write=0 read=4180 credits=0.4758
+5 gemini-4-argon hit uncached=280 write=0 read=4600 credits=0.3320"
+`;
+
+exports[`golden simulations (scenario × vendor default model) > model-switch on openai 1`] = `
+"1 gpt-6.1-terra miss uncached=0 write=3500 read=0 credits=0.5875
+2 gpt-6.1-terra hit uncached=0 write=350 read=3500 credits=0.2112
+3 gpt-6.1-sol miss(tools) uncached=0 write=4180 read=0 credits=1.5950
+4 gpt-6.1-sol hit uncached=0 write=420 read=4180 credits=0.4968
+5 gpt-6.1-sol hit uncached=0 write=280 read=4600 credits=0.3460"
+`;
+
+exports[`golden simulations (scenario × vendor default model) > reasoning-budget-toggle on anthropic 1`] = `
+"1 claude-sonnet-5.5 miss uncached=0 write=3800 read=0 credits=1.2500
+2 claude-sonnet-5.5 hit uncached=0 write=300 read=3800 credits=0.4130
+3 claude-sonnet-5.5 partial(messages) uncached=0 write=1380 read=3000 credits=1.5250
+4 claude-sonnet-5.5 hit uncached=0 write=550 read=4380 credits=0.8013
+5 claude-sonnet-5.5 partial(messages) uncached=0 write=2250 read=3000 credits=0.8125"
+`;
+
+exports[`golden simulations (scenario × vendor default model) > reasoning-budget-toggle on google 1`] = `
+"1 gemini-4-argon miss uncached=3800 write=0 read=0 credits=1.0600
+2 gemini-4-argon hit uncached=300 write=0 read=3800 credits=0.3980
+3 gemini-4-argon unknown uncached=n/a write=n/a read=n/a credits=n/a
+4 gemini-4-argon hit uncached=550 write=0 read=4380 credits=0.7738
+5 gemini-4-argon unknown uncached=n/a write=n/a read=n/a credits=n/a"
+`;
+
+exports[`golden simulations (scenario × vendor default model) > reasoning-budget-toggle on openai 1`] = `
+"1 gpt-6.1-sol miss uncached=0 write=3800 read=0 credits=1.2500
+2 gpt-6.1-sol hit uncached=0 write=300 read=3800 credits=0.4130
+3 gpt-6.1-sol unknown uncached=n/a write=n/a read=n/a credits=n/a
+4 gpt-6.1-sol hit uncached=0 write=550 read=4380 credits=0.8013
+5 gpt-6.1-sol unknown uncached=n/a write=n/a read=n/a credits=n/a"
+`;
+
+exports[`golden simulations (scenario × vendor default model) > reasoning-budget-toggle on xai 1`] = `
+"1 grok-4.7 miss uncached=3800 write=0 read=0 credits=0.9400
+2 grok-4.7 hit uncached=300 write=0 read=3800 credits=0.4300
+3 grok-4.7 unknown uncached=n/a write=n/a read=n/a credits=n/a
+4 grok-4.7 hit uncached=550 write=0 read=4380 credits=0.7010
+5 grok-4.7 unknown uncached=n/a write=n/a read=n/a credits=n/a"
+`;
+
+exports[`golden simulations (scenario × vendor default model) > rewind on anthropic 1`] = `
+"1 claude-sonnet-5.5 miss uncached=0 write=4000 read=0 credits=1.3000
+2 claude-sonnet-5.5 hit uncached=0 write=300 read=4000 credits=0.4150
+3 claude-sonnet-5.5 hit uncached=0 write=1880 read=4300 credits=0.8930
+4 claude-sonnet-5.5 partial uncached=0 write=660 read=4480 credits=0.5098
+5 claude-sonnet-5.5 hit uncached=0 write=220 read=5140 credits=0.2764"
+`;
+
+exports[`golden simulations (scenario × vendor default model) > rewind on google 1`] = `
+"1 gemini-4-argon miss uncached=4000 write=0 read=0 credits=1.1000
+2 gemini-4-argon hit uncached=300 write=0 read=4000 credits=0.4000
+3 gemini-4-argon hit uncached=1880 write=0 read=4300 credits=0.7990
+4 gemini-4-argon partial uncached=660 write=0 read=4480 credits=0.4768
+5 gemini-4-argon hit uncached=220 write=0 read=5140 credits=0.2654"
+`;
+
+exports[`golden simulations (scenario × vendor default model) > rewind on openai 1`] = `
+"1 gpt-6.1-sol miss uncached=0 write=4000 read=0 credits=1.3000
+2 gpt-6.1-sol hit uncached=0 write=300 read=4000 credits=0.4150
+3 gpt-6.1-sol hit uncached=0 write=1880 read=4300 credits=0.8930
+4 gpt-6.1-sol partial uncached=0 write=660 read=4480 credits=0.5098
+5 gpt-6.1-sol hit uncached=0 write=220 read=5140 credits=0.2764"
+`;
+
+exports[`golden simulations (scenario × vendor default model) > rewind on xai 1`] = `
+"1 grok-4.7 miss uncached=4000 write=0 read=0 credits=0.9800
+2 grok-4.7 hit uncached=300 write=0 read=4000 credits=0.4400
+3 grok-4.7 hit uncached=1880 write=0 read=4300 credits=0.8190
+4 grok-4.7 partial uncached=660 write=0 read=4480 credits=0.5360
+5 grok-4.7 hit uncached=220 write=0 read=5140 credits=0.4030"
+`;
+
+exports[`golden simulations (scenario × vendor default model) > session-forking on anthropic 1`] = `
+"1 claude-sonnet-5.5 miss uncached=0 write=4000 read=0 credits=1.3000
+2 claude-sonnet-5.5 hit uncached=0 write=300 read=4000 credits=0.4150
+3 claude-sonnet-5.5 hit uncached=0 write=540 read=4300 credits=0.4780
+4 claude-sonnet-5.5 hit uncached=0 write=930 read=4840 credits=0.6309
+5 claude-sonnet-5.5 hit uncached=0 write=220 read=5770 credits=0.3227"
+`;
+
+exports[`golden simulations (scenario × vendor default model) > session-forking on google 1`] = `
+"1 gemini-4-argon miss uncached=4000 write=0 read=0 credits=1.1000
+2 gemini-4-argon hit uncached=300 write=0 read=4000 credits=0.4000
+3 gemini-4-argon hit uncached=540 write=0 read=4300 credits=0.4510
+4 gemini-4-argon hit uncached=930 write=0 read=4840 credits=0.5844
+5 gemini-4-argon hit uncached=220 write=0 read=5770 credits=0.3117"
+`;
+
+exports[`golden simulations (scenario × vendor default model) > session-forking on openai 1`] = `
+"1 gpt-6.1-sol miss uncached=0 write=4000 read=0 credits=1.3000
+2 gpt-6.1-sol hit uncached=0 write=300 read=4000 credits=0.4150
+3 gpt-6.1-sol hit uncached=0 write=540 read=4300 credits=0.4780
+4 gpt-6.1-sol hit uncached=0 write=930 read=4840 credits=0.6309
+5 gpt-6.1-sol hit uncached=0 write=220 read=5770 credits=0.3227"
+`;
+
+exports[`golden simulations (scenario × vendor default model) > session-forking on xai 1`] = `
+"1 grok-4.7 miss uncached=4000 write=0 read=0 credits=0.9800
+2 grok-4.7 hit uncached=300 write=0 read=4000 credits=0.4400
+3 grok-4.7 hit uncached=540 write=0 read=4300 credits=0.5030
+4 grok-4.7 hit uncached=930 write=0 read=4840 credits=0.6380
+5 grok-4.7 hit uncached=220 write=0 read=5770 credits=0.4585"
+`;
+
+exports[`golden simulations (scenario × vendor default model) > session-forking-multi-branch on anthropic 1`] = `
+"1 claude-sonnet-5.5 miss uncached=0 write=3800 read=0 credits=1.2500
+2 claude-sonnet-5.5 hit uncached=0 write=400 read=3800 credits=0.4380
+3 claude-sonnet-5.5 hit uncached=0 write=300 read=4200 credits=0.4170
+4 claude-sonnet-5.5 hit uncached=0 write=810 read=4500 credits=0.5975
+5 claude-sonnet-5.5 hit uncached=0 write=330 read=5310 credits=0.4156
+6 claude-sonnet-5.5 hit uncached=0 write=540 read=5640 credits=0.4314"
+`;
+
+exports[`golden simulations (scenario × vendor default model) > session-forking-multi-branch on google 1`] = `
+"1 gemini-4-argon miss uncached=3800 write=0 read=0 credits=1.0600
+2 gemini-4-argon hit uncached=400 write=0 read=3800 credits=0.4180
+3 gemini-4-argon hit uncached=300 write=0 read=4200 credits=0.4020
+4 gemini-4-argon hit uncached=810 write=0 read=4500 credits=0.5570
+5 gemini-4-argon hit uncached=330 write=0 read=5310 credits=0.3991
+6 gemini-4-argon hit uncached=540 write=0 read=5640 credits=0.4044"
+`;
+
+exports[`golden simulations (scenario × vendor default model) > session-forking-multi-branch on openai 1`] = `
+"1 gpt-6.1-sol miss uncached=0 write=3800 read=0 credits=1.2500
+2 gpt-6.1-sol hit uncached=0 write=400 read=3800 credits=0.4380
+3 gpt-6.1-sol hit uncached=0 write=300 read=4200 credits=0.4170
+4 gpt-6.1-sol hit uncached=0 write=810 read=4500 credits=0.5975
+5 gpt-6.1-sol hit uncached=0 write=330 read=5310 credits=0.4156
+6 gpt-6.1-sol hit uncached=0 write=540 read=5640 credits=0.4314"
+`;
+
+exports[`golden simulations (scenario × vendor default model) > session-forking-multi-branch on xai 1`] = `
+"1 grok-4.7 miss uncached=3800 write=0 read=0 credits=0.9400
+2 grok-4.7 hit uncached=400 write=0 read=3800 credits=0.4500
+3 grok-4.7 hit uncached=300 write=0 read=4200 credits=0.4500
+4 grok-4.7 hit uncached=810 write=0 read=4500 credits=0.5970
+5 grok-4.7 hit uncached=330 write=0 read=5310 credits=0.4995
+6 grok-4.7 hit uncached=540 write=0 read=5640 credits=0.5340"
+`;
+
+exports[`golden simulations (scenario × vendor default model) > silent-instructions-pullin on anthropic 1`] = `
+"1 claude-sonnet-5.5 miss uncached=0 write=4000 read=0 credits=1.3000
+2 claude-sonnet-5.5 hit uncached=0 write=300 read=4000 credits=0.4150
+3 claude-sonnet-5.5 partial(system) uncached=0 write=3350 read=1800 credits=1.2655
+4 claude-sonnet-5.5 hit uncached=0 write=460 read=5150 credits=0.4565
+5 claude-sonnet-5.5 hit uncached=0 write=220 read=5610 credits=0.2811"
+`;
+
+exports[`golden simulations (scenario × vendor default model) > silent-instructions-pullin on google 1`] = `
+"1 gemini-4-argon miss uncached=4000 write=0 read=0 credits=1.1000
+2 gemini-4-argon hit uncached=300 write=0 read=4000 credits=0.4000
+3 gemini-4-argon unknown uncached=n/a write=n/a read=n/a credits=n/a
+4 gemini-4-argon hit uncached=460 write=0 read=5150 credits=0.4335
+5 gemini-4-argon hit uncached=220 write=0 read=5610 credits=0.2701"
+`;
+
+exports[`golden simulations (scenario × vendor default model) > silent-instructions-pullin on openai 1`] = `
+"1 gpt-6.1-sol miss uncached=0 write=4000 read=0 credits=1.3000
+2 gpt-6.1-sol hit uncached=0 write=300 read=4000 credits=0.4150
+3 gpt-6.1-sol partial(system) uncached=0 write=3350 read=1800 credits=1.2655
+4 gpt-6.1-sol hit uncached=0 write=460 read=5150 credits=0.4565
+5 gpt-6.1-sol hit uncached=0 write=220 read=5610 credits=0.2811"
+`;
+
+exports[`golden simulations (scenario × vendor default model) > silent-instructions-pullin on xai 1`] = `
+"1 grok-4.7 miss uncached=4000 write=0 read=0 credits=0.9800
+2 grok-4.7 hit uncached=300 write=0 read=4000 credits=0.4400
+3 grok-4.7 unknown uncached=n/a write=n/a read=n/a credits=n/a
+4 grok-4.7 hit uncached=460 write=0 read=5150 credits=0.5235
+5 grok-4.7 hit uncached=220 write=0 read=5610 credits=0.4265"
+`;
+
+exports[`golden simulations (scenario × vendor default model) > subagent-cheaper-model on anthropic 1`] = `
+"1 claude-haiku-5.5 miss(tools) uncached=0 write=1950 read=0 credits=0.0374
+2 claude-haiku-5.5 hit uncached=0 write=910 read=1950 credits=0.0238
+3 claude-haiku-5.5 hit uncached=0 write=140 read=2860 credits=0.0166"
+`;
+
+exports[`golden simulations (scenario × vendor default model) > subagent-cheaper-model on google 1`] = `
+"1 gemini-3.8-flash unknown uncached=n/a write=n/a read=n/a credits=n/a
+2 gemini-3.8-flash hit uncached=910 write=0 read=1950 credits=0.1616
+3 gemini-3.8-flash hit uncached=140 write=0 read=2860 credits=0.1220"
+`;
+
+exports[`golden simulations (scenario × vendor default model) > subagent-cheaper-model on openai 1`] = `
+"1 gpt-6.1-terra miss(tools) uncached=0 write=1950 read=0 credits=0.3737
+2 gpt-6.1-terra hit uncached=0 write=910 read=1950 credits=0.2285
+3 gpt-6.1-terra hit uncached=0 write=140 read=2860 credits=0.1518"
+`;
+
+exports[`golden simulations (scenario × vendor default model) > subagent-session on anthropic 1`] = `
+"1 claude-sonnet-5.5 miss uncached=0 write=2050 read=0 credits=0.8125
+2 claude-sonnet-5.5 hit uncached=0 write=1120 read=2050 credits=0.5405
+3 claude-sonnet-5.5 hit uncached=0 write=140 read=3170 credits=0.3667"
+`;
+
+exports[`golden simulations (scenario × vendor default model) > subagent-session on google 1`] = `
+"1 gemini-4-argon miss uncached=2050 write=0 read=0 credits=0.7100
+2 gemini-4-argon hit uncached=1120 write=0 read=2050 credits=0.4845
+3 gemini-4-argon hit uncached=140 write=0 read=3170 credits=0.3597"
+`;
+
+exports[`golden simulations (scenario × vendor default model) > subagent-session on openai 1`] = `
+"1 gpt-6.1-sol miss uncached=0 write=2050 read=0 credits=0.8125
+2 gpt-6.1-sol hit uncached=0 write=1120 read=2050 credits=0.5405
+3 gpt-6.1-sol hit uncached=0 write=140 read=3170 credits=0.3667"
+`;
+
+exports[`golden simulations (scenario × vendor default model) > subagent-session on xai 1`] = `
+"1 grok-4.7 miss uncached=2050 write=0 read=0 credits=0.5900
+2 grok-4.7 hit uncached=1120 write=0 read=2050 credits=0.4705
+3 grok-4.7 hit uncached=140 write=0 read=3170 credits=0.3665"
+`;

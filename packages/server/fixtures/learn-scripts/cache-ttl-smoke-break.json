@@ -1,0 +1,172 @@
+{
+  "id": "cache-ttl-smoke-break",
+  "title": "Cache TTL: A 5+ Minute Smoke Break",
+  "category": "Cache TTL",
+  "harnesses": ["vscode-local", "copilot-agent-host", "claude-code"],
+  "sessionKind": "main",
+  "staticPrefix": {
+    "toolsTokens": 1500,
+    "systemTokens": 1500
+  },
+  "steps": [
+    {
+      "index": 1,
+      "userMessage": "Let's add pagination to the search results endpoint.",
+      "assistantResponse": "Sure, looking at the search endpoint now.",
+      "toolCalls": [],
+      "explanation": "Normal first turn: writes the static prefix and this turn's own content.",
+      "newContent": {
+        "userTokens": 400,
+        "toolResultTokens": 0,
+        "reasoningTokens": 0,
+        "outputTokens": 200
+      },
+      "events": []
+    },
+    {
+      "index": 2,
+      "userMessage": "Use cursor-based pagination, not offset-based.",
+      "assistantResponse": "Got it, planning cursor-based pagination.",
+      "toolCalls": [],
+      "explanation": "Normal turn: reads and extends the cache from the first turn.",
+      "newContent": {
+        "userTokens": 50,
+        "toolResultTokens": 0,
+        "reasoningTokens": 0,
+        "outputTokens": 150
+      },
+      "events": []
+    },
+    {
+      "index": 3,
+      "userMessage": "Go ahead and look at how the results are currently fetched.",
+      "assistantResponse": "Checking the current results-fetching code.",
+      "toolCalls": [
+        {
+          "name": "read_file",
+          "argsSummary": "src/search/results.ts"
+        },
+        {
+          "name": "grep_search",
+          "argsSummary": "offset usage across src/search"
+        }
+      ],
+      "explanation": "Explores the code with a couple of tool calls; the cache keeps growing normally.",
+      "newContent": {
+        "userTokens": 60,
+        "toolResultTokens": 300,
+        "reasoningTokens": 0,
+        "outputTokens": 180
+      },
+      "events": []
+    },
+    {
+      "index": 4,
+      "userMessage": "Implement the cursor-based pagination.",
+      "assistantResponse": "Implementing cursor-based pagination now.",
+      "toolCalls": [
+        {
+          "name": "replace_string_in_file",
+          "argsSummary": "src/search/results.ts"
+        },
+        {
+          "name": "run_in_terminal",
+          "argsSummary": "npm test -- search"
+        }
+      ],
+      "explanation": "Applies an edit and runs a quick check: a normal, healthy cache-building turn.",
+      "newContent": {
+        "userTokens": 60,
+        "toolResultTokens": 500,
+        "reasoningTokens": 0,
+        "outputTokens": 200
+      },
+      "events": []
+    },
+    {
+      "index": 5,
+      "userMessage": "Tests pass, nice.",
+      "assistantResponse": "Great, the pagination change is working.",
+      "toolCalls": [],
+      "explanation": "Normal follow-up turn.",
+      "newContent": {
+        "userTokens": 190,
+        "toolResultTokens": 0,
+        "reasoningTokens": 0,
+        "outputTokens": 160
+      },
+      "events": []
+    },
+    {
+      "index": 6,
+      "userMessage": "Now update the API docs for the new cursor param.",
+      "assistantResponse": "Updating the API docs to describe the cursor parameter.",
+      "toolCalls": [],
+      "explanation": "Normal follow-up turn.",
+      "newContent": {
+        "userTokens": 210,
+        "toolResultTokens": 0,
+        "reasoningTokens": 0,
+        "outputTokens": 150
+      },
+      "events": []
+    },
+    {
+      "index": 7,
+      "userMessage": "That's all for this part, looks good.",
+      "assistantResponse": "Glad it's working — the cache is healthy at this point.",
+      "toolCalls": [],
+      "explanation": "Normal follow-up turn. The cache is healthy at this point; the user then steps away.",
+      "newContent": {
+        "userTokens": 290,
+        "toolResultTokens": 0,
+        "reasoningTokens": 0,
+        "outputTokens": 170
+      },
+      "events": []
+    },
+    {
+      "index": 8,
+      "userMessage": "Ok, next let's add rate limiting to the same endpoint.",
+      "assistantResponse": "Sure — picking this back up and looking at rate limiting for the endpoint.",
+      "toolCalls": [],
+      "explanation": "The pause outlasted the cache's lifetime, so the provider evicted the entry and the whole history is resent as new input before a fresh cache is written. Nothing is lost from the conversation: this is not a clear or a rewind, only the cached copy expired, and this one turn pays to rebuild it.",
+      "idleMinutesBefore": 6,
+      "newContent": {
+        "userTokens": 100,
+        "toolResultTokens": 0,
+        "reasoningTokens": 220,
+        "outputTokens": 200
+      },
+      "events": []
+    },
+    {
+      "index": 9,
+      "userMessage": "Use a sliding-window limiter.",
+      "assistantResponse": "Using a sliding-window rate limiter.",
+      "toolCalls": [],
+      "explanation": "Normal turn: the cache written by the previous turn is read again and cost returns to its usual shape.",
+      "newContent": {
+        "userTokens": 60,
+        "toolResultTokens": 0,
+        "reasoningTokens": 0,
+        "outputTokens": 150
+      },
+      "events": []
+    },
+    {
+      "index": 10,
+      "userMessage": "Perfect, thanks.",
+      "assistantResponse": "You're welcome!",
+      "toolCalls": [],
+      "explanation": "Normal turn: cache growth has fully recovered.",
+      "newContent": {
+        "userTokens": 120,
+        "toolResultTokens": 0,
+        "reasoningTokens": 0,
+        "outputTokens": 120
+      },
+      "events": []
+    }
+  ]
+}

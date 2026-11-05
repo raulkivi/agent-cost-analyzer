@@ -1,5 +1,9 @@
-import type { CacheOutcome, Layer } from "@agent-cost-analyzer/domain";
-import type { CacheRequest, KnownCacheResult } from "../cache-model.js";
+import type { CacheOutcome } from "@agent-cost-analyzer/domain";
+import {
+  validPrefixTokens,
+  type CacheRequest,
+  type KnownCacheResult,
+} from "../cache-model.js";
 
 export interface PrefixCacheConfig {
   minCacheableTokens: number;
@@ -31,10 +35,8 @@ export class PrefixCache {
       this.entry !== undefined && req.atMinute <= this.entry.expiresAt
         ? this.entry.tokens
         : 0;
-    const validPrefix =
-      req.invalidatedFrom === undefined
-        ? Infinity
-        : this.align(req.prompt.tokensBefore(req.invalidatedFrom as Layer));
+    const limit = validPrefixTokens(req);
+    const validPrefix = Number.isFinite(limit) ? this.align(limit) : limit;
     const read = Math.min(previous, validPrefix, cacheableTokens);
     const written = cacheableTokens - read;
 

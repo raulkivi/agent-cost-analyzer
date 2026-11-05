@@ -1,0 +1,99 @@
+{
+  "id": "instructions-edit",
+  "title": "Editing Custom Instructions Mid-Session",
+  "category": "Instructions change",
+  "harnesses": ["vscode-local", "copilot-agent-host", "claude-code"],
+  "sessionKind": "main",
+  "staticPrefix": {
+    "toolsTokens": 1800,
+    "systemTokens": 1200
+  },
+  "steps": [
+    {
+      "index": 1,
+      "userMessage": "Let's add input validation to the signup form.",
+      "assistantResponse": "Sure, looking at the signup form now.",
+      "toolCalls": [],
+      "explanation": "Normal first turn: writes the static system prompt and instructions plus this turn's own content.",
+      "newContent": {
+        "userTokens": 1000,
+        "toolResultTokens": 0,
+        "reasoningTokens": 150,
+        "outputTokens": 150
+      },
+      "events": []
+    },
+    {
+      "index": 2,
+      "userMessage": "Validate email format and require a password of at least 8 characters.",
+      "assistantResponse": "Got it, adding those validation rules.",
+      "toolCalls": [
+        {
+          "name": "read_file",
+          "argsSummary": "src/forms/signup.ts"
+        }
+      ],
+      "explanation": "Normal turn: reads and extends the cache built by the first turn.",
+      "newContent": {
+        "userTokens": 50,
+        "toolResultTokens": 100,
+        "reasoningTokens": 120,
+        "outputTokens": 180
+      },
+      "events": []
+    },
+    {
+      "index": 3,
+      "userMessage": "I just added a note to copilot-instructions.md: always write a Zod schema for new form fields. Continue with that in mind.",
+      "assistantResponse": "Understood — I'll add a Zod schema for the new signup fields going forward.",
+      "toolCalls": [],
+      "explanation": "Editing the custom instructions file changes the system prompt, which sits right after the tool definitions. The match breaks there, and all earlier conversation, though unchanged, can no longer match either, because a prefix match cannot skip a changed block and resume later. Only the tool definitions ahead of the change can still be read, and only if a breakpoint caches them alone. A new cache is then written under the updated instructions.",
+      "newContent": {
+        "userTokens": 100,
+        "toolResultTokens": 0,
+        "reasoningTokens": 200,
+        "outputTokens": 220
+      },
+      "events": [
+        {
+          "type": "system-changed",
+          "deltaTokens": 150,
+          "cause": "edit"
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "userMessage": "Apply the schema to the login form too.",
+      "assistantResponse": "Adding the same Zod-schema convention to the login form.",
+      "toolCalls": [
+        {
+          "name": "replace_string_in_file",
+          "argsSummary": "src/forms/login.ts"
+        }
+      ],
+      "explanation": "Normal turn on the post-edit baseline: the cache rebuilds under the updated instructions.",
+      "newContent": {
+        "userTokens": 60,
+        "toolResultTokens": 300,
+        "reasoningTokens": 140,
+        "outputTokens": 170
+      },
+      "events": []
+    },
+    {
+      "index": 5,
+      "userMessage": "Looks good, thanks.",
+      "assistantResponse": "Glad it's working well.",
+      "toolCalls": [],
+      "explanation": "The cache keeps growing normally under the new instructions.",
+      "newContent": {
+        "userTokens": 60,
+        "toolResultTokens": 0,
+        "reasoningTokens": 60,
+        "outputTokens": 90
+      },
+      "events": []
+    }
+  ]
+}

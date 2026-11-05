@@ -1,0 +1,108 @@
+{
+  "id": "cascading-model-switch-then-ttl-lapse",
+  "title": "Cascading Triggers: A Model Switch Followed by a Cache-Expiry",
+  "category": "Combined triggers",
+  "harnesses": ["vscode-local", "copilot-agent-host", "claude-code"],
+  "sessionKind": "main",
+  "staticPrefix": {
+    "toolsTokens": 1800,
+    "systemTokens": 1200
+  },
+  "steps": [
+    {
+      "index": 1,
+      "userMessage": "Let's refactor the notifications service to use an event bus.",
+      "assistantResponse": "Sure, looking at the notifications service now.",
+      "toolCalls": [],
+      "explanation": "Normal first turn: writes the static prefix plus this turn's own content.",
+      "newContent": {
+        "userTokens": 800,
+        "toolResultTokens": 0,
+        "reasoningTokens": 150,
+        "outputTokens": 150
+      },
+      "events": []
+    },
+    {
+      "index": 2,
+      "userMessage": "Use an in-process event emitter for now, not a message queue.",
+      "assistantResponse": "Got it, using an in-process event emitter.",
+      "toolCalls": [],
+      "explanation": "Normal turn reusing and extending the first model's cache.",
+      "newContent": {
+        "userTokens": 150,
+        "toolResultTokens": 0,
+        "reasoningTokens": 120,
+        "outputTokens": 180
+      },
+      "events": []
+    },
+    {
+      "index": 3,
+      "userMessage": "Switch to the more capable model — this refactor is getting complex.",
+      "assistantResponse": "Switching models now and continuing with the full context.",
+      "toolCalls": [],
+      "explanation": "Model switch: the first model's cache is useless to the second, so the whole history plus the new message is resent uncached and the second model writes its own cache from scratch.",
+      "newContent": {
+        "userTokens": 150,
+        "toolResultTokens": 0,
+        "reasoningTokens": 250,
+        "outputTokens": 300
+      },
+      "events": [
+        {
+          "type": "model-switch",
+          "toRole": "cheaper"
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "userMessage": "Looks great — go ahead and start on the event bus interface. I'll be back in a bit.",
+      "assistantResponse": "Starting on the event bus interface now.",
+      "toolCalls": [
+        {
+          "name": "replace_string_in_file",
+          "argsSummary": "src/events/event-bus.ts"
+        }
+      ],
+      "explanation": "Normal turn under the new model; its cache builds up again. The user then steps away for longer than the default cache lifetime.",
+      "newContent": {
+        "userTokens": 100,
+        "toolResultTokens": 300,
+        "reasoningTokens": 150,
+        "outputTokens": 200
+      },
+      "events": []
+    },
+    {
+      "index": 5,
+      "userMessage": "Ok I'm back — continue with the event bus interface.",
+      "assistantResponse": "Picking this back up — continuing with the event bus interface.",
+      "toolCalls": [],
+      "explanation": "Second invalidation in a few turns: the idle gap outlives the cache, so the whole history since the switch is resent uncached, and the switch is never reverted. Both costs stack on one turn.",
+      "idleMinutesBefore": 6,
+      "newContent": {
+        "userTokens": 100,
+        "toolResultTokens": 0,
+        "reasoningTokens": 200,
+        "outputTokens": 180
+      },
+      "events": []
+    },
+    {
+      "index": 6,
+      "userMessage": "Perfect, that's everything for now.",
+      "assistantResponse": "Sounds good — the event bus interface is in place.",
+      "toolCalls": [],
+      "explanation": "The cache recovers to normal healthy growth, but only after paying for both triggers back to back.",
+      "newContent": {
+        "userTokens": 80,
+        "toolResultTokens": 0,
+        "reasoningTokens": 90,
+        "outputTokens": 140
+      },
+      "events": []
+    }
+  ]
+}
