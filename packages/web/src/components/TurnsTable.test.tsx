@@ -342,4 +342,48 @@ describe("TurnsTable", () => {
       expect(onOpenTurn).toHaveBeenCalledWith(1);
     });
   });
+
+  describe("simulated turns (step 13.7)", () => {
+    const simulation = {
+      vendorId: "anthropic",
+      modelId: "claude-sonnet-5.5",
+      cacheOutcome: "partial" as const,
+      note: "n",
+      confidence: "inferred" as const,
+      sourceIds: [],
+    };
+    const simulated = [
+      makeTurn({
+        index: 1,
+        usage: { ...makeTurn().usage, costAiCredits: { known: true, value: 1.225 } },
+        simulation,
+      }),
+    ];
+
+    it("shows a Cache column with the outcome, after Trigger", () => {
+      render(<TurnsTable turns={simulated} selectedTurnIndex={0} onSelectTurn={() => {}} />);
+
+      const headers = screen.getAllByRole("columnheader").map((cell) => cell.textContent);
+      expect(headers.slice(0, 3)).toEqual(["Turn", "Trigger", "Cache"]);
+      expect(screen.getByText("Cache partial hit")).toBeInTheDocument();
+    });
+
+    it("hides the Cache column for turns without a simulation", () => {
+      render(<TurnsTable turns={[makeTurn()]} selectedTurnIndex={0} onSelectTurn={() => {}} />);
+
+      expect(screen.queryByRole("columnheader", { name: "Cache" })).not.toBeInTheDocument();
+    });
+
+    it("adds a USD tooltip to the AI Credits cells of simulated turns only", () => {
+      const { container, rerender } = render(
+        <TurnsTable turns={simulated} selectedTurnIndex={0} onSelectTurn={() => {}} columns={["turn", "aiCredits", "cumulative"]} />,
+      );
+      expect(container.querySelectorAll('td [title="≈ $0.0123"]')).toHaveLength(2);
+
+      rerender(
+        <TurnsTable turns={[makeTurn()]} selectedTurnIndex={0} onSelectTurn={() => {}} columns={["turn", "aiCredits", "cumulative"]} />,
+      );
+      expect(container.querySelector("[title]")).toBeNull();
+    });
+  });
 });

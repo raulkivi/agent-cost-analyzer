@@ -28,6 +28,8 @@ export class UnknownModelError extends Error {
 const NOT_SIMULATED = "Not simulated: caching behaviour isn't documented";
 const TOTAL_UNKNOWN = "At least one turn's cost is unknown for this vendor.";
 const DEFAULT_VENDOR_ID = "anthropic";
+// D3's fallback when the user has no Analyze usage to pick from.
+const DEFAULT_MODEL_ID = "claude-sonnet-5.5";
 
 // A model's own caching kind overrides its vendor's default (e.g. GPT-5.6+).
 const isSimulated = (profile: VendorProfile, model: ModelPrice): boolean =>
@@ -56,6 +58,13 @@ export class LearnSimulationService {
       modelId: model.modelId,
       harness: this.harness,
     });
+  }
+
+  // Every scenario that applies to this harness, on the default model.
+  listScenarios(): Session[] {
+    return this.scripts
+      .filter((script) => script.harnesses.includes(this.harness))
+      .map((script) => this.getScenario(script.id));
   }
 
   compareScenario(id: string, modelIds?: string[]): VendorComparison {
@@ -167,10 +176,12 @@ export class LearnSimulationService {
   }
 
   private defaultModelId(): string {
-    const preferred = this.profiles.find(
-      (p) => p.vendorId === DEFAULT_VENDOR_ID,
-    );
-    return (preferred ?? this.simulatedProfiles()[0] ?? this.profiles[0]!)
+    const preferred = this.profiles
+      .flatMap((p) => p.models.map((m) => ({ p, m })))
+      .find(({ p, m }) => m.modelId === DEFAULT_MODEL_ID && isSimulated(p, m));
+    if (preferred !== undefined) return DEFAULT_MODEL_ID;
+    const vendor = this.profiles.find((p) => p.vendorId === DEFAULT_VENDOR_ID);
+    return (vendor ?? this.simulatedProfiles()[0] ?? this.profiles[0]!)
       .defaultModelId;
   }
 }
