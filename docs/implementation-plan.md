@@ -1447,6 +1447,41 @@ always stay visible next to the replay, and the replay is labelled
 
 **Status (2026-11-03)**: planned, not started.
 
+## Phase 15 — Cost by repository and project, price history, billing
+
+Full design: [plans/cost-by-repository-and-project.md](plans/cost-by-repository-and-project.md).
+
+**Goal**: attribute every Analyze session's cost to a repository, group
+repositories into user-defined projects, show and compare their cost over
+time, split a project's cost by vendor and model, price token-only turns at
+the versioned model price in force when they ran (with price changes marked
+on every time chart), and produce frozen billing statements and estimates.
+
+**Deliverables** (steps 15.0–15.15 in the plan): per-provider workspace and
+turn-time capture, a file-only `RepositoryResolver`, a local projects file
+with `GET/PUT /api/projects`, a price book with `effectiveFrom`/`effectiveTo`
+versions per channel, `CostFigure`s labelled billed/reported/priced, a cost
+cube with time-series, compare, variance, statement and estimate builders,
+new Dashboard tabs (Cost over time, Compare, Project, Billing), 10 new
+read-only MCP tools and 3 prompts (plan §10.1, each shipped in the step of
+the builder it calls), ten end-to-end usage-scenario tests (plan §12.4: a
+required Playwright `web-e2e` job for the standalone app, wdio specs for the
+extension), and extension grouping by repository.
+
+**Exit criterion**: the plan's §15.
+
+**Dependencies**: Phase 9.11 (insights dataset) for steps 15.1–15.4 and
+15.8; Phase 13 step 13.2 (vendor price data) for steps 15.5 onwards.
+
+**Status (2026-11-05)**: steps 15.1 (workspace and turn-time capture in
+every provider) 15.2 (repository resolver and remote URL normaliser),
+15.0 (threat-model rows) and 15.3 (projects file and its API) are done. Planned otherwise; the owner accepted every recommended
+decision (D1–D10, plan §13). The UI is a set of new Dashboard tabs built on
+the existing design system, UX standards and chart kit (plan §11), with a
+mock-up review gate (step 15.8) before any UI code. The mock-ups are drawn (2026-11-05,
+[mockups/cost-by-project/](plans/mockups/cost-by-project/)) and await the
+owner's review; the palette tokens of step 15.8 are not started.
+
 ## Summary dependency graph
 
 ![Summary dependency graph](diagrams/summary-dependency-graph.drawio.svg)

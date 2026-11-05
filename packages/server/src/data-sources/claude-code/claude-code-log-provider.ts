@@ -20,6 +20,7 @@ import { indexToolResults } from "./tool-result-index.js";
 import { buildTurnInspectorDetail } from "./turn-inspector-builder.js";
 import { computeClaudeCodeFileHash, resolveClaudeCodeSessionFilePath } from "./session-id.js";
 import { resolveClaudeCodeTitle } from "./title-resolver.js";
+import { resolveSessionWorkspace, resolveTurnStartedAt, resolveTurnWorkspace } from "./workspace-resolver.js";
 
 const PROVIDER_ID = "claude-code";
 const NO_AI_CREDITS_REASON =
@@ -156,12 +157,17 @@ export class ClaudeCodeLogProvider implements LogProvider {
     const forkPointIds = findForkPointIds(entries);
     const groups = groupBranchEntriesByUserMessage(branch);
     const resultIndex = indexToolResults(entries);
+    const workspace = resolveSessionWorkspace(branch);
 
     const turns: Turn[] = groups.map((group, index) => {
       const usage = extractTurnUsage(group);
       const triggeredEvent = triggeredEventFor(group, forkPointIds);
+      const startedAt = resolveTurnStartedAt(group);
+      const turnWorkspace = resolveTurnWorkspace(group, workspace);
       return {
         index,
+        ...(startedAt ? { startedAt } : {}),
+        ...(turnWorkspace ? { workspace: turnWorkspace } : {}),
         userMessage: extractUserMessageText(group.userMessageEntry),
         assistantResponse: extractAssistantResponseText(group),
         toolCalls: extractToolCalls(group, resultIndex),
@@ -186,6 +192,7 @@ export class ClaudeCodeLogProvider implements LogProvider {
       costAiCredits: unavailableTokenCount(NO_AI_CREDITS_REASON),
       usageDataAvailable: knownUsageTurns.length > 0,
       ...(startedAt ? { startedAt } : {}),
+      workspace,
     };
   }
 

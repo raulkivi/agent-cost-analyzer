@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Dashboard, compare</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&amp;family=Barlow+Condensed:wght@500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#416180}a:hover{color:#2c455d}
+.bp{position:relative;border:1px solid rgba(29,31,32,.16)}
+.bp>i{position:absolute;width:11px;height:11px;color:rgba(29,31,32,.55)}
+.bp>i::before,.bp>i::after{content:"";position:absolute;background:currentColor}
+.bp>i::before{left:5px;top:0;width:1px;height:100%}
+.bp>i::after{top:5px;left:0;width:100%;height:1px}
+.bp>.tl{top:-6px;left:-6px}.bp>.tr{top:-6px;right:-6px}.bp>.bl{bottom:-6px;left:-6px}.bp>.br{bottom:-6px;right:-6px}
+.seg{display:inline-flex;border:1px solid rgba(29,31,32,.16);border-radius:4px;overflow:hidden}
+.seg>label,.seg>button{display:inline-flex;align-items:center;height:30px;padding:0 11px;font:inherit;font-size:13px;color:#1d1f20;background:transparent;border:0;cursor:pointer;position:relative}
+.seg>label+label,.seg>button+button{border-left:1px solid rgba(29,31,32,.16)}
+.seg>label>input{position:absolute;opacity:0;width:1px;height:1px}
+.seg>.on{background:#416180;color:#f2f2f3}
+.btn{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 11px;border:1px solid rgba(29,31,32,.16);border-radius:4px;font:inherit;font-size:13px;color:#1d1f20;background:transparent;cursor:pointer}
+.kicker{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#416180}
+.muted{color:#5b5c5e}
+.num{font-variant-numeric:tabular-nums}
+.tbl{width:100%;border-collapse:collapse;font-size:13px}
+.tbl th{font-weight:600;text-align:right;padding:7px 10px;border-bottom:1px solid rgba(29,31,32,.30);white-space:nowrap}
+.tbl td{text-align:right;padding:7px 10px;border-bottom:1px solid rgba(29,31,32,.10);font-variant-numeric:tabular-nums;white-space:nowrap}
+.tbl th:first-child,.tbl td:first-child{text-align:left}
+.tbl tfoot td{font-weight:600;border-bottom:0;border-top:1px solid rgba(29,31,32,.30)}
+</style>
+</helmet>
+<div style="width: 1440px; height: 900px; box-sizing: border-box; display: flex; flex-direction: column; background: #f2f2f3; color: #1d1f20; font-family: Barlow, system-ui, sans-serif; font-size: 14px; line-height: 1.45; overflow: hidden">
+  <header style="height: 56px; flex-shrink: 0; display: flex; align-items: center; gap: 20px; padding: 0 24px; border-bottom: 1px solid rgba(29,31,32,.16)">
+    <span style="font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 20px; margin-right: auto">Agent Cost Analyzer</span>
+    <div class="seg" role="radiogroup" aria-label="Mode"><label><input type="radio" name="mode">Learn</label><label class="on"><input type="radio" name="mode" checked>Analyze</label></div>
+    <label style="display: flex; align-items: center; gap: 8px; font-size: 13px">Provider<select style="height: 30px; font: inherit; font-size: 13px; padding: 0 8px; border: 1px solid rgba(29,31,32,.16); border-radius: 4px; background: #f2f2f3; color: #1d1f20"><option>All providers</option></select></label>
+  </header>
+
+  <div style="flex-grow: 1; min-height: 0; display: flex; flex-direction: column; gap: 14px; padding: 16px 24px 20px">
+    <div style="display: flex; align-items: center; gap: 20px">
+      <h1 style="margin: 0; font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 30px; line-height: 1">Dashboard</h1>
+      <div class="seg" role="tablist" aria-label="Dashboard views">
+        <button role="tab" aria-selected="false">Overview</button>
+        <button role="tab" aria-selected="false">Cost over time</button>
+        <button role="tab" aria-selected="true" class="on">Compare</button>
+        <button role="tab" aria-selected="false">Project</button>
+        <button role="tab" aria-selected="false">Billing</button>
+      </div>
+      <div style="margin-left: auto; display: flex; align-items: center; gap: 8px; font-size: 13px">
+        <span class="muted">Selections</span>
+        <span style="display: inline-flex; align-items: center; gap: 4px; height: 26px; padding: 0 2px 0 10px; border: 1px solid #416180; border-radius: 13px">Project: 3 of 6<button aria-label="Clear project selection" style="width: 22px; height: 22px; border: 0; background: transparent; color: #1d1f20; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"></path></svg></button></span>
+        <button class="btn">Clear all</button>
+        <button class="btn">Back</button>
+      </div>
+    </div>
+
+    <div style="flex-grow: 1; min-height: 0; display: flex; gap: 20px">
+      <aside aria-label="Filters" style="width: 232px; flex-shrink: 0; display: flex; flex-direction: column; gap: 12px">
+        <section class="bp" style="padding: 8px 10px; display: flex; flex-direction: column; gap: 2px">
+          <h2 style="margin: 0 0 4px; font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 15px">Group by</h2>
+          <div class="seg" role="radiogroup" aria-label="Group by"><label class="on"><input type="radio" name="grp" checked>Project</label><label><input type="radio" name="grp">Repository</label></div>
+        </section>
+        <section class="bp" style="padding: 8px 10px; display: flex; flex-direction: column; gap: 2px">
+          <h2 style="margin: 0 0 4px; font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 15px">Project</h2>
+          <sc-for list="{{projItems}}" as="it" hint-placeholder-count="6">
+            <button aria-pressed="{{it.pressed}}" style="{{it.style}}"><span>{{it.name}}</span><span class="num">{{it.value}}</span></button>
+          </sc-for>
+        </section>
+        <section class="bp" style="padding: 8px 10px; display: flex; flex-direction: column; gap: 2px">
+          <h2 style="margin: 0 0 4px; font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 15px">Vendor</h2>
+          <sc-for list="{{vendorItems}}" as="it" hint-placeholder-count="4">
+            <button aria-pressed="{{it.pressed}}" style="{{it.style}}"><span>{{it.name}}</span><span class="num">{{it.value}}</span></button>
+          </sc-for>
+        </section>
+      </aside>
+
+      <main style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 14px">
+        <div role="group" aria-label="Comparison filters" style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; font-size: 13px">
+          <div class="seg" role="radiogroup" aria-label="Date range"><label><input type="radio" name="range">This month</label><label><input type="radio" name="range">Last month</label><label class="on"><input type="radio" name="range" checked>Last 90 days</label><label><input type="radio" name="range">This year</label><label><input type="radio" name="range">Custom…</label></div>
+          <label style="display: flex; align-items: center; gap: 8px">Compare with<select style="height: 30px; font: inherit; font-size: 13px; padding: 0 8px; border: 1px solid rgba(29,31,32,.16); border-radius: 4px; background: #f2f2f3; color: #1d1f20"><option>Previous 90 days</option><option>Same period last year</option></select></label>
+          <div class="seg" role="radiogroup" aria-label="Currency"><label class="on"><input type="radio" name="cur" checked>AI Credits</label><label><input type="radio" name="cur">USD</label></div>
+          <div class="seg" role="radiogroup" aria-label="Pricing"><label class="on"><input type="radio" name="pricing" checked>As of use</label><label><input type="radio" name="pricing">Today's prices</label></div>
+        </div>
+
+        <section class="bp" aria-labelledby="cmp-h" style="padding: 12px 16px; display: flex; flex-direction: column; gap: 8px"><i class="tl"></i><i class="tr"></i><i class="bl"></i><i class="br"></i>
+          <div style="display: flex; align-items: center; gap: 12px">
+            <div style="display: flex; flex-direction: column; gap: 2px"><span class="kicker">Compare · Aug 4 – Nov 2 vs previous 90 days</span><h2 id="cmp-h" style="margin: 0; font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 19px">Three projects</h2></div>
+            <button class="btn" style="margin-left: auto" aria-haspopup="menu"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 5h16M4 12h16M4 19h16"></path><path d="M9 3v4M15 10v4M7 17v4"></path></svg>Columns</button>
+            <button class="btn">Export CSV</button>
+          </div>
+          <table class="tbl">
+            <caption style="position: absolute; width: 1px; height: 1px; overflow: hidden">Cost of three projects, Aug 4 to Nov 2, compared with the previous 90 days</caption>
+            <thead><tr><th scope="col">Project</th><th scope="col">Total (AI Credits)</th><th scope="col">Change</th><th scope="col">Per session</th><th scope="col">Per active day</th><th scope="col">Share</th><th scope="col">Cache-hit ratio</th><th scope="col">Output share</th><th scope="col">Coverage</th></tr></thead>
+            <tbody>
+              <sc-for list="{{rows}}" as="r" hint-placeholder-count="3">
+                <tr><td><span style="display: inline-flex; align-items: center; gap: 8px"><span aria-hidden="true" style="width: 10px; height: 10px; border-radius: 2px; background: {{r.color}}"></span>{{r.name}}</span></td><td>{{r.total}}</td><td>{{r.change}}</td><td>{{r.perSession}}</td><td>{{r.perDay}}</td><td>{{r.share}}</td><td>{{r.cache}}</td><td>{{r.output}}</td><td>{{r.coverage}}</td></tr>
+              </sc-for>
+            </tbody>
+            <tfoot><tr><td>Selection</td><td>{{sumTotal}}</td><td>{{sumChange}}</td><td>{{sumPerSession}}</td><td>{{sumPerDay}}</td><td>100.0%</td><td>67%</td><td>9.8%</td><td>96%</td></tr></tfoot>
+          </table>
+          <p class="muted" style="margin: 0; font-size: 12px">Internal tools: 16% of its turns are unpriced (Claude Code, week of Sep 22), so its total covers 84% of turns. Its true cost is higher, not 0 for those turns.</p>
+        </section>
+
+        <div style="flex-grow: 1; min-height: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px">
+          <figure class="bp" style="margin: 0; padding: 12px 16px; display: flex; flex-direction: column; gap: 4px"><i class="tl"></i><i class="tr"></i><i class="bl"></i><i class="br"></i>
+            <div style="display: flex; align-items: flex-start; gap: 12px">
+              <div style="display: flex; flex-direction: column; gap: 2px"><span class="kicker">Indexed · week of Aug 4 = 100</span><figcaption style="font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 17px; color: #1d1f20">Growth, one scale for all</figcaption></div>
+              <button class="btn" style="margin-left: auto">View as table</button>
+            </div>
+            <ul aria-label="Legend" style="list-style: none; margin: 0; padding: 0; display: flex; gap: 14px; font-size: 12px">
+              <sc-for list="{{rows}}" as="r" hint-placeholder-count="3"><li style="display: flex; align-items: center; gap: 6px"><span aria-hidden="true" style="width: 14px; height: 3px; border-radius: 2px; background: {{r.color}}"></span>{{r.name}}</li></sc-for>
+            </ul>
+            <svg role="img" aria-label="{{ariaIndex}}" width="540" height="250" viewBox="0 0 540 250" style="display: block; font-family: Barlow, sans-serif">
+              <sc-for list="{{igrid}}" as="g" hint-placeholder-count="5">
+                <line x1="40" x2="420" y1="{{g.y}}" y2="{{g.y}}" stroke="{{g.stroke}}" stroke-width="1"></line>
+                <text x="34" y="{{g.ty}}" text-anchor="end" font-size="11" fill="#5b5c5e">{{g.label}}</text>
+              </sc-for>
+              <text x="40" y="244" font-size="11" fill="#5b5c5e">Aug 4</text>
+              <text x="230" y="244" text-anchor="middle" font-size="11" fill="#5b5c5e">Sep 15</text>
+              <text x="420" y="244" text-anchor="end" font-size="11" fill="#5b5c5e">Oct 27</text>
+              <sc-for list="{{ilines}}" as="ln" hint-placeholder-count="3">
+                <path d="{{ln.d}}" fill="none" stroke="{{ln.color}}" stroke-width="2" stroke-linejoin="round"></path>
+                <circle cx="{{ln.ex}}" cy="{{ln.ey}}" r="4" fill="{{ln.color}}" stroke="#f2f2f3" stroke-width="2"></circle>
+                <text x="430" y="{{ln.ly}}" font-size="12" fill="#1d1f20">{{ln.name}} <tspan fill="#5b5c5e" style="font-variant-numeric: tabular-nums">{{ln.last}}</tspan></text>
+              </sc-for>
+            </svg>
+          </figure>
+          <figure class="bp" style="margin: 0; padding: 12px 16px; display: flex; flex-direction: column; gap: 8px"><i class="tl"></i><i class="tr"></i><i class="bl"></i><i class="br"></i>
+            <div style="display: flex; align-items: flex-start; gap: 12px">
+              <div style="display: flex; flex-direction: column; gap: 2px"><span class="kicker">Share of total · AI Credits</span><figcaption style="font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 17px; color: #1d1f20">Where the money went</figcaption></div>
+              <button class="btn" style="margin-left: auto">View as table</button>
+            </div>
+            <div role="img" aria-label="{{ariaShare}}" style="display: flex; flex-direction: column; gap: 14px; margin-top: 10px">
+              <sc-for list="{{rows}}" as="r" hint-placeholder-count="3">
+                <div style="display: grid; grid-template-columns: 130px minmax(0, 1fr) 150px; align-items: center; gap: 10px; font-size: 13px">
+                  <span>{{r.name}}</span>
+                  <span style="display: block; height: 20px"><span style="display: block; height: 20px; width: {{r.barW}}; background: {{r.color}}; border-radius: 0 4px 4px 0"></span></span>
+                  <span class="num" style="text-align: right">{{r.share}} · {{r.total}}</span>
+                </div>
+              </sc-for>
+            </div>
+            <p class="muted" style="margin: auto 0 0; font-size: 12px">Bars, not a pie. Colours follow the project, not its rank, so filtering never repaints them.</p>
+          </figure>
+        </div>
+      </main>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    function fmt(n) { return n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+    function pct(n) { return (n * 100).toFixed(1) + '%'; }
+    var data = [
+      { name: 'Customer portal', color: '#2a78d6', vals: [3800,4200,4500,5100,4700,4000,3600,3900,4400,4900,5300,5800,6100], prev: 51200, sessions: 214, days: 58, cache: '71%', output: '9.1%', coverage: '98%' },
+      { name: 'Billing service', color: '#eb6834', vals: [2200,2500,2800,3000,2600,2400,2100,2300,2700,3100,3300,3600,3800], prev: 30100, sessions: 133, days: 49, cache: '64%', output: '10.4%', coverage: '99%' },
+      { name: 'Internal tools', color: '#1baf7a', vals: [1000,1200,1500,1400,1300,1100,900,null,1200,1600,1800,1700,2000], prev: 15500, sessions: 96, days: 37, cache: '58%', output: '11.2%', coverage: '84%' }
+    ];
+    var sum = 0, prev = 0, sessions = 0, days = 61;
+    data.forEach(function (d) { d.total = d.vals.reduce(function (a, v) { return a + (v || 0); }, 0); sum += d.total; prev += d.prev; sessions += d.sessions; });
+    var maxTotal = Math.max.apply(null, data.map(function (d) { return d.total; }));
+    var rows = data.map(function (d) {
+      var ch = d.total / d.prev - 1;
+      return { name: d.name, color: d.color, total: fmt(d.total), change: (ch >= 0 ? '+' : '−') + pct(Math.abs(ch)), perSession: fmt(d.total / d.sessions), perDay: fmt(d.total / d.days),
+        share: pct(d.total / sum), cache: d.cache, output: d.output, coverage: d.coverage, barW: (d.total / maxTotal * 100).toFixed(1) + '%' };
+    });
+    var IX = function (i) { return 40 + i * 380 / 12; };
+    var IY = function (v) { return 228 - (v - 60) / 160 * 210; };
+    var igrid = [60, 100, 140, 180, 220].map(function (v) { return { y: IY(v), ty: IY(v) + 4, label: String(v), stroke: v === 100 ? 'rgba(29,31,32,.40)' : 'rgba(29,31,32,.10)' }; });
+    var ilines = data.map(function (d) {
+      var base = d.vals[0], dd = '', pen = false;
+      d.vals.forEach(function (v, i) { if (v === null) { pen = false; return; } dd += (pen ? 'L' : 'M') + IX(i).toFixed(1) + ' ' + IY(v / base * 100).toFixed(1) + ' '; pen = true; });
+      var last = d.vals[12] / base * 100;
+      return { name: d.name, color: d.color, d: dd, ex: IX(12), ey: IY(last), ly: IY(last) + 4, last: last.toFixed(0) };
+    });
+    function item(name, value, st) {
+      var base = 'display: flex; justify-content: space-between; gap: 8px; height: 26px; align-items: center; padding: 0 8px; border: 0; border-radius: 2px; font: inherit; font-size: 13px; text-align: left; cursor: pointer; ';
+      var look = st === 'sel' ? 'background: #416180; color: #f2f2f3' : st === 'exc' ? 'background: #e7e7ea; color: #5b5c5e' : 'background: transparent; color: #1d1f20';
+      return { name: name, value: value, pressed: st === 'sel' ? 'true' : 'false', style: base + look };
+    }
+    return {
+      rows: rows, sumTotal: fmt(sum), sumChange: '+' + pct(sum / prev - 1), sumPerSession: fmt(sum / sessions), sumPerDay: fmt(sum / days),
+      igrid: igrid, ilines: ilines,
+      ariaIndex: 'Indexed line chart, week of Aug 4 equals 100. By Oct 27: Customer portal ' + ilines[0].last + ', Billing service ' + ilines[1].last + ', Internal tools ' + ilines[2].last + '.',
+      ariaShare: 'Share of total: ' + rows.map(function (r) { return r.name + ' ' + r.share; }).join(', ') + '.',
+      projItems: [item('Customer portal', '60,300', 'sel'), item('Billing service', '36,400', 'sel'), item('Internal tools', '17,700', 'sel'), item('Data platform', '10,950', 'alt'), item('Mobile app', '6,230', 'alt'), item('No project', '3,802', 'alt')],
+      vendorItems: [item('Anthropic', '71,500', 'pos'), item('OpenAI', '35,430', 'pos'), item('Google', '7,470', 'pos'), item('xAI', '—', 'exc')]
+    };
+  }
+}
+</script>
+</body>
+</html>

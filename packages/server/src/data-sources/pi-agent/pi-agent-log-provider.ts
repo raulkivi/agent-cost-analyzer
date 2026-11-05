@@ -1,7 +1,9 @@
 import { existsSync } from "node:fs";
 import path from "node:path";
 import {
+  knownWorkspace,
   unavailableTokenCount,
+  unknownWorkspace,
   type Session,
   type TokenCount,
   type TriggeredEvent,
@@ -25,6 +27,10 @@ import { buildToolInventory } from "../jsonl/tool-inventory.js";
 import { readSystemPromptSidecarIndex, type SidecarIndex } from "./system-prompt-sidecar-reader.js";
 
 const PROVIDER_ID = "pi-agent";
+// Phase 15 step 15.1: the folder is on the session header line only; a file
+// without a valid header has none. pi records no git branch.
+export const PI_NO_FOLDER_REASON = "This pi session file has no session header, so its working folder is unknown.";
+
 const NO_AI_CREDITS_REASON =
   "AI Credits are GitHub Copilot's own billing unit — a pi coding-agent session has no AI Credits conversion.";
 
@@ -162,8 +168,11 @@ export class PiAgentLogProvider implements LogProvider, SystemPromptTextReader {
     const turns: Turn[] = groups.map((group, index) => {
       const usage = extractTurnUsage(group);
       const triggeredEvent = triggeredEventFor(group, forkPointIds);
+      // SessionEntryBase.timestamp in the published schema; older files lack it.
+      const startedAt = typeof group.userMessageEntry.timestamp === "string" && group.userMessageEntry.timestamp ? group.userMessageEntry.timestamp : undefined;
       return {
         index,
+        ...(startedAt ? { startedAt } : {}),
         userMessage: extractMessageText(group.userMessageEntry),
         assistantResponse: extractAssistantResponseText(group),
         toolCalls: extractToolCalls(group),
@@ -205,6 +214,7 @@ export class PiAgentLogProvider implements LogProvider, SystemPromptTextReader {
       costAiCredits: unavailableTokenCount(NO_AI_CREDITS_REASON),
       usageDataAvailable: knownUsageTurns.length > 0,
       ...(header ? { startedAt: header.timestamp } : {}),
+      workspace: knownWorkspace(header?.cwd) ?? unknownWorkspace(PI_NO_FOLDER_REASON),
       ...(systemPrompt ? { systemPrompt } : {}),
       ...(toolInventory ? { toolInventory } : {}),
     };

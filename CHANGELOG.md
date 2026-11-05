@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- Session working folders (Phase 15 step 15.1): every Analyze session
+  reports the folder it ran in, and its branch and repository where the log
+  records them, or why it is unknown (mitmproxy captures record none); each
+  turn reports when it started. This is the groundwork for cost by
+  repository and project.
+- Repository resolution (Phase 15 step 15.2): a session's folder maps to
+  its repository from the folder's git files alone (no `git` process, no
+  network). Clones, worktrees and subfolders of one remote get one key, and
+  credentials in remote URLs never reach it. Not shown in the app yet.
+- Projects file (Phase 15 step 15.3): `projects.json` in the app's settings
+  folder groups repositories into projects (with optional path and branch
+  scopes and aliases). `GET`/`PUT /api/projects` read and validate-then-write
+  it, `GET /api/repositories` lists the repositories your sessions ran in,
+  and a broken file shows an optional warning.
 - VS Code Agent Host sessions (step 10.13): Copilot chats that VS Code 1.143
   and later run through the Agent Host are listed with their turns, tokens and
   AI Credits, beside the classic Copilot Chat sessions.

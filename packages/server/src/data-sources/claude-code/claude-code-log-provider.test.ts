@@ -80,6 +80,20 @@ describe("ClaudeCodeLogProvider", () => {
     expect(session?.model).toBe("claude-sonnet-5");
   });
 
+  it("reports the folder, branch and turn times from the normal fixture's entries (step 15.1)", async () => {
+    const provider = new ClaudeCodeLogProvider({ projectsDirPath: fixturesDir });
+    const id = computeClaudeCodeFileHash(path.join(fixturesDir, "-home-dev-project", "normal-session.jsonl"));
+
+    const session = await provider.readSession(id);
+    const listed = (await provider.listSessions()).find((s) => s.id === id);
+
+    expect(session?.workspace).toEqual({ known: true, cwd: "/home/dev/project", branch: "main" });
+    expect(listed?.workspace).toEqual(session?.workspace);
+    expect(session?.turns.map((turn) => turn.startedAt)).toEqual(["2026-09-01T10:00:01.000Z", "2026-09-01T10:05:00.000Z"]);
+    // Both turns ran where the session did, so neither carries its own workspace.
+    expect(session?.turns.every((turn) => turn.workspace === undefined)).toBe(true);
+  });
+
   it("readSession marks usageDataAvailable false when the assistant message carries no usage data at all", async () => {
     const provider = new ClaudeCodeLogProvider({ projectsDirPath: fixturesDir });
     const id = computeClaudeCodeFileHash(path.join(fixturesDir, "-home-dev-project", "no-usage-session.jsonl"));

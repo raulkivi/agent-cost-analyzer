@@ -1,7 +1,7 @@
 import { existsSync, readdirSync } from "node:fs";
 import path from "node:path";
 import type { Session, TokenCount, Turn, TurnInspectorDetail, TurnUsage } from "@agent-cost-analyzer/domain";
-import { unavailableTokenCount } from "@agent-cost-analyzer/domain";
+import { unavailableTokenCount, unknownWorkspace } from "@agent-cost-analyzer/domain";
 import type { LogProvider, LogProviderAvailability } from "../log-provider.js";
 import { buildContentPart } from "../build-content-parts.js";
 import { harEntryToRawExchange, readHarFile, type HarEntry } from "./har.js";
@@ -9,6 +9,11 @@ import { decodeExchange } from "./decoders/registry.js";
 import type { MitmExchangeDecoder } from "./decoders/decoder.js";
 import { computeHarSessionId, computeSegmentSessionId, parseSegmentSessionId } from "./session-id.js";
 import { DEFAULT_IDLE_GAP_THRESHOLD_MS, splitEntriesByIdleGap } from "./split-entries-by-idle-gap.js";
+
+// Phase 15 step 15.1: a HAR capture holds HTTP traffic only, so its sessions
+// are Unattributed until a capture rule (plan §7) assigns them.
+export const MITMPROXY_NO_FOLDER_REASON =
+  "mitmproxy captures record no working folder; add a capture rule to assign them to a repository.";
 
 const PROVIDER_ID = "mitmproxy";
 const NO_AI_CREDITS_REASON =
@@ -112,6 +117,7 @@ export class MitmproxyLogProvider implements LogProvider {
       const normalized = decodeExchange(exchange, decoders);
       return {
         index,
+        ...(entry.startedDateTime ? { startedAt: entry.startedDateTime } : {}),
         userMessage: "",
         assistantResponse: "",
         toolCalls: normalized.toolCalls,
@@ -141,6 +147,7 @@ export class MitmproxyLogProvider implements LogProvider {
       costAiCredits: unavailableTokenCount(NO_AI_CREDITS_REASON),
       usageDataAvailable: knownUsageTurns.length > 0,
       ...(startedAt ? { startedAt } : {}),
+      workspace: unknownWorkspace(MITMPROXY_NO_FOLDER_REASON),
     };
   }
 

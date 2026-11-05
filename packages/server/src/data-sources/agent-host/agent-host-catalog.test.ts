@@ -144,6 +144,7 @@ describe("listAgentHostSessionRows", () => {
         title: "Add retry to uploader",
         startedAtMs: 1790805513846,
         modifiedAtMs: 1790809488968,
+        workingFolder: "/home/user/src/example",
       },
       {
         id: "3f2a9c10-1111-4a1b-8c01-aaaaaaaaaaa1",
@@ -151,6 +152,7 @@ describe("listAgentHostSessionRows", () => {
         title: "Refactor billing module",
         startedAtMs: 1790805037911,
         modifiedAtMs: 1790809488848,
+        workingFolder: "/home/user/src/example",
       },
     ]);
   });
@@ -236,6 +238,37 @@ describe("listAgentHostSessionRows", () => {
     ]);
   });
 
+  describe("working folder from the payload (step 15.1)", () => {
+    const folderCases: { sessionUri: string; payload?: unknown; folder: string | undefined }[] = [
+      { sessionUri: "copilotcli:/w-project", payload: { data: { project: { uri: "file:///home/user/src/example" } } }, folder: "/home/user/src/example" },
+      { sessionUri: "copilotcli:/w-encoded", payload: { data: { project: { uri: "file:///home/user/my%20app" } } }, folder: "/home/user/my app" },
+      { sessionUri: "copilotcli:/w-dirs", payload: { data: { workingDirectories: ["file:///home/user/a", "file:///home/user/b"] } }, folder: "/home/user/a" },
+      {
+        sessionUri: "copilotcli:/w-both",
+        payload: { data: { project: { uri: "file:///home/user/p" }, workingDirectories: ["file:///home/user/w"] } },
+        folder: "/home/user/p",
+      },
+      { sessionUri: "copilotcli:/w-remote", payload: { data: { project: { uri: "vscode-remote://ssh-remote+box/home/u/app" } } }, folder: undefined },
+      { sessionUri: "copilotcli:/w-garbage", payload: { data: { project: { uri: "not a uri" }, workingDirectories: [42, null] } }, folder: undefined },
+      { sessionUri: "copilotcli:/w-none", payload: { data: { summary: "x" } }, folder: undefined },
+      { sessionUri: "copilotcli:/w-invalid", payload: "{not: json", folder: undefined },
+    ];
+
+    it("reads data.project.uri, else the first data.workingDirectories entry, file URIs only", () => {
+      const db = new DatabaseSync(dbFile);
+      db.exec(SESSIONS_V2_DDL);
+      seedSessions(db, folderCases.map((testCase) => ({ sessionUri: testCase.sessionUri, payload: testCase.payload })));
+
+      const rows = new Map(listAgentHostSessionRows(db).map((row) => [row.sessionUri, row]));
+      for (const testCase of folderCases) {
+        expect(rows.get(testCase.sessionUri)?.workingFolder, testCase.sessionUri).toBe(testCase.folder);
+        if (testCase.folder === undefined) {
+          expect(rows.get(testCase.sessionUri)).not.toHaveProperty("workingFolder");
+        }
+      }
+    });
+  });
+
   describe("title from payload data.summary", () => {
     const titleCases: { sessionUri: string; payload?: unknown; title: string | null }[] = [
       { sessionUri: "copilotcli:/t-trim", payload: { data: { summary: "  Padded \n" } }, title: "Padded" },
@@ -319,6 +352,7 @@ describe("getAgentHostSessionRow", () => {
       title: "Deleted session",
       startedAtMs: 1790800000000,
       modifiedAtMs: 1790801000000,
+      workingFolder: "/home/user/src/example",
     });
   });
 

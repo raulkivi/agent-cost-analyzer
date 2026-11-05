@@ -5,7 +5,7 @@ import { describeLogProviderContract } from "../contract.js";
 import { anthropicDecoder } from "./decoders/anthropic.js";
 import { openAiDecoder } from "./decoders/openai.js";
 import { UNRECOGNIZED_VENDOR_REASON } from "./decoders/registry.js";
-import { MitmproxyLogProvider } from "./mitmproxy-log-provider.js";
+import { MITMPROXY_NO_FOLDER_REASON, MitmproxyLogProvider } from "./mitmproxy-log-provider.js";
 import { computeSegmentSessionId } from "./session-id.js";
 
 const fixturesDir = path.resolve(
@@ -76,6 +76,18 @@ describe("MitmproxyLogProvider", () => {
     expect(session?.usageDataAvailable).toBe(true);
     expect(session?.turns[0].usage.uncachedInput).toEqual({ known: true, value: 120 });
     expect(session?.model).toBe("claude-3-5-haiku-20241022");
+  });
+
+  it("reports the workspace as Unattributed with the reason, and each turn's HAR start time (step 15.1)", async () => {
+    const provider = new MitmproxyLogProvider({ capturesDirPath: fixturesDir, decoders: [anthropicDecoder, openAiDecoder] });
+    const id = computeSegmentSessionId(path.join(fixturesDir, "anthropic-non-streamed.har"), 0);
+
+    const session = await provider.readSession(id);
+    const listed = (await provider.listSessions()).find((s) => s.id === id);
+
+    expect(session?.workspace).toEqual({ known: false, reason: MITMPROXY_NO_FOLDER_REASON });
+    expect(listed?.workspace).toEqual(session?.workspace);
+    expect(session?.turns[0].startedAt).toBe("2026-08-01T12:00:00.000Z");
   });
 
   it("sets roundsCount to 1 for every turn, since each HAR entry is one complete exchange", async () => {

@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Dashboard, billing</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&amp;family=Barlow+Condensed:wght@500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#416180}a:hover{color:#2c455d}
+.bp{position:relative;border:1px solid rgba(29,31,32,.16)}
+.bp>i{position:absolute;width:11px;height:11px;color:rgba(29,31,32,.55)}
+.bp>i::before,.bp>i::after{content:"";position:absolute;background:currentColor}
+.bp>i::before{left:5px;top:0;width:1px;height:100%}
+.bp>i::after{top:5px;left:0;width:100%;height:1px}
+.bp>.tl{top:-6px;left:-6px}.bp>.tr{top:-6px;right:-6px}.bp>.bl{bottom:-6px;left:-6px}.bp>.br{bottom:-6px;right:-6px}
+.seg{display:inline-flex;border:1px solid rgba(29,31,32,.16);border-radius:4px;overflow:hidden}
+.seg>label,.seg>button{display:inline-flex;align-items:center;height:30px;padding:0 11px;font:inherit;font-size:13px;color:#1d1f20;background:transparent;border:0;cursor:pointer;position:relative}
+.seg>label+label,.seg>button+button{border-left:1px solid rgba(29,31,32,.16)}
+.seg>label>input{position:absolute;opacity:0;width:1px;height:1px}
+.seg>.on{background:#416180;color:#f2f2f3}
+.btn{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 11px;border:1px solid rgba(29,31,32,.16);border-radius:4px;font:inherit;font-size:13px;color:#1d1f20;background:transparent;cursor:pointer}
+.btn-p{background:#416180;border-color:#416180;color:#f2f2f3}
+.kicker{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#416180}
+.muted{color:#5b5c5e}
+.num{font-variant-numeric:tabular-nums}
+.ttl{font-family:'Barlow Condensed',sans-serif;font-weight:600;color:#1d1f20}
+.sel,.inp{height:30px;font:inherit;font-size:13px;padding:0 8px;border:1px solid rgba(29,31,32,.30);border-radius:4px;background:#f2f2f3;color:#1d1f20;box-sizing:border-box}
+.tbl{width:100%;border-collapse:collapse;font-size:13px}
+.tbl th{font-weight:600;text-align:left;padding:6px 8px;border-bottom:1px solid rgba(29,31,32,.30);white-space:nowrap}
+.tbl td{padding:6px 8px;border-bottom:1px solid rgba(29,31,32,.10);white-space:nowrap}
+.tbl .r{text-align:right;font-variant-numeric:tabular-nums}
+.tag{display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:2px 8px;border-radius:3px}
+.warn{display:inline-flex;align-items:center;gap:4px;padding:1px 6px;background:#eba524;color:#1d1f20;font-size:11px;font-weight:600;white-space:nowrap}
+</style>
+</helmet>
+<div style="position: relative; width: 1440px; height: 900px; box-sizing: border-box; display: flex; flex-direction: column; background: #f2f2f3; color: #1d1f20; font-family: Barlow, system-ui, sans-serif; font-size: 14px; line-height: 1.45; overflow: hidden">
+  <header style="height: 56px; flex-shrink: 0; display: flex; align-items: center; gap: 20px; padding: 0 24px; border-bottom: 1px solid rgba(29,31,32,.16)">
+    <span style="font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 20px; margin-right: auto">Agent Cost Analyzer</span>
+    <div class="seg" role="radiogroup" aria-label="Mode"><label><input type="radio" name="mode">Learn</label><label class="on"><input type="radio" name="mode" checked>Analyze</label></div>
+    <label style="display: flex; align-items: center; gap: 8px; font-size: 13px">Provider<select class="sel"><option>All providers</option></select></label>
+  </header>
+
+  <div style="flex-grow: 1; min-height: 0; display: flex; flex-direction: column; gap: 14px; padding: 16px 24px 20px">
+    <div style="display: flex; align-items: center; gap: 20px">
+      <h1 style="margin: 0; font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 30px; line-height: 1">Dashboard</h1>
+      <div class="seg" role="tablist" aria-label="Dashboard views">
+        <button role="tab" aria-selected="false">Overview</button>
+        <button role="tab" aria-selected="false">Cost over time</button>
+        <button role="tab" aria-selected="false">Compare</button>
+        <button role="tab" aria-selected="false">Project</button>
+        <button role="tab" aria-selected="true" class="on">Billing</button>
+      </div>
+      <a href="Projects.dc.html" style="margin-left: auto; font-size: 13px">Edit projects</a>
+    </div>
+
+    <div role="group" aria-label="Statement" style="display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px 16px; font-size: 13px">
+      <label style="display: flex; flex-direction: column; gap: 3px">Project<select class="sel" style="width: 200px"><option>Customer portal</option></select></label>
+      <label style="display: flex; flex-direction: column; gap: 3px">Period<select class="sel" style="width: 160px"><option>October 2026</option><option>Custom range…</option></select></label>
+      <span style="display: flex; flex-direction: column; gap: 3px"><span>Time zone</span><span class="muted" style="height: 30px; display: flex; align-items: center">Europe/Tallinn (your time zone, D6)</span></span>
+      <label style="display: flex; flex-direction: column; gap: 3px">Also show in<span style="display: flex; gap: 6px"><select class="sel" style="width: 90px"><option>EUR</option><option>None</option></select><input class="inp" style="width: 90px" value="0.92" aria-label="Fixed rate, EUR per USD"></span></label>
+      <span class="muted" style="font-size: 12px; padding-bottom: 6px">Fixed rate you enter for this statement; the app never looks up exchange rates.</span>
+    </div>
+
+    <div style="flex-grow: 1; min-height: 0; display: flex; gap: 16px">
+      <section class="bp" aria-labelledby="st-h" style="flex-grow: 1; min-width: 0; padding: 12px 16px; display: flex; flex-direction: column; gap: 8px"><i class="tl"></i><i class="tr"></i><i class="bl"></i><i class="br"></i>
+        <div style="display: flex; align-items: flex-start; gap: 12px">
+          <div style="display: flex; flex-direction: column; gap: 3px">
+            <span style="display: flex; align-items: center; gap: 8px">
+              <span class="kicker">{{kicker}}</span>
+              <sc-if value="{{isFrozen}}" hint-placeholder-val="{{false}}"><span class="tag" style="border: 1px solid #416180; color: #416180">Frozen</span></sc-if>
+            </span>
+            <h2 id="st-h" class="ttl" style="margin: 0; font-size: 21px">Customer portal · 1–31 October 2026</h2>
+            <span class="muted" style="font-size: 13px">Client: Example Ltd · Billing code EX-2026-07 · 214 sessions, 3 repositories</span>
+          </div>
+          <div style="margin-left: auto; display: flex; gap: 8px">
+            <button class="btn" aria-haspopup="dialog">Export…</button>
+            <sc-if value="{{isFrozen}}" hint-placeholder-val="{{false}}"><button class="btn">View diff</button></sc-if>
+            <sc-if value="{{canIssue}}" hint-placeholder-val="{{true}}"><button class="btn btn-p" aria-haspopup="dialog">Issue statement</button></sc-if>
+          </div>
+        </div>
+
+        <sc-if value="{{isFrozen}}" hint-placeholder-val="{{false}}">
+          <div role="status" style="display: flex; align-items: center; gap: 10px; padding: 8px 10px; border: 1px solid rgba(29,31,32,.16); border-radius: 4px; background: #fff7e6; font-size: 13px">
+            <span class="warn"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 3l9 16H3z"></path><path d="M12 10v4M12 17v.5"></path></svg>Differs from issued</span>
+            <span>A re-run today gives <strong class="num" style="font-weight: 600">+214.00 AI Credits</strong>: 3 sessions were logged after Nov 3, 14:05. The issued figures below are unchanged.</span>
+          </div>
+        </sc-if>
+
+        <div style="flex-grow: 1; min-height: 0; overflow: auto">
+          <table class="tbl">
+            <caption style="position: absolute; width: 1px; height: 1px; overflow: hidden">Statement lines by channel, model and price version</caption>
+            <thead><tr><th scope="col">Channel</th><th scope="col">Model</th><th scope="col">Price version</th><th scope="col">Basis</th><th scope="col" class="r">Tokens</th><th scope="col" class="r">Amount</th><th scope="col" class="r">USD</th></tr></thead>
+            <tbody>
+              <sc-for list="{{lines}}" as="l" hint-placeholder-count="6">
+                <tr><td>{{l.channel}}</td><td>{{l.model}}</td><td class="num">{{l.version}}</td><td>{{l.basis}}</td><td class="r">{{l.tokens}}</td><td class="r">{{l.amount}}</td><td class="r">{{l.usd}}</td></tr>
+              </sc-for>
+              <tr><td colspan="7" style="white-space: normal; background: rgba(29,31,32,.04)"><span style="display: inline-flex; align-items: center; gap: 6px"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"></circle><path d="M12 8v5M12 16v.5"></path></svg><strong style="font-weight: 600">18 turns, cost unknown</strong></span> · mitmproxy capture · no price version for gpt-6-luna on openai-api before Nov 1, 2026. Not counted as 0; add a price version to include them.</td></tr>
+            </tbody>
+          </table>
+          <dl style="margin: 10px 0 0 auto; width: 430px; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 16px; font-size: 13px">
+            <sc-for list="{{totals}}" as="t" hint-placeholder-count="7">
+              <dt style="font-weight: {{t.w}}">{{t.k}}</dt><dd class="num" style="margin: 0; text-align: right; font-weight: {{t.w}}">{{t.v}}</dd>
+            </sc-for>
+          </dl>
+          <p class="muted" style="margin: 10px 0 0; font-size: 12px">Not included (D4, opt-in per project): Claude Code use under a subscription, 2.3 M tokens, API-equivalent $41.20. Coverage: 2,116 of 2,134 turns priced. 1 AI Credit = $0.01 (GitHub Copilot pricing).</p>
+          <details style="margin-top: 8px; font-size: 12px">
+            <summary style="cursor: pointer">Provenance</summary>
+            <p class="muted num" style="margin: 6px 0 0">App 0.3.0 · price book 2026-11-01 · projects.json sha256:3f9a…c21e · 214 session ids (included in the JSON export) · generated Nov 5, 2026 20:14 Europe/Tallinn</p>
+          </details>
+        </div>
+      </section>
+
+      <aside style="width: 380px; flex-shrink: 0; display: flex; flex-direction: column; gap: 14px">
+        <section class="bp" aria-labelledby="es-h" style="padding: 12px 16px; display: flex; flex-direction: column; gap: 10px"><i class="tl"></i><i class="tr"></i><i class="bl"></i><i class="br"></i>
+          <div style="display: flex; flex-direction: column; gap: 2px"><span class="kicker">Estimate · at today's prices</span><h2 id="es-h" class="ttl" style="margin: 0; font-size: 19px">Next piece of work</h2></div>
+          <div style="display: flex; gap: 12px; align-items: flex-end; font-size: 13px">
+            <label style="display: flex; flex-direction: column; gap: 3px">Planned active days<input class="inp" type="number" value="20" style="width: 110px"></label>
+            <div style="display: flex; flex-direction: column; gap: 3px"><span id="hw">History window</span><div class="seg" role="radiogroup" aria-labelledby="hw"><label><input type="radio" name="hw">4 weeks</label><label class="on"><input type="radio" name="hw" checked>12 weeks</label></div></div>
+          </div>
+          <figure style="margin: 4px 0 0; display: flex; flex-direction: column; gap: 6px">
+            <svg role="img" aria-label="Estimate range for 20 active days: 20,800.00 AI Credits at the median, 27,400.00 at the 90th percentile." width="348" height="64" viewBox="0 0 348 64" style="display: block; font-family: Barlow, sans-serif">
+              <line x1="8" x2="340" y1="34" y2="34" stroke="rgba(29,31,32,.16)" stroke-width="1"></line>
+              <rect x="74" y="26" width="200" height="16" rx="4" fill="#94bce3"></rect>
+              <line x1="74" x2="74" y1="20" y2="48" stroke="#2c455d" stroke-width="2"></line>
+              <line x1="274" x2="274" y1="20" y2="48" stroke="#2c455d" stroke-width="2"></line>
+              <text x="74" y="14" text-anchor="middle" font-size="12" fill="#1d1f20" style="font-variant-numeric: tabular-nums">p50 20,800.00</text>
+              <text x="274" y="14" text-anchor="middle" font-size="12" fill="#1d1f20" style="font-variant-numeric: tabular-nums">p90 27,400.00</text>
+              <text x="174" y="60" text-anchor="middle" font-size="11" fill="#5b5c5e">AI Credits · $208.00 – $274.00</text>
+            </svg>
+            <figcaption class="muted" style="font-size: 12px; margin: 0">A range, never one number. From 58 active days, Aug 4 – Nov 2: cost per active day median 1,040.00, p90 1,370.00.</figcaption>
+          </figure>
+          <p class="muted" style="margin: 0; font-size: 12px">On another model: available with Phase 14 (replay). Until then, a same-tokens reprice labelled Simulated.</p>
+        </section>
+
+        <section class="bp" aria-labelledby="is-h" style="flex-grow: 1; padding: 12px 16px; display: flex; flex-direction: column; gap: 8px"><i class="tl"></i><i class="tr"></i><i class="bl"></i><i class="br"></i>
+          <h2 id="is-h" class="ttl" style="margin: 0; font-size: 19px">Issued statements</h2>
+          <ul style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; font-size: 13px">
+            <sc-for list="{{issued}}" as="s" hint-placeholder-count="3">
+              <li style="display: flex; flex-direction: column; gap: 3px; padding: 8px 0; border-bottom: 1px solid rgba(29,31,32,.10)">
+                <span style="display: flex; align-items: center; gap: 8px"><a href="#">{{s.period}}</a><span class="tag" style="border: 1px solid #416180; color: #416180">Frozen</span><span class="num" style="margin-left: auto">{{s.total}}</span></span>
+                <span class="muted" style="font-size: 12px">{{s.note}}</span>
+                <sc-if value="{{s.differs}}" hint-placeholder-val="{{false}}"><span><span class="warn"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 3l9 16H3z"></path><path d="M12 10v4M12 17v.5"></path></svg>Differs from issued</span> <a href="#" style="font-size: 12px">View diff</a></span></sc-if>
+              </li>
+            </sc-for>
+          </ul>
+        </section>
+      </aside>
+    </div>
+  </div>
+
+  <sc-if value="{{isConfirm}}" hint-placeholder-val="{{false}}">
+    <div aria-hidden="true" style="position: absolute; inset: 0; background: rgba(29,31,32,.40)"></div>
+    <div role="dialog" aria-modal="true" aria-labelledby="dlg-h" aria-describedby="dlg-d" style="position: absolute; left: 470px; top: 280px; width: 500px; box-sizing: border-box; padding: 20px 22px; background: #f2f2f3; border: 1px solid rgba(29,31,32,.16); box-shadow: 0 12px 32px rgba(43,43,45,.22); display: flex; flex-direction: column; gap: 12px">
+      <h2 id="dlg-h" class="ttl" style="margin: 0; font-size: 22px">Issue the October 2026 statement?</h2>
+      <div id="dlg-d" style="display: flex; flex-direction: column; gap: 8px; font-size: 14px">
+        <span>Customer portal · total <strong class="num" style="font-weight: 600">{{grand}}</strong>.</span>
+        <span>A frozen copy is saved to <code style="font-family: ui-monospace, monospace; font-size: 12px">~/.agent-cost-analyzer/statements/customer-portal/2026-10.json</code>.</span>
+        <span>Later price-book updates or late logs never change it. A re-run shows the difference instead.</span>
+        <span class="muted" style="font-size: 13px">18 turns with unknown cost are listed on the statement, not counted.</span>
+      </div>
+      <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 4px"><button class="btn">Cancel</button><button class="btn btn-p">Issue statement</button></div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{isExport}}" hint-placeholder-val="{{false}}">
+    <div aria-hidden="true" style="position: absolute; inset: 0; background: rgba(29,31,32,.40)"></div>
+    <div role="dialog" aria-modal="true" aria-labelledby="ex-h" style="position: absolute; left: 330px; top: 110px; width: 780px; height: 680px; box-sizing: border-box; padding: 20px 22px; background: #f2f2f3; border: 1px solid rgba(29,31,32,.16); box-shadow: 0 12px 32px rgba(43,43,45,.22); display: flex; flex-direction: column; gap: 12px">
+      <div style="display: flex; align-items: flex-start; gap: 12px">
+        <div style="display: flex; flex-direction: column; gap: 2px"><span class="kicker">Export · draft statement</span><h2 id="ex-h" class="ttl" style="margin: 0; font-size: 22px">Customer portal · October 2026</h2></div>
+        <button class="btn" aria-label="Close export (Escape)" style="margin-left: auto; width: 32px; padding: 0; justify-content: center"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"></path></svg></button>
+      </div>
+      <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px 20px; font-size: 13px">
+        <div style="display: flex; align-items: center; gap: 8px"><span id="fmt-l">Format</span><div class="seg" role="radiogroup" aria-labelledby="fmt-l"><label><input type="radio" name="fmt">CSV · lines</label><label><input type="radio" name="fmt">JSON · full</label><label class="on"><input type="radio" name="fmt" checked>Markdown · for an email</label></div></div>
+        <label style="display: flex; align-items: center; gap: 6px"><input type="checkbox" checked>Include session titles</label>
+        <label style="display: flex; align-items: center; gap: 6px"><input type="checkbox" checked>Include the EUR total</label>
+      </div>
+      <p class="muted" style="margin: 0; font-size: 12px">Exports never contain message text. Session ids are in the JSON export; titles can be left out. A draft export is marked as a draft.</p>
+      <figure style="margin: 0; flex-grow: 1; min-height: 0; display: flex; flex-direction: column; gap: 4px">
+        <figcaption class="muted" style="font-size: 12px; margin: 0">Preview</figcaption>
+        <pre style="margin: 0; flex-grow: 1; min-height: 0; overflow: auto; padding: 12px 14px; background: #e7e7ea; border: 1px solid rgba(29,31,32,.16); font-family: ui-monospace, monospace; font-size: 12px; line-height: 1.55; white-space: pre-wrap">{{exportPreview}}</pre>
+      </figure>
+      <div style="display: flex; align-items: center; gap: 8px">
+        <span role="status" class="muted" style="font-size: 12px">customer-portal-2026-10-draft.md · 2.1 KB</span>
+        <button class="btn" style="margin-left: auto">Copy</button>
+        <button class="btn btn-p">Save…</button>
+      </div>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"state":{"editor":"enum","options":["draft","confirm","frozen","export"],"default":"draft"},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var state = this.props.state ?? 'draft';
+    function fmt(n) { return n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+    var raw = [
+      ['GitHub Copilot', 'Claude Sonnet 5.5', '2026-09-01', 'Billed', '38.6 M', 14280.40, 'AIC'],
+      ['GitHub Copilot', 'GPT-5.5', '2026-06-01', 'Billed', '9.2 M', 3815.10, 'AIC'],
+      ['GitHub Copilot', 'Gemini 3.8 Flash', '2026-09-15 promo', 'Billed', '6.1 M', 612.30, 'AIC'],
+      ['Anthropic API', 'Claude Opus 5.5', '2026-05-14', 'Priced', '3.4 M', 96.40, 'USD'],
+      ['OpenAI API (pi)', 'GPT-5.6', 'pi’s own table', 'Reported', '1.0 M', 12.85, 'USD']
+    ];
+    var aic = 0, usd = 0;
+    var lines = raw.map(function (r) {
+      var inUsd = r[6] === 'AIC' ? r[5] / 100 : r[5];
+      if (r[6] === 'AIC') aic += r[5]; else usd += r[5];
+      return { channel: r[0], model: r[1], version: r[2], basis: r[3], tokens: r[4],
+        amount: r[6] === 'AIC' ? fmt(r[5]) + ' AI Credits' : '$' + fmt(r[5]), usd: '$' + fmt(inUsd) };
+    });
+    var usage = aic / 100 + usd, markup = usage * 0.15, seat = 19, grand = usage + markup + seat;
+    var totals = [
+      { k: 'Copilot subtotal', v: fmt(aic) + ' AI Credits ($' + fmt(aic / 100) + ')', w: '400' },
+      { k: 'API subtotal', v: '$' + fmt(usd), w: '400' },
+      { k: 'Usage', v: '$' + fmt(usage), w: '600' },
+      { k: 'Markup 15% (project setting)', v: '$' + fmt(markup), w: '400' },
+      { k: 'Fixed line: Copilot Business seat × 1', v: '$' + fmt(seat), w: '400' },
+      { k: 'Total', v: '$' + fmt(grand), w: '600' },
+      { k: 'In EUR at 0.92 (fixed rate)', v: '€' + fmt(grand * 0.92), w: '400' }
+    ];
+    var issued = [
+      { period: 'September 2026', total: '$318.46', note: 'Issued Oct 2, 2026 09:12 · 17,950.20 AI Credits + $112.10', differs: false },
+      { period: 'August 2026', total: '$341.02', note: 'Issued Sep 1, 2026 10:40 · price book corrected Sep 20', differs: true },
+      { period: 'July 2026', total: '$296.75', note: 'Issued Aug 3, 2026 08:55', differs: false }
+    ];
+    var md = [
+      '# Customer portal · October 2026 (draft)',
+      '',
+      'Client: Example Ltd · Billing code EX-2026-07',
+      'Period: 1–31 October 2026, Europe/Tallinn',
+      '',
+      '| Channel | Model | Basis | Amount | USD |',
+      '|---|---|---|---:|---:|'
+    ];
+    lines.forEach(function (l) { md.push('| ' + l.channel + ' | ' + l.model + ' | ' + l.basis + ' | ' + l.amount + ' | ' + l.usd + ' |'); });
+    md.push('', '18 turns have unknown cost (no price for gpt-6-luna before Nov 1, 2026) and are not included.', '');
+    totals.forEach(function (t) { md.push('- ' + t.k + ': ' + t.v); });
+    md.push('', '1 AI Credit = $0.01 (GitHub Copilot pricing). EUR at a fixed rate of 0.92 entered for this statement.', 'Price book 2026-11-01 · 214 sessions · generated Nov 5, 2026 by Agent Cost Analyzer.');
+    return {
+      isConfirm: state === 'confirm', isFrozen: state === 'frozen', isExport: state === 'export', canIssue: state !== 'frozen',
+      exportPreview: md.join('\n'),
+      kicker: state === 'frozen' ? 'Statement · issued Nov 3, 2026 14:05' : 'Draft statement',
+      lines: lines, totals: totals, issued: issued, grand: '$' + fmt(grand)
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -260,6 +260,8 @@ interface Turn {
   usage: TurnUsage;
   explanation: string; // "what happened this turn, and why" (both modes)
   triggeredEvent?: "model-switch" | "tool-change" | "compaction" | "clear" | "rewind" | "fork" | "cache-expiry";
+  startedAt?: string; // Analyze mode only (Phase 15 step 15.1) — when the turn started, as the log records it
+  workspace?: SessionWorkspace; // only where the turn ran elsewhere than its session (Claude Code)
 }
 
 interface SystemPromptComponent { // Analyze mode only
@@ -287,7 +289,42 @@ interface Session {
   category?: string; // Learn mode only — authored once per fixture, e.g. "Prompt caching"
   startedAt?: string; // Analyze mode only — ISO date, sourced from sessions.created_at
   copilotHarness?: "local" | "agent-host"; // VS Code (Copilot) sessions only; §6.2.2.1
+  workspace?: SessionWorkspace; // Analyze mode only (Phase 15 step 15.1)
 }
+
+// Phase 15 step 15.1 (plans/cost-by-repository-and-project.md §4.1): the
+// folder a session ran in, as its log records it, before any repository
+// resolution. Unknown carries its reason, like TokenCount (constraint 6).
+type SessionWorkspace =
+  | { known: true; cwd: string; repositoryHint?: string; branch?: string }
+  | { known: false; reason: string };
+// Where each provider reads it:
+// - VS Code classic: the session store's sessions.cwd / repository / branch;
+//   turns.timestamp per turn.
+// - VS Code Agent Host: the catalog payload's data.project.uri (else
+//   data.workingDirectories[0]; file: URIs only), else the Copilot CLI event
+//   log's session.start data.context.cwd; each user.message timestamp.
+// - Claude Code: cwd / gitBranch / timestamp on every entry; the session
+//   takes the first, a turn its user message's when it differs.
+// - pi: the session header's cwd (no branch); SessionEntryBase.timestamp.
+// - mitmproxy: unknown (captures record no folder); each entry's
+//   startedDateTime.
+
+// Phase 15 step 15.2 (plans/cost-by-repository-and-project.md §4.2): the
+// repository a workspace belongs to, resolved from files only (no git
+// process). key: a normalised remote ("github.com/org/app"),
+// "local:<main repository root>", "repository:<recorded name>" or
+// "path:<folder>"; credentials are dropped before a key is built.
+interface RepositoryRef {
+  key: string;
+  source: "git-remote" | "git-local" | "recorded-repository" | "folder-path";
+  rootPath?: string;
+  pathInRepo?: string; // relative; "" is the root
+  branch?: string;
+}
+type RepositoryAttribution =
+  | { attributed: true; repository: RepositoryRef }
+  | { attributed: false; reason: string };
 ```
 
 Log-provider selection is a separate app-level contract, not a provider-
@@ -1793,9 +1830,10 @@ small retry/tolerance window rather than treating that as missing data.
 
 A minimal REST surface, almost entirely read-only — the app never writes to
 the SQLite store or the log files (vision §6 non-goal: read-only viewer).
-The two `PUT` endpoints below are the exceptions: both write only to the
-app's own `settings.json` (§11.2), never to VS Code's or the log/SQLite
-sources themselves.
+The `PUT` endpoints below are the exceptions: they write only to the app's
+own settings folder (`settings.json`, and `projects.json` for
+`PUT /api/projects`, §11.2), never to VS Code's or the log/SQLite sources
+themselves.
 
 | Method & path | Returns |
 |---|---|
@@ -1812,6 +1850,9 @@ sources themselves.
 | `GET /api/audit` | `AuditRollup` over the most recent sessions (`limit`, default 50, max 500) whose `startedAt` falls in `since`..`until` (ISO date or timestamp, compared at the bound's precision): totals, top failing commands, daily counts, per-session summary, category/program/tool breakdowns. Optional `provider` |
 | `GET /api/insights` | `InsightsDataset` (Phase 9.11, [plans/insights-dashboard.md](plans/insights-dashboard.md)): the most recent sessions from **every** registered provider (`limit` per provider, default 50, max 500; `since`/`until` as for `/api/audit`; optional `provider` restricts to one, 400 if unknown), flattened to session/turn/tool-call rows, plus security, anomaly and behaviour-change findings. Each provider's availability, error or truncation is reported in `providers[]`; one failing provider never fails the response |
 | `GET /api/config/status` | `ConfigStatus` — current prerequisite-setting check results and any `warnings[]` (§6.3), including the effective `minRetainedSessionLogsThreshold` |
+| `GET /api/projects` | `ProjectsState` (Phase 15 step 15.3, [plans/cost-by-repository-and-project.md](plans/cost-by-repository-and-project.md) §7): `status` (`missing`, `valid` or `invalid`), the file in use, its `problems` and its `location` |
+| `PUT /api/projects` | Replaces the projects file with the body after validation; returns the new `ProjectsState`. 400 with `{ error, problems }` if anything is wrong, and nothing is written |
+| `GET /api/repositories` | `RepositoryList` (Phase 15 step 15.3): every repository the providers' sessions resolve to (`key`, `source`, `rootPath`, session count, providers, first and last use, projects), the Unattributed sessions grouped by reason, and each provider's status |
 | `PUT /api/config/retention-threshold` | Sets the persisted `minRetainedSessionLogsThreshold` override (body: `{ value: number }`, must be a positive integer, else 400); returns the fresh `ConfigStatus` so the caller can update both the header control and the warning banner from one response |
 
 The server binds to `localhost` only (see §11.2).

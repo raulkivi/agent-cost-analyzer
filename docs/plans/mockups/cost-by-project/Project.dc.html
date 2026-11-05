@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Dashboard, inside a project</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&amp;family=Barlow+Condensed:wght@500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#416180}a:hover{color:#2c455d}
+.bp{position:relative;border:1px solid rgba(29,31,32,.16)}
+.bp>i{position:absolute;width:11px;height:11px;color:rgba(29,31,32,.55)}
+.bp>i::before,.bp>i::after{content:"";position:absolute;background:currentColor}
+.bp>i::before{left:5px;top:0;width:1px;height:100%}
+.bp>i::after{top:5px;left:0;width:100%;height:1px}
+.bp>.tl{top:-6px;left:-6px}.bp>.tr{top:-6px;right:-6px}.bp>.bl{bottom:-6px;left:-6px}.bp>.br{bottom:-6px;right:-6px}
+.seg{display:inline-flex;border:1px solid rgba(29,31,32,.16);border-radius:4px;overflow:hidden}
+.seg>label,.seg>button{display:inline-flex;align-items:center;height:30px;padding:0 11px;font:inherit;font-size:13px;color:#1d1f20;background:transparent;border:0;cursor:pointer;position:relative}
+.seg>label+label,.seg>button+button{border-left:1px solid rgba(29,31,32,.16)}
+.seg>label>input{position:absolute;opacity:0;width:1px;height:1px}
+.seg>.on{background:#416180;color:#f2f2f3}
+.btn{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 11px;border:1px solid rgba(29,31,32,.16);border-radius:4px;font:inherit;font-size:13px;color:#1d1f20;background:transparent;cursor:pointer}
+.kicker{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#416180}
+.muted{color:#5b5c5e}
+.num{font-variant-numeric:tabular-nums}
+.ttl{font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:17px;color:#1d1f20}
+.sel{height:30px;font:inherit;font-size:13px;padding:0 8px;border:1px solid rgba(29,31,32,.16);border-radius:4px;background:#f2f2f3;color:#1d1f20}
+</style>
+</helmet>
+<div style="width: 1440px; height: 900px; box-sizing: border-box; display: flex; flex-direction: column; background: #f2f2f3; color: #1d1f20; font-family: Barlow, system-ui, sans-serif; font-size: 14px; line-height: 1.45; overflow: hidden">
+  <header style="height: 56px; flex-shrink: 0; display: flex; align-items: center; gap: 20px; padding: 0 24px; border-bottom: 1px solid rgba(29,31,32,.16)">
+    <span style="font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 20px; margin-right: auto">Agent Cost Analyzer</span>
+    <div class="seg" role="radiogroup" aria-label="Mode"><label><input type="radio" name="mode">Learn</label><label class="on"><input type="radio" name="mode" checked>Analyze</label></div>
+    <label style="display: flex; align-items: center; gap: 8px; font-size: 13px">Provider<select class="sel"><option>All providers</option></select></label>
+  </header>
+
+  <div style="flex-grow: 1; min-height: 0; display: flex; flex-direction: column; gap: 14px; padding: 16px 24px 20px">
+    <div style="display: flex; align-items: center; gap: 20px">
+      <h1 style="margin: 0; font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 30px; line-height: 1">Dashboard</h1>
+      <div class="seg" role="tablist" aria-label="Dashboard views">
+        <button role="tab" aria-selected="false">Overview</button>
+        <button role="tab" aria-selected="false">Cost over time</button>
+        <button role="tab" aria-selected="false">Compare</button>
+        <button role="tab" aria-selected="true" class="on">Project</button>
+        <button role="tab" aria-selected="false">Billing</button>
+      </div>
+      <div style="margin-left: auto; display: flex; align-items: center; gap: 8px; font-size: 13px">
+        <span class="muted">Selections</span>
+        <span style="display: inline-flex; align-items: center; gap: 4px; height: 26px; padding: 0 2px 0 10px; border: 1px solid #416180; border-radius: 13px">Project: Customer portal<button aria-label="Clear project selection" style="width: 22px; height: 22px; border: 0; background: transparent; color: #1d1f20; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"></path></svg></button></span>
+        <span style="display: inline-flex; align-items: center; gap: 4px; height: 26px; padding: 0 2px 0 10px; border: 1px solid #416180; border-radius: 13px">Vendor: Anthropic<button aria-label="Clear vendor selection" style="width: 22px; height: 22px; border: 0; background: transparent; color: #1d1f20; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"></path></svg></button></span>
+        <button class="btn">Clear all</button>
+        <button class="btn">Back</button>
+      </div>
+    </div>
+
+    <div style="display: flex; align-items: center; gap: 18px; font-size: 13px">
+      <div class="seg" role="radiogroup" aria-label="Date range"><label><input type="radio" name="range">This month</label><label><input type="radio" name="range">Last month</label><label class="on"><input type="radio" name="range" checked>Last 90 days</label><label><input type="radio" name="range">This year</label><label><input type="radio" name="range">Custom…</label></div>
+      <div class="seg" role="radiogroup" aria-label="Currency"><label class="on"><input type="radio" name="cur" checked>AI Credits</label><label><input type="radio" name="cur">USD</label></div>
+      <div class="seg" role="radiogroup" aria-label="Pricing"><label class="on"><input type="radio" name="pricing" checked>As of use</label><label><input type="radio" name="pricing">Today's prices</label></div>
+    </div>
+
+    <div style="flex-grow: 1; min-height: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(2, minmax(0, 1fr)); gap: 14px">
+      <figure class="bp" style="margin: 0; padding: 12px 16px; display: flex; flex-direction: column; gap: 10px"><i class="tl"></i><i class="tr"></i><i class="bl"></i><i class="br"></i>
+        <div style="display: flex; align-items: flex-start; gap: 12px"><div style="display: flex; flex-direction: column; gap: 2px"><span class="kicker">Customer portal · 60,300.00 AI Credits</span><figcaption class="ttl">Cost by vendor</figcaption></div><button class="btn" style="margin-left: auto">View as table</button></div>
+        <div role="img" aria-label="Cost by vendor: Anthropic 39,180.00 selected, OpenAI 17,920.00, Google 3,200.00 AI Credits." style="display: flex; flex-direction: column; gap: 12px">
+          <sc-for list="{{vendors}}" as="v" hint-placeholder-count="3">
+            <button aria-pressed="{{v.pressed}}" style="display: grid; grid-template-columns: 110px minmax(0, 1fr) 150px; align-items: center; gap: 10px; padding: 4px 6px; border: 0; border-radius: 2px; background: {{v.bg}}; font: inherit; font-size: 13px; color: #1d1f20; text-align: left; cursor: pointer"><span style="font-weight: {{v.weight}}">{{v.name}}</span><span style="display: block; height: 20px"><span style="display: block; height: 20px; width: {{v.w}}; background: {{v.color}}; opacity: {{v.opacity}}; border-radius: 0 4px 4px 0"></span></span><span class="num" style="text-align: right">{{v.value}} · {{v.share}}</span></button>
+          </sc-for>
+        </div>
+        <p class="muted" style="margin: auto 0 0; font-size: 12px">Click a vendor to see its models. Vendor colours are fixed by vendor, not by rank.</p>
+      </figure>
+
+      <figure class="bp" style="margin: 0; padding: 12px 16px; display: flex; flex-direction: column; gap: 10px"><i class="tl"></i><i class="tr"></i><i class="bl"></i><i class="br"></i>
+        <div style="display: flex; align-items: flex-start; gap: 12px"><div style="display: flex; flex-direction: column; gap: 2px"><span class="kicker">Anthropic · 39,180.00 AI Credits</span><figcaption class="ttl">Models, and what their cost is made of</figcaption></div><button class="btn" style="margin-left: auto">View as table</button></div>
+        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px">
+          <div role="img" aria-label="Anthropic models: Claude Sonnet 5.5 28,410.00, Claude Opus 5.5 9,120.00, Claude Haiku 5.5 1,650.00 AI Credits." style="display: flex; flex-direction: column; gap: 10px">
+            <span class="muted" style="font-size: 12px">By model</span>
+            <sc-for list="{{models}}" as="m" hint-placeholder-count="3">
+              <div style="display: flex; flex-direction: column; gap: 3px; font-size: 13px"><span style="display: flex; justify-content: space-between"><span>{{m.name}}</span><span class="num">{{m.value}}</span></span><span style="display: block; height: 14px"><span style="display: block; height: 14px; width: {{m.w}}; background: #5980a6; border-radius: 0 4px 4px 0"></span></span></div>
+            </sc-for>
+          </div>
+          <div role="img" aria-label="Anthropic cost by token type: output 17,000.00, cache write 7,450.00, uncached input 6,200.00, cache read 4,630.00, reasoning 3,900.00 AI Credits." style="display: flex; flex-direction: column; gap: 10px">
+            <span class="muted" style="font-size: 12px">By token type (a separate chart, not stacked into the first)</span>
+            <sc-for list="{{tokens}}" as="t" hint-placeholder-count="5">
+              <div style="display: grid; grid-template-columns: 96px minmax(0, 1fr) 70px; align-items: center; gap: 6px; font-size: 12px"><span>{{t.name}}</span><span style="display: block; height: 12px"><span style="display: block; height: 12px; width: {{t.w}}; background: #416180; border-radius: 0 3px 3px 0"></span></span><span class="num" style="text-align: right">{{t.value}}</span></div>
+            </sc-for>
+            <span class="muted" style="font-size: 12px">Tokens: 31.4 M cache read, 6.2 M uncached, 2.0 M cache write, 1.1 M output, 0.5 M reasoning</span>
+          </div>
+        </div>
+      </figure>
+
+      <figure class="bp" style="margin: 0; padding: 12px 16px; display: flex; flex-direction: column; gap: 6px"><i class="tl"></i><i class="tr"></i><i class="bl"></i><i class="br"></i>
+        <div style="display: flex; align-items: flex-start; gap: 12px">
+          <div style="display: flex; flex-direction: column; gap: 2px"><span class="kicker">Customer portal · all vendors</span><figcaption class="ttl">Why cost changed: August to October</figcaption></div>
+          <label style="margin-left: auto; display: flex; align-items: center; gap: 6px; font-size: 13px">From<select class="sel"><option>Aug 2026</option></select></label>
+          <label style="display: flex; align-items: center; gap: 6px; font-size: 13px">To<select class="sel"><option>Oct 2026</option></select></label>
+          <button class="btn">View as table</button>
+        </div>
+        <div style="display: flex; gap: 16px; align-items: flex-end">
+          <svg role="img" aria-label="Waterfall from August 18,240.00 to October 21,120.00 AI Credits: usage effect plus 4,130.00, price effect minus 1,860.00, mix effect plus 610.00." width="400" height="220" viewBox="0 0 400 220" style="display: block; flex-shrink: 0; font-family: Barlow, sans-serif">
+            <line x1="40" x2="392" y1="190" y2="190" stroke="rgba(29,31,32,.30)"></line>
+            <sc-for list="{{wf}}" as="w" hint-placeholder-count="5">
+              <rect x="{{w.x}}" y="{{w.y}}" width="40" height="{{w.h}}" rx="2" fill="{{w.fill}}"></rect>
+              <text x="{{w.cx}}" y="{{w.ly}}" text-anchor="middle" font-size="12" fill="#1d1f20" style="font-variant-numeric: tabular-nums">{{w.label}}</text>
+              <text x="{{w.cx}}" y="208" text-anchor="middle" font-size="11" fill="#5b5c5e">{{w.name}}</text>
+            </sc-for>
+            <sc-for list="{{wfLinks}}" as="k" hint-placeholder-count="4">
+              <line x1="{{k.x1}}" x2="{{k.x2}}" y1="{{k.y}}" y2="{{k.y}}" stroke="rgba(29,31,32,.45)" stroke-dasharray="2 2"></line>
+            </sc-for>
+          </svg>
+          <table style="border-collapse: collapse; font-size: 13px; flex-grow: 1">
+            <caption style="text-align: left; font-size: 12px; color: #5b5c5e; padding-bottom: 4px">Effects add up to the change exactly</caption>
+            <tbody>
+              <sc-for list="{{wfRows}}" as="r" hint-placeholder-count="5">
+                <tr><th scope="row" style="text-align: left; font-weight: {{r.weight}}; padding: 4px 8px 4px 0; border-bottom: 1px solid rgba(29,31,32,.10)">{{r.name}}</th><td class="num" style="text-align: right; padding: 4px 0; border-bottom: 1px solid rgba(29,31,32,.10); font-weight: {{r.weight}}">{{r.value}}</td></tr>
+              </sc-for>
+            </tbody>
+          </table>
+        </div>
+        <p class="muted" style="margin: auto 0 0; font-size: 12px">Usage: more tokens at August prices. Price: October tokens × the price difference (the documented Sep 1 Sonnet cut). Mix: work moved from Sonnet to Opus. Red bars raise cost, blue lower it; the sign is always written.</p>
+      </figure>
+
+      <section class="bp" aria-labelledby="rec-h" style="padding: 12px 16px; display: flex; flex-direction: column; gap: 10px"><i class="tl"></i><i class="tr"></i><i class="bl"></i><i class="br"></i>
+        <div style="display: flex; flex-direction: column; gap: 2px"><span class="kicker">Copilot turns · billed vs price book</span><h2 id="rec-h" class="ttl" style="margin: 0">Reconciliation</h2></div>
+        <div style="display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border: 1px solid rgba(29,31,32,.16); border-radius: 4px; background: #fff7e6">
+          <span style="display: inline-flex; align-items: center; gap: 4px; padding: 1px 6px; background: #eba524; color: #1d1f20; font-size: 11px; font-weight: 600; white-space: nowrap"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 3l9 16H3z"></path><path d="M12 10v4M12 17v.5"></path></svg>Medium</span>
+          <div style="display: flex; flex-direction: column; gap: 4px; font-size: 13px">
+            <strong style="font-weight: 600">Observed: GPT-5.5 billed 12% above the price book since Oct 6</strong>
+            <span>214 turns · billed 4,210.00 AI Credits, priced 3,758.93 · inferred, not a documented price change</span>
+            <span class="muted">Check GitHub's models and pricing page; if the price changed, add a price version with its source.</span>
+            <span style="display: flex; gap: 8px; margin-top: 4px"><button class="btn">Open price book</button><button class="btn">Show turns</button></span>
+          </div>
+        </div>
+        <table style="border-collapse: collapse; font-size: 13px; width: 100%">
+          <caption style="text-align: left; font-size: 12px; color: #5b5c5e; padding-bottom: 4px">Billed minus priced, per model and month (AI Credits)</caption>
+          <thead><tr><th scope="col" style="text-align: left; padding: 5px 8px 5px 0; border-bottom: 1px solid rgba(29,31,32,.30)">Model</th><th scope="col" style="text-align: right; padding: 5px 8px; border-bottom: 1px solid rgba(29,31,32,.30)">Aug</th><th scope="col" style="text-align: right; padding: 5px 8px; border-bottom: 1px solid rgba(29,31,32,.30)">Sep</th><th scope="col" style="text-align: right; padding: 5px 0 5px 8px; border-bottom: 1px solid rgba(29,31,32,.30)">Oct</th></tr></thead>
+          <tbody>
+            <sc-for list="{{recon}}" as="r" hint-placeholder-count="3">
+              <tr><th scope="row" style="text-align: left; font-weight: 400; padding: 5px 8px 5px 0; border-bottom: 1px solid rgba(29,31,32,.10)">{{r.model}}</th><td class="num" style="text-align: right; padding: 5px 8px; border-bottom: 1px solid rgba(29,31,32,.10)">{{r.aug}}</td><td class="num" style="text-align: right; padding: 5px 8px; border-bottom: 1px solid rgba(29,31,32,.10)">{{r.sep}}</td><td class="num" style="text-align: right; padding: 5px 0 5px 8px; border-bottom: 1px solid rgba(29,31,32,.10); font-weight: {{r.octWeight}}">{{r.oct}}</td></tr>
+            </sc-for>
+          </tbody>
+        </table>
+      </section>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    function fmt(n) { return n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+    var vs = [['Anthropic', 39180, '#2a78d6'], ['OpenAI', 17920, '#eb6834'], ['Google', 3200, '#1baf7a']];
+    var vendors = vs.map(function (v, i) {
+      return { name: v[0], value: fmt(v[1]), share: (v[1] / 60300 * 100).toFixed(1) + '%', color: v[2], w: (v[1] / 39180 * 100).toFixed(1) + '%',
+        pressed: i === 0 ? 'true' : 'false', bg: i === 0 ? 'rgba(65,97,128,.12)' : 'transparent', weight: i === 0 ? '600' : '400', opacity: i === 0 ? '1' : '0.55' };
+    });
+    var ms = [['Claude Sonnet 5.5', 28410], ['Claude Opus 5.5', 9120], ['Claude Haiku 5.5', 1650]];
+    var models = ms.map(function (m) { return { name: m[0], value: fmt(m[1]), w: (m[1] / 28410 * 100).toFixed(1) + '%' }; });
+    var ts = [['Output', 17000], ['Cache write', 7450], ['Uncached input', 6200], ['Cache read', 4630], ['Reasoning', 3900]];
+    var tokens = ts.map(function (t) { return { name: t[0], value: fmt(t[1]), w: (t[1] / 17000 * 100).toFixed(1) + '%' }; });
+
+    var steps = [['August', 18240, 'total'], ['Usage', 4130, 'up'], ['Price', -1860, 'down'], ['Mix', 610, 'up'], ['October', 21120, 'total']];
+    var Y = function (v) { return 190 - v / 24000 * 170; };
+    var run = 0, wf = [], wfLinks = [];
+    steps.forEach(function (s, i) {
+      var x = 50 + i * 70, top, bottom;
+      if (s[2] === 'total') { top = Y(s[1]); bottom = Y(0); run = s[1]; }
+      else { var a = run, b = run + s[1]; top = Y(Math.max(a, b)); bottom = Y(Math.min(a, b)); run = b; }
+      var fill = s[2] === 'total' ? '#5980a6' : s[2] === 'up' ? '#e34948' : '#1c5cab';
+      var label = s[2] === 'total' ? fmt(s[1]) : (s[1] > 0 ? '+' : '−') + fmt(Math.abs(s[1]));
+      wf.push({ x: x, y: top, h: Math.max(bottom - top, 2), fill: fill, cx: x + 20, ly: top - 6, label: label, name: s[0] });
+      if (i < steps.length - 1) wfLinks.push({ x1: x + 40, x2: x + 70, y: Y(run) });
+    });
+    var wfRows = [
+      { name: 'August cost', value: fmt(18240), weight: '600' },
+      { name: 'Usage effect', value: '+' + fmt(4130), weight: '400' },
+      { name: 'Price effect', value: '−' + fmt(1860), weight: '400' },
+      { name: 'Mix effect', value: '+' + fmt(610), weight: '400' },
+      { name: 'October cost', value: fmt(21120), weight: '600' }
+    ];
+    var recon = [
+      { model: 'Claude Sonnet 5.5', aug: '+2.10', sep: '−0.40', oct: '+1.05', octWeight: '400' },
+      { model: 'GPT-5.5', aug: '+0.85', sep: '+1.20', oct: '+451.07', octWeight: '600' },
+      { model: 'Gemini 3.8 Flash', aug: '0.00', sep: '−0.15', oct: '+0.30', octWeight: '400' }
+    ];
+    return { vendors: vendors, models: models, tokens: tokens, wf: wf, wfLinks: wfLinks, wfRows: wfRows, recon: recon };
+  }
+}
+</script>
+</body>
+</html>

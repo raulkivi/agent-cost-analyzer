@@ -1,4 +1,5 @@
 import type { DatabaseSync } from "node:sqlite";
+import { fileURLToPath } from "node:url";
 import { hasTable } from "../sqlite/has-table.js";
 
 export const AGENT_HOST_COPILOT_PROVIDER = "copilotcli";
@@ -16,6 +17,12 @@ export interface AgentHostSessionRow {
   startedAtMs: number;
   /** modified_time */
   modifiedAtMs: number;
+  /**
+   * The local folder the session ran in (Phase 15 step 15.1): payload
+   * data.project.uri, else the first data.workingDirectories entry. Only
+   * file: URIs; absent when there is neither (or only a remote URI).
+   */
+  workingFolder?: string;
 }
 
 interface SessionV2DbRow {
@@ -30,9 +37,13 @@ interface SessionV2DbRow {
 const SELECT_SESSION =
   "SELECT session_uri, payload, start_time, modified_time FROM sessions_v2";
 
-// Session-level summary only: a payload that hides the title inside
-// chats[].summary stays untitled.
-function readTitle(payload: string | null): string | null {
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+// The payload's `data` object, or null when the payload is missing, isn't
+// JSON, or holds no data object.
+function payloadData(payload: string | null): Record<string, unknown> | null {
   if (payload === null) {
     return null;
   }
@@ -42,19 +53,46 @@ function readTitle(payload: string | null): string | null {
   } catch {
     return null;
   }
-  if (typeof parsed !== "object" || parsed === null) {
+  if (!isRecord(parsed)) {
     return null;
   }
-  const data = (parsed as Record<string, unknown>).data;
-  if (typeof data !== "object" || data === null) {
-    return null;
-  }
-  const summary = (data as Record<string, unknown>).summary;
+  return isRecord(parsed.data) ? parsed.data : null;
+}
+
+// Session-level summary only: a payload that hides the title inside
+// chats[].summary stays untitled.
+function readTitle(data: Record<string, unknown> | null): string | null {
+  const summary = data?.summary;
   if (typeof summary !== "string") {
     return null;
   }
   const trimmed = summary.trim();
   return trimmed === "" ? null : trimmed;
+}
+
+function localPath(uri: unknown): string | null {
+  if (typeof uri !== "string" || !uri.startsWith("file:")) {
+    return null;
+  }
+  try {
+    const folder = fileURLToPath(uri);
+    return folder === "" ? null : folder;
+  } catch {
+    return null;
+  }
+}
+
+// A remote (vscode-remote:) folder isn't on this machine, so it isn't one.
+function readWorkingFolder(data: Record<string, unknown> | null): string | null {
+  if (data === null) {
+    return null;
+  }
+  const project = isRecord(data.project) ? localPath(data.project.uri) : null;
+  if (project) {
+    return project;
+  }
+  const directories = Array.isArray(data.workingDirectories) ? data.workingDirectories : [];
+  return localPath(directories[0]);
 }
 
 function toRow(dbRow: SessionV2DbRow): AgentHostSessionRow | null {
@@ -65,12 +103,15 @@ function toRow(dbRow: SessionV2DbRow): AgentHostSessionRow | null {
   if (id === "") {
     return null;
   }
+  const data = payloadData(dbRow.payload);
+  const workingFolder = readWorkingFolder(data);
   return {
     id,
     sessionUri: dbRow.session_uri,
-    title: readTitle(dbRow.payload),
+    title: readTitle(data),
     startedAtMs: dbRow.start_time,
     modifiedAtMs: dbRow.modified_time,
+    ...(workingFolder ? { workingFolder } : {}),
   };
 }
 

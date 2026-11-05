@@ -7,6 +7,11 @@ import { agentHostCatalogProbe } from "../services/config-check/agent-host-catal
 import { resolveUserDataDir } from "../platform/vscode-paths/resolve-user-data-dir.js";
 import { checkConfig } from "../services/config-check/config-check.js";
 import { ApiService } from "../services/api/api-service.js";
+import { FileProjectStore } from "../data-sources/projects/file-project-store.js";
+import { NodeReadOnlyFileSystem } from "../platform/file-system/node-read-only-file-system.js";
+import { ProjectCatalog } from "../services/cost-attribution/project-catalog.js";
+import { RepositoryListService } from "../services/cost-attribution/repository-list-service.js";
+import { RepositoryResolver } from "../services/cost-attribution/repository-resolver.js";
 import { AuditQueryService } from "../services/tool-audit/audit-query-service.js";
 import { readAppVersion } from "./app-version.js";
 import { composeLogProviders, type LogProviderCompositionOptions } from "./compose-log-providers.js";
@@ -44,13 +49,19 @@ export function standaloneProductProfile(version: string): ProductProfile {
 // extension builds its own over a Copilot-only registry.
 export function createStandaloneApiService(options: StandaloneApiServiceOptions = {}): ApiService {
   const { learnScenariosFixturesDir, appVersion: appVersionOption, ...compositionOptions } = options;
-  const { registry, appSettings, resolvedVscodeSettingsPath } = composeLogProviders(compositionOptions);
+  const { registry, appSettings, resolvedVscodeSettingsPath, resolvedAppSettingsDir } = composeLogProviders(compositionOptions);
+  // Phase 15 step 15.3: projects.json beside settings.json.
+  const projectCatalog = new ProjectCatalog(new FileProjectStore(resolvedAppSettingsDir));
   const appVersion = appVersionOption ?? readAppVersion();
   const agentHostUserDataDir =
     compositionOptions.agentHostUserDataDir !== undefined ? compositionOptions.agentHostUserDataDir : resolveUserDataDir();
 
   return new ApiService({
     registry,
+    projects: {
+      catalog: projectCatalog,
+      repositories: new RepositoryListService(registry, new RepositoryResolver(new NodeReadOnlyFileSystem()), projectCatalog),
+    },
     auditQueries: new AuditQueryService(registry),
     insights: createInsightsService(registry),
     settings: appSettings,

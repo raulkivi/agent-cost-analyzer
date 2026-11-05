@@ -14,8 +14,10 @@ import type { LogProvider } from "../../data-sources/log-providers/log-provider.
 import type { SystemPromptTextLookup } from "../../data-sources/log-providers/system-prompt-text-reader.js";
 import type { LearnScenarioCatalog } from "../../data-sources/learn-scenarios/loader.js";
 import { AuditQueryService, type SessionRangeFilter } from "../tool-audit/audit-query-service.js";
+import { InMemoryProjectStore } from "../../test-support/in-memory-project-store.js";
+import { ProjectCatalog } from "../cost-attribution/project-catalog.js";
 import { ScenarioNotFoundError, UnknownModelError } from "../learn-simulation/learn-simulation-service.js";
-import { ApiService, type ApiLearnSimulation, type ApiServiceDeps } from "./api-service.js";
+import { ApiService, PROJECTS_UNAVAILABLE_MESSAGE, type ApiLearnSimulation, type ApiServiceDeps } from "./api-service.js";
 import { BadRequestError, InternalError, NotFoundError, statusForApiError } from "./api-errors.js";
 
 const profile: ProductProfile = {
@@ -487,5 +489,86 @@ describe("statusForApiError", () => {
     expect(statusForApiError(new NotFoundError("x"))).toBe(404);
     expect(statusForApiError(new InternalError("x"))).toBe(500);
     expect(statusForApiError(new Error("x"))).toBe(500);
+  });
+});
+
+// Phase 15 step 15.3: the projects file and the repository list.
+describe("ApiService projects", () => {
+  const validFile = { version: 1, projects: [{ id: "app", name: "App", members: [{ repository: "github.com/org/app" }] }] };
+  const repositoryList = { repositories: [], unattributed: [], providers: [] };
+
+  function withProjects(store: InMemoryProjectStore) {
+    return build(undefined, {
+      projects: { catalog: new ProjectCatalog(store), repositories: { getRepositoryList: async () => repositoryList } },
+    });
+  }
+
+  it("getProjects returns the file's state", async () => {
+    const { service } = withProjects(new InMemoryProjectStore(JSON.stringify(validFile)));
+
+    await expect(service.getProjects()).resolves.toMatchObject({ status: "valid", file: { projects: [{ id: "app" }] } });
+  });
+
+  it("saveProjects writes a valid file and returns the new state", async () => {
+    const store = new InMemoryProjectStore();
+    const { service } = withProjects(store);
+
+    await expect(service.saveProjects(validFile)).resolves.toMatchObject({ status: "valid" });
+    expect(store.writes).toBe(1);
+  });
+
+  it("saveProjects rejects an invalid file as a bad request that carries the problems, and writes nothing", async () => {
+    const store = new InMemoryProjectStore();
+    const { service } = withProjects(store);
+
+    const error = await service.saveProjects({ version: 1, projects: [{ id: "x", name: "X", members: [] }] }).then(
+      () => undefined,
+      (reason: unknown) => reason,
+    );
+
+    expect(error).toBeInstanceOf(BadRequestError);
+    expect((error as BadRequestError).details).toEqual({ problems: [{ path: "projects[0].members", message: expect.any(String) }] });
+    expect(store.writes).toBe(0);
+  });
+
+  it("getRepositoryList returns the list", async () => {
+    const { service } = withProjects(new InMemoryProjectStore());
+
+    await expect(service.getRepositoryList()).resolves.toEqual(repositoryList);
+  });
+
+  it("adds an optional config warning when the projects file has problems, and none when it is fine or missing", async () => {
+    const broken = withProjects(new InMemoryProjectStore("{ not json"));
+    const fine = withProjects(new InMemoryProjectStore(JSON.stringify(validFile)));
+    const missing = withProjects(new InMemoryProjectStore());
+
+    const status = await broken.service.getConfigStatus();
+    const warning = status.warnings.find((w) => w.code === "projects-file-invalid");
+
+    expect(warning).toMatchObject({ severity: "optional", settingId: "/settings/projects.json", currentValue: 1, recommendedValue: 0 });
+    expect(warning!.message).toMatch(/projects are ignored/);
+    expect(warning!.helpSteps[0]).toMatch(/^Not valid JSON/);
+    expect((await fine.service.getConfigStatus()).warnings.some((w) => w.code === "projects-file-invalid")).toBe(false);
+    expect((await missing.service.getConfigStatus()).warnings.some((w) => w.code === "projects-file-invalid")).toBe(false);
+  });
+
+  it("says the file is kept, with its problems, when they are only across entries", async () => {
+    const tie = { version: 1, projects: [{ id: "a", name: "A", members: [{ repository: "r" }] }, { id: "b", name: "B", members: [{ repository: "r" }] }] };
+    const { service } = withProjects(new InMemoryProjectStore(JSON.stringify(tie)));
+
+    const warning = (await service.getConfigStatus()).warnings.find((w) => w.code === "projects-file-invalid");
+
+    expect(warning!.message).toMatch(/still used/);
+    expect(warning!.helpSteps[0]).toMatch(/^projects\[1\]\.members\[0\]: Exact tie/);
+  });
+
+  it("is not found in a product without projects (the extension, for now)", async () => {
+    const { service } = build();
+
+    for (const call of [() => service.getProjects(), () => service.saveProjects(validFile), () => service.getRepositoryList()]) {
+      const error = await call().then(() => undefined, (reason: unknown) => reason);
+      expect(error).toBeInstanceOf(NotFoundError);
+      expect((error as Error).message).toBe(PROJECTS_UNAVAILABLE_MESSAGE);
+    }
   });
 });
