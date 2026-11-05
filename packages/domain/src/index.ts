@@ -41,6 +41,13 @@ export {
 } from "./session-audit.js";
 export { turnSchema, triggeredEventSchema, type Turn, type TriggeredEvent } from "./turn.js";
 export {
+  sessionWorkspaceSchema,
+  knownWorkspace,
+  unknownWorkspace,
+  type SessionWorkspace,
+  type KnownSessionWorkspace,
+} from "./workspace.js";
+export {
   systemPromptComponentSchema,
   type SystemPromptComponent,
 } from "./system-prompt-component.js";

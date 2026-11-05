@@ -89,6 +89,13 @@ describe("PiAgentLogProvider", () => {
     expect(session?.model).toBe("claude-sonnet-5");
   });
 
+  it("leaves turn times unset for a pre-schema file whose entries carry no timestamp", async () => {
+    const session = await new PiAgentLogProvider({ sessionsDirPath: fixturesDir }).readSession(computePiFileHash(path.join(fixturesDir, "normal-session.jsonl")));
+
+    expect(session?.workspace).toEqual({ known: true, cwd: "/home/user/my-project" });
+    expect(session?.turns.every((turn) => !("startedAt" in turn))).toBe(true);
+  });
+
   it("readSession marks usageDataAvailable false when no assistant message carries usage data", async () => {
     const provider = new PiAgentLogProvider({ sessionsDirPath: fixturesDir });
     const id = computePiFileHash(path.join(fixturesDir, "no-usage-session.jsonl"));
@@ -123,6 +130,17 @@ describe("PiAgentLogProvider", () => {
   describe("published-schema fixture (schema-v3-session.jsonl)", () => {
     const schemaSessionPath = path.join(fixturesDir, "schema-v3-session.jsonl");
     const schemaSessionId = computePiFileHash(schemaSessionPath);
+
+    it("reports the header's folder and each turn's user-message time (step 15.1)", async () => {
+      const provider = new PiAgentLogProvider({ sessionsDirPath: fixturesDir });
+      const session = await provider.readSession(schemaSessionId);
+      const listed = (await provider.listSessions()).find((s) => s.id === schemaSessionId);
+
+      // pi records no git branch, so the workspace is the folder alone.
+      expect(session?.workspace).toEqual({ known: true, cwd: "/home/user/schema-project" });
+      expect(listed?.workspace).toEqual(session?.workspace);
+      expect(session?.turns.map((turn) => turn.startedAt)).toEqual(["2026-08-05T09:00:01.000Z", "2026-08-05T09:05:01.000Z"]);
+    });
 
     it("counts every usage-bearing entry toward its turn: assistant, toolResult, cache_warm usage, compaction", async () => {
       const session = await new PiAgentLogProvider({ sessionsDirPath: fixturesDir }).readSession(schemaSessionId);

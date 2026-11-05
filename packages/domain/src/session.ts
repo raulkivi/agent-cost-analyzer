@@ -3,6 +3,7 @@ import { systemPromptComponentSchema } from "./system-prompt-component.js";
 import { tokenCountSchema } from "./token-count.js";
 import { toolInventoryEntrySchema } from "./tool-inventory-entry.js";
 import { turnSchema } from "./turn.js";
+import { sessionWorkspaceSchema } from "./workspace.js";
 
 // Which Copilot store a VS Code session came from: the classic chat session
 // store, or VS Code's Agent Host (1.143+), which records tokens and AI
@@ -40,6 +41,9 @@ export const sessionSchema = z.object({
   startedAt: z.string().optional(), // Analyze mode only — ISO date from sessions.created_at
   copilotHarness: copilotHarnessSchema.optional(), // VS Code (Copilot) sessions only
   copilotEventLog: copilotEventLogStatusSchema.optional(), // Agent Host sessions only
+  // Analyze mode only (Phase 15 step 15.1): the folder the session ran in,
+  // or why it is unknown. Absent where the provider has not reported it.
+  workspace: sessionWorkspaceSchema.optional(),
 });
 
 export type Session = z.infer<typeof sessionSchema>;

@@ -115,6 +115,7 @@ content here.
   price history, billing statements and estimates; see
   docs/plans/cost-by-repository-and-project.md) is planned: the owner's
   decisions D1–D10 are recorded; step 15.8's mock-ups are drawn
-  (docs/plans/mockups/cost-by-project/) and await the owner's review, and
-  no code step is started. The progress table and per-step
+  (docs/plans/mockups/cost-by-project/) and await the owner's review;
+  step 15.1 is done (`Session.workspace`, `Turn.startedAt`, and
+  `Turn.workspace` for Claude Code, from every provider; plan §14.1). The progress table and per-step
   status notes are in docs/plans/vscode-extension.md.

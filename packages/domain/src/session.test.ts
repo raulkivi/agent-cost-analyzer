@@ -100,6 +100,25 @@ describe("sessionSchema", () => {
     expect(sessionSchema.parse(sample)).toEqual(sample);
   });
 
+  it("accepts a known or an unknown workspace (Phase 15 step 15.1)", () => {
+    const base = {
+      id: "session-123",
+      mode: "analyze",
+      title: "Real session",
+      model: "gpt-4o",
+      turns: [turn],
+      turnCount: 1,
+      costAiCredits: { known: true, value: 2.79598 },
+      usageDataAvailable: true,
+    };
+    const known = { ...base, workspace: { known: true, cwd: "/home/dev/app", repositoryHint: "org/app", branch: "main" } };
+    const unknown = { ...base, workspace: { known: false, reason: "no working folder recorded" } };
+
+    expect(sessionSchema.parse(known)).toEqual(known);
+    expect(sessionSchema.parse(unknown)).toEqual(unknown);
+    expect(sessionSchema.safeParse({ ...base, workspace: { known: false } }).success).toBe(false);
+  });
+
   it("accepts an Analyze-mode session with a providerId", () => {
     const sample = {
       id: "session-123",

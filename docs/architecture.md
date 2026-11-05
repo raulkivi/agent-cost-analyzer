@@ -260,6 +260,8 @@ interface Turn {
   usage: TurnUsage;
   explanation: string; // "what happened this turn, and why" (both modes)
   triggeredEvent?: "model-switch" | "tool-change" | "compaction" | "clear" | "rewind" | "fork" | "cache-expiry";
+  startedAt?: string; // Analyze mode only (Phase 15 step 15.1) — when the turn started, as the log records it
+  workspace?: SessionWorkspace; // only where the turn ran elsewhere than its session (Claude Code)
 }
 
 interface SystemPromptComponent { // Analyze mode only
@@ -287,7 +289,26 @@ interface Session {
   category?: string; // Learn mode only — authored once per fixture, e.g. "Prompt caching"
   startedAt?: string; // Analyze mode only — ISO date, sourced from sessions.created_at
   copilotHarness?: "local" | "agent-host"; // VS Code (Copilot) sessions only; §6.2.2.1
+  workspace?: SessionWorkspace; // Analyze mode only (Phase 15 step 15.1)
 }
+
+// Phase 15 step 15.1 (plans/cost-by-repository-and-project.md §4.1): the
+// folder a session ran in, as its log records it, before any repository
+// resolution. Unknown carries its reason, like TokenCount (constraint 6).
+type SessionWorkspace =
+  | { known: true; cwd: string; repositoryHint?: string; branch?: string }
+  | { known: false; reason: string };
+// Where each provider reads it:
+// - VS Code classic: the session store's sessions.cwd / repository / branch;
+//   turns.timestamp per turn.
+// - VS Code Agent Host: the catalog payload's data.project.uri (else
+//   data.workingDirectories[0]; file: URIs only), else the Copilot CLI event
+//   log's session.start data.context.cwd; each user.message timestamp.
+// - Claude Code: cwd / gitBranch / timestamp on every entry; the session
+//   takes the first, a turn its user message's when it differs.
+// - pi: the session header's cwd (no branch); SessionEntryBase.timestamp.
+// - mitmproxy: unknown (captures record no folder); each entry's
+//   startedDateTime.
 ```
 
 Log-provider selection is a separate app-level contract, not a provider-

@@ -5,7 +5,7 @@ import type {
   Turn,
   TurnUsage,
 } from "@agent-cost-analyzer/domain";
-import { sumTokenCounts, unavailableTokenCount } from "@agent-cost-analyzer/domain";
+import { knownWorkspace, sumTokenCounts, unavailableTokenCount, unknownWorkspace } from "@agent-cost-analyzer/domain";
 import type {
   SessionFileRow,
   SessionRow,
@@ -46,6 +46,10 @@ function reasonForAvailability(availability: MainJsonlAvailability): string {
   }
   return USAGE_UNAVAILABLE_REASON;
 }
+
+// Phase 15 step 15.1: the store's sessions row has no cwd for this session.
+export const STORE_NO_FOLDER_REASON =
+  "The VS Code session store records no working folder for this session.";
 
 export const STORE_TURN_MISSING_REASON =
   "GitHub Copilot Chat's session store has no record of this turn (it was likely interrupted, or was still " +
@@ -238,6 +242,7 @@ function buildTurn(
     assistantResponse: row?.assistant_response ?? "",
     toolCalls: buildToolCalls(fileRowsByTurn.get(index) ?? [], invokedToolNames),
     usage: usage ?? buildUnavailableUsage(fallbackTokenCount),
+    ...(row?.timestamp ? { startedAt: row.timestamp } : {}),
     ...(row
       ? { explanation }
       : { explanation: `${explanation} ${STORE_TURN_MISSING_REASON}`, textUnavailableReason: STORE_TURN_MISSING_REASON }),
@@ -269,6 +274,9 @@ export function buildSessionSummary(
     usageDataAvailable: usage.usageDataAvailable,
     copilotHarness: "local",
     ...(row.created_at ? { startedAt: row.created_at } : {}),
+    workspace:
+      knownWorkspace(row.cwd, { repositoryHint: row.repository, branch: row.branch }) ??
+      unknownWorkspace(STORE_NO_FOLDER_REASON),
   };
 }
 

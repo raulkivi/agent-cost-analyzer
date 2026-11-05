@@ -6,7 +6,8 @@ import type {
   TurnInspectorDetail,
   TurnUsage,
 } from "@agent-cost-analyzer/domain";
-import { sumTokenCounts, unavailableTokenCount } from "@agent-cost-analyzer/domain";
+import { knownWorkspace, sumTokenCounts, unavailableTokenCount, unknownWorkspace } from "@agent-cost-analyzer/domain";
+import type { SessionWorkspace } from "@agent-cost-analyzer/domain";
 import type { AgentHostSessionRow } from "../../data-sources/agent-host/agent-host-catalog.js";
 import {
   nanoAiuToAiCredits,
@@ -41,6 +42,10 @@ export const AGENT_HOST_TURN_COST_UNAVAILABLE_REASON =
   "VS Code's Agent Host recorded no AI Credits for this turn.";
 export const AGENT_HOST_SESSION_COST_UNAVAILABLE_REASON =
   "VS Code's Agent Host recorded no AI Credits for at least one turn of this session, so its total is unknown.";
+// Phase 15 step 15.1: neither the catalog payload nor the event log names a
+// local folder (a remote window, or the log wasn't read or has no start).
+export const AGENT_HOST_NO_FOLDER_REASON =
+  "VS Code's Agent Host records no local working folder for this session.";
 export const AGENT_HOST_NO_TURNS_REASON = "VS Code's Agent Host has recorded no turns for this session.";
 export const AGENT_HOST_SESSION_DB_MISSING_REASON =
   "This session's Agent Host database (agentSessionData/<session>/session.db) is missing or unreadable, so its turns and usage are unknown.";
@@ -75,6 +80,8 @@ const EVENT_TYPES_USED = new Set([
   "session.compaction_start",
   "session.binary_asset",
   "session.usage_record",
+  // Phase 15 step 15.1: its data.context.cwd is the session's folder.
+  "session.start",
 ]);
 
 export function isAgentHostEventTypeUsed(type: string): boolean {
@@ -157,8 +164,10 @@ function buildTurn(row: AgentHostTurnRow, index: number, source: TurnContentSour
     return { index, userMessage: "", assistantResponse: "", toolCalls: [], usage, explanation: buildExplanation(row, usage, source.note) };
   }
   const { content } = source;
+  const startedAt = source.turn.matched ? source.turn.userMessage.timestamp : null;
   return {
     index,
+    ...(startedAt ? { startedAt } : {}),
     userMessage: content.userMessage,
     assistantResponse: content.assistantResponse,
     toolCalls: content.toolCalls,
@@ -216,6 +225,30 @@ function lastTurnModel(rows: AgentHostTurnRow[]): string | null {
   return null;
 }
 
+// The Copilot CLI's session.start records data.context.cwd (the only
+// context field in the captured logs).
+function sessionStartCwd(eventLog: AgentHostEventLog | undefined): string | null {
+  if (eventLog?.status !== "read") {
+    return null;
+  }
+  const start = eventLog.events.find((event) => event.type === "session.start");
+  const context = start?.data.context;
+  if (typeof context !== "object" || context === null) {
+    return null;
+  }
+  const cwd = (context as Record<string, unknown>).cwd;
+  return typeof cwd === "string" ? cwd : null;
+}
+
+// The catalog's folder is there for list summaries too; the log's is the fallback.
+function agentHostWorkspace(catalogRow: AgentHostSessionRow, eventLog: AgentHostEventLog | undefined): SessionWorkspace {
+  return (
+    knownWorkspace(catalogRow.workingFolder) ??
+    knownWorkspace(sessionStartCwd(eventLog)) ??
+    unknownWorkspace(AGENT_HOST_NO_FOLDER_REASON)
+  );
+}
+
 // An invalid Date throws from toISOString, and a session without a start is
 // still listable (startedAt is optional in the domain).
 function isoStart(startedAtMs: number): string | undefined {
@@ -258,6 +291,7 @@ export function buildAgentHostSession({ catalogRow, store, eventLog }: AgentHost
     ...(eventLog ? { copilotEventLog: eventLogStatus(eventLog) } : {}),
     ...(systemPrompt ? { systemPrompt } : {}),
     ...(startedAt ? { startedAt } : {}),
+    workspace: agentHostWorkspace(catalogRow, eventLog),
   };
 }
 

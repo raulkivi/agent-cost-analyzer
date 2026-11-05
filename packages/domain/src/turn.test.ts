@@ -27,6 +27,22 @@ describe("turnSchema", () => {
     expect(turnSchema.parse(sample)).toEqual(sample);
   });
 
+  it("accepts a turn's start time and its own workspace (Phase 15 step 15.1)", () => {
+    const sample = {
+      index: 2,
+      userMessage: "Now fix the API.",
+      assistantResponse: "Done.",
+      toolCalls: [],
+      usage,
+      explanation: "The user moved to another folder.",
+      startedAt: "2026-10-20T09:00:04.000Z",
+      workspace: { known: true, cwd: "/home/dev/api", branch: "feature/x" },
+    };
+
+    expect(turnSchema.parse(sample)).toEqual(sample);
+    expect(turnSchema.safeParse({ ...sample, startedAt: "" }).success).toBe(false);
+  });
+
   it("accepts a turn with tool calls and a triggered event", () => {
     const sample = {
       index: 1,

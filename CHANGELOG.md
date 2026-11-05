@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- Session working folders (Phase 15 step 15.1): every Analyze session
+  reports the folder it ran in, and its branch and repository where the log
+  records them, or why it is unknown (mitmproxy captures record none); each
+  turn reports when it started. This is the groundwork for cost by
+  repository and project.
 - VS Code Agent Host sessions (step 10.13): Copilot chats that VS Code 1.143
   and later run through the Agent Host are listed with their turns, tokens and
   AI Credits, beside the classic Copilot Chat sessions.

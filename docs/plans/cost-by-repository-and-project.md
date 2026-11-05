@@ -1072,7 +1072,7 @@ No UI code (15.9 onwards) starts before the mock-ups in 15.8 are approved.
 | Step | Work | Exit criterion |
 |---|---|---|
 | 15.0 | Threat-model rows for the two new write endpoints (D1–D10 already recorded in §13) | Threat model updated |
-| 15.1 | **Workspace capture**: `Session.workspace`, `Turn.startedAt` (and per-turn workspace for Claude Code) in every provider; verify classic VS Code chat's folder source | Each provider's fixture test yields folder, branch and turn times; mitmproxy reports Unattributed with a reason |
+| 15.1 | **Workspace capture**: `Session.workspace`, `Turn.startedAt` (and per-turn workspace for Claude Code) in every provider; verify classic VS Code chat's folder source | Each provider's fixture test yields folder, branch and turn times; mitmproxy reports Unattributed with a reason Done 2026-11-05, see §14.1 |
 | 15.2 | **RepositoryResolver** + `RemoteUrlNormalizer` | Unit tests of §12.1 pass; no credential in any output (property test) |
 | 15.3 | **ProjectCatalog** + project file schema + `GET/PUT /api/projects`, `GET /api/repositories` | Schema, matching and API tests pass; a bad file gives a config warning |
 | 15.4 | **Attribution in the dataset**: `repositoryKey`/`projectId`/`vendorId`/`channel` on Insights rows; Project, Repository, Vendor and Channel list boxes on the Dashboard; MCP: `list_repositories`, `list_projects`, `list_sessions` filters (§10.1) | Dashboard filters by repository and project; totals match the per-session totals; axe and keyboard tests pass for the new list boxes; the step's MCP tools pass the §10.1.6 tests |
@@ -1087,6 +1087,29 @@ No UI code (15.9 onwards) starts before the mock-ups in 15.8 are approved.
 | 15.13 | **MCP, cross-cutting work** (§10.1.4): server instructions for both products, the `toolGroups` option and the extension's tool set, the security tests of §10.1.5 | The §10.1.6 exit criterion over stdio; scenario S10 passes |
 | 15.14 | **VS Code extension** (§11.9): group by repository, status bar per workspace repository, the two Dashboard tabs | Extension and manifest tests (category, codicons, l10n keys); UI check passes; manual check list updated; scenario S9 passes in `extension-ui` |
 | 15.15 | **Docs**: architecture.md (domain, data flow, API), UserGuide, vscode-extension-guide, vision non-goals, README index | Docs reviewed by the owner |
+
+### 14.1 Step status notes
+
+**15.1 (done 2026-11-05).** `SessionWorkspace` (known: `cwd`, optional
+`repositoryHint` and `branch`; unknown: `reason`) is in
+`packages/domain/src/workspace.ts`, on `Session.workspace` and, where a turn
+ran elsewhere, `Turn.workspace`; `Turn.startedAt` is new too. What each
+provider reads, and what was checked:
+
+| Provider | Folder, repository, branch | Turn time | How it was checked |
+|---|---|---|---|
+| VS Code classic | session store `sessions.cwd`, `repository`, `branch` (the query already selected them; the title fallback already used two) | `turns.timestamp` | Store schema and fixture rows; a real store's values are not checked in this session |
+| VS Code Agent Host | catalog payload `data.project.uri`, else `data.workingDirectories[0]` (`file:` URIs only); else the event log's `session.start` `data.context.cwd`. No branch is recorded | each turn's `user.message` timestamp | Both shapes are in the fixtures captured from real VS Code Insights 1.145 and Copilot CLI 1.0.103 logs |
+| Claude Code | `cwd` and `gitBranch` on every entry; the session takes the first, a turn its user message's when it differs | the user message's `timestamp` | A real session log on this machine (2026-11-05): every user, assistant, system and attachment entry carries all three, and `cwd` moved between folders of one repository within the session |
+| pi | session header `cwd`; pi records no branch | `SessionEntryBase.timestamp` (absent in pre-schema files) | The published schema in the vendored package and its fixture |
+| mitmproxy | unknown, with a reason that points to capture rules | HAR `startedDateTime` | Fixtures |
+
+The task "verify classic VS Code chat's folder source" is answered by the
+session store's own columns; the `workspaceStorage` fallback from §12.3 is
+not needed. The Agent Host event-log reader now keeps `session.start`
+events, which it used to drop. The new folder paths are not added to any
+MCP output or to the advice export: both pick their fields explicitly
+(the §10.1.5 tests that guard this come with step 15.13).
 
 ## 15. Exit criterion
 
