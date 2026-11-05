@@ -12,7 +12,7 @@ import { InMemoryAppSettingsStore } from "../../test-support/in-memory-app-setti
 import { LogProviderRegistry, UnknownLogProviderIdError } from "../../data-sources/log-providers/registry.js";
 import type { LogProvider } from "../../data-sources/log-providers/log-provider.js";
 import type { SystemPromptTextLookup } from "../../data-sources/log-providers/system-prompt-text-reader.js";
-import type { LearnScenarioCatalog } from "../../data-sources/learn-scenarios/loader.js";
+import type { LearnScenarioCatalog } from "../learn-simulation/learn-scenario-catalog.js";
 import { AuditQueryService, type SessionRangeFilter } from "../tool-audit/audit-query-service.js";
 import { ScenarioNotFoundError, UnknownModelError } from "../learn-simulation/learn-simulation-service.js";
 import { ApiService, type ApiLearnSimulation, type ApiServiceDeps } from "./api-service.js";

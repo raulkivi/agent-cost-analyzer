@@ -8,39 +8,45 @@ happening only at the original trunk: **a branch can fork again**, and the
 new fork point becomes its own shared trunk — the original trunk plus
 everything that branch had already added — for a fresh pair of sub-branches.
 
-| Turn | What happens | Cache write | Cache read | Cache size after | Uncached input | Tool | Reasoning | Output text | **Turn total** | **Turn AI Credits** |
+<!-- scenarios:generated:start -->
+Simulated on Claude Sonnet 5.5 (and its cheaper sibling where a scenario switches models) with the real per-token prices in GitHub's Copilot price table, checked 2026-11-04. The figures come from the Learn simulator, not from a live session. Tool and Vision tokens are part of the input columns, not added to them.
+
+| Turn | What happens | Cache write | Cache read | Cache size after | Uncached input | Tool (in input) | Vision (in input) | Reasoning | Output text | **Turn total** | **Turn AI Credits** |
+|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| 1 | Normal first turn: writes the static prefix plus this turn's own content. This starts the shared trunk every branch inherits. | 3800 | 0 | 3800 | 0 | 0 | 0 | 150 | 150 | **4100** | **1.25** |
+| 2 | Normal turn on the shared trunk; reads and extends the cache from the first turn. | 400 | 3800 | 4200 | 0 | 100 | 0 | 120 | 180 | **4500** | **0.44** |
+| 3 | First fork point: a second, independent continuation starts from this exact prefix. This branch carries on, and may fork again later. | 300 | 4200 | 4500 | 0 | 0 | 0 | 140 | 160 | **4800** | **0.42** |
+| 4 | Reads the shared trunk as a cache hit, then diverges with its own content. The other branch reads the same trunk independently. | 810 | 4500 | 5310 | 0 | 500 | 0 | 160 | 190 | **5660** | **0.60** |
+| 5 | A second fork, from inside this branch. The nested fork point is itself a shared trunk for two new sub-branches, with the same mechanics one level deeper; the first fork's branch is unaffected. | 330 | 5310 | 5640 | 0 | 0 | 0 | 130 | 150 | **5920** | **0.42** |
+| 6 | Reads the full nested trunk as a cache hit, then diverges with its own content. The parallel sub-branch reads the same trunk independently, so the trunk is paid for once, not once per branch. | 540 | 5640 | 6180 | 0 | 300 | 0 | 100 | 140 | **6420** | **0.43** |
+
+Session total: **3.55 AI Credits** (≈ $0.0355); most expensive turn: **turn 1** (1.25 AI Credits).
+
+Running totals by token type:
+
+| Cumulative through turn | What happens | Cache write | Cache read | Uncached input | Tool (in input) | Vision (in input) | Reasoning | Output text | **Session total** | **Running AI Credits** |
 |---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| 1 | Normal turn; writes static prefix + own content — the start of the shared trunk | 3500 | 0 | 3500 | 500 | 0 | 150 | 150 | **4300** | **0.0289 AI Credits** |
-| 2 | Normal turn, still on the trunk | 600 | 3500 | 4100 | 200 | 100 | 120 | 180 | **4700** | **0.0115 AI Credits** |
-| 3 | **First fork**: Branch A (Redis) and Branch B (in-memory LRU, not detailed here) both start from this 4620-token prefix | 520 | 4100 | 4620 | 220 | 0 | 140 | 160 | **5140** | **0.0109 AI Credits** |
-| A · 4 | Branch A implements the Redis-based strategy, reading the shared trunk as a cache hit | 1000 | 4620 | 5620 | 150 | 500 | 160 | 190 | **6620** | **0.0171 AI Credits** |
-| A · 5 | **Second fork, nested inside Branch A**: Branch A.1 (write-through) and A.2 (write-back, not detailed here) both start from this 6100-token prefix — the original trunk *plus* Branch A's own work | 480 | 5620 | 6100 | 140 | 0 | 130 | 150 | **6520** | **0.0107 AI Credits** |
-| A.1 · 6 | Branch A.1 implements the write-through variant, reading the full nested trunk as a cache hit | 350 | 6100 | 6450 | 90 | 300 | 100 | 140 | **7080** | **0.0108 AI Credits** |
+| 1 | Normal first turn: writes the static prefix plus this turn's own content. This starts the shared trunk every branch inherits. | 3800 | 0 | 0 | 0 | 0 | 150 | 150 | **4100** | **1.25** |
+| 2 | Normal turn on the shared trunk; reads and extends the cache from the first turn. | 4200 | 3800 | 0 | 100 | 0 | 270 | 330 | **8600** | **1.69** |
+| 3 | First fork point: a second, independent continuation starts from this exact prefix. This branch carries on, and may fork again later. | 4500 | 8000 | 0 | 100 | 0 | 410 | 490 | **13400** | **2.10** |
+| 4 | Reads the shared trunk as a cache hit, then diverges with its own content. The other branch reads the same trunk independently. | 5310 | 12500 | 0 | 600 | 0 | 570 | 680 | **19060** | **2.70** |
+| 5 | A second fork, from inside this branch. The nested fork point is itself a shared trunk for two new sub-branches, with the same mechanics one level deeper; the first fork's branch is unaffected. | 5640 | 17810 | 0 | 600 | 0 | 700 | 830 | **24980** | **3.12** |
+| 6 | Reads the full nested trunk as a cache hit, then diverges with its own content. The parallel sub-branch reads the same trunk independently, so the trunk is paid for once, not once per branch. | 6180 | 23450 | 0 | 900 | 0 | 800 | 970 | **31400** | **3.55** |
 
-![Scenario 17: Forking Twice — A Nested Branch from Within a Branch](diagrams/scenario-17-forking-twice-a-nested-branch-from-within-a-bran.drawio.svg)
-
-<!-- mermaid-source: diagrams/scenario-17-forking-twice-a-nested-branch-from-within-a-bran.drawio.svg
 ```mermaid
-flowchart TD
-    T1["Turn 1"] --&gt; T2["Turn 2"] --&gt; T3["Turn 3<br/>(fork point, cache size 4620)"]
-    T3 --&gt;|fork| A4["Branch A · Turn 4<br/>Redis strategy"]
-    T3 --&gt;|fork| B4["Branch B · Turn 4<br/>in-memory LRU (not detailed)"]
-    A4 --&gt; A5["Branch A · Turn 5<br/>(nested fork point, cache size 6100)"]
-    A5 --&gt;|fork| A1_6["Branch A.1 · Turn 6<br/>write-through"]
-    A5 --&gt;|fork| A2_6["Branch A.2 · Turn 6<br/>write-back (not detailed)"]
+xychart-beta
+    title "Tokens per turn by type (simulated)"
+    x-axis [Turn1, Turn2, Turn3, Turn4, Turn5, Turn6]
+    y-axis "Tokens" 0 --> 6000
+    bar "Cache write" [3800, 400, 300, 810, 330, 540]
+    bar "Cache read" [0, 3800, 4200, 4500, 5310, 5640]
+    bar "Uncached input" [0, 0, 0, 0, 0, 0]
+    bar "Tool" [0, 100, 0, 500, 0, 300]
+    bar "Vision" [0, 0, 0, 0, 0, 0]
+    bar "Reasoning" [150, 120, 140, 160, 130, 100]
+    bar "Output text" [150, 180, 160, 190, 150, 140]
 ```
--->
-
-Branch A.1's full session cost through turn 6 is **0.0289 + 0.0115 + 0.0109 +
-0.0171 + 0.0107 + 0.0108 = 0.0899 AI Credits** — it reuses the original trunk
-once (paid at turns 1-3) *and* Branch A's own pre-fork work once (paid at turn
-4), rather than paying for either a second time. Running three entirely
-separate sessions from scratch for Branch B, Branch A.1, and Branch A.2 would
-instead rebuild the original trunk three times and Branch A's own work twice.
-Nesting a fork inside a fork compounds the saving [Scenario 8](08-session-forking.md)
-already demonstrates at one level — it isn't a one-time discount, it's a
-discount that applies again at every level a session chooses to branch
-further.
+<!-- scenarios:generated:end -->
 
 **Sources** (checked 2026-11-03):
 

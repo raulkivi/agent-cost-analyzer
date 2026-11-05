@@ -2,7 +2,7 @@ import type { ProductProfile } from "@agent-cost-analyzer/domain";
 import { loadScenarioScripts } from "../data-sources/learn-scripts/loader.js";
 import { loadVendorProfiles } from "../data-sources/vendor-profiles/loader.js";
 import { LearnSimulationService } from "../services/learn-simulation/learn-simulation-service.js";
-import { loadLearnScenarios } from "../data-sources/learn-scenarios/loader.js";
+import { createSimulatedScenarioCatalog } from "../services/learn-simulation/simulated-scenario-catalog.js";
 import { agentHostCatalogProbe } from "../services/config-check/agent-host-catalog-probe.js";
 import { resolveUserDataDir } from "../platform/vscode-paths/resolve-user-data-dir.js";
 import { checkConfig } from "../services/config-check/config-check.js";
@@ -13,9 +13,10 @@ import { composeLogProviders, type LogProviderCompositionOptions } from "./compo
 import { createInsightsService } from "./create-insights-service.js";
 
 export interface StandaloneApiServiceOptions extends LogProviderCompositionOptions {
-  // G4 (vscode-extension.md §2.2): both default to this package's own
-  // files, located through import.meta.url.
-  learnScenariosFixturesDir?: string;
+  // G4 (vscode-extension.md §2.2): default to this package's own files,
+  // located through import.meta.url.
+  learnScriptsDir?: string;
+  vendorProfilesDir?: string;
   appVersion?: string;
 }
 
@@ -33,8 +34,7 @@ export function standaloneProductProfile(version: string): ProductProfile {
       settingFixes: false,
       openInEditor: false,
       sessionSidebar: false,
-      // The standalone HTTP routes arrive in step 13.10.
-      vendorSimulation: false,
+      vendorSimulation: true,
     },
   };
 }
@@ -43,11 +43,17 @@ export function standaloneProductProfile(version: string): ProductProfile {
 // file-backed app settings. The HTTP app (app.ts) is the only caller; the
 // extension builds its own over a Copilot-only registry.
 export function createStandaloneApiService(options: StandaloneApiServiceOptions = {}): ApiService {
-  const { learnScenariosFixturesDir, appVersion: appVersionOption, ...compositionOptions } = options;
+  const { learnScriptsDir, vendorProfilesDir, appVersion: appVersionOption, ...compositionOptions } = options;
   const { registry, appSettings, resolvedVscodeSettingsPath } = composeLogProviders(compositionOptions);
   const appVersion = appVersionOption ?? readAppVersion();
   const agentHostUserDataDir =
     compositionOptions.agentHostUserDataDir !== undefined ? compositionOptions.agentHostUserDataDir : resolveUserDataDir();
+
+  const learnSimulation = new LearnSimulationService(
+    loadScenarioScripts(learnScriptsDir),
+    loadVendorProfiles(vendorProfilesDir),
+    "claude-code",
+  );
 
   return new ApiService({
     registry,
@@ -60,8 +66,8 @@ export function createStandaloneApiService(options: StandaloneApiServiceOptions 
         minRetainedSessionLogsThreshold,
         agentHostCatalogPresent: agentHostCatalogProbe(agentHostUserDataDir),
       }),
-    learnScenarios: loadLearnScenarios({ fixturesDir: learnScenariosFixturesDir }),
-    learnSimulation: new LearnSimulationService(loadScenarioScripts(), loadVendorProfiles(), "claude-code"),
+    learnScenarios: createSimulatedScenarioCatalog(learnSimulation),
+    learnSimulation,
     appVersion,
     productProfile: standaloneProductProfile(appVersion),
   });

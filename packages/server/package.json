@@ -10,7 +10,9 @@
     "test": "vitest run",
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "mcp": "tsx src/mcp/stdio.ts"
+    "mcp": "tsx src/mcp/stdio.ts",
+    "scenarios:docs": "tsx scripts/scenarios-docs.mts",
+    "scenarios:docs:check": "tsx scripts/scenarios-docs.mts --check"
   },
   "dependencies": {
     "@agent-cost-analyzer/domain": "*",

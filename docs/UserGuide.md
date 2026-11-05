@@ -64,13 +64,35 @@ the bundle until you open it first.
 
 ## Learn mode
 
-Learn mode ships with 18 bundled example sessions, each illustrating one
+Learn mode ships with 18 bundled example scenarios (the VS Code extension
+lists the 17 that apply to Copilot), each illustrating one
 concept from [agentic-coding-explained.md](agentic-coding-explained.md) —
 prompt caching basics and TTL expiry, context compaction, an MCP tool
 change, a model switch, `/clear`, `/rewind`, session forking, an
 instructions-file edit, extended thinking/reasoning budget, a subagent
-running on a cheaper model, and more. No setup is required — this data is
-static and doesn't depend on anything on your machine.
+running on a cheaper model, and more. No setup is required — the scenarios
+don't depend on anything on your machine. Their numbers are **simulated**:
+each scenario is replayed on a vendor and model you choose, using that
+vendor's documented caching rules and real prices, and the result is labelled
+**Simulated** wherever it appears. It's a teaching model, not a prediction of
+your bill.
+
+### Choosing a vendor and model
+
+The **Simulate on** picker above the turns table lists models grouped by
+vendor (Anthropic, OpenAI, Google, xAI). Models from vendors whose caching
+isn't documented (Moonshot AI, Microsoft) are listed but disabled, with the
+reason shown. By default it picks the model your recent Analyze sessions used
+most, falling back to Claude Sonnet 5.5; your own pick is remembered. Changing
+the model re-simulates the open scenario. In scenarios with a second, cheaper
+model, that model is the vendor's curated cheaper sibling.
+
+The **ⓘ assumptions** button next to the picker lists what the simulation
+assumes because no vendor documents it, for example where Copilot places
+cache breakpoints, each marked *documented*, *inferred* or *unknown*. The
+**Sources** footer under the table links the documents the numbers come from
+and shows the date they were checked; it turns into a warning when that data
+is more than 90 days old.
 
 ### Picking a scenario and reading the turns table
 
@@ -98,6 +120,12 @@ happened mid-session — a `compaction` event (shown above), a `tool
 change`, a `model switch`, `/clear`, `/rewind`, cache expiry, or a
 session fork. Most turns have no trigger and show a muted em dash instead.
 
+In a simulated scenario a **Cache** column follows Trigger: ● hit, ◐ partial
+(part of the prefix was still cached), ○ miss, ? unknown. A ? means a rule
+this turn depends on is unknown for the chosen vendor; its cache figures and
+AI Credits then show an em dash, never a made-up zero. Hover an AI Credits
+figure for its USD equivalent (1 AI Credit = $0.01).
+
 The **Columns** button above the table (next to "Showing n of 14 columns")
 opens the column chooser: untick any column to hide it, except **Turn**,
 which names the row and always stays. Your choice is remembered. It is
@@ -114,7 +142,16 @@ highlights the matching row, and clicking a row moves the scrubber:
 
 The right-column **Explanation** panel always shows a plain-language
 explanation for the currently selected turn — what happened, and why,
-based on that turn's real cache/token numbers.
+based on that turn's cache/token numbers. In a simulated scenario it adds a
+generated line for the chosen model ("the image invalidated the conversation
+cache; tools and system prompt were still read from cache") and, for turns
+with a cache event, a **How vendors differ** card with one row per vendor
+(its default model): the outcome, the turn's AI Credits and a source link.
+
+The **Vendors** tab compares models across the whole scenario: total AI
+Credits (with USD), cache-hit ratio, misses and the most expensive turn, with
+a per-turn strip of hit/partial/miss marks. It starts with each simulated
+vendor's default model, and you can add more models. The table can be sorted.
 
 ### Searching the scenario list
 

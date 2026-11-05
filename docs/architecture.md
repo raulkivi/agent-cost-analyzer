@@ -394,9 +394,45 @@ sequenceDiagram
 ```
 -->
 
-Learn-mode fixtures are authored directly in the domain shape (§5), so no
-enrichment/parsing step is needed — they exist purely to seed realistic
-`Turn`/`TurnUsage`/`explanation` data for teaching, per vision §3.1.
+Learn mode no longer serves hand-computed numbers where the product has
+vendor simulation (the `vendorSimulation` flag in `ProductFeatures`: on in
+the VS Code extension and the standalone app). Each scenario is a
+vendor-neutral `ScenarioScript` that the simulator replays on a chosen
+vendor and model, so cache hits, misses and prices come from that vendor's
+documented rules and real prices (§6.1.1). A product with the flag off keeps
+serving the bundled fixtures, which are authored directly in the domain
+shape (§5) to seed realistic `Turn`/`TurnUsage`/`explanation` data for
+teaching, per vision §3.1.
+
+#### 6.1.1 Vendor-aware simulation
+
+![6.1.1 Learn simulation](diagrams/6-1-learn-simulation.drawio.svg)
+
+Pure core, data at the edges, one strategy per caching kind (SOLID: each
+cache model is closed for modification and open for new vendors). The
+simulator depends on domain types and the `CacheModel` interface only, never
+on a concrete vendor file, so adding a vendor means adding a data file, plus
+a new strategy only when its caching kind is new.
+
+| Unit | Package | Responsibility |
+|---|---|---|
+| `scenario-script.ts`, `vendor-profile.ts`, `simulation.ts`, `vendor-comparison.ts` | `domain` | zod schemas: `ScenarioScript`, `VendorProfile` (prices, cache rules, sources), `Turn.simulation`, `VendorComparison` |
+| `fixtures/learn-scripts/` | `server` | the 18 scenarios as vendor-neutral scripts |
+| `fixtures/vendor-profiles/` | `server` | one file per vendor: prices, cache rules, assumptions, sources |
+| `services/learn-simulation/prompt-builder.ts` | `server` | builds each request as tools → system → messages segments (S1) |
+| `services/learn-simulation/cache-models/*` | `server` | `Breakpoint`, `AutomaticPrefix`, `BestEffort` and `Unknown` strategies, chosen by `createCacheModel` |
+| `services/learn-simulation/invalidation-policy.ts` | `server` | maps script events to the first invalidated layer using the profile's rules |
+| `services/learn-simulation/pricer.ts` | `server` | token buckets × price tier → USD → AI credits (1 credit = $0.01) |
+| `services/learn-simulation/simulate-scenario.ts` | `server` | script + model → Learn `Session` (pure) |
+| `services/learn-simulation/learn-simulation-service.ts` | `server` | `getScenario`, `compareScenario`, `listVendorProfiles` behind `ApiService` |
+| `components/learn/*` | `web` | vendor picker, assumptions popover, sources footer, cache-outcome badge, How vendors differ card, Vendors tab |
+
+Where a rule a turn depends on is `unknown` for the chosen vendor, the turn's
+cache fields and cost are unavailable, never zero (constraint 6). Vendors whose
+whole caching kind is unknown are listed but not simulated. The rules and
+their sources are in
+[plans/vendor-aware-learn-simulation.md](plans/vendor-aware-learn-simulation.md)
+§5 and [learn-rule-register.md](learn-rule-register.md).
 
 ### 6.2 Analyze mode
 

@@ -7,46 +7,48 @@ model switch, one TTL lapse, one fork. Real sessions don't always cooperate:
 a model switch ([Scenario 4](04-model-switch.md)) can be followed, a couple of
 turns later, by an idle gap that outlasts the *new* model's TTL
 ([Scenario 9](09-cache-ttl-smoke-break.md)'s trigger) — and the two don't just
-add up, they compound, because the second miss re-pays the pricier post-switch
-rates the first trigger already put in effect.
+add up, they compound, because the second miss re-pays the whole history at the new
+model's uncached prices.
 
-| Turn | Model | What happens | Cache write | Cache read | Cache size after | Uncached input | Tool | Reasoning | Output text | **Turn total** | **Turn AI Credits** |
-|---|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| 1 | A | Normal turn; writes static prefix + own content | 3500 | 0 | 3500 | 500 | 0 | 150 | 150 | **4300** | **0.0289 AI Credits** |
-| 2 | A | Normal turn; reads/extends the cache | 600 | 3500 | 4100 | 200 | 0 | 120 | 180 | **4600** | **0.0110 AI Credits** |
-| 3 | **B** | **Model switch**: A's 4100-token cache is worthless to B; the whole history + new message is resent uncached, and B writes its own first cache entry at its own, pricier rates | 4850 | 0 | 4850 | 4300 | 0 | 250 | 300 | **9700** | **0.1080 AI Credits** |
-| 4 | B | Normal turn under B; the user then steps away for 5+ minutes | 470 | 4850 | 5320 | 120 | 300 | 150 | 200 | **6440** | **0.0243 AI Credits** |
-| 5 | **B** | **Cache-expiry, cascading on the switch**: the idle gap exceeds B's TTL too; the entire post-switch history is evicted and resent uncached — at B's pricier rates, since the switch never reverted | 5900 | 0 | 5900 | 5380 | 0 | 200 | 180 | **11660** | **0.1242 AI Credits** |
-| 6 | B | Cache finally recovers to normal healthy growth | 310 | 5900 | 6210 | 80 | 0 | 90 | 140 | **6520** | **0.0167 AI Credits** |
+<!-- scenarios:generated:start -->
+Simulated on Claude Sonnet 5.5 (and its cheaper sibling where a scenario switches models) with the real per-token prices in GitHub's Copilot price table, checked 2026-11-04. The figures come from the Learn simulator, not from a live session. Tool and Vision tokens are part of the input columns, not added to them.
 
-![Scenario 14: Cascading Triggers — A Model Switch Followed by a Cache-Expiry](diagrams/scenario-14-cascading-triggers-a-model-switch-followed-by-a.drawio.svg)
+| Turn | What happens | Model | Cache write | Cache read | Cache size after | Uncached input | Tool (in input) | Vision (in input) | Reasoning | Output text | **Turn total** | **Turn AI Credits** |
+|---|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| 1 | Normal first turn: writes the static prefix plus this turn's own content. | claude-sonnet-5.5 | 3800 | 0 | 3800 | 0 | 0 | 0 | 150 | 150 | **4100** | **1.25** |
+| 2 | Normal turn reusing and extending the first model's cache. | claude-sonnet-5.5 | 300 | 3800 | 4100 | 0 | 0 | 0 | 120 | 180 | **4400** | **0.41** |
+| 3 | Model switch: the first model's cache is useless to the second, so the whole history plus the new message is resent uncached and the second model writes its own cache from scratch. | claude-haiku-5.5 | 4430 | 0 | 4430 | 0 | 0 | 0 | 250 | 300 | **4980** | **0.08** |
+| 4 | Normal turn under the new model; its cache builds up again. The user then steps away for longer than the default cache lifetime. | claude-haiku-5.5 | 700 | 4430 | 5130 | 0 | 300 | 0 | 150 | 200 | **5480** | **0.03** |
+| 5 | Second invalidation in a few turns: the idle gap outlives the cache, so the whole history since the switch is resent uncached, and the switch is never reverted. Both costs stack on one turn. | claude-haiku-5.5 | 5430 | 0 | 5430 | 0 | 0 | 0 | 200 | 180 | **5810** | **0.09** |
+| 6 | The cache recovers to normal healthy growth, but only after paying for both triggers back to back. | claude-haiku-5.5 | 260 | 5430 | 5690 | 0 | 0 | 0 | 90 | 140 | **5920** | **0.02** |
 
-<!-- mermaid-source: diagrams/scenario-14-cascading-triggers-a-model-switch-followed-by-a.drawio.svg
+Session total: **1.88 AI Credits** (≈ $0.0188); most expensive turn: **turn 1** (1.25 AI Credits).
+
+Running totals by token type:
+
+| Cumulative through turn | What happens | Cache write | Cache read | Uncached input | Tool (in input) | Vision (in input) | Reasoning | Output text | **Session total** | **Running AI Credits** |
+|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| 1 | Normal first turn: writes the static prefix plus this turn's own content. | 3800 | 0 | 0 | 0 | 0 | 150 | 150 | **4100** | **1.25** |
+| 2 | Normal turn reusing and extending the first model's cache. | 4100 | 3800 | 0 | 0 | 0 | 270 | 330 | **8500** | **1.66** |
+| 3 | Model switch: the first model's cache is useless to the second, so the whole history plus the new message is resent uncached and the second model writes its own cache from scratch. | 8530 | 3800 | 0 | 0 | 0 | 520 | 630 | **13480** | **1.75** |
+| 4 | Normal turn under the new model; its cache builds up again. The user then steps away for longer than the default cache lifetime. | 9230 | 8230 | 0 | 300 | 0 | 670 | 830 | **18960** | **1.78** |
+| 5 | Second invalidation in a few turns: the idle gap outlives the cache, so the whole history since the switch is resent uncached, and the switch is never reverted. Both costs stack on one turn. | 14660 | 8230 | 0 | 300 | 0 | 870 | 1010 | **24770** | **1.86** |
+| 6 | The cache recovers to normal healthy growth, but only after paying for both triggers back to back. | 14920 | 13660 | 0 | 300 | 0 | 960 | 1150 | **30690** | **1.88** |
+
 ```mermaid
-sequenceDiagram
-    participant U as User
-    participant S as Session
-
-    Note over S: Turns 1-2 — Model A, healthy cache (4100)
-    U->>S: "Switch to the more capable model"
-    Note over S: Turn 3 — MODEL SWITCH: full miss + new (pricier) rates<br/>0.1080 AI Credits
-    Note over S: Turn 4 — Model B, cache rebuilding (5320)
-    Note over U: 🚬 5+ minute break
-    Note over S: Turn 5 — CACHE-EXPIRY on top of the switch:<br/>full miss again, still at Model B's rates<br/>0.1242 AI Credits — the most expensive turn
-    Note over S: Turn 6 — recovers to normal Model B pricing
+xychart-beta
+    title "Tokens per turn by type (simulated)"
+    x-axis [Turn1, Turn2, Turn3, Turn4, Turn5, Turn6]
+    y-axis "Tokens" 0 --> 6000
+    bar "Cache write" [3800, 300, 4430, 700, 5430, 260]
+    bar "Cache read" [0, 3800, 0, 4430, 0, 5430]
+    bar "Uncached input" [0, 0, 0, 0, 0, 0]
+    bar "Tool" [0, 0, 0, 300, 0, 0]
+    bar "Vision" [0, 0, 0, 0, 0, 0]
+    bar "Reasoning" [150, 120, 250, 150, 200, 90]
+    bar "Output text" [150, 180, 300, 200, 180, 140]
 ```
--->
-
-Turn 5 (**0.1242 AI Credits**) is the most expensive turn in the session —
-more expensive even than the model-switch turn itself — because it pays both
-the "no warm cache" tax *and* the "expensive model" tax at once. A
-single-trigger session pays for exactly one of these; this session pays for
-both, back to back, purely because the second trigger landed on top of state
-the first one had already changed. The practical lesson (Section 17.4):
-batching configuration decisions (model, tools, instructions) at the *start*
-of a session and structuring long breaks around a single, deliberate
-`/clear` or a fresh session avoids not just one invalidation, but the
-compounding of several.
+<!-- scenarios:generated:end -->
 
 **Sources** (checked 2026-11-03):
 

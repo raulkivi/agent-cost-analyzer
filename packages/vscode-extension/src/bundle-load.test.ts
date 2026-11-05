@@ -12,7 +12,6 @@ import { extensionBundleOptions, mcpServerBundleOptions } from "../scripts/esbui
 import { COMMAND_IDS, VIEW_IDS } from "./commands/command-ids.js";
 
 const serverFixturesDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../server/fixtures");
-const learnFixturesDir = path.join(serverFixturesDir, "learn-scenarios");
 // A real main.jsonl with AI Credits numbers; its session id seeds the store.
 const USAGE_SESSION_ID = "1c7604a0-1488-4b5d-880a-f80fd693475e";
 // What the real fixture log's user_messages say (their text is redacted); the store turn carries it too, so the two join.
@@ -288,7 +287,6 @@ describe("the built extension bundle", () => {
     const copilotStorage = path.join(userDataDir, "User", "globalStorage", "github.copilot-chat");
     mkdirSync(copilotStorage, { recursive: true });
     seedSessionStore(path.join(copilotStorage, "session-store.db"));
-    cpSync(learnFixturesDir, path.join(installDir, "media", "learn-scenarios"), { recursive: true });
     for (const name of ["learn-scripts", "vendor-profiles"]) {
       cpSync(path.join(serverFixturesDir, name), path.join(installDir, "media", name), { recursive: true });
     }

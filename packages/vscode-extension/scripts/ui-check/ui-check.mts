@@ -36,6 +36,24 @@ async function clickFirstVisible(page: Page, harness: Harness, candidates: Retur
   return false;
 }
 
+// Below the wide layout the right column lives in a Details drawer.
+async function openDetailsIfCollapsed(page: Page, harness: Harness): Promise<void> {
+  const details = page.getByRole("button", { name: "Details" }).first();
+  if ((await details.isVisible().catch(() => false)) && (await details.getAttribute("aria-expanded")) !== "true") {
+    await details.click();
+    await harness.settle(page);
+  }
+}
+
+async function openVendorsTab(page: Page, harness: Harness): Promise<void> {
+  await harness.postHostEvent(page, "selectSession", { sessionId: "image-attachment-invalidation", mode: "learn" });
+  await openDetailsIfCollapsed(page, harness);
+  // The tab control's radios are visually hidden, so click its label.
+  await page.locator("label.seg-opt", { hasText: "Vendors" }).first().click();
+  await page.getByRole("table", { name: /each vendor/ }).waitFor({ timeout: 10000 });
+  await harness.settle(page);
+}
+
 async function openSystemPromptInspector(page: Page, harness: Harness): Promise<void> {
   await harness.postHostEvent(page, "selectSession", { sessionId: harness.usageSessionId, tab: "system-prompt" });
   const inspector = page.getByRole("button", { name: /system prompt inspector/i });
@@ -113,6 +131,27 @@ const SCENARIOS: Scenario[] = [
     widths: NARROW_WIDTHS,
     run: async (page, harness) =>
       harness.postHostEvent(page, "selectSession", { sessionId: "cache-basics", mode: "learn" }),
+  },
+  {
+    name: "learn-vendors-tab",
+    // The Vendors tab: each vendor's default model side by side (13.8).
+    run: openVendorsTab,
+  },
+  {
+    name: "learn-vendors-narrow",
+    widths: NARROW_WIDTHS,
+    run: openVendorsTab,
+  },
+  {
+    name: "learn-vendor-differences",
+    // A turn with a cache event shows the How vendors differ card (13.8).
+    run: async (page, harness) => {
+      await harness.postHostEvent(page, "selectSession", { sessionId: "image-attachment-invalidation", mode: "learn" });
+      await page.getByRole("row").nth(3).click();
+      await openDetailsIfCollapsed(page, harness);
+      await page.getByRole("heading", { name: "How vendors differ" }).waitFor({ timeout: 10000 });
+      await harness.settle(page);
+    },
   },
   {
     name: "learn-scenario-assumptions",

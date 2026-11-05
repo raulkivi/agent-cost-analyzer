@@ -142,7 +142,6 @@ export async function startHarness(options: HarnessOptions = {}): Promise<Harnes
       },
     },
     settingsSource: new JsoncFileSettingsSource(logPaths.vscodeSettingsPath),
-    learnScenariosFixturesDir: path.join(mediaDir, "learn-scenarios"),
     learnScriptsDir: path.join(mediaDir, "learn-scripts"),
     vendorProfilesDir: path.join(mediaDir, "vendor-profiles"),
     appVersion: "0.0.0-ui-check",

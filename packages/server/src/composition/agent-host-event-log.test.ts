@@ -24,7 +24,7 @@ import { createStandaloneApiService } from "./create-standalone-api-service.js";
 // products' composition roots and the extension's MCP server. The fixture
 // dir is the Copilot home; the missing-log session has no log dir there.
 
-const learnScenariosFixturesDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../fixtures/learn-scenarios");
+const fixturesRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../fixtures");
 
 describe("Agent Host sessions with the Copilot CLI event log (step 10.14)", () => {
   let userDataDir: string;
@@ -47,9 +47,8 @@ describe("Agent Host sessions with the Copilot CLI event log (step 10.14)", () =
       ...paths,
       vscodeSettingsPath: null,
       appSettings: new InMemoryAppSettingsStore(),
-      learnScenariosFixturesDir,
-      learnScriptsDir: path.resolve(learnScenariosFixturesDir, "../learn-scripts"),
-      vendorProfilesDir: path.resolve(learnScenariosFixturesDir, "../vendor-profiles"),
+      learnScriptsDir: path.join(fixturesRoot, "learn-scripts"),
+      vendorProfilesDir: path.join(fixturesRoot, "vendor-profiles"),
       appVersion: "0.1.0-test",
     });
     standalone = createStandaloneApiService({
@@ -61,7 +60,6 @@ describe("Agent Host sessions with the Copilot CLI event log (step 10.14)", () =
       piAgentSessionsDirPath: null,
       systemPromptLogPath: null,
       claudeCodeProjectsDirPath: null,
-      learnScenariosFixturesDir,
       appVersion: "0.1.0-test",
     });
     const server = createMcpServer(createCopilotMcpServices({ ...paths, appVersion: "0.1.0-test" }));

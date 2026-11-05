@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- Vendor-aware Learn (Phase 13): scenarios are simulated on a vendor and
+  model you pick, with real prices and documented cache rules, a Cache column,
+  per-turn notes, an assumptions popover and a sources footer. Learn numbers
+  change accordingly.
 - VS Code Agent Host sessions (step 10.13): Copilot chats that VS Code 1.143
   and later run through the Agent Host are listed with their turns, tokens and
   AI Credits, beside the classic Copilot Chat sessions.

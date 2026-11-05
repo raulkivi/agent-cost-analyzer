@@ -1,7 +1,7 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { ProductProfile, Session, VendorProfileSummary } from "@agent-cost-analyzer/domain";
+import type { ProductProfile, Session, VendorComparison, VendorProfileSummary } from "@agent-cost-analyzer/domain";
 import { App } from "./App.js";
 import { resetApiTransport, setApiTransport } from "./api-client/current-transport.js";
 import { resetViewStateStorage, setViewStateStorage } from "./state/current-view-state-storage.js";
@@ -52,6 +52,28 @@ const simulated = (modelId: string): Session => ({
   ],
 });
 
+const comparison: VendorComparison = {
+  scenarioId: "cache-basics",
+  entries: [
+    {
+      vendorId: "anthropic",
+      modelId: "claude-sonnet-5.5",
+      displayName: "claude-sonnet-5.5",
+      simulated: true,
+      totalAiCredits: { known: true, value: 1.2 },
+      turns: [{ index: 1, cacheOutcome: "miss", aiCredits: { known: true, value: 1.2 }, note: "Sonnet note", sourceIds: [] }],
+    },
+    {
+      vendorId: "openai",
+      modelId: "gpt-6.1-sol",
+      displayName: "gpt-6.1-sol",
+      simulated: true,
+      totalAiCredits: { known: true, value: 0.9 },
+      turns: [{ index: 1, cacheOutcome: "hit", aiCredits: { known: true, value: 0.9 }, note: "GPT note", sourceIds: [] }],
+    },
+  ],
+};
+
 const extensionProfile: ProductProfile = {
   productId: "vscode-extension",
   displayName: "AI Credits Analyzer",
@@ -80,6 +102,7 @@ describe("Learn mode with vendor simulation (step 13.7)", () => {
           getHealth: { status: "ok", version: "0.2.0" },
           listLearnScenarios: [simulated("claude-sonnet-5.5")],
           listVendorProfiles: profiles,
+          compareScenario: comparison,
           getScenario: simulated((params as { modelId?: string } | undefined)?.modelId ?? "claude-sonnet-5.5"),
           getLogProviderStatus: { providers: [{ id: "vscode", label: "VS Code", available: true }], activeProviderId: "vscode" },
           listSessions: [],
@@ -126,6 +149,36 @@ describe("Learn mode with vendor simulation (step 13.7)", () => {
       }),
     );
     expect(await screen.findByText("On gpt-6.1-sol: cache miss.")).toBeInTheDocument();
+  });
+
+  it("shows How vendors differ for a turn with a cache event", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(await screen.findByRole("button", { name: /cache basics/i }));
+
+    expect(await screen.findByRole("heading", { name: "How vendors differ" })).toBeInTheDocument();
+    expect(screen.getByText("Sonnet note")).toBeInTheDocument();
+    expect(screen.getByText("GPT note")).toBeInTheDocument();
+  });
+
+  it("has a Vendors tab with the sortable comparison, and adding a model refetches", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(await screen.findByRole("button", { name: /cache basics/i }));
+    await user.click(await screen.findByLabelText("Vendors"));
+
+    expect(await screen.findByRole("columnheader", { name: "Total AI credits" })).toBeInTheDocument();
+    expect(within(screen.getByRole("table", { name: /each vendor/ })).getByText("gpt-6.1-sol")).toBeInTheDocument();
+    expect(calls.filter((c) => c.method === "compareScenario").length).toBeGreaterThan(0);
+
+    await user.selectOptions(screen.getByLabelText("Add a model"), "claude-opus-5.5");
+    await user.click(screen.getByRole("button", { name: "Add" }));
+    await waitFor(() =>
+      expect(calls.filter((c) => c.method === "compareScenario").at(-1)?.params).toEqual({
+        id: "cache-basics",
+        modelIds: ["claude-sonnet-5.5", "gpt-6.1-sol", "claude-opus-5.5"],
+      }),
+    );
   });
 
   it("shows no picker when the product has no vendor simulation", async () => {

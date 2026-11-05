@@ -364,7 +364,6 @@ describe("SidebarController over VS Code Agent Host sessions", () => {
       ...copilotLogPathsFromUserDataDir(userDataDir),
       copilotHome: null,
       appSettings: new InMemoryAppSettingsStore(),
-      learnScenariosFixturesDir: path.resolve(import.meta.dirname, "../../../server/fixtures/learn-scenarios"),
       learnScriptsDir: path.resolve(import.meta.dirname, "../../../server/fixtures/learn-scripts"),
       vendorProfilesDir: path.resolve(import.meta.dirname, "../../../server/fixtures/vendor-profiles"),
       appVersion: "0.1.0-test",

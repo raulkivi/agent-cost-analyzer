@@ -38,7 +38,7 @@ describe("GET /api/product", () => {
         settingFixes: false,
         openInEditor: false,
         sessionSidebar: false,
-        vendorSimulation: false,
+        vendorSimulation: true,
       },
     });
   });

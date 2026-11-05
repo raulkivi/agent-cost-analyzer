@@ -172,7 +172,7 @@ Everything else works as the [User Guide](UserGuide.md) describes:
 | Panel area | Where it's described |
 |---|---|
 | Header with the **Learn / Analyze** switch, the **Config** button and the **Retention** field | [The shared layout](UserGuide.md#the-shared-layout), [Enabling full per-turn numbers](UserGuide.md#enabling-full-per-turn-numbers) |
-| Learn mode: 18 sample sessions that explain caching and AI Credits | [Learn mode](UserGuide.md#learn-mode) |
+| Learn mode: 17 Copilot scenarios, simulated on a vendor and model you pick, that explain caching and AI Credits | [Learn mode](UserGuide.md#learn-mode) |
 | The 13-column turns table and timeline | [Picking a scenario and reading the turns table](UserGuide.md#picking-a-scenario-and-reading-the-turns-table), [The turns table in Analyze mode](UserGuide.md#the-turns-table-in-analyze-mode) |
 | Explanation, System prompt and Tools tabs | [The three-tab right panel](UserGuide.md#the-three-tab-right-panel) |
 | System prompt inspector | [The system prompt inspector](UserGuide.md#the-system-prompt-inspector) |
@@ -229,12 +229,22 @@ offers **Open Learn mode** and **Get started**.
 
 ### Learn view (`aiCreditsAnalyzer.learn`)
 
-The 18 bundled Learn scenarios, grouped by what they teach (prompt
-caching, cache TTL, compaction, model switches and so on). Each row shows
-the scenario's turn count and AI Credits. Select a scenario to open it in
-the panel's Learn mode, the same way the Sessions view opens a session.
-The scenarios ship with the extension, so this view works before you have
-any sessions of your own.
+The 17 bundled Learn scenarios that apply to Copilot, grouped by what they
+teach (prompt caching, cache TTL, compaction, model switches and so on). The
+Claude-only 1-hour cache scenario is hidden because Copilot users can't choose
+it, and the `/clear` and `/rewind` scenarios use VS Code wording (a new chat,
+restoring a checkpoint). Each row shows the scenario's turn count and AI
+Credits on the default model. Select a scenario to open it in the panel's
+Learn mode, the same way the Sessions view opens a session. The scenarios ship
+with the extension, so this view works before you have any sessions of your
+own.
+
+In the panel the scenario is **simulated** on a vendor and model you pick
+(Anthropic, OpenAI, Google or xAI), with a Cache column, a generated note per
+turn, an assumptions popover, a sources footer and USD tooltips on AI Credits.
+The extension stays offline: prices and cache rules ship as reviewed data with
+their sources. See [Learn mode](UserGuide.md#learn-mode) for what each part
+shows.
 
 ### Setup view (`aiCreditsAnalyzer.setup`)
 
