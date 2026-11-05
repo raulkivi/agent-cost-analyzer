@@ -35,6 +35,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Plan for Phase 13, vendor-aware Learn simulation (VS Code first), and
   Phase 14, replaying Analyze sessions on another vendor.
 ### Fixed
+- VS Code Local harness sessions: the session list and the session detail
+  (turns table, `get_session_cost`, `get_cost_rollup`, insights) now report the
+  same AI Credits, turn count, model and usage availability, from one shared
+  computation (`summarizeSessionUsage`). A `main.jsonl` turn with no
+  session-store row (interrupted or still running) was counted by the list but
+  dropped by the detail; it is now a turn of the session, with its usage and a
+  `textUnavailableReason`, and its inspector opens. A store turn with no usage
+  in `main.jsonl` now makes the list's total unknown, as it already made the
+  detail's. The `LogProvider` contract checks list-vs-detail agreement for
+  every provider.
 - Learn scenarios: five AI Credits arithmetic slips (scenarios 10, 12, 13,
   15 and 18) and one wrong cross-scenario total (scenario 14).
 - Learn scenarios and docs: the cache prefix order is tools → system →

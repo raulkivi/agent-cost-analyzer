@@ -39,6 +39,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **A session's AI Credits are the same in the Sessions view, the status bar,
+  the panel and the MCP tools.** For a Local harness chat whose debug log has a
+  turn that Copilot Chat's session store has no record of (an interrupted or
+  still-running turn), the Sessions view counted that turn's AI Credits and
+  the panel and `get_session_cost` did not. The panel now lists that turn, with
+  its tokens and AI Credits and a note that its text isn't recorded, and every
+  view counts it. When a turn in the session store has no usage in the debug
+  log, the Sessions view now shows the session's AI Credits as unknown, as
+  the panel does, instead of a partial total.
 - The Setup view and the first walkthrough step no longer say Copilot Chat
   debug logging is needed for token data. It matters only for Local harness
   chats; Agent Host chats (the VS Code default) need no setting.

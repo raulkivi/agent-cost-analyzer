@@ -649,6 +649,24 @@ this slice:
   reason (`LOGGING_NEVER_ENABLED_REASON`/`USAGE_UNAVAILABLE_REASON`) — a
   session can have some turns known and others not (e.g. the last turn's
   events not yet flushed per the `flushIntervalMs` note below).
+- **Debug-log turns without a store row (fix, 2026-11-05).** The store can
+  also lag the log: a turn that was interrupted, or still running when the
+  store was read, has a `user_message` and billed `llm_request`s in
+  `main.jsonl` but no `turns` row (seen on real data: 3 requests, 11.22 AI
+  Credits, no row). Such a turn is part of the session: `buildSession` adds
+  it at its positional index with its usage and tool calls, empty text and
+  `textUnavailableReason` (`STORE_TURN_MISSING_REASON`), and
+  `readTurnDetail` opens it. The session's figures (`turnCount`,
+  `costAiCredits`, `model`, `usageDataAvailable`) come from one function,
+  `summarizeSessionUsage(availability, storeTurnIndices, turnUsages)`, which
+  both the list summary and `buildSession` call, so the Sessions list,
+  status bar, turns table and MCP tools agree. Every store turn and every
+  log turn counts, all-or-nothing: a store turn with no usage in the log
+  makes the total unknown in the list too. Before this fix the list summed
+  every log turn and ignored store turns, while the detail summed only
+  store turns, so the two could differ in either direction. The
+  `LogProvider` contract (`contract.ts`) now asserts that every provider's
+  list summary equals its `readSession` on these four figures.
 - Verified end-to-end against this machine's own real, live local data
   (not just fixtures): this project's own session history and another
   project's longer session both return real per-turn numbers through

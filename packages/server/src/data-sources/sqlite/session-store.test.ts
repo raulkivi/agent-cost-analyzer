@@ -9,6 +9,7 @@ import {
   getSessionRow,
   getTurnRows,
   listSessionRows,
+  listTurnIndicesBySession,
   openReadOnlyDb,
 } from "./session-store.js";
 
@@ -133,6 +134,17 @@ describe("session-store", () => {
     const rows = getTurnRows(db, "session-1");
 
     expect(rows.map((row) => row.turn_index)).toEqual([0, 1]);
+    db.close();
+  });
+
+  it("listTurnIndicesBySession returns every session's turn indices, ordered, in one query", () => {
+    const db = new DatabaseSync(dbFile);
+    seedDb(db);
+
+    const indices = listTurnIndicesBySession(db);
+
+    expect(indices.get("session-1")).toEqual([0, 1]);
+    expect(indices.has("session-2")).toBe(false);
     db.close();
   });
 

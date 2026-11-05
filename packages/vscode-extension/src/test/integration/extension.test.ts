@@ -205,7 +205,7 @@ suite("AI Credits Analyzer in a real VS Code (step 10.9)", function () {
         );
         const cost = await client.callTool({ name: "get_session_cost", arguments: { sessionId: fixture.usageSessionId } });
         assert.equal(typeof (cost.structuredContent as { totals: { aiCredits: { value: unknown } } }).totals.aiCredits.value, "number");
-        // The Sessions view says 9.65 for this session and get_session_cost 7.34: see the skipped test below.
+        // That it equals the Sessions view's number: the next test.
 
         // 2.4: another agent's sessions are not offered; the tools say only vscode is available.
         const providers = await client.callTool({ name: "list_log_providers", arguments: {} });
@@ -222,9 +222,9 @@ suite("AI Credits Analyzer in a real VS Code (step 10.9)", function () {
       }
     });
 
-    // TODO(bug: list-vs-detail AI Credits mismatch, see scripts/ui-automation/ui-fixture-credits.test.ts):
-    // check 2.3 expects the MCP tool to give the AI Credits the Sessions view shows; unskip with the fix.
-    test.skip("get_session_cost gives the AI Credits the Sessions view shows for the same session", async () => {
+    // Check 2.3 expects the MCP tool to give the AI Credits the Sessions view
+    // shows (they differed before the list-vs-detail fix, step 10.16).
+    test("get_session_cost gives the AI Credits the Sessions view shows for the same session", async () => {
       await setMcpEnabled(true);
       const [definition] = await waitFor(mcpServerDefinitions, (definitions) => definitions.length > 0, {
         timeoutMs: WAIT_MS,

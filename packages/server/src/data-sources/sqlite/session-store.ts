@@ -78,6 +78,22 @@ export function getTurnRows(db: DatabaseSync, sessionId: string): TurnRow[] {
     .all(sessionId) as unknown as TurnRow[];
 }
 
+// Every session's turn indices in one query, for the session list: a summary
+// counts the same turns as the full session (session-enricher's
+// summarizeSessionUsage) without reading each session's turn text.
+export function listTurnIndicesBySession(db: DatabaseSync): Map<string, number[]> {
+  const rows = db
+    .prepare("SELECT session_id, turn_index FROM turns ORDER BY session_id, turn_index ASC")
+    .all() as unknown as Pick<TurnRow, "session_id" | "turn_index">[];
+  const bySession = new Map<string, number[]>();
+  for (const row of rows) {
+    const indices = bySession.get(row.session_id) ?? [];
+    indices.push(row.turn_index);
+    bySession.set(row.session_id, indices);
+  }
+  return bySession;
+}
+
 export function getCheckpointRows(db: DatabaseSync, sessionId: string): CheckpointRow[] {
   return db
     .prepare("SELECT * FROM checkpoints WHERE session_id = ? ORDER BY checkpoint_number ASC")
