@@ -126,8 +126,12 @@ function tokens(theme: Theme): Record<string, string> {
   const root = Object.fromEntries(standaloneRules.find((rule) => rule.selectors.includes(":root"))!.declarations);
   const bodyClass = bodyClassOf(theme);
   if (!bodyClass) return root;
-  const body = vscodeRules.find((rule) => rule.selectors.includes(`body.${bodyClass}`) && rule.declarations.has("--color-bg"))!;
-  return { ...root, ...Object.fromEntries(body.declarations), ...(VSCODE_THEME_VARS[theme]?.vars ?? {}) };
+  // Every rule on the bare body class, in source order: the shared token
+  // rule first, then per-theme ones such as the series steps (§11.7).
+  const body = vscodeRules
+    .filter((rule) => rule.selectors.includes(`body.${bodyClass}`))
+    .flatMap((rule) => [...rule.declarations]);
+  return { ...root, ...Object.fromEntries(body), ...(VSCODE_THEME_VARS[theme]?.vars ?? {}) };
 }
 
 function color(theme: Theme, value: string, backdrop?: Rgb): Rgb {
@@ -240,5 +244,98 @@ describe("inline text colours in components", () => {
       [...text.matchAll(/color:\s*"var\(--color-accent(-[2-6]00)?\)"/g)].map((match) => `${file}: ${match[0]}`),
     );
     expect(decorative).toEqual([]);
+  });
+});
+
+// The categorical palette (cost-by-repository-and-project.md §11.7): eight
+// identity colours in a fixed order, the dataviz reference palette, light
+// steps on light grounds and dark steps on dark ones. They colour marks,
+// not text, so the bar is WCAG 1.4.11's 3:1 for graphics.
+describe("categorical series palette (cost-by-repository-and-project.md §11.7)", () => {
+  const GRAPHICS = 3;
+  const SLOTS = [1, 2, 3, 4, 5, 6, 7, 8] as const;
+  const HUES = ["blue", "orange", "aqua", "yellow", "magenta", "green", "violet", "red"] as const;
+  const LIGHT = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#008300", "#6250d6", "#e34948"];
+  const DARK = ["#3987e5", "#d95926", "#199e70", "#c98500", "#d55181", "#008300", "#9085e9", "#e66767"];
+  // A documented warning, not a pass: on a light ground these four sit at
+  // 1.9-2.9:1. The dataviz validator allows that only with relief, which
+  // the charts give (direct labels up to four series, values in tooltips,
+  // "View as table"). No other slot, and no slot on a dark ground, gets it.
+  const LIGHT_GROUND_BELOW_3_TO_1 = new Set<string>(["orange", "aqua", "yellow", "magenta"]);
+  const LIGHT_GROUND_FLOOR = 1.9;
+
+  const SERIES_THEMES: { theme: Theme; steps: string[]; light: boolean; dashed: boolean }[] = [
+    { theme: "standalone", steps: LIGHT, light: true, dashed: false },
+    { theme: "vscode-light-modern", steps: LIGHT, light: true, dashed: false },
+    { theme: "vscode-dark-modern", steps: DARK, light: false, dashed: false },
+    { theme: "vscode-high-contrast", steps: DARK, light: false, dashed: true },
+  ];
+
+  describe.each(SERIES_THEMES)("$theme", ({ theme, steps, light, dashed }) => {
+    const value = (token: string) => tokens(theme)[token]?.toLowerCase();
+
+    it("defines --color-series-1 to -8 in the fixed order", () => {
+      expect(SLOTS.map((slot) => value(`--color-series-${slot}`))).toEqual(steps);
+    });
+
+    it.each(SLOTS.map((slot) => [slot, HUES[slot - 1]!] as const))("series %i (%s) against the page", (slot, hue) => {
+      const contrast = ratio(theme, `var(--color-series-${slot})`, "var(--color-bg)");
+      if (light && LIGHT_GROUND_BELOW_3_TO_1.has(hue)) {
+        // The warning band: weak, but still a visible mark.
+        expect(contrast).toBeGreaterThanOrEqual(LIGHT_GROUND_FLOOR);
+      } else {
+        expect(contrast).toBeGreaterThanOrEqual(GRAPHICS);
+      }
+    });
+
+    it("waterfall increases and decreases (the diverging pair) differ and reach 3:1 on the page", () => {
+      expect(value("--color-diverging-increase")).toBeDefined();
+      expect(value("--color-diverging-decrease")).toBeDefined();
+      expect(value("--color-diverging-increase")).not.toBe(value("--color-diverging-decrease"));
+      expect(ratio(theme, "var(--color-diverging-increase)", "var(--color-bg)")).toBeGreaterThanOrEqual(GRAPHICS);
+      expect(ratio(theme, "var(--color-diverging-decrease)", "var(--color-bg)")).toBeGreaterThanOrEqual(GRAPHICS);
+    });
+
+    it(dashed ? "series also differ by dash pattern (solid, 7 4, 2 3, in turn)" : "series lines are solid", () => {
+      const expected = SLOTS.map((slot) => (dashed ? ["none", "7 4", "2 3"][(slot - 1) % 3] : "none"));
+      expect(SLOTS.map((slot) => value(`--dash-series-${slot}`))).toEqual(expected);
+    });
+  });
+
+  it("the light-ground allowance covers only slots that need it", () => {
+    for (const theme of ["standalone", "vscode-light-modern"] as const) {
+      const below = SLOTS.filter((slot) => ratio(theme, `var(--color-series-${slot})`, "var(--color-bg)") < GRAPHICS).map(
+        (slot) => HUES[slot - 1]!,
+      );
+      expect(below.every((hue) => LIGHT_GROUND_BELOW_3_TO_1.has(hue))).toBe(true);
+    }
+  });
+
+  it("uses the light steps in a light High Contrast theme, whose body carries vscode-high-contrast too", () => {
+    const declarations = Object.fromEntries(
+      vscodeRules
+        .filter((rule) => rule.selectors.includes("body.vscode-high-contrast.vscode-high-contrast-light"))
+        .flatMap((rule) => [...rule.declarations]),
+    );
+    expect(SLOTS.map((slot) => declarations[`--color-series-${slot}`]?.toLowerCase())).toEqual(LIGHT);
+    expect(declarations["--color-diverging-increase"]?.toLowerCase()).toBe("#e34948");
+    expect(declarations["--color-diverging-decrease"]?.toLowerCase()).toBe("#1c5cab");
+  });
+
+  // VS Code's own charts.* colours fall outside the lightness band on Dark
+  // Modern (§11.7's correction), so no series follows them.
+  it("never maps a series or diverging token to --vscode-charts-*", () => {
+    const mapped = vscodeRules.flatMap((rule) =>
+      [...rule.declarations]
+        .filter(([name, declaredValue]) => /^--(color|dash)-(series|diverging)/.test(name) && declaredValue.includes("--vscode-charts"))
+        .map(([name]) => name),
+    );
+    expect(mapped).toEqual([]);
+  });
+
+  // A ninth series folds into "Other" (§11.6), never a generated hue.
+  it("defines no ninth series colour", () => {
+    const names = [...standaloneRules, ...vscodeRules].flatMap((rule) => [...rule.declarations.keys()]);
+    expect(names.filter((name) => /^--color-series-(9|\d{2,})$/.test(name))).toEqual([]);
   });
 });

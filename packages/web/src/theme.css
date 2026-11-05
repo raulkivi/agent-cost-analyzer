@@ -52,6 +52,36 @@
   --color-accent-2-800: #314457;
   --color-accent-2-900: #1f2d3a;
 
+  /* Categorical series — identity colours for vendors and projects
+     (cost-by-repository-and-project.md §11.7): the dataviz reference
+     palette in its fixed order, validated on this ground (#f2f2f3). A
+     series keeps its slot when filters change; past eight it folds into
+     "Other". Slots 2-5 (orange, aqua, yellow, magenta) are under 3:1 here,
+     a documented warning relieved by direct labels, tooltips and "View as
+     table" (theme-contrast.test.ts). Series colour marks, never text.
+     The editor-theme stylesheet gives dark themes their own dark steps. */
+  --color-series-1: #2a78d6; /* blue */
+  --color-series-2: #eb6834; /* orange */
+  --color-series-3: #1baf7a; /* aqua */
+  --color-series-4: #eda100; /* yellow */
+  --color-series-5: #e87ba4; /* magenta */
+  --color-series-6: #008300; /* green */
+  --color-series-7: #6250d6; /* violet */
+  --color-series-8: #e34948; /* red */
+  /* Waterfall increases and decreases, always with a written sign. */
+  --color-diverging-increase: #e34948;
+  --color-diverging-decrease: #1c5cab;
+  /* Stroke dash per series (stroke-dasharray); solid here, patterned in
+     High Contrast, where colours alone flatten. */
+  --dash-series-1: none;
+  --dash-series-2: none;
+  --dash-series-3: none;
+  --dash-series-4: none;
+  --dash-series-5: none;
+  --dash-series-6: none;
+  --dash-series-7: none;
+  --dash-series-8: none;
+
   --font-heading: "Barlow Condensed", system-ui, sans-serif;
   --font-heading-weight: 600;
   --font-body: "Barlow", system-ui, sans-serif;
