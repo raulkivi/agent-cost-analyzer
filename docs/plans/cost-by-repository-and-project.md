@@ -1308,11 +1308,22 @@ Data:
   the loader fills them from the newest version, and a model priced in
   both places (or in neither) stops startup. Phase 13's tests and golden
   snapshots are unchanged and pass.
-- **Every version starts on 2026-10-26**, the date of the last github/docs
-  commit to the snapshot's price table (cc0c29a), the earliest date the
-  source supports. D8's history from 2026-01-01 needs the table's own
-  github/docs history cited; until then earlier turns price as unknown.
-  No earlier version was invented.
+- **History from 2026-10-01** (D8 as revised): the Copilot book is rebuilt
+  from the git history of github/docs' `models-and-pricing.yml`. The table
+  at 7f63f3a (2026-09-29) was unchanged until 2026-10-02, so its prices
+  hold from 2026-10-01. The only price change since is Claude Sonnet 5.5's
+  cached input, $0.20 → $0.10 per 1M on 2026-10-07 (eb975b9). Claude Haiku
+  5.5 (2026-10-07), Gemini 4 Argon (2026-10-13) and GPT-6.1 Terra
+  (2026-10-26) start on the day they were added. Each version cites the
+  table pinned at the commit that proves its start, with a quote (30
+  versions). Dates are commit dates (UTC); the docs site may have deployed
+  later the same day. Turns before 2026-10-01 price as unknown.
+- **Nine models removed during October are not in the book** (Claude Opus
+  4.7, Gemini 3.5/3.6 Flash and Kimi K2.7 Code on 10-02; GPT-5 mini,
+  GPT-5.4, GPT-5.4 mini, GPT-5.5 and Gemini 3.7 Flash on 10-19), because
+  no Phase 13 profile simulates them and a test requires the book's
+  Copilot models to match the profiles. October turns on them price as
+  unknown until the owner decides to add them.
 - The Gemini promotions end per GitHub's wording (Flash "through December
   31, 2026": `effectiveTo` 2027-01-01; Argon "until December 1, 2026":
   2026-12-01); no price is known after them.
