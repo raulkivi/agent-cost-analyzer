@@ -6,6 +6,7 @@ import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "no
 import { createServer } from "node:http";
 import os from "node:os";
 import path from "node:path";
+import type { ConfigWarning } from "@agent-cost-analyzer/domain";
 import { chromium, type Browser, type Page } from "playwright";
 import { createExtensionApiService } from "../../../server/src/composition/create-extension-api-service.ts";
 import { JsoncFileSettingsSource } from "../../../server/src/data-sources/vscode-settings/jsonc-file-settings-source.ts";
@@ -56,12 +57,18 @@ export interface Harness {
   agentHostMissingLogSessionId?: string;
   // Step 10.15: one whose log's per-call usage records fill Cache write and Reasoning.
   agentHostUsageRecordsSessionId?: string;
-  open(theme: VscodeTheme, width: number, height?: number): Promise<Page>;
+  open(theme: VscodeTheme, width: number, height?: number, options?: OpenOptions): Promise<Page>;
   postHostEvent(page: Page, name: string, payload?: unknown): Promise<void>;
   // Resolves once no webview request has been in flight for a moment, and
   // React has painted what they returned.
   settle(page: Page): Promise<void>;
   close(): Promise<void>;
+}
+
+export interface OpenOptions {
+  // Replaces the config check's warnings, to show the banner (the seeded
+  // fixture has none).
+  configWarnings?: ConfigWarning[];
 }
 
 export interface SeededUserData {
@@ -101,6 +108,13 @@ function seedUiCheckFixture(rootDir: string): SeededUserData {
     agentHostMissingLogSessionId: COPILOT_CLI_FIXTURE_SESSION_IDS.missingLog,
     agentHostUsageRecordsSessionId: COPILOT_CLI_FIXTURE_SESSION_IDS.usageRecords,
   };
+}
+
+function withConfigWarnings(reply: unknown, request: unknown, warnings: ConfigWarning[] | undefined): unknown {
+  const asksConfigStatus = (request as { method?: string } | null)?.method === "getConfigStatus";
+  const answer = reply as { ok?: boolean; result?: object } | undefined;
+  if (!warnings || !asksConfigStatus || !answer?.ok) return reply;
+  return { ...answer, result: { ...answer.result, warnings } };
 }
 
 export async function startHarness(options: HarnessOptions = {}): Promise<Harness> {
@@ -165,13 +179,13 @@ export async function startHarness(options: HarnessOptions = {}): Promise<Harnes
     agentHostSessionId: fixture.agentHostSessionId,
     agentHostMissingLogSessionId: fixture.agentHostMissingLogSessionId,
     agentHostUsageRecordsSessionId: fixture.agentHostUsageRecordsSessionId,
-    async open(theme, width, height = 900) {
+    async open(theme, width, height = 900, openOptions = {}) {
       const page = await browser.newPage({ viewport: { width, height }, deviceScaleFactor: options.deviceScaleFactor ?? 1 });
       page.on("pageerror", (error) => console.error(`page error: ${error.message}`));
       await page.exposeFunction("__toHost", async (message: unknown) => {
         inFlight += 1;
         try {
-          const reply = await dispatcher.dispatch(message);
+          const reply = withConfigWarnings(await dispatcher.dispatch(message), message, openOptions.configWarnings);
           if (reply) await page.evaluate(`window.postMessage(${JSON.stringify(reply)}, "*")`);
         } finally {
           inFlight -= 1;

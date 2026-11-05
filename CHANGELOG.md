@@ -35,6 +35,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Plan for Phase 13, vendor-aware Learn simulation (VS Code first), and
   Phase 14, replaying Analyze sessions on another vendor.
 ### Fixed
+- The setup warning banner fits a 360 px (or 320 px) wide panel: long setting
+  ids wrap, and the fix and Dismiss buttons move under the text instead of
+  pushing the page sideways.
 - VS Code Local harness sessions: the session list and the session detail
   (turns table, `get_session_cost`, `get_cost_rollup`, insights) now report the
   same AI Credits, turn count, model and usage availability, from one shared

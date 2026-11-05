@@ -339,7 +339,7 @@ dependencies that never ship.
 | 1.6 | `panel.e2e.ts` | The new `holdRequests`/`releaseRequests` hooks hold `getInsights`; Cancel, "Loading cancelled", Retry, dashboard |
 | 1.7 | `keyboard.e2e.ts` | Down/Enter in the Sessions tree, Tab walk with a visible focus indicator on every stop, column chooser Enter/Escape and focus return, Pretty/Raw/Icicle radios by arrow keys, arrow keys inside the diagram, View as table `aria-pressed` |
 | 1.8 | `layout-theme.e2e.ts` | Both High Contrast themes: the UI check's probe and judge on the real page (zero findings), focus outline, selected row. Screenshots in `test/ui/out/`. **Manual:** "charts still distinguishable" |
-| 1.9 | `layout-theme.e2e.ts` | 640 px gives `medium`, 360 px gives `narrow` (view `<select>`, no radio group); no sideways scroll once the setup banner is dismissed |
+| 1.9 | `layout-theme.e2e.ts` | 640 px gives `medium`, 360 px gives `narrow` (view `<select>`, no radio group); no sideways scroll once the setup banner is dismissed; the banner itself fits 360 and 320 px |
 | 1.10 | `layout-theme.e2e.ts` | Light theme changes the body class and `--vscode-editor-background`; `editor.fontSize` reaches the webview as a variable that nothing uses (Q4, decided 2026-11-04: the panel follows the workbench font; the spec pins it) |
 | 1.11 | `panel.e2e.ts` | `ai-credits-analyzer-doc` scheme, a typed key leaves it clean, copy puts the prompt on the clipboard (the clipboard works under xvfb) |
 | 1.13 | `views.e2e.ts` | Learn scenario, another, then a session; plus the Sessions count guard (F5) |
@@ -410,11 +410,13 @@ suite. 2.2's "9 tools" is asserted by the integration suite, not here.
 
 ### 6.3 Findings for the owner
 
-- **1.9 bug (skipped test).** With Copilot Chat missing the config warning
-  banner is wider than a 360 px panel (elements reach 404-511 px), so the
-  page scrolls sideways. The suite dismisses the banner for the 1.9 checks
-  and keeps `1.9 the config warning banner fits a 360 px panel` as
-  `test.skip`: unskip it with the fix.
+- **1.9 bug (fixed).** With Copilot Chat missing the config warning banner
+  was wider than a 360 px panel (elements reached 404-511 px), so the page
+  scrolled sideways: the flex children had no `min-width: 0`, the long
+  setting ids could not break, and Dismiss/fix buttons could not wrap.
+  `ConfigWarningBanner` now wraps; `1.9 the config warning banner fits a 360
+  px panel` (and 320 px) runs on a fresh panel, and the UI check's
+  `config-banner` scenario covers 320-1600 px in every theme.
 - **1.10 / Q4.** Confirmed: the panel ignores `editor.fontSize`; the spec
   pins that.
 - **CI is informational** (`continue-on-error: true`) until T15.

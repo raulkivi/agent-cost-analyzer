@@ -34,12 +34,16 @@ export function ConfigWarningBanner({ warnings, onDismiss, onFixSetting }: Confi
         margin: "var(--space-3) var(--space-4) 0",
         padding: "var(--space-2) var(--space-3)",
         display: "flex",
+        // Narrow panels: Dismiss drops under the warnings instead of
+        // pushing the banner past the panel's edge.
+        flexWrap: "wrap",
         alignItems: "center",
         gap: "var(--space-3)",
         background: "var(--color-accent-100)",
       }}
     >
-      <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-2)", flex: 1 }}>
+      {/* min-width 0 lets the column shrink below its longest unbreakable word. */}
+      <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-2)", flex: "1 1 12rem", minWidth: 0 }}>
         {warnings.map((warning) => {
           // Optional warnings (e.g. agent-traces-unavailable) are additive
           // enrichments the app works fully without — a muted tone keeps
@@ -48,7 +52,10 @@ export function ConfigWarningBanner({ warnings, onDismiss, onFixSetting }: Confi
           const tone =
             warning.severity === "optional" ? "--color-accent-2" : "--color-accent";
           return (
-            <div key={warning.code} style={{ display: "flex", alignItems: "flex-start", gap: "var(--space-3)" }}>
+            <div
+              key={warning.code}
+              style={{ display: "flex", flexWrap: "wrap", alignItems: "flex-start", gap: "var(--space-2) var(--space-3)" }}
+            >
               <div
                 data-severity={warning.severity}
                 style={{
@@ -66,7 +73,8 @@ export function ConfigWarningBanner({ warnings, onDismiss, onFixSetting }: Confi
               >
                 !
               </div>
-              <div style={{ fontSize: 13 }}>
+              {/* Long setting ids have no break points: wrap them anywhere. */}
+              <div style={{ fontSize: 13, flex: "1 1 10rem", minWidth: 0, overflowWrap: "anywhere" }}>
                 <p style={{ margin: 0 }}>
                   <strong>{warning.message}</strong>
                 </p>
@@ -84,7 +92,7 @@ export function ConfigWarningBanner({ warnings, onDismiss, onFixSetting }: Confi
                 <button
                   type="button"
                   className={`btn ${FIX_ACTIONS[warning.code].variant}`}
-                  style={{ flex: "none", marginLeft: "auto" }}
+                  style={{ flex: "none", marginLeft: "auto", maxWidth: "100%" }}
                   // The visible verb plus the setting it opens, so each
                   // button's name is unique and starts with its label.
                   aria-label={`${FIX_ACTIONS[warning.code].label} ${warning.settingId}`}

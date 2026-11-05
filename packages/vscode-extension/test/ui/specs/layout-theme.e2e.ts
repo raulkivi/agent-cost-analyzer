@@ -177,16 +177,21 @@ suite("Narrow panel (check 1.9)", () => {
     });
   }
 
-  // KNOWN BUG, found by this automation: with Copilot Chat missing (the
-  // baseline here) the config warning banner is wider than a 360 px panel
-  // (elements reach 404-511 px), so the page scrolls sideways. Skipped so the
-  // suite stays green; unskip it with the fix (docs/plans/vscode-ui-automation.md).
-  test.skip("1.9 the config warning banner fits a 360 px panel", async () => {
-    await resizeSoPanelIs(360);
-    await panel.inside(async (view) => {
-      await view.requestFrame();
-      const { scrollWidth, clientWidth } = await view.horizontalOverflow();
-      expect(scrollWidth).toBeLessThanOrEqual(clientWidth);
+  // Found by this automation: with Copilot Chat missing (the baseline here)
+  // the config warning banner was wider than a 360 px panel. A fresh panel
+  // shows it, so the check runs before anything dismisses it.
+  for (const target of [360, 320]) {
+    test(`1.9 the config warning banner fits a ${target} px panel`, async () => {
+      await openUsageSession();
+      const width = await resizeSoPanelIs(target);
+      await panel.inside(async (view) => {
+        await view.waitForText("Dismiss");
+        await view.requestFrame();
+        const { scrollWidth, clientWidth } = await view.horizontalOverflow();
+        if (scrollWidth > clientWidth) console.log(`1.9 banner overflow at ${width} px ${JSON.stringify((await probe(view)).overflowing)}`);
+        expect(scrollWidth).toBeLessThanOrEqual(clientWidth);
+      });
+      await saveScreenshot(`1.9-banner-${target}`);
     });
-  });
+  }
 });
