@@ -115,8 +115,8 @@ content here.
   price history, billing statements and estimates; see
   docs/plans/cost-by-repository-and-project.md) is planned: the owner's
   decisions D1–D10 are recorded; step 15.8's mock-ups are drawn and approved
-  (2026-11-05, docs/plans/mockups/cost-by-project/; the palette tokens are
-  not started);
+  (2026-11-05, docs/plans/mockups/cost-by-project/), and its palette tokens
+  (`--color-series-1`..`-8`) are done;
   step 15.1 is done (`Session.workspace`, `Turn.startedAt`, and
   `Turn.workspace` for Claude Code, from every provider) and step 15.2
   (`RepositoryResolver` and `RemoteUrlNormalizer` in

@@ -872,7 +872,7 @@ and High Contrast. The order is fixed. A project's colour comes from its
 position in the project file, and a vendor's colour from a fixed vendor
 order (Anthropic, OpenAI, Google, xAI, Microsoft, Moonshot AI, …), so
 filtering never repaints them. Waterfall increases and decreases use the
-diverging pair (red `#e34948`, dark blue `#1c5cab`) with a written sign;
+diverging pair (red `#e34948`, dark blue `#1c5cab`; in dark themes the blue is `#3987e5`, since `#1c5cab` is 2.5:1 on `#1f1f1f`, pending the owner's approval) with a written sign;
 warnings keep the existing severity colours with icon and text.
 
 ### 11.8 Mock-ups and review gate
@@ -1083,7 +1083,7 @@ No UI code (15.9 onwards) starts before the mock-ups in 15.8 are approved.
 | 15.5 | **Price book with history**: `PriceVersion` schema, bundled channel files with sources, user versions, `PriceBook` lookup; Phase 13 profiles read their current prices from it; MCP: `get_price_book` | Overlap/boundary/precedence tests pass; every version has a source; Phase 13 tests unchanged; the step's MCP tools pass the §10.1.6 tests |
 | 15.6 | **CostPricer + basis**: `CostFigure` on every turn row; reconciliation figures for Copilot turns; Cost basis list box; MCP: cost basis in `get_session_cost`, `get_cost_rollup`, `get_turn` | Pricing tests pass; unknown never sums as 0; billed vs priced shown per model-month; the step's MCP tools pass the §10.1.6 tests |
 | 15.7 | **Time series, compare, project breakdown** + their endpoints; MCP: `get_repository_cost`, `get_project_cost`, `compare_costs`, the `review_costs` project step | Golden outputs for a fixture dataset across three providers and two projects; the step's MCP tools pass the §10.1.6 tests |
-| 15.8 | **Mock-ups and palette** (§11.7, §11.8): the seven boards on a Design canvas with versioned copies (drawn and approved 2026-11-05); the eight categorical tokens in `theme.css` and `theme-vscode.css` (not started) | Owner approves the boards and their comments are resolved; the dataviz validator passes in light and dark; `theme-contrast.test.ts` covers the new tokens in Dark Modern, Light Modern and High Contrast |
+| 15.8 | **Mock-ups and palette** (§11.7, §11.8): the seven boards on a Design canvas with versioned copies (drawn and approved 2026-11-05); the eight categorical tokens in `theme.css` and `theme-vscode.css` (done 2026-11-05, see §14.1) | Owner approves the boards and their comments are resolved; the dataviz validator passes in light and dark; `theme-contrast.test.ts` covers the new tokens in Dark Modern, Light Modern and High Contrast |
 | 15.9 | **Dashboard tabs: Cost over time and Compare**, with price-change markers (§11.1–§11.3) | Component tests incl. "View as table" and unknown-as-gap; `vitest-axe` clean in three themes; keyboard tests; the UI check (`npm run test:ui`) passes for the new tabs at 600–1600 px in three themes; screenshots of the standalone app at desktop and 360 px widths; the §12.4.1 Playwright harness and fixture home are in place, and scenarios S2 and S3 pass in the `web-e2e` job |
 | 15.10 | **Price changes and variance**: `PriceChangeDetector`, observed-change finding, `VarianceAnalyzer`, Project tab (§11.4); MCP: `explain_cost_change` tool and prompt, `get_price_changes`, `list_findings` kind `price-change` | Effects add up exactly (property test); markers match price-book boundaries; same UI checks as 15.9; the step's MCP tools pass the §10.1.6 tests; scenario S4 passes |
 | 15.11 | **Statements**: builder, freeze, diff, CSV/JSON/Markdown export, Billing tab, Projects editor (§11.5); MCP: `get_statement`, `prepare_statement` prompt | Golden statements; a frozen statement survives a price-book update unchanged and the diff is exact; every project can be assigned by keyboard alone; same UI checks as 15.9; the step's MCP tools pass the §10.1.6 tests; scenarios S1, S5, S6 and S8 pass |
@@ -1179,6 +1179,34 @@ written with 15.3, since `PUT /api/projects` is the first new write.
 - Not yet: capture rules are validated but not applied, because mitmproxy
   sessions don't carry their capture file's path; step 15.4 adds that
   when it attributes sessions.
+
+**15.8 palette (done 2026-11-05).** `theme.css` `:root` has
+`--color-series-1` to `-8` (the §11.7 light steps, fixed order), the
+waterfall pair `--color-diverging-increase` (`#e34948`) and
+`--color-diverging-decrease` (`#1c5cab`), and `--dash-series-1` to `-8`
+(`none`). The standalone app has no dark theme, so the dark steps live in
+`theme-vscode.css`: `body.vscode-dark` and `body.vscode-high-contrast` take
+the §11.7 dark steps as fixed values (never `--vscode-charts-*`);
+`body.vscode-high-contrast` also repeats the dashes solid, `7 4`, `2 3`, and
+`body.vscode-high-contrast.vscode-high-contrast-light` takes the light
+steps back.
+
+- **Found while validating:** `#1c5cab` fails the dark lightness band
+  (L 0.48) and is 2.5:1 on `#1f1f1f`, so dark themes use the blue ramp's 400
+  step `#3987e5` for decreases (validator: all pass on `#1f1f1f` and
+  `#000`). This change to §11.7 awaits the owner's approval.
+- Validator (`validate_palette.js`), light on `#f2f2f3`: lightness, chroma,
+  colour-blind separation (worst adjacent ΔE 9.1) and normal vision (19.6)
+  pass; contrast is a warning for orange 2.86, aqua 2.52, yellow 1.94 and
+  magenta 2.41. Dark on `#1f1f1f`: all pass (ΔE 8.4, normal vision 19.3,
+  all ≥ 3:1). On Light Modern `#ffffff` the warning covers aqua, yellow and
+  magenta; on High Contrast `#000` all are ≥ 3:1.
+- `theme-contrast.test.ts` covers the standalone app, Light Modern, Dark
+  Modern and High Contrast: exact order; 3:1 graphics contrast with an
+  explicit light-ground allowance (floor 1.9:1) for orange, aqua, yellow
+  and magenta only; the diverging pair; dashes; the light High Contrast
+  override; no `--vscode-charts-*`; no ninth series. Nothing uses the tokens
+  yet; the charts of step 15.9 onwards do.
 
 ## 15. Exit criterion
 

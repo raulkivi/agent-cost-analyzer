@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- Web and VS Code themes: eight categorical series colours
+  (`--color-series-1` to `-8`, light and dark steps), a diverging pair for
+  waterfalls, and dash patterns in High Contrast, ready for the
+  cost-by-project charts (Phase 15 step 15.8).
 - Session working folders (Phase 15 step 15.1): every Analyze session
   reports the folder it ran in, and its branch and repository where the log
   records them, or why it is unknown (mitmproxy captures record none); each
