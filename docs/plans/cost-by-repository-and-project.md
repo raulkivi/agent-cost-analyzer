@@ -1017,6 +1017,10 @@ script.
 
 #### 12.4.2 Scenarios
 
+The mock-up canvas (§11.8) carries the same scenarios as blue sticky
+notes, one per row of boards, naming the board each one passes through.
+When a scenario changes here, its sticky changes in the same commit.
+
 | # | Scenario | Board | Step | Passes when |
 |---|---|---|---|---|
 | S1 | **First project.** Open the Dashboard with no project file → the "no projects" empty state → *Create project* → assign three repositories with each row's Project select, by keyboard only → Save | 6, 5 | 15.11 | The project appears in the Project list box; its total equals the sum of its three repositories; the file on disk parses against the schema |
