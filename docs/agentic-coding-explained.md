@@ -1036,8 +1036,8 @@ on the model generation:
 | Provider (example models available in Copilot) | Default cache lifetime | Longer-TTL option | Notes |
 |---|---|---|---|
 | **Anthropic** (Claude Opus/Sonnet/Haiku families) | **5 minutes**, refreshed for free on every cache hit | 1-hour TTL available, at ~2x the normal cache-write price | The clock starts at the **request** that reads/writes the entry, not the end of its response — a slow 4-minute response leaves only ~1 minute before the next call must land to keep the hit |
-| **OpenAI** (GPT-5.x / GPT-6 families) | Automatic caching for prompts of 1,024+ tokens. With `in_memory` retention, entries typically stay **5-10 minutes after last use, up to ~1 hour**. Since May 2026, organizations without zero data retention default to **24-hour** retention on models that support it | GPT-5.6+ use `prompt_cache_options` (implicit by default, or explicit breakpoints) with a **30-minute default** TTL and an optional 12-hour TTL. These models also **charge for cache writes** (1.25x input at 30 minutes, 2.5x at 12 hours); earlier OpenAI models don't | Lifetime depends on model and retention mode; `in_memory` is the short case |
-| **Google** (Gemini 3.x/4) | **Implicit caching**, no guaranteed TTL; explicit context caching defaults to **1 hour** | Explicit caching with any TTL | Google's guidance is to send similar-prefix requests "in a short amount of time". For Copilot, GitHub says it uses Google's Durable Caching, "held for up to 24 hours" |
+| **OpenAI** (GPT-5.x / GPT-6 families) | Automatic caching for prompts of 1,024+ tokens. With `in_memory` retention, entries typically stay **5-10 minutes after last use, up to ~1 hour**. Organizations without zero data retention default to **24-hour** retention on models that support it (ZDR organizations default to `in_memory`) | GPT-5.6+ use `prompt_cache_options` (implicit by default, or explicit breakpoints) with a **30-minute default** TTL and an optional 12-hour TTL. These models also **charge for cache writes** (1.25x input at 30 minutes, 2.5x at 12 hours); earlier OpenAI models don't | Lifetime depends on model and retention mode; `in_memory` is the short case |
+| **Google** (Gemini 3.x/4) | **Implicit caching**, no guaranteed TTL; explicit context caching default TTL is **unknown** (not stated in Google's docs) | Explicit caching with any TTL | Google's guidance is to send similar-prefix requests "in a short amount of time". For Copilot, GitHub says it uses Google's Durable Caching, "held for up to 24 hours" |
 | **xAI (Grok)** | Documented, but no fixed TTL: entries "can be evicted at any time due to server load or restarts" | Routing hints (`x-grok-conv-id` / `prompt_cache_key`) improve retention | Treat as best-effort |
 | **Moonshot AI (Kimi), Microsoft (MAI-Code)** | Not publicly documented for Copilot | — | Treat as unknown/opaque |
 
@@ -1135,7 +1135,7 @@ pricing.
 - **Idle time beyond the provider's TTL** — the subject of 17.1/17.2. Anthropic
   is explicit about 5 minutes by default; OpenAI's `in_memory` retention is
   looser ("5-10 minutes, up to one hour"), while its 24-hour default retention
-  (since May 2026) and GPT-5.6+'s 30-minute default last longer (Section 17.1).
+  (non-ZDR organizations) and GPT-5.6+'s 30-minute default last longer (Section 17.1).
 - **Toggling anything that gets rendered into the prompt itself** — reasoning
   effort/thinking-budget changes, web-search or citation toggles, `tool_choice`
   changes, and images appearing/disappearing anywhere in the conversation are
