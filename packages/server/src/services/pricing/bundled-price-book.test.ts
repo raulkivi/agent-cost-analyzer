@@ -21,14 +21,15 @@ const { versions, sources } = source.load();
 
 describe("bundled price book (step 15.5)", () => {
   it("holds the GitHub Copilot channel", () => {
-    expect(book.list({}).channels).toEqual(["github-copilot"]);
+    expect(book.list({}).channels).toContain("github-copilot");
   });
 
-  it("cites at least one dated https source for every version, GitHub's price table first", () => {
+  it("cites at least one dated https source for every version, GitHub's price table first on github-copilot", () => {
     const byId = new Map(sources.map((cited) => [cited.id, cited]));
     for (const version of versions) {
-      // The table as of the commit that proves the version's start (D8 history).
-      expect(version.sourceIds[0], version.id).toMatch(/^gh-pricing-table/);
+      // On github-copilot: the table as of the commit that proves the version's start (D8 history).
+      if (version.channel === "github-copilot") expect(version.sourceIds[0], version.id).toMatch(/^gh-pricing-table/);
+      expect(version.sourceIds.length, version.id).toBeGreaterThan(0);
       for (const id of version.sourceIds) {
         expect(byId.get(id)?.checkedAt, `${version.id} -> ${id}`).toMatch(/^\d{4}-\d{2}-\d{2}$/);
         expect(byId.get(id)?.url, `${version.id} -> ${id}`).toMatch(/^https:\/\//);

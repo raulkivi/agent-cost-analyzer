@@ -120,7 +120,7 @@ content here.
   on Insights rows, Dashboard list boxes, mitmproxy capture rules, MCP
   `list_repositories`/`list_projects`) and step 15.5 (price book with history in
   `packages/server/src/services/pricing/`, `fixtures/price-book/`, so far
-  GitHub Copilot's table from 2026-10-26 only; `GET /api/price-book`,
+  GitHub Copilot's and the Anthropic API's prices from 2026-10-01; `GET /api/price-book`,
   `get_price_book`) is done;
   step 15.1 is done (`Session.workspace`, `Turn.startedAt`, and
   `Turn.workspace` for Claude Code, from every provider) and step 15.2

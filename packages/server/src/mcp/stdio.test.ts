@@ -73,7 +73,7 @@ describe("stdio MCP entry point", () => {
 
   // Phase 15 step 15.5: the standalone server serves the bundled price book.
   it("returns the price book in force at a date", async () => {
-    const result = await client.callTool({ name: "get_price_book", arguments: { model: "claude-sonnet-5.5", at: "2026-11-05" } });
+    const result = await client.callTool({ name: "get_price_book", arguments: { channel: "github-copilot", model: "claude-sonnet-5.5", at: "2026-11-05" } });
 
     expect(result.isError).toBeFalsy();
     expect(priceBookListingSchema.parse(result.structuredContent).versions.map((version) => version.id)).toEqual([

@@ -1327,11 +1327,31 @@ Data:
 - The Gemini promotions end per GitHub's wording (Flash "through December
   31, 2026": `effectiveTo` 2027-01-01; Argon "until December 1, 2026":
   2026-12-01); no price is known after them.
-- **No vendor API prices are sourced yet**, so `anthropic-api`,
-  `openai-api`, `google-api` and `xai-api` have no file and a lookup there
-  is unknown. Until they are added, step 15.6 can price only Copilot turns;
-  Claude Code, pi and mitmproxy turns stay unknown (pi keeps its
-  `reported` cost).
+- **`anthropic-api`** (`fixtures/price-book/anthropic-api.json`): 20 list
+  versions for 18 Claude models from 2026-10-01. Each cites Anthropic's
+  pricing page plus a dated release note or announcement; the 5-minute
+  cache write maps to `cacheWriteUsdPerM` and the 1-hour write to
+  `extendedCacheWriteUsdPerM`, as on `github-copilot`. The window's one
+  price change, Claude Sonnet 5.5's cache read $0.20 → $0.10 on
+  2026-10-07, is a version boundary (00:00 UTC; the time of day isn't
+  published). Claude Haiku 5.5 starts at its 2026-10-07 launch with a
+  100,000-token prompt-length tier. The 2026-10-01 starts rest on dated
+  launch notes, today's page and release notes recording no change in
+  between (no archived page could be fetched). Fast mode on Opus 5 and
+  Opus 4.8 is sourced only from 2026-11-05; fast-mode cache prices are
+  derived from the page's "multipliers apply on top" rule and say so in
+  their notes. New model ids not in any Phase 13 profile:
+  `claude-mythos-5`, `claude-mythos-5.1`, `claude-opus-4.5`/`4.6`/`4.7`,
+  `claude-sonnet-4.5`, `claude-opus-5.5-fast`, `claude-opus-5-fast`.
+  Batch, data-residency, priority and cloud-platform prices are not
+  modelled.
+- **`openai-api` and `google-api` are not added yet**: this cloud session's
+  network does not allow openai.com, developers.openai.com, ai.google.dev
+  or aistudio.google.com, and third-party price lists don't count as
+  sources. A lookup there (and on `xai-api`) is unknown, so step 15.6 can't
+  price those turns yet (pi keeps its `reported` cost). When OpenAI is
+  added, GPT-5.6 and later get a cache-write price of 1.25× input, per the
+  prompt-caching guide the Phase 13 profile cites.
 
 API and MCP: `GET /api/price-book?channel&model&at` (400 on a bad query;
 404 in the extension, which has no price book), and `get_price_book`

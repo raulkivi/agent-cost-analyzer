@@ -16,7 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   by folder name only unless `includePaths` is set.
 - Price book with history (Phase 15 step 15.5): sourced, dated price
   versions per channel and model (`fixtures/price-book/`, starting with
-  GitHub Copilot's table), the user's own contract or list prices in
+  GitHub Copilot's table from 2026-10-01 and the Anthropic API's), the user's own contract or list prices in
   `projects.json` (`channels.priceVersions`), `GET /api/price-book` and the
   read-only `get_price_book` MCP tool. Learn simulation prices now come
   from the price book. A price not in the book is unknown with a reason,

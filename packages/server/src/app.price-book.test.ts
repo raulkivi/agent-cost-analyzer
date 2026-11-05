@@ -80,7 +80,7 @@ describe("price book API", () => {
 
     expect(response.status).toBe(200);
     const listing = priceBookListingSchema.parse(response.body);
-    expect(listing.channels).toEqual(["acme-reseller", "github-copilot"]);
+    expect(listing.channels).toEqual(expect.arrayContaining(["acme-reseller", "github-copilot"]));
     expect(listing.versions.find((version) => version.origin === "user")).toMatchObject({ kind: "contract", scope: { projectId: "acme" } });
     expect(listing.versions.some((version) => version.id === "mine")).toBe(false);
     expect(listing.problems).toEqual([{ path: "channels.priceVersions[1]", message: expect.stringMatching(/"mine" overlaps/) }]);
