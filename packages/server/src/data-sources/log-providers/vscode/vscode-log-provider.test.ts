@@ -237,11 +237,142 @@ describe("VscodeLogProvider: a session's AI Credits in the list and in its detai
   });
 });
 
-function seedRoundTripLog(debugLogsDirPath: string, sessionId: string): void {
+// Debug logging can be switched on in the middle of a session: the log then
+// holds only the later turns, and the Nth user_message is not store turn N.
+// Turns are joined on the user's message text, never on position alone.
+describe("VscodeLogProvider: debug logging switched on mid-session", () => {
+  const SESSION_ID = "mid-session";
+  let dir: string;
+  let dbPath: string;
+  let debugLogsDirPath: string;
+
+  beforeEach(() => {
+    dir = mkdtempSync(path.join(tmpdir(), "vscode-log-provider-mid-session-"));
+    dbPath = path.join(dir, "session-store.db");
+    debugLogsDirPath = path.join(dir, "debug-logs");
+  });
+
+  afterEach(() => {
+    rmSync(dir, { recursive: true, force: true });
+  });
+
+  function seedStore(userMessages: string[]): void {
+    const db = new DatabaseSync(dbPath);
+    db.exec(SESSION_STORE_SCHEMA);
+    db.prepare(
+      "INSERT INTO sessions (id, cwd, repository, branch, host_type, summary, agent_name, agent_description, created_at, updated_at) VALUES (?, '/repo', 'org/repo', 'main', 'desktop', 'Mid', 'GitHub Copilot Chat', 'chat', '2026-01-01T00:00:00.000Z', '2026-01-01T00:00:00.000Z')",
+    ).run(SESSION_ID);
+    userMessages.forEach((message, index) => {
+      db.prepare("INSERT INTO turns (session_id, turn_index, user_message, assistant_response, timestamp) VALUES (?, ?, ?, 'ok', NULL)").run(
+        SESSION_ID,
+        index,
+        message,
+      );
+    });
+    db.close();
+  }
+
+  // One logged turn: a user_message, one tool call and one billed request.
+  // `aiu` doubles as the turn's marker in the assertions.
+  function seedLog(turns: { message: string; aiu: number; tool: string }[]): void {
+    const sessionDir = path.join(debugLogsDirPath, SESSION_ID);
+    mkdirSync(sessionDir, { recursive: true });
+    const lines = turns.flatMap((turn, i) => [
+      { type: "user_message", ts: i * 10, attrs: { content: turn.message } },
+      { type: "tool_call", name: turn.tool, attrs: {} },
+      {
+        type: "llm_request",
+        ts: i * 10 + 1,
+        attrs: { model: "claude-sonnet-5", inputTokens: 100 + turn.aiu, outputTokens: 5, cachedTokens: 10, copilotUsageNanoAiu: turn.aiu * 1e9 },
+      },
+    ]);
+    writeFileSync(path.join(sessionDir, "main.jsonl"), lines.map((line) => JSON.stringify(line)).join("\n") + "\n");
+  }
+
+  function provider(): VscodeLogProvider {
+    return new VscodeLogProvider({ sessionStoreDbPath: dbPath, debugLogsDirPaths: [debugLogsDirPath], agentTracesDbPath: null });
+  }
+
+  const credits = (usage: { costAiCredits: { known: boolean; value?: number } }) => (usage.costAiCredits.known ? usage.costAiCredits.value : null);
+
+  it("attributes each logged turn's usage to the store turn with the same message", async () => {
+    seedStore(["first", "second", "third", "fourth"]);
+    seedLog([
+      { message: "third", aiu: 3, tool: "tool_third" },
+      { message: "fourth", aiu: 4, tool: "tool_fourth" },
+    ]);
+
+    const detail = await provider().readSession(SESSION_ID);
+
+    expect(detail?.turns.map((turn) => credits(turn.usage))).toEqual([null, null, 3, 4]);
+    expect(detail?.turns.map((turn) => turn.toolCalls.map((call) => call.name))).toEqual([[], [], ["tool_third"], ["tool_fourth"]]);
+    expect(detail?.turns.map((turn) => turn.index)).toEqual([0, 1, 2, 3]);
+  });
+
+  it("leaves the total unknown, in the list and the detail, while turns before the log have no usage", async () => {
+    seedStore(["first", "second", "third", "fourth"]);
+    seedLog([
+      { message: "third", aiu: 3, tool: "t" },
+      { message: "fourth", aiu: 4, tool: "t" },
+    ]);
+
+    const [listed] = await provider().listSessions();
+    const detail = await provider().readSession(SESSION_ID);
+
+    expect(listed.costAiCredits.known).toBe(false);
+    expect(detail?.costAiCredits).toEqual(listed.costAiCredits);
+    expect(listed.turnCount).toBe(4);
+    expect(detail?.turnCount).toBe(4);
+    expect(listed.usageDataAvailable).toBe(true);
+  });
+
+  it("opens a store turn in the turn inspector from the log turn with the same message", async () => {
+    seedStore(["first", "second", "third"]);
+    seedLog([{ message: "third", aiu: 3, tool: "t" }]);
+
+    const logged = await provider().readTurnDetail(SESSION_ID, 2);
+    const beforeLog = await provider().readTurnDetail(SESSION_ID, 0);
+
+    expect(logged?.turnIndex).toBe(2);
+    expect(logged?.userMessage).toEqual([{ kind: "text", text: "third" }]);
+    expect(beforeLog?.userMessage).toEqual([]);
+    expect(beforeLog?.rounds).toEqual([]);
+    await expect(provider().readTurnDetail(SESSION_ID, 3)).resolves.toBeNull();
+  });
+
+  it("gives the whole session a known total when the log covers every store turn", async () => {
+    seedStore(["first", "second"]);
+    seedLog([
+      { message: "first", aiu: 1, tool: "t" },
+      { message: "second", aiu: 2, tool: "t" },
+    ]);
+
+    const [listed] = await provider().listSessions();
+    const detail = await provider().readSession(SESSION_ID);
+
+    expect(listed.costAiCredits).toEqual({ known: true, value: 3 });
+    expect(detail?.costAiCredits).toEqual({ known: true, value: 3 });
+  });
+
+  it("leaves per-turn usage unknown rather than guessing when the log's message matches several store turns", async () => {
+    seedStore(["continue", "other", "continue"]);
+    seedLog([{ message: "continue", aiu: 9, tool: "t" }]);
+
+    const [listed] = await provider().listSessions();
+    const detail = await provider().readSession(SESSION_ID);
+
+    expect(detail?.turns.map((turn) => credits(turn.usage))).toEqual([null, null, null]);
+    expect(listed.costAiCredits.known).toBe(false);
+    expect(detail?.costAiCredits).toEqual(listed.costAiCredits);
+    await expect(provider().readTurnDetail(SESSION_ID, 0)).resolves.toMatchObject({ rounds: [] });
+  });
+});
+
+function seedRoundTripLog(debugLogsDirPath: string, sessionId: string, userMessage = "hi"): void {
   const sessionLogDir = path.join(debugLogsDirPath, sessionId);
   mkdirSync(sessionLogDir, { recursive: true });
   const lines = [
-    { type: "user_message", attrs: { content: "hi" } },
+    { type: "user_message", attrs: { content: userMessage } },
     { type: "llm_request", attrs: { inputMessages: [{ role: "system", content: "You are an agent." }] } },
     { type: "agent_response", attrs: { response: "hello" } },
   ];
@@ -289,6 +420,30 @@ describeLogProviderContract("VscodeLogProvider (debug log ahead of the session s
   unknownSessionId: "does-not-exist",
   buildUnavailableProvider: () => new VscodeLogProvider({ sessionStoreDbPath: null, debugLogsDirPaths: [], agentTracesDbPath: null }),
   turnIndexWithRoundTrip: 1,
+});
+
+// Debug logging switched on at the session's third turn: the log holds only that turn.
+describeLogProviderContract("VscodeLogProvider (debug log starts mid-session)", {
+  buildAvailableProvider: () => {
+    const dir = mkdtempSync(path.join(tmpdir(), "vscode-log-provider-contract-mid-"));
+    const dbPath = path.join(dir, "session-store.db");
+    seedFixtureDb(dbPath);
+    const db = new DatabaseSync(dbPath);
+    for (const [turnIndex, message] of [[1, "earlier"], [2, "later"]] as const) {
+      db.prepare("INSERT INTO turns (session_id, turn_index, user_message, assistant_response, timestamp) VALUES ('session-1', ?, ?, 'ok', NULL)").run(
+        turnIndex,
+        message,
+      );
+    }
+    db.close();
+    const debugLogsDirPath = path.join(dir, "debug-logs");
+    seedRoundTripLog(debugLogsDirPath, "session-1", "later");
+    return new VscodeLogProvider({ sessionStoreDbPath: dbPath, debugLogsDirPaths: [debugLogsDirPath], agentTracesDbPath: null });
+  },
+  knownSessionId: "session-1",
+  unknownSessionId: "does-not-exist",
+  buildUnavailableProvider: () => new VscodeLogProvider({ sessionStoreDbPath: null, debugLogsDirPaths: [], agentTracesDbPath: null }),
+  turnIndexWithRoundTrip: 2,
 });
 
 describe("VscodeLogProvider.readTurnDetail", () => {

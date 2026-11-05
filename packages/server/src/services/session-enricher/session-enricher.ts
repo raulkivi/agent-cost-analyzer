@@ -23,8 +23,9 @@ export const LOGGING_NEVER_ENABLED_REASON =
   "was off while this session ran, so no usage data was recorded. Enable it in VS Code " +
   "settings and reload the window to capture usage data for future sessions.";
 export const USAGE_UNAVAILABLE_REASON =
-  "Usage data is unavailable for this session (main.jsonl is missing, uses an " +
-  "older/unsupported log format, or its usage data could not be extracted).";
+  "Usage data is unavailable for this session or turn (main.jsonl is missing, uses an " +
+  "older/unsupported log format, its usage data could not be extracted, debug logging " +
+  "was switched on after the turn ran, or the turn could not be matched to the log with certainty).";
 export const PARSE_FAILURES_REASON =
   "main.jsonl for this session has content, but none of its lines could be " +
   "parsed into a usable event — this looks like a parser regression or a " +
@@ -50,8 +51,8 @@ export const STORE_TURN_MISSING_REASON =
   "GitHub Copilot Chat's session store has no record of this turn (it was likely interrupted, or was still " +
   "running when the store was read), so its text is unknown. Its tokens and AI Credits come from the debug log (main.jsonl).";
 
-// Debug-log turns (one per user_message, the positional join of
-// architecture.md §6.2.2) that the session store has no `turns` row for: an
+// Debug-log turns (one per user_message, placed on a store turn index by
+// log-turn-alignment.ts, architecture.md §6.2.2) that the session store has no `turns` row for: an
 // interrupted or still-running turn whose requests were billed all the same.
 function logOnlyTurnIndices(
   storeTurnIndices: readonly number[],

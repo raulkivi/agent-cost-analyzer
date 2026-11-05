@@ -30,6 +30,10 @@ export const COPILOT_SESSION_STORE_SCHEMA = `
 export const USAGE_SESSION_ID = "1c7604a0-1488-4b5d-880a-f80fd693475e";
 export const USAGE_MAIN_JSONL = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../fixtures/jsonl/real-session-with-usage.jsonl");
 
+// What the real debug log's user_messages say (their text is redacted); the
+// store's turn 0 carries the same text so the two join as they do for real.
+export const USAGE_LOG_USER_MESSAGE = "<redacted user message content>";
+
 // One Copilot Chat session ("Fix the bug", one turn) in a new session store
 // at dbPath, started at `startedAt`.
 export function seedCopilotSessionStore(dbPath: string, startedAt: string): void {
@@ -39,8 +43,9 @@ export function seedCopilotSessionStore(dbPath: string, startedAt: string): void
   db.prepare(
     "INSERT INTO sessions (id, cwd, repository, branch, host_type, summary, agent_name, agent_description, created_at, updated_at) VALUES (?, '/repo', 'org/repo', 'main', 'desktop', 'Fix the bug', 'GitHub Copilot Chat', 'chat', ?, ?)",
   ).run(USAGE_SESSION_ID, startedAt, startedAt);
-  db.prepare("INSERT INTO turns (session_id, turn_index, user_message, assistant_response, timestamp) VALUES (?, 0, 'hi', 'hello', ?)").run(
+  db.prepare("INSERT INTO turns (session_id, turn_index, user_message, assistant_response, timestamp) VALUES (?, 0, ?, 'hello', ?)").run(
     USAGE_SESSION_ID,
+    USAGE_LOG_USER_MESSAGE,
     startedAt,
   );
   db.close();

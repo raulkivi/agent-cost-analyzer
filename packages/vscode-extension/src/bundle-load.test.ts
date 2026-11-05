@@ -15,6 +15,8 @@ const serverFixturesDir = path.resolve(path.dirname(fileURLToPath(import.meta.ur
 const learnFixturesDir = path.join(serverFixturesDir, "learn-scenarios");
 // A real main.jsonl with AI Credits numbers; its session id seeds the store.
 const USAGE_SESSION_ID = "1c7604a0-1488-4b5d-880a-f80fd693475e";
+// What the real fixture log's user_messages say (their text is redacted); the store turn carries it too, so the two join.
+const USAGE_LOG_USER_MESSAGE = "<redacted user message content>";
 const usageMainJsonl = path.join(serverFixturesDir, "jsonl", "real-session-with-usage.jsonl");
 
 // The session store's tables, as Copilot Chat creates them (enough for the
@@ -46,8 +48,9 @@ function seedSessionStore(dbPath: string): void {
   db.prepare(
     "INSERT INTO sessions (id, cwd, repository, branch, host_type, summary, agent_name, agent_description, created_at, updated_at) VALUES (?, '/repo', 'org/repo', 'main', 'desktop', 'Fix the bug', 'GitHub Copilot Chat', 'chat', ?, ?)",
   ).run(USAGE_SESSION_ID, now, now);
-  db.prepare("INSERT INTO turns (session_id, turn_index, user_message, assistant_response, timestamp) VALUES (?, 0, 'hi', 'hello', ?)").run(
+  db.prepare("INSERT INTO turns (session_id, turn_index, user_message, assistant_response, timestamp) VALUES (?, 0, ?, 'hello', ?)").run(
     USAGE_SESSION_ID,
+    USAGE_LOG_USER_MESSAGE,
     now,
   );
   db.close();

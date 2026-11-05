@@ -608,7 +608,8 @@ this slice:
   premium requests (not USD) — see [GitHub Copilot models and
   pricing](https://docs.github.com/en/copilot/reference/copilot-billing/models-and-pricing)
   for how a given model's requests convert to AI Credits.
-- **The join key is positional, not `turnId`.** `main.jsonl`'s own
+- **The join key is the user's message text, not `turnId`.** (Positional
+  until 2026-11-05: see the mid-session logging bullet below.) `main.jsonl`'s own
   `turnId` (on `turn_start`/`turn_end`) is an internal per-agent-iteration
   counter that **resets to 0 at every `user_message`**, not a running
   SQLite `turn_index` — verified against this project's own session
@@ -649,12 +650,37 @@ this slice:
   reason (`LOGGING_NEVER_ENABLED_REASON`/`USAGE_UNAVAILABLE_REASON`) — a
   session can have some turns known and others not (e.g. the last turn's
   events not yet flushed per the `flushIntervalMs` note below).
+- **Debug logging switched on mid-session (fix, 2026-11-05).** The log holds
+  only the turns from the moment logging was enabled, so the Nth
+  `user_message` is not necessarily store turn N; joining by position
+  attributed those turns' tokens and AI Credits to the wrong store turns
+  (earlier turns showed later turns' usage). Both sides carry the user's
+  message text, so `data-sources/jsonl/log-turn-alignment.ts` joins on it:
+  `main-jsonl-reader.ts` keeps a SHA-256 digest of each `user_message`'s
+  `attrs.content` (`attrs.contentDigest`; the text itself is still dropped
+  by the narrow read), the store side digests `turns.user_message`, and
+  `alignLogTurnsToStore` looks for the one start offset where every
+  overlapping text agrees. One offset: used. None or several (for example a
+  log of one "continue" in a session with two): if the log has as many turns
+  as the store, position is trusted (a text differing, e.g. through
+  attachments), otherwise every log turn is *unplaced* and the store turns
+  get unknown usage (constraint 6: unknown, not a guess). Log turns past the
+  store's last row continue the numbering. The per-log-turn usage, invoked
+  tools and turn-inspector lookup all go through this alignment
+  (`placeByStoreIndex`, `VscodeLogProvider.findLogTurnIndex`). The total
+  stays all-or-nothing: store turns logging did not cover leave the session
+  total unknown, in the list and the detail alike. Checked on this machine's
+  real data: 85 sessions with a log and store turns, all join the same way
+  as the positional rule did (no mid-session case occurs there), so the
+  fix changes nothing for them. Timestamps are not used: the store's
+  timestamp is the turn's end, 0.4 s to 11 h after the log's
+  `user_message`.
 - **Debug-log turns without a store row (fix, 2026-11-05).** The store can
   also lag the log: a turn that was interrupted, or still running when the
   store was read, has a `user_message` and billed `llm_request`s in
   `main.jsonl` but no `turns` row (seen on real data: 3 requests, 11.22 AI
   Credits, no row). Such a turn is part of the session: `buildSession` adds
-  it at its positional index with its usage and tool calls, empty text and
+  it at its aligned index with its usage and tool calls, empty text and
   `textUnavailableReason` (`STORE_TURN_MISSING_REASON`), and
   `readTurnDetail` opens it. The session's figures (`turnCount`,
   `costAiCredits`, `model`, `usageDataAvailable`) come from one function,
@@ -733,8 +759,8 @@ confirm:
   Phase 8.5 later added a second, optional local source that can populate
   them — see that phase's implementation note below.
   `data-sources/jsonl/tool-inventory.ts`'s `extractInvokedToolNamesByTurn`
-  reuses `groupEnvelopesByUserMessage`'s positional join to attribute each
-  `tool_call` to a SQLite turn index; `buildToolInventory` unions that
+  reuses `groupEnvelopesByUserMessage`'s grouping (then placed by the
+  alignment above) to attribute each `tool_call` to a SQLite turn index; `buildToolInventory` unions that
   against the tools-artifact list — a tool invoked but absent from the
   artifact (schema drift) is still surfaced, marked `loaded: false`, rather
   than dropped; if the artifact itself couldn't be read, only tools with

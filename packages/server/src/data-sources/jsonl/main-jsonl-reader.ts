@@ -1,5 +1,6 @@
 import { createReadStream, existsSync } from "node:fs";
 import { createInterface } from "node:readline";
+import { userMessageDigest } from "./log-turn-alignment.js";
 
 // Generic envelope shape (architecture.md §7). Only `type` is relied on by
 // this adapter; everything else is intentionally optional/untyped since the
@@ -64,6 +65,20 @@ export function createAttrsProjector(keys: readonly string[]): AttrsProjector {
 
 const projectAttrs = createAttrsProjector(KNOWN_ATTRS_KEYS);
 
+// The user_message text itself is dropped like any wide content, but a digest
+// of it is kept: it is the key that joins a log turn to its session-store
+// turn (log-turn-alignment.ts).
+function withContentDigest(
+  envelope: JsonlEnvelope,
+  attrs: Record<string, unknown> | undefined,
+): Record<string, unknown> | undefined {
+  const content = envelope.attrs?.content;
+  if (envelope.type !== "user_message" || typeof content !== "string") {
+    return attrs;
+  }
+  return { ...attrs, contentDigest: userMessageDigest(content) };
+}
+
 // Exported so turn-inspector-reader.ts's bounded wide-attrs read can reuse
 // this line-parsing/JSON-shape logic with a different attrsProjector instead
 // of duplicating it.
@@ -84,7 +99,7 @@ export function parseEnvelopeLine(
       typeof (parsed as { type?: unknown }).type === "string"
     ) {
       const envelope = parsed as JsonlEnvelope;
-      return { ...envelope, attrs: attrsProjector(envelope.attrs) };
+      return { ...envelope, attrs: withContentDigest(envelope, attrsProjector(envelope.attrs)) };
     }
     return null;
   } catch {
