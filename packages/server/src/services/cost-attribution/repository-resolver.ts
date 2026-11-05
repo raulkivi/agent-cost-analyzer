@@ -99,10 +99,18 @@ export class RepositoryResolver {
   }
 
   // `.git` as a file holds `gitdir: <path>`, relative to its own folder.
+  // Read line by line with trim, not a regex: /^gitdir:\s*(.+?)\s*$/ is
+  // quadratic on long whitespace.
   private followGitFile(dotGitFile: string): string | null {
     const text = this.fs.readText(dotGitFile, MAX_GIT_FILE_BYTES);
-    const match = text ? /^gitdir:\s*(.+?)\s*$/m.exec(text) : null;
-    return match ? path.resolve(path.dirname(dotGitFile), match[1]!) : null;
+    for (const line of text?.split("\n") ?? []) {
+      const trimmed = line.trim();
+      if (trimmed.startsWith("gitdir:")) {
+        const target = trimmed.slice("gitdir:".length).trim();
+        return target ? path.resolve(path.dirname(dotGitFile), target) : null;
+      }
+    }
+    return null;
   }
 
   private commonDir(gitDir: string): string {

@@ -92,3 +92,21 @@ describe("resolveAlias and projectIdsForRepository", () => {
     expect(projectIdsForRepository(catalog, "github.com/example/docs")).toEqual([]);
   });
 });
+
+// Branch patterns come from the user's projects file: matching must not
+// backtrack exponentially (CodeQL js/polynomial-redos family, PR #137).
+describe("branchPatternMatches on adversarial patterns", () => {
+  it("answers quickly for many ** and * against a long branch that doesn't match", () => {
+    const started = performance.now();
+    expect(branchPatternMatches(`${"**".repeat(40)}x`, "a".repeat(250))).toBe(false);
+    expect(branchPatternMatches(`${"*a".repeat(40)}x`, "a".repeat(250))).toBe(false);
+    expect(branchPatternMatches(`${"**/".repeat(40)}x`, `${"a/".repeat(120)}b`)).toBe(false);
+    expect(performance.now() - started).toBeLessThan(200);
+  });
+
+  it("still matches across segments with **", () => {
+    expect(branchPatternMatches("**/fix-*", "team/a/fix-login")).toBe(true);
+    expect(branchPatternMatches("**", "")).toBe(true);
+    expect(branchPatternMatches("*", "a/b")).toBe(false);
+  });
+});

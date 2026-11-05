@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { emptyProjectsFile, projectsFileSchema, projectsStateSchema, validateProjectsFile, type ProjectsFile } from "./projects.js";
+import { emptyProjectsFile, normalizeMemberPath, projectsFileSchema, projectsStateSchema, validateProjectsFile, type ProjectsFile } from "./projects.js";
 
 const portal = {
   id: "customer-portal",
@@ -135,5 +135,22 @@ describe("projectsStateSchema", () => {
 
   it("rejects an unknown status", () => {
     expect(projectsStateSchema.safeParse({ status: "broken", file: emptyProjectsFile(), problems: [], location: "x" }).success).toBe(false);
+  });
+});
+
+// CodeQL js/polynomial-redos (PR #137): normalizing a path must stay linear
+// on adversarial input (a projects file is user content, up to 100 kB).
+describe("normalizeMemberPath on adversarial input", () => {
+  it("strips trailing slashes in linear time", () => {
+    const started = performance.now();
+    expect(normalizeMemberPath(`${"/".repeat(100_000)}x`)).toBe(`${"/".repeat(100_000)}x`);
+    expect(normalizeMemberPath(`a${"/".repeat(100_000)}`)).toBe("a");
+    expect(performance.now() - started).toBeLessThan(200);
+  });
+
+  it("keeps its results", () => {
+    expect(normalizeMemberPath("./svc/api//")).toBe("svc/api");
+    expect(normalizeMemberPath(undefined)).toBe("");
+    expect(normalizeMemberPath("///")).toBe("");
   });
 });

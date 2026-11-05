@@ -168,6 +168,20 @@ describe("RepositoryResolver", () => {
     expect(new RepositoryResolver(fs).resolve(known("/r"))).toMatchObject({ repository: { key: "local:/r", source: "git-local" } });
   });
 
+  it("reads a gitdir line with surrounding spaces, and stays fast on adversarial whitespace", () => {
+    const padded = new InMemoryFileSystem({
+      "/home/dev/app/.git/config": remote("https://github.com/org/app"),
+      "/home/dev/app/.git/worktrees/w/commondir": "../..",
+      "/home/dev/w/.git": "gitdir:   /home/dev/app/.git/worktrees/w   \n",
+    });
+    expect(new RepositoryResolver(padded).resolve(known("/home/dev/w"))).toMatchObject({ repository: { key: "github.com/org/app" } });
+
+    const hostile = new InMemoryFileSystem({ "/r/.git": `gitdir:${" ".repeat(200_000)}x${" ".repeat(50_000)}y` });
+    const started = performance.now();
+    new RepositoryResolver(hostile).resolve(known("/r"));
+    expect(performance.now() - started).toBeLessThan(200);
+  });
+
   it("treats a .git file without a gitdir line as no repository", () => {
     const fs = new InMemoryFileSystem({ "/r/.git": "garbage\n" });
 

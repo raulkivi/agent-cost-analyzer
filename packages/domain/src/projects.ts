@@ -83,8 +83,15 @@ export function emptyProjectsFile(): ProjectsFile {
   return { version: 1, projects: [], aliases: {}, captureRules: [] };
 }
 
+// A loop, not /\/+$/: that regex is quadratic on a long run of "/" not at
+// the end (CodeQL js/polynomial-redos), and the file is user content.
 export function normalizeMemberPath(path: string | undefined): string {
-  return (path ?? "").replace(/^\.\//, "").replace(/\/+$/, "");
+  const value = (path ?? "").startsWith("./") ? (path ?? "").slice(2) : (path ?? "");
+  let end = value.length;
+  while (end > 0 && value[end - 1] === "/") {
+    end -= 1;
+  }
+  return value.slice(0, end);
 }
 
 function scopeKey(member: ProjectMember): string {

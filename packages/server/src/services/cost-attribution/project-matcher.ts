@@ -19,21 +19,68 @@ export function resolveAlias(file: ProjectsFile, key: string): string {
   return file.aliases[key] ?? key;
 }
 
-const patternCache = new Map<string, RegExp>();
+type Token = { kind: "any" } | { kind: "segment" } | { kind: "one" } | { kind: "literal"; char: string };
+
+const tokenCache = new Map<string, Token[]>();
+
+function tokenize(pattern: string): Token[] {
+  const tokens: Token[] = [];
+  for (let i = 0; i < pattern.length; i++) {
+    const ch = pattern[i]!;
+    if (ch === "*" && pattern[i + 1] === "*") {
+      // Runs of `**` mean the same as one.
+      if (tokens.at(-1)?.kind !== "any") {
+        tokens.push({ kind: "any" });
+      }
+      i += 1;
+    } else if (ch === "*") {
+      tokens.push({ kind: "segment" });
+    } else if (ch === "?") {
+      tokens.push({ kind: "one" });
+    } else {
+      tokens.push({ kind: "literal", char: ch });
+    }
+  }
+  return tokens;
+}
 
 // `**` any characters, `*` any within one segment, `?` one character; the
-// rest is literal.
+// rest is literal. Matched by dynamic programming over (pattern, branch), so
+// it takes at most pattern length × branch length steps whatever the
+// pattern: a regex built from a user's `**` runs could backtrack
+// exponentially.
 export function branchPatternMatches(pattern: string, branch: string): boolean {
-  let regex = patternCache.get(pattern);
-  if (!regex) {
-    const source = pattern
-      .split(/(\*\*|\*|\?)/)
-      .map((part) => (part === "**" ? ".*" : part === "*" ? "[^/]*" : part === "?" ? "[^/]" : part.replace(/[.+^${}()|[\]\\]/g, "\\$&")))
-      .join("");
-    regex = new RegExp(`^${source}$`);
-    patternCache.set(pattern, regex);
+  let tokens = tokenCache.get(pattern);
+  if (!tokens) {
+    tokens = tokenize(pattern);
+    tokenCache.set(pattern, tokens);
   }
-  return regex.test(branch);
+  const n = branch.length;
+  // previous[j]: the tokens so far match branch[0, j).
+  let previous: boolean[] = new Array<boolean>(n + 1).fill(false);
+  previous[0] = true;
+  for (const token of tokens) {
+    const next: boolean[] = new Array<boolean>(n + 1).fill(false);
+    for (let j = 0; j <= n; j++) {
+      const ch = j > 0 ? branch[j - 1] : undefined;
+      switch (token.kind) {
+        case "any":
+          next[j] = previous[j]! || (j > 0 && next[j - 1]!);
+          break;
+        case "segment":
+          next[j] = previous[j]! || (j > 0 && next[j - 1]! && ch !== "/");
+          break;
+        case "one":
+          next[j] = j > 0 && previous[j - 1]! && ch !== "/";
+          break;
+        case "literal":
+          next[j] = j > 0 && previous[j - 1]! && ch === token.char;
+          break;
+      }
+    }
+    previous = next;
+  }
+  return previous[n]!;
 }
 
 function pathMatches(memberPath: string, pathInRepo: string | undefined): boolean {
