@@ -196,6 +196,11 @@ showing the behavioral-proxy fallback silently.
   credential access, statistical anomalies, first-time behaviour) and says
   what happened, when and why. The signals are prompts to look, not
   intrusion detection, and the dashboard stays read-only and local.
+- Not an invoicing or accounting system. Phase 15 (proposed,
+  [plans/cost-by-repository-and-project.md](plans/cost-by-repository-and-project.md))
+  adds cost by repository and project, price history, and frozen billing
+  statements as the evidence an invoice is built from, but no tax, invoice
+  numbering or payment tracking, and no live price fetching.
 - Not scoped to editing or replaying sessions (no `/rewind`-style mutation of
   real logs) — it's a read-only viewer/analyzer.
 - No dependency on the cloud-synced (DuckDB) store — the app only reads local
