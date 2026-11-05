@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
-import { costRollupSchema, sessionCostSchema } from "@agent-cost-analyzer/domain";
+import { costRollupSchema, priceBookListingSchema, sessionCostSchema } from "@agent-cost-analyzer/domain";
 
 // End-to-end: spawns the real stdio entry point (what `claude mcp add`
 // runs) against a temporary HOME holding the real-capture Claude Code
@@ -69,5 +69,15 @@ describe("stdio MCP entry point", () => {
 
     const findings = await client.callTool({ name: "list_findings", arguments: {} });
     expect(findings.isError).toBeFalsy();
+  }, 60_000);
+
+  // Phase 15 step 15.5: the standalone server serves the bundled price book.
+  it("returns the price book in force at a date", async () => {
+    const result = await client.callTool({ name: "get_price_book", arguments: { model: "claude-sonnet-5.5", at: "2026-11-05" } });
+
+    expect(result.isError).toBeFalsy();
+    expect(priceBookListingSchema.parse(result.structuredContent).versions.map((version) => version.id)).toEqual([
+      "github-copilot:claude-sonnet-5.5:2026-10-26",
+    ]);
   }, 60_000);
 });

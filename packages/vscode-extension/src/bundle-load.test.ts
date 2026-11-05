@@ -289,7 +289,7 @@ describe("the built extension bundle", () => {
     mkdirSync(copilotStorage, { recursive: true });
     seedSessionStore(path.join(copilotStorage, "session-store.db"));
     cpSync(learnFixturesDir, path.join(installDir, "media", "learn-scenarios"), { recursive: true });
-    for (const name of ["learn-scripts", "vendor-profiles"]) {
+    for (const name of ["learn-scripts", "vendor-profiles", "price-book"]) {
       cpSync(path.join(serverFixturesDir, name), path.join(installDir, "media", name), { recursive: true });
     }
 

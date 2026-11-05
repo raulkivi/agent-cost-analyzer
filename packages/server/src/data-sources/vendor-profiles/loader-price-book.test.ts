@@ -93,7 +93,8 @@ describe("loadVendorProfiles with a price book", () => {
       mkdirSync(path.join(root, "vendor-profiles"));
       mkdirSync(path.join(root, "price-book"));
       writeFileSync(path.join(root, "vendor-profiles", "acme.json"), JSON.stringify(profileFile({})));
-      const { origin: _origin, ...bundled } = version();
+      const bundled: Partial<PriceBookEntry> = version();
+      delete bundled.origin;
       writeFileSync(
         path.join(root, "price-book", "github-copilot.json"),
         JSON.stringify({ channel: "github-copilot", sources: profileFile({}).sources, versions: [bundled] }),

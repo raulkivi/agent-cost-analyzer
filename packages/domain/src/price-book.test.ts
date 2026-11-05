@@ -31,8 +31,9 @@ describe("priceVersionSchema", () => {
   });
 
   it("defaults sourceIds to an empty list (a user contract may cite none)", () => {
-    const { sourceIds: _omitted, ...rest } = version({ kind: "contract", channel: "acme-reseller" });
-    expect(priceVersionSchema.parse(rest).sourceIds).toEqual([]);
+    const withoutSources: Partial<PriceVersion> = version({ kind: "contract", channel: "acme-reseller" });
+    delete withoutSources.sourceIds;
+    expect(priceVersionSchema.parse(withoutSources).sourceIds).toEqual([]);
   });
 
   it("rejects dates that aren't ISO calendar dates", () => {
