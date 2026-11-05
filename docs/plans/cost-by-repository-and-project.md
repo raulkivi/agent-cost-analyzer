@@ -1,10 +1,10 @@
 # Phase 15: Cost by repository and project, price history, billing and estimates
 
-Status: **Proposed** (2026-11-05). Nothing is built yet. The owner decisions
-this plan needs are listed in [§13](#13-open-decisions), each with a
-recommendation. This document is the design. Its steps go into
-[implementation-plan.md](../implementation-plan.md) as Phase 15 once the
-decisions are made.
+Status: **Planned** (2026-11-05). Nothing is built yet. The owner accepted
+every recommended decision on 2026-11-05 ([§13](#13-decisions)). The UI
+design (§11) was then revised against the project's existing design and UX
+guidance. This document is the design; Phase 15 in
+[implementation-plan.md](../implementation-plan.md) points here.
 
 ## Contents
 
@@ -20,7 +20,7 @@ decisions are made.
 10. [API and MCP](#10-api-and-mcp)
 11. [User interface](#11-user-interface)
 12. [Testing, privacy, risks](#12-testing-privacy-risks)
-13. [Open decisions](#13-open-decisions)
+13. [Decisions](#13-decisions)
 14. [Implementation steps](#14-implementation-steps-tdd-each-with-an-exit-criterion)
 15. [Exit criterion](#15-exit-criterion)
 
@@ -201,7 +201,7 @@ type CostFigure =
 Rules:
 
 - **Preferred basis per turn**: `billed` if present, else `reported`, else
-  `priced`, unless the user picks one basis for a view (§13 D3). Each total
+  `priced`, unless the user picks one basis for a view (D3). Each total
   shows how many turns each basis covers, extending today's `MeasureTotal`
   (`value`, `knownTurns`, `turns`).
 - **Currency**: AI Credits and USD are converted only by the documented
@@ -214,7 +214,7 @@ Rules:
 - **Subscriptions** (Claude Max, Copilot plan allowances): tokens used under
   a flat-fee plan have no per-token bill. Their priced figure is labelled
   **API-equivalent**. It is useful for comparing and estimating, but a
-  statement shows it only when the user opts in (§13 D4).
+  statement shows it only when the user opts in (D4).
 
 ## 6. Price book with history
 
@@ -342,7 +342,7 @@ read-only.
 }
 ```
 
-**Membership rule** (recommended, §13 D1): a turn belongs to **at most one
+**Membership rule** (decided, D1): a turn belongs to **at most one
 project**. If two members of different projects match the same turn, the
 most specific one wins (path beats whole repository, branch beats no
 branch), and an exact tie is a validation error shown in the UI. This keeps
@@ -452,7 +452,7 @@ flowchart LR
   Cube --> Est[Estimator]
   Book --> PCD[PriceChangeDetector]
   TS & Var & Stmt & Est & PCD --> API[HTTP API + MCP tools]
-  API --> Web[Web: Costs view] & Ext[VS Code extension]
+  API --> Web[Web: Dashboard cost tabs] & Ext[VS Code extension]
 ```
 
 New modules (server, under `services/cost-attribution/` and
@@ -522,35 +522,208 @@ variance analysis.
 
 ## 11. User interface
 
-**Standalone app**: a new Analyze-mode **Costs** view next to the
-Dashboard, with four tabs:
+The UI follows the project's existing guidance. It adds no new style of
+its own:
 
-1. **Over time**: a line or stacked-area chart per repository/project, the
-   range picker, the bucket picker, the basis and pricing-mode switches,
-   and **vertical markers for price changes** (hover shows the model, old
-   and new price, and the source). Coverage under 100% is shown on the
-   point, not hidden.
-2. **Compare**: the §8.2 table and indexed chart; pick repositories or
-   projects with checkboxes.
-3. **Project**: the vendor → model breakdown, token-type mix, the variance
-   explanation between two chosen months, and the reconciliation gap for
-   Copilot turns.
-4. **Billing**: draft statement for a period, *Issue*, export, and the
-   list of issued statements with their diffs. Plus **Estimate**: inputs
-   (days or sessions, history window) and the forecast range.
+- the "Industry" design handoff in [`Design/README.md`](../../Design/README.md);
+- the Dashboard's associative model and layout
+  ([insights-dashboard.md](insights-dashboard.md) §2, §5 and §10);
+- the UX and accessibility standards in
+  [vscode-extension.md §3.5](vscode-extension.md#35-ux-and-accessibility-standards),
+  which bind both products because the UI code is shared;
+- the lessons of the [10.11 UX review](vscode-extension.md#1011-ux-review-for-vs-code-owners-report-2026-10-24);
+- the `dataviz` chart rules (one axis, fixed categorical order, legends,
+  hover layer, a table view).
 
-A **Projects** settings page edits the project file: unassigned
-repositories are listed first so they can be dragged into a project, and
-validation errors (overlaps, unknown keys) are shown inline.
+§11.6 lists how each rule applies here.
 
-Charts follow the `dataviz` guidance and the Industry design system; the
-existing D3 dependency is reused.
+### 11.1 Where it lives: the Dashboard, not a new view
 
-**VS Code extension** (Copilot only): the sidebar can group sessions by
-repository as well as by day, the status bar shows today's AI Credits for
-the **current workspace's** repository, and a compact Costs panel offers
-the Over time and Project tabs. Billing and estimates stay in the
-standalone app at first (§13 D7).
+Cost by repository and project is a **new section of the existing
+Dashboard** (the Analyze-mode, all-provider view of Phase 9.11), not a
+separate Costs view. The reasons:
+
+- the Dashboard already answers "what is driving my spend" with the
+  associative model, selection chips, Back, KPI tiles with coverage and
+  "View as table". A second cost view would split those answers in two;
+- new **list boxes** for *Project*, *Repository*, *Vendor*, *Channel* and
+  *Cost basis* join the existing ones (Provider, Date, Model, …). So
+  clicking a project in a list box filters every chart, and clicking a
+  model in a chart filters the project lists, as the rest of the Dashboard
+  already does. This needs only new fields in the insights model (§9),
+  not a new engine;
+- the Dashboard already shipped its narrow-width order (filters column down
+  to 720 px, insights first below that). The new section inherits it.
+
+The Dashboard gains a **SegmentedControl** at the top of its right side:
+*Overview* (today's content), *Cost over time*, *Compare*, *Billing*.
+The selections are shared across all four, so a selection made in one
+stays in force in the others.
+
+### 11.2 Cost over time
+
+- **Filters, in one row above the charts**: the date range first, with
+  presets (*This month*, *Last month*, *Last 90 days*, *This year*) before a
+  custom range; then the bucket (*Day / Week / Month*), the currency
+  (*AI Credits / USD*) and the pricing mode (*As of use / Today's prices*).
+  The filters use the existing `SegmentedControl` and `select` primitives.
+- **KPI tiles** (`StatTile`): total cost, change versus the previous
+  period, cost per active day, coverage. Coverage below 100% uses the
+  tile's `note`, for example "412 of 430 turns priced". A partial total is
+  never shown as complete.
+- **One series** (one project, one repository, or the whole selection):
+  `TrendColumns`, as on the Dashboard today, with a cumulative line only as
+  a separate small chart. It is **never a second y-axis on the same chart**.
+- **Two to four series**: a line chart with a direct label at each line's
+  end, plus a legend.
+- **Five or more series**: small multiples, one per project or repository,
+  on a shared y-scale, with *Shared scale / Own scale* as a toggle. Lines
+  are not overlaid past four.
+- **Vendor split inside one project**: stacked columns by vendor. A 2 px
+  surface gap separates the segments. Vendors beyond the eighth fold into
+  "Other".
+- **Unknown cost is a gap, never zero**: a bucket whose cost is all unknown
+  is left out and drawn as a break in the line, as the Dashboard's daily
+  chart already does. A bucket with partial coverage carries a hatched cap
+  and its coverage in the tooltip.
+- **Price-change markers**: a hairline at the change date, plus a small
+  outline `Tag` above the plot ("Price: Sonnet 5.5 −20%"). The marker is
+  keyboard-focusable and has a tooltip with the model, the old and new
+  unit prices and the source. The table view lists price changes in rows
+  of their own. Documented changes use a solid line; observed (inferred)
+  changes use a dashed line and the label "Observed", so the two never
+  differ by colour alone.
+- **Hover layer**: a crosshair and tooltip on lines; a tooltip per column
+  on columns. Hit targets are at least 24 px.
+- **Clicking a column or point selects that period**, so the chart is a
+  selection surface like `TrendColumns` today.
+
+### 11.3 Compare
+
+- A **table** first (the §8.2 measures). The repositories or projects come
+  from the list-box selection; no separate checkbox picker. AI Credits have
+  2 decimals and tabular figures, and units are shown in the headers.
+- Below 700 px the table keeps its **priority columns** (name, total,
+  change, coverage) and the rest move to the details drawer, as the turns
+  table does. Users can choose which columns stay visible.
+- An **indexed line chart** (first period = 100). It compares the shape
+  of a large and a small project on one axis, without a second scale.
+- "Share of total" uses horizontal bars (`HorizontalBars`), not a pie.
+
+### 11.4 Inside a project
+
+- `HorizontalBars` by vendor, then by model when a vendor is selected,
+  with token type (uncached input, cache write, cache read, reasoning,
+  output) as a second bar chart, not stacked into the first.
+- **Price versus usage** (§8.4): a waterfall from period A's cost to
+  period B's (usage, then price, then mix effect), with each step labelled
+  with its signed amount and also listed in a table. Increases and
+  decreases use the diverging pair plus a + or − sign, never colour alone.
+- **Billed versus priced gap** (Copilot turns): shown as a finding with
+  the existing `StatusTag` (icon plus text), not as a new colour.
+
+### 11.5 Billing, estimates and projects
+
+- **Billing**: the draft statement is a table inside a `Blueprint` card,
+  with absolute dates (a bill needs exact dates, not "Today 14:02"). The
+  *Issue statement* button opens a confirmation dialog, because the action
+  writes a file. Export uses the existing export-dialog pattern
+  (`AdviceExportDialog`): format choice, a preview, and Copy or Save.
+  Issued statements are listed with a `Tag` "Frozen" and, if a re-run
+  differs, a `StatusTag` warning "Differs from issued" with the diff one
+  click away.
+- **Estimate**: a panel inside Billing. The forecast is shown as a
+  **range** (p50 to p90) on a horizontal interval with the two ends
+  labelled, plus the inputs used (history window, pricing mode). It is
+  labelled "Estimate" and never shown as a single number.
+- **Projects editor**: a settings page in the same style as the Setup
+  view. Unassigned repositories are listed first. Each row has a
+  **Project `select`** to assign it. Drag and drop may be added as an
+  extra, but it is never the only way (WCAG 2.2 2.5.7 Dragging
+  Movements). Validation errors (overlapping scopes, unknown keys) are
+  shown inline next to the field and summarised at the top, and Save is
+  disabled while any remain.
+- **States** use the shared `AsyncView`:
+  - *Empty, no repositories found*: why (for example "only mitmproxy
+    captures, which record no folder"), with a link to capture rules;
+  - *Empty, no projects*: "Group repositories into a project to bill and
+    compare them", with a *Create project* button;
+  - *Partial*: a warning with the uncovered turns, never a zero;
+  - *Error*: what failed, that nothing was changed, Retry and Copy details.
+
+### 11.6 Guidance checklist
+
+| Source | Rule | How it applies here |
+|---|---|---|
+| Design README | Use `theme.css` tokens, never hex; reuse `Blueprint`, `Tag`, `SegmentedControl` | All new parts are built from `components/ui/*` and the chart kit in `charts/` |
+| Design README | No emoji | Markers, statuses and chips use `Tag`/`StatusTag` and text |
+| Design README | Height-capped scroll areas for long content | Statement lines and the compare table scroll inside their card |
+| §3.5 Accessibility | WCAG 2.2 AA; axe clean in dark, light and High Contrast | `vitest-axe` tests for each new tab in the three theme fixtures |
+| §3.5 Accessibility | Every chart has an `aria-label` summary and "View as table" | Every new chart uses `ViewAsTable`/`ChartDataTable`; unknown cells say "unknown" |
+| §3.5 Accessibility | Keyboard: arrows in lists, Enter opens, Escape closes; focus visible | List boxes and charts reuse `on-key-activate`; price markers are in the tab order |
+| §3.5 Accessibility | Status never by colour alone | Price markers solid vs dashed plus label; variance steps signed; gaps via `StatusTag` |
+| §3.5 Accessibility | `prefers-reduced-motion`; `aria-live` for async results | No chart transitions under reduced motion; totals announced when selections change |
+| §3.5 Layout | Layout by panel width (`layoutFor`), minimum 360 px | New tabs use `use-container-width`; priority columns and drawer below 700 px |
+| §3.5 States | One `AsyncView` pattern; partial is a warning, never 0 | §11.5 states |
+| §3.5 Content | Sentence case, units always, AI Credits 2 decimals, tabular figures, relative dates with absolute tooltip | Same, except statements, which use absolute dates |
+| §3.5 Performance | Interactions under 100 ms | The cube is aggregated on the server; the browser only filters (as the Dashboard does) |
+| 10.11 review | Nothing past the panel's right edge; text contrast on the real ground; no Industry corner marks or uppercase labels in VS Code | The UI check (`npm run test:ui`) adds the new tabs at 600, 900, 1200 and 1600 px in the three themes |
+| dataviz | One axis; small multiples or indexing instead of two scales | §11.2, §11.3 |
+| dataviz | Categorical colours in fixed order, following the entity; 8 at most, then "Other" | A new validated categorical palette (§11.7); a vendor or project keeps its colour when filters change |
+| dataviz | Legend for 2+ series; direct labels up to 4 | §11.2 |
+| dataviz | Status colours reserved | Status colours only for warnings and gaps, never as a series colour |
+| dataviz | Filters in one row, date range first with presets | §11.2 |
+
+### 11.7 One new design-system addition: a categorical palette
+
+The chart kit has no colours for categories today. `TrendColumns` and
+`HorizontalBars` use the accent, and `StackedColumns` uses status colours
+for tool-call outcomes. Vendors and projects need **identity** colours, so
+this phase adds eight categorical tokens (`--color-series-1` to `-8`) to
+`theme.css`, with their own dark-theme steps. In `theme-vscode.css`, the
+first six map to VS Code's own chart colours (`--vscode-charts-blue`,
+`-orange`, `-green`, `-purple`, `-yellow`, `-red`; red goes last because it
+reads as an error), and the last two keep the app's own tokens. Because
+the theme sets those six colours, they must pass the validator in Dark
+Modern, Light Modern and High Contrast as well. They are
+checked with the dataviz validator in light and dark and with
+`theme-contrast.test.ts`. The order is fixed. A project's colour comes
+from its position in the project file, and a vendor's colour from a fixed
+vendor order, so filtering never repaints them. In High Contrast, series
+also carry a texture or a dash pattern, because the theme flattens
+colours.
+
+### 11.8 Mock-ups and review gate
+
+As in Phase 10 (§3.6 there), the boards are drawn on a Design canvas
+before any UI code, with versioned copies in
+`docs/plans/mockups/cost-by-project/`:
+
+1. Cost over time with price markers (one series, three series, small
+   multiples);
+2. Compare (wide, and at 640 px with the drawer);
+3. Project: vendor and model bars, the variance waterfall;
+4. Billing: draft, issue confirmation, frozen with diff, estimate;
+5. Projects editor, including keyboard assignment and validation errors;
+6. Empty, partial and error states;
+7. VS Code: sidebar grouped by repository, the status bar, the compact
+   panel in Dark Modern, Light Modern and High Contrast.
+
+The owner reviews them and their comments are resolved before step 15.9
+starts (§14).
+
+### 11.9 VS Code extension (Copilot only)
+
+- The **Sessions** tree can be grouped by repository as well as by day
+  (a view-title toggle with a codicon), with each group's AI Credits.
+- The **status bar** shows today's AI Credits for the current workspace's
+  repository, with the all-repositories total in its tooltip.
+- The panel's Dashboard gets the *Cost over time* and *Compare* tabs.
+  Billing and estimates stay in the standalone app at first (D7).
+- No unprompted notifications: a price change or a billed-versus-priced
+  gap appears as a finding, not a toast.
+- Commands sit under the "AI Credits Analyzer" category; new strings go
+  through `package.nls.json` and the webview messages module.
 
 ## 12. Testing, privacy, risks
 
@@ -599,12 +772,12 @@ Each step starts with failing tests. The key ones:
 | A repository moves or is renamed upstream | Aliases in the project file merge keys; history stays under one repository |
 | Cube size over long histories | Built from the existing cached `InsightsDataset`; aggregated server-side; date range required for statements |
 
-## 13. Open decisions
+## 13. Decisions
 
-Each decision has a recommendation. They are the owner's to make; the plan
-assumes the recommendation until they are recorded here.
+The owner accepted every recommendation on 2026-11-05. The **Decided**
+column is binding; the other options are kept for the record.
 
-| # | Question | Options | Recommendation |
+| # | Question | Options considered | Decided (2026-11-05) |
 |---|---|---|---|
 | D1 | Can one turn count in two projects? | (a) exclusive, most specific wins; (b) many-to-many, totals not additive; (c) many-to-many with allocation percentages | **(a)**: billing needs additive totals; percentages can come later |
 | D2 | Reporting currency | AI Credits only; USD only; both with the fixed 1 credit = $0.01 rate; plus a user currency per statement | **Both, plus an optional fixed-rate user currency on statements** |
@@ -619,34 +792,35 @@ assumes the recommendation until they are recorded here.
 
 ## 14. Implementation steps (TDD, each with an exit criterion)
 
-Steps 15.1–15.4 and 15.8 need no price data and can start once the
-decisions are recorded. Steps from 15.5 on need Phase 13 step 13.2's vendor
-data (or replace it, see 15.5).
+Steps 15.1–15.4 and 15.8 need no price data and can start now. Steps 15.5
+onwards need Phase 13 step 13.2's vendor data (or replace it, see 15.5).
+No UI code (15.9 onwards) starts before the mock-ups in 15.8 are approved.
 
 | Step | Work | Exit criterion |
 |---|---|---|
-| 15.0 | Owner records D1–D10 in §13; threat-model rows for the new writes | Decisions recorded; threat model updated |
+| 15.0 | Threat-model rows for the two new write endpoints (D1–D10 already recorded in §13) | Threat model updated |
 | 15.1 | **Workspace capture**: `Session.workspace`, `Turn.startedAt` (and per-turn workspace for Claude Code) in every provider; verify classic VS Code chat's folder source | Each provider's fixture test yields folder, branch and turn times; mitmproxy reports Unattributed with a reason |
 | 15.2 | **RepositoryResolver** + `RemoteUrlNormalizer` | Unit tests of §12.1 pass; no credential in any output (property test) |
 | 15.3 | **ProjectCatalog** + project file schema + `GET/PUT /api/projects`, `GET /api/repositories` | Schema, matching and API tests pass; a bad file gives a config warning |
-| 15.4 | **Attribution in the dataset**: `repositoryKey`/`projectId` on Insights rows; Dashboard list boxes for both | Dashboard filters by repository and project; totals match the per-session totals |
+| 15.4 | **Attribution in the dataset**: `repositoryKey`/`projectId`/`vendorId`/`channel` on Insights rows; Project, Repository, Vendor and Channel list boxes on the Dashboard | Dashboard filters by repository and project; totals match the per-session totals; axe and keyboard tests pass for the new list boxes |
 | 15.5 | **Price book with history**: `PriceVersion` schema, bundled channel files with sources, user versions, `PriceBook` lookup; Phase 13 profiles read their current prices from it | Overlap/boundary/precedence tests pass; every version has a source; Phase 13 tests unchanged |
-| 15.6 | **CostPricer + basis**: `CostFigure` on every turn row; reconciliation figures for Copilot turns | Pricing tests pass; unknown never sums as 0; billed vs priced shown per model-month |
+| 15.6 | **CostPricer + basis**: `CostFigure` on every turn row; reconciliation figures for Copilot turns; Cost basis list box | Pricing tests pass; unknown never sums as 0; billed vs priced shown per model-month |
 | 15.7 | **Time series, compare, project breakdown** + their endpoints | Golden outputs for a fixture dataset across three providers and two projects |
-| 15.8 | **Costs view, Over time and Compare tabs**, with price-change markers | Component tests; a UI check with the run skill at phone and desktop widths |
-| 15.9 | **Price changes and variance**: `PriceChangeDetector`, observed-change finding, `VarianceAnalyzer`, Project tab | Effects add up exactly (property test); markers match price-book boundaries |
-| 15.10 | **Statements**: builder, freeze, diff, CSV/JSON/Markdown export, Billing tab | Golden statements; a frozen statement survives a price-book update unchanged and the diff is exact |
-| 15.11 | **Estimates** + Estimate panel | Forecast range tests on fixture histories; labelled as estimates in the UI |
-| 15.12 | **MCP tools** of §10 | MCP tests with output schemas, as in Phase 9.12 |
-| 15.13 | **VS Code extension**: group by repository, status bar per workspace repository | Extension tests; manual check list updated |
-| 15.14 | **Docs**: architecture.md (domain, data flow, API), UserGuide, vscode-extension-guide, vision non-goals, README index | Docs reviewed by the owner |
+| 15.8 | **Mock-ups and palette** (§11.7, §11.8): the seven boards on a Design canvas with versioned copies; the eight categorical tokens in `theme.css` and `theme-vscode.css` | Owner approves the boards and their comments are resolved; the dataviz validator passes in light and dark; `theme-contrast.test.ts` covers the new tokens in Dark Modern, Light Modern and High Contrast |
+| 15.9 | **Dashboard tabs: Cost over time and Compare**, with price-change markers (§11.1–§11.3) | Component tests incl. "View as table" and unknown-as-gap; `vitest-axe` clean in three themes; keyboard tests; the UI check (`npm run test:ui`) passes for the new tabs at 600–1600 px in three themes; screenshots of the standalone app at desktop and 360 px widths |
+| 15.10 | **Price changes and variance**: `PriceChangeDetector`, observed-change finding, `VarianceAnalyzer`, Project tab (§11.4) | Effects add up exactly (property test); markers match price-book boundaries; same UI checks as 15.9 |
+| 15.11 | **Statements**: builder, freeze, diff, CSV/JSON/Markdown export, Billing tab, Projects editor (§11.5) | Golden statements; a frozen statement survives a price-book update unchanged and the diff is exact; every project can be assigned by keyboard alone; same UI checks as 15.9 |
+| 15.12 | **Estimates** + Estimate panel | Forecast range tests on fixture histories; shown as a labelled range, never a single number |
+| 15.13 | **MCP tools** of §10 | MCP tests with output schemas, as in Phase 9.12 |
+| 15.14 | **VS Code extension** (§11.9): group by repository, status bar per workspace repository, the two Dashboard tabs | Extension and manifest tests (category, codicons, l10n keys); UI check passes; manual check list updated |
+| 15.15 | **Docs**: architecture.md (domain, data flow, API), UserGuide, vscode-extension-guide, vision non-goals, README index | Docs reviewed by the owner |
 
 ## 15. Exit criterion
 
 On a machine with Copilot, Claude Code and pi sessions across at least three
 repositories grouped into two projects:
 
-- the Costs view shows each repository's and project's cost per month,
+- the Dashboard's cost tabs show each repository's and project's cost per month,
   with coverage, and marks every documented price change in the range;
 - the Project tab splits one project's cost by vendor and model, and
   explains the change between two months as usage, price and mix effects

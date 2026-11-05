@@ -1456,19 +1456,22 @@ time, split a project's cost by vendor and model, price token-only turns at
 the versioned model price in force when they ran (with price changes marked
 on every time chart), and produce frozen billing statements and estimates.
 
-**Deliverables** (steps 15.0–15.14 in the plan): per-provider workspace and
+**Deliverables** (steps 15.0–15.15 in the plan): per-provider workspace and
 turn-time capture, a file-only `RepositoryResolver`, a local projects file
 with `GET/PUT /api/projects`, a price book with `effectiveFrom`/`effectiveTo`
 versions per channel, `CostFigure`s labelled billed/reported/priced, a cost
 cube with time-series, compare, variance, statement and estimate builders,
-a Costs view, MCP tools, and extension grouping by repository.
+new Dashboard tabs (Cost over time, Compare, Billing), MCP tools, and extension grouping by repository.
 
 **Exit criterion**: the plan's §15.
 
 **Dependencies**: Phase 9.11 (insights dataset) for steps 15.1–15.4 and
 15.8; Phase 13 step 13.2 (vendor price data) for steps 15.5 onwards.
 
-**Status (2026-11-05)**: proposed; owner decisions D1–D10 open (plan §13).
+**Status (2026-11-05)**: planned; the owner accepted every recommended
+decision (D1–D10, plan §13). The UI is a set of new Dashboard tabs built on
+the existing design system, UX standards and chart kit (plan §11), with a
+mock-up review gate (step 15.8) before any UI code.
 
 ## Summary dependency graph
 

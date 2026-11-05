@@ -111,5 +111,8 @@ content here.
   docs/plans/vscode-extension-manual-checks.md). Phase 13 (vendor-aware Learn simulation,
   VS Code first; see docs/plans/vendor-aware-learn-simulation.md) is
   in progress, starting with step 13.0 (rule register; owner decisions D1–D19 in its §9; Phase 14, replaying Analyze sessions on another vendor, follows it); the Learn scenario fact-check it builds on is in
-  docs/learn-scenarios-fact-check.md. The progress table and per-step
+  docs/learn-scenarios-fact-check.md. Phase 15 (cost by repository and project,
+  price history, billing statements and estimates; see
+  docs/plans/cost-by-repository-and-project.md) is planned: the owner's
+  decisions D1–D10 are recorded, and no step is started. The progress table and per-step
   status notes are in docs/plans/vscode-extension.md.
