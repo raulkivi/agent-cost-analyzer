@@ -976,6 +976,71 @@ Each step starts with failing tests. The key ones:
 | A repository moves or is renamed upstream | Aliases in the project file merge keys; history stays under one repository |
 | Cube size over long histories | Built from the existing cached `InsightsDataset`; aggregated server-side; date range required for statements |
 
+### 12.4 Usage-scenario tests (end to end)
+
+§12.1 tests the parts, and §11.6 the layout, contrast and keyboard rules.
+This section adds tests that drive the **real app** through the main
+things a user does with this phase, from the first project to an issued
+bill. Each one follows a mock-up board, so the boards are also the test
+script.
+
+#### 12.4.1 Harness
+
+- **Standalone app: a new Playwright suite** in `packages/web/e2e/`
+  (`npm run test:e2e`). It uses the Playwright already pinned for the UI
+  check (1.63.0) and the pre-installed Chromium. Each test starts the
+  real server and web build against a **seeded fixture home**:
+  - copies of the existing provider test fixtures (Copilot local and
+    Agent Host, Claude Code, pi, mitmproxy) arranged as sessions in four
+    repositories (three with a git remote, one `local:`), so §4.2's
+    resolver runs on real files;
+  - a temporary `HOME`, so the project file and statements are written
+    there and each test starts clean;
+  - a fixture price-book folder (the injectable folder of Phase 13's
+    loader), which S5 swaps for an updated one;
+  - a **fixed clock** (an environment variable read by the server's
+    clock port), so "last 90 days", "this month" and relative dates are
+    the same on every run.
+- **VS Code extension: new `wdio-vscode-service` specs** in
+  `packages/vscode-extension/test/ui/specs/` (step 10.16's harness),
+  over a seeded Copilot fixture with sessions in two workspace folders.
+- **At every stop** a scenario runs the axe check: in the standalone app in
+  light and dark; in VS Code in Dark Modern, Light Modern and High
+  Contrast.
+- **What a scenario asserts**: figures read from the page (not the API)
+  equal the fixture's expected values, written into the test, rounded as
+  the UI rounds them (AI Credits 2 decimals); unknown figures read
+  "unknown", never "0.00".
+- **Test first**: each scenario is written from its board before the UI
+  code it drives, fails, and is committed with that step's code (§14).
+  The UI check and component tests stay; scenarios don't replace them.
+
+#### 12.4.2 Scenarios
+
+| # | Scenario | Board | Step | Passes when |
+|---|---|---|---|---|
+| S1 | **First project.** Open the Dashboard with no project file → the "no projects" empty state → *Create project* → assign three repositories with each row's Project select, by keyboard only → Save | 6, 5 | 15.11 | The project appears in the Project list box; its total equals the sum of its three repositories; the file on disk parses against the schema |
+| S2 | **One project over time.** Select the project, week buckets, last 90 days → Tab to the Sep 1 price marker → its tooltip opens → Escape closes it → *View as table* | 1 | 15.9 | Tooltip shows old and new unit prices and the source; the table equals the chart; the week with no priced turns reads "unknown" and is a gap in the line |
+| S3 | **Compare.** Select two projects → Compare tab → resize to 640 px → open a row's Details → Escape | 2a, 2b | 15.9 | Table measures equal the fixture; at 640 px only the priority columns show; focus returns to the Details button after Escape |
+| S4 | **Inside a project.** Project tab → click Anthropic → its models → choose August and October | 3 | 15.10 | Model bars sum to the vendor's total; usage, price and mix effects add up exactly to the change, in the waterfall and its table |
+| S5 | **Bill a month.** Billing → October draft → *Issue statement* → confirm → export CSV and Markdown → swap in the updated price-book folder → reload | 4 | 15.11 | The frozen statement shows the same figures as before the swap and "Differs from issued" with the exact diff; both exports contain no message text; the unknown-cost line is listed, not summed |
+| S6 | **Overlapping projects.** In the Projects editor, add the same repository and branch scope to a second project | 5 | 15.11 | The tie error shows inline and in the summary, Save is disabled; removing one member enables it |
+| S7 | **Estimate.** Billing → Estimate → 20 planned days, 12-week history | 4 | 15.12 | A p50–p90 range labelled "Estimate", at today's prices, equal to the fixture's expected range; no single number shown |
+| S8 | **Captures with no folder.** Provider: mitmproxy only → the Unattributed empty state → add a capture rule for the fixture capture folder | 6, 5 | 15.11 | Those sessions move to the rule's repository and its cost includes them |
+| S9 | **VS Code.** Open the Sessions view → *Group by repository* → open the panel's Cost over time tab; the workspace is one of the fixture repositories | 7 | 15.14 | Group totals equal the fixture; the status bar shows today's AI Credits for the workspace's repository and the all-repositories total in its tooltip; axe clean in all three themes |
+| S10 | **One answer everywhere.** For one project and month, read the total in the Dashboard, from `GET /api/cost/timeseries` and from MCP `get_project_cost` over stdio | 1 | 15.13 | All three are equal, with the same coverage |
+
+#### 12.4.3 CI
+
+- A new `web-e2e` job in `.github/workflows/ci.yml` runs the standalone
+  suite on every PR. It is a **required** check: the suite runs headless
+  on fixed fixtures and a fixed clock, so a failure is a real failure.
+  It uploads Playwright traces and screenshots when a test fails.
+- The extension scenario (S9) joins the existing `extension-ui` job,
+  which stays informational (`continue-on-error`, as decided for step
+  10.16) until the owner decides otherwise.
+- No retries are configured: a flaky scenario is fixed, not re-run.
+
 ## 13. Decisions
 
 The owner accepted every recommendation on 2026-11-05. The **Decided**
@@ -1011,12 +1076,12 @@ No UI code (15.9 onwards) starts before the mock-ups in 15.8 are approved.
 | 15.6 | **CostPricer + basis**: `CostFigure` on every turn row; reconciliation figures for Copilot turns; Cost basis list box; MCP: cost basis in `get_session_cost`, `get_cost_rollup`, `get_turn` | Pricing tests pass; unknown never sums as 0; billed vs priced shown per model-month; the step's MCP tools pass the §10.1.6 tests |
 | 15.7 | **Time series, compare, project breakdown** + their endpoints; MCP: `get_repository_cost`, `get_project_cost`, `compare_costs`, the `review_costs` project step | Golden outputs for a fixture dataset across three providers and two projects; the step's MCP tools pass the §10.1.6 tests |
 | 15.8 | **Mock-ups and palette** (§11.7, §11.8): the seven boards on a Design canvas with versioned copies (drawn 2026-11-05, awaiting review); the eight categorical tokens in `theme.css` and `theme-vscode.css` (not started) | Owner approves the boards and their comments are resolved; the dataviz validator passes in light and dark; `theme-contrast.test.ts` covers the new tokens in Dark Modern, Light Modern and High Contrast |
-| 15.9 | **Dashboard tabs: Cost over time and Compare**, with price-change markers (§11.1–§11.3) | Component tests incl. "View as table" and unknown-as-gap; `vitest-axe` clean in three themes; keyboard tests; the UI check (`npm run test:ui`) passes for the new tabs at 600–1600 px in three themes; screenshots of the standalone app at desktop and 360 px widths |
-| 15.10 | **Price changes and variance**: `PriceChangeDetector`, observed-change finding, `VarianceAnalyzer`, Project tab (§11.4); MCP: `explain_cost_change` tool and prompt, `get_price_changes`, `list_findings` kind `price-change` | Effects add up exactly (property test); markers match price-book boundaries; same UI checks as 15.9; the step's MCP tools pass the §10.1.6 tests |
-| 15.11 | **Statements**: builder, freeze, diff, CSV/JSON/Markdown export, Billing tab, Projects editor (§11.5); MCP: `get_statement`, `prepare_statement` prompt | Golden statements; a frozen statement survives a price-book update unchanged and the diff is exact; every project can be assigned by keyboard alone; same UI checks as 15.9; the step's MCP tools pass the §10.1.6 tests |
-| 15.12 | **Estimates** + Estimate panel; MCP: `estimate_cost`, `estimate_work` prompt | Forecast range tests on fixture histories; shown as a labelled range, never a single number; the step's MCP tools pass the §10.1.6 tests |
-| 15.13 | **MCP, cross-cutting work** (§10.1.4): server instructions for both products, the `toolGroups` option and the extension's tool set, the security tests of §10.1.5 | The §10.1.6 exit criterion over stdio |
-| 15.14 | **VS Code extension** (§11.9): group by repository, status bar per workspace repository, the two Dashboard tabs | Extension and manifest tests (category, codicons, l10n keys); UI check passes; manual check list updated |
+| 15.9 | **Dashboard tabs: Cost over time and Compare**, with price-change markers (§11.1–§11.3) | Component tests incl. "View as table" and unknown-as-gap; `vitest-axe` clean in three themes; keyboard tests; the UI check (`npm run test:ui`) passes for the new tabs at 600–1600 px in three themes; screenshots of the standalone app at desktop and 360 px widths; the §12.4.1 Playwright harness and fixture home are in place, and scenarios S2 and S3 pass in the `web-e2e` job |
+| 15.10 | **Price changes and variance**: `PriceChangeDetector`, observed-change finding, `VarianceAnalyzer`, Project tab (§11.4); MCP: `explain_cost_change` tool and prompt, `get_price_changes`, `list_findings` kind `price-change` | Effects add up exactly (property test); markers match price-book boundaries; same UI checks as 15.9; the step's MCP tools pass the §10.1.6 tests; scenario S4 passes |
+| 15.11 | **Statements**: builder, freeze, diff, CSV/JSON/Markdown export, Billing tab, Projects editor (§11.5); MCP: `get_statement`, `prepare_statement` prompt | Golden statements; a frozen statement survives a price-book update unchanged and the diff is exact; every project can be assigned by keyboard alone; same UI checks as 15.9; the step's MCP tools pass the §10.1.6 tests; scenarios S1, S5, S6 and S8 pass |
+| 15.12 | **Estimates** + Estimate panel; MCP: `estimate_cost`, `estimate_work` prompt | Forecast range tests on fixture histories; shown as a labelled range, never a single number; the step's MCP tools pass the §10.1.6 tests; scenario S7 passes |
+| 15.13 | **MCP, cross-cutting work** (§10.1.4): server instructions for both products, the `toolGroups` option and the extension's tool set, the security tests of §10.1.5 | The §10.1.6 exit criterion over stdio; scenario S10 passes |
+| 15.14 | **VS Code extension** (§11.9): group by repository, status bar per workspace repository, the two Dashboard tabs | Extension and manifest tests (category, codicons, l10n keys); UI check passes; manual check list updated; scenario S9 passes in `extension-ui` |
 | 15.15 | **Docs**: architecture.md (domain, data flow, API), UserGuide, vscode-extension-guide, vision non-goals, README index | Docs reviewed by the owner |
 
 ## 15. Exit criterion
@@ -1034,4 +1099,6 @@ repositories grouped into two projects:
   separately;
 - the same figures are available through the MCP tools (§10.1.6), and
   MCP and the Dashboard agree for every repository and project;
+- the ten usage scenarios of §12.4 pass (S1–S8 and S10 in the required
+  `web-e2e` job, S9 in `extension-ui`);
 - no unknown cost is shown or summed as zero anywhere.

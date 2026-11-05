@@ -1463,7 +1463,9 @@ versions per channel, `CostFigure`s labelled billed/reported/priced, a cost
 cube with time-series, compare, variance, statement and estimate builders,
 new Dashboard tabs (Cost over time, Compare, Project, Billing), 10 new
 read-only MCP tools and 3 prompts (plan §10.1, each shipped in the step of
-the builder it calls), and extension grouping by repository.
+the builder it calls), ten end-to-end usage-scenario tests (plan §12.4: a
+required Playwright `web-e2e` job for the standalone app, wdio specs for the
+extension), and extension grouping by repository.
 
 **Exit criterion**: the plan's §15.
 
