@@ -53,6 +53,34 @@ export class PanelView {
     await button.click();
   }
 
+  // Learn mode (step 13.7): picks a model in the "Simulate on" select. The
+  // select is React-controlled, so the value goes through the native setter
+  // and a bubbling change event, as a person's pick would.
+  async chooseSimulationModel(modelId: string): Promise<void> {
+    const chosen = await browser.execute((id) => {
+      const select = document.querySelector<HTMLSelectElement>(".vendor-picker select");
+      if (select === null) return false;
+      const setter = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, "value")?.set;
+      setter?.call(select, id);
+      select.dispatchEvent(new Event("change", { bubbles: true }));
+      return select.value === id;
+    }, modelId);
+    if (!chosen) throw new Error(`No simulated model "${modelId}" in the picker`);
+  }
+
+  // The turns table's Cache column as the words a screen reader hears, one
+  // per row ("Cache hit", "Cache outcome unknown", ...).
+  cacheOutcomes(): Promise<string[]> {
+    return browser.execute(() => {
+      const headers = Array.from(document.querySelectorAll("table thead th"));
+      const column = headers.findIndex((header) => (header.textContent ?? "").trim() === "Cache");
+      if (column < 0) return [];
+      return Array.from(document.querySelectorAll("table tbody tr")).map(
+        (row) => row.children[column]?.querySelector(".sr-only")?.textContent?.trim() ?? "",
+      );
+    });
+  }
+
   hasText(text: string): Promise<boolean> {
     return browser.execute((needle) => document.body.innerText.includes(needle), text);
   }
@@ -114,6 +142,15 @@ export class AnalyzerPanel {
   async reset(): Promise<void> {
     await this.host.command("workbench.action.closeAllEditors");
     await this.host.hook(INTERNAL_COMMAND_IDS.resetDiagnostics);
+  }
+
+  // What clicking a Learn tree row does. The tree itself only draws the rows
+  // that fit the window (a short CI screen shows a handful), so specs that
+  // don't test the tree open a scenario by id.
+  async openScenario(scenarioId: string): Promise<void> {
+    await this.host.waitForExtension();
+    await this.run(COMMAND_IDS.openScenario, scenarioId);
+    await this.settleLayout();
   }
 
   async openSession(sessionId: string): Promise<void> {
