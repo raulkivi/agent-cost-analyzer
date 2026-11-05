@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-11-06
+
+### Changed
+
+- **Requires VS Code 1.145 or later** (was 1.144).
+
 ### Added
 
 - **Vendor-aware Learn.** Learn scenarios are now simulated on a vendor and
