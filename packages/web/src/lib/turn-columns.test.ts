@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   ALL_TURN_COLUMNS,
+  columnsApplyingTo,
   hiddenTurnColumns,
   parseTurnColumns,
   PRIORITY_TURN_COLUMNS,
@@ -9,10 +10,11 @@ import {
 } from "./turn-columns.js";
 
 describe("turn columns (§3.5 Layout)", () => {
-  it("lists the turns table's 14 columns in display order", () => {
+  it("lists the turns table's 15 columns in display order", () => {
     expect(TURN_COLUMNS.map((column) => column.label)).toEqual([
       "Turn",
       "Trigger",
+      "Cache",
       "Rounds",
       "Calls",
       "Uncached in",
@@ -50,6 +52,7 @@ describe("turn columns (§3.5 Layout)", () => {
 
   it("lists the columns a layout hides, for the details drawer", () => {
     expect(hiddenTurnColumns(PRIORITY_TURN_COLUMNS)).toEqual([
+      "cache",
       "rounds",
       "calls",
       "uncachedInput",
@@ -72,10 +75,26 @@ describe("turn columns (§3.5 Layout)", () => {
       expect(parseTurnColumns(["model", "gone", 3])).toEqual(["turn", "model"]);
     });
 
+    it("adds the Cache column to an older list that showed every other column", () => {
+      const legacy = ALL_TURN_COLUMNS.filter((id) => id !== "cache");
+      expect(parseTurnColumns(legacy)).toEqual(ALL_TURN_COLUMNS);
+    });
+
+    it("leaves a deliberate older choice without Cache", () => {
+      expect(parseTurnColumns(["turn", "model"])).toEqual(["turn", "model"]);
+    });
+
     it("reads nothing usable as no stored choice", () => {
       expect(parseTurnColumns(undefined)).toBeUndefined();
       expect(parseTurnColumns("model")).toBeUndefined();
       expect(parseTurnColumns({ columns: [] })).toBeUndefined();
+    });
+  });
+
+  describe("columnsApplyingTo", () => {
+    it("drops Cache unless the turns are simulated", () => {
+      expect(columnsApplyingTo(["turn", "cache", "model"], false)).toEqual(["turn", "model"]);
+      expect(columnsApplyingTo(["turn", "cache", "model"], true)).toEqual(["turn", "cache", "model"]);
     });
   });
 });

@@ -7,8 +7,14 @@ import {
   type RpcCommandResponse,
   type RpcResponse,
 } from "@agent-cost-analyzer/domain";
-import type { ApiQuery, ApiService } from "@agent-cost-analyzer/server/src/services/api/api-service";
-import { ApiError, statusForApiError } from "@agent-cost-analyzer/server/src/services/api/api-errors";
+import type {
+  ApiQuery,
+  ApiService,
+} from "@agent-cost-analyzer/server/src/services/api/api-service";
+import {
+  ApiError,
+  statusForApiError,
+} from "@agent-cost-analyzer/server/src/services/api/api-errors";
 import type { RequestGate } from "../diagnostics/request-gate.js";
 import { describeIssues } from "./describe-issues.js";
 
@@ -18,7 +24,11 @@ export type DispatcherApi = Pick<ApiService, ApiMethod>;
 // Handles the webview's host commands (domain rpc.ts, G8); in the extension
 // a HostCommandHandler (rpc/host-command-handler.ts).
 export interface HostCommandSink {
-  handle(message: { id: string; command?: unknown; args?: unknown }): Promise<RpcCommandResponse>;
+  handle(message: {
+    id: string;
+    command?: unknown;
+    args?: unknown;
+  }): Promise<RpcCommandResponse>;
 }
 
 // Records the webview's timing marks (domain rpc.ts, perfMark); in the
@@ -53,6 +63,14 @@ function stringParam(params: Params, key: string): string {
   return params[key] as string;
 }
 
+function optionalString(params: Params, key: string): string | undefined {
+  return params[key] as string | undefined;
+}
+
+function optionalStringList(params: Params, key: string): string[] | undefined {
+  return params[key] as string[] | undefined;
+}
+
 // The query fields exactly as the HTTP transport's query string carries
 // them (http-transport.ts): lists comma-joined, everything else as text,
 // undefined and "" left out — so ApiService parses the same input, and
@@ -77,14 +95,21 @@ function sessionQuery(params: Params): [string, ApiQuery] {
 // transports use (packages/web/src/api-client/http-transport.ts). The
 // params were already shape-checked against the method's schema, and
 // ApiService's own validation covers the values.
-function invoke(api: DispatcherApi, method: ApiMethod, params: Params): Promise<unknown> {
+function invoke(
+  api: DispatcherApi,
+  method: ApiMethod,
+  params: Params,
+): Promise<unknown> {
   switch (method) {
     case "listSessions":
       return api.listSessions();
     case "getSession":
       return api.getSession(stringParam(params, "id"));
     case "getTurnDetail":
-      return api.getTurnDetail(stringParam(params, "sessionId"), params.turnIndex);
+      return api.getTurnDetail(
+        stringParam(params, "sessionId"),
+        params.turnIndex,
+      );
     case "getSystemPromptText":
       return api.getSystemPromptText(stringParam(params, "id"));
     case "getConfigStatus":
@@ -95,6 +120,18 @@ function invoke(api: DispatcherApi, method: ApiMethod, params: Params): Promise<
       return api.listLearnScenarios();
     case "getLearnScenario":
       return api.getLearnScenario(stringParam(params, "id"));
+    case "getScenario":
+      return api.getScenario(
+        stringParam(params, "id"),
+        optionalString(params, "modelId"),
+      );
+    case "compareScenario":
+      return api.compareScenario(
+        stringParam(params, "id"),
+        optionalStringList(params, "modelIds"),
+      );
+    case "listVendorProfiles":
+      return api.listVendorProfiles();
     case "getLogProviderStatus":
       return api.getLogProviderStatus();
     case "setActiveLogProvider":
@@ -141,7 +178,9 @@ export class MessageDispatcher {
   // request nor a host command, for a cancel or a timing mark, and for a
   // cancelled request.
   // Commands never reach ApiService.
-  async dispatch(message: unknown): Promise<RpcResponse | RpcCommandResponse | undefined> {
+  async dispatch(
+    message: unknown,
+  ): Promise<RpcResponse | RpcCommandResponse | undefined> {
     if (isRecord(message) && message.kind === "perfMark") {
       this.recordPerformanceMark(message);
       return undefined;
@@ -181,7 +220,8 @@ export class MessageDispatcher {
     this.running.add(id);
     try {
       // Awaited only when there is a gate, so production adds no tick.
-      if (this.options.requestGate) await this.options.requestGate.waitFor(method.data);
+      if (this.options.requestGate)
+        await this.options.requestGate.waitFor(method.data);
       const reply = await this.answer(id, method.data, parsed.data as Params);
       return this.cancelled.has(id) ? undefined : reply;
     } finally {
@@ -194,13 +234,25 @@ export class MessageDispatcher {
   private recordPerformanceMark(message: unknown): void {
     const mark = rpcPerformanceMarkSchema.safeParse(message);
     if (mark.success) {
-      this.options.performanceMarks?.recordWebviewMark(mark.data.name, mark.data.timeMs);
+      this.options.performanceMarks?.recordWebviewMark(
+        mark.data.name,
+        mark.data.timeMs,
+      );
     }
   }
 
-  private async answer(id: string, method: ApiMethod, params: Params): Promise<RpcResponse> {
+  private async answer(
+    id: string,
+    method: ApiMethod,
+    params: Params,
+  ): Promise<RpcResponse> {
     try {
-      return { kind: "response", id, ok: true, result: await invoke(this.api, method, params) };
+      return {
+        kind: "response",
+        id,
+        ok: true,
+        result: await invoke(this.api, method, params),
+      };
     } catch (error) {
       if (error instanceof ApiError) {
         return failure(id, statusForApiError(error), error.message);
@@ -211,10 +263,17 @@ export class MessageDispatcher {
   }
 }
 
-function describeInvalidParams(method: ApiMethod, error: { issues: { path: PropertyKey[]; message: string }[] }): string {
+function describeInvalidParams(
+  method: ApiMethod,
+  error: { issues: { path: PropertyKey[]; message: string }[] },
+): string {
   return `Invalid params for ${method}: ${describeIssues(error.issues)}`;
 }
 
-function failure(id: string, status: 400 | 404 | 500, message: string): RpcResponse {
+function failure(
+  id: string,
+  status: 400 | 404 | 500,
+  message: string,
+): RpcResponse {
   return { kind: "response", id, ok: false, error: { status, message } };
 }

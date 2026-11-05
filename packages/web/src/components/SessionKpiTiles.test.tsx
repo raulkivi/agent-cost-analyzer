@@ -13,4 +13,25 @@ describe("SessionKpiTiles (narrow layout, mock-up board 4)", () => {
     expect(screen.getByRole("group", { name: "Turns" })).toHaveTextContent("2");
     expect(screen.getByRole("group", { name: "Tool calls" })).toHaveTextContent("0");
   });
+
+  it("adds a USD tooltip to the AI Credits tile of a simulated session only", () => {
+    const simulation = {
+      vendorId: "anthropic",
+      modelId: "claude-sonnet-5.5",
+      cacheOutcome: "hit" as const,
+      note: "n",
+      confidence: "inferred" as const,
+      sourceIds: [],
+    };
+    const credits = (value: number) => ({
+      usage: { ...makeTurn().usage, costAiCredits: { known: true as const, value } },
+    });
+    const { rerender } = render(
+      <SessionKpiTiles turns={[makeTurn({ ...credits(100), simulation }), makeTurn({ ...credits(50), simulation })]} />,
+    );
+    expect(screen.getByRole("group", { name: "AI Credits" })).toHaveAttribute("title", "≈ $1.50");
+
+    rerender(<SessionKpiTiles turns={[makeTurn(credits(100))]} />);
+    expect(screen.getByRole("group", { name: "AI Credits" })).not.toHaveAttribute("title");
+  });
 });

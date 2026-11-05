@@ -103,9 +103,24 @@ const SCENARIOS: Scenario[] = [
   { name: "learn", run: async () => undefined },
   {
     name: "learn-scenario",
-    // As the sidebar's Learn view opens it (step 10.12).
+    // As the sidebar's Learn view opens it (step 10.12): simulated on the
+    // default model, with the picker, Cache column and sources footer (13.7).
     run: async (page, harness) =>
       harness.postHostEvent(page, "selectSession", { sessionId: "cache-basics", mode: "learn" }),
+  },
+  {
+    name: "learn-scenario-narrow",
+    widths: NARROW_WIDTHS,
+    run: async (page, harness) =>
+      harness.postHostEvent(page, "selectSession", { sessionId: "cache-basics", mode: "learn" }),
+  },
+  {
+    name: "learn-scenario-assumptions",
+    run: async (page, harness) => {
+      await harness.postHostEvent(page, "selectSession", { sessionId: "cache-basics", mode: "learn" });
+      await page.getByRole("button", { name: /assumption/i }).first().click();
+      await harness.settle(page);
+    },
   },
   {
     name: "session",

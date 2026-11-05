@@ -3,7 +3,7 @@
 Status: **In progress** (planned 2026-11-03; step 13.0 started 2026-11-04,
 after `ext-v0.1.0` was tagged). As of 2026-11-05 the rule register is
 drafted, verified and has the owner's decisions recorded (#115, #116,
-#120, #123); step 13.1 (domain schemas, #129) is merged; step 13.2 (vendor data) is merged (#130); step 13.3 (simulator core) is merged (#131); step 13.4 (cache models, InvalidationPolicy) is merged (#132); step 13.5 (18 scripts, `simulateScenario`, 69 golden snapshots; the old fixtures and fixture-arithmetic test stay until 13.6 swaps the adapter) is built, in review; step 13.5a and steps 13.6-13.10 are not started. It ships in extension 0.2.0. The owner's decisions
+#120, #123); step 13.1 (domain schemas, #129) is merged; step 13.2 (vendor data) is merged (#130); step 13.3 (simulator core) is merged (#131); step 13.4 (cache models, InvalidationPolicy) is merged (#132); step 13.5 (18 scripts, `simulateScenario`, 69 golden snapshots) is built (#133); step 13.6 (`getScenario`, `compareScenario`, `listVendorProfiles`, `vendorSimulation` flag) is built (#134); step 13.7 (Learn picker, Cache column, simulation note, USD tooltips, assumptions popover, sources footer; the extension Learn list now comes from the simulation, standalone keeps the old fixtures until 13.10) is built, in review; the UI check (new narrow and assumptions scenarios) passes in every theme; step 13.5a and steps 13.8-13.10 are not started. It ships in extension 0.2.0. The owner's decisions
 from the 2026-11-03 interview are recorded in [§9](#9-decisions). In short:
 - simulate **every Copilot vendor whose caching is documented** (Anthropic,
   OpenAI, Google, xAI);

@@ -7,6 +7,7 @@ import {
   type ProductFeatures,
   type ProductProfile,
   type Session,
+  type VendorProfileSummary,
 } from "@agent-cost-analyzer/domain";
 import { fetchConfigStatus, updateRetentionThreshold } from "./api-client/config-status.js";
 import { onHostEvent } from "./api-client/host-events.js";
@@ -14,12 +15,16 @@ import { fetchHealth, type HealthResponse } from "./api-client/health.js";
 import { fetchLearnScenarios } from "./api-client/learn-scenarios.js";
 import { fetchLogProviderStatus, setActiveLogProvider } from "./api-client/log-providers.js";
 import { fetchProductProfile } from "./api-client/product-profile.js";
+import { fetchScenario, fetchVendorProfiles } from "./api-client/vendor-simulation.js";
 import { fetchSession, fetchSessions } from "./api-client/sessions.js";
 import { AdviceExportDialog } from "./components/AdviceExportDialog.js";
 import { AdviceExportTriggerBar } from "./components/AdviceExportTriggerBar.js";
 import { AppHeader } from "./components/AppHeader.js";
 import { AuditRollupPanel } from "./components/AuditRollupPanel.js";
 import { ColumnChooser } from "./components/ColumnChooser.js";
+import { AssumptionsPopover } from "./components/learn/AssumptionsPopover.js";
+import { SourcesFooter } from "./components/learn/SourcesFooter.js";
+import { VendorPicker } from "./components/learn/VendorPicker.js";
 import { SessionKpiTiles } from "./components/SessionKpiTiles.js";
 import { TurnMetrics } from "./components/TurnMetrics.js";
 import { Drawer } from "./components/ui/Drawer.js";
@@ -40,6 +45,7 @@ import { SegmentedControl } from "./components/ui/SegmentedControl.js";
 import { Tag } from "./components/ui/Tag.js";
 import { AiCreditsSparkline } from "./charts/AiCreditsSparkline.js";
 import { getHostCapabilities } from "./host/current-host-capabilities.js";
+import { defaultSimulatedModel } from "./lib/default-simulated-model.js";
 import { eventLogUnavailableReason } from "./lib/agent-host-unavailable.js";
 import { performanceMarks as pagePerformanceMarks, type PerformanceMarks } from "./lib/performance-marks.js";
 import { LIST_COLUMN_WIDTH, layoutFor, type Layout } from "./lib/layout.js";
@@ -77,6 +83,7 @@ type SessionLoad =
 
 // The view-state storage key for the turns table's chosen columns.
 const TURN_COLUMNS_KEY = "turnColumns";
+const SIMULATION_MODEL_KEY = "learnSimulationModel";
 
 // §3.5 Layout: list (when shown), centre and right column at wide widths;
 // list and centre at medium, with the right column in a drawer; one column
@@ -112,6 +119,7 @@ const FALLBACK_FEATURES: ProductFeatures = {
   settingFixes: false,
   openInEditor: false,
   sessionSidebar: false,
+  vendorSimulation: false,
 };
 
 const EMPTY_STATES = {
@@ -151,6 +159,16 @@ export function App({ performanceMarks = pagePerformanceMarks }: AppProps = {}) 
   const [inspectorOpen, setInspectorOpen] = useState(false);
   const [turnInspectorOpen, setTurnInspectorOpen] = useState(false);
   const [providers, setProviders] = useState<LogProviderDescriptor[]>([]);
+  // Step 13.7: the vendor profiles behind the Learn model picker, and the
+  // person's explicit pick (kept between visits); no pick means the D3 default.
+  const [vendorProfiles, setVendorProfiles] = useState<VendorProfileSummary[]>([]);
+  const [pickedModelId, setPickedModelId] = useState<string | null>(
+    () => {
+      const stored = getViewStateStorage().get(SIMULATION_MODEL_KEY);
+      return typeof stored === "string" ? stored : null;
+    },
+  );
+  const latestScenarioRequestId = useRef(0);
   const [centerView, setCenterView] = useState<CenterView>("turns");
   const [productProfile, setProductProfile] = useState<ProductProfile | null>(null);
   // Whether the profile has resolved or failed: until then the header holds
@@ -190,6 +208,14 @@ export function App({ performanceMarks = pagePerformanceMarks }: AppProps = {}) 
       .catch(() => undefined)
       .finally(() => setProfileSettled(true));
   }, []);
+
+  const simulationEnabled = (productProfile?.features ?? FALLBACK_FEATURES).vendorSimulation;
+  useEffect(() => {
+    if (!simulationEnabled) return;
+    fetchVendorProfiles()
+      .then(setVendorProfiles)
+      .catch((error: Error) => setFetchError(error.message));
+  }, [simulationEnabled]);
 
   useEffect(() => {
     fetchHealth()
@@ -252,8 +278,9 @@ export function App({ performanceMarks = pagePerformanceMarks }: AppProps = {}) 
     if (picked) {
       setInspectorOpen(false);
       setTurnInspectorOpen(false);
-      loadSession(picked);
+      openLearnScenario(picked);
     }
+    // openLearnScenario reads the latest model; the effect fires per pending id.
   }, [pendingScenarioId, scenarioList, loadSession]);
 
   // The extension's sidebar picked a session (D10, the selectSession event):
@@ -283,6 +310,20 @@ export function App({ performanceMarks = pagePerformanceMarks }: AppProps = {}) 
           openTextDocument(text, "plaintext").catch((error: Error) => setFetchError(error.message));
         }
       : undefined;
+
+  const simulatedModelIds = new Set(
+    vendorProfiles.flatMap((profile) => profile.models.filter((model) => model.simulated).map((model) => model.modelId)),
+  );
+  const simulationModelId =
+    simulationEnabled && vendorProfiles.length > 0
+      ? pickedModelId !== null && simulatedModelIds.has(pickedModelId)
+        ? pickedModelId
+        : defaultSimulatedModel(sessionList.status === "ready" ? sessionList.items : [], vendorProfiles)
+      : undefined;
+  const simulationProfile = vendorProfiles.find((profile) =>
+    profile.models.some((model) => model.modelId === simulationModelId),
+  );
+  const sessionIsSimulated = mode === "learn" && session !== null && session.turns.some((turn) => turn.simulation);
 
   const selectedTurn = session?.turns[selectedTurnIndex] ?? null;
   const inspectorShown = session !== null && (inspectorOpen || turnInspectorOpen);
@@ -376,8 +417,30 @@ export function App({ performanceMarks = pagePerformanceMarks }: AppProps = {}) 
     if (mode === "analyze") {
       openAnalyzeSession(picked.id);
     } else {
-      loadSession(picked);
+      openLearnScenario(picked);
     }
+  }
+
+  // With simulation on, a scenario opens replayed on the chosen model; the
+  // list's own copy (default model) shows until that answer arrives, and
+  // stays if it fails. Otherwise the list's copy is the scenario.
+  function openLearnScenario(picked: Session, modelId: string | undefined = simulationModelId): void {
+    loadSession(picked);
+    if (!simulationEnabled || modelId === undefined) return;
+    const requestId = ++latestScenarioRequestId.current;
+    fetchScenario(picked.id, modelId)
+      .then((simulated) => {
+        if (requestId === latestScenarioRequestId.current) loadSession(simulated);
+      })
+      .catch((error: Error) => {
+        if (requestId === latestScenarioRequestId.current) setFetchError(error.message);
+      });
+  }
+
+  function handleModelChange(modelId: string): void {
+    setPickedModelId(modelId);
+    getViewStateStorage().set(SIMULATION_MODEL_KEY, modelId);
+    if (mode === "learn" && session) openLearnScenario(session, modelId);
   }
 
   // `tab` is applied once the session has loaded: loading a session resets
@@ -651,6 +714,15 @@ export function App({ performanceMarks = pagePerformanceMarks }: AppProps = {}) 
                     className="center-view-seg"
                   />
                 ))}
+              {mode === "learn" && simulationModelId !== undefined && simulationProfile !== undefined && (
+                <div
+                  className="learn-simulation-bar"
+                  style={{ display: "flex", alignItems: "center", gap: "var(--space-2)", flexWrap: "wrap", marginBottom: "var(--space-3)" }}
+                >
+                  <VendorPicker profiles={vendorProfiles} value={simulationModelId} onChange={handleModelChange} />
+                  <AssumptionsPopover assumptions={simulationProfile.assumptions} />
+                </div>
+              )}
               <div style={mode === "analyze" ? { marginTop: "var(--space-3)" } : undefined}>
               {showDashboard ? (
                 <InsightsDashboard crossProvider={features.crossProviderInsights} />
@@ -700,6 +772,7 @@ export function App({ performanceMarks = pagePerformanceMarks }: AppProps = {}) 
                       {session.title}
                     </h3>
                     <Tag variant="accent">{session.model}</Tag>
+                    {sessionIsSimulated && <Tag variant="outline">Simulated</Tag>}
                     <Tag variant={session.usageDataAvailable ? "accent" : "outline"}>
                       {session.usageDataAvailable ? "usage: known" : "usage: unavailable"}
                     </Tag>
@@ -711,7 +784,7 @@ export function App({ performanceMarks = pagePerformanceMarks }: AppProps = {}) 
                       </span>
                     )}
                     <div style={{ marginLeft: "auto", display: "flex", gap: "var(--space-2)", alignItems: "center" }}>
-                      {layout !== "narrow" && <ColumnChooser visible={chosenColumns} onChange={handleColumnsChange} />}
+                      {layout !== "narrow" && <ColumnChooser visible={chosenColumns} onChange={handleColumnsChange} simulated={sessionIsSimulated} />}
                       {layout !== "wide" && (
                         <button
                           type="button"
@@ -752,6 +825,9 @@ export function App({ performanceMarks = pagePerformanceMarks }: AppProps = {}) 
                       )}
                       {rightColumn}
                     </Drawer>
+                  )}
+                  {sessionIsSimulated && simulationProfile && (
+                    <SourcesFooter sources={simulationProfile.sources} oldestCheckedAt={simulationProfile.oldestCheckedAt} />
                   )}
                   <div style={{ marginTop: "var(--space-4)" }}>
                     <TimelineScrubber

@@ -2,9 +2,10 @@
 // extension build has filled media/): the host's dist/extension.js with
 // esbuild's metafile at dist/meta.json, and the MCP child process's
 // dist/mcp-stdio.js with dist/meta-mcp-stdio.json (step 10.8). Then the
-// learn-scenario fixtures go into media/learn-scenarios, where the
+// learn-scenario fixtures go into media/learn-scenarios (plus media/learn-scripts
+// and media/vendor-profiles for the simulation), where the
 // composition root reads them (G4).
-import { cpSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { cpSync, mkdirSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import path from "node:path";
 import { build } from "esbuild";
@@ -23,3 +24,12 @@ const learnScenariosDir = path.join(extensionPackageDir, "media", "learn-scenari
 rmSync(learnScenariosDir, { recursive: true, force: true });
 mkdirSync(path.dirname(learnScenariosDir), { recursive: true });
 cpSync(path.join(serverDir, "fixtures", "learn-scenarios"), learnScenariosDir, { recursive: true });
+// Step 13.6: the vendor-aware simulation's scripts and vendor profiles. Only
+// the JSON the loaders read ships; the price-table snapshot beside the
+// profiles is a CI-diff input (step 13.9), not runtime data.
+const jsonOnly = (source: string): boolean => statSync(source).isDirectory() || source.endsWith(".json");
+for (const name of ["learn-scripts", "vendor-profiles"]) {
+  const target = path.join(extensionPackageDir, "media", name);
+  rmSync(target, { recursive: true, force: true });
+  cpSync(path.join(serverDir, "fixtures", name), target, { recursive: true, filter: jsonOnly });
+}

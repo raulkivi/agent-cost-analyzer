@@ -139,4 +139,33 @@ describe("ExplanationPanel", () => {
     expect(screen.getByText("Failed · Command not found")).toBeInTheDocument();
     expect(screen.getByText("foo --version")).toBeInTheDocument();
   });
+
+  it("shows a simulation's generated note and a Simulated tag", () => {
+    render(
+      <ExplanationPanel
+        turn={makeTurn({
+          simulation: {
+            vendorId: "anthropic",
+            modelId: "claude-sonnet-5.5",
+            cacheOutcome: "hit",
+            note: "On Claude Sonnet 5.5: cache hit, 4,500 tokens read from cache.",
+            confidence: "inferred",
+            sourceIds: [],
+          },
+        })}
+        mode="learn"
+      />,
+    );
+
+    expect(screen.getByText("Simulated")).toBeInTheDocument();
+    expect(screen.getByText("Simulation note")).toHaveClass("sr-only");
+    expect(screen.getByText(/cache hit, 4,500 tokens read from cache/)).toBeInTheDocument();
+  });
+
+  it("shows no simulation note or tag for a turn without a simulation", () => {
+    render(<ExplanationPanel turn={makeTurn()} mode="learn" />);
+
+    expect(screen.queryByText("Simulated")).not.toBeInTheDocument();
+    expect(screen.queryByText("Simulation note")).not.toBeInTheDocument();
+  });
 });

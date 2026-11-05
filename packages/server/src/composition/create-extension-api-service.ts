@@ -1,5 +1,8 @@
 import type { ProductProfile } from "@agent-cost-analyzer/domain";
-import { loadLearnScenarios } from "../data-sources/learn-scenarios/loader.js";
+import { loadScenarioScripts } from "../data-sources/learn-scripts/loader.js";
+import { loadVendorProfiles } from "../data-sources/vendor-profiles/loader.js";
+import { LearnSimulationService } from "../services/learn-simulation/learn-simulation-service.js";
+import { createSimulatedScenarioCatalog } from "../services/learn-simulation/simulated-scenario-catalog.js";
 import { agentHostCatalogProbe } from "../services/config-check/agent-host-catalog-probe.js";
 import { checkConfig } from "../services/config-check/config-check.js";
 import type { SettingsSource } from "../services/config-check/settings-source.js";
@@ -16,6 +19,9 @@ export interface ExtensionApiServiceOptions extends CopilotProviderCompositionOp
   // G4 (vscode-extension.md §2.2): required, because the extension runs as
   // a single CJS bundle with no usable import.meta.url to default from.
   learnScenariosFixturesDir: string;
+  // Same G4 reason: the bundle can't locate the simulator's data itself.
+  learnScriptsDir: string;
+  vendorProfilesDir: string;
   appVersion: string;
 }
 
@@ -35,6 +41,7 @@ export function extensionProductProfile(version: string): ProductProfile {
       settingFixes: true,
       openInEditor: true,
       sessionSidebar: true,
+      vendorSimulation: true,
     },
   };
 }
@@ -44,8 +51,15 @@ export function extensionProductProfile(version: string): ProductProfile {
 // it never imports the Express app or any non-Copilot provider; the
 // extension's bundle-boundary test enforces that.
 export function createExtensionApiService(options: ExtensionApiServiceOptions): ApiService {
-  const { learnScenariosFixturesDir, appVersion, settingsSource, ...compositionOptions } = options;
+  const { learnScriptsDir, vendorProfilesDir, appVersion, settingsSource, ...compositionOptions } = options;
   const { registry, appSettings, resolvedVscodeSettingsPath } = composeCopilotProviders(compositionOptions);
+
+  // Copilot users see VS Code wording (D13/D14).
+  const learnSimulation = new LearnSimulationService(
+    loadScenarioScripts(learnScriptsDir),
+    loadVendorProfiles(vendorProfilesDir),
+    "vscode-local",
+  );
 
   return new ApiService({
     registry,
@@ -59,7 +73,11 @@ export function createExtensionApiService(options: ExtensionApiServiceOptions): 
         minRetainedSessionLogsThreshold,
         agentHostCatalogPresent: agentHostCatalogProbe(compositionOptions.agentHostUserDataDir),
       }),
-    learnScenarios: loadLearnScenarios({ fixturesDir: learnScenariosFixturesDir }),
+    // The Learn list is the simulated scenarios; the legacy
+    // learnScenariosFixturesDir option is accepted but unused until the
+    // fixtures are retired (it stays in compositionOptions harmlessly).
+    learnScenarios: createSimulatedScenarioCatalog(learnSimulation),
+    learnSimulation,
     appVersion,
     productProfile: extensionProductProfile(appVersion),
   });

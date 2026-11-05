@@ -136,7 +136,18 @@ export function ExplanationPanel({
           {TRIGGER_LABELS[turn.triggeredEvent]}
         </Tag>
       )}
+      {turn.simulation && (
+        <Tag variant="accent" style={{ marginTop: 6, marginLeft: turn.triggeredEvent ? 6 : 0, display: "inline-flex" }}>
+          Simulated
+        </Tag>
+      )}
       <p style={{ fontSize: 14, margin: "8px 0 0" }}>{turn.explanation}</p>
+      {turn.simulation && (
+        <p style={{ fontSize: 13, margin: "8px 0 0" }}>
+          <span className="sr-only">Simulation note</span>
+          {turn.simulation.note}
+        </p>
+      )}
       {mode === "analyze" && (
         <ToolCallsThisTurn
           turn={turn}

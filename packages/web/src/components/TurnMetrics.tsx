@@ -1,5 +1,5 @@
 import type { Turn } from "@agent-cost-analyzer/domain";
-import { TURN_COLUMNS, type TurnColumnId } from "../lib/turn-columns.js";
+import { columnsApplyingTo, TURN_COLUMNS, type TurnColumnId } from "../lib/turn-columns.js";
 import { TurnColumnValue } from "./TurnsTable.js";
 
 interface TurnMetricsProps {
@@ -19,7 +19,7 @@ export function TurnMetrics({ turns, turnIndex, columns }: TurnMetricsProps) {
   if (!turn) return null;
   return (
     <dl className="turn-metrics">
-      {columns.map((id) => (
+      {columnsApplyingTo(columns, turn.simulation !== undefined).map((id) => (
         <div key={id}>
           <dt className="text-muted">{LABELS.get(id)}</dt>
           <dd>

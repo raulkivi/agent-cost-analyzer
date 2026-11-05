@@ -13,6 +13,7 @@ describe("productProfileSchema", () => {
       settingFixes: false,
       openInEditor: false,
       sessionSidebar: false,
+      vendorSimulation: false,
     },
   };
 
@@ -31,6 +32,7 @@ describe("productProfileSchema", () => {
         settingFixes: true,
         openInEditor: true,
         sessionSidebar: true,
+        vendorSimulation: true,
       },
     };
 
@@ -45,6 +47,12 @@ describe("productProfileSchema", () => {
     const features: Partial<typeof standalone.features> = { ...standalone.features };
     delete features.openInEditor;
 
+    expect(() => productProfileSchema.parse({ ...standalone, features })).toThrow();
+  });
+
+  it("rejects a profile without vendorSimulation (step 13.6)", () => {
+    const features: Record<string, unknown> = { ...standalone.features };
+    delete features.vendorSimulation;
     expect(() => productProfileSchema.parse({ ...standalone, features })).toThrow();
   });
 
