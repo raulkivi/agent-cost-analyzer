@@ -4,11 +4,13 @@ interface StatTileProps {
   note?: string;
   // Only for a value that is bad news (e.g. a non-zero failure rate).
   alert?: boolean;
+  // Hover text for a figure that has a second unit (e.g. AI Credits in USD).
+  title?: string;
 }
 
-export function StatTile({ label, value, note, alert = false }: StatTileProps) {
+export function StatTile({ label, value, note, alert = false, title }: StatTileProps) {
   return (
-    <div className="stat-tile" role="group" aria-label={label}>
+    <div className="stat-tile" role="group" aria-label={label} title={title}>
       <span className="stat-tile-label">{label}</span>
       <span className={alert ? "stat-tile-value stat-tile-value--alert" : "stat-tile-value"}>{value}</span>
       {note && <span className="stat-tile-note">{note}</span>}
