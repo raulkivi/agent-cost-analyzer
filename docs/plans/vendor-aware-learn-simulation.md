@@ -3,7 +3,7 @@
 Status: **In progress** (planned 2026-11-03; step 13.0 started 2026-11-04,
 after `ext-v0.1.0` was tagged). As of 2026-11-05 the rule register is
 drafted, verified and has the owner's decisions recorded (#115, #116,
-#120, #123); step 13.1 (domain schemas) is built on branch `feat/step-13-1-domain-schemas`; steps 13.2-13.10 are not started. It ships in extension 0.2.0. The owner's decisions
+#120, #123); step 13.1 (domain schemas, #129) is merged; step 13.2 (vendor data: six profiles, a price-table snapshot, loader) is built, in review; steps 13.3-13.10 are not started. It ships in extension 0.2.0. The owner's decisions
 from the 2026-11-03 interview are recorded in [§9](#9-decisions). In short:
 - simulate **every Copilot vendor whose caching is documented** (Anthropic,
   OpenAI, Google, xAI);

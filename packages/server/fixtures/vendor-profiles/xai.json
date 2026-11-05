@@ -1,0 +1,262 @@
+{
+  "vendorId": "xai",
+  "displayName": "xAI",
+  "defaultModelId": "grok-4.7",
+  "caching": {
+    "kind": "best-effort",
+    "note": "Automatic prefix caching that isn't guaranteed: entries can be evicted at any time, and requests may be routed to different servers. Messages at the start of the request that match exactly are served from cache, tool call results included. xAI documents no cache lifetime, no minimum cacheable length and no cache-write charge, and GitHub's table has no cache-write column for xAI."
+  },
+  "invalidation": [
+    {
+      "change": "tools-changed",
+      "invalidatesFrom": "unknown",
+      "confidence": "unknown",
+      "sourceIds": []
+    },
+    {
+      "change": "system-changed",
+      "invalidatesFrom": "unknown",
+      "confidence": "unknown",
+      "sourceIds": []
+    },
+    {
+      "change": "image-added",
+      "invalidatesFrom": "unknown",
+      "confidence": "unknown",
+      "sourceIds": []
+    },
+    {
+      "change": "image-removed",
+      "invalidatesFrom": "unknown",
+      "confidence": "unknown",
+      "sourceIds": []
+    },
+    {
+      "change": "thinking-changed",
+      "invalidatesFrom": "unknown",
+      "confidence": "unknown",
+      "sourceIds": []
+    },
+    {
+      "change": "model-switch",
+      "invalidatesFrom": "unknown",
+      "confidence": "unknown",
+      "sourceIds": []
+    },
+    {
+      "change": "tool-choice-changed",
+      "invalidatesFrom": "unknown",
+      "confidence": "unknown",
+      "sourceIds": []
+    }
+  ],
+  "models": [
+    {
+      "modelId": "grok-4.5",
+      "displayName": "Grok 4.5",
+      "vendorId": "xai",
+      "releaseStatus": "GA",
+      "tiers": [
+        {
+          "maxInputTokens": 200000,
+          "inputUsdPerM": 2.0,
+          "cachedInputUsdPerM": 0.5,
+          "cacheWriteUsdPerM": null,
+          "outputUsdPerM": 6.0
+        },
+        {
+          "inputUsdPerM": 4.0,
+          "cachedInputUsdPerM": 1.0,
+          "cacheWriteUsdPerM": null,
+          "outputUsdPerM": 12.0
+        }
+      ],
+      "sourceIds": ["gh-pricing-table", "gh-model-hosting-xai"]
+    },
+    {
+      "modelId": "grok-4.6",
+      "displayName": "Grok 4.6",
+      "vendorId": "xai",
+      "releaseStatus": "GA",
+      "tiers": [
+        {
+          "maxInputTokens": 200000,
+          "inputUsdPerM": 2.0,
+          "cachedInputUsdPerM": 0.5,
+          "cacheWriteUsdPerM": null,
+          "outputUsdPerM": 6.0
+        },
+        {
+          "inputUsdPerM": 4.0,
+          "cachedInputUsdPerM": 1.0,
+          "cacheWriteUsdPerM": null,
+          "outputUsdPerM": 12.0
+        }
+      ],
+      "sourceIds": ["gh-pricing-table", "gh-model-hosting-xai"]
+    },
+    {
+      "modelId": "grok-4.7",
+      "displayName": "Grok 4.7",
+      "vendorId": "xai",
+      "releaseStatus": "GA",
+      "tiers": [
+        {
+          "maxInputTokens": 200000,
+          "inputUsdPerM": 2.0,
+          "cachedInputUsdPerM": 0.5,
+          "cacheWriteUsdPerM": null,
+          "outputUsdPerM": 6.0
+        },
+        {
+          "inputUsdPerM": 4.0,
+          "cachedInputUsdPerM": 1.0,
+          "cacheWriteUsdPerM": null,
+          "outputUsdPerM": 12.0
+        }
+      ],
+      "sourceIds": ["gh-pricing-table", "gh-model-hosting-xai"]
+    }
+  ],
+  "assumptions": [
+    {
+      "text": "xAI documents no cache lifetime, only that entries can be evicted at any time. The simulation's cache lifetime is assumed (D5).",
+      "confidence": "unknown"
+    },
+    {
+      "text": "Whether Copilot sends x-grok-conv-id or another routing hint, which xAI recommends to maximize cache hits, isn't documented.",
+      "confidence": "unknown"
+    },
+    {
+      "text": "xAI documents no tools/system/messages order; it advises putting system prompts, few-shot examples and reference documents at the beginning. The simulation assumes tools → system → messages.",
+      "confidence": "unknown"
+    },
+    {
+      "text": "Any edit, removal or reordering of earlier messages breaks the cache; only appended messages keep it.",
+      "confidence": "documented",
+      "sourceIds": ["xai-caching-earlier-messages"]
+    },
+    {
+      "text": "On reasoning models, leaving out reasoning_content from previous responses causes cache misses.",
+      "confidence": "documented",
+      "sourceIds": ["xai-caching-reasoning"]
+    },
+    {
+      "text": "Copilot bills GitHub's tiers (rule register owner decision 5): the default tier up to and including 200K input tokens, the long-context tier above it. xAI's own boundary puts exactly 200k in the long tier, and xAI bills all tokens in such a request, cached ones included, at the long-context rates.",
+      "confidence": "documented",
+      "sourceIds": [
+        "gh-pricing-table",
+        "xai-models-long-context",
+        "xai-usage-long-context"
+      ]
+    },
+    {
+      "text": "GitHub's '≤ 200K' threshold is read as 200,000 input tokens; GitHub doesn't define K.",
+      "confidence": "inferred",
+      "sourceIds": ["gh-pricing-table"]
+    },
+    {
+      "text": "xAI's own Grok 4.5 cached-input price is $0.30 (< 200k) and $0.60 (≥ 200k); GitHub lists $0.50 and $1.00. The profile uses GitHub's table, which Copilot bills; the cause isn't documented (rule register owner decision 6, open).",
+      "confidence": "documented",
+      "sourceIds": ["xai-models-pricing", "gh-pricing-table"]
+    },
+    {
+      "text": "Grok 4.5, 4.6 and 4.7 have identical Copilot prices, so xAI has no cheaper model and two-model scenarios are skipped for it (rule register owner decision 2).",
+      "confidence": "documented",
+      "sourceIds": ["gh-pricing-table"]
+    }
+  ],
+  "sources": [
+    {
+      "id": "gh-pricing-table",
+      "title": "GitHub Copilot price table (github/docs models-and-pricing.yml)",
+      "url": "https://github.com/github/docs/blob/cc0c29a040c251c48ed65198f108a484c33406fa/data/tables/copilot/models-and-pricing.yml",
+      "quote": "threshold: Input token threshold for pricing tier (OpenAI, Google, and xAI; Anthropic only for models with more than one pricing tier).",
+      "checkedAt": "2026-11-05"
+    },
+    {
+      "id": "gh-model-hosting-xai",
+      "title": "GitHub Docs: Hosting of models for GitHub Copilot (xAI models)",
+      "url": "https://docs.github.com/en/copilot/reference/ai-models/model-hosting",
+      "quote": "These models are hosted on xAI. xAI operates these models in GitHub Copilot under a zero data retention API policy.",
+      "checkedAt": "2026-11-05"
+    },
+    {
+      "id": "xai-caching-automatic",
+      "title": "xAI: Prompt caching",
+      "url": "https://docs.x.ai/developers/advanced-api-usage/prompt-caching",
+      "quote": "The xAI API performs prompt caching automatically.",
+      "checkedAt": "2026-11-04"
+    },
+    {
+      "id": "xai-caching-prefix",
+      "title": "xAI: Prompt caching (prefix)",
+      "url": "https://docs.x.ai/developers/advanced-api-usage/prompt-caching",
+      "quote": "When consecutive requests share the same starting messages, the xAI API automatically caches them. On the next request, messages at the beginning that match exactly are served from cache:",
+      "checkedAt": "2026-11-04"
+    },
+    {
+      "id": "xai-caching-not-guaranteed",
+      "title": "xAI: Prompt caching, how it works",
+      "url": "https://docs.x.ai/developers/advanced-api-usage/prompt-caching/how-it-works",
+      "quote": "Prompt caching is not 100% guaranteed. Cache entries can be evicted due to memory pressure, and requests may be routed to different servers.",
+      "checkedAt": "2026-11-04"
+    },
+    {
+      "id": "xai-caching-eviction",
+      "title": "xAI: Prompt caching, best practices (cache lifetime)",
+      "url": "https://docs.x.ai/developers/advanced-api-usage/prompt-caching/best-practices",
+      "quote": "Cache entries can be evicted at any time due to server load or restarts. Use `x-grok-conv-id` to maximize retention by routing to the same server.",
+      "checkedAt": "2026-11-04"
+    },
+    {
+      "id": "xai-caching-tool-results",
+      "title": "xAI: Prompt caching, best practices (cacheable prefix)",
+      "url": "https://docs.x.ai/developers/advanced-api-usage/prompt-caching/best-practices",
+      "quote": "The cacheable prefix includes all messages up to and including tool call results.",
+      "checkedAt": "2026-11-04"
+    },
+    {
+      "id": "xai-caching-front-load",
+      "title": "xAI: Prompt caching, best practices (prompt structure)",
+      "url": "https://docs.x.ai/developers/advanced-api-usage/prompt-caching/best-practices",
+      "quote": "**Front-load static content** — Place system prompts, few-shot examples, and reference documents at the beginning where they form a stable prefix.",
+      "checkedAt": "2026-11-04"
+    },
+    {
+      "id": "xai-caching-earlier-messages",
+      "title": "xAI: Prompt caching, multi-turn",
+      "url": "https://docs.x.ai/developers/advanced-api-usage/prompt-caching/multi-turn",
+      "quote": "Any change to earlier messages breaks the cache. Only append new messages at the end.",
+      "checkedAt": "2026-11-04"
+    },
+    {
+      "id": "xai-caching-reasoning",
+      "title": "xAI: Prompt caching, multi-turn (reasoning models)",
+      "url": "https://docs.x.ai/developers/advanced-api-usage/prompt-caching/multi-turn",
+      "quote": "For reasoning models, you **must** include `reasoning_content` from previous responses; omitting it is the top cause of cache misses.",
+      "checkedAt": "2026-11-04"
+    },
+    {
+      "id": "xai-models-pricing",
+      "title": "xAI: Models and pricing",
+      "url": "https://docs.x.ai/developers/models",
+      "quote": "| grok-4.5 (< 200k prompt tokens) | 500k | $2.00 | $0.30 | $6.00 |",
+      "checkedAt": "2026-11-04"
+    },
+    {
+      "id": "xai-models-long-context",
+      "title": "xAI: Models and pricing (long context pricing)",
+      "url": "https://docs.x.ai/developers/models",
+      "quote": "Models listed with two rows use long context pricing: requests whose prompt reaches the listed token threshold are billed at the higher rate for all tokens in the request.",
+      "checkedAt": "2026-11-04"
+    },
+    {
+      "id": "xai-usage-long-context",
+      "title": "xAI: Prompt caching, usage and pricing",
+      "url": "https://docs.x.ai/developers/advanced-api-usage/prompt-caching/usage-and-pricing",
+      "quote": "Long context pricing applies when total prompt tokens (including cached tokens) exceed the model's long context threshold. Both cached and non-cached tokens use their respective long-context rates in this case.",
+      "checkedAt": "2026-11-04"
+    }
+  ]
+}

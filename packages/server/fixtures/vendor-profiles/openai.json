@@ -1,0 +1,578 @@
+{
+  "vendorId": "openai",
+  "displayName": "OpenAI",
+  "defaultModelId": "gpt-6.1-sol",
+  "caching": {
+    "kind": "best-effort",
+    "note": "Models before GPT-5.6: automatic prefix caching, implicit only, with no cache-write charge. OpenAI publishes no minimum cacheable length for them (it varies with request settings) and no breakpoint interval length. Lifetime depends on retention: in_memory keeps entries around 5 to 10 minutes of inactivity, up to one hour; 24h typically around 30 minutes, up to 24 hours. Which retention Copilot uses isn't documented."
+  },
+  "invalidation": [
+    {
+      "change": "tools-changed",
+      "invalidatesFrom": "tools",
+      "confidence": "inferred",
+      "sourceIds": ["openai-pc-tools", "openai-pc-prefix-match"]
+    },
+    {
+      "change": "system-changed",
+      "invalidatesFrom": "system",
+      "confidence": "inferred",
+      "sourceIds": ["openai-pc-prefix-match", "openai-pc-stable-first"]
+    },
+    {
+      "change": "image-added",
+      "invalidatesFrom": "unknown",
+      "confidence": "unknown",
+      "sourceIds": []
+    },
+    {
+      "change": "image-removed",
+      "invalidatesFrom": "unknown",
+      "confidence": "unknown",
+      "sourceIds": []
+    },
+    {
+      "change": "thinking-changed",
+      "invalidatesFrom": "unknown",
+      "confidence": "unknown",
+      "sourceIds": []
+    },
+    {
+      "change": "model-switch",
+      "invalidatesFrom": "tools",
+      "confidence": "documented",
+      "sourceIds": ["openai-pc-model"]
+    },
+    {
+      "change": "tool-choice-changed",
+      "invalidatesFrom": "unknown",
+      "confidence": "unknown",
+      "sourceIds": []
+    }
+  ],
+  "models": [
+    {
+      "modelId": "gpt-5.3-codex",
+      "displayName": "GPT-5.3-Codex",
+      "vendorId": "openai",
+      "releaseStatus": "GA",
+      "tiers": [
+        {
+          "inputUsdPerM": 1.75,
+          "cachedInputUsdPerM": 0.175,
+          "cacheWriteUsdPerM": null,
+          "outputUsdPerM": 14.0
+        }
+      ],
+      "cheaperSiblingId": "gpt-5.4-nano",
+      "sourceIds": [
+        "gh-pricing-table",
+        "gh-models-pricing-openai",
+        "openai-pc-min-earlier"
+      ]
+    },
+    {
+      "modelId": "gpt-5.4-nano",
+      "displayName": "GPT-5.4 nano",
+      "vendorId": "openai",
+      "releaseStatus": "GA",
+      "tiers": [
+        {
+          "inputUsdPerM": 0.2,
+          "cachedInputUsdPerM": 0.02,
+          "cacheWriteUsdPerM": null,
+          "outputUsdPerM": 1.25
+        }
+      ],
+      "cheaperSiblingId": "gpt-6-luna",
+      "sourceIds": [
+        "gh-pricing-table",
+        "gh-models-pricing-openai",
+        "openai-pc-min-earlier"
+      ]
+    },
+    {
+      "modelId": "gpt-5.6-luna",
+      "displayName": "GPT-5.6 Luna",
+      "vendorId": "openai",
+      "releaseStatus": "GA",
+      "tiers": [
+        {
+          "maxInputTokens": 200000,
+          "inputUsdPerM": 0.2,
+          "cachedInputUsdPerM": 0.02,
+          "cacheWriteUsdPerM": 0.25,
+          "outputUsdPerM": 1.2
+        },
+        {
+          "inputUsdPerM": 0.4,
+          "cachedInputUsdPerM": 0.04,
+          "cacheWriteUsdPerM": 0.5,
+          "outputUsdPerM": 1.8
+        }
+      ],
+      "cachingKind": {
+        "kind": "automatic-prefix",
+        "ttlMinutes": { "fixed": 30 },
+        "writeCharged": true,
+        "minCacheableTokens": 1024
+      },
+      "cheaperSiblingId": "gpt-6-luna",
+      "sourceIds": [
+        "gh-pricing-table",
+        "gh-models-pricing-openai",
+        "openai-pc-min-new",
+        "openai-pc-retention-table",
+        "openai-pc-write"
+      ]
+    },
+    {
+      "modelId": "gpt-5.6-sol",
+      "displayName": "GPT-5.6 Sol",
+      "vendorId": "openai",
+      "releaseStatus": "GA",
+      "tiers": [
+        {
+          "maxInputTokens": 272000,
+          "inputUsdPerM": 4.0,
+          "cachedInputUsdPerM": 0.4,
+          "cacheWriteUsdPerM": 5.0,
+          "outputUsdPerM": 20.0
+        },
+        {
+          "inputUsdPerM": 8.0,
+          "cachedInputUsdPerM": 0.8,
+          "cacheWriteUsdPerM": 10.0,
+          "outputUsdPerM": 30.0
+        }
+      ],
+      "cachingKind": {
+        "kind": "automatic-prefix",
+        "ttlMinutes": { "fixed": 30 },
+        "writeCharged": true,
+        "minCacheableTokens": 1024
+      },
+      "cheaperSiblingId": "gpt-5.6-terra",
+      "sourceIds": [
+        "gh-pricing-table",
+        "gh-models-pricing-openai",
+        "openai-pc-min-new",
+        "openai-pc-retention-table",
+        "openai-pc-write"
+      ]
+    },
+    {
+      "modelId": "gpt-5.6-terra",
+      "displayName": "GPT-5.6 Terra",
+      "vendorId": "openai",
+      "releaseStatus": "GA",
+      "tiers": [
+        {
+          "maxInputTokens": 272000,
+          "inputUsdPerM": 2.0,
+          "cachedInputUsdPerM": 0.2,
+          "cacheWriteUsdPerM": 2.5,
+          "outputUsdPerM": 12.0
+        },
+        {
+          "inputUsdPerM": 4.0,
+          "cachedInputUsdPerM": 0.4,
+          "cacheWriteUsdPerM": 5.0,
+          "outputUsdPerM": 18.0
+        }
+      ],
+      "cachingKind": {
+        "kind": "automatic-prefix",
+        "ttlMinutes": { "fixed": 30 },
+        "writeCharged": true,
+        "minCacheableTokens": 1024
+      },
+      "cheaperSiblingId": "gpt-5.6-luna",
+      "sourceIds": [
+        "gh-pricing-table",
+        "gh-models-pricing-openai",
+        "openai-pc-min-new",
+        "openai-pc-retention-table",
+        "openai-pc-write"
+      ]
+    },
+    {
+      "modelId": "gpt-6-astra",
+      "displayName": "GPT-6 Astra",
+      "vendorId": "openai",
+      "releaseStatus": "GA",
+      "tiers": [
+        {
+          "maxInputTokens": 272000,
+          "inputUsdPerM": 10.0,
+          "cachedInputUsdPerM": 1.0,
+          "cacheWriteUsdPerM": 12.5,
+          "outputUsdPerM": 50.0
+        },
+        {
+          "inputUsdPerM": 20.0,
+          "cachedInputUsdPerM": 2.0,
+          "cacheWriteUsdPerM": 25.0,
+          "outputUsdPerM": 75.0
+        }
+      ],
+      "cachingKind": {
+        "kind": "automatic-prefix",
+        "ttlMinutes": { "fixed": 30 },
+        "writeCharged": true,
+        "minCacheableTokens": 1024
+      },
+      "cheaperSiblingId": "gpt-6-sol",
+      "sourceIds": [
+        "gh-pricing-table",
+        "gh-models-pricing-openai",
+        "openai-pc-min-new",
+        "openai-pc-retention-table",
+        "openai-pc-write"
+      ]
+    },
+    {
+      "modelId": "gpt-6-luna",
+      "displayName": "GPT-6 Luna",
+      "vendorId": "openai",
+      "releaseStatus": "GA",
+      "tiers": [
+        {
+          "maxInputTokens": 272000,
+          "inputUsdPerM": 0.1,
+          "cachedInputUsdPerM": 0.01,
+          "cacheWriteUsdPerM": 0.125,
+          "outputUsdPerM": 0.5
+        },
+        {
+          "inputUsdPerM": 0.2,
+          "cachedInputUsdPerM": 0.02,
+          "cacheWriteUsdPerM": 0.25,
+          "outputUsdPerM": 0.75
+        }
+      ],
+      "cachingKind": {
+        "kind": "automatic-prefix",
+        "ttlMinutes": { "fixed": 30 },
+        "writeCharged": true,
+        "minCacheableTokens": 1024
+      },
+      "sourceIds": [
+        "gh-pricing-table",
+        "gh-models-pricing-openai",
+        "openai-pc-min-new",
+        "openai-pc-retention-table",
+        "openai-pc-write"
+      ]
+    },
+    {
+      "modelId": "gpt-6-sol",
+      "displayName": "GPT-6 Sol",
+      "vendorId": "openai",
+      "releaseStatus": "GA",
+      "tiers": [
+        {
+          "maxInputTokens": 272000,
+          "inputUsdPerM": 2.0,
+          "cachedInputUsdPerM": 0.2,
+          "cacheWriteUsdPerM": 2.5,
+          "outputUsdPerM": 10.0
+        },
+        {
+          "inputUsdPerM": 4.0,
+          "cachedInputUsdPerM": 0.4,
+          "cacheWriteUsdPerM": 5.0,
+          "outputUsdPerM": 15.0
+        }
+      ],
+      "cachingKind": {
+        "kind": "automatic-prefix",
+        "ttlMinutes": { "fixed": 30 },
+        "writeCharged": true,
+        "minCacheableTokens": 1024
+      },
+      "cheaperSiblingId": "gpt-6-luna",
+      "sourceIds": [
+        "gh-pricing-table",
+        "gh-models-pricing-openai",
+        "openai-pc-min-new",
+        "openai-pc-retention-table",
+        "openai-pc-write"
+      ]
+    },
+    {
+      "modelId": "gpt-6.1-sol",
+      "displayName": "GPT-6.1 Sol",
+      "vendorId": "openai",
+      "releaseStatus": "GA",
+      "tiers": [
+        {
+          "maxInputTokens": 272000,
+          "inputUsdPerM": 2.0,
+          "cachedInputUsdPerM": 0.1,
+          "cacheWriteUsdPerM": 2.5,
+          "outputUsdPerM": 10.0
+        },
+        {
+          "inputUsdPerM": 4.0,
+          "cachedInputUsdPerM": 0.2,
+          "cacheWriteUsdPerM": 5.0,
+          "outputUsdPerM": 15.0
+        }
+      ],
+      "cachingKind": {
+        "kind": "automatic-prefix",
+        "ttlMinutes": { "fixed": 30 },
+        "writeCharged": true,
+        "minCacheableTokens": 1024
+      },
+      "cheaperSiblingId": "gpt-6.1-terra",
+      "sourceIds": [
+        "gh-pricing-table",
+        "gh-models-pricing-openai",
+        "openai-pc-min-new",
+        "openai-pc-retention-table",
+        "openai-pc-write"
+      ]
+    },
+    {
+      "modelId": "gpt-6.1-terra",
+      "displayName": "GPT-6.1 Terra",
+      "vendorId": "openai",
+      "releaseStatus": "GA",
+      "tiers": [
+        {
+          "maxInputTokens": 272000,
+          "inputUsdPerM": 1.0,
+          "cachedInputUsdPerM": 0.05,
+          "cacheWriteUsdPerM": 1.25,
+          "outputUsdPerM": 5.0
+        },
+        {
+          "inputUsdPerM": 2.0,
+          "cachedInputUsdPerM": 0.1,
+          "cacheWriteUsdPerM": 2.5,
+          "outputUsdPerM": 7.5
+        }
+      ],
+      "cachingKind": {
+        "kind": "automatic-prefix",
+        "ttlMinutes": { "fixed": 30 },
+        "writeCharged": true,
+        "minCacheableTokens": 1024
+      },
+      "cheaperSiblingId": "gpt-6-luna",
+      "sourceIds": [
+        "gh-pricing-table",
+        "gh-models-pricing-openai",
+        "openai-pc-min-new",
+        "openai-pc-retention-table",
+        "openai-pc-write"
+      ]
+    }
+  ],
+  "assumptions": [
+    {
+      "text": "OpenAI documents no tools/system/messages render order, only that stable content should come first. The simulation assumes tools → system → messages, so the tools and system rules are inferred.",
+      "confidence": "unknown"
+    },
+    {
+      "text": "Which cache lifetime Copilot requests for GPT-5.6 and later (the 30-minute default or 12 hours) isn't documented. The simulation assumes the 30-minute default.",
+      "confidence": "unknown"
+    },
+    {
+      "text": "For GPT-5.6 and later, 30 minutes is a minimum lifetime, and a read extends coverage to at least 30 minutes after it. The simulation treats an entry as expired 30 minutes after its last read or write, though it may survive longer.",
+      "confidence": "inferred",
+      "sourceIds": ["openai-pc-ttl", "openai-pc-refresh"]
+    },
+    {
+      "text": "For GPT-5.3-Codex and GPT-5.4 nano, Copilot's retention is probably in_memory: GitHub has a zero data retention agreement with OpenAI, and OpenAI defaults organizations with Zero Data Retention to in_memory on models that support both values. No doc states this for Copilot, or which values these two models support.",
+      "confidence": "inferred",
+      "sourceIds": [
+        "gh-model-hosting-openai-zdr",
+        "openai-pc-zdr-default",
+        "openai-pc-in-memory"
+      ]
+    },
+    {
+      "text": "Changing reasoning effort can change model-side reasoning instructions, and so the prefix. OpenAI doesn't say from which point, so the rule is unknown.",
+      "confidence": "documented",
+      "sourceIds": ["openai-pc-effort"]
+    },
+    {
+      "text": "Reasoning tokens are billed as output tokens.",
+      "confidence": "documented",
+      "sourceIds": ["openai-reasoning-billing"]
+    },
+    {
+      "text": "Copilot bills GitHub's tiers (rule register owner decision 3): GPT-5.6 Luna's long-context tier starts above 200K input tokens on GitHub, though OpenAI's pricing page shows 272K for all models; the other tiered models start above 272K. The long-context output prices are GitHub's, which differ from OpenAI's own page data (owner decision 4, open).",
+      "confidence": "documented",
+      "sourceIds": ["gh-pricing-table", "openai-pricing-long-context"]
+    },
+    {
+      "text": "GitHub's thresholds ('≤ 200K', '≤ 272K') are read as 200,000 and 272,000 input tokens; GitHub doesn't define K.",
+      "confidence": "inferred",
+      "sourceIds": ["gh-pricing-table"]
+    },
+    {
+      "text": "GitHub doesn't say which tokens count toward a tier threshold or whether the long-context tier prices the whole request. The simulation prices the whole request by its total input tokens.",
+      "confidence": "unknown"
+    }
+  ],
+  "sources": [
+    {
+      "id": "gh-pricing-table",
+      "title": "GitHub Copilot price table (github/docs models-and-pricing.yml)",
+      "url": "https://github.com/github/docs/blob/cc0c29a040c251c48ed65198f108a484c33406fa/data/tables/copilot/models-and-pricing.yml",
+      "quote": "Applies to Anthropic models and to GPT-5.6 and later OpenAI model families. Use \"Not applicable\" for models that have no cache write cost.",
+      "checkedAt": "2026-11-05"
+    },
+    {
+      "id": "gh-models-pricing-openai",
+      "title": "GitHub Docs: Models and pricing for GitHub Copilot",
+      "url": "https://docs.github.com/en/copilot/reference/copilot-billing/models-and-pricing",
+      "quote": "Earlier OpenAI models have no cache write cost.",
+      "checkedAt": "2026-11-05"
+    },
+    {
+      "id": "gh-model-hosting-openai-zdr",
+      "title": "GitHub Docs: Hosting of models for GitHub Copilot (OpenAI models)",
+      "url": "https://docs.github.com/en/copilot/reference/ai-models/model-hosting",
+      "quote": "GitHub maintains a zero data retention agreement with OpenAI.",
+      "checkedAt": "2026-11-05"
+    },
+    {
+      "id": "openai-pc-default-on",
+      "title": "OpenAI: Prompt caching",
+      "url": "https://developers.openai.com/api/docs/guides/prompt-caching",
+      "quote": "Prompt caching is enabled by default for supported OpenAI models.",
+      "checkedAt": "2026-11-04"
+    },
+    {
+      "id": "openai-pc-implicit-breakpoint",
+      "title": "OpenAI: Prompt caching (implicit breakpoint, GPT-5.6 and later)",
+      "url": "https://developers.openai.com/api/docs/guides/prompt-caching",
+      "quote": "OpenAI places a breakpoint at the end of the latest eligible message.",
+      "checkedAt": "2026-11-04"
+    },
+    {
+      "id": "openai-pc-min-new",
+      "title": "OpenAI: Prompt caching (minimum length)",
+      "url": "https://developers.openai.com/api/docs/guides/prompt-caching",
+      "quote": "The minimum cacheable prompt length is 1,024 tokens for GPT-5.6 and later and varies by request settings for earlier models.",
+      "checkedAt": "2026-11-04"
+    },
+    {
+      "id": "openai-pc-min-earlier",
+      "title": "OpenAI: Prompt caching (minimum length, earlier models)",
+      "url": "https://developers.openai.com/api/docs/guides/prompt-caching",
+      "quote": "For models before GPT-5.6, the minimum cacheable input length varies with request settings, including tools, images, output schemas, reasoning effort, and verbosity.",
+      "checkedAt": "2026-11-04"
+    },
+    {
+      "id": "openai-pc-earlier-interval",
+      "title": "OpenAI: Prompt caching (implicit breakpoints, earlier models)",
+      "url": "https://developers.openai.com/api/docs/guides/prompt-caching",
+      "quote": "Spaced at regular, model-dependent intervals.",
+      "checkedAt": "2026-11-04"
+    },
+    {
+      "id": "openai-pc-retention-table",
+      "title": "OpenAI: Prompt caching (supported retention values)",
+      "url": "https://developers.openai.com/api/docs/guides/prompt-caching",
+      "quote": "Supported retention values | \"30m\" (default), or \"12h\" in the Responses API | \"24h\" only | \"in_memory\" or \"24h\" *",
+      "checkedAt": "2026-11-04"
+    },
+    {
+      "id": "openai-pc-ttl",
+      "title": "OpenAI: Prompt caching (cache lifetime, GPT-5.6 and later)",
+      "url": "https://developers.openai.com/api/docs/guides/prompt-caching",
+      "quote": "set `prompt_cache_options.ttl` to choose the minimum cache lifetime.",
+      "checkedAt": "2026-11-04"
+    },
+    {
+      "id": "openai-pc-refresh",
+      "title": "OpenAI: Prompt caching (refresh on read, GPT-5.6 and later)",
+      "url": "https://developers.openai.com/api/docs/guides/prompt-caching",
+      "quote": "A 30-minute read refreshes coverage to at least 30 minutes after that read. If it uses an entry with valid 12-hour coverage, it preserves the later of the existing expiry and 30 minutes after the read. It does not restart a 12-hour clock or incur another write charge.",
+      "checkedAt": "2026-11-04"
+    },
+    {
+      "id": "openai-pc-write",
+      "title": "OpenAI: Prompt caching (cache-write charge, GPT-5.6 and later)",
+      "url": "https://developers.openai.com/api/docs/guides/prompt-caching",
+      "quote": "cache writes cost 1.25× the standard, uncached input-token rate for the default 30-minute lifetime.",
+      "checkedAt": "2026-11-04"
+    },
+    {
+      "id": "openai-pc-in-memory",
+      "title": "OpenAI: Prompt caching (in_memory retention)",
+      "url": "https://developers.openai.com/api/docs/guides/prompt-caching",
+      "quote": "in_memory: Entries typically remain active for around 5 to 10 minutes of inactivity, up to one hour.",
+      "checkedAt": "2026-11-04"
+    },
+    {
+      "id": "openai-pc-24h",
+      "title": "OpenAI: Prompt caching (24h retention)",
+      "url": "https://developers.openai.com/api/docs/guides/prompt-caching",
+      "quote": "24h: Extended retention typically keeps entries available for around 30 minutes and can retain them for up to 24 hours.",
+      "checkedAt": "2026-11-04"
+    },
+    {
+      "id": "openai-pc-zdr-default",
+      "title": "OpenAI: Prompt caching (default retention with Zero Data Retention)",
+      "url": "https://developers.openai.com/api/docs/guides/prompt-caching",
+      "quote": "Organizations with Zero Data Retention enabled default to in_memory.",
+      "checkedAt": "2026-11-04"
+    },
+    {
+      "id": "openai-pc-prefix-match",
+      "title": "OpenAI: Prompt caching (prefix match)",
+      "url": "https://developers.openai.com/api/docs/guides/prompt-caching",
+      "quote": "Cache reuse requires the entire rendered prefix to match.",
+      "checkedAt": "2026-11-04"
+    },
+    {
+      "id": "openai-pc-tools",
+      "title": "OpenAI: Prompt caching (tool changes)",
+      "url": "https://developers.openai.com/api/docs/guides/prompt-caching",
+      "quote": "Changes tool names, descriptions, schemas, ordering, or tool-specific instructions.",
+      "checkedAt": "2026-11-04"
+    },
+    {
+      "id": "openai-pc-stable-first",
+      "title": "OpenAI: Prompt caching (prompt structure)",
+      "url": "https://developers.openai.com/api/docs/guides/prompt-caching",
+      "quote": "Put stable developer instructions and shared reference material first.",
+      "checkedAt": "2026-11-04"
+    },
+    {
+      "id": "openai-pc-model",
+      "title": "OpenAI: Prompt caching (model changes)",
+      "url": "https://developers.openai.com/api/docs/guides/prompt-caching",
+      "quote": "A different model can use different weights and caching behavior.",
+      "checkedAt": "2026-11-04"
+    },
+    {
+      "id": "openai-pc-effort",
+      "title": "OpenAI: Prompt caching (reasoning effort changes)",
+      "url": "https://developers.openai.com/api/docs/guides/prompt-caching",
+      "quote": "Can change model-side reasoning instructions.",
+      "checkedAt": "2026-11-04"
+    },
+    {
+      "id": "openai-pricing-long-context",
+      "title": "OpenAI: API pricing (long-context toggle)",
+      "url": "https://developers.openai.com/api/docs/pricing",
+      "quote": "Long: >272K input tokens",
+      "checkedAt": "2026-11-04"
+    },
+    {
+      "id": "openai-reasoning-billing",
+      "title": "OpenAI: Reasoning models",
+      "url": "https://developers.openai.com/api/docs/guides/reasoning",
+      "quote": "While reasoning tokens are not visible via the API, they still occupy space in the model’s context window and are billed as output tokens.",
+      "checkedAt": "2026-11-05"
+    }
+  ]
+}
