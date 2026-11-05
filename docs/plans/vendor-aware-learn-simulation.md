@@ -322,7 +322,9 @@ example is where Copilot places cache breakpoints.
     (or updates) an issue listing added, removed and changed models; it
     never commits.
   - Cache-rule changes are reviewed by hand.
-  - Updating is a data-only change: edit the JSON, cite the source, run the
+  - Updating is a data-only change: edit
+    `fixtures/price-book/github-copilot.json` (prices, Phase 15 step 15.5)
+    or the profile JSON (cache rules), cite the source, run the
     golden tests, and review the snapshot diff.
 - **Scale change**: real prices make Learn numbers about 40-100x larger than
   today's illustrative 0.005-credits-per-1K rate. For example, a

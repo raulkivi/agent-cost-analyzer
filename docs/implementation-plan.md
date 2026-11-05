@@ -1475,7 +1475,7 @@ extension), and extension grouping by repository.
 
 **Status (2026-11-05)**: steps 15.1 (workspace and turn-time capture in
 every provider) 15.2 (repository resolver and remote URL normaliser),
-15.0 (threat-model rows) and 15.3 (projects file and its API) are done. Planned otherwise; the owner accepted every recommended
+15.0 (threat-model rows) and 15.3 (projects file and its API) are done, and so is 15.5 (price book; only GitHub Copilot's prices from 2026-10-26 are sourced so far). Planned otherwise; the owner accepted every recommended
 decision (D1–D10, plan §13). The UI is a set of new Dashboard tabs built on
 the existing design system, UX standards and chart kit (plan §11), with a
 mock-up review gate (step 15.8) before any UI code. The mock-ups are drawn and were approved by the owner on 2026-11-05

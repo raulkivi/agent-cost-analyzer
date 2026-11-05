@@ -116,7 +116,10 @@ content here.
   docs/plans/cost-by-repository-and-project.md) is planned: the owner's
   decisions D1–D10 are recorded; step 15.8's mock-ups are drawn and approved
   (2026-11-05, docs/plans/mockups/cost-by-project/), and its palette tokens
-  (`--color-series-1`..`-8`) are done;
+  (`--color-series-1`..`-8`) are done; step 15.5 (price book with history in
+  `packages/server/src/services/pricing/`, `fixtures/price-book/`, so far
+  GitHub Copilot's table from 2026-10-26 only; `GET /api/price-book`,
+  `get_price_book`) is done;
   step 15.1 is done (`Session.workspace`, `Turn.startedAt`, and
   `Turn.workspace` for Claude Code, from every provider) and step 15.2
   (`RepositoryResolver` and `RemoteUrlNormalizer` in

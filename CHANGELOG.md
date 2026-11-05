@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- Price book with history (Phase 15 step 15.5): sourced, dated price
+  versions per channel and model (`fixtures/price-book/`, starting with
+  GitHub Copilot's table), the user's own contract or list prices in
+  `projects.json` (`channels.priceVersions`), `GET /api/price-book` and the
+  read-only `get_price_book` MCP tool. Learn simulation prices now come
+  from the price book. A price not in the book is unknown with a reason,
+  never zero.
 - Web and VS Code themes: eight categorical series colours
   (`--color-series-1` to `-8`, light and dark steps), a diverging pair for
   waterfalls, and dash patterns in High Contrast, ready for the

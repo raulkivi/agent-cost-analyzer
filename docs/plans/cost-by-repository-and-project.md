@@ -229,10 +229,10 @@ in force now").
 
 ```ts
 type PriceVersion = {
-  id: string;               // "github-copilot:claude-sonnet-5-5:2026-09-01"
+  id: string;               // "github-copilot:claude-sonnet-5.5:2026-10-26"
   channel: string;          // "github-copilot" | "anthropic-api" | "openai-api" | user channel id
   modelId: string;          // the price table's model id; provider ids are mapped (Phase 13 step 13.0 mapping)
-  currency: Currency;
+  currency: "USD";         // tiers are Phase 13's PriceTier, USD per 1M tokens
   effectiveFrom: string;    // ISO date (UTC), inclusive
   effectiveTo?: string;     // exclusive; absent = still in force
   tiers: PriceTier[];       // Phase 13's PriceTier, unchanged
@@ -240,11 +240,13 @@ type PriceVersion = {
   promoEndsAt?: string;     // as in Phase 13
   sourceIds: string[];      // cited sources, with checkedAt
   note?: string;            // "price cut announced 2026-08-20"
+  scope?: { projectId: string } | { repository: string }; // contract only
 };
 ```
 
 - The bundled history lives in `fixtures/price-book/<channel>.json`, one
-  array of `PriceVersion` per channel. Versions of one model on one
+  object per channel, `{ channel, sources: Source[], versions: PriceVersion[] }`,
+  so each version's `sourceIds` resolve to dated sources in the same file. Versions of one model on one
   channel must not overlap, and gaps are allowed but flagged (a test
   enforces both).
 - Phase 13's vendor profiles take their `tiers` from the newest version, so
@@ -253,7 +255,9 @@ type PriceVersion = {
 - **User rates** (negotiated contract, reseller, internal markup) live in
   the user's local project file (§7), as `kind: "contract"` versions on
   user channels. They take precedence over list prices for the projects or
-  repositories they are scoped to.
+  repositories they are scoped to. Precedence: a repository contract, then
+  a project contract, then an unscoped contract, then the list or promo
+  price.
 
 ### 6.2 Which price applies
 
@@ -551,7 +555,7 @@ Credit = $0.01 and says so in `conversion`.
 |---|---|---|---|
 | `list_repositories` | 15.4 | `provider?`, `since?`, `until?`, `projectId?`, `includeUnattributed?` (default true), `includePaths?` (default false) | `RepositoryList`: each repository's `repositoryKey`, project, session and turn counts, first and last use, cost with coverage; Unattributed buckets with their reasons |
 | `list_projects` | 15.4 | none | `ProjectList`: each project's id, name, client, billing code, members (repository key, path and branch scopes); validation problems, if any |
-| `get_price_book` | 15.5 | `channel?`, `model?`, `at?` (ISO date: the version in force then) | `PriceVersion[]` with sources and `checkedAt`, user contract versions marked as such |
+| `get_price_book` | 15.5 | `channel?`, `model?`, `at?` (ISO date: the version in force then) | `PriceBookListing` (an MCP `outputSchema` must be an object): `channels`, `versions` with their `origin` (`bundled` or `user`), `sources` with `checkedAt`, `gaps`, `unknown` with reasons, and `problems` |
 | `get_repository_cost` | 15.7 | `repository` (key from `list_repositories`), `since?`, `until?`, `bucket?` (`day`/`week`/`month`, default `month`), `basis?` (`preferred`/`billed`/`reported`/`priced`), `pricing?` (`as-of-use`/`today`), `currency?` | `CostSeries`: totals with coverage by basis; one point per bucket with coverage; breakdown by vendor and model; price-change markers in the range |
 | `get_project_cost` | 15.7 | `projectId`, the same options as above, `topSessions?` (default 10, max 50) | `ProjectCost`: as `CostSeries`, plus a breakdown by repository member, by vendor → model and by token type, and the most expensive sessions |
 | `compare_costs` | 15.7 | `groupBy` (`repository`/`project`), `ids` (2 to 20), `since`, `until`, `comparePeriod?` (`previous`/`last-year`, default `previous`), `pricing?`, `currency?` | `CostComparison`: the §8.2 measures per id (total, change, per session, per active day, share, cache-hit ratio, output share, coverage) |
@@ -1080,7 +1084,7 @@ No UI code (15.9 onwards) starts before the mock-ups in 15.8 are approved.
 | 15.2 | **RepositoryResolver** + `RemoteUrlNormalizer` | Unit tests of §12.1 pass; no credential in any output (property test) Done 2026-11-05, see §14.1 |
 | 15.3 | **ProjectCatalog** + project file schema + `GET/PUT /api/projects`, `GET /api/repositories` | Schema, matching and API tests pass; a bad file gives a config warning Done 2026-11-05, see §14.1 |
 | 15.4 | **Attribution in the dataset**: `repositoryKey`/`projectId`/`vendorId`/`channel` on Insights rows; Project, Repository, Vendor and Channel list boxes on the Dashboard; MCP: `list_repositories`, `list_projects`, `list_sessions` filters (§10.1) | Dashboard filters by repository and project; totals match the per-session totals; axe and keyboard tests pass for the new list boxes; the step's MCP tools pass the §10.1.6 tests |
-| 15.5 | **Price book with history**: `PriceVersion` schema, bundled channel files with sources, user versions, `PriceBook` lookup; Phase 13 profiles read their current prices from it; MCP: `get_price_book` | Overlap/boundary/precedence tests pass; every version has a source; Phase 13 tests unchanged; the step's MCP tools pass the §10.1.6 tests |
+| 15.5 | **Price book with history**: `PriceVersion` schema, bundled channel files with sources, user versions, `PriceBook` lookup; Phase 13 profiles read their current prices from it; MCP: `get_price_book` | Overlap/boundary/precedence tests pass; every version has a source; Phase 13 tests unchanged; the step's MCP tools pass the §10.1.6 tests Done 2026-11-05, see §14.1 |
 | 15.6 | **CostPricer + basis**: `CostFigure` on every turn row; reconciliation figures for Copilot turns; Cost basis list box; MCP: cost basis in `get_session_cost`, `get_cost_rollup`, `get_turn` | Pricing tests pass; unknown never sums as 0; billed vs priced shown per model-month; the step's MCP tools pass the §10.1.6 tests |
 | 15.7 | **Time series, compare, project breakdown** + their endpoints; MCP: `get_repository_cost`, `get_project_cost`, `compare_costs`, the `review_costs` project step | Golden outputs for a fixture dataset across three providers and two projects; the step's MCP tools pass the §10.1.6 tests |
 | 15.8 | **Mock-ups and palette** (§11.7, §11.8): the seven boards on a Design canvas with versioned copies (drawn and approved 2026-11-05); the eight categorical tokens in `theme.css` and `theme-vscode.css` (done 2026-11-05, see §14.1) | Owner approves the boards and their comments are resolved; the dataviz validator passes in light and dark; `theme-contrast.test.ts` covers the new tokens in Dark Modern, Light Modern and High Contrast |
@@ -1207,6 +1211,74 @@ steps back.
   and magenta only; the diverging pair; dashes; the light High Contrast
   override; no `--vscode-charts-*`; no ninth series. Nothing uses the tokens
   yet; the charts of step 15.9 onwards do.
+
+**15.5 (done 2026-11-05).** Domain (`packages/domain/src/price-book.ts`):
+
+- `PriceVersion` as in §6.1. `currency` is `"USD"` (the tiers are Phase 13's
+  `PriceTier`, USD per 1M tokens; AI Credits follow at 1 credit = $0.01),
+  `sourceIds` default to `[]` for user versions, and a contract-only
+  `scope` names one project or one repository. Checked: real ISO dates,
+  `effectiveTo` after `effectiveFrom`, ascending tiers, `promoEndsAt`
+  exactly on promo versions.
+- `PriceBookEntry` (a version plus its `origin`), `PriceLookup` (known with
+  the version, or unknown with a reason), `PriceBookListing`, and
+  `findPriceVersionConflicts`, which compares versions per channel, model
+  and precedence class (list and promo one class, each contract scope
+  another), rejects overlaps and flags gaps.
+- The projects file's `channels.priceVersions` now holds `PriceVersion`s;
+  `validateProjectsFile` reports duplicate ids, overlapping user versions
+  and unknown `scope.projectId`s.
+
+Server (`services/pricing/`):
+
+- A `PriceBookSource` port. `BundledPriceBookSource` reads
+  `fixtures/price-book/<channel>.json` and stops startup on bad data (no
+  source, an unknown source, a contract version, a duplicate id, an
+  overlap, a file named for another channel). `UserPriceBookSource` reads
+  the projects file on every lookup. `CompositePriceBookSource` leaves out,
+  as a `problem`, a user version that clashes with one already in the book.
+- `PriceBook.priceFor(channel, modelId, at, scope?)` uses
+  `[effectiveFrom, effectiveTo)` in UTC with §6.1's precedence; otherwise
+  unknown with a reason ("before", "between", "from", no model, no
+  channel). `newestVersion` gives Phase 13 its prices; `list` serves the
+  API and MCP.
+
+Data:
+
+- One channel, `github-copilot`, with 29 versions moved unchanged from the
+  Phase 13 profiles. The profiles no longer hold `tiers` or `promoEndsAt`;
+  the loader fills them from the newest version, and a model priced in
+  both places (or in neither) stops startup. Phase 13's tests and golden
+  snapshots are unchanged and pass.
+- **Every version starts on 2026-10-26**, the date of the last github/docs
+  commit to the snapshot's price table (cc0c29a), the earliest date the
+  source supports. D8's history from 2026-01-01 needs the table's own
+  github/docs history cited; until then earlier turns price as unknown.
+  No earlier version was invented.
+- The Gemini promotions end per GitHub's wording (Flash "through December
+  31, 2026": `effectiveTo` 2027-01-01; Argon "until December 1, 2026":
+  2026-12-01); no price is known after them.
+- **No vendor API prices are sourced yet**, so `anthropic-api`,
+  `openai-api`, `google-api` and `xai-api` have no file and a lookup there
+  is unknown. Until they are added, step 15.6 can price only Copilot turns;
+  Claude Code, pi and mitmproxy turns stay unknown (pi keeps its
+  `reported` cost).
+
+API and MCP: `GET /api/price-book?channel&model&at` (400 on a bad query;
+404 in the extension, which has no price book), and `get_price_book`
+(read-only, `outputSchema` `PriceBookListing`) in `mcp/pricing-tools.ts`,
+registered only when the server has a price book: the standalone app and
+its stdio server. The extension's server gets it with step 15.13's
+`toolGroups`, so its tools/list stays at nine. A test checks the HTTP
+route and the tool agree. The extension build ships `media/price-book`.
+
+TDD exceptions: the six profile files and `github-copilot.json` were
+rewritten by a checked script after their data tests failed; the
+extension's build copy lists changed with `build.mts`; the
+`ApiService.getPriceBook` test followed the route test. Not yet: mapping
+provider model ids to price-table ids and the "at today's prices" mode
+(both step 15.6); the planned weekly `vendor-prices.yml` (step 13.9) must
+diff `fixtures/price-book/github-copilot.json`.
 
 ## 15. Exit criterion
 
