@@ -97,6 +97,10 @@ This repo builds two products from one codebase:
   the checks the owner runs in a real VS Code before each extension
   release: usability script, MCP server in Copilot agent mode, and remote
   windows.
+- [Classic subagent credits plan](docs/plans/classic-subagent-credits.md) —
+  proposed: counting the AI Credits that classic Copilot Chat subagents
+  log to sibling files next to `main.jsonl`, with measured impact, format
+  facts, options and open questions.
 - [VS Code UI automation plan](docs/plans/vscode-ui-automation.md) —
   proposed step 10.16: automating the manual checks that need a real
   VS Code window with `wdio-vscode-service` under xvfb.
