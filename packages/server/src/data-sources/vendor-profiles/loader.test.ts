@@ -218,3 +218,9 @@ describe("findVendorModel", () => {
     expect(findVendorModel(profiles, "ghost")).toBeUndefined();
   });
 });
+
+describe("loadVendorProfiles default directory", () => {
+  it("loads the six bundled profiles when no directory is given", () => {
+    expect(loadVendorProfiles()).toHaveLength(6);
+  });
+});

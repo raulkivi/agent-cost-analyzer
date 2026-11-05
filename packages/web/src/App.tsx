@@ -112,6 +112,7 @@ const FALLBACK_FEATURES: ProductFeatures = {
   settingFixes: false,
   openInEditor: false,
   sessionSidebar: false,
+  vendorSimulation: false,
 };
 
 const EMPTY_STATES = {

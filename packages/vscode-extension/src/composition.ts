@@ -116,6 +116,8 @@ export function composeExtension({
     }),
     settingsSource: new VscodeSettingsSource(workspace, logPaths.vscodeSettingsPath, extensions),
     learnScenariosFixturesDir: path.join(mediaDir, "learn-scenarios"),
+    learnScriptsDir: path.join(mediaDir, "learn-scripts"),
+    vendorProfilesDir: path.join(mediaDir, "vendor-profiles"),
     appVersion: extensionVersion,
   });
   const dispatcher = new MessageDispatcher(api, {
