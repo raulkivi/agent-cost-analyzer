@@ -8,13 +8,11 @@
 // What a person still judges by eye: that the wording and layout read well.
 import { browser, expect } from "@wdio/globals";
 import { AnalyzerPanel } from "../support/analyzer-panel.js";
-import { SidebarViews } from "../support/sidebar-views.js";
 import { wdioVscodeHost as host } from "../support/vscode-host.js";
 
 const panel = new AnalyzerPanel(host);
-const sidebar = new SidebarViews();
 
-const SCENARIO_15 = "An Image Attachment Invalidates the Cache";
+const SCENARIO_15_ID = "image-attachment-invalidation";
 const HIT = "Cache hit";
 const MISS = "Cache miss";
 const PARTIAL = "Cache partial hit";
@@ -34,8 +32,7 @@ suite("Learn vendors (check 13.8)", () => {
   });
 
   test("13.8 scenario 15 on three vendors gives the outcomes the rule register documents", async () => {
-    await sidebar.select("learn", SCENARIO_15);
-    await browser.waitUntil(async () => (await (await browser.getWorkbench()).getAllWebviews()).length > 0, { timeout: 30_000 });
+    await panel.openScenario(SCENARIO_15_ID);
 
     await panel.inside(async (view) => {
       await view.waitForTurnRows(5);

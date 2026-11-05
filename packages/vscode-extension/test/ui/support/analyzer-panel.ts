@@ -144,6 +144,15 @@ export class AnalyzerPanel {
     await this.host.hook(INTERNAL_COMMAND_IDS.resetDiagnostics);
   }
 
+  // What clicking a Learn tree row does. The tree itself only draws the rows
+  // that fit the window (a short CI screen shows a handful), so specs that
+  // don't test the tree open a scenario by id.
+  async openScenario(scenarioId: string): Promise<void> {
+    await this.host.waitForExtension();
+    await this.run(COMMAND_IDS.openScenario, scenarioId);
+    await this.settleLayout();
+  }
+
   async openSession(sessionId: string): Promise<void> {
     await this.host.waitForExtension();
     await this.run(COMMAND_IDS.openSession, sessionId);
