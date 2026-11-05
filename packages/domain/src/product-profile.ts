@@ -16,6 +16,9 @@ export const productFeaturesSchema = z.object({
   // the host lists the sessions in its own sidebar, so the Analyze mode
   // view gives that column to the turns (step 10.11)
   sessionSidebar: z.boolean(),
+  // Learn scenarios replayed on a chosen vendor and model (Phase 13): the
+  // extension has it from 13.6; the standalone app gets it in 13.10.
+  vendorSimulation: z.boolean(),
 });
 
 export type ProductFeatures = z.infer<typeof productFeaturesSchema>;
