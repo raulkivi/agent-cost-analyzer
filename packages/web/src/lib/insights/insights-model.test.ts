@@ -2,7 +2,17 @@ import { describe, expect, it } from "vitest";
 import type { InsightSessionRow, InsightTurnRow } from "@agent-cost-analyzer/domain";
 import { createAssociativeEngine } from "../associative/engine.js";
 import { sampleInsightsDataset } from "../../test-support/insights-fixture.js";
-import { FIELD, createInsightsModel, LIST_BOX_GROUPS } from "./insights-model.js";
+import { FIELD, createInsightsModel, LIST_BOX_GROUPS, NO_PROJECT, UNATTRIBUTED, UNKNOWN_CHANNEL } from "./insights-model.js";
+import { computeKpis, topSessionsByCredits } from "./measures.js";
+
+function viewOf(evaluation: ReturnType<ReturnType<typeof createAssociativeEngine>["evaluate"]>) {
+  return {
+    sessions: evaluation.rows<InsightSessionRow>("sessions"),
+    turns: evaluation.rows<InsightTurnRow>("turns"),
+    toolCalls: evaluation.rows("toolCalls") as never[],
+    findings: evaluation.rows("findings") as never[],
+  };
+}
 
 function engineFor() {
   return createAssociativeEngine(createInsightsModel(sampleInsightsDataset()));
@@ -44,6 +54,71 @@ describe("createInsightsModel", () => {
       ["AI Credits known", 3],
       ["AI Credits unknown", 1],
     ]);
+  });
+
+  describe("attribution fields (step 15.4)", () => {
+    it("lists projects by name, with No project, and repositories by key, with Unattributed", () => {
+      const engine = engineFor().evaluate({});
+      expect(engine.values(FIELD.project).map((value) => [value.value, value.label, value.count])).toEqual([
+        ["portal", "Customer portal", 2],
+        [NO_PROJECT, "No project", 2],
+      ]);
+      expect(engine.values(FIELD.repository).map((value) => [value.label, value.count])).toEqual([
+        ["github.com/acme/platform", 1],
+        ["github.com/acme/portal", 2],
+        ["Unattributed", 1],
+      ]);
+    });
+
+    it("labels vendors from the dataset and channels from the domain, unknown last", () => {
+      const dataset = sampleInsightsDataset();
+      dataset.turns[2] = { ...dataset.turns[2]!, channel: null, channelUnknownReason: "No channel is known." };
+      const engine = createAssociativeEngine(createInsightsModel(dataset)).evaluate({});
+
+      expect(engine.values(FIELD.vendor).map((value) => value.label)).toEqual(["Anthropic", "OpenAI"]);
+      expect(engine.values(FIELD.channel).map((value) => [value.value, value.label])).toEqual([
+        ["anthropic-api", "Anthropic API"],
+        ["github-copilot", "GitHub Copilot"],
+        [UNKNOWN_CHANNEL, "Unknown channel"],
+      ]);
+    });
+
+    it("filters turns, not whole sessions, by repository: a session that moved counts only its turns there", () => {
+      const result = engineFor().evaluate({ [FIELD.repository]: ["github.com/acme/portal"] });
+
+      expect(result.rows<InsightTurnRow>("turns").map((row) => row.key)).toEqual(["cc:s1:0", "vs:s3:0"]);
+      expect(result.rows<InsightSessionRow>("sessions").map((row) => row.key)).toEqual(["cc:s1", "vs:s3"]);
+      expect(result.values(FIELD.project).map((value) => [value.label, value.state])).toEqual([
+        ["Customer portal", "possible"],
+        ["No project", "excluded"],
+      ]);
+    });
+
+    it("selecting Unattributed finds the turns with no repository", () => {
+      const result = engineFor().evaluate({ [FIELD.repository]: [UNATTRIBUTED] });
+      expect(result.rows<InsightTurnRow>("turns").map((row) => row.key)).toEqual(["cc:s2:0"]);
+    });
+
+    it("totals by project and by repository add up to the whole, and match the per-session totals (D1)", () => {
+      const engine = engineFor();
+      const all = computeKpis(viewOf(engine.evaluate({})));
+      for (const fieldId of [FIELD.project, FIELD.repository, FIELD.vendor, FIELD.channel]) {
+        const parts = engine.evaluate({}).values(fieldId).map((value) => {
+          const view = viewOf(engine.evaluate({ [fieldId]: [value.value] }));
+          const kpis = computeKpis(view);
+          const perSession = topSessionsByCredits(view.sessions, view.turns, 100).reduce((sum, row) => sum + row.aiCredits.total, 0);
+          expect(perSession, `${fieldId}=${value.value}`).toBeCloseTo(kpis.aiCredits.total, 9);
+          return kpis.aiCredits;
+        });
+        expect(parts.reduce((sum, part) => sum + part.total, 0), fieldId).toBeCloseTo(all.aiCredits.total, 9);
+        expect(parts.reduce((sum, part) => sum + part.known, 0), fieldId).toBe(all.aiCredits.known);
+        expect(parts.reduce((sum, part) => sum + part.count, 0), fieldId).toBe(all.aiCredits.count);
+      }
+    });
+  });
+
+  it("puts Project, Repository, Vendor and Channel first, as the approved mock-up does", () => {
+    expect(LIST_BOX_GROUPS[0]?.fields).toEqual([FIELD.project, FIELD.repository, FIELD.vendor, FIELD.channel]);
   });
 
   it("lists every field in exactly one list-box group", () => {

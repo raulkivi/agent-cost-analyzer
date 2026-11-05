@@ -272,6 +272,26 @@ describe.each(Object.keys(THEMES) as ThemeName[])("axe: no WCAG 2.2 AA violation
     await expectNoViolations();
   });
 
+  // Phase 15 step 15.4: the Project, Repository, Vendor and Channel list
+  // boxes, with a selection in two of them (selected, possible and
+  // excluded values all on screen).
+  it("Dashboard, with the attribution list boxes and a project and repository selected", async () => {
+    await openAnalyzeSession();
+    fireEvent.click(screen.getByLabelText("Dashboard"));
+    await screen.findByRole("group", { name: "AI Credits" });
+    for (const name of ["Project", "Repository", "Vendor", "Channel"]) {
+      expect(screen.getByRole("listbox", { name })).toBeInTheDocument();
+    }
+
+    fireEvent.click(within(screen.getByRole("listbox", { name: "Project" })).getByRole("option", { name: /Customer portal/ }));
+    fireEvent.click(within(screen.getByRole("listbox", { name: "Repository" })).getByRole("option", { name: /github.com\/acme\/portal/ }), {
+      ctrlKey: true,
+    });
+
+    expect(screen.getByRole("listitem", { name: "Project: Customer portal" })).toBeInTheDocument();
+    await expectNoViolations();
+  });
+
   it("TurnInspector", async () => {
     await openAnalyzeSession();
     fireEvent.click(screen.getByRole("button", { name: "Inspect request/response" }));

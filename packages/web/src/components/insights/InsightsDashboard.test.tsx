@@ -58,6 +58,82 @@ describe("InsightsDashboard", () => {
     expect(screen.getByRole("listitem", { name: "Program: npm" })).toBeInTheDocument();
   });
 
+  describe("attribution list boxes (step 15.4)", () => {
+    it("shows Project, Repository, Vendor and Channel list boxes first, with No project and Unattributed", async () => {
+      renderDashboard();
+      await screen.findByRole("group", { name: "AI Credits" });
+
+      const listBoxes = screen.getAllByRole("listbox").map((listBox) => listBox.getAttribute("aria-label"));
+      expect(listBoxes.slice(0, 4)).toEqual(["Project", "Repository", "Vendor", "Channel"]);
+      expect(option("Project", /No project/)).toBeInTheDocument();
+      expect(option("Repository", /Unattributed/)).toBeInTheDocument();
+      expect(option("Vendor", /OpenAI/)).toBeInTheDocument();
+      expect(option("Channel", /GitHub Copilot/)).toBeInTheDocument();
+    });
+
+    it("filters every KPI by project, counting only the turns in it", async () => {
+      renderDashboard();
+      await screen.findByRole("group", { name: "AI Credits" });
+
+      fireEvent.click(option("Project", /Customer portal/));
+
+      expect(tile("AI Credits")).toHaveTextContent("2.50");
+      expect(tile("Turns")).toHaveTextContent("2");
+      expect(tile("Sessions")).toHaveTextContent("2");
+      expect(option("Repository", /github.com\/acme\/platform/)).toHaveAttribute("data-state", "excluded");
+      expect(screen.getByRole("listitem", { name: "Project: Customer portal" })).toBeInTheDocument();
+      const table = screen.getByRole("table", { name: "Most expensive sessions" });
+      expect(within(table).getAllByRole("row").slice(1).map((row) => within(row).getAllByRole("cell").at(-1)?.textContent)).toEqual([
+        "2.00",
+        "0.50",
+      ]);
+    });
+
+    it("filters by repository, and Unattributed keeps its turns' unknown AI Credits unknown", async () => {
+      renderDashboard();
+      await screen.findByRole("group", { name: "AI Credits" });
+
+      fireEvent.click(option("Repository", /Unattributed/));
+
+      expect(tile("AI Credits")).toHaveTextContent("—");
+      expect(tile("AI Credits")).toHaveTextContent("0 of 1 turns known");
+      expect(option("Project", /No project/)).toHaveAttribute("data-state", "possible");
+    });
+
+    it("selects and adds values with the keyboard alone", async () => {
+      const user = userEvent.setup();
+      renderDashboard();
+      await screen.findByRole("group", { name: "AI Credits" });
+
+      option("Vendor", /OpenAI/).focus();
+      await user.keyboard("{Enter}");
+      expect(tile("Sessions")).toHaveTextContent("1");
+
+      option("Vendor", /Anthropic/).focus();
+      await user.keyboard("{Control>} {/Control}");
+      expect(option("Vendor", /Anthropic/)).toHaveAttribute("aria-selected", "true");
+      expect(option("Vendor", /OpenAI/)).toHaveAttribute("aria-selected", "true");
+      expect(tile("Sessions")).toHaveTextContent("3");
+
+      await user.click(screen.getByRole("button", { name: "Clear Vendor selection" }));
+      expect(screen.queryByRole("listitem", { name: /^Vendor/ })).not.toBeInTheDocument();
+    });
+
+    it("reaches the new list boxes' values with Tab", async () => {
+      const user = userEvent.setup();
+      renderDashboard();
+      await screen.findByRole("group", { name: "AI Credits" });
+
+      const first = option("Project", /Customer portal/);
+      for (let step = 0; step < 40 && document.activeElement !== first; step++) {
+        await user.tab();
+      }
+      expect(document.activeElement).toBe(first);
+      await user.keyboard(" ");
+      expect(screen.getByRole("listitem", { name: "Project: Customer portal" })).toBeInTheDocument();
+    });
+  });
+
   it("Back undoes the last selection and Clear all removes every one", async () => {
     renderDashboard();
     await screen.findByRole("group", { name: "AI Credits" });

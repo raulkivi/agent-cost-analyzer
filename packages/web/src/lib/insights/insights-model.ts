@@ -1,3 +1,4 @@
+import { channelLabel } from "@agent-cost-analyzer/domain";
 import type {
   FailureCategory,
   FindingKind,
@@ -20,6 +21,10 @@ import { TRIGGER_LABELS } from "../trigger-labels.js";
 export const TABLE = { sessions: "sessions", turns: "turns", toolCalls: "toolCalls", findings: "findings" } as const;
 
 export const FIELD = {
+  project: "project",
+  repository: "repository",
+  vendor: "vendor",
+  channel: "channel",
   provider: "provider",
   date: "date",
   hour: "hour",
@@ -39,7 +44,10 @@ export const FIELD = {
 
 export type FieldId = (typeof FIELD)[keyof typeof FIELD];
 
+// Phase 15 step 15.4: the attribution list boxes come first, in the
+// approved mock-up's order (docs/plans/mockups/cost-by-project/Main.dc.html).
 export const LIST_BOX_GROUPS: { title: string; fields: FieldId[] }[] = [
+  { title: "Project & source", fields: [FIELD.project, FIELD.repository, FIELD.vendor, FIELD.channel] },
   { title: "When & where", fields: [FIELD.provider, FIELD.date, FIELD.hour, FIELD.session] },
   { title: "Cost", fields: [FIELD.model, FIELD.trigger, FIELD.usage] },
   { title: "Tool calls", fields: [FIELD.tool, FIELD.toolKind, FIELD.program, FIELD.outcome, FIELD.failureCategory] },
@@ -91,6 +99,34 @@ export function findingCategoryLabel(category: string): string {
 const USAGE_KNOWN = "known";
 const USAGE_UNKNOWN = "unknown";
 
+// Step 15.4: a row with no repository, project, vendor or channel is still
+// listed and selectable, under one of these values, so its cost is never
+// dropped (constraint 6). None can collide with a real id: repository keys
+// and channel ids hold no parentheses, project ids are [a-z0-9-].
+export const UNATTRIBUTED = "(unattributed)";
+export const NO_PROJECT = "(no-project)";
+export const UNKNOWN_VENDOR = "(unknown-vendor)";
+export const UNKNOWN_CHANNEL = "(unknown-channel)";
+
+const PLACEHOLDER_LABELS: Record<string, string> = {
+  [UNATTRIBUTED]: "Unattributed",
+  [NO_PROJECT]: "No project",
+  [UNKNOWN_VENDOR]: "Unknown vendor",
+  [UNKNOWN_CHANNEL]: "Unknown channel",
+};
+
+// Placeholders last, the rest by label.
+function placeholdersLast(label: (value: string) => string) {
+  return (a: string, b: string) => {
+    const rank = (value: string) => (value in PLACEHOLDER_LABELS ? 1 : 0);
+    return rank(a) - rank(b) || label(a).localeCompare(label(b));
+  };
+}
+
+function withPlaceholders(label: (value: string) => string): (value: string) => string {
+  return (value) => PLACEHOLDER_LABELS[value] ?? label(value);
+}
+
 function field<Row>(
   id: FieldId,
   label: string,
@@ -104,6 +140,12 @@ function field<Row>(
 export function createInsightsModel(dataset: InsightsDataset): AssociativeModel {
   const providerLabels = new Map(dataset.providers.map((provider) => [provider.id, provider.label]));
   const sessionTitles = new Map(dataset.sessions.map((session) => [session.key, session.title]));
+  const projectNames = new Map((dataset.projects ?? []).map((project) => [project.id, project.name]));
+  const vendorLabels = new Map((dataset.vendors ?? []).map((vendor) => [vendor.id, vendor.label]));
+  const projectLabel = withPlaceholders((value) => projectNames.get(value) ?? value);
+  const repositoryLabel = withPlaceholders((value) => value);
+  const vendorLabel = withPlaceholders((value) => vendorLabels.get(value) ?? value);
+  const channelDisplay = withPlaceholders(channelLabel);
   return {
     tables: [
       { id: TABLE.sessions, rows: dataset.sessions, key: (row) => (row as InsightSessionRow).key },
@@ -127,6 +169,23 @@ export function createInsightsModel(dataset: InsightsDataset): AssociativeModel 
       },
     ],
     fields: [
+      // Attribution is per turn (a session can move between repositories).
+      field<InsightTurnRow>(FIELD.project, "Project", TABLE.turns, (row) => row.projectId ?? NO_PROJECT, {
+        display: projectLabel,
+        compare: placeholdersLast(projectLabel),
+      }),
+      field<InsightTurnRow>(FIELD.repository, "Repository", TABLE.turns, (row) => row.repositoryKey ?? UNATTRIBUTED, {
+        display: repositoryLabel,
+        compare: placeholdersLast(repositoryLabel),
+      }),
+      field<InsightTurnRow>(FIELD.vendor, "Vendor", TABLE.turns, (row) => row.vendorId ?? UNKNOWN_VENDOR, {
+        display: vendorLabel,
+        compare: placeholdersLast(vendorLabel),
+      }),
+      field<InsightTurnRow>(FIELD.channel, "Channel", TABLE.turns, (row) => row.channel ?? UNKNOWN_CHANNEL, {
+        display: channelDisplay,
+        compare: placeholdersLast(channelDisplay),
+      }),
       field<InsightSessionRow>(FIELD.provider, "Provider", TABLE.sessions, (row) => row.providerId, {
         display: (value) => providerLabels.get(value) ?? value,
       }),
