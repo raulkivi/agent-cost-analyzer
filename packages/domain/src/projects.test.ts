@@ -1,5 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { emptyProjectsFile, normalizeMemberPath, projectsFileSchema, projectsStateSchema, validateProjectsFile, type ProjectsFile } from "./projects.js";
+import {
+  emptyProjectsFile,
+  normalizeMemberPath,
+  projectListSchema,
+  projectsFileSchema,
+  projectsStateSchema,
+  validateProjectsFile,
+  type ProjectsFile,
+} from "./projects.js";
 
 const portal = {
   id: "customer-portal",
@@ -152,5 +160,35 @@ describe("normalizeMemberPath on adversarial input", () => {
     expect(normalizeMemberPath("./svc/api//")).toBe("svc/api");
     expect(normalizeMemberPath(undefined)).toBe("");
     expect(normalizeMemberPath("///")).toBe("");
+  });
+});
+
+describe("projectListSchema (MCP list_projects, step 15.4)", () => {
+  it("accepts each project's id, name, client, billing code and member scopes, with the file's status and problems", () => {
+    const sample = {
+      status: "invalid",
+      projects: [
+        {
+          id: portal.id,
+          name: portal.name,
+          client: portal.client,
+          billingCode: portal.billingCode,
+          members: portal.members,
+        },
+      ],
+      problems: [{ path: "projects[0].members[1]", message: "Exact tie." }],
+    };
+    expect(projectListSchema.parse(sample)).toEqual(sample);
+  });
+
+  it("has no file location, rates or other local details", () => {
+    const parsed = projectListSchema.parse({
+      status: "valid",
+      projects: [{ ...portal }],
+      problems: [],
+      location: "/home/dev/.config/app/projects.json",
+    });
+    expect(parsed).not.toHaveProperty("location");
+    expect(parsed.projects[0]).not.toHaveProperty("rates");
   });
 });

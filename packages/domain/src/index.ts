@@ -55,6 +55,8 @@ export {
   unattributedEntrySchema,
   repositoryListProviderSchema,
   repositoryListSchema,
+  sessionAiCreditsTotalSchema,
+  type SessionAiCreditsTotal,
   type RepositoryListEntry,
   type UnattributedEntry,
   type RepositoryList,
@@ -69,6 +71,10 @@ export {
   projectsFileSchema,
   projectFileProblemSchema,
   projectsStateSchema,
+  projectListEntrySchema,
+  projectListSchema,
+  type ProjectListEntry,
+  type ProjectList,
   emptyProjectsFile,
   normalizeMemberPath,
   validateProjectsFile,
@@ -79,6 +85,13 @@ export {
   type ProjectFileProblem,
   type ProjectsState,
 } from "./projects.js";
+export {
+  CHANNEL,
+  channelIdSchema,
+  channelLabel,
+  vendorApiChannel,
+  type BundledChannelId,
+} from "./channels.js";
 export {
   systemPromptComponentSchema,
   type SystemPromptComponent,

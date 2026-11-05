@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { projectsFileSchema, repositoryListSchema, type RepositoryAttribution, type Session, type SessionWorkspace } from "@agent-cost-analyzer/domain";
 import { buildRepositoryList, NO_WORKSPACE_REPORTED_REASON } from "./repository-list-builder.js";
 
-function session(id: string, startedAt: string | undefined, workspace: SessionWorkspace | undefined): Session {
+function session(id: string, startedAt: string | undefined, workspace: SessionWorkspace | undefined, aiCredits?: number): Session {
   return {
     id,
     mode: "analyze",
@@ -10,7 +10,7 @@ function session(id: string, startedAt: string | undefined, workspace: SessionWo
     model: "m",
     turns: [],
     turnCount: 1,
-    costAiCredits: { known: false, reason: "n/a" },
+    costAiCredits: aiCredits === undefined ? { known: false, reason: "n/a" } : { known: true, value: aiCredits },
     usageDataAvailable: false,
     ...(startedAt ? { startedAt } : {}),
     ...(workspace ? { workspace } : {}),
@@ -29,6 +29,11 @@ const KEYS: Record<string, RepositoryAttribution> = {
 };
 function resolve(workspace: SessionWorkspace): RepositoryAttribution {
   return workspace.known ? KEYS[workspace.cwd]! : { attributed: false, reason: workspace.reason };
+}
+
+// As SessionAttributor.snapshot().repository does, without aliases (the builder applies them).
+function repositoryOf(value: Session): RepositoryAttribution {
+  return value.workspace ? resolve(value.workspace) : { attributed: false, reason: NO_WORKSPACE_REPORTED_REASON };
 }
 
 const projects = projectsFileSchema.parse({
@@ -52,7 +57,7 @@ describe("buildRepositoryList", () => {
         session("c3", "2026-10-15T09:00:00.000Z", { known: true, cwd: "/home/dev/notes" }),
       ] },
       { providerId: "vscode", sessions: [
-        session("v1", "2026-09-30T09:00:00.000Z", { known: true, cwd: "/home/dev/old-app" }),
+        session("v1", "2026-09-30T09:00:00.000Z", { known: true, cwd: "/home/dev/old-app" }, 1.5),
         session("v2", undefined, undefined),
       ] },
       { providerId: "mitmproxy", sessions: [
@@ -60,7 +65,7 @@ describe("buildRepositoryList", () => {
         session("m2", "2026-10-04T09:00:00.000Z", { known: false, reason: "mitmproxy captures record no working folder" }),
       ] },
     ],
-    resolve,
+    repositoryOf,
     projects,
   });
 
@@ -74,6 +79,8 @@ describe("buildRepositoryList", () => {
       source: "git-remote",
       rootPath: "/home/dev/app",
       sessionCount: 3,
+      turnCount: 3,
+      aiCredits: { value: 1.5, knownSessions: 1, sessions: 3 },
       providerIds: ["claude-code", "vscode"],
       firstUsedAt: "2026-09-30T09:00:00.000Z",
       lastUsedAt: "2026-11-01T09:00:00.000Z",
@@ -86,6 +93,8 @@ describe("buildRepositoryList", () => {
       key: "path:/home/dev/notes",
       source: "folder-path",
       sessionCount: 1,
+      turnCount: 1,
+      aiCredits: { value: null, knownSessions: 0, sessions: 1 },
       providerIds: ["claude-code"],
       firstUsedAt: "2026-10-15T09:00:00.000Z",
       lastUsedAt: "2026-10-15T09:00:00.000Z",
@@ -96,8 +105,20 @@ describe("buildRepositoryList", () => {
 
   it("groups Unattributed sessions by reason, most first, including sessions with no workspace reported", () => {
     expect(list.unattributed).toEqual([
-      { reason: "mitmproxy captures record no working folder", sessionCount: 2, providerIds: ["mitmproxy"] },
-      { reason: NO_WORKSPACE_REPORTED_REASON, sessionCount: 1, providerIds: ["vscode"] },
+      {
+        reason: "mitmproxy captures record no working folder",
+        sessionCount: 2,
+        turnCount: 2,
+        aiCredits: { value: null, knownSessions: 0, sessions: 2 },
+        providerIds: ["mitmproxy"],
+      },
+      {
+        reason: NO_WORKSPACE_REPORTED_REASON,
+        sessionCount: 1,
+        turnCount: 1,
+        aiCredits: { value: null, knownSessions: 0, sessions: 1 },
+        providerIds: ["vscode"],
+      },
     ]);
   });
 
@@ -109,7 +130,7 @@ describe("buildRepositoryList", () => {
     const tie = buildRepositoryList({
       providers: [],
       sessions: [{ providerId: "p", sessions: [session("a", undefined, { known: true, cwd: "/home/dev/notes" }), session("b", undefined, { known: true, cwd: "/home/dev/app" })] }],
-      resolve,
+      repositoryOf,
       projects: projectsFileSchema.parse({ version: 1, projects: [] }),
     });
 
