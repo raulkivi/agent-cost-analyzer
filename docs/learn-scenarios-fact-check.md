@@ -62,8 +62,8 @@ a claim is overstated or out of date; **Low** means a slip or a missing nuance.
 | F-05 | Low | 1-hour-scenario turn 3 is 0.0122; the scenario's own rates give 0.012275, which rounds to **0.0123** | fixture, scenario 13 doc, all-scenarios | Fixed |
 | F-06 | Low | Cascading-scenario turn 6 cites a "model-switch-only" total of 0.176; the Model Switch scenario totals **0.1853** | fixture | Fixed |
 | F-07 | **High** | The app says tool definitions sit "early" and an instructions edit invalidates "*everything*" while a tool change only invalidates what comes after it. Anthropic documents the opposite order: **tools → system → messages**. Tool definitions come first, so a tool change invalidates the **entire** cache; an instructions edit (system prompt) leaves the tool block cacheable | scenarios 5, 10, 11; agentic §4, §12, §17.3; README | Fixed (text). The miss numbers still hold for a harness that caches no breakpoint after the tools |
-| F-08 | Medium | "A 5+ minute break is long enough to exceed **every provider's** default TTL". Only Anthropic's 5-minute default is that short. OpenAI's in-memory caching keeps entries 5-10 minutes, and its 24-hour default retention (since May 2026) and GPT-5.6+'s 30-minute default last longer. GitHub holds Copilot's Gemini caches for up to 24 hours | scenario 9 fixture, doc; agentic §17.1-17.3 | Fixed |
-| F-09 | Medium | §17.1 provider table out of date: OpenAI "GPT-5.6+ … fixed 30-minute minimum TTL" (actually a 30-minute *default*, with a 12-hour option); Google "no TTL documented" (explicit caching defaults to 1 hour; Copilot uses Durable Caching for up to 24 hours); xAI "not documented" (it is documented, best-effort) | agentic §17.1 | Fixed |
+| F-08 | Medium | "A 5+ minute break is long enough to exceed **every provider's** default TTL". Only Anthropic's 5-minute default is that short. OpenAI's in-memory caching keeps entries 5-10 minutes, and its 24-hour default retention (non-ZDR orgs) and GPT-5.6+'s 30-minute default last longer. GitHub holds Copilot's Gemini caches for up to 24 hours | scenario 9 fixture, doc; agentic §17.1-17.3 | Fixed |
+| F-09 | Medium | §17.1 provider table out of date: OpenAI "GPT-5.6+ … fixed 30-minute minimum TTL" (actually a 30-minute *default*, with a 12-hour option); Google "no TTL documented" (explicit caching default TTL unknown; Copilot uses Durable Caching for up to 24 hours); xAI "not documented" (it is documented, best-effort) | agentic §17.1 | Fixed |
 | F-10 | Medium | "OpenAI-style caching has no cache-write charge" is wrong for GPT-5.6+, which charge 1.25x (30 minutes) or 2.5x (12 hours) | agentic §6, §17.1 | Fixed in §17.1; §9's note left as is (it hedges "varies") |
 | F-11 | Medium | Copilot billing described as "per-model multipliers". Since 2026-06-01 Copilot bills **per token by model** in GitHub AI Credits (1 credit = $0.01); multipliers remain only for legacy annual plans | agentic §6 | Fixed |
 | R-01 | **High** | **Every cache miss is billed twice.** The full history is counted both as uncached input and as a cache write. Anthropic's usage fields are separate (`total_input_tokens = cache_read_input_tokens + cache_creation_input_tokens + input_tokens`), so a miss bills the history once, as a cache write | 11 turns in 8 scenarios | **Proposed** |
@@ -251,11 +251,11 @@ each source family was read).
 
 | Claim | Verdict | Source |
 |---|---|---|
-| OpenAI: automatic caching, evicted after 5-10 minutes of inactivity, up to ~1 hour | Correct for `in_memory` only; 24-hour default for non-ZDR orgs since May 2026 | [OpenAI prompt caching](https://developers.openai.com/api/docs/guides/prompt-caching) |
+| OpenAI: automatic caching, evicted after 5-10 minutes of inactivity, up to ~1 hour | Correct for `in_memory` only; 24-hour default for non-ZDR orgs (ZDR orgs default to `in_memory`) | [OpenAI prompt caching](https://developers.openai.com/api/docs/guides/prompt-caching) |
 | OpenAI GPT-5.6+: "explicit breakpoints with a fixed 30-minute minimum TTL" | Partly: implicit by default; 30 minutes is the *default*, 12 hours optional | same |
 | OpenAI charges no cache writes | Wrong for GPT-5.6+ (1.25x / 2.5x) | same; [GitHub models and pricing](https://docs.github.com/en/copilot/reference/copilot-billing/models-and-pricing): "Earlier OpenAI models have no cache write cost." |
 | OpenAI reasoning tokens billed as output | Correct | [OpenAI reasoning](https://developers.openai.com/api/docs/guides/reasoning): "they still occupy space in the model's context window and are billed as output tokens." |
-| Gemini: implicit caching, no fixed TTL | Correct; explicit caching defaults to 1 hour | [Gemini caching](https://ai.google.dev/gemini-api/docs/caching): "If not set, the TTL defaults to 1 hour" |
+| Gemini: implicit caching, no fixed TTL | Correct as "no TTL documented"; explicit cache default TTL unknown (the "1 hour" default is not in Google's docs) | [Gemini caching](https://ai.google.dev/gemini-api/docs/caching): no TTL default stated |
 | xAI caching not documented | Wrong: documented, best-effort | [xAI prompt caching](https://docs.x.ai/developers/advanced-api-usage/prompt-caching/best-practices) |
 | A 5+ minute pause exceeds every provider's TTL | Wrong (F-08) | all of the above; [GitHub model hosting](https://docs.github.com/en/copilot/reference/ai-models/model-hosting): Gemini "Cached data is encrypted and held for up to 24 hours." |
 | Copilot bills in AI Credits (formerly premium requests) | Correct; per token, 1 credit = $0.01 | [GitHub models and pricing](https://docs.github.com/en/copilot/reference/copilot-billing/models-and-pricing): "Each token is priced based on the model used, and the total is converted into AI credits, where 1 AI credit = $0.01 USD." |
@@ -301,11 +301,13 @@ Documented behaviour that matters for AI Credits but has no scenario yet:
 6. **Copilot SDK `cacheExpiresAt`** gives a per-call cache expiry, a
    first-party signal Analyze mode could show
    ([GitHub Copilot SDK streaming events](https://docs.github.com/en/copilot/how-tos/copilot-sdk/features/streaming-events)).
-7. **Promotional prices.** Gemini 3.8 Flash and Gemini 4 Argon have promo
-   prices that end in December 2026 (GitHub models and pricing footnotes).
+7. **Promotional prices.** Gemini 3.8 Flash has a Copilot promo through
+   2026-12-31 and Gemini 4 Argon through 2026-12-01; post-promo Copilot prices
+   are unknown (GitHub models and pricing footnotes).
 
 ## Source list
 
+- Current verified rule register (2026-11-04): [learn-rule-register.md](learn-rule-register.md)
 - Anthropic: [prompt caching](https://platform.claude.com/docs/en/build-with-claude/prompt-caching),
   [extended thinking](https://platform.claude.com/docs/en/build-with-claude/thinking),
   [vision](https://platform.claude.com/docs/en/build-with-claude/vision),
