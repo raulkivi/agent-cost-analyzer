@@ -6,6 +6,7 @@
 // Needs the built media/ (npm run build) and Playwright's Chromium.
 import { mkdirSync } from "node:fs";
 import path from "node:path";
+import type { ConfigWarning } from "@agent-cost-analyzer/domain";
 import type { Page } from "playwright";
 import { judgeProbe } from "./judge.mts";
 import { probePage } from "./probe.mts";
@@ -13,9 +14,13 @@ import { VSCODE_THEMES } from "./vscode-themes.mts";
 import { startHarness, type Harness } from "./webview-harness.mts";
 
 const WIDTHS = [600, 900, 1200, 1600];
+// Narrow panels, for the scenarios that have to fit them (manual check 1.9).
+const NARROW_WIDTHS = [320, 360];
 
 interface Scenario {
   name: string;
+  widths?: number[];
+  configWarnings?: ConfigWarning[];
   run(page: Page, harness: Harness): Promise<void>;
 }
 
@@ -59,7 +64,42 @@ async function openAgentHostSystemPrompt(page: Page, harness: Harness, sessionId
   }
 }
 
+// Both severities, with the long unbreakable setting ids Copilot Chat's
+// warnings really carry.
+const BANNER_WARNINGS: ConfigWarning[] = [
+  {
+    code: "copilot-chat-unavailable",
+    severity: "required",
+    settingId: "github.copilot.chat.agentDebugLog.fileLogging.enabled",
+    currentValue: false,
+    recommendedValue: true,
+    message: "GitHub Copilot Chat is disabled or not installed, so it writes no logs to analyze.",
+    helpSteps: [
+      "Open the Extensions view and enable GitHub Copilot Chat, or install it.",
+      "Sign in to GitHub Copilot if asked, then reload the VS Code window.",
+    ],
+  },
+  {
+    code: "agent-traces-unavailable",
+    severity: "optional",
+    settingId: "github.copilot.chat.otel.dbSpanExporter.enabled",
+    currentValue: false,
+    recommendedValue: true,
+    message: "Cache-write and reasoning-token counts aren't available yet.",
+    helpSteps: ["Set github.copilot.chat.otel.dbSpanExporter.enabled to true", "Reload VS Code"],
+  },
+];
+
 const SCENARIOS: Scenario[] = [
+  {
+    name: "config-banner",
+    widths: [...NARROW_WIDTHS, ...WIDTHS],
+    configWarnings: BANNER_WARNINGS,
+    run: async (page, harness) => {
+      await page.getByRole("alert").first().waitFor({ timeout: 5000 });
+      await harness.settle(page);
+    },
+  },
   { name: "learn", run: async () => undefined },
   {
     name: "learn-scenario",
@@ -180,12 +220,13 @@ if (shots) mkdirSync(shots, { recursive: true });
 let failures = 0;
 try {
   for (const [themeName, theme] of Object.entries(VSCODE_THEMES)) {
-    for (const width of WIDTHS) {
+    for (const width of [...NARROW_WIDTHS, ...WIDTHS]) {
       for (const scenario of SCENARIOS) {
+        if (!(scenario.widths ?? WIDTHS).includes(width)) continue;
         const where = `${scenario.name} · ${themeName} · ${width}px`;
         const only = onlyFilter();
         if (only && !where.includes(only)) continue;
-        const page = await harness.open(theme, width);
+        const page = await harness.open(theme, width, undefined, { configWarnings: scenario.configWarnings });
         let findings: string[];
         try {
           await scenario.run(page, harness);

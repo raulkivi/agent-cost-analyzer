@@ -34,6 +34,17 @@ const optionalWarning: ConfigWarning = {
 };
 
 describe("ConfigWarningBanner", () => {
+  // jsdom has no layout; the real overflow check is the UI check's
+  // config-banner scenario (320/360 px). This pins the styles it relies on.
+  it("lets long text wrap and actions drop to the next line in a narrow panel", () => {
+    render(<ConfigWarningBanner warnings={[warning, optionalWarning]} onDismiss={vi.fn()} onFixSetting={vi.fn()} />);
+
+    expect(screen.getByRole("alert")).toHaveStyle({ flexWrap: "wrap" });
+    const text = screen.getByText(/maxRetainedSessionLogs: current 50/).parentElement as HTMLElement;
+    expect(text).toHaveStyle({ minWidth: "0", overflowWrap: "anywhere" });
+    expect(text.parentElement).toHaveStyle({ flexWrap: "wrap" });
+  });
+
   it("renders nothing when there are no warnings", () => {
     render(<ConfigWarningBanner warnings={[]} onDismiss={vi.fn()} />);
 
