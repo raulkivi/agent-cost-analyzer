@@ -48,6 +48,8 @@ describe("Agent Host sessions with the Copilot CLI event log (step 10.14)", () =
       vscodeSettingsPath: null,
       appSettings: new InMemoryAppSettingsStore(),
       learnScenariosFixturesDir,
+      learnScriptsDir: path.resolve(learnScenariosFixturesDir, "../learn-scripts"),
+      vendorProfilesDir: path.resolve(learnScenariosFixturesDir, "../vendor-profiles"),
       appVersion: "0.1.0-test",
     });
     standalone = createStandaloneApiService({

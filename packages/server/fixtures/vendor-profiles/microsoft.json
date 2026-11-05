@@ -1,0 +1,104 @@
+{
+  "vendorId": "microsoft",
+  "displayName": "Microsoft",
+  "defaultModelId": "mai-code-1.1-flash",
+  "caching": {
+    "kind": "unknown",
+    "reason": "caching behaviour isn't documented"
+  },
+  "invalidation": [
+    {
+      "change": "tools-changed",
+      "invalidatesFrom": "unknown",
+      "confidence": "unknown",
+      "sourceIds": []
+    },
+    {
+      "change": "system-changed",
+      "invalidatesFrom": "unknown",
+      "confidence": "unknown",
+      "sourceIds": []
+    },
+    {
+      "change": "image-added",
+      "invalidatesFrom": "unknown",
+      "confidence": "unknown",
+      "sourceIds": []
+    },
+    {
+      "change": "image-removed",
+      "invalidatesFrom": "unknown",
+      "confidence": "unknown",
+      "sourceIds": []
+    },
+    {
+      "change": "thinking-changed",
+      "invalidatesFrom": "unknown",
+      "confidence": "unknown",
+      "sourceIds": []
+    },
+    {
+      "change": "model-switch",
+      "invalidatesFrom": "unknown",
+      "confidence": "unknown",
+      "sourceIds": []
+    },
+    {
+      "change": "tool-choice-changed",
+      "invalidatesFrom": "unknown",
+      "confidence": "unknown",
+      "sourceIds": []
+    }
+  ],
+  "models": [
+    {
+      "modelId": "mai-code-1.1-flash",
+      "displayName": "MAI-Code-1.1-Flash",
+      "vendorId": "microsoft",
+      "releaseStatus": "GA",
+      "tiers": [
+        {
+          "inputUsdPerM": 0.2,
+          "cachedInputUsdPerM": 0.02,
+          "cacheWriteUsdPerM": null,
+          "outputUsdPerM": 1.2
+        }
+      ],
+      "sourceIds": ["gh-pricing-table", "gh-model-hosting-mai"]
+    }
+  ],
+  "assumptions": [
+    {
+      "text": "Copilot's MAI-Code-1.1-Flash is a first-party Microsoft model served on Azure AI Foundry in GitHub's tenant.",
+      "confidence": "documented",
+      "sourceIds": ["gh-model-hosting-mai", "gh-model-hosting-mai-foundry"]
+    },
+    {
+      "text": "GitHub lists a cached-input price, but no GitHub or Microsoft doc describes how this model's caching works (lifetime, minimum length, prefix rules, invalidation), so it isn't simulated (D1).",
+      "confidence": "unknown"
+    }
+  ],
+  "sources": [
+    {
+      "id": "gh-pricing-table",
+      "title": "GitHub Copilot price table (github/docs models-and-pricing.yml)",
+      "url": "https://github.com/github/docs/blob/cc0c29a040c251c48ed65198f108a484c33406fa/data/tables/copilot/models-and-pricing.yml",
+      "quote": "provider: microsoft",
+      "checkedAt": "2026-11-05"
+    },
+    {
+      "id": "gh-model-hosting-mai",
+      "title": "GitHub Docs: Hosting of models for GitHub Copilot (MAI Code 1.1 Flash)",
+      "url": "https://docs.github.com/en/copilot/reference/ai-models/model-hosting",
+      "quote": "MAI Code 1.1 Flash is a first-party Microsoft model hosted on Azure in GitHub's tenant.",
+      "checkedAt": "2026-11-05"
+    },
+    {
+      "id": "gh-model-hosting-mai-foundry",
+      "title": "GitHub Docs: Hosting of models for GitHub Copilot (MAI Code 1.1 Flash on Azure AI Foundry)",
+      "url": "https://docs.github.com/en/copilot/reference/ai-models/model-hosting",
+      "quote": "When cloud hosted, MAI Code 1.1 Flash is served on Microsoft Azure AI Foundry within GitHub's tenant",
+      "checkedAt": "2026-11-05"
+    }
+  ]
+}

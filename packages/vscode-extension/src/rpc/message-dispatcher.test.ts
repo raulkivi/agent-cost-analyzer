@@ -12,6 +12,9 @@ function fakeApi(overrides: Partial<DispatcherApi> = {}): DispatcherApi {
     setRetentionThreshold: vi.fn(async () => ({}) as never),
     listLearnScenarios: vi.fn(async () => []),
     getLearnScenario: vi.fn(async () => ({ id: "cache-basics" }) as never),
+    getScenario: vi.fn(async () => ({ id: "cache-basics" }) as never),
+    compareScenario: vi.fn(async () => ({ scenarioId: "cache-basics", entries: [] }) as never),
+    listVendorProfiles: vi.fn(async () => []),
     getLogProviderStatus: vi.fn(async () => ({}) as never),
     setActiveLogProvider: vi.fn(async () => ({}) as never),
     getSessionAudit: vi.fn(async () => ({}) as never),
@@ -36,6 +39,21 @@ describe("MessageDispatcher (vscode-extension.md §4)", () => {
 
     expect(api.getLearnScenario).toHaveBeenCalledWith("cache-basics");
     expect(response).toEqual({ kind: "response", id: "req-1", ok: true, result: { id: "cache-basics" } });
+  });
+
+  it("routes the vendor-simulation methods to ApiService (step 13.6)", async () => {
+    const api = fakeApi();
+    const dispatcher = new MessageDispatcher(api);
+
+    await dispatcher.dispatch(request("getScenario", { id: "cache-basics", modelId: "claude-sonnet-5.5" }));
+    await dispatcher.dispatch(request("getScenario", { id: "cache-basics" }));
+    await dispatcher.dispatch(request("compareScenario", { id: "cache-basics", modelIds: ["a", "b"] }));
+    await dispatcher.dispatch(request("listVendorProfiles"));
+
+    expect(api.getScenario).toHaveBeenNthCalledWith(1, "cache-basics", "claude-sonnet-5.5");
+    expect(api.getScenario).toHaveBeenNthCalledWith(2, "cache-basics", undefined);
+    expect(api.compareScenario).toHaveBeenCalledWith("cache-basics", ["a", "b"]);
+    expect(api.listVendorProfiles).toHaveBeenCalledOnce();
   });
 
   it.each(["deleteEverything", "constructor", "__proto__", 42, undefined])(
@@ -144,6 +162,8 @@ describe("MessageDispatcher (vscode-extension.md §4)", () => {
     ["getSession", { id: 7 }, "id"],
     ["getSystemPromptText", { id: "" }, "id"],
     ["getLearnScenario", { id: null }, "id"],
+    ["getScenario", { id: 5 }, "id"],
+    ["compareScenario", { id: "s", modelIds: [1] }, "modelIds"],
     ["getTurnDetail", { sessionId: 7, turnIndex: 0 }, "sessionId"],
     ["getSessionAudit", {}, "sessionId"],
     ["listToolCalls", { sessionId: "s1", status: [1] }, "status"],

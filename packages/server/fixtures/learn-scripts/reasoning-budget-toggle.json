@@ -1,0 +1,98 @@
+{
+  "id": "reasoning-budget-toggle",
+  "title": "Toggling Extended Thinking Mid-Session",
+  "category": "Reasoning settings",
+  "harnesses": ["vscode-local", "copilot-agent-host", "claude-code"],
+  "sessionKind": "main",
+  "staticPrefix": {
+    "toolsTokens": 1800,
+    "systemTokens": 1200
+  },
+  "steps": [
+    {
+      "index": 1,
+      "userMessage": "Let's design the retry logic for the payment webhook handler.",
+      "assistantResponse": "Sure, looking at the current webhook handler.",
+      "toolCalls": [],
+      "explanation": "Normal first turn: writes the static prefix plus this turn's own content. Extended thinking is off, so reasoning stays at its normal baseline.",
+      "newContent": {
+        "userTokens": 800,
+        "toolResultTokens": 0,
+        "reasoningTokens": 150,
+        "outputTokens": 150
+      },
+      "events": []
+    },
+    {
+      "index": 2,
+      "userMessage": "It should use exponential backoff with jitter.",
+      "assistantResponse": "Got it, planning exponential backoff with jitter.",
+      "toolCalls": [],
+      "explanation": "Normal turn reusing and extending the cache.",
+      "newContent": {
+        "userTokens": 150,
+        "toolResultTokens": 0,
+        "reasoningTokens": 120,
+        "outputTokens": 180
+      },
+      "events": []
+    },
+    {
+      "index": 3,
+      "userMessage": "This retry logic has a lot of edge cases — turn on extended thinking for this part.",
+      "assistantResponse": "Switching to extended thinking mode for this design.",
+      "toolCalls": [],
+      "explanation": "Enabling extended thinking changes the request itself, which invalidates the conversation cache. Reasoning tokens also jump while the model spends a much larger budget deliberating.",
+      "newContent": {
+        "userTokens": 100,
+        "toolResultTokens": 0,
+        "reasoningTokens": 900,
+        "outputTokens": 250
+      },
+      "events": [
+        {
+          "type": "thinking-changed",
+          "enabled": true
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "userMessage": "Good — now write the code.",
+      "assistantResponse": "Writing the retry logic now.",
+      "toolCalls": [
+        {
+          "name": "replace_string_in_file",
+          "argsSummary": "src/webhooks/payment-retry.ts"
+        }
+      ],
+      "explanation": "Normal turn under the new, still elevated reasoning budget; the cache rebuilds under the current settings.",
+      "newContent": {
+        "userTokens": 100,
+        "toolResultTokens": 200,
+        "reasoningTokens": 400,
+        "outputTokens": 220
+      },
+      "events": []
+    },
+    {
+      "index": 5,
+      "userMessage": "That's solid — turn extended thinking back off, we're done with the tricky part.",
+      "assistantResponse": "Turning extended thinking back off.",
+      "toolCalls": [],
+      "explanation": "Turning extended thinking back off invalidates the cache again, in the same way: any change to the thinking setting alters the request, in either direction. Toggling mid-task costs a full miss twice.",
+      "newContent": {
+        "userTokens": 100,
+        "toolResultTokens": 0,
+        "reasoningTokens": 100,
+        "outputTokens": 120
+      },
+      "events": [
+        {
+          "type": "thinking-changed",
+          "enabled": false
+        }
+      ]
+    }
+  ]
+}

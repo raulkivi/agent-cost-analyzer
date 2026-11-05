@@ -49,6 +49,8 @@ describe(".vscodeignore (step 10.9)", () => {
     "media/assets/index.js",
     "media/index.html",
     "media/learn-scenarios/cache-hit.json",
+    "media/learn-scripts/cache-basics.json",
+    "media/vendor-profiles/anthropic.json",
     "package.json",
     "package.nls.json",
     "resources/activity-bar.svg",

@@ -47,6 +47,11 @@ function toRequest(method: ApiMethodName, params: unknown): HttpRequest {
       return { url: "/api/learn/scenarios" };
     case "getLearnScenario": // { id }
       return { url: `/api/learn/scenarios/${String(p.id)}` };
+    // The standalone app gets these HTTP routes in step 13.10.
+    case "getScenario":
+    case "compareScenario":
+    case "listVendorProfiles":
+      throw new Error(`${method} is not available in the standalone app yet (step 13.10)`);
     case "getLogProviderStatus":
       return { url: "/api/log-providers" };
     case "setActiveLogProvider": // { id }

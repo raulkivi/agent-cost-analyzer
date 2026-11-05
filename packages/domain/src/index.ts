@@ -224,3 +224,15 @@ export {
   type CacheOutcome,
   type TurnSimulation,
 } from "./simulation.js";
+export {
+  vendorModelSummarySchema,
+  vendorProfileSummarySchema,
+  comparisonTurnSchema,
+  vendorComparisonEntrySchema,
+  vendorComparisonSchema,
+  type VendorModelSummary,
+  type VendorProfileSummary,
+  type ComparisonTurn,
+  type VendorComparisonEntry,
+  type VendorComparison,
+} from "./vendor-comparison.js";

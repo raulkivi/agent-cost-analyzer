@@ -1,0 +1,123 @@
+{
+  "vendorId": "moonshot",
+  "displayName": "Moonshot AI",
+  "defaultModelId": "kimi-k3",
+  "caching": {
+    "kind": "unknown",
+    "reason": "caching on GitHub's Fireworks deployment isn't documented"
+  },
+  "invalidation": [
+    {
+      "change": "tools-changed",
+      "invalidatesFrom": "unknown",
+      "confidence": "unknown",
+      "sourceIds": []
+    },
+    {
+      "change": "system-changed",
+      "invalidatesFrom": "unknown",
+      "confidence": "unknown",
+      "sourceIds": []
+    },
+    {
+      "change": "image-added",
+      "invalidatesFrom": "unknown",
+      "confidence": "unknown",
+      "sourceIds": []
+    },
+    {
+      "change": "image-removed",
+      "invalidatesFrom": "unknown",
+      "confidence": "unknown",
+      "sourceIds": []
+    },
+    {
+      "change": "thinking-changed",
+      "invalidatesFrom": "unknown",
+      "confidence": "unknown",
+      "sourceIds": []
+    },
+    {
+      "change": "model-switch",
+      "invalidatesFrom": "unknown",
+      "confidence": "unknown",
+      "sourceIds": []
+    },
+    {
+      "change": "tool-choice-changed",
+      "invalidatesFrom": "unknown",
+      "confidence": "unknown",
+      "sourceIds": []
+    }
+  ],
+  "models": [
+    {
+      "modelId": "kimi-k3",
+      "displayName": "Kimi K3",
+      "vendorId": "moonshot",
+      "releaseStatus": "GA",
+      "tiers": [
+        {
+          "inputUsdPerM": 3.0,
+          "cachedInputUsdPerM": 0.3,
+          "cacheWriteUsdPerM": null,
+          "outputUsdPerM": 15.0
+        }
+      ],
+      "sourceIds": ["gh-pricing-table", "gh-model-hosting-kimi"]
+    }
+  ],
+  "assumptions": [
+    {
+      "text": "Copilot's Kimi K3 is hosted by GitHub on Fireworks AI, not on Moonshot's API.",
+      "confidence": "documented",
+      "sourceIds": ["gh-model-hosting-kimi"]
+    },
+    {
+      "text": "Moonshot's own Kimi API caches repeated prefixes automatically (5-minute default TTL, 1-hour option, cache writes billed), and Fireworks caches the longest matching prefix on all its deployments; neither doc covers GitHub's Copilot deployment.",
+      "confidence": "documented",
+      "sourceIds": ["moonshot-pricing-caching", "fireworks-prompt-caching"]
+    },
+    {
+      "text": "Whether either vendor's caching rules apply to Copilot's Kimi K3 isn't documented, so the model isn't simulated (D1; rule register owner decision 1).",
+      "confidence": "unknown"
+    }
+  ],
+  "sources": [
+    {
+      "id": "gh-pricing-table",
+      "title": "GitHub Copilot price table (github/docs models-and-pricing.yml)",
+      "url": "https://github.com/github/docs/blob/cc0c29a040c251c48ed65198f108a484c33406fa/data/tables/copilot/models-and-pricing.yml",
+      "quote": "provider: moonshot_ai",
+      "checkedAt": "2026-11-05"
+    },
+    {
+      "id": "gh-model-hosting-kimi",
+      "title": "GitHub Docs: Hosting of models for GitHub Copilot (Kimi K3)",
+      "url": "https://docs.github.com/en/copilot/reference/ai-models/model-hosting",
+      "quote": "Kimi K3 is hosted by GitHub on Fireworks AI.",
+      "checkedAt": "2026-11-05"
+    },
+    {
+      "id": "moonshot-pricing-caching",
+      "title": "Kimi API: Kimi K3 pricing",
+      "url": "https://platform.kimi.ai/docs/pricing/chat-k3.md",
+      "quote": "Note: The Kimi API **automatically enables** context caching billing for repeated request prefixes, with a default TTL (time-to-live) of 5m.",
+      "checkedAt": "2026-11-04"
+    },
+    {
+      "id": "moonshot-context-caching",
+      "title": "Kimi API: Context caching",
+      "url": "https://platform.kimi.ai/docs/guide/context-caching.md",
+      "quote": "Cache Write supports two TTLs: `5m` and `1h`.",
+      "checkedAt": "2026-11-04"
+    },
+    {
+      "id": "fireworks-prompt-caching",
+      "title": "Fireworks AI: Prompt caching",
+      "url": "https://docs.fireworks.ai/guides/prompt-caching",
+      "quote": "Prompt caching is enabled by default for all Fireworks models and deployments.",
+      "checkedAt": "2026-11-04"
+    }
+  ]
+}

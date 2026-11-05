@@ -21,6 +21,8 @@ function buildService(appSettings = new InMemoryAppSettingsStore(), settingsSour
     appSettings,
     settingsSource,
     learnScenariosFixturesDir: fixturesDir,
+    learnScriptsDir: path.resolve(fixturesDir, "../learn-scripts"),
+    vendorProfilesDir: path.resolve(fixturesDir, "../vendor-profiles"),
     appVersion: "0.1.0-test",
   });
 }
@@ -39,9 +41,19 @@ describe("createExtensionApiService (extension composition, vscode-extension.md 
         settingFixes: true,
         openInEditor: true,
         sessionSidebar: true,
+        vendorSimulation: true,
       },
     });
     expect(await service.getHealth()).toEqual({ status: "ok", version: "0.1.0-test" });
+  });
+
+  it("replays a Learn scenario on a model with VS Code wording (step 13.6)", async () => {
+    const service = buildService();
+    const session = await service.getScenario("clear", "claude-sonnet-5.5");
+    expect(session.turns[0]!.simulation?.modelId).toBe("claude-sonnet-5.5");
+    const comparison = await service.compareScenario("clear");
+    expect(comparison.entries.length).toBeGreaterThan(1);
+    expect((await service.listVendorProfiles()).length).toBe(6);
   });
 
   it("lists only the VS Code provider", async () => {
@@ -51,11 +63,15 @@ describe("createExtensionApiService (extension composition, vscode-extension.md 
     expect(status.providers.map((provider) => provider.id)).toEqual(["vscode"]);
   });
 
-  it("serves Learn mode from the injected fixtures dir (G4)", async () => {
-    const scenarios = await buildService().listLearnScenarios();
+  it("serves Learn mode from the simulation: 17 scenarios on the default model (G4, D3, D13)", async () => {
+    const service = buildService();
+    const scenarios = await service.listLearnScenarios();
 
-    expect(scenarios.length).toBeGreaterThan(0);
+    expect(scenarios).toHaveLength(17);
     expect(scenarios.every((scenario) => scenario.mode === "learn")).toBe(true);
+    expect(scenarios.every((s) => s.model === "claude-sonnet-5.5")).toBe(true);
+    expect((await service.getLearnScenario("clear")).turns[0]!.simulation).toBeDefined();
+    await expect(service.getLearnScenario("cache-ttl-1-hour-breakpoint")).rejects.toThrow();
   });
 
   it("keeps the retention threshold in the injected store (D5)", async () => {

@@ -1,0 +1,70 @@
+{
+  "id": "subagent-cheaper-model",
+  "title": "A Subagent Running a Cheaper Model",
+  "category": "Subagents",
+  "harnesses": ["vscode-local", "copilot-agent-host", "claude-code"],
+  "sessionKind": "subagent",
+  "staticPrefix": {
+    "toolsTokens": 700,
+    "systemTokens": 500
+  },
+  "steps": [
+    {
+      "index": 1,
+      "userMessage": "(subagent task) Find every call site of the deprecated formatCurrency() helper across the repo.",
+      "assistantResponse": "Searching the codebase for all call sites.",
+      "toolCalls": [
+        {
+          "name": "grep_search",
+          "argsSummary": "formatCurrency( usages across src/"
+        }
+      ],
+      "explanation": "This subagent runs on a cheaper, faster model than its parent, a deliberate choice for a narrow, mechanical search task. Like any subagent it has its own isolated context; this first turn writes its own static prefix plus new content.",
+      "newContent": {
+        "userTokens": 250,
+        "toolResultTokens": 500,
+        "reasoningTokens": 150,
+        "outputTokens": 110
+      },
+      "events": [
+        {
+          "type": "model-switch",
+          "toRole": "cheaper"
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "userMessage": "(subagent task, continued) Confirm which call sites pass a currency code and which rely on the default.",
+      "assistantResponse": "Checking each call site's arguments.",
+      "toolCalls": [
+        {
+          "name": "read_file",
+          "argsSummary": "full contents of the files matched in the previous search"
+        }
+      ],
+      "explanation": "Normal cache-building turn within the subagent's own session.",
+      "newContent": {
+        "userTokens": 100,
+        "toolResultTokens": 700,
+        "reasoningTokens": 120,
+        "outputTokens": 90
+      },
+      "events": []
+    },
+    {
+      "index": 3,
+      "userMessage": "(subagent task, continued) Summarize the findings for the parent session.",
+      "assistantResponse": "12 call sites found; 9 pass an explicit currency code, 3 rely on the default (which is being removed). Returning a compact summary to the parent.",
+      "toolCalls": [],
+      "explanation": "Final subagent turn: synthesizes a compact summary that crosses back to the parent. Isolation keeps the exploration out of the parent's cache, and the cheaper model matches the task's real difficulty.",
+      "newContent": {
+        "userTokens": 50,
+        "toolResultTokens": 0,
+        "reasoningTokens": 80,
+        "outputTokens": 160
+      },
+      "events": []
+    }
+  ]
+}

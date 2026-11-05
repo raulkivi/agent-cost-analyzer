@@ -6,6 +6,8 @@ import type { Layout } from "./layout.js";
 export const TURN_COLUMNS = [
   { id: "turn", label: "Turn" },
   { id: "trigger", label: "Trigger" },
+  // Simulated (Learn) sessions only: the table and drawer leave it out when no turn has a simulation.
+  { id: "cache", label: "Cache" },
   { id: "rounds", label: "Rounds" },
   { id: "calls", label: "Calls" },
   { id: "uncachedInput", label: "Uncached in" },
@@ -47,5 +49,14 @@ export function hiddenTurnColumns(visible: readonly TurnColumnId[]): TurnColumnI
 // and anything but an array means nothing was stored.
 export function parseTurnColumns(stored: unknown): TurnColumnId[] | undefined {
   if (!Array.isArray(stored)) return undefined;
-  return inDisplayOrder(stored.filter((id): id is string => typeof id === "string"));
+  const ids = stored.filter((id): id is string => typeof id === "string");
+  // A list saved before the Cache column existed that showed every column
+  // meant "all of them", so the new column joins it.
+  const showedEverything = ALL_TURN_COLUMNS.every((id) => id === "cache" || ids.includes(id));
+  return inDisplayOrder(showedEverything ? [...ids, "cache"] : ids);
+}
+
+// Whether a column applies to these turns: Cache only to simulated ones.
+export function columnsApplyingTo(columns: readonly TurnColumnId[], simulated: boolean): TurnColumnId[] {
+  return columns.filter((id) => id !== "cache" || simulated);
 }

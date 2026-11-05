@@ -10,6 +10,8 @@ import type {
   Session,
   SessionAudit,
   TurnInspectorDetail,
+  VendorComparison,
+  VendorProfileSummary,
 } from "@agent-cost-analyzer/domain";
 import type { AppSettingsStore } from "../../data-sources/log-providers/app-settings.js";
 import { ProjectsFileRejectedError, type ProjectCatalog } from "../cost-attribution/project-catalog.js";
@@ -21,6 +23,7 @@ import {
   supportsSystemPromptText,
   type SystemPromptTextLookup,
 } from "../../data-sources/log-providers/system-prompt-text-reader.js";
+import { ScenarioNotFoundError, UnknownModelError } from "../learn-simulation/learn-simulation-service.js";
 import type { SessionRangeFilter, ToolCallFilter } from "../tool-audit/audit-query-service.js";
 import { parseSessionRangeQuery, parseToolCallFilterQuery } from "../tool-audit/audit-query-params.js";
 import { BadRequestError, InternalError, NotFoundError } from "./api-errors.js";
@@ -48,6 +51,14 @@ export interface ApiInsights {
   getDataset(filter: SessionRangeFilter): Promise<InsightsDataset>;
 }
 
+// The simulator slice ApiService needs (ISP); it throws
+// ScenarioNotFoundError / UnknownModelError, mapped to 404 / 400 below.
+export interface ApiLearnSimulation {
+  getScenario(id: string, modelId?: string): Session;
+  compareScenario(id: string, modelIds?: string[]): VendorComparison;
+  listVendorProfiles(): VendorProfileSummary[];
+}
+
 // Checks the editor's settings against the given retention threshold
 // (undefined: the check's own default).
 export type ConfigStatusCheck = (minRetainedSessionLogsThreshold: number | undefined) => ConfigStatus;
@@ -69,6 +80,7 @@ export interface ApiServiceDeps {
   settings: Pick<AppSettingsStore, "readMinRetainedSessionLogsThreshold" | "writeMinRetainedSessionLogsThreshold">;
   checkConfig: ConfigStatusCheck;
   learnScenarios: LearnScenarioCatalog;
+  learnSimulation: ApiLearnSimulation;
   appVersion: string;
   productProfile: ProductProfile;
 }
@@ -95,6 +107,31 @@ function parseTurnIndex(raw: unknown): number {
     throw new BadRequestError(`"${String(raw)}" is not a valid turn index.`);
   }
   return turnIndex;
+}
+
+function optionalModelId(raw: unknown): string | undefined {
+  if (raw === undefined) return undefined;
+  if (typeof raw !== "string") throw new BadRequestError('"modelId" must be a string.');
+  return raw;
+}
+
+function optionalModelIds(raw: unknown): string[] | undefined {
+  if (raw === undefined) return undefined;
+  if (!Array.isArray(raw) || raw.some((id) => typeof id !== "string")) {
+    throw new BadRequestError('"modelIds" must be an array of strings.');
+  }
+  return raw as string[];
+}
+
+// Maps the simulator's typed failures to the API's; anything else stays internal.
+function simulate<T>(run: () => T): T {
+  try {
+    return run();
+  } catch (error) {
+    if (error instanceof ScenarioNotFoundError) throw new NotFoundError(error.message);
+    if (error instanceof UnknownModelError) throw new BadRequestError(error.message);
+    throw failure("the simulated scenario", error);
+  }
 }
 
 function failure(what: string, error: unknown): InternalError {
@@ -179,6 +216,20 @@ export class ApiService {
       throw new NotFoundError(`Unknown learn scenario id "${id}"`);
     }
     return scenario;
+  }
+
+  async getScenario(id: string, modelId?: unknown): Promise<Session> {
+    const model = optionalModelId(modelId);
+    return simulate(() => this.deps.learnSimulation.getScenario(id, model));
+  }
+
+  async compareScenario(id: string, modelIds?: unknown): Promise<VendorComparison> {
+    const models = optionalModelIds(modelIds);
+    return simulate(() => this.deps.learnSimulation.compareScenario(id, models));
+  }
+
+  async listVendorProfiles(): Promise<VendorProfileSummary[]> {
+    return simulate(() => this.deps.learnSimulation.listVendorProfiles());
   }
 
   async getLogProviderStatus(): Promise<LogProviderStatus> {

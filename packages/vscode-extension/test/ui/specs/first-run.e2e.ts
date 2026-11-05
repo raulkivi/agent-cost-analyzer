@@ -47,7 +47,7 @@ suite("First run in a VS Code that has never seen Copilot Chat (checks 1.1, 1.2,
     expect(statusItems).toContain(SETUP_NEEDED);
   });
 
-  test("1.3 the Sessions view says why it is empty and points to Learn mode; the Learn view lists the 18 scenarios", async () => {
+  test("1.3 the Sessions view says why it is empty and points to Learn mode; the Learn view lists the 17 scenarios", async () => {
     const [welcome] = await sidebar.rowTexts("sessions");
     expect(welcome).toContain("No Copilot Chat sessions with token data yet");
     expect(welcome).toContain("Open Learn mode");
@@ -67,9 +67,9 @@ suite("First run in a VS Code that has never seen Copilot Chat (checks 1.1, 1.2,
     );
     const scenarios = (await sidebar.allRowTexts("learn")).filter((row) => /\d+ turns? ·/.test(row));
     for (let step = 0; step < 4; step++) await host.command("workbench.action.zoomOut");
-    expect(scenarios).toHaveLength(18);
-    // 18 different scenarios, not one row seen twice.
-    expect(new Set(scenarios.map((row) => row.replace(/\d+ turns? ·.*$/, ""))).size).toBe(18);
+    expect(scenarios).toHaveLength(17);
+    // 17 different scenarios, not one row seen twice.
+    expect(new Set(scenarios.map((row) => row.replace(/\d+ turns? ·.*$/, ""))).size).toBe(17);
   });
 
   test("1.3 and 1.2 Setup lists the missing Copilot Chat and the logging settings as warnings, and changes nothing by itself", async () => {

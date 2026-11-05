@@ -129,4 +129,13 @@ describe("ColumnChooser (§3.5 Layout, mock-up board 1)", () => {
       expect(screen.queryByRole("group", { name: "Visible columns" })).not.toBeInTheDocument();
     });
   });
+
+  it("lists and counts the Cache column only for a simulated session", () => {
+    const visible = ["turn", "cache"] as const;
+    const { rerender } = render(<ColumnChooser visible={visible} onChange={() => {}} />);
+    expect(screen.getByText("Showing 1 of 14 columns")).toBeInTheDocument();
+
+    rerender(<ColumnChooser visible={visible} onChange={() => {}} simulated />);
+    expect(screen.getByText("Showing 2 of 15 columns")).toBeInTheDocument();
+  });
 });

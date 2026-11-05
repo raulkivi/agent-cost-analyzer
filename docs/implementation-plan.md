@@ -1425,7 +1425,8 @@ and `ext-v0.1.0`). Not Phase 11 or 12.
 **Status (2026-11-05)**: in progress, step 13.0 (rule register). The
 register is drafted (#115), verified (#116), has the owner's decisions
 recorded (#120) and had two unsourced claims corrected (#123). Step
-13.1 (domain schemas) is built, in review; steps 13.2-13.10 are not started. The owner's decisions are in the plan's §9:
+13.1 (domain schemas, #129) is merged; step 13.2 (vendor data) is built, in
+review; steps 13.3-13.10 are not started. The owner's decisions are in the plan's §9:
 Anthropic, OpenAI, Google and xAI are simulated, while Moonshot AI and
 Microsoft are listed but disabled. It ships in extension 0.2.0.
 

@@ -1,0 +1,679 @@
+{
+  "vendorId": "anthropic",
+  "displayName": "Anthropic",
+  "defaultModelId": "claude-sonnet-5.5",
+  "caching": {
+    "kind": "breakpoints",
+    "defaultTtlMinutes": 5,
+    "extendedTtlMinutes": 60,
+    "refreshOnHit": true,
+    "minCacheableTokens": 512,
+    "layers": ["tools", "system", "messages"]
+  },
+  "invalidation": [
+    {
+      "change": "tools-changed",
+      "invalidatesFrom": "tools",
+      "confidence": "documented",
+      "sourceIds": ["anthropic-pc-hierarchy", "anthropic-pc-tools"]
+    },
+    {
+      "change": "system-changed",
+      "invalidatesFrom": "system",
+      "confidence": "documented",
+      "sourceIds": ["anthropic-pc-hierarchy"]
+    },
+    {
+      "change": "image-added",
+      "invalidatesFrom": "messages",
+      "confidence": "documented",
+      "sourceIds": ["anthropic-pc-images"]
+    },
+    {
+      "change": "image-removed",
+      "invalidatesFrom": "messages",
+      "confidence": "documented",
+      "sourceIds": ["anthropic-pc-images"]
+    },
+    {
+      "change": "thinking-changed",
+      "invalidatesFrom": "messages",
+      "modelSpecific": true,
+      "confidence": "documented",
+      "sourceIds": [
+        "anthropic-pc-thinking",
+        "anthropic-pc-effort",
+        "anthropic-thinking-caching"
+      ]
+    },
+    {
+      "change": "model-switch",
+      "invalidatesFrom": "tools",
+      "confidence": "documented",
+      "sourceIds": [
+        "anthropic-cache-diagnostics",
+        "claude-code-switching-models"
+      ]
+    },
+    {
+      "change": "tool-choice-changed",
+      "invalidatesFrom": "messages",
+      "confidence": "documented",
+      "sourceIds": ["anthropic-pc-tool-choice"]
+    }
+  ],
+  "models": [
+    {
+      "modelId": "claude-haiku-4.5",
+      "displayName": "Claude Haiku 4.5",
+      "vendorId": "anthropic",
+      "releaseStatus": "GA",
+      "tiers": [
+        {
+          "inputUsdPerM": 1.0,
+          "cachedInputUsdPerM": 0.1,
+          "cacheWriteUsdPerM": 1.25,
+          "extendedCacheWriteUsdPerM": 2.0,
+          "outputUsdPerM": 5.0
+        }
+      ],
+      "cachingKind": {
+        "kind": "breakpoints",
+        "defaultTtlMinutes": 5,
+        "extendedTtlMinutes": 60,
+        "refreshOnHit": true,
+        "minCacheableTokens": 4096,
+        "layers": ["tools", "system", "messages"]
+      },
+      "cheaperSiblingId": "claude-haiku-5.5",
+      "sourceIds": [
+        "gh-pricing-table",
+        "gh-models-pricing-anthropic",
+        "anthropic-pc-pricing-1h",
+        "anthropic-pc-limitations-4096"
+      ]
+    },
+    {
+      "modelId": "claude-haiku-5.5",
+      "displayName": "Claude Haiku 5.5",
+      "vendorId": "anthropic",
+      "releaseStatus": "GA",
+      "tiers": [
+        {
+          "maxInputTokens": 100000,
+          "inputUsdPerM": 0.1,
+          "cachedInputUsdPerM": 0.01,
+          "cacheWriteUsdPerM": 0.125,
+          "extendedCacheWriteUsdPerM": 0.2,
+          "outputUsdPerM": 0.5
+        },
+        {
+          "inputUsdPerM": 0.5,
+          "cachedInputUsdPerM": 0.05,
+          "cacheWriteUsdPerM": 0.625,
+          "extendedCacheWriteUsdPerM": 1.0,
+          "outputUsdPerM": 2.5
+        }
+      ],
+      "sourceIds": [
+        "gh-pricing-table",
+        "gh-models-pricing-anthropic",
+        "anthropic-pc-pricing-1h",
+        "anthropic-pc-tier-length",
+        "anthropic-pc-limitations-512"
+      ]
+    },
+    {
+      "modelId": "claude-sonnet-4",
+      "displayName": "Claude Sonnet 4",
+      "vendorId": "anthropic",
+      "releaseStatus": "GA",
+      "tiers": [
+        {
+          "inputUsdPerM": 3.0,
+          "cachedInputUsdPerM": 0.3,
+          "cacheWriteUsdPerM": 3.75,
+          "extendedCacheWriteUsdPerM": 6.0,
+          "outputUsdPerM": 15.0
+        }
+      ],
+      "cachingKind": {
+        "kind": "breakpoints",
+        "defaultTtlMinutes": 5,
+        "extendedTtlMinutes": 60,
+        "refreshOnHit": true,
+        "minCacheableTokens": 1024,
+        "layers": ["tools", "system", "messages"]
+      },
+      "cheaperSiblingId": "claude-haiku-4.5",
+      "sourceIds": [
+        "gh-pricing-table",
+        "gh-models-pricing-anthropic",
+        "anthropic-pc-pricing-1h",
+        "anthropic-pc-limitations-1024"
+      ]
+    },
+    {
+      "modelId": "claude-sonnet-4.6",
+      "displayName": "Claude Sonnet 4.6",
+      "vendorId": "anthropic",
+      "releaseStatus": "GA",
+      "tiers": [
+        {
+          "inputUsdPerM": 3.0,
+          "cachedInputUsdPerM": 0.3,
+          "cacheWriteUsdPerM": 3.75,
+          "extendedCacheWriteUsdPerM": 6.0,
+          "outputUsdPerM": 15.0
+        }
+      ],
+      "cachingKind": {
+        "kind": "breakpoints",
+        "defaultTtlMinutes": 5,
+        "extendedTtlMinutes": 60,
+        "refreshOnHit": true,
+        "minCacheableTokens": 1024,
+        "layers": ["tools", "system", "messages"]
+      },
+      "cheaperSiblingId": "claude-haiku-4.5",
+      "sourceIds": [
+        "gh-pricing-table",
+        "gh-models-pricing-anthropic",
+        "anthropic-pc-pricing-1h",
+        "anthropic-pc-limitations-1024"
+      ]
+    },
+    {
+      "modelId": "claude-opus-4.8",
+      "displayName": "Claude Opus 4.8",
+      "vendorId": "anthropic",
+      "releaseStatus": "GA",
+      "tiers": [
+        {
+          "inputUsdPerM": 5.0,
+          "cachedInputUsdPerM": 0.5,
+          "cacheWriteUsdPerM": 6.25,
+          "extendedCacheWriteUsdPerM": 10.0,
+          "outputUsdPerM": 25.0
+        }
+      ],
+      "cachingKind": {
+        "kind": "breakpoints",
+        "defaultTtlMinutes": 5,
+        "extendedTtlMinutes": 60,
+        "refreshOnHit": true,
+        "minCacheableTokens": 1024,
+        "layers": ["tools", "system", "messages"]
+      },
+      "cheaperSiblingId": "claude-sonnet-4.6",
+      "sourceIds": [
+        "gh-pricing-table",
+        "gh-models-pricing-anthropic",
+        "anthropic-pc-pricing-1h",
+        "anthropic-pc-limitations-1024"
+      ]
+    },
+    {
+      "modelId": "claude-opus-5",
+      "displayName": "Claude Opus 5",
+      "vendorId": "anthropic",
+      "releaseStatus": "GA",
+      "tiers": [
+        {
+          "inputUsdPerM": 5.0,
+          "cachedInputUsdPerM": 0.5,
+          "cacheWriteUsdPerM": 6.25,
+          "extendedCacheWriteUsdPerM": 10.0,
+          "outputUsdPerM": 25.0
+        }
+      ],
+      "cheaperSiblingId": "claude-sonnet-5",
+      "sourceIds": [
+        "gh-pricing-table",
+        "gh-models-pricing-anthropic",
+        "anthropic-pc-pricing-1h",
+        "anthropic-pc-limitations-512"
+      ]
+    },
+    {
+      "modelId": "claude-opus-5.5",
+      "displayName": "Claude Opus 5.5",
+      "vendorId": "anthropic",
+      "releaseStatus": "GA",
+      "tiers": [
+        {
+          "inputUsdPerM": 4.0,
+          "cachedInputUsdPerM": 0.2,
+          "cacheWriteUsdPerM": 5.0,
+          "extendedCacheWriteUsdPerM": 8.0,
+          "outputUsdPerM": 20.0
+        }
+      ],
+      "cheaperSiblingId": "claude-sonnet-5.5",
+      "sourceIds": [
+        "gh-pricing-table",
+        "gh-models-pricing-anthropic",
+        "anthropic-pc-pricing-1h",
+        "anthropic-pc-limitations-512"
+      ]
+    },
+    {
+      "modelId": "claude-sonnet-5",
+      "displayName": "Claude Sonnet 5",
+      "vendorId": "anthropic",
+      "releaseStatus": "GA",
+      "tiers": [
+        {
+          "inputUsdPerM": 2.0,
+          "cachedInputUsdPerM": 0.2,
+          "cacheWriteUsdPerM": 2.5,
+          "extendedCacheWriteUsdPerM": 4.0,
+          "outputUsdPerM": 10.0
+        }
+      ],
+      "cachingKind": {
+        "kind": "breakpoints",
+        "defaultTtlMinutes": 5,
+        "extendedTtlMinutes": 60,
+        "refreshOnHit": true,
+        "minCacheableTokens": 1024,
+        "layers": ["tools", "system", "messages"]
+      },
+      "cheaperSiblingId": "claude-haiku-5.5",
+      "sourceIds": [
+        "gh-pricing-table",
+        "gh-models-pricing-anthropic",
+        "anthropic-pc-pricing-1h",
+        "anthropic-pc-limitations-1024"
+      ]
+    },
+    {
+      "modelId": "claude-sonnet-5.5",
+      "displayName": "Claude Sonnet 5.5",
+      "vendorId": "anthropic",
+      "releaseStatus": "GA",
+      "tiers": [
+        {
+          "inputUsdPerM": 2.0,
+          "cachedInputUsdPerM": 0.1,
+          "cacheWriteUsdPerM": 2.5,
+          "extendedCacheWriteUsdPerM": 4.0,
+          "outputUsdPerM": 10.0
+        }
+      ],
+      "cheaperSiblingId": "claude-haiku-5.5",
+      "sourceIds": [
+        "gh-pricing-table",
+        "gh-models-pricing-anthropic",
+        "anthropic-pc-pricing-1h",
+        "anthropic-pc-limitations-512"
+      ]
+    },
+    {
+      "modelId": "claude-opus-4.8-fast",
+      "displayName": "Claude Opus 4.8 (fast mode) (preview)",
+      "vendorId": "anthropic",
+      "releaseStatus": "GA",
+      "tiers": [
+        {
+          "inputUsdPerM": 10.0,
+          "cachedInputUsdPerM": 1.0,
+          "cacheWriteUsdPerM": 12.5,
+          "outputUsdPerM": 50.0
+        }
+      ],
+      "cachingKind": {
+        "kind": "breakpoints",
+        "defaultTtlMinutes": 5,
+        "refreshOnHit": true,
+        "minCacheableTokens": 1024,
+        "layers": ["tools", "system", "messages"]
+      },
+      "cheaperSiblingId": "claude-opus-4.8",
+      "sourceIds": [
+        "gh-pricing-table",
+        "gh-models-pricing-anthropic",
+        "anthropic-pc-limitations-1024"
+      ]
+    },
+    {
+      "modelId": "claude-fable-5",
+      "displayName": "Claude Fable 5",
+      "vendorId": "anthropic",
+      "releaseStatus": "GA",
+      "tiers": [
+        {
+          "inputUsdPerM": 10.0,
+          "cachedInputUsdPerM": 1.0,
+          "cacheWriteUsdPerM": 12.5,
+          "extendedCacheWriteUsdPerM": 20.0,
+          "outputUsdPerM": 50.0
+        }
+      ],
+      "cheaperSiblingId": "claude-opus-5.5",
+      "sourceIds": [
+        "gh-pricing-table",
+        "gh-models-pricing-anthropic",
+        "anthropic-pc-pricing-1h",
+        "anthropic-pc-limitations-512"
+      ]
+    },
+    {
+      "modelId": "claude-fable-5.1",
+      "displayName": "Claude Fable 5.1",
+      "vendorId": "anthropic",
+      "releaseStatus": "GA",
+      "tiers": [
+        {
+          "inputUsdPerM": 10.0,
+          "cachedInputUsdPerM": 0.25,
+          "cacheWriteUsdPerM": 12.5,
+          "extendedCacheWriteUsdPerM": 20.0,
+          "outputUsdPerM": 50.0
+        }
+      ],
+      "cheaperSiblingId": "claude-opus-5.5",
+      "sourceIds": [
+        "gh-pricing-table",
+        "gh-models-pricing-anthropic",
+        "anthropic-pc-pricing-1h",
+        "anthropic-pc-limitations-512"
+      ]
+    }
+  ],
+  "assumptions": [
+    {
+      "text": "Where Copilot places cache breakpoints isn't documented. The simulation assumes one after the tools, one after the system prompt and one after the last message.",
+      "confidence": "unknown"
+    },
+    {
+      "text": "Which cache TTL Copilot requests for Claude models isn't documented. The simulation assumes Anthropic's 5-minute default.",
+      "confidence": "unknown"
+    },
+    {
+      "text": "GitHub serves Copilot's Claude models from Amazon Web Services, Anthropic and Google Cloud, and doesn't say which one serves a request. GitHub links Anthropic's prompt-caching docs, so the simulation applies Anthropic's API rules.",
+      "confidence": "inferred",
+      "sourceIds": [
+        "gh-model-hosting-anthropic-hosts",
+        "gh-model-hosting-anthropic-caching"
+      ]
+    },
+    {
+      "text": "Thinking and effort changes also invalidate the tools and system caches on models that render the configuration ahead of them. Anthropic doesn't list those models, so the rule is marked model-specific and its per-model extent is unknown.",
+      "confidence": "unknown"
+    },
+    {
+      "text": "On Claude Fable 5.1, Fable 5, Opus 5.5, Opus 4.8, Opus 5, Sonnet 5.5 and Haiku 5.5, a system instruction added partway through a conversation keeps the system and message caches. This isn't available on Claude Sonnet 5.",
+      "confidence": "documented",
+      "sourceIds": ["anthropic-pc-mid-conversation-system"]
+    },
+    {
+      "text": "Whether Copilot adds instructions as mid-conversation system messages isn't documented. The simulation applies the top-level system rule.",
+      "confidence": "unknown"
+    },
+    {
+      "text": "Claude Code harness only: the main conversation requests the 1-hour TTL only on a Claude subscription within the plan's included usage; otherwise it gets 5 minutes, and subagents get 5 minutes even on a subscription.",
+      "confidence": "documented",
+      "sourceIds": ["claude-code-ttl", "claude-code-subagent-ttl"]
+    },
+    {
+      "text": "Claude Code harness only (rule register owner decision 7): changing effort keeps the cache on Opus 5.5, Sonnet 5.5, Haiku 5.5 and Fable 5.1 with an API key or a Claude subscription (Fable 5.1 from v2.1.260), but not on Amazon Bedrock, Google Cloud's Agent Platform, a Claude apps gateway, with CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS set or under an organization HIPAA configuration. The VS Code and Copilot harnesses follow the API rule.",
+      "confidence": "documented",
+      "sourceIds": [
+        "claude-code-effort",
+        "claude-code-effort-exceptions",
+        "claude-code-effort-fable"
+      ]
+    },
+    {
+      "text": "Claude Opus 4.8 (fast mode): Anthropic publishes no fast-mode minimum cacheable length. The profile uses Claude Opus 4.8's 1,024 tokens.",
+      "confidence": "inferred",
+      "sourceIds": ["anthropic-pc-limitations-1024", "anthropic-pc-speed"]
+    },
+    {
+      "text": "Claude Opus 4.8 (fast mode): Anthropic publishes no fast-mode 1-hour cache-write price or 1-hour TTL statement, so the profile lists neither.",
+      "confidence": "unknown"
+    },
+    {
+      "text": "On Claude Haiku 5.5 the long-context tier applies to prompts over 100,000 tokens, and cache reads and writes count toward the prompt length.",
+      "confidence": "documented",
+      "sourceIds": ["anthropic-pc-tier-length", "gh-pricing-table"]
+    },
+    {
+      "text": "Prompts below the model's minimum cacheable length are processed without caching, and no error is returned.",
+      "confidence": "documented",
+      "sourceIds": ["anthropic-pc-below-minimum"]
+    },
+    {
+      "text": "Thinking tokens are billed as output tokens.",
+      "confidence": "documented",
+      "sourceIds": ["anthropic-thinking-billing"]
+    }
+  ],
+  "sources": [
+    {
+      "id": "gh-pricing-table",
+      "title": "GitHub Copilot price table (github/docs models-and-pricing.yml)",
+      "url": "https://github.com/github/docs/blob/cc0c29a040c251c48ed65198f108a484c33406fa/data/tables/copilot/models-and-pricing.yml",
+      "quote": "Applies to Anthropic models and to GPT-5.6 and later OpenAI model families. Use \"Not applicable\" for models that have no cache write cost.",
+      "checkedAt": "2026-11-05"
+    },
+    {
+      "id": "gh-models-pricing-anthropic",
+      "title": "GitHub Docs: Models and pricing for GitHub Copilot",
+      "url": "https://docs.github.com/en/copilot/reference/copilot-billing/models-and-pricing",
+      "quote": "Anthropic models include a cache write cost in addition to cached input.",
+      "checkedAt": "2026-11-05"
+    },
+    {
+      "id": "gh-model-hosting-anthropic-hosts",
+      "title": "GitHub Docs: Hosting of models for GitHub Copilot (Anthropic models)",
+      "url": "https://docs.github.com/en/copilot/reference/ai-models/model-hosting",
+      "quote": "These models are hosted by Amazon Web Services, Anthropic PBC, and Google Cloud Platform.",
+      "checkedAt": "2026-11-05"
+    },
+    {
+      "id": "gh-model-hosting-anthropic-caching",
+      "title": "GitHub Docs: Hosting of models for GitHub Copilot (prompt caching)",
+      "url": "https://docs.github.com/en/copilot/reference/ai-models/model-hosting",
+      "quote": "To provide better service quality and reduce latency, GitHub uses prompt caching.",
+      "checkedAt": "2026-11-05"
+    },
+    {
+      "id": "anthropic-pc-breakpoints",
+      "title": "Anthropic: Prompt caching",
+      "url": "https://platform.claude.com/docs/en/build-with-claude/prompt-caching",
+      "quote": "You can define up to 4 cache breakpoints if you want to:",
+      "checkedAt": "2026-11-04"
+    },
+    {
+      "id": "anthropic-pc-default-ttl",
+      "title": "Anthropic: Prompt caching (cache lifetime)",
+      "url": "https://platform.claude.com/docs/en/build-with-claude/prompt-caching",
+      "quote": "By default, the cache has a 5-minute lifetime.",
+      "checkedAt": "2026-11-04"
+    },
+    {
+      "id": "anthropic-pc-refresh",
+      "title": "Anthropic: Prompt caching (refresh on hit)",
+      "url": "https://platform.claude.com/docs/en/build-with-claude/prompt-caching",
+      "quote": "The cache is refreshed for no additional cost each time the cached content is used.",
+      "checkedAt": "2026-11-04"
+    },
+    {
+      "id": "anthropic-pc-extended-ttl",
+      "title": "Anthropic: Prompt caching (1-hour cache duration)",
+      "url": "https://platform.claude.com/docs/en/build-with-claude/prompt-caching",
+      "quote": "Cache entries with longer TTL must appear before shorter TTLs (that is, a 1-hour cache entry must appear before any 5-minute cache entries).",
+      "checkedAt": "2026-11-04"
+    },
+    {
+      "id": "anthropic-pc-limitations-512",
+      "title": "Anthropic: Prompt caching, cache limitations (512 tokens)",
+      "url": "https://platform.claude.com/docs/en/build-with-claude/prompt-caching#cache-limitations",
+      "quote": "512 tokens for Claude Fable 5.1, Claude Mythos 5.1, Claude Opus 5.5, Claude Opus 5, Claude Sonnet 5.5, Claude Fable 5, Claude Mythos 5, and Claude Haiku 5.5",
+      "checkedAt": "2026-11-04"
+    },
+    {
+      "id": "anthropic-pc-limitations-1024",
+      "title": "Anthropic: Prompt caching, cache limitations (1,024 tokens)",
+      "url": "https://platform.claude.com/docs/en/build-with-claude/prompt-caching#cache-limitations",
+      "quote": "1,024 tokens for Claude Opus 4.8, Claude Sonnet 5, Claude Sonnet 4.6, Claude Sonnet 4.5 (deprecated), Claude Opus 4.1 (retired, except on Claude Models on Google Cloud (Google managed) and Bedrock), Claude Opus 4 (retired, except on Claude Models on Google Cloud (Google managed)), and Claude Sonnet 4 (retired, except on Claude Models on Google Cloud (Google managed) and Bedrock)",
+      "checkedAt": "2026-11-04"
+    },
+    {
+      "id": "anthropic-pc-limitations-4096",
+      "title": "Anthropic: Prompt caching, cache limitations (4,096 tokens)",
+      "url": "https://platform.claude.com/docs/en/build-with-claude/prompt-caching#cache-limitations",
+      "quote": "4,096 tokens for Claude Haiku 4.5",
+      "checkedAt": "2026-11-04"
+    },
+    {
+      "id": "anthropic-pc-below-minimum",
+      "title": "Anthropic: Prompt caching, cache limitations (below the minimum)",
+      "url": "https://platform.claude.com/docs/en/build-with-claude/prompt-caching#cache-limitations",
+      "quote": "Shorter prompts cannot be cached, even if marked with `cache_control`. Any requests to cache fewer than this number of tokens are processed without caching, and no error is returned.",
+      "checkedAt": "2026-11-04"
+    },
+    {
+      "id": "anthropic-pc-pricing-1h",
+      "title": "Anthropic: Prompt caching, pricing (1-hour cache writes)",
+      "url": "https://platform.claude.com/docs/en/build-with-claude/prompt-caching#pricing",
+      "quote": "Cache write tokens with a 1-hour TTL are 2 times the base input tokens price.",
+      "checkedAt": "2026-11-04"
+    },
+    {
+      "id": "anthropic-pc-pricing-5m",
+      "title": "Anthropic: Prompt caching, pricing (5-minute cache writes)",
+      "url": "https://platform.claude.com/docs/en/build-with-claude/prompt-caching#pricing",
+      "quote": "Cache write tokens with a 5-minute TTL are 1.25 times the base input tokens price.",
+      "checkedAt": "2026-11-04"
+    },
+    {
+      "id": "anthropic-pc-tier-length",
+      "title": "Anthropic: Prompt caching, pricing (prompt-length tiers)",
+      "url": "https://platform.claude.com/docs/en/build-with-claude/prompt-caching#pricing",
+      "quote": "On a model priced by prompt length, cache reads and cache writes count toward a request's prompt length.",
+      "checkedAt": "2026-11-04"
+    },
+    {
+      "id": "anthropic-pc-hierarchy",
+      "title": "Anthropic: Prompt caching, what invalidates the cache",
+      "url": "https://platform.claude.com/docs/en/build-with-claude/prompt-caching#what-invalidates-the-cache",
+      "quote": "As described in Structuring your prompt, the cache follows the hierarchy: `tools` → `system` → `messages`. Changes at each level invalidate that level and all subsequent levels.",
+      "checkedAt": "2026-11-04"
+    },
+    {
+      "id": "anthropic-pc-tools",
+      "title": "Anthropic: Prompt caching, what invalidates the cache (tool definitions)",
+      "url": "https://platform.claude.com/docs/en/build-with-claude/prompt-caching#what-invalidates-the-cache",
+      "quote": "Modifying tool definitions (names, descriptions, parameters) invalidates the entire cache",
+      "checkedAt": "2026-11-04"
+    },
+    {
+      "id": "anthropic-pc-images",
+      "title": "Anthropic: Prompt caching, what invalidates the cache (images)",
+      "url": "https://platform.claude.com/docs/en/build-with-claude/prompt-caching#what-invalidates-the-cache",
+      "quote": "Adding/removing images anywhere in the prompt affects message blocks",
+      "checkedAt": "2026-11-04"
+    },
+    {
+      "id": "anthropic-pc-tool-choice",
+      "title": "Anthropic: Prompt caching, what invalidates the cache (tool_choice)",
+      "url": "https://platform.claude.com/docs/en/build-with-claude/prompt-caching#what-invalidates-the-cache",
+      "quote": "Changes to the `tool_choice` parameter only affect message blocks",
+      "checkedAt": "2026-11-04"
+    },
+    {
+      "id": "anthropic-pc-thinking",
+      "title": "Anthropic: Prompt caching, what invalidates the cache (thinking)",
+      "url": "https://platform.claude.com/docs/en/build-with-claude/prompt-caching#what-invalidates-the-cache",
+      "quote": "The thinking configuration (mode, and `budget_tokens` in extended mode) is rendered into the prompt, so changing it always invalidates message blocks; tool and system caches are also invalidated on models that render the configuration ahead of them.",
+      "checkedAt": "2026-11-04"
+    },
+    {
+      "id": "anthropic-pc-effort",
+      "title": "Anthropic: Prompt caching, what invalidates the cache (effort)",
+      "url": "https://platform.claude.com/docs/en/build-with-claude/prompt-caching#what-invalidates-the-cache",
+      "quote": "Changing the `output_config.effort` value always invalidates message blocks, with the same model-specific effect on tool and system caches as thinking parameters.",
+      "checkedAt": "2026-11-04"
+    },
+    {
+      "id": "anthropic-pc-speed",
+      "title": "Anthropic: Prompt caching, what invalidates the cache (speed)",
+      "url": "https://platform.claude.com/docs/en/build-with-claude/prompt-caching#what-invalidates-the-cache",
+      "quote": "Switching between `speed: \"fast\"` and standard speed invalidates system and message caches",
+      "checkedAt": "2026-11-04"
+    },
+    {
+      "id": "anthropic-pc-mid-conversation-system",
+      "title": "Anthropic: Prompt caching (mid-conversation system instructions)",
+      "url": "https://platform.claude.com/docs/en/build-with-claude/prompt-caching",
+      "quote": "On Claude Fable 5.1, Claude Mythos 5.1, Claude Fable 5, Claude Mythos 5, Claude Opus 5.5, Claude Opus 4.8, Claude Opus 5, Claude Sonnet 5.5, and Claude Haiku 5.5, you can add a new system instruction partway through a conversation without invalidating the system or message caches.",
+      "checkedAt": "2026-11-04"
+    },
+    {
+      "id": "anthropic-thinking-caching",
+      "title": "Anthropic: Building with extended thinking, thinking and prompt caching",
+      "url": "https://platform.claude.com/docs/en/build-with-claude/thinking#thinking-and-prompt-caching",
+      "quote": "Switching between `adaptive`, `enabled`, and `disabled`, changing `budget_tokens`, and changing the effort value all invalidate cache breakpoints: message-level breakpoints always miss, and tool and system-prompt breakpoints can miss too, depending on where the model renders the configuration.",
+      "checkedAt": "2026-11-04"
+    },
+    {
+      "id": "anthropic-thinking-billing",
+      "title": "Anthropic: Building with extended thinking (billing)",
+      "url": "https://platform.claude.com/docs/en/build-with-claude/thinking",
+      "quote": "Thinking has a cost: the tokens Claude spends reasoning are billed as output tokens, even when the thinking text isn't returned to you, and they count toward `max_tokens` alongside the response text.",
+      "checkedAt": "2026-11-04"
+    },
+    {
+      "id": "anthropic-cache-diagnostics",
+      "title": "Anthropic: Cache diagnostics",
+      "url": "https://platform.claude.com/docs/en/build-with-claude/cache-diagnostics",
+      "quote": "The `model` differs from the previous request (for example, a router, A/B test, or fallback selected a different model). The cache is per-model.",
+      "checkedAt": "2026-11-04"
+    },
+    {
+      "id": "claude-code-switching-models",
+      "title": "Claude Code: Prompt caching, switching models",
+      "url": "https://code.claude.com/docs/en/prompt-caching#switching-models",
+      "quote": "Each model has its own cache. Switching with `/model` means the next request reads the entire conversation history with no cache hits, even though the content is identical.",
+      "checkedAt": "2026-11-04"
+    },
+    {
+      "id": "claude-code-ttl",
+      "title": "Claude Code: Prompt caching, which TTL each request gets",
+      "url": "https://code.claude.com/docs/en/prompt-caching#which-ttl-each-request-gets",
+      "quote": "Unless you choose a TTL yourself, Claude Code requests the one-hour TTL only on a Claude subscription within your plan's included usage.",
+      "checkedAt": "2026-11-04"
+    },
+    {
+      "id": "claude-code-subagent-ttl",
+      "title": "Claude Code: Prompt caching, which TTL each request gets (subagents)",
+      "url": "https://code.claude.com/docs/en/prompt-caching#which-ttl-each-request-gets",
+      "quote": "Subagents fall outside the main-conversation TTL bucket, so they get five minutes even on a subscription until you choose a longer one.",
+      "checkedAt": "2026-11-04"
+    },
+    {
+      "id": "claude-code-effort",
+      "title": "Claude Code: Prompt caching, changing effort level",
+      "url": "https://code.claude.com/docs/en/prompt-caching#changing-effort-level",
+      "quote": "On Opus 5.5, Sonnet 5.5, Haiku 5.5, and Fable 5.1 with an API key or a Claude subscription, you keep the cache when you change effort.",
+      "checkedAt": "2026-11-04"
+    },
+    {
+      "id": "claude-code-effort-exceptions",
+      "title": "Claude Code: Prompt caching, changing effort level (exceptions)",
+      "url": "https://code.claude.com/docs/en/prompt-caching#changing-effort-level",
+      "quote": "On Amazon Bedrock, Google Cloud's Agent Platform, or a Claude apps gateway, or when you set `CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS` or your organization has a HIPAA configuration, it works as on most models.",
+      "checkedAt": "2026-11-04"
+    },
+    {
+      "id": "claude-code-effort-fable",
+      "title": "Claude Code: Prompt caching, changing effort level (Fable 5.1 before v2.1.260)",
+      "url": "https://code.claude.com/docs/en/prompt-caching#changing-effort-level",
+      "quote": "Before v2.1.260, changing effort on Fable 5.1 with an API key or a Claude subscription also invalidated the cache.",
+      "checkedAt": "2026-11-04"
+    }
+  ]
+}

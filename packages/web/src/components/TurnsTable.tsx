@@ -5,7 +5,9 @@ import { sumTokenCounts } from "@agent-cost-analyzer/domain";
 import { isFailedStatus } from "@agent-cost-analyzer/domain";
 import { formatAiCredits } from "../lib/format-ai-credits.js";
 import { TRIGGER_LABELS } from "../lib/trigger-labels.js";
-import { ALL_TURN_COLUMNS, TURN_COLUMNS, type TurnColumnId } from "../lib/turn-columns.js";
+import { aiCreditsToUsd, formatUsd } from "../lib/ai-credits-usd.js";
+import { ALL_TURN_COLUMNS, columnsApplyingTo, TURN_COLUMNS, type TurnColumnId } from "../lib/turn-columns.js";
+import { CacheOutcomeBadge } from "./learn/CacheOutcomeBadge.js";
 import { Tag } from "./ui/Tag.js";
 
 const CUMULATIVE_COST_UNKNOWN_REASON =
@@ -44,6 +46,14 @@ function cumulativeCostThrough(turns: Turn[], turnIndex: number): TokenCount {
   );
 }
 
+// Simulated turns carry real prices, so their credits get a USD equivalent
+// on hover (1 AI credit = $0.01); measured turns don't.
+function CreditsCell({ turn, credits }: { turn: Turn; credits: TokenCount }) {
+  const text = formatAiCredits(credits);
+  if (!turn.simulation || !credits.known) return <>{text}</>;
+  return <span title={`≈ ${formatUsd(aiCreditsToUsd(credits.value))}`}>{text}</span>;
+}
+
 interface CellProps {
   turn: Turn;
   turnIndex: number;
@@ -60,6 +70,12 @@ const VALUES: Record<TurnColumnId, (props: CellProps) => ReactNode> = {
     ) : (
       <span className="text-muted">—</span>
     ),
+  cache: ({ turn }) =>
+    turn.simulation ? (
+      <CacheOutcomeBadge outcome={turn.simulation.cacheOutcome} />
+    ) : (
+      <span className="text-muted">—</span>
+    ),
   rounds: ({ turn }) => formatRoundsCount(turn.usage.roundsCount),
   calls: ({ turn }) => <ToolCallsCell turn={turn} />,
   uncachedInput: ({ turn }) => formatTokenCount(turn.usage.uncachedInput),
@@ -69,8 +85,10 @@ const VALUES: Record<TurnColumnId, (props: CellProps) => ReactNode> = {
   vision: ({ turn }) => formatTokenCount(turn.usage.vision),
   reasoning: ({ turn }) => formatTokenCount(turn.usage.reasoning),
   output: ({ turn }) => formatTokenCount(turn.usage.output),
-  aiCredits: ({ turn }) => formatAiCredits(turn.usage.costAiCredits),
-  cumulative: ({ turns, turnIndex }) => formatAiCredits(cumulativeCostThrough(turns, turnIndex)),
+  aiCredits: ({ turn }) => <CreditsCell turn={turn} credits={turn.usage.costAiCredits} />,
+  cumulative: ({ turn, turns, turnIndex }) => (
+    <CreditsCell turn={turn} credits={cumulativeCostThrough(turns, turnIndex)} />
+  ),
   model: ({ turn }) => turn.usage.model,
 };
 
@@ -108,8 +126,10 @@ export function TurnsTable({
   selectedTurnIndex,
   onSelectTurn,
   onOpenTurn,
-  columns = ALL_TURN_COLUMNS,
+  columns: requestedColumns = ALL_TURN_COLUMNS,
 }: TurnsTableProps) {
+  const simulated = turns.some((turn) => turn.simulation !== undefined);
+  const columns = columnsApplyingTo(requestedColumns, simulated);
   const rows = useRef<(HTMLTableRowElement | null)[]>([]);
   // Roving tabindex: the table is one Tab stop, entered at the selected row.
   const tabStop = selectedTurnIndex >= 0 && selectedTurnIndex < turns.length ? selectedTurnIndex : 0;
@@ -138,7 +158,7 @@ export function TurnsTable({
   }
 
   return (
-    <table className="table" style={columns.length === ALL_TURN_COLUMNS.length ? { minWidth: MIN_WIDTH_ALL_COLUMNS } : undefined}>
+    <table className="table" style={columns.length === columnsApplyingTo(ALL_TURN_COLUMNS, simulated).length ? { minWidth: MIN_WIDTH_ALL_COLUMNS } : undefined}>
       <thead>
         <tr>
           {columns.map((id) => (
