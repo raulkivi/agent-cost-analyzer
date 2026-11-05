@@ -116,6 +116,7 @@ describe("listAgentHostSessionRows on the real-shaped fixture", () => {
         title: "Add retry to uploader",
         startedAtMs: 1790805513846,
         modifiedAtMs: 1790809488968,
+        workingFolder: "/home/user/src/example",
       },
       {
         id: A,
@@ -123,6 +124,7 @@ describe("listAgentHostSessionRows on the real-shaped fixture", () => {
         title: "Refactor billing module",
         startedAtMs: 1790805037911,
         modifiedAtMs: 1790809488848,
+        workingFolder: "/home/user/src/example",
       },
     ]);
   });
@@ -146,6 +148,7 @@ describe("getAgentHostSessionRow", () => {
       title: "Refactor billing module",
       startedAtMs: 1790805037911,
       modifiedAtMs: 1790809488848,
+      workingFolder: "/home/user/src/example",
     });
   });
 

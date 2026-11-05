@@ -41,6 +41,45 @@ export {
 } from "./session-audit.js";
 export { turnSchema, triggeredEventSchema, type Turn, type TriggeredEvent } from "./turn.js";
 export {
+  sessionWorkspaceSchema,
+  knownWorkspace,
+  unknownWorkspace,
+  type SessionWorkspace,
+  type KnownSessionWorkspace,
+} from "./workspace.js";
+export {
+  repositorySourceSchema,
+  repositoryRefSchema,
+  repositoryAttributionSchema,
+  repositoryListEntrySchema,
+  unattributedEntrySchema,
+  repositoryListProviderSchema,
+  repositoryListSchema,
+  type RepositoryListEntry,
+  type UnattributedEntry,
+  type RepositoryList,
+  type RepositorySource,
+  type RepositoryRef,
+  type RepositoryAttribution,
+} from "./repository.js";
+export {
+  projectMemberSchema,
+  projectSchema,
+  captureRuleSchema,
+  projectsFileSchema,
+  projectFileProblemSchema,
+  projectsStateSchema,
+  emptyProjectsFile,
+  normalizeMemberPath,
+  validateProjectsFile,
+  type ProjectMember,
+  type Project,
+  type CaptureRule,
+  type ProjectsFile,
+  type ProjectFileProblem,
+  type ProjectsState,
+} from "./projects.js";
+export {
   systemPromptComponentSchema,
   type SystemPromptComponent,
 } from "./system-prompt-component.js";

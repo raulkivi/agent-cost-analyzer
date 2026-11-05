@@ -18,6 +18,7 @@ import {
   STORE_TURN_MISSING_REASON,
   summarizeSessionUsage,
   TOOL_CALL_TOKEN_COUNT_UNAVAILABLE_REASON,
+  STORE_NO_FOLDER_REASON,
   USAGE_UNAVAILABLE_REASON,
 } from "./session-enricher.js";
 
@@ -86,6 +87,26 @@ describe("buildSessionSummary", () => {
     expect(
       buildSessionSummary({ ...sessionRow, created_at: null }).startedAt,
     ).toBeUndefined();
+  });
+
+  it("reports the store's folder, repository and branch as the workspace (step 15.1)", () => {
+    expect(buildSessionSummary(sessionRow).workspace).toEqual({
+      known: true,
+      cwd: "/repo",
+      repositoryHint: "org/repo",
+      branch: "main",
+    });
+  });
+
+  it("keeps the folder when the store has no repository or branch", () => {
+    expect(buildSessionSummary({ ...sessionRow, repository: null, branch: "" }).workspace).toEqual({ known: true, cwd: "/repo" });
+  });
+
+  it("says why the workspace is unknown when the store row has no folder", () => {
+    expect(buildSessionSummary({ ...sessionRow, cwd: null }).workspace).toEqual({
+      known: false,
+      reason: STORE_NO_FOLDER_REASON,
+    });
   });
 
   it("defaults costAiCredits to unavailable when not passed", () => {
@@ -235,6 +256,15 @@ describe("buildSession", () => {
     expect(session.mode).toBe("analyze");
     expect(session.usageDataAvailable).toBe(false);
     expect(session.turns).toHaveLength(2);
+  });
+
+  it("stamps each store turn with its timestamp, and leaves a log-only turn without one (step 15.1)", () => {
+    const session = buildSession({ sessionRow, turnRows, fileRows, mainJsonlAvailability: "missing" });
+
+    expect(session.turns.map((turn) => turn.startedAt)).toEqual(["2026-01-01T00:00:00.000Z", "2026-01-01T00:00:01.000Z"]);
+    expect(session.workspace).toEqual(buildSessionSummary(sessionRow).workspace);
+    const untimed = buildSession({ sessionRow, turnRows: [{ ...turnRows[0], timestamp: null }], fileRows: [], mainJsonlAvailability: "missing" });
+    expect(untimed.turns[0]).not.toHaveProperty("startedAt");
   });
 
   it("sets turnCount from the actual turns loaded, not the row's turn_count", () => {

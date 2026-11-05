@@ -3,7 +3,7 @@ import {
   createStandaloneApiService,
   type StandaloneApiServiceOptions,
 } from "./composition/create-standalone-api-service.js";
-import { ApiError, statusForApiError } from "./services/api/api-errors.js";
+import { ApiError, BadRequestError, statusForApiError } from "./services/api/api-errors.js";
 import { createLoopbackHostGuard } from "./http/loopback-host-guard.js";
 
 export interface CreateAppOptions extends StandaloneApiServiceOptions {
@@ -26,7 +26,8 @@ function route(respond: Respond) {
       await respond(req, res);
     } catch (error) {
       if (error instanceof ApiError) {
-        res.status(statusForApiError(error)).json({ error: error.message });
+        const details = error instanceof BadRequestError ? error.details : undefined;
+        res.status(statusForApiError(error)).json({ ...details, error: error.message });
         return;
       }
       next(error);
@@ -62,6 +63,20 @@ export function createApp(options: CreateAppOptions = {}): Express {
   app.put("/api/config/retention-threshold", route(async (req, res) => {
     const { value } = (req.body ?? {}) as { value?: unknown };
     res.json(await api.setRetentionThreshold(value));
+  }));
+
+  // Phase 15 step 15.3. PUT is the only route that writes the projects
+  // file; its body is the whole file, validated before anything is written.
+  app.get("/api/projects", route(async (_req, res) => {
+    res.json(await api.getProjects());
+  }));
+
+  app.put("/api/projects", route(async (req, res) => {
+    res.json(await api.saveProjects(req.body));
+  }));
+
+  app.get("/api/repositories", route(async (_req, res) => {
+    res.json(await api.getRepositoryList());
   }));
 
   app.get("/api/learn/scenarios", route(async (_req, res) => {

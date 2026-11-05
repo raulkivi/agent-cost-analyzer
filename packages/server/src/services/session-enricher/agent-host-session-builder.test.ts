@@ -37,6 +37,7 @@ import {
   buildAgentHostTurnUsage,
   isAgentHostEventTypeUsed,
   type AgentHostEventLog,
+  AGENT_HOST_NO_FOLDER_REASON,
 } from "./agent-host-session-builder.js";
 
 const catalogRow: AgentHostSessionRow = {
@@ -386,6 +387,32 @@ describe("with the Copilot CLI event log (step 10.14)", () => {
         toolCallsUnavailableReason: TURN_EVENT_ALREADY_TAKEN_REASON,
       });
       expect(duplicate.explanation).toContain(TURN_EVENT_ALREADY_TAKEN_REASON);
+    });
+
+    it("takes the workspace from the catalog's folder, else the log's session.start cwd, else says why (step 15.1)", () => {
+      const fromCatalog = buildAgentHostSession({ catalogRow: { ...catalogRow, workingFolder: "/home/user/src/app" }, store: storeFor("normal") });
+      const fromLog = buildAgentHostSession({ catalogRow, store: storeFor("normal"), eventLog: read("normal") });
+      const neither = buildAgentHostSession({ catalogRow, store: storeFor("normal"), eventLog: missing });
+
+      expect(fromCatalog.workspace).toEqual({ known: true, cwd: "/home/user/src/app" });
+      expect(fromLog.workspace).toEqual({ known: true, cwd: "/home/user/src/example" });
+      expect(neither.workspace).toEqual({ known: false, reason: AGENT_HOST_NO_FOLDER_REASON });
+      expect(() => sessionSchema.parse(neither)).not.toThrow();
+    });
+
+    it("prefers the catalog's folder over the log's", () => {
+      const session = buildAgentHostSession({ catalogRow: { ...catalogRow, workingFolder: "/home/user/src/app" }, store: storeFor("normal"), eventLog: read("normal") });
+
+      expect(session.workspace).toEqual({ known: true, cwd: "/home/user/src/app" });
+    });
+
+    it("stamps a matched turn with its user.message time and leaves an unmatched one without (step 15.1)", () => {
+      const normal = buildAgentHostSession({ catalogRow, store: storeFor("normal"), eventLog: read("normal") });
+      const steering = buildAgentHostSession({ catalogRow, store: storeFor("steeringAbortSubagent"), eventLog: read("steeringAbortSubagent") });
+
+      expect(normal.turns[0]!.startedAt).toBe(matched("normal", 0).userMessage.timestamp);
+      expect(normal.turns[0]!.startedAt).toMatch(/^2026-/);
+      expect(steering.turns[4]).not.toHaveProperty("startedAt");
     });
 
     it("sets the system prompt from the log, and leaves the tool inventory unset", () => {

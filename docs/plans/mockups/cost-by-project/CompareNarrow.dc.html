@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Compare at 640 pixels</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&amp;family=Barlow+Condensed:wght@500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#416180}a:hover{color:#2c455d}
+.bp{position:relative;border:1px solid rgba(29,31,32,.16)}
+.bp>i{position:absolute;width:11px;height:11px;color:rgba(29,31,32,.55)}
+.bp>i::before,.bp>i::after{content:"";position:absolute;background:currentColor}
+.bp>i::before{left:5px;top:0;width:1px;height:100%}
+.bp>i::after{top:5px;left:0;width:100%;height:1px}
+.bp>.tl{top:-6px;left:-6px}.bp>.tr{top:-6px;right:-6px}.bp>.bl{bottom:-6px;left:-6px}.bp>.br{bottom:-6px;right:-6px}
+.seg{display:inline-flex;border:1px solid rgba(29,31,32,.16);border-radius:4px;overflow:hidden}
+.seg>label{display:inline-flex;align-items:center;height:30px;padding:0 10px;font-size:13px;position:relative;cursor:pointer}
+.seg>label+label{border-left:1px solid rgba(29,31,32,.16)}
+.seg>label>input{position:absolute;opacity:0;width:1px;height:1px}
+.seg>.on{background:#416180;color:#f2f2f3}
+.btn{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 10px;border:1px solid rgba(29,31,32,.16);border-radius:4px;font:inherit;font-size:13px;color:#1d1f20;background:transparent;cursor:pointer}
+.kicker{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#416180}
+.muted{color:#5b5c5e}
+.num{font-variant-numeric:tabular-nums}
+.sel{height:30px;font:inherit;font-size:13px;padding:0 8px;border:1px solid rgba(29,31,32,.16);border-radius:4px;background:#f2f2f3;color:#1d1f20}
+.tbl{width:100%;border-collapse:collapse;font-size:13px}
+.tbl th{font-weight:600;text-align:right;padding:7px 8px;border-bottom:1px solid rgba(29,31,32,.30)}
+.tbl td{text-align:right;padding:7px 8px;border-bottom:1px solid rgba(29,31,32,.10);font-variant-numeric:tabular-nums}
+.tbl th:first-child,.tbl td:first-child{text-align:left}
+</style>
+</helmet>
+<div style="position: relative; width: 640px; height: 900px; box-sizing: border-box; display: flex; flex-direction: column; background: #f2f2f3; color: #1d1f20; font-family: Barlow, system-ui, sans-serif; font-size: 14px; line-height: 1.45; overflow: hidden">
+  <header style="flex-shrink: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding: 10px 16px; border-bottom: 1px solid rgba(29,31,32,.16)">
+    <span style="font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 18px; margin-right: auto">Agent Cost Analyzer</span>
+    <div class="seg" role="radiogroup" aria-label="Mode"><label><input type="radio" name="mode">Learn</label><label class="on"><input type="radio" name="mode" checked>Analyze</label></div>
+    <label style="display: flex; align-items: center; gap: 6px; font-size: 13px"><span style="position: absolute; width: 1px; height: 1px; overflow: hidden">Provider</span><select class="sel"><option>All providers</option></select></label>
+  </header>
+
+  <div style="flex-grow: 1; min-height: 0; display: flex; flex-direction: column; gap: 12px; padding: 14px 16px">
+    <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px">
+      <h1 style="margin: 0; font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 26px; line-height: 1; margin-right: auto">Dashboard</h1>
+      <label style="display: flex; align-items: center; gap: 6px; font-size: 13px">View<select class="sel"><option>Overview</option><option>Cost over time</option><option selected>Compare</option><option>Project</option><option>Billing</option></select></label>
+      <button class="btn" aria-haspopup="dialog"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 5h18l-7 8v6l-4 2v-8z"></path></svg>Filters (1)</button>
+    </div>
+    <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 13px">
+      <span style="display: inline-flex; align-items: center; gap: 4px; height: 26px; padding: 0 2px 0 10px; border: 1px solid #416180; border-radius: 13px">Project: 3 of 6<button aria-label="Clear project selection" style="width: 22px; height: 22px; border: 0; background: transparent; color: #1d1f20; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"></path></svg></button></span>
+      <label style="display: flex; align-items: center; gap: 6px">Range<select class="sel"><option>Last 90 days</option></select></label>
+    </div>
+
+    <section class="bp" aria-labelledby="n-h" style="padding: 10px 12px; display: flex; flex-direction: column; gap: 6px"><i class="tl"></i><i class="tr"></i><i class="bl"></i><i class="br"></i>
+      <div style="display: flex; align-items: center; gap: 8px">
+        <div style="display: flex; flex-direction: column"><span class="kicker">Compare · vs previous 90 days</span><h2 id="n-h" style="margin: 0; font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 18px">Three projects</h2></div>
+        <button class="btn" style="margin-left: auto">Columns</button>
+      </div>
+      <table class="tbl">
+        <caption style="position: absolute; width: 1px; height: 1px; overflow: hidden">Priority columns; the other measures are in each row's details</caption>
+        <thead><tr><th scope="col">Project</th><th scope="col">Total</th><th scope="col">Change</th><th scope="col">Coverage</th><th scope="col"><span style="position: absolute; width: 1px; height: 1px; overflow: hidden">Details</span></th></tr></thead>
+        <tbody>
+          <sc-for list="{{rows}}" as="r" hint-placeholder-count="3">
+            <tr style="background: {{r.bg}}"><td><span style="display: inline-flex; align-items: center; gap: 6px"><span aria-hidden="true" style="width: 10px; height: 10px; border-radius: 2px; background: {{r.color}}"></span>{{r.name}}</span></td><td>{{r.total}}</td><td>{{r.change}}</td><td>{{r.coverage}}</td><td><button class="btn" aria-label="{{r.detailsLabel}}" aria-expanded="{{r.open}}" style="height: 26px; padding: 0 8px">Details</button></td></tr>
+          </sc-for>
+        </tbody>
+      </table>
+      <p class="muted" style="margin: 0; font-size: 12px">Totals in AI Credits. Below 700 px only the priority columns stay; Columns lets the user keep others.</p>
+    </section>
+
+    <figure class="bp" style="margin: 0; padding: 10px 12px; display: flex; flex-direction: column; gap: 8px"><i class="tl"></i><i class="tr"></i><i class="bl"></i><i class="br"></i>
+      <div style="display: flex; align-items: center; gap: 8px"><figcaption style="font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 17px; color: #1d1f20">Share of total</figcaption><button class="btn" style="margin-left: auto">View as table</button></div>
+      <div role="img" aria-label="Share of total: Customer portal 52.7%, Billing service 31.8%, Internal tools 15.5%." style="display: flex; flex-direction: column; gap: 10px">
+        <sc-for list="{{rows}}" as="r" hint-placeholder-count="3">
+          <div style="display: grid; grid-template-columns: 110px minmax(0, 1fr) 56px; align-items: center; gap: 8px; font-size: 13px"><span>{{r.name}}</span><span style="display: block; height: 18px"><span style="display: block; height: 18px; width: {{r.barW}}; background: {{r.color}}; border-radius: 0 4px 4px 0"></span></span><span class="num" style="text-align: right">{{r.share}}</span></div>
+        </sc-for>
+      </div>
+    </figure>
+  </div>
+
+  <div aria-hidden="true" style="position: absolute; inset: 0; background: rgba(29,31,32,.32)"></div>
+  <aside role="dialog" aria-modal="true" aria-labelledby="dr-h" style="position: absolute; top: 0; right: 0; bottom: 0; width: 340px; box-sizing: border-box; background: #f2f2f3; border-left: 1px solid rgba(29,31,32,.16); box-shadow: 0 12px 32px rgba(43,43,45,.22); padding: 16px; display: flex; flex-direction: column; gap: 12px">
+    <div style="display: flex; align-items: center; gap: 8px">
+      <div style="display: flex; flex-direction: column"><span class="kicker">Details</span><h2 id="dr-h" style="margin: 0; font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 20px">Customer portal</h2></div>
+      <button class="btn" aria-label="Close details (Escape)" style="margin-left: auto; width: 32px; padding: 0; justify-content: center"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"></path></svg></button>
+    </div>
+    <dl style="margin: 0; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px 12px; font-size: 13px">
+      <sc-for list="{{details}}" as="d" hint-placeholder-count="8">
+        <dt class="muted">{{d.k}}</dt><dd class="num" style="margin: 0; text-align: right">{{d.v}}</dd>
+      </sc-for>
+    </dl>
+    <div style="border-top: 1px solid rgba(29,31,32,.16); padding-top: 10px; display: flex; flex-direction: column; gap: 6px; font-size: 13px">
+      <span class="kicker">Repositories in this project</span>
+      <span>example/portal-web <span class="muted num">· 31,240.00</span></span>
+      <span>example/platform · services/portal-api <span class="muted num">· 28,060.00</span></span>
+      <span>example/infra · branches portal/* <span class="muted num">· 1,000.00</span></span>
+    </div>
+    <a href="Project.dc.html" style="margin-top: auto; font-size: 13px">Open the project breakdown</a>
+  </aside>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":640,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var rows = [
+      { name: 'Customer portal', color: '#2a78d6', total: '60,300.00', change: '+17.8%', coverage: '98%', share: '52.7%', barW: '100%', open: 'true', bg: 'rgba(65,97,128,.10)' },
+      { name: 'Billing service', color: '#eb6834', total: '36,400.00', change: '+20.9%', coverage: '99%', share: '31.8%', barW: '60.4%', open: 'false', bg: 'transparent' },
+      { name: 'Internal tools', color: '#1baf7a', total: '17,700.00', change: '+14.2%', coverage: '84%', share: '15.5%', barW: '29.4%', open: 'false', bg: 'transparent' }
+    ];
+    rows.forEach(function (r) { r.detailsLabel = 'Details for ' + r.name; });
+    var details = [
+      { k: 'Total (AI Credits)', v: '60,300.00' },
+      { k: 'Previous 90 days', v: '51,200.00' },
+      { k: 'Change', v: '+17.8%' },
+      { k: 'Per session (214 sessions)', v: '281.78' },
+      { k: 'Per active day (58 days)', v: '1,039.66' },
+      { k: 'Share of selection', v: '52.7%' },
+      { k: 'Cache-hit ratio', v: '71%' },
+      { k: 'Output share', v: '9.1%' },
+      { k: 'Coverage', v: '98% · 2,091 of 2,134 turns' },
+      { k: 'Cost basis', v: 'billed 91% · priced 7% · reported 2%' }
+    ];
+    return { rows: rows, details: details };
+  }
+}
+</script>
+</body>
+</html>
