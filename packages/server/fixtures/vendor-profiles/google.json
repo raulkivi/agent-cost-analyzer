@@ -1,0 +1,208 @@
+{
+  "vendorId": "google",
+  "displayName": "Google",
+  "defaultModelId": "gemini-4-argon",
+  "caching": {
+    "kind": "best-effort",
+    "note": "Implicit prefix caching, on by default for Gemini 2.5 and newer; Copilot uses Google's Durable Caching, a storage tier of implicit caching. No cache lifetime is documented: GitHub holds cached data for up to 24 hours, and Google deletes it no later than 24 hours after it's written, often sooner, which bounds retention but promises no hit window. Gemini 4 Argon and Gemini 3.8 Flash cache prompts of at least 4,096 input tokens. Copilot lists no cache-write charge."
+  },
+  "invalidation": [
+    {
+      "change": "tools-changed",
+      "invalidatesFrom": "unknown",
+      "confidence": "unknown",
+      "sourceIds": []
+    },
+    {
+      "change": "system-changed",
+      "invalidatesFrom": "unknown",
+      "confidence": "unknown",
+      "sourceIds": []
+    },
+    {
+      "change": "image-added",
+      "invalidatesFrom": "unknown",
+      "confidence": "unknown",
+      "sourceIds": []
+    },
+    {
+      "change": "image-removed",
+      "invalidatesFrom": "unknown",
+      "confidence": "unknown",
+      "sourceIds": []
+    },
+    {
+      "change": "thinking-changed",
+      "invalidatesFrom": "unknown",
+      "confidence": "unknown",
+      "sourceIds": []
+    },
+    {
+      "change": "model-switch",
+      "invalidatesFrom": "unknown",
+      "confidence": "unknown",
+      "sourceIds": []
+    },
+    {
+      "change": "tool-choice-changed",
+      "invalidatesFrom": "unknown",
+      "confidence": "unknown",
+      "sourceIds": []
+    }
+  ],
+  "models": [
+    {
+      "modelId": "gemini-3.8-flash",
+      "displayName": "Gemini 3.8 Flash",
+      "vendorId": "google",
+      "releaseStatus": "GA",
+      "tiers": [
+        {
+          "inputUsdPerM": 0.75,
+          "cachedInputUsdPerM": 0.075,
+          "cacheWriteUsdPerM": null,
+          "outputUsdPerM": 3.75
+        }
+      ],
+      "promoEndsAt": "2026-12-31",
+      "sourceIds": [
+        "gh-pricing-table",
+        "gh-models-pricing-gemini-flash-promo",
+        "google-caching-min-tokens"
+      ]
+    },
+    {
+      "modelId": "gemini-4-argon",
+      "displayName": "Gemini 4 Argon",
+      "vendorId": "google",
+      "releaseStatus": "GA",
+      "tiers": [
+        {
+          "inputUsdPerM": 2.0,
+          "cachedInputUsdPerM": 0.1,
+          "cacheWriteUsdPerM": null,
+          "outputUsdPerM": 10.0
+        }
+      ],
+      "cheaperSiblingId": "gemini-3.8-flash",
+      "promoEndsAt": "2026-12-01",
+      "sourceIds": [
+        "gh-pricing-table",
+        "gh-models-pricing-argon-promo",
+        "google-caching-min-tokens"
+      ]
+    }
+  ],
+  "assumptions": [
+    {
+      "text": "Google documents no cache lifetime for implicit caching. The simulation's cache lifetime is assumed.",
+      "confidence": "unknown"
+    },
+    {
+      "text": "Whether Copilot's Gemini requests hit Google's Durable Caching tier isn't documented.",
+      "confidence": "unknown"
+    },
+    {
+      "text": "Google documents no tools/system/messages order and no invalidation rules; it only advises putting large, common content at the beginning. The simulation assumes tools → system → messages.",
+      "confidence": "unknown"
+    },
+    {
+      "text": "Gemini 4 Argon and Gemini 3.8 Flash cache only prompts of at least 4,096 input tokens (Gemini API figure).",
+      "confidence": "documented",
+      "sourceIds": ["google-caching-min-tokens"]
+    },
+    {
+      "text": "On Gemini 4 and newer, the previous request is cached in full only if the new request adds at least 2,050 tokens; otherwise the last 2,050 tokens of the previous request are re-processed at the standard input rate.",
+      "confidence": "documented",
+      "sourceIds": ["google-caching-multi-turn"]
+    },
+    {
+      "text": "Copilot's Gemini prices are promotional: Gemini 3.8 Flash through December 31, 2026, and Gemini 4 Argon until December 1, 2026 (the table: 'Promotional pricing expires 2026-12-01'). promoEndsAt keeps those dates as GitHub states them. Post-promo Copilot prices are unknown.",
+      "confidence": "documented",
+      "sourceIds": [
+        "gh-models-pricing-gemini-flash-promo",
+        "gh-models-pricing-argon-promo",
+        "gh-pricing-table"
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "id": "gh-pricing-table",
+      "title": "GitHub Copilot price table (github/docs models-and-pricing.yml)",
+      "url": "https://github.com/github/docs/blob/cc0c29a040c251c48ed65198f108a484c33406fa/data/tables/copilot/models-and-pricing.yml",
+      "quote": "Promotional pricing expires 2026-12-01. Google hasn't shared post-promo pricing yet.",
+      "checkedAt": "2026-11-05"
+    },
+    {
+      "id": "gh-models-pricing-gemini-flash-promo",
+      "title": "GitHub Docs: Models and pricing for GitHub Copilot (Gemini 3.8 Flash promotion)",
+      "url": "https://docs.github.com/en/copilot/reference/copilot-billing/models-and-pricing",
+      "quote": "Gemini 3.8 Flash is available at the promotional pricing of $0.75 per 1M input tokens, $0.075 per 1M cached input tokens, and $3.75 per 1M output tokens through December 31, 2026.",
+      "checkedAt": "2026-11-05"
+    },
+    {
+      "id": "gh-models-pricing-argon-promo",
+      "title": "GitHub Docs: Models and pricing for GitHub Copilot (Gemini 4 Argon promotion)",
+      "url": "https://docs.github.com/en/copilot/reference/copilot-billing/models-and-pricing",
+      "quote": "Gemini 4 Argon is available at the promotional pricing of $2.00 per 1M input tokens, $0.10 per 1M cached input tokens, and $10.00 per 1M output tokens until December 1, 2026.",
+      "checkedAt": "2026-11-05"
+    },
+    {
+      "id": "gh-model-hosting-gemini-caching",
+      "title": "GitHub Docs: Hosting of models for GitHub Copilot (Gemini models)",
+      "url": "https://docs.github.com/en/copilot/reference/ai-models/model-hosting",
+      "quote": "To provide better service quality and reduce latency, GitHub uses Google's Durable Caching. Cached data is encrypted and held for up to 24 hours.",
+      "checkedAt": "2026-11-05"
+    },
+    {
+      "id": "google-caching-implicit",
+      "title": "Google AI: Context caching",
+      "url": "https://aistudio.google.com/docs/caching",
+      "quote": "Implicit caching is enabled by default for all Gemini 2.5 and newer models.",
+      "checkedAt": "2026-11-04"
+    },
+    {
+      "id": "google-caching-explicit-unsupported",
+      "title": "Google AI: Context caching (explicit caching)",
+      "url": "https://aistudio.google.com/docs/caching",
+      "quote": "Explicit caching (manually creating and managing cache objects) is not supported in the Interactions API, or for Gemini 4 Argon and onward.",
+      "checkedAt": "2026-11-04"
+    },
+    {
+      "id": "google-caching-min-tokens",
+      "title": "Google AI: Context caching (minimum input tokens)",
+      "url": "https://aistudio.google.com/docs/caching",
+      "quote": "The following table lists the minimum input token count for each model",
+      "checkedAt": "2026-11-04"
+    },
+    {
+      "id": "google-caching-multi-turn",
+      "title": "Google AI: Context caching (multi-turn, Gemini 4 and newer)",
+      "url": "https://aistudio.google.com/docs/caching",
+      "quote": "Gemini caches the full previous request only if the new request adds at least 2,050 tokens. Model output, thought, and function results all count toward this total. For smaller additions, Gemini re-processes the last 2,050 tokens of the previous request at the standard input rate.",
+      "checkedAt": "2026-11-04"
+    },
+    {
+      "id": "google-caching-order",
+      "title": "Google AI: Context caching (prompt structure)",
+      "url": "https://aistudio.google.com/docs/caching",
+      "quote": "Try putting large and common contents at the beginning of your prompt",
+      "checkedAt": "2026-11-04"
+    },
+    {
+      "id": "google-zdr-durable",
+      "title": "Google Cloud: Zero data retention (durable data caching)",
+      "url": "https://docs.cloud.google.com/gemini-enterprise-agent-platform/resources/zero-data-retention",
+      "quote": "Implicit caching uses two storage tiers",
+      "checkedAt": "2026-11-04"
+    },
+    {
+      "id": "google-zdr-eviction",
+      "title": "Google Cloud: Zero data retention (durable cache deletion)",
+      "url": "https://docs.cloud.google.com/gemini-enterprise-agent-platform/resources/zero-data-retention",
+      "quote": "It's deleted no later than 24 hours after it's written, and is often evicted sooner.",
+      "checkedAt": "2026-11-04"
+    }
+  ]
+}
