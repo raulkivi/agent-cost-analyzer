@@ -2137,9 +2137,9 @@ ID isn't set up yet.
 5. After the first release: *Settings → Trusted Publishers*, register
    repository `raulkivi/agent-cost-analyzer`, workflow
    `release-extension.yml` and environment `release`. Then delete the
-   `OVSX_PAT` secret and revoke the token. With the secret empty, `ovsx`
-   (≥ 1.1.0) exchanges the workflow's OIDC ID token for a short-lived
-   publishing token.
+   `OVSX_PAT` secret and revoke the token. The workflow publishes with
+   `ovsx publish --trusted-publishing` (≥ 1.1.0), which exchanges the
+   workflow's OIDC ID token for a short-lived publishing token.
 
 **Listing prerequisites checked before the first publish (step 10.9)**
 
