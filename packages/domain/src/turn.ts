@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { toolCallRecordSchema } from "./tool-call-record.js";
+import { turnSimulationSchema } from "./simulation.js";
 import { turnUsageSchema } from "./turn-usage.js";
 
 export const triggeredEventSchema = z.enum([
@@ -28,6 +29,7 @@ export const turnSchema = z.object({
   // the empty values read as unknown, not as empty (constraint 6).
   textUnavailableReason: z.string().optional(),
   toolCallsUnavailableReason: z.string().optional(),
+  simulation: turnSimulationSchema.optional(),
 });
 
 export type TriggeredEvent = z.infer<typeof triggeredEventSchema>;

@@ -70,3 +70,42 @@ describe("turnSchema", () => {
     expect(() => turnSchema.parse(sample)).toThrow();
   });
 });
+
+describe("turnSchema simulation", () => {
+  const sample = {
+    index: 0,
+    userMessage: "hi",
+    assistantResponse: "hello",
+    toolCalls: [],
+    usage,
+    explanation: "greeting",
+  };
+
+  const simulation = {
+    vendorId: "anthropic",
+    modelId: "claude-sonnet-5-5",
+    cacheOutcome: "hit",
+    note: "cache read from the previous turn",
+    confidence: "documented",
+    sourceIds: ["anthropic-caching"],
+  };
+
+  it("parses a turn without a simulation", () => {
+    expect(turnSchema.parse(sample)).toEqual(sample);
+  });
+
+  it("parses a turn with a simulation", () => {
+    const withSimulation = { ...sample, simulation };
+
+    expect(turnSchema.parse(withSimulation)).toEqual(withSimulation);
+  });
+
+  it("rejects a turn whose simulation is invalid", () => {
+    expect(() =>
+      turnSchema.parse({
+        ...sample,
+        simulation: { ...simulation, sourceIds: [] },
+      }),
+    ).toThrow();
+  });
+});
