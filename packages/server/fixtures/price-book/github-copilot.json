@@ -273,6 +273,132 @@
       "url": "https://github.com/github/docs/blob/7f63f3a5dce5e0caffcc9c4326cdac982c7adc73/data/tables/copilot/models-and-pricing.yml",
       "quote": "model: Grok 4.7; threshold: ≤ 200K; input: $2.00; cached_input: $0.50; output: $6.00 / threshold: > 200K; input: $4.00; cached_input: $1.00; output: $12.00",
       "checkedAt": "2026-11-05"
+    },
+    {
+      "id": "gh-pricing-table-7f63f3a-claude-opus-4.7",
+      "title": "GitHub Copilot price table at github/docs 7f63f3a (2026-09-29): Claude Opus 4.7 (entry lines joined by '; ', tiers by ' / ')",
+      "url": "https://github.com/github/docs/blob/7f63f3a5dce5e0caffcc9c4326cdac982c7adc73/data/tables/copilot/models-and-pricing.yml",
+      "quote": "model: Claude Opus 4.7; input: $5.00; cached_input: $0.50; cache_write: $6.25; output: $25.00",
+      "checkedAt": "2026-11-05"
+    },
+    {
+      "id": "gh-pricing-table-9c7da1a-removes-claude-opus-4.7",
+      "title": "GitHub Copilot price table at github/docs 9c7da1a (2026-10-02): Claude Opus 4.7 no longer listed",
+      "url": "https://github.com/github/docs/blob/9c7da1a58938cb45da17789618a85b7d9d26eb43/data/tables/copilot/models-and-pricing.yml",
+      "quote": "The table at this commit has no entry for Claude Opus 4.7; the one before it does.",
+      "checkedAt": "2026-11-05"
+    },
+    {
+      "id": "gh-pricing-table-7f63f3a-gemini-3.5-flash",
+      "title": "GitHub Copilot price table at github/docs 7f63f3a (2026-09-29): Gemini 3.5 Flash (entry lines joined by '; ', tiers by ' / ')",
+      "url": "https://github.com/github/docs/blob/7f63f3a5dce5e0caffcc9c4326cdac982c7adc73/data/tables/copilot/models-and-pricing.yml",
+      "quote": "model: Gemini 3.5 Flash; input: $1.50; cached_input: $0.15; output: $9.00",
+      "checkedAt": "2026-11-05"
+    },
+    {
+      "id": "gh-pricing-table-9c7da1a-removes-gemini-3.5-flash",
+      "title": "GitHub Copilot price table at github/docs 9c7da1a (2026-10-02): Gemini 3.5 Flash no longer listed",
+      "url": "https://github.com/github/docs/blob/9c7da1a58938cb45da17789618a85b7d9d26eb43/data/tables/copilot/models-and-pricing.yml",
+      "quote": "The table at this commit has no entry for Gemini 3.5 Flash; the one before it does.",
+      "checkedAt": "2026-11-05"
+    },
+    {
+      "id": "gh-pricing-table-7f63f3a-gemini-3.6-flash",
+      "title": "GitHub Copilot price table at github/docs 7f63f3a (2026-09-29): Gemini 3.6 Flash (entry lines joined by '; ', tiers by ' / ')",
+      "url": "https://github.com/github/docs/blob/7f63f3a5dce5e0caffcc9c4326cdac982c7adc73/data/tables/copilot/models-and-pricing.yml",
+      "quote": "model: Gemini 3.6 Flash[^gemini-flash-promo]; input: $0.75; cached_input: $0.075; output: $3.75",
+      "checkedAt": "2026-11-05"
+    },
+    {
+      "id": "gh-pricing-table-9c7da1a-removes-gemini-3.6-flash",
+      "title": "GitHub Copilot price table at github/docs 9c7da1a (2026-10-02): Gemini 3.6 Flash no longer listed",
+      "url": "https://github.com/github/docs/blob/9c7da1a58938cb45da17789618a85b7d9d26eb43/data/tables/copilot/models-and-pricing.yml",
+      "quote": "The table at this commit has no entry for Gemini 3.6 Flash; the one before it does.",
+      "checkedAt": "2026-11-05"
+    },
+    {
+      "id": "gh-pricing-table-7f63f3a-kimi-k2.7-code",
+      "title": "GitHub Copilot price table at github/docs 7f63f3a (2026-09-29): Kimi K2.7 Code (entry lines joined by '; ', tiers by ' / ')",
+      "url": "https://github.com/github/docs/blob/7f63f3a5dce5e0caffcc9c4326cdac982c7adc73/data/tables/copilot/models-and-pricing.yml",
+      "quote": "model: Kimi K2.7 Code; input: $0.95; cached_input: $0.19; output: $4.00",
+      "checkedAt": "2026-11-05"
+    },
+    {
+      "id": "gh-pricing-table-9c7da1a-removes-kimi-k2.7-code",
+      "title": "GitHub Copilot price table at github/docs 9c7da1a (2026-10-02): Kimi K2.7 Code no longer listed",
+      "url": "https://github.com/github/docs/blob/9c7da1a58938cb45da17789618a85b7d9d26eb43/data/tables/copilot/models-and-pricing.yml",
+      "quote": "The table at this commit has no entry for Kimi K2.7 Code; the one before it does.",
+      "checkedAt": "2026-11-05"
+    },
+    {
+      "id": "gh-pricing-table-7f63f3a-gpt-5-mini",
+      "title": "GitHub Copilot price table at github/docs 7f63f3a (2026-09-29): GPT-5 mini (entry lines joined by '; ', tiers by ' / ')",
+      "url": "https://github.com/github/docs/blob/7f63f3a5dce5e0caffcc9c4326cdac982c7adc73/data/tables/copilot/models-and-pricing.yml",
+      "quote": "model: GPT-5 mini; input: $0.25; cached_input: $0.025; cache_write: Not applicable; output: $2.00",
+      "checkedAt": "2026-11-05"
+    },
+    {
+      "id": "gh-pricing-table-4dd188c-removes-gpt-5-mini",
+      "title": "GitHub Copilot price table at github/docs 4dd188c (2026-10-19): GPT-5 mini no longer listed",
+      "url": "https://github.com/github/docs/blob/4dd188c2c92f0b57e7f7ec863fd9cca1e093b09b/data/tables/copilot/models-and-pricing.yml",
+      "quote": "The table at this commit has no entry for GPT-5 mini; the one before it does.",
+      "checkedAt": "2026-11-05"
+    },
+    {
+      "id": "gh-pricing-table-7f63f3a-gpt-5.4",
+      "title": "GitHub Copilot price table at github/docs 7f63f3a (2026-09-29): GPT-5.4 (entry lines joined by '; ', tiers by ' / ')",
+      "url": "https://github.com/github/docs/blob/7f63f3a5dce5e0caffcc9c4326cdac982c7adc73/data/tables/copilot/models-and-pricing.yml",
+      "quote": "model: GPT-5.4; threshold: ≤ 272K; input: $2.50; cached_input: $0.25; cache_write: Not applicable; output: $15.00 / threshold: > 272K; input: $5.00; cached_input: $0.50; cache_write: Not applicable; output: $22.50",
+      "checkedAt": "2026-11-05"
+    },
+    {
+      "id": "gh-pricing-table-4dd188c-removes-gpt-5.4",
+      "title": "GitHub Copilot price table at github/docs 4dd188c (2026-10-19): GPT-5.4 no longer listed",
+      "url": "https://github.com/github/docs/blob/4dd188c2c92f0b57e7f7ec863fd9cca1e093b09b/data/tables/copilot/models-and-pricing.yml",
+      "quote": "The table at this commit has no entry for GPT-5.4; the one before it does.",
+      "checkedAt": "2026-11-05"
+    },
+    {
+      "id": "gh-pricing-table-7f63f3a-gpt-5.4-mini",
+      "title": "GitHub Copilot price table at github/docs 7f63f3a (2026-09-29): GPT-5.4 mini (entry lines joined by '; ', tiers by ' / ')",
+      "url": "https://github.com/github/docs/blob/7f63f3a5dce5e0caffcc9c4326cdac982c7adc73/data/tables/copilot/models-and-pricing.yml",
+      "quote": "model: GPT-5.4 mini; input: $0.75; cached_input: $0.075; cache_write: Not applicable; output: $4.50",
+      "checkedAt": "2026-11-05"
+    },
+    {
+      "id": "gh-pricing-table-4dd188c-removes-gpt-5.4-mini",
+      "title": "GitHub Copilot price table at github/docs 4dd188c (2026-10-19): GPT-5.4 mini no longer listed",
+      "url": "https://github.com/github/docs/blob/4dd188c2c92f0b57e7f7ec863fd9cca1e093b09b/data/tables/copilot/models-and-pricing.yml",
+      "quote": "The table at this commit has no entry for GPT-5.4 mini; the one before it does.",
+      "checkedAt": "2026-11-05"
+    },
+    {
+      "id": "gh-pricing-table-7f63f3a-gpt-5.5",
+      "title": "GitHub Copilot price table at github/docs 7f63f3a (2026-09-29): GPT-5.5 (entry lines joined by '; ', tiers by ' / ')",
+      "url": "https://github.com/github/docs/blob/7f63f3a5dce5e0caffcc9c4326cdac982c7adc73/data/tables/copilot/models-and-pricing.yml",
+      "quote": "model: GPT-5.5; threshold: ≤ 272K; input: $5.00; cached_input: $0.50; cache_write: Not applicable; output: $30.00 / threshold: > 272K; input: $10.00; cached_input: $1.00; cache_write: Not applicable; output: $45.00",
+      "checkedAt": "2026-11-05"
+    },
+    {
+      "id": "gh-pricing-table-4dd188c-removes-gpt-5.5",
+      "title": "GitHub Copilot price table at github/docs 4dd188c (2026-10-19): GPT-5.5 no longer listed",
+      "url": "https://github.com/github/docs/blob/4dd188c2c92f0b57e7f7ec863fd9cca1e093b09b/data/tables/copilot/models-and-pricing.yml",
+      "quote": "The table at this commit has no entry for GPT-5.5; the one before it does.",
+      "checkedAt": "2026-11-05"
+    },
+    {
+      "id": "gh-pricing-table-7f63f3a-gemini-3.7-flash",
+      "title": "GitHub Copilot price table at github/docs 7f63f3a (2026-09-29): Gemini 3.7 Flash (entry lines joined by '; ', tiers by ' / ')",
+      "url": "https://github.com/github/docs/blob/7f63f3a5dce5e0caffcc9c4326cdac982c7adc73/data/tables/copilot/models-and-pricing.yml",
+      "quote": "model: Gemini 3.7 Flash[^gemini-flash-promo]; input: $0.75; cached_input: $0.075; output: $3.75",
+      "checkedAt": "2026-11-05"
+    },
+    {
+      "id": "gh-pricing-table-4dd188c-removes-gemini-3.7-flash",
+      "title": "GitHub Copilot price table at github/docs 4dd188c (2026-10-19): Gemini 3.7 Flash no longer listed",
+      "url": "https://github.com/github/docs/blob/4dd188c2c92f0b57e7f7ec863fd9cca1e093b09b/data/tables/copilot/models-and-pricing.yml",
+      "quote": "The table at this commit has no entry for Gemini 3.7 Flash; the one before it does.",
+      "checkedAt": "2026-11-05"
     }
   ],
   "versions": [
@@ -1046,6 +1172,231 @@
         "gh-pricing-table"
       ],
       "note": "In force on 2026-10-01: the github/docs price table at 7f63f3a (2026-09-29), unchanged until 9c7da1a (2026-10-02), lists it. Unchanged through cc0c29a (2026-10-26), the last commit to the table as of 2026-11-05."
+    },
+    {
+      "id": "github-copilot:claude-opus-4.7:2026-10-01",
+      "channel": "github-copilot",
+      "modelId": "claude-opus-4.7",
+      "currency": "USD",
+      "effectiveFrom": "2026-10-01",
+      "effectiveTo": "2026-10-02",
+      "tiers": [
+        {
+          "inputUsdPerM": 5.0,
+          "cachedInputUsdPerM": 0.5,
+          "cacheWriteUsdPerM": 6.25,
+          "extendedCacheWriteUsdPerM": 10.0,
+          "outputUsdPerM": 25.0
+        }
+      ],
+      "kind": "list",
+      "sourceIds": [
+        "gh-pricing-table-7f63f3a-claude-opus-4.7",
+        "gh-pricing-table-9c7da1a-removes-claude-opus-4.7",
+        "gh-models-pricing-anthropic",
+        "anthropic-pc-pricing-1h"
+      ],
+      "note": "In force on 2026-10-01: the github/docs price table at 7f63f3a (2026-09-29), unchanged until 9c7da1a (2026-10-02), lists it. Removed from the table in 9c7da1a (2026-10-02); no price is known after that, and the model's actual retirement date is not in the table. extendedCacheWriteUsdPerM (1-hour cache write) is 2x the input price, from Anthropic's prompt-caching docs; GitHub's table has no 1-hour column."
+    },
+    {
+      "id": "github-copilot:gemini-3.5-flash:2026-10-01",
+      "channel": "github-copilot",
+      "modelId": "gemini-3.5-flash",
+      "currency": "USD",
+      "effectiveFrom": "2026-10-01",
+      "effectiveTo": "2026-10-02",
+      "tiers": [
+        {
+          "inputUsdPerM": 1.5,
+          "cachedInputUsdPerM": 0.15,
+          "cacheWriteUsdPerM": null,
+          "outputUsdPerM": 9.0
+        }
+      ],
+      "kind": "list",
+      "sourceIds": [
+        "gh-pricing-table-7f63f3a-gemini-3.5-flash",
+        "gh-pricing-table-9c7da1a-removes-gemini-3.5-flash"
+      ],
+      "note": "In force on 2026-10-01: the github/docs price table at 7f63f3a (2026-09-29), unchanged until 9c7da1a (2026-10-02), lists it. Removed from the table in 9c7da1a (2026-10-02); no price is known after that, and the model's actual retirement date is not in the table."
+    },
+    {
+      "id": "github-copilot:gemini-3.6-flash:2026-10-01",
+      "channel": "github-copilot",
+      "modelId": "gemini-3.6-flash",
+      "currency": "USD",
+      "effectiveFrom": "2026-10-01",
+      "effectiveTo": "2026-10-02",
+      "tiers": [
+        {
+          "inputUsdPerM": 0.75,
+          "cachedInputUsdPerM": 0.075,
+          "cacheWriteUsdPerM": null,
+          "outputUsdPerM": 3.75
+        }
+      ],
+      "kind": "promo",
+      "promoEndsAt": "2026-12-31",
+      "sourceIds": [
+        "gh-pricing-table-7f63f3a-gemini-3.6-flash",
+        "gh-pricing-table-9c7da1a-removes-gemini-3.6-flash",
+        "gh-models-pricing-page-7f63f3a-gemini-flash-promo",
+        "gh-models-pricing-gemini-flash-promo"
+      ],
+      "note": "In force on 2026-10-01: the github/docs price table at 7f63f3a (2026-09-29), unchanged until 9c7da1a (2026-10-02), lists it. Removed from the table in 9c7da1a (2026-10-02); no price is known after that, and the model's actual retirement date is not in the table. Promotional price; GitHub states the promotion's end as 2026-12-31, after the model's removal."
+    },
+    {
+      "id": "github-copilot:kimi-k2.7-code:2026-10-01",
+      "channel": "github-copilot",
+      "modelId": "kimi-k2.7-code",
+      "currency": "USD",
+      "effectiveFrom": "2026-10-01",
+      "effectiveTo": "2026-10-02",
+      "tiers": [
+        {
+          "inputUsdPerM": 0.95,
+          "cachedInputUsdPerM": 0.19,
+          "cacheWriteUsdPerM": null,
+          "outputUsdPerM": 4.0
+        }
+      ],
+      "kind": "list",
+      "sourceIds": [
+        "gh-pricing-table-7f63f3a-kimi-k2.7-code",
+        "gh-pricing-table-9c7da1a-removes-kimi-k2.7-code"
+      ],
+      "note": "In force on 2026-10-01: the github/docs price table at 7f63f3a (2026-09-29), unchanged until 9c7da1a (2026-10-02), lists it. Removed from the table in 9c7da1a (2026-10-02); no price is known after that, and the model's actual retirement date is not in the table."
+    },
+    {
+      "id": "github-copilot:gpt-5-mini:2026-10-01",
+      "channel": "github-copilot",
+      "modelId": "gpt-5-mini",
+      "currency": "USD",
+      "effectiveFrom": "2026-10-01",
+      "effectiveTo": "2026-10-19",
+      "tiers": [
+        {
+          "inputUsdPerM": 0.25,
+          "cachedInputUsdPerM": 0.025,
+          "cacheWriteUsdPerM": null,
+          "outputUsdPerM": 2.0
+        }
+      ],
+      "kind": "list",
+      "sourceIds": [
+        "gh-pricing-table-7f63f3a-gpt-5-mini",
+        "gh-pricing-table-4dd188c-removes-gpt-5-mini",
+        "gh-models-pricing-openai"
+      ],
+      "note": "In force on 2026-10-01: the github/docs price table at 7f63f3a (2026-09-29), unchanged until 9c7da1a (2026-10-02), lists it. Removed from the table in 4dd188c (2026-10-19); no price is known after that, and the model's actual retirement date is not in the table."
+    },
+    {
+      "id": "github-copilot:gpt-5.4:2026-10-01",
+      "channel": "github-copilot",
+      "modelId": "gpt-5.4",
+      "currency": "USD",
+      "effectiveFrom": "2026-10-01",
+      "effectiveTo": "2026-10-19",
+      "tiers": [
+        {
+          "maxInputTokens": 272000,
+          "inputUsdPerM": 2.5,
+          "cachedInputUsdPerM": 0.25,
+          "cacheWriteUsdPerM": null,
+          "outputUsdPerM": 15.0
+        },
+        {
+          "inputUsdPerM": 5.0,
+          "cachedInputUsdPerM": 0.5,
+          "cacheWriteUsdPerM": null,
+          "outputUsdPerM": 22.5
+        }
+      ],
+      "kind": "list",
+      "sourceIds": [
+        "gh-pricing-table-7f63f3a-gpt-5.4",
+        "gh-pricing-table-4dd188c-removes-gpt-5.4",
+        "gh-models-pricing-openai"
+      ],
+      "note": "In force on 2026-10-01: the github/docs price table at 7f63f3a (2026-09-29), unchanged until 9c7da1a (2026-10-02), lists it. Removed from the table in 4dd188c (2026-10-19); no price is known after that, and the model's actual retirement date is not in the table."
+    },
+    {
+      "id": "github-copilot:gpt-5.4-mini:2026-10-01",
+      "channel": "github-copilot",
+      "modelId": "gpt-5.4-mini",
+      "currency": "USD",
+      "effectiveFrom": "2026-10-01",
+      "effectiveTo": "2026-10-19",
+      "tiers": [
+        {
+          "inputUsdPerM": 0.75,
+          "cachedInputUsdPerM": 0.075,
+          "cacheWriteUsdPerM": null,
+          "outputUsdPerM": 4.5
+        }
+      ],
+      "kind": "list",
+      "sourceIds": [
+        "gh-pricing-table-7f63f3a-gpt-5.4-mini",
+        "gh-pricing-table-4dd188c-removes-gpt-5.4-mini",
+        "gh-models-pricing-openai"
+      ],
+      "note": "In force on 2026-10-01: the github/docs price table at 7f63f3a (2026-09-29), unchanged until 9c7da1a (2026-10-02), lists it. Removed from the table in 4dd188c (2026-10-19); no price is known after that, and the model's actual retirement date is not in the table."
+    },
+    {
+      "id": "github-copilot:gpt-5.5:2026-10-01",
+      "channel": "github-copilot",
+      "modelId": "gpt-5.5",
+      "currency": "USD",
+      "effectiveFrom": "2026-10-01",
+      "effectiveTo": "2026-10-19",
+      "tiers": [
+        {
+          "maxInputTokens": 272000,
+          "inputUsdPerM": 5.0,
+          "cachedInputUsdPerM": 0.5,
+          "cacheWriteUsdPerM": null,
+          "outputUsdPerM": 30.0
+        },
+        {
+          "inputUsdPerM": 10.0,
+          "cachedInputUsdPerM": 1.0,
+          "cacheWriteUsdPerM": null,
+          "outputUsdPerM": 45.0
+        }
+      ],
+      "kind": "list",
+      "sourceIds": [
+        "gh-pricing-table-7f63f3a-gpt-5.5",
+        "gh-pricing-table-4dd188c-removes-gpt-5.5",
+        "gh-models-pricing-openai"
+      ],
+      "note": "In force on 2026-10-01: the github/docs price table at 7f63f3a (2026-09-29), unchanged until 9c7da1a (2026-10-02), lists it. Removed from the table in 4dd188c (2026-10-19); no price is known after that, and the model's actual retirement date is not in the table."
+    },
+    {
+      "id": "github-copilot:gemini-3.7-flash:2026-10-01",
+      "channel": "github-copilot",
+      "modelId": "gemini-3.7-flash",
+      "currency": "USD",
+      "effectiveFrom": "2026-10-01",
+      "effectiveTo": "2026-10-19",
+      "tiers": [
+        {
+          "inputUsdPerM": 0.75,
+          "cachedInputUsdPerM": 0.075,
+          "cacheWriteUsdPerM": null,
+          "outputUsdPerM": 3.75
+        }
+      ],
+      "kind": "promo",
+      "promoEndsAt": "2026-12-31",
+      "sourceIds": [
+        "gh-pricing-table-7f63f3a-gemini-3.7-flash",
+        "gh-pricing-table-4dd188c-removes-gemini-3.7-flash",
+        "gh-models-pricing-page-7f63f3a-gemini-flash-promo",
+        "gh-models-pricing-gemini-flash-promo"
+      ],
+      "note": "In force on 2026-10-01: the github/docs price table at 7f63f3a (2026-09-29), unchanged until 9c7da1a (2026-10-02), lists it. Removed from the table in 4dd188c (2026-10-19); no price is known after that, and the model's actual retirement date is not in the table. Promotional price; GitHub states the promotion's end as 2026-12-31, after the model's removal."
     }
   ]
 }

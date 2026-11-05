@@ -1318,12 +1318,15 @@ Data:
   table pinned at the commit that proves its start, with a quote (30
   versions). Dates are commit dates (UTC); the docs site may have deployed
   later the same day. Turns before 2026-10-01 price as unknown.
-- **Nine models removed during October are not in the book** (Claude Opus
-  4.7, Gemini 3.5/3.6 Flash and Kimi K2.7 Code on 10-02; GPT-5 mini,
-  GPT-5.4, GPT-5.4 mini, GPT-5.5 and Gemini 3.7 Flash on 10-19), because
-  no Phase 13 profile simulates them and a test requires the book's
-  Copilot models to match the profiles. October turns on them price as
-  unknown until the owner decides to add them.
+- **Nine models removed during October are in the book** (owner,
+  2026-11-05), so October turns on them are priced: Claude Opus 4.7,
+  Gemini 3.5/3.6 Flash and Kimi K2.7 Code (removed 2026-10-02, 9c7da1a);
+  GPT-5 mini, GPT-5.4, GPT-5.4 mini, GPT-5.5 and Gemini 3.7 Flash (removed
+  2026-10-19, 4dd188c). Each runs from 2026-10-01 to its removal commit's
+  date, citing the table at 7f63f3a and at the removing commit; no price is
+  known after it. No Phase 13 profile simulates them, so the bundled-data
+  test now requires every profile model to be priced and every other
+  Copilot model to have an end date (39 versions in all).
 - The Gemini promotions end per GitHub's wording (Flash "through December
   31, 2026": `effectiveTo` 2027-01-01; Argon "until December 1, 2026":
   2026-12-01); no price is known after them.

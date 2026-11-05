@@ -48,9 +48,13 @@ describe("bundled price book (step 15.5)", () => {
     for (const version of versions) expect(version.effectiveFrom >= "2026-01-01", version.id).toBe(true);
   });
 
-  it("prices every Phase 13 model on github-copilot, and nothing else", () => {
-    const copilotModels = versions.filter((version) => version.channel === "github-copilot").map((version) => version.modelId);
-    expect([...new Set(copilotModels)].sort()).toEqual([...profileModelIds].sort());
+  it("prices every Phase 13 model on github-copilot; any other model there is one GitHub has removed", () => {
+    const copilot = versions.filter((version) => version.channel === "github-copilot");
+    expect(profileModelIds.every((modelId) => copilot.some((version) => version.modelId === modelId))).toBe(true);
+    // Removed models stay so the turns that used them are priced; each ends.
+    for (const version of copilot.filter((candidate) => !profileModelIds.includes(candidate.modelId))) {
+      expect(version.effectiveTo, version.id).toBeDefined();
+    }
     for (const modelId of profileModelIds) {
       expect(book.newestVersion("github-copilot", modelId), modelId).toBeDefined();
     }
