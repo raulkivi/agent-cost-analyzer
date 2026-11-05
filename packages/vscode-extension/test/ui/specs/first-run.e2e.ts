@@ -68,8 +68,8 @@ suite("First run in a VS Code that has never seen Copilot Chat (checks 1.1, 1.2,
     const scenarios = (await sidebar.allRowTexts("learn")).filter((row) => /\d+ turns? ·/.test(row));
     for (let step = 0; step < 4; step++) await host.command("workbench.action.zoomOut");
     expect(scenarios).toHaveLength(17);
-    // 18 different scenarios, not one row seen twice.
-    expect(new Set(scenarios.map((row) => row.replace(/\d+ turns? ·.*$/, ""))).size).toBe(18);
+    // 17 different scenarios, not one row seen twice.
+    expect(new Set(scenarios.map((row) => row.replace(/\d+ turns? ·.*$/, ""))).size).toBe(17);
   });
 
   test("1.3 and 1.2 Setup lists the missing Copilot Chat and the logging settings as warnings, and changes nothing by itself", async () => {
