@@ -119,6 +119,8 @@ content here.
   step 15.1 is done (`Session.workspace`, `Turn.startedAt`, and
   `Turn.workspace` for Claude Code, from every provider) and step 15.2
   (`RepositoryResolver` and `RemoteUrlNormalizer` in
-  `packages/server/src/services/cost-attribution/`, not yet wired in) are
+  `packages/server/src/services/cost-attribution/`) and steps 15.0/15.3
+  (projects file in the app settings folder, `GET/PUT /api/projects`,
+  `GET /api/repositories`, optional `projects-file-invalid` warning) are
   done; plan §14.1. The progress table and per-step
   status notes are in docs/plans/vscode-extension.md.

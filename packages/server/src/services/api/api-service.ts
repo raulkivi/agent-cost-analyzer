@@ -5,11 +5,15 @@ import type {
   InsightsDataset,
   LogProviderStatus,
   ProductProfile,
+  ProjectsState,
+  RepositoryList,
   Session,
   SessionAudit,
   TurnInspectorDetail,
 } from "@agent-cost-analyzer/domain";
 import type { AppSettingsStore } from "../../data-sources/log-providers/app-settings.js";
+import { ProjectsFileRejectedError, type ProjectCatalog } from "../cost-attribution/project-catalog.js";
+import { buildProjectsFileWarning } from "../cost-attribution/projects-file-warning.js";
 import type { LearnScenarioCatalog } from "../../data-sources/learn-scenarios/loader.js";
 import type { LogProvider } from "../../data-sources/log-providers/log-provider.js";
 import { UnknownLogProviderIdError } from "../../data-sources/log-providers/registry.js";
@@ -48,8 +52,18 @@ export interface ApiInsights {
 // (undefined: the check's own default).
 export type ConfigStatusCheck = (minRetainedSessionLogsThreshold: number | undefined) => ConfigStatus;
 
+// Phase 15 step 15.3: the projects file and the repository list. Optional:
+// a product without them (the extension, until step 15.14) answers 404.
+export interface ApiProjects {
+  catalog: Pick<ProjectCatalog, "load" | "save">;
+  repositories: { getRepositoryList(): Promise<RepositoryList> };
+}
+
+export const PROJECTS_UNAVAILABLE_MESSAGE = "Projects are not available in this product.";
+
 export interface ApiServiceDeps {
   registry: ApiProviderRegistry;
+  projects?: ApiProjects;
   auditQueries: ApiAuditQueries;
   insights: ApiInsights;
   settings: Pick<AppSettingsStore, "readMinRetainedSessionLogsThreshold" | "writeMinRetainedSessionLogsThreshold">;
@@ -113,7 +127,38 @@ export class ApiService {
   }
 
   async getConfigStatus(): Promise<ConfigStatus> {
-    return this.deps.checkConfig(this.deps.settings.readMinRetainedSessionLogsThreshold());
+    const status = this.deps.checkConfig(this.deps.settings.readMinRetainedSessionLogsThreshold());
+    const projectsWarning = this.deps.projects ? buildProjectsFileWarning(this.deps.projects.catalog.load()) : null;
+    return projectsWarning ? { ...status, warnings: [...status.warnings, projectsWarning] } : status;
+  }
+
+  private requireProjects(): ApiProjects {
+    if (!this.deps.projects) {
+      throw new NotFoundError(PROJECTS_UNAVAILABLE_MESSAGE);
+    }
+    return this.deps.projects;
+  }
+
+  async getProjects(): Promise<ProjectsState> {
+    return this.requireProjects().catalog.load();
+  }
+
+  // Strict: a file with any problem is rejected whole and nothing is
+  // written; the problems go back beside the error for inline display.
+  async saveProjects(candidate: unknown): Promise<ProjectsState> {
+    const { catalog } = this.requireProjects();
+    try {
+      return catalog.save(candidate);
+    } catch (error) {
+      if (error instanceof ProjectsFileRejectedError) {
+        throw new BadRequestError(error.message, { problems: error.problems });
+      }
+      throw error;
+    }
+  }
+
+  async getRepositoryList(): Promise<RepositoryList> {
+    return this.requireProjects().repositories.getRepositoryList();
   }
 
   async setRetentionThreshold(value: unknown): Promise<ConfigStatus> {

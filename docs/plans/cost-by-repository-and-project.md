@@ -305,11 +305,11 @@ Price changes come from two places, and the UI keeps them apart:
 Projects are the first **user-owned data** the app writes. Logs stay
 read-only.
 
-- **Where**: one local JSON file. Standalone app:
-  `~/.agent-cost-analyzer/projects.json`, with the path overridable by an
-  environment variable like the providers' own folders. VS Code extension:
-  the extension's global storage. Validated with a zod schema on read; a
-  bad file gives a config warning (like the startup config check, architecture.md §6.3), not a
+- **Where**: one local JSON file. Standalone app: `projects.json` in the
+  app's settings folder, beside its `settings.json` (`resolveAppSettingsDir`,
+  so the same override applies). VS Code extension: the extension's global
+  storage. Validated with a zod schema on read; a bad file gives an optional
+  config warning (like the startup config check, architecture.md §6.3), not a
   crash.
 - **Why a file**: it is easy to back up, diff, and share with a colleague
   (it holds no message text). It can be imported and exported from the UI.
@@ -1073,10 +1073,10 @@ No UI code (15.9 onwards) starts before the mock-ups in 15.8 are approved.
 
 | Step | Work | Exit criterion |
 |---|---|---|
-| 15.0 | Threat-model rows for the two new write endpoints (D1–D10 already recorded in §13) | Threat model updated |
+| 15.0 | Threat-model rows for the two new write endpoints (D1–D10 already recorded in §13) | Threat model updated Done 2026-11-05, see §14.1 |
 | 15.1 | **Workspace capture**: `Session.workspace`, `Turn.startedAt` (and per-turn workspace for Claude Code) in every provider; verify classic VS Code chat's folder source | Each provider's fixture test yields folder, branch and turn times; mitmproxy reports Unattributed with a reason Done 2026-11-05, see §14.1 |
 | 15.2 | **RepositoryResolver** + `RemoteUrlNormalizer` | Unit tests of §12.1 pass; no credential in any output (property test) Done 2026-11-05, see §14.1 |
-| 15.3 | **ProjectCatalog** + project file schema + `GET/PUT /api/projects`, `GET /api/repositories` | Schema, matching and API tests pass; a bad file gives a config warning |
+| 15.3 | **ProjectCatalog** + project file schema + `GET/PUT /api/projects`, `GET /api/repositories` | Schema, matching and API tests pass; a bad file gives a config warning Done 2026-11-05, see §14.1 |
 | 15.4 | **Attribution in the dataset**: `repositoryKey`/`projectId`/`vendorId`/`channel` on Insights rows; Project, Repository, Vendor and Channel list boxes on the Dashboard; MCP: `list_repositories`, `list_projects`, `list_sessions` filters (§10.1) | Dashboard filters by repository and project; totals match the per-session totals; axe and keyboard tests pass for the new list boxes; the step's MCP tools pass the §10.1.6 tests |
 | 15.5 | **Price book with history**: `PriceVersion` schema, bundled channel files with sources, user versions, `PriceBook` lookup; Phase 13 profiles read their current prices from it; MCP: `get_price_book` | Overlap/boundary/precedence tests pass; every version has a source; Phase 13 tests unchanged; the step's MCP tools pass the §10.1.6 tests |
 | 15.6 | **CostPricer + basis**: `CostFigure` on every turn row; reconciliation figures for Copilot turns; Cost basis list box; MCP: cost basis in `get_session_cost`, `get_cost_rollup`, `get_turn` | Pricing tests pass; unknown never sums as 0; billed vs priced shown per model-month; the step's MCP tools pass the §10.1.6 tests |
@@ -1144,6 +1144,39 @@ Checked on this repository's own checkout: its root and `packages/server`
 both resolve to `github.com/raulkivi/agent-cost-analyzer`, so the folder
 changes seen in step 15.1's Claude Code log merge into one repository.
 Nothing calls the resolver yet; step 15.4 wires it into the dataset.
+
+**15.0 and 15.3 (done 2026-11-05).** Step 15.0's threat-model rows were
+written with 15.3, since `PUT /api/projects` is the first new write.
+
+- Domain (`packages/domain/src/projects.ts`): `projectsFileSchema`
+  (version 1; projects with members scoped by `path` and `branches`;
+  `aliases`; `captureRules`; `channels` as a placeholder for step 15.5),
+  `validateProjectsFile` for what a schema can't check (duplicate ids, D1's
+  exact ties, a member listed twice, alias chains and self-aliases), and
+  `ProjectsState`. `RepositoryList` is in `repository.ts`.
+- Server (`services/cost-attribution/`):
+  - `ProjectCatalog` loads through a `ProjectStore` and never fails: a
+    missing file is empty; a file failing its schema falls back to empty
+    with each problem's path; one with only cross-entry problems is kept.
+    Saving is strict: any problem rejects the whole file and nothing is
+    written.
+  - `FileProjectStore` keeps `projects.json` in the app settings folder.
+    Reads are limited to 1 MiB; writes go to a 0600 temporary file in the
+    same folder and are renamed over the old one.
+  - `matchProject` applies §7's rule: the deepest path wins, then a branch
+    scope over none, then file order. Branch patterns support `*` (one
+    segment), `**` and `?`. Aliases are followed.
+  - `RepositoryListService` and `buildRepositoryList` work from session
+    summaries only, merge aliased keys, and group Unattributed sessions by
+    reason. Unavailable or failing providers are reported, never fatal.
+- API: `GET /api/projects`, `PUT /api/projects` (400 with `problems` beside
+  `error`), `GET /api/repositories`, and a new optional config warning,
+  `projects-file-invalid`. The extension's `ApiService` has no projects yet
+  (404) until step 15.14, and these routes aren't in its webview
+  allow-list.
+- Not yet: capture rules are validated but not applied, because mitmproxy
+  sessions don't carry their capture file's path; step 15.4 adds that
+  when it attributes sessions.
 
 ## 15. Exit criterion
 

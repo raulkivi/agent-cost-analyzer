@@ -20,6 +20,8 @@ const FIX_ACTIONS: Record<ConfigWarning["code"], { label: string; variant: "btn-
   "agent-traces-unavailable": { label: "Enable", variant: "btn-secondary" },
   "copilot-chat-unavailable": { label: "Open Extensions", variant: "btn-primary" },
   "settings-not-found": { label: "Open setting", variant: "btn-secondary" },
+  // Standalone only (no setting fixes there), so the button never shows yet.
+  "projects-file-invalid": { label: "Open file", variant: "btn-secondary" },
 };
 
 export function ConfigWarningBanner({ warnings, onDismiss, onFixSetting }: ConfigWarningBannerProps) {

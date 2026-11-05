@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { repositoryAttributionSchema, repositoryRefSchema } from "./repository.js";
+import { repositoryAttributionSchema, repositoryListSchema, repositoryRefSchema } from "./repository.js";
 
 describe("repositoryRefSchema", () => {
   it("accepts a repository resolved from its git remote, with its root, path inside and branch", () => {
@@ -47,5 +47,36 @@ describe("repositoryAttributionSchema", () => {
 
   it("rejects an unattributed session without a reason (constraint 6)", () => {
     expect(repositoryAttributionSchema.safeParse({ attributed: false, reason: "" }).success).toBe(false);
+  });
+});
+
+describe("repositoryListSchema", () => {
+  it("accepts repositories, Unattributed buckets and provider statuses", () => {
+    const sample = {
+      repositories: [
+        {
+          key: "github.com/org/app",
+          source: "git-remote",
+          rootPath: "/home/dev/app",
+          sessionCount: 3,
+          providerIds: ["claude-code", "vscode"],
+          firstUsedAt: "2026-10-01T09:00:00.000Z",
+          lastUsedAt: "2026-11-05T09:00:00.000Z",
+          projectIds: ["portal"],
+        },
+      ],
+      unattributed: [{ reason: "mitmproxy captures record no working folder", sessionCount: 2, providerIds: ["mitmproxy"] }],
+      providers: [
+        { id: "claude-code", label: "Claude Code", available: true },
+        { id: "pi-agent", label: "pi", available: false, unavailableReason: "No pi sessions directory is configured." },
+      ],
+    };
+
+    expect(repositoryListSchema.parse(sample)).toEqual(sample);
+  });
+
+  it("rejects a negative session count", () => {
+    const bad = { repositories: [{ key: "k", source: "git-remote", sessionCount: -1, providerIds: [], projectIds: [] }], unattributed: [], providers: [] };
+    expect(repositoryListSchema.safeParse(bad).success).toBe(false);
   });
 });

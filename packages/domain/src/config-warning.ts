@@ -7,6 +7,8 @@ export const configWarningSchema = z.object({
     "settings-not-found",
     "agent-traces-unavailable",
     "copilot-chat-unavailable",
+    // Phase 15 step 15.3: the projects file has problems (always optional).
+    "projects-file-invalid",
   ]),
   // required: the app can't produce any usage numbers without it fixed.
   // optional: an additive enrichment (Phase 8.5's cache-write/reasoning

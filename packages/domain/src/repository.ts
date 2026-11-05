@@ -34,6 +34,45 @@ export const repositoryAttributionSchema = z.discriminatedUnion("attributed", [
   z.object({ attributed: z.literal(false), reason: z.string().min(1) }),
 ]);
 
+// Phase 15 step 15.3: GET /api/repositories — every repository the
+// providers' sessions resolve to, with the projects that include it, plus
+// the Unattributed sessions grouped by reason.
+const count = z.number().int().nonnegative();
+
+export const repositoryListEntrySchema = z.object({
+  key: z.string().min(1),
+  source: repositorySourceSchema,
+  rootPath: z.string().min(1).optional(),
+  sessionCount: count,
+  providerIds: z.array(z.string()),
+  firstUsedAt: z.string().optional(),
+  lastUsedAt: z.string().optional(),
+  projectIds: z.array(z.string()),
+});
+
+export const unattributedEntrySchema = z.object({
+  reason: z.string().min(1),
+  sessionCount: count,
+  providerIds: z.array(z.string()),
+});
+
+export const repositoryListProviderSchema = z.object({
+  id: z.string(),
+  label: z.string(),
+  available: z.boolean(),
+  unavailableReason: z.string().optional(),
+  error: z.string().optional(),
+});
+
+export const repositoryListSchema = z.object({
+  repositories: z.array(repositoryListEntrySchema),
+  unattributed: z.array(unattributedEntrySchema),
+  providers: z.array(repositoryListProviderSchema),
+});
+
 export type RepositorySource = z.infer<typeof repositorySourceSchema>;
 export type RepositoryRef = z.infer<typeof repositoryRefSchema>;
 export type RepositoryAttribution = z.infer<typeof repositoryAttributionSchema>;
+export type RepositoryListEntry = z.infer<typeof repositoryListEntrySchema>;
+export type UnattributedEntry = z.infer<typeof unattributedEntrySchema>;
+export type RepositoryList = z.infer<typeof repositoryListSchema>;

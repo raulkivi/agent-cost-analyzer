@@ -6,8 +6,13 @@ export class ApiError extends Error {}
 
 // The caller's input is invalid (bad turn index, threshold, provider id or
 // query) — 400.
+// `details` are extra fields sent beside `error` (e.g. a rejected projects
+// file's `problems`, Phase 15 step 15.3), so a client can show them inline.
 export class BadRequestError extends ApiError {
-  constructor(message: string) {
+  constructor(
+    message: string,
+    readonly details?: Readonly<Record<string, unknown>>,
+  ) {
     super(message);
     this.name = "BadRequestError";
   }
