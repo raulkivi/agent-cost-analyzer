@@ -10,6 +10,7 @@ import { ApiService } from "../services/api/api-service.js";
 import { AuditQueryService } from "../services/tool-audit/audit-query-service.js";
 import { composeCopilotProviders, type CopilotProviderCompositionOptions } from "./compose-copilot-providers.js";
 import { createInsightsService } from "./create-insights-service.js";
+import { createSessionAttributor } from "./create-session-attributor.js";
 
 export interface ExtensionApiServiceOptions extends CopilotProviderCompositionOptions {
   // The effective VS Code settings the config check judges (G6: the
@@ -54,17 +55,15 @@ export function createExtensionApiService(options: ExtensionApiServiceOptions): 
   const { learnScriptsDir, vendorProfilesDir, appVersion, settingsSource, ...compositionOptions } = options;
   const { registry, appSettings, resolvedVscodeSettingsPath } = composeCopilotProviders(compositionOptions);
 
+  const vendorProfiles = loadVendorProfiles(vendorProfilesDir);
   // Copilot users see VS Code wording (D13/D14).
-  const learnSimulation = new LearnSimulationService(
-    loadScenarioScripts(learnScriptsDir),
-    loadVendorProfiles(vendorProfilesDir),
-    "vscode-local",
-  );
+  const learnSimulation = new LearnSimulationService(loadScenarioScripts(learnScriptsDir), vendorProfiles, "vscode-local");
 
   return new ApiService({
     registry,
     auditQueries: new AuditQueryService(registry),
-    insights: createInsightsService(registry),
+    // Step 15.4: repository, vendor and channel; no projects file until step 15.14.
+    insights: createInsightsService(registry, createSessionAttributor({ vendorProfiles })),
     settings: appSettings,
     checkConfig: (minRetainedSessionLogsThreshold) =>
       checkConfig({

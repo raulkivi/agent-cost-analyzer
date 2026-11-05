@@ -90,6 +90,18 @@ describe("MitmproxyLogProvider", () => {
     expect(session?.turns[0].startedAt).toBe("2026-08-01T12:00:00.000Z");
   });
 
+  it("records the capture file each session was read from, for capture rules (step 15.4)", async () => {
+    const provider = new MitmproxyLogProvider({ capturesDirPath: fixturesDir, decoders: [anthropicDecoder, openAiDecoder] });
+    const file = path.join(fixturesDir, "anthropic-non-streamed.har");
+    const id = computeSegmentSessionId(file, 0);
+
+    const session = await provider.readSession(id);
+    const listed = (await provider.listSessions()).find((s) => s.id === id);
+
+    expect(session?.capture).toEqual({ filePath: file });
+    expect(listed?.capture).toEqual({ filePath: file });
+  });
+
   it("sets roundsCount to 1 for every turn, since each HAR entry is one complete exchange", async () => {
     const provider = new MitmproxyLogProvider({
       capturesDirPath: fixturesDir,

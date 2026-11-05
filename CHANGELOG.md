@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- Cost by repository and project (Phase 15 step 15.4): Dashboard rows are
+  attributed to a repository, project, vendor and channel, with Project,
+  Repository, Vendor and Channel list boxes (Unattributed and unknown
+  values keep their reasons). mitmproxy capture rules now apply. New MCP
+  tools `list_repositories` and `list_projects`, and `list_sessions`
+  filters by repository and project; MCP output gives local repositories
+  by folder name only unless `includePaths` is set.
 - Price book with history (Phase 15 step 15.5): sourced, dated price
   versions per channel and model (`fixtures/price-book/`, starting with
   GitHub Copilot's table), the user's own contract or list prices in

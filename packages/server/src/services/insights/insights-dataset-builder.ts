@@ -8,6 +8,7 @@ import type {
   Turn,
 } from "@agent-cost-analyzer/domain";
 import { MAX_EVIDENCE_EXCERPT_LENGTH } from "@agent-cost-analyzer/domain";
+import type { Attribution, AttributionSnapshot } from "../cost-attribution/session-attributor.js";
 import { excerptOf } from "../tool-audit/output-redactor.js";
 import { toolCallsUnavailableReason, turnToolCallsUnavailableReason } from "../tool-audit/tool-calls-availability.js";
 import { statusOf } from "../tool-audit/outcome-tally.js";
@@ -26,6 +27,42 @@ export interface InsightRows {
   sessions: InsightSessionRow[];
   turns: InsightTurnRow[];
   toolCalls: InsightToolCallRow[];
+}
+
+// Phase 15 step 15.4: who each row's cost belongs to (SessionAttributor,
+// DIP: any implementation of this port). A turn is attributed by its own
+// folder and model, so a session that moved between repositories splits.
+export type RowAttributor = Pick<AttributionSnapshot, "session" | "turn">;
+
+const NOT_CONFIGURED_REASON = "Attribution is not configured for this dataset.";
+
+// The attributor for callers that only need the figures (session cost) or
+// predate attribution: every value is unknown, with the reason.
+export const NOT_ATTRIBUTED: Attribution = {
+  repository: { attributed: false, reason: NOT_CONFIGURED_REASON },
+  projectId: null,
+  vendor: { known: false, reason: NOT_CONFIGURED_REASON },
+  channel: { known: false, reason: NOT_CONFIGURED_REASON },
+};
+
+const UNCONFIGURED: RowAttributor = { session: () => NOT_ATTRIBUTED, turn: () => NOT_ATTRIBUTED };
+
+type AttributionRowFields = Pick<
+  InsightTurnRow,
+  "repositoryKey" | "unattributedReason" | "projectId" | "vendorId" | "vendorUnknownReason" | "channel" | "channelUnknownReason"
+>;
+
+export function attributionRowFields(attribution: Attribution): AttributionRowFields {
+  const { repository, vendor, channel } = attribution;
+  return {
+    repositoryKey: repository.attributed ? repository.repository.key : null,
+    ...(repository.attributed ? {} : { unattributedReason: repository.reason }),
+    projectId: repository.attributed ? attribution.projectId : null,
+    vendorId: vendor.known ? vendor.vendorId : null,
+    ...(vendor.known ? {} : { vendorUnknownReason: vendor.reason }),
+    channel: channel.known ? channel.channel : null,
+    ...(channel.known ? {} : { channelUnknownReason: channel.reason }),
+  };
 }
 
 export function sessionKeyOf(providerId: string, sessionId: string): string {
@@ -49,7 +86,7 @@ function isEstimated(count: TokenCount): boolean {
   return count.known && count.estimated === true;
 }
 
-function sessionRow(source: ProviderSessions, session: Session): InsightSessionRow {
+function sessionRow(source: ProviderSessions, session: Session, attribution: Attribution): InsightSessionRow {
   const startedAt = session.startedAt ? new Date(session.startedAt) : undefined;
   const validStart = startedAt && !Number.isNaN(startedAt.getTime()) ? startedAt : undefined;
   return {
@@ -62,10 +99,11 @@ function sessionRow(source: ProviderSessions, session: Session): InsightSessionR
     ...(session.startedAt ? { startedAt: session.startedAt } : {}),
     ...(toolCallsUnavailableReason(session) ? { toolCallsUnavailable: true } : {}),
     ...(validStart ? { date: validStart.toISOString().slice(0, 10), hour: validStart.getUTCHours() } : {}),
+    ...attributionRowFields(attribution),
   };
 }
 
-function turnRow(sessionKey: string, turn: Turn, toolCallsUnknown: boolean): InsightTurnRow {
+function turnRow(sessionKey: string, turn: Turn, toolCallsUnknown: boolean, attribution: Attribution): InsightTurnRow {
   const { usage } = turn;
   const counts = [usage.uncachedInput, usage.cacheWrite, usage.cacheRead, usage.reasoning, usage.output, usage.costAiCredits];
   return {
@@ -82,6 +120,7 @@ function turnRow(sessionKey: string, turn: Turn, toolCallsUnknown: boolean): Ins
     aiCredits: figure(usage.costAiCredits),
     estimated: counts.some(isEstimated),
     toolCallCount: toolCallsUnknown ? null : turn.toolCalls.length,
+    ...attributionRowFields(attribution),
   };
 }
 
@@ -104,15 +143,16 @@ function toolCallRow(turnKey: string, call: ToolCallRecord, callIndex: number): 
   };
 }
 
-export function buildInsightRows(sources: ProviderSessions[]): InsightRows {
+export function buildInsightRows(sources: ProviderSessions[], attributor: RowAttributor = UNCONFIGURED): InsightRows {
   const rows: InsightRows = { sessions: [], turns: [], toolCalls: [] };
   for (const source of sources) {
     for (const session of source.sessions) {
       const sessionKey = sessionKeyOf(source.providerId, session.id);
-      rows.sessions.push(sessionRow(source, session));
+      rows.sessions.push(sessionRow(source, session, attributor.session(source.providerId, session)));
       for (const turn of session.turns) {
         const turnKey = turnKeyOf(sessionKey, turn.index);
-        rows.turns.push(turnRow(sessionKey, turn, turnToolCallsUnavailableReason(session, turn) !== undefined));
+        const unknownCalls = turnToolCallsUnavailableReason(session, turn) !== undefined;
+        rows.turns.push(turnRow(sessionKey, turn, unknownCalls, attributor.turn(source.providerId, session, turn)));
         turn.toolCalls.forEach((call, callIndex) => rows.toolCalls.push(toolCallRow(turnKey, call, callIndex)));
       }
     }

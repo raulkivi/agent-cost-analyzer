@@ -11,6 +11,48 @@ import { triggeredEventSchema } from "./turn.js";
 // null = unknown (constraint 6) — never 0, never omitted.
 const tokenFigureSchema = z.number().nullable();
 
+// Phase 15 step 15.4 (docs/plans/cost-by-repository-and-project.md §8, §9):
+// who a row's cost belongs to and who sold it. Each is null when unknown,
+// with its reason beside it (constraint 6): an Unattributed row keeps why
+// (and is in no project), an unknown vendor or channel says why. A turn
+// row is attributed by its own folder and model; a session row by the
+// session's. `projectId: null` on an attributed row is "No project".
+const attributionShape = {
+  repositoryKey: z.string().min(1).nullable(),
+  unattributedReason: z.string().min(1).optional(),
+  projectId: z.string().min(1).nullable(),
+  vendorId: z.string().min(1).nullable(),
+  vendorUnknownReason: z.string().min(1).optional(),
+  channel: z.string().min(1).nullable(),
+  channelUnknownReason: z.string().min(1).optional(),
+};
+
+type AttributionFields = {
+  repositoryKey: string | null;
+  unattributedReason?: string;
+  projectId: string | null;
+  vendorId: string | null;
+  vendorUnknownReason?: string;
+  channel: string | null;
+  channelUnknownReason?: string;
+};
+
+function checkAttribution(row: AttributionFields, ctx: z.RefinementCtx): void {
+  const pairs: [keyof AttributionFields, keyof AttributionFields][] = [
+    ["repositoryKey", "unattributedReason"],
+    ["vendorId", "vendorUnknownReason"],
+    ["channel", "channelUnknownReason"],
+  ];
+  for (const [value, reason] of pairs) {
+    if ((row[value] === null) !== (row[reason] !== undefined)) {
+      ctx.addIssue({ code: "custom", path: [reason], message: `${reason} is set exactly when ${value} is null` });
+    }
+  }
+  if (row.repositoryKey === null && row.projectId !== null) {
+    ctx.addIssue({ code: "custom", path: ["projectId"], message: "an Unattributed row is in no project" });
+  }
+}
+
 export const insightSessionRowSchema = z.object({
   key: z.string(), // providerId:sessionId
   providerId: z.string(),
@@ -24,7 +66,8 @@ export const insightSessionRowSchema = z.object({
   // The provider doesn't read this session's tool calls (Agent Host): its
   // empty tool-call list means unknown, not zero.
   toolCallsUnavailable: z.boolean().optional(),
-});
+  ...attributionShape,
+}).superRefine(checkAttribution);
 
 export type InsightSessionRow = z.infer<typeof insightSessionRowSchema>;
 
@@ -42,7 +85,8 @@ export const insightTurnRowSchema = z.object({
   aiCredits: tokenFigureSchema,
   estimated: z.boolean(), // any figure on this turn is a local-tokenizer estimate
   toolCallCount: z.number().nullable(), // null: tool calls unknown
-});
+  ...attributionShape,
+}).superRefine(checkAttribution);
 
 export type InsightTurnRow = z.infer<typeof insightTurnRowSchema>;
 
@@ -105,6 +149,9 @@ export const insightsDatasetSchema = z.object({
   turns: z.array(insightTurnRowSchema),
   toolCalls: z.array(insightToolCallRowSchema),
   findings: z.array(insightFindingSchema),
+  // Display names for the ids the rows carry (step 15.4); absent: show ids.
+  projects: z.array(z.object({ id: z.string(), name: z.string() })).optional(),
+  vendors: z.array(z.object({ id: z.string(), label: z.string() })).optional(),
 });
 
 export type InsightsDataset = z.infer<typeof insightsDatasetSchema>;

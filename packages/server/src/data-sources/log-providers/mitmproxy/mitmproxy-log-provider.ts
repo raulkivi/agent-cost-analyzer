@@ -148,6 +148,8 @@ export class MitmproxyLogProvider implements LogProvider {
       usageDataAvailable: knownUsageTurns.length > 0,
       ...(startedAt ? { startedAt } : {}),
       workspace: unknownWorkspace(MITMPROXY_NO_FOLDER_REASON),
+      // Step 15.4: a capture rule (plan §7) assigns it by this path.
+      capture: { filePath },
     };
   }
 

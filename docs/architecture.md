@@ -327,6 +327,22 @@ type RepositoryAttribution =
   | { attributed: false; reason: string };
 ```
 
+Attribution (Phase 15 step 15.4): `RepositorySource` also has
+`capture-rule`; mitmproxy sessions carry `Session.capture?: { filePath }`, a
+local path never put into MCP output. `InsightSessionRow`/`InsightTurnRow`
+gain `repositoryKey | null` (with `unattributedReason`), `projectId | null`,
+`vendorId | null` (with `vendorUnknownReason`) and `channel | null` (with
+`channelUnknownReason`); `InsightsDataset` gains optional `projects[]` and
+`vendors[]` display names. `RepositoryListEntry` and `UnattributedEntry`
+gain `turnCount` and `aiCredits { value | null, knownSessions, sessions }`.
+`ProjectList` is `list_projects`' output; `channels.ts` holds the channel
+ids. On the server, `services/cost-attribution/` adds `SessionAttributor`,
+`ProfileVendorResolver`, `resolveChannel`, `matchCaptureRule`,
+`AttributionQueryService` and `repository-key-privacy`; `InsightsService`
+takes an optional `DatasetAttribution`. The MCP attribution tools are
+registered when `McpServerDeps.attribution` is given (the standalone stdio
+server); local folder paths appear only with `includePaths`.
+
 Price book (Phase 15 step 15.5, `packages/domain/src/price-book.ts`;
 [plans/cost-by-repository-and-project.md](plans/cost-by-repository-and-project.md)
 §6): a `PriceVersion` is one dated price (`channel`, `modelId`, `currency`

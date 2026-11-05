@@ -119,6 +119,23 @@ describe("sessionSchema", () => {
     expect(sessionSchema.safeParse({ ...base, workspace: { known: false } }).success).toBe(false);
   });
 
+  it("accepts the capture file a mitmproxy session was read from (step 15.4)", () => {
+    const base = {
+      id: "har-1",
+      mode: "analyze",
+      title: "capture.har",
+      model: "claude-sonnet-5",
+      turns: [turn],
+      turnCount: 1,
+      costAiCredits: { known: false, reason: "n/a" },
+      usageDataAvailable: true,
+    };
+    const sample = { ...base, capture: { filePath: "/home/dev/captures/acme/one.har" } };
+
+    expect(sessionSchema.parse(sample)).toEqual(sample);
+    expect(sessionSchema.safeParse({ ...base, capture: { filePath: "" } }).success).toBe(false);
+  });
+
   it("accepts an Analyze-mode session with a providerId", () => {
     const sample = {
       id: "session-123",

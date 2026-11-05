@@ -51,6 +51,31 @@ describe("InsightsService", () => {
     ]);
   });
 
+  it("attributes the rows through the injected attributor and names the projects and vendors they use (step 15.4)", async () => {
+    const a = new FakeProvider("vscode", [analyzeSession("s1", day(1), [turn(0)])]);
+    const attribution = {
+      snapshot: () => ({
+        session: () => attributed,
+        turn: () => attributed,
+        projectName: (id: string) => (id === "portal" ? "Customer portal" : undefined),
+        vendorLabel: (id: string) => (id === "anthropic" ? "Anthropic" : id),
+      }),
+    };
+    const attributed = {
+      repository: { attributed: true as const, repository: { key: "github.com/acme/portal", source: "git-remote" as const } },
+      projectId: "portal",
+      vendor: { known: true as const, vendorId: "anthropic", basis: "profile" as const },
+      channel: { known: true as const, channel: "github-copilot" },
+    };
+
+    const dataset = await new InsightsService({ listProviders: () => [a] }, [], () => NOW, attribution).getDataset({});
+
+    expect(insightsDatasetSchema.parse(dataset)).toEqual(dataset);
+    expect(dataset.turns[0]).toMatchObject({ repositoryKey: "github.com/acme/portal", projectId: "portal" });
+    expect(dataset.projects).toEqual([{ id: "portal", name: "Customer portal" }]);
+    expect(dataset.vendors).toEqual([{ id: "anthropic", label: "Anthropic" }]);
+  });
+
   it("reports an unavailable provider and keeps loading the others", async () => {
     const ok = new FakeProvider("ok", [analyzeSession("s1", day(1), [])]);
     const off = new UnavailableProvider("off", [analyzeSession("x", day(1), [])]);

@@ -74,6 +74,19 @@ export const projectsStateSchema = z.object({
   location: z.string(),
 });
 
+// Phase 15 step 15.4: the MCP list_projects result. Only what a client
+// model needs to name and scope projects: no file location (a local path),
+// rates or capture rules.
+export const projectListEntrySchema = projectSchema.pick({ id: true, name: true, client: true, billingCode: true, members: true });
+
+export const projectListSchema = z.object({
+  status: projectsStateSchema.shape.status,
+  projects: z.array(projectListEntrySchema),
+  problems: z.array(projectFileProblemSchema),
+});
+
+export type ProjectListEntry = z.infer<typeof projectListEntrySchema>;
+export type ProjectList = z.infer<typeof projectListSchema>;
 export type ProjectMember = z.infer<typeof projectMemberSchema>;
 export type Project = z.infer<typeof projectSchema>;
 export type CaptureRule = z.infer<typeof captureRuleSchema>;

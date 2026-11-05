@@ -3,11 +3,19 @@ import type { LogProvider } from "../../data-sources/log-providers/log-provider.
 import { UnknownLogProviderIdError } from "../../data-sources/log-providers/registry.js";
 import { DEFAULT_ROLLUP_SESSION_LIMIT, inRange, MAX_ROLLUP_SESSION_LIMIT, type SessionRangeFilter } from "../tool-audit/audit-query-service.js";
 import type { FindingDetector } from "./finding-detector.js";
-import { buildInsightRows, type ProviderSessions } from "./insights-dataset-builder.js";
+import type { AttributionSnapshot } from "../cost-attribution/session-attributor.js";
+import { buildInsightRows, type InsightRows, type ProviderSessions, type RowAttributor } from "./insights-dataset-builder.js";
 
 // The narrow slice of LogProviderRegistry this service needs (DIP).
 export interface ProviderSource {
   listProviders(): LogProvider[];
+}
+
+// Step 15.4: attribution against one read of the projects file per dataset
+// (SessionAttributor satisfies it). Absent, rows say attribution is not
+// configured.
+export interface DatasetAttribution {
+  snapshot(): RowAttributor & Pick<AttributionSnapshot, "projectName" | "vendorLabel">;
 }
 
 interface ProviderLoad {
@@ -19,11 +27,23 @@ interface ProviderLoad {
 // sessions from every provider (or one, with providerId), flattens them and
 // runs the injected finding detectors. A provider that is unavailable or
 // fails is reported in providers[] — it never fails the whole dataset.
+// Display names for the project and vendor ids the rows use.
+function labelsOf(rows: InsightRows, snapshot: Pick<AttributionSnapshot, "projectName" | "vendorLabel">) {
+  const all = [...rows.sessions, ...rows.turns];
+  const projectIds = [...new Set(all.flatMap((row) => (row.projectId ? [row.projectId] : [])))].sort();
+  const vendorIds = [...new Set(all.flatMap((row) => (row.vendorId ? [row.vendorId] : [])))].sort();
+  return {
+    projects: projectIds.map((id) => ({ id, name: snapshot.projectName(id) ?? id })),
+    vendors: vendorIds.map((id) => ({ id, label: snapshot.vendorLabel(id) })),
+  };
+}
+
 export class InsightsService {
   constructor(
     private readonly providers: ProviderSource,
     private readonly detectors: readonly FindingDetector[],
     private readonly now: () => Date = () => new Date(),
+    private readonly attribution?: DatasetAttribution,
   ) {}
 
   async getDataset(filter: SessionRangeFilter): Promise<InsightsDataset> {
@@ -31,7 +51,8 @@ export class InsightsService {
     const limit = Math.min(filter.limit ?? DEFAULT_ROLLUP_SESSION_LIMIT, MAX_ROLLUP_SESSION_LIMIT);
     const loads = await Promise.all(selected.map((provider) => this.load(provider, filter, limit)));
     const sources = loads.flatMap((load) => (load.sessions ? [load.sessions] : []));
-    const rows = buildInsightRows(sources);
+    const snapshot = this.attribution?.snapshot();
+    const rows = buildInsightRows(sources, snapshot);
     return {
       generatedAt: this.now().toISOString(),
       ...(filter.since ? { since: filter.since } : {}),
@@ -39,6 +60,7 @@ export class InsightsService {
       providers: loads.map((load) => load.status),
       ...rows,
       findings: this.detectors.flatMap((detector) => detector.detect({ sources, rows })),
+      ...(snapshot ? labelsOf(rows, snapshot) : {}),
     };
   }
 

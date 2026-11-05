@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
-import { costRollupSchema, priceBookListingSchema, sessionCostSchema } from "@agent-cost-analyzer/domain";
+import { costRollupSchema, priceBookListingSchema, projectListSchema, repositoryListSchema, sessionCostSchema } from "@agent-cost-analyzer/domain";
 
 // End-to-end: spawns the real stdio entry point (what `claude mcp add`
 // runs) against a temporary HOME holding the real-capture Claude Code
@@ -79,5 +79,14 @@ describe("stdio MCP entry point", () => {
     expect(priceBookListingSchema.parse(result.structuredContent).versions.map((version) => version.id)).toEqual([
       "github-copilot:claude-sonnet-5.5:2026-10-26",
     ]);
+  }, 60_000);
+
+  it("lists the fixture session's repository and the (missing) projects file without local paths (step 15.4)", async () => {
+    const repositories = await client.callTool({ name: "list_repositories", arguments: { provider: "claude-code" } });
+    const projects = await client.callTool({ name: "list_projects", arguments: {} });
+
+    expect(repositoryListSchema.parse(repositories.structuredContent).repositories.length + repositoryListSchema.parse(repositories.structuredContent).unattributed.length).toBeGreaterThan(0);
+    expect(projectListSchema.parse(projects.structuredContent)).toMatchObject({ status: "missing", projects: [] });
+    expect(JSON.stringify([repositories, projects])).not.toContain(home);
   }, 60_000);
 });

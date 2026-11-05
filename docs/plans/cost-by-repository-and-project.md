@@ -1083,7 +1083,7 @@ No UI code (15.9 onwards) starts before the mock-ups in 15.8 are approved.
 | 15.1 | **Workspace capture**: `Session.workspace`, `Turn.startedAt` (and per-turn workspace for Claude Code) in every provider; verify classic VS Code chat's folder source | Each provider's fixture test yields folder, branch and turn times; mitmproxy reports Unattributed with a reason Done 2026-11-05, see §14.1 |
 | 15.2 | **RepositoryResolver** + `RemoteUrlNormalizer` | Unit tests of §12.1 pass; no credential in any output (property test) Done 2026-11-05, see §14.1 |
 | 15.3 | **ProjectCatalog** + project file schema + `GET/PUT /api/projects`, `GET /api/repositories` | Schema, matching and API tests pass; a bad file gives a config warning Done 2026-11-05, see §14.1 |
-| 15.4 | **Attribution in the dataset**: `repositoryKey`/`projectId`/`vendorId`/`channel` on Insights rows; Project, Repository, Vendor and Channel list boxes on the Dashboard; MCP: `list_repositories`, `list_projects`, `list_sessions` filters (§10.1) | Dashboard filters by repository and project; totals match the per-session totals; axe and keyboard tests pass for the new list boxes; the step's MCP tools pass the §10.1.6 tests |
+| 15.4 | **Attribution in the dataset**: `repositoryKey`/`projectId`/`vendorId`/`channel` on Insights rows; Project, Repository, Vendor and Channel list boxes on the Dashboard; MCP: `list_repositories`, `list_projects`, `list_sessions` filters (§10.1) | Dashboard filters by repository and project; totals match the per-session totals; axe and keyboard tests pass for the new list boxes; the step's MCP tools pass the §10.1.6 tests Done 2026-11-05, see §14.1 |
 | 15.5 | **Price book with history**: `PriceVersion` schema, bundled channel files with sources, user versions, `PriceBook` lookup; Phase 13 profiles read their current prices from it; MCP: `get_price_book` | Overlap/boundary/precedence tests pass; every version has a source; Phase 13 tests unchanged; the step's MCP tools pass the §10.1.6 tests Done 2026-11-05, see §14.1 |
 | 15.6 | **CostPricer + basis**: `CostFigure` on every turn row; reconciliation figures for Copilot turns; Cost basis list box; MCP: cost basis in `get_session_cost`, `get_cost_rollup`, `get_turn` | Pricing tests pass; unknown never sums as 0; billed vs priced shown per model-month; the step's MCP tools pass the §10.1.6 tests |
 | 15.7 | **Time series, compare, project breakdown** + their endpoints; MCP: `get_repository_cost`, `get_project_cost`, `compare_costs`, the `review_costs` project step | Golden outputs for a fixture dataset across three providers and two projects; the step's MCP tools pass the §10.1.6 tests |
@@ -1180,9 +1180,67 @@ written with 15.3, since `PUT /api/projects` is the first new write.
   `projects-file-invalid`. The extension's `ApiService` has no projects yet
   (404) until step 15.14, and these routes aren't in its webview
   allow-list.
-- Not yet: capture rules are validated but not applied, because mitmproxy
-  sessions don't carry their capture file's path; step 15.4 adds that
-  when it attributes sessions.
+- Capture rules were validated but not applied here, because mitmproxy
+  sessions didn't carry their capture file's path; step 15.4 applies them.
+
+**15.4 (done 2026-11-05).** `SessionAttributor`
+(`services/cost-attribution/session-attributor.ts`) attributes a session,
+and each turn by its own folder and model, to a repository
+(`RepositoryResolver`, aliases followed), at most one project
+(`matchProject`, D1), a vendor and a channel. It reads the projects file
+once per dataset.
+
+- **Capture rules apply.** mitmproxy sessions carry
+  `Session.capture.filePath` (never in MCP output or the advice export),
+  matched by the branch-pattern DP matcher (`*`, `**`, `?`, a leading `~`,
+  Windows slashes normalised) and attributed with the new source
+  `capture-rule`.
+- **Channels** are domain ids in `packages/domain/src/channels.ts`
+  (`github-copilot`, `anthropic-api`, `openai-api`, `google-api`,
+  `xai-api`, `moonshot-api`). `resolveChannel` gives VS Code
+  `github-copilot`, Claude Code `anthropic-api`, and pi and mitmproxy the
+  model vendor's API channel; `channels.providers` overrides a provider.
+  **Changed from §6.3:** mitmproxy uses the model's vendor, not the
+  decoder's, because sessions don't record which decoder ran. The
+  per-repository override of §6.3 is not in the file schema yet.
+- **Vendor** comes from Phase 13's profiles, read unchanged: a few
+  spellings of the model id first (lower case, no `vendor/` prefix, no
+  `[1m]`-style tag or date suffix, `x-5-5` as `x-5.5`), then a model
+  family only one vendor uses; otherwise unknown with a reason.
+- **Insights rows** (session and turn) carry `repositoryKey`, `projectId`,
+  `vendorId` and `channel`, each null with a reason when unknown
+  (`unattributedReason`, `vendorUnknownReason`, `channelUnknownReason`);
+  an Unattributed row has no project. The dataset adds project and vendor
+  display names.
+- **Dashboard:** the first list-box group is Project, Repository, Vendor
+  and Channel, over turn rows (a session that moved between repositories
+  counts each turn where it ran), with Unattributed, No project, Unknown
+  vendor and Unknown channel selectable, so no cost is dropped. A test
+  checks that totals per value add up to the whole and match the
+  per-session totals; axe (four themes) and keyboard tests cover the new
+  list boxes.
+- **Repository list** now uses the attributor (capture rules and aliases
+  apply) and gains turn counts, AI Credits with session coverage, and
+  provider and date filters.
+- **MCP:** `list_repositories`, `list_projects` and `list_sessions`'
+  `repository`/`projectId` filters (which use the session's own folder),
+  served by `AttributionQueryService`. `local:` and `path:` keys are
+  returned as the folder name only, root paths left out, unless
+  `includePaths`; local keys are redacted in projects-file problems too. A
+  property test checks no output holds a home folder or credential. Two
+  local repositories with the same folder name look alike without
+  `includePaths`.
+- The extension's MCP server keeps its nine tools (attribution is an
+  optional dependency) until steps 15.13/15.14; its Dashboard attributes
+  repositories, vendors and channels, with every turn under No project.
+
+TDD exceptions: the `channel-resolver`, `repository-key-privacy` and
+`ProfileVendorResolver` tests were written first but not run red before
+the code; the Dashboard and a11y tests passed on their first run because
+the Dashboard renders whatever groups the (already test-driven) model
+defines. Not yet: Unattributed reasons in the Dashboard UI (they are in the
+rows, the API and MCP); the mock-up's per-value cost figures in the list
+boxes; the per-repository channel override.
 
 **15.8 palette (done 2026-11-05).** `theme.css` `:root` has
 `--color-series-1` to `-8` (the §11.7 light steps, fixed order), the

@@ -1,6 +1,10 @@
 import { unavailableTokenCount, type Session, type ToolCallRecord, type Turn, type TurnUsage } from "@agent-cost-analyzer/domain";
 import { parseShellCommand } from "../services/tool-audit/shell-command-parser.js";
-import type { ProviderSessions } from "../services/insights/insights-dataset-builder.js";
+import { attributionRowFields, NOT_ATTRIBUTED, type ProviderSessions } from "../services/insights/insights-dataset-builder.js";
+
+// Step 15.4: the attribution fields of a row nobody attributed, for
+// hand-written dataset rows.
+export const UNATTRIBUTED_FIELDS = attributionRowFields(NOT_ATTRIBUTED);
 
 // In-memory Sessions for insights tests: each test states its own data.
 const known = (value: number) => ({ known: true as const, value });
