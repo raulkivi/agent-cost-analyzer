@@ -14,6 +14,7 @@ import { RepositoryListService } from "../services/cost-attribution/repository-l
 import { RepositoryResolver } from "../services/cost-attribution/repository-resolver.js";
 import { AuditQueryService } from "../services/tool-audit/audit-query-service.js";
 import { readAppVersion } from "./app-version.js";
+import { createStandalonePriceBook } from "./create-price-book.js";
 import { composeLogProviders, type LogProviderCompositionOptions } from "./compose-log-providers.js";
 import { createInsightsService } from "./create-insights-service.js";
 
@@ -62,6 +63,7 @@ export function createStandaloneApiService(options: StandaloneApiServiceOptions 
       catalog: projectCatalog,
       repositories: new RepositoryListService(registry, new RepositoryResolver(new NodeReadOnlyFileSystem()), projectCatalog),
     },
+    priceBook: createStandalonePriceBook(resolvedAppSettingsDir, projectCatalog),
     auditQueries: new AuditQueryService(registry),
     insights: createInsightsService(registry),
     settings: appSettings,
