@@ -876,7 +876,7 @@ and High Contrast. The order is fixed. A project's colour comes from its
 position in the project file, and a vendor's colour from a fixed vendor
 order (Anthropic, OpenAI, Google, xAI, Microsoft, Moonshot AI, …), so
 filtering never repaints them. Waterfall increases and decreases use the
-diverging pair (red `#e34948`, dark blue `#1c5cab`; in dark themes the blue is `#3987e5`, since `#1c5cab` is 2.5:1 on `#1f1f1f`, pending the owner's approval) with a written sign;
+diverging pair (red `#e34948`, dark blue `#1c5cab`; in dark themes the blue is `#3987e5`, since `#1c5cab` is 2.5:1 on `#1f1f1f`; approved by the owner 2026-11-05) with a written sign;
 warnings keep the existing severity colours with icon and text.
 
 ### 11.8 Mock-ups and review gate
@@ -1067,7 +1067,7 @@ column is binding; the other options are kept for the record.
 | D5 | Where does project config live? | local JSON file; app database; per-repo file committed to each repo | **Local JSON file** (§7) |
 | D6 | Time zone for day/month buckets | UTC; user time zone | **User time zone for statements** (bills follow the calendar month where the user works), **UTC elsewhere** to match the Dashboard |
 | D7 | Which product first? | standalone app; VS Code extension; both | **Standalone app first** (it sees every provider and vendor); the extension gets grouping and the status bar in a later step |
-| D8 | How far back must price history go? | from first log on this machine; 12 months; current only | **From 2026-01-01**, sourced; earlier turns price as `unknown` unless the user adds versions |
+| D8 | How far back must price history go? | from first log on this machine; 12 months; current only | **From 2026-10-01** (revised by the owner on 2026-11-05; first recorded as 2026-01-01), sourced, for GitHub Copilot and the Anthropic, OpenAI and Google APIs; earlier turns price as `unknown` unless the user adds versions |
 | D9 | Should observed price changes (§6.4) raise findings? | yes; no | **Yes**, as `inferred` findings on the Dashboard |
 | D10 | Estimates in scope now, or after Phase 14? | now (run rate, unit cost); after Phase 14 | **Now**, without cross-model replay; Phase 14 adds "on another model" |
 
@@ -1256,7 +1256,7 @@ steps back.
 - **Found while validating:** `#1c5cab` fails the dark lightness band
   (L 0.48) and is 2.5:1 on `#1f1f1f`, so dark themes use the blue ramp's 400
   step `#3987e5` for decreases (validator: all pass on `#1f1f1f` and
-  `#000`). This change to §11.7 awaits the owner's approval.
+  `#000`). The owner approved this change to §11.7 on 2026-11-05.
 - Validator (`validate_palette.js`), light on `#f2f2f3`: lightness, chroma,
   colour-blind separation (worst adjacent ΔE 9.1) and normal vision (19.6)
   pass; contrast is a warning for orange 2.86, aqua 2.52, yellow 1.94 and
