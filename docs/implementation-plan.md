@@ -1461,7 +1461,9 @@ turn-time capture, a file-only `RepositoryResolver`, a local projects file
 with `GET/PUT /api/projects`, a price book with `effectiveFrom`/`effectiveTo`
 versions per channel, `CostFigure`s labelled billed/reported/priced, a cost
 cube with time-series, compare, variance, statement and estimate builders,
-new Dashboard tabs (Cost over time, Compare, Billing), MCP tools, and extension grouping by repository.
+new Dashboard tabs (Cost over time, Compare, Project, Billing), 10 new
+read-only MCP tools and 3 prompts (plan §10.1, each shipped in the step of
+the builder it calls), and extension grouping by repository.
 
 **Exit criterion**: the plan's §15.
 

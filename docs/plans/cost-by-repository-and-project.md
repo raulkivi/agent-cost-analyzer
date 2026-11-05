@@ -17,7 +17,7 @@ guidance. This document is the design; Phase 15 in
 7. [Projects: configuration](#7-projects-configuration)
 8. [Analyses](#8-analyses)
 9. [Architecture](#9-architecture)
-10. [API and MCP](#10-api-and-mcp)
+10. [API and MCP](#10-api-and-mcp), with the MCP tools in [§10.1](#101-mcp-tools)
 11. [User interface](#11-user-interface)
 12. [Testing, privacy, risks](#12-testing-privacy-risks)
 13. [Decisions](#13-decisions)
@@ -514,11 +514,163 @@ The two write endpoints are the app's first non-log writes. They need the
 existing local-only binding and the CSRF/origin checks from the
 [threat model](../threat-model.md), which gets a new row for them.
 
-MCP tools (read-only, like the rest of the server): `get_cost_by_repository`,
-`get_project_cost` (with vendor/model breakdown), `compare_costs`,
-`get_price_changes`, `get_statement` (draft or frozen; issuing stays a UI
-action). A prompt, `explain-cost-change`, chains `compare_costs` and the
-variance analysis.
+MCP tools are specified in §10.1.
+
+### 10.1 MCP tools
+
+This extends the MCP server of Phase 9.12
+([mcp-tools-v2.md](mcp-tools-v2.md)) and follows its conventions:
+
+- names are `verb_noun` in snake_case, and none of the existing tools is
+  renamed;
+- every description starts with when to use the tool, then its defaults;
+- every tool is annotated read-only (`READ_ONLY`) and declares an
+  `outputSchema` that is the same domain zod schema the HTTP API returns;
+- results are JSON plus `structuredContent`;
+- a `null` figure is unknown, never zero, and every total carries its
+  coverage (`knownTurns`, `turns`), as in today's `MeasureTotal`.
+
+**Timing.** Each tool ships in the same step as the builder it calls
+(§14), not in a separate MCP step at the end. So MCP and the Dashboard
+read the same builders and agree from the first step, and each builder's
+output schema is designed for both from the start.
+
+#### 10.1.1 New tools
+
+Like `get_cost_rollup`, every new tool reads **every available provider**
+unless `provider` is given, and lists unavailable providers in
+`providers[]` rather than dropping their spend. `since`/`until` are the
+existing ISO date arguments (inclusive). Where a tool has a `currency`
+argument, the default is `"native"`: each figure stays in the unit it was
+recorded in, and totals are given per currency. `"usd"` converts at 1 AI
+Credit = $0.01 and says so in `conversion`.
+
+| Tool | Step | Input | Returns (`outputSchema`) |
+|---|---|---|---|
+| `list_repositories` | 15.4 | `provider?`, `since?`, `until?`, `projectId?`, `includeUnattributed?` (default true), `includePaths?` (default false) | `RepositoryList`: each repository's `repositoryKey`, project, session and turn counts, first and last use, cost with coverage; Unattributed buckets with their reasons |
+| `list_projects` | 15.4 | none | `ProjectList`: each project's id, name, client, billing code, members (repository key, path and branch scopes); validation problems, if any |
+| `get_price_book` | 15.5 | `channel?`, `model?`, `at?` (ISO date: the version in force then) | `PriceVersion[]` with sources and `checkedAt`, user contract versions marked as such |
+| `get_repository_cost` | 15.7 | `repository` (key from `list_repositories`), `since?`, `until?`, `bucket?` (`day`/`week`/`month`, default `month`), `basis?` (`preferred`/`billed`/`reported`/`priced`), `pricing?` (`as-of-use`/`today`), `currency?` | `CostSeries`: totals with coverage by basis; one point per bucket with coverage; breakdown by vendor and model; price-change markers in the range |
+| `get_project_cost` | 15.7 | `projectId`, the same options as above, `topSessions?` (default 10, max 50) | `ProjectCost`: as `CostSeries`, plus a breakdown by repository member, by vendor → model and by token type, and the most expensive sessions |
+| `compare_costs` | 15.7 | `groupBy` (`repository`/`project`), `ids` (2 to 20), `since`, `until`, `comparePeriod?` (`previous`/`last-year`, default `previous`), `pricing?`, `currency?` | `CostComparison`: the §8.2 measures per id (total, change, per session, per active day, share, cache-hit ratio, output share, coverage) |
+| `explain_cost_change` | 15.10 | `groupBy`, `id`, `periodA`, `periodB` (each `YYYY-MM` or a `since`/`until` pair), `currency?` | `CostVariance`: usage, price and mix effects per model and in total, which add up exactly to the change, with the price versions behind the price effect |
+| `get_price_changes` | 15.10 | `since?`, `until?`, `channel?`, `model?`, `kind?` (`documented`/`observed`, default both) | `PriceChangeList`: each change's model, channel, date, old and new unit prices per token type, percentage, and either its source (documented) or its evidence with confidence `inferred` (observed) |
+| `get_statement` | 15.11 | `projectId`, `period` (`YYYY-MM` or a range), `includeLines?` (default true) | `Statement`: the frozen statement if one is issued, with the diff against a re-run, else the draft; lines, unknown-cost lines with reasons, totals per currency, markup, fixed lines, provenance. It never issues one: issuing writes a file and stays a UI action |
+| `estimate_cost` | 15.12 | `projectId` (or `repository`), `activeDays` or `sessions`, `historyWeeks?` (4 or 12, default 12) | `CostEstimate`: a p50–p90 range at today's prices, the unit costs and history window used, labelled `"estimate"`. Never a single number |
+
+#### 10.1.2 Changes to existing tools
+
+| Tool | Step | Change |
+|---|---|---|
+| `list_sessions` | 15.4 | Adds `repository?` and `projectId?` filters. Each session in the response gains `repositoryKey` (or `null` with `unattributedReason`) and `projectId` |
+| `get_session_cost` | 15.6 | Adds the session's repository and project, a per-basis cost (`billed`, `reported`, `priced`) with coverage, and the price versions used. The existing AI Credits figures don't change |
+| `get_cost_rollup` | 15.6 | Adds `repository?` and `projectId?` filters, breakdowns by repository, project, vendor and channel, and per-basis totals |
+| `get_turn` | 15.6 | Adds the turn's `CostFigure`s and its price version |
+| `list_findings` | 15.10 | Adds `kind: "price-change"` for observed price changes (§6.4), with the same shape as the other findings |
+
+#### 10.1.3 Prompts
+
+Prompt names stay snake_case like the existing ones (`audit_session`,
+`review_costs`, `security_review`).
+
+| Prompt | Step | What it asks the model to do |
+|---|---|---|
+| `explain_cost_change` (`groupBy`, `id`, `periodA`, `periodB`) | 15.10 | Call `compare_costs` and the `explain_cost_change` tool, then `get_price_changes` for the models with the largest price effect; say whether usage, price or mix drove the change, and what to do about each |
+| `prepare_statement` (`projectId`, `period`) | 15.11 | Call `get_statement`; summarise totals, unknown-cost lines and any diff against an issued statement; draft a short note to the client. It reminds the user that issuing is done in the app |
+| `estimate_work` (`projectId`, `activeDays`) | 15.12 | Call `estimate_cost` and `get_project_cost`; give the range, its inputs and the main uncertainty |
+
+`review_costs` (Phase 9.12) also gets a step that groups its findings by
+project when projects exist (15.7). The prompt and the tool named
+`explain_cost_change` are separate registrations, as MCP keeps tools and
+prompts apart.
+
+#### 10.1.4 Server design (SOLID)
+
+- **Tool groups.** Three new modules next to the existing ones, so adding
+  them changes no other group (OCP):
+  - `mcp/attribution-tools.ts`: `list_repositories`, `list_projects`;
+  - `mcp/pricing-tools.ts`: `get_price_book`, `get_price_changes`;
+  - `mcp/billing-tools.ts`: `get_statement`, `estimate_cost`.
+
+  `get_repository_cost`, `get_project_cost`, `compare_costs` and
+  `explain_cost_change` go into the existing `mcp/cost-tools.ts`, and the
+  new prompts into `mcp/prompts.ts`. New argument schemas (`repositoryArg`,
+  `projectIdArg`, `bucketArg`, `basisArg`, `pricingArg`, `currencyArg`,
+  `periodArg`) go into `mcp/tool-helpers.ts` and are shared with the HTTP
+  query-parameter schemas, so both surfaces validate the same way.
+- **Dependencies.** Tools call `AnalysisQueryService`, which gains methods
+  over the §9 builders through narrow interfaces (`CostCubeSource`,
+  `PriceBookReader`, `StatementReader`). The MCP layer never touches the
+  registry, the project file or the price-book files directly (DIP).
+- **Same numbers everywhere.** MCP and the HTTP API call the same
+  builders, over the same cost cube the Dashboard uses.
+- **Products.** Today `createMcpServer` registers every group, and the
+  extension's Copilot-only server (vscode-extension.md step 10.8) gets the
+  same tools. It gains a `toolGroups` option, next to the `McpIdentity`
+  option that already holds per-product texts. The extension leaves out
+  `billing` (D7: billing and estimates are standalone-only at first) and
+  keeps the rest, over the Copilot provider.
+- **Instructions.** `STANDALONE_MCP_IDENTITY.instructions` (and the
+  extension's identity) gain:
+  - a workflow line: `list_repositories`/`list_projects`, then
+    `get_project_cost` or `compare_costs`, then `explain_cost_change`;
+  - what billed, reported and priced mean, and that priced figures depend
+    on the price book (`get_price_book`);
+  - "as of use" versus "today's prices";
+  - the 1 AI Credit = $0.01 conversion, and that no other exchange rates
+    are used;
+  - that statements are issued only in the app.
+- **MCP Apps.** An interactive project-cost view for MCP Apps hosts is
+  not part of this phase. It belongs to Phase 12
+  ([mcp-apps.md](mcp-apps.md)) and would render `get_project_cost`'s
+  `structuredContent`, which is why that schema carries the series and
+  breakdowns, not only totals.
+
+#### 10.1.5 Security and privacy
+
+Tool output enters the client model's context, which is usually a hosted
+model ([mcp-tools-v2.md §6](mcp-tools-v2.md#6-security)). So:
+
+- Repositories are identified by their **normalised key**
+  (`github.com/org/repo`), never by local folder paths. `local:` and
+  `path:` keys are returned as the folder's name only, unless
+  `includePaths: true` is passed to `list_repositories`.
+- Remote URLs have credentials stripped **before** they reach the cube
+  (§4.2), so no tool can return one; a test checks every tool's output.
+- Client names and billing codes are returned only by `list_projects` and
+  `get_statement`, the two tools that need them.
+- No tool writes. Issuing a statement and editing projects stay UI
+  actions behind the CSRF/origin checks (§10).
+- `estimate_cost` always returns a range labelled as an estimate, and its
+  description says so, so a model doesn't quote it as a price.
+
+#### 10.1.6 Testing and exit criterion
+
+Tests (TDD, as in Phase 9.12, in `mcp-server.test.ts` and one test file
+per new group), each written in the step that adds the tool:
+
+- each tool's output parses against its `outputSchema`, including the
+  partial-coverage and all-unknown cases;
+- for the same fixture, each MCP tool and its HTTP endpoint return the
+  same figures;
+- unknown costs come back as `null` with a reason, never `0`;
+- no output contains a credential or, without `includePaths`, a local
+  path (property test over generated remote URLs and folders);
+- the extension's server lists no `billing` tools.
+
+Exit criterion, checked in step 15.13 over stdio on a fixture with
+Copilot, Claude Code and pi sessions across three repositories in two
+projects:
+
+- the standalone `tools/list` returns the 9 Phase 9.12 tools plus the 10
+  new ones (19), all read-only with an `outputSchema`; the extension's
+  returns 17 (without `get_statement` and `estimate_cost`);
+- `prompts/list` adds `explain_cost_change`, `prepare_statement` and
+  `estimate_work` (6 in all; the extension leaves out the last two);
+- `get_project_cost` reports a priced figure with the price version it
+  used, next to a billed Copilot figure;
+- `explain_cost_change` across the Sep 1 price change returns effects that
+  add up exactly to the change.
 
 ## 11. User interface
 
@@ -854,16 +1006,16 @@ No UI code (15.9 onwards) starts before the mock-ups in 15.8 are approved.
 | 15.1 | **Workspace capture**: `Session.workspace`, `Turn.startedAt` (and per-turn workspace for Claude Code) in every provider; verify classic VS Code chat's folder source | Each provider's fixture test yields folder, branch and turn times; mitmproxy reports Unattributed with a reason |
 | 15.2 | **RepositoryResolver** + `RemoteUrlNormalizer` | Unit tests of §12.1 pass; no credential in any output (property test) |
 | 15.3 | **ProjectCatalog** + project file schema + `GET/PUT /api/projects`, `GET /api/repositories` | Schema, matching and API tests pass; a bad file gives a config warning |
-| 15.4 | **Attribution in the dataset**: `repositoryKey`/`projectId`/`vendorId`/`channel` on Insights rows; Project, Repository, Vendor and Channel list boxes on the Dashboard | Dashboard filters by repository and project; totals match the per-session totals; axe and keyboard tests pass for the new list boxes |
-| 15.5 | **Price book with history**: `PriceVersion` schema, bundled channel files with sources, user versions, `PriceBook` lookup; Phase 13 profiles read their current prices from it | Overlap/boundary/precedence tests pass; every version has a source; Phase 13 tests unchanged |
-| 15.6 | **CostPricer + basis**: `CostFigure` on every turn row; reconciliation figures for Copilot turns; Cost basis list box | Pricing tests pass; unknown never sums as 0; billed vs priced shown per model-month |
-| 15.7 | **Time series, compare, project breakdown** + their endpoints | Golden outputs for a fixture dataset across three providers and two projects |
+| 15.4 | **Attribution in the dataset**: `repositoryKey`/`projectId`/`vendorId`/`channel` on Insights rows; Project, Repository, Vendor and Channel list boxes on the Dashboard; MCP: `list_repositories`, `list_projects`, `list_sessions` filters (§10.1) | Dashboard filters by repository and project; totals match the per-session totals; axe and keyboard tests pass for the new list boxes; the step's MCP tools pass the §10.1.6 tests |
+| 15.5 | **Price book with history**: `PriceVersion` schema, bundled channel files with sources, user versions, `PriceBook` lookup; Phase 13 profiles read their current prices from it; MCP: `get_price_book` | Overlap/boundary/precedence tests pass; every version has a source; Phase 13 tests unchanged; the step's MCP tools pass the §10.1.6 tests |
+| 15.6 | **CostPricer + basis**: `CostFigure` on every turn row; reconciliation figures for Copilot turns; Cost basis list box; MCP: cost basis in `get_session_cost`, `get_cost_rollup`, `get_turn` | Pricing tests pass; unknown never sums as 0; billed vs priced shown per model-month; the step's MCP tools pass the §10.1.6 tests |
+| 15.7 | **Time series, compare, project breakdown** + their endpoints; MCP: `get_repository_cost`, `get_project_cost`, `compare_costs`, the `review_costs` project step | Golden outputs for a fixture dataset across three providers and two projects; the step's MCP tools pass the §10.1.6 tests |
 | 15.8 | **Mock-ups and palette** (§11.7, §11.8): the seven boards on a Design canvas with versioned copies (drawn 2026-11-05, awaiting review); the eight categorical tokens in `theme.css` and `theme-vscode.css` (not started) | Owner approves the boards and their comments are resolved; the dataviz validator passes in light and dark; `theme-contrast.test.ts` covers the new tokens in Dark Modern, Light Modern and High Contrast |
 | 15.9 | **Dashboard tabs: Cost over time and Compare**, with price-change markers (§11.1–§11.3) | Component tests incl. "View as table" and unknown-as-gap; `vitest-axe` clean in three themes; keyboard tests; the UI check (`npm run test:ui`) passes for the new tabs at 600–1600 px in three themes; screenshots of the standalone app at desktop and 360 px widths |
-| 15.10 | **Price changes and variance**: `PriceChangeDetector`, observed-change finding, `VarianceAnalyzer`, Project tab (§11.4) | Effects add up exactly (property test); markers match price-book boundaries; same UI checks as 15.9 |
-| 15.11 | **Statements**: builder, freeze, diff, CSV/JSON/Markdown export, Billing tab, Projects editor (§11.5) | Golden statements; a frozen statement survives a price-book update unchanged and the diff is exact; every project can be assigned by keyboard alone; same UI checks as 15.9 |
-| 15.12 | **Estimates** + Estimate panel | Forecast range tests on fixture histories; shown as a labelled range, never a single number |
-| 15.13 | **MCP tools** of §10 | MCP tests with output schemas, as in Phase 9.12 |
+| 15.10 | **Price changes and variance**: `PriceChangeDetector`, observed-change finding, `VarianceAnalyzer`, Project tab (§11.4); MCP: `explain_cost_change` tool and prompt, `get_price_changes`, `list_findings` kind `price-change` | Effects add up exactly (property test); markers match price-book boundaries; same UI checks as 15.9; the step's MCP tools pass the §10.1.6 tests |
+| 15.11 | **Statements**: builder, freeze, diff, CSV/JSON/Markdown export, Billing tab, Projects editor (§11.5); MCP: `get_statement`, `prepare_statement` prompt | Golden statements; a frozen statement survives a price-book update unchanged and the diff is exact; every project can be assigned by keyboard alone; same UI checks as 15.9; the step's MCP tools pass the §10.1.6 tests |
+| 15.12 | **Estimates** + Estimate panel; MCP: `estimate_cost`, `estimate_work` prompt | Forecast range tests on fixture histories; shown as a labelled range, never a single number; the step's MCP tools pass the §10.1.6 tests |
+| 15.13 | **MCP, cross-cutting work** (§10.1.4): server instructions for both products, the `toolGroups` option and the extension's tool set, the security tests of §10.1.5 | The §10.1.6 exit criterion over stdio |
 | 15.14 | **VS Code extension** (§11.9): group by repository, status bar per workspace repository, the two Dashboard tabs | Extension and manifest tests (category, codicons, l10n keys); UI check passes; manual check list updated |
 | 15.15 | **Docs**: architecture.md (domain, data flow, API), UserGuide, vscode-extension-guide, vision non-goals, README index | Docs reviewed by the owner |
 
@@ -880,4 +1032,6 @@ repositories grouped into two projects:
 - a statement for one project and month can be issued, exported, and still
   shows the same figures after a price-book update, with the diff listed
   separately;
+- the same figures are available through the MCP tools (§10.1.6), and
+  MCP and the Dashboard agree for every repository and project;
 - no unknown cost is shown or summed as zero anywhere.
