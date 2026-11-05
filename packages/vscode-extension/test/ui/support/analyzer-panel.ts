@@ -7,6 +7,7 @@ import { COMMAND_IDS } from "../../../src/commands/command-ids.js";
 import { INTERNAL_COMMAND_IDS } from "../../../src/diagnostics/test-hooks.js";
 import { layoutFor } from "../../../../web/src/lib/layout.js";
 import type { VscodeHost } from "./vscode-host.js";
+import { enterWebview, leaveWebview } from "./webview-frame.js";
 
 export const PANEL_TITLE = "AI Credits Analyzer";
 const WAIT_MS = 30_000;
@@ -189,11 +190,11 @@ export class AnalyzerPanel {
     const workbench = await browser.getWorkbench();
     const [webview] = await workbench.getAllWebviews();
     if (!webview) throw new Error(`No ${PANEL_TITLE} webview is open`);
-    await webview.open();
+    await enterWebview(browser, webview);
     try {
       return await body(new PanelView());
     } finally {
-      await webview.close();
+      await leaveWebview(browser);
     }
   }
 }
