@@ -1,0 +1,662 @@
+{
+  "channel": "anthropic-api",
+  "sources": [
+    {
+      "id": "anthropic-api-pricing-table",
+      "title": "Anthropic: Pricing, model pricing table",
+      "url": "https://platform.claude.com/docs/en/about-claude/pricing#model-pricing",
+      "quote": "| Model | Base input tokens | 5m cache writes | 1h cache writes | Cache hits and refreshes | Output tokens |",
+      "checkedAt": "2026-11-05"
+    },
+    {
+      "id": "anthropic-api-pricing-cache-writes",
+      "title": "Anthropic: Pricing, prompt caching multipliers (cache writes)",
+      "url": "https://platform.claude.com/docs/en/about-claude/pricing#prompt-caching",
+      "quote": "5-minute cache write | 1.25x base input price | Cache valid for 5 minutes; 1-hour cache write | 2x base input price | Cache valid for 1 hour",
+      "checkedAt": "2026-11-05"
+    },
+    {
+      "id": "anthropic-api-pricing-cache-reads",
+      "title": "Anthropic: Pricing, prompt caching multipliers (cache reads)",
+      "url": "https://platform.claude.com/docs/en/about-claude/pricing#prompt-caching",
+      "quote": "Cache read (hit) | 0.1x base input price (0.025x on Claude Fable 5.1 and Claude Mythos 5.1; 0.05x on Claude Opus 5.5 and Claude Sonnet 5.5)",
+      "checkedAt": "2026-11-05"
+    },
+    {
+      "id": "anthropic-api-pricing-long-context",
+      "title": "Anthropic: Pricing, long context pricing",
+      "url": "https://platform.claude.com/docs/en/about-claude/pricing#long-context-pricing",
+      "quote": "Claude Haiku 5.5 is priced by prompt length: a request whose prompt is over 100,000 tokens pays higher prices. A request’s prompt length counts all of its input tokens, including cache reads and cache writes.",
+      "checkedAt": "2026-11-05"
+    },
+    {
+      "id": "anthropic-api-pricing-fast-mode",
+      "title": "Anthropic: Pricing, fast mode pricing",
+      "url": "https://platform.claude.com/docs/en/about-claude/pricing#fast-mode-pricing",
+      "quote": "| Claude Opus 5.5 | $8 USD / MTok | $40 USD / MTok | ... | Claude Opus 5 / Claude Opus 4.8 | $10 USD / MTok | $50 USD / MTok |",
+      "checkedAt": "2026-11-05"
+    },
+    {
+      "id": "anthropic-api-pricing-fast-mode-caching",
+      "title": "Anthropic: Pricing, fast mode pricing (stacking)",
+      "url": "https://platform.claude.com/docs/en/about-claude/pricing#fast-mode-pricing",
+      "quote": "Prompt caching multipliers apply on top of fast mode pricing.",
+      "checkedAt": "2026-11-05"
+    },
+    {
+      "id": "anthropic-api-notes-2026-10-07-sonnet-5-5-cache",
+      "title": "Claude Platform release notes, October 7, 2026 (Sonnet 5.5 cache reads)",
+      "url": "https://platform.claude.com/docs/en/release-notes/overview",
+      "quote": "We’ve lowered the price of prompt cache reads on Claude Sonnet 5.5 from $0.20 USD to $0.10 USD per million tokens: 0.05x the base input price instead of 0.1x. Cache writes and all other prices are unchanged.",
+      "checkedAt": "2026-11-05"
+    },
+    {
+      "id": "anthropic-api-news-haiku-5-5",
+      "title": "Anthropic: Introducing Claude Haiku 5.5 (October 7, 2026)",
+      "url": "https://www.anthropic.com/news/claude-haiku-5-5",
+      "quote": "Cache reads $0.01 / $0.05 ... Cache writes $0.125 / $0.625 ... Input tokens $0.10 / $0.50 ... Output tokens $0.50 / $2.50 (Haiku 5.5 prompts up to / over 100k)",
+      "checkedAt": "2026-11-05"
+    },
+    {
+      "id": "anthropic-api-news-haiku-5-5-sonnet-cut",
+      "title": "Anthropic: Introducing Claude Haiku 5.5 (October 7, 2026), Sonnet 5.5 cache reads",
+      "url": "https://www.anthropic.com/news/claude-haiku-5-5",
+      "quote": "First, starting today, we’re lowering the price of cache reads on Claude Sonnet 5.5. Cache reads now cost 50% less: $0.10 per million tokens rather than $0.20.",
+      "checkedAt": "2026-11-05"
+    },
+    {
+      "id": "anthropic-api-news-sonnet-5-5",
+      "title": "Anthropic: Introducing Claude Sonnet 5.5 (September 28, 2026)",
+      "url": "https://www.anthropic.com/news/claude-sonnet-5-5",
+      "quote": "Sonnet 5.5 is priced the same as Sonnet 5 at $2 per million input tokens and $10 per million output tokens",
+      "checkedAt": "2026-11-05"
+    },
+    {
+      "id": "anthropic-api-news-opus-5-5",
+      "title": "Anthropic: Introducing Claude Opus 5.5 (September 22, 2026)",
+      "url": "https://www.anthropic.com/news/claude-opus-5-5",
+      "quote": "Input and output tokens are $4 and $20 per million, 20% less than Opus 5. Cache reads (which make up the majority of agentic and coding work costs) are $0.20 per million tokens, 60% less than Opus 5.",
+      "checkedAt": "2026-11-05"
+    },
+    {
+      "id": "anthropic-api-news-opus-5-5-fast",
+      "title": "Anthropic: Introducing Claude Opus 5.5 (September 22, 2026), fast mode",
+      "url": "https://www.anthropic.com/news/claude-opus-5-5",
+      "quote": "Fast mode for Opus 5.5 is also available in Claude Code and the Claude Platform with up to 2.5x speed. It costs $8 per million input tokens and $40 per million output tokens.",
+      "checkedAt": "2026-11-05"
+    },
+    {
+      "id": "anthropic-api-notes-2026-09-01-fable-5-1",
+      "title": "Claude Platform release notes, September 1, 2026 (Fable 5.1, Mythos 5.1)",
+      "url": "https://platform.claude.com/docs/en/release-notes/overview",
+      "quote": "Prompt cache reads on Claude Fable 5.1 and Claude Mythos 5.1 cost $0.25 USD per million tokens: 0.025x the base input price, compared with 0.1x on other models. Cache writes are unchanged.",
+      "checkedAt": "2026-11-05"
+    },
+    {
+      "id": "anthropic-api-notes-2026-09-01-fable-5-1-price",
+      "title": "Claude Platform release notes, September 1, 2026 (Fable 5.1 price)",
+      "url": "https://platform.claude.com/docs/en/release-notes/overview",
+      "quote": "at $10 / $50 USD per MTok, the same as Claude Fable 5, with cache reads cut to $0.25 USD per MTok",
+      "checkedAt": "2026-11-05"
+    },
+    {
+      "id": "anthropic-api-notes-2026-08-10-sonnet-5",
+      "title": "Claude Platform release notes, August 10, 2026 (Sonnet 5)",
+      "url": "https://platform.claude.com/docs/en/release-notes/overview",
+      "quote": "The introductory pricing for Claude Sonnet 5 ($2 / $10 USD per MTok) is now the standard price: the previously scheduled increase to $3 / $15 USD per MTok on September 1, 2026, will not occur.",
+      "checkedAt": "2026-11-05"
+    },
+    {
+      "id": "anthropic-api-notes-2026-07-24-opus-5",
+      "title": "Claude Platform release notes, July 24, 2026 (Opus 5)",
+      "url": "https://platform.claude.com/docs/en/release-notes/overview",
+      "quote": "at $5 / $25 USD per MTok, the same pricing as Claude Opus 4.8",
+      "checkedAt": "2026-11-05"
+    },
+    {
+      "id": "anthropic-api-notes-2026-04-16-opus-4-7",
+      "title": "Claude Platform release notes, April 16, 2026 (Opus 4.7)",
+      "url": "https://platform.claude.com/docs/en/release-notes/overview",
+      "quote": "We’ve launched Claude Opus 4.7, our most capable model for complex reasoning and agentic coding, at the same $5 / $25 USD per MTok pricing as Opus 4.6.",
+      "checkedAt": "2026-11-05"
+    },
+    {
+      "id": "anthropic-api-news-fable-5-mythos-5",
+      "title": "Anthropic: Claude Fable 5 and Claude Mythos 5 (June 9, 2026)",
+      "url": "https://www.anthropic.com/news/claude-fable-5-mythos-5",
+      "quote": "Pricing for both models is $10 per million input tokens and $50 per million output tokens.",
+      "checkedAt": "2026-11-05"
+    },
+    {
+      "id": "anthropic-api-news-sonnet-4-6",
+      "title": "Anthropic: Introducing Claude Sonnet 4.6 (February 17, 2026)",
+      "url": "https://www.anthropic.com/news/claude-sonnet-4-6",
+      "quote": "Pricing remains the same as Sonnet 4.5, starting at $3/$15 per million tokens.",
+      "checkedAt": "2026-11-05"
+    },
+    {
+      "id": "anthropic-api-news-sonnet-4-5",
+      "title": "Anthropic: Introducing Claude Sonnet 4.5 (September 29, 2025)",
+      "url": "https://www.anthropic.com/news/claude-sonnet-4-5",
+      "quote": "Pricing remains the same as Claude Sonnet 4, at $3/$15 per million tokens.",
+      "checkedAt": "2026-11-05"
+    },
+    {
+      "id": "anthropic-api-news-haiku-4-5",
+      "title": "Anthropic: Introducing Claude Haiku 4.5 (October 15, 2025)",
+      "url": "https://www.anthropic.com/news/claude-haiku-4-5",
+      "quote": "Pricing is now $1/$5 per million input and output tokens.",
+      "checkedAt": "2026-11-05"
+    },
+    {
+      "id": "anthropic-api-news-opus-4-5",
+      "title": "Anthropic: Introducing Claude Opus 4.5 (November 24, 2025)",
+      "url": "https://www.anthropic.com/news/claude-opus-4-5",
+      "quote": "Pricing is now $5/$25 per million tokens",
+      "checkedAt": "2026-11-05"
+    }
+  ],
+  "versions": [
+    {
+      "id": "anthropic-api:claude-fable-5:2026-10-01",
+      "channel": "anthropic-api",
+      "modelId": "claude-fable-5",
+      "currency": "USD",
+      "effectiveFrom": "2026-10-01",
+      "tiers": [
+        {
+          "inputUsdPerM": 10,
+          "cachedInputUsdPerM": 1.0,
+          "cacheWriteUsdPerM": 12.5,
+          "extendedCacheWriteUsdPerM": 20,
+          "outputUsdPerM": 50
+        }
+      ],
+      "kind": "list",
+      "sourceIds": [
+        "anthropic-api-pricing-table",
+        "anthropic-api-pricing-cache-writes",
+        "anthropic-api-pricing-cache-reads",
+        "anthropic-api-news-fable-5-mythos-5",
+        "anthropic-api-notes-2026-09-01-fable-5-1"
+      ],
+      "note": "In force from 2026-10-01: a dated Anthropic source before that day gives this input/output price, today's pricing page lists the same, and the release notes record no change in between. Launched 2026-06-09 at $10/$50; the 2026-09-01 notes keep 0.1x cache reads for models other than Fable 5.1 and Mythos 5.1. cacheWriteUsdPerM is the 5-minute write (1.25x input) and extendedCacheWriteUsdPerM the 1-hour write (2x input), as on the pricing page's table. Claude API (first-party), global routing; batch, data residency (1.1x), priority and cloud-platform prices are not modelled."
+    },
+    {
+      "id": "anthropic-api:claude-fable-5.1:2026-10-01",
+      "channel": "anthropic-api",
+      "modelId": "claude-fable-5.1",
+      "currency": "USD",
+      "effectiveFrom": "2026-10-01",
+      "tiers": [
+        {
+          "inputUsdPerM": 10,
+          "cachedInputUsdPerM": 0.25,
+          "cacheWriteUsdPerM": 12.5,
+          "extendedCacheWriteUsdPerM": 20,
+          "outputUsdPerM": 50
+        }
+      ],
+      "kind": "list",
+      "sourceIds": [
+        "anthropic-api-pricing-table",
+        "anthropic-api-pricing-cache-writes",
+        "anthropic-api-pricing-cache-reads",
+        "anthropic-api-notes-2026-09-01-fable-5-1-price",
+        "anthropic-api-notes-2026-09-01-fable-5-1"
+      ],
+      "note": "In force from 2026-10-01: a dated Anthropic source before that day gives this input/output price, today's pricing page lists the same, and the release notes record no change in between. Launched 2026-09-01 at $10/$50 with cache reads at 0.025x ($0.25). cacheWriteUsdPerM is the 5-minute write (1.25x input) and extendedCacheWriteUsdPerM the 1-hour write (2x input), as on the pricing page's table. Claude API (first-party), global routing; batch, data residency (1.1x), priority and cloud-platform prices are not modelled."
+    },
+    {
+      "id": "anthropic-api:claude-haiku-4.5:2026-10-01",
+      "channel": "anthropic-api",
+      "modelId": "claude-haiku-4.5",
+      "currency": "USD",
+      "effectiveFrom": "2026-10-01",
+      "tiers": [
+        {
+          "inputUsdPerM": 1,
+          "cachedInputUsdPerM": 0.1,
+          "cacheWriteUsdPerM": 1.25,
+          "extendedCacheWriteUsdPerM": 2,
+          "outputUsdPerM": 5
+        }
+      ],
+      "kind": "list",
+      "sourceIds": [
+        "anthropic-api-pricing-table",
+        "anthropic-api-pricing-cache-writes",
+        "anthropic-api-pricing-cache-reads",
+        "anthropic-api-news-haiku-4-5"
+      ],
+      "note": "In force from 2026-10-01: a dated Anthropic source before that day gives this input/output price, today's pricing page lists the same, and the release notes record no change in between. Launched 2025-10-15 at $1/$5. cacheWriteUsdPerM is the 5-minute write (1.25x input) and extendedCacheWriteUsdPerM the 1-hour write (2x input), as on the pricing page's table. Claude API (first-party), global routing; batch, data residency (1.1x), priority and cloud-platform prices are not modelled."
+    },
+    {
+      "id": "anthropic-api:claude-haiku-5.5:2026-10-07",
+      "channel": "anthropic-api",
+      "modelId": "claude-haiku-5.5",
+      "currency": "USD",
+      "effectiveFrom": "2026-10-07",
+      "tiers": [
+        {
+          "maxInputTokens": 100000,
+          "inputUsdPerM": 0.1,
+          "cachedInputUsdPerM": 0.01,
+          "cacheWriteUsdPerM": 0.125,
+          "extendedCacheWriteUsdPerM": 0.2,
+          "outputUsdPerM": 0.5
+        },
+        {
+          "inputUsdPerM": 0.5,
+          "cachedInputUsdPerM": 0.05,
+          "cacheWriteUsdPerM": 0.625,
+          "extendedCacheWriteUsdPerM": 1.0,
+          "outputUsdPerM": 2.5
+        }
+      ],
+      "kind": "list",
+      "sourceIds": [
+        "anthropic-api-pricing-table",
+        "anthropic-api-pricing-cache-writes",
+        "anthropic-api-pricing-cache-reads",
+        "anthropic-api-pricing-long-context",
+        "anthropic-api-news-haiku-5-5"
+      ],
+      "note": "Launched 2026-10-07, so no earlier price. Priced by prompt length: the first tier covers prompts up to 100,000 tokens, counting cache reads and writes; the 1-hour write is not in the launch announcement and comes from the pricing page (2x input). cacheWriteUsdPerM is the 5-minute write (1.25x input) and extendedCacheWriteUsdPerM the 1-hour write (2x input), as on the pricing page's table. Claude API (first-party), global routing; batch, data residency (1.1x), priority and cloud-platform prices are not modelled."
+    },
+    {
+      "id": "anthropic-api:claude-mythos-5:2026-10-01",
+      "channel": "anthropic-api",
+      "modelId": "claude-mythos-5",
+      "currency": "USD",
+      "effectiveFrom": "2026-10-01",
+      "tiers": [
+        {
+          "inputUsdPerM": 10,
+          "cachedInputUsdPerM": 1.0,
+          "cacheWriteUsdPerM": 12.5,
+          "extendedCacheWriteUsdPerM": 20,
+          "outputUsdPerM": 50
+        }
+      ],
+      "kind": "list",
+      "sourceIds": [
+        "anthropic-api-pricing-table",
+        "anthropic-api-pricing-cache-writes",
+        "anthropic-api-pricing-cache-reads",
+        "anthropic-api-news-fable-5-mythos-5",
+        "anthropic-api-notes-2026-09-01-fable-5-1"
+      ],
+      "note": "In force from 2026-10-01: a dated Anthropic source before that day gives this input/output price, today's pricing page lists the same, and the release notes record no change in between. Launched 2026-06-09 with Fable 5 at $10/$50; limited availability (verified organizations). cacheWriteUsdPerM is the 5-minute write (1.25x input) and extendedCacheWriteUsdPerM the 1-hour write (2x input), as on the pricing page's table. Claude API (first-party), global routing; batch, data residency (1.1x), priority and cloud-platform prices are not modelled."
+    },
+    {
+      "id": "anthropic-api:claude-mythos-5.1:2026-10-01",
+      "channel": "anthropic-api",
+      "modelId": "claude-mythos-5.1",
+      "currency": "USD",
+      "effectiveFrom": "2026-10-01",
+      "tiers": [
+        {
+          "inputUsdPerM": 10,
+          "cachedInputUsdPerM": 0.25,
+          "cacheWriteUsdPerM": 12.5,
+          "extendedCacheWriteUsdPerM": 20,
+          "outputUsdPerM": 50
+        }
+      ],
+      "kind": "list",
+      "sourceIds": [
+        "anthropic-api-pricing-table",
+        "anthropic-api-pricing-cache-writes",
+        "anthropic-api-pricing-cache-reads",
+        "anthropic-api-notes-2026-09-01-fable-5-1-price",
+        "anthropic-api-notes-2026-09-01-fable-5-1"
+      ],
+      "note": "In force from 2026-10-01: a dated Anthropic source before that day gives this input/output price, today's pricing page lists the same, and the release notes record no change in between. Launched 2026-09-01 with Fable 5.1 at $10/$50, cache reads 0.025x ($0.25); limited availability (verified organizations). cacheWriteUsdPerM is the 5-minute write (1.25x input) and extendedCacheWriteUsdPerM the 1-hour write (2x input), as on the pricing page's table. Claude API (first-party), global routing; batch, data residency (1.1x), priority and cloud-platform prices are not modelled."
+    },
+    {
+      "id": "anthropic-api:claude-opus-4.5:2026-10-01",
+      "channel": "anthropic-api",
+      "modelId": "claude-opus-4.5",
+      "currency": "USD",
+      "effectiveFrom": "2026-10-01",
+      "tiers": [
+        {
+          "inputUsdPerM": 5,
+          "cachedInputUsdPerM": 0.5,
+          "cacheWriteUsdPerM": 6.25,
+          "extendedCacheWriteUsdPerM": 10,
+          "outputUsdPerM": 25
+        }
+      ],
+      "kind": "list",
+      "sourceIds": [
+        "anthropic-api-pricing-table",
+        "anthropic-api-pricing-cache-writes",
+        "anthropic-api-pricing-cache-reads",
+        "anthropic-api-news-opus-4-5"
+      ],
+      "note": "In force from 2026-10-01: a dated Anthropic source before that day gives this input/output price, today's pricing page lists the same, and the release notes record no change in between. Launched 2025-11-24 at $5/$25. cacheWriteUsdPerM is the 5-minute write (1.25x input) and extendedCacheWriteUsdPerM the 1-hour write (2x input), as on the pricing page's table. Claude API (first-party), global routing; batch, data residency (1.1x), priority and cloud-platform prices are not modelled."
+    },
+    {
+      "id": "anthropic-api:claude-opus-4.6:2026-10-01",
+      "channel": "anthropic-api",
+      "modelId": "claude-opus-4.6",
+      "currency": "USD",
+      "effectiveFrom": "2026-10-01",
+      "tiers": [
+        {
+          "inputUsdPerM": 5,
+          "cachedInputUsdPerM": 0.5,
+          "cacheWriteUsdPerM": 6.25,
+          "extendedCacheWriteUsdPerM": 10,
+          "outputUsdPerM": 25
+        }
+      ],
+      "kind": "list",
+      "sourceIds": [
+        "anthropic-api-pricing-table",
+        "anthropic-api-pricing-cache-writes",
+        "anthropic-api-pricing-cache-reads",
+        "anthropic-api-notes-2026-04-16-opus-4-7"
+      ],
+      "note": "In force from 2026-10-01: a dated Anthropic source before that day gives this input/output price, today's pricing page lists the same, and the release notes record no change in between. $5/$25 per the 2026-04-16 notes (Opus 4.7 at \"the same ... pricing as Opus 4.6\"). Long-context (over 200k) premium no longer applies: the pricing page says Claude 4.6 and later models get the full 1M context at standard pricing. cacheWriteUsdPerM is the 5-minute write (1.25x input) and extendedCacheWriteUsdPerM the 1-hour write (2x input), as on the pricing page's table. Claude API (first-party), global routing; batch, data residency (1.1x), priority and cloud-platform prices are not modelled."
+    },
+    {
+      "id": "anthropic-api:claude-opus-4.7:2026-10-01",
+      "channel": "anthropic-api",
+      "modelId": "claude-opus-4.7",
+      "currency": "USD",
+      "effectiveFrom": "2026-10-01",
+      "tiers": [
+        {
+          "inputUsdPerM": 5,
+          "cachedInputUsdPerM": 0.5,
+          "cacheWriteUsdPerM": 6.25,
+          "extendedCacheWriteUsdPerM": 10,
+          "outputUsdPerM": 25
+        }
+      ],
+      "kind": "list",
+      "sourceIds": [
+        "anthropic-api-pricing-table",
+        "anthropic-api-pricing-cache-writes",
+        "anthropic-api-pricing-cache-reads",
+        "anthropic-api-notes-2026-04-16-opus-4-7"
+      ],
+      "note": "In force from 2026-10-01: a dated Anthropic source before that day gives this input/output price, today's pricing page lists the same, and the release notes record no change in between. Launched 2026-04-16 at $5/$25. cacheWriteUsdPerM is the 5-minute write (1.25x input) and extendedCacheWriteUsdPerM the 1-hour write (2x input), as on the pricing page's table. Claude API (first-party), global routing; batch, data residency (1.1x), priority and cloud-platform prices are not modelled."
+    },
+    {
+      "id": "anthropic-api:claude-opus-4.8:2026-10-01",
+      "channel": "anthropic-api",
+      "modelId": "claude-opus-4.8",
+      "currency": "USD",
+      "effectiveFrom": "2026-10-01",
+      "tiers": [
+        {
+          "inputUsdPerM": 5,
+          "cachedInputUsdPerM": 0.5,
+          "cacheWriteUsdPerM": 6.25,
+          "extendedCacheWriteUsdPerM": 10,
+          "outputUsdPerM": 25
+        }
+      ],
+      "kind": "list",
+      "sourceIds": [
+        "anthropic-api-pricing-table",
+        "anthropic-api-pricing-cache-writes",
+        "anthropic-api-pricing-cache-reads",
+        "anthropic-api-notes-2026-07-24-opus-5"
+      ],
+      "note": "In force from 2026-10-01: a dated Anthropic source before that day gives this input/output price, today's pricing page lists the same, and the release notes record no change in between. $5/$25 per the 2026-07-24 notes (Opus 5 at \"the same pricing as Claude Opus 4.8\"). cacheWriteUsdPerM is the 5-minute write (1.25x input) and extendedCacheWriteUsdPerM the 1-hour write (2x input), as on the pricing page's table. Claude API (first-party), global routing; batch, data residency (1.1x), priority and cloud-platform prices are not modelled."
+    },
+    {
+      "id": "anthropic-api:claude-opus-4.8-fast:2026-11-05",
+      "channel": "anthropic-api",
+      "modelId": "claude-opus-4.8-fast",
+      "currency": "USD",
+      "effectiveFrom": "2026-11-05",
+      "tiers": [
+        {
+          "inputUsdPerM": 10,
+          "cachedInputUsdPerM": 1.0,
+          "cacheWriteUsdPerM": 12.5,
+          "extendedCacheWriteUsdPerM": 20,
+          "outputUsdPerM": 50
+        }
+      ],
+      "kind": "list",
+      "sourceIds": [
+        "anthropic-api-pricing-table",
+        "anthropic-api-pricing-cache-writes",
+        "anthropic-api-pricing-cache-reads",
+        "anthropic-api-pricing-fast-mode",
+        "anthropic-api-pricing-fast-mode-caching"
+      ],
+      "note": "Claude Opus 4.8 with speed \"fast\" (research preview; same id as github-copilot.json). Only today's pricing page (checked 2026-11-05) gives this fast-mode price ($10/$50 for Claude Opus 5 and Claude Opus 4.8); no dated source earlier in the window was found, so earlier fast turns price as unknown. Cache prices are derived: caching multipliers apply on top of fast mode pricing (pricing page); Anthropic does not print fast-mode cache prices. Fast mode for Opus 4.8 is deprecated with removal on 2026-11-30 (release notes, 2026-10-30); that is not a price change, so the version is left open. cacheWriteUsdPerM is the 5-minute write (1.25x input) and extendedCacheWriteUsdPerM the 1-hour write (2x input), as on the pricing page's table. Claude API (first-party), global routing; batch, data residency (1.1x), priority and cloud-platform prices are not modelled."
+    },
+    {
+      "id": "anthropic-api:claude-opus-5:2026-10-01",
+      "channel": "anthropic-api",
+      "modelId": "claude-opus-5",
+      "currency": "USD",
+      "effectiveFrom": "2026-10-01",
+      "tiers": [
+        {
+          "inputUsdPerM": 5,
+          "cachedInputUsdPerM": 0.5,
+          "cacheWriteUsdPerM": 6.25,
+          "extendedCacheWriteUsdPerM": 10,
+          "outputUsdPerM": 25
+        }
+      ],
+      "kind": "list",
+      "sourceIds": [
+        "anthropic-api-pricing-table",
+        "anthropic-api-pricing-cache-writes",
+        "anthropic-api-pricing-cache-reads",
+        "anthropic-api-notes-2026-07-24-opus-5"
+      ],
+      "note": "In force from 2026-10-01: a dated Anthropic source before that day gives this input/output price, today's pricing page lists the same, and the release notes record no change in between. Launched 2026-07-24 at $5/$25. cacheWriteUsdPerM is the 5-minute write (1.25x input) and extendedCacheWriteUsdPerM the 1-hour write (2x input), as on the pricing page's table. Claude API (first-party), global routing; batch, data residency (1.1x), priority and cloud-platform prices are not modelled."
+    },
+    {
+      "id": "anthropic-api:claude-opus-5-fast:2026-11-05",
+      "channel": "anthropic-api",
+      "modelId": "claude-opus-5-fast",
+      "currency": "USD",
+      "effectiveFrom": "2026-11-05",
+      "tiers": [
+        {
+          "inputUsdPerM": 10,
+          "cachedInputUsdPerM": 1.0,
+          "cacheWriteUsdPerM": 12.5,
+          "extendedCacheWriteUsdPerM": 20,
+          "outputUsdPerM": 50
+        }
+      ],
+      "kind": "list",
+      "sourceIds": [
+        "anthropic-api-pricing-table",
+        "anthropic-api-pricing-cache-writes",
+        "anthropic-api-pricing-cache-reads",
+        "anthropic-api-pricing-fast-mode",
+        "anthropic-api-pricing-fast-mode-caching"
+      ],
+      "note": "Claude Opus 5 with speed \"fast\" (research preview). Only today's pricing page (checked 2026-11-05) gives this fast-mode price ($10/$50 for Claude Opus 5 and Claude Opus 4.8); no dated source earlier in the window was found, so earlier fast turns price as unknown. Cache prices are derived: caching multipliers apply on top of fast mode pricing (pricing page); Anthropic does not print fast-mode cache prices. cacheWriteUsdPerM is the 5-minute write (1.25x input) and extendedCacheWriteUsdPerM the 1-hour write (2x input), as on the pricing page's table. Claude API (first-party), global routing; batch, data residency (1.1x), priority and cloud-platform prices are not modelled."
+    },
+    {
+      "id": "anthropic-api:claude-opus-5.5:2026-10-01",
+      "channel": "anthropic-api",
+      "modelId": "claude-opus-5.5",
+      "currency": "USD",
+      "effectiveFrom": "2026-10-01",
+      "tiers": [
+        {
+          "inputUsdPerM": 4,
+          "cachedInputUsdPerM": 0.2,
+          "cacheWriteUsdPerM": 5.0,
+          "extendedCacheWriteUsdPerM": 8,
+          "outputUsdPerM": 20
+        }
+      ],
+      "kind": "list",
+      "sourceIds": [
+        "anthropic-api-pricing-table",
+        "anthropic-api-pricing-cache-writes",
+        "anthropic-api-pricing-cache-reads",
+        "anthropic-api-news-opus-5-5"
+      ],
+      "note": "In force from 2026-10-01: a dated Anthropic source before that day gives this input/output price, today's pricing page lists the same, and the release notes record no change in between. Launched 2026-09-22 at $4/$20 with cache reads at $0.20 (0.05x). cacheWriteUsdPerM is the 5-minute write (1.25x input) and extendedCacheWriteUsdPerM the 1-hour write (2x input), as on the pricing page's table. Claude API (first-party), global routing; batch, data residency (1.1x), priority and cloud-platform prices are not modelled."
+    },
+    {
+      "id": "anthropic-api:claude-opus-5.5-fast:2026-10-01",
+      "channel": "anthropic-api",
+      "modelId": "claude-opus-5.5-fast",
+      "currency": "USD",
+      "effectiveFrom": "2026-10-01",
+      "tiers": [
+        {
+          "inputUsdPerM": 8,
+          "cachedInputUsdPerM": 0.4,
+          "cacheWriteUsdPerM": 10.0,
+          "extendedCacheWriteUsdPerM": 16,
+          "outputUsdPerM": 40
+        }
+      ],
+      "kind": "list",
+      "sourceIds": [
+        "anthropic-api-pricing-table",
+        "anthropic-api-pricing-cache-writes",
+        "anthropic-api-pricing-cache-reads",
+        "anthropic-api-pricing-fast-mode",
+        "anthropic-api-pricing-fast-mode-caching",
+        "anthropic-api-news-opus-5-5-fast"
+      ],
+      "note": "In force from 2026-10-01: a dated Anthropic source before that day gives this input/output price, today's pricing page lists the same, and the release notes record no change in between. Claude Opus 5.5 with speed \"fast\" (the -fast id follows github-copilot.json's claude-opus-4.8-fast); $8/$40 from its 2026-09-22 launch. Cache prices are derived: Anthropic says caching multipliers apply on top of fast mode pricing, and we assume Opus 5.5's 0.05x read multiplier applies too; Anthropic does not print fast-mode cache prices. cacheWriteUsdPerM is the 5-minute write (1.25x input) and extendedCacheWriteUsdPerM the 1-hour write (2x input), as on the pricing page's table. Claude API (first-party), global routing; batch, data residency (1.1x), priority and cloud-platform prices are not modelled."
+    },
+    {
+      "id": "anthropic-api:claude-sonnet-4.5:2026-10-01",
+      "channel": "anthropic-api",
+      "modelId": "claude-sonnet-4.5",
+      "currency": "USD",
+      "effectiveFrom": "2026-10-01",
+      "tiers": [
+        {
+          "inputUsdPerM": 3,
+          "cachedInputUsdPerM": 0.3,
+          "cacheWriteUsdPerM": 3.75,
+          "extendedCacheWriteUsdPerM": 6,
+          "outputUsdPerM": 15
+        }
+      ],
+      "kind": "list",
+      "sourceIds": [
+        "anthropic-api-pricing-table",
+        "anthropic-api-pricing-cache-writes",
+        "anthropic-api-pricing-cache-reads",
+        "anthropic-api-news-sonnet-4-5"
+      ],
+      "note": "In force from 2026-10-01: a dated Anthropic source before that day gives this input/output price, today's pricing page lists the same, and the release notes record no change in between. Launched 2025-09-29 at $3/$15; its 1M-context beta (with its long-context premium) was retired 2026-04-30, so requests are capped at 200k and there is no tier. Deprecated 2026-09-30, retiring 2026-11-30 (model deprecations page); a retirement isn't a price change, so the version is left open. cacheWriteUsdPerM is the 5-minute write (1.25x input) and extendedCacheWriteUsdPerM the 1-hour write (2x input), as on the pricing page's table. Claude API (first-party), global routing; batch, data residency (1.1x), priority and cloud-platform prices are not modelled."
+    },
+    {
+      "id": "anthropic-api:claude-sonnet-4.6:2026-10-01",
+      "channel": "anthropic-api",
+      "modelId": "claude-sonnet-4.6",
+      "currency": "USD",
+      "effectiveFrom": "2026-10-01",
+      "tiers": [
+        {
+          "inputUsdPerM": 3,
+          "cachedInputUsdPerM": 0.3,
+          "cacheWriteUsdPerM": 3.75,
+          "extendedCacheWriteUsdPerM": 6,
+          "outputUsdPerM": 15
+        }
+      ],
+      "kind": "list",
+      "sourceIds": [
+        "anthropic-api-pricing-table",
+        "anthropic-api-pricing-cache-writes",
+        "anthropic-api-pricing-cache-reads",
+        "anthropic-api-news-sonnet-4-6"
+      ],
+      "note": "In force from 2026-10-01: a dated Anthropic source before that day gives this input/output price, today's pricing page lists the same, and the release notes record no change in between. Launched 2026-02-17 at $3/$15; full 1M context at standard pricing (pricing page, long context). cacheWriteUsdPerM is the 5-minute write (1.25x input) and extendedCacheWriteUsdPerM the 1-hour write (2x input), as on the pricing page's table. Claude API (first-party), global routing; batch, data residency (1.1x), priority and cloud-platform prices are not modelled."
+    },
+    {
+      "id": "anthropic-api:claude-sonnet-5:2026-10-01",
+      "channel": "anthropic-api",
+      "modelId": "claude-sonnet-5",
+      "currency": "USD",
+      "effectiveFrom": "2026-10-01",
+      "tiers": [
+        {
+          "inputUsdPerM": 2,
+          "cachedInputUsdPerM": 0.2,
+          "cacheWriteUsdPerM": 2.5,
+          "extendedCacheWriteUsdPerM": 4,
+          "outputUsdPerM": 10
+        }
+      ],
+      "kind": "list",
+      "sourceIds": [
+        "anthropic-api-pricing-table",
+        "anthropic-api-pricing-cache-writes",
+        "anthropic-api-pricing-cache-reads",
+        "anthropic-api-notes-2026-08-10-sonnet-5"
+      ],
+      "note": "In force from 2026-10-01: a dated Anthropic source before that day gives this input/output price, today's pricing page lists the same, and the release notes record no change in between. Introductory $2/$10 made the standard price on 2026-08-10; the planned 2026-09-01 rise to $3/$15 did not happen. cacheWriteUsdPerM is the 5-minute write (1.25x input) and extendedCacheWriteUsdPerM the 1-hour write (2x input), as on the pricing page's table. Claude API (first-party), global routing; batch, data residency (1.1x), priority and cloud-platform prices are not modelled."
+    },
+    {
+      "id": "anthropic-api:claude-sonnet-5.5:2026-10-01",
+      "channel": "anthropic-api",
+      "modelId": "claude-sonnet-5.5",
+      "currency": "USD",
+      "effectiveFrom": "2026-10-01",
+      "effectiveTo": "2026-10-07",
+      "tiers": [
+        {
+          "inputUsdPerM": 2,
+          "cachedInputUsdPerM": 0.2,
+          "cacheWriteUsdPerM": 2.5,
+          "extendedCacheWriteUsdPerM": 4,
+          "outputUsdPerM": 10
+        }
+      ],
+      "kind": "list",
+      "sourceIds": [
+        "anthropic-api-pricing-table",
+        "anthropic-api-pricing-cache-writes",
+        "anthropic-api-pricing-cache-reads",
+        "anthropic-api-news-sonnet-5-5",
+        "anthropic-api-notes-2026-10-07-sonnet-5-5-cache",
+        "anthropic-api-news-haiku-5-5-sonnet-cut"
+      ],
+      "note": "Launched 2026-09-28 at $2/$10; cache reads were $0.20 (0.1x) until the 2026-10-07 cut, per the release notes, which also say cache writes and all other prices were unchanged. The Sonnet 5.5 announcement page now shows the later $0.10 read price. The cut's time of day isn't published; the boundary is 2026-10-07 00:00 UTC. cacheWriteUsdPerM is the 5-minute write (1.25x input) and extendedCacheWriteUsdPerM the 1-hour write (2x input), as on the pricing page's table. Claude API (first-party), global routing; batch, data residency (1.1x), priority and cloud-platform prices are not modelled."
+    },
+    {
+      "id": "anthropic-api:claude-sonnet-5.5:2026-10-07",
+      "channel": "anthropic-api",
+      "modelId": "claude-sonnet-5.5",
+      "currency": "USD",
+      "effectiveFrom": "2026-10-07",
+      "tiers": [
+        {
+          "inputUsdPerM": 2,
+          "cachedInputUsdPerM": 0.1,
+          "cacheWriteUsdPerM": 2.5,
+          "extendedCacheWriteUsdPerM": 4,
+          "outputUsdPerM": 10
+        }
+      ],
+      "kind": "list",
+      "sourceIds": [
+        "anthropic-api-pricing-table",
+        "anthropic-api-pricing-cache-writes",
+        "anthropic-api-pricing-cache-reads",
+        "anthropic-api-notes-2026-10-07-sonnet-5-5-cache",
+        "anthropic-api-news-haiku-5-5-sonnet-cut"
+      ],
+      "note": "Cache reads cut to $0.10 (0.05x) on 2026-10-07 (\"starting today\"); everything else unchanged. The cut's time of day isn't published; the boundary is 2026-10-07 00:00 UTC. cacheWriteUsdPerM is the 5-minute write (1.25x input) and extendedCacheWriteUsdPerM the 1-hour write (2x input), as on the pricing page's table. Claude API (first-party), global routing; batch, data residency (1.1x), priority and cloud-platform prices are not modelled."
+    }
+  ]
+}

@@ -82,7 +82,7 @@ describe("get_price_book", () => {
   it("lists every version with its sources and checkedAt, the user's contract marked as such", async () => {
     const listing = await call({});
 
-    expect(listing.channels).toEqual(["acme-reseller", "github-copilot"]);
+    expect(listing.channels).toEqual(expect.arrayContaining(["acme-reseller", "github-copilot"]));
     expect(listing.versions.length).toBeGreaterThan(20);
     expect(listing.sources.every((source) => /^\d{4}-\d{2}-\d{2}$/.test(source.checkedAt))).toBe(true);
     expect(listing.versions.find((version) => version.origin === "user")).toMatchObject({ kind: "contract", id: contract.id });
