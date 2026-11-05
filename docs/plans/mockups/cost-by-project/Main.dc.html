@@ -56,8 +56,8 @@ a{color:#416180}a:hover{color:#2c455d}
     </div>
 
     <div style="flex-grow: 1; min-height: 0; display: flex; gap: 20px">
-      <aside aria-label="Filters" style="width: 232px; flex-shrink: 0; display: flex; flex-direction: column; gap: 12px; overflow: hidden">
-        <sc-for list="{{boxes}}" as="box" hint-placeholder-count="5">
+      <aside aria-label="Filters" style="width: 232px; flex-shrink: 0; display: flex; flex-direction: column; gap: 12px; overflow-y: auto; padding: 6px 6px 6px 6px; margin: -6px">
+        <sc-for list="{{boxes}}" as="box" hint-placeholder-count="6">
           <section class="bp" style="padding: 8px 10px; display: flex; flex-direction: column; gap: 2px">
             <h2 style="margin: 0 0 4px; font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 15px">{{box.title}}</h2>
             <sc-for list="{{box.items}}" as="it" hint-placeholder-count="4">
@@ -116,18 +116,35 @@ a{color:#416180}a:hover{color:#2c455d}
                 </sc-for>
                 <line x1="{{m1x}}" x2="{{m1x}}" y1="40" y2="350" stroke="rgba(29,31,32,.6)" stroke-width="1"></line>
                 <line x1="{{m2x}}" x2="{{m2x}}" y1="40" y2="350" stroke="rgba(29,31,32,.6)" stroke-width="1" stroke-dasharray="4 3"></line>
-                <line x1="{{hx}}" x2="{{hx}}" y1="40" y2="350" stroke="rgba(29,31,32,.35)" stroke-width="1"></line>
+                <line x1="{{hx}}" x2="{{hx}}" y1="40" y2="350" stroke="{{crossStroke}}" stroke-width="1"></line>
                 <sc-for list="{{lines}}" as="ln" hint-placeholder-count="3">
                   <path d="{{ln.d}}" fill="none" stroke="{{ln.color}}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"></path>
                   <circle cx="{{ln.ex}}" cy="{{ln.ey}}" r="4" fill="{{ln.color}}" stroke="#f2f2f3" stroke-width="2"></circle>
-                  <circle cx="{{ln.hxp}}" cy="{{ln.hy}}" r="4" fill="{{ln.color}}" stroke="#f2f2f3" stroke-width="2"></circle>
+                  <circle cx="{{ln.hxp}}" cy="{{ln.hy}}" r="{{ln.hr}}" fill="{{ln.color}}" stroke="#f2f2f3" stroke-width="2"></circle>
                   <text x="{{ln.lx}}" y="{{ln.ly}}" font-size="12" fill="#1d1f20">{{ln.name}}</text>
                   <text x="{{ln.lx}}" y="{{ln.ly2}}" font-size="12" fill="#5b5c5e" style="font-variant-numeric: tabular-nums">{{ln.last}}</text>
                 </sc-for>
                 <text x="{{gapX}}" y="{{gapY}}" text-anchor="middle" font-size="11" fill="#5b5c5e">no priced turns</text>
               </svg>
-              <button aria-label="Price change on Sep 1: Claude Sonnet 5.5, input and output 20 percent lower. Documented. Source: GitHub Copilot models and pricing." style="position: absolute; left: {{m1tag}}; top: 6px; height: 24px; padding: 0 8px; border: 1px solid #1d1f20; border-radius: 3px; background: #f2f2f3; color: #1d1f20; font: inherit; font-size: 12px; white-space: nowrap; cursor: pointer">Price · Claude Sonnet 5.5 −20%</button>
+              <button aria-label="Price change on Sep 1: Claude Sonnet 5.5, input and output 20 percent lower. Documented. Source: GitHub Copilot models and pricing." aria-describedby="{{markerTipId}}" style="position: absolute; left: {{m1tag}}; top: 6px; height: 24px; padding: 0 8px; border: 1px solid #1d1f20; border-radius: 3px; background: #f2f2f3; color: #1d1f20; font: inherit; font-size: 12px; white-space: nowrap; cursor: pointer; outline: {{markerFocus}}; outline-offset: 2px">Price · Claude Sonnet 5.5 −20%</button>
+              <sc-if value="{{showMarkerTip}}" hint-placeholder-val="{{false}}">
+                <div id="price-tip" role="tooltip" style="position: absolute; left: {{m1tipLeft}}; top: 38px; width: 300px; padding: 10px 12px; background: #1d1f20; color: #f2f2f3; border-radius: 4px; font-size: 12px; display: flex; flex-direction: column; gap: 6px; box-shadow: 0 3px 10px rgba(43,43,45,.16)">
+                  <span style="display: flex; flex-direction: column; gap: 1px"><strong style="font-weight: 600; font-size: 13px">Price change · Sep 1, 2026</strong><span style="color: #c9cacc">Claude Sonnet 5.5 · GitHub Copilot · documented</span></span>
+                  <table style="border-collapse: collapse; font-size: 12px">
+                    <caption style="position: absolute; width: 1px; height: 1px; overflow: hidden">Unit prices before and after, USD per million tokens</caption>
+                    <thead><tr><th scope="col" style="text-align: left; font-weight: 400; color: #c9cacc; padding: 2px 0">USD / 1M tokens</th><th scope="col" style="text-align: right; font-weight: 400; color: #c9cacc; padding: 2px 0 2px 10px">Before</th><th scope="col" style="text-align: right; font-weight: 400; color: #c9cacc; padding: 2px 0 2px 10px">After</th><th scope="col" style="text-align: right; font-weight: 400; color: #c9cacc; padding: 2px 0 2px 10px">Change</th></tr></thead>
+                    <tbody>
+                      <sc-for list="{{priceRows}}" as="pr" hint-placeholder-count="4">
+                        <tr><th scope="row" style="text-align: left; font-weight: 400; padding: 2px 0">{{pr.k}}</th><td class="num" style="text-align: right; padding: 2px 0 2px 10px">{{pr.before}}</td><td class="num" style="text-align: right; padding: 2px 0 2px 10px">{{pr.after}}</td><td class="num" style="text-align: right; padding: 2px 0 2px 10px">{{pr.change}}</td></tr>
+                      </sc-for>
+                    </tbody>
+                  </table>
+                  <span style="color: #c9cacc">Source: GitHub Copilot models and pricing, checked Sep 2, 2026 · price version github-copilot:claude-sonnet-5-5:2026-09-01</span>
+                  <span style="color: #c9cacc">Enter opens the price book · Escape closes</span>
+                </div>
+              </sc-if>
               <button aria-label="Observed on Oct 6: GPT-5.5 billed 12 percent above the price book. Inferred, not a documented price change." style="position: absolute; left: {{m2tag}}; top: 6px; height: 24px; padding: 0 8px; border: 1px dashed #1d1f20; border-radius: 3px; background: #f2f2f3; color: #1d1f20; font: inherit; font-size: 12px; white-space: nowrap; cursor: pointer">Observed · GPT-5.5 billed +12%</button>
+              <sc-if value="{{showPointTip}}" hint-placeholder-val="{{true}}">
               <div role="tooltip" style="position: absolute; left: {{tipLeft}}; top: 92px; width: 230px; padding: 8px 10px; background: #1d1f20; color: #f2f2f3; border-radius: 4px; font-size: 12px; display: flex; flex-direction: column; gap: 3px; box-shadow: 0 3px 10px rgba(43,43,45,.16)">
                 <strong style="font-weight: 600">Week of Oct 20</strong>
                 <sc-for list="{{tipRows}}" as="tr" hint-placeholder-count="3">
@@ -135,6 +152,7 @@ a{color:#416180}a:hover{color:#2c455d}
                 </sc-for>
                 <span style="color: #c9cacc">Coverage 97% · 2 price versions</span>
               </div>
+              </sc-if>
             </div>
           </sc-if>
 
@@ -146,10 +164,18 @@ a{color:#416180}a:hover{color:#2c455d}
                     <line x1="60" x2="930" y1="{{g.y}}" y2="{{g.y}}" stroke="rgba(29,31,32,.10)" stroke-width="1"></line>
                     <text x="52" y="{{g.ty}}" text-anchor="end" font-size="11" fill="#5b5c5e">{{g.label}}</text>
                   </sc-for>
+                  <defs>
+                    <pattern id="hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+                      <rect width="6" height="6" fill="#f2f2f3"></rect>
+                      <line x1="0" y1="0" x2="0" y2="6" stroke="#416180" stroke-width="2"></line>
+                    </pattern>
+                  </defs>
                   <sc-for list="{{bars}}" as="b" hint-placeholder-count="13">
                     <path d="{{b.d}}" fill="#5980a6"></path>
                     <text x="{{b.x}}" y="262" text-anchor="middle" font-size="11" fill="#5b5c5e">{{b.label}}</text>
                   </sc-for>
+                  <rect x="{{capX}}" y="{{capY}}" width="24" height="14" rx="4" fill="url(#hatch)" stroke="#416180" stroke-width="1"></rect>
+                  <text x="{{capCx}}" y="{{capLy}}" text-anchor="middle" font-size="11" fill="#1d1f20">85%</text>
                   <line x1="{{m1x}}" x2="{{m1x}}" y1="36" y2="240" stroke="rgba(29,31,32,.6)" stroke-width="1"></line>
                   <line x1="{{m2x}}" x2="{{m2x}}" y1="36" y2="240" stroke="rgba(29,31,32,.6)" stroke-width="1" stroke-dasharray="4 3"></line>
                 </svg>
@@ -198,11 +224,13 @@ a{color:#416180}a:hover{color:#2c455d}
   </div>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"series":{"editor":"enum","options":["one","three","many"],"default":"three"},"scale":{"editor":"enum","options":["shared","own"],"default":"shared"},"$preview":{"width":1440,"height":900}}'>
+<script type="text/x-dc" data-dc-script data-props='{"series":{"editor":"enum","options":["one","three","many"],"default":"three"},"scale":{"editor":"enum","options":["shared","own"],"default":"shared"},"tooltip":{"editor":"enum","options":["point","price-marker"],"default":"point"},"$preview":{"width":1440,"height":900}}'>
 class Component extends DCLogic {
   renderVals() {
     var series = this.props.series ?? 'three';
     var scale = this.props.scale ?? 'shared';
+    var tooltip = this.props.tooltip ?? 'point';
+    var markerTip = tooltip === 'price-marker';
     var weeks = ['Aug 4','Aug 11','Aug 18','Aug 25','Sep 1','Sep 8','Sep 15','Sep 22','Sep 29','Oct 6','Oct 13','Oct 20','Oct 27'];
     var SERIES = ['#2a78d6','#eb6834','#1baf7a','#eda100','#e87ba4'];
     var projects = [
@@ -237,7 +265,7 @@ class Component extends DCLogic {
     var lines = three.map(function (p) {
       var last = p.vals[12];
       return { name: p.name, color: p.color, d: path(p.vals, x, y3), ex: x(12), ey: y3(last), hxp: x(11), hy: y3(p.vals[11]),
-        lx: x(12) + 12, ly: y3(last) - 2, ly2: y3(last) + 13, last: fmt(last) };
+        lx: x(12) + 12, ly: y3(last) - 2, ly2: y3(last) + 13, last: fmt(last), hr: markerTip ? 0 : 4 };
     });
     var tipRows = three.map(function (p) { return { name: p.name, color: p.color, value: fmt(p.vals[11]) }; });
 
@@ -250,6 +278,8 @@ class Component extends DCLogic {
       return { x: cx, label: i % 2 === 0 ? weeks[i] : '',
         d: 'M' + x0 + ' ' + base + ' V' + (top + 4) + ' Q' + x0 + ' ' + top + ' ' + (x0 + 4) + ' ' + top + ' H' + (x1 - 4) + ' Q' + x1 + ' ' + top + ' ' + x1 + ' ' + (top + 4) + ' V' + base + ' Z' };
     });
+    // Week of Sep 22 (index 7): 85% of its turns priced, so its column gets a hatched cap.
+    var capTop = y1(cp.vals[7]);
     var run = [], acc = 0;
     cp.vals.forEach(function (v) { acc += v; run.push(acc); });
     var yr = yOf(64000, 14, 76);
@@ -281,6 +311,7 @@ class Component extends DCLogic {
       box('Project', projItems),
       box('Repository', [item('example/portal-web', '31,240', 'pos'), item('example/platform · portal-api', '28,060', 'pos'), item('example/billing-api', '36,400', 'pos'), item('example/infra · portal/*', '1,000', 'pos'), item('example/docs-site', '3,802', 'exc')]),
       box('Vendor', [item('Anthropic', '71,500', 'pos'), item('OpenAI', '35,430', 'pos'), item('Google', '7,470', 'pos'), item('xAI', '—', 'exc')]),
+      box('Channel', [item('GitHub Copilot', '97,830', 'pos'), item('Anthropic API', '12,390', 'pos'), item('OpenAI API', '4,180', 'pos')]),
       box('Cost basis', [item('Billed', '97,830', 'pos'), item('Reported', '4,180', 'pos'), item('Priced', '12,390', 'pos')]),
       box('Provider', [item('VS Code', '97,830', 'pos'), item('Claude Code', '12,390', 'pos'), item('pi', '4,180', 'pos'), item('mitmproxy', 'unknown', 'exc')])
     ];
@@ -303,11 +334,23 @@ class Component extends DCLogic {
       gapX: x(7), gapY: y3(1050) + 18,
       ariaThree: 'Line chart of weekly cost in AI Credits for three projects, Aug 4 to Oct 27. Customer portal ends at ' + fmt(6100) + ', Billing service at ' + fmt(3800) + ', Internal tools at ' + fmt(2000) + '; Internal tools has no priced turns in the week of Sep 22. Price change markers on Sep 1 and Oct 6.',
       gridOne: gridOne, bars: bars,
-      ariaOne: 'Column chart of weekly cost in AI Credits for Customer portal, Aug 4 to Oct 27, from ' + fmt(3800) + ' to ' + fmt(6100) + '.',
+      capX: x(7) - 12, capY: capTop - 16, capCx: x(7), capLy: capTop - 21,
+      showPointTip: !markerTip, showMarkerTip: markerTip, markerTipId: markerTip ? 'price-tip' : '',
+      markerFocus: markerTip ? '2px solid #416180' : 'none', crossStroke: markerTip ? 'transparent' : 'rgba(29,31,32,.35)',
+      m1tipLeft: (x(4) - 4) + 'px',
+      priceRows: [
+        { k: 'Input', before: '3.00', after: '2.40', change: '−20%' },
+        { k: 'Cached input', before: '0.30', after: '0.24', change: '−20%' },
+        { k: 'Cache write', before: '3.75', after: '3.00', change: '−20%' },
+        { k: 'Output', before: '15.00', after: '12.00', change: '−20%' }
+      ],
+      ariaOne: 'Column chart of weekly cost in AI Credits for Customer portal, Aug 4 to Oct 27, from ' + fmt(3800) + ' to ' + fmt(6100) + '. The week of Sep 22 has 85% of its turns priced.',
       ariaRun: 'Running total for Customer portal, reaching ' + fmt(run[12]) + ' AI Credits.',
       runD: runD, runEx: x(12), runEy: yr(run[12]), runLx: x(12) + 12, runLy: yr(run[12]) + 4, runLast: fmt(run[12]), runMaxLabel: fmt0(64000),
       panels: panels,
-      footnote: series === 'many'
+      footnote: series === 'one'
+        ? 'Hatched cap: a week with partial coverage (Sep 22, 85% of turns priced); its known cost is the column, and the tooltip and table give the coverage. Solid marker: documented price change; dashed: observed, inferred.'
+        : series === 'many'
         ? 'Past four series the lines are not overlaid: one panel per project, on a shared y-scale unless Own scale is chosen. Solid hairline: documented price change on Sep 1.'
         : 'Solid marker: documented price change (price book). Dashed marker: observed from billed figures, inferred. A week whose cost is all unknown is a gap, never 0. Coverage is on every point in the table view and the tooltip.'
     };

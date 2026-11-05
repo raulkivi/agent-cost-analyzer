@@ -167,9 +167,34 @@ a{color:#416180}a:hover{color:#2c455d}
       <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 4px"><button class="btn">Cancel</button><button class="btn btn-p">Issue statement</button></div>
     </div>
   </sc-if>
+
+  <sc-if value="{{isExport}}" hint-placeholder-val="{{false}}">
+    <div aria-hidden="true" style="position: absolute; inset: 0; background: rgba(29,31,32,.40)"></div>
+    <div role="dialog" aria-modal="true" aria-labelledby="ex-h" style="position: absolute; left: 330px; top: 110px; width: 780px; height: 680px; box-sizing: border-box; padding: 20px 22px; background: #f2f2f3; border: 1px solid rgba(29,31,32,.16); box-shadow: 0 12px 32px rgba(43,43,45,.22); display: flex; flex-direction: column; gap: 12px">
+      <div style="display: flex; align-items: flex-start; gap: 12px">
+        <div style="display: flex; flex-direction: column; gap: 2px"><span class="kicker">Export · draft statement</span><h2 id="ex-h" class="ttl" style="margin: 0; font-size: 22px">Customer portal · October 2026</h2></div>
+        <button class="btn" aria-label="Close export (Escape)" style="margin-left: auto; width: 32px; padding: 0; justify-content: center"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"></path></svg></button>
+      </div>
+      <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px 20px; font-size: 13px">
+        <div style="display: flex; align-items: center; gap: 8px"><span id="fmt-l">Format</span><div class="seg" role="radiogroup" aria-labelledby="fmt-l"><label><input type="radio" name="fmt">CSV · lines</label><label><input type="radio" name="fmt">JSON · full</label><label class="on"><input type="radio" name="fmt" checked>Markdown · for an email</label></div></div>
+        <label style="display: flex; align-items: center; gap: 6px"><input type="checkbox" checked>Include session titles</label>
+        <label style="display: flex; align-items: center; gap: 6px"><input type="checkbox" checked>Include the EUR total</label>
+      </div>
+      <p class="muted" style="margin: 0; font-size: 12px">Exports never contain message text. Session ids are in the JSON export; titles can be left out. A draft export is marked as a draft.</p>
+      <figure style="margin: 0; flex-grow: 1; min-height: 0; display: flex; flex-direction: column; gap: 4px">
+        <figcaption class="muted" style="font-size: 12px; margin: 0">Preview</figcaption>
+        <pre style="margin: 0; flex-grow: 1; min-height: 0; overflow: auto; padding: 12px 14px; background: #e7e7ea; border: 1px solid rgba(29,31,32,.16); font-family: ui-monospace, monospace; font-size: 12px; line-height: 1.55; white-space: pre-wrap">{{exportPreview}}</pre>
+      </figure>
+      <div style="display: flex; align-items: center; gap: 8px">
+        <span role="status" class="muted" style="font-size: 12px">customer-portal-2026-10-draft.md · 2.1 KB</span>
+        <button class="btn" style="margin-left: auto">Copy</button>
+        <button class="btn btn-p">Save…</button>
+      </div>
+    </div>
+  </sc-if>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"state":{"editor":"enum","options":["draft","confirm","frozen"],"default":"draft"},"$preview":{"width":1440,"height":900}}'>
+<script type="text/x-dc" data-dc-script data-props='{"state":{"editor":"enum","options":["draft","confirm","frozen","export"],"default":"draft"},"$preview":{"width":1440,"height":900}}'>
 class Component extends DCLogic {
   renderVals() {
     var state = this.props.state ?? 'draft';
@@ -203,8 +228,22 @@ class Component extends DCLogic {
       { period: 'August 2026', total: '$341.02', note: 'Issued Sep 1, 2026 10:40 · price book corrected Sep 20', differs: true },
       { period: 'July 2026', total: '$296.75', note: 'Issued Aug 3, 2026 08:55', differs: false }
     ];
+    var md = [
+      '# Customer portal · October 2026 (draft)',
+      '',
+      'Client: Example Ltd · Billing code EX-2026-07',
+      'Period: 1–31 October 2026, Europe/Tallinn',
+      '',
+      '| Channel | Model | Basis | Amount | USD |',
+      '|---|---|---|---:|---:|'
+    ];
+    lines.forEach(function (l) { md.push('| ' + l.channel + ' | ' + l.model + ' | ' + l.basis + ' | ' + l.amount + ' | ' + l.usd + ' |'); });
+    md.push('', '18 turns have unknown cost (no price for gpt-6-luna before Nov 1, 2026) and are not included.', '');
+    totals.forEach(function (t) { md.push('- ' + t.k + ': ' + t.v); });
+    md.push('', '1 AI Credit = $0.01 (GitHub Copilot pricing). EUR at a fixed rate of 0.92 entered for this statement.', 'Price book 2026-11-01 · 214 sessions · generated Nov 5, 2026 by Agent Cost Analyzer.');
     return {
-      isConfirm: state === 'confirm', isFrozen: state === 'frozen', canIssue: state !== 'frozen',
+      isConfirm: state === 'confirm', isFrozen: state === 'frozen', isExport: state === 'export', canIssue: state !== 'frozen',
+      exportPreview: md.join('\n'),
       kicker: state === 'frozen' ? 'Statement · issued Nov 3, 2026 14:05' : 'Draft statement',
       lines: lines, totals: totals, issued: issued, grand: '$' + fmt(grand)
     };

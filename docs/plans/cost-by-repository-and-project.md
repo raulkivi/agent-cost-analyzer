@@ -898,17 +898,17 @@ the owner shares it from the page's Share menu; reviewers comment on the
 canvas. The versioned copies are in
 [mockups/cost-by-project/](mockups/cost-by-project/) (`.dc.html` files
 rendered by the canvas, not standalone pages). All numbers on the boards
-are sample data. Three boards have a tweak: board 1 switches between one,
-three and many series, board 4 between the draft, confirm and frozen
-states, and board 7 between Dark Modern, Light Modern and High Contrast.
+are sample data. Three boards have tweaks: board 1 switches between one,
+three and many series and between the point and price-marker tooltips,
+board 4 between the draft, confirm, frozen and export states, and board 7 between Dark Modern, Light Modern and High Contrast.
 
 | Board | File | Shows | Plan |
 |---|---|---|---|
-| 1 | `Main.dc.html` | Cost over time: filters row, KPI tiles with coverage, three projects as lines with direct labels, a documented (solid) and an observed (dashed) price marker, a hover tooltip, an unknown week as a gap; one series as columns plus a separate running total; five series as small multiples with shared or own scale | §11.2 |
+| 1 | `Main.dc.html` | Cost over time: Project, Repository, Vendor, Channel, Cost basis and Provider list boxes; filters row, KPI tiles with coverage, three projects as lines with direct labels, a documented (solid) and an observed (dashed) price marker, an unknown week as a gap; a tooltip tweak shows either the point tooltip or the focused price marker's tooltip (unit prices before and after, source, price version); one series as columns with a hatched cap on a partly covered week, plus a separate running total; five series as small multiples with shared or own scale | §11.1, §11.2 |
 | 2a | `Compare.dc.html` | Compare table with Columns and Export, indexed line chart, share-of-total bars | §11.3 |
 | 2b | `CompareNarrow.dc.html` | 640 px: view select, priority columns, Filters button, details drawer | §11.3, vscode-extension.md §3.5 Layout |
 | 3 | `Project.dc.html` | Vendor bars (selectable), models and token types as two charts, August-to-October waterfall with a table, billed-vs-priced finding and per-model gap table | §11.4, §8.4, §6.4 |
-| 4 | `Billing.dc.html` | Draft statement with unknown-cost row, totals, markup, fixed line, fixed-rate EUR, provenance; issue confirmation; frozen with "Differs from issued"; estimate range; issued list | §11.5, §8.5, §8.6 |
+| 4 | `Billing.dc.html` | Draft statement with unknown-cost row, totals, markup, fixed line, fixed-rate EUR, provenance; issue confirmation; frozen with "Differs from issued"; export dialog (CSV, JSON or Markdown, session titles optional, preview, Copy and Save); estimate range; issued list | §11.5, §8.5, §8.6 |
 | 5 | `Projects.dc.html` | Unassigned repositories first with a Project select per row, alias and capture-rule cases, project cards with member scopes, an exact-tie error inline and in a summary, Save disabled | §11.5, §7, D1 |
 | 6 | `States.dc.html` | Loading skeleton with Cancel, two empty states, partial, error, stale price book | §11.5 |
 | 7 | `VsCode.dc.html` | Sessions tree grouped by repository, status bar with tooltip, compact Cost over time tab | §11.9 |
