@@ -103,7 +103,8 @@ content here.
   owner's manual check passed; 10.15 (cache-write and reasoning tokens for
   Agent Host sessions, from the event log's usage records) done, owner's manual check passed; 10.16 (UI automation
   of the manual checks in a real VS Code with `wdio-vscode-service`, `test/ui/`, informational `extension-ui` CI
-  job; see docs/plans/vscode-ui-automation.md §6) code done, owner's decisions open. Release prep
+  job; see docs/plans/vscode-ui-automation.md §6) merged (#117, #121, #127), owner's decisions open. A
+  proposed plan for classic Copilot Chat subagent AI Credits is in docs/plans/classic-subagent-credits.md. Release prep
   is merged (#90), and publishing setup is done (the Open VSX
   ownership claim was granted 2026-10-28); 0.1.0 is released (tag `ext-v0.1.0`, 2026-11-03,
   on the Marketplace and Open VSX; some VS Code manual checks stay open, see

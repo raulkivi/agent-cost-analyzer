@@ -1,7 +1,9 @@
 # AI Credits of classic Copilot Chat subagents
 
-Status: **proposed** (design only, not started). Not yet a numbered step;
-see open question 9.
+Status: **proposed** (design only, not started; plan merged in #124). Not
+yet a numbered step; see open question 9. `ext-v0.1.0` shipped on
+2026-11-03 without this fix, so classic-harness totals that omit subagent
+spend stay partial until it lands (a 0.1.x or 0.2.0 change).
 
 ## 1. Context
 
@@ -408,6 +410,6 @@ model (owner, 2026-10-29: Claude subagents only in this repo).
    session total into unknown (R2)?
 8. **Free runs.** Show `searchSubagent` runs with 0.00 AI Credits in the
    breakdown, or hide 0-credit runs?
-9. **Scheduling.** Make this a numbered step (for example 10.17) and land
-   it before the extension's 0.1.0 release, since the extension's totals
-   are wrong without it?
+9. **Scheduling.** Make this a numbered step (for example 10.17)? The
+   0.1.0 release has shipped without it, so the question is now which
+   release carries it (0.1.x or 0.2.0, which Phase 13 also targets).

@@ -1,7 +1,9 @@
 # Phase 13: Vendor-aware Learn simulation
 
 Status: **In progress** (planned 2026-11-03; step 13.0 started 2026-11-04,
-after `ext-v0.1.0` was tagged). It ships in extension 0.2.0. The owner's decisions
+after `ext-v0.1.0` was tagged). As of 2026-11-05 the rule register is
+drafted, verified and has the owner's decisions recorded (#115, #116,
+#120, #123); steps 13.1-13.10 are not started. It ships in extension 0.2.0. The owner's decisions
 from the 2026-11-03 interview are recorded in [§9](#9-decisions). In short:
 - simulate **every Copilot vendor whose caching is documented** (Anthropic,
   OpenAI, Google, xAI);
@@ -359,7 +361,7 @@ committed once its exit criterion holds.
 | Extension bundle size | Profiles are small JSON; covered by the existing bundle-size test |
 | Real captures leak content | Calibration fixtures keep only token sizes, gaps and event types; redaction reuses the existing redactor and is tested |
 | GitHub renames the price table or changes its format | The weekly workflow fails loudly (issue titled "price diff failed") instead of reporting "no changes" |
-| Phase 10's 0.1.0 release is still open | Phase 13 starts after `ext-v0.1.0` is tagged and ships in 0.2.0 (§9 D6) |
+| Phase 10's 0.1.0 release is still open | Resolved: `ext-v0.1.0` was tagged 2026-11-03; Phase 13 ships in 0.2.0 (§9 D6) |
 
 ## 9. Decisions
 
