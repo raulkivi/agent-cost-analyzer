@@ -1472,8 +1472,9 @@ extension), and extension grouping by repository.
 **Dependencies**: Phase 9.11 (insights dataset) for steps 15.1–15.4 and
 15.8; Phase 13 step 13.2 (vendor price data) for steps 15.5 onwards.
 
-**Status (2026-11-05)**: step 15.1 (workspace and turn-time capture in
-every provider) is done. Planned otherwise; the owner accepted every recommended
+**Status (2026-11-05)**: steps 15.1 (workspace and turn-time capture in
+every provider) and 15.2 (repository resolver and remote URL normaliser)
+are done. Planned otherwise; the owner accepted every recommended
 decision (D1–D10, plan §13). The UI is a set of new Dashboard tabs built on
 the existing design system, UX standards and chart kit (plan §11), with a
 mock-up review gate (step 15.8) before any UI code. The mock-ups are drawn (2026-11-05,

@@ -309,6 +309,22 @@ type SessionWorkspace =
 // - pi: the session header's cwd (no branch); SessionEntryBase.timestamp.
 // - mitmproxy: unknown (captures record no folder); each entry's
 //   startedDateTime.
+
+// Phase 15 step 15.2 (plans/cost-by-repository-and-project.md §4.2): the
+// repository a workspace belongs to, resolved from files only (no git
+// process). key: a normalised remote ("github.com/org/app"),
+// "local:<main repository root>", "repository:<recorded name>" or
+// "path:<folder>"; credentials are dropped before a key is built.
+interface RepositoryRef {
+  key: string;
+  source: "git-remote" | "git-local" | "recorded-repository" | "folder-path";
+  rootPath?: string;
+  pathInRepo?: string; // relative; "" is the root
+  branch?: string;
+}
+type RepositoryAttribution =
+  | { attributed: true; repository: RepositoryRef }
+  | { attributed: false; reason: string };
 ```
 
 Log-provider selection is a separate app-level contract, not a provider-

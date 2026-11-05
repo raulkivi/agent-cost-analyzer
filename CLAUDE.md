@@ -117,5 +117,8 @@ content here.
   decisions D1–D10 are recorded; step 15.8's mock-ups are drawn
   (docs/plans/mockups/cost-by-project/) and await the owner's review;
   step 15.1 is done (`Session.workspace`, `Turn.startedAt`, and
-  `Turn.workspace` for Claude Code, from every provider; plan §14.1). The progress table and per-step
+  `Turn.workspace` for Claude Code, from every provider) and step 15.2
+  (`RepositoryResolver` and `RemoteUrlNormalizer` in
+  `packages/server/src/services/cost-attribution/`, not yet wired in) are
+  done; plan §14.1. The progress table and per-step
   status notes are in docs/plans/vscode-extension.md.

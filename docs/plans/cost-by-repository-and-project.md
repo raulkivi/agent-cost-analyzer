@@ -154,10 +154,12 @@ repository name) into a `RepositoryRef`. It reads files only. It never runs
 3. With no remote, the key is `local:<absolute path of the main
    repository root>`.
 4. If the folder no longer exists, use the provider's recorded repository
-   name (VS Code session store) if there is one; otherwise key the session
-   by its folder path, `path:<cwd>`, marked `confidence: "inferred"`.
-   The user can merge such a key into a real repository with an alias
-   (§7).
+   name (VS Code session store) if there is one: a full remote (with or
+   without a scheme) keys like one; a plain `owner/name` keys as
+   `repository:<name>`; anything else is ignored. Otherwise key the session
+   by its folder path, `path:<cwd>`, with `source: "folder-path"`. An
+   existing folder outside any repository keys the same way. The user can
+   merge such a key into a real repository with an alias (§7).
 5. No folder at all: **Unattributed**, with the reason (for example
    "mitmproxy captures do not record a working folder").
 
@@ -1073,7 +1075,7 @@ No UI code (15.9 onwards) starts before the mock-ups in 15.8 are approved.
 |---|---|---|
 | 15.0 | Threat-model rows for the two new write endpoints (D1–D10 already recorded in §13) | Threat model updated |
 | 15.1 | **Workspace capture**: `Session.workspace`, `Turn.startedAt` (and per-turn workspace for Claude Code) in every provider; verify classic VS Code chat's folder source | Each provider's fixture test yields folder, branch and turn times; mitmproxy reports Unattributed with a reason Done 2026-11-05, see §14.1 |
-| 15.2 | **RepositoryResolver** + `RemoteUrlNormalizer` | Unit tests of §12.1 pass; no credential in any output (property test) |
+| 15.2 | **RepositoryResolver** + `RemoteUrlNormalizer` | Unit tests of §12.1 pass; no credential in any output (property test) Done 2026-11-05, see §14.1 |
 | 15.3 | **ProjectCatalog** + project file schema + `GET/PUT /api/projects`, `GET /api/repositories` | Schema, matching and API tests pass; a bad file gives a config warning |
 | 15.4 | **Attribution in the dataset**: `repositoryKey`/`projectId`/`vendorId`/`channel` on Insights rows; Project, Repository, Vendor and Channel list boxes on the Dashboard; MCP: `list_repositories`, `list_projects`, `list_sessions` filters (§10.1) | Dashboard filters by repository and project; totals match the per-session totals; axe and keyboard tests pass for the new list boxes; the step's MCP tools pass the §10.1.6 tests |
 | 15.5 | **Price book with history**: `PriceVersion` schema, bundled channel files with sources, user versions, `PriceBook` lookup; Phase 13 profiles read their current prices from it; MCP: `get_price_book` | Overlap/boundary/precedence tests pass; every version has a source; Phase 13 tests unchanged; the step's MCP tools pass the §10.1.6 tests |
@@ -1110,6 +1112,38 @@ not needed. The Agent Host event-log reader now keeps `session.start`
 events, which it used to drop. The new folder paths are not added to any
 MCP output or to the advice export: both pick their fields explicitly
 (the §10.1.5 tests that guard this come with step 15.13).
+
+**15.2 (done 2026-11-05).** In `packages/server/src/services/cost-attribution/`:
+
+- `remote-url-normalizer.ts`: a remote URL → key. It drops the scheme,
+  user, password or token, and port first; lower-cases the key; removes
+  `.git`; keeps GitLab subgroups; and gives Azure DevOps' four forms
+  (HTTPS, `ssh.dev.azure.com:v3`, `*.visualstudio.com`,
+  `vs-ssh.visualstudio.com:v3`) one `dev.azure.com/<org>/<project>/<repo>`
+  key. Local and `file:` remotes give no key. **Found while testing:** an
+  `@` left in the path (`user:pass@host` parses as git's `host:path` form)
+  would have put `pass` into the key, so any path with an `@` is now
+  rejected. The property tests check that no generated credential, in any
+  position, reaches a key, and that no key contains an `@`.
+- `git-config-remotes.ts`: reads `[remote "<name>"]` `url` entries from a
+  config file's text; `origin` is preferred, else the first. It does not
+  follow `url.<base>.insteadOf` rewrites or include files.
+- `repository-resolver.ts`: §4.2 over a `ReadOnlyFileSystem` port
+  (`kindOf`, `readText` with a 256 KiB limit). It follows a `.git` file's
+  `gitdir` (worktrees, submodules) and a worktree's `commondir`; a
+  remote-less worktree keys by the main checkout's root, so the two merge.
+  Results are cached per folder; the branch comes from each workspace.
+  `platform/file-system/node-read-only-file-system.ts` is the Node
+  implementation (size checked on the open handle).
+- Domain: `RepositoryRef` (`key`, `source`: `git-remote`, `git-local`,
+  `recorded-repository` or `folder-path`, optional `rootPath`,
+  `pathInRepo`, `branch`) and `RepositoryAttribution` (attributed, or
+  Unattributed with a reason) in `packages/domain/src/repository.ts`.
+
+Checked on this repository's own checkout: its root and `packages/server`
+both resolve to `github.com/raulkivi/agent-cost-analyzer`, so the folder
+changes seen in step 15.1's Claude Code log merge into one repository.
+Nothing calls the resolver yet; step 15.4 wires it into the dataset.
 
 ## 15. Exit criterion
 

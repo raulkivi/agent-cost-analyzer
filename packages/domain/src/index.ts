@@ -48,6 +48,14 @@ export {
   type KnownSessionWorkspace,
 } from "./workspace.js";
 export {
+  repositorySourceSchema,
+  repositoryRefSchema,
+  repositoryAttributionSchema,
+  type RepositorySource,
+  type RepositoryRef,
+  type RepositoryAttribution,
+} from "./repository.js";
+export {
   systemPromptComponentSchema,
   type SystemPromptComponent,
 } from "./system-prompt-component.js";
