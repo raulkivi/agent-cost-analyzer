@@ -56,15 +56,6 @@
       "displayName": "Gemini 3.8 Flash",
       "vendorId": "google",
       "releaseStatus": "GA",
-      "tiers": [
-        {
-          "inputUsdPerM": 0.75,
-          "cachedInputUsdPerM": 0.075,
-          "cacheWriteUsdPerM": null,
-          "outputUsdPerM": 3.75
-        }
-      ],
-      "promoEndsAt": "2026-12-31",
       "sourceIds": [
         "gh-pricing-table",
         "gh-models-pricing-gemini-flash-promo",
@@ -76,16 +67,7 @@
       "displayName": "Gemini 4 Argon",
       "vendorId": "google",
       "releaseStatus": "GA",
-      "tiers": [
-        {
-          "inputUsdPerM": 2.0,
-          "cachedInputUsdPerM": 0.1,
-          "cacheWriteUsdPerM": null,
-          "outputUsdPerM": 10.0
-        }
-      ],
       "cheaperSiblingId": "gemini-3.8-flash",
-      "promoEndsAt": "2026-12-01",
       "sourceIds": [
         "gh-pricing-table",
         "gh-models-pricing-argon-promo",

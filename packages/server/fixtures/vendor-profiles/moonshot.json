@@ -56,14 +56,6 @@
       "displayName": "Kimi K3",
       "vendorId": "moonshot",
       "releaseStatus": "GA",
-      "tiers": [
-        {
-          "inputUsdPerM": 3.0,
-          "cachedInputUsdPerM": 0.3,
-          "cacheWriteUsdPerM": null,
-          "outputUsdPerM": 15.0
-        }
-      ],
       "sourceIds": ["gh-pricing-table", "gh-model-hosting-kimi"]
     }
   ],

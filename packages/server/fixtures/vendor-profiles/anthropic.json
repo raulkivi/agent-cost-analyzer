@@ -68,15 +68,6 @@
       "displayName": "Claude Haiku 4.5",
       "vendorId": "anthropic",
       "releaseStatus": "GA",
-      "tiers": [
-        {
-          "inputUsdPerM": 1.0,
-          "cachedInputUsdPerM": 0.1,
-          "cacheWriteUsdPerM": 1.25,
-          "extendedCacheWriteUsdPerM": 2.0,
-          "outputUsdPerM": 5.0
-        }
-      ],
       "cachingKind": {
         "kind": "breakpoints",
         "defaultTtlMinutes": 5,
@@ -98,23 +89,6 @@
       "displayName": "Claude Haiku 5.5",
       "vendorId": "anthropic",
       "releaseStatus": "GA",
-      "tiers": [
-        {
-          "maxInputTokens": 100000,
-          "inputUsdPerM": 0.1,
-          "cachedInputUsdPerM": 0.01,
-          "cacheWriteUsdPerM": 0.125,
-          "extendedCacheWriteUsdPerM": 0.2,
-          "outputUsdPerM": 0.5
-        },
-        {
-          "inputUsdPerM": 0.5,
-          "cachedInputUsdPerM": 0.05,
-          "cacheWriteUsdPerM": 0.625,
-          "extendedCacheWriteUsdPerM": 1.0,
-          "outputUsdPerM": 2.5
-        }
-      ],
       "sourceIds": [
         "gh-pricing-table",
         "gh-models-pricing-anthropic",
@@ -128,15 +102,6 @@
       "displayName": "Claude Sonnet 4",
       "vendorId": "anthropic",
       "releaseStatus": "GA",
-      "tiers": [
-        {
-          "inputUsdPerM": 3.0,
-          "cachedInputUsdPerM": 0.3,
-          "cacheWriteUsdPerM": 3.75,
-          "extendedCacheWriteUsdPerM": 6.0,
-          "outputUsdPerM": 15.0
-        }
-      ],
       "cachingKind": {
         "kind": "breakpoints",
         "defaultTtlMinutes": 5,
@@ -158,15 +123,6 @@
       "displayName": "Claude Sonnet 4.6",
       "vendorId": "anthropic",
       "releaseStatus": "GA",
-      "tiers": [
-        {
-          "inputUsdPerM": 3.0,
-          "cachedInputUsdPerM": 0.3,
-          "cacheWriteUsdPerM": 3.75,
-          "extendedCacheWriteUsdPerM": 6.0,
-          "outputUsdPerM": 15.0
-        }
-      ],
       "cachingKind": {
         "kind": "breakpoints",
         "defaultTtlMinutes": 5,
@@ -188,15 +144,6 @@
       "displayName": "Claude Opus 4.8",
       "vendorId": "anthropic",
       "releaseStatus": "GA",
-      "tiers": [
-        {
-          "inputUsdPerM": 5.0,
-          "cachedInputUsdPerM": 0.5,
-          "cacheWriteUsdPerM": 6.25,
-          "extendedCacheWriteUsdPerM": 10.0,
-          "outputUsdPerM": 25.0
-        }
-      ],
       "cachingKind": {
         "kind": "breakpoints",
         "defaultTtlMinutes": 5,
@@ -218,15 +165,6 @@
       "displayName": "Claude Opus 5",
       "vendorId": "anthropic",
       "releaseStatus": "GA",
-      "tiers": [
-        {
-          "inputUsdPerM": 5.0,
-          "cachedInputUsdPerM": 0.5,
-          "cacheWriteUsdPerM": 6.25,
-          "extendedCacheWriteUsdPerM": 10.0,
-          "outputUsdPerM": 25.0
-        }
-      ],
       "cheaperSiblingId": "claude-sonnet-5",
       "sourceIds": [
         "gh-pricing-table",
@@ -240,15 +178,6 @@
       "displayName": "Claude Opus 5.5",
       "vendorId": "anthropic",
       "releaseStatus": "GA",
-      "tiers": [
-        {
-          "inputUsdPerM": 4.0,
-          "cachedInputUsdPerM": 0.2,
-          "cacheWriteUsdPerM": 5.0,
-          "extendedCacheWriteUsdPerM": 8.0,
-          "outputUsdPerM": 20.0
-        }
-      ],
       "cheaperSiblingId": "claude-sonnet-5.5",
       "sourceIds": [
         "gh-pricing-table",
@@ -262,15 +191,6 @@
       "displayName": "Claude Sonnet 5",
       "vendorId": "anthropic",
       "releaseStatus": "GA",
-      "tiers": [
-        {
-          "inputUsdPerM": 2.0,
-          "cachedInputUsdPerM": 0.2,
-          "cacheWriteUsdPerM": 2.5,
-          "extendedCacheWriteUsdPerM": 4.0,
-          "outputUsdPerM": 10.0
-        }
-      ],
       "cachingKind": {
         "kind": "breakpoints",
         "defaultTtlMinutes": 5,
@@ -292,15 +212,6 @@
       "displayName": "Claude Sonnet 5.5",
       "vendorId": "anthropic",
       "releaseStatus": "GA",
-      "tiers": [
-        {
-          "inputUsdPerM": 2.0,
-          "cachedInputUsdPerM": 0.1,
-          "cacheWriteUsdPerM": 2.5,
-          "extendedCacheWriteUsdPerM": 4.0,
-          "outputUsdPerM": 10.0
-        }
-      ],
       "cheaperSiblingId": "claude-haiku-5.5",
       "sourceIds": [
         "gh-pricing-table",
@@ -314,14 +225,6 @@
       "displayName": "Claude Opus 4.8 (fast mode) (preview)",
       "vendorId": "anthropic",
       "releaseStatus": "GA",
-      "tiers": [
-        {
-          "inputUsdPerM": 10.0,
-          "cachedInputUsdPerM": 1.0,
-          "cacheWriteUsdPerM": 12.5,
-          "outputUsdPerM": 50.0
-        }
-      ],
       "cachingKind": {
         "kind": "breakpoints",
         "defaultTtlMinutes": 5,
@@ -341,15 +244,6 @@
       "displayName": "Claude Fable 5",
       "vendorId": "anthropic",
       "releaseStatus": "GA",
-      "tiers": [
-        {
-          "inputUsdPerM": 10.0,
-          "cachedInputUsdPerM": 1.0,
-          "cacheWriteUsdPerM": 12.5,
-          "extendedCacheWriteUsdPerM": 20.0,
-          "outputUsdPerM": 50.0
-        }
-      ],
       "cheaperSiblingId": "claude-opus-5.5",
       "sourceIds": [
         "gh-pricing-table",
@@ -363,15 +257,6 @@
       "displayName": "Claude Fable 5.1",
       "vendorId": "anthropic",
       "releaseStatus": "GA",
-      "tiers": [
-        {
-          "inputUsdPerM": 10.0,
-          "cachedInputUsdPerM": 0.25,
-          "cacheWriteUsdPerM": 12.5,
-          "extendedCacheWriteUsdPerM": 20.0,
-          "outputUsdPerM": 50.0
-        }
-      ],
       "cheaperSiblingId": "claude-opus-5.5",
       "sourceIds": [
         "gh-pricing-table",

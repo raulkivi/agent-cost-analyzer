@@ -154,3 +154,49 @@ describe("normalizeMemberPath on adversarial input", () => {
     expect(normalizeMemberPath("///")).toBe("");
   });
 });
+
+// Phase 15 step 15.5: the user's own price versions (plan §6.1, §7).
+describe("channels.priceVersions", () => {
+  const contract = {
+    id: "acme-reseller:claude-sonnet-5.5:2026-07-01",
+    channel: "acme-reseller",
+    modelId: "claude-sonnet-5.5",
+    currency: "USD",
+    effectiveFrom: "2026-07-01",
+    tiers: [{ inputUsdPerM: 2.5, cachedInputUsdPerM: 0.25, cacheWriteUsdPerM: 3, outputUsdPerM: 12 }],
+    kind: "contract",
+    scope: { projectId: "customer-portal" },
+  } as const;
+
+  it("keeps a file without channels, or without priceVersions, valid", () => {
+    expect(projectsFileSchema.safeParse({ version: 1, projects: [] }).success).toBe(true);
+    expect(
+      projectsFileSchema.safeParse({ version: 1, projects: [], channels: { providers: { "claude-code": "anthropic-api" } } }).success,
+    ).toBe(true);
+  });
+
+  it("parses user versions as PriceVersions", () => {
+    const parsed = projectsFileSchema.parse({ version: 1, projects: [portal], channels: { priceVersions: [contract] } });
+
+    expect(parsed.channels?.priceVersions?.[0]).toMatchObject({ kind: "contract", sourceIds: [] });
+  });
+
+  it("rejects an entry that isn't a PriceVersion", () => {
+    expect(projectsFileSchema.safeParse({ version: 1, projects: [], channels: { priceVersions: [{ id: "x" }] } }).success).toBe(false);
+  });
+
+  it("reports duplicate ids, overlapping user versions and unknown project scopes", () => {
+    const later = { ...contract, id: "acme-reseller:claude-sonnet-5.5:2026-09-01", effectiveFrom: "2026-09-01" };
+    const duplicate = { ...contract, modelId: "claude-opus-5.5" };
+    const unknownProject = { ...contract, id: "other", scope: { projectId: "nope" } };
+    const problems = validateProjectsFile(
+      projectsFileSchema.parse({ version: 1, projects: [portal], channels: { priceVersions: [contract, later, duplicate, unknownProject] } }),
+    );
+
+    expect(problems).toEqual([
+      { path: "channels.priceVersions[2].id", message: expect.stringContaining("used twice") },
+      { path: "channels.priceVersions[1]", message: expect.stringContaining("overlaps") },
+      { path: "channels.priceVersions[3].scope.projectId", message: expect.stringContaining('"nope"') },
+    ]);
+  });
+});
