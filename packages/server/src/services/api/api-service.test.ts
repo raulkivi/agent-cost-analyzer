@@ -14,20 +14,35 @@ import type { LogProvider } from "../../data-sources/log-providers/log-provider.
 import type { SystemPromptTextLookup } from "../../data-sources/log-providers/system-prompt-text-reader.js";
 import type { LearnScenarioCatalog } from "../../data-sources/learn-scenarios/loader.js";
 import { AuditQueryService, type SessionRangeFilter } from "../tool-audit/audit-query-service.js";
-import { ApiService, type ApiServiceDeps } from "./api-service.js";
+import { ScenarioNotFoundError, UnknownModelError } from "../learn-simulation/learn-simulation-service.js";
+import { ApiService, type ApiLearnSimulation, type ApiServiceDeps } from "./api-service.js";
 import { BadRequestError, InternalError, NotFoundError, statusForApiError } from "./api-errors.js";
 
 const profile: ProductProfile = {
   productId: "standalone",
   displayName: "Agent Cost Analyzer",
   version: "1.2.3",
-  features: { providerSelect: true, crossProviderInsights: true, settingFixes: false, openInEditor: false, sessionSidebar: false },
+  features: { providerSelect: true, crossProviderInsights: true, settingFixes: false, openInEditor: false, sessionSidebar: false, vendorSimulation: false },
 };
 
 const learnScenario = { ...sampleSessions[0], id: "learn-1", mode: "learn" as const };
 const learnScenarios: LearnScenarioCatalog = {
   list: () => [learnScenario],
   get: (id) => (id === learnScenario.id ? learnScenario : undefined),
+};
+
+const simulatedSession = { ...sampleSessions[0], id: "sim-1", mode: "learn" as const };
+const learnSimulation: ApiLearnSimulation = {
+  getScenario: (id, modelId) => {
+    if (id !== "sim-1") throw new ScenarioNotFoundError(id);
+    if (modelId === "bad") throw new UnknownModelError('Unknown model id "bad"');
+    return { ...simulatedSession, model: modelId ?? "default" };
+  },
+  compareScenario: (id, modelIds) => {
+    if (id !== "sim-1") throw new ScenarioNotFoundError(id);
+    return { scenarioId: id, entries: (modelIds ?? []).map((m) => ({ vendorId: "v", modelId: m, displayName: m, simulated: false, reason: "r", turns: [] })) };
+  },
+  listVendorProfiles: () => [],
 };
 
 function configStatusFor(threshold: number | undefined): ConfigStatus {
@@ -108,6 +123,7 @@ function build(
     settings,
     checkConfig: configStatusFor,
     learnScenarios,
+    learnSimulation,
     appVersion: "1.2.3",
     productProfile: profile,
     ...overrides,
@@ -282,6 +298,42 @@ describe("ApiService", () => {
 
     it("getLearnScenario throws NotFoundError for an unknown id", async () => {
       await expectApiError(build().service.getLearnScenario("nope"), NotFoundError, 'Unknown learn scenario id "nope"');
+    });
+  });
+
+  describe("simulated learn scenarios", () => {
+    it("getScenario returns the simulated session, passing the model id", async () => {
+      await expect(build().service.getScenario("sim-1", "m1")).resolves.toMatchObject({ id: "sim-1", model: "m1" });
+    });
+
+    it("getScenario maps an unknown scenario to NotFoundError", async () => {
+      await expectApiError(build().service.getScenario("nope"), NotFoundError, 'Unknown learn scenario id "nope"');
+    });
+
+    it("getScenario maps an unknown model to BadRequestError", async () => {
+      await expectApiError(build().service.getScenario("sim-1", "bad"), BadRequestError, 'Unknown model id "bad"');
+    });
+
+    it("getScenario rejects a non-string model id", async () => {
+      await expectApiError(build().service.getScenario("sim-1", 3), BadRequestError, '"modelId" must be a string.');
+    });
+
+    it("compareScenario returns one entry per model id", async () => {
+      const result = await build().service.compareScenario("sim-1", ["a", "b"]);
+      expect(result.entries.map((e) => e.modelId)).toEqual(["a", "b"]);
+    });
+
+    it("compareScenario rejects modelIds that are not an array of strings", async () => {
+      await expectApiError(build().service.compareScenario("sim-1", "a"), BadRequestError, '"modelIds" must be an array of strings.');
+      await expectApiError(build().service.compareScenario("sim-1", [1]), BadRequestError, '"modelIds" must be an array of strings.');
+    });
+
+    it("compareScenario maps an unknown scenario to NotFoundError", async () => {
+      await expectApiError(build().service.compareScenario("nope"), NotFoundError, 'Unknown learn scenario id "nope"');
+    });
+
+    it("listVendorProfiles returns the simulation's profiles", async () => {
+      await expect(build().service.listVendorProfiles()).resolves.toEqual([]);
     });
   });
 

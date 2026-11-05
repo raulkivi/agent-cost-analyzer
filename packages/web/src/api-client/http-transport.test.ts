@@ -47,7 +47,7 @@ function harness(): ContractHarness {
   };
 }
 
-describeApiTransportContract("HttpTransport", harness);
+describeApiTransportContract("HttpTransport", harness, ["getScenario", "compareScenario", "listVendorProfiles"]);
 
 describe("HttpTransport URL mapping", () => {
   const cases: Array<[ApiMethodName, unknown, string, string?, unknown?]> = [

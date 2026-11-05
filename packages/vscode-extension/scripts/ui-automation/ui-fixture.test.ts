@@ -30,6 +30,8 @@ describe("createUiFixture (step 10.16)", () => {
       copilotHome,
       appSettings: new InMemoryAppSettingsStore(),
       learnScenariosFixturesDir,
+      learnScriptsDir: path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../../server/fixtures/learn-scripts"),
+      vendorProfilesDir: path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../../server/fixtures/vendor-profiles"),
       appVersion: "0.0.0-test",
     });
   }

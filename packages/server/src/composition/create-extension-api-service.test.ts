@@ -21,6 +21,8 @@ function buildService(appSettings = new InMemoryAppSettingsStore(), settingsSour
     appSettings,
     settingsSource,
     learnScenariosFixturesDir: fixturesDir,
+    learnScriptsDir: path.resolve(fixturesDir, "../learn-scripts"),
+    vendorProfilesDir: path.resolve(fixturesDir, "../vendor-profiles"),
     appVersion: "0.1.0-test",
   });
 }
@@ -39,9 +41,19 @@ describe("createExtensionApiService (extension composition, vscode-extension.md 
         settingFixes: true,
         openInEditor: true,
         sessionSidebar: true,
+        vendorSimulation: true,
       },
     });
     expect(await service.getHealth()).toEqual({ status: "ok", version: "0.1.0-test" });
+  });
+
+  it("replays a Learn scenario on a model with VS Code wording (step 13.6)", async () => {
+    const service = buildService();
+    const session = await service.getScenario("clear", "claude-sonnet-5.5");
+    expect(session.turns[0]!.simulation?.modelId).toBe("claude-sonnet-5.5");
+    const comparison = await service.compareScenario("clear");
+    expect(comparison.entries.length).toBeGreaterThan(1);
+    expect((await service.listVendorProfiles()).length).toBe(6);
   });
 
   it("lists only the VS Code provider", async () => {

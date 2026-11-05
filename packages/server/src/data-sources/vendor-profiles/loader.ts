@@ -1,5 +1,6 @@
 import { readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import {
   vendorProfileSchema,
   type ModelPrice,
@@ -47,9 +48,17 @@ function findReferenceProblem(profile: VendorProfile): string | undefined {
   return undefined;
 }
 
+// Resolved lazily: a single-file bundle passes its own directory instead (G4).
+function defaultProfilesDir(): string {
+  return path.resolve(
+    path.dirname(fileURLToPath(import.meta.url)),
+    "../../../fixtures/vendor-profiles",
+  );
+}
+
 // Fail fast, like the learn-scenario loader: an invalid bundled profile must
 // break startup rather than feed wrong prices into a simulation.
-export function loadVendorProfiles(dir: string): VendorProfile[] {
+export function loadVendorProfiles(dir: string = defaultProfilesDir()): VendorProfile[] {
   const files = readdirSync(dir)
     .filter((file) => file.endsWith(".json"))
     .sort();
