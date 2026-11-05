@@ -1,0 +1,108 @@
+{
+  "id": "image-attachment-invalidation",
+  "title": "An Image Attachment Invalidates the Cache",
+  "category": "Vision tokens",
+  "harnesses": ["vscode-local", "copilot-agent-host", "claude-code"],
+  "sessionKind": "main",
+  "staticPrefix": {
+    "toolsTokens": 1800,
+    "systemTokens": 1200
+  },
+  "steps": [
+    {
+      "index": 1,
+      "userMessage": "Let's improve the error messages on the upload form.",
+      "assistantResponse": "Sure, looking at the upload form's error handling.",
+      "toolCalls": [],
+      "explanation": "Normal first turn: writes the static prefix plus this turn's own content. No image has appeared in the conversation yet.",
+      "newContent": {
+        "userTokens": 800,
+        "toolResultTokens": 0,
+        "reasoningTokens": 150,
+        "outputTokens": 150
+      },
+      "events": []
+    },
+    {
+      "index": 2,
+      "userMessage": "Make the file-too-large message mention the actual size limit.",
+      "assistantResponse": "Got it, updating that message.",
+      "toolCalls": [
+        {
+          "name": "read_file",
+          "argsSummary": "src/upload/errors.ts"
+        }
+      ],
+      "explanation": "Normal turn; reads and extends the cache built by the first turn.",
+      "newContent": {
+        "userTokens": 200,
+        "toolResultTokens": 300,
+        "reasoningTokens": 120,
+        "outputTokens": 180
+      },
+      "events": []
+    },
+    {
+      "index": 3,
+      "userMessage": "Here's what the error looks like right now — [screenshot attached].",
+      "assistantResponse": "Thanks, I can see the message is truncated in the toast — let me widen it.",
+      "toolCalls": [],
+      "explanation": "An image appearing in the conversation invalidates the cache from the message content on, because it changes the shape of the content, not just its size. The old conversation cache is resent uncached and rewritten, on top of the image's own tokens.",
+      "newContent": {
+        "userTokens": 100,
+        "toolResultTokens": 0,
+        "reasoningTokens": 180,
+        "outputTokens": 190,
+        "images": [
+          {
+            "width": 1280,
+            "height": 800
+          }
+        ]
+      },
+      "events": [
+        {
+          "type": "image-added"
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "userMessage": "That's better, thanks.",
+      "assistantResponse": "Glad that's clearer now.",
+      "toolCalls": [],
+      "explanation": "Normal turn; the image is now part of the cached content, with no further disruption.",
+      "newContent": {
+        "userTokens": 70,
+        "toolResultTokens": 0,
+        "reasoningTokens": 60,
+        "outputTokens": 90
+      },
+      "events": []
+    },
+    {
+      "index": 5,
+      "userMessage": "Actually one more thing — here's the same error on mobile [screenshot attached].",
+      "assistantResponse": "I see — the toast is even more cramped on the narrow viewport, let me adjust the breakpoint too.",
+      "toolCalls": [],
+      "explanation": "A second image later in the same session triggers the same invalidation again. The cost is per occurrence, so a session that attaches several screenshots pays it each time.",
+      "newContent": {
+        "userTokens": 100,
+        "toolResultTokens": 0,
+        "reasoningTokens": 160,
+        "outputTokens": 170,
+        "images": [
+          {
+            "width": 390,
+            "height": 844
+          }
+        ]
+      },
+      "events": [
+        {
+          "type": "image-added"
+        }
+      ]
+    }
+  ]
+}

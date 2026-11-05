@@ -70,6 +70,21 @@ describe("BreakpointCacheModel", () => {
     });
   });
 
+  it("S15: a shared prefix shorter than the cache keeps only that prefix", () => {
+    const m = model();
+    m.request({ prompt: prompt(1000, 500, 2000), atMinute: 0 });
+    const r = m.request({
+      prompt: prompt(1000, 500, 900),
+      atMinute: 1,
+      sharedPrefixTokens: 1900,
+    });
+    expect(r).toMatchObject({
+      cacheRead: 1900,
+      cacheWrite: 500,
+      outcome: "partial",
+    });
+  });
+
   it("S4: TTL counts from the last request and a hit refreshes it", () => {
     const m = model();
     m.request({ prompt: prompt(1000, 500, 200), atMinute: 0 });

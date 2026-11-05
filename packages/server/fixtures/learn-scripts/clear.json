@@ -1,0 +1,133 @@
+{
+  "id": "clear",
+  "title": "Claude Code's /clear",
+  "category": "Clear",
+  "harnesses": ["vscode-local", "copilot-agent-host", "claude-code"],
+  "sessionKind": "main",
+  "staticPrefix": {
+    "toolsTokens": 1200,
+    "systemTokens": 1800
+  },
+  "steps": [
+    {
+      "index": 1,
+      "userMessage": "Let's fix the flaky login test.",
+      "assistantResponse": "Sure, looking into the flaky login test now.",
+      "toolCalls": [],
+      "explanation": "Normal first turn: writes the static prefix plus this turn's own content.",
+      "newContent": {
+        "userTokens": 500,
+        "toolResultTokens": 0,
+        "reasoningTokens": 150,
+        "outputTokens": 150
+      },
+      "events": []
+    },
+    {
+      "index": 2,
+      "userMessage": "It looks like a timing issue in the test setup.",
+      "assistantResponse": "Agreed, that lines up with what I'm seeing in the test file.",
+      "toolCalls": [
+        {
+          "name": "read_file",
+          "argsSummary": "tests/login.spec.ts"
+        }
+      ],
+      "explanation": "Normal turn that reads and extends the cache built by the first turn.",
+      "newContent": {
+        "userTokens": 200,
+        "toolResultTokens": 100,
+        "reasoningTokens": 120,
+        "outputTokens": 180
+      },
+      "events": []
+    },
+    {
+      "index": 3,
+      "userMessage": "/clear — let's start something completely different: add rate limiting to the API.",
+      "assistantResponse": "Starting fresh. Looking at the API layer to plan rate limiting.",
+      "toolCalls": [],
+      "explanation": "/clear drops only the conversation history. The static prefix (instructions and tool definitions) is reloaded unchanged and still matches the cache, so it is read rather than rewritten. Nothing is summarised and no extra output is paid: the old turns are simply never sent again.",
+      "newContent": {
+        "userTokens": 300,
+        "toolResultTokens": 0,
+        "reasoningTokens": 130,
+        "outputTokens": 170
+      },
+      "events": [
+        {
+          "type": "clear"
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "userMessage": "Add a token-bucket limiter to the request middleware.",
+      "assistantResponse": "Adding a token-bucket rate limiter to the request middleware now.",
+      "toolCalls": [
+        {
+          "name": "replace_string_in_file",
+          "argsSummary": "add token-bucket limiter to src/api/middleware.ts"
+        }
+      ],
+      "explanation": "Normal turn on the new task; the cache builds up again from the post-clear baseline, far smaller than the old conversation would have grown to.",
+      "newContent": {
+        "userTokens": 120,
+        "toolResultTokens": 0,
+        "reasoningTokens": 90,
+        "outputTokens": 110
+      },
+      "events": []
+    },
+    {
+      "index": 5,
+      "userMessage": "Looks good, thanks.",
+      "assistantResponse": "Glad it's working well.",
+      "toolCalls": [],
+      "explanation": "The cache keeps growing normally under the new, unrelated task, still far smaller than the discarded conversation would have reached.",
+      "newContent": {
+        "userTokens": 70,
+        "toolResultTokens": 0,
+        "reasoningTokens": 60,
+        "outputTokens": 90
+      },
+      "events": []
+    }
+  ],
+  "textByHarness": {
+    "vscode-local": {
+      "title": "Starting a New Chat",
+      "userMessages": [
+        "Let's fix the flaky login test.",
+        "It looks like a timing issue in the test setup.",
+        "(new chat) Let's start something completely different: add rate limiting to the API.",
+        "Add a token-bucket limiter to the request middleware.",
+        "Looks good, thanks."
+      ],
+      "explanations": [
+        "Normal first turn: writes the static prefix plus this turn's own content.",
+        "Normal turn that reads and extends the cache built by the first turn.",
+        "Starting a new chat drops only the conversation history. The static prefix (instructions and tool definitions) is resent unchanged and still matches the cache, so it is read rather than rewritten. Nothing is summarised and no extra output is paid: the old turns are simply never sent again.",
+        "Normal turn on the new task; the cache builds up again from the new chat's baseline, far smaller than the old conversation would have grown to.",
+        "The cache keeps growing normally under the new, unrelated task, still far smaller than the discarded conversation would have reached."
+      ]
+    },
+    "copilot-agent-host": {
+      "title": "Starting a New Chat",
+      "userMessages": [
+        "Let's fix the flaky login test.",
+        "It looks like a timing issue in the test setup.",
+        "(new chat) Let's start something completely different: add rate limiting to the API.",
+        "Add a token-bucket limiter to the request middleware.",
+        "Looks good, thanks."
+      ],
+      "explanations": [
+        "Normal first turn: writes the static prefix plus this turn's own content.",
+        "Normal turn that reads and extends the cache built by the first turn.",
+        "Starting a new chat drops only the conversation history. The static prefix (instructions and tool definitions) is resent unchanged and still matches the cache, so it is read rather than rewritten. Nothing is summarised and no extra output is paid: the old turns are simply never sent again.",
+        "Normal turn on the new task; the cache builds up again from the new chat's baseline, far smaller than the old conversation would have grown to.",
+        "The cache keeps growing normally under the new, unrelated task, still far smaller than the discarded conversation would have reached."
+      ]
+    }
+  }
+}

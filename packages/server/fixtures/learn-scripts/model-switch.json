@@ -1,0 +1,88 @@
+{
+  "id": "model-switch",
+  "title": "Model Switch Mid-Session",
+  "category": "Model switching",
+  "harnesses": ["vscode-local", "copilot-agent-host", "claude-code"],
+  "sessionKind": "main",
+  "staticPrefix": {
+    "toolsTokens": 1200,
+    "systemTokens": 1800
+  },
+  "steps": [
+    {
+      "index": 1,
+      "userMessage": "Let's plan out the caching layer for the API.",
+      "assistantResponse": "Sure, exploring the code to plan it out.",
+      "toolCalls": [],
+      "explanation": "Normal first turn on the starting model: writes the static prefix plus this turn's own content; nothing to read yet.",
+      "newContent": {
+        "userTokens": 500,
+        "toolResultTokens": 0,
+        "reasoningTokens": 150,
+        "outputTokens": 150
+      },
+      "events": []
+    },
+    {
+      "index": 2,
+      "userMessage": "Sounds good, go ahead.",
+      "assistantResponse": "Continuing with the plan.",
+      "toolCalls": [],
+      "explanation": "Normal turn that reuses and extends the starting model's cache.",
+      "newContent": {
+        "userTokens": 200,
+        "toolResultTokens": 0,
+        "reasoningTokens": 120,
+        "outputTokens": 180
+      },
+      "events": []
+    },
+    {
+      "index": 3,
+      "userMessage": "Actually, switch to the more capable model for this next part.",
+      "assistantResponse": "Switching models now and continuing with the full context.",
+      "toolCalls": [],
+      "explanation": "Model switch: prompt caches are scoped per model, so the first model's cache is worthless to the new one. The whole prior history plus the new message is sent as uncached input and the new model writes its own first cache entry. The new model's prices apply from here on.",
+      "newContent": {
+        "userTokens": 150,
+        "toolResultTokens": 0,
+        "reasoningTokens": 250,
+        "outputTokens": 300
+      },
+      "events": [
+        {
+          "type": "model-switch",
+          "toRole": "primary"
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "userMessage": "Continue.",
+      "assistantResponse": "Continuing under the new model.",
+      "toolCalls": [],
+      "explanation": "Behaves like a normal, healthy cache-building turn again, now under the new model's cache and prices.",
+      "newContent": {
+        "userTokens": 120,
+        "toolResultTokens": 0,
+        "reasoningTokens": 150,
+        "outputTokens": 200
+      },
+      "events": []
+    },
+    {
+      "index": 5,
+      "userMessage": "Great, thanks.",
+      "assistantResponse": "You're welcome.",
+      "toolCalls": [],
+      "explanation": "The cache keeps growing normally under the new model, with no further disruption.",
+      "newContent": {
+        "userTokens": 80,
+        "toolResultTokens": 0,
+        "reasoningTokens": 90,
+        "outputTokens": 140
+      },
+      "events": []
+    }
+  ]
+}

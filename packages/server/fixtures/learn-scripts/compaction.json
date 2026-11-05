@@ -1,0 +1,98 @@
+{
+  "id": "compaction",
+  "title": "Context Compaction Mid-Session",
+  "category": "Compaction",
+  "harnesses": ["vscode-local", "copilot-agent-host", "claude-code"],
+  "sessionKind": "main",
+  "staticPrefix": {
+    "toolsTokens": 1200,
+    "systemTokens": 1800
+  },
+  "steps": [
+    {
+      "index": 1,
+      "userMessage": "Let's start refactoring the auth module.",
+      "assistantResponse": "Sure, exploring the auth module now.",
+      "toolCalls": [],
+      "explanation": "Normal first turn: writes the static prefix plus this turn's own content.",
+      "newContent": {
+        "userTokens": 500,
+        "toolResultTokens": 0,
+        "reasoningTokens": 150,
+        "outputTokens": 150
+      },
+      "events": []
+    },
+    {
+      "index": 2,
+      "userMessage": "Continue with the next file.",
+      "assistantResponse": "Looking at the session handling file next.",
+      "toolCalls": [
+        {
+          "name": "read_file",
+          "argsSummary": "src/auth/session.ts"
+        }
+      ],
+      "explanation": "Normal turn that reads and extends the existing cache.",
+      "newContent": {
+        "userTokens": 200,
+        "toolResultTokens": 100,
+        "reasoningTokens": 120,
+        "outputTokens": 180
+      },
+      "events": []
+    },
+    {
+      "index": 3,
+      "userMessage": "(automatic) context nearing the model's window limit.",
+      "assistantResponse": "Compacting the conversation history into a summary before continuing.",
+      "toolCalls": [],
+      "explanation": "Compaction: this request reads the entire prior history once more from the cache and produces a much smaller summary. It costs extra output, but the summary replaces the history as the new conversation prefix.",
+      "newContent": {
+        "userTokens": 150,
+        "toolResultTokens": 0,
+        "reasoningTokens": 300,
+        "outputTokens": 400
+      },
+      "events": [
+        {
+          "type": "compaction",
+          "summaryTokens": 400
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "userMessage": "Continue with the next file.",
+      "assistantResponse": "Looking at the token handling file next.",
+      "toolCalls": [
+        {
+          "name": "read_file",
+          "argsSummary": "src/auth/token.ts"
+        }
+      ],
+      "explanation": "Builds on the much smaller post-compaction conversation. The summary differs from the raw history it replaced, so the old cached conversation no longer matches and is written again as a fresh, smaller prefix.",
+      "newContent": {
+        "userTokens": 80,
+        "toolResultTokens": 0,
+        "reasoningTokens": 100,
+        "outputTokens": 120
+      },
+      "events": []
+    },
+    {
+      "index": 5,
+      "userMessage": "Looks good, thanks.",
+      "assistantResponse": "Glad it's working well.",
+      "toolCalls": [],
+      "explanation": "The cache stays small compared to what it would have been without compaction; that is the point of the trade-off.",
+      "newContent": {
+        "userTokens": 60,
+        "toolResultTokens": 0,
+        "reasoningTokens": 60,
+        "outputTokens": 90
+      },
+      "events": []
+    }
+  ]
+}
