@@ -8,7 +8,7 @@ import { InMemoryAppSettingsStore } from "../test-support/in-memory-app-settings
 import type { SettingsSource } from "../services/config-check/settings-source.js";
 import { createExtensionApiService } from "./create-extension-api-service.js";
 
-const fixturesDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../fixtures/learn-scenarios");
+const fixturesRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../fixtures");
 
 function buildService(appSettings = new InMemoryAppSettingsStore(), settingsSource?: SettingsSource, agentHostUserDataDir: string | null = null) {
   return createExtensionApiService({
@@ -20,9 +20,8 @@ function buildService(appSettings = new InMemoryAppSettingsStore(), settingsSour
     vscodeSettingsPath: null,
     appSettings,
     settingsSource,
-    learnScenariosFixturesDir: fixturesDir,
-    learnScriptsDir: path.resolve(fixturesDir, "../learn-scripts"),
-    vendorProfilesDir: path.resolve(fixturesDir, "../vendor-profiles"),
+    learnScriptsDir: path.join(fixturesRoot, "learn-scripts"),
+    vendorProfilesDir: path.join(fixturesRoot, "vendor-profiles"),
     appVersion: "0.1.0-test",
   });
 }

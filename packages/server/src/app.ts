@@ -87,6 +87,20 @@ export function createApp(options: CreateAppOptions = {}): Express {
     res.json(await api.getLearnScenario(req.params.id));
   }));
 
+  // ?model= and ?models=a,b arrive as text; ApiService validates the ids.
+  app.get("/api/learn/scenarios/:id/simulation", route(async (req, res) => {
+    res.json(await api.getScenario(req.params.id, req.query.model));
+  }));
+
+  app.get("/api/learn/scenarios/:id/comparison", route(async (req, res) => {
+    const models = typeof req.query.models === "string" && req.query.models.length > 0 ? req.query.models.split(",") : undefined;
+    res.json(await api.compareScenario(req.params.id, models));
+  }));
+
+  app.get("/api/vendors", route(async (_req, res) => {
+    res.json(await api.listVendorProfiles());
+  }));
+
   app.get("/api/log-providers", route(async (_req, res) => {
     res.json(await api.getLogProviderStatus());
   }));

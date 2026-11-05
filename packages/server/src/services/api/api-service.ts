@@ -16,7 +16,7 @@ import type {
 import type { AppSettingsStore } from "../../data-sources/log-providers/app-settings.js";
 import { ProjectsFileRejectedError, type ProjectCatalog } from "../cost-attribution/project-catalog.js";
 import { buildProjectsFileWarning } from "../cost-attribution/projects-file-warning.js";
-import type { LearnScenarioCatalog } from "../../data-sources/learn-scenarios/loader.js";
+import type { LearnScenarioCatalog } from "../learn-simulation/learn-scenario-catalog.js";
 import type { LogProvider } from "../../data-sources/log-providers/log-provider.js";
 import { UnknownLogProviderIdError } from "../../data-sources/log-providers/registry.js";
 import {

@@ -42,23 +42,13 @@ const CASES: Array<[ApiMethodName, unknown]> = [
 export function describeApiTransportContract(
   name: string,
   makeHarness: () => ContractHarness,
-  // Methods this transport doesn't carry yet; they must reject, not answer.
-  unsupported: readonly ApiMethodName[] = [],
 ): void {
-  const supported = CASES.filter(([method]) => !unsupported.includes(method));
   describe(`${name} satisfies the ApiTransport contract`, () => {
-    it.each(CASES.filter(([method]) => unsupported.includes(method)))(
-      "%s rejects as not available",
-      async (method, params) => {
-        await expect(makeHarness().transport.call(method, params)).rejects.toThrow(/not available/);
-      },
-    );
-
     it("exercises every domain ApiMethod", () => {
       expect(CASES.map(([method]) => method).sort()).toEqual([...apiMethodSchema.options].sort());
     });
 
-    it.each(supported.filter(([method]) => method !== "getSystemPromptText"))(
+    it.each(CASES.filter(([method]) => method !== "getSystemPromptText"))(
       "%s resolves with the backend's JSON result",
       async (method, params) => {
         const harness = makeHarness();
@@ -75,7 +65,7 @@ export function describeApiTransportContract(
       );
     });
 
-    it.each(supported)("%s rejects with the status in the message when the backend fails", async (method, params) => {
+    it.each(CASES)("%s rejects with the status in the message when the backend fails", async (method, params) => {
       const harness = makeHarness();
       harness.failWith(404);
       await expect(harness.transport.call(method, params)).rejects.toThrow(/failed with status 404/);

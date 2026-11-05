@@ -9,7 +9,6 @@ import { copilotLogPathsFromUserDataDir } from "../src/platform/copilot-log-path
 import { parseIntegrationFixture } from "./integration-fixture-env.mts";
 import { createIntegrationFixture } from "./integration-fixture.mts";
 
-const learnScenariosFixturesDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../server/fixtures/learn-scenarios");
 const NOW = new Date("2026-10-24T12:00:00Z");
 
 // The fixture the real-VS Code integration suite (.vscode-test.mjs) seeds,
@@ -31,7 +30,6 @@ describe("createIntegrationFixture (step 10.9)", () => {
       ...copilotLogPathsFromUserDataDir(userDataDir),
       copilotHome: null,
       appSettings: new InMemoryAppSettingsStore(),
-      learnScenariosFixturesDir,
       learnScriptsDir: path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../server/fixtures/learn-scripts"),
       vendorProfilesDir: path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../server/fixtures/vendor-profiles"),
       appVersion: "0.0.0-test",

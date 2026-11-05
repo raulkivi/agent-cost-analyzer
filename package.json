@@ -33,7 +33,10 @@
     "typecheck": "npm run typecheck --workspaces --if-present",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "mcp": "bash scripts/mcp-server.sh"
+    "mcp": "bash scripts/mcp-server.sh",
+    "scenarios:docs": "npm run scenarios:docs --workspace=packages/server",
+    "scenarios:docs:check": "npm run scenarios:docs:check --workspace=packages/server",
+    "vendor-prices:diff": "tsx packages/server/scripts/vendor-prices-diff.mts"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

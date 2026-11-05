@@ -2,7 +2,7 @@ import { useState } from "react";
 import type { Session } from "@agent-cost-analyzer/domain";
 
 export type Mode = "learn" | "analyze";
-export type RightTab = "explanation" | "system-prompt" | "tools";
+export type RightTab = "explanation" | "system-prompt" | "tools" | "vendors";
 
 // Analyze mode's default provider until GET /api/log-providers resolves —
 // matches the server registry's own default (app-settings.ts).

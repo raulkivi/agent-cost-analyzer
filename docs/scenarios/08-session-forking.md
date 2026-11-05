@@ -37,50 +37,43 @@ intact as a live fallback (instead of `/rewind`'s all-or-nothing discard), or to
 **parallelize** work — e.g. handing one branch to a teammate or a background
 agent — from a context that's already warmed up.
 
-![Scenario 8: Session Forking](diagrams/scenario-8-session-forking.drawio.svg)
+<!-- scenarios:generated:start -->
+Simulated on Claude Sonnet 5.5 (and its cheaper sibling where a scenario switches models) with the real per-token prices in GitHub's Copilot price table, checked 2026-11-04. The figures come from the Learn simulator, not from a live session. Tool and Vision tokens are part of the input columns, not added to them.
 
-<!-- mermaid-source: diagrams/scenario-8-session-forking.drawio.svg
+| Turn | What happens | Cache write | Cache read | Cache size after | Uncached input | Tool (in input) | Vision (in input) | Reasoning | Output text | **Turn total** | **Turn AI Credits** |
+|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| 1 | Normal first turn: writes the static prefix and this turn's own content. This is the start of the shared trunk both branches inherit. | 4000 | 0 | 4000 | 0 | 0 | 0 | 150 | 150 | **4300** | **1.30** |
+| 2 | Normal turn on the shared trunk: reads and extends the cache built by the first turn. | 300 | 4000 | 4300 | 0 | 100 | 0 | 120 | 180 | **4600** | **0.41** |
+| 3 | Fork point: the user decides to compare two strategies. Nothing is invalidated; the next step starts a second, independent continuation from this exact prefix. | 540 | 4300 | 4840 | 0 | 0 | 0 | 140 | 160 | **5140** | **0.48** |
+| 4 | Branch A reads the shared trunk as a cache hit, then diverges with its own content. A parallel branch would read the same trunk independently, and neither branch sees the other's later writes. Forking pays for the trunk once instead of rebuilding it in a second session. | 930 | 4840 | 5770 | 0 | 500 | 0 | 160 | 190 | **6120** | **0.63** |
+| 5 | Normal follow-up in branch A, building on that branch's own cache. | 220 | 5770 | 5990 | 0 | 0 | 0 | 90 | 120 | **6200** | **0.32** |
+
+Session total: **3.15 AI Credits** (≈ $0.0315); most expensive turn: **turn 1** (1.30 AI Credits).
+
+Running totals by token type:
+
+| Cumulative through turn | What happens | Cache write | Cache read | Uncached input | Tool (in input) | Vision (in input) | Reasoning | Output text | **Session total** | **Running AI Credits** |
+|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| 1 | Normal first turn: writes the static prefix and this turn's own content. This is the start of the shared trunk both branches inherit. | 4000 | 0 | 0 | 0 | 0 | 150 | 150 | **4300** | **1.30** |
+| 2 | Normal turn on the shared trunk: reads and extends the cache built by the first turn. | 4300 | 4000 | 0 | 100 | 0 | 270 | 330 | **8900** | **1.71** |
+| 3 | Fork point: the user decides to compare two strategies. Nothing is invalidated; the next step starts a second, independent continuation from this exact prefix. | 4840 | 8300 | 0 | 100 | 0 | 410 | 490 | **14040** | **2.19** |
+| 4 | Branch A reads the shared trunk as a cache hit, then diverges with its own content. A parallel branch would read the same trunk independently, and neither branch sees the other's later writes. Forking pays for the trunk once instead of rebuilding it in a second session. | 5770 | 13140 | 0 | 600 | 0 | 570 | 680 | **20160** | **2.82** |
+| 5 | Normal follow-up in branch A, building on that branch's own cache. | 5990 | 18910 | 0 | 600 | 0 | 660 | 800 | **26360** | **3.15** |
+
 ```mermaid
-flowchart TD
-    T1["Turn 1"] --&gt; T2["Turn 2"] --&gt; T3["Turn 3<br/>(fork point, cache size 4620)"]
-    T3 --&gt;|fork| A4["Branch A - Turn 4<br/>tries Redis-based caching"]
-    A4 --&gt; A5["Branch A - Turn 5"]
-    T3 --&gt;|fork| B4["Branch B - Turn 4<br/>tries in-memory LRU caching"]
-    B4 --&gt; B5["Branch B - Turn 5"]
+xychart-beta
+    title "Tokens per turn by type (simulated)"
+    x-axis [Turn1, Turn2, Turn3, Turn4, Turn5]
+    y-axis "Tokens" 0 --> 6000
+    bar "Cache write" [4000, 300, 540, 930, 220]
+    bar "Cache read" [0, 4000, 4300, 4840, 5770]
+    bar "Uncached input" [0, 0, 0, 0, 0]
+    bar "Tool" [0, 100, 0, 500, 0]
+    bar "Vision" [0, 0, 0, 0, 0]
+    bar "Reasoning" [150, 120, 140, 160, 90]
+    bar "Output text" [150, 180, 160, 190, 120]
 ```
--->
-
-**Shared trunk** (both branches inherit this identically):
-
-| Turn | What happens | Cache write | Cache read | Cache size after | Uncached input | Tool | Reasoning | Output text | **Turn total** | **Turn AI Credits** |
-|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| 1 | Normal turn; writes static prefix + own content | 3500 | 0 | 3500 | 500 | 0 | 150 | 150 | **4300** | **0.0289 AI Credits** |
-| 2 | Normal turn; reads/extends the cache | 600 | 3500 | 4100 | 200 | 100 | 120 | 180 | **4700** | **0.0115 AI Credits** |
-| 3 | Decides to compare two caching strategies; **forks here** | 520 | 4100 | 4620 | 220 | 0 | 140 | 160 | **5140** | **0.0109 AI Credits** |
-
-AI Credits spent on the trunk so far: **0.0513** (paid once).
-
-**Post-fork branches** (each turn 4 reads the *same* trunk cache — 4620 — independently):
-
-| Branch / Turn | What happens | Cache write | Cache read | Cache size after | Uncached input | Tool | Reasoning | Output text | **Turn total** | **Turn AI Credits** |
-|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| A · 4 | Implements a Redis-based caching strategy | 1000 | 4620 | 5620 | 150 | 500 | 160 | 190 | **6620** | **0.0171 AI Credits** |
-| A · 5 | Normal follow-up turn in branch A | 290 | 5620 | 5910 | 80 | 0 | 90 | 120 | **6200** | **0.0082 AI Credits** |
-| B · 4 | Implements an in-memory LRU caching strategy | 1170 | 4620 | 5790 | 140 | 700 | 150 | 180 | **6960** | **0.0188 AI Credits** |
-| B · 5 | Normal follow-up turn in branch B | 250 | 5790 | 6040 | 70 | 0 | 80 | 100 | **6290** | **0.0075 AI Credits** |
-
-Branch A total: **0.0253 AI Credits** on top of the trunk (session A total: 0.0513 AI Credits + 0.0253 AI Credits
-= **0.0766 AI Credits**). Branch B total: **0.0263 AI Credits** on top of the same trunk (session B
-total: 0.0513 AI Credits + 0.0263 AI Credits = **0.0776 AI Credits**). Exploring *both* strategies this way
-requires **0.0513 AI Credits + 0.0253 AI Credits + 0.0263 AI Credits = 0.1029 AI Credits** in total — the trunk is paid for
-**once**, then reused as a cache hit by both branches.
-
-Compare that to running two entirely separate sessions from scratch instead of
-forking: each would have to rebuild the same trunk independently (2 × 0.0513 AI Credits =
-0.1026 AI Credits) on top of its own branch spend (0.0253 AI Credits + 0.0263 AI Credits), for a total of
-**0.1542 AI Credits** — about **0.0513 AI Credits more**, exactly one extra copy of the trunk. That
-gap *is* the saving forking provides: shared setup gets paid for once and reused,
-not re-purchased per branch.
+<!-- scenarios:generated:end -->
 
 **Sources** (checked 2026-11-03):
 

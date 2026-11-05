@@ -18,26 +18,45 @@ What this does to tokens/cache/AI Credits:
 - **A new cache rebuilds** from the tool-change turn forward, under the new
   toolset, the same way a fresh session would.
 
-This example changes the enabled MCP tools starting at turn 3 (same model/rates
-throughout as [Scenario 1](01-cache-basics-8-turn-session.md)'s Model A: cache
-write 0.00625 AI Credits, cache read 0.0005 AI Credits, uncached input/tool 0.005 AI Credits,
-reasoning/output 0.015 AI Credits per 1K tokens):
+This example changes the enabled MCP tools starting at turn 3, with the same model and prices throughout:
 
-| Turn | What happens | Cache write | Cache read | Cache size after | Uncached input | Tool | Reasoning | Output text | **Turn total** | **Turn AI Credits** |
+<!-- scenarios:generated:start -->
+Simulated on Claude Sonnet 5.5 (and its cheaper sibling where a scenario switches models) with the real per-token prices in GitHub's Copilot price table, checked 2026-11-04. The figures come from the Learn simulator, not from a live session. Tool and Vision tokens are part of the input columns, not added to them.
+
+| Turn | What happens | Cache write | Cache read | Cache size after | Uncached input | Tool (in input) | Vision (in input) | Reasoning | Output text | **Turn total** | **Turn AI Credits** |
+|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| 1 | Normal first turn: writes the static prefix, including the currently enabled toolset, plus this turn's own content. | 3500 | 0 | 3500 | 0 | 0 | 0 | 150 | 150 | **3800** | **1.18** |
+| 2 | Normal turn that reuses and extends the cache. | 450 | 3500 | 3950 | 0 | 100 | 0 | 120 | 180 | **4250** | **0.45** |
+| 3 | The tool definitions come first in the prompt, so changing the enabled toolset invalidates everything after them: the prior cache no longer matches and the whole history is resent uncached. Prices stay the same, so this spike is smaller than a model switch's. | 5780 | 0 | 5780 | 0 | 0 | 0 | 200 | 220 | **6200** | **1.86** |
+| 4 | Normal turn under the new toolset; it actually calls one of the newly enabled tools. | 730 | 5780 | 6510 | 0 | 400 | 0 | 130 | 160 | **6800** | **0.53** |
+| 5 | The cache continues building normally under the new toolset, with no further disruption. | 230 | 6510 | 6740 | 0 | 0 | 0 | 70 | 100 | **6910** | **0.29** |
+
+Session total: **4.31 AI Credits** (≈ $0.0431); most expensive turn: **turn 3** (1.86 AI Credits).
+
+Running totals by token type:
+
+| Cumulative through turn | What happens | Cache write | Cache read | Uncached input | Tool (in input) | Vision (in input) | Reasoning | Output text | **Session total** | **Running AI Credits** |
 |---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| 1 | Normal turn; writes static prefix (incl. old toolset) + own content | 3500 | 0 | 3500 | 500 | 0 | 150 | 150 | **4300** | **0.0289 AI Credits** |
-| 2 | Normal turn; reads/extends the cache | 600 | 3500 | 4100 | 200 | 100 | 120 | 180 | **4700** | **0.0115 AI Credits** |
-| 3 | **MCP toolset changes**: new tool schemas alter the early prefix; the prior 4100-token cache no longer matches and must be resent uncached; a new cache is written under the new toolset | 4770 | 0 | 4770 | 4350 | 0 | 200 | 220 | **9540** | **0.0579 AI Credits** |
-| 4 | Normal turn; uses one of the newly enabled tools | 800 | 4770 | 5570 | 110 | 400 | 130 | 160 | **6370** | **0.0143 AI Credits** |
-| 5 | Normal turn; cache continues building under the new toolset | 240 | 5570 | 5810 | 70 | 0 | 70 | 100 | **6050** | **0.0072 AI Credits** |
+| 1 | Normal first turn: writes the static prefix, including the currently enabled toolset, plus this turn's own content. | 3500 | 0 | 0 | 0 | 0 | 150 | 150 | **3800** | **1.18** |
+| 2 | Normal turn that reuses and extends the cache. | 3950 | 3500 | 0 | 100 | 0 | 270 | 330 | **8050** | **1.62** |
+| 3 | The tool definitions come first in the prompt, so changing the enabled toolset invalidates everything after them: the prior cache no longer matches and the whole history is resent uncached. Prices stay the same, so this spike is smaller than a model switch's. | 9730 | 3500 | 0 | 100 | 0 | 470 | 550 | **14250** | **3.49** |
+| 4 | Normal turn under the new toolset; it actually calls one of the newly enabled tools. | 10460 | 9280 | 0 | 500 | 0 | 600 | 710 | **21050** | **4.02** |
+| 5 | The cache continues building normally under the new toolset, with no further disruption. | 10690 | 15790 | 0 | 500 | 0 | 670 | 810 | **27960** | **4.31** |
 
-Turn 3 (**0.0579 AI Credits**) is about 5x a normal turn — a real spike, but far
-smaller than the ~10x spike from a model switch ([Scenario 4](04-model-switch.md)),
-because the model and its rates didn't change, only the cache. This is the general
-pattern: **model switches invalidate the cache *and* change the price per token**,
-while **tool/instruction changes invalidate the cache but keep the same price per
-token** — both use more AI Credits on the turn of the change, but a model switch usually
-hurts more.
+```mermaid
+xychart-beta
+    title "Tokens per turn by type (simulated)"
+    x-axis [Turn1, Turn2, Turn3, Turn4, Turn5]
+    y-axis "Tokens" 0 --> 7000
+    bar "Cache write" [3500, 450, 5780, 730, 230]
+    bar "Cache read" [0, 3500, 0, 5780, 6510]
+    bar "Uncached input" [0, 0, 0, 0, 0]
+    bar "Tool" [0, 100, 0, 400, 0]
+    bar "Vision" [0, 0, 0, 0, 0]
+    bar "Reasoning" [150, 120, 200, 130, 70]
+    bar "Output text" [150, 180, 220, 160, 100]
+```
+<!-- scenarios:generated:end -->
 
 **Sources** (checked 2026-11-03):
 

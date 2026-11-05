@@ -23,20 +23,43 @@ What this does to tokens/cache/AI Credits:
   eventually re-writes) far fewer cached tokens — cutting the steady per-turn AI Credits
   growth at the price of losing verbatim detail from the compacted turns.
 
-| Turn | What happens | Cache write | Cache read | Cache size after | Uncached input | Tool | Reasoning | Output text | **Turn total** | **Turn AI Credits** |
-|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| 1 | Normal turn; writes static prefix + own content | 3500 | 0 | 3500 | 500 | 0 | 150 | 150 | **4300** | **0.0289 AI Credits** |
-| 2 | Normal turn; reads/extends the cache | 600 | 3500 | 4100 | 200 | 100 | 120 | 180 | **4700** | **0.0115 AI Credits** |
-| 3 | **Context compaction**: reads all prior history (4100) one last time, replaces it with a ~500-token summary as the new cache prefix | 1350 | 4100 | **1350** | 150 | 0 | 300 | 400 | **6300** | **0.0217 AI Credits** |
-| 4 | Normal turn; now builds on the much smaller post-compaction cache | 300 | 1350 | 1650 | 80 | 0 | 100 | 120 | **1950** | **0.0063 AI Credits** |
-| 5 | Normal turn; cache stays small relative to what it would have been | 210 | 1650 | 1860 | 60 | 0 | 60 | 90 | **2070** | **0.0047 AI Credits** |
+<!-- scenarios:generated:start -->
+Simulated on Claude Sonnet 5.5 (and its cheaper sibling where a scenario switches models) with the real per-token prices in GitHub's Copilot price table, checked 2026-11-04. The figures come from the Learn simulator, not from a live session. Tool and Vision tokens are part of the input columns, not added to them.
 
-The key number is **cache size after turn 3**: it *drops* from 4100 to 1350 even
-though the conversation keeps growing — instead of turn 4 reading 4100+ tokens
-(and turn 5 reading even more), it reads only 1350, then 1650. Turn 3 itself uses
-more AI Credits than a normal turn (the compaction "tax"), but turns 4-5 are noticeably
-cheaper than if the raw history had kept growing uncompacted — that trade-off is
-the whole point of compaction.
+| Turn | What happens | Cache write | Cache read | Cache size after | Uncached input | Tool (in input) | Vision (in input) | Reasoning | Output text | **Turn total** | **Turn AI Credits** |
+|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| 1 | Normal first turn: writes the static prefix plus this turn's own content. | 3500 | 0 | 3500 | 0 | 0 | 0 | 150 | 150 | **3800** | **1.18** |
+| 2 | Normal turn that reads and extends the existing cache. | 450 | 3500 | 3950 | 0 | 100 | 0 | 120 | 180 | **4250** | **0.45** |
+| 3 | Compaction: this request reads the entire prior history once more from the cache and produces a much smaller summary. It costs extra output, but the summary replaces the history as the new conversation prefix. | 330 | 3950 | 4280 | 0 | 0 | 0 | 300 | 400 | **4980** | **0.82** |
+| 4 | Builds on the much smaller post-compaction conversation. The summary differs from the raw history it replaced, so the old cached conversation no longer matches and is written again as a fresh, smaller prefix. | 480 | 3000 | 3480 | 0 | 0 | 0 | 100 | 120 | **3700** | **0.37** |
+| 5 | The cache stays small compared to what it would have been without compaction; that is the point of the trade-off. | 180 | 3480 | 3660 | 0 | 0 | 0 | 60 | 90 | **3810** | **0.23** |
+
+Session total: **3.04 AI Credits** (≈ $0.0304); most expensive turn: **turn 1** (1.18 AI Credits).
+
+Running totals by token type:
+
+| Cumulative through turn | What happens | Cache write | Cache read | Uncached input | Tool (in input) | Vision (in input) | Reasoning | Output text | **Session total** | **Running AI Credits** |
+|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| 1 | Normal first turn: writes the static prefix plus this turn's own content. | 3500 | 0 | 0 | 0 | 0 | 150 | 150 | **3800** | **1.18** |
+| 2 | Normal turn that reads and extends the existing cache. | 3950 | 3500 | 0 | 100 | 0 | 270 | 330 | **8050** | **1.62** |
+| 3 | Compaction: this request reads the entire prior history once more from the cache and produces a much smaller summary. It costs extra output, but the summary replaces the history as the new conversation prefix. | 4280 | 7450 | 0 | 100 | 0 | 570 | 730 | **13030** | **2.44** |
+| 4 | Builds on the much smaller post-compaction conversation. The summary differs from the raw history it replaced, so the old cached conversation no longer matches and is written again as a fresh, smaller prefix. | 4760 | 10450 | 0 | 100 | 0 | 670 | 850 | **16730** | **2.81** |
+| 5 | The cache stays small compared to what it would have been without compaction; that is the point of the trade-off. | 4940 | 13930 | 0 | 100 | 0 | 730 | 940 | **20540** | **3.04** |
+
+```mermaid
+xychart-beta
+    title "Tokens per turn by type (simulated)"
+    x-axis [Turn1, Turn2, Turn3, Turn4, Turn5]
+    y-axis "Tokens" 0 --> 4000
+    bar "Cache write" [3500, 450, 330, 480, 180]
+    bar "Cache read" [0, 3500, 3950, 3000, 3480]
+    bar "Uncached input" [0, 0, 0, 0, 0]
+    bar "Tool" [0, 100, 0, 0, 0]
+    bar "Vision" [0, 0, 0, 0, 0]
+    bar "Reasoning" [150, 120, 300, 100, 60]
+    bar "Output text" [150, 180, 400, 120, 90]
+```
+<!-- scenarios:generated:end -->
 
 **Sources** (checked 2026-11-03):
 

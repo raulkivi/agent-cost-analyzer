@@ -47,11 +47,12 @@ function toRequest(method: ApiMethodName, params: unknown): HttpRequest {
       return { url: "/api/learn/scenarios" };
     case "getLearnScenario": // { id }
       return { url: `/api/learn/scenarios/${String(p.id)}` };
-    // The standalone app gets these HTTP routes in step 13.10.
-    case "getScenario":
-    case "compareScenario":
+    case "getScenario": // { id, modelId? }
+      return { url: `/api/learn/scenarios/${String(p.id)}/simulation${queryString({ model: p.modelId })}` };
+    case "compareScenario": // { id, modelIds? }
+      return { url: `/api/learn/scenarios/${String(p.id)}/comparison${queryString({ models: p.modelIds })}` };
     case "listVendorProfiles":
-      throw new Error(`${method} is not available in the standalone app yet (step 13.10)`);
+      return { url: "/api/vendors" };
     case "getLogProviderStatus":
       return { url: "/api/log-providers" };
     case "setActiveLogProvider": // { id }

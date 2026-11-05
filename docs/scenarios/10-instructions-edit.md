@@ -9,33 +9,43 @@ later. The result is a **full cache miss**: the next turn resends everything
 from scratch. This is the same *mechanism* as [Scenario 5](05-mcp-tool-change.md)'s
 MCP-tool-change example, triggered one block later in the prefix: a tool change also invalidates the tool definitions, so it is always a total miss, while an instructions edit is a total miss unless the tool block is cached on its own.
 
-| Turn | What happens | Cache write | Cache read | Cache size after | Uncached input | Tool | Reasoning | Output text | **Turn total** | **Turn AI Credits** |
+<!-- scenarios:generated:start -->
+Simulated on Claude Sonnet 5.5 (and its cheaper sibling where a scenario switches models) with the real per-token prices in GitHub's Copilot price table, checked 2026-11-04. The figures come from the Learn simulator, not from a live session. Tool and Vision tokens are part of the input columns, not added to them.
+
+| Turn | What happens | Cache write | Cache read | Cache size after | Uncached input | Tool (in input) | Vision (in input) | Reasoning | Output text | **Turn total** | **Turn AI Credits** |
+|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| 1 | Normal first turn: writes the static system prompt and instructions plus this turn's own content. | 4000 | 0 | 4000 | 0 | 0 | 0 | 150 | 150 | **4300** | **1.30** |
+| 2 | Normal turn: reads and extends the cache built by the first turn. | 300 | 4000 | 4300 | 0 | 100 | 0 | 120 | 180 | **4600** | **0.41** |
+| 3 | Editing the custom instructions file changes the system prompt, which sits right after the tool definitions. The match breaks there, and all earlier conversation, though unchanged, can no longer match either, because a prefix match cannot skip a changed block and resume later. Only the tool definitions ahead of the change can still be read, and only if a breakpoint caches them alone. A new cache is then written under the updated instructions. | 2930 | 1800 | 4730 | 0 | 0 | 0 | 200 | 220 | **5150** | **1.17** |
+| 4 | Normal turn on the post-edit baseline: the cache rebuilds under the updated instructions. | 580 | 4730 | 5310 | 0 | 300 | 0 | 140 | 170 | **5620** | **0.50** |
+| 5 | The cache keeps growing normally under the new instructions. | 230 | 5310 | 5540 | 0 | 0 | 0 | 60 | 90 | **5690** | **0.26** |
+
+Session total: **3.65 AI Credits** (≈ $0.0365); most expensive turn: **turn 1** (1.30 AI Credits).
+
+Running totals by token type:
+
+| Cumulative through turn | What happens | Cache write | Cache read | Uncached input | Tool (in input) | Vision (in input) | Reasoning | Output text | **Session total** | **Running AI Credits** |
 |---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| 1 | Normal turn; writes static prefix + own content | 3500 | 0 | 3500 | 500 | 0 | 150 | 150 | **4300** | **0.0289 AI Credits** |
-| 2 | Normal turn; reads/extends the cache | 600 | 3500 | 4100 | 200 | 100 | 120 | 180 | **4700** | **0.0115 AI Credits** |
-| 3 | **`copilot-instructions.md` is edited mid-session**: the change sits in the system prompt, right after the tool definitions, so the system prompt and all history miss — a full miss here, since nothing caches the tool block on its own | 4700 | 0 | 4700 | 4150 | 0 | 200 | 220 | **9270** | **0.0564 AI Credits** |
-| 4 | Normal turn on the post-edit baseline; cache rebuilds under the updated instructions | 600 | 4700 | 5300 | 130 | 300 | 140 | 170 | **6040** | **0.0129 AI Credits** |
-| 5 | Normal turn; no further disruption | 220 | 5300 | 5520 | 70 | 0 | 60 | 90 | **5740** | **0.0066 AI Credits** |
+| 1 | Normal first turn: writes the static system prompt and instructions plus this turn's own content. | 4000 | 0 | 0 | 0 | 0 | 150 | 150 | **4300** | **1.30** |
+| 2 | Normal turn: reads and extends the cache built by the first turn. | 4300 | 4000 | 0 | 100 | 0 | 270 | 330 | **8900** | **1.71** |
+| 3 | Editing the custom instructions file changes the system prompt, which sits right after the tool definitions. The match breaks there, and all earlier conversation, though unchanged, can no longer match either, because a prefix match cannot skip a changed block and resume later. Only the tool definitions ahead of the change can still be read, and only if a breakpoint caches them alone. A new cache is then written under the updated instructions. | 7230 | 5800 | 0 | 100 | 0 | 470 | 550 | **14050** | **2.89** |
+| 4 | Normal turn on the post-edit baseline: the cache rebuilds under the updated instructions. | 7810 | 10530 | 0 | 400 | 0 | 610 | 720 | **19670** | **3.39** |
+| 5 | The cache keeps growing normally under the new instructions. | 8040 | 15840 | 0 | 400 | 0 | 670 | 810 | **25360** | **3.65** |
 
-![Scenario 10: Editing Custom Instructions Mid-Session](diagrams/scenario-10-editing-custom-instructions-mid-session.drawio.svg)
-
-<!-- mermaid-source: diagrams/scenario-10-editing-custom-instructions-mid-session.drawio.svg
 ```mermaid
-sequenceDiagram
-    participant U as User
-    participant S as Session
-
-    Note over S: Turn 2 — cache size 4100, healthy
-    U->>S: "I just added a note to copilot-instructions.md..."
-    Note over S: Instructions sit right after the tool definitions —<br/>editing them breaks the match from there on
-    Note over S: Turn 3 — cache_read=0, uncached_input=4150,<br/>cache_write=4700 (full resend + rebuild)
-    Note over S: Turn 4 — cache_read=4700, back to normal shape
+xychart-beta
+    title "Tokens per turn by type (simulated)"
+    x-axis [Turn1, Turn2, Turn3, Turn4, Turn5]
+    y-axis "Tokens" 0 --> 6000
+    bar "Cache write" [4000, 300, 2930, 580, 230]
+    bar "Cache read" [0, 4000, 1800, 4730, 5310]
+    bar "Uncached input" [0, 0, 0, 0, 0]
+    bar "Tool" [0, 100, 0, 300, 0]
+    bar "Vision" [0, 0, 0, 0, 0]
+    bar "Reasoning" [150, 120, 200, 140, 60]
+    bar "Output text" [150, 180, 220, 170, 90]
 ```
--->
-
-Turn 3 (**0.0564 AI Credits**) is roughly 5x turn 2's cost — comparable in
-scale to an MCP tool change ([Scenario 5](05-mcp-tool-change.md)), and for the same reason, one block apart: the tool definitions come first in the prefix, so a tool change invalidates *everything*, while an instructions edit invalidates the system prompt and everything after it — only a separately cached tool block could survive it ([Anthropic: what invalidates the cache](https://platform.claude.com/docs/en/build-with-claude/prompt-caching#what-invalidates-the-cache)). Turns 4-5 recover completely normal cache-growth behavior once the new
-cache — now including the updated instructions — has been (re-)written.
+<!-- scenarios:generated:end -->
 
 **Sources** (checked 2026-11-03):
 

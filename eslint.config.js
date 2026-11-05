@@ -31,8 +31,11 @@ export default tseslint.config(
             "packages/*/vitest.config.ts",
             "packages/*/vite.config.ts",
             "packages/vscode-extension/.vscode-test.mjs",
+            "packages/server/scripts/*.mts",
             "packages/vscode-extension/wdio.conf.mts", "packages/vscode-extension/wdio.copilot.conf.mts",
           ],
+          // Config and script files outside any tsconfig: a handful, by design.
+          maximumDefaultProjectFileMatchCount_THIS_WILL_SLOW_DOWN_LINTING: 16,
         },
         tsconfigRootDir: import.meta.dirname,
       },

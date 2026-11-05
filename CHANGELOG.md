@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- Vendor-aware Learn (Phase 13): scenarios are simulated on a vendor and
+  model you pick, with real prices and documented cache rules, a Cache column,
+  per-turn notes, an assumptions popover and a sources footer. Learn numbers
+  change accordingly.
 - Session working folders (Phase 15 step 15.1): every Analyze session
   reports the folder it ran in, and its branch and repository where the log
   records them, or why it is unknown (mitmproxy captures record none); each

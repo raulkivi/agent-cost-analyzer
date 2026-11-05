@@ -35,7 +35,7 @@ import { createStandaloneApiService } from "./create-standalone-api-service.js";
 // fixtures (real DDL and rows) inside a user-data dir, read through both
 // products' composition roots and every consumer of the Copilot provider.
 
-const learnScenariosFixturesDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../fixtures/learn-scenarios");
+const fixturesRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../fixtures");
 const sessionRows = readAgentHostFixtureRows("session-rows.json");
 const turnNanoAiu = fixtureTurnNanoAiu(sessionRows);
 // The fixture's turn_usage totals: 1.285093 + 246.03949 + 35.494578 + 0.1582715.
@@ -68,9 +68,8 @@ describe("Agent Host sessions through the Copilot provider (step 10.13)", () => 
       ...noClassicLogs,
       vscodeSettingsPath: null,
       appSettings: new InMemoryAppSettingsStore(),
-      learnScenariosFixturesDir,
-      learnScriptsDir: path.resolve(learnScenariosFixturesDir, "../learn-scripts"),
-      vendorProfilesDir: path.resolve(learnScenariosFixturesDir, "../vendor-profiles"),
+      learnScriptsDir: path.join(fixturesRoot, "learn-scripts"),
+      vendorProfilesDir: path.join(fixturesRoot, "vendor-profiles"),
       appVersion: "0.1.0-test",
     });
     standalone = createStandaloneApiService({
@@ -83,7 +82,6 @@ describe("Agent Host sessions through the Copilot provider (step 10.13)", () => 
       piAgentSessionsDirPath: null,
       systemPromptLogPath: null,
       claudeCodeProjectsDirPath: null,
-      learnScenariosFixturesDir,
       appVersion: "0.1.0-test",
     });
     const server = createMcpServer(createCopilotMcpServices({ ...noClassicLogs, appVersion: "0.1.0-test" }));

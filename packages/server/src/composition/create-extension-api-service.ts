@@ -17,9 +17,8 @@ export interface ExtensionApiServiceOptions extends CopilotProviderCompositionOp
   // the check reads the settings.json at vscodeSettingsPath.
   settingsSource?: SettingsSource;
   // G4 (vscode-extension.md §2.2): required, because the extension runs as
-  // a single CJS bundle with no usable import.meta.url to default from.
-  learnScenariosFixturesDir: string;
-  // Same G4 reason: the bundle can't locate the simulator's data itself.
+  // a single CJS bundle with no usable import.meta.url to default from, so it
+  // can't locate the simulator's data itself.
   learnScriptsDir: string;
   vendorProfilesDir: string;
   appVersion: string;
@@ -73,9 +72,6 @@ export function createExtensionApiService(options: ExtensionApiServiceOptions): 
         minRetainedSessionLogsThreshold,
         agentHostCatalogPresent: agentHostCatalogProbe(compositionOptions.agentHostUserDataDir),
       }),
-    // The Learn list is the simulated scenarios; the legacy
-    // learnScenariosFixturesDir option is accepted but unused until the
-    // fixtures are retired (it stays in compositionOptions harmlessly).
     learnScenarios: createSimulatedScenarioCatalog(learnSimulation),
     learnSimulation,
     appVersion,
