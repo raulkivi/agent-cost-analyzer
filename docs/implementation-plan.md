@@ -1478,9 +1478,9 @@ every provider) 15.2 (repository resolver and remote URL normaliser),
 15.0 (threat-model rows) and 15.3 (projects file and its API) are done. Planned otherwise; the owner accepted every recommended
 decision (D1–D10, plan §13). The UI is a set of new Dashboard tabs built on
 the existing design system, UX standards and chart kit (plan §11), with a
-mock-up review gate (step 15.8) before any UI code. The mock-ups are drawn (2026-11-05,
-[mockups/cost-by-project/](plans/mockups/cost-by-project/)) and await the
-owner's review; the palette tokens of step 15.8 are not started.
+mock-up review gate (step 15.8) before any UI code. The mock-ups are drawn and were approved by the owner on 2026-11-05
+([mockups/cost-by-project/](plans/mockups/cost-by-project/)); the palette
+tokens of step 15.8 are not started.
 
 ## Summary dependency graph
 
