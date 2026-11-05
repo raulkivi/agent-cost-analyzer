@@ -29,7 +29,7 @@ Progress (2026-10-28):
 | 10.13 | Agent Host sessions: read the sessions VS Code 1.143+ creates by default (manual check 1.4) | Done (`20c880b`–`756a26c`); manual check 1.4 passes with the default harness |
 | 10.14 | Agent Host turn text, tool calls and system prompt from the Copilot CLI event log (`~/.copilot/session-state/<sdkSessionId>/events.jsonl`) | Code done (`2f302b0`–`3911119`, docs commit); owner's manual check (task 11) passed 2026-11-02 |
 | 10.15 | Cache-write and reasoning tokens for Agent Host sessions from `session.usage_record` | Done (#102); owner's manual check (task 7) passed 2026-11-02 |
-| 10.16 | UI automation of the manual checks in a real VS Code (`wdio-vscode-service` under xvfb) | Code done on a branch (T0-T13 bar T14/T15): checks 1.5-1.11, 1.13, 2.1, 2.2, 2.5, 2.6 automated; the `extension-ui` CI job is informational; owner's decisions and flake measurement open. See [vscode-ui-automation.md](vscode-ui-automation.md) §6 |
+| 10.16 | UI automation of the manual checks in a real VS Code (`wdio-vscode-service` under xvfb) | Merged (#117, #121, #127; T0-T13 bar T14/T15): checks 1.1-1.13 and 2.1-2.6 that need a real window are automated (second pass #121 added 1.1-1.4, 1.12, 2.3, 2.4; an opt-in real-Copilot suite is written but never run end to end); the `extension-ui` CI job is informational; owner's decisions and flake measurement open. See [vscode-ui-automation.md](vscode-ui-automation.md) §6 |
 
 
 ## 1. Context

@@ -102,8 +102,9 @@ This repo builds two products from one codebase:
   log to sibling files next to `main.jsonl`, with measured impact, format
   facts, options and open questions.
 - [VS Code UI automation plan](docs/plans/vscode-ui-automation.md) —
-  proposed step 10.16: automating the manual checks that need a real
-  VS Code window with `wdio-vscode-service` under xvfb.
+  step 10.16 (merged; owner's decisions open): automating the manual
+  checks that need a real VS Code window with `wdio-vscode-service` under
+  xvfb.
 - [pi-system-prompt-logger](packages/pi-system-prompt-logger/README.md) —
   optional Pi coding-agent extension, vendored in this repo, that captures
   pi's assembled system prompt to a JSONL sidecar log so Analyze mode's

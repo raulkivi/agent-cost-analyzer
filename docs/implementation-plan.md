@@ -7,10 +7,13 @@ extension sharing the same code (vision §5). Phase 11 pins the standalone
 app's pi provider against a real captured session, postponed from Phase 9.6.
 Phase 12 adds branded, interactive MCP Apps views for both products.
 
-**Overall status (2026-10-28):** Phases 0-10 have their code and docs
-merged to `main`, including Phase 10's release prep (#90). Still open:
-Phase 10's owner tasks before the first release (see its section),
-Phase 11 (not started) and Phase 12 (planned).
+**Overall status (2026-11-05):** Phases 0-10 have their code and docs
+merged to `main`. The extension's 0.1.0 is released (tag `ext-v0.1.0`,
+2026-11-03). Open: Phase 10's owner manual checks and decisions (see its
+section), Phase 11 (not started), Phase 12 (planned), Phase 13 (in
+progress, step 13.0) and Phase 14 (planned after 13). A proposed plan,
+[plans/classic-subagent-credits.md](plans/classic-subagent-credits.md),
+covers classic Copilot Chat subagent AI Credits; it has no step number yet.
 Each phase has a goal, concrete deliverables, an exit criterion (how you know
 it's done), and its dependencies. Phases are ordered so the riskiest/least
 certain work (real `main.jsonl` parsing) happens after there's already a
@@ -1234,15 +1237,16 @@ dataset and detectors).
 ## Phase 10 — AI Credits Analyzer VS Code extension (in scope since 2026-10-24)
 
 Full plan: [plans/vscode-extension.md](plans/vscode-extension.md)
-(steps 10.0-10.12, each with its own exit criterion, plus CI and Marketplace
+(steps 10.0-10.16, each with its own exit criterion, plus CI and Marketplace
 deployment). The extension, **AI Credits Analyzer**, is a separate,
 Copilot-only product that shares code with the standalone app (**Agent Cost
 Analyzer**, vision §5). The standalone app keeps every provider. Brought
 into scope on 2026-10-24. Previously this was a deferred "future path".
 
-**Status (2026-10-24)**: every step's code and docs are merged (#57-#80).
-The integration suite passes in a real stable VS Code in CI, and every CI
-run builds an installable `.vsix`. Not yet published. Each step's details
+**Status (2026-11-05)**: every step's code and docs are merged (#57-#121).
+The integration suite and the `extension-ui` suite (10.16, informational in
+CI) run in a real stable VS Code, and every CI run builds an installable
+`.vsix`. 0.1.0 is published on the Marketplace and Open VSX. Each step's details
 and deviations are in its status note in the plan's §6.
 
 | Step | What | State |
@@ -1260,6 +1264,15 @@ and deviations are in its status note in the plan's §6.
 | 10.10 | Documentation: extension README/listing, extension user guide, two-product README and User Guide | Done (#73); screenshots done; owner review open |
 | 10.11 | UX review for VS Code: panel fits any width, readable in light, dark and High Contrast, native look, automated UI check | Done (#77) |
 | 10.12 | Learn scenarios in the side bar (a Learn view), like the Sessions view; the panel has no list of its own | Done (#80) |
+| 10.13 | Agent Host sessions (the VS Code 1.143+ default) listed with turns, tokens and AI Credits | Done; manual check 1.4 passes |
+| 10.14 | Agent Host turn text, tool calls and system prompt from the Copilot CLI event log | Done; owner's check passed 2026-11-02 |
+| 10.15 | Cache-write and reasoning tokens for Agent Host sessions | Done (#102); owner's check passed 2026-11-02 |
+| 10.16 | UI automation of the manual checks (`wdio-vscode-service`, `test/ui/`) | Merged (#117, #121, #127); CI job informational; owner's decisions and T15 open ([plans/vscode-ui-automation.md](plans/vscode-ui-automation.md)) |
+
+**Fixes after 0.1.0** (unreleased, in the changelogs): the AI Credits in a
+session's list summary and detail now agree (#122); debug-log usage is
+attributed to the right turn when logging started mid-session (#126); the
+setup banner fits 320/360 px panels (#125).
 
 **Verified in CI** (step 10.9): activation, the panel's data, the
 Sessions view, the §3.5 performance budgets with 200 sessions, and the MCP
@@ -1285,8 +1298,8 @@ server (off, on with 9 tools and `get_session_cost`, off again).
    sessions run through the Agent Host; both products now list them with
    turns, tokens and AI Credits. Manual check 1.4 passes with the default
    harness.
-5. The first release: tag `ext-v0.1.0` (odd minor, so the pre-release
-   channel).
+5. Done: the first release, tag `ext-v0.1.0` (odd minor, so the
+   pre-release channel), 2026-11-03.
 
 The dev-only `@azure/msal-node` advisory is accepted
 ([threat-model.md](threat-model.md) §7, 2026-10-27).
@@ -1409,10 +1422,12 @@ unknown.
 **Dependencies**: Phase 10 (the extension, its Learn view from step 10.12
 and `ext-v0.1.0`). Not Phase 11 or 12.
 
-**Status (2026-11-03)**: planned, not started. The owner's decisions are
-in the plan's §9: Anthropic, OpenAI, Google and xAI are simulated, while
-Moonshot AI and Microsoft are listed but disabled. Work starts after
-`ext-v0.1.0` and ships in extension 0.2.0.
+**Status (2026-11-05)**: in progress, step 13.0 (rule register). The
+register is drafted (#115), verified (#116), has the owner's decisions
+recorded (#120) and had two unsourced claims corrected (#123). Steps
+13.1-13.10 are not started. The owner's decisions are in the plan's §9:
+Anthropic, OpenAI, Google and xAI are simulated, while Moonshot AI and
+Microsoft are listed but disabled. It ships in extension 0.2.0.
 
 ## Phase 14 — Replay real Analyze sessions on another vendor
 

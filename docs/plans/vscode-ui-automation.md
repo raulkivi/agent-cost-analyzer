@@ -1,7 +1,7 @@
 # VS Code UI automation of the manual checks
 
-Status: **code done on a branch, awaiting the owner's decisions and T15
-(step 10.16)**; §6 records what was built and learned. Extends
+Status: **merged to `main` (#117, #121, #127), awaiting the owner's decisions
+and T15 (step 10.16)**; §6 records what was built and learned. Extends
 [vscode-extension.md](vscode-extension.md) step 10.9 (integration suite,
 manual checks) and step 10.11 (UI check). Automates the rows of
 [vscode-extension-manual-checks.md](vscode-extension-manual-checks.md)
