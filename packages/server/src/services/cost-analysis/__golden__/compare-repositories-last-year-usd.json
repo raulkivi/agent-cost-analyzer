@@ -1,0 +1,331 @@
+{
+  "generatedAt": "2026-11-06T12:00:00.000Z",
+  "since": "2026-10-01",
+  "until": "2026-10-31",
+  "comparePeriod": "last-year",
+  "previousSince": "2025-10-01",
+  "previousUntil": "2025-10-31",
+  "groupBy": "repository",
+  "basis": "preferred",
+  "pricing": "as-of-use",
+  "currency": "usd",
+  "conversion": "Every amount is in USD: AI Credits converted at 1 AI Credit = $0.01 (GitHub's documented rate); no other exchange rate is used.",
+  "providers": [
+    {
+      "id": "vscode",
+      "label": "Fake",
+      "available": true,
+      "sessionCount": 3,
+      "truncated": false
+    },
+    {
+      "id": "claude-code",
+      "label": "Fake",
+      "available": true,
+      "sessionCount": 3,
+      "truncated": false
+    },
+    {
+      "id": "pi-agent",
+      "label": "Fake",
+      "available": true,
+      "sessionCount": 1,
+      "truncated": false
+    }
+  ],
+  "undatedTurns": 0,
+  "total": {
+    "turns": 6,
+    "knownTurns": 5,
+    "amounts": [
+      {
+        "currency": "USD",
+        "amount": 0.097,
+        "knownTurns": 5
+      }
+    ],
+    "usd": 0.097,
+    "estimated": false,
+    "apiEquivalentTurns": 0
+  },
+  "rows": [
+    {
+      "key": "github.com/acme/portal-web",
+      "label": "github.com/acme/portal-web",
+      "sessions": 1,
+      "turns": 2,
+      "activeDays": 2,
+      "total": {
+        "turns": 2,
+        "knownTurns": 2,
+        "amounts": [
+          {
+            "currency": "USD",
+            "amount": 0.019000000000000003,
+            "knownTurns": 2
+          }
+        ],
+        "usd": 0.019000000000000003,
+        "estimated": false,
+        "apiEquivalentTurns": 0
+      },
+      "coverage": {
+        "preferred": {
+          "turns": 2,
+          "knownTurns": 2
+        },
+        "billed": {
+          "turns": 2,
+          "knownTurns": 2
+        },
+        "reported": {
+          "turns": 2,
+          "knownTurns": 0
+        },
+        "priced": {
+          "turns": 2,
+          "knownTurns": 2
+        }
+      },
+      "previous": {
+        "sessions": 0,
+        "turns": 0,
+        "total": {
+          "turns": 0,
+          "knownTurns": 0,
+          "amounts": [],
+          "usd": null,
+          "estimated": false,
+          "apiEquivalentTurns": 0
+        },
+        "coverage": {
+          "preferred": {
+            "turns": 0,
+            "knownTurns": 0
+          },
+          "billed": {
+            "turns": 0,
+            "knownTurns": 0
+          },
+          "reported": {
+            "turns": 0,
+            "knownTurns": 0
+          },
+          "priced": {
+            "turns": 0,
+            "knownTurns": 0
+          }
+        }
+      },
+      "change": [
+        {
+          "currency": "USD",
+          "current": 0.019000000000000003,
+          "previous": null,
+          "absolute": null,
+          "ratio": null
+        }
+      ],
+      "perSession": [
+        {
+          "currency": "USD",
+          "amount": 0.019000000000000003
+        }
+      ],
+      "perActiveDay": [
+        {
+          "currency": "USD",
+          "amount": 0.009500000000000001
+        }
+      ],
+      "perTurn": [
+        {
+          "currency": "USD",
+          "amount": 0.009500000000000001
+        }
+      ],
+      "share": [
+        {
+          "currency": "USD",
+          "share": 0.19587628865979384
+        }
+      ],
+      "cacheHitRatio": 0.9,
+      "outputShare": 0.047619047619047616
+    },
+    {
+      "key": "github.com/acme/billing",
+      "label": "github.com/acme/billing",
+      "sessions": 2,
+      "turns": 3,
+      "activeDays": 3,
+      "total": {
+        "turns": 3,
+        "knownTurns": 3,
+        "amounts": [
+          {
+            "currency": "USD",
+            "amount": 0.07800000000000001,
+            "knownTurns": 3
+          }
+        ],
+        "usd": 0.07800000000000001,
+        "estimated": false,
+        "apiEquivalentTurns": 0
+      },
+      "coverage": {
+        "preferred": {
+          "turns": 3,
+          "knownTurns": 3
+        },
+        "billed": {
+          "turns": 3,
+          "knownTurns": 1
+        },
+        "reported": {
+          "turns": 3,
+          "knownTurns": 1
+        },
+        "priced": {
+          "turns": 3,
+          "knownTurns": 3
+        }
+      },
+      "previous": {
+        "sessions": 0,
+        "turns": 0,
+        "total": {
+          "turns": 0,
+          "knownTurns": 0,
+          "amounts": [],
+          "usd": null,
+          "estimated": false,
+          "apiEquivalentTurns": 0
+        },
+        "coverage": {
+          "preferred": {
+            "turns": 0,
+            "knownTurns": 0
+          },
+          "billed": {
+            "turns": 0,
+            "knownTurns": 0
+          },
+          "reported": {
+            "turns": 0,
+            "knownTurns": 0
+          },
+          "priced": {
+            "turns": 0,
+            "knownTurns": 0
+          }
+        }
+      },
+      "change": [
+        {
+          "currency": "USD",
+          "current": 0.07800000000000001,
+          "previous": null,
+          "absolute": null,
+          "ratio": null
+        }
+      ],
+      "perSession": [
+        {
+          "currency": "USD",
+          "amount": 0.03900000000000001
+        }
+      ],
+      "perActiveDay": [
+        {
+          "currency": "USD",
+          "amount": 0.026000000000000006
+        }
+      ],
+      "perTurn": [
+        {
+          "currency": "USD",
+          "amount": 0.026000000000000006
+        }
+      ],
+      "share": [
+        {
+          "currency": "USD",
+          "share": 0.8041237113402063
+        }
+      ],
+      "cacheHitRatio": 0,
+      "outputShare": 0.23076923076923078
+    },
+    {
+      "key": "local:scratch",
+      "label": "local:scratch",
+      "sessions": 1,
+      "turns": 1,
+      "activeDays": 1,
+      "total": {
+        "turns": 1,
+        "knownTurns": 0,
+        "amounts": [],
+        "usd": null,
+        "estimated": false,
+        "apiEquivalentTurns": 0
+      },
+      "coverage": {
+        "preferred": {
+          "turns": 1,
+          "knownTurns": 0
+        },
+        "billed": {
+          "turns": 1,
+          "knownTurns": 0
+        },
+        "reported": {
+          "turns": 1,
+          "knownTurns": 0
+        },
+        "priced": {
+          "turns": 1,
+          "knownTurns": 0
+        }
+      },
+      "previous": {
+        "sessions": 0,
+        "turns": 0,
+        "total": {
+          "turns": 0,
+          "knownTurns": 0,
+          "amounts": [],
+          "usd": null,
+          "estimated": false,
+          "apiEquivalentTurns": 0
+        },
+        "coverage": {
+          "preferred": {
+            "turns": 0,
+            "knownTurns": 0
+          },
+          "billed": {
+            "turns": 0,
+            "knownTurns": 0
+          },
+          "reported": {
+            "turns": 0,
+            "knownTurns": 0
+          },
+          "priced": {
+            "turns": 0,
+            "knownTurns": 0
+          }
+        }
+      },
+      "change": [],
+      "perSession": [],
+      "perActiveDay": [],
+      "perTurn": [],
+      "share": [],
+      "cacheHitRatio": null,
+      "outputShare": null
+    }
+  ]
+}

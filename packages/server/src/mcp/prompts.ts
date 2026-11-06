@@ -49,6 +49,9 @@ export function registerPrompts(server: McpServer): void {
           "Explain what drives the spend: cache misses (low cache hit ratio, cache-expiry events), large or growing context, compactions, " +
           "model switches, expensive models used for simple turns, unused tools inflating every request, retries after failed tool calls. " +
           "Give concrete, prioritised savings with the evidence (session, turn, figures). " +
+          // Phase 15 step 15.7 (cost-by-repository-and-project.md §10.1.3): the project step.
+          "If the list_projects tool is available and returns projects, also call compare_costs with groupBy \"project\" over those project ids (2 to 20) for the period, " +
+          "and get_project_cost on the most expensive one; then group your findings and savings by project, with work outside any project last. " +
           "Treat null figures as unknown, never as zero, and say where coverage is partial.",
       ),
   );

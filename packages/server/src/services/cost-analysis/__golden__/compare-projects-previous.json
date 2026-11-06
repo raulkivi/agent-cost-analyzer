@@ -1,0 +1,322 @@
+{
+  "generatedAt": "2026-11-06T12:00:00.000Z",
+  "since": "2026-10-01",
+  "until": "2026-10-31",
+  "comparePeriod": "previous",
+  "previousSince": "2026-08-31",
+  "previousUntil": "2026-09-30",
+  "groupBy": "project",
+  "basis": "preferred",
+  "pricing": "as-of-use",
+  "currency": "native",
+  "conversion": "1 AI Credit = $0.01 (GitHub's documented rate); no other exchange rate is used.",
+  "providers": [
+    {
+      "id": "vscode",
+      "label": "Fake",
+      "available": true,
+      "sessionCount": 3,
+      "truncated": false
+    },
+    {
+      "id": "claude-code",
+      "label": "Fake",
+      "available": true,
+      "sessionCount": 3,
+      "truncated": false
+    },
+    {
+      "id": "pi-agent",
+      "label": "Fake",
+      "available": true,
+      "sessionCount": 1,
+      "truncated": false
+    }
+  ],
+  "undatedTurns": 0,
+  "total": {
+    "turns": 7,
+    "knownTurns": 7,
+    "amounts": [
+      {
+        "currency": "AI_CREDITS",
+        "amount": 4.4,
+        "knownTurns": 3
+      },
+      {
+        "currency": "USD",
+        "amount": 0.061500000000000006,
+        "knownTurns": 4
+      }
+    ],
+    "usd": 0.10550000000000001,
+    "estimated": false,
+    "apiEquivalentTurns": 2
+  },
+  "rows": [
+    {
+      "key": "portal",
+      "label": "Customer portal",
+      "sessions": 2,
+      "turns": 4,
+      "activeDays": 4,
+      "total": {
+        "turns": 4,
+        "knownTurns": 4,
+        "amounts": [
+          {
+            "currency": "AI_CREDITS",
+            "amount": 1.9,
+            "knownTurns": 2
+          },
+          {
+            "currency": "USD",
+            "amount": 0.0085,
+            "knownTurns": 2
+          }
+        ],
+        "usd": 0.027500000000000004,
+        "estimated": false,
+        "apiEquivalentTurns": 2
+      },
+      "coverage": {
+        "preferred": {
+          "turns": 4,
+          "knownTurns": 4
+        },
+        "billed": {
+          "turns": 4,
+          "knownTurns": 2
+        },
+        "reported": {
+          "turns": 4,
+          "knownTurns": 0
+        },
+        "priced": {
+          "turns": 4,
+          "knownTurns": 4
+        }
+      },
+      "previous": {
+        "sessions": 1,
+        "turns": 1,
+        "total": {
+          "turns": 1,
+          "knownTurns": 0,
+          "amounts": [],
+          "usd": null,
+          "estimated": false,
+          "apiEquivalentTurns": 0
+        },
+        "coverage": {
+          "preferred": {
+            "turns": 1,
+            "knownTurns": 0
+          },
+          "billed": {
+            "turns": 1,
+            "knownTurns": 0
+          },
+          "reported": {
+            "turns": 1,
+            "knownTurns": 0
+          },
+          "priced": {
+            "turns": 1,
+            "knownTurns": 0
+          }
+        }
+      },
+      "change": [
+        {
+          "currency": "AI_CREDITS",
+          "current": 1.9,
+          "previous": null,
+          "absolute": null,
+          "ratio": null
+        },
+        {
+          "currency": "USD",
+          "current": 0.0085,
+          "previous": null,
+          "absolute": null,
+          "ratio": null
+        }
+      ],
+      "perSession": [
+        {
+          "currency": "AI_CREDITS",
+          "amount": 0.95
+        },
+        {
+          "currency": "USD",
+          "amount": 0.00425
+        }
+      ],
+      "perActiveDay": [
+        {
+          "currency": "AI_CREDITS",
+          "amount": 0.475
+        },
+        {
+          "currency": "USD",
+          "amount": 0.002125
+        }
+      ],
+      "perTurn": [
+        {
+          "currency": "AI_CREDITS",
+          "amount": 0.475
+        },
+        {
+          "currency": "USD",
+          "amount": 0.002125
+        }
+      ],
+      "share": [
+        {
+          "currency": "AI_CREDITS",
+          "share": 0.43181818181818177
+        },
+        {
+          "currency": "USD",
+          "share": 0.13821138211382114
+        }
+      ],
+      "cacheHitRatio": 0.8558558558558559,
+      "outputShare": 0.059322033898305086
+    },
+    {
+      "key": "billing",
+      "label": "Billing",
+      "sessions": 2,
+      "turns": 3,
+      "activeDays": 3,
+      "total": {
+        "turns": 3,
+        "knownTurns": 3,
+        "amounts": [
+          {
+            "currency": "AI_CREDITS",
+            "amount": 2.5,
+            "knownTurns": 1
+          },
+          {
+            "currency": "USD",
+            "amount": 0.053000000000000005,
+            "knownTurns": 2
+          }
+        ],
+        "usd": 0.07800000000000001,
+        "estimated": false,
+        "apiEquivalentTurns": 0
+      },
+      "coverage": {
+        "preferred": {
+          "turns": 3,
+          "knownTurns": 3
+        },
+        "billed": {
+          "turns": 3,
+          "knownTurns": 1
+        },
+        "reported": {
+          "turns": 3,
+          "knownTurns": 1
+        },
+        "priced": {
+          "turns": 3,
+          "knownTurns": 3
+        }
+      },
+      "previous": {
+        "sessions": 0,
+        "turns": 0,
+        "total": {
+          "turns": 0,
+          "knownTurns": 0,
+          "amounts": [],
+          "usd": null,
+          "estimated": false,
+          "apiEquivalentTurns": 0
+        },
+        "coverage": {
+          "preferred": {
+            "turns": 0,
+            "knownTurns": 0
+          },
+          "billed": {
+            "turns": 0,
+            "knownTurns": 0
+          },
+          "reported": {
+            "turns": 0,
+            "knownTurns": 0
+          },
+          "priced": {
+            "turns": 0,
+            "knownTurns": 0
+          }
+        }
+      },
+      "change": [
+        {
+          "currency": "AI_CREDITS",
+          "current": 2.5,
+          "previous": null,
+          "absolute": null,
+          "ratio": null
+        },
+        {
+          "currency": "USD",
+          "current": 0.053000000000000005,
+          "previous": null,
+          "absolute": null,
+          "ratio": null
+        }
+      ],
+      "perSession": [
+        {
+          "currency": "AI_CREDITS",
+          "amount": 1.25
+        },
+        {
+          "currency": "USD",
+          "amount": 0.026500000000000003
+        }
+      ],
+      "perActiveDay": [
+        {
+          "currency": "AI_CREDITS",
+          "amount": 0.8333333333333334
+        },
+        {
+          "currency": "USD",
+          "amount": 0.017666666666666667
+        }
+      ],
+      "perTurn": [
+        {
+          "currency": "AI_CREDITS",
+          "amount": 0.8333333333333334
+        },
+        {
+          "currency": "USD",
+          "amount": 0.017666666666666667
+        }
+      ],
+      "share": [
+        {
+          "currency": "AI_CREDITS",
+          "share": 0.5681818181818181
+        },
+        {
+          "currency": "USD",
+          "share": 0.8617886178861789
+        }
+      ],
+      "cacheHitRatio": 0,
+      "outputShare": 0.23076923076923078
+    }
+  ]
+}

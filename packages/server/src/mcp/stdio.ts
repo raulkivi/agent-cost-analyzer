@@ -17,11 +17,11 @@ const version = readAppVersion();
 const { registry, resolvedAppSettingsDir } = composeLogProviders();
 // Phase 15 step 15.5: get_price_book reads the bundled book and the user's
 // versions in projects.json, as the web app does; step 15.6 prices turns
-// with the same book.
+// with the same book; step 15.7's cost analyses mark its price changes.
 const attribution = createStandaloneAttribution(registry, resolvedAppSettingsDir);
 const priceBook = createStandalonePriceBook(resolvedAppSettingsDir, attribution.catalog);
 const server = createMcpServer({
-  ...createMcpServices(registry, version, undefined, attribution, createTurnPricer(priceBook)),
+  ...createMcpServices(registry, version, undefined, attribution, createTurnPricer(priceBook), priceBook),
   priceBook,
 });
 

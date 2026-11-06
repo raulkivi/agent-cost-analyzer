@@ -14,6 +14,7 @@ import { composeLogProviders, type LogProviderCompositionOptions } from "./compo
 import { createInsightsService } from "./create-insights-service.js";
 import { createStandaloneAttribution } from "./create-standalone-attribution.js";
 import { createTurnPricer } from "./create-turn-pricer.js";
+import { createCostAnalysis, projectDirectoryOf } from "./create-cost-analysis.js";
 
 export interface StandaloneApiServiceOptions extends LogProviderCompositionOptions {
   // G4 (vscode-extension.md §2.2): default to this package's own files,
@@ -58,6 +59,8 @@ export function createStandaloneApiService(options: StandaloneApiServiceOptions 
   const agentHostUserDataDir =
     compositionOptions.agentHostUserDataDir !== undefined ? compositionOptions.agentHostUserDataDir : resolveUserDataDir();
 
+  const insights = createInsightsService(registry, attribution.dataset, createTurnPricer(priceBook));
+
   const learnSimulation = new LearnSimulationService(
     loadScenarioScripts(learnScriptsDir),
     vendorProfiles,
@@ -71,8 +74,10 @@ export function createStandaloneApiService(options: StandaloneApiServiceOptions 
       repositories: attribution.repositories,
     },
     priceBook,
+    // Step 15.7: cost over time and compare, over the same dataset.
+    costAnalysis: createCostAnalysis(insights, priceBook, projectDirectoryOf(attribution.catalog)),
     auditQueries: new AuditQueryService(registry),
-    insights: createInsightsService(registry, attribution.dataset, createTurnPricer(priceBook)),
+    insights,
     settings: appSettings,
     checkConfig: (minRetainedSessionLogsThreshold) =>
       checkConfig({

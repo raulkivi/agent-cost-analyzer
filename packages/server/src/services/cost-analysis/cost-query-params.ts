@@ -10,6 +10,7 @@ import {
   pricingModeSchema,
 } from "@agent-cost-analyzer/domain";
 import { limitSchema } from "../tool-audit/audit-query-params.js";
+import { MAX_ROLLUP_SESSION_LIMIT } from "../tool-audit/audit-query-service.js";
 
 // Phase 15 step 15.7 (docs/plans/cost-by-repository-and-project.md §10,
 // §10.1.4): the options of the cost analyses. The MCP tools' argument
@@ -17,7 +18,6 @@ import { limitSchema } from "../tool-audit/audit-query-params.js";
 // so HTTP and MCP validate the same way.
 
 export const MAX_COST_IDS = 20;
-export const MAX_ROLLUP_SESSIONS_PER_PROVIDER = 500;
 
 export const costDateArg = isoCalendarDateSchema;
 export const costBucketArg = costBucketSchema;
@@ -31,7 +31,7 @@ const unique = (ids: readonly string[]) => new Set(ids).size === ids.length;
 
 const viewShape = {
   providerId: z.string().min(1).optional(),
-  limit: limitSchema.max(MAX_ROLLUP_SESSIONS_PER_PROVIDER).optional(),
+  limit: limitSchema.max(MAX_ROLLUP_SESSION_LIMIT).optional(),
   basis: costBasisArg.default("preferred"),
   pricing: costPricingArg.default("as-of-use"),
   currency: costCurrencyArg.default("native"),

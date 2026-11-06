@@ -2,6 +2,8 @@ import type {
   AuditRollup,
   AuditedToolCall,
   ConfigStatus,
+  CostComparison,
+  CostSeries,
   InsightsDataset,
   LogProviderStatus,
   PriceBookListing,
@@ -30,6 +32,8 @@ import type { SessionRangeFilter, ToolCallFilter } from "../tool-audit/audit-que
 import { isoDateBoundSchema, parseSessionRangeQuery, parseToolCallFilterQuery } from "../tool-audit/audit-query-params.js";
 import { BadRequestError, InternalError, NotFoundError } from "./api-errors.js";
 import type { PriceBookReader } from "../pricing/price-book.js";
+import type { CostAnalysisQueries } from "../cost-analysis/cost-analysis-service.js";
+import { parseCostCompareQuery, parseCostSeriesQuery } from "../cost-analysis/cost-query-params.js";
 
 // The narrow slices of the registry and query services ApiService needs
 // (DIP) — each product's composition root passes its own registry, so
@@ -85,10 +89,15 @@ const priceBookQuerySchema = z.object({
   at: isoDateBoundSchema.optional(),
 });
 
+// Phase 15 step 15.7: cost over time and compare. Optional like the price
+// book: the extension has none yet and answers 404.
+export const COST_ANALYSIS_UNAVAILABLE_MESSAGE = "Cost analyses are not available in this product.";
+
 export interface ApiServiceDeps {
   registry: ApiProviderRegistry;
   projects?: ApiProjects;
   priceBook?: PriceBookReader;
+  costAnalysis?: Pick<CostAnalysisQueries, "getTimeSeries" | "compare">;
   auditQueries: ApiAuditQueries;
   insights: ApiInsights;
   settings: Pick<AppSettingsStore, "readMinRetainedSessionLogsThreshold" | "writeMinRetainedSessionLogsThreshold">;
@@ -400,5 +409,34 @@ export class ApiService {
     } catch (error) {
       throw auditFailure("insights", error);
     }
+  }
+
+  // Phase 15 step 15.7 (plan §10): GET /api/cost/timeseries and
+  // /api/cost/compare, over the same builders as the MCP cost tools.
+  async getCostTimeSeries(query: ApiQuery = {}): Promise<CostSeries> {
+    const analysis = this.costAnalysis();
+    const parsed = parseCostSeriesQuery(query);
+    if (!parsed.ok) throw new BadRequestError(parsed.error);
+    try {
+      return await analysis.getTimeSeries(parsed.value);
+    } catch (error) {
+      throw auditFailure("cost time series", error);
+    }
+  }
+
+  async getCostComparison(query: ApiQuery = {}): Promise<CostComparison> {
+    const analysis = this.costAnalysis();
+    const parsed = parseCostCompareQuery(query);
+    if (!parsed.ok) throw new BadRequestError(parsed.error);
+    try {
+      return await analysis.compare(parsed.value);
+    } catch (error) {
+      throw auditFailure("cost comparison", error);
+    }
+  }
+
+  private costAnalysis(): NonNullable<ApiServiceDeps["costAnalysis"]> {
+    if (!this.deps.costAnalysis) throw new NotFoundError(COST_ANALYSIS_UNAVAILABLE_MESSAGE);
+    return this.deps.costAnalysis;
   }
 }

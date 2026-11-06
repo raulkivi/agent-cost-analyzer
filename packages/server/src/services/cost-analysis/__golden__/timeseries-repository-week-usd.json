@@ -1,0 +1,2028 @@
+{
+  "generatedAt": "2026-11-06T12:00:00.000Z",
+  "since": "2026-10-01",
+  "until": "2026-10-31",
+  "basis": "preferred",
+  "pricing": "as-of-use",
+  "currency": "usd",
+  "conversion": "Every amount is in USD: AI Credits converted at 1 AI Credit = $0.01 (GitHub's documented rate); no other exchange rate is used.",
+  "bucket": "week",
+  "groupBy": "repository",
+  "providers": [
+    {
+      "id": "vscode",
+      "label": "Fake",
+      "available": true,
+      "sessionCount": 3,
+      "truncated": false
+    },
+    {
+      "id": "claude-code",
+      "label": "Fake",
+      "available": true,
+      "sessionCount": 2,
+      "truncated": false
+    },
+    {
+      "id": "pi-agent",
+      "label": "Fake",
+      "available": true,
+      "sessionCount": 1,
+      "truncated": false
+    }
+  ],
+  "sessions": 6,
+  "turns": 9,
+  "undatedTurns": 0,
+  "total": {
+    "turns": 9,
+    "knownTurns": 8,
+    "amounts": [
+      {
+        "currency": "USD",
+        "amount": 0.10790000000000001,
+        "knownTurns": 8
+      }
+    ],
+    "usd": 0.10790000000000001,
+    "estimated": false,
+    "apiEquivalentTurns": 3
+  },
+  "totals": {
+    "preferred": {
+      "turns": 9,
+      "knownTurns": 8,
+      "amounts": [
+        {
+          "currency": "AI_CREDITS",
+          "amount": 4.4,
+          "knownTurns": 3
+        },
+        {
+          "currency": "USD",
+          "amount": 0.0639,
+          "knownTurns": 5
+        }
+      ],
+      "usd": 0.10790000000000001,
+      "estimated": false,
+      "apiEquivalentTurns": 3
+    },
+    "billed": {
+      "turns": 9,
+      "knownTurns": 3,
+      "amounts": [
+        {
+          "currency": "AI_CREDITS",
+          "amount": 4.4,
+          "knownTurns": 3
+        }
+      ],
+      "usd": 0.044000000000000004,
+      "estimated": false,
+      "apiEquivalentTurns": 0
+    },
+    "reported": {
+      "turns": 9,
+      "knownTurns": 1,
+      "amounts": [
+        {
+          "currency": "USD",
+          "amount": 0.05,
+          "knownTurns": 1
+        }
+      ],
+      "usd": 0.05,
+      "estimated": false,
+      "apiEquivalentTurns": 0
+    },
+    "priced": {
+      "turns": 9,
+      "knownTurns": 8,
+      "amounts": [
+        {
+          "currency": "AI_CREDITS",
+          "amount": 3.07,
+          "knownTurns": 3
+        },
+        {
+          "currency": "USD",
+          "amount": 0.0169,
+          "knownTurns": 5
+        }
+      ],
+      "usd": 0.0476,
+      "estimated": false,
+      "apiEquivalentTurns": 3
+    },
+    "preferredBasisTurns": {
+      "billed": 3,
+      "reported": 1,
+      "priced": 4,
+      "unknown": 1
+    },
+    "priceVersionIds": [
+      "anthropic-api:claude-opus-5.5:2026-10-01",
+      "anthropic-api:claude-sonnet-5.5:2026-10-01",
+      "anthropic-api:claude-sonnet-5.5:2026-10-07",
+      "github-copilot:claude-sonnet-5.5:2026-10-01",
+      "github-copilot:claude-sonnet-5.5:2026-10-07",
+      "github-copilot:gpt-6.1-sol:2026-10-01",
+      "openai-api:gpt-6.1-sol:2026-10-01",
+      "openai-api:gpt-6.1-sol:2026-10-20"
+    ],
+    "conversion": "1 AI Credit = $0.01 (GitHub's documented rate); no other exchange rate is used."
+  },
+  "points": [
+    {
+      "period": "2026-W40",
+      "start": "2026-09-28",
+      "end": "2026-10-04",
+      "sessions": 0,
+      "turns": 0,
+      "cost": {
+        "turns": 0,
+        "knownTurns": 0,
+        "amounts": [],
+        "usd": null,
+        "estimated": false,
+        "apiEquivalentTurns": 0
+      },
+      "cumulative": {
+        "turns": 0,
+        "knownTurns": 0,
+        "amounts": [],
+        "usd": null,
+        "estimated": false,
+        "apiEquivalentTurns": 0
+      },
+      "coverage": {
+        "preferred": {
+          "turns": 0,
+          "knownTurns": 0
+        },
+        "billed": {
+          "turns": 0,
+          "knownTurns": 0
+        },
+        "reported": {
+          "turns": 0,
+          "knownTurns": 0
+        },
+        "priced": {
+          "turns": 0,
+          "knownTurns": 0
+        }
+      }
+    },
+    {
+      "period": "2026-W41",
+      "start": "2026-10-05",
+      "end": "2026-10-11",
+      "sessions": 2,
+      "turns": 4,
+      "cost": {
+        "turns": 4,
+        "knownTurns": 4,
+        "amounts": [
+          {
+            "currency": "USD",
+            "amount": 0.027500000000000004,
+            "knownTurns": 4
+          }
+        ],
+        "usd": 0.027500000000000004,
+        "estimated": false,
+        "apiEquivalentTurns": 2
+      },
+      "cumulative": {
+        "turns": 4,
+        "knownTurns": 4,
+        "amounts": [
+          {
+            "currency": "USD",
+            "amount": 0.027500000000000004,
+            "knownTurns": 4
+          }
+        ],
+        "usd": 0.027500000000000004,
+        "estimated": false,
+        "apiEquivalentTurns": 2
+      },
+      "coverage": {
+        "preferred": {
+          "turns": 4,
+          "knownTurns": 4
+        },
+        "billed": {
+          "turns": 4,
+          "knownTurns": 2
+        },
+        "reported": {
+          "turns": 4,
+          "knownTurns": 0
+        },
+        "priced": {
+          "turns": 4,
+          "knownTurns": 4
+        }
+      }
+    },
+    {
+      "period": "2026-W42",
+      "start": "2026-10-12",
+      "end": "2026-10-18",
+      "sessions": 1,
+      "turns": 1,
+      "cost": {
+        "turns": 1,
+        "knownTurns": 1,
+        "amounts": [
+          {
+            "currency": "USD",
+            "amount": 0.0024,
+            "knownTurns": 1
+          }
+        ],
+        "usd": 0.0024,
+        "estimated": false,
+        "apiEquivalentTurns": 1
+      },
+      "cumulative": {
+        "turns": 5,
+        "knownTurns": 5,
+        "amounts": [
+          {
+            "currency": "USD",
+            "amount": 0.029900000000000003,
+            "knownTurns": 5
+          }
+        ],
+        "usd": 0.029900000000000003,
+        "estimated": false,
+        "apiEquivalentTurns": 3
+      },
+      "coverage": {
+        "preferred": {
+          "turns": 1,
+          "knownTurns": 1
+        },
+        "billed": {
+          "turns": 1,
+          "knownTurns": 0
+        },
+        "reported": {
+          "turns": 1,
+          "knownTurns": 0
+        },
+        "priced": {
+          "turns": 1,
+          "knownTurns": 1
+        }
+      }
+    },
+    {
+      "period": "2026-W43",
+      "start": "2026-10-19",
+      "end": "2026-10-25",
+      "sessions": 3,
+      "turns": 4,
+      "cost": {
+        "turns": 4,
+        "knownTurns": 3,
+        "amounts": [
+          {
+            "currency": "USD",
+            "amount": 0.07800000000000001,
+            "knownTurns": 3
+          }
+        ],
+        "usd": 0.07800000000000001,
+        "estimated": false,
+        "apiEquivalentTurns": 0
+      },
+      "cumulative": {
+        "turns": 9,
+        "knownTurns": 8,
+        "amounts": [
+          {
+            "currency": "USD",
+            "amount": 0.10790000000000002,
+            "knownTurns": 8
+          }
+        ],
+        "usd": 0.10790000000000002,
+        "estimated": false,
+        "apiEquivalentTurns": 3
+      },
+      "coverage": {
+        "preferred": {
+          "turns": 4,
+          "knownTurns": 3
+        },
+        "billed": {
+          "turns": 4,
+          "knownTurns": 1
+        },
+        "reported": {
+          "turns": 4,
+          "knownTurns": 1
+        },
+        "priced": {
+          "turns": 4,
+          "knownTurns": 3
+        }
+      }
+    },
+    {
+      "period": "2026-W44",
+      "start": "2026-10-26",
+      "end": "2026-11-01",
+      "sessions": 0,
+      "turns": 0,
+      "cost": {
+        "turns": 0,
+        "knownTurns": 0,
+        "amounts": [],
+        "usd": null,
+        "estimated": false,
+        "apiEquivalentTurns": 0
+      },
+      "cumulative": {
+        "turns": 9,
+        "knownTurns": 8,
+        "amounts": [
+          {
+            "currency": "USD",
+            "amount": 0.10790000000000002,
+            "knownTurns": 8
+          }
+        ],
+        "usd": 0.10790000000000002,
+        "estimated": false,
+        "apiEquivalentTurns": 3
+      },
+      "coverage": {
+        "preferred": {
+          "turns": 0,
+          "knownTurns": 0
+        },
+        "billed": {
+          "turns": 0,
+          "knownTurns": 0
+        },
+        "reported": {
+          "turns": 0,
+          "knownTurns": 0
+        },
+        "priced": {
+          "turns": 0,
+          "knownTurns": 0
+        }
+      }
+    }
+  ],
+  "series": [
+    {
+      "key": "github.com/acme/billing",
+      "label": "github.com/acme/billing",
+      "sessions": 2,
+      "turns": 3,
+      "total": {
+        "turns": 3,
+        "knownTurns": 3,
+        "amounts": [
+          {
+            "currency": "USD",
+            "amount": 0.07800000000000001,
+            "knownTurns": 3
+          }
+        ],
+        "usd": 0.07800000000000001,
+        "estimated": false,
+        "apiEquivalentTurns": 0
+      },
+      "coverage": {
+        "preferred": {
+          "turns": 3,
+          "knownTurns": 3
+        },
+        "billed": {
+          "turns": 3,
+          "knownTurns": 1
+        },
+        "reported": {
+          "turns": 3,
+          "knownTurns": 1
+        },
+        "priced": {
+          "turns": 3,
+          "knownTurns": 3
+        }
+      },
+      "points": [
+        {
+          "period": "2026-W40",
+          "start": "2026-09-28",
+          "end": "2026-10-04",
+          "sessions": 0,
+          "turns": 0,
+          "cost": {
+            "turns": 0,
+            "knownTurns": 0,
+            "amounts": [],
+            "usd": null,
+            "estimated": false,
+            "apiEquivalentTurns": 0
+          },
+          "cumulative": {
+            "turns": 0,
+            "knownTurns": 0,
+            "amounts": [],
+            "usd": null,
+            "estimated": false,
+            "apiEquivalentTurns": 0
+          },
+          "coverage": {
+            "preferred": {
+              "turns": 0,
+              "knownTurns": 0
+            },
+            "billed": {
+              "turns": 0,
+              "knownTurns": 0
+            },
+            "reported": {
+              "turns": 0,
+              "knownTurns": 0
+            },
+            "priced": {
+              "turns": 0,
+              "knownTurns": 0
+            }
+          }
+        },
+        {
+          "period": "2026-W41",
+          "start": "2026-10-05",
+          "end": "2026-10-11",
+          "sessions": 0,
+          "turns": 0,
+          "cost": {
+            "turns": 0,
+            "knownTurns": 0,
+            "amounts": [],
+            "usd": null,
+            "estimated": false,
+            "apiEquivalentTurns": 0
+          },
+          "cumulative": {
+            "turns": 0,
+            "knownTurns": 0,
+            "amounts": [],
+            "usd": null,
+            "estimated": false,
+            "apiEquivalentTurns": 0
+          },
+          "coverage": {
+            "preferred": {
+              "turns": 0,
+              "knownTurns": 0
+            },
+            "billed": {
+              "turns": 0,
+              "knownTurns": 0
+            },
+            "reported": {
+              "turns": 0,
+              "knownTurns": 0
+            },
+            "priced": {
+              "turns": 0,
+              "knownTurns": 0
+            }
+          }
+        },
+        {
+          "period": "2026-W42",
+          "start": "2026-10-12",
+          "end": "2026-10-18",
+          "sessions": 0,
+          "turns": 0,
+          "cost": {
+            "turns": 0,
+            "knownTurns": 0,
+            "amounts": [],
+            "usd": null,
+            "estimated": false,
+            "apiEquivalentTurns": 0
+          },
+          "cumulative": {
+            "turns": 0,
+            "knownTurns": 0,
+            "amounts": [],
+            "usd": null,
+            "estimated": false,
+            "apiEquivalentTurns": 0
+          },
+          "coverage": {
+            "preferred": {
+              "turns": 0,
+              "knownTurns": 0
+            },
+            "billed": {
+              "turns": 0,
+              "knownTurns": 0
+            },
+            "reported": {
+              "turns": 0,
+              "knownTurns": 0
+            },
+            "priced": {
+              "turns": 0,
+              "knownTurns": 0
+            }
+          }
+        },
+        {
+          "period": "2026-W43",
+          "start": "2026-10-19",
+          "end": "2026-10-25",
+          "sessions": 2,
+          "turns": 3,
+          "cost": {
+            "turns": 3,
+            "knownTurns": 3,
+            "amounts": [
+              {
+                "currency": "USD",
+                "amount": 0.07800000000000001,
+                "knownTurns": 3
+              }
+            ],
+            "usd": 0.07800000000000001,
+            "estimated": false,
+            "apiEquivalentTurns": 0
+          },
+          "cumulative": {
+            "turns": 3,
+            "knownTurns": 3,
+            "amounts": [
+              {
+                "currency": "USD",
+                "amount": 0.07800000000000001,
+                "knownTurns": 3
+              }
+            ],
+            "usd": 0.07800000000000001,
+            "estimated": false,
+            "apiEquivalentTurns": 0
+          },
+          "coverage": {
+            "preferred": {
+              "turns": 3,
+              "knownTurns": 3
+            },
+            "billed": {
+              "turns": 3,
+              "knownTurns": 1
+            },
+            "reported": {
+              "turns": 3,
+              "knownTurns": 1
+            },
+            "priced": {
+              "turns": 3,
+              "knownTurns": 3
+            }
+          }
+        },
+        {
+          "period": "2026-W44",
+          "start": "2026-10-26",
+          "end": "2026-11-01",
+          "sessions": 0,
+          "turns": 0,
+          "cost": {
+            "turns": 0,
+            "knownTurns": 0,
+            "amounts": [],
+            "usd": null,
+            "estimated": false,
+            "apiEquivalentTurns": 0
+          },
+          "cumulative": {
+            "turns": 3,
+            "knownTurns": 3,
+            "amounts": [
+              {
+                "currency": "USD",
+                "amount": 0.07800000000000001,
+                "knownTurns": 3
+              }
+            ],
+            "usd": 0.07800000000000001,
+            "estimated": false,
+            "apiEquivalentTurns": 0
+          },
+          "coverage": {
+            "preferred": {
+              "turns": 0,
+              "knownTurns": 0
+            },
+            "billed": {
+              "turns": 0,
+              "knownTurns": 0
+            },
+            "reported": {
+              "turns": 0,
+              "knownTurns": 0
+            },
+            "priced": {
+              "turns": 0,
+              "knownTurns": 0
+            }
+          }
+        }
+      ]
+    },
+    {
+      "key": "github.com/acme/portal-web",
+      "label": "github.com/acme/portal-web",
+      "sessions": 1,
+      "turns": 2,
+      "total": {
+        "turns": 2,
+        "knownTurns": 2,
+        "amounts": [
+          {
+            "currency": "USD",
+            "amount": 0.019000000000000003,
+            "knownTurns": 2
+          }
+        ],
+        "usd": 0.019000000000000003,
+        "estimated": false,
+        "apiEquivalentTurns": 0
+      },
+      "coverage": {
+        "preferred": {
+          "turns": 2,
+          "knownTurns": 2
+        },
+        "billed": {
+          "turns": 2,
+          "knownTurns": 2
+        },
+        "reported": {
+          "turns": 2,
+          "knownTurns": 0
+        },
+        "priced": {
+          "turns": 2,
+          "knownTurns": 2
+        }
+      },
+      "points": [
+        {
+          "period": "2026-W40",
+          "start": "2026-09-28",
+          "end": "2026-10-04",
+          "sessions": 0,
+          "turns": 0,
+          "cost": {
+            "turns": 0,
+            "knownTurns": 0,
+            "amounts": [],
+            "usd": null,
+            "estimated": false,
+            "apiEquivalentTurns": 0
+          },
+          "cumulative": {
+            "turns": 0,
+            "knownTurns": 0,
+            "amounts": [],
+            "usd": null,
+            "estimated": false,
+            "apiEquivalentTurns": 0
+          },
+          "coverage": {
+            "preferred": {
+              "turns": 0,
+              "knownTurns": 0
+            },
+            "billed": {
+              "turns": 0,
+              "knownTurns": 0
+            },
+            "reported": {
+              "turns": 0,
+              "knownTurns": 0
+            },
+            "priced": {
+              "turns": 0,
+              "knownTurns": 0
+            }
+          }
+        },
+        {
+          "period": "2026-W41",
+          "start": "2026-10-05",
+          "end": "2026-10-11",
+          "sessions": 1,
+          "turns": 2,
+          "cost": {
+            "turns": 2,
+            "knownTurns": 2,
+            "amounts": [
+              {
+                "currency": "USD",
+                "amount": 0.019000000000000003,
+                "knownTurns": 2
+              }
+            ],
+            "usd": 0.019000000000000003,
+            "estimated": false,
+            "apiEquivalentTurns": 0
+          },
+          "cumulative": {
+            "turns": 2,
+            "knownTurns": 2,
+            "amounts": [
+              {
+                "currency": "USD",
+                "amount": 0.019000000000000003,
+                "knownTurns": 2
+              }
+            ],
+            "usd": 0.019000000000000003,
+            "estimated": false,
+            "apiEquivalentTurns": 0
+          },
+          "coverage": {
+            "preferred": {
+              "turns": 2,
+              "knownTurns": 2
+            },
+            "billed": {
+              "turns": 2,
+              "knownTurns": 2
+            },
+            "reported": {
+              "turns": 2,
+              "knownTurns": 0
+            },
+            "priced": {
+              "turns": 2,
+              "knownTurns": 2
+            }
+          }
+        },
+        {
+          "period": "2026-W42",
+          "start": "2026-10-12",
+          "end": "2026-10-18",
+          "sessions": 0,
+          "turns": 0,
+          "cost": {
+            "turns": 0,
+            "knownTurns": 0,
+            "amounts": [],
+            "usd": null,
+            "estimated": false,
+            "apiEquivalentTurns": 0
+          },
+          "cumulative": {
+            "turns": 2,
+            "knownTurns": 2,
+            "amounts": [
+              {
+                "currency": "USD",
+                "amount": 0.019000000000000003,
+                "knownTurns": 2
+              }
+            ],
+            "usd": 0.019000000000000003,
+            "estimated": false,
+            "apiEquivalentTurns": 0
+          },
+          "coverage": {
+            "preferred": {
+              "turns": 0,
+              "knownTurns": 0
+            },
+            "billed": {
+              "turns": 0,
+              "knownTurns": 0
+            },
+            "reported": {
+              "turns": 0,
+              "knownTurns": 0
+            },
+            "priced": {
+              "turns": 0,
+              "knownTurns": 0
+            }
+          }
+        },
+        {
+          "period": "2026-W43",
+          "start": "2026-10-19",
+          "end": "2026-10-25",
+          "sessions": 0,
+          "turns": 0,
+          "cost": {
+            "turns": 0,
+            "knownTurns": 0,
+            "amounts": [],
+            "usd": null,
+            "estimated": false,
+            "apiEquivalentTurns": 0
+          },
+          "cumulative": {
+            "turns": 2,
+            "knownTurns": 2,
+            "amounts": [
+              {
+                "currency": "USD",
+                "amount": 0.019000000000000003,
+                "knownTurns": 2
+              }
+            ],
+            "usd": 0.019000000000000003,
+            "estimated": false,
+            "apiEquivalentTurns": 0
+          },
+          "coverage": {
+            "preferred": {
+              "turns": 0,
+              "knownTurns": 0
+            },
+            "billed": {
+              "turns": 0,
+              "knownTurns": 0
+            },
+            "reported": {
+              "turns": 0,
+              "knownTurns": 0
+            },
+            "priced": {
+              "turns": 0,
+              "knownTurns": 0
+            }
+          }
+        },
+        {
+          "period": "2026-W44",
+          "start": "2026-10-26",
+          "end": "2026-11-01",
+          "sessions": 0,
+          "turns": 0,
+          "cost": {
+            "turns": 0,
+            "knownTurns": 0,
+            "amounts": [],
+            "usd": null,
+            "estimated": false,
+            "apiEquivalentTurns": 0
+          },
+          "cumulative": {
+            "turns": 2,
+            "knownTurns": 2,
+            "amounts": [
+              {
+                "currency": "USD",
+                "amount": 0.019000000000000003,
+                "knownTurns": 2
+              }
+            ],
+            "usd": 0.019000000000000003,
+            "estimated": false,
+            "apiEquivalentTurns": 0
+          },
+          "coverage": {
+            "preferred": {
+              "turns": 0,
+              "knownTurns": 0
+            },
+            "billed": {
+              "turns": 0,
+              "knownTurns": 0
+            },
+            "reported": {
+              "turns": 0,
+              "knownTurns": 0
+            },
+            "priced": {
+              "turns": 0,
+              "knownTurns": 0
+            }
+          }
+        }
+      ]
+    },
+    {
+      "key": "github.com/acme/portal-api",
+      "label": "github.com/acme/portal-api",
+      "sessions": 1,
+      "turns": 2,
+      "total": {
+        "turns": 2,
+        "knownTurns": 2,
+        "amounts": [
+          {
+            "currency": "USD",
+            "amount": 0.0085,
+            "knownTurns": 2
+          }
+        ],
+        "usd": 0.0085,
+        "estimated": false,
+        "apiEquivalentTurns": 2
+      },
+      "coverage": {
+        "preferred": {
+          "turns": 2,
+          "knownTurns": 2
+        },
+        "billed": {
+          "turns": 2,
+          "knownTurns": 0
+        },
+        "reported": {
+          "turns": 2,
+          "knownTurns": 0
+        },
+        "priced": {
+          "turns": 2,
+          "knownTurns": 2
+        }
+      },
+      "points": [
+        {
+          "period": "2026-W40",
+          "start": "2026-09-28",
+          "end": "2026-10-04",
+          "sessions": 0,
+          "turns": 0,
+          "cost": {
+            "turns": 0,
+            "knownTurns": 0,
+            "amounts": [],
+            "usd": null,
+            "estimated": false,
+            "apiEquivalentTurns": 0
+          },
+          "cumulative": {
+            "turns": 0,
+            "knownTurns": 0,
+            "amounts": [],
+            "usd": null,
+            "estimated": false,
+            "apiEquivalentTurns": 0
+          },
+          "coverage": {
+            "preferred": {
+              "turns": 0,
+              "knownTurns": 0
+            },
+            "billed": {
+              "turns": 0,
+              "knownTurns": 0
+            },
+            "reported": {
+              "turns": 0,
+              "knownTurns": 0
+            },
+            "priced": {
+              "turns": 0,
+              "knownTurns": 0
+            }
+          }
+        },
+        {
+          "period": "2026-W41",
+          "start": "2026-10-05",
+          "end": "2026-10-11",
+          "sessions": 1,
+          "turns": 2,
+          "cost": {
+            "turns": 2,
+            "knownTurns": 2,
+            "amounts": [
+              {
+                "currency": "USD",
+                "amount": 0.0085,
+                "knownTurns": 2
+              }
+            ],
+            "usd": 0.0085,
+            "estimated": false,
+            "apiEquivalentTurns": 2
+          },
+          "cumulative": {
+            "turns": 2,
+            "knownTurns": 2,
+            "amounts": [
+              {
+                "currency": "USD",
+                "amount": 0.0085,
+                "knownTurns": 2
+              }
+            ],
+            "usd": 0.0085,
+            "estimated": false,
+            "apiEquivalentTurns": 2
+          },
+          "coverage": {
+            "preferred": {
+              "turns": 2,
+              "knownTurns": 2
+            },
+            "billed": {
+              "turns": 2,
+              "knownTurns": 0
+            },
+            "reported": {
+              "turns": 2,
+              "knownTurns": 0
+            },
+            "priced": {
+              "turns": 2,
+              "knownTurns": 2
+            }
+          }
+        },
+        {
+          "period": "2026-W42",
+          "start": "2026-10-12",
+          "end": "2026-10-18",
+          "sessions": 0,
+          "turns": 0,
+          "cost": {
+            "turns": 0,
+            "knownTurns": 0,
+            "amounts": [],
+            "usd": null,
+            "estimated": false,
+            "apiEquivalentTurns": 0
+          },
+          "cumulative": {
+            "turns": 2,
+            "knownTurns": 2,
+            "amounts": [
+              {
+                "currency": "USD",
+                "amount": 0.0085,
+                "knownTurns": 2
+              }
+            ],
+            "usd": 0.0085,
+            "estimated": false,
+            "apiEquivalentTurns": 2
+          },
+          "coverage": {
+            "preferred": {
+              "turns": 0,
+              "knownTurns": 0
+            },
+            "billed": {
+              "turns": 0,
+              "knownTurns": 0
+            },
+            "reported": {
+              "turns": 0,
+              "knownTurns": 0
+            },
+            "priced": {
+              "turns": 0,
+              "knownTurns": 0
+            }
+          }
+        },
+        {
+          "period": "2026-W43",
+          "start": "2026-10-19",
+          "end": "2026-10-25",
+          "sessions": 0,
+          "turns": 0,
+          "cost": {
+            "turns": 0,
+            "knownTurns": 0,
+            "amounts": [],
+            "usd": null,
+            "estimated": false,
+            "apiEquivalentTurns": 0
+          },
+          "cumulative": {
+            "turns": 2,
+            "knownTurns": 2,
+            "amounts": [
+              {
+                "currency": "USD",
+                "amount": 0.0085,
+                "knownTurns": 2
+              }
+            ],
+            "usd": 0.0085,
+            "estimated": false,
+            "apiEquivalentTurns": 2
+          },
+          "coverage": {
+            "preferred": {
+              "turns": 0,
+              "knownTurns": 0
+            },
+            "billed": {
+              "turns": 0,
+              "knownTurns": 0
+            },
+            "reported": {
+              "turns": 0,
+              "knownTurns": 0
+            },
+            "priced": {
+              "turns": 0,
+              "knownTurns": 0
+            }
+          }
+        },
+        {
+          "period": "2026-W44",
+          "start": "2026-10-26",
+          "end": "2026-11-01",
+          "sessions": 0,
+          "turns": 0,
+          "cost": {
+            "turns": 0,
+            "knownTurns": 0,
+            "amounts": [],
+            "usd": null,
+            "estimated": false,
+            "apiEquivalentTurns": 0
+          },
+          "cumulative": {
+            "turns": 2,
+            "knownTurns": 2,
+            "amounts": [
+              {
+                "currency": "USD",
+                "amount": 0.0085,
+                "knownTurns": 2
+              }
+            ],
+            "usd": 0.0085,
+            "estimated": false,
+            "apiEquivalentTurns": 2
+          },
+          "coverage": {
+            "preferred": {
+              "turns": 0,
+              "knownTurns": 0
+            },
+            "billed": {
+              "turns": 0,
+              "knownTurns": 0
+            },
+            "reported": {
+              "turns": 0,
+              "knownTurns": 0
+            },
+            "priced": {
+              "turns": 0,
+              "knownTurns": 0
+            }
+          }
+        }
+      ]
+    },
+    {
+      "key": "path:notes",
+      "label": "path:notes",
+      "sessions": 1,
+      "turns": 1,
+      "total": {
+        "turns": 1,
+        "knownTurns": 1,
+        "amounts": [
+          {
+            "currency": "USD",
+            "amount": 0.0024,
+            "knownTurns": 1
+          }
+        ],
+        "usd": 0.0024,
+        "estimated": false,
+        "apiEquivalentTurns": 1
+      },
+      "coverage": {
+        "preferred": {
+          "turns": 1,
+          "knownTurns": 1
+        },
+        "billed": {
+          "turns": 1,
+          "knownTurns": 0
+        },
+        "reported": {
+          "turns": 1,
+          "knownTurns": 0
+        },
+        "priced": {
+          "turns": 1,
+          "knownTurns": 1
+        }
+      },
+      "points": [
+        {
+          "period": "2026-W40",
+          "start": "2026-09-28",
+          "end": "2026-10-04",
+          "sessions": 0,
+          "turns": 0,
+          "cost": {
+            "turns": 0,
+            "knownTurns": 0,
+            "amounts": [],
+            "usd": null,
+            "estimated": false,
+            "apiEquivalentTurns": 0
+          },
+          "cumulative": {
+            "turns": 0,
+            "knownTurns": 0,
+            "amounts": [],
+            "usd": null,
+            "estimated": false,
+            "apiEquivalentTurns": 0
+          },
+          "coverage": {
+            "preferred": {
+              "turns": 0,
+              "knownTurns": 0
+            },
+            "billed": {
+              "turns": 0,
+              "knownTurns": 0
+            },
+            "reported": {
+              "turns": 0,
+              "knownTurns": 0
+            },
+            "priced": {
+              "turns": 0,
+              "knownTurns": 0
+            }
+          }
+        },
+        {
+          "period": "2026-W41",
+          "start": "2026-10-05",
+          "end": "2026-10-11",
+          "sessions": 0,
+          "turns": 0,
+          "cost": {
+            "turns": 0,
+            "knownTurns": 0,
+            "amounts": [],
+            "usd": null,
+            "estimated": false,
+            "apiEquivalentTurns": 0
+          },
+          "cumulative": {
+            "turns": 0,
+            "knownTurns": 0,
+            "amounts": [],
+            "usd": null,
+            "estimated": false,
+            "apiEquivalentTurns": 0
+          },
+          "coverage": {
+            "preferred": {
+              "turns": 0,
+              "knownTurns": 0
+            },
+            "billed": {
+              "turns": 0,
+              "knownTurns": 0
+            },
+            "reported": {
+              "turns": 0,
+              "knownTurns": 0
+            },
+            "priced": {
+              "turns": 0,
+              "knownTurns": 0
+            }
+          }
+        },
+        {
+          "period": "2026-W42",
+          "start": "2026-10-12",
+          "end": "2026-10-18",
+          "sessions": 1,
+          "turns": 1,
+          "cost": {
+            "turns": 1,
+            "knownTurns": 1,
+            "amounts": [
+              {
+                "currency": "USD",
+                "amount": 0.0024,
+                "knownTurns": 1
+              }
+            ],
+            "usd": 0.0024,
+            "estimated": false,
+            "apiEquivalentTurns": 1
+          },
+          "cumulative": {
+            "turns": 1,
+            "knownTurns": 1,
+            "amounts": [
+              {
+                "currency": "USD",
+                "amount": 0.0024,
+                "knownTurns": 1
+              }
+            ],
+            "usd": 0.0024,
+            "estimated": false,
+            "apiEquivalentTurns": 1
+          },
+          "coverage": {
+            "preferred": {
+              "turns": 1,
+              "knownTurns": 1
+            },
+            "billed": {
+              "turns": 1,
+              "knownTurns": 0
+            },
+            "reported": {
+              "turns": 1,
+              "knownTurns": 0
+            },
+            "priced": {
+              "turns": 1,
+              "knownTurns": 1
+            }
+          }
+        },
+        {
+          "period": "2026-W43",
+          "start": "2026-10-19",
+          "end": "2026-10-25",
+          "sessions": 0,
+          "turns": 0,
+          "cost": {
+            "turns": 0,
+            "knownTurns": 0,
+            "amounts": [],
+            "usd": null,
+            "estimated": false,
+            "apiEquivalentTurns": 0
+          },
+          "cumulative": {
+            "turns": 1,
+            "knownTurns": 1,
+            "amounts": [
+              {
+                "currency": "USD",
+                "amount": 0.0024,
+                "knownTurns": 1
+              }
+            ],
+            "usd": 0.0024,
+            "estimated": false,
+            "apiEquivalentTurns": 1
+          },
+          "coverage": {
+            "preferred": {
+              "turns": 0,
+              "knownTurns": 0
+            },
+            "billed": {
+              "turns": 0,
+              "knownTurns": 0
+            },
+            "reported": {
+              "turns": 0,
+              "knownTurns": 0
+            },
+            "priced": {
+              "turns": 0,
+              "knownTurns": 0
+            }
+          }
+        },
+        {
+          "period": "2026-W44",
+          "start": "2026-10-26",
+          "end": "2026-11-01",
+          "sessions": 0,
+          "turns": 0,
+          "cost": {
+            "turns": 0,
+            "knownTurns": 0,
+            "amounts": [],
+            "usd": null,
+            "estimated": false,
+            "apiEquivalentTurns": 0
+          },
+          "cumulative": {
+            "turns": 1,
+            "knownTurns": 1,
+            "amounts": [
+              {
+                "currency": "USD",
+                "amount": 0.0024,
+                "knownTurns": 1
+              }
+            ],
+            "usd": 0.0024,
+            "estimated": false,
+            "apiEquivalentTurns": 1
+          },
+          "coverage": {
+            "preferred": {
+              "turns": 0,
+              "knownTurns": 0
+            },
+            "billed": {
+              "turns": 0,
+              "knownTurns": 0
+            },
+            "reported": {
+              "turns": 0,
+              "knownTurns": 0
+            },
+            "priced": {
+              "turns": 0,
+              "knownTurns": 0
+            }
+          }
+        }
+      ]
+    },
+    {
+      "key": "local:scratch",
+      "label": "local:scratch",
+      "sessions": 1,
+      "turns": 1,
+      "total": {
+        "turns": 1,
+        "knownTurns": 0,
+        "amounts": [],
+        "usd": null,
+        "estimated": false,
+        "apiEquivalentTurns": 0
+      },
+      "coverage": {
+        "preferred": {
+          "turns": 1,
+          "knownTurns": 0
+        },
+        "billed": {
+          "turns": 1,
+          "knownTurns": 0
+        },
+        "reported": {
+          "turns": 1,
+          "knownTurns": 0
+        },
+        "priced": {
+          "turns": 1,
+          "knownTurns": 0
+        }
+      },
+      "points": [
+        {
+          "period": "2026-W40",
+          "start": "2026-09-28",
+          "end": "2026-10-04",
+          "sessions": 0,
+          "turns": 0,
+          "cost": {
+            "turns": 0,
+            "knownTurns": 0,
+            "amounts": [],
+            "usd": null,
+            "estimated": false,
+            "apiEquivalentTurns": 0
+          },
+          "cumulative": {
+            "turns": 0,
+            "knownTurns": 0,
+            "amounts": [],
+            "usd": null,
+            "estimated": false,
+            "apiEquivalentTurns": 0
+          },
+          "coverage": {
+            "preferred": {
+              "turns": 0,
+              "knownTurns": 0
+            },
+            "billed": {
+              "turns": 0,
+              "knownTurns": 0
+            },
+            "reported": {
+              "turns": 0,
+              "knownTurns": 0
+            },
+            "priced": {
+              "turns": 0,
+              "knownTurns": 0
+            }
+          }
+        },
+        {
+          "period": "2026-W41",
+          "start": "2026-10-05",
+          "end": "2026-10-11",
+          "sessions": 0,
+          "turns": 0,
+          "cost": {
+            "turns": 0,
+            "knownTurns": 0,
+            "amounts": [],
+            "usd": null,
+            "estimated": false,
+            "apiEquivalentTurns": 0
+          },
+          "cumulative": {
+            "turns": 0,
+            "knownTurns": 0,
+            "amounts": [],
+            "usd": null,
+            "estimated": false,
+            "apiEquivalentTurns": 0
+          },
+          "coverage": {
+            "preferred": {
+              "turns": 0,
+              "knownTurns": 0
+            },
+            "billed": {
+              "turns": 0,
+              "knownTurns": 0
+            },
+            "reported": {
+              "turns": 0,
+              "knownTurns": 0
+            },
+            "priced": {
+              "turns": 0,
+              "knownTurns": 0
+            }
+          }
+        },
+        {
+          "period": "2026-W42",
+          "start": "2026-10-12",
+          "end": "2026-10-18",
+          "sessions": 0,
+          "turns": 0,
+          "cost": {
+            "turns": 0,
+            "knownTurns": 0,
+            "amounts": [],
+            "usd": null,
+            "estimated": false,
+            "apiEquivalentTurns": 0
+          },
+          "cumulative": {
+            "turns": 0,
+            "knownTurns": 0,
+            "amounts": [],
+            "usd": null,
+            "estimated": false,
+            "apiEquivalentTurns": 0
+          },
+          "coverage": {
+            "preferred": {
+              "turns": 0,
+              "knownTurns": 0
+            },
+            "billed": {
+              "turns": 0,
+              "knownTurns": 0
+            },
+            "reported": {
+              "turns": 0,
+              "knownTurns": 0
+            },
+            "priced": {
+              "turns": 0,
+              "knownTurns": 0
+            }
+          }
+        },
+        {
+          "period": "2026-W43",
+          "start": "2026-10-19",
+          "end": "2026-10-25",
+          "sessions": 1,
+          "turns": 1,
+          "cost": {
+            "turns": 1,
+            "knownTurns": 0,
+            "amounts": [],
+            "usd": null,
+            "estimated": false,
+            "apiEquivalentTurns": 0
+          },
+          "cumulative": {
+            "turns": 1,
+            "knownTurns": 0,
+            "amounts": [],
+            "usd": null,
+            "estimated": false,
+            "apiEquivalentTurns": 0
+          },
+          "coverage": {
+            "preferred": {
+              "turns": 1,
+              "knownTurns": 0
+            },
+            "billed": {
+              "turns": 1,
+              "knownTurns": 0
+            },
+            "reported": {
+              "turns": 1,
+              "knownTurns": 0
+            },
+            "priced": {
+              "turns": 1,
+              "knownTurns": 0
+            }
+          }
+        },
+        {
+          "period": "2026-W44",
+          "start": "2026-10-26",
+          "end": "2026-11-01",
+          "sessions": 0,
+          "turns": 0,
+          "cost": {
+            "turns": 0,
+            "knownTurns": 0,
+            "amounts": [],
+            "usd": null,
+            "estimated": false,
+            "apiEquivalentTurns": 0
+          },
+          "cumulative": {
+            "turns": 1,
+            "knownTurns": 0,
+            "amounts": [],
+            "usd": null,
+            "estimated": false,
+            "apiEquivalentTurns": 0
+          },
+          "coverage": {
+            "preferred": {
+              "turns": 0,
+              "knownTurns": 0
+            },
+            "billed": {
+              "turns": 0,
+              "knownTurns": 0
+            },
+            "reported": {
+              "turns": 0,
+              "knownTurns": 0
+            },
+            "priced": {
+              "turns": 0,
+              "knownTurns": 0
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "byVendor": [
+    {
+      "key": "openai",
+      "label": "OpenAI",
+      "sessions": 3,
+      "turns": 4,
+      "cost": {
+        "turns": 4,
+        "knownTurns": 3,
+        "amounts": [
+          {
+            "currency": "USD",
+            "amount": 0.07800000000000001,
+            "knownTurns": 3
+          }
+        ],
+        "usd": 0.07800000000000001,
+        "estimated": false,
+        "apiEquivalentTurns": 0
+      },
+      "coverage": {
+        "preferred": {
+          "turns": 4,
+          "knownTurns": 3
+        },
+        "billed": {
+          "turns": 4,
+          "knownTurns": 1
+        },
+        "reported": {
+          "turns": 4,
+          "knownTurns": 1
+        },
+        "priced": {
+          "turns": 4,
+          "knownTurns": 3
+        }
+      },
+      "models": [
+        {
+          "key": "gpt-6.1-sol",
+          "label": "gpt-6.1-sol",
+          "sessions": 3,
+          "turns": 4,
+          "cost": {
+            "turns": 4,
+            "knownTurns": 3,
+            "amounts": [
+              {
+                "currency": "USD",
+                "amount": 0.07800000000000001,
+                "knownTurns": 3
+              }
+            ],
+            "usd": 0.07800000000000001,
+            "estimated": false,
+            "apiEquivalentTurns": 0
+          },
+          "coverage": {
+            "preferred": {
+              "turns": 4,
+              "knownTurns": 3
+            },
+            "billed": {
+              "turns": 4,
+              "knownTurns": 1
+            },
+            "reported": {
+              "turns": 4,
+              "knownTurns": 1
+            },
+            "priced": {
+              "turns": 4,
+              "knownTurns": 3
+            }
+          }
+        }
+      ]
+    },
+    {
+      "key": "anthropic",
+      "label": "Anthropic",
+      "sessions": 3,
+      "turns": 5,
+      "cost": {
+        "turns": 5,
+        "knownTurns": 5,
+        "amounts": [
+          {
+            "currency": "USD",
+            "amount": 0.029900000000000003,
+            "knownTurns": 5
+          }
+        ],
+        "usd": 0.029900000000000003,
+        "estimated": false,
+        "apiEquivalentTurns": 3
+      },
+      "coverage": {
+        "preferred": {
+          "turns": 5,
+          "knownTurns": 5
+        },
+        "billed": {
+          "turns": 5,
+          "knownTurns": 2
+        },
+        "reported": {
+          "turns": 5,
+          "knownTurns": 0
+        },
+        "priced": {
+          "turns": 5,
+          "knownTurns": 5
+        }
+      },
+      "models": [
+        {
+          "key": "claude-sonnet-5.5",
+          "label": "claude-sonnet-5.5",
+          "sessions": 1,
+          "turns": 2,
+          "cost": {
+            "turns": 2,
+            "knownTurns": 2,
+            "amounts": [
+              {
+                "currency": "USD",
+                "amount": 0.019000000000000003,
+                "knownTurns": 2
+              }
+            ],
+            "usd": 0.019000000000000003,
+            "estimated": false,
+            "apiEquivalentTurns": 0
+          },
+          "coverage": {
+            "preferred": {
+              "turns": 2,
+              "knownTurns": 2
+            },
+            "billed": {
+              "turns": 2,
+              "knownTurns": 2
+            },
+            "reported": {
+              "turns": 2,
+              "knownTurns": 0
+            },
+            "priced": {
+              "turns": 2,
+              "knownTurns": 2
+            }
+          }
+        },
+        {
+          "key": "claude-sonnet-5-5-20261001",
+          "label": "claude-sonnet-5-5-20261001",
+          "sessions": 1,
+          "turns": 2,
+          "cost": {
+            "turns": 2,
+            "knownTurns": 2,
+            "amounts": [
+              {
+                "currency": "USD",
+                "amount": 0.0085,
+                "knownTurns": 2
+              }
+            ],
+            "usd": 0.0085,
+            "estimated": false,
+            "apiEquivalentTurns": 2
+          },
+          "coverage": {
+            "preferred": {
+              "turns": 2,
+              "knownTurns": 2
+            },
+            "billed": {
+              "turns": 2,
+              "knownTurns": 0
+            },
+            "reported": {
+              "turns": 2,
+              "knownTurns": 0
+            },
+            "priced": {
+              "turns": 2,
+              "knownTurns": 2
+            }
+          }
+        },
+        {
+          "key": "claude-opus-5-5-20261001",
+          "label": "claude-opus-5-5-20261001",
+          "sessions": 1,
+          "turns": 1,
+          "cost": {
+            "turns": 1,
+            "knownTurns": 1,
+            "amounts": [
+              {
+                "currency": "USD",
+                "amount": 0.0024,
+                "knownTurns": 1
+              }
+            ],
+            "usd": 0.0024,
+            "estimated": false,
+            "apiEquivalentTurns": 1
+          },
+          "coverage": {
+            "preferred": {
+              "turns": 1,
+              "knownTurns": 1
+            },
+            "billed": {
+              "turns": 1,
+              "knownTurns": 0
+            },
+            "reported": {
+              "turns": 1,
+              "knownTurns": 0
+            },
+            "priced": {
+              "turns": 1,
+              "knownTurns": 1
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "priceChanges": [
+    {
+      "kind": "documented",
+      "date": "2026-10-07",
+      "channel": "anthropic-api",
+      "modelId": "claude-sonnet-5.5",
+      "fromVersionId": "anthropic-api:claude-sonnet-5.5:2026-10-01",
+      "toVersionId": "anthropic-api:claude-sonnet-5.5:2026-10-07",
+      "changes": [
+        {
+          "tier": 0,
+          "tokenType": "cachedInput",
+          "fromUsdPerM": 0.2,
+          "toUsdPerM": 0.1,
+          "percent": -50
+        }
+      ],
+      "sourceIds": [
+        "anthropic-api-pricing-table",
+        "anthropic-api-pricing-cache-writes",
+        "anthropic-api-pricing-cache-reads",
+        "anthropic-api-notes-2026-10-07-sonnet-5-5-cache",
+        "anthropic-api-news-haiku-5-5-sonnet-cut"
+      ],
+      "note": "Cache reads cut to $0.10 (0.05x) on 2026-10-07 (\"starting today\"); everything else unchanged. The cut's time of day isn't published; the boundary is 2026-10-07 00:00 UTC. cacheWriteUsdPerM is the 5-minute write (1.25x input) and extendedCacheWriteUsdPerM the 1-hour write (2x input), as on the pricing page's table. Claude API (first-party), global routing; batch, data residency (1.1x), priority and cloud-platform prices are not modelled."
+    },
+    {
+      "kind": "documented",
+      "date": "2026-10-07",
+      "channel": "github-copilot",
+      "modelId": "claude-sonnet-5.5",
+      "fromVersionId": "github-copilot:claude-sonnet-5.5:2026-10-01",
+      "toVersionId": "github-copilot:claude-sonnet-5.5:2026-10-07",
+      "changes": [
+        {
+          "tier": 0,
+          "tokenType": "cachedInput",
+          "fromUsdPerM": 0.2,
+          "toUsdPerM": 0.1,
+          "percent": -50
+        }
+      ],
+      "sourceIds": [
+        "gh-pricing-table-eb975b9-claude-sonnet-5.5",
+        "gh-pricing-table",
+        "gh-models-pricing-anthropic",
+        "anthropic-pc-pricing-1h"
+      ],
+      "note": "Cached input lowered from $0.20 to $0.10 in github/docs eb975b9 (2026-10-07). Unchanged through cc0c29a (2026-10-26), the last commit to the table as of 2026-11-05. extendedCacheWriteUsdPerM (1-hour cache write) is 2x the input price, from Anthropic's prompt-caching docs; GitHub's table has no 1-hour column."
+    },
+    {
+      "kind": "documented",
+      "date": "2026-10-20",
+      "channel": "openai-api",
+      "modelId": "gpt-6.1-sol",
+      "fromVersionId": "openai-api:gpt-6.1-sol:2026-10-01",
+      "toVersionId": "openai-api:gpt-6.1-sol:2026-10-20",
+      "changes": [
+        {
+          "tier": 0,
+          "tokenType": "extendedCacheWrite",
+          "fromUsdPerM": null,
+          "toUsdPerM": 5,
+          "percent": null
+        },
+        {
+          "tier": 1,
+          "tokenType": "extendedCacheWrite",
+          "fromUsdPerM": null,
+          "toUsdPerM": 10,
+          "percent": null
+        }
+      ],
+      "sourceIds": [
+        "openai-api-pricing-gpt-6-1-sol",
+        "openai-api-pricing-table-header",
+        "openai-api-pricing-context-length",
+        "openai-api-model-gpt-6-1-sol-long-context",
+        "openai-api-pc-write-rates",
+        "openai-api-pc-not-additive",
+        "openai-api-changelog-2026-10-20-12h-cache",
+        "openai-api-changelog-2026-09-29-gpt-6-1-sol"
+      ],
+      "note": "Same prices as the 2026-10-01 version; the boundary is the 12-hour cache write OpenAI added on 2026-10-20 (00:00 UTC; the time of day isn't published). Released 2026-09-29 at $2 input, $0.10 cached input, $2.50 cache write and $10 output (changelog); the long-context and 12-hour prices come from today's pricing page and model page only. The second tier is the long-context price for prompts over 272K input tokens, applied to the whole request. cacheWriteUsdPerM is the default 30-minute write (1.25x input); extendedCacheWriteUsdPerM is the 12-hour write (2.5x input, Responses API only), offered from 2026-10-20 per the changelog. Standard tier, global processing; Batch, Flex, Fast, Ultrafast, regional-processing (10% uplift) and cloud-platform prices are not modelled."
+    }
+  ]
+}

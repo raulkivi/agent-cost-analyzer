@@ -1,12 +1,23 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import { costRollupSchema, sessionCostSchema } from "@agent-cost-analyzer/domain";
+import { costComparisonSchema, costRollupSchema, costSeriesSchema, projectCostSchema, sessionCostSchema } from "@agent-cost-analyzer/domain";
+import { costCompareRequestSchema, costSeriesRequestSchema } from "../services/cost-analysis/cost-query-params.js";
+import type { CostAnalysisQueries } from "../services/cost-analysis/cost-analysis-service.js";
+import { DEFAULT_TOP_PROJECT_SESSIONS, MAX_TOP_PROJECT_SESSIONS } from "../services/cost-analysis/project-cost-builder.js";
 import { DEFAULT_TOP_SESSIONS } from "../services/cost/cost-rollup-builder.js";
 import { DEFAULT_TOP_TURNS } from "../services/cost/session-cost-builder.js";
 import { DEFAULT_ROLLUP_SESSION_LIMIT } from "../services/tool-audit/audit-query-service.js";
 import type { McpToolDeps } from "./mcp-server.js";
 import {
+  basisArg,
+  bucketArg,
+  comparePeriodArg,
+  costIdsArg,
+  costSinceArg,
+  costUntilArg,
+  currencyArg,
   json,
+  pricingArg,
   projectIdArg,
   providerArg,
   READ_ONLY,
@@ -14,6 +25,7 @@ import {
   sessionIdArg,
   sessionsPerProviderArg,
   sinceArg,
+  toolError,
   unknownSession,
   untilArg,
   type Guard,
@@ -79,5 +91,115 @@ export function registerCostTools(server: McpServer, deps: McpToolDeps, guarded:
       guarded(async () =>
         json(await deps.analysisQueries.getCostRollup({ providerId: provider, since, until, limit }, { topSessions, repository, projectId })),
       ),
+  );
+}
+
+// Phase 15 step 15.7 (cost-by-repository-and-project.md §10.1.1): cost over
+// time for one repository or project, and the compare table. Registered
+// with the cost analyses (the standalone server; the extension's server
+// gets them with step 15.13's toolGroups).
+const SERIES_TEXT =
+  "Returns totals per basis with coverage (knownTurns of turns), one point per bucket in the range (UTC; a bucket with turns but nothing known has usd null and no amounts: a gap, never 0) with a running total, a breakdown by vendor then model, and the documented price changes in the range for the models priced (priceChanges). Turns are bucketed by their own date; sessions are selected by their start. Local repositories are named by folder only.";
+
+function seriesArgs(deps: McpToolDeps) {
+  return {
+    since: costSinceArg,
+    until: costUntilArg,
+    bucket: bucketArg,
+    basis: basisArg,
+    pricing: pricingArg,
+    currency: currencyArg,
+    provider: providerArg(deps.identity).describe("Restrict to one log provider id (see list_log_providers). Default: every available provider."),
+    limit: sessionsPerProviderArg(DEFAULT_ROLLUP_SESSION_LIMIT),
+  };
+}
+
+type SeriesArgs = {
+  since?: string;
+  until?: string;
+  bucket?: string;
+  basis?: string;
+  pricing?: string;
+  currency?: string;
+  provider?: string;
+  limit?: number;
+};
+
+function seriesRequest(args: SeriesArgs) {
+  const { provider, ...rest } = args;
+  return costSeriesRequestSchema.parse({ ...rest, ...(provider !== undefined ? { providerId: provider } : {}) });
+}
+
+export function registerCostAnalysisTools(server: McpServer, deps: McpToolDeps, analysis: CostAnalysisQueries, guarded: Guard): void {
+  server.registerTool(
+    "get_repository_cost",
+    {
+      title: "Get a repository's cost over time",
+      description:
+        "Answers \"what did this repository cost, and how did it change?\" for one repository key from list_repositories, across every available provider unless `provider` is given. Defaults: monthly buckets, the preferred basis, prices as of use, native currencies. " +
+        SERIES_TEXT +
+        " " +
+        COST_BASIS_TEXT,
+      inputSchema: { repository: repositoryArg, ...seriesArgs(deps) },
+      outputSchema: costSeriesSchema,
+      annotations: READ_ONLY,
+    },
+    ({ repository, ...args }) => guarded(async () => json(await analysis.getRepositoryCost({ ...seriesRequest(args), repository }))),
+  );
+
+  server.registerTool(
+    "get_project_cost",
+    {
+      title: "Get a project's cost over time and breakdown",
+      description:
+        "Answers \"what did this project cost, where did the money go?\" for one project id from list_projects: everything get_repository_cost returns for the project's turns, plus a breakdown by repository member, by vendor then model, tokens per model by type (uncached input, cache write, cache read, reasoning, output) and the most expensive sessions. Defaults: monthly buckets, the preferred basis, prices as of use, native currencies. " +
+        SERIES_TEXT +
+        " " +
+        COST_BASIS_TEXT,
+      inputSchema: {
+        projectId: projectIdArg,
+        ...seriesArgs(deps),
+        topSessions: z
+          .number()
+          .int()
+          .min(1)
+          .max(MAX_TOP_PROJECT_SESSIONS)
+          .optional()
+          .describe(`How many of the most expensive sessions to return (default ${DEFAULT_TOP_PROJECT_SESSIONS}, max ${MAX_TOP_PROJECT_SESSIONS}).`),
+      },
+      outputSchema: projectCostSchema,
+      annotations: READ_ONLY,
+    },
+    ({ projectId, topSessions, ...args }) =>
+      guarded(async () => {
+        const cost = await analysis.getProjectCost({ ...seriesRequest(args), projectId, ...(topSessions !== undefined ? { topSessions } : {}) });
+        return cost ? json(cost) : toolError(`Unknown project id "${projectId}". Call list_projects to find valid ids.`);
+      }),
+  );
+
+  server.registerTool(
+    "compare_costs",
+    {
+      title: "Compare repositories or projects",
+      description:
+        "Compares 2 to 20 repositories (keys from list_repositories) or projects (ids from list_projects) over one period: per id the total with coverage, the change against the previous period (or the same dates last year), cost per session, per active day and per turn, share of the compared total, cache-hit ratio and output share. Money measures are per currency unless currency is \"usd\"; a change against a period with nothing known is null, never \"from 0\". Defaults: the preferred basis, prices as of use, native currencies, the previous period. " +
+        COST_BASIS_TEXT,
+      inputSchema: {
+        groupBy: z.enum(["repository", "project"]).describe('Compare repositories or projects.'),
+        ids: costIdsArg,
+        since: costSinceArg.unwrap().describe('First day of the period, inclusive: "YYYY-MM-DD" (UTC).'),
+        until: costUntilArg.unwrap().describe('Last day of the period, inclusive: "YYYY-MM-DD" (UTC).'),
+        comparePeriod: comparePeriodArg,
+        basis: basisArg,
+        pricing: pricingArg,
+        currency: currencyArg,
+        provider: providerArg(deps.identity).describe("Restrict to one log provider id (see list_log_providers). Default: every available provider."),
+        limit: sessionsPerProviderArg(DEFAULT_ROLLUP_SESSION_LIMIT),
+      },
+      outputSchema: costComparisonSchema,
+      annotations: READ_ONLY,
+    },
+    ({ provider, ...args }) =>
+      guarded(async () => json(await analysis.compare(costCompareRequestSchema.parse({ ...args, ...(provider !== undefined ? { providerId: provider } : {}) })))),
   );
 }
