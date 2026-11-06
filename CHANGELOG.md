@@ -46,6 +46,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   vendor and channel, and a reconciliation of Copilot's billed AI Credits
   against the price book per model and month. A turn that can't be priced
   is unknown with a reason, never zero.
+- Cost over time, compare and inside a project (Phase 15 step 15.7):
+  `GET /api/cost/timeseries` gives cost per day, ISO week or month (UTC)
+  for the whole selection or per repository, project, vendor or model,
+  with coverage per basis on every bucket, a running total, a vendor and
+  model breakdown and the documented price changes in the range;
+  `GET /api/cost/compare` compares 2 to 20 repositories or projects (total,
+  change against the previous period or last year, per session, per active
+  day, per turn, share, cache-hit ratio, output share). Both take a basis,
+  "as of use" or "today's" prices, and native currencies or USD at
+  1 AI Credit = $0.01. New MCP tools `get_repository_cost`,
+  `get_project_cost` (adds breakdowns by repository, token type and the top
+  sessions) and `compare_costs`; `review_costs` now groups its findings by
+  project. A bucket whose cost is all unknown is a gap, never zero.
 - Web and VS Code themes: eight categorical series colours
   (`--color-series-1` to `-8`, light and dark steps), a diverging pair for
   waterfalls, and dash patterns in High Contrast, ready for the

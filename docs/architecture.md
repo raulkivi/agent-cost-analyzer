@@ -388,6 +388,43 @@ policy). Data flow: `InsightsService` and `AnalysisQueryService` take a
 `PriceBook.snapshot()`, so the projects file is read once; the Dashboard,
 `get_cost_rollup`, `get_session_cost` and `get_turn` read the same figures.
 
+Cost over time, compare and inside a project (Phase 15 step 15.7,
+`packages/domain/src/cost-analysis.ts` and `price-change.ts`; plan §8.1–
+§8.3): `CostSeries` is a selection's cost bucketed by UTC day, ISO week or
+month (`period`, inclusive `start`/`end`), stating its view (`basis`
+preferred/billed/reported/priced, `pricing` as-of-use/today, `currency`
+native/usd and the `conversion` text). It holds `total` (the view's basis
+and currency), `totals` (`CostBasisTotals`, native), one `CostPoint` per
+bucket in the range (empty buckets included; each with `sessions`, `turns`,
+`cost`, a running `cumulative` and `BasisCoverage`, i.e. `turns`/
+`knownTurns` per basis), one `series[]` line per group (repository,
+project, vendor or model), `byVendor` (vendor → model), `undatedTurns` and
+`priceChanges`. A bucket with turns but nothing known has `usd: null` and
+no amounts: a gap, never 0. `ProjectCost` extends it with `project`,
+`byRepository`, `byTokenType` (per model, `MeasureTotal` per token type)
+and `topSessions`. `CostComparison` holds per id the total and coverage,
+the previous period's (`comparePeriod` previous or last-year), `change`,
+`perSession`, `perActiveDay` and `perTurn` per currency, `share` of the
+compared total per currency, `cacheHitRatio` and `outputShare`. A
+`PriceChangeMarker` is a documented price change: the boundary between two
+adjacent versions of one model on one channel where a unit price differs
+(`documentedPriceChanges`). On the server, `services/cost-analysis/` holds
+the cost cube (`buildCostCube`: one row per dated Insights turn row, joined
+to its session), the pure builders `buildCostSeries`,
+`buildCostComparison` and `buildProjectCost`, the shared query schemas
+(`cost-query-params.ts`, used by HTTP and MCP) and `CostAnalysisService`
+over a `CostCubeSource` port (`DatasetCostCubeSource` reads the Insights
+dataset, priced in the asked mode through `TurnPricing.snapshot(mode)`),
+an optional `PriceVersionSource` (the price book) and an optional
+`ProjectDirectory` (the projects file). Repository keys in its output are
+always redacted to folder names for `local:`/`path:` keys. The MCP tools
+`get_repository_cost` (`CostSeries`), `get_project_cost` (`ProjectCost`)
+and `compare_costs` (`CostComparison`) are registered in `mcp/cost-tools.ts`
+when `McpServerDeps.costAnalysis` is given (the standalone stdio server,
+which builds it with attribution); they and the two HTTP endpoints call the
+same `CostAnalysisService`, so their outputs are equal. `review_costs`
+gains a step that compares projects and groups findings by project.
+
 Log-provider selection is a separate app-level contract, not a provider-
 specific API or UI branch:
 
@@ -1950,6 +1987,8 @@ themselves.
 | `GET /api/projects` | `ProjectsState` (Phase 15 step 15.3, [plans/cost-by-repository-and-project.md](plans/cost-by-repository-and-project.md) §7): `status` (`missing`, `valid` or `invalid`), the file in use, its `problems` and its `location` |
 | `PUT /api/projects` | Replaces the projects file with the body after validation; returns the new `ProjectsState`. 400 with `{ error, problems }` if anything is wrong, and nothing is written |
 | `GET /api/price-book?channel&model&at` | `PriceBookListing` (Phase 15 step 15.5): the price versions in force (or all), their sources, gaps, unknown lookups with reasons and user-version problems; also the standalone MCP tool `get_price_book`. Not in the extension (404) |
+| `GET /api/cost/timeseries?groupBy&ids&bucket&basis&pricing&currency&since&until&provider&limit` | `CostSeries` (Phase 15 step 15.7): cost over time for the whole selection and, with `groupBy` (`repository`, `project`, `vendor`, `model`), one line per group or per `ids` entry (comma-separated, up to 20); `bucket` `day`/`week`/`month` (default), UTC; `basis` default `preferred`; `pricing` `as-of-use` (default) or `today`; `currency` `native` (default) or `usd`; `since`/`until` inclusive ISO dates. 400 on a bad query; not in the extension (404). Project cost is this endpoint with `groupBy=project` (the MCP tool `get_project_cost` adds the project breakdowns) |
+| `GET /api/cost/compare?groupBy&ids&since&until&comparePeriod&basis&pricing&currency&provider&limit` | `CostComparison` (Phase 15 step 15.7): the plan's §8.2 measures for 2 to 20 repositories or projects over `since`..`until` (required), against the `previous` period (default) or `last-year`. 400 on a bad query; not in the extension (404) |
 | `GET /api/repositories` | `RepositoryList` (Phase 15 step 15.3): every repository the providers' sessions resolve to (`key`, `source`, `rootPath`, session count, providers, first and last use, projects), the Unattributed sessions grouped by reason, and each provider's status |
 | `PUT /api/config/retention-threshold` | Sets the persisted `minRetainedSessionLogsThreshold` override (body: `{ value: number }`, must be a positive integer, else 400); returns the fresh `ConfigStatus` so the caller can update both the header control and the warning banner from one response |
 

@@ -127,6 +127,11 @@ content here.
   Copilot billed-vs-priced reconciliation per model and month, a Cost basis
   list box and basis switch on the Dashboard, and the basis in
   `get_session_cost`, `get_cost_rollup` and `get_turn`) is done;
+  step 15.7 is done (cost cube and pure time series, compare and project
+  builders in `packages/server/src/services/cost-analysis/`,
+  `GET /api/cost/timeseries` and `/api/cost/compare`, MCP
+  `get_repository_cost`, `get_project_cost`, `compare_costs` and the
+  `review_costs` project step, golden JSON in `cost-analysis/__golden__/`);
   step 15.1 is done (`Session.workspace`, `Turn.startedAt`, and
   `Turn.workspace` for Claude Code, from every provider) and step 15.2
   (`RepositoryResolver` and `RemoteUrlNormalizer` in
