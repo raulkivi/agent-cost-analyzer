@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { costRollupSchema, type InsightsDataset, type InsightTurnRow } from "@agent-cost-analyzer/domain";
 import { buildCostRollup } from "./cost-rollup-builder.js";
+import { UNATTRIBUTED_FIELDS } from "../../test-support/insights-fakes.js";
 
 function turnRow(sessionKey: string, turnIndex: number, overrides: Partial<InsightTurnRow> = {}): InsightTurnRow {
   return {
@@ -16,6 +17,7 @@ function turnRow(sessionKey: string, turnIndex: number, overrides: Partial<Insig
     aiCredits: null,
     estimated: false,
     toolCallCount: 0,
+    ...UNATTRIBUTED_FIELDS,
     ...overrides,
   };
 }
@@ -30,9 +32,9 @@ function dataset(): InsightsDataset {
       { id: "pi-agent", label: "pi", available: false, unavailableReason: "no sessions dir", sessionCount: 0, truncated: false },
     ],
     sessions: [
-      { key: "claude-code:a", providerId: "claude-code", providerLabel: "Claude Code", sessionId: "a", title: "A", model: "model-a", startedAt: "2026-09-27T08:00:00.000Z", date: "2026-09-27", hour: 8 },
-      { key: "claude-code:b", providerId: "claude-code", providerLabel: "Claude Code", sessionId: "b", title: "B", model: "model-a", startedAt: "2026-09-27T09:00:00.000Z", date: "2026-09-27", hour: 9 },
-      { key: "vscode:c", providerId: "vscode", providerLabel: "VS Code", sessionId: "c", title: "C", model: "model-b", startedAt: "2026-09-28T08:00:00.000Z", date: "2026-09-28", hour: 8 },
+      { key: "claude-code:a", providerId: "claude-code", providerLabel: "Claude Code", sessionId: "a", title: "A", model: "model-a", startedAt: "2026-09-27T08:00:00.000Z", date: "2026-09-27", hour: 8, ...UNATTRIBUTED_FIELDS },
+      { key: "claude-code:b", providerId: "claude-code", providerLabel: "Claude Code", sessionId: "b", title: "B", model: "model-a", startedAt: "2026-09-27T09:00:00.000Z", date: "2026-09-27", hour: 9, ...UNATTRIBUTED_FIELDS },
+      { key: "vscode:c", providerId: "vscode", providerLabel: "VS Code", sessionId: "c", title: "C", model: "model-b", startedAt: "2026-09-28T08:00:00.000Z", date: "2026-09-28", hour: 8, ...UNATTRIBUTED_FIELDS },
     ],
     turns: [
       turnRow("claude-code:a", 0),

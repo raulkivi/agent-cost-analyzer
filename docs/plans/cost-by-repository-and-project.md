@@ -229,10 +229,10 @@ in force now").
 
 ```ts
 type PriceVersion = {
-  id: string;               // "github-copilot:claude-sonnet-5-5:2026-09-01"
+  id: string;               // "github-copilot:claude-sonnet-5.5:2026-10-26"
   channel: string;          // "github-copilot" | "anthropic-api" | "openai-api" | user channel id
   modelId: string;          // the price table's model id; provider ids are mapped (Phase 13 step 13.0 mapping)
-  currency: Currency;
+  currency: "USD";         // tiers are Phase 13's PriceTier, USD per 1M tokens
   effectiveFrom: string;    // ISO date (UTC), inclusive
   effectiveTo?: string;     // exclusive; absent = still in force
   tiers: PriceTier[];       // Phase 13's PriceTier, unchanged
@@ -240,11 +240,13 @@ type PriceVersion = {
   promoEndsAt?: string;     // as in Phase 13
   sourceIds: string[];      // cited sources, with checkedAt
   note?: string;            // "price cut announced 2026-08-20"
+  scope?: { projectId: string } | { repository: string }; // contract only
 };
 ```
 
 - The bundled history lives in `fixtures/price-book/<channel>.json`, one
-  array of `PriceVersion` per channel. Versions of one model on one
+  object per channel, `{ channel, sources: Source[], versions: PriceVersion[] }`,
+  so each version's `sourceIds` resolve to dated sources in the same file. Versions of one model on one
   channel must not overlap, and gaps are allowed but flagged (a test
   enforces both).
 - Phase 13's vendor profiles take their `tiers` from the newest version, so
@@ -253,7 +255,9 @@ type PriceVersion = {
 - **User rates** (negotiated contract, reseller, internal markup) live in
   the user's local project file (§7), as `kind: "contract"` versions on
   user channels. They take precedence over list prices for the projects or
-  repositories they are scoped to.
+  repositories they are scoped to. Precedence: a repository contract, then
+  a project contract, then an unscoped contract, then the list or promo
+  price.
 
 ### 6.2 Which price applies
 
@@ -551,7 +555,7 @@ Credit = $0.01 and says so in `conversion`.
 |---|---|---|---|
 | `list_repositories` | 15.4 | `provider?`, `since?`, `until?`, `projectId?`, `includeUnattributed?` (default true), `includePaths?` (default false) | `RepositoryList`: each repository's `repositoryKey`, project, session and turn counts, first and last use, cost with coverage; Unattributed buckets with their reasons |
 | `list_projects` | 15.4 | none | `ProjectList`: each project's id, name, client, billing code, members (repository key, path and branch scopes); validation problems, if any |
-| `get_price_book` | 15.5 | `channel?`, `model?`, `at?` (ISO date: the version in force then) | `PriceVersion[]` with sources and `checkedAt`, user contract versions marked as such |
+| `get_price_book` | 15.5 | `channel?`, `model?`, `at?` (ISO date: the version in force then) | `PriceBookListing` (an MCP `outputSchema` must be an object): `channels`, `versions` with their `origin` (`bundled` or `user`), `sources` with `checkedAt`, `gaps`, `unknown` with reasons, and `problems` |
 | `get_repository_cost` | 15.7 | `repository` (key from `list_repositories`), `since?`, `until?`, `bucket?` (`day`/`week`/`month`, default `month`), `basis?` (`preferred`/`billed`/`reported`/`priced`), `pricing?` (`as-of-use`/`today`), `currency?` | `CostSeries`: totals with coverage by basis; one point per bucket with coverage; breakdown by vendor and model; price-change markers in the range |
 | `get_project_cost` | 15.7 | `projectId`, the same options as above, `topSessions?` (default 10, max 50) | `ProjectCost`: as `CostSeries`, plus a breakdown by repository member, by vendor → model and by token type, and the most expensive sessions |
 | `compare_costs` | 15.7 | `groupBy` (`repository`/`project`), `ids` (2 to 20), `since`, `until`, `comparePeriod?` (`previous`/`last-year`, default `previous`), `pricing?`, `currency?` | `CostComparison`: the §8.2 measures per id (total, change, per session, per active day, share, cache-hit ratio, output share, coverage) |
@@ -872,7 +876,7 @@ and High Contrast. The order is fixed. A project's colour comes from its
 position in the project file, and a vendor's colour from a fixed vendor
 order (Anthropic, OpenAI, Google, xAI, Microsoft, Moonshot AI, …), so
 filtering never repaints them. Waterfall increases and decreases use the
-diverging pair (red `#e34948`, dark blue `#1c5cab`) with a written sign;
+diverging pair (red `#e34948`, dark blue `#1c5cab`; in dark themes the blue is `#3987e5`, since `#1c5cab` is 2.5:1 on `#1f1f1f`; approved by the owner 2026-11-05) with a written sign;
 warnings keep the existing severity colours with icon and text.
 
 ### 11.8 Mock-ups and review gate
@@ -894,7 +898,9 @@ before any UI code, with versioned copies in
 The owner reviews them and their comments are resolved before step 15.9
 starts (§14).
 
-**Status (2026-11-05): drawn, awaiting the owner's review.** The canvas is
+**Status: approved by the owner on 2026-11-05, with no change requests.** The
+review gate is passed, so UI work (step 15.9 onwards) may start once its
+other dependencies are met. The canvas is
 **https://claude.ai/artifact/MEYu54PJ19cnSjsgVquWS9**. It is private until
 the owner shares it from the page's Share menu; reviewers comment on the
 canvas. The versioned copies are in
@@ -1061,7 +1067,7 @@ column is binding; the other options are kept for the record.
 | D5 | Where does project config live? | local JSON file; app database; per-repo file committed to each repo | **Local JSON file** (§7) |
 | D6 | Time zone for day/month buckets | UTC; user time zone | **User time zone for statements** (bills follow the calendar month where the user works), **UTC elsewhere** to match the Dashboard |
 | D7 | Which product first? | standalone app; VS Code extension; both | **Standalone app first** (it sees every provider and vendor); the extension gets grouping and the status bar in a later step |
-| D8 | How far back must price history go? | from first log on this machine; 12 months; current only | **From 2026-01-01**, sourced; earlier turns price as `unknown` unless the user adds versions |
+| D8 | How far back must price history go? | from first log on this machine; 12 months; current only | **From 2026-10-01** (revised by the owner on 2026-11-05; first recorded as 2026-01-01), sourced, for GitHub Copilot and the Anthropic, OpenAI and Google APIs; earlier turns price as `unknown` unless the user adds versions |
 | D9 | Should observed price changes (§6.4) raise findings? | yes; no | **Yes**, as `inferred` findings on the Dashboard |
 | D10 | Estimates in scope now, or after Phase 14? | now (run rate, unit cost); after Phase 14 | **Now**, without cross-model replay; Phase 14 adds "on another model" |
 
@@ -1077,11 +1083,11 @@ No UI code (15.9 onwards) starts before the mock-ups in 15.8 are approved.
 | 15.1 | **Workspace capture**: `Session.workspace`, `Turn.startedAt` (and per-turn workspace for Claude Code) in every provider; verify classic VS Code chat's folder source | Each provider's fixture test yields folder, branch and turn times; mitmproxy reports Unattributed with a reason Done 2026-11-05, see §14.1 |
 | 15.2 | **RepositoryResolver** + `RemoteUrlNormalizer` | Unit tests of §12.1 pass; no credential in any output (property test) Done 2026-11-05, see §14.1 |
 | 15.3 | **ProjectCatalog** + project file schema + `GET/PUT /api/projects`, `GET /api/repositories` | Schema, matching and API tests pass; a bad file gives a config warning Done 2026-11-05, see §14.1 |
-| 15.4 | **Attribution in the dataset**: `repositoryKey`/`projectId`/`vendorId`/`channel` on Insights rows; Project, Repository, Vendor and Channel list boxes on the Dashboard; MCP: `list_repositories`, `list_projects`, `list_sessions` filters (§10.1) | Dashboard filters by repository and project; totals match the per-session totals; axe and keyboard tests pass for the new list boxes; the step's MCP tools pass the §10.1.6 tests |
-| 15.5 | **Price book with history**: `PriceVersion` schema, bundled channel files with sources, user versions, `PriceBook` lookup; Phase 13 profiles read their current prices from it; MCP: `get_price_book` | Overlap/boundary/precedence tests pass; every version has a source; Phase 13 tests unchanged; the step's MCP tools pass the §10.1.6 tests |
+| 15.4 | **Attribution in the dataset**: `repositoryKey`/`projectId`/`vendorId`/`channel` on Insights rows; Project, Repository, Vendor and Channel list boxes on the Dashboard; MCP: `list_repositories`, `list_projects`, `list_sessions` filters (§10.1) | Dashboard filters by repository and project; totals match the per-session totals; axe and keyboard tests pass for the new list boxes; the step's MCP tools pass the §10.1.6 tests Done 2026-11-05, see §14.1 |
+| 15.5 | **Price book with history**: `PriceVersion` schema, bundled channel files with sources, user versions, `PriceBook` lookup; Phase 13 profiles read their current prices from it; MCP: `get_price_book` | Overlap/boundary/precedence tests pass; every version has a source; Phase 13 tests unchanged; the step's MCP tools pass the §10.1.6 tests Done 2026-11-05, see §14.1 |
 | 15.6 | **CostPricer + basis**: `CostFigure` on every turn row; reconciliation figures for Copilot turns; Cost basis list box; MCP: cost basis in `get_session_cost`, `get_cost_rollup`, `get_turn` | Pricing tests pass; unknown never sums as 0; billed vs priced shown per model-month; the step's MCP tools pass the §10.1.6 tests |
 | 15.7 | **Time series, compare, project breakdown** + their endpoints; MCP: `get_repository_cost`, `get_project_cost`, `compare_costs`, the `review_costs` project step | Golden outputs for a fixture dataset across three providers and two projects; the step's MCP tools pass the §10.1.6 tests |
-| 15.8 | **Mock-ups and palette** (§11.7, §11.8): the seven boards on a Design canvas with versioned copies (drawn 2026-11-05, awaiting review); the eight categorical tokens in `theme.css` and `theme-vscode.css` (not started) | Owner approves the boards and their comments are resolved; the dataviz validator passes in light and dark; `theme-contrast.test.ts` covers the new tokens in Dark Modern, Light Modern and High Contrast |
+| 15.8 | **Mock-ups and palette** (§11.7, §11.8): the seven boards on a Design canvas with versioned copies (drawn and approved 2026-11-05); the eight categorical tokens in `theme.css` and `theme-vscode.css` (done 2026-11-05, see §14.1) | Owner approves the boards and their comments are resolved; the dataviz validator passes in light and dark; `theme-contrast.test.ts` covers the new tokens in Dark Modern, Light Modern and High Contrast |
 | 15.9 | **Dashboard tabs: Cost over time and Compare**, with price-change markers (§11.1–§11.3) | Component tests incl. "View as table" and unknown-as-gap; `vitest-axe` clean in three themes; keyboard tests; the UI check (`npm run test:ui`) passes for the new tabs at 600–1600 px in three themes; screenshots of the standalone app at desktop and 360 px widths; the §12.4.1 Playwright harness and fixture home are in place, and scenarios S2 and S3 pass in the `web-e2e` job |
 | 15.10 | **Price changes and variance**: `PriceChangeDetector`, observed-change finding, `VarianceAnalyzer`, Project tab (§11.4); MCP: `explain_cost_change` tool and prompt, `get_price_changes`, `list_findings` kind `price-change` | Effects add up exactly (property test); markers match price-book boundaries; same UI checks as 15.9; the step's MCP tools pass the §10.1.6 tests; scenario S4 passes |
 | 15.11 | **Statements**: builder, freeze, diff, CSV/JSON/Markdown export, Billing tab, Projects editor (§11.5); MCP: `get_statement`, `prepare_statement` prompt | Golden statements; a frozen statement survives a price-book update unchanged and the diff is exact; every project can be assigned by keyboard alone; same UI checks as 15.9; the step's MCP tools pass the §10.1.6 tests; scenarios S1, S5, S6 and S8 pass |
@@ -1174,9 +1180,229 @@ written with 15.3, since `PUT /api/projects` is the first new write.
   `projects-file-invalid`. The extension's `ApiService` has no projects yet
   (404) until step 15.14, and these routes aren't in its webview
   allow-list.
-- Not yet: capture rules are validated but not applied, because mitmproxy
-  sessions don't carry their capture file's path; step 15.4 adds that
-  when it attributes sessions.
+- Capture rules were validated but not applied here, because mitmproxy
+  sessions didn't carry their capture file's path; step 15.4 applies them.
+
+**15.4 (done 2026-11-05).** `SessionAttributor`
+(`services/cost-attribution/session-attributor.ts`) attributes a session,
+and each turn by its own folder and model, to a repository
+(`RepositoryResolver`, aliases followed), at most one project
+(`matchProject`, D1), a vendor and a channel. It reads the projects file
+once per dataset.
+
+- **Capture rules apply.** mitmproxy sessions carry
+  `Session.capture.filePath` (never in MCP output or the advice export),
+  matched by the branch-pattern DP matcher (`*`, `**`, `?`, a leading `~`,
+  Windows slashes normalised) and attributed with the new source
+  `capture-rule`.
+- **Channels** are domain ids in `packages/domain/src/channels.ts`
+  (`github-copilot`, `anthropic-api`, `openai-api`, `google-api`,
+  `xai-api`, `moonshot-api`). `resolveChannel` gives VS Code
+  `github-copilot`, Claude Code `anthropic-api`, and pi and mitmproxy the
+  model vendor's API channel; `channels.providers` overrides a provider.
+  **Changed from §6.3:** mitmproxy uses the model's vendor, not the
+  decoder's, because sessions don't record which decoder ran. The
+  per-repository override of §6.3 is not in the file schema yet.
+- **Vendor** comes from Phase 13's profiles, read unchanged: a few
+  spellings of the model id first (lower case, no `vendor/` prefix, no
+  `[1m]`-style tag or date suffix, `x-5-5` as `x-5.5`), then a model
+  family only one vendor uses; otherwise unknown with a reason.
+- **Insights rows** (session and turn) carry `repositoryKey`, `projectId`,
+  `vendorId` and `channel`, each null with a reason when unknown
+  (`unattributedReason`, `vendorUnknownReason`, `channelUnknownReason`);
+  an Unattributed row has no project. The dataset adds project and vendor
+  display names.
+- **Dashboard:** the first list-box group is Project, Repository, Vendor
+  and Channel, over turn rows (a session that moved between repositories
+  counts each turn where it ran), with Unattributed, No project, Unknown
+  vendor and Unknown channel selectable, so no cost is dropped. A test
+  checks that totals per value add up to the whole and match the
+  per-session totals; axe (four themes) and keyboard tests cover the new
+  list boxes.
+- **Repository list** now uses the attributor (capture rules and aliases
+  apply) and gains turn counts, AI Credits with session coverage, and
+  provider and date filters.
+- **MCP:** `list_repositories`, `list_projects` and `list_sessions`'
+  `repository`/`projectId` filters (which use the session's own folder),
+  served by `AttributionQueryService`. `local:` and `path:` keys are
+  returned as the folder name only, root paths left out, unless
+  `includePaths`; local keys are redacted in projects-file problems too. A
+  property test checks no output holds a home folder or credential. Two
+  local repositories with the same folder name look alike without
+  `includePaths`.
+- The extension's MCP server keeps its nine tools (attribution is an
+  optional dependency) until steps 15.13/15.14; its Dashboard attributes
+  repositories, vendors and channels, with every turn under No project.
+
+TDD exceptions: the `channel-resolver`, `repository-key-privacy` and
+`ProfileVendorResolver` tests were written first but not run red before
+the code; the Dashboard and a11y tests passed on their first run because
+the Dashboard renders whatever groups the (already test-driven) model
+defines. Not yet: Unattributed reasons in the Dashboard UI (they are in the
+rows, the API and MCP); the mock-up's per-value cost figures in the list
+boxes; the per-repository channel override.
+
+**15.8 palette (done 2026-11-05).** `theme.css` `:root` has
+`--color-series-1` to `-8` (the §11.7 light steps, fixed order), the
+waterfall pair `--color-diverging-increase` (`#e34948`) and
+`--color-diverging-decrease` (`#1c5cab`), and `--dash-series-1` to `-8`
+(`none`). The standalone app has no dark theme, so the dark steps live in
+`theme-vscode.css`: `body.vscode-dark` and `body.vscode-high-contrast` take
+the §11.7 dark steps as fixed values (never `--vscode-charts-*`);
+`body.vscode-high-contrast` also repeats the dashes solid, `7 4`, `2 3`, and
+`body.vscode-high-contrast.vscode-high-contrast-light` takes the light
+steps back.
+
+- **Found while validating:** `#1c5cab` fails the dark lightness band
+  (L 0.48) and is 2.5:1 on `#1f1f1f`, so dark themes use the blue ramp's 400
+  step `#3987e5` for decreases (validator: all pass on `#1f1f1f` and
+  `#000`). The owner approved this change to §11.7 on 2026-11-05.
+- Validator (`validate_palette.js`), light on `#f2f2f3`: lightness, chroma,
+  colour-blind separation (worst adjacent ΔE 9.1) and normal vision (19.6)
+  pass; contrast is a warning for orange 2.86, aqua 2.52, yellow 1.94 and
+  magenta 2.41. Dark on `#1f1f1f`: all pass (ΔE 8.4, normal vision 19.3,
+  all ≥ 3:1). On Light Modern `#ffffff` the warning covers aqua, yellow and
+  magenta; on High Contrast `#000` all are ≥ 3:1.
+- `theme-contrast.test.ts` covers the standalone app, Light Modern, Dark
+  Modern and High Contrast: exact order; 3:1 graphics contrast with an
+  explicit light-ground allowance (floor 1.9:1) for orange, aqua, yellow
+  and magenta only; the diverging pair; dashes; the light High Contrast
+  override; no `--vscode-charts-*`; no ninth series. Nothing uses the tokens
+  yet; the charts of step 15.9 onwards do.
+
+**15.5 (done 2026-11-05).** Domain (`packages/domain/src/price-book.ts`):
+
+- `PriceVersion` as in §6.1. `currency` is `"USD"` (the tiers are Phase 13's
+  `PriceTier`, USD per 1M tokens; AI Credits follow at 1 credit = $0.01),
+  `sourceIds` default to `[]` for user versions, and a contract-only
+  `scope` names one project or one repository. Checked: real ISO dates,
+  `effectiveTo` after `effectiveFrom`, ascending tiers, `promoEndsAt`
+  exactly on promo versions.
+- `PriceBookEntry` (a version plus its `origin`), `PriceLookup` (known with
+  the version, or unknown with a reason), `PriceBookListing`, and
+  `findPriceVersionConflicts`, which compares versions per channel, model
+  and precedence class (list and promo one class, each contract scope
+  another), rejects overlaps and flags gaps.
+- The projects file's `channels.priceVersions` now holds `PriceVersion`s;
+  `validateProjectsFile` reports duplicate ids, overlapping user versions
+  and unknown `scope.projectId`s.
+
+Server (`services/pricing/`):
+
+- A `PriceBookSource` port. `BundledPriceBookSource` reads
+  `fixtures/price-book/<channel>.json` and stops startup on bad data (no
+  source, an unknown source, a contract version, a duplicate id, an
+  overlap, a file named for another channel). `UserPriceBookSource` reads
+  the projects file on every lookup. `CompositePriceBookSource` leaves out,
+  as a `problem`, a user version that clashes with one already in the book.
+- `PriceBook.priceFor(channel, modelId, at, scope?)` uses
+  `[effectiveFrom, effectiveTo)` in UTC with §6.1's precedence; otherwise
+  unknown with a reason ("before", "between", "from", no model, no
+  channel). `newestVersion` gives Phase 13 its prices; `list` serves the
+  API and MCP.
+
+Data:
+
+- One channel, `github-copilot`, with 29 versions moved unchanged from the
+  Phase 13 profiles. The profiles no longer hold `tiers` or `promoEndsAt`;
+  the loader fills them from the newest version, and a model priced in
+  both places (or in neither) stops startup. Phase 13's tests and golden
+  snapshots are unchanged and pass.
+- **History from 2026-10-01** (D8 as revised): the Copilot book is rebuilt
+  from the git history of github/docs' `models-and-pricing.yml`. The table
+  at 7f63f3a (2026-09-29) was unchanged until 2026-10-02, so its prices
+  hold from 2026-10-01. The only price change since is Claude Sonnet 5.5's
+  cached input, $0.20 → $0.10 per 1M on 2026-10-07 (eb975b9). Claude Haiku
+  5.5 (2026-10-07), Gemini 4 Argon (2026-10-13) and GPT-6.1 Terra
+  (2026-10-26) start on the day they were added. Each version cites the
+  table pinned at the commit that proves its start, with a quote (30
+  versions). Dates are commit dates (UTC); the docs site may have deployed
+  later the same day. Turns before 2026-10-01 price as unknown.
+- **Nine models removed during October are in the book** (owner,
+  2026-11-05), so October turns on them are priced: Claude Opus 4.7,
+  Gemini 3.5/3.6 Flash and Kimi K2.7 Code (removed 2026-10-02, 9c7da1a);
+  GPT-5 mini, GPT-5.4, GPT-5.4 mini, GPT-5.5 and Gemini 3.7 Flash (removed
+  2026-10-19, 4dd188c). Each runs from 2026-10-01 to its removal commit's
+  date, citing the table at 7f63f3a and at the removing commit; no price is
+  known after it. No Phase 13 profile simulates them, so the bundled-data
+  test now requires every profile model to be priced and every other
+  Copilot model to have an end date (39 versions in all).
+- The Gemini promotions end per GitHub's wording (Flash "through December
+  31, 2026": `effectiveTo` 2027-01-01; Argon "until December 1, 2026":
+  2026-12-01); no price is known after them.
+- **`anthropic-api`** (`fixtures/price-book/anthropic-api.json`): 20 list
+  versions for 18 Claude models from 2026-10-01. Each cites Anthropic's
+  pricing page plus a dated release note or announcement; the 5-minute
+  cache write maps to `cacheWriteUsdPerM` and the 1-hour write to
+  `extendedCacheWriteUsdPerM`, as on `github-copilot`. The window's one
+  price change, Claude Sonnet 5.5's cache read $0.20 → $0.10 on
+  2026-10-07, is a version boundary (00:00 UTC; the time of day isn't
+  published). Claude Haiku 5.5 starts at its 2026-10-07 launch with a
+  100,000-token prompt-length tier. The 2026-10-01 starts rest on dated
+  launch notes, today's page and release notes recording no change in
+  between (no archived page could be fetched). Fast mode on Opus 5 and
+  Opus 4.8 is sourced only from 2026-11-05; fast-mode cache prices are
+  derived from the page's "multipliers apply on top" rule and say so in
+  their notes. New model ids not in any Phase 13 profile:
+  `claude-mythos-5`, `claude-mythos-5.1`, `claude-opus-4.5`/`4.6`/`4.7`,
+  `claude-sonnet-4.5`, `claude-opus-5.5-fast`, `claude-opus-5-fast`.
+  Batch, data-residency, priority and cloud-platform prices are not
+  modelled.
+- **`openai-api`** (`fixtures/price-book/openai-api.json`): 27
+  standard-tier versions for 23 OpenAI text and coding models. Each cites
+  OpenAI's pricing page (its `.md` version, which carries the long-context
+  columns) plus model pages, the prompt-caching guide, the changelog or the
+  deprecations page, checked 2026-11-06. GPT-5.6 and later charge cache
+  writes at 1.25× input (30 minutes, `cacheWriteUsdPerM`); the 12-hour
+  write at 2.5× (`extendedCacheWriteUsdPerM`) starts at the 2026-10-20
+  changelog entry (00:00 UTC), the window's one change. Earlier models
+  have no cache-write price, and prompts over 272K input tokens use a
+  long-context tier for the whole request. GPT-6.1 Sol, GPT-6 Sol, GPT-6
+  Luna and GPT-5.6 Sol start 2026-10-01 on dated changelog prices; GPT-5.6
+  Sol's $4/$20 is a promotion ending 2026-11-30, with no price after it.
+  **Every other OpenAI model starts 2026-11-06**, including GPT-6 Astra,
+  GPT-6.1 Terra and GPT-5.6 Terra/Luna, because no dated OpenAI source
+  states its amount (launch entries give none, and openai.com's
+  announcements refuse automated requests), so October turns on them price
+  as unknown. Batch, Flex, Fast, Ultrafast, regional and cloud-platform
+  prices, pro models (no cached-input price), `chat-latest` and
+  restricted-access models are not modelled.
+- **`google-api`** (`fixtures/price-book/google-api.json`): 15 versions
+  for 10 Gemini text models at the paid tier's Standard prices. Each cites
+  ai.google.dev's pricing page plus a dated release note or model guide,
+  checked 2026-11-06. Google's stated introductory prices are promo
+  versions followed by the standard price Google gives for after them:
+  Gemini 4 Argon from its 2026-10-13 launch through 2026-11-30 ($2/$10,
+  then $4/$20 per 1M input/output), and Gemini 3.8 and 3.6 Flash through
+  2026-12-31 ($0.75/$3.75, then $1.50/$7.50). `gemini-2.5-pro` bills at
+  Gemini 3.8 Flash rates from its 2026-12-01 routing; Gemini 3.1 Pro
+  Preview and 2.5 Pro have a 200,000-token prompt-length tier. Only Gemini
+  3.8 Flash and 3.5 Flash-Lite are proven from 2026-10-01; the release
+  notes carry no prices for the older models and Gemini 3.6 Flash's price
+  cut is undated, so those start on 2026-11-06. Gemini 3.7 Flash and 3.5
+  Flash have no price on Google's site (deprecated 2026-10-08) and are
+  left out. Cache writes have no price (Gemini has no per-token write
+  price); explicit-cache storage per hour, Batch/Flex/Priority, audio
+  input, the free tier and Vertex AI aren't modelled.
+- Boundaries at a stated date are 00:00 UTC on every channel, since no
+  vendor publishes a time of day. `xai-api` and `moonshot-api` have no
+  file yet, so a lookup there is unknown.
+
+API and MCP: `GET /api/price-book?channel&model&at` (400 on a bad query;
+404 in the extension, which has no price book), and `get_price_book`
+(read-only, `outputSchema` `PriceBookListing`) in `mcp/pricing-tools.ts`,
+registered only when the server has a price book: the standalone app and
+its stdio server. The extension's server gets it with step 15.13's
+`toolGroups`, so its tools/list stays at nine. A test checks the HTTP
+route and the tool agree. The extension build ships `media/price-book`.
+
+TDD exceptions: the six profile files and `github-copilot.json` were
+rewritten by a checked script after their data tests failed; the
+extension's build copy lists changed with `build.mts`; the
+`ApiService.getPriceBook` test followed the route test. Not yet: mapping
+provider model ids to price-table ids and the "at today's prices" mode
+(both step 15.6); the planned weekly `vendor-prices.yml` (step 13.9) must
+diff `fixtures/price-book/github-copilot.json`.
 
 ## 15. Exit criterion
 

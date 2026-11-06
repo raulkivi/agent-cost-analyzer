@@ -4,6 +4,7 @@ import type {
   ConfigStatus,
   InsightsDataset,
   LogProviderStatus,
+  PriceBookListing,
   ProductProfile,
   ProjectsState,
   RepositoryList,
@@ -13,6 +14,7 @@ import type {
   VendorComparison,
   VendorProfileSummary,
 } from "@agent-cost-analyzer/domain";
+import { z } from "zod";
 import type { AppSettingsStore } from "../../data-sources/log-providers/app-settings.js";
 import { ProjectsFileRejectedError, type ProjectCatalog } from "../cost-attribution/project-catalog.js";
 import { buildProjectsFileWarning } from "../cost-attribution/projects-file-warning.js";
@@ -25,8 +27,9 @@ import {
 } from "../../data-sources/log-providers/system-prompt-text-reader.js";
 import { ScenarioNotFoundError, UnknownModelError } from "../learn-simulation/learn-simulation-service.js";
 import type { SessionRangeFilter, ToolCallFilter } from "../tool-audit/audit-query-service.js";
-import { parseSessionRangeQuery, parseToolCallFilterQuery } from "../tool-audit/audit-query-params.js";
+import { isoDateBoundSchema, parseSessionRangeQuery, parseToolCallFilterQuery } from "../tool-audit/audit-query-params.js";
 import { BadRequestError, InternalError, NotFoundError } from "./api-errors.js";
+import type { PriceBookReader } from "../pricing/price-book.js";
 
 // The narrow slices of the registry and query services ApiService needs
 // (DIP) — each product's composition root passes its own registry, so
@@ -72,9 +75,20 @@ export interface ApiProjects {
 
 export const PROJECTS_UNAVAILABLE_MESSAGE = "Projects are not available in this product.";
 
+// Phase 15 step 15.5: the price book. Optional like projects: the extension
+// has none yet and answers 404.
+export const PRICE_BOOK_UNAVAILABLE_MESSAGE = "The price book is not available in this product.";
+
+const priceBookQuerySchema = z.object({
+  channel: z.string().min(1).optional(),
+  model: z.string().min(1).optional(),
+  at: isoDateBoundSchema.optional(),
+});
+
 export interface ApiServiceDeps {
   registry: ApiProviderRegistry;
   projects?: ApiProjects;
+  priceBook?: PriceBookReader;
   auditQueries: ApiAuditQueries;
   insights: ApiInsights;
   settings: Pick<AppSettingsStore, "readMinRetainedSessionLogsThreshold" | "writeMinRetainedSessionLogsThreshold">;
@@ -196,6 +210,17 @@ export class ApiService {
 
   async getRepositoryList(): Promise<RepositoryList> {
     return this.requireProjects().repositories.getRepositoryList();
+  }
+
+  // GET /api/price-book?channel&model&at (plan §10): the same listing the
+  // get_price_book MCP tool returns.
+  async getPriceBook(query: ApiQuery): Promise<PriceBookListing> {
+    if (!this.deps.priceBook) throw new NotFoundError(PRICE_BOOK_UNAVAILABLE_MESSAGE);
+    const parsed = priceBookQuerySchema.safeParse(query);
+    if (!parsed.success) {
+      throw new BadRequestError(parsed.error.issues.map((issue) => `${issue.path.join(".")}: ${issue.message}`).join("; "));
+    }
+    return this.deps.priceBook.list(parsed.data);
   }
 
   async setRetentionThreshold(value: unknown): Promise<ConfigStatus> {

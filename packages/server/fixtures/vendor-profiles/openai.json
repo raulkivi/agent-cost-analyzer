@@ -56,14 +56,6 @@
       "displayName": "GPT-5.3-Codex",
       "vendorId": "openai",
       "releaseStatus": "GA",
-      "tiers": [
-        {
-          "inputUsdPerM": 1.75,
-          "cachedInputUsdPerM": 0.175,
-          "cacheWriteUsdPerM": null,
-          "outputUsdPerM": 14.0
-        }
-      ],
       "cheaperSiblingId": "gpt-5.4-nano",
       "sourceIds": [
         "gh-pricing-table",
@@ -76,14 +68,6 @@
       "displayName": "GPT-5.4 nano",
       "vendorId": "openai",
       "releaseStatus": "GA",
-      "tiers": [
-        {
-          "inputUsdPerM": 0.2,
-          "cachedInputUsdPerM": 0.02,
-          "cacheWriteUsdPerM": null,
-          "outputUsdPerM": 1.25
-        }
-      ],
       "cheaperSiblingId": "gpt-6-luna",
       "sourceIds": [
         "gh-pricing-table",
@@ -96,21 +80,6 @@
       "displayName": "GPT-5.6 Luna",
       "vendorId": "openai",
       "releaseStatus": "GA",
-      "tiers": [
-        {
-          "maxInputTokens": 200000,
-          "inputUsdPerM": 0.2,
-          "cachedInputUsdPerM": 0.02,
-          "cacheWriteUsdPerM": 0.25,
-          "outputUsdPerM": 1.2
-        },
-        {
-          "inputUsdPerM": 0.4,
-          "cachedInputUsdPerM": 0.04,
-          "cacheWriteUsdPerM": 0.5,
-          "outputUsdPerM": 1.8
-        }
-      ],
       "cachingKind": {
         "kind": "automatic-prefix",
         "ttlMinutes": { "fixed": 30 },
@@ -131,21 +100,6 @@
       "displayName": "GPT-5.6 Sol",
       "vendorId": "openai",
       "releaseStatus": "GA",
-      "tiers": [
-        {
-          "maxInputTokens": 272000,
-          "inputUsdPerM": 4.0,
-          "cachedInputUsdPerM": 0.4,
-          "cacheWriteUsdPerM": 5.0,
-          "outputUsdPerM": 20.0
-        },
-        {
-          "inputUsdPerM": 8.0,
-          "cachedInputUsdPerM": 0.8,
-          "cacheWriteUsdPerM": 10.0,
-          "outputUsdPerM": 30.0
-        }
-      ],
       "cachingKind": {
         "kind": "automatic-prefix",
         "ttlMinutes": { "fixed": 30 },
@@ -166,21 +120,6 @@
       "displayName": "GPT-5.6 Terra",
       "vendorId": "openai",
       "releaseStatus": "GA",
-      "tiers": [
-        {
-          "maxInputTokens": 272000,
-          "inputUsdPerM": 2.0,
-          "cachedInputUsdPerM": 0.2,
-          "cacheWriteUsdPerM": 2.5,
-          "outputUsdPerM": 12.0
-        },
-        {
-          "inputUsdPerM": 4.0,
-          "cachedInputUsdPerM": 0.4,
-          "cacheWriteUsdPerM": 5.0,
-          "outputUsdPerM": 18.0
-        }
-      ],
       "cachingKind": {
         "kind": "automatic-prefix",
         "ttlMinutes": { "fixed": 30 },
@@ -201,21 +140,6 @@
       "displayName": "GPT-6 Astra",
       "vendorId": "openai",
       "releaseStatus": "GA",
-      "tiers": [
-        {
-          "maxInputTokens": 272000,
-          "inputUsdPerM": 10.0,
-          "cachedInputUsdPerM": 1.0,
-          "cacheWriteUsdPerM": 12.5,
-          "outputUsdPerM": 50.0
-        },
-        {
-          "inputUsdPerM": 20.0,
-          "cachedInputUsdPerM": 2.0,
-          "cacheWriteUsdPerM": 25.0,
-          "outputUsdPerM": 75.0
-        }
-      ],
       "cachingKind": {
         "kind": "automatic-prefix",
         "ttlMinutes": { "fixed": 30 },
@@ -236,21 +160,6 @@
       "displayName": "GPT-6 Luna",
       "vendorId": "openai",
       "releaseStatus": "GA",
-      "tiers": [
-        {
-          "maxInputTokens": 272000,
-          "inputUsdPerM": 0.1,
-          "cachedInputUsdPerM": 0.01,
-          "cacheWriteUsdPerM": 0.125,
-          "outputUsdPerM": 0.5
-        },
-        {
-          "inputUsdPerM": 0.2,
-          "cachedInputUsdPerM": 0.02,
-          "cacheWriteUsdPerM": 0.25,
-          "outputUsdPerM": 0.75
-        }
-      ],
       "cachingKind": {
         "kind": "automatic-prefix",
         "ttlMinutes": { "fixed": 30 },
@@ -270,21 +179,6 @@
       "displayName": "GPT-6 Sol",
       "vendorId": "openai",
       "releaseStatus": "GA",
-      "tiers": [
-        {
-          "maxInputTokens": 272000,
-          "inputUsdPerM": 2.0,
-          "cachedInputUsdPerM": 0.2,
-          "cacheWriteUsdPerM": 2.5,
-          "outputUsdPerM": 10.0
-        },
-        {
-          "inputUsdPerM": 4.0,
-          "cachedInputUsdPerM": 0.4,
-          "cacheWriteUsdPerM": 5.0,
-          "outputUsdPerM": 15.0
-        }
-      ],
       "cachingKind": {
         "kind": "automatic-prefix",
         "ttlMinutes": { "fixed": 30 },
@@ -305,21 +199,6 @@
       "displayName": "GPT-6.1 Sol",
       "vendorId": "openai",
       "releaseStatus": "GA",
-      "tiers": [
-        {
-          "maxInputTokens": 272000,
-          "inputUsdPerM": 2.0,
-          "cachedInputUsdPerM": 0.1,
-          "cacheWriteUsdPerM": 2.5,
-          "outputUsdPerM": 10.0
-        },
-        {
-          "inputUsdPerM": 4.0,
-          "cachedInputUsdPerM": 0.2,
-          "cacheWriteUsdPerM": 5.0,
-          "outputUsdPerM": 15.0
-        }
-      ],
       "cachingKind": {
         "kind": "automatic-prefix",
         "ttlMinutes": { "fixed": 30 },
@@ -340,21 +219,6 @@
       "displayName": "GPT-6.1 Terra",
       "vendorId": "openai",
       "releaseStatus": "GA",
-      "tiers": [
-        {
-          "maxInputTokens": 272000,
-          "inputUsdPerM": 1.0,
-          "cachedInputUsdPerM": 0.05,
-          "cacheWriteUsdPerM": 1.25,
-          "outputUsdPerM": 5.0
-        },
-        {
-          "inputUsdPerM": 2.0,
-          "cachedInputUsdPerM": 0.1,
-          "cacheWriteUsdPerM": 2.5,
-          "outputUsdPerM": 7.5
-        }
-      ],
       "cachingKind": {
         "kind": "automatic-prefix",
         "ttlMinutes": { "fixed": 30 },

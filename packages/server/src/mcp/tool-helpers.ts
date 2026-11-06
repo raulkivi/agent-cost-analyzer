@@ -21,6 +21,19 @@ export function providerArg(identity: McpIdentity) {
 
 export const sessionIdArg = z.string().min(1).describe("Session id from list_sessions.");
 
+// Phase 15 step 15.4 (plan §10.1.4): a repository key as list_repositories
+// returns it, and a project id from list_projects.
+export const repositoryArg = z
+  .string()
+  .min(1)
+  .max(2048)
+  .describe("Repository key from list_repositories, e.g. github.com/org/app or local:<folder name>.");
+
+export const projectIdArg = z
+  .string()
+  .regex(/^[a-z0-9][a-z0-9-]{0,63}$/)
+  .describe("Project id from list_projects.");
+
 export const sinceArg = isoDateBoundSchema
   .optional()
   .describe('Earliest session start, inclusive: "YYYY-MM-DD" or an ISO timestamp.');

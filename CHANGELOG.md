@@ -17,6 +17,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   model you pick, with real prices and documented cache rules, a Cache column,
   per-turn notes, an assumptions popover and a sources footer. Learn numbers
   change accordingly.
+- Cost by repository and project (Phase 15 step 15.4): Dashboard rows are
+  attributed to a repository, project, vendor and channel, with Project,
+  Repository, Vendor and Channel list boxes (Unattributed and unknown
+  values keep their reasons). mitmproxy capture rules now apply. New MCP
+  tools `list_repositories` and `list_projects`, and `list_sessions`
+  filters by repository and project; MCP output gives local repositories
+  by folder name only unless `includePaths` is set.
+- Price book with history (Phase 15 step 15.5): sourced, dated price
+  versions per channel and model (`fixtures/price-book/`, starting with
+  GitHub Copilot's table from 2026-10-01 and the Anthropic, OpenAI and Google APIs'), the user's own contract or list prices in
+  `projects.json` (`channels.priceVersions`), `GET /api/price-book` and the
+  read-only `get_price_book` MCP tool. Learn simulation prices now come
+  from the price book. A price not in the book is unknown with a reason,
+  never zero.
+- Web and VS Code themes: eight categorical series colours
+  (`--color-series-1` to `-8`, light and dark steps), a diverging pair for
+  waterfalls, and dash patterns in High Contrast, ready for the
+  cost-by-project charts (Phase 15 step 15.8).
 - Session working folders (Phase 15 step 15.1): every Analyze session
   reports the folder it ran in, and its branch and repository where the log
   records them, or why it is unknown (mitmproxy captures record none); each

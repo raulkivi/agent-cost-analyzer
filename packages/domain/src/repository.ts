@@ -10,8 +10,9 @@ import { z } from "zod";
 // repository.
 // `source` says how the key was found; `path:` keys come from
 // `folder-path` and are only as good as the folder name (the user can merge
-// them into a real repository with an alias, plan §7).
-export const repositorySourceSchema = z.enum(["git-remote", "git-local", "recorded-repository", "folder-path"]);
+// them into a real repository with an alias, plan §7). `capture-rule` is a
+// mitmproxy capture assigned by a projects-file capture rule (step 15.4).
+export const repositorySourceSchema = z.enum(["git-remote", "git-local", "recorded-repository", "folder-path", "capture-rule"]);
 
 // A path inside the repository, relative and never escaping it; "" is the root.
 const pathInRepo = z.string().refine((value) => !value.startsWith("/") && !value.split("/").includes(".."), {
@@ -39,11 +40,23 @@ export const repositoryAttributionSchema = z.discriminatedUnion("attributed", [
 // the Unattributed sessions grouped by reason.
 const count = z.number().int().nonnegative();
 
+// Step 15.4: the AI Credits of a group of sessions, from their summaries.
+// null when no session's figure is known (constraint 6), with coverage.
+export const sessionAiCreditsTotalSchema = z
+  .object({ value: z.number().nullable(), knownSessions: count, sessions: count })
+  .refine((total) => total.knownSessions <= total.sessions, { message: "knownSessions cannot exceed sessions", path: ["knownSessions"] })
+  .refine((total) => (total.value === null) === (total.knownSessions === 0), {
+    message: "value is null exactly when no session is known",
+    path: ["value"],
+  });
+
 export const repositoryListEntrySchema = z.object({
   key: z.string().min(1),
   source: repositorySourceSchema,
   rootPath: z.string().min(1).optional(),
   sessionCount: count,
+  turnCount: count,
+  aiCredits: sessionAiCreditsTotalSchema,
   providerIds: z.array(z.string()),
   firstUsedAt: z.string().optional(),
   lastUsedAt: z.string().optional(),
@@ -53,6 +66,8 @@ export const repositoryListEntrySchema = z.object({
 export const unattributedEntrySchema = z.object({
   reason: z.string().min(1),
   sessionCount: count,
+  turnCount: count,
+  aiCredits: sessionAiCreditsTotalSchema,
   providerIds: z.array(z.string()),
 });
 
@@ -76,3 +91,4 @@ export type RepositoryAttribution = z.infer<typeof repositoryAttributionSchema>;
 export type RepositoryListEntry = z.infer<typeof repositoryListEntrySchema>;
 export type UnattributedEntry = z.infer<typeof unattributedEntrySchema>;
 export type RepositoryList = z.infer<typeof repositoryListSchema>;
+export type SessionAiCreditsTotal = z.infer<typeof sessionAiCreditsTotalSchema>;

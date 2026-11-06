@@ -7,15 +7,12 @@ import { agentHostCatalogProbe } from "../services/config-check/agent-host-catal
 import { resolveUserDataDir } from "../platform/vscode-paths/resolve-user-data-dir.js";
 import { checkConfig } from "../services/config-check/config-check.js";
 import { ApiService } from "../services/api/api-service.js";
-import { FileProjectStore } from "../data-sources/projects/file-project-store.js";
-import { NodeReadOnlyFileSystem } from "../platform/file-system/node-read-only-file-system.js";
-import { ProjectCatalog } from "../services/cost-attribution/project-catalog.js";
-import { RepositoryListService } from "../services/cost-attribution/repository-list-service.js";
-import { RepositoryResolver } from "../services/cost-attribution/repository-resolver.js";
 import { AuditQueryService } from "../services/tool-audit/audit-query-service.js";
 import { readAppVersion } from "./app-version.js";
+import { createStandalonePriceBook } from "./create-price-book.js";
 import { composeLogProviders, type LogProviderCompositionOptions } from "./compose-log-providers.js";
 import { createInsightsService } from "./create-insights-service.js";
+import { createStandaloneAttribution } from "./create-standalone-attribution.js";
 
 export interface StandaloneApiServiceOptions extends LogProviderCompositionOptions {
   // G4 (vscode-extension.md §2.2): default to this package's own files,
@@ -50,26 +47,29 @@ export function standaloneProductProfile(version: string): ProductProfile {
 export function createStandaloneApiService(options: StandaloneApiServiceOptions = {}): ApiService {
   const { learnScriptsDir, vendorProfilesDir, appVersion: appVersionOption, ...compositionOptions } = options;
   const { registry, appSettings, resolvedVscodeSettingsPath, resolvedAppSettingsDir } = composeLogProviders(compositionOptions);
-  // Phase 15 step 15.3: projects.json beside settings.json.
-  const projectCatalog = new ProjectCatalog(new FileProjectStore(resolvedAppSettingsDir));
+  const vendorProfiles = loadVendorProfiles(vendorProfilesDir);
+  // Phase 15: projects.json beside settings.json (step 15.3); the same
+  // attribution for the repository list and the dataset (step 15.4).
+  const attribution = createStandaloneAttribution(registry, resolvedAppSettingsDir, vendorProfiles);
   const appVersion = appVersionOption ?? readAppVersion();
   const agentHostUserDataDir =
     compositionOptions.agentHostUserDataDir !== undefined ? compositionOptions.agentHostUserDataDir : resolveUserDataDir();
 
   const learnSimulation = new LearnSimulationService(
     loadScenarioScripts(learnScriptsDir),
-    loadVendorProfiles(vendorProfilesDir),
+    vendorProfiles,
     "claude-code",
   );
 
   return new ApiService({
     registry,
     projects: {
-      catalog: projectCatalog,
-      repositories: new RepositoryListService(registry, new RepositoryResolver(new NodeReadOnlyFileSystem()), projectCatalog),
+      catalog: attribution.catalog,
+      repositories: attribution.repositories,
     },
+    priceBook: createStandalonePriceBook(resolvedAppSettingsDir, attribution.catalog),
     auditQueries: new AuditQueryService(registry),
-    insights: createInsightsService(registry),
+    insights: createInsightsService(registry, attribution.dataset),
     settings: appSettings,
     checkConfig: (minRetainedSessionLogsThreshold) =>
       checkConfig({

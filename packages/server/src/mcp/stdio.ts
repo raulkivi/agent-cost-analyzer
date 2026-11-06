@@ -1,5 +1,7 @@
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { composeLogProviders } from "../composition/compose-log-providers.js";
+import { createStandalonePriceBook } from "../composition/create-price-book.js";
+import { createStandaloneAttribution } from "../composition/create-standalone-attribution.js";
 import { createMcpServices } from "../composition/mcp-services.js";
 import { readAppVersion } from "../composition/app-version.js";
 import { createMcpServer } from "./mcp-server.js";
@@ -11,8 +13,13 @@ import { createMcpServer } from "./mcp-server.js";
 // over its own composition root.
 const version = readAppVersion();
 
-const { registry } = composeLogProviders();
-const server = createMcpServer(createMcpServices(registry, version));
+const { registry, resolvedAppSettingsDir } = composeLogProviders();
+// Phase 15 step 15.5: get_price_book reads the bundled book and the user's
+// versions in projects.json, as the web app does.
+const server = createMcpServer({
+  ...createMcpServices(registry, version, undefined, createStandaloneAttribution(registry, resolvedAppSettingsDir)),
+  priceBook: createStandalonePriceBook(resolvedAppSettingsDir),
+});
 
 await server.connect(new StdioServerTransport());
 console.error(`agent-cost-analyzer MCP server ${version} ready on stdio (read-only, local logs only).`);

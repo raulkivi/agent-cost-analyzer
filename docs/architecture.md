@@ -327,6 +327,37 @@ type RepositoryAttribution =
   | { attributed: false; reason: string };
 ```
 
+Attribution (Phase 15 step 15.4): `RepositorySource` also has
+`capture-rule`; mitmproxy sessions carry `Session.capture?: { filePath }`, a
+local path never put into MCP output. `InsightSessionRow`/`InsightTurnRow`
+gain `repositoryKey | null` (with `unattributedReason`), `projectId | null`,
+`vendorId | null` (with `vendorUnknownReason`) and `channel | null` (with
+`channelUnknownReason`); `InsightsDataset` gains optional `projects[]` and
+`vendors[]` display names. `RepositoryListEntry` and `UnattributedEntry`
+gain `turnCount` and `aiCredits { value | null, knownSessions, sessions }`.
+`ProjectList` is `list_projects`' output; `channels.ts` holds the channel
+ids. On the server, `services/cost-attribution/` adds `SessionAttributor`,
+`ProfileVendorResolver`, `resolveChannel`, `matchCaptureRule`,
+`AttributionQueryService` and `repository-key-privacy`; `InsightsService`
+takes an optional `DatasetAttribution`. The MCP attribution tools are
+registered when `McpServerDeps.attribution` is given (the standalone stdio
+server); local folder paths appear only with `includePaths`.
+
+Price book (Phase 15 step 15.5, `packages/domain/src/price-book.ts`;
+[plans/cost-by-repository-and-project.md](plans/cost-by-repository-and-project.md)
+§6): a `PriceVersion` is one dated price (`channel`, `modelId`, `currency`
+`"USD"`, `[effectiveFrom, effectiveTo)`, Phase 13's `tiers`, `kind` list,
+promo or contract, cited `sourceIds`, a contract-only `scope`).
+`PriceBookEntry` adds its `origin` (`bundled` or `user`); `PriceLookup` is
+known with the version or unknown with a reason (constraint 6: a turn
+outside every version is never priced at 0); `PriceBookListing` is what the
+API and MCP return. The user's versions live in
+`ProjectsFile.channels.priceVersions`. On the server, `services/pricing/`
+holds a `PriceBook` over a `PriceBookSource` port (bundled
+`fixtures/price-book/<channel>.json`, user versions, composite). Invalid
+bundled data stops startup; invalid user data is reported as problems.
+Phase 13's vendor profiles read their prices from the price book.
+
 Log-provider selection is a separate app-level contract, not a provider-
 specific API or UI branch:
 
@@ -1888,6 +1919,7 @@ themselves.
 | `GET /api/config/status` | `ConfigStatus` — current prerequisite-setting check results and any `warnings[]` (§6.3), including the effective `minRetainedSessionLogsThreshold` |
 | `GET /api/projects` | `ProjectsState` (Phase 15 step 15.3, [plans/cost-by-repository-and-project.md](plans/cost-by-repository-and-project.md) §7): `status` (`missing`, `valid` or `invalid`), the file in use, its `problems` and its `location` |
 | `PUT /api/projects` | Replaces the projects file with the body after validation; returns the new `ProjectsState`. 400 with `{ error, problems }` if anything is wrong, and nothing is written |
+| `GET /api/price-book?channel&model&at` | `PriceBookListing` (Phase 15 step 15.5): the price versions in force (or all), their sources, gaps, unknown lookups with reasons and user-version problems; also the standalone MCP tool `get_price_book`. Not in the extension (404) |
 | `GET /api/repositories` | `RepositoryList` (Phase 15 step 15.3): every repository the providers' sessions resolve to (`key`, `source`, `rootPath`, session count, providers, first and last use, projects), the Unattributed sessions grouped by reason, and each provider's status |
 | `PUT /api/config/retention-threshold` | Sets the persisted `minRetainedSessionLogsThreshold` override (body: `{ value: number }`, must be a positive integer, else 400); returns the fresh `ConfigStatus` so the caller can update both the header control and the warning banner from one response |
 

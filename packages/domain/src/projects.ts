@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { findPriceVersionConflicts, priceVersionSchema } from "./price-book.js";
 
 // Phase 15 step 15.3 (docs/plans/cost-by-repository-and-project.md §7):
 // the user's local projects file. Projects group repository members, each
@@ -46,11 +47,12 @@ export const projectsFileSchema = z.object({
   aliases: z.record(z.string().min(1), z.string().min(1)).default({}),
   // mitmproxy captures record no folder: assign capture files to a repository.
   captureRules: z.array(captureRuleSchema).default([]),
-  // Channel overrides and contract prices; their shape is step 15.5's.
+  // Channel overrides and the user's own price versions (step 15.5, plan
+  // §6.1): contract rates, or list prices the bundled book lacks (D8).
   channels: z
     .object({
       providers: z.record(z.string(), z.string()).optional(),
-      priceVersions: z.array(z.unknown()).optional(),
+      priceVersions: z.array(priceVersionSchema).optional(),
     })
     .optional(),
 });
@@ -72,6 +74,19 @@ export const projectsStateSchema = z.object({
   location: z.string(),
 });
 
+// Phase 15 step 15.4: the MCP list_projects result. Only what a client
+// model needs to name and scope projects: no file location (a local path),
+// rates or capture rules.
+export const projectListEntrySchema = projectSchema.pick({ id: true, name: true, client: true, billingCode: true, members: true });
+
+export const projectListSchema = z.object({
+  status: projectsStateSchema.shape.status,
+  projects: z.array(projectListEntrySchema),
+  problems: z.array(projectFileProblemSchema),
+});
+
+export type ProjectListEntry = z.infer<typeof projectListEntrySchema>;
+export type ProjectList = z.infer<typeof projectListSchema>;
 export type ProjectMember = z.infer<typeof projectMemberSchema>;
 export type Project = z.infer<typeof projectSchema>;
 export type CaptureRule = z.infer<typeof captureRuleSchema>;
@@ -146,5 +161,41 @@ export function validateProjectsFile(file: ProjectsFile): ProjectFileProblem[] {
     }
   }
 
+  problems.push(...validatePriceVersions(file));
+
+  return problems;
+}
+
+// The user's price versions among themselves; overlaps with the bundled
+// price book are the server's to report (it knows the bundled versions).
+function validatePriceVersions(file: ProjectsFile): ProjectFileProblem[] {
+  const versions = file.channels?.priceVersions ?? [];
+  const problems: ProjectFileProblem[] = [];
+  const indexById = new Map<string, number>();
+  versions.forEach((version, index) => {
+    if (indexById.has(version.id)) {
+      problems.push({ path: `channels.priceVersions[${index}].id`, message: `Price version id "${version.id}" is used twice.` });
+    } else {
+      indexById.set(version.id, index);
+    }
+  });
+  // Keyed by position, so an overlap still points at the right entry when
+  // two versions share an id.
+  const positional = versions.map((version, index) => ({ ...version, id: String(index) }));
+  for (const { first, second } of findPriceVersionConflicts(positional).overlaps) {
+    problems.push({
+      path: `channels.priceVersions[${second}]`,
+      message: `"${versions[Number(second)]!.id}" overlaps "${versions[Number(first)]!.id}": two prices of ${versions[Number(second)]!.modelId} on ${versions[Number(second)]!.channel} for the same time and scope.`,
+    });
+  }
+  const projectIds = new Set(file.projects.map((project) => project.id));
+  versions.forEach((version, index) => {
+    if (version.scope && "projectId" in version.scope && !projectIds.has(version.scope.projectId)) {
+      problems.push({
+        path: `channels.priceVersions[${index}].scope.projectId`,
+        message: `"${version.id}" is scoped to project "${version.scope.projectId}", which isn't in this file.`,
+      });
+    }
+  });
   return problems;
 }

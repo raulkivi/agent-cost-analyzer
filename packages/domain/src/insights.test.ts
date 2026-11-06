@@ -1,5 +1,18 @@
 import { describe, expect, it } from "vitest";
-import { findingsQueryResultSchema, insightFindingSchema, insightsDatasetSchema, insightTurnRowSchema } from "./insights.js";
+import {
+  findingsQueryResultSchema,
+  insightFindingSchema,
+  insightSessionRowSchema,
+  insightsDatasetSchema,
+  insightTurnRowSchema,
+} from "./insights.js";
+
+const attributed = {
+  repositoryKey: "github.com/acme/portal",
+  projectId: "acme-portal",
+  vendorId: "anthropic",
+  channel: "anthropic-api",
+};
 
 function sampleDataset() {
   return {
@@ -16,6 +29,7 @@ function sampleDataset() {
         startedAt: "2026-10-10T09:15:00.000Z",
         date: "2026-10-10",
         hour: 9,
+        ...attributed,
       },
     ],
     turns: [
@@ -32,6 +46,7 @@ function sampleDataset() {
         aiCredits: 0.5,
         estimated: false,
         toolCallCount: 1,
+        ...attributed,
       },
     ],
     toolCalls: [
@@ -91,6 +106,54 @@ describe("insightsDatasetSchema", () => {
       error: "database is locked",
     } as (typeof dataset.providers)[number]);
     expect(insightsDatasetSchema.parse(dataset).providers[1]).toMatchObject({ error: "database is locked" });
+  });
+});
+
+describe("attribution on insight rows (Phase 15 step 15.4)", () => {
+  const turnRow = () => sampleDataset().turns[0]!;
+
+  it("requires the four attribution fields on session and turn rows; null is unknown, never omitted", () => {
+    const { repositoryKey, ...withoutRepository } = turnRow();
+    expect(repositoryKey).toBe("github.com/acme/portal");
+    expect(insightTurnRowSchema.safeParse(withoutRepository).success).toBe(false);
+    const { vendorId, ...withoutVendor } = sampleDataset().sessions[0]!;
+    expect(vendorId).toBe("anthropic");
+    expect(insightSessionRowSchema.safeParse(withoutVendor).success).toBe(false);
+  });
+
+  it("keeps the reason of an Unattributed row, an unknown vendor and an unknown channel", () => {
+    const unknown = {
+      ...turnRow(),
+      repositoryKey: null,
+      unattributedReason: "mitmproxy captures record no working folder.",
+      projectId: null,
+      vendorId: null,
+      vendorUnknownReason: "No vendor profile lists model x.",
+      channel: null,
+      channelUnknownReason: "No channel is known for provider y.",
+    };
+    expect(insightTurnRowSchema.parse(unknown)).toEqual(unknown);
+  });
+
+  it("rejects an unknown value without its reason", () => {
+    expect(insightTurnRowSchema.safeParse({ ...turnRow(), repositoryKey: null, projectId: null }).success).toBe(false);
+    expect(insightTurnRowSchema.safeParse({ ...turnRow(), vendorId: null }).success).toBe(false);
+    expect(insightTurnRowSchema.safeParse({ ...turnRow(), channel: null }).success).toBe(false);
+  });
+
+  it("puts an Unattributed row in no project", () => {
+    expect(
+      insightTurnRowSchema.safeParse({ ...turnRow(), repositoryKey: null, unattributedReason: "no folder", projectId: "acme-portal" }).success,
+    ).toBe(false);
+  });
+
+  it("carries display names for the projects and vendors the rows refer to", () => {
+    const dataset = {
+      ...sampleDataset(),
+      projects: [{ id: "acme-portal", name: "ACME portal" }],
+      vendors: [{ id: "anthropic", label: "Anthropic" }],
+    };
+    expect(insightsDatasetSchema.parse(dataset)).toEqual(dataset);
   });
 });
 

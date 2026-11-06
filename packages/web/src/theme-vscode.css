@@ -249,3 +249,49 @@ body.vscode-high-contrast .filter-chip[aria-pressed="true"] {
   outline: 2px solid var(--vscode-contrastActiveBorder, #f38518);
   outline-offset: -2px;
 }
+
+/* — categorical series (cost-by-repository-and-project.md §11.7): fixed
+     values, not --vscode-charts-*, whose orange, green, purple and yellow
+     fall outside the lightness band on Dark Modern. Light themes keep
+     theme.css's light steps; dark themes take the palette's dark steps,
+     validated on #1f1f1f (every slot 3:1 or more). The diverging pair's
+     dark blue (#1c5cab, 2.5:1 on #1f1f1f) steps up to the blue ramp's 400
+     step in dark themes. High Contrast also varies the dash (solid, 7 4,
+     2 3, in turn), since the theme flattens colours; a light High Contrast
+     theme carries vscode-high-contrast too, so it takes the light steps
+     back. — */
+body.vscode-dark,
+body.vscode-high-contrast {
+  --color-series-1: #3987e5; /* blue */
+  --color-series-2: #d95926; /* orange */
+  --color-series-3: #199e70; /* aqua */
+  --color-series-4: #c98500; /* yellow */
+  --color-series-5: #d55181; /* magenta */
+  --color-series-6: #008300; /* green */
+  --color-series-7: #9085e9; /* violet */
+  --color-series-8: #e66767; /* red */
+  --color-diverging-increase: #e34948;
+  --color-diverging-decrease: #3987e5;
+}
+body.vscode-high-contrast {
+  --dash-series-1: none;
+  --dash-series-2: 7 4;
+  --dash-series-3: 2 3;
+  --dash-series-4: none;
+  --dash-series-5: 7 4;
+  --dash-series-6: 2 3;
+  --dash-series-7: none;
+  --dash-series-8: 7 4;
+}
+body.vscode-high-contrast.vscode-high-contrast-light {
+  --color-series-1: #2a78d6;
+  --color-series-2: #eb6834;
+  --color-series-3: #1baf7a;
+  --color-series-4: #eda100;
+  --color-series-5: #e87ba4;
+  --color-series-6: #008300;
+  --color-series-7: #6250d6;
+  --color-series-8: #e34948;
+  --color-diverging-increase: #e34948;
+  --color-diverging-decrease: #1c5cab;
+}

@@ -79,6 +79,11 @@ export function createApp(options: CreateAppOptions = {}): Express {
     res.json(await api.getRepositoryList());
   }));
 
+  // Phase 15 step 15.5: the price book behind priced figures.
+  app.get("/api/price-book", route(async (req, res) => {
+    res.json(await api.getPriceBook(req.query));
+  }));
+
   app.get("/api/learn/scenarios", route(async (_req, res) => {
     res.json(await api.listLearnScenarios());
   }));

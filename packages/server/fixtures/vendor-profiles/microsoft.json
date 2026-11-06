@@ -56,14 +56,6 @@
       "displayName": "MAI-Code-1.1-Flash",
       "vendorId": "microsoft",
       "releaseStatus": "GA",
-      "tiers": [
-        {
-          "inputUsdPerM": 0.2,
-          "cachedInputUsdPerM": 0.02,
-          "cacheWriteUsdPerM": null,
-          "outputUsdPerM": 1.2
-        }
-      ],
       "sourceIds": ["gh-pricing-table", "gh-model-hosting-mai"]
     }
   ],

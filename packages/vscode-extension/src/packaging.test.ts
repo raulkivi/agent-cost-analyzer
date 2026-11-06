@@ -49,6 +49,7 @@ describe(".vscodeignore (step 10.9)", () => {
     "media/assets/index.js",
     "media/index.html",
     "media/learn-scripts/cache-basics.json",
+    "media/price-book/github-copilot.json",
     "media/vendor-profiles/anthropic.json",
     "package.json",
     "package.nls.json",

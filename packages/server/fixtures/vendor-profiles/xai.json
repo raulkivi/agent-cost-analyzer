@@ -56,21 +56,6 @@
       "displayName": "Grok 4.5",
       "vendorId": "xai",
       "releaseStatus": "GA",
-      "tiers": [
-        {
-          "maxInputTokens": 200000,
-          "inputUsdPerM": 2.0,
-          "cachedInputUsdPerM": 0.5,
-          "cacheWriteUsdPerM": null,
-          "outputUsdPerM": 6.0
-        },
-        {
-          "inputUsdPerM": 4.0,
-          "cachedInputUsdPerM": 1.0,
-          "cacheWriteUsdPerM": null,
-          "outputUsdPerM": 12.0
-        }
-      ],
       "sourceIds": ["gh-pricing-table", "gh-model-hosting-xai"]
     },
     {
@@ -78,21 +63,6 @@
       "displayName": "Grok 4.6",
       "vendorId": "xai",
       "releaseStatus": "GA",
-      "tiers": [
-        {
-          "maxInputTokens": 200000,
-          "inputUsdPerM": 2.0,
-          "cachedInputUsdPerM": 0.5,
-          "cacheWriteUsdPerM": null,
-          "outputUsdPerM": 6.0
-        },
-        {
-          "inputUsdPerM": 4.0,
-          "cachedInputUsdPerM": 1.0,
-          "cacheWriteUsdPerM": null,
-          "outputUsdPerM": 12.0
-        }
-      ],
       "sourceIds": ["gh-pricing-table", "gh-model-hosting-xai"]
     },
     {
@@ -100,21 +70,6 @@
       "displayName": "Grok 4.7",
       "vendorId": "xai",
       "releaseStatus": "GA",
-      "tiers": [
-        {
-          "maxInputTokens": 200000,
-          "inputUsdPerM": 2.0,
-          "cachedInputUsdPerM": 0.5,
-          "cacheWriteUsdPerM": null,
-          "outputUsdPerM": 6.0
-        },
-        {
-          "inputUsdPerM": 4.0,
-          "cachedInputUsdPerM": 1.0,
-          "cacheWriteUsdPerM": null,
-          "outputUsdPerM": 12.0
-        }
-      ],
       "sourceIds": ["gh-pricing-table", "gh-model-hosting-xai"]
     }
   ],

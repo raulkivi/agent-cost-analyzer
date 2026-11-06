@@ -44,6 +44,10 @@ export const sessionSchema = z.object({
   // Analyze mode only (Phase 15 step 15.1): the folder the session ran in,
   // or why it is unknown. Absent where the provider has not reported it.
   workspace: sessionWorkspaceSchema.optional(),
+  // mitmproxy only (step 15.4): the capture file the session was read from,
+  // so a projects-file capture rule can assign it to a repository. A local
+  // path: no MCP tool or export returns it.
+  capture: z.object({ filePath: z.string().min(1) }).optional(),
 });
 
 export type Session = z.infer<typeof sessionSchema>;

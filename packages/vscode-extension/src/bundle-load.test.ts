@@ -287,7 +287,7 @@ describe("the built extension bundle", () => {
     const copilotStorage = path.join(userDataDir, "User", "globalStorage", "github.copilot-chat");
     mkdirSync(copilotStorage, { recursive: true });
     seedSessionStore(path.join(copilotStorage, "session-store.db"));
-    for (const name of ["learn-scripts", "vendor-profiles"]) {
+    for (const name of ["learn-scripts", "vendor-profiles", "price-book"]) {
       cpSync(path.join(serverFixturesDir, name), path.join(installDir, "media", name), { recursive: true });
     }
 

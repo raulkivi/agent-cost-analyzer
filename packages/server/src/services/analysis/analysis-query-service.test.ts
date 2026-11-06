@@ -3,13 +3,14 @@ import type { InsightsDataset } from "@agent-cost-analyzer/domain";
 import type { SessionRangeFilter } from "../tool-audit/audit-query-service.js";
 import { FakeProvider, lookup, sampleSessions } from "../../test-support/audit-fakes.js";
 import { AnalysisQueryService, type InsightsSource } from "./analysis-query-service.js";
+import { UNATTRIBUTED_FIELDS } from "../../test-support/insights-fakes.js";
 
 function insightsSource(): InsightsSource & { filters: SessionRangeFilter[] } {
   const filters: SessionRangeFilter[] = [];
   const dataset: InsightsDataset = {
     generatedAt: "2026-10-01T00:00:00.000Z",
     providers: [{ id: "fake", label: "Fake", available: true, sessionCount: 1, truncated: false }],
-    sessions: [{ key: "fake:mid", providerId: "fake", providerLabel: "Fake", sessionId: "mid", title: "Session mid", model: "m" }],
+    sessions: [{ key: "fake:mid", providerId: "fake", providerLabel: "Fake", sessionId: "mid", title: "Session mid", model: "m", ...UNATTRIBUTED_FIELDS }],
     turns: [
       {
         key: "fake:mid:0",
@@ -24,6 +25,7 @@ function insightsSource(): InsightsSource & { filters: SessionRangeFilter[] } {
         aiCredits: null,
         estimated: false,
         toolCallCount: 2,
+        ...UNATTRIBUTED_FIELDS,
       },
     ],
     toolCalls: [],

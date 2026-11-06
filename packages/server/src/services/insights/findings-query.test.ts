@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { findingsQueryResultSchema, type InsightFinding, type InsightsDataset } from "@agent-cost-analyzer/domain";
 import { queryFindings } from "./findings-query.js";
+import { UNATTRIBUTED_FIELDS } from "../../test-support/insights-fakes.js";
 
 function finding(key: string, overrides: Partial<InsightFinding> = {}): InsightFinding {
   return {
@@ -22,8 +23,8 @@ function dataset(findings: InsightFinding[]): InsightsDataset {
     generatedAt: "2026-10-01T00:00:00.000Z",
     providers: [{ id: "claude-code", label: "Claude Code", available: true, sessionCount: 2, truncated: false }],
     sessions: [
-      { key: "claude-code:a", providerId: "claude-code", providerLabel: "Claude Code", sessionId: "a", title: "Session A", model: "m" },
-      { key: "claude-code:b", providerId: "claude-code", providerLabel: "Claude Code", sessionId: "b", title: "Session B", model: "m" },
+      { key: "claude-code:a", providerId: "claude-code", providerLabel: "Claude Code", sessionId: "a", title: "Session A", model: "m", ...UNATTRIBUTED_FIELDS },
+      { key: "claude-code:b", providerId: "claude-code", providerLabel: "Claude Code", sessionId: "b", title: "Session B", model: "m", ...UNATTRIBUTED_FIELDS },
     ],
     turns: [],
     toolCalls: [],

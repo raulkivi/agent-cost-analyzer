@@ -1,5 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { emptyProjectsFile, normalizeMemberPath, projectsFileSchema, projectsStateSchema, validateProjectsFile, type ProjectsFile } from "./projects.js";
+import {
+  emptyProjectsFile,
+  normalizeMemberPath,
+  projectListSchema,
+  projectsFileSchema,
+  projectsStateSchema,
+  validateProjectsFile,
+  type ProjectsFile,
+} from "./projects.js";
 
 const portal = {
   id: "customer-portal",
@@ -152,5 +160,81 @@ describe("normalizeMemberPath on adversarial input", () => {
     expect(normalizeMemberPath("./svc/api//")).toBe("svc/api");
     expect(normalizeMemberPath(undefined)).toBe("");
     expect(normalizeMemberPath("///")).toBe("");
+  });
+});
+
+// Phase 15 step 15.5: the user's own price versions (plan §6.1, §7).
+describe("channels.priceVersions", () => {
+  const contract = {
+    id: "acme-reseller:claude-sonnet-5.5:2026-07-01",
+    channel: "acme-reseller",
+    modelId: "claude-sonnet-5.5",
+    currency: "USD",
+    effectiveFrom: "2026-07-01",
+    tiers: [{ inputUsdPerM: 2.5, cachedInputUsdPerM: 0.25, cacheWriteUsdPerM: 3, outputUsdPerM: 12 }],
+    kind: "contract",
+    scope: { projectId: "customer-portal" },
+  } as const;
+
+  it("keeps a file without channels, or without priceVersions, valid", () => {
+    expect(projectsFileSchema.safeParse({ version: 1, projects: [] }).success).toBe(true);
+    expect(
+      projectsFileSchema.safeParse({ version: 1, projects: [], channels: { providers: { "claude-code": "anthropic-api" } } }).success,
+    ).toBe(true);
+  });
+
+  it("parses user versions as PriceVersions", () => {
+    const parsed = projectsFileSchema.parse({ version: 1, projects: [portal], channels: { priceVersions: [contract] } });
+
+    expect(parsed.channels?.priceVersions?.[0]).toMatchObject({ kind: "contract", sourceIds: [] });
+  });
+
+  it("rejects an entry that isn't a PriceVersion", () => {
+    expect(projectsFileSchema.safeParse({ version: 1, projects: [], channels: { priceVersions: [{ id: "x" }] } }).success).toBe(false);
+  });
+
+  it("reports duplicate ids, overlapping user versions and unknown project scopes", () => {
+    const later = { ...contract, id: "acme-reseller:claude-sonnet-5.5:2026-09-01", effectiveFrom: "2026-09-01" };
+    const duplicate = { ...contract, modelId: "claude-opus-5.5" };
+    const unknownProject = { ...contract, id: "other", scope: { projectId: "nope" } };
+    const problems = validateProjectsFile(
+      projectsFileSchema.parse({ version: 1, projects: [portal], channels: { priceVersions: [contract, later, duplicate, unknownProject] } }),
+    );
+
+    expect(problems).toEqual([
+      { path: "channels.priceVersions[2].id", message: expect.stringContaining("used twice") },
+      { path: "channels.priceVersions[1]", message: expect.stringContaining("overlaps") },
+      { path: "channels.priceVersions[3].scope.projectId", message: expect.stringContaining('"nope"') },
+    ]);
+  });
+});
+
+describe("projectListSchema (MCP list_projects, step 15.4)", () => {
+  it("accepts each project's id, name, client, billing code and member scopes, with the file's status and problems", () => {
+    const sample = {
+      status: "invalid",
+      projects: [
+        {
+          id: portal.id,
+          name: portal.name,
+          client: portal.client,
+          billingCode: portal.billingCode,
+          members: portal.members,
+        },
+      ],
+      problems: [{ path: "projects[0].members[1]", message: "Exact tie." }],
+    };
+    expect(projectListSchema.parse(sample)).toEqual(sample);
+  });
+
+  it("has no file location, rates or other local details", () => {
+    const parsed = projectListSchema.parse({
+      status: "valid",
+      projects: [{ ...portal }],
+      problems: [],
+      location: "/home/dev/.config/app/projects.json",
+    });
+    expect(parsed).not.toHaveProperty("location");
+    expect(parsed.projects[0]).not.toHaveProperty("rates");
   });
 });
