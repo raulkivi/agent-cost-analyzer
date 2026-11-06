@@ -9,11 +9,16 @@ import type { TurnPricing } from "../services/pricing/turn-cost-figures.js";
 // MCP server so both report the same findings. Step 15.4: the attribution
 // (repository, project, vendor, channel) the rows carry. Step 15.6: the
 // pricer behind each row's priced cost figure.
-export function createInsightsService(providers: ProviderSource, attribution?: DatasetAttribution, pricer?: TurnPricing): InsightsService {
+export function createInsightsService(
+  providers: ProviderSource,
+  attribution?: DatasetAttribution,
+  pricer?: TurnPricing,
+  now?: () => Date,
+): InsightsService {
   return new InsightsService(
     providers,
     [new SecurityScanner(DEFAULT_SECURITY_RULES), new AnomalyDetector(), new BehaviorChangeDetector()],
-    undefined,
+    now,
     attribution,
     pricer,
   );

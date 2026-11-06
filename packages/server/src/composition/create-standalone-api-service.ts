@@ -22,6 +22,9 @@ export interface StandaloneApiServiceOptions extends LogProviderCompositionOptio
   learnScriptsDir?: string;
   vendorProfilesDir?: string;
   appVersion?: string;
+  // The clock (plan §12.4.1): the real one unless a test or the
+  // usage-scenario suite fixes it (server.ts reads AGENT_COST_ANALYZER_NOW).
+  now?: () => Date;
 }
 
 // The standalone app's product profile (vscode-extension.md §3.3): every
@@ -39,6 +42,8 @@ export function standaloneProductProfile(version: string): ProductProfile {
       openInEditor: false,
       sessionSidebar: false,
       vendorSimulation: true,
+      // Step 15.9: GET /api/cost/* behind the Dashboard's cost tabs.
+      costAnalysis: true,
     },
   };
 }
@@ -47,7 +52,7 @@ export function standaloneProductProfile(version: string): ProductProfile {
 // file-backed app settings. The HTTP app (app.ts) is the only caller; the
 // extension builds its own over a Copilot-only registry.
 export function createStandaloneApiService(options: StandaloneApiServiceOptions = {}): ApiService {
-  const { learnScriptsDir, vendorProfilesDir, appVersion: appVersionOption, ...compositionOptions } = options;
+  const { learnScriptsDir, vendorProfilesDir, appVersion: appVersionOption, now, ...compositionOptions } = options;
   const { registry, appSettings, resolvedVscodeSettingsPath, resolvedAppSettingsDir } = composeLogProviders(compositionOptions);
   const vendorProfiles = loadVendorProfiles(vendorProfilesDir);
   // Phase 15: projects.json beside settings.json (step 15.3); the same
@@ -59,7 +64,7 @@ export function createStandaloneApiService(options: StandaloneApiServiceOptions 
   const agentHostUserDataDir =
     compositionOptions.agentHostUserDataDir !== undefined ? compositionOptions.agentHostUserDataDir : resolveUserDataDir();
 
-  const insights = createInsightsService(registry, attribution.dataset, createTurnPricer(priceBook));
+  const insights = createInsightsService(registry, attribution.dataset, createTurnPricer(priceBook, now), now);
 
   const learnSimulation = new LearnSimulationService(
     loadScenarioScripts(learnScriptsDir),

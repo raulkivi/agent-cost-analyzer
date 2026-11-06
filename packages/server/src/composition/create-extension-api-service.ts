@@ -44,6 +44,8 @@ export function extensionProductProfile(version: string): ProductProfile {
       openInEditor: true,
       sessionSidebar: true,
       vendorSimulation: true,
+      // Step 15.9: the extension has no cost routes until step 15.14.
+      costAnalysis: false,
     },
   };
 }

@@ -41,6 +41,8 @@ describe("apiMethodSchema", () => {
       "getInsights",
       "getHealth",
       "getProductProfile",
+      "getCostTimeSeries",
+      "getCostComparison",
     ]);
   });
 
@@ -103,6 +105,32 @@ describe("apiMethodParamsSchemas (vscode-extension.md §4)", () => {
     });
 
     expect(parsed).toMatchObject({ sessionId: "s1", status: ["failed", "denied"], turn: 3, limit: 25 });
+  });
+
+  // Phase 15 step 15.9: the Dashboard's cost tabs. Shape only; the cost
+  // query parser in ApiService owns the value rules and their messages.
+  it("accepts the cost queries the way the web transport sends them", () => {
+    expect(
+      apiMethodParamsSchemas.getCostTimeSeries.safeParse({
+        since: "2026-08-09",
+        until: "2026-11-06",
+        bucket: "week",
+        basis: "preferred",
+        pricing: "as-of-use",
+        currency: "native",
+        groupBy: "project",
+        ids: ["portal", "billing"],
+        provider: "claude-code",
+        limit: 200,
+      }).success,
+    ).toBe(true);
+    expect(apiMethodParamsSchemas.getCostTimeSeries.safeParse({}).success).toBe(true);
+    expect(
+      apiMethodParamsSchemas.getCostComparison.safeParse({ since: "2026-08-09", until: "2026-11-06", groupBy: "project", ids: "portal,billing", comparePeriod: "previous" })
+        .success,
+    ).toBe(true);
+    expect(apiMethodParamsSchemas.getCostTimeSeries.safeParse({ ids: 5 }).success).toBe(false);
+    expect(apiMethodParamsSchemas.getCostComparison.safeParse({ bucket: { day: true } }).success).toBe(false);
   });
 
   it("accepts range query fields as text or numbers, and absent fields", () => {

@@ -92,3 +92,28 @@ export type RepositoryListEntry = z.infer<typeof repositoryListEntrySchema>;
 export type UnattributedEntry = z.infer<typeof unattributedEntrySchema>;
 export type RepositoryList = z.infer<typeof repositoryListSchema>;
 export type SessionAiCreditsTotal = z.infer<typeof sessionAiCreditsTotalSchema>;
+
+// §10.1.5: `local:` and `path:` keys carry a folder path on this machine, so
+// outputs name them by the folder only (`local:scratch`), and the web app
+// shows just the folder's name. Remote keys are left as they are.
+const LOCAL_KEY_PREFIXES = ["local:", "path:"] as const;
+
+function lastPathSegment(folder: string): string {
+  const parts = folder.split(/[\\/]/).filter((part) => part.length > 0);
+  return parts.at(-1) ?? "";
+}
+
+export function isLocalRepositoryKey(key: string): boolean {
+  return LOCAL_KEY_PREFIXES.some((prefix) => key.startsWith(prefix));
+}
+
+export function redactRepositoryKey(key: string): string {
+  const prefix = LOCAL_KEY_PREFIXES.find((candidate) => key.startsWith(candidate));
+  return prefix ? `${prefix}${lastPathSegment(key.slice(prefix.length))}` : key;
+}
+
+// What a person reads: a local key's folder name, else the key itself.
+export function repositoryFolderLabel(key: string): string {
+  const prefix = LOCAL_KEY_PREFIXES.find((candidate) => key.startsWith(candidate));
+  return prefix ? lastPathSegment(key.slice(prefix.length)) : key;
+}

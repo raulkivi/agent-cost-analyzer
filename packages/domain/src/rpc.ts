@@ -24,6 +24,9 @@ export const apiMethodSchema = z.enum([
   "getInsights",
   "getHealth",
   "getProductProfile",
+  // Phase 15 step 15.9: the Dashboard's Cost over time and Compare tabs.
+  "getCostTimeSeries",
+  "getCostComparison",
 ]);
 
 export type ApiMethod = z.infer<typeof apiMethodSchema>;
@@ -46,6 +49,19 @@ const rangeQuery = {
   until: z.string().optional(),
   limit: numberOrText.optional(),
   provider: z.string().optional(),
+};
+
+// The cost analyses' query (GET /api/cost/timeseries, /api/cost/compare):
+// text fields as sent, ids as a list or a comma-separated string. Values are
+// ApiService's (cost-query-params.ts).
+const costQuery = {
+  ...rangeQuery,
+  bucket: z.string().optional(),
+  basis: z.string().optional(),
+  pricing: z.string().optional(),
+  currency: z.string().optional(),
+  groupBy: z.string().optional(),
+  ids: textOrList.optional(),
 };
 
 export const apiMethodParamsSchemas = {
@@ -79,6 +95,8 @@ export const apiMethodParamsSchemas = {
   getInsights: z.object(rangeQuery),
   getHealth: noParams,
   getProductProfile: noParams,
+  getCostTimeSeries: z.object(costQuery),
+  getCostComparison: z.object({ ...costQuery, comparePeriod: z.string().optional() }),
 } as const satisfies Record<ApiMethod, z.ZodType>;
 
 // webview -> host (vscode-extension.md §4). `params` stays unknown here: the
