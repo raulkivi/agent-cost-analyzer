@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-11-06
+
+### Changed
+
+- Maintenance release. The simulator was checked against real Claude Code and
+  Copilot Chat session logs (no mismatch in Copilot's 39 requests), and a
+  flaky internal test was fixed. Nothing changes in what the extension shows.
+
 ## [0.2.0] - 2026-11-06
 
 ### Changed
