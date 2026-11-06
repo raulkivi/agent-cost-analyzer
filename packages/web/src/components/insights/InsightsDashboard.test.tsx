@@ -410,6 +410,34 @@ describe("InsightsDashboard", () => {
       expect(screen.getByRole("region", { name: "Reconciliation" })).toBeInTheDocument();
     });
 
+    // Step 15.11 (plan §11.5): Billing, and the Projects editor it opens.
+    it("opens Billing, and from its empty state the Projects editor, then goes back", async () => {
+      const user = userEvent.setup();
+      const loadDataset = vi.fn().mockResolvedValue({ ...sampleInsightsDataset(), projects: [] });
+      render(
+        <InsightsDashboard
+          loadDataset={loadDataset}
+          now={NOW}
+          costAnalysis
+          loadCostSeries={vi.fn().mockResolvedValue(sampleCostSeries())}
+          billing={{
+            loadStatement: vi.fn(),
+            loadProjects: vi.fn().mockResolvedValue({ status: "missing", file: { version: 1, projects: [], aliases: {}, captureRules: [] }, problems: [], location: "/x/projects.json" }),
+            loadRepositories: vi.fn().mockResolvedValue({ repositories: [], unattributed: [], providers: [] }),
+          }}
+        />,
+      );
+      await screen.findByRole("group", { name: "AI Credits" });
+      fireEvent.click(within(screen.getByRole("radiogroup", { name: "Dashboard view" })).getByRole("radio", { name: "Billing" }));
+      await user.click(await screen.findByRole("button", { name: "Create project" }));
+      expect(await screen.findByRole("heading", { name: "Projects" })).toBeInTheDocument();
+      expect(screen.queryByRole("group", { name: "AI Credits" })).not.toBeInTheDocument();
+      await user.click(screen.getByRole("button", { name: /Back to the Dashboard/ }));
+      await screen.findByRole("group", { name: "AI Credits" });
+      // The dataset is read again: the projects may have changed.
+      expect(loadDataset).toHaveBeenCalledTimes(2);
+    });
+
     it("below 700 px offers the views as a select", async () => {
       vi.stubGlobal(
         "ResizeObserver",

@@ -92,6 +92,9 @@ export const insightTurnRowSchema = z.object({
   ...attributionShape,
   // Step 15.6: YYYY-MM-DD (UTC) of the turn's own time, else the session's.
   date: z.string().optional(),
+  // Step 15.11 (D6): the same instant as an ISO time, so statements can
+  // bill by calendar day in their own time zone.
+  at: z.string().optional(),
   // Step 15.6 (plan §5): the turn's billed, reported and priced figures,
   // each unknown with a reason, never 0. The server always sets it.
   cost: turnCostFiguresSchema.optional(),

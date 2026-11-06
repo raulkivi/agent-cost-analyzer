@@ -19,8 +19,8 @@ const tsx = path.resolve(webDir, "../../node_modules/.bin/tsx");
 // fixture home.
 const OUTSIDE_HOME = ["XDG_CONFIG_HOME", "APPDATA", "COPILOT_HOME", "CLAUDE_CONFIG_DIR", "PI_CODING_AGENT_DIR"];
 
-async function startServer(home: string): Promise<{ baseURL: string; child: ChildProcess }> {
-  const env: NodeJS.ProcessEnv = { ...process.env, HOME: home, USERPROFILE: home, AGENT_COST_ANALYZER_NOW: FIXTURE_NOW };
+async function startServer(home: string, noProjects: boolean): Promise<{ baseURL: string; child: ChildProcess }> {
+  const env: NodeJS.ProcessEnv = { ...process.env, HOME: home, USERPROFILE: home, AGENT_COST_ANALYZER_NOW: FIXTURE_NOW, ...(noProjects ? { AGENT_COST_E2E_NO_PROJECTS: "1" } : {}) };
   for (const name of OUTSIDE_HOME) delete env[name];
   const child = spawn(tsx, ["e2e/support/serve.mts"], { cwd: webDir, env, stdio: ["ignore", "pipe", "pipe"] });
   let stderr = "";
@@ -44,14 +44,16 @@ async function startServer(home: string): Promise<{ baseURL: string; child: Chil
   return { baseURL: `http://127.0.0.1:${port}`, child };
 }
 
-export const test = base.extend<{ app: { baseURL: string } }>({
-  // Playwright reads a fixture's dependencies from this destructuring; it has none.
-  // eslint-disable-next-line no-empty-pattern
-  app: async ({}, use) => {
+// Step 15.11: `home` and `appSettingsDir` let a scenario change files the
+// way a user would (a late log, a price-book update); `noProjects` starts
+// with no projects file (S1).
+export const test = base.extend<{ noProjects: boolean; app: { baseURL: string; home: string; appSettingsDir: string } }>({
+  noProjects: [false, { option: true }],
+  app: async ({ noProjects }, use) => {
     const home = mkdtempSync(path.join(os.tmpdir(), "aca-e2e-"));
-    const { baseURL, child } = await startServer(home);
+    const { baseURL, child } = await startServer(home, noProjects);
     try {
-      await use({ baseURL });
+      await use({ baseURL, home, appSettingsDir: path.join(home, ".config", "agent-cost-analyzer") });
     } finally {
       child.kill("SIGTERM");
       rmSync(home, { recursive: true, force: true });

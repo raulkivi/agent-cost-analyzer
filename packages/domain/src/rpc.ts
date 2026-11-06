@@ -30,6 +30,13 @@ export const apiMethodSchema = z.enum([
   // Phase 15 step 15.10: the Dashboard's Project tab.
   "getProjectCost",
   "getCostVariance",
+  // Phase 15 step 15.11: billing statements; issuing writes a file.
+  "getStatement",
+  "issueStatement",
+  // Phase 15 step 15.11: the Projects editor (saveProjects writes the file).
+  "getProjects",
+  "saveProjects",
+  "getRepositoryList",
 ]);
 
 export type ApiMethod = z.infer<typeof apiMethodSchema>;
@@ -101,6 +108,12 @@ export const apiMethodParamsSchemas = {
   getCostTimeSeries: z.object(costQuery),
   getCostComparison: z.object({ ...costQuery, comparePeriod: z.string().optional() }),
   getProjectCost: z.object({ ...costQuery, projectId: z.string().min(1), topSessions: numberOrText.optional() }),
+  getStatement: z.object({ projectId: z.string().min(1), period: z.string().min(1), provider: z.string().optional(), limit: numberOrText.optional() }),
+  issueStatement: z.object({ projectId: z.string().min(1), period: z.string().min(1) }),
+  getProjects: noParams,
+  // ApiService validates the file itself (projectsFileSchema).
+  saveProjects: z.object({ file: z.unknown() }),
+  getRepositoryList: noParams,
   getCostVariance: z.object({
     groupBy: z.string(),
     id: z.string().min(1),
@@ -166,7 +179,7 @@ export type RpcPerformanceMark = z.infer<typeof rpcPerformanceMarkSchema>;
 // so the web code handles "unknown session" (404) the same on both transports.
 export type RpcResponse =
   | { kind: "response"; id: string; ok: true; result: unknown }
-  | { kind: "response"; id: string; ok: false; error: { status: 400 | 404 | 500; message: string } };
+  | { kind: "response"; id: string; ok: false; error: { status: 400 | 404 | 409 | 500; message: string } };
 
 // host -> webview, unsolicited. selectSession: the sidebar picked a session
 // (D10); configChanged: the Copilot logging settings changed -> refetch the

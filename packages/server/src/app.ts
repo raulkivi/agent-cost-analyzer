@@ -96,6 +96,20 @@ export function createApp(options: CreateAppOptions = {}): Express {
 
   // Phase 15 step 15.10: why a cost changed (usage, price, mix) and the
   // documented and observed price changes.
+  // Phase 15 step 15.11: billing statements. Issuing writes a file, so it
+  // takes JSON only: a cross-origin form post (no preflight) gets 415.
+  app.get("/api/statements", route(async (req, res) => {
+    res.json(await api.getStatement(req.query));
+  }));
+
+  app.post("/api/statements/:projectId/:period/issue", route(async (req, res) => {
+    if (!req.is("application/json")) {
+      res.status(415).json({ error: "Send the issue request as application/json." });
+      return;
+    }
+    res.json(await api.issueStatement(req.params.projectId, req.params.period));
+  }));
+
   app.get("/api/cost/project", route(async (req, res) => {
     res.json(await api.getProjectCost(req.query));
   }));

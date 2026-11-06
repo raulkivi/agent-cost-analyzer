@@ -18,6 +18,8 @@ import {
   writeCopilotCliAgentHostStores,
 } from "../../../server/src/test-support/copilot-cli-fixtures.ts";
 import { sampleCostComparison, sampleCostSeries, sampleCostVariance, sampleProjectCost, THREE_PROJECTS } from "../../../web/src/test-support/cost-fixture.ts";
+import { sampleStatement } from "../../../web/src/test-support/statement-sample.ts";
+import { diffStatements } from "@agent-cost-analyzer/domain";
 import { createIntegrationFixture } from "../integration-fixture.mts";
 import { webviewDefaultCss, type VscodeTheme } from "./vscode-themes.mts";
 
@@ -120,6 +122,42 @@ function seedUiCheckFixture(rootDir: string): SeededUserData {
 
 const COST_PROJECTS = THREE_PROJECTS.map((project) => ({ id: project.key!, name: project.label }));
 
+function billingAnswer() {
+  const issued = sampleStatement({ status: "issued", issuedAt: "2026-11-02T09:00:00.000Z" });
+  const rerun = sampleStatement({ lines: [{ ...issued.lines[0]!, amount: 150 }], totals: [{ currency: "AI_CREDITS", lines: 150, markup: 12, fixed: 0, total: 162 }, issued.totals[1]!] });
+  return { statement: issued, rerun, diff: diffStatements(issued, rerun), canIssue: { ok: false, reason: "Already issued." }, issuedPeriods: ["2026-09", "2026-10"] };
+}
+
+const PROJECTS_STATE = {
+  status: "valid",
+  file: {
+    version: 1,
+    projects: [
+      { id: COST_PROJECTS[0]!.id, name: COST_PROJECTS[0]!.name, client: "ACME", members: [{ repository: "github.com/acme/portal-web" }, { repository: "github.com/acme/infra", branches: ["portal/*"] }], rates: { markupPercent: 10, fixedLines: [{ label: "Seats", amount: 39, currency: "USD" }], currency: { code: "EUR", perUsd: 0.92 } } },
+      { id: COST_PROJECTS[1]!.id, name: COST_PROJECTS[1]!.name, members: [{ repository: "github.com/acme/billing" }, { repository: "github.com/acme/infra", branches: ["portal/*"] }] },
+    ],
+    aliases: {},
+    captureRules: [],
+  },
+  problems: [],
+  location: "/home/dev/.config/agent-cost-analyzer/projects.json",
+};
+
+const REPOSITORY_LIST = {
+  repositories: ["github.com/acme/portal-web", "github.com/acme/billing", "github.com/acme/infra", "github.com/acme/mobile-app", "github.com/acme/data-platform-with-a-long-name"].map((key, index) => ({
+    key,
+    source: "git-remote",
+    sessionCount: 10 - index,
+    turnCount: 40,
+    aiCredits: { value: 100, knownSessions: 1, sessions: 1 },
+    providerIds: ["vscode"],
+    projectIds: [],
+    lastUsedAt: "2026-10-20T10:00:00.000Z",
+  })),
+  unattributed: [{ reason: "mitmproxy captures record no working folder.", sessionCount: 41, turnCount: 90, aiCredits: { value: null, knownSessions: 0, sessions: 41 }, providerIds: ["mitmproxy"] }],
+  providers: [],
+};
+
 function withCostTabs(reply: unknown, request: unknown, enabled: boolean | undefined): unknown {
   const method = (request as { method?: string } | null)?.method;
   const id = (request as { id?: string } | null)?.id;
@@ -129,6 +167,10 @@ function withCostTabs(reply: unknown, request: unknown, enabled: boolean | undef
   // Step 15.10: the Project tab.
   if (method === "getProjectCost") return { kind: "response", id, ok: true, result: sampleProjectCost() };
   if (method === "getCostVariance") return { kind: "response", id, ok: true, result: sampleCostVariance() };
+  // Step 15.11: the Billing tab (an issued statement whose re-run differs) and the Projects editor.
+  if (method === "getStatement") return { kind: "response", id, ok: true, result: billingAnswer() };
+  if (method === "getProjects") return { kind: "response", id, ok: true, result: PROJECTS_STATE };
+  if (method === "getRepositoryList") return { kind: "response", id, ok: true, result: REPOSITORY_LIST };
   const answer = reply as { ok?: boolean; result?: Record<string, unknown> } | undefined;
   if (!answer?.ok || !answer.result) return reply;
   if (method === "getProductProfile") {
@@ -228,7 +270,7 @@ export async function startHarness(options: HarnessOptions = {}): Promise<Harnes
       await page.exposeFunction("__toHost", async (message: unknown) => {
         inFlight += 1;
         try {
-          const answered = openOptions.costTabs && /getCost|getProjectCost/.test(String((message as { method?: string }).method)) ? undefined : await dispatcher.dispatch(message);
+          const answered = openOptions.costTabs && /getCost|getProjectCost|getStatement|getProjects|getRepositoryList/.test(String((message as { method?: string }).method)) ? undefined : await dispatcher.dispatch(message);
           const reply = withCostTabs(withConfigWarnings(answered, message, openOptions.configWarnings), message, openOptions.costTabs);
           if (reply) await page.evaluate(`window.postMessage(${JSON.stringify(reply)}, "*")`);
         } finally {

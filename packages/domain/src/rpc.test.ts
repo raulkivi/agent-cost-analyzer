@@ -45,6 +45,11 @@ describe("apiMethodSchema", () => {
       "getCostComparison",
       "getProjectCost",
       "getCostVariance",
+      "getStatement",
+      "issueStatement",
+      "getProjects",
+      "saveProjects",
+      "getRepositoryList",
     ]);
   });
 
@@ -138,6 +143,10 @@ describe("apiMethodParamsSchemas (vscode-extension.md §4)", () => {
     expect(apiMethodParamsSchemas.getProjectCost.safeParse({}).success).toBe(false);
     expect(apiMethodParamsSchemas.getCostVariance.safeParse({ groupBy: "project", id: "portal", periodA: "2026-08", periodB: "2026-10", currency: "usd" }).success).toBe(true);
     expect(apiMethodParamsSchemas.getCostVariance.safeParse({ groupBy: "project", periodA: "2026-08", periodB: "2026-10" }).success).toBe(false);
+    // Step 15.11: statements; issuing needs both ids.
+    expect(apiMethodParamsSchemas.getStatement.safeParse({ projectId: "portal", period: "2026-10" }).success).toBe(true);
+    expect(apiMethodParamsSchemas.issueStatement.safeParse({ projectId: "portal", period: "2026-10" }).success).toBe(true);
+    expect(apiMethodParamsSchemas.issueStatement.safeParse({ projectId: "portal" }).success).toBe(false);
   });
 
   it("accepts range query fields as text or numbers, and absent fields", () => {

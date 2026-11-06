@@ -16,7 +16,7 @@ function userMessage(text: string) {
   return { messages: [{ role: "user" as const, content: { type: "text" as const, text } }] };
 }
 
-export function registerPrompts(server: McpServer, options: { costAnalysis?: boolean } = {}): void {
+export function registerPrompts(server: McpServer, options: { costAnalysis?: boolean; statements?: boolean } = {}): void {
   server.registerPrompt(
     "audit_session",
     {
@@ -74,6 +74,26 @@ export function registerPrompts(server: McpServer, options: { costAnalysis?: boo
       ),
   );
 
+  // Phase 15 step 15.11 (§10.1.3): with statements only.
+  if (options.statements) {
+    server.registerPrompt(
+      "prepare_statement",
+      {
+        title: "Prepare a client statement",
+        description: "Summarise a project's statement for a period and draft a short note to the client.",
+        argsSchema: { projectId: z.string(), period: z.string() },
+      },
+      ({ projectId, period }) =>
+        userMessage(
+          `Prepare the statement for project "${projectId}", period ${period}. ` +
+            `Call get_statement with projectId "${projectId}" and period "${period}". ` +
+            "Summarise the totals per currency (and in the project's own currency if it has one, with its rate), the markup and fixed lines, " +
+            "the turns with unknown cost and why (they are not in the totals: say so, never count them as zero), subscription use left off, and the coverage. " +
+            "If the statement is issued and the re-run differs, explain the diff line by line (late logs, a price-book change). " +
+            "Then draft a short, plain note to the client. Remind me that issuing (freezing) the statement is done in the app's Billing tab, not here.",
+        ),
+    );
+  }
   // Phase 15 step 15.10 (cost-by-repository-and-project.md §10.1.3): with the cost analyses only.
   if (!options.costAnalysis) return;
   server.registerPrompt(

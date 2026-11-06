@@ -4,6 +4,7 @@ import type {
   ConfigStatus,
   CostComparison,
   CostVariance,
+  StatementAnswer,
   ProjectCost,
   PriceChangeList,
   CostSeries,
@@ -33,7 +34,16 @@ import {
 import { ScenarioNotFoundError, UnknownModelError } from "../learn-simulation/learn-simulation-service.js";
 import type { SessionRangeFilter, ToolCallFilter } from "../tool-audit/audit-query-service.js";
 import { isoDateBoundSchema, parseSessionRangeQuery, parseToolCallFilterQuery } from "../tool-audit/audit-query-params.js";
-import { BadRequestError, InternalError, NotFoundError } from "./api-errors.js";
+import { BadRequestError, ConflictError, InternalError, NotFoundError } from "./api-errors.js";
+import { StatementAlreadyIssuedError } from "../../data-sources/statements/file-statement-store.js";
+import {
+  AlreadyIssuedError,
+  PeriodNotEndedError,
+  UnknownStatementPeriodError,
+  UnknownStatementProjectError,
+  type StatementQueries,
+  type StatementRequest,
+} from "../billing/statement-service.js";
 import type { PriceBookReader } from "../pricing/price-book.js";
 import type { CostAnalysisQueries } from "../cost-analysis/cost-analysis-service.js";
 import { parseCostCompareQuery, parseCostSeriesQuery, parseCostVarianceQuery, parsePriceChangesQuery, parseProjectCostQuery } from "../cost-analysis/cost-query-params.js";
@@ -95,12 +105,16 @@ const priceBookQuerySchema = z.object({
 // Phase 15 step 15.7: cost over time and compare. Optional like the price
 // book: the extension has none yet and answers 404.
 export const COST_ANALYSIS_UNAVAILABLE_MESSAGE = "Cost analyses are not available in this product.";
+export const STATEMENTS_UNAVAILABLE_MESSAGE = "Billing statements are not available in this product.";
 
 export interface ApiServiceDeps {
   registry: ApiProviderRegistry;
   projects?: ApiProjects;
   priceBook?: PriceBookReader;
   costAnalysis?: Pick<CostAnalysisQueries, "getTimeSeries" | "compare" | "explainChange" | "getPriceChanges" | "getProjectCost">;
+  // Phase 15 step 15.11: billing statements (the standalone app; the
+  // extension gets them with step 15.14).
+  statements?: StatementQueries;
   auditQueries: ApiAuditQueries;
   insights: ApiInsights;
   settings: Pick<AppSettingsStore, "readMinRetainedSessionLogsThreshold" | "writeMinRetainedSessionLogsThreshold">;
@@ -438,6 +452,39 @@ export class ApiService {
     }
   }
 
+  // Step 15.11 (plan §8.5): a project's statement for a period, the draft or
+  // the frozen copy with the re-run's diff.
+  async getStatement(query: ApiQuery = {}): Promise<StatementAnswer> {
+    const statements = this.statementQueries();
+    const request = statementRequestOf(query);
+    const answer = await this.statementCall(() => statements.get(request));
+    if (answer === null) throw new NotFoundError(`Unknown project id "${request.projectId}"`);
+    return answer;
+  }
+
+  // Step 15.11 (plan §8.5, D15): freezes the draft; writes a file.
+  async issueStatement(projectId: unknown, period: unknown): Promise<StatementAnswer> {
+    const statements = this.statementQueries();
+    const request = statementRequestOf({ projectId, period });
+    return this.statementCall(() => statements.issue(request));
+  }
+
+  private statementQueries(): StatementQueries {
+    if (!this.deps.statements) throw new NotFoundError(STATEMENTS_UNAVAILABLE_MESSAGE);
+    return this.deps.statements;
+  }
+
+  private async statementCall<T>(call: () => Promise<T>): Promise<T> {
+    try {
+      return await call();
+    } catch (error) {
+      if (error instanceof UnknownStatementPeriodError) throw new BadRequestError(error.message);
+      if (error instanceof UnknownStatementProjectError) throw new NotFoundError(error.message);
+      if (error instanceof PeriodNotEndedError || error instanceof AlreadyIssuedError || error instanceof StatementAlreadyIssuedError) throw new ConflictError(error.message);
+      throw auditFailure("statement", error);
+    }
+  }
+
   // Step 15.10 (plan §11.4): the Project tab's breakdown, as get_project_cost.
   async getProjectCost(query: ApiQuery = {}): Promise<ProjectCost> {
     const analysis = this.costAnalysis();
@@ -481,4 +528,17 @@ export class ApiService {
     if (!this.deps.costAnalysis) throw new NotFoundError(COST_ANALYSIS_UNAVAILABLE_MESSAGE);
     return this.deps.costAnalysis;
   }
+}
+
+// Step 15.11: GET /api/statements?projectId&period&provider&limit.
+function statementRequestOf(query: Readonly<Record<string, unknown>>): StatementRequest {
+  const text = (value: unknown) => (typeof value === "string" && value.length > 0 ? value : undefined);
+  const projectId = text(query.projectId);
+  const period = text(query.period);
+  if (projectId === undefined) throw new BadRequestError("projectId is required.");
+  if (period === undefined) throw new BadRequestError("period is required: a month as YYYY-MM or a range as YYYY-MM-DD..YYYY-MM-DD.");
+  const provider = text(query.provider);
+  const limit = text(query.limit);
+  if (limit !== undefined && !/^\d+$/.test(limit)) throw new BadRequestError("limit must be a whole number.");
+  return { projectId, period, ...(provider !== undefined ? { providerId: provider } : {}), ...(limit !== undefined ? { limit: Number(limit) } : {}) };
 }

@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from "react";
-import { AI_CREDIT_CONVERSION_NOTE, redactRepositoryKey, type CostBasisChoice, type CostComparison, type CostSeries, type CostVariance, type ProjectCost } from "@agent-cost-analyzer/domain";
+import { AI_CREDIT_CONVERSION_NOTE, redactRepositoryKey, type CostBasisChoice, type CostComparison, type CostSeries, type CostVariance, type ProjectCost, type ProjectsFile, type ProjectsState, type RepositoryList, type StatementAnswer } from "@agent-cost-analyzer/domain";
 import type {
   FailureCategory,
   InsightFinding,
@@ -40,6 +40,9 @@ import { CompareTab } from "./CompareTab.js";
 import { CostOverTimeTab, type CostOrders } from "./CostOverTimeTab.js";
 import { CurrentSelections } from "./CurrentSelections.js";
 import { ProjectTab } from "./ProjectTab.js";
+import { BillingTab } from "../billing/BillingTab.js";
+import { ProjectsEditor } from "../projects/ProjectsEditor.js";
+import type { StatementQuery } from "../../api-client/statements.js";
 import { FindingsTable } from "./FindingsTable.js";
 import { ListBox } from "./ListBox.js";
 
@@ -81,13 +84,14 @@ const COST_BASIS_OPTIONS = [
 ] as const;
 
 // Phase 15 step 15.9 (plan §11.1): the Dashboard's views. Step 15.10 adds
-// Project; Billing follows in step 15.11.
-type DashboardView = "overview" | "cost-over-time" | "compare" | "project";
+// Project; step 15.11 adds Billing and the Projects editor it opens.
+type DashboardView = "overview" | "cost-over-time" | "compare" | "project" | "billing";
 const VIEW_OPTIONS = [
   { value: "overview", label: "Overview" },
   { value: "cost-over-time", label: "Cost over time" },
   { value: "compare", label: "Compare" },
   { value: "project", label: "Project" },
+  { value: "billing", label: "Billing" },
 ] as const;
 // Below this the views are a select (plan §11.1), as the session view's are.
 const VIEW_SELECT_BELOW = 700;
@@ -119,6 +123,16 @@ interface InsightsDashboardProps {
   // Step 15.10: the Project tab.
   loadProjectCost?: (query: ProjectCostQuery, signal: AbortSignal) => Promise<ProjectCost>;
   loadCostVariance?: (query: CostVarianceQuery, signal: AbortSignal) => Promise<CostVariance>;
+  // Step 15.11: the Billing tab and the Projects editor (injectable for tests).
+  billing?: BillingDeps;
+}
+
+export interface BillingDeps {
+  loadStatement?: (query: StatementQuery, signal: AbortSignal) => Promise<StatementAnswer>;
+  issue?: (projectId: string, period: string) => Promise<StatementAnswer>;
+  loadProjects?: (signal: AbortSignal) => Promise<ProjectsState>;
+  loadRepositories?: (signal: AbortSignal) => Promise<RepositoryList>;
+  save?: (file: ProjectsFile) => Promise<ProjectsState>;
 }
 
 // The list boxes, without the Provider facet for a single-provider product.
@@ -142,7 +156,9 @@ export function InsightsDashboard({
   loadCostComparison,
   loadProjectCost,
   loadCostVariance,
+  billing = {},
 }: InsightsDashboardProps) {
+  const [editingProjects, setEditingProjects] = useState(false);
   const [preset, setPreset] = useState<RangePreset>("30");
   const [nowTime] = useState(() => (now ?? new Date()).getTime());
   // The load is cancellable (Cancel on its skeleton): the signal reaches the
@@ -152,6 +168,20 @@ export function InsightsDashboard({
     [preset, loadDataset, nowTime],
   );
   const { state, cancel, retry } = useCancellableLoad(loadFor);
+
+  if (editingProjects) {
+    return (
+      <ProjectsEditor
+        onBack={() => {
+          setEditingProjects(false);
+          retry();
+        }}
+        {...(billing.loadProjects ? { loadProjects: billing.loadProjects } : {})}
+        {...(billing.loadRepositories ? { loadRepositories: billing.loadRepositories } : {})}
+        {...(billing.save ? { save: billing.save } : {})}
+      />
+    );
+  }
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-4)" }}>
@@ -197,6 +227,8 @@ export function InsightsDashboard({
             loadCostComparison={loadCostComparison}
             loadProjectCost={loadProjectCost}
             loadCostVariance={loadCostVariance}
+            billing={billing}
+            onEditProjects={() => setEditingProjects(true)}
             key={state.data.generatedAt + preset}
           />
         )}
@@ -230,6 +262,8 @@ interface DashboardBodyProps {
   loadCostComparison?: InsightsDashboardProps["loadCostComparison"];
   loadProjectCost?: InsightsDashboardProps["loadProjectCost"];
   loadCostVariance?: InsightsDashboardProps["loadCostVariance"];
+  billing: BillingDeps;
+  onEditProjects: () => void;
 }
 
 // Plan §11.7: a project's colour is its position in the projects file; a
@@ -243,7 +277,7 @@ function costOrders(dataset: InsightsDataset): CostOrders {
   return { project: (dataset.projects ?? []).map((project) => project.id), repository: [...repositories].sort() };
 }
 
-function DashboardBody({ dataset, crossProvider, costAnalysis, now, loadCostSeries, loadCostComparison, loadProjectCost, loadCostVariance }: DashboardBodyProps) {
+function DashboardBody({ dataset, crossProvider, costAnalysis, now, loadCostSeries, loadCostComparison, loadProjectCost, loadCostVariance, billing, onEditProjects }: DashboardBodyProps) {
   const model = useMemo(() => createInsightsModel(dataset), [dataset]);
   const orders = useMemo(() => costOrders(dataset), [dataset]);
   const [dashboardView, setDashboardView] = useState<DashboardView>("overview");
@@ -338,6 +372,15 @@ function DashboardBody({ dataset, crossProvider, costAnalysis, now, loadCostSeri
             basis={costBasis}
             now={now}
             loadSeries={loadCostSeries}
+          />
+        ) : dashboardView === "billing" ? (
+          <BillingTab
+            projects={dataset.projects ?? []}
+            selections={selections}
+            now={now}
+            onEditProjects={onEditProjects}
+            {...(billing.loadStatement ? { loadStatement: billing.loadStatement } : {})}
+            {...(billing.issue ? { issue: billing.issue } : {})}
           />
         ) : dashboardView === "project" ? (
           <ProjectTab

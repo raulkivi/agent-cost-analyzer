@@ -157,6 +157,18 @@ function invoke(
       return api.getProjectCost(toQuery(params));
     case "getCostVariance":
       return api.getCostVariance(toQuery(params));
+    case "getStatement":
+      return api.getStatement(toQuery(params));
+    case "getProjects":
+      return api.getProjects();
+    case "saveProjects":
+      return api.saveProjects((params as { file: unknown }).file);
+    case "getRepositoryList":
+      return api.getRepositoryList();
+    case "issueStatement": {
+      const { projectId, period } = params as { projectId: string; period: string };
+      return api.issueStatement(projectId, period);
+    }
   }
 }
 
@@ -281,7 +293,7 @@ function describeInvalidParams(
 
 function failure(
   id: string,
-  status: 400 | 404 | 500,
+  status: 400 | 404 | 409 | 500,
   message: string,
 ): RpcResponse {
   return { kind: "response", id, ok: false, error: { status, message } };

@@ -146,6 +146,12 @@ content here.
   `explain_cost_change` (tool and prompt) and `get_price_changes`, the
   Dashboard's Project tab (`ProjectTab`, `charts/Waterfall.tsx`), dashed
   observed markers on Cost over time, and scenario S4);
+  step 15.11 is done (statements: `services/billing/` builder and service,
+  `data-sources/statements/` file store in the settings folder, domain
+  `Statement`, diff and CSV/JSON/Markdown exports, `GET /api/statements`
+  and the JSON-only issue POST, MCP `get_statement` and
+  `prepare_statement`, the Dashboard's Billing tab and the Projects editor,
+  decisions D13–D15, scenarios S1, S5, S6 and S8);
   step 15.1 is done (`Session.workspace`, `Turn.startedAt`, and
   `Turn.workspace` for Claude Code, from every provider) and step 15.2
   (`RepositoryResolver` and `RemoteUrlNormalizer` in
