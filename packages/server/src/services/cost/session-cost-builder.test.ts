@@ -8,6 +8,8 @@ import {
   type TurnUsage,
 } from "@agent-cost-analyzer/domain";
 import { buildSessionCost } from "./session-cost-builder.js";
+import type { Attribution } from "../cost-attribution/session-attributor.js";
+import type { TurnPricer } from "../pricing/turn-cost-figures.js";
 
 const k = (value: number, estimated?: boolean): TokenCount => ({ known: true, value, ...(estimated ? { estimated } : {}) });
 const NO_CREDITS = "This log format records no AI Credits.";
@@ -145,7 +147,7 @@ describe("buildSessionCost", () => {
       { turnIndex: 1, event: "model-switch" },
       { turnIndex: 2, event: "compaction" },
     ]);
-    expect(cost.byModel).toEqual([
+    expect(cost.byModel).toMatchObject([
       { model: "model-b", turns: 2, inputTokens: 200, output: 55, aiCredits: null },
       { model: "model-a", turns: 1, inputTokens: 100, output: 5, aiCredits: null },
     ]);
@@ -191,5 +193,46 @@ describe("buildSessionCost", () => {
     expect(cost.totals.output).toEqual({ value: null, knownTurns: 0, turns: 0, estimated: false });
     expect(cost.topTurns).toEqual([]);
     expect(cost.cacheHitRatio).toBeNull();
+  });
+
+  describe("cost basis and attribution (step 15.6)", () => {
+    const portal: Attribution = {
+      repository: { attributed: true, repository: { key: "github.com/acme/portal", source: "git-remote" } },
+      projectId: "portal",
+      vendor: { known: true, vendorId: "anthropic", basis: "profile" },
+      channel: { known: true, channel: "anthropic-api" },
+    };
+    const attributor = { session: () => portal, turn: () => portal };
+    const pricer: TurnPricer = {
+      figuresFor: (providerId, _session, t) => ({
+        billed: { known: false, reason: "no billed figure" },
+        reported: { known: false, reason: "no reported figure" },
+        priced:
+          t.index === 1
+            ? { known: false, reason: "no price" }
+            : { known: true, amount: 0.5, currency: "USD", basis: "priced", priceVersionIds: [`${providerId}:v`] },
+      }),
+    };
+
+    it("adds the session's repository and project, per-basis totals with coverage, and price versions", () => {
+      const cost = buildSessionCost(session([turn(0), turn(1)]), {}, { providerId: "claude-code", attributor, pricer });
+      expect(sessionCostSchema.parse(cost)).toEqual(cost);
+      expect(cost).toMatchObject({ repositoryKey: "github.com/acme/portal", projectId: "portal" });
+      expect(cost.cost.priced).toMatchObject({ turns: 2, knownTurns: 1, usd: 0.5 });
+      expect(cost.cost.priceVersionIds).toEqual(["claude-code:v"]);
+      expect(cost.topTurns.find((t) => t.turnIndex === 1)?.cost.priced).toEqual({ known: false, reason: "no price" });
+    });
+
+    it("keeps the existing AI Credits figures unchanged", () => {
+      const plain = buildSessionCost(session([turn(0)]));
+      const priced = buildSessionCost(session([turn(0)]), {}, { providerId: "claude-code", attributor, pricer });
+      expect(priced.totals).toEqual(plain.totals);
+    });
+
+    it("leaves repository and project out when attribution isn't configured", () => {
+      const cost = buildSessionCost(session([turn(0)]));
+      expect(cost).not.toHaveProperty("repositoryKey");
+      expect(cost.cost.priced.knownTurns).toBe(0);
+    });
   });
 });

@@ -76,6 +76,26 @@ describe("InsightsService", () => {
     expect(dataset.vendors).toEqual([{ id: "anthropic", label: "Anthropic" }]);
   });
 
+  it("prices every turn row with the injected pricer, seeing each turn's attribution (step 15.6)", async () => {
+    const a = new FakeProvider("vscode", [analyzeSession("s1", day(1), [turn(0)])]);
+    const seen: string[] = [];
+    const pricer = {
+      figuresFor: (providerId: string, _session: unknown, _turn: unknown, attribution: { projectId: string | null }) => {
+        seen.push(`${providerId}:${attribution.projectId}`);
+        return {
+          billed: { known: false as const, reason: "x" },
+          reported: { known: false as const, reason: "x" },
+          priced: { known: true as const, amount: 3, currency: "USD" as const, basis: "priced" as const, priceVersionIds: ["v"] },
+        };
+      },
+    };
+    const dataset = await new InsightsService({ listProviders: () => [a] }, [], () => NOW, undefined, { snapshot: () => pricer }).getDataset({});
+    expect(insightsDatasetSchema.parse(dataset)).toEqual(dataset);
+    expect(dataset.turns[0]!.cost?.priced).toMatchObject({ amount: 3 });
+    expect(dataset.sessions[0]!.cost?.priced.usd).toBe(3);
+    expect(seen).toEqual(["vscode:null"]);
+  });
+
   it("reports an unavailable provider and keeps loading the others", async () => {
     const ok = new FakeProvider("ok", [analyzeSession("s1", day(1), [])]);
     const off = new UnavailableProvider("off", [analyzeSession("x", day(1), [])]);

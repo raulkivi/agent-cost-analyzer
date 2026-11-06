@@ -1,4 +1,5 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { COST_BASIS_TEXT } from "./cost-tools.js";
 import { z } from "zod";
 import { copilotHarnessSchema, logProviderStatusSchema, turnViewSchema } from "@agent-cost-analyzer/domain";
 import { DEFAULT_MAX_TEXT_CHARS } from "../services/session-view/turn-view-builder.js";
@@ -114,7 +115,8 @@ export function registerSessionTools(server: McpServer, deps: McpToolDeps, guard
     {
       title: "Get one turn",
       description:
-        "Reads one turn of a session: the user prompt and assistant response (secrets redacted, truncated to maxTextChars), its token usage and AI Credits, any triggered event (compaction, model switch, cache expiry, ...) and its tool calls with outcomes. The text and tool calls are unknown, with a reason, for a VS Code Agent Host turn whose Copilot CLI event log is missing, unreadable or has no match. Use it to explain why a turn found by get_session_cost or list_tool_calls was expensive or failed.",
+        "Reads one turn of a session: the user prompt and assistant response (secrets redacted, truncated to maxTextChars), its token usage and AI Credits, any triggered event (compaction, model switch, cache expiry, ...) and its tool calls with outcomes. The text and tool calls are unknown, with a reason, for a VS Code Agent Host turn whose Copilot CLI event log is missing, unreadable or has no match. Use it to explain why a turn found by get_session_cost or list_tool_calls was expensive or failed. `cost` gives the turn's billed, reported and priced figures (the priced one names its price version) and `preferredCost` the one totals use. " +
+        COST_BASIS_TEXT,
       inputSchema: {
         sessionId: sessionIdArg,
         turnIndex: turnIndexSchema.describe("0-based turn index, e.g. from get_session_cost's topTurns or list_tool_calls."),

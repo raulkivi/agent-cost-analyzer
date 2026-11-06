@@ -129,4 +129,21 @@ describe("buildTurnView", () => {
   it("returns null for a turn index the session doesn't have", () => {
     expect(buildTurnView(session([{}]), 5)).toBeNull();
   });
+
+  it("carries the turn's cost figures and the preferred one (step 15.6)", () => {
+    const cost = {
+      billed: { known: false as const, reason: "no billed figure" },
+      reported: { known: false as const, reason: "no reported figure" },
+      priced: { known: true as const, amount: 0.3, currency: "USD" as const, basis: "priced" as const, priceVersionIds: ["anthropic-api:m:2026-10-01"] },
+    };
+    const view = buildTurnView(session([{}]), 0, {}, cost);
+    expect(view && turnViewSchema.parse(view)).toEqual(view);
+    expect(view).toMatchObject({ cost, preferredCost: cost.priced });
+  });
+
+  it("without figures, gives billed and reported from the usage and priced as unknown", () => {
+    const view = buildTurnView(session([{}]), 0);
+    expect(view!.cost.priced.known).toBe(false);
+    expect(view!.preferredCost.known).toBe(false);
+  });
 });

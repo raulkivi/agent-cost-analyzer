@@ -80,4 +80,39 @@ describe("AnalysisQueryService", () => {
     expect(await analysis.getTurn("missing", 0)).toEqual({ status: "unknown-session" });
     expect(await analysis.getTurn("new", 9)).toEqual({ status: "unknown-turn", turnCount: 2 });
   });
+
+  describe("cost basis and attribution (step 15.6)", () => {
+    const portal = {
+      repository: { attributed: true as const, repository: { key: "github.com/acme/portal", source: "git-remote" as const } },
+      projectId: "portal",
+      vendor: { known: true as const, vendorId: "anthropic", basis: "profile" as const },
+      channel: { known: true as const, channel: "anthropic-api" },
+    };
+    const priced = { known: true as const, amount: 0.25, currency: "USD" as const, basis: "priced" as const, priceVersionIds: ["v"] };
+    const seen: string[] = [];
+    const fakePricer = {
+      figuresFor: (providerId: string, _session: unknown, turn: { index: number }) => {
+        seen.push(`${providerId}:${turn.index}`);
+        return { billed: { known: false as const, reason: "x" }, reported: { known: false as const, reason: "x" }, priced };
+      },
+    };
+    const costs = {
+      attribution: { snapshot: () => ({ session: () => portal, turn: () => portal }) },
+      pricer: { snapshot: () => fakePricer },
+    };
+    const priceAware = () => new AnalysisQueryService(lookup(new FakeProvider("fake", sampleSessions)), insightsSource(), costs);
+
+    it("prices a session's turns as its provider's and adds its repository and project", async () => {
+      const cost = await priceAware().getSessionCost("new");
+      expect(cost).toMatchObject({ repositoryKey: "github.com/acme/portal", projectId: "portal" });
+      expect(cost?.cost.priced).toMatchObject({ turns: 2, knownTurns: 2, usd: 0.5 });
+      expect(seen).toContain("fake:1");
+    });
+
+    it("adds the turn's figures to get_turn", async () => {
+      const found = await priceAware().getTurn("new", 1);
+      expect(found.status === "ok" && found.view.cost.priced).toEqual(priced);
+      expect(found.status === "ok" && found.view.preferredCost).toEqual(priced);
+    });
+  });
 });

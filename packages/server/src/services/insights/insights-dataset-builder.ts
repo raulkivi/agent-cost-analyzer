@@ -6,8 +6,10 @@ import type {
   TokenCount,
   ToolCallRecord,
   Turn,
+  TurnCostFigures,
 } from "@agent-cost-analyzer/domain";
-import { MAX_EVIDENCE_EXCERPT_LENGTH } from "@agent-cost-analyzer/domain";
+import { costBasisTotals, MAX_EVIDENCE_EXCERPT_LENGTH } from "@agent-cost-analyzer/domain";
+import { TurnCostFigureBuilder, type TurnPricer } from "../pricing/turn-cost-figures.js";
 import type { Attribution, AttributionSnapshot } from "../cost-attribution/session-attributor.js";
 import { excerptOf } from "../tool-audit/output-redactor.js";
 import { toolCallsUnavailableReason, turnToolCallsUnavailableReason } from "../tool-audit/tool-calls-availability.js";
@@ -46,6 +48,10 @@ export const NOT_ATTRIBUTED: Attribution = {
 };
 
 const UNCONFIGURED: RowAttributor = { session: () => NOT_ATTRIBUTED, turn: () => NOT_ATTRIBUTED };
+
+// Step 15.6: without a price book, billed and reported still come from the
+// log and priced is unknown with the reason.
+const UNPRICED: TurnPricer = new TurnCostFigureBuilder();
 
 type AttributionRowFields = Pick<
   InsightTurnRow,
@@ -86,9 +92,13 @@ function isEstimated(count: TokenCount): boolean {
   return count.known && count.estimated === true;
 }
 
+function validTime(value: string | undefined): Date | undefined {
+  const time = value ? new Date(value) : undefined;
+  return time && !Number.isNaN(time.getTime()) ? time : undefined;
+}
+
 function sessionRow(source: ProviderSessions, session: Session, attribution: Attribution): InsightSessionRow {
-  const startedAt = session.startedAt ? new Date(session.startedAt) : undefined;
-  const validStart = startedAt && !Number.isNaN(startedAt.getTime()) ? startedAt : undefined;
+  const validStart = validTime(session.startedAt);
   return {
     key: sessionKeyOf(source.providerId, session.id),
     providerId: source.providerId,
@@ -103,8 +113,16 @@ function sessionRow(source: ProviderSessions, session: Session, attribution: Att
   };
 }
 
-function turnRow(sessionKey: string, turn: Turn, toolCallsUnknown: boolean, attribution: Attribution): InsightTurnRow {
+function turnRow(
+  sessionKey: string,
+  session: Session,
+  turn: Turn,
+  toolCallsUnknown: boolean,
+  attribution: Attribution,
+  cost: TurnCostFigures,
+): InsightTurnRow {
   const { usage } = turn;
+  const time = validTime(turn.startedAt) ?? validTime(session.startedAt);
   const counts = [usage.uncachedInput, usage.cacheWrite, usage.cacheRead, usage.reasoning, usage.output, usage.costAiCredits];
   return {
     key: turnKeyOf(sessionKey, turn.index),
@@ -121,6 +139,8 @@ function turnRow(sessionKey: string, turn: Turn, toolCallsUnknown: boolean, attr
     estimated: counts.some(isEstimated),
     toolCallCount: toolCallsUnknown ? null : turn.toolCalls.length,
     ...attributionRowFields(attribution),
+    ...(time ? { date: time.toISOString().slice(0, 10) } : {}),
+    cost,
   };
 }
 
@@ -143,18 +163,30 @@ function toolCallRow(turnKey: string, call: ToolCallRecord, callIndex: number): 
   };
 }
 
-export function buildInsightRows(sources: ProviderSessions[], attributor: RowAttributor = UNCONFIGURED): InsightRows {
+// Step 15.6: each turn row carries its billed, reported and priced
+// figures; each session row their per-basis totals with coverage.
+export function buildInsightRows(
+  sources: ProviderSessions[],
+  attributor: RowAttributor = UNCONFIGURED,
+  pricer: TurnPricer = UNPRICED,
+): InsightRows {
   const rows: InsightRows = { sessions: [], turns: [], toolCalls: [] };
   for (const source of sources) {
     for (const session of source.sessions) {
       const sessionKey = sessionKeyOf(source.providerId, session.id);
-      rows.sessions.push(sessionRow(source, session, attributor.session(source.providerId, session)));
+      const turnCosts: TurnCostFigures[] = [];
+      const row = sessionRow(source, session, attributor.session(source.providerId, session));
+      rows.sessions.push(row);
       for (const turn of session.turns) {
         const turnKey = turnKeyOf(sessionKey, turn.index);
         const unknownCalls = turnToolCallsUnavailableReason(session, turn) !== undefined;
-        rows.turns.push(turnRow(sessionKey, turn, unknownCalls, attributor.turn(source.providerId, session, turn)));
+        const attribution = attributor.turn(source.providerId, session, turn);
+        const cost = pricer.figuresFor(source.providerId, session, turn, attribution);
+        turnCosts.push(cost);
+        rows.turns.push(turnRow(sessionKey, session, turn, unknownCalls, attribution, cost));
         turn.toolCalls.forEach((call, callIndex) => rows.toolCalls.push(toolCallRow(turnKey, call, callIndex)));
       }
+      row.cost = costBasisTotals(turnCosts);
     }
   }
   return rows;

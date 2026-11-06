@@ -64,12 +64,12 @@ describe("buildCostRollup", () => {
   it("breaks spend down by provider, model and day", () => {
     const rollup = buildCostRollup(dataset());
 
-    expect(rollup.byProvider).toEqual([
+    expect(rollup.byProvider).toMatchObject([
       { providerId: "claude-code", providerLabel: "Claude Code", sessions: 2, turns: 3, inputTokens: 1200, output: 15, aiCredits: null },
       { providerId: "vscode", providerLabel: "VS Code", sessions: 1, turns: 1, inputTokens: 100, output: null, aiCredits: 2 },
     ]);
     expect(rollup.byModel.map((m) => m.model)).toEqual(["model-a", "model-b"]);
-    expect(rollup.daily).toEqual([
+    expect(rollup.daily).toMatchObject([
       { date: "2026-09-27", sessions: 2, turns: 3, inputTokens: 1200, output: 15, aiCredits: null },
       { date: "2026-09-28", sessions: 1, turns: 1, inputTokens: 100, output: null, aiCredits: 2 },
     ]);
@@ -90,5 +90,107 @@ describe("buildCostRollup", () => {
     expect(rollup.totals.output.value).toBeNull();
     expect(rollup.topSessions).toEqual([]);
     expect(rollup.cacheHitRatio).toBeNull();
+  });
+
+  describe("cost basis (step 15.6)", () => {
+    const billed = (amount: number) => ({ known: true as const, amount, currency: "AI_CREDITS" as const, basis: "billed" as const });
+    const priced = (amount: number, currency: "AI_CREDITS" | "USD", id: string) => ({
+      known: true as const,
+      amount,
+      currency,
+      basis: "priced" as const,
+      priceVersionIds: [id],
+    });
+    const none = { known: false as const, reason: "not recorded" };
+
+    function costed(): InsightsDataset {
+      const base = dataset();
+      const portal = { repositoryKey: "github.com/acme/portal", projectId: "portal", vendorId: "anthropic", channel: "anthropic-api" };
+      const copilot = { repositoryKey: "github.com/acme/api", projectId: null, vendorId: "anthropic", channel: "github-copilot" };
+      return {
+        ...base,
+        vendors: [{ id: "anthropic", label: "Anthropic" }],
+        projects: [{ id: "portal", name: "Customer portal" }],
+        turns: [
+          turnRow("claude-code:a", 0, { ...portal, date: "2026-09-27", cost: { billed: none, reported: none, priced: priced(0.5, "USD", "anthropic-api:m:1") } }),
+          turnRow("claude-code:b", 0, { ...portal, date: "2026-09-27", cost: { billed: none, reported: none, priced: none } }),
+          turnRow("claude-code:b", 1, { date: "2026-09-27", cost: { billed: none, reported: none, priced: priced(0.25, "USD", "anthropic-api:m:1") } }),
+          turnRow("vscode:c", 0, {
+            ...copilot,
+            model: "model-b",
+            aiCredits: 2,
+            output: null,
+            date: "2026-10-02",
+            cost: { billed: billed(2), reported: none, priced: priced(1.6, "AI_CREDITS", "github-copilot:model-b:1") },
+          }),
+        ],
+      };
+    }
+
+    it("totals each basis with coverage; the unknown turn is never summed as 0", () => {
+      const rollup = buildCostRollup(costed());
+      expect(costRollupSchema.parse(rollup)).toEqual(rollup);
+      expect(rollup.cost.priced).toMatchObject({ turns: 4, knownTurns: 3 });
+      expect(rollup.cost.preferred.amounts).toEqual([
+        { currency: "AI_CREDITS", amount: 2, knownTurns: 1 },
+        { currency: "USD", amount: 0.75, knownTurns: 2 },
+      ]);
+      expect(rollup.cost.priceVersionIds).toEqual(["anthropic-api:m:1", "github-copilot:model-b:1"]);
+      expect(rollup.byModel.find((m) => m.model === "model-b")?.cost).toMatchObject({ knownTurns: 1, amounts: [{ currency: "AI_CREDITS", amount: 2 }] });
+    });
+
+    it("breaks cost down by repository, project, vendor and channel, keeping unknown buckets with their reason", () => {
+      const rollup = buildCostRollup(costed());
+      expect(rollup.byRepository.map((g) => [g.key, g.label, g.turns])).toEqual([
+        ["github.com/acme/portal", "github.com/acme/portal", 2],
+        ["github.com/acme/api", "github.com/acme/api", 1],
+        [null, "Unattributed", 1],
+      ]);
+      expect(rollup.byRepository.at(-1)?.reason).toBe(UNATTRIBUTED_FIELDS.unattributedReason);
+      expect(rollup.byProject.map((g) => [g.key, g.label, g.turns])).toEqual([
+        ["portal", "Customer portal", 2],
+        [null, "No project", 2],
+      ]);
+      expect(rollup.byVendor.map((g) => [g.key, g.label])).toEqual([
+        ["anthropic", "Anthropic"],
+        [null, "Unknown vendor"],
+      ]);
+      expect(rollup.byChannel.map((g) => [g.key, g.label])).toEqual([
+        ["anthropic-api", "Anthropic API"],
+        ["github-copilot", "GitHub Copilot"],
+        [null, "Unknown channel"],
+      ]);
+    });
+
+    it("reconciles Copilot's billed AI Credits with the price book per model and month", () => {
+      expect(buildCostRollup(costed()).reconciliation).toEqual([
+        {
+          month: "2026-10",
+          model: "model-b",
+          turns: 1,
+          billedAiCredits: 2,
+          pricedAiCredits: 1.6,
+          difference: 0.4,
+          ratio: 1.25,
+          billedOnlyTurns: 0,
+          priceVersionIds: ["github-copilot:model-b:1"],
+        },
+      ]);
+    });
+
+    it("filters by repository or project, over each turn's own attribution", () => {
+      const byRepository = buildCostRollup(costed(), { repository: "github.com/acme/portal" });
+      expect(byRepository.turnCount).toBe(2);
+      expect(byRepository.sessionCount).toBe(2);
+      const byProject = buildCostRollup(costed(), { projectId: "portal" });
+      expect(byProject.turnCount).toBe(2);
+      expect(byProject.topSessions.map((session) => session.sessionId).sort()).toEqual(["a", "b"]);
+      expect(buildCostRollup(costed(), { projectId: "none" }).turnCount).toBe(0);
+    });
+
+    it("treats a turn row without figures as unknown on every basis", () => {
+      const rollup = buildCostRollup(dataset());
+      expect(rollup.cost.preferred).toMatchObject({ turns: 4, knownTurns: 0, usd: null });
+    });
   });
 });
