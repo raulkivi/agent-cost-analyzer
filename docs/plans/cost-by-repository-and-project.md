@@ -434,7 +434,11 @@ them, as **not explained**, never as 0 (constraint 6).
   and the list of session ids included.
 
 **Freezing**: "Issue statement" writes the statement as JSON under
-`~/.agent-cost-analyzer/statements/<project>/<period>.json`. A frozen
+`statements/<project>/<period>.json` in the app's settings folder (beside
+`projects.json`, so `resolveAppSettingsDir`'s override applies; step
+15.11). Months are calendar months in the statement's time zone (D6): the
+machine's, as the server reports it, written into the statement. Only an
+ended period can be issued (D15). A frozen
 statement is never recomputed. Re-running the period later shows a
 **diff against the frozen copy** (late logs, a price-book fix) instead of
 silently changing it. Exports: CSV (lines), JSON (full), Markdown (for a
@@ -1090,6 +1094,9 @@ column is binding; the other options are kept for the record.
 | D10 | Estimates in scope now, or after Phase 14? | now (run rate, unit cost); after Phase 14 | **Now**, without cross-model replay; Phase 14 adds "on another model" |
 | D11 | When does a billed-vs-priced gap become an observed price change (§6.4)? (decided 2026-11-06) | 5% for 2 weeks; 10% for 2 weeks; 5% for 2 months | **5% for 2 weeks**: billed AI Credits differ from priced by more than 5%, in the same direction, in 2 ISO weeks in a row, each week with at least 20 turns that have both figures |
 | D12 | How is the mix effect (§8.4) computed? (decided 2026-11-06) | volume vs. mix split; mix = new or dropped models | **Volume vs. mix split**: usage = change in total tokens × period A's average price per token (per token type, over all models); mix = the per-model usage effects minus that; price as in §8.4. The three add up exactly to the change |
+| D13 | Where are a project's markup and fixed lines (seat fees) set? (decided 2026-11-06) | per project; per statement; not yet | **Per project**, in `projects.json` (`rates.markupPercent`, `rates.fixedLines`), edited in the Projects editor; every statement for the project uses them and freezes them |
+| D14 | Where is D2's optional fixed-rate user currency set? (decided 2026-11-06) | per project; per statement; not yet | **Per project** (`rates.currency`: a code and a fixed rate per USD); the statement states the rate and keeps AI Credits and USD beside it |
+| D15 | Can a period that hasn't ended be issued? (decided 2026-11-06) | only ended periods; any time with a warning | **Only ended periods**: a draft any time; *Issue statement* is disabled, with the reason, until the period's last day has passed in the statement's time zone |
 
 ## 14. Implementation steps (TDD, each with an exit criterion)
 
