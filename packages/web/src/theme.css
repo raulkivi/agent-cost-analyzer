@@ -452,7 +452,8 @@ a { color: var(--color-accent-text); text-underline-offset: 3px; }
 .cost-finding p { margin: 4px 0 0; }
 /* Step 15.11: the Projects editor and the Billing tab. */
 .projects-editor { display: flex; flex-direction: column; gap: var(--space-3); }
-.projects-head, .projects-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); justify-content: space-between; }
+.projects-head { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); }
+.projects-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); justify-content: space-between; }
 .projects-title { margin: 0; }
 .projects-actions, .billing-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .projects-summary { border: 1px solid var(--color-diverging-increase); padding: 8px 12px; }

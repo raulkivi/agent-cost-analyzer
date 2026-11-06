@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
-import type { FixedLine, Project, ProjectFileProblem, ProjectsFile, ProjectsState, RepositoryList } from "@agent-cost-analyzer/domain";
+import { isLocalRepositoryKey, repositoryFolderLabel, type FixedLine, type Project, type ProjectFileProblem, type ProjectsFile, type ProjectsState, type RepositoryList } from "@agent-cost-analyzer/domain";
+
+// A local repository by its folder, as the list boxes name it, never its path.
+const repositoryLabel = (key: string) => (isLocalRepositoryKey(key) ? `${repositoryFolderLabel(key)} (local)` : key);
 import { fetchProjects, fetchRepositoryList, saveProjects } from "../../api-client/statements.js";
 import {
   addCaptureRule,
@@ -162,14 +165,14 @@ function EditorBody({ initial, repositories, save }: { initial: ProjectsState; r
               {unassigned.map((entry) => (
                 <tr key={entry.key}>
                   <td>
-                    <code>{entry.key}</code>
+                    <code>{repositoryLabel(entry.key)}</code>
                   </td>
                   <td className="num">{entry.sessionCount}</td>
                   <td>{entry.lastUsedAt ? entry.lastUsedAt.slice(0, 10) : "unknown"}</td>
                   <td>
                     <select
                       className="input"
-                      aria-label={`Assign ${entry.key} to`}
+                      aria-label={`Assign ${repositoryLabel(entry.key)} to`}
                       value=""
                       disabled={file.projects.length === 0}
                       onChange={(event) => edit(assignRepository(file, entry.key, event.target.value))}
@@ -195,7 +198,7 @@ function EditorBody({ initial, repositories, save }: { initial: ProjectsState; r
         {repositories.unattributed.map((entry) => (
           <p key={entry.reason} className="cost-note">
             <strong>
-              {entry.sessionCount} sessions are Unattributed: {entry.reason}
+              {entry.sessionCount} {entry.sessionCount === 1 ? "session is" : "sessions are"} Unattributed: {entry.reason}
             </strong>{" "}
             A capture rule assigns capture files (mitmproxy records no folder) to a repository.
           </p>
@@ -212,7 +215,7 @@ function EditorBody({ initial, repositories, save }: { initial: ProjectsState; r
                 <option value="">Choose a repository</option>
                 {keys.map((key) => (
                   <option key={key} value={key}>
-                    {key}
+                    {repositoryLabel(key)}
                   </option>
                 ))}
               </select>
@@ -223,9 +226,11 @@ function EditorBody({ initial, repositories, save }: { initial: ProjectsState; r
             <FieldErrors id={`rule-${index}`} problems={problemsAt(problems, `captureRules[${index}]`)} />
           </div>
         ))}
-        <button type="button" className="btn btn-secondary" onClick={() => edit(addCaptureRule(file, "", ""))}>
-          Add a capture rule
-        </button>
+        <div className="projects-row">
+          <button type="button" className="btn btn-secondary" onClick={() => edit(addCaptureRule(file, "", ""))}>
+            Add a capture rule
+          </button>
+        </div>
       </Blueprint>
 
       {file.projects.map((project, index) => (
@@ -344,7 +349,7 @@ function ProjectCard({ project, index, keys, problems, autoFocus, onChange, onRe
               return (
                 <tr key={memberIndex}>
                   <td>
-                    <code>{member.repository}</code>
+                    <code>{repositoryLabel(member.repository)}</code>
                   </td>
                   <td>
                     <input className="input" aria-label="Path scope" placeholder="whole repository" value={member.path ?? ""} onChange={(event) => onMember(memberIndex, { path: event.target.value })} {...fieldError(memberProblems, errorId)} />
@@ -361,7 +366,7 @@ function ProjectCard({ project, index, keys, problems, autoFocus, onChange, onRe
                     <FieldErrors id={errorId} problems={memberProblems} />
                   </td>
                   <td>
-                    <button type="button" className="btn btn-secondary" aria-label={`Remove ${member.repository} from this project`} onClick={() => onRemoveMember(memberIndex)}>
+                    <button type="button" className="btn btn-secondary" aria-label={`Remove ${repositoryLabel(member.repository)} from this project`} onClick={() => onRemoveMember(memberIndex)}>
                       Remove
                     </button>
                   </td>
@@ -387,7 +392,7 @@ function ProjectCard({ project, index, keys, problems, autoFocus, onChange, onRe
                 .filter((key) => !members.has(key))
                 .map((key) => (
                   <option key={key} value={key}>
-                    {key}
+                    {repositoryLabel(key)}
                   </option>
                 ))}
             </select>

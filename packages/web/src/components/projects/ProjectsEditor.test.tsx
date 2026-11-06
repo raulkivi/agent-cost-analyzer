@@ -130,4 +130,21 @@ describe("ProjectsEditor (plan §11.5, board 5)", () => {
     await user.click(await screen.findByRole("button", { name: /Back to the Dashboard/ }));
     expect(onBack).toHaveBeenCalled();
   });
+
+  it("names a local repository by its folder, not its path, and counts sessions in words", async () => {
+    const local = { ...repositories.repositories[0]!, key: "local:/home/dev/scratch" };
+    const save = vi.fn();
+    render(
+      <ProjectsEditor
+        onBack={vi.fn()}
+        loadProjects={vi.fn().mockResolvedValue(state())}
+        loadRepositories={vi.fn().mockResolvedValue({ ...repositories, repositories: [local], unattributed: [{ ...repositories.unattributed[0]!, sessionCount: 1 }] })}
+        save={save}
+      />,
+    );
+    const table = await screen.findByRole("table", { name: "Repositories without a project" });
+    expect(table).toHaveTextContent("scratch (local)");
+    expect(table).not.toHaveTextContent("/home/dev");
+    expect(screen.getByText(/1 session is Unattributed/)).toBeInTheDocument();
+  });
 });

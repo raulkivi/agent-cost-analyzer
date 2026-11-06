@@ -44,7 +44,7 @@ async function dashboard(width: number, height: number): Promise<Page> {
   return page;
 }
 
-async function openView(page: Page, view: "Cost over time" | "Compare" | "Project") {
+async function openView(page: Page, view: "Cost over time" | "Compare" | "Project" | "Billing") {
   const select = page.getByRole("combobox", { name: "Dashboard view" });
   if (await select.isVisible().catch(() => false)) await select.selectOption({ label: view });
   else await radio(page, "Dashboard view", view);
@@ -123,6 +123,26 @@ try {
   await page.getByRole("img", { name: /^Why cost changed/ }).waitFor();
   await page.evaluate(() => document.querySelector(".cost-variance")?.scrollIntoView({ block: "start" }));
   await shoot(page, "guide-dashboard-project-360.png");
+  await page.close();
+
+  // Step 15.11: Billing (October, Customer portal) and the Projects editor.
+  page = await dashboard(1440, 1000);
+  await page.getByRole("listbox", { name: "Project" }).getByRole("option", { name: /Customer portal/ }).click();
+  await openView(page, "Billing");
+  await page.getByRole("table", { name: "Totals" }).waitFor();
+  await page.evaluate(() => document.querySelector(".cost-tab")?.scrollIntoView({ block: "start" }));
+  await shoot(page, "guide-dashboard-billing.png");
+  await page.getByRole("button", { name: "Edit projects" }).click();
+  await page.getByRole("heading", { name: "Projects" }).waitFor();
+  await shoot(page, "guide-projects-editor.png");
+  await page.close();
+
+  page = await dashboard(360, 800);
+  await page.getByRole("listbox", { name: "Project" }).getByRole("option", { name: /Customer portal/ }).click();
+  await openView(page, "Billing");
+  await page.getByRole("table", { name: "Totals" }).waitFor();
+  await page.evaluate(() => document.querySelector(".cost-tab")?.scrollIntoView({ block: "start" }));
+  await shoot(page, "guide-dashboard-billing-360.png");
   await page.close();
 } finally {
   await browser.close();
