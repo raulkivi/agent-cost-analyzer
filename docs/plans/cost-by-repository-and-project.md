@@ -1909,7 +1909,8 @@ are in §13.
   price-book change with the exact diff (service test and S5). S1, S5, S6
   and S8 pass, with S2–S4, three runs in a row; the fixture can start with
   no projects file. The UI check gains Billing, its export dialog and the
-  editor; see the counts below. Screenshots: `guide-dashboard-billing.png`,
+  editor (36 combinations), and the whole check passes (345 checks, none
+  failing). Screenshots: `guide-dashboard-billing.png`,
   `guide-dashboard-billing-360.png`, `guide-projects-editor.png`.
 - **Found and fixed by the checks**: the excluded-line reason doubled its
   punctuation in Markdown; a store test pulled domain sources into the
