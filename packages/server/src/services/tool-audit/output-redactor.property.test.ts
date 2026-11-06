@@ -49,16 +49,31 @@ const credentialValue = fc
   .tuple(fc.constantFrom(..."0123456789"), body(ALNUM, 7, 30))
   .map(([digit, rest]) => `${digit}${rest}`);
 
+// A fragment of the secret may appear in the random text around it; that is
+// not a leak, so such inputs say nothing about the redactor and are skipped.
+function surroundingTextIsClean(needle: string, ...surrounding: string[]): void {
+  fc.pre(surrounding.every((part) => !part.includes(needle)));
+}
+
 const randomCase = (word: string) =>
   fc.array(fc.boolean(), { minLength: word.length, maxLength: word.length }).map((flags) =>
     [...word].map((ch, i) => (flags[i] ? ch.toUpperCase() : ch.toLowerCase())).join(""),
   );
 
 describe("redactSecrets (property-based)", () => {
+  // Counterexample fast-check found (seed -1246284167): the text before the
+  // JWT was exactly the JWT payload's letters, so "the output still contains
+  // them" said nothing about a leak. The properties now skip such inputs.
+  it("redacts a JWT whose payload also appears in the surrounding text", () => {
+    const output = redactSecrets("tring eyJAAAAA.eyJtring.A ");
+    expect(output).toBe("tring [REDACTED] ");
+  });
+
   for (const [format, arbitrary] of Object.entries(SECRET_FORMATS)) {
     it(`never leaks a ${format} embedded in arbitrary text`, () => {
       fc.assert(
         fc.property(text, arbitrary, text, (before, { secret, sensitive }, after) => {
+          surroundingTextIsClean(sensitive, before, after);
           const output = redactSecrets(`${before} ${secret} ${after}`);
           expect(output).not.toContain(sensitive);
         }),
@@ -78,6 +93,7 @@ describe("redactSecrets (property-based)", () => {
         ),
         text,
         (before, { secret, sensitive }, after) => {
+          surroundingTextIsClean(sensitive, before, after);
           expect(redactSecrets(`${before} ${secret} ${after}`)).not.toContain(sensitive);
         },
       ),
@@ -94,6 +110,7 @@ describe("redactSecrets (property-based)", () => {
         text,
         (before, scheme, digit, rest, after) => {
           const value = `${digit}${rest}`;
+          surroundingTextIsClean(value, before, after);
           expect(redactSecrets(`${before} ${scheme} ${value} ${after}`)).not.toContain(value);
         },
       ),
@@ -106,6 +123,7 @@ describe("redactSecrets (property-based)", () => {
       .chain(randomCase);
     fc.assert(
       fc.property(text, key, fc.constantFrom("=", ":", " = ", ": "), credentialValue, text, (before, name, sep, value, after) => {
+        surroundingTextIsClean(value, before, after);
         expect(redactSecrets(`${before} ${name}${sep}${value} ${after}`)).not.toContain(value);
       }),
     );
@@ -164,6 +182,7 @@ describe("excerptOf (property-based)", () => {
         text,
         fc.integer({ min: 1, max: 200 }),
         (before, { sensitive }, after, maxLength) => {
+          surroundingTextIsClean(sensitive, before, after);
           expect(excerptOf(`${before} ghp_${sensitive} ${after}`, maxLength)).not.toContain(sensitive);
         },
       ),
