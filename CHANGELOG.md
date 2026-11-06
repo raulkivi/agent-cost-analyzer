@@ -31,6 +31,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   read-only `get_price_book` MCP tool. Learn simulation prices now come
   from the price book. A price not in the book is unknown with a reason,
   never zero.
+- Cost basis (Phase 15 step 15.6): every Dashboard turn now carries three
+  cost figures, each labelled with how it was obtained: billed (Copilot's
+  AI Credits), reported (pi's own USD cost) and priced (tokens times the
+  price in force on the turn's channel when it ran, naming the price
+  version). Totals use billed, else reported, else priced, show how many
+  turns each covers, and keep AI Credits and USD apart (converted only at
+  1 AI Credit = $0.01). A Cost basis list box and a Cost tile with a
+  Preferred / Billed / Reported / Priced switch are on the Dashboard.
+  Claude Code's priced figures are labelled API-equivalent; Claude Code and
+  pi 1-hour cache writes are priced at the 1-hour rate. `get_session_cost`,
+  `get_cost_rollup` and `get_turn` return the cost basis; `get_cost_rollup`
+  adds repository and project filters, breakdowns by repository, project,
+  vendor and channel, and a reconciliation of Copilot's billed AI Credits
+  against the price book per model and month. A turn that can't be priced
+  is unknown with a reason, never zero.
 - Web and VS Code themes: eight categorical series colours
   (`--color-series-1` to `-8`, light and dark steps), a diverging pair for
   waterfalls, and dash patterns in High Contrast, ready for the

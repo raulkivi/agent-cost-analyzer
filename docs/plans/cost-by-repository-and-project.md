@@ -1085,7 +1085,7 @@ No UI code (15.9 onwards) starts before the mock-ups in 15.8 are approved.
 | 15.3 | **ProjectCatalog** + project file schema + `GET/PUT /api/projects`, `GET /api/repositories` | Schema, matching and API tests pass; a bad file gives a config warning Done 2026-11-05, see §14.1 |
 | 15.4 | **Attribution in the dataset**: `repositoryKey`/`projectId`/`vendorId`/`channel` on Insights rows; Project, Repository, Vendor and Channel list boxes on the Dashboard; MCP: `list_repositories`, `list_projects`, `list_sessions` filters (§10.1) | Dashboard filters by repository and project; totals match the per-session totals; axe and keyboard tests pass for the new list boxes; the step's MCP tools pass the §10.1.6 tests Done 2026-11-05, see §14.1 |
 | 15.5 | **Price book with history**: `PriceVersion` schema, bundled channel files with sources, user versions, `PriceBook` lookup; Phase 13 profiles read their current prices from it; MCP: `get_price_book` | Overlap/boundary/precedence tests pass; every version has a source; Phase 13 tests unchanged; the step's MCP tools pass the §10.1.6 tests Done 2026-11-05, see §14.1 |
-| 15.6 | **CostPricer + basis**: `CostFigure` on every turn row; reconciliation figures for Copilot turns; Cost basis list box; MCP: cost basis in `get_session_cost`, `get_cost_rollup`, `get_turn` | Pricing tests pass; unknown never sums as 0; billed vs priced shown per model-month; the step's MCP tools pass the §10.1.6 tests |
+| 15.6 | **CostPricer + basis**: `CostFigure` on every turn row; reconciliation figures for Copilot turns; Cost basis list box; MCP: cost basis in `get_session_cost`, `get_cost_rollup`, `get_turn` | Pricing tests pass; unknown never sums as 0; billed vs priced shown per model-month; the step's MCP tools pass the §10.1.6 tests Done 2026-11-06, see §14.1 |
 | 15.7 | **Time series, compare, project breakdown** + their endpoints; MCP: `get_repository_cost`, `get_project_cost`, `compare_costs`, the `review_costs` project step | Golden outputs for a fixture dataset across three providers and two projects; the step's MCP tools pass the §10.1.6 tests |
 | 15.8 | **Mock-ups and palette** (§11.7, §11.8): the seven boards on a Design canvas with versioned copies (drawn and approved 2026-11-05); the eight categorical tokens in `theme.css` and `theme-vscode.css` (done 2026-11-05, see §14.1) | Owner approves the boards and their comments are resolved; the dataviz validator passes in light and dark; `theme-contrast.test.ts` covers the new tokens in Dark Modern, Light Modern and High Contrast |
 | 15.9 | **Dashboard tabs: Cost over time and Compare**, with price-change markers (§11.1–§11.3) | Component tests incl. "View as table" and unknown-as-gap; `vitest-axe` clean in three themes; keyboard tests; the UI check (`npm run test:ui`) passes for the new tabs at 600–1600 px in three themes; screenshots of the standalone app at desktop and 360 px widths; the §12.4.1 Playwright harness and fixture home are in place, and scenarios S2 and S3 pass in the `web-e2e` job |
@@ -1403,6 +1403,120 @@ extension's build copy lists changed with `build.mts`; the
 provider model ids to price-table ids and the "at today's prices" mode
 (both step 15.6); the planned weekly `vendor-prices.yml` (step 13.9) must
 diff `fixtures/price-book/github-copilot.json`.
+
+**15.6 (done 2026-11-06).** Domain (`packages/domain/src/cost-figure.ts`):
+`CostFigure` as in §5's sketch (known: `amount`, `currency`, `basis`,
+priced-only `priceVersionIds` and `apiEquivalent`, optional `estimated` and
+`notes`; unknown: `reason`), `TurnCostFigures` (one per basis),
+`preferredCostFigure` (billed, else reported, else priced; D3) and
+`costFigureFor` (one basis for a view), `CostTotal` and `CostBasisTotals`
+(MeasureTotal-style `turns`/`knownTurns`, one amount per currency, `usd`
+only at 1 AI Credit = $0.01, `apiEquivalentTurns`, `preferredBasisTurns`,
+the price versions used and the conversion text), `buildCostReconciliation`
+and `channelCurrency`. `TurnUsage` gains optional `extendedCacheWrite` and
+`reportedCostUsd`; `InsightTurnRow` gains `date` (the turn's own time, else
+the session's) and `cost`, `InsightSessionRow` `cost`; `SessionCost`,
+`CostRollup` and `TurnView` gain the fields of §10.1.2. Every new field on
+an existing shape is optional or added by the server everywhere, so older
+payloads and Learn mode are unaffected.
+
+- **Bases.** Billed is `TurnUsage.costAiCredits` (Copilot's
+  `copilotUsageNanoAiu`; only the VS Code provider records it). Reported is
+  pi's `Usage.cost.total`, summed over every usage in the turn and unknown
+  if one lacks it; no other provider logs a cost of its own. Priced is
+  `CostPricer` (`services/pricing/cost-pricer.ts`).
+- **CostPricer** depends on a `PriceLookupPort` (PriceBook's `priceFor` and
+  `newestVersion`) and a `PriceModelMapper`, and reuses Phase 13's
+  `priceTurn`/`pickTier` (whose input is now any `{ tiers }`), so the
+  arithmetic is not duplicated. The time is the turn's `startedAt`, else the
+  session start with a note; the turn's project and repository are the
+  lookup's `scope`, so a contract price applies where it is scoped. Copilot
+  figures are in AI Credits (USD ÷ $0.01), every other channel in USD.
+  "At today's prices" (`mode: "today"`) prices at the version in force now,
+  else the newest one; it is tested but no view uses it yet (15.7's
+  `pricing` argument will).
+- **Model ids.** `CandidatePriceModelMapper` tries the spellings step
+  15.4's `candidateModelIds` gives (shared, now also turning a display
+  name's spaces into hyphens) against the model ids the channel prices
+  (`PriceBook.modelIds`): Claude Code's `claude-opus-5-5-20261001` and a
+  `[1m]` tag map to `claude-opus-5.5`, `copilot/GPT-6.1-Sol` to
+  `gpt-6.1-sol`. No near match is guessed; `<synthetic>` and `unknown` are
+  unknown.
+- **Cache-write lifetime, per provider.** Where the log splits writes by
+  lifetime, the split is used: Claude Code now reads
+  `cache_creation.ephemeral_1h_input_tokens` and pi `cacheWrite1h` into
+  `extendedCacheWrite`, priced at `extendedCacheWriteUsdPerM` and the rest
+  at `cacheWriteUsdPerM`. Otherwise the provider's default applies, with a
+  note on the figure: **Claude Code: the 1-hour rate** (the calibration's
+  finding 1 and #145: it writes 1-hour caches); **Copilot (VS Code): the
+  standard (5-minute) rate**, as the calibration decided for Copilot;
+  **pi and mitmproxy: the API's standard rate**. A 1-hour write on a version
+  with no 1-hour price (fast-mode Opus 4.8 on Copilot) is unknown with a
+  reason, not priced at another rate. A version with no write price
+  (`null`, automatic caching) charges writes as input, as Phase 13 does.
+- **Unknown, never 0.** Priced is unknown, with the reason, for an unknown
+  channel, an unmappable model, no time at all, no version in force, or an
+  unknown uncached-input, cache-read, output or cache-write count. One
+  exception, exact rather than guessed: both VS Code stores record uncached
+  input as input − cached, so with cache writes unknown a version that
+  charges writes as plain input still prices the turn. Reasoning tokens are
+  part of output in every provider and aren't priced again.
+- **Tiers.** The tier is chosen by the request's whole prompt, as Phase
+  13's Pricer does, but a turn holds only the sum of its requests. So a
+  single-request turn, or one whose whole input stays in the first tier, is
+  priced exactly; a several-request turn that crosses a tier threshold is
+  unknown with a reason (the providers don't yet carry per-request input on
+  `TurnUsage`).
+- **Subscriptions.** Claude Code's priced figures carry `apiEquivalent: true`
+  and totals count those turns (§5, D4); no statement logic yet.
+- **Wiring.** `TurnCostFigureBuilder` adds billed and reported to the
+  pricer's figure and holds the per-provider policy (cache-write default,
+  API-equivalent, unknown writes inside uncached input). `InsightsService`
+  and `AnalysisQueryService` take a `TurnPricing` port and price each
+  dataset or session over one `PriceBook.snapshot()`, because the user price
+  source reads the projects file on every lookup. The standalone app and its
+  stdio MCP server price with the bundled and user book; the extension's
+  Dashboard with the bundled book shipped in `media/price-book`; the
+  extension's MCP server has no price book until step 15.13, so its priced
+  figures are unknown with that reason.
+- **Reconciliation.** `buildCostReconciliation` compares, per model and
+  month, the Copilot turns with both a billed and a priced AI Credits
+  figure (`billedAiCredits`, `pricedAiCredits`, `difference`, `ratio`,
+  their price versions) and counts billed turns the book can't price
+  (`billedOnlyTurns`), never comparing them as 0. **Where it is shown:** the
+  approved mock-ups place the reconciliation table on the Project tab
+  (Project.dc.html), which is step 15.10's; in this step it is in
+  `get_cost_rollup`'s `reconciliation`, and the domain function is shared so
+  that tab can compute it from the Dashboard's rows.
+- **Dashboard.** A Cost basis list box joins the first group after Channel,
+  as in Main.dc.html: each turn's preferred basis (Billed, Reported,
+  Priced), plus Cost unknown so no turn is dropped. A Cost tile shows the
+  selection's cost per currency ("0.50 AI Credits + $0.70"), its coverage,
+  API-equivalent turns and the 1 AI Credit = $0.01 rule, with a Preferred /
+  Billed / Reported / Priced switch for the view (D3). vitest-axe (the
+  a11y suite) and keyboard tests cover both.
+- **MCP.** `get_session_cost` adds the repository and project (local keys
+  redacted to the folder name, §10.1.5), `cost` and a `cost` per top turn;
+  `get_cost_rollup` adds `repository`/`projectId` filters (a redacted local
+  key matches too), `cost`, the four breakdowns (unknown buckets last, with
+  their reasons) and `reconciliation`; `get_turn` adds `cost` and
+  `preferredCost`. Descriptions explain the bases and name no provider, so
+  the extension's server shares them. `mcp/cost-basis-tools.test.ts` checks
+  the schemas with full, partial and no coverage, that each tool agrees with
+  the dataset `GET /api/insights` serves, that unknown stays
+  `{known: false, reason}`, and that no output holds a local path.
+
+TDD exceptions: `pricer.ts`'s widened parameter type passed its new test at
+once (vitest doesn't type-check); `turn-cost-figures.test.ts` and
+`insights-service.test.ts`'s pricer test were written before their code but
+not run red in between; the Dashboard's list box needed no component change
+(the model defines it). Not yet: per-request input on `TurnUsage` (so
+several-request turns crossing a tier stay unknown); the "today" mode in a
+view (15.7); the reconciliation table in the UI (15.10's Project tab) and
+the observed-change finding (15.10); Claude Code fast mode isn't detected (nothing maps a
+turn to the `-fast` price ids, so a fast-mode turn prices at standard
+rates); mitmproxy's Anthropic decoder doesn't read the 1-hour split; the
+extension's MCP server has no price book (15.13).
 
 ## 15. Exit criterion
 

@@ -358,6 +358,36 @@ holds a `PriceBook` over a `PriceBookSource` port (bundled
 bundled data stops startup; invalid user data is reported as problems.
 Phase 13's vendor profiles read their prices from the price book.
 
+Cost basis (Phase 15 step 15.6, `packages/domain/src/cost-figure.ts`; plan
+§5): a `CostFigure` is known (`amount`, `currency` `"AI_CREDITS" | "USD"`,
+`basis` `"billed" | "reported" | "priced"`, priced-only `priceVersionIds`
+and `apiEquivalent`, optional `estimated` and `notes`) or unknown with a
+`reason`, never 0. `TurnCostFigures` holds one figure per basis;
+`preferredCostFigure` takes billed, else reported, else priced (D3).
+`CostTotal` sums figures MeasureTotal-style (`turns`, `knownTurns`, one
+`amounts[]` entry per currency, `usd` converted only at 1 AI Credit =
+$0.01, `apiEquivalentTurns`); `CostBasisTotals` holds one per basis plus
+`preferredBasisTurns`, the price versions used and the conversion text.
+`CostReconciliationRow` compares billed and priced AI Credits per model and
+month. `TurnUsage` gains optional `extendedCacheWrite` (the 1-hour subset of
+cache writes: Claude Code `cache_creation.ephemeral_1h_input_tokens`, pi
+`cacheWrite1h`) and `reportedCostUsd` (pi `Usage.cost.total`).
+`InsightTurnRow` gains `date` and `cost` (`TurnCostFigures`),
+`InsightSessionRow` `cost` (`CostBasisTotals`); `SessionCost` gains the
+session's `repositoryKey`/`projectId`, `cost` and a `cost` per top turn;
+`CostRollup` gains `cost`, `byRepository`/`byProject`/`byVendor`/`byChannel`
+(`CostGroup`) and `reconciliation`; `TurnView` gains `cost` and
+`preferredCost`; `channelCurrency` says a channel's unit. On the server,
+`services/pricing/` adds `CostPricer` (over a `PriceLookupPort` and a
+`PriceModelMapper`; Phase 13's `priceTurn`/`pickTier` do the arithmetic),
+`CandidatePriceModelMapper` (provider model ids to price-book ids through
+step 15.4's `candidateModelIds`), and `TurnCostFigureBuilder` (billed and
+reported from the log, priced from the pricer, per-provider pricing
+policy). Data flow: `InsightsService` and `AnalysisQueryService` take a
+`TurnPricing` port and price each dataset (or session) over one
+`PriceBook.snapshot()`, so the projects file is read once; the Dashboard,
+`get_cost_rollup`, `get_session_cost` and `get_turn` read the same figures.
+
 Log-provider selection is a separate app-level contract, not a provider-
 specific API or UI branch:
 
@@ -1915,7 +1945,7 @@ themselves.
 | `GET /api/sessions/:id/audit` | `SessionAudit` (Phase 9.10, [plans/tool-call-audit.md](plans/tool-call-audit.md)): per-status totals, failure rate over known outcomes (`null` when none known), by-tool/program/category breakdowns, per-turn outcome counts, every classified call, retry groups, failure-recovery cost, and outcome coverage. Optional `?provider=<id>` audits a provider other than the active one (400 if unknown); 404 for an unknown session |
 | `GET /api/sessions/:id/tool-calls` | `{ total, calls: AuditedToolCall[] }`: one session's classified tool calls, filtered by `status`/`category`/`kind` (comma-separated enum lists), `tool`, `program`, `turn`, paged by `offset`/`limit`, optional `provider`. 400 on an invalid value |
 | `GET /api/audit` | `AuditRollup` over the most recent sessions (`limit`, default 50, max 500) whose `startedAt` falls in `since`..`until` (ISO date or timestamp, compared at the bound's precision): totals, top failing commands, daily counts, per-session summary, category/program/tool breakdowns. Optional `provider` |
-| `GET /api/insights` | `InsightsDataset` (Phase 9.11, [plans/insights-dashboard.md](plans/insights-dashboard.md)): the most recent sessions from **every** registered provider (`limit` per provider, default 50, max 500; `since`/`until` as for `/api/audit`; optional `provider` restricts to one, 400 if unknown), flattened to session/turn/tool-call rows, plus security, anomaly and behaviour-change findings. Each provider's availability, error or truncation is reported in `providers[]`; one failing provider never fails the response |
+| `GET /api/insights` | `InsightsDataset` (Phase 9.11, [plans/insights-dashboard.md](plans/insights-dashboard.md)): the most recent sessions from **every** registered provider (`limit` per provider, default 50, max 500; `since`/`until` as for `/api/audit`; optional `provider` restricts to one, 400 if unknown), flattened to session/turn/tool-call rows, plus security, anomaly and behaviour-change findings. Each provider's availability, error or truncation is reported in `providers[]`; one failing provider never fails the response. Since Phase 15 step 15.6 each turn row carries its billed, reported and priced `cost` figures and each session row their per-basis totals |
 | `GET /api/config/status` | `ConfigStatus` — current prerequisite-setting check results and any `warnings[]` (§6.3), including the effective `minRetainedSessionLogsThreshold` |
 | `GET /api/projects` | `ProjectsState` (Phase 15 step 15.3, [plans/cost-by-repository-and-project.md](plans/cost-by-repository-and-project.md) §7): `status` (`missing`, `valid` or `invalid`), the file in use, its `problems` and its `location` |
 | `PUT /api/projects` | Replaces the projects file with the body after validation; returns the new `ProjectsState`. 400 with `{ error, problems }` if anything is wrong, and nothing is written |
