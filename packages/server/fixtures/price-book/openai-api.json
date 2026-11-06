@@ -329,6 +329,13 @@
       "url": "https://developers.openai.com/api/docs/deprecations",
       "quote": "On October 14, 2026, we notified developers using certain GPT-4 series models of their deprecation and removal from the API on January 14, 2027.",
       "checkedAt": "2026-11-06"
+    },
+    {
+      "id": "openai-api-changelog-2026-07-30-gpt-5-6-cut",
+      "title": "OpenAI API changelog, Jul 30, 2026 (GPT-5.6 Terra and Luna price cut)",
+      "url": "https://developers.openai.com/api/docs/changelog",
+      "quote": "Starting July 30, GPT-5.6 Luna costs 80% less, while GPT-5.6 Terra costs 20% less. See pricing details.",
+      "checkedAt": "2026-11-06"
     }
   ],
   "versions": [
@@ -657,11 +664,45 @@
       "note": "Starts 2026-11-06: today's pricing page is the earliest OpenAI source found that gives this price (no dated launch post or changelog entry with the amount could be fetched), so earlier turns price as unknown. Released 2026-04-24 (changelog, no price given). The second tier is the long-context price for prompts over 272K input tokens, applied to the whole request. No cache-write charge on models before GPT-5.6 (prompt-caching guide), so cacheWriteUsdPerM is null. Standard tier, global processing; Batch, Flex, Fast, Ultrafast, regional-processing (10% uplift) and cloud-platform prices are not modelled."
     },
     {
-      "id": "openai-api:gpt-5.6-luna:2026-11-06",
+      "id": "openai-api:gpt-5.6-luna:2026-10-01",
       "channel": "openai-api",
       "modelId": "gpt-5.6-luna",
       "currency": "USD",
-      "effectiveFrom": "2026-11-06",
+      "effectiveFrom": "2026-10-01",
+      "tiers": [
+        {
+          "maxInputTokens": 272000,
+          "inputUsdPerM": 0.2,
+          "cachedInputUsdPerM": 0.02,
+          "cacheWriteUsdPerM": 0.25,
+          "outputUsdPerM": 1.2
+        },
+        {
+          "inputUsdPerM": 0.4,
+          "cachedInputUsdPerM": 0.04,
+          "cacheWriteUsdPerM": 0.5,
+          "outputUsdPerM": 1.8
+        }
+      ],
+      "kind": "list",
+      "sourceIds": [
+        "openai-api-pricing-gpt-5-6-luna",
+        "openai-api-pricing-table-header",
+        "openai-api-pricing-context-length",
+        "openai-api-model-gpt-5-6-luna-long-context",
+        "openai-api-pc-write-rates",
+        "openai-api-pc-not-additive",
+        "openai-api-changelog-2026-07-30-gpt-5-6-cut"
+      ],
+      "note": "In force from 2026-10-01 (owner's decision, 2026-11-06): the 2026-07-30 changelog cut its price by 80% without stating amounts; today's pricing page gives the amounts, and the changelog records no price change for it between 2026-07-30 and 2026-11-06 (no archived page could be fetched), so the prices are taken as in force since that cut. The second tier is the long-context price for prompts over 272K input tokens, applied to the whole request. cacheWriteUsdPerM is the default 30-minute write (1.25x input); the 12-hour write did not exist until 2026-10-20 (changelog), so this version has no extendedCacheWriteUsdPerM. Standard tier, global processing; Batch, Flex, Fast, Ultrafast, regional-processing (10% uplift) and cloud-platform prices are not modelled.",
+      "effectiveTo": "2026-10-20"
+    },
+    {
+      "id": "openai-api:gpt-5.6-luna:2026-10-20",
+      "channel": "openai-api",
+      "modelId": "gpt-5.6-luna",
+      "currency": "USD",
+      "effectiveFrom": "2026-10-20",
       "tiers": [
         {
           "maxInputTokens": 272000,
@@ -687,9 +728,10 @@
         "openai-api-model-gpt-5-6-luna-long-context",
         "openai-api-pc-write-rates",
         "openai-api-pc-not-additive",
-        "openai-api-changelog-2026-10-20-12h-cache"
+        "openai-api-changelog-2026-10-20-12h-cache",
+        "openai-api-changelog-2026-07-30-gpt-5-6-cut"
       ],
-      "note": "Starts 2026-11-06: today's pricing page is the earliest OpenAI source found that gives this price (no dated launch post or changelog entry with the amount could be fetched), so earlier turns price as unknown. The 2026-07-30 changelog cut its price by 80% but gives no amounts. The second tier is the long-context price for prompts over 272K input tokens, applied to the whole request. cacheWriteUsdPerM is the default 30-minute write (1.25x input); extendedCacheWriteUsdPerM is the 12-hour write (2.5x input, Responses API only), offered from 2026-10-20 per the changelog. Standard tier, global processing; Batch, Flex, Fast, Ultrafast, regional-processing (10% uplift) and cloud-platform prices are not modelled."
+      "note": "Same prices as the 2026-10-01 version; the boundary is the 12-hour cache write OpenAI added on 2026-10-20 (00:00 UTC; the time of day isn't published). In force from 2026-10-01 (owner's decision, 2026-11-06): the 2026-07-30 changelog cut its price by 80% without stating amounts; today's pricing page gives the amounts, and the changelog records no price change for it between 2026-07-30 and 2026-11-06 (no archived page could be fetched), so the prices are taken as in force since that cut. The second tier is the long-context price for prompts over 272K input tokens, applied to the whole request. cacheWriteUsdPerM is the default 30-minute write (1.25x input); extendedCacheWriteUsdPerM is the 12-hour write (2.5x input, Responses API only), offered from 2026-10-20 per the changelog. Standard tier, global processing; Batch, Flex, Fast, Ultrafast, regional-processing (10% uplift) and cloud-platform prices are not modelled."
     },
     {
       "id": "openai-api:gpt-5.6-sol:2026-10-01",
@@ -767,11 +809,45 @@
       "note": "Same prices as the 2026-10-01 version; the boundary is the 12-hour cache write OpenAI added on 2026-10-20 (00:00 UTC; the time of day isn't published). Promotional price: the 2026-08-21 changelog cut GPT-5.6 Sol to $4 input and $20 output 'at least through November 21, 2026'; today's pricing page says the promotion runs until November 30, 2026, so no price is known from 2026-12-01. The cached-input, cache-write and long-context prices come from today's pricing page only. The second tier is the long-context price for prompts over 272K input tokens, applied to the whole request. cacheWriteUsdPerM is the default 30-minute write (1.25x input); extendedCacheWriteUsdPerM is the 12-hour write (2.5x input, Responses API only), offered from 2026-10-20 per the changelog. Standard tier, global processing; Batch, Flex, Fast, Ultrafast, regional-processing (10% uplift) and cloud-platform prices are not modelled."
     },
     {
-      "id": "openai-api:gpt-5.6-terra:2026-11-06",
+      "id": "openai-api:gpt-5.6-terra:2026-10-01",
       "channel": "openai-api",
       "modelId": "gpt-5.6-terra",
       "currency": "USD",
-      "effectiveFrom": "2026-11-06",
+      "effectiveFrom": "2026-10-01",
+      "tiers": [
+        {
+          "maxInputTokens": 272000,
+          "inputUsdPerM": 2,
+          "cachedInputUsdPerM": 0.2,
+          "cacheWriteUsdPerM": 2.5,
+          "outputUsdPerM": 12
+        },
+        {
+          "inputUsdPerM": 4,
+          "cachedInputUsdPerM": 0.4,
+          "cacheWriteUsdPerM": 5,
+          "outputUsdPerM": 18
+        }
+      ],
+      "kind": "list",
+      "sourceIds": [
+        "openai-api-pricing-gpt-5-6-terra",
+        "openai-api-pricing-table-header",
+        "openai-api-pricing-context-length",
+        "openai-api-model-gpt-5-6-terra-long-context",
+        "openai-api-pc-write-rates",
+        "openai-api-pc-not-additive",
+        "openai-api-changelog-2026-07-30-gpt-5-6-cut"
+      ],
+      "note": "In force from 2026-10-01 (owner's decision, 2026-11-06): the 2026-07-30 changelog cut its price by 20% without stating amounts; today's pricing page gives the amounts, and the changelog records no price change for it between 2026-07-30 and 2026-11-06 (no archived page could be fetched), so the prices are taken as in force since that cut. The second tier is the long-context price for prompts over 272K input tokens, applied to the whole request. cacheWriteUsdPerM is the default 30-minute write (1.25x input); the 12-hour write did not exist until 2026-10-20 (changelog), so this version has no extendedCacheWriteUsdPerM. Standard tier, global processing; Batch, Flex, Fast, Ultrafast, regional-processing (10% uplift) and cloud-platform prices are not modelled.",
+      "effectiveTo": "2026-10-20"
+    },
+    {
+      "id": "openai-api:gpt-5.6-terra:2026-10-20",
+      "channel": "openai-api",
+      "modelId": "gpt-5.6-terra",
+      "currency": "USD",
+      "effectiveFrom": "2026-10-20",
       "tiers": [
         {
           "maxInputTokens": 272000,
@@ -797,9 +873,10 @@
         "openai-api-model-gpt-5-6-terra-long-context",
         "openai-api-pc-write-rates",
         "openai-api-pc-not-additive",
-        "openai-api-changelog-2026-10-20-12h-cache"
+        "openai-api-changelog-2026-10-20-12h-cache",
+        "openai-api-changelog-2026-07-30-gpt-5-6-cut"
       ],
-      "note": "Starts 2026-11-06: today's pricing page is the earliest OpenAI source found that gives this price (no dated launch post or changelog entry with the amount could be fetched), so earlier turns price as unknown. The 2026-07-30 changelog cut its price by 20% but gives no amounts. The second tier is the long-context price for prompts over 272K input tokens, applied to the whole request. cacheWriteUsdPerM is the default 30-minute write (1.25x input); extendedCacheWriteUsdPerM is the 12-hour write (2.5x input, Responses API only), offered from 2026-10-20 per the changelog. Standard tier, global processing; Batch, Flex, Fast, Ultrafast, regional-processing (10% uplift) and cloud-platform prices are not modelled."
+      "note": "Same prices as the 2026-10-01 version; the boundary is the 12-hour cache write OpenAI added on 2026-10-20 (00:00 UTC; the time of day isn't published). In force from 2026-10-01 (owner's decision, 2026-11-06): the 2026-07-30 changelog cut its price by 20% without stating amounts; today's pricing page gives the amounts, and the changelog records no price change for it between 2026-07-30 and 2026-11-06 (no archived page could be fetched), so the prices are taken as in force since that cut. The second tier is the long-context price for prompts over 272K input tokens, applied to the whole request. cacheWriteUsdPerM is the default 30-minute write (1.25x input); extendedCacheWriteUsdPerM is the 12-hour write (2.5x input, Responses API only), offered from 2026-10-20 per the changelog. Standard tier, global processing; Batch, Flex, Fast, Ultrafast, regional-processing (10% uplift) and cloud-platform prices are not modelled."
     },
     {
       "id": "openai-api:gpt-6-astra:2026-11-06",

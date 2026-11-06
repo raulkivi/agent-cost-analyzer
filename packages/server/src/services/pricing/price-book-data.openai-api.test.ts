@@ -118,4 +118,20 @@ describe("openai-api price book data", () => {
     expect(lookupAt("gpt-6.1-terra", "2026-11-06T00:00:00Z").tiers[0]).toMatchObject({ inputUsdPerM: 1, cachedInputUsdPerM: 0.05, outputUsdPerM: 5 });
     expect(book.priceFor("openai-api", "gpt-6.1-terra", "2026-11-05T23:59:59Z").known).toBe(false);
   });
+
+  // Owner, 2026-11-06: the 2026-07-30 changelog's percentage cuts plus
+  // today's page, with no change recorded since, prove these from 2026-10-01.
+  it("prices GPT-5.6 Terra and Luna from 2026-10-01 on the July 30 cut, adding the 12-hour write on 2026-10-20", () => {
+    for (const [modelId, input, output] of [["gpt-5.6-terra", 2, 12], ["gpt-5.6-luna", 0.2, 1.2]] as const) {
+      const october = lookupAt(modelId, "2026-10-01T00:00:00Z");
+      expect(october.id).toBe(`openai-api:${modelId}:2026-10-01`);
+      expect(october.effectiveTo).toBe("2026-10-20");
+      expect(october.sourceIds).toContain("openai-api-changelog-2026-07-30-gpt-5-6-cut");
+      expect(october.tiers[0]).toMatchObject({ inputUsdPerM: input, outputUsdPerM: output });
+      expect(october.tiers.every((tier) => tier.extendedCacheWriteUsdPerM === undefined)).toBe(true);
+      expect(lookupAt(modelId, "2026-10-20T00:00:00Z").id).toBe(`openai-api:${modelId}:2026-10-20`);
+      expect(lookupAt(modelId, "2026-11-06T00:00:00Z").tiers[0]).toMatchObject({ extendedCacheWriteUsdPerM: input * 2.5 });
+      expect(book.priceFor("openai-api", modelId, "2026-09-30T23:59:59Z").known).toBe(false);
+    }
+  });
 });
