@@ -103,7 +103,7 @@
     },
     "scenarios1": {
       "fill": "blue",
-      "text": "Usage scenarios on this row (plan §12.4, Playwright web-e2e)\n\nS2 · Board 1 · One project over time (step 15.9): week buckets, last 90 days → Tab to the Sep 1 price marker → tooltip shows old and new unit prices and the source → Escape → View as table equals the chart; the week with no priced turns reads \"unknown\" and is a gap.\n\nS3 · Boards 2a, 2b · Compare (15.9): select two projects → Compare → resize to 640 px → Details → Escape; only priority columns at 640 px, focus returns to Details.\n\nS10 · Board 1 · One answer everywhere (15.13): one project's October total is equal in the Dashboard, GET /api/cost/timeseries and MCP get_project_cost.",
+      "text": "Usage scenarios on this row (plan §12.4, Playwright web-e2e)\n\nS2 · Board 1 · One project over time (step 15.9): week buckets, last 90 days → Tab to the price marker (the fixture uses Claude Sonnet 5.5's real 2026-10-07 price change; this board's sample shows Sep 1) → tooltip shows old and new unit prices and the source → Escape → View as table equals the chart; the week with no priced turns reads \"unknown\" and is a gap.\n\nS3 · Boards 2a, 2b · Compare (15.9): select two projects → Compare → resize to 640 px → Details → Escape; only priority columns at 640 px, focus returns to Details.\n\nS10 · Board 1 · One answer everywhere (15.13): one project's October total is equal in the Dashboard, GET /api/cost/timeseries and MCP get_project_cost.",
       "w": 440,
       "x": 3760,
       "y": 540

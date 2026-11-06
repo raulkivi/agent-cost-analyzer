@@ -7,11 +7,13 @@ extension sharing the same code (vision §5). Phase 11 pins the standalone
 app's pi provider against a real captured session, postponed from Phase 9.6.
 Phase 12 adds branded, interactive MCP Apps views for both products.
 
-**Overall status (2026-11-05):** Phases 0-10 have their code and docs
+**Overall status (2026-11-06):** Phases 0-10 have their code and docs
 merged to `main`. The extension's 0.1.0 is released (tag `ext-v0.1.0`,
 2026-11-03). Open: Phase 10's owner manual checks and decisions (see its
 section), Phase 11 (not started), Phase 12 (planned), Phase 13 (in
-progress, step 13.0) and Phase 14 (planned after 13). A proposed plan,
+progress: steps 13.0-13.10 built, 13.5a calibration open), Phase 14
+(planned after 13) and Phase 15 (in progress: steps 15.0-15.9 done,
+15.10-15.15 open). A proposed plan,
 [plans/classic-subagent-credits.md](plans/classic-subagent-credits.md),
 covers classic Copilot Chat subagent AI Credits; it has no step number yet.
 Each phase has a goal, concrete deliverables, an exit criterion (how you know
@@ -1473,14 +1475,38 @@ extension), and extension grouping by repository.
 **Dependencies**: Phase 9.11 (insights dataset) for steps 15.1–15.4 and
 15.8; Phase 13 step 13.2 (vendor price data) for steps 15.5 onwards.
 
-**Status (2026-11-06)**: steps 15.1 (workspace and turn-time capture in
-every provider) 15.2 (repository resolver and remote URL normaliser),
-15.0 (threat-model rows) and 15.3 (projects file and its API) are done, and so are 15.4 (attribution in the dataset), 15.5 (price book; GitHub Copilot's and the Anthropic, OpenAI and Google APIs' prices are sourced from 2026-10-01 where a dated source proves them) and 15.6 (`CostPricer` and the billed/reported/priced cost basis on every Dashboard turn row, Copilot reconciliation, the Cost basis list box, and the basis in `get_session_cost`, `get_cost_rollup` and `get_turn`), and 15.7 (time series, compare and project breakdown over a cost cube, `GET /api/cost/timeseries` and `/api/cost/compare`, the MCP tools `get_repository_cost`, `get_project_cost` and `compare_costs`, the `review_costs` project step, golden outputs over three providers and two projects), and 15.9 (the Dashboard's Cost over time and Compare tabs with price-change markers, unknown cost as a gap, "View as table" on every chart, the §12.4.1 Playwright harness with scenarios S2 and S3 in a required `web-e2e` CI job, and the UI check over the new tabs). Planned otherwise; the owner accepted every recommended
-decision (D1–D10, plan §13). The UI is a set of new Dashboard tabs built on
-the existing design system, UX standards and chart kit (plan §11), with a
-mock-up review gate (step 15.8) before any UI code. The mock-ups are drawn and were approved by the owner on 2026-11-05
-([mockups/cost-by-project/](plans/mockups/cost-by-project/)); the palette
-tokens of step 15.8 are done (2026-11-05).
+**Status (2026-11-06)**: in progress. The owner accepted every
+recommended decision (D1–D10, plan §13). Steps 15.0–15.9 are done; the
+plan's §14 table and §14.1 notes have each step's detail:
+
+- 15.0: threat-model rows for the two new write endpoints.
+- 15.1: workspace and turn-time capture in every provider.
+- 15.2: repository resolver and remote URL normaliser.
+- 15.3: projects file and its API (`GET/PUT /api/projects`,
+  `GET /api/repositories`).
+- 15.4: attribution in the dataset (repository, project, vendor and
+  channel on Insights rows; MCP `list_repositories`/`list_projects`).
+- 15.5: price book with history (GitHub Copilot's and the Anthropic,
+  OpenAI and Google APIs' prices from 2026-10-01 where a dated source
+  proves them; `GET /api/price-book`, `get_price_book`).
+- 15.6: `CostPricer` and the billed/reported/priced cost basis on every
+  Dashboard turn row, Copilot reconciliation, the Cost basis list box, and
+  the basis in `get_session_cost`, `get_cost_rollup` and `get_turn`.
+- 15.7: time series, compare and project breakdown over a cost cube
+  (`GET /api/cost/timeseries` and `/api/cost/compare`, MCP
+  `get_repository_cost`, `get_project_cost`, `compare_costs`, the
+  `review_costs` project step, golden outputs).
+- 15.8: mock-ups drawn and approved by the owner on 2026-11-05
+  ([mockups/cost-by-project/](plans/mockups/cost-by-project/)), and the
+  palette tokens.
+- 15.9: the Dashboard's Cost over time and Compare tabs with price-change
+  markers, unknown cost as a gap and "View as table" on every chart; the
+  §12.4.1 Playwright harness with scenarios S2 and S3 in a required
+  `web-e2e` CI job; the UI check over the new tabs.
+
+Open: 15.10 (price changes and variance, Project tab; next), 15.11
+(statements, Billing tab, Projects editor), 15.12 (estimates), 15.13 (MCP
+cross-cutting work), 15.14 (VS Code extension) and 15.15 (docs).
 
 ## Summary dependency graph
 
@@ -1521,5 +1547,7 @@ flowchart LR
     P10 --&gt; P12
     P10 --&gt; P13["Phase 13<br/>Vendor-aware Learn simulation"]
     P13 --&gt; P14["Phase 14<br/>Replay Analyze sessions on another vendor"]
+    P911 --&gt; P15["Phase 15<br/>Cost by repository and project"]
+    P13 --&gt; P15
 ```
 -->
