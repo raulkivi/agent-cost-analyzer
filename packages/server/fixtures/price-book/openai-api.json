@@ -1,0 +1,1107 @@
+{
+  "channel": "openai-api",
+  "sources": [
+    {
+      "id": "openai-api-pricing-gpt-6-astra",
+      "title": "OpenAI API: Pricing, Standard pricing data (short and long context), gpt-6-astra",
+      "url": "https://developers.openai.com/api/docs/pricing.md",
+      "quote": "| gpt-6-astra | $10.00 | $50.00 | $1.00 | $12.50 | $25.00 | $20.00 | $75.00 | $2.00 | $25.00 | $50.00 |",
+      "checkedAt": "2026-11-06"
+    },
+    {
+      "id": "openai-api-pricing-gpt-6-1-sol",
+      "title": "OpenAI API: Pricing, Standard pricing data (short and long context), gpt-6.1-sol",
+      "url": "https://developers.openai.com/api/docs/pricing.md",
+      "quote": "| gpt-6.1-sol | $2.00 | $10.00 | $0.10 | $2.50 | $5.00 | $4.00 | $15.00 | $0.20 | $5.00 | $10.00 |",
+      "checkedAt": "2026-11-06"
+    },
+    {
+      "id": "openai-api-pricing-gpt-6-1-terra",
+      "title": "OpenAI API: Pricing, Standard pricing data (short and long context), gpt-6.1-terra",
+      "url": "https://developers.openai.com/api/docs/pricing.md",
+      "quote": "| gpt-6.1-terra | $1.00 | $5.00 | $0.05 | $1.25 | $2.50 | $2.00 | $7.50 | $0.10 | $2.50 | $5.00 |",
+      "checkedAt": "2026-11-06"
+    },
+    {
+      "id": "openai-api-pricing-gpt-6-luna",
+      "title": "OpenAI API: Pricing, Standard pricing data (short and long context), gpt-6-luna",
+      "url": "https://developers.openai.com/api/docs/pricing.md",
+      "quote": "| gpt-6-luna | $0.10 | $0.50 | $0.01 | $0.125 | $0.25 | $0.20 | $0.75 | $0.02 | $0.25 | $0.50 |",
+      "checkedAt": "2026-11-06"
+    },
+    {
+      "id": "openai-api-pricing-gpt-6-sol",
+      "title": "OpenAI API: Pricing, Standard pricing data (short and long context), gpt-6-sol",
+      "url": "https://developers.openai.com/api/docs/pricing.md",
+      "quote": "| gpt-6-sol | $2.00 | $10.00 | $0.20 | $2.50 | $5.00 | $4.00 | $15.00 | $0.40 | $5.00 | $10.00 |",
+      "checkedAt": "2026-11-06"
+    },
+    {
+      "id": "openai-api-pricing-gpt-5-6-sol",
+      "title": "OpenAI API: Pricing, Standard pricing data (short and long context), gpt-5.6-sol",
+      "url": "https://developers.openai.com/api/docs/pricing.md",
+      "quote": "| gpt-5.6-sol | $4.00 | $20.00 | $0.40 | $5.00 | $10.00 | $8.00 | $30.00 | $0.80 | $10.00 | $20.00 |",
+      "checkedAt": "2026-11-06"
+    },
+    {
+      "id": "openai-api-pricing-gpt-5-6-terra",
+      "title": "OpenAI API: Pricing, Standard pricing data (short and long context), gpt-5.6-terra",
+      "url": "https://developers.openai.com/api/docs/pricing.md",
+      "quote": "| gpt-5.6-terra | $2.00 | $12.00 | $0.20 | $2.50 | $5.00 | $4.00 | $18.00 | $0.40 | $5.00 | $10.00 |",
+      "checkedAt": "2026-11-06"
+    },
+    {
+      "id": "openai-api-pricing-gpt-5-6-luna",
+      "title": "OpenAI API: Pricing, Standard pricing data (short and long context), gpt-5.6-luna",
+      "url": "https://developers.openai.com/api/docs/pricing.md",
+      "quote": "| gpt-5.6-luna | $0.20 | $1.20 | $0.02 | $0.25 | $0.50 | $0.40 | $1.80 | $0.04 | $0.50 | $1.00 |",
+      "checkedAt": "2026-11-06"
+    },
+    {
+      "id": "openai-api-pricing-gpt-5-5",
+      "title": "OpenAI API: Pricing, Standard pricing data (short and long context), gpt-5.5",
+      "url": "https://developers.openai.com/api/docs/pricing.md",
+      "quote": "| gpt-5.5 (<272K context length) | $5.00 | $30.00 | $0.50 | - | - | $10.00 | $45.00 | $1.00 | - | - |",
+      "checkedAt": "2026-11-06"
+    },
+    {
+      "id": "openai-api-pricing-gpt-5-4",
+      "title": "OpenAI API: Pricing, Standard pricing data (short and long context), gpt-5.4",
+      "url": "https://developers.openai.com/api/docs/pricing.md",
+      "quote": "| gpt-5.4 (<272K context length) | $2.50 | $15.00 | $0.25 | - | - | $5.00 | $22.50 | $0.50 | - | - |",
+      "checkedAt": "2026-11-06"
+    },
+    {
+      "id": "openai-api-pricing-gpt-5-4-mini",
+      "title": "OpenAI API: Pricing, Standard pricing data, gpt-5.4-mini",
+      "url": "https://developers.openai.com/api/docs/pricing.md",
+      "quote": "| gpt-5.4-mini | $0.75 | $4.50 | $0.075 |",
+      "checkedAt": "2026-11-06"
+    },
+    {
+      "id": "openai-api-pricing-gpt-5-4-nano",
+      "title": "OpenAI API: Pricing, Standard pricing data, gpt-5.4-nano",
+      "url": "https://developers.openai.com/api/docs/pricing.md",
+      "quote": "| gpt-5.4-nano | $0.20 | $1.25 | $0.02 |",
+      "checkedAt": "2026-11-06"
+    },
+    {
+      "id": "openai-api-pricing-gpt-5-2",
+      "title": "OpenAI API: Pricing, Standard pricing data, gpt-5.2",
+      "url": "https://developers.openai.com/api/docs/pricing.md",
+      "quote": "| gpt-5.2 | $1.75 | $14.00 | $0.175 |",
+      "checkedAt": "2026-11-06"
+    },
+    {
+      "id": "openai-api-pricing-gpt-5-1",
+      "title": "OpenAI API: Pricing, Standard pricing data, gpt-5.1",
+      "url": "https://developers.openai.com/api/docs/pricing.md",
+      "quote": "| gpt-5.1 | $1.25 | $10.00 | $0.125 |",
+      "checkedAt": "2026-11-06"
+    },
+    {
+      "id": "openai-api-pricing-gpt-5",
+      "title": "OpenAI API: Pricing, Standard pricing data, gpt-5",
+      "url": "https://developers.openai.com/api/docs/pricing.md",
+      "quote": "| gpt-5 | $1.25 | $10.00 | $0.125 |",
+      "checkedAt": "2026-11-06"
+    },
+    {
+      "id": "openai-api-pricing-gpt-5-mini",
+      "title": "OpenAI API: Pricing, Standard pricing data, gpt-5-mini",
+      "url": "https://developers.openai.com/api/docs/pricing.md",
+      "quote": "| gpt-5-mini | $0.25 | $2.00 | $0.025 |",
+      "checkedAt": "2026-11-06"
+    },
+    {
+      "id": "openai-api-pricing-gpt-5-nano",
+      "title": "OpenAI API: Pricing, Standard pricing data, gpt-5-nano",
+      "url": "https://developers.openai.com/api/docs/pricing.md",
+      "quote": "| gpt-5-nano | $0.05 | $0.40 | $0.005 |",
+      "checkedAt": "2026-11-06"
+    },
+    {
+      "id": "openai-api-pricing-gpt-4-1",
+      "title": "OpenAI API: Pricing, Standard pricing data, gpt-4.1",
+      "url": "https://developers.openai.com/api/docs/pricing.md",
+      "quote": "| gpt-4.1 | $2.00 | $8.00 | $0.50 |",
+      "checkedAt": "2026-11-06"
+    },
+    {
+      "id": "openai-api-pricing-gpt-4-1-mini",
+      "title": "OpenAI API: Pricing, Standard pricing data, gpt-4.1-mini",
+      "url": "https://developers.openai.com/api/docs/pricing.md",
+      "quote": "| gpt-4.1-mini | $0.40 | $1.60 | $0.10 |",
+      "checkedAt": "2026-11-06"
+    },
+    {
+      "id": "openai-api-pricing-gpt-4o",
+      "title": "OpenAI API: Pricing, Standard pricing data, gpt-4o",
+      "url": "https://developers.openai.com/api/docs/pricing.md",
+      "quote": "| gpt-4o | $2.50 | $10.00 | $1.25 |",
+      "checkedAt": "2026-11-06"
+    },
+    {
+      "id": "openai-api-pricing-gpt-4o-mini",
+      "title": "OpenAI API: Pricing, Standard pricing data, gpt-4o-mini",
+      "url": "https://developers.openai.com/api/docs/pricing.md",
+      "quote": "| gpt-4o-mini | $0.15 | $0.60 | $0.075 |",
+      "checkedAt": "2026-11-06"
+    },
+    {
+      "id": "openai-api-pricing-o3",
+      "title": "OpenAI API: Pricing, Standard pricing data, o3",
+      "url": "https://developers.openai.com/api/docs/pricing.md",
+      "quote": "| o3 | $2.00 | $8.00 | $0.50 |",
+      "checkedAt": "2026-11-06"
+    },
+    {
+      "id": "openai-api-pricing-gpt-5-3-codex",
+      "title": "OpenAI API: Pricing, Specialized models (Standard), gpt-5.3-codex",
+      "url": "https://developers.openai.com/api/docs/pricing.md",
+      "quote": "| Codex | gpt-5.3-codex | $1.75 | $14.00 | $0.175 |",
+      "checkedAt": "2026-11-06"
+    },
+    {
+      "id": "openai-api-pricing-table-header",
+      "title": "OpenAI API: Pricing, Flagship models, Standard pricing data columns",
+      "url": "https://developers.openai.com/api/docs/pricing.md",
+      "quote": "| Model | Short context input | Short context output | Short context cached input | Short context 30m write | Short context 12h write | Long context input | Long context output | Long context cached input | Long context 30m write | Long context 12h write |",
+      "checkedAt": "2026-11-06"
+    },
+    {
+      "id": "openai-api-pricing-context-length",
+      "title": "OpenAI API: Pricing, short and long context",
+      "url": "https://developers.openai.com/api/docs/pricing.md",
+      "quote": "Short context: ≤272K input tokens. Long context: >272K input tokens.",
+      "checkedAt": "2026-11-06"
+    },
+    {
+      "id": "openai-api-pricing-gpt-5-6-sol-promo",
+      "title": "OpenAI API: Pricing, GPT-5.6 Sol promotion",
+      "url": "https://developers.openai.com/api/docs/pricing.md",
+      "quote": "GPT-5.6 Sol’s promotional pricing is available until November 30, 2026.",
+      "checkedAt": "2026-11-06"
+    },
+    {
+      "id": "openai-api-pc-write-rates",
+      "title": "OpenAI API: Prompt caching guide, cache-write rates for GPT-5.6 and later",
+      "url": "https://developers.openai.com/api/docs/guides/prompt-caching",
+      "quote": "For GPT-5.6 and later, cache writes cost 1.25× the standard, uncached input-token rate for the default 30-minute lifetime. In the Responses API, you can choose a 12-hour minimum lifetime at a write rate of 2.5× ordinary input.",
+      "checkedAt": "2026-11-06"
+    },
+    {
+      "id": "openai-api-pc-earlier-no-write",
+      "title": "OpenAI API: Prompt caching guide, summary of model differences (cache write charge)",
+      "url": "https://developers.openai.com/api/docs/guides/prompt-caching",
+      "quote": "Cache write charge | 1.25× for \"30m\"; 2.5× for \"12h\" in the Responses API | No additional cache-write charge | No additional cache-write charge",
+      "checkedAt": "2026-11-06"
+    },
+    {
+      "id": "openai-api-pc-not-additive",
+      "title": "OpenAI API: Prompt caching guide, cache-write pricing",
+      "url": "https://developers.openai.com/api/docs/guides/prompt-caching",
+      "quote": "Cache-write pricing is not an additive fee: input tokens use the uncached-input, cached-input, or cache-write rate.",
+      "checkedAt": "2026-11-06"
+    },
+    {
+      "id": "openai-api-changelog-2026-10-20-12h-cache",
+      "title": "OpenAI API changelog, Oct 20, 2026 (12-hour prompt caching)",
+      "url": "https://developers.openai.com/api/docs/changelog",
+      "quote": "You can now choose 12-hour prompt caching in the API. 12-hour prompt caching keeps shared instructions, tools, and context cached longer to benefit from lower cached-input pricing, even when requests are hours apart. 12-hour cache writes cost 2.5x the input token price.",
+      "checkedAt": "2026-11-06"
+    },
+    {
+      "id": "openai-api-changelog-2026-09-29-gpt-6-1-sol",
+      "title": "OpenAI API changelog, Sep 29, 2026 (GPT-6.1 Sol released)",
+      "url": "https://developers.openai.com/api/docs/changelog",
+      "quote": "Standard pricing per 1M tokens for prompts with up to 272K input tokens is $2 input, $0.10 cached input, $2.50 cache write, and $10 output.",
+      "checkedAt": "2026-11-06"
+    },
+    {
+      "id": "openai-api-changelog-2026-09-22-gpt-6-sol",
+      "title": "OpenAI API changelog, Sep 22, 2026 (GPT-6 Sol released)",
+      "url": "https://developers.openai.com/api/docs/changelog",
+      "quote": "Standard pricing per 1M tokens for prompts with up to 272K input tokens: ... GPT-6 Sol: $2 input, $0.20 cached input, and $10 output. ... see pricing for cache writes, longer prompts, and other processing tiers.",
+      "checkedAt": "2026-11-06"
+    },
+    {
+      "id": "openai-api-changelog-2026-09-22-gpt-6-luna",
+      "title": "OpenAI API changelog, Sep 22, 2026 (GPT-6 Luna released)",
+      "url": "https://developers.openai.com/api/docs/changelog",
+      "quote": "Standard pricing per 1M tokens for prompts with up to 272K input tokens: ... GPT-6 Luna: $0.10 input, $0.01 cached input, and $0.50 output. ... see pricing for cache writes, longer prompts, and other processing tiers.",
+      "checkedAt": "2026-11-06"
+    },
+    {
+      "id": "openai-api-changelog-2026-08-21-gpt-5-6-sol",
+      "title": "OpenAI API changelog, Aug 21, 2026 (GPT-5.6 Sol price)",
+      "url": "https://developers.openai.com/api/docs/changelog",
+      "quote": "GPT-5.6 Sol now costs $4 per million input tokens and $20 per million output tokens, representing 20% lower input pricing and 33% lower output pricing. GPT-5.6 Sol’s promotional pricing is available at least through November 21, 2026.",
+      "checkedAt": "2026-11-06"
+    },
+    {
+      "id": "openai-api-model-gpt-6-astra-long-context",
+      "title": "OpenAI API: gpt-6-astra model page, pricing notes",
+      "url": "https://developers.openai.com/api/docs/models/gpt-6-astra",
+      "quote": "Prompts with more than 272K input tokens are priced at 2x input and cache rates and 1.5x output for the full request.",
+      "checkedAt": "2026-11-06"
+    },
+    {
+      "id": "openai-api-model-gpt-6-1-sol-long-context",
+      "title": "OpenAI API: gpt-6.1-sol model page, pricing notes",
+      "url": "https://developers.openai.com/api/docs/models/gpt-6.1-sol",
+      "quote": "API prompts with more than 272K input tokens are priced at 2x input and cache rates and 1.5x output for the full request.",
+      "checkedAt": "2026-11-06"
+    },
+    {
+      "id": "openai-api-model-gpt-6-1-terra-long-context",
+      "title": "OpenAI API: gpt-6.1-terra model page, pricing notes",
+      "url": "https://developers.openai.com/api/docs/models/gpt-6.1-terra",
+      "quote": "Prompts with more than 272K input tokens are priced at 2x input and cache rates and 1.5x output for the full request.",
+      "checkedAt": "2026-11-06"
+    },
+    {
+      "id": "openai-api-model-gpt-6-sol-long-context",
+      "title": "OpenAI API: gpt-6-sol model page, pricing notes",
+      "url": "https://developers.openai.com/api/docs/models/gpt-6-sol",
+      "quote": "Prompts with more than 272K input tokens are priced at 2x input and cache rates and 1.5x output for the full request.",
+      "checkedAt": "2026-11-06"
+    },
+    {
+      "id": "openai-api-model-gpt-6-luna-long-context",
+      "title": "OpenAI API: gpt-6-luna model page, pricing notes",
+      "url": "https://developers.openai.com/api/docs/models/gpt-6-luna",
+      "quote": "Prompts with more than 272K input tokens are priced at 2x input and cache rates and 1.5x output for the full request.",
+      "checkedAt": "2026-11-06"
+    },
+    {
+      "id": "openai-api-model-gpt-5-6-sol-long-context",
+      "title": "OpenAI API: gpt-5.6-sol model page, pricing notes",
+      "url": "https://developers.openai.com/api/docs/models/gpt-5.6-sol",
+      "quote": "Prompts with >272K input tokens are priced at 2x input and 1.5x output for the full request.",
+      "checkedAt": "2026-11-06"
+    },
+    {
+      "id": "openai-api-model-gpt-5-6-terra-long-context",
+      "title": "OpenAI API: gpt-5.6-terra model page, pricing notes",
+      "url": "https://developers.openai.com/api/docs/models/gpt-5.6-terra",
+      "quote": "Prompts with >272K input tokens are priced at 2x input and 1.5x output for the full request.",
+      "checkedAt": "2026-11-06"
+    },
+    {
+      "id": "openai-api-model-gpt-5-6-luna-long-context",
+      "title": "OpenAI API: gpt-5.6-luna model page, pricing notes",
+      "url": "https://developers.openai.com/api/docs/models/gpt-5.6-luna",
+      "quote": "Prompts with >272K input tokens are priced at 2x input and 1.5x output for the full request.",
+      "checkedAt": "2026-11-06"
+    },
+    {
+      "id": "openai-api-model-gpt-5-5-long-context",
+      "title": "OpenAI API: gpt-5.5 model page, pricing notes",
+      "url": "https://developers.openai.com/api/docs/models/gpt-5.5",
+      "quote": "For GPT-5.5, prompts with >272K input tokens are priced at 2x input and 1.5x output for the full session for standard, batch, and flex.",
+      "checkedAt": "2026-11-06"
+    },
+    {
+      "id": "openai-api-model-gpt-5-4-long-context",
+      "title": "OpenAI API: gpt-5.4 model page, pricing notes",
+      "url": "https://developers.openai.com/api/docs/models/gpt-5.4",
+      "quote": "For models with a 1.05M context window (GPT-5.4 and GPT-5.4 Pro), prompts with >272K input tokens are priced at 2x input and 1.5x output for the full session for standard, batch, and flex.",
+      "checkedAt": "2026-11-06"
+    },
+    {
+      "id": "openai-api-deprecations-2026-10-01",
+      "title": "OpenAI API deprecations, 2026-10-01: GPT-5.3-Codex, GPT-5.1, GPT-5.4-Nano",
+      "url": "https://developers.openai.com/api/docs/deprecations",
+      "quote": "The following models are deprecated and will be removed from the API on April 1, 2027, with six months' notice.",
+      "checkedAt": "2026-11-06"
+    },
+    {
+      "id": "openai-api-deprecations-2026-06-11",
+      "title": "OpenAI API deprecations, 2026-06-11: GPT-5 and o3 model deprecations",
+      "url": "https://developers.openai.com/api/docs/deprecations",
+      "quote": "On June 11, 2026, we notified developers using older GPT-5 and o3 model snapshots of their deprecation and removal from the API on December 11, 2026.",
+      "checkedAt": "2026-11-06"
+    },
+    {
+      "id": "openai-api-deprecations-2026-10-14",
+      "title": "OpenAI API deprecations, 2026-10-14: GPT-4 series model deprecations",
+      "url": "https://developers.openai.com/api/docs/deprecations",
+      "quote": "On October 14, 2026, we notified developers using certain GPT-4 series models of their deprecation and removal from the API on January 14, 2027.",
+      "checkedAt": "2026-11-06"
+    }
+  ],
+  "versions": [
+    {
+      "id": "openai-api:gpt-4.1:2026-11-06",
+      "channel": "openai-api",
+      "modelId": "gpt-4.1",
+      "currency": "USD",
+      "effectiveFrom": "2026-11-06",
+      "tiers": [
+        {
+          "inputUsdPerM": 2,
+          "cachedInputUsdPerM": 0.5,
+          "cacheWriteUsdPerM": null,
+          "outputUsdPerM": 8
+        }
+      ],
+      "kind": "list",
+      "sourceIds": [
+        "openai-api-pricing-gpt-4-1",
+        "openai-api-pc-earlier-no-write",
+        "openai-api-deprecations-2026-10-14"
+      ],
+      "note": "Starts 2026-11-06: today's pricing page is the earliest OpenAI source found that gives this price (no dated launch post or changelog entry with the amount could be fetched), so earlier turns price as unknown. No cache-write charge on models before GPT-5.6 (prompt-caching guide), so cacheWriteUsdPerM is null. The model is deprecated on 2026-10-14, shutting down on 2027-01-14 (deprecations page); no end date is set here. Standard tier, global processing; Batch, Flex, Fast, Ultrafast, regional-processing (10% uplift) and cloud-platform prices are not modelled."
+    },
+    {
+      "id": "openai-api:gpt-4.1-mini:2026-11-06",
+      "channel": "openai-api",
+      "modelId": "gpt-4.1-mini",
+      "currency": "USD",
+      "effectiveFrom": "2026-11-06",
+      "tiers": [
+        {
+          "inputUsdPerM": 0.4,
+          "cachedInputUsdPerM": 0.1,
+          "cacheWriteUsdPerM": null,
+          "outputUsdPerM": 1.6
+        }
+      ],
+      "kind": "list",
+      "sourceIds": [
+        "openai-api-pricing-gpt-4-1-mini",
+        "openai-api-pc-earlier-no-write",
+        "openai-api-deprecations-2026-10-14"
+      ],
+      "note": "Starts 2026-11-06: today's pricing page is the earliest OpenAI source found that gives this price (no dated launch post or changelog entry with the amount could be fetched), so earlier turns price as unknown. No cache-write charge on models before GPT-5.6 (prompt-caching guide), so cacheWriteUsdPerM is null. The model is deprecated on 2026-10-14, shutting down on 2027-01-14 (deprecations page); no end date is set here. Standard tier, global processing; Batch, Flex, Fast, Ultrafast, regional-processing (10% uplift) and cloud-platform prices are not modelled."
+    },
+    {
+      "id": "openai-api:gpt-4o:2026-11-06",
+      "channel": "openai-api",
+      "modelId": "gpt-4o",
+      "currency": "USD",
+      "effectiveFrom": "2026-11-06",
+      "tiers": [
+        {
+          "inputUsdPerM": 2.5,
+          "cachedInputUsdPerM": 1.25,
+          "cacheWriteUsdPerM": null,
+          "outputUsdPerM": 10
+        }
+      ],
+      "kind": "list",
+      "sourceIds": [
+        "openai-api-pricing-gpt-4o",
+        "openai-api-pc-earlier-no-write",
+        "openai-api-deprecations-2026-10-14"
+      ],
+      "note": "Starts 2026-11-06: today's pricing page is the earliest OpenAI source found that gives this price (no dated launch post or changelog entry with the amount could be fetched), so earlier turns price as unknown. No cache-write charge on models before GPT-5.6 (prompt-caching guide), so cacheWriteUsdPerM is null. The model is deprecated on 2026-10-14, shutting down on 2027-01-14 (deprecations page); no end date is set here. Standard tier, global processing; Batch, Flex, Fast, Ultrafast, regional-processing (10% uplift) and cloud-platform prices are not modelled."
+    },
+    {
+      "id": "openai-api:gpt-4o-mini:2026-11-06",
+      "channel": "openai-api",
+      "modelId": "gpt-4o-mini",
+      "currency": "USD",
+      "effectiveFrom": "2026-11-06",
+      "tiers": [
+        {
+          "inputUsdPerM": 0.15,
+          "cachedInputUsdPerM": 0.075,
+          "cacheWriteUsdPerM": null,
+          "outputUsdPerM": 0.6
+        }
+      ],
+      "kind": "list",
+      "sourceIds": [
+        "openai-api-pricing-gpt-4o-mini",
+        "openai-api-pc-earlier-no-write",
+        "openai-api-deprecations-2026-10-14"
+      ],
+      "note": "Starts 2026-11-06: today's pricing page is the earliest OpenAI source found that gives this price (no dated launch post or changelog entry with the amount could be fetched), so earlier turns price as unknown. No cache-write charge on models before GPT-5.6 (prompt-caching guide), so cacheWriteUsdPerM is null. The model is deprecated on 2026-10-14, shutting down on 2027-01-14 (deprecations page); no end date is set here. Standard tier, global processing; Batch, Flex, Fast, Ultrafast, regional-processing (10% uplift) and cloud-platform prices are not modelled."
+    },
+    {
+      "id": "openai-api:gpt-5:2026-11-06",
+      "channel": "openai-api",
+      "modelId": "gpt-5",
+      "currency": "USD",
+      "effectiveFrom": "2026-11-06",
+      "tiers": [
+        {
+          "inputUsdPerM": 1.25,
+          "cachedInputUsdPerM": 0.125,
+          "cacheWriteUsdPerM": null,
+          "outputUsdPerM": 10
+        }
+      ],
+      "kind": "list",
+      "sourceIds": [
+        "openai-api-pricing-gpt-5",
+        "openai-api-pc-earlier-no-write",
+        "openai-api-deprecations-2026-06-11"
+      ],
+      "note": "Starts 2026-11-06: today's pricing page is the earliest OpenAI source found that gives this price (no dated launch post or changelog entry with the amount could be fetched), so earlier turns price as unknown. No cache-write charge on models before GPT-5.6 (prompt-caching guide), so cacheWriteUsdPerM is null. The model is deprecated, shutting down on 2026-12-11 (deprecations page); no end date is set here. Standard tier, global processing; Batch, Flex, Fast, Ultrafast, regional-processing (10% uplift) and cloud-platform prices are not modelled."
+    },
+    {
+      "id": "openai-api:gpt-5-mini:2026-11-06",
+      "channel": "openai-api",
+      "modelId": "gpt-5-mini",
+      "currency": "USD",
+      "effectiveFrom": "2026-11-06",
+      "tiers": [
+        {
+          "inputUsdPerM": 0.25,
+          "cachedInputUsdPerM": 0.025,
+          "cacheWriteUsdPerM": null,
+          "outputUsdPerM": 2
+        }
+      ],
+      "kind": "list",
+      "sourceIds": [
+        "openai-api-pricing-gpt-5-mini",
+        "openai-api-pc-earlier-no-write",
+        "openai-api-deprecations-2026-06-11"
+      ],
+      "note": "Starts 2026-11-06: today's pricing page is the earliest OpenAI source found that gives this price (no dated launch post or changelog entry with the amount could be fetched), so earlier turns price as unknown. No cache-write charge on models before GPT-5.6 (prompt-caching guide), so cacheWriteUsdPerM is null. The model is deprecated, shutting down on 2026-12-11 (deprecations page); no end date is set here. Standard tier, global processing; Batch, Flex, Fast, Ultrafast, regional-processing (10% uplift) and cloud-platform prices are not modelled."
+    },
+    {
+      "id": "openai-api:gpt-5-nano:2026-11-06",
+      "channel": "openai-api",
+      "modelId": "gpt-5-nano",
+      "currency": "USD",
+      "effectiveFrom": "2026-11-06",
+      "tiers": [
+        {
+          "inputUsdPerM": 0.05,
+          "cachedInputUsdPerM": 0.005,
+          "cacheWriteUsdPerM": null,
+          "outputUsdPerM": 0.4
+        }
+      ],
+      "kind": "list",
+      "sourceIds": [
+        "openai-api-pricing-gpt-5-nano",
+        "openai-api-pc-earlier-no-write",
+        "openai-api-deprecations-2026-06-11"
+      ],
+      "note": "Starts 2026-11-06: today's pricing page is the earliest OpenAI source found that gives this price (no dated launch post or changelog entry with the amount could be fetched), so earlier turns price as unknown. No cache-write charge on models before GPT-5.6 (prompt-caching guide), so cacheWriteUsdPerM is null. The model is deprecated, shutting down on 2026-12-11 (deprecations page); no end date is set here. Standard tier, global processing; Batch, Flex, Fast, Ultrafast, regional-processing (10% uplift) and cloud-platform prices are not modelled."
+    },
+    {
+      "id": "openai-api:gpt-5.1:2026-11-06",
+      "channel": "openai-api",
+      "modelId": "gpt-5.1",
+      "currency": "USD",
+      "effectiveFrom": "2026-11-06",
+      "tiers": [
+        {
+          "inputUsdPerM": 1.25,
+          "cachedInputUsdPerM": 0.125,
+          "cacheWriteUsdPerM": null,
+          "outputUsdPerM": 10
+        }
+      ],
+      "kind": "list",
+      "sourceIds": [
+        "openai-api-pricing-gpt-5-1",
+        "openai-api-pc-earlier-no-write",
+        "openai-api-deprecations-2026-10-01"
+      ],
+      "note": "Starts 2026-11-06: today's pricing page is the earliest OpenAI source found that gives this price (no dated launch post or changelog entry with the amount could be fetched), so earlier turns price as unknown. No cache-write charge on models before GPT-5.6 (prompt-caching guide), so cacheWriteUsdPerM is null. The model is deprecated on 2026-10-01, shutting down on 2027-04-01 (deprecations page); no end date is set here. Standard tier, global processing; Batch, Flex, Fast, Ultrafast, regional-processing (10% uplift) and cloud-platform prices are not modelled."
+    },
+    {
+      "id": "openai-api:gpt-5.2:2026-11-06",
+      "channel": "openai-api",
+      "modelId": "gpt-5.2",
+      "currency": "USD",
+      "effectiveFrom": "2026-11-06",
+      "tiers": [
+        {
+          "inputUsdPerM": 1.75,
+          "cachedInputUsdPerM": 0.175,
+          "cacheWriteUsdPerM": null,
+          "outputUsdPerM": 14
+        }
+      ],
+      "kind": "list",
+      "sourceIds": [
+        "openai-api-pricing-gpt-5-2",
+        "openai-api-pc-earlier-no-write"
+      ],
+      "note": "Starts 2026-11-06: today's pricing page is the earliest OpenAI source found that gives this price (no dated launch post or changelog entry with the amount could be fetched), so earlier turns price as unknown. No cache-write charge on models before GPT-5.6 (prompt-caching guide), so cacheWriteUsdPerM is null. Standard tier, global processing; Batch, Flex, Fast, Ultrafast, regional-processing (10% uplift) and cloud-platform prices are not modelled."
+    },
+    {
+      "id": "openai-api:gpt-5.3-codex:2026-11-06",
+      "channel": "openai-api",
+      "modelId": "gpt-5.3-codex",
+      "currency": "USD",
+      "effectiveFrom": "2026-11-06",
+      "tiers": [
+        {
+          "inputUsdPerM": 1.75,
+          "cachedInputUsdPerM": 0.175,
+          "cacheWriteUsdPerM": null,
+          "outputUsdPerM": 14
+        }
+      ],
+      "kind": "list",
+      "sourceIds": [
+        "openai-api-pricing-gpt-5-3-codex",
+        "openai-api-pc-earlier-no-write",
+        "openai-api-deprecations-2026-10-01"
+      ],
+      "note": "Starts 2026-11-06: today's pricing page is the earliest OpenAI source found that gives this price (no dated launch post or changelog entry with the amount could be fetched), so earlier turns price as unknown. Released 2026-02-24 (changelog, no price given); listed under Specialized models. No cache-write charge on models before GPT-5.6 (prompt-caching guide), so cacheWriteUsdPerM is null. The model is deprecated on 2026-10-01, shutting down on 2027-04-01 (deprecations page); no end date is set here. Standard tier, global processing; Batch, Flex, Fast, Ultrafast, regional-processing (10% uplift) and cloud-platform prices are not modelled."
+    },
+    {
+      "id": "openai-api:gpt-5.4:2026-11-06",
+      "channel": "openai-api",
+      "modelId": "gpt-5.4",
+      "currency": "USD",
+      "effectiveFrom": "2026-11-06",
+      "tiers": [
+        {
+          "maxInputTokens": 272000,
+          "inputUsdPerM": 2.5,
+          "cachedInputUsdPerM": 0.25,
+          "cacheWriteUsdPerM": null,
+          "outputUsdPerM": 15
+        },
+        {
+          "inputUsdPerM": 5,
+          "cachedInputUsdPerM": 0.5,
+          "cacheWriteUsdPerM": null,
+          "outputUsdPerM": 22.5
+        }
+      ],
+      "kind": "list",
+      "sourceIds": [
+        "openai-api-pricing-gpt-5-4",
+        "openai-api-pricing-table-header",
+        "openai-api-pricing-context-length",
+        "openai-api-model-gpt-5-4-long-context",
+        "openai-api-pc-earlier-no-write"
+      ],
+      "note": "Starts 2026-11-06: today's pricing page is the earliest OpenAI source found that gives this price (no dated launch post or changelog entry with the amount could be fetched), so earlier turns price as unknown. Released 2026-03-05 (changelog, no price given). The second tier is the long-context price for prompts over 272K input tokens, applied to the whole request. No cache-write charge on models before GPT-5.6 (prompt-caching guide), so cacheWriteUsdPerM is null. Standard tier, global processing; Batch, Flex, Fast, Ultrafast, regional-processing (10% uplift) and cloud-platform prices are not modelled."
+    },
+    {
+      "id": "openai-api:gpt-5.4-mini:2026-11-06",
+      "channel": "openai-api",
+      "modelId": "gpt-5.4-mini",
+      "currency": "USD",
+      "effectiveFrom": "2026-11-06",
+      "tiers": [
+        {
+          "inputUsdPerM": 0.75,
+          "cachedInputUsdPerM": 0.075,
+          "cacheWriteUsdPerM": null,
+          "outputUsdPerM": 4.5
+        }
+      ],
+      "kind": "list",
+      "sourceIds": [
+        "openai-api-pricing-gpt-5-4-mini",
+        "openai-api-pc-earlier-no-write"
+      ],
+      "note": "Starts 2026-11-06: today's pricing page is the earliest OpenAI source found that gives this price (no dated launch post or changelog entry with the amount could be fetched), so earlier turns price as unknown. Released 2026-03-17 (changelog, no price given). No cache-write charge on models before GPT-5.6 (prompt-caching guide), so cacheWriteUsdPerM is null. Standard tier, global processing; Batch, Flex, Fast, Ultrafast, regional-processing (10% uplift) and cloud-platform prices are not modelled."
+    },
+    {
+      "id": "openai-api:gpt-5.4-nano:2026-11-06",
+      "channel": "openai-api",
+      "modelId": "gpt-5.4-nano",
+      "currency": "USD",
+      "effectiveFrom": "2026-11-06",
+      "tiers": [
+        {
+          "inputUsdPerM": 0.2,
+          "cachedInputUsdPerM": 0.02,
+          "cacheWriteUsdPerM": null,
+          "outputUsdPerM": 1.25
+        }
+      ],
+      "kind": "list",
+      "sourceIds": [
+        "openai-api-pricing-gpt-5-4-nano",
+        "openai-api-pc-earlier-no-write",
+        "openai-api-deprecations-2026-10-01"
+      ],
+      "note": "Starts 2026-11-06: today's pricing page is the earliest OpenAI source found that gives this price (no dated launch post or changelog entry with the amount could be fetched), so earlier turns price as unknown. Released 2026-03-17 (changelog, no price given). No cache-write charge on models before GPT-5.6 (prompt-caching guide), so cacheWriteUsdPerM is null. The model is deprecated on 2026-10-01, shutting down on 2027-04-01 (deprecations page); no end date is set here. Standard tier, global processing; Batch, Flex, Fast, Ultrafast, regional-processing (10% uplift) and cloud-platform prices are not modelled."
+    },
+    {
+      "id": "openai-api:gpt-5.5:2026-11-06",
+      "channel": "openai-api",
+      "modelId": "gpt-5.5",
+      "currency": "USD",
+      "effectiveFrom": "2026-11-06",
+      "tiers": [
+        {
+          "maxInputTokens": 272000,
+          "inputUsdPerM": 5,
+          "cachedInputUsdPerM": 0.5,
+          "cacheWriteUsdPerM": null,
+          "outputUsdPerM": 30
+        },
+        {
+          "inputUsdPerM": 10,
+          "cachedInputUsdPerM": 1,
+          "cacheWriteUsdPerM": null,
+          "outputUsdPerM": 45
+        }
+      ],
+      "kind": "list",
+      "sourceIds": [
+        "openai-api-pricing-gpt-5-5",
+        "openai-api-pricing-table-header",
+        "openai-api-pricing-context-length",
+        "openai-api-model-gpt-5-5-long-context",
+        "openai-api-pc-earlier-no-write"
+      ],
+      "note": "Starts 2026-11-06: today's pricing page is the earliest OpenAI source found that gives this price (no dated launch post or changelog entry with the amount could be fetched), so earlier turns price as unknown. Released 2026-04-24 (changelog, no price given). The second tier is the long-context price for prompts over 272K input tokens, applied to the whole request. No cache-write charge on models before GPT-5.6 (prompt-caching guide), so cacheWriteUsdPerM is null. Standard tier, global processing; Batch, Flex, Fast, Ultrafast, regional-processing (10% uplift) and cloud-platform prices are not modelled."
+    },
+    {
+      "id": "openai-api:gpt-5.6-luna:2026-11-06",
+      "channel": "openai-api",
+      "modelId": "gpt-5.6-luna",
+      "currency": "USD",
+      "effectiveFrom": "2026-11-06",
+      "tiers": [
+        {
+          "maxInputTokens": 272000,
+          "inputUsdPerM": 0.2,
+          "cachedInputUsdPerM": 0.02,
+          "cacheWriteUsdPerM": 0.25,
+          "extendedCacheWriteUsdPerM": 0.5,
+          "outputUsdPerM": 1.2
+        },
+        {
+          "inputUsdPerM": 0.4,
+          "cachedInputUsdPerM": 0.04,
+          "cacheWriteUsdPerM": 0.5,
+          "extendedCacheWriteUsdPerM": 1,
+          "outputUsdPerM": 1.8
+        }
+      ],
+      "kind": "list",
+      "sourceIds": [
+        "openai-api-pricing-gpt-5-6-luna",
+        "openai-api-pricing-table-header",
+        "openai-api-pricing-context-length",
+        "openai-api-model-gpt-5-6-luna-long-context",
+        "openai-api-pc-write-rates",
+        "openai-api-pc-not-additive",
+        "openai-api-changelog-2026-10-20-12h-cache"
+      ],
+      "note": "Starts 2026-11-06: today's pricing page is the earliest OpenAI source found that gives this price (no dated launch post or changelog entry with the amount could be fetched), so earlier turns price as unknown. The 2026-07-30 changelog cut its price by 80% but gives no amounts. The second tier is the long-context price for prompts over 272K input tokens, applied to the whole request. cacheWriteUsdPerM is the default 30-minute write (1.25x input); extendedCacheWriteUsdPerM is the 12-hour write (2.5x input, Responses API only), offered from 2026-10-20 per the changelog. Standard tier, global processing; Batch, Flex, Fast, Ultrafast, regional-processing (10% uplift) and cloud-platform prices are not modelled."
+    },
+    {
+      "id": "openai-api:gpt-5.6-sol:2026-10-01",
+      "channel": "openai-api",
+      "modelId": "gpt-5.6-sol",
+      "currency": "USD",
+      "effectiveFrom": "2026-10-01",
+      "effectiveTo": "2026-10-20",
+      "tiers": [
+        {
+          "maxInputTokens": 272000,
+          "inputUsdPerM": 4,
+          "cachedInputUsdPerM": 0.4,
+          "cacheWriteUsdPerM": 5,
+          "outputUsdPerM": 20
+        },
+        {
+          "inputUsdPerM": 8,
+          "cachedInputUsdPerM": 0.8,
+          "cacheWriteUsdPerM": 10,
+          "outputUsdPerM": 30
+        }
+      ],
+      "kind": "promo",
+      "promoEndsAt": "2026-11-30",
+      "sourceIds": [
+        "openai-api-pricing-gpt-5-6-sol",
+        "openai-api-pricing-table-header",
+        "openai-api-pricing-context-length",
+        "openai-api-model-gpt-5-6-sol-long-context",
+        "openai-api-pc-write-rates",
+        "openai-api-pc-not-additive",
+        "openai-api-changelog-2026-08-21-gpt-5-6-sol",
+        "openai-api-pricing-gpt-5-6-sol-promo"
+      ],
+      "note": "In force from 2026-10-01: a dated OpenAI changelog entry before that day gives this price, today's pricing page lists the same, and the changelog records no price change for it in between (no archived page could be fetched). Promotional price: the 2026-08-21 changelog cut GPT-5.6 Sol to $4 input and $20 output 'at least through November 21, 2026'; today's pricing page says the promotion runs until November 30, 2026, so no price is known from 2026-12-01. The cached-input, cache-write and long-context prices come from today's pricing page only. The second tier is the long-context price for prompts over 272K input tokens, applied to the whole request. cacheWriteUsdPerM is the default 30-minute write (1.25x input); the 12-hour write did not exist until 2026-10-20 (changelog), so this version has no extendedCacheWriteUsdPerM. Standard tier, global processing; Batch, Flex, Fast, Ultrafast, regional-processing (10% uplift) and cloud-platform prices are not modelled."
+    },
+    {
+      "id": "openai-api:gpt-5.6-sol:2026-10-20",
+      "channel": "openai-api",
+      "modelId": "gpt-5.6-sol",
+      "currency": "USD",
+      "effectiveFrom": "2026-10-20",
+      "effectiveTo": "2026-12-01",
+      "tiers": [
+        {
+          "maxInputTokens": 272000,
+          "inputUsdPerM": 4,
+          "cachedInputUsdPerM": 0.4,
+          "cacheWriteUsdPerM": 5,
+          "extendedCacheWriteUsdPerM": 10,
+          "outputUsdPerM": 20
+        },
+        {
+          "inputUsdPerM": 8,
+          "cachedInputUsdPerM": 0.8,
+          "cacheWriteUsdPerM": 10,
+          "extendedCacheWriteUsdPerM": 20,
+          "outputUsdPerM": 30
+        }
+      ],
+      "kind": "promo",
+      "promoEndsAt": "2026-11-30",
+      "sourceIds": [
+        "openai-api-pricing-gpt-5-6-sol",
+        "openai-api-pricing-table-header",
+        "openai-api-pricing-context-length",
+        "openai-api-model-gpt-5-6-sol-long-context",
+        "openai-api-pc-write-rates",
+        "openai-api-pc-not-additive",
+        "openai-api-changelog-2026-10-20-12h-cache",
+        "openai-api-changelog-2026-08-21-gpt-5-6-sol",
+        "openai-api-pricing-gpt-5-6-sol-promo"
+      ],
+      "note": "Same prices as the 2026-10-01 version; the boundary is the 12-hour cache write OpenAI added on 2026-10-20 (00:00 UTC; the time of day isn't published). Promotional price: the 2026-08-21 changelog cut GPT-5.6 Sol to $4 input and $20 output 'at least through November 21, 2026'; today's pricing page says the promotion runs until November 30, 2026, so no price is known from 2026-12-01. The cached-input, cache-write and long-context prices come from today's pricing page only. The second tier is the long-context price for prompts over 272K input tokens, applied to the whole request. cacheWriteUsdPerM is the default 30-minute write (1.25x input); extendedCacheWriteUsdPerM is the 12-hour write (2.5x input, Responses API only), offered from 2026-10-20 per the changelog. Standard tier, global processing; Batch, Flex, Fast, Ultrafast, regional-processing (10% uplift) and cloud-platform prices are not modelled."
+    },
+    {
+      "id": "openai-api:gpt-5.6-terra:2026-11-06",
+      "channel": "openai-api",
+      "modelId": "gpt-5.6-terra",
+      "currency": "USD",
+      "effectiveFrom": "2026-11-06",
+      "tiers": [
+        {
+          "maxInputTokens": 272000,
+          "inputUsdPerM": 2,
+          "cachedInputUsdPerM": 0.2,
+          "cacheWriteUsdPerM": 2.5,
+          "extendedCacheWriteUsdPerM": 5,
+          "outputUsdPerM": 12
+        },
+        {
+          "inputUsdPerM": 4,
+          "cachedInputUsdPerM": 0.4,
+          "cacheWriteUsdPerM": 5,
+          "extendedCacheWriteUsdPerM": 10,
+          "outputUsdPerM": 18
+        }
+      ],
+      "kind": "list",
+      "sourceIds": [
+        "openai-api-pricing-gpt-5-6-terra",
+        "openai-api-pricing-table-header",
+        "openai-api-pricing-context-length",
+        "openai-api-model-gpt-5-6-terra-long-context",
+        "openai-api-pc-write-rates",
+        "openai-api-pc-not-additive",
+        "openai-api-changelog-2026-10-20-12h-cache"
+      ],
+      "note": "Starts 2026-11-06: today's pricing page is the earliest OpenAI source found that gives this price (no dated launch post or changelog entry with the amount could be fetched), so earlier turns price as unknown. The 2026-07-30 changelog cut its price by 20% but gives no amounts. The second tier is the long-context price for prompts over 272K input tokens, applied to the whole request. cacheWriteUsdPerM is the default 30-minute write (1.25x input); extendedCacheWriteUsdPerM is the 12-hour write (2.5x input, Responses API only), offered from 2026-10-20 per the changelog. Standard tier, global processing; Batch, Flex, Fast, Ultrafast, regional-processing (10% uplift) and cloud-platform prices are not modelled."
+    },
+    {
+      "id": "openai-api:gpt-6-astra:2026-11-06",
+      "channel": "openai-api",
+      "modelId": "gpt-6-astra",
+      "currency": "USD",
+      "effectiveFrom": "2026-11-06",
+      "tiers": [
+        {
+          "maxInputTokens": 272000,
+          "inputUsdPerM": 10,
+          "cachedInputUsdPerM": 1,
+          "cacheWriteUsdPerM": 12.5,
+          "extendedCacheWriteUsdPerM": 25,
+          "outputUsdPerM": 50
+        },
+        {
+          "inputUsdPerM": 20,
+          "cachedInputUsdPerM": 2,
+          "cacheWriteUsdPerM": 25,
+          "extendedCacheWriteUsdPerM": 50,
+          "outputUsdPerM": 75
+        }
+      ],
+      "kind": "list",
+      "sourceIds": [
+        "openai-api-pricing-gpt-6-astra",
+        "openai-api-pricing-table-header",
+        "openai-api-pricing-context-length",
+        "openai-api-model-gpt-6-astra-long-context",
+        "openai-api-pc-write-rates",
+        "openai-api-pc-not-additive",
+        "openai-api-changelog-2026-10-20-12h-cache"
+      ],
+      "note": "Starts 2026-11-06: today's pricing page is the earliest OpenAI source found that gives this price (no dated launch post or changelog entry with the amount could be fetched), so earlier turns price as unknown. Released 2026-09-03 (changelog, no price given). The second tier is the long-context price for prompts over 272K input tokens, applied to the whole request. cacheWriteUsdPerM is the default 30-minute write (1.25x input); extendedCacheWriteUsdPerM is the 12-hour write (2.5x input, Responses API only), offered from 2026-10-20 per the changelog. Standard tier, global processing; Batch, Flex, Fast, Ultrafast, regional-processing (10% uplift) and cloud-platform prices are not modelled."
+    },
+    {
+      "id": "openai-api:gpt-6-luna:2026-10-01",
+      "channel": "openai-api",
+      "modelId": "gpt-6-luna",
+      "currency": "USD",
+      "effectiveFrom": "2026-10-01",
+      "effectiveTo": "2026-10-20",
+      "tiers": [
+        {
+          "maxInputTokens": 272000,
+          "inputUsdPerM": 0.1,
+          "cachedInputUsdPerM": 0.01,
+          "cacheWriteUsdPerM": 0.125,
+          "outputUsdPerM": 0.5
+        },
+        {
+          "inputUsdPerM": 0.2,
+          "cachedInputUsdPerM": 0.02,
+          "cacheWriteUsdPerM": 0.25,
+          "outputUsdPerM": 0.75
+        }
+      ],
+      "kind": "list",
+      "sourceIds": [
+        "openai-api-pricing-gpt-6-luna",
+        "openai-api-pricing-table-header",
+        "openai-api-pricing-context-length",
+        "openai-api-model-gpt-6-luna-long-context",
+        "openai-api-pc-write-rates",
+        "openai-api-pc-not-additive",
+        "openai-api-changelog-2026-09-22-gpt-6-luna"
+      ],
+      "note": "In force from 2026-10-01: a dated OpenAI changelog entry before that day gives this price, today's pricing page lists the same, and the changelog records no price change for it in between (no archived page could be fetched). Released 2026-09-22 at $0.10 input, $0.01 cached input and $0.50 output (changelog, which points to the pricing page for cache writes and longer prompts); the cache-write, long-context and 12-hour prices come from today's pricing page, model page and the guide's 1.25x rule only. The second tier is the long-context price for prompts over 272K input tokens, applied to the whole request. cacheWriteUsdPerM is the default 30-minute write (1.25x input); the 12-hour write did not exist until 2026-10-20 (changelog), so this version has no extendedCacheWriteUsdPerM. Standard tier, global processing; Batch, Flex, Fast, Ultrafast, regional-processing (10% uplift) and cloud-platform prices are not modelled."
+    },
+    {
+      "id": "openai-api:gpt-6-luna:2026-10-20",
+      "channel": "openai-api",
+      "modelId": "gpt-6-luna",
+      "currency": "USD",
+      "effectiveFrom": "2026-10-20",
+      "tiers": [
+        {
+          "maxInputTokens": 272000,
+          "inputUsdPerM": 0.1,
+          "cachedInputUsdPerM": 0.01,
+          "cacheWriteUsdPerM": 0.125,
+          "extendedCacheWriteUsdPerM": 0.25,
+          "outputUsdPerM": 0.5
+        },
+        {
+          "inputUsdPerM": 0.2,
+          "cachedInputUsdPerM": 0.02,
+          "cacheWriteUsdPerM": 0.25,
+          "extendedCacheWriteUsdPerM": 0.5,
+          "outputUsdPerM": 0.75
+        }
+      ],
+      "kind": "list",
+      "sourceIds": [
+        "openai-api-pricing-gpt-6-luna",
+        "openai-api-pricing-table-header",
+        "openai-api-pricing-context-length",
+        "openai-api-model-gpt-6-luna-long-context",
+        "openai-api-pc-write-rates",
+        "openai-api-pc-not-additive",
+        "openai-api-changelog-2026-10-20-12h-cache",
+        "openai-api-changelog-2026-09-22-gpt-6-luna"
+      ],
+      "note": "Same prices as the 2026-10-01 version; the boundary is the 12-hour cache write OpenAI added on 2026-10-20 (00:00 UTC; the time of day isn't published). Released 2026-09-22 at $0.10 input, $0.01 cached input and $0.50 output (changelog, which points to the pricing page for cache writes and longer prompts); the cache-write, long-context and 12-hour prices come from today's pricing page, model page and the guide's 1.25x rule only. The second tier is the long-context price for prompts over 272K input tokens, applied to the whole request. cacheWriteUsdPerM is the default 30-minute write (1.25x input); extendedCacheWriteUsdPerM is the 12-hour write (2.5x input, Responses API only), offered from 2026-10-20 per the changelog. Standard tier, global processing; Batch, Flex, Fast, Ultrafast, regional-processing (10% uplift) and cloud-platform prices are not modelled."
+    },
+    {
+      "id": "openai-api:gpt-6-sol:2026-10-01",
+      "channel": "openai-api",
+      "modelId": "gpt-6-sol",
+      "currency": "USD",
+      "effectiveFrom": "2026-10-01",
+      "effectiveTo": "2026-10-20",
+      "tiers": [
+        {
+          "maxInputTokens": 272000,
+          "inputUsdPerM": 2,
+          "cachedInputUsdPerM": 0.2,
+          "cacheWriteUsdPerM": 2.5,
+          "outputUsdPerM": 10
+        },
+        {
+          "inputUsdPerM": 4,
+          "cachedInputUsdPerM": 0.4,
+          "cacheWriteUsdPerM": 5,
+          "outputUsdPerM": 15
+        }
+      ],
+      "kind": "list",
+      "sourceIds": [
+        "openai-api-pricing-gpt-6-sol",
+        "openai-api-pricing-table-header",
+        "openai-api-pricing-context-length",
+        "openai-api-model-gpt-6-sol-long-context",
+        "openai-api-pc-write-rates",
+        "openai-api-pc-not-additive",
+        "openai-api-changelog-2026-09-22-gpt-6-sol"
+      ],
+      "note": "In force from 2026-10-01: a dated OpenAI changelog entry before that day gives this price, today's pricing page lists the same, and the changelog records no price change for it in between (no archived page could be fetched). Released 2026-09-22 at $2 input, $0.20 cached input and $10 output (changelog, which points to the pricing page for cache writes and longer prompts); the cache-write, long-context and 12-hour prices come from today's pricing page, model page and the guide's 1.25x rule only. The second tier is the long-context price for prompts over 272K input tokens, applied to the whole request. cacheWriteUsdPerM is the default 30-minute write (1.25x input); the 12-hour write did not exist until 2026-10-20 (changelog), so this version has no extendedCacheWriteUsdPerM. Standard tier, global processing; Batch, Flex, Fast, Ultrafast, regional-processing (10% uplift) and cloud-platform prices are not modelled."
+    },
+    {
+      "id": "openai-api:gpt-6-sol:2026-10-20",
+      "channel": "openai-api",
+      "modelId": "gpt-6-sol",
+      "currency": "USD",
+      "effectiveFrom": "2026-10-20",
+      "tiers": [
+        {
+          "maxInputTokens": 272000,
+          "inputUsdPerM": 2,
+          "cachedInputUsdPerM": 0.2,
+          "cacheWriteUsdPerM": 2.5,
+          "extendedCacheWriteUsdPerM": 5,
+          "outputUsdPerM": 10
+        },
+        {
+          "inputUsdPerM": 4,
+          "cachedInputUsdPerM": 0.4,
+          "cacheWriteUsdPerM": 5,
+          "extendedCacheWriteUsdPerM": 10,
+          "outputUsdPerM": 15
+        }
+      ],
+      "kind": "list",
+      "sourceIds": [
+        "openai-api-pricing-gpt-6-sol",
+        "openai-api-pricing-table-header",
+        "openai-api-pricing-context-length",
+        "openai-api-model-gpt-6-sol-long-context",
+        "openai-api-pc-write-rates",
+        "openai-api-pc-not-additive",
+        "openai-api-changelog-2026-10-20-12h-cache",
+        "openai-api-changelog-2026-09-22-gpt-6-sol"
+      ],
+      "note": "Same prices as the 2026-10-01 version; the boundary is the 12-hour cache write OpenAI added on 2026-10-20 (00:00 UTC; the time of day isn't published). Released 2026-09-22 at $2 input, $0.20 cached input and $10 output (changelog, which points to the pricing page for cache writes and longer prompts); the cache-write, long-context and 12-hour prices come from today's pricing page, model page and the guide's 1.25x rule only. The second tier is the long-context price for prompts over 272K input tokens, applied to the whole request. cacheWriteUsdPerM is the default 30-minute write (1.25x input); extendedCacheWriteUsdPerM is the 12-hour write (2.5x input, Responses API only), offered from 2026-10-20 per the changelog. Standard tier, global processing; Batch, Flex, Fast, Ultrafast, regional-processing (10% uplift) and cloud-platform prices are not modelled."
+    },
+    {
+      "id": "openai-api:gpt-6.1-sol:2026-10-01",
+      "channel": "openai-api",
+      "modelId": "gpt-6.1-sol",
+      "currency": "USD",
+      "effectiveFrom": "2026-10-01",
+      "effectiveTo": "2026-10-20",
+      "tiers": [
+        {
+          "maxInputTokens": 272000,
+          "inputUsdPerM": 2,
+          "cachedInputUsdPerM": 0.1,
+          "cacheWriteUsdPerM": 2.5,
+          "outputUsdPerM": 10
+        },
+        {
+          "inputUsdPerM": 4,
+          "cachedInputUsdPerM": 0.2,
+          "cacheWriteUsdPerM": 5,
+          "outputUsdPerM": 15
+        }
+      ],
+      "kind": "list",
+      "sourceIds": [
+        "openai-api-pricing-gpt-6-1-sol",
+        "openai-api-pricing-table-header",
+        "openai-api-pricing-context-length",
+        "openai-api-model-gpt-6-1-sol-long-context",
+        "openai-api-pc-write-rates",
+        "openai-api-pc-not-additive",
+        "openai-api-changelog-2026-09-29-gpt-6-1-sol"
+      ],
+      "note": "In force from 2026-10-01: a dated OpenAI changelog entry before that day gives this price, today's pricing page lists the same, and the changelog records no price change for it in between (no archived page could be fetched). Released 2026-09-29 at $2 input, $0.10 cached input, $2.50 cache write and $10 output (changelog); the long-context and 12-hour prices come from today's pricing page and model page only. The second tier is the long-context price for prompts over 272K input tokens, applied to the whole request. cacheWriteUsdPerM is the default 30-minute write (1.25x input); the 12-hour write did not exist until 2026-10-20 (changelog), so this version has no extendedCacheWriteUsdPerM. Standard tier, global processing; Batch, Flex, Fast, Ultrafast, regional-processing (10% uplift) and cloud-platform prices are not modelled."
+    },
+    {
+      "id": "openai-api:gpt-6.1-sol:2026-10-20",
+      "channel": "openai-api",
+      "modelId": "gpt-6.1-sol",
+      "currency": "USD",
+      "effectiveFrom": "2026-10-20",
+      "tiers": [
+        {
+          "maxInputTokens": 272000,
+          "inputUsdPerM": 2,
+          "cachedInputUsdPerM": 0.1,
+          "cacheWriteUsdPerM": 2.5,
+          "extendedCacheWriteUsdPerM": 5,
+          "outputUsdPerM": 10
+        },
+        {
+          "inputUsdPerM": 4,
+          "cachedInputUsdPerM": 0.2,
+          "cacheWriteUsdPerM": 5,
+          "extendedCacheWriteUsdPerM": 10,
+          "outputUsdPerM": 15
+        }
+      ],
+      "kind": "list",
+      "sourceIds": [
+        "openai-api-pricing-gpt-6-1-sol",
+        "openai-api-pricing-table-header",
+        "openai-api-pricing-context-length",
+        "openai-api-model-gpt-6-1-sol-long-context",
+        "openai-api-pc-write-rates",
+        "openai-api-pc-not-additive",
+        "openai-api-changelog-2026-10-20-12h-cache",
+        "openai-api-changelog-2026-09-29-gpt-6-1-sol"
+      ],
+      "note": "Same prices as the 2026-10-01 version; the boundary is the 12-hour cache write OpenAI added on 2026-10-20 (00:00 UTC; the time of day isn't published). Released 2026-09-29 at $2 input, $0.10 cached input, $2.50 cache write and $10 output (changelog); the long-context and 12-hour prices come from today's pricing page and model page only. The second tier is the long-context price for prompts over 272K input tokens, applied to the whole request. cacheWriteUsdPerM is the default 30-minute write (1.25x input); extendedCacheWriteUsdPerM is the 12-hour write (2.5x input, Responses API only), offered from 2026-10-20 per the changelog. Standard tier, global processing; Batch, Flex, Fast, Ultrafast, regional-processing (10% uplift) and cloud-platform prices are not modelled."
+    },
+    {
+      "id": "openai-api:gpt-6.1-terra:2026-11-06",
+      "channel": "openai-api",
+      "modelId": "gpt-6.1-terra",
+      "currency": "USD",
+      "effectiveFrom": "2026-11-06",
+      "tiers": [
+        {
+          "maxInputTokens": 272000,
+          "inputUsdPerM": 1,
+          "cachedInputUsdPerM": 0.05,
+          "cacheWriteUsdPerM": 1.25,
+          "extendedCacheWriteUsdPerM": 2.5,
+          "outputUsdPerM": 5
+        },
+        {
+          "inputUsdPerM": 2,
+          "cachedInputUsdPerM": 0.1,
+          "cacheWriteUsdPerM": 2.5,
+          "extendedCacheWriteUsdPerM": 5,
+          "outputUsdPerM": 7.5
+        }
+      ],
+      "kind": "list",
+      "sourceIds": [
+        "openai-api-pricing-gpt-6-1-terra",
+        "openai-api-pricing-table-header",
+        "openai-api-pricing-context-length",
+        "openai-api-model-gpt-6-1-terra-long-context",
+        "openai-api-pc-write-rates",
+        "openai-api-pc-not-additive",
+        "openai-api-changelog-2026-10-20-12h-cache"
+      ],
+      "note": "Starts 2026-11-06: today's pricing page is the earliest OpenAI source found that gives this price (no dated launch post or changelog entry with the amount could be fetched), so earlier turns price as unknown. Released 2026-10-26 (changelog, no price given). The second tier is the long-context price for prompts over 272K input tokens, applied to the whole request. cacheWriteUsdPerM is the default 30-minute write (1.25x input); extendedCacheWriteUsdPerM is the 12-hour write (2.5x input, Responses API only), offered from 2026-10-20 per the changelog. Standard tier, global processing; Batch, Flex, Fast, Ultrafast, regional-processing (10% uplift) and cloud-platform prices are not modelled."
+    },
+    {
+      "id": "openai-api:o3:2026-11-06",
+      "channel": "openai-api",
+      "modelId": "o3",
+      "currency": "USD",
+      "effectiveFrom": "2026-11-06",
+      "tiers": [
+        {
+          "inputUsdPerM": 2,
+          "cachedInputUsdPerM": 0.5,
+          "cacheWriteUsdPerM": null,
+          "outputUsdPerM": 8
+        }
+      ],
+      "kind": "list",
+      "sourceIds": [
+        "openai-api-pricing-o3",
+        "openai-api-pc-earlier-no-write",
+        "openai-api-deprecations-2026-06-11"
+      ],
+      "note": "Starts 2026-11-06: today's pricing page is the earliest OpenAI source found that gives this price (no dated launch post or changelog entry with the amount could be fetched), so earlier turns price as unknown. No cache-write charge on models before GPT-5.6 (prompt-caching guide), so cacheWriteUsdPerM is null. The model is deprecated, shutting down on 2026-12-11 (deprecations page); no end date is set here. Standard tier, global processing; Batch, Flex, Fast, Ultrafast, regional-processing (10% uplift) and cloud-platform prices are not modelled."
+    }
+  ]
+}

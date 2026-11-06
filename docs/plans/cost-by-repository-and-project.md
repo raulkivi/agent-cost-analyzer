@@ -1348,13 +1348,45 @@ Data:
   `claude-sonnet-4.5`, `claude-opus-5.5-fast`, `claude-opus-5-fast`.
   Batch, data-residency, priority and cloud-platform prices are not
   modelled.
-- **`openai-api` and `google-api` are not added yet**: this cloud session's
-  network does not allow openai.com, developers.openai.com, ai.google.dev
-  or aistudio.google.com, and third-party price lists don't count as
-  sources. A lookup there (and on `xai-api`) is unknown, so step 15.6 can't
-  price those turns yet (pi keeps its `reported` cost). When OpenAI is
-  added, GPT-5.6 and later get a cache-write price of 1.25× input, per the
-  prompt-caching guide the Phase 13 profile cites.
+- **`openai-api`** (`fixtures/price-book/openai-api.json`): 27
+  standard-tier versions for 23 OpenAI text and coding models. Each cites
+  OpenAI's pricing page (its `.md` version, which carries the long-context
+  columns) plus model pages, the prompt-caching guide, the changelog or the
+  deprecations page, checked 2026-11-06. GPT-5.6 and later charge cache
+  writes at 1.25× input (30 minutes, `cacheWriteUsdPerM`); the 12-hour
+  write at 2.5× (`extendedCacheWriteUsdPerM`) starts at the 2026-10-20
+  changelog entry (00:00 UTC), the window's one change. Earlier models
+  have no cache-write price, and prompts over 272K input tokens use a
+  long-context tier for the whole request. GPT-6.1 Sol, GPT-6 Sol, GPT-6
+  Luna and GPT-5.6 Sol start 2026-10-01 on dated changelog prices; GPT-5.6
+  Sol's $4/$20 is a promotion ending 2026-11-30, with no price after it.
+  **Every other OpenAI model starts 2026-11-06**, including GPT-6 Astra,
+  GPT-6.1 Terra and GPT-5.6 Terra/Luna, because no dated OpenAI source
+  states its amount (launch entries give none, and openai.com's
+  announcements refuse automated requests), so October turns on them price
+  as unknown. Batch, Flex, Fast, Ultrafast, regional and cloud-platform
+  prices, pro models (no cached-input price), `chat-latest` and
+  restricted-access models are not modelled.
+- **`google-api`** (`fixtures/price-book/google-api.json`): 15 versions
+  for 10 Gemini text models at the paid tier's Standard prices. Each cites
+  ai.google.dev's pricing page plus a dated release note or model guide,
+  checked 2026-11-06. Google's stated introductory prices are promo
+  versions followed by the standard price Google gives for after them:
+  Gemini 4 Argon from its 2026-10-13 launch through 2026-11-30 ($2/$10,
+  then $4/$20 per 1M input/output), and Gemini 3.8 and 3.6 Flash through
+  2026-12-31 ($0.75/$3.75, then $1.50/$7.50). `gemini-2.5-pro` bills at
+  Gemini 3.8 Flash rates from its 2026-12-01 routing; Gemini 3.1 Pro
+  Preview and 2.5 Pro have a 200,000-token prompt-length tier. Only Gemini
+  3.8 Flash and 3.5 Flash-Lite are proven from 2026-10-01; the release
+  notes carry no prices for the older models and Gemini 3.6 Flash's price
+  cut is undated, so those start on 2026-11-06. Gemini 3.7 Flash and 3.5
+  Flash have no price on Google's site (deprecated 2026-10-08) and are
+  left out. Cache writes have no price (Gemini has no per-token write
+  price); explicit-cache storage per hour, Batch/Flex/Priority, audio
+  input, the free tier and Vertex AI aren't modelled.
+- Boundaries at a stated date are 00:00 UTC on every channel, since no
+  vendor publishes a time of day. `xai-api` and `moonshot-api` have no
+  file yet, so a lookup there is unknown.
 
 API and MCP: `GET /api/price-book?channel&model&at` (400 on a bad query;
 404 in the extension, which has no price book), and `get_price_book`
