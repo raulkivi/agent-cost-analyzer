@@ -37,6 +37,8 @@ export const apiMethodSchema = z.enum([
   "getProjects",
   "saveProjects",
   "getRepositoryList",
+  // Phase 15 step 15.12: the Billing tab's estimate panel.
+  "getCostEstimate",
 ]);
 
 export type ApiMethod = z.infer<typeof apiMethodSchema>;
@@ -114,6 +116,14 @@ export const apiMethodParamsSchemas = {
   // ApiService validates the file itself (projectsFileSchema).
   saveProjects: z.object({ file: z.unknown() }),
   getRepositoryList: noParams,
+  getCostEstimate: z.object({
+    projectId: z.string().optional(),
+    repository: z.string().optional(),
+    activeDays: numberOrText.optional(),
+    sessions: numberOrText.optional(),
+    historyWeeks: numberOrText.optional(),
+    provider: z.string().optional(),
+  }),
   getCostVariance: z.object({
     groupBy: z.string(),
     id: z.string().min(1),

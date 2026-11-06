@@ -94,6 +94,7 @@ describe("HttpTransport URL mapping", () => {
     ["getProjects", undefined, "/api/projects"],
     ["saveProjects", { file: { version: 1, projects: [] } }, "/api/projects", "PUT", { version: 1, projects: [] }],
     ["getRepositoryList", undefined, "/api/repositories"],
+    ["getCostEstimate", { projectId: "portal", activeDays: 20, historyWeeks: 12 }, "/api/estimates?projectId=portal&activeDays=20&historyWeeks=12"],
     ["getHealth", undefined, "/api/health"],
     ["getProductProfile", undefined, "/api/product"],
   ];

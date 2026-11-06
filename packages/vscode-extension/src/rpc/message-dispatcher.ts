@@ -165,6 +165,8 @@ function invoke(
       return api.saveProjects((params as { file: unknown }).file);
     case "getRepositoryList":
       return api.getRepositoryList();
+    case "getCostEstimate":
+      return api.getCostEstimate(toQuery(params));
     case "issueStatement": {
       const { projectId, period } = params as { projectId: string; period: string };
       return api.issueStatement(projectId, period);

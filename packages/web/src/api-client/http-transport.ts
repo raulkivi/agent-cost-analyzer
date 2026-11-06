@@ -88,6 +88,8 @@ function toRequest(method: ApiMethodName, params: unknown): HttpRequest {
       return { url: "/api/projects", put: p.file };
     case "getRepositoryList":
       return { url: "/api/repositories" };
+    case "getCostEstimate": // { projectId | repository, activeDays | sessions, historyWeeks?, provider? }
+      return { url: `/api/estimates${queryString(p)}` };
     case "getStatement": // { projectId, period, provider?, limit? }
       return { url: `/api/statements${queryString(p)}` };
     case "issueStatement": // { projectId, period }: JSON only (threat model)

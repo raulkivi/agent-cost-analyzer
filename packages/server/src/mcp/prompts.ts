@@ -16,7 +16,7 @@ function userMessage(text: string) {
   return { messages: [{ role: "user" as const, content: { type: "text" as const, text } }] };
 }
 
-export function registerPrompts(server: McpServer, options: { costAnalysis?: boolean; statements?: boolean } = {}): void {
+export function registerPrompts(server: McpServer, options: { costAnalysis?: boolean; statements?: boolean; estimates?: boolean } = {}): void {
   server.registerPrompt(
     "audit_session",
     {
@@ -91,6 +91,25 @@ export function registerPrompts(server: McpServer, options: { costAnalysis?: boo
             "the turns with unknown cost and why (they are not in the totals: say so, never count them as zero), subscription use left off, and the coverage. " +
             "If the statement is issued and the re-run differs, explain the diff line by line (late logs, a price-book change). " +
             "Then draft a short, plain note to the client. Remind me that issuing (freezing) the statement is done in the app's Billing tab, not here.",
+        ),
+    );
+  }
+  // Phase 15 step 15.12 (§10.1.3): with estimates only.
+  if (options.estimates) {
+    server.registerPrompt(
+      "estimate_work",
+      {
+        title: "Estimate planned work",
+        description: "Give a cost range for planned work on a project, its inputs and the main uncertainty.",
+        argsSchema: { projectId: z.string(), activeDays: z.string() },
+      },
+      ({ projectId, activeDays }) =>
+        userMessage(
+          `Estimate what ${activeDays} more active days of work on project "${projectId}" will cost. ` +
+            `Call estimate_cost with projectId "${projectId}" and activeDays ${activeDays} (and again with historyWeeks 4 to see the recent trend), then get_project_cost for the same project over the last 12 weeks. ` +
+            "Give the p50–p90 range in USD at today's prices, never a single number, with the history it rests on (window, known days, coverage). " +
+            "Name the main uncertainty: a recent model switch or price change, a few very expensive days, days left out for unknown cost, or a short history. " +
+            "If there is no range, say why and what would make one possible.",
         ),
     );
   }

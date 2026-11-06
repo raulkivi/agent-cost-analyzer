@@ -2,6 +2,7 @@ import type { ProductProfile } from "@agent-cost-analyzer/domain";
 import { DatasetCostCubeSource } from "../services/cost-analysis/cost-analysis-service.js";
 import { FileStatementStore } from "../data-sources/statements/file-statement-store.js";
 import { priceBookHashOf, StatementService } from "../services/billing/statement-service.js";
+import { EstimateService } from "../services/billing/estimate-service.js";
 import { loadScenarioScripts } from "../data-sources/learn-scripts/loader.js";
 import { loadVendorProfiles } from "../data-sources/vendor-profiles/loader.js";
 import { LearnSimulationService } from "../services/learn-simulation/learn-simulation-service.js";
@@ -86,6 +87,8 @@ export function createStandaloneApiService(options: StandaloneApiServiceOptions 
     priceBook,
     // Step 15.7: cost over time and compare, over the same dataset.
     costAnalysis: createCostAnalysis(insights, priceBook, projectDirectoryOf(attribution.catalog), now),
+    // Step 15.12: estimates over the same dataset, at today's prices.
+    estimates: new EstimateService({ cubes: new DatasetCostCubeSource(insights), projects: projectDirectoryOf(attribution.catalog), ...(now ? { now } : {}) }),
     // Step 15.11: statements over the same dataset, kept beside projects.json.
     statements: new StatementService({
       cubes: new DatasetCostCubeSource(insights),

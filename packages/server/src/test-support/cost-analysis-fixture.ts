@@ -2,6 +2,7 @@ import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { DatasetCostCubeSource } from "../services/cost-analysis/cost-analysis-service.js";
 import { priceBookHashOf, StatementService } from "../services/billing/statement-service.js";
 import { InMemoryStatementStore } from "./in-memory-statement-store.js";
+import { EstimateService } from "../services/billing/estimate-service.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import type { LogProviderStatus, Session, TokenCount, Turn, TurnUsage } from "@agent-cost-analyzer/domain";
 import { createCostAnalysis, projectDirectoryOf } from "../composition/create-cost-analysis.js";
@@ -182,8 +183,9 @@ export function composeCostFixture() {
     timeZone: "UTC",
     now: () => FIXTURE_NOW,
   });
-  // The cost routes read only costAnalysis and statements (app.ts passes req.query unchanged).
-  const api = new ApiService({ costAnalysis, statements } as unknown as ApiServiceDeps);
+  const estimates = new EstimateService({ cubes: new DatasetCostCubeSource(insights), projects: projectDirectoryOf(catalog), now: () => FIXTURE_NOW });
+  // The cost routes read only costAnalysis, statements and estimates (app.ts passes req.query unchanged).
+  const api = new ApiService({ costAnalysis, statements, estimates } as unknown as ApiServiceDeps);
   const server = createMcpServer({
     auditQueries: new AuditQueryService(lookup),
     analysisQueries: new AnalysisQueryService(lookup, insights, { attribution: attributor, pricer }),
@@ -192,6 +194,7 @@ export function composeCostFixture() {
     costAnalysis,
     priceBook,
     statements,
+    estimates,
   });
   return { api, server, insights, costAnalysis, statements };
 }

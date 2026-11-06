@@ -32,6 +32,7 @@ function fakeApi(overrides: Partial<DispatcherApi> = {}): DispatcherApi {
     getProjects: vi.fn(async () => ({}) as never),
     saveProjects: vi.fn(async () => ({}) as never),
     getRepositoryList: vi.fn(async () => ({}) as never),
+    getCostEstimate: vi.fn(async () => ({}) as never),
   };
   return { ...api, ...overrides };
 }
@@ -187,6 +188,12 @@ describe("MessageDispatcher (vscode-extension.md §4)", () => {
     expect(api.getProjects).toHaveBeenCalled();
     expect(api.saveProjects).toHaveBeenCalledWith({ version: 1, projects: [] });
     expect(api.getRepositoryList).toHaveBeenCalled();
+  });
+
+  it("routes getCostEstimate to ApiService as a query", async () => {
+    const api = fakeApi();
+    await new MessageDispatcher(api).dispatch(request("getCostEstimate", { projectId: "portal", activeDays: 20 }));
+    expect(api.getCostEstimate).toHaveBeenCalledWith({ projectId: "portal", activeDays: "20" });
   });
 
   // Step 15.10: the Project tab's breakdown and variance.

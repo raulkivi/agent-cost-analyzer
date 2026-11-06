@@ -4,6 +4,7 @@ import type {
   ConfigStatus,
   CostComparison,
   CostVariance,
+  CostEstimate,
   StatementAnswer,
   ProjectCost,
   PriceChangeList,
@@ -44,6 +45,7 @@ import {
   type StatementQueries,
   type StatementRequest,
 } from "../billing/statement-service.js";
+import { parseEstimateQuery, type EstimateQueries } from "../billing/estimate-service.js";
 import type { PriceBookReader } from "../pricing/price-book.js";
 import type { CostAnalysisQueries } from "../cost-analysis/cost-analysis-service.js";
 import { parseCostCompareQuery, parseCostSeriesQuery, parseCostVarianceQuery, parsePriceChangesQuery, parseProjectCostQuery } from "../cost-analysis/cost-query-params.js";
@@ -105,6 +107,7 @@ const priceBookQuerySchema = z.object({
 // Phase 15 step 15.7: cost over time and compare. Optional like the price
 // book: the extension has none yet and answers 404.
 export const COST_ANALYSIS_UNAVAILABLE_MESSAGE = "Cost analyses are not available in this product.";
+export const ESTIMATES_UNAVAILABLE_MESSAGE = "Estimates are not available in this product.";
 export const STATEMENTS_UNAVAILABLE_MESSAGE = "Billing statements are not available in this product.";
 
 export interface ApiServiceDeps {
@@ -115,6 +118,8 @@ export interface ApiServiceDeps {
   // Phase 15 step 15.11: billing statements (the standalone app; the
   // extension gets them with step 15.14).
   statements?: StatementQueries;
+  // Phase 15 step 15.12: estimates (the standalone app; the extension with 15.14).
+  estimates?: EstimateQueries;
   auditQueries: ApiAuditQueries;
   insights: ApiInsights;
   settings: Pick<AppSettingsStore, "readMinRetainedSessionLogsThreshold" | "writeMinRetainedSessionLogsThreshold">;
@@ -467,6 +472,21 @@ export class ApiService {
     const statements = this.statementQueries();
     const request = statementRequestOf({ projectId, period });
     return this.statementCall(() => statements.issue(request));
+  }
+
+  // Step 15.12 (plan §8.6): GET /api/estimates, as MCP estimate_cost.
+  async getCostEstimate(query: ApiQuery = {}): Promise<CostEstimate> {
+    if (!this.deps.estimates) throw new NotFoundError(ESTIMATES_UNAVAILABLE_MESSAGE);
+    const parsed = parseEstimateQuery(query);
+    if (!parsed.ok) throw new BadRequestError(parsed.error);
+    let estimate: CostEstimate | null;
+    try {
+      estimate = await this.deps.estimates.estimate(parsed.value);
+    } catch (error) {
+      throw auditFailure("estimate", error);
+    }
+    if (estimate === null) throw new NotFoundError(`Unknown project id "${"projectId" in parsed.value ? parsed.value.projectId : ""}"`);
+    return estimate;
   }
 
   private statementQueries(): StatementQueries {

@@ -11,6 +11,7 @@ import type { PriceVersionSource } from "../services/cost-analysis/cost-analysis
 import { createCostAnalysis } from "./create-cost-analysis.js";
 import { DatasetCostCubeSource } from "../services/cost-analysis/cost-analysis-service.js";
 import { StatementService, type StatementServiceDeps } from "../services/billing/statement-service.js";
+import { EstimateService } from "../services/billing/estimate-service.js";
 import type { StatementStore } from "../services/billing/statement-store.js";
 
 // The services createMcpServer takes, over whichever registry a product's
@@ -74,6 +75,11 @@ export function createMcpServices(
             priceBookHash: statements.priceBookHash,
             appVersion: version,
             timeZone: statements.timeZone ?? Intl.DateTimeFormat().resolvedOptions().timeZone,
+          }),
+          // Step 15.12: estimates come with statements (the billing group).
+          estimates: new EstimateService({
+            cubes: new DatasetCostCubeSource(insights),
+            projects: { projectName: (id) => attribution.queries.listProjects().projects.find((project) => project.id === id)?.name },
           }),
         }
       : {}),
