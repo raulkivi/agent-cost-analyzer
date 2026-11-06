@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import request from "supertest";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { costComparisonSchema, costSeriesSchema, costVarianceSchema, priceChangeListSchema } from "@agent-cost-analyzer/domain";
+import { costComparisonSchema, costSeriesSchema, costVarianceSchema, priceChangeListSchema, projectCostSchema } from "@agent-cost-analyzer/domain";
 import { createApp } from "./app.js";
 
 // Phase 15 step 15.7: GET /api/cost/timeseries and /api/cost/compare over
@@ -88,5 +88,14 @@ describe("cost analysis API", () => {
     const list = priceChangeListSchema.parse(response.body);
     expect(list.changes.every((change) => change.kind === "documented" && change.channel === "github-copilot")).toBe(true);
     expect((await request(buildApp()).get("/api/price-changes").query({ kind: "rumoured" })).status).toBe(400);
+  });
+
+  // Step 15.10 (plan §11.4): the Project tab's breakdown over HTTP, as get_project_cost.
+  it("GET /api/cost/project answers a ProjectCost, 404 for an unknown project and 400 without one", async () => {
+    const response = await request(buildApp()).get("/api/cost/project").query({ projectId: "acme", since: "2026-10-01", until: "2026-10-31" });
+    expect(response.status).toBe(200);
+    expect(projectCostSchema.parse(response.body).project).toEqual({ id: "acme", name: "ACME" });
+    expect((await request(buildApp()).get("/api/cost/project").query({ projectId: "nope" })).status).toBe(404);
+    expect((await request(buildApp()).get("/api/cost/project")).status).toBe(400);
   });
 });

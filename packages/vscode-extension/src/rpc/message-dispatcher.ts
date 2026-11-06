@@ -153,6 +153,10 @@ function invoke(
       return api.getCostTimeSeries(toQuery(params));
     case "getCostComparison":
       return api.getCostComparison(toQuery(params));
+    case "getProjectCost":
+      return api.getProjectCost(toQuery(params));
+    case "getCostVariance":
+      return api.getCostVariance(toQuery(params));
   }
 }
 

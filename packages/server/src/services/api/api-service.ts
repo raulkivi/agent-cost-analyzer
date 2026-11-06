@@ -4,6 +4,7 @@ import type {
   ConfigStatus,
   CostComparison,
   CostVariance,
+  ProjectCost,
   PriceChangeList,
   CostSeries,
   InsightsDataset,
@@ -35,7 +36,7 @@ import { isoDateBoundSchema, parseSessionRangeQuery, parseToolCallFilterQuery } 
 import { BadRequestError, InternalError, NotFoundError } from "./api-errors.js";
 import type { PriceBookReader } from "../pricing/price-book.js";
 import type { CostAnalysisQueries } from "../cost-analysis/cost-analysis-service.js";
-import { parseCostCompareQuery, parseCostSeriesQuery, parseCostVarianceQuery, parsePriceChangesQuery } from "../cost-analysis/cost-query-params.js";
+import { parseCostCompareQuery, parseCostSeriesQuery, parseCostVarianceQuery, parsePriceChangesQuery, parseProjectCostQuery } from "../cost-analysis/cost-query-params.js";
 
 // The narrow slices of the registry and query services ApiService needs
 // (DIP) — each product's composition root passes its own registry, so
@@ -99,7 +100,7 @@ export interface ApiServiceDeps {
   registry: ApiProviderRegistry;
   projects?: ApiProjects;
   priceBook?: PriceBookReader;
-  costAnalysis?: Pick<CostAnalysisQueries, "getTimeSeries" | "compare" | "explainChange" | "getPriceChanges">;
+  costAnalysis?: Pick<CostAnalysisQueries, "getTimeSeries" | "compare" | "explainChange" | "getPriceChanges" | "getProjectCost">;
   auditQueries: ApiAuditQueries;
   insights: ApiInsights;
   settings: Pick<AppSettingsStore, "readMinRetainedSessionLogsThreshold" | "writeMinRetainedSessionLogsThreshold">;
@@ -435,6 +436,21 @@ export class ApiService {
     } catch (error) {
       throw auditFailure("cost comparison", error);
     }
+  }
+
+  // Step 15.10 (plan §11.4): the Project tab's breakdown, as get_project_cost.
+  async getProjectCost(query: ApiQuery = {}): Promise<ProjectCost> {
+    const analysis = this.costAnalysis();
+    const parsed = parseProjectCostQuery(query);
+    if (!parsed.ok) throw new BadRequestError(parsed.error);
+    let cost: ProjectCost | null;
+    try {
+      cost = await analysis.getProjectCost(parsed.value);
+    } catch (error) {
+      throw auditFailure("project cost", error);
+    }
+    if (cost === null) throw new NotFoundError(`Unknown project id "${parsed.value.projectId}"`);
+    return cost;
   }
 
   // Step 15.10 (plan §8.4, §10): usage, price and mix effects between two periods.

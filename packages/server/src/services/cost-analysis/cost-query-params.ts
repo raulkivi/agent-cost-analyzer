@@ -71,7 +71,7 @@ type Query = Readonly<Record<string, unknown>>;
 
 const PARAMS: Readonly<Record<string, string>> = { provider: "providerId" };
 const LISTS = new Set(["ids"]);
-const INTEGERS = new Set(["limit"]);
+const INTEGERS = new Set(["limit", "topSessions"]);
 
 // Query strings → the request's fields: a repeated parameter (an array) is
 // passed on as-is so the schema rejects it; ids are comma-separated.
@@ -169,4 +169,24 @@ export function parseCostVarianceQuery(query: Query): ParseResult<CostVarianceRe
 
 export function parsePriceChangesQuery(query: Query): ParseResult<PriceChangesRequest> {
   return toResult(priceChangesRequestSchema.safeParse(fromQuery(query, PRICE_CHANGE_PARAMS)));
+}
+
+// Step 15.10: GET /api/cost/project, the series options plus projectId (and topSessions).
+export const projectCostRequestSchema = z
+  .object({
+    ...viewShape,
+    since: costDateArg.optional(),
+    until: costDateArg.optional(),
+    bucket: costBucketArg.default("month"),
+    projectId: costIdSchema,
+    topSessions: z.number().int().min(1).max(50).optional(),
+  })
+  .refine(ordered, ORDER_MESSAGE);
+
+export type ProjectCostRequestParams = z.infer<typeof projectCostRequestSchema>;
+
+const PROJECT_PARAMS = ["provider", "limit", "since", "until", "bucket", "basis", "pricing", "currency", "projectId", "topSessions"];
+
+export function parseProjectCostQuery(query: Query): ParseResult<ProjectCostRequestParams> {
+  return toResult(projectCostRequestSchema.safeParse(fromQuery(query, PROJECT_PARAMS)));
 }

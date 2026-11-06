@@ -76,6 +76,10 @@ function toRequest(method: ApiMethodName, params: unknown): HttpRequest {
       return { url: `/api/cost/timeseries${queryString(p)}` };
     case "getCostComparison": // the same, plus comparePeriod?, with groupBy and ids required
       return { url: `/api/cost/compare${queryString(p)}` };
+    case "getProjectCost": // { projectId, ...the series options, topSessions? }
+      return { url: `/api/cost/project${queryString(p)}` };
+    case "getCostVariance": // { groupBy, id, periodA, periodB, currency?, provider?, limit? }
+      return { url: `/api/cost/variance${queryString(p)}` };
   }
 }
 

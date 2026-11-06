@@ -96,6 +96,10 @@ export function createApp(options: CreateAppOptions = {}): Express {
 
   // Phase 15 step 15.10: why a cost changed (usage, price, mix) and the
   // documented and observed price changes.
+  app.get("/api/cost/project", route(async (req, res) => {
+    res.json(await api.getProjectCost(req.query));
+  }));
+
   app.get("/api/cost/variance", route(async (req, res) => {
     res.json(await api.getCostVariance(req.query));
   }));
