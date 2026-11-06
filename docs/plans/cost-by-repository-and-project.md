@@ -298,7 +298,9 @@ Price changes come from two places, and the UI keeps them apart:
    the markers on the time charts (§11).
 2. **Observed** (Copilot only): each month, compare the billed AI Credits
    per model with the priced figure for the same turns. If the ratio moves
-   by more than a threshold and stays there, raise an `InsightFinding`
+   by more than a threshold and stays there (D11: more than 5%, the same
+   way, in 2 ISO weeks in a row with at least 20 compared turns each),
+   raise an `InsightFinding`
    ("Observed: Claude Sonnet 5.5 billed 12% above the price book since
    2026-10-14"), `confidence: "inferred"`. It reuses the Phase 9.11
    finding pipeline. It is a prompt to check the price book, not a price
@@ -400,8 +402,22 @@ For two periods A and B, per model:
 
 The two add up to the cost change exactly, per token type, and are summed
 over models. A **mix effect** (moving work to a different model) is shown
-as its own line by computing usage at the model level. This answers "costs
+as its own line by computing usage at the model level (D12): per token
+type, the **volume effect** is (all models' tokens in B − in A) × A's
+average price for that type, and the **mix effect** is the sum of the
+per-model usage effects minus the volume effect. Usage (volume), price and
+mix then add up exactly to the change. This answers "costs
 went up 30%: was it the price change on 1 October or more work?"
+
+Effects need a unit price, so the variance is on the **priced** basis, as
+of use: each priced turn carries its cost per token type (uncached input,
+cache read, cache write, output; reasoning is priced as output), and a
+cell's unit price is its cost ÷ its tokens. A model with no tokens of a
+type in one period takes the other period's unit price, so a new or
+dropped model is all usage. Totals are per currency (AI Credits for
+Copilot, USD for the APIs), or all in USD at 1 AI Credit = $0.01. Turns
+without a priced figure are counted, with the cost the view's basis gives
+them, as **not explained**, never as 0 (constraint 6).
 
 ### 8.5 Billing statements (G8)
 
@@ -1070,6 +1086,8 @@ column is binding; the other options are kept for the record.
 | D8 | How far back must price history go? | from first log on this machine; 12 months; current only | **From 2026-10-01** (revised by the owner on 2026-11-05; first recorded as 2026-01-01), sourced, for GitHub Copilot and the Anthropic, OpenAI and Google APIs; earlier turns price as `unknown` unless the user adds versions |
 | D9 | Should observed price changes (§6.4) raise findings? | yes; no | **Yes**, as `inferred` findings on the Dashboard |
 | D10 | Estimates in scope now, or after Phase 14? | now (run rate, unit cost); after Phase 14 | **Now**, without cross-model replay; Phase 14 adds "on another model" |
+| D11 | When does a billed-vs-priced gap become an observed price change (§6.4)? (decided 2026-11-06) | 5% for 2 weeks; 10% for 2 weeks; 5% for 2 months | **5% for 2 weeks**: billed AI Credits differ from priced by more than 5%, in the same direction, in 2 ISO weeks in a row, each week with at least 20 turns that have both figures |
+| D12 | How is the mix effect (§8.4) computed? (decided 2026-11-06) | volume vs. mix split; mix = new or dropped models | **Volume vs. mix split**: usage = change in total tokens × period A's average price per token (per token type, over all models); mix = the per-model usage effects minus that; price as in §8.4. The three add up exactly to the change |
 
 ## 14. Implementation steps (TDD, each with an exit criterion)
 
