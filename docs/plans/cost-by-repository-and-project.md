@@ -453,7 +453,14 @@ From a project's history (or a set of similar projects):
 - **Unit costs**: median and 90th-percentile cost per session.
 - **Forecast**: planned active days (or sessions) × the unit cost, given as
   a **range** (p50 to p90), never a single number, priced **at today's
-  prices** so a past price cut does not inflate the estimate.
+  prices** so a past price cut does not inflate the estimate. D16: p50 =
+  median cost per active day × days, p90 = the 90th percentile × days
+  (percentiles by linear interpolation). An active day is a UTC calendar
+  day with any of the project's turns, as on the Dashboard; it counts only
+  when every turn on it has a priced figure, else it is left out and
+  counted in the coverage (D18). Amounts are in USD, AI Credits converted
+  at 1 AI Credit = $0.01 (D2), and shown in the picked unit. With fewer
+  than 5 known active days (or sessions) there is no range (D18).
 - **What if another model**: hands off to Phase 14 (replay on another
   vendor) when it exists; until then, a token-for-token reprice at another
   model's price, labelled **Simulated, same tokens assumed**.
@@ -1097,6 +1104,9 @@ column is binding; the other options are kept for the record.
 | D13 | Where are a project's markup and fixed lines (seat fees) set? (decided 2026-11-06) | per project; per statement; not yet | **Per project**, in `projects.json` (`rates.markupPercent`, `rates.fixedLines`), edited in the Projects editor; every statement for the project uses them and freezes them |
 | D14 | Where is D2's optional fixed-rate user currency set? (decided 2026-11-06) | per project; per statement; not yet | **Per project** (`rates.currency`: a code and a fixed rate per USD); the statement states the rate and keeps AI Credits and USD beside it |
 | D15 | Can a period that hasn't ended be issued? (decided 2026-11-06) | only ended periods; any time with a warning | **Only ended periods**: a draft any time; *Issue statement* is disabled, with the reason, until the period's last day has passed in the statement's time zone |
+| D16 | How is an estimate's p50–p90 range worked out? (decided 2026-11-06) | unit cost × days; resampled totals | **Unit cost × days**: the median and 90th-percentile cost per active day (or per session) in the history window, each × the planned days (or sessions), as on board 4 |
+| D17 | Is "what if another model" in step 15.12? (decided 2026-11-06) | leave for Phase 14; a same-tokens reprice now | **Left for Phase 14**: the panel says it comes with replay; 15.12 estimates the project's own models only |
+| D18 | What if the history is too thin? (decided 2026-11-06) | refuse under 5 days; always estimate with a warning | **No range under 5 active days with a known cost**: the answer gives the reason and the day count instead; days with any unknown cost are left out and counted in the coverage |
 
 ## 14. Implementation steps (TDD, each with an exit criterion)
 
