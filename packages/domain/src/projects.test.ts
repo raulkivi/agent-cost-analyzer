@@ -238,3 +238,22 @@ describe("projectListSchema (MCP list_projects, step 15.4)", () => {
     expect(parsed.projects[0]).not.toHaveProperty("rates");
   });
 });
+
+// Step 15.11 (D13, D14): fixed lines and a fixed-rate user currency per project.
+describe("project rates for statements", () => {
+  const base = { id: "portal", name: "Portal", members: [{ repository: "github.com/acme/portal" }] };
+  const parse = (rates: unknown) => projectsFileSchema.safeParse({ version: 1, projects: [{ ...base, rates }] });
+
+  it("accepts markup, fixed lines in AI Credits or USD, and a user currency at a fixed rate per USD", () => {
+    const parsed = parse({ markupPercent: 10, fixedLines: [{ label: "Seats", amount: 39, currency: "USD" }], currency: { code: "EUR", perUsd: 0.92 } });
+    expect(parsed.success).toBe(true);
+  });
+
+  it("refuses an empty label, a negative amount, an unknown currency, a code that isn't three letters and a rate of 0", () => {
+    expect(parse({ fixedLines: [{ label: "", amount: 1, currency: "USD" }] }).success).toBe(false);
+    expect(parse({ fixedLines: [{ label: "x", amount: -1, currency: "USD" }] }).success).toBe(false);
+    expect(parse({ fixedLines: [{ label: "x", amount: 1, currency: "EUR" }] }).success).toBe(false);
+    expect(parse({ currency: { code: "euro", perUsd: 1 } }).success).toBe(false);
+    expect(parse({ currency: { code: "EUR", perUsd: 0 } }).success).toBe(false);
+  });
+});

@@ -33,6 +33,7 @@ export type CostCubeRow = Pick<
   sessionModel: string;
   sessionStartedAt?: string;
   date: string; // YYYY-MM-DD (UTC): the turn's own time, else its session's
+  at?: string; // step 15.11: the same instant, ISO (statements bill in their time zone, D6)
   cost: TurnCostFigures;
 };
 
@@ -69,6 +70,7 @@ export function buildCostCube(dataset: InsightsDataset): CostCube {
       sessionModel: session.model,
       ...(session.startedAt !== undefined ? { sessionStartedAt: session.startedAt } : {}),
       date,
+      ...(turn.at !== undefined ? { at: turn.at } : {}),
       model: turn.model,
       repositoryKey: turn.repositoryKey,
       ...(turn.unattributedReason !== undefined ? { unattributedReason: turn.unattributedReason } : {}),

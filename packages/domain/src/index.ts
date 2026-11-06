@@ -70,6 +70,8 @@ export {
 export {
   projectMemberSchema,
   projectSchema,
+  fixedLineSchema,
+  type FixedLine,
   captureRuleSchema,
   projectsFileSchema,
   projectFileProblemSchema,
@@ -394,3 +396,24 @@ export {
   type CostComparison,
   type Bucket,
 } from "./cost-analysis.js";
+export {
+  STATEMENT_VERSION,
+  statementPeriodSchema,
+  statementTokensSchema,
+  statementLineSchema,
+  statementTotalSchema,
+  statementSchema,
+  statementDiffSchema,
+  statementAnswerSchema,
+  diffStatements,
+  parseStatementPeriod,
+  localDate,
+  periodHasEnded,
+  type StatementPeriod,
+  type StatementLine,
+  type StatementTotal,
+  type Statement,
+  type StatementDiff,
+  type StatementAnswer,
+} from "./statement.js";
+export { exportStatement, type StatementExportFormat, type StatementExportOptions } from "./statement-export.js";

@@ -139,7 +139,7 @@ function turnRow(
     estimated: counts.some(isEstimated),
     toolCallCount: toolCallsUnknown ? null : turn.toolCalls.length,
     ...attributionRowFields(attribution),
-    ...(time ? { date: time.toISOString().slice(0, 10) } : {}),
+    ...(time ? { date: time.toISOString().slice(0, 10), at: time.toISOString() } : {}),
     cost,
   };
 }
