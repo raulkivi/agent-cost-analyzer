@@ -33,6 +33,27 @@ const january = entry({ effectiveFrom: "2026-01-01", effectiveTo: "2026-09-01" }
 const september = entry({ effectiveFrom: "2026-09-01", effectiveTo: "2026-09-15", tiers: [{ ...tier, inputUsdPerM: 2 }] });
 const october = entry({ effectiveFrom: "2026-10-01", tiers: [{ ...tier, inputUsdPerM: 1 }] });
 
+describe("PriceBook.snapshot (step 15.6)", () => {
+  it("reads its source once, so pricing a whole dataset doesn't re-read the projects file per turn", () => {
+    let loads = 0;
+    const data: PriceBookData = { versions: [october], sources: [source], problems: [] };
+    const snapshot = new PriceBook({ load: () => ((loads += 1), data) }).snapshot();
+    snapshot.priceFor("github-copilot", "sonnet", "2026-10-02");
+    snapshot.modelIds("github-copilot");
+    snapshot.newestVersion("github-copilot", "sonnet");
+    expect(loads).toBe(1);
+    expect(snapshot.priceFor("github-copilot", "sonnet", "2026-10-02")).toEqual({ known: true, version: october });
+  });
+});
+
+describe("PriceBook.modelIds (step 15.6)", () => {
+  it("lists the model ids a channel prices, once each, sorted", () => {
+    const two = book([october, january, entry({ modelId: "haiku" }), entry({ channel: "openai-api", modelId: "gpt" })]);
+    expect(two.modelIds("github-copilot")).toEqual(["haiku", "sonnet"]);
+    expect(two.modelIds("xai-api")).toEqual([]);
+  });
+});
+
 describe("PriceBook.priceFor", () => {
   const history = book([october, january, september]);
 

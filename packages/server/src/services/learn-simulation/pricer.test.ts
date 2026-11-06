@@ -66,4 +66,9 @@ describe("priceTurn", () => {
     expect(low.usd).toBeCloseTo(0.6);
     expect(high.usd).toBeCloseTo(1.200006);
   });
+
+  it("prices from anything with tiers, e.g. a price-book version (step 15.6 reuses this math)", () => {
+    const cost = priceTurn({ tiers: sonnet.tiers }, { ...none, output: 1_000_000 });
+    expect(cost.usd).toBeCloseTo(15);
+  });
 });

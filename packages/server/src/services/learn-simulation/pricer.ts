@@ -16,7 +16,9 @@ export interface TurnCost {
 const USD_PER_AI_CREDIT = 0.01;
 
 // Tiers are ordered by ascending threshold; the last has no maxInputTokens.
-function pickTier(tiers: PriceTier[], inputTokens: number): PriceTier {
+// The tier applies per request by its whole prompt (Phase 15's CostPricer
+// picks it the same way).
+export function pickTier(tiers: PriceTier[], inputTokens: number): PriceTier {
   return (
     tiers.find(
       (tier) =>
@@ -25,7 +27,8 @@ function pickTier(tiers: PriceTier[], inputTokens: number): PriceTier {
   );
 }
 
-export function priceTurn(model: ModelPrice, usage: PricedUsage): TurnCost {
+// Only the tiers are read, so a Phase 15 price-book version prices the same way.
+export function priceTurn(model: Pick<ModelPrice, "tiers">, usage: PricedUsage): TurnCost {
   const inputTokens =
     usage.uncachedInput +
     usage.cacheRead +
