@@ -1,0 +1,94 @@
+{
+  "statement": {
+    "version": 1,
+    "status": "draft",
+    "generatedAt": "2026-11-06T12:00:00.000Z",
+    "project": {
+      "id": "portal",
+      "name": "Customer portal",
+      "client": "Acme Corp"
+    },
+    "period": {
+      "key": "2026-10",
+      "label": "October 2026",
+      "since": "2026-10-01",
+      "until": "2026-10-31",
+      "timeZone": "UTC"
+    },
+    "includeSubscriptionUse": false,
+    "conversion": "1 AI Credit = $0.01 (GitHub's documented rate); no other exchange rate is used.",
+    "lines": [
+      {
+        "key": "billed|AI_CREDITS|github-copilot|claude-sonnet-5.5|",
+        "basis": "billed",
+        "currency": "AI_CREDITS",
+        "channel": "github-copilot",
+        "model": "claude-sonnet-5.5",
+        "priceVersionId": null,
+        "sessions": 1,
+        "turns": 2,
+        "tokens": {
+          "uncachedInput": 2000,
+          "cacheRead": 18000,
+          "cacheWrite": 0,
+          "reasoning": null,
+          "output": 1000
+        },
+        "unitPrices": null,
+        "amount": 1.9,
+        "apiEquivalent": false
+      }
+    ],
+    "unknown": [],
+    "excluded": [
+      {
+        "reason": "subscription use priced as API-equivalent, left off unless the project includes it",
+        "turns": 2,
+        "sessions": 1
+      }
+    ],
+    "markup": [
+      {
+        "currency": "AI_CREDITS",
+        "base": 1.9,
+        "amount": 0
+      }
+    ],
+    "fixedLines": [],
+    "totals": [
+      {
+        "currency": "AI_CREDITS",
+        "lines": 1.9,
+        "markup": 0,
+        "fixed": 0,
+        "total": 1.9
+      }
+    ],
+    "coverage": {
+      "turns": 4,
+      "knownTurns": 4
+    },
+    "provenance": {
+      "appVersion": "0.0.0-test",
+      "priceBookHash": "d09a4526c69b",
+      "projectsFileHash": "b1e3876edce6",
+      "priceVersionIds": [],
+      "sessions": [
+        {
+          "providerId": "claude-code",
+          "sessionId": "cc-1",
+          "title": "Session cc-1"
+        },
+        {
+          "providerId": "vscode",
+          "sessionId": "cp-1",
+          "title": "Session cp-1"
+        }
+      ]
+    }
+  },
+  "canIssue": {
+    "ok": true
+  },
+  "issuedPeriods": []
+}
