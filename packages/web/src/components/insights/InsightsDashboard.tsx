@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from "react";
-import { AI_CREDIT_CONVERSION_NOTE, type CostBasisChoice } from "@agent-cost-analyzer/domain";
+import { AI_CREDIT_CONVERSION_NOTE, redactRepositoryKey, type CostBasisChoice, type CostComparison, type CostSeries } from "@agent-cost-analyzer/domain";
 import type {
   FailureCategory,
   InsightFinding,
@@ -8,13 +8,14 @@ import type {
   InsightToolCallRow,
   InsightTurnRow,
 } from "@agent-cost-analyzer/domain";
+import type { CostCompareQuery, CostSeriesQuery } from "../../api-client/cost-analysis.js";
 import { fetchInsights, type InsightsQuery } from "../../api-client/insights.js";
 import { HorizontalBars } from "../../charts/HorizontalBars.js";
 import { TrendColumns } from "../../charts/TrendColumns.js";
 import { createAssociativeEngine } from "../../lib/associative/engine.js";
 import { back, clearAll, clearField, commit, emptyHistory, selectOnly, toggleValue } from "../../lib/associative/selections.js";
 import { CATEGORY_LABELS, formatCompact, formatFailureRate, STATUS_META } from "../../lib/audit-format.js";
-import { createInsightsModel, FIELD, LIST_BOX_GROUPS, SEVERITY_ORDER, TABLE, type FieldId } from "../../lib/insights/insights-model.js";
+import { createInsightsModel, FIELD, LIST_BOX_GROUPS, NO_PROJECT, SEVERITY_ORDER, TABLE, UNATTRIBUTED, type FieldId } from "../../lib/insights/insights-model.js";
 import {
   aiCreditsByDay,
   computeKpis,
@@ -30,10 +31,13 @@ import {
 import { buildNarrative } from "../../lib/insights/narrative.js";
 import { formatUsd } from "../../lib/ai-credits-usd.js";
 import { useCancellableLoad } from "../../lib/use-cancellable-load.js";
+import { useContainerWidth } from "../../lib/use-container-width.js";
 import { AsyncView, cancelledEmptyState } from "../ui/AsyncView.js";
 import { Blueprint } from "../ui/Blueprint.js";
 import { SegmentedControl } from "../ui/SegmentedControl.js";
 import { StatTile } from "../ui/StatTile.js";
+import { CompareTab } from "./CompareTab.js";
+import { CostOverTimeTab, type CostOrders } from "./CostOverTimeTab.js";
 import { CurrentSelections } from "./CurrentSelections.js";
 import { FindingsTable } from "./FindingsTable.js";
 import { ListBox } from "./ListBox.js";
@@ -75,6 +79,18 @@ const COST_BASIS_OPTIONS = [
   { value: "priced", label: "Priced" },
 ] as const;
 
+// Phase 15 step 15.9 (plan §11.1): the Dashboard's views. Project and
+// Billing follow in steps 15.10 and 15.11.
+type DashboardView = "overview" | "cost-over-time" | "compare";
+const VIEW_OPTIONS = [
+  { value: "overview", label: "Overview" },
+  { value: "cost-over-time", label: "Cost over time" },
+  { value: "compare", label: "Compare" },
+] as const;
+// Below this the views are a select (plan §11.1), as the session view's are.
+const VIEW_SELECT_BELOW = 700;
+const PLACEHOLDERS = { project: NO_PROJECT, repository: UNATTRIBUTED };
+
 const FAILED_SERIES = [{ id: "failed", label: "Failed", color: STATUS_META.error.color }];
 const CALLS_SERIES = [{ id: "calls", label: "Calls", color: STATUS_META.success.color }];
 
@@ -93,6 +109,11 @@ interface InsightsDashboardProps {
   // false for a single-provider product, which then gets no Provider list
   // box or column and no cross-provider wording.
   crossProvider?: boolean;
+  // ProductProfile.features.costAnalysis (step 15.9): the Cost over time and
+  // Compare tabs over GET /api/cost/*; off in the extension until step 15.14.
+  costAnalysis?: boolean;
+  loadCostSeries?: (query: CostSeriesQuery, signal: AbortSignal) => Promise<CostSeries>;
+  loadCostComparison?: (query: CostCompareQuery, signal: AbortSignal) => Promise<CostComparison>;
 }
 
 // The list boxes, without the Provider facet for a single-provider product.
@@ -107,7 +128,14 @@ function listBoxGroups(crossProvider: boolean) {
 // single-provider product) — list boxes, current
 // selections with Back, KPIs, clickable charts, and security/anomaly/
 // behaviour-change signals that say what happened, when and why.
-export function InsightsDashboard({ loadDataset = fetchInsights, now, crossProvider = true }: InsightsDashboardProps) {
+export function InsightsDashboard({
+  loadDataset = fetchInsights,
+  now,
+  crossProvider = true,
+  costAnalysis = false,
+  loadCostSeries,
+  loadCostComparison,
+}: InsightsDashboardProps) {
   const [preset, setPreset] = useState<RangePreset>("30");
   const [nowTime] = useState(() => (now ?? new Date()).getTime());
   // The load is cancellable (Cancel on its skeleton): the signal reaches the
@@ -153,7 +181,15 @@ export function InsightsDashboard({ loadDataset = fetchInsights, now, crossProvi
         partial={state.kind === "ready" ? providerNotes(state.data).join(" · ") || undefined : undefined}
       >
         {state.kind === "ready" && (
-          <DashboardBody dataset={state.data} crossProvider={crossProvider} key={state.data.generatedAt + preset} />
+          <DashboardBody
+            dataset={state.data}
+            crossProvider={crossProvider}
+            costAnalysis={costAnalysis}
+            now={new Date(nowTime)}
+            loadCostSeries={loadCostSeries}
+            loadCostComparison={loadCostComparison}
+            key={state.data.generatedAt + preset}
+          />
         )}
       </AsyncView>
     </div>
@@ -176,8 +212,31 @@ function providerNotes(dataset: InsightsDataset): string[] {
   });
 }
 
-function DashboardBody({ dataset, crossProvider }: { dataset: InsightsDataset; crossProvider: boolean }) {
+interface DashboardBodyProps {
+  dataset: InsightsDataset;
+  crossProvider: boolean;
+  costAnalysis: boolean;
+  now: Date;
+  loadCostSeries?: InsightsDashboardProps["loadCostSeries"];
+  loadCostComparison?: InsightsDashboardProps["loadCostComparison"];
+}
+
+// Plan §11.7: a project's colour is its position in the projects file; a
+// repository's its place among every repository in the dataset, sorted (as
+// the API names them, local keys by folder), so filtering never repaints.
+function costOrders(dataset: InsightsDataset): CostOrders {
+  const repositories = new Set<string>();
+  for (const row of [...dataset.sessions, ...dataset.turns]) {
+    if (row.repositoryKey) repositories.add(redactRepositoryKey(row.repositoryKey));
+  }
+  return { project: (dataset.projects ?? []).map((project) => project.id), repository: [...repositories].sort() };
+}
+
+function DashboardBody({ dataset, crossProvider, costAnalysis, now, loadCostSeries, loadCostComparison }: DashboardBodyProps) {
   const model = useMemo(() => createInsightsModel(dataset), [dataset]);
+  const orders = useMemo(() => costOrders(dataset), [dataset]);
+  const [dashboardView, setDashboardView] = useState<DashboardView>("overview");
+  const [measure, mainWidth] = useContainerWidth<HTMLDivElement>();
   const engine = useMemo(() => createAssociativeEngine(model), [model]);
   const [history, setHistory] = useState(emptyHistory);
   const [costBasis, setCostBasis] = useState<CostBasisChoice>("preferred");
@@ -199,6 +258,17 @@ function DashboardBody({ dataset, crossProvider }: { dataset: InsightsDataset; c
   const valueLabel = (fieldId: string, value: string) => fieldsById.get(fieldId)?.display?.(value) ?? value;
   const sessionTitles = new Map(dataset.sessions.map((session) => [session.key, session.title]));
   const singleSelected = (fieldId: FieldId) => (selections[fieldId]?.length === 1 ? selections[fieldId]![0] : undefined);
+
+  // A grouping field's values still selected or possible, in the fixed
+  // colour order (then the rest by label).
+  function possibleValues(fieldId: FieldId, order: readonly string[]): string[] {
+    const values = evaluation
+      .values(fieldId)
+      .filter((value) => value.state === "selected" || value.state === "possible")
+      .map((value) => value.value);
+    const rank = (value: string) => (order.includes(value) ? order.indexOf(value) : order.length);
+    return [...values].sort((a, b) => rank(a) - rank(b));
+  }
 
   function select(fieldId: FieldId, value: string, additive = false) {
     setHistory((current) =>
@@ -236,7 +306,8 @@ function DashboardBody({ dataset, crossProvider }: { dataset: InsightsDataset; c
         </ul>
       </aside>
 
-      <div className="insights-main">
+      <div className="insights-main" ref={measure}>
+        {costAnalysis && <ViewSwitch value={dashboardView} onChange={setDashboardView} asSelect={mainWidth !== undefined && mainWidth > 0 && mainWidth < VIEW_SELECT_BELOW} />}
         <CurrentSelections
           selections={selections}
           fieldLabel={fieldLabel}
@@ -247,188 +318,237 @@ function DashboardBody({ dataset, crossProvider }: { dataset: InsightsDataset; c
           onBack={() => setHistory(back)}
         />
 
-        <Blueprint className="audit-section">
-          <section role="region" aria-label="What happened">
-            <div className="card-kicker">What happened</div>
-            <ul className="insights-narrative">
-              {buildNarrative(view, { crossProvider }).map((line) => (
-                <li key={line}>{line}</li>
-              ))}
-            </ul>
-          </section>
-        </Blueprint>
-
-        <div className="insights-cost-basis" role="group" aria-label="Cost basis for totals">
-          <span className="text-muted" style={{ fontSize: 12 }}>Cost basis for totals</span>
-          <SegmentedControl name="insights-cost-basis" options={COST_BASIS_OPTIONS} value={costBasis} onChange={setCostBasis} />
-        </div>
-
-        <div className="stat-tiles">
-          <StatTile
-            label="Cost"
-            value={formatCostTotal(cost)}
-            note={`${cost.knownTurns} of ${cost.turns} turns known${apiEquivalentNote}${inAll} ${AI_CREDIT_CONVERSION_NOTE}`}
+        {dashboardView === "cost-over-time" ? (
+          <CostOverTimeTab
+            selections={selections}
+            fieldLabel={fieldLabel}
+            orders={orders}
+            placeholders={PLACEHOLDERS}
+            basis={costBasis}
+            now={now}
+            loadSeries={loadCostSeries}
           />
-          <StatTile
-            label="AI Credits"
-            value={kpis.aiCredits.known > 0 ? kpis.aiCredits.total.toFixed(2) : "—"}
-            note={`${kpis.aiCredits.known} of ${kpis.aiCredits.count} turns known`}
+        ) : dashboardView === "compare" ? (
+          <CompareTab
+            selections={selections}
+            possible={{ project: possibleValues(FIELD.project, orders.project), repository: possibleValues(FIELD.repository, []) }}
+            fieldLabel={fieldLabel}
+            orders={orders}
+            placeholders={PLACEHOLDERS}
+            basis={costBasis}
+            now={now}
+            narrow={mainWidth !== undefined && mainWidth > 0 && mainWidth < VIEW_SELECT_BELOW}
+            loadComparison={loadCostComparison}
+            loadSeries={loadCostSeries}
           />
-          <StatTile label="Sessions" value={String(kpis.sessions)} />
-          <StatTile label="Turns" value={formatCompact(kpis.turns)} />
-          <StatTile
-            label="Cache hit ratio"
-            value={kpis.cacheHitRatio === null ? "—" : `${Math.round(kpis.cacheHitRatio * 100)}%`}
-            note="cache read ÷ all input"
-          />
-          <StatTile
-            label="Output tokens"
-            value={kpis.output.known > 0 ? formatCompact(kpis.output.total) : "—"}
-            note={`${kpis.output.known} of ${kpis.output.count} turns known`}
-          />
-          <StatTile label="Tool calls" value={formatCompact(kpis.toolCalls)} />
-          <StatTile
-            label="Failure rate"
-            value={formatFailureRate(kpis.failureRate)}
-            note={`${kpis.failed} of ${kpis.knownOutcomes} with a known outcome`}
-            alert={kpis.failed > 0}
-          />
-          <StatTile
-            label="Security signals"
-            value={String(kpis.securityFindings)}
-            note={severityNote || undefined}
-            alert={highOrWorse > 0}
-          />
-        </div>
-
-        <Blueprint className="audit-section">
-          <div className="card-kicker">AI Credits by day</div>
-          <TrendColumns
-            ariaLabel="AI Credits by day"
-            axisLabel="Day"
-            valueLabel="AI Credits"
-            // A day with no known figure is left out, never drawn as 0 (constraint 6).
-            columns={aiCreditsByDay(view.sessions, view.turns)
-              .filter((day) => day.known > 0)
-              .map((day) => ({
-                key: day.date,
-                label: day.date.slice(5),
-                value: day.total,
-                note: `${day.known} of ${day.count} turns known`,
-              }))}
-            format={(value) => value.toFixed(2)}
-            selectedKeys={selections[FIELD.date] ?? []}
-            onSelect={(date, additive) => select(FIELD.date, date, additive)}
-            emptyText="No known AI Credits in the current selection."
-          />
-        </Blueprint>
-
-        <div className="audit-grid-2">
+        ) : (
+          <>
           <Blueprint className="audit-section">
-            <div className="card-kicker">Tokens by model</div>
-            <HorizontalBars
-              ariaLabel="Tokens by model"
-              series={TOKEN_SERIES}
-              rows={tokensByModel(view.turns).map((row) => ({
-                key: row.model,
-                label: row.model,
-                values: Object.fromEntries(TOKEN_KINDS.map((kind) => [kind, row[kind]])),
-              }))}
-              selectedKey={singleSelected(FIELD.model)}
-              onSelect={(model) => select(FIELD.model, model)}
-              emptyText="No turns."
+            <section role="region" aria-label="What happened">
+              <div className="card-kicker">What happened</div>
+              <ul className="insights-narrative">
+                {buildNarrative(view, { crossProvider }).map((line) => (
+                  <li key={line}>{line}</li>
+                ))}
+              </ul>
+            </section>
+          </Blueprint>
+
+          <div className="insights-cost-basis" role="group" aria-label="Cost basis for totals">
+            <span className="text-muted" style={{ fontSize: 12 }}>Cost basis for totals</span>
+            <SegmentedControl name="insights-cost-basis" options={COST_BASIS_OPTIONS} value={costBasis} onChange={setCostBasis} />
+          </div>
+
+          <div className="stat-tiles">
+            <StatTile
+              label="Cost"
+              value={formatCostTotal(cost)}
+              note={`${cost.knownTurns} of ${cost.turns} turns known${apiEquivalentNote}${inAll} ${AI_CREDIT_CONVERSION_NOTE}`}
+            />
+            <StatTile
+              label="AI Credits"
+              value={kpis.aiCredits.known > 0 ? kpis.aiCredits.total.toFixed(2) : "—"}
+              note={`${kpis.aiCredits.known} of ${kpis.aiCredits.count} turns known`}
+            />
+            <StatTile label="Sessions" value={String(kpis.sessions)} />
+            <StatTile label="Turns" value={formatCompact(kpis.turns)} />
+            <StatTile
+              label="Cache hit ratio"
+              value={kpis.cacheHitRatio === null ? "—" : `${Math.round(kpis.cacheHitRatio * 100)}%`}
+              note="cache read ÷ all input"
+            />
+            <StatTile
+              label="Output tokens"
+              value={kpis.output.known > 0 ? formatCompact(kpis.output.total) : "—"}
+              note={`${kpis.output.known} of ${kpis.output.count} turns known`}
+            />
+            <StatTile label="Tool calls" value={formatCompact(kpis.toolCalls)} />
+            <StatTile
+              label="Failure rate"
+              value={formatFailureRate(kpis.failureRate)}
+              note={`${kpis.failed} of ${kpis.knownOutcomes} with a known outcome`}
+              alert={kpis.failed > 0}
+            />
+            <StatTile
+              label="Security signals"
+              value={String(kpis.securityFindings)}
+              note={severityNote || undefined}
+              alert={highOrWorse > 0}
+            />
+          </div>
+
+          <Blueprint className="audit-section">
+            <div className="card-kicker">AI Credits by day</div>
+            <TrendColumns
+              ariaLabel="AI Credits by day"
+              axisLabel="Day"
+              valueLabel="AI Credits"
+              // A day with no known figure is left out, never drawn as 0 (constraint 6).
+              columns={aiCreditsByDay(view.sessions, view.turns)
+                .filter((day) => day.known > 0)
+                .map((day) => ({
+                  key: day.date,
+                  label: day.date.slice(5),
+                  value: day.total,
+                  note: `${day.known} of ${day.count} turns known`,
+                }))}
+              format={(value) => value.toFixed(2)}
+              selectedKeys={selections[FIELD.date] ?? []}
+              onSelect={(date, additive) => select(FIELD.date, date, additive)}
+              emptyText="No known AI Credits in the current selection."
             />
           </Blueprint>
-          <Blueprint className="audit-section">
-            <div className="card-kicker">Tool calls by tool</div>
-            <HorizontalBars
-              ariaLabel="Tool calls by tool"
-              series={TOOL_SERIES}
-              rows={toolCallsByTool(view.toolCalls)
-                .slice(0, 12)
-                .map((row) => ({ key: row.name, label: row.name, values: { succeeded: row.succeeded, failed: row.failed, unknown: row.unknown } }))}
-              selectedKey={singleSelected(FIELD.tool)}
-              onSelect={(tool) => select(FIELD.tool, tool)}
-              emptyText="No tool calls."
-            />
-          </Blueprint>
-          <Blueprint className="audit-section">
-            <div className="card-kicker">Why calls failed</div>
-            <HorizontalBars
-              ariaLabel="Failures by category"
-              series={FAILED_SERIES}
-              rows={countBy(view.toolCalls, (call) => call.failureCategory).map((row) => ({
-                key: row.key,
-                label: CATEGORY_LABELS[row.key as FailureCategory] ?? row.key,
-                values: { failed: row.count },
-              }))}
-              selectedKey={singleSelected(FIELD.failureCategory)}
-              onSelect={(category) => select(FIELD.failureCategory, category)}
-              emptyText="No classified failures."
-            />
-          </Blueprint>
-          <Blueprint className="audit-section">
-            <div className="card-kicker">Shell programs</div>
-            <HorizontalBars
-              ariaLabel="Shell programs"
-              series={CALLS_SERIES}
-              rows={countBy(view.toolCalls, (call) => call.program)
-                .slice(0, 12)
-                .map((row) => ({ key: row.key, label: row.key, values: { calls: row.count } }))}
-              selectedKey={singleSelected(FIELD.program)}
-              onSelect={(program) => select(FIELD.program, program)}
-              emptyText="No shell commands."
-            />
-          </Blueprint>
-        </div>
 
-        <Blueprint className="audit-section">
-          <div className="card-kicker">Signals to review</div>
-          <p className="text-muted" style={{ fontSize: 12, margin: 0 }}>
-            Rule-based security signals, statistical anomalies and behaviour changes. Each is a prompt to look, not a verdict.
-          </p>
-          <FindingsTable
-            findings={view.findings}
-            sessionTitle={(key) => sessionTitles.get(key) ?? key}
-            onSelectSession={(key) => select(FIELD.session, key)}
-          />
-        </Blueprint>
+          <div className="audit-grid-2">
+            <Blueprint className="audit-section">
+              <div className="card-kicker">Tokens by model</div>
+              <HorizontalBars
+                ariaLabel="Tokens by model"
+                series={TOKEN_SERIES}
+                rows={tokensByModel(view.turns).map((row) => ({
+                  key: row.model,
+                  label: row.model,
+                  values: Object.fromEntries(TOKEN_KINDS.map((kind) => [kind, row[kind]])),
+                }))}
+                selectedKey={singleSelected(FIELD.model)}
+                onSelect={(model) => select(FIELD.model, model)}
+                emptyText="No turns."
+              />
+            </Blueprint>
+            <Blueprint className="audit-section">
+              <div className="card-kicker">Tool calls by tool</div>
+              <HorizontalBars
+                ariaLabel="Tool calls by tool"
+                series={TOOL_SERIES}
+                rows={toolCallsByTool(view.toolCalls)
+                  .slice(0, 12)
+                  .map((row) => ({ key: row.name, label: row.name, values: { succeeded: row.succeeded, failed: row.failed, unknown: row.unknown } }))}
+                selectedKey={singleSelected(FIELD.tool)}
+                onSelect={(tool) => select(FIELD.tool, tool)}
+                emptyText="No tool calls."
+              />
+            </Blueprint>
+            <Blueprint className="audit-section">
+              <div className="card-kicker">Why calls failed</div>
+              <HorizontalBars
+                ariaLabel="Failures by category"
+                series={FAILED_SERIES}
+                rows={countBy(view.toolCalls, (call) => call.failureCategory).map((row) => ({
+                  key: row.key,
+                  label: CATEGORY_LABELS[row.key as FailureCategory] ?? row.key,
+                  values: { failed: row.count },
+                }))}
+                selectedKey={singleSelected(FIELD.failureCategory)}
+                onSelect={(category) => select(FIELD.failureCategory, category)}
+                emptyText="No classified failures."
+              />
+            </Blueprint>
+            <Blueprint className="audit-section">
+              <div className="card-kicker">Shell programs</div>
+              <HorizontalBars
+                ariaLabel="Shell programs"
+                series={CALLS_SERIES}
+                rows={countBy(view.toolCalls, (call) => call.program)
+                  .slice(0, 12)
+                  .map((row) => ({ key: row.key, label: row.key, values: { calls: row.count } }))}
+                selectedKey={singleSelected(FIELD.program)}
+                onSelect={(program) => select(FIELD.program, program)}
+                emptyText="No shell commands."
+              />
+            </Blueprint>
+          </div>
 
-        <Blueprint className="audit-section">
-          <div className="card-kicker">Most expensive sessions</div>
-          <table className="table" aria-label="Most expensive sessions" style={{ fontSize: 13 }}>
-            <thead>
-              <tr>
-                <th>Session</th>
-                {crossProvider && <th>Provider</th>}
-                <th>Started</th>
-                <th>Turns</th>
-                <th>AI Credits</th>
-              </tr>
-            </thead>
-            <tbody>
-              {topSessionsByCredits(view.sessions, view.turns, TOP_SESSIONS).map(({ session, aiCredits, turns }) => (
-                <tr key={session.key}>
-                  <td className="truncate" style={{ maxWidth: 320 }}>
-                    <button type="button" className="btn btn-ghost" onClick={() => select(FIELD.session, session.key)}>
-                      {session.title}
-                    </button>
-                  </td>
-                  {crossProvider && <td>{session.providerLabel}</td>}
-                  <td>{session.date ?? "—"}</td>
-                  <td>{turns}</td>
-                  <td>
-                    {aiCredits.known > 0 ? aiCredits.total.toFixed(2) : "—"}
-                    {aiCredits.known > 0 && aiCredits.known < aiCredits.count && (
-                      <span className="text-muted" style={{ fontSize: 11 }}> ({aiCredits.known} of {aiCredits.count} known)</span>
-                    )}
-                  </td>
+          <Blueprint className="audit-section">
+            <div className="card-kicker">Signals to review</div>
+            <p className="text-muted" style={{ fontSize: 12, margin: 0 }}>
+              Rule-based security signals, statistical anomalies and behaviour changes. Each is a prompt to look, not a verdict.
+            </p>
+            <FindingsTable
+              findings={view.findings}
+              sessionTitle={(key) => sessionTitles.get(key) ?? key}
+              onSelectSession={(key) => select(FIELD.session, key)}
+            />
+          </Blueprint>
+
+          <Blueprint className="audit-section">
+            <div className="card-kicker">Most expensive sessions</div>
+            <table className="table" aria-label="Most expensive sessions" style={{ fontSize: 13 }}>
+              <thead>
+                <tr>
+                  <th>Session</th>
+                  {crossProvider && <th>Provider</th>}
+                  <th>Started</th>
+                  <th>Turns</th>
+                  <th>AI Credits</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </Blueprint>
+              </thead>
+              <tbody>
+                {topSessionsByCredits(view.sessions, view.turns, TOP_SESSIONS).map(({ session, aiCredits, turns }) => (
+                  <tr key={session.key}>
+                    <td className="truncate" style={{ maxWidth: 320 }}>
+                      <button type="button" className="btn btn-ghost" onClick={() => select(FIELD.session, session.key)}>
+                        {session.title}
+                      </button>
+                    </td>
+                    {crossProvider && <td>{session.providerLabel}</td>}
+                    <td>{session.date ?? "—"}</td>
+                    <td>{turns}</td>
+                    <td>
+                      {aiCredits.known > 0 ? aiCredits.total.toFixed(2) : "—"}
+                      {aiCredits.known > 0 && aiCredits.known < aiCredits.count && (
+                        <span className="text-muted" style={{ fontSize: 11 }}> ({aiCredits.known} of {aiCredits.count} known)</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </Blueprint>
+          </>
+        )}
       </div>
+    </div>
+  );
+}
+
+function ViewSwitch({ value, onChange, asSelect }: { value: DashboardView; onChange: (view: DashboardView) => void; asSelect: boolean }) {
+  if (asSelect) {
+    return (
+      <label className="view-select">
+        <span className="text-muted">View</span>
+        <select className="input" aria-label="Dashboard view" value={value} onChange={(event) => onChange(event.target.value as DashboardView)}>
+          {VIEW_OPTIONS.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+      </label>
+    );
+  }
+  return (
+    <div role="radiogroup" aria-label="Dashboard view" className="dashboard-views">
+      <SegmentedControl name="dashboard-view" options={VIEW_OPTIONS} value={value} onChange={onChange} />
     </div>
   );
 }

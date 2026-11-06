@@ -23,6 +23,8 @@ function fakeApi(overrides: Partial<DispatcherApi> = {}): DispatcherApi {
     getInsights: vi.fn(async () => ({}) as never),
     getHealth: vi.fn(async () => ({ status: "ok" as const, version: "0.1.0" })),
     getProductProfile: vi.fn(async () => ({}) as never),
+    getCostTimeSeries: vi.fn(async () => ({}) as never),
+    getCostComparison: vi.fn(async () => ({}) as never),
   };
   return { ...api, ...overrides };
 }
@@ -140,6 +142,23 @@ describe("MessageDispatcher (vscode-extension.md §4)", () => {
     expect(api.setActiveLogProvider).toHaveBeenCalledWith("vscode");
     expect(api.getSessionAudit).toHaveBeenCalledWith("s1", {});
     expect(api.listSessions).toHaveBeenCalledWith();
+  });
+
+  // Step 15.9: the Dashboard's cost tabs call these; the extension's
+  // ApiService has no cost analyses until step 15.14, so they answer 404.
+  it("routes the cost methods to ApiService and answers its 404 while the extension has none", async () => {
+    const api = fakeApi({
+      getCostComparison: vi.fn(async () => {
+        throw new NotFoundError("Cost analyses are not available in this product.");
+      }),
+    });
+    const dispatcher = new MessageDispatcher(api);
+
+    await dispatcher.dispatch(request("getCostTimeSeries", { since: "2026-10-01", bucket: "week", ids: ["a", "b"], groupBy: "project" }));
+    const compare = await dispatcher.dispatch(request("getCostComparison", { since: "2026-10-01", until: "2026-10-31", groupBy: "project", ids: ["a", "b"] }));
+
+    expect(api.getCostTimeSeries).toHaveBeenCalledWith({ since: "2026-10-01", bucket: "week", ids: "a,b", groupBy: "project" });
+    expect(compare).toMatchObject({ ok: false, error: { status: 404 } });
   });
 
   it("passes query fields the way the HTTP query string would: lists comma-joined, numbers as text, blanks dropped", async () => {

@@ -1,6 +1,6 @@
 # Phase 15: Cost by repository and project, price history, billing and estimates
 
-Status: **Planned** (2026-11-05). Nothing is built yet. The owner accepted
+Status: **In progress**: steps 15.0–15.9 are done (see §14.1). The owner accepted
 every recommended decision on 2026-11-05 ([§13](#13-decisions)). The UI
 design (§11) was then revised against the project's existing design and UX
 guidance. This document is the design; Phase 15 in
@@ -1032,7 +1032,7 @@ When a scenario changes here, its sticky changes in the same commit.
 | # | Scenario | Board | Step | Passes when |
 |---|---|---|---|---|
 | S1 | **First project.** Open the Dashboard with no project file → the "no projects" empty state → *Create project* → assign three repositories with each row's Project select, by keyboard only → Save | 6, 5 | 15.11 | The project appears in the Project list box; its total equals the sum of its three repositories; the file on disk parses against the schema |
-| S2 | **One project over time.** Select the project, week buckets, last 90 days → Tab to the Sep 1 price marker → its tooltip opens → Escape closes it → *View as table* | 1 | 15.9 | Tooltip shows old and new unit prices and the source; the table equals the chart; the week with no priced turns reads "unknown" and is a gap in the line |
+| S2 | **One project over time.** Select the project, week buckets, last 90 days → Tab to the price marker (the fixture's is 2026-10-07; the board's sample shows Sep 1) → its tooltip opens → Escape closes it → *View as table* | 1 | 15.9 | Tooltip shows old and new unit prices and the source; the table equals the chart; the week with no priced turns reads "unknown" and is a gap in the line |
 | S3 | **Compare.** Select two projects → Compare tab → resize to 640 px → open a row's Details → Escape | 2a, 2b | 15.9 | Table measures equal the fixture; at 640 px only the priority columns show; focus returns to the Details button after Escape |
 | S4 | **Inside a project.** Project tab → click Anthropic → its models → choose August and October | 3 | 15.10 | Model bars sum to the vendor's total; usage, price and mix effects add up exactly to the change, in the waterfall and its table |
 | S5 | **Bill a month.** Billing → October draft → *Issue statement* → confirm → export CSV and Markdown → swap in the updated price-book folder → reload | 4 | 15.11 | The frozen statement shows the same figures as before the swap and "Differs from issued" with the exact diff; both exports contain no message text; the unknown-cost line is listed, not summed |
@@ -1087,8 +1087,8 @@ No UI code (15.9 onwards) starts before the mock-ups in 15.8 are approved.
 | 15.5 | **Price book with history**: `PriceVersion` schema, bundled channel files with sources, user versions, `PriceBook` lookup; Phase 13 profiles read their current prices from it; MCP: `get_price_book` | Overlap/boundary/precedence tests pass; every version has a source; Phase 13 tests unchanged; the step's MCP tools pass the §10.1.6 tests Done 2026-11-05, see §14.1 |
 | 15.6 | **CostPricer + basis**: `CostFigure` on every turn row; reconciliation figures for Copilot turns; Cost basis list box; MCP: cost basis in `get_session_cost`, `get_cost_rollup`, `get_turn` | Pricing tests pass; unknown never sums as 0; billed vs priced shown per model-month; the step's MCP tools pass the §10.1.6 tests Done 2026-11-06, see §14.1 |
 | 15.7 | **Time series, compare, project breakdown** + their endpoints; MCP: `get_repository_cost`, `get_project_cost`, `compare_costs`, the `review_costs` project step | Golden outputs for a fixture dataset across three providers and two projects; the step's MCP tools pass the §10.1.6 tests Done 2026-11-06, see §14.1 |
-| 15.8 | **Mock-ups and palette** (§11.7, §11.8): the seven boards on a Design canvas with versioned copies (drawn and approved 2026-11-05); the eight categorical tokens in `theme.css` and `theme-vscode.css` (done 2026-11-05, see §14.1) | Owner approves the boards and their comments are resolved; the dataviz validator passes in light and dark; `theme-contrast.test.ts` covers the new tokens in Dark Modern, Light Modern and High Contrast |
-| 15.9 | **Dashboard tabs: Cost over time and Compare**, with price-change markers (§11.1–§11.3) | Component tests incl. "View as table" and unknown-as-gap; `vitest-axe` clean in three themes; keyboard tests; the UI check (`npm run test:ui`) passes for the new tabs at 600–1600 px in three themes; screenshots of the standalone app at desktop and 360 px widths; the §12.4.1 Playwright harness and fixture home are in place, and scenarios S2 and S3 pass in the `web-e2e` job |
+| 15.8 | **Mock-ups and palette** (§11.7, §11.8): the seven boards on a Design canvas with versioned copies (drawn and approved 2026-11-05); the eight categorical tokens in `theme.css` and `theme-vscode.css` (done 2026-11-05, see §14.1) | Owner approves the boards and their comments are resolved; the dataviz validator passes in light and dark; `theme-contrast.test.ts` covers the new tokens in Dark Modern, Light Modern and High Contrast Done 2026-11-05, see §14.1 |
+| 15.9 | **Dashboard tabs: Cost over time and Compare**, with price-change markers (§11.1–§11.3) | Component tests incl. "View as table" and unknown-as-gap; `vitest-axe` clean in three themes; keyboard tests; the UI check (`npm run test:ui`) passes for the new tabs at 600–1600 px in three themes; screenshots of the standalone app at desktop and 360 px widths; the §12.4.1 Playwright harness and fixture home are in place, and scenarios S2 and S3 pass in the `web-e2e` job Done 2026-11-06, see §14.1 |
 | 15.10 | **Price changes and variance**: `PriceChangeDetector`, observed-change finding, `VarianceAnalyzer`, Project tab (§11.4); MCP: `explain_cost_change` tool and prompt, `get_price_changes`, `list_findings` kind `price-change` | Effects add up exactly (property test); markers match price-book boundaries; same UI checks as 15.9; the step's MCP tools pass the §10.1.6 tests; scenario S4 passes |
 | 15.11 | **Statements**: builder, freeze, diff, CSV/JSON/Markdown export, Billing tab, Projects editor (§11.5); MCP: `get_statement`, `prepare_statement` prompt | Golden statements; a frozen statement survives a price-book update unchanged and the diff is exact; every project can be assigned by keyboard alone; same UI checks as 15.9; the step's MCP tools pass the §10.1.6 tests; scenarios S1, S5, S6 and S8 pass |
 | 15.12 | **Estimates** + Estimate panel; MCP: `estimate_cost`, `estimate_work` prompt | Forecast range tests on fixture histories; shown as a labelled range, never a single number; the step's MCP tools pass the §10.1.6 tests; scenario S7 passes |
@@ -1625,6 +1625,111 @@ the price split comes with 15.10's variance analysis); a user time zone
 (UTC only, D6); the indexed (first period = 100) view of §8.2 is left to
 the UI; observed price changes (15.10); the extension's tools and routes
 (15.13/15.14).
+
+**15.9 (done 2026-11-06).** The Dashboard's *Cost over time* and *Compare*
+tabs, in the standalone app.
+
+- **Where.** `InsightsDashboard` shows a view switch (a `SegmentedControl`;
+  a *View* `select` below 700 px of the Dashboard's own width) when
+  `ProductFeatures.costAnalysis` is on. *Project* and *Billing* follow in
+  15.10 and 15.11. The list boxes and current selections are shared.
+- **Selections → request** (`lib/cost/cost-scope.ts`). The endpoints filter
+  by one grouping and one provider, so: a Project selection is
+  `groupBy=project&ids=…`; else a Repository selection is
+  `groupBy=repository`; else every project. A selected *No project* or
+  *Unattributed* asks for every line and keeps that one (no id names it).
+  Exactly one selected provider is `provider`. **Any other selection** (a
+  model, a date, a tool, a vendor…) **is not applied** and the tab says so
+  ("Not applied here: Model."), rather than showing figures that only look
+  filtered. Compare compares the selected values of its *Group by* field
+  when there are two or more, else every value still possible under the
+  whole selection (so the associative filters narrow the list), up to 20.
+- **Cost over time** (`CostOverTimeTab`, board 1): filters in one row
+  (range presets, bucket, unit, pricing); KPI tiles for total (with
+  coverage), change versus the previous period of the same length, cost per
+  active day and coverage, from a second, day-by-day request starting at the
+  previous period (the change is unknown when nothing in it is known); one
+  series as columns with a hatched cap on partly covered buckets plus a
+  separate running-total chart; two to four as lines with a legend and
+  direct labels (spread so they never overlap); five or more as small
+  multiples with *Shared / Own scale*. An idle bucket is 0; a bucket with
+  turns and nothing known is a gap with a dashed *unknown* band and reads
+  "unknown" in the tooltip and table. A *Partial data* warning states the
+  coverage whenever it is below 100%.
+- **Price-change markers.** A hairline at the change date (solid:
+  documented; 15.10 adds the dashed observed kind) and an outline tag per
+  model and date ("Price · claude-sonnet-5.5 −50%"), grouping the same
+  change on several channels. The tag is in the Tab order; its name is its
+  visible text (WCAG 2.5.3) and its description the whole change; focus or
+  hover opens a tooltip with each channel's old and new unit prices per
+  token type, the sources and the price version; Escape closes it. The
+  table view lists each change in a row of its own.
+- **Compare** (`CompareTab`, boards 2a and 2b): the §8.2 measures with units
+  in the headers and a *Selection* row; below 700 px the name, total,
+  change and coverage plus a *Details* button per row opening a `Drawer`
+  with the rest (Escape closes it and focus returns to the button) and a
+  *Columns* disclosure to keep more; the indexed line chart (each line from
+  its first known, non-zero bucket = 100); share of total as
+  `HorizontalBars`, which gained a `format`.
+- **Units (D2).** Requests ask for native currencies (time series) or USD
+  (compare); the tabs show every figure in the picked unit through the
+  totals' `usd` at 1 AI Credit = $0.01 and state the conversion, so
+  switching unit asks nothing again.
+- **Colours** (`SeriesPalette`): `--color-series-n` and `--dash-series-n` in
+  a fixed order: a project's position in the projects file (so the Insights
+  dataset's `projects` now lists **every** project in file order, not only
+  the used ones, sorted), a repository's place among the dataset's sorted
+  (redacted) keys; No project and Unattributed neutral; no ninth hue.
+- **Local repositories** are named by their folder in the tabs and, now, in
+  the Repository list box ("scratch (local)"); the redaction moved to the
+  domain (`redactRepositoryKey`, `repositoryFolderLabel`).
+- **Extension.** The RPC allow-list and the dispatcher carry
+  `getCostTimeSeries`/`getCostComparison` (404 from its ApiService); the
+  profile's `costAnalysis` is false, so the tabs are hidden. Its tests stay
+  green. The UI check turns the tabs on in its harness and answers them with
+  the web package's sample data (`test-support/cost-fixture.ts`) to check
+  the shared UI at 600–1600 px in Dark Modern, Light Modern and High
+  Contrast: 5 new scenarios, all pass.
+- **Usage-scenario suite** (§12.4.1): `packages/web/e2e/` with
+  `@playwright/test` 1.64.1 (the UI check's Playwright). Each test spawns the
+  real server and the web build over a fresh fixture home (Claude Code and pi
+  sessions in the fixtures' shapes, copies of the Copilot usage log and a
+  mitmproxy capture, in github.com/acme/portal-web, portal-api, billing and
+  `local:scratch`, two projects) at a fixed clock: the server's new clock
+  port reads `AGENT_COST_ANALYZER_NOW`, and the page's clock is fixed too.
+  axe runs in the browser at every stop. **S2 and S3 pass**; the required
+  `web-e2e` CI job runs them with `--trace off` and uploads failure
+  screenshots. S2 uses the bundled book's documented change, Claude Sonnet
+  5.5's cache-read cut on **2026-10-07**, where the board shows a sample
+  Sep 1. The browser axe check found two existing defects, fixed here: list
+  box values under the 24 px target size, and the chart table's scroll
+  area without keyboard access.
+- **Screenshots** (sample fixture data, 2x): `docs/images/guide-dashboard-cost-over-time.png`,
+  `guide-dashboard-compare.png` (1440 px), `guide-dashboard-cost-over-time-360.png`,
+  `guide-dashboard-compare-360.png`, made by `packages/web/e2e/support/screenshots.mts`,
+  which also fails on any horizontal page overflow.
+
+Departures from the mock-ups: the view switch has three views until 15.10
+and 15.11; the tabs' filters sit above the charts in the right column, with
+*Group by* and *Compare with* in Compare's row rather than a left-column box;
+the cost basis is the Overview's existing switch (shared, named in the
+kicker); the marker tooltip names sources by id (the price book's titles are
+not in the marker); no *Export CSV* on Compare yet; the range presets have no
+*Custom…* range yet; the observed (dashed) marker is 15.10's.
+
+TDD exceptions: the component and model tests were written before their
+code, but the chart, the tabs and the Dashboard wiring were each finished
+in one pass, so their tests failed only for the missing module; the S2 and
+S3 scenarios were written after the UI they drive (§12.4.1 asks for them
+first); `labelPositions`, the HorizontalBars accessible names and the two
+axe fixes were changed after the browser check found them, then tested; the
+UI check scenarios, the harness's cost answers, the CI job and the
+screenshot script have no tests of their own (they are tests). Not yet:
+clicking a column or point to select its period (§11.2); vendor split as
+stacked columns inside one project (§11.2, left to the Project tab); a
+custom date range; Export CSV; the extension's own cost data and tabs
+(15.14); the axe check in a dark theme in the standalone app, which has
+none; observed price changes (15.10).
 
 ## 15. Exit criterion
 

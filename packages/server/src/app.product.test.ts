@@ -39,6 +39,7 @@ describe("GET /api/product", () => {
         openInEditor: false,
         sessionSidebar: false,
         vendorSimulation: true,
+        costAnalysis: true,
       },
     });
   });

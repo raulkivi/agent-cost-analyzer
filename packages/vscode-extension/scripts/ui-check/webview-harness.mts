@@ -17,6 +17,7 @@ import {
   COPILOT_CLI_FIXTURE_SESSION_IDS,
   writeCopilotCliAgentHostStores,
 } from "../../../server/src/test-support/copilot-cli-fixtures.ts";
+import { sampleCostComparison, sampleCostSeries, THREE_PROJECTS } from "../../../web/src/test-support/cost-fixture.ts";
 import { createIntegrationFixture } from "../integration-fixture.mts";
 import { webviewDefaultCss, type VscodeTheme } from "./vscode-themes.mts";
 
@@ -69,6 +70,13 @@ export interface OpenOptions {
   // Replaces the config check's warnings, to show the banner (the seeded
   // fixture has none).
   configWarnings?: ConfigWarning[];
+  // Step 15.9: the Dashboard's cost tabs, which the extension hides until
+  // step 15.14 (no cost routes yet). For the layout and contrast check the
+  // page gets a profile with costAnalysis on, the cost methods answer the
+  // web package's sample series and comparison, and the Copilot turns are
+  // spread over the sample's three projects so the tabs have something to
+  // compare. Sample data only.
+  costTabs?: boolean;
 }
 
 export interface SeededUserData {
@@ -108,6 +116,34 @@ function seedUiCheckFixture(rootDir: string): SeededUserData {
     agentHostMissingLogSessionId: COPILOT_CLI_FIXTURE_SESSION_IDS.missingLog,
     agentHostUsageRecordsSessionId: COPILOT_CLI_FIXTURE_SESSION_IDS.usageRecords,
   };
+}
+
+const COST_PROJECTS = THREE_PROJECTS.map((project) => ({ id: project.key!, name: project.label }));
+
+function withCostTabs(reply: unknown, request: unknown, enabled: boolean | undefined): unknown {
+  const method = (request as { method?: string } | null)?.method;
+  const id = (request as { id?: string } | null)?.id;
+  if (!enabled || !method) return reply;
+  if (method === "getCostTimeSeries") return { kind: "response", id, ok: true, result: sampleCostSeries() };
+  if (method === "getCostComparison") return { kind: "response", id, ok: true, result: sampleCostComparison() };
+  const answer = reply as { ok?: boolean; result?: Record<string, unknown> } | undefined;
+  if (!answer?.ok || !answer.result) return reply;
+  if (method === "getProductProfile") {
+    const profile = answer.result as { features: Record<string, boolean> };
+    return { ...answer, result: { ...profile, features: { ...profile.features, costAnalysis: true } } };
+  }
+  if (method === "getInsights") {
+    const dataset = answer.result as { turns: { projectId?: string | null }[] };
+    return {
+      ...answer,
+      result: {
+        ...dataset,
+        projects: COST_PROJECTS,
+        turns: dataset.turns.map((turn, index) => ({ ...turn, projectId: COST_PROJECTS[index % COST_PROJECTS.length]!.id })),
+      },
+    };
+  }
+  return reply;
 }
 
 function withConfigWarnings(reply: unknown, request: unknown, warnings: ConfigWarning[] | undefined): unknown {
@@ -166,7 +202,10 @@ export async function startHarness(options: HarnessOptions = {}): Promise<Harnes
   });
   await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
   const { port } = server.address() as { port: number };
-  const browser: Browser = await chromium.launch();
+  // PLAYWRIGHT_CHROMIUM_EXECUTABLE: a pre-installed Chromium other than the
+  // build this Playwright downloads (CI installs that one).
+  const executablePath = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE;
+  const browser: Browser = await chromium.launch(executablePath ? { executablePath } : {});
   let inFlight = 0;
   async function settle(page: Page): Promise<void> {
     for (let quietFor = 0, waited = 0; quietFor < 300 && waited < 15_000; waited += 50) {
@@ -186,7 +225,8 @@ export async function startHarness(options: HarnessOptions = {}): Promise<Harnes
       await page.exposeFunction("__toHost", async (message: unknown) => {
         inFlight += 1;
         try {
-          const reply = withConfigWarnings(await dispatcher.dispatch(message), message, openOptions.configWarnings);
+          const answered = openOptions.costTabs && /getCost/.test(String((message as { method?: string }).method)) ? undefined : await dispatcher.dispatch(message);
+          const reply = withCostTabs(withConfigWarnings(answered, message, openOptions.configWarnings), message, openOptions.costTabs);
           if (reply) await page.evaluate(`window.postMessage(${JSON.stringify(reply)}, "*")`);
         } finally {
           inFlight -= 1;

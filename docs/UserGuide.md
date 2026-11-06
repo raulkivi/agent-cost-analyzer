@@ -541,11 +541,87 @@ prices under `channels.priceVersions` in `projects.json`. A price that isn't
 in the book is shown as unknown with a reason, never as 0. Learn mode's
 simulated prices come from the same book.
 
+#### Cost over time and Compare
+
+Above the dashboard's content, a view switch offers **Overview** (everything
+above), **Cost over time** and **Compare**; below 700 px it is a **View**
+dropdown. The list boxes and **Current selections** stay in force in all
+three views. The two cost views follow the **Project**, **Repository** and a
+single **Provider** selection; any other selection (a model, a date, a tool)
+is named under the filters as "Not applied here", so a figure never only
+looks filtered. Both views are in the standalone app; the VS Code extension
+gets them in a later release.
+
+The filters sit in one row: the date range first (**This month**, **Last
+month**, **Last 90 days**, **This year**), then, on Cost over time, the
+bucket (**Day**, **Week**, **Month**, in UTC), the unit (**AI Credits** or
+**USD**) and the pricing (**As of use** or **Today's prices**). Figures in
+the other unit are converted at GitHub's documented 1 AI Credit = $0.01, and
+the view says so. Totals use each turn's preferred basis (billed, then
+reported, then priced) unless the Overview's **Cost basis** switch picks
+one.
+
+![Cost over time for two projects and the No project bucket: the filter row, KPI tiles with coverage, lines with a direct label at each end, unknown weeks drawn as gaps, and a price-change tag with its tooltip](images/guide-dashboard-cost-over-time.png)
+
+**Cost over time** shows:
+
+- **KPI tiles**: total cost, change against the previous period of the same
+  length, cost per active day and coverage. When some turns have no known
+  cost, the tiles say how many are known ("6 of 7 turns known") and a
+  *Partial data* warning appears; the total is never shown as complete.
+- **One project or repository** as columns, with a separate **running
+  total** chart below (never a second axis on the same chart). A column
+  whose turns are only partly known carries a hatched cap.
+- **Two to four** as lines, with a legend and a label at each line's end.
+- **Five or more** as small multiples, one per project or repository, with
+  **Shared scale** or **Own scale**.
+- **Unknown cost is a gap**: a period whose turns have no known cost (for
+  example Claude Code turns before the price book's first price) is left
+  out of the line and marked with a dashed *unknown* band, never drawn as 0.
+- **Price changes**: a documented price change in the range is a hairline
+  with a tag such as "Price · claude-sonnet-5.5 −50%". The tag is in the Tab
+  order; on focus or hover its tooltip lists each channel's old and new unit
+  prices (USD per 1M tokens), the sources and the price version. Esc closes
+  it.
+
+A project keeps its colour (its position in `projects.json`) and a
+repository its colour whatever you filter. **No project** and
+**Unattributed** are grey. Focus a chart and use Left/Right, Home and End to
+read each period; the tooltip lists every line with its coverage.
+
+![Compare at 360 px: the priority columns, a Details button per row, and the indexed growth chart](images/guide-dashboard-compare-360.png)
+
+**Compare** puts two or more projects (or repositories, with **Group by**)
+side by side: the selected ones, or every one still possible under the
+current selections when fewer than two are selected (up to 20). **Compare
+with** picks the previous period or the same dates last year.
+
+- A **table** first: total, change, cost per session, per active day, share
+  of the selection, cache-hit ratio, output share and coverage, with units
+  in the headers and a **Selection** total row. A change against a period
+  with nothing known is "unknown", never a change from 0. Below 700 px only
+  the name, total, change and coverage stay; **Details** on a row opens the
+  rest in a drawer (Esc closes it and returns to the button), and
+  **Columns** keeps more.
+- **Growth, one scale for all**: each line indexed to its first known
+  period (= 100), so a large and a small project compare on one axis.
+- **Where the money went**: share of the total as bars.
+
+![Compare at desktop width: the measures table, indexed growth and share of total](images/guide-dashboard-compare.png)
+
+The views read `GET /api/cost/timeseries` and `GET /api/cost/compare`, the
+same analyses the MCP tools `get_repository_cost`, `get_project_cost` and
+`compare_costs` return. At 360 px the cost views stack under the view
+dropdown:
+
+![Cost over time at 360 px: KPI tiles in two columns and the chart below](images/guide-dashboard-cost-over-time-360.png)
+
 ## Charts as tables
 
 Every chart has a **View as table** button in its toolbar: the AI Credits
 sparkline, the prompt composition diagram, the tool-audit and dashboard
-columns, and the ranked bars. It swaps the chart for a table of the same
+columns, the ranked bars, and the cost views' charts (where price changes
+are rows of their own and an unknown period reads "unknown"). It swaps the chart for a table of the same
 numbers, and pressing it again returns to the chart. Use it when a chart is
 hard to read (colour, size, a screen reader) or when you want exact values.
 

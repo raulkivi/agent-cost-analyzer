@@ -148,6 +148,11 @@ function invoke(
       return api.getHealth();
     case "getProductProfile":
       return api.getProductProfile();
+    // Step 15.9: 404 from the extension's ApiService until step 15.14.
+    case "getCostTimeSeries":
+      return api.getCostTimeSeries(toQuery(params));
+    case "getCostComparison":
+      return api.getCostComparison(toQuery(params));
   }
 }
 

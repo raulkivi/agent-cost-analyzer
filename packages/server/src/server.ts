@@ -1,4 +1,5 @@
 import { createApp } from "./app.js";
+import { clockFromEnv } from "./platform/clock/clock-from-env.js";
 import { agentHostCatalogProbe } from "./services/config-check/agent-host-catalog-probe.js";
 import { resolveUserDataDir } from "./platform/vscode-paths/resolve-user-data-dir.js";
 import { checkConfig } from "./services/config-check/config-check.js";
@@ -18,6 +19,6 @@ if (configStatus.warnings.length > 0) {
   }
 }
 
-createApp({ allowedHostPorts: [port, viteDevServerPort] }).listen(port, host, () => {
+createApp({ allowedHostPorts: [port, viteDevServerPort], now: clockFromEnv() }).listen(port, host, () => {
   console.log(`Server listening on http://${host}:${port}`);
 });

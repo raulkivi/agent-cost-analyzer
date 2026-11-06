@@ -24,7 +24,9 @@ export const UNKNOWN_CELL = "unknown";
 // Shared by all the charts — each maps its own data to rows.
 export function ChartDataTable({ caption, rowHeader, columns, rows }: ChartDataTableProps) {
   return (
-    <div className="chart-table-wrap">
+    // The wrap scrolls past 260 px, so it takes focus to scroll by keyboard
+    // (axe scrollable-region-focusable, found by step 15.9's browser check).
+    <div className="chart-table-wrap" tabIndex={0} role="region" aria-label={`${caption}, table`}>
       <table className="table">
         <caption>{caption}</caption>
         <thead>

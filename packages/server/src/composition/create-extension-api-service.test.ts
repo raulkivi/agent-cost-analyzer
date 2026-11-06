@@ -41,6 +41,8 @@ describe("createExtensionApiService (extension composition, vscode-extension.md 
         openInEditor: true,
         sessionSidebar: true,
         vendorSimulation: true,
+        // Step 15.9: no cost routes until step 15.14, so the tabs are hidden.
+        costAnalysis: false,
       },
     });
     expect(await service.getHealth()).toEqual({ status: "ok", version: "0.1.0-test" });

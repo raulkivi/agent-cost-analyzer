@@ -116,3 +116,19 @@ describe("repositoryListSchema", () => {
     expect(repositoryListSchema.safeParse(entry({ value: 0, knownSessions: 0, sessions: 1 })).success).toBe(false);
   });
 });
+
+// Phase 15 step 15.9: shared by the server's outputs (§10.1.5) and the web
+// app, which names a local repository by its folder.
+describe("repository key privacy", () => {
+  it("redacts local: and path: keys to the folder name and leaves remote keys alone", async () => {
+    const { redactRepositoryKey, isLocalRepositoryKey, repositoryFolderLabel } = await import("./index.js");
+    expect(redactRepositoryKey("local:/home/dev/scratch")).toBe("local:scratch");
+    expect(redactRepositoryKey("path:C:\\work\\notes\\")).toBe("path:notes");
+    expect(redactRepositoryKey("github.com/acme/portal-web")).toBe("github.com/acme/portal-web");
+    expect(isLocalRepositoryKey("path:/x")).toBe(true);
+    expect(isLocalRepositoryKey("github.com/acme/x")).toBe(false);
+    expect(repositoryFolderLabel("local:/home/dev/scratch")).toBe("scratch");
+    expect(repositoryFolderLabel("local:scratch")).toBe("scratch");
+    expect(repositoryFolderLabel("github.com/acme/portal-web")).toBe("github.com/acme/portal-web");
+  });
+});

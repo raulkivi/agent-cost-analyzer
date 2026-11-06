@@ -19,6 +19,10 @@ export const productFeaturesSchema = z.object({
   // Learn scenarios replayed on a chosen vendor and model (Phase 13): the
   // extension has it from 13.6; the standalone app gets it in 13.10.
   vendorSimulation: z.boolean(),
+  // The Dashboard's Cost over time and Compare tabs (Phase 15 step 15.9),
+  // over GET /api/cost/*: the standalone app has them; the extension gets
+  // its own in step 15.14, so until then the tabs are hidden there.
+  costAnalysis: z.boolean(),
 });
 
 export type ProductFeatures = z.infer<typeof productFeaturesSchema>;

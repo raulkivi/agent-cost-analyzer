@@ -25,7 +25,11 @@ describe("cost analysis API", () => {
   });
 
   function buildApp() {
-    return createApp({
+    return createApp(buildOptions());
+  }
+
+  function buildOptions() {
+    return {
       sessionStoreDbPath: path.join(dir, "missing.db"),
       debugLogsDirPaths: [],
       vscodeSettingsPath: null,
@@ -36,7 +40,7 @@ describe("cost analysis API", () => {
       piAgentSessionsDirPath: null,
       systemPromptLogPath: null,
       claudeCodeProjectsDirPath: null,
-    });
+    };
   }
 
   it("GET /api/cost/timeseries answers a CostSeries with every bucket of the range", async () => {
@@ -51,6 +55,14 @@ describe("cost analysis API", () => {
     const response = await request(buildApp()).get("/api/cost/compare").query({ groupBy: "project", ids: "acme,other", since: "2026-10-01", until: "2026-10-31" });
     expect(response.status).toBe(200);
     expect(costComparisonSchema.parse(response.body).rows.map((row) => row.key)).toEqual(["acme", "other"]);
+  });
+
+  // Step 15.9 (plan §12.4.1): the clock port the usage-scenario suite fixes.
+  it("prices and stamps with an injected clock", async () => {
+    const app = createApp({ ...buildOptions(), now: () => new Date("2026-11-06T12:00:00.000Z") });
+    const response = await request(app).get("/api/cost/timeseries").query({ since: "2026-10-01", until: "2026-10-31" });
+    expect(response.status).toBe(200);
+    expect(response.body.generatedAt).toBe("2026-11-06T12:00:00.000Z");
   });
 
   it("answers 400 for a bad query", async () => {

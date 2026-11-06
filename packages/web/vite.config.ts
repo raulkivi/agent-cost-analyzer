@@ -43,6 +43,8 @@ export default defineConfig(({ mode }) => {
       environment: "jsdom",
       globals: true,
       setupFiles: ["./src/setupTests.ts"],
+      // The usage-scenario suite (e2e/, plan §12.4.1) runs under Playwright.
+      include: ["src/**/*.test.{ts,tsx}", "vite-plugins/**/*.test.ts"],
     },
   };
 });

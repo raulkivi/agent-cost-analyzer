@@ -72,6 +72,10 @@ function toRequest(method: ApiMethodName, params: unknown): HttpRequest {
       return { url: "/api/health" };
     case "getProductProfile":
       return { url: "/api/product" };
+    case "getCostTimeSeries": // { since?, until?, bucket?, basis?, pricing?, currency?, groupBy?, ids?, provider?, limit? }
+      return { url: `/api/cost/timeseries${queryString(p)}` };
+    case "getCostComparison": // the same, plus comparePeriod?, with groupBy and ids required
+      return { url: `/api/cost/compare${queryString(p)}` };
   }
 }
 

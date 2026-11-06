@@ -84,7 +84,7 @@ This repo builds two products from one codebase:
   MCP tool results. Includes the use-case analysis, branding rules and
   tasks.
 - [Cost by repository and project plan](docs/plans/cost-by-repository-and-project.md) —
-  Phase 15 (planned): attribute cost to repositories, group them into
+  Phase 15 (in progress, steps 15.0–15.9 done): attribute cost to repositories, group them into
   projects, compare them over time, split a project by vendor and model,
   versioned model prices with price-change markers, billing statements
   and estimates.

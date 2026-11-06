@@ -21,6 +21,7 @@ interface Scenario {
   name: string;
   widths?: number[];
   configWarnings?: ConfigWarning[];
+  costTabs?: boolean;
   run(page: Page, harness: Harness): Promise<void>;
 }
 
@@ -107,6 +108,29 @@ const BANNER_WARNINGS: ConfigWarning[] = [
     helpSteps: ["Set github.copilot.chat.otel.dbSpanExporter.enabled to true", "Reload VS Code"],
   },
 ];
+
+async function openDashboard(page: Page, harness: Harness): Promise<void> {
+  await harness.postHostEvent(page, "selectSession", { sessionId: harness.usageSessionId });
+  const view = page.getByRole("combobox", { name: /^view$/i });
+  if (await view.first().isVisible().catch(() => false)) {
+    await view.first().selectOption({ label: "Dashboard" });
+  } else {
+    await page.getByText("Dashboard", { exact: true }).first().click();
+  }
+  await harness.settle(page);
+}
+
+// Step 15.9: the Dashboard's view switch is radios, or a select below 700 px.
+async function openDashboardView(page: Page, harness: Harness, label: "Cost over time" | "Compare"): Promise<void> {
+  await openDashboard(page, harness);
+  const select = page.getByRole("combobox", { name: "Dashboard view" });
+  if (await select.isVisible().catch(() => false)) {
+    await select.selectOption({ label });
+  } else {
+    await page.getByRole("radiogroup", { name: "Dashboard view" }).locator("label.seg-opt", { hasText: label }).click();
+  }
+  await harness.settle(page);
+}
 
 const SCENARIOS: Scenario[] = [
   {
@@ -241,16 +265,49 @@ const SCENARIOS: Scenario[] = [
       await page.getByText("Tool calls not available", { exact: true }).first().waitFor({ timeout: 5000 });
     },
   },
+  { name: "dashboard", run: openDashboard },
+  // Step 15.9 (plan §11.6): the cost tabs at 600-1600 px in the three themes.
   {
-    name: "dashboard",
+    name: "dashboard-cost-over-time",
+    costTabs: true,
     run: async (page, harness) => {
-      await harness.postHostEvent(page, "selectSession", { sessionId: harness.usageSessionId });
-      const view = page.getByRole("combobox", { name: /^view$/i });
-      if (await view.first().isVisible().catch(() => false)) {
-        await view.first().selectOption({ label: "Dashboard" });
-      } else {
-        await page.getByText("Dashboard", { exact: true }).first().click();
-      }
+      await openDashboardView(page, harness, "Cost over time");
+      await page.getByRole("group", { name: "Total cost" }).waitFor({ timeout: 10000 });
+    },
+  },
+  {
+    name: "dashboard-cost-over-time-marker",
+    costTabs: true,
+    run: async (page, harness) => {
+      await openDashboardView(page, harness, "Cost over time");
+      await page.getByRole("button", { name: /^Price · / }).first().focus();
+      await page.getByRole("tooltip").first().waitFor({ timeout: 5000 });
+    },
+  },
+  {
+    name: "dashboard-cost-over-time-table",
+    costTabs: true,
+    run: async (page, harness) => {
+      await openDashboardView(page, harness, "Cost over time");
+      await page.getByRole("button", { name: "View as table" }).first().click();
+      await harness.settle(page);
+    },
+  },
+  {
+    name: "dashboard-compare",
+    costTabs: true,
+    run: async (page, harness) => {
+      await openDashboardView(page, harness, "Compare");
+      await page.getByRole("table", { name: /^Compare/ }).waitFor({ timeout: 10000 });
+    },
+  },
+  {
+    name: "dashboard-compare-details",
+    costTabs: true,
+    widths: [600],
+    run: async (page, harness) => {
+      await openDashboardView(page, harness, "Compare");
+      await page.getByRole("button", { name: /^Details for / }).first().click();
       await harness.settle(page);
     },
   },
@@ -280,7 +337,7 @@ try {
         const where = `${scenario.name} · ${themeName} · ${width}px`;
         const only = onlyFilter();
         if (only && !where.includes(only)) continue;
-        const page = await harness.open(theme, width, undefined, { configWarnings: scenario.configWarnings });
+        const page = await harness.open(theme, width, undefined, { configWarnings: scenario.configWarnings, costTabs: scenario.costTabs });
         let findings: string[];
         try {
           await scenario.run(page, harness);

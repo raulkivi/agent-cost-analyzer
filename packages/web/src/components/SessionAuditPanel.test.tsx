@@ -132,7 +132,7 @@ describe("SessionAuditPanel", () => {
   it("filters the table by clicking a failure-category bar, and clears the filter", async () => {
     renderPanel();
 
-    fireEvent.click(await screen.findByRole("button", { name: "Timeout: 1 Failed" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Timeout 1: 1 Failed" }));
 
     const table = screen.getByRole("table", { name: "Tool calls" });
     expect(within(table).getAllByRole("row").slice(1)).toHaveLength(1);
@@ -145,7 +145,7 @@ describe("SessionAuditPanel", () => {
   it("filters by shell program from the program chart", async () => {
     renderPanel();
 
-    fireEvent.click(await screen.findByRole("button", { name: "sleep: 0 Succeeded, 1 Failed" }));
+    fireEvent.click(await screen.findByRole("button", { name: "sleep 1: 0 Succeeded, 1 Failed" }));
 
     const table = screen.getByRole("table", { name: "Tool calls" });
     expect(within(table).getAllByRole("row").slice(1)).toHaveLength(1);

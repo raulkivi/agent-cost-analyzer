@@ -76,6 +76,37 @@ describe("InsightsService", () => {
     expect(dataset.vendors).toEqual([{ id: "anthropic", label: "Anthropic" }]);
   });
 
+  // Step 15.9 (plan §11.7): a project's chart colour is its position in the
+  // projects file, so the dataset lists every project in file order, used
+  // or not, and filtering or another date range never repaints one.
+  it("lists the projects in projects-file order, including ones no row uses", async () => {
+    const a = new FakeProvider("vscode", [analyzeSession("s1", day(1), [turn(0)])]);
+    const attributed = {
+      repository: { attributed: true as const, repository: { key: "github.com/acme/portal", source: "git-remote" as const } },
+      projectId: "portal",
+      vendor: { known: true as const, vendorId: "anthropic", basis: "profile" as const },
+      channel: { known: true as const, channel: "github-copilot" },
+    };
+    const projects = [
+      { id: "zeta", name: "Zeta", members: [] },
+      { id: "portal", name: "Customer portal", members: [] },
+      { id: "alpha", name: "Alpha", members: [] },
+    ];
+    const attribution = {
+      snapshot: () => ({
+        projectsFile: { version: 1 as const, projects },
+        session: () => attributed,
+        turn: () => attributed,
+        projectName: (id: string) => projects.find((project) => project.id === id)?.name,
+        vendorLabel: (id: string) => id,
+      }),
+    };
+
+    const dataset = await new InsightsService({ listProviders: () => [a] }, [], () => NOW, attribution as never).getDataset({});
+
+    expect(dataset.projects?.map((project) => project.id)).toEqual(["zeta", "portal", "alpha"]);
+  });
+
   it("prices every turn row with the injected pricer, seeing each turn's attribution (step 15.6)", async () => {
     const a = new FakeProvider("vscode", [analyzeSession("s1", day(1), [turn(0)])]);
     const seen: string[] = [];

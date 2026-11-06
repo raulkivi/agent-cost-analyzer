@@ -2,22 +2,15 @@
 // §10.1.5): MCP output enters a (usually hosted) client model's context, so
 // repositories are named by their normalised key and never by a local
 // folder path. `local:` and `path:` keys carry one, so they are given as
-// the folder's name only, unless a tool's caller asks for paths.
+// the folder's name only, unless a tool's caller asks for paths. The
+// redaction itself lives in the domain (step 15.9), so the web app names a
+// local repository the same way.
+import { isLocalRepositoryKey, redactRepositoryKey } from "@agent-cost-analyzer/domain";
 
-const LOCAL_PREFIXES = ["local:", "path:"] as const;
-
-function lastSegment(folder: string): string {
-  const parts = folder.split(/[\\/]/).filter((part) => part.length > 0);
-  return parts.at(-1) ?? "";
-}
+export { redactRepositoryKey };
 
 export function isLocalKey(key: string): boolean {
-  return LOCAL_PREFIXES.some((prefix) => key.startsWith(prefix));
-}
-
-export function redactRepositoryKey(key: string): string {
-  const prefix = LOCAL_PREFIXES.find((candidate) => key.startsWith(candidate));
-  return prefix ? `${prefix}${lastSegment(key.slice(prefix.length))}` : key;
+  return isLocalRepositoryKey(key);
 }
 
 // A filter names a repository by its full key or by the redacted key a

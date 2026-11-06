@@ -1,0 +1,13 @@
+{
+  // The usage-scenario suite (plan §12.4.1) runs in Node under Playwright
+  // Test and tsx, not in the browser bundle, so it type-checks on its own.
+  "extends": "../../../tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "allowImportingTsExtensions": true,
+    "module": "ESNext",
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "types": ["node"]
+  },
+  "include": ["./**/*.ts", "./**/*.mts"]
+}

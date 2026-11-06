@@ -14,6 +14,7 @@ describe("productProfileSchema", () => {
       openInEditor: false,
       sessionSidebar: false,
       vendorSimulation: false,
+      costAnalysis: true,
     },
   };
 
@@ -33,6 +34,7 @@ describe("productProfileSchema", () => {
         openInEditor: true,
         sessionSidebar: true,
         vendorSimulation: true,
+        costAnalysis: false,
       },
     };
 
@@ -53,6 +55,12 @@ describe("productProfileSchema", () => {
   it("rejects a profile without vendorSimulation (step 13.6)", () => {
     const features: Record<string, unknown> = { ...standalone.features };
     delete features.vendorSimulation;
+    expect(() => productProfileSchema.parse({ ...standalone, features })).toThrow();
+  });
+
+  it("rejects a profile without costAnalysis (Phase 15 step 15.9)", () => {
+    const features: Record<string, unknown> = { ...standalone.features };
+    delete features.costAnalysis;
     expect(() => productProfileSchema.parse({ ...standalone, features })).toThrow();
   });
 
