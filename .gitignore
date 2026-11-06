@@ -14,6 +14,8 @@ packages/vscode-extension/.vscode-test/
 # The VS Code UI automation (step 10.16): the service's VS Code download, and failure artefacts
 packages/vscode-extension/.wdio-vscode-service/
 packages/vscode-extension/test/ui/out/
+# The standalone app's usage-scenario suite (step 15.9): failure screenshots and traces
+packages/web/e2e/out/
 *.tsbuildinfo
 
 # Test coverage
