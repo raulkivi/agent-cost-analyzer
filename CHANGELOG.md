@@ -81,6 +81,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A usage-scenario test suite for the standalone app (Playwright, the real
   server over a seeded fixture home at a fixed clock), run by a new
   required `web-e2e` CI job.
+- Billing statements and a Projects editor (Phase 15 step 15.11): a Billing
+  tab on the Dashboard shows one project's statement for a month, in this
+  machine's time zone: lines per channel, model and price version, turns
+  with unknown cost listed (never counted as zero), subscription use left
+  off unless the project includes it, the project's markup, fixed lines
+  and own currency at a fixed rate, totals per currency, coverage and
+  provenance. "Issue statement" (after a confirmation, and only once the
+  month has ended) freezes it as a file that never changes; a later re-run
+  that differs (late logs, a price change) shows "Differs from issued" and
+  the exact diff. Export as CSV, JSON or Markdown (no message text, session
+  titles optional). The Projects editor assigns repositories to projects
+  with a select (keyboard only), edits members, rates and capture rules,
+  and shows problems such as two projects claiming the same scope inline,
+  with Save disabled until they're fixed. `GET /api/statements`,
+  `POST /api/statements/:projectId/:period/issue` (JSON only), MCP
+  `get_statement` (read-only) and a `prepare_statement` prompt.
 - Price changes and why cost changed (Phase 15 step 15.10): a Project tab on
   the Dashboard, inside the selected project: cost by vendor (click one for
   its models, with tokens by type beside them), a waterfall from one month's

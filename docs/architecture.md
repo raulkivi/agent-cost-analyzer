@@ -425,6 +425,25 @@ which builds it with attribution); they and the two HTTP endpoints call the
 same `CostAnalysisService`, so their outputs are equal. `review_costs`
 gains a step that compares projects and groups findings by project.
 
+Billing statements (Phase 15 step 15.11, plan §8.5, D4, D6, D13–D15;
+`packages/domain/src/statement.ts` and `statement-export.ts`): a
+`Statement` holds one project's lines for a period (per basis, currency,
+channel, model and price version, with tokens and unit prices), unknown-
+cost and excluded lines (never summed), markup and fixed lines from the
+project's `rates`, totals per currency, the project's own currency at its
+fixed rate, coverage and provenance; `diffStatements` compares a frozen
+copy with a re-run exactly; `exportStatement` writes CSV, JSON and
+Markdown without message text. On the server, `services/billing/` holds
+the pure `buildStatement` (over the cost cube; turns placed by their day
+in the statement's time zone through `InsightTurnRow.at`) and
+`StatementService` over a `StatementStore` port
+(`FileStatementStore`, `data-sources/statements/`, exclusive create so an
+issued statement never changes); `mcp/billing-tools.ts` registers
+`get_statement` (read-only) and the prompts gain `prepare_statement`. The
+web's Billing tab (`components/billing/`) and Projects editor
+(`components/projects/`, edits as pure functions in
+`lib/projects/editor-model.ts`) are the Dashboard's.
+
 Price changes and variance (Phase 15 step 15.10, plan §6.4, §8.4, D11,
 D12; `packages/domain/src/price-change.ts` and `cost-variance.ts`): a priced
 `CostFigure` carries `byTokenType` (uncached input, cache read, cache
@@ -453,8 +472,10 @@ web client of those two endpoints. `InsightsDashboard` shows a view switch
 width) when `ProductFeatures.costAnalysis` is on: true in the standalone
 app, false in the extension until step 15.14, whose ApiService has no cost
 analyses (the webview RPC allow-list carries `getCostTimeSeries`,
-`getCostComparison`, and from step 15.10 `getProjectCost` and
-`getCostVariance`, and the extension answers them 404). The tabs share
+`getCostComparison`, from step 15.10 `getProjectCost` and
+`getCostVariance`, and from step 15.11 `getStatement`, `issueStatement`,
+`getProjects`, `saveProjects` and `getRepositoryList`, and the extension
+answers them 404). The tabs share
 the associative selections. Data flow: `lib/cost/cost-scope.ts` turns the
 selections into a request (Project, else Repository, as `groupBy` and
 `ids`; one selected Provider as `provider`; a selected No project or
@@ -2048,6 +2069,8 @@ themselves.
 | `GET /api/cost/variance?groupBy&id&periodA&periodB&currency&provider&limit` | `CostVariance` (Phase 15 step 15.10): why a repository's or project's cost changed between two periods (`YYYY-MM` or `YYYY-MM-DD..YYYY-MM-DD`), as usage, price and mix effects per currency, model and token type that add up exactly to the change, on the priced basis as of use; turns without a priced figure are `notExplained`; also MCP `explain_cost_change`. 400 for a bad query; not in the extension (404) |
 | `GET /api/cost/project?projectId&since&until&bucket&basis&pricing&currency&provider&limit&topSessions` | `ProjectCost` (Phase 15 step 15.10, the Dashboard's Project tab): as MCP `get_project_cost`; 404 for an unknown project or in the extension |
 | `GET /api/price-book/changes?since&until&channel&model&kind&provider&limit` | `PriceChangeList` (Phase 15 step 15.10): documented changes (price-book version boundaries) and observed ones (Copilot billed vs priced, `inferred`), oldest first; also MCP `get_price_changes`. Not in the extension (404) |
+| `GET /api/statements?projectId&period&provider&limit` | `StatementAnswer` (Phase 15 step 15.11): one project's statement for a month (`YYYY-MM`) or range (`YYYY-MM-DD..YYYY-MM-DD`) in the machine's time zone: the frozen copy with the re-run and its exact diff, else the draft and whether it can be issued; also MCP `get_statement`. 404 unknown project, 400 bad period; not in the extension (404) |
+| `POST /api/statements/:projectId/:period/issue` | Freezes the draft into `statements/<project>/<period>.json` in the app's settings folder (Phase 15 step 15.11). JSON only (415 otherwise); 409 for an open or already issued period; returns the `StatementAnswer` |
 | `GET /api/repositories` | `RepositoryList` (Phase 15 step 15.3): every repository the providers' sessions resolve to (`key`, `source`, `rootPath`, session count, providers, first and last use, projects), the Unattributed sessions grouped by reason, and each provider's status |
 | `PUT /api/config/retention-threshold` | Sets the persisted `minRetainedSessionLogsThreshold` override (body: `{ value: number }`, must be a positive integer, else 400); returns the fresh `ConfigStatus` so the caller can update both the header control and the warning banner from one response |
 

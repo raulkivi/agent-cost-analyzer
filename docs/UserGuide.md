@@ -646,6 +646,51 @@ The Project tab reads `GET /api/cost/project` and `GET /api/cost/variance`;
 the MCP tools `explain_cost_change` and `get_price_changes` give the same
 answers.
 
+**Billing** bills one project for a month. Pick the **Project** and the
+**Period** (the last month that has ended is chosen first); months are
+calendar months in this computer's time zone, which the statement names.
+
+- The **statement** lists a line per channel, model and price version with
+  its turns, tokens and amount. Turns whose cost is unknown are listed with
+  the reason and are not counted as zero. Use under a subscription (Claude
+  Code priced as API-equivalent) is left off unless the project includes
+  it. The totals are per currency, with the project's markup and fixed
+  lines, and in the project's own currency if it has one, at its fixed rate.
+- **Issue statement** freezes it as a file in the app's settings folder,
+  after a confirmation. Only a month that has ended can be issued. An issued
+  statement never changes: if later logs or a price change give other
+  figures, it shows **Differs from issued**, and **View diff** lists the
+  exact differences.
+- **Export…** writes the statement as CSV, JSON or Markdown (for an email to
+  a client), with a preview, to copy or save. Exports hold session ids and,
+  if you leave the box ticked, their titles; never message text.
+
+![Billing: the October statement for Customer portal, its lines, totals and what is not included](images/guide-dashboard-billing.png)
+
+**Edit projects** (or **Create project** when there are none) opens the
+**Projects** editor:
+
+- **Repositories without a project** are listed first. Assign each one with
+  its **Assign to** select; the keyboard is enough.
+- Each project has a name, client, billing code, **markup** (%), **fixed
+  lines** on every statement (a seat fee, say), an **own currency** at a
+  fixed rate per USD, whether **subscription use** is included, and its
+  members: a repository, optionally narrowed to a path inside it and branch
+  patterns (`main, release/*`).
+- **Capture rules** assign mitmproxy captures, which record no folder, to a
+  repository; the editor says how many sessions are Unattributed and why.
+- Problems, such as two projects claiming the same repository and branches
+  (a turn counts in one project only), show next to the field and in a
+  summary at the top, and **Save** stays disabled until they are fixed.
+
+![The Projects editor: a repository without a project, capture rules, and a project's fields and members](images/guide-projects-editor.png)
+
+![Billing at 360 px](images/guide-dashboard-billing-360.png)
+
+Billing reads `GET /api/statements`; the MCP tool `get_statement` gives the
+same answer and never issues one, and the `prepare_statement` prompt drafts
+a note to the client from it.
+
 ## Charts as tables
 
 Every chart has a **View as table** button in its toolbar: the AI Credits

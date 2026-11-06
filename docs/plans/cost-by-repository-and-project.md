@@ -1,6 +1,6 @@
 # Phase 15: Cost by repository and project, price history, billing and estimates
 
-Status: **In progress**: steps 15.0–15.10 are done (see §14.1). The owner accepted
+Status: **In progress**: steps 15.0–15.11 are done (see §14.1). The owner accepted
 every recommended decision on 2026-11-05 ([§13](#13-decisions)). The UI
 design (§11) was then revised against the project's existing design and UX
 guidance. This document is the design; Phase 15 in
@@ -534,8 +534,8 @@ All read endpoints are `GET` and follow §8's existing conventions
 | `GET /api/cost/project?projectId=…&since&until&bucket&basis&pricing&currency&provider&limit&topSessions` | `ProjectCost`, as MCP `get_project_cost` (added in 15.10 for the Project tab; 404 for an unknown project) |
 | `GET /api/price-book?channel&model` | price versions with sources |
 | `GET /api/price-book/changes?since&until&channel&model&kind=documented\|observed&provider&limit` | `PriceChangeList`: documented changes and observed ones, oldest first (built in 15.10; observed changes are also `price-change` findings in `GET /api/insights`) |
-| `GET /api/statements?project&period` | a draft statement, or the frozen one with a diff |
-| `POST /api/statements/:project/:period/issue` | freezes the draft |
+| `GET /api/statements?projectId&period&provider&limit` | `StatementAnswer` (built in 15.11): the frozen statement with the re-run and its exact diff, else the draft; whether it can be issued (D15) and why not; the project's issued periods. 404 unknown project, 400 bad period |
+| `POST /api/statements/:projectId/:period/issue` | Freezes the draft (built in 15.11). JSON only (415 otherwise, so no cross-origin form can issue); 409 for an open or already issued period |
 | `GET /api/estimates?project&days\|sessions` | forecast range and the inputs used |
 
 The two write endpoints are the app's first non-log writes. They need the
@@ -1117,7 +1117,7 @@ No UI code (15.9 onwards) starts before the mock-ups in 15.8 are approved.
 | 15.8 | **Mock-ups and palette** (§11.7, §11.8): the seven boards on a Design canvas with versioned copies (drawn and approved 2026-11-05); the eight categorical tokens in `theme.css` and `theme-vscode.css` (done 2026-11-05, see §14.1) | Owner approves the boards and their comments are resolved; the dataviz validator passes in light and dark; `theme-contrast.test.ts` covers the new tokens in Dark Modern, Light Modern and High Contrast Done 2026-11-05, see §14.1 |
 | 15.9 | **Dashboard tabs: Cost over time and Compare**, with price-change markers (§11.1–§11.3) | Component tests incl. "View as table" and unknown-as-gap; `vitest-axe` clean in three themes; keyboard tests; the UI check (`npm run test:ui`) passes for the new tabs at 600–1600 px in three themes; screenshots of the standalone app at desktop and 360 px widths; the §12.4.1 Playwright harness and fixture home are in place, and scenarios S2 and S3 pass in the `web-e2e` job Done 2026-11-06, see §14.1 |
 | 15.10 | **Price changes and variance**: `PriceChangeDetector`, observed-change finding, `VarianceAnalyzer`, Project tab (§11.4); MCP: `explain_cost_change` tool and prompt, `get_price_changes`, `list_findings` kind `price-change` | Effects add up exactly (property test); markers match price-book boundaries; same UI checks as 15.9; the step's MCP tools pass the §10.1.6 tests; scenario S4 passes Done 2026-11-06, see §14.1 |
-| 15.11 | **Statements**: builder, freeze, diff, CSV/JSON/Markdown export, Billing tab, Projects editor (§11.5); MCP: `get_statement`, `prepare_statement` prompt | Golden statements; a frozen statement survives a price-book update unchanged and the diff is exact; every project can be assigned by keyboard alone; same UI checks as 15.9; the step's MCP tools pass the §10.1.6 tests; scenarios S1, S5, S6 and S8 pass |
+| 15.11 | **Statements**: builder, freeze, diff, CSV/JSON/Markdown export, Billing tab, Projects editor (§11.5); MCP: `get_statement`, `prepare_statement` prompt | Golden statements; a frozen statement survives a price-book update unchanged and the diff is exact; every project can be assigned by keyboard alone; same UI checks as 15.9; the step's MCP tools pass the §10.1.6 tests; scenarios S1, S5, S6 and S8 pass Done 2026-11-06, see §14.1 |
 | 15.12 | **Estimates** + Estimate panel; MCP: `estimate_cost`, `estimate_work` prompt | Forecast range tests on fixture histories; shown as a labelled range, never a single number; the step's MCP tools pass the §10.1.6 tests; scenario S7 passes |
 | 15.13 | **MCP, cross-cutting work** (§10.1.4): server instructions for both products, the `toolGroups` option and the extension's tool set, the security tests of §10.1.5 | The §10.1.6 exit criterion over stdio; scenario S10 passes |
 | 15.14 | **VS Code extension** (§11.9): group by repository, status bar per workspace repository, the two Dashboard tabs | Extension and manifest tests (category, codicons, l10n keys); UI check passes; manual check list updated; scenario S9 passes in `extension-ui` |
@@ -1847,6 +1847,89 @@ the four fixes above were made after the browser checks found them, then
 tested; the UI-check scenarios and screenshot script have no tests of their
 own. Not yet: clicking a vendor in Cost over time; Export CSV; observed
 changes in the extension (15.14).
+
+**15.11 (done 2026-11-06).** Statements, the Billing tab and the Projects
+editor. The owner's decisions D13 (markup and fixed lines per project), D14
+(the user currency per project) and D15 (only ended periods are issued)
+are in §13.
+
+- **Domain.** `Statement` (`statement.ts`): lines per basis, currency,
+  channel, model and price version with tokens by type and unit prices
+  (priced lines), unknown-cost lines by reason (never summed), excluded
+  lines (subscription use, D4), markup per currency, fixed lines, totals
+  per currency (the schema refuses a total that isn't lines + markup +
+  fixed), the project's own currency at its fixed rate, coverage and
+  provenance (app version, price-book hash, projects-file hash, session
+  ids and titles). `diffStatements` gives the exact difference per line,
+  per total, in the sessions, unknown turns and inputs. Periods are a
+  month or a range in a time zone (`parseStatementPeriod`, `localDate`,
+  `periodHasEnded`). `exportStatement` writes CSV, JSON and Markdown
+  (shared by the server and the export dialog's preview): no message text,
+  titles optional, a leading `= + - @` in a CSV field neutralised. Project
+  `rates` gain `fixedLines` and `currency`; Insights turn rows and cube rows
+  carry the turn's instant `at`.
+- **Server** (`services/billing/`): `buildStatement`, pure over the cost
+  cube (the preferred basis per turn, turns placed by their day in the
+  statement's time zone, D6); `StatementService` (the draft on demand, the
+  frozen copy with the re-run and its diff, issuing only an ended period);
+  `FileStatementStore` (`data-sources/statements/`) writes
+  `statements/<project>/<period>.json` in the settings folder exclusively
+  (never overwritten, 0600) after checking the id and key patterns.
+  The time zone is the machine's (`Intl`), overridable by
+  `createApp({ timeZone })`; the usage-scenario suite uses UTC.
+- **API**: `GET /api/statements`, `POST .../issue` (JSON only, 415
+  otherwise; `ConflictError` 409 joins the API errors and the RPC
+  statuses). RPC: `getStatement`, `issueStatement`, and for the editor
+  `getProjects`, `saveProjects`, `getRepositoryList` (all 404 in the
+  extension until 15.14). Threat-model rows for the write, the read and the
+  RPC write methods.
+- **MCP**: `get_statement` (`mcp/billing-tools.ts`, read-only, never
+  issues; `includeLines`) and the `prepare_statement` prompt, wired into
+  the stdio server over the same statements folder.
+- **Billing tab** (`components/billing/BillingTab.tsx`, board 4): project
+  and month (the last ended month by default), exact dates, lines, unknown
+  cost listed, totals, the own currency, coverage, provenance; *Issue
+  statement* behind a confirmation dialog (focus trapped, Escape cancels),
+  shown only when the period can be issued, else its reason; *Export…*
+  (CSV, JSON or Markdown, a preview, titles optional, Copy or Save);
+  *Frozen* and, when the re-run differs, *Differs from issued* with the
+  exact diff; the issued periods. With no projects: the "no projects"
+  empty state with *Create project*.
+- **Projects editor** (`components/projects/ProjectsEditor.tsx`, board 5),
+  opened from Billing in place of the Dashboard: repositories without a
+  project first, each assigned with a select (keyboard alone, no drag);
+  projects with name, client, billing code, markup, fixed lines, own
+  currency, subscription use and members (path and branch scopes); capture
+  rules with the Unattributed sessions explained; problems inline and in a
+  summary (the domain's schema and cross-entry checks together), Save
+  disabled while any remain; a new project's id follows its name until
+  saved. Back reloads the dataset.
+- **Checks**: golden statements and exports over the cost fixture
+  (`services/billing/__golden__/`); a frozen statement unchanged after a
+  price-book change with the exact diff (service test and S5). S1, S5, S6
+  and S8 pass, with S2–S4, three runs in a row; the fixture can start with
+  no projects file. The UI check gains Billing, its export dialog and the
+  editor; see the counts below. Screenshots: `guide-dashboard-billing.png`,
+  `guide-dashboard-billing-360.png`, `guide-projects-editor.png`.
+- **Found and fixed by the checks**: the excluded-line reason doubled its
+  punctuation in Markdown; a store test pulled domain sources into the
+  server's program (typecheck); muted text in the export dialog was below
+  4.5:1 (axe); a local repository showed its full path in the editor.
+
+Departures from the mock-ups: the user currency is set per project in the
+editor (D14), not on the Billing tab; the period select offers the last 12
+months, no custom range yet; the Estimate panel is 15.12's; the editor is
+opened from Billing (*Edit projects*, *Create project*) rather than from a
+settings link, has no Import/Export of the file, and no drag and drop;
+aliases are not edited there.
+
+TDD exceptions: the file store, the query wrappers and the web API client
+were written with their tests in one pass; S1, S5, S6 and S8 were written
+after the UI they drive; the fixes above were made after the checks found
+them, then tested; the UI-check scenarios, the harness's answers and the
+screenshot script have no tests of their own. Not yet: custom statement
+ranges in the UI (the API takes them); Import/Export of the projects file;
+the extension's statements (15.14).
 
 ## 15. Exit criterion
 
