@@ -72,8 +72,8 @@ npm run package --workspace=packages/vscode-extension # writes a .vsix next to t
   screenshot of every combination, or `-- --only "session · dark"` to run a
   few.
 - **Install a VSIX.** After `npm run package`, use *Extensions: Install from
-  VSIX...* in the Command Palette and pick the file. The extension isn't
-  published to a marketplace yet, so this is how to try a build.
+  VSIX...* in the Command Palette and pick the file. This is how to try a
+  build before it is published; releases are on the Marketplace and Open VSX.
 - **Manual checks.** Some things no test can drive (the usability script, the
   MCP server in Copilot agent mode, remote windows). Release candidates are
   checked by hand against
