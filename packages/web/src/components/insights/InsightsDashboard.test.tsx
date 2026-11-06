@@ -134,6 +134,67 @@ describe("InsightsDashboard", () => {
     });
   });
 
+  describe("cost basis (step 15.6)", () => {
+    it("shows a Cost basis list box after Channel, with each turn's preferred basis", async () => {
+      renderDashboard();
+      await screen.findByRole("group", { name: "AI Credits" });
+
+      const listBoxes = screen.getAllByRole("listbox").map((listBox) => listBox.getAttribute("aria-label"));
+      expect(listBoxes.slice(0, 5)).toEqual(["Project", "Repository", "Vendor", "Channel", "Cost basis"]);
+      expect(within(screen.getByRole("listbox", { name: "Cost basis" })).getAllByRole("option").map((o) => o.textContent)).toEqual([
+        expect.stringContaining("Billed"),
+        expect.stringContaining("Reported"),
+        expect.stringContaining("Priced"),
+        expect.stringContaining("Cost unknown"),
+      ]);
+    });
+
+    it("shows the cost at the preferred basis, per currency, with coverage and the conversion it uses", async () => {
+      renderDashboard();
+      await screen.findByRole("group", { name: "Cost" });
+      expect(tile("Cost")).toHaveTextContent("0.50 AI Credits + $0.70");
+      expect(tile("Cost")).toHaveTextContent("3 of 4 turns known");
+      expect(tile("Cost")).toHaveTextContent("1 AI Credit = $0.01");
+    });
+
+    it("switches the cost figure to one basis for the view", async () => {
+      const user = userEvent.setup();
+      renderDashboard();
+      await screen.findByRole("group", { name: "Cost" });
+
+      await user.click(screen.getByRole("radio", { name: "Billed" }));
+      expect(tile("Cost")).toHaveTextContent("0.50 AI Credits");
+      expect(tile("Cost")).toHaveTextContent("1 of 4 turns known");
+
+      await user.click(screen.getByRole("radio", { name: "Priced" }));
+      expect(tile("Cost")).toHaveTextContent("0.40 AI Credits + $0.75");
+    });
+
+    it("filters by cost basis, and a turn with no known cost stays unknown, never 0", async () => {
+      renderDashboard();
+      await screen.findByRole("group", { name: "Cost" });
+
+      fireEvent.click(option("Cost basis", /Cost unknown/));
+      expect(tile("Cost")).toHaveTextContent("—");
+      expect(tile("Cost")).toHaveTextContent("0 of 1 turns known");
+      expect(screen.getByRole("listitem", { name: "Cost basis: Cost unknown" })).toBeInTheDocument();
+    });
+
+    it("selects a basis and switches the view's basis with the keyboard alone", async () => {
+      const user = userEvent.setup();
+      renderDashboard();
+      await screen.findByRole("group", { name: "Cost" });
+
+      option("Cost basis", /Billed/).focus();
+      await user.keyboard("{Enter}");
+      expect(tile("Sessions")).toHaveTextContent("1");
+
+      screen.getByRole("radio", { name: "Preferred" }).focus();
+      await user.keyboard("{ArrowRight}");
+      expect(screen.getByRole("radio", { name: "Billed" })).toBeChecked();
+    });
+  });
+
   it("Back undoes the last selection and Clear all removes every one", async () => {
     renderDashboard();
     await screen.findByRole("group", { name: "AI Credits" });

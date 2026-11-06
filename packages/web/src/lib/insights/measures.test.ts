@@ -3,7 +3,9 @@ import { findingRow, sampleInsightsDataset, turnRow } from "../../test-support/i
 import {
   aiCreditsByDay,
   computeKpis,
+  costTotalFor,
   countBy,
+  formatCostTotal,
   sumWithCoverage,
   tokensByModel,
   toolCallsByTool,
@@ -19,6 +21,39 @@ describe("sumWithCoverage", () => {
 
   it("never turns an all-unknown sum into 0 coverage of something", () => {
     expect(sumWithCoverage([null, null], (value) => value)).toEqual({ total: 0, known: 0, count: 2 });
+  });
+});
+
+describe("costTotalFor (step 15.6)", () => {
+  it("totals the preferred figure per currency, with coverage, never summing unknown as 0", () => {
+    const total = costTotalFor(dataset.turns, "preferred");
+    expect(total).toMatchObject({ turns: 4, knownTurns: 3 });
+    expect(total.amounts).toEqual([
+      { currency: "AI_CREDITS", amount: 0.5, knownTurns: 1 },
+      { currency: "USD", amount: 0.7, knownTurns: 2 },
+    ]);
+    expect(total.usd).toBeCloseTo(0.705);
+  });
+
+  it("totals one basis for a view (D3)", () => {
+    const priced = costTotalFor(dataset.turns, "priced");
+    expect(priced.knownTurns).toBe(3);
+    expect(priced.amounts.map((amount) => amount.currency)).toEqual(["AI_CREDITS", "USD"]);
+    expect(costTotalFor(dataset.turns, "billed").knownTurns).toBe(1);
+  });
+
+  it("counts a row without figures as unknown", () => {
+    expect(costTotalFor([turnRow("cc:s9", 0)], "preferred")).toMatchObject({ turns: 1, knownTurns: 0, usd: null });
+  });
+});
+
+describe("formatCostTotal", () => {
+  it("shows each currency in its own unit, AI Credits to 2 decimals", () => {
+    expect(formatCostTotal(costTotalFor(dataset.turns, "preferred"))).toBe("0.50 AI Credits + $0.70");
+  });
+
+  it("is a dash, never 0, when nothing is known", () => {
+    expect(formatCostTotal(costTotalFor([turnRow("cc:s9", 0)], "preferred"))).toBe("—");
   });
 });
 

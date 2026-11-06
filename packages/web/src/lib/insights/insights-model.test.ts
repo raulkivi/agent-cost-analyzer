@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { InsightSessionRow, InsightTurnRow } from "@agent-cost-analyzer/domain";
 import { createAssociativeEngine } from "../associative/engine.js";
 import { sampleInsightsDataset } from "../../test-support/insights-fixture.js";
-import { FIELD, createInsightsModel, LIST_BOX_GROUPS, NO_PROJECT, UNATTRIBUTED, UNKNOWN_CHANNEL } from "./insights-model.js";
+import { FIELD, createInsightsModel, LIST_BOX_GROUPS, NO_COST, NO_PROJECT, UNATTRIBUTED, UNKNOWN_CHANNEL } from "./insights-model.js";
 import { computeKpis, topSessionsByCredits } from "./measures.js";
 
 function viewOf(evaluation: ReturnType<ReturnType<typeof createAssociativeEngine>["evaluate"]>) {
@@ -117,8 +117,32 @@ describe("createInsightsModel", () => {
     });
   });
 
-  it("puts Project, Repository, Vendor and Channel first, as the approved mock-up does", () => {
-    expect(LIST_BOX_GROUPS[0]?.fields).toEqual([FIELD.project, FIELD.repository, FIELD.vendor, FIELD.channel]);
+  describe("cost basis field (step 15.6)", () => {
+    it("lists each turn's preferred basis in the fixed order billed, reported, priced, then Cost unknown", () => {
+      const values = engineFor().evaluate({}).values(FIELD.costBasis);
+      expect(values.map((value) => [value.value, value.label, value.count])).toEqual([
+        ["billed", "Billed", 1],
+        ["reported", "Reported", 1],
+        ["priced", "Priced", 1],
+        [NO_COST, "Cost unknown", 1],
+      ]);
+    });
+
+    it("selecting a basis keeps the turns whose preferred figure has it", () => {
+      const result = engineFor().evaluate({ [FIELD.costBasis]: ["priced"] });
+      expect(result.rows<InsightTurnRow>("turns").map((row) => row.key)).toEqual(["cc:s1:0"]);
+    });
+
+    it("puts a row without cost figures under Cost unknown, never dropping it", () => {
+      const dataset = sampleInsightsDataset();
+      delete dataset.turns[0]!.cost;
+      const values = createAssociativeEngine(createInsightsModel(dataset)).evaluate({}).values(FIELD.costBasis);
+      expect(values.find((value) => value.value === NO_COST)?.count).toBe(2);
+    });
+  });
+
+  it("puts Project, Repository, Vendor, Channel and Cost basis first, as the approved mock-up does (steps 15.4, 15.6)", () => {
+    expect(LIST_BOX_GROUPS[0]?.fields).toEqual([FIELD.project, FIELD.repository, FIELD.vendor, FIELD.channel, FIELD.costBasis]);
   });
 
   it("lists every field in exactly one list-box group", () => {

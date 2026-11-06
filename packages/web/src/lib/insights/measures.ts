@@ -1,11 +1,18 @@
 import {
+  costFigureFor,
   isFailedStatus,
+  sumCostFigures,
+  type CostBasisChoice,
+  type CostTotal,
+  type TurnCostFigures,
   type FindingSeverity,
   type InsightFinding,
   type InsightSessionRow,
   type InsightToolCallRow,
   type InsightTurnRow,
 } from "@agent-cost-analyzer/domain";
+
+import { formatUsd } from "../ai-credits-usd.js";
 
 // KPI and chart maths over the *possible* rows of the current selection.
 // Unknown figures (null) are never summed as 0: every total carries its
@@ -158,4 +165,22 @@ export function topSessionsByCredits(
     })
     .sort((a, b) => b.aiCredits.total - a.aiCredits.total || b.turns - a.turns)
     .slice(0, limit);
+}
+
+// Step 15.6 (plan §5, D3): the rows' cost at one basis ("preferred": each
+// turn's billed, else reported, else priced), per currency with coverage.
+// A row without figures counts as unknown on every basis, never 0.
+const NOT_COMPUTED = { known: false as const, reason: "No cost figures for this turn." };
+const NO_FIGURES: TurnCostFigures = { billed: NOT_COMPUTED, reported: NOT_COMPUTED, priced: NOT_COMPUTED };
+
+export function costTotalFor(turns: readonly InsightTurnRow[], basis: CostBasisChoice): CostTotal {
+  return sumCostFigures(turns.map((turn) => costFigureFor(turn.cost ?? NO_FIGURES, basis)));
+}
+
+// Each currency in its own unit, never added together: "0.50 AI Credits + $0.70".
+export function formatCostTotal(total: CostTotal): string {
+  if (total.knownTurns === 0) return "—";
+  return total.amounts
+    .map((amount) => (amount.currency === "AI_CREDITS" ? `${amount.amount.toFixed(2)} AI Credits` : formatUsd(amount.amount)))
+    .join(" + ");
 }
