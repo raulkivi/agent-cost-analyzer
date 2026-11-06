@@ -128,4 +128,16 @@ describe("CostOverTimeTab (plan §11.2, board 1)", () => {
     expect(await screen.findByText("No turns in this range for this selection.")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Show this year" })).toBeInTheDocument();
   });
+
+  // Step 15.10 (plan §6.4 point 2): observed changes beside the documented ones.
+  it("marks observed price changes as their own (dashed) markers", async () => {
+    const series: CostSeries = {
+      ...sampleCostSeries(),
+      observedChanges: [
+        { kind: "observed", date: "2026-10-05", channel: "github-copilot", modelId: "gpt-5.5", direction: "above", percent: 12, weeks: [], priceVersionIds: [], confidence: "inferred" },
+      ],
+    };
+    renderTab({ loadSeries: loader(series) });
+    expect(await screen.findByRole("button", { name: "Observed · gpt-5.5 +12%" })).toBeInTheDocument();
+  });
 });

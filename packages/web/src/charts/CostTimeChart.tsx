@@ -67,7 +67,13 @@ function tokenTypeLabel(change: PriceChangeMarker["changes"][number]): string {
 }
 
 function channelsOf(group: PriceMarkerGroup): string {
+  if (group.observed) return channelLabel(group.observed.channel);
   return [...new Set(group.markers.map((marker) => channelLabel(marker.channel)))].join(" and ");
+}
+
+// Step 15.10: an observed change's sentence (inferred, never a price).
+function observedSentence(change: NonNullable<PriceMarkerGroup["observed"]>): string {
+  return `billed ${Math.abs(change.percent)}% ${change.direction} the price book for ${change.weeks.length} weeks in a row`;
 }
 
 function changeSentence(group: PriceMarkerGroup): string {
@@ -82,6 +88,9 @@ function changeSentence(group: PriceMarkerGroup): string {
 
 // The marker's accessible name: the whole change, not only the tag's text.
 export function priceMarkerDescription(group: PriceMarkerGroup): string {
+  if (group.observed) {
+    return `Observed on ${longDate(group.date)}: ${group.modelId} on ${channelsOf(group)} ${observedSentence(group.observed)}. Inferred, not documented: check the price book.`;
+  }
   return `Price change on ${longDate(group.date)}: ${group.modelId} on ${channelsOf(group)}, ${changeSentence(group)}. Documented.`;
 }
 
@@ -246,7 +255,7 @@ export function CostTimeChart({
             const open = openMarker === index;
             const markerTooltipId = `${baseId}-marker-${index}`;
             return (
-              <div key={`${group.date}-${group.modelId}`}>
+              <div key={`${group.kind ?? "documented"}-${group.date}-${group.modelId}`}>
                 <button
                   type="button"
                   className="cost-marker-tag"
@@ -269,7 +278,12 @@ export function CostTimeChart({
                 <span id={`${baseId}-marker-${index}-text`} className="sr-only">
                   {priceMarkerDescription(group)}
                 </span>
-                {open && <PriceMarkerTooltip id={markerTooltipId} group={group} left={Math.min(tagLefts[position]!, Math.max(0, width - 320))} top={tagAreaHeight + 4} />}
+                {open &&
+                  (group.observed ? (
+                    <ObservedMarkerTooltip id={markerTooltipId} group={group} left={Math.min(tagLefts[position]!, Math.max(0, width - 320))} top={tagAreaHeight + 4} />
+                  ) : (
+                    <PriceMarkerTooltip id={markerTooltipId} group={group} left={Math.min(tagLefts[position]!, Math.max(0, width - 320))} top={tagAreaHeight + 4} />
+                  ))}
               </div>
             );
           })}
@@ -319,7 +333,15 @@ export function CostTimeChart({
             </g>
           ))}
           {placedMarkers.map(({ group, x }) => (
-            <line key={`${group.date}-${group.modelId}`} data-marker={group.date} x1={x} x2={x} y1={margin.top} y2={plotBottom} className="cost-marker-line" />
+            <line
+              key={`${group.kind ?? "documented"}-${group.date}-${group.modelId}`}
+              data-marker={group.date}
+              x1={x}
+              x2={x}
+              y1={margin.top}
+              y2={plotBottom}
+              className={group.observed ? "cost-marker-line-observed" : "cost-marker-line"}
+            />
           ))}
           {columns
             ? lines[0]!.points.map((point, index) => {
@@ -449,11 +471,18 @@ export function costChartTable({
         }),
       ),
       ...markers.map(
-        (group): ChartDataRow => ({
-          key: `marker-${group.date}-${group.modelId}`,
-          header: `Price change ${longDate(group.date)}`,
-          cells: [`${group.modelId} (${channelsOf(group)}): ${changeSentence(group)}`, ...lines.map(() => "")],
-        }),
+        (group): ChartDataRow =>
+          group.observed
+            ? {
+                key: `observed-${group.date}-${group.modelId}`,
+                header: `Observed change ${longDate(group.date)}`,
+                cells: [`${group.modelId} (${channelsOf(group)}): ${observedSentence(group.observed)}; inferred, not documented`, ...lines.map(() => "")],
+              }
+            : {
+                key: `marker-${group.date}-${group.modelId}`,
+                header: `Price change ${longDate(group.date)}`,
+                cells: [`${group.modelId} (${channelsOf(group)}): ${changeSentence(group)}`, ...lines.map(() => "")],
+              },
       ),
     ],
   };
@@ -470,6 +499,44 @@ function axisLabel(point: ChartPoint, bucket: CostBucket): string {
 
 function truncate(text: string, length: number): string {
   return text.length > length ? `${text.slice(0, length - 1)}…` : text;
+}
+
+// Step 15.10: an observed change's evidence, week by week.
+function ObservedMarkerTooltip({ id, group, left, top }: { id: string; group: PriceMarkerGroup; left: number; top: number }) {
+  const change = group.observed!;
+  return (
+    <div id={id} role="tooltip" className="chart-tooltip cost-marker-tooltip" style={{ left, top }}>
+      <div className="chart-tooltip-title">Observed change {"·"} {longDate(group.date)}</div>
+      <div className="text-muted">
+        {group.modelId} {"·"} {channelsOf(group)} {"·"} inferred, not documented
+      </div>
+      <table className="cost-marker-prices">
+        <caption className="sr-only">Billed and priced AI Credits per week</caption>
+        <thead>
+          <tr>
+            <th scope="col">Week</th>
+            <th scope="col">Turns</th>
+            <th scope="col">Billed</th>
+            <th scope="col">Priced</th>
+            <th scope="col">Ratio</th>
+          </tr>
+        </thead>
+        <tbody>
+          {change.weeks.map((week) => (
+            <tr key={week.period}>
+              <th scope="row">{week.period}</th>
+              <td>{week.turns}</td>
+              <td>{week.billedAiCredits.toFixed(2)}</td>
+              <td>{week.pricedAiCredits.toFixed(2)}</td>
+              <td>×{week.ratio.toFixed(2)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <div className="text-muted">Check the price book: a change it doesn't have yet?</div>
+      <div className="text-muted">Escape closes</div>
+    </div>
+  );
 }
 
 function PriceMarkerTooltip({ id, group, left, top }: { id: string; group: PriceMarkerGroup; left: number; top: number }) {

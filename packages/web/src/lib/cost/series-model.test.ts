@@ -138,3 +138,25 @@ describe("price markers and currencies", () => {
     expect(costTotal(1).amounts[0]!.currency).toBe("AI_CREDITS");
   });
 });
+
+// Step 15.10 (plan §6.4 point 2, §11.2): observed changes are markers of
+// their own kind (dashed), labelled as observed.
+describe("observedMarkerGroups", () => {
+  it("makes one observed group per change, labelled with its size and direction", async () => {
+    const { observedMarkerGroups } = await import("./series-model.js");
+    const groups = observedMarkerGroups([
+      {
+        kind: "observed",
+        date: "2026-10-05",
+        channel: "github-copilot",
+        modelId: "gpt-5.5",
+        direction: "above",
+        percent: 12,
+        weeks: [],
+        priceVersionIds: [],
+        confidence: "inferred",
+      },
+    ] as never);
+    expect(groups).toEqual([expect.objectContaining({ kind: "observed", date: "2026-10-05", modelId: "gpt-5.5", label: "Observed · gpt-5.5 +12%", markers: [] })]);
+  });
+});
