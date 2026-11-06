@@ -352,9 +352,17 @@ session turn by turn:
   attachment invalidating the cache, toggling extended thinking, nested
   forking, and a subagent on a cheaper model) to see a guided, turn-by-turn
   walkthrough of how caching and token accounting work, with a
-  plain-language explanation for each turn.
+  plain-language explanation for each turn. Each scenario is simulated on a
+  vendor and model you pick (real prices, documented cache rules), with a
+  Cache column and an assumptions popover; see the
+  [User Guide](docs/UserGuide.md#choosing-a-vendor-and-model).
 
   ![Learn mode with a scenario selected: turns table, AI Credits sparkline, timeline scrubber, and the explanation panel](docs/images/learn-scenario.png)
+
+- **Cost by repository and project** — the Analyze-mode Dashboard attributes
+  every session to a repository, vendor and channel, and groups repositories
+  into projects you define in `projects.json`; see the
+  [User Guide](docs/UserGuide.md#cost-by-repository-and-project).
 
 - **Analyze mode** — pick one of your own real sessions (VS Code Copilot
   Chat, a Claude Code session, a mitmproxy capture, or a pi coding agent session — see the **Source**
