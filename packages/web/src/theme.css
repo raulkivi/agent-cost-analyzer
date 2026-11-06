@@ -450,6 +450,29 @@ a { color: var(--color-accent-text); text-underline-offset: 3px; }
 .cost-variance-periods { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .cost-finding { display: flex; gap: 12px; align-items: flex-start; margin: 8px 0 12px; }
 .cost-finding p { margin: 4px 0 0; }
+/* Step 15.11: the Projects editor and the Billing tab. */
+.projects-editor { display: flex; flex-direction: column; gap: var(--space-3); }
+.projects-head, .projects-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); justify-content: space-between; }
+.projects-title { margin: 0; }
+.projects-actions, .billing-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.projects-summary { border: 1px solid var(--color-diverging-increase); padding: 8px 12px; }
+.projects-summary ul { margin: 4px 0 0; padding-left: 18px; }
+.projects-status { margin: 0; }
+.projects-card { display: flex; flex-direction: column; gap: 12px; }
+.projects-fields { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr)); }
+.projects-row { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 8px; margin: 8px 0; }
+.projects-rates { border: 1px solid var(--color-border, rgba(127, 127, 127, 0.3)); padding: 8px 12px; min-width: 0; }
+.field { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.field-error { color: var(--color-text); font-weight: 600; font-size: 12px; }
+.field-error::before { content: "✕ "; }
+.input[aria-invalid="true"] { border-color: var(--color-diverging-increase); box-shadow: inset 0 0 0 1px var(--color-diverging-increase); }
+.checkbox { display: inline-flex; align-items: center; gap: 6px; min-height: 24px; }
+.billing-grid { display: grid; gap: 16px; grid-template-columns: minmax(0, 3fr) minmax(min(100%, 220px), 1fr); }
+@media (max-width: 900px) { .billing-grid { grid-template-columns: minmax(0, 1fr); } }
+.billing-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; }
+.billing-issued { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.billing-formats { display: flex; gap: 16px; margin-bottom: 8px; }
+.billing-preview { width: 100%; font-family: var(--font-mono, monospace); font-size: 12px; box-sizing: border-box; }
 .cost-marker-line-observed { stroke: var(--color-text); stroke-opacity: 0.6; stroke-width: 1; stroke-dasharray: 4 3; }
 .cost-direct-label { font-size: 12px; fill: var(--color-text); }
 .cost-direct-value { font-size: 12px; fill: var(--color-text-muted); font-variant-numeric: tabular-nums; }
