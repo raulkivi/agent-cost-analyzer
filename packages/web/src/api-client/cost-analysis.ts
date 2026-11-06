@@ -7,7 +7,9 @@ import type {
   CostCurrencyChoice,
   CostSeries,
   CostSeriesGroupBy,
+  CostVariance,
   PricingMode,
+  ProjectCost,
 } from "@agent-cost-analyzer/domain";
 import { getApiTransport } from "./current-transport.js";
 
@@ -45,4 +47,29 @@ export function fetchCostTimeSeries(query: CostSeriesQuery, signal?: AbortSignal
 
 export function fetchCostComparison(query: CostCompareQuery, signal?: AbortSignal): Promise<CostComparison> {
   return getApiTransport().call<CostComparison>("getCostComparison", query, signal);
+}
+
+// Step 15.10: the Project tab, over GET /api/cost/project and /api/cost/variance.
+export interface ProjectCostQuery extends CostViewQuery {
+  projectId: string;
+  bucket?: CostBucket;
+  topSessions?: number;
+}
+
+export interface CostVarianceQuery {
+  groupBy: CostCompareGroupBy;
+  id: string;
+  periodA: string; // "YYYY-MM" or "YYYY-MM-DD..YYYY-MM-DD"
+  periodB: string;
+  currency?: CostCurrencyChoice;
+  provider?: string;
+  limit?: number;
+}
+
+export function fetchProjectCost(query: ProjectCostQuery, signal?: AbortSignal): Promise<ProjectCost> {
+  return getApiTransport().call<ProjectCost>("getProjectCost", query, signal);
+}
+
+export function fetchCostVariance(query: CostVarianceQuery, signal?: AbortSignal): Promise<CostVariance> {
+  return getApiTransport().call<CostVariance>("getCostVariance", query, signal);
 }

@@ -25,6 +25,8 @@ function fakeApi(overrides: Partial<DispatcherApi> = {}): DispatcherApi {
     getProductProfile: vi.fn(async () => ({}) as never),
     getCostTimeSeries: vi.fn(async () => ({}) as never),
     getCostComparison: vi.fn(async () => ({}) as never),
+    getProjectCost: vi.fn(async () => ({}) as never),
+    getCostVariance: vi.fn(async () => ({}) as never),
   };
   return { ...api, ...overrides };
 }
@@ -159,6 +161,16 @@ describe("MessageDispatcher (vscode-extension.md §4)", () => {
 
     expect(api.getCostTimeSeries).toHaveBeenCalledWith({ since: "2026-10-01", bucket: "week", ids: "a,b", groupBy: "project" });
     expect(compare).toMatchObject({ ok: false, error: { status: 404 } });
+  });
+
+  // Step 15.10: the Project tab's breakdown and variance.
+  it("routes the project cost and variance methods to ApiService", async () => {
+    const api = fakeApi();
+    const dispatcher = new MessageDispatcher(api);
+    await dispatcher.dispatch(request("getProjectCost", { projectId: "portal", since: "2026-10-01" }));
+    await dispatcher.dispatch(request("getCostVariance", { groupBy: "project", id: "portal", periodA: "2026-08", periodB: "2026-10" }));
+    expect(api.getProjectCost).toHaveBeenCalledWith({ projectId: "portal", since: "2026-10-01" });
+    expect(api.getCostVariance).toHaveBeenCalledWith({ groupBy: "project", id: "portal", periodA: "2026-08", periodB: "2026-10" });
   });
 
   it("passes query fields the way the HTTP query string would: lists comma-joined, numbers as text, blanks dropped", async () => {

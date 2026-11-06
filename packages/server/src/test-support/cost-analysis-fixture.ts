@@ -177,6 +177,7 @@ export function composeCostFixture() {
     getProviderStatus: async () => providerStatus,
     version: "0.0.0-test",
     costAnalysis,
+    priceBook,
   });
   return { api, server, insights, costAnalysis };
 }

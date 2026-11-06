@@ -94,6 +94,20 @@ export function createApp(options: CreateAppOptions = {}): Express {
     res.json(await api.getCostComparison(req.query));
   }));
 
+  // Phase 15 step 15.10: why a cost changed (usage, price, mix) and the
+  // documented and observed price changes.
+  app.get("/api/cost/project", route(async (req, res) => {
+    res.json(await api.getProjectCost(req.query));
+  }));
+
+  app.get("/api/cost/variance", route(async (req, res) => {
+    res.json(await api.getCostVariance(req.query));
+  }));
+
+  app.get("/api/price-book/changes", route(async (req, res) => {
+    res.json(await api.getPriceChanges(req.query));
+  }));
+
   app.get("/api/learn/scenarios", route(async (_req, res) => {
     res.json(await api.listLearnScenarios());
   }));

@@ -65,14 +65,15 @@ export class InsightsService {
     const loads = await Promise.all(selected.map((provider) => this.load(provider, filter, limit)));
     const sources = loads.flatMap((load) => (load.sessions ? [load.sessions] : []));
     const snapshot = this.attribution?.snapshot();
-    const rows = buildInsightRows(sources, snapshot, this.pricer?.snapshot(options.pricing ?? "as-of-use"));
+    const pricing = options.pricing ?? "as-of-use";
+    const rows = buildInsightRows(sources, snapshot, this.pricer?.snapshot(pricing));
     return {
       generatedAt: this.now().toISOString(),
       ...(filter.since ? { since: filter.since } : {}),
       ...(filter.until ? { until: filter.until } : {}),
       providers: loads.map((load) => load.status),
       ...rows,
-      findings: this.detectors.flatMap((detector) => detector.detect({ sources, rows })),
+      findings: this.detectors.flatMap((detector) => detector.detect({ sources, rows, pricing })),
       ...(snapshot ? labelsOf(rows, snapshot) : {}),
     };
   }

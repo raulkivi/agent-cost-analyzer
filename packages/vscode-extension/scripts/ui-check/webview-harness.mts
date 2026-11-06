@@ -17,7 +17,7 @@ import {
   COPILOT_CLI_FIXTURE_SESSION_IDS,
   writeCopilotCliAgentHostStores,
 } from "../../../server/src/test-support/copilot-cli-fixtures.ts";
-import { sampleCostComparison, sampleCostSeries, THREE_PROJECTS } from "../../../web/src/test-support/cost-fixture.ts";
+import { sampleCostComparison, sampleCostSeries, sampleCostVariance, sampleProjectCost, THREE_PROJECTS } from "../../../web/src/test-support/cost-fixture.ts";
 import { createIntegrationFixture } from "../integration-fixture.mts";
 import { webviewDefaultCss, type VscodeTheme } from "./vscode-themes.mts";
 
@@ -126,6 +126,9 @@ function withCostTabs(reply: unknown, request: unknown, enabled: boolean | undef
   if (!enabled || !method) return reply;
   if (method === "getCostTimeSeries") return { kind: "response", id, ok: true, result: sampleCostSeries() };
   if (method === "getCostComparison") return { kind: "response", id, ok: true, result: sampleCostComparison() };
+  // Step 15.10: the Project tab.
+  if (method === "getProjectCost") return { kind: "response", id, ok: true, result: sampleProjectCost() };
+  if (method === "getCostVariance") return { kind: "response", id, ok: true, result: sampleCostVariance() };
   const answer = reply as { ok?: boolean; result?: Record<string, unknown> } | undefined;
   if (!answer?.ok || !answer.result) return reply;
   if (method === "getProductProfile") {
@@ -225,7 +228,7 @@ export async function startHarness(options: HarnessOptions = {}): Promise<Harnes
       await page.exposeFunction("__toHost", async (message: unknown) => {
         inFlight += 1;
         try {
-          const answered = openOptions.costTabs && /getCost/.test(String((message as { method?: string }).method)) ? undefined : await dispatcher.dispatch(message);
+          const answered = openOptions.costTabs && /getCost|getProjectCost/.test(String((message as { method?: string }).method)) ? undefined : await dispatcher.dispatch(message);
           const reply = withCostTabs(withConfigWarnings(answered, message, openOptions.configWarnings), message, openOptions.costTabs);
           if (reply) await page.evaluate(`window.postMessage(${JSON.stringify(reply)}, "*")`);
         } finally {

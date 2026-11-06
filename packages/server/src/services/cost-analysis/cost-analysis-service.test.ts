@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { PriceBookEntry, PricingMode } from "@agent-cost-analyzer/domain";
 import type { SessionRangeFilter } from "../tool-audit/audit-query-service.js";
-import { costs, cubeOf, cubeRow, priced } from "../../test-support/cost-cube-fakes.js";
+import { billed, costs, cubeOf, cubeRow, priced } from "../../test-support/cost-cube-fakes.js";
 import type { CostCube } from "./cost-cube.js";
 import { CostAnalysisService, DatasetCostCubeSource } from "./cost-analysis-service.js";
 
@@ -81,5 +81,41 @@ describe("DatasetCostCubeSource", () => {
     const cube = await source.getCube({ since: "2026-10-01" }, "today");
     expect(calls).toEqual([[{ since: "2026-10-01" }, { pricing: "today" }]]);
     expect(cube).toMatchObject({ generatedAt: "t", rows: [], undatedTurns: 0 });
+  });
+
+  // Step 15.10 (plan §8.4, §10.1.1): explain_cost_change and get_price_changes.
+  it("explains a change from one cube, as of use, covering both periods, and names the price changes between them", async () => {
+    const { service, requests } = setup();
+    const variance = await service.explainChange({
+      groupBy: "project",
+      id: "portal",
+      periodA: { label: "2026-08", since: "2026-08-01", until: "2026-08-31" },
+      periodB: { label: "2026-10", since: "2026-10-01", until: "2026-10-31" },
+      currency: "native",
+      providerId: "vscode",
+    });
+    expect(requests).toEqual([{ range: { providerId: "vscode", since: "2026-08-01", until: "2026-10-31" }, pricing: "as-of-use" }]);
+    expect(variance).toMatchObject({ id: "portal", label: "Customer portal", basis: "priced" });
+  });
+
+  it("lists documented changes from the price book and observed ones from the turns, as of use", async () => {
+    const copilot = (date: string) =>
+      Array.from({ length: 20 }, () => cubeRow({ date, channel: "github-copilot", model: "claude-sonnet-5.5", cost: costs({ billed: billed(12), priced: priced(10, "gh", "AI_CREDITS") }) }));
+    const { service, requests } = setup(cubeOf([...copilot("2026-10-13"), ...copilot("2026-10-20")]));
+    const list = await service.getPriceChanges({ since: "2026-10-01", until: "2026-10-31" });
+    expect(requests).toEqual([{ range: { since: "2026-10-01", until: "2026-10-31" }, pricing: "as-of-use" }]);
+    expect(list.changes.map((change) => [change.kind, change.date])).toEqual([
+      ["documented", "2026-10-07"],
+      ["observed", "2026-10-12"],
+    ]);
+    expect(list.providers).toHaveLength(1);
+  });
+
+  it("reads no sessions for documented changes alone", async () => {
+    const { service, requests } = setup();
+    const list = await service.getPriceChanges({ kind: "documented" });
+    expect(requests).toEqual([]);
+    expect(list.changes.map((change) => change.kind)).toEqual(["documented"]);
+    expect(list.providers).toEqual([]);
   });
 });

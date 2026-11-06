@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
-import { sampleCostComparison, sampleCostSeries } from "../../test-support/cost-fixture.js";
+import { sampleCostComparison, sampleCostSeries, sampleCostVariance, sampleProjectCost } from "../../test-support/cost-fixture.js";
 import { sampleInsightsDataset } from "../../test-support/insights-fixture.js";
 import { InsightsDashboard } from "./InsightsDashboard.js";
 
@@ -385,6 +385,29 @@ describe("InsightsDashboard", () => {
       fireEvent.click(within(screen.getByRole("radiogroup", { name: "Dashboard view" })).getByRole("radio", { name: "Compare" }));
       expect(await screen.findByText("Compare needs two or more projects.")).toBeInTheDocument();
       expect(loadComparison).not.toHaveBeenCalled();
+    });
+
+    // Step 15.10 (plan §11.4): the Project tab, inside the selected project.
+    it("opens the Project tab inside the selected project", async () => {
+      const loadProjectCost = vi.fn().mockResolvedValue(sampleProjectCost());
+      const loadVariance = vi.fn().mockResolvedValue(sampleCostVariance());
+      render(
+        <InsightsDashboard
+          loadDataset={vi.fn().mockResolvedValue(sampleInsightsDataset())}
+          now={NOW}
+          costAnalysis
+          loadCostSeries={vi.fn().mockResolvedValue(sampleCostSeries())}
+          loadCostComparison={vi.fn().mockResolvedValue(sampleCostComparison())}
+          loadProjectCost={loadProjectCost}
+          loadCostVariance={loadVariance}
+        />,
+      );
+      await screen.findByRole("group", { name: "AI Credits" });
+      fireEvent.click(option("Project", /Customer portal/));
+      fireEvent.click(within(screen.getByRole("radiogroup", { name: "Dashboard view" })).getByRole("radio", { name: "Project" }));
+      expect(await screen.findByRole("group", { name: /Cost by vendor/ })).toBeInTheDocument();
+      expect(loadProjectCost).toHaveBeenCalledWith(expect.objectContaining({ projectId: "portal" }), expect.any(AbortSignal));
+      expect(screen.getByRole("region", { name: "Reconciliation" })).toBeInTheDocument();
     });
 
     it("below 700 px offers the views as a select", async () => {

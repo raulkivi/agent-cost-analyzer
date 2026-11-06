@@ -138,6 +138,14 @@ content here.
   `ProductFeatures.costAnalysis` until step 15.14; the §12.4.1 Playwright
   usage-scenario suite in `packages/web/e2e/` with S2 and S3 in the
   `web-e2e` CI job, `npm run test:e2e --workspace=packages/web`);
+  step 15.10 is done (`PriceChangeDetector` in `services/pricing/` with
+  observed Copilot price changes as `price-change` findings (D11), the
+  `VarianceAnalyzer` in `services/cost-analysis/` with usage, price and mix
+  effects that add up exactly (D12), `GET /api/cost/variance`,
+  `/api/cost/project` and `/api/price-book/changes`, MCP
+  `explain_cost_change` (tool and prompt) and `get_price_changes`, the
+  Dashboard's Project tab (`ProjectTab`, `charts/Waterfall.tsx`), dashed
+  observed markers on Cost over time, and scenario S4);
   step 15.1 is done (`Session.workspace`, `Turn.startedAt`, and
   `Turn.workspace` for Claude Code, from every provider) and step 15.2
   (`RepositoryResolver` and `RemoteUrlNormalizer` in

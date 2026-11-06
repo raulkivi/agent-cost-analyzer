@@ -1,4 +1,4 @@
-import { repositoryFolderLabel, type CostSeries, type CostSeriesLine, type Currency, type PriceChangeMarker } from "@agent-cost-analyzer/domain";
+import { repositoryFolderLabel, type CostSeries, type CostSeriesLine, type Currency, type ObservedPriceChange, type PriceChangeMarker } from "@agent-cost-analyzer/domain";
 import { amountIn, formatChange, type DisplayUnit } from "./cost-format.js";
 import { keepLine, type SeriesScope } from "./cost-scope.js";
 import type { DateRange } from "./date-ranges.js";
@@ -131,10 +131,13 @@ export function indexedLines(lines: readonly ChartLine[]): ChartLine[] {
 }
 
 export interface PriceMarkerGroup {
+  // Step 15.10: documented (a solid line) or observed (dashed, inferred).
+  kind?: "documented" | "observed";
   date: string;
   modelId: string;
   label: string;
   markers: PriceChangeMarker[];
+  observed?: ObservedPriceChange;
 }
 
 function percentLabel(markers: readonly PriceChangeMarker[]): string {
@@ -146,6 +149,18 @@ function percentLabel(markers: readonly PriceChangeMarker[]): string {
 
 // One tag per model and date: the same change on two channels (Copilot and
 // the vendor's API) is one marker with both in its tooltip.
+// Step 15.10 (plan §6.4 point 2): one dashed marker per observed change.
+export function observedMarkerGroups(changes: readonly ObservedPriceChange[]): PriceMarkerGroup[] {
+  return changes.map((change) => ({
+    kind: "observed",
+    date: change.date,
+    modelId: change.modelId,
+    label: `Observed · ${change.modelId} ${formatChange(change.percent / 100).replace(".0%", "%")}`,
+    markers: [],
+    observed: change,
+  }));
+}
+
 export function groupPriceMarkers(markers: readonly PriceChangeMarker[]): PriceMarkerGroup[] {
   const groups = new Map<string, PriceChangeMarker[]>();
   for (const marker of markers) {

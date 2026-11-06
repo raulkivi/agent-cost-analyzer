@@ -12,7 +12,7 @@ import {
 } from "./cost-figure.js";
 import { insightProviderStatusSchema } from "./insights.js";
 import { isoCalendarDateSchema } from "./price-book.js";
-import { priceChangeMarkerSchema } from "./price-change.js";
+import { observedPriceChangeSchema, priceChangeMarkerSchema } from "./price-change.js";
 
 // Phase 15 step 15.7 (docs/plans/cost-by-repository-and-project.md §8.1–
 // §8.3, §10, §10.1.1): cost over time, compare and inside a project. The
@@ -119,6 +119,8 @@ export const costSeriesSchema = z.object({
   series: z.array(costSeriesLineSchema), // one per group (with groupBy)
   byVendor: z.array(vendorCostBreakdownSchema), // vendor → model
   priceChanges: z.array(priceChangeMarkerSchema), // documented changes in the range, for the models priced
+  // Step 15.10: observed changes (plan §6.4) starting in the range, for the models shown.
+  observedChanges: z.array(observedPriceChangeSchema),
 });
 
 export type CostSeries = z.infer<typeof costSeriesSchema>;

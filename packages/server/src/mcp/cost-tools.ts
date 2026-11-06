@@ -1,7 +1,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import { costComparisonSchema, costRollupSchema, costSeriesSchema, projectCostSchema, sessionCostSchema } from "@agent-cost-analyzer/domain";
-import { costCompareRequestSchema, costSeriesRequestSchema } from "../services/cost-analysis/cost-query-params.js";
+import { costComparisonSchema, costRollupSchema, costSeriesSchema, costVarianceSchema, projectCostSchema, sessionCostSchema } from "@agent-cost-analyzer/domain";
+import { costCompareRequestSchema, costSeriesRequestSchema, costVarianceRequestSchema } from "../services/cost-analysis/cost-query-params.js";
 import type { CostAnalysisQueries } from "../services/cost-analysis/cost-analysis-service.js";
 import { DEFAULT_TOP_PROJECT_SESSIONS, MAX_TOP_PROJECT_SESSIONS } from "../services/cost-analysis/project-cost-builder.js";
 import { DEFAULT_TOP_SESSIONS } from "../services/cost/cost-rollup-builder.js";
@@ -201,5 +201,38 @@ export function registerCostAnalysisTools(server: McpServer, deps: McpToolDeps, 
     },
     ({ provider, ...args }) =>
       guarded(async () => json(await analysis.compare(costCompareRequestSchema.parse({ ...args, ...(provider !== undefined ? { providerId: provider } : {}) })))),
+  );
+
+  // Step 15.10 (plan §8.4, D12, §10.1.1).
+  const periodArg = z
+    .union([z.string(), z.object({ since: z.string(), until: z.string() })])
+    .describe('A month "YYYY-MM", or {since, until} as "YYYY-MM-DD" (UTC, inclusive).');
+  server.registerTool(
+    "explain_cost_change",
+    {
+      title: "Explain why a cost changed",
+      description:
+        "Answers \"costs went up 30%: was it a price change, more work, or a different model?\" for one repository (key from list_repositories) or project (id from list_projects) between period A and period B. " +
+        "On the priced basis, as of use (tokens × the price version in force when each turn ran), per currency: the usage effect (more or fewer tokens at A's average price), the price effect (B's tokens × the change in unit price) and the mix effect (work moved between models), which add up exactly to the change; " +
+        "per model and token type (uncached input, cache read, cache write, output) with unit prices and the price versions behind them; turns without a priced figure counted as notExplained with reasons, never 0; and the documented price changes between the periods. " +
+        "Follow up with get_price_changes for the models with the largest price effect. Local repositories are named by folder only. Currencies stay apart unless currency is \"usd\" (1 AI Credit = $0.01).",
+      inputSchema: {
+        groupBy: z.enum(["repository", "project"]).describe("Explain a repository's or a project's change."),
+        id: z.string().min(1).describe("The repository key or project id."),
+        periodA: periodArg,
+        periodB: periodArg,
+        currency: currencyArg,
+        provider: providerArg(deps.identity).describe("Restrict to one log provider id (see list_log_providers). Default: every available provider."),
+        limit: sessionsPerProviderArg(DEFAULT_ROLLUP_SESSION_LIMIT),
+      },
+      outputSchema: costVarianceSchema,
+      annotations: READ_ONLY,
+    },
+    ({ provider, ...args }) =>
+      guarded(async () => {
+        const parsed = costVarianceRequestSchema.safeParse({ ...args, ...(provider !== undefined ? { providerId: provider } : {}) });
+        if (!parsed.success) return toolError(parsed.error.issues.map((issue) => `${issue.path.join(".") || "arguments"}: ${issue.message}`).join("; "));
+        return json(await analysis.explainChange(parsed.data));
+      }),
   );
 }

@@ -43,6 +43,8 @@ describe("apiMethodSchema", () => {
       "getProductProfile",
       "getCostTimeSeries",
       "getCostComparison",
+      "getProjectCost",
+      "getCostVariance",
     ]);
   });
 
@@ -131,6 +133,11 @@ describe("apiMethodParamsSchemas (vscode-extension.md §4)", () => {
     ).toBe(true);
     expect(apiMethodParamsSchemas.getCostTimeSeries.safeParse({ ids: 5 }).success).toBe(false);
     expect(apiMethodParamsSchemas.getCostComparison.safeParse({ bucket: { day: true } }).success).toBe(false);
+    // Step 15.10: the Project tab's breakdown and variance.
+    expect(apiMethodParamsSchemas.getProjectCost.safeParse({ projectId: "portal", since: "2026-08-09", until: "2026-11-06" }).success).toBe(true);
+    expect(apiMethodParamsSchemas.getProjectCost.safeParse({}).success).toBe(false);
+    expect(apiMethodParamsSchemas.getCostVariance.safeParse({ groupBy: "project", id: "portal", periodA: "2026-08", periodB: "2026-10", currency: "usd" }).success).toBe(true);
+    expect(apiMethodParamsSchemas.getCostVariance.safeParse({ groupBy: "project", periodA: "2026-08", periodB: "2026-10" }).success).toBe(false);
   });
 
   it("accepts range query fields as text or numbers, and absent fields", () => {

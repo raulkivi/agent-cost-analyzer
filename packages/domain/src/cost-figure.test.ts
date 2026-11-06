@@ -223,3 +223,18 @@ describe("buildCostReconciliation (plan §5: billed vs priced per model and mont
     expect(row!.ratio).toBeNull();
   });
 });
+
+// Phase 15 step 15.10 (plan §8.4): a priced figure carries its cost per
+// token type, so the variance can find each cell's unit price.
+describe("priced figure byTokenType", () => {
+  it("is allowed on a priced figure", async () => {
+    const { costFigureSchema } = await import("./cost-figure.js");
+    const figure = { known: true, amount: 3, currency: "USD", basis: "priced", priceVersionIds: ["v"], byTokenType: { uncachedInput: 1, cacheRead: 0.5, cacheWrite: 0.5, output: 1 } };
+    expect(costFigureSchema.parse(figure)).toEqual(figure);
+  });
+
+  it("is refused on a billed or reported figure", async () => {
+    const { costFigureSchema } = await import("./cost-figure.js");
+    expect(() => costFigureSchema.parse({ known: true, amount: 3, currency: "USD", basis: "reported", byTokenType: { uncachedInput: 3, cacheRead: 0, cacheWrite: 0, output: 0 } })).toThrow();
+  });
+});

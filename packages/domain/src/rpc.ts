@@ -27,6 +27,9 @@ export const apiMethodSchema = z.enum([
   // Phase 15 step 15.9: the Dashboard's Cost over time and Compare tabs.
   "getCostTimeSeries",
   "getCostComparison",
+  // Phase 15 step 15.10: the Dashboard's Project tab.
+  "getProjectCost",
+  "getCostVariance",
 ]);
 
 export type ApiMethod = z.infer<typeof apiMethodSchema>;
@@ -97,6 +100,16 @@ export const apiMethodParamsSchemas = {
   getProductProfile: noParams,
   getCostTimeSeries: z.object(costQuery),
   getCostComparison: z.object({ ...costQuery, comparePeriod: z.string().optional() }),
+  getProjectCost: z.object({ ...costQuery, projectId: z.string().min(1), topSessions: numberOrText.optional() }),
+  getCostVariance: z.object({
+    groupBy: z.string(),
+    id: z.string().min(1),
+    periodA: z.string(),
+    periodB: z.string(),
+    currency: z.string().optional(),
+    provider: z.string().optional(),
+    limit: numberOrText.optional(),
+  }),
 } as const satisfies Record<ApiMethod, z.ZodType>;
 
 // webview -> host (vscode-extension.md §4). `params` stays unknown here: the

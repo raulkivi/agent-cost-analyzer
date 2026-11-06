@@ -359,6 +359,9 @@ a { color: var(--color-accent-text); text-underline-offset: 3px; }
 .hbar-segment { height: 12px; min-width: 2px; }
 .hbar-segment:last-of-type { border-radius: 0 4px 4px 0; }
 .hbar-value { margin-left: 6px; font-variant-numeric: tabular-nums; color: color-mix(in srgb, var(--color-text) 75%, transparent); }
+/* Step 15.10: on the selected row's tint the muted value fell to 4.4:1 in
+   Light Modern (found by the UI check), so it takes the full text colour. */
+.hbar-row--selected .hbar-value { color: var(--color-text); }
 
 /* — audit stat tiles and status tags — */
 .stat-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(118px, 1fr)); gap: var(--space-2); }
@@ -429,6 +432,25 @@ a { color: var(--color-accent-text); text-underline-offset: 3px; }
 .cost-crosshair { stroke: var(--color-text-muted); stroke-width: 1; }
 .cost-end-dot { stroke: var(--color-bg); stroke-width: 2; }
 .cost-partial-point { fill: var(--color-bg); stroke-width: 2; }
+/* Step 15.10 (plan §11.4): the price-versus-usage waterfall. Increases and
+   decreases use the diverging pair; the sign is always written beside them. */
+.waterfall { display: block; max-width: 640px; overflow: visible; }
+.waterfall-axis { stroke: var(--color-text-muted); stroke-width: 1; }
+.waterfall-link { stroke: var(--color-text-muted); stroke-width: 1; stroke-dasharray: 2 2; }
+.waterfall-total { fill: var(--color-series-1); }
+.waterfall-increase { fill: var(--color-diverging-increase); }
+.waterfall-decrease { fill: var(--color-diverging-decrease); }
+.waterfall-none { fill: var(--color-text-muted); }
+.waterfall-value { fill: var(--color-text); font-size: 12px; font-variant-numeric: tabular-nums; }
+.waterfall-name { fill: var(--color-text-muted); font-size: 11px; }
+/* Step 15.10: the Project tab's cards and stacked sub-charts. */
+.cost-project-grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); }
+.cost-chart-stack { display: grid; gap: 24px; }
+.cost-subchart-label { margin: 8px 0 0; font-size: 12px; }
+.cost-variance-periods { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.cost-finding { display: flex; gap: 12px; align-items: flex-start; margin: 8px 0 12px; }
+.cost-finding p { margin: 4px 0 0; }
+.cost-marker-line-observed { stroke: var(--color-text); stroke-opacity: 0.6; stroke-width: 1; stroke-dasharray: 4 3; }
 .cost-direct-label { font-size: 12px; fill: var(--color-text); }
 .cost-direct-value { font-size: 12px; fill: var(--color-text-muted); font-variant-numeric: tabular-nums; }
 .cost-tooltip { min-width: 200px; }

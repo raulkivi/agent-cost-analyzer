@@ -80,7 +80,7 @@ export function createStandaloneApiService(options: StandaloneApiServiceOptions 
     },
     priceBook,
     // Step 15.7: cost over time and compare, over the same dataset.
-    costAnalysis: createCostAnalysis(insights, priceBook, projectDirectoryOf(attribution.catalog)),
+    costAnalysis: createCostAnalysis(insights, priceBook, projectDirectoryOf(attribution.catalog), now),
     auditQueries: new AuditQueryService(registry),
     insights,
     settings: appSettings,

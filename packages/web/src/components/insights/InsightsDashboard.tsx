@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from "react";
-import { AI_CREDIT_CONVERSION_NOTE, redactRepositoryKey, type CostBasisChoice, type CostComparison, type CostSeries } from "@agent-cost-analyzer/domain";
+import { AI_CREDIT_CONVERSION_NOTE, redactRepositoryKey, type CostBasisChoice, type CostComparison, type CostSeries, type CostVariance, type ProjectCost } from "@agent-cost-analyzer/domain";
 import type {
   FailureCategory,
   InsightFinding,
@@ -8,7 +8,7 @@ import type {
   InsightToolCallRow,
   InsightTurnRow,
 } from "@agent-cost-analyzer/domain";
-import type { CostCompareQuery, CostSeriesQuery } from "../../api-client/cost-analysis.js";
+import type { CostCompareQuery, CostSeriesQuery, CostVarianceQuery, ProjectCostQuery } from "../../api-client/cost-analysis.js";
 import { fetchInsights, type InsightsQuery } from "../../api-client/insights.js";
 import { HorizontalBars } from "../../charts/HorizontalBars.js";
 import { TrendColumns } from "../../charts/TrendColumns.js";
@@ -39,6 +39,7 @@ import { StatTile } from "../ui/StatTile.js";
 import { CompareTab } from "./CompareTab.js";
 import { CostOverTimeTab, type CostOrders } from "./CostOverTimeTab.js";
 import { CurrentSelections } from "./CurrentSelections.js";
+import { ProjectTab } from "./ProjectTab.js";
 import { FindingsTable } from "./FindingsTable.js";
 import { ListBox } from "./ListBox.js";
 
@@ -79,13 +80,14 @@ const COST_BASIS_OPTIONS = [
   { value: "priced", label: "Priced" },
 ] as const;
 
-// Phase 15 step 15.9 (plan §11.1): the Dashboard's views. Project and
-// Billing follow in steps 15.10 and 15.11.
-type DashboardView = "overview" | "cost-over-time" | "compare";
+// Phase 15 step 15.9 (plan §11.1): the Dashboard's views. Step 15.10 adds
+// Project; Billing follows in step 15.11.
+type DashboardView = "overview" | "cost-over-time" | "compare" | "project";
 const VIEW_OPTIONS = [
   { value: "overview", label: "Overview" },
   { value: "cost-over-time", label: "Cost over time" },
   { value: "compare", label: "Compare" },
+  { value: "project", label: "Project" },
 ] as const;
 // Below this the views are a select (plan §11.1), as the session view's are.
 const VIEW_SELECT_BELOW = 700;
@@ -114,6 +116,9 @@ interface InsightsDashboardProps {
   costAnalysis?: boolean;
   loadCostSeries?: (query: CostSeriesQuery, signal: AbortSignal) => Promise<CostSeries>;
   loadCostComparison?: (query: CostCompareQuery, signal: AbortSignal) => Promise<CostComparison>;
+  // Step 15.10: the Project tab.
+  loadProjectCost?: (query: ProjectCostQuery, signal: AbortSignal) => Promise<ProjectCost>;
+  loadCostVariance?: (query: CostVarianceQuery, signal: AbortSignal) => Promise<CostVariance>;
 }
 
 // The list boxes, without the Provider facet for a single-provider product.
@@ -135,6 +140,8 @@ export function InsightsDashboard({
   costAnalysis = false,
   loadCostSeries,
   loadCostComparison,
+  loadProjectCost,
+  loadCostVariance,
 }: InsightsDashboardProps) {
   const [preset, setPreset] = useState<RangePreset>("30");
   const [nowTime] = useState(() => (now ?? new Date()).getTime());
@@ -188,6 +195,8 @@ export function InsightsDashboard({
             now={new Date(nowTime)}
             loadCostSeries={loadCostSeries}
             loadCostComparison={loadCostComparison}
+            loadProjectCost={loadProjectCost}
+            loadCostVariance={loadCostVariance}
             key={state.data.generatedAt + preset}
           />
         )}
@@ -219,6 +228,8 @@ interface DashboardBodyProps {
   now: Date;
   loadCostSeries?: InsightsDashboardProps["loadCostSeries"];
   loadCostComparison?: InsightsDashboardProps["loadCostComparison"];
+  loadProjectCost?: InsightsDashboardProps["loadProjectCost"];
+  loadCostVariance?: InsightsDashboardProps["loadCostVariance"];
 }
 
 // Plan §11.7: a project's colour is its position in the projects file; a
@@ -232,7 +243,7 @@ function costOrders(dataset: InsightsDataset): CostOrders {
   return { project: (dataset.projects ?? []).map((project) => project.id), repository: [...repositories].sort() };
 }
 
-function DashboardBody({ dataset, crossProvider, costAnalysis, now, loadCostSeries, loadCostComparison }: DashboardBodyProps) {
+function DashboardBody({ dataset, crossProvider, costAnalysis, now, loadCostSeries, loadCostComparison, loadProjectCost, loadCostVariance }: DashboardBodyProps) {
   const model = useMemo(() => createInsightsModel(dataset), [dataset]);
   const orders = useMemo(() => costOrders(dataset), [dataset]);
   const [dashboardView, setDashboardView] = useState<DashboardView>("overview");
@@ -327,6 +338,18 @@ function DashboardBody({ dataset, crossProvider, costAnalysis, now, loadCostSeri
             basis={costBasis}
             now={now}
             loadSeries={loadCostSeries}
+          />
+        ) : dashboardView === "project" ? (
+          <ProjectTab
+            selections={selections}
+            fieldLabel={fieldLabel}
+            placeholders={PLACEHOLDERS}
+            basis={costBasis}
+            now={now}
+            findings={dataset.findings}
+            turns={dataset.turns}
+            {...(loadProjectCost ? { loadProjectCost } : {})}
+            {...(loadCostVariance ? { loadVariance: loadCostVariance } : {})}
           />
         ) : dashboardView === "compare" ? (
           <CompareTab

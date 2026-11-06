@@ -15,10 +15,11 @@ export function projectDirectoryOf(catalog: { load(): Pick<ProjectsState, "file"
   return { projectName: (id) => catalog.load().file.projects.find((project) => project.id === id)?.name };
 }
 
-export function createCostAnalysis(insights: DatasetReader, priceVersions?: PriceVersionSource, projects?: ProjectDirectory): CostAnalysisService {
+export function createCostAnalysis(insights: DatasetReader, priceVersions?: PriceVersionSource, projects?: ProjectDirectory, now?: () => Date): CostAnalysisService {
   return new CostAnalysisService({
     cubes: new DatasetCostCubeSource(insights),
     ...(priceVersions ? { priceVersions } : {}),
     ...(projects ? { projects } : {}),
+    ...(now ? { now } : {}),
   });
 }

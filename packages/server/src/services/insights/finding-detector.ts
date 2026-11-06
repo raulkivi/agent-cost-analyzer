@@ -1,4 +1,4 @@
-import type { InsightFinding, InsightSessionRow, InsightToolCallRow, InsightTurnRow } from "@agent-cost-analyzer/domain";
+import type { InsightFinding, InsightSessionRow, InsightToolCallRow, InsightTurnRow, PricingMode } from "@agent-cost-analyzer/domain";
 import type { InsightRows, ProviderSessions } from "./insights-dataset-builder.js";
 
 // Phase 9.11 (docs/plans/insights-dashboard.md §4): every detector is an
@@ -7,6 +7,8 @@ import type { InsightRows, ProviderSessions } from "./insights-dataset-builder.j
 export interface DetectorInput {
   sources: ProviderSessions[];
   rows: InsightRows;
+  // Step 15.10: the pricing mode the rows' priced figures use (as of use when absent).
+  pricing?: PricingMode;
 }
 
 export interface FindingDetector {

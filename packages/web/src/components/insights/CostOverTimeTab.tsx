@@ -8,7 +8,7 @@ import { conversionNote, coverageNote, coverageRatio, formatAmount, formatChange
 import { seriesScope, type ScopePlaceholders } from "../../lib/cost/cost-scope.js";
 import { previousRange, rangeFor } from "../../lib/cost/date-ranges.js";
 import { SeriesPalette } from "../../lib/cost/series-colors.js";
-import { chartLines, costKpis, groupPriceMarkers, nativeCurrencies, runningTotalLine, type ChartLine } from "../../lib/cost/series-model.js";
+import { chartLines, costKpis, groupPriceMarkers, observedMarkerGroups, nativeCurrencies, runningTotalLine, type ChartLine } from "../../lib/cost/series-model.js";
 import { useCancellableLoad } from "../../lib/use-cancellable-load.js";
 import { AsyncView, cancelledEmptyState } from "../ui/AsyncView.js";
 import { Blueprint } from "../ui/Blueprint.js";
@@ -178,7 +178,8 @@ function CostChartCard({ series, lines, groupBy, filters, basis, scale, onScale 
   const { unit, bucket } = filters;
   const format = (value: number) => formatAmount(value, unit);
   const tick = (value: number) => formatTick(value, unit);
-  const markers = groupPriceMarkers(series.priceChanges);
+  // Step 15.10: observed changes (dashed) beside the documented ones.
+  const markers = [...groupPriceMarkers(series.priceChanges), ...observedMarkerGroups(series.observedChanges ?? [])].sort((a, b) => a.date.localeCompare(b.date));
   const title = chartTitle(lines, groupBy);
   const ariaLabel = `Cost over time, ${title}, ${BUCKET_ADVERB[bucket]}, ${unitLabel(unit)}`;
   const kicker = costKicker(["Cost over time", BUCKET_ADVERB[bucket], unitLabel(unit), PRICING_LABEL[filters.pricing], `${basis} basis`]);
