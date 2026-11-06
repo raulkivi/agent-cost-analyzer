@@ -14,12 +14,14 @@ interface HorizontalBarsProps {
   selectedKey?: string;
   onSelect?: (key: string) => void;
   emptyText?: string;
+  // How a value reads (bar tip, accessible name, table); counts by default.
+  format?: (value: number) => string;
 }
 
 // Ranked horizontal bars (magnitude by category): one shared scale, value
 // at the bar tip, segments separated by a 2px surface gap. HTML rather than
 // SVG so long labels truncate with a native title instead of colliding.
-export function HorizontalBars({ ariaLabel, series, rows, selectedKey, onSelect, emptyText }: HorizontalBarsProps) {
+export function HorizontalBars({ ariaLabel, series, rows, selectedKey, onSelect, emptyText, format = String }: HorizontalBarsProps) {
   const totals = rows.map((row) => series.reduce((sum, s) => sum + (row.values[s.id] ?? 0), 0));
   const max = Math.max(1, ...totals);
 
@@ -34,8 +36,8 @@ export function HorizontalBars({ ariaLabel, series, rows, selectedKey, onSelect,
       key: row.key,
       header: row.label,
       cells: [
-        ...series.map((s) => (row.values[s.id] === undefined ? null : String(row.values[s.id]))),
-        String(totals[index]),
+        ...series.map((s) => (row.values[s.id] === undefined ? null : format(row.values[s.id]!))),
+        format(totals[index]!),
       ],
     })),
   };
@@ -53,7 +55,11 @@ export function HorizontalBars({ ariaLabel, series, rows, selectedKey, onSelect,
             {rows.map((row, index) => {
               const selected = row.key === selectedKey;
               const select = () => onSelect?.(row.key);
-              const label = `${row.label}: ${series.map((s) => `${row.values[s.id] ?? 0} ${s.label}`).join(", ")}`;
+              // Starts with the visible text, label then total (WCAG 2.5.3); the
+              // segments follow unless the only one is the row itself.
+              const present = series.filter((s) => series.length === 1 || row.values[s.id] !== undefined);
+              const segments = present.length === 1 && present[0]!.label === row.label ? "" : `: ${present.map((s) => `${format(row.values[s.id] ?? 0)} ${s.label}`).join(", ")}`;
+              const label = `${row.label} ${format(totals[index]!)}${segments}`;
               return (
                 <div
                   key={row.key}
@@ -66,7 +72,7 @@ export function HorizontalBars({ ariaLabel, series, rows, selectedKey, onSelect,
                   onClick={select}
                   onKeyDown={activateOnEnterOrSpace(select)}
                 >
-                  <span className="hbar-label truncate">{row.label}</span>
+                  <span className="hbar-label truncate">{row.label}</span>{" "}
                   <span className="hbar-track">
                     {series.map((s) => {
                       const value = row.values[s.id] ?? 0;
@@ -82,7 +88,8 @@ export function HorizontalBars({ ariaLabel, series, rows, selectedKey, onSelect,
                         />
                       ) : null;
                     })}
-                    <span className="hbar-value">{totals[index]}</span>
+                    {" "}
+                    <span className="hbar-value">{format(totals[index]!)}</span>
                   </span>
                 </div>
               );

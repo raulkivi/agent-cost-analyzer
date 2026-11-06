@@ -1,4 +1,4 @@
-import { channelLabel, preferredCostFigure } from "@agent-cost-analyzer/domain";
+import { channelLabel, isLocalRepositoryKey, preferredCostFigure, repositoryFolderLabel } from "@agent-cost-analyzer/domain";
 import type {
   FailureCategory,
   FindingKind,
@@ -157,7 +157,8 @@ export function createInsightsModel(dataset: InsightsDataset): AssociativeModel 
   const projectNames = new Map((dataset.projects ?? []).map((project) => [project.id, project.name]));
   const vendorLabels = new Map((dataset.vendors ?? []).map((vendor) => [vendor.id, vendor.label]));
   const projectLabel = withPlaceholders((value) => projectNames.get(value) ?? value);
-  const repositoryLabel = withPlaceholders((value) => value);
+  // Step 15.9: a local: or path: key by its folder, as the cost tabs name it.
+  const repositoryLabel = withPlaceholders((value) => (isLocalRepositoryKey(value) ? `${repositoryFolderLabel(value)} (local)` : value));
   const vendorLabel = withPlaceholders((value) => vendorLabels.get(value) ?? value);
   const channelDisplay = withPlaceholders(channelLabel);
   return {

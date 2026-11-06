@@ -70,6 +70,14 @@ describe("createInsightsModel", () => {
       ]);
     });
 
+    // Step 15.9: as the cost tabs name it, a local repository by its folder.
+    it("names a local repository by its folder, never its full path", () => {
+      const dataset = sampleInsightsDataset();
+      dataset.turns[0] = { ...dataset.turns[0]!, repositoryKey: "local:/home/dev/scratch" };
+      const engine = createAssociativeEngine(createInsightsModel(dataset)).evaluate({});
+      expect(engine.values(FIELD.repository).map((value) => value.label)).toContain("scratch (local)");
+    });
+
     it("labels vendors from the dataset and channels from the domain, unknown last", () => {
       const dataset = sampleInsightsDataset();
       dataset.turns[2] = { ...dataset.turns[2]!, channel: null, channelUnknownReason: "No channel is known." };

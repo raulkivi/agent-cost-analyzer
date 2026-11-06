@@ -35,6 +35,8 @@ const CASES: Array<[ApiMethodName, unknown]> = [
   ["getInsights", {}],
   ["getHealth", undefined],
   ["getProductProfile", undefined],
+  ["getCostTimeSeries", { since: "2026-08-09", bucket: "week" }],
+  ["getCostComparison", { since: "2026-08-09", until: "2026-11-06", groupBy: "project", ids: ["a", "b"] }],
 ];
 
 // Behaviour every ApiTransport adapter must share, so api-client can't tell

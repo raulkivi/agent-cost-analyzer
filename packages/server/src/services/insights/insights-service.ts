@@ -34,9 +34,13 @@ interface ProviderLoad {
 // runs the injected finding detectors. A provider that is unavailable or
 // fails is reported in providers[] — it never fails the whole dataset.
 // Display names for the project and vendor ids the rows use.
-function labelsOf(rows: InsightRows, snapshot: Pick<AttributionSnapshot, "projectName" | "vendorLabel">) {
+// Step 15.9: every project in projects-file order (a chart colour is that
+// position, plan §11.7), then any id a row uses that the file no longer has.
+function labelsOf(rows: InsightRows, snapshot: Pick<AttributionSnapshot, "projectName" | "vendorLabel"> & Partial<Pick<AttributionSnapshot, "projectsFile">>) {
   const all = [...rows.sessions, ...rows.turns];
-  const projectIds = [...new Set(all.flatMap((row) => (row.projectId ? [row.projectId] : [])))].sort();
+  const fileIds = (snapshot.projectsFile?.projects ?? []).map((project) => project.id);
+  const usedIds = [...new Set(all.flatMap((row) => (row.projectId ? [row.projectId] : [])))].sort();
+  const projectIds = [...fileIds, ...usedIds.filter((id) => !fileIds.includes(id))];
   const vendorIds = [...new Set(all.flatMap((row) => (row.vendorId ? [row.vendorId] : [])))].sort();
   return {
     projects: projectIds.map((id) => ({ id, name: snapshot.projectName(id) ?? id })),

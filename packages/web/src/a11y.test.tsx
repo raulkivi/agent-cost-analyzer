@@ -8,6 +8,7 @@ import { resetHostCapabilities, setHostCapabilities } from "./host/current-host-
 import { resetViewStateStorage } from "./state/current-view-state-storage.js";
 import { makeAuditRollup, makeSessionAudit } from "./test-support/audit-fixture.js";
 import { axeViolations } from "./test-support/axe.js";
+import { sampleCostComparison, sampleCostSeries } from "./test-support/cost-fixture.js";
 import { sampleInsightsDataset } from "./test-support/insights-fixture.js";
 import { makeTurn } from "./test-support/turn-fixture.js";
 import themeCss from "./theme.css?raw";
@@ -139,7 +140,7 @@ const extensionProfile: ProductProfile = {
   productId: "vscode-extension",
   displayName: "AI Credits Analyzer",
   version: "0.1.0",
-  features: { providerSelect: false, crossProviderInsights: false, settingFixes: true, openInEditor: true, sessionSidebar: false, vendorSimulation: false },
+  features: { providerSelect: false, crossProviderInsights: false, settingFixes: true, openInEditor: true, sessionSidebar: false, vendorSimulation: false, costAnalysis: false },
 };
 
 interface Backend {
@@ -177,6 +178,8 @@ function fakeFetch(url: string) {
       ],
     });
   if (url.startsWith("/api/insights")) return json(sampleInsightsDataset());
+  if (url.startsWith("/api/cost/timeseries")) return json(sampleCostSeries());
+  if (url.startsWith("/api/cost/compare")) return json(sampleCostComparison());
   if (url.startsWith("/api/audit"))
     return json(makeAuditRollup({ sessions: [{ sessionId: "session-1", title: "Fix the bug", toolCalls: 4, failed: 3, unknown: 0 }] }));
   if (url === "/api/config/status")
@@ -304,6 +307,50 @@ describe.each(Object.keys(THEMES) as ThemeName[])("axe: no WCAG 2.2 AA violation
 
     expect(screen.getByRole("listitem", { name: "Cost basis: Priced" })).toBeInTheDocument();
     await expectNoViolations();
+  });
+
+  // Phase 15 step 15.9: the cost tabs, in the standalone app's profile
+  // (the extension has none until step 15.14).
+  describe("cost tabs", () => {
+    const standaloneProfile: ProductProfile = {
+      productId: "standalone",
+      displayName: "Agent Cost Analyzer",
+      version: "0.9.0",
+      features: { providerSelect: true, crossProviderInsights: true, settingFixes: false, openInEditor: false, sessionSidebar: false, vendorSimulation: false, costAnalysis: true },
+    };
+
+    async function openCostTab(name: "Cost over time" | "Compare") {
+      backend.profile = standaloneProfile;
+      await openAnalyzeSession();
+      fireEvent.click(screen.getByLabelText("Dashboard"));
+      await screen.findByRole("group", { name: "AI Credits" });
+      fireEvent.click(within(screen.getByRole("radiogroup", { name: "Dashboard view" })).getByRole("radio", { name }));
+    }
+
+    it("Cost over time, with a price marker's tooltip open, then as a table", async () => {
+      await openCostTab("Cost over time");
+      await screen.findByRole("group", { name: "Total cost" });
+      fireEvent.focus(screen.getByRole("button", { name: /^Price \u00b7 claude-sonnet-5.5/ }));
+      expect(screen.getByRole("tooltip")).toBeInTheDocument();
+      await expectNoViolations();
+
+      fireEvent.focus(screen.getByRole("group", { name: /Cost over time, 3 projects/ }));
+      await expectNoViolations();
+      fireEvent.click(screen.getByRole("button", { name: "View as table" }));
+      await expectNoViolations();
+    });
+
+    it("Compare, every chart viewed as a table", async () => {
+      await openCostTab("Compare");
+      // One project and No project: the explanatory empty state.
+      expect(await screen.findByText(/Compare needs two or more/)).toBeInTheDocument();
+      await expectNoViolations();
+      fireEvent.click(within(screen.getByRole("radiogroup", { name: "Group by" })).getByRole("radio", { name: "Repository" }));
+      await screen.findByRole("table", { name: /Compare/ });
+      await expectNoViolations();
+      for (const toggle of screen.getAllByRole("button", { name: "View as table" })) fireEvent.click(toggle);
+      await expectNoViolations();
+    });
   });
 
   it("TurnInspector", async () => {
@@ -473,6 +520,25 @@ describe.each(Object.keys(THEMES) as ThemeName[])("axe: no WCAG 2.2 AA violation
       fireEvent.click(screen.getByRole("button", { name: "Details" }));
       await waitFor(() => expect(screen.getByRole("region", { name: /details/ })).toBeInTheDocument());
 
+      await expectNoViolations();
+    });
+
+    // Step 15.9 (board 2b): the Compare tab's priority columns and a row's
+    // details drawer.
+    it("640 px, the Compare tab with a row's details open", async () => {
+      panelWidth(640);
+      backend.profile = {
+        productId: "standalone",
+        displayName: "Agent Cost Analyzer",
+        version: "0.9.0",
+        features: { providerSelect: true, crossProviderInsights: true, settingFixes: false, openInEditor: false, sessionSidebar: false, vendorSimulation: false, costAnalysis: true },
+      };
+      await openAnalyzeSession();
+      fireEvent.change(screen.getByRole("combobox", { name: /^view$/i }), { target: { value: "dashboard" } });
+      await screen.findByRole("group", { name: "AI Credits" });
+      fireEvent.change(screen.getByRole("combobox", { name: "Dashboard view" }), { target: { value: "compare" } });
+      fireEvent.click(within(screen.getByRole("radiogroup", { name: "Group by" })).getByRole("radio", { name: "Repository" }));
+      fireEvent.click((await screen.findAllByRole("button", { name: /^Details for / }))[0]!);
       await expectNoViolations();
     });
 

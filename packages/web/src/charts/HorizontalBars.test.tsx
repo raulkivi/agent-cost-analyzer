@@ -20,8 +20,8 @@ describe("HorizontalBars", () => {
       />,
     );
 
-    expect(screen.getByRole("button", { name: "npm: 9 Succeeded, 3 Failed" })).toHaveTextContent("12");
-    expect(screen.getByRole("button", { name: "git: 6 Succeeded, 0 Failed" })).toHaveTextContent("6");
+    expect(screen.getByRole("button", { name: "npm 12: 9 Succeeded, 3 Failed" })).toHaveTextContent("12");
+    expect(screen.getByRole("button", { name: "git 6: 6 Succeeded, 0 Failed" })).toHaveTextContent("6");
   });
 
   it("sizes segments relative to the largest row", () => {
@@ -59,7 +59,7 @@ describe("HorizontalBars", () => {
       />,
     );
 
-    const row = screen.getByRole("button", { name: "Timeout: 2 Failed" });
+    const row = screen.getByRole("button", { name: "Timeout 2: 2 Failed" });
     fireEvent.click(row);
     expect(onSelect).toHaveBeenCalledWith("timeout");
     expect(row).toHaveAttribute("aria-pressed", "true");
@@ -97,5 +97,19 @@ describe("HorizontalBars", () => {
   it("renders an empty state", () => {
     render(<HorizontalBars ariaLabel="x" series={series} rows={[]} emptyText="Nothing failed." />);
     expect(screen.getByText("Nothing failed.")).toBeInTheDocument();
+  });
+  // Step 15.9: the Compare tab's share-of-total bars write shares, not counts.
+  it("formats values, totals and table cells with the given format", () => {
+    render(
+      <HorizontalBars
+        ariaLabel="Share of total"
+        series={[{ id: "portal", label: "Customer portal", color: "var(--color-series-1)" }]}
+        rows={[{ key: "portal", label: "Customer portal", values: { portal: 0.527 } }]}
+        format={(value) => `${(value * 100).toFixed(1)}%`}
+      />,
+    );
+    expect(screen.getByRole("button", { name: "Customer portal 52.7%" })).toHaveTextContent("52.7%");
+    fireEvent.click(screen.getByRole("button", { name: "View as table" }));
+    expect(within(screen.getByRole("table", { name: "Share of total" })).getAllByRole("cell").map((cell) => cell.textContent)).toEqual(["52.7%", "52.7%"]);
   });
 });

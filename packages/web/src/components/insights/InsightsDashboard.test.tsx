@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
+import { sampleCostComparison, sampleCostSeries } from "../../test-support/cost-fixture.js";
 import { sampleInsightsDataset } from "../../test-support/insights-fixture.js";
 import { InsightsDashboard } from "./InsightsDashboard.js";
 
@@ -343,5 +344,67 @@ describe("InsightsDashboard", () => {
 
     expect(await screen.findByRole("group", { name: "AI Credits" })).toBeInTheDocument();
     expect(loadDataset).toHaveBeenCalledTimes(2);
+  });
+  // Phase 15 step 15.9 (plan §11.1): the cost tabs share the list boxes'
+  // selections; hidden where the product has no cost analyses (the extension).
+  describe("cost tabs", () => {
+    function renderWithCost(loadSeries = vi.fn().mockResolvedValue(sampleCostSeries())) {
+      const loadComparison = vi.fn().mockResolvedValue(sampleCostComparison());
+      render(
+        <InsightsDashboard
+          loadDataset={vi.fn().mockResolvedValue(sampleInsightsDataset())}
+          now={NOW}
+          costAnalysis
+          loadCostSeries={loadSeries}
+          loadCostComparison={loadComparison}
+        />,
+      );
+      return { loadSeries, loadComparison };
+    }
+
+    it("has no view switch in a product without cost analyses", async () => {
+      renderDashboard();
+      await screen.findByRole("group", { name: "AI Credits" });
+      expect(screen.queryByRole("radiogroup", { name: "Dashboard view" })).not.toBeInTheDocument();
+    });
+
+    it("keeps a list-box selection when switching to Cost over time", async () => {
+      const { loadSeries } = renderWithCost();
+      await screen.findByRole("group", { name: "AI Credits" });
+      fireEvent.click(option("Project", /Customer portal/));
+      fireEvent.click(within(screen.getByRole("radiogroup", { name: "Dashboard view" })).getByRole("radio", { name: "Cost over time" }));
+      expect(await screen.findByRole("group", { name: "Total cost" })).toBeInTheDocument();
+      expect(loadSeries).toHaveBeenCalledWith(expect.objectContaining({ groupBy: "project", ids: ["portal"] }), expect.any(AbortSignal));
+      expect(screen.getByRole("listitem", { name: "Project: Customer portal" })).toBeInTheDocument();
+      expect(screen.queryByRole("group", { name: "AI Credits" })).not.toBeInTheDocument();
+    });
+
+    it("opens Compare over the possible projects", async () => {
+      const { loadComparison } = renderWithCost();
+      await screen.findByRole("group", { name: "AI Credits" });
+      fireEvent.click(within(screen.getByRole("radiogroup", { name: "Dashboard view" })).getByRole("radio", { name: "Compare" }));
+      expect(await screen.findByText("Compare needs two or more projects.")).toBeInTheDocument();
+      expect(loadComparison).not.toHaveBeenCalled();
+    });
+
+    it("below 700 px offers the views as a select", async () => {
+      vi.stubGlobal(
+        "ResizeObserver",
+        class {
+          constructor(private readonly callback: ResizeObserverCallback) {}
+          observe(target: Element) {
+            this.callback([{ target, contentRect: { width: 600 } } as unknown as ResizeObserverEntry], this as unknown as ResizeObserver);
+          }
+          unobserve() {}
+          disconnect() {}
+        },
+      );
+      renderWithCost();
+      await screen.findByRole("group", { name: "AI Credits" });
+      const select = screen.getByRole("combobox", { name: "Dashboard view" });
+      fireEvent.change(select, { target: { value: "cost-over-time" } });
+      expect(await screen.findByRole("group", { name: "Total cost" })).toBeInTheDocument();
+      vi.unstubAllGlobals();
+    });
   });
 });
