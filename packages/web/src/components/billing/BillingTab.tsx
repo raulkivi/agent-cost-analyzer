@@ -463,16 +463,12 @@ function ExportDialog({ statement, copyToClipboard, onClose }: { statement: Stat
             <input type="checkbox" checked={includeTitles} onChange={(event) => (setIncludeTitles(event.target.checked), setCopied(false))} />
             Include session titles
           </label>
-          <p className="text-muted cost-note">Session ids and titles only; message text is never exported.</p>
-          <label htmlFor={previewId} className="text-muted">
-            Preview
-          </label>
+          <p className="cost-note">Session ids and titles only; message text is never exported.</p>
+          <label htmlFor={previewId}>Preview</label>
           <textarea id={previewId} className="input billing-preview" readOnly value={text} rows={12} />
         </div>
         <div className="dialog-actions">
-          <span role="status" className="text-muted">
-            {copied ? "Copied." : ""}
-          </span>
+          <span role="status">{copied ? "Copied." : ""}</span>
           <button type="button" className="btn btn-secondary" onClick={() => void copyToClipboard(text).then(() => setCopied(true))}>
             Copy
           </button>

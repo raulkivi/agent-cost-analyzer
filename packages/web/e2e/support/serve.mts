@@ -22,9 +22,10 @@ const home = os.homedir();
 if (!home.includes("aca-e2e-")) {
   throw new Error(`Refusing to seed a fixture home in ${home}: the suite sets HOME to a temporary aca-e2e- folder`);
 }
-const fixture = createFixtureHome(home);
+const fixture = createFixtureHome(home, { projects: process.env.AGENT_COST_E2E_NO_PROJECTS !== "1" });
 
-const app = createApp({ appSettingsDir: fixture.appSettingsDir, now: clockFromEnv() });
+// Step 15.11: statements bill in UTC here, whatever the machine's zone.
+const app = createApp({ appSettingsDir: fixture.appSettingsDir, now: clockFromEnv(), timeZone: "UTC" });
 app.use(express.static(dist));
 const server = app.listen(0, "127.0.0.1", () => {
   const address = server.address();

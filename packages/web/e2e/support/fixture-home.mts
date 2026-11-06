@@ -184,7 +184,12 @@ export interface FixtureHome {
   folders: { portalWeb: string; portalApi: string; billing: string; scratch: string };
 }
 
-export function createFixtureHome(home: string): FixtureHome {
+// Step 15.11: scenario S1 starts with no projects file.
+export interface FixtureOptions {
+  projects?: boolean;
+}
+
+export function createFixtureHome(home: string, options: FixtureOptions = {}): FixtureHome {
   const dev = path.join(home, "dev");
   const folders = {
     portalWeb: path.join(dev, "portal-web"),
@@ -220,7 +225,7 @@ export function createFixtureHome(home: string): FixtureHome {
   claudeCodeSession(home, "c0000000-0000-4000-8000-000000000008", folders.scratch, [{ at: "2026-10-22T10:00:00.000Z", input: 1000, output: 200 }]);
 
   const appSettingsDir = path.join(home, ".config", "agent-cost-analyzer");
-  write(
+  if (options.projects !== false) write(
     path.join(appSettingsDir, "projects.json"),
     `${JSON.stringify(
       {
