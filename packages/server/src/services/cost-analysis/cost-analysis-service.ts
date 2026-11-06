@@ -2,7 +2,9 @@ import {
   comparisonPeriod,
   type CostComparison,
   type CostSeries,
+  type CostVariance,
   type InsightsDataset,
+  type PriceChangeList,
   type PriceBookEntry,
   type PricingMode,
   type ProjectCost,
@@ -11,9 +13,11 @@ import type { DatasetOptions } from "../insights/insights-service.js";
 import type { SessionRangeFilter } from "../tool-audit/audit-query-service.js";
 import { buildCostComparison } from "./comparison-builder.js";
 import { buildCostCube, type CostCube } from "./cost-cube.js";
-import type { CostCompareRequest, CostSeriesRequest } from "./cost-query-params.js";
+import { PriceChangeDetector } from "../pricing/price-change-detector.js";
+import type { CostCompareRequest, CostSeriesRequest, CostVarianceRequest, PriceChangesRequest } from "./cost-query-params.js";
 import { buildProjectCost } from "./project-cost-builder.js";
 import { buildCostSeries } from "./time-series-builder.js";
+import { buildCostVariance } from "./variance-analyzer.js";
 
 // Phase 15 step 15.7 (docs/plans/cost-by-repository-and-project.md §9,
 // §10.1.4): the cost analyses behind GET /api/cost/timeseries and
@@ -45,6 +49,8 @@ export interface CostAnalysisDeps {
   cubes: CostCubeSource;
   priceVersions?: PriceVersionSource;
   projects?: ProjectDirectory;
+  // Step 15.10: the clock for answers that read no sessions.
+  now?: () => Date;
 }
 
 type ViewRequest = Omit<CostSeriesRequest, "groupBy" | "ids">;
@@ -57,6 +63,9 @@ export interface CostAnalysisQueries {
   getRepositoryCost(request: RepositoryCostRequest): Promise<CostSeries>;
   getProjectCost(request: ProjectCostRequest): Promise<ProjectCost | null>;
   compare(request: CostCompareRequest): Promise<CostComparison>;
+  // Step 15.10 (plan §8.4, §6.4): explain_cost_change and get_price_changes.
+  explainChange(request: CostVarianceRequest): Promise<CostVariance>;
+  getPriceChanges(request: PriceChangesRequest): Promise<PriceChangeList>;
 }
 
 export interface DatasetReader {
@@ -113,6 +122,29 @@ export class CostAnalysisService implements CostAnalysisQueries {
     const previous = comparisonPeriod(request.since, request.until, request.comparePeriod);
     const cube = await this.cube(request, previous.since, request.until);
     return buildCostComparison(cube, withoutSelection(request));
+  }
+
+  // Priced as of use: at today's prices every turn has one price, so
+  // there would be no price effect to show.
+  async explainChange(request: CostVarianceRequest): Promise<CostVariance> {
+    const since = request.periodA.since < request.periodB.since ? request.periodA.since : request.periodB.since;
+    const until = request.periodA.until > request.periodB.until ? request.periodA.until : request.periodB.until;
+    const cube = await this.cube({ ...request, pricing: "as-of-use" }, since, until);
+    return buildCostVariance(cube, { groupBy: request.groupBy, id: request.id, periodA: request.periodA, periodB: request.periodB, currency: request.currency }, this.versions());
+  }
+
+  // Documented changes need only the price book; observed ones read the
+  // turns in the range (as of use), so their providers are listed.
+  async getPriceChanges(request: PriceChangesRequest): Promise<PriceChangeList> {
+    const filter = { since: request.since, until: request.until, channel: request.channel, model: request.model, kind: request.kind };
+    const cube = request.kind === "documented" ? undefined : await this.cube({ ...request, pricing: "as-of-use" }, request.since, request.until);
+    return {
+      generatedAt: cube?.generatedAt ?? (this.deps.now ?? (() => new Date()))().toISOString(),
+      ...(request.since ? { since: request.since } : {}),
+      ...(request.until ? { until: request.until } : {}),
+      providers: cube?.providers ?? [],
+      changes: new PriceChangeDetector().list({ versions: this.versions(), turns: cube?.rows ?? [] }, filter),
+    };
   }
 
   private async cube(request: { providerId?: string; limit?: number; pricing: PricingMode }, since?: string, until?: string): Promise<CostCube> {

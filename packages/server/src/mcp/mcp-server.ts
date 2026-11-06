@@ -70,11 +70,11 @@ export function createMcpServer(deps: McpServerDeps): McpServer {
   registerCostTools(server, toolDeps, guarded);
   if (deps.costAnalysis) registerCostAnalysisTools(server, toolDeps, deps.costAnalysis, guarded);
   registerFindingTools(server, toolDeps, guarded);
-  if (deps.priceBook) registerPricingTools(server, deps.priceBook, guarded);
+  if (deps.priceBook) registerPricingTools(server, deps.priceBook, guarded, deps.costAnalysis);
   if (deps.attribution) {
     registerAttributionTools(server, toolDeps, deps.attribution, guarded);
   }
-  registerPrompts(server);
+  registerPrompts(server, { costAnalysis: deps.costAnalysis !== undefined });
 
   return server;
 }

@@ -16,7 +16,7 @@ function userMessage(text: string) {
   return { messages: [{ role: "user" as const, content: { type: "text" as const, text } }] };
 }
 
-export function registerPrompts(server: McpServer): void {
+export function registerPrompts(server: McpServer, options: { costAnalysis?: boolean } = {}): void {
   server.registerPrompt(
     "audit_session",
     {
@@ -71,6 +71,27 @@ export function registerPrompts(server: McpServer): void {
           "(credential access, piping a download into a shell, force-pushing, uploading data). " +
           "Then call list_findings with kind [\"behavior-change\",\"anomaly\"] to spot new programs, tools or outlier sessions. " +
           "Finish with concrete guardrails: permission rules to add, commands to deny, CLAUDE.md guidance.",
+      ),
+  );
+
+  // Phase 15 step 15.10 (cost-by-repository-and-project.md §10.1.3): with the cost analyses only.
+  if (!options.costAnalysis) return;
+  server.registerPrompt(
+    "explain_cost_change",
+    {
+      title: "Explain why a cost changed",
+      description: "Say whether more work, a price change or a model change drove a repository's or project's cost between two periods, and what to do about each.",
+      argsSchema: { groupBy: z.enum(["repository", "project"]), id: z.string(), periodA: z.string(), periodB: z.string() },
+    },
+    ({ groupBy, id, periodA, periodB }) =>
+      userMessage(
+        `Explain why the cost of ${groupBy} "${id}" changed from ${periodA} to ${periodB}. ` +
+          `Call compare_costs with groupBy "${groupBy}" for the period of ${periodB} if it helps to see the totals with coverage (it needs 2 ids, so add another ${groupBy} or skip it), ` +
+          `then the explain_cost_change tool with groupBy "${groupBy}", id "${id}", periodA "${periodA}" and periodB "${periodB}", ` +
+          "then get_price_changes for the models with the largest price effect over the same dates. " +
+          "Say whether usage, price or mix drove the change, with the figures per currency and per model. " +
+          "For each driver say what to do: for usage, which work grew; for price, which documented or observed change and whether the price book needs checking; for mix, which models the work moved between and whether a cheaper model would do. " +
+          "Name turns that are not explained (no priced figure) and treat unknown figures as unknown, never as zero.",
       ),
   );
 }

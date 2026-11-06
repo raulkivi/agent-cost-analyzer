@@ -3,6 +3,8 @@ import type {
   AuditedToolCall,
   ConfigStatus,
   CostComparison,
+  CostVariance,
+  PriceChangeList,
   CostSeries,
   InsightsDataset,
   LogProviderStatus,
@@ -33,7 +35,7 @@ import { isoDateBoundSchema, parseSessionRangeQuery, parseToolCallFilterQuery } 
 import { BadRequestError, InternalError, NotFoundError } from "./api-errors.js";
 import type { PriceBookReader } from "../pricing/price-book.js";
 import type { CostAnalysisQueries } from "../cost-analysis/cost-analysis-service.js";
-import { parseCostCompareQuery, parseCostSeriesQuery } from "../cost-analysis/cost-query-params.js";
+import { parseCostCompareQuery, parseCostSeriesQuery, parseCostVarianceQuery, parsePriceChangesQuery } from "../cost-analysis/cost-query-params.js";
 
 // The narrow slices of the registry and query services ApiService needs
 // (DIP) — each product's composition root passes its own registry, so
@@ -97,7 +99,7 @@ export interface ApiServiceDeps {
   registry: ApiProviderRegistry;
   projects?: ApiProjects;
   priceBook?: PriceBookReader;
-  costAnalysis?: Pick<CostAnalysisQueries, "getTimeSeries" | "compare">;
+  costAnalysis?: Pick<CostAnalysisQueries, "getTimeSeries" | "compare" | "explainChange" | "getPriceChanges">;
   auditQueries: ApiAuditQueries;
   insights: ApiInsights;
   settings: Pick<AppSettingsStore, "readMinRetainedSessionLogsThreshold" | "writeMinRetainedSessionLogsThreshold">;
@@ -432,6 +434,30 @@ export class ApiService {
       return await analysis.compare(parsed.value);
     } catch (error) {
       throw auditFailure("cost comparison", error);
+    }
+  }
+
+  // Step 15.10 (plan §8.4, §10): usage, price and mix effects between two periods.
+  async getCostVariance(query: ApiQuery = {}): Promise<CostVariance> {
+    const analysis = this.costAnalysis();
+    const parsed = parseCostVarianceQuery(query);
+    if (!parsed.ok) throw new BadRequestError(parsed.error);
+    try {
+      return await analysis.explainChange(parsed.value);
+    } catch (error) {
+      throw auditFailure("cost variance", error);
+    }
+  }
+
+  // Step 15.10 (plan §6.4): documented and observed price changes.
+  async getPriceChanges(query: ApiQuery = {}): Promise<PriceChangeList> {
+    const analysis = this.costAnalysis();
+    const parsed = parsePriceChangesQuery(query);
+    if (!parsed.ok) throw new BadRequestError(parsed.error);
+    try {
+      return await analysis.getPriceChanges(parsed.value);
+    } catch (error) {
+      throw auditFailure("price changes", error);
     }
   }
 
