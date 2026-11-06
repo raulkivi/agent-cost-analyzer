@@ -61,7 +61,8 @@ describe("bundled price book (step 15.5)", () => {
   });
 
   it("ends each promotional price when GitHub says the promotion ends, leaving the price after it unknown", () => {
-    const promos = versions.filter((version) => version.kind === "promo");
+    // Copilot's only: a vendor channel such as google-api states the price after a promotion.
+    const promos = versions.filter((version) => version.channel === "github-copilot" && version.kind === "promo");
     expect(promos.length).toBeGreaterThan(0);
     for (const promo of promos) {
       expect(promo.effectiveTo, promo.id).toBeDefined();
