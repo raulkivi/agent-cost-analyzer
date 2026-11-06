@@ -61,4 +61,26 @@ describe("turnUsageSchema", () => {
 
     expect(() => turnUsageSchema.parse(missingModel)).toThrow();
   });
+
+  it("accepts the optional 1-hour cache-write subset and the agent's own reported cost (step 15.6)", () => {
+    const base = {
+      uncachedInput: { known: true, value: 120 },
+      cacheWrite: { known: true, value: 30 },
+      cacheRead: { known: true, value: 30 },
+      tool: { known: false, reason: "x" },
+      vision: { known: false, reason: "x" },
+      reasoning: { known: true, value: 0 },
+      output: { known: true, value: 200 },
+      costAiCredits: { known: false, reason: "not Copilot" },
+      model: "claude-sonnet-5.5",
+    };
+    const parsed = turnUsageSchema.parse({
+      ...base,
+      extendedCacheWrite: { known: true, value: 20 },
+      reportedCostUsd: { known: false, reason: "no cost in this log" },
+    });
+    expect(parsed.extendedCacheWrite).toEqual({ known: true, value: 20 });
+    expect(parsed.reportedCostUsd).toEqual({ known: false, reason: "no cost in this log" });
+    expect(turnUsageSchema.parse(base).extendedCacheWrite).toBeUndefined();
+  });
 });

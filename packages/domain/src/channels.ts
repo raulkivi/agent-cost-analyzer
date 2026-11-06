@@ -48,3 +48,10 @@ export function vendorApiChannel(vendorId: string): BundledChannelId | undefined
 export function channelLabel(channelId: string): string {
   return Object.hasOwn(CHANNEL_LABELS, channelId) ? CHANNEL_LABELS[channelId as BundledChannelId] : channelId;
 }
+
+// Step 15.6 (plan §5): the unit a channel's priced figures are in. Copilot
+// bills in AI Credits, so a priced Copilot turn is given in AI Credits (the
+// book's USD ÷ $0.01); every other channel, user channels included, in USD.
+export function channelCurrency(channelId: string): "AI_CREDITS" | "USD" {
+  return channelId === CHANNEL.githubCopilot ? "AI_CREDITS" : "USD";
+}

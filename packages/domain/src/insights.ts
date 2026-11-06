@@ -2,6 +2,7 @@ import { z } from "zod";
 import { failureCategorySchema, toolCallStatusSchema } from "./tool-call-outcome.js";
 import { toolKindSchema } from "./tool-call-record.js";
 import { triggeredEventSchema } from "./turn.js";
+import { costBasisTotalsSchema, turnCostFiguresSchema } from "./cost-figure.js";
 
 // Phase 9.11 insights dashboard (docs/plans/insights-dashboard.md §3): a
 // small star schema of flat, already-redacted rows across every provider.
@@ -67,6 +68,9 @@ export const insightSessionRowSchema = z.object({
   // empty tool-call list means unknown, not zero.
   toolCallsUnavailable: z.boolean().optional(),
   ...attributionShape,
+  // Step 15.6: the session's turns summed per cost basis, with coverage.
+  // The server always sets it; absent in data from before step 15.6.
+  cost: costBasisTotalsSchema.optional(),
 }).superRefine(checkAttribution);
 
 export type InsightSessionRow = z.infer<typeof insightSessionRowSchema>;
@@ -86,6 +90,11 @@ export const insightTurnRowSchema = z.object({
   estimated: z.boolean(), // any figure on this turn is a local-tokenizer estimate
   toolCallCount: z.number().nullable(), // null: tool calls unknown
   ...attributionShape,
+  // Step 15.6: YYYY-MM-DD (UTC) of the turn's own time, else the session's.
+  date: z.string().optional(),
+  // Step 15.6 (plan §5): the turn's billed, reported and priced figures,
+  // each unknown with a reason, never 0. The server always sets it.
+  cost: turnCostFiguresSchema.optional(),
 }).superRefine(checkAttribution);
 
 export type InsightTurnRow = z.infer<typeof insightTurnRowSchema>;

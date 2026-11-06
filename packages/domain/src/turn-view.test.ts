@@ -13,6 +13,13 @@ const usage = {
   model: "m",
 };
 
+const cost = {
+  billed: { known: false, reason: "no billed figure" },
+  reported: { known: false, reason: "no reported figure" },
+  priced: { known: true, amount: 0.25, currency: "USD", basis: "priced", priceVersionIds: ["anthropic-api:m:2026-10-01"] },
+};
+const preferredCost = cost.priced;
+
 describe("turnViewSchema", () => {
   it("accepts a bounded turn view", () => {
     const view = {
@@ -27,6 +34,8 @@ describe("turnViewSchema", () => {
       assistantResponseTruncated: true,
       explanation: "",
       usage,
+      cost,
+      preferredCost,
       toolCalls: [{ name: "Bash", kind: "shell", status: "error", failureCategory: "timeout", exitCode: 124, command: "npm test", durationMs: 10 }],
     };
     expect(turnViewSchema.parse(view)).toEqual(view);
@@ -44,6 +53,8 @@ describe("turnViewSchema", () => {
       assistantResponseTruncated: false,
       explanation: "",
       usage,
+      cost,
+      preferredCost,
       toolCalls: [],
       textUnavailableReason: "no text",
       toolCallsUnavailableReason: "no calls",
