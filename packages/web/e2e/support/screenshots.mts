@@ -137,6 +137,15 @@ try {
   await shoot(page, "guide-projects-editor.png");
   await page.close();
 
+  // Step 15.12: the estimate panel (Mobile app: six priced days, so a range).
+  page = await dashboard(1440, 1000);
+  await page.getByRole("listbox", { name: "Project" }).getByRole("option", { name: /Mobile app/ }).click();
+  await openView(page, "Billing");
+  await page.getByRole("img", { name: /^Estimate at today's prices/ }).waitFor();
+  await page.evaluate(() => document.querySelector(".estimate-panel")?.scrollIntoView({ block: "center" }));
+  await shoot(page, "guide-dashboard-estimate.png");
+  await page.close();
+
   page = await dashboard(360, 800);
   await page.getByRole("listbox", { name: "Project" }).getByRole("option", { name: /Customer portal/ }).click();
   await openView(page, "Billing");

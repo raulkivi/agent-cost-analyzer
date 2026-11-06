@@ -152,6 +152,10 @@ content here.
   and the JSON-only issue POST, MCP `get_statement` and
   `prepare_statement`, the Dashboard's Billing tab and the Projects editor,
   decisions D13–D15, scenarios S1, S5, S6 and S8);
+  step 15.12 is done (estimates: domain `CostEstimate`, `buildCostEstimate`
+  and `EstimateService` in `services/billing/`, `GET /api/estimates`, MCP
+  `estimate_cost` and the `estimate_work` prompt, the Billing tab's
+  `EstimatePanel`, decisions D16–D18, scenario S7);
   step 15.1 is done (`Session.workspace`, `Turn.startedAt`, and
   `Turn.workspace` for Claude Code, from every provider) and step 15.2
   (`RepositoryResolver` and `RemoteUrlNormalizer` in

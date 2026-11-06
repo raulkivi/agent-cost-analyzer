@@ -81,6 +81,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A usage-scenario test suite for the standalone app (Playwright, the real
   server over a seeded fixture home at a fixed clock), run by a new
   required `web-e2e` CI job.
+- Estimates (Phase 15 step 15.12): the Billing tab's "Next piece of work"
+  panel estimates planned work for a project as a range, never one number:
+  the median and 90th-percentile cost per active day over the last 4 or 12
+  weeks, at today's prices, times the planned active days, with the inputs
+  it used. With fewer than 5 active days of known cost it gives the reason
+  instead of a range. `GET /api/estimates` (active days or sessions), MCP
+  `estimate_cost` and an `estimate_work` prompt.
 - Billing statements and a Projects editor (Phase 15 step 15.11): a Billing
   tab on the Dashboard shows one project's statement for a month, in this
   machine's time zone: lines per channel, model and price version, turns

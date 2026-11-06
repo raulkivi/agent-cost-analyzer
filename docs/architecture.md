@@ -439,7 +439,13 @@ in the statement's time zone through `InsightTurnRow.at`) and
 `StatementService` over a `StatementStore` port
 (`FileStatementStore`, `data-sources/statements/`, exclusive create so an
 issued statement never changes); `mcp/billing-tools.ts` registers
-`get_statement` (read-only) and the prompts gain `prepare_statement`. The
+`get_statement` (read-only) and the prompts gain `prepare_statement`.
+Step 15.12 adds estimates: the domain's `CostEstimate`
+(`cost-estimate.ts`; a p50–p90 range at today's prices in USD with the
+unit costs and history window used, or the reason when fewer than 5 units
+have a known cost), the pure `buildCostEstimate` and `EstimateService` in
+`services/billing/`, MCP `estimate_cost` and the `estimate_work` prompt,
+and the Billing tab's `EstimatePanel`. The
 web's Billing tab (`components/billing/`) and Projects editor
 (`components/projects/`, edits as pure functions in
 `lib/projects/editor-model.ts`) are the Dashboard's.
@@ -474,7 +480,8 @@ app, false in the extension until step 15.14, whose ApiService has no cost
 analyses (the webview RPC allow-list carries `getCostTimeSeries`,
 `getCostComparison`, from step 15.10 `getProjectCost` and
 `getCostVariance`, and from step 15.11 `getStatement`, `issueStatement`,
-`getProjects`, `saveProjects` and `getRepositoryList`, and the extension
+`getProjects`, `saveProjects` and `getRepositoryList`, from step 15.12
+`getCostEstimate`, and the extension
 answers them 404). The tabs share
 the associative selections. Data flow: `lib/cost/cost-scope.ts` turns the
 selections into a request (Project, else Repository, as `groupBy` and
@@ -2070,6 +2077,7 @@ themselves.
 | `GET /api/cost/project?projectId&since&until&bucket&basis&pricing&currency&provider&limit&topSessions` | `ProjectCost` (Phase 15 step 15.10, the Dashboard's Project tab): as MCP `get_project_cost`; 404 for an unknown project or in the extension |
 | `GET /api/price-book/changes?since&until&channel&model&kind&provider&limit` | `PriceChangeList` (Phase 15 step 15.10): documented changes (price-book version boundaries) and observed ones (Copilot billed vs priced, `inferred`), oldest first; also MCP `get_price_changes`. Not in the extension (404) |
 | `GET /api/statements?projectId&period&provider&limit` | `StatementAnswer` (Phase 15 step 15.11): one project's statement for a month (`YYYY-MM`) or range (`YYYY-MM-DD..YYYY-MM-DD`) in the machine's time zone: the frozen copy with the re-run and its exact diff, else the draft and whether it can be issued; also MCP `get_statement`. 404 unknown project, 400 bad period; not in the extension (404) |
+| `GET /api/estimates?projectId\|repository&activeDays\|sessions&historyWeeks=4\|12&provider` | `CostEstimate` (Phase 15 step 15.12): the cost of planned work as a p50–p90 range at today's prices (median and 90th-percentile cost per active day or session in the last 4 or 12 weeks × the planned units), labelled `"estimate"`, never one number; under 5 units with a known cost no range, the reason instead; also MCP `estimate_cost`. 404 unknown project, 400 bad query; not in the extension (404) |
 | `POST /api/statements/:projectId/:period/issue` | Freezes the draft into `statements/<project>/<period>.json` in the app's settings folder (Phase 15 step 15.11). JSON only (415 otherwise); 409 for an open or already issued period; returns the `StatementAnswer` |
 | `GET /api/repositories` | `RepositoryList` (Phase 15 step 15.3): every repository the providers' sessions resolve to (`key`, `source`, `rootPath`, session count, providers, first and last use, projects), the Unattributed sessions grouped by reason, and each provider's status |
 | `PUT /api/config/retention-threshold` | Sets the persisted `minRetainedSessionLogsThreshold` override (body: `{ value: number }`, must be a positive integer, else 400); returns the fresh `ConfigStatus` so the caller can update both the header control and the warning banner from one response |
