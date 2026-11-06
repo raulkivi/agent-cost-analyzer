@@ -115,7 +115,6 @@ export function composeExtension({
       onError: (setting, error) => console.error(`AI Credits Analyzer: could not save ${setting}`, error),
     }),
     settingsSource: new VscodeSettingsSource(workspace, logPaths.vscodeSettingsPath, extensions),
-    learnScenariosFixturesDir: path.join(mediaDir, "learn-scenarios"),
     learnScriptsDir: path.join(mediaDir, "learn-scripts"),
     vendorProfilesDir: path.join(mediaDir, "vendor-profiles"),
     appVersion: extensionVersion,

@@ -47,7 +47,7 @@ function harness(): ContractHarness {
   };
 }
 
-describeApiTransportContract("HttpTransport", harness, ["getScenario", "compareScenario", "listVendorProfiles"]);
+describeApiTransportContract("HttpTransport", harness);
 
 describe("HttpTransport URL mapping", () => {
   const cases: Array<[ApiMethodName, unknown, string, string?, unknown?]> = [
@@ -59,6 +59,19 @@ describe("HttpTransport URL mapping", () => {
     ["setRetentionThreshold", { value: 300 }, "/api/config/retention-threshold", "PUT", { value: 300 }],
     ["listLearnScenarios", undefined, "/api/learn/scenarios"],
     ["getLearnScenario", { id: "cache-basics" }, "/api/learn/scenarios/cache-basics"],
+    ["getScenario", { id: "cache-basics" }, "/api/learn/scenarios/cache-basics/simulation"],
+    [
+      "getScenario",
+      { id: "cache-basics", modelId: "gpt-6.1-sol" },
+      "/api/learn/scenarios/cache-basics/simulation?model=gpt-6.1-sol",
+    ],
+    ["compareScenario", { id: "cache-basics" }, "/api/learn/scenarios/cache-basics/comparison"],
+    [
+      "compareScenario",
+      { id: "cache-basics", modelIds: ["claude-sonnet-5.5", "gpt-6.1-sol"] },
+      "/api/learn/scenarios/cache-basics/comparison?models=claude-sonnet-5.5%2Cgpt-6.1-sol",
+    ],
+    ["listVendorProfiles", undefined, "/api/vendors"],
     ["getLogProviderStatus", undefined, "/api/log-providers"],
     ["setActiveLogProvider", { id: "mitmproxy" }, "/api/log-providers/active", "PUT", { id: "mitmproxy" }],
     ["getSessionAudit", { sessionId: "a/b" }, "/api/sessions/a%2Fb/audit"],

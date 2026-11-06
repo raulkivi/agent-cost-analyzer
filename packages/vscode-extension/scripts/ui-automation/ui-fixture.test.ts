@@ -9,7 +9,6 @@ import { InMemoryAppSettingsStore } from "@agent-cost-analyzer/server/src/test-s
 import { copilotLogPathsFromUserDataDir } from "../../src/platform/copilot-log-paths.js";
 import { LARGE_SESSION_TURNS, createFirstRunFixture, createUiFixture } from "./ui-fixture.mts";
 
-const learnScenariosFixturesDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../../server/fixtures/learn-scenarios");
 
 // The fixture the VS Code UI automation (wdio.conf.mts, step 10.16) seeds,
 // read back by the extension's own Copilot-only ApiService in plain Node.
@@ -29,7 +28,6 @@ describe("createUiFixture (step 10.16)", () => {
       ...copilotLogPathsFromUserDataDir(userDataDir),
       copilotHome,
       appSettings: new InMemoryAppSettingsStore(),
-      learnScenariosFixturesDir,
       learnScriptsDir: path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../../server/fixtures/learn-scripts"),
       vendorProfilesDir: path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../../server/fixtures/vendor-profiles"),
       appVersion: "0.0.0-test",

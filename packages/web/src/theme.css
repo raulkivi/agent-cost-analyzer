@@ -541,3 +541,19 @@ main[data-layout="narrow"] .nav { flex-wrap: wrap; gap: var(--space-2); }
 .sources-footer-list { margin: 0 0 var(--space-1); padding-left: var(--space-3); }
 .sources-footer-checked { margin: 0; }
 .sources-footer-warning { margin: var(--space-1) 0 0; padding: var(--space-1) var(--space-2); border: 1px solid var(--color-accent); }
+
+/* Step 13.8: "How vendors differ" card and the Vendors tab. Rows wrap, so a
+   narrow panel stacks each vendor into a block instead of cutting it off. */
+.vendor-diff { margin-top: var(--space-3); padding-top: var(--space-2); border-top: 1px solid var(--color-divider); }
+.vendor-diff-title { margin: 0 0 var(--space-2); font-size: 14px; }
+.vendor-diff-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-2); }
+.vendor-diff-row { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-1) var(--space-2); min-width: 0; font-size: 13px; }
+.vendor-diff-model { font-weight: 600; min-width: 0; overflow-wrap: anywhere; }
+.vendor-diff-note { flex: 1 1 100%; min-width: 0; overflow-wrap: anywhere; }
+.vendor-diff-sources { flex: 1 1 100%; display: flex; flex-wrap: wrap; gap: var(--space-2); font-size: 12px; }
+.vendors-tab { min-width: 0; }
+.vendors-model { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1); }
+.vendors-strip { display: flex; flex-wrap: wrap; gap: 2px; margin-top: var(--space-1); }
+.vendors-reason { font-size: 12px; margin-top: var(--space-1); max-width: 240px; overflow-wrap: anywhere; }
+.vendors-sort { padding: 0; font: inherit; font-weight: inherit; text-align: left; }
+.vendors-add { margin-top: var(--space-3); display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }

@@ -9,8 +9,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-11-06
+
+### Changed
+
+- **Requires VS Code 1.145 or later** (was 1.144).
+
 ### Added
 
+- **Vendor-aware Learn.** Learn scenarios are now simulated on a vendor and
+  model you pick (Anthropic, OpenAI, Google or xAI), using that vendor's
+  documented caching rules and real prices instead of illustrative numbers.
+  The turns table gains a Cache column (hit, partial, miss, unknown), each turn
+  has a generated note, AI Credits show their USD equivalent on hover, and an
+  assumptions popover and a sources footer say what the numbers rest on. The
+  Learn view lists the 17 scenarios that apply to Copilot (the Claude-only
+  1-hour cache scenario is hidden), and the `/clear` and `/rewind` scenarios use
+  VS Code wording. The Learn numbers differ from earlier versions: cache
+  misses are no longer billed twice, and 1-hour cache writes and images follow
+  Anthropic's documented rules.
 - **Agent Host sessions.** Chats from VS Code's default Copilot harness
   (VS Code 1.143 and later) are listed in the Sessions view with their turns,
   tokens and AI Credits.

@@ -2,7 +2,7 @@
   "name": "ai-credits-analyzer",
   "displayName": "%displayName%",
   "description": "%description%",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "publisher": "raulkivi",
   "icon": "icon.png",
   "private": true,
@@ -35,7 +35,7 @@
     "Other"
   ],
   "engines": {
-    "vscode": "^1.144.0"
+    "vscode": "^1.145.0"
   },
   "capabilities": {
     "untrustedWorkspaces": {

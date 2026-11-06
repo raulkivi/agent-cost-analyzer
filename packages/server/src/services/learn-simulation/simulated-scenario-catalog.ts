@@ -1,12 +1,11 @@
-import type { LearnScenarioCatalog } from "../../data-sources/learn-scenarios/loader.js";
+import type { LearnScenarioCatalog } from "./learn-scenario-catalog.js";
 import {
   ScenarioNotFoundError,
   type LearnSimulationService,
 } from "./learn-simulation-service.js";
 
-// Lets ApiService's Learn list and lookup read simulated sessions through the
-// same catalog interface the fixture loader implements, so ApiService needs
-// no change for the extension (OCP).
+// Lets ApiService's Learn list and lookup read simulated sessions through a
+// narrow catalog interface (ISP) instead of the whole simulation service.
 export function createSimulatedScenarioCatalog(
   simulation: Pick<LearnSimulationService, "listScenarios" | "getScenario">,
 ): LearnScenarioCatalog {

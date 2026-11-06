@@ -9,38 +9,43 @@ the request shape — even though flipping one mid-task doesn't feel like
 reconfiguring anything. This scenario shows the extended-thinking budget being
 turned on, used, and turned back off within a single session.
 
-| Turn | What happens | Cache write | Cache read | Cache size after | Uncached input | Tool | Reasoning | Output text | **Turn total** | **Turn AI Credits** |
+<!-- scenarios:generated:start -->
+Simulated on Claude Sonnet 5.5 (and its cheaper sibling where a scenario switches models) with the real per-token prices in GitHub's Copilot price table, checked 2026-11-04. The figures come from the Learn simulator, not from a live session. Tool and Vision tokens are part of the input columns, not added to them.
+
+| Turn | What happens | Cache write | Cache read | Cache size after | Uncached input | Tool (in input) | Vision (in input) | Reasoning | Output text | **Turn total** | **Turn AI Credits** |
+|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| 1 | Normal first turn: writes the static prefix plus this turn's own content. Extended thinking is off, so reasoning stays at its normal baseline. | 3800 | 0 | 3800 | 0 | 0 | 0 | 150 | 150 | **4100** | **1.25** |
+| 2 | Normal turn reusing and extending the cache. | 300 | 3800 | 4100 | 0 | 0 | 0 | 120 | 180 | **4400** | **0.41** |
+| 3 | Enabling extended thinking changes the request itself, which invalidates the conversation cache. Reasoning tokens also jump while the model spends a much larger budget deliberating. | 1380 | 3000 | 4380 | 0 | 0 | 0 | 900 | 250 | **5530** | **1.52** |
+| 4 | Normal turn under the new, still elevated reasoning budget; the cache rebuilds under the current settings. | 550 | 4380 | 4930 | 0 | 200 | 0 | 400 | 220 | **5550** | **0.80** |
+| 5 | Turning extended thinking back off invalidates the cache again, in the same way: any change to the thinking setting alters the request, in either direction. Toggling mid-task costs a full miss twice. | 2250 | 3000 | 5250 | 0 | 0 | 0 | 100 | 120 | **5470** | **0.81** |
+
+Session total: **4.80 AI Credits** (≈ $0.0480); most expensive turn: **turn 3** (1.52 AI Credits).
+
+Running totals by token type:
+
+| Cumulative through turn | What happens | Cache write | Cache read | Uncached input | Tool (in input) | Vision (in input) | Reasoning | Output text | **Session total** | **Running AI Credits** |
 |---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| 1 | Normal turn; extended thinking off, reasoning at baseline | 3500 | 0 | 3500 | 500 | 0 | 150 | 150 | **4300** | **0.0289 AI Credits** |
-| 2 | Normal turn; reads/extends the cache | 600 | 3500 | 4100 | 200 | 0 | 120 | 180 | **4600** | **0.0110 AI Credits** |
-| 3 | **Extended thinking turned on**: the thinking-budget parameter changes the request shape, invalidating the cache; reasoning tokens jump sharply | 4650 | 0 | 4650 | 4150 | 0 | 900 | 250 | **9950** | **0.0671 AI Credits** |
-| 4 | Normal turn under the new (elevated) reasoning budget | 700 | 4650 | 5350 | 130 | 200 | 400 | 220 | **6300** | **0.0177 AI Credits** |
-| 5 | **Extended thinking turned back off**: the same invalidation happens again, in the other direction | 5800 | 0 | 5800 | 5420 | 0 | 100 | 120 | **11440** | **0.0667 AI Credits** |
+| 1 | Normal first turn: writes the static prefix plus this turn's own content. Extended thinking is off, so reasoning stays at its normal baseline. | 3800 | 0 | 0 | 0 | 0 | 150 | 150 | **4100** | **1.25** |
+| 2 | Normal turn reusing and extending the cache. | 4100 | 3800 | 0 | 0 | 0 | 270 | 330 | **8500** | **1.66** |
+| 3 | Enabling extended thinking changes the request itself, which invalidates the conversation cache. Reasoning tokens also jump while the model spends a much larger budget deliberating. | 5480 | 6800 | 0 | 0 | 0 | 1170 | 580 | **14030** | **3.19** |
+| 4 | Normal turn under the new, still elevated reasoning budget; the cache rebuilds under the current settings. | 6030 | 11180 | 0 | 200 | 0 | 1570 | 800 | **19580** | **3.99** |
+| 5 | Turning extended thinking back off invalidates the cache again, in the same way: any change to the thinking setting alters the request, in either direction. Toggling mid-task costs a full miss twice. | 8280 | 14180 | 0 | 200 | 0 | 1670 | 920 | **25050** | **4.80** |
 
-![Scenario 16: Toggling Extended Thinking Mid-Session](diagrams/scenario-16-toggling-extended-thinking-mid-session.drawio.svg)
-
-<!-- mermaid-source: diagrams/scenario-16-toggling-extended-thinking-mid-session.drawio.svg
 ```mermaid
-sequenceDiagram
-    participant U as User
-    participant S as Session
-
-    Note over S: Turns 1-2 — normal, thinking off
-    U->>S: "Turn on extended thinking for this part"
-    Note over S: Turn 3 — thinking-budget param changes request shape:<br/>cache MISS, reasoning tokens spike (900)
-    Note over S: Turn 4 — normal turn, thinking still on
-    U->>S: "Turn extended thinking back off"
-    Note over S: Turn 5 — toggling OFF invalidates again:<br/>cache MISS, reasoning back to baseline
+xychart-beta
+    title "Tokens per turn by type (simulated)"
+    x-axis [Turn1, Turn2, Turn3, Turn4, Turn5]
+    y-axis "Tokens" 0 --> 5000
+    bar "Cache write" [3800, 300, 1380, 550, 2250]
+    bar "Cache read" [0, 3800, 3000, 4380, 3000]
+    bar "Uncached input" [0, 0, 0, 0, 0]
+    bar "Tool" [0, 0, 0, 200, 0]
+    bar "Vision" [0, 0, 0, 0, 0]
+    bar "Reasoning" [150, 120, 900, 400, 100]
+    bar "Output text" [150, 180, 250, 220, 120]
 ```
--->
-
-Both toggle turns (3 and 5) cost roughly 6x a normal turn — the setting
-invalidates the cache in **either direction**, so switching it on and then off
-again within one session pays the full-miss tax twice for what is, in terms
-of net task complexity, a single "use more reasoning for the hard part" ask.
-Per Section 17.4 of the main doc, this is squarely a "decide up front" setting
-— enabling it before the session starts (or accepting the elevated reasoning
-cost for the whole session) avoids paying the switch cost at all.
+<!-- scenarios:generated:end -->
 
 **Sources** (checked 2026-11-03):
 

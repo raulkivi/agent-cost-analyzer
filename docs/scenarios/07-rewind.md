@@ -24,20 +24,43 @@ What this does to tokens/cache/AI Credits:
   on — a fresh branch starts from the rewind point, but still on top of the
   still-valid earlier cache.
 
-| Turn | What happens | Cache write | Cache read | Cache size after | Uncached input | Tool | Reasoning | Output text | **Turn total** | **Turn AI Credits** |
-|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| 1 | Normal turn; writes static prefix + own content | 3500 | 0 | 3500 | 500 | 0 | 150 | 150 | **4300** | **0.0289 AI Credits** |
-| 2 | Normal turn; reads/extends the cache | 600 | 3500 | 4100 | 200 | 100 | 120 | 180 | **4700** | **0.0115 AI Credits** |
-| 3 | **Wrong path**: model edits the wrong files based on a misunderstanding (will be rewound away) | 1830 | 4100 | 5930 | 250 | 1200 | 200 | 180 | **7760** | **0.0264 AI Credits** |
-| 4 | **`/rewind`** back to end of turn 2 with a corrected instruction; turn 3's 1830 tokens are discarded and never read again | 820 | 4100 | 4920 | 220 | 300 | 140 | 160 | **5740** | **0.0143 AI Credits** |
-| 5 | Normal turn continuing on the corrected branch | 260 | 4920 | 5180 | 90 | 0 | 70 | 100 | **5440** | **0.0071 AI Credits** |
+<!-- scenarios:generated:start -->
+Simulated on Claude Sonnet 5.5 (and its cheaper sibling where a scenario switches models) with the real per-token prices in GitHub's Copilot price table, checked 2026-11-04. The figures come from the Learn simulator, not from a live session. Tool and Vision tokens are part of the input columns, not added to them.
 
-Turn 3 (**0.0264 AI Credits**) is money already spent and gone — `/rewind` can't undo that
-charge. What it *does* do shows up in **turn 4's cache read (4100)**: it resumes
-from turn 2's cache size, not turn 3's larger 5930, so the mistaken turn never
-bloats any future turn's context or AI Credits. Compare that to *not* rewinding and
-instead just sending a correction on top — the model would keep re-reading (and
-re-paying for) that wrong 1830-token detour in every subsequent turn forever.
+| Turn | What happens | Cache write | Cache read | Cache size after | Uncached input | Tool (in input) | Vision (in input) | Reasoning | Output text | **Turn total** | **Turn AI Credits** |
+|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| 1 | Normal first turn: the static prefix and this turn's own content are written to the cache. | 4000 | 0 | 4000 | 0 | 0 | 0 | 150 | 150 | **4300** | **1.30** |
+| 2 | Normal turn: reads the cached prefix and extends it with the new content. | 300 | 4000 | 4300 | 0 | 100 | 0 | 120 | 180 | **4600** | **0.41** |
+| 3 | Wrong path: a misread stack trace sends the model to edit the wrong file. This turn's AI Credits are already billed and will not be refunded when it is rewound away. | 1880 | 4300 | 6180 | 0 | 1200 | 0 | 200 | 180 | **6560** | **0.89** |
+| 4 | The rewind rolls back to the end of the second turn and continues with a corrected instruction. The abandoned step is never read again, so the request resumes from the earlier, smaller prefix, which is still a warm cache hit. The mistaken turn's cost is spent, but it never inflates any later request. | 660 | 4480 | 5140 | 0 | 300 | 0 | 140 | 160 | **5440** | **0.51** |
+| 5 | Normal turn on the corrected branch: the mistaken detour never appears in this or any later request. | 220 | 5140 | 5360 | 0 | 0 | 0 | 70 | 100 | **5530** | **0.28** |
+
+Session total: **3.39 AI Credits** (≈ $0.0339); most expensive turn: **turn 1** (1.30 AI Credits).
+
+Running totals by token type:
+
+| Cumulative through turn | What happens | Cache write | Cache read | Uncached input | Tool (in input) | Vision (in input) | Reasoning | Output text | **Session total** | **Running AI Credits** |
+|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| 1 | Normal first turn: the static prefix and this turn's own content are written to the cache. | 4000 | 0 | 0 | 0 | 0 | 150 | 150 | **4300** | **1.30** |
+| 2 | Normal turn: reads the cached prefix and extends it with the new content. | 4300 | 4000 | 0 | 100 | 0 | 270 | 330 | **8900** | **1.71** |
+| 3 | Wrong path: a misread stack trace sends the model to edit the wrong file. This turn's AI Credits are already billed and will not be refunded when it is rewound away. | 6180 | 8300 | 0 | 1300 | 0 | 470 | 510 | **15460** | **2.61** |
+| 4 | The rewind rolls back to the end of the second turn and continues with a corrected instruction. The abandoned step is never read again, so the request resumes from the earlier, smaller prefix, which is still a warm cache hit. The mistaken turn's cost is spent, but it never inflates any later request. | 6840 | 12780 | 0 | 1600 | 0 | 610 | 670 | **20900** | **3.12** |
+| 5 | Normal turn on the corrected branch: the mistaken detour never appears in this or any later request. | 7060 | 17920 | 0 | 1600 | 0 | 680 | 770 | **26430** | **3.39** |
+
+```mermaid
+xychart-beta
+    title "Tokens per turn by type (simulated)"
+    x-axis [Turn1, Turn2, Turn3, Turn4, Turn5]
+    y-axis "Tokens" 0 --> 6000
+    bar "Cache write" [4000, 300, 1880, 660, 220]
+    bar "Cache read" [0, 4000, 4300, 4480, 5140]
+    bar "Uncached input" [0, 0, 0, 0, 0]
+    bar "Tool" [0, 100, 1200, 300, 0]
+    bar "Vision" [0, 0, 0, 0, 0]
+    bar "Reasoning" [150, 120, 200, 140, 70]
+    bar "Output text" [150, 180, 180, 160, 100]
+```
+<!-- scenarios:generated:end -->
 
 **Sources** (checked 2026-11-03):
 

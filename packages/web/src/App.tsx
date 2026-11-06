@@ -22,6 +22,8 @@ import { AdviceExportTriggerBar } from "./components/AdviceExportTriggerBar.js";
 import { AppHeader } from "./components/AppHeader.js";
 import { AuditRollupPanel } from "./components/AuditRollupPanel.js";
 import { ColumnChooser } from "./components/ColumnChooser.js";
+import { VendorDifferencesCard, hasCacheEvent } from "./components/learn/VendorDifferencesCard.js";
+import { VendorsTab } from "./components/learn/VendorsTab.js";
 import { AssumptionsPopover } from "./components/learn/AssumptionsPopover.js";
 import { SourcesFooter } from "./components/learn/SourcesFooter.js";
 import { VendorPicker } from "./components/learn/VendorPicker.js";
@@ -53,11 +55,19 @@ import { ALL_TURN_COLUMNS, hiddenTurnColumns, parseTurnColumns, turnColumnsFor, 
 import { useContainerWidth } from "./lib/use-container-width.js";
 import { getViewStateStorage } from "./state/current-view-state-storage.js";
 import { useSessionStore, type RightTab } from "./state/session-store.js";
+import { useExtraVendorModels } from "./state/use-extra-vendor-models.js";
+import { useScenarioComparison } from "./state/use-scenario-comparison.js";
 
 const RIGHT_TAB_OPTIONS = [
   { value: "explanation", label: "Explanation" },
   { value: "system-prompt", label: "System prompt" },
   { value: "tools", label: "Tools" },
+] as const;
+
+// Learn mode's right column when the product simulates vendors (13.8).
+const LEARN_RIGHT_TAB_OPTIONS = [
+  { value: "explanation", label: "Explanation" },
+  { value: "vendors", label: "Vendors" },
 ] as const;
 
 // Analyze-mode center views: the existing turns table, one session's
@@ -325,6 +335,18 @@ export function App({ performanceMarks = pagePerformanceMarks }: AppProps = {}) 
   );
   const sessionIsSimulated = mode === "learn" && session !== null && session.turns.some((turn) => turn.simulation);
 
+  // Step 13.8: the same scenario on each vendor's default model, plus the
+  // models added in the Vendors tab. No extras means the server's own default.
+  const extraModels = useExtraVendorModels();
+  const defaultComparisonModelIds = vendorProfiles
+    .filter((profile) => simulatedModelIds.has(profile.defaultModelId))
+    .map((profile) => profile.defaultModelId);
+  const comparisonLoad = useScenarioComparison(
+    sessionIsSimulated && session !== null ? session.id : null,
+    simulationEnabled,
+    extraModels.modelIds.length === 0 ? undefined : [...defaultComparisonModelIds, ...extraModels.modelIds],
+  );
+
   const selectedTurn = session?.turns[selectedTurnIndex] ?? null;
   const inspectorShown = session !== null && (inspectorOpen || turnInspectorOpen);
   // "All sessions" hides the right column; the dashboard brings its own
@@ -525,11 +547,36 @@ export function App({ performanceMarks = pagePerformanceMarks }: AppProps = {}) 
           onChange={setRightTab}
           className="right-tab-seg"
         />
+      ) : features.vendorSimulation ? (
+        <SegmentedControl
+          name="learn-right-tab"
+          options={LEARN_RIGHT_TAB_OPTIONS}
+          value={rightTab === "vendors" ? "vendors" : "explanation"}
+          onChange={setRightTab}
+          className="right-tab-seg"
+        />
       ) : (
         <h6 style={{ margin: "0 0 0 var(--space-1)" }}>Explanation</h6>
       )}
       <div style={{ marginTop: "var(--space-2)" }}>
-        {(mode === "learn" || rightTab === "explanation") && (
+        {mode === "learn" && rightTab === "vendors" && sessionIsSimulated && (
+          comparisonLoad.status === "ready" && comparisonLoad.comparison ? (
+            <VendorsTab
+              comparison={comparisonLoad.comparison}
+              profiles={vendorProfiles}
+              extraModelIds={extraModels.modelIds}
+              onAddModel={extraModels.add}
+              onRemoveModel={extraModels.remove}
+            />
+          ) : (
+            <p className="text-muted" role={comparisonLoad.status === "error" ? "alert" : "status"} style={{ fontSize: 13 }}>
+              {comparisonLoad.status === "error"
+                ? `Couldn't compare vendors: ${comparisonLoad.error}`
+                : "Comparing vendors…"}
+            </p>
+          )
+        )}
+        {(mode === "analyze" ? rightTab === "explanation" : rightTab !== "vendors") && (
           <ExplanationPanel
             turn={selectedTurn}
             mode={mode}
@@ -538,6 +585,13 @@ export function App({ performanceMarks = pagePerformanceMarks }: AppProps = {}) 
             onOpenTurnInspector={
               mode === "analyze" && session ? () => setTurnInspectorOpen(true) : undefined
             }
+          />
+        )}
+        {mode === "learn" && rightTab !== "vendors" && sessionIsSimulated && selectedTurn && hasCacheEvent(selectedTurn) && (
+          <VendorDifferencesCard
+            comparison={comparisonLoad.comparison}
+            turnIndex={selectedTurn.index}
+            profiles={vendorProfiles}
           />
         )}
         {mode === "analyze" && rightTab === "system-prompt" && (

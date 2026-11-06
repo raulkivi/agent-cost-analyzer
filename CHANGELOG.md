@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- Vendor-aware Learn (Phase 13): scenarios are simulated on a vendor and
+  model you pick, with real prices and documented cache rules, a Cache column,
+  per-turn notes, an assumptions popover and a sources footer. Learn numbers
+  change accordingly.
 - Cost by repository and project (Phase 15 step 15.4): Dashboard rows are
   attributed to a repository, project, vendor and channel, with Project,
   Repository, Vendor and Channel list boxes (Unattributed and unknown

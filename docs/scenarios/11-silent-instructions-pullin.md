@@ -19,23 +19,43 @@ file can be genuinely surprising — and, unlike every other trigger in this
 series, it carries **no trigger tag** in the turns table, since nothing about
 the request itself was a recognized event.
 
-| Turn | What happens | Cache write | Cache read | Cache size after | Uncached input | Tool | Reasoning | Output text | **Turn total** | **Turn AI Credits** |
-|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| 1 | Normal turn; writes static prefix + own content. No `.sql` files touched yet, so the path-scoped SQL instructions aren't loaded | 3500 | 0 | 3500 | 500 | 0 | 150 | 150 | **4300** | **0.0289 AI Credits** |
-| 2 | Normal turn; reads/extends the cache. Still no `.sql` files touched | 600 | 3500 | 4100 | 200 | 100 | 120 | 180 | **4700** | **0.0115 AI Credits** |
-| 3 | **First `.sql` file touched this session**: silently pulls in a path-scoped `applyTo: **/*.sql` instructions block grouped near the top of the prompt — invalidating everything cached after that position, with no visible trigger tag | 4700 | 0 | 4700 | 4200 | 150 | 210 | 200 | **9460** | **0.0573 AI Credits** |
-| 4 | Normal turn under the newly-included SQL instructions block | 650 | 4700 | 5350 | 140 | 200 | 130 | 160 | **5980** | **0.0125 AI Credits** |
-| 5 | Normal turn; no further disruption | 230 | 5350 | 5580 | 70 | 0 | 70 | 100 | **5820** | **0.0070 AI Credits** |
+<!-- scenarios:generated:start -->
+Simulated on Claude Sonnet 5.5 (and its cheaper sibling where a scenario switches models) with the real per-token prices in GitHub's Copilot price table, checked 2026-11-04. The figures come from the Learn simulator, not from a live session. Tool and Vision tokens are part of the input columns, not added to them.
 
-Turn 3's cost (**0.0573 AI Credits**, ~5x turn 2) is mechanically identical to
-[Scenario 10](10-instructions-edit.md)'s deliberate instructions edit — same
-prefix-insertion, same full-below invalidation — but nothing in the user's
-message announced it. Compare this to [Scenario 5](05-mcp-tool-change.md)'s
-explicit MCP tool change: that scenario at least *looks* like a config change
-to the person reading the transcript. This one doesn't. The practical
-takeaway (Section 17.4 of the main doc) is to keep an eye on which file types
-pull in path-scoped instructions in a given project, since the first turn that
-touches one will always pay this tax, whether or not anyone was expecting it.
+| Turn | What happens | Cache write | Cache read | Cache size after | Uncached input | Tool (in input) | Vision (in input) | Reasoning | Output text | **Turn total** | **Turn AI Credits** |
+|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| 1 | Normal first turn: writes the static system prompt and instructions plus this turn's own content. No path-scoped instruction file applies yet, because no matching file type has been touched. | 4000 | 0 | 4000 | 0 | 0 | 0 | 150 | 150 | **4300** | **1.30** |
+| 2 | Normal turn: reads and extends the cache built by the first turn. Still no matching file touched. | 300 | 4000 | 4300 | 0 | 100 | 0 | 120 | 180 | **4600** | **0.41** |
+| 3 | The first turn to touch a matching file type silently pulls in a path-scoped instruction block that earlier turns never loaded. Nothing in the user's message looks like a configuration change, but the block sits near the top of the prompt, so inserting it breaks the prefix match there and invalidates everything cached after it, including conversation that did not change. The turn carries no visible trigger, which is the danger: it looks ordinary yet costs far more. | 3350 | 1800 | 5150 | 0 | 150 | 0 | 210 | 200 | **5560** | **1.27** |
+| 4 | Normal turn under the newly included instruction block: the cache rebuilds under the new prefix. | 460 | 5150 | 5610 | 0 | 200 | 0 | 130 | 160 | **5900** | **0.46** |
+| 5 | The cache keeps growing normally; nothing in the session ever flagged the earlier spike. | 220 | 5610 | 5830 | 0 | 0 | 0 | 70 | 100 | **6000** | **0.28** |
+
+Session total: **3.72 AI Credits** (≈ $0.0372); most expensive turn: **turn 1** (1.30 AI Credits).
+
+Running totals by token type:
+
+| Cumulative through turn | What happens | Cache write | Cache read | Uncached input | Tool (in input) | Vision (in input) | Reasoning | Output text | **Session total** | **Running AI Credits** |
+|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| 1 | Normal first turn: writes the static system prompt and instructions plus this turn's own content. No path-scoped instruction file applies yet, because no matching file type has been touched. | 4000 | 0 | 0 | 0 | 0 | 150 | 150 | **4300** | **1.30** |
+| 2 | Normal turn: reads and extends the cache built by the first turn. Still no matching file touched. | 4300 | 4000 | 0 | 100 | 0 | 270 | 330 | **8900** | **1.71** |
+| 3 | The first turn to touch a matching file type silently pulls in a path-scoped instruction block that earlier turns never loaded. Nothing in the user's message looks like a configuration change, but the block sits near the top of the prompt, so inserting it breaks the prefix match there and invalidates everything cached after it, including conversation that did not change. The turn carries no visible trigger, which is the danger: it looks ordinary yet costs far more. | 7650 | 5800 | 0 | 250 | 0 | 480 | 530 | **14460** | **2.98** |
+| 4 | Normal turn under the newly included instruction block: the cache rebuilds under the new prefix. | 8110 | 10950 | 0 | 450 | 0 | 610 | 690 | **20360** | **3.44** |
+| 5 | The cache keeps growing normally; nothing in the session ever flagged the earlier spike. | 8330 | 16560 | 0 | 450 | 0 | 680 | 790 | **26360** | **3.72** |
+
+```mermaid
+xychart-beta
+    title "Tokens per turn by type (simulated)"
+    x-axis [Turn1, Turn2, Turn3, Turn4, Turn5]
+    y-axis "Tokens" 0 --> 6000
+    bar "Cache write" [4000, 300, 3350, 460, 220]
+    bar "Cache read" [0, 4000, 1800, 5150, 5610]
+    bar "Uncached input" [0, 0, 0, 0, 0]
+    bar "Tool" [0, 100, 150, 200, 0]
+    bar "Vision" [0, 0, 0, 0, 0]
+    bar "Reasoning" [150, 120, 210, 130, 70]
+    bar "Output text" [150, 180, 200, 160, 100]
+```
+<!-- scenarios:generated:end -->
 
 **Sources** (checked 2026-11-03):
 

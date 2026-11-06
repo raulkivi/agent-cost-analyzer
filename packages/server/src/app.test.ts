@@ -10,9 +10,10 @@ import {
   logProviderStatusSchema,
   sessionSchema,
   turnInspectorDetailSchema,
+  vendorComparisonSchema,
+  vendorProfileSummarySchema,
 } from "@agent-cost-analyzer/domain";
 import { createApp } from "./app.js";
-import { listLearnScenarios } from "./data-sources/learn-scenarios/loader.js";
 import {
   LOGGING_NEVER_ENABLED_REASON,
   TOOL_CALL_TOKEN_COUNT_UNAVAILABLE_REASON,
@@ -182,31 +183,29 @@ describe("Host header guard (DNS rebinding, architecture.md §11.2)", () => {
 });
 
 describe("GET /api/learn/scenarios", () => {
-  it("returns every bundled learn scenario as valid Sessions", async () => {
+  it("returns all 18 scenarios, simulated on the default model, as valid Sessions", async () => {
     const app = createApp();
 
     const response = await request(app).get("/api/learn/scenarios");
 
     expect(response.status).toBe(200);
-    expect(response.body.length).toBe(listLearnScenarios().length);
+    expect(response.body).toHaveLength(18);
     for (const scenario of response.body) {
       expect(() => sessionSchema.parse(scenario)).not.toThrow();
       expect(scenario.mode).toBe("learn");
+      expect(scenario.model).toBe("claude-sonnet-5.5");
     }
   });
 });
 
 describe("GET /api/learn/scenarios/:id", () => {
-  it("returns the full Session for a known scenario id", async () => {
+  it("returns the full simulated Session for a known scenario id", async () => {
     const app = createApp();
-    const [expected] = listLearnScenarios();
 
-    const response = await request(app).get(
-      `/api/learn/scenarios/${expected.id}`,
-    );
+    const response = await request(app).get("/api/learn/scenarios/cache-basics");
 
     expect(response.status).toBe(200);
-    expect(response.body).toEqual(expected);
+    expect(sessionSchema.parse(response.body).id).toBe("cache-basics");
   });
 
   it("returns 404 for an unknown scenario id", async () => {
@@ -217,6 +216,67 @@ describe("GET /api/learn/scenarios/:id", () => {
     );
 
     expect(response.status).toBe(404);
+  });
+});
+
+describe("GET /api/learn/scenarios/:id/simulation", () => {
+  it("replays the scenario on the requested model", async () => {
+    const app = createApp();
+
+    const response = await request(app).get(
+      "/api/learn/scenarios/cache-basics/simulation?model=gpt-6.1-sol",
+    );
+
+    expect(response.status).toBe(200);
+    expect(sessionSchema.parse(response.body).turns[0]?.simulation?.modelId).toBe("gpt-6.1-sol");
+  });
+
+  it("uses the default model without ?model", async () => {
+    const response = await request(createApp()).get("/api/learn/scenarios/cache-basics/simulation");
+
+    expect(response.status).toBe(200);
+    expect(response.body.turns[0].simulation.modelId).toBe("claude-sonnet-5.5");
+  });
+
+  it("returns 400 for an unknown model and 404 for an unknown scenario", async () => {
+    const app = createApp();
+
+    expect((await request(app).get("/api/learn/scenarios/cache-basics/simulation?model=nope")).status).toBe(400);
+    expect((await request(app).get("/api/learn/scenarios/nope/simulation")).status).toBe(404);
+  });
+});
+
+describe("GET /api/learn/scenarios/:id/comparison", () => {
+  it("compares the requested models", async () => {
+    const response = await request(createApp()).get(
+      "/api/learn/scenarios/cache-basics/comparison?models=claude-sonnet-5.5,gpt-6.1-sol",
+    );
+
+    expect(response.status).toBe(200);
+    const comparison = vendorComparisonSchema.parse(response.body);
+    expect(comparison.entries.map((entry) => entry.modelId)).toEqual(["claude-sonnet-5.5", "gpt-6.1-sol"]);
+  });
+
+  it("defaults to each simulated vendor's default model", async () => {
+    const response = await request(createApp()).get("/api/learn/scenarios/cache-basics/comparison");
+
+    expect(response.status).toBe(200);
+    expect(vendorComparisonSchema.parse(response.body).entries.length).toBeGreaterThan(1);
+  });
+
+  it("returns 404 for an unknown scenario", async () => {
+    expect((await request(createApp()).get("/api/learn/scenarios/nope/comparison")).status).toBe(404);
+  });
+});
+
+describe("GET /api/vendors", () => {
+  it("lists every vendor profile, with unsimulated models disabled by a reason", async () => {
+    const response = await request(createApp()).get("/api/vendors");
+
+    expect(response.status).toBe(200);
+    const profiles = response.body.map((profile: unknown) => vendorProfileSummarySchema.parse(profile));
+    expect(profiles.map((profile: { vendorId: string }) => profile.vendorId)).toContain("anthropic");
+    expect(profiles.flatMap((profile: { models: { simulated: boolean }[] }) => profile.models).some((model: { simulated: boolean }) => !model.simulated)).toBe(true);
   });
 });
 

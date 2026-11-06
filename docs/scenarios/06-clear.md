@@ -27,21 +27,43 @@ Why use it:
   which is the key difference from compaction: `/clear` = full discard, no tax,
   no memory; compaction = partial discard, one-time tax, keeps the gist.
 
-| Turn | What happens | Cache write | Cache read | Cache size after | Uncached input | Tool | Reasoning | Output text | **Turn total** | **Turn AI Credits** |
-|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| 1 | Normal turn; writes static prefix + own content | 3500 | 0 | 3500 | 500 | 0 | 150 | 150 | **4300** | **0.0289 AI Credits** |
-| 2 | Normal turn; reads/extends the cache | 600 | 3500 | 4100 | 200 | 100 | 120 | 180 | **4700** | **0.0115 AI Credits** |
-| 3 | **`/clear`**: conversation history (the 1100 tokens turns 1-2 added) is dropped; only the still-valid static prefix (3000) is read; a new unrelated task starts | 600 | 3000 | 3600 | 300 | 0 | 130 | 170 | **4200** | **0.0113 AI Credits** |
-| 4 | Normal turn on the new task; cache builds up again from the post-`/clear` baseline | 320 | 3600 | 3920 | 120 | 0 | 90 | 110 | **4240** | **0.0074 AI Credits** |
-| 5 | Normal turn; still far smaller than the old conversation would have grown to | 220 | 3920 | 4140 | 70 | 0 | 60 | 90 | **4360** | **0.0059 AI Credits** |
+<!-- scenarios:generated:start -->
+Simulated on Claude Sonnet 5.5 (and its cheaper sibling where a scenario switches models) with the real per-token prices in GitHub's Copilot price table, checked 2026-11-04. The figures come from the Learn simulator, not from a live session. Tool and Vision tokens are part of the input columns, not added to them.
 
-The tell is **turn 3's cache read (3000)**: instead of reading the full 4100-token
-history a normal turn would have inherited (or a spike from a forced resend, as
-in [Scenario 4](04-model-switch.md)/[Scenario 5](05-mcp-tool-change.md)), it drops
-straight back to just the static prefix. And unlike a compaction or a model/tool
-switch, turn 3 (**0.0113 AI Credits**) isn't a spike at all — it's roughly in line
-with a normal turn, because nothing had to be summarized or resent; the old turns
-were simply never sent again.
+| Turn | What happens | Cache write | Cache read | Cache size after | Uncached input | Tool (in input) | Vision (in input) | Reasoning | Output text | **Turn total** | **Turn AI Credits** |
+|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| 1 | Normal first turn: writes the static prefix plus this turn's own content. | 3500 | 0 | 3500 | 0 | 0 | 0 | 150 | 150 | **3800** | **1.18** |
+| 2 | Normal turn that reads and extends the cache built by the first turn. | 450 | 3500 | 3950 | 0 | 100 | 0 | 120 | 180 | **4250** | **0.45** |
+| 3 | /clear drops only the conversation history. The static prefix (instructions and tool definitions) is reloaded unchanged and still matches the cache, so it is read rather than rewritten. Nothing is summarised and no extra output is paid: the old turns are simply never sent again. | 300 | 3000 | 3300 | 0 | 0 | 0 | 130 | 170 | **3600** | **0.40** |
+| 4 | Normal turn on the new task; the cache builds up again from the post-clear baseline, far smaller than the old conversation would have grown to. | 290 | 3300 | 3590 | 0 | 0 | 0 | 90 | 110 | **3790** | **0.31** |
+| 5 | The cache keeps growing normally under the new, unrelated task, still far smaller than the discarded conversation would have reached. | 180 | 3590 | 3770 | 0 | 0 | 0 | 60 | 90 | **3920** | **0.23** |
+
+Session total: **2.56 AI Credits** (≈ $0.0256); most expensive turn: **turn 1** (1.18 AI Credits).
+
+Running totals by token type:
+
+| Cumulative through turn | What happens | Cache write | Cache read | Uncached input | Tool (in input) | Vision (in input) | Reasoning | Output text | **Session total** | **Running AI Credits** |
+|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| 1 | Normal first turn: writes the static prefix plus this turn's own content. | 3500 | 0 | 0 | 0 | 0 | 150 | 150 | **3800** | **1.18** |
+| 2 | Normal turn that reads and extends the cache built by the first turn. | 3950 | 3500 | 0 | 100 | 0 | 270 | 330 | **8050** | **1.62** |
+| 3 | /clear drops only the conversation history. The static prefix (instructions and tool definitions) is reloaded unchanged and still matches the cache, so it is read rather than rewritten. Nothing is summarised and no extra output is paid: the old turns are simply never sent again. | 4250 | 6500 | 0 | 100 | 0 | 400 | 500 | **11650** | **2.03** |
+| 4 | Normal turn on the new task; the cache builds up again from the post-clear baseline, far smaller than the old conversation would have grown to. | 4540 | 9800 | 0 | 100 | 0 | 490 | 610 | **15440** | **2.33** |
+| 5 | The cache keeps growing normally under the new, unrelated task, still far smaller than the discarded conversation would have reached. | 4720 | 13390 | 0 | 100 | 0 | 550 | 700 | **19360** | **2.56** |
+
+```mermaid
+xychart-beta
+    title "Tokens per turn by type (simulated)"
+    x-axis [Turn1, Turn2, Turn3, Turn4, Turn5]
+    y-axis "Tokens" 0 --> 4000
+    bar "Cache write" [3500, 450, 300, 290, 180]
+    bar "Cache read" [0, 3500, 3000, 3300, 3590]
+    bar "Uncached input" [0, 0, 0, 0, 0]
+    bar "Tool" [0, 100, 0, 0, 0]
+    bar "Vision" [0, 0, 0, 0, 0]
+    bar "Reasoning" [150, 120, 130, 90, 60]
+    bar "Output text" [150, 180, 170, 110, 90]
+```
+<!-- scenarios:generated:end -->
 
 **Sources** (checked 2026-11-03):
 

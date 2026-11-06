@@ -11,33 +11,43 @@ the story. Attaching (or removing) an image also changes the *shape* of the
 message content at the point it's inserted, which breaks the prefix match
 there, independent of how many vision tokens the image itself costs.
 
-| Turn | What happens | Cache write | Cache read | Cache size after | Uncached input | Vision | Reasoning | Output text | **Turn total** | **Turn AI Credits** |
+<!-- scenarios:generated:start -->
+Simulated on Claude Sonnet 5.5 (and its cheaper sibling where a scenario switches models) with the real per-token prices in GitHub's Copilot price table, checked 2026-11-04. The figures come from the Learn simulator, not from a live session. Tool and Vision tokens are part of the input columns, not added to them.
+
+| Turn | What happens | Cache write | Cache read | Cache size after | Uncached input | Tool (in input) | Vision (in input) | Reasoning | Output text | **Turn total** | **Turn AI Credits** |
+|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| 1 | Normal first turn: writes the static prefix plus this turn's own content. No image has appeared in the conversation yet. | 3800 | 0 | 3800 | 0 | 0 | 0 | 150 | 150 | **4100** | **1.25** |
+| 2 | Normal turn; reads and extends the cache built by the first turn. | 650 | 3800 | 4450 | 0 | 300 | 0 | 120 | 180 | **4750** | **0.50** |
+| 3 | An image appearing in the conversation invalidates the cache from the message content on, because it changes the shape of the content, not just its size. The old conversation cache is resent uncached and rewritten, on top of the image's own tokens. | 3064 | 3000 | 6064 | 0 | 0 | 1334 | 180 | 190 | **6434** | **1.17** |
+| 4 | Normal turn; the image is now part of the cached content, with no further disruption. | 260 | 6064 | 6324 | 0 | 0 | 0 | 60 | 90 | **6474** | **0.28** |
+| 5 | A second image later in the same session triggers the same invalidation again. The cost is per occurrence, so a session that attaches several screenshots pays it each time. | 3948 | 3000 | 6948 | 0 | 0 | 434 | 160 | 170 | **7278** | **1.35** |
+
+Session total: **4.54 AI Credits** (≈ $0.0454); most expensive turn: **turn 5** (1.35 AI Credits).
+
+Running totals by token type:
+
+| Cumulative through turn | What happens | Cache write | Cache read | Uncached input | Tool (in input) | Vision (in input) | Reasoning | Output text | **Session total** | **Running AI Credits** |
 |---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| 1 | Normal turn; writes static prefix + own content. No image yet | 3500 | 0 | 3500 | 500 | 0 | 150 | 150 | **4300** | **0.0289 AI Credits** |
-| 2 | Normal turn; reads/extends the cache | 600 | 3500 | 4100 | 200 | 0 | 120 | 180 | **4600** | **0.0110 AI Credits** |
-| 3 | **First screenshot attached**: invalidates the prefix at the point of insertion, on top of its own 700 vision tokens | 4700 | 0 | 4700 | 4200 | 700 | 180 | 190 | **9970** | **0.0594 AI Credits** |
-| 4 | Normal turn; the image is now baked into the cache like any other content | 220 | 4700 | 4920 | 70 | 0 | 60 | 90 | **5140** | **0.0063 AI Credits** |
-| 5 | **Second screenshot attached, later in the session**: the same invalidation happens again — per-occurrence, not one-time | 5300 | 0 | 5300 | 5000 | 650 | 160 | 170 | **11280** | **0.0663 AI Credits** |
+| 1 | Normal first turn: writes the static prefix plus this turn's own content. No image has appeared in the conversation yet. | 3800 | 0 | 0 | 0 | 0 | 150 | 150 | **4100** | **1.25** |
+| 2 | Normal turn; reads and extends the cache built by the first turn. | 4450 | 3800 | 0 | 300 | 0 | 270 | 330 | **8850** | **1.75** |
+| 3 | An image appearing in the conversation invalidates the cache from the message content on, because it changes the shape of the content, not just its size. The old conversation cache is resent uncached and rewritten, on top of the image's own tokens. | 7514 | 6800 | 0 | 300 | 1334 | 450 | 520 | **15284** | **2.92** |
+| 4 | Normal turn; the image is now part of the cached content, with no further disruption. | 7774 | 12864 | 0 | 300 | 1334 | 510 | 610 | **21758** | **3.19** |
+| 5 | A second image later in the same session triggers the same invalidation again. The cost is per occurrence, so a session that attaches several screenshots pays it each time. | 11722 | 15864 | 0 | 300 | 1768 | 670 | 780 | **29036** | **4.54** |
 
-![Scenario 15: An Image Attachment Invalidates the Cache](diagrams/scenario-15-an-image-attachment-invalidates-the-cache.drawio.svg)
-
-<!-- mermaid-source: diagrams/scenario-15-an-image-attachment-invalidates-the-cache.drawio.svg
 ```mermaid
-flowchart LR
-    T1["Turn 1<br/>no image"] --&gt; T2["Turn 2<br/>no image"]
-    T2 --&gt;|"image #1 inserted"| T3["Turn 3<br/>cache MISS + vision tokens"]
-    T3 --&gt; T4["Turn 4<br/>image cached normally"]
-    T4 --&gt;|"image #2 inserted"| T5["Turn 5<br/>cache MISS again + vision tokens"]
+xychart-beta
+    title "Tokens per turn by type (simulated)"
+    x-axis [Turn1, Turn2, Turn3, Turn4, Turn5]
+    y-axis "Tokens" 0 --> 7000
+    bar "Cache write" [3800, 650, 3064, 260, 3948]
+    bar "Cache read" [0, 3800, 3000, 6064, 3000]
+    bar "Uncached input" [0, 0, 0, 0, 0]
+    bar "Tool" [0, 300, 0, 0, 0]
+    bar "Vision" [0, 0, 1334, 0, 434]
+    bar "Reasoning" [150, 120, 180, 60, 160]
+    bar "Output text" [150, 180, 190, 90, 170]
 ```
--->
-
-Both invalidating turns (3 and 5) cost roughly 5-6x a normal turn — not
-because either screenshot is especially large, but because each one resets
-the prefix match at the point it lands. A session that goes back and forth
-attaching several screenshots over its lifetime (a common pattern when
-iterating on UI bugs) pays this tax **every time**, not just on the first
-attachment — worth knowing before assuming that only the first image in a
-session is expensive.
+<!-- scenarios:generated:end -->
 
 **Sources** (checked 2026-11-03):
 
