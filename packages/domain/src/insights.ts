@@ -114,7 +114,8 @@ export const insightToolCallRowSchema = z.object({
 
 export type InsightToolCallRow = z.infer<typeof insightToolCallRowSchema>;
 
-export const findingKindSchema = z.enum(["security", "anomaly", "behavior-change"]);
+// Step 15.10 adds "price-change": an observed price change (plan §6.4).
+export const findingKindSchema = z.enum(["security", "anomaly", "behavior-change", "price-change"]);
 export type FindingKind = z.infer<typeof findingKindSchema>;
 
 export const findingSeveritySchema = z.enum(["info", "low", "medium", "high", "critical"]);

@@ -28,7 +28,17 @@ export function pickTier(tiers: PriceTier[], inputTokens: number): PriceTier {
 }
 
 // Only the tiers are read, so a Phase 15 price-book version prices the same way.
-export function priceTurn(model: Pick<ModelPrice, "tiers">, usage: PricedUsage): TurnCost {
+// The USD per token type a turn costs (Phase 15 step 15.10: the variance
+// needs each type's cost); cache writes of both lifetimes are one type.
+export interface TurnCostParts {
+  uncachedInput: number;
+  cacheRead: number;
+  cacheWrite: number;
+  output: number;
+}
+
+// The tier and per-type rates (USD per 1M) a turn is priced at.
+function ratesFor(model: Pick<ModelPrice, "tiers">, usage: PricedUsage) {
   const inputTokens =
     usage.uncachedInput +
     usage.cacheRead +
@@ -38,6 +48,21 @@ export function priceTurn(model: Pick<ModelPrice, "tiers">, usage: PricedUsage):
   // No published write price means writes are billed like plain input.
   const writeRate = tier.cacheWriteUsdPerM ?? tier.inputUsdPerM;
   const extendedRate = tier.extendedCacheWriteUsdPerM ?? writeRate;
+  return { tier, writeRate, extendedRate };
+}
+
+export function priceTurnParts(model: Pick<ModelPrice, "tiers">, usage: PricedUsage): TurnCostParts {
+  const { tier, writeRate, extendedRate } = ratesFor(model, usage);
+  return {
+    uncachedInput: (usage.uncachedInput * tier.inputUsdPerM) / 1_000_000,
+    cacheRead: (usage.cacheRead * tier.cachedInputUsdPerM) / 1_000_000,
+    cacheWrite: (usage.cacheWrite * writeRate + usage.extendedCacheWrite * extendedRate) / 1_000_000,
+    output: (usage.output * tier.outputUsdPerM) / 1_000_000,
+  };
+}
+
+export function priceTurn(model: Pick<ModelPrice, "tiers">, usage: PricedUsage): TurnCost {
+  const { tier, writeRate, extendedRate } = ratesFor(model, usage);
   const usd =
     (usage.uncachedInput * tier.inputUsdPerM +
       usage.cacheRead * tier.cachedInputUsdPerM +

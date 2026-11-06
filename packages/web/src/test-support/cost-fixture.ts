@@ -167,6 +167,7 @@ export function sampleCostSeries(
     series,
     byVendor: [],
     priceChanges: options.priceChanges ?? [PRICE_MARKER],
+    observedChanges: [],
   };
 }
 

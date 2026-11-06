@@ -165,3 +165,31 @@ describe("buildCostSeries", () => {
     expect(buildCostSeries(cubeOf([], 2), view, []).undatedTurns).toBe(2);
   });
 });
+
+// Step 15.10 (plan §6.4 point 2, D11): observed changes beside the
+// documented markers. A billing gap is the model's, not the selection's,
+// so every turn of the cube counts; only models the selection used show.
+describe("buildCostSeries: observed price changes", () => {
+  const copilotTurns = (date: string, project: string, ratio: number) =>
+    Array.from({ length: 20 }, () =>
+      cubeRow({ date, projectId: project, model: "claude-sonnet-5.5", channel: "github-copilot", cost: costs({ billed: billed(10 * ratio), priced: priced(10, "gh:v", "AI_CREDITS") }) }),
+    );
+  const cube = cubeOf([
+    ...copilotTurns("2026-10-13", "portal", 1.2),
+    ...copilotTurns("2026-10-20", "portal", 1.2),
+    cubeRow({ date: "2026-10-14", projectId: "app", model: "claude-sonnet-5.5", channel: "github-copilot", cost: costs({ billed: billed(12), priced: priced(10, "gh:v", "AI_CREDITS") }) }),
+    cubeRow({ date: "2026-10-14", projectId: "other", model: "gpt-5.5", channel: "github-copilot", cost: costs({ billed: billed(1) }) }),
+  ]);
+  const october = { ...view, since: "2026-10-01", until: "2026-10-31" };
+
+  it("lists an observed change for a model the selection used, found over every turn of the cube", () => {
+    const series = costSeriesSchema.parse(buildCostSeries(cube, { ...october, groupBy: "project", ids: ["app"] }, []));
+    expect(series.observedChanges.map((change) => [change.modelId, change.date, change.direction])).toEqual([["claude-sonnet-5.5", "2026-10-12", "above"]]);
+  });
+
+  it("leaves out models the selection didn't use, changes outside the range, and today's prices", () => {
+    expect(buildCostSeries(cube, { ...october, groupBy: "project", ids: ["other"] }, []).observedChanges).toEqual([]);
+    expect(buildCostSeries(cube, { ...october, since: "2026-10-13" }, []).observedChanges).toEqual([]);
+    expect(buildCostSeries(cube, { ...october, pricing: "today" }, []).observedChanges).toEqual([]);
+  });
+});

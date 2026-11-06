@@ -35,6 +35,16 @@ const knownCostFigureSchema = z.object({
   apiEquivalent: z.boolean().optional(),
   // Assumptions the figure rests on, e.g. "priced at the session start".
   notes: z.array(z.string().min(1)).optional(),
+  // priced only (step 15.10, plan §8.4): the amount per token type the
+  // pricer charges, in the figure's currency; they sum to `amount`.
+  byTokenType: z
+    .object({
+      uncachedInput: z.number().nonnegative(),
+      cacheRead: z.number().nonnegative(),
+      cacheWrite: z.number().nonnegative(),
+      output: z.number().nonnegative(),
+    })
+    .optional(),
 });
 
 const unknownCostFigureSchema = z.object({ known: z.literal(false), reason: z.string().min(1) });
@@ -44,6 +54,9 @@ export const costFigureSchema = z
   .superRefine((figure, ctx) => {
     if (figure.known && figure.basis !== "priced" && (figure.priceVersionIds !== undefined || figure.apiEquivalent !== undefined)) {
       ctx.addIssue({ code: "custom", path: ["priceVersionIds"], message: "price versions and apiEquivalent belong to priced figures only" });
+    }
+    if (figure.known && figure.basis !== "priced" && figure.byTokenType !== undefined) {
+      ctx.addIssue({ code: "custom", path: ["byTokenType"], message: "a cost per token type belongs to priced figures only" });
     }
   });
 

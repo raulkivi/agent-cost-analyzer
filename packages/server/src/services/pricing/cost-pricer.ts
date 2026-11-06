@@ -1,6 +1,7 @@
 import {
   channelCurrency,
   unknownCost,
+  USD_PER_AI_CREDIT,
   type CostFigure,
   type PriceBookEntry,
   type PriceLookup,
@@ -8,7 +9,7 @@ import {
   type TokenCount,
   type TurnUsage,
 } from "@agent-cost-analyzer/domain";
-import { pickTier, priceTurn } from "../learn-simulation/pricer.js";
+import { pickTier, priceTurn, priceTurnParts } from "../learn-simulation/pricer.js";
 import type { ChannelResolution } from "../cost-attribution/channel-resolver.js";
 import type { PriceScope } from "./price-book.js";
 import type { PriceModelMapper } from "./price-model-mapper.js";
@@ -127,25 +128,37 @@ function priceWith(version: PriceBookEntry, request: PricingRequest, channel: st
   if (split.extended > 0 && tier.extendedCacheWriteUsdPerM === undefined && tier.cacheWriteUsdPerM !== null) {
     return cannot(`${version.id} has no extended (1-hour) cache-write price.`);
   }
-  const cost = priceTurn(version, {
+  const priced = {
     uncachedInput: uncached!.value,
     cacheRead: cacheRead!.value,
     cacheWrite: cacheWrite - split.extended,
     extendedCacheWrite: split.extended,
     output: output!.value,
-  });
+  };
+  const cost = priceTurn(version, priced);
+  const parts = priceTurnParts(version, priced);
   const currency = channelCurrency(channel);
+  // 1 AI Credit = $0.01 on Copilot (D2); the parts sum to the amount (to float rounding).
+  const scale = currency === "AI_CREDITS" ? 1 / USD_PER_AI_CREDIT : 1;
+  const byTokenType = {
+    uncachedInput: parts.uncachedInput * scale,
+    cacheRead: parts.cacheRead * scale,
+    cacheWrite: parts.cacheWrite * scale,
+    output: parts.output * scale,
+  };
+  const amount = currency === "AI_CREDITS" ? cost.aiCredits : cost.usd;
   const estimated = [uncached!, cacheRead!, output!, writes].some((c) => c.known && c.estimated);
   const allNotes = [...notes, ...(split.note ? [split.note] : [])];
   return {
     known: true,
-    amount: currency === "AI_CREDITS" ? cost.aiCredits : cost.usd,
+    amount,
     currency,
     basis: "priced",
     priceVersionIds: [version.id],
     ...(estimated ? { estimated: true } : {}),
     ...(request.apiEquivalent ? { apiEquivalent: true } : {}),
     ...(allNotes.length > 0 ? { notes: allNotes } : {}),
+    byTokenType,
   };
 }
 

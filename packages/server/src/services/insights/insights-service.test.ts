@@ -214,4 +214,14 @@ describe("InsightsService", () => {
 
     expect(dataset.findings.map((finding) => finding.key)).toEqual(["p:s1:x", "p:s1:x"]);
   });
+
+  // Step 15.10: an observed-price-change detector must know the rows' pricing mode.
+  it("tells each detector which pricing mode the rows were priced in", async () => {
+    const provider = new FakeProvider("p", [analyzeSession("s1", day(1), [turn(0)])]);
+    const seen: (string | undefined)[] = [];
+    const detector: FindingDetector = { detect: ({ pricing }) => (seen.push(pricing), []) };
+    await service([provider], [detector]).getDataset({});
+    await service([provider], [detector]).getDataset({}, { pricing: "today" });
+    expect(seen).toEqual(["as-of-use", "today"]);
+  });
 });

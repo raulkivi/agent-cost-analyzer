@@ -2024,5 +2024,6 @@
       ],
       "note": "Same prices as the 2026-10-01 version; the boundary is the 12-hour cache write OpenAI added on 2026-10-20 (00:00 UTC; the time of day isn't published). Released 2026-09-29 at $2 input, $0.10 cached input, $2.50 cache write and $10 output (changelog); the long-context and 12-hour prices come from today's pricing page and model page only. The second tier is the long-context price for prompts over 272K input tokens, applied to the whole request. cacheWriteUsdPerM is the default 30-minute write (1.25x input); extendedCacheWriteUsdPerM is the 12-hour write (2.5x input, Responses API only), offered from 2026-10-20 per the changelog. Standard tier, global processing; Batch, Flex, Fast, Ultrafast, regional-processing (10% uplift) and cloud-platform prices are not modelled."
     }
-  ]
+  ],
+  "observedChanges": []
 }
