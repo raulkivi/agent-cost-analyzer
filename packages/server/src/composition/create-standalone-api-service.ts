@@ -1,4 +1,7 @@
 import type { ProductProfile } from "@agent-cost-analyzer/domain";
+import { DatasetCostCubeSource } from "../services/cost-analysis/cost-analysis-service.js";
+import { FileStatementStore } from "../data-sources/statements/file-statement-store.js";
+import { priceBookHashOf, StatementService } from "../services/billing/statement-service.js";
 import { loadScenarioScripts } from "../data-sources/learn-scripts/loader.js";
 import { loadVendorProfiles } from "../data-sources/vendor-profiles/loader.js";
 import { LearnSimulationService } from "../services/learn-simulation/learn-simulation-service.js";
@@ -25,6 +28,8 @@ export interface StandaloneApiServiceOptions extends LogProviderCompositionOptio
   // The clock (plan §12.4.1): the real one unless a test or the
   // usage-scenario suite fixes it (server.ts reads AGENT_COST_ANALYZER_NOW).
   now?: () => Date;
+  // Step 15.11 (D6): the time zone statements bill in; the machine's by default.
+  timeZone?: string;
 }
 
 // The standalone app's product profile (vscode-extension.md §3.3): every
@@ -52,7 +57,7 @@ export function standaloneProductProfile(version: string): ProductProfile {
 // file-backed app settings. The HTTP app (app.ts) is the only caller; the
 // extension builds its own over a Copilot-only registry.
 export function createStandaloneApiService(options: StandaloneApiServiceOptions = {}): ApiService {
-  const { learnScriptsDir, vendorProfilesDir, appVersion: appVersionOption, now, ...compositionOptions } = options;
+  const { learnScriptsDir, vendorProfilesDir, appVersion: appVersionOption, now, timeZone, ...compositionOptions } = options;
   const { registry, appSettings, resolvedVscodeSettingsPath, resolvedAppSettingsDir } = composeLogProviders(compositionOptions);
   const vendorProfiles = loadVendorProfiles(vendorProfilesDir);
   // Phase 15: projects.json beside settings.json (step 15.3); the same
@@ -81,6 +86,16 @@ export function createStandaloneApiService(options: StandaloneApiServiceOptions 
     priceBook,
     // Step 15.7: cost over time and compare, over the same dataset.
     costAnalysis: createCostAnalysis(insights, priceBook, projectDirectoryOf(attribution.catalog), now),
+    // Step 15.11: statements over the same dataset, kept beside projects.json.
+    statements: new StatementService({
+      cubes: new DatasetCostCubeSource(insights),
+      store: new FileStatementStore(resolvedAppSettingsDir),
+      projects: attribution.catalog,
+      priceBookHash: () => priceBookHashOf(priceBook.list({}).versions),
+      appVersion,
+      timeZone: timeZone ?? Intl.DateTimeFormat().resolvedOptions().timeZone,
+      ...(now ? { now } : {}),
+    }),
     auditQueries: new AuditQueryService(registry),
     insights,
     settings: appSettings,

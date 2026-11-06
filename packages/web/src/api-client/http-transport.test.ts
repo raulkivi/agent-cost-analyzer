@@ -89,6 +89,8 @@ describe("HttpTransport URL mapping", () => {
     ["getCostComparison", { since: "2026-08-09", until: "2026-11-06", groupBy: "project", ids: ["a", "b"] }, "/api/cost/compare?since=2026-08-09&until=2026-11-06&groupBy=project&ids=a%2Cb"],
     ["getProjectCost", { projectId: "portal", since: "2026-08-09" }, "/api/cost/project?projectId=portal&since=2026-08-09"],
     ["getCostVariance", { groupBy: "project", id: "portal", periodA: "2026-08", periodB: "2026-10", currency: "usd" }, "/api/cost/variance?groupBy=project&id=portal&periodA=2026-08&periodB=2026-10&currency=usd"],
+    ["getStatement", { projectId: "portal", period: "2026-10" }, "/api/statements?projectId=portal&period=2026-10"],
+    ["issueStatement", { projectId: "portal", period: "2026-10-01..2026-10-15" }, "/api/statements/portal/2026-10-01..2026-10-15/issue", "POST", {}],
     ["getHealth", undefined, "/api/health"],
     ["getProductProfile", undefined, "/api/product"],
   ];

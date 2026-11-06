@@ -9,6 +9,9 @@ import { createInsightsService } from "./create-insights-service.js";
 import type { TurnPricing } from "../services/pricing/turn-cost-figures.js";
 import type { PriceVersionSource } from "../services/cost-analysis/cost-analysis-service.js";
 import { createCostAnalysis } from "./create-cost-analysis.js";
+import { DatasetCostCubeSource } from "../services/cost-analysis/cost-analysis-service.js";
+import { StatementService, type StatementServiceDeps } from "../services/billing/statement-service.js";
+import type { StatementStore } from "../services/billing/statement-store.js";
 
 // The services createMcpServer takes, over whichever registry a product's
 // composition root built: every provider for the standalone stdio server
@@ -23,6 +26,13 @@ export interface McpAttributionServices {
   dataset: DatasetAttribution;
 }
 
+export interface McpStatementInputs {
+  store: StatementStore;
+  projects: StatementServiceDeps["projects"];
+  priceBookHash: () => string;
+  timeZone?: string;
+}
+
 export function createMcpServices(
   registry: LogProviderRegistry,
   version: string,
@@ -34,6 +44,8 @@ export function createMcpServices(
   // Step 15.7: the price book's versions, for price-change markers in the
   // cost analyses (which come with attribution: they need projects).
   priceVersions?: PriceVersionSource,
+  // Step 15.11: issued statements and what drafts need (with attribution).
+  statements?: McpStatementInputs,
 ): McpServerDeps {
   const insights = createInsightsService(registry, attribution?.dataset, pricer);
   return {
@@ -50,6 +62,18 @@ export function createMcpServices(
       ? {
           costAnalysis: createCostAnalysis(insights, priceVersions, {
             projectName: (id) => attribution.queries.listProjects().projects.find((project) => project.id === id)?.name,
+          }),
+        }
+      : {}),
+    ...(attribution && statements
+      ? {
+          statements: new StatementService({
+            cubes: new DatasetCostCubeSource(insights),
+            store: statements.store,
+            projects: statements.projects,
+            priceBookHash: statements.priceBookHash,
+            appVersion: version,
+            timeZone: statements.timeZone ?? Intl.DateTimeFormat().resolvedOptions().timeZone,
           }),
         }
       : {}),

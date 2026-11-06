@@ -27,6 +27,8 @@ function fakeApi(overrides: Partial<DispatcherApi> = {}): DispatcherApi {
     getCostComparison: vi.fn(async () => ({}) as never),
     getProjectCost: vi.fn(async () => ({}) as never),
     getCostVariance: vi.fn(async () => ({}) as never),
+    getStatement: vi.fn(async () => ({}) as never),
+    issueStatement: vi.fn(async () => ({}) as never),
   };
   return { ...api, ...overrides };
 }
@@ -161,6 +163,16 @@ describe("MessageDispatcher (vscode-extension.md §4)", () => {
 
     expect(api.getCostTimeSeries).toHaveBeenCalledWith({ since: "2026-10-01", bucket: "week", ids: "a,b", groupBy: "project" });
     expect(compare).toMatchObject({ ok: false, error: { status: 404 } });
+  });
+
+  // Step 15.11: statements (404 from the extension's ApiService until 15.14).
+  it("routes the statement methods to ApiService", async () => {
+    const api = fakeApi();
+    const dispatcher = new MessageDispatcher(api);
+    await dispatcher.dispatch(request("getStatement", { projectId: "portal", period: "2026-10" }));
+    await dispatcher.dispatch(request("issueStatement", { projectId: "portal", period: "2026-10" }));
+    expect(api.getStatement).toHaveBeenCalledWith({ projectId: "portal", period: "2026-10" });
+    expect(api.issueStatement).toHaveBeenCalledWith("portal", "2026-10");
   });
 
   // Step 15.10: the Project tab's breakdown and variance.

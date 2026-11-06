@@ -6,6 +6,8 @@ interface HttpRequest {
   url: string;
   // Absent for a plain GET, which passes no init to fetch.
   put?: unknown;
+  // Step 15.11: a JSON POST (issuing a statement).
+  post?: unknown;
   text?: boolean;
 }
 
@@ -80,6 +82,10 @@ function toRequest(method: ApiMethodName, params: unknown): HttpRequest {
       return { url: `/api/cost/project${queryString(p)}` };
     case "getCostVariance": // { groupBy, id, periodA, periodB, currency?, provider?, limit? }
       return { url: `/api/cost/variance${queryString(p)}` };
+    case "getStatement": // { projectId, period, provider?, limit? }
+      return { url: `/api/statements${queryString(p)}` };
+    case "issueStatement": // { projectId, period }: JSON only (threat model)
+      return { url: `/api/statements/${encodeURIComponent(String(p.projectId))}/${encodeURIComponent(String(p.period))}/issue`, post: {} };
   }
 }
 
@@ -94,15 +100,16 @@ export class HttpTransport implements ApiTransport {
     const request = toRequest(method, params);
     // A plain GET passes no init at all unless there is a signal to hand on.
     const signalInit = signal ? { signal } : undefined;
+    const write = request.put !== undefined ? { method: "PUT", body: request.put } : request.post !== undefined ? { method: "POST", body: request.post } : undefined;
     const response =
-      request.put === undefined
+      write === undefined
         ? signalInit
           ? await this.fetchImpl(request.url, signalInit)
           : await this.fetchImpl(request.url)
         : await this.fetchImpl(request.url, {
-            method: "PUT",
+            method: write.method,
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(request.put),
+            body: JSON.stringify(write.body),
             ...signalInit,
           });
     if (!response.ok) {

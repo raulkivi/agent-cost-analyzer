@@ -1,4 +1,7 @@
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
+import { DatasetCostCubeSource } from "../services/cost-analysis/cost-analysis-service.js";
+import { priceBookHashOf, StatementService } from "../services/billing/statement-service.js";
+import { InMemoryStatementStore } from "./in-memory-statement-store.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import type { LogProviderStatus, Session, TokenCount, Turn, TurnUsage } from "@agent-cost-analyzer/domain";
 import { createCostAnalysis, projectDirectoryOf } from "../composition/create-cost-analysis.js";
@@ -169,8 +172,18 @@ export function composeCostFixture() {
   // The InsightsService GET /api/insights serves (createInsightsService wires it this way, plus detectors).
   const insights = new InsightsService({ listProviders: () => providers }, [], () => FIXTURE_NOW, attributor, pricer);
   const costAnalysis = createCostAnalysis(insights, priceBook, projectDirectoryOf(catalog));
-  // The cost routes read only costAnalysis (app.ts passes req.query unchanged).
-  const api = new ApiService({ costAnalysis } as unknown as ApiServiceDeps);
+  // Step 15.11: statements over the same dataset, in UTC at the fixed clock.
+  const statements = new StatementService({
+    cubes: new DatasetCostCubeSource(insights),
+    store: new InMemoryStatementStore(),
+    projects: catalog,
+    priceBookHash: () => priceBookHashOf(priceBook.list({}).versions),
+    appVersion: "0.0.0-test",
+    timeZone: "UTC",
+    now: () => FIXTURE_NOW,
+  });
+  // The cost routes read only costAnalysis and statements (app.ts passes req.query unchanged).
+  const api = new ApiService({ costAnalysis, statements } as unknown as ApiServiceDeps);
   const server = createMcpServer({
     auditQueries: new AuditQueryService(lookup),
     analysisQueries: new AnalysisQueryService(lookup, insights, { attribution: attributor, pricer }),
@@ -178,8 +191,9 @@ export function composeCostFixture() {
     version: "0.0.0-test",
     costAnalysis,
     priceBook,
+    statements,
   });
-  return { api, server, insights, costAnalysis };
+  return { api, server, insights, costAnalysis, statements };
 }
 
 export async function connectCostFixture(): Promise<{ client: Client; api: ApiService }> {

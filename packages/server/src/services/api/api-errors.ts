@@ -26,6 +26,15 @@ export class NotFoundError extends ApiError {
   }
 }
 
+// The request conflicts with what is stored, e.g. issuing a statement that
+// is already frozen or a period that hasn't ended (step 15.11) — 409.
+export class ConflictError extends ApiError {
+  constructor(message: string) {
+    super(message);
+    this.name = "ConflictError";
+  }
+}
+
 // A source read failed and the service has already worded the failure for
 // the client ("Failed to load …") — 500.
 export class InternalError extends ApiError {
@@ -37,12 +46,15 @@ export class InternalError extends ApiError {
 
 // The status both transports report for an error ApiService threw
 // (vscode-extension.md §4: the webview RPC uses the HTTP API's numbers).
-export function statusForApiError(error: unknown): 400 | 404 | 500 {
+export function statusForApiError(error: unknown): 400 | 404 | 409 | 500 {
   if (error instanceof BadRequestError) {
     return 400;
   }
   if (error instanceof NotFoundError) {
     return 404;
+  }
+  if (error instanceof ConflictError) {
+    return 409;
   }
   return 500;
 }

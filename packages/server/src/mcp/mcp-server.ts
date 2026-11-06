@@ -9,6 +9,8 @@ import { MCP_ICONS, MCP_WEBSITE_URL } from "./mcp-branding.js";
 import { STANDALONE_MCP_IDENTITY, type McpIdentity } from "./mcp-identity.js";
 import { registerAttributionTools } from "./attribution-tools.js";
 import { registerAuditTools } from "./audit-tools.js";
+import { registerBillingTools } from "./billing-tools.js";
+import type { StatementQueries } from "../services/billing/statement-service.js";
 import { registerCostAnalysisTools, registerCostTools } from "./cost-tools.js";
 import { registerFindingTools } from "./finding-tools.js";
 import { registerPricingTools } from "./pricing-tools.js";
@@ -37,6 +39,9 @@ export interface McpServerDeps {
   // compare_costs. Absent for a product without them yet (the extension,
   // until step 15.13).
   costAnalysis?: CostAnalysisQueries;
+  // Phase 15 step 15.11: get_statement and prepare_statement (the standalone
+  // server; the extension's with step 15.13).
+  statements?: StatementQueries;
   version: string;
   // The name and log-source wording of the product serving the tools;
   // defaults to the standalone server's (mcp-identity.ts).
@@ -74,7 +79,8 @@ export function createMcpServer(deps: McpServerDeps): McpServer {
   if (deps.attribution) {
     registerAttributionTools(server, toolDeps, deps.attribution, guarded);
   }
-  registerPrompts(server, { costAnalysis: deps.costAnalysis !== undefined });
+  if (deps.statements) registerBillingTools(server, deps.statements, guarded);
+  registerPrompts(server, { costAnalysis: deps.costAnalysis !== undefined, statements: deps.statements !== undefined });
 
   return server;
 }
