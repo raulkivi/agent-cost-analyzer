@@ -102,8 +102,8 @@ describe("get_price_book", () => {
       { channel: "github-copilot", modelId: "claude-sonnet-5.5", reason: "no price for claude-sonnet-5.5 on github-copilot before 2026-10-01" },
     ]);
 
-    const noChannel = await call({ channel: "openai-api", model: "gpt-6-sol" });
-    expect(noChannel.unknown).toEqual([{ channel: "openai-api", modelId: "gpt-6-sol", reason: "no price book for channel openai-api" }]);
+    const noChannel = await call({ channel: "xai-api", model: "grok-5" });
+    expect(noChannel.unknown).toEqual([{ channel: "xai-api", modelId: "grok-5", reason: "no price book for channel xai-api" }]);
   });
 
   it("rejects an `at` that isn't an ISO date", async () => {
