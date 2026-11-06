@@ -95,6 +95,26 @@ function reasoningOf(usage: PiUsage | undefined): TokenCount {
   return usage?.output === 0 ? { known: true, value: 0 } : unavailableTokenCount(NO_REASONING_BREAKDOWN_REASON);
 }
 
+const NO_REPORTED_COST_REASON =
+  "pi's Usage did not include a numeric cost.total for every usage in this turn, so pi's own cost for it is unknown.";
+const NO_EXTENDED_SPLIT_REASON =
+  "pi's Usage for a call that wrote cache did not include cacheWrite1h, so how many cache writes were 1-hour writes is unknown.";
+
+// Step 15.6: pi's own price for the usage (`Usage.cost.total`, USD), the
+// "reported" cost basis. Every usage needs one, or the turn's is unknown.
+function reportedCostOf(usage: PiUsage | undefined): TokenCount {
+  const cost = usage?.cost;
+  const total = typeof cost === "object" && cost !== null ? (cost as Record<string, unknown>).total : undefined;
+  return typeof total === "number" && total >= 0 ? { known: true, value: total } : unavailableTokenCount(NO_REPORTED_COST_REASON);
+}
+
+// Step 15.6: `cacheWrite1h` is the 1-hour subset of `cacheWrite`; a usage
+// that wrote nothing has none.
+function extendedCacheWriteOf(usage: PiUsage | undefined): TokenCount {
+  if (typeof usage?.cacheWrite1h === "number") return { known: true, value: usage.cacheWrite1h };
+  return usage?.cacheWrite === 0 ? { known: true, value: 0 } : unavailableTokenCount(NO_EXTENDED_SPLIT_REASON);
+}
+
 // Per-turn usage summed over every usage-bearing entry in the turn's span
 // (see usageOfEntry), mirroring the VS Code provider's "sum every
 // llm_request span in the turn" pattern (session-usage-spans.ts's
@@ -121,6 +141,8 @@ export function extractTurnUsage(group: PiTurnGroup): TurnUsage {
     costAiCredits: unavailableTokenCount(NO_AI_CREDITS_REASON),
     model,
     roundsCount: assistantMessages.length,
+    extendedCacheWrite: sumTokenCounts(usages.map(extendedCacheWriteOf), NO_EXTENDED_SPLIT_REASON),
+    reportedCostUsd: sumTokenCounts(usages.map(reportedCostOf), NO_REPORTED_COST_REASON),
   };
 }
 

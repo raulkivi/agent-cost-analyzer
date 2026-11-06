@@ -12,7 +12,9 @@ export interface PiUsage {
   output?: unknown;
   cacheRead?: unknown;
   cacheWrite?: unknown;
+  cacheWrite1h?: unknown; // the 1-hour subset of cacheWrite (message-types.md "Usage")
   reasoning?: unknown;
+  cost?: unknown; // { input, output, cacheRead, cacheWrite, total } in USD
 }
 
 export interface PiAssistantMessage {
