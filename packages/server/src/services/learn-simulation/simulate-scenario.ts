@@ -26,9 +26,15 @@ export interface SimulateOptions {
   harness: Harness;
   // Cache lifetime for best-effort vendors; no doc states one (D5).
   assumedTtlMinutes?: number;
+  // Apply what a harness does on its own, unless told otherwise. Claude Code
+  // requests the 1-hour cache lifetime (its logs show it on 186 of 188
+  // sessions, docs/plans/learn-calibration-findings.md); the scenario docs
+  // turn this off to teach the vendor's own default.
+  harnessCacheDefaults?: boolean;
 }
 
 const DEFAULT_GAP_MINUTES = 1;
+const HARNESSES_WITH_LONG_CACHE: Harness[] = ["claude-code"];
 const DEFAULT_ASSUMED_TTL_MINUTES = 5;
 const UNKNOWN_REASON = (vendor: string): string =>
   `${vendor}'s cache behaviour for this turn is unknown, so it isn't simulated.`;
@@ -75,7 +81,14 @@ export function simulateScenario(
     ? findModel(profile, primary.cheaperSiblingId)
     : undefined;
   const policy = new InvalidationPolicy(profile);
-  const text = script.textByHarness?.[harness];
+  // A harness with a long cache lifetime has its own break lengths and
+  // wording (the scripts that teach cache expiry); with its defaults off the
+  // script's vendor-default story applies instead.
+  const harnessDefaults = options.harnessCacheDefaults !== false;
+  const text =
+    harnessDefaults || !HARNESSES_WITH_LONG_CACHE.includes(harness)
+      ? script.textByHarness?.[harness]
+      : undefined;
   const caches = new Map<string, CacheModel>();
   const cacheFor = (model: ModelPrice): CacheModel => {
     let cache = caches.get(model.modelId);
@@ -95,10 +108,17 @@ export function simulateScenario(
   let system = script.staticPrefix.systemTokens;
   let messages = 0;
   let clock = 0;
-  let extendedTtl = false;
+  let extendedTtl =
+    harnessDefaults && HARNESSES_WITH_LONG_CACHE.includes(harness);
   let afterCompaction = false;
   const messagesAfter = new Map<number, number>();
   const turns: Turn[] = [];
+
+  const idleFor = (
+    step: ScenarioScript["steps"][number],
+    position: number,
+  ): number | undefined =>
+    text?.idleMinutes?.[position] ?? step.idleMinutesBefore;
 
   script.steps.forEach((step, position) => {
     const events = step.events;
@@ -147,8 +167,8 @@ export function simulateScenario(
     const model = role === "cheaper" ? requireModel(cheaper, primary) : primary;
     clock +=
       position === 0
-        ? (step.idleMinutesBefore ?? 0)
-        : (step.idleMinutesBefore ?? DEFAULT_GAP_MINUTES);
+        ? (idleFor(step, position) ?? 0)
+        : (idleFor(step, position) ?? DEFAULT_GAP_MINUTES);
 
     const images = (step.newContent.images ?? []).map((img) =>
       imageTokens(profile.vendorId, img),

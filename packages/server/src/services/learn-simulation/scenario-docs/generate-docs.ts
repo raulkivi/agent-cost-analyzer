@@ -142,10 +142,13 @@ export function generateScenarioDocs(
     const doc = input.docs[file];
     if (doc === undefined) throw new Error(`Missing doc ${file}`);
     // The reference harness is Claude Code: every doc is written in its terms.
+    // Its 1-hour cache lifetime is left out: the docs teach the vendor's
+    // default lifetime, and say where Claude Code differs.
     const session = simulateScenario(script, {
       profile: input.profile,
       modelId: input.modelId,
       harness: "claude-code",
+      harnessCacheDefaults: false,
     });
     out[file] = replaceGeneratedRegion(
       doc,

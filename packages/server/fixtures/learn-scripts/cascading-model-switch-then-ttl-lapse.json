@@ -104,5 +104,18 @@
       },
       "events": []
     }
-  ]
+  ],
+  "textByHarness": {
+    "claude-code": {
+      "idleMinutes": [null, null, null, null, 70, null],
+      "explanations": [
+        "Normal first turn: writes the static prefix plus this turn's own content.",
+        "Normal turn reusing and extending the first model's cache.",
+        "Model switch: the first model's cache is useless to the second, so the whole history plus the new message is resent uncached and the second model writes its own cache from scratch.",
+        "Normal turn under the new model; its cache builds up again. The user then steps away for longer than the long cache lifetime this tool uses.",
+        "Second invalidation in a few turns: the idle gap outlives the cache, so the whole history since the switch is resent uncached, and the switch is never reverted. Both costs stack on one turn.",
+        "The cache recovers to normal healthy growth, but only after paying for both triggers back to back."
+      ]
+    }
+  }
 }

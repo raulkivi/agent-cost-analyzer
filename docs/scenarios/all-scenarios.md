@@ -629,6 +629,10 @@ to 10 turns.
 Turns 1-7 happen back-to-back and build a healthy, growing cache. Then the user
 steps away for a **5+ minute smoke break** before turn 8 — long enough to exceed Anthropic's default 5-minute cache lifetime (see Section 17.1 of the main doc; other providers' caches can outlast it — OpenAI's in-memory caching keeps entries 5-10 minutes, and its 24-hour retention and Copilot's Gemini caching much longer).
 
+> In the app's Claude Code harness this scenario's break is longer than an hour,
+> because Claude Code keeps its cache that long. The numbers below use the
+> 5-minute default.
+
 Simulated on Claude Sonnet 5.5 (and its cheaper sibling where a scenario switches models) with the real per-token prices in GitHub's Copilot price table, checked 2026-11-04. The figures come from the Learn simulator, not from a live session. Tool and Vision tokens are part of the input columns, not added to them.
 
 | Turn | What happens | Cache write | Cache read | Cache size after | Uncached input | Tool (in input) | Vision (in input) | Reasoning | Output text | **Turn total** | **Turn AI Credits** |

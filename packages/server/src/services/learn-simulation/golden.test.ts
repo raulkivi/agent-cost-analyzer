@@ -53,4 +53,24 @@ describe("golden simulations (scenario × vendor default model)", () => {
       });
     }
   }
+
+  // Claude Code keeps its cache an hour, so a 5-minute break is a hit there
+  // and the scripts carry a longer break for it (step 13.5a).
+  describe("on the Claude Code harness (1-hour cache)", () => {
+    for (const id of ["cache-ttl-smoke-break", "cascading-model-switch-then-ttl-lapse"]) {
+      it(`${id}`, () => {
+        const script = scripts.find((s) => s.id === id)!;
+        const profile = profiles.find((p) => p.vendorId === "anthropic")!;
+        const session = simulateScenario(script, {
+          profile,
+          modelId: profile.defaultModelId,
+          harness: "claude-code",
+        });
+        expect(render(session)).toMatchSnapshot();
+        // The break is the step with a long idle gap: it must be a miss.
+        const lapse = id === "cache-ttl-smoke-break" ? 7 : 4;
+        expect(session.turns[lapse]!.simulation?.cacheOutcome).toBe("miss");
+      });
+    }
+  });
 });

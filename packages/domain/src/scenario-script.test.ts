@@ -152,3 +152,29 @@ describe("scenarioScriptSchema", () => {
     expect(scenarioScriptSchema.safeParse(rest).success).toBe(false);
   });
 });
+
+describe("harness text idle overrides (Claude Code's 1-hour cache)", () => {
+  const script = {
+    id: "s",
+    title: "T",
+    category: "C",
+    harnesses: ["claude-code"],
+    sessionKind: "main",
+    staticPrefix: { toolsTokens: 1, systemTokens: 1 },
+    steps: [step],
+  };
+
+  it("accepts per-step idle minutes, with null keeping the script's own gap", () => {
+    const parsed = scenarioScriptSchema.parse({
+      ...script,
+      textByHarness: { "claude-code": { idleMinutes: [null, 70] } },
+    });
+    expect(parsed.textByHarness?.["claude-code"]?.idleMinutes).toEqual([null, 70]);
+  });
+
+  it("rejects a negative idle gap", () => {
+    expect(() =>
+      scenarioScriptSchema.parse({ ...script, textByHarness: { "claude-code": { idleMinutes: [-1] } } }),
+    ).toThrow();
+  });
+});
