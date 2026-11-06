@@ -1,0 +1,306 @@
+{
+  "id": "claude-code-2e4ad1d9",
+  "source": "claude-code",
+  "harness": "claude-code",
+  "vendorId": "anthropic",
+  "modelId": "claude-opus-5.5",
+  "requests": [
+    {
+      "index": 0,
+      "gapMinutes": 0,
+      "recorded": {
+        "uncachedInput": 2,
+        "cacheRead": 26438,
+        "cacheWrite": 0,
+        "extendedCacheWrite": 29718,
+        "output": 156
+      }
+    },
+    {
+      "index": 1,
+      "gapMinutes": 0.041933333333333336,
+      "recorded": {
+        "uncachedInput": 2,
+        "cacheRead": 56156,
+        "cacheWrite": 0,
+        "extendedCacheWrite": 616,
+        "output": 96
+      }
+    },
+    {
+      "index": 2,
+      "gapMinutes": 0.05268333333333333,
+      "recorded": {
+        "uncachedInput": 2,
+        "cacheRead": 56772,
+        "cacheWrite": 0,
+        "extendedCacheWrite": 18169,
+        "output": 345
+      }
+    },
+    {
+      "index": 3,
+      "gapMinutes": 0.037983333333333334,
+      "recorded": {
+        "uncachedInput": 2,
+        "cacheRead": 74941,
+        "cacheWrite": 0,
+        "extendedCacheWrite": 5438,
+        "output": 75
+      }
+    },
+    {
+      "index": 4,
+      "gapMinutes": 0.036533333333333334,
+      "recorded": {
+        "uncachedInput": 2,
+        "cacheRead": 80379,
+        "cacheWrite": 0,
+        "extendedCacheWrite": 344,
+        "output": 653
+      }
+    },
+    {
+      "index": 5,
+      "gapMinutes": 0.0875,
+      "recorded": {
+        "uncachedInput": 2,
+        "cacheRead": 80723,
+        "cacheWrite": 0,
+        "extendedCacheWrite": 2813,
+        "output": 353
+      }
+    },
+    {
+      "index": 6,
+      "gapMinutes": 0.11746666666666666,
+      "recorded": {
+        "uncachedInput": 2,
+        "cacheRead": 83536,
+        "cacheWrite": 0,
+        "extendedCacheWrite": 3110,
+        "output": 692
+      }
+    },
+    {
+      "index": 7,
+      "gapMinutes": 0.06271666666666667,
+      "recorded": {
+        "uncachedInput": 2,
+        "cacheRead": 86646,
+        "cacheWrite": 0,
+        "extendedCacheWrite": 2256,
+        "output": 168
+      }
+    },
+    {
+      "index": 8,
+      "gapMinutes": 0.3784166666666667,
+      "recorded": {
+        "uncachedInput": 2,
+        "cacheRead": 88902,
+        "cacheWrite": 0,
+        "extendedCacheWrite": 1773,
+        "output": 2350
+      }
+    },
+    {
+      "index": 9,
+      "gapMinutes": 0.08885,
+      "recorded": {
+        "uncachedInput": 2,
+        "cacheRead": 90675,
+        "cacheWrite": 0,
+        "extendedCacheWrite": 2636,
+        "output": 291
+      }
+    },
+    {
+      "index": 10,
+      "gapMinutes": 0.07678333333333333,
+      "recorded": {
+        "uncachedInput": 2,
+        "cacheRead": 93311,
+        "cacheWrite": 0,
+        "extendedCacheWrite": 1055,
+        "output": 460
+      }
+    },
+    {
+      "index": 11,
+      "gapMinutes": 1.0172666666666668,
+      "recorded": {
+        "uncachedInput": 2,
+        "cacheRead": 94366,
+        "cacheWrite": 0,
+        "extendedCacheWrite": 1745,
+        "output": 7940
+      }
+    },
+    {
+      "index": 12,
+      "gapMinutes": 0.4587333333333333,
+      "recorded": {
+        "uncachedInput": 2,
+        "cacheRead": 96111,
+        "cacheWrite": 0,
+        "extendedCacheWrite": 8198,
+        "output": 2205
+      }
+    },
+    {
+      "index": 13,
+      "gapMinutes": 0.3001333333333333,
+      "recorded": {
+        "uncachedInput": 2,
+        "cacheRead": 104309,
+        "cacheWrite": 0,
+        "extendedCacheWrite": 2766,
+        "output": 168
+      }
+    },
+    {
+      "index": 14,
+      "gapMinutes": 0.05185,
+      "recorded": {
+        "uncachedInput": 2,
+        "cacheRead": 107075,
+        "cacheWrite": 0,
+        "extendedCacheWrite": 417,
+        "output": 2534
+      }
+    },
+    {
+      "index": 15,
+      "gapMinutes": 0.3824666666666667,
+      "recorded": {
+        "uncachedInput": 2,
+        "cacheRead": 107492,
+        "cacheWrite": 0,
+        "extendedCacheWrite": 3196,
+        "output": 2665
+      }
+    },
+    {
+      "index": 16,
+      "gapMinutes": 0.4291833333333333,
+      "recorded": {
+        "uncachedInput": 2,
+        "cacheRead": 110688,
+        "cacheWrite": 0,
+        "extendedCacheWrite": 3226,
+        "output": 523
+      }
+    },
+    {
+      "index": 17,
+      "gapMinutes": 0.07863333333333333,
+      "recorded": {
+        "uncachedInput": 2,
+        "cacheRead": 113914,
+        "cacheWrite": 0,
+        "extendedCacheWrite": 1216,
+        "output": 230
+      }
+    },
+    {
+      "index": 18,
+      "gapMinutes": 0.062016666666666664,
+      "recorded": {
+        "uncachedInput": 2,
+        "cacheRead": 115130,
+        "cacheWrite": 0,
+        "extendedCacheWrite": 380,
+        "output": 1011
+      }
+    },
+    {
+      "index": 19,
+      "gapMinutes": 0.25311666666666666,
+      "recorded": {
+        "uncachedInput": 2,
+        "cacheRead": 115510,
+        "cacheWrite": 0,
+        "extendedCacheWrite": 1251,
+        "output": 1510
+      }
+    },
+    {
+      "index": 20,
+      "gapMinutes": 99.89398333333334,
+      "recorded": {
+        "uncachedInput": 2,
+        "cacheRead": 24200,
+        "cacheWrite": 0,
+        "extendedCacheWrite": 94138,
+        "output": 309
+      }
+    },
+    {
+      "index": 21,
+      "gapMinutes": 0.2409,
+      "recorded": {
+        "uncachedInput": 2,
+        "cacheRead": 118338,
+        "cacheWrite": 0,
+        "extendedCacheWrite": 2900,
+        "output": 1294
+      }
+    },
+    {
+      "index": 22,
+      "gapMinutes": 0.06905,
+      "recorded": {
+        "uncachedInput": 2,
+        "cacheRead": 121238,
+        "cacheWrite": 0,
+        "extendedCacheWrite": 2360,
+        "output": 187
+      }
+    },
+    {
+      "index": 23,
+      "gapMinutes": 0.07603333333333333,
+      "recorded": {
+        "uncachedInput": 2,
+        "cacheRead": 123598,
+        "cacheWrite": 0,
+        "extendedCacheWrite": 406,
+        "output": 4751
+      }
+    },
+    {
+      "index": 24,
+      "gapMinutes": 0.6277333333333334,
+      "recorded": {
+        "uncachedInput": 2,
+        "cacheRead": 124004,
+        "cacheWrite": 0,
+        "extendedCacheWrite": 6625,
+        "output": 626
+      }
+    },
+    {
+      "index": 25,
+      "gapMinutes": 0.11376666666666667,
+      "recorded": {
+        "uncachedInput": 2,
+        "cacheRead": 130629,
+        "cacheWrite": 0,
+        "extendedCacheWrite": 1637,
+        "output": 461
+      }
+    },
+    {
+      "index": 26,
+      "gapMinutes": 0.1129,
+      "recorded": {
+        "uncachedInput": 2,
+        "cacheRead": 132266,
+        "cacheWrite": 0,
+        "extendedCacheWrite": 568,
+        "output": 380
+      }
+    }
+  ]
+}
