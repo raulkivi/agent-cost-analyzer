@@ -97,6 +97,23 @@ export class PriceBook implements PriceBookReader {
     return { known: false, reason: reasonForNoListPrice(candidates.filter(isList), channel, modelId, time) };
   }
 
+  // Step 15.6: the book as it is now, read once. The user source reads the
+  // projects file on every load, so a dataset is priced over one snapshot.
+  snapshot(): PriceBook {
+    const data = this.source.load();
+    return new PriceBook({ load: () => data });
+  }
+
+  // Step 15.6: the model ids priced on a channel, for mapping a provider's
+  // own model ids onto the book's (CandidatePriceModelMapper).
+  modelIds(channel: string): string[] {
+    const ids = this.source
+      .load()
+      .versions.filter((version) => version.channel === channel)
+      .map((version) => version.modelId);
+    return [...new Set(ids)].sort();
+  }
+
   // The price "now" for Phase 13's simulator (plan §6.1): the latest list
   // or promo version, whatever its end date.
   newestVersion(channel: string, modelId: string): PriceBookEntry | undefined {

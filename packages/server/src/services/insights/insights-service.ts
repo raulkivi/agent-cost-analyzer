@@ -5,6 +5,7 @@ import { DEFAULT_ROLLUP_SESSION_LIMIT, inRange, MAX_ROLLUP_SESSION_LIMIT, type S
 import type { FindingDetector } from "./finding-detector.js";
 import type { AttributionSnapshot } from "../cost-attribution/session-attributor.js";
 import { buildInsightRows, type InsightRows, type ProviderSessions, type RowAttributor } from "./insights-dataset-builder.js";
+import type { TurnPricing } from "../pricing/turn-cost-figures.js";
 
 // The narrow slice of LogProviderRegistry this service needs (DIP).
 export interface ProviderSource {
@@ -44,6 +45,9 @@ export class InsightsService {
     private readonly detectors: readonly FindingDetector[],
     private readonly now: () => Date = () => new Date(),
     private readonly attribution?: DatasetAttribution,
+    // Step 15.6: the priced basis (TurnCostFigureBuilder over the price
+    // book). Absent, priced figures are unknown with the reason.
+    private readonly pricer?: TurnPricing,
   ) {}
 
   async getDataset(filter: SessionRangeFilter): Promise<InsightsDataset> {
@@ -52,7 +56,7 @@ export class InsightsService {
     const loads = await Promise.all(selected.map((provider) => this.load(provider, filter, limit)));
     const sources = loads.flatMap((load) => (load.sessions ? [load.sessions] : []));
     const snapshot = this.attribution?.snapshot();
-    const rows = buildInsightRows(sources, snapshot);
+    const rows = buildInsightRows(sources, snapshot, this.pricer?.snapshot());
     return {
       generatedAt: this.now().toISOString(),
       ...(filter.since ? { since: filter.since } : {}),

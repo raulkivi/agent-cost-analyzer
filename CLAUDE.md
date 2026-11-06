@@ -121,7 +121,12 @@ content here.
   `list_repositories`/`list_projects`) and step 15.5 (price book with history in
   `packages/server/src/services/pricing/`, `fixtures/price-book/`, so far
   GitHub Copilot's and the Anthropic, OpenAI and Google APIs' prices from 2026-10-01 where a dated source proves them; `GET /api/price-book`,
-  `get_price_book`) is done;
+  `get_price_book`) is done; step 15.6 (`CostPricer` in
+  `services/pricing/`: billed, reported and priced `CostFigure`s on every
+  Insights turn row and per-basis totals with coverage on session rows,
+  Copilot billed-vs-priced reconciliation per model and month, a Cost basis
+  list box and basis switch on the Dashboard, and the basis in
+  `get_session_cost`, `get_cost_rollup` and `get_turn`) is done;
   step 15.1 is done (`Session.workspace`, `Turn.startedAt`, and
   `Turn.workspace` for Claude Code, from every provider) and step 15.2
   (`RepositoryResolver` and `RemoteUrlNormalizer` in

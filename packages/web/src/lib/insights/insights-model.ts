@@ -1,4 +1,4 @@
-import { channelLabel } from "@agent-cost-analyzer/domain";
+import { channelLabel, preferredCostFigure } from "@agent-cost-analyzer/domain";
 import type {
   FailureCategory,
   FindingKind,
@@ -25,6 +25,7 @@ export const FIELD = {
   repository: "repository",
   vendor: "vendor",
   channel: "channel",
+  costBasis: "costBasis",
   provider: "provider",
   date: "date",
   hour: "hour",
@@ -47,7 +48,7 @@ export type FieldId = (typeof FIELD)[keyof typeof FIELD];
 // Phase 15 step 15.4: the attribution list boxes come first, in the
 // approved mock-up's order (docs/plans/mockups/cost-by-project/Main.dc.html).
 export const LIST_BOX_GROUPS: { title: string; fields: FieldId[] }[] = [
-  { title: "Project & source", fields: [FIELD.project, FIELD.repository, FIELD.vendor, FIELD.channel] },
+  { title: "Project & source", fields: [FIELD.project, FIELD.repository, FIELD.vendor, FIELD.channel, FIELD.costBasis] },
   { title: "When & where", fields: [FIELD.provider, FIELD.date, FIELD.hour, FIELD.session] },
   { title: "Cost", fields: [FIELD.model, FIELD.trigger, FIELD.usage] },
   { title: "Tool calls", fields: [FIELD.tool, FIELD.toolKind, FIELD.program, FIELD.outcome, FIELD.failureCategory] },
@@ -107,6 +108,19 @@ export const UNATTRIBUTED = "(unattributed)";
 export const NO_PROJECT = "(no-project)";
 export const UNKNOWN_VENDOR = "(unknown-vendor)";
 export const UNKNOWN_CHANNEL = "(unknown-channel)";
+// Step 15.6: a turn with no billed, reported or priced figure.
+export const NO_COST = "(no-cost)";
+
+// Step 15.6 (plan §5): the basis of each turn's preferred figure, in trust
+// order, as the approved mock-up's Cost basis list box shows it.
+const COST_BASIS_ORDER = ["billed", "reported", "priced", NO_COST];
+const COST_BASIS_LABELS: Record<string, string> = { billed: "Billed", reported: "Reported", priced: "Priced", [NO_COST]: "Cost unknown" };
+
+function costBasisOf(row: InsightTurnRow): string {
+  if (!row.cost) return NO_COST;
+  const preferred = preferredCostFigure(row.cost);
+  return preferred.known ? preferred.basis : NO_COST;
+}
 
 const PLACEHOLDER_LABELS: Record<string, string> = {
   [UNATTRIBUTED]: "Unattributed",
@@ -185,6 +199,10 @@ export function createInsightsModel(dataset: InsightsDataset): AssociativeModel 
       field<InsightTurnRow>(FIELD.channel, "Channel", TABLE.turns, (row) => row.channel ?? UNKNOWN_CHANNEL, {
         display: channelDisplay,
         compare: placeholdersLast(channelDisplay),
+      }),
+      field<InsightTurnRow>(FIELD.costBasis, "Cost basis", TABLE.turns, costBasisOf, {
+        display: (value) => COST_BASIS_LABELS[value] ?? value,
+        compare: (a, b) => COST_BASIS_ORDER.indexOf(a) - COST_BASIS_ORDER.indexOf(b),
       }),
       field<InsightSessionRow>(FIELD.provider, "Provider", TABLE.sessions, (row) => row.providerId, {
         display: (value) => providerLabels.get(value) ?? value,

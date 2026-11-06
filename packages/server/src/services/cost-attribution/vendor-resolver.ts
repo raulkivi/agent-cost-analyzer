@@ -62,6 +62,11 @@ export function candidateModelIds(modelId: string): string[] {
     }
   };
   add(id);
+  // Step 15.6: a display-style name, "claude sonnet 5.5".
+  if (id.includes(" ")) {
+    id = id.split(" ").filter((part) => part.length > 0).join("-");
+    add(id);
+  }
   if (id.includes("/")) {
     id = id.slice(id.lastIndexOf("/") + 1);
     add(id);

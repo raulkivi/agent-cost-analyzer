@@ -68,6 +68,23 @@ function sumReasoningField(rounds: ClaudeCodeRound[]): TokenCount {
   );
 }
 
+const NO_EXTENDED_SPLIT_REASON =
+  "Claude Code's usage object for a round that wrote cache did not split its cache writes by lifetime (cache_creation.ephemeral_1h_input_tokens), so how many were 1-hour writes is unknown.";
+
+// Phase 15 step 15.6: the 1-hour subset of each round's cache writes
+// (`usage.cache_creation.ephemeral_1h_input_tokens`, seen in real captures
+// beside `ephemeral_5m_input_tokens`), which the 1-hour price applies to. A
+// round that wrote nothing has none even without the breakdown.
+function extendedCacheWriteOf(round: ClaudeCodeRound): TokenCount {
+  const usage = usageOf(round);
+  const breakdown = usage?.cache_creation;
+  if (typeof breakdown === "object" && breakdown !== null) {
+    const value = (breakdown as Record<string, unknown>).ephemeral_1h_input_tokens;
+    if (typeof value === "number") return { known: true, value };
+  }
+  return usage?.cache_creation_input_tokens === 0 ? { known: true, value: 0 } : unavailableTokenCount(NO_EXTENDED_SPLIT_REASON);
+}
+
 // Per-turn usage summed once per round (round-grouper.ts's grouping-by-
 // message.id, not per raw JSONL entry) — a turn can span several
 // round-trips when the agent loops through tool calls before answering,
@@ -88,5 +105,6 @@ export function extractTurnUsage(group: ClaudeCodeTurnGroup): TurnUsage {
     costAiCredits: unavailableTokenCount(NO_AI_CREDITS_REASON),
     model,
     roundsCount: rounds.length,
+    extendedCacheWrite: sumTokenCounts(rounds.map(extendedCacheWriteOf), NO_EXTENDED_SPLIT_REASON),
   };
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { CHANNEL, channelIdSchema, channelLabel, vendorApiChannel } from "./channels.js";
+import { CHANNEL, channelCurrency, channelIdSchema, channelLabel, vendorApiChannel } from "./channels.js";
 
 describe("channels", () => {
   it("names the bundled channels with stable ids", () => {
@@ -32,5 +32,13 @@ describe("channels", () => {
     expect(channelIdSchema.safeParse("acme-bedrock-2").success).toBe(true);
     expect(channelIdSchema.safeParse("").success).toBe(false);
     expect(channelIdSchema.safeParse("Has Space").success).toBe(false);
+  });
+});
+
+describe("channelCurrency (step 15.6)", () => {
+  it("is AI Credits on GitHub Copilot and USD on every other channel, user channels included", () => {
+    expect(channelCurrency("github-copilot")).toBe("AI_CREDITS");
+    expect(channelCurrency("anthropic-api")).toBe("USD");
+    expect(channelCurrency("acme-bedrock")).toBe("USD");
   });
 });

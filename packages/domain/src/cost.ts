@@ -2,6 +2,7 @@ import { z } from "zod";
 import { insightProviderStatusSchema } from "./insights.js";
 import { systemPromptComponentSchema } from "./system-prompt-component.js";
 import { triggeredEventSchema } from "./turn.js";
+import { costBasisTotalsSchema, costReconciliationRowSchema, costTotalSchema, turnCostFiguresSchema } from "./cost-figure.js";
 
 // Phase 9.12 (docs/plans/mcp-tools-v2.md §4.1): token and AI Credits
 // figures aggregated per session and across sessions. Unknown is null,
@@ -39,6 +40,9 @@ const costFiguresSchema = z.object({
   inputTokens: z.number().nullable(),
   output: z.number().nullable(),
   aiCredits: z.number().nullable(),
+  // Step 15.6: the group's turns at their preferred cost basis (plan §5, D3),
+  // per currency, with coverage.
+  cost: costTotalSchema,
 });
 
 export type CostFigures = z.infer<typeof costFiguresSchema>;
@@ -57,6 +61,7 @@ export const turnCostSchema = z.object({
   aiCredits: z.number().nullable(),
   toolCalls: z.number().nullable(), // null: tool calls unknown
   userMessage: z.string(), // bounded, redacted excerpt
+  cost: turnCostFiguresSchema, // step 15.6: billed, reported and priced
 });
 
 export const contextOverheadSchema = z.object({
@@ -85,7 +90,15 @@ export const sessionCostSchema = z.object({
   model: z.string(),
   startedAt: z.string().optional(),
   turnCount: z.number(),
+  // Step 15.6: the session's repository (null = Unattributed, with the
+  // reason) and project (null = none); absent when attribution isn't
+  // configured for the product.
+  repositoryKey: z.string().nullable().optional(),
+  unattributedReason: z.string().optional(),
+  projectId: z.string().nullable().optional(),
   totals: costMeasuresSchema,
+  // Step 15.6: the turns' cost per basis, with coverage and the price versions used.
+  cost: costBasisTotalsSchema,
   cacheHitRatio: ratioSchema, // cache read / input tokens
   byModel: z.array(modelCostSchema),
   rankedBy: costRankingSchema,
@@ -97,6 +110,18 @@ export const sessionCostSchema = z.object({
 
 export type SessionCost = z.infer<typeof sessionCostSchema>;
 
+// Step 15.6: one repository, project, vendor or channel in the rollup. A
+// null key is the Unattributed / No project / unknown bucket, with why.
+export const costGroupSchema = z.object({
+  key: z.string().nullable(),
+  label: z.string(),
+  reason: z.string().optional(),
+  turns: z.number().int().nonnegative(),
+  cost: costBasisTotalsSchema,
+});
+
+export type CostGroup = z.infer<typeof costGroupSchema>;
+
 export const costRollupSchema = z.object({
   generatedAt: z.string(),
   since: z.string().optional(),
@@ -105,6 +130,7 @@ export const costRollupSchema = z.object({
   sessionCount: z.number(),
   turnCount: z.number(),
   totals: costMeasuresSchema,
+  cost: costBasisTotalsSchema, // step 15.6: per-basis totals with coverage
   cacheHitRatio: ratioSchema,
   byProvider: z.array(costFiguresSchema.extend({ providerId: z.string(), providerLabel: z.string(), sessions: z.number() })),
   byModel: z.array(modelCostSchema),
@@ -119,6 +145,13 @@ export const costRollupSchema = z.object({
       startedAt: z.string().optional(),
     }),
   ),
+  // Step 15.6: who the turns' cost belongs to and who sold it.
+  byRepository: z.array(costGroupSchema),
+  byProject: z.array(costGroupSchema),
+  byVendor: z.array(costGroupSchema),
+  byChannel: z.array(costGroupSchema),
+  // Step 15.6: Copilot's billed AI Credits against the price book, per model and month.
+  reconciliation: z.array(costReconciliationRowSchema),
 });
 
 export type CostRollup = z.infer<typeof costRollupSchema>;

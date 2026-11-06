@@ -8,6 +8,9 @@ import {
 import type { Attribution } from "../cost-attribution/session-attributor.js";
 import { analyzeSession, bash, providerSessions, turn, usage } from "../../test-support/insights-fakes.js";
 import { buildInsightRows, NOT_ATTRIBUTED, type RowAttributor } from "./insights-dataset-builder.js";
+import type { CostFigure, Session, Turn } from "@agent-cost-analyzer/domain";
+import { costBasisTotals } from "@agent-cost-analyzer/domain";
+import { TurnCostFigureBuilder, type TurnPricer } from "../pricing/turn-cost-figures.js";
 
 const portal: Attribution = {
   repository: { attributed: true, repository: { key: "github.com/acme/portal", source: "git-remote", rootPath: "/work/portal" } },
@@ -53,6 +56,7 @@ describe("buildInsightRows", () => {
         vendorUnknownReason: NOT_ATTRIBUTED.vendor.known ? "" : NOT_ATTRIBUTED.vendor.reason,
         channel: null,
         channelUnknownReason: NOT_ATTRIBUTED.channel.known ? "" : NOT_ATTRIBUTED.channel.reason,
+        cost: costBasisTotals(rows.turns.map((row) => row.cost!)),
       },
     ]);
     expect(rows.turns[0]).toMatchObject({ key: "vscode:s1:0", sessionKey: "vscode:s1", turnIndex: 0, toolCallCount: 1 });
@@ -191,6 +195,46 @@ describe("buildInsightRows", () => {
       failureCategory: "command-not-found",
       startedAt: "2026-10-10T09:16:00.000Z",
       durationMs: 12,
+    });
+  });
+
+  describe("cost figures (step 15.6)", () => {
+    const priced = (amount: number): CostFigure => ({ known: true, amount, currency: "USD", basis: "priced", priceVersionIds: ["v"] });
+    // Prices turn 0 at $2, leaves turn 1 unknown; records what it was asked.
+    const asked: { providerId: string; session: Session; turn: Turn }[] = [];
+    const fakePricer: TurnPricer = {
+      figuresFor: (providerId, session, turnValue) => {
+        asked.push({ providerId, session, turn: turnValue });
+        const base = new TurnCostFigureBuilder().figuresFor(providerId, session, turnValue, NOT_ATTRIBUTED);
+        return { ...base, priced: turnValue.index === 0 ? priced(2) : { known: false, reason: "no price" } };
+      },
+    };
+
+    it("puts billed, reported and priced figures on every turn row", () => {
+      const rows = buildInsightRows([providerSessions([analyzeSession("s1", undefined, [turn(0), turn(1)])], "vscode")], fakeAttributor, fakePricer);
+      expect(rows.turns.map((row) => row.cost?.priced)).toEqual([priced(2), { known: false, reason: "no price" }]);
+      expect(rows.turns[0]!.cost?.billed).toEqual({ known: true, amount: 1, currency: "AI_CREDITS", basis: "billed" });
+      expect(asked.at(-1)).toMatchObject({ providerId: "vscode", turn: { index: 1 } });
+      for (const row of rows.turns) insightTurnRowSchema.parse(row);
+    });
+
+    it("sums the session row per basis with coverage: an unknown turn is not 0", () => {
+      const rows = buildInsightRows([providerSessions([analyzeSession("s1", undefined, [turn(0), turn(1)])], "vscode")], fakeAttributor, fakePricer);
+      expect(rows.sessions[0]!.cost?.priced).toMatchObject({ turns: 2, knownTurns: 1, usd: 2 });
+      expect(rows.sessions[0]!.cost?.billed).toMatchObject({ turns: 2, knownTurns: 2 });
+      insightSessionRowSchema.parse(rows.sessions[0]);
+    });
+
+    it("without a pricer, still carries billed and reported, and priced as unknown", () => {
+      const rows = buildInsightRows([providerSessions([analyzeSession("s1", undefined, [turn(0)])], "vscode")]);
+      expect(rows.turns[0]!.cost?.priced.known).toBe(false);
+      expect(rows.turns[0]!.cost?.billed.known).toBe(true);
+    });
+
+    it("dates a turn by its own time, else its session's", () => {
+      const own = { ...turn(0), startedAt: "2026-10-31T23:30:00.000Z" };
+      const rows = buildInsightRows([providerSessions([analyzeSession("s1", "2026-10-30T10:00:00.000Z", [own, turn(1)])], "vscode")]);
+      expect(rows.turns.map((row) => row.date)).toEqual(["2026-10-31", "2026-10-30"]);
     });
   });
 });

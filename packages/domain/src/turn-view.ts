@@ -3,6 +3,7 @@ import { failureCategorySchema, toolCallStatusSchema } from "./tool-call-outcome
 import { toolKindSchema } from "./tool-call-record.js";
 import { triggeredEventSchema } from "./turn.js";
 import { turnUsageSchema } from "./turn-usage.js";
+import { costFigureSchema, turnCostFiguresSchema } from "./cost-figure.js";
 
 // Phase 9.12 (docs/plans/mcp-tools-v2.md §4/§6): one turn as the MCP
 // get_turn tool returns it — free text redacted and bounded, tool calls
@@ -30,6 +31,10 @@ export const turnViewSchema = z.object({
   assistantResponseTruncated: z.boolean(),
   explanation: z.string(),
   usage: turnUsageSchema,
+  // Step 15.6: the turn's billed, reported and priced figures (the priced
+  // one names its price versions), and which one totals use by default.
+  cost: turnCostFiguresSchema,
+  preferredCost: costFigureSchema,
   toolCalls: z.array(turnViewToolCallSchema),
   // Set when the provider doesn't record the turn's text / tool calls, so the
   // empty values read as "not available", not as "empty" / "no tool calls".

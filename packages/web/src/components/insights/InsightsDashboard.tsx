@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState } from "react";
+import { AI_CREDIT_CONVERSION_NOTE, type CostBasisChoice } from "@agent-cost-analyzer/domain";
 import type {
   FailureCategory,
   InsightFinding,
@@ -17,7 +18,9 @@ import { createInsightsModel, FIELD, LIST_BOX_GROUPS, SEVERITY_ORDER, TABLE, typ
 import {
   aiCreditsByDay,
   computeKpis,
+  costTotalFor,
   countBy,
+  formatCostTotal,
   TOKEN_KINDS,
   tokensByModel,
   toolCallsByTool,
@@ -25,6 +28,7 @@ import {
   type InsightRowsView,
 } from "../../lib/insights/measures.js";
 import { buildNarrative } from "../../lib/insights/narrative.js";
+import { formatUsd } from "../../lib/ai-credits-usd.js";
 import { useCancellableLoad } from "../../lib/use-cancellable-load.js";
 import { AsyncView, cancelledEmptyState } from "../ui/AsyncView.js";
 import { Blueprint } from "../ui/Blueprint.js";
@@ -61,6 +65,15 @@ const TOOL_SERIES = [
   { id: "failed", label: "Failed", color: STATUS_META.error.color },
   { id: "unknown", label: "Unknown", color: STATUS_META.unknown.color },
 ];
+
+// Step 15.6 (plan §5, D3): totals use each turn's preferred basis unless the
+// view picks one.
+const COST_BASIS_OPTIONS = [
+  { value: "preferred", label: "Preferred" },
+  { value: "billed", label: "Billed" },
+  { value: "reported", label: "Reported" },
+  { value: "priced", label: "Priced" },
+] as const;
 
 const FAILED_SERIES = [{ id: "failed", label: "Failed", color: STATUS_META.error.color }];
 const CALLS_SERIES = [{ id: "calls", label: "Calls", color: STATUS_META.success.color }];
@@ -167,6 +180,7 @@ function DashboardBody({ dataset, crossProvider }: { dataset: InsightsDataset; c
   const model = useMemo(() => createInsightsModel(dataset), [dataset]);
   const engine = useMemo(() => createAssociativeEngine(model), [model]);
   const [history, setHistory] = useState(emptyHistory);
+  const [costBasis, setCostBasis] = useState<CostBasisChoice>("preferred");
   const selections = history.present;
   const evaluation = useMemo(() => engine.evaluate(selections), [engine, selections]);
 
@@ -177,6 +191,9 @@ function DashboardBody({ dataset, crossProvider }: { dataset: InsightsDataset; c
     findings: evaluation.rows<InsightFinding>(TABLE.findings),
   };
   const kpis = computeKpis(view);
+  const cost = costTotalFor(view.turns, costBasis);
+  const inAll = cost.amounts.length > 1 && cost.usd !== null ? ` · about ${formatUsd(cost.usd)} in all at` : " ·";
+  const apiEquivalentNote = cost.apiEquivalentTurns > 0 ? ` · ${cost.apiEquivalentTurns} API-equivalent` : "";
   const fieldsById = new Map(model.fields.map((field) => [field.id, field]));
   const fieldLabel = (fieldId: string) => fieldsById.get(fieldId)?.label ?? fieldId;
   const valueLabel = (fieldId: string, value: string) => fieldsById.get(fieldId)?.display?.(value) ?? value;
@@ -241,7 +258,17 @@ function DashboardBody({ dataset, crossProvider }: { dataset: InsightsDataset; c
           </section>
         </Blueprint>
 
+        <div className="insights-cost-basis" role="group" aria-label="Cost basis for totals">
+          <span className="text-muted" style={{ fontSize: 12 }}>Cost basis for totals</span>
+          <SegmentedControl name="insights-cost-basis" options={COST_BASIS_OPTIONS} value={costBasis} onChange={setCostBasis} />
+        </div>
+
         <div className="stat-tiles">
+          <StatTile
+            label="Cost"
+            value={formatCostTotal(cost)}
+            note={`${cost.knownTurns} of ${cost.turns} turns known${apiEquivalentNote}${inAll} ${AI_CREDIT_CONVERSION_NOTE}`}
+          />
           <StatTile
             label="AI Credits"
             value={kpis.aiCredits.known > 0 ? kpis.aiCredits.total.toFixed(2) : "—"}

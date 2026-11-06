@@ -1473,9 +1473,9 @@ extension), and extension grouping by repository.
 **Dependencies**: Phase 9.11 (insights dataset) for steps 15.1–15.4 and
 15.8; Phase 13 step 13.2 (vendor price data) for steps 15.5 onwards.
 
-**Status (2026-11-05)**: steps 15.1 (workspace and turn-time capture in
+**Status (2026-11-06)**: steps 15.1 (workspace and turn-time capture in
 every provider) 15.2 (repository resolver and remote URL normaliser),
-15.0 (threat-model rows) and 15.3 (projects file and its API) are done, and so are 15.4 (attribution in the dataset) and 15.5 (price book; GitHub Copilot's and the Anthropic, OpenAI and Google APIs' prices are sourced from 2026-10-01 where a dated source proves them). Planned otherwise; the owner accepted every recommended
+15.0 (threat-model rows) and 15.3 (projects file and its API) are done, and so are 15.4 (attribution in the dataset), 15.5 (price book; GitHub Copilot's and the Anthropic, OpenAI and Google APIs' prices are sourced from 2026-10-01 where a dated source proves them) and 15.6 (`CostPricer` and the billed/reported/priced cost basis on every Dashboard turn row, Copilot reconciliation, the Cost basis list box, and the basis in `get_session_cost`, `get_cost_rollup` and `get_turn`). Planned otherwise; the owner accepted every recommended
 decision (D1–D10, plan §13). The UI is a set of new Dashboard tabs built on
 the existing design system, UX standards and chart kit (plan §11), with a
 mock-up review gate (step 15.8) before any UI code. The mock-ups are drawn and were approved by the owner on 2026-11-05

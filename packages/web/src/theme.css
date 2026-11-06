@@ -397,6 +397,8 @@ a { color: var(--color-accent-text); text-underline-offset: 3px; }
 }
 .insights-listbox-group { display: flex; flex-direction: column; gap: var(--space-2); }
 .insights-main { display: flex; flex-direction: column; gap: var(--space-4); min-width: 0; }
+/* Phase 15 step 15.6: the cost tile's basis switch (Preferred / Billed / Reported / Priced). */
+.insights-cost-basis { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
 .insights-narrative { margin: 0; padding-left: 1.2em; font-size: 13px; display: flex; flex-direction: column; gap: 4px; }
 
 .listbox { border: 1px solid var(--color-divider); background: #ffffff; }

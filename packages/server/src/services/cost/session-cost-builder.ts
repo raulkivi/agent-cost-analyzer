@@ -1,11 +1,13 @@
-import type { Session, SessionCost, TokenCount } from "@agent-cost-analyzer/domain";
-import { buildInsightRows } from "../insights/insights-dataset-builder.js";
+import { costBasisTotals, type Session, type SessionCost, type TokenCount } from "@agent-cost-analyzer/domain";
+import { attributionRowFields, buildInsightRows, type RowAttributor } from "../insights/insights-dataset-builder.js";
+import type { TurnPricer } from "../pricing/turn-cost-figures.js";
 import { excerptOf } from "../tool-audit/output-redactor.js";
 import {
   byCostDescending,
   cacheHitRatio,
   costFigures,
   costMeasures,
+  costOf,
   groupBy,
   inputTokensOf,
   rankingFor,
@@ -21,6 +23,15 @@ const NO_CONTEXT_OVERHEAD_REASON =
 
 export interface SessionCostOptions {
   topTurns?: number;
+}
+
+// Step 15.6: who the session belongs to and how its turns are priced. Both
+// optional, so a caller without attribution or a price book still gets
+// billed and reported figures, and priced ones as unknown with the reason.
+export interface SessionCostContext {
+  providerId?: string;
+  attributor?: RowAttributor;
+  pricer?: TurnPricer;
 }
 
 function figure(count: TokenCount): number | null {
@@ -64,8 +75,10 @@ function contextOverhead(session: Session): SessionCost["contextOverhead"] {
   return overhead;
 }
 
-export function buildSessionCost(session: Session, options: SessionCostOptions = {}): SessionCost {
-  const { turns: rows } = buildInsightRows([{ providerId: session.providerId ?? "", providerLabel: "", sessions: [session] }]);
+export function buildSessionCost(session: Session, options: SessionCostOptions = {}, context: SessionCostContext = {}): SessionCost {
+  const providerId = context.providerId ?? session.providerId ?? "";
+  const { turns: rows } = buildInsightRows([{ providerId, providerLabel: "", sessions: [session] }], context.attributor, context.pricer);
+  const attribution = context.attributor ? attributionRowFields(context.attributor.session(providerId, session)) : undefined;
   const turnsByIndex = new Map(session.turns.map((turn) => [turn.index, turn]));
   const rankedBy = rankingFor(rows);
 
@@ -79,6 +92,7 @@ export function buildSessionCost(session: Session, options: SessionCostOptions =
       aiCredits: row.aiCredits,
       toolCalls: row.toolCallCount,
       userMessage: excerptOf(turnsByIndex.get(row.turnIndex)?.userMessage ?? "", USER_MESSAGE_EXCERPT_LENGTH),
+      cost: costOf(row),
     }))
     .sort(byCostDescending(rankedBy))
     .slice(0, options.topTurns ?? DEFAULT_TOP_TURNS);
@@ -94,7 +108,15 @@ export function buildSessionCost(session: Session, options: SessionCostOptions =
     model: session.model,
     ...(session.startedAt ? { startedAt: session.startedAt } : {}),
     turnCount: session.turns.length,
+    ...(attribution
+      ? {
+          repositoryKey: attribution.repositoryKey,
+          ...(attribution.unattributedReason ? { unattributedReason: attribution.unattributedReason } : {}),
+          projectId: attribution.projectId,
+        }
+      : {}),
     totals: costMeasures(rows),
+    cost: costBasisTotals(rows.map(costOf)),
     cacheHitRatio: cacheHitRatio(rows),
     byModel,
     rankedBy,

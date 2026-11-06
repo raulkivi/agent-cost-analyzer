@@ -157,6 +157,50 @@ describe("attribution on insight rows (Phase 15 step 15.4)", () => {
   });
 });
 
+describe("cost figures on insight rows (Phase 15 step 15.6)", () => {
+  const turnRow = () => sampleDataset().turns[0]!;
+  const cost = {
+    billed: { known: false, reason: "Claude Code has no billed figure." },
+    reported: { known: false, reason: "Claude Code logs no cost of its own." },
+    priced: {
+      known: true,
+      amount: 0.0123,
+      currency: "USD",
+      basis: "priced",
+      priceVersionIds: ["anthropic-api:claude-sonnet-5.5:2026-10-07"],
+      apiEquivalent: true,
+    },
+  };
+
+  it("carries each basis' figure and the turn's date on a turn row", () => {
+    const row = { ...turnRow(), date: "2026-10-10", cost };
+    expect(insightTurnRowSchema.parse(row)).toEqual(row);
+  });
+
+  it("rejects an unknown figure without a reason", () => {
+    const row = { ...turnRow(), cost: { ...cost, billed: { known: false } } };
+    expect(insightTurnRowSchema.safeParse(row).success).toBe(false);
+  });
+
+  it("carries per-basis totals with coverage on a session row", () => {
+    const total = { turns: 1, knownTurns: 0, amounts: [], usd: null, estimated: false, apiEquivalentTurns: 0 };
+    const priced = { ...total, knownTurns: 1, amounts: [{ currency: "USD", amount: 0.0123, knownTurns: 1 }], usd: 0.0123, apiEquivalentTurns: 1 };
+    const session = {
+      ...sampleDataset().sessions[0]!,
+      cost: {
+        preferred: priced,
+        billed: total,
+        reported: total,
+        priced,
+        preferredBasisTurns: { billed: 0, reported: 0, priced: 1, unknown: 0 },
+        priceVersionIds: ["anthropic-api:claude-sonnet-5.5:2026-10-07"],
+        conversion: "1 AI Credit = $0.01 (GitHub's documented rate); no other exchange rate is used.",
+      },
+    };
+    expect(insightSessionRowSchema.parse(session)).toEqual(session);
+  });
+});
+
 describe("findingsQueryResultSchema", () => {
   it("accepts findings enriched with their session's provider and title", () => {
     const { findings, providers, generatedAt } = sampleDataset();

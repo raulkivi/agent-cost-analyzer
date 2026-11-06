@@ -11,6 +11,8 @@ import { AuditQueryService } from "../services/tool-audit/audit-query-service.js
 import { composeCopilotProviders, type CopilotProviderCompositionOptions } from "./compose-copilot-providers.js";
 import { createInsightsService } from "./create-insights-service.js";
 import { createSessionAttributor } from "./create-session-attributor.js";
+import { createBundledPriceBookBeside } from "./create-price-book.js";
+import { createTurnPricer } from "./create-turn-pricer.js";
 
 export interface ExtensionApiServiceOptions extends CopilotProviderCompositionOptions {
   // The effective VS Code settings the config check judges (G6: the
@@ -50,6 +52,11 @@ export function extensionProductProfile(version: string): ProductProfile {
 // extension's own settings store. Unlike create-standalone-api-service.ts
 // it never imports the Express app or any non-Copilot provider; the
 // extension's bundle-boundary test enforces that.
+function pricerBeside(vendorProfilesDir: string) {
+  const book = createBundledPriceBookBeside(vendorProfilesDir);
+  return book ? createTurnPricer(book) : undefined;
+}
+
 export function createExtensionApiService(options: ExtensionApiServiceOptions): ApiService {
   const { learnScriptsDir, vendorProfilesDir, appVersion, settingsSource, ...compositionOptions } = options;
   const { registry, appSettings, resolvedVscodeSettingsPath } = composeCopilotProviders(compositionOptions);
@@ -62,7 +69,9 @@ export function createExtensionApiService(options: ExtensionApiServiceOptions): 
     registry,
     auditQueries: new AuditQueryService(registry),
     // Step 15.4: repository, vendor and channel; no projects file until step 15.14.
-    insights: createInsightsService(registry, createSessionAttributor({ vendorProfiles })),
+    // Step 15.6: Copilot turns priced from the bundled price book, so billed
+    // and priced figures can be compared.
+    insights: createInsightsService(registry, createSessionAttributor({ vendorProfiles }), pricerBeside(vendorProfilesDir)),
     settings: appSettings,
     checkConfig: (minRetainedSessionLogsThreshold) =>
       checkConfig({

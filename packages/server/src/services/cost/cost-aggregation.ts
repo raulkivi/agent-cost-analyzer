@@ -1,4 +1,13 @@
-import type { CostFigures, CostMeasures, CostRanking, InsightTurnRow, MeasureTotal } from "@agent-cost-analyzer/domain";
+import {
+  preferredCostFigure,
+  sumCostFigures,
+  type CostFigures,
+  type CostMeasures,
+  type CostRanking,
+  type InsightTurnRow,
+  type MeasureTotal,
+  type TurnCostFigures,
+} from "@agent-cost-analyzer/domain";
 
 // Shared, pure aggregation over flat turn rows (the dashboard's
 // InsightTurnRow shape) for the session and cross-session cost builders
@@ -7,8 +16,16 @@ import type { CostFigures, CostMeasures, CostRanking, InsightTurnRow, MeasureTot
 
 export type TurnFigures = Pick<
   InsightTurnRow,
-  "uncachedInput" | "cacheWrite" | "cacheRead" | "reasoning" | "output" | "aiCredits" | "estimated"
+  "uncachedInput" | "cacheWrite" | "cacheRead" | "reasoning" | "output" | "aiCredits" | "estimated" | "cost"
 >;
+
+const NOT_COMPUTED = { known: false as const, reason: "This row carries no cost figures (it predates step 15.6)." };
+const NO_FIGURES: TurnCostFigures = { billed: NOT_COMPUTED, reported: NOT_COMPUTED, priced: NOT_COMPUTED };
+
+// Step 15.6: a row's three cost bases; every basis unknown when absent.
+export function costOf(turn: Pick<TurnFigures, "cost">): TurnCostFigures {
+  return turn.cost ?? NO_FIGURES;
+}
 
 type Measure = (turn: TurnFigures) => number | null;
 
@@ -69,6 +86,7 @@ export function costFigures(turns: readonly TurnFigures[]): CostFigures {
     inputTokens: sumKnown(turns, inputTokensOf).value,
     output: sumKnown(turns, (t) => t.output).value,
     aiCredits: sumKnown(turns, (t) => t.aiCredits).value,
+    cost: sumCostFigures(turns.map((turn) => preferredCostFigure(costOf(turn)))),
   };
 }
 

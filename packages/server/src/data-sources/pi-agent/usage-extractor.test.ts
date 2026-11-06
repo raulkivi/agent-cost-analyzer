@@ -203,6 +203,44 @@ describe("extractTurnUsage", () => {
   });
 });
 
+describe("extractTurnUsage: cost detail (step 15.6)", () => {
+  const cost = (total: number) => ({ input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total });
+
+  it("sums pi's own Usage.cost.total as the reported cost in USD, over every usage in the turn", () => {
+    const g = group([
+      userMessage("u1"),
+      assistantMessage("a1", { input: 1, output: 1, cacheRead: 0, cacheWrite: 0, cost: cost(0.25) }),
+      usageEntry("w1", { input: 0, output: 0, cacheRead: 5, cacheWrite: 0, cost: cost(0.015) }),
+    ]);
+    const reported = extractTurnUsage(g).reportedCostUsd;
+    expect(reported?.known).toBe(true);
+    if (reported?.known) expect(reported.value).toBeCloseTo(0.265);
+  });
+
+  it("is unknown when any usage has no numeric cost.total (never summed short)", () => {
+    const g = group([
+      userMessage("u1"),
+      assistantMessage("a1", { input: 1, output: 1, cacheRead: 0, cacheWrite: 0, cost: cost(0.25) }),
+      assistantMessage("a2", { input: 1, output: 1, cacheRead: 0, cacheWrite: 0 }),
+    ]);
+    expect(extractTurnUsage(g).reportedCostUsd?.known).toBe(false);
+  });
+
+  it("reads cacheWrite1h as the 1-hour subset of cache writes", () => {
+    const g = group([
+      userMessage("u1"),
+      assistantMessage("a1", { input: 1, output: 1, cacheRead: 0, cacheWrite: 300, cacheWrite1h: 200 }),
+      assistantMessage("a2", { input: 1, output: 1, cacheRead: 0, cacheWrite: 0 }),
+    ]);
+    expect(extractTurnUsage(g).extendedCacheWrite).toEqual({ known: true, value: 200 });
+  });
+
+  it("leaves the 1-hour subset unknown when a usage wrote cache without cacheWrite1h", () => {
+    const g = group([userMessage("u1"), assistantMessage("a1", { input: 1, output: 1, cacheRead: 0, cacheWrite: 300 })]);
+    expect(extractTurnUsage(g).extendedCacheWrite?.known).toBe(false);
+  });
+});
+
 describe("extractToolCalls", () => {
   it("builds one ToolCallRecord per ToolResultMessage, using toolName directly", () => {
     const g = group([

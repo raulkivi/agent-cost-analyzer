@@ -15,6 +15,8 @@ describe("candidateModelIds", () => {
     expect(candidateModelIds("Copilot/Claude-Sonnet-5.5")).toEqual(["copilot/claude-sonnet-5.5", "claude-sonnet-5.5"]);
     expect(candidateModelIds("claude-opus-5-5-20261001")).toEqual(["claude-opus-5-5-20261001", "claude-opus-5-5", "claude-opus-5.5"]);
     expect(candidateModelIds("claude-opus-5[1m]")).toEqual(["claude-opus-5[1m]", "claude-opus-5"]);
+    // Step 15.6: a display-style name with spaces.
+    expect(candidateModelIds("Claude Sonnet 5.5")).toEqual(["claude sonnet 5.5", "claude-sonnet-5.5"]);
   });
 });
 

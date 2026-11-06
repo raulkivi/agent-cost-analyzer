@@ -13,6 +13,7 @@ import { createStandalonePriceBook } from "./create-price-book.js";
 import { composeLogProviders, type LogProviderCompositionOptions } from "./compose-log-providers.js";
 import { createInsightsService } from "./create-insights-service.js";
 import { createStandaloneAttribution } from "./create-standalone-attribution.js";
+import { createTurnPricer } from "./create-turn-pricer.js";
 
 export interface StandaloneApiServiceOptions extends LogProviderCompositionOptions {
   // G4 (vscode-extension.md §2.2): default to this package's own files,
@@ -51,6 +52,8 @@ export function createStandaloneApiService(options: StandaloneApiServiceOptions 
   // Phase 15: projects.json beside settings.json (step 15.3); the same
   // attribution for the repository list and the dataset (step 15.4).
   const attribution = createStandaloneAttribution(registry, resolvedAppSettingsDir, vendorProfiles);
+  // Step 15.5/15.6: one price book for GET /api/price-book and the priced cost basis.
+  const priceBook = createStandalonePriceBook(resolvedAppSettingsDir, attribution.catalog);
   const appVersion = appVersionOption ?? readAppVersion();
   const agentHostUserDataDir =
     compositionOptions.agentHostUserDataDir !== undefined ? compositionOptions.agentHostUserDataDir : resolveUserDataDir();
@@ -67,9 +70,9 @@ export function createStandaloneApiService(options: StandaloneApiServiceOptions 
       catalog: attribution.catalog,
       repositories: attribution.repositories,
     },
-    priceBook: createStandalonePriceBook(resolvedAppSettingsDir, attribution.catalog),
+    priceBook,
     auditQueries: new AuditQueryService(registry),
-    insights: createInsightsService(registry, attribution.dataset),
+    insights: createInsightsService(registry, attribution.dataset, createTurnPricer(priceBook)),
     settings: appSettings,
     checkConfig: (minRetainedSessionLogsThreshold) =>
       checkConfig({

@@ -89,4 +89,32 @@ describe("extractTurnUsage", () => {
     expect(result.tool.known).toBe(false);
     expect(result.vision.known).toBe(false);
   });
+
+  describe("extendedCacheWrite (step 15.6: the 1-hour cache writes, priced higher)", () => {
+    const base = { input_tokens: 1, output_tokens: 1, cache_read_input_tokens: 0 };
+
+    it("sums cache_creation.ephemeral_1h_input_tokens once per round", () => {
+      const r1 = { ...base, cache_creation_input_tokens: 300, cache_creation: { ephemeral_5m_input_tokens: 100, ephemeral_1h_input_tokens: 200 } };
+      const r2 = { ...base, cache_creation_input_tokens: 50, cache_creation: { ephemeral_5m_input_tokens: 0, ephemeral_1h_input_tokens: 50 } };
+      const g = group([
+        userText("u1"),
+        assistantBlock("a1", "m1", { type: "thinking", thinking: "x" }, r1),
+        assistantBlock("a2", "m1", { type: "text", text: "ok" }, r1),
+        assistantBlock("a3", "m2", { type: "text", text: "done" }, r2),
+      ]);
+      expect(extractTurnUsage(g).extendedCacheWrite).toEqual({ known: true, value: 250 });
+    });
+
+    it("counts a round with no cache write as 0 even without the breakdown", () => {
+      const g = group([userText("u1"), assistantBlock("a1", "m1", { type: "text", text: "ok" }, { ...base, cache_creation_input_tokens: 0 })]);
+      expect(extractTurnUsage(g).extendedCacheWrite).toEqual({ known: true, value: 0 });
+    });
+
+    it("is unknown, with a reason, when a round wrote cache without the breakdown", () => {
+      const g = group([userText("u1"), assistantBlock("a1", "m1", { type: "text", text: "ok" }, { ...base, cache_creation_input_tokens: 10 })]);
+      const extended = extractTurnUsage(g).extendedCacheWrite;
+      expect(extended?.known).toBe(false);
+      if (extended && !extended.known) expect(extended.reason).toMatch(/1-hour/);
+    });
+  });
 });

@@ -292,6 +292,20 @@ describe.each(Object.keys(THEMES) as ThemeName[])("axe: no WCAG 2.2 AA violation
     await expectNoViolations();
   });
 
+  // Phase 15 step 15.6: the Cost basis list box with a value selected, and
+  // the cost tile's basis switch.
+  it("Dashboard, with the Cost basis list box selected and the cost shown at one basis", async () => {
+    await openAnalyzeSession();
+    fireEvent.click(screen.getByLabelText("Dashboard"));
+    await screen.findByRole("group", { name: "Cost" });
+
+    fireEvent.click(within(screen.getByRole("listbox", { name: "Cost basis" })).getByRole("option", { name: /Priced/ }));
+    fireEvent.click(screen.getByRole("radio", { name: "Priced" }));
+
+    expect(screen.getByRole("listitem", { name: "Cost basis: Priced" })).toBeInTheDocument();
+    await expectNoViolations();
+  });
+
   it("TurnInspector", async () => {
     await openAnalyzeSession();
     fireEvent.click(screen.getByRole("button", { name: "Inspect request/response" }));
