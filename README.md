@@ -24,9 +24,11 @@ This repo builds two products from one codebase:
 - **Using VS Code with GitHub Copilot Chat?** Use the **AI Credits
   Analyzer** extension. It runs inside VS Code, reads your Copilot Chat
   logs there, and covers Copilot only. See the
-  [extension guide](docs/vscode-extension-guide.md). It isn't published to
-  the Marketplace yet; until it is, you can build it and install it from a
-  VSIX, as described in [CONTRIBUTING.md](CONTRIBUTING.md#working-on-the-vs-code-extension).
+  [extension guide](docs/vscode-extension-guide.md). Install it from the
+  [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=raulkivi.ai-credits-analyzer)
+  or [Open VSX](https://open-vsx.org/extension/raulkivi/ai-credits-analyzer),
+  or build a VSIX as described in
+  [CONTRIBUTING.md](CONTRIBUTING.md#working-on-the-vs-code-extension).
 
   ![The AI Credits Analyzer extension in VS Code: Sessions grouped by day with their AI Credits, a session open in the panel, and today's AI Credits in the status bar](docs/images/vscode/sidebar.png)
 
