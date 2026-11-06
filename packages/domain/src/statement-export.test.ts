@@ -50,4 +50,9 @@ describe("exportStatement", () => {
     const json = JSON.parse(exportStatement(sampleStatement(), "json", { includeTitles: false }));
     expect(json.provenance.sessions[0]).toEqual({ providerId: "vscode", sessionId: "s1" });
   });
+
+  it("escapes backslashes and pipes in Markdown table cells, so a title can't break the table", () => {
+    const statement = sampleStatement({ lines: [{ ...sampleStatement().lines[0]!, model: "odd\\|model\\" }] });
+    expect(exportStatement(statement, "markdown")).toContain("| odd\\\\\\|model\\\\ | billed |");
+  });
 });

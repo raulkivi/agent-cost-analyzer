@@ -63,7 +63,8 @@ function toCsv(statement: Statement): string {
   return `${rows.map(csvRow).join("\n")}\n`;
 }
 
-const mdCell = (value: string) => value.replace(/\|/g, "\\|").replace(/\n/g, " ");
+// Backslashes first, then pipes, so a value can't escape its own cell (CodeQL js/incomplete-sanitization).
+const mdCell = (value: string) => value.replace(/\\/g, "\\\\").replace(/\|/g, "\\|").replace(/\n/g, " ");
 
 function toMarkdown(statement: Statement, includeTitles: boolean): string {
   const { project, period } = statement;

@@ -46,7 +46,7 @@ test("S1: first project, assigned by keyboard alone", async ({ page, app }) => {
   const projectTotal = await page.getByRole("group", { name: "Total cost" }).textContent();
   await page.getByRole("button", { name: "Clear all" }).click();
   for (const key of ["github.com/acme/portal-web", "github.com/acme/portal-api", "github.com/acme/billing"]) {
-    await page.getByRole("listbox", { name: "Repository" }).getByRole("option", { name: new RegExp(key.replace(/\./g, "\\.")) }).click({ modifiers: ["ControlOrMeta"] });
+    await page.getByRole("listbox", { name: "Repository" }).getByRole("option", { name: key }).click({ modifiers: ["ControlOrMeta"] });
   }
   const amount = (text: string | null) => Number(/([\d,]+\.\d\d) AI Credits/.exec(text ?? "")![1]!.replace(/,/g, ""));
   const lines = page.getByRole("button", { name: "View as table" }).first();
