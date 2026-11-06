@@ -44,7 +44,7 @@ async function dashboard(width: number, height: number): Promise<Page> {
   return page;
 }
 
-async function openView(page: Page, view: "Cost over time" | "Compare") {
+async function openView(page: Page, view: "Cost over time" | "Compare" | "Project") {
   const select = page.getByRole("combobox", { name: "Dashboard view" });
   if (await select.isVisible().catch(() => false)) await select.selectOption({ label: view });
   else await radio(page, "Dashboard view", view);
@@ -102,6 +102,27 @@ try {
   await page.getByRole("table", { name: /Compare/ }).waitFor();
   await page.evaluate(() => document.querySelector(".cost-compare")?.scrollIntoView({ block: "start" }));
   await shoot(page, "guide-dashboard-compare-360.png");
+  await page.close();
+
+  // Step 15.10: the Project tab inside Customer portal, Anthropic chosen.
+  page = await dashboard(1440, 1000);
+  await openView(page, "Project");
+  await page.getByRole("listbox", { name: "Project" }).getByRole("option", { name: /Customer portal/ }).click();
+  // The fixture's priced turns are all in October (prices start 2026-10-01).
+  await page.getByRole("combobox", { name: "To", exact: true }).selectOption({ label: "Oct 2026" });
+  await page.getByRole("img", { name: /^Why cost changed/ }).waitFor();
+  await page.evaluate(() => document.querySelector(".cost-tab")?.scrollIntoView({ block: "start" }));
+  await shoot(page, "guide-dashboard-project.png");
+  await page.close();
+
+  page = await dashboard(360, 800);
+  await openView(page, "Project");
+  await page.getByRole("listbox", { name: "Project" }).getByRole("option", { name: /Customer portal/ }).click();
+  // The fixture's priced turns are all in October (prices start 2026-10-01).
+  await page.getByRole("combobox", { name: "To", exact: true }).selectOption({ label: "Oct 2026" });
+  await page.getByRole("img", { name: /^Why cost changed/ }).waitFor();
+  await page.evaluate(() => document.querySelector(".cost-variance")?.scrollIntoView({ block: "start" }));
+  await shoot(page, "guide-dashboard-project-360.png");
   await page.close();
 } finally {
   await browser.close();

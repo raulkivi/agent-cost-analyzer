@@ -58,7 +58,10 @@ export interface WaterfallStep {
   to: number;
 }
 
-const effectKind = (value: number): WaterfallStep["kind"] => (value > 0 ? "increase" : value < 0 ? "decrease" : "none");
+// What reads as zero is no change (no colour, no sign): AI Credits show
+// two decimals; USD below $1 shows more, so there only float residue drops.
+const rounded = (value: number, unit: DisplayUnit) => (unit === "AI_CREDITS" ? Math.round(value * 100) / 100 : Math.abs(value) < 1e-9 ? 0 : value);
+const effectKind = (value: number, unit: DisplayUnit): WaterfallStep["kind"] => (rounded(value, unit) > 0 ? "increase" : rounded(value, unit) < 0 ? "decrease" : "none");
 
 export function waterfallSteps(row: VarianceCurrency, unit: DisplayUnit, labels: { a: string; b: string }): WaterfallStep[] {
   const shown = (usd: number) => usdIn(usd, unit)!;
@@ -71,7 +74,7 @@ export function waterfallSteps(row: VarianceCurrency, unit: DisplayUnit, labels:
     ["mix", "Mix", row.mix],
   ] as const) {
     const value = shown(usd);
-    steps.push({ key, label, kind: effectKind(value), value, from: level, to: level + value });
+    steps.push({ key, label, kind: effectKind(value, unit), value, from: level, to: level + value });
     level += value;
   }
   const end = shown(row.costB);
@@ -82,8 +85,9 @@ export function waterfallSteps(row: VarianceCurrency, unit: DisplayUnit, labels:
 const MINUS = "−";
 
 export function formatSigned(value: number, unit: DisplayUnit): string {
-  const text = formatAmount(Math.abs(value), unit);
-  if (value > 0) return `+${text}`;
-  if (value < 0) return `${MINUS}${text}`;
+  const shown = rounded(value, unit);
+  const text = formatAmount(Math.abs(shown), unit);
+  if (shown > 0) return `+${text}`;
+  if (shown < 0) return `${MINUS}${text}`;
   return text;
 }

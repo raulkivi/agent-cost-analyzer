@@ -74,6 +74,10 @@ describe("waterfallSteps", () => {
     expect(steps[2]!.value).toBeCloseTo(-1860, 6);
   });
 
+  it("treats a float residue that rounds to 0.00 as no change", () => {
+    expect(waterfallSteps({ ...usd, mix: 1e-15 }, "AI_CREDITS", { a: "A", b: "B" })[3]).toMatchObject({ kind: "none" });
+  });
+
   it("calls a zero effect no change", () => {
     expect(waterfallSteps({ ...usd, mix: 0, change: 22.7 }, "USD", { a: "A", b: "B" })[3]).toMatchObject({ kind: "none", value: 0 });
   });
@@ -85,5 +89,7 @@ describe("formatSigned", () => {
     expect(formatSigned(-1860, "AI_CREDITS")).toBe("−1,860.00");
     expect(formatSigned(-18.6, "USD")).toBe("−$18.60");
     expect(formatSigned(0, "USD")).toBe("$0.00");
+    expect(formatSigned(1e-15, "AI_CREDITS")).toBe("0.00");
+    expect(formatSigned(-0.004, "AI_CREDITS")).toBe("0.00");
   });
 });
