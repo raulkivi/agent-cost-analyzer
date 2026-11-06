@@ -47,6 +47,9 @@ describe("apiMethodSchema", () => {
       "getCostVariance",
       "getStatement",
       "issueStatement",
+      "getProjects",
+      "saveProjects",
+      "getRepositoryList",
     ]);
   });
 

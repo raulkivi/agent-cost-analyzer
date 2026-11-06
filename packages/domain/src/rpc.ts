@@ -33,6 +33,10 @@ export const apiMethodSchema = z.enum([
   // Phase 15 step 15.11: billing statements; issuing writes a file.
   "getStatement",
   "issueStatement",
+  // Phase 15 step 15.11: the Projects editor (saveProjects writes the file).
+  "getProjects",
+  "saveProjects",
+  "getRepositoryList",
 ]);
 
 export type ApiMethod = z.infer<typeof apiMethodSchema>;
@@ -106,6 +110,10 @@ export const apiMethodParamsSchemas = {
   getProjectCost: z.object({ ...costQuery, projectId: z.string().min(1), topSessions: numberOrText.optional() }),
   getStatement: z.object({ projectId: z.string().min(1), period: z.string().min(1), provider: z.string().optional(), limit: numberOrText.optional() }),
   issueStatement: z.object({ projectId: z.string().min(1), period: z.string().min(1) }),
+  getProjects: noParams,
+  // ApiService validates the file itself (projectsFileSchema).
+  saveProjects: z.object({ file: z.unknown() }),
+  getRepositoryList: noParams,
   getCostVariance: z.object({
     groupBy: z.string(),
     id: z.string().min(1),

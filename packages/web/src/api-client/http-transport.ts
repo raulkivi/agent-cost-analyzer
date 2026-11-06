@@ -82,6 +82,12 @@ function toRequest(method: ApiMethodName, params: unknown): HttpRequest {
       return { url: `/api/cost/project${queryString(p)}` };
     case "getCostVariance": // { groupBy, id, periodA, periodB, currency?, provider?, limit? }
       return { url: `/api/cost/variance${queryString(p)}` };
+    case "getProjects":
+      return { url: "/api/projects" };
+    case "saveProjects": // { file }: the whole projects file
+      return { url: "/api/projects", put: p.file };
+    case "getRepositoryList":
+      return { url: "/api/repositories" };
     case "getStatement": // { projectId, period, provider?, limit? }
       return { url: `/api/statements${queryString(p)}` };
     case "issueStatement": // { projectId, period }: JSON only (threat model)

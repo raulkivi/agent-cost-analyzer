@@ -91,6 +91,9 @@ describe("HttpTransport URL mapping", () => {
     ["getCostVariance", { groupBy: "project", id: "portal", periodA: "2026-08", periodB: "2026-10", currency: "usd" }, "/api/cost/variance?groupBy=project&id=portal&periodA=2026-08&periodB=2026-10&currency=usd"],
     ["getStatement", { projectId: "portal", period: "2026-10" }, "/api/statements?projectId=portal&period=2026-10"],
     ["issueStatement", { projectId: "portal", period: "2026-10-01..2026-10-15" }, "/api/statements/portal/2026-10-01..2026-10-15/issue", "POST", {}],
+    ["getProjects", undefined, "/api/projects"],
+    ["saveProjects", { file: { version: 1, projects: [] } }, "/api/projects", "PUT", { version: 1, projects: [] }],
+    ["getRepositoryList", undefined, "/api/repositories"],
     ["getHealth", undefined, "/api/health"],
     ["getProductProfile", undefined, "/api/product"],
   ];

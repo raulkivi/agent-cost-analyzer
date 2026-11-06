@@ -41,6 +41,9 @@ const CASES: Array<[ApiMethodName, unknown]> = [
   ["getCostVariance", { groupBy: "project", id: "portal", periodA: "2026-08", periodB: "2026-10" }],
   ["getStatement", { projectId: "portal", period: "2026-10" }],
   ["issueStatement", { projectId: "portal", period: "2026-10" }],
+  ["getProjects", undefined],
+  ["saveProjects", { file: { version: 1, projects: [] } }],
+  ["getRepositoryList", undefined],
 ];
 
 // Behaviour every ApiTransport adapter must share, so api-client can't tell

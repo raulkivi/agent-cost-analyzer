@@ -29,6 +29,9 @@ function fakeApi(overrides: Partial<DispatcherApi> = {}): DispatcherApi {
     getCostVariance: vi.fn(async () => ({}) as never),
     getStatement: vi.fn(async () => ({}) as never),
     issueStatement: vi.fn(async () => ({}) as never),
+    getProjects: vi.fn(async () => ({}) as never),
+    saveProjects: vi.fn(async () => ({}) as never),
+    getRepositoryList: vi.fn(async () => ({}) as never),
   };
   return { ...api, ...overrides };
 }
@@ -173,6 +176,17 @@ describe("MessageDispatcher (vscode-extension.md §4)", () => {
     await dispatcher.dispatch(request("issueStatement", { projectId: "portal", period: "2026-10" }));
     expect(api.getStatement).toHaveBeenCalledWith({ projectId: "portal", period: "2026-10" });
     expect(api.issueStatement).toHaveBeenCalledWith("portal", "2026-10");
+  });
+
+  it("routes the projects methods to ApiService, the file as saveProjects' body", async () => {
+    const api = fakeApi();
+    const dispatcher = new MessageDispatcher(api);
+    await dispatcher.dispatch(request("getProjects"));
+    await dispatcher.dispatch(request("saveProjects", { file: { version: 1, projects: [] } }));
+    await dispatcher.dispatch(request("getRepositoryList"));
+    expect(api.getProjects).toHaveBeenCalled();
+    expect(api.saveProjects).toHaveBeenCalledWith({ version: 1, projects: [] });
+    expect(api.getRepositoryList).toHaveBeenCalled();
   });
 
   // Step 15.10: the Project tab's breakdown and variance.

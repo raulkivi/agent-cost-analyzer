@@ -159,6 +159,12 @@ function invoke(
       return api.getCostVariance(toQuery(params));
     case "getStatement":
       return api.getStatement(toQuery(params));
+    case "getProjects":
+      return api.getProjects();
+    case "saveProjects":
+      return api.saveProjects((params as { file: unknown }).file);
+    case "getRepositoryList":
+      return api.getRepositoryList();
     case "issueStatement": {
       const { projectId, period } = params as { projectId: string; period: string };
       return api.issueStatement(projectId, period);
