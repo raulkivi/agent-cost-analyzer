@@ -1977,7 +1977,7 @@ model waits for Phase 14) and D18 (no range under 5 known units) are in §13.
   retry (it failed once in a full run and not in 32 reruns, so the cause
   wasn't found; a one-shot read of a table that may still be rendering was
   the only race in it). The UI check gains `dashboard-billing-estimate`
-  (12 combinations), and the whole check passes (UI_CHECK_RESULT).
+  (12 combinations), and the whole check passes (357 checks, none failing).
   Screenshot: `guide-dashboard-estimate.png`.
 - **Found and fixed by the checks**: in the side column the drawing scaled
   its labels down until they couldn't be read, and a narrow range drew p50

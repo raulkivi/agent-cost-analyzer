@@ -561,7 +561,7 @@ the view says so. Totals use each turn's preferred basis (billed, then
 reported, then priced) unless the Overview's **Cost basis** switch picks
 one.
 
-![Cost over time for two projects and the No project bucket: the filter row, KPI tiles with coverage, lines with a direct label at each end, unknown weeks drawn as gaps, and a price-change tag with its tooltip](images/guide-dashboard-cost-over-time.png)
+![Cost over time for three projects and the No project bucket: the filter row, KPI tiles with coverage, lines with a direct label at each end, unknown weeks drawn as gaps, and a price-change tag with its tooltip](images/guide-dashboard-cost-over-time.png)
 
 **Cost over time** shows:
 
