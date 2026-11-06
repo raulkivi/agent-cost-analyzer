@@ -411,7 +411,7 @@ went up 30%: was it the price change on 1 October or more work?"
 
 Effects need a unit price, so the variance is on the **priced** basis, as
 of use: each priced turn carries its cost per token type (uncached input,
-cache read, cache write, output; reasoning is priced as output), and a
+cache read, cache write, output: the types the pricer charges), and a
 cell's unit price is its cost ÷ its tokens. A model with no tokens of a
 type in one period takes the other period's unit price, so a new or
 dropped model is all usage. Totals are per currency (AI Credits for
