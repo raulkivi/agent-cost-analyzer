@@ -1,4 +1,4 @@
-import type { InsightProviderStatus, InsightsDataset } from "@agent-cost-analyzer/domain";
+import type { InsightProviderStatus, InsightsDataset, PricingMode } from "@agent-cost-analyzer/domain";
 import type { LogProvider } from "../../data-sources/log-providers/log-provider.js";
 import { UnknownLogProviderIdError } from "../../data-sources/log-providers/registry.js";
 import { DEFAULT_ROLLUP_SESSION_LIMIT, inRange, MAX_ROLLUP_SESSION_LIMIT, type SessionRangeFilter } from "../tool-audit/audit-query-service.js";
@@ -17,6 +17,11 @@ export interface ProviderSource {
 // configured.
 export interface DatasetAttribution {
   snapshot(): RowAttributor & Pick<AttributionSnapshot, "projectName" | "vendorLabel">;
+}
+
+// Step 15.7: how the dataset's priced figures are priced (plan §6.2).
+export interface DatasetOptions {
+  pricing?: PricingMode;
 }
 
 interface ProviderLoad {
@@ -50,13 +55,13 @@ export class InsightsService {
     private readonly pricer?: TurnPricing,
   ) {}
 
-  async getDataset(filter: SessionRangeFilter): Promise<InsightsDataset> {
+  async getDataset(filter: SessionRangeFilter, options: DatasetOptions = {}): Promise<InsightsDataset> {
     const selected = this.selectProviders(filter.providerId);
     const limit = Math.min(filter.limit ?? DEFAULT_ROLLUP_SESSION_LIMIT, MAX_ROLLUP_SESSION_LIMIT);
     const loads = await Promise.all(selected.map((provider) => this.load(provider, filter, limit)));
     const sources = loads.flatMap((load) => (load.sessions ? [load.sessions] : []));
     const snapshot = this.attribution?.snapshot();
-    const rows = buildInsightRows(sources, snapshot, this.pricer?.snapshot());
+    const rows = buildInsightRows(sources, snapshot, this.pricer?.snapshot(options.pricing ?? "as-of-use"));
     return {
       generatedAt: this.now().toISOString(),
       ...(filter.since ? { since: filter.since } : {}),

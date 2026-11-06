@@ -65,8 +65,9 @@ export interface TurnPricer {
 
 // What long-lived services hold: a pricer over the price book as it is when
 // a dataset (or one session) is priced, so the book is read once per use.
+// Step 15.7: in the pricing mode the view asks for (§6.2; as of use by default).
 export interface TurnPricing {
-  snapshot(): TurnPricer;
+  snapshot(mode?: PricingMode): TurnPricer;
 }
 
 const NO_PRICE_BOOK_REASON = "No price book is configured for this product, so no turn is priced.";
@@ -85,9 +86,9 @@ export class TurnCostFigureBuilder implements TurnPricer, TurnPricing {
     private readonly mode: PricingMode = "as-of-use",
   ) {}
 
-  // Its pricer is fixed already.
-  snapshot(): TurnPricer {
-    return this;
+  // Its pricer is fixed already; another mode prices over the same pricer.
+  snapshot(mode: PricingMode = this.mode): TurnPricer {
+    return mode === this.mode ? this : new TurnCostFigureBuilder(this.pricer, mode);
   }
 
   figuresFor(providerId: string, session: Session, turn: Turn, attribution: Attribution): TurnCostFigures {

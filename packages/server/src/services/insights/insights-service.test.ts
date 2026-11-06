@@ -96,6 +96,24 @@ describe("InsightsService", () => {
     expect(seen).toEqual(["vscode:null"]);
   });
 
+  it("prices with the pricing mode a caller asks for, as of use by default (step 15.7)", async () => {
+    const a = new FakeProvider("vscode", [analyzeSession("s1", day(1), [turn(0)])]);
+    const modes: (string | undefined)[] = [];
+    const figures = {
+      figuresFor: () => ({
+        billed: { known: false as const, reason: "x" },
+        reported: { known: false as const, reason: "x" },
+        priced: { known: false as const, reason: "x" },
+      }),
+    };
+    const insights = new InsightsService({ listProviders: () => [a] }, [], () => NOW, undefined, {
+      snapshot: (mode?: string) => (modes.push(mode), figures),
+    });
+    await insights.getDataset({});
+    await insights.getDataset({}, { pricing: "today" });
+    expect(modes).toEqual(["as-of-use", "today"]);
+  });
+
   it("reports an unavailable provider and keeps loading the others", async () => {
     const ok = new FakeProvider("ok", [analyzeSession("s1", day(1), [])]);
     const off = new UnavailableProvider("off", [analyzeSession("x", day(1), [])]);
