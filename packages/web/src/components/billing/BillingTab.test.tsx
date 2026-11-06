@@ -115,4 +115,26 @@ describe("BillingTab (plan §11.5, board 4)", () => {
     await user.keyboard("{Escape}");
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
+
+  // Step 15.12 (plan §11.5): the estimate panel sits beside the statement.
+  it("shows the estimate panel for the chosen project", async () => {
+    const loadEstimate = vi.fn().mockResolvedValue({
+      label: "estimate",
+      generatedAt: NOW.toISOString(),
+      target: { groupBy: "project", id: "portal", name: "Customer portal" },
+      pricing: "today",
+      currency: "USD",
+      conversion: "x",
+      window: { weeks: 12, since: "2026-08-15", until: "2026-11-06" },
+      unit: "activeDays",
+      planned: 20,
+      history: { units: 5, knownUnits: 5, turns: 5, totalUsd: 50 },
+      runRate: { perActiveDayUsd: 10, perWeekUsd: 4.2 },
+      unitCost: { p50: 10, p90: 14 },
+      range: { p50: 200, p90: 280 },
+    });
+    renderTab({ loadEstimate });
+    expect(await screen.findByRole("img", { name: /^Estimate at today's prices: 20,000\.00 to 28,000\.00 AI Credits/ })).toBeInTheDocument();
+    expect(loadEstimate).toHaveBeenCalledWith({ projectId: "portal", activeDays: 20, historyWeeks: 12 }, expect.any(AbortSignal));
+  });
 });

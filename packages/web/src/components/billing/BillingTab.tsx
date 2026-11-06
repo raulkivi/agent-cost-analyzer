@@ -1,13 +1,16 @@
 import { useCallback, useId, useMemo, useRef, useState } from "react";
+import type { ReactNode } from "react";
 import {
   channelLabel,
   exportStatement,
   parseStatementPeriod,
+  type CostEstimate,
   type Statement,
   type StatementAnswer,
   type StatementExportFormat,
 } from "@agent-cost-analyzer/domain";
-import { fetchStatement, issueStatement, type StatementQuery } from "../../api-client/statements.js";
+import { fetchStatement, issueStatement, type EstimateQuery, type StatementQuery } from "../../api-client/statements.js";
+import { EstimatePanel } from "./EstimatePanel.js";
 import { standaloneHostCapabilities } from "../../host/host-capabilities.js";
 import { useEscapeKey, useFocusTrap } from "../../lib/focus.js";
 import { useCancellableLoad } from "../../lib/use-cancellable-load.js";
@@ -30,6 +33,8 @@ interface BillingTabProps {
   loadStatement?: (query: StatementQuery, signal: AbortSignal) => Promise<StatementAnswer>;
   issue?: (projectId: string, period: string) => Promise<StatementAnswer>;
   copyToClipboard?: (text: string) => Promise<void>;
+  // Step 15.12: the estimate panel's request.
+  loadEstimate?: (query: EstimateQuery, signal: AbortSignal) => Promise<CostEstimate>;
 }
 
 const unit = (currency: string) => (currency === "AI_CREDITS" ? "AI Credits" : currency);
@@ -47,7 +52,7 @@ function monthOptions(now: Date): { value: string; label: string }[] {
   return months;
 }
 
-export function BillingTab({ projects, selections, now, onEditProjects, loadStatement = fetchStatement, issue = issueStatement, copyToClipboard = standaloneHostCapabilities().copyToClipboard }: BillingTabProps) {
+export function BillingTab({ projects, selections, now, onEditProjects, loadStatement = fetchStatement, issue = issueStatement, copyToClipboard = standaloneHostCapabilities().copyToClipboard, loadEstimate }: BillingTabProps) {
   const months = useMemo(() => monthOptions(now), [now]);
   const selected = selections.project?.length === 1 ? selections.project[0] : undefined;
   const [projectId, setProjectId] = useState(() => projects.find((project) => project.id === selected)?.id ?? projects[0]?.id ?? "");
@@ -107,6 +112,7 @@ export function BillingTab({ projects, selections, now, onEditProjects, loadStat
       >
         {state.kind === "ready" && (
           <StatementView
+            aside={<EstimatePanel projectId={projectId} {...(loadEstimate ? { loadEstimate } : {})} />}
             answer={state.data}
             copyToClipboard={copyToClipboard}
             onPickPeriod={setPeriod}
@@ -122,13 +128,15 @@ export function BillingTab({ projects, selections, now, onEditProjects, loadStat
 }
 
 interface StatementViewProps {
+  // Step 15.12: under the issued statements (the estimate panel).
+  aside?: ReactNode;
   answer: StatementAnswer;
   copyToClipboard: (text: string) => Promise<void>;
   onPickPeriod: (period: string) => void;
   onIssue: () => Promise<void>;
 }
 
-function StatementView({ answer, copyToClipboard, onPickPeriod, onIssue }: StatementViewProps) {
+function StatementView({ aside, answer, copyToClipboard, onPickPeriod, onIssue }: StatementViewProps) {
   const { statement } = answer;
   const [dialog, setDialog] = useState<"issue" | "export" | null>(null);
   const [showDiff, setShowDiff] = useState(false);
@@ -185,6 +193,7 @@ function StatementView({ answer, copyToClipboard, onPickPeriod, onIssue }: State
           <StatementTables statement={statement} />
         </section>
       </Blueprint>
+      <div className="billing-aside">
       <Blueprint className="audit-section">
         <h4 className="cost-chart-title">Issued statements</h4>
         {answer.issuedPeriods.length === 0 ? (
@@ -202,6 +211,8 @@ function StatementView({ answer, copyToClipboard, onPickPeriod, onIssue }: State
           </ul>
         )}
       </Blueprint>
+        {aside}
+      </div>
       {dialog === "issue" && (
         <IssueDialog
           statement={statement}
