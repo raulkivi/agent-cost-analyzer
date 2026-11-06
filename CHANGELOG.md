@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Fixed
+- Dashboard list-box values meet the 24 px minimum target size, and a chart's
+  table view can be scrolled from the keyboard (found by the new
+  real-browser accessibility check).
+
 ### Changed
 - Learn on the Claude Code harness uses the 1-hour cache lifetime Claude Code
   requests (its own logs show it), so a short break no longer expires the
@@ -59,6 +64,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `get_project_cost` (adds breakdowns by repository, token type and the top
   sessions) and `compare_costs`; `review_costs` now groups its findings by
   project. A bucket whose cost is all unknown is a gap, never zero.
+- Dashboard tabs Cost over time and Compare (Phase 15 step 15.9, standalone
+  app): a view switch beside the Dashboard's list boxes, whose Project,
+  Repository and Provider selections the tabs follow. Cost over time has
+  date presets, day/week/month buckets, AI Credits or USD (converted at
+  1 AI Credit = $0.01, stated) and as-of-use or today's prices; KPI tiles
+  with coverage; one series as columns plus a separate running total, two
+  to four as labelled lines, five or more as small multiples; unknown cost
+  as a visible gap, never zero; and documented price changes as focusable
+  markers with the old and new unit prices and the source. Compare shows
+  the measures table (priority columns and a Details drawer on narrow
+  screens), indexed growth and share of total. Every chart has "View as
+  table". Series keep their colour as filters change; High Contrast adds
+  dash patterns. Hidden in the VS Code extension until it gets its own cost
+  data. A local repository is shown by its folder name in the list boxes.
+- A usage-scenario test suite for the standalone app (Playwright, the real
+  server over a seeded fixture home at a fixed clock), run by a new
+  required `web-e2e` CI job.
 - Web and VS Code themes: eight categorical series colours
   (`--color-series-1` to `-8`, light and dark steps), a diverging pair for
   waterfalls, and dash patterns in High Contrast, ready for the

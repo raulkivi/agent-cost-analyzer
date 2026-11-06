@@ -132,6 +132,12 @@ content here.
   `GET /api/cost/timeseries` and `/api/cost/compare`, MCP
   `get_repository_cost`, `get_project_cost`, `compare_costs` and the
   `review_costs` project step, golden JSON in `cost-analysis/__golden__/`);
+  step 15.9 is done (the Dashboard's Cost over time and Compare tabs in
+  `packages/web/src/components/insights/` over `GET /api/cost/*`, the chart
+  `charts/CostTimeChart.tsx` and `lib/cost/`, hidden in the extension by
+  `ProductFeatures.costAnalysis` until step 15.14; the §12.4.1 Playwright
+  usage-scenario suite in `packages/web/e2e/` with S2 and S3 in the
+  `web-e2e` CI job, `npm run test:e2e --workspace=packages/web`);
   step 15.1 is done (`Session.workspace`, `Turn.startedAt`, and
   `Turn.workspace` for Claude Code, from every provider) and step 15.2
   (`RepositoryResolver` and `RemoteUrlNormalizer` in

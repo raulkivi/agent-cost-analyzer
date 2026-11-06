@@ -425,6 +425,39 @@ which builds it with attribution); they and the two HTTP endpoints call the
 same `CostAnalysisService`, so their outputs are equal. `review_costs`
 gains a step that compares projects and groups findings by project.
 
+The Dashboard's cost tabs (Phase 15 step 15.9, plan §11.1–§11.3) are the
+web client of those two endpoints. `InsightsDashboard` shows a view switch
+(Overview, Cost over time, Compare; a `select` below 700 px of its own
+width) when `ProductFeatures.costAnalysis` is on: true in the standalone
+app, false in the extension until step 15.14, whose ApiService has no cost
+analyses (the webview RPC allow-list carries `getCostTimeSeries` and
+`getCostComparison`, and the extension answers them 404). The tabs share
+the associative selections. Data flow: `lib/cost/cost-scope.ts` turns the
+selections into a request (Project, else Repository, as `groupBy` and
+`ids`; one selected Provider as `provider`; a selected No project or
+Unattributed bucket asks for every line and keeps that one, since no id
+names it) and lists every other selected field as not applied, which the
+tab states; `api-client/cost-analysis.ts` calls the transport;
+`lib/cost/series-model.ts` maps a `CostSeries` to chart lines in the shown
+unit (an idle bucket is 0, a bucket with turns and nothing known is
+`null`, a gap), KPIs (Cost over time asks a second, day-by-day series from
+the previous period's start for the change and active days), the running
+total, indexed lines and price-marker groups. Money is shown in AI Credits
+or USD through the totals' `usd` at 1 AI Credit = $0.01, so switching unit
+asks nothing again (Compare asks with `currency=usd`). `SeriesPalette`
+(`lib/cost/series-colors.ts`) gives `--color-series-n` and
+`--dash-series-n` by a fixed order: a project's position in the projects
+file (the Insights dataset's `projects` now lists every project in file
+order), a repository's place among the dataset's sorted keys, null buckets
+neutral. `charts/CostTimeChart.tsx` draws columns (one series, hatched cap
+when partial), lines (direct labels, legend) or a compact small multiple,
+with the unknown bands, the price-change hairlines and focusable tags
+(described by the whole change; tooltip with the unit prices, sources and
+price version), a keyboard crosshair, and `costChartTable` for "View as
+table". `CostOverTimeTab` and `CompareTab` (with `CostFilters`) compose
+them; `CompareTab` keeps the priority columns and a row's `Drawer` below
+700 px.
+
 Log-provider selection is a separate app-level contract, not a provider-
 specific API or UI branch:
 
@@ -2185,6 +2218,16 @@ refactored — red-green-refactor, not tests bolted on afterward.
   them, as in step 10.9). The one production seam it needed is a Test-mode
   hook that holds webview replies (`aiCreditsAnalyzer.internal.holdRequests`),
   registered only in `ExtensionMode.Test` like the other hooks.
+- The standalone app has a usage-scenario suite (Phase 15 step 15.9,
+  plan §12.4, `packages/web/e2e/`, `npm run test:e2e --workspace=packages/web`,
+  Playwright Test): each scenario starts the real server and the web build
+  (`e2e/support/serve.mts` through tsx) over a seeded fixture home (a
+  temporary `HOME` with Claude Code, pi, Copilot and mitmproxy sessions in
+  four repositories and two projects, `e2e/support/fixture-home.mts`) at a
+  fixed clock (`AGENT_COST_ANALYZER_NOW`, read by the server's clock port
+  `platform/clock/clock-from-env.ts`, and the page's clock), reads figures
+  from the page and runs axe in the browser at every stop. The required
+  `web-e2e` CI job runs it with no retries.
 - Property-based tests (`*.property.test.ts`, `fast-check`) cover code
   that takes untrusted input or has a simple invariant: secret and header
   redaction, the SSE and shell-command parsers, the release checks and
