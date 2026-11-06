@@ -5,6 +5,13 @@ is extracted from a section of
 [agentic-coding-explained.md](../agentic-coding-explained.md) and expands it
 into a concrete, turn-by-turn example.
 
+The docs teach each vendor's own default cache lifetime (Anthropic's is 5
+minutes). In the app, the Claude Code harness uses the 1-hour lifetime Claude
+Code itself requests, as its logs show
+([learn-calibration-findings.md](../plans/learn-calibration-findings.md)); the
+TTL scenarios (9, 13 and 14) use a longer break there so the lesson still
+happens. Copilot keeps the 5-minute default.
+
 The prose in each doc explains the mechanism and quotes no absolute numbers.
 The tables and the token chart are **generated** by the Learn simulator, which
 replays the scenario's script (`packages/server/fixtures/learn-scripts/`) on

@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Changed
+- Learn on the Claude Code harness uses the 1-hour cache lifetime Claude Code
+  requests (its own logs show it), so a short break no longer expires the
+  cache there; the TTL scenarios use a break longer than an hour. Copilot is
+  unchanged.
+
 ### Added
 - Vendor-aware Learn (Phase 13): scenarios are simulated on a vendor and
   model you pick, with real prices and documented cache rules, a Cache column,

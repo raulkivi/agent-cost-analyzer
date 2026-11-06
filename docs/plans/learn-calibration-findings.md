@@ -35,9 +35,11 @@ ones are pinned as known disagreements (below); the rest must match fully.
    (for example the smoke-break scenario) describe a Claude Code user on a
    5-minute lifetime, which these logs show is not what Claude Code does on
    this machine. Whether that holds for every user (for example API-key
-   users) isn't known. **Open decision for the owner:** keep the scenarios
-   as a general lesson with a note, or apply the 1-hour lifetime on the
-   Claude Code harness.
+   users) isn't known. **Decided (owner, 2026-11-06):** the 1-hour lifetime applies on the
+   Claude Code harness (`harnessCacheDefaults`, on by default). The scenario
+   docs keep the vendor-default 5 minutes, and the TTL scripts carry a longer
+   break for Claude Code through `textByHarness.idleMinutes`. Copilot keeps
+   the 5-minute default.
 2. **The conversation cache grows exactly as the rules say.** Each request
    reads the whole previous prompt and writes only the new tokens (the
    previous output plus new content). S2 and S3 hold on real data.

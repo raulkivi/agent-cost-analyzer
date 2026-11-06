@@ -391,6 +391,28 @@ exports[`golden simulations (scenario × vendor default model) > model-switch on
 5 gpt-6.1-sol hit uncached=0 write=280 read=4600 credits=0.3460"
 `;
 
+exports[`golden simulations (scenario × vendor default model) > on the Claude Code harness (1-hour cache) > cache-ttl-smoke-break 1`] = `
+"1 claude-sonnet-5.5 miss uncached=0 write=3400 read=0 credits=1.5600
+2 claude-sonnet-5.5 hit uncached=0 write=250 read=3400 credits=0.2840
+3 claude-sonnet-5.5 hit uncached=0 write=510 read=3650 credits=0.4205
+4 claude-sonnet-5.5 hit uncached=0 write=740 read=4160 credits=0.5376
+5 claude-sonnet-5.5 hit uncached=0 write=390 read=4900 credits=0.3650
+6 claude-sonnet-5.5 hit uncached=0 write=370 read=5290 credits=0.3509
+7 claude-sonnet-5.5 hit uncached=0 write=440 read=5660 credits=0.4026
+8 claude-sonnet-5.5 miss uncached=0 write=6370 read=0 credits=2.9680
+9 claude-sonnet-5.5 hit uncached=0 write=260 read=6370 credits=0.3177
+10 claude-sonnet-5.5 hit uncached=0 write=270 read=6630 credits=0.2943"
+`;
+
+exports[`golden simulations (scenario × vendor default model) > on the Claude Code harness (1-hour cache) > cascading-model-switch-then-ttl-lapse 1`] = `
+"1 claude-sonnet-5.5 miss uncached=0 write=3800 read=0 credits=1.8200
+2 claude-sonnet-5.5 hit uncached=0 write=300 read=3800 credits=0.4580
+3 claude-haiku-5.5 miss(tools) uncached=0 write=4430 read=0 credits=0.1161
+4 claude-haiku-5.5 hit uncached=0 write=700 read=4430 credits=0.0359
+5 claude-haiku-5.5 miss uncached=0 write=5430 read=0 credits=0.1276
+6 claude-haiku-5.5 hit uncached=0 write=260 read=5430 credits=0.0221"
+`;
+
 exports[`golden simulations (scenario × vendor default model) > reasoning-budget-toggle on anthropic 1`] = `
 "1 claude-sonnet-5.5 miss uncached=0 write=3800 read=0 credits=1.2500
 2 claude-sonnet-5.5 hit uncached=0 write=300 read=3800 credits=0.4130

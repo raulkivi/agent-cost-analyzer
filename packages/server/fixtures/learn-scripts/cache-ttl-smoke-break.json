@@ -168,5 +168,23 @@
       },
       "events": []
     }
-  ]
+  ],
+  "textByHarness": {
+    "claude-code": {
+      "idleMinutes": [null, null, null, null, null, null, null, 70, null, null],
+      "explanations": [
+        "Normal first turn: writes the static prefix and this turn's own content.",
+        "Normal turn: reads and extends the cache from the first turn.",
+        "Explores the code with a couple of tool calls; the cache keeps growing normally.",
+        "Applies an edit and runs a quick check: a normal, healthy cache-building turn.",
+        "Normal follow-up turn.",
+        "Normal follow-up turn.",
+        "Normal follow-up turn. The cache is healthy at this point; the user then steps away for a long break, well over an hour, because this tool keeps its cache that long.",
+        "The pause outlasted even the long cache lifetime, so the provider evicted the entry and the whole history is resent as new input before a fresh cache is written. Nothing is lost from the conversation: this is not a clear or a rewind, only the cached copy expired, and this one turn pays to rebuild it. A shorter break would have cost nothing here.",
+        "Normal turn: the cache written by the previous turn is read again and cost returns to its usual shape.",
+        "Normal turn: cache growth has fully recovered."
+      ],
+      "title": "Cache TTL: A Break Longer Than an Hour"
+    }
+  }
 }

@@ -57,6 +57,10 @@ export const harnessTextSchema = z.object({
   title: z.string().optional(),
   userMessages: z.array(z.string()).optional(),
   explanations: z.array(z.string()).optional(),
+  // Per step, in order: a different idle gap for this harness (null keeps the
+  // script's own). A break that outlives one harness's cache lifetime may not
+  // outlive another's (Claude Code keeps its cache an hour).
+  idleMinutes: z.array(z.number().nonnegative().nullable()).optional(),
 });
 
 export const scenarioScriptSchema = z.object({

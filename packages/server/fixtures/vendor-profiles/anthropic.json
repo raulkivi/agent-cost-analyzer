@@ -448,6 +448,10 @@
       "text": "Thinking tokens are billed as output tokens.",
       "confidence": "documented",
       "sourceIds": ["anthropic-thinking-billing"]
+    },
+    {
+      "text": "On the Claude Code harness the simulation uses the 1-hour cache lifetime, as Claude Code's own logs show (186 of 188 past sessions wrote 1-hour caches). Copilot is simulated with the 5-minute default.",
+      "confidence": "inferred"
     }
   ],
   "sources": [

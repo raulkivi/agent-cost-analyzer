@@ -55,7 +55,7 @@ const script = (
   ...extra,
 });
 const run = (s: ScenarioScript, p = anthropic, modelId = "claude-sonnet-5.5") =>
-  simulateScenario(s, { profile: p, modelId, harness: "claude-code" });
+  simulateScenario(s, { profile: p, modelId, harness: "claude-code", harnessCacheDefaults: false });
 const known = (c: unknown) => (c as { known: true; value: number }).value;
 
 describe("simulateScenario", () => {
@@ -232,5 +232,50 @@ describe("simulateScenario", () => {
         harness: "vscode-local",
       }),
     ).toThrow(/harness/);
+  });
+
+  describe("cache lifetime by harness (step 13.5a: Claude Code keeps its cache for an hour)", () => {
+    const withBreak = (minutes: number, extra: Partial<ScenarioScript> = {}) =>
+      script([step(1), step(2, [], { idleMinutesBefore: minutes })], {
+        harnesses: ["claude-code", "vscode-local"],
+        ...extra,
+      });
+    const outcomeAfterBreak = (s: ScenarioScript, harness: "claude-code" | "vscode-local", more = {}) =>
+      simulateScenario(s, { profile: anthropic, modelId: "claude-sonnet-5.5", harness, ...more }).turns[1]!
+        .simulation?.cacheOutcome;
+
+    it("survives a 30-minute break on the Claude Code harness", () => {
+      expect(outcomeAfterBreak(withBreak(30), "claude-code")).toBe("hit");
+    });
+
+    it("still lapses after more than an hour on the Claude Code harness", () => {
+      expect(outcomeAfterBreak(withBreak(70), "claude-code")).toBe("miss");
+    });
+
+    it("keeps the 5-minute default on the Copilot harness", () => {
+      expect(outcomeAfterBreak(withBreak(30), "vscode-local")).toBe("miss");
+    });
+
+    it("can be turned off, for docs that teach the vendor's default lifetime", () => {
+      expect(outcomeAfterBreak(withBreak(30), "claude-code", { harnessCacheDefaults: false })).toBe("miss");
+    });
+
+    it("charges the 1-hour write rate on the Claude Code harness", () => {
+      const cost = (harness: "claude-code" | "vscode-local") =>
+        (simulateScenario(withBreak(1), { profile: anthropic, modelId: "claude-sonnet-5.5", harness }).turns[0]!.usage
+          .costAiCredits as { value: number }).value;
+      // 4500 written: 2.5/M for 5 minutes, 4.0/M for an hour (output is the same).
+      expect(cost("claude-code") - cost("vscode-local")).toBeCloseTo((4500 * (4.0 - 2.5)) / 1e6 / 0.01, 6);
+    });
+
+    it("lets a script give a harness its own break length", () => {
+      const s = withBreak(6, {
+        textByHarness: { "claude-code": { idleMinutes: [null, 70] } },
+      });
+      expect(outcomeAfterBreak(s, "claude-code")).toBe("miss");
+      expect(outcomeAfterBreak(s, "vscode-local")).toBe("miss");
+      // 6 minutes lapses the 5-minute cache but not Claude Code's hour:
+      expect(outcomeAfterBreak(withBreak(6), "claude-code")).toBe("hit");
+    });
   });
 });

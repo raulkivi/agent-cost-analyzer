@@ -107,6 +107,9 @@ export function replayCapture(
     profile,
     modelId: capture.modelId,
     harness: capture.harness,
+    // The lifetime comes from what the capture recorded, not from the
+    // harness default being tested.
+    harnessCacheDefaults: false,
   });
   return capture.requests.map((request, position) => {
     const turn = session.turns[position]!;
