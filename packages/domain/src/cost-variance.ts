@@ -10,6 +10,7 @@ import { priceChangeMarkerSchema } from "./price-change.js";
 // changed between two periods. On the priced basis, as of use, per currency:
 //
 //   usage (volume) = Σ_type (all tokens B − all tokens A) × A's average price
+//                    (B's, for a type A has no tokens of)
 //   price          = Σ_cells tokens B × (unit price B − unit price A)
 //   mix            = Σ_cells (tokens B − tokens A) × unit price A − usage
 //

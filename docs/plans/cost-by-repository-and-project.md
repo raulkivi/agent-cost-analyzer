@@ -1,6 +1,6 @@
 # Phase 15: Cost by repository and project, price history, billing and estimates
 
-Status: **In progress**: steps 15.0–15.9 are done (see §14.1). The owner accepted
+Status: **In progress**: steps 15.0–15.10 are done (see §14.1). The owner accepted
 every recommended decision on 2026-11-05 ([§13](#13-decisions)). The UI
 design (§11) was then revised against the project's existing design and UX
 guidance. This document is the design; Phase 15 in
@@ -414,7 +414,8 @@ of use: each priced turn carries its cost per token type (uncached input,
 cache read, cache write, output: the types the pricer charges), and a
 cell's unit price is its cost ÷ its tokens. A model with no tokens of a
 type in one period takes the other period's unit price, so a new or
-dropped model is all usage. Totals are per currency (AI Credits for
+dropped model is all usage; likewise a token type with no tokens in A
+takes B's average price for the volume effect. Totals are per currency (AI Credits for
 Copilot, USD for the APIs), or all in USD at 1 AI Credit = $0.01. Turns
 without a priced figure are counted, with the cost the view's basis gives
 them, as **not explained**, never as 0 (constraint 6).
@@ -525,9 +526,10 @@ All read endpoints are `GET` and follow §8's existing conventions
 | `GET /api/projects`, `PUT /api/projects` | the project file; `PUT` validates and writes it |
 | `GET /api/cost/timeseries?groupBy=repository\|project\|vendor\|model&bucket=day\|week\|month&ids=…&pricing=as-of-use\|today&basis=preferred\|billed\|reported\|priced&currency=native\|usd&since&until&provider&limit` | `CostSeries`: series with coverage and price-change markers (built in 15.7; `ids` needs `groupBy`, up to 20; dates are inclusive ISO dates; project cost is `groupBy=project`, see §14.1) |
 | `GET /api/cost/compare?groupBy=repository\|project&ids=…&since&until&comparePeriod=previous\|last-year&basis&pricing&currency&provider&limit` | `CostComparison`: the §8.2 table (built in 15.7; 2 to 20 ids, `since` and `until` required) |
-| `GET /api/cost/variance?groupBy=…&id=…&periodA=…&periodB=…` | usage, price and mix effects |
+| `GET /api/cost/variance?groupBy=repository\|project&id=…&periodA=…&periodB=…&currency&provider&limit` | `CostVariance`: usage, price and mix effects per currency, model and token type (built in 15.10; a period is `YYYY-MM` or `YYYY-MM-DD..YYYY-MM-DD`; priced basis, as of use) |
+| `GET /api/cost/project?projectId=…&since&until&bucket&basis&pricing&currency&provider&limit&topSessions` | `ProjectCost`, as MCP `get_project_cost` (added in 15.10 for the Project tab; 404 for an unknown project) |
 | `GET /api/price-book?channel&model` | price versions with sources |
-| `GET /api/price-book/changes?since` | documented changes, and observed-change findings |
+| `GET /api/price-book/changes?since&until&channel&model&kind=documented\|observed&provider&limit` | `PriceChangeList`: documented changes and observed ones, oldest first (built in 15.10; observed changes are also `price-change` findings in `GET /api/insights`) |
 | `GET /api/statements?project&period` | a draft statement, or the frozen one with a diff |
 | `POST /api/statements/:project/:period/issue` | freezes the draft |
 | `GET /api/estimates?project&days\|sessions` | forecast range and the inputs used |

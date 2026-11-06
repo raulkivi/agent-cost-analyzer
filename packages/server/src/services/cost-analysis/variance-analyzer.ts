@@ -28,9 +28,9 @@ import { groupingFor, inDateRange } from "./cube-aggregation.js";
 // one period takes the other period's unit price, so a new or dropped model
 // is all usage. Then, per cell, usage = (qB − qA) × pA and price =
 // qB × (pB − pA), which add up to cB − cA. Per token type, the volume
-// effect is (QB − QA) × A's average price over every model, and mix is the
-// rest of the change after volume and price (D12), so the three add up to
-// the change by construction.
+// effect is (QB − QA) × A's average price over every model (B's when A has
+// none of that type), and mix is the rest of the change after volume and
+// price (D12), so the three add up to the change by construction.
 
 export interface CostVarianceQuery {
   groupBy: CostCompareGroupBy;
@@ -143,7 +143,10 @@ function currencyRow(currency: Currency, items: readonly Explained[]): VarianceC
     const costA = cells.reduce((sum, cell) => sum + cell.costA, 0);
     const costB = cells.reduce((sum, cell) => sum + cell.costB, 0);
     const averagePriceA = unitPrice(costA, tokensA);
-    const usage = averagePriceA === null ? 0 : ((tokensB - tokensA) * averagePriceA) / PER_M;
+    // No tokens of this type in A: B's average price stands in (as a cell's
+    // does), so new work is usage, not mix.
+    const volumePrice = averagePriceA ?? unitPrice(costB, tokensB) ?? 0;
+    const usage = ((tokensB - tokensA) * volumePrice) / PER_M;
     const price = cells.reduce((sum, cell) => sum + cell.price, 0);
     return [{ tokenType: type, tokensA, tokensB, averagePriceA, usage, mix: costB - costA - usage - price, price }];
   });

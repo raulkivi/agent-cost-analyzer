@@ -104,7 +104,7 @@ export function createApp(options: CreateAppOptions = {}): Express {
     res.json(await api.getCostVariance(req.query));
   }));
 
-  app.get("/api/price-changes", route(async (req, res) => {
+  app.get("/api/price-book/changes", route(async (req, res) => {
     res.json(await api.getPriceChanges(req.query));
   }));
 

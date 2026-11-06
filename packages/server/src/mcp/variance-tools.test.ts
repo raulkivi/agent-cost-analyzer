@@ -54,7 +54,7 @@ describe("MCP variance and price-change tools (step 15.10)", () => {
     expect(JSON.stringify(structured(result))).not.toMatch(/\/home\//);
   });
 
-  it("get_price_changes returns what GET /api/price-changes returns", async () => {
+  it("get_price_changes returns what GET /api/price-book/changes returns", async () => {
     const args = { since: "2026-10-01", until: "2026-10-31" };
     const mcp = priceChangeListSchema.parse(structured(await client.callTool({ name: "get_price_changes", arguments: args })));
     expect(mcp).toEqual(await api.getPriceChanges(args));

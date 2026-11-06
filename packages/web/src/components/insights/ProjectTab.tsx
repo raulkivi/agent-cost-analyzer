@@ -205,20 +205,22 @@ function VendorBreakdown({ cost, unit, kicker }: { cost: ProjectCost; unit: Disp
           <h4 id="cost-models-title" className="cost-chart-title">
             Models, and the tokens their cost is made of
           </h4>
-          <HorizontalBars
-            ariaLabel={`${vendorName} models`}
-            series={SINGLE_SERIES(unitLabel(unit))}
-            rows={(vendor?.models ?? []).map((row) => ({ key: row.key ?? row.label, label: row.label, values: { value: shown(row.cost.usd) } }))}
-            format={format}
-            emptyText="No models."
-          />
-          <HorizontalBars
-            ariaLabel={`${vendorName} tokens by type`}
-            series={SINGLE_SERIES("Tokens")}
-            rows={tokenRows}
-            format={formatCompact}
-            emptyText="No tokens."
-          />
+          <div className="cost-chart-stack">
+            <div>
+              <p className="text-muted cost-subchart-label">By model ({unitLabel(unit)})</p>
+              <HorizontalBars
+                ariaLabel={`${vendorName} models`}
+                series={SINGLE_SERIES(unitLabel(unit))}
+                rows={(vendor?.models ?? []).map((row) => ({ key: row.key ?? row.label, label: row.label, values: { value: shown(row.cost.usd) } }))}
+                format={format}
+                emptyText="No models."
+              />
+            </div>
+            <div>
+              <p className="text-muted cost-subchart-label">Tokens by type (a separate chart, not stacked into the one above)</p>
+              <HorizontalBars ariaLabel={`${vendorName} tokens by type`} series={SINGLE_SERIES("Tokens")} rows={tokenRows} format={formatCompact} emptyText="No tokens." />
+            </div>
+          </div>
         </section>
       </Blueprint>
     </div>

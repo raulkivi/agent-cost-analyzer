@@ -57,6 +57,13 @@ describe("buildCostVariance", () => {
     expect(usd!.byTokenType).toEqual([{ tokenType: "output", tokensA: 1_000_000, tokensB: 1_000_000, averagePriceA: 30, usage: 0, mix: -20, price: 0 }]);
   });
 
+  it("calls work in a period with nothing before it usage, not mix (A's price is unknown, so B's stands in)", () => {
+    const cube = cubeOf([outputTurn("2026-10-10", "sonnet", 1_000_000, 10)]);
+    const [usd] = costVarianceSchema.parse(buildCostVariance(cube, query, [])).currencies;
+    expect(usd).toMatchObject({ costA: 0, costB: 10, change: 10, usage: 10, price: 0, mix: 0 });
+    expect(usd!.byTokenType[0]).toMatchObject({ averagePriceA: null, usage: 10, mix: 0 });
+  });
+
   it("adds all three up exactly to the change in a mixed case, and gives the price versions behind each model", () => {
     const cube = cubeOf([
       outputTurn("2026-08-03", "sonnet", 2_000_000, 15),

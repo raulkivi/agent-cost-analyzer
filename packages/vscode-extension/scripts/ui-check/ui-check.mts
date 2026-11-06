@@ -121,7 +121,7 @@ async function openDashboard(page: Page, harness: Harness): Promise<void> {
 }
 
 // Step 15.9: the Dashboard's view switch is radios, or a select below 700 px.
-async function openDashboardView(page: Page, harness: Harness, label: "Cost over time" | "Compare"): Promise<void> {
+async function openDashboardView(page: Page, harness: Harness, label: "Cost over time" | "Compare" | "Project"): Promise<void> {
   await openDashboard(page, harness);
   const select = page.getByRole("combobox", { name: "Dashboard view" });
   if (await select.isVisible().catch(() => false)) {
@@ -308,6 +308,29 @@ const SCENARIOS: Scenario[] = [
     run: async (page, harness) => {
       await openDashboardView(page, harness, "Compare");
       await page.getByRole("button", { name: /^Details for / }).first().click();
+      await harness.settle(page);
+    },
+  },
+  // Step 15.10 (plan §11.4, board 3): the Project tab, inside one project.
+  {
+    name: "dashboard-project",
+    costTabs: true,
+    run: async (page, harness) => {
+      await openDashboardView(page, harness, "Project");
+      await page.getByRole("listbox", { name: "Project" }).getByRole("option").first().click();
+      await harness.settle(page);
+      await page.getByRole("img", { name: /^Why cost changed/ }).waitFor({ timeout: 10000 });
+    },
+  },
+  {
+    name: "dashboard-project-table",
+    costTabs: true,
+    run: async (page, harness) => {
+      await openDashboardView(page, harness, "Project");
+      await page.getByRole("listbox", { name: "Project" }).getByRole("option").first().click();
+      await harness.settle(page);
+      await page.getByRole("img", { name: /^Why cost changed/ }).waitFor({ timeout: 10000 });
+      await page.getByRole("region", { name: /^Why cost changed/ }).getByRole("button", { name: "View as table" }).click();
       await harness.settle(page);
     },
   },

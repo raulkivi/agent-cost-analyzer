@@ -82,12 +82,12 @@ describe("cost analysis API", () => {
     expect((await request(buildApp()).get("/api/cost/variance").query({ groupBy: "project", periodA: "2026-08", periodB: "2026-10" })).status).toBe(400);
   });
 
-  it("GET /api/price-changes lists the bundled price book's documented changes", async () => {
-    const response = await request(buildApp()).get("/api/price-changes").query({ kind: "documented", channel: "github-copilot" });
+  it("GET /api/price-book/changes lists the bundled price book's documented changes", async () => {
+    const response = await request(buildApp()).get("/api/price-book/changes").query({ kind: "documented", channel: "github-copilot" });
     expect(response.status).toBe(200);
     const list = priceChangeListSchema.parse(response.body);
     expect(list.changes.every((change) => change.kind === "documented" && change.channel === "github-copilot")).toBe(true);
-    expect((await request(buildApp()).get("/api/price-changes").query({ kind: "rumoured" })).status).toBe(400);
+    expect((await request(buildApp()).get("/api/price-book/changes").query({ kind: "rumoured" })).status).toBe(400);
   });
 
   // Step 15.10 (plan §11.4): the Project tab's breakdown over HTTP, as get_project_cost.
