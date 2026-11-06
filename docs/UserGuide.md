@@ -402,7 +402,7 @@ claude mcp add agent-cost-analyzer -- /absolute/path/to/agent-cost-analyzer/scri
 | Tool | What it returns |
 |---|---|
 | `list_log_providers` | Available log sources and which one is active |
-| `list_sessions` | Sessions, most recent first. Search titles and ids with `query`, filter by date; `total` says how many matched |
+| `list_sessions` | Sessions, most recent first. Search titles and ids with `query`, filter by date, repository or project; `total` says how many matched |
 | `get_turn` | One turn: prompt and response (secrets redacted, truncated), usage, triggered event and tool calls |
 | `get_session_cost` | One session's tokens and AI Credits with coverage, cache hit ratio, spend per model, the most expensive turns, cost events and context overhead |
 | `get_cost_rollup` | Spend across **every** provider by provider, model and day, plus the most expensive sessions |
@@ -410,6 +410,9 @@ claude mcp add agent-cost-analyzer -- /absolute/path/to/agent-cost-analyzer/scri
 | `list_tool_calls` | One session's calls, filtered by status, failure category, tool kind, tool, program or turn, paged with `offset`/`limit` |
 | `get_audit_rollup` | Cross-session tool-call totals, top failing commands and per-day counts for one provider |
 | `list_findings` | Security, anomaly and behaviour-change findings across every provider, most severe first, with what, when, why and redacted evidence |
+| `list_repositories` | The repositories your sessions ran in, with sessions, turns, AI Credits and project ids; sessions with no repository are grouped by reason |
+| `list_projects` | Your projects from `projects.json` with their repositories and AI Credits |
+| `get_price_book` | The dated price versions the app prices turns with, per channel and model |
 
 Three prompts start common reviews: `audit_session` (why a session's tool
 calls failed), `review_costs` (what drives your spend and how to cut it)
@@ -419,7 +422,8 @@ prevent them).
 Per-session tools take an optional `provider` (for example
 `"claude-code"`) and otherwise use the source selected in the web app.
 `get_cost_rollup` and `list_findings` read every available provider
-unless you pass one. A `null` figure means the log doesn't record it; it
+unless you pass one. Repositories are reported by folder name only
+unless you set `includePaths`. A `null` figure means the log doesn't record it; it
 is never treated as zero. The server reads local logs only and writes
 nothing. Everything a tool returns goes into the agent's context, so free
 text is redacted and truncated first.
@@ -433,8 +437,8 @@ reachable even when the selected source has no sessions: the empty state
 offers **Open the dashboard across all providers**. Pick 7, 30 or 90 days,
 or all time.
 
-**List boxes** (left) hold every field: provider, date, hour (UTC),
-session, model, trigger event, usage data, tool, tool kind, program,
+**List boxes** (left) hold every field: project, repository, vendor,
+channel, provider, date, hour (UTC), session, model, trigger event, usage data, tool, tool kind, program,
 outcome, failure category, signal type, severity and signal category.
 Click a value to select only it; Ctrl/⌘-click to add or remove values.
 Every other list box then colours its values:
@@ -484,6 +488,58 @@ What the view shows for the current selection:
   command inside a heredoc that isn't run by a shell (for example a test
   fixture or a doc being written) isn't flagged.
 - **Most expensive sessions**: click one to select it.
+
+#### Cost by repository and project
+
+Each session is attributed to the **repository** it ran in (read from the
+folder's git files; no `git` process, no network), the **vendor** and the
+**channel** it was billed through. Clones, worktrees and subfolders of one
+remote share one repository, and credentials in remote URLs are dropped.
+Sessions whose repository can't be found sit under **Unattributed**, with
+the reason (for example a mitmproxy capture records no folder). Sessions in
+a repository that no project claims sit under **No project**.
+
+To group repositories into **projects**, create `projects.json` in the
+app's settings folder, beside `settings.json`:
+
+| OS | Settings folder |
+|---|---|
+| Linux | `$XDG_CONFIG_HOME/agent-cost-analyzer` (default `~/.config/agent-cost-analyzer`) |
+| macOS | `~/Library/Application Support/agent-cost-analyzer` |
+| Windows | `%APPDATA%\agent-cost-analyzer` |
+
+```json
+{
+  "version": 1,
+  "projects": [
+    {
+      "id": "acme-portal",
+      "name": "ACME customer portal",
+      "members": [
+        { "repository": "github.com/acme/portal-web" },
+        { "repository": "github.com/acme/platform", "path": "services/portal-api" },
+        { "repository": "github.com/acme/infra", "branches": ["portal/*"] }
+      ]
+    }
+  ]
+}
+```
+
+- A turn belongs to at most one project; the most specific member wins
+  (path beats whole repository, branch beats no branch), so project totals
+  add up.
+- `aliases` merge repository keys; `captureRules` map mitmproxy capture
+  files to a repository by glob.
+- A file that fails validation is ignored and an optional warning appears;
+  nothing is rewritten.
+- `GET`/`PUT /api/projects` read and write the file; `GET /api/repositories`
+  lists the repositories found.
+
+Prices come from a bundled, dated **price book** (GitHub Copilot's table from
+2026-10-01 and the Anthropic, OpenAI and Google APIs'). Add your own contract
+prices under `channels.priceVersions` in `projects.json`. A price that isn't
+in the book is shown as unknown with a reason, never as 0. Learn mode's
+simulated prices come from the same book.
 
 ## Charts as tables
 
