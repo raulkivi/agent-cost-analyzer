@@ -7,6 +7,8 @@ import type { DatasetAttribution } from "../services/insights/insights-service.j
 import { AuditQueryService } from "../services/tool-audit/audit-query-service.js";
 import { createInsightsService } from "./create-insights-service.js";
 import type { TurnPricing } from "../services/pricing/turn-cost-figures.js";
+import type { PriceVersionSource } from "../services/cost-analysis/cost-analysis-service.js";
+import { createCostAnalysis } from "./create-cost-analysis.js";
 
 // The services createMcpServer takes, over whichever registry a product's
 // composition root built: every provider for the standalone stdio server
@@ -29,10 +31,14 @@ export function createMcpServices(
   // Step 15.6: the priced cost basis (createTurnPricer); absent, priced
   // figures are unknown with the reason.
   pricer?: TurnPricing,
+  // Step 15.7: the price book's versions, for price-change markers in the
+  // cost analyses (which come with attribution: they need projects).
+  priceVersions?: PriceVersionSource,
 ): McpServerDeps {
+  const insights = createInsightsService(registry, attribution?.dataset, pricer);
   return {
     auditQueries: new AuditQueryService(registry),
-    analysisQueries: new AnalysisQueryService(registry, createInsightsService(registry, attribution?.dataset, pricer), {
+    analysisQueries: new AnalysisQueryService(registry, insights, {
       ...(attribution ? { attribution: attribution.dataset } : {}),
       ...(pricer ? { pricer } : {}),
     }),
@@ -40,5 +46,12 @@ export function createMcpServices(
     version,
     ...(identity ? { identity } : {}),
     ...(attribution ? { attribution: attribution.queries } : {}),
+    ...(attribution
+      ? {
+          costAnalysis: createCostAnalysis(insights, priceVersions, {
+            projectName: (id) => attribution.queries.listProjects().projects.find((project) => project.id === id)?.name,
+          }),
+        }
+      : {}),
   };
 }

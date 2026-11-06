@@ -507,8 +507,8 @@ All read endpoints are `GET` and follow §8's existing conventions
 |---|---|
 | `GET /api/repositories` | repositories seen, with session counts, first/last use, project, and the Unattributed reasons |
 | `GET /api/projects`, `PUT /api/projects` | the project file; `PUT` validates and writes it |
-| `GET /api/cost/timeseries?groupBy=repository\|project\|vendor\|model&bucket=day\|week\|month&ids=…&pricing=as-of-use\|today&basis=preferred\|billed\|priced` | series with coverage and price-change markers |
-| `GET /api/cost/compare?groupBy=…&ids=…&since&until` | the §8.2 table |
+| `GET /api/cost/timeseries?groupBy=repository\|project\|vendor\|model&bucket=day\|week\|month&ids=…&pricing=as-of-use\|today&basis=preferred\|billed\|reported\|priced&currency=native\|usd&since&until&provider&limit` | `CostSeries`: series with coverage and price-change markers (built in 15.7; `ids` needs `groupBy`, up to 20; dates are inclusive ISO dates; project cost is `groupBy=project`, see §14.1) |
+| `GET /api/cost/compare?groupBy=repository\|project&ids=…&since&until&comparePeriod=previous\|last-year&basis&pricing&currency&provider&limit` | `CostComparison`: the §8.2 table (built in 15.7; 2 to 20 ids, `since` and `until` required) |
 | `GET /api/cost/variance?groupBy=…&id=…&periodA=…&periodB=…` | usage, price and mix effects |
 | `GET /api/price-book?channel&model` | price versions with sources |
 | `GET /api/price-book/changes?since` | documented changes, and observed-change findings |
@@ -556,9 +556,9 @@ Credit = $0.01 and says so in `conversion`.
 | `list_repositories` | 15.4 | `provider?`, `since?`, `until?`, `projectId?`, `includeUnattributed?` (default true), `includePaths?` (default false) | `RepositoryList`: each repository's `repositoryKey`, project, session and turn counts, first and last use, cost with coverage; Unattributed buckets with their reasons |
 | `list_projects` | 15.4 | none | `ProjectList`: each project's id, name, client, billing code, members (repository key, path and branch scopes); validation problems, if any |
 | `get_price_book` | 15.5 | `channel?`, `model?`, `at?` (ISO date: the version in force then) | `PriceBookListing` (an MCP `outputSchema` must be an object): `channels`, `versions` with their `origin` (`bundled` or `user`), `sources` with `checkedAt`, `gaps`, `unknown` with reasons, and `problems` |
-| `get_repository_cost` | 15.7 | `repository` (key from `list_repositories`), `since?`, `until?`, `bucket?` (`day`/`week`/`month`, default `month`), `basis?` (`preferred`/`billed`/`reported`/`priced`), `pricing?` (`as-of-use`/`today`), `currency?` | `CostSeries`: totals with coverage by basis; one point per bucket with coverage; breakdown by vendor and model; price-change markers in the range |
+| `get_repository_cost` | 15.7 | `repository` (key from `list_repositories`), `since?`, `until?`, `bucket?` (`day`/`week`/`month`, default `month`), `basis?` (`preferred`/`billed`/`reported`/`priced`), `pricing?` (`as-of-use`/`today`), `currency?`, `provider?`, `limit?` (sessions per provider, as in `get_cost_rollup`) | `CostSeries`: totals with coverage by basis; one point per bucket with coverage; breakdown by vendor and model; price-change markers in the range. As built it is exactly `GET /api/cost/timeseries?groupBy=repository&ids=<repository>` |
 | `get_project_cost` | 15.7 | `projectId`, the same options as above, `topSessions?` (default 10, max 50) | `ProjectCost`: as `CostSeries`, plus a breakdown by repository member, by vendor → model and by token type, and the most expensive sessions |
-| `compare_costs` | 15.7 | `groupBy` (`repository`/`project`), `ids` (2 to 20), `since`, `until`, `comparePeriod?` (`previous`/`last-year`, default `previous`), `pricing?`, `currency?` | `CostComparison`: the §8.2 measures per id (total, change, per session, per active day, share, cache-hit ratio, output share, coverage) |
+| `compare_costs` | 15.7 | `groupBy` (`repository`/`project`), `ids` (2 to 20), `since`, `until`, `comparePeriod?` (`previous`/`last-year`, default `previous`), `pricing?`, `currency?`; as built also `basis?`, `provider?`, `limit?` | `CostComparison`: the §8.2 measures per id (total, change, per session, per active day, share, cache-hit ratio, output share, coverage) |
 | `explain_cost_change` | 15.10 | `groupBy`, `id`, `periodA`, `periodB` (each `YYYY-MM` or a `since`/`until` pair), `currency?` | `CostVariance`: usage, price and mix effects per model and in total, which add up exactly to the change, with the price versions behind the price effect |
 | `get_price_changes` | 15.10 | `since?`, `until?`, `channel?`, `model?`, `kind?` (`documented`/`observed`, default both) | `PriceChangeList`: each change's model, channel, date, old and new unit prices per token type, percentage, and either its source (documented) or its evidence with confidence `inferred` (observed) |
 | `get_statement` | 15.11 | `projectId`, `period` (`YYYY-MM` or a range), `includeLines?` (default true) | `Statement`: the frozen statement if one is issued, with the diff against a re-run, else the draft; lines, unknown-cost lines with reasons, totals per currency, markup, fixed lines, provenance. It never issues one: issuing writes a file and stays a UI action |
@@ -1086,7 +1086,7 @@ No UI code (15.9 onwards) starts before the mock-ups in 15.8 are approved.
 | 15.4 | **Attribution in the dataset**: `repositoryKey`/`projectId`/`vendorId`/`channel` on Insights rows; Project, Repository, Vendor and Channel list boxes on the Dashboard; MCP: `list_repositories`, `list_projects`, `list_sessions` filters (§10.1) | Dashboard filters by repository and project; totals match the per-session totals; axe and keyboard tests pass for the new list boxes; the step's MCP tools pass the §10.1.6 tests Done 2026-11-05, see §14.1 |
 | 15.5 | **Price book with history**: `PriceVersion` schema, bundled channel files with sources, user versions, `PriceBook` lookup; Phase 13 profiles read their current prices from it; MCP: `get_price_book` | Overlap/boundary/precedence tests pass; every version has a source; Phase 13 tests unchanged; the step's MCP tools pass the §10.1.6 tests Done 2026-11-05, see §14.1 |
 | 15.6 | **CostPricer + basis**: `CostFigure` on every turn row; reconciliation figures for Copilot turns; Cost basis list box; MCP: cost basis in `get_session_cost`, `get_cost_rollup`, `get_turn` | Pricing tests pass; unknown never sums as 0; billed vs priced shown per model-month; the step's MCP tools pass the §10.1.6 tests Done 2026-11-06, see §14.1 |
-| 15.7 | **Time series, compare, project breakdown** + their endpoints; MCP: `get_repository_cost`, `get_project_cost`, `compare_costs`, the `review_costs` project step | Golden outputs for a fixture dataset across three providers and two projects; the step's MCP tools pass the §10.1.6 tests |
+| 15.7 | **Time series, compare, project breakdown** + their endpoints; MCP: `get_repository_cost`, `get_project_cost`, `compare_costs`, the `review_costs` project step | Golden outputs for a fixture dataset across three providers and two projects; the step's MCP tools pass the §10.1.6 tests Done 2026-11-06, see §14.1 |
 | 15.8 | **Mock-ups and palette** (§11.7, §11.8): the seven boards on a Design canvas with versioned copies (drawn and approved 2026-11-05); the eight categorical tokens in `theme.css` and `theme-vscode.css` (done 2026-11-05, see §14.1) | Owner approves the boards and their comments are resolved; the dataviz validator passes in light and dark; `theme-contrast.test.ts` covers the new tokens in Dark Modern, Light Modern and High Contrast |
 | 15.9 | **Dashboard tabs: Cost over time and Compare**, with price-change markers (§11.1–§11.3) | Component tests incl. "View as table" and unknown-as-gap; `vitest-axe` clean in three themes; keyboard tests; the UI check (`npm run test:ui`) passes for the new tabs at 600–1600 px in three themes; screenshots of the standalone app at desktop and 360 px widths; the §12.4.1 Playwright harness and fixture home are in place, and scenarios S2 and S3 pass in the `web-e2e` job |
 | 15.10 | **Price changes and variance**: `PriceChangeDetector`, observed-change finding, `VarianceAnalyzer`, Project tab (§11.4); MCP: `explain_cost_change` tool and prompt, `get_price_changes`, `list_findings` kind `price-change` | Effects add up exactly (property test); markers match price-book boundaries; same UI checks as 15.9; the step's MCP tools pass the §10.1.6 tests; scenario S4 passes |
@@ -1521,6 +1521,110 @@ the observed-change finding (15.10); Claude Code fast mode isn't detected (nothi
 turn to the `-fast` price ids, so a fast-mode turn prices at standard
 rates); mitmproxy's Anthropic decoder doesn't read the 1-hour split; the
 extension's MCP server has no price book (15.13).
+
+**15.7 (done 2026-11-06).** Domain (`packages/domain/src/cost-analysis.ts`,
+`price-change.ts`): `CostSeries`, `ProjectCost` and `CostComparison` (§10.1.1),
+`BasisCoverage` (`turns`/`knownTurns` for preferred, billed, reported and
+priced), UTC buckets (`bucketOf`, `bucketsBetween`: a day, an ISO week
+`2026-W41` Monday to Sunday, a calendar month, each with inclusive `start`
+and `end`), `costInCurrency`, `addCostTotals`, `comparisonPeriod`, and
+`documentedPriceChanges` with `PriceChangeMarker`.
+
+- **Cube and builders** (`packages/server/src/services/cost-analysis/`):
+  `buildCostCube` turns the Insights dataset (step 15.4's attribution,
+  step 15.6's figures) into one flat row per dated turn, joined to its
+  session; turns with no date at all are counted as `undatedTurns`, never
+  dropped silently. `buildCostSeries`, `buildCostComparison` and
+  `buildProjectCost` are pure functions over it (a new analysis is a new
+  builder); `buildProjectCost` is the series grouped by the project plus
+  its breakdowns, so the two always agree. `CostAnalysisService` reads one
+  cube per request through a `CostCubeSource` port and adds the price
+  book's versions (markers) and the projects file's names.
+- **Choices.** Every bucket in the range is a point: an idle bucket has
+  `turns: 0`; a bucket with turns but nothing known has `usd: null` and no
+  amounts, the gap §11.2 draws; partial buckets carry their coverage per
+  basis. The range is `since`..`until` when given, else the selection's
+  first to last date, and lines share it. Each point has a running
+  `cumulative` total. Money is per currency (D2) unless `currency: "usd"`
+  (1 AI Credit = $0.01, stated in `conversion`); so compare's per-session,
+  per-active-day, per-turn, share and change measures are arrays per
+  currency, and a change against a period with nothing known is null, not
+  "from 0". Share is of the compared ids' total. Output share is output ÷
+  (input + output) tokens over turns whose tokens are known. Per session
+  and per turn divide by every turn and session in the selection, known
+  or not; the coverage beside them says how much is known.
+- **Selection.** Sessions are read as every tool reads them (start in
+  `since`..`until`, `provider`, `limit` per provider); turns are then
+  bucketed and filtered by their own UTC date (D6). A session started
+  before `since` is not read, so its later turns are missing; compare reads
+  from the start of the comparison period.
+- **"Today's prices"** (§6.2): `TurnPricing.snapshot(mode)` and
+  `InsightsService.getDataset(filter, { pricing })` price a dataset in
+  either mode, so `pricing=today` re-prices every turn at the newest
+  version (the Dashboard keeps "as of use").
+- **Price-change markers** are the documented changes (§6.4 point 1): the
+  boundary between two adjacent versions of one model on one channel in one
+  precedence class where a unit price differs (per tier and token type, old
+  and new USD per 1M, percentage), dated inside the range, for the
+  channel/model pairs whose versions priced a turn in the selection. A
+  gap, an end without a successor or a change of sources only is no
+  marker. Step 15.10's detector can reuse `documentedPriceChanges`.
+- **Privacy.** Repository keys in every output (HTTP and MCP alike) are
+  redacted to the folder name for `local:`/`path:` keys (§10.1.5); a
+  filter accepts either form. Groups are formed by the full key, so two
+  local repositories with one folder name are two lines with the same
+  label. Client names and billing codes are not in any output.
+- **API.** `GET /api/cost/timeseries` and `GET /api/cost/compare` (§10),
+  zod-validated by `cost-query-params.ts` (dates are ISO calendar dates
+  only; a repeated parameter is rejected), 400 on a bad query or unknown
+  provider, 404 in a product without cost analyses: the extension's
+  `ApiService` has none until step 15.14, and the routes aren't in the
+  webview RPC method list yet (15.9 adds what its tabs call). **No project
+  endpoint**: §10 names none, so project cost over HTTP is the time series
+  with `groupBy=project`; `get_project_cost`'s extra breakdowns are MCP
+  only for now (step 15.10's Project tab may add an endpoint).
+- **MCP** (`mcp/cost-tools.ts`): `get_repository_cost`, `get_project_cost`
+  (an unknown project id is a tool error pointing to `list_projects`) and
+  `compare_costs`, read-only, with the HTTP response schemas as
+  `outputSchema`, registered when `McpServerDeps.costAnalysis` is given
+  (the standalone stdio server, which builds it with attribution). The
+  argument schemas are the HTTP ones (`cost-query-params.ts`) with
+  descriptions in `tool-helpers.ts`. `review_costs` gains the project step
+  (§10.1.3), worded "if the list_projects tool is available" because the
+  extension's server shares the prompt. The extension's server keeps its
+  nine tools until step 15.13.
+- **Golden outputs** (`cost-analysis.golden.test.ts`,
+  `__golden__/*.json`, fixture in `test-support/cost-analysis-fixture.ts`):
+  VS Code (billed), Claude Code (priced, API-equivalent) and pi (reported)
+  sessions over the bundled price book, in two projects (portal: two
+  repositories; billing: one) plus a remote-less local repository and a
+  folder outside any repository, spanning Claude Sonnet 5.5's 2026-10-07
+  cache-read cut (a marker on github-copilot and anthropic-api) and OpenAI's
+  2026-10-20 extended cache-write price. Seven outputs are committed
+  (series by project, repository, vendor and model; the portal project;
+  two comparisons) and figures are checked by hand (for example portal's
+  October: 1.9 AI Credits billed and $0.0085 priced; at today's prices
+  Sonnet's two Copilot turns are 0.79 AI Credits each).
+  `mcp/cost-analysis-tools.test.ts` checks the §10.1.6 points: each tool
+  parses against its schema with full, partial and no coverage, equals the
+  HTTP service's answer for the same query, returns unknown as null with
+  coverage, and holds no local path or client name;
+  `get_project_cost` gives priced figures with their price versions beside
+  billed Copilot ones.
+
+TDD exceptions: `project-cost-builder.test.ts` was written before its code
+but not run red on its own; the MCP tool registrations and the two Express
+routes were written before their tests (`cost-analysis-tools.test.ts`,
+`app.cost.test.ts`), which then passed at once; the golden files were
+generated by the first run and checked by hand, with the hand-checked
+figures in the same test. Not yet: model ids in `byVendor` and
+`byTokenType` are the providers' own (Claude Code's
+`claude-sonnet-5-5-20261001` beside Copilot's `claude-sonnet-5.5`), not the
+price book's; cost per token type (only token counts per type are given;
+the price split comes with 15.10's variance analysis); a user time zone
+(UTC only, D6); the indexed (first period = 100) view of §8.2 is left to
+the UI; observed price changes (15.10); the extension's tools and routes
+(15.13/15.14).
 
 ## 15. Exit criterion
 

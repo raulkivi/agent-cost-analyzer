@@ -84,6 +84,16 @@ export function createApp(options: CreateAppOptions = {}): Express {
     res.json(await api.getPriceBook(req.query));
   }));
 
+  // Phase 15 step 15.7: cost over time (grouped by repository, project,
+  // vendor or model) and the compare table.
+  app.get("/api/cost/timeseries", route(async (req, res) => {
+    res.json(await api.getCostTimeSeries(req.query));
+  }));
+
+  app.get("/api/cost/compare", route(async (req, res) => {
+    res.json(await api.getCostComparison(req.query));
+  }));
+
   app.get("/api/learn/scenarios", route(async (_req, res) => {
     res.json(await api.listLearnScenarios());
   }));

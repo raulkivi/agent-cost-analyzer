@@ -107,3 +107,15 @@ describe("TurnCostFigureBuilder", () => {
     expect(figures.billed.known).toBe(true);
   });
 });
+
+describe("TurnCostFigureBuilder.snapshot (step 15.7)", () => {
+  it("prices in the mode a snapshot asks for", () => {
+    const modes: (string | undefined)[] = [];
+    const pricer = { price: (_request: PricingRequest, mode?: string) => (modes.push(mode), PRICED) };
+    const builder = new TurnCostFigureBuilder(pricer);
+    const session = analyzeSession("s1", "2026-10-08T00:00:00.000Z", [turn(0)]);
+    builder.snapshot().figuresFor("vscode", session, session.turns[0]!, attribution);
+    builder.snapshot("today").figuresFor("vscode", session, session.turns[0]!, attribution);
+    expect(modes).toEqual(["as-of-use", "today"]);
+  });
+});

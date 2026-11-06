@@ -4,6 +4,16 @@ import type { LogProviderStatus } from "@agent-cost-analyzer/domain";
 import { UnknownLogProviderIdError } from "../data-sources/log-providers/registry.js";
 import type { McpIdentity } from "./mcp-identity.js";
 import { isoDateBoundSchema, limitSchema } from "../services/tool-audit/audit-query-params.js";
+import {
+  comparePeriodArg as comparePeriodSchema,
+  costBasisArg,
+  costBucketArg,
+  costCurrencyArg,
+  costDateArg,
+  costIdSchema,
+  costPricingArg,
+  MAX_COST_IDS,
+} from "../services/cost-analysis/cost-query-params.js";
 
 // Shared building blocks for the MCP tool groups (docs/plans/mcp-tools-v2.md
 // §3/§5): result envelopes, actionable errors, and argument schemas reused
@@ -86,3 +96,33 @@ export function createGuard(getProviderStatus: () => Promise<LogProviderStatus>)
     }
   };
 }
+
+// Phase 15 step 15.7 (plan §10.1.4): the cost analyses' options, the same
+// schemas GET /api/cost/timeseries and /api/cost/compare parse their
+// query parameters with (services/cost-analysis/cost-query-params.ts).
+export const bucketArg = costBucketArg.optional().describe('Bucket size: "day", "week" (ISO weeks) or "month" (default), in UTC.');
+
+export const basisArg = costBasisArg
+  .optional()
+  .describe('Which cost basis the figures use: "preferred" (default: billed, else reported, else priced per turn), or only "billed", "reported" or "priced".');
+
+export const pricingArg = costPricingArg
+  .optional()
+  .describe('How priced figures are priced: "as-of-use" (default: the price in force when each turn ran) or "today" (every turn at today\'s prices, for comparing and estimating).');
+
+export const currencyArg = costCurrencyArg
+  .optional()
+  .describe('"native" (default): each figure in its own unit (AI Credits or USD), totals per currency. "usd": everything in USD at 1 AI Credit = $0.01, the only conversion used.');
+
+export const costSinceArg = costDateArg.optional().describe('First day, inclusive: "YYYY-MM-DD" (UTC). Sessions started earlier are not read.');
+export const costUntilArg = costDateArg.optional().describe('Last day, inclusive: "YYYY-MM-DD" (UTC).');
+
+export const comparePeriodArg = comparePeriodSchema
+  .optional()
+  .describe('What the change is measured against: "previous" (default: the same number of days just before) or "last-year" (the same dates a year earlier).');
+
+export const costIdsArg = z
+  .array(costIdSchema)
+  .min(2)
+  .max(MAX_COST_IDS)
+  .describe(`The ${2} to ${MAX_COST_IDS} repository keys (from list_repositories) or project ids (from list_projects) to compare.`);

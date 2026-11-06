@@ -4,11 +4,12 @@ import type { AnalysisQueryService } from "../services/analysis/analysis-query-s
 import type { PriceBookReader } from "../services/pricing/price-book.js";
 import type { AttributionQueries } from "../services/cost-attribution/attribution-query-service.js";
 import type { AuditQueryService } from "../services/tool-audit/audit-query-service.js";
+import type { CostAnalysisQueries } from "../services/cost-analysis/cost-analysis-service.js";
 import { MCP_ICONS, MCP_WEBSITE_URL } from "./mcp-branding.js";
 import { STANDALONE_MCP_IDENTITY, type McpIdentity } from "./mcp-identity.js";
 import { registerAttributionTools } from "./attribution-tools.js";
 import { registerAuditTools } from "./audit-tools.js";
-import { registerCostTools } from "./cost-tools.js";
+import { registerCostAnalysisTools, registerCostTools } from "./cost-tools.js";
 import { registerFindingTools } from "./finding-tools.js";
 import { registerPricingTools } from "./pricing-tools.js";
 import { registerPrompts } from "./prompts.js";
@@ -32,6 +33,10 @@ export interface McpServerDeps {
   // list_projects, list_sessions' repository/project filters). Absent for a
   // product without a projects file yet (the extension, until step 15.14).
   attribution?: AttributionQueries;
+  // Phase 15 step 15.7: get_repository_cost, get_project_cost and
+  // compare_costs. Absent for a product without them yet (the extension,
+  // until step 15.13).
+  costAnalysis?: CostAnalysisQueries;
   version: string;
   // The name and log-source wording of the product serving the tools;
   // defaults to the standalone server's (mcp-identity.ts).
@@ -63,6 +68,7 @@ export function createMcpServer(deps: McpServerDeps): McpServer {
   registerSessionTools(server, toolDeps, guarded);
   registerAuditTools(server, toolDeps, guarded);
   registerCostTools(server, toolDeps, guarded);
+  if (deps.costAnalysis) registerCostAnalysisTools(server, toolDeps, deps.costAnalysis, guarded);
   registerFindingTools(server, toolDeps, guarded);
   if (deps.priceBook) registerPricingTools(server, deps.priceBook, guarded);
   if (deps.attribution) {
