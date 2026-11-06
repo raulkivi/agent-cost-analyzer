@@ -1109,7 +1109,7 @@ No UI code (15.9 onwards) starts before the mock-ups in 15.8 are approved.
 | 15.7 | **Time series, compare, project breakdown** + their endpoints; MCP: `get_repository_cost`, `get_project_cost`, `compare_costs`, the `review_costs` project step | Golden outputs for a fixture dataset across three providers and two projects; the step's MCP tools pass the §10.1.6 tests Done 2026-11-06, see §14.1 |
 | 15.8 | **Mock-ups and palette** (§11.7, §11.8): the seven boards on a Design canvas with versioned copies (drawn and approved 2026-11-05); the eight categorical tokens in `theme.css` and `theme-vscode.css` (done 2026-11-05, see §14.1) | Owner approves the boards and their comments are resolved; the dataviz validator passes in light and dark; `theme-contrast.test.ts` covers the new tokens in Dark Modern, Light Modern and High Contrast Done 2026-11-05, see §14.1 |
 | 15.9 | **Dashboard tabs: Cost over time and Compare**, with price-change markers (§11.1–§11.3) | Component tests incl. "View as table" and unknown-as-gap; `vitest-axe` clean in three themes; keyboard tests; the UI check (`npm run test:ui`) passes for the new tabs at 600–1600 px in three themes; screenshots of the standalone app at desktop and 360 px widths; the §12.4.1 Playwright harness and fixture home are in place, and scenarios S2 and S3 pass in the `web-e2e` job Done 2026-11-06, see §14.1 |
-| 15.10 | **Price changes and variance**: `PriceChangeDetector`, observed-change finding, `VarianceAnalyzer`, Project tab (§11.4); MCP: `explain_cost_change` tool and prompt, `get_price_changes`, `list_findings` kind `price-change` | Effects add up exactly (property test); markers match price-book boundaries; same UI checks as 15.9; the step's MCP tools pass the §10.1.6 tests; scenario S4 passes |
+| 15.10 | **Price changes and variance**: `PriceChangeDetector`, observed-change finding, `VarianceAnalyzer`, Project tab (§11.4); MCP: `explain_cost_change` tool and prompt, `get_price_changes`, `list_findings` kind `price-change` | Effects add up exactly (property test); markers match price-book boundaries; same UI checks as 15.9; the step's MCP tools pass the §10.1.6 tests; scenario S4 passes Done 2026-11-06, see §14.1 |
 | 15.11 | **Statements**: builder, freeze, diff, CSV/JSON/Markdown export, Billing tab, Projects editor (§11.5); MCP: `get_statement`, `prepare_statement` prompt | Golden statements; a frozen statement survives a price-book update unchanged and the diff is exact; every project can be assigned by keyboard alone; same UI checks as 15.9; the step's MCP tools pass the §10.1.6 tests; scenarios S1, S5, S6 and S8 pass |
 | 15.12 | **Estimates** + Estimate panel; MCP: `estimate_cost`, `estimate_work` prompt | Forecast range tests on fixture histories; shown as a labelled range, never a single number; the step's MCP tools pass the §10.1.6 tests; scenario S7 passes |
 | 15.13 | **MCP, cross-cutting work** (§10.1.4): server instructions for both products, the `toolGroups` option and the extension's tool set, the security tests of §10.1.5 | The §10.1.6 exit criterion over stdio; scenario S10 passes |
@@ -1750,6 +1750,96 @@ stacked columns inside one project (§11.2, left to the Project tab); a
 custom date range; Export CSV; the extension's own cost data and tabs
 (15.14); the axe check in a dark theme in the standalone app, which has
 none; observed price changes (15.10).
+
+**15.10 (done 2026-11-06).** Price changes, price versus usage, and the
+Dashboard's *Project* tab. The owner's decisions D11 (observed-change
+threshold) and D12 (mix effect) are in §13.
+
+- **Domain.** `observedPriceChangeSchema` (`kind: "observed"`, the first
+  week's Monday, channel, the model as logged, `direction` above/below,
+  signed `percent` over the run, the `weeks` with billed and priced AI
+  Credits and their ratio, the price versions, `confidence: "inferred"`)
+  and `priceChangeListSchema` (documented and observed side by side);
+  `costVarianceSchema` per currency, model and token type, whose refinement
+  refuses effects that don't add up to the change; finding kind
+  `price-change`; `CostSeries.observedChanges`. A priced `CostFigure`
+  carries `byTokenType` (uncached input, cache read, cache write, output),
+  from `priceTurnParts`, which shares its rates with Learn's `priceTurn`
+  (Learn's arithmetic is unchanged; the figure's amount still comes from
+  `priceTurn`, so earlier figures don't move).
+- **`PriceChangeDetector`** (`services/pricing/`): documented changes are
+  step 15.7's `documentedPriceChanges`; observed ones group Copilot turns
+  with both figures in AI Credits by channel, model and ISO week, and a run
+  of weeks in a row more than 5% away from 1 the same way, each with 20+
+  such turns, is one change (D11). `PriceChangeFindingDetector` raises each
+  as a `medium`, `inferred` finding (`pricing.observed-change`), linked to
+  the first session of its first week, with the weeks as evidence; it
+  raises nothing on a dataset priced at today's prices (detectors now
+  receive the pricing mode). A billing gap is the model's, so cost series
+  find observed changes over every turn of the cube and list those for the
+  models the selection used.
+- **`VarianceAnalyzer`** (`services/cost-analysis/variance-analyzer.ts`): a
+  pure function over the cube, priced as of use, per currency (native, or
+  all USD). Cells are model × token type with tokens and cost per period;
+  unit price = cost ÷ tokens; a cell (or a token type, for the volume
+  effect) with no tokens in one period takes the other period's price, so
+  a new or dropped model is usage. Mix is the change after volume and
+  price, so the three add up by construction; a fast-check property test
+  checks it per currency, model and token type. Turns without a priced
+  figure (or its split) are `notExplained`, with reasons.
+- **API**: `GET /api/cost/variance`, `GET /api/cost/project` (the Project
+  tab needs `get_project_cost`'s breakdown over HTTP) and
+  `GET /api/price-book/changes`, parsed by the same schemas as MCP. A
+  period is `YYYY-MM` or `YYYY-MM-DD..YYYY-MM-DD` (HTTP) or
+  `{since, until}` (MCP). The RPC allow-list and the extension's dispatcher
+  carry `getProjectCost` and `getCostVariance` (404 there until 15.14).
+- **MCP**: `explain_cost_change` (with the cost analyses),
+  `get_price_changes` (in the pricing group, with the cost analyses: its
+  observed changes read sessions), the `explain_cost_change` prompt
+  (registered only with the cost analyses), and `list_findings` names kind
+  `price-change`. Each tool is checked against its HTTP twin.
+- **Project tab** (`ProjectTab`, board 3): inside the one project the
+  Project list box selects (else it says what to select); cost by vendor
+  (`HorizontalBars`, click a vendor), the vendor's models and its tokens by
+  type as a separate chart; *Why cost changed* with *From*/*To* months
+  (default: the range's first and last month) as a `Waterfall` (new chart:
+  totals on the axis, effects floating between levels with dashed
+  connectors, the diverging pair plus a written sign, a value that rounds
+  to zero drawn as no change, "View as table"), what isn't explained, and
+  the documented changes between the months; *Reconciliation*: observed
+  price changes as findings (severity as text) and billed minus priced per
+  model and month from the dataset's Copilot turns. Amounts are asked in
+  USD and shown in the picked unit.
+- **Observed markers**: Cost over time draws them as dashed hairlines with
+  a tag ("Observed · gpt-5.5 +12%"), a description that says inferred, a
+  tooltip with the weeks, and a table row of their own.
+- **Checks**: S4 passes (with S2 and S3, three runs in a row; the `web-e2e`
+  job runs every spec). The UI check gains two Project-tab scenarios: all
+  24 combinations pass in Dark Modern, Light Modern and High Contrast at
+  600–1600 px, and the whole check passes (309 checks). Screenshots: `docs/images/guide-dashboard-project.png` and
+  `guide-dashboard-project-360.png`.
+- **Found and fixed by the browser checks**: the selected bar's value was
+  4.4:1 in Light Modern (it now takes the full text colour); two stacked
+  charts' table buttons were too close (axe target-size; they now have
+  labels and space); a token type with nothing in period A put new work
+  under mix (S4's fixture, where nothing before October is priced; now
+  usage); a float residue showed as a red "+0.00".
+
+Departures from the mock-ups: the vendor bars are blue, not a colour per
+vendor; the token-type chart shows tokens, not cost (the variance has the
+cost per type, per month); the reconciliation's *Open price book* and
+*Show turns* buttons aren't built; the tab follows only the Project and one
+Provider selection and names the rest as not applied; the waterfall asks
+for USD (one chart) and shows it in the picked unit.
+
+TDD exceptions: the query-parameter schemas, the project model and the
+observed findings' pricing-mode test were written with or after their code
+in one pass; the API route was renamed to `/api/price-book/changes` after
+it was built (§10 names it so); S4 was written after the tab it drives;
+the four fixes above were made after the browser checks found them, then
+tested; the UI-check scenarios and screenshot script have no tests of their
+own. Not yet: clicking a vendor in Cost over time; Export CSV; observed
+changes in the extension (15.14).
 
 ## 15. Exit criterion
 

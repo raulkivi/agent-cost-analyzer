@@ -425,13 +425,36 @@ which builds it with attribution); they and the two HTTP endpoints call the
 same `CostAnalysisService`, so their outputs are equal. `review_costs`
 gains a step that compares projects and groups findings by project.
 
+Price changes and variance (Phase 15 step 15.10, plan §6.4, §8.4, D11,
+D12; `packages/domain/src/price-change.ts` and `cost-variance.ts`): a priced
+`CostFigure` carries `byTokenType` (uncached input, cache read, cache
+write, output). `ObservedPriceChange` is a run of 2+ ISO weeks in a row in
+which Copilot's billed AI Credits for a model are more than 5% above (or
+below) the priced ones, each week with 20+ turns that have both
+(`confidence: "inferred"`); `PriceChangeList` holds both kinds. On the
+server, `services/pricing/price-change-detector.ts` (`PriceChangeDetector`)
+lists them; `services/insights/price-change-finding-detector.ts` raises each
+observed change as a finding of kind `price-change` (none when the dataset
+is priced at today's prices; `DetectorInput.pricing` says which); cost
+series carry `observedChanges` for the models shown. `CostVariance`
+(`services/cost-analysis/variance-analyzer.ts`, pure over the cube) splits
+the priced change between two periods per currency, model and token type
+into usage (volume at period A's average price), price and mix (the rest),
+which add up by construction (a property test checks it; the schema
+refuses effects that don't). `CostAnalysisService.explainChange` and
+`getPriceChanges` serve `GET /api/cost/variance`, `/api/price-book/changes`
+and the MCP tools `explain_cost_change` (cost group) and
+`get_price_changes` (pricing group), registered with the cost analyses,
+plus the `explain_cost_change` prompt.
+
 The Dashboard's cost tabs (Phase 15 step 15.9, plan §11.1–§11.3) are the
 web client of those two endpoints. `InsightsDashboard` shows a view switch
-(Overview, Cost over time, Compare; a `select` below 700 px of its own
+(Overview, Cost over time, Compare, and Project from step 15.10; a `select` below 700 px of its own
 width) when `ProductFeatures.costAnalysis` is on: true in the standalone
 app, false in the extension until step 15.14, whose ApiService has no cost
-analyses (the webview RPC allow-list carries `getCostTimeSeries` and
-`getCostComparison`, and the extension answers them 404). The tabs share
+analyses (the webview RPC allow-list carries `getCostTimeSeries`,
+`getCostComparison`, and from step 15.10 `getProjectCost` and
+`getCostVariance`, and the extension answers them 404). The tabs share
 the associative selections. Data flow: `lib/cost/cost-scope.ts` turns the
 selections into a request (Project, else Repository, as `groupBy` and
 `ids`; one selected Provider as `provider`; a selected No project or
@@ -2022,6 +2045,9 @@ themselves.
 | `GET /api/price-book?channel&model&at` | `PriceBookListing` (Phase 15 step 15.5): the price versions in force (or all), their sources, gaps, unknown lookups with reasons and user-version problems; also the standalone MCP tool `get_price_book`. Not in the extension (404) |
 | `GET /api/cost/timeseries?groupBy&ids&bucket&basis&pricing&currency&since&until&provider&limit` | `CostSeries` (Phase 15 step 15.7): cost over time for the whole selection and, with `groupBy` (`repository`, `project`, `vendor`, `model`), one line per group or per `ids` entry (comma-separated, up to 20); `bucket` `day`/`week`/`month` (default), UTC; `basis` default `preferred`; `pricing` `as-of-use` (default) or `today`; `currency` `native` (default) or `usd`; `since`/`until` inclusive ISO dates. 400 on a bad query; not in the extension (404). Project cost is this endpoint with `groupBy=project` (the MCP tool `get_project_cost` adds the project breakdowns) |
 | `GET /api/cost/compare?groupBy&ids&since&until&comparePeriod&basis&pricing&currency&provider&limit` | `CostComparison` (Phase 15 step 15.7): the plan's §8.2 measures for 2 to 20 repositories or projects over `since`..`until` (required), against the `previous` period (default) or `last-year`. 400 on a bad query; not in the extension (404) |
+| `GET /api/cost/variance?groupBy&id&periodA&periodB&currency&provider&limit` | `CostVariance` (Phase 15 step 15.10): why a repository's or project's cost changed between two periods (`YYYY-MM` or `YYYY-MM-DD..YYYY-MM-DD`), as usage, price and mix effects per currency, model and token type that add up exactly to the change, on the priced basis as of use; turns without a priced figure are `notExplained`; also MCP `explain_cost_change`. 400 for a bad query; not in the extension (404) |
+| `GET /api/cost/project?projectId&since&until&bucket&basis&pricing&currency&provider&limit&topSessions` | `ProjectCost` (Phase 15 step 15.10, the Dashboard's Project tab): as MCP `get_project_cost`; 404 for an unknown project or in the extension |
+| `GET /api/price-book/changes?since&until&channel&model&kind&provider&limit` | `PriceChangeList` (Phase 15 step 15.10): documented changes (price-book version boundaries) and observed ones (Copilot billed vs priced, `inferred`), oldest first; also MCP `get_price_changes`. Not in the extension (404) |
 | `GET /api/repositories` | `RepositoryList` (Phase 15 step 15.3): every repository the providers' sessions resolve to (`key`, `source`, `rootPath`, session count, providers, first and last use, projects), the Unattributed sessions grouped by reason, and each provider's status |
 | `PUT /api/config/retention-threshold` | Sets the persisted `minRetainedSessionLogsThreshold` override (body: `{ value: number }`, must be a positive integer, else 400); returns the fresh `ConfigStatus` so the caller can update both the header control and the warning banner from one response |
 

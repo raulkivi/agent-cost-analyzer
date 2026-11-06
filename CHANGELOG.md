@@ -81,6 +81,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A usage-scenario test suite for the standalone app (Playwright, the real
   server over a seeded fixture home at a fixed clock), run by a new
   required `web-e2e` CI job.
+- Price changes and why cost changed (Phase 15 step 15.10): a Project tab on
+  the Dashboard, inside the selected project: cost by vendor (click one for
+  its models, with tokens by type beside them), a waterfall from one month's
+  cost to another's split into usage, price and mix effects that add up
+  exactly to the change (on the priced basis, as of use, with "View as
+  table"), and Copilot's billed minus priced AI Credits per model and month.
+  An observed price change (Copilot billing a model more than 5% away from
+  the price book, the same way, two weeks in a row) is an inferred
+  "price-change" finding and a dashed marker on Cost over time.
+  `GET /api/cost/variance`, `GET /api/cost/project` and
+  `GET /api/price-book/changes`; MCP tools `explain_cost_change` and
+  `get_price_changes`, an `explain_cost_change` prompt, and `list_findings`
+  kind `price-change`. A turn that can't be priced is counted as not
+  explained, never as zero. Fixed: a selected bar's value was below the
+  4.5:1 contrast minimum in Light Modern.
 - Web and VS Code themes: eight categorical series colours
   (`--color-series-1` to `-8`, light and dark steps), a diverging pair for
   waterfalls, and dash patterns in High Contrast, ready for the

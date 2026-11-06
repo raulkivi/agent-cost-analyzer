@@ -616,6 +616,36 @@ dropdown:
 
 ![Cost over time at 360 px: KPI tiles in two columns and the chart below](images/guide-dashboard-cost-over-time-360.png)
 
+**Project** looks inside the one project selected in the **Project** list
+box (select one first; the tab says so otherwise):
+
+- **Cost by vendor** as bars. Click a vendor to see its **models**, and
+  beside them the **tokens by type** (uncached input, cache write, cache
+  read, reasoning, output) as a separate chart.
+- **Why cost changed** between two months (**From** and **To**; by default
+  the first and last month of the date range): a waterfall from the first
+  month's cost through three effects to the second's. **Usage** is more or
+  fewer tokens at the first month's prices, **price** is the second month's
+  tokens times the change in unit price, and **mix** is work moved between
+  models. They add up exactly to the change. Increases are red and decreases
+  blue, and every step also has its written sign. The waterfall uses the
+  priced basis as of use, since only prices can be split this way; turns
+  without a priced figure are listed as not explained, never counted as 0.
+- **Reconciliation** (GitHub Copilot turns): billed minus priced AI Credits
+  per model and month. When Copilot billed a model more than 5% above or
+  below the price book, the same way, two weeks in a row (20 turns or more
+  each week), it is shown here as an **observed price change**: an inferred
+  finding, a prompt to check the price book, not a price. The same change
+  is a dashed marker on **Cost over time** (documented changes are solid).
+
+![The Project tab: cost by vendor, Anthropic's models and tokens by type, and why cost changed from August to October](images/guide-dashboard-project.png)
+
+![The Project tab at 360 px: the waterfall and the reconciliation table](images/guide-dashboard-project-360.png)
+
+The Project tab reads `GET /api/cost/project` and `GET /api/cost/variance`;
+the MCP tools `explain_cost_change` and `get_price_changes` give the same
+answers.
+
 ## Charts as tables
 
 Every chart has a **View as table** button in its toolbar: the AI Credits

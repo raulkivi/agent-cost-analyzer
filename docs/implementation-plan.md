@@ -12,8 +12,8 @@ merged to `main`. The extension's 0.1.0 is released (tag `ext-v0.1.0`,
 2026-11-03). Open: Phase 10's owner manual checks and decisions (see its
 section), Phase 11 (not started), Phase 12 (planned), Phase 13 (in
 progress: steps 13.0-13.10 built, 13.5a calibration open), Phase 14
-(planned after 13) and Phase 15 (in progress: steps 15.0-15.9 done,
-15.10-15.15 open). A proposed plan,
+(planned after 13) and Phase 15 (in progress: steps 15.0-15.10 done,
+15.11-15.15 open). A proposed plan,
 [plans/classic-subagent-credits.md](plans/classic-subagent-credits.md),
 covers classic Copilot Chat subagent AI Credits; it has no step number yet.
 Each phase has a goal, concrete deliverables, an exit criterion (how you know
@@ -1476,7 +1476,7 @@ extension), and extension grouping by repository.
 15.8; Phase 13 step 13.2 (vendor price data) for steps 15.5 onwards.
 
 **Status (2026-11-06)**: in progress. The owner accepted every
-recommended decision (D1–D10, plan §13). Steps 15.0–15.9 are done; the
+recommended decision (D1–D12, plan §13). Steps 15.0–15.10 are done; the
 plan's §14 table and §14.1 notes have each step's detail:
 
 - 15.0: threat-model rows for the two new write endpoints.
@@ -1503,10 +1503,15 @@ plan's §14 table and §14.1 notes have each step's detail:
   markers, unknown cost as a gap and "View as table" on every chart; the
   §12.4.1 Playwright harness with scenarios S2 and S3 in a required
   `web-e2e` CI job; the UI check over the new tabs.
+- 15.10: price changes and variance: observed Copilot price changes as
+  inferred findings and dashed chart markers, usage/price/mix effects that
+  add up exactly (`GET /api/cost/variance`, MCP `explain_cost_change` tool
+  and prompt, `get_price_changes`), and the Dashboard's Project tab with
+  scenario S4.
 
-Open: 15.10 (price changes and variance, Project tab; next), 15.11
-(statements, Billing tab, Projects editor), 15.12 (estimates), 15.13 (MCP
-cross-cutting work), 15.14 (VS Code extension) and 15.15 (docs).
+Open: 15.11 (statements, Billing tab, Projects editor; next), 15.12
+(estimates), 15.13 (MCP cross-cutting work), 15.14 (VS Code extension) and
+15.15 (docs).
 
 ## Summary dependency graph
 
