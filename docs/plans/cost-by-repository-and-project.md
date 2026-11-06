@@ -1348,7 +1348,7 @@ Data:
   `claude-sonnet-4.5`, `claude-opus-5.5-fast`, `claude-opus-5-fast`.
   Batch, data-residency, priority and cloud-platform prices are not
   modelled.
-- **`openai-api`** (`fixtures/price-book/openai-api.json`): 27
+- **`openai-api`** (`fixtures/price-book/openai-api.json`): 29
   standard-tier versions for 23 OpenAI text and coding models. Each cites
   OpenAI's pricing page (its `.md` version, which carries the long-context
   columns) plus model pages, the prompt-caching guide, the changelog or the
@@ -1360,9 +1360,13 @@ Data:
   long-context tier for the whole request. GPT-6.1 Sol, GPT-6 Sol, GPT-6
   Luna and GPT-5.6 Sol start 2026-10-01 on dated changelog prices; GPT-5.6
   Sol's $4/$20 is a promotion ending 2026-11-30, with no price after it.
-  **Every other OpenAI model starts 2026-11-06**, including GPT-6 Astra,
-  GPT-6.1 Terra and GPT-5.6 Terra/Luna, because no dated OpenAI source
-  states its amount (launch entries give none, and openai.com's
+  GPT-5.6 Terra and Luna also start 2026-10-01 (owner's decision,
+  2026-11-06): the 2026-07-30 changelog cut them by 20% and 80% without
+  stating amounts, today's page gives the amounts, and the changelog
+  records no change since, so today's prices are taken as in force since
+  that cut; their notes say so. **Every other OpenAI model starts
+  2026-11-06**, including GPT-6 Astra and GPT-6.1 Terra, because no dated
+  OpenAI source states its amount (launch entries give none, and openai.com's
   announcements refuse automated requests), so October turns on them price
   as unknown. Batch, Flex, Fast, Ultrafast, regional and cloud-platform
   prices, pro models (no cached-input price), `chat-latest` and
