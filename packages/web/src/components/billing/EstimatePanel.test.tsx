@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
-import type { CostEstimate } from "@agent-cost-analyzer/domain";
+import { sampleEstimate } from "../../test-support/estimate-sample.js";
 import { EstimatePanel } from "./EstimatePanel.js";
 
 // Phase 15 step 15.12 (plan §8.6, §11.5; board 4): the Estimate panel. A
@@ -9,22 +9,7 @@ import { EstimatePanel } from "./EstimatePanel.js";
 // it used, never a single number; no range and the reason when the history
 // is thin (D18); the other-model reprice waits for Phase 14 (D17).
 
-const estimate = (overrides: Partial<CostEstimate> = {}): CostEstimate => ({
-  label: "estimate",
-  generatedAt: "2026-11-06T12:00:00.000Z",
-  target: { groupBy: "project", id: "portal", name: "Customer portal" },
-  pricing: "today",
-  currency: "USD",
-  conversion: "Every amount is in USD at today's prices: AI Credits converted at 1 AI Credit = $0.01.",
-  window: { weeks: 12, since: "2026-08-15", until: "2026-11-06" },
-  unit: "activeDays",
-  planned: 20,
-  history: { units: 7, knownUnits: 6, turns: 30, totalUsd: 62.4 },
-  runRate: { perActiveDayUsd: 10.4, perWeekUsd: 5.2 },
-  unitCost: { p50: 10.4, p90: 13.7 },
-  range: { p50: 208, p90: 274 },
-  ...overrides,
-});
+const estimate = sampleEstimate;
 
 describe("EstimatePanel (plan §11.5, board 4)", () => {
   it("asks for 20 planned days over 12 weeks first, and shows the range with both ends labelled, never one number", async () => {
@@ -37,6 +22,18 @@ describe("EstimatePanel (plan §11.5, board 4)", () => {
     expect(screen.getByText("p90 27,400.00")).toBeInTheDocument();
     expect(screen.getByText(/From 6 active days with a known cost, 2026-08-15 to 2026-11-06 \(1 left out\): cost per active day median 1,040.00, p90 1,370.00 AI Credits/)).toBeInTheDocument();
     expect(screen.getByText(/On another model: with Phase 14/)).toBeInTheDocument();
+  });
+
+  it("writes both ends as text outside the drawing, so they stay readable at any width and never overlap", async () => {
+    const load = vi.fn().mockResolvedValue(estimate({ range: { p50: 208, p90: 212 } }));
+    render(<EstimatePanel projectId="portal" loadEstimate={load} />);
+    const figure = await screen.findByRole("img", { name: /^Estimate/ });
+    const p50 = screen.getByText("p50 20,800.00");
+    const p90 = screen.getByText("p90 21,200.00");
+    expect(figure.contains(p50)).toBe(false);
+    expect(figure.contains(p90)).toBe(false);
+    expect(p50.parentElement).toBe(p90.parentElement);
+    expect(screen.getByText("AI Credits · $208.00 – $212.00")).toBeInTheDocument();
   });
 
   it("asks again when the planned days or window change", async () => {

@@ -322,6 +322,18 @@ const SCENARIOS: Scenario[] = [
       await harness.settle(page);
     },
   },
+  // Step 15.12 (plan §11.5, board 4): the estimate panel beside the statement.
+  {
+    name: "dashboard-billing-estimate",
+    costTabs: true,
+    run: async (page, harness) => {
+      await openDashboardView(page, harness, "Billing");
+      const figure = page.getByRole("img", { name: /^Estimate at today's prices/ });
+      await figure.waitFor({ timeout: 10000 });
+      await figure.scrollIntoViewIfNeeded();
+      await harness.settle(page);
+    },
+  },
   {
     name: "dashboard-billing-export",
     costTabs: true,

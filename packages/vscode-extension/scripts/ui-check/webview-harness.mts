@@ -19,6 +19,7 @@ import {
 } from "../../../server/src/test-support/copilot-cli-fixtures.ts";
 import { sampleCostComparison, sampleCostSeries, sampleCostVariance, sampleProjectCost, THREE_PROJECTS } from "../../../web/src/test-support/cost-fixture.ts";
 import { sampleStatement } from "../../../web/src/test-support/statement-sample.ts";
+import { sampleEstimate } from "../../../web/src/test-support/estimate-sample.ts";
 import { diffStatements } from "@agent-cost-analyzer/domain";
 import { createIntegrationFixture } from "../integration-fixture.mts";
 import { webviewDefaultCss, type VscodeTheme } from "./vscode-themes.mts";
@@ -169,6 +170,8 @@ function withCostTabs(reply: unknown, request: unknown, enabled: boolean | undef
   if (method === "getCostVariance") return { kind: "response", id, ok: true, result: sampleCostVariance() };
   // Step 15.11: the Billing tab (an issued statement whose re-run differs) and the Projects editor.
   if (method === "getStatement") return { kind: "response", id, ok: true, result: billingAnswer() };
+  // Step 15.12: the Billing tab's estimate panel.
+  if (method === "getCostEstimate") return { kind: "response", id, ok: true, result: sampleEstimate() };
   if (method === "getProjects") return { kind: "response", id, ok: true, result: PROJECTS_STATE };
   if (method === "getRepositoryList") return { kind: "response", id, ok: true, result: REPOSITORY_LIST };
   const answer = reply as { ok?: boolean; result?: Record<string, unknown> } | undefined;

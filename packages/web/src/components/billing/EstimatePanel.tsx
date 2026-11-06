@@ -79,27 +79,27 @@ function EstimateBody({ estimate }: { estimate: CostEstimate }) {
   const left = history.units - history.knownUnits;
   const unitWord = estimate.unit === "activeDays" ? "active day" : "session";
   const label = `Estimate at today's prices: ${credits(range.p50)} to ${credits(range.p90)} AI Credits (${dollars(range.p50)} to ${dollars(range.p90)}), p50 to p90.`;
-  // p50 at a fixed place and p90 placed by how much larger it is, so a wide range reads wide.
-  const width = 360;
-  const x50 = 80;
-  const x90 = range.p90 === 0 ? x50 : x50 + ((width - 160) * (range.p90 - range.p50)) / range.p90 + 20;
+  // The drawing stretches to the panel's width (in percent of it); the ends are
+  // written as text below it, so they stay readable in a narrow column and
+  // never overlap. p50 sits at a fixed place and p90 by how much larger it
+  // is, so a wide range reads wide.
+  const x50 = 15;
+  const x90 = range.p90 === 0 ? x50 : x50 + (70 * (range.p90 - range.p50)) / range.p90;
   return (
     <figure className="estimate-figure">
-      <svg role="img" aria-label={label} viewBox={`0 0 ${width} 70`} width="100%" className="estimate-interval">
-        <line x1={8} x2={width - 8} y1={34} y2={34} className="waterfall-axis" />
-        <rect x={x50} y={26} width={Math.max(2, x90 - x50)} height={16} rx={4} className="estimate-band" />
-        <line x1={x50} x2={x50} y1={20} y2={48} className="estimate-end" />
-        <line x1={x90} x2={x90} y1={20} y2={48} className="estimate-end" />
-        <text x={x50} y={14} textAnchor="middle" className="waterfall-value">
-          p50 {credits(range.p50)}
-        </text>
-        <text x={x90} y={14} textAnchor="middle" className="waterfall-value">
-          p90 {credits(range.p90)}
-        </text>
-        <text x={(x50 + x90) / 2} y={62} textAnchor="middle" className="waterfall-name">
-          AI Credits · {dollars(range.p50)} – {dollars(range.p90)}
-        </text>
+      <svg role="img" aria-label={label} viewBox="0 0 100 24" preserveAspectRatio="none" width="100%" height="24" className="estimate-interval">
+        <line x1={1} x2={99} y1={12} y2={12} className="waterfall-axis" vectorEffect="non-scaling-stroke" />
+        <rect x={x50} y={5} width={Math.max(0.5, x90 - x50)} height={14} className="estimate-band" />
+        <line x1={x50} x2={x50} y1={1} y2={23} className="estimate-end" vectorEffect="non-scaling-stroke" />
+        <line x1={x90} x2={x90} y1={1} y2={23} className="estimate-end" vectorEffect="non-scaling-stroke" />
       </svg>
+      <div className="estimate-ends">
+        <span className="estimate-end-label">p50 {credits(range.p50)}</span>
+        <span className="estimate-end-label">p90 {credits(range.p90)}</span>
+      </div>
+      <div className="estimate-units text-muted">
+        AI Credits · {dollars(range.p50)} – {dollars(range.p90)}
+      </div>
       <figcaption className="cost-note">
         A range, never one number. From {history.knownUnits} {unitWord}s with a known cost, {window.since} to {window.until}
         {left > 0 ? ` (${left} left out)` : ""}: cost per {unitWord} median {credits(unitCost.p50)}, p90 {credits(unitCost.p90)} AI Credits.
