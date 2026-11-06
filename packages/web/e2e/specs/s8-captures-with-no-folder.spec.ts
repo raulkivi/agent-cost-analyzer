@@ -17,7 +17,7 @@ test("S8: a capture rule moves mitmproxy's Unattributed sessions into a reposito
 
   await chooseOption(page, "Dashboard view", "Billing");
   await page.getByRole("button", { name: "Edit projects" }).click();
-  await expect(page.getByText(/sessions are Unattributed:.*mitmproxy|sessions are Unattributed:/)).toBeVisible();
+  await expect(page.getByText(/(1 session is|sessions are) Unattributed:/)).toBeVisible();
   await page.getByRole("button", { name: "Add a capture rule" }).click();
   await page.getByRole("textbox", { name: "Capture files (glob)" }).fill("~/.config/agent-cost-analyzer/mitmproxy-captures/*.har");
   await page.getByRole("combobox", { name: "Repository for these captures" }).selectOption("github.com/acme/billing");
