@@ -50,3 +50,10 @@ describe("the products' differences in the instructions (step 15.13)", () => {
     expect(COPILOT_MCP_IDENTITY.instructions).not.toMatch(/Claude Code|\bpi\b|mitmproxy/i);
   });
 });
+
+describe("deepLinkBase", () => {
+  it("is the extension's vscode:// URI on the Copilot identity only", () => {
+    expect(COPILOT_MCP_IDENTITY.deepLinkBase).toBe("vscode://raulkivi.ai-credits-analyzer");
+    expect(STANDALONE_MCP_IDENTITY.deepLinkBase).toBeUndefined();
+  });
+});
