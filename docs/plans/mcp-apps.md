@@ -383,6 +383,36 @@ the kicker style and the accent ramp carry it.
 U2 and U3 follow the same header, kicker and footer, and use the same
 `StatTile` row and table grammar as the web Dashboard.
 
+### 5.6 Mock-ups
+
+The §5.5 wireframe fixes the content, not the look. Each increment
+starts with mock-up boards that the owner approves before any view code,
+as Phase 14 (step 14.6) and Phase 15 (step 15.8) did.
+
+- **Where:** `docs/plans/mockups/mcp-apps/`, in the same `.dc.html`
+  board format as `mockups/cost-by-project/` and `mockups/session-replay/`.
+- **Frames:** each view is drawn inside a VS Code Copilot Chat frame and
+  a Claude Desktop frame, inline at about 560–640 px, in light and dark.
+  The frames use the host variables the A0 spike recorded, so the boards
+  show what each host really sends, not a guess. That is why the MVP
+  boards come after A0. Billing views (U14, U15) are drawn in the Claude
+  Desktop frame only.
+- **What each board must show:** the brand layering (§5.1), the in-place
+  drill-down and its back control, and the labels the display rules
+  require: "Unknown", partial coverage, "simulated", "estimate",
+  "inferred", and the extension's "no projects" reason.
+- **States boards** cover the cases a single happy-path board hides:
+  unknown and partial figures, errors, narrow width, and no deep link
+  (the standalone server).
+- **What they don't prove:** real rendering in each host. The owner's
+  manual checks (A16, A24, A33) do that.
+
+| Task | Boards | Approved before |
+|---|---|---|
+| A0b | U1, U2, U3; MVP states | A9, A11 |
+| A17b | U9 (repository, project), U10, U11, drill-down; "no projects" | A20, A22 |
+| A25b | U12 (both modes), U4, U5; states for U13–U15 | A27–A30 |
+
 ## 6. Security (threat-model.md §6 to be updated)
 
 - **Same data, same redaction.** The views only show what the tools
@@ -420,6 +450,7 @@ fewer, an exact spec, and acceptance tests the local agent never sees.
 | # | Task | Complexity | Model | Depends on |
 |---|---|---|---|---|
 | A0 | **Spike** (1 day, time-boxed). A hard-coded view on `get_session_cost` in VS Code Copilot Chat and Claude Desktop. Record: the host variables each sends, whether `toolInfo` is present, `local()` fonts, `openLink` to `vscode://`, app-initiated `tools/call` approval prompts, display modes, High Contrast. Results go into §9. | medium | Sonnet | — |
+| A0b | **MVP mock-ups** (§5.6): U1, U2 and U3 in a VS Code Copilot Chat frame and a Claude Desktop frame, light and dark, using the host variables A0 recorded; one states board (Unknown, partial coverage, error, narrow width, no deep link). The owner approves them before A9. | medium | Sonnet (frontend-design skill) + owner | A0 |
 | A1 | `turnSeriesSchema` in `packages/domain/src/cost.ts`, and `buildTurnSeries(session: Session, maxTurns = 500): TurnSeries` in `services/cost/turn-series-builder.ts` | low | setup6 | — |
 | A2 | `injectBrand(html: string, brand: ViewBrand): string` in `mcp/apps/inject-brand.ts`. Throws when the placeholder is missing; escapes HTML attribute characters. | low | setup6 | — |
 | A3 | `McpIdentity.deepLinkBase` (Copilot identity only), `toViewBrand(identity, version)`, and the icon SVG exported from `mcp-branding.ts` | low | Haiku | A2 |
@@ -428,9 +459,9 @@ fewer, an exact spec, and acceptance tests the local agent never sees.
 | A6 | Theme layering: `theme-mcp-host.css`, `brand.css`, contrast tests (text ≥ 4.5:1, marks ≥ 3:1) against the fallbacks and against recorded VS Code and Claude variable sets from A0, light and dark | medium | Sonnet (frontend-design skill) | A0, A5 |
 | A7 | View models: `toSessionCostViewModel`, `toCostRollupViewModel`, `toFindingsViewModel` (§4.3), one run each | low | setup6 | A1, A5 |
 | A8 | Server group `registerAppViews`, `ViewSource`/`FileViewSource`, `get_turn_series`, `_meta.ui` on three tools. In-memory client tests: `tools/list` metadata, `resources/read` MIME type and the injected brand, unchanged `content`. | medium | Sonnet | A1, A2, A3 |
-| A9 | U1 `SessionCostView`, with the turn drill-down and the deep-link button | medium | Sonnet | A6, A7, A8 |
+| A9 | U1 `SessionCostView`, with the turn drill-down and the deep-link button | medium | Sonnet | A0b, A6, A7, A8 |
 | A10 | U2 `CostRollupView`, with in-place drill-down into U1 | medium | Sonnet | A9 |
-| A11 | U3 `FindingsView`, with filters | medium | Sonnet | A6, A7, A8 |
+| A11 | U3 `FindingsView`, with filters | medium | Sonnet | A0b, A6, A7, A8 |
 | A12 | Deep link: the extension's URI handler and `onUri` activation (§4.4), with unit tests for parameter validation and an integration test | medium | Sonnet | A0 |
 | A13 | Packaging: build order (views before extension and server), `dist/mcp-apps/views.html` in the `.vsix` (asserted by the package-contents test), `scripts/mcp-server.sh` serving the standalone build | medium | Sonnet | A8 |
 | A14 | Accessibility and security review of the views: axe in the component tests, keyboard drill-down, the no-forwarding rule (§6) as a test over every `sendMessage` call site | medium | Opus | A9–A11 |
@@ -446,12 +477,13 @@ Starts after the MVP's exit criterion is met (A16).
 
 | # | Task | Complexity | Model | Depends on |
 |---|---|---|---|---|
+| A17b | **Increment 2 mock-ups** (§5.6): U9 for a repository and a project, U10, U11, the U10 → U9 → U1 drill-down, and the extension's "no projects" state, in both host frames, light and dark. The owner approves them before A20. | medium | Sonnet (frontend-design skill) + owner | A16 |
 | A17 | `packages/web` exports for the Phase 14/15 presentational modules (§4.5). Where a tab mixes rendering with fetching, split the rendering out first. A pure refactor: typecheck and the web and e2e tests stay green. | medium | Sonnet | A16 |
 | A18 | View models `toCostSeriesViewModel`, `toCostComparisonViewModel` and `toCostVarianceViewModel` (§4.5), one run each, with the basis, currency and "no earlier figure" rules | low | setup6 | A16 |
 | A19 | `registerAppViews` takes the registered tool names and adds `_meta.ui` to `get_repository_cost`, `get_project_cost`, `compare_costs` and `explain_cost_change`. In-memory client tests over both tool-group sets: metadata present only for registered tools, `content` unchanged. | medium | Sonnet | A16 |
-| A20 | U9 `CostOverTimeView`: series chart with price-change markers, project breakdowns, top sessions drilling into U1, and the extension's "no projects" reason | medium | Sonnet | A17, A18, A19 |
+| A20 | U9 `CostOverTimeView`: series chart with price-change markers, project breakdowns, top sessions drilling into U1, and the extension's "no projects" reason | medium | Sonnet | A17, A17b, A18, A19 |
 | A21 | U10 `CostCompareView`, with in-place drill-down into U9 | medium | Sonnet | A20 |
-| A22 | U11 `CostChangeView`: waterfall, per-model table, not-explained turns | medium | Sonnet | A17, A18, A19 |
+| A22 | U11 `CostChangeView`: waterfall, per-model table, not-explained turns | medium | Sonnet | A17, A17b, A18, A19 |
 | A23 | Accessibility and security review of U9–U11 (as A14), and docs: User Guide, extension guide, both CHANGELOGs | medium | Opus | A21, A22 |
 | A24 | Owner's manual checks of U9–U11 in VS Code Copilot Chat and Claude Desktop, light and dark | — | owner | A23 |
 
@@ -461,12 +493,13 @@ Starts after Increment 2's exit criterion is met (A24).
 
 | # | Task | Complexity | Model | Depends on |
 |---|---|---|---|---|
+| A25b | **Increment 3 mock-ups** (§5.6): U12 in compare and replay modes (with a failed self-check), U4 and U5 in both host frames, light and dark; one states board for U13, U14 and U15 (documented vs inferred changes, an issued statement with a diff, an estimate range and a refusal), drawn in the Claude Desktop frame only for U14/U15. The owner approves them before A27. | medium | Sonnet (frontend-design skill) + owner | A24 |
 | A25 | View models `toReplayViewModel`, `toPriceChangesViewModel`, `toStatementViewModel` and `toEstimateViewModel` (§4.5), one run each, with tests that the "simulated", "inferred" and "estimate" labels are always there | low | setup6 | A24 |
 | A26 | `_meta.ui` on `replay_session`, `compare_models_for_session`, `get_price_changes`, `get_statement`, `estimate_cost`, `get_session_audit`, `get_audit_rollup` and `list_sessions`. The test asserts that the extension's `tools/list` names no billing view. | medium | Sonnet | A24 |
-| A27 | U12 `ReplayView`, compare and replay modes, with the self-check status | medium | Sonnet | A25, A26 |
-| A28 | U13 `PriceChangesView`, and the U11 → U13 drill-down | medium | Sonnet | A25, A26 |
-| A29 | U14 `StatementView` and U15 `EstimateView`, standalone only, read-only | medium | Sonnet | A25, A26 |
-| A30 | U4 `AuditView` and U5 `SessionPickerView` (the picker sends only the fixed "Analyse session <id>" template) | medium | Sonnet | A26 |
+| A27 | U12 `ReplayView`, compare and replay modes, with the self-check status | medium | Sonnet | A25, A25b, A26 |
+| A28 | U13 `PriceChangesView`, and the U11 → U13 drill-down | medium | Sonnet | A25, A25b, A26 |
+| A29 | U14 `StatementView` and U15 `EstimateView`, standalone only, read-only | medium | Sonnet | A25, A25b, A26 |
+| A30 | U4 `AuditView` and U5 `SessionPickerView` (the picker sends only the fixed "Analyse session <id>" template) | medium | Sonnet | A25b, A26 |
 | A31 | Fullscreen mode for U2 and U9 (`requestDisplayMode`) | low | Haiku | A26 |
 | A32 | Accessibility and security review of A27–A31 (as A14), and docs: architecture.md, threat-model.md §6, User Guide, extension guide, both CHANGELOGs | medium | Opus | A27–A31 |
 | A33 | Owner's manual checks of Increment 3: VS Code Copilot Chat (no U14/U15 there) and Claude Desktop, light and dark | — | owner | A32 |
@@ -514,6 +547,7 @@ sections ships first, as extension 0.3.0 and app 0.10.0.
 - Unknown figures show "Unknown", never 0, in every view (constraint 6).
 - Every view model and `injectBrand` has unit tests. The contrast tests
   pass for the fallbacks and for each recorded host variable set.
+- The views match the owner-approved A0b boards.
 
 ### 8.2 Increment 2 (U9–U11)
 
@@ -526,6 +560,7 @@ sections ships first, as extension 0.3.0 and app 0.10.0.
   unknown period never reads "from 0".
 - `tools/list` keeps the same tool count. Only `_meta.ui` is added, on
   the four tools.
+- The views match the owner-approved A17b boards.
 
 ### 8.3 Increment 3 (U4, U5, U12–U15)
 
@@ -536,6 +571,7 @@ sections ships first, as extension 0.3.0 and app 0.10.0.
 - U4 and U5 render in both hosts. The picker sends only its fixed
   template.
 - No view can write anything (§6).
+- The views match the owner-approved A25b boards.
 
 ## 9. Open questions and risks
 
@@ -550,6 +586,7 @@ sections ships first, as extension 0.3.0 and app 0.10.0.
 | Bundle size (React, d3 parts) | Slow first render | Budget test in A5 |
 | A shorter `content` for UI-capable clients would save model tokens | Changes what the model sees per host | Follow-up decision (§11) |
 | Tabs that mix fetching and rendering (Phase 15's Dashboard tabs, `CompareModelsView`, `EstimatePanel`) | The split in A17 grows into a web refactor | A17 splits only what U9–U15 render. Anything else stays. |
+| Mock-ups drawn before A0 would guess the host variables | Boards redrawn | A0b starts after A0 and uses its recorded variables |
 | Bundle size with the Increment 2/3 views | Over the 450 KB budget | Lazy route chunks inlined into the single file, or a raised budget, decided at A20 |
 | Approval prompts on view-initiated calls to model-visible tools (U9–U12 drill-down) | Each click asks the user | A0 records the behaviour. If it prompts, the view says so before the first drill-down. |
 

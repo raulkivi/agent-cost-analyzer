@@ -1363,6 +1363,10 @@ unchanged.
 - One-day spike in VS Code Copilot Chat and Claude Desktop. It records
   the host style variables each sends, `toolInfo`, `vscode://` links and
   approval prompts.
+- Mock-up boards in `docs/plans/mockups/mcp-apps/`, drawn in both host
+  frames in light and dark and approved by the owner before any view
+  code: the MVP's after the spike, and one set at the start of each
+  increment (plan §5.6).
 - Server: a `registerAppViews` tool group with:
   - one `ui://` resource (`text/html;profile=mcp-app`) that the
     `ViewSource` port serves, with the product brand injected from
