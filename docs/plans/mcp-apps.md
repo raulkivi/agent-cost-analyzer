@@ -212,7 +212,13 @@ Drill-downs reuse the same host-mediated path for every view (§4.3, §4.5).
 
 ### 4.4 Deep link (extension)
 
-**A0 result (2026-11-07):** both hosts refuse `openLink` to `vscode://`, so A12 is dropped and the view's button copies a command instead. The copied text is `AI Credits Analyzer: Open Session <id>` (the owner adopted the A0b placeholder, 2026-11-07); the user pastes it into the Command Palette. The standalone product shows no button. The rest of this section is kept for a host that later allows `vscode://`.
+**A0 result (2026-11-07):** both hosts refuse `openLink` to `vscode://`, so A12 is dropped and the view's button copies a command instead. The copied text was first `AI Credits Analyzer: Open Session <id>` (the A0b placeholder). A15 found that this cannot work: the Command Palette matches command titles only and passes no argument, and `aiCreditsAnalyzer.openSession` was hidden from it.
+
+**Owner decision (2026-11-07), option A:** the extension shows **"AI Credits Analyzer: Open Session…"** in the Command Palette. Run without a session, it opens a QuickPick of the sessions, newest first, filterable by title and id. The view's button copies the **session title**, and its hint says to run that command and paste the title. Claude Desktop and the standalone product show no button.
+
+**Follow-up, option B (after the MVP):** a one-click "Open in AI Credits Analyzer". The view calls an app-only tool, and the MCP server hands the request to the extension over a new local channel, which then opens the panel. That channel is new attack surface and needs a threat-model entry, so it is listed in §11.
+
+The rest of this section is kept for a host that later allows `vscode://`. The rest of this section is kept for a host that later allows `vscode://`.
 
 - The extension adds `window.registerUriHandler` and the `onUri`
   activation event.
@@ -625,6 +631,9 @@ Revisit if Copilot Chat or Claude adopts it.
 - Learn-mode explainer cards in the chat (U8).
 - A remote server for claude.ai or ChatGPT. It conflicts with constraint 1.
 - Any write action from a view.
+- One-click "Open in AI Credits Analyzer" from U1 (§4.4 option B): an
+  app-only tool plus a local server-to-extension channel. It replaces the
+  copy-and-pick flow and needs a threat-model entry for the new channel.
 
 ## Sources
 
