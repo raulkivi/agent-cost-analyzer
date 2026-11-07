@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import type { HostEvent } from "@agent-cost-analyzer/domain";
 import { createExtensionApiService } from "@agent-cost-analyzer/server/src/composition/create-extension-api-service";
+import { createSessionAttributor } from "@agent-cost-analyzer/server/src/composition/create-session-attributor";
 import { ExtensionCommands } from "./commands/extension-commands.js";
 import { watchConfigChanges, watchExtensionChanges, type ConfigurationChangeSource, type ExtensionsChangeSource } from "./config/config-change-watcher.js";
 import type { Translate } from "./l10n/localize.js";
@@ -21,6 +22,7 @@ import { copilotDebugLogsDirPaths, copilotLogPathsFromUserDataDir } from "./plat
 import { userDataDirFromGlobalStorage } from "./platform/vscode-user-data-dir.js";
 import { SidebarController } from "./sidebar/sidebar-controller.js";
 import { GlobalStateAppSettingsStore, type Memento } from "./settings/global-state-app-settings-store.js";
+import { GlobalStateSessionsGroupingStore } from "./settings/global-state-sessions-grouping-store.js";
 import { VscodeSettingsSource, type ConfigurationReader, type ExtensionsReader } from "./vscode/vscode-settings-source.js";
 import { createVscodeWebviewPanel } from "./vscode/vscode-webview-panel.js";
 
@@ -141,9 +143,16 @@ export function composeExtension({
     onPageLoad: () => timings.pageLoading(),
   });
 
+  // Step 15.14 (plan §11.9): each session's repository from its folder, as
+  // the Dashboard's attribution resolves it; repositories need no vendors.
+  const attributor = createSessionAttributor({ vendorProfiles: [] });
   const sidebar = new SidebarController(
     {
       listSessions: () => api.listSessions(),
+      attributeRepositories: (sessions) => {
+        const snapshot = attributor.snapshot();
+        return new Map(sessions.map((session) => [session.id, snapshot.repository(session)]));
+      },
       listLearnScenarios: () => api.listLearnScenarios(),
       getConfigStatus: () => api.getConfigStatus(),
       relistLogSources: () => {
@@ -152,6 +161,7 @@ export function composeExtension({
     },
     {
       translate,
+      grouping: new GlobalStateSessionsGroupingStore(globalState, (error) => console.error("AI Credits Analyzer: could not save the Sessions grouping", error)),
       onInternalError: (source, error) => console.error(`AI Credits Analyzer: ${source} failed`, error),
       timing: {
         now: () => globalThis.performance.now(),

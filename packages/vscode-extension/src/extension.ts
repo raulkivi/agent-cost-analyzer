@@ -48,7 +48,9 @@ export function activate(context: vscode.ExtensionContext): void {
     }
   }
   context.subscriptions.push(
-    registerSessionsView<vscode.TreeItem>(vscode, extension.sidebar, vscode.l10n.t),
+    registerSessionsView<vscode.TreeItem>(vscode, extension.sidebar, vscode.l10n.t, {
+      setContext: (key, value) => void vscode.commands.executeCommand("setContext", key, value),
+    }),
     registerLearnView<vscode.TreeItem>(vscode, extension.sidebar, vscode.l10n.t),
     registerSetupView<vscode.TreeItem>(vscode, extension.sidebar),
     registerStatusBar(vscode, extension.sidebar),

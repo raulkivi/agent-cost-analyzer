@@ -14,7 +14,7 @@ import {
 import { InMemoryAppSettingsStore } from "@agent-cost-analyzer/server/src/test-support/in-memory-app-settings-store";
 import { copilotLogPathsFromUserDataDir } from "../platform/copilot-log-paths.js";
 import { upperCaseTranslate } from "../l10n/upper-case-translate.js";
-import { SidebarController, type SidebarSources } from "./sidebar-controller.js";
+import { SidebarController, type SessionsGrouping, type SidebarSources } from "./sidebar-controller.js";
 
 const NOW = new Date("2026-10-24T15:00:00Z");
 
@@ -224,6 +224,89 @@ describe("SidebarController", () => {
 
     expect(extra).not.toHaveBeenCalled();
     expect(onChange).toHaveBeenCalled();
+  });
+});
+
+// Phase 15 step 15.14 (plan §11.9): Group by day or by repository.
+describe("SidebarController grouping", () => {
+  const PORTAL = { attributed: true as const, repository: { key: "github.com/example/portal-web", source: "git-remote" as const } };
+
+  function groupingSetup(
+    stored: SessionsGrouping | undefined,
+    attributeRepositories?: SidebarSources["attributeRepositories"],
+    listSessions: SidebarSources["listSessions"] = async () => [session("a", 4), session("b", null)],
+  ) {
+    const store = { value: stored, read: vi.fn(() => store.value), write: vi.fn((grouping: SessionsGrouping) => void (store.value = grouping)) };
+    const onInternalError = vi.fn();
+    const sources: SidebarSources = {
+      relistLogSources: () => {},
+      listSessions,
+      getConfigStatus: async () => status([]),
+      listLearnScenarios: async () => [],
+      ...(attributeRepositories ? { attributeRepositories } : {}),
+    };
+    const controller = new SidebarController(sources, { now: () => NOW, timeZone: "UTC", grouping: store, onInternalError });
+    const onChange = vi.fn();
+    controller.onDidChange(onChange);
+    return { controller, store, onChange, onInternalError };
+  }
+
+  it("groups by day unless a grouping was saved", async () => {
+    const { controller } = groupingSetup(undefined);
+    await controller.refresh();
+
+    expect(controller.sessionsGrouping()).toBe("day");
+    expect(controller.sessionsTree().map((node) => node.kind === "group" && node.label)).toEqual(["Today"]);
+  });
+
+  it("groups by repository with the saved choice, over the repositories resolved in the refresh", async () => {
+    const attribute = vi.fn((sessions: Session[]) => new Map(sessions.filter((s) => s.id === "a").map((s) => [s.id, PORTAL])));
+    const { controller } = groupingSetup("repository", attribute);
+    await controller.refresh();
+
+    expect(controller.sessionsGrouping()).toBe("repository");
+    expect(controller.sessionsTree().map((node) => node.kind === "group" && [node.label, node.children.map((child) => child.sessionId)])).toEqual([
+      ["github.com/example/portal-web", ["a"]],
+      ["No repository", ["b"]],
+    ]);
+    expect(attribute).toHaveBeenCalledTimes(1);
+  });
+
+  it("switches the grouping, saves it and announces it without reading the sessions again", async () => {
+    const listSessions = vi.fn(async () => [session("a", 4)]);
+    const { controller, store, onChange } = groupingSetup(undefined, () => new Map([["a", PORTAL]]), listSessions);
+    await controller.refresh();
+    onChange.mockClear();
+    listSessions.mockClear();
+
+    controller.setSessionsGrouping("repository");
+
+    expect(store.write).toHaveBeenCalledWith("repository");
+    expect(controller.sessionsGrouping()).toBe("repository");
+    expect(onChange).toHaveBeenCalledTimes(1);
+    expect(listSessions).not.toHaveBeenCalled();
+  });
+
+  it("puts every session in No repository, with the reason, when repositories can't be resolved", async () => {
+    const { controller, onInternalError } = groupingSetup("repository", () => {
+      throw new Error("git on fire");
+    });
+    await controller.refresh();
+
+    const [group] = controller.sessionsTree();
+    expect(group?.kind === "group" && [group.label, group.tooltip]).toEqual(["No repository", "No repository\n2 sessions · 4.00 AI Credits · 1 unknown\nThe repository couldn't be read."]);
+    expect(onInternalError).toHaveBeenCalledWith("attributeRepositories", expect.objectContaining({ message: "git on fire" }));
+  });
+
+  it("shows the load error whatever the grouping", async () => {
+    const { controller } = groupingSetup("repository");
+    const failing = new SidebarController(
+      { relistLogSources: () => {}, listSessions: async () => Promise.reject(new Error("x")), getConfigStatus: async () => status([]), listLearnScenarios: async () => [] },
+      { now: () => NOW, grouping: { read: () => "repository", write: () => {} } },
+    );
+    await Promise.all([controller.refresh(), failing.refresh()]);
+
+    expect(failing.sessionsTree()).toMatchObject([{ kind: "message", icon: "error" }]);
   });
 });
 

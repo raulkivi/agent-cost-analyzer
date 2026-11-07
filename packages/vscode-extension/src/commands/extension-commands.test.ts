@@ -27,7 +27,7 @@ function statusWith(...settingIds: string[]): ConfigStatus {
 
 function setup(readConfigStatus: () => Promise<ConfigStatus> = async () => statusWith(LOGGING_SETTING)) {
   const panel = { open: vi.fn(), postWhenReady: vi.fn() };
-  const sidebar = { refresh: vi.fn(async () => undefined) };
+  const sidebar = { refresh: vi.fn(async () => undefined), setSessionsGrouping: vi.fn() };
   const hostCommands = { openSetting: vi.fn(async () => undefined) };
   const walkthrough = { open: vi.fn(async () => undefined) };
   const commands = new ExtensionCommands({ panel, sidebar, hostCommands, walkthrough, readConfigStatus });
@@ -37,6 +37,20 @@ function setup(readConfigStatus: () => Promise<ConfigStatus> = async () => statu
 const selectSession = (payload: unknown) => ({ kind: "event", name: "selectSession", payload });
 
 describe("ExtensionCommands", () => {
+  // Step 15.14 (plan §11.9): the Sessions view's grouping toggle.
+  describe("groupSessionsByRepository and groupSessionsByDay", () => {
+    it("regroup the Sessions view without reading the sessions again", () => {
+      const { commands, sidebar } = setup();
+      const handlers = commands.handlers();
+
+      handlers[COMMAND_IDS.groupSessionsByRepository]!();
+      handlers[COMMAND_IDS.groupSessionsByDay]!();
+
+      expect(sidebar.setSessionsGrouping.mock.calls).toEqual([["repository"], ["day"]]);
+      expect(sidebar.refresh).not.toHaveBeenCalled();
+    });
+  });
+
   describe("openWalkthrough", () => {
     it("opens the Get Started walkthrough and nothing else", async () => {
       const { commands, walkthrough, panel } = setup();
@@ -264,7 +278,7 @@ describe("ExtensionCommands error messages (vscode-extension.md §3.5 Localizati
     const panel = { open: vi.fn(), postWhenReady: vi.fn() };
     const commands = new ExtensionCommands({
       panel,
-      sidebar: { refresh: async () => undefined },
+      sidebar: { refresh: async () => undefined, setSessionsGrouping: () => undefined },
       hostCommands: { openSetting: async () => undefined },
       walkthrough: { open: async () => undefined },
       readConfigStatus: async () => statusWith(LOGGING_SETTING),

@@ -187,6 +187,42 @@ describe("registerSessionsView", () => {
     expect(provider.getTreeItem(second).description).toBe("AI Credits unknown");
   });
 
+  // Step 15.14 (plan §11.9): grouped by repository, a group says what it holds.
+  it("shows a repository group with its tooltip", async () => {
+    const { api, views } = fakeVscode();
+    const controller = new SidebarController(
+      {
+        relistLogSources: () => undefined,
+        listSessions: async () => [session("a", 4.82)],
+        listLearnScenarios: async () => [],
+        getConfigStatus: async () => ({ checkedAt: "x", vscodeUserSettingsPath: null, loggingEnabled: true, maxRetainedSessionLogs: 200, minRetainedSessionLogsThreshold: 200, warnings: [] }),
+        attributeRepositories: () => new Map([["a", { attributed: true as const, repository: { key: "github.com/example/portal-web", source: "git-remote" as const } }]]),
+      },
+      { now: () => new Date("2026-10-24T15:00:00Z"), timeZone: "UTC", grouping: { read: () => "repository", write: () => {} } },
+    );
+    registerSessionsView(api, controller);
+    await controller.refresh();
+    const [group] = views[0]!.provider.getChildren();
+
+    expect(views[0]!.provider.getTreeItem(group)).toMatchObject({
+      label: "github.com/example/portal-web",
+      description: "4.82",
+      tooltip: "github.com/example/portal-web\n1 session · 4.82 AI Credits",
+      id: "group:repository:github.com/example/portal-web",
+    });
+  });
+
+  it("keeps the grouping context key in step, so the view title offers the other grouping", async () => {
+    const { api } = fakeVscode();
+    const { controller } = controllerWith();
+    const setContext = vi.fn();
+    registerSessionsView(api, controller, undefined, { setContext });
+
+    expect(setContext).toHaveBeenLastCalledWith("aiCreditsAnalyzer.sessionsGrouping", "day");
+    controller.setSessionsGrouping("repository");
+    expect(setContext).toHaveBeenLastCalledWith("aiCreditsAnalyzer.sessionsGrouping", "repository");
+  });
+
   it("collapses a group that isn't Today or Yesterday", async () => {
     const { api, views } = fakeVscode();
     const { controller } = controllerWith({ sessions: [{ ...session("a", 1), startedAt: "2026-09-01T09:00:00Z" }] });

@@ -18,6 +18,8 @@
   "welcome.learn": "Sample sessions that show how prompt caching, compaction, model switches and other events change what a turn costs. Pick one to see it turn by turn.\n[Open Learn mode](command:aiCreditsAnalyzer.openLearnMode)",
   "welcome.setup": "No setup problems found. Agent Host chats (the VS Code default) need no setting. Local harness chats record token data only while Copilot Chat debug logging is on and enough sessions are kept.\n[Review the debug logging setting](command:aiCreditsAnalyzer.fixSetting)",
   "command.openWalkthrough.title": "Open Get Started Walkthrough",
+  "command.groupSessionsByRepository.title": "Group Sessions by Repository",
+  "command.groupSessionsByDay.title": "Group Sessions by Day",
   "walkthrough.step.enableLogging.altText": "A settings switch for Copilot Chat debug logging turned on.",
   "walkthrough.step.enableLogging.title": "Enable Copilot Chat debug logging",
   "walkthrough.step.enableLogging.description": "Local harness chats record token and AI Credits data only while debug logging is on. Agent Host chats (the VS Code default) need no setting. Turn it on for Local harness chats, then start a chat.\n[Open the setting](command:aiCreditsAnalyzer.fixSetting?%5B%22github.copilot.chat.agentDebugLog.fileLogging.enabled%22%5D)",
