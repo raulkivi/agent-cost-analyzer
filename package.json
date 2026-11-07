@@ -21,6 +21,7 @@
     "packages/domain",
     "packages/server",
     "packages/web",
+    "packages/mcp-apps",
     "packages/pi-system-prompt-logger",
     "packages/vscode-extension"
   ],
