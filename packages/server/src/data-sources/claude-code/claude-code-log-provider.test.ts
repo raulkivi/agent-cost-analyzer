@@ -150,6 +150,54 @@ describe("ClaudeCodeLogProvider", () => {
     ]);
   });
 
+  // Phase 14 step 14.2: the per-request trace a replay reads.
+  describe("readRequestTrace", () => {
+    const idOf = (file: string) => computeClaudeCodeFileHash(path.join(fixturesDir, "-home-dev-project", `${file}.jsonl`));
+
+    it("gives one record per request in the session's own turns", async () => {
+      const provider = new ClaudeCodeLogProvider({ projectsDirPath: fixturesDir });
+
+      const trace = await provider.readRequestTrace(idOf("normal-session"));
+
+      expect(trace?.requests.map((r) => [r.turnIndex, r.uncachedInput, r.cacheRead, r.cacheWrite, r.output])).toEqual([
+        [0, 1250, 1500, 300, 120],
+        [0, 15, 1800, 0, 340],
+        [1, 1900, 3200, 150, 210],
+      ]);
+      expect(trace?.notTraced).toEqual([]);
+      // Its turns are the session's: the same count as readSession's.
+      const session = await provider.readSession(idOf("normal-session"));
+      expect(new Set(trace?.requests.map((r) => r.turnIndex)).size).toBe(session?.turns.length);
+    });
+
+    it("follows only the active branch of a forked session", async () => {
+      const provider = new ClaudeCodeLogProvider({ projectsDirPath: fixturesDir });
+
+      const trace = await provider.readRequestTrace(idOf("forked-session"));
+
+      expect(trace?.requests.map((r) => [r.turnIndex, r.uncachedInput, r.cacheRead])).toEqual([
+        [0, 300, 100],
+        [1, 420, 500],
+        [1, 90, 900],
+      ]);
+    });
+
+    it("lists a turn without usage as not traced, with the reason", async () => {
+      const provider = new ClaudeCodeLogProvider({ projectsDirPath: fixturesDir });
+
+      const trace = await provider.readRequestTrace(idOf("no-usage-session"));
+
+      expect(trace?.requests).toEqual([]);
+      expect(trace?.notTraced).toHaveLength(1);
+    });
+
+    it("returns null for an unknown session id", async () => {
+      const provider = new ClaudeCodeLogProvider({ projectsDirPath: fixturesDir });
+
+      await expect(provider.readRequestTrace("does-not-exist")).resolves.toBeNull();
+    });
+  });
+
   describe("readTurnDetail", () => {
     it("returns rounds for a known session/turn", async () => {
       const provider = new ClaudeCodeLogProvider({ projectsDirPath: fixturesDir });
