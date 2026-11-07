@@ -173,3 +173,79 @@ describe("translation (vscode-extension.md §3.5 Localization)", () => {
     });
   });
 });
+
+// Phase 15 step 15.14 (plan §11.9, board 7): today's AI Credits for the
+// current workspace's repository, with every repository's in the tooltip.
+describe("buildTodayStatus for the workspace's repository", () => {
+  const PORTAL = "github.com/example/portal-web";
+  const BILLING = "github.com/example/billing-api";
+  const SCRATCH = "local:/home/dev/scratch";
+  const KEYS: Record<string, string> = { portal: PORTAL, billing: BILLING, scratch: SCRATCH };
+  const repositoryOf = (s: Session) => {
+    const key = KEYS[s.id.split("-")[0]!];
+    return key
+      ? { attributed: true as const, repository: { key, source: "git-remote" as const } }
+      : { attributed: false as const, reason: "No folder." };
+  };
+  const sessions = [
+    session("portal-1", TODAY, 40),
+    session("portal-2", TODAY, 8.2),
+    session("billing-1", TODAY, 13.55),
+    session("none-1", TODAY, null),
+    session("portal-old", YESTERDAY, 100),
+  ];
+
+  it("shows the workspace repository's known total, and every repository's in the tooltip", () => {
+    const status = buildTodayStatus(sessions, NOW, "UTC", undefined, { repositoryKeys: [PORTAL], repositoryOf });
+
+    expect(status).toEqual({
+      text: "$(graph) portal-web 48.20 AI Credits today",
+      tooltip: "AI Credits today\nportal-web (this workspace): 48.20\nAll repositories: 61.75\n3 of 4 sessions today have cost data",
+      ariaLabel: "AI Credits today: 48.20 in portal-web, 61.75 in all repositories, 3 of 4 sessions today have cost data. Open analyzer.",
+    });
+  });
+
+  it("names a local repository by its folder only", () => {
+    const status = buildTodayStatus([session("scratch-1", TODAY, 1)], NOW, "UTC", undefined, { repositoryKeys: [SCRATCH], repositoryOf });
+
+    expect(status?.text).toBe("$(graph) scratch 1.00 AI Credits today");
+    expect(JSON.stringify(status)).not.toContain("/home/dev");
+  });
+
+  it("adds up a multi-root workspace's repositories and names the first with how many more", () => {
+    const status = buildTodayStatus(sessions, NOW, "UTC", undefined, { repositoryKeys: [PORTAL, BILLING], repositoryOf });
+
+    expect(status?.text).toBe("$(graph) portal-web +1 61.75 AI Credits today");
+  });
+
+  it("says unknown, never 0, when none of the repository's sessions today has a cost", () => {
+    const status = buildTodayStatus([session("portal-1", TODAY, null), session("billing-1", TODAY, 2)], NOW, "UTC", undefined, { repositoryKeys: [PORTAL], repositoryOf });
+
+    expect(status?.text).toBe("$(graph) portal-web: AI Credits unknown");
+    expect(status?.tooltip.split("\n").slice(1, 3)).toEqual(["portal-web (this workspace): unknown", "All repositories: 2.00"]);
+  });
+
+  it("falls back to every repository's total when the workspace's had no session today, and says so", () => {
+    const status = buildTodayStatus([session("billing-1", TODAY, 2)], NOW, "UTC", undefined, { repositoryKeys: [PORTAL], repositoryOf });
+
+    expect(status?.text).toBe("$(graph) 2.00 AI Credits today");
+    expect(status?.tooltip).toBe("1 of 1 session today has cost data\nportal-web (this workspace): no sessions today");
+  });
+
+  it("is today's total as before with no workspace repository (no folder open, or not in a repository)", () => {
+    expect(buildTodayStatus(sessions, NOW, "UTC", undefined, { repositoryKeys: [], repositoryOf })).toEqual(buildTodayStatus(sessions, NOW, "UTC"));
+  });
+
+  it("translates its text, tooltip and screen-reader label, but not the repository's name", () => {
+    const status = buildTodayStatus(sessions, NOW, "UTC", T, { repositoryKeys: [PORTAL], repositoryOf });
+
+    expect(status?.text).toBe("$(graph) portal-web 48.20 AI CREDITS TODAY");
+    expect(status?.tooltip.split("\n")[1]).toBe("portal-web (THIS WORKSPACE): 48.20");
+  });
+
+  it("carries the workspace's repository into the status bar state", () => {
+    const state = buildStatusBarState({ sessions, now: NOW, warnings: [], timeZone: "UTC", workspace: { repositoryKeys: [PORTAL], repositoryOf } });
+
+    expect(state?.text).toBe("$(graph) portal-web 48.20 AI Credits today");
+  });
+});

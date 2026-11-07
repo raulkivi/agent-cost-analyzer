@@ -11,6 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Cost by repository.** The Sessions view can be grouped by repository
+  (the new toggle in its title bar), each group with its AI Credits. The
+  status bar shows today's AI Credits for the open folder's repository,
+  with every repository's total in its tooltip. The panel's Dashboard
+  gains the *Cost over time* and *Compare* tabs; billing and estimates stay
+  in the standalone Agent Cost Analyzer app.
 - **MCP server: cost by repository.** The server now has 17 read-only tools,
   up from nine. The new ones list the repositories your Copilot sessions
   ran in, give a repository's cost over time, compare repositories, explain

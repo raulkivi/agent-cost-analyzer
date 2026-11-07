@@ -316,8 +316,11 @@ Each step should add its rows to §4 in the same change, as step 15.0 did.
   Apply §5.6 first: opt-in for client names, billing codes and paths. Add the
   planned §10.1.5 security tests (argument injection, redaction) for every new
   tool.
-- **Extension tabs (15.14).** New webview views reuse the existing RPC
-  allow-list; any new method needs the same schema check and a row in §6.
+- **Extension tabs (15.14, done).** The Cost over time and Compare tabs
+  reuse the existing read-only RPC methods; no method was added. The
+  Sessions view's repository groups and the status bar name a local
+  repository by its folder only, never its path (a hashed TreeItem id).
+  Any new method still needs the same schema check and a row in §6.
 - **Phase 12 (MCP Apps views, planned).** Views rendered inside the MCP
   client are a new untrusted-content boundary with their own sandbox and CSP;
   reassess before building.

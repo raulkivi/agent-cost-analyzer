@@ -39,6 +39,20 @@ export class PanelView {
     if (!clicked) throw new Error(`No option "${label}" in the panel`);
   }
 
+  // Step 15.14: the Dashboard's view switch, radios or (below 700 px of the
+  // Dashboard's width) a select.
+  async chooseDashboardView(label: string): Promise<void> {
+    const viaSelect = await browser.execute((text) => {
+      const select = document.querySelector<HTMLSelectElement>("select[aria-label='Dashboard view']");
+      const option = Array.from(select?.options ?? []).find((candidate) => candidate.text === text);
+      if (!select || !option) return false;
+      Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, "value")?.set?.call(select, option.value);
+      select.dispatchEvent(new Event("change", { bubbles: true }));
+      return true;
+    }, label);
+    if (!viaSelect) await this.chooseOption(label);
+  }
+
   showTab(label: string): Promise<void> {
     return this.chooseOption(label);
   }

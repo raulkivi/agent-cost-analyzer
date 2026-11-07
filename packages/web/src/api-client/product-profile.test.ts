@@ -7,7 +7,7 @@ const profile: ProductProfile = {
   productId: "standalone",
   displayName: "Agent Cost Analyzer",
   version: "0.8.0",
-  features: { providerSelect: true, crossProviderInsights: true, settingFixes: false, openInEditor: false, sessionSidebar: false, vendorSimulation: false, costAnalysis: false },
+  features: { providerSelect: true, crossProviderInsights: true, settingFixes: false, openInEditor: false, sessionSidebar: false, vendorSimulation: false, costAnalysis: false, projectsAndBilling: false },
 };
 
 describe("product-profile api-client (vscode-extension.md §3.3)", () => {

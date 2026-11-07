@@ -50,6 +50,8 @@ export function standaloneProductProfile(version: string): ProductProfile {
       vendorSimulation: true,
       // Step 15.9: GET /api/cost/* behind the Dashboard's cost tabs.
       costAnalysis: true,
+      // Steps 15.10-15.12: projects, statements and estimates.
+      projectsAndBilling: true,
     },
   };
 }

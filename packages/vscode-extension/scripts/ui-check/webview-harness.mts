@@ -73,12 +73,14 @@ export interface OpenOptions {
   // Replaces the config check's warnings, to show the banner (the seeded
   // fixture has none).
   configWarnings?: ConfigWarning[];
-  // Step 15.9: the Dashboard's cost tabs, which the extension hides until
-  // step 15.14 (no cost routes yet). For the layout and contrast check the
-  // page gets a profile with costAnalysis on, the cost methods answer the
-  // web package's sample series and comparison, and the Copilot turns are
-  // spread over the sample's three projects so the tabs have something to
-  // compare. Sample data only.
+  // Step 15.9: the Dashboard's cost tabs over sample data. The extension
+  // has Cost over time and Compare from step 15.14 but no Project or Billing
+  // (D7, D19); for the layout and contrast check of the shared UI in VS
+  // Code's themes the page gets a profile with every tab on, the cost
+  // methods answer the web package's sample series and comparison, and the
+  // Copilot turns are spread over the sample's three projects so the tabs
+  // have something to compare. Sample data only. Without this the page has
+  // the extension's real profile and cost routes.
   costTabs?: boolean;
 }
 
@@ -178,7 +180,7 @@ function withCostTabs(reply: unknown, request: unknown, enabled: boolean | undef
   if (!answer?.ok || !answer.result) return reply;
   if (method === "getProductProfile") {
     const profile = answer.result as { features: Record<string, boolean> };
-    return { ...answer, result: { ...profile, features: { ...profile.features, costAnalysis: true } } };
+    return { ...answer, result: { ...profile, features: { ...profile.features, costAnalysis: true, projectsAndBilling: true } } };
   }
   if (method === "getInsights") {
     const dataset = answer.result as { turns: { projectId?: string | null }[] };

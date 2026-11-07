@@ -110,6 +110,9 @@ module.exports = {
   },
   env: { clipboard: { writeText(text) { clipboard.push(text); return Promise.resolve(); } } },
   workspace: {
+    // No folder open (step 15.14's status bar then shows every repository's total).
+    workspaceFolders: undefined,
+    onDidChangeWorkspaceFolders: () => ({ dispose() {} }),
     // Every setting counts as registered, as with Copilot Chat enabled.
     getConfiguration: () => ({ get: (id) => settings[id], inspect: (id) => ({ defaultValue: settings[id] ?? null }) }),
     // A URI is opened through the content provider of its scheme, as VS Code

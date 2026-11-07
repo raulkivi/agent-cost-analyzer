@@ -408,6 +408,10 @@ a { color: var(--color-accent-text); text-underline-offset: 3px; }
      Series colours are the --color-series-* identity tokens with their
      --dash-series-* patterns; text never wears a series colour. — */
 .dashboard-views { align-self: flex-start; max-width: 100%; }
+/* Step 15.14: the extension's switch, with where Project and Billing are. */
+.dashboard-views-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-3); }
+.dashboard-views-row > .view-select { flex: 1 1 12rem; }
+.dashboard-views-note { font-size: 12px; }
 .cost-tab { display: flex; flex-direction: column; gap: var(--space-4); min-width: 0; }
 .cost-filters { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-4); font-size: 13px; }
 .cost-filters .seg { flex-wrap: wrap; }

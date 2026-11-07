@@ -81,6 +81,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A usage-scenario test suite for the standalone app (Playwright, the real
   server over a seeded fixture home at a fixed clock), run by a new
   required `web-e2e` CI job.
+- Cost by repository in the VS Code extension (Phase 15 step 15.14): the
+  Sessions view can be grouped by repository (a title-bar toggle, kept
+  across workspaces), the status bar shows today's AI Credits for the open
+  folder's repository with every repository's total in its tooltip, and
+  the panel's Dashboard has the Cost over time and Compare tabs. A new
+  product flag, `projectsAndBilling`, keeps Project and Billing in this app
+  only; the extension's view switch says where they are. Scenario S9 runs
+  in the `extension-ui` job.
 - MCP across both products (Phase 15 step 15.13): the server's
   instructions now explain the cost workflow (repositories and projects,
   then project cost or a comparison, then why it changed), what billed,

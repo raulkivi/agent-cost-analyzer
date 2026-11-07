@@ -204,7 +204,8 @@ side bar has three views: Sessions, Learn and Setup.
 
 ### Sessions view (`aiCreditsAnalyzer.sessions`)
 
-Your Copilot Chat sessions, grouped by day: **Today**, **Yesterday**, then
+Your Copilot Chat sessions, grouped by day or by repository. By day (the
+default): **Today**, **Yesterday**, then
 dates (YYYY-MM-DD), newest first. Sessions with no start time go in an
 **Undated** group at the end; the extension never makes up a date.
 
@@ -217,7 +218,27 @@ dates (YYYY-MM-DD), newest first. Sessions with no start time go in an
 - Select a session to open the panel on it.
 - Right-click a session for **Open Session**, **Show Tool Audit** and
   **Copy Advice Bundle**.
-- The title bar has **Refresh** and **Open**.
+- The title bar has **Refresh**, **Open** and the grouping toggle:
+  **Group Sessions by Repository** (a repository icon) while sessions are
+  grouped by day, **Group Sessions by Day** (a calendar icon) while they
+  are grouped by repository. The choice is remembered in every workspace.
+
+#### Grouped by repository
+
+Each group is the repository a session's folder belongs to: its remote,
+for example `github.com/example/portal-web`, or a repository with no
+remote by its folder name, for example `scratch (local)` (the full path
+on your machine is never shown). Groups with the highest known AI Credits
+come first, and sessions whose folder isn't known, or isn't in a
+repository, go in a **No repository** group at the end; hover it for the
+reasons.
+
+- A group's row shows the sum of its sessions' known costs and how many
+  are unknown, as a day's row does. It totals every session in the group.
+- Hover a group for its session count and total.
+- Each session's row shows its cost and the day it started (**Today
+  14:02**, **Yesterday** or a date).
+- The group holding your newest session is expanded.
 
 The list loads when VS Code starts, when the view becomes visible, and
 when you select **Refresh**. It doesn't watch files in the background, so
@@ -294,8 +315,25 @@ sessions today have cost data"). Select it to open the panel.
   Select it to open the Setup view.
 - With no sessions today, the item is hidden.
 
-The item updates on each refresh, not on a timer, so after midnight it
-changes on the next refresh.
+When the open folder is in a git repository, the item shows that
+repository's AI Credits today, for example `portal-web 48.20 AI Credits
+today`, and its tooltip adds every repository's total:
+
+```
+AI Credits today
+portal-web (this workspace): 48.20
+All repositories: 61.75
+3 of 4 sessions today have cost data
+```
+
+A repository with no remote is named by its folder only. A multi-root
+workspace adds up its folders' repositories (`portal-web +1`). If the
+workspace's repository has no session today, the item shows every
+repository's total and the tooltip says so. With no folder open, or one
+outside a repository, it shows every repository's total.
+
+The item updates on each refresh, and when you add or remove a workspace
+folder, not on a timer, so after midnight it changes on the next refresh.
 
 ### Selection sync
 
@@ -326,6 +364,8 @@ bar and are hidden from the Command Palette.
 | Fix Setting | `aiCreditsAnalyzer.fixSetting` | Opens the Settings editor on a setting a Setup row names, or the debug-logging setting (side bar and walkthrough only) |
 | Open Learn Mode | `aiCreditsAnalyzer.openLearnMode` | Opens the panel, which starts in Learn mode |
 | Open Get Started Walkthrough | `aiCreditsAnalyzer.openWalkthrough` | Opens the Get Started walkthrough |
+| Group Sessions by Repository | `aiCreditsAnalyzer.groupSessionsByRepository` | Groups the Sessions view by repository |
+| Group Sessions by Day | `aiCreditsAnalyzer.groupSessionsByDay` | Groups the Sessions view by day (the default) |
 
 **Fix Setting** opens only the Copilot Chat logging settings the setup
 check judges and `aiCreditsAnalyzer.mcp.enabled`. Any other setting id is

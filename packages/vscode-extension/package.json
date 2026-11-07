@@ -108,6 +108,18 @@
         "title": "%command.openWalkthrough.title%",
         "category": "%category%",
         "icon": "$(book)"
+      },
+      {
+        "command": "aiCreditsAnalyzer.groupSessionsByRepository",
+        "title": "%command.groupSessionsByRepository.title%",
+        "category": "%category%",
+        "icon": "$(repo)"
+      },
+      {
+        "command": "aiCreditsAnalyzer.groupSessionsByDay",
+        "title": "%command.groupSessionsByDay.title%",
+        "category": "%category%",
+        "icon": "$(calendar)"
       }
     ],
     "viewsContainers": {
@@ -259,6 +271,16 @@
         }
       ],
       "view/title": [
+        {
+          "command": "aiCreditsAnalyzer.groupSessionsByRepository",
+          "when": "view == aiCreditsAnalyzer.sessions && aiCreditsAnalyzer.sessionsGrouping != repository",
+          "group": "navigation@0"
+        },
+        {
+          "command": "aiCreditsAnalyzer.groupSessionsByDay",
+          "when": "view == aiCreditsAnalyzer.sessions && aiCreditsAnalyzer.sessionsGrouping == repository",
+          "group": "navigation@0"
+        },
         {
           "command": "aiCreditsAnalyzer.refreshSessions",
           "when": "view == aiCreditsAnalyzer.sessions",

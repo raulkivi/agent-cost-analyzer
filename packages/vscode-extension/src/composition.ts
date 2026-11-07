@@ -19,8 +19,10 @@ import { MessageDispatcher } from "./rpc/message-dispatcher.js";
 import { resolveCopilotHome } from "@agent-cost-analyzer/server/src/data-sources/agent-host/copilot-cli-paths";
 import { copilotDebugLogsDirPaths, copilotLogPathsFromUserDataDir } from "./platform/copilot-log-paths.js";
 import { userDataDirFromGlobalStorage } from "./platform/vscode-user-data-dir.js";
+import { createRepositorySources } from "./sidebar/repository-sources.js";
 import { SidebarController } from "./sidebar/sidebar-controller.js";
 import { GlobalStateAppSettingsStore, type Memento } from "./settings/global-state-app-settings-store.js";
+import { GlobalStateSessionsGroupingStore } from "./settings/global-state-sessions-grouping-store.js";
 import { VscodeSettingsSource, type ConfigurationReader, type ExtensionsReader } from "./vscode/vscode-settings-source.js";
 import { createVscodeWebviewPanel } from "./vscode/vscode-webview-panel.js";
 
@@ -49,6 +51,9 @@ export interface ExtensionCompositionInput {
   // Opens the Get Started walkthrough: vscode/vscode-walkthrough.ts over the
   // real API.
   walkthrough: WalkthroughLauncher;
+  // The open workspace's folder paths (vscode.workspace.workspaceFolders),
+  // for the status bar's repository (step 15.14); read on every refresh.
+  workspaceFolderPaths(): string[];
 }
 
 export interface ComposedExtension extends Disposable {
@@ -86,6 +91,7 @@ export function composeExtension({
   hostCommands,
   translate,
   walkthrough,
+  workspaceFolderPaths,
 }: ExtensionCompositionInput): ComposedExtension {
   const mediaDir = path.join(extensionPath, "media");
   // Copilot only (vscode-extension.md §3.1). Every log path comes from the
@@ -144,6 +150,8 @@ export function composeExtension({
   const sidebar = new SidebarController(
     {
       listSessions: () => api.listSessions(),
+      // Step 15.14 (plan §11.9): repositories for the grouping and the status bar.
+      ...createRepositorySources(workspaceFolderPaths),
       listLearnScenarios: () => api.listLearnScenarios(),
       getConfigStatus: () => api.getConfigStatus(),
       relistLogSources: () => {
@@ -152,6 +160,7 @@ export function composeExtension({
     },
     {
       translate,
+      grouping: new GlobalStateSessionsGroupingStore(globalState, (error) => console.error("AI Credits Analyzer: could not save the Sessions grouping", error)),
       onInternalError: (source, error) => console.error(`AI Credits Analyzer: ${source} failed`, error),
       timing: {
         now: () => globalThis.performance.now(),

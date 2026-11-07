@@ -12,8 +12,8 @@ merged to `main`. The extension's 0.1.0 is released (tag `ext-v0.1.0`,
 2026-11-03). Open: Phase 10's owner manual checks and decisions (see its
 section), Phase 11 (not started), Phase 12 (planned), Phase 13 (in
 progress: steps 13.0-13.10 built, 13.5a calibration open), Phase 14
-(planned after 13) and Phase 15 (in progress: steps 15.0-15.13 done,
-15.14-15.15 open). A proposed plan,
+(planned after 13) and Phase 15 (in progress: steps 15.0-15.14 done,
+15.15 open). A proposed plan,
 [plans/classic-subagent-credits.md](plans/classic-subagent-credits.md),
 covers classic Copilot Chat subagent AI Credits; it has no step number yet.
 Each phase has a goal, concrete deliverables, an exit criterion (how you know
@@ -1521,7 +1521,13 @@ plan's §14 table and §14.1 notes have each step's detail:
   in all, without billing; cost-basis instructions for both; security
   tests over every tool; the stdio exit criterion and scenario S10).
 
-Open: 15.14 (VS Code extension; next) and 15.15 (docs).
+- 15.14: the VS Code extension (Sessions grouped by repository with a
+  title-bar toggle, the status bar per workspace repository, the
+  Dashboard's Cost over time and Compare tabs; `projectsAndBilling` keeps
+  Project and Billing in the standalone app), with scenario S9 in
+  `extension-ui`.
+
+Open: 15.15 (docs; next).
 
 ## Summary dependency graph
 

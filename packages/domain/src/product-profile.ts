@@ -20,9 +20,12 @@ export const productFeaturesSchema = z.object({
   // extension has it from 13.6; the standalone app gets it in 13.10.
   vendorSimulation: z.boolean(),
   // The Dashboard's Cost over time and Compare tabs (Phase 15 step 15.9),
-  // over GET /api/cost/*: the standalone app has them; the extension gets
-  // its own in step 15.14, so until then the tabs are hidden there.
+  // over GET /api/cost/*: both products (the extension from step 15.14).
   costAnalysis: z.boolean(),
+  // The Dashboard's Project and Billing tabs and the Projects editor
+  // (steps 15.10-15.12): the standalone app only, since the extension has
+  // no projects file (D7, D19). Off, the tab switch says where they are.
+  projectsAndBilling: z.boolean(),
 });
 
 export type ProductFeatures = z.infer<typeof productFeaturesSchema>;
