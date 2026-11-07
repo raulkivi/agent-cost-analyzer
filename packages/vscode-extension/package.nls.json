@@ -4,7 +4,7 @@
   "command.open.title": "Open",
   "category": "AI Credits Analyzer",
   "command.refreshSessions.title": "Refresh",
-  "command.openSession.title": "Open Session",
+  "command.openSession.title": "Open Session…",
   "command.openScenario.title": "Open Scenario",
   "command.showToolAudit.title": "Show Tool Audit",
   "command.copyAdviceBundle.title": "Copy Advice Bundle",

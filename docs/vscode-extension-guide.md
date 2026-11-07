@@ -400,14 +400,23 @@ would:
 ## Commands
 
 Every command is in the **AI Credits Analyzer** category of the Command
-Palette. Commands that need a session or a setting are run from the side
-bar and are hidden from the Command Palette.
+Palette. **Open Session…** is the one session command you can run from the
+Palette: it asks which session to open (see below). The other commands that
+need a session or a setting are run from the side bar and are hidden from
+the Command Palette.
+
+**Open Session…** with no session shows a picker of your sessions, newest
+first. Each row is the session title, with the start time, provider and AI
+Credits (Unknown when the log has none, never 0) beside it and the session id
+below. Typing filters on all of those, so a pasted title or id finds its
+session. Choosing a row opens it as the Sessions view does; Escape does
+nothing; with no sessions you get a short message instead.
 
 | Command | Id | What it does |
 |---|---|---|
 | Open | `aiCreditsAnalyzer.open` | Opens the analyzer panel |
 | Refresh | `aiCreditsAnalyzer.refreshSessions` | Reloads the Sessions view, the Setup view and the status bar |
-| Open Session | `aiCreditsAnalyzer.openSession` | Opens the panel on a session (side bar only) |
+| Open Session | `aiCreditsAnalyzer.openSession` | Opens the panel on a session; from the Command Palette, asks which one |
 | Open Scenario | `aiCreditsAnalyzer.openScenario` | Opens the panel on a Learn scenario (Learn view only) |
 | Show Tool Audit | `aiCreditsAnalyzer.showToolAudit` | Opens the panel on a session's tool audit (side bar only) |
 | Copy Advice Bundle | `aiCreditsAnalyzer.copyAdviceBundle` | Opens the panel on a session with the advice dialog open (side bar only) |
@@ -520,10 +529,12 @@ What you can click:
 - **Ask about this session** (spend view) sends `Analyse session <id>` to
   the chat. Only that fixed text goes to the model; titles, prompts and
   evidence never do.
-- **Copy "open in panel" command** (session cost view) copies
-  `AI Credits Analyzer: Open Session <id>`. VS Code doesn't let a chat view
-  open links into the editor, so press Ctrl+Shift+P (Cmd+Shift+P on macOS),
-  paste it and press Enter, or open the session from the Sessions view.
+- **Copy "open in panel" command** (session cost view) copies the session
+  title. VS Code doesn't let a chat view open links into the editor, so
+  press Ctrl+Shift+P (Cmd+Shift+P on macOS), run **AI Credits Analyzer:
+  Open Session…** and paste the title into the picker that opens; the list
+  narrows to that session and Enter opens it. You can also open the session
+  from the Sessions view.
 
 Clicking through a view calls the server through VS Code and costs no model
 tokens. A figure the log doesn't record reads **Unknown**, never 0. The

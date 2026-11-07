@@ -11,6 +11,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Open Session… in the Command Palette.** **AI Credits Analyzer: Open
+  Session…** now shows a picker of your sessions (newest first; title, start
+  time, provider, AI Credits, and the id, all searchable) and opens the one
+  you choose. The Sessions view's Open is unchanged. The cost view's copy
+  button will copy the session title to paste into this picker.
 - **MCP server: interactive cost views.** In VS Code Copilot Chat, the MCP
   tools `get_session_cost`, `get_cost_rollup` and `list_findings` now show a
   branded, interactive view next to the text result (per-turn chart, top

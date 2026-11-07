@@ -637,10 +637,10 @@ text.
   any question. Nothing else from the view is ever sent to the model, not
   the session title or a prompt: they stay in the view.
 - **Copy "open in panel" command** (session cost view, VS Code only) copies
-  `AI Credits Analyzer: Open Session <id>`. Hosts don't let a view open a
-  link into VS Code, so there is no link to click. Press Ctrl+Shift+P
-  (Cmd+Shift+P on macOS), paste the text and press Enter, or find the
-  session in the extension's Sessions view. The standalone product shows no
+  the session title. Hosts don't let a view open a link into VS Code, so
+  there is no link to click. Press Ctrl+Shift+P (Cmd+Shift+P on macOS), run
+  **AI Credits Analyzer: Open Session…**, paste the title into the picker and
+  press Enter, or find the session in the extension's Sessions view. The standalone product shows no
   such button, because its web app may not be running.
 
 Clicking through a view calls the server through the host; the model never
