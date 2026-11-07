@@ -81,7 +81,7 @@ describe("U1 SessionCostView has no axe violations", () => {
 
   it("after the copy button was used", async () => {
     renderU1(ok(sessionCost()));
-    fireEvent.click(screen.getByRole("button", { name: /Copy .open in panel. command/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Copy title to open in panel" }));
     await screen.findByRole("button", { name: "Copied" });
     await expectNoViolations();
   });

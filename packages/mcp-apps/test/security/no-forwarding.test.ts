@@ -280,7 +280,6 @@ describe("no-forwarding rule (static, over every call site in src/)", () => {
     expect(argumentProblems(parse("({ sessionId: row.title })"), "bad")).toEqual(["bad: reads .title, a logged-text field"]);
     expect(argumentProblems(parse("args"), "bad")).toEqual(["bad: arguments are args, not an object literal or a reviewed builder"]);
     expect(fixedTemplateProblems("askAboutSessionText")).toEqual([]);
-    expect(fixedTemplateProblems("openSessionCommand")).toEqual([]);
     expect(fixedTemplateProblems("toolArguments")).not.toEqual([]);
   });
 });
@@ -307,7 +306,10 @@ describe("no HTML or network sinks (static)", () => {
 });
 
 describe("clipboard (static)", () => {
-  it("writes only the fixed open-session command, which names only the session id", () => {
+  // Plan §4.4, decision A: the clipboard gets the session title (or the id)
+  // for the extension's Open Session picker. It goes to the user, never to
+  // the model, so a title is allowed here and nowhere in a port call.
+  it("writes only the open-session search text, built from the session id and title", () => {
     const writes = SOURCES.flatMap((source) =>
       descendants(source.sf)
         .filter((node): node is ts.CallExpression => ts.isCallExpression(node) && calleeName(node) === "writeText")
@@ -319,7 +321,7 @@ describe("clipboard (static)", () => {
     const copied = writes.find(({ source }) => source.file.endsWith("CopyCommandButton.tsx"))!.call.arguments[0]!;
     expect(ts.isIdentifier(copied) && hook.fn.parameters.some((param) => param.name.getText() === copied.text)).toBe(true);
 
-    // Every caller of the hook passes a const built by openSessionCommand from an id.
+    // Every caller of the hook passes a const built by sessionSearchText.
     const callers = SOURCES.flatMap((source) => descendants(source.sf).filter((node): node is ts.CallExpression => ts.isCallExpression(node) && calleeName(node) === "useCopyCommand").map((call) => ({ source, call })));
     expect(callers.length).toBeGreaterThan(0);
     for (const { source, call } of callers) {
@@ -327,9 +329,8 @@ describe("clipboard (static)", () => {
       expect(ts.isIdentifier(argument)).toBe(true);
       const declaration = descendants(source.sf).find((node): node is ts.VariableDeclaration => ts.isVariableDeclaration(node) && node.name.getText() === (argument as ts.Identifier).text)!;
       const init = declaration.initializer!;
-      expect(ts.isCallExpression(init) && calleeName(init)).toBe("openSessionCommand");
-      expect((init as ts.CallExpression).arguments.map((arg) => arg.getText())).toEqual(["vm.sessionId"]);
+      expect(ts.isCallExpression(init) && calleeName(init)).toBe("sessionSearchText");
+      expect((init as ts.CallExpression).arguments.map((arg) => arg.getText())).toEqual(["vm.sessionId", "vm.title"]);
     }
-    expect(fixedTemplateProblems("openSessionCommand")).toEqual([]);
   });
 });

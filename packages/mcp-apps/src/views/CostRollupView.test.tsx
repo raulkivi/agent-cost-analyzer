@@ -298,7 +298,7 @@ describe("CostRollupView sends no logged text (plan section 6)", () => {
     }
     pressed.push(...(await exerciseEveryControl(document.body, { skip: new RegExp(secret) })));
 
-    for (const name of ["button:Retry", "button:Turn 17", "button:Ask about this session", 'button:Copy "open in panel" command']) expect(pressed).toContain(name);
+    for (const name of ["button:Retry", "button:Turn 17", "button:Ask about this session", 'button:Copy title to open in panel']) expect(pressed).toContain(name);
     expect(JSON.stringify(port.calls)).not.toContain(secret);
     expect(new Set(port.calls.map((call) => call.method))).toEqual(new Set(["callTool", "sendMessage"]));
     expect(calls(port, "sendMessage").map((call) => call.args)).toEqual(rollup.topSessions.slice(1).map((session) => [`Analyse session ${session.sessionId}`]));

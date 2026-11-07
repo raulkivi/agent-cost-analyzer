@@ -176,12 +176,12 @@ describe("SessionCostView turn drill-down", () => {
 });
 
 describe("SessionCostView copy-command button", () => {
-  it("copies the Command Palette text and shows short Copied feedback", async () => {
+  it("copies the session title for the Open Session picker and says how to use it (plan §4.4, decision A)", async () => {
     const { clipboard, port } = setup();
-    fireEvent.click(screen.getByRole("button", { name: /Copy .open in panel. command/ }));
-    await waitFor(() => expect(clipboard!.writeText).toHaveBeenCalledWith("AI Credits Analyzer: Open Session 7f3a9c2e"));
+    fireEvent.click(screen.getByRole("button", { name: "Copy title to open in panel" }));
+    await waitFor(() => expect(clipboard!.writeText).toHaveBeenCalledWith("Refactor provider registry"));
     expect(await screen.findByRole("button", { name: "Copied" })).toBeInTheDocument();
-    expect(screen.getByRole("status")).toHaveTextContent("Paste it in the Command Palette");
+    expect(screen.getByRole("status")).toHaveTextContent('Run "AI Credits Analyzer: Open Session…" from the Command Palette (Ctrl+Shift+P) and paste it.');
     expect(calls(port, "openLink")).toHaveLength(0);
   });
 
@@ -189,11 +189,11 @@ describe("SessionCostView copy-command button", () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
     try {
       setup();
-      fireEvent.click(screen.getByRole("button", { name: /Copy .open in panel. command/ }));
+      fireEvent.click(screen.getByRole("button", { name: "Copy title to open in panel" }));
       await screen.findByRole("button", { name: "Copied" });
       await act(async () => {});
       act(() => vi.advanceTimersByTime(3000));
-      expect(screen.getByRole("button", { name: /Copy .open in panel. command/ })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Copy title to open in panel" })).toBeInTheDocument();
     } finally {
       vi.useRealTimers();
     }
@@ -201,9 +201,9 @@ describe("SessionCostView copy-command button", () => {
 
   it("says so, and shows the text to copy by hand, when the clipboard write fails", async () => {
     setup({ clipboard: { writeText: vi.fn().mockRejectedValue(new Error("denied")) } });
-    fireEvent.click(screen.getByRole("button", { name: /Copy .open in panel. command/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Copy title to open in panel" }));
     expect((await screen.findByText(/Couldn't copy/)).closest('[role="status"]')).not.toBeNull();
-    expect(screen.getByText("AI Credits Analyzer: Open Session 7f3a9c2e")).toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent('Run "AI Credits Analyzer: Open Session…" from the Command Palette and search for: Refactor provider registry');
   });
 
   it("is hidden when the clipboard is unavailable", () => {
@@ -249,7 +249,7 @@ describe("SessionCostView security (plan §6)", () => {
     const { port } = setup({ cost });
     fireEvent.click(screen.getByRole("button", { name: /Turn 17/ }));
     await screen.findByText("Turn 17 · claude-sonnet-5.5");
-    fireEvent.click(screen.getByRole("button", { name: /Copy .open in panel. command/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Copy title to open in panel" }));
     await screen.findByRole("button", { name: "Copied" });
     expect(screen.getAllByText(new RegExp(secret)).length).toBeGreaterThan(0); // shown to the user...
     const methods = new Set(port.calls.map((call) => call.method));
@@ -295,11 +295,13 @@ describe("SessionCostView security (plan §6)", () => {
     const working = await exerciseEveryControl();
 
     const pressed = [...failing, ...working];
-    for (const name of ["button:Turn 17", "button:Turn 5", "button:Turn 29", "button:Retry", "button:Hide turn", 'button:Copy "open in panel" command']) expect(pressed).toContain(name);
+    for (const name of ["button:Turn 17", "button:Turn 5", "button:Turn 29", "button:Retry", "button:Hide turn", 'button:Copy title to open in panel']) expect(pressed).toContain(name);
     expect(screen.getAllByText(new RegExp(secret)).length).toBeGreaterThan(0);
     expect(new Set(port.calls.map((call) => call.method))).toEqual(new Set(["callTool"]));
     expect(JSON.stringify(port.calls)).not.toContain(secret);
-    expect(clipboard.writeText.mock.calls).toEqual(clipboard.writeText.mock.calls.map(() => ["AI Credits Analyzer: Open Session 7f3a9c2e"]));
+    // The clipboard gets the title (plan §4.4, decision A): it goes to the
+    // user, who pastes it into the Open Session picker, never to the model.
+    expect(clipboard.writeText.mock.calls).toEqual(clipboard.writeText.mock.calls.map(() => [`Title ${secret}`]));
     expect(clipboard.writeText).toHaveBeenCalled();
   });
 });
