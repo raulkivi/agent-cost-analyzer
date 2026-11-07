@@ -30,7 +30,7 @@ export function App({ port, brand }: { port: AppHostPort; brand: ViewBrand }) {
     case "cost-rollup":
       return <CostRollupView brand={brand} />;
     case "findings":
-      return <FindingsView brand={brand} />;
+      return <FindingsView brand={brand} port={port} result={result} />;
     default:
       return <NoViewState brand={brand} />;
   }

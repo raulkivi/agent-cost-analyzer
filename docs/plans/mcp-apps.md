@@ -2,7 +2,7 @@
 
 **Last changed:** 2026-11-07 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
-Status: **in progress: A0, A0b, A1–A8 done (2026-11-07); planned 2026-10-28, updated
+Status: **in progress: A0, A0b, A1–A8 and A11 done (2026-11-07); planned 2026-10-28, updated
 2026-11-07 for the Phase 14 and Phase 15 tools.** This is Phase 12 in
 [implementation-plan.md](../implementation-plan.md). Its dependencies are
 met: Phase 9.12's tools are done, step 10.13 is done and `ext-v0.1.0`
@@ -475,7 +475,7 @@ fewer, an exact spec, and acceptance tests the local agent never sees.
 | A8 | Server group `registerAppViews`, `ViewSource`/`FileViewSource`, `get_turn_series`, `_meta.ui` on three tools. In-memory client tests: `tools/list` metadata, `resources/read` MIME type and the injected brand, unchanged `content`. | medium | Sonnet | A1, A2, A3 |
 | A9 | U1 `SessionCostView`, with the turn drill-down and the deep-link button | medium | Sonnet | A0b, A6, A7, A8 |
 | A10 | U2 `CostRollupView`, with in-place drill-down into U1 | medium | Sonnet | A9 |
-| A11 | U3 `FindingsView`, with filters | medium | Sonnet | A0b, A6, A7, A8 |
+| A11 | U3 `FindingsView`, with filters. **Done 2026-11-07:** `src/views/FindingsView.tsx` and `src/views/findings/` (severity tiles, kind radio group and minimum-severity select, table scrolling inside the card, evidence collapsed by default and shown as text). A filter change calls `list_findings` with `kind` and `minSeverity`, plus the model's own arguments (window, provider, limits) from `onToolInput`; the previous result stays visible while loading and after an error (Retry). Stale answers are ignored. `App` now passes the port and the tool result to the view. No `sendMessage`, `openLink` or `updateModelContext` call. The shared footer is left to A9's `ViewShell` | medium | Sonnet | A0b, A6, A7, A8 |
 | A12 | Deep link: the extension's URI handler and `onUri` activation (§4.4), with unit tests for parameter validation and an integration test | medium | Sonnet | A0 |
 | A13 | Packaging: build order (views before extension and server), `dist/mcp-apps/views.html` in the `.vsix` (asserted by the package-contents test), `scripts/mcp-server.sh` serving the standalone build | medium | Sonnet | A8 |
 | A14 | Accessibility and security review of the views: axe in the component tests, keyboard drill-down, the no-forwarding rule (§6) as a test over every `sendMessage` call site | medium | Opus | A9–A11 |

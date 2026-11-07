@@ -104,7 +104,7 @@ gantt
 - Phase 14: steps 14.0-14.7 built; 14.8's docs written, the owner's review and the §13 exit criterion on real sessions open; the extension guide's replay screenshots open (User Guide's done). See [Phase 14 detail](#phase-14-detail--analyze-session-replay).
 - Phase 15: owner's review and exit criterion on real data.
 - Phase 13: owner's eyes-on review of step 13.8.
-- Phase 12: A0b boards approved 2026-11-07 ([mockups/mcp-apps/](plans/mockups/mcp-apps/README.md)); A5 (views workspace), A6 (theme layering) and A7 (view models) done; next A9 (U1 session cost) and A11 (U3 findings) in parallel, then A10 (U2) (A0 host spike done 2026-11-07; results in [mcp-apps-spike.md](plans/mcp-apps-spike.md)). See [Phase 12 detail](#phase-12-detail--mcp-apps).
+- Phase 12: A0b boards approved 2026-11-07 ([mockups/mcp-apps/](plans/mockups/mcp-apps/README.md)); A5 (views workspace), A6 (theme layering), A7 (view models) and A11 (U3 findings view with filters) done; next A9 (U1 session cost) then A10 (U2) (A0 host spike done 2026-11-07; results in [mcp-apps-spike.md](plans/mcp-apps-spike.md)). See [Phase 12 detail](#phase-12-detail--mcp-apps).
 
 ## Phase 12 detail — MCP Apps
 
@@ -173,7 +173,7 @@ gantt
     section Views
     A9 U1 SessionCostView, medium, Sonnet (0%)   :crit, a9, after a0b a6 a7 a8, 2d
     A10 U2 CostRollupView, medium, Sonnet (0%)   :a10, after a9, 2d
-    A11 U3 FindingsView, medium, Sonnet (0%)     :a11, after a0b a6 a7 a8, 2d
+    A11 U3 FindingsView, medium, Sonnet (100%)   :done, a11, after a0b a6 a7 a8, 2d
 
     section Extension and packaging
     A12 Deep link URI handler, dropped (hosts refuse vscode://) :done, a12, after a0, 1d
