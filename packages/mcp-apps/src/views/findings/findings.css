@@ -1,0 +1,89 @@
+/* SPDX-FileCopyrightText: 2026 Raul Kivi
+   SPDX-License-Identifier: MIT
+*/
+/* U3 FindingsView (docs/plans/mcp-apps.md §4.3, mock-up Findings.dc.html).
+   Structure, text and severity colours come from the host's variables; the
+   only brand colour is --brand-accent-text. No colour literals (§5.4). */
+
+.fv-muted { color: var(--color-text-secondary, var(--brand-fb-text-muted)); }
+
+.fv-head { display: flex; align-items: baseline; justify-content: space-between; gap: 4px 10px; flex-wrap: wrap; }
+.fv-head h1 { margin: 0; }
+.fv-meta { font-size: 12px; }
+
+.fv-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(84px, 1fr)); gap: 8px; margin: 12px 0; }
+.fv-tile {
+  display: flex; flex-direction: column; gap: 1px; padding: 8px 10px; min-width: 0;
+  background: var(--color-background-secondary, var(--brand-fb-surface));
+  border: 1px solid var(--color-border-tertiary, var(--brand-fb-divider));
+  border-radius: var(--radius-sm);
+}
+.fv-tile.is-dim { opacity: 0.5; }
+.fv-tile-label { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; color: var(--color-text-secondary, var(--brand-fb-text-muted)); }
+.fv-tile-value { font-size: 21px; font-weight: 600; line-height: 1.2; font-variant-numeric: tabular-nums; }
+
+.fv-mark { flex-shrink: 0; }
+.fv-mark--critical, .fv-mark--high { fill: var(--color-text-danger, currentColor); stroke: var(--color-text-danger, currentColor); }
+.fv-mark--medium { fill: var(--color-text-warning, currentColor); stroke: var(--color-text-warning, currentColor); }
+.fv-mark--low { stroke: var(--color-text-info, currentColor); }
+.fv-mark--info { stroke: var(--color-text-secondary, currentColor); }
+
+.fv-filters { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
+.fv-filters .seg { flex-wrap: wrap; }
+.fv-filters .seg-opt { padding: 3px 8px; font-size: 12px; white-space: nowrap; }
+.fv-select { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; }
+.fv-select select {
+  height: 24px; padding: 0 6px; font: inherit; color: inherit;
+  background: var(--color-background-primary, transparent);
+  border: 1px solid var(--color-border-secondary, var(--brand-fb-divider));
+  border-radius: var(--radius-md);
+}
+
+/* The inline height is capped at about 640px (§4.3): long tables scroll
+   inside the card, not the page. */
+.findings-scroll { overflow: auto; max-height: 330px; }
+.fv-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.fv-table th {
+  text-align: left; font-weight: 600; padding: 4px 6px; white-space: nowrap;
+  color: var(--color-text-secondary, var(--brand-fb-text-muted));
+  border-bottom: 1px solid var(--color-border-primary, var(--brand-fb-divider));
+}
+.fv-table td { padding: 4px 6px; vertical-align: top; border-bottom: 1px solid var(--color-border-tertiary, var(--brand-fb-divider)); }
+.fv-table[aria-busy="true"] { opacity: 0.6; }
+.fv-sev { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+.fv-finding { min-width: 170px; }
+.fv-session { min-width: 110px; }
+.fv-detail { margin-top: 2px; }
+.fv-link {
+  display: inline-flex; align-items: center; gap: 4px; padding: 0; border: 0; background: none; cursor: pointer;
+  font: inherit; font-size: 11px; color: var(--brand-accent-text); text-decoration: underline; text-underline-offset: 2px;
+}
+.fv-why { margin: 4px 0 0; }
+.fv-evidence {
+  margin: 4px 0 2px; padding: 6px 8px; font-family: var(--font-mono, ui-monospace, monospace); font-size: 11px;
+  white-space: pre-wrap; overflow-wrap: anywhere;
+  background: var(--color-background-secondary, var(--brand-fb-surface));
+  border: 1px solid var(--color-border-tertiary, var(--brand-fb-divider));
+  border-radius: var(--radius-sm);
+}
+.fv-hint { font-size: 11px; }
+
+.fv-note { margin: 6px 0 0; font-size: 11px; }
+.fv-empty { margin: 8px 0; font-size: 13px; }
+.fv-status { margin: 0 0 6px; font-size: 12px; }
+
+.fv-alert {
+  display: flex; flex-direction: column; gap: 6px; margin: 8px 0; padding: 8px 10px; font-size: 12px;
+  background: var(--color-background-danger, transparent);
+  border: 1px solid var(--color-border-danger, var(--brand-fb-divider));
+  border-radius: var(--radius-sm);
+}
+.fv-alert button {
+  align-self: flex-start; height: 26px; padding: 0 10px; font: inherit; font-size: 12px; cursor: pointer; color: inherit;
+  background: transparent; border: 1px solid var(--color-border-secondary, var(--brand-fb-divider)); border-radius: var(--radius-md);
+}
+
+@media (max-width: 420px) {
+  .fv-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .fv-tile-value { font-size: 19px; }
+}

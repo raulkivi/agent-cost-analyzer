@@ -8,3 +8,5 @@ export { toFindingsViewModel } from "./findings.js";
 export type { FilterOption, FindingRow, FindingsFilter, FindingsViewModel, SeverityTile } from "./findings.js";
 export { UNKNOWN_TEXT } from "./format.js";
 export type { MeasureView } from "./format.js";
+export { toTurnDetailViewModel } from "./turn-detail.js";
+export type { TurnDetailViewModel } from "./turn-detail.js";

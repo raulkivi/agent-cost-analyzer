@@ -74,9 +74,10 @@ describe("toSessionCostViewModel context overhead", () => {
     expect(contextOverhead).toEqual({
       systemPrompt: {
         tokens: { text: "21 k", known: true, estimate: false },
+        value: 21_000,
         components: [
-          { label: "Custom instructions", tokens: { text: "3 k", known: true, estimate: false } },
-          { label: "Tool definitions", tokens: { text: "Unknown", known: false, estimate: false } },
+          { label: "Custom instructions", tokens: { text: "3 k", known: true, estimate: false }, value: 3000 },
+          { label: "Tool definitions", tokens: { text: "Unknown", known: false, estimate: false }, value: null },
         ],
       },
       unusedToolsText: "14 of 52 tools unused",
