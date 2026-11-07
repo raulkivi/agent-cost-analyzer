@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import request from "supertest";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { statementAnswerSchema } from "@agent-cost-analyzer/domain";
+import { costEstimateSchema, statementAnswerSchema } from "@agent-cost-analyzer/domain";
 import { createApp } from "./app.js";
 
 // Phase 15 step 15.11 (plan §8.5, §10, threat model): GET /api/statements
@@ -86,5 +86,14 @@ describe("statements API", () => {
     const text = await request(app).post("/api/statements/acme/2026-10/issue").set("Content-Type", "text/plain").send("{}");
     expect(text.status).toBe(415);
     expect(existsSync(path.join(settingsDir, "statements"))).toBe(false);
+  });
+
+  // Step 15.12 (plan §8.6, §10): estimates.
+  it("GET /api/estimates answers an estimate (no range on an empty history), 404 for an unknown project, 400 for a bad query", async () => {
+    const response = await request(buildApp()).get("/api/estimates").query({ projectId: "acme", activeDays: "20" });
+    expect(response.status).toBe(200);
+    expect(costEstimateSchema.parse(response.body)).toMatchObject({ label: "estimate", pricing: "today", range: null, refusal: expect.stringMatching(/needs at least 5/) });
+    expect((await request(buildApp()).get("/api/estimates").query({ projectId: "nope", activeDays: "20" })).status).toBe(404);
+    expect((await request(buildApp()).get("/api/estimates").query({ projectId: "acme" })).status).toBe(400);
   });
 });

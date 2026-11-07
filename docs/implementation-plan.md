@@ -12,8 +12,8 @@ merged to `main`. The extension's 0.1.0 is released (tag `ext-v0.1.0`,
 2026-11-03). Open: Phase 10's owner manual checks and decisions (see its
 section), Phase 11 (not started), Phase 12 (planned), Phase 13 (in
 progress: steps 13.0-13.10 built, 13.5a calibration open), Phase 14
-(planned after 13) and Phase 15 (in progress: steps 15.0-15.11 done,
-15.12-15.15 open). A proposed plan,
+(planned after 13) and Phase 15 (in progress: steps 15.0-15.12 done,
+15.13-15.15 open). A proposed plan,
 [plans/classic-subagent-credits.md](plans/classic-subagent-credits.md),
 covers classic Copilot Chat subagent AI Credits; it has no step number yet.
 Each phase has a goal, concrete deliverables, an exit criterion (how you know
@@ -1476,7 +1476,7 @@ extension), and extension grouping by repository.
 15.8; Phase 13 step 13.2 (vendor price data) for steps 15.5 onwards.
 
 **Status (2026-11-06)**: in progress. The owner accepted every
-recommended decision (D1–D15, plan §13). Steps 15.0–15.11 are done; the
+recommended decision (D1–D18, plan §13). Steps 15.0–15.12 are done; the
 plan's §14 table and §14.1 notes have each step's detail:
 
 - 15.0: threat-model rows for the two new write endpoints.
@@ -1512,8 +1512,12 @@ plan's §14 table and §14.1 notes have each step's detail:
   exports; `GET /api/statements`, the issue POST, MCP `get_statement` and
   `prepare_statement`), the Dashboard's Billing tab and the Projects
   editor, with scenarios S1, S5, S6 and S8.
+- 15.12: estimates (a p50–p90 range at today's prices from the median and
+  p90 cost per active day or session, no range under 5 known units;
+  `GET /api/estimates`, MCP `estimate_cost` and `estimate_work`), the
+  Billing tab's estimate panel, with scenario S7.
 
-Open: 15.12 (estimates; next), 15.13 (MCP cross-cutting work), 15.14
+Open: 15.13 (MCP cross-cutting work; next), 15.14
 (VS Code extension) and 15.15 (docs).
 
 ## Summary dependency graph

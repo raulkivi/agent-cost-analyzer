@@ -561,7 +561,7 @@ the view says so. Totals use each turn's preferred basis (billed, then
 reported, then priced) unless the Overview's **Cost basis** switch picks
 one.
 
-![Cost over time for two projects and the No project bucket: the filter row, KPI tiles with coverage, lines with a direct label at each end, unknown weeks drawn as gaps, and a price-change tag with its tooltip](images/guide-dashboard-cost-over-time.png)
+![Cost over time for three projects and the No project bucket: the filter row, KPI tiles with coverage, lines with a direct label at each end, unknown weeks drawn as gaps, and a price-change tag with its tooltip](images/guide-dashboard-cost-over-time.png)
 
 **Cost over time** shows:
 
@@ -690,6 +690,29 @@ calendar months in this computer's time zone, which the statement names.
 Billing reads `GET /api/statements`; the MCP tool `get_statement` gives the
 same answer and never issues one, and the `prepare_statement` prompt drafts
 a note to the client from it.
+
+#### Estimate the next piece of work
+
+Beside the statement, **Next piece of work** estimates what planned work on
+the project will cost. Enter the **Planned active days** (20 to start) and
+pick a **History window** of 4 or 12 weeks. The estimate is a range, never
+one number: the median (p50) and 90th-percentile (p90) cost of one active
+day in that window, at today's prices, times the planned days. It is shown
+in AI Credits with USD beside it, with the days it used.
+
+- An active day is a UTC day with at least one turn on the project. A day
+  with any turn that has no price is left out, and the panel says how many.
+- With fewer than 5 active days of known cost there is no range: the panel
+  says why, and how many days had a turn with no price.
+- Estimating on another model comes with Phase 14 (replaying sessions on
+  another vendor).
+
+![The estimate panel: a p50–p90 range for 20 planned days of Mobile app work over 12 weeks of history](images/guide-dashboard-estimate.png)
+
+The panel reads `GET /api/estimates`, which also takes `sessions` instead
+of `activeDays`. The MCP tool `estimate_cost` gives the same answer, and
+the `estimate_work` prompt turns it into a short estimate with its inputs
+and main uncertainty.
 
 ## Charts as tables
 

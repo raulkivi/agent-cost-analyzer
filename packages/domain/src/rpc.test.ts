@@ -50,6 +50,7 @@ describe("apiMethodSchema", () => {
       "getProjects",
       "saveProjects",
       "getRepositoryList",
+      "getCostEstimate",
     ]);
   });
 
@@ -147,6 +148,9 @@ describe("apiMethodParamsSchemas (vscode-extension.md §4)", () => {
     expect(apiMethodParamsSchemas.getStatement.safeParse({ projectId: "portal", period: "2026-10" }).success).toBe(true);
     expect(apiMethodParamsSchemas.issueStatement.safeParse({ projectId: "portal", period: "2026-10" }).success).toBe(true);
     expect(apiMethodParamsSchemas.issueStatement.safeParse({ projectId: "portal" }).success).toBe(false);
+    // Step 15.12: estimates.
+    expect(apiMethodParamsSchemas.getCostEstimate.safeParse({ projectId: "portal", activeDays: 20, historyWeeks: 12 }).success).toBe(true);
+    expect(apiMethodParamsSchemas.getCostEstimate.safeParse({ projectId: { x: 1 } }).success).toBe(false);
   });
 
   it("accepts range query fields as text or numbers, and absent fields", () => {

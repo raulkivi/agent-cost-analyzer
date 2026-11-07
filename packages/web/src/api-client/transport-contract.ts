@@ -44,6 +44,7 @@ const CASES: Array<[ApiMethodName, unknown]> = [
   ["getProjects", undefined],
   ["saveProjects", { file: { version: 1, projects: [] } }],
   ["getRepositoryList", undefined],
+  ["getCostEstimate", { projectId: "portal", activeDays: 20, historyWeeks: 12 }],
 ];
 
 // Behaviour every ApiTransport adapter must share, so api-client can't tell

@@ -98,6 +98,11 @@ export function createApp(options: CreateAppOptions = {}): Express {
   // documented and observed price changes.
   // Phase 15 step 15.11: billing statements. Issuing writes a file, so it
   // takes JSON only: a cross-origin form post (no preflight) gets 415.
+  // Phase 15 step 15.12: an estimate for planned work, a p50–p90 range.
+  app.get("/api/estimates", route(async (req, res) => {
+    res.json(await api.getCostEstimate(req.query));
+  }));
+
   app.get("/api/statements", route(async (req, res) => {
     res.json(await api.getStatement(req.query));
   }));

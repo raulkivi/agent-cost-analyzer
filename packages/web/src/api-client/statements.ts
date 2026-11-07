@@ -1,4 +1,4 @@
-import type { ProjectsFile, ProjectsState, RepositoryList, StatementAnswer } from "@agent-cost-analyzer/domain";
+import type { CostEstimate, ProjectsFile, ProjectsState, RepositoryList, StatementAnswer } from "@agent-cost-analyzer/domain";
 import { getApiTransport } from "./current-transport.js";
 
 // Phase 15 step 15.11: the Billing tab (GET /api/statements, the issue
@@ -28,4 +28,15 @@ export function saveProjects(file: ProjectsFile): Promise<ProjectsState> {
 
 export function fetchRepositoryList(signal?: AbortSignal): Promise<RepositoryList> {
   return getApiTransport().call<RepositoryList>("getRepositoryList", undefined, signal);
+}
+
+// Step 15.12: GET /api/estimates, the Billing tab's estimate panel.
+export interface EstimateQuery {
+  projectId: string;
+  activeDays: number;
+  historyWeeks: 4 | 12;
+}
+
+export function fetchCostEstimate(query: EstimateQuery, signal?: AbortSignal): Promise<CostEstimate> {
+  return getApiTransport().call<CostEstimate>("getCostEstimate", query, signal);
 }

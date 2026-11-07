@@ -1,6 +1,6 @@
 # Phase 15: Cost by repository and project, price history, billing and estimates
 
-Status: **In progress**: steps 15.0–15.11 are done (see §14.1). The owner accepted
+Status: **In progress**: steps 15.0–15.12 are done (see §14.1). The owner accepted
 every recommended decision on 2026-11-05 ([§13](#13-decisions)). The UI
 design (§11) was then revised against the project's existing design and UX
 guidance. This document is the design; Phase 15 in
@@ -453,7 +453,14 @@ From a project's history (or a set of similar projects):
 - **Unit costs**: median and 90th-percentile cost per session.
 - **Forecast**: planned active days (or sessions) × the unit cost, given as
   a **range** (p50 to p90), never a single number, priced **at today's
-  prices** so a past price cut does not inflate the estimate.
+  prices** so a past price cut does not inflate the estimate. D16: p50 =
+  median cost per active day × days, p90 = the 90th percentile × days
+  (percentiles by linear interpolation). An active day is a UTC calendar
+  day with any of the project's turns, as on the Dashboard; it counts only
+  when every turn on it has a priced figure, else it is left out and
+  counted in the coverage (D18). Amounts are in USD, AI Credits converted
+  at 1 AI Credit = $0.01 (D2), and shown in the picked unit. With fewer
+  than 5 known active days (or sessions) there is no range (D18).
 - **What if another model**: hands off to Phase 14 (replay on another
   vendor) when it exists; until then, a token-for-token reprice at another
   model's price, labelled **Simulated, same tokens assumed**.
@@ -536,7 +543,7 @@ All read endpoints are `GET` and follow §8's existing conventions
 | `GET /api/price-book/changes?since&until&channel&model&kind=documented\|observed&provider&limit` | `PriceChangeList`: documented changes and observed ones, oldest first (built in 15.10; observed changes are also `price-change` findings in `GET /api/insights`) |
 | `GET /api/statements?projectId&period&provider&limit` | `StatementAnswer` (built in 15.11): the frozen statement with the re-run and its exact diff, else the draft; whether it can be issued (D15) and why not; the project's issued periods. 404 unknown project, 400 bad period |
 | `POST /api/statements/:projectId/:period/issue` | Freezes the draft (built in 15.11). JSON only (415 otherwise, so no cross-origin form can issue); 409 for an open or already issued period |
-| `GET /api/estimates?project&days\|sessions` | forecast range and the inputs used |
+| `GET /api/estimates?projectId\|repository&activeDays\|sessions&historyWeeks=4\|12&provider` | `CostEstimate` (built in 15.12): a p50–p90 range at today's prices in USD, the unit costs and the history window used, labelled `"estimate"`; under 5 known units no range, the reason instead (D18). One of `projectId`/`repository` and one of `activeDays`/`sessions`; `historyWeeks` defaults to 12. 404 unknown project, 400 bad query |
 
 The two write endpoints are the app's first non-log writes. They need the
 existing local-only binding and the CSRF/origin checks from the
@@ -1097,6 +1104,9 @@ column is binding; the other options are kept for the record.
 | D13 | Where are a project's markup and fixed lines (seat fees) set? (decided 2026-11-06) | per project; per statement; not yet | **Per project**, in `projects.json` (`rates.markupPercent`, `rates.fixedLines`), edited in the Projects editor; every statement for the project uses them and freezes them |
 | D14 | Where is D2's optional fixed-rate user currency set? (decided 2026-11-06) | per project; per statement; not yet | **Per project** (`rates.currency`: a code and a fixed rate per USD); the statement states the rate and keeps AI Credits and USD beside it |
 | D15 | Can a period that hasn't ended be issued? (decided 2026-11-06) | only ended periods; any time with a warning | **Only ended periods**: a draft any time; *Issue statement* is disabled, with the reason, until the period's last day has passed in the statement's time zone |
+| D16 | How is an estimate's p50–p90 range worked out? (decided 2026-11-06) | unit cost × days; resampled totals | **Unit cost × days**: the median and 90th-percentile cost per active day (or per session) in the history window, each × the planned days (or sessions), as on board 4 |
+| D17 | Is "what if another model" in step 15.12? (decided 2026-11-06) | leave for Phase 14; a same-tokens reprice now | **Left for Phase 14**: the panel says it comes with replay; 15.12 estimates the project's own models only |
+| D18 | What if the history is too thin? (decided 2026-11-06) | refuse under 5 days; always estimate with a warning | **No range under 5 active days with a known cost**: the answer gives the reason and the day count instead; days with any unknown cost are left out and counted in the coverage |
 
 ## 14. Implementation steps (TDD, each with an exit criterion)
 
@@ -1118,7 +1128,7 @@ No UI code (15.9 onwards) starts before the mock-ups in 15.8 are approved.
 | 15.9 | **Dashboard tabs: Cost over time and Compare**, with price-change markers (§11.1–§11.3) | Component tests incl. "View as table" and unknown-as-gap; `vitest-axe` clean in three themes; keyboard tests; the UI check (`npm run test:ui`) passes for the new tabs at 600–1600 px in three themes; screenshots of the standalone app at desktop and 360 px widths; the §12.4.1 Playwright harness and fixture home are in place, and scenarios S2 and S3 pass in the `web-e2e` job Done 2026-11-06, see §14.1 |
 | 15.10 | **Price changes and variance**: `PriceChangeDetector`, observed-change finding, `VarianceAnalyzer`, Project tab (§11.4); MCP: `explain_cost_change` tool and prompt, `get_price_changes`, `list_findings` kind `price-change` | Effects add up exactly (property test); markers match price-book boundaries; same UI checks as 15.9; the step's MCP tools pass the §10.1.6 tests; scenario S4 passes Done 2026-11-06, see §14.1 |
 | 15.11 | **Statements**: builder, freeze, diff, CSV/JSON/Markdown export, Billing tab, Projects editor (§11.5); MCP: `get_statement`, `prepare_statement` prompt | Golden statements; a frozen statement survives a price-book update unchanged and the diff is exact; every project can be assigned by keyboard alone; same UI checks as 15.9; the step's MCP tools pass the §10.1.6 tests; scenarios S1, S5, S6 and S8 pass Done 2026-11-06, see §14.1 |
-| 15.12 | **Estimates** + Estimate panel; MCP: `estimate_cost`, `estimate_work` prompt | Forecast range tests on fixture histories; shown as a labelled range, never a single number; the step's MCP tools pass the §10.1.6 tests; scenario S7 passes |
+| 15.12 | **Estimates** + Estimate panel; MCP: `estimate_cost`, `estimate_work` prompt | Forecast range tests on fixture histories; shown as a labelled range, never a single number; the step's MCP tools pass the §10.1.6 tests; scenario S7 passes Done 2026-11-06, see §14.1 |
 | 15.13 | **MCP, cross-cutting work** (§10.1.4): server instructions for both products, the `toolGroups` option and the extension's tool set, the security tests of §10.1.5 | The §10.1.6 exit criterion over stdio; scenario S10 passes |
 | 15.14 | **VS Code extension** (§11.9): group by repository, status bar per workspace repository, the two Dashboard tabs | Extension and manifest tests (category, codicons, l10n keys); UI check passes; manual check list updated; scenario S9 passes in `extension-ui` |
 | 15.15 | **Docs**: architecture.md (domain, data flow, API), UserGuide, vscode-extension-guide, vision non-goals, README index | Docs reviewed by the owner |
@@ -1931,6 +1941,55 @@ them, then tested; the UI-check scenarios, the harness's answers and the
 screenshot script have no tests of their own. Not yet: custom statement
 ranges in the UI (the API takes them); Import/Export of the projects file;
 the extension's statements (15.14).
+
+**15.12 (done 2026-11-06).** Estimates and the Billing tab's estimate
+panel. The owner's decisions D16 (unit cost × planned units), D17 (another
+model waits for Phase 14) and D18 (no range under 5 known units) are in §13.
+
+- **Domain.** `CostEstimate` (`cost-estimate.ts`): the target, `pricing:
+  "today"`, USD, the window (4 or 12 weeks), the unit (active days or
+  sessions) and planned count, the history (units, known units, turns,
+  total), the run rate, and either the unit costs and the range or the
+  refusal (the schema refuses one without the other, and a p50 above the
+  p90). `percentile` interpolates linearly; `MIN_ESTIMATE_UNITS` is 5.
+- **Server** (`services/billing/`): `buildCostEstimate`, pure over the
+  cost cube at today's prices: units are UTC days (or sessions) in the
+  trailing window ending today; a unit counts only when every turn in it is
+  priced, the others are counted and named in the refusal or the caption;
+  range = the median and p90 unit cost × the planned units (D16).
+  `EstimateService` parses the query (`estimateRequestSchema`), names the
+  project or repository and asks the cube for the window.
+- **API**: `GET /api/estimates` (404 unknown project, 400 bad query). RPC:
+  `getCostEstimate` (404 in the extension until 15.14). **MCP**:
+  `estimate_cost` (`mcp/billing-tools.ts`, "never a single number") and
+  the `estimate_work` prompt.
+- **Estimate panel** (`components/billing/EstimatePanel.tsx`, board 4), in
+  the Billing tab's side column under the issued statements: planned
+  active days (20 by default) and a 4- or 12-week history (12 by default);
+  the range as an interval with both ends written below it (p50 and p90 in
+  AI Credits, USD beside them), the inputs it used, and "Estimate · at
+  today's prices"; the reason instead when the history is thin; a note
+  that another model comes with Phase 14 (D17).
+- **Checks**: estimate builder and service tests with the D16 numbers,
+  golden estimates (`services/billing/__golden__/estimates.json`), API and
+  MCP tests. S7 passes with S1–S6 and S8 over a fixture project with six
+  priced pi days (Mobile app), three runs in a row; S3's table reads now
+  retry (it failed once in a full run and not in 32 reruns, so the cause
+  wasn't found; a one-shot read of a table that may still be rendering was
+  the only race in it). The UI check gains `dashboard-billing-estimate`
+  (12 combinations), and the whole check passes (357 checks, none failing).
+  Screenshot: `guide-dashboard-estimate.png`.
+- **Found and fixed by the checks**: in the side column the drawing scaled
+  its labels down until they couldn't be read, and a narrow range drew p50
+  over p90; the ends are now text below the interval.
+
+Departures from the mock-up: the panel takes active days only (the API
+and MCP also take sessions); no "what if another model" (D17).
+
+TDD exceptions: S7 and the UI-check scenario were written after the panel
+they drive; the layout fix was made after the UI check found it, then
+tested; the harness's answer and the screenshot script have no tests of
+their own. Not yet: estimates in the extension (15.14).
 
 ## 15. Exit criterion
 

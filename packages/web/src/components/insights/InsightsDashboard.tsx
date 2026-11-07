@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from "react";
-import { AI_CREDIT_CONVERSION_NOTE, redactRepositoryKey, type CostBasisChoice, type CostComparison, type CostSeries, type CostVariance, type ProjectCost, type ProjectsFile, type ProjectsState, type RepositoryList, type StatementAnswer } from "@agent-cost-analyzer/domain";
+import { AI_CREDIT_CONVERSION_NOTE, redactRepositoryKey, type CostBasisChoice, type CostComparison, type CostSeries, type CostEstimate, type CostVariance, type ProjectCost, type ProjectsFile, type ProjectsState, type RepositoryList, type StatementAnswer } from "@agent-cost-analyzer/domain";
 import type {
   FailureCategory,
   InsightFinding,
@@ -42,7 +42,7 @@ import { CurrentSelections } from "./CurrentSelections.js";
 import { ProjectTab } from "./ProjectTab.js";
 import { BillingTab } from "../billing/BillingTab.js";
 import { ProjectsEditor } from "../projects/ProjectsEditor.js";
-import type { StatementQuery } from "../../api-client/statements.js";
+import type { EstimateQuery, StatementQuery } from "../../api-client/statements.js";
 import { FindingsTable } from "./FindingsTable.js";
 import { ListBox } from "./ListBox.js";
 
@@ -133,6 +133,7 @@ export interface BillingDeps {
   loadProjects?: (signal: AbortSignal) => Promise<ProjectsState>;
   loadRepositories?: (signal: AbortSignal) => Promise<RepositoryList>;
   save?: (file: ProjectsFile) => Promise<ProjectsState>;
+  loadEstimate?: (query: EstimateQuery, signal: AbortSignal) => Promise<CostEstimate>;
 }
 
 // The list boxes, without the Provider facet for a single-provider product.
@@ -381,6 +382,7 @@ function DashboardBody({ dataset, crossProvider, costAnalysis, now, loadCostSeri
             onEditProjects={onEditProjects}
             {...(billing.loadStatement ? { loadStatement: billing.loadStatement } : {})}
             {...(billing.issue ? { issue: billing.issue } : {})}
+            {...(billing.loadEstimate ? { loadEstimate: billing.loadEstimate } : {})}
           />
         ) : dashboardView === "project" ? (
           <ProjectTab

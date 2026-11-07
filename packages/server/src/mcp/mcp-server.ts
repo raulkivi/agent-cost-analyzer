@@ -11,6 +11,7 @@ import { registerAttributionTools } from "./attribution-tools.js";
 import { registerAuditTools } from "./audit-tools.js";
 import { registerBillingTools } from "./billing-tools.js";
 import type { StatementQueries } from "../services/billing/statement-service.js";
+import type { EstimateQueries } from "../services/billing/estimate-service.js";
 import { registerCostAnalysisTools, registerCostTools } from "./cost-tools.js";
 import { registerFindingTools } from "./finding-tools.js";
 import { registerPricingTools } from "./pricing-tools.js";
@@ -42,6 +43,8 @@ export interface McpServerDeps {
   // Phase 15 step 15.11: get_statement and prepare_statement (the standalone
   // server; the extension's with step 15.13).
   statements?: StatementQueries;
+  // Phase 15 step 15.12: estimate_cost and estimate_work.
+  estimates?: EstimateQueries;
   version: string;
   // The name and log-source wording of the product serving the tools;
   // defaults to the standalone server's (mcp-identity.ts).
@@ -79,8 +82,8 @@ export function createMcpServer(deps: McpServerDeps): McpServer {
   if (deps.attribution) {
     registerAttributionTools(server, toolDeps, deps.attribution, guarded);
   }
-  if (deps.statements) registerBillingTools(server, deps.statements, guarded);
-  registerPrompts(server, { costAnalysis: deps.costAnalysis !== undefined, statements: deps.statements !== undefined });
+  if (deps.statements || deps.estimates) registerBillingTools(server, { statements: deps.statements, estimates: deps.estimates }, guarded);
+  registerPrompts(server, { costAnalysis: deps.costAnalysis !== undefined, statements: deps.statements !== undefined, estimates: deps.estimates !== undefined });
 
   return server;
 }
