@@ -51,11 +51,12 @@ describe("createCopilotMcpServer (vscode-extension.md D7)", () => {
     rmSync(userDataDir, { recursive: true, force: true });
   });
 
-  // Step 15.13 (plan §10.1.6): every group but billing (D7).
-  it("serves the 17 read-only tools with the given version, without get_statement or estimate_cost", async () => {
+  // Step 15.13 (plan §10.1.6): every group but billing (D7); Phase 14 step 14.5 adds replay (D5).
+  it("serves the 19 read-only tools with the given version, without get_statement or estimate_cost", async () => {
     const { tools } = await client.listTools();
 
-    expect(tools).toHaveLength(17);
+    expect(tools).toHaveLength(19);
+    expect(tools.map((tool) => tool.name)).toEqual(expect.arrayContaining(["replay_session", "compare_models_for_session"]));
     expect(tools.map((tool) => tool.name)).not.toEqual(expect.arrayContaining(["get_statement"]));
     expect(tools.map((tool) => tool.name)).not.toEqual(expect.arrayContaining(["estimate_cost"]));
     expect(tools.every((tool) => tool.annotations?.readOnlyHint === true)).toBe(true);

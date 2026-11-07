@@ -16,6 +16,8 @@ import { registerCostAnalysisTools, registerCostTools } from "./cost-tools.js";
 import { registerFindingTools } from "./finding-tools.js";
 import { registerPricingTools } from "./pricing-tools.js";
 import { registerPrompts } from "./prompts.js";
+import { registerReplayTools } from "./replay-tools.js";
+import type { SessionReplayQueries } from "../services/session-replay/session-replay-service.js";
 import { registerSessionTools } from "./session-tools.js";
 import { createGuard } from "./tool-helpers.js";
 
@@ -50,6 +52,9 @@ export interface McpServerDeps {
   statements?: StatementQueries;
   // Phase 15 step 15.12: estimate_cost and estimate_work.
   estimates?: EstimateQueries;
+  // Phase 14 step 14.5 (D5, D7): replay_session and
+  // compare_models_for_session, in both products, where a price book exists.
+  sessionReplay?: SessionReplayQueries;
   version: string;
   // Phase 15 step 15.13 (plan §10.1.4): the tool groups this product serves,
   // every group when omitted. A group is registered only when its services
@@ -62,8 +67,8 @@ export interface McpServerDeps {
 
 // The tool groups, one module each (open/closed): sessions, audit and cost
 // (session_cost, cost_rollup) and findings are Phase 9.12's; the rest come
-// with Phase 15 and need their services.
-export const MCP_TOOL_GROUPS = ["sessions", "audit", "cost", "findings", "attribution", "pricing", "costAnalysis", "billing"] as const;
+// with Phase 15 and need their services; replay comes with Phase 14.
+export const MCP_TOOL_GROUPS = ["sessions", "audit", "cost", "findings", "attribution", "pricing", "costAnalysis", "replay", "billing"] as const;
 export type McpToolGroup = (typeof MCP_TOOL_GROUPS)[number];
 // The extension's set: billing and estimates are standalone-only (D7).
 export const WITHOUT_BILLING_TOOL_GROUPS: readonly McpToolGroup[] = MCP_TOOL_GROUPS.filter((group) => group !== "billing");
@@ -102,6 +107,7 @@ export function createMcpServer(deps: McpServerDeps): McpServer {
   if (serves("findings")) registerFindingTools(server, toolDeps, guarded);
   if (serves("pricing") && deps.priceBook) registerPricingTools(server, deps.priceBook, guarded, deps.costAnalysis);
   if (serves("attribution") && deps.attribution) registerAttributionTools(server, toolDeps, deps.attribution, guarded);
+  if (serves("replay") && deps.sessionReplay) registerReplayTools(server, toolDeps, deps.sessionReplay, guarded);
   if (statements || estimates) registerBillingTools(server, { statements, estimates }, guarded);
   registerPrompts(server, { costAnalysis: costAnalysis !== undefined, statements: statements !== undefined, estimates: estimates !== undefined });
 

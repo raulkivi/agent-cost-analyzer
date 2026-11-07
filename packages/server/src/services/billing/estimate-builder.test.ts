@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { costEstimateSchema } from "@agent-cost-analyzer/domain";
 import { billed, costs, cubeOf, cubeRow, priced, unknownFigure } from "../../test-support/cost-cube-fakes.js";
-import { buildCostEstimate, type EstimateQuery } from "./estimate-builder.js";
+import { buildCostEstimate, estimateRows, type EstimateQuery } from "./estimate-builder.js";
 
 // Phase 15 step 15.12 (plan §8.6, D16–D18): an estimate from a project's
 // history at today's prices, a pure function over a cube priced "today".
@@ -67,5 +67,22 @@ describe("buildCostEstimate", () => {
   it("can target a repository", () => {
     const cube = cubeOf([1, 2, 3, 4, 5].map((n) => day(`2026-10-0${n}`, 10, { repositoryKey: "github.com/acme/app" })));
     expect(buildCostEstimate(cube, { ...query, target: { groupBy: "repository", id: "github.com/acme/app", name: "github.com/acme/app" } }).history.knownUnits).toBe(5);
+  });
+
+  // Phase 14 step 14.5 (D7): the same estimate over another figure per turn
+  // (the simulated one), its rows the target's in the window.
+  it("estimates from another figure per turn when given one, with the same rules", () => {
+    const rows = [1, 2, 3, 4, 5].map((n) => day(`2026-10-0${n}`, 1000));
+    const outside = day("2026-01-01", 1);
+    const cube = cubeOf([...rows, outside]);
+    const asked: string[] = [];
+    const halfOf = (row: (typeof rows)[number]) => (asked.push(row.turnKey), priced(n(row) * 5, "sim"));
+    const n = (row: (typeof rows)[number]) => Number(row.date.slice(-1));
+
+    const estimate = costEstimateSchema.parse(buildCostEstimate(cube, query, halfOf));
+
+    expect(estimate).toMatchObject({ history: { units: 5, knownUnits: 5, totalUsd: 75 }, unitCost: { p50: 15, p90: 23 } });
+    expect(asked.sort()).toEqual(rows.map((row) => row.turnKey).sort());
+    expect(estimateRows(cube, query).map((row) => row.turnKey)).toEqual(rows.map((row) => row.turnKey));
   });
 });

@@ -7,6 +7,7 @@ import {
   type CostEstimate,
   type EstimateUnit,
 } from "@agent-cost-analyzer/domain";
+import type { CostFigure } from "@agent-cost-analyzer/domain";
 import type { CostCube, CostCubeRow } from "../cost-analysis/cost-cube.js";
 import { groupingFor } from "../cost-analysis/cube-aggregation.js";
 
@@ -35,11 +36,16 @@ interface Unit {
   usd: number;
 }
 
-function unitsOf(rows: readonly CostCubeRow[], keyOf: (row: CostCubeRow) => string): Unit[] {
+// The figure a turn is estimated from: its priced one (at today's prices),
+// or, on another model, its simulated one (Phase 14 step 14.5).
+export type EstimateFigureOf = (row: CostCubeRow) => CostFigure;
+const pricedFigure: EstimateFigureOf = (row) => row.cost.priced;
+
+function unitsOf(rows: readonly CostCubeRow[], keyOf: (row: CostCubeRow) => string, figureOf: EstimateFigureOf): Unit[] {
   const groups = new Map<string, CostCubeRow[]>();
   for (const row of rows) groups.set(keyOf(row), [...(groups.get(keyOf(row)) ?? []), row]);
   return [...groups.values()].map((members) => {
-    const figures = members.map((row) => row.cost.priced);
+    const figures = members.map(figureOf);
     const known = figures.every((figure) => figure.known);
     return { rows: members, known, usd: known ? figures.reduce((sum, figure) => sum + (toUsd(figure) ?? 0), 0) : 0 };
   });
@@ -47,14 +53,24 @@ function unitsOf(rows: readonly CostCubeRow[], keyOf: (row: CostCubeRow) => stri
 
 const plural = (count: number, one: string, many: string) => `${count} ${count === 1 ? one : many}`;
 
-export function buildCostEstimate(cube: CostCube, query: EstimateQuery): CostEstimate {
+function windowOf(query: Pick<EstimateQuery, "now" | "weeks">): { since: string; until: string } {
   const until = query.now.toISOString().slice(0, 10);
-  const since = addDays(until, -(query.weeks * 7 - 1));
-  const grouping = groupingFor(query.target.groupBy, cube);
-  const rows = cube.rows.filter((row) => grouping.matches(row, query.target.id) && row.date >= since && row.date <= until);
+  return { since: addDays(until, -(query.weeks * 7 - 1)), until };
+}
 
-  const days = unitsOf(rows, (row) => row.date);
-  const units = query.unit === "activeDays" ? days : unitsOf(rows, (row) => row.sessionKey);
+// The target's turns in the history window, the rows an estimate reads.
+export function estimateRows(cube: CostCube, query: Pick<EstimateQuery, "target" | "now" | "weeks">): CostCubeRow[] {
+  const { since, until } = windowOf(query);
+  const grouping = groupingFor(query.target.groupBy, cube);
+  return cube.rows.filter((row) => grouping.matches(row, query.target.id) && row.date >= since && row.date <= until);
+}
+
+export function buildCostEstimate(cube: CostCube, query: EstimateQuery, figureOf: EstimateFigureOf = pricedFigure): CostEstimate {
+  const { since, until } = windowOf(query);
+  const rows = estimateRows(cube, query);
+
+  const days = unitsOf(rows, (row) => row.date, figureOf);
+  const units = query.unit === "activeDays" ? days : unitsOf(rows, (row) => row.sessionKey, figureOf);
   const known = units.filter((unit) => unit.known);
   const knownDays = days.filter((unit) => unit.known);
   const totalUsd = round(known.reduce((sum, unit) => sum + unit.usd, 0));

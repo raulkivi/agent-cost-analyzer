@@ -1,5 +1,8 @@
 import { z } from "zod";
-import { MAX_COMPARED_MODELS } from "@agent-cost-analyzer/domain";
+import {
+  MAX_COMPARED_MODELS,
+  MAX_REPLAY_MODEL_ID_LENGTH,
+} from "@agent-cost-analyzer/domain";
 
 // Phase 14 step 14.5 (docs/plans/analyze-session-replay.md §9,
 // threat-model.md §4): the replay routes' options, shared by HTTP
@@ -8,8 +11,8 @@ import { MAX_COMPARED_MODELS } from "@agent-cost-analyzer/domain";
 // messages. Whether a model id is one a vendor profile lists is the
 // service's check (its allow-list); this only bounds the input.
 
-// No model id a vendor profile lists comes near this; it bounds the input.
-export const MAX_REPLAY_MODEL_ID_LENGTH = 100;
+// The bound on a model id is the domain's, shared with the RPC schema.
+export { MAX_REPLAY_MODEL_ID_LENGTH };
 
 export const replayModelArg = z
   .string()

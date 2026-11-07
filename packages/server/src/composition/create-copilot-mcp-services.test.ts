@@ -11,6 +11,7 @@ import { composeLogProviders } from "./compose-log-providers.js";
 import { STANDALONE_MCP_IDENTITY } from "../mcp/mcp-identity.js";
 import { COPILOT_MCP_IDENTITY, createCopilotMcpServices } from "./create-copilot-mcp-services.js";
 import { createMcpServices } from "./mcp-services.js";
+import { loadVendorProfiles } from "../data-sources/vendor-profiles/loader.js";
 import { createStandaloneAttribution } from "./create-standalone-attribution.js";
 import { createStandalonePriceBook } from "./create-price-book.js";
 import { createTurnPricer } from "./create-turn-pricer.js";
@@ -97,7 +98,7 @@ describe("createCopilotMcpServices (the extension's MCP server, vscode-extension
         store: new InMemoryStatementStore(),
         projects: attribution.catalog,
         priceBookHash: () => "test",
-      }),
+      }, { profiles: loadVendorProfiles(), priceBook }),
       priceBook,
     });
   });
@@ -123,12 +124,17 @@ describe("createCopilotMcpServices (the extension's MCP server, vscode-extension
     });
 
   // Step 15.13 (plan §10.1.4, §10.1.6): every group but billing (D7).
-  it("lists the standalone server's tools but the billing ones (17 of 19), with the same input and output schemas", async () => {
+  // Phase 14 step 14.5 (D5): both serve the replay group.
+  it("lists the standalone server's tools but the billing ones (19 of 21), with the same input and output schemas", async () => {
     const { tools } = await copilot.listTools();
     const standaloneTools = (await standalone.listTools()).tools;
 
-    expect(standaloneTools).toHaveLength(19);
-    expect(tools).toHaveLength(17);
+    expect(standaloneTools).toHaveLength(21);
+    expect(tools).toHaveLength(19);
+    for (const name of ["replay_session", "compare_models_for_session"]) {
+      expect(tools.map((tool) => tool.name)).toContain(name);
+      expect(standaloneTools.map((tool) => tool.name)).toContain(name);
+    }
     expect(withoutIdentityText(tools)).toEqual(withoutIdentityText(standaloneTools.filter((tool) => !BILLING_TOOLS.includes(tool.name))));
     for (const tool of tools) {
       expect(tool.outputSchema?.type, tool.name).toBe("object");
@@ -141,6 +147,17 @@ describe("createCopilotMcpServices (the extension's MCP server, vscode-extension
 
     expect(standalonePrompts).toHaveLength(6);
     expect((await copilot.listPrompts()).prompts).toEqual(standalonePrompts.filter((prompt) => !BILLING_PROMPTS.includes(prompt.name)));
+  });
+
+  it("answers replay_session over the Copilot provider: the session replayed, or why not, never a thrown stack", async () => {
+    const result = await copilot.callTool({ name: "replay_session", arguments: { sessionId: USAGE_SESSION_ID, model: "claude-haiku-5.5" } });
+    const text = JSON.stringify(result);
+
+    if (result.isError) expect(textOf(result)).not.toMatch(/\bat .*\.(ts|js):\d+/);
+    else expect(result.structuredContent).toMatchObject({ simulated: true, sessionId: USAGE_SESSION_ID, model: "claude-haiku-5.5" });
+    expect(text).not.toContain(dir);
+    const unknownModel = await copilot.callTool({ name: "replay_session", arguments: { sessionId: USAGE_SESSION_ID, model: "not-a-model" } });
+    expect(unknownModel.isError).toBe(true);
   });
 
   it("lists no projects and says why: projects are edited in the standalone app (D19)", async () => {

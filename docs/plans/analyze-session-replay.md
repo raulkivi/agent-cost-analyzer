@@ -3,8 +3,9 @@
 **Status (2026-11-07): planned.** The owner decided D1, D2, D4, D5 and D7
 on 2026-11-07; D3, D6 and D8 take the recommendation, open for the owner to
 revisit (§11). Steps 14.0 (threat-model rows), 14.1 (domain schemas) and
-14.2 (request traces), 14.3 (the scripter) and 14.4 (the replay service)
-are done (2026-11-07); step 14.5 is next.
+14.2 (request traces), 14.3 (the scripter), 14.4 (the replay service) and
+14.5 (routes, RPC and MCP) are done (2026-11-07); step 14.6 (mock-ups) is
+next.
 
 The question this answers: **"What would this real session have cost on
 another model?"** It reuses Phase 13's simulator
@@ -244,7 +245,7 @@ recommendation and stay open for the owner to revisit.
 | 14.2 | `RequestTraceSource` for Claude Code and Copilot (local and Agent Host), the 13.5a extractors moved and reused | Each provider's fixture gives the expected trace; calibration tests unchanged. Done 2026-11-07, see the note below |
 | 14.3 | `RequestTraceScripter` with compaction, clear, model switch and 1-hour events; replaces `scriptFromCapture` | Property tests; the 17 shrinking-prompt sessions' shapes replay without error; calibration still 99.8%. Done 2026-11-07, see the note below |
 | 14.4 | `ReplayAligner`, `SessionReplayService`, self-check, pricing per D2 | Golden replays of the fixtures; self-check passes at D12 on every calibration fixture. Done 2026-11-07, see the note below |
-| 14.5 | API routes, RPC, MCP tools (per D7) | Route, RPC and MCP tests (schemas, read-only, redaction) |
+| 14.5 | API routes, RPC, MCP tools (per D7) | Route, RPC and MCP tests (schemas, read-only, redaction). Done 2026-11-07, see the note below |
 | 14.6 | Mock-ups (Replay on, Simulated columns, summary card, Compare models) in both products' themes | Owner approves the boards |
 | 14.7 | UI in the standalone app and the extension (per D4, D5) | Component, axe and keyboard tests; UI check in three VS Code themes; usage scenarios pass in `web-e2e` and `extension-ui` |
 | 14.8 | Docs: architecture.md, User Guide, extension guide, vision | Owner reviews |
@@ -377,6 +378,40 @@ harnesses.
   (one under Sonnet 5's 1,024-token minimum) make some own-model self-checks
   fail, which is the rules being right about fixtures that aren't real logs;
   the real Copilot local log passes 3 of 3.
+
+**14.5 (done 2026-11-07).** One wiring, `composition/create-session-replay.ts`,
+in all four places (the standalone app and its MCP server, the extension
+and its MCP server).
+
+- **HTTP.** `GET /api/sessions/:id/replay?model&pricing&provider` and
+  `/replay/compare?models&pricing&provider`, through `ApiService`'s
+  `getSessionReplay` and `compareSessionReplay`. The query parsers
+  (`services/session-replay/replay-query-params.ts`, model ids of at most
+  100 characters, 1 to 10 models, the pricing enum) give HTTP, RPC and MCP
+  the same messages. An unknown model or too many models is a 400; an
+  unknown session, or one that can't be replayed (a provider with no
+  traces, an empty trace, more than 20,000 requests), is a 404 with the
+  reason: the shared error set has no 422, and this matches the system-prompt
+  route's 404 for a session that lacks the artifact. GET only; no paths in
+  any body; the loopback host guard applies (`app.replay.test.ts`).
+- **RPC.** `getSessionReplay` and `compareSessionReplay` in `domain/rpc.ts`
+  with strict params and, a first for the RPC table, result schemas
+  (`apiMethodResultSchemas`) the web client parses answers with
+  (`web/src/api-client/replay.ts`); the extension's dispatcher routes them
+  to the same ApiService methods.
+- **MCP (D7).** A `replay` tool group with `replay_session` and
+  `compare_models_for_session` (read-only, domain output schemas, errors as
+  tool errors with the reason), in both servers: 21 tools in the standalone
+  server, 19 in the extension's. `estimate_cost` takes an optional `model`:
+  the project's sessions in the window (at most 200) are replayed on it and
+  each turn's priced figure is replaced by its simulated cost, then the
+  unchanged estimate rules apply (D16, D18); the answer carries a
+  `simulation` block (coverage, self-check counts, assumptions) and is
+  priced as of each session's dates on its own channel (D2), not today.
+  `GET /api/estimates` doesn't take `model` yet (only MCP was asked for, D7).
+- **Tests.** Route, RPC, dispatcher, web client and MCP tests, and
+  `mcp/security.test.ts` now runs its read-only and no-path/no-credential
+  checks over the replay tools and `estimate_cost` with a model.
 
 ## 13. Exit criterion
 

@@ -26,7 +26,7 @@ describe("costEstimateSchema", () => {
     expect(costEstimateSchema.parse(base)).toEqual(base);
   });
 
-  it("is always labelled an estimate, at today's prices", () => {
+  it("is always labelled an estimate, at today's prices unless simulated on another model", () => {
     expect(() => costEstimateSchema.parse({ ...base, label: "actual" })).toThrow();
     expect(() => costEstimateSchema.parse({ ...base, pricing: "as-of-use" })).toThrow();
   });
@@ -37,6 +37,30 @@ describe("costEstimateSchema", () => {
     expect(costEstimateSchema.parse(thin).range).toBeNull();
     expect(() => costEstimateSchema.parse({ ...base, range: null, unitCost: null })).toThrow(/reason/);
     expect(() => costEstimateSchema.parse({ ...base, refusal: "x" })).toThrow(/reason/);
+  });
+
+  // Phase 14 step 14.5 (analyze-session-replay.md §9, D7; closes Phase 15's
+  // D17): an estimate on another model is simulated, priced as each replayed
+  // session was used, and says how it was made and what it covers.
+  it("labels an estimate on another model simulated, priced as of use, with its method, coverage and self-checks", () => {
+    const simulation: NonNullable<CostEstimate["simulation"]> = {
+      label: "simulated",
+      model: "claude-haiku-5.5",
+      vendorId: "anthropic",
+      method: "Each session replayed on claude-haiku-5.5.",
+      sessions: 4,
+      replayedSessions: 3,
+      turns: 30,
+      replayedTurns: 25,
+      notReplayed: [{ reason: "This provider's logs can't be replayed yet.", turns: 5 }],
+      selfCheck: { checked: 3, passed: 2 },
+      assumptions: [{ id: "A1", text: "Same conversation.", confidence: "unknown" }],
+    };
+    const simulated = { ...base, pricing: "as-of-use" as const, simulation };
+    expect(costEstimateSchema.parse(simulated)).toEqual(simulated);
+    expect(() => costEstimateSchema.parse({ ...base, simulation })).toThrow(/as-of-use/);
+    expect(() => costEstimateSchema.parse({ ...simulated, simulation: { ...simulation, replayedTurns: 31 } })).toThrow();
+    expect(() => costEstimateSchema.parse({ ...simulated, simulation: { ...simulation, selfCheck: { checked: 1, passed: 2 } } })).toThrow();
   });
 
   it("needs five known units", () => {

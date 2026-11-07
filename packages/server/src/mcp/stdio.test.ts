@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
-import { costRollupSchema, priceBookListingSchema, projectListSchema, repositoryListSchema, sessionCostSchema } from "@agent-cost-analyzer/domain";
+import { costRollupSchema, priceBookListingSchema, projectListSchema, repositoryListSchema, sessionCostSchema, sessionReplaySchema } from "@agent-cost-analyzer/domain";
 
 // End-to-end: spawns the real stdio entry point (what `claude mcp add`
 // runs) against a temporary HOME holding the real-capture Claude Code
@@ -69,6 +69,23 @@ describe("stdio MCP entry point", () => {
 
     const findings = await client.callTool({ name: "list_findings", arguments: {} });
     expect(findings.isError).toBeFalsy();
+  }, 60_000);
+
+  // Phase 14 step 14.5 (D7): 21 tools and 6 prompts, the replay group among
+  // them, and replay_session over the real-capture Claude Code fixture.
+  it("lists 21 read-only tools and 6 prompts, and replays the fixture session on another model, labelled simulated", async () => {
+    const { tools } = await client.listTools();
+    expect(tools).toHaveLength(21);
+    expect((await client.listPrompts()).prompts).toHaveLength(6);
+    expect(tools.every((tool) => tool.annotations?.readOnlyHint === true)).toBe(true);
+
+    const sessions = await client.callTool({ name: "list_sessions", arguments: { provider: "claude-code" } });
+    const [session] = (sessions.structuredContent as { sessions: { id: string }[] }).sessions;
+    const result = await client.callTool({ name: "replay_session", arguments: { sessionId: session.id, provider: "claude-code", model: "claude-haiku-5.5" } });
+
+    expect(result.isError, JSON.stringify(result.content)).toBeFalsy();
+    expect(sessionReplaySchema.parse(result.structuredContent)).toMatchObject({ simulated: true, model: "claude-haiku-5.5", sessionId: session.id });
+    expect(JSON.stringify(result)).not.toContain(home);
   }, 60_000);
 
   // Phase 15 step 15.5: the standalone server serves the bundled price book.

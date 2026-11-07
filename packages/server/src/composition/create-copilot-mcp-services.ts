@@ -1,5 +1,5 @@
 import type { AppSettingsStore } from "../data-sources/log-providers/app-settings.js";
-import { COST_BASIS_INSTRUCTIONS, type McpIdentity } from "../mcp/mcp-identity.js";
+import { COST_BASIS_INSTRUCTIONS, REPLAY_INSTRUCTIONS, type McpIdentity } from "../mcp/mcp-identity.js";
 import { WITHOUT_BILLING_TOOL_GROUPS, type McpServerDeps } from "../mcp/mcp-server.js";
 import { loadVendorProfiles } from "../data-sources/vendor-profiles/loader.js";
 import { createCopilotAttribution } from "./create-copilot-attribution.js";
@@ -40,6 +40,7 @@ export const COPILOT_MCP_IDENTITY: McpIdentity = {
     "Dates are ISO (YYYY-MM-DD or a timestamp), inclusive, compared against each session's start.",
     "Cost by repository: list_repositories first (list_projects has no projects here: they are edited in the standalone Agent Cost Analyzer app, so every turn is in No project), then get_repository_cost or get_project_cost (over time, by model) or compare_costs (several side by side), then explain_cost_change (usage, price and mix effects) and get_price_changes for the price changes behind it.",
     COST_BASIS_INSTRUCTIONS,
+    REPLAY_INSTRUCTIONS,
   ].join("\n\n"),
   logSourcesDescription: "VS Code GitHub Copilot Chat",
   providerArgDescription: 'Log provider id; only "vscode" (VS Code GitHub Copilot Chat) exists here, so this can be left out (see list_log_providers).',
@@ -81,10 +82,21 @@ export function createCopilotMcpServices(options: CopilotMcpServicesOptions): Mc
   // Step 15.13 (plan §10.1.4, D7, D19): repositories, the bundled price
   // book and the cost analyses over the Copilot provider, as the extension's
   // Dashboard has them; no projects and no billing.
-  const attribution = createCopilotAttribution(registry, loadVendorProfiles(options.vendorProfilesDir));
+  const profiles = loadVendorProfiles(options.vendorProfilesDir);
+  const attribution = createCopilotAttribution(registry, profiles);
   const priceBook = createBundledPriceBookBeside(options.vendorProfilesDir);
+  // Phase 14 step 14.5 (D5): replays too, on the same profiles and price book.
   return {
-    ...createMcpServices(registry, options.appVersion, COPILOT_MCP_IDENTITY, attribution, priceBook ? createTurnPricer(priceBook) : undefined, priceBook),
+    ...createMcpServices(
+      registry,
+      options.appVersion,
+      COPILOT_MCP_IDENTITY,
+      attribution,
+      priceBook ? createTurnPricer(priceBook) : undefined,
+      priceBook,
+      undefined,
+      priceBook ? { profiles, priceBook } : undefined,
+    ),
     ...(priceBook ? { priceBook } : {}),
     toolGroups: WITHOUT_BILLING_TOOL_GROUPS,
   };

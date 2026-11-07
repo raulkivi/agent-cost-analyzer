@@ -28,6 +28,11 @@ export const COST_BASIS_INSTRUCTIONS = [
   "Conversion: 1 AI Credit = $0.01 (GitHub's documented rate); no other exchange rate is used.",
 ].join("\n\n");
 
+// Phase 14 step 14.5 (analyze-session-replay.md §9, D7): replays, the same
+// for both products.
+export const REPLAY_INSTRUCTIONS =
+  "Replay on another model: replay_session (one model, per turn) and compare_models_for_session (several, totals) run a session's own request trace through another model's caching rules and prices. Their figures are Simulated, assuming the same conversation and token counts: say \"would have cost about\". Check selfCheck (the replay on the session's own model against its log) and coverage (turns not replayed, with reasons) before relying on them.";
+
 export const STANDALONE_MCP_IDENTITY: McpIdentity = {
   name: "agent-cost-analyzer",
   title: "Agent Cost Analyzer",
@@ -40,7 +45,8 @@ export const STANDALONE_MCP_IDENTITY: McpIdentity = {
     "Dates are ISO (YYYY-MM-DD or a timestamp), inclusive, compared against each session's start.",
     "Cost by repository and project: list_repositories and list_projects first, then get_project_cost or get_repository_cost (over time, by vendor and model) or compare_costs (several side by side), then explain_cost_change (usage, price and mix effects) and get_price_changes for the price changes behind it.",
     COST_BASIS_INSTRUCTIONS,
-    "Billing: get_statement reads a project's statement for a period; statements are issued only in the app, never by a tool. estimate_cost gives the cost of planned work as a p50–p90 range at today's prices, never one number.",
+    REPLAY_INSTRUCTIONS,
+    "Billing: get_statement reads a project's statement for a period; statements are issued only in the app, never by a tool. estimate_cost gives the cost of planned work as a p50–p90 range at today's prices, never one number; with `model`, on that model, simulated by replaying the project's sessions.",
   ].join("\n\n"),
   logSourcesDescription: "VS Code Copilot Chat, Claude Code CLI, pi, mitmproxy captures",
   providerArgDescription:

@@ -460,12 +460,12 @@ MCP across the products (Phase 15 step 15.13, plan §10.1.4–§10.1.6):
 `createMcpServer` takes `toolGroups` (`sessions`, `audit`, `cost`,
 `findings`, `attribution`, `pricing`, `costAnalysis`, `billing`; every
 group by default), and a group is registered only when its services are
-given too. The standalone stdio server serves all 19 tools and 6 prompts.
+given too. The standalone stdio server serves all 21 tools and 6 prompts (19 before Phase 14 step 14.5 added the `replay` group).
 The extension's (`createCopilotMcpServices`) serves
 `WITHOUT_BILLING_TOOL_GROUPS`: repositories over the Copilot provider
 (`createCopilotAttribution`, with no projects file, so `list_projects`
 returns none with a `reason`, D19), the bundled price book from its
-`media/` folder and the cost analyses, 17 tools and 4 prompts. Both
+`media/` folder, the cost analyses and the replay tools, 19 tools and 4 prompts. Both
 identities' instructions share `COST_BASIS_INSTRUCTIONS` (the three cost
 bases, as-of-use versus today's prices, 1 AI Credit = $0.01).
 
@@ -2094,7 +2094,7 @@ this is the end-to-end view.
 | Dashboard tabs | Overview, Cost over time, Compare, Project, Billing | Overview, Cost over time, Compare (`ProductFeatures.projectsAndBilling` false) |
 | Statements and estimates | Yes | No (D7) |
 | Side bar and status bar | — | Sessions grouped by day or repository; today's AI Credits for the workspace's repository (step 15.14) |
-| MCP | 19 tools, 6 prompts | 17 tools, 4 prompts (no `billing` group) |
+| MCP | 21 tools, 6 prompts | 19 tools, 4 prompts (no `billing` group) |
 
 ## 7. `main.jsonl` parsing strategy
 

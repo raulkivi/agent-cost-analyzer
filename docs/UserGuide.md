@@ -419,7 +419,9 @@ claude mcp add agent-cost-analyzer -- /absolute/path/to/agent-cost-analyzer/scri
 | `compare_costs` | Two to 20 repositories or projects side by side: total, change, per session, per active day, share and coverage |
 | `explain_cost_change` | Why a repository's or project's cost changed between two periods: usage, price and mix effects that add up exactly |
 | `get_statement` | A project's billing statement for a period: the issued one with any differences, else the draft. It never issues one |
-| `estimate_cost` | The cost of planned work as a p50–p90 range at today's prices, never one number |
+| `estimate_cost` | The cost of planned work as a p50–p90 range at today's prices, never one number. With `model`, the same estimate from the project's sessions replayed on that model (**Simulated**, priced as of each session's dates, with coverage and assumptions) |
+| `replay_session` | One session replayed on another model: per turn and in total what it would have cost beside what it did, with coverage, the self-check on its own model and the assumptions. **Simulated** |
+| `compare_models_for_session` | One session's simulated total on up to 10 models, its own included, with how many turns each replayed. **Simulated** |
 
 Six prompts start common reviews: `audit_session` (why a session's tool
 calls failed), `review_costs` (what drives your spend and how to cut it),

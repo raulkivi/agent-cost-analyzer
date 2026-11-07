@@ -13,6 +13,10 @@ import { DatasetCostCubeSource } from "../services/cost-analysis/cost-analysis-s
 import { StatementService, type StatementServiceDeps } from "../services/billing/statement-service.js";
 import { EstimateService } from "../services/billing/estimate-service.js";
 import type { StatementStore } from "../services/billing/statement-store.js";
+import type { VendorProfile } from "@agent-cost-analyzer/domain";
+import type { PriceBook } from "../services/pricing/price-book.js";
+import { ReplayModelResolver } from "../services/session-replay/replay-model-resolver.js";
+import { createSessionReplay } from "./create-session-replay.js";
 
 // The services createMcpServer takes, over whichever registry a product's
 // composition root built: every provider for the standalone stdio server
@@ -34,6 +38,13 @@ export interface McpStatementInputs {
   timeZone?: string;
 }
 
+// Phase 14 step 14.5 (D5, D7): what replays run on. Both products pass it
+// when they have a price book; without one the replay group isn't served.
+export interface McpReplayInputs {
+  profiles: readonly VendorProfile[];
+  priceBook: PriceBook;
+}
+
 export function createMcpServices(
   registry: LogProviderRegistry,
   version: string,
@@ -47,8 +58,15 @@ export function createMcpServices(
   priceVersions?: PriceVersionSource,
   // Step 15.11: issued statements and what drafts need (with attribution).
   statements?: McpStatementInputs,
+  // Step 14.5: replay_session, compare_models_for_session and
+  // estimate_cost's model (needs the turn pricer too, for measured figures).
+  replay?: McpReplayInputs,
 ): McpServerDeps {
   const insights = createInsightsService(registry, attribution?.dataset, pricer);
+  const sessionReplay =
+    replay && pricer
+      ? createSessionReplay({ providers: registry, profiles: replay.profiles, priceBook: replay.priceBook, pricer, ...(attribution ? { attribution: attribution.dataset } : {}) })
+      : undefined;
   return {
     auditQueries: new AuditQueryService(registry),
     analysisQueries: new AnalysisQueryService(registry, insights, {
@@ -58,6 +76,7 @@ export function createMcpServices(
     getProviderStatus: () => registry.getStatus(),
     version,
     ...(identity ? { identity } : {}),
+    ...(sessionReplay ? { sessionReplay } : {}),
     ...(attribution ? { attribution: attribution.queries } : {}),
     ...(attribution
       ? {
@@ -80,6 +99,7 @@ export function createMcpServices(
           estimates: new EstimateService({
             cubes: new DatasetCostCubeSource(insights),
             projects: { projectName: (id) => attribution.queries.listProjects().projects.find((project) => project.id === id)?.name },
+            ...(sessionReplay && replay ? { replay: { sessions: sessionReplay, models: new ReplayModelResolver(replay.profiles) } } : {}),
           }),
         }
       : {}),
