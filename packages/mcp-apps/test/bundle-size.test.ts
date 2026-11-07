@@ -8,9 +8,10 @@ import { fileURLToPath } from "node:url";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { JSDOM } from "jsdom";
 
-// Plan §7 A5: the single-file bundle stays within 450 KB uncompressed, and
+// Plan §7 A5: the single-file bundle stays within its size budget, uncompressed, and
 // is self-contained (constraint 1: no network, no external resources).
-const BUDGET_BYTES = 450 * 1024;
+// The owner raised this from 450 KB on 2026-11-07 because ext-apps pulls in all of zod via a dynamic import; no third-party patching.
+const BUDGET_BYTES = 900 * 1024;
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
 describe("views.html bundle", () => {
@@ -32,7 +33,7 @@ describe("views.html bundle", () => {
 
   afterAll(() => rmSync(outDir, { recursive: true, force: true }));
 
-  it("is at most 450 KB uncompressed", () => {
+  it("is at most 900 KB uncompressed", () => {
     const size = Buffer.byteLength(html);
     console.info(`views.html: ${(size / 1024).toFixed(1)} KB`);
     expect(size).toBeLessThanOrEqual(BUDGET_BYTES);
@@ -42,7 +43,7 @@ describe("views.html bundle", () => {
     expect(html.match(/<meta name="aca-brand" content="">/g)).toHaveLength(1);
   });
 
-  it("still starts with zod's unused parts cut (no error while loading and rendering)", async () => {
+  it("loads and renders without error", async () => {
     const dom = new JSDOM(html.replace(/<script type="module"[^>]*>/, "<script>"), { runScripts: "dangerously", pretendToBeVisual: true });
     const errors: unknown[] = [];
     dom.window.addEventListener("error", (event) => errors.push(event.error ?? event.message));
