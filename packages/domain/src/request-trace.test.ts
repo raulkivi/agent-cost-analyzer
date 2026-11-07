@@ -41,6 +41,14 @@ describe("requestTraceSchema", () => {
     expect(requestTraceSchema.safeParse(trace({ requests: [request] })).success).toBe(false);
   });
 
+  // Copilot's local harness records no cache writes without agent-traces.db:
+  // unknown, never 0 (constraint 6); the replay infers them (assumption A4).
+  it("allows cache writes the log doesn't record as null, with no 1-hour split", () => {
+    const request = { ...trace().requests[0]!, cacheWrite: null };
+    expect(requestTraceSchema.safeParse(trace({ requests: [request] })).success).toBe(true);
+    expect(requestTraceSchema.safeParse(trace({ requests: [{ ...request, extendedCacheWrite: 10 }] })).success).toBe(false);
+  });
+
   it("requires indexes 0, 1, 2… in order, and times that never go back", () => {
     const [a, b] = trace().requests;
     expect(requestTraceSchema.safeParse(trace({ requests: [a!, { ...b!, index: 3 }] })).success).toBe(false);

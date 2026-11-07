@@ -1,6 +1,7 @@
 import { existsSync } from "node:fs";
 import {
   unavailableTokenCount,
+  type RequestTrace,
   type Session,
   type TokenCount,
   type TriggeredEvent,
@@ -8,11 +9,12 @@ import {
   type TurnInspectorDetail,
   type TurnUsage,
 } from "@agent-cost-analyzer/domain";
-import type { LogProvider, LogProviderAvailability } from "../log-providers/log-provider.js";
+import type { LogProvider, LogProviderAvailability, RequestTraceReader } from "../log-providers/log-provider.js";
 import { listClaudeCodeSessionFiles } from "../../platform/claude-code-paths/resolve-claude-code-projects-dir.js";
 import { readClaudeCodeSessionFile, type ClaudeCodeRawEntry } from "./claude-code-jsonl-reader.js";
 import { findForkPointIds, resolveActiveLeafUuid, walkBranch } from "./session-tree.js";
 import { groupBranchEntriesByUserMessage, type ClaudeCodeTurnGroup } from "./turn-grouper.js";
+import { buildClaudeCodeRequestTrace } from "./request-trace-builder.js";
 import { groupTurnEntriesByRound } from "./round-grouper.js";
 import { extractTurnUsage } from "./usage-extractor.js";
 import { extractToolCalls } from "./tool-call-extractor.js";
@@ -127,7 +129,7 @@ function resolveStartedAt(branch: ClaudeCodeRawEntry[]): string | undefined {
 // names the authoritative active branch (session-tree.ts's
 // resolveActiveLeafUuid), so there's no need to guess/expose every fork as
 // its own session.
-export class ClaudeCodeLogProvider implements LogProvider {
+export class ClaudeCodeLogProvider implements LogProvider, RequestTraceReader {
   readonly id = PROVIDER_ID;
   readonly label = "Claude Code CLI";
 
@@ -214,6 +216,19 @@ export class ClaudeCodeLogProvider implements LogProvider {
       return null;
     }
     return this.buildSessionFromFile(filePath);
+  }
+
+  // Phase 14 step 14.2: the same active branch and turn grouping as
+  // buildSession, so the trace's turn indexes are the session's.
+  async readRequestTrace(sessionId: string): Promise<RequestTrace | null> {
+    const filePath = resolveClaudeCodeSessionFilePath(this.listSessionFilePaths(), sessionId);
+    if (!filePath) {
+      return null;
+    }
+    const { entries } = await readClaudeCodeSessionFile(filePath);
+    const activeLeafUuid = resolveActiveLeafUuid(entries);
+    const branch = activeLeafUuid ? walkBranch(entries, activeLeafUuid) : [];
+    return buildClaudeCodeRequestTrace(sessionId, groupBranchEntriesByUserMessage(branch));
   }
 
   async readTurnDetail(sessionId: string, turnIndex: number): Promise<TurnInspectorDetail | null> {

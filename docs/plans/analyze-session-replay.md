@@ -2,8 +2,8 @@
 
 **Status (2026-11-07): planned.** The owner decided D1, D2, D4, D5 and D7
 on 2026-11-07; D3, D6 and D8 take the recommendation, open for the owner to
-revisit (§11). Steps 14.0 (threat-model rows) and 14.1 (domain schemas)
-are done (2026-11-07); step 14.2 is next.
+revisit (§11). Steps 14.0 (threat-model rows), 14.1 (domain schemas) and
+14.2 (request traces) are done (2026-11-07); step 14.3 is next.
 
 The question this answers: **"What would this real session have cost on
 another model?"** It reuses Phase 13's simulator
@@ -240,13 +240,49 @@ recommendation and stay open for the owner to revisit.
 |---|---|---|
 | 14.0 | Decisions D1–D8 (§11, recorded 2026-11-07); threat-model rows for the new read routes, RPC methods and MCP tools | Threat model updated. Done 2026-11-07: §4 and §6 rows and the §9 bullet, marked "plan" |
 | 14.1 | Domain `RequestTrace` and `SessionReplay` schemas | Schema tests pass. Done 2026-11-07: `request-trace.ts` (strict records, numbers only; indexes, times and turns never go back; 1-hour writes within all writes; untraced turns with reasons) and `session-replay.ts` (always `simulated: true`; a turn is replayed or has a reason; unknown totals null, never 0, with the difference null too; coverage and the self-check bounded; at most 10 compared models); 18 tests |
-| 14.2 | `RequestTraceSource` for Claude Code and Copilot (local and Agent Host), the 13.5a extractors moved and reused | Each provider's fixture gives the expected trace; calibration tests unchanged |
+| 14.2 | `RequestTraceSource` for Claude Code and Copilot (local and Agent Host), the 13.5a extractors moved and reused | Each provider's fixture gives the expected trace; calibration tests unchanged. Done 2026-11-07, see the note below |
 | 14.3 | `RequestTraceScripter` with compaction, clear, model switch and 1-hour events; replaces `scriptFromCapture` | Property tests; the 17 shrinking-prompt sessions' shapes replay without error; calibration still 99.8% |
 | 14.4 | `ReplayAligner`, `SessionReplayService`, self-check, pricing per D2 | Golden replays of the fixtures; self-check passes at D12 on every calibration fixture |
 | 14.5 | API routes, RPC, MCP tools (per D7) | Route, RPC and MCP tests (schemas, read-only, redaction) |
 | 14.6 | Mock-ups (Replay on, Simulated columns, summary card, Compare models) in both products' themes | Owner approves the boards |
 | 14.7 | UI in the standalone app and the extension (per D4, D5) | Component, axe and keyboard tests; UI check in three VS Code themes; usage scenarios pass in `web-e2e` and `extension-ui` |
 | 14.8 | Docs: architecture.md, User Guide, extension guide, vision | Owner reviews |
+
+### 12.1 Step notes
+
+**14.2 (done 2026-11-07).** Request traces for Claude Code and both Copilot
+harnesses.
+
+- **Port.** `RequestTraceReader` is an optional `LogProvider` capability
+  (`canReadRequestTrace`, ISP), implemented by `ClaudeCodeLogProvider` and
+  `VscodeLogProvider` (classic store first, then Agent Host through an
+  optional `CopilotSessionSource.readRequestTrace`). pi and mitmproxy don't
+  implement it (D1).
+- **Same turns as the session.** Each trace reuses its provider's own turn
+  building: Claude Code's active branch, turn grouping and rounds;
+  the local harness's debug-log alignment to the store
+  (`alignLogTurnsToStore`, store rows plus placed log turns); Agent Host's
+  `segmentCopilotTurns`, as the turn inspector. A test per provider checks
+  the trace's turns against `readSession`'s.
+- **Builders** (pure, tested over the providers' fixtures):
+  `buildClaudeCodeRequestTrace`, `buildLocalRequestTrace`
+  (`data-sources/jsonl/`), `buildAgentHostRequestTrace`
+  (`services/session-enricher/`).
+  - A turn is traced whole or not at all, and an untraced turn keeps its
+    reason: no usage, no request, not in the debug log, a log turn that
+    can't be placed, or a turn the matcher couldn't place.
+  - Times are kept in order, and a model change is a `model-switch` event.
+  - Sub-agent calls are left out of the main chain (D6).
+- **Domain change.** `TraceRequest.cacheWrite` is nullable. Copilot's local
+  harness records no writes without `agent-traces.db`, and Agent Host flags
+  unreliable writes (`cacheDetailsReported: false`). Then the writes stay in
+  `uncachedInput` and step 14.3 infers them (A4), rather than a made-up 0.
+- **Deviation from the plan.** The 13.5a calibration extractors are not
+  moved. They read whole files across branches and store 5-minute and
+  1-hour writes separately, while a trace follows the session's active
+  branch and turns with the 1-hour writes inside all writes. Reusing them
+  would have changed calibration; the traces reuse the providers' readers
+  instead, and calibration is unchanged (its 25 tests pass).
 
 ## 13. Exit criterion
 

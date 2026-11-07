@@ -24,8 +24,11 @@ export const traceRequestSchema = z
     model: z.string().min(1),
     uncachedInput: tokens,
     cacheRead: tokens,
-    // All cache writes, the 1-hour ones included.
-    cacheWrite: tokens,
+    // All cache writes, the 1-hour ones included; null when the log doesn't
+    // record writes (Copilot's local harness without agent-traces.db), never
+    // 0 (constraint 6). Then uncachedInput holds the writes too, and the
+    // replay infers them (plan assumption A4).
+    cacheWrite: tokens.nullable(),
     // Writes the provider says used the 1-hour lifetime.
     extendedCacheWrite: tokens.optional(),
     output: tokens,
@@ -34,8 +37,8 @@ export const traceRequestSchema = z
     event: traceEventSchema.optional(),
   })
   .strict()
-  .refine((request) => (request.extendedCacheWrite ?? 0) <= request.cacheWrite, {
-    message: "1-hour cache writes cannot exceed all cache writes",
+  .refine((request) => request.extendedCacheWrite === undefined || (request.cacheWrite !== null && request.extendedCacheWrite <= request.cacheWrite), {
+    message: "1-hour cache writes need known cache writes and cannot exceed them",
     path: ["extendedCacheWrite"],
   });
 

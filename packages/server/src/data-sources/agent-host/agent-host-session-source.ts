@@ -1,6 +1,7 @@
 import { existsSync } from "node:fs";
 import type { DatabaseSync } from "node:sqlite";
-import type { Session, TurnInspectorDetail } from "@agent-cost-analyzer/domain";
+import type { RequestTrace, Session, TurnInspectorDetail } from "@agent-cost-analyzer/domain";
+import { buildAgentHostRequestTrace } from "../../services/session-enricher/agent-host-request-trace.js";
 import { lookupAgentHostSystemPromptText } from "../../services/session-enricher/agent-host-system-prompt-builder.js";
 import {
   buildAgentHostSession,
@@ -216,6 +217,18 @@ export class AgentHostSessionSource implements CopilotSessionSource {
       return null;
     }
     return buildAgentHostTurnDetail(turnIndex, await this.loadEventLog(entry.sdkSessionId, turnRefs));
+  }
+
+  // Phase 14 step 14.2: session.db decides the turns, the event log the
+  // requests (buildAgentHostRequestTrace); a log that can't be read lists
+  // every turn as not traced with the log's reason.
+  async readRequestTrace(sessionId: string): Promise<RequestTrace | null> {
+    const entry = this.findInCatalog(sessionId);
+    if (!entry) {
+      return null;
+    }
+    const turnRefs = this.withStore(sessionId, readAgentHostTurnEventIds) ?? [];
+    return buildAgentHostRequestTrace(sessionId, turnRefs.length, await this.loadEventLog(entry.sdkSessionId, turnRefs));
   }
 
   async lookupSystemPromptText(sessionId: string): Promise<SystemPromptTextLookup> {
