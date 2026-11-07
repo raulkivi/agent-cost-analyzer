@@ -19,9 +19,9 @@
   },
   "workspaces": [
     "packages/domain",
-    "packages/server",
     "packages/web",
     "packages/mcp-apps",
+    "packages/server",
     "packages/pi-system-prompt-logger",
     "packages/vscode-extension"
   ],

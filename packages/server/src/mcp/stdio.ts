@@ -9,7 +9,7 @@ import { createTurnPricer } from "../composition/create-turn-pricer.js";
 import { loadVendorProfiles } from "../data-sources/vendor-profiles/loader.js";
 import { readAppVersion } from "../composition/app-version.js";
 import { createMcpServer } from "./mcp-server.js";
-import { FileViewSource } from "./apps/view-source.js";
+import { resolveAppViews } from "./apps/resolve-app-views.js";
 import { parseStdioArgs } from "./stdio-args.js";
 import { FileStatementStore } from "../data-sources/statements/file-statement-store.js";
 import { priceBookHashOf } from "../services/billing/statement-service.js";
@@ -33,8 +33,8 @@ const priceBook = createStandalonePriceBook(resolvedAppSettingsDir, attribution.
 const { projectBillingDetails, appViewsHtml } = parseStdioArgs(process.argv.slice(2));
 const server = createMcpServer({
   projectBillingDetails,
-  // Dev only (docs/plans/mcp-apps-spike.md): --app-views-html serves that file as the views resource.
-  ...(appViewsHtml ? { appViews: { source: new FileViewSource(appViewsHtml) } } : {}),
+  // --app-views-html (scripts/mcp-server.sh passes the built views.html): the views resource and _meta.ui; no file, no views.
+  ...resolveAppViews(appViewsHtml, (missing) => console.error(`agent-cost-analyzer MCP server: no app views at ${missing}; starting without them (run npm run build).`)),
   ...createMcpServices(registry, version, undefined, attribution, createTurnPricer(priceBook), priceBook, {
     // Step 15.11: get_statement reads the statements the app issued.
     store: new FileStatementStore(resolvedAppSettingsDir),
