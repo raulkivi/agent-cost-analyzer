@@ -1,11 +1,22 @@
 # MCP Apps: branded, interactive cost views in the chat
 
-Status: **planned (2026-10-28), not started.** This is Phase 12 in
-[implementation-plan.md](../implementation-plan.md). It starts after
-`ext-v0.1.0` ships, because step 10.13 blocks that release.
+Status: **planned (2026-10-28), not started; updated 2026-11-07 for the
+Phase 14 and Phase 15 tools.** This is Phase 12 in
+[implementation-plan.md](../implementation-plan.md). Its dependencies are
+met: Phase 9.12's tools are done, step 10.13 is done and `ext-v0.1.0`
+shipped on 2026-11-03.
 This plan extends the MCP server from Phase 9.10 and Phase 9.12
 ([tool-call-audit.md](tool-call-audit.md) §10,
-[mcp-tools-v2.md](mcp-tools-v2.md)).
+[mcp-tools-v2.md](mcp-tools-v2.md)), and covers the tools that Phase 14
+step 14.5 ([analyze-session-replay.md](analyze-session-replay.md)) and
+Phase 15 steps 15.4–15.13
+([cost-by-repository-and-project.md](cost-by-repository-and-project.md))
+added after it was written.
+
+**Tools today.** The standalone server lists 21 model-visible tools. The
+extension's server lists 19: every group except `billing`
+(`get_statement`, `estimate_cost`; Phase 15 D7). §2 judges every one of
+them for a view.
 
 ## 1. Context
 
@@ -43,11 +54,30 @@ adds over prose.
 | U1 | "Why was this session expensive?" | `get_session_cost` | KPI tiles with coverage, AI Credits per turn chart, top turns with event tags, context-overhead bar. Click a turn to see its detail. | **MVP** |
 | U2 | "What's driving my spend this week?" | `get_cost_rollup` | Daily spend columns, spend by model and provider bars, a top-sessions table. Click a session to open U1 in place. | **MVP** |
 | U3 | "Anything risky in my sessions?" | `list_findings` | Severity tiles, a findings table, kind and severity filters, collapsed redacted evidence. | **MVP** |
-| U4 | "Why did tool calls fail?" | `get_session_audit`, `get_audit_rollup` | Failure categories bar, recovery cost, failing commands. | Increment 2 |
-| U5 | "Find the session about X" | `list_sessions` | A picker. A click sends "Analyse session <id>" to the chat. | Increment 2, if U1–U3 land well |
+| U4 | "Why did tool calls fail?" | `get_session_audit`, `get_audit_rollup` | Failure categories bar, recovery cost, failing commands. | Increment 3 |
+| U5 | "Find the session about X" | `list_sessions` | A picker. A click sends "Analyse session <id>" to the chat. | Increment 3, if U1–U3 land well |
 | U6 | "Show me turn N" | `get_turn` | Little. Prompt and response are prose, which the model already reads. | Rejected as a standalone view. It's the drill-down inside U1. |
 | U7 | `list_tool_calls`, `list_log_providers`, prompts | — | Raw rows or setup data. | Rejected |
 | U8 | "Explain prompt caching" (Learn content in chat) | — | Learn diagrams | Follow-up (§11). It isn't a tool-result view. |
+
+### 2.1 Tools added by Phases 14 and 15
+
+| # | User question | Tool | View adds | In | Verdict |
+|---|---|---|---|---|---|
+| U9 | "What did this repository / project cost, and how did it change?" | `get_repository_cost`, `get_project_cost` | Total tiles per basis with coverage, a cost-over-time chart by bucket with documented and observed price-change markers. For a project, also cost by vendor then model, tokens by type, and top sessions. Click a session to open U1 in place. | both | **Increment 2** |
+| U10 | "Which repository or project costs the most?" | `compare_costs` | A comparison table (total, change, cost per session, per active day and per turn, cache-hit ratio) with share bars. Click a row to open U9 for that id in place. | both | **Increment 2** |
+| U11 | "Costs went up 30%: why?" | `explain_cost_change` | A waterfall of usage, price and mix effects that add up to the change, a per-model table with unit prices, the "not explained" turns and their reasons, and the documented price changes. "Price changes" opens U13 in place. | both | **Increment 2** |
+| U12 | "What would this session have cost on model X?" / "Compare models for this session" | `replay_session`, `compare_models_for_session` | One view, two modes. Compare: simulated totals per model beside the measured total. Replay: simulated per-turn credits beside measured, and the self-check result. Every simulated figure carries the "simulated" tag. Click a model to replay on it in place. | both | **Increment 3** |
+| U13 | "When did prices change?" | `get_price_changes` | A timeline that keeps documented and observed changes apart. Each change shows % per token type with its sources. Observed changes are tagged "inferred". | both | **Increment 3** |
+| U14 | "What does project X's statement for October say?" | `get_statement` | Statement lines per basis, currency, channel and model, totals per currency, coverage, unknown-cost turns with reasons, and for an issued period the diff against the re-run. No issue button: issuing stays in the app (§11). | standalone | **Increment 3** |
+| U15 | "How much will 10 days of work on X cost?" | `estimate_cost` | A p50–p90 range bar in USD labelled "estimate", the sample it came from, and the refusal reason when there is too little data. Never a single number. | standalone | **Increment 3** |
+| U16 | "Which prices does the analyzer use?" | `get_price_book` | A long reference table of versions and sources. The model reads it well enough. | — | Rejected as a standalone view. U13 shows the versions behind each change. |
+| U17 | "Which repositories / projects are there?" | `list_repositories`, `list_projects` | Lookup lists for picking an id. | — | Rejected as views. U5's picker may later list repositories too. |
+
+"In" is the product whose server registers the tool. The extension has
+no projects (Phase 15 D19). There, `get_project_cost` and project
+comparisons return their reason, and U9/U10 show that reason instead of
+a chart.
 
 **Product fit.** Drill-down from a view goes host → server → view. The
 model never sees those results, so exploring a session in the chat spends
@@ -59,7 +89,14 @@ no model tokens. A cost analyzer should show this off.
   per-turn chart. Product branding. A deep link from the view into the
   extension's panel. VS Code Copilot Chat and Claude Desktop as verified
   hosts.
-- **Increment 2:** U4, U5, fullscreen mode for U2.
+- **Increment 2 (cost analysis, both products):** U9, U10 and U11, for
+  the Phase 15 cost-analysis tools. These are the cost questions the
+  Dashboard's Cost over time, Compare and Project tabs answer.
+- **Increment 3:** U12 (replay), U13 (price changes), U14 and U15
+  (statement and estimate, standalone only), U4 (audit), U5 (session
+  picker), and fullscreen mode for U2 and U9.
+- Each increment reuses the MVP's bundle, theme, `AppHostPort` and
+  router, and ships on its own once its exit criterion (§8) is met.
 - Text results stay exactly as they are today, for every host.
 
 ## 4. Design
@@ -174,6 +211,88 @@ no model tokens. A cost analyzer should show this off.
 - Parameters are validated against the existing session id rules. The
   handler only navigates. It never runs a command that changes anything.
 
+### 4.5 Views for the Phase 14 and 15 tools (Increments 2 and 3)
+
+- **Same bundle, same router.** U9–U15 are routes in `views.html`, keyed
+  on the tool name. Each increment adds `_meta.ui.resourceUri` to its
+  tools. Names, input schemas, output schemas and `content` stay as they
+  are.
+- **Only for registered tools.** `registerAppViews` takes the names of
+  the tools the server actually registered (the `toolGroups` and
+  optional-deps checks in `createMcpServer`). It adds `_meta.ui` only to
+  those. The extension's server therefore never names a view for
+  `get_statement` or `estimate_cost`.
+- **No new app-only tools.** Drill-down calls tools the model can already
+  call: `get_repository_cost`, `get_project_cost`, `get_session_cost`,
+  `get_price_changes` and `replay_session`. Arguments come only from the
+  current `structuredContent`: ids, keys, periods and the basis.
+- **Reuse.** The presentational parts come from `packages/web`:
+  - charts: `CostTimeChart`, `Waterfall`, `HorizontalBars`,
+    `StackedColumns`, `ReplayCompareBars`, `ChartDataTable`/`ViewAsTable`;
+  - `lib/cost/*`: `cost-format`, `series-model`, `series-colors`,
+    `project-model`;
+  - replay: `SimulatedBadge` and `ReplayPricingNote`.
+
+  The tabs (`CostOverTimeTab`, `CompareTab`, `ProjectTab`, `BillingTab`,
+  `EstimatePanel`, `CompareModelsView`) fetch through `api-client`, so the
+  views don't import them. Where a tab mixes its rendering with fetching,
+  the rendering is split out first, a pure refactor with the web tests
+  green (A17).
+- **Pure view models**, one per view, alongside §4.3's:
+  ```ts
+  toCostSeriesViewModel(cost: CostSeries | ProjectCost): CostSeriesViewModel        // U9
+  toCostComparisonViewModel(comparison: CostComparison): CostComparisonViewModel    // U10
+  toCostVarianceViewModel(variance: CostVariance): CostVarianceViewModel            // U11
+  toReplayViewModel(replay: SessionReplay | SessionReplayComparison): ReplayViewModel // U12
+  toPriceChangesViewModel(list: PriceChangeList): PriceChangesViewModel             // U13
+  toStatementViewModel(answer: StatementAnswer): StatementViewModel                 // U14
+  toEstimateViewModel(estimate: CostEstimate): EstimateViewModel                    // U15
+  ```
+- **Display rules**, on top of §4.3's:
+  - Every money figure names its basis (billed, reported or priced) and
+    its currency. Currencies stay apart unless the result is in USD.
+  - A change against a period with nothing known shows "no earlier
+    figure", never "from 0".
+  - Replay figures carry "simulated", and the self-check status is shown.
+    A failed or missing self-check is called out, not hidden.
+  - Estimates show the p50–p90 range and "estimate", never one number. A
+    refusal shows its reason.
+  - Observed price changes are "inferred" and visually distinct from
+    documented ones.
+  - Local repositories show the folder name only, as the tools return it.
+- **Interactions:**
+  - U9: clicking a top session opens U1 in place.
+  - U10: clicking a row opens U9 for that id in place.
+  - U11: "Price changes" opens U13 in place, filtered to the models with
+    the largest price effect.
+  - U12: in compare mode, clicking a model calls `replay_session` and
+    switches to replay mode.
+  - U13, U14 and U15 have no drill-down.
+
+  Each in-place swap has a back control, as in U2.
+
+### 4.6 Tool coverage
+
+| Tool | Group | View |
+|---|---|---|
+| `list_log_providers` | sessions | — (U7) |
+| `list_sessions` | sessions | U5, Increment 3 |
+| `get_turn` | sessions | Drill-down in U1 |
+| `get_session_audit`, `get_audit_rollup` | audit | U4, Increment 3 |
+| `list_tool_calls` | audit | — (U7) |
+| `get_session_cost` | cost | U1, MVP |
+| `get_cost_rollup` | cost | U2, MVP |
+| `get_repository_cost`, `get_project_cost` | costAnalysis | U9, Increment 2 |
+| `compare_costs` | costAnalysis | U10, Increment 2 |
+| `explain_cost_change` | costAnalysis | U11, Increment 2 |
+| `list_findings` | findings | U3, MVP |
+| `list_repositories`, `list_projects` | attribution | — (U17) |
+| `get_price_book` | pricing | — (U16) |
+| `get_price_changes` | pricing | U13, Increment 3 |
+| `replay_session`, `compare_models_for_session` | replay | U12, Increment 3 |
+| `get_statement`, `estimate_cost` | billing (standalone) | U14, U15, Increment 3 |
+| `get_turn_series` (app-only, new) | appViews | Feeds U1's chart |
+
 ## 5. Branding
 
 **Rule: the brand marks identity and data. The host owns the structure.**
@@ -282,6 +401,15 @@ U2 and U3 follow the same header, kicker and footer, and use the same
   same guard and `isError` handling as the other tools.
 - **Deep link.** Only `vscode://raulkivi.ai-credits-analyzer/…`. The
   handler validates parameters and only navigates (§4.4).
+- **No billing views in the extension.** The extension's server never
+  registers the billing tools, so it never names a view for them (§4.5).
+  A test over the extension's `tools/list` asserts this.
+- **Read-only billing.** U14 has no issue action, and nothing a view does
+  can write a statement, a projects file or a setting.
+- **Labels can't be dropped.** "Simulated", "estimate" and "inferred" are
+  part of the view models' output, not CSS. A test asserts them, so a
+  screenshot of a view can't pass a simulated or estimated figure off as
+  measured.
 
 ## 7. Tasks
 
@@ -312,19 +440,76 @@ fewer, an exact spec, and acceptance tests the local agent never sees.
 A0 decides whether A12 is still needed: if hosts block `vscode://` links,
 the button falls back to copying a command.
 
+### 7.1 Increment 2: cost analysis views (U9–U11)
+
+Starts after the MVP's exit criterion is met (A16).
+
+| # | Task | Complexity | Model | Depends on |
+|---|---|---|---|---|
+| A17 | `packages/web` exports for the Phase 14/15 presentational modules (§4.5). Where a tab mixes rendering with fetching, split the rendering out first. A pure refactor: typecheck and the web and e2e tests stay green. | medium | Sonnet | A16 |
+| A18 | View models `toCostSeriesViewModel`, `toCostComparisonViewModel` and `toCostVarianceViewModel` (§4.5), one run each, with the basis, currency and "no earlier figure" rules | low | setup6 | A16 |
+| A19 | `registerAppViews` takes the registered tool names and adds `_meta.ui` to `get_repository_cost`, `get_project_cost`, `compare_costs` and `explain_cost_change`. In-memory client tests over both tool-group sets: metadata present only for registered tools, `content` unchanged. | medium | Sonnet | A16 |
+| A20 | U9 `CostOverTimeView`: series chart with price-change markers, project breakdowns, top sessions drilling into U1, and the extension's "no projects" reason | medium | Sonnet | A17, A18, A19 |
+| A21 | U10 `CostCompareView`, with in-place drill-down into U9 | medium | Sonnet | A20 |
+| A22 | U11 `CostChangeView`: waterfall, per-model table, not-explained turns | medium | Sonnet | A17, A18, A19 |
+| A23 | Accessibility and security review of U9–U11 (as A14), and docs: User Guide, extension guide, both CHANGELOGs | medium | Opus | A21, A22 |
+| A24 | Owner's manual checks of U9–U11 in VS Code Copilot Chat and Claude Desktop, light and dark | — | owner | A23 |
+
+### 7.2 Increment 3: replay, prices, billing, audit, picker
+
+Starts after Increment 2's exit criterion is met (A24).
+
+| # | Task | Complexity | Model | Depends on |
+|---|---|---|---|---|
+| A25 | View models `toReplayViewModel`, `toPriceChangesViewModel`, `toStatementViewModel` and `toEstimateViewModel` (§4.5), one run each, with tests that the "simulated", "inferred" and "estimate" labels are always there | low | setup6 | A24 |
+| A26 | `_meta.ui` on `replay_session`, `compare_models_for_session`, `get_price_changes`, `get_statement`, `estimate_cost`, `get_session_audit`, `get_audit_rollup` and `list_sessions`. The test asserts that the extension's `tools/list` names no billing view. | medium | Sonnet | A24 |
+| A27 | U12 `ReplayView`, compare and replay modes, with the self-check status | medium | Sonnet | A25, A26 |
+| A28 | U13 `PriceChangesView`, and the U11 → U13 drill-down | medium | Sonnet | A25, A26 |
+| A29 | U14 `StatementView` and U15 `EstimateView`, standalone only, read-only | medium | Sonnet | A25, A26 |
+| A30 | U4 `AuditView` and U5 `SessionPickerView` (the picker sends only the fixed "Analyse session <id>" template) | medium | Sonnet | A26 |
+| A31 | Fullscreen mode for U2 and U9 (`requestDisplayMode`) | low | Haiku | A26 |
+| A32 | Accessibility and security review of A27–A31 (as A14), and docs: architecture.md, threat-model.md §6, User Guide, extension guide, both CHANGELOGs | medium | Opus | A27–A31 |
+| A33 | Owner's manual checks of Increment 3: VS Code Copilot Chat (no U14/U15 there) and Claude Desktop, light and dark | — | owner | A32 |
+
 ## 8. Exit criterion
+
+### 8.1 MVP (U1–U3)
 
 - In VS Code Copilot Chat and Claude Desktop, asking about a session's
   cost, the week's spend and security findings renders the U1, U2 and U3
   views in the host's light and dark themes, with the product mark, name
   and accent.
 - Drilling into a turn or a top session works without a new model turn.
-- `tools/list` returns 10 tools. `get_turn_series` is app-only. The 9
-  model-visible tools have the same names, schemas and `content` as
-  Phase 9.12, and Claude Code CLI output is byte-identical.
+- `tools/list` returns 22 tools on the standalone server and 20 on the
+  extension's: today's 21 and 19 plus the app-only `get_turn_series`.
+  Every model-visible tool keeps the name, schemas and `content` it has
+  after Phase 14 step 14.5 and Phase 15 step 15.13, and Claude Code CLI
+  output is byte-identical.
 - Unknown figures show "Unknown", never 0, in every view (constraint 6).
 - Every view model and `injectBrand` has unit tests. The contrast tests
   pass for the fallbacks and for each recorded host variable set.
+
+### 8.2 Increment 2 (U9–U11)
+
+- In both hosts, asking what a repository cost, comparing repositories,
+  and asking why cost changed renders U9, U10 and U11 in light and dark.
+- U10 → U9 → U1 and U11's drill-down work without a new model turn.
+- In the extension, project questions show the "no projects" reason, not
+  an empty chart.
+- Every money figure names its basis and currency. A change from an
+  unknown period never reads "from 0".
+- `tools/list` keeps the same tool count. Only `_meta.ui` is added, on
+  the four tools.
+
+### 8.3 Increment 3 (U4, U5, U12–U15)
+
+- U12 and U13 render in both hosts. U14 and U15 render in Claude
+  Desktop. The extension's `tools/list` names no billing view.
+- Every replay figure says "simulated", every estimate is a range that
+  says "estimate", and every observed price change says "inferred".
+- U4 and U5 render in both hosts. The picker sends only its fixed
+  template.
+- No view can write anything (§6).
 
 ## 9. Open questions and risks
 
@@ -338,6 +523,9 @@ the button falls back to copying a command.
 | Spec draft changes (App-provided tools, `object-src 'none'`) | Minor | Pin 1.7.5; review at the SDK 2 migration |
 | Bundle size (React, d3 parts) | Slow first render | Budget test in A5 |
 | A shorter `content` for UI-capable clients would save model tokens | Changes what the model sees per host | Follow-up decision (§11) |
+| Tabs that mix fetching and rendering (Phase 15's Dashboard tabs, `CompareModelsView`, `EstimatePanel`) | The split in A17 grows into a web refactor | A17 splits only what U9–U15 render. Anything else stays. |
+| Bundle size with the Increment 2/3 views | Over the 450 KB budget | Lazy route chunks inlined into the single file, or a raised budget, decided at A20 |
+| Approval prompts on view-initiated calls to model-visible tools (U9–U12 drill-down) | Each click asks the user | A0 records the behaviour. If it prompts, the view says so before the first drill-down. |
 
 ## 10. Rejected: A2UI
 
@@ -350,7 +538,8 @@ Revisit if Copilot Chat or Claude adopts it.
 ## 11. Out of scope (follow-ups)
 
 - Migrating to MCP SDK 2 and ext-apps 2.x.
-- U4 (audit view) and U5 (session picker).
+- Views for `get_price_book`, `list_repositories` and `list_projects`
+  (U16, U17).
 - A shorter `content` when the client declares `io.modelcontextprotocol/ui`.
   The model would get a summary, the view would get `structuredContent`,
   and the saving would be measured with the tool itself.

@@ -92,7 +92,7 @@ gantt
 ## Not started
 
 - Phase 11 (0%) — pi provider real-capture verification.
-- Phase 12 (0%) — MCP Apps: interactive views in the chat. See [Phase 12 detail](#phase-12-detail--mcp-apps).
+- Phase 12 (0%) — MCP Apps: interactive views in the chat; MVP plus Increments 2 and 3 for the Phase 14 and 15 tools. See [Phase 12 detail](#phase-12-detail--mcp-apps).
 
 ## Open items
 
@@ -102,9 +102,10 @@ gantt
 
 ## Phase 12 detail — MCP Apps
 
-Schedule view of the task table in [mcp-apps.md](plans/mcp-apps.md) §7. The design, exit criterion and risks stay there; this file only sequences the work.
+Schedule view of the task tables in [mcp-apps.md](plans/mcp-apps.md) §7, §7.1 and §7.2. The design, exit criterion and risks stay there; this file only sequences the work.
 
-- Status: planned, not started (0%). Blocked on Phase 10 step 10.13's release dependency per [implementation-plan.md](implementation-plan.md).
+- Status: planned, not started (0%). Dependencies met: step 10.13 is done and `ext-v0.1.0` shipped 2026-11-03; the Phase 14 and 15 tools the increments need are done.
+- Scope (updated 2026-11-07): MVP (A0-A16: U1-U3), Increment 2 (A17-A24: cost-analysis views U9-U11), Increment 3 (A25-A33: replay, price changes, statement and estimate, audit, picker). Each increment starts after the previous one's owner checks.
 - Estimates, not commitments: low = 1 day, medium = 2 days, spike = 1 day. Weekends are excluded. The start date 2026-11-09 is a placeholder.
 - Labels carry task ID, model and complexity. The critical path is marked red.
 - A12 is dropped if the A0 spike shows hosts block `vscode://` links (the button then copies a command).
@@ -173,17 +174,40 @@ gantt
     A14 A11y and security review, medium, Opus (0%) :a14, after a9 a10 a11, 2d
     A15 Docs, medium, Sonnet (0%)                :a15, after a13 a14, 2d
     A16 Owner manual checks (0%)                 :a16, after a15, 1d
+
+    section Increment 2 — cost analysis
+    A17 web exports and splits, medium, Sonnet (0%) :a17, after a16, 2d
+    A18 Cost view models, low, setup6 (0%)       :a18, after a16, 1d
+    A19 _meta.ui on cost tools, medium, Sonnet (0%) :a19, after a16, 2d
+    A20 U9 CostOverTimeView, medium, Sonnet (0%) :a20, after a17 a18 a19, 2d
+    A21 U10 CostCompareView, medium, Sonnet (0%) :a21, after a20, 2d
+    A22 U11 CostChangeView, medium, Sonnet (0%)  :a22, after a17 a18 a19, 2d
+    A23 Review and docs, medium, Opus (0%)       :a23, after a21 a22, 2d
+    A24 Owner manual checks (0%)                 :a24, after a23, 1d
+
+    section Increment 3 — replay, prices, billing
+    A25 View models, low, setup6 (0%)            :a25, after a24, 1d
+    A26 _meta.ui on remaining tools, medium, Sonnet (0%) :a26, after a24, 2d
+    A27 U12 ReplayView, medium, Sonnet (0%)      :a27, after a25 a26, 2d
+    A28 U13 PriceChangesView, medium, Sonnet (0%) :a28, after a25 a26, 2d
+    A29 U14 U15 Statement and Estimate, medium, Sonnet (0%) :a29, after a25 a26, 2d
+    A30 U4 U5 Audit and picker, medium, Sonnet (0%) :a30, after a26, 2d
+    A31 Fullscreen U2 U9, low, Haiku (0%)        :a31, after a26, 1d
+    A32 Review and docs, medium, Opus (0%)       :a32, after a27 a28 a29 a30 a31, 2d
+    A33 Owner manual checks (0%)                 :a33, after a32, 1d
 ```
 
 ### Critical path
 
-A0 → A5 → A6 → A9 → A14 → A15 → A16.
+MVP: A0 → A5 → A6 → A9 → A14 → A15 → A16. Increment 2: A17/A19 → A20 → A21 → A23 → A24. Increment 3: A26 → A27/A28/A29/A30 → A32 → A33.
 
 ### Parallel lanes
 
 - A1, A2, A4 start together; A3 follows A2.
 - A12 runs beside A5-A8 once A0 finishes.
 - A10 and A11 run in parallel after A9 and A6-A8.
+- Increment 2: A17, A18, A19 start together; A20 and A22 run in parallel.
+- Increment 3: A25 and A26 start together; A27-A31 run in parallel.
 
 ## Phase 14 detail — Analyze session replay
 
