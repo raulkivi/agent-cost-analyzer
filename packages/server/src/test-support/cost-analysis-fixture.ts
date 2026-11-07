@@ -8,7 +8,9 @@ import type { LogProviderStatus, Session, TokenCount, Turn, TurnUsage } from "@a
 import { createCostAnalysis, projectDirectoryOf } from "../composition/create-cost-analysis.js";
 import { createTurnPricer } from "../composition/create-turn-pricer.js";
 import { UnknownLogProviderIdError } from "../data-sources/log-providers/registry.js";
-import { createMcpServer } from "../mcp/mcp-server.js";
+import { createMcpServer, type McpServerDeps } from "../mcp/mcp-server.js";
+import { AttributionQueryService } from "../services/cost-attribution/attribution-query-service.js";
+import { RepositoryListService } from "../services/cost-attribution/repository-list-service.js";
 import { AnalysisQueryService } from "../services/analysis/analysis-query-service.js";
 import { ApiService, type ApiServiceDeps } from "../services/api/api-service.js";
 import { ProjectCatalog } from "../services/cost-attribution/project-catalog.js";
@@ -151,7 +153,9 @@ const providerStatus: LogProviderStatus = {
   ],
 };
 
-export function composeCostFixture() {
+export type CostFixtureOptions = Pick<McpServerDeps, "toolGroups" | "identity">;
+
+export function composeCostFixture(options: CostFixtureOptions = {}) {
   const providers = [new FakeProvider("vscode", copilotSessions), new FakeProvider("claude-code", claudeCodeSessions), new FakeProvider("pi-agent", piSessions)];
   const lookup: ProviderLookup = {
     getActiveProvider: () => providers[0]!,
@@ -191,16 +195,19 @@ export function composeCostFixture() {
     analysisQueries: new AnalysisQueryService(lookup, insights, { attribution: attributor, pricer }),
     getProviderStatus: async () => providerStatus,
     version: "0.0.0-test",
+    // Step 15.13: every Phase 15 group, as the standalone stdio server has them.
+    attribution: new AttributionQueryService(new RepositoryListService({ listProviders: () => providers }, attributor), catalog, attributor),
     costAnalysis,
     priceBook,
     statements,
     estimates,
+    ...options,
   });
   return { api, server, insights, costAnalysis, statements };
 }
 
-export async function connectCostFixture(): Promise<{ client: Client; api: ApiService }> {
-  const { server, api } = composeCostFixture();
+export async function connectCostFixture(options: CostFixtureOptions = {}): Promise<{ client: Client; api: ApiService }> {
+  const { server, api } = composeCostFixture(options);
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
   const client = new Client({ name: "test-client", version: "1.0.0" });
   await Promise.all([server.connect(serverTransport), client.connect(clientTransport)]);

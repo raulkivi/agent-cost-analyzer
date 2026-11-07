@@ -1,6 +1,10 @@
 import type { AppSettingsStore } from "../data-sources/log-providers/app-settings.js";
 import type { McpIdentity } from "../mcp/mcp-identity.js";
-import type { McpServerDeps } from "../mcp/mcp-server.js";
+import { WITHOUT_BILLING_TOOL_GROUPS, type McpServerDeps } from "../mcp/mcp-server.js";
+import { loadVendorProfiles } from "../data-sources/vendor-profiles/loader.js";
+import { createCopilotAttribution } from "./create-copilot-attribution.js";
+import { createBundledPriceBookBeside } from "./create-price-book.js";
+import { createTurnPricer } from "./create-turn-pricer.js";
 import { composeCopilotProviders } from "./compose-copilot-providers.js";
 import { createMcpServices } from "./mcp-services.js";
 import type { VscodeProviderPaths } from "./providers/create-vscode-provider.js";
@@ -16,6 +20,9 @@ export interface CopilotMcpServicesOptions {
   // Not derived from the user-data dir: the Copilot CLI's own home (step 10.14).
   copilotHome: string | null;
   appVersion: string;
+  // Step 15.13: the extension's media/vendor-profiles, with the bundled
+  // price book beside it (G4: the bundle can't locate them itself).
+  vendorProfilesDir: string;
 }
 
 // The extension's own name and Copilot-only wording (step 10.9): the same
@@ -69,5 +76,14 @@ export function createCopilotMcpServices(options: CopilotMcpServicesOptions): Mc
     vscodeSettingsPath: null,
     appSettings: readOnlyAppSettings,
   });
-  return createMcpServices(registry, options.appVersion, COPILOT_MCP_IDENTITY);
+  // Step 15.13 (plan §10.1.4, D7, D19): repositories, the bundled price
+  // book and the cost analyses over the Copilot provider, as the extension's
+  // Dashboard has them; no projects and no billing.
+  const attribution = createCopilotAttribution(registry, loadVendorProfiles(options.vendorProfilesDir));
+  const priceBook = createBundledPriceBookBeside(options.vendorProfilesDir);
+  return {
+    ...createMcpServices(registry, options.appVersion, COPILOT_MCP_IDENTITY, attribution, priceBook ? createTurnPricer(priceBook) : undefined, priceBook),
+    ...(priceBook ? { priceBook } : {}),
+    toolGroups: WITHOUT_BILLING_TOOL_GROUPS,
+  };
 }

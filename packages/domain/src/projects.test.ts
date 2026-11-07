@@ -227,6 +227,12 @@ describe("projectListSchema (MCP list_projects, step 15.4)", () => {
     expect(projectListSchema.parse(sample)).toEqual(sample);
   });
 
+  // Step 15.13 (D19): a product without projects says why.
+  it("may carry the reason a product has no projects", () => {
+    const sample = { status: "missing", projects: [], problems: [], reason: "Projects are edited in the Agent Cost Analyzer app." };
+    expect(projectListSchema.parse(sample)).toEqual(sample);
+  });
+
   it("has no file location, rates or other local details", () => {
     const parsed = projectListSchema.parse({
       status: "valid",

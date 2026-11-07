@@ -1107,6 +1107,7 @@ column is binding; the other options are kept for the record.
 | D16 | How is an estimate's p50–p90 range worked out? (decided 2026-11-06) | unit cost × days; resampled totals | **Unit cost × days**: the median and 90th-percentile cost per active day (or per session) in the history window, each × the planned days (or sessions), as on board 4 |
 | D17 | Is "what if another model" in step 15.12? (decided 2026-11-06) | leave for Phase 14; a same-tokens reprice now | **Left for Phase 14**: the panel says it comes with replay; 15.12 estimates the project's own models only |
 | D18 | What if the history is too thin? (decided 2026-11-06) | refuse under 5 days; always estimate with a warning | **No range under 5 active days with a known cost**: the answer gives the reason and the day count instead; days with any unknown cost are left out and counted in the coverage |
+| D19 | Where do the extension's MCP project tools get projects from? (decided 2026-11-07) | none yet; read the standalone app's file; leave the project tools out | **None yet**: the extension's server lists the planned 17 tools; `list_projects` returns no projects with a reason (projects are edited in the standalone app), every turn is in No project, and the repository, pricing and cost tools work over Copilot sessions, as the extension's Dashboard does |
 
 ## 14. Implementation steps (TDD, each with an exit criterion)
 
