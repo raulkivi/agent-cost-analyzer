@@ -55,7 +55,7 @@ suite("Scenario R1: VS Code, replay a session on two models (step 14.7)", () => 
     await host.setSetting(THEME_SETTING, undefined);
   });
 
-  test("Replay on A, then B, then Compare models lists both, with the measured model tagged", async () => {
+  test("Replay on A, then B, then Compare models with A added lists both, with the measured model tagged", async () => {
     await panel.openSession(SESSION_ID);
     const [totalA, totalB, rows] = await panel.inside(async (view) => {
       await view.waitForTurnRows(1);
@@ -63,6 +63,9 @@ suite("Scenario R1: VS Code, replay a session on two models (step 14.7)", () => 
       expect((await view.simulatedColumns()).cells).toBeGreaterThan(0);
       const b = await replayOn(view, MODEL_B);
       await view.clickButton("Compare models");
+      // Compare models starts from the replay model (B), the session's own
+      // model and each vendor's default; A is not a default, so add it.
+      await view.addCompareModel(MODEL_A);
       let compared: Awaited<ReturnType<PanelView["compareModelRows"]>> = [];
       await browser.waitUntil(
         async () => {

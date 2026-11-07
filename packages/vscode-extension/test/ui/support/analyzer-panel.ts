@@ -113,6 +113,25 @@ export class PanelView {
     }, modelId);
   }
 
+  // Compare models' "Add model" picker: adds a model to the comparison
+  // (it lists the session's own model, the replay model and each vendor's
+  // default; any other model is added here).
+  async addCompareModel(modelId: string): Promise<void> {
+    await browser.waitUntil(
+      () =>
+        browser.execute((id) => {
+          const select = document.querySelector<HTMLSelectElement>("[aria-label='Comparison settings'] select");
+          if (select === null || select.disabled) return false;
+          if (!Array.from(select.options).some((option) => option.value === id)) return false;
+          const setter = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, "value")?.set;
+          setter?.call(select, id);
+          select.dispatchEvent(new Event("change", { bubbles: true }));
+          return true;
+        }, modelId),
+      { timeout: WAIT_MS, timeoutMsg: `No model "${modelId}" in Compare models' Add model picker` },
+    );
+  }
+
   // The replay summary strip's simulated total as shown ("1.59"), or null
   // while there is no strip for that model.
   replaySimulatedTotal(modelId: string): Promise<string | null> {
