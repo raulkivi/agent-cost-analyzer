@@ -174,6 +174,18 @@ export function createApp(options: CreateAppOptions = {}): Express {
     res.json(await api.listToolCalls(req.params.id, req.query));
   }));
 
+  // Phase 14 step 14.5: the session replayed on another model, and
+  // compared across models. GET only: a replay is computed on request and
+  // never stored. Both paths are deeper than /api/sessions/:id, so neither
+  // clashes with it or with the audit, tool-call and turn routes.
+  app.get("/api/sessions/:id/replay", route(async (req, res) => {
+    res.json(await api.getSessionReplay(req.params.id, req.query));
+  }));
+
+  app.get("/api/sessions/:id/replay/compare", route(async (req, res) => {
+    res.json(await api.compareSessionReplay(req.params.id, req.query));
+  }));
+
   app.get("/api/audit", route(async (req, res) => {
     res.json(await api.getAuditRollup(req.query));
   }));

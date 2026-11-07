@@ -212,6 +212,8 @@ export {
   apiMethodSchema,
   apiMethodParamsSchemas,
   rpcRequestSchema,
+  apiMethodResultSchemas,
+  MAX_REPLAY_MODEL_ID_LENGTH,
   rpcCancelSchema,
   performanceMarkNameSchema,
   rpcPerformanceMarkSchema,

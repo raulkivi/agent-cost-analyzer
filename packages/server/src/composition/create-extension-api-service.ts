@@ -14,6 +14,7 @@ import { createSessionAttributor } from "./create-session-attributor.js";
 import { createBundledPriceBookBeside } from "./create-price-book.js";
 import { createTurnPricer } from "./create-turn-pricer.js";
 import { createCostAnalysis } from "./create-cost-analysis.js";
+import { createSessionReplay } from "./create-session-replay.js";
 
 export interface ExtensionApiServiceOptions extends CopilotProviderCompositionOptions {
   // The effective VS Code settings the config check judges (G6: the
@@ -69,7 +70,9 @@ export function createExtensionApiService(options: ExtensionApiServiceOptions): 
   // every turn is in No project. Step 15.6: Copilot turns priced from the
   // bundled price book, so billed and priced figures can be compared.
   const priceBook = createBundledPriceBookBeside(vendorProfilesDir);
-  const insights = createInsightsService(registry, createSessionAttributor({ vendorProfiles }), priceBook ? createTurnPricer(priceBook) : undefined);
+  const attribution = createSessionAttributor({ vendorProfiles });
+  const pricer = priceBook ? createTurnPricer(priceBook) : undefined;
+  const insights = createInsightsService(registry, attribution, pricer);
 
   return new ApiService({
     registry,
@@ -78,6 +81,13 @@ export function createExtensionApiService(options: ExtensionApiServiceOptions): 
     // Step 15.14: the Dashboard's Cost over time and Compare tabs, over the
     // same dataset, with the bundled price book's documented changes.
     costAnalysis: createCostAnalysis(insights, priceBook),
+    // Phase 14 step 14.5 (D5): Copilot sessions replayed on another model,
+    // priced from the bundled price book with the same attribution and
+    // pricer as the Dashboard. Without a price book a replay can't be
+    // priced, so the method answers "not available".
+    ...(priceBook && pricer
+      ? { sessionReplay: createSessionReplay({ providers: registry, profiles: vendorProfiles, priceBook, pricer, attribution }) }
+      : {}),
     settings: appSettings,
     checkConfig: (minRetainedSessionLogsThreshold) =>
       checkConfig({

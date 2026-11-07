@@ -3,9 +3,10 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { productProfileSchema } from "@agent-cost-analyzer/domain";
+import { productProfileSchema, sessionReplayComparisonSchema, sessionReplaySchema } from "@agent-cost-analyzer/domain";
 import { InMemoryAppSettingsStore } from "../test-support/in-memory-app-settings-store.js";
 import type { SettingsSource } from "../services/config-check/settings-source.js";
+import { COPILOT_CLI_FIXTURE_HOME, COPILOT_CLI_FIXTURE_SESSION_IDS, writeCopilotCliAgentHostStores } from "../test-support/copilot-cli-fixtures.js";
 import { createExtensionApiService } from "./create-extension-api-service.js";
 
 const fixturesRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../fixtures");
@@ -150,5 +151,41 @@ describe("createExtensionApiService (extension composition, vscode-extension.md 
     const status = await buildService().getConfigStatus();
 
     expect(status.warnings.map((warning) => warning.code)).toEqual(["settings-not-found"]);
+  });
+
+  // Phase 14 step 14.5 (D5): the extension replays its Copilot sessions too,
+  // priced from its bundled price book.
+  describe("session replay", () => {
+    function buildAgentHostService(userDataDir: string) {
+      writeCopilotCliAgentHostStores(userDataDir);
+      return createExtensionApiService({
+        sessionStoreDbPath: null,
+        debugLogsDirPaths: [],
+        agentTracesDbPath: null,
+        agentHostUserDataDir: userDataDir,
+        copilotHome: COPILOT_CLI_FIXTURE_HOME,
+        vscodeSettingsPath: null,
+        appSettings: new InMemoryAppSettingsStore(),
+        learnScriptsDir: path.join(fixturesRoot, "learn-scripts"),
+        vendorProfilesDir: path.join(fixturesRoot, "vendor-profiles"),
+        appVersion: "0.1.0-test",
+      });
+    }
+
+    it("replays and compares a Copilot (Agent Host) session", async () => {
+      const userDataDir = mkdtempSync(path.join(tmpdir(), "ext-replay-"));
+      try {
+        const service = buildAgentHostService(userDataDir);
+        const sessionId = COPILOT_CLI_FIXTURE_SESSION_IDS.usageRecords;
+
+        const replay = sessionReplaySchema.parse(await service.getSessionReplay(sessionId, { model: "claude-haiku-5.5" }));
+        expect(replay).toMatchObject({ simulated: true, sessionId, providerId: "vscode", model: "claude-haiku-5.5" });
+        const comparison = sessionReplayComparisonSchema.parse(await service.compareSessionReplay(sessionId, { models: ["claude-haiku-5.5", "gpt-6.1-sol"] }));
+        expect(comparison.entries.map((entry) => entry.model)).toEqual(expect.arrayContaining(["claude-haiku-5.5", "gpt-6.1-sol"]));
+        await expect(service.getSessionReplay("nope", { model: "claude-haiku-5.5" })).rejects.toThrow('Unknown session id "nope"');
+      } finally {
+        rmSync(userDataDir, { recursive: true, force: true });
+      }
+    });
   });
 });
