@@ -1,5 +1,7 @@
 # Agent Cost Analyzer
 
+**Last changed:** 2026-11-07 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+
 Independent project; not affiliated with or endorsed by GitHub or Microsoft.
 
 A local app that helps you optimize the cost of agentic coding. It explains
@@ -78,7 +80,7 @@ This repo builds two products from one codebase:
   tools and the Phase 9.12 additions: session and cross-provider cost,
   security/anomaly/behaviour findings, a one-turn drill-down, server
   instructions and output schemas.
-- [MCP Apps plan](docs/plans/mcp-apps.md) — Phase 12 (planned): branded,
+- [MCP Apps plan](docs/plans/mcp-apps.md) — Phase 12 (MVP built; owner checks in [mcp-apps-a16-checklist.md](docs/plans/mcp-apps-a16-checklist.md), handover in [mcp-apps-handover.md](docs/plans/mcp-apps-handover.md)): branded,
   interactive views (session cost, spend rollup, findings) that MCP Apps
   hosts such as VS Code Copilot Chat and Claude Desktop render next to the
   MCP tool results. Includes the use-case analysis, branding rules and
