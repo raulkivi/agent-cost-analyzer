@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 // Manual check 1.12, first half (docs/plans/vscode-extension-manual-checks.md):
 // the analyzer installed from its VSIX into a throwaway profile (wdio.conf.mts
 // "uninstall" launch; the development extension is an empty stand-in), as a

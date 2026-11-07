@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { SeenSessionTracker } from "../ports/SeenSessionTracker.js";
 
 export class InMemorySeenTracker implements SeenSessionTracker {

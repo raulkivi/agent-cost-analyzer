@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { AppSettingsStore } from "../data-sources/log-providers/app-settings.js";
 
 // In-memory AppSettingsStore for tests that shouldn't touch the disk — and

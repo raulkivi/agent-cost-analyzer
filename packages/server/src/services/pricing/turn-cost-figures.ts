@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { unknownCost, type CostFigure, type PricingMode, type Session, type Turn, type TurnCostFigures, type TurnUsage } from "@agent-cost-analyzer/domain";
 import type { Attribution } from "../cost-attribution/session-attributor.js";
 import type { CacheWriteLifetime, PricingRequest } from "./cost-pricer.js";

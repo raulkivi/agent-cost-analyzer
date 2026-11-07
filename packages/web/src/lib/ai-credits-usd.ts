@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 const USD_PER_AI_CREDIT = 0.01;
 
 export function aiCreditsToUsd(credits: number): number {

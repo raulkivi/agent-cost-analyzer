@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 // Entry point for the design-sync tool (see /.design-sync/config.json's
 // `entry` field) — NOT part of the app itself. Deliberately outside src/
 // (excluded from this package's tsconfig `include`) so it never reaches the

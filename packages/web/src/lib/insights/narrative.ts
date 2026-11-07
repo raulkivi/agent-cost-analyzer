@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { FailureCategory, InsightFinding } from "@agent-cost-analyzer/domain";
 import { CATEGORY_LABELS } from "../audit-format.js";
 import { SEVERITY_ORDER } from "./insights-model.js";

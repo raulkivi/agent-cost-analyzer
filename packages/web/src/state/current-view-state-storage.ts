@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { memoryViewStateStorage, type ViewStateStorage } from "./view-state-storage.js";
 
 // Like host/current-host-capabilities.ts: main.tsx installs the storage

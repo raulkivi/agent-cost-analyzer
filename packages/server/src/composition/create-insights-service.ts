@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { AnomalyDetector } from "../services/insights/anomaly-detector.js";
 import { BehaviorChangeDetector } from "../services/insights/behavior-change-detector.js";
 import { InsightsService, type DatasetAttribution, type ProviderSource } from "../services/insights/insights-service.js";

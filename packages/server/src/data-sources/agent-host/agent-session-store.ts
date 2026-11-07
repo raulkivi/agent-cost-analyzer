@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { DatabaseSync } from "node:sqlite";
 import { hasTable } from "../sqlite/has-table.js";
 

@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { z } from "zod";
 
 // A per-turn analog of SystemPromptComponent (architecture.md §4.2), scoped

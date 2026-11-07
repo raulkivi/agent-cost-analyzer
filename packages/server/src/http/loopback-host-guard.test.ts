@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import express from "express";
 import request from "supertest";
 import { describe, expect, it } from "vitest";

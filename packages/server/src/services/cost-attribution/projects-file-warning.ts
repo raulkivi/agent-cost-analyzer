@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { ConfigWarning, ProjectsState } from "@agent-cost-analyzer/domain";
 
 // Phase 15 step 15.3: a projects file with problems becomes an optional

@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { KeyboardEvent } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { onKeyActivate } from "./on-key-activate.js";

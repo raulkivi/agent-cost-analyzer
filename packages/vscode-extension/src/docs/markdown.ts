@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 // Pure Markdown helpers for the doc checks (docs.test.ts, step 10.10): the
 // headings GitHub turns into anchors and the links a page contains. They
 // cover the Markdown this repo writes, not every CommonMark corner.

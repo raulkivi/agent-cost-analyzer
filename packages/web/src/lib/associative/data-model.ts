@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 // Generic associative (QlikView-style) data model: a tree of flat tables
 // linked child → parent by key, and fields that read one value per row
 // (docs/plans/insights-dashboard.md §5). No React, no domain types.

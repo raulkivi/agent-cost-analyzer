@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { describe, expect, it } from "vitest";
 import type { InsightSessionRow, InsightTurnRow } from "@agent-cost-analyzer/domain";
 import { createAssociativeEngine } from "../associative/engine.js";

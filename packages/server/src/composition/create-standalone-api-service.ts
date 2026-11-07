@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { ProductProfile } from "@agent-cost-analyzer/domain";
 import { loadScenarioScripts } from "../data-sources/learn-scripts/loader.js";
 import { loadVendorProfiles } from "../data-sources/vendor-profiles/loader.js";

@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { DatabaseSync } from "node:sqlite";
 
 const COPILOT_CHAT_AGENT_NAME = "GitHub Copilot Chat";

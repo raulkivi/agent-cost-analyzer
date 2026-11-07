@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { useRef, useState } from "react";
 import type { KeyboardEvent } from "react";
 import type { Session } from "@agent-cost-analyzer/domain";

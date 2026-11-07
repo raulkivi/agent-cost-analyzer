@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { USD_PER_AI_CREDIT, type CostTotal, type Currency } from "@agent-cost-analyzer/domain";
 import { formatUsd } from "../ai-credits-usd.js";
 

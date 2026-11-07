@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 // Manual checks 2.1, 2.2 and 2.6 (docs/plans/vscode-extension-manual-checks.md)
 // at the level VS Code shows them: its own *MCP: List Servers* pick. That the
 // server lists 9 tools and answers is the integration suite's (over stdio);

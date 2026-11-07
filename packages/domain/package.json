@@ -3,6 +3,7 @@
   "private": true,
   "version": "0.9.0",
   "license": "MIT",
+  "author": "Raul Kivi",
   "type": "module",
   "main": "./src/index.ts",
   "types": "./src/index.ts",

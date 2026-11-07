@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { describe, expect, it } from "vitest";
 import { costComparisonSchema, costSeriesSchema, projectCostSchema } from "@agent-cost-analyzer/domain";
 import { composeCostFixture } from "../../test-support/cost-analysis-fixture.js";

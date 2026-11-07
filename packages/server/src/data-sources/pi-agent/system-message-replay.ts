@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { messageOf } from "./pi-message.js";
 import type { PiRawEntry } from "./pi-jsonl-reader.js";
 

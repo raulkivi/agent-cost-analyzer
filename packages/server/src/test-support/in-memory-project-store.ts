@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { ProjectStore, ProjectStoreRead } from "../services/cost-attribution/project-store.js";
 
 export class InMemoryProjectStore implements ProjectStore {

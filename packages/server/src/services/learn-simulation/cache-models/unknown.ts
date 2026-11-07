@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { CachingKind } from "@agent-cost-analyzer/domain";
 import type { CacheModel, UnknownCacheResult } from "../cache-model.js";
 

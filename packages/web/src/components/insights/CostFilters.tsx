@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { ReactNode } from "react";
 import type { CostBucket, PricingMode } from "@agent-cost-analyzer/domain";
 import type { DisplayUnit } from "../../lib/cost/cost-format.js";

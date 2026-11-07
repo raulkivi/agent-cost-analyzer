@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 // Manual check 1.7 (docs/plans/vscode-extension-manual-checks.md): keyboard
 // only, in a real VS Code (step 10.16). No mouse calls anywhere in this file;
 // the one workbench command used to cross from the side bar into the editor

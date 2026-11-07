@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { createReadStream, existsSync } from "node:fs";
 import { createInterface } from "node:readline";
 import path from "node:path";

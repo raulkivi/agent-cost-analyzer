@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { UiFixture } from "../../../scripts/ui-automation/ui-fixture.mts";
 
 // A valid fixture description for unit tests of the helpers that read one.

@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { Selections } from "./data-model.js";
 
 // Pure selection reducers + a Back history (QlikView's "Back" button).

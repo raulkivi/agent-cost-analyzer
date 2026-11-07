@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { ToolCallRecord, ToolCallStatus } from "@agent-cost-analyzer/domain";
 import type { CopilotEvent } from "../../data-sources/agent-host/copilot-event.js";
 import { MAX_ARGS_SUMMARY_LENGTH, summarizeToolArgs } from "../tool-audit/args-summary.js";

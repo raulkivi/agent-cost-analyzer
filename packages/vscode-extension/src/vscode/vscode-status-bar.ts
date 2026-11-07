@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { Disposable } from "../panel/analyzer-panel.js";
 import type { SidebarController } from "../sidebar/sidebar-controller.js";
 

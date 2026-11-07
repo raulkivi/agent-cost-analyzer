@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { Turn, VendorComparison, VendorComparisonEntry, VendorProfileSummary } from "@agent-cost-analyzer/domain";
 import { aiCreditsToUsd, formatUsd } from "../../lib/ai-credits-usd.js";
 import { CacheOutcomeBadge } from "./CacheOutcomeBadge.js";

@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { addDays, comparisonPeriod, type Bucket, type CostBucket } from "@agent-cost-analyzer/domain";
 
 // Phase 15 step 15.9 (plan §11.2): the cost tabs' date range presets, in

@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 // vscode-extension.md §3.5 Layout, by the room the panel leaves for the
 // turns and the right column (an editor panel can be much narrower than the
 // window, and the session list column takes its share):

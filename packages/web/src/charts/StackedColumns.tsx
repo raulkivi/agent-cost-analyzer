@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { useState } from "react";
 import { scaleLinear } from "d3-scale";
 import type { ToolCallStatus } from "@agent-cost-analyzer/domain";

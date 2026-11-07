@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { VendorProfileSummary } from "@agent-cost-analyzer/domain";
 
 const FALLBACK_MODEL_ID = "claude-sonnet-5.5";

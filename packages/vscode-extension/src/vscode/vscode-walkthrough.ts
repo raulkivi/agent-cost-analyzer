@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { WalkthroughLauncher } from "../onboarding/walkthrough-offer.js";
 
 // The id package.json contributes under `walkthroughs`.

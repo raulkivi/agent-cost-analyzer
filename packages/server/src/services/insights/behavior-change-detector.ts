@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { FindingSeverity, InsightFinding, InsightSessionRow } from "@agent-cost-analyzer/domain";
 import { indexRows, type DetectorInput, type FindingDetector } from "./finding-detector.js";
 

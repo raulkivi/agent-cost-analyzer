@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { Plugin } from "vite";
 
 // An `@import` of an http(s) or protocol-relative URL, bare or in url(),

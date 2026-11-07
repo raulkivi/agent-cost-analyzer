@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 // Manual checks 1.1, 1.3 and the Copilot-Chat-missing half of 1.2
 // (docs/plans/vscode-extension-manual-checks.md), in a VS Code that has never
 // seen the extension or Copilot Chat (step 10.16, wdio.conf.mts "first-run"

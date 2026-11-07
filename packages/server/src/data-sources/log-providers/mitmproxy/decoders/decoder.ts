@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { ToolCallRecord, TurnUsage } from "@agent-cost-analyzer/domain";
 
 // mitmproxy-only shapes — never imported outside data-sources/log-providers

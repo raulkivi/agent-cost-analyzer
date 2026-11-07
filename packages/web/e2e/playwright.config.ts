@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { defineConfig } from "@playwright/test";
 
 // Phase 15 step 15.9 (docs/plans/cost-by-repository-and-project.md §12.4):

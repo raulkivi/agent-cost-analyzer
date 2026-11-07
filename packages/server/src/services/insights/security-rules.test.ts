@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { describe, expect, it } from "vitest";
 import { DEFAULT_SECURITY_RULES, matchSecurityRules, type SecuritySubject } from "./security-rules.js";
 

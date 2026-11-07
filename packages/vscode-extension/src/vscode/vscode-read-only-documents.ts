@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { ReadOnlyDocumentStore } from "../documents/read-only-document-store.js";
 import type { Disposable } from "../panel/analyzer-panel.js";
 

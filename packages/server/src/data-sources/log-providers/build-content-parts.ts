@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { MessageContentPart } from "@agent-cost-analyzer/domain";
 
 // Provider-neutral placeholder detection, shared by VscodeLogProvider's

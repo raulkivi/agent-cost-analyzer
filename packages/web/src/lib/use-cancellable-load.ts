@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { useCallback, useEffect, useRef, useState } from "react";
 import { isAbortError } from "../api-client/abort.js";
 

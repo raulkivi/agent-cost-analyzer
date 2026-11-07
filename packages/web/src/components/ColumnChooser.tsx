@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { useEffect, useId, useRef, useState } from "react";
 import type { KeyboardEvent } from "react";
 import { columnsApplyingTo, REQUIRED_TURN_COLUMN, TURN_COLUMNS, type TurnColumnId } from "../lib/turn-columns.js";

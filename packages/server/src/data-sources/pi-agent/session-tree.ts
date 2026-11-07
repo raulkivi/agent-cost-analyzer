@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { PiRawEntry } from "./pi-jsonl-reader.js";
 
 // pi's JSONL body is an append-only serialization of a tree (forks/rewinds

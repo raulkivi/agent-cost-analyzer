@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { resolveCopilotChatGlobalStorageFile } from "./copilot-chat-global-storage-path.js";
 
 interface ResolveSessionStoreDbPathOptions {

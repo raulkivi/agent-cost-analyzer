@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { describe, expect, it } from "vitest";
 import { createAssociativeEngine } from "./engine.js";
 import type { AssociativeModel } from "./data-model.js";

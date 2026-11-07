@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { Source } from "@agent-cost-analyzer/domain";
 
 export const STALE_AFTER_DAYS = 90;

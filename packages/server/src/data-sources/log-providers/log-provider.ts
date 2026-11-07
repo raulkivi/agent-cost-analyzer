@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { Session, TurnInspectorDetail } from "@agent-cost-analyzer/domain";
 
 // The provider-neutral boundary (architecture.md §6.2.1/§12): every log

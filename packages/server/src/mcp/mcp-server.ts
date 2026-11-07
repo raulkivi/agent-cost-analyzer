@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { LogProviderStatus } from "@agent-cost-analyzer/domain";
 import type { AnalysisQueryService } from "../services/analysis/analysis-query-service.js";

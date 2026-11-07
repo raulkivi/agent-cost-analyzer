@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import * as vscode from "vscode";
 import { COMMAND_IDS, VIEW_IDS } from "./commands/command-ids.js";
 import { composeExtension } from "./composition.js";

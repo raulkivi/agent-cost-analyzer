@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { describe, expect, it } from "vitest";
 import { projectsFileSchema, type ProjectsFile } from "@agent-cost-analyzer/domain";
 import { branchPatternMatches, matchProject, projectIdsForRepository, resolveAlias } from "./project-matcher.js";

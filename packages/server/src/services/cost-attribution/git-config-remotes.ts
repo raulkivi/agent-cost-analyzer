@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 // Phase 15 step 15.2: the remotes in a git `config` file, read as text (no
 // `git` process). Only `[remote "<name>"]` sections and their `url` key are
 // read; `url.<base>.insteadOf` rewrites and include files are not followed,

@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { scaleLinear } from "d3-scale";
 import { line as d3Line } from "d3-shape";
 import type { Turn } from "@agent-cost-analyzer/domain";

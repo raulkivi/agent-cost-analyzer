@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { PromptNode } from "./system-prompt-parser.js";
 import type { TextSegment } from "./system-prompt-text.js";
 

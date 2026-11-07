@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { unavailableTokenCount, type Session, type ToolCallRecord, type Turn, type TurnUsage } from "@agent-cost-analyzer/domain";
 import { parseShellCommand } from "../services/tool-audit/shell-command-parser.js";
 import { attributionRowFields, NOT_ATTRIBUTED, type ProviderSessions } from "../services/insights/insights-dataset-builder.js";

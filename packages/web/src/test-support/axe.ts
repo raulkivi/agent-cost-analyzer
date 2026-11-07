@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import axe from "axe-core";
 
 // Runs axe-core's WCAG 2.2 A/AA rules (vscode-extension.md §3.5

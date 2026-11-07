@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { InsightProviderStatus, InsightsDataset, InsightTurnRow, TurnCostFigures } from "@agent-cost-analyzer/domain";
 import { costOf } from "../cost/cost-aggregation.js";
 

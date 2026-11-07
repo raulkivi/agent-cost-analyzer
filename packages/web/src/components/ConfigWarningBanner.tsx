@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { ConfigWarning } from "@agent-cost-analyzer/domain";
 import { Blueprint } from "./ui/Blueprint.js";
 

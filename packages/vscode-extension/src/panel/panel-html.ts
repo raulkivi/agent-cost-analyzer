@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 // One chunk of Vite's build manifest (media/manifest.json, written by
 // `vite build --mode extension`); only the fields the panel reads.
 export interface ViteManifestChunk {

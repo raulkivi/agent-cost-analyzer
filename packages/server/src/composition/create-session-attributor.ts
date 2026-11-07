@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import os from "node:os";
 import { emptyProjectsFile, type VendorProfile } from "@agent-cost-analyzer/domain";
 import { NodeReadOnlyFileSystem } from "../platform/file-system/node-read-only-file-system.js";

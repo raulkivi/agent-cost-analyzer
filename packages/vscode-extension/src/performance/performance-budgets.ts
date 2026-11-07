@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { TimingMark, TimingMarkName } from "./performance-recorder.js";
 
 // The §3.5 Performance budgets (vscode-extension.md), in ms; each is

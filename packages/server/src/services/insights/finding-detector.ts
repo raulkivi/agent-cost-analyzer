@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { InsightFinding, InsightSessionRow, InsightToolCallRow, InsightTurnRow } from "@agent-cost-analyzer/domain";
 import type { InsightRows, ProviderSessions } from "./insights-dataset-builder.js";
 

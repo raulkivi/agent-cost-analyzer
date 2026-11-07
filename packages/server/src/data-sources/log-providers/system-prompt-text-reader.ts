@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { LogProvider } from "./log-provider.js";
 
 // The result of looking up a session's raw system-prompt text. Kept apart

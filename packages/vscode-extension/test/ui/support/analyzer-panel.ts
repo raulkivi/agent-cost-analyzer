@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 // Page object for the AI Credits Analyzer panel (step 10.16): opens it, and
 // gives specs domain verbs for what is inside its webview. Specs never write
 // selectors; the web app is reached through accessible names (`aria/`) and

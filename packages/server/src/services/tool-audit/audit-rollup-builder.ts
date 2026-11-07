@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { AuditRollup, FailureCategory, OutcomeTotals, SessionAudit } from "@agent-cost-analyzer/domain";
 import {
   addToTotals,

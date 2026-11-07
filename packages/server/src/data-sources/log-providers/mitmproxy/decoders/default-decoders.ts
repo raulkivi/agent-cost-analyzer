@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { anthropicDecoder } from "./anthropic.js";
 import { openAiDecoder } from "./openai.js";
 import type { MitmExchangeDecoder } from "./decoder.js";

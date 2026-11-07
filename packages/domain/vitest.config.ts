@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { configDefaults, defineConfig } from "vitest/config";
 
 export default defineConfig({

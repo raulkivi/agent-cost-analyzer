@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { z } from "zod";
 
 // Phase 15 (docs/plans/cost-by-repository-and-project.md §3, §6.3): a

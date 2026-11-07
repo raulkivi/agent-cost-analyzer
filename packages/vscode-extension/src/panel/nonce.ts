@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { randomBytes } from "node:crypto";
 
 // A fresh CSP nonce for each render of the panel's HTML (vscode-extension.md

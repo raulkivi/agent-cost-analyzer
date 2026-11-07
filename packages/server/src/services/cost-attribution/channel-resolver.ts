@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { CHANNEL, channelIdSchema, vendorApiChannel } from "@agent-cost-analyzer/domain";
 import type { VendorResolution } from "./vendor-resolver.js";
 

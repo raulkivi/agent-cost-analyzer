@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 interface SegmentedControlOption<T extends string> {
   value: T;
   label: string;

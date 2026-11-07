@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { ConfigStatus } from "@agent-cost-analyzer/domain";
 import { describe, expect, it, vi } from "vitest";
 import { upperCaseTranslate } from "../l10n/upper-case-translate.js";

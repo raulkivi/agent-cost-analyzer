@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { activateOnEnterOrSpace, ChartLegend, type LegendItem } from "./chart-parts.js";
 import { ViewAsTable } from "./ViewAsTable.js";
 

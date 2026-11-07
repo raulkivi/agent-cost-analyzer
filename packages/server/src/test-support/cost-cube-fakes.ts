@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { CostFigure, TurnCostFigures } from "@agent-cost-analyzer/domain";
 import type { CostCube, CostCubeRow } from "../services/cost-analysis/cost-cube.js";
 

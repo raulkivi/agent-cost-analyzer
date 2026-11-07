@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { createApp } from "./app.js";
 import { clockFromEnv } from "./platform/clock/clock-from-env.js";
 import { agentHostCatalogProbe } from "./services/config-check/agent-host-catalog-probe.js";

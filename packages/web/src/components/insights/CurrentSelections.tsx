@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { Selections } from "../../lib/associative/data-model.js";
 
 interface CurrentSelectionsProps {

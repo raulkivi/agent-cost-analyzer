@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { existsSync } from "node:fs";
 import path from "node:path";
 import { resolveUserDataDir } from "../../platform/vscode-paths/resolve-user-data-dir.js";

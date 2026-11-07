@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 // What every product serving the MCP tools shows about where it comes
 // from: the repo link and the icon. Inline data URIs, so clients show the
 // icon without the server or the client reaching the network.

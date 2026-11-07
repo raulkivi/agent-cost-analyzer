@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { CacheOutcome, CachingKind } from "@agent-cost-analyzer/domain";
 import type { Prompt } from "../prompt-builder.js";
 import {

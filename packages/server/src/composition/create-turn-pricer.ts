@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { PricingMode } from "@agent-cost-analyzer/domain";
 import { CostPricer } from "../services/pricing/cost-pricer.js";
 import type { PriceBook } from "../services/pricing/price-book.js";

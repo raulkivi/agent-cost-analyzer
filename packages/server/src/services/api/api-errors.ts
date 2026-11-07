@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 // Typed failures ApiService throws instead of HTTP statuses, so the Express
 // adapter (app.ts) and the extension's message dispatcher map them the same
 // way (vscode-extension.md D2/§4). The message is the one the API sends to

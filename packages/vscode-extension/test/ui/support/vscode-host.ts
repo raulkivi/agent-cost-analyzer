@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 // The one port the specs use to reach VS Code itself (step 10.16): commands,
 // settings, the extension's Test-mode hooks, the active editor and the
 // clipboard. The wdio adapter below runs each call inside the workbench with

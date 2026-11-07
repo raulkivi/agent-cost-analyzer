@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { FailureCategory, ToolCallStatus } from "@agent-cost-analyzer/domain";
 
 // Outcome is a *state*, so it gets a status encoding rather than a

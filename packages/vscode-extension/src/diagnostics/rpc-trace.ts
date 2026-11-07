@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 export interface RpcTraceEntry {
   // The ApiService method the webview asked for.
   method: string;

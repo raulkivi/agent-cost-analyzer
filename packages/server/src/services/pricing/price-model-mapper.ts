@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { candidateModelIds } from "../cost-attribution/vendor-resolver.js";
 
 // Phase 15 step 15.6 (docs/plans/cost-by-repository-and-project.md §6.1):

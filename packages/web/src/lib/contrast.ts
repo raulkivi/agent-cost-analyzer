@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 // WCAG 2.2 contrast maths over the small CSS colour grammar this app's
 // stylesheets use: #hex, a few names, var() with fallbacks and
 // `color-mix(in srgb, A p%, B)`. jsdom computes no colours, so axe's

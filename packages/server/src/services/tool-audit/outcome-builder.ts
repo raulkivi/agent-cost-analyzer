@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { isFailedStatus, type ToolCallOutcome, type ToolCallStatus, type ToolKind } from "@agent-cost-analyzer/domain";
 import { classifyFailure, defaultFailureRules, type FailureRule } from "./failure-classifier.js";
 
