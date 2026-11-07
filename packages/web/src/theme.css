@@ -589,7 +589,9 @@ a { color: var(--color-accent-text); text-underline-offset: 3px; }
 
 /* — layout by panel width (§3.5 Layout, mock-up board 4): drawers, the
      narrow view select and 2×2 KPIs. Wide widths use none of these. — */
-.table-scroll { overflow-x: auto; }
+/* The containing block of any .sr-only label inside, so it scrolls with the
+   table instead of widening the page (step 14.7 UI check). */
+.table-scroll { overflow-x: auto; position: relative; }
 .view-select { display: flex; align-items: center; gap: var(--space-2); font-size: 13px; }
 .view-select > .input { flex: 1; min-height: 30px; }
 .kpi-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-2); margin-bottom: var(--space-3); }

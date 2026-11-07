@@ -11,8 +11,10 @@ import { ReplayCompareBars, type ReplayCompareBar } from "../../charts/ReplayCom
 import { formatAmount, formatChange, UNKNOWN, unitLabel } from "../../lib/cost/cost-format.js";
 import { useContainerWidth } from "../../lib/use-container-width.js";
 import { useReplayComparison } from "../../state/use-replay-comparison.js";
+import { VendorPicker } from "../learn/VendorPicker.js";
 import { AsyncView, cancelledEmptyState } from "../ui/AsyncView.js";
 import { SegmentedControl } from "../ui/SegmentedControl.js";
+import { SimulatedBadge } from "./SimulatedBadge.js";
 
 type Pricing = "session-channel" | "copilot" | "api";
 
@@ -46,20 +48,6 @@ const PRICING_OPTIONS: { value: Pricing; label: string }[] = [
   { value: "api", label: "API prices" },
 ];
 
-const SIMULATED_BADGE: CSSProperties = {
-  display: "inline-flex",
-  alignItems: "center",
-  height: 18,
-  padding: "0 6px",
-  border: "1px dashed var(--color-accent-text)",
-  borderRadius: "var(--radius-sm)",
-  color: "var(--color-accent-text)",
-  fontSize: 10,
-  fontWeight: 600,
-  letterSpacing: "0.08em",
-  textTransform: "uppercase",
-  whiteSpace: "nowrap",
-};
 const MEASURED_TAG: CSSProperties = {
   display: "inline-flex",
   alignItems: "center",
@@ -89,10 +77,6 @@ const BOX: CSSProperties = {
   minWidth: 0,
 };
 const KICKER: CSSProperties = { fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--color-accent-text)" };
-
-function SimulatedBadge() {
-  return <span style={SIMULATED_BADGE}>Simulated</span>;
-}
 
 const distinct = (ids: readonly string[]): string[] => [...new Set(ids)];
 
@@ -153,64 +137,6 @@ function PricingNote({ pricing, data, vendorName }: { pricing: Pricing; data: Se
       <span>
         <strong>{lead}</strong>, <span className="text-muted">{rest}</span>
       </span>
-    </div>
-  );
-}
-
-interface AddModelPickerProps {
-  profiles: VendorProfileSummary[];
-  compared: readonly string[];
-  disabled: boolean;
-  describedBy: string;
-  onAdd(modelId: string): void;
-}
-
-// Learn's VendorPicker grouping (vendors as optgroups, a model that isn't
-// simulated listed but disabled, with its reason), as an "add" select: it
-// starts on "Choose…", leaves out the models already compared, and adds on
-// change.
-function AddModelPicker({ profiles, compared, disabled, describedBy, onAdd }: AddModelPickerProps) {
-  const id = useId();
-  const shown = new Set(compared);
-  const groups = profiles
-    .map((profile) => ({ profile, models: profile.models.filter((model) => !shown.has(model.modelId)) }))
-    .filter((group) => group.models.length > 0);
-  const unsimulated = groups.flatMap((group) => group.models.filter((model) => !model.simulated));
-  return (
-    <div className="view-select">
-      <label htmlFor={id}>Add model</label>
-      <select
-        id={id}
-        className="input"
-        value=""
-        disabled={disabled}
-        aria-describedby={describedBy}
-        onChange={(event) => {
-          if (event.target.value !== "") onAdd(event.target.value);
-        }}
-      >
-        <option value="">Choose…</option>
-        {groups.map(({ profile, models }) => (
-          <optgroup key={profile.vendorId} label={profile.displayName}>
-            {models.map((model) => (
-              <option
-                key={model.modelId}
-                value={model.modelId}
-                disabled={!model.simulated}
-                title={model.reason}
-                aria-describedby={model.simulated ? undefined : `${id}-reason-${model.modelId}`}
-              >
-                {model.simulated ? model.displayName : `${model.displayName} (not simulated)`}
-              </option>
-            ))}
-          </optgroup>
-        ))}
-      </select>
-      {unsimulated.map((model) => (
-        <span key={model.modelId} id={`${id}-reason-${model.modelId}`} className="sr-only">
-          {model.reason}
-        </span>
-      ))}
     </div>
   );
 }
@@ -409,6 +335,7 @@ export function CompareModelsView({ sessionId, providerId, profiles, initialMode
   const [measure, width] = useContainerWidth<HTMLElement>();
   const titleId = useId();
   const capId = useId();
+  const addId = useId();
   const pricingName = useId();
   const data = load.status === "ready" ? load.data : null;
 
@@ -451,7 +378,19 @@ export function CompareModelsView({ sessionId, providerId, profiles, initialMode
       </div>
 
       <div role="group" aria-label="Comparison settings" style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "var(--space-2) var(--space-4)", fontSize: 13 }}>
-        <AddModelPicker profiles={profiles} compared={compared} disabled={atCap} describedBy={capId} onAdd={(model) => setModels(distinct([...compared, model]))} />
+        <VendorPicker
+          id={addId}
+          label="Add model"
+          placeholder="Choose…"
+          profiles={profiles}
+          value=""
+          excludeModelIds={compared}
+          disabled={atCap}
+          describedBy={capId}
+          onChange={(model) => {
+            if (model !== "") setModels(distinct([...compared, model]));
+          }}
+        />
         <span id={capId} style={{ fontVariantNumeric: "tabular-nums" }}>
           <strong>
             {compared.length} of {MAX_COMPARED_MODELS}

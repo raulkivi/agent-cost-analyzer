@@ -107,6 +107,12 @@ describe("CompareModelsView", () => {
     expect(screen.getAllByText("Simulated").length).toBeGreaterThan(0);
   });
 
+  it("uses the shared Simulated badge and Learn's picker (one badge, one picker)", async () => {
+    await renderReady();
+    for (const badge of screen.getAllByText("Simulated")) expect(badge).toHaveClass("sim-badge");
+    expect(screen.getByRole("combobox", { name: "Add model" }).closest(".vendor-picker")).not.toBeNull();
+  });
+
   it("ranks the models by simulated total, highest first, unknown last", async () => {
     await renderReady();
     const models = bodyRows().map((row) => within(row).getAllByRole("cell")[0]!.textContent);
