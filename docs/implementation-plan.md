@@ -1406,6 +1406,10 @@ extension's MCP server and `ext-v0.1.0`); for the increments, Phase 14
 step 14.5 (replay tools) and Phase 15 steps 15.7 and 15.10–15.13 (cost
 analysis, price change, billing tools in both servers). All are met.
 
+**Target releases** (plan §7.3): MVP in extension 0.4.0 and app 0.11.0,
+Increment 2 in 0.5.0 and 0.12.0, Increment 3 in 0.6.0 and 0.13.0. This
+assumes the Phase 14/15 work ships first as 0.3.0 and 0.10.0.
+
 **Status (2026-11-07)**: planned, not started; dependencies met. Plan
 updated to cover the Phase 14 and 15 tools (Increments 2 and 3).
 

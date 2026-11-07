@@ -376,7 +376,7 @@ the kicker style and the accent ramp carry it.
 │  › 17  "rewrite the decoder…"  [compaction]       4.10     310 k    │
 │  › 5   "add tests for…"        [model switch]     2.95     240 k    │
 │ Context overhead  system prompt 21 k ███████░░  unused tools 14     │
-│ Read-only · local logs · v0.2.0        [ Open in AI Credits Analyzer ]│
+│ Read-only · local logs · v0.4.0        [ Open in AI Credits Analyzer ]│
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -470,6 +470,32 @@ Starts after Increment 2's exit criterion is met (A24).
 | A31 | Fullscreen mode for U2 and U9 (`requestDisplayMode`) | low | Haiku | A26 |
 | A32 | Accessibility and security review of A27–A31 (as A14), and docs: architecture.md, threat-model.md §6, User Guide, extension guide, both CHANGELOGs | medium | Opus | A27–A31 |
 | A33 | Owner's manual checks of Increment 3: VS Code Copilot Chat (no U14/U15 there) and Claude Desktop, light and dark | — | owner | A32 |
+
+### 7.3 Target releases
+
+Both changelogs follow Semantic Versioning. Before 1.0, each increment
+adds features, so each one is a minor release of both products. The
+targets assume the Phase 14 and 15 work already in both `[Unreleased]`
+sections ships first, as extension 0.3.0 and app 0.10.0.
+
+| Release | Ships after | Extension (AI Credits Analyzer, tag `ext-v*`) | Standalone app (Agent Cost Analyzer, tag `app-v*`) |
+|---|---|---|---|
+| MVP: U1–U3 | A16 | **0.4.0** | **0.11.0** |
+| Increment 2: U9–U11 | A24 | **0.5.0** | **0.12.0** |
+| Increment 3: U4, U5, U12–U15 | A33 | **0.6.0** (no U14/U15) | **0.13.0** |
+
+- If the MVP ships in the same release as the Phase 14/15 work, every
+  row moves down one minor version: the MVP becomes extension 0.3.0 and
+  app 0.10.0.
+- A fix found in an owner's manual check after a release is a patch
+  release (for example 0.4.1). It doesn't move the next increment's
+  target.
+- The odd-minor pre-release rule in
+  [vscode-extension.md](vscode-extension.md) §7 applied only until step
+  10.9's remote check passed. It isn't applied here: every row is a
+  stable Marketplace and Open VSX release.
+- Each release updates both changelogs and the version in
+  `packages/vscode-extension/package.json` and the root `package.json`.
 
 ## 8. Exit criterion
 

@@ -106,6 +106,7 @@ Schedule view of the task tables in [mcp-apps.md](plans/mcp-apps.md) §7, §7.1 
 
 - Status: planned, not started (0%). Dependencies met: step 10.13 is done and `ext-v0.1.0` shipped 2026-11-03; the Phase 14 and 15 tools the increments need are done.
 - Scope (updated 2026-11-07): MVP (A0-A16: U1-U3), Increment 2 (A17-A24: cost-analysis views U9-U11), Increment 3 (A25-A33: replay, price changes, statement and estimate, audit, picker). Each increment starts after the previous one's owner checks.
+- Target releases (plan §7.3): MVP in extension 0.4.0 / app 0.11.0, Increment 2 in 0.5.0 / 0.12.0, Increment 3 in 0.6.0 / 0.13.0, assuming the Phase 14/15 work ships first as 0.3.0 / 0.10.0.
 - Estimates, not commitments: low = 1 day, medium = 2 days, spike = 1 day. Weekends are excluded. The start date 2026-11-09 is a placeholder.
 - Labels carry task ID, model and complexity. The critical path is marked red.
 - A12 is dropped if the A0 spike shows hosts block `vscode://` links (the button then copies a command).
@@ -195,6 +196,11 @@ gantt
     A31 Fullscreen U2 U9, low, Haiku (0%)        :a31, after a26, 1d
     A32 Review and docs, medium, Opus (0%)       :a32, after a27 a28 a29 a30 a31, 2d
     A33 Owner manual checks (0%)                 :a33, after a32, 1d
+
+    section Target releases
+    Ext 0.4.0 / app 0.11.0 (MVP) :milestone, m12a, after a16, 0d
+    Ext 0.5.0 / app 0.12.0 (Increment 2) :milestone, m12b, after a24, 0d
+    Ext 0.6.0 / app 0.13.0 (Increment 3) :milestone, m12c, after a33, 0d
 ```
 
 ### Critical path
