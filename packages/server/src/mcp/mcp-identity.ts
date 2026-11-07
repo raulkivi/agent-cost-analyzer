@@ -20,6 +20,9 @@ export interface McpIdentity {
   logSourcesDescription: string;
   // The description of every tool's `provider` argument.
   providerArgDescription: string;
+  // The URI scheme and publisher.name that opens the product's own UI
+  // (MCP Apps views link back with it); left out where there is none.
+  deepLinkBase?: string;
 }
 
 // Phase 15 step 15.13 (plan §10.1.4): what a cost figure means, the same

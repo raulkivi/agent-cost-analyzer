@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
 import { describe, expect, it } from "vitest";
-import { costRollupSchema, measureTotalSchema, sessionCostSchema } from "./cost.js";
+import { costRollupSchema, measureTotalSchema, sessionCostSchema, turnSeriesSchema } from "./cost.js";
 import { costBasisTotals, sumCostFigures, type TurnCostFigures } from "./cost-figure.js";
 
 const turnCost: TurnCostFigures = {
@@ -126,5 +126,34 @@ describe("costRollupSchema", () => {
       ],
     };
     expect(costRollupSchema.parse(rollup)).toEqual(rollup);
+  });
+});
+
+describe("turnSeriesSchema", () => {
+  const series = {
+    sessionId: "s1",
+    turns: [
+      { turnIndex: 0, startedAt: "2026-09-27T08:00:00.000Z", model: "m", aiCredits: 1.5, inputTokens: 100, cacheRead: 90, output: 5, estimated: false, events: ["compaction" as const] },
+      { turnIndex: 1, model: "m", aiCredits: null, inputTokens: null, cacheRead: null, output: null, estimated: false, events: [] },
+    ],
+    totalTurns: 2,
+    truncated: false,
+  };
+
+  it("round-trips a series whose unknown figures are null", () => {
+    expect(turnSeriesSchema.parse(series)).toEqual(series);
+  });
+
+  it("accepts an empty session", () => {
+    const empty = { sessionId: "s1", turns: [], totalTurns: 0, truncated: false };
+    expect(turnSeriesSchema.parse(empty)).toEqual(empty);
+  });
+
+  it("rejects an omitted figure, a missing flag and an unknown event", () => {
+    const noCredits: Record<string, unknown> = { ...series.turns[1] };
+    delete noCredits.aiCredits;
+    expect(() => turnSeriesSchema.parse({ ...series, turns: [noCredits] })).toThrow();
+    expect(() => turnSeriesSchema.parse({ ...series, truncated: undefined })).toThrow();
+    expect(() => turnSeriesSchema.parse({ ...series, turns: [{ ...series.turns[0], events: ["bogus"] }] })).toThrow();
   });
 });
