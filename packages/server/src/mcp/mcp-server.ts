@@ -22,6 +22,8 @@ import { registerReplayTools } from "./replay-tools.js";
 import type { SessionReplayQueries } from "../services/session-replay/session-replay-service.js";
 import { registerSessionTools } from "./session-tools.js";
 import { createGuard } from "./tool-helpers.js";
+import { captureRegisteredTools, registerAppViews } from "./apps/register-app-views.js";
+import type { ViewSource } from "./apps/view-source.js";
 
 // Local, read-only MCP interface over the analyzer (docs/plans/
 // tool-call-audit.md §10, docs/plans/mcp-tools-v2.md) so a user can attach
@@ -58,6 +60,10 @@ export interface McpServerDeps {
   // compare_models_for_session, in both products, where a price book exists.
   sessionReplay?: SessionReplayQueries;
   version: string;
+  // Phase 12 (docs/plans/mcp-apps.md §4.2): the MCP App views. When given,
+  // the server serves the views resource, the app-only get_turn_series and
+  // names the view on the tools that have one; absent, nothing changes.
+  appViews?: { source: ViewSource };
   // Phase 15 step 15.13 (plan §10.1.4): the tool groups this product serves,
   // every group when omitted. A group is registered only when its services
   // are given too. The extension leaves out billing (D7).
@@ -97,6 +103,9 @@ export function createMcpServer(deps: McpServerDeps): McpServer {
   );
   const guarded = createGuard(deps.getProviderStatus);
 
+  // Recorded so the views group can name its resource on the tools above.
+  const registered = deps.appViews ? captureRegisteredTools(server) : undefined;
+
   const serves = (group: McpToolGroup) => (deps.toolGroups ?? MCP_TOOL_GROUPS).includes(group);
   const costAnalysis = serves("costAnalysis") ? deps.costAnalysis : undefined;
   const statements = serves("billing") ? deps.statements : undefined;
@@ -111,6 +120,9 @@ export function createMcpServer(deps: McpServerDeps): McpServer {
   if (serves("attribution") && deps.attribution) registerAttributionTools(server, toolDeps, deps.attribution, guarded);
   if (serves("replay") && deps.sessionReplay) registerReplayTools(server, toolDeps, deps.sessionReplay, guarded);
   if (statements || estimates) registerBillingTools(server, { statements, estimates }, guarded);
+  if (deps.appViews && registered) {
+    registerAppViews(server, { identity, version: deps.version, source: deps.appViews.source, analysisQueries: deps.analysisQueries }, registered, guarded);
+  }
   registerPrompts(server, { costAnalysis: costAnalysis !== undefined, statements: statements !== undefined, estimates: estimates !== undefined });
 
   return server;

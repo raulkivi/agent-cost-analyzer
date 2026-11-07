@@ -1,8 +1,9 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import type { CostRollup, FindingsQueryResult, InsightsDataset, SessionCost, TurnView } from "@agent-cost-analyzer/domain";
+import type { CostRollup, FindingsQueryResult, InsightsDataset, SessionCost, TurnSeries, TurnView } from "@agent-cost-analyzer/domain";
 import type { LogProvider } from "../../data-sources/log-providers/log-provider.js";
 import { buildCostRollup, type CostRollupOptions } from "../cost/cost-rollup-builder.js";
+import { buildTurnSeries } from "../cost/turn-series-builder.js";
 import { buildSessionCost, type SessionCostOptions } from "../cost/session-cost-builder.js";
 import { queryFindings, type FindingsFilter } from "../insights/findings-query.js";
 import { buildTurnView, type TurnViewOptions } from "../session-view/turn-view-builder.js";
@@ -56,6 +57,12 @@ export class AnalysisQueryService {
     });
     // §10.1.5: MCP output names a local repository by its folder name only.
     return cost.repositoryKey ? { ...cost, repositoryKey: redactRepositoryKey(cost.repositoryKey) } : cost;
+  }
+
+  // Phase 12: the app-only get_turn_series (null for an unknown session).
+  async getTurnSeries(sessionId: string, providerId?: string, maxTurns?: number): Promise<TurnSeries | null> {
+    const session = await this.provider(providerId).readSession(sessionId);
+    return session ? buildTurnSeries(session, maxTurns) : null;
   }
 
   async getCostRollup(range: SessionRangeFilter, options: CostRollupOptions = {}): Promise<CostRollup> {
