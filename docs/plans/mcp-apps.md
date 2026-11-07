@@ -1,5 +1,7 @@
 # MCP Apps: branded, interactive cost views in the chat
 
+**Last changed:** 2026-11-07 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+
 Status: **in progress: A1–A4 done (2026-11-07); planned 2026-10-28, updated
 2026-11-07 for the Phase 14 and Phase 15 tools.** This is Phase 12 in
 [implementation-plan.md](../implementation-plan.md). Its dependencies are
@@ -104,6 +106,8 @@ no model tokens. A cost analyzer should show this off.
 ### 4.1 Runtime flow
 
 ![MCP Apps runtime flow](diagrams/mcp-apps-sequence.drawio.svg)
+
+Drill-downs reuse the same host-mediated path for every view (§4.3, §4.5).
 
 ### 4.2 Server (`packages/server/src/mcp/apps/`)
 
@@ -272,6 +276,10 @@ no model tokens. A cost analyzer should show this off.
   Each in-place swap has a back control, as in U2.
 
 ### 4.6 Tool coverage
+
+![MCP Apps view routing](diagrams/mcp-apps-views.drawio.svg)
+
+Green: MVP. Blue: Increment 2. Yellow: Increment 3. Dotted edges are in-place drill-downs.
 
 | Tool | Group | View |
 |---|---|---|
