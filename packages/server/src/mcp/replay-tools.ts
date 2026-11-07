@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { MAX_COMPARED_MODELS, sessionReplayComparisonSchema, sessionReplaySchema } from "@agent-cost-analyzer/domain";

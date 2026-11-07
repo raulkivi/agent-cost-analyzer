@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import {
   REPLAY_READ_TOLERANCE_PERCENT,
   type ReplaySelfCheck,

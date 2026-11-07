@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { AI_CREDIT_CONVERSION_NOTE, unknownCost, type CostEstimate, type CostFigure, type ReplayAssumption, type SessionReplay } from "@agent-cost-analyzer/domain";
 import type { CostCubeRow } from "../cost-analysis/cost-cube.js";
 import { turnKeyOf } from "../insights/insights-dataset-builder.js";
