@@ -269,6 +269,30 @@ describe("GET /api/learn/scenarios/:id/comparison", () => {
   });
 });
 
+// threat-model.md §5.7: scenario and model ids are looked up in the bundled
+// lists (in memory) and never reach a path join, so a traversal-shaped id is
+// just an unknown one.
+describe("Learn routes with path-traversal ids (threat-model.md §5.7)", () => {
+  const TRAVERSAL_IDS = ["..%2F..%2Fpackage.json", "..%2Fvendor-profiles%2Fanthropic", "%2E%2E%2F%2E%2E%2Fetc%2Fpasswd", "cache-basics%2F..%2F..%2Fsecrets"];
+
+  it.each(TRAVERSAL_IDS)("treats the scenario id %s as unknown on every Learn route", async (id) => {
+    const app = createApp();
+
+    for (const route of [`/api/learn/scenarios/${id}`, `/api/learn/scenarios/${id}/simulation`, `/api/learn/scenarios/${id}/comparison`]) {
+      const response = await request(app).get(route);
+      expect(response.status, route).toBe(404);
+      expect(JSON.stringify(response.body), route).not.toMatch(/"name"\s*:\s*"@agent-cost-analyzer|root:/);
+    }
+  });
+
+  it.each(["../../package.json", "..%2F..%2Fanthropic", "claude-sonnet-5.5/../../x"])("refuses the model id %s with a 400", async (model) => {
+    const app = createApp();
+
+    expect((await request(app).get(`/api/learn/scenarios/cache-basics/simulation?model=${model}`)).status).toBe(400);
+    expect((await request(app).get(`/api/learn/scenarios/cache-basics/comparison?models=claude-sonnet-5.5,${model}`)).status).toBe(400);
+  });
+});
+
 describe("GET /api/vendors", () => {
   it("lists every vendor profile, with unsimulated models disabled by a reason", async () => {
     const response = await request(createApp()).get("/api/vendors");

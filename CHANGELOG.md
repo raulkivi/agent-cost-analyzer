@@ -6,6 +6,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Security
+- The MCP server no longer hands local folder paths to the chat model:
+  `list_repositories` has no `includePaths` argument any more (an old one is
+  ignored), so instructions hidden in a logged session can't make the model
+  ask for them. Paths are still in the app (`GET /api/repositories`).
+- `list_projects` no longer returns client names and billing codes unless you
+  start the MCP server with `--project-billing-details`; `get_statement` still
+  carries them. (threat-model.md §5.6)
+- The server refuses to start if it is ever set to listen on anything but a
+  loopback address (127.0.0.1, ::1 or localhost), since it has no
+  authentication (threat-model.md §5.1).
+- Tests now show that traversal-shaped ids on the Learn routes are treated as
+  unknown and never read a file (threat-model.md §5.7).
+- The code-review workflow checks out its plugin marketplace at a pinned
+  commit instead of running whatever that repository's default branch holds
+  (threat-model.md §5.5).
+
 ### Fixed
 - Dashboard list-box values meet the 24 px minimum target size, and a chart's
   table view can be scrolled from the keyboard (found by the new

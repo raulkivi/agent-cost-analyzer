@@ -26,6 +26,11 @@ import { createGuard } from "./tool-helpers.js";
 // connect it in memory. Each tool group registers itself (open/closed).
 
 export interface McpServerDeps {
+  // threat-model.md §5.6: whether list_projects returns each project's client
+  // name and billing code to the chat model. Off unless the user launches the
+  // server with --project-billing-details; statements (get_statement) always
+  // carry them, since a statement is for the client.
+  projectBillingDetails?: boolean;
   auditQueries: AuditQueryService;
   analysisQueries: AnalysisQueryService;
   getProviderStatus: () => Promise<LogProviderStatus>;

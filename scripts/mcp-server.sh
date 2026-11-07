@@ -5,4 +5,4 @@
 # stdout is reserved for JSON-RPC; the server logs to stderr only.
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-exec "$ROOT/node_modules/.bin/tsx" "$ROOT/packages/server/src/mcp/stdio.ts"
+exec "$ROOT/node_modules/.bin/tsx" "$ROOT/packages/server/src/mcp/stdio.ts" "$@"

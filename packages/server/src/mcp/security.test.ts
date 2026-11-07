@@ -74,8 +74,9 @@ describe("MCP security across every tool (step 15.13, plan §10.1.5)", () => {
             expect(text, name).not.toContain(secret);
             expect(text, name).not.toContain(home);
           }
-          // The one way to see paths: asking for them.
-          expect(JSON.stringify(await client.callTool({ name: "list_repositories", arguments: { includePaths: true } }))).toContain(home);
+          // threat-model.md §5.6: the model can't ask for paths either; an
+          // includePaths argument (the old way) is ignored.
+          expect(JSON.stringify(await client.callTool({ name: "list_repositories", arguments: { includePaths: true } }))).not.toContain(home);
         } finally {
           await client.close();
         }
@@ -84,8 +85,28 @@ describe("MCP security across every tool (step 15.13, plan §10.1.5)", () => {
     );
   }, 60_000);
 
-  it("names a project's client and billing code only in list_projects and get_statement", async () => {
+  // threat-model.md §5.6: client names and billing codes reach the model only
+  // in a statement, and in list_projects only when the user opted in.
+  it("names a project's client and billing code only in get_statement by default", async () => {
     const { client } = await connectCostFixture({ projects: withBillingCode });
+    try {
+      for (const [name, result] of await callEvery(client)) {
+        const text = JSON.stringify(result);
+        if (name === "get_statement") {
+          expect(text, name).toContain(CLIENT);
+          expect(text, name).toContain(BILLING_CODE);
+        } else {
+          expect(text, name).not.toContain(CLIENT);
+          expect(text, name).not.toContain(BILLING_CODE);
+        }
+      }
+    } finally {
+      await client.close();
+    }
+  });
+
+  it("adds them to list_projects only with the projectBillingDetails opt-in", async () => {
+    const { client } = await connectCostFixture({ projects: withBillingCode, projectBillingDetails: true });
     try {
       for (const [name, result] of await callEvery(client)) {
         const text = JSON.stringify(result);

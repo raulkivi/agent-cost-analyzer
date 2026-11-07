@@ -7,32 +7,30 @@ import { json, projectIdArg, providerArg, READ_ONLY, sinceArg, untilArg, type Gu
 
 // Phase 15 step 15.4 (docs/plans/cost-by-repository-and-project.md
 // §10.1.1, §10.1.4): which repositories and projects the sessions belong
-// to. Read-only, every available provider unless `provider` is given, and
-// no local folder path unless `includePaths` (§10.1.5).
+// to. Read-only, every available provider unless `provider` is given. No
+// local folder path ever (§10.1.5; threat-model.md §5.6: a logged session
+// could otherwise make the model ask for them; paths stay in the HTTP API),
+// and no client name or billing code unless the user opted in.
 export function registerAttributionTools(server: McpServer, deps: McpToolDeps, attribution: AttributionQueries, guarded: Guard): void {
   server.registerTool(
     "list_repositories",
     {
       title: "List repositories",
       description:
-        "Lists the code repositories the sessions worked in, across every available provider unless `provider` is given: start here to find a `repository` key for list_sessions or to see which project each repository is in. Each entry has its key (a normalised remote such as github.com/org/app; a repository without a remote, or a folder outside one, is local:<folder name> or path:<folder name>), session and turn counts, first and last use, AI Credits with coverage (null is unknown, never zero) and project ids. Sessions with no repository are grouped by reason under `unattributed`. Folder paths are left out unless includePaths is true.",
+        "Lists the code repositories the sessions worked in, across every available provider unless `provider` is given: start here to find a `repository` key for list_sessions or to see which project each repository is in. Each entry has its key (a normalised remote such as github.com/org/app; a repository without a remote, or a folder outside one, is local:<folder name> or path:<folder name>), session and turn counts, first and last use, AI Credits with coverage (null is unknown, never zero) and project ids. Sessions with no repository are grouped by reason under `unattributed`. Local folder paths are never returned.",
       inputSchema: {
         provider: providerArg(deps.identity).describe("Log provider id (see list_log_providers). Omit to read every available provider."),
         since: sinceArg,
         until: untilArg,
         projectId: projectIdArg.optional().describe("Only repositories with a member in this project (see list_projects)."),
         includeUnattributed: z.boolean().optional().describe("Include the Unattributed buckets with their reasons (default true)."),
-        includePaths: z
-          .boolean()
-          .optional()
-          .describe("Return local folder paths (full local:/path: keys and each repository's root folder). Default false: folder names only."),
       },
       outputSchema: repositoryListSchema,
       annotations: READ_ONLY,
     },
-    ({ provider, since, until, projectId, includeUnattributed, includePaths }) =>
+    ({ provider, since, until, projectId, includeUnattributed }) =>
       guarded(async () =>
-        json(await attribution.listRepositories({ providerId: provider, since, until, projectId, includeUnattributed, includePaths })),
+        json(await attribution.listRepositories({ providerId: provider, since, until, projectId, includeUnattributed, includePaths: false })),
       ),
   );
 
@@ -41,10 +39,18 @@ export function registerAttributionTools(server: McpServer, deps: McpToolDeps, a
     {
       title: "List projects",
       description:
-        "Lists the user's projects from their local projects file: each project's id, name, client, billing code and members (a repository key, optionally narrowed to a path inside it and branch patterns). A turn counts in at most one project, the most specific matching member. Use it to pick a `projectId` for list_repositories or list_sessions; `problems` lists what is wrong with the file, if anything.",
+        "Lists the user's projects from their local projects file: each project's id, name" +
+        (deps.projectBillingDetails ? ", client, billing code" : "") +
+        " and members (a repository key, optionally narrowed to a path inside it and branch patterns). A turn counts in at most one project, the most specific matching member. Use it to pick a `projectId` for list_repositories or list_sessions; `problems` lists what is wrong with the file, if anything." +
+        (deps.projectBillingDetails ? "" : " Client names and billing codes are not shared here; a statement (get_statement) has them."),
       outputSchema: projectListSchema,
       annotations: READ_ONLY,
     },
-    () => guarded(async () => json(attribution.listProjects())),
+    () =>
+      guarded(async () => {
+        const list = attribution.listProjects();
+        if (deps.projectBillingDetails) return json(list);
+        return json({ ...list, projects: list.projects.map((project) => ({ id: project.id, name: project.name, members: project.members })) });
+      }),
   );
 }

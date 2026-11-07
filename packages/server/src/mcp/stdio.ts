@@ -22,7 +22,11 @@ const { registry, resolvedAppSettingsDir } = composeLogProviders();
 // with the same book; step 15.7's cost analyses mark its price changes.
 const attribution = createStandaloneAttribution(registry, resolvedAppSettingsDir);
 const priceBook = createStandalonePriceBook(resolvedAppSettingsDir, attribution.catalog);
+// threat-model.md §5.6: list_projects shares client names and billing codes
+// with the chat model only when the user asks for it at launch.
+const projectBillingDetails = process.argv.slice(2).includes("--project-billing-details");
 const server = createMcpServer({
+  projectBillingDetails,
   ...createMcpServices(registry, version, undefined, attribution, createTurnPricer(priceBook), priceBook, {
     // Step 15.11: get_statement reads the statements the app issued.
     store: new FileStatementStore(resolvedAppSettingsDir),
