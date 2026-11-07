@@ -1,0 +1,47 @@
+/* SPDX-FileCopyrightText: 2026 Raul Kivi
+   SPDX-License-Identifier: MIT
+*/
+/* Brand tokens for the MCP App views (docs/plans/mcp-apps.md §5.2). The
+   brand marks identity and data; the host owns the structure, so this is
+   the only stylesheet with colour literals (§5.4).
+
+   Light is the default. The dark values apply when ext-apps'
+   applyDocumentTheme has set <html data-theme="dark"> from
+   hostContext.theme: the host's theme, never the OS colour-scheme query.
+   The light ramp is theme.css's accent ramp; the dark one uses its steps
+   200, 400, 500 and 900. test/theme/theme-contrast.test.ts holds every pair
+   to 4.5:1 (text) or 3:1 (marks) in each host. */
+
+html[data-host="mcp-app"] {
+  /* Brand accent */
+  --brand-mark: #416180;            /* the product mark */
+  --brand-accent: #5980a6;          /* data marks: bars, columns, the line */
+  --brand-accent-text: #416180;     /* kicker, links */
+  --brand-accent-fill: #416180;     /* ground of primary buttons, checked segments */
+  --brand-on-accent: #ffffff;       /* label on --brand-accent-fill */
+  --brand-accent-strong: #2c455d;   /* selected and hover (--color-accent-800) */
+
+  /* Fallbacks for a host that sends no variable: theme.css's Industry
+     palette. --brand-fb-ground is the ground they are designed for (the
+     view itself is transparent). */
+  --brand-fb-text: #1d1f20;
+  --brand-fb-ground: #f2f2f3;
+  --brand-fb-surface: #e9e9ea;
+  --brand-fb-text-muted: color-mix(in srgb, var(--brand-fb-text) 70%, transparent);
+  --brand-fb-divider: color-mix(in srgb, var(--brand-fb-text) 16%, transparent);
+}
+
+html[data-host="mcp-app"][data-theme="dark"] {
+  --brand-mark: #94bce3;
+  --brand-accent: #749dc4;
+  --brand-accent-text: #94bce3;
+  --brand-accent-fill: #94bce3;
+  --brand-on-accent: #1d2d3d;
+  --brand-accent-strong: #d6ebff;
+
+  --brand-fb-text: #f5f5f8;
+  --brand-fb-ground: #2b2b2d;
+  --brand-fb-surface: #38383a;
+  --brand-fb-text-muted: color-mix(in srgb, var(--brand-fb-text) 70%, transparent);
+  --brand-fb-divider: color-mix(in srgb, var(--brand-fb-text) 16%, transparent);
+}

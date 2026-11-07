@@ -1,0 +1,67 @@
+/* SPDX-FileCopyrightText: 2026 Raul Kivi
+   SPDX-License-Identifier: MIT
+*/
+/* MCP App host mapping (docs/plans/mcp-apps.md §5.2), built like the web
+   package's theme-vscode.css: theme.css's Industry tokens are re-pointed at
+   the MCP Apps spec's standard host variables, with the Industry palette
+   (brand.css's --brand-fb-* tokens) as each fallback.
+
+   The host variables arrive on <html> at runtime (ext-apps'
+   applyHostStyleVariables), as concrete light-dark() colours from Claude
+   Desktop or var(--vscode-*) references from VS Code; both resolve through
+   the same var() here. A host may send any subset, so every token has a
+   fallback. The brand shows only in the accent tokens (brand.css).
+
+   Every rule is scoped under html[data-host="mcp-app"], so the standalone
+   app, which sets no data-host, renders as theme.css alone. No colour
+   literals here (§5.4). Load order: theme.css, brand.css, this file. */
+
+html[data-host="mcp-app"] {
+  /* The view is transparent over the host's own ground, and the page lets
+     the host pick light or dark. */
+  --color-bg: transparent;
+  color-scheme: light dark;
+
+  /* Structure: the host's. */
+  --color-text: var(--color-text-primary, var(--brand-fb-text));
+  --color-text-muted: var(--color-text-secondary, var(--brand-fb-text-muted));
+  --color-surface: var(--color-background-secondary, var(--brand-fb-surface));
+  --color-divider: var(--color-border-primary, var(--brand-fb-divider));
+  --font-body: var(--font-sans, "Barlow", system-ui, sans-serif);
+  /* Barlow Condensed only if installed (no font file is bundled or fetched,
+     §5.3), then the host's font. */
+  --font-heading: "Barlow Condensed", var(--font-sans, system-ui, sans-serif);
+  --radius-sm: var(--border-radius-sm, 2px);
+  --radius-md: var(--border-radius-md, 4px);
+  --radius-lg: var(--border-radius-lg, 7px);
+
+  /* Identity and data: the brand's. */
+  --color-accent: var(--brand-accent);
+  --color-accent-text: var(--brand-accent-text);
+  --color-accent-fill: var(--brand-accent-fill);
+  --color-accent-800: var(--brand-accent-strong);
+
+  /* The ramp steps theme.css pairs as light ground + dark text (tags,
+     selected rows), re-derived from the host's ground and text so they stay
+     legible on a dark host too. */
+  --color-accent-100: color-mix(in srgb, var(--brand-accent) 20%, var(--color-background-primary, var(--brand-fb-ground)));
+  --color-accent-2-100: color-mix(in srgb, var(--color-text-secondary, var(--brand-fb-text)) 16%, var(--color-background-primary, var(--brand-fb-ground)));
+  --color-accent-2-800: var(--color-text-primary, var(--brand-fb-text));
+  --color-neutral-100: color-mix(in srgb, var(--color-text-primary, var(--brand-fb-text)) 8%, var(--color-background-primary, var(--brand-fb-ground)));
+  --color-neutral-200: color-mix(in srgb, var(--color-text-primary, var(--brand-fb-text)) 14%, var(--color-background-primary, var(--brand-fb-ground)));
+  --color-neutral-800: var(--color-text-primary, var(--brand-fb-text));
+}
+
+/* The host's focus ring. */
+html[data-host="mcp-app"] :focus-visible {
+  outline-color: var(--color-ring-primary, var(--color-accent));
+}
+
+/* Labels on accent grounds: theme.css uses --color-bg, which is transparent
+   here. */
+html[data-host="mcp-app"] .btn-primary,
+html[data-host="mcp-app"] .seg-opt:has(input:checked),
+html[data-host="mcp-app"] .filter-chip[aria-pressed="true"],
+html[data-host="mcp-app"] .replay-channel--on {
+  color: var(--brand-on-accent);
+}
