@@ -5,7 +5,7 @@ on 2026-11-07; D3, D6 and D8 take the recommendation, open for the owner to
 revisit (§11). Steps 14.0 (threat-model rows), 14.1 (domain schemas) and
 14.2 (request traces), 14.3 (the scripter), 14.4 (the replay service) and
 14.5 (routes, RPC and MCP) are done (2026-11-07); step 14.6's mock-ups are
-drawn (2026-11-07) and wait for the owner's approval before UI code starts.
+drawn and approved by the owner (2026-11-07); step 14.7 (the UI) is next.
 
 The question this answers: **"What would this real session have cost on
 another model?"** It reuses Phase 13's simulator
@@ -246,7 +246,7 @@ recommendation and stay open for the owner to revisit.
 | 14.3 | `RequestTraceScripter` with compaction, clear, model switch and 1-hour events; replaces `scriptFromCapture` | Property tests; the 17 shrinking-prompt sessions' shapes replay without error; calibration still 99.8%. Done 2026-11-07, see the note below |
 | 14.4 | `ReplayAligner`, `SessionReplayService`, self-check, pricing per D2 | Golden replays of the fixtures; self-check passes at D12 on every calibration fixture. Done 2026-11-07, see the note below |
 | 14.5 | API routes, RPC, MCP tools (per D7) | Route, RPC and MCP tests (schemas, read-only, redaction). Done 2026-11-07, see the note below |
-| 14.6 | Mock-ups (Replay on, Simulated columns, summary card, Compare models) in both products' themes | Owner approves the boards. Drawn 2026-11-07, see the note below; approval open |
+| 14.6 | Mock-ups (Replay on, Simulated columns, summary card, Compare models) in both products' themes | Owner approves the boards. Done 2026-11-07: drawn and approved by the owner, see the note below |
 | 14.7 | UI in the standalone app and the extension (per D4, D5) | Component, axe and keyboard tests; UI check in three VS Code themes; usage scenarios pass in `web-e2e` and `extension-ui` |
 | 14.8 | Docs: architecture.md, User Guide, extension guide, vision | Owner reviews |
 
@@ -413,7 +413,8 @@ and its MCP server).
   `mcp/security.test.ts` now runs its read-only and no-path/no-credential
   checks over the replay tools and `estimate_cost` with a model.
 
-**14.6 (drawn 2026-11-07; the owner's approval open).** Five boards on a
+**14.6 (done 2026-11-07: drawn, and approved by the owner with no change
+requests).** Five boards on a
 Design canvas, **https://claude.ai/artifact/Qv3dWr3J3RybfDsAzTKUxM**
 (private until the owner shares it from the page's Share menu; reviewers
 comment on the canvas), with versioned copies in
