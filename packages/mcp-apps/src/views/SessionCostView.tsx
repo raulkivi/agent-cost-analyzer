@@ -4,6 +4,7 @@ import { StatTile } from "@agent-cost-analyzer/web/ui/StatTile";
 import { Tag } from "@agent-cost-analyzer/web/ui/Tag";
 import { formatAiCreditsValue } from "@agent-cost-analyzer/web/lib/format-ai-credits";
 import { useMemo } from "react";
+import type { ReactNode } from "react";
 import type { ViewBrand } from "../brand/view-brand.js";
 import type { AppHostPort, ToolResult } from "../host/app-host-port.js";
 import type { ClipboardPort } from "../host/clipboard-port.js";
@@ -26,6 +27,14 @@ import type { SessionCost, TurnSeries } from "@agent-cost-analyzer/domain";
 
 const KICKER = "Session cost";
 
+// Set when another view opens this one in place (U2): the kicker trail, a
+// back control above the title, and extra footer buttons.
+export interface DrillDownFrame {
+  kicker?: string;
+  lead?: ReactNode;
+  actions?: ReactNode;
+}
+
 function Tile({ label, tile }: { label: string; tile: SessionCostTile }) {
   const note =
     tile.coverageNote !== undefined || tile.estimate ? (
@@ -38,7 +47,7 @@ function Tile({ label, tile }: { label: string; tile: SessionCostTile }) {
   return <StatTile label={label} value={tile.text} note={note} />;
 }
 
-function ErrorBox({ title, children, onRetry }: { title: string; children: string; onRetry?: () => void }) {
+export function ErrorBox({ title, children, onRetry }: { title: string; children: string; onRetry?: () => void }) {
   return (
     <div className="view-error" role="alert">
       <div>
@@ -55,7 +64,7 @@ function ErrorBox({ title, children, onRetry }: { title: string; children: strin
   );
 }
 
-function LoadedSessionCost({ port, brand, clipboard, cost }: { port: AppHostPort; brand: ViewBrand; clipboard: ClipboardPort | undefined; cost: SessionCost }) {
+function LoadedSessionCost({ port, brand, clipboard, cost, frame }: { port: AppHostPort; brand: ViewBrand; clipboard: ClipboardPort | undefined; cost: SessionCost; frame: DrillDownFrame | undefined }) {
   const provider = cost.providerId;
   const series = useResource<TurnSeries>(
     async () => {
@@ -78,7 +87,21 @@ function LoadedSessionCost({ port, brand, clipboard, cost }: { port: AppHostPort
   const chartNotes = [vm.chart?.unknownNote, vm.chart?.truncatedNote].filter((note) => note !== undefined);
 
   return (
-    <ViewShell brand={brand} kicker={KICKER} title={vm.title} meta={meta} actions={copyable ? <CopyCommandButton phase={copy.phase} onCopy={copy.copy} /> : undefined}>
+    <ViewShell
+      brand={brand}
+      kicker={frame?.kicker ?? KICKER}
+      title={vm.title}
+      meta={meta}
+      lead={frame?.lead}
+      actions={
+        frame?.actions !== undefined || copyable ? (
+          <>
+            {frame?.actions}
+            {copyable && <CopyCommandButton phase={copy.phase} onCopy={copy.copy} />}
+          </>
+        ) : undefined
+      }
+    >
       <div className="stat-tiles view-tiles">
         <Tile label="AI Credits" tile={vm.tiles.aiCredits} />
         <Tile label="Input tokens" tile={vm.tiles.inputTokens} />
@@ -120,7 +143,7 @@ function LoadedSessionCost({ port, brand, clipboard, cost }: { port: AppHostPort
   );
 }
 
-export function SessionCostView({ port, brand, clipboard, result }: { port: AppHostPort; brand: ViewBrand; clipboard?: ClipboardPort | undefined; result: ToolResult | undefined }) {
+export function SessionCostView({ port, brand, clipboard, result, frame }: { port: AppHostPort; brand: ViewBrand; clipboard?: ClipboardPort | undefined; result: ToolResult | undefined; frame?: DrillDownFrame | undefined }) {
   const cost = useMemo(() => (result === undefined || result.isError ? undefined : parseSessionCost(result.structuredContent)), [result]);
 
   if (result === undefined) {
@@ -139,5 +162,5 @@ export function SessionCostView({ port, brand, clipboard, result }: { port: AppH
       </ViewShell>
     );
   }
-  return <LoadedSessionCost port={port} brand={brand} clipboard={clipboard} cost={cost} />;
+  return <LoadedSessionCost port={port} brand={brand} clipboard={clipboard} cost={cost} frame={frame} />;
 }
