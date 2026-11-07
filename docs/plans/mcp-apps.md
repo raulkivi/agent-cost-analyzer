@@ -449,7 +449,7 @@ fewer, an exact spec, and acceptance tests the local agent never sees.
 
 | # | Task | Complexity | Model | Depends on |
 |---|---|---|---|---|
-| A0 | **Spike** (1 day, time-boxed). A hard-coded view on `get_session_cost` in VS Code Copilot Chat and Claude Desktop. Record: the host variables each sends, whether `toolInfo` is present, `local()` fonts, `openLink` to `vscode://`, app-initiated `tools/call` approval prompts, display modes, High Contrast. Results go into §9. | medium | Sonnet | — |
+| A0 | **Spike** (1 day, time-boxed). A hard-coded view on `get_session_cost` in VS Code Copilot Chat and Claude Desktop. Record: the host variables each sends, whether `toolInfo` is present, `local()` fonts, `openLink` to `vscode://`, app-initiated `tools/call` approval prompts, display modes, High Contrast. Results go into §9. The kit and the owner's checklist are in [mcp-apps-spike.md](mcp-apps-spike.md). | medium | Sonnet | — |
 | A0b | **MVP mock-ups** (§5.6): U1, U2 and U3 in a VS Code Copilot Chat frame and a Claude Desktop frame, light and dark, using the host variables A0 recorded; one states board (Unknown, partial coverage, error, narrow width, no deep link). The owner approves them before A9. | medium | Sonnet (frontend-design skill) + owner | A0 |
 | A1 | `turnSeriesSchema` in `packages/domain/src/cost.ts`, and `buildTurnSeries(session: Session, maxTurns = 500): TurnSeries` in `services/cost/turn-series-builder.ts` | low | setup6 | — |
 | A2 | `injectBrand(html: string, brand: ViewBrand): string` in `mcp/apps/inject-brand.ts`. Throws when the placeholder is missing; escapes HTML attribute characters. | low | setup6 | — |
