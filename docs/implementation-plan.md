@@ -1435,20 +1435,31 @@ Microsoft are listed but disabled. It ships in extension 0.2.0.
 
 ## Phase 14 — Replay real Analyze sessions on another vendor
 
+Full design: [plans/analyze-session-replay.md](plans/analyze-session-replay.md).
+
 **Goal**: answer "what would this real session have cost on another
 model?". It reuses Phase 13's simulator on the token shape (sizes, gaps,
 events) of a real Analyze session. Owner decision D18 in
 [plans/vendor-aware-learn-simulation.md](plans/vendor-aware-learn-simulation.md).
 
-**Deliverables**: to be planned when Phase 13 is done. The measured figures
-always stay visible next to the replay, and the replay is labelled
-**Simulated**.
+**Deliverables** (steps 14.0–14.8 in the plan): a per-request
+`RequestTrace` for Claude Code and Copilot (D1), a `RequestTraceScripter`
+that generalises 13.5a's `scriptFromCapture` (compaction, clear, model
+switch, 1-hour writes), a `SessionReplayService` with a self-check on the
+session's own model, priced on the session's own channel (D2), replay and
+compare routes, RPC methods and MCP tools (`replay_session`,
+`compare_models_for_session`, and `estimate_cost` with a `model`, D7), and
+**Replay on** plus **Compare models** in both products (D4, D5). The
+measured figures always stay visible next to the replay, and the replay is
+labelled **Simulated**.
 
-**Exit criterion**: to be set in its plan.
+**Exit criterion**: the plan's §13.
 
-**Dependencies**: Phase 13 (simulator, vendor profiles, calibration).
+**Dependencies**: Phase 13 (simulator, vendor profiles, calibration):
+merged.
 
-**Status (2026-11-03)**: planned, not started.
+**Status (2026-11-07)**: planned, decisions D1–D8 recorded; not started
+(step 14.0 next).
 
 ## Phase 15 — Cost by repository and project, price history, billing
 
