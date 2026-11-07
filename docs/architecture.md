@@ -2145,22 +2145,7 @@ figures, labelled **Simulated**. Details and decisions are in
 [plans/analyze-session-replay.md](plans/analyze-session-replay.md); this is
 the end-to-end view.
 
-```text
-provider log ──readRequestTrace──▶ RequestTrace (numbers only, per request)
-                                        │ scriptFromRequestTrace
-                                        ▼
-                                  ScenarioScript
-                 ┌──────────────────────┴──────────────────────┐
-     withoutModelSwitches                              switches kept
-                 ▼                                             ▼
-  simulateScenario(target model)          simulateScenario(own model, cheaperModelId)
-                 │                                             │
-   ReplayPricer (CostPricer, D2)                       replaySelfCheck vs trace
-                 ▼                                             │
-   alignReplay ◀── measured figures (as get_session_cost)      │
-                 ▼                                             ▼
-                 └────────────▶ SessionReplay ◀────────────────┘
-```
+![6.5 Session replay](diagrams/6-5-session-replay.drawio.svg)
 
 1. **Trace.** The provider reduces its log to one record per LLM request in
    the session's main chain (time, model, token counts; no text). A turn is

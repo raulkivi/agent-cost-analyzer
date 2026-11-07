@@ -365,6 +365,8 @@ shown. On the **Explanation** tab, the selected turn gets a dashed
 **Simulated** box with its outcome and its cache read, cache write and
 cost, measured beside simulated.
 
+![Analyze view with a session replayed on Claude Opus 5.5: the Replay on select, the summary strip with measured, simulated and difference, and the dashed Simulated box in the Explanation tab](images/guide-replay-strip.png)
+
 **The summary strip.** Above the table, a strip shows:
 
 - the **Measured** total and the **Simulated** total, and the
@@ -374,6 +376,8 @@ cost, measured beside simulated.
 - the self-check, for example "Replay matches the log on
   claude-opus-5-5: 98% of compared requests";
 - which prices were used, and their date.
+
+![The Replay summary dialog with totals, prices, coverage, self-check and assumptions A1 to A5](images/guide-replay-summary.png)
 
 **Replay summary** opens the full summary as a dialog:
 
@@ -417,6 +421,8 @@ cost, measured beside simulated.
 
 That is why the app says a session "would have cost about" a figure, not
 "would have cost" it.
+
+![Compare models: ranked table and one bar per model, the session's own model tagged](images/guide-replay-compare.png)
 
 **Compare models.** The **Compare models** button, beside Replay on,
 swaps the turns table for the session's simulated total on several models:
