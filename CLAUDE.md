@@ -18,6 +18,10 @@ content here.
 - Every new source file starts with the two-line SPDX header (see
   [AGENTS.md](AGENTS.md)); `npm run headers:fix` adds it. Never remove
   copyright headers or `LICENSE` when copying code.
+- Every document has a header with a **last changed** date (YYYY-MM-DD)
+  and a **source** link, `https://github.com/raulkivi/agent-cost-analyzer`.
+  Add the header only when creating a new document or updating an existing
+  one (set the date then); never backfill untouched documents.
 - Treat the docs above as the source of truth. If an implementation
   decision conflicts with them, update the relevant doc in the same change
   rather than letting it drift.
@@ -32,154 +36,8 @@ content here.
   [docs/implementation-plan-gantt.md](docs/implementation-plan-gantt.md)
   in the same change: the phase bars and percentages, Open items, and the
   phase's detail chart.
-- Repo status: Phases 0-9.6 complete (9.6 verified against pi's
-  published schema in the vendored package docs/types; the real-capture
-  check is postponed to Phase 11, not started), Phases 9.7-9.10 complete (9.10: tool-call
-  audit — classified per-call outcomes, `GET /api/sessions/:id/audit`,
-  `/tool-calls`, `GET /api/audit`, a read-only stdio MCP server in
-  `packages/server/src/mcp/` launched via `scripts/mcp-server.sh`, and the
-  web Tool audit / All sessions views; see docs/plans/tool-call-audit.md),
-  Phase 9.11 complete (insights dashboard: `GET /api/insights` across every
-  provider, `services/insights/*` security/anomaly/behaviour-change
-  detectors, a generic associative engine in `packages/web/src/lib/associative/`
-  and the web Dashboard view; see docs/plans/insights-dashboard.md),
-  Phase 9.12 complete (MCP tools v2: `get_session_cost`, `get_cost_rollup`,
-  `list_findings`, `get_turn`, cost/security prompts, server instructions
-  and output schemas; the MCP server is split into tool-group modules in
-  `packages/server/src/mcp/`; see docs/plans/mcp-tools-v2.md)
-  — npm workspaces with
-  `packages/domain`
-  (zod schemas + types for every architecture.md §5 shape, including
-  `Session.category`/`startedAt`/`providerId`, `ConfigWarning.severity`,
-  `LogProviderDescriptor`/`LogProviderStatus`, and `TurnInspectorDetail`),
-  `packages/server`
-  (Express API: Learn-mode fixtures plus real Analyze-mode sessions read
-  through a provider-extensible `LogProvider` registry — `VscodeLogProvider`
-  (SQLite + `main.jsonl`, enriched with real per-turn token/cache numbers
-  plus optional cache-write/reasoning tokens from `agent-traces.db`, and
-  Analyze-mode-only system-prompt breakdown/tool-inventory detail) and
-  `MitmproxyLogProvider` (local HAR captures, redacted, decoded through an
-  Anthropic/OpenAI vendor-decoder registry), and `PiAgentLogProvider` (reads
-  the pi coding agent's own JSONL session format directly, one branch-tree
-  leaf per `Session`; verified against the published schema shipped in the
-  vendored `@earendil-works/pi-coding-agent` — sums usage from assistant,
-  toolResult, `usage` (e.g. cache_warm), compaction and branch_summary
-  entries, reads `Usage.reasoning`, and replays in-file system messages into
-  `systemPrompt`/`toolInventory`; `tool`/`vision`/`costAiCredits` stay
-  unavailable, and a real captured session is Phase 11's work, see
-  architecture.md §6.2.5), and
-  `ClaudeCodeLogProvider` (reads the Claude Code CLI's own JSONL session
-  format directly from `~/.claude/projects/`, one `Session` per file using
-  the format's own authoritative active-branch pointer; every shape
-  confirmed against real captures on this machine, so per-turn usage
-  including cache read/write and reasoning tokens is populated for real —
-  `systemPrompt`/`toolInventory` stay unset, see architecture.md §6.2.6);
-  `GET /api/log-providers` and
-  `PUT /api/log-providers/active` select the source; a startup config check
-  reads `settings.json` and exposes `GET /api/config/status`),
-  `packages/web` (Vite + React, styled with the "Industry" design system
-  ported from `Design/` into `theme.css` — header with mode switch and an
-  Analyze-mode provider select, a searchable session list showing each
-  session's total AI Credits, a 13-column turns table (incl. a running
-  cumulative AI Credits total per row; AI Credits figures are rounded to 2
-  decimal places throughout), a tabbed Explanation/System-prompt/Tools right
-  column, a dismissible structured config-warning banner (required vs.
-  optional severity styled distinctly), zero-data empty states — built on
-  shared `components/ui/*` primitives; `charts/AiCreditsSparkline` is the
-  sole remaining D3 chart, in the center column's header row; `TurnInspector`
-  is a per-turn request/response drill-down opened from `ExplanationPanel`,
-  showing one Request/Response card pair per LLM round-trip with
-  oversized/file/image content collapsed into placeholder chips), Vitest
-  wired with TDD-first tests, and `packages/pi-system-prompt-logger`
-  (a vendored Pi coding-agent extension — captures the assembled pi system
-  prompt to a JSONL sidecar log; `PiAgentLogProvider` falls back to it for
-  session files without in-file system messages, populating
-  `Session.systemPrompt` and the system prompt inspector for those pi
-  sessions; `npm run configure`/`unconfigure` install/remove it, see
-  architecture.md §6.2.5). Phase 10 (AI Credits Analyzer, a separate
-  Copilot-only VS Code extension in `packages/vscode-extension` sharing
-  this code) is in progress: steps 10.0-10.8 done, 10.9
-  (real-VS Code integration tests, packaging, release workflows) code
-  done with the owner's manual checks open, 10.10 (documentation)
-  written with screenshots and the owner's review open, 10.11 (UX review
-  for VS Code: fits any panel width, readable in every theme, UI check)
-  and 10.12 (Learn scenarios in a side bar Learn view) done; 10.13
-  (Agent Host sessions, the VS Code 1.143+ default: listed with turns,
-  tokens and AI Credits in both products) done; 10.14 (their turn text,
-  tool calls and system prompt from the Copilot CLI event log) done;
-  owner's manual check passed; 10.15 (cache-write and reasoning tokens for
-  Agent Host sessions, from the event log's usage records) done, owner's manual check passed; 10.16 (UI automation
-  of the manual checks in a real VS Code with `wdio-vscode-service`, `test/ui/`, informational `extension-ui` CI
-  job; see docs/plans/vscode-ui-automation.md §6) merged (#117, #121, #127), owner's decisions open. A
-  proposed plan for classic Copilot Chat subagent AI Credits is in docs/plans/classic-subagent-credits.md. Release prep
-  is merged (#90), and publishing setup is done (the Open VSX
-  ownership claim was granted 2026-10-28); 0.1.0 is released (tag `ext-v0.1.0`, 2026-11-03,
-  on the Marketplace and Open VSX; some VS Code manual checks stay open, see
-  docs/plans/vscode-extension-manual-checks.md). Phase 13 (vendor-aware Learn simulation,
-  VS Code first; see docs/plans/vendor-aware-learn-simulation.md) is
-  built and merged: steps 13.0-13.10 (simulator, vendor profiles, Learn picker, Cache column, Vendors tab, `npm run scenarios:docs`, standalone support; #129-#139) and 13.5a (calibration against real Claude Code and Copilot logs, #144; the owner's 1-hour Claude Code cache decision of 2026-11-06 is in `harnessCacheDefaults`); decisions D1–D19 are all recorded in its §9; open: only the owner's eyes-on review of 13.8; Phase 14, replaying Analyze sessions on another model, is planned in docs/plans/analyze-session-replay.md (decisions D1–D8 recorded 2026-11-07, step 14.0's threat-model rows, step 14.1's domain `RequestTrace`/`SessionReplay` schemas and step 14.2's request traces (optional `RequestTraceReader` on the Claude Code and VS Code providers) and step 14.3's `RequestTraceScripter` in `packages/server/src/services/session-replay/` (calibration replays through it; Claude Code compacted sessions now read past the compaction) and step 14.4's `SessionReplayService` (model resolver, D2 pricing through `CostPricer`, aligner, self-check that reproduces calibration, golden replays in `session-replay/__golden__/`) and step 14.5's routes (`GET /api/sessions/:id/replay` and `/replay/compare`), RPC methods and MCP `replay` tool group (`replay_session`, `compare_models_for_session`; `estimate_cost` with `model`) done; step 14.6's five mock-up boards are drawn and approved by the owner (2026-11-07, docs/plans/mockups/session-replay/) and step 14.7's UI (Replay on and Compare models in both products, `packages/web/src/components/replay/`, behind `ProductFeatures.sessionReplay`; scenario R1 in `web-e2e` and `extension-ui`) done; step 14.8's docs (architecture.md §6.5, User Guide and extension guide sections, vision) written, the owner's review and the plan §13 exit criterion on real sessions open); the Learn scenario fact-check it builds on is in
-  docs/learn-scenarios-fact-check.md. Phase 15 (cost by repository and project,
-  price history, billing statements and estimates; see
-  docs/plans/cost-by-repository-and-project.md) is planned: the owner's
-  decisions D1–D10 are recorded; step 15.8's mock-ups are drawn and approved
-  (2026-11-05, docs/plans/mockups/cost-by-project/), and its palette tokens
-  (`--color-series-1`..`-8`) are done; step 15.4 (`SessionAttributor`: repository, project, vendor and channel
-  on Insights rows, Dashboard list boxes, mitmproxy capture rules, MCP
-  `list_repositories`/`list_projects`) and step 15.5 (price book with history in
-  `packages/server/src/services/pricing/`, `fixtures/price-book/`, so far
-  GitHub Copilot's and the Anthropic, OpenAI and Google APIs' prices from 2026-10-01 where a dated source proves them; `GET /api/price-book`,
-  `get_price_book`) is done; step 15.6 (`CostPricer` in
-  `services/pricing/`: billed, reported and priced `CostFigure`s on every
-  Insights turn row and per-basis totals with coverage on session rows,
-  Copilot billed-vs-priced reconciliation per model and month, a Cost basis
-  list box and basis switch on the Dashboard, and the basis in
-  `get_session_cost`, `get_cost_rollup` and `get_turn`) is done;
-  step 15.7 is done (cost cube and pure time series, compare and project
-  builders in `packages/server/src/services/cost-analysis/`,
-  `GET /api/cost/timeseries` and `/api/cost/compare`, MCP
-  `get_repository_cost`, `get_project_cost`, `compare_costs` and the
-  `review_costs` project step, golden JSON in `cost-analysis/__golden__/`);
-  step 15.9 is done (the Dashboard's Cost over time and Compare tabs in
-  `packages/web/src/components/insights/` over `GET /api/cost/*`, the chart
-  `charts/CostTimeChart.tsx` and `lib/cost/`, in the extension from step 15.14; the §12.4.1 Playwright
-  usage-scenario suite in `packages/web/e2e/` with S2 and S3 in the
-  `web-e2e` CI job, `npm run test:e2e --workspace=packages/web`);
-  step 15.10 is done (`PriceChangeDetector` in `services/pricing/` with
-  observed Copilot price changes as `price-change` findings (D11), the
-  `VarianceAnalyzer` in `services/cost-analysis/` with usage, price and mix
-  effects that add up exactly (D12), `GET /api/cost/variance`,
-  `/api/cost/project` and `/api/price-book/changes`, MCP
-  `explain_cost_change` (tool and prompt) and `get_price_changes`, the
-  Dashboard's Project tab (`ProjectTab`, `charts/Waterfall.tsx`), dashed
-  observed markers on Cost over time, and scenario S4);
-  step 15.11 is done (statements: `services/billing/` builder and service,
-  `data-sources/statements/` file store in the settings folder, domain
-  `Statement`, diff and CSV/JSON/Markdown exports, `GET /api/statements`
-  and the JSON-only issue POST, MCP `get_statement` and
-  `prepare_statement`, the Dashboard's Billing tab and the Projects editor,
-  decisions D13–D15, scenarios S1, S5, S6 and S8);
-  step 15.12 is done (estimates: domain `CostEstimate`, `buildCostEstimate`
-  and `EstimateService` in `services/billing/`, `GET /api/estimates`, MCP
-  `estimate_cost` and the `estimate_work` prompt, the Billing tab's
-  `EstimatePanel`, decisions D16–D18, scenario S7);
-  step 15.13 is done (MCP across both products: `createMcpServer`'s
-  `toolGroups`, the extension's MCP server with 17 tools over the Copilot
-  provider and no billing, `list_projects` with no projects and a reason
-  there (D19), cost-basis instructions for both, `mcp/security.test.ts`,
-  the stdio exit criterion and scenario S10 in `web-e2e`);
-  step 15.14 is done (the extension: Sessions grouped by repository with a
-  title-bar toggle kept in globalState, `sidebar/sessions-by-repository-tree-model.ts`
-  and `sidebar/repository-sources.ts`; the status bar per workspace
-  repository; the Dashboard's Cost over time and Compare tabs, with
-  `ProductFeatures.projectsAndBilling` keeping Project and Billing in the
-  standalone app; scenario S9 in `extension-ui`); step 15.15 (the docs pass: architecture.md
-  §6.4 cost data flow and product table, guides, vision, READMEs) is written,
-  the owner's review and the plan §15 exit criterion on real data open;
-  step 15.1 is done (`Session.workspace`, `Turn.startedAt`, and
-  `Turn.workspace` for Claude Code, from every provider) and step 15.2
-  (`RepositoryResolver` and `RemoteUrlNormalizer` in
-  `packages/server/src/services/cost-attribution/`) and steps 15.0/15.3
-  (projects file in the app settings folder, `GET/PUT /api/projects`,
-  `GET /api/repositories`, optional `projects-file-invalid` warning) are
-  done; plan §14.1. The progress table and per-step
-  status notes are in docs/plans/vscode-extension.md.
+- Current status lives in
+  [docs/implementation-plan-gantt.md](docs/implementation-plan-gantt.md)
+  and the per-phase plans in `docs/plans/`
+  (progress table: [docs/plans/vscode-extension.md](docs/plans/vscode-extension.md)).
+  Do not record status in this file.

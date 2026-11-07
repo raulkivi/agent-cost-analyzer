@@ -160,6 +160,8 @@ export {
   turnCostSchema,
   contextOverheadSchema,
   sessionCostSchema,
+  turnSeriesTurnSchema,
+  turnSeriesSchema,
   costRollupSchema,
   costGroupSchema,
   type CostGroup,
@@ -168,6 +170,8 @@ export {
   type CostFigures,
   type CostRanking,
   type SessionCost,
+  type TurnSeriesTurn,
+  type TurnSeries,
   type CostRollup,
 } from "./cost.js";
 export {

@@ -5,6 +5,20 @@
   "license": "MIT",
   "author": "Raul Kivi",
   "type": "module",
+  "exports": {
+    "./theme.css": "./src/theme.css",
+    "./ui/Blueprint": "./src/components/ui/Blueprint.tsx",
+    "./ui/StatTile": "./src/components/ui/StatTile.tsx",
+    "./ui/StatusTag": "./src/components/ui/StatusTag.tsx",
+    "./ui/Tag": "./src/components/ui/Tag.tsx",
+    "./ui/SegmentedControl": "./src/components/ui/SegmentedControl.tsx",
+    "./charts/TrendColumns": "./src/charts/TrendColumns.tsx",
+    "./charts/HorizontalBars": "./src/charts/HorizontalBars.tsx",
+    "./charts/StackedColumns": "./src/charts/StackedColumns.tsx",
+    "./charts/AiCreditsSparkline": "./src/charts/AiCreditsSparkline.tsx",
+    "./insights/FindingsTable": "./src/components/insights/FindingsTable.tsx",
+    "./lib/format-ai-credits": "./src/lib/format-ai-credits.ts"
+  },
   "scripts": {
     "dev": "vite",
     "test": "vitest run",

@@ -112,6 +112,31 @@ export const sessionCostSchema = z.object({
 
 export type SessionCost = z.infer<typeof sessionCostSchema>;
 
+// Phase 12 (docs/plans/mcp-apps.md §4.2): the bounded per-turn figures a
+// per-turn chart needs for one session. SessionCost carries only topTurns;
+// this is the app-only `get_turn_series` result. Unknown is null, never 0.
+export const turnSeriesTurnSchema = z.object({
+  turnIndex: z.number(),
+  startedAt: z.string().optional(), // absent when the log records no turn time
+  model: z.string(),
+  aiCredits: z.number().nullable(),
+  inputTokens: z.number().nullable(), // uncached + cache write + cache read
+  cacheRead: z.number().nullable(),
+  output: z.number().nullable(),
+  estimated: z.boolean(), // a figure on this turn is a local-tokenizer estimate
+  events: z.array(triggeredEventSchema), // events triggered on this turn
+});
+
+export const turnSeriesSchema = z.object({
+  sessionId: z.string(),
+  turns: z.array(turnSeriesTurnSchema),
+  totalTurns: z.number().int().nonnegative(),
+  truncated: z.boolean(), // the session had more turns than maxTurns; the first maxTurns are kept
+});
+
+export type TurnSeriesTurn = z.infer<typeof turnSeriesTurnSchema>;
+export type TurnSeries = z.infer<typeof turnSeriesSchema>;
+
 // Step 15.6: one repository, project, vendor or channel in the rollup. A
 // null key is the Unattributed / No project / unknown bucket, with why.
 export const costGroupSchema = z.object({

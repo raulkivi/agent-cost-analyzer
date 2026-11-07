@@ -72,6 +72,10 @@ gantt
     14.0-14.7 replay core, API, mock-ups, UI (89%) :done, p14, 2026-11-07, 1d
     14.8 docs written, owner review (11%)  :active, p14r, after p14, 1d
 
+    section MCP Apps
+    12 A1-A4 foundations (11%)             :done, p12a, 2026-11-07, 1d
+    12 A0 host spike onward (0%)          :active, p12b, after p12a, 1d
+
     section Cost
     15 Cost by repository and project (95%) :done, p15, 2026-11-05, 3d
     15.15 owner review, real data (5%)     :active, p15r, after p15, 1d
@@ -92,19 +96,19 @@ gantt
 ## Not started
 
 - Phase 11 (0%) — pi provider real-capture verification.
-- Phase 12 (0%) — MCP Apps: interactive views in the chat; MVP plus Increments 2 and 3 for the Phase 14 and 15 tools. See [Phase 12 detail](#phase-12-detail--mcp-apps).
 
 ## Open items
 
 - Phase 14: steps 14.0-14.7 built; 14.8's docs written, the owner's review and the §13 exit criterion on real sessions open; the extension guide's replay screenshots open (User Guide's done). See [Phase 14 detail](#phase-14-detail--analyze-session-replay).
 - Phase 15: owner's review and exit criterion on real data.
 - Phase 13: owner's eyes-on review of step 13.8.
+- Phase 12: A0 host spike in VS Code Copilot Chat and Claude Desktop (owner), then A0b mock-up approval. See [Phase 12 detail](#phase-12-detail--mcp-apps).
 
 ## Phase 12 detail — MCP Apps
 
 Schedule view of the task tables in [mcp-apps.md](plans/mcp-apps.md) §7, §7.1 and §7.2. The design, exit criterion and risks stay there; this file only sequences the work.
 
-- Status: planned, not started (0%). Dependencies met: step 10.13 is done and `ext-v0.1.0` shipped 2026-11-03; the Phase 14 and 15 tools the increments need are done.
+- Status: in progress (11%, 4 of 36 tasks): A1-A4 done 2026-11-07 (foundations PR); A8 in progress; A0 needs the owner (a real VS Code Copilot Chat and Claude Desktop). Dependencies met: step 10.13 is done and `ext-v0.1.0` shipped 2026-11-03; the Phase 14 and 15 tools the increments need are done.
 - Each increment starts with mock-up boards the owner approves (A0b, A17b, A25b; plan §5.6).
 - Scope (updated 2026-11-07): MVP (A0-A16: U1-U3), Increment 2 (A17-A24: cost-analysis views U9-U11), Increment 3 (A25-A33: replay, price changes, statement and estimate, audit, picker). Each increment starts after the previous one's owner checks.
 - Target releases (plan §7.3): MVP in extension 0.4.0 / app 0.11.0, Increment 2 in 0.5.0 / 0.12.0, Increment 3 in 0.6.0 / 0.13.0, assuming the Phase 14/15 work ships first as 0.3.0 / 0.10.0.
@@ -151,10 +155,10 @@ gantt
     A0b MVP mock-ups and approval, medium, Sonnet + owner (0%) :a0b, after a0, 3d
 
     section Foundations
-    A1 turnSeriesSchema, low, setup6 (0%)        :a1, 2026-11-09, 1d
-    A2 injectBrand, low, setup6 (0%)             :a2, 2026-11-09, 1d
-    A3 McpIdentity deepLinkBase, low, Haiku (0%) :a3, after a2, 1d
-    A4 web package exports, low, Haiku (0%)      :a4, 2026-11-09, 1d
+    A1 turnSeriesSchema, low, setup6 (100%)      :done, a1, 2026-11-07, 1d
+    A2 injectBrand, low, setup6 (100%)           :done, a2, 2026-11-07, 1d
+    A3 McpIdentity deepLinkBase, low, Haiku (100%) :done, a3, 2026-11-07, 1d
+    A4 web package exports, low, Haiku (100%)    :done, a4, 2026-11-07, 1d
 
     section Views workspace
     A5 mcp-apps scaffold, medium, Sonnet (0%)    :crit, a5, after a0 a4, 2d
