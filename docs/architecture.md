@@ -179,9 +179,54 @@ outbound network calls.
 | `services/session-replay/replay-query-params.ts` | Phase 14 step 14.5: the replay options' zod schemas, shared by HTTP, the webview RPC and MCP so all three give the same messages |
 | `composition/create-session-replay.ts` | Phase 14 step 14.5: `createSessionReplay`, the one wiring of `SessionReplayService` used by the standalone app, its MCP server, the extension and its MCP server |
 | `mcp/replay-tools.ts` | Phase 14 step 14.5 (D7): the `replay` tool group, `replay_session` and `compare_models_for_session` (read-only, domain output schemas) |
+| `mcp/apps/` | Phase 12 ([plans/mcp-apps.md](plans/mcp-apps.md) §4.2): the MCP App views as a tool group. `registerAppViews` registers the one `ui://<server name>/views.html` resource, adds `_meta.ui.resourceUri` to the tools in `APP_VIEW_TOOL_NAMES` that the server actually registered (`captureRegisteredTools` records them, so the other groups don't change) and registers the app-only `get_turn_series`. `ViewSource` is the port for the HTML (`FileViewSource` reads the built file on every call, `InMemoryViewSource` is the test double). `injectBrand` fills the page's `aca-brand` meta with the escaped `ViewBrand` from `toViewBrand(identity, version)`. `resolveAppViews(path, onMissing)` turns a path into the `appViews` option, or into nothing when the file is missing, so both entry points start without the group instead of failing at `resources/read` |
+| `services/cost/turn-series-builder.ts` | Phase 12 A1: `buildTurnSeries` turns a session into the bounded per-turn figures (default 500 turns, at most 2000) that `get_turn_series` returns for the chart. `SessionCost` carries only `topTurns` |
 | `services/config-check` | Runs at server startup and on demand (§6.3): checks `agentDebugLog.fileLogging.enabled` and `maxRetainedSessionLogs` against constraints 8/10, producing actionable `ConfigWarning`s |
 | `domain` | The shared normalized TypeScript types (§5), plus schema validation, used by every other module and re-exported to the frontend build |
 | `api` | Thin REST layer (§8) that calls into `domain`/services and returns JSON; no business logic lives here |
+
+#### 4.1.1 MCP App views: runtime flow (Phase 12)
+
+A host that supports MCP Apps (VS Code Copilot Chat, Claude Desktop) shows
+an interactive view next to the text result of three tools. The server
+stays read-only and makes no network call (constraint 1); the view is one
+static file.
+
+1. **Tool call.** `tools/list` gives `get_session_cost`, `get_cost_rollup`
+   and `list_findings` a `_meta.ui.resourceUri` of
+   `ui://<server name>/views.html` (and the legacy flat key). The model
+   calls the tool as before. Its name, input schema, output schema and
+   `content` are unchanged, so a host without MCP Apps, and Claude Code
+   CLI, get the same text.
+2. **Resource read.** The host reads the URI with `resources/read`. The
+   server answers with the built `views.html` (MIME type
+   `text/html;profile=mcp-app`) after `injectBrand` has put the product's
+   name, version and id into the page. The resource declares no `csp`
+   domains, so the host's default applies.
+3. **Render.** The host renders the page in a sandboxed iframe and sends it
+   the host context (theme, style variables, display mode, the tool's
+   name), the tool's input and its result over postMessage JSON-RPC. The
+   page picks its view from `toolInfo.tool.name` (Claude Desktop), then
+   `toolCall.toolName` (VS Code), then the shape of `structuredContent`.
+4. **Drill-down.** A click makes the view call a tool through the host,
+   which forwards it to this server: `get_turn_series` for the chart,
+   `get_turn` for an expanded turn, `get_session_cost` from the rollup, and
+   `list_findings` for the filters. The answers go to the view and never to
+   the model, so exploring a session spends no model tokens.
+   `get_turn_series` is app-only (`_meta.ui.visibility: ["app"]`), so the
+   host keeps it out of the model's tool list. `tools/list` therefore has
+   22 tools on the standalone server and 20 on the extension's when the
+   views are served, and 21 and 19 without them.
+5. **Back to the chat.** The view reaches the chat in two ways only:
+   `sendMessage` with the fixed text `Analyse session <id>`, and (extension
+   only) a button that copies the Command Palette text
+   `AI Credits Analyzer: Open Session <id>`. Both hosts refuse a
+   `vscode://` link, so there is no deep link and no `openLink` call.
+   Logged text is never forwarded ([threat-model.md](threat-model.md) §6.1).
+
+Without `dist/mcp-apps/views.html` (the extension) or `--app-views-html`
+(the standalone server), none of this is registered: no resource, no
+`_meta.ui`, no `get_turn_series`.
 
 ### 4.2 Frontend (SPA)
 
@@ -214,6 +259,35 @@ The domain types in §5 are defined **once** and imported by both the server
 (to shape its API responses) and the frontend (to type what it renders).
 Keeping this in its own package (not duplicated ad hoc in each app) is what
 makes constraint 3 (decoupling) actually enforceable rather than aspirational.
+
+### 4.4 MCP App views package (`packages/mcp-apps`, Phase 12)
+
+Responsibilities: render the three cost views inside an MCP Apps host,
+purely from tool results. It is a Vite workspace whose build
+(`vite-plugin-singlefile`) writes one self-contained `dist/views.html`, with
+scripts and CSS inline and no external resource, font or network access. It
+is never published; the server and the extension serve the built file.
+
+| Module | Responsibility |
+|---|---|
+| `host/` | `AppHostPort`, the view's only gateway to the host (`callTool`, `openLink`, `sendMessage`, `requestDisplayMode`, `onHostContext`, `onToolInput`, `onToolResult`). `ExtAppsHostPort` wraps ext-apps' `App`; `FakeAppHostPort` records calls for tests. `ClipboardPort` is the same idea for "copy this text"; a host that blocks the clipboard gets none, and the button is hidden |
+| `router/select-view.ts` | The tool name, else the result's shape, to a view id. A named tool without a view gets the neutral state and is not guessed from its shape |
+| `view-models/` | Pure functions from a domain type to display text: `toSessionCostViewModel`, `toCostRollupViewModel`, `toFindingsViewModel`, `toTurnDetailViewModel`. They own the display rules: a `null` measure reads "Unknown" and never 0 (constraint 6), AI Credits round to 2 decimals, partial coverage adds a note, `estimated` adds an "estimate" tag |
+| `views/` | `SessionCostView` (U1), `CostRollupView` (U2, drilling into U1 in place) and `FindingsView` (U3), inside the branded `ViewShell`. A view gets the port, the brand and the tool result as props |
+| `brand/` | `ViewBrand` and `readBrand`, which reads the `aca-brand` meta the server filled |
+| `theme/` | `brand.css` (fixed brand tokens), `theme-mcp-host.css` (the Industry tokens pointed at the host's style variables, with fallbacks), `views.css`, and `bindHostTheme`, which applies the host's theme, variables and fonts as they arrive |
+
+**Dependency rules.** `mcp-apps` depends on `domain` (types) and on
+`web`'s presentational exports only: `theme.css`, `ui/Blueprint`,
+`ui/StatTile`, `ui/Tag`, `ui/SegmentedControl`, `lib/format-ai-credits` and
+`lib/contrast`, each listed in `web`'s `exports`, which keeps them free of
+any data source (constraint 3). It never imports `server`. The server in
+turn never imports `mcp-apps`: it reads the built HTML through `ViewSource`
+(DIP). The extension's build copies the file. The only link between a view
+and the server is the MCP tool contract, and the view checks the shape of a
+result itself instead of importing the server's zod schemas, so zod stays
+out of the bundle. The build order is `domain`, `web`, `mcp-apps`, then
+`server` and `vscode-extension` (`scripts/build-order.test.mjs`).
 
 ## 5. Domain model
 
@@ -2314,7 +2388,8 @@ the extension. `getSessionReplay` and `compareSessionReplay` (Phase 14) are
 the first with result schemas (`apiMethodResultSchemas`), which the web
 client parses answers with. The MCP servers expose the same services: the
 standalone stdio server 21 tools and 6 prompts, the extension's 19 tools
-and 4 prompts (no `billing` group; §5). Phase 15's `estimate_cost` (billing
+and 4 prompts (no `billing` group; §5), plus the app-only `get_turn_series`
+in each when the views are served (§4.1.1). Phase 15's `estimate_cost` (billing
 group, standalone only) takes an
 optional `model` (Phase 14, D7): the project's sessions in the window (at
 most 200) are replayed on it and their simulated costs feed the unchanged
@@ -2369,6 +2444,7 @@ agent-cost-analyzer/
         platform/
           vscode-paths/
           pi-agent-paths/
+        mcp/apps/      # Phase 12: registerAppViews, ViewSource, injectBrand (§4.1.1)
         http/          # cross-cutting Express middleware (loopback Host guard, §11.2)
         api/
       fixtures/        # bundled Learn-mode scenario files + jsonl/mitmproxy/pi-agent test fixtures
@@ -2380,6 +2456,8 @@ agent-cost-analyzer/
         charts/
         lib/associative/ # Phase 9.11 generic associative selection engine (no React)
         lib/insights/    # Phase 9.11 insights model, measures, narrative
+    mcp-apps/         # Phase 12: the MCP App views, built to one dist/views.html (§4.4)
+      src/            # host/ (AppHostPort), router/, view-models/, views/, brand/, theme/
     pi-system-prompt-logger/ # vendored Pi coding-agent extension: captures the
                               # assembled system prompt to a JSONL sidecar log,
                               # optionally consumed by server/pi-agent (§6.2.5)
@@ -2387,7 +2465,9 @@ agent-cost-analyzer/
 ```
 
 `domain` has no dependency on `server` or `web`; both of those depend on
-`domain`. This is the enforced version of constraint 3.
+`domain`. This is the enforced version of constraint 3. `mcp-apps` depends
+on `domain` and on `web`'s presentational exports only, never on `server`
+(§4.4).
 
 ## 11. Non-functional concerns
 
@@ -2465,6 +2545,11 @@ agent-cost-analyzer/
 - Only the latest stable, non-vulnerable version of each dependency may be
   added or upgraded to (see §11.6); a dependency with a known unpatched
   vulnerability is not introduced regardless of how minor its role is.
+- The MCP App views (Phase 12) add no network access and no write path:
+  the page is one static file that declares no `csp` domains, so the
+  host's default CSP (no network, no frames, no external resource) holds,
+  and a view can only call this server's read-only tools through the host.
+  See [threat-model.md](threat-model.md) §6.1.
 
 ### 11.3 Graceful degradation
 
@@ -2551,6 +2636,31 @@ refactored — red-green-refactor, not tests bolted on afterward.
   (a fixture session replayed on two models, then Compare models) in
   `web-e2e` (`e2e/specs/r1-replay-on-two-models.spec.ts`) and
   `extension-ui` (`test/ui/specs/r1-replay.e2e.ts`).
+
+- The MCP App views (Phase 12, `packages/mcp-apps`) have six kinds of
+  test. View-model unit tests and fast-check properties
+  (`view-models.property.test.ts`) pin the display rules: a `null` measure
+  always reads "Unknown", a known one never does, AI Credits keep two
+  decimals when the text is formatted again, and the coverage note and the
+  "estimate" tag appear exactly when they should. Component tests render
+  each view with Testing Library over `FakeAppHostPort` and a fake
+  clipboard, click the drill-downs, filters and buttons, and assert the
+  calls the port recorded, including that no `sendMessage`, `updateModelContext`
+  or `openLink` call carries logged text. The contrast tests (`test/theme/`)
+  read the real CSS and check text at 4.5:1 and marks at 3:1 against the
+  fallbacks and the host variable sets recorded in the A0 spike (VS Code
+  Light Modern, Dark Modern and Dark High Contrast, and Claude Desktop). The
+  bundle test (`test/bundle-size.test.ts`) runs the production build and
+  asserts at most 900 KB, exactly one brand placeholder, no external
+  script, stylesheet or font, and a clean load in jsdom. On the server,
+  in-memory MCP client tests (`register-app-views.test.ts`) assert the
+  `tools/list` metadata, the resource's MIME type and injected brand,
+  unchanged tool `content`, and 22 and 20 tools with the views against 21
+  and 19 without; `injectBrand`, `ViewSource` and `resolveAppViews` have
+  unit tests. Stdio tests start the real entry points with and without the
+  file (`stdio.test.ts`, `mcp-stdio-bundle.test.ts`), and `packaging.test.ts`
+  asserts `dist/mcp-apps/views.html` is in the `.vsix`. No test proves real
+  rendering in each host; that is the owner's manual check (A16).
 
 ### 11.5 Code quality: SOLID
 

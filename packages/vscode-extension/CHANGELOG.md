@@ -15,7 +15,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   tools `get_session_cost`, `get_cost_rollup` and `list_findings` now show a
   branded, interactive view next to the text result (per-turn chart, top
   turns, spend by day, model and provider with a drill-down into a session,
-  filterable findings).
+  filterable findings). A session's view has a **Copy "open in panel"
+  command** button, because VS Code doesn't let a chat view open a link; paste
+  the copied text in the Command Palette. The views ship in the extension
+  (`dist/mcp-apps/views.html`; without that file the server runs without
+  them) and add one app-only tool, `get_turn_series`, to the server's 19. The
+  tools keep their names, schemas and text, so Claude Code's output is
+  unchanged.
 - **Cost by repository.** The Sessions view can be grouped by repository
   (the new toggle in its title bar), each group with its AI Credits. The
   status bar shows today's AI Credits for the open folder's repository,

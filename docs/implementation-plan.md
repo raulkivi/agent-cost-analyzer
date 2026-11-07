@@ -12,7 +12,7 @@ Phase 12 adds branded, interactive MCP Apps views for both products.
 **Overall status (2026-11-06):** Phases 0-10 have their code and docs
 merged to `main`. The extension's 0.1.0 is released (tag `ext-v0.1.0`,
 2026-11-03). Open: Phase 10's owner manual checks and decisions (see its
-section), Phase 11 (not started), Phase 12 (in progress: A0, A0b, A1–A11 and A13 done; the plan
+section), Phase 11 (not started), Phase 12 (in progress: the MVP's code and docs, A0–A11, A13 and A15, are done, A12 is dropped, and A14's review and A16's owner checks remain; the plan
 covers the Phase 14 and 15 tools since 2026-11-07), Phase 13 (in
 progress: steps 13.0-13.10 and 13.5a merged, the owner's eyes-on review
 of 13.8 open), Phase 14
@@ -1385,10 +1385,16 @@ unchanged.
 - Branding: the host's theme for structure (`theme-mcp-host.css`), the
   brand for identity and data (`brand.css`: the app icon, product name,
   corner-mark cards, kicker, accent ramp), light and dark, contrast-tested.
-- Extension: a `vscode://raulkivi.ai-credits-analyzer/session?id=…` URI
-  handler that opens a session from a view. The views ship in the `.vsix`.
-- architecture.md, threat-model.md §6, the User Guide and the extension
-  guide updated.
+- Extension: the views ship in the `.vsix` (`dist/mcp-apps/views.html`).
+  The spike showed both hosts refuse `vscode://` links, so there is no URI
+  handler (A12 is dropped); U1's button copies the Command Palette text
+  `AI Credits Analyzer: Open Session <id>` instead.
+- Packaging: `mcp-apps` builds before the server and the extension;
+  `scripts/mcp-server.sh` passes `--app-views-html` when the build exists,
+  and without the file both servers start with no views.
+- architecture.md (§4.1.1, §4.4, §11.2, §11.4), threat-model.md §6.1, the
+  User Guide ("Interactive views in the chat"), the extension guide and
+  both CHANGELOGs updated (A15).
 - Increment 2 (after the MVP): views for the Phase 15 cost-analysis
   tools: cost over time for a repository or project (`get_repository_cost`,
   `get_project_cost`), `compare_costs` and `explain_cost_change`, in both
@@ -1416,13 +1422,18 @@ analysis, price change, billing tools in both servers). All are met.
 Increment 2 in 0.5.0 and 0.12.0, Increment 3 in 0.6.0 and 0.13.0. This
 assumes the Phase 14/15 work ships first as 0.3.0 and 0.10.0.
 
-**Status (2026-11-07)**: in progress. A1–A4 (turn series, brand
+**Status (2026-11-07)**: in progress. The MVP (U1–U3) is built and
+documented: A0–A11, A13 and A15 are done, A12 is dropped, and A14
+(accessibility and security review) and A16 (the owner's checks in both
+hosts) remain before the MVP's exit criterion is met. Increments 2 and 3
+(A17–A33) have not started. A1–A4 (turn series, brand
 injection and identity, web package exports) and A8 (the `registerAppViews`
 server group, `get_turn_series`, `_meta.ui` on three tools, ext-apps 1.7.5)
 done; A0 host spike done by the owner (both hosts refuse `vscode://`
 links, so A12 is dropped and U1 copies the command text); A0b mock-ups
 approved; A5 `packages/mcp-apps` scaffold done (single-file Vite build,
-`AppHostPort`, view router; bundle budget 900 KB by owner decision); A6 theme layering (host-variable mapping, brand ramps, contrast tests) and A7 pure view models for U1–U3 done; A9 U1 `SessionCostView` (turn drill-down, copy-command button, shared branded shell) and A11 U3 `FindingsView` (filters re-call `list_findings`) done; A10 U2 `CostRollupView` (in-place drill-down into U1) and A13 packaging (views in the `.vsix` and served by `scripts/mcp-server.sh`) done. Plan
+`AppHostPort`, view router; bundle budget 900 KB by owner decision); A6 theme layering (host-variable mapping, brand ramps, contrast tests) and A7 pure view models for U1–U3 done; A9 U1 `SessionCostView` (turn drill-down, copy-command button, shared branded shell) and A11 U3 `FindingsView` (filters re-call `list_findings`) done; A10 U2 `CostRollupView` (in-place drill-down into U1) and A13 packaging (views in the `.vsix` and served by `scripts/mcp-server.sh`) done. A15 docs
+(architecture, threat model, both guides, both CHANGELOGs) done. Plan
 updated to cover the Phase 14 and 15 tools (Increments 2 and 3).
 
 ## Phase 13 — Vendor-aware Learn simulation (VS Code first)
@@ -1624,3 +1635,7 @@ flowchart LR
     P13 --&gt; P15
 ```
 -->
+
+Phase 12's MVP (the three views) needs only Phases 9.12 and 10. The edges
+from Phases 14 and 15 are for its Increments 2 and 3, whose tools those
+phases added.
