@@ -1,0 +1,1547 @@
+{
+  "capturedAt": "2026-11-07T15:54:16.450Z",
+  "hostInfo": {
+    "name": "Claude",
+    "version": "1.0.0"
+  },
+  "hostCapabilities": {
+    "openLinks": {},
+    "downloadFile": {},
+    "serverTools": {
+      "listChanged": true
+    },
+    "serverResources": {
+      "listChanged": true
+    },
+    "logging": {},
+    "sandbox": {},
+    "updateModelContext": {
+      "text": {},
+      "image": {}
+    },
+    "message": {
+      "text": {}
+    }
+  },
+  "theme": {
+    "fromHostContext": "light",
+    "appliedToDocument": "light"
+  },
+  "styleVariables": {
+    "count": 76,
+    "defined": {
+      "--border-radius-full": "9999px",
+      "--border-radius-lg": "10px",
+      "--border-radius-md": "8px",
+      "--border-radius-sm": "6px",
+      "--border-radius-xl": "12px",
+      "--border-radius-xs": "4px",
+      "--border-width-regular": "0.5px",
+      "--color-background-danger": "light-dark(rgba(247, 236, 236, 1), rgba(96, 42, 40, 1))",
+      "--color-background-disabled": "light-dark(rgba(255, 255, 255, 0.5), rgba(48, 48, 46, 0.5))",
+      "--color-background-ghost": "light-dark(rgba(255, 255, 255, 0), rgba(48, 48, 46, 0))",
+      "--color-background-info": "light-dark(rgba(214, 228, 246, 1), rgba(37, 62, 95, 1))",
+      "--color-background-inverse": "light-dark(rgba(20, 20, 19, 1), rgba(250, 249, 245, 1))",
+      "--color-background-primary": "light-dark(rgba(255, 255, 255, 1), rgba(48, 48, 46, 1))",
+      "--color-background-secondary": "light-dark(rgba(245, 244, 237, 1), rgba(38, 38, 36, 1))",
+      "--color-background-success": "light-dark(rgba(233, 241, 220, 1), rgba(27, 70, 20, 1))",
+      "--color-background-tertiary": "light-dark(rgba(250, 249, 245, 1), rgba(20, 20, 19, 1))",
+      "--color-background-warning": "light-dark(rgba(246, 238, 223, 1), rgba(72, 58, 15, 1))",
+      "--color-border-danger": "light-dark(rgba(167, 61, 57, 1), rgba(205, 92, 88, 1))",
+      "--color-border-disabled": "light-dark(rgba(31, 30, 29, 0.1), rgba(222, 220, 209, 0.1))",
+      "--color-border-ghost": "light-dark(rgba(31, 30, 29, 0), rgba(222, 220, 209, 0))",
+      "--color-border-info": "light-dark(rgba(70, 130, 213, 1), rgba(70, 130, 213, 1))",
+      "--color-border-inverse": "light-dark(rgba(255, 255, 255, 0.3), rgba(20, 20, 19, 0.15))",
+      "--color-border-primary": "light-dark(rgba(31, 30, 29, 0.4), rgba(222, 220, 209, 0.4))",
+      "--color-border-secondary": "light-dark(rgba(31, 30, 29, 0.3), rgba(222, 220, 209, 0.3))",
+      "--color-border-success": "light-dark(rgba(67, 116, 38, 1), rgba(89, 145, 48, 1))",
+      "--color-border-tertiary": "light-dark(rgba(31, 30, 29, 0.15), rgba(222, 220, 209, 0.15))",
+      "--color-border-warning": "light-dark(rgba(128, 92, 31, 1), rgba(168, 120, 41, 1))",
+      "--color-ring-danger": "light-dark(rgba(167, 61, 57, 0.5), rgba(205, 92, 88, 0.5))",
+      "--color-ring-info": "light-dark(rgba(50, 102, 173, 0.5), rgba(128, 170, 221, 0.5))",
+      "--color-ring-inverse": "light-dark(rgba(255, 255, 255, 0.7), rgba(20, 20, 19, 0.7))",
+      "--color-ring-primary": "light-dark(rgba(20, 20, 19, 0.7), rgba(250, 249, 245, 0.7))",
+      "--color-ring-secondary": "light-dark(rgba(61, 61, 58, 0.7), rgba(194, 192, 182, 0.7))",
+      "--color-ring-success": "light-dark(rgba(67, 116, 38, 0.5), rgba(89, 145, 48, 0.5))",
+      "--color-ring-warning": "light-dark(rgba(128, 92, 31, 0.5), rgba(168, 120, 41, 0.5))",
+      "--color-text-danger": "light-dark(rgba(127, 44, 40, 1), rgba(238, 136, 132, 1))",
+      "--color-text-disabled": "light-dark(rgba(20, 20, 19, 0.5), rgba(250, 249, 245, 0.5))",
+      "--color-text-ghost": "light-dark(rgba(115, 114, 108, 0.5), rgba(156, 154, 146, 0.5))",
+      "--color-text-info": "light-dark(rgba(50, 102, 173, 1), rgba(128, 170, 221, 1))",
+      "--color-text-inverse": "light-dark(rgba(255, 255, 255, 1), rgba(20, 20, 19, 1))",
+      "--color-text-primary": "light-dark(rgba(20, 20, 19, 1), rgba(250, 249, 245, 1))",
+      "--color-text-secondary": "light-dark(rgba(61, 61, 58, 1), rgba(194, 192, 182, 1))",
+      "--color-text-success": "light-dark(rgba(38, 91, 25, 1), rgba(122, 185, 72, 1))",
+      "--color-text-tertiary": "light-dark(rgba(115, 114, 108, 1), rgba(156, 154, 146, 1))",
+      "--color-text-warning": "light-dark(rgba(90, 72, 21, 1), rgba(209, 160, 65, 1))",
+      "--font-heading-2xl-line-height": "1.1",
+      "--font-heading-2xl-size": "26.25px",
+      "--font-heading-3xl-line-height": "1",
+      "--font-heading-3xl-size": "33.75px",
+      "--font-heading-lg-line-height": "1.25",
+      "--font-heading-lg-size": "18.75px",
+      "--font-heading-md-line-height": "1.4",
+      "--font-heading-md-size": "15px",
+      "--font-heading-sm-line-height": "1.4",
+      "--font-heading-sm-size": "14px",
+      "--font-heading-xl-line-height": "1.25",
+      "--font-heading-xl-size": "22.5px",
+      "--font-heading-xs-line-height": "1.4",
+      "--font-heading-xs-size": "12px",
+      "--font-mono": "\"anthropic-mono\", \"SF Mono\", ui-monospace, Menlo, Consolas, monospace",
+      "--font-sans": "ui-sans-serif, system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif",
+      "--font-text-lg-line-height": "1.25",
+      "--font-text-lg-size": "18.75px",
+      "--font-text-md-line-height": "1.4",
+      "--font-text-md-size": "15px",
+      "--font-text-sm-line-height": "1.4",
+      "--font-text-sm-size": "14px",
+      "--font-text-xs-line-height": "1.4",
+      "--font-text-xs-size": "12px",
+      "--font-weight-bold": "700",
+      "--font-weight-medium": "500",
+      "--font-weight-normal": "400",
+      "--font-weight-semibold": "600",
+      "--shadow-hairline": "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
+      "--shadow-lg": "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1)",
+      "--shadow-md": "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1)",
+      "--shadow-sm": "0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1)"
+    },
+    "undefinedNames": []
+  },
+  "hostFonts": {
+    "present": true,
+    "css": "\n@font-face {\n  font-family: \"anthropic-sans\";\n  src: url(\"https://assets.claude.ai/claude-ai/v2/assets/v1/cb48c413e-yAna2Le1.woff2\") format(\"woff2\"), url(\"https://assets.claude.ai/Fonts/AnthropicSans-Text-Regular-Static.otf\") format(\"opentype\");\n  font-weight: 400;\n  font-style: normal;\n  font-display: swap;\n  font-feature-settings: \"dlig\" 0, \"ss01\" 1, \"ss02\" 1;\n  unicode-range: U+0-5B, U+5D-A0, U+A2-A3, U+A5-316, U+318-DFFF, U+E140-10FFFF;\n}\n@font-face {\n  font-family: \"anthropic-sans\";\n  src: url(\"https://assets.claude.ai/claude-ai/v2/assets/v1/cc27851ad-DDVos-BJ.woff2\") format(\"woff2\"), url(\"https://assets.claude.ai/Fonts/AnthropicSans-Text-Regular-Static.otf\") format(\"opentype\");\n  font-weight: 400;\n  font-style: normal;\n  font-display: swap;\n  font-feature-settings: \"dlig\" 0;\n  unicode-range: U+5C, U+A1, U+A4, U+E000-E13F;\n}\n@font-face {\n  font-family: \"anthropic-sans\";\n  src: url(\"https://assets.claude.ai/Fonts/AnthropicSans-Text-RegularItalic-Static.otf\") format(\"opentype\");\n  font-weight: 400;\n  font-style: italic;\n  font-display: swap;\n  font-feature-settings: \"dlig\" 0;\n}\n@font-face {\n  font-family: \"anthropic-sans\";\n  src: url(\"https://assets.claude.ai/claude-ai/v2/assets/v1/cb48c413e-yAna2Le1.woff2\") format(\"woff2\"), url(\"https://assets.claude.ai/Fonts/AnthropicSans-Text-Medium-Static.otf\") format(\"opentype\");\n  font-weight: 500;\n  font-style: normal;\n  font-display: swap;\n  font-feature-settings: \"dlig\" 0, \"ss01\" 1, \"ss02\" 1;\n  unicode-range: U+0-5B, U+5D-A0, U+A2-A3, U+A5-316, U+318-DFFF, U+E140-10FFFF;\n}\n@font-face {\n  font-family: \"anthropic-sans\";\n  src: url(\"https://assets.claude.ai/claude-ai/v2/assets/v1/cc27851ad-DDVos-BJ.woff2\") format(\"woff2\"), url(\"https://assets.claude.ai/Fonts/AnthropicSans-Text-Medium-Static.otf\") format(\"opentype\");\n  font-weight: 500;\n  font-style: normal;\n  font-display: swap;\n  font-feature-settings: \"dlig\" 0;\n  unicode-range: U+5C, U+A1, U+A4, U+E000-E13F;\n}\n@font-face {\n  font-family: \"anthropic-sans\";\n  src: url(\"https://assets.claude.ai/Fonts/AnthropicSans-Text-MediumItalic-Static.otf\") format(\"opentype\");\n  font-weight: 500;\n  font-style: italic;\n  font-display: swap;\n  font-feature-settings: \"dlig\" 0;\n}\n@font-face {\n  font-family: \"anthropic-sans\";\n  src: url(\"https://assets.claude.ai/claude-ai/v2/assets/v1/cb48c413e-yAna2Le1.woff2\") format(\"woff2\"), url(\"https://assets.claude.ai/Fonts/AnthropicSans-Text-Semibold-Static.otf\") format(\"opentype\");\n  font-weight: 600;\n  font-style: normal;\n  font-display: swap;\n  font-feature-settings: \"dlig\" 0, \"ss01\" 1, \"ss02\" 1;\n  unicode-range: U+0-5B, U+5D-A0, U+A2-A3, U+A5-316, U+318-DFFF, U+E140-10FFFF;\n}\n@font-face {\n  font-family: \"anthropic-sans\";\n  src: url(\"https://assets.claude.ai/claude-ai/v2/assets/v1/cc27851ad-DDVos-BJ.woff2\") format(\"woff2\"), url(\"https://assets.claude.ai/Fonts/AnthropicSans-Text-Semibold-Static.otf\") format(\"opentype\");\n  font-weight: 600;\n  font-style: normal;\n  font-display: swap;\n  font-feature-settings: \"dlig\" 0;\n  unicode-range: U+5C, U+A1, U+A4, U+E000-E13F;\n}\n@font-face {\n  font-family: \"anthropic-sans\";\n  src: url(\"https://assets.claude.ai/Fonts/AnthropicSans-Text-SemiboldItalic-Static.otf\") format(\"opentype\");\n  font-weight: 600;\n  font-style: italic;\n  font-display: swap;\n  font-feature-settings: \"dlig\" 0;\n}\n@font-face {\n  font-family: \"anthropic-sans\";\n  src: url(\"https://assets.claude.ai/claude-ai/v2/assets/v1/cb48c413e-yAna2Le1.woff2\") format(\"woff2\"), url(\"https://assets.claude.ai/Fonts/AnthropicSans-Text-Bold-Static.otf\") format(\"opentype\");\n  font-weight: 700;\n  font-style: normal;\n  font-display: swap;\n  font-feature-settings: \"dlig\" 0, \"ss01\" 1, \"ss02\" 1;\n  unicode-range: U+0-5B, U+5D-A0, U+A2-A3, U+A5-316, U+318-DFFF, U+E140-10FFFF;\n}\n@font-face {\n  font-family: \"anthropic-sans\";\n  src: url(\"https://assets.claude.ai/claude-ai/v2/assets/v1/cc27851ad-DDVos-BJ.woff2\") format(\"woff2\"), url(\"https://assets.claude.ai/Fonts/AnthropicSans-Text-Bold-Static.otf\") format(\"opentype\");\n  font-weight: 700;\n  font-style: normal;\n  font-display: swap;\n  font-feature-settings: \"dlig\" 0;\n  unicode-range: U+5C, U+A1, U+A4, U+E000-E13F;\n}\n@font-face {\n  font-family: \"anthropic-sans\";\n  src: url(\"https://assets.claude.ai/Fonts/AnthropicSans-Text-BoldItalic-Static.otf\") format(\"opentype\");\n  font-weight: 700;\n  font-style: italic;\n  font-display: swap;\n  font-feature-settings: \"dlig\" 0;\n}",
+    "length": 4383
+  },
+  "toolInfo": {
+    "present": true,
+    "id": "toolu_01X6MQ4GjCnsXwN9An58jANG",
+    "toolName": "get_session_cost",
+    "content": {
+      "id": "toolu_01X6MQ4GjCnsXwN9An58jANG",
+      "tool": {
+        "name": "get_session_cost",
+        "title": "Get session cost",
+        "description": "Explains what one session cost and why: token totals (uncached input, cache write, cache read, reasoning, output) and AI Credits, each with turn coverage; cache hit ratio; spend per model; the most expensive turns; cost-relevant events (compaction, cache expiry, model switch, ...); and context overhead (system-prompt parts, tools defined but never used); the session's repository and project. null means unknown, never zero — see unavailableReasons. Cost figures carry their basis: billed (what GitHub Copilot billed, AI Credits), reported (what the agent logged itself, USD) and priced (tokens × the price version in force on the turn's channel at the turn's time; see get_price_book, and priceVersionIds). The preferred figure is billed, else reported, else priced. A priced figure with apiEquivalent: true is what the same use costs on the API, though a flat-fee plan may have covered it. An unknown figure is {known:false, reason}, never 0; totals give knownTurns of turns per basis. Currencies stay apart; `usd` converts only at 1 AI Credit = $0.01.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "sessionId": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Session id from list_sessions."
+            },
+            "provider": {
+              "description": "Log provider id, e.g. \"claude-code\", \"vscode\", \"pi-agent\", \"mitmproxy\" (see list_log_providers). Defaults to the provider active in the web app.",
+              "type": "string"
+            },
+            "topTurns": {
+              "description": "How many of the most expensive turns to return (default 5).",
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50
+            }
+          },
+          "required": [
+            "sessionId"
+          ],
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "sessionId": {
+              "type": "string"
+            },
+            "providerId": {
+              "type": "string"
+            },
+            "title": {
+              "type": "string"
+            },
+            "model": {
+              "type": "string"
+            },
+            "startedAt": {
+              "type": "string"
+            },
+            "turnCount": {
+              "type": "number"
+            },
+            "repositoryKey": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "unattributedReason": {
+              "type": "string"
+            },
+            "projectId": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "totals": {
+              "type": "object",
+              "properties": {
+                "uncachedInput": {
+                  "type": "object",
+                  "properties": {
+                    "value": {
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "knownTurns": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "turns": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "estimated": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "value",
+                    "knownTurns",
+                    "turns",
+                    "estimated"
+                  ],
+                  "additionalProperties": false
+                },
+                "cacheWrite": {
+                  "type": "object",
+                  "properties": {
+                    "value": {
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "knownTurns": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "turns": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "estimated": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "value",
+                    "knownTurns",
+                    "turns",
+                    "estimated"
+                  ],
+                  "additionalProperties": false
+                },
+                "cacheRead": {
+                  "type": "object",
+                  "properties": {
+                    "value": {
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "knownTurns": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "turns": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "estimated": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "value",
+                    "knownTurns",
+                    "turns",
+                    "estimated"
+                  ],
+                  "additionalProperties": false
+                },
+                "inputTokens": {
+                  "type": "object",
+                  "properties": {
+                    "value": {
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "knownTurns": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "turns": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "estimated": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "value",
+                    "knownTurns",
+                    "turns",
+                    "estimated"
+                  ],
+                  "additionalProperties": false
+                },
+                "reasoning": {
+                  "type": "object",
+                  "properties": {
+                    "value": {
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "knownTurns": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "turns": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "estimated": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "value",
+                    "knownTurns",
+                    "turns",
+                    "estimated"
+                  ],
+                  "additionalProperties": false
+                },
+                "output": {
+                  "type": "object",
+                  "properties": {
+                    "value": {
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "knownTurns": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "turns": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "estimated": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "value",
+                    "knownTurns",
+                    "turns",
+                    "estimated"
+                  ],
+                  "additionalProperties": false
+                },
+                "aiCredits": {
+                  "type": "object",
+                  "properties": {
+                    "value": {
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "knownTurns": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "turns": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "estimated": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "value",
+                    "knownTurns",
+                    "turns",
+                    "estimated"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "uncachedInput",
+                "cacheWrite",
+                "cacheRead",
+                "inputTokens",
+                "reasoning",
+                "output",
+                "aiCredits"
+              ],
+              "additionalProperties": false
+            },
+            "cost": {
+              "type": "object",
+              "properties": {
+                "preferred": {
+                  "type": "object",
+                  "properties": {
+                    "turns": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "knownTurns": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "amounts": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "currency": {
+                            "type": "string",
+                            "enum": [
+                              "AI_CREDITS",
+                              "USD"
+                            ]
+                          },
+                          "amount": {
+                            "type": "number",
+                            "minimum": 0
+                          },
+                          "knownTurns": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 9007199254740991
+                          }
+                        },
+                        "required": [
+                          "currency",
+                          "amount",
+                          "knownTurns"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "usd": {
+                      "anyOf": [
+                        {
+                          "type": "number",
+                          "minimum": 0
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "estimated": {
+                      "type": "boolean"
+                    },
+                    "apiEquivalentTurns": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    }
+                  },
+                  "required": [
+                    "turns",
+                    "knownTurns",
+                    "amounts",
+                    "usd",
+                    "estimated",
+                    "apiEquivalentTurns"
+                  ],
+                  "additionalProperties": false
+                },
+                "billed": {
+                  "type": "object",
+                  "properties": {
+                    "turns": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "knownTurns": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "amounts": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "currency": {
+                            "type": "string",
+                            "enum": [
+                              "AI_CREDITS",
+                              "USD"
+                            ]
+                          },
+                          "amount": {
+                            "type": "number",
+                            "minimum": 0
+                          },
+                          "knownTurns": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 9007199254740991
+                          }
+                        },
+                        "required": [
+                          "currency",
+                          "amount",
+                          "knownTurns"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "usd": {
+                      "anyOf": [
+                        {
+                          "type": "number",
+                          "minimum": 0
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "estimated": {
+                      "type": "boolean"
+                    },
+                    "apiEquivalentTurns": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    }
+                  },
+                  "required": [
+                    "turns",
+                    "knownTurns",
+                    "amounts",
+                    "usd",
+                    "estimated",
+                    "apiEquivalentTurns"
+                  ],
+                  "additionalProperties": false
+                },
+                "reported": {
+                  "type": "object",
+                  "properties": {
+                    "turns": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "knownTurns": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "amounts": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "currency": {
+                            "type": "string",
+                            "enum": [
+                              "AI_CREDITS",
+                              "USD"
+                            ]
+                          },
+                          "amount": {
+                            "type": "number",
+                            "minimum": 0
+                          },
+                          "knownTurns": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 9007199254740991
+                          }
+                        },
+                        "required": [
+                          "currency",
+                          "amount",
+                          "knownTurns"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "usd": {
+                      "anyOf": [
+                        {
+                          "type": "number",
+                          "minimum": 0
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "estimated": {
+                      "type": "boolean"
+                    },
+                    "apiEquivalentTurns": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    }
+                  },
+                  "required": [
+                    "turns",
+                    "knownTurns",
+                    "amounts",
+                    "usd",
+                    "estimated",
+                    "apiEquivalentTurns"
+                  ],
+                  "additionalProperties": false
+                },
+                "priced": {
+                  "type": "object",
+                  "properties": {
+                    "turns": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "knownTurns": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "amounts": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "currency": {
+                            "type": "string",
+                            "enum": [
+                              "AI_CREDITS",
+                              "USD"
+                            ]
+                          },
+                          "amount": {
+                            "type": "number",
+                            "minimum": 0
+                          },
+                          "knownTurns": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 9007199254740991
+                          }
+                        },
+                        "required": [
+                          "currency",
+                          "amount",
+                          "knownTurns"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "usd": {
+                      "anyOf": [
+                        {
+                          "type": "number",
+                          "minimum": 0
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "estimated": {
+                      "type": "boolean"
+                    },
+                    "apiEquivalentTurns": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    }
+                  },
+                  "required": [
+                    "turns",
+                    "knownTurns",
+                    "amounts",
+                    "usd",
+                    "estimated",
+                    "apiEquivalentTurns"
+                  ],
+                  "additionalProperties": false
+                },
+                "preferredBasisTurns": {
+                  "type": "object",
+                  "properties": {
+                    "billed": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "reported": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "priced": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "unknown": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    }
+                  },
+                  "required": [
+                    "billed",
+                    "reported",
+                    "priced",
+                    "unknown"
+                  ],
+                  "additionalProperties": false
+                },
+                "priceVersionIds": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "conversion": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "preferred",
+                "billed",
+                "reported",
+                "priced",
+                "preferredBasisTurns",
+                "priceVersionIds",
+                "conversion"
+              ],
+              "additionalProperties": false
+            },
+            "cacheHitRatio": {
+              "anyOf": [
+                {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "byModel": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "turns": {
+                    "type": "number"
+                  },
+                  "inputTokens": {
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  },
+                  "output": {
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  },
+                  "aiCredits": {
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  },
+                  "cost": {
+                    "type": "object",
+                    "properties": {
+                      "turns": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991
+                      },
+                      "knownTurns": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991
+                      },
+                      "amounts": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "currency": {
+                              "type": "string",
+                              "enum": [
+                                "AI_CREDITS",
+                                "USD"
+                              ]
+                            },
+                            "amount": {
+                              "type": "number",
+                              "minimum": 0
+                            },
+                            "knownTurns": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 9007199254740991
+                            }
+                          },
+                          "required": [
+                            "currency",
+                            "amount",
+                            "knownTurns"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "usd": {
+                        "anyOf": [
+                          {
+                            "type": "number",
+                            "minimum": 0
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "estimated": {
+                        "type": "boolean"
+                      },
+                      "apiEquivalentTurns": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991
+                      }
+                    },
+                    "required": [
+                      "turns",
+                      "knownTurns",
+                      "amounts",
+                      "usd",
+                      "estimated",
+                      "apiEquivalentTurns"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "model": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "turns",
+                  "inputTokens",
+                  "output",
+                  "aiCredits",
+                  "cost",
+                  "model"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "rankedBy": {
+              "type": "string",
+              "enum": [
+                "aiCredits",
+                "inputTokens"
+              ]
+            },
+            "topTurns": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "turnIndex": {
+                    "type": "number"
+                  },
+                  "model": {
+                    "type": "string"
+                  },
+                  "triggeredEvent": {
+                    "type": "string",
+                    "enum": [
+                      "model-switch",
+                      "tool-change",
+                      "compaction",
+                      "clear",
+                      "rewind",
+                      "fork",
+                      "cache-expiry",
+                      "instructions-change",
+                      "image-change",
+                      "reasoning-toggle"
+                    ]
+                  },
+                  "inputTokens": {
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  },
+                  "output": {
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  },
+                  "aiCredits": {
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  },
+                  "toolCalls": {
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  },
+                  "userMessage": {
+                    "type": "string"
+                  },
+                  "cost": {
+                    "type": "object",
+                    "properties": {
+                      "billed": {
+                        "oneOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "known": {
+                                "type": "boolean",
+                                "const": true
+                              },
+                              "amount": {
+                                "type": "number",
+                                "minimum": 0
+                              },
+                              "currency": {
+                                "type": "string",
+                                "enum": [
+                                  "AI_CREDITS",
+                                  "USD"
+                                ]
+                              },
+                              "basis": {
+                                "type": "string",
+                                "enum": [
+                                  "billed",
+                                  "reported",
+                                  "priced"
+                                ]
+                              },
+                              "priceVersionIds": {
+                                "minItems": 1,
+                                "type": "array",
+                                "items": {
+                                  "type": "string",
+                                  "minLength": 1
+                                }
+                              },
+                              "estimated": {
+                                "type": "boolean"
+                              },
+                              "apiEquivalent": {
+                                "type": "boolean"
+                              },
+                              "notes": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string",
+                                  "minLength": 1
+                                }
+                              },
+                              "byTokenType": {
+                                "type": "object",
+                                "properties": {
+                                  "uncachedInput": {
+                                    "type": "number",
+                                    "minimum": 0
+                                  },
+                                  "cacheRead": {
+                                    "type": "number",
+                                    "minimum": 0
+                                  },
+                                  "cacheWrite": {
+                                    "type": "number",
+                                    "minimum": 0
+                                  },
+                                  "output": {
+                                    "type": "number",
+                                    "minimum": 0
+                                  }
+                                },
+                                "required": [
+                                  "uncachedInput",
+                                  "cacheRead",
+                                  "cacheWrite",
+                                  "output"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "required": [
+                              "known",
+                              "amount",
+                              "currency",
+                              "basis"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "known": {
+                                "type": "boolean",
+                                "const": false
+                              },
+                              "reason": {
+                                "type": "string",
+                                "minLength": 1
+                              }
+                            },
+                            "required": [
+                              "known",
+                              "reason"
+                            ],
+                            "additionalProperties": false
+                          }
+                        ]
+                      },
+                      "reported": {
+                        "oneOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "known": {
+                                "type": "boolean",
+                                "const": true
+                              },
+                              "amount": {
+                                "type": "number",
+                                "minimum": 0
+                              },
+                              "currency": {
+                                "type": "string",
+                                "enum": [
+                                  "AI_CREDITS",
+                                  "USD"
+                                ]
+                              },
+                              "basis": {
+                                "type": "string",
+                                "enum": [
+                                  "billed",
+                                  "reported",
+                                  "priced"
+                                ]
+                              },
+                              "priceVersionIds": {
+                                "minItems": 1,
+                                "type": "array",
+                                "items": {
+                                  "type": "string",
+                                  "minLength": 1
+                                }
+                              },
+                              "estimated": {
+                                "type": "boolean"
+                              },
+                              "apiEquivalent": {
+                                "type": "boolean"
+                              },
+                              "notes": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string",
+                                  "minLength": 1
+                                }
+                              },
+                              "byTokenType": {
+                                "type": "object",
+                                "properties": {
+                                  "uncachedInput": {
+                                    "type": "number",
+                                    "minimum": 0
+                                  },
+                                  "cacheRead": {
+                                    "type": "number",
+                                    "minimum": 0
+                                  },
+                                  "cacheWrite": {
+                                    "type": "number",
+                                    "minimum": 0
+                                  },
+                                  "output": {
+                                    "type": "number",
+                                    "minimum": 0
+                                  }
+                                },
+                                "required": [
+                                  "uncachedInput",
+                                  "cacheRead",
+                                  "cacheWrite",
+                                  "output"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "required": [
+                              "known",
+                              "amount",
+                              "currency",
+                              "basis"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "known": {
+                                "type": "boolean",
+                                "const": false
+                              },
+                              "reason": {
+                                "type": "string",
+                                "minLength": 1
+                              }
+                            },
+                            "required": [
+                              "known",
+                              "reason"
+                            ],
+                            "additionalProperties": false
+                          }
+                        ]
+                      },
+                      "priced": {
+                        "oneOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "known": {
+                                "type": "boolean",
+                                "const": true
+                              },
+                              "amount": {
+                                "type": "number",
+                                "minimum": 0
+                              },
+                              "currency": {
+                                "type": "string",
+                                "enum": [
+                                  "AI_CREDITS",
+                                  "USD"
+                                ]
+                              },
+                              "basis": {
+                                "type": "string",
+                                "enum": [
+                                  "billed",
+                                  "reported",
+                                  "priced"
+                                ]
+                              },
+                              "priceVersionIds": {
+                                "minItems": 1,
+                                "type": "array",
+                                "items": {
+                                  "type": "string",
+                                  "minLength": 1
+                                }
+                              },
+                              "estimated": {
+                                "type": "boolean"
+                              },
+                              "apiEquivalent": {
+                                "type": "boolean"
+                              },
+                              "notes": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string",
+                                  "minLength": 1
+                                }
+                              },
+                              "byTokenType": {
+                                "type": "object",
+                                "properties": {
+                                  "uncachedInput": {
+                                    "type": "number",
+                                    "minimum": 0
+                                  },
+                                  "cacheRead": {
+                                    "type": "number",
+                                    "minimum": 0
+                                  },
+                                  "cacheWrite": {
+                                    "type": "number",
+                                    "minimum": 0
+                                  },
+                                  "output": {
+                                    "type": "number",
+                                    "minimum": 0
+                                  }
+                                },
+                                "required": [
+                                  "uncachedInput",
+                                  "cacheRead",
+                                  "cacheWrite",
+                                  "output"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "required": [
+                              "known",
+                              "amount",
+                              "currency",
+                              "basis"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "known": {
+                                "type": "boolean",
+                                "const": false
+                              },
+                              "reason": {
+                                "type": "string",
+                                "minLength": 1
+                              }
+                            },
+                            "required": [
+                              "known",
+                              "reason"
+                            ],
+                            "additionalProperties": false
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "billed",
+                      "reported",
+                      "priced"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "turnIndex",
+                  "model",
+                  "inputTokens",
+                  "output",
+                  "aiCredits",
+                  "toolCalls",
+                  "userMessage",
+                  "cost"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "events": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "turnIndex": {
+                    "type": "number"
+                  },
+                  "event": {
+                    "type": "string",
+                    "enum": [
+                      "model-switch",
+                      "tool-change",
+                      "compaction",
+                      "clear",
+                      "rewind",
+                      "fork",
+                      "cache-expiry",
+                      "instructions-change",
+                      "image-change",
+                      "reasoning-toggle"
+                    ]
+                  }
+                },
+                "required": [
+                  "turnIndex",
+                  "event"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "contextOverhead": {
+              "type": "object",
+              "properties": {
+                "systemPrompt": {
+                  "type": "object",
+                  "properties": {
+                    "tokens": {
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "components": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "kind": {
+                            "type": "string",
+                            "enum": [
+                              "built-in",
+                              "repo-instructions",
+                              "path-scoped-instructions",
+                              "skill-manifest",
+                              "tool-definitions"
+                            ]
+                          },
+                          "label": {
+                            "type": "string"
+                          },
+                          "tokens": {
+                            "type": [
+                              "number",
+                              "null"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "kind",
+                          "label",
+                          "tokens"
+                        ],
+                        "additionalProperties": false
+                      }
+                    }
+                  },
+                  "required": [
+                    "tokens",
+                    "components"
+                  ],
+                  "additionalProperties": false
+                },
+                "toolInventory": {
+                  "type": "object",
+                  "properties": {
+                    "defined": {
+                      "type": "number"
+                    },
+                    "loaded": {
+                      "type": "number"
+                    },
+                    "invoked": {
+                      "type": "number"
+                    },
+                    "neverInvokedCount": {
+                      "type": "number"
+                    },
+                    "neverInvoked": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "required": [
+                    "defined",
+                    "loaded",
+                    "invoked",
+                    "neverInvokedCount",
+                    "neverInvoked"
+                  ],
+                  "additionalProperties": false
+                },
+                "unavailableReason": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false
+            },
+            "unavailableReasons": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "sessionId",
+            "title",
+            "model",
+            "turnCount",
+            "totals",
+            "cost",
+            "cacheHitRatio",
+            "byModel",
+            "rankedBy",
+            "topTurns",
+            "events",
+            "contextOverhead",
+            "unavailableReasons"
+          ],
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "additionalProperties": false
+        },
+        "annotations": {
+          "readOnlyHint": true,
+          "destructiveHint": false,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        },
+        "_meta": {
+          "ui": {
+            "resourceUri": "ui://agent-cost-analyzer/views.html"
+          },
+          "ui/resourceUri": "ui://agent-cost-analyzer/views.html"
+        }
+      }
+    }
+  },
+  "displayModes": {
+    "current": "inline",
+    "available": [
+      "inline",
+      "fullscreen"
+    ]
+  },
+  "otherHostContext": {
+    "containerDimensions": {
+      "maxHeight": 5000,
+      "width": 736
+    },
+    "locale": "en-US",
+    "timeZone": "Europe/Paris",
+    "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Claude/4.23118.0 Chrome/152.0.7977.167 Electron/44.9.3 Safari/537.36",
+    "platform": "desktop",
+    "deviceCapabilities": {
+      "touch": false,
+      "hover": true
+    },
+    "safeAreaInsets": {
+      "top": 0,
+      "right": 0,
+      "bottom": 0,
+      "left": 0
+    }
+  },
+  "structuredContentKeys": [
+    "byModel",
+    "cacheHitRatio",
+    "contextOverhead",
+    "cost",
+    "events",
+    "model",
+    "projectId",
+    "providerId",
+    "rankedBy",
+    "repositoryKey",
+    "sessionId",
+    "startedAt",
+    "title",
+    "topTurns",
+    "totals",
+    "turnCount",
+    "unavailableReasons"
+  ],
+  "contentBlockCount": 2,
+  "brand": {
+    "productId": "standalone",
+    "displayName": "Agent Cost Analyzer",
+    "version": "0.9.0"
+  },
+  "headingFont": {
+    "requested": "Barlow Condensed",
+    "available": false
+  },
+  "observations": [
+    {
+      "name": "openLink vscode://",
+      "outcome": "error",
+      "detail": "{\"isError\":true}",
+      "approvalPromptSeen": null
+    },
+    {
+      "name": "openLink https://",
+      "outcome": "ok",
+      "detail": "{\"isError\":false}",
+      "approvalPromptSeen": true
+    },
+    {
+      "name": "callServerTool get_turn_series",
+      "outcome": "ok",
+      "detail": "{\"content\":[{\"type\":\"text\",\"text\":\"{\\\"sessionId\\\":\\\"6b47947c-6ec1-4542-954c-3955b980462c\\\",\\\"turns\\\":[{\\\"turnIndex\\\":0,\\\"startedAt\\\":\\\"2026-11-07T14:57:25.672Z\\\",\\\"model\\\":\\\"gpt-6-luna\\\",\\\"aiCredits\\\":0.2192855,\\\"inputTokens\\\":45171,\\\"cacheRead\\\":22505,\\\"output\\\":149,\\\"estimated\\\":false,\\\"events\\\":[",
+      "approvalPromptSeen": null
+    },
+    {
+      "name": "requestDisplayMode fullscreen",
+      "outcome": "ok",
+      "detail": "{\"mode\":\"fullscreen\"}",
+      "approvalPromptSeen": null
+    },
+    {
+      "name": "requestDisplayMode inline",
+      "outcome": "ok",
+      "detail": "{\"mode\":\"inline\"}",
+      "approvalPromptSeen": null
+    }
+  ]
+}
