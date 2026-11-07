@@ -36,15 +36,17 @@ function RowDetail({ row }: { row: FindingRow }) {
 
 export function FindingsTable({ rows, busy }: { rows: FindingRow[]; busy: boolean }) {
   return (
-    <div className="findings-scroll">
+    // Focusable and named, so a keyboard user can scroll it (A14; axe's
+    // scrollable-region-focusable needs layout, which jsdom lacks).
+    <div className="findings-scroll" tabIndex={0} role="region" aria-label="Findings, scrollable">
       <table className="fv-table" aria-label="Findings" aria-busy={busy}>
         <thead>
           <tr>
             <th>Severity</th>
             <th>Finding</th>
-            <th>Kind</th>
-            <th>Session</th>
-            <th>When</th>
+            <th className="fv-col-wide">Kind</th>
+            <th className="fv-col-wide">Session</th>
+            <th className="fv-col-wide">When</th>
           </tr>
         </thead>
         <tbody>
@@ -65,14 +67,17 @@ export function FindingsTable({ rows, busy }: { rows: FindingRow[]; busy: boolea
                     </Tag>
                   )}
                 </div>
+                {/* Shown instead of the Kind, Session and When columns on a
+                    narrow host (findings.css), so the table fits 360px. */}
+                <div className="fv-row-meta fv-muted">{[row.kindLabel, row.sessionTitle, row.turnText, row.whenText].filter((part) => part !== undefined && part !== "").join(" · ")}</div>
                 <RowDetail row={row} />
               </td>
-              <td className="fv-muted">{row.kindLabel}</td>
-              <td className="fv-session">
+              <td className="fv-muted fv-col-wide">{row.kindLabel}</td>
+              <td className="fv-session fv-col-wide">
                 <span>{row.sessionTitle}</span>
                 {row.turnText && <span className="fv-muted"> · {row.turnText}</span>}
               </td>
-              <td className="fv-muted">{row.whenText ?? ""}</td>
+              <td className="fv-muted fv-col-wide">{row.whenText ?? ""}</td>
             </tr>
           ))}
         </tbody>

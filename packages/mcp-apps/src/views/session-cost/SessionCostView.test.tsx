@@ -8,6 +8,7 @@ import type { ViewBrand } from "../../brand/view-brand.js";
 import { sessionCost, total, turnSeries, measures } from "../../view-models/fixtures.js";
 import { turnView } from "../../view-models/turn-view-fixture.js";
 import { SessionCostView } from "../SessionCostView.js";
+import { exerciseEveryControl } from "../../test-support/exercise-controls.js";
 
 const extension: ViewBrand = { productId: "vscode-extension", displayName: "AI Credits Analyzer", version: "0.4.0" };
 const standalone: ViewBrand = { productId: "standalone", displayName: "Agent Cost Analyzer", version: "0.11.0" };
@@ -40,7 +41,7 @@ describe("SessionCostView content", () => {
 
   it("fetches the per-turn series for this session and draws the chart with event markers and an unknown note", async () => {
     const { port } = setup();
-    const chart = await screen.findByRole("img", { name: "AI Credits per turn, 4 turns" });
+    const chart = await screen.findByRole("img", { name: "AI Credits per turn, 4 turns; highest 4.10 at turn 2; 1 turn unknown" });
     expect(calls(port, "callTool")[0]!.args).toEqual(["get_turn_series", { sessionId: "7f3a9c2e" }]);
     expect(screen.getByText("1 turn unknown")).toBeInTheDocument();
     expect(within(chart).getByText("Turn 2: 4.10 AI Credits (estimate), compaction, model switch")).toBeInTheDocument();
@@ -102,7 +103,7 @@ describe("SessionCostView chart failure", () => {
     expect(screen.getByText("18.42")).toBeInTheDocument();
     port.toolResults.set("get_turn_series", { structuredContent: turnSeries() });
     fireEvent.click(within(alert).getByRole("button", { name: "Retry" }));
-    expect(await screen.findByRole("img", { name: "AI Credits per turn, 4 turns" })).toBeInTheDocument();
+    expect(await screen.findByRole("img", { name: "AI Credits per turn, 4 turns; highest 4.10 at turn 2; 1 turn unknown" })).toBeInTheDocument();
     expect(screen.queryByRole("alert")).toBeNull();
   });
 
@@ -201,7 +202,7 @@ describe("SessionCostView copy-command button", () => {
   it("says so, and shows the text to copy by hand, when the clipboard write fails", async () => {
     setup({ clipboard: { writeText: vi.fn().mockRejectedValue(new Error("denied")) } });
     fireEvent.click(screen.getByRole("button", { name: /Copy .open in panel. command/ }));
-    expect(await screen.findByRole("status")).toHaveTextContent("Couldn't copy");
+    expect((await screen.findByText(/Couldn't copy/)).closest('[role="status"]')).not.toBeNull();
     expect(screen.getByText("AI Credits Analyzer: Open Session 7f3a9c2e")).toBeInTheDocument();
   });
 
@@ -256,5 +257,49 @@ describe("SessionCostView security (plan §6)", () => {
     expect(methods.has("updateModelContext")).toBe(false);
     expect(methods.has("openLink")).toBe(false);
     for (const call of calls(port, "callTool")) expect(JSON.stringify(call.args)).not.toContain("SECRET");
+  });
+
+  it("renders a hostile title, prompt and turn detail as inert text", async () => {
+    const hostile = '<img src=x onerror="alert(1)">';
+    const cost = sessionCost({ title: hostile });
+    cost.topTurns[0]!.userMessage = hostile;
+    const port = new FakeAppHostPort();
+    port.toolResults.set("get_turn_series", { structuredContent: turnSeries() });
+    port.toolResults.set("get_turn", { structuredContent: turnView({ userMessage: hostile }) });
+    const { container } = render(<SessionCostView port={port} brand={extension} result={{ structuredContent: cost }} />);
+    fireEvent.click(screen.getByRole("button", { name: /Turn 17/ }));
+    await screen.findByText("Turn 17 · claude-sonnet-5.5");
+    expect(container.querySelector("img")).toBeNull();
+    expect(screen.getByRole("heading", { name: hostile })).toBeInTheDocument();
+    expect(screen.getAllByText(new RegExp(hostile.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))).length).toBeGreaterThanOrEqual(2);
+  });
+
+  // A14: every control, in the failure states too (Retry), with logged text
+  // planted in every field the view shows.
+  it("presses every control, through failures and retries, and forwards no logged text", async () => {
+    const secret = "SECRET-LOGGED-TEXT";
+    const cost = sessionCost({ title: `Title ${secret}` });
+    for (const turn of cost.topTurns) turn.userMessage = `${secret} prompt ${turn.turnIndex}`;
+    const clipboard = { writeText: vi.fn().mockResolvedValue(undefined) };
+    // First with get_turn_series and get_turn failing (Retry everywhere)...
+    const port = new FakeAppHostPort();
+    const failingView = render(<SessionCostView port={port} brand={extension} clipboard={clipboard} result={{ structuredContent: cost }} />);
+    await screen.findByRole("alert");
+    const failing = await exerciseEveryControl();
+    failingView.unmount();
+    // ...then with both answering, so each turn opens and offers Hide turn.
+    port.toolResults.set("get_turn_series", { structuredContent: turnSeries() });
+    port.toolResults.set("get_turn", { structuredContent: turnView({ userMessage: `${secret} user`, assistantResponse: `${secret} reply`, explanation: `${secret} why` }) });
+    render(<SessionCostView port={port} brand={extension} clipboard={clipboard} result={{ structuredContent: cost }} />);
+    await screen.findByRole("img", { name: /AI Credits per turn/ });
+    const working = await exerciseEveryControl();
+
+    const pressed = [...failing, ...working];
+    for (const name of ["button:Turn 17", "button:Turn 5", "button:Turn 29", "button:Retry", "button:Hide turn", 'button:Copy "open in panel" command']) expect(pressed).toContain(name);
+    expect(screen.getAllByText(new RegExp(secret)).length).toBeGreaterThan(0);
+    expect(new Set(port.calls.map((call) => call.method))).toEqual(new Set(["callTool"]));
+    expect(JSON.stringify(port.calls)).not.toContain(secret);
+    expect(clipboard.writeText.mock.calls).toEqual(clipboard.writeText.mock.calls.map(() => ["AI Credits Analyzer: Open Session 7f3a9c2e"]));
+    expect(clipboard.writeText).toHaveBeenCalled();
   });
 });

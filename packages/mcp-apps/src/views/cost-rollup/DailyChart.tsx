@@ -14,6 +14,21 @@ const TOP = 10;
 const BASE = 98;
 const MAX_LABELS = 8;
 
+type Daily = CostRollupViewModel["daily"];
+
+// The chart's accessible name (A14): role="img" hides each column's <title>
+// from assistive tech, so the name carries the size, the peak day and how
+// many days are unknown.
+export function describeDailyChart(daily: Daily): string {
+  const { points } = daily;
+  const parts = [`Daily AI Credits, ${points.length} ${points.length === 1 ? "day" : "days"}`];
+  const peak = points.reduce<Daily["points"][number] | undefined>((best, point) => (point.value !== null && (best === undefined || point.value > (best.value ?? -Infinity)) ? point : best), undefined);
+  if (peak !== undefined) parts.push(`highest ${peak.text} on ${peak.label}`);
+  const unknown = points.filter((point) => point.value === null).length;
+  if (unknown > 0) parts.push(`${unknown} ${unknown === 1 ? "day" : "days"} unknown`);
+  return parts.join("; ");
+}
+
 export function DailyChart({ daily, formatValue }: { daily: CostRollupViewModel["daily"]; formatValue: (value: number) => string }) {
   const hatchId = `hatch-${useId().replace(/[^a-zA-Z0-9_-]/g, "")}`;
   const { points } = daily;
@@ -28,7 +43,7 @@ export function DailyChart({ daily, formatValue }: { daily: CostRollupViewModel[
   const labelEvery = Math.ceil(points.length / MAX_LABELS);
 
   return (
-    <svg className="view-chart" role="img" aria-label={`Daily AI Credits, ${points.length} ${points.length === 1 ? "day" : "days"}`} viewBox={`0 0 ${WIDTH} ${HEIGHT}`} width="100%">
+    <svg className="view-chart" role="img" aria-label={describeDailyChart(daily)} viewBox={`0 0 ${WIDTH} ${HEIGHT}`} width="100%">
       <defs>
         <pattern id={hatchId} width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
           <line x1="2.5" y1="0" x2="2.5" y2="5" stroke="var(--color-text-muted)" strokeWidth="1.4" />

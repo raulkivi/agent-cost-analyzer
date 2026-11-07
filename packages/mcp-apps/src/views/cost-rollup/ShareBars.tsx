@@ -21,8 +21,20 @@ export function ShareBars({ label, rows }: { label: string; rows: ShareRow[] }) 
           <span className="rv-bar-track">
             {row.share !== null && largest > 0 && <span data-bar="" className="rv-bar-fill" style={{ width: `${Math.max(1, (row.share / largest) * 100)}%` }} />}
           </span>
-          <span className={row.aiCredits.known ? "rv-bar-value" : "rv-bar-value view-unknown"}>{row.aiCredits.text}</span>
-          <span className={row.share === null ? "rv-bar-share view-unknown" : "rv-bar-share text-muted"}>{row.shareText}</span>
+          {!row.aiCredits.known && row.share === null ? (
+            // An unknown spend has an unknown share: one "Unknown" across both
+            // columns, which two narrow columns could not hold side by side
+            // (A14 visual check). The share is still read out.
+            <span className="rv-bar-unknown view-unknown">
+              {row.aiCredits.text}
+              <span className="sr-only"> share {row.shareText}</span>
+            </span>
+          ) : (
+            <>
+              <span className={row.aiCredits.known ? "rv-bar-value" : "rv-bar-value view-unknown"}>{row.aiCredits.text}</span>
+              <span className={row.share === null ? "rv-bar-share view-unknown" : "rv-bar-share text-muted"}>{row.shareText}</span>
+            </>
+          )}
         </li>
       ))}
     </ul>

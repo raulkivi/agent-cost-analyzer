@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import { useState } from "react";
+import { useId, useRef, useState } from "react";
 import type { AppHostPort } from "../../host/app-host-port.js";
 import { Tag } from "@agent-cost-analyzer/web/ui/Tag";
 import { toTurnDetailViewModel } from "../../view-models/index.js";
@@ -78,16 +78,24 @@ function TurnRow({ port, sessionId, provider, turn, open, onToggle }: { port: Ap
     `${sessionId}:${turn.turnIndex}`,
   );
 
+  const detailId = useId();
+  const toggleRef = useRef<HTMLButtonElement>(null);
   const toggle = () => {
     if (!open && state.status === "idle") load();
     onToggle();
+  };
+  // "Hide turn" removes itself, so focus goes back to the row's toggle
+  // rather than falling to the document (A14).
+  const hide = () => {
+    onToggle();
+    toggleRef.current?.focus();
   };
 
   return (
     <>
       <tr className={open ? "view-row-selected" : undefined}>
-        <td>
-          <button type="button" className="view-row-button" aria-expanded={open} aria-label={`Turn ${turn.turnIndex}`} onClick={toggle}>
+        <td className="view-left">
+          <button ref={toggleRef} type="button" className="view-row-button" aria-expanded={open} aria-controls={open ? detailId : undefined} aria-label={`Turn ${turn.turnIndex}`} onClick={toggle}>
             <Chevron open={open} />
             <span>{turn.turnIndex}</span>
           </button>
@@ -109,7 +117,7 @@ function TurnRow({ port, sessionId, provider, turn, open, onToggle }: { port: Ap
         </td>
       </tr>
       {open && (
-        <tr className="view-row-detail">
+        <tr id={detailId} className="view-row-detail">
           <td colSpan={4}>
             {state.status === "loading" && (
               <p role="status" className="text-muted">
@@ -128,7 +136,7 @@ function TurnRow({ port, sessionId, provider, turn, open, onToggle }: { port: Ap
                 </div>
               </div>
             )}
-            {state.status === "ready" && <TurnDetail detail={toTurnDetailViewModel(state.data)} onHide={onToggle} />}
+            {state.status === "ready" && <TurnDetail detail={toTurnDetailViewModel(state.data)} onHide={hide} />}
           </td>
         </tr>
       )}

@@ -2,7 +2,7 @@
 
 **Last changed:** 2026-11-07 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
-Status: **in progress: A0, A0b, A1–A11, A13 and A15 done (2026-11-07), A12 dropped; planned 2026-10-28, updated
+Status: **in progress: A0, A0b, A1–A11 and A13–A15 done (2026-11-07), A12 dropped; planned 2026-10-28, updated
 2026-11-07 for the Phase 14 and Phase 15 tools.** This is Phase 12 in
 [implementation-plan.md](../implementation-plan.md). Its dependencies are
 met: Phase 9.12's tools are done, step 10.13 is done and `ext-v0.1.0`
@@ -461,6 +461,127 @@ as Phase 14 (step 14.6) and Phase 15 (step 15.8) did.
   screenshot of a view can't pass a simulated or estimated figure off as
   measured.
 
+### 6.1 A14 review, 2026-11-07 (U1–U3)
+
+Scope: everything under `packages/mcp-apps/src`, the built
+`dist/views.html`, and the server's resource registration and `injectBrand`.
+
+**Checked, holds (now asserted by tests):**
+
+- **CSP.** One self-contained file: the bundle test asserts no external
+  script, stylesheet, font or `url(http…)`. A new server test asserts the
+  resource declares no `_meta.ui.csp` (no `connectDomains` or
+  `resourceDomains`), no `domain`, no `permissions` and no
+  `prefersBorder: false`, in both `resources/list` and `resources/read`.
+- **No HTML sinks, no network.** A static test finds no
+  `dangerouslySetInnerHTML`, `innerHTML`, `outerHTML`, `insertAdjacentHTML`,
+  `document.write`, `eval`, `new Function`, `srcdoc`, `fetch`,
+  `XMLHttpRequest`, `WebSocket`, `EventSource`, `sendBeacon`, `window.open`
+  or `location` navigation in shipped code, and no `<a>` element.
+- **Logged text is rendered as text.** Evidence is a text child of
+  `<pre>`. Tests render hostile markup in a session title, a top-turn
+  prompt, the `get_turn` detail, a rollup session title and finding
+  evidence, and find no element created from it.
+- **No forwarding.** `test/security/no-forwarding.test.ts` parses every
+  shipped source with the TypeScript compiler and finds every mention of
+  `sendMessage`, `openLink`, `updateModelContext`, `callTool` and
+  `callServerTool`. It fails on any alias or destructuring, so a call site
+  can't hide. It asserts: one `sendMessage` site, whose text comes from
+  `askAboutSessionText`, a template whose only placeholder is a `string`
+  `*Id` parameter; no `openLink` call outside the adapter; no
+  `updateModelContext` at all; exactly four tool calls (`get_turn_series`,
+  `get_turn`, `get_session_cost`, `list_findings`), through the
+  `callParsed` forwarder or directly, by literal name, with arguments that
+  are object literals of reviewed names (`sessionId`, `provider`,
+  `turnIndex`, `maxTurns`, `kind`, `minSeverity`) or a reviewed builder
+  (`toolArguments`), and that read no logged-text field. The ext-apps
+  adapter forwards only its own parameters. Mutating a template or adding
+  `note: session.title` to a call makes it fail. Each view's dynamic test
+  now presses every control it shows (every turn, Hide turn, Retry in each
+  failure state, copy, Ask, every kind radio and severity option, every
+  evidence toggle) with logged text planted in every field, and checks
+  what reached the port.
+- **Clipboard.** The only `writeText` outside the port is the copy hook,
+  and every caller passes `openSessionCommand(vm.sessionId)`, a fixed
+  template naming the id (static test).
+- **`injectBrand`.** It escapes `& < > " '`, splices with `slice` rather
+  than `replace` (no `$&` patterns), and its tests cover a display name
+  that tries to leave the attribute. The brand values are the server's own
+  identity and version; `readBrand` checks the shape, falls back to the
+  generic brand, and the view renders the name as text.
+
+**Fixed:**
+
+- **Host style variables.** ext-apps' `applyHostStyleVariables` calls
+  `style.setProperty(key, value)` on `<html>` for every key it is given.
+  A key like `display` or `background-image` would restyle the page, and a
+  `url()` value would make a request. `bindHostTheme` now passes only
+  custom properties (`--*`) and drops values containing `url(`, `image(`,
+  `image-set(`, `expression(`, `;`, `{`, `}`, `<`, `>`, `@` or `\`.
+  `setProperty` already rejects a `;}` breakout, so this is defence in
+  depth. A test checks that all five recorded host sets (Claude light and
+  dark, VS Code light, dark and HC dark) pass through unchanged. The theme
+  is applied only when it is `light` or `dark`.
+- **Session id in the message.** The id comes from the logs (a Claude Code
+  id is the log's file name), so a crafted name could carry words into
+  "Analyse session <id>". "Ask about this session" is now shown only for a
+  plain id (`^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$`, which covers the
+  providers' UUIDs, hex hashes with segment suffixes and slugs), and the
+  static test requires that check next to the `sendMessage` call.
+
+**Accessibility (fixed):** axe found one violation, in every state:
+`landmark-contentinfo-is-top-level`, because the footer sat inside the
+shell's `role="region"`. The shell is now the page's `<main>`, named by its
+title. Beyond what axe checks in jsdom:
+
+- Each chart's name now summarises it, e.g. "AI Credits per turn, 4 turns;
+  highest 4.10 at turn 2; 1 turn unknown".
+- The chart's loading skeleton is a `status` with text.
+- Turn toggles have `aria-controls`.
+- U3's table scroller is focusable and named, like U1's and U2's.
+- The kind filter is a `fieldset` with a legend, not a `radiogroup` around
+  native radios.
+- The copy button lost a duplicate `aria-live`.
+- Dimmed severity tiles use the muted text token, not `opacity: 0.5`,
+  which the contrast tests can't see.
+- The radios' focus ring uses the host's `--color-ring-primary`.
+- Keyboard: focus fell to the document when a drill-down opened, when Back
+  closed it, and when "Hide turn" removed itself. It now lands on Back, on
+  the session row the user came from, and on the turn's toggle.
+
+Colour contrast isn't checked by axe in jsdom; the A6 contrast tests cover
+it.
+
+**Layout (fixed, from screenshots at 560 and 360px, light and dark):**
+
+- The corner marks sat 6px outside the card and scrolled every view 5px
+  sideways; the shell now has a 6px margin.
+- U2's "Unknown Unknown" overlapped in the narrow value and share columns;
+  an unknown row now shows one "Unknown" across both.
+- Session titles in U2's table were centred.
+- Footer buttons wrapped their labels out of the 26px box at 360px.
+- At 360px, U2's table pushed AI Credits, and U3's table pushed Session and
+  When, out of view. Provider and model, and kind, session and day, now
+  move under the title.
+- Chart axis labels drew at about 6px at 360px.
+- U3's severity tiles are three across on a narrow host.
+
+**Left open:**
+
+- **Host fonts.** `applyHostFonts` injects the host's `@font-face` CSS as
+  given. Claude Desktop's loads `woff2` files from its own asset domain.
+  That fetch is the host's, under the host's CSP, not the view's; it
+  belongs in the threat model's MCP section (A15).
+- **Host trust.** The host can already restyle or replace the frame it
+  renders. The variable filter limits what a malformed context can do, not
+  what a hostile host can do.
+- **Copy command.** The copied text names the raw session id. It goes to
+  the user's clipboard, not the model, so the plain-id rule isn't applied
+  there.
+- **No end-to-end test in a real host.** The checks above run in jsdom and
+  in a Chromium harness (`test/visual/`, built on demand, not shipped).
+  The hosts themselves are A16.
+
 ## 7. Tasks
 
 TDD throughout: each task starts with a failing test (architecture.md
@@ -484,7 +605,7 @@ fewer, an exact spec, and acceptance tests the local agent never sees.
 | A11 | U3 `FindingsView`, with filters. **Done 2026-11-07:** `src/views/FindingsView.tsx` and `src/views/findings/` (severity tiles, kind radio group and minimum-severity select, table scrolling inside the card, evidence collapsed by default and shown as text). A filter change calls `list_findings` with `kind` and `minSeverity`, plus the model's own arguments (window, provider, limits) from `onToolInput`; the previous result stays visible while loading and after an error (Retry). Stale answers are ignored. `App` now passes the port and the tool result to the view. No `sendMessage`, `openLink` or `updateModelContext` call. The shared footer is left to A9's `ViewShell` | medium | Sonnet | A0b, A6, A7, A8 |
 | A12 | Deep link: the extension's URI handler and `onUri` activation (§4.4), with unit tests for parameter validation and an integration test | medium | Sonnet | A0 |
 | A13 | Packaging: build order (views before extension and server), `dist/mcp-apps/views.html` in the `.vsix` (asserted by the package-contents test), `scripts/mcp-server.sh` serving the standalone build. **Done 2026-11-07:** root workspaces build `mcp-apps` before `server` and `vscode-extension`, and the extension's own `build` builds it first (as it does the web app), so CI's `npm run build --workspace=packages/vscode-extension` and the release build both have `packages/mcp-apps/dist/views.html`. `scripts/build.mts` copies it to `dist/mcp-apps/views.html` and fails if it is missing; `.vscodeignore` allows it and `packaging.test.ts` lists it. One helper, `resolveAppViews(path, onMissing)` (`server/src/mcp/apps/resolve-app-views.ts`), turns a path into the `appViews` option, or into nothing when the file does not exist (a bare `FileViewSource` would register the resource and tag the tools, then fail at `resources/read`); the standalone `stdio.ts` (`--app-views-html`) and the extension's `createCopilotMcpServer({ appViewsHtml })` both use it. The child process passes `<dist>/mcp-apps/views.html` with no new command-line input. `scripts/mcp-server.sh` adds `--app-views-html packages/mcp-apps/dist/views.html` when that file exists; a caller's own flag comes later and wins. Tests: resolver, real stdio entry point and the built extension bundle, with and without the file; the script's arguments; the workspace build order | medium | Sonnet | A8 |
-| A14 | Accessibility and security review of the views: axe in the component tests, keyboard drill-down, the no-forwarding rule (§6) as a test over every `sendMessage` call site | medium | Opus | A9–A11 |
+| A14 | Accessibility and security review of the views: axe in the component tests, keyboard drill-down, the no-forwarding rule (§6) as a test over every `sendMessage` call site. **Done 2026-11-07:** axe-core 4.14.0 (devDependency) over every state of U1–U3 and the no-view state (`src/views/a11y.test.tsx`); keyboard tests with user-event (`src/views/keyboard.test.tsx`) and focus returned after drill-in, Back and Hide turn; the rule as a static test over every host call site in `src/` (`test/security/no-forwarding.test.ts`), paired with a dynamic test per view that presses every control; host style variables filtered; the "Ask" button only for a plain session id; 360px layout fixes. Findings and what is left open: §6.1 | medium | Opus | A9–A11 |
 | A15 | Docs: architecture.md §4.1/§11.2/§12, threat-model.md §6, implementation-plan.md Phase 12 and its dependency graph, UserGuide, vscode-extension-guide, both CHANGELOGs. **Done 2026-11-07:** architecture.md gained §4.1.1 (runtime flow), §4.4 (the `packages/mcp-apps` module map and dependency rules), a §10 tree entry, a §11.2 bullet and a §11.4 testing bullet; threat-model.md gained §6.1 (MCP Apps) and its standalone-server row now lists `--project-billing-details` and `--app-views-html`; implementation-plan.md's Phase 12 section and the Gantt are current (the summary graph's edges were already right; a note says the Phase 14 and 15 edges are for the increments); the User Guide has "Interactive views in the chat" and the extension guide "Interactive views in Copilot Chat" (screenshots follow in A16); both CHANGELOGs list the views, the copy button and the unchanged text output. Written from the code. Open for A14 and the owner: `aiCreditsAnalyzer.openSession` is hidden from the Command Palette (`when: false`) and takes a session id as an argument, so the copied text `AI Credits Analyzer: Open Session <id>` does not run it when pasted; the guides send the user to the Sessions view as a fallback | medium | Sonnet | A13 |
 | A16 | Owner's manual checks: VS Code Copilot Chat in light, dark and High Contrast; Claude Desktop in light and dark; Claude Code CLI text output unchanged | — | owner | A13 |
 

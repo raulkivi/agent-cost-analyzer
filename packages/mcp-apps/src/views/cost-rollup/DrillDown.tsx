@@ -1,12 +1,13 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
 import type { SessionCost } from "@agent-cost-analyzer/domain";
 import type { ViewBrand } from "../../brand/view-brand.js";
 import type { AppHostPort } from "../../host/app-host-port.js";
 import type { ClipboardPort } from "../../host/clipboard-port.js";
 import { ErrorBox, SessionCostView } from "../SessionCostView.js";
 import { ViewShell } from "../ViewShell.js";
+import { useFocusOnMountIfLost } from "../focus.js";
 import { callParsed, parseSessionCost, useResource } from "../session-cost/tool-data.js";
 import { AskAboutSession } from "./AskAboutSession.js";
 import "./cost-rollup.css";
@@ -22,10 +23,15 @@ export interface SessionRef {
 
 const KICKER = "Cost rollup › Session cost";
 
+// The session button that opened this view is gone once it opens, and the
+// loading shell gives way to U1, so Back takes the lost focus each time it
+// mounts (A14). The rollup puts focus back on the session row.
 function BackButton({ onBack }: { onBack: () => void }) {
+  const ref = useRef<HTMLButtonElement>(null);
+  useFocusOnMountIfLost(ref);
   return (
     <div className="rv-back">
-      <button type="button" className="view-link rv-back-button" onClick={onBack}>
+      <button ref={ref} type="button" className="view-link rv-back-button" onClick={onBack}>
         <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M15 6l-6 6 6 6" />
         </svg>
