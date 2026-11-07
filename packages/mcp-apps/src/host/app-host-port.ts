@@ -14,6 +14,9 @@ export interface HostContext {
   theme?: "light" | "dark";
   displayMode?: DisplayMode;
   availableDisplayModes?: DisplayMode[];
+  // The host's look (MCP Apps spec): CSS variables by name, and @font-face
+  // rules for its fonts. Hosts send any subset (plan §5.2).
+  styles?: { variables?: Record<string, string | undefined>; css?: { fonts?: string } };
 }
 
 export interface ToolResult {
