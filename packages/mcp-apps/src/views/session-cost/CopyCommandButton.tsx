@@ -31,9 +31,11 @@ export function useCopyCommand(clipboard: ClipboardPort, command: string): { pha
   return { phase, copy };
 }
 
+// No aria-live on the button: CopyCommandStatus is the live region, so the
+// result is announced once, with the command text.
 export function CopyCommandButton({ phase, onCopy }: { phase: Phase; onCopy: () => void }) {
   return (
-    <button type="button" className="btn btn-secondary view-btn" onClick={onCopy} aria-live="polite">
+    <button type="button" className="btn btn-secondary view-btn" onClick={onCopy}>
       {phase === "copied" ? "Copied" : 'Copy "open in panel" command'}
     </button>
   );

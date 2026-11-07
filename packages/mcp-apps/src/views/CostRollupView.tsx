@@ -34,6 +34,8 @@ export function CostRollupView({ port, brand, clipboard, result }: { port: AppHo
   const rollup = useMemo(() => (result === undefined || result.isError ? undefined : parseCostRollup(result.structuredContent)), [result]);
   const vm = useMemo(() => (rollup === undefined ? undefined : toCostRollupViewModel(rollup)), [rollup]);
   const [selected, setSelected] = useState<SessionRef | undefined>();
+  // The session last opened, so Back can return focus to its row (A14).
+  const [returnTo, setReturnTo] = useState<SessionRef | undefined>();
 
   if (result === undefined) {
     return (
@@ -93,7 +95,16 @@ export function CostRollupView({ port, brand, clipboard, result }: { port: AppHo
           <h2>Top sessions</h2>
           <span className="text-muted">click a session to open it here</span>
         </div>
-        <TopSessions sessions={vm.topSessions} providerLabels={providerLabels} onOpen={(session) => setSelected({ sessionId: session.sessionId, providerId: session.providerId })} />
+        <TopSessions
+          sessions={vm.topSessions}
+          providerLabels={providerLabels}
+          focusOnMount={returnTo}
+          onOpen={(session) => {
+            const ref = { sessionId: session.sessionId, providerId: session.providerId };
+            setSelected(ref);
+            setReturnTo(ref);
+          }}
+        />
       </section>
     </ViewShell>
   );

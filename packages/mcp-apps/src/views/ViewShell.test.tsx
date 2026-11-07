@@ -14,7 +14,7 @@ describe("ViewShell", () => {
         <p>body</p>
       </ViewShell>,
     );
-    expect(screen.getByRole("region", { name: "Findings" })).toBeInTheDocument();
+    expect(screen.getByRole("main", { name: "Findings" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { level: 1, name: "Findings" })).toBeInTheDocument();
     expect(screen.getByText("AI Credits Analyzer · Findings")).toBeInTheDocument();
     expect(screen.getByText("body")).toBeInTheDocument();

@@ -114,7 +114,11 @@ function LoadedSessionCost({ port, brand, clipboard, cost, frame }: { port: AppH
           <h2>AI Credits per turn</h2>
           {chartNotes.length > 0 && <span className="text-muted">{chartNotes.join(" · ")}</span>}
         </div>
-        {series.state.status === "loading" && <div className="view-skeleton" aria-busy="true" />}
+        {series.state.status === "loading" && (
+          <div className="view-skeleton" role="status">
+            <span className="sr-only">Loading the per-turn chart…</span>
+          </div>
+        )}
         {series.state.status === "error" && (
           <ErrorBox title="Couldn't load the per-turn chart." onRetry={series.load}>
             The get_turn_series call failed. The figures above come from the tool result and still stand.

@@ -18,14 +18,17 @@ const selectedValue = <V extends string>(options: FilterOption<V>[]): V | "all" 
 export function FindingsFilters({ kindOptions, severityOptions, onKind, onMinSeverity }: FindingsFiltersProps) {
   return (
     <div className="fv-filters">
-      <div role="radiogroup" aria-label="Kind">
+      {/* Native radios grouped by a fieldset and legend (the board shows no
+          visible label, so the legend is for assistive tech only). */}
+      <fieldset className="fv-kind">
+        <legend className="sr-only">Kind</legend>
         <SegmentedControl
           name="findings-kind"
           options={kindOptions.map(({ value, label }) => ({ value, label }))}
           value={selectedValue(kindOptions)}
           onChange={onKind}
         />
-      </div>
+      </fieldset>
       <label className="fv-select">
         <span className="fv-muted">Severity</span>
         <select value={selectedValue(severityOptions)} onChange={(event) => onMinSeverity(event.target.value as FindingSeverity | "all")}>

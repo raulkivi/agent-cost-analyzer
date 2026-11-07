@@ -1,7 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
 import type { ReactNode } from "react";
-import { Blueprint } from "@agent-cost-analyzer/web/ui/Blueprint";
 import type { ViewBrand } from "../brand/view-brand.js";
 
 // The branded frame shared by U1-U3 (plan §5.1, §5.5): the corner-mark card,
@@ -45,7 +44,16 @@ export function ViewShell({
 }) {
   const footer = brand.version ? `Read-only · local logs · v${brand.version}` : "Read-only · local logs";
   return (
-    <Blueprint className="card view-shell" role="region" aria-labelledby="view-title">
+    // <main>, not Blueprint's <div role="region">: the view is the whole
+    // document in the host's frame, so it is the page's one main landmark,
+    // and the footer inside it is not a nested contentinfo landmark (A14:
+    // axe landmark-contentinfo-is-top-level). Same classes and corner marks
+    // as Blueprint.
+    <main className="blueprint card view-shell" aria-labelledby="view-title">
+      <i className="corner tl" />
+      <i className="corner tr" />
+      <i className="corner bl" />
+      <i className="corner br" />
       <div className="view-kicker">
         <BrandMark />
         <p className="card-kicker">
@@ -62,6 +70,6 @@ export function ViewShell({
         <span className="view-footer-note">{footer}</span>
         {actions !== undefined && <span className="view-footer-actions">{actions}</span>}
       </footer>
-    </Blueprint>
+    </main>
   );
 }
