@@ -75,8 +75,8 @@ gantt
     14.8 docs written, owner review (11%)  :active, p14r, after p14, 1d
 
     section MCP Apps
-    12 A1-A4, A8 foundations, server (14%) :done, p12a, 2026-11-07, 1d
-    12 A0 host spike onward (0%)          :active, p12b, after p12a, 1d
+    12 A0-A4, A8 foundations, spike, server (17%) :done, p12a, 2026-11-07, 1d
+    12 A0b mock-ups onward (0%)          :active, p12b, after p12a, 1d
 
     section Cost
     15 Cost by repository and project (95%) :done, p15, 2026-11-05, 3d
@@ -104,19 +104,19 @@ gantt
 - Phase 14: steps 14.0-14.7 built; 14.8's docs written, the owner's review and the §13 exit criterion on real sessions open; the extension guide's replay screenshots open (User Guide's done). See [Phase 14 detail](#phase-14-detail--analyze-session-replay).
 - Phase 15: owner's review and exit criterion on real data.
 - Phase 13: owner's eyes-on review of step 13.8.
-- Phase 12: A0 host spike in VS Code Copilot Chat and Claude Desktop (owner; kit and checklist in [mcp-apps-spike.md](plans/mcp-apps-spike.md)), then A0b mock-up approval. See [Phase 12 detail](#phase-12-detail--mcp-apps).
+- Phase 12: A0b mock-up approval (A0 host spike done 2026-11-07; results in [mcp-apps-spike.md](plans/mcp-apps-spike.md)). See [Phase 12 detail](#phase-12-detail--mcp-apps).
 
 ## Phase 12 detail — MCP Apps
 
 Schedule view of the task tables in [mcp-apps.md](plans/mcp-apps.md) §7, §7.1 and §7.2. The design, exit criterion and risks stay there; this file only sequences the work.
 
-- Status: in progress (14%, 5 of 36 tasks): A1-A4 done 2026-11-07 (#176), A8 done 2026-11-07 (server views group); A0's spike kit is ready (`docs/plans/mcp-apps-spike.md`) and waits on the owner's run in VS Code Copilot Chat and Claude Desktop; A0 needs the owner (a real VS Code Copilot Chat and Claude Desktop). Dependencies met: step 10.13 is done and `ext-v0.1.0` shipped 2026-11-03; the Phase 14 and 15 tools the increments need are done.
+- Status: in progress (17%, 6 of 36 tasks): A0 done 2026-11-07 (owner ran the spike in VS Code Insiders 1.146 and Claude Desktop; results in `docs/plans/mcp-apps-spike-results/`), A1-A4 done 2026-11-07 (#176), A8 done 2026-11-07 (server views group). Dependencies met: step 10.13 is done and `ext-v0.1.0` shipped 2026-11-03; the Phase 14 and 15 tools the increments need are done.
 - Each increment starts with mock-up boards the owner approves (A0b, A17b, A25b; plan §5.6).
 - Scope (updated 2026-11-07): MVP (A0-A16: U1-U3), Increment 2 (A17-A24: cost-analysis views U9-U11), Increment 3 (A25-A33: replay, price changes, statement and estimate, audit, picker). Each increment starts after the previous one's owner checks.
 - Target releases (plan §7.3): MVP in extension 0.4.0 / app 0.11.0, Increment 2 in 0.5.0 / 0.12.0, Increment 3 in 0.6.0 / 0.13.0, assuming the Phase 14/15 work ships first as 0.3.0 / 0.10.0.
 - Estimates, not commitments: low = 1 day, medium = 2 days, spike = 1 day. Weekends are excluded. The start date 2026-11-09 is a placeholder.
 - Labels carry task ID, model and complexity. The critical path is marked red.
-- A12 is dropped if the A0 spike shows hosts block `vscode://` links (the button then copies a command).
+- A12 is dropped: the A0 spike showed both hosts refuse `vscode://` links (the button copies a command).
 
 ```mermaid
 %%{init: {
@@ -153,7 +153,7 @@ gantt
     excludes weekends
 
     section Spike
-    A0 Host spike, kit ready, owner run open (50%) :crit, active, a0, 2026-11-07, 3d
+    A0 Host spike, owner run (100%) :crit, done, a0, 2026-11-07, 1d
     A0b MVP mock-ups and approval, medium, Sonnet + owner (0%) :a0b, after a0, 3d
 
     section Foundations
@@ -176,7 +176,7 @@ gantt
     A11 U3 FindingsView, medium, Sonnet (0%)     :a11, after a0b a6 a7 a8, 2d
 
     section Extension and packaging
-    A12 Deep link URI handler, medium, Sonnet (0%) :a12, after a0, 2d
+    A12 Deep link URI handler, dropped (hosts refuse vscode://) :done, a12, after a0, 1d
     A13 Packaging, medium, Sonnet (0%)           :a13, after a8, 2d
 
     section Review and release

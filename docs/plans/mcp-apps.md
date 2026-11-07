@@ -476,8 +476,8 @@ fewer, an exact spec, and acceptance tests the local agent never sees.
 | A15 | Docs: architecture.md §4.1/§11.2/§12, threat-model.md §6, implementation-plan.md Phase 12 and its dependency graph, UserGuide, vscode-extension-guide, both CHANGELOGs | medium | Sonnet | A13 |
 | A16 | Owner's manual checks: VS Code Copilot Chat in light, dark and High Contrast; Claude Desktop in light and dark; Claude Code CLI text output unchanged | — | owner | A13 |
 
-A0 decides whether A12 is still needed: if hosts block `vscode://` links,
-the button falls back to copying a command.
+A0 result (2026-11-07): both hosts refuse `vscode://` links, so A12 is dropped
+and the button copies a command.
 
 ### 7.1 Increment 2: cost analysis views (U9–U11)
 
@@ -585,10 +585,12 @@ sections ships first, as extension 0.3.0 and app 0.10.0.
 
 | Item | Risk | Resolved by |
 |---|---|---|
-| VS Code's host variable coverage and High Contrast behaviour | Not verified from a primary source | A0 |
-| `toolInfo` present in each host | Router falls back to shape detection | A0 |
-| `openLink` to `vscode://` | A host may allow only https | A0. Fallback: copy a command. |
-| Approval prompts on app-initiated `tools/call` | Drill-down feels slow | A0 |
+| VS Code's host variable coverage and High Contrast behaviour | **Resolved (A0, 2026-11-07):** VS Code (Insiders 1.146) sends all 76 variables as `var(--vscode-*)` references; Dark HC sends the same set and reports `dark`, with no HC flag. Light HC not run. | — |
+| `toolInfo` present in each host | **Resolved:** Claude Desktop sends it (full tool definition); VS Code does not (only `hostContext.toolCall` with the tool name). The router uses `toolCall.toolName` when `toolInfo` is absent, else shape detection. | — |
+| `openLink` to `vscode://` | **Resolved:** refused in both hosts (`isError`). A12 is dropped; the button copies a command (§4.4). | — |
+| Approval prompts on app-initiated `tools/call` | **Resolved:** none in either host for `get_turn_series`. | — |
+| Display modes | **Resolved:** VS Code `inline` only; Claude Desktop `inline` and `fullscreen`. Views must not depend on fullscreen. | — |
+| Claude Desktop sends concrete `light-dark()` colours and fonts; VS Code sends `var(--vscode-*)` | A6 layers both onto the brand tokens | A6, using the recorded sets in `mcp-apps-spike-results/` |
 | `local()` heading font | Usually absent, so the host font is used. Accepted (§5.3). | — |
 | Spec draft changes (App-provided tools, `object-src 'none'`) | Minor | Pin 1.7.5; review at the SDK 2 migration |
 | Bundle size (React, d3 parts) | Slow first render | Budget test in A5 |
@@ -596,7 +598,7 @@ sections ships first, as extension 0.3.0 and app 0.10.0.
 | Tabs that mix fetching and rendering (Phase 15's Dashboard tabs, `CompareModelsView`, `EstimatePanel`) | The split in A17 grows into a web refactor | A17 splits only what U9–U15 render. Anything else stays. |
 | Mock-ups drawn before A0 would guess the host variables | Boards redrawn | A0b starts after A0 and uses its recorded variables |
 | Bundle size with the Increment 2/3 views | Over the 450 KB budget | Lazy route chunks inlined into the single file, or a raised budget, decided at A20 |
-| Approval prompts on view-initiated calls to model-visible tools (U9–U12 drill-down) | Each click asks the user | A0 records the behaviour. If it prompts, the view says so before the first drill-down. |
+| Approval prompts on view-initiated calls to model-visible tools (U9–U12 drill-down) | Each click asks the user | **Resolved (A0):** `get_turn_series` is an app-only tool and did not prompt. Prompts for model-visible tools are not yet tested; check in A9. |
 
 ## 10. Rejected: A2UI
 
