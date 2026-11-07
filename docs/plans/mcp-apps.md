@@ -502,8 +502,11 @@ Scope: everything under `packages/mcp-apps/src`, the built
   evidence toggle) with logged text planted in every field, and checks
   what reached the port.
 - **Clipboard.** The only `writeText` outside the port is the copy hook,
-  and every caller passes `openSessionCommand(vm.sessionId)`, a fixed
-  template naming the id (static test).
+  and every caller passes `sessionSearchText(vm.sessionId, vm.title)`: the
+  session title on one line (control characters dropped, at most 120
+  characters), or the id when there is no title (static test). After the
+  owner's decision A (§4.4) the title goes to the clipboard on purpose; it
+  reaches the user, never the model.
 - **`injectBrand`.** It escapes `& < > " '`, splices with `slice` rather
   than `replace` (no `$&` patterns), and its tests cover a display name
   that tries to leave the attribute. The brand values are the server's own

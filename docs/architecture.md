@@ -219,8 +219,8 @@ static file.
    views are served, and 21 and 19 without them.
 5. **Back to the chat.** The view reaches the chat in two ways only:
    `sendMessage` with the fixed text `Analyse session <id>`, and (extension
-   only) a button that copies the Command Palette text
-   `AI Credits Analyzer: Open Session <id>`. Both hosts refuse a
+   only) a button that copies the session title for the extension's
+   **AI Credits Analyzer: Open Session…** picker. Both hosts refuse a
    `vscode://` link, so there is no deep link and no `openLink` call.
    Logged text is never forwarded ([threat-model.md](threat-model.md) §6.1).
 

@@ -529,7 +529,7 @@ What you can click:
 - **Ask about this session** (spend view) sends `Analyse session <id>` to
   the chat. Only that fixed text goes to the model; titles, prompts and
   evidence never do.
-- **Copy "open in panel" command** (session cost view) copies the session
+- **Copy title to open in panel** (session cost view) copies the session
   title. VS Code doesn't let a chat view open links into the editor, so
   press Ctrl+Shift+P (Cmd+Shift+P on macOS), run **AI Credits Analyzer:
   Open Session…** and paste the title into the picker that opens; the list

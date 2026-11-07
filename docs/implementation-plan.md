@@ -1387,8 +1387,10 @@ unchanged.
   corner-mark cards, kicker, accent ramp), light and dark, contrast-tested.
 - Extension: the views ship in the `.vsix` (`dist/mcp-apps/views.html`).
   The spike showed both hosts refuse `vscode://` links, so there is no URI
-  handler (A12 is dropped); U1's button copies the Command Palette text
-  `AI Credits Analyzer: Open Session <id>` instead.
+  handler (A12 is dropped). Instead, U1's button copies the session title,
+  and the extension's palette command **AI Credits Analyzer: Open Session…**
+  opens a picker to paste it into (owner decision A, plan §4.4; a one-click
+  open is a follow-up).
 - Packaging: `mcp-apps` builds before the server and the extension;
   `scripts/mcp-server.sh` passes `--app-views-html` when the build exists,
   and without the file both servers start with no views.

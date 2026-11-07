@@ -15,14 +15,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Session…** now shows a picker of your sessions (newest first; title, start
   time, provider, AI Credits, and the id, all searchable) and opens the one
   you choose. The Sessions view's Open is unchanged. The cost view's copy
-  button will copy the session title to paste into this picker.
+  button copies the session title to paste into this picker.
 - **MCP server: interactive cost views.** In VS Code Copilot Chat, the MCP
   tools `get_session_cost`, `get_cost_rollup` and `list_findings` now show a
   branded, interactive view next to the text result (per-turn chart, top
   turns, spend by day, model and provider with a drill-down into a session,
-  filterable findings). A session's view has a **Copy "open in panel"
-  command** button, because VS Code doesn't let a chat view open a link; paste
-  the copied text in the Command Palette. The views ship in the extension
+  filterable findings). A session's view has a **Copy title to open in
+  panel** button, because VS Code doesn't let a chat view open a link; run
+  **AI Credits Analyzer: Open Session…** and paste the title. The views ship in the extension
   (`dist/mcp-apps/views.html`; without that file the server runs without
   them) and add one app-only tool, `get_turn_series`, to the server's 19. The
   tools keep their names, schemas and text, so Claude Code's output is
