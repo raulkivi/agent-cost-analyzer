@@ -29,7 +29,15 @@ async function statusBarItems(): Promise<string[]> {
 
 suite("Scenario S9: VS Code, cost by repository (step 15.14)", () => {
   suiteSetup(async () => {
-    await host.waitForExtension();
+    await host.waitForExtension({ userDataDir: fixture.userDataDir });
+    // Copilot Chat is built in but disabled in a new profile, and without it
+    // the required "Copilot Chat unavailable" warning takes the status bar
+    // over ("setup needed"), as in the copilot launch (check 1.4).
+    await host.command("workbench.extensions.action.enableAll");
+    await browser.waitUntil(async () => (await statusBarItems()).some((item) => item.startsWith("AI Credits today")), {
+      timeout: 90_000,
+      timeoutMsg: "the status bar did not switch from 'setup needed' to today's AI Credits once Copilot Chat was enabled",
+    });
     await host.command(COMMAND_IDS.refreshSessions);
   });
 
