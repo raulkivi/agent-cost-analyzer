@@ -3,6 +3,7 @@
 // environment variable, which the wdio workers inherit. No imports beyond
 // types, so both Node (the config) and the specs can load it.
 import type { FirstRunFixture, UiFixture } from "../../../scripts/ui-automation/ui-fixture.mts";
+import type { S9Fixture } from "../../../scripts/ui-automation/s9-fixture.mts";
 
 // The main launch: sessions, Copilot Chat absent.
 export const UI_FIXTURE_ENV = "AI_CREDITS_ANALYZER_UI_FIXTURE";
@@ -14,6 +15,8 @@ export const FIRST_RUN_FIXTURE_ENV = "AI_CREDITS_ANALYZER_UI_FIRST_RUN_FIXTURE";
 export const TRUST_FIXTURE_ENV = "AI_CREDITS_ANALYZER_UI_TRUST_FIXTURE";
 // The profile that has the analyzer installed from its VSIX, then uninstalled (check 1.12).
 export const UNINSTALL_FIXTURE_ENV = "AI_CREDITS_ANALYZER_UI_UNINSTALL_FIXTURE";
+// Scenario S9 (step 15.14): sessions in two git repositories, the first open.
+export const S9_FIXTURE_ENV = "AI_CREDITS_ANALYZER_UI_S9_FIXTURE";
 
 function parseObject(raw: string | undefined, envName: string): Record<string, unknown> {
   if (raw === undefined || raw === "") {
@@ -60,4 +63,10 @@ export function parseFirstRunFixture(raw: string | undefined, envName: string = 
   const value = parseObject(raw, envName);
   requireStrings(value, ["storagePath", "userDataDir"], envName);
   return value as unknown as FirstRunFixture;
+}
+
+export function parseS9Fixture(raw: string | undefined, envName: string = S9_FIXTURE_ENV): S9Fixture {
+  const value = parseObject(raw, envName);
+  requireStrings(value, ["storagePath", "userDataDir", "copilotHome", "workspacePath", "usageSessionId"], envName);
+  return value as unknown as S9Fixture;
 }

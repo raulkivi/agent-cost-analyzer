@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { createUiFixtureStub } from "./ui-fixture-stub.js";
-import { COPILOT_FIXTURE_ENV, FIRST_RUN_FIXTURE_ENV, UI_FIXTURE_ENV, parseFirstRunFixture, parseUiFixture } from "./ui-fixture-env.mts";
+import { COPILOT_FIXTURE_ENV, FIRST_RUN_FIXTURE_ENV, S9_FIXTURE_ENV, UI_FIXTURE_ENV, parseFirstRunFixture, parseS9Fixture, parseUiFixture } from "./ui-fixture-env.mts";
 
 describe("parseUiFixture (step 10.16)", () => {
   it("reads back what the config wrote", () => {
@@ -50,5 +50,30 @@ describe("parseFirstRunFixture (step 10.16)", () => {
 
   it("names the missing field", () => {
     expect(() => parseFirstRunFixture(JSON.stringify({ ...fixture, userDataDir: "" }))).toThrow(/userDataDir must be a non-empty string/);
+  });
+});
+
+// Step 15.14: scenario S9's launch, with its workspace folder.
+describe("parseS9Fixture", () => {
+  const fixture = {
+    storagePath: "/s9/storage",
+    userDataDir: "/s9/storage/settings",
+    userSettings: {},
+    copilotHome: "/s9/copilot-home",
+    workspacePath: "/s9/repos/portal-web",
+    usageSessionId: "1c7604a0-1488-4b5d-880a-f80fd693475e",
+    repositoryPaths: { portal: "/s9/repos/portal-web", billing: "/s9/repos/billing-api" },
+  };
+
+  it("reads back what the config wrote", () => {
+    expect(parseS9Fixture(JSON.stringify(fixture))).toEqual(fixture);
+  });
+
+  it("says how to run the specs when the variable is unset", () => {
+    expect(() => parseS9Fixture(undefined)).toThrow(new RegExp(`${S9_FIXTURE_ENV} is not set`));
+  });
+
+  it("rejects a fixture without its workspace folder", () => {
+    expect(() => parseS9Fixture(JSON.stringify({ ...fixture, workspacePath: "" }))).toThrow(/workspacePath/);
   });
 });

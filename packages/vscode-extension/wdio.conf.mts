@@ -9,12 +9,13 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import process from "node:process";
 import { OUT_DIR, saveScreenshot } from "./test/ui/support/screenshots.ts";
-import { COPILOT_FIXTURE_ENV, FIRST_RUN_FIXTURE_ENV, TRUST_FIXTURE_ENV, UI_FIXTURE_ENV, UNINSTALL_FIXTURE_ENV } from "./test/ui/support/ui-fixture-env.mts";
+import { COPILOT_FIXTURE_ENV, FIRST_RUN_FIXTURE_ENV, S9_FIXTURE_ENV, TRUST_FIXTURE_ENV, UI_FIXTURE_ENV, UNINSTALL_FIXTURE_ENV } from "./test/ui/support/ui-fixture-env.mts";
 import { PINNED_VSCODE_VERSION } from "./scripts/ui-automation/vscode-version.mts";
 import { buildVsix } from "./scripts/ui-automation/build-vsix.mts";
 import { cliOf, installVsix } from "./scripts/ui-automation/install-vsix.mts";
 import { KEEP_EXTENSIONS_MARKER, KeepExtensionsLauncher } from "./scripts/ui-automation/keep-extensions-service.mts";
 import { createFirstRunFixture, createUiFixture } from "./scripts/ui-automation/ui-fixture.mts";
+import { createS9Fixture } from "./scripts/ui-automation/s9-fixture.mts";
 
 export { PINNED_VSCODE_VERSION };
 
@@ -31,7 +32,10 @@ const COPILOT_SPEC = "./test/ui/specs/copilot-available.e2e.ts";
 // Check 1.12: two launches on one profile, the analyzer installed, then gone.
 const UNINSTALL_INSTALLED_SPEC = "./test/ui/specs/uninstall-installed.e2e.ts";
 const UNINSTALL_AFTER_SPEC = "./test/ui/specs/uninstall-after.e2e.ts";
-const OWN_LAUNCH_SPECS = [TRUST_SPEC, FIRST_RUN_SPEC, COPILOT_SPEC, UNINSTALL_INSTALLED_SPEC, UNINSTALL_AFTER_SPEC];
+// Scenario S9 (Phase 15 step 15.14): a workspace folder that is a git
+// repository, so the status bar names it.
+const S9_SPEC = "./test/ui/specs/s9-group-by-repository.e2e.ts";
+const OWN_LAUNCH_SPECS = [TRUST_SPEC, FIRST_RUN_SPEC, COPILOT_SPEC, UNINSTALL_INSTALLED_SPEC, UNINSTALL_AFTER_SPEC, S9_SPEC];
 
 // wdio loads this file in the launcher and again in every worker. Only the
 // launcher seeds the fixtures: its root and fixtures reach the workers (and so
@@ -65,6 +69,7 @@ const uninstallFixture = seeded(UNINSTALL_FIXTURE_ENV, () => {
 // Workspace Trust enabled (the service disables it by default, F8), so VS Code
 // starts it in Restricted Mode.
 const trustFixture = seeded(TRUST_FIXTURE_ENV, () => createUiFixture(path.join(rootDir, "trust"), { sessionCount: 1 }));
+const s9Fixture = seeded(S9_FIXTURE_ENV, () => createS9Fixture(path.join(rootDir, "s9")));
 const trustWorkspace = path.join(rootDir, "trust-workspace");
 if (!inWorker) {
   mkdirSync(path.join(trustWorkspace, ".vscode"), { recursive: true });
@@ -135,6 +140,21 @@ const LAUNCHES: Record<string, object> = {
     },
     specs: [TRUST_SPEC],
   },
+  // Scenario S9 (plan §12.4.2): Copilot sessions in two repositories,
+  // portal-web open as the workspace folder.
+  s9: {
+    browserName: "vscode",
+    browserVersion: PINNED_VSCODE_VERSION,
+    "wdio:vscodeOptions": {
+      extensionPath: import.meta.dirname,
+      storagePath: s9Fixture.storagePath,
+      userSettings: s9Fixture.userSettings,
+      workspacePath: s9Fixture.workspacePath,
+      verboseLogging: false,
+      vscodeArgs: CHROMIUM_FLAGS,
+    },
+    specs: [S9_SPEC],
+  },
   // Check 1.12: the analyzer installed from its VSIX (not under development:
   // the development extension is an empty stand-in), then uninstalled, then a
   // second launch on the same profile. The wrapper lets installed extensions load.
@@ -188,7 +208,7 @@ export const config: WebdriverIO.Config = {
     if (passed) return;
     const name = `failure-${test.title}`.replace(/[^a-zA-Z0-9.-]+/g, "_").slice(0, 120);
     await saveScreenshot(name).catch(() => undefined);
-    for (const [label, { userDataDir }] of [["main", fixture], ["trust", trustFixture], ["first-run", firstRunFixture], ["copilot", copilotFixture], ["uninstall", uninstallFixture]] as const) {
+    for (const [label, { userDataDir }] of [["main", fixture], ["trust", trustFixture], ["first-run", firstRunFixture], ["copilot", copilotFixture], ["uninstall", uninstallFixture], ["s9", s9Fixture]] as const) {
       if (existsSync(path.join(userDataDir, "logs"))) cpSync(path.join(userDataDir, "logs"), path.join(OUT_DIR, `${name}-logs-${label}`), { recursive: true, force: true });
     }
   },

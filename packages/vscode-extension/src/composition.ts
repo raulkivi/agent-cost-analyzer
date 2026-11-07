@@ -2,9 +2,6 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import type { HostEvent } from "@agent-cost-analyzer/domain";
 import { createExtensionApiService } from "@agent-cost-analyzer/server/src/composition/create-extension-api-service";
-import { createSessionAttributor } from "@agent-cost-analyzer/server/src/composition/create-session-attributor";
-import { NodeReadOnlyFileSystem } from "@agent-cost-analyzer/server/src/platform/file-system/node-read-only-file-system";
-import { RepositoryResolver } from "@agent-cost-analyzer/server/src/services/cost-attribution/repository-resolver";
 import { ExtensionCommands } from "./commands/extension-commands.js";
 import { watchConfigChanges, watchExtensionChanges, type ConfigurationChangeSource, type ExtensionsChangeSource } from "./config/config-change-watcher.js";
 import type { Translate } from "./l10n/localize.js";
@@ -22,6 +19,7 @@ import { MessageDispatcher } from "./rpc/message-dispatcher.js";
 import { resolveCopilotHome } from "@agent-cost-analyzer/server/src/data-sources/agent-host/copilot-cli-paths";
 import { copilotDebugLogsDirPaths, copilotLogPathsFromUserDataDir } from "./platform/copilot-log-paths.js";
 import { userDataDirFromGlobalStorage } from "./platform/vscode-user-data-dir.js";
+import { createRepositorySources } from "./sidebar/repository-sources.js";
 import { SidebarController } from "./sidebar/sidebar-controller.js";
 import { GlobalStateAppSettingsStore, type Memento } from "./settings/global-state-app-settings-store.js";
 import { GlobalStateSessionsGroupingStore } from "./settings/global-state-sessions-grouping-store.js";
@@ -149,26 +147,11 @@ export function composeExtension({
     onPageLoad: () => timings.pageLoading(),
   });
 
-  // Step 15.14 (plan §11.9): each session's repository from its folder, as
-  // the Dashboard's attribution resolves it; repositories need no vendors.
-  const attributor = createSessionAttributor({ vendorProfiles: [] });
-  // The workspace's own folders, resolved the same way (the extension has no
-  // projects file, so no aliases apply).
-  const folderRepositories = new RepositoryResolver(new NodeReadOnlyFileSystem());
   const sidebar = new SidebarController(
     {
       listSessions: () => api.listSessions(),
-      attributeRepositories: (sessions) => {
-        const snapshot = attributor.snapshot();
-        return new Map(sessions.map((session) => [session.id, snapshot.repository(session)]));
-      },
-      workspaceRepositoryKeys: () => {
-        const keys = workspaceFolderPaths().flatMap((cwd) => {
-          const found = folderRepositories.resolve({ known: true, cwd });
-          return found.attributed ? [found.repository.key] : [];
-        });
-        return [...new Set(keys)];
-      },
+      // Step 15.14 (plan §11.9): repositories for the grouping and the status bar.
+      ...createRepositorySources(workspaceFolderPaths),
       listLearnScenarios: () => api.listLearnScenarios(),
       getConfigStatus: () => api.getConfigStatus(),
       relistLogSources: () => {
