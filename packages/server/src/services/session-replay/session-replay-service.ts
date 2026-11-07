@@ -1,12 +1,11 @@
 import {
-  CHANNEL,
   MAX_COMPARED_MODELS,
   channelCurrency,
   preferredCostFigure,
+  type CostFigure,
   type Currency,
   type MeasuredCost,
   type ReplayAssumption,
-  type ReplayPriceChannel,
   type ReplayPricing,
   type ReplaySelfCheck,
   type RequestTrace,
@@ -211,27 +210,32 @@ function emptyTraceReason(trace: RequestTrace): string {
   return reasons.length === 0 ? `${base}.` : `${base}: ${reasons.join(" ")}`;
 }
 
-// D2's kind for the pricing field and the currency. An unknown session
-// channel isn't known to be Copilot, and replayChannel prices every other
-// channel at the vendor's API, so it is the API kind (in USD); the costs
-// themselves stay unknown with the reason.
-function pricingKind(
-  requested: ReplayPricingRequest,
-  sessionChannel: ChannelResolution,
-): ReplayPriceChannel {
-  if (requested !== "session-channel") return requested;
-  return sessionChannel.known &&
-    sessionChannel.channel === CHANNEL.githubCopilot
-    ? "copilot"
-    : "api";
-}
+const NO_CHANNEL_REASON = (reason: string): string =>
+  `No price channel is known, so nothing simulated is priced: ${reason}`;
 
+// The replay's currency: its price channel's unit. With no channel known,
+// nothing simulated is priced, so the currency only labels the measured
+// figures: the unit of the first known one, so they are shown as recorded
+// (others converted at the one documented rate), else USD.
 function currencyOf(
   channel: ReplayChannelResolution,
-  kind: ReplayPriceChannel,
+  measured: CostFigure[],
 ): Currency {
   if (channel.known) return channelCurrency(channel.channel);
-  return kind === "copilot" ? "AI_CREDITS" : "USD";
+  const first = measured.find((figure) => figure.known);
+  return first?.known ? first.currency : "USD";
+}
+
+// A measured figure in the replay's currency.
+function inCurrency(figure: CostFigure, currency: Currency): MeasuredCost {
+  if (!figure.known) return { known: false, reason: figure.reason };
+  const value = convertCost(figure.amount, figure.currency, currency);
+  return value === undefined
+    ? {
+        known: false,
+        reason: `The measured cost is in ${figure.currency}, which can't be shown in ${currency}.`,
+      }
+    : { known: true, value, currency, basis: figure.basis };
 }
 
 function assumptionsFor(trace: RequestTrace): ReplayAssumption[] {
@@ -414,18 +418,18 @@ export class SessionReplayService implements SessionReplayQueries {
       loaded.sessionChannel,
       target.vendorId,
     );
-    const kind = channel.known
-      ? channel.kind
-      : pricingKind(requested, loaded.sessionChannel);
-    const currency = currencyOf(channel, kind);
+    const figures = session.turns.map((turn) =>
+      this.measuredFigure(loaded, turn),
+    );
+    const currency = currencyOf(channel, figures);
 
     const simulatedRequests = simulated.turns.map(
       (turn, position): SimulatedRequest =>
         this.simulatedRequest(loaded, turn, channel, position),
     );
-    const measured = session.turns.map((turn) => ({
+    const measured = session.turns.map((turn, position) => ({
       cacheRead: turn.usage.cacheRead.known ? turn.usage.cacheRead.value : null,
-      cost: this.measuredCost(loaded, turn, currency),
+      cost: inCurrency(figures[position]!, currency),
     }));
     const aligned = alignReplay({
       trace,
@@ -446,7 +450,9 @@ export class SessionReplayService implements SessionReplayQueries {
         model: target.modelId,
         vendorId: target.vendorId,
         pricing: {
-          channel: kind,
+          ...(channel.known
+            ? { channel: channel.kind }
+            : { channel: null, reason: NO_CHANNEL_REASON(channel.reason) }),
           asOf: trace.requests[0]!.startedAt.slice(0, 10),
           requested,
         },
@@ -484,14 +490,10 @@ export class SessionReplayService implements SessionReplayQueries {
   }
 
   // The turn's preferred figure (billed, else reported, else priced) as
-  // get_session_cost has it, in the replay's currency.
-  private measuredCost(
-    loaded: Loaded,
-    turn: Turn,
-    currency: Currency,
-  ): MeasuredCost {
+  // get_session_cost has it.
+  private measuredFigure(loaded: Loaded, turn: Turn): CostFigure {
     const { provider, session, attributor, turnPricer } = loaded;
-    const figure = preferredCostFigure(
+    return preferredCostFigure(
       turnPricer.figuresFor(
         provider.id,
         session,
@@ -499,14 +501,6 @@ export class SessionReplayService implements SessionReplayQueries {
         attributor.turn(provider.id, session, turn),
       ),
     );
-    if (!figure.known) return { known: false, reason: figure.reason };
-    const value = convertCost(figure.amount, figure.currency, currency);
-    return value === undefined
-      ? {
-          known: false,
-          reason: `The measured cost is in ${figure.currency}, which can't be shown in ${currency}.`,
-        }
-      : { known: true, value, currency, basis: figure.basis };
   }
 
   // G4/D8: the unmodified script, switches included, on the session's own

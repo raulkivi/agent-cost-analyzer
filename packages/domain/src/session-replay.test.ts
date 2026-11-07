@@ -69,6 +69,14 @@ describe("sessionReplaySchema", () => {
     expect(sessionReplaySchema.safeParse(replay({ selfCheck: null })).success).toBe(true);
   });
 
+  it("records an unknown price channel as null with its reason, never a made-up channel (constraint 6)", () => {
+    const unknown = { channel: null, reason: "No channel is known for this session.", asOf: "2026-10-07", requested: "session-channel" as const };
+    expect(sessionReplaySchema.safeParse(replay({ pricing: unknown })).success).toBe(true);
+    expect(sessionReplaySchema.safeParse(replay({ pricing: { ...unknown, reason: undefined } })).success).toBe(false);
+    expect(sessionReplaySchema.safeParse(replay({ pricing: { ...unknown, reason: "" } })).success).toBe(false);
+    expect(sessionReplaySchema.safeParse(replay({ pricing: { ...replay().pricing, reason: "a known channel has no reason" } })).success).toBe(false);
+  });
+
   it("is exported from the domain index", () => {
     expect(domain.sessionReplaySchema).toBe(sessionReplaySchema);
   });

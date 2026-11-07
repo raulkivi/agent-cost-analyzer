@@ -3,8 +3,8 @@
 **Status (2026-11-07): planned.** The owner decided D1, D2, D4, D5 and D7
 on 2026-11-07; D3, D6 and D8 take the recommendation, open for the owner to
 revisit (§11). Steps 14.0 (threat-model rows), 14.1 (domain schemas) and
-14.2 (request traces) and 14.3 (the scripter) are done (2026-11-07); step
-14.4 is next.
+14.2 (request traces), 14.3 (the scripter) and 14.4 (the replay service)
+are done (2026-11-07); step 14.5 is next.
 
 The question this answers: **"What would this real session have cost on
 another model?"** It reuses Phase 13's simulator
@@ -243,7 +243,7 @@ recommendation and stay open for the owner to revisit.
 | 14.1 | Domain `RequestTrace` and `SessionReplay` schemas | Schema tests pass. Done 2026-11-07: `request-trace.ts` (strict records, numbers only; indexes, times and turns never go back; 1-hour writes within all writes; untraced turns with reasons) and `session-replay.ts` (always `simulated: true`; a turn is replayed or has a reason; unknown totals null, never 0, with the difference null too; coverage and the self-check bounded; at most 10 compared models); 18 tests |
 | 14.2 | `RequestTraceSource` for Claude Code and Copilot (local and Agent Host), the 13.5a extractors moved and reused | Each provider's fixture gives the expected trace; calibration tests unchanged. Done 2026-11-07, see the note below |
 | 14.3 | `RequestTraceScripter` with compaction, clear, model switch and 1-hour events; replaces `scriptFromCapture` | Property tests; the 17 shrinking-prompt sessions' shapes replay without error; calibration still 99.8%. Done 2026-11-07, see the note below |
-| 14.4 | `ReplayAligner`, `SessionReplayService`, self-check, pricing per D2 | Golden replays of the fixtures; self-check passes at D12 on every calibration fixture |
+| 14.4 | `ReplayAligner`, `SessionReplayService`, self-check, pricing per D2 | Golden replays of the fixtures; self-check passes at D12 on every calibration fixture. Done 2026-11-07, see the note below |
 | 14.5 | API routes, RPC, MCP tools (per D7) | Route, RPC and MCP tests (schemas, read-only, redaction) |
 | 14.6 | Mock-ups (Replay on, Simulated columns, summary card, Compare models) in both products' themes | Owner approves the boards |
 | 14.7 | UI in the standalone app and the extension (per D4, D5) | Component, axe and keyboard tests; UI check in three VS Code themes; usage scenarios pass in `web-e2e` and `extension-ui` |
@@ -321,12 +321,62 @@ harnesses.
   After the fixes, a real 484-request session with a compaction replays
   without error on three models, every simulated input equals the log's,
   and on its own model the cache read is within 5% on 480 of 483 requests.
-- **Open for 14.4.** Trace model ids are the log's (`claude-opus-5-5`) and
-  need mapping to profile ids (`claude-opus-5.5`); a model switch is a role
-  (primary or cheaper), so 14.4 decides how each role is priced on the
-  replay model. A `/clear` inside a Claude Code file still starts the branch
-  after it (no link back), and a file that begins with a compaction records
-  no `compaction` event: both are recorded, not fixed.
+- **Open after 14.3.** A `/clear` inside a Claude Code file still starts the
+  branch after it (no link back), and a file that begins with a compaction
+  records no `compaction` event: both are recorded, not fixed. (The model-id
+  mapping and model-switch pricing it also listed were settled in 14.4.)
+
+**14.4 (done 2026-11-07).** `SessionReplayService` in
+`services/session-replay/`, composing pure parts over narrow ports (DIP):
+
+- **`ReplayModelResolver`.** A log's model id (`claude-opus-5-5`, a date
+  suffix, `[1m]`, `copilot/`) resolves to a vendor profile's model through
+  Phase 15's shared `candidateModelIds`; no near match is guessed, and a
+  model whose caching is undocumented is refused (Phase 13 D1).
+- **Model switches.** On a target model the whole session runs on that one
+  model (`withoutModelSwitches`, A1/A5). The self-check keeps them: the
+  simulator's new `cheaperModelId` option runs the "cheaper" role on the
+  session's own second model. With three or more models, or a second model
+  in another profile, the self-check is null (the roles can't hold them).
+- **Pricing (D2), `ReplayPricer`.** Through Phase 15's `CostPricer` at each
+  request's date, list prices only (a contract applies to real use).
+  "Session channel" keeps a Copilot session on Copilot (AI Credits) and moves
+  any other channel to the target vendor's API (USD). An unknown channel is
+  `pricing.channel: null` with its reason, and nothing simulated is priced
+  (constraint 6; the domain schema gained the reason). The simulator now
+  reports 1-hour writes as `extendedCacheWrite`, so they are priced at the
+  1-hour rate (no rule changed, no Learn golden moved).
+- **Measured figures** are the session's preferred figure per turn, as
+  `get_session_cost` gives it, converted to the replay's currency at the one
+  documented rate (1 AI Credit = $0.01).
+- **`alignReplay`.** Requests are summed into the session's turns; a turn
+  with any unknown request is not replayed, with the reason. Totals compare
+  like with like: both are over the same turns (replayed, with known measured
+  and simulated cost), and the coverage gives the rest with reasons.
+- **Self-check (G4, D8), `replaySelfCheck`.** Calibration's own check: the
+  first request is not compared (A3), the outcome must match and the read be
+  within 5%. Through the service, every calibration capture gives exactly
+  calibration's result: three pass, and the two known disagreements
+  (`claude-code-39e87ae3` request 14, `claude-code-2e4ad1d9` request 20,
+  explained in `calibration.test.ts`) still disagree there, so "passes on
+  every calibration fixture" holds except where calibration itself records a
+  disagreement. Harness cache defaults (on for replays, off in calibration)
+  change no capture's result.
+- **Compare.** Any model no profile lists refuses the whole comparison; more
+  than 10 models (the session's own included) is a validation error for
+  14.5's 400. The measured total is the own-model replay's.
+- **Limits.** A trace over 20,000 requests is not replayed. The longest real
+  traces seen are 484 requests (this machine) and 52 (the calibration
+  captures); a synthetic 20,000-request trace scripts and simulates in about
+  0.15 s, so the cap stays as a bound, not a cost problem.
+- **Goldens.** Eight replays over the Claude Code, Copilot local and Agent
+  Host fixtures, each on its own model and two others (Haiku 5.5, GPT-6.1
+  Sol), in `__golden__/`. The fixtures predate the price book, so the golden
+  test shifts every time by one offset into 2026-10-21 (gaps and order
+  unchanged, so caching is the same). The hand-written fixtures' tiny prompts
+  (one under Sonnet 5's 1,024-token minimum) make some own-model self-checks
+  fail, which is the rules being right about fixtures that aren't real logs;
+  the real Copilot local log passes 3 of 3.
 
 ## 13. Exit criterion
 

@@ -668,6 +668,7 @@ a new strategy only when its caching kind is new.
 | `services/learn-simulation/simulate-scenario.ts` | `server` | script + model → Learn `Session` (pure) |
 | `services/learn-simulation/learn-simulation-service.ts` | `server` | `getScenario`, `compareScenario`, `listVendorProfiles` behind `ApiService` |
 | `services/session-replay/request-trace-scripter.ts` | `server` | Phase 14: a real session's `RequestTrace` → `ScenarioScript` (compaction, clear, model switch, 1-hour writes; pure); calibration replays its captures through it |
+| `services/session-replay/session-replay-service.ts` | `server` | Phase 14: replay and compare a session on other models: `ReplayModelResolver`, `ReplayPricer` (D2, through `CostPricer`), `alignReplay`, `replaySelfCheck` (calibration's check), over narrow ports |
 | `components/learn/*` | `web` | vendor picker, assumptions popover, sources footer, cache-outcome badge, How vendors differ card, Vendors tab |
 
 Where a rule a turn depends on is `unknown` for the chosen vendor, the turn's

@@ -11,7 +11,7 @@
     "vendorId": "anthropic",
     "pricing": {
       "channel": "api",
-      "asOf": "2026-09-02",
+      "asOf": "2026-10-21",
       "requested": "session-channel"
     },
     "currency": "USD",
@@ -21,8 +21,10 @@
         "measured": {
           "cacheRead": 2000,
           "cost": {
-            "known": false,
-            "reason": "No cost is known for this turn (billed: AI Credits are GitHub Copilot's own billing unit — a Claude Code CLI session has no AI Credits conversion.; reported: This provider logs no cost of its own.; priced: Cannot price: no price for claude-sonnet-5 on anthropic-api before 2026-10-01)"
+            "known": true,
+            "value": 0.00966,
+            "currency": "USD",
+            "basis": "priced"
           }
         },
         "simulated": {
@@ -30,8 +32,9 @@
           "cacheWrite": 2350,
           "outcome": "miss",
           "cost": {
-            "known": false,
-            "reason": "Cannot price: no price for claude-sonnet-5 on anthropic-api before 2026-10-01"
+            "known": true,
+            "value": 0.01066,
+            "currency": "USD"
           }
         }
       },
@@ -40,8 +43,10 @@
         "measured": {
           "cacheRead": 0,
           "cost": {
-            "known": false,
-            "reason": "No cost is known for this turn (billed: AI Credits are GitHub Copilot's own billing unit — a Claude Code CLI session has no AI Credits conversion.; reported: This provider logs no cost of its own.; priced: Cannot price: no price for claude-sonnet-5 on anthropic-api before 2026-10-01)"
+            "known": true,
+            "value": 0.0072,
+            "currency": "USD",
+            "basis": "priced"
           }
         },
         "simulated": {
@@ -49,24 +54,25 @@
           "cacheWrite": 0,
           "outcome": "partial",
           "cost": {
-            "known": false,
-            "reason": "Cannot price: no price for claude-sonnet-5 on anthropic-api before 2026-10-01"
+            "known": true,
+            "value": 0.00096,
+            "currency": "USD"
           }
         }
       }
     ],
     "totals": {
       "measured": {
-        "value": null,
-        "knownTurns": 0,
+        "value": 0.01686,
+        "knownTurns": 2,
         "turns": 2
       },
       "simulated": {
-        "value": null,
-        "knownTurns": 0,
+        "value": 0.01162,
+        "knownTurns": 2,
         "turns": 2
       },
-      "difference": null
+      "difference": -0.00524
     },
     "coverage": {
       "turns": 2,
@@ -117,7 +123,7 @@
     "vendorId": "anthropic",
     "pricing": {
       "channel": "api",
-      "asOf": "2026-09-02",
+      "asOf": "2026-10-21",
       "requested": "session-channel"
     },
     "currency": "USD",
@@ -127,8 +133,10 @@
         "measured": {
           "cacheRead": 2000,
           "cost": {
-            "known": false,
-            "reason": "No cost is known for this turn (billed: AI Credits are GitHub Copilot's own billing unit — a Claude Code CLI session has no AI Credits conversion.; reported: This provider logs no cost of its own.; priced: Cannot price: no price for claude-sonnet-5 on anthropic-api before 2026-10-01)"
+            "known": true,
+            "value": 0.00966,
+            "currency": "USD",
+            "basis": "priced"
           }
         },
         "simulated": {
@@ -136,8 +144,9 @@
           "cacheWrite": 2350,
           "outcome": "miss",
           "cost": {
-            "known": false,
-            "reason": "Cannot price: no price for claude-haiku-5.5 on anthropic-api before 2026-10-07"
+            "known": true,
+            "value": 0.0005329999999999999,
+            "currency": "USD"
           }
         }
       },
@@ -146,8 +155,10 @@
         "measured": {
           "cacheRead": 0,
           "cost": {
-            "known": false,
-            "reason": "No cost is known for this turn (billed: AI Credits are GitHub Copilot's own billing unit — a Claude Code CLI session has no AI Credits conversion.; reported: This provider logs no cost of its own.; priced: Cannot price: no price for claude-sonnet-5 on anthropic-api before 2026-10-01)"
+            "known": true,
+            "value": 0.0072,
+            "currency": "USD",
+            "basis": "priced"
           }
         },
         "simulated": {
@@ -155,24 +166,25 @@
           "cacheWrite": 0,
           "outcome": "partial",
           "cost": {
-            "known": false,
-            "reason": "Cannot price: no price for claude-haiku-5.5 on anthropic-api before 2026-10-07"
+            "known": true,
+            "value": 0.000048,
+            "currency": "USD"
           }
         }
       }
     ],
     "totals": {
       "measured": {
-        "value": null,
-        "knownTurns": 0,
+        "value": 0.01686,
+        "knownTurns": 2,
         "turns": 2
       },
       "simulated": {
-        "value": null,
-        "knownTurns": 0,
+        "value": 0.0005809999999999999,
+        "knownTurns": 2,
         "turns": 2
       },
-      "difference": null
+      "difference": -0.016279000000000002
     },
     "coverage": {
       "turns": 2,
@@ -223,7 +235,7 @@
     "vendorId": "openai",
     "pricing": {
       "channel": "api",
-      "asOf": "2026-09-02",
+      "asOf": "2026-10-21",
       "requested": "session-channel"
     },
     "currency": "USD",
@@ -233,8 +245,10 @@
         "measured": {
           "cacheRead": 2000,
           "cost": {
-            "known": false,
-            "reason": "No cost is known for this turn (billed: AI Credits are GitHub Copilot's own billing unit — a Claude Code CLI session has no AI Credits conversion.; reported: This provider logs no cost of its own.; priced: Cannot price: no price for claude-sonnet-5 on anthropic-api before 2026-10-01)"
+            "known": true,
+            "value": 0.00966,
+            "currency": "USD",
+            "basis": "priced"
           }
         },
         "simulated": {
@@ -242,8 +256,9 @@
           "cacheWrite": 2350,
           "outcome": "miss",
           "cost": {
-            "known": false,
-            "reason": "Cannot price: no price for gpt-6.1-sol on openai-api before 2026-10-01"
+            "known": true,
+            "value": 0.006954999999999999,
+            "currency": "USD"
           }
         }
       },
@@ -252,8 +267,10 @@
         "measured": {
           "cacheRead": 0,
           "cost": {
-            "known": false,
-            "reason": "No cost is known for this turn (billed: AI Credits are GitHub Copilot's own billing unit — a Claude Code CLI session has no AI Credits conversion.; reported: This provider logs no cost of its own.; priced: Cannot price: no price for claude-sonnet-5 on anthropic-api before 2026-10-01)"
+            "known": true,
+            "value": 0.0072,
+            "currency": "USD",
+            "basis": "priced"
           }
         },
         "simulated": {
@@ -261,24 +278,25 @@
           "cacheWrite": 0,
           "outcome": "partial",
           "cost": {
-            "known": false,
-            "reason": "Cannot price: no price for gpt-6.1-sol on openai-api before 2026-10-01"
+            "known": true,
+            "value": 0.00078,
+            "currency": "USD"
           }
         }
       }
     ],
     "totals": {
       "measured": {
-        "value": null,
-        "knownTurns": 0,
+        "value": 0.01686,
+        "knownTurns": 2,
         "turns": 2
       },
       "simulated": {
-        "value": null,
-        "knownTurns": 0,
+        "value": 0.007735,
+        "knownTurns": 2,
         "turns": 2
       },
-      "difference": null
+      "difference": -0.009125000000000001
     },
     "coverage": {
       "turns": 2,

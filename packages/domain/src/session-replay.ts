@@ -27,14 +27,22 @@ export const simulatedCostSchema = z.discriminatedUnion("known", [knownCost, unk
 
 // D2: priced on the session's own channel (Copilot's price table, or the
 // vendor's API price as of the session's date), or on the one asked for.
+// The channel is null, with the reason, when none is known (the session's
+// own is unknown, or the vendor lists no API channel): then nothing
+// simulated is priced, and no channel is made up (constraint 6).
 export const replayPriceChannelSchema = z.enum(["copilot", "api"]);
 export const replayPricingSchema = z
   .object({
-    channel: replayPriceChannelSchema,
+    channel: replayPriceChannelSchema.nullable(),
+    reason: z.string().min(1).optional(),
     asOf: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
     requested: z.enum(["session-channel", "copilot", "api"]),
   })
-  .strict();
+  .strict()
+  .refine((pricing) => (pricing.channel === null) === (pricing.reason !== undefined), {
+    message: "a reason is given exactly when no price channel is known",
+    path: ["reason"],
+  });
 
 export const replayTurnSchema = z
   .object({

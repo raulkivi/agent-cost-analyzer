@@ -5,6 +5,7 @@ import {
   CHANNEL,
   MAX_COMPARED_MODELS,
   channelCurrency,
+  vendorApiChannel,
   sessionReplayComparisonSchema,
   sessionReplaySchema,
   unavailableTokenCount,
@@ -603,11 +604,76 @@ describe("SessionReplayService.replay: pricing and currency", () => {
     );
     expect(replay.totals.simulated.value).toBeNull();
     expect(replay.totals.difference).toBeNull();
-    // Not known to be Copilot, so the API kind and its currency (see the service).
-    expect(replay).toMatchObject({
-      currency: "USD",
-      pricing: { channel: "api" },
+    // No channel is made up: null with the reason. Nothing measured is
+    // known either, so the currency falls back to USD.
+    expect(replay).toMatchObject({ currency: "USD" });
+    expect(replay.pricing).toEqual({
+      channel: null,
+      reason: `No price channel is known, so nothing simulated is priced: No channel for pi-like.`,
+      asOf: "2026-10-10",
+      requested: "session-channel",
     });
+  });
+
+  it("shows the measured figures in their own currency when no price channel is known", async () => {
+    const provider = new TraceProvider(
+      "pi-like",
+      [
+        sessionOf(
+          "pi-like",
+          FOUR_SONNET.map((m, i) => turnOf(i, m, k(2))),
+        ),
+      ],
+      [traceOf("pi-like", "claude-code", FOUR_SONNET)],
+    );
+    const result = await serviceOf([provider]).replay({
+      sessionId: "s-1",
+      model: SONNET,
+    });
+    if (result.status !== "ok") throw new Error(result.status);
+    expect(result.value.currency).toBe("AI_CREDITS");
+    expect(result.value.pricing.channel).toBeNull();
+    expect(result.value.turns[0]!.measured.cost).toEqual({
+      known: true,
+      value: 2,
+      currency: "AI_CREDITS",
+      basis: "billed",
+    });
+  });
+
+  it("records no channel when the API price is asked for and the vendor lists no API channel", async () => {
+    // Every real profile's vendor has an API channel, so a copy under a
+    // vendor id with none stands in for one that doesn't.
+    const anthropic = profiles.find((p) => p.vendorId === "anthropic")!;
+    const acme = {
+      ...anthropic,
+      vendorId: "acme",
+      models: anthropic.models.map((m) => ({
+        ...m,
+        vendorId: "acme",
+        modelId: `acme-${m.modelId}`,
+        ...(m.cheaperSiblingId
+          ? { cheaperSiblingId: `acme-${m.cheaperSiblingId}` }
+          : {}),
+      })),
+    };
+    expect(vendorApiChannel("acme")).toBeUndefined();
+    const service = serviceOf([copilotProvider(FOUR_SONNET)], {
+      profiles: [...profiles, acme],
+    });
+    const result = await service.replay({
+      sessionId: "s-1",
+      model: `acme-${SONNET}`,
+      pricing: "api",
+    });
+    if (result.status !== "ok") throw new Error(result.status);
+    expect(sessionReplaySchema.parse(result.value).pricing).toMatchObject({
+      channel: null,
+      requested: "api",
+      reason: expect.stringContaining("No API channel is listed"),
+    });
+    // The Copilot session's billed AI Credits stay in their own unit.
+    expect(result.value.currency).toBe("AI_CREDITS");
   });
 
   it("keeps a measured cost that isn't known as unknown, with its reason", async () => {

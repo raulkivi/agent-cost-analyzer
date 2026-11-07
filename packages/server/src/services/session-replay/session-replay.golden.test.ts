@@ -110,6 +110,123 @@ function serviceOver(
   });
 }
 
+// The fixtures are dated before the price book's first prices
+// (2026-10-01), so replayed as they are, every cost would be unknown. Each
+// real provider is wrapped, in this test only, to move every time in its
+// Session (startedAt, each turn's startedAt) and its RequestTrace (each
+// request's startedAt) by one fixed offset, so the first request lands on
+// SHIFTED_START: after every replayed model's first price (Claude Haiku 5.5
+// from 2026-10-07) and clear of GPT-6.1 Sol's 2026-10-20 price change. The
+// offset comes from the fixture's own first request, so it's deterministic;
+// gaps and order are unchanged, so cache behaviour is identical.
+const SHIFTED_START = "2026-10-21T09:00:00.000Z";
+type TraceProvider = LogProvider & RequestTraceReader;
+
+const shift = (time: string, offsetMs: number) =>
+  new Date(Date.parse(time) + offsetMs).toISOString();
+
+function timeShifted(
+  provider: TraceProvider,
+  start = SHIFTED_START,
+): TraceProvider {
+  const offsetOf = (trace: RequestTrace | null): number => {
+    const first = trace?.requests[0];
+    return first ? Date.parse(start) - Date.parse(first.startedAt) : 0;
+  };
+  const shiftTrace = (trace: RequestTrace, offset: number): RequestTrace => ({
+    ...trace,
+    requests: trace.requests.map((request) => ({
+      ...request,
+      startedAt: shift(request.startedAt, offset),
+    })),
+  });
+  const shiftSession = (session: Session, offset: number): Session => ({
+    ...session,
+    ...(session.startedAt !== undefined
+      ? { startedAt: shift(session.startedAt, offset) }
+      : {}),
+    turns: session.turns.map((turn) => ({
+      ...turn,
+      ...(turn.startedAt !== undefined
+        ? { startedAt: shift(turn.startedAt, offset) }
+        : {}),
+    })),
+  });
+  return {
+    id: provider.id,
+    label: provider.label,
+    checkAvailability: () => provider.checkAvailability(),
+    listSessions: () => provider.listSessions(),
+    readTurnDetail: (sessionId, turnIndex) =>
+      provider.readTurnDetail(sessionId, turnIndex),
+    readSession: async (sessionId) => {
+      const session = await provider.readSession(sessionId);
+      return (
+        session &&
+        shiftSession(
+          session,
+          offsetOf(await provider.readRequestTrace(sessionId)),
+        )
+      );
+    },
+    readRequestTrace: async (sessionId) => {
+      const trace = await provider.readRequestTrace(sessionId);
+      return trace && shiftTrace(trace, offsetOf(trace));
+    },
+  };
+}
+
+describe("timeShifted (test decorator)", () => {
+  const trace: RequestTrace = {
+    sessionId: "s",
+    providerId: "p",
+    harness: "claude-code",
+    notTraced: [],
+    requests: [0, 90_000].map((ms, index) => ({
+      index,
+      turnIndex: index,
+      startedAt: new Date(
+        Date.parse("2026-09-01T10:00:00.000Z") + ms,
+      ).toISOString(),
+      model: "m",
+      uncachedInput: 1,
+      cacheRead: 0,
+      cacheWrite: 0,
+      output: 1,
+    })),
+  };
+  const session: Session = {
+    id: "s",
+    mode: "analyze",
+    title: "s",
+    model: "m",
+    turns: [],
+    turnCount: 0,
+    costAiCredits: { known: false, reason: "n/a" },
+    usageDataAvailable: true,
+    startedAt: "2026-09-01T09:59:00.000Z",
+  };
+  class One extends FakeProvider implements RequestTraceReader {
+    async readRequestTrace() {
+      return trace;
+    }
+  }
+
+  it("moves the first request to the start and every other time by the same offset", async () => {
+    const shifted = timeShifted(new One("p", [session]));
+    const moved = await shifted.readRequestTrace("s");
+    expect(moved?.requests.map((r) => r.startedAt)).toEqual([
+      SHIFTED_START,
+      "2026-10-21T09:01:30.000Z",
+    ]);
+    expect((await shifted.readSession("s"))?.startedAt).toBe(
+      "2026-10-21T08:59:00.000Z",
+    );
+    // The provider's own records are left as they were.
+    expect(trace.requests[0]!.startedAt).toBe("2026-09-01T10:00:00.000Z");
+  });
+});
+
 // Claude Code's session ids hash the file's path and time, so the golden
 // names the fixture instead.
 function stable(replay: SessionReplay, name: string): SessionReplay {
@@ -148,7 +265,7 @@ describe("golden replays: Claude Code fixtures", () => {
   const provider = new ClaudeCodeLogProvider({
     projectsDirPath: path.join(fixtures, "claude-code"),
   });
-  const service = serviceOver(provider);
+  const service = serviceOver(timeShifted(provider));
   const idOf = (name: string) =>
     computeClaudeCodeFileHash(path.join(projectDir, `${name}.jsonl`));
 
@@ -228,7 +345,7 @@ describe("golden replays: Copilot fixtures", () => {
       agentTracesDbPath: null,
     });
     await goldenReplays(
-      serviceOver(provider),
+      serviceOver(timeShifted(provider)),
       USAGE_SESSION_ID,
       "copilot-local-usage-session",
       COPILOT_MODELS,
@@ -246,7 +363,7 @@ describe("golden replays: Copilot fixtures", () => {
       }),
     });
     await goldenReplays(
-      serviceOver(provider),
+      serviceOver(timeShifted(provider)),
       COPILOT_CLI_FIXTURE_SESSION_IDS.usageRecords,
       "copilot-agent-host-usage-records",
       COPILOT_MODELS,

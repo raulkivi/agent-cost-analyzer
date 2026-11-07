@@ -11,7 +11,7 @@
     "vendorId": "anthropic",
     "pricing": {
       "channel": "copilot",
-      "asOf": "2026-10-30",
+      "asOf": "2026-10-21",
       "requested": "session-channel"
     },
     "currency": "AI_CREDITS",
@@ -169,7 +169,7 @@
     "vendorId": "anthropic",
     "pricing": {
       "channel": "copilot",
-      "asOf": "2026-10-30",
+      "asOf": "2026-10-21",
       "requested": "session-channel"
     },
     "currency": "AI_CREDITS",
@@ -327,7 +327,7 @@
     "vendorId": "openai",
     "pricing": {
       "channel": "copilot",
-      "asOf": "2026-10-30",
+      "asOf": "2026-10-21",
       "requested": "session-channel"
     },
     "currency": "AI_CREDITS",
