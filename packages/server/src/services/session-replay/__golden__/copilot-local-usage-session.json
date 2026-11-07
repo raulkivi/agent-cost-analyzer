@@ -1,0 +1,347 @@
+[
+  {
+    "simulated": true,
+    "sessionId": "copilot-local-usage-session",
+    "providerId": "vscode",
+    "harness": "vscode-local",
+    "measuredModels": [
+      "claude-sonnet-5"
+    ],
+    "model": "claude-sonnet-5",
+    "vendorId": "anthropic",
+    "pricing": {
+      "channel": "copilot",
+      "asOf": "2026-08-08",
+      "requested": "session-channel"
+    },
+    "currency": "AI_CREDITS",
+    "turns": [
+      {
+        "turnIndex": 0,
+        "measured": {
+          "cacheRead": 42559,
+          "cost": {
+            "known": true,
+            "value": 7.33953,
+            "currency": "AI_CREDITS",
+            "basis": "billed"
+          }
+        },
+        "simulated": {
+          "cacheRead": 29330,
+          "cacheWrite": 34599,
+          "outcome": "miss",
+          "cost": {
+            "known": false,
+            "reason": "Cannot price: no price for claude-sonnet-5 on github-copilot before 2026-10-01"
+          }
+        }
+      },
+      {
+        "turnIndex": 1,
+        "measured": {
+          "cacheRead": 70461,
+          "cost": {
+            "known": true,
+            "value": 2.30782,
+            "currency": "AI_CREDITS",
+            "basis": "billed"
+          }
+        },
+        "simulated": {
+          "cacheRead": 70464,
+          "cacheWrite": 1832,
+          "outcome": "hit",
+          "cost": {
+            "known": false,
+            "reason": "Cannot price: no price for claude-sonnet-5 on github-copilot before 2026-10-01"
+          }
+        }
+      }
+    ],
+    "totals": {
+      "measured": {
+        "value": null,
+        "knownTurns": 0,
+        "turns": 2
+      },
+      "simulated": {
+        "value": null,
+        "knownTurns": 0,
+        "turns": 2
+      },
+      "difference": null
+    },
+    "coverage": {
+      "turns": 2,
+      "replayedTurns": 2,
+      "requests": 4,
+      "replayedRequests": 4,
+      "notReplayed": []
+    },
+    "selfCheck": {
+      "model": "claude-sonnet-5",
+      "requests": 3,
+      "matching": 3,
+      "readTolerancePercent": 5,
+      "passed": true
+    },
+    "assumptions": [
+      {
+        "id": "A1",
+        "text": "Same conversation: the other model is assumed to get the same prompts and to answer with as many output and reasoning tokens as the session's model did. It wouldn't: another model writes other answers and makes other tool calls, so this is the comparison's main caveat.",
+        "confidence": "unknown"
+      },
+      {
+        "id": "A2",
+        "text": "Same token counts: the session's token counts are kept as they are. Another vendor's tokenizer would count the same text differently, but no text is read to count it again and no vendor publishes a conversion to apply.",
+        "confidence": "unknown"
+      },
+      {
+        "id": "A3",
+        "text": "Cold start: the first request is assumed to read nothing from the cache, though other sessions may have left the tools and system prompt cached. The self-check leaves that request out for the same reason.",
+        "confidence": "inferred"
+      },
+      {
+        "id": "A4",
+        "text": "Inferred cache writes: the log records no cache writes for some requests (Copilot's local harness without agent-traces.db), so those writes are what the vendor's caching rules say they would have been.",
+        "confidence": "inferred"
+      },
+      {
+        "id": "A5",
+        "text": "Same harness: the session's agent is kept, with its tool definitions, cache breakpoints and cache lifetime defaults; only the model, its vendor's caching rules and its prices change.",
+        "confidence": "inferred"
+      }
+    ]
+  },
+  {
+    "simulated": true,
+    "sessionId": "copilot-local-usage-session",
+    "providerId": "vscode",
+    "harness": "vscode-local",
+    "measuredModels": [
+      "claude-sonnet-5"
+    ],
+    "model": "claude-haiku-5.5",
+    "vendorId": "anthropic",
+    "pricing": {
+      "channel": "copilot",
+      "asOf": "2026-08-08",
+      "requested": "session-channel"
+    },
+    "currency": "AI_CREDITS",
+    "turns": [
+      {
+        "turnIndex": 0,
+        "measured": {
+          "cacheRead": 42559,
+          "cost": {
+            "known": true,
+            "value": 7.33953,
+            "currency": "AI_CREDITS",
+            "basis": "billed"
+          }
+        },
+        "simulated": {
+          "cacheRead": 29330,
+          "cacheWrite": 34599,
+          "outcome": "miss",
+          "cost": {
+            "known": false,
+            "reason": "Cannot price: no price for claude-haiku-5.5 on github-copilot before 2026-10-07"
+          }
+        }
+      },
+      {
+        "turnIndex": 1,
+        "measured": {
+          "cacheRead": 70461,
+          "cost": {
+            "known": true,
+            "value": 2.30782,
+            "currency": "AI_CREDITS",
+            "basis": "billed"
+          }
+        },
+        "simulated": {
+          "cacheRead": 70464,
+          "cacheWrite": 1832,
+          "outcome": "hit",
+          "cost": {
+            "known": false,
+            "reason": "Cannot price: no price for claude-haiku-5.5 on github-copilot before 2026-10-07"
+          }
+        }
+      }
+    ],
+    "totals": {
+      "measured": {
+        "value": null,
+        "knownTurns": 0,
+        "turns": 2
+      },
+      "simulated": {
+        "value": null,
+        "knownTurns": 0,
+        "turns": 2
+      },
+      "difference": null
+    },
+    "coverage": {
+      "turns": 2,
+      "replayedTurns": 2,
+      "requests": 4,
+      "replayedRequests": 4,
+      "notReplayed": []
+    },
+    "selfCheck": {
+      "model": "claude-sonnet-5",
+      "requests": 3,
+      "matching": 3,
+      "readTolerancePercent": 5,
+      "passed": true
+    },
+    "assumptions": [
+      {
+        "id": "A1",
+        "text": "Same conversation: the other model is assumed to get the same prompts and to answer with as many output and reasoning tokens as the session's model did. It wouldn't: another model writes other answers and makes other tool calls, so this is the comparison's main caveat.",
+        "confidence": "unknown"
+      },
+      {
+        "id": "A2",
+        "text": "Same token counts: the session's token counts are kept as they are. Another vendor's tokenizer would count the same text differently, but no text is read to count it again and no vendor publishes a conversion to apply.",
+        "confidence": "unknown"
+      },
+      {
+        "id": "A3",
+        "text": "Cold start: the first request is assumed to read nothing from the cache, though other sessions may have left the tools and system prompt cached. The self-check leaves that request out for the same reason.",
+        "confidence": "inferred"
+      },
+      {
+        "id": "A4",
+        "text": "Inferred cache writes: the log records no cache writes for some requests (Copilot's local harness without agent-traces.db), so those writes are what the vendor's caching rules say they would have been.",
+        "confidence": "inferred"
+      },
+      {
+        "id": "A5",
+        "text": "Same harness: the session's agent is kept, with its tool definitions, cache breakpoints and cache lifetime defaults; only the model, its vendor's caching rules and its prices change.",
+        "confidence": "inferred"
+      }
+    ]
+  },
+  {
+    "simulated": true,
+    "sessionId": "copilot-local-usage-session",
+    "providerId": "vscode",
+    "harness": "vscode-local",
+    "measuredModels": [
+      "claude-sonnet-5"
+    ],
+    "model": "gpt-6.1-sol",
+    "vendorId": "openai",
+    "pricing": {
+      "channel": "copilot",
+      "asOf": "2026-08-08",
+      "requested": "session-channel"
+    },
+    "currency": "AI_CREDITS",
+    "turns": [
+      {
+        "turnIndex": 0,
+        "measured": {
+          "cacheRead": 42559,
+          "cost": {
+            "known": true,
+            "value": 7.33953,
+            "currency": "AI_CREDITS",
+            "basis": "billed"
+          }
+        },
+        "simulated": {
+          "cacheRead": 29330,
+          "cacheWrite": 34599,
+          "outcome": "miss",
+          "cost": {
+            "known": false,
+            "reason": "Cannot price: no price for gpt-6.1-sol on github-copilot before 2026-10-01"
+          }
+        }
+      },
+      {
+        "turnIndex": 1,
+        "measured": {
+          "cacheRead": 70461,
+          "cost": {
+            "known": true,
+            "value": 2.30782,
+            "currency": "AI_CREDITS",
+            "basis": "billed"
+          }
+        },
+        "simulated": {
+          "cacheRead": 70464,
+          "cacheWrite": 1832,
+          "outcome": "hit",
+          "cost": {
+            "known": false,
+            "reason": "Cannot price: no price for gpt-6.1-sol on github-copilot before 2026-10-01"
+          }
+        }
+      }
+    ],
+    "totals": {
+      "measured": {
+        "value": null,
+        "knownTurns": 0,
+        "turns": 2
+      },
+      "simulated": {
+        "value": null,
+        "knownTurns": 0,
+        "turns": 2
+      },
+      "difference": null
+    },
+    "coverage": {
+      "turns": 2,
+      "replayedTurns": 2,
+      "requests": 4,
+      "replayedRequests": 4,
+      "notReplayed": []
+    },
+    "selfCheck": {
+      "model": "claude-sonnet-5",
+      "requests": 3,
+      "matching": 3,
+      "readTolerancePercent": 5,
+      "passed": true
+    },
+    "assumptions": [
+      {
+        "id": "A1",
+        "text": "Same conversation: the other model is assumed to get the same prompts and to answer with as many output and reasoning tokens as the session's model did. It wouldn't: another model writes other answers and makes other tool calls, so this is the comparison's main caveat.",
+        "confidence": "unknown"
+      },
+      {
+        "id": "A2",
+        "text": "Same token counts: the session's token counts are kept as they are. Another vendor's tokenizer would count the same text differently, but no text is read to count it again and no vendor publishes a conversion to apply.",
+        "confidence": "unknown"
+      },
+      {
+        "id": "A3",
+        "text": "Cold start: the first request is assumed to read nothing from the cache, though other sessions may have left the tools and system prompt cached. The self-check leaves that request out for the same reason.",
+        "confidence": "inferred"
+      },
+      {
+        "id": "A4",
+        "text": "Inferred cache writes: the log records no cache writes for some requests (Copilot's local harness without agent-traces.db), so those writes are what the vendor's caching rules say they would have been.",
+        "confidence": "inferred"
+      },
+      {
+        "id": "A5",
+        "text": "Same harness: the session's agent is kept, with its tool definitions, cache breakpoints and cache lifetime defaults; only the model, its vendor's caching rules and its prices change.",
+        "confidence": "inferred"
+      }
+    ]
+  }
+]

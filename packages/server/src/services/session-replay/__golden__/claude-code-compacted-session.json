@@ -1,0 +1,320 @@
+[
+  {
+    "simulated": true,
+    "sessionId": "claude-code-compacted-session",
+    "providerId": "claude-code",
+    "harness": "claude-code",
+    "measuredModels": [
+      "claude-sonnet-5"
+    ],
+    "model": "claude-sonnet-5",
+    "vendorId": "anthropic",
+    "pricing": {
+      "channel": "api",
+      "asOf": "2026-09-02",
+      "requested": "session-channel"
+    },
+    "currency": "USD",
+    "turns": [
+      {
+        "turnIndex": 0,
+        "measured": {
+          "cacheRead": 2000,
+          "cost": {
+            "known": false,
+            "reason": "No cost is known for this turn (billed: AI Credits are GitHub Copilot's own billing unit — a Claude Code CLI session has no AI Credits conversion.; reported: This provider logs no cost of its own.; priced: Cannot price: no price for claude-sonnet-5 on anthropic-api before 2026-10-01)"
+          }
+        },
+        "simulated": {
+          "cacheRead": 1800,
+          "cacheWrite": 2350,
+          "outcome": "miss",
+          "cost": {
+            "known": false,
+            "reason": "Cannot price: no price for claude-sonnet-5 on anthropic-api before 2026-10-01"
+          }
+        }
+      },
+      {
+        "turnIndex": 1,
+        "measured": {
+          "cacheRead": 0,
+          "cost": {
+            "known": false,
+            "reason": "No cost is known for this turn (billed: AI Credits are GitHub Copilot's own billing unit — a Claude Code CLI session has no AI Credits conversion.; reported: This provider logs no cost of its own.; priced: Cannot price: no price for claude-sonnet-5 on anthropic-api before 2026-10-01)"
+          }
+        },
+        "simulated": {
+          "cacheRead": 1800,
+          "cacheWrite": 0,
+          "outcome": "partial",
+          "cost": {
+            "known": false,
+            "reason": "Cannot price: no price for claude-sonnet-5 on anthropic-api before 2026-10-01"
+          }
+        }
+      }
+    ],
+    "totals": {
+      "measured": {
+        "value": null,
+        "knownTurns": 0,
+        "turns": 2
+      },
+      "simulated": {
+        "value": null,
+        "knownTurns": 0,
+        "turns": 2
+      },
+      "difference": null
+    },
+    "coverage": {
+      "turns": 2,
+      "replayedTurns": 2,
+      "requests": 3,
+      "replayedRequests": 3,
+      "notReplayed": []
+    },
+    "selfCheck": {
+      "model": "claude-sonnet-5",
+      "requests": 2,
+      "matching": 0,
+      "readTolerancePercent": 5,
+      "passed": false
+    },
+    "assumptions": [
+      {
+        "id": "A1",
+        "text": "Same conversation: the other model is assumed to get the same prompts and to answer with as many output and reasoning tokens as the session's model did. It wouldn't: another model writes other answers and makes other tool calls, so this is the comparison's main caveat.",
+        "confidence": "unknown"
+      },
+      {
+        "id": "A2",
+        "text": "Same token counts: the session's token counts are kept as they are. Another vendor's tokenizer would count the same text differently, but no text is read to count it again and no vendor publishes a conversion to apply.",
+        "confidence": "unknown"
+      },
+      {
+        "id": "A3",
+        "text": "Cold start: the first request is assumed to read nothing from the cache, though other sessions may have left the tools and system prompt cached. The self-check leaves that request out for the same reason.",
+        "confidence": "inferred"
+      },
+      {
+        "id": "A5",
+        "text": "Same harness: the session's agent is kept, with its tool definitions, cache breakpoints and cache lifetime defaults; only the model, its vendor's caching rules and its prices change.",
+        "confidence": "inferred"
+      }
+    ]
+  },
+  {
+    "simulated": true,
+    "sessionId": "claude-code-compacted-session",
+    "providerId": "claude-code",
+    "harness": "claude-code",
+    "measuredModels": [
+      "claude-sonnet-5"
+    ],
+    "model": "claude-haiku-5.5",
+    "vendorId": "anthropic",
+    "pricing": {
+      "channel": "api",
+      "asOf": "2026-09-02",
+      "requested": "session-channel"
+    },
+    "currency": "USD",
+    "turns": [
+      {
+        "turnIndex": 0,
+        "measured": {
+          "cacheRead": 2000,
+          "cost": {
+            "known": false,
+            "reason": "No cost is known for this turn (billed: AI Credits are GitHub Copilot's own billing unit — a Claude Code CLI session has no AI Credits conversion.; reported: This provider logs no cost of its own.; priced: Cannot price: no price for claude-sonnet-5 on anthropic-api before 2026-10-01)"
+          }
+        },
+        "simulated": {
+          "cacheRead": 1800,
+          "cacheWrite": 2350,
+          "outcome": "miss",
+          "cost": {
+            "known": false,
+            "reason": "Cannot price: no price for claude-haiku-5.5 on anthropic-api before 2026-10-07"
+          }
+        }
+      },
+      {
+        "turnIndex": 1,
+        "measured": {
+          "cacheRead": 0,
+          "cost": {
+            "known": false,
+            "reason": "No cost is known for this turn (billed: AI Credits are GitHub Copilot's own billing unit — a Claude Code CLI session has no AI Credits conversion.; reported: This provider logs no cost of its own.; priced: Cannot price: no price for claude-sonnet-5 on anthropic-api before 2026-10-01)"
+          }
+        },
+        "simulated": {
+          "cacheRead": 1800,
+          "cacheWrite": 0,
+          "outcome": "partial",
+          "cost": {
+            "known": false,
+            "reason": "Cannot price: no price for claude-haiku-5.5 on anthropic-api before 2026-10-07"
+          }
+        }
+      }
+    ],
+    "totals": {
+      "measured": {
+        "value": null,
+        "knownTurns": 0,
+        "turns": 2
+      },
+      "simulated": {
+        "value": null,
+        "knownTurns": 0,
+        "turns": 2
+      },
+      "difference": null
+    },
+    "coverage": {
+      "turns": 2,
+      "replayedTurns": 2,
+      "requests": 3,
+      "replayedRequests": 3,
+      "notReplayed": []
+    },
+    "selfCheck": {
+      "model": "claude-sonnet-5",
+      "requests": 2,
+      "matching": 0,
+      "readTolerancePercent": 5,
+      "passed": false
+    },
+    "assumptions": [
+      {
+        "id": "A1",
+        "text": "Same conversation: the other model is assumed to get the same prompts and to answer with as many output and reasoning tokens as the session's model did. It wouldn't: another model writes other answers and makes other tool calls, so this is the comparison's main caveat.",
+        "confidence": "unknown"
+      },
+      {
+        "id": "A2",
+        "text": "Same token counts: the session's token counts are kept as they are. Another vendor's tokenizer would count the same text differently, but no text is read to count it again and no vendor publishes a conversion to apply.",
+        "confidence": "unknown"
+      },
+      {
+        "id": "A3",
+        "text": "Cold start: the first request is assumed to read nothing from the cache, though other sessions may have left the tools and system prompt cached. The self-check leaves that request out for the same reason.",
+        "confidence": "inferred"
+      },
+      {
+        "id": "A5",
+        "text": "Same harness: the session's agent is kept, with its tool definitions, cache breakpoints and cache lifetime defaults; only the model, its vendor's caching rules and its prices change.",
+        "confidence": "inferred"
+      }
+    ]
+  },
+  {
+    "simulated": true,
+    "sessionId": "claude-code-compacted-session",
+    "providerId": "claude-code",
+    "harness": "claude-code",
+    "measuredModels": [
+      "claude-sonnet-5"
+    ],
+    "model": "gpt-6.1-sol",
+    "vendorId": "openai",
+    "pricing": {
+      "channel": "api",
+      "asOf": "2026-09-02",
+      "requested": "session-channel"
+    },
+    "currency": "USD",
+    "turns": [
+      {
+        "turnIndex": 0,
+        "measured": {
+          "cacheRead": 2000,
+          "cost": {
+            "known": false,
+            "reason": "No cost is known for this turn (billed: AI Credits are GitHub Copilot's own billing unit — a Claude Code CLI session has no AI Credits conversion.; reported: This provider logs no cost of its own.; priced: Cannot price: no price for claude-sonnet-5 on anthropic-api before 2026-10-01)"
+          }
+        },
+        "simulated": {
+          "cacheRead": 1800,
+          "cacheWrite": 2350,
+          "outcome": "miss",
+          "cost": {
+            "known": false,
+            "reason": "Cannot price: no price for gpt-6.1-sol on openai-api before 2026-10-01"
+          }
+        }
+      },
+      {
+        "turnIndex": 1,
+        "measured": {
+          "cacheRead": 0,
+          "cost": {
+            "known": false,
+            "reason": "No cost is known for this turn (billed: AI Credits are GitHub Copilot's own billing unit — a Claude Code CLI session has no AI Credits conversion.; reported: This provider logs no cost of its own.; priced: Cannot price: no price for claude-sonnet-5 on anthropic-api before 2026-10-01)"
+          }
+        },
+        "simulated": {
+          "cacheRead": 1800,
+          "cacheWrite": 0,
+          "outcome": "partial",
+          "cost": {
+            "known": false,
+            "reason": "Cannot price: no price for gpt-6.1-sol on openai-api before 2026-10-01"
+          }
+        }
+      }
+    ],
+    "totals": {
+      "measured": {
+        "value": null,
+        "knownTurns": 0,
+        "turns": 2
+      },
+      "simulated": {
+        "value": null,
+        "knownTurns": 0,
+        "turns": 2
+      },
+      "difference": null
+    },
+    "coverage": {
+      "turns": 2,
+      "replayedTurns": 2,
+      "requests": 3,
+      "replayedRequests": 3,
+      "notReplayed": []
+    },
+    "selfCheck": {
+      "model": "claude-sonnet-5",
+      "requests": 2,
+      "matching": 0,
+      "readTolerancePercent": 5,
+      "passed": false
+    },
+    "assumptions": [
+      {
+        "id": "A1",
+        "text": "Same conversation: the other model is assumed to get the same prompts and to answer with as many output and reasoning tokens as the session's model did. It wouldn't: another model writes other answers and makes other tool calls, so this is the comparison's main caveat.",
+        "confidence": "unknown"
+      },
+      {
+        "id": "A2",
+        "text": "Same token counts: the session's token counts are kept as they are. Another vendor's tokenizer would count the same text differently, but no text is read to count it again and no vendor publishes a conversion to apply.",
+        "confidence": "unknown"
+      },
+      {
+        "id": "A3",
+        "text": "Cold start: the first request is assumed to read nothing from the cache, though other sessions may have left the tools and system prompt cached. The self-check leaves that request out for the same reason.",
+        "confidence": "inferred"
+      },
+      {
+        "id": "A5",
+        "text": "Same harness: the session's agent is kept, with its tool definitions, cache breakpoints and cache lifetime defaults; only the model, its vendor's caching rules and its prices change.",
+        "confidence": "inferred"
+      }
+    ]
+  }
+]
