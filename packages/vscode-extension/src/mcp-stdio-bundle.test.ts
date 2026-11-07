@@ -1,5 +1,6 @@
 import { spawn, spawnSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { cpSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
@@ -8,6 +9,7 @@ import { seedCopilotSessionStore } from "@agent-cost-analyzer/server/src/test-su
 import { mcpServerBundleOptions } from "../scripts/esbuild-options.mts";
 
 const VERSION = "9.9.9-test";
+const serverFixturesDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../server/fixtures");
 
 interface JsonRpcMessage {
   jsonrpc: string;
@@ -59,6 +61,10 @@ describe("the built MCP server bundle", () => {
     await build({ ...mcpServerBundleOptions(path.join(installDir, "dist")), logLevel: "silent" });
     writeFileSync(path.join(installDir, "package.json"), JSON.stringify({ name: "ai-credits-analyzer", version: VERSION }));
     bundle = path.join(installDir, "dist", "mcp-stdio.js");
+    // Step 15.13: the vendor profiles and the bundled price book, in media/ as in the .vsix.
+    for (const name of ["vendor-profiles", "price-book"]) {
+      cpSync(path.join(serverFixturesDir, name), path.join(installDir, "media", name), { recursive: true });
+    }
     userDataDir = path.join(installDir, "user-data");
     seedCopilotSessionStore(
       path.join(userDataDir, "User", "globalStorage", "github.copilot-chat", "session-store.db"),
@@ -70,7 +76,8 @@ describe("the built MCP server bundle", () => {
     rmSync(installDir, { recursive: true, force: true });
   });
 
-  it("answers initialize and tools/list with the 9 tools, and writes nothing but JSON-RPC to stdout", async () => {
+  // Step 15.13 (plan §10.1.6): every tool group but billing (D7): 17 tools.
+  it("answers initialize and tools/list with the 17 tools, and writes nothing but JSON-RPC to stdout", async () => {
     const { lines } = await initializeAndListTools(bundle, userDataDir);
     const messages = lines.map((line) => JSON.parse(line) as JsonRpcMessage);
 
@@ -78,13 +85,21 @@ describe("the built MCP server bundle", () => {
     expect(messages.find((message) => message.id === 1)?.result?.serverInfo).toEqual(expect.objectContaining({ name: "ai-credits-analyzer", version: VERSION }));
     const tools = messages.find((message) => message.id === 2)?.result?.tools ?? [];
     expect(tools.map((tool) => tool.name).sort()).toEqual([
+      "compare_costs",
+      "explain_cost_change",
       "get_audit_rollup",
       "get_cost_rollup",
+      "get_price_book",
+      "get_price_changes",
+      "get_project_cost",
+      "get_repository_cost",
       "get_session_audit",
       "get_session_cost",
       "get_turn",
       "list_findings",
       "list_log_providers",
+      "list_projects",
+      "list_repositories",
       "list_sessions",
       "list_tool_calls",
     ]);

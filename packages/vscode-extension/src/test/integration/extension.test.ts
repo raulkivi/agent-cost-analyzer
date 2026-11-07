@@ -33,14 +33,23 @@ const EXTENSION_ID = "raulkivi.ai-credits-analyzer";
 const WAIT_MS = 30_000;
 // The webview requests the panel makes on its own when it opens.
 const STARTUP_METHODS = ["getHealth", "getProductProfile", "listLearnScenarios", "getConfigStatus", "listSessions"];
+// Step 15.13 (plan §10.1.6): every tool group but billing (D7), 17 tools.
 const MCP_TOOLS = [
+  "compare_costs",
+  "explain_cost_change",
   "get_audit_rollup",
   "get_cost_rollup",
+  "get_price_book",
+  "get_price_changes",
+  "get_project_cost",
+  "get_repository_cost",
   "get_session_audit",
   "get_session_cost",
   "get_turn",
   "list_findings",
   "list_log_providers",
+  "list_projects",
+  "list_repositories",
   "list_sessions",
   "list_tool_calls",
 ];
@@ -154,7 +163,7 @@ suite("AI Credits Analyzer in a real VS Code (step 10.9)", function () {
       assert.deepEqual(await mcpServerDefinitions(), []);
     });
 
-    test("with the setting on, offers one server that lists the 9 tools and answers get_session_cost for the seeded session", async () => {
+    test("with the setting on, offers one server that lists the 17 tools and answers get_session_cost for the seeded session", async () => {
       await setMcpEnabled(true);
       const [definition, ...others] = await waitFor(mcpServerDefinitions, (definitions) => definitions.length > 0, {
         timeoutMs: WAIT_MS,

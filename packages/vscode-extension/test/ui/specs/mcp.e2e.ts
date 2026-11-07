@@ -1,6 +1,6 @@
 // Manual checks 2.1, 2.2 and 2.6 (docs/plans/vscode-extension-manual-checks.md)
 // at the level VS Code shows them: its own *MCP: List Servers* pick. That the
-// server lists 9 tools and answers is the integration suite's (over stdio);
+// server lists 17 tools and answers is the integration suite's (over stdio);
 // Copilot agent mode using them (2.3, 2.4) stays manual.
 import { expect } from "@wdio/globals";
 import { INTERNAL_COMMAND_IDS } from "../../../src/diagnostics/test-hooks.js";
