@@ -52,7 +52,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   with coverage, a self-check on the session's own model and the
   assumptions. Every figure is labelled Simulated. `estimate_cost` takes a
   `model` to estimate planned work on it. The same answers are at
-  `GET /api/sessions/:id/replay` and `/replay/compare`; the views follow.
+  `GET /api/sessions/:id/replay` and `/replay/compare`.
+- Replay on and Compare models in Analyze, in the app and the extension:
+  pick a model to see Simulated columns beside the measured ones, a summary
+  with coverage, the self-check and the assumptions, and the session's
+  total on up to 10 models side by side.
 - Vendor-aware Learn (Phase 13): scenarios are simulated on a vendor and
   model you pick, with real prices and documented cache rules, a Cache column,
   per-turn notes, an assumptions popover and a sources footer. Learn numbers

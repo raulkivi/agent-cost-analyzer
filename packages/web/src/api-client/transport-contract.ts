@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 import { describe, expect, it } from "vitest";
 import { apiMethodSchema } from "@agent-cost-analyzer/domain";
+import { ApiRequestError } from "./api-request-error.js";
 import type { ApiMethodName, ApiTransport } from "./transport.js";
 
 // What a transport's fake backend does with the next request.
@@ -9,8 +10,10 @@ export interface ContractHarness {
   transport: ApiTransport;
   // The backend answers the next request successfully with `value`.
   succeedWith(value: unknown): void;
-  // The backend answers the next request with an error of this status.
-  failWith(status: number): void;
+  // The backend answers the next request with an error of this status and,
+  // when given, the backend's own message (the HTTP body's `error`, the RPC
+  // response's `error.message`).
+  failWith(status: number, message?: string): void;
   // The backend never answers the next request (but, like a real one,
   // lets the transport give up on it).
   hang(): void;
@@ -83,6 +86,18 @@ export function describeApiTransportContract(
       const harness = makeHarness();
       harness.failWith(404);
       await expect(harness.transport.call(method, params)).rejects.toThrow(/failed with status 404/);
+    });
+
+    // Step 14.7: a replay's 404 says why the session can't be replayed and a
+    // 400 says what was wrong with the request; the UI shows those words.
+    it("keeps the backend's message and status on the error", async () => {
+      const harness = makeHarness();
+      harness.failWith(404, "This provider's logs can't be replayed yet.");
+      const error = await harness.transport.call("getSessionReplay", { sessionId: "s1", model: "m" }).catch((caught: unknown) => caught);
+
+      expect(error).toBeInstanceOf(ApiRequestError);
+      expect(error).toMatchObject({ status: 404, detail: "This provider's logs can't be replayed yet." });
+      expect((error as Error).message).toMatch(/failed with status 404: This provider's logs can't be replayed yet\.$/);
     });
 
     describe("cancellation (an AbortSignal)", () => {

@@ -173,7 +173,7 @@ describe.each(THEMES)("theme contrast, %s", (theme) => {
     expect(ratio(theme, "var(--color-accent-text)", ground)).toBeGreaterThanOrEqual(AA_TEXT);
   });
 
-  it.each([".btn-primary", ".seg-opt:has(input:checked)", '.filter-chip[aria-pressed="true"]'])(
+  it.each([".btn-primary", ".seg-opt:has(input:checked)", '.filter-chip[aria-pressed="true"]', ".replay-channel--on"])(
     "button text on its button background (%s)",
     (selector) => {
       expect(ruleRatio(theme, selector)).toBeGreaterThanOrEqual(AA_TEXT);

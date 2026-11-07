@@ -5,7 +5,9 @@ on 2026-11-07; D3, D6 and D8 take the recommendation, open for the owner to
 revisit (§11). Steps 14.0 (threat-model rows), 14.1 (domain schemas) and
 14.2 (request traces), 14.3 (the scripter), 14.4 (the replay service) and
 14.5 (routes, RPC and MCP) are done (2026-11-07); step 14.6's mock-ups are
-drawn and approved by the owner (2026-11-07); step 14.7 (the UI) is next.
+drawn and approved by the owner and step 14.7 (the UI in both products) is
+built (2026-11-07; the extension scenario's first run is in CI); step 14.8
+(docs) is next.
 
 The question this answers: **"What would this real session have cost on
 another model?"** It reuses Phase 13's simulator
@@ -247,7 +249,7 @@ recommendation and stay open for the owner to revisit.
 | 14.4 | `ReplayAligner`, `SessionReplayService`, self-check, pricing per D2 | Golden replays of the fixtures; self-check passes at D12 on every calibration fixture. Done 2026-11-07, see the note below |
 | 14.5 | API routes, RPC, MCP tools (per D7) | Route, RPC and MCP tests (schemas, read-only, redaction). Done 2026-11-07, see the note below |
 | 14.6 | Mock-ups (Replay on, Simulated columns, summary card, Compare models) in both products' themes | Owner approves the boards. Done 2026-11-07: drawn and approved by the owner, see the note below |
-| 14.7 | UI in the standalone app and the extension (per D4, D5) | Component, axe and keyboard tests; UI check in three VS Code themes; usage scenarios pass in `web-e2e` and `extension-ui` |
+| 14.7 | UI in the standalone app and the extension (per D4, D5) | Component, axe and keyboard tests; UI check in three VS Code themes; usage scenarios pass in `web-e2e` and `extension-ui`. Done 2026-11-07, see the note below |
 | 14.8 | Docs: architecture.md, User Guide, extension guide, vision | Owner reviews |
 
 ### 12.1 Step notes
@@ -429,6 +431,47 @@ model ids are the vendor profiles' own.
 | 3 | `Compare.dc.html` | Compare models: a ranked table and one-hue bars (the session's own model hatched and outlined, a measured reference line, an unknown total as "unknown" with its reason), Add model with the 10-model cap, the pricing note (another vendor's model moves to that vendor's API) |
 | 4 | `States.dc.html` | The picker open, loading with Cancel, not replayable (a pi session; over 20,000 requests), no price channel, no price on that date, a request error with Retry, no self-check (three models; no vendor profile) |
 | 5 | `VsCode.dc.html` | The extension's panel at a compact width with a Copilot session: Replay on, the summary line, the price switch, the turns table with the Simulated group behind Columns, and Compare models with inline bars. Tweaks: Dark Modern, Light Modern, High Contrast; replay or compare view |
+
+**14.7 (done 2026-11-07).** Replay on and Compare models in the Analyze view
+of both products (one web UI; the extension's webview runs it over RPC),
+behind a new product feature `sessionReplay` (on wherever `ApiService` has a
+replay service: always in the standalone app, with the bundled price book in
+the extension), following the approved boards.
+
+- **Components** (`packages/web/src/components/replay/`): `ReplayOnPicker`
+  (Learn's `VendorPicker`, now with optional label, id, placeholder, excluded
+  and marked models, and an "Off (measured only)" first choice; disabled
+  with the server's reason for pi and mitmproxy, D1), `ReplaySummaryStrip`,
+  `ReplaySummaryPanel` (a dialog; the assumptions open the first time a
+  viewer opens it, `replayAssumptionsSeen` in view-state storage),
+  `ReplayTurnNote` in the Explanation tab, `ReplayStatus` (loading after
+  300 ms with Cancel, not replayable, errors), one `SimulatedBadge`, and
+  `CompareModelsView` with `charts/ReplayCompareBars.tsx`.
+- **Turns table**: a "Simulated · <model>" group of three columns
+  (`replayCache`, `replayCacheRead`, `replayCost`) with dashed cells in every
+  theme (High Contrast: contrastBorder, no fill); the simulated cost can't be
+  hidden and stays visible at narrow width; a turn not replayed shows its
+  reason across the group.
+- **State**: `use-session-replay`, `use-analyze-replay` (model, pricing,
+  panel and compare per session, reset on a new session; one pricing value
+  for the strip, the panel and compare), `use-replay-comparison`.
+- **Transports keep the API's message**: `ApiRequestError` carries the status
+  and the server's text, so a 404's "can't be replayed" reason and a 400's
+  message reach the view.
+- **Tests**: component, App, axe (all four theme fixtures) and keyboard tests;
+  the extension's UI check has three replay scenarios and passes 405 of 405
+  checks in Dark Modern, Light Modern and High Contrast at every width (it
+  found `.table-scroll` needed `position: relative` for a screen-reader-only
+  header at 600 px). Usage scenario R1 in `web-e2e`
+  (`e2e/specs/r1-replay-on-two-models.spec.ts`: a Claude Code fixture
+  session replayed on two models, every figure equal to the API's, the
+  summary's focus handling, Compare models, axe) passes; R1 in
+  `extension-ui` (`test/ui/specs/r1-replay.e2e.ts`: two models, Compare
+  models, WCAG AA in three themes) typechecks and first runs in CI (the
+  VS Code download is blocked in this environment).
+- **Open**: axe in R1 leaves out the session list, which has two violations
+  unrelated to replay (each card's accessible name is its title alone, and
+  the advice checkbox is under 24 px).
 
 ## 13. Exit criterion
 

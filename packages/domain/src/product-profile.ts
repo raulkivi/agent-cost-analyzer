@@ -28,6 +28,10 @@ export const productFeaturesSchema = z.object({
   // (steps 15.10-15.12): the standalone app only, since the extension has
   // no projects file (D7, D19). Off, the tab switch says where they are.
   projectsAndBilling: z.boolean(),
+  // Analyze sessions replayed on another model (Phase 14 step 14.7): on
+  // exactly when the backend can answer replays (the standalone app always;
+  // the extension when its bundled price book is there to price them).
+  sessionReplay: z.boolean(),
 });
 
 export type ProductFeatures = z.infer<typeof productFeaturesSchema>;

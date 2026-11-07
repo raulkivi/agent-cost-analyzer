@@ -29,6 +29,12 @@ import { VendorsTab } from "./components/learn/VendorsTab.js";
 import { AssumptionsPopover } from "./components/learn/AssumptionsPopover.js";
 import { SourcesFooter } from "./components/learn/SourcesFooter.js";
 import { VendorPicker } from "./components/learn/VendorPicker.js";
+import { CompareModelsView } from "./components/replay/CompareModelsView.js";
+import { ReplayOnPicker } from "./components/replay/ReplayOnPicker.js";
+import { ReplayStatus } from "./components/replay/ReplayStatus.js";
+import { ReplaySummaryPanel } from "./components/replay/ReplaySummaryPanel.js";
+import { ReplaySummaryStrip } from "./components/replay/ReplaySummaryStrip.js";
+import { ReplayTurnNote } from "./components/replay/ReplayTurnNote.js";
 import { SessionKpiTiles } from "./components/SessionKpiTiles.js";
 import { TurnMetrics } from "./components/TurnMetrics.js";
 import { Drawer } from "./components/ui/Drawer.js";
@@ -51,12 +57,14 @@ import { AiCreditsSparkline } from "./charts/AiCreditsSparkline.js";
 import { getHostCapabilities } from "./host/current-host-capabilities.js";
 import { defaultSimulatedModel } from "./lib/default-simulated-model.js";
 import { eventLogUnavailableReason } from "./lib/agent-host-unavailable.js";
+import { initialCompareModels } from "./lib/replay-models.js";
 import { performanceMarks as pagePerformanceMarks, type PerformanceMarks } from "./lib/performance-marks.js";
 import { LIST_COLUMN_WIDTH, layoutFor, type Layout } from "./lib/layout.js";
 import { ALL_TURN_COLUMNS, hiddenTurnColumns, parseTurnColumns, turnColumnsFor, type TurnColumnId } from "./lib/turn-columns.js";
 import { useContainerWidth } from "./lib/use-container-width.js";
 import { getViewStateStorage } from "./state/current-view-state-storage.js";
 import { useSessionStore, type RightTab } from "./state/session-store.js";
+import { useAnalyzeReplay } from "./state/use-analyze-replay.js";
 import { useExtraVendorModels } from "./state/use-extra-vendor-models.js";
 import { useScenarioComparison } from "./state/use-scenario-comparison.js";
 
@@ -135,6 +143,7 @@ const FALLBACK_FEATURES: ProductFeatures = {
   // An older server without GET /api/cost/* (or none at all): no cost tabs.
   costAnalysis: false,
   projectsAndBilling: false,
+  sessionReplay: false,
 };
 
 const EMPTY_STATES = {
@@ -225,12 +234,14 @@ export function App({ performanceMarks = pagePerformanceMarks }: AppProps = {}) 
   }, []);
 
   const simulationEnabled = (productProfile?.features ?? FALLBACK_FEATURES).vendorSimulation;
+  // Step 14.7: Analyze's Replay on picker lists the same vendor profiles.
+  const sessionReplayEnabled = (productProfile?.features ?? FALLBACK_FEATURES).sessionReplay;
   useEffect(() => {
-    if (!simulationEnabled) return;
+    if (!simulationEnabled && !sessionReplayEnabled) return;
     fetchVendorProfiles()
       .then(setVendorProfiles)
       .catch((error: Error) => setFetchError(error.message));
-  }, [simulationEnabled]);
+  }, [simulationEnabled, sessionReplayEnabled]);
 
   useEffect(() => {
     fetchHealth()
@@ -351,6 +362,19 @@ export function App({ performanceMarks = pagePerformanceMarks }: AppProps = {}) 
     simulationEnabled,
     extraModels.modelIds.length === 0 ? undefined : [...defaultComparisonModelIds, ...extraModels.modelIds],
   );
+
+  // Phase 14 step 14.7: the open Analyze session replayed on another model.
+  const replayShown = mode === "analyze" && features.sessionReplay && session !== null;
+  const analyzeReplay = useAnalyzeReplay({
+    session: replayShown ? { id: session.id, ...(session.providerId ? { providerId: session.providerId } : {}) } : null,
+    enabled: replayShown,
+  });
+  const readyReplay = replayShown ? analyzeReplay.replay : undefined;
+  const compareShown = replayShown && analyzeReplay.compareOpen;
+  const tableReplay = compareShown ? undefined : readyReplay;
+  const replayVendorName = readyReplay
+    ? (vendorProfiles.find((profile) => profile.vendorId === readyReplay.vendorId)?.displayName ?? readyReplay.vendorId)
+    : "";
 
   const selectedTurn = session?.turns[selectedTurnIndex] ?? null;
   const inspectorShown = session !== null && (inspectorOpen || turnInspectorOpen);
@@ -591,6 +615,9 @@ export function App({ performanceMarks = pagePerformanceMarks }: AppProps = {}) 
               mode === "analyze" && session ? () => setTurnInspectorOpen(true) : undefined
             }
           />
+        )}
+        {mode === "analyze" && rightTab === "explanation" && readyReplay && selectedTurn && (
+          <ReplayTurnNote turn={selectedTurn} replay={readyReplay} />
         )}
         {mode === "learn" && rightTab !== "vendors" && sessionIsSimulated && selectedTurn && hasCacheEvent(selectedTurn) && (
           <VendorDifferencesCard
@@ -842,8 +869,31 @@ export function App({ performanceMarks = pagePerformanceMarks }: AppProps = {}) 
                         AI Credits: unavailable
                       </span>
                     )}
+                    {replayShown && (
+                      <div className="replay-controls">
+                        <ReplayOnPicker
+                          profiles={vendorProfiles}
+                          value={analyzeReplay.model}
+                          sessionModel={session.model}
+                          onChange={analyzeReplay.setModel}
+                          {...(analyzeReplay.unavailableReason ? { unavailableReason: analyzeReplay.unavailableReason } : {})}
+                        />
+                        {!analyzeReplay.unavailableReason && (
+                          <button
+                            type="button"
+                            className="btn btn-secondary btn-sm"
+                            aria-pressed={analyzeReplay.compareOpen}
+                            onClick={() => analyzeReplay.setCompareOpen(!analyzeReplay.compareOpen)}
+                          >
+                            Compare models
+                          </button>
+                        )}
+                      </div>
+                    )}
                     <div style={{ marginLeft: "auto", display: "flex", gap: "var(--space-2)", alignItems: "center" }}>
-                      {layout !== "narrow" && <ColumnChooser visible={chosenColumns} onChange={handleColumnsChange} simulated={sessionIsSimulated} />}
+                      {layout !== "narrow" && !compareShown && (
+                        <ColumnChooser visible={chosenColumns} onChange={handleColumnsChange} simulated={sessionIsSimulated} replayed={tableReplay !== undefined} />
+                      )}
                       {layout !== "wide" && (
                         <button
                           type="button"
@@ -858,17 +908,60 @@ export function App({ performanceMarks = pagePerformanceMarks }: AppProps = {}) 
                     </div>
                   </div>
                   {layout === "narrow" && <SessionKpiTiles turns={session.turns} />}
-                  {/* The table scrolls inside its column at every width, so
-                      it never pushes the page past the panel (step 10.11). */}
-                  <div className="table-scroll">
-                    <TurnsTable
-                      turns={session.turns}
-                      selectedTurnIndex={selectedTurnIndex}
-                      onSelectTurn={selectTurn}
-                      onOpenTurn={layout === "wide" ? undefined : () => setDetailsOpen(true)}
-                      columns={visibleColumns}
+                  {replayShown && !analyzeReplay.unavailableReason && (
+                    readyReplay ? (
+                      <ReplaySummaryStrip
+                        replay={readyReplay}
+                        vendorName={replayVendorName}
+                        onOpenSummary={() => analyzeReplay.setSummaryOpen(true)}
+                        onPricingChange={analyzeReplay.setPricing}
+                      />
+                    ) : (
+                      <ReplayStatus
+                        status={analyzeReplay.load.status}
+                        {...(analyzeReplay.load.error !== undefined ? { error: analyzeReplay.load.error } : {})}
+                        {...(analyzeReplay.load.errorStatus !== undefined ? { errorStatus: analyzeReplay.load.errorStatus } : {})}
+                        model={analyzeReplay.model}
+                        onCancel={() => {
+                          analyzeReplay.load.cancel();
+                          analyzeReplay.setModel(null);
+                        }}
+                        onRetry={analyzeReplay.load.retry}
+                      />
+                    )
+                  )}
+                  {readyReplay && analyzeReplay.summaryOpen && (
+                    <ReplaySummaryPanel
+                      replay={readyReplay}
+                      sessionTitle={session.title}
+                      vendorName={replayVendorName}
+                      onPricingChange={analyzeReplay.setPricing}
+                      onClose={() => analyzeReplay.setSummaryOpen(false)}
                     />
-                  </div>
+                  )}
+                  {compareShown ? (
+                    <CompareModelsView
+                      sessionId={session.id}
+                      {...(session.providerId ? { providerId: session.providerId } : {})}
+                      profiles={vendorProfiles}
+                      initialModels={initialCompareModels({ replayModel: analyzeReplay.model, sessionModel: session.model, profiles: vendorProfiles })}
+                      pricing={analyzeReplay.pricing}
+                      onPricingChange={analyzeReplay.setPricing}
+                    />
+                  ) : (
+                    /* The table scrolls inside its column at every width, so
+                       it never pushes the page past the panel (step 10.11). */
+                    <div className="table-scroll">
+                      <TurnsTable
+                        turns={session.turns}
+                        selectedTurnIndex={selectedTurnIndex}
+                        onSelectTurn={selectTurn}
+                        onOpenTurn={layout === "wide" ? undefined : () => setDetailsOpen(true)}
+                        columns={visibleColumns}
+                        {...(tableReplay ? { replay: tableReplay } : {})}
+                      />
+                    </div>
+                  )}
                   {showDetailsDrawer && selectedTurn && (
                     <Drawer
                       title={`Turn ${selectedTurn.index} details`}
@@ -880,6 +973,7 @@ export function App({ performanceMarks = pagePerformanceMarks }: AppProps = {}) 
                           turns={session.turns}
                           turnIndex={selectedTurnIndex}
                           columns={hiddenTurnColumns(visibleColumns)}
+                          {...(tableReplay ? { replay: tableReplay } : {})}
                         />
                       )}
                       {rightColumn}

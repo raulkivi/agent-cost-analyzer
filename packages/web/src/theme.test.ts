@@ -45,6 +45,18 @@ describe("theme.css (vscode-extension.md §3.5)", () => {
     expect(zIndex(".dialog-backdrop")).toBeGreaterThan(zIndex(".drawer--side"));
   });
 
+  // Step 14.7's UI check: an .sr-only label (position: absolute) in a table
+  // inside a .table-scroll box was placed against the page, not the box, so
+  // a wide table's last header widened the whole page past a 600 px panel.
+  // The scroll box has to be the label's containing block.
+  it("makes the table scroll box the containing block of its visually hidden labels", () => {
+    const css = readTheme();
+    const rule = /\.table-scroll\s*\{([^}]*)\}/.exec(css)?.[1] ?? "";
+
+    expect(rule).toMatch(/overflow-x:\s*auto/);
+    expect(rule).toMatch(/position:\s*relative/);
+  });
+
   describe("reduced motion", () => {
     const block = () => mediaBlock(readTheme(), /\(prefers-reduced-motion:\s*reduce\)/);
 

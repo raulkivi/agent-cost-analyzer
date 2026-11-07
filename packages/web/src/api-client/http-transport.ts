@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
+import { ApiRequestError } from "./api-request-error.js";
 import type { ApiMethodName, ApiTransport } from "./transport.js";
 
 type FetchLike = typeof fetch;
@@ -109,6 +110,18 @@ function toRequest(method: ApiMethodName, params: unknown): HttpRequest {
   }
 }
 
+// The server's error body is `{ error: message }` (app.ts); anything else,
+// or no body at all, gives no message.
+async function errorMessageOf(response: Response): Promise<string | undefined> {
+  try {
+    const body: unknown = await response.json();
+    const message = typeof body === "object" && body !== null ? (body as { error?: unknown }).error : undefined;
+    return typeof message === "string" && message.length > 0 ? message : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 // ApiTransport over the standalone server's REST API. This is the only
 // module in the web package that touches `fetch`.
 export class HttpTransport implements ApiTransport {
@@ -133,7 +146,7 @@ export class HttpTransport implements ApiTransport {
             ...signalInit,
           });
     if (!response.ok) {
-      throw new Error(`Request to ${request.url} failed with status ${response.status}`);
+      throw new ApiRequestError(request.url, response.status, await errorMessageOf(response));
     }
     return (request.text ? response.text() : response.json()) as Promise<T>;
   }

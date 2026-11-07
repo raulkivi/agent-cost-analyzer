@@ -31,3 +31,22 @@ describe("TurnMetrics", () => {
     expect(within(screen.getByRole("definition")).getByText("0.02")).toBeInTheDocument();
   });
 });
+
+// Step 14.7: the narrow drawer shows the simulated columns the table hides.
+describe("TurnMetrics with a replay", () => {
+  it("lists the hidden simulated figures, labelled Simulated, or not replayed with the reason", async () => {
+    const { makeReplay, NOT_REPLAYED_REASON } = await import("../test-support/replay-fixture.js");
+    const turns = [0, 1].map((index) => makeTurn({ index }));
+    const { rerender } = render(<TurnMetrics turns={turns} turnIndex={0} columns={["replayCache", "replayCacheRead", "model"]} replay={makeReplay()} />);
+    expect(screen.getByText("Simulated cache").nextElementSibling).toHaveTextContent("Partial");
+    expect(screen.getByText("Simulated cache read").nextElementSibling).toHaveTextContent((29_000).toLocaleString());
+
+    rerender(<TurnMetrics turns={turns} turnIndex={1} columns={["replayCache", "replayCacheRead"]} replay={makeReplay()} />);
+    expect(screen.getAllByText("not replayed")[0]).toHaveAttribute("title", NOT_REPLAYED_REASON);
+  });
+
+  it("leaves the simulated figures out without a replay", () => {
+    render(<TurnMetrics turns={[makeTurn({ index: 0 })]} turnIndex={0} columns={["replayCache", "model"]} />);
+    expect(screen.queryByText("Simulated cache")).not.toBeInTheDocument();
+  });
+});

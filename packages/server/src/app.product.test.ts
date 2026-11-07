@@ -43,6 +43,7 @@ describe("GET /api/product", () => {
         vendorSimulation: true,
         costAnalysis: true,
         projectsAndBilling: true,
+        sessionReplay: true,
       },
     });
   });

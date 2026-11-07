@@ -5,6 +5,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { ConfigStatus, ProductProfile, Session } from "@agent-cost-analyzer/domain";
 import { App } from "./App.js";
 import { resetApiTransport } from "./api-client/current-transport.js";
+import { ReplayStatus } from "./components/replay/ReplayStatus.js";
+import { ReplaySummaryStrip } from "./components/replay/ReplaySummaryStrip.js";
+import { TurnsTable } from "./components/TurnsTable.js";
 import { AsyncView, cancelledEmptyState } from "./components/ui/AsyncView.js";
 import { resetHostCapabilities, setHostCapabilities } from "./host/current-host-capabilities.js";
 import { resetViewStateStorage } from "./state/current-view-state-storage.js";
@@ -12,6 +15,7 @@ import { makeAuditRollup, makeSessionAudit } from "./test-support/audit-fixture.
 import { axeViolations } from "./test-support/axe.js";
 import { sampleCostComparison, sampleCostSeries } from "./test-support/cost-fixture.js";
 import { sampleInsightsDataset } from "./test-support/insights-fixture.js";
+import { makeReplay, REPLAY_PROFILES } from "./test-support/replay-fixture.js";
 import { makeTurn } from "./test-support/turn-fixture.js";
 import themeCss from "./theme.css?raw";
 import vscodeThemeCss from "./theme-vscode.css?raw";
@@ -142,13 +146,15 @@ const extensionProfile: ProductProfile = {
   productId: "vscode-extension",
   displayName: "AI Credits Analyzer",
   version: "0.1.0",
-  features: { providerSelect: false, crossProviderInsights: false, settingFixes: true, openInEditor: true, sessionSidebar: false, vendorSimulation: false, costAnalysis: false, projectsAndBilling: false },
+  features: { providerSelect: false, crossProviderInsights: false, settingFixes: true, openInEditor: true, sessionSidebar: false, vendorSimulation: false, costAnalysis: false, projectsAndBilling: false, sessionReplay: false },
 };
 
 interface Backend {
   sessions: Session[];
   warnings: ConfigStatus["warnings"];
   profile: ProductProfile | null;
+  // Step 14.7: the open session is a Claude Code one, so it can be replayed.
+  replayable?: boolean;
 }
 
 let backend: Backend;
@@ -164,7 +170,9 @@ function fakeFetch(url: string) {
   if (url === "/api/log-providers")
     return json({ providers: [{ id: "vscode", label: "VS Code", available: true }], activeProviderId: "vscode" });
   if (url === "/api/sessions") return json(backend.sessions);
-  if (url === "/api/sessions/session-1") return json(fullSession);
+  if (url === "/api/sessions/session-1") return json(backend.replayable ? { ...fullSession, providerId: "claude-code" } : fullSession);
+  if (url === "/api/vendors") return json(REPLAY_PROFILES);
+  if (url.startsWith("/api/sessions/session-1/replay?")) return json(makeReplay({ sessionId: "session-1" }));
   if (url === "/api/sessions/session-1/audit") return json(makeSessionAudit({ sessionId: "session-1" }));
   if (url === "/api/sessions/session-1/system-prompt")
     return Promise.resolve({ ok: true, status: 200, text: () => Promise.resolve("You are helpful.\n<rules>Be brief.</rules>") });
@@ -318,7 +326,7 @@ describe.each(Object.keys(THEMES) as ThemeName[])("axe: no WCAG 2.2 AA violation
       productId: "standalone",
       displayName: "Agent Cost Analyzer",
       version: "0.9.0",
-      features: { providerSelect: true, crossProviderInsights: true, settingFixes: false, openInEditor: false, sessionSidebar: false, vendorSimulation: false, costAnalysis: true, projectsAndBilling: true },
+      features: { providerSelect: true, crossProviderInsights: true, settingFixes: false, openInEditor: false, sessionSidebar: false, vendorSimulation: false, costAnalysis: true, projectsAndBilling: true, sessionReplay: false },
     };
 
     async function openCostTab(name: "Cost over time" | "Compare") {
@@ -483,6 +491,67 @@ describe.each(Object.keys(THEMES) as ThemeName[])("axe: no WCAG 2.2 AA violation
     await expectNoViolations();
   });
 
+  // Phase 14 step 14.7: a session replayed on another model (boards 1, 2, 4).
+  describe("session replay", () => {
+    it("Analyze mode, a session replayed: the picker, the strip, the Simulated columns and the turn note, then the summary panel", async () => {
+      backend.replayable = true;
+      backend.profile = {
+        productId: "standalone",
+        displayName: "Agent Cost Analyzer",
+        version: "0.9.0",
+        features: { providerSelect: true, crossProviderInsights: true, settingFixes: false, openInEditor: false, sessionSidebar: false, vendorSimulation: true, costAnalysis: false, projectsAndBilling: false, sessionReplay: true },
+      };
+      await openAnalyzeSession();
+      const picker = await screen.findByLabelText("Replay on");
+      await expectNoViolations();
+      fireEvent.change(picker, { target: { value: "claude-sonnet-5.5" } });
+      await screen.findByRole("region", { name: "Replay summary" });
+      await screen.findByRole("region", { name: "Simulated on claude-sonnet-5.5" });
+      await expectNoViolations();
+
+      fireEvent.click(screen.getByRole("button", { name: "Columns" }));
+      await expectNoViolations();
+
+      fireEvent.click(screen.getByRole("button", { name: "Replay summary" }));
+      await screen.findByRole("dialog");
+      await expectNoViolations();
+    });
+
+    it("the replay table with a turn not replayed, a failed self-check and an unpriced replay", async () => {
+      const replay = makeReplay({
+        selfCheck: { model: "claude-opus-5.5", requests: 40, matching: 37, readTolerancePercent: 5, passed: false },
+        pricing: { channel: null, reason: "No price channel is known, so nothing simulated is priced.", asOf: "2026-10-21", requested: "session-channel" },
+      });
+      render(
+        <main>
+          <ReplaySummaryStrip replay={replay} vendorName="Anthropic" onOpenSummary={vi.fn()} onPricingChange={vi.fn()} />
+          <TurnsTable turns={[0, 1, 2].map((index) => makeTurn({ index }))} selectedTurnIndex={0} onSelectTurn={vi.fn()} replay={replay} />
+        </main>,
+      );
+      await expectNoViolations();
+    });
+
+    it("the not replayable, loading and error states", async () => {
+      vi.useFakeTimers();
+      try {
+        render(
+          <main>
+            <ReplayStatus status="idle" model={null} onCancel={vi.fn()} onRetry={vi.fn()} />
+            <ReplayStatus status="error" errorStatus={404} error="This provider's logs can't be replayed yet." model="claude-sonnet-5.5" onCancel={vi.fn()} onRetry={vi.fn()} />
+            <ReplayStatus status="error" error="network error" model="claude-sonnet-5.5" onCancel={vi.fn()} onRetry={vi.fn()} />
+            <ReplayStatus status="loading" model="claude-sonnet-5.5" onCancel={vi.fn()} onRetry={vi.fn()} />
+          </main>,
+        );
+        act(() => {
+          vi.advanceTimersByTime(300);
+        });
+      } finally {
+        vi.useRealTimers();
+      }
+      await expectNoViolations();
+    });
+  });
+
   it("error, partial and cancelled AsyncView states", async () => {
     render(
       <main>
@@ -533,7 +602,7 @@ describe.each(Object.keys(THEMES) as ThemeName[])("axe: no WCAG 2.2 AA violation
         productId: "standalone",
         displayName: "Agent Cost Analyzer",
         version: "0.9.0",
-        features: { providerSelect: true, crossProviderInsights: true, settingFixes: false, openInEditor: false, sessionSidebar: false, vendorSimulation: false, costAnalysis: true, projectsAndBilling: true },
+        features: { providerSelect: true, crossProviderInsights: true, settingFixes: false, openInEditor: false, sessionSidebar: false, vendorSimulation: false, costAnalysis: true, projectsAndBilling: true, sessionReplay: false },
       };
       await openAnalyzeSession();
       fireEvent.change(screen.getByRole("combobox", { name: /^view$/i }), { target: { value: "dashboard" } });

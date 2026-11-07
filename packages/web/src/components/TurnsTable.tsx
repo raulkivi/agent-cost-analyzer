@@ -2,14 +2,16 @@
 // SPDX-License-Identifier: MIT
 import { useRef } from "react";
 import type { CSSProperties, KeyboardEvent, ReactNode } from "react";
-import type { TokenCount, Turn } from "@agent-cost-analyzer/domain";
+import type { ReplayTurn, SessionReplay, TokenCount, Turn } from "@agent-cost-analyzer/domain";
 import { sumTokenCounts } from "@agent-cost-analyzer/domain";
 import { isFailedStatus } from "@agent-cost-analyzer/domain";
 import { formatAiCredits } from "../lib/format-ai-credits.js";
 import { TRIGGER_LABELS } from "../lib/trigger-labels.js";
 import { aiCreditsToUsd, formatUsd } from "../lib/ai-credits-usd.js";
-import { ALL_TURN_COLUMNS, columnsApplyingTo, TURN_COLUMNS, type TurnColumnId } from "../lib/turn-columns.js";
+import { formatSimulatedCost, replayCostTitle } from "../lib/replay-format.js";
+import { ALL_TURN_COLUMN_LABELS, ALL_TURN_COLUMNS, columnsApplyingTo, isReplayColumn, type TurnColumnId } from "../lib/turn-columns.js";
 import { CacheOutcomeBadge } from "./learn/CacheOutcomeBadge.js";
+import { SimulatedBadge } from "./replay/SimulatedBadge.js";
 import { Tag } from "./ui/Tag.js";
 
 const CUMULATIVE_COST_UNKNOWN_REASON =
@@ -60,6 +62,31 @@ interface CellProps {
   turn: Turn;
   turnIndex: number;
   turns: Turn[];
+  // This turn in the replay shown (step 14.7), for the simulated columns.
+  replayTurn?: ReplayTurn;
+}
+
+// A replay always has every turn; this only guards a mismatch.
+const NOT_IN_REPLAY_REASON = "This turn isn't in the replay.";
+
+export function notReplayedReason(replayTurn: ReplayTurn | undefined): string {
+  return replayTurn?.notReplayedReason ?? NOT_IN_REPLAY_REASON;
+}
+
+// The simulated figures, or "not replayed" (never 0) with the reason.
+function simulatedValue(replayTurn: ReplayTurn | undefined, value: (simulated: NonNullable<ReplayTurn["simulated"]>) => ReactNode): ReactNode {
+  if (!replayTurn?.simulated) {
+    return <span className="text-muted" title={notReplayedReason(replayTurn)}>not replayed</span>;
+  }
+  return value(replayTurn.simulated);
+}
+
+export function SimulatedCostValue({ cost }: { cost: NonNullable<ReplayTurn["simulated"]>["cost"] }) {
+  return (
+    <span title={replayCostTitle(cost)} className={cost.known ? undefined : "text-muted"}>
+      {formatSimulatedCost(cost)}
+    </span>
+  );
 }
 
 // Each column's value for a turn; the table and the narrow layout's details
@@ -92,6 +119,9 @@ const VALUES: Record<TurnColumnId, (props: CellProps) => ReactNode> = {
     <CreditsCell turn={turn} credits={cumulativeCostThrough(turns, turnIndex)} />
   ),
   model: ({ turn }) => turn.usage.model,
+  replayCache: ({ replayTurn }) => simulatedValue(replayTurn, (simulated) => <CacheOutcomeBadge outcome={simulated.outcome} showWord />),
+  replayCacheRead: ({ replayTurn }) => simulatedValue(replayTurn, (simulated) => simulated.cacheRead.toLocaleString()),
+  replayCost: ({ replayTurn }) => simulatedValue(replayTurn, (simulated) => <SimulatedCostValue cost={simulated.cost} />),
 };
 
 export function TurnColumnValue({ column, ...props }: CellProps & { column: TurnColumnId }) {
@@ -106,7 +136,10 @@ const CELL_STYLES: Partial<Record<TurnColumnId, { className?: string; style?: CS
   model: { className: "text-muted truncate", style: { fontSize: 12, maxWidth: 110 } },
 };
 
-const LABELS = new Map<TurnColumnId, string>(TURN_COLUMNS.map((column) => [column.id, column.label]));
+// Under the "Simulated · <model>" group header the simulated columns need
+// no "Simulated" of their own.
+const GROUPED_LABELS: Partial<Record<TurnColumnId, string>> = { replayCache: "Cache", replayCacheRead: "Cache read", replayCost: "Cost" };
+const headerLabel = (id: TurnColumnId, grouped: boolean) => (grouped ? GROUPED_LABELS[id] : undefined) ?? ALL_TURN_COLUMN_LABELS.get(id);
 
 // Below this many columns the table needn't be forced wider than its panel.
 const MIN_WIDTH_ALL_COLUMNS = 760;
@@ -121,6 +154,29 @@ interface TurnsTableProps {
   // Visible columns, in display order (the column chooser, or the narrow
   // layout's priority columns). Omitted, all of them.
   columns?: readonly TurnColumnId[];
+  // Phase 14 step 14.7: the session replayed on another model. Its
+  // simulated columns follow the measured ones, which stay as they are.
+  replay?: SessionReplay;
+}
+
+function SimulatedCells({ columns, replayTurn, ...props }: CellProps & { columns: TurnColumnId[] }) {
+  if (columns.length === 0) return null;
+  if (!replayTurn?.simulated) {
+    return (
+      <td colSpan={columns.length} className="sim-cell sim-cell--gap">
+        <strong>not replayed</strong> <span className="text-muted">{notReplayedReason(replayTurn)}</span>
+      </td>
+    );
+  }
+  return (
+    <>
+      {columns.map((id) => (
+        <td key={id} className="sim-cell">
+          <TurnColumnValue column={id} replayTurn={replayTurn} {...props} />
+        </td>
+      ))}
+    </>
+  );
 }
 
 export function TurnsTable({
@@ -129,9 +185,15 @@ export function TurnsTable({
   onSelectTurn,
   onOpenTurn,
   columns: requestedColumns = ALL_TURN_COLUMNS,
+  replay,
 }: TurnsTableProps) {
   const simulated = turns.some((turn) => turn.simulation !== undefined);
-  const columns = columnsApplyingTo(requestedColumns, simulated);
+  const replayed = replay !== undefined;
+  const shown = columnsApplyingTo(requestedColumns, simulated, replayed);
+  const columns = shown.filter((id) => !isReplayColumn(id));
+  const simulatedColumns = shown.filter(isReplayColumn);
+  const grouped = simulatedColumns.length > 0;
+  const replayTurns = new Map((replay?.turns ?? []).map((replayTurn) => [replayTurn.turnIndex, replayTurn]));
   const rows = useRef<(HTMLTableRowElement | null)[]>([]);
   // Roving tabindex: the table is one Tab stop, entered at the selected row.
   const tabStop = selectedTurnIndex >= 0 && selectedTurnIndex < turns.length ? selectedTurnIndex : 0;
@@ -160,12 +222,33 @@ export function TurnsTable({
   }
 
   return (
-    <table className="table" style={columns.length === columnsApplyingTo(ALL_TURN_COLUMNS, simulated).length ? { minWidth: MIN_WIDTH_ALL_COLUMNS } : undefined}>
+    <table
+      className="table"
+      style={shown.length === columnsApplyingTo(ALL_TURN_COLUMNS, simulated, replayed).length ? { minWidth: MIN_WIDTH_ALL_COLUMNS } : undefined}
+    >
+      {grouped && replay && (
+        <caption className="sr-only">
+          Turns of the session: measured figures from the log and, in the Simulated columns, figures simulated on {replay.model}
+        </caption>
+      )}
       <thead>
+        {grouped && replay && (
+          <tr>
+            <th scope="colgroup" colSpan={columns.length}>
+              Measured
+            </th>
+            <th scope="colgroup" colSpan={simulatedColumns.length} className="sim-cell sim-group">
+              <span className="sim-group-label">
+                <SimulatedBadge />{" "}
+                <span className="sim-group-model">{replay.model}</span>
+              </span>
+            </th>
+          </tr>
+        )}
         <tr>
-          {columns.map((id) => (
-            <th key={id} scope="col">
-              {LABELS.get(id)}
+          {[...columns, ...simulatedColumns].map((id) => (
+            <th key={id} scope="col" className={isReplayColumn(id) ? "sim-cell" : undefined}>
+              {headerLabel(id, grouped)}
             </th>
           ))}
         </tr>
@@ -191,6 +274,7 @@ export function TurnsTable({
                 <TurnColumnValue column={id} turn={turn} turnIndex={turnIndex} turns={turns} />
               </td>
             ))}
+            <SimulatedCells columns={simulatedColumns} turn={turn} turnIndex={turnIndex} turns={turns} replayTurn={replayTurns.get(turn.index)} />
           </tr>
         ))}
       </tbody>

@@ -35,8 +35,9 @@ export interface ExtensionApiServiceOptions extends CopilotProviderCompositionOp
 // Copilot provider is registered, so there's no provider select and no
 // cross-provider wording. The extension host implements the openSetting and
 // openTextDocument host commands (step 10.5), so setting fixes and
-// open-in-editor are on.
-export function extensionProductProfile(version: string): ProductProfile {
+// open-in-editor are on. Session replay (step 14.7) is on exactly when the
+// ApiService has a replay to answer with, which needs the bundled price book.
+export function extensionProductProfile(version: string, { sessionReplay }: { sessionReplay: boolean }): ProductProfile {
   return {
     productId: "vscode-extension",
     displayName: "AI Credits Analyzer",
@@ -52,6 +53,7 @@ export function extensionProductProfile(version: string): ProductProfile {
       // no projects file and no billing here (D7, D19).
       costAnalysis: true,
       projectsAndBilling: false,
+      sessionReplay,
     },
   };
 }
@@ -75,6 +77,10 @@ export function createExtensionApiService(options: ExtensionApiServiceOptions): 
   const attribution = createSessionAttributor({ vendorProfiles });
   const pricer = priceBook ? createTurnPricer(priceBook) : undefined;
   const insights = createInsightsService(registry, attribution, pricer);
+  // Without a price book a replay can't be priced, so the method answers
+  // "not available" and the UI offers no replay.
+  const sessionReplay =
+    priceBook && pricer ? createSessionReplay({ providers: registry, profiles: vendorProfiles, priceBook, pricer, attribution }) : undefined;
 
   return new ApiService({
     registry,
@@ -85,11 +91,8 @@ export function createExtensionApiService(options: ExtensionApiServiceOptions): 
     costAnalysis: createCostAnalysis(insights, priceBook),
     // Phase 14 step 14.5 (D5): Copilot sessions replayed on another model,
     // priced from the bundled price book with the same attribution and
-    // pricer as the Dashboard. Without a price book a replay can't be
-    // priced, so the method answers "not available".
-    ...(priceBook && pricer
-      ? { sessionReplay: createSessionReplay({ providers: registry, profiles: vendorProfiles, priceBook, pricer, attribution }) }
-      : {}),
+    // pricer as the Dashboard.
+    ...(sessionReplay ? { sessionReplay } : {}),
     settings: appSettings,
     checkConfig: (minRetainedSessionLogsThreshold) =>
       checkConfig({
@@ -101,6 +104,6 @@ export function createExtensionApiService(options: ExtensionApiServiceOptions): 
     learnScenarios: createSimulatedScenarioCatalog(learnSimulation),
     learnSimulation,
     appVersion,
-    productProfile: extensionProductProfile(appVersion),
+    productProfile: extensionProductProfile(appVersion, { sessionReplay: sessionReplay !== undefined }),
   });
 }

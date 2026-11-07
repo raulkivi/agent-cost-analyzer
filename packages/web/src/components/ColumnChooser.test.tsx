@@ -141,3 +141,31 @@ describe("ColumnChooser (§3.5 Layout, mock-up board 1)", () => {
     expect(screen.getByText("Showing 2 of 15 columns")).toBeInTheDocument();
   });
 });
+
+// Phase 14 step 14.7: the replay's simulated group in the chooser.
+describe("ColumnChooser with a replay shown", () => {
+  it("lists the simulated columns, the simulated cost always on, and keeps their ids when another column toggles", async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(<ColumnChooser visible={ALL_TURN_COLUMNS} onChange={onChange} replayed />);
+
+    expect(screen.getByText("Showing 17 of 17 columns")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Columns" }));
+    expect(screen.getByRole("checkbox", { name: "Simulated cost" })).toBeDisabled();
+    expect(screen.getByRole("checkbox", { name: "Simulated cost" })).toBeChecked();
+    await user.click(screen.getByRole("checkbox", { name: "Simulated cache read" }));
+    expect(onChange).toHaveBeenLastCalledWith(ALL_TURN_COLUMNS.filter((id) => id !== "replayCacheRead"));
+  });
+
+  it("without a replay, neither lists nor drops the simulated columns", async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(<ColumnChooser visible={ALL_TURN_COLUMNS} onChange={onChange} />);
+
+    expect(screen.getByText("Showing 14 of 14 columns")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Columns" }));
+    expect(screen.queryByRole("checkbox", { name: "Simulated cost" })).not.toBeInTheDocument();
+    await user.click(screen.getByRole("checkbox", { name: "Model" }));
+    expect(onChange).toHaveBeenLastCalledWith(ALL_TURN_COLUMNS.filter((id) => id !== "model"));
+  });
+});

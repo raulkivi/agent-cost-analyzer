@@ -55,6 +55,8 @@ export function standaloneProductProfile(version: string): ProductProfile {
       costAnalysis: true,
       // Steps 15.10-15.12: projects, statements and estimates.
       projectsAndBilling: true,
+      // Phase 14 step 14.7: its ApiService always has a session replay.
+      sessionReplay: true,
     },
   };
 }
