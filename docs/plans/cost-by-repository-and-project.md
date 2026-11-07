@@ -1131,7 +1131,7 @@ No UI code (15.9 onwards) starts before the mock-ups in 15.8 are approved.
 | 15.11 | **Statements**: builder, freeze, diff, CSV/JSON/Markdown export, Billing tab, Projects editor (§11.5); MCP: `get_statement`, `prepare_statement` prompt | Golden statements; a frozen statement survives a price-book update unchanged and the diff is exact; every project can be assigned by keyboard alone; same UI checks as 15.9; the step's MCP tools pass the §10.1.6 tests; scenarios S1, S5, S6 and S8 pass Done 2026-11-06, see §14.1 |
 | 15.12 | **Estimates** + Estimate panel; MCP: `estimate_cost`, `estimate_work` prompt | Forecast range tests on fixture histories; shown as a labelled range, never a single number; the step's MCP tools pass the §10.1.6 tests; scenario S7 passes Done 2026-11-06, see §14.1 |
 | 15.13 | **MCP, cross-cutting work** (§10.1.4): server instructions for both products, the `toolGroups` option and the extension's tool set, the security tests of §10.1.5 | The §10.1.6 exit criterion over stdio; scenario S10 passes Done 2026-11-07, see §14.1 |
-| 15.14 | **VS Code extension** (§11.9): group by repository, status bar per workspace repository, the two Dashboard tabs | Extension and manifest tests (category, codicons, l10n keys); UI check passes; manual check list updated; scenario S9 passes in `extension-ui` |
+| 15.14 | **VS Code extension** (§11.9): group by repository, status bar per workspace repository, the two Dashboard tabs | Extension and manifest tests (category, codicons, l10n keys); UI check passes; manual check list updated; scenario S9 passes in `extension-ui` Done 2026-11-07 (S9 written for `extension-ui`, see §14.1) |
 | 15.15 | **Docs**: architecture.md (domain, data flow, API), UserGuide, vscode-extension-guide, vision non-goals, README index | Docs reviewed by the owner |
 
 ### 14.1 Step status notes
@@ -2053,6 +2053,56 @@ broken on purpose once to see the property test fail); S10 was written
 after the views it reads. The `@modelcontextprotocol/sdk` dev dependency
 of `packages/web` is for the e2e suite's stdio client. Not yet: the
 extension's own projects (15.14 or later) and its Dashboard tabs (15.14).
+
+**15.14 (done 2026-11-07).** The VS Code extension (§11.9), with the
+owner's choices of 2026-11-07: a repository group totals every session in
+it, as a day group does (board 7's "last 30 days" note is dropped); a
+`ProductFeatures.projectsAndBilling` flag hides Project and Billing; the
+grouping is kept across workspaces.
+
+- **Dashboard tabs.** The extension's ApiService gets the cost analyses
+  over the Copilot dataset and the bundled price book
+  (`createCostAnalysis`), so its profile turns `costAnalysis` on;
+  `projectsAndBilling` is false there (no projects file or billing, D7,
+  D19) and true in the standalone app. `InsightsDashboard` then offers
+  Overview, Cost over time and Compare, with board 7's note "Billing and
+  estimates: in the Agent Cost Analyzer app".
+- **Group by repository** (`sidebar/sessions-by-repository-tree-model.ts`).
+  Groups by the repository each session's folder resolves to
+  (`SessionAttributor`, once per refresh, `sidebar/repository-sources.ts`):
+  the highest known total first, groups with none after them, **No
+  repository** last with its reasons in the tooltip. A group's description
+  is the day groups' (known sum and unknown count, never 0); its tooltip
+  gives the session count and total; a session row adds its day ("Today
+  14:02"). A local repository is named by its folder ("scratch (local)")
+  and its TreeItem id carries a hash, never the path. The group with the
+  newest session is expanded.
+- **Toggle.** `aiCreditsAnalyzer.groupSessionsByRepository` (`$(repo)`) and
+  `…ByDay` (`$(calendar)`) in the Sessions view's title, one at a time by
+  the `aiCreditsAnalyzer.sessionsGrouping` context key; the choice is in
+  `globalState` (`GlobalStateSessionsGroupingStore`). Regrouping reads
+  nothing again.
+- **Status bar.** With the open workspace's folders in a repository
+  (resolved by `RepositoryResolver` on every refresh, and when a folder is
+  added or removed), the item shows their AI Credits today ("portal-web
+  48.20 AI Credits today", "portal-web +1" for several, a local one by its
+  folder) and the tooltip and accessible name add every repository's total
+  and the coverage. No folder, a folder outside a repository, or no session
+  today in it: every repository's total, as before.
+- **Tests.** Tree model, controller, store, commands, view and manifest
+  (category, codicons, `package.nls.json` keys) tests; the UI check gains
+  the extension's own profile on Cost over time in the three themes (12
+  more, all pass). **S9** (`test/ui/specs/s9-group-by-repository.e2e.ts`,
+  its own `s9` launch with portal-web open): the group totals, the status
+  bar's text and accessible name equal `S9_EXPECTED`, and the Cost over
+  time tab passes the contrast judge in Dark Modern, Light Modern and High
+  Contrast. `s9-fixture.test.ts` checks `S9_EXPECTED` against the
+  extension's own sidebar code over the same fixture.
+
+Not run here: the wdio specs need VS Code's download host, which this
+cloud environment's network doesn't allow, so S9 first runs in CI's
+`extension-ui` job (informational, as decided for step 10.16). Not yet:
+the extension's own projects (D19 stands).
 
 ## 15. Exit criterion
 

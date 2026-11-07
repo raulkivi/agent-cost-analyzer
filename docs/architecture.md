@@ -488,14 +488,18 @@ plus the `explain_cost_change` prompt.
 The Dashboard's cost tabs (Phase 15 step 15.9, plan §11.1–§11.3) are the
 web client of those two endpoints. `InsightsDashboard` shows a view switch
 (Overview, Cost over time, Compare, and Project from step 15.10; a `select` below 700 px of its own
-width) when `ProductFeatures.costAnalysis` is on: true in the standalone
-app, false in the extension until step 15.14, whose ApiService has no cost
-analyses (the webview RPC allow-list carries `getCostTimeSeries`,
+width) when `ProductFeatures.costAnalysis` is on, in both products (the
+extension's ApiService has the cost analyses over its Copilot dataset from
+step 15.14). Project and Billing need `ProductFeatures.projectsAndBilling`
+too: true in the standalone app, false in the extension, which has no
+projects file or billing (D7, D19), so its switch offers Overview, Cost
+over time and Compare with a note that billing and estimates are in the
+standalone app (the webview RPC allow-list carries `getCostTimeSeries`,
 `getCostComparison`, from step 15.10 `getProjectCost` and
 `getCostVariance`, and from step 15.11 `getStatement`, `issueStatement`,
 `getProjects`, `saveProjects` and `getRepositoryList`, from step 15.12
-`getCostEstimate`, and the extension
-answers them 404). The tabs share
+`getCostEstimate`; the extension answers the project and billing ones
+404). The tabs share
 the associative selections. Data flow: `lib/cost/cost-scope.ts` turns the
 selections into a request (Project, else Repository, as `groupBy` and
 `ids`; one selected Provider as `provider`; a selected No project or

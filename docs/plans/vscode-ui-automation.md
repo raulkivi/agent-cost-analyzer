@@ -343,6 +343,7 @@ dependencies that never ship.
 | 1.10 | `layout-theme.e2e.ts` | Light theme changes the body class and `--vscode-editor-background`; `editor.fontSize` reaches the webview as a variable that nothing uses (Q4, decided 2026-11-04: the panel follows the workbench font; the spec pins it) |
 | 1.11 | `panel.e2e.ts` | `ai-credits-analyzer-doc` scheme, a typed key leaves it clean, copy puts the prompt on the clipboard (the clipboard works under xvfb) |
 | 1.13 | `views.e2e.ts` | Learn scenario, another, then a session; plus the Sessions count guard (F5) |
+| 1.14 (S9) | `s9-group-by-repository.e2e.ts` | Phase 15 step 15.14: its own `s9` launch with `workspacePath` on a seeded git folder (`scripts/ui-automation/s9-fixture.mts`): Group by repository's rows, the status bar's text and accessible name against `S9_EXPECTED` (checked by `s9-fixture.test.ts`), and the Cost over time tab through the probe and judge in Dark Modern, Light Modern and High Contrast |
 | 2.1, 2.2, 2.6 | `mcp.e2e.ts` | VS Code's own *MCP: List Servers* (`workbench.mcp.listServer`) lists the server without Copilot Chat installed. The 17 tools stay the integration suite's |
 | 2.5 | `mcp-trust.e2e.ts` | Own capability: Workspace Trust on, a folder whose settings enable the server; untrusted gives no server, the Trust button in the Workspace Trust editor gives one |
 
