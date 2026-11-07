@@ -12,6 +12,7 @@
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "mcp": "tsx src/mcp/stdio.ts",
+    "spike:build": "tsx scripts/build-spike-view.mts",
     "scenarios:docs": "tsx scripts/scenarios-docs.mts",
     "scenarios:docs:check": "tsx scripts/scenarios-docs.mts --check"
   },
@@ -26,6 +27,7 @@
   "devDependencies": {
     "@types/express": "^5.0.0",
     "@types/supertest": "^7.2.1",
+    "esbuild": "^0.28.2",
     "supertest": "^7.3.1",
     "tsx": "^4.23.15",
     "vitest": "^5.0.5"

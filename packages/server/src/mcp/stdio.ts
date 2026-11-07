@@ -9,6 +9,8 @@ import { createTurnPricer } from "../composition/create-turn-pricer.js";
 import { loadVendorProfiles } from "../data-sources/vendor-profiles/loader.js";
 import { readAppVersion } from "../composition/app-version.js";
 import { createMcpServer } from "./mcp-server.js";
+import { FileViewSource } from "./apps/view-source.js";
+import { parseStdioArgs } from "./stdio-args.js";
 import { FileStatementStore } from "../data-sources/statements/file-statement-store.js";
 import { priceBookHashOf } from "../services/billing/statement-service.js";
 
@@ -28,9 +30,11 @@ const attribution = createStandaloneAttribution(registry, resolvedAppSettingsDir
 const priceBook = createStandalonePriceBook(resolvedAppSettingsDir, attribution.catalog);
 // threat-model.md §5.6: list_projects shares client names and billing codes
 // with the chat model only when the user asks for it at launch.
-const projectBillingDetails = process.argv.slice(2).includes("--project-billing-details");
+const { projectBillingDetails, appViewsHtml } = parseStdioArgs(process.argv.slice(2));
 const server = createMcpServer({
   projectBillingDetails,
+  // Dev only (docs/plans/mcp-apps-spike.md): --app-views-html serves that file as the views resource.
+  ...(appViewsHtml ? { appViews: { source: new FileViewSource(appViewsHtml) } } : {}),
   ...createMcpServices(registry, version, undefined, attribution, createTurnPricer(priceBook), priceBook, {
     // Step 15.11: get_statement reads the statements the app issued.
     store: new FileStatementStore(resolvedAppSettingsDir),
