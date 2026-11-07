@@ -124,6 +124,62 @@ describe("simulateScenario", () => {
     expect(t2.triggeredEvent).toBe("model-switch");
   });
 
+  it("cheaperModelId sets the model the cheaper role uses, over the curated sibling", () => {
+    const s = script([step(1), step(2, [{ type: "model-switch", toRole: "cheaper" }])]);
+    const session = simulateScenario(s, {
+      profile: anthropic,
+      modelId: "claude-opus-5.5",
+      cheaperModelId: "claude-haiku-4.5",
+      harness: "claude-code",
+      harnessCacheDefaults: false,
+    });
+    expect(session.model).toBe("claude-opus-5.5");
+    expect(session.turns[1]!.usage.model).toBe("claude-haiku-4.5");
+  });
+
+  it("cheaperModelId lets a model with no curated sibling switch", () => {
+    const s = script([step(1), step(2, [{ type: "model-switch", toRole: "cheaper" }])]);
+    const session = simulateScenario(s, {
+      profile: anthropic,
+      modelId: "claude-haiku-4.5",
+      cheaperModelId: "claude-opus-5.5",
+      harness: "claude-code",
+      harnessCacheDefaults: false,
+    });
+    expect(session.turns[1]!.usage.model).toBe("claude-opus-5.5");
+  });
+
+  it("reports the 1-hour writes inside cacheWrite as extendedCacheWrite", () => {
+    const s = script([step(1, [{ type: "extended-ttl" }]), step(2)]);
+    const [t1, t2] = run(s).turns;
+    expect(known(t1!.usage.cacheWrite)).toBe(4500);
+    expect(t1!.usage.extendedCacheWrite).toEqual({ known: true, value: 4500 });
+    expect(t2!.usage.extendedCacheWrite).toEqual({ known: true, value: 600 });
+  });
+
+  it("reports extendedCacheWrite 0 when nothing is written with the 1-hour lifetime", () => {
+    const [t1] = run(script([step(1)])).turns;
+    expect(t1!.usage.extendedCacheWrite).toEqual({ known: true, value: 0 });
+  });
+
+  it("leaves extendedCacheWrite out when the turn's counts are unknown", () => {
+    const s = script([step(1), step(2, [{ type: "image-added" }])]);
+    const [, t2] = run(s, xai, "grok-4.7").turns;
+    expect(t2!.usage.cacheWrite.known).toBe(false);
+    expect(t2!.usage.extendedCacheWrite).toBeUndefined();
+  });
+
+  it("cheaperModelId must be in the profile", () => {
+    expect(() =>
+      simulateScenario(script([step(1)]), {
+        profile: anthropic,
+        modelId: "claude-opus-5.5",
+        cheaperModelId: "gpt-nope",
+        harness: "claude-code",
+      }),
+    ).toThrow(/Model "gpt-nope" is not in the anthropic profile/);
+  });
+
   it("S13: compaction reads the warm prefix, then the summary restarts messages", () => {
     const s = script([
       step(1),

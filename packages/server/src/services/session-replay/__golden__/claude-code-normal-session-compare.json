@@ -1,0 +1,46 @@
+{
+  "simulated": true,
+  "sessionId": "normal-session",
+  "providerId": "claude-code",
+  "currency": "USD",
+  "measured": {
+    "value": 0.01613,
+    "knownTurns": 2,
+    "turns": 2
+  },
+  "entries": [
+    {
+      "model": "claude-sonnet-5",
+      "vendorId": "anthropic",
+      "total": {
+        "value": 0.032366,
+        "knownTurns": 2,
+        "turns": 2
+      },
+      "replayedTurns": 2,
+      "isMeasuredModel": true
+    },
+    {
+      "model": "claude-haiku-5.5",
+      "vendorId": "anthropic",
+      "total": {
+        "value": 0.0016183,
+        "knownTurns": 2,
+        "turns": 2
+      },
+      "replayedTurns": 2,
+      "isMeasuredModel": false
+    },
+    {
+      "model": "gpt-6.1-sol",
+      "vendorId": "openai",
+      "total": {
+        "value": 0.0222755,
+        "knownTurns": 2,
+        "turns": 2
+      },
+      "replayedTurns": 2,
+      "isMeasuredModel": false
+    }
+  ]
+}

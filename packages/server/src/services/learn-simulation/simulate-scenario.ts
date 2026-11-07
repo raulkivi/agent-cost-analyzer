@@ -31,6 +31,10 @@ export interface SimulateOptions {
   // sessions, docs/plans/learn-calibration-findings.md); the scenario docs
   // turn this off to teach the vendor's own default.
   harnessCacheDefaults?: boolean;
+  // The model the "cheaper" role uses, instead of the primary's curated
+  // cheaper sibling: a session replay's self-check runs a session that
+  // switched from model A to model B on A and B (Phase 14 step 14.4).
+  cheaperModelId?: string;
 }
 
 const DEFAULT_GAP_MINUTES = 1;
@@ -77,9 +81,8 @@ export function simulateScenario(
     );
   }
   const primary = findModel(profile, options.modelId);
-  const cheaper = primary.cheaperSiblingId
-    ? findModel(profile, primary.cheaperSiblingId)
-    : undefined;
+  const cheaperId = options.cheaperModelId ?? primary.cheaperSiblingId;
+  const cheaper = cheaperId ? findModel(profile, cheaperId) : undefined;
   const policy = new InvalidationPolicy(profile);
   // A harness with a long cache lifetime has its own break lengths and
   // wording (the scripts that teach cache expiry); with its defaults off the
@@ -235,6 +238,10 @@ export function simulateScenario(
         uncachedInput: known(result.uncachedInput),
         cacheWrite: known(result.cacheWrite + result.extendedCacheWrite),
         cacheRead: known(result.cacheRead),
+        // The part of cacheWrite with the 1-hour lifetime, so a pricer can
+        // charge it at that rate on any vendor. Left out when the counts are
+        // unknown (the unknown branch above): cacheWrite is unknown there.
+        extendedCacheWrite: known(result.extendedCacheWrite),
         // Attribution within the input counts above, not an extra charge.
         tool: known(step.newContent.toolResultTokens),
         vision: known(imageTotal),

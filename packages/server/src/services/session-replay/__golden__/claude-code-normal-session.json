@@ -1,0 +1,338 @@
+[
+  {
+    "simulated": true,
+    "sessionId": "claude-code-normal-session",
+    "providerId": "claude-code",
+    "harness": "claude-code",
+    "measuredModels": [
+      "claude-sonnet-5"
+    ],
+    "model": "claude-sonnet-5",
+    "vendorId": "anthropic",
+    "pricing": {
+      "channel": "api",
+      "asOf": "2026-10-21",
+      "requested": "session-channel"
+    },
+    "currency": "USD",
+    "turns": [
+      {
+        "turnIndex": 0,
+        "measured": {
+          "cacheRead": 3300,
+          "cost": {
+            "known": true,
+            "value": 0.00899,
+            "currency": "USD",
+            "basis": "priced"
+          }
+        },
+        "simulated": {
+          "cacheRead": 1815,
+          "cacheWrite": 3050,
+          "outcome": "miss",
+          "cost": {
+            "known": true,
+            "value": 0.016763,
+            "currency": "USD"
+          }
+        }
+      },
+      {
+        "turnIndex": 1,
+        "measured": {
+          "cacheRead": 3200,
+          "cost": {
+            "known": true,
+            "value": 0.00714,
+            "currency": "USD",
+            "basis": "priced"
+          }
+        },
+        "simulated": {
+          "cacheRead": 1815,
+          "cacheWrite": 3435,
+          "outcome": "hit",
+          "cost": {
+            "known": true,
+            "value": 0.015603,
+            "currency": "USD"
+          }
+        }
+      }
+    ],
+    "totals": {
+      "measured": {
+        "value": 0.01613,
+        "knownTurns": 2,
+        "turns": 2
+      },
+      "simulated": {
+        "value": 0.032366,
+        "knownTurns": 2,
+        "turns": 2
+      },
+      "difference": 0.016236
+    },
+    "coverage": {
+      "turns": 2,
+      "replayedTurns": 2,
+      "requests": 3,
+      "replayedRequests": 3,
+      "notReplayed": []
+    },
+    "selfCheck": {
+      "model": "claude-sonnet-5",
+      "requests": 2,
+      "matching": 1,
+      "readTolerancePercent": 5,
+      "passed": false
+    },
+    "assumptions": [
+      {
+        "id": "A1",
+        "text": "Same conversation: the other model is assumed to get the same prompts and to answer with as many output and reasoning tokens as the session's model did. It wouldn't: another model writes other answers and makes other tool calls, so this is the comparison's main caveat.",
+        "confidence": "unknown"
+      },
+      {
+        "id": "A2",
+        "text": "Same token counts: the session's token counts are kept as they are. Another vendor's tokenizer would count the same text differently, but no text is read to count it again and no vendor publishes a conversion to apply.",
+        "confidence": "unknown"
+      },
+      {
+        "id": "A3",
+        "text": "Cold start: the first request is assumed to read nothing from the cache, though other sessions may have left the tools and system prompt cached. The self-check leaves that request out for the same reason.",
+        "confidence": "inferred"
+      },
+      {
+        "id": "A5",
+        "text": "Same harness: the session's agent is kept, with its tool definitions, cache breakpoints and cache lifetime defaults; only the model, its vendor's caching rules and its prices change.",
+        "confidence": "inferred"
+      }
+    ]
+  },
+  {
+    "simulated": true,
+    "sessionId": "claude-code-normal-session",
+    "providerId": "claude-code",
+    "harness": "claude-code",
+    "measuredModels": [
+      "claude-sonnet-5"
+    ],
+    "model": "claude-haiku-5.5",
+    "vendorId": "anthropic",
+    "pricing": {
+      "channel": "api",
+      "asOf": "2026-10-21",
+      "requested": "session-channel"
+    },
+    "currency": "USD",
+    "turns": [
+      {
+        "turnIndex": 0,
+        "measured": {
+          "cacheRead": 3300,
+          "cost": {
+            "known": true,
+            "value": 0.00899,
+            "currency": "USD",
+            "basis": "priced"
+          }
+        },
+        "simulated": {
+          "cacheRead": 1815,
+          "cacheWrite": 3050,
+          "outcome": "miss",
+          "cost": {
+            "known": true,
+            "value": 0.00083815,
+            "currency": "USD"
+          }
+        }
+      },
+      {
+        "turnIndex": 1,
+        "measured": {
+          "cacheRead": 3200,
+          "cost": {
+            "known": true,
+            "value": 0.00714,
+            "currency": "USD",
+            "basis": "priced"
+          }
+        },
+        "simulated": {
+          "cacheRead": 1815,
+          "cacheWrite": 3435,
+          "outcome": "hit",
+          "cost": {
+            "known": true,
+            "value": 0.00078015,
+            "currency": "USD"
+          }
+        }
+      }
+    ],
+    "totals": {
+      "measured": {
+        "value": 0.01613,
+        "knownTurns": 2,
+        "turns": 2
+      },
+      "simulated": {
+        "value": 0.0016183,
+        "knownTurns": 2,
+        "turns": 2
+      },
+      "difference": -0.014511699999999999
+    },
+    "coverage": {
+      "turns": 2,
+      "replayedTurns": 2,
+      "requests": 3,
+      "replayedRequests": 3,
+      "notReplayed": []
+    },
+    "selfCheck": {
+      "model": "claude-sonnet-5",
+      "requests": 2,
+      "matching": 1,
+      "readTolerancePercent": 5,
+      "passed": false
+    },
+    "assumptions": [
+      {
+        "id": "A1",
+        "text": "Same conversation: the other model is assumed to get the same prompts and to answer with as many output and reasoning tokens as the session's model did. It wouldn't: another model writes other answers and makes other tool calls, so this is the comparison's main caveat.",
+        "confidence": "unknown"
+      },
+      {
+        "id": "A2",
+        "text": "Same token counts: the session's token counts are kept as they are. Another vendor's tokenizer would count the same text differently, but no text is read to count it again and no vendor publishes a conversion to apply.",
+        "confidence": "unknown"
+      },
+      {
+        "id": "A3",
+        "text": "Cold start: the first request is assumed to read nothing from the cache, though other sessions may have left the tools and system prompt cached. The self-check leaves that request out for the same reason.",
+        "confidence": "inferred"
+      },
+      {
+        "id": "A5",
+        "text": "Same harness: the session's agent is kept, with its tool definitions, cache breakpoints and cache lifetime defaults; only the model, its vendor's caching rules and its prices change.",
+        "confidence": "inferred"
+      }
+    ]
+  },
+  {
+    "simulated": true,
+    "sessionId": "claude-code-normal-session",
+    "providerId": "claude-code",
+    "harness": "claude-code",
+    "measuredModels": [
+      "claude-sonnet-5"
+    ],
+    "model": "gpt-6.1-sol",
+    "vendorId": "openai",
+    "pricing": {
+      "channel": "api",
+      "asOf": "2026-10-21",
+      "requested": "session-channel"
+    },
+    "currency": "USD",
+    "turns": [
+      {
+        "turnIndex": 0,
+        "measured": {
+          "cacheRead": 3300,
+          "cost": {
+            "known": true,
+            "value": 0.00899,
+            "currency": "USD",
+            "basis": "priced"
+          }
+        },
+        "simulated": {
+          "cacheRead": 1815,
+          "cacheWrite": 3050,
+          "outcome": "miss",
+          "cost": {
+            "known": true,
+            "value": 0.0120065,
+            "currency": "USD"
+          }
+        }
+      },
+      {
+        "turnIndex": 1,
+        "measured": {
+          "cacheRead": 3200,
+          "cost": {
+            "known": true,
+            "value": 0.00714,
+            "currency": "USD",
+            "basis": "priced"
+          }
+        },
+        "simulated": {
+          "cacheRead": 1815,
+          "cacheWrite": 3435,
+          "outcome": "hit",
+          "cost": {
+            "known": true,
+            "value": 0.010269,
+            "currency": "USD"
+          }
+        }
+      }
+    ],
+    "totals": {
+      "measured": {
+        "value": 0.01613,
+        "knownTurns": 2,
+        "turns": 2
+      },
+      "simulated": {
+        "value": 0.0222755,
+        "knownTurns": 2,
+        "turns": 2
+      },
+      "difference": 0.006145500000000002
+    },
+    "coverage": {
+      "turns": 2,
+      "replayedTurns": 2,
+      "requests": 3,
+      "replayedRequests": 3,
+      "notReplayed": []
+    },
+    "selfCheck": {
+      "model": "claude-sonnet-5",
+      "requests": 2,
+      "matching": 1,
+      "readTolerancePercent": 5,
+      "passed": false
+    },
+    "assumptions": [
+      {
+        "id": "A1",
+        "text": "Same conversation: the other model is assumed to get the same prompts and to answer with as many output and reasoning tokens as the session's model did. It wouldn't: another model writes other answers and makes other tool calls, so this is the comparison's main caveat.",
+        "confidence": "unknown"
+      },
+      {
+        "id": "A2",
+        "text": "Same token counts: the session's token counts are kept as they are. Another vendor's tokenizer would count the same text differently, but no text is read to count it again and no vendor publishes a conversion to apply.",
+        "confidence": "unknown"
+      },
+      {
+        "id": "A3",
+        "text": "Cold start: the first request is assumed to read nothing from the cache, though other sessions may have left the tools and system prompt cached. The self-check leaves that request out for the same reason.",
+        "confidence": "inferred"
+      },
+      {
+        "id": "A5",
+        "text": "Same harness: the session's agent is kept, with its tool definitions, cache breakpoints and cache lifetime defaults; only the model, its vendor's caching rules and its prices change.",
+        "confidence": "inferred"
+      }
+    ]
+  }
+]
