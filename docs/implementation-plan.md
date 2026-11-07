@@ -1459,7 +1459,8 @@ labelled **Simulated**.
 merged.
 
 **Status (2026-11-07)**: planned, decisions D1–D8 recorded; steps 14.0
-(threat-model rows) and 14.1 (domain schemas) done; step 14.2 next.
+(threat-model rows), 14.1 (domain schemas) and 14.2 (request traces for
+Claude Code and Copilot) done; step 14.3 next.
 
 ## Phase 15 — Cost by repository and project, price history, billing
 
