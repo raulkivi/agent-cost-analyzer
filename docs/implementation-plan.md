@@ -12,7 +12,7 @@ Phase 12 adds branded, interactive MCP Apps views for both products.
 **Overall status (2026-11-06):** Phases 0-10 have their code and docs
 merged to `main`. The extension's 0.1.0 is released (tag `ext-v0.1.0`,
 2026-11-03). Open: Phase 10's owner manual checks and decisions (see its
-section), Phase 11 (not started), Phase 12 (in progress: A0, A0b, A1–A9 and A11 done; the plan
+section), Phase 11 (not started), Phase 12 (in progress: A0, A0b, A1–A11 and A13 done; the plan
 covers the Phase 14 and 15 tools since 2026-11-07), Phase 13 (in
 progress: steps 13.0-13.10 and 13.5a merged, the owner's eyes-on review
 of 13.8 open), Phase 14
@@ -1422,7 +1422,7 @@ server group, `get_turn_series`, `_meta.ui` on three tools, ext-apps 1.7.5)
 done; A0 host spike done by the owner (both hosts refuse `vscode://`
 links, so A12 is dropped and U1 copies the command text); A0b mock-ups
 approved; A5 `packages/mcp-apps` scaffold done (single-file Vite build,
-`AppHostPort`, view router; bundle budget 900 KB by owner decision); A6 theme layering (host-variable mapping, brand ramps, contrast tests) and A7 pure view models for U1–U3 done; A9 U1 `SessionCostView` (turn drill-down, copy-command button, shared branded shell) and A11 U3 `FindingsView` (filters re-call `list_findings`) done. Plan
+`AppHostPort`, view router; bundle budget 900 KB by owner decision); A6 theme layering (host-variable mapping, brand ramps, contrast tests) and A7 pure view models for U1–U3 done; A9 U1 `SessionCostView` (turn drill-down, copy-command button, shared branded shell) and A11 U3 `FindingsView` (filters re-call `list_findings`) done; A10 U2 `CostRollupView` (in-place drill-down into U1) and A13 packaging (views in the `.vsix` and served by `scripts/mcp-server.sh`) done. Plan
 updated to cover the Phase 14 and 15 tools (Increments 2 and 3).
 
 ## Phase 13 — Vendor-aware Learn simulation (VS Code first)

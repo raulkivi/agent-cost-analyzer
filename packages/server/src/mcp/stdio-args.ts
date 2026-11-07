@@ -6,8 +6,8 @@
 export interface StdioArgs {
   // threat-model.md §5.6: list_projects shares client names and billing codes.
   projectBillingDetails: boolean;
-  // Dev only (docs/plans/mcp-apps-spike.md): serve this HTML file as the MCP
-  // App views resource instead of nothing. Absent = no app views.
+  // Serve this built HTML file (packages/mcp-apps/dist/views.html) as the MCP
+  // App views resource. Absent or missing file = no app views.
   appViewsHtml?: string;
 }
 

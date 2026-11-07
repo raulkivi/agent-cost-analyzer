@@ -1,10 +1,11 @@
 // Bundles the extension's code (`npm run build`, after the web app's
 // extension build has filled media/): the host's dist/extension.js with
 // esbuild's metafile at dist/meta.json, and the MCP child process's
-// dist/mcp-stdio.js with dist/meta-mcp-stdio.json (step 10.8). Then the
+// dist/mcp-stdio.js with dist/meta-mcp-stdio.json (step 10.8), and the MCP App
+// views copied to dist/mcp-apps/views.html (Phase 12 A13). Then the
 // simulation's data goes into media/learn-scripts, media/vendor-profiles and
 // media/price-book, where the composition root reads it (G4).
-import { cpSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import path from "node:path";
 import { build } from "esbuild";
@@ -16,6 +17,17 @@ const extension = await build(extensionBundleOptions(distDir));
 writeFileSync(path.join(distDir, "meta.json"), JSON.stringify(extension.metafile, null, 2));
 const mcpServer = await build(mcpServerBundleOptions(distDir));
 writeFileSync(path.join(distDir, "meta-mcp-stdio.json"), JSON.stringify(mcpServer.metafile, null, 2));
+
+// Phase 12 A13: the MCP App views, one self-contained HTML file built by
+// packages/mcp-apps. The child process serves dist/mcp-apps/views.html (no
+// file, no views), so a build that skipped mcp-apps must fail here rather
+// than ship an extension whose server silently has no views.
+const viewsBuild = path.join(extensionPackageDir, "..", "mcp-apps", "dist", "views.html");
+if (!existsSync(viewsBuild)) {
+  throw new Error(`${viewsBuild} is missing: build packages/mcp-apps before the extension (npm run build)`);
+}
+mkdirSync(path.join(distDir, "mcp-apps"), { recursive: true });
+cpSync(viewsBuild, path.join(distDir, "mcp-apps", "views.html"));
 
 // Fixtures are data, not code, so they're copied rather than bundled.
 const serverDir = path.dirname(createRequire(import.meta.url).resolve("@agent-cost-analyzer/server/package.json"));

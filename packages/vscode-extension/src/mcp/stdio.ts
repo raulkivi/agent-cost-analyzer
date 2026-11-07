@@ -35,7 +35,10 @@ async function main(): Promise<void> {
   const version = readAppVersion(path.join(__dirname, "..", "package.json"));
   // Step 15.13: the vendor profiles and the bundled price book ship in media/.
   const vendorProfilesDir = path.join(__dirname, "..", "media", "vendor-profiles");
-  const server = createCopilotMcpServer({ userDataDir: args.userDataDir, version, vendorProfilesDir });
+  // Phase 12 A13: the MCP App views, copied there by scripts/build.mts; a
+  // missing file means the server starts without them.
+  const appViewsHtml = path.join(__dirname, "mcp-apps", "views.html");
+  const server = createCopilotMcpServer({ userDataDir: args.userDataDir, version, vendorProfilesDir, appViewsHtml });
   await server.connect(new StdioServerTransport());
   process.stderr.write(`${PREFIX} ${version} ready on stdio (read-only, Copilot Chat logs only).\n`);
 }

@@ -29,7 +29,7 @@ export function App({ port, brand, clipboard }: { port: AppHostPort; brand: View
     case "session-cost":
       return <SessionCostView port={port} brand={brand} clipboard={clipboard} result={result} />;
     case "cost-rollup":
-      return <CostRollupView brand={brand} />;
+      return <CostRollupView port={port} brand={brand} clipboard={clipboard} result={result} />;
     case "findings":
       return <FindingsView brand={brand} port={port} result={result} />;
     default:

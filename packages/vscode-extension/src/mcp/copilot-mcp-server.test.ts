@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
@@ -137,5 +137,66 @@ describe("createCopilotMcpServer with Agent Host event logs (step 10.14)", () =>
     const view = await turnText({ userDataDir, version: "0.1.0-test", copilotHome: null, vendorProfilesDir: FIXTURE_VENDOR_PROFILES_DIR });
 
     expect(view.textUnavailableReason).toMatch(/Copilot CLI home/);
+  });
+});
+
+// Phase 12 A13 (mcp-apps.md §4.2, §7): the composition boundary the child
+// process uses (mcp/stdio.ts passes <extension>/dist/mcp-apps/views.html).
+describe("createCopilotMcpServer with the app views (Phase 12 A13)", () => {
+  let dir: string;
+  let userDataDir: string;
+  const URI = "ui://ai-credits-analyzer/views.html";
+
+  beforeAll(() => {
+    dir = mkdtempSync(path.join(tmpdir(), "copilot-mcp-server-views-"));
+    userDataDir = path.join(dir, "user-data");
+    mkdirSync(path.join(userDataDir, "User"), { recursive: true });
+    mkdirSync(path.join(dir, "dist", "mcp-apps"), { recursive: true });
+    writeFileSync(path.join(dir, "dist", "mcp-apps", "views.html"), '<!doctype html><html><head><meta name="aca-brand" content=""></head><body>built views</body></html>');
+  });
+  afterAll(() => {
+    rmSync(dir, { recursive: true, force: true });
+  });
+
+  async function connect(appViewsHtml: string | undefined): Promise<Client> {
+    const server = createCopilotMcpServer({ userDataDir, version: "0.1.0-test", vendorProfilesDir: FIXTURE_VENDOR_PROFILES_DIR, appViewsHtml });
+    const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+    const client = new Client({ name: "test-client", version: "1.0.0" });
+    await Promise.all([server.connect(serverTransport), client.connect(clientTransport)]);
+    return client;
+  }
+
+  it("serves the views file as text/html;profile=mcp-app and tags the three tools with _meta.ui", async () => {
+    const client = await connect(path.join(dir, "dist", "mcp-apps", "views.html"));
+    try {
+      const { tools } = await client.listTools();
+      expect(tools).toHaveLength(20);
+      expect(
+        tools
+          .filter((tool) => tool._meta?.ui !== undefined)
+          .map((tool) => tool.name)
+          .sort(),
+      ).toEqual(["get_cost_rollup", "get_session_cost", "get_turn_series", "list_findings"]);
+      expect(tools.find((tool) => tool.name === "get_session_cost")!._meta).toMatchObject({ ui: { resourceUri: URI } });
+      const { contents } = await client.readResource({ uri: URI });
+      expect(contents[0]).toMatchObject({ uri: URI, mimeType: "text/html;profile=mcp-app" });
+      expect((contents[0] as { text: string }).text).toContain("built views");
+    } finally {
+      await client.close();
+    }
+  });
+
+  it.each([
+    ["no path", undefined],
+    ["a path to a file that is not there", "/nonexistent/dist/mcp-apps/views.html"],
+  ])("lists the 19 normal tools and no views for %s", async (_label, appViewsHtml) => {
+    const client = await connect(appViewsHtml);
+    try {
+      const { tools } = await client.listTools();
+      expect(tools).toHaveLength(19);
+      expect(tools.some((tool) => tool._meta !== undefined)).toBe(false);
+    } finally {
+      await client.close();
+    }
   });
 });
