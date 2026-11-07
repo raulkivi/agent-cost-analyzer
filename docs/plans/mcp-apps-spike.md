@@ -135,20 +135,20 @@ done" so §9 of mcp-apps.md is updated and A0b/A6 can start.
 
 | Question (mcp-apps.md §9) | VS Code | Claude Desktop |
 |---|---|---|
-| View rendered at all? (version) | | |
-| Host variables sent: count, which are missing (`styleVariables.defined` / `undefinedNames`) | | |
-| Colour values differ by theme as expected; transparent or opaque background? | | |
-| `hostFonts` present (`@font-face` css)? | | |
-| `toolInfo` present, with what? (`toolInfo.content`) | | |
-| `local("Barlow Condensed")` heading font present? | | |
-| `openLink` `vscode://raulkivi.ai-credits-analyzer/session?id=test`: opened / refused / asked? | | |
-| `openLink` `https://` works? | | |
-| Approval prompt on app-initiated `tools/call` to `get_turn_series`? | | |
-| Display modes: `availableDisplayModes`; did `fullscreen` work and return to inline? | | |
-| High Contrast (dark and light): readable? variables sent? | | n/a |
-| Brand injected (`brand` in the report not null)? | | |
-| `structuredContent` keys reach the view? (`structuredContentKeys`) | | |
-| Anything else odd (clipping, scroll, height, errors in the observations) | | |
+| View rendered at all? (version) | Yes. Insiders 1.146.0 (snap builds fail with a libcrypto/glibc error: use the .deb) | Yes. Claude 4.23118.0 (Electron 44) |
+| Host variables sent: count, which are missing | 76, none missing, same set in all themes | 76, none missing, same set in both themes |
+| Colour values differ by theme as expected; transparent or opaque background? | Values are `var(--vscode-*)` references, so the host theme drives them. Transparent or opaque: not recorded | Resolved `light-dark(rgba(...), rgba(...))` values, identical in both reports. Opaque `background-primary` and `ghost` is transparent |
+| `hostFonts` present (`@font-face` css)? | No | Yes: `anthropic-sans` from assets.claude.ai (4.4 KB css) |
+| `toolInfo` present, with what? | No. `hostContext.toolCall` carries `toolCallId` and `toolName` (`aca-spike-get_session_cost`) | Yes: the tool's full definition (schemas, `_meta.ui`) |
+| `local("Barlow Condensed")` heading font present? | Absent (not installed) | Absent (not installed) |
+| `openLink` `vscode://`: opened / refused / asked? | Refused (`isError: true`) | Refused (`isError: true`) |
+| `openLink` `https://` works? | Yes, no prompt | Yes, with a prompt |
+| Approval prompt on app-initiated `tools/call` to `get_turn_series`? | No | No |
+| Display modes | `inline` only; `fullscreen` returns `inline` | `inline`, `fullscreen`; fullscreen works and returns to inline |
+| High Contrast: readable? variables sent? | Dark HC: readable, swatches distinct, same 76 variables, theme reported as `dark` (no HC flag). Light HC: not run | n/a |
+| Brand injected? | Yes (`standalone`, 0.9.0) | Yes |
+| `structuredContent` keys reach the view? | Yes, 17 keys | Yes, 17 keys |
+| Anything else odd | `hostCapabilities` lacks `message`; `updateModelContext` richer; `sandbox` allows `clipboardWrite`; container width 576-877 px | `sandbox` has no clipboard permission; `maxHeight` 5000; Copy report can hit the 50,000-character chat paste limit (report is ~60 KB), so save it to a file |
 
 Files to commit when done: the table (paste into this file or the PR
 description) and the `mcp-apps-spike-results/*.json` reports. The reports
