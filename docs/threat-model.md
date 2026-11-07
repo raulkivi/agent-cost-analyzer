@@ -149,7 +149,7 @@ chat model (§4).
 | mitmproxy HAR ingestion → `redactHeaders` | Information disclosure — captured credentials reaching the UI/exports | **Real, partial gap.** `redact-headers.ts` redacts a fixed denylist (`authorization`, `x-api-key`, `api-key`, `proxy-authorization`, `cookie`, `set-cookie`) at *read* time. It does **not** cover: (a) API keys passed as URL query parameters (a real pattern for some providers, e.g. `?key=...`), and (b) non-standard vendor auth headers outside the fixed list. A user who captures traffic to a provider using either pattern will see the raw credential surfaced in the Turn Inspector / any exported session, even though they reasonably believe "sensitive headers are redacted." |
 | `packages/pi-system-prompt-logger` install | Privilege boundary crossing into a 3rd-party agent runtime | **Accepted.** This vendored extension runs inside `@earendil-works/pi-coding-agent`'s own process once installed via `npm run configure`, so installing it extends trust into that runtime. Earlier upstream CVEs (predictable temp extension install paths → local privilege escalation; `auth.json` write race) were tracked as Dependabot alerts under the package's previous name, `@mariozechner/pi-coding-agent`; as of 2026-10-26 no Dependabot alert is open for the pi package. Re-check on each pi upgrade. |
 | Standalone MCP server (`packages/server/src/mcp/`, `scripts/mcp-server.sh`) | Information disclosure to a third-party model; prompt injection from logged content; argument injection | **Mitigated, with the data flow accepted.** Off unless the user registers it with an MCP client. It takes no command-line arguments; its only environment input is where to read, as for the API (the home directory, `APPDATA`, `XDG_CONFIG_HOME`, and `PI_SYSTEM_PROMPT_LOG_PATH` for the pi logger's sidecar), set by the same user who starts it. It opens no port and makes no network calls; stdout carries JSON-RPC only. All 12 tools (re-counted 2026-11-06: 12 `registerTool` calls, 12 `READ_ONLY` annotations) are annotated read-only, and their arguments are zod-checked (`maxTextChars` 200–20,000; session ids resolve through the same provider lookup as the API, so the path-traversal row above applies). It reads every provider, including mitmproxy captures. Free text it returns (prompts, responses, tool output excerpts) goes through `redactSecrets` and is truncated. Residual: (a) that redaction is pattern-based — GitHub, GitLab, npm, Hugging Face and Slack tokens, `sk-` keys, Stripe `sk_`/`rk_` keys, Google `AIza…` keys, AWS access keys, JWTs, private keys, bearer/basic credentials and `password=`/`api_key=`-style pairs — so a credential in another format can still reach the model (§5.4); (b) logged content is untrusted text, so a prompt injection captured in a session can reach the model as a tool result; the tools are read-only, so it can steer the chat but not act through this server. |
-| MCP attribution tools (`list_repositories`, `list_projects`, `attribution-tools.ts`, 2026-11-05) | Information disclosure of client names, billing codes and folder paths to the chat model; a prompt-injected session steering the tool arguments | **Mitigated, with the data flow accepted; one residual.** Both tools are read-only. `list_repositories` returns repository keys and folder *names*; full local paths come back only when the caller passes `includePaths: true`, which defaults to false. `list_projects` returns each project's name, client and billing code, with no opt-out. Residual: `includePaths` is a model-chosen argument, so instructions captured in a session's logged text can ask the model to set it (§5.6). |
+| MCP attribution tools (`list_repositories`, `list_projects`, `attribution-tools.ts`, 2026-11-05) | Information disclosure of client names, billing codes and folder paths to the chat model; a prompt-injected session steering the tool arguments | **Mitigated, with the data flow accepted; one residual.** Both tools are read-only. `list_repositories` returns repository keys and folder *names* only: since 2026-11-07 it has no `includePaths` argument (an old one is ignored), so instructions in a session's logged text can't make the model fetch local paths; they stay in `GET /api/repositories`. `list_projects` returns ids, names and members; client names and billing codes only when the user launches the server with `--project-billing-details`, and in `get_statement`. Tests: `attribution-tools.test.ts`, `mcp/security.test.ts` (§5.6, done). |
 | Agent Host and Copilot CLI event-log readers (`data-sources/agent-host/`, steps 10.13–10.15) | Path traversal through a session id; unbounded reads; hostile log content | **Mitigated.** Both path builders (`agentSessionDbPath`, `copilotEventLogPath`) test the id against `^[0-9A-Za-z][0-9A-Za-z-]*$` before joining and return `null` otherwise, the same pattern as the VS Code row above. One event-log line is capped at 8 MiB (`MAX_EVENT_LINE_CHARS`), and a line that doesn't parse is dropped. The Copilot home comes from `COPILOT_HOME` or the home directory, set by the user who starts the process. Content renders as React text (XSS row). |
 | New read-only routes: `GET /api/price-book`, `/api/vendors`, `/api/learn/scenarios/:id/simulation` and `/comparison`, `/api/repositories` | Information disclosure; input handling | **Mostly mitigated, one item unverified.** All sit behind the loopback host guard (`app.use(createLoopbackHostGuard…)` runs before `express.json()` and every route, re-read in `app.ts`). They serve bundled data and derived figures, and write nothing. Not re-read at route level: how the scenario `:id` and the `modelId`/`modelIds` query values are resolved. Confirm it is a lookup in the bundled list, not a path (§5.7). |
 | Price book and vendor profiles (`fixtures/price-book/`, `fixtures/vendor-profiles/`) | Tampering with prices to mislead spend figures; a user-supplied version file | **Accepted.** Bundled files are reviewed data edits with a cited source (CODEOWNERS covers `/scripts/` and `package.json`, not `fixtures/`: see §5.8). The weekly `vendor-prices` workflow only reports drift. The plan's user price versions are a future write path (§9). |
@@ -159,16 +159,13 @@ chat model (§4).
 
 ## 5. Recommendations (priority order)
 
-**5.1 (Low, preventive; open, re-checked 2026-11-06: `server.ts` still has `const host = "127.0.0.1"` and no assertion) — Guard the loopback-only
+**5.1 (Low, preventive; done 2026-11-07) — Guard the loopback-only
 assumption in code, not just convention.**
-Nothing currently stops a future change from adding `cors()` or changing
-`host` to `0.0.0.0`, which would turn "trusted because it's loopback"
-into "trusted because nothing" = an unauthenticated LAN service. Consider
-a one-line startup assertion in `server.ts` (refuse to listen if `host`
-isn't a loopback address) so this trust boundary can't drift silently.
-`server.ts` still binds a hard-coded `127.0.0.1` with no such check. The
-Host-header guard (§4) doesn't replace it: a non-browser client on the LAN
-can send `Host: localhost:3001` itself.
+`server.ts` now calls `assertLoopbackBindHost(host)` (`http/loopback-bind.ts`)
+before it listens: anything but `127.0.0.1`, `::1` or `localhost` fails at
+start with the reason, so a change to `0.0.0.0` can't turn the app into an
+unauthenticated LAN service silently. Tested in `loopback-bind.test.ts`. The
+Host-header guard (§4) stays: it covers DNS rebinding, this covers the bind.
 
 **5.2 (Medium, concrete; header patterns done, query-string redaction n/a because captured URLs are not retained) — Widen credential redaction beyond the fixed
 header denylist.**
@@ -204,21 +201,24 @@ executes whatever that repository's default branch holds, in a job that has
 pinned by SHA. Pin the marketplace to a commit if the action accepts a ref,
 or vendor the plugin, and let Dependabot-style review bump it.
 
-**5.6 (Medium, concrete; open, found 2026-11-06) — Take `includePaths` out
+**5.6 (Medium, concrete; done 2026-11-07) — Take `includePaths` out
 of the model's reach, and decide what `list_projects` may return.**
-A captured session can carry instructions that make the chat model call
-`list_repositories` with `includePaths: true` and so receive full local
-paths. Options, cheapest first: drop the argument from the MCP tool and keep
-paths in the API only; or make it a server-side setting the user turns on.
-Separately, `list_projects` always returns client names and billing codes;
-return project ids and names only unless the user opts in.
+Done with the cheapest option: `list_repositories` has no `includePaths`
+argument any more (an old one is ignored), and paths stay in the HTTP API
+(`GET /api/repositories`). `list_projects` returns project ids, names and
+members; client names and billing codes only when the user launches the
+standalone server with `--project-billing-details`
+(`scripts/mcp-server.sh` passes its arguments through). `get_statement`
+keeps them, since a statement is for the client. Tests in
+`attribution-tools.test.ts` and `mcp/security.test.ts`.
 
-**5.7 (Low, concrete; open, found 2026-11-06) — Verify the new read routes'
+**5.7 (Low, concrete; done 2026-11-07) — Verify the new read routes'
 id handling.**
-Confirm that `GET /api/learn/scenarios/:id` (and `/simulation`,
-`/comparison`) and the `modelId`/`modelIds` query values resolve against the
-bundled lists and never reach a path join, and add a test like
-`session-log-path.test.ts` for each.
+Verified: `GET /api/learn/scenarios/:id` (and `/simulation`, `/comparison`)
+look the scenario up with `scripts.find` and the `model`/`models` values with
+`profile.models.find`, in memory; neither reaches a path join. `app.test.ts`
+now sends traversal-shaped scenario ids (encoded `../`) to all three routes
+(404, nothing read) and traversal-shaped model ids to both query forms (400).
 
 **5.8 (Low, concrete; open, found 2026-11-06) — Release and repository
 settings that the repository cannot show.**

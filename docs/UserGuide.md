@@ -410,8 +410,8 @@ claude mcp add agent-cost-analyzer -- /absolute/path/to/agent-cost-analyzer/scri
 | `list_tool_calls` | One session's calls, filtered by status, failure category, tool kind, tool, program or turn, paged with `offset`/`limit` |
 | `get_audit_rollup` | Cross-session tool-call totals, top failing commands and per-day counts for one provider |
 | `list_findings` | Security, anomaly and behaviour-change findings across every provider, most severe first, with what, when, why and redacted evidence |
-| `list_repositories` | The repositories your sessions ran in, with sessions, turns, AI Credits and project ids; sessions with no repository are grouped by reason |
-| `list_projects` | Your projects from `projects.json` with their repositories and AI Credits |
+| `list_repositories` | The repositories your sessions ran in, with sessions, turns, AI Credits and project ids; sessions with no repository are grouped by reason. Local repositories are named by folder, never by path |
+| `list_projects` | Your projects from `projects.json` with their repositories and AI Credits; client names and billing codes only if you start the server with `--project-billing-details` (for example `claude mcp add agent-cost-analyzer -- /abs/path/scripts/mcp-server.sh --project-billing-details`) |
 | `get_price_book` | The dated price versions the app prices turns with, per channel and model |
 | `get_price_changes` | When a model's price changed: documented changes from the price book, and observed GitHub Copilot ones |
 | `get_repository_cost` | One repository's cost over time, by vendor and model, with price-change markers |

@@ -582,8 +582,8 @@ Credit = $0.01 and says so in `conversion`.
 
 | Tool | Step | Input | Returns (`outputSchema`) |
 |---|---|---|---|
-| `list_repositories` | 15.4 | `provider?`, `since?`, `until?`, `projectId?`, `includeUnattributed?` (default true), `includePaths?` (default false) | `RepositoryList`: each repository's `repositoryKey`, project, session and turn counts, first and last use, cost with coverage; Unattributed buckets with their reasons |
-| `list_projects` | 15.4 | none | `ProjectList`: each project's id, name, client, billing code, members (repository key, path and branch scopes); validation problems, if any |
+| `list_repositories` | 15.4 | `provider?`, `since?`, `until?`, `projectId?`, `includeUnattributed?` (default true); no `includePaths` since 2026-11-07 (threat-model.md §5.6) | `RepositoryList`: each repository's `repositoryKey`, project, session and turn counts, first and last use, cost with coverage; Unattributed buckets with their reasons |
+| `list_projects` | 15.4 | none | `ProjectList`: each project's id, name, members (client and billing code only with the server's `--project-billing-details` opt-in, threat-model.md §5.6) (repository key, path and branch scopes); validation problems, if any |
 | `get_price_book` | 15.5 | `channel?`, `model?`, `at?` (ISO date: the version in force then) | `PriceBookListing` (an MCP `outputSchema` must be an object): `channels`, `versions` with their `origin` (`bundled` or `user`), `sources` with `checkedAt`, `gaps`, `unknown` with reasons, and `problems` |
 | `get_repository_cost` | 15.7 | `repository` (key from `list_repositories`), `since?`, `until?`, `bucket?` (`day`/`week`/`month`, default `month`), `basis?` (`preferred`/`billed`/`reported`/`priced`), `pricing?` (`as-of-use`/`today`), `currency?`, `provider?`, `limit?` (sessions per provider, as in `get_cost_rollup`) | `CostSeries`: totals with coverage by basis; one point per bucket with coverage; breakdown by vendor and model; price-change markers in the range. As built it is exactly `GET /api/cost/timeseries?groupBy=repository&ids=<repository>` |
 | `get_project_cost` | 15.7 | `projectId`, the same options as above, `topSessions?` (default 10, max 50) | `ProjectCost`: as `CostSeries`, plus a breakdown by repository member, by vendor → model and by token type, and the most expensive sessions |
@@ -668,12 +668,15 @@ model ([mcp-tools-v2.md §6](mcp-tools-v2.md#6-security)). So:
 
 - Repositories are identified by their **normalised key**
   (`github.com/org/repo`), never by local folder paths. `local:` and
-  `path:` keys are returned as the folder's name only, unless
-  `includePaths: true` is passed to `list_repositories`.
+  `path:` keys are returned as the folder's name only. (Until 2026-11-07,
+  `list_repositories` took `includePaths: true`; it was removed because a
+  logged session could steer the model to ask for paths, threat-model.md
+  §5.6. Paths stay in `GET /api/repositories`.)
 - Remote URLs have credentials stripped **before** they reach the cube
   (§4.2), so no tool can return one; a test checks every tool's output.
-- Client names and billing codes are returned only by `list_projects` and
-  `get_statement`, the two tools that need them.
+- Client names and billing codes are returned only by `get_statement`,
+  and by `list_projects` when the user launches the server with
+  `--project-billing-details` (threat-model.md §5.6, 2026-11-07).
 - No tool writes. Issuing a statement and editing projects stay UI
   actions behind the CSRF/origin checks (§10).
 - `estimate_cost` always returns a range labelled as an estimate, and its
@@ -689,8 +692,9 @@ per new group), each written in the step that adds the tool:
 - for the same fixture, each MCP tool and its HTTP endpoint return the
   same figures;
 - unknown costs come back as `null` with a reason, never `0`;
-- no output contains a credential or, without `includePaths`, a local
-  path (property test over generated remote URLs and folders);
+- no output contains a credential or a local path, even when an old
+  `includePaths` argument is passed (property test over generated remote
+  URLs and folders);
 - the extension's server lists no `billing` tools.
 
 Exit criterion, checked in step 15.13 over stdio on a fixture with

@@ -346,7 +346,8 @@ ids. On the server, `services/cost-attribution/` adds `SessionAttributor`,
 `AttributionQueryService` and `repository-key-privacy`; `InsightsService`
 takes an optional `DatasetAttribution`. The MCP attribution tools are
 registered when `McpServerDeps.attribution` is given (the standalone stdio
-server); local folder paths appear only with `includePaths`.
+server); they never return local folder paths (threat-model.md §5.6; paths
+stay in `GET /api/repositories`).
 
 Price book (Phase 15 step 15.5, `packages/domain/src/price-book.ts`;
 [plans/cost-by-repository-and-project.md](plans/cost-by-repository-and-project.md)
@@ -2275,9 +2276,9 @@ agent-cost-analyzer/
   its tools are all read-only and never reach the network
   ([plans/mcp-tools-v2.md](plans/mcp-tools-v2.md) §6). Repositories are
   returned by their normalised remote key (credentials stripped) or, for
-  a local one, its folder name, unless `includePaths` is asked for; client
-  names and billing codes come only from `list_projects` and
-  `get_statement`. `mcp/security.test.ts` runs every tool over generated
+  a local one, its folder name, never its path; client names and billing
+  codes come only from `get_statement`, and from `list_projects` when the
+  server is launched with `--project-billing-details` (threat-model.md §5.6). `mcp/security.test.ts` runs every tool over generated
   folders and remote credentials to check this (Phase 15 step 15.13).
 - No secrets are logged; any credentials that happen to appear in captured
   terminal-output tool results are treated as opaque strings, never parsed or
