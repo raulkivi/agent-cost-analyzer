@@ -5,6 +5,9 @@ import type { SessionReplay, SessionReplayComparison } from "@agent-cost-analyze
 import { axeViolations } from "../support/axe.js";
 import { expect, test } from "../support/app-fixture.js";
 
+// Every RegExp metacharacter, the backslash included (CodeQL: incomplete escaping).
+const escapeRegExp = (text: string): string => text.replace(/[\\^$.*+?()[\]{}|]/g, "\\$&");
+
 // Scenario R1, "Replay a session on two models" (docs/plans/
 // analyze-session-replay.md §10 and §12 row 14.7, boards 1 to 3): open a
 // Claude Code session in Analyze, Replay on model A, then model B, open the
@@ -118,7 +121,7 @@ test("R1: replay a Claude Code session on two models, its summary and Compare mo
   await expect(table).toBeVisible();
   await expect(table.locator("tbody tr")).toHaveCount(shown.entries.length);
   for (const entry of shown.entries) {
-    const row = table.locator("tbody tr").filter({ has: page.locator(".mono", { hasText: new RegExp(`^${entry.model.replace(/\./g, "\\.")}$`) }) });
+    const row = table.locator("tbody tr").filter({ has: page.locator(".mono", { hasText: new RegExp(`^${escapeRegExp(entry.model)}$`) }) });
     await expect(row).toHaveCount(1);
     await expect(row.locator("td").nth(3)).toHaveText(entry.total.value === null ? "unknown" : usd(entry.total.value));
     if (entry.isMeasuredModel) await expect(row).toContainText("Measured model");
