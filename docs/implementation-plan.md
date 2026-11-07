@@ -1458,8 +1458,8 @@ labelled **Simulated**.
 **Dependencies**: Phase 13 (simulator, vendor profiles, calibration):
 merged.
 
-**Status (2026-11-07)**: planned, decisions D1–D8 recorded; not started
-(step 14.0 next).
+**Status (2026-11-07)**: planned, decisions D1–D8 recorded; step 14.0
+(threat-model rows) done; step 14.1 next.
 
 ## Phase 15 — Cost by repository and project, price history, billing
 
