@@ -1,0 +1,30 @@
+{
+  "name": "@agent-cost-analyzer/mcp-apps",
+  "private": true,
+  "version": "0.9.0",
+  "license": "MIT",
+  "author": "Raul Kivi",
+  "type": "module",
+  "scripts": {
+    "test": "vitest run",
+    "build": "vite build",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/ext-apps": "1.7.5",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "^7.0.1",
+    "@testing-library/react": "^16.3.3",
+    "@types/jsdom": "30.0.0",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.2",
+    "jsdom": "^30.1.3",
+    "vite": "^8.3.5",
+    "vite-plugin-singlefile": "2.3.4",
+    "vitest": "^5.0.5"
+  }
+}
