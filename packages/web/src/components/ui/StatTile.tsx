@@ -1,9 +1,11 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
+import type { ReactNode } from "react";
+
 interface StatTileProps {
   label: string;
   value: string;
-  note?: string;
+  note?: ReactNode;
   // Only for a value that is bad news (e.g. a non-zero failure rate).
   alert?: boolean;
   // Hover text for a figure that has a second unit (e.g. AI Credits in USD).

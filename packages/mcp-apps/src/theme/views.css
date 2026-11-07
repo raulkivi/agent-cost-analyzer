@@ -1,0 +1,95 @@
+/* SPDX-FileCopyrightText: 2026 Raul Kivi
+   SPDX-License-Identifier: MIT
+*/
+/* Layout of the MCP App views (docs/plans/mcp-apps.md §5, boards in
+   docs/plans/mockups/mcp-apps/). Structure uses the host's tokens through
+   theme-mcp-host.css; the brand shows only in the accent tokens. No colour
+   literals here (§5.4). Load order: theme.css, brand.css, theme-mcp-host.css,
+   this file. */
+
+html[data-host="mcp-app"] body { margin: 0; }
+
+html[data-host="mcp-app"] .view-shell {
+  gap: 12px;
+  padding: 14px 16px 12px;
+  background: transparent;
+  border: 1px solid var(--color-divider);
+  font-family: var(--font-body);
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--color-text);
+  max-width: 640px;
+  box-sizing: border-box;
+}
+html[data-host="mcp-app"] .blueprint > .corner { color: var(--brand-accent); }
+
+.view-kicker { display: flex; align-items: center; gap: 7px; }
+.view-kicker .brand-mark { flex-shrink: 0; }
+.view-kicker .card-kicker { margin: 0; font-weight: 600; }
+.view-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.view-heading h1 { margin: 0; font-family: var(--font-body); font-weight: 600; font-size: 17px; line-height: 1.2; overflow-wrap: anywhere; }
+.view-meta { font-size: 12px; color: var(--color-text-muted); }
+
+.view-tiles { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.view-tiles .stat-tile { background: var(--color-surface); border-radius: var(--radius-sm); min-width: 0; }
+.view-tiles .stat-tile-value { font-size: 21px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.view-tiles .stat-tile-note { min-height: 17px; }
+.view-estimate { font-size: 10px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; padding: 1px 5px; }
+.view-unknown { font-style: italic; color: var(--color-text-muted); }
+
+.view-section { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.view-section-head { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.view-section-head h2 { margin: 0; font-size: 13px; font-weight: 600; }
+.view-section-head .text-muted { font-size: 11px; }
+
+.view-chart { display: block; overflow: visible; height: auto; }
+.view-chart-axis { font-size: 10px; fill: var(--color-text-muted); font-family: var(--font-body); }
+.view-skeleton { height: 118px; background: var(--color-surface); border: 1px dashed var(--color-divider); border-radius: var(--radius-sm); }
+
+/* Long tables scroll inside the card (plan §4.3: inline height about 640px). */
+.view-scroll { overflow: auto; max-height: 340px; }
+.view-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.view-table th { font-weight: 600; text-align: right; padding: 4px 6px; white-space: nowrap; color: var(--color-text-muted); border-bottom: 1px solid var(--color-divider); }
+.view-table td { text-align: right; padding: 4px 6px; white-space: nowrap; vertical-align: top; border-bottom: 1px solid var(--color-divider); font-variant-numeric: tabular-nums; }
+.view-table .view-left { text-align: left; }
+.view-table td.view-cell-text { text-align: left; white-space: normal; }
+.view-table tr.view-row-selected > td,
+.view-table tr.view-row-detail > td { background: var(--color-accent-100); }
+.view-table tr.view-row-selected > td:first-child,
+.view-table tr.view-row-detail > td { box-shadow: inset 2px 0 0 var(--color-accent-text); }
+.view-table tr.view-row-detail > td { text-align: left; white-space: normal; padding: 6px 8px 8px 12px; }
+.view-row-button { display: inline-flex; align-items: center; gap: 4px; border: 0; background: none; padding: 0; font: inherit; color: inherit; cursor: pointer; }
+.view-row-button svg { color: var(--color-accent-text); flex-shrink: 0; transition: transform 0.12s; }
+.view-chevron--open { transform: rotate(90deg); }
+
+.view-turn-detail { display: flex; flex-direction: column; gap: 6px; }
+.view-turn-detail-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.view-turn-event { font-size: 12px; color: var(--color-text-muted); }
+.view-turn-grid { display: grid; grid-template-columns: 1.3fr 1fr; gap: 12px; }
+.view-label { font-size: 11px; color: var(--color-text-muted); }
+.view-turn-prompt { margin: 2px 0 0; font-size: 12px; overflow-wrap: anywhere; }
+.view-turn-tokens { margin: 2px 0 0; font-size: 12px; }
+.view-turn-tokens > div { display: flex; justify-content: space-between; gap: 10px; }
+.view-turn-tokens dt { color: var(--color-text-muted); }
+.view-turn-tokens dd { margin: 0; text-align: right; }
+.view-turn-tools { font-size: 12px; }
+.view-link { border: 0; background: none; padding: 0; font: inherit; font-size: 12px; color: var(--color-accent-text); cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
+
+.view-stack { display: flex; height: 12px; border-radius: 2px; overflow: hidden; gap: 1px; }
+.view-stack > span { display: block; height: 100%; }
+.view-legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 11px; color: var(--color-text-muted); }
+
+.view-footer { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; padding-top: 8px; border-top: 1px solid var(--color-divider); font-size: 11px; }
+.view-footer-note { color: var(--color-text-muted); }
+.view-footer-actions { display: flex; gap: 8px; margin-left: auto; }
+.view-btn { height: 26px; padding: 0 10px; font-size: 12px; }
+
+.view-copied { padding: 6px 8px; font-size: 12px; border: 1px solid var(--color-divider); border-radius: var(--radius-sm); background: var(--color-surface); overflow-wrap: anywhere; }
+.view-error { display: flex; gap: 8px; padding: 8px 10px; font-size: 12px; border: 1px solid var(--color-border-danger, var(--color-divider)); background: var(--color-background-danger, var(--color-surface)); border-radius: var(--radius-sm); }
+.view-error-action { margin-top: 6px; }
+
+/* Narrow hosts (the States board, 360px): tiles wrap to two columns. */
+@media (max-width: 480px) {
+  .view-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .view-turn-grid { grid-template-columns: 1fr; }
+}
