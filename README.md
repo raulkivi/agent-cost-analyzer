@@ -83,6 +83,10 @@ This repo builds two products from one codebase:
   hosts such as VS Code Copilot Chat and Claude Desktop render next to the
   MCP tool results. Includes the use-case analysis, branding rules and
   tasks.
+- [Analyze session replay plan](docs/plans/analyze-session-replay.md) —
+  Phase 14 (planned): replay a real Claude Code or Copilot session on
+  another model, beside what it really cost, with a self-check on its own
+  model and a Compare models view.
 - [Cost by repository and project plan](docs/plans/cost-by-repository-and-project.md) —
   Phase 15 (steps 15.0–15.15 done; the owner's review of the docs and the
   exit criterion on real data are open): attribute cost to repositories, group them into

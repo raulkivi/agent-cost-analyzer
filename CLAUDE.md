@@ -110,7 +110,7 @@ content here.
   on the Marketplace and Open VSX; some VS Code manual checks stay open, see
   docs/plans/vscode-extension-manual-checks.md). Phase 13 (vendor-aware Learn simulation,
   VS Code first; see docs/plans/vendor-aware-learn-simulation.md) is
-  built and merged: steps 13.0-13.10 (simulator, vendor profiles, Learn picker, Cache column, Vendors tab, `npm run scenarios:docs`, standalone support; #129-#139) and 13.5a (calibration against real Claude Code and Copilot logs, #144; the owner's 1-hour Claude Code cache decision of 2026-11-06 is in `harnessCacheDefaults`); decisions D1–D19 are all recorded in its §9; open: only the owner's eyes-on review of 13.8; Phase 14, replaying Analyze sessions on another vendor, follows it; the Learn scenario fact-check it builds on is in
+  built and merged: steps 13.0-13.10 (simulator, vendor profiles, Learn picker, Cache column, Vendors tab, `npm run scenarios:docs`, standalone support; #129-#139) and 13.5a (calibration against real Claude Code and Copilot logs, #144; the owner's 1-hour Claude Code cache decision of 2026-11-06 is in `harnessCacheDefaults`); decisions D1–D19 are all recorded in its §9; open: only the owner's eyes-on review of 13.8; Phase 14, replaying Analyze sessions on another model, is planned in docs/plans/analyze-session-replay.md (decisions D1–D8 recorded 2026-11-07, step 14.0 next); the Learn scenario fact-check it builds on is in
   docs/learn-scenarios-fact-check.md. Phase 15 (cost by repository and project,
   price history, billing statements and estimates; see
   docs/plans/cost-by-repository-and-project.md) is planned: the owner's
