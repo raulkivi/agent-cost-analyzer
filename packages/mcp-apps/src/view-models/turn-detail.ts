@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { TokenCount, TurnView } from "@agent-cost-analyzer/domain";
 import { formatAiCreditsValue } from "@agent-cost-analyzer/web/lib/format-ai-credits";
 import { eventLabel } from "./session-cost.js";

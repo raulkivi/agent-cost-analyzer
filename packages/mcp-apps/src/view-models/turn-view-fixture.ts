@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { TurnView } from "@agent-cost-analyzer/domain";
 
 // An invented get_turn result for the turn-detail tests.

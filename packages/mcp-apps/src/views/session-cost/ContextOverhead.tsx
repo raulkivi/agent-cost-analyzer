@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { ContextOverheadView } from "../../view-models/index.js";
 
 // The context-overhead bar: the system prompt split into the components the

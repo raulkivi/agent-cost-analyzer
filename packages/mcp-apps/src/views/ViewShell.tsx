@@ -31,6 +31,7 @@ export function ViewShell({
   title,
   meta,
   actions,
+  lead,
   children,
 }: {
   brand: ViewBrand;
@@ -38,6 +39,8 @@ export function ViewShell({
   title: string;
   meta?: ReactNode;
   actions?: ReactNode;
+  // Between the kicker and the title: the back control of an in-place drill-down.
+  lead?: ReactNode;
   children?: ReactNode;
 }) {
   const footer = brand.version ? `Read-only · local logs · v${brand.version}` : "Read-only · local logs";
@@ -49,6 +52,7 @@ export function ViewShell({
           {brand.displayName} · {kicker}
         </p>
       </div>
+      {lead}
       <div className="view-heading">
         <h1 id="view-title">{title}</h1>
         {meta !== undefined && <span className="view-meta">{meta}</span>}
