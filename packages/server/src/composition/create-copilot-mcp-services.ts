@@ -33,6 +33,7 @@ export interface CopilotMcpServicesOptions {
 export const COPILOT_MCP_IDENTITY: McpIdentity = {
   name: "ai-credits-analyzer",
   title: "AI Credits Analyzer",
+  deepLinkBase: "vscode://raulkivi.ai-credits-analyzer",
   description: "AI Credits, token and tool-call analysis of your local GitHub Copilot Chat sessions, by Raul Kivi.",
   instructions: [
     "Read-only analyzer of local GitHub Copilot Chat logs in VS Code (AI Credits Analyzer). It never writes, executes or reaches the network.",
