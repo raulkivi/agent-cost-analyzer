@@ -12,8 +12,8 @@ merged to `main`. The extension's 0.1.0 is released (tag `ext-v0.1.0`,
 2026-11-03). Open: Phase 10's owner manual checks and decisions (see its
 section), Phase 11 (not started), Phase 12 (planned), Phase 13 (in
 progress: steps 13.0-13.10 built, 13.5a calibration open), Phase 14
-(planned after 13) and Phase 15 (in progress: steps 15.0-15.14 done,
-15.15 open). A proposed plan,
+(planned after 13) and Phase 15 (steps 15.0-15.15 done; the owner's docs review and
+the exit criterion on real data open). A proposed plan,
 [plans/classic-subagent-credits.md](plans/classic-subagent-credits.md),
 covers classic Copilot Chat subagent AI Credits; it has no step number yet.
 Each phase has a goal, concrete deliverables, an exit criterion (how you know
@@ -1527,7 +1527,12 @@ plan's §14 table and §14.1 notes have each step's detail:
   Project and Billing in the standalone app), with scenario S9 in
   `extension-ui`.
 
-Open: 15.15 (docs; next).
+- 15.15: the docs pass (architecture.md §4.1 modules, §6.4 cost data flow
+  and the product table, §8 and §12; the User Guide, extension guide,
+  vision non-goals and READMEs).
+
+Open: the owner's review of the docs (15.15's exit criterion) and the
+phase's exit criterion (plan §15) on a machine with real sessions.
 
 ## Summary dependency graph
 

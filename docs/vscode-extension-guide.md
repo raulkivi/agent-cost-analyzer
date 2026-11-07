@@ -159,6 +159,11 @@ these differences:
   Code's clipboard.
 - The insights dashboard covers Copilot Chat sessions only, so it has no
   Provider list box.
+- The dashboard's view switch offers **Overview**, **Cost over time** and
+  **Compare**, by repository, vendor or model. **Project** and **Billing**
+  (projects, statements and estimates) are only in the standalone Agent
+  Cost Analyzer app, and the switch says so: the extension has no projects,
+  so every session counts in **No project**.
 - The panel has no list of its own: pick a session in the **Sessions**
   view or a scenario in the **Learn** view in the side bar, and the panel
   gives that room to the turns.
@@ -179,6 +184,7 @@ Everything else works as the [User Guide](UserGuide.md) describes:
 | Turn inspector (request and response per round) | [The turn inspector](UserGuide.md#the-turn-inspector) |
 | **Tool audit** and **All sessions** views | [Auditing tool calls](UserGuide.md#auditing-tool-calls) |
 | **Dashboard** view | [The insights dashboard](UserGuide.md#the-insights-dashboard) |
+| **Cost over time** and **Compare** | [Cost over time and Compare](UserGuide.md#cost-over-time-and-compare); the cost basis and prices in [Cost by repository and project](UserGuide.md#cost-by-repository-and-project) |
 | Exporting an AI-advice bundle | [Exporting an AI-advice bundle](UserGuide.md#exporting-an-ai-advice-bundle) |
 
 The panel opens in Learn mode. Switch to **Analyze** to see your own

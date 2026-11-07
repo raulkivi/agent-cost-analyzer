@@ -165,7 +165,9 @@ content here.
   and `sidebar/repository-sources.ts`; the status bar per workspace
   repository; the Dashboard's Cost over time and Compare tabs, with
   `ProductFeatures.projectsAndBilling` keeping Project and Billing in the
-  standalone app; scenario S9 in `extension-ui`); 15.15 (docs) is next;
+  standalone app; scenario S9 in `extension-ui`); step 15.15 (the docs pass: architecture.md
+  §6.4 cost data flow and product table, guides, vision, READMEs) is written,
+  the owner's review and the plan §15 exit criterion on real data open;
   step 15.1 is done (`Session.workspace`, `Turn.startedAt`, and
   `Turn.workspace` for Claude Code, from every provider) and step 15.2
   (`RepositoryResolver` and `RemoteUrlNormalizer` in

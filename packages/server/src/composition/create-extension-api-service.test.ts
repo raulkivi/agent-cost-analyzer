@@ -66,6 +66,19 @@ describe("createExtensionApiService (extension composition, vscode-extension.md 
     expect(series.groupBy).toBe("repository");
     const comparison = await service.getCostComparison({ groupBy: "repository", ids: "a,b", since: "2026-10-01", until: "2026-10-31" });
     expect(comparison.rows).toHaveLength(2);
+    // Why a repository's cost changed (architecture.md §8, step 15.15).
+    const variance = await service.getCostVariance({ groupBy: "repository", id: "github.com/example/app", periodA: "2026-09", periodB: "2026-10" });
+    expect([variance.groupBy, variance.id, variance.basis]).toEqual(["repository", "github.com/example/app", "priced"]);
+  });
+
+  it("has no projects, statements, estimates or repository list in the extension (D7, D19)", async () => {
+    const service = buildService();
+
+    await expect(service.getProjectCost({ projectId: "portal" })).rejects.toThrow(/Unknown project id/);
+    await expect(service.getStatement({ projectId: "portal", period: "2026-10" })).rejects.toThrow();
+    await expect(service.getCostEstimate({ projectId: "portal", activeDays: "5" })).rejects.toThrow();
+    await expect(service.getProjects()).rejects.toThrow();
+    await expect(service.getRepositoryList()).rejects.toThrow();
   });
 
   it("lists only the VS Code provider", async () => {

@@ -196,11 +196,15 @@ showing the behavioral-proxy fallback silently.
   credential access, statistical anomalies, first-time behaviour) and says
   what happened, when and why. The signals are prompts to look, not
   intrusion detection, and the dashboard stays read-only and local.
-- Not an invoicing or accounting system. Phase 15 (planned,
-  [plans/cost-by-repository-and-project.md](plans/cost-by-repository-and-project.md))
-  adds cost by repository and project, price history, and frozen billing
-  statements as the evidence an invoice is built from, but no tax, invoice
-  numbering or payment tracking, and no live price fetching.
+- Not an invoicing or accounting system. Phase 15
+  ([plans/cost-by-repository-and-project.md](plans/cost-by-repository-and-project.md))
+  adds cost by repository and project, price history, frozen billing
+  statements as the evidence an invoice is built from, and estimates as a
+  range, never one number. It has no tax, invoice numbering or payment
+  tracking, no live price fetching (prices come from the bundled, sourced
+  price book and the user's own versions), and no forecasting on another
+  model until Phase 14's replay. Projects, statements and estimates are in
+  the standalone app only; the VS Code extension shows cost by repository.
 - Not scoped to editing or replaying sessions (no `/rewind`-style mutation of
   real logs) — it's a read-only viewer/analyzer.
 - No dependency on the cloud-synced (DuckDB) store — the app only reads local

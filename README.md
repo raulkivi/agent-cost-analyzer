@@ -84,7 +84,8 @@ This repo builds two products from one codebase:
   MCP tool results. Includes the use-case analysis, branding rules and
   tasks.
 - [Cost by repository and project plan](docs/plans/cost-by-repository-and-project.md) —
-  Phase 15 (in progress, steps 15.0–15.14 done): attribute cost to repositories, group them into
+  Phase 15 (steps 15.0–15.15 done; the owner's review of the docs and the
+  exit criterion on real data are open): attribute cost to repositories, group them into
   projects, compare them over time, split a project by vendor and model,
   versioned model prices with price-change markers, billing statements
   and estimates.
@@ -363,8 +364,13 @@ session turn by turn:
 
 - **Cost by repository and project** — the Analyze-mode Dashboard attributes
   every session to a repository, vendor and channel, and groups repositories
-  into projects you define in `projects.json`; see the
-  [User Guide](docs/UserGuide.md#cost-by-repository-and-project).
+  into projects you define in `projects.json`. Cost over time, Compare and
+  the Project tab show where it went and why it changed (usage, price or
+  model mix); Billing issues a frozen monthly statement per project and
+  estimates the next piece of work as a range. See the
+  [User Guide](docs/UserGuide.md#cost-by-repository-and-project), and
+  [architecture.md §6.4](docs/architecture.md#64-cost-by-repository-and-project-phase-15)
+  for how the figures are worked out.
 
 - **Analyze mode** — pick one of your own real sessions (VS Code Copilot
   Chat, a Claude Code session, a mitmproxy capture, or a pi coding agent session — see the **Source**
