@@ -1,5 +1,7 @@
 # Implementation Plan: Agent Cost Analyzer and AI Credits Analyzer
 
+**Last changed:** 2026-11-07 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+
 This plan sequences [architecture.md](architecture.md) into buildable phases.
 Phases 0-9.12 build the standalone app, **Agent Cost Analyzer** (every
 provider). Phase 10 builds **AI Credits Analyzer**, a Copilot-only VS Code
