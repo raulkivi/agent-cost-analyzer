@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { useEffect, useState } from "react";
 import type { ClipboardPort } from "../../host/clipboard-port.js";
 

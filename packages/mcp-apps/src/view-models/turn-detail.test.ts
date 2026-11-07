@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { describe, expect, it } from "vitest";
 import { toTurnDetailViewModel } from "./turn-detail.js";
 import { turnView } from "./turn-view-fixture.js";

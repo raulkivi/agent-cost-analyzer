@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { SessionCost, TurnSeries, TurnView } from "@agent-cost-analyzer/domain";
 import type { AppHostPort } from "../../host/app-host-port.js";
