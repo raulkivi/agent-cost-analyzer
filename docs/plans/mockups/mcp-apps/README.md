@@ -5,7 +5,7 @@
 Boards for task A0b in [mcp-apps.md](../../mcp-apps.md) §5.6 and §7. They
 show the MVP views U1, U2 and U3 inside a VS Code Copilot Chat frame and a
 Claude Desktop frame, inline at about 600 px. The owner approves them
-before A9 and A11 start. Status: **drawn, owner approval open.**
+before A9 and A11 start. Status: **drawn and approved by the owner (2026-11-07).** The copy-command text `AI Credits Analyzer: Open Session <id>` is adopted.
 
 The boards use the same `.dc.html` format as `../session-replay/` and
 `../cost-by-project/`, listed in `canvas.json`. Like those sets, they

@@ -208,6 +208,8 @@ Drill-downs reuse the same host-mediated path for every view (§4.3, §4.5).
 
 ### 4.4 Deep link (extension)
 
+**A0 result (2026-11-07):** both hosts refuse `openLink` to `vscode://`, so A12 is dropped and the view's button copies a command instead. The copied text is `AI Credits Analyzer: Open Session <id>` (the owner adopted the A0b placeholder, 2026-11-07); the user pastes it into the Command Palette. The standalone product shows no button. The rest of this section is kept for a host that later allows `vscode://`.
+
 - The extension adds `window.registerUriHandler` and the `onUri`
   activation event.
 - `/session?id=<id>` opens the AI Credits Analyzer panel on that session.
@@ -458,7 +460,7 @@ fewer, an exact spec, and acceptance tests the local agent never sees.
 | # | Task | Complexity | Model | Depends on |
 |---|---|---|---|---|
 | A0 | **Spike** (1 day, time-boxed). A hard-coded view on `get_session_cost` in VS Code Copilot Chat and Claude Desktop. Record: the host variables each sends, whether `toolInfo` is present, `local()` fonts, `openLink` to `vscode://`, app-initiated `tools/call` approval prompts, display modes, High Contrast. Results go into §9. The kit and the owner's checklist are in [mcp-apps-spike.md](mcp-apps-spike.md). | medium | Sonnet | — |
-| A0b | **MVP mock-ups** (§5.6): U1, U2 and U3 in a VS Code Copilot Chat frame and a Claude Desktop frame, light and dark, using the host variables A0 recorded; one states board (Unknown, partial coverage, error, narrow width, no deep link). The owner approves them before A9. **Drawn, owner approval open (2026-11-07):** [mockups/mcp-apps/](mockups/mcp-apps/README.md). | medium | Sonnet (frontend-design skill) + owner | A0 |
+| A0b | **MVP mock-ups** (§5.6): U1, U2 and U3 in a VS Code Copilot Chat frame and a Claude Desktop frame, light and dark, using the host variables A0 recorded; one states board (Unknown, partial coverage, error, narrow width, no deep link). The owner approves them before A9. **Drawn and approved by the owner (2026-11-07):** [mockups/mcp-apps/](mockups/mcp-apps/README.md). | medium | Sonnet (frontend-design skill) + owner | A0 |
 | A1 | `turnSeriesSchema` in `packages/domain/src/cost.ts`, and `buildTurnSeries(session: Session, maxTurns = 500): TurnSeries` in `services/cost/turn-series-builder.ts` | low | setup6 | — |
 | A2 | `injectBrand(html: string, brand: ViewBrand): string` in `mcp/apps/inject-brand.ts`. Throws when the placeholder is missing; escapes HTML attribute characters. | low | setup6 | — |
 | A3 | `McpIdentity.deepLinkBase` (Copilot identity only), `toViewBrand(identity, version)`, and the icon SVG exported from `mcp-branding.ts` | low | Haiku | A2 |
