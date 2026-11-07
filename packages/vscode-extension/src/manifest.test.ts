@@ -208,8 +208,18 @@ describe("package.json contributions (vscode-extension.md §3.5)", () => {
     const hidden = (contributes.menus?.commandPalette ?? []).filter((entry) => entry.when === "false").map((entry) => entry.command);
 
     expect(hidden.sort()).toEqual(
-      [COMMAND_IDS.openSession, COMMAND_IDS.openScenario, COMMAND_IDS.showToolAudit, COMMAND_IDS.copyAdviceBundle, COMMAND_IDS.fixSetting].sort(),
+      [COMMAND_IDS.openScenario, COMMAND_IDS.showToolAudit, COMMAND_IDS.copyAdviceBundle, COMMAND_IDS.fixSetting].sort(),
     );
+  });
+
+  // Open Session picks its session in a QuickPick when run without one, so
+  // the palette lists it (and the MCP App view's copy button names it).
+  it("lists Open Session… in the Command Palette, titled with an ellipsis", () => {
+    const entry = (contributes.menus?.commandPalette ?? []).find((candidate) => candidate.command === COMMAND_IDS.openSession);
+    const command = (contributes.commands ?? []).find((candidate) => candidate.command === COMMAND_IDS.openSession);
+
+    expect(entry === undefined || entry.when !== "false").toBe(true);
+    expect(text(command?.title)).toBe("Open Session…");
   });
 
   it("links the Setup welcome to fixSetting and the Sessions welcome to Learn mode", () => {
