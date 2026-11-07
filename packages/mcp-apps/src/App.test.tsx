@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest";
 import { App } from "./App.js";
 import { FakeAppHostPort } from "./host/fake-app-host-port.js";
 import { GENERIC_BRAND, type ViewBrand } from "./brand/view-brand.js";
+import { findingsResult, SAMPLE_FINDINGS } from "./views/findings/fixtures.js";
 
 const brand: ViewBrand = { productId: "vscode-extension", displayName: "AI Credits Analyzer", version: "0.9.0" };
 
@@ -40,6 +41,15 @@ describe("App shell", () => {
     render(<App port={port} brand={GENERIC_BRAND} />);
     act(() => port.pushHostContext({ toolInfo: { tool: { name: "get_statement" } } }));
     expect(screen.getByRole("heading", { name: "No view for this result" })).toBeInTheDocument();
+  });
+
+  it("hands the list_findings result to the findings view", () => {
+    const port = new FakeAppHostPort();
+    render(<App port={port} brand={brand} />);
+    act(() => port.pushHostContext({ toolInfo: { tool: { name: "list_findings" } } }));
+    act(() => port.pushToolResult({ structuredContent: findingsResult(SAMPLE_FINDINGS) }));
+    expect(screen.getByRole("table", { name: "Findings" })).toBeInTheDocument();
+    expect(screen.getByText("Read a credentials file")).toBeInTheDocument();
   });
 
   it("picks up context that arrived before the shell subscribed", () => {
