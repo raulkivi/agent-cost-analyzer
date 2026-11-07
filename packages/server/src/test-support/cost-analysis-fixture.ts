@@ -121,15 +121,28 @@ export const piSessions = [
   ]),
 ];
 
-const files = new InMemoryFileSystem(
-  {
-    "/home/dev/portal-web/.git/config": '[remote "origin"]\n\turl = git@github.com:acme/portal-web.git\n',
-    "/home/dev/portal-api/.git/config": '[remote "origin"]\n\turl = https://github.com/acme/portal-api.git\n',
-    "/home/dev/billing/.git/config": '[remote "origin"]\n\turl = git@github.com:acme/billing.git\n',
-    "/home/dev/scratch/.git/config": "[core]\n\tbare = false\n",
-  },
-  ["/home/dev/notes"],
-);
+const FIXTURE_HOME = "/home/dev";
+
+// Step 15.13: the security tests move the fixture to another home folder
+// and give portal-api's remote a credential.
+function filesAt(home: string, portalApiRemote = "https://github.com/acme/portal-api.git") {
+  return new InMemoryFileSystem(
+    {
+      [`${home}/portal-web/.git/config`]: '[remote "origin"]\n\turl = git@github.com:acme/portal-web.git\n',
+      [`${home}/portal-api/.git/config`]: `[remote "origin"]\n\turl = ${portalApiRemote}\n`,
+      [`${home}/billing/.git/config`]: '[remote "origin"]\n\turl = git@github.com:acme/billing.git\n',
+      [`${home}/scratch/.git/config`]: "[core]\n\tbare = false\n",
+    },
+    [`${home}/notes`],
+  );
+}
+
+function rehome(sessions: Session[], home: string): Session[] {
+  if (home === FIXTURE_HOME) return sessions;
+  return sessions.map((session) =>
+    session.workspace?.known ? { ...session, workspace: { known: true, cwd: home + session.workspace.cwd.slice(FIXTURE_HOME.length) } } : session,
+  );
+}
 
 export const fixtureProjects = {
   version: 1,
@@ -153,10 +166,19 @@ const providerStatus: LogProviderStatus = {
   ],
 };
 
-export type CostFixtureOptions = Pick<McpServerDeps, "toolGroups" | "identity">;
+export type CostFixtureOptions = Pick<McpServerDeps, "toolGroups" | "identity"> & {
+  // Step 15.13: the security tests' generated home folder, remote and projects.
+  home?: string;
+  portalApiRemote?: string;
+  projects?: unknown;
+};
 
-export function composeCostFixture(options: CostFixtureOptions = {}) {
-  const providers = [new FakeProvider("vscode", copilotSessions), new FakeProvider("claude-code", claudeCodeSessions), new FakeProvider("pi-agent", piSessions)];
+export function composeCostFixture({ home = FIXTURE_HOME, portalApiRemote, projects = fixtureProjects, ...options }: CostFixtureOptions = {}) {
+  const providers = [
+    new FakeProvider("vscode", rehome(copilotSessions, home)),
+    new FakeProvider("claude-code", rehome(claudeCodeSessions, home)),
+    new FakeProvider("pi-agent", rehome(piSessions, home)),
+  ];
   const lookup: ProviderLookup = {
     getActiveProvider: () => providers[0]!,
     getProvider: (id) => {
@@ -165,12 +187,12 @@ export function composeCostFixture(options: CostFixtureOptions = {}) {
       return found;
     },
   };
-  const catalog = new ProjectCatalog(new InMemoryProjectStore(JSON.stringify(fixtureProjects)));
+  const catalog = new ProjectCatalog(new InMemoryProjectStore(JSON.stringify(projects)));
   const attributor = new SessionAttributor({
-    repositories: new RepositoryResolver(files),
+    repositories: new RepositoryResolver(filesAt(home, portalApiRemote)),
     projects: catalog,
     vendors: new ProfileVendorResolver(vendorProfiles),
-    homeDir: "/home/dev",
+    homeDir: home,
   });
   const priceBook = new PriceBook(new BundledPriceBookSource());
   const pricer = createTurnPricer(priceBook, () => FIXTURE_NOW);
