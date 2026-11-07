@@ -27,6 +27,7 @@ import {
 import { InMemoryAppSettingsStore } from "../test-support/in-memory-app-settings-store.js";
 import { COPILOT_CLI_FIXTURE_HOME } from "../test-support/copilot-cli-fixtures.js";
 import { AGENT_HOST_NO_SDK_SESSION_ID_REASON } from "../data-sources/agent-host/agent-host-session-source.js";
+import { FIXTURE_VENDOR_PROFILES_DIR } from "../test-support/vendor-profiles-dir.js";
 import { createCopilotMcpServices } from "./create-copilot-mcp-services.js";
 import { createExtensionApiService } from "./create-extension-api-service.js";
 import { createStandaloneApiService } from "./create-standalone-api-service.js";
@@ -84,7 +85,7 @@ describe("Agent Host sessions through the Copilot provider (step 10.13)", () => 
       claudeCodeProjectsDirPath: null,
       appVersion: "0.1.0-test",
     });
-    const server = createMcpServer(createCopilotMcpServices({ ...noClassicLogs, appVersion: "0.1.0-test" }));
+    const server = createMcpServer(createCopilotMcpServices({ ...noClassicLogs, appVersion: "0.1.0-test", vendorProfilesDir: FIXTURE_VENDOR_PROFILES_DIR }));
     const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
     mcp = new Client({ name: "test-client", version: "1.0.0" });
     await Promise.all([server.connect(serverTransport), mcp.connect(clientTransport)]);

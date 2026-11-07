@@ -413,11 +413,28 @@ claude mcp add agent-cost-analyzer -- /absolute/path/to/agent-cost-analyzer/scri
 | `list_repositories` | The repositories your sessions ran in, with sessions, turns, AI Credits and project ids; sessions with no repository are grouped by reason |
 | `list_projects` | Your projects from `projects.json` with their repositories and AI Credits |
 | `get_price_book` | The dated price versions the app prices turns with, per channel and model |
+| `get_price_changes` | When a model's price changed: documented changes from the price book, and observed GitHub Copilot ones |
+| `get_repository_cost` | One repository's cost over time, by vendor and model, with price-change markers |
+| `get_project_cost` | One project's cost over time, by repository, vendor, model and token type, with its most expensive sessions |
+| `compare_costs` | Two to 20 repositories or projects side by side: total, change, per session, per active day, share and coverage |
+| `explain_cost_change` | Why a repository's or project's cost changed between two periods: usage, price and mix effects that add up exactly |
+| `get_statement` | A project's billing statement for a period: the issued one with any differences, else the draft. It never issues one |
+| `estimate_cost` | The cost of planned work as a p50–p90 range at today's prices, never one number |
 
-Three prompts start common reviews: `audit_session` (why a session's tool
-calls failed), `review_costs` (what drives your spend and how to cut it)
-and `security_review` (risky agent actions and the guardrails that would
-prevent them).
+Six prompts start common reviews: `audit_session` (why a session's tool
+calls failed), `review_costs` (what drives your spend and how to cut it),
+`security_review` (risky agent actions and the guardrails that would
+prevent them), `explain_cost_change` (whether usage, price or mix drove a
+change), `prepare_statement` (a statement's summary and a note to the
+client) and `estimate_work` (a range for planned work and its main
+uncertainty).
+
+Every cost figure says its basis: **billed** (what the vendor billed,
+GitHub Copilot's AI Credits), **reported** (a cost the log itself records)
+or **priced** (tokens times the price book's price for that model and
+date). Figures are priced **as of use** unless a tool is asked for
+**today's prices**, and the only conversion is 1 AI Credit = $0.01. The
+server's instructions tell the agent this when it connects.
 
 Per-session tools take an optional `provider` (for example
 `"claude-code"`) and otherwise use the source selected in the web app.

@@ -20,6 +20,14 @@ export interface McpIdentity {
   providerArgDescription: string;
 }
 
+// Phase 15 step 15.13 (plan §10.1.4): what a cost figure means, the same
+// for both products.
+export const COST_BASIS_INSTRUCTIONS = [
+  "Cost bases: billed is what the vendor billed (GitHub Copilot's AI Credits); reported is a cost the log itself records; priced is tokens × the price book's price for that model, channel and date (get_price_book lists the versions and their sources). The preferred basis takes billed, then reported, then priced; every total says how many turns it covers.",
+  'Prices: "as of use" (the default) prices each turn at the prices in force when it ran; "today\'s prices" reprices every turn at today\'s, to compare usage without price changes.',
+  "Conversion: 1 AI Credit = $0.01 (GitHub's documented rate); no other exchange rate is used.",
+].join("\n\n");
+
 export const STANDALONE_MCP_IDENTITY: McpIdentity = {
   name: "agent-cost-analyzer",
   title: "Agent Cost Analyzer",
@@ -30,6 +38,9 @@ export const STANDALONE_MCP_IDENTITY: McpIdentity = {
     "Scope: per-session tools and get_audit_rollup read one provider, the `provider` argument or else the one active in the web app (list_log_providers shows activeProviderId). get_cost_rollup and list_findings read every available provider unless `provider` is given.",
     "Units: token counts are tokens; AI Credits are GitHub Copilot's billing unit and only VS Code sessions record them. A null figure is unknown, never zero: check knownTurns vs turns and unavailableReasons before comparing. `estimated` marks local-tokenizer estimates.",
     "Dates are ISO (YYYY-MM-DD or a timestamp), inclusive, compared against each session's start.",
+    "Cost by repository and project: list_repositories and list_projects first, then get_project_cost or get_repository_cost (over time, by vendor and model) or compare_costs (several side by side), then explain_cost_change (usage, price and mix effects) and get_price_changes for the price changes behind it.",
+    COST_BASIS_INSTRUCTIONS,
+    "Billing: get_statement reads a project's statement for a period; statements are issued only in the app, never by a tool. estimate_cost gives the cost of planned work as a p50–p90 range at today's prices, never one number.",
   ].join("\n\n"),
   logSourcesDescription: "VS Code Copilot Chat, Claude Code CLI, pi, mitmproxy captures",
   providerArgDescription:

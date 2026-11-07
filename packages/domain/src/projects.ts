@@ -99,6 +99,8 @@ export const projectListSchema = z.object({
   status: projectsStateSchema.shape.status,
   projects: z.array(projectListEntrySchema),
   problems: z.array(projectFileProblemSchema),
+  // Step 15.13 (D19): why a product has no projects (the extension's server).
+  reason: z.string().optional(),
 });
 
 export type ProjectListEntry = z.infer<typeof projectListEntrySchema>;

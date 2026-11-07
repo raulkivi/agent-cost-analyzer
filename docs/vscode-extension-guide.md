@@ -369,8 +369,9 @@ applies. Your user setting always applies.
 
 ### What it offers
 
-Nine read-only tools, the same ones the standalone app's MCP server has,
-over Copilot Chat sessions only:
+Seventeen read-only tools, the standalone app's MCP server's tools without
+its billing ones (`get_statement` and `estimate_cost`), over Copilot Chat
+sessions only:
 
 | Tool | What it returns |
 |---|---|
@@ -383,9 +384,17 @@ over Copilot Chat sessions only:
 | `list_tool_calls` | One session's tool calls, filtered and paged |
 | `get_audit_rollup` | Tool-call totals, top failing commands and per-day counts across sessions |
 | `list_findings` | Security, anomaly and behaviour-change findings, with redacted evidence |
+| `list_repositories` | The repositories your Copilot sessions ran in, with sessions, turns and AI Credits (folder names only for local ones) |
+| `list_projects` | No projects here: projects are edited in the standalone Agent Cost Analyzer app, and it says so |
+| `get_price_book` | The dated GitHub Copilot and API prices the extension prices turns with |
+| `get_price_changes` | When a model's price changed: documented, and observed from your billed AI Credits |
+| `get_repository_cost` | One repository's cost over time, by model, with price-change markers |
+| `get_project_cost` | One project's cost; with no projects, everything is in No project |
+| `compare_costs` | Several repositories side by side: total, change, per session, per active day and share |
+| `explain_cost_change` | Why a repository's cost changed between two periods: usage, price and mix effects |
 
-Three prompts start common reviews: `audit_session`, `review_costs` and
-`security_review`. A `null` figure means the log doesn't record it; the
+Four prompts start common reviews: `audit_session`, `review_costs`,
+`security_review` and `explain_cost_change`. A `null` figure means the log doesn't record it; the
 tools never report it as 0. The User Guide's
 [MCP section](UserGuide.md#querying-the-audit-from-claude-code-mcp) has
 more on the tools.
@@ -398,6 +407,8 @@ context, and so to whichever model the chat uses:
 - costs: tokens, AI Credits and cache use per session, turn and day;
 - tool calls and their outcomes;
 - findings: security, anomaly and behaviour-change flags, with excerpts;
+- repositories: their remote names (`github.com/org/repo`), never a
+  remote's credentials; a local repository by its folder name only;
 - turn text: your prompts and the model's responses.
 
 Secrets found in that text are redacted first, and text is cut to a

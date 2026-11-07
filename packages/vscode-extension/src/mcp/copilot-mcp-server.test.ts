@@ -19,6 +19,7 @@ import {
   COPILOT_CLI_FIXTURE_SESSION_IDS,
   writeCopilotCliAgentHostStores,
 } from "@agent-cost-analyzer/server/src/test-support/copilot-cli-fixtures";
+import { FIXTURE_VENDOR_PROFILES_DIR } from "@agent-cost-analyzer/server/src/test-support/vendor-profiles-dir";
 import { createCopilotMcpServer, type CopilotMcpServerOptions } from "./copilot-mcp-server.js";
 
 type ToolResult = Awaited<ReturnType<Client["callTool"]>>;
@@ -39,7 +40,7 @@ describe("createCopilotMcpServer (vscode-extension.md D7)", () => {
       path.join(userDataDir, "User", "globalStorage", "github.copilot-chat", "session-store.db"),
       new Date().toISOString(),
     );
-    const server = createCopilotMcpServer({ userDataDir, version: "0.1.0-test" });
+    const server = createCopilotMcpServer({ userDataDir, version: "0.1.0-test", vendorProfilesDir: FIXTURE_VENDOR_PROFILES_DIR });
     const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
     client = new Client({ name: "test-client", version: "1.0.0" });
     await Promise.all([server.connect(serverTransport), client.connect(clientTransport)]);
@@ -50,10 +51,13 @@ describe("createCopilotMcpServer (vscode-extension.md D7)", () => {
     rmSync(userDataDir, { recursive: true, force: true });
   });
 
-  it("serves the 9 read-only tools with the given version", async () => {
+  // Step 15.13 (plan §10.1.6): every group but billing (D7).
+  it("serves the 17 read-only tools with the given version, without get_statement or estimate_cost", async () => {
     const { tools } = await client.listTools();
 
-    expect(tools).toHaveLength(9);
+    expect(tools).toHaveLength(17);
+    expect(tools.map((tool) => tool.name)).not.toEqual(expect.arrayContaining(["get_statement"]));
+    expect(tools.map((tool) => tool.name)).not.toEqual(expect.arrayContaining(["estimate_cost"]));
     expect(tools.every((tool) => tool.annotations?.readOnlyHint === true)).toBe(true);
     expect(client.getServerVersion()?.version).toBe("0.1.0-test");
   });
@@ -118,7 +122,7 @@ describe("createCopilotMcpServer with Agent Host event logs (step 10.14)", () =>
   it("reads a turn's text from the event log under COPILOT_HOME", async () => {
     vi.stubEnv("COPILOT_HOME", COPILOT_CLI_FIXTURE_HOME);
 
-    const view = await turnText({ userDataDir, version: "0.1.0-test" });
+    const view = await turnText({ userDataDir, version: "0.1.0-test", vendorProfilesDir: FIXTURE_VENDOR_PROFILES_DIR });
 
     expect(view.userMessage).toBe("Example prompt one: please list the source files.");
     expect(view.textUnavailableReason).toBeUndefined();
@@ -127,7 +131,7 @@ describe("createCopilotMcpServer with Agent Host event logs (step 10.14)", () =>
   it("reads no event log for an explicit null Copilot home", async () => {
     vi.stubEnv("COPILOT_HOME", COPILOT_CLI_FIXTURE_HOME);
 
-    const view = await turnText({ userDataDir, version: "0.1.0-test", copilotHome: null });
+    const view = await turnText({ userDataDir, version: "0.1.0-test", copilotHome: null, vendorProfilesDir: FIXTURE_VENDOR_PROFILES_DIR });
 
     expect(view.textUnavailableReason).toMatch(/Copilot CLI home/);
   });

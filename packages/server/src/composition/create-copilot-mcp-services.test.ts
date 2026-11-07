@@ -4,13 +4,21 @@ import path from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
-import { costRollupSchema, logProviderStatusSchema, sessionCostSchema } from "@agent-cost-analyzer/domain";
+import { costRollupSchema, logProviderStatusSchema, priceBookListingSchema, projectListSchema, repositoryListSchema, sessionCostSchema } from "@agent-cost-analyzer/domain";
 import { createMcpServer, type McpServerDeps } from "../mcp/mcp-server.js";
 import { seedCopilotSessionStore, USAGE_SESSION_ID, writeUsageDebugLog } from "../test-support/copilot-session-store.js";
 import { composeLogProviders } from "./compose-log-providers.js";
 import { STANDALONE_MCP_IDENTITY } from "../mcp/mcp-identity.js";
 import { COPILOT_MCP_IDENTITY, createCopilotMcpServices } from "./create-copilot-mcp-services.js";
 import { createMcpServices } from "./mcp-services.js";
+import { createStandaloneAttribution } from "./create-standalone-attribution.js";
+import { createStandalonePriceBook } from "./create-price-book.js";
+import { createTurnPricer } from "./create-turn-pricer.js";
+import { InMemoryStatementStore } from "../test-support/in-memory-statement-store.js";
+import { FIXTURE_VENDOR_PROFILES_DIR } from "../test-support/vendor-profiles-dir.js";
+
+const BILLING_TOOLS = ["get_statement", "estimate_cost"];
+const BILLING_PROMPTS = ["prepare_statement", "estimate_work"];
 
 type ToolResult = Awaited<ReturnType<Client["callTool"]>>;
 
@@ -64,6 +72,7 @@ describe("createCopilotMcpServices (the extension's MCP server, vscode-extension
         agentHostUserDataDir: null,
         copilotHome: null,
         appVersion: "0.1.0-test",
+        vendorProfilesDir: FIXTURE_VENDOR_PROFILES_DIR,
       }),
     );
     // The standalone server as mcp/stdio.ts builds it, over the same Copilot
@@ -80,7 +89,17 @@ describe("createCopilotMcpServices (the extension's MCP server, vscode-extension
       systemPromptLogPath: null,
       claudeCodeProjectsDirPath: null,
     });
-    standalone = await connect(createMcpServices(registry, "0.1.0-test"));
+    // Step 15.13: with its projects file (none here), price book and statements.
+    const attribution = createStandaloneAttribution(registry, dir);
+    const priceBook = createStandalonePriceBook(dir, attribution.catalog);
+    standalone = await connect({
+      ...createMcpServices(registry, "0.1.0-test", undefined, attribution, createTurnPricer(priceBook), priceBook, {
+        store: new InMemoryStatementStore(),
+        projects: attribution.catalog,
+        priceBookHash: () => "test",
+      }),
+      priceBook,
+    });
   });
 
   afterAll(async () => {
@@ -103,18 +122,42 @@ describe("createCopilotMcpServices (the extension's MCP server, vscode-extension
       return { ...rest, description: tool.name === "list_log_providers" ? undefined : description, inputSchema: { ...inputSchema, properties } };
     });
 
-  it("lists the same 9 tools as the standalone server, with the same input and output schemas", async () => {
+  // Step 15.13 (plan §10.1.4, §10.1.6): every group but billing (D7).
+  it("lists the standalone server's tools but the billing ones (17 of 19), with the same input and output schemas", async () => {
     const { tools } = await copilot.listTools();
+    const standaloneTools = (await standalone.listTools()).tools;
 
-    expect(tools).toHaveLength(9);
-    expect(withoutIdentityText(tools)).toEqual(withoutIdentityText((await standalone.listTools()).tools));
+    expect(standaloneTools).toHaveLength(19);
+    expect(tools).toHaveLength(17);
+    expect(withoutIdentityText(tools)).toEqual(withoutIdentityText(standaloneTools.filter((tool) => !BILLING_TOOLS.includes(tool.name))));
     for (const tool of tools) {
       expect(tool.outputSchema?.type, tool.name).toBe("object");
+      expect(tool.annotations?.readOnlyHint, tool.name).toBe(true);
     }
   });
 
-  it("offers the same prompts as the standalone server", async () => {
-    expect((await copilot.listPrompts()).prompts).toEqual((await standalone.listPrompts()).prompts);
+  it("offers the standalone server's prompts but the billing ones (4 of 6)", async () => {
+    const standalonePrompts = (await standalone.listPrompts()).prompts;
+
+    expect(standalonePrompts).toHaveLength(6);
+    expect((await copilot.listPrompts()).prompts).toEqual(standalonePrompts.filter((prompt) => !BILLING_PROMPTS.includes(prompt.name)));
+  });
+
+  it("lists no projects and says why: projects are edited in the standalone app (D19)", async () => {
+    const list = projectListSchema.parse((await copilot.callTool({ name: "list_projects", arguments: {} })).structuredContent);
+
+    expect(list.projects).toEqual([]);
+    expect(list.reason).toMatch(/Agent Cost Analyzer app/);
+    expect(projectListSchema.parse((await standalone.callTool({ name: "list_projects", arguments: {} })).structuredContent).reason).toBeUndefined();
+  });
+
+  it("reads the bundled price book and lists repositories over the Copilot provider", async () => {
+    const book = priceBookListingSchema.parse((await copilot.callTool({ name: "get_price_book", arguments: { channel: "github-copilot" } })).structuredContent);
+    const repositories = repositoryListSchema.parse((await copilot.callTool({ name: "list_repositories", arguments: {} })).structuredContent);
+
+    expect(book.versions.length).toBeGreaterThan(0);
+    expect(book.versions.every((version) => version.origin === "bundled")).toBe(true);
+    expect([...repositories.repositories, ...repositories.unattributed].length).toBeGreaterThan(0);
   });
 
   it("is named ai-credits-analyzer and speaks only of Copilot", async () => {

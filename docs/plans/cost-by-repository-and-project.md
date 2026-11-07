@@ -1,6 +1,6 @@
 # Phase 15: Cost by repository and project, price history, billing and estimates
 
-Status: **In progress**: steps 15.0–15.12 are done (see §14.1). The owner accepted
+Status: **In progress**: steps 15.0–15.13 are done (see §14.1). The owner accepted
 every recommended decision on 2026-11-05 ([§13](#13-decisions)). The UI
 design (§11) was then revised against the project's existing design and UX
 guidance. This document is the design; Phase 15 in
@@ -1107,6 +1107,7 @@ column is binding; the other options are kept for the record.
 | D16 | How is an estimate's p50–p90 range worked out? (decided 2026-11-06) | unit cost × days; resampled totals | **Unit cost × days**: the median and 90th-percentile cost per active day (or per session) in the history window, each × the planned days (or sessions), as on board 4 |
 | D17 | Is "what if another model" in step 15.12? (decided 2026-11-06) | leave for Phase 14; a same-tokens reprice now | **Left for Phase 14**: the panel says it comes with replay; 15.12 estimates the project's own models only |
 | D18 | What if the history is too thin? (decided 2026-11-06) | refuse under 5 days; always estimate with a warning | **No range under 5 active days with a known cost**: the answer gives the reason and the day count instead; days with any unknown cost are left out and counted in the coverage |
+| D19 | Where do the extension's MCP project tools get projects from? (decided 2026-11-07) | none yet; read the standalone app's file; leave the project tools out | **None yet**: the extension's server lists the planned 17 tools; `list_projects` returns no projects with a reason (projects are edited in the standalone app), every turn is in No project, and the repository, pricing and cost tools work over Copilot sessions, as the extension's Dashboard does |
 
 ## 14. Implementation steps (TDD, each with an exit criterion)
 
@@ -1129,7 +1130,7 @@ No UI code (15.9 onwards) starts before the mock-ups in 15.8 are approved.
 | 15.10 | **Price changes and variance**: `PriceChangeDetector`, observed-change finding, `VarianceAnalyzer`, Project tab (§11.4); MCP: `explain_cost_change` tool and prompt, `get_price_changes`, `list_findings` kind `price-change` | Effects add up exactly (property test); markers match price-book boundaries; same UI checks as 15.9; the step's MCP tools pass the §10.1.6 tests; scenario S4 passes Done 2026-11-06, see §14.1 |
 | 15.11 | **Statements**: builder, freeze, diff, CSV/JSON/Markdown export, Billing tab, Projects editor (§11.5); MCP: `get_statement`, `prepare_statement` prompt | Golden statements; a frozen statement survives a price-book update unchanged and the diff is exact; every project can be assigned by keyboard alone; same UI checks as 15.9; the step's MCP tools pass the §10.1.6 tests; scenarios S1, S5, S6 and S8 pass Done 2026-11-06, see §14.1 |
 | 15.12 | **Estimates** + Estimate panel; MCP: `estimate_cost`, `estimate_work` prompt | Forecast range tests on fixture histories; shown as a labelled range, never a single number; the step's MCP tools pass the §10.1.6 tests; scenario S7 passes Done 2026-11-06, see §14.1 |
-| 15.13 | **MCP, cross-cutting work** (§10.1.4): server instructions for both products, the `toolGroups` option and the extension's tool set, the security tests of §10.1.5 | The §10.1.6 exit criterion over stdio; scenario S10 passes |
+| 15.13 | **MCP, cross-cutting work** (§10.1.4): server instructions for both products, the `toolGroups` option and the extension's tool set, the security tests of §10.1.5 | The §10.1.6 exit criterion over stdio; scenario S10 passes Done 2026-11-07, see §14.1 |
 | 15.14 | **VS Code extension** (§11.9): group by repository, status bar per workspace repository, the two Dashboard tabs | Extension and manifest tests (category, codicons, l10n keys); UI check passes; manual check list updated; scenario S9 passes in `extension-ui` |
 | 15.15 | **Docs**: architecture.md (domain, data flow, API), UserGuide, vscode-extension-guide, vision non-goals, README index | Docs reviewed by the owner |
 
@@ -1990,6 +1991,68 @@ TDD exceptions: S7 and the UI-check scenario were written after the panel
 they drive; the layout fix was made after the UI check found it, then
 tested; the harness's answer and the screenshot script have no tests of
 their own. Not yet: estimates in the extension (15.14).
+
+**15.13 (done 2026-11-07).** MCP across both products. The owner's
+decision D19 (the extension's project tools have no projects yet) is in
+§13.
+
+- **Tool groups.** `createMcpServer` takes `toolGroups` (`sessions`,
+  `audit`, `cost`, `findings`, `attribution`, `pricing`, `costAnalysis`,
+  `billing`), every group by default; a group is registered only when its
+  services are given too, and the billing prompts go with the billing
+  group. `WITHOUT_BILLING_TOOL_GROUPS` is the extension's set (D7).
+- **The extension's server** (`createCopilotMcpServices`): repositories,
+  vendors and channels over the Copilot provider
+  (`createCopilotAttribution`), the bundled price book from the
+  extension's `media/` (the child process passes
+  `media/vendor-profiles`; the price book is beside it), its pricer and the
+  cost analyses: 17 tools and 4 prompts. With no projects file (D19),
+  `list_projects` returns none with a `reason` (an optional field of
+  `ProjectList`), and every turn is in No project.
+- **Instructions.** Both products give the cost workflow
+  (`list_repositories`/`list_projects` → `get_project_cost` or
+  `compare_costs` → `explain_cost_change` and `get_price_changes`), the
+  three cost bases and the price book behind priced figures, as-of-use
+  versus today's prices and the one conversion
+  (`COST_BASIS_INSTRUCTIONS`, shared). The standalone server adds that
+  statements are issued only in the app and estimates are ranges; the
+  extension's says it has no projects and names no billing tool.
+- **Security tests** (`mcp/security.test.ts`, §10.1.5): every tool of the
+  standalone server over the cost fixture moved to a generated home
+  folder, with a credential in a remote URL. No output carries the
+  credential or the home folder (a property test; `list_repositories`
+  with `includePaths` is the one way to see paths, and a test checks it
+  does), client names and billing codes appear only in `list_projects`
+  and `get_statement`, and every tool is read-only. A deliberate break of
+  the path redaction makes the property test fail.
+- **Exit criterion over stdio** (`e2e/specs/mcp-exit-criterion.spec.ts`,
+  in the `web-e2e` job): the standalone stdio server over the e2e fixture
+  home lists 19 read-only tools with output schemas and 6 prompts;
+  `get_project_cost` for Customer portal in October has a billed Copilot
+  figure and priced figures with their price versions
+  (`anthropic-api:claude-sonnet-5.5:…`); `explain_cost_change` across
+  Claude Sonnet 5.5's 2026-10-07 cache-read cut (the fixture's documented
+  change; §10.1.6's sample said Sep 1) gives usage, price and mix effects
+  that add up to the change, with a non-zero price effect. The extension's
+  bundle, over stdio, lists 17 tools and 4 prompts
+  (`mcp-stdio-bundle.test.ts`); its bundle-load and VS Code integration
+  tests expect the 17 tools.
+- **S10** (`e2e/specs/s10-one-answer.spec.ts`): Customer portal in
+  October gives the same total and coverage in the Dashboard (Cost over
+  time, Last month), `GET /api/cost/timeseries` and MCP
+  `get_project_cost` over stdio (30.95 AI Credits, all 6 turns known).
+  The whole `web-e2e` suite (S1–S8, S10 and the exit criterion) passes
+  three runs in a row.
+- **Docs**: the User Guide's MCP table lists the 19 tools and 6 prompts
+  and the cost bases; the extension guide, README and changelog its 17
+  tools; the manual check list and UI-automation plan the new count.
+
+TDD exceptions: the security and exit-criterion tests guard behaviour
+that earlier steps built, so they passed when written (the redaction was
+broken on purpose once to see the property test fail); S10 was written
+after the views it reads. The `@modelcontextprotocol/sdk` dev dependency
+of `packages/web` is for the e2e suite's stdio client. Not yet: the
+extension's own projects (15.14 or later) and its Dashboard tabs (15.14).
 
 ## 15. Exit criterion
 

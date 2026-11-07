@@ -42,7 +42,8 @@ Microsoft.
   change what a turn costs.
 - **MCP server for Copilot agent mode** (off by default). Ask Copilot Chat
   "what did my last session cost?" and it answers from the same local logs
-  through nine read-only tools.
+  through 17 read-only tools, including cost by repository and why it
+  changed.
 
 An unknown figure is shown as unknown, never as 0.
 

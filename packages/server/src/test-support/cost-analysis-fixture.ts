@@ -8,7 +8,9 @@ import type { LogProviderStatus, Session, TokenCount, Turn, TurnUsage } from "@a
 import { createCostAnalysis, projectDirectoryOf } from "../composition/create-cost-analysis.js";
 import { createTurnPricer } from "../composition/create-turn-pricer.js";
 import { UnknownLogProviderIdError } from "../data-sources/log-providers/registry.js";
-import { createMcpServer } from "../mcp/mcp-server.js";
+import { createMcpServer, type McpServerDeps } from "../mcp/mcp-server.js";
+import { AttributionQueryService } from "../services/cost-attribution/attribution-query-service.js";
+import { RepositoryListService } from "../services/cost-attribution/repository-list-service.js";
 import { AnalysisQueryService } from "../services/analysis/analysis-query-service.js";
 import { ApiService, type ApiServiceDeps } from "../services/api/api-service.js";
 import { ProjectCatalog } from "../services/cost-attribution/project-catalog.js";
@@ -119,15 +121,28 @@ export const piSessions = [
   ]),
 ];
 
-const files = new InMemoryFileSystem(
-  {
-    "/home/dev/portal-web/.git/config": '[remote "origin"]\n\turl = git@github.com:acme/portal-web.git\n',
-    "/home/dev/portal-api/.git/config": '[remote "origin"]\n\turl = https://github.com/acme/portal-api.git\n',
-    "/home/dev/billing/.git/config": '[remote "origin"]\n\turl = git@github.com:acme/billing.git\n',
-    "/home/dev/scratch/.git/config": "[core]\n\tbare = false\n",
-  },
-  ["/home/dev/notes"],
-);
+const FIXTURE_HOME = "/home/dev";
+
+// Step 15.13: the security tests move the fixture to another home folder
+// and give portal-api's remote a credential.
+function filesAt(home: string, portalApiRemote = "https://github.com/acme/portal-api.git") {
+  return new InMemoryFileSystem(
+    {
+      [`${home}/portal-web/.git/config`]: '[remote "origin"]\n\turl = git@github.com:acme/portal-web.git\n',
+      [`${home}/portal-api/.git/config`]: `[remote "origin"]\n\turl = ${portalApiRemote}\n`,
+      [`${home}/billing/.git/config`]: '[remote "origin"]\n\turl = git@github.com:acme/billing.git\n',
+      [`${home}/scratch/.git/config`]: "[core]\n\tbare = false\n",
+    },
+    [`${home}/notes`],
+  );
+}
+
+function rehome(sessions: Session[], home: string): Session[] {
+  if (home === FIXTURE_HOME) return sessions;
+  return sessions.map((session) =>
+    session.workspace?.known ? { ...session, workspace: { known: true, cwd: home + session.workspace.cwd.slice(FIXTURE_HOME.length) } } : session,
+  );
+}
 
 export const fixtureProjects = {
   version: 1,
@@ -151,8 +166,19 @@ const providerStatus: LogProviderStatus = {
   ],
 };
 
-export function composeCostFixture() {
-  const providers = [new FakeProvider("vscode", copilotSessions), new FakeProvider("claude-code", claudeCodeSessions), new FakeProvider("pi-agent", piSessions)];
+export type CostFixtureOptions = Pick<McpServerDeps, "toolGroups" | "identity"> & {
+  // Step 15.13: the security tests' generated home folder, remote and projects.
+  home?: string;
+  portalApiRemote?: string;
+  projects?: unknown;
+};
+
+export function composeCostFixture({ home = FIXTURE_HOME, portalApiRemote, projects = fixtureProjects, ...options }: CostFixtureOptions = {}) {
+  const providers = [
+    new FakeProvider("vscode", rehome(copilotSessions, home)),
+    new FakeProvider("claude-code", rehome(claudeCodeSessions, home)),
+    new FakeProvider("pi-agent", rehome(piSessions, home)),
+  ];
   const lookup: ProviderLookup = {
     getActiveProvider: () => providers[0]!,
     getProvider: (id) => {
@@ -161,12 +187,12 @@ export function composeCostFixture() {
       return found;
     },
   };
-  const catalog = new ProjectCatalog(new InMemoryProjectStore(JSON.stringify(fixtureProjects)));
+  const catalog = new ProjectCatalog(new InMemoryProjectStore(JSON.stringify(projects)));
   const attributor = new SessionAttributor({
-    repositories: new RepositoryResolver(files),
+    repositories: new RepositoryResolver(filesAt(home, portalApiRemote)),
     projects: catalog,
     vendors: new ProfileVendorResolver(vendorProfiles),
-    homeDir: "/home/dev",
+    homeDir: home,
   });
   const priceBook = new PriceBook(new BundledPriceBookSource());
   const pricer = createTurnPricer(priceBook, () => FIXTURE_NOW);
@@ -191,16 +217,19 @@ export function composeCostFixture() {
     analysisQueries: new AnalysisQueryService(lookup, insights, { attribution: attributor, pricer }),
     getProviderStatus: async () => providerStatus,
     version: "0.0.0-test",
+    // Step 15.13: every Phase 15 group, as the standalone stdio server has them.
+    attribution: new AttributionQueryService(new RepositoryListService({ listProviders: () => providers }, attributor), catalog, attributor),
     costAnalysis,
     priceBook,
     statements,
     estimates,
+    ...options,
   });
   return { api, server, insights, costAnalysis, statements };
 }
 
-export async function connectCostFixture(): Promise<{ client: Client; api: ApiService }> {
-  const { server, api } = composeCostFixture();
+export async function connectCostFixture(options: CostFixtureOptions = {}): Promise<{ client: Client; api: ApiService }> {
+  const { server, api } = composeCostFixture(options);
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
   const client = new Client({ name: "test-client", version: "1.0.0" });
   await Promise.all([server.connect(serverTransport), client.connect(clientTransport)]);

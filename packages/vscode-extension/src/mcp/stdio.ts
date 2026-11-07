@@ -31,7 +31,9 @@ async function main(): Promise<void> {
   // The bundle is <extension>/dist/mcp-stdio.js, next to the extension's
   // own package.json (G4: no import.meta.url in a CJS bundle).
   const version = readAppVersion(path.join(__dirname, "..", "package.json"));
-  const server = createCopilotMcpServer({ userDataDir: args.userDataDir, version });
+  // Step 15.13: the vendor profiles and the bundled price book ship in media/.
+  const vendorProfilesDir = path.join(__dirname, "..", "media", "vendor-profiles");
+  const server = createCopilotMcpServer({ userDataDir: args.userDataDir, version, vendorProfilesDir });
   await server.connect(new StdioServerTransport());
   process.stderr.write(`${PREFIX} ${version} ready on stdio (read-only, Copilot Chat logs only).\n`);
 }
