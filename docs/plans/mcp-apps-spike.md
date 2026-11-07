@@ -1,5 +1,7 @@
 # MCP Apps host spike (Phase 12, task A0): owner's checklist
 
+**Last changed:** 2026-11-07 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+
 Time-box: about 30 minutes. You run a throw-away view in two real hosts and
 paste back what each one sends. Nothing here is shipped: the spike view and
 the `--app-views-html` flag are dev-only (the flag is not wired into the VS
