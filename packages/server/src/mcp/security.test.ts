@@ -35,7 +35,11 @@ const CALLS: [name: string, args: Record<string, unknown>][] = [
   ["explain_cost_change", { groupBy: "project", id: "portal", periodA: "2026-09", periodB: "2026-10" }],
   ["get_statement", { projectId: "portal", period: "2026-10" }],
   ["estimate_cost", { projectId: "portal", activeDays: 20 }],
+  // Phase 14 step 14.5 (D7; threat-model.md §9): the replay group.
+  ["replay_session", { sessionId: "cc-1", model: "claude-haiku-5.5", provider: "claude-code" }],
+  ["compare_models_for_session", { sessionId: "cp-1", models: ["claude-haiku-5.5", "gpt-6.1-sol"], provider: "vscode" }],
 ];
+const REPLAY_TOOLS = ["replay_session", "compare_models_for_session"];
 const NAMED_CLIENT_TOOLS = ["list_projects", "get_statement"];
 
 const CLIENT = "Acme Corp";
@@ -86,6 +90,28 @@ describe("MCP security across every tool (step 15.13, plan §10.1.5)", () => {
       { numRuns: 6 },
     );
   }, 60_000);
+
+  // Phase 14 step 14.5 (threat-model.md §9): a replay returns numbers, model
+  // ids and turn indexes only, never a turn's text or the session's title,
+  // and estimate_cost on another model the same.
+  it("returns no turn text or session title from the replay tools or estimate_cost with a model", async () => {
+    const { client } = await connectCostFixture();
+    try {
+      const results = [
+        ...[...(await callEvery(client))].filter(([name]) => REPLAY_TOOLS.includes(name)).map(([, result]) => result),
+        await client.callTool({ name: "estimate_cost", arguments: { projectId: "portal", activeDays: 20, model: "claude-haiku-5.5" } }),
+      ];
+      expect(results.at(-1)!.structuredContent).toHaveProperty("simulation.label", "simulated");
+      for (const result of results) {
+        expect(result.isError, JSON.stringify(result.content)).not.toBe(true);
+        const text = JSON.stringify(result);
+        expect(text).not.toMatch(/prompt \d/);
+        expect(text).not.toMatch(/Session (cc|cp)-\d/);
+      }
+    } finally {
+      await client.close();
+    }
+  });
 
   // threat-model.md §5.6: client names and billing codes reach the model only
   // in a statement, and in list_projects only when the user opted in.

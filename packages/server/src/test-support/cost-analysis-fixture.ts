@@ -6,7 +6,12 @@ import { priceBookHashOf, StatementService } from "../services/billing/statement
 import { InMemoryStatementStore } from "./in-memory-statement-store.js";
 import { EstimateService } from "../services/billing/estimate-service.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
-import type { LogProviderStatus, Session, TokenCount, Turn, TurnUsage } from "@agent-cost-analyzer/domain";
+import type { LogProviderStatus, RequestTrace, Session, TokenCount, Turn, TurnUsage } from "@agent-cost-analyzer/domain";
+import type { RequestTraceReader } from "../data-sources/log-providers/log-provider.js";
+import { loadVendorProfiles } from "../data-sources/vendor-profiles/loader.js";
+import { createSessionReplay } from "../composition/create-session-replay.js";
+import { ReplayModelResolver } from "../services/session-replay/replay-model-resolver.js";
+import { FIXTURE_VENDOR_PROFILES_DIR } from "./vendor-profiles-dir.js";
 import { createCostAnalysis, projectDirectoryOf } from "../composition/create-cost-analysis.js";
 import { createTurnPricer } from "../composition/create-turn-pricer.js";
 import { UnknownLogProviderIdError } from "../data-sources/log-providers/registry.js";
@@ -123,6 +128,42 @@ export const piSessions = [
   ]),
 ];
 
+// Phase 14 step 14.5: Claude Code and Copilot sessions can be replayed (D1),
+// each turn one request with the turn's own token counts; pi can't.
+function traceOf(providerId: string, harness: RequestTrace["harness"], session: Session): RequestTrace {
+  const value = (count: TokenCount) => (count.known ? count.value : null);
+  return {
+    sessionId: session.id,
+    providerId,
+    harness,
+    requests: session.turns.map((turn, index) => ({
+      index,
+      turnIndex: turn.index,
+      startedAt: turn.startedAt!,
+      model: turn.usage.model,
+      uncachedInput: value(turn.usage.uncachedInput) ?? 0,
+      cacheRead: value(turn.usage.cacheRead) ?? 0,
+      cacheWrite: value(turn.usage.cacheWrite),
+      output: value(turn.usage.output) ?? 0,
+    })),
+    notTraced: [],
+  };
+}
+
+class TracedFakeProvider extends FakeProvider implements RequestTraceReader {
+  constructor(
+    id: string,
+    private readonly traced: Session[],
+    private readonly harness: RequestTrace["harness"],
+  ) {
+    super(id, traced);
+  }
+  async readRequestTrace(sessionId: string): Promise<RequestTrace | null> {
+    const session = this.traced.find((candidate) => candidate.id === sessionId);
+    return session ? traceOf(this.id, this.harness, session) : null;
+  }
+}
+
 const FIXTURE_HOME = "/home/dev";
 
 // Step 15.13: the security tests move the fixture to another home folder
@@ -177,8 +218,8 @@ export type CostFixtureOptions = Pick<McpServerDeps, "toolGroups" | "identity" |
 
 export function composeCostFixture({ home = FIXTURE_HOME, portalApiRemote, projects = fixtureProjects, ...options }: CostFixtureOptions = {}) {
   const providers = [
-    new FakeProvider("vscode", rehome(copilotSessions, home)),
-    new FakeProvider("claude-code", rehome(claudeCodeSessions, home)),
+    new TracedFakeProvider("vscode", rehome(copilotSessions, home), "vscode-local"),
+    new TracedFakeProvider("claude-code", rehome(claudeCodeSessions, home), "claude-code"),
     new FakeProvider("pi-agent", rehome(piSessions, home)),
   ];
   const lookup: ProviderLookup = {
@@ -211,7 +252,15 @@ export function composeCostFixture({ home = FIXTURE_HOME, portalApiRemote, proje
     timeZone: "UTC",
     now: () => FIXTURE_NOW,
   });
-  const estimates = new EstimateService({ cubes: new DatasetCostCubeSource(insights), projects: projectDirectoryOf(catalog), now: () => FIXTURE_NOW });
+  // Phase 14 step 14.5: replays as both products wire them (createSessionReplay).
+  const profiles = loadVendorProfiles(FIXTURE_VENDOR_PROFILES_DIR);
+  const sessionReplay = createSessionReplay({ providers: lookup, profiles, priceBook, pricer, attribution: attributor });
+  const estimates = new EstimateService({
+    cubes: new DatasetCostCubeSource(insights),
+    projects: projectDirectoryOf(catalog),
+    now: () => FIXTURE_NOW,
+    replay: { sessions: sessionReplay, models: new ReplayModelResolver(profiles) },
+  });
   // The cost routes read only costAnalysis, statements and estimates (app.ts passes req.query unchanged).
   const api = new ApiService({ costAnalysis, statements, estimates } as unknown as ApiServiceDeps);
   const server = createMcpServer({
@@ -225,9 +274,10 @@ export function composeCostFixture({ home = FIXTURE_HOME, portalApiRemote, proje
     priceBook,
     statements,
     estimates,
+    sessionReplay,
     ...options,
   });
-  return { api, server, insights, costAnalysis, statements };
+  return { api, server, insights, costAnalysis, statements, sessionReplay };
 }
 
 export async function connectCostFixture(options: CostFixtureOptions = {}): Promise<{ client: Client; api: ApiService }> {

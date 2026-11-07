@@ -19,6 +19,8 @@ import type {
   RepositoryList,
   Session,
   SessionAudit,
+  SessionReplay,
+  SessionReplayComparison,
   TurnInspectorDetail,
   VendorComparison,
   VendorProfileSummary,
@@ -50,6 +52,8 @@ import {
 import { parseEstimateQuery, type EstimateQueries } from "../billing/estimate-service.js";
 import type { PriceBookReader } from "../pricing/price-book.js";
 import type { CostAnalysisQueries } from "../cost-analysis/cost-analysis-service.js";
+import { TooManyComparedModelsError, type ReplayResult, type SessionReplayQueries } from "../session-replay/session-replay-service.js";
+import { parseCompareQuery, parseReplayQuery } from "../session-replay/replay-query-params.js";
 import { parseCostCompareQuery, parseCostSeriesQuery, parseCostVarianceQuery, parsePriceChangesQuery, parseProjectCostQuery } from "../cost-analysis/cost-query-params.js";
 
 // The narrow slices of the registry and query services ApiService needs
@@ -111,6 +115,9 @@ const priceBookQuerySchema = z.object({
 export const COST_ANALYSIS_UNAVAILABLE_MESSAGE = "Cost analyses are not available in this product.";
 export const ESTIMATES_UNAVAILABLE_MESSAGE = "Estimates are not available in this product.";
 export const STATEMENTS_UNAVAILABLE_MESSAGE = "Billing statements are not available in this product.";
+// Phase 14 step 14.5: session replay. Optional like the price book: a
+// product without a price book can't price a replay and answers 404.
+export const SESSION_REPLAY_UNAVAILABLE_MESSAGE = "Session replay is not available in this product.";
 
 export interface ApiServiceDeps {
   registry: ApiProviderRegistry;
@@ -122,6 +129,8 @@ export interface ApiServiceDeps {
   statements?: StatementQueries;
   // Phase 15 step 15.12: estimates (the standalone app; the extension with 15.14).
   estimates?: EstimateQueries;
+  // Phase 14 step 14.5: a session replayed on another model (both products, D5).
+  sessionReplay?: SessionReplayQueries;
   auditQueries: ApiAuditQueries;
   insights: ApiInsights;
   settings: Pick<AppSettingsStore, "readMinRetainedSessionLogsThreshold" | "writeMinRetainedSessionLogsThreshold">;
@@ -491,6 +500,29 @@ export class ApiService {
     return estimate;
   }
 
+  // Phase 14 step 14.5 (plan §9): GET /api/sessions/:id/replay?model&pricing&provider,
+  // the session as it would have run on another model (always simulated).
+  async getSessionReplay(sessionId: string, query: ApiQuery = {}): Promise<SessionReplay> {
+    const replays = this.sessionReplays();
+    const parsed = parseReplayQuery(query);
+    if (!parsed.ok) throw new BadRequestError(parsed.error);
+    return replayAnswer(sessionId, () => replays.replay({ sessionId, ...parsed.value }));
+  }
+
+  // GET /api/sessions/:id/replay/compare?models&pricing&provider: the
+  // session's total on each model (its own included), with coverage.
+  async compareSessionReplay(sessionId: string, query: ApiQuery = {}): Promise<SessionReplayComparison> {
+    const replays = this.sessionReplays();
+    const parsed = parseCompareQuery(query);
+    if (!parsed.ok) throw new BadRequestError(parsed.error);
+    return replayAnswer(sessionId, () => replays.compare({ sessionId, ...parsed.value }));
+  }
+
+  private sessionReplays(): SessionReplayQueries {
+    if (!this.deps.sessionReplay) throw new NotFoundError(SESSION_REPLAY_UNAVAILABLE_MESSAGE);
+    return this.deps.sessionReplay;
+  }
+
   private statementQueries(): StatementQueries {
     if (!this.deps.statements) throw new NotFoundError(STATEMENTS_UNAVAILABLE_MESSAGE);
     return this.deps.statements;
@@ -549,6 +581,33 @@ export class ApiService {
   private costAnalysis(): NonNullable<ApiServiceDeps["costAnalysis"]> {
     if (!this.deps.costAnalysis) throw new NotFoundError(COST_ANALYSIS_UNAVAILABLE_MESSAGE);
     return this.deps.costAnalysis;
+  }
+}
+
+// Phase 14 step 14.5: the replay service's statuses as the API's errors.
+// A model no vendor profile lists, or too many models, is the caller's
+// mistake (400). A session that exists but can't be replayed (a provider
+// without request traces, an empty trace, one over the 20,000-request
+// limit) answers 404 with the reason, as a session without a captured
+// system prompt does: the replay asked for doesn't exist, and the error set
+// both transports share has no 422.
+async function replayAnswer<T>(sessionId: string, call: () => Promise<ReplayResult<T>>): Promise<T> {
+  let result: ReplayResult<T>;
+  try {
+    result = await call();
+  } catch (error) {
+    if (error instanceof TooManyComparedModelsError) throw new BadRequestError(error.message);
+    throw auditFailure(`replay of session "${sessionId}"`, error);
+  }
+  switch (result.status) {
+    case "ok":
+      return result.value;
+    case "unknown-session":
+      throw new NotFoundError(`Unknown session id "${sessionId}"`);
+    case "unknown-model":
+      throw new BadRequestError(result.reason);
+    case "not-replayable":
+      throw new NotFoundError(result.reason);
   }
 }
 

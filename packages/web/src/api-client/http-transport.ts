@@ -92,6 +92,16 @@ function toRequest(method: ApiMethodName, params: unknown): HttpRequest {
       return { url: "/api/repositories" };
     case "getCostEstimate": // { projectId | repository, activeDays | sessions, historyWeeks?, provider? }
       return { url: `/api/estimates${queryString(p)}` };
+    case "getSessionReplay": {
+      // { sessionId, model, pricing?, provider? }
+      const { sessionId, ...query } = p;
+      return { url: `/api/sessions/${encodeURIComponent(String(sessionId))}/replay${queryString(query)}` };
+    }
+    case "compareSessionReplay": {
+      // { sessionId, models, pricing?, provider? }: models comma-joined
+      const { sessionId, ...query } = p;
+      return { url: `/api/sessions/${encodeURIComponent(String(sessionId))}/replay/compare${queryString(query)}` };
+    }
     case "getStatement": // { projectId, period, provider?, limit? }
       return { url: `/api/statements${queryString(p)}` };
     case "issueStatement": // { projectId, period }: JSON only (threat model)

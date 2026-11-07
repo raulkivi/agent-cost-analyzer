@@ -73,6 +73,30 @@ describe("MCP billing tools (step 15.11)", () => {
     expect((await client.callTool({ name: "estimate_cost", arguments: { projectId: "portal" } })).isError).toBe(true);
   });
 
+  // Phase 14 step 14.5 (analyze-session-replay.md §9, D7; closes D17): on
+  // another model, the project's sessions in the window are replayed on it.
+  it("estimate_cost with a model estimates from the project's sessions replayed on it, labelled simulated", async () => {
+    const tool = (await client.listTools()).tools.find((candidate) => candidate.name === "estimate_cost");
+    expect(Object.keys(tool?.inputSchema.properties ?? {})).toContain("model");
+    expect(tool?.description).toMatch(/Simulated/);
+
+    const result = await client.callTool({ name: "estimate_cost", arguments: { projectId: "portal", activeDays: 20, model: "claude-haiku-5.5" } });
+    const mcp = costEstimateSchema.parse(structured(result));
+
+    expect(mcp).toMatchObject({ label: "estimate", pricing: "as-of-use", target: { groupBy: "project", id: "portal" } });
+    // cc-0, cc-1 (Claude Code) and cp-1 (Copilot) are the portal's sessions in the window.
+    expect(mcp.simulation).toMatchObject({ label: "simulated", model: "claude-haiku-5.5", vendorId: "anthropic", sessions: 3, replayedSessions: 3 });
+    expect(mcp.simulation!.turns).toBe(mcp.history.turns);
+    expect(mcp.simulation!.assumptions.map((assumption) => assumption.id)).toContain("A1");
+  });
+
+  it("estimate_cost refuses a model no vendor profile lists, or one over the length limit, with the reason", async () => {
+    const unknown = await client.callTool({ name: "estimate_cost", arguments: { projectId: "portal", activeDays: 20, model: "not-a-model" } });
+    expect(unknown.isError).toBe(true);
+    expect((unknown.content as { text: string }[])[0]!.text).toMatch(/No vendor profile lists the model "not-a-model"/);
+    expect((await client.callTool({ name: "estimate_cost", arguments: { projectId: "portal", activeDays: 20, model: "x".repeat(101) } })).isError).toBe(true);
+  });
+
   it("offers estimate_work, which chains estimate_cost and get_project_cost and names the uncertainty", async () => {
     const prompt = await client.getPrompt({ name: "estimate_work", arguments: { projectId: "portal", activeDays: "20" } });
     const text = (prompt.messages[0]!.content as { text: string }).text;

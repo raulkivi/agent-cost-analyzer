@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import fc from "fast-check";
 import { describe, expect, it } from "vitest";
 import type { VendorProfile } from "@agent-cost-analyzer/domain";

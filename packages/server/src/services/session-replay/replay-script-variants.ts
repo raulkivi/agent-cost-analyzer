@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { ScenarioScript } from "@agent-cost-analyzer/domain";
 
 // Phase 14 step 14.4: on a target model the whole session runs on that one

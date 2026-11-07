@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: MIT
 import { describe, expect, it } from "vitest";
 import * as domain from "./index.js";
+import { MAX_COMPARED_MODELS, sessionReplayComparisonSchema, sessionReplaySchema } from "./session-replay.js";
 import {
   apiMethodSchema,
   apiMethodParamsSchemas,
+  apiMethodResultSchemas,
   hostCommandArgsSchemas,
   hostCommandSchema,
   hostEventNameSchema,
@@ -53,6 +55,8 @@ describe("apiMethodSchema", () => {
       "saveProjects",
       "getRepositoryList",
       "getCostEstimate",
+      "getSessionReplay",
+      "compareSessionReplay",
     ]);
   });
 
@@ -153,6 +157,63 @@ describe("apiMethodParamsSchemas (vscode-extension.md §4)", () => {
     // Step 15.12: estimates.
     expect(apiMethodParamsSchemas.getCostEstimate.safeParse({ projectId: "portal", activeDays: 20, historyWeeks: 12 }).success).toBe(true);
     expect(apiMethodParamsSchemas.getCostEstimate.safeParse({ projectId: { x: 1 } }).success).toBe(false);
+  });
+
+  // Phase 14 step 14.5: a session replayed on other models (threat-model.md
+  // "RPC allow-list growth (Phase 14)"): read-only, the HTTP routes' limits.
+  describe("session replay methods", () => {
+    const tenModels = Array.from({ length: MAX_COMPARED_MODELS }, (_, i) => `model-${i}`);
+
+    it("getSessionReplay takes a session id, one model, and optional pricing and provider", () => {
+      const schema = apiMethodParamsSchemas.getSessionReplay;
+      expect(schema.safeParse({ sessionId: "s1", model: "claude-sonnet-5.5" }).success).toBe(true);
+      expect(schema.safeParse({ sessionId: "s1", model: "gpt-6.1-sol", pricing: "api", provider: "claude-code" }).success).toBe(true);
+      for (const pricing of ["session-channel", "copilot", "api"]) {
+        expect(schema.safeParse({ sessionId: "s1", model: "m", pricing }).success).toBe(true);
+      }
+    });
+
+    it.each([
+      [{ model: "m" }],
+      [{ sessionId: "", model: "m" }],
+      [{ sessionId: 7, model: "m" }],
+      [{ sessionId: "s1" }],
+      [{ sessionId: "s1", model: "" }],
+      [{ sessionId: "s1", model: "m".repeat(101) }],
+      [{ sessionId: "s1", model: ["a"] }],
+      [{ sessionId: "s1", model: "m", pricing: "cheapest" }],
+      [{ sessionId: "s1", model: "m", provider: 5 }],
+      [{ sessionId: "s1", model: "m", extra: "x" }],
+    ])("getSessionReplay rejects %j", (params) => {
+      expect(apiMethodParamsSchemas.getSessionReplay.safeParse(params).success).toBe(false);
+    });
+
+    it("compareSessionReplay takes 1 to MAX_COMPARED_MODELS model ids", () => {
+      const schema = apiMethodParamsSchemas.compareSessionReplay;
+      expect(schema.safeParse({ sessionId: "s1", models: ["a"] }).success).toBe(true);
+      expect(schema.safeParse({ sessionId: "s1", models: tenModels, pricing: "copilot", provider: "vscode" }).success).toBe(true);
+    });
+
+    it.each([
+      [{ models: ["a"] }],
+      [{ sessionId: "", models: ["a"] }],
+      [{ sessionId: "s1" }],
+      [{ sessionId: "s1", models: [] }],
+      [{ sessionId: "s1", models: [...tenModels, "model-10"] }],
+      [{ sessionId: "s1", models: ["a", ""] }],
+      [{ sessionId: "s1", models: ["m".repeat(101)] }],
+      [{ sessionId: "s1", models: "a,b" }],
+      [{ sessionId: "s1", models: [1] }],
+      [{ sessionId: "s1", models: ["a"], pricing: "free" }],
+      [{ sessionId: "s1", models: ["a"], extra: true }],
+    ])("compareSessionReplay rejects %j", (params) => {
+      expect(apiMethodParamsSchemas.compareSessionReplay.safeParse(params).success).toBe(false);
+    });
+
+    it("validates their results with the domain replay schemas", () => {
+      expect(apiMethodResultSchemas.getSessionReplay).toBe(sessionReplaySchema);
+      expect(apiMethodResultSchemas.compareSessionReplay).toBe(sessionReplayComparisonSchema);
+    });
   });
 
   it("accepts range query fields as text or numbers, and absent fields", () => {

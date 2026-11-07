@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { VendorProfile } from "@agent-cost-analyzer/domain";
 import { candidateModelIds } from "../cost-attribution/vendor-resolver.js";
 

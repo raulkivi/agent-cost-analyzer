@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
 import { z } from "zod";
+import { MAX_COMPARED_MODELS, sessionReplayComparisonSchema, sessionReplaySchema } from "./session-replay.js";
 
 // The ApiService method names (vscode-extension.md D2/§4), shared by the
 // server, the web app's transports and the extension's dispatcher so the
@@ -41,6 +42,9 @@ export const apiMethodSchema = z.enum([
   "getRepositoryList",
   // Phase 15 step 15.12: the Billing tab's estimate panel.
   "getCostEstimate",
+  // Phase 14 step 14.5: a session replayed on other models. Read-only.
+  "getSessionReplay",
+  "compareSessionReplay",
 ]);
 
 export type ApiMethod = z.infer<typeof apiMethodSchema>;
@@ -76,6 +80,19 @@ const costQuery = {
   currency: z.string().optional(),
   groupBy: z.string().optional(),
   ids: textOrList.optional(),
+};
+
+// Phase 14 step 14.5 (threat-model.md "RPC allow-list growth (Phase 14)"):
+// the replay routes' params and limits. Unlike the older methods these are
+// strict — a model id is bounded text, at most MAX_COMPARED_MODELS of them,
+// the pricing one of three — and ApiService checks the ids again against
+// the vendor profiles.
+export const MAX_REPLAY_MODEL_ID_LENGTH = 100;
+const replayModelId = z.string().min(1).max(MAX_REPLAY_MODEL_ID_LENGTH);
+const replayQuery = {
+  sessionId: sessionIdSchema,
+  pricing: z.enum(["session-channel", "copilot", "api"]).optional(),
+  provider: z.string().optional(),
 };
 
 export const apiMethodParamsSchemas = {
@@ -126,6 +143,8 @@ export const apiMethodParamsSchemas = {
     historyWeeks: numberOrText.optional(),
     provider: z.string().optional(),
   }),
+  getSessionReplay: z.object({ ...replayQuery, model: replayModelId }).strict(),
+  compareSessionReplay: z.object({ ...replayQuery, models: z.array(replayModelId).min(1).max(MAX_COMPARED_MODELS) }).strict(),
   getCostVariance: z.object({
     groupBy: z.string(),
     id: z.string().min(1),
@@ -136,6 +155,13 @@ export const apiMethodParamsSchemas = {
     limit: numberOrText.optional(),
   }),
 } as const satisfies Record<ApiMethod, z.ZodType>;
+
+// The answers the web api-client parses before use, so a backend that drifts
+// from the domain shapes fails loudly rather than rendering wrong figures.
+export const apiMethodResultSchemas = {
+  getSessionReplay: sessionReplaySchema,
+  compareSessionReplay: sessionReplayComparisonSchema,
+} as const satisfies Partial<Record<ApiMethod, z.ZodType>>;
 
 // webview -> host (vscode-extension.md §4). `params` stays unknown here: the
 // host validates it per method with apiMethodParamsSchemas.

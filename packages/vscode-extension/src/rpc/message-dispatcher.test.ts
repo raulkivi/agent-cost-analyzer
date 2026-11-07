@@ -35,6 +35,8 @@ function fakeApi(overrides: Partial<DispatcherApi> = {}): DispatcherApi {
     saveProjects: vi.fn(async () => ({}) as never),
     getRepositoryList: vi.fn(async () => ({}) as never),
     getCostEstimate: vi.fn(async () => ({}) as never),
+    getSessionReplay: vi.fn(async () => ({}) as never),
+    compareSessionReplay: vi.fn(async () => ({}) as never),
   };
   return { ...api, ...overrides };
 }
@@ -198,6 +200,39 @@ describe("MessageDispatcher (vscode-extension.md §4)", () => {
     expect(api.getCostEstimate).toHaveBeenCalledWith({ projectId: "portal", activeDays: "20" });
   });
 
+  // Phase 14 step 14.5: the replay methods take (sessionId, query), the
+  // query as the HTTP routes' query string carries it (models comma-joined).
+  it("routes the session replay methods to ApiService as (sessionId, query)", async () => {
+    const api = fakeApi();
+    const dispatcher = new MessageDispatcher(api);
+    await dispatcher.dispatch(request("getSessionReplay", { sessionId: "s1", model: "gpt-6.1-sol", pricing: "api" }));
+    await dispatcher.dispatch(
+      request("compareSessionReplay", { sessionId: "s1", models: ["claude-sonnet-5.5", "gpt-6.1-sol"], provider: "claude-code" }),
+    );
+    expect(api.getSessionReplay).toHaveBeenCalledWith("s1", { model: "gpt-6.1-sol", pricing: "api" });
+    expect(api.compareSessionReplay).toHaveBeenCalledWith("s1", { models: "claude-sonnet-5.5,gpt-6.1-sol", provider: "claude-code" });
+  });
+
+  it("maps a replay's unknown-model 400 and unknown-session 404 like the other methods", async () => {
+    const api = fakeApi({
+      getSessionReplay: vi.fn(async () => {
+        throw new BadRequestError('Unknown model "nope".');
+      }),
+      compareSessionReplay: vi.fn(async () => {
+        throw new NotFoundError("Session not found");
+      }),
+    });
+    const dispatcher = new MessageDispatcher(api);
+    expect(await dispatcher.dispatch(request("getSessionReplay", { sessionId: "s1", model: "nope" }))).toMatchObject({
+      ok: false,
+      error: { status: 400, message: 'Unknown model "nope".' },
+    });
+    expect(await dispatcher.dispatch(request("compareSessionReplay", { sessionId: "gone", models: ["a"] }))).toMatchObject({
+      ok: false,
+      error: { status: 404 },
+    });
+  });
+
   // Step 15.10: the Project tab's breakdown and variance.
   it("routes the project cost and variance methods to ApiService", async () => {
     const api = fakeApi();
@@ -235,6 +270,11 @@ describe("MessageDispatcher (vscode-extension.md §4)", () => {
     ["listToolCalls", { sessionId: "s1", status: [1] }, "status"],
     ["getAuditRollup", { limit: { n: 1 } }, "limit"],
     ["getInsights", { since: 5 }, "since"],
+    ["getSessionReplay", { model: "m" }, "sessionId"],
+    ["getSessionReplay", { sessionId: "s1", model: "m".repeat(101) }, "model"],
+    ["getSessionReplay", { sessionId: "s1", model: "m", pricing: "cheapest" }, "pricing"],
+    ["compareSessionReplay", { sessionId: "s1", models: [] }, "models"],
+    ["compareSessionReplay", { sessionId: "s1", models: Array.from({ length: 11 }, (_, i) => `m${i}`) }, "models"],
   ])("rejects %s params %j with a 400 that names the field %s, without calling the service", async (method, params, field) => {
     const api = fakeApi();
 

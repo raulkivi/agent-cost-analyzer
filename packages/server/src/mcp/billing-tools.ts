@@ -4,7 +4,8 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { costEstimateSchema, statementAnswerSchema } from "@agent-cost-analyzer/domain";
 import type { EstimateQueries } from "../services/billing/estimate-service.js";
-import { parseEstimateQuery } from "../services/billing/estimate-service.js";
+import { EstimateModelError, parseEstimateQuery } from "../services/billing/estimate-service.js";
+import { replayModelArg } from "../services/session-replay/replay-query-params.js";
 import type { StatementQueries } from "../services/billing/statement-service.js";
 import { AlreadyIssuedError, PeriodNotEndedError, UnknownStatementPeriodError } from "../services/billing/statement-service.js";
 import { json, READ_ONLY, toolError, type Guard } from "./tool-helpers.js";
@@ -57,13 +58,15 @@ function registerEstimateTool(server: McpServer, estimates: EstimateQueries, gua
       description:
         "Use to estimate what planned work on one project (id from list_projects) or repository (key from list_repositories) will cost: a p50–p90 range in USD at today's prices, never a single number, labelled \"estimate\". " +
         "It is the median and 90th-percentile cost per active day (or per session) in the last 4 or 12 weeks × the planned active days (or sessions); days or sessions with any unpriced turn are left out and counted. " +
-        "With fewer than 5 known days or sessions there is no range: `refusal` says why. AI Credits are converted at 1 AI Credit = $0.01. It doesn't estimate on another model.",
+        "With fewer than 5 known days or sessions there is no range: `refusal` says why. AI Credits are converted at 1 AI Credit = $0.01. " +
+        "With `model`, it estimates on that model instead: every session of the target in the window is replayed on it (as replay_session does) and the unit costs are the simulated ones, priced on each session's own channel as of when it ran (pricing \"as-of-use\"). Those figures are Simulated (same conversation and token counts assumed); `simulation` gives the method, the sessions and turns replayed, the rest by reason, how many self-checks passed, and the assumptions.",
       inputSchema: {
         projectId: z.string().min(1).optional().describe("The project id, from list_projects (or give repository)."),
         repository: z.string().min(1).optional().describe("A repository key, from list_repositories (or give projectId)."),
         activeDays: z.number().int().min(1).optional().describe("Planned active days (or give sessions)."),
         sessions: z.number().int().min(1).optional().describe("Planned sessions (or give activeDays)."),
         historyWeeks: z.union([z.literal(4), z.literal(12)]).optional().describe("History window in weeks: 4 or 12 (default)."),
+        model: replayModelArg.optional().describe('Estimate on this model instead (a model id a vendor profile lists, e.g. "claude-haiku-5.5"): the target\'s sessions replayed on it, Simulated.'),
       },
       outputSchema: costEstimateSchema,
       annotations: READ_ONLY,
@@ -72,8 +75,13 @@ function registerEstimateTool(server: McpServer, estimates: EstimateQueries, gua
       guarded(async () => {
         const parsed = parseEstimateQuery(args);
         if (!parsed.ok) return toolError(parsed.error);
-        const estimate = await estimates.estimate(parsed.value);
-        return estimate ? json(estimate) : toolError(`Unknown project id "${args.projectId}". Call list_projects to find valid ids.`);
+        try {
+          const estimate = await estimates.estimate({ ...parsed.value, ...(args.model !== undefined ? { model: args.model } : {}) });
+          return estimate ? json(estimate) : toolError(`Unknown project id "${args.projectId}". Call list_projects to find valid ids.`);
+        } catch (error) {
+          if (error instanceof EstimateModelError) return toolError(error.message);
+          throw error;
+        }
       }),
   );
 }

@@ -170,6 +170,11 @@ function invoke(
       return api.getRepositoryList();
     case "getCostEstimate":
       return api.getCostEstimate(toQuery(params));
+    // Phase 14 step 14.5: read-only; ApiService checks the model ids again.
+    case "getSessionReplay":
+      return api.getSessionReplay(...sessionQuery(params));
+    case "compareSessionReplay":
+      return api.compareSessionReplay(...sessionQuery(params));
     case "issueStatement": {
       const { projectId, period } = params as { projectId: string; period: string };
       return api.issueStatement(projectId, period);

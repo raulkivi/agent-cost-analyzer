@@ -415,7 +415,7 @@ applies. Your user setting always applies.
 
 ### What it offers
 
-Seventeen read-only tools, the standalone app's MCP server's tools without
+Nineteen read-only tools, the standalone app's MCP server's tools without
 its billing ones (`get_statement` and `estimate_cost`), over Copilot Chat
 sessions only:
 
@@ -438,6 +438,8 @@ sessions only:
 | `get_project_cost` | One project's cost; with no projects, everything is in No project |
 | `compare_costs` | Several repositories side by side: total, change, per session, per active day and share |
 | `explain_cost_change` | Why a repository's cost changed between two periods: usage, price and mix effects |
+| `replay_session` | One session replayed on another model: what it would have cost per turn and in total, beside what it did, with coverage and the self-check. **Simulated** |
+| `compare_models_for_session` | One session's simulated total on up to 10 models, its own included. **Simulated** |
 
 Four prompts start common reviews: `audit_session`, `review_costs`,
 `security_review` and `explain_cost_change`. A `null` figure means the log doesn't record it; the

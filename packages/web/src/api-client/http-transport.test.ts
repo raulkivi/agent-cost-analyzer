@@ -99,6 +99,23 @@ describe("HttpTransport URL mapping", () => {
     ["getCostEstimate", { projectId: "portal", activeDays: 20, historyWeeks: 12 }, "/api/estimates?projectId=portal&activeDays=20&historyWeeks=12"],
     ["getHealth", undefined, "/api/health"],
     ["getProductProfile", undefined, "/api/product"],
+    // Phase 14 step 14.5: the session id and each model id encoded, models comma-joined.
+    ["getSessionReplay", { sessionId: "s1", model: "gpt-6.1-sol" }, "/api/sessions/s1/replay?model=gpt-6.1-sol"],
+    [
+      "getSessionReplay",
+      { sessionId: "a/b c", model: "x&y=z", pricing: "api", provider: "claude-code" },
+      "/api/sessions/a%2Fb%20c/replay?model=x%26y%3Dz&pricing=api&provider=claude-code",
+    ],
+    [
+      "compareSessionReplay",
+      { sessionId: "s1", models: ["claude-sonnet-5.5", "gpt-6.1-sol"], pricing: "session-channel" },
+      "/api/sessions/s1/replay/compare?models=claude-sonnet-5.5%2Cgpt-6.1-sol&pricing=session-channel",
+    ],
+    [
+      "compareSessionReplay",
+      { sessionId: "a/b", models: ["x/y", "p&q"], provider: "vscode" },
+      "/api/sessions/a%2Fb/replay/compare?models=x%2Fy%2Cp%26q&provider=vscode",
+    ],
   ];
 
   it.each(cases)("%s %j -> %s", async (method, params, url, verb, body) => {

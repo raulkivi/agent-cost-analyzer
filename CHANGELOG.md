@@ -45,6 +45,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   unchanged.
 
 ### Added
+- Replay a session on another model (Phase 14, first part): the MCP tools
+  `replay_session` and `compare_models_for_session`, in both the app's and
+  the extension's MCP server, say what a real Claude Code or Copilot session
+  would have cost on another model, turn by turn, beside what it did cost,
+  with coverage, a self-check on the session's own model and the
+  assumptions. Every figure is labelled Simulated. `estimate_cost` takes a
+  `model` to estimate planned work on it. The same answers are at
+  `GET /api/sessions/:id/replay` and `/replay/compare`; the views follow.
 - Vendor-aware Learn (Phase 13): scenarios are simulated on a vendor and
   model you pick, with real prices and documented cache rules, a Cache column,
   per-turn notes, an assumptions popover and a sources footer. Learn numbers

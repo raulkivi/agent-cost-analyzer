@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { describe, expect, it } from "vitest";
 import type { ScenarioScript, ScriptStep } from "@agent-cost-analyzer/domain";
 import { withoutModelSwitches } from "./replay-script-variants.js";

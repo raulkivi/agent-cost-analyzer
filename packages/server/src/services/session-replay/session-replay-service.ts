@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import {
   MAX_COMPARED_MODELS,
   channelCurrency,

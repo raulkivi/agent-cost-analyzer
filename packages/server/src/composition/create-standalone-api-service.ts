@@ -21,6 +21,7 @@ import { createInsightsService } from "./create-insights-service.js";
 import { createStandaloneAttribution } from "./create-standalone-attribution.js";
 import { createTurnPricer } from "./create-turn-pricer.js";
 import { createCostAnalysis, projectDirectoryOf } from "./create-cost-analysis.js";
+import { createSessionReplay } from "./create-session-replay.js";
 
 export interface StandaloneApiServiceOptions extends LogProviderCompositionOptions {
   // G4 (vscode-extension.md §2.2): default to this package's own files,
@@ -74,7 +75,8 @@ export function createStandaloneApiService(options: StandaloneApiServiceOptions 
   const agentHostUserDataDir =
     compositionOptions.agentHostUserDataDir !== undefined ? compositionOptions.agentHostUserDataDir : resolveUserDataDir();
 
-  const insights = createInsightsService(registry, attribution.dataset, createTurnPricer(priceBook, now), now);
+  const pricer = createTurnPricer(priceBook, now);
+  const insights = createInsightsService(registry, attribution.dataset, pricer, now);
 
   const learnSimulation = new LearnSimulationService(
     loadScenarioScripts(learnScriptsDir),
@@ -103,6 +105,9 @@ export function createStandaloneApiService(options: StandaloneApiServiceOptions 
       timeZone: timeZone ?? Intl.DateTimeFormat().resolvedOptions().timeZone,
       ...(now ? { now } : {}),
     }),
+    // Phase 14 step 14.5: replays priced from the same price book, with the
+    // session's measured figures from the same attribution and pricer.
+    sessionReplay: createSessionReplay({ providers: registry, profiles: vendorProfiles, priceBook, pricer, attribution: attribution.dataset }),
     auditQueries: new AuditQueryService(registry),
     insights,
     settings: appSettings,

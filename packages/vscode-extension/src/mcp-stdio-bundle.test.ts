@@ -85,8 +85,8 @@ describe("the built MCP server bundle", () => {
     rmSync(installDir, { recursive: true, force: true });
   });
 
-  // Step 15.13 (plan §10.1.6): every tool group but billing (D7): 17 tools.
-  it("answers initialize, tools/list with the 17 tools and prompts/list with 4 prompts, and writes nothing but JSON-RPC to stdout", async () => {
+  // Step 15.13 (plan §10.1.6): every tool group but billing (D7); Phase 14 step 14.5 adds replay (D5): 19 tools.
+  it("answers initialize, tools/list with the 19 tools and prompts/list with 4 prompts, and writes nothing but JSON-RPC to stdout", async () => {
     const { lines } = await initializeAndListTools(bundle, userDataDir);
     const messages = lines.map((line) => JSON.parse(line) as JsonRpcMessage);
 
@@ -95,6 +95,7 @@ describe("the built MCP server bundle", () => {
     const tools = messages.find((message) => message.id === 2)?.result?.tools ?? [];
     expect(tools.map((tool) => tool.name).sort()).toEqual([
       "compare_costs",
+      "compare_models_for_session",
       "explain_cost_change",
       "get_audit_rollup",
       "get_cost_rollup",
@@ -111,6 +112,7 @@ describe("the built MCP server bundle", () => {
       "list_repositories",
       "list_sessions",
       "list_tool_calls",
+      "replay_session",
     ]);
     expect(tools.every((tool) => tool.outputSchema?.type === "object")).toBe(true);
     // The billing prompts (prepare_statement, estimate_work) are left out with their tools.
