@@ -1,5 +1,7 @@
 # Architecture: Agent Cost Analyzer and AI Credits Analyzer
 
+**Last changed:** 2026-11-07 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+
 ## 1. Purpose & scope
 
 This document translates [vision.md](vision.md) into a concrete system design:
@@ -2645,7 +2647,7 @@ registry. See the plan's §3 for the decisions (D1-D10).
   title (AI Credits Analyzer) and Copilot-only instructions. Both servers
   send the same author, GitHub repo link (`websiteUrl`) and inline SVG/PNG
   icon in their `initialize` result (`mcp/mcp-branding.ts`). Its only input is a validated
-  `--user-data-dir`. It's off until `aiCreditsAnalyzer.mcp.enabled` is on,
+  `--user-data-dir`; the MCP App views (Phase 12) are the one file it also serves, `dist/mcp-apps/views.html`, copied there from `packages/mcp-apps/dist/views.html` by `scripts/build.mts`, and without it the server starts without views. It's off until `aiCreditsAnalyzer.mcp.enabled` is on,
   and an untrusted workspace can't turn it on (`restrictedConfigurations`).
 - **Tests in a real VS Code.** A `@vscode/test-cli` suite runs on stable
   VS Code in CI. The webview posts its timing marks to the host, which

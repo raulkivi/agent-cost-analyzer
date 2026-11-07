@@ -7,6 +7,7 @@
 **
 !dist/extension.js
 !dist/mcp-stdio.js
+!dist/mcp-apps/views.html
 !media/**
 !resources/**
 !package.nls.json

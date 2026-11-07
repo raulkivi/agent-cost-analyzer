@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import { cpSync, mkdtempSync, rmSync } from "node:fs";
+import { cpSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -107,5 +107,62 @@ describe("stdio MCP entry point", () => {
     expect(repositoryListSchema.parse(repositories.structuredContent).repositories.length + repositoryListSchema.parse(repositories.structuredContent).unattributed.length).toBeGreaterThan(0);
     expect(projectListSchema.parse(projects.structuredContent)).toMatchObject({ status: "missing", projects: [] });
     expect(JSON.stringify([repositories, projects])).not.toContain(home);
+  }, 60_000);
+});
+
+// Phase 12 A13 (docs/plans/mcp-apps.md §7): the real entry point with the
+// built views file serves the resource and tags the three tools; with the
+// file missing it starts normally without them.
+describe("stdio MCP entry point, app views", () => {
+  let home: string;
+  const clients: Client[] = [];
+
+  beforeAll(() => {
+    home = mkdtempSync(path.join(tmpdir(), "mcp-stdio-views-home-"));
+    cpSync(fixtureProjectDir, path.join(home, ".claude", "projects", "-home-dev-project"), { recursive: true });
+  });
+
+  afterAll(async () => {
+    await Promise.all(clients.map((c) => c.close()));
+    rmSync(home, { recursive: true, force: true });
+  });
+
+  async function connect(extraArgs: string[]): Promise<Client> {
+    const client = new Client({ name: "stdio-views-test", version: "1.0.0" });
+    clients.push(client);
+    await client.connect(
+      new StdioClientTransport({
+        command: path.join(repoRoot, "node_modules", ".bin", "tsx"),
+        args: [path.join(here, "stdio.ts"), ...extraArgs],
+        env: { PATH: process.env.PATH ?? "", HOME: home },
+        stderr: "ignore",
+      }),
+    );
+    return client;
+  }
+
+  it("serves the views file as text/html;profile=mcp-app and tags the three tools with _meta.ui", async () => {
+    const file = path.join(home, "views.html");
+    writeFileSync(file, '<!doctype html><html><head><meta name="aca-brand" content=""></head><body>built views</body></html>');
+    const client = await connect(["--app-views-html", file]);
+
+    const { tools } = await client.listTools();
+    const uri = "ui://agent-cost-analyzer/views.html";
+    for (const name of ["get_session_cost", "get_cost_rollup", "list_findings"]) {
+      expect(tools.find((tool) => tool.name === name)!._meta).toMatchObject({ ui: { resourceUri: uri } });
+    }
+    const { contents } = await client.readResource({ uri });
+    expect(contents[0]).toMatchObject({ uri, mimeType: "text/html;profile=mcp-app" });
+    expect((contents[0] as { text: string }).text).toContain("built views");
+  }, 60_000);
+
+  it("starts normally with its 21 tools and no views when the file is missing", async () => {
+    const client = await connect(["--app-views-html", path.join(home, "missing", "views.html")]);
+
+    const { tools } = await client.listTools();
+    expect(tools).toHaveLength(21);
+    expect(tools.some((tool) => tool._meta !== undefined)).toBe(false);
+    const result = await client.callTool({ name: "list_sessions", arguments: { provider: "claude-code" } });
+    expect(result.isError).toBeFalsy();
   }, 60_000);
 });

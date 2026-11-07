@@ -120,6 +120,31 @@ describe("the built MCP server bundle", () => {
     expect(prompts.map((prompt) => prompt.name).sort()).toEqual(["audit_session", "explain_cost_change", "review_costs", "security_review"]);
   }, 60_000);
 
+  // Phase 12 A13: dist/mcp-apps/views.html next to the bundle, as in the .vsix.
+  // Without it (the test above) the server lists its 19 tools and no views.
+  it("serves dist/mcp-apps/views.html when it is there: _meta.ui on the three tools and a 20th, app-only, tool", async () => {
+    const views = path.join(installDir, "dist", "mcp-apps", "views.html");
+    mkdirSync(path.dirname(views), { recursive: true });
+    writeFileSync(views, '<!doctype html><html><head><meta name="aca-brand" content=""></head><body>built views</body></html>');
+    try {
+      const { lines } = await initializeAndListTools(bundle, userDataDir);
+      const tools = (lines.map((line) => JSON.parse(line) as JsonRpcMessage).find((message) => message.id === 2)?.result?.tools ?? []) as {
+        name: string;
+        _meta?: { ui?: { resourceUri?: string } };
+      }[];
+
+      expect(tools).toHaveLength(20);
+      expect(
+        tools
+          .filter((tool) => tool._meta?.ui?.resourceUri === "ui://ai-credits-analyzer/views.html")
+          .map((tool) => tool.name)
+          .sort(),
+      ).toEqual(["get_cost_rollup", "get_session_cost", "list_findings"]);
+    } finally {
+      rmSync(path.dirname(views), { recursive: true, force: true });
+    }
+  }, 60_000);
+
   it.each([
     ["no arguments", []],
     ["a relative user-data dir", ["--user-data-dir", "user-data"]],

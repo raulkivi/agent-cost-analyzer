@@ -46,6 +46,7 @@ describe(".vscodeignore (step 10.9)", () => {
     "LICENSE",
     "README.md",
     "dist/extension.js",
+    "dist/mcp-apps/views.html",
     "dist/mcp-stdio.js",
     "icon.png",
     "media/assets/index.js",
@@ -61,6 +62,7 @@ describe(".vscodeignore (step 10.9)", () => {
   const KEPT_OUT = [
     "dist/meta.json",
     "dist/meta-mcp-stdio.json",
+    "dist/mcp-apps/views.html.map",
     "dist/extension.js.map",
     "dist/mcp-stdio.js.map",
     "src/extension.ts",
@@ -102,6 +104,15 @@ describe(".vscodeignore (step 10.9)", () => {
 
   it("keeps sources, tests, build scripts, dependencies, metafiles and sourcemaps out", () => {
     for (const file of KEPT_OUT) expect(listed, file).not.toContain(file);
+  });
+
+  // Phase 12 A13: the MCP App views ride along as dist/mcp-apps/views.html,
+  // copied from packages/mcp-apps/dist/views.html by scripts/build.mts.
+  // Checked when the extension has been built.
+  it.skipIf(!existsSync(path.join(packageDir, "dist", "mcp-apps")))("holds the built views file, identical to the mcp-apps build", () => {
+    const built = path.join(packageDir, "dist", "mcp-apps", "views.html");
+
+    expect(readFileSync(built, "utf-8")).toBe(readFileSync(path.join(packageDir, "..", "mcp-apps", "dist", "views.html"), "utf-8"));
   });
 
   // vsce lets "!media/**" win over any exclusion, so the webview build must

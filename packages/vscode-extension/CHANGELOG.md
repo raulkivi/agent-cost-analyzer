@@ -11,6 +11,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **MCP server: interactive cost views.** In VS Code Copilot Chat, the MCP
+  tools `get_session_cost`, `get_cost_rollup` and `list_findings` now show a
+  branded, interactive view next to the text result (per-turn chart, top
+  turns, spend by day, model and provider with a drill-down into a session,
+  filterable findings).
 - **Cost by repository.** The Sessions view can be grouped by repository
   (the new toggle in its title bar), each group with its AI Credits. The
   status bar shows today's AI Credits for the open folder's repository,

@@ -1,5 +1,7 @@
 # User Guide
 
+**Last changed:** 2026-11-07 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+
 A walkthrough of the Agent Cost Analyzer's two modes — **Learn** (guided,
 bundled example sessions) and **Analyze** (your own real sessions from VS
 Code Copilot Chat, Claude Code, pi or mitmproxy captures) — with
@@ -532,6 +534,10 @@ server:
 ```bash
 claude mcp add agent-cost-analyzer -- /absolute/path/to/agent-cost-analyzer/scripts/mcp-server.sh
 ```
+
+Run `npm run build` once as well: the script then serves the interactive cost
+views (`packages/mcp-apps/dist/views.html`) to hosts that can show them.
+Without the build the server works as before, with text results only.
 
 | Tool | What it returns |
 |---|---|
