@@ -1132,7 +1132,7 @@ No UI code (15.9 onwards) starts before the mock-ups in 15.8 are approved.
 | 15.12 | **Estimates** + Estimate panel; MCP: `estimate_cost`, `estimate_work` prompt | Forecast range tests on fixture histories; shown as a labelled range, never a single number; the step's MCP tools pass the §10.1.6 tests; scenario S7 passes Done 2026-11-06, see §14.1 |
 | 15.13 | **MCP, cross-cutting work** (§10.1.4): server instructions for both products, the `toolGroups` option and the extension's tool set, the security tests of §10.1.5 | The §10.1.6 exit criterion over stdio; scenario S10 passes Done 2026-11-07, see §14.1 |
 | 15.14 | **VS Code extension** (§11.9): group by repository, status bar per workspace repository, the two Dashboard tabs | Extension and manifest tests (category, codicons, l10n keys); UI check passes; manual check list updated; scenario S9 passes in `extension-ui` Done 2026-11-07 (S9 written for `extension-ui`, see §14.1) |
-| 15.15 | **Docs**: architecture.md (domain, data flow, API), UserGuide, vscode-extension-guide, vision non-goals, README index | Docs reviewed by the owner |
+| 15.15 | **Docs**: architecture.md (domain, data flow, API), UserGuide, vscode-extension-guide, vision non-goals, README index | Docs reviewed by the owner. Written 2026-11-07, the owner's review open, see §14.1 |
 
 ### 14.1 Step status notes
 
@@ -2103,6 +2103,34 @@ Not run here: the wdio specs need VS Code's download host, which this
 cloud environment's network doesn't allow, so S9 first runs in CI's
 `extension-ui` job (informational, as decided for step 10.16). Not yet:
 the extension's own projects (D19 stands).
+
+**15.15 (written 2026-11-07; the owner's review open).** The docs pass over
+the whole phase, after the per-step updates:
+
+- **architecture.md.** §4.1 lists the Phase 15 modules
+  (`services/cost-attribution`, `pricing`, `cost-analysis`, `billing`,
+  `data-sources/projects` and `statements`); a new **§6.4** is the
+  end-to-end cost data flow (workspace → repository → project, vendor and
+  channel → billed, reported and priced figures → the Insights rows and the
+  cost cube → the analyses → API, webview RPC and MCP) with a table of what
+  each product has; §8's API table says which cost methods the extension
+  answers (time series, compare and variance over its Copilot sessions;
+  price-book routes are MCP-only there); §12 has the extension's Phase 15
+  share. The domain shapes were already in §5, step by step.
+- **User Guide** and **extension guide.** The cost views are in both
+  products; Project and Billing in the standalone app only. The extension
+  guide's panel section and table point at the User Guide's cost sections.
+- **vision.md §6.** The invoicing non-goal says what Phase 15 is and isn't
+  (no tax, invoice numbers, payments, live prices or other-model forecasts),
+  and which product has what.
+- **READMEs.** The repository README's feature list and doc index, and the
+  extension's Marketplace README (grouping, status bar, cost tabs).
+- A test pins the extension's answers the docs now describe
+  (`create-extension-api-service.test.ts`: variance answers, project cost,
+  statements, estimates, projects and the repository list do not).
+
+Still open for Phase 15 as a whole: the owner's review of these docs and
+the §15 exit criterion on a machine with real sessions.
 
 ## 15. Exit criterion
 

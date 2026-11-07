@@ -148,7 +148,8 @@ function invoke(
       return api.getHealth();
     case "getProductProfile":
       return api.getProductProfile();
-    // Step 15.9: 404 from the extension's ApiService until step 15.14.
+    // Step 15.9; answered over the Copilot sessions from step 15.14 (project
+    // cost, statements, estimates and projects are 404: none in the extension).
     case "getCostTimeSeries":
       return api.getCostTimeSeries(toQuery(params));
     case "getCostComparison":

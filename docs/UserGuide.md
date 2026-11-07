@@ -566,8 +566,9 @@ dropdown. The list boxes and **Current selections** stay in force in all
 three views. The two cost views follow the **Project**, **Repository** and a
 single **Provider** selection; any other selection (a model, a date, a tool)
 is named under the filters as "Not applied here", so a figure never only
-looks filtered. Both views are in the standalone app; the VS Code extension
-gets them in a later release.
+looks filtered. The VS Code extension has both views too, over its Copilot
+sessions; **Project** and **Billing** (below) are only in this app, because
+the extension has no projects.
 
 The filters sit in one row: the date range first (**This month**, **Last
 month**, **Last 90 days**, **This year**), then, on Cost over time, the
