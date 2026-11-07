@@ -39,7 +39,8 @@ export interface TurnChart {
 }
 
 export interface ContextOverheadView {
-  systemPrompt?: { tokens: MeasureView; components: { label: string; tokens: MeasureView }[] };
+  // `value` is the raw count (null = unknown) so the bar can size its segments.
+  systemPrompt?: { tokens: MeasureView; value: number | null; components: { label: string; tokens: MeasureView; value: number | null }[] };
   unusedToolsText?: string;
   unavailableReason?: string;
 }
@@ -87,7 +88,8 @@ function buildOverhead(overhead: SessionCost["contextOverhead"]): ContextOverhea
   if (overhead.systemPrompt) {
     view.systemPrompt = {
       tokens: valueView(overhead.systemPrompt.tokens, formatTokens),
-      components: overhead.systemPrompt.components.map((component) => ({ label: component.label, tokens: valueView(component.tokens, formatTokens) })),
+      value: overhead.systemPrompt.tokens,
+      components: overhead.systemPrompt.components.map((component) => ({ label: component.label, tokens: valueView(component.tokens, formatTokens), value: component.tokens })),
     };
   }
   if (overhead.toolInventory) {
