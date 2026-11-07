@@ -12,6 +12,7 @@ import { COMMAND_IDS } from "../../../src/commands/command-ids.js";
 import { AnalyzerPanel } from "../support/analyzer-panel.js";
 import { saveScreenshot } from "../support/screenshots.js";
 import { SidebarViews } from "../support/sidebar-views.js";
+import { isTreeRow } from "../support/tree-row.js";
 import { parseS9Fixture, S9_FIXTURE_ENV } from "../support/ui-fixture-env.mts";
 import { wdioVscodeHost as host } from "../support/vscode-host.js";
 
@@ -20,15 +21,10 @@ const panel = new AnalyzerPanel(host);
 const sidebar = new SidebarViews();
 const THEME_SETTING = "workbench.colorTheme";
 
-// The status bar item's accessible name (its tooltip's figures, as one sentence).
-function statusBarLabels(): Promise<string[]> {
-  return browser.execute(() =>
-    Array.from(document.querySelectorAll<HTMLElement>(".statusbar-item [aria-label], .statusbar-item[aria-label]")).map((element) => element.getAttribute("aria-label") ?? ""),
-  );
-}
-
-function statusBarTexts(): Promise<string[]> {
-  return browser.execute(() => Array.from(document.querySelectorAll<HTMLElement>(".statusbar-item")).map((element) => element.innerText.replace(/\s+/g, " ").trim()));
+// Each status bar item as the service reads it: its accessible name, which
+// carries the tooltip's figures as one sentence.
+async function statusBarItems(): Promise<string[]> {
+  return (await browser.getWorkbench()).getStatusBar().getItems();
 }
 
 suite("Scenario S9: VS Code, cost by repository (step 15.14)", () => {
@@ -51,17 +47,18 @@ suite("Scenario S9: VS Code, cost by repository (step 15.14)", () => {
     });
     const rows = await sidebar.rowTexts("sessions");
     for (const group of S9_EXPECTED.groups) {
-      expect(rows).toContain(`${group.label} ${group.description}`);
+      expect(rows.some((row) => isTreeRow(row, group.label, group.description))).toBe(true);
     }
     await saveScreenshot("s9-sessions-by-repository");
   });
 
   test("the status bar shows today's AI Credits for the workspace's repository, and every repository's in its tooltip", async () => {
-    await browser.waitUntil(async () => (await statusBarTexts()).some((text) => text.includes(S9_EXPECTED.statusText)), {
-      timeout: 30_000,
-      timeoutMsg: `the status bar did not show "${S9_EXPECTED.statusText}"`,
-    });
-    expect(await statusBarLabels()).toContain(S9_EXPECTED.statusAriaLabel);
+    let items: string[] = [];
+    await browser
+      .waitUntil(async () => (items = await statusBarItems()).includes(S9_EXPECTED.statusAriaLabel), { timeout: 30_000 })
+      .catch(() => undefined);
+    // On a miss, the message says what the status bar did show.
+    expect(items.filter((item) => item.includes("AI Credits"))).toContain(S9_EXPECTED.statusAriaLabel);
   });
 
   for (const [theme, bodyClass] of [
