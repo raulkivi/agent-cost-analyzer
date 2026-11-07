@@ -10,7 +10,8 @@ Phase 12 adds branded, interactive MCP Apps views for both products.
 **Overall status (2026-11-06):** Phases 0-10 have their code and docs
 merged to `main`. The extension's 0.1.0 is released (tag `ext-v0.1.0`,
 2026-11-03). Open: Phase 10's owner manual checks and decisions (see its
-section), Phase 11 (not started), Phase 12 (planned), Phase 13 (in
+section), Phase 11 (not started), Phase 12 (planned, dependencies met; the plan
+covers the Phase 14 and 15 tools since 2026-11-07), Phase 13 (in
 progress: steps 13.0-13.10 and 13.5a merged, the owner's eyes-on review
 of 13.8 open), Phase 14
 (steps 14.0-14.7 built and 14.8's docs written; the owner's docs review
@@ -1362,6 +1363,10 @@ unchanged.
 - One-day spike in VS Code Copilot Chat and Claude Desktop. It records
   the host style variables each sends, `toolInfo`, `vscode://` links and
   approval prompts.
+- Mock-up boards in `docs/plans/mockups/mcp-apps/`, drawn in both host
+  frames in light and dark and approved by the owner before any view
+  code: the MVP's after the spike, and one set at the start of each
+  increment (plan §5.6).
 - Server: a `registerAppViews` tool group with:
   - one `ui://` resource (`text/html;profile=mcp-app`) that the
     `ViewSource` port serves, with the product brand injected from
@@ -1382,17 +1387,35 @@ unchanged.
   handler that opens a session from a view. The views ship in the `.vsix`.
 - architecture.md, threat-model.md §6, the User Guide and the extension
   guide updated.
+- Increment 2 (after the MVP): views for the Phase 15 cost-analysis
+  tools: cost over time for a repository or project (`get_repository_cost`,
+  `get_project_cost`), `compare_costs` and `explain_cost_change`, in both
+  products.
+- Increment 3: views for `replay_session`/`compare_models_for_session`,
+  `get_price_changes`, `get_statement` and `estimate_cost` (standalone
+  only, as the extension has no billing tools), the audit tools and a
+  `list_sessions` picker. `get_price_book`, `list_repositories`,
+  `list_projects`, `list_tool_calls` and `list_log_providers` get no view
+  (plan §2, §4.6).
 
-**Exit criterion**: in VS Code Copilot Chat and Claude Desktop, the three
-views render in light and dark with the product brand. Drill-down works
-without a new model turn. The 9 model-visible tools keep their names,
-schemas and `content`, and Claude Code CLI output is byte-identical.
-Unknown figures show "Unknown", never 0.
+**Exit criterion** (MVP; the increments have their own in plan §8): in
+VS Code Copilot Chat and Claude Desktop, the three views render in light
+and dark with the product brand. Drill-down works without a new model
+turn. Every model-visible tool (21 standalone, 19 in the extension)
+keeps its name, schemas and `content`, and Claude Code CLI output is
+byte-identical. Unknown figures show "Unknown", never 0.
 
 **Dependencies**: Phase 9.12 (cost and findings tools), Phase 10 (the
-extension's MCP server and `ext-v0.1.0`, which step 10.13 blocks).
+extension's MCP server and `ext-v0.1.0`); for the increments, Phase 14
+step 14.5 (replay tools) and Phase 15 steps 15.7 and 15.10–15.13 (cost
+analysis, price change, billing tools in both servers). All are met.
 
-**Status (2026-10-28)**: planned, not started.
+**Target releases** (plan §7.3): MVP in extension 0.4.0 and app 0.11.0,
+Increment 2 in 0.5.0 and 0.12.0, Increment 3 in 0.6.0 and 0.13.0. This
+assumes the Phase 14/15 work ships first as 0.3.0 and 0.10.0.
+
+**Status (2026-11-07)**: planned, not started; dependencies met. Plan
+updated to cover the Phase 14 and 15 tools (Increments 2 and 3).
 
 ## Phase 13 — Vendor-aware Learn simulation (VS Code first)
 
@@ -1585,6 +1608,8 @@ flowchart LR
     P98 --&gt; P11
     P912 --&gt; P12["Phase 12<br/>MCP Apps views"]
     P10 --&gt; P12
+    P14 --&gt; P12
+    P15 --&gt; P12
     P10 --&gt; P13["Phase 13<br/>Vendor-aware Learn simulation"]
     P13 --&gt; P14["Phase 14<br/>Replay Analyze sessions on another vendor"]
     P911 --&gt; P15["Phase 15<br/>Cost by repository and project"]
