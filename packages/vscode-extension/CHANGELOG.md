@@ -23,6 +23,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   why a cost changed (usage, price or model mix), and read the bundled price
   book and its price changes. There are no projects in the extension:
   `list_projects` says they are edited in the standalone app.
+- **Replay a session on another model.** In Analyze, **Replay on** shows
+  what a Copilot session would have cost about on another model, beside
+  what it did cost: Simulated columns in the turns table, a summary with
+  coverage, a self-check on the session's own model and the assumptions,
+  and **Compare models** for up to 10 models. Priced at GitHub Copilot's
+  prices by default, with a switch to the vendor's API prices. Nothing is
+  stored.
+- **MCP server: replay.** Two more read-only tools, `replay_session` and
+  `compare_models_for_session`, for 19 in all.
 
 ## [0.2.1] - 2026-11-06
 

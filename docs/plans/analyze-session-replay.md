@@ -6,8 +6,8 @@ revisit (§11). Steps 14.0 (threat-model rows), 14.1 (domain schemas) and
 14.2 (request traces), 14.3 (the scripter), 14.4 (the replay service) and
 14.5 (routes, RPC and MCP) are done (2026-11-07); step 14.6's mock-ups are
 drawn and approved by the owner and step 14.7 (the UI in both products) is
-built (2026-11-07; the extension scenario's first run is in CI); step 14.8
-(docs) is next.
+built (2026-11-07), and step 14.8's docs are written; the owner's review of
+them and the §13 exit criterion on real sessions are open.
 
 The question this answers: **"What would this real session have cost on
 another model?"** It reuses Phase 13's simulator
@@ -250,7 +250,7 @@ recommendation and stay open for the owner to revisit.
 | 14.5 | API routes, RPC, MCP tools (per D7) | Route, RPC and MCP tests (schemas, read-only, redaction). Done 2026-11-07, see the note below |
 | 14.6 | Mock-ups (Replay on, Simulated columns, summary card, Compare models) in both products' themes | Owner approves the boards. Done 2026-11-07: drawn and approved by the owner, see the note below |
 | 14.7 | UI in the standalone app and the extension (per D4, D5) | Component, axe and keyboard tests; UI check in three VS Code themes; usage scenarios pass in `web-e2e` and `extension-ui`. Done 2026-11-07, see the note below |
-| 14.8 | Docs: architecture.md, User Guide, extension guide, vision | Owner reviews |
+| 14.8 | Docs: architecture.md, User Guide, extension guide, vision | Owner reviews. Written 2026-11-07, see the note below; the owner's review open |
 
 ### 12.1 Step notes
 
@@ -472,6 +472,33 @@ the extension), following the approved boards.
 - **Open**: axe in R1 leaves out the session list, which has two violations
   unrelated to replay (each card's accessible name is its title alone, and
   the advice checkbox is under 24 px).
+
+**14.8 (written 2026-11-07; the owner's review open).**
+
+- **architecture.md**: §4.1 and §4.2 module rows for every Phase 14 module,
+  §5's `RequestTrace`, `SessionReplay`, `SessionReplayComparison` and
+  `ProductFeatures.sessionReplay`, a new §6.5 "Session replay (Phase 14)"
+  (the data flow, the rules a maintainer needs, provider coverage, the open
+  gaps), the §6.4 product table row, the §8 routes, RPC methods and MCP
+  counts (21 and 19 tools), and one line each in §11.2, §11.4 and §12.
+  §6.5's diagram is a text block (the other §6 sections' draw.io SVGs
+  weren't made here).
+- **vision.md**: replay in §3.2's Analyze capabilities with its caveat (A1)
+  and the self-check, the extension's feature list, and §2's non-goals.
+- **User Guide**: "Replaying a session on another model" (Replay on, the
+  Simulated columns, the strip, the Replay summary, Compare models, which
+  sessions can be replayed, the messages, never stored), the MCP table, the
+  Estimate panel's pointer to `estimate_cost` with `model`, charts as tables,
+  narrow windows and keyboard use. **The extension guide**: the same, shorter,
+  with AI Credits at Copilot's prices by default and the compact panel.
+  The READMEs and the extension's CHANGELOG list the feature.
+- **Corrections found while writing**: sub-agent requests are left out of the
+  main chain; only an Agent Host turn with nothing but sub-agent calls shows
+  in coverage, with its reason, so §4's "reported as not replayed" holds for
+  those turns only (D6). The strip's line for a missing self-check is neutral
+  because `selfCheck: null` carries no reason.
+- **Open**: replay screenshots for both guides (the guides have one per
+  major feature; the boards show the shots to take).
 
 ## 13. Exit criterion
 

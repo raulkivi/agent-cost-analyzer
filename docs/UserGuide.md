@@ -332,6 +332,134 @@ If a turn has no captured round-trip data (for example, it predates
 enabling debug logging, or its data has since aged out), the inspector
 shows an explanatory empty state instead of a blank panel.
 
+### Replaying a session on another model
+
+What would this session have cost on another model? A replay keeps the
+session's turns, requests and token counts, and runs them through the
+other model's vendor caching rules and prices. Only caching and prices
+change. Every replayed figure is labelled **Simulated**, and the measured
+figures stay as they are, beside it.
+
+**Choose a model.** With a session open, the **Replay on** select sits in
+the session's header row. It starts at **Off (measured only)**. Models are
+grouped by vendor, and the session's own model is marked
+**(this session)**. A model whose vendor doesn't document its caching is
+listed but disabled, with the reason. While the replay runs, "Replaying on
+*model*…" shows with **Cancel**, which turns the replay off again. Opening
+another session starts it at Off.
+
+**The Simulated columns.** The turns table gains a dashed
+**Simulated · *model*** group after the measured columns:
+
+| Column | What it shows |
+|---|---|
+| Cache | The simulated cache outcome of the turn, as a word and an icon |
+| Cache read | The simulated cache-read tokens |
+| Cost | The simulated cost: AI Credits for a Copilot session (hover for USD), USD otherwise. "unknown" when it has no price |
+
+A turn that can't be replayed reads **not replayed** across the group, with
+the reason (for example, the log has no usage for it). It never reads 0.
+The **Columns** chooser lists the group as Simulated cache, Simulated
+cache read and Simulated cost; the cost can't be hidden while a replay is
+shown. On the **Explanation** tab, the selected turn gets a dashed
+**Simulated** box with its outcome and its cache read, cache write and
+cost, measured beside simulated.
+
+**The summary strip.** Above the table, a strip shows:
+
+- the **Measured** total and the **Simulated** total, and the
+  **Difference** (simulated minus measured, with its percentage);
+- a sentence: "This session would have cost about … on *model*.";
+- the coverage, for example "38 of 40 turns replayed; 2 not replayed: …";
+- the self-check, for example "Replay matches the log on
+  claude-opus-5-5: 98% of compared requests";
+- which prices were used, and their date.
+
+**Replay summary** opens the full summary as a dialog:
+
+- **Totals.** Both totals cover the same turns: those replayed with a known
+  measured and simulated cost. Turns not replayed, or with an unknown cost,
+  are left out of both, so the difference compares like with like.
+- **Prices.** By default a replay is priced on the session's own channel,
+  at the price on the session's date: a Copilot session at GitHub
+  Copilot's prices, in AI Credits; a Claude Code session at the replay
+  vendor's API prices, in USD. The **Price channel** switch (for
+  example *Anthropic API* or *GitHub Copilot*) prices both totals at the other channel
+  instead. The only conversion is 1 AI Credit = $0.01.
+- **Coverage.** How many turns and requests were replayed, and each reason
+  a turn wasn't, with its turn numbers. Only the session's main chain is
+  replayed: sub-agent requests are left out.
+- **Self-check.** The same replay on the session's own model, compared
+  request by request with the log. A request matches when its cache hit or
+  miss is exactly the log's and its cache read is within 5%. The first
+  request isn't compared (a cold start). The figures for other models rest
+  on this check: if it fails, the dialog says to read them with care. A
+  session that used more models than a replay can hold (three or more, or two from different vendors),
+  or whose model has no vendor profile, has no self-check, and the dialog
+  says why.
+- **Assumptions** (what a replay can't know). Open the first time you open
+  the dialog, each with its confidence (documented, inferred or unknown):
+  - **A1, same conversation** (the main caveat): the other model gets the
+    same prompts and answers with as many output and reasoning tokens. It
+    wouldn't: another model writes other answers and makes other tool
+    calls.
+  - **A2, same token counts**: another vendor's tokenizer would count the
+    same text differently. No text is read to count it again.
+  - **A3, cold start**: the first request reads nothing from the cache,
+    though other sessions may have left it warm.
+  - **A4, inferred cache writes**: where the log records no cache writes
+    (Copilot's local harness without `agent-traces.db`), they are what the
+    vendor's rules say. Greyed out as "not used for this session" when the
+    log records every write.
+  - **A5, same harness**: the session's tools, cache breakpoints and cache
+    lifetimes are kept; only the model, its caching rules and prices
+    change.
+
+That is why the app says a session "would have cost about" a figure, not
+"would have cost" it.
+
+**Compare models.** The **Compare models** button, beside Replay on,
+swaps the turns table for the session's simulated total on several models:
+
+- It starts with the session's own model, the Replay on model and each
+  vendor's default model. **Add model** adds one, up to 10 models with the
+  session's own included ("4 of 10 models"). **Reset to each vendor's
+  default** starts over, and ✕ on a row removes that model.
+- The table is ranked by simulated total, highest first: model, vendor,
+  channel, the simulated total, the difference from the measured total and
+  the turns replayed. The session's own model is tagged **Measured model**,
+  with its measured total.
+- The bar chart beside it (below it in a narrow window) uses one hue for
+  every model. The session's own model is hatched and outlined, and a
+  dashed line marks the measured total. **View as table** gives the same
+  numbers.
+- A model with no total reads **unknown**, with the reason ("not
+  replayed", or "replayed, but not priced"), never 0.
+- **Prices** chooses *Session's channel*, *Copilot prices* or *API
+  prices*. On the session's channel, a session that wasn't on Copilot
+  moves to each model's own vendor's API prices. The choice is shared with
+  the summary strip and dialog.
+
+Press **Compare models** again to return to the turns table.
+
+**Which sessions can be replayed.** Claude Code sessions and Copilot Chat
+sessions (local and Agent Host) can. pi and mitmproxy sessions can't yet:
+**Replay on** shows *Not available* with "This provider's logs can't be
+replayed yet." Otherwise you may see:
+
+- **This session can't be replayed**, with the reason, for example a
+  session with no request data, or one with more than 20,000 requests
+  ("at most 20,000 can be replayed"). Its measured figures are unchanged.
+- **Unpriced**, when the channel has no price for the model on the
+  session's date, or no price channel is known. The tokens are still
+  simulated; a button offers the other channel's prices instead.
+- **Couldn't replay on *model***, when the request fails, with **Try
+  again** and **Copy details**.
+
+A replay is computed when you ask for it and never stored. The same
+replays are available to an agent through the MCP tools
+[`replay_session` and `compare_models_for_session`](#querying-the-audit-from-claude-code-mcp).
+
 ### Searching sessions and empty states
 
 The left column's search box works the same way in Analyze mode — filter
@@ -419,9 +547,9 @@ claude mcp add agent-cost-analyzer -- /absolute/path/to/agent-cost-analyzer/scri
 | `compare_costs` | Two to 20 repositories or projects side by side: total, change, per session, per active day, share and coverage |
 | `explain_cost_change` | Why a repository's or project's cost changed between two periods: usage, price and mix effects that add up exactly |
 | `get_statement` | A project's billing statement for a period: the issued one with any differences, else the draft. It never issues one |
-| `estimate_cost` | The cost of planned work as a p50–p90 range at today's prices, never one number. With `model`, the same estimate from the project's sessions replayed on that model (**Simulated**, priced as of each session's dates, with coverage and assumptions) |
-| `replay_session` | One session replayed on another model: per turn and in total what it would have cost beside what it did, with coverage, the self-check on its own model and the assumptions. **Simulated** |
-| `compare_models_for_session` | One session's simulated total on up to 10 models, its own included, with how many turns each replayed. **Simulated** |
+| `estimate_cost` | The cost of planned work as a p50–p90 range at today's prices, never one number. With `model`, the same estimate from the project's sessions (up to 200) replayed on that model: **Simulated**, priced on each session's own channel as of its dates, with coverage, self-check counts and assumptions |
+| `replay_session` | One session replayed on another model: per turn and in total what it would have cost beside what it did, with coverage, the self-check on its own model and the assumptions. `pricing` is `session-channel` (the default), `copilot` or `api`. **Simulated** |
+| `compare_models_for_session` | One session's simulated total on up to 10 models, its own included, with how many turns each replayed. Takes the same `pricing`. **Simulated** |
 
 Six prompts start common reviews: `audit_session` (why a session's tool
 calls failed), `review_costs` (what drives your spend and how to cut it),
@@ -430,6 +558,11 @@ prevent them), `explain_cost_change` (whether usage, price or mix drove a
 change), `prepare_statement` (a statement's summary and a note to the
 client) and `estimate_work` (a range for planned work and its main
 uncertainty).
+
+The replay tools give the same figures as
+[Replaying a session on another model](#replaying-a-session-on-another-model)
+in the app. Like the app, they can't replay pi or mitmproxy sessions yet,
+and they refuse a model no vendor profile lists, with the reason.
 
 Every cost figure says its basis: **billed** (what the vendor billed,
 GitHub Copilot's AI Credits), **reported** (a cost the log itself records)
@@ -724,8 +857,11 @@ in AI Credits with USD beside it, with the days it used.
   with any turn that has no price is left out, and the panel says how many.
 - With fewer than 5 active days of known cost there is no range: the panel
   says why, and how many days had a turn with no price.
-- Estimating on another model comes with Phase 14 (replaying sessions on
-  another vendor).
+- The panel estimates on the models the sessions used. To estimate on
+  another model, ask the MCP tool `estimate_cost` with a `model`: it
+  replays the project's sessions on that model
+  ([Replaying a session on another model](#replaying-a-session-on-another-model))
+  and labels the estimate **Simulated**.
 
 ![The estimate panel: a p50–p90 range for 20 planned days of Mobile app work over 12 weeks of history](images/guide-dashboard-estimate.png)
 
@@ -738,7 +874,7 @@ and main uncertainty.
 
 Every chart has a **View as table** button in its toolbar: the AI Credits
 sparkline, the prompt composition diagram, the tool-audit and dashboard
-columns, the ranked bars, and the cost views' charts (where price changes
+columns, the ranked bars, the Compare models bars, and the cost views' charts (where price changes
 are rows of their own and an unknown period reads "unknown"). It swaps the chart for a table of the same
 numbers, and pressing it again returns to the chart. Use it when a chart is
 hard to read (colour, size, a screen reader) or when you want exact values.
@@ -765,8 +901,10 @@ off on the right; a table wider than its column scrolls sideways inside it.
   and returns focus. The turns table keeps the **Columns** chooser.
 - **Narrow** (below that) — the center switch becomes a **View** dropdown,
   the session's KPIs show as 2x2 tiles, and the turns table keeps only
-  Turn, Trigger, AI Credits and Cumulative. The other columns appear in the
-  **Details** drawer for the selected turn. The column chooser isn't offered.
+  Turn, Trigger, AI Credits and Cumulative, plus the simulated Cost while a
+  replay is shown. The other columns appear in the **Details** drawer for
+  the selected turn, the simulated ones included. The column chooser isn't
+  offered.
 
 The system prompt inspector stacks its structure, text and description
 columns the same way, and the insights dashboard puts its filter lists in
@@ -782,6 +920,11 @@ The layout works down to 360 px wide.
 - **Timeline scrubber** — a slider: arrow keys step through turns.
 - **Column chooser** — Tab to **Columns**, Enter to open, Esc to close and
   return to the button.
+- **Replay on** — a standard select; **Compare models** is a toggle
+  button.
+- **Replay summary** — a dialog: it traps focus, closes with Esc, its
+  close button or a click outside, and gives focus back to the
+  **Replay summary** button.
 - **Dialogs and drawers** — the advice export dialog traps focus and closes
   with Esc; drawers take focus when they open, give it back when they
   close, and never trap Tab.

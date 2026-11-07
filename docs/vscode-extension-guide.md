@@ -185,6 +185,7 @@ Everything else works as the [User Guide](UserGuide.md) describes:
 | **Tool audit** and **All sessions** views | [Auditing tool calls](UserGuide.md#auditing-tool-calls) |
 | **Dashboard** view | [The insights dashboard](UserGuide.md#the-insights-dashboard) |
 | **Cost over time** and **Compare** | [Cost over time and Compare](UserGuide.md#cost-over-time-and-compare); the cost basis and prices in [Cost by repository and project](UserGuide.md#cost-by-repository-and-project) |
+| **Replay on** and **Compare models** (a session on another model, **Simulated**) | [Replaying a session on another model](#replaying-a-session-on-another-model) below, and in full in the [User Guide](UserGuide.md#replaying-a-session-on-another-model) |
 | Exporting an AI-advice bundle | [Exporting an AI-advice bundle](UserGuide.md#exporting-an-ai-advice-bundle) |
 
 The panel opens in Learn mode. Switch to **Analyze** to see your own
@@ -200,6 +201,47 @@ than counting as successes or failures.
 ![The same panel in Light Modern](images/vscode/panel-light.png)
 
 ![The insights dashboard: what happened, totals, and AI Credits by day](images/vscode/dashboard.png)
+
+### Replaying a session on another model
+
+In Analyze, open a Copilot session and pick a model in **Replay on**
+(**Off (measured only)** by default; the session's own model is marked
+**(this session)**). The panel shows what the session would have cost
+about on that model, beside what it did cost. It works for local and
+Agent Host sessions alike. The replay keeps the session's turns and token
+counts; only caching and prices change.
+
+- **Simulated columns.** The turns table gains a dashed
+  **Simulated · *model*** group: cache outcome, cache read and cost. A
+  turn that can't be replayed says why. The measured columns don't change.
+- **Summary.** A strip above the table gives the measured and simulated
+  totals, the difference, the coverage, the self-check on the session's
+  own model and the prices used. **Replay summary** opens the detail as a
+  dialog, with the assumptions behind the replay; Escape closes it.
+- **Prices.** A Copilot session is priced at GitHub Copilot's prices, in
+  AI Credits (hover a simulated cost for its USD), as of the session's
+  date. The **Price channel** switch in the summary prices it at the
+  model's vendor's API prices instead, in USD, from the extension's
+  bundled price book.
+- **Compare models.** The session's simulated total on up to 10 models,
+  its own included, as a ranked table and bars. An unknown total reads
+  "unknown", never 0.
+
+What differs in the panel:
+
+- **Compact panel.** Below 700 px wide, the table keeps the priority
+  columns plus the simulated **Cost**; the other simulated figures are in
+  the selected turn's **Details**. In a wider panel, the **Columns** button
+  lists Simulated cache, Simulated cache read and Simulated cost; the cost
+  can't be hidden. In Compare models, the bars go under the table in a
+  narrow panel.
+- **Themes.** The Simulated cells keep their dashed edge and **Simulated**
+  label in Dark Modern, Light Modern and High Contrast; in High Contrast
+  they use the theme's contrast border, with no fill.
+
+A replay is computed when you ask for it and never stored. Agent mode can
+ask for the same figures through `replay_session` and
+`compare_models_for_session` ([What it offers](#what-it-offers)).
 
 ## The side bar and status bar
 
@@ -509,7 +551,8 @@ automatically in dark, light and high-contrast themes.
 - **Narrow panels.** The layout follows the panel's width, not the
   window's. From 700 to 1099 px wide, the right column becomes a drawer.
   Below 700 px, the turns table shows priority columns (Turn, Trigger, AI
-  Credits, Cumulative), details open in a drawer, and the views are a
+  Credits, Cumulative, and the simulated Cost while a replay is shown),
+  details open in a drawer, and the views are a
   select. The minimum width is 360 px. The table's column chooser lets
   you pick the visible columns, and it remembers your choice.
 - **Reduced motion.** With your system's reduce-motion setting on,
