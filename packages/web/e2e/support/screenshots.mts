@@ -73,6 +73,21 @@ async function shoot(page: Page, name: string) {
   console.log(path.join(outDir, name));
 }
 
+// Step 14.8: the Analyze view with a Claude Code session replayed on another model.
+async function replayPage(width: number, height: number): Promise<Page> {
+  const page = await browser.newPage({ viewport: { width, height }, deviceScaleFactor: 2 });
+  await page.clock.setFixedTime(new Date(FIXTURE_NOW));
+  await page.goto(`http://127.0.0.1:${port}/`);
+  await page.getByText("Analyze", { exact: true }).click();
+  const switched = page.waitForResponse((response) => response.url().endsWith("/api/log-providers/active") && response.ok());
+  await page.getByRole("combobox", { name: "Log provider" }).selectOption("claude-code");
+  await switched;
+  await page.getByRole("button", { name: /^portal-web/ }).filter({ hasText: /2 turns/ }).click();
+  await page.getByRole("combobox", { name: "Replay on" }).selectOption("claude-opus-5.5");
+  await page.getByRole("region", { name: "Replay summary" }).waitFor();
+  return page;
+}
+
 try {
   // Desktop: three lines (both projects and No project) with the price marker's tooltip.
   let page = await dashboard(1440, 1000);
@@ -152,6 +167,17 @@ try {
   await page.getByRole("table", { name: "Totals" }).waitFor();
   await page.evaluate(() => document.querySelector(".cost-tab")?.scrollIntoView({ block: "start" }));
   await shoot(page, "guide-dashboard-billing-360.png");
+  await page.close();
+  // Step 14.8: replay strip and Simulated columns, the summary dialog, Compare models.
+  page = await replayPage(1440, 1000);
+  await shoot(page, "guide-replay-strip.png");
+  await page.getByRole("button", { name: "Replay summary" }).click();
+  await page.getByRole("list", { name: "Assumptions" }).waitFor();
+  await shoot(page, "guide-replay-summary.png");
+  await page.keyboard.press("Escape");
+  await page.getByRole("button", { name: "Compare models" }).click();
+  await page.getByRole("table", { name: /Simulated cost of this session on each model/ }).waitFor();
+  await shoot(page, "guide-replay-compare.png");
   await page.close();
 } finally {
   await browser.close();

@@ -497,8 +497,10 @@ the extension), following the approved boards.
   in coverage, with its reason, so §4's "reported as not replayed" holds for
   those turns only (D6). The strip's line for a missing self-check is neutral
   because `selfCheck: null` carries no reason.
-- **Open**: replay screenshots for both guides (the guides have one per
-  major feature; the boards show the shots to take).
+- Screenshots: the User Guide has three replay shots (strip, summary,
+  Compare models; `packages/web/e2e/support/screenshots.mts`). §6.5's
+  diagram is draw.io. **Open**: the extension guide's replay shots (they
+  need a real VS Code, `npm run screenshots` in the extension).
 
 ## 13. Exit criterion
 
