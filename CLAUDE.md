@@ -28,6 +28,10 @@ content here.
   met.
 - Commit all changes to git as soon as a phase's exit criterion is met,
   before starting the next phase.
+- After every phase or step is completed (or its status changes), update
+  [docs/implementation-plan-gantt.md](docs/implementation-plan-gantt.md)
+  in the same change: the phase bars and percentages, Open items, and the
+  phase's detail chart.
 - Repo status: Phases 0-9.6 complete (9.6 verified against pi's
   published schema in the vendored package docs/types; the real-capture
   check is postponed to Phase 11, not started), Phases 9.7-9.10 complete (9.10: tool-call
