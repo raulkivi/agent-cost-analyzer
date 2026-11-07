@@ -1,0 +1,327 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>AI Credits Analyzer, session replay</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:#4daafc}a:hover{color:#7cc0ff}
+.num{font-variant-numeric: tabular-nums; white-space: nowrap}
+.vh{position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap}
+</style>
+</helmet>
+<div style="position: relative; width: 1280px; height: 800px; box-sizing: border-box; display: flex; flex-direction: column; font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; font-size: 13px; background: {{t.bg}}; color: {{t.fg}}; overflow: hidden">
+  <div style="display: flex; flex-grow: 1; min-height: 0">
+    <nav aria-label="Activity Bar" style="width: 48px; flex-shrink: 0; background: {{t.side}}; border-right: 1px solid {{t.border}}; display: flex; flex-direction: column; align-items: center; padding-top: 6px">
+      <button aria-label="AI Credits Analyzer" aria-current="true" style="width: 48px; height: 44px; border: 0; border-left: 2px solid {{t.accent}}; background: transparent; color: {{t.fg}}; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 20V10"></path><path d="M10 20V4"></path><path d="M16 20v-7"></path><path d="M21 20H3"></path></svg></button>
+    </nav>
+
+    <aside aria-label="AI Credits Analyzer sidebar" style="width: 290px; flex-shrink: 0; background: {{t.side}}; border-right: 1px solid {{t.border}}; display: flex; flex-direction: column">
+      <div style="height: 35px; display: flex; align-items: center; padding: 0 20px; font-size: 11px; letter-spacing: 0.04em; color: {{t.muted}}">AI CREDITS ANALYZER</div>
+      <div style="display: flex; align-items: center; gap: 4px; height: 24px; padding: 0 4px 0 8px; font-size: 11px; font-weight: 700; letter-spacing: 0.04em; border-top: 1px solid {{t.border}}">
+        <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"></path></svg><span>SESSIONS</span>
+        <span style="margin-left: auto; display: flex; gap: 2px">
+          <button aria-label="Group sessions by day" aria-pressed="false" title="Group by day" style="width: 24px; height: 22px; border: 1px solid transparent; border-radius: 4px; background: transparent; color: {{t.fg}}; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="5" width="18" height="16" rx="1"></rect><path d="M3 10h18M8 3v4M16 3v4"></path></svg></button>
+          <button aria-label="Group sessions by repository" aria-pressed="true" title="Group by repository" style="width: 24px; height: 22px; border: 1px solid {{t.pressedBorder}}; border-radius: 4px; background: {{t.pressedBg}}; color: {{t.fg}}; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="6" cy="6" r="2.2"></circle><circle cx="6" cy="18" r="2.2"></circle><circle cx="18" cy="9" r="2.2"></circle><path d="M6 8.2v7.6M18 11.2c0 3-4 3.5-10.4 5.6"></path></svg></button>
+        </span>
+      </div>
+      <div role="tree" aria-label="Sessions by repository" style="display: flex; flex-direction: column; padding-top: 2px">
+        <sc-for list="{{tree}}" as="n" hint-placeholder-count="8">
+          <div role="treeitem" aria-level="{{n.level}}" aria-expanded="{{n.expanded}}" aria-selected="{{n.selected}}" style="display: flex; align-items: center; gap: 6px; height: 22px; padding: 0 10px 0 {{n.indent}}; background: {{n.bg}}; outline: {{n.outline}}; outline-offset: -1px">
+            <sc-if value="{{n.isGroup}}" hint-placeholder-val="{{false}}"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="{{n.chevron}}"></path></svg></sc-if>
+            <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: {{n.weight}}">{{n.label}}</span>
+            <span class="num" style="margin-left: auto; color: {{n.valueColor}}">{{n.value}}</span>
+          </div>
+        </sc-for>
+      </div>
+      <div style="margin-top: auto; padding: 10px 14px; border-top: 1px solid {{t.border}}; color: {{t.muted}}; font-size: 12px; line-height: 1.5">Totals are measured AI Credits from the logs. A replay never changes them.</div>
+    </aside>
+
+    <main style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column">
+      <div style="height: 35px; flex-shrink: 0; display: flex; background: {{t.side}}; border-bottom: 1px solid {{t.border}}">
+        <div style="display: flex; align-items: center; padding: 0 12px; background: {{t.bg}}; border-top: 1px solid {{t.accent}}; border-right: 1px solid {{t.border}}">AI Credits Analyzer</div>
+      </div>
+      <div style="flex-grow: 1; min-height: 0; display: flex; flex-direction: column; gap: 12px; padding: 14px 20px; overflow: hidden">
+
+        <header style="display: flex; align-items: flex-start; gap: 12px; flex-wrap: wrap">
+          <div style="display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1 1 300px">
+            <h1 style="margin: 0; font-size: 18px; font-weight: 600">Add repository grouping to the Sessions view</h1>
+            <span style="color: {{t.muted}}" title="2026-10-21 10:48">Copilot local · claude-sonnet-5 · Oct 21 · 2 turns · 22 requests</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap">
+            <label for="replay-on" style="display: flex; align-items: center; gap: 6px">Replay on</label>
+            <select id="replay-on" aria-describedby="replay-on-note" style="height: 26px; min-width: 190px; font: inherit; padding: 0 6px; border: 1px solid {{t.inputBorder}}; border-radius: 2px; background: {{t.inputBg}}; color: {{t.fg}}; outline: 1px solid {{t.focus}}; outline-offset: 1px">
+              <option>Off (measured only)</option>
+              <optgroup label="Anthropic">
+                <option>claude-sonnet-5 (session's model)</option>
+                <option>claude-sonnet-5.5</option>
+                <option selected="selected">claude-haiku-5.5</option>
+                <option>claude-opus-5.5</option>
+              </optgroup>
+              <optgroup label="OpenAI">
+                <option>gpt-6.1-sol</option>
+              </optgroup>
+              <optgroup label="Google">
+                <option>gemini-3.8-flash</option>
+              </optgroup>
+              <optgroup label="Moonshot AI">
+                <option disabled="disabled">kimi-k3 (caching undocumented)</option>
+              </optgroup>
+              <optgroup label="Microsoft">
+                <option disabled="disabled">mai-code-1.1-flash (caching undocumented)</option>
+              </optgroup>
+            </select>
+            <span id="replay-on-note" class="vh">Moonshot AI and Microsoft are listed but can't be chosen: their caching is undocumented.</span>
+            <button aria-pressed="{{comparePressed}}" onClick="{{toggleView}}" style="height: 26px; padding: 0 10px; border: 1px solid {{cmpBtn.border}}; border-radius: 2px; background: {{cmpBtn.bg}}; color: {{cmpBtn.fg}}; font: inherit; display: flex; align-items: center; gap: 6px"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6h10M4 12h16M4 18h6"></path></svg>Compare models</button>
+            <button aria-label="Open the details drawer" aria-expanded="false" title="Details" style="width: 26px; height: 26px; border: 1px solid {{t.secBorder}}; border-radius: 2px; background: {{t.secBg}}; color: {{t.secFg}}; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="18" height="16" rx="1"></rect><path d="M15 4v16"></path></svg></button>
+          </div>
+        </header>
+
+        <section aria-label="Replay summary" style="display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; border: 1px solid {{t.border}}; border-radius: 4px; background: {{t.card}}">
+          <p class="num" style="margin: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; white-space: normal; line-height: 1.5">
+            <span>Measured <strong style="font-weight: 600">9.65</strong> AI Credits</span>
+            <span aria-hidden="true" style="color: {{t.muted}}">·</span>
+            <span style="display: inline-flex; align-items: center; gap: 6px; padding: 0 6px; border: 1px dashed {{t.simBorder}}; border-radius: 2px; background: {{t.simBg}}"><span style="display: inline-flex; align-items: center; gap: 3px; font-size: 11px; font-weight: 600; letter-spacing: 0.02em"><svg aria-hidden="true" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 3h6M10 3v6l-5 10a1 1 0 0 0 1 1.5h12a1 1 0 0 0 1-1.5l-5-10V3"></path></svg>Simulated</span>on claude-haiku-5.5 <strong style="font-weight: 600">0.63</strong></span>
+            <span aria-hidden="true" style="color: {{t.muted}}">·</span>
+            <span><strong style="font-weight: 600">−9.02</strong> (−93%)</span>
+            <span aria-hidden="true" style="color: {{t.muted}}">·</span>
+            <span>2 of 2 turns replayed</span>
+          </p>
+          <p style="margin: 0; display: flex; align-items: center; gap: 6px; line-height: 1.5" title="21 of 21 compared requests: cache read within 5%, hit or miss exact. The first request is not compared (cold start).">
+            <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"></circle><path d="M8 12.5l2.8 2.8L16 10"></path></svg>
+            <span>Replay matches the log on claude-sonnet-5: 100% of compared requests <span style="color: {{t.muted}}">(21 of 21; the first is a cold start)</span></span>
+          </p>
+          <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; color: {{t.muted}}">
+            <span>GitHub Copilot's prices as of 2026-10-21</span>
+            <label style="display: flex; align-items: center; gap: 6px; color: {{t.fg}}">Prices<select style="height: 24px; font: inherit; padding: 0 6px; border: 1px solid {{t.inputBorder}}; border-radius: 2px; background: {{t.inputBg}}; color: {{t.fg}}"><option selected="selected">GitHub Copilot (the session's)</option><option>Vendor API, in USD</option></select></label>
+            <button aria-expanded="{{assumptionsOpen}}" aria-controls="assumptions" onClick="{{toggleAssumptions}}" style="margin-left: auto; height: 24px; padding: 0 6px; border: 0; background: transparent; color: {{t.link}}; font: inherit; display: flex; align-items: center; gap: 4px"><svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="{{assumptionsChevron}}"></path></svg>Assumptions (5)</button>
+          </div>
+          <sc-if value="{{assumptionsShown}}" hint-placeholder-val="{{false}}">
+            <ul id="assumptions" style="margin: 0; padding: 8px 0 0; list-style: none; display: flex; flex-direction: column; gap: 4px; border-top: 1px solid {{t.border}}; line-height: 1.45">
+              <sc-for list="{{assumptions}}" as="a" hint-placeholder-count="5">
+                <li style="display: flex; gap: 8px"><strong style="font-weight: 600; flex-shrink: 0; width: 24px">{{a.id}}</strong><span style="flex-grow: 1">{{a.text}}</span><span style="flex-shrink: 0; height: 18px; padding: 0 6px; border: 1px solid {{t.inputBorder}}; border-radius: 9px; font-size: 11px; color: {{t.fg}}">{{a.confidence}}</span></li>
+              </sc-for>
+            </ul>
+          </sc-if>
+        </section>
+
+        <sc-if value="{{isReplay}}" hint-placeholder-val="{{true}}">
+          <div style="display: flex; flex-direction: column; gap: 8px; min-height: 0">
+            <div style="display: flex; align-items: center; gap: 10px">
+              <h2 style="margin: 0; font-size: 13px; font-weight: 600">Turns</h2>
+              <span style="margin-left: auto; color: {{t.muted}}; font-size: 12px">Showing 7 of 14 columns</span>
+              <button aria-expanded="false" style="height: 24px; padding: 0 8px; border: 1px solid {{t.secBorder}}; border-radius: 2px; background: {{t.secBg}}; color: {{t.secFg}}; font: inherit; font-size: 12px; display: flex; align-items: center; gap: 4px"><svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="16" rx="1"></rect><path d="M9 4v16M15 4v16"></path></svg>Columns</button>
+            </div>
+            <div style="border: 1px solid {{t.border}}; border-radius: 4px; overflow: hidden">
+              <table class="num" style="width: 100%; border-collapse: collapse; white-space: normal">
+                <caption class="vh">Turns, measured and simulated on claude-haiku-5.5, AI Credits</caption>
+                <thead>
+                  <tr style="background: {{t.head}}; color: {{t.muted}}; font-size: 12px">
+                    <th scope="colgroup" colspan="7" style="padding: 5px 8px; text-align: left; font-weight: 600; border-bottom: 1px solid {{t.border}}">Measured</th>
+                    <th scope="colgroup" colspan="2" style="padding: 4px 8px; text-align: left; font-weight: 600; border-left: 1px dashed {{t.simBorder}}; border-bottom: 1px dashed {{t.simBorder}}; background: {{t.simBg}}; color: {{t.fg}}">
+                      <span style="display: inline-flex; align-items: center; gap: 6px"><span style="display: inline-flex; align-items: center; gap: 3px; height: 18px; padding: 0 6px; border: 1px dashed {{t.simBorder}}; border-radius: 2px; font-size: 11px"><svg aria-hidden="true" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 3h6M10 3v6l-5 10a1 1 0 0 0 1 1.5h12a1 1 0 0 0 1-1.5l-5-10V3"></path></svg>Simulated</span>claude-haiku-5.5</span>
+                    </th>
+                    <th scope="col" rowspan="2" style="width: 30px; border-left: 1px solid {{t.border}}"><span class="vh">Details</span></th>
+                  </tr>
+                  <tr style="background: {{t.head}}; color: {{t.muted}}; font-size: 12px">
+                    <th scope="col" style="padding: 5px 8px; text-align: left; font-weight: 600">Turn</th>
+                    <th scope="col" style="padding: 5px 8px; text-align: left; font-weight: 600">Trigger</th>
+                    <th scope="col" style="padding: 5px 8px; text-align: right; font-weight: 600">Uncached in</th>
+                    <th scope="col" style="padding: 5px 8px; text-align: right; font-weight: 600">Cache read</th>
+                    <th scope="col" style="padding: 5px 8px; text-align: right; font-weight: 600">Output</th>
+                    <th scope="col" style="padding: 5px 8px; text-align: right; font-weight: 600">AI Credits</th>
+                    <th scope="col" style="padding: 5px 8px; text-align: right; font-weight: 600">Cumulative</th>
+                    <th scope="col" style="padding: 5px 8px; text-align: left; font-weight: 600; border-left: 1px dashed {{t.simBorder}}; background: {{t.simBg}}; color: {{t.fg}}">Cache</th>
+                    <th scope="col" style="padding: 5px 8px; text-align: right; font-weight: 600; background: {{t.simBg}}; color: {{t.fg}}">AI Credits</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <sc-for list="{{rows}}" as="r" hint-placeholder-count="2">
+                    <tr style="border-top: 1px solid {{t.border}}">
+                      <th scope="row" style="padding: 6px 8px; text-align: left; font-weight: 400">{{r.n}}</th>
+                      <td style="padding: 6px 8px">{{r.trigger}}</td>
+                      <td style="padding: 6px 8px; text-align: right">{{r.uncached}}</td>
+                      <td style="padding: 6px 8px; text-align: right">{{r.read}}</td>
+                      <td style="padding: 6px 8px; text-align: right">{{r.output}}</td>
+                      <td style="padding: 6px 8px; text-align: right; font-weight: 600">{{r.cost}}</td>
+                      <td style="padding: 6px 8px; text-align: right">{{r.cum}}</td>
+                      <td style="padding: 4px 6px; border-left: 1px dashed {{t.simBorder}}">
+                        <div style="display: flex; flex-direction: column; gap: 1px; padding: 3px 6px; border: 1px dashed {{t.simBorder}}; border-radius: 2px; background: {{t.simBg}}">
+                          <span style="display: inline-flex; align-items: center; gap: 4px; font-weight: 600"><svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="{{r.icon}}"></path></svg>{{r.outcome}}</span>
+                          <span style="color: {{t.muted}}; font-size: 12px">{{r.simRead}} read · {{r.simWrite}} written</span>
+                        </div>
+                      </td>
+                      <td style="padding: 4px 6px">
+                        <div style="padding: 3px 6px; text-align: right; font-weight: 600; border: 1px dashed {{t.simBorder}}; border-radius: 2px; background: {{t.simBg}}" title="{{r.simTip}}">{{r.simCost}}</div>
+                      </td>
+                      <td style="padding: 0 3px; border-left: 1px solid {{t.border}}"><button aria-label="{{r.label}}" aria-expanded="false" style="width: 24px; height: 24px; border: 0; background: transparent; color: inherit; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"></path></svg></button></td>
+                    </tr>
+                  </sc-for>
+                  <tr style="border-top: 1px solid {{t.border}}; background: {{t.head}}">
+                    <th scope="row" colspan="5" style="padding: 6px 8px; text-align: left; font-weight: 600">Total, 2 of 2 turns</th>
+                    <td style="padding: 6px 8px; text-align: right; font-weight: 600">9.65</td>
+                    <td style="padding: 6px 8px"></td>
+                    <td style="padding: 6px 8px; border-left: 1px dashed {{t.simBorder}}; color: {{t.muted}}; font-size: 12px">Simulated total</td>
+                    <td style="padding: 4px 6px"><div style="padding: 3px 6px; text-align: right; font-weight: 600; border: 1px dashed {{t.simBorder}}; border-radius: 2px; background: {{t.simBg}}">0.63</div></td>
+                    <td style="border-left: 1px solid {{t.border}}"></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <p style="margin: 0; color: {{t.muted}}; font-size: 12px; line-height: 1.5">Hidden here: Rounds, Calls, Cache write, Tool, Vision, Reasoning, Model (Columns to show them, or a row's details). The log has no cache writes for this session, so the simulated writes are inferred (A4). Hover a simulated figure for its USD.</p>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{isCompare}}" hint-placeholder-val="{{false}}">
+          <section aria-labelledby="cmp-title" style="display: flex; flex-direction: column; gap: 8px">
+            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap">
+              <h2 id="cmp-title" style="margin: 0; font-size: 13px; font-weight: 600">Compare models</h2>
+              <span style="display: inline-flex; align-items: center; gap: 3px; height: 18px; padding: 0 6px; border: 1px dashed {{t.simBorder}}; border-radius: 2px; background: {{t.simBg}}; font-size: 11px; font-weight: 600"><svg aria-hidden="true" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 3h6M10 3v6l-5 10a1 1 0 0 0 1 1.5h12a1 1 0 0 0 1-1.5l-5-10V3"></path></svg>Simulated</span>
+              <span style="color: {{t.muted}}">AI Credits, the same 2 turns on each model</span>
+              <label style="margin-left: auto; display: flex; align-items: center; gap: 6px">Add model<select style="height: 24px; font: inherit; padding: 0 6px; border: 1px solid {{t.inputBorder}}; border-radius: 2px; background: {{t.inputBg}}; color: {{t.fg}}"><option>Choose…</option><optgroup label="Anthropic"><option>claude-sonnet-5.5</option><option>claude-opus-5.5</option></optgroup><optgroup label="Google"><option>gemini-3.8-flash</option></optgroup><optgroup label="Moonshot AI"><option disabled="disabled">kimi-k3 (caching undocumented)</option></optgroup><optgroup label="Microsoft"><option disabled="disabled">mai-code-1.1-flash (caching undocumented)</option></optgroup></select></label>
+              <span style="color: {{t.muted}}; font-size: 12px">3 of 10 models</span>
+            </div>
+            <div style="border: 1px solid {{t.border}}; border-radius: 4px; overflow: hidden">
+              <table class="num" style="width: 100%; border-collapse: collapse; white-space: normal">
+                <caption class="vh">This session's total on its own model and on two others, AI Credits at GitHub Copilot's prices as of 2026-10-21</caption>
+                <thead>
+                  <tr style="background: {{t.head}}; color: {{t.muted}}; font-size: 12px">
+                    <th scope="col" style="padding: 6px 8px; text-align: left; font-weight: 600">Model</th>
+                    <th scope="col" style="padding: 6px 8px; text-align: left; font-weight: 600">Vendor</th>
+                    <th scope="col" style="padding: 6px 8px; text-align: right; font-weight: 600">AI Credits</th>
+                    <th scope="col" style="padding: 6px 8px; text-align: left; font-weight: 600; width: 270px"><span class="vh">Bar, </span>Scale 0 to 11.69</th>
+                    <th scope="col" style="padding: 6px 8px; text-align: right; font-weight: 600">vs measured</th>
+                    <th scope="col" style="padding: 6px 8px; text-align: right; font-weight: 600">Turns replayed</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <sc-for list="{{cmp}}" as="c" hint-placeholder-count="4">
+                    <tr style="border-top: {{c.rowBorder}}">
+                      <th scope="row" style="padding: 7px 8px; text-align: left; font-weight: 600">{{c.model}} <span style="font-weight: 400; color: {{t.muted}}">{{c.tag}}</span></th>
+                      <td style="padding: 7px 8px">{{c.vendor}}</td>
+                      <td style="padding: 7px 8px; text-align: right; font-weight: 600">{{c.value}} <span style="font-weight: 400; color: {{t.muted}}; font-size: 12px">{{c.kind}}</span></td>
+                      <td style="padding: 7px 8px" aria-hidden="true">
+                        <div style="width: {{c.barW}}; height: 12px; box-sizing: border-box; border: {{c.barBorder}}; background: {{c.barBg}}; border-radius: 1px"></div>
+                      </td>
+                      <td style="padding: 7px 8px; text-align: right">{{c.diff}}</td>
+                      <td style="padding: 7px 8px; text-align: right">{{c.turns}}</td>
+                    </tr>
+                  </sc-for>
+                </tbody>
+              </table>
+            </div>
+            <ul aria-label="Legend" style="list-style: none; margin: 0; padding: 0; display: flex; gap: 16px; font-size: 12px; color: {{t.muted}}">
+              <li style="display: flex; align-items: center; gap: 6px"><span aria-hidden="true" style="width: 18px; height: 10px; box-sizing: border-box; border: {{legend.measuredBorder}}; background: {{legend.measuredBg}}"></span>Measured, from the log</li>
+              <li style="display: flex; align-items: center; gap: 6px"><span aria-hidden="true" style="width: 18px; height: 10px; box-sizing: border-box; border: {{legend.simBorder}}; background: {{legend.simBg}}"></span>Simulated (dashed)</li>
+            </ul>
+            <p style="margin: 0; color: {{t.muted}}; font-size: 12px; line-height: 1.5">The claude-sonnet-5 simulated row is the self-check: 9.61 against 9.65 measured, every compared request matching. Each figure assumes the same conversation (A1): another model would write other answers.</p>
+          </section>
+        </sc-if>
+
+        <p style="margin: auto 0 0; color: {{t.muted}}; font-size: 12px">{{footnote}}</p>
+      </div>
+    </main>
+  </div>
+  <footer style="height: 22px; flex-shrink: 0; display: flex; align-items: center; justify-content: flex-end; padding: 0 10px; background: {{t.status}}; border-top: 1px solid {{t.border}}; font-size: 12px">
+    <button aria-label="AI Credits today in agent-cost-analyzer: 9.65. Open analyzer." style="height: 22px; padding: 0 6px; border: 0; background: transparent; color: {{t.fg}}; font: inherit; display: flex; align-items: center; gap: 4px"><svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 20V10M10 20V4M16 20v-7M21 20H3"></path></svg>agent-cost-analyzer 9.65 AI Credits today</button>
+  </footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["dark","light","high-contrast"],"default":"dark"},"view":{"editor":"enum","options":["replay","compare"],"default":"replay"},"$preview":{"width":1280,"height":800}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var self = this;
+    var theme = this.props.theme ?? 'dark';
+    var st = this.state || {};
+    var view = st.view ?? (this.props.view ?? 'replay');
+    var THEMES = {
+      dark: { bg: '#1f1f1f', side: '#181818', card: '#202020', head: '#252526', border: '#2b2b2b', fg: '#cccccc', muted: '#9d9d9d', accent: '#0078d4', sel: '#04395e', selOutline: 'none',
+        inputBg: '#313131', inputBorder: '#3c3c3c', status: '#181818', focus: '#0078d4', link: '#4daafc',
+        pressedBg: 'rgba(255,255,255,.10)', pressedBorder: 'transparent',
+        btnBg: '#0078d4', btnFg: '#ffffff', btnBorder: '#0078d4', secBg: '#313131', secFg: '#cccccc', secBorder: '#3c3c3c',
+        simBorder: '#75a8db', simBg: 'rgba(55,148,255,.07)', barMeasured: '#3987e5', barSim: 'rgba(57,135,229,.30)', hc: false },
+      light: { bg: '#ffffff', side: '#f8f8f8', card: '#ffffff', head: '#f3f3f3', border: '#e5e5e5', fg: '#3b3b3b', muted: '#616161', accent: '#005fb8', sel: '#e8e8e8', selOutline: 'none',
+        inputBg: '#ffffff', inputBorder: '#cecece', status: '#f8f8f8', focus: '#005fb8', link: '#005fb8',
+        pressedBg: 'rgba(0,0,0,.08)', pressedBorder: 'transparent',
+        btnBg: '#005fb8', btnFg: '#ffffff', btnBorder: '#005fb8', secBg: '#e5e5e5', secFg: '#3b3b3b', secBorder: '#cecece',
+        simBorder: '#3f7ab8', simBg: 'rgba(0,95,184,.05)', barMeasured: '#2a78d6', barSim: 'rgba(42,120,214,.25)', hc: false },
+      'high-contrast': { bg: '#000000', side: '#000000', card: '#000000', head: '#000000', border: '#6fc3df', fg: '#ffffff', muted: '#ffffff', accent: '#f38518', sel: 'transparent', selOutline: '1px solid #f38518',
+        inputBg: '#000000', inputBorder: '#6fc3df', status: '#000000', focus: '#f38518', link: '#21a6ff',
+        pressedBg: 'transparent', pressedBorder: '#f38518',
+        btnBg: '#000000', btnFg: '#ffffff', btnBorder: '#f38518', secBg: '#000000', secFg: '#ffffff', secBorder: '#6fc3df',
+        simBorder: '#6fc3df', simBg: 'transparent', barMeasured: 'transparent', barSim: 'transparent', hc: true }
+    };
+    var t = THEMES[theme] || THEMES.dark;
+    var compare = view === 'compare';
+    var assumptionsOpen = !!st.assumptionsOpen;
+
+    function node(label, value, level, opts) {
+      opts = opts || {};
+      var sel = !!opts.selected;
+      return { label: label, value: value, level: level, isGroup: level === 1, expanded: level === 1 ? (opts.open ? 'true' : 'false') : '',
+        chevron: opts.open ? 'M6 9l6 6 6-6' : 'M9 6l6 6-6 6', indent: level === 1 ? '8px' : '30px', weight: level === 1 ? '600' : '400',
+        selected: sel ? 'true' : 'false', bg: sel ? t.sel : 'transparent', outline: sel ? t.selOutline : 'none', valueColor: level === 1 ? t.fg : t.muted };
+    }
+    var tree = [
+      node('github.com/raulkivi/agent-cost-analyzer', '212.40', 1, { open: true }),
+      node('Add repository grouping to the… · Oct 21', '9.65', 2, { selected: true }),
+      node('Fix status bar total · Oct 20', '6.18', 2),
+      node('Price book loader tests · Oct 19', '12.94', 2),
+      node('Show 18 more', '', 2),
+      node('github.com/example/portal-web', '96.30', 1),
+      node('github.com/example/billing-api', '41.75', 1),
+      node('No repository · 1 session', '3.20', 1)
+    ];
+
+    var ICON = { hit: 'M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18M8 12.5l2.8 2.8L16 10', partial: 'M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18M12 3v18', miss: 'M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18M9 9l6 6M15 9l-6 6' };
+    var rows = [
+      { n: '1', trigger: 'User prompt', uncached: '38.2k', read: '182.4k', output: '6.1k', cost: '4.12', cum: '4.12',
+        outcome: 'Partial', icon: ICON.partial, simRead: '176.0k', simWrite: '44.1k', simCost: '0.29', simTip: '0.29 AI Credits = $0.0029 at GitHub Copilot’s prices. Partial: the first request is a cold start (A3).', label: 'Turn 1 details' },
+      { n: '2', trigger: 'User prompt', uncached: '21.6k', read: '411.7k', output: '9.8k', cost: '5.53', cum: '9.65',
+        outcome: 'Hit', icon: ICON.hit, simRead: '405.2k', simWrite: '23.6k', simCost: '0.34', simTip: '0.34 AI Credits = $0.0034 at GitHub Copilot’s prices.', label: 'Turn 2 details' }
+    ];
+
+    var MAX = 11.69, W = 250;
+    function bw(v) { return Math.max(2, Math.round(v / MAX * W)) + 'px'; }
+    var measuredBorder = t.hc ? '1px solid ' + t.fg : '1px solid ' + t.barMeasured;
+    var simBorder = '1px dashed ' + t.simBorder;
+    var cmp = [
+      { model: 'claude-sonnet-5', tag: 'session’s model', vendor: 'Anthropic', value: '9.65', kind: 'measured', barW: bw(9.65), barBorder: measuredBorder, barBg: t.barMeasured, diff: '—', turns: '2 of 2', rowBorder: '1px solid ' + t.border },
+      { model: 'claude-sonnet-5', tag: 'self-check', vendor: 'Anthropic', value: '9.61', kind: 'simulated', barW: bw(9.61), barBorder: simBorder, barBg: t.barSim, diff: '−0.04', turns: '2 of 2', rowBorder: '1px dashed ' + t.border },
+      { model: 'claude-haiku-5.5', tag: 'chosen', vendor: 'Anthropic', value: '0.63', kind: 'simulated', barW: bw(0.63), barBorder: simBorder, barBg: t.barSim, diff: '−9.02', turns: '2 of 2', rowBorder: '1px solid ' + t.border },
+      { model: 'gpt-6.1-sol', tag: '', vendor: 'OpenAI', value: '11.69', kind: 'simulated', barW: bw(11.69), barBorder: simBorder, barBg: t.barSim, diff: '+2.04', turns: '2 of 2', rowBorder: '1px solid ' + t.border }
+    ];
+
+    var assumptions = [
+      { id: 'A1', text: 'Same conversation: the other model gets the same prompts and writes as many output and reasoning tokens. It wouldn’t; this is the main caveat.', confidence: 'unknown' },
+      { id: 'A2', text: 'Same token counts: another vendor’s tokenizer would count the text differently; no conversion is published.', confidence: 'unknown' },
+      { id: 'A3', text: 'Cold start: the first request reads nothing from the cache. The self-check leaves it out.', confidence: 'inferred' },
+      { id: 'A4', text: 'Inferred cache writes: this log has no cache writes, so they are what the vendor’s rules say.', confidence: 'inferred' },
+      { id: 'A5', text: 'Same harness: Copilot local’s tools, cache breakpoints and lifetimes are kept; only the model, its caching rules and prices change.', confidence: 'inferred' }
+    ];
+
+    function set(patch) { if (typeof self.setState === 'function') { self.setState(patch); } else { self.state = Object.assign({}, self.state || {}, patch); } }
+    var cmpBtn = compare ? { bg: t.btnBg, fg: t.btnFg, border: t.btnBorder } : { bg: t.secBg, fg: t.secFg, border: t.secBorder };
+
+    return {
+      t: t, tree: tree, rows: rows, cmp: cmp, assumptions: assumptions, cmpBtn: cmpBtn,
+      isReplay: !compare, isCompare: compare, comparePressed: compare ? 'true' : 'false',
+      assumptionsShown: assumptionsOpen, assumptionsOpen: assumptionsOpen ? 'true' : 'false',
+      assumptionsChevron: assumptionsOpen ? 'M6 9l6 6 6-6' : 'M9 6l6 6-6 6',
+      legend: { measuredBorder: measuredBorder, measuredBg: t.barMeasured, simBorder: simBorder, simBg: t.barSim },
+      toggleView: function () { set({ view: compare ? 'replay' : 'compare' }); },
+      toggleAssumptions: function () { set({ assumptionsOpen: !assumptionsOpen }); },
+      footnote: theme === 'high-contrast'
+        ? 'High Contrast: simulated cells and bars are dashed contrastBorder outlines with no fill, measured bars a solid outline; focus and the pressed button use contrastActiveBorder.'
+        : 'Panel 940 px wide: the right column is a drawer (Details), and secondary columns sit behind Columns. Simulated figures always carry the badge and a dashed cell.'
+    };
+  }
+}
+</script>
+</body>
+</html>
