@@ -192,14 +192,14 @@ Google API keys, Stripe secret and restricted keys, npm, GitLab and
 Hugging Face tokens. Add a pattern whenever a new key format turns up,
 erring on masking too much.
 
-**5.5 (Medium, concrete; open, found 2026-11-06) — Pin the code-review
+**5.5 (Medium, concrete; done 2026-11-07) — Pin the code-review
 plugin marketplace.**
-`claude-code-review.yml` passes `plugin_marketplaces:
-'https://github.com/anthropics/claude-code.git'` with no ref, so each run
-executes whatever that repository's default branch holds, in a job that has
-`CLAUDE_CODE_OAUTH_TOKEN` and `id-token: write`. Every other action is
-pinned by SHA. Pin the marketplace to a commit if the action accepts a ref,
-or vendor the plugin, and let Dependabot-style review bump it.
+`claude-code-action` accepts only a `.git` URL or a local path for
+`plugin_marketplaces` (its `install-plugins.ts`), so a URL can't carry a ref.
+`claude-code-review.yml` now checks out `anthropics/claude-code` at a pinned
+commit (`0ed9469…`, its main on 2026-11-07, with `persist-credentials: false`)
+and passes that folder. Dependabot doesn't bump a checkout's `ref`: bump it
+by hand after reading the diff.
 
 **5.6 (Medium, concrete; done 2026-11-07) — Take `includePaths` out
 of the model's reach, and decide what `list_projects` may return.**

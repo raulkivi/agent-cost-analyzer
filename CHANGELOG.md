@@ -19,6 +19,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   authentication (threat-model.md §5.1).
 - Tests now show that traversal-shaped ids on the Learn routes are treated as
   unknown and never read a file (threat-model.md §5.7).
+- The code-review workflow checks out its plugin marketplace at a pinned
+  commit instead of running whatever that repository's default branch holds
+  (threat-model.md §5.5).
 
 ### Fixed
 - Dashboard list-box values meet the 24 px minimum target size, and a chart's
