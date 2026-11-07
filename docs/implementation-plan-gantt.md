@@ -17,6 +17,7 @@ Timeline of [implementation-plan.md](implementation-plan.md) phases. Percentages
     "sectionBkgColor2": "#1c2129",
     "altSectionBkgColor": "#0d1117",
     "gridColor": "#30363d",
+    "excludeBkgColor": "#161b22",
     "todayLineColor": "#f85149",
     "taskBkgColor": "#1f6feb",
     "taskBorderColor": "#58a6ff",
@@ -101,7 +102,7 @@ gantt
 
 ## Open items
 
-- Phase 14: steps 14.0-14.7 built; 14.8's docs written, the owner's review and the §13 exit criterion on real sessions open; the extension guide's replay screenshots open (User Guide's done). See [Phase 14 detail](#phase-14-detail--analyze-session-replay).
+- Phase 14: steps 14.0-14.7 built; 14.8's docs written, the owner's review and the §13 exit criterion on real sessions open; the extension guide's replay screenshots open (User Guide's done). Step table: [analyze-session-replay.md](plans/analyze-session-replay.md) §12.
 - Phase 15: owner's review and exit criterion on real data.
 - Phase 13: owner's eyes-on review of step 13.8.
 - Phase 12: A0b boards approved 2026-11-07 ([mockups/mcp-apps/](plans/mockups/mcp-apps/README.md)); A5 (views workspace), A6 (theme layering), A7 (view models), A9 (U1 session cost view) and A11 (U3 findings view) done; next A10 (U2 spend view) and A13 (packaging) in parallel (A0 host spike done 2026-11-07; results in [mcp-apps-spike.md](plans/mcp-apps-spike.md)). See [Phase 12 detail](#phase-12-detail--mcp-apps).
@@ -131,6 +132,7 @@ Schedule view of the task tables in [mcp-apps.md](plans/mcp-apps.md) §7, §7.1 
     "sectionBkgColor2": "#1c2129",
     "altSectionBkgColor": "#0d1117",
     "gridColor": "#30363d",
+    "excludeBkgColor": "#161b22",
     "todayLineColor": "#f85149",
     "taskBkgColor": "#1f6feb",
     "taskBorderColor": "#58a6ff",
@@ -172,17 +174,17 @@ gantt
 
     section Views
     A9 U1 SessionCostView, medium, Sonnet (100%) :done, a9, after a0b a6 a7 a8, 2d
-    A10 U2 CostRollupView, medium, Sonnet (0%)   :a10, after a9, 2d
+    A10 U2 CostRollupView, medium, Sonnet (0%)   :crit, a10, after a9, 2d
     A11 U3 FindingsView, medium, Sonnet (100%)   :done, a11, after a0b a6 a7 a8, 2d
 
     section Extension and packaging
-    A12 Deep link URI handler, dropped (hosts refuse vscode://) :done, a12, after a0, 1d
+    A12 Deep link URI handler, dropped (hosts refuse vscode links) :done, a12, after a0, 1d
     A13 Packaging, medium, Sonnet (0%)           :a13, after a8, 2d
 
     section Review and release
-    A14 A11y and security review, medium, Opus (0%) :a14, after a9 a10 a11, 2d
-    A15 Docs, medium, Sonnet (0%)                :a15, after a13 a14, 2d
-    A16 Owner manual checks (0%)                 :a16, after a15, 1d
+    A14 A11y and security review, medium, Opus (0%) :crit, a14, after a9 a10 a11, 2d
+    A15 Docs, medium, Sonnet (0%)                :crit, a15, after a13 a14, 2d
+    A16 Owner manual checks (0%)                 :crit, a16, after a15, 1d
 
     section Increment 2 — cost analysis
     A17b Inc. 2 mock-ups and approval, medium, Sonnet + owner (0%) :a17b, after a16, 3d
@@ -215,77 +217,12 @@ gantt
 
 ### Critical path
 
-MVP: A0 → A5 → A6 → A9 → A14 → A15 → A16 (A0b's mock-ups run beside A5-A6 and join at A9; a late approval moves A9). Increment 2: A17b (mock-ups and approval) → A20 → A21 → A23 → A24. Increment 3: A25b (mock-ups and approval) → A27/A28/A29/A30 → A32 → A33.
+MVP: A5 → A6 → A9 → A10 → A14 → A15 → A16 (A0, A0b and A1-A5, A8 are done; A7 runs beside A6 and joins at A9). Increment 2: A17b (mock-ups and approval) → A20 → A21 → A23 → A24. Increment 3: A25b (mock-ups and approval) → A27/A28/A29/A30 → A32 → A33.
 
 ### Parallel lanes
 
-- A1, A2, A4 start together; A3 follows A2.
-- A12 and A0b (mock-ups) run beside A5-A8 once A0 finishes.
-- A10 and A11 run in parallel after A9 and A6-A8.
+- A6 and A7 run in parallel (A5 and A1 done); A13 can start any time (A8 done).
+- A9 and A11 start together once A6 and A7 finish; A10 follows A9.
 - Increment 2: A17, A17b, A18, A19 start together; A20 and A22 run in parallel.
 - Increment 3: A25, A25b and A26 start together; A27-A31 run in parallel.
 
-## Phase 14 detail — Analyze session replay
-
-Schedule view of the step table in [analyze-session-replay.md](plans/analyze-session-replay.md) §12. Design, decisions and risks stay there; this file only sequences the work.
-
-- Status (2026-11-07): steps 14.0-14.7 done (8 of 9, 89%); 14.8's docs written, waiting on the owner's review.
-- Estimates: API/RPC/MCP 2 days, mock-ups 2 days, UI 3 days, docs 2 days. Weekends are excluded.
-- 14.6 needs the owner's approval of the boards before 14.7 starts.
-
-```mermaid
-%%{init: {
-  "theme": "base",
-  "themeVariables": {
-    "darkMode": true,
-    "background": "#0d1117",
-    "textColor": "#e6edf3",
-    "primaryTextColor": "#e6edf3",
-    "lineColor": "#8b949e",
-    "sectionBkgColor": "#161b22",
-    "sectionBkgColor2": "#1c2129",
-    "altSectionBkgColor": "#0d1117",
-    "gridColor": "#30363d",
-    "todayLineColor": "#f85149",
-    "taskBkgColor": "#1f6feb",
-    "taskBorderColor": "#58a6ff",
-    "taskTextColor": "#ffffff",
-    "taskTextLightColor": "#ffffff",
-    "taskTextDarkColor": "#ffffff",
-    "taskTextOutsideColor": "#e6edf3",
-    "doneTaskBkgColor": "#238636",
-    "doneTaskBorderColor": "#3fb950",
-    "activeTaskBkgColor": "#9e6a03",
-    "activeTaskBorderColor": "#d29922",
-    "critBkgColor": "#da3633",
-    "critBorderColor": "#f85149"
-  }
-}}%%
-gantt
-    title Phase 14 — Analyze session replay
-    dateFormat YYYY-MM-DD
-    axisFormat %m-%d
-    excludes weekends
-
-    section Done
-    14.0 Decisions D1-D8, threat model (100%)       :done, s0, 2026-11-07, 1d
-    14.1 RequestTrace, SessionReplay schemas (100%) :done, s1, 2026-11-07, 1d
-    14.2 RequestTraceSource (100%)                  :done, s2, 2026-11-07, 1d
-    14.3 RequestTraceScripter (100%)                :done, s3, 2026-11-07, 1d
-    14.4 SessionReplayService, self-check (100%)    :done, s4, 2026-11-07, 1d
-    14.5 API routes, RPC, MCP tools (100%)          :done, s5, 2026-11-07, 1d
-    14.6 Mock-ups, owner approval (100%)            :done, s6, 2026-11-07, 1d
-
-    14.7 UI in app and extension (100%)             :done, s7, 2026-11-07, 1d
-
-    section Remaining
-    14.8 Docs written, owner review (50%)           :active, crit, s8, after s7, 1d
-```
-
-### Critical path
-
-14.8 (everything before it done).
-
-### Exit criteria per open step
-
-- 14.8: owner reviews.
