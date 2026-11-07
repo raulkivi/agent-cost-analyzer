@@ -17,6 +17,7 @@ import {
   writeCopilotCliAgentHostStores,
 } from "../test-support/copilot-cli-fixtures.js";
 import { InMemoryAppSettingsStore } from "../test-support/in-memory-app-settings-store.js";
+import { FIXTURE_VENDOR_PROFILES_DIR } from "../test-support/vendor-profiles-dir.js";
 import { createCopilotMcpServices } from "./create-copilot-mcp-services.js";
 import { createExtensionApiService } from "./create-extension-api-service.js";
 import { createStandaloneApiService } from "./create-standalone-api-service.js";
@@ -64,7 +65,7 @@ describe("Agent Host sessions with the Copilot CLI event log (step 10.14)", () =
       claudeCodeProjectsDirPath: null,
       appVersion: "0.1.0-test",
     });
-    const server = createMcpServer(createCopilotMcpServices({ ...paths, appVersion: "0.1.0-test" }));
+    const server = createMcpServer(createCopilotMcpServices({ ...paths, appVersion: "0.1.0-test", vendorProfilesDir: FIXTURE_VENDOR_PROFILES_DIR }));
     const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
     mcp = new Client({ name: "test-client", version: "1.0.0" });
     await Promise.all([server.connect(serverTransport), mcp.connect(clientTransport)]);

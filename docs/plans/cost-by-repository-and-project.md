@@ -1,6 +1,6 @@
 # Phase 15: Cost by repository and project, price history, billing and estimates
 
-Status: **In progress**: steps 15.0–15.9 are done (see §14.1). The owner accepted
+Status: **In progress**: steps 15.0–15.13 are done (see §14.1). The owner accepted
 every recommended decision on 2026-11-05 ([§13](#13-decisions)). The UI
 design (§11) was then revised against the project's existing design and UX
 guidance. This document is the design; Phase 15 in
@@ -298,7 +298,9 @@ Price changes come from two places, and the UI keeps them apart:
    the markers on the time charts (§11).
 2. **Observed** (Copilot only): each month, compare the billed AI Credits
    per model with the priced figure for the same turns. If the ratio moves
-   by more than a threshold and stays there, raise an `InsightFinding`
+   by more than a threshold and stays there (D11: more than 5%, the same
+   way, in 2 ISO weeks in a row with at least 20 compared turns each),
+   raise an `InsightFinding`
    ("Observed: Claude Sonnet 5.5 billed 12% above the price book since
    2026-10-14"), `confidence: "inferred"`. It reuses the Phase 9.11
    finding pipeline. It is a prompt to check the price book, not a price
@@ -400,8 +402,23 @@ For two periods A and B, per model:
 
 The two add up to the cost change exactly, per token type, and are summed
 over models. A **mix effect** (moving work to a different model) is shown
-as its own line by computing usage at the model level. This answers "costs
+as its own line by computing usage at the model level (D12): per token
+type, the **volume effect** is (all models' tokens in B − in A) × A's
+average price for that type, and the **mix effect** is the sum of the
+per-model usage effects minus the volume effect. Usage (volume), price and
+mix then add up exactly to the change. This answers "costs
 went up 30%: was it the price change on 1 October or more work?"
+
+Effects need a unit price, so the variance is on the **priced** basis, as
+of use: each priced turn carries its cost per token type (uncached input,
+cache read, cache write, output: the types the pricer charges), and a
+cell's unit price is its cost ÷ its tokens. A model with no tokens of a
+type in one period takes the other period's unit price, so a new or
+dropped model is all usage; likewise a token type with no tokens in A
+takes B's average price for the volume effect. Totals are per currency (AI Credits for
+Copilot, USD for the APIs), or all in USD at 1 AI Credit = $0.01. Turns
+without a priced figure are counted, with the cost the view's basis gives
+them, as **not explained**, never as 0 (constraint 6).
 
 ### 8.5 Billing statements (G8)
 
@@ -417,7 +434,11 @@ went up 30%: was it the price change on 1 October or more work?"
   and the list of session ids included.
 
 **Freezing**: "Issue statement" writes the statement as JSON under
-`~/.agent-cost-analyzer/statements/<project>/<period>.json`. A frozen
+`statements/<project>/<period>.json` in the app's settings folder (beside
+`projects.json`, so `resolveAppSettingsDir`'s override applies; step
+15.11). Months are calendar months in the statement's time zone (D6): the
+machine's, as the server reports it, written into the statement. Only an
+ended period can be issued (D15). A frozen
 statement is never recomputed. Re-running the period later shows a
 **diff against the frozen copy** (late logs, a price-book fix) instead of
 silently changing it. Exports: CSV (lines), JSON (full), Markdown (for a
@@ -432,7 +453,14 @@ From a project's history (or a set of similar projects):
 - **Unit costs**: median and 90th-percentile cost per session.
 - **Forecast**: planned active days (or sessions) × the unit cost, given as
   a **range** (p50 to p90), never a single number, priced **at today's
-  prices** so a past price cut does not inflate the estimate.
+  prices** so a past price cut does not inflate the estimate. D16: p50 =
+  median cost per active day × days, p90 = the 90th percentile × days
+  (percentiles by linear interpolation). An active day is a UTC calendar
+  day with any of the project's turns, as on the Dashboard; it counts only
+  when every turn on it has a priced figure, else it is left out and
+  counted in the coverage (D18). Amounts are in USD, AI Credits converted
+  at 1 AI Credit = $0.01 (D2), and shown in the picked unit. With fewer
+  than 5 known active days (or sessions) there is no range (D18).
 - **What if another model**: hands off to Phase 14 (replay on another
   vendor) when it exists; until then, a token-for-token reprice at another
   model's price, labelled **Simulated, same tokens assumed**.
@@ -509,12 +537,13 @@ All read endpoints are `GET` and follow §8's existing conventions
 | `GET /api/projects`, `PUT /api/projects` | the project file; `PUT` validates and writes it |
 | `GET /api/cost/timeseries?groupBy=repository\|project\|vendor\|model&bucket=day\|week\|month&ids=…&pricing=as-of-use\|today&basis=preferred\|billed\|reported\|priced&currency=native\|usd&since&until&provider&limit` | `CostSeries`: series with coverage and price-change markers (built in 15.7; `ids` needs `groupBy`, up to 20; dates are inclusive ISO dates; project cost is `groupBy=project`, see §14.1) |
 | `GET /api/cost/compare?groupBy=repository\|project&ids=…&since&until&comparePeriod=previous\|last-year&basis&pricing&currency&provider&limit` | `CostComparison`: the §8.2 table (built in 15.7; 2 to 20 ids, `since` and `until` required) |
-| `GET /api/cost/variance?groupBy=…&id=…&periodA=…&periodB=…` | usage, price and mix effects |
+| `GET /api/cost/variance?groupBy=repository\|project&id=…&periodA=…&periodB=…&currency&provider&limit` | `CostVariance`: usage, price and mix effects per currency, model and token type (built in 15.10; a period is `YYYY-MM` or `YYYY-MM-DD..YYYY-MM-DD`; priced basis, as of use) |
+| `GET /api/cost/project?projectId=…&since&until&bucket&basis&pricing&currency&provider&limit&topSessions` | `ProjectCost`, as MCP `get_project_cost` (added in 15.10 for the Project tab; 404 for an unknown project) |
 | `GET /api/price-book?channel&model` | price versions with sources |
-| `GET /api/price-book/changes?since` | documented changes, and observed-change findings |
-| `GET /api/statements?project&period` | a draft statement, or the frozen one with a diff |
-| `POST /api/statements/:project/:period/issue` | freezes the draft |
-| `GET /api/estimates?project&days\|sessions` | forecast range and the inputs used |
+| `GET /api/price-book/changes?since&until&channel&model&kind=documented\|observed&provider&limit` | `PriceChangeList`: documented changes and observed ones, oldest first (built in 15.10; observed changes are also `price-change` findings in `GET /api/insights`) |
+| `GET /api/statements?projectId&period&provider&limit` | `StatementAnswer` (built in 15.11): the frozen statement with the re-run and its exact diff, else the draft; whether it can be issued (D15) and why not; the project's issued periods. 404 unknown project, 400 bad period |
+| `POST /api/statements/:projectId/:period/issue` | Freezes the draft (built in 15.11). JSON only (415 otherwise, so no cross-origin form can issue); 409 for an open or already issued period |
+| `GET /api/estimates?projectId\|repository&activeDays\|sessions&historyWeeks=4\|12&provider` | `CostEstimate` (built in 15.12): a p50–p90 range at today's prices in USD, the unit costs and the history window used, labelled `"estimate"`; under 5 known units no range, the reason instead (D18). One of `projectId`/`repository` and one of `activeDays`/`sessions`; `historyWeeks` defaults to 12. 404 unknown project, 400 bad query |
 
 The two write endpoints are the app's first non-log writes. They need the
 existing local-only binding and the CSRF/origin checks from the
@@ -553,8 +582,8 @@ Credit = $0.01 and says so in `conversion`.
 
 | Tool | Step | Input | Returns (`outputSchema`) |
 |---|---|---|---|
-| `list_repositories` | 15.4 | `provider?`, `since?`, `until?`, `projectId?`, `includeUnattributed?` (default true), `includePaths?` (default false) | `RepositoryList`: each repository's `repositoryKey`, project, session and turn counts, first and last use, cost with coverage; Unattributed buckets with their reasons |
-| `list_projects` | 15.4 | none | `ProjectList`: each project's id, name, client, billing code, members (repository key, path and branch scopes); validation problems, if any |
+| `list_repositories` | 15.4 | `provider?`, `since?`, `until?`, `projectId?`, `includeUnattributed?` (default true); no `includePaths` since 2026-11-07 (threat-model.md §5.6) | `RepositoryList`: each repository's `repositoryKey`, project, session and turn counts, first and last use, cost with coverage; Unattributed buckets with their reasons |
+| `list_projects` | 15.4 | none | `ProjectList`: each project's id, name, members (client and billing code only with the server's `--project-billing-details` opt-in, threat-model.md §5.6) (repository key, path and branch scopes); validation problems, if any |
 | `get_price_book` | 15.5 | `channel?`, `model?`, `at?` (ISO date: the version in force then) | `PriceBookListing` (an MCP `outputSchema` must be an object): `channels`, `versions` with their `origin` (`bundled` or `user`), `sources` with `checkedAt`, `gaps`, `unknown` with reasons, and `problems` |
 | `get_repository_cost` | 15.7 | `repository` (key from `list_repositories`), `since?`, `until?`, `bucket?` (`day`/`week`/`month`, default `month`), `basis?` (`preferred`/`billed`/`reported`/`priced`), `pricing?` (`as-of-use`/`today`), `currency?`, `provider?`, `limit?` (sessions per provider, as in `get_cost_rollup`) | `CostSeries`: totals with coverage by basis; one point per bucket with coverage; breakdown by vendor and model; price-change markers in the range. As built it is exactly `GET /api/cost/timeseries?groupBy=repository&ids=<repository>` |
 | `get_project_cost` | 15.7 | `projectId`, the same options as above, `topSessions?` (default 10, max 50) | `ProjectCost`: as `CostSeries`, plus a breakdown by repository member, by vendor → model and by token type, and the most expensive sessions |
@@ -639,12 +668,15 @@ model ([mcp-tools-v2.md §6](mcp-tools-v2.md#6-security)). So:
 
 - Repositories are identified by their **normalised key**
   (`github.com/org/repo`), never by local folder paths. `local:` and
-  `path:` keys are returned as the folder's name only, unless
-  `includePaths: true` is passed to `list_repositories`.
+  `path:` keys are returned as the folder's name only. (Until 2026-11-07,
+  `list_repositories` took `includePaths: true`; it was removed because a
+  logged session could steer the model to ask for paths, threat-model.md
+  §5.6. Paths stay in `GET /api/repositories`.)
 - Remote URLs have credentials stripped **before** they reach the cube
   (§4.2), so no tool can return one; a test checks every tool's output.
-- Client names and billing codes are returned only by `list_projects` and
-  `get_statement`, the two tools that need them.
+- Client names and billing codes are returned only by `get_statement`,
+  and by `list_projects` when the user launches the server with
+  `--project-billing-details` (threat-model.md §5.6, 2026-11-07).
 - No tool writes. Issuing a statement and editing projects stay UI
   actions behind the CSRF/origin checks (§10).
 - `estimate_cost` always returns a range labelled as an estimate, and its
@@ -660,8 +692,9 @@ per new group), each written in the step that adds the tool:
 - for the same fixture, each MCP tool and its HTTP endpoint return the
   same figures;
 - unknown costs come back as `null` with a reason, never `0`;
-- no output contains a credential or, without `includePaths`, a local
-  path (property test over generated remote URLs and folders);
+- no output contains a credential or a local path, even when an old
+  `includePaths` argument is passed (property test over generated remote
+  URLs and folders);
 - the extension's server lists no `billing` tools.
 
 Exit criterion, checked in step 15.13 over stdio on a fixture with
@@ -1070,6 +1103,15 @@ column is binding; the other options are kept for the record.
 | D8 | How far back must price history go? | from first log on this machine; 12 months; current only | **From 2026-10-01** (revised by the owner on 2026-11-05; first recorded as 2026-01-01), sourced, for GitHub Copilot and the Anthropic, OpenAI and Google APIs; earlier turns price as `unknown` unless the user adds versions |
 | D9 | Should observed price changes (§6.4) raise findings? | yes; no | **Yes**, as `inferred` findings on the Dashboard |
 | D10 | Estimates in scope now, or after Phase 14? | now (run rate, unit cost); after Phase 14 | **Now**, without cross-model replay; Phase 14 adds "on another model" |
+| D11 | When does a billed-vs-priced gap become an observed price change (§6.4)? (decided 2026-11-06) | 5% for 2 weeks; 10% for 2 weeks; 5% for 2 months | **5% for 2 weeks**: billed AI Credits differ from priced by more than 5%, in the same direction, in 2 ISO weeks in a row, each week with at least 20 turns that have both figures |
+| D12 | How is the mix effect (§8.4) computed? (decided 2026-11-06) | volume vs. mix split; mix = new or dropped models | **Volume vs. mix split**: usage = change in total tokens × period A's average price per token (per token type, over all models); mix = the per-model usage effects minus that; price as in §8.4. The three add up exactly to the change |
+| D13 | Where are a project's markup and fixed lines (seat fees) set? (decided 2026-11-06) | per project; per statement; not yet | **Per project**, in `projects.json` (`rates.markupPercent`, `rates.fixedLines`), edited in the Projects editor; every statement for the project uses them and freezes them |
+| D14 | Where is D2's optional fixed-rate user currency set? (decided 2026-11-06) | per project; per statement; not yet | **Per project** (`rates.currency`: a code and a fixed rate per USD); the statement states the rate and keeps AI Credits and USD beside it |
+| D15 | Can a period that hasn't ended be issued? (decided 2026-11-06) | only ended periods; any time with a warning | **Only ended periods**: a draft any time; *Issue statement* is disabled, with the reason, until the period's last day has passed in the statement's time zone |
+| D16 | How is an estimate's p50–p90 range worked out? (decided 2026-11-06) | unit cost × days; resampled totals | **Unit cost × days**: the median and 90th-percentile cost per active day (or per session) in the history window, each × the planned days (or sessions), as on board 4 |
+| D17 | Is "what if another model" in step 15.12? (decided 2026-11-06) | leave for Phase 14; a same-tokens reprice now | **Left for Phase 14**: the panel says it comes with replay; 15.12 estimates the project's own models only |
+| D18 | What if the history is too thin? (decided 2026-11-06) | refuse under 5 days; always estimate with a warning | **No range under 5 active days with a known cost**: the answer gives the reason and the day count instead; days with any unknown cost are left out and counted in the coverage |
+| D19 | Where do the extension's MCP project tools get projects from? (decided 2026-11-07) | none yet; read the standalone app's file; leave the project tools out | **None yet**: the extension's server lists the planned 17 tools; `list_projects` returns no projects with a reason (projects are edited in the standalone app), every turn is in No project, and the repository, pricing and cost tools work over Copilot sessions, as the extension's Dashboard does |
 
 ## 14. Implementation steps (TDD, each with an exit criterion)
 
@@ -1089,12 +1131,12 @@ No UI code (15.9 onwards) starts before the mock-ups in 15.8 are approved.
 | 15.7 | **Time series, compare, project breakdown** + their endpoints; MCP: `get_repository_cost`, `get_project_cost`, `compare_costs`, the `review_costs` project step | Golden outputs for a fixture dataset across three providers and two projects; the step's MCP tools pass the §10.1.6 tests Done 2026-11-06, see §14.1 |
 | 15.8 | **Mock-ups and palette** (§11.7, §11.8): the seven boards on a Design canvas with versioned copies (drawn and approved 2026-11-05); the eight categorical tokens in `theme.css` and `theme-vscode.css` (done 2026-11-05, see §14.1) | Owner approves the boards and their comments are resolved; the dataviz validator passes in light and dark; `theme-contrast.test.ts` covers the new tokens in Dark Modern, Light Modern and High Contrast Done 2026-11-05, see §14.1 |
 | 15.9 | **Dashboard tabs: Cost over time and Compare**, with price-change markers (§11.1–§11.3) | Component tests incl. "View as table" and unknown-as-gap; `vitest-axe` clean in three themes; keyboard tests; the UI check (`npm run test:ui`) passes for the new tabs at 600–1600 px in three themes; screenshots of the standalone app at desktop and 360 px widths; the §12.4.1 Playwright harness and fixture home are in place, and scenarios S2 and S3 pass in the `web-e2e` job Done 2026-11-06, see §14.1 |
-| 15.10 | **Price changes and variance**: `PriceChangeDetector`, observed-change finding, `VarianceAnalyzer`, Project tab (§11.4); MCP: `explain_cost_change` tool and prompt, `get_price_changes`, `list_findings` kind `price-change` | Effects add up exactly (property test); markers match price-book boundaries; same UI checks as 15.9; the step's MCP tools pass the §10.1.6 tests; scenario S4 passes |
-| 15.11 | **Statements**: builder, freeze, diff, CSV/JSON/Markdown export, Billing tab, Projects editor (§11.5); MCP: `get_statement`, `prepare_statement` prompt | Golden statements; a frozen statement survives a price-book update unchanged and the diff is exact; every project can be assigned by keyboard alone; same UI checks as 15.9; the step's MCP tools pass the §10.1.6 tests; scenarios S1, S5, S6 and S8 pass |
-| 15.12 | **Estimates** + Estimate panel; MCP: `estimate_cost`, `estimate_work` prompt | Forecast range tests on fixture histories; shown as a labelled range, never a single number; the step's MCP tools pass the §10.1.6 tests; scenario S7 passes |
-| 15.13 | **MCP, cross-cutting work** (§10.1.4): server instructions for both products, the `toolGroups` option and the extension's tool set, the security tests of §10.1.5 | The §10.1.6 exit criterion over stdio; scenario S10 passes |
-| 15.14 | **VS Code extension** (§11.9): group by repository, status bar per workspace repository, the two Dashboard tabs | Extension and manifest tests (category, codicons, l10n keys); UI check passes; manual check list updated; scenario S9 passes in `extension-ui` |
-| 15.15 | **Docs**: architecture.md (domain, data flow, API), UserGuide, vscode-extension-guide, vision non-goals, README index | Docs reviewed by the owner |
+| 15.10 | **Price changes and variance**: `PriceChangeDetector`, observed-change finding, `VarianceAnalyzer`, Project tab (§11.4); MCP: `explain_cost_change` tool and prompt, `get_price_changes`, `list_findings` kind `price-change` | Effects add up exactly (property test); markers match price-book boundaries; same UI checks as 15.9; the step's MCP tools pass the §10.1.6 tests; scenario S4 passes Done 2026-11-06, see §14.1 |
+| 15.11 | **Statements**: builder, freeze, diff, CSV/JSON/Markdown export, Billing tab, Projects editor (§11.5); MCP: `get_statement`, `prepare_statement` prompt | Golden statements; a frozen statement survives a price-book update unchanged and the diff is exact; every project can be assigned by keyboard alone; same UI checks as 15.9; the step's MCP tools pass the §10.1.6 tests; scenarios S1, S5, S6 and S8 pass Done 2026-11-06, see §14.1 |
+| 15.12 | **Estimates** + Estimate panel; MCP: `estimate_cost`, `estimate_work` prompt | Forecast range tests on fixture histories; shown as a labelled range, never a single number; the step's MCP tools pass the §10.1.6 tests; scenario S7 passes Done 2026-11-06, see §14.1 |
+| 15.13 | **MCP, cross-cutting work** (§10.1.4): server instructions for both products, the `toolGroups` option and the extension's tool set, the security tests of §10.1.5 | The §10.1.6 exit criterion over stdio; scenario S10 passes Done 2026-11-07, see §14.1 |
+| 15.14 | **VS Code extension** (§11.9): group by repository, status bar per workspace repository, the two Dashboard tabs | Extension and manifest tests (category, codicons, l10n keys); UI check passes; manual check list updated; scenario S9 passes in `extension-ui` Done 2026-11-07 (S9 written for `extension-ui`, see §14.1) |
+| 15.15 | **Docs**: architecture.md (domain, data flow, API), UserGuide, vscode-extension-guide, vision non-goals, README index | Docs reviewed by the owner. Written 2026-11-07, the owner's review open, see §14.1 |
 
 ### 14.1 Step status notes
 
@@ -1730,6 +1772,369 @@ stacked columns inside one project (§11.2, left to the Project tab); a
 custom date range; Export CSV; the extension's own cost data and tabs
 (15.14); the axe check in a dark theme in the standalone app, which has
 none; observed price changes (15.10).
+
+**15.10 (done 2026-11-06).** Price changes, price versus usage, and the
+Dashboard's *Project* tab. The owner's decisions D11 (observed-change
+threshold) and D12 (mix effect) are in §13.
+
+- **Domain.** `observedPriceChangeSchema` (`kind: "observed"`, the first
+  week's Monday, channel, the model as logged, `direction` above/below,
+  signed `percent` over the run, the `weeks` with billed and priced AI
+  Credits and their ratio, the price versions, `confidence: "inferred"`)
+  and `priceChangeListSchema` (documented and observed side by side);
+  `costVarianceSchema` per currency, model and token type, whose refinement
+  refuses effects that don't add up to the change; finding kind
+  `price-change`; `CostSeries.observedChanges`. A priced `CostFigure`
+  carries `byTokenType` (uncached input, cache read, cache write, output),
+  from `priceTurnParts`, which shares its rates with Learn's `priceTurn`
+  (Learn's arithmetic is unchanged; the figure's amount still comes from
+  `priceTurn`, so earlier figures don't move).
+- **`PriceChangeDetector`** (`services/pricing/`): documented changes are
+  step 15.7's `documentedPriceChanges`; observed ones group Copilot turns
+  with both figures in AI Credits by channel, model and ISO week, and a run
+  of weeks in a row more than 5% away from 1 the same way, each with 20+
+  such turns, is one change (D11). `PriceChangeFindingDetector` raises each
+  as a `medium`, `inferred` finding (`pricing.observed-change`), linked to
+  the first session of its first week, with the weeks as evidence; it
+  raises nothing on a dataset priced at today's prices (detectors now
+  receive the pricing mode). A billing gap is the model's, so cost series
+  find observed changes over every turn of the cube and list those for the
+  models the selection used.
+- **`VarianceAnalyzer`** (`services/cost-analysis/variance-analyzer.ts`): a
+  pure function over the cube, priced as of use, per currency (native, or
+  all USD). Cells are model × token type with tokens and cost per period;
+  unit price = cost ÷ tokens; a cell (or a token type, for the volume
+  effect) with no tokens in one period takes the other period's price, so
+  a new or dropped model is usage. Mix is the change after volume and
+  price, so the three add up by construction; a fast-check property test
+  checks it per currency, model and token type. Turns without a priced
+  figure (or its split) are `notExplained`, with reasons.
+- **API**: `GET /api/cost/variance`, `GET /api/cost/project` (the Project
+  tab needs `get_project_cost`'s breakdown over HTTP) and
+  `GET /api/price-book/changes`, parsed by the same schemas as MCP. A
+  period is `YYYY-MM` or `YYYY-MM-DD..YYYY-MM-DD` (HTTP) or
+  `{since, until}` (MCP). The RPC allow-list and the extension's dispatcher
+  carry `getProjectCost` and `getCostVariance` (404 there until 15.14).
+- **MCP**: `explain_cost_change` (with the cost analyses),
+  `get_price_changes` (in the pricing group, with the cost analyses: its
+  observed changes read sessions), the `explain_cost_change` prompt
+  (registered only with the cost analyses), and `list_findings` names kind
+  `price-change`. Each tool is checked against its HTTP twin.
+- **Project tab** (`ProjectTab`, board 3): inside the one project the
+  Project list box selects (else it says what to select); cost by vendor
+  (`HorizontalBars`, click a vendor), the vendor's models and its tokens by
+  type as a separate chart; *Why cost changed* with *From*/*To* months
+  (default: the range's first and last month) as a `Waterfall` (new chart:
+  totals on the axis, effects floating between levels with dashed
+  connectors, the diverging pair plus a written sign, a value that rounds
+  to zero drawn as no change, "View as table"), what isn't explained, and
+  the documented changes between the months; *Reconciliation*: observed
+  price changes as findings (severity as text) and billed minus priced per
+  model and month from the dataset's Copilot turns. Amounts are asked in
+  USD and shown in the picked unit.
+- **Observed markers**: Cost over time draws them as dashed hairlines with
+  a tag ("Observed · gpt-5.5 +12%"), a description that says inferred, a
+  tooltip with the weeks, and a table row of their own.
+- **Checks**: S4 passes (with S2 and S3, three runs in a row; the `web-e2e`
+  job runs every spec). The UI check gains two Project-tab scenarios: all
+  24 combinations pass in Dark Modern, Light Modern and High Contrast at
+  600–1600 px, and the whole check passes (309 checks). Screenshots: `docs/images/guide-dashboard-project.png` and
+  `guide-dashboard-project-360.png`.
+- **Found and fixed by the browser checks**: the selected bar's value was
+  4.4:1 in Light Modern (it now takes the full text colour); two stacked
+  charts' table buttons were too close (axe target-size; they now have
+  labels and space); a token type with nothing in period A put new work
+  under mix (S4's fixture, where nothing before October is priced; now
+  usage); a float residue showed as a red "+0.00".
+
+Departures from the mock-ups: the vendor bars are blue, not a colour per
+vendor; the token-type chart shows tokens, not cost (the variance has the
+cost per type, per month); the reconciliation's *Open price book* and
+*Show turns* buttons aren't built; the tab follows only the Project and one
+Provider selection and names the rest as not applied; the waterfall asks
+for USD (one chart) and shows it in the picked unit.
+
+TDD exceptions: the query-parameter schemas, the project model and the
+observed findings' pricing-mode test were written with or after their code
+in one pass; the API route was renamed to `/api/price-book/changes` after
+it was built (§10 names it so); S4 was written after the tab it drives;
+the four fixes above were made after the browser checks found them, then
+tested; the UI-check scenarios and screenshot script have no tests of their
+own. Not yet: clicking a vendor in Cost over time; Export CSV; observed
+changes in the extension (15.14).
+
+**15.11 (done 2026-11-06).** Statements, the Billing tab and the Projects
+editor. The owner's decisions D13 (markup and fixed lines per project), D14
+(the user currency per project) and D15 (only ended periods are issued)
+are in §13.
+
+- **Domain.** `Statement` (`statement.ts`): lines per basis, currency,
+  channel, model and price version with tokens by type and unit prices
+  (priced lines), unknown-cost lines by reason (never summed), excluded
+  lines (subscription use, D4), markup per currency, fixed lines, totals
+  per currency (the schema refuses a total that isn't lines + markup +
+  fixed), the project's own currency at its fixed rate, coverage and
+  provenance (app version, price-book hash, projects-file hash, session
+  ids and titles). `diffStatements` gives the exact difference per line,
+  per total, in the sessions, unknown turns and inputs. Periods are a
+  month or a range in a time zone (`parseStatementPeriod`, `localDate`,
+  `periodHasEnded`). `exportStatement` writes CSV, JSON and Markdown
+  (shared by the server and the export dialog's preview): no message text,
+  titles optional, a leading `= + - @` in a CSV field neutralised. Project
+  `rates` gain `fixedLines` and `currency`; Insights turn rows and cube rows
+  carry the turn's instant `at`.
+- **Server** (`services/billing/`): `buildStatement`, pure over the cost
+  cube (the preferred basis per turn, turns placed by their day in the
+  statement's time zone, D6); `StatementService` (the draft on demand, the
+  frozen copy with the re-run and its diff, issuing only an ended period);
+  `FileStatementStore` (`data-sources/statements/`) writes
+  `statements/<project>/<period>.json` in the settings folder exclusively
+  (never overwritten, 0600) after checking the id and key patterns.
+  The time zone is the machine's (`Intl`), overridable by
+  `createApp({ timeZone })`; the usage-scenario suite uses UTC.
+- **API**: `GET /api/statements`, `POST .../issue` (JSON only, 415
+  otherwise; `ConflictError` 409 joins the API errors and the RPC
+  statuses). RPC: `getStatement`, `issueStatement`, and for the editor
+  `getProjects`, `saveProjects`, `getRepositoryList` (all 404 in the
+  extension until 15.14). Threat-model rows for the write, the read and the
+  RPC write methods.
+- **MCP**: `get_statement` (`mcp/billing-tools.ts`, read-only, never
+  issues; `includeLines`) and the `prepare_statement` prompt, wired into
+  the stdio server over the same statements folder.
+- **Billing tab** (`components/billing/BillingTab.tsx`, board 4): project
+  and month (the last ended month by default), exact dates, lines, unknown
+  cost listed, totals, the own currency, coverage, provenance; *Issue
+  statement* behind a confirmation dialog (focus trapped, Escape cancels),
+  shown only when the period can be issued, else its reason; *Export…*
+  (CSV, JSON or Markdown, a preview, titles optional, Copy or Save);
+  *Frozen* and, when the re-run differs, *Differs from issued* with the
+  exact diff; the issued periods. With no projects: the "no projects"
+  empty state with *Create project*.
+- **Projects editor** (`components/projects/ProjectsEditor.tsx`, board 5),
+  opened from Billing in place of the Dashboard: repositories without a
+  project first, each assigned with a select (keyboard alone, no drag);
+  projects with name, client, billing code, markup, fixed lines, own
+  currency, subscription use and members (path and branch scopes); capture
+  rules with the Unattributed sessions explained; problems inline and in a
+  summary (the domain's schema and cross-entry checks together), Save
+  disabled while any remain; a new project's id follows its name until
+  saved. Back reloads the dataset.
+- **Checks**: golden statements and exports over the cost fixture
+  (`services/billing/__golden__/`); a frozen statement unchanged after a
+  price-book change with the exact diff (service test and S5). S1, S5, S6
+  and S8 pass, with S2–S4, three runs in a row; the fixture can start with
+  no projects file. The UI check gains Billing, its export dialog and the
+  editor (36 combinations), and the whole check passes (345 checks, none
+  failing). Screenshots: `guide-dashboard-billing.png`,
+  `guide-dashboard-billing-360.png`, `guide-projects-editor.png`.
+- **Found and fixed by the checks**: the excluded-line reason doubled its
+  punctuation in Markdown; a store test pulled domain sources into the
+  server's program (typecheck); muted text in the export dialog was below
+  4.5:1 (axe); a local repository showed its full path in the editor.
+
+Departures from the mock-ups: the user currency is set per project in the
+editor (D14), not on the Billing tab; the period select offers the last 12
+months, no custom range yet; the Estimate panel is 15.12's; the editor is
+opened from Billing (*Edit projects*, *Create project*) rather than from a
+settings link, has no Import/Export of the file, and no drag and drop;
+aliases are not edited there.
+
+TDD exceptions: the file store, the query wrappers and the web API client
+were written with their tests in one pass; S1, S5, S6 and S8 were written
+after the UI they drive; the fixes above were made after the checks found
+them, then tested; the UI-check scenarios, the harness's answers and the
+screenshot script have no tests of their own. Not yet: custom statement
+ranges in the UI (the API takes them); Import/Export of the projects file;
+the extension's statements (15.14).
+
+**15.12 (done 2026-11-06).** Estimates and the Billing tab's estimate
+panel. The owner's decisions D16 (unit cost × planned units), D17 (another
+model waits for Phase 14) and D18 (no range under 5 known units) are in §13.
+
+- **Domain.** `CostEstimate` (`cost-estimate.ts`): the target, `pricing:
+  "today"`, USD, the window (4 or 12 weeks), the unit (active days or
+  sessions) and planned count, the history (units, known units, turns,
+  total), the run rate, and either the unit costs and the range or the
+  refusal (the schema refuses one without the other, and a p50 above the
+  p90). `percentile` interpolates linearly; `MIN_ESTIMATE_UNITS` is 5.
+- **Server** (`services/billing/`): `buildCostEstimate`, pure over the
+  cost cube at today's prices: units are UTC days (or sessions) in the
+  trailing window ending today; a unit counts only when every turn in it is
+  priced, the others are counted and named in the refusal or the caption;
+  range = the median and p90 unit cost × the planned units (D16).
+  `EstimateService` parses the query (`estimateRequestSchema`), names the
+  project or repository and asks the cube for the window.
+- **API**: `GET /api/estimates` (404 unknown project, 400 bad query). RPC:
+  `getCostEstimate` (404 in the extension until 15.14). **MCP**:
+  `estimate_cost` (`mcp/billing-tools.ts`, "never a single number") and
+  the `estimate_work` prompt.
+- **Estimate panel** (`components/billing/EstimatePanel.tsx`, board 4), in
+  the Billing tab's side column under the issued statements: planned
+  active days (20 by default) and a 4- or 12-week history (12 by default);
+  the range as an interval with both ends written below it (p50 and p90 in
+  AI Credits, USD beside them), the inputs it used, and "Estimate · at
+  today's prices"; the reason instead when the history is thin; a note
+  that another model comes with Phase 14 (D17).
+- **Checks**: estimate builder and service tests with the D16 numbers,
+  golden estimates (`services/billing/__golden__/estimates.json`), API and
+  MCP tests. S7 passes with S1–S6 and S8 over a fixture project with six
+  priced pi days (Mobile app), three runs in a row; S3's table reads now
+  retry (it failed once in a full run and not in 32 reruns, so the cause
+  wasn't found; a one-shot read of a table that may still be rendering was
+  the only race in it). The UI check gains `dashboard-billing-estimate`
+  (12 combinations), and the whole check passes (357 checks, none failing).
+  Screenshot: `guide-dashboard-estimate.png`.
+- **Found and fixed by the checks**: in the side column the drawing scaled
+  its labels down until they couldn't be read, and a narrow range drew p50
+  over p90; the ends are now text below the interval.
+
+Departures from the mock-up: the panel takes active days only (the API
+and MCP also take sessions); no "what if another model" (D17).
+
+TDD exceptions: S7 and the UI-check scenario were written after the panel
+they drive; the layout fix was made after the UI check found it, then
+tested; the harness's answer and the screenshot script have no tests of
+their own. Not yet: estimates in the extension (15.14).
+
+**15.13 (done 2026-11-07).** MCP across both products. The owner's
+decision D19 (the extension's project tools have no projects yet) is in
+§13.
+
+- **Tool groups.** `createMcpServer` takes `toolGroups` (`sessions`,
+  `audit`, `cost`, `findings`, `attribution`, `pricing`, `costAnalysis`,
+  `billing`), every group by default; a group is registered only when its
+  services are given too, and the billing prompts go with the billing
+  group. `WITHOUT_BILLING_TOOL_GROUPS` is the extension's set (D7).
+- **The extension's server** (`createCopilotMcpServices`): repositories,
+  vendors and channels over the Copilot provider
+  (`createCopilotAttribution`), the bundled price book from the
+  extension's `media/` (the child process passes
+  `media/vendor-profiles`; the price book is beside it), its pricer and the
+  cost analyses: 17 tools and 4 prompts. With no projects file (D19),
+  `list_projects` returns none with a `reason` (an optional field of
+  `ProjectList`), and every turn is in No project.
+- **Instructions.** Both products give the cost workflow
+  (`list_repositories`/`list_projects` → `get_project_cost` or
+  `compare_costs` → `explain_cost_change` and `get_price_changes`), the
+  three cost bases and the price book behind priced figures, as-of-use
+  versus today's prices and the one conversion
+  (`COST_BASIS_INSTRUCTIONS`, shared). The standalone server adds that
+  statements are issued only in the app and estimates are ranges; the
+  extension's says it has no projects and names no billing tool.
+- **Security tests** (`mcp/security.test.ts`, §10.1.5): every tool of the
+  standalone server over the cost fixture moved to a generated home
+  folder, with a credential in a remote URL. No output carries the
+  credential or the home folder (a property test; `list_repositories`
+  with `includePaths` is the one way to see paths, and a test checks it
+  does), client names and billing codes appear only in `list_projects`
+  and `get_statement`, and every tool is read-only. A deliberate break of
+  the path redaction makes the property test fail.
+- **Exit criterion over stdio** (`e2e/specs/mcp-exit-criterion.spec.ts`,
+  in the `web-e2e` job): the standalone stdio server over the e2e fixture
+  home lists 19 read-only tools with output schemas and 6 prompts;
+  `get_project_cost` for Customer portal in October has a billed Copilot
+  figure and priced figures with their price versions
+  (`anthropic-api:claude-sonnet-5.5:…`); `explain_cost_change` across
+  Claude Sonnet 5.5's 2026-10-07 cache-read cut (the fixture's documented
+  change; §10.1.6's sample said Sep 1) gives usage, price and mix effects
+  that add up to the change, with a non-zero price effect. The extension's
+  bundle, over stdio, lists 17 tools and 4 prompts
+  (`mcp-stdio-bundle.test.ts`); its bundle-load and VS Code integration
+  tests expect the 17 tools.
+- **S10** (`e2e/specs/s10-one-answer.spec.ts`): Customer portal in
+  October gives the same total and coverage in the Dashboard (Cost over
+  time, Last month), `GET /api/cost/timeseries` and MCP
+  `get_project_cost` over stdio (30.95 AI Credits, all 6 turns known).
+  The whole `web-e2e` suite (S1–S8, S10 and the exit criterion) passes
+  three runs in a row.
+- **Docs**: the User Guide's MCP table lists the 19 tools and 6 prompts
+  and the cost bases; the extension guide, README and changelog its 17
+  tools; the manual check list and UI-automation plan the new count.
+
+TDD exceptions: the security and exit-criterion tests guard behaviour
+that earlier steps built, so they passed when written (the redaction was
+broken on purpose once to see the property test fail); S10 was written
+after the views it reads. The `@modelcontextprotocol/sdk` dev dependency
+of `packages/web` is for the e2e suite's stdio client. Not yet: the
+extension's own projects (15.14 or later) and its Dashboard tabs (15.14).
+
+**15.14 (done 2026-11-07).** The VS Code extension (§11.9), with the
+owner's choices of 2026-11-07: a repository group totals every session in
+it, as a day group does (board 7's "last 30 days" note is dropped); a
+`ProductFeatures.projectsAndBilling` flag hides Project and Billing; the
+grouping is kept across workspaces.
+
+- **Dashboard tabs.** The extension's ApiService gets the cost analyses
+  over the Copilot dataset and the bundled price book
+  (`createCostAnalysis`), so its profile turns `costAnalysis` on;
+  `projectsAndBilling` is false there (no projects file or billing, D7,
+  D19) and true in the standalone app. `InsightsDashboard` then offers
+  Overview, Cost over time and Compare, with board 7's note "Billing and
+  estimates: in the Agent Cost Analyzer app".
+- **Group by repository** (`sidebar/sessions-by-repository-tree-model.ts`).
+  Groups by the repository each session's folder resolves to
+  (`SessionAttributor`, once per refresh, `sidebar/repository-sources.ts`):
+  the highest known total first, groups with none after them, **No
+  repository** last with its reasons in the tooltip. A group's description
+  is the day groups' (known sum and unknown count, never 0); its tooltip
+  gives the session count and total; a session row adds its day ("Today
+  14:02"). A local repository is named by its folder ("scratch (local)")
+  and its TreeItem id carries a hash, never the path. The group with the
+  newest session is expanded.
+- **Toggle.** `aiCreditsAnalyzer.groupSessionsByRepository` (`$(repo)`) and
+  `…ByDay` (`$(calendar)`) in the Sessions view's title, one at a time by
+  the `aiCreditsAnalyzer.sessionsGrouping` context key; the choice is in
+  `globalState` (`GlobalStateSessionsGroupingStore`). Regrouping reads
+  nothing again.
+- **Status bar.** With the open workspace's folders in a repository
+  (resolved by `RepositoryResolver` on every refresh, and when a folder is
+  added or removed), the item shows their AI Credits today ("portal-web
+  48.20 AI Credits today", "portal-web +1" for several, a local one by its
+  folder) and the tooltip and accessible name add every repository's total
+  and the coverage. No folder, a folder outside a repository, or no session
+  today in it: every repository's total, as before.
+- **Tests.** Tree model, controller, store, commands, view and manifest
+  (category, codicons, `package.nls.json` keys) tests; the UI check gains
+  the extension's own profile on Cost over time in the three themes (12
+  more, all pass). **S9** (`test/ui/specs/s9-group-by-repository.e2e.ts`,
+  its own `s9` launch with portal-web open): the group totals, the status
+  bar's text and accessible name equal `S9_EXPECTED`, and the Cost over
+  time tab passes the contrast judge in Dark Modern, Light Modern and High
+  Contrast. `s9-fixture.test.ts` checks `S9_EXPECTED` against the
+  extension's own sidebar code over the same fixture.
+
+Not run here: the wdio specs need VS Code's download host, which this
+cloud environment's network doesn't allow, so S9 first runs in CI's
+`extension-ui` job (informational, as decided for step 10.16). Not yet:
+the extension's own projects (D19 stands).
+
+**15.15 (written 2026-11-07; the owner's review open).** The docs pass over
+the whole phase, after the per-step updates:
+
+- **architecture.md.** §4.1 lists the Phase 15 modules
+  (`services/cost-attribution`, `pricing`, `cost-analysis`, `billing`,
+  `data-sources/projects` and `statements`); a new **§6.4** is the
+  end-to-end cost data flow (workspace → repository → project, vendor and
+  channel → billed, reported and priced figures → the Insights rows and the
+  cost cube → the analyses → API, webview RPC and MCP) with a table of what
+  each product has; §8's API table says which cost methods the extension
+  answers (time series, compare and variance over its Copilot sessions;
+  price-book routes are MCP-only there); §12 has the extension's Phase 15
+  share. The domain shapes were already in §5, step by step.
+- **User Guide** and **extension guide.** The cost views are in both
+  products; Project and Billing in the standalone app only. The extension
+  guide's panel section and table point at the User Guide's cost sections.
+- **vision.md §6.** The invoicing non-goal says what Phase 15 is and isn't
+  (no tax, invoice numbers, payments, live prices or other-model forecasts),
+  and which product has what.
+- **READMEs.** The repository README's feature list and doc index, and the
+  extension's Marketplace README (grouping, status bar, cost tabs).
+- A test pins the extension's answers the docs now describe
+  (`create-extension-api-service.test.ts`: variance answers, project cost,
+  statements, estimates, projects and the repository list do not).
+
+Still open for Phase 15 as a whole: the owner's review of these docs and
+the §15 exit criterion on a machine with real sessions.
 
 ## 15. Exit criterion
 

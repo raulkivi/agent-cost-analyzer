@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import type { Session, TurnInspectorDetail } from "@agent-cost-analyzer/domain";
+import type { RequestTrace, Session, TurnInspectorDetail } from "@agent-cost-analyzer/domain";
 import type { LogProviderAvailability } from "../log-provider.js";
 import type { SystemPromptTextLookup } from "../system-prompt-text-reader.js";
 
@@ -16,4 +16,7 @@ export interface CopilotSessionSource {
   readSession(sessionId: string): Promise<Session | null>;
   readTurnDetail(sessionId: string, turnIndex: number): Promise<TurnInspectorDetail | null>;
   lookupSystemPromptText(sessionId: string): Promise<SystemPromptTextLookup>;
+  // Phase 14 step 14.2: the per-request trace, as RequestTraceReader; a
+  // source without one leaves it out (its sessions then have no replay).
+  readRequestTrace?(sessionId: string): Promise<RequestTrace | null>;
 }

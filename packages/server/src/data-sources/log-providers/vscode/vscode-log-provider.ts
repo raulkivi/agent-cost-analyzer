@@ -3,6 +3,7 @@
 import { existsSync } from "node:fs";
 import type { DatabaseSync } from "node:sqlite";
 import type {
+  RequestTrace,
   Session,
   SystemPromptComponent,
   ToolInventoryEntry,
@@ -48,7 +49,8 @@ import {
   buildSessionSummary,
   summarizeSessionUsage,
 } from "../../../services/session-enricher/session-enricher.js";
-import type { LogProvider, LogProviderAvailability } from "../log-provider.js";
+import type { LogProvider, LogProviderAvailability, RequestTraceReader } from "../log-provider.js";
+import { buildLocalRequestTrace } from "../../jsonl/local-request-trace.js";
 import type { SystemPromptTextLookup, SystemPromptTextReader } from "../system-prompt-text-reader.js";
 import type { CopilotSessionSource } from "./copilot-session-source.js";
 
@@ -87,7 +89,7 @@ const PROVIDER_ID = "vscode";
 // Host), injected as a CopilotSessionSource: ids are UUIDs in both stores,
 // so each lookup asks the classic store first and the second store only for
 // an id the classic store doesn't have.
-export class VscodeLogProvider implements LogProvider, SystemPromptTextReader {
+export class VscodeLogProvider implements LogProvider, SystemPromptTextReader, RequestTraceReader {
   readonly id = PROVIDER_ID;
   readonly label = "VS Code (local Copilot Chat)";
 
@@ -241,6 +243,45 @@ export class VscodeLogProvider implements LogProvider, SystemPromptTextReader {
         }),
         providerId: PROVIDER_ID,
       };
+    } finally {
+      db.close();
+    }
+  }
+
+  // Phase 14 step 14.2: the per-request trace a replay reads, from the
+  // classic store first, then Agent Host (as readSession).
+  async readRequestTrace(sessionId: string): Promise<RequestTrace | null> {
+    const classic = await this.readClassicRequestTrace(sessionId);
+    if (classic !== "unknown-session") {
+      return classic;
+    }
+    return (await this.agentHostSessions?.readRequestTrace?.(sessionId)) ?? null;
+  }
+
+  // The same reads and alignment as readClassicSession, so the trace's turn
+  // indexes are the session's: the store's rows and the placed log turns.
+  private async readClassicRequestTrace(sessionId: string): Promise<RequestTrace | "unknown-session"> {
+    const db = this.openDb();
+    if (!db) {
+      return "unknown-session";
+    }
+    try {
+      const sessionRow = getSessionRow(db, sessionId);
+      if (!sessionRow) {
+        return "unknown-session";
+      }
+      const turnRows = getTurnRows(db, sessionRow.id);
+      const mainJsonlPath = resolveMainJsonlPath(this.debugLogsDirPaths(), sessionRow.id);
+      const envelopes = mainJsonlPath ? (await readMainJsonlFile(mainJsonlPath)).envelopes : [];
+      const alignment = alignLogTurnsToStore(logTurnDigests(envelopes), storeTurnKeys(turnRows));
+      const placed = alignment.filter((index): index is number => index !== null);
+      return buildLocalRequestTrace({
+        sessionId: sessionRow.id,
+        envelopes,
+        alignment,
+        sessionTurnIndexes: [...turnRows.map((row) => row.turn_index), ...placed],
+        agentTraceUsage: loadAgentTraceUsageForResponseIds(this.options.agentTracesDbPath, collectResponseIds(envelopes)),
+      });
     } finally {
       db.close();
     }

@@ -813,3 +813,62 @@ describe("VscodeLogProvider with a second Copilot session source", () => {
     });
   });
 });
+
+// Phase 14 step 14.2 (docs/plans/analyze-session-replay.md §4.1): the
+// per-request trace a replay reads, from either Copilot store.
+describe("VscodeLogProvider.readRequestTrace", () => {
+  it("traces a local-harness session from its debug log, in the session's turns", async () => {
+    const dir = mkdtempSync(path.join(tmpdir(), "vscode-log-provider-trace-"));
+    try {
+      const dbPath = path.join(dir, "session-store.db");
+      const debugLogsDirPath = path.join(dir, "debug-logs");
+      // One `turns` row; the log has two user_messages (the second is a turn
+      // the store has no row for, which readSession lists too).
+      seedCopilotSessionStore(dbPath, "2026-08-08T10:00:00.000Z");
+      writeUsageDebugLog(debugLogsDirPath);
+      const provider = new VscodeLogProvider({ sessionStoreDbPath: dbPath, debugLogsDirPaths: [debugLogsDirPath], agentTracesDbPath: null });
+
+      const trace = await provider.readRequestTrace(USAGE_SESSION_ID);
+      const session = await provider.readSession(USAGE_SESSION_ID);
+
+      expect(trace?.harness).toBe("vscode-local");
+      expect(trace?.requests.map((r) => [r.turnIndex, r.cacheRead, r.cacheWrite])).toEqual([
+        [0, 13230, null],
+        [0, 29329, null],
+        [1, 34597, null],
+        [1, 35864, null],
+      ]);
+      expect([...new Set(trace?.requests.map((r) => r.turnIndex))]).toEqual(session?.turns.map((turn) => turn.index));
+      expect(trace?.notTraced).toEqual([]);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("traces an Agent Host session from the Copilot CLI event log", async () => {
+    const userDataDir = mkdtempSync(path.join(tmpdir(), "vscode-log-provider-trace-ah-"));
+    try {
+      writeCopilotCliAgentHostStores(userDataDir);
+      const provider = new VscodeLogProvider({
+        sessionStoreDbPath: null,
+        debugLogsDirPaths: [],
+        agentTracesDbPath: null,
+        agentHostSessions: new AgentHostSessionSource({ userDataDir, copilotHome: COPILOT_CLI_FIXTURE_HOME }),
+      });
+
+      const trace = await provider.readRequestTrace(COPILOT_CLI_FIXTURE_SESSION_IDS.usageRecords);
+
+      expect(trace?.harness).toBe("copilot-agent-host");
+      expect(trace?.requests.map((r) => r.turnIndex)).toEqual([0, 0, 1, 1, 3]);
+      expect(trace?.notTraced.map((t) => t.turnIndex)).toEqual([2]);
+    } finally {
+      rmSync(userDataDir, { recursive: true, force: true });
+    }
+  });
+
+  it("returns null for a session neither store has", async () => {
+    const provider = new VscodeLogProvider({ sessionStoreDbPath: null, debugLogsDirPaths: [], agentTracesDbPath: null });
+
+    await expect(provider.readRequestTrace("does-not-exist")).resolves.toBeNull();
+  });
+});

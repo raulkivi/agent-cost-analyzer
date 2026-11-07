@@ -46,6 +46,8 @@ export class AttributionQueryService implements AttributionQueries {
     private readonly repositories: Pick<RepositoryListService, "getRepositoryList">,
     private readonly catalog: Pick<ProjectCatalog, "load">,
     private readonly attribution: SessionAttribution,
+    // Step 15.13 (D19): a product with no projects of its own says why.
+    private readonly noProjectsReason?: string,
   ) {}
 
   async listRepositories(query: RepositoryQuery): Promise<RepositoryList> {
@@ -79,6 +81,7 @@ export class AttributionQueryService implements AttributionQueries {
         })),
       })),
       problems: state.problems.map(redact),
+      ...(this.noProjectsReason !== undefined ? { reason: this.noProjectsReason } : {}),
     };
   }
 

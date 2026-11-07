@@ -6,7 +6,34 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Security
+- The MCP server no longer hands local folder paths to the chat model:
+  `list_repositories` has no `includePaths` argument any more (an old one is
+  ignored), so instructions hidden in a logged session can't make the model
+  ask for them. Paths are still in the app (`GET /api/repositories`).
+- `list_projects` no longer returns client names and billing codes unless you
+  start the MCP server with `--project-billing-details`; `get_statement` still
+  carries them. (threat-model.md §5.6)
+- The server refuses to start if it is ever set to listen on anything but a
+  loopback address (127.0.0.1, ::1 or localhost), since it has no
+  authentication (threat-model.md §5.1).
+- Tests now show that traversal-shaped ids on the Learn routes are treated as
+  unknown and never read a file (threat-model.md §5.7).
+- The code-review workflow pins its plugin to a commit instead of running
+  whatever that repository's default branch holds (threat-model.md §5.5). The
+  pin now goes on the plugin itself, through a one-plugin marketplace the
+  workflow writes; the first attempt pinned only Anthropic's marketplace,
+  which can't be added from a local copy and still pointed the plugin at
+  `main`.
+
 ### Fixed
+- Claude Code sessions that were compacted (`/compact` or automatic) now
+  show and cost every turn, not only those after the latest compaction; the
+  turn after a compaction is marked as one.
+- Claude Code turns are no longer split by lines the CLI writes itself
+  (`isMeta`), which could count one response twice, and the CLI's
+  `<synthetic>` lines after an interruption are no longer taken as a request
+  or as the session's model.
 - Dashboard list-box values meet the 24 px minimum target size, and a chart's
   table view can be scrolled from the keyboard (found by the new
   real-browser accessibility check).
@@ -81,6 +108,62 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A usage-scenario test suite for the standalone app (Playwright, the real
   server over a seeded fixture home at a fixed clock), run by a new
   required `web-e2e` CI job.
+- Cost by repository in the VS Code extension (Phase 15 step 15.14): the
+  Sessions view can be grouped by repository (a title-bar toggle, kept
+  across workspaces), the status bar shows today's AI Credits for the open
+  folder's repository with every repository's total in its tooltip, and
+  the panel's Dashboard has the Cost over time and Compare tabs. A new
+  product flag, `projectsAndBilling`, keeps Project and Billing in this app
+  only; the extension's view switch says where they are. Scenario S9 runs
+  in the `extension-ui` job.
+- MCP across both products (Phase 15 step 15.13): the server's
+  instructions now explain the cost workflow (repositories and projects,
+  then project cost or a comparison, then why it changed), what billed,
+  reported and priced figures are, as-of-use versus today's prices, and the
+  one conversion (1 AI Credit = $0.01). The VS Code extension's MCP server
+  gains the repository, price-book and cost tools (17 tools, no billing);
+  its `list_projects` says projects are edited in this app. New tests run
+  every tool over generated folders and remote credentials and check that
+  none leaks a credential or a local path, and a usage scenario checks
+  that the Dashboard, the HTTP API and MCP give the same total.
+- Estimates (Phase 15 step 15.12): the Billing tab's "Next piece of work"
+  panel estimates planned work for a project as a range, never one number:
+  the median and 90th-percentile cost per active day over the last 4 or 12
+  weeks, at today's prices, times the planned active days, with the inputs
+  it used. With fewer than 5 active days of known cost it gives the reason
+  instead of a range. `GET /api/estimates` (active days or sessions), MCP
+  `estimate_cost` and an `estimate_work` prompt.
+- Billing statements and a Projects editor (Phase 15 step 15.11): a Billing
+  tab on the Dashboard shows one project's statement for a month, in this
+  machine's time zone: lines per channel, model and price version, turns
+  with unknown cost listed (never counted as zero), subscription use left
+  off unless the project includes it, the project's markup, fixed lines
+  and own currency at a fixed rate, totals per currency, coverage and
+  provenance. "Issue statement" (after a confirmation, and only once the
+  month has ended) freezes it as a file that never changes; a later re-run
+  that differs (late logs, a price change) shows "Differs from issued" and
+  the exact diff. Export as CSV, JSON or Markdown (no message text, session
+  titles optional). The Projects editor assigns repositories to projects
+  with a select (keyboard only), edits members, rates and capture rules,
+  and shows problems such as two projects claiming the same scope inline,
+  with Save disabled until they're fixed. `GET /api/statements`,
+  `POST /api/statements/:projectId/:period/issue` (JSON only), MCP
+  `get_statement` (read-only) and a `prepare_statement` prompt.
+- Price changes and why cost changed (Phase 15 step 15.10): a Project tab on
+  the Dashboard, inside the selected project: cost by vendor (click one for
+  its models, with tokens by type beside them), a waterfall from one month's
+  cost to another's split into usage, price and mix effects that add up
+  exactly to the change (on the priced basis, as of use, with "View as
+  table"), and Copilot's billed minus priced AI Credits per model and month.
+  An observed price change (Copilot billing a model more than 5% away from
+  the price book, the same way, two weeks in a row) is an inferred
+  "price-change" finding and a dashed marker on Cost over time.
+  `GET /api/cost/variance`, `GET /api/cost/project` and
+  `GET /api/price-book/changes`; MCP tools `explain_cost_change` and
+  `get_price_changes`, an `explain_cost_change` prompt, and `list_findings`
+  kind `price-change`. A turn that can't be priced is counted as not
+  explained, never as zero. Fixed: a selected bar's value was below the
+  4.5:1 contrast minimum in Light Modern.
 - Web and VS Code themes: eight categorical series colours
   (`--color-series-1` to `-8`, light and dark steps), a diverging pair for
   waterfalls, and dash patterns in High Contrast, ready for the

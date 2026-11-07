@@ -181,21 +181,28 @@ function copilotSession(home: string, cwd: string, startedAt: string): void {
 export interface FixtureHome {
   home: string;
   appSettingsDir: string;
-  folders: { portalWeb: string; portalApi: string; billing: string; scratch: string };
+  folders: { portalWeb: string; portalApi: string; billing: string; scratch: string; mobile: string };
 }
 
-export function createFixtureHome(home: string): FixtureHome {
+// Step 15.11: scenario S1 starts with no projects file.
+export interface FixtureOptions {
+  projects?: boolean;
+}
+
+export function createFixtureHome(home: string, options: FixtureOptions = {}): FixtureHome {
   const dev = path.join(home, "dev");
   const folders = {
     portalWeb: path.join(dev, "portal-web"),
     portalApi: path.join(dev, "portal-api"),
     billing: path.join(dev, "billing"),
     scratch: path.join(dev, "scratch"),
+    mobile: path.join(dev, "mobile-app"),
   };
   gitRepository(folders.portalWeb, "git@github.com:acme/portal-web.git");
   gitRepository(folders.portalApi, "https://github.com/acme/portal-api.git");
   gitRepository(folders.billing, "git@github.com:acme/billing.git");
   gitRepository(folders.scratch);
+  gitRepository(folders.mobile, "git@github.com:acme/mobile-app.git");
 
   // Customer portal. 2026-09-15 is before the price book's first price
   // (2026-10-01), so that week's turn has no known cost: the gap in S2.
@@ -216,11 +223,19 @@ export function createFixtureHome(home: string): FixtureHome {
   // The previous 90 days (May 11 to Aug 8), for Compare's "Change": pi logged $0.01.
   piSession(home, "p0000000-0000-4000-8000-000000000009", folders.billing, [{ at: "2026-07-20T09:00:00.000Z", input: 500, output: 100, costUsd: 0.01 }]);
 
+  // Mobile app (step 15.12, S7): six priced pi days in October, so the
+  // 12-week estimate has a range (an estimate needs 5 known active days).
+  [3, 8, 13, 17, 22, 29].forEach((day, index) =>
+    piSession(home, `p0000000-0000-4000-8000-0000000001${index}0`, folders.mobile, [
+      { at: `2026-10-${String(day).padStart(2, "0")}T09:00:00.000Z`, input: 1000 * (index + 1), output: 200 * (index + 1), costUsd: 0.01 * (index + 1) },
+    ]),
+  );
+
   // No project: a local repository and a capture with no folder.
   claudeCodeSession(home, "c0000000-0000-4000-8000-000000000008", folders.scratch, [{ at: "2026-10-22T10:00:00.000Z", input: 1000, output: 200 }]);
 
   const appSettingsDir = path.join(home, ".config", "agent-cost-analyzer");
-  write(
+  if (options.projects !== false) write(
     path.join(appSettingsDir, "projects.json"),
     `${JSON.stringify(
       {
@@ -228,6 +243,7 @@ export function createFixtureHome(home: string): FixtureHome {
         projects: [
           { id: "portal", name: "Customer portal", members: [{ repository: "github.com/acme/portal-web" }, { repository: "github.com/acme/portal-api" }] },
           { id: "billing", name: "Billing service", members: [{ repository: "github.com/acme/billing" }] },
+          { id: "mobile", name: "Mobile app", members: [{ repository: "github.com/acme/mobile-app" }] },
         ],
       },
       null,

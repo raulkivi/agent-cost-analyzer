@@ -3,7 +3,7 @@
 import { sumTokenCounts, unavailableTokenCount, type TokenCount } from "@agent-cost-analyzer/domain";
 import type { TurnUsage } from "@agent-cost-analyzer/domain";
 import type { ClaudeCodeRawEntry } from "./claude-code-jsonl-reader.js";
-import { groupTurnEntriesByRound, type ClaudeCodeRound } from "./round-grouper.js";
+import { groupTurnRequestRounds, type ClaudeCodeRound } from "./round-grouper.js";
 import type { ClaudeCodeTurnGroup } from "./turn-grouper.js";
 
 const MISSING_FIELD_REASON =
@@ -91,9 +91,11 @@ function extendedCacheWriteOf(round: ClaudeCodeRound): TokenCount {
 // message.id, not per raw JSONL entry) — a turn can span several
 // round-trips when the agent loops through tool calls before answering,
 // same "sum every round in the turn" pattern as pi-agent/usage-extractor.ts
-// and the VS Code provider's session-usage-spans.ts.
+// and the VS Code provider's session-usage-spans.ts. Synthetic rounds (the
+// CLI's own "<synthetic>" lines, round-grouper.ts) are no request, so they
+// are neither counted nor taken as the turn's model.
 export function extractTurnUsage(group: ClaudeCodeTurnGroup): TurnUsage {
-  const rounds = groupTurnEntriesByRound(group.entries);
+  const rounds = groupTurnRequestRounds(group.entries);
   const model = rounds.length > 0 ? modelOf(rounds[rounds.length - 1]) ?? "unknown" : "unknown";
 
   return {

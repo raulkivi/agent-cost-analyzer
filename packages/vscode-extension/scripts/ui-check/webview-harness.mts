@@ -17,7 +17,10 @@ import {
   COPILOT_CLI_FIXTURE_SESSION_IDS,
   writeCopilotCliAgentHostStores,
 } from "../../../server/src/test-support/copilot-cli-fixtures.ts";
-import { sampleCostComparison, sampleCostSeries, THREE_PROJECTS } from "../../../web/src/test-support/cost-fixture.ts";
+import { sampleCostComparison, sampleCostSeries, sampleCostVariance, sampleProjectCost, THREE_PROJECTS } from "../../../web/src/test-support/cost-fixture.ts";
+import { sampleStatement } from "../../../web/src/test-support/statement-sample.ts";
+import { sampleEstimate } from "../../../web/src/test-support/estimate-sample.ts";
+import { diffStatements } from "@agent-cost-analyzer/domain";
 import { createIntegrationFixture } from "../integration-fixture.mts";
 import { webviewDefaultCss, type VscodeTheme } from "./vscode-themes.mts";
 
@@ -70,12 +73,14 @@ export interface OpenOptions {
   // Replaces the config check's warnings, to show the banner (the seeded
   // fixture has none).
   configWarnings?: ConfigWarning[];
-  // Step 15.9: the Dashboard's cost tabs, which the extension hides until
-  // step 15.14 (no cost routes yet). For the layout and contrast check the
-  // page gets a profile with costAnalysis on, the cost methods answer the
-  // web package's sample series and comparison, and the Copilot turns are
-  // spread over the sample's three projects so the tabs have something to
-  // compare. Sample data only.
+  // Step 15.9: the Dashboard's cost tabs over sample data. The extension
+  // has Cost over time and Compare from step 15.14 but no Project or Billing
+  // (D7, D19); for the layout and contrast check of the shared UI in VS
+  // Code's themes the page gets a profile with every tab on, the cost
+  // methods answer the web package's sample series and comparison, and the
+  // Copilot turns are spread over the sample's three projects so the tabs
+  // have something to compare. Sample data only. Without this the page has
+  // the extension's real profile and cost routes.
   costTabs?: boolean;
 }
 
@@ -120,17 +125,62 @@ function seedUiCheckFixture(rootDir: string): SeededUserData {
 
 const COST_PROJECTS = THREE_PROJECTS.map((project) => ({ id: project.key!, name: project.label }));
 
+function billingAnswer() {
+  const issued = sampleStatement({ status: "issued", issuedAt: "2026-11-02T09:00:00.000Z" });
+  const rerun = sampleStatement({ lines: [{ ...issued.lines[0]!, amount: 150 }], totals: [{ currency: "AI_CREDITS", lines: 150, markup: 12, fixed: 0, total: 162 }, issued.totals[1]!] });
+  return { statement: issued, rerun, diff: diffStatements(issued, rerun), canIssue: { ok: false, reason: "Already issued." }, issuedPeriods: ["2026-09", "2026-10"] };
+}
+
+const PROJECTS_STATE = {
+  status: "valid",
+  file: {
+    version: 1,
+    projects: [
+      { id: COST_PROJECTS[0]!.id, name: COST_PROJECTS[0]!.name, client: "ACME", members: [{ repository: "github.com/acme/portal-web" }, { repository: "github.com/acme/infra", branches: ["portal/*"] }], rates: { markupPercent: 10, fixedLines: [{ label: "Seats", amount: 39, currency: "USD" }], currency: { code: "EUR", perUsd: 0.92 } } },
+      { id: COST_PROJECTS[1]!.id, name: COST_PROJECTS[1]!.name, members: [{ repository: "github.com/acme/billing" }, { repository: "github.com/acme/infra", branches: ["portal/*"] }] },
+    ],
+    aliases: {},
+    captureRules: [],
+  },
+  problems: [],
+  location: "/home/dev/.config/agent-cost-analyzer/projects.json",
+};
+
+const REPOSITORY_LIST = {
+  repositories: ["github.com/acme/portal-web", "github.com/acme/billing", "github.com/acme/infra", "github.com/acme/mobile-app", "github.com/acme/data-platform-with-a-long-name"].map((key, index) => ({
+    key,
+    source: "git-remote",
+    sessionCount: 10 - index,
+    turnCount: 40,
+    aiCredits: { value: 100, knownSessions: 1, sessions: 1 },
+    providerIds: ["vscode"],
+    projectIds: [],
+    lastUsedAt: "2026-10-20T10:00:00.000Z",
+  })),
+  unattributed: [{ reason: "mitmproxy captures record no working folder.", sessionCount: 41, turnCount: 90, aiCredits: { value: null, knownSessions: 0, sessions: 41 }, providerIds: ["mitmproxy"] }],
+  providers: [],
+};
+
 function withCostTabs(reply: unknown, request: unknown, enabled: boolean | undefined): unknown {
   const method = (request as { method?: string } | null)?.method;
   const id = (request as { id?: string } | null)?.id;
   if (!enabled || !method) return reply;
   if (method === "getCostTimeSeries") return { kind: "response", id, ok: true, result: sampleCostSeries() };
   if (method === "getCostComparison") return { kind: "response", id, ok: true, result: sampleCostComparison() };
+  // Step 15.10: the Project tab.
+  if (method === "getProjectCost") return { kind: "response", id, ok: true, result: sampleProjectCost() };
+  if (method === "getCostVariance") return { kind: "response", id, ok: true, result: sampleCostVariance() };
+  // Step 15.11: the Billing tab (an issued statement whose re-run differs) and the Projects editor.
+  if (method === "getStatement") return { kind: "response", id, ok: true, result: billingAnswer() };
+  // Step 15.12: the Billing tab's estimate panel.
+  if (method === "getCostEstimate") return { kind: "response", id, ok: true, result: sampleEstimate() };
+  if (method === "getProjects") return { kind: "response", id, ok: true, result: PROJECTS_STATE };
+  if (method === "getRepositoryList") return { kind: "response", id, ok: true, result: REPOSITORY_LIST };
   const answer = reply as { ok?: boolean; result?: Record<string, unknown> } | undefined;
   if (!answer?.ok || !answer.result) return reply;
   if (method === "getProductProfile") {
     const profile = answer.result as { features: Record<string, boolean> };
-    return { ...answer, result: { ...profile, features: { ...profile.features, costAnalysis: true } } };
+    return { ...answer, result: { ...profile, features: { ...profile.features, costAnalysis: true, projectsAndBilling: true } } };
   }
   if (method === "getInsights") {
     const dataset = answer.result as { turns: { projectId?: string | null }[] };
@@ -225,7 +275,7 @@ export async function startHarness(options: HarnessOptions = {}): Promise<Harnes
       await page.exposeFunction("__toHost", async (message: unknown) => {
         inFlight += 1;
         try {
-          const answered = openOptions.costTabs && /getCost/.test(String((message as { method?: string }).method)) ? undefined : await dispatcher.dispatch(message);
+          const answered = openOptions.costTabs && /getCost|getProjectCost|getStatement|getProjects|getRepositoryList/.test(String((message as { method?: string }).method)) ? undefined : await dispatcher.dispatch(message);
           const reply = withCostTabs(withConfigWarnings(answered, message, openOptions.configWarnings), message, openOptions.costTabs);
           if (reply) await page.evaluate(`window.postMessage(${JSON.stringify(reply)}, "*")`);
         } finally {

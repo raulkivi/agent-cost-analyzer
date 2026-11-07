@@ -14,6 +14,9 @@ export interface CopilotMcpServerOptions {
   // The Copilot CLI's home (step 10.14); omitted, resolved as the CLI does,
   // from this process's environment, which the extension host passes on.
   copilotHome?: string | null;
+  // Step 15.13: the extension's media/vendor-profiles, with the bundled price
+  // book beside it (G4: the bundle can't locate them itself).
+  vendorProfilesDir: string;
 }
 
 // The MCP server the extension's child process runs (dist/mcp-stdio.js,
@@ -22,7 +25,7 @@ export interface CopilotMcpServerOptions {
 // same way the extension host derives them (copilot-log-paths.ts). The
 // process outlives many chats, so the per-workspace debug-logs folders are
 // re-listed on every lookup, and a workspace opened later is still found.
-export function createCopilotMcpServer({ userDataDir, version, copilotHome = resolveCopilotHome() }: CopilotMcpServerOptions): McpServer {
+export function createCopilotMcpServer({ userDataDir, version, copilotHome = resolveCopilotHome(), vendorProfilesDir }: CopilotMcpServerOptions): McpServer {
   const { sessionStoreDbPath, agentTracesDbPath, agentHostUserDataDir } = copilotLogPathsFromUserDataDir(userDataDir);
   return createMcpServer(
     createCopilotMcpServices({
@@ -32,6 +35,7 @@ export function createCopilotMcpServer({ userDataDir, version, copilotHome = res
       copilotHome,
       debugLogsDirPaths: () => copilotDebugLogsDirPaths(userDataDir),
       appVersion: version,
+      vendorProfilesDir,
     }),
   );
 }

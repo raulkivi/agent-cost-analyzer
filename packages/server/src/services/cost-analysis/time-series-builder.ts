@@ -11,9 +11,11 @@ import {
   type CostSeries,
   type CostSeriesGroupBy,
   type PriceBookEntry,
+  type ObservedPriceChange,
   type PriceChangeMarker,
   type VendorCostBreakdown,
 } from "@agent-cost-analyzer/domain";
+import { PriceChangeDetector } from "../pricing/price-change-detector.js";
 import type { CostCube, CostCubeRow } from "./cost-cube.js";
 import {
   breakdownRow,
@@ -90,6 +92,23 @@ export function priceChangesFor(rows: readonly CostCubeRow[], priceVersions: rea
   return documentedPriceChanges(priceVersions, { since: range.from, until: range.to, pairs: [...pairs.values()] });
 }
 
+// Step 15.10 (plan §6.4 point 2): observed changes starting in range for
+// the channel/model pairs the selection used. A billing gap is the model's,
+// so it is found over every turn of the cube. At today's prices every turn
+// has one price, so the gap is the price change itself: none are listed.
+export function observedChangesFor(
+  cube: CostCube,
+  selected: readonly CostCubeRow[],
+  range: { from: string; to: string } | undefined,
+  pricing: CostView["pricing"],
+): ObservedPriceChange[] {
+  if (range === undefined || pricing === "today") return [];
+  const pairs = new Map<string, { channel: string; modelId: string }>();
+  for (const row of selected) if (row.channel !== null) pairs.set(JSON.stringify([row.channel, row.model]), { channel: row.channel, modelId: row.model });
+  if (pairs.size === 0) return [];
+  return new PriceChangeDetector().observed(cube.rows, { since: range.from, until: range.to, pairs: [...pairs.values()] });
+}
+
 export function buildCostSeries(cube: CostCube, query: CostSeriesQuery, priceVersions: readonly PriceBookEntry[]): CostSeries {
   const dated = inDateRange(cube.rows, query.since, query.until);
   const grouping = query.groupBy ? groupingFor(query.groupBy, cube) : undefined;
@@ -124,5 +143,6 @@ export function buildCostSeries(cube: CostCube, query: CostSeriesQuery, priceVer
     })),
     byVendor: byVendor(selected, cube, query),
     priceChanges: priceChangesFor(selected, priceVersions, range),
+    observedChanges: observedChangesFor(cube, selected, range, query.pricing),
   };
 }

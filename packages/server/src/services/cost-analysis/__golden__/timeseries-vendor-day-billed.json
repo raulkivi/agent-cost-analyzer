@@ -811,5 +811,6 @@
       ],
       "note": "Cached input lowered from $0.20 to $0.10 in github/docs eb975b9 (2026-10-07). Unchanged through cc0c29a (2026-10-26), the last commit to the table as of 2026-11-05. extendedCacheWriteUsdPerM (1-hour cache write) is 2x the input price, from Anthropic's prompt-caching docs; GitHub's table has no 1-hour column."
     }
-  ]
+  ],
+  "observedChanges": []
 }

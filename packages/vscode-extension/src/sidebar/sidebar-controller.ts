@@ -1,11 +1,27 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import type { ConfigStatus, Session } from "@agent-cost-analyzer/domain";
+import type { ConfigStatus, RepositoryAttribution, Session } from "@agent-cost-analyzer/domain";
 import { identityTranslate, type Translate } from "../l10n/localize.js";
 import type { Disposable } from "../panel/analyzer-panel.js";
 import { buildStatusBarState, type StatusBarState } from "../status-bar/status-bar-model.js";
 import { buildLearnTree, learnLoadErrorTree, type LearnTreeNode } from "./learn-tree-model.js";
+import { buildSessionsByRepositoryTree, type RepositoryOf } from "./sessions-by-repository-tree-model.js";
 import { buildSessionsTree, sessionsLoadErrorTree, type SessionsTreeNode } from "./sessions-tree-model.js";
+
+// Step 15.14 (plan §11.9): how the Sessions tree groups its sessions.
+export type SessionsGrouping = "day" | "repository";
+
+// Where the grouping is kept (globalState in the extension, across
+// workspaces); undefined is "never chosen", i.e. by day.
+export interface SessionsGroupingStore {
+  read(): SessionsGrouping | undefined;
+  write(grouping: SessionsGrouping): void;
+}
+
+// A session whose repository couldn't be looked up (the resolver failed, or
+// the session is new since the last refresh): No repository, with the reason.
+export const REPOSITORY_NOT_READ_REASON = "The repository couldn't be read.";
+const NOT_READ: RepositoryAttribution = { attributed: false, reason: REPOSITORY_NOT_READ_REASON };
 import { buildSetupTree, type SetupWarningNode } from "./setup-view-model.js";
 
 // What the sidebar and the status bar read from (ApiService's listSessions,
@@ -16,6 +32,12 @@ export interface SidebarSources {
   // The bundled Learn scenarios (step 10.12): fixed, so read once.
   listLearnScenarios(): Promise<Session[]>;
   getConfigStatus(): Promise<ConfigStatus>;
+  // Step 15.14: each session's repository, by session id (SessionAttributor
+  // in the extension), resolved once per refresh: it reads git files.
+  attributeRepositories?(sessions: Session[]): ReadonlyMap<string, RepositoryAttribution>;
+  // Step 15.14: the repository keys of the open workspace's folders, for the
+  // status bar; read once per refresh.
+  workspaceRepositoryKeys?(): string[];
   // Lists the per-workspace debug-logs folders again, so a workspace first
   // opened after activation is read without a reload (10.4 lists them once
   // at activation). Called before every full refresh.
@@ -32,13 +54,15 @@ export interface SidebarControllerOptions {
   translate?: Translate;
   // Hears every failure of a source; the views only show a generic error.
   onInternalError?: (
-    source: "listSessions" | "listLearnScenarios" | "getConfigStatus" | "relistLogSources",
+    source: "listSessions" | "listLearnScenarios" | "getConfigStatus" | "relistLogSources" | "attributeRepositories" | "workspaceRepositoryKeys",
     error: unknown,
   ) => void;
   // Times each full refresh that read the sessions, from its start to the
   // Sessions tree's nodes being built (§3.5 Performance: under 500 ms).
   // `now` is a monotonic clock in ms.
   timing?: { now(): number; sessionsTreeBuilt(durationMs: number): void };
+  // Step 15.14: the saved grouping; by day for this session only without one.
+  grouping?: SessionsGroupingStore;
 }
 
 // The data behind the Sessions tree, the Setup view and the status bar:
@@ -49,6 +73,9 @@ export interface SidebarControllerOptions {
 export class SidebarController {
   // undefined: not loaded yet; "error": the last read failed.
   private sessions: Session[] | "error" | undefined;
+  private repositories: ReadonlyMap<string, RepositoryAttribution> = new Map();
+  private workspaceKeys: string[] = [];
+  private grouping: SessionsGrouping;
   private scenarios: Session[] | "error" | undefined;
   private configStatus: ConfigStatus | undefined;
   private fullRefresh: Promise<void> | undefined;
@@ -58,7 +85,23 @@ export class SidebarController {
   constructor(
     private readonly sources: SidebarSources,
     private readonly options: SidebarControllerOptions = {},
-  ) {}
+  ) {
+    this.grouping = options.grouping?.read() ?? "day";
+  }
+
+  sessionsGrouping(): SessionsGrouping {
+    return this.grouping;
+  }
+
+  // Regroups what was read last: nothing new to read from the logs.
+  setSessionsGrouping(grouping: SessionsGrouping): void {
+    this.grouping = grouping;
+    this.options.grouping?.write(grouping);
+    this.notify();
+  }
+
+  // Step 15.14: the repository each session was resolved to in the last refresh.
+  repositoryOf: RepositoryOf = (session) => this.repositories.get(session.id) ?? NOT_READ;
 
   onDidChange(listener: () => void): Disposable {
     this.listeners.add(listener);
@@ -88,7 +131,9 @@ export class SidebarController {
     if (this.sessions === "error") {
       return sessionsLoadErrorTree(this.translate());
     }
-    return buildSessionsTree(this.sessions, this.now(), this.options.timeZone, this.translate());
+    return this.grouping === "repository"
+      ? buildSessionsByRepositoryTree(this.sessions, this.repositoryOf, this.now(), this.options.timeZone, this.translate())
+      : buildSessionsTree(this.sessions, this.now(), this.options.timeZone, this.translate());
   }
 
   learnTree(): LearnTreeNode[] {
@@ -112,6 +157,7 @@ export class SidebarController {
       warnings: this.configStatus?.warnings ?? [],
       timeZone: this.options.timeZone,
       t: this.translate(),
+      workspace: { repositoryKeys: this.workspaceKeys, repositoryOf: this.repositoryOf },
     });
   }
 
@@ -153,6 +199,29 @@ export class SidebarController {
     } catch (error) {
       this.sessions = "error";
       this.options.onInternalError?.("listSessions", error);
+      return;
+    }
+    this.readRepositories(this.sessions);
+  }
+
+  private readRepositories(sessions: Session[]): void {
+    this.readWorkspaceRepositories();
+    if (!this.sources.attributeRepositories) return;
+    try {
+      this.repositories = this.sources.attributeRepositories(sessions);
+    } catch (error) {
+      this.repositories = new Map();
+      this.options.onInternalError?.("attributeRepositories", error);
+    }
+  }
+
+  private readWorkspaceRepositories(): void {
+    if (!this.sources.workspaceRepositoryKeys) return;
+    try {
+      this.workspaceKeys = this.sources.workspaceRepositoryKeys();
+    } catch (error) {
+      this.workspaceKeys = [];
+      this.options.onInternalError?.("workspaceRepositoryKeys", error);
     }
   }
 

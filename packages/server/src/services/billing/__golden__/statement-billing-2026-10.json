@@ -1,0 +1,146 @@
+{
+  "statement": {
+    "version": 1,
+    "status": "draft",
+    "generatedAt": "2026-11-06T12:00:00.000Z",
+    "project": {
+      "id": "billing",
+      "name": "Billing"
+    },
+    "period": {
+      "key": "2026-10",
+      "label": "October 2026",
+      "since": "2026-10-01",
+      "until": "2026-10-31",
+      "timeZone": "UTC"
+    },
+    "includeSubscriptionUse": false,
+    "conversion": "1 AI Credit = $0.01 (GitHub's documented rate); no other exchange rate is used.",
+    "lines": [
+      {
+        "key": "billed|AI_CREDITS|github-copilot|gpt-6.1-sol|",
+        "basis": "billed",
+        "currency": "AI_CREDITS",
+        "channel": "github-copilot",
+        "model": "gpt-6.1-sol",
+        "priceVersionId": null,
+        "sessions": 1,
+        "turns": 1,
+        "tokens": {
+          "uncachedInput": 2000,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "reasoning": null,
+          "output": 1000
+        },
+        "unitPrices": null,
+        "amount": 2.5,
+        "apiEquivalent": false
+      },
+      {
+        "key": "priced|USD|openai-api|gpt-6.1-sol|openai-api:gpt-6.1-sol:2026-10-20",
+        "basis": "priced",
+        "currency": "USD",
+        "channel": "openai-api",
+        "model": "gpt-6.1-sol",
+        "priceVersionId": "openai-api:gpt-6.1-sol:2026-10-20",
+        "sessions": 1,
+        "turns": 1,
+        "tokens": {
+          "uncachedInput": 1000,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "reasoning": null,
+          "output": 100
+        },
+        "unitPrices": {
+          "uncachedInput": 2,
+          "cacheRead": null,
+          "cacheWrite": null,
+          "output": 10
+        },
+        "amount": 0.003,
+        "apiEquivalent": false
+      },
+      {
+        "key": "reported|USD|openai-api|gpt-6.1-sol|",
+        "basis": "reported",
+        "currency": "USD",
+        "channel": "openai-api",
+        "model": "gpt-6.1-sol",
+        "priceVersionId": null,
+        "sessions": 1,
+        "turns": 1,
+        "tokens": {
+          "uncachedInput": 1000,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "reasoning": null,
+          "output": 100
+        },
+        "unitPrices": null,
+        "amount": 0.05,
+        "apiEquivalent": false
+      }
+    ],
+    "unknown": [],
+    "excluded": [],
+    "markup": [
+      {
+        "currency": "AI_CREDITS",
+        "base": 2.5,
+        "amount": 0
+      },
+      {
+        "currency": "USD",
+        "base": 0.053,
+        "amount": 0
+      }
+    ],
+    "fixedLines": [],
+    "totals": [
+      {
+        "currency": "AI_CREDITS",
+        "lines": 2.5,
+        "markup": 0,
+        "fixed": 0,
+        "total": 2.5
+      },
+      {
+        "currency": "USD",
+        "lines": 0.053,
+        "markup": 0,
+        "fixed": 0,
+        "total": 0.053
+      }
+    ],
+    "coverage": {
+      "turns": 3,
+      "knownTurns": 3
+    },
+    "provenance": {
+      "appVersion": "0.0.0-test",
+      "priceBookHash": "d09a4526c69b",
+      "projectsFileHash": "b1e3876edce6",
+      "priceVersionIds": [
+        "openai-api:gpt-6.1-sol:2026-10-20"
+      ],
+      "sessions": [
+        {
+          "providerId": "pi-agent",
+          "sessionId": "pi-1",
+          "title": "Session pi-1"
+        },
+        {
+          "providerId": "vscode",
+          "sessionId": "cp-2",
+          "title": "Session cp-2"
+        }
+      ]
+    }
+  },
+  "canIssue": {
+    "ok": true
+  },
+  "issuedPeriods": []
+}

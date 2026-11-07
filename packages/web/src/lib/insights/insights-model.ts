@@ -71,6 +71,7 @@ export const FINDING_KIND_LABELS: Record<FindingKind, string> = {
   security: "Security signal",
   anomaly: "Anomaly",
   "behavior-change": "Behaviour change",
+  "price-change": "Price change",
 };
 
 const FINDING_CATEGORY_LABELS: Record<string, string> = {
@@ -87,6 +88,7 @@ const FINDING_CATEGORY_LABELS: Record<string, string> = {
   "package-install": "Package install",
   "permission-denied": "Denied action",
   "cost-outlier": "Cost outlier",
+  "observed-price-change": "Observed price change",
   "output-outlier": "Output outlier",
   "tool-volume-outlier": "Tool-call volume outlier",
   "failure-rate-outlier": "Failure-rate outlier",

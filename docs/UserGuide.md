@@ -410,14 +410,31 @@ claude mcp add agent-cost-analyzer -- /absolute/path/to/agent-cost-analyzer/scri
 | `list_tool_calls` | One session's calls, filtered by status, failure category, tool kind, tool, program or turn, paged with `offset`/`limit` |
 | `get_audit_rollup` | Cross-session tool-call totals, top failing commands and per-day counts for one provider |
 | `list_findings` | Security, anomaly and behaviour-change findings across every provider, most severe first, with what, when, why and redacted evidence |
-| `list_repositories` | The repositories your sessions ran in, with sessions, turns, AI Credits and project ids; sessions with no repository are grouped by reason |
-| `list_projects` | Your projects from `projects.json` with their repositories and AI Credits |
+| `list_repositories` | The repositories your sessions ran in, with sessions, turns, AI Credits and project ids; sessions with no repository are grouped by reason. Local repositories are named by folder, never by path |
+| `list_projects` | Your projects from `projects.json` with their repositories and AI Credits; client names and billing codes only if you start the server with `--project-billing-details` (for example `claude mcp add agent-cost-analyzer -- /abs/path/scripts/mcp-server.sh --project-billing-details`) |
 | `get_price_book` | The dated price versions the app prices turns with, per channel and model |
+| `get_price_changes` | When a model's price changed: documented changes from the price book, and observed GitHub Copilot ones |
+| `get_repository_cost` | One repository's cost over time, by vendor and model, with price-change markers |
+| `get_project_cost` | One project's cost over time, by repository, vendor, model and token type, with its most expensive sessions |
+| `compare_costs` | Two to 20 repositories or projects side by side: total, change, per session, per active day, share and coverage |
+| `explain_cost_change` | Why a repository's or project's cost changed between two periods: usage, price and mix effects that add up exactly |
+| `get_statement` | A project's billing statement for a period: the issued one with any differences, else the draft. It never issues one |
+| `estimate_cost` | The cost of planned work as a p50–p90 range at today's prices, never one number |
 
-Three prompts start common reviews: `audit_session` (why a session's tool
-calls failed), `review_costs` (what drives your spend and how to cut it)
-and `security_review` (risky agent actions and the guardrails that would
-prevent them).
+Six prompts start common reviews: `audit_session` (why a session's tool
+calls failed), `review_costs` (what drives your spend and how to cut it),
+`security_review` (risky agent actions and the guardrails that would
+prevent them), `explain_cost_change` (whether usage, price or mix drove a
+change), `prepare_statement` (a statement's summary and a note to the
+client) and `estimate_work` (a range for planned work and its main
+uncertainty).
+
+Every cost figure says its basis: **billed** (what the vendor billed,
+GitHub Copilot's AI Credits), **reported** (a cost the log itself records)
+or **priced** (tokens times the price book's price for that model and
+date). Figures are priced **as of use** unless a tool is asked for
+**today's prices**, and the only conversion is 1 AI Credit = $0.01. The
+server's instructions tell the agent this when it connects.
 
 Per-session tools take an optional `provider` (for example
 `"claude-code"`) and otherwise use the source selected in the web app.
@@ -549,8 +566,9 @@ dropdown. The list boxes and **Current selections** stay in force in all
 three views. The two cost views follow the **Project**, **Repository** and a
 single **Provider** selection; any other selection (a model, a date, a tool)
 is named under the filters as "Not applied here", so a figure never only
-looks filtered. Both views are in the standalone app; the VS Code extension
-gets them in a later release.
+looks filtered. The VS Code extension has both views too, over its Copilot
+sessions; **Project** and **Billing** (below) are only in this app, because
+the extension has no projects.
 
 The filters sit in one row: the date range first (**This month**, **Last
 month**, **Last 90 days**, **This year**), then, on Cost over time, the
@@ -561,7 +579,7 @@ the view says so. Totals use each turn's preferred basis (billed, then
 reported, then priced) unless the Overview's **Cost basis** switch picks
 one.
 
-![Cost over time for two projects and the No project bucket: the filter row, KPI tiles with coverage, lines with a direct label at each end, unknown weeks drawn as gaps, and a price-change tag with its tooltip](images/guide-dashboard-cost-over-time.png)
+![Cost over time for three projects and the No project bucket: the filter row, KPI tiles with coverage, lines with a direct label at each end, unknown weeks drawn as gaps, and a price-change tag with its tooltip](images/guide-dashboard-cost-over-time.png)
 
 **Cost over time** shows:
 
@@ -615,6 +633,104 @@ same analyses the MCP tools `get_repository_cost`, `get_project_cost` and
 dropdown:
 
 ![Cost over time at 360 px: KPI tiles in two columns and the chart below](images/guide-dashboard-cost-over-time-360.png)
+
+**Project** looks inside the one project selected in the **Project** list
+box (select one first; the tab says so otherwise):
+
+- **Cost by vendor** as bars. Click a vendor to see its **models**, and
+  beside them the **tokens by type** (uncached input, cache write, cache
+  read, reasoning, output) as a separate chart.
+- **Why cost changed** between two months (**From** and **To**; by default
+  the first and last month of the date range): a waterfall from the first
+  month's cost through three effects to the second's. **Usage** is more or
+  fewer tokens at the first month's prices, **price** is the second month's
+  tokens times the change in unit price, and **mix** is work moved between
+  models. They add up exactly to the change. Increases are red and decreases
+  blue, and every step also has its written sign. The waterfall uses the
+  priced basis as of use, since only prices can be split this way; turns
+  without a priced figure are listed as not explained, never counted as 0.
+- **Reconciliation** (GitHub Copilot turns): billed minus priced AI Credits
+  per model and month. When Copilot billed a model more than 5% above or
+  below the price book, the same way, two weeks in a row (20 turns or more
+  each week), it is shown here as an **observed price change**: an inferred
+  finding, a prompt to check the price book, not a price. The same change
+  is a dashed marker on **Cost over time** (documented changes are solid).
+
+![The Project tab: cost by vendor, Anthropic's models and tokens by type, and why cost changed from August to October](images/guide-dashboard-project.png)
+
+![The Project tab at 360 px: the waterfall and the reconciliation table](images/guide-dashboard-project-360.png)
+
+The Project tab reads `GET /api/cost/project` and `GET /api/cost/variance`;
+the MCP tools `explain_cost_change` and `get_price_changes` give the same
+answers.
+
+**Billing** bills one project for a month. Pick the **Project** and the
+**Period** (the last month that has ended is chosen first); months are
+calendar months in this computer's time zone, which the statement names.
+
+- The **statement** lists a line per channel, model and price version with
+  its turns, tokens and amount. Turns whose cost is unknown are listed with
+  the reason and are not counted as zero. Use under a subscription (Claude
+  Code priced as API-equivalent) is left off unless the project includes
+  it. The totals are per currency, with the project's markup and fixed
+  lines, and in the project's own currency if it has one, at its fixed rate.
+- **Issue statement** freezes it as a file in the app's settings folder,
+  after a confirmation. Only a month that has ended can be issued. An issued
+  statement never changes: if later logs or a price change give other
+  figures, it shows **Differs from issued**, and **View diff** lists the
+  exact differences.
+- **Export…** writes the statement as CSV, JSON or Markdown (for an email to
+  a client), with a preview, to copy or save. Exports hold session ids and,
+  if you leave the box ticked, their titles; never message text.
+
+![Billing: the October statement for Customer portal, its lines, totals and what is not included](images/guide-dashboard-billing.png)
+
+**Edit projects** (or **Create project** when there are none) opens the
+**Projects** editor:
+
+- **Repositories without a project** are listed first. Assign each one with
+  its **Assign to** select; the keyboard is enough.
+- Each project has a name, client, billing code, **markup** (%), **fixed
+  lines** on every statement (a seat fee, say), an **own currency** at a
+  fixed rate per USD, whether **subscription use** is included, and its
+  members: a repository, optionally narrowed to a path inside it and branch
+  patterns (`main, release/*`).
+- **Capture rules** assign mitmproxy captures, which record no folder, to a
+  repository; the editor says how many sessions are Unattributed and why.
+- Problems, such as two projects claiming the same repository and branches
+  (a turn counts in one project only), show next to the field and in a
+  summary at the top, and **Save** stays disabled until they are fixed.
+
+![The Projects editor: a repository without a project, capture rules, and a project's fields and members](images/guide-projects-editor.png)
+
+![Billing at 360 px](images/guide-dashboard-billing-360.png)
+
+Billing reads `GET /api/statements`; the MCP tool `get_statement` gives the
+same answer and never issues one, and the `prepare_statement` prompt drafts
+a note to the client from it.
+
+#### Estimate the next piece of work
+
+Beside the statement, **Next piece of work** estimates what planned work on
+the project will cost. Enter the **Planned active days** (20 to start) and
+pick a **History window** of 4 or 12 weeks. The estimate is a range, never
+one number: the median (p50) and 90th-percentile (p90) cost of one active
+day in that window, at today's prices, times the planned days. It is shown
+in AI Credits with USD beside it, with the days it used.
+
+- An active day is a UTC day with at least one turn on the project. A day
+  with any turn that has no price is left out, and the panel says how many.
+- With fewer than 5 active days of known cost there is no range: the panel
+  says why, and how many days had a turn with no price.
+- Estimating on another model comes with Phase 14 (replaying sessions on
+  another vendor).
+
+![The estimate panel: a p50–p90 range for 20 planned days of Mobile app work over 12 weeks of history](images/guide-dashboard-estimate.png)
+
+The panel reads `GET /api/estimates`, which also takes `sessions` instead
+of `activeDays`. The MCP tool `estimate_cost` gives the same answer, and
+the `estimate_work` prompt turns it into a short estimate with its inputs
+and main uncertainty.
 
 ## Charts as tables
 

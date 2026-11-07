@@ -5,10 +5,13 @@ import { clockFromEnv } from "./platform/clock/clock-from-env.js";
 import { agentHostCatalogProbe } from "./services/config-check/agent-host-catalog-probe.js";
 import { resolveUserDataDir } from "./platform/vscode-paths/resolve-user-data-dir.js";
 import { checkConfig } from "./services/config-check/config-check.js";
+import { assertLoopbackBindHost } from "./http/loopback-bind.js";
 
 const port = 3001;
 // Loopback-only per architecture.md §11.2 — never expose to other hosts.
 const host = "127.0.0.1";
+// threat-model.md §5.1: fails at start if this ever stops being loopback.
+assertLoopbackBindHost(host);
 // The Vite dev server (packages/web/vite.config.ts, strictPort) proxies
 // /api here without changeOrigin, so its own Host (port 5173) arrives as-is.
 const viteDevServerPort = 5173;

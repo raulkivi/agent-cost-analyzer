@@ -18,7 +18,7 @@ export function registerFindingTools(server: McpServer, deps: McpToolDeps, guard
     {
       title: "List security, anomaly and behaviour-change findings",
       description:
-        "Lists what the analyzer flagged across every available provider (or one) in a date window, most severe first: security (credential access, pipe-to-shell, destructive or history-rewriting commands, privilege escalation, data upload, ...), anomalies (cost or failure outliers) and behaviour changes (first use of a program, tool or model). Each finding says what happened, when, in which session and turn, why it was flagged, with redacted evidence. Use get_turn to see the context.",
+        "Lists what the analyzer flagged across every available provider (or one) in a date window, most severe first: security (credential access, pipe-to-shell, destructive or history-rewriting commands, privilege escalation, data upload, ...), anomalies (cost or failure outliers), behaviour changes (first use of a program, tool or model) and price changes (kind \"price-change\": GitHub Copilot billing a model steadily above or below the price book, inferred; see get_price_changes). Each finding says what happened, when, in which session and turn, why it was flagged, with redacted evidence. Use get_turn to see the context.",
       inputSchema: {
         provider: z.string().optional().describe("Restrict to one log provider id (see list_log_providers). Default: every available provider."),
         since: sinceArg,

@@ -159,6 +159,11 @@ these differences:
   Code's clipboard.
 - The insights dashboard covers Copilot Chat sessions only, so it has no
   Provider list box.
+- The dashboard's view switch offers **Overview**, **Cost over time** and
+  **Compare**, by repository, vendor or model. **Project** and **Billing**
+  (projects, statements and estimates) are only in the standalone Agent
+  Cost Analyzer app, and the switch says so: the extension has no projects,
+  so every session counts in **No project**.
 - The panel has no list of its own: pick a session in the **Sessions**
   view or a scenario in the **Learn** view in the side bar, and the panel
   gives that room to the turns.
@@ -179,6 +184,7 @@ Everything else works as the [User Guide](UserGuide.md) describes:
 | Turn inspector (request and response per round) | [The turn inspector](UserGuide.md#the-turn-inspector) |
 | **Tool audit** and **All sessions** views | [Auditing tool calls](UserGuide.md#auditing-tool-calls) |
 | **Dashboard** view | [The insights dashboard](UserGuide.md#the-insights-dashboard) |
+| **Cost over time** and **Compare** | [Cost over time and Compare](UserGuide.md#cost-over-time-and-compare); the cost basis and prices in [Cost by repository and project](UserGuide.md#cost-by-repository-and-project) |
 | Exporting an AI-advice bundle | [Exporting an AI-advice bundle](UserGuide.md#exporting-an-ai-advice-bundle) |
 
 The panel opens in Learn mode. Switch to **Analyze** to see your own
@@ -204,7 +210,8 @@ side bar has three views: Sessions, Learn and Setup.
 
 ### Sessions view (`aiCreditsAnalyzer.sessions`)
 
-Your Copilot Chat sessions, grouped by day: **Today**, **Yesterday**, then
+Your Copilot Chat sessions, grouped by day or by repository. By day (the
+default): **Today**, **Yesterday**, then
 dates (YYYY-MM-DD), newest first. Sessions with no start time go in an
 **Undated** group at the end; the extension never makes up a date.
 
@@ -217,7 +224,27 @@ dates (YYYY-MM-DD), newest first. Sessions with no start time go in an
 - Select a session to open the panel on it.
 - Right-click a session for **Open Session**, **Show Tool Audit** and
   **Copy Advice Bundle**.
-- The title bar has **Refresh** and **Open**.
+- The title bar has **Refresh**, **Open** and the grouping toggle:
+  **Group Sessions by Repository** (a repository icon) while sessions are
+  grouped by day, **Group Sessions by Day** (a calendar icon) while they
+  are grouped by repository. The choice is remembered in every workspace.
+
+#### Grouped by repository
+
+Each group is the repository a session's folder belongs to: its remote,
+for example `github.com/example/portal-web`, or a repository with no
+remote by its folder name, for example `scratch (local)` (the full path
+on your machine is never shown). Groups with the highest known AI Credits
+come first, and sessions whose folder isn't known, or isn't in a
+repository, go in a **No repository** group at the end; hover it for the
+reasons.
+
+- A group's row shows the sum of its sessions' known costs and how many
+  are unknown, as a day's row does. It totals every session in the group.
+- Hover a group for its session count and total.
+- Each session's row shows its cost and the day it started (**Today
+  14:02**, **Yesterday** or a date).
+- The group holding your newest session is expanded.
 
 The list loads when VS Code starts, when the view becomes visible, and
 when you select **Refresh**. It doesn't watch files in the background, so
@@ -294,8 +321,25 @@ sessions today have cost data"). Select it to open the panel.
   Select it to open the Setup view.
 - With no sessions today, the item is hidden.
 
-The item updates on each refresh, not on a timer, so after midnight it
-changes on the next refresh.
+When the open folder is in a git repository, the item shows that
+repository's AI Credits today, for example `portal-web 48.20 AI Credits
+today`, and its tooltip adds every repository's total:
+
+```
+AI Credits today
+portal-web (this workspace): 48.20
+All repositories: 61.75
+3 of 4 sessions today have cost data
+```
+
+A repository with no remote is named by its folder only. A multi-root
+workspace adds up its folders' repositories (`portal-web +1`). If the
+workspace's repository has no session today, the item shows every
+repository's total and the tooltip says so. With no folder open, or one
+outside a repository, it shows every repository's total.
+
+The item updates on each refresh, and when you add or remove a workspace
+folder, not on a timer, so after midnight it changes on the next refresh.
 
 ### Selection sync
 
@@ -326,6 +370,8 @@ bar and are hidden from the Command Palette.
 | Fix Setting | `aiCreditsAnalyzer.fixSetting` | Opens the Settings editor on a setting a Setup row names, or the debug-logging setting (side bar and walkthrough only) |
 | Open Learn Mode | `aiCreditsAnalyzer.openLearnMode` | Opens the panel, which starts in Learn mode |
 | Open Get Started Walkthrough | `aiCreditsAnalyzer.openWalkthrough` | Opens the Get Started walkthrough |
+| Group Sessions by Repository | `aiCreditsAnalyzer.groupSessionsByRepository` | Groups the Sessions view by repository |
+| Group Sessions by Day | `aiCreditsAnalyzer.groupSessionsByDay` | Groups the Sessions view by day (the default) |
 
 **Fix Setting** opens only the Copilot Chat logging settings the setup
 check judges and `aiCreditsAnalyzer.mcp.enabled`. Any other setting id is
@@ -369,8 +415,9 @@ applies. Your user setting always applies.
 
 ### What it offers
 
-Nine read-only tools, the same ones the standalone app's MCP server has,
-over Copilot Chat sessions only:
+Seventeen read-only tools, the standalone app's MCP server's tools without
+its billing ones (`get_statement` and `estimate_cost`), over Copilot Chat
+sessions only:
 
 | Tool | What it returns |
 |---|---|
@@ -383,9 +430,17 @@ over Copilot Chat sessions only:
 | `list_tool_calls` | One session's tool calls, filtered and paged |
 | `get_audit_rollup` | Tool-call totals, top failing commands and per-day counts across sessions |
 | `list_findings` | Security, anomaly and behaviour-change findings, with redacted evidence |
+| `list_repositories` | The repositories your Copilot sessions ran in, with sessions, turns and AI Credits (folder names only for local ones) |
+| `list_projects` | No projects here: projects are edited in the standalone Agent Cost Analyzer app, and it says so |
+| `get_price_book` | The dated GitHub Copilot and API prices the extension prices turns with |
+| `get_price_changes` | When a model's price changed: documented, and observed from your billed AI Credits |
+| `get_repository_cost` | One repository's cost over time, by model, with price-change markers |
+| `get_project_cost` | One project's cost; with no projects, everything is in No project |
+| `compare_costs` | Several repositories side by side: total, change, per session, per active day and share |
+| `explain_cost_change` | Why a repository's cost changed between two periods: usage, price and mix effects |
 
-Three prompts start common reviews: `audit_session`, `review_costs` and
-`security_review`. A `null` figure means the log doesn't record it; the
+Four prompts start common reviews: `audit_session`, `review_costs`,
+`security_review` and `explain_cost_change`. A `null` figure means the log doesn't record it; the
 tools never report it as 0. The User Guide's
 [MCP section](UserGuide.md#querying-the-audit-from-claude-code-mcp) has
 more on the tools.
@@ -398,6 +453,8 @@ context, and so to whichever model the chat uses:
 - costs: tokens, AI Credits and cache use per session, turn and day;
 - tool calls and their outcomes;
 - findings: security, anomaly and behaviour-change flags, with excerpts;
+- repositories: their remote names (`github.com/org/repo`), never a
+  remote's credentials; a local repository by its folder name only;
 - turn text: your prompts and the model's responses.
 
 Secrets found in that text are redacted first, and text is cut to a

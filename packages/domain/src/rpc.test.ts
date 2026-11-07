@@ -45,6 +45,14 @@ describe("apiMethodSchema", () => {
       "getProductProfile",
       "getCostTimeSeries",
       "getCostComparison",
+      "getProjectCost",
+      "getCostVariance",
+      "getStatement",
+      "issueStatement",
+      "getProjects",
+      "saveProjects",
+      "getRepositoryList",
+      "getCostEstimate",
     ]);
   });
 
@@ -133,6 +141,18 @@ describe("apiMethodParamsSchemas (vscode-extension.md §4)", () => {
     ).toBe(true);
     expect(apiMethodParamsSchemas.getCostTimeSeries.safeParse({ ids: 5 }).success).toBe(false);
     expect(apiMethodParamsSchemas.getCostComparison.safeParse({ bucket: { day: true } }).success).toBe(false);
+    // Step 15.10: the Project tab's breakdown and variance.
+    expect(apiMethodParamsSchemas.getProjectCost.safeParse({ projectId: "portal", since: "2026-08-09", until: "2026-11-06" }).success).toBe(true);
+    expect(apiMethodParamsSchemas.getProjectCost.safeParse({}).success).toBe(false);
+    expect(apiMethodParamsSchemas.getCostVariance.safeParse({ groupBy: "project", id: "portal", periodA: "2026-08", periodB: "2026-10", currency: "usd" }).success).toBe(true);
+    expect(apiMethodParamsSchemas.getCostVariance.safeParse({ groupBy: "project", periodA: "2026-08", periodB: "2026-10" }).success).toBe(false);
+    // Step 15.11: statements; issuing needs both ids.
+    expect(apiMethodParamsSchemas.getStatement.safeParse({ projectId: "portal", period: "2026-10" }).success).toBe(true);
+    expect(apiMethodParamsSchemas.issueStatement.safeParse({ projectId: "portal", period: "2026-10" }).success).toBe(true);
+    expect(apiMethodParamsSchemas.issueStatement.safeParse({ projectId: "portal" }).success).toBe(false);
+    // Step 15.12: estimates.
+    expect(apiMethodParamsSchemas.getCostEstimate.safeParse({ projectId: "portal", activeDays: 20, historyWeeks: 12 }).success).toBe(true);
+    expect(apiMethodParamsSchemas.getCostEstimate.safeParse({ projectId: { x: 1 } }).success).toBe(false);
   });
 
   it("accepts range query fields as text or numbers, and absent fields", () => {

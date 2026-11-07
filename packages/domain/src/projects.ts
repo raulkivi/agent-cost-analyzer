@@ -26,13 +26,29 @@ export const projectMemberSchema = z.object({
   branches: z.array(z.string().min(1)).min(1).optional(),
 });
 
+// A fixed line on every statement of a project (a seat fee), per period.
+export const fixedLineSchema = z.object({
+  label: z.string().trim().min(1).max(200),
+  amount: z.number().nonnegative(),
+  currency: z.enum(["AI_CREDITS", "USD"]),
+}).strict();
+
 export const projectSchema = z.object({
   id: z.string().regex(/^[a-z0-9][a-z0-9-]{0,63}$/, "id: lower-case letters, digits and hyphens, at most 64"),
   name: z.string().trim().min(1),
   client: z.string().min(1).optional(),
   billingCode: z.string().min(1).optional(),
   members: z.array(projectMemberSchema).min(1),
-  rates: z.object({ markupPercent: z.number().min(0).max(10_000).optional() }).optional(),
+  // Step 15.11 (D13, D14): what statements add on top, and a fixed-rate
+  // currency of the user's own beside AI Credits and USD.
+  rates: z
+    .object({
+      markupPercent: z.number().min(0).max(10_000).optional(),
+      fixedLines: z.array(fixedLineSchema).max(50).optional(),
+      currency: z.object({ code: z.string().regex(/^[A-Z]{3}$/, "a three-letter currency code, e.g. EUR"), perUsd: z.number().positive() }).strict().optional(),
+    })
+    .strict()
+    .optional(),
   // D4: subscription (API-equivalent) use is left off statements unless set.
   includeSubscriptionUse: z.boolean().optional(),
 });
@@ -85,11 +101,14 @@ export const projectListSchema = z.object({
   status: projectsStateSchema.shape.status,
   projects: z.array(projectListEntrySchema),
   problems: z.array(projectFileProblemSchema),
+  // Step 15.13 (D19): why a product has no projects (the extension's server).
+  reason: z.string().optional(),
 });
 
 export type ProjectListEntry = z.infer<typeof projectListEntrySchema>;
 export type ProjectList = z.infer<typeof projectListSchema>;
 export type ProjectMember = z.infer<typeof projectMemberSchema>;
+export type FixedLine = z.infer<typeof fixedLineSchema>;
 export type Project = z.infer<typeof projectSchema>;
 export type CaptureRule = z.infer<typeof captureRuleSchema>;
 export type ProjectsFile = z.infer<typeof projectsFileSchema>;

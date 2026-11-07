@@ -3,6 +3,7 @@
 import { existsSync } from "node:fs";
 import {
   unavailableTokenCount,
+  type RequestTrace,
   type Session,
   type TokenCount,
   type TriggeredEvent,
@@ -10,12 +11,14 @@ import {
   type TurnInspectorDetail,
   type TurnUsage,
 } from "@agent-cost-analyzer/domain";
-import type { LogProvider, LogProviderAvailability } from "../log-providers/log-provider.js";
+import type { LogProvider, LogProviderAvailability, RequestTraceReader } from "../log-providers/log-provider.js";
 import { listClaudeCodeSessionFiles } from "../../platform/claude-code-paths/resolve-claude-code-projects-dir.js";
 import { readClaudeCodeSessionFile, type ClaudeCodeRawEntry } from "./claude-code-jsonl-reader.js";
 import { findForkPointIds, resolveActiveLeafUuid, walkBranch } from "./session-tree.js";
 import { groupBranchEntriesByUserMessage, type ClaudeCodeTurnGroup } from "./turn-grouper.js";
-import { groupTurnEntriesByRound } from "./round-grouper.js";
+import { buildClaudeCodeRequestTrace } from "./request-trace-builder.js";
+import { groupTurnEntriesByRound, groupTurnRequestRounds } from "./round-grouper.js";
+import { findCompactedRequestIds } from "./compaction.js";
 import { extractTurnUsage } from "./usage-extractor.js";
 import { extractToolCalls } from "./tool-call-extractor.js";
 import { indexToolResults } from "./tool-result-index.js";
@@ -100,17 +103,23 @@ function extractAssistantResponseText(group: ClaudeCodeTurnGroup): string {
   return texts.join("\n");
 }
 
-// Only "fork" is detected in v1 (no confirmed on-disk marker yet for the
-// other enum values — ship without rather than guess, per the plan).
+// "fork" and "compaction" are detected (no confirmed on-disk marker yet for
+// the other enum values — ship without rather than guess, per the plan).
+// A compaction tags the turn holding the first request after the boundary
+// (compaction.ts), the same request the request trace marks; fork wins
+// when both apply, as in pi-agent-log-provider.ts.
 // Checking specifically against the turn's own userMessageEntry.parentUuid
 // (not every entry) is load-bearing: a parallel tool-call response also
 // produces parentUuid multiplicities in real captures, but never with a
 // genuine new user turn as one of the children — only a real
 // message-edit/resend does that, so this check alone can't misfire on
 // parallel-tool-call structure (see session-tree.ts's findForkPointIds).
-function triggeredEventFor(group: ClaudeCodeTurnGroup, forkPointIds: Set<string>): TriggeredEvent | undefined {
+function triggeredEventFor(group: ClaudeCodeTurnGroup, forkPointIds: Set<string>, compactedRequestIds: Set<string>): TriggeredEvent | undefined {
   const parentUuid = group.userMessageEntry.parentUuid;
-  return typeof parentUuid === "string" && forkPointIds.has(parentUuid) ? "fork" : undefined;
+  if (typeof parentUuid === "string" && forkPointIds.has(parentUuid)) {
+    return "fork";
+  }
+  return groupTurnRequestRounds(group.entries).some((round) => compactedRequestIds.has(round.messageId)) ? "compaction" : undefined;
 }
 
 // Earliest timestamp among the branch's own entries (constraint: only the
@@ -129,7 +138,7 @@ function resolveStartedAt(branch: ClaudeCodeRawEntry[]): string | undefined {
 // names the authoritative active branch (session-tree.ts's
 // resolveActiveLeafUuid), so there's no need to guess/expose every fork as
 // its own session.
-export class ClaudeCodeLogProvider implements LogProvider {
+export class ClaudeCodeLogProvider implements LogProvider, RequestTraceReader {
   readonly id = PROVIDER_ID;
   readonly label = "Claude Code CLI";
 
@@ -158,12 +167,13 @@ export class ClaudeCodeLogProvider implements LogProvider {
     const branch = activeLeafUuid ? walkBranch(entries, activeLeafUuid) : [];
     const forkPointIds = findForkPointIds(entries);
     const groups = groupBranchEntriesByUserMessage(branch);
+    const compactedRequestIds = findCompactedRequestIds(groups);
     const resultIndex = indexToolResults(entries);
     const workspace = resolveSessionWorkspace(branch);
 
     const turns: Turn[] = groups.map((group, index) => {
       const usage = extractTurnUsage(group);
-      const triggeredEvent = triggeredEventFor(group, forkPointIds);
+      const triggeredEvent = triggeredEventFor(group, forkPointIds, compactedRequestIds);
       const startedAt = resolveTurnStartedAt(group);
       const turnWorkspace = resolveTurnWorkspace(group, workspace);
       return {
@@ -180,7 +190,10 @@ export class ClaudeCodeLogProvider implements LogProvider {
     });
 
     const knownUsageTurns = turns.filter((turn) => turn.usage.output.known);
-    const model = knownUsageTurns.length > 0 ? knownUsageTurns[knownUsageTurns.length - 1].usage.model : "unknown";
+    // The model of the last turn that made a request: a turn with none (a
+    // local command, or only a "<synthetic>" line) has model "unknown".
+    const modelTurns = knownUsageTurns.filter((turn) => (turn.usage.roundsCount ?? 0) > 0);
+    const model = modelTurns.at(-1)?.usage.model ?? "unknown";
     const startedAt = resolveStartedAt(branch);
 
     return {
@@ -216,6 +229,19 @@ export class ClaudeCodeLogProvider implements LogProvider {
       return null;
     }
     return this.buildSessionFromFile(filePath);
+  }
+
+  // Phase 14 step 14.2: the same active branch and turn grouping as
+  // buildSession, so the trace's turn indexes are the session's.
+  async readRequestTrace(sessionId: string): Promise<RequestTrace | null> {
+    const filePath = resolveClaudeCodeSessionFilePath(this.listSessionFilePaths(), sessionId);
+    if (!filePath) {
+      return null;
+    }
+    const { entries } = await readClaudeCodeSessionFile(filePath);
+    const activeLeafUuid = resolveActiveLeafUuid(entries);
+    const branch = activeLeafUuid ? walkBranch(entries, activeLeafUuid) : [];
+    return buildClaudeCodeRequestTrace(sessionId, groupBranchEntriesByUserMessage(branch));
   }
 
   async readTurnDetail(sessionId: string, turnIndex: number): Promise<TurnInspectorDetail | null> {

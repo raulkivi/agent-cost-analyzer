@@ -4,7 +4,7 @@ import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { COMMAND_IDS, VIEW_IDS } from "./commands/command-ids.js";
+import { COMMAND_IDS, SESSIONS_GROUPING_CONTEXT_KEY, VIEW_IDS } from "./commands/command-ids.js";
 import { WATCHED_SETTING_IDS } from "./config/config-change-watcher.js";
 import { INTERNAL_COMMAND_IDS } from "./diagnostics/test-hooks.js";
 import { MCP_ENABLED_SETTING_ID, MCP_PROVIDER_ID } from "./mcp/mcp-server-definitions.js";
@@ -179,6 +179,20 @@ describe("package.json contributions (vscode-extension.md §3.5)", () => {
     expect(sessionItem.map((entry) => entry.command).sort()).toEqual(
       [COMMAND_IDS.openSession, COMMAND_IDS.showToolAudit, COMMAND_IDS.copyAdviceBundle].sort(),
     );
+  });
+
+  // Step 15.14 (plan §11.9): one toggle in the Sessions view's title, the
+  // other grouping's command shown while the context key holds this one.
+  it("offers Group by repository and Group by day in the Sessions view title, one at a time", () => {
+    const title = contributes.menus?.["view/title"] ?? [];
+    const byRepository = title.find((entry) => entry.command === COMMAND_IDS.groupSessionsByRepository);
+    const byDay = title.find((entry) => entry.command === COMMAND_IDS.groupSessionsByDay);
+
+    expect(byRepository?.when).toBe(`view == ${VIEW_IDS.sessions} && ${SESSIONS_GROUPING_CONTEXT_KEY} != repository`);
+    expect(byDay?.when).toBe(`view == ${VIEW_IDS.sessions} && ${SESSIONS_GROUPING_CONTEXT_KEY} == repository`);
+    expect([byRepository?.group, byDay?.group]).toEqual(["navigation@0", "navigation@0"]);
+    const icons = Object.fromEntries((contributes.commands ?? []).map((command) => [command.command, command.icon]));
+    expect([icons[COMMAND_IDS.groupSessionsByRepository], icons[COMMAND_IDS.groupSessionsByDay]]).toEqual(["$(repo)", "$(calendar)"]);
   });
 
   it("puts the Fix action inline on a Setup warning", () => {

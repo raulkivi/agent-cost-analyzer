@@ -24,6 +24,8 @@ export interface GroupNode {
   id: string;
   label: string;
   description: string;
+  // Step 15.14: a repository group says what it holds (a day needs none).
+  tooltip?: string;
   expanded: boolean;
   children: SessionNode[];
 }
@@ -43,7 +45,7 @@ const MODEL_UNKNOWN = "unknown";
 
 // 2 decimals, the same rule as the web app's formatAiCredits (a one-line
 // duplicate: pulling web code into the host isn't worth it for this).
-function formatAiCredits(value: number): string {
+export function formatAiCredits(value: number): string {
   return value.toFixed(2);
 }
 
@@ -55,7 +57,7 @@ function turnCountText(count: number, t: Translate): string {
 
 // A valid start instant, or undefined: an absent or unparseable startedAt
 // puts the session in the Undated group rather than guessing a date.
-function startOf(session: Session): Date | undefined {
+export function startOf(session: Session): Date | undefined {
   if (session.startedAt === undefined) {
     return undefined;
   }
@@ -67,7 +69,7 @@ function costText(session: Session, t: Translate): string {
   return session.costAiCredits.known ? formatAiCredits(session.costAiCredits.value) : t("AI Credits unknown");
 }
 
-function toSessionNode(session: Session, start: Date | undefined, timeZone: string | undefined, t: Translate): SessionNode {
+export function toSessionNode(session: Session, start: Date | undefined, timeZone: string | undefined, t: Translate): SessionNode {
   const cost = costText(session, t);
   const turns = turnCountText(session.turnCount, t);
   const started = start
@@ -88,7 +90,7 @@ function toSessionNode(session: Session, start: Date | undefined, timeZone: stri
 
 // "12.40 · 1 unknown": the known costs summed, then how many are unknown.
 // With none known there's no sum to show — never a 0 (constraint 6).
-function groupDescription(sessions: Session[], t: Translate): string {
+export function groupDescription(sessions: Session[], t: Translate): string {
   let known = 0;
   let total = 0;
   for (const session of sessions) {

@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: MIT
 import type {
   CacheOutcome,
-  ScenarioScript,
-  ScriptStep,
+  RequestTrace,
   VendorProfile,
 } from "@agent-cost-analyzer/domain";
+import { scriptFromRequestTrace } from "../../session-replay/request-trace-scripter.js";
 import { simulateScenario } from "../simulate-scenario.js";
 import { requestInputTokens, type CalibrationCapture } from "./capture.js";
 
@@ -25,79 +25,43 @@ export function recordedOutcome(
   return cacheRead >= previousInput * 0.99 ? "hit" : "partial";
 }
 
-// The capture's input totals fix the script: each request's new content is
-// what it adds beyond the previous prompt and the previous output.
-export function scriptFromCapture(capture: CalibrationCapture): ScenarioScript {
-  const [first, ...rest] = capture.requests;
-  const firstInput = requestInputTokens(first!);
-  // The tools/system split can't be seen in usage numbers; it only matters
-  // for events, and a calibration capture has none.
-  const toolsTokens = Math.round(firstInput / 2);
-  const extended = capture.requests.some(
-    (r) => (r.recorded.extendedCacheWrite ?? 0) > 0,
-  );
+// Captures date from before request traces (step 14.2); as a trace they
+// replay through the same scripter as a real session (step 14.3), so
+// calibration checks the replay's own script. Times are rebuilt from the
+// gaps, from an arbitrary start, to the millisecond.
+const CAPTURE_START = Date.parse("2026-01-01T00:00:00.000Z");
 
-  const step = (
-    index: number,
-    gap: number,
-    newTokens: number,
-    output: number,
-    events: ScriptStep["events"],
-  ): ScriptStep => ({
-    index,
-    userMessage: "",
-    assistantResponse: "",
-    toolCalls: [],
-    explanation: "",
-    idleMinutesBefore: gap,
-    newContent: {
-      userTokens: newTokens,
-      toolResultTokens: 0,
-      reasoningTokens: 0,
-      outputTokens: output,
-    },
-    events,
-  });
-
-  const steps = [
-    step(
-      1,
-      0,
-      0,
-      first!.recorded.output,
-      extended ? [{ type: "extended-ttl" }] : [],
-    ),
-  ];
-  let previous = first!;
-  for (const request of rest) {
-    const delta =
-      requestInputTokens(request) -
-      requestInputTokens(previous) -
-      previous.recorded.output;
-    if (delta < 0) {
-      throw new Error(
-        `Request ${request.index}: the prompt shrinks (${delta} tokens), which a script can't express`,
-      );
-    }
-    steps.push(
-      step(
-        request.index + 1,
-        request.gapMinutes,
-        delta,
-        request.recorded.output,
-        [],
-      ),
-    );
-    previous = request;
-  }
+export function traceFromCapture(capture: CalibrationCapture): RequestTrace {
+  let elapsedMinutes = 0;
   return {
-    id: capture.id,
-    title: capture.id,
-    category: "calibration",
-    harnesses: [capture.harness],
-    sessionKind: "main",
-    staticPrefix: { toolsTokens, systemTokens: firstInput - toolsTokens },
-    steps,
+    sessionId: capture.id,
+    providerId: capture.source,
+    harness: capture.harness,
+    notTraced: [],
+    requests: capture.requests.map((request) => {
+      elapsedMinutes += request.gapMinutes;
+      const {
+        uncachedInput,
+        cacheRead,
+        cacheWrite,
+        extendedCacheWrite,
+        output,
+      } = request.recorded;
+      return {
+        index: request.index,
+        turnIndex: request.index,
+        startedAt: new Date(
+          CAPTURE_START + Math.round(elapsedMinutes * 60_000),
+        ).toISOString(),
+        model: capture.modelId,
+        uncachedInput,
+        cacheRead,
+        // A trace keeps the 1-hour writes inside all writes.
+        cacheWrite: cacheWrite + (extendedCacheWrite ?? 0),
+        ...(extendedCacheWrite === undefined ? {} : { extendedCacheWrite }),
+        output,
+      };
+    }),
   };
 }
 
@@ -105,14 +69,17 @@ export function replayCapture(
   capture: CalibrationCapture,
   profile: VendorProfile,
 ): ReplayRow[] {
-  const session = simulateScenario(scriptFromCapture(capture), {
-    profile,
-    modelId: capture.modelId,
-    harness: capture.harness,
-    // The lifetime comes from what the capture recorded, not from the
-    // harness default being tested.
-    harnessCacheDefaults: false,
-  });
+  const session = simulateScenario(
+    scriptFromRequestTrace(traceFromCapture(capture)),
+    {
+      profile,
+      modelId: capture.modelId,
+      harness: capture.harness,
+      // The lifetime comes from what the capture recorded, not from the
+      // harness default being tested.
+      harnessCacheDefaults: false,
+    },
+  );
   return capture.requests.map((request, position) => {
     const turn = session.turns[position]!;
     const value = (count: { known: boolean; value?: number }): number =>

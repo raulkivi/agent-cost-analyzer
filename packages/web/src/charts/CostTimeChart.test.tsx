@@ -120,4 +120,31 @@ describe("CostTimeChart (plan §11.2)", () => {
     expect([...placed].sort((a, b) => a - b)).toEqual([136, 168, 200]);
     expect(labelPositions([50, 120], 10, 200, 32)).toEqual([50, 120]);
   });
+
+  // Step 15.10 (plan §6.4 point 2): an observed change is a dashed marker,
+  // named as observed and inferred, with its weeks in the tooltip and table.
+  it("draws an observed change as a dashed marker with its own description and table row", async () => {
+    const { observedMarkerGroups } = await import("../lib/cost/series-model.js");
+    const observed = observedMarkerGroups([
+      {
+        kind: "observed",
+        date: "2026-10-05",
+        channel: "github-copilot",
+        modelId: "gpt-5.5",
+        direction: "above",
+        percent: 12,
+        weeks: [{ period: "2026-W41", start: "2026-10-05", end: "2026-10-11", turns: 20, billedAiCredits: 224, pricedAiCredits: 200, ratio: 1.12 }],
+        priceVersionIds: ["v"],
+        confidence: "inferred",
+      },
+    ]);
+    const { container } = render(
+      <CostTimeChart ariaLabel="Cost" lines={lines} bucket="week" format={String} formatTick={String} unitLabel="AI Credits" markers={observed} />,
+    );
+    expect(container.querySelector("[data-marker='2026-10-05']")).toHaveClass("cost-marker-line-observed");
+    const tag = screen.getByRole("button", { name: "Observed · gpt-5.5 +12%" });
+    expect(tag).toHaveAccessibleDescription(/Observed on Oct 5, 2026: gpt-5\.5 on GitHub Copilot billed 12% above the price book.*Inferred, not documented/);
+    fireEvent.focus(tag);
+    expect(screen.getByRole("tooltip")).toHaveTextContent("2026-W41");
+  });
 });

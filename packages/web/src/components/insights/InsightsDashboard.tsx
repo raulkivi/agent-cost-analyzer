@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
 import { useCallback, useMemo, useState } from "react";
-import { AI_CREDIT_CONVERSION_NOTE, redactRepositoryKey, type CostBasisChoice, type CostComparison, type CostSeries } from "@agent-cost-analyzer/domain";
+import { AI_CREDIT_CONVERSION_NOTE, redactRepositoryKey, type CostBasisChoice, type CostComparison, type CostSeries, type CostEstimate, type CostVariance, type ProjectCost, type ProjectsFile, type ProjectsState, type RepositoryList, type StatementAnswer } from "@agent-cost-analyzer/domain";
 import type {
   FailureCategory,
   InsightFinding,
@@ -10,7 +10,7 @@ import type {
   InsightToolCallRow,
   InsightTurnRow,
 } from "@agent-cost-analyzer/domain";
-import type { CostCompareQuery, CostSeriesQuery } from "../../api-client/cost-analysis.js";
+import type { CostCompareQuery, CostSeriesQuery, CostVarianceQuery, ProjectCostQuery } from "../../api-client/cost-analysis.js";
 import { fetchInsights, type InsightsQuery } from "../../api-client/insights.js";
 import { HorizontalBars } from "../../charts/HorizontalBars.js";
 import { TrendColumns } from "../../charts/TrendColumns.js";
@@ -41,6 +41,10 @@ import { StatTile } from "../ui/StatTile.js";
 import { CompareTab } from "./CompareTab.js";
 import { CostOverTimeTab, type CostOrders } from "./CostOverTimeTab.js";
 import { CurrentSelections } from "./CurrentSelections.js";
+import { ProjectTab } from "./ProjectTab.js";
+import { BillingTab } from "../billing/BillingTab.js";
+import { ProjectsEditor } from "../projects/ProjectsEditor.js";
+import type { EstimateQuery, StatementQuery } from "../../api-client/statements.js";
 import { FindingsTable } from "./FindingsTable.js";
 import { ListBox } from "./ListBox.js";
 
@@ -81,14 +85,20 @@ const COST_BASIS_OPTIONS = [
   { value: "priced", label: "Priced" },
 ] as const;
 
-// Phase 15 step 15.9 (plan §11.1): the Dashboard's views. Project and
-// Billing follow in steps 15.10 and 15.11.
-type DashboardView = "overview" | "cost-over-time" | "compare";
+// Phase 15 step 15.9 (plan §11.1): the Dashboard's views. Step 15.10 adds
+// Project; step 15.11 adds Billing and the Projects editor it opens.
+type DashboardView = "overview" | "cost-over-time" | "compare" | "project" | "billing";
 const VIEW_OPTIONS = [
   { value: "overview", label: "Overview" },
   { value: "cost-over-time", label: "Cost over time" },
   { value: "compare", label: "Compare" },
+  { value: "project", label: "Project" },
+  { value: "billing", label: "Billing" },
 ] as const;
+// Step 15.14 (plan §11.9): without projects and billing (the extension, D7,
+// D19) only the first three views, and a note saying where the rest are.
+const COST_VIEW_OPTIONS = VIEW_OPTIONS.filter((option) => option.value !== "project" && option.value !== "billing");
+export const PROJECTS_AND_BILLING_ELSEWHERE = "Billing and estimates: in the Agent Cost Analyzer app";
 // Below this the views are a select (plan §11.1), as the session view's are.
 const VIEW_SELECT_BELOW = 700;
 const PLACEHOLDERS = { project: NO_PROJECT, repository: UNATTRIBUTED };
@@ -114,8 +124,25 @@ interface InsightsDashboardProps {
   // ProductProfile.features.costAnalysis (step 15.9): the Cost over time and
   // Compare tabs over GET /api/cost/*; off in the extension until step 15.14.
   costAnalysis?: boolean;
+  // ProductProfile.features.projectsAndBilling (step 15.14): the Project and
+  // Billing tabs; true by default (the standalone app).
+  projectsAndBilling?: boolean;
   loadCostSeries?: (query: CostSeriesQuery, signal: AbortSignal) => Promise<CostSeries>;
   loadCostComparison?: (query: CostCompareQuery, signal: AbortSignal) => Promise<CostComparison>;
+  // Step 15.10: the Project tab.
+  loadProjectCost?: (query: ProjectCostQuery, signal: AbortSignal) => Promise<ProjectCost>;
+  loadCostVariance?: (query: CostVarianceQuery, signal: AbortSignal) => Promise<CostVariance>;
+  // Step 15.11: the Billing tab and the Projects editor (injectable for tests).
+  billing?: BillingDeps;
+}
+
+export interface BillingDeps {
+  loadStatement?: (query: StatementQuery, signal: AbortSignal) => Promise<StatementAnswer>;
+  issue?: (projectId: string, period: string) => Promise<StatementAnswer>;
+  loadProjects?: (signal: AbortSignal) => Promise<ProjectsState>;
+  loadRepositories?: (signal: AbortSignal) => Promise<RepositoryList>;
+  save?: (file: ProjectsFile) => Promise<ProjectsState>;
+  loadEstimate?: (query: EstimateQuery, signal: AbortSignal) => Promise<CostEstimate>;
 }
 
 // The list boxes, without the Provider facet for a single-provider product.
@@ -135,9 +162,14 @@ export function InsightsDashboard({
   now,
   crossProvider = true,
   costAnalysis = false,
+  projectsAndBilling = true,
   loadCostSeries,
   loadCostComparison,
+  loadProjectCost,
+  loadCostVariance,
+  billing = {},
 }: InsightsDashboardProps) {
+  const [editingProjects, setEditingProjects] = useState(false);
   const [preset, setPreset] = useState<RangePreset>("30");
   const [nowTime] = useState(() => (now ?? new Date()).getTime());
   // The load is cancellable (Cancel on its skeleton): the signal reaches the
@@ -147,6 +179,20 @@ export function InsightsDashboard({
     [preset, loadDataset, nowTime],
   );
   const { state, cancel, retry } = useCancellableLoad(loadFor);
+
+  if (editingProjects) {
+    return (
+      <ProjectsEditor
+        onBack={() => {
+          setEditingProjects(false);
+          retry();
+        }}
+        {...(billing.loadProjects ? { loadProjects: billing.loadProjects } : {})}
+        {...(billing.loadRepositories ? { loadRepositories: billing.loadRepositories } : {})}
+        {...(billing.save ? { save: billing.save } : {})}
+      />
+    );
+  }
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-4)" }}>
@@ -187,9 +233,14 @@ export function InsightsDashboard({
             dataset={state.data}
             crossProvider={crossProvider}
             costAnalysis={costAnalysis}
+            projectsAndBilling={projectsAndBilling}
             now={new Date(nowTime)}
             loadCostSeries={loadCostSeries}
             loadCostComparison={loadCostComparison}
+            loadProjectCost={loadProjectCost}
+            loadCostVariance={loadCostVariance}
+            billing={billing}
+            onEditProjects={() => setEditingProjects(true)}
             key={state.data.generatedAt + preset}
           />
         )}
@@ -218,9 +269,14 @@ interface DashboardBodyProps {
   dataset: InsightsDataset;
   crossProvider: boolean;
   costAnalysis: boolean;
+  projectsAndBilling: boolean;
   now: Date;
   loadCostSeries?: InsightsDashboardProps["loadCostSeries"];
   loadCostComparison?: InsightsDashboardProps["loadCostComparison"];
+  loadProjectCost?: InsightsDashboardProps["loadProjectCost"];
+  loadCostVariance?: InsightsDashboardProps["loadCostVariance"];
+  billing: BillingDeps;
+  onEditProjects: () => void;
 }
 
 // Plan §11.7: a project's colour is its position in the projects file; a
@@ -234,7 +290,7 @@ function costOrders(dataset: InsightsDataset): CostOrders {
   return { project: (dataset.projects ?? []).map((project) => project.id), repository: [...repositories].sort() };
 }
 
-function DashboardBody({ dataset, crossProvider, costAnalysis, now, loadCostSeries, loadCostComparison }: DashboardBodyProps) {
+function DashboardBody({ dataset, crossProvider, costAnalysis, projectsAndBilling, now, loadCostSeries, loadCostComparison, loadProjectCost, loadCostVariance, billing, onEditProjects }: DashboardBodyProps) {
   const model = useMemo(() => createInsightsModel(dataset), [dataset]);
   const orders = useMemo(() => costOrders(dataset), [dataset]);
   const [dashboardView, setDashboardView] = useState<DashboardView>("overview");
@@ -309,7 +365,15 @@ function DashboardBody({ dataset, crossProvider, costAnalysis, now, loadCostSeri
       </aside>
 
       <div className="insights-main" ref={measure}>
-        {costAnalysis && <ViewSwitch value={dashboardView} onChange={setDashboardView} asSelect={mainWidth !== undefined && mainWidth > 0 && mainWidth < VIEW_SELECT_BELOW} />}
+        {costAnalysis && (
+          <ViewSwitch
+            value={dashboardView}
+            onChange={setDashboardView}
+            options={projectsAndBilling ? VIEW_OPTIONS : COST_VIEW_OPTIONS}
+            asSelect={mainWidth !== undefined && mainWidth > 0 && mainWidth < VIEW_SELECT_BELOW}
+            note={projectsAndBilling ? undefined : PROJECTS_AND_BILLING_ELSEWHERE}
+          />
+        )}
         <CurrentSelections
           selections={selections}
           fieldLabel={fieldLabel}
@@ -329,6 +393,28 @@ function DashboardBody({ dataset, crossProvider, costAnalysis, now, loadCostSeri
             basis={costBasis}
             now={now}
             loadSeries={loadCostSeries}
+          />
+        ) : dashboardView === "billing" ? (
+          <BillingTab
+            projects={dataset.projects ?? []}
+            selections={selections}
+            now={now}
+            onEditProjects={onEditProjects}
+            {...(billing.loadStatement ? { loadStatement: billing.loadStatement } : {})}
+            {...(billing.issue ? { issue: billing.issue } : {})}
+            {...(billing.loadEstimate ? { loadEstimate: billing.loadEstimate } : {})}
+          />
+        ) : dashboardView === "project" ? (
+          <ProjectTab
+            selections={selections}
+            fieldLabel={fieldLabel}
+            placeholders={PLACEHOLDERS}
+            basis={costBasis}
+            now={now}
+            findings={dataset.findings}
+            turns={dataset.turns}
+            {...(loadProjectCost ? { loadProjectCost } : {})}
+            {...(loadCostVariance ? { loadVariance: loadCostVariance } : {})}
           />
         ) : dashboardView === "compare" ? (
           <CompareTab
@@ -533,24 +619,39 @@ function DashboardBody({ dataset, crossProvider, costAnalysis, now, loadCostSeri
   );
 }
 
-function ViewSwitch({ value, onChange, asSelect }: { value: DashboardView; onChange: (view: DashboardView) => void; asSelect: boolean }) {
-  if (asSelect) {
-    return (
-      <label className="view-select">
-        <span className="text-muted">View</span>
-        <select className="input" aria-label="Dashboard view" value={value} onChange={(event) => onChange(event.target.value as DashboardView)}>
-          {VIEW_OPTIONS.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
-      </label>
-    );
-  }
-  return (
+type ViewOption = (typeof VIEW_OPTIONS)[number];
+
+interface ViewSwitchProps {
+  value: DashboardView;
+  onChange: (view: DashboardView) => void;
+  options: readonly ViewOption[];
+  asSelect: boolean;
+  // Where the views this product leaves out are (step 15.14).
+  note?: string;
+}
+
+function ViewSwitch({ value, onChange, options, asSelect, note }: ViewSwitchProps) {
+  const control = asSelect ? (
+    <label className="view-select">
+      <span className="text-muted">View</span>
+      <select className="input" aria-label="Dashboard view" value={value} onChange={(event) => onChange(event.target.value as DashboardView)}>
+        {options.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+    </label>
+  ) : (
     <div role="radiogroup" aria-label="Dashboard view" className="dashboard-views">
-      <SegmentedControl name="dashboard-view" options={VIEW_OPTIONS} value={value} onChange={onChange} />
+      <SegmentedControl name="dashboard-view" options={options} value={value} onChange={onChange} />
+    </div>
+  );
+  if (!note) return control;
+  return (
+    <div className="dashboard-views-row">
+      {control}
+      <span className="text-muted dashboard-views-note">{note}</span>
     </div>
   );
 }

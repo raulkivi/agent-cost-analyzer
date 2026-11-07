@@ -8,6 +8,8 @@ import { createMcpServices } from "../composition/mcp-services.js";
 import { createTurnPricer } from "../composition/create-turn-pricer.js";
 import { readAppVersion } from "../composition/app-version.js";
 import { createMcpServer } from "./mcp-server.js";
+import { FileStatementStore } from "../data-sources/statements/file-statement-store.js";
+import { priceBookHashOf } from "../services/billing/statement-service.js";
 
 // stdio entry point for `claude mcp add` (see docs/plans/tool-call-audit.md
 // §10 and scripts/mcp-server.sh). stdout carries JSON-RPC only — anything
@@ -22,8 +24,17 @@ const { registry, resolvedAppSettingsDir } = composeLogProviders();
 // with the same book; step 15.7's cost analyses mark its price changes.
 const attribution = createStandaloneAttribution(registry, resolvedAppSettingsDir);
 const priceBook = createStandalonePriceBook(resolvedAppSettingsDir, attribution.catalog);
+// threat-model.md §5.6: list_projects shares client names and billing codes
+// with the chat model only when the user asks for it at launch.
+const projectBillingDetails = process.argv.slice(2).includes("--project-billing-details");
 const server = createMcpServer({
-  ...createMcpServices(registry, version, undefined, attribution, createTurnPricer(priceBook), priceBook),
+  projectBillingDetails,
+  ...createMcpServices(registry, version, undefined, attribution, createTurnPricer(priceBook), priceBook, {
+    // Step 15.11: get_statement reads the statements the app issued.
+    store: new FileStatementStore(resolvedAppSettingsDir),
+    projects: attribution.catalog,
+    priceBookHash: () => priceBookHashOf(priceBook.list({}).versions),
+  }),
   priceBook,
 });
 

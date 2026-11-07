@@ -37,13 +37,44 @@ jobs:
           fetch-depth: 1
           persist-credentials: false
 
+      # threat-model.md §5.5: the code-review plugin is pinned to a commit,
+      # like every action here, so a run never executes whatever a default
+      # branch holds that day. Anthropic's marketplace entry for it follows
+      # claude-plugins-official's main, and its name is reserved for that
+      # GitHub source, so a local copy of it can't be added. Instead this
+      # step writes a one-plugin marketplace pinning the plugin's own source
+      # by sha. It is written here, not committed, so it is only ever this
+      # workflow file, which the action checks against main before a run.
+      # Bump the sha by hand after reading the diff; Dependabot can't.
+      - name: Write the pinned code-review plugin marketplace
+        run: |
+          mkdir -p "$RUNNER_TEMP/review-plugins/.claude-plugin"
+          cat > "$RUNNER_TEMP/review-plugins/.claude-plugin/marketplace.json" <<'JSON'
+          {
+            "name": "pinned-review-plugins",
+            "owner": { "name": "agent-cost-analyzer" },
+            "plugins": [
+              {
+                "name": "code-review",
+                "source": {
+                  "source": "git-subdir",
+                  "url": "https://github.com/anthropics/claude-plugins-official.git",
+                  "path": "plugins/code-review",
+                  "ref": "main",
+                  "sha": "0412be76f50ab4f4f8abff3753efa9269fbbca5b"
+                }
+              }
+            ]
+          }
+          JSON
+
       - name: Run Claude Code Review
         id: claude-review
         uses: anthropics/claude-code-action@925afb53776cf1a2b738c6bdbed37b4d4000ef13 # v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          plugin_marketplaces: 'https://github.com/anthropics/claude-code.git'
-          plugins: 'code-review@claude-code-plugins'
+          plugin_marketplaces: '${{ runner.temp }}/review-plugins'
+          plugins: 'code-review@pinned-review-plugins'
           prompt: '/code-review:code-review ${{ github.repository }}/pull/${{ github.event.pull_request.number }}'
           # See https://github.com/anthropics/claude-code-action/blob/main/docs/usage.md
           # or https://code.claude.com/docs/en/cli-reference for available options

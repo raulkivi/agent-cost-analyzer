@@ -39,14 +39,14 @@ test("S3: compare two projects, then at 640 px with a row's details", async ({ p
   await expect(table).toBeVisible();
   await expect(table.locator("tbody tr")).toHaveCount(2);
   expect(await table.locator("thead th").allTextContents()).toEqual(HEADERS);
-  expect(await readTable(table)).toEqual(EXPECTED);
+  await expect.poll(() => readTable(table)).toEqual(EXPECTED);
   await expect(page.getByText(/Billing service: 67% of turns have a known cost/)).toBeVisible();
   expect(await axeViolations(page)).toEqual([]);
 
   await page.setViewportSize({ width: 640, height: 900 });
   await expect(table.locator("thead th")).toHaveText(["Project", "Total (AI Credits)", "Change", "Coverage", "Details"]);
   await expect(table.locator("tbody tr")).toHaveCount(2);
-  expect(await readTable(table)).toEqual({
+  await expect.poll(() => readTable(table)).toEqual({
     "Customer portal": ["30.95", "unknown", "86%", "Details"],
     "Billing service": ["4.30", "+330.0%", "67%", "Details"],
     Selection: ["35.25", "unknown", "80%", ""],

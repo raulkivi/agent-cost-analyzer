@@ -150,11 +150,30 @@ function invoke(
       return api.getHealth();
     case "getProductProfile":
       return api.getProductProfile();
-    // Step 15.9: 404 from the extension's ApiService until step 15.14.
+    // Step 15.9; answered over the Copilot sessions from step 15.14 (project
+    // cost, statements, estimates and projects are 404: none in the extension).
     case "getCostTimeSeries":
       return api.getCostTimeSeries(toQuery(params));
     case "getCostComparison":
       return api.getCostComparison(toQuery(params));
+    case "getProjectCost":
+      return api.getProjectCost(toQuery(params));
+    case "getCostVariance":
+      return api.getCostVariance(toQuery(params));
+    case "getStatement":
+      return api.getStatement(toQuery(params));
+    case "getProjects":
+      return api.getProjects();
+    case "saveProjects":
+      return api.saveProjects((params as { file: unknown }).file);
+    case "getRepositoryList":
+      return api.getRepositoryList();
+    case "getCostEstimate":
+      return api.getCostEstimate(toQuery(params));
+    case "issueStatement": {
+      const { projectId, period } = params as { projectId: string; period: string };
+      return api.issueStatement(projectId, period);
+    }
   }
 }
 
@@ -279,7 +298,7 @@ function describeInvalidParams(
 
 function failure(
   id: string,
-  status: 400 | 404 | 500,
+  status: 400 | 404 | 409 | 500,
   message: string,
 ): RpcResponse {
   return { kind: "response", id, ok: false, error: { status, message } };

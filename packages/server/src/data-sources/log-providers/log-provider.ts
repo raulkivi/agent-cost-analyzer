@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import type { Session, TurnInspectorDetail } from "@agent-cost-analyzer/domain";
+import type { RequestTrace, Session, TurnInspectorDetail } from "@agent-cost-analyzer/domain";
 
 // The provider-neutral boundary (architecture.md §6.2.1/§12): every log
 // source — VS Code local logs, mitmproxy captures, or a future source —
@@ -39,4 +39,20 @@ export interface LogProvider {
   // round-trip data available" — that's a valid, non-null
   // TurnInspectorDetail with `rounds: []`.
   readTurnDetail(sessionId: string, turnIndex: number): Promise<TurnInspectorDetail | null>;
+}
+
+// Phase 14 step 14.2 (docs/plans/analyze-session-replay.md §8): the per-
+// request trace a replay reads. A separate, optional capability (ISP):
+// only providers whose logs record each LLM request implement it (Claude
+// Code and Copilot first, D1); the others never have to stub it.
+export interface RequestTraceReader {
+  // The session's main chain as one record per request, numbers only, in
+  // the session's own turns, or null if this provider has no session with
+  // that id (as readSession). Turns with no usable request are listed in
+  // `notTraced` with their reason, never dropped or zeroed.
+  readRequestTrace(sessionId: string): Promise<RequestTrace | null>;
+}
+
+export function canReadRequestTrace(provider: LogProvider): provider is LogProvider & RequestTraceReader {
+  return typeof (provider as Partial<RequestTraceReader>).readRequestTrace === "function";
 }

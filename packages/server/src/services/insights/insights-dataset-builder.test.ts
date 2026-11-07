@@ -238,5 +238,12 @@ describe("buildInsightRows", () => {
       const rows = buildInsightRows([providerSessions([analyzeSession("s1", "2026-10-30T10:00:00.000Z", [own, turn(1)])], "vscode")]);
       expect(rows.turns.map((row) => row.date)).toEqual(["2026-10-31", "2026-10-30"]);
     });
+
+    // Step 15.11 (D6): the instant too, so statements bill in their time zone.
+    it("gives each turn its time as an ISO instant, the same one its date comes from", () => {
+      const own = { ...turn(0), startedAt: "2026-10-31T23:30:00+00:00" };
+      const rows = buildInsightRows([providerSessions([analyzeSession("s1", "2026-10-30T10:00:00.000Z", [own, turn(1)])], "vscode")]);
+      expect(rows.turns.map((row) => row.at)).toEqual(["2026-10-31T23:30:00.000Z", "2026-10-30T10:00:00.000Z"]);
+    });
   });
 });

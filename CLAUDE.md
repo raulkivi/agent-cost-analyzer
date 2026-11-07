@@ -113,7 +113,7 @@ content here.
   on the Marketplace and Open VSX; some VS Code manual checks stay open, see
   docs/plans/vscode-extension-manual-checks.md). Phase 13 (vendor-aware Learn simulation,
   VS Code first; see docs/plans/vendor-aware-learn-simulation.md) is
-  in progress: steps 13.0-13.10 are built (simulator, vendor profiles, Learn picker, Cache column, Vendors tab, `npm run scenarios:docs`, standalone support); 13.5a (calibration against real captures) is open (owner decisions D1–D19 in its §9; Phase 14, replaying Analyze sessions on another vendor, follows it); the Learn scenario fact-check it builds on is in
+  built and merged: steps 13.0-13.10 (simulator, vendor profiles, Learn picker, Cache column, Vendors tab, `npm run scenarios:docs`, standalone support; #129-#139) and 13.5a (calibration against real Claude Code and Copilot logs, #144; the owner's 1-hour Claude Code cache decision of 2026-11-06 is in `harnessCacheDefaults`); decisions D1–D19 are all recorded in its §9; open: only the owner's eyes-on review of 13.8; Phase 14, replaying Analyze sessions on another model, is planned in docs/plans/analyze-session-replay.md (decisions D1–D8 recorded 2026-11-07, step 14.0's threat-model rows, step 14.1's domain `RequestTrace`/`SessionReplay` schemas and step 14.2's request traces (optional `RequestTraceReader` on the Claude Code and VS Code providers) and step 14.3's `RequestTraceScripter` in `packages/server/src/services/session-replay/` (calibration replays through it; Claude Code compacted sessions now read past the compaction) done, step 14.4 next); the Learn scenario fact-check it builds on is in
   docs/learn-scenarios-fact-check.md. Phase 15 (cost by repository and project,
   price history, billing statements and estimates; see
   docs/plans/cost-by-repository-and-project.md) is planned: the owner's
@@ -137,10 +137,40 @@ content here.
   `review_costs` project step, golden JSON in `cost-analysis/__golden__/`);
   step 15.9 is done (the Dashboard's Cost over time and Compare tabs in
   `packages/web/src/components/insights/` over `GET /api/cost/*`, the chart
-  `charts/CostTimeChart.tsx` and `lib/cost/`, hidden in the extension by
-  `ProductFeatures.costAnalysis` until step 15.14; the §12.4.1 Playwright
+  `charts/CostTimeChart.tsx` and `lib/cost/`, in the extension from step 15.14; the §12.4.1 Playwright
   usage-scenario suite in `packages/web/e2e/` with S2 and S3 in the
   `web-e2e` CI job, `npm run test:e2e --workspace=packages/web`);
+  step 15.10 is done (`PriceChangeDetector` in `services/pricing/` with
+  observed Copilot price changes as `price-change` findings (D11), the
+  `VarianceAnalyzer` in `services/cost-analysis/` with usage, price and mix
+  effects that add up exactly (D12), `GET /api/cost/variance`,
+  `/api/cost/project` and `/api/price-book/changes`, MCP
+  `explain_cost_change` (tool and prompt) and `get_price_changes`, the
+  Dashboard's Project tab (`ProjectTab`, `charts/Waterfall.tsx`), dashed
+  observed markers on Cost over time, and scenario S4);
+  step 15.11 is done (statements: `services/billing/` builder and service,
+  `data-sources/statements/` file store in the settings folder, domain
+  `Statement`, diff and CSV/JSON/Markdown exports, `GET /api/statements`
+  and the JSON-only issue POST, MCP `get_statement` and
+  `prepare_statement`, the Dashboard's Billing tab and the Projects editor,
+  decisions D13–D15, scenarios S1, S5, S6 and S8);
+  step 15.12 is done (estimates: domain `CostEstimate`, `buildCostEstimate`
+  and `EstimateService` in `services/billing/`, `GET /api/estimates`, MCP
+  `estimate_cost` and the `estimate_work` prompt, the Billing tab's
+  `EstimatePanel`, decisions D16–D18, scenario S7);
+  step 15.13 is done (MCP across both products: `createMcpServer`'s
+  `toolGroups`, the extension's MCP server with 17 tools over the Copilot
+  provider and no billing, `list_projects` with no projects and a reason
+  there (D19), cost-basis instructions for both, `mcp/security.test.ts`,
+  the stdio exit criterion and scenario S10 in `web-e2e`);
+  step 15.14 is done (the extension: Sessions grouped by repository with a
+  title-bar toggle kept in globalState, `sidebar/sessions-by-repository-tree-model.ts`
+  and `sidebar/repository-sources.ts`; the status bar per workspace
+  repository; the Dashboard's Cost over time and Compare tabs, with
+  `ProductFeatures.projectsAndBilling` keeping Project and Billing in the
+  standalone app; scenario S9 in `extension-ui`); step 15.15 (the docs pass: architecture.md
+  §6.4 cost data flow and product table, guides, vision, READMEs) is written,
+  the owner's review and the plan §15 exit criterion on real data open;
   step 15.1 is done (`Session.workspace`, `Turn.startedAt`, and
   `Turn.workspace` for Claude Code, from every provider) and step 15.2
   (`RepositoryResolver` and `RemoteUrlNormalizer` in

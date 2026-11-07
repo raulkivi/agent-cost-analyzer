@@ -96,6 +96,39 @@ export function createApp(options: CreateAppOptions = {}): Express {
     res.json(await api.getCostComparison(req.query));
   }));
 
+  // Phase 15 step 15.10: why a cost changed (usage, price, mix) and the
+  // documented and observed price changes.
+  // Phase 15 step 15.11: billing statements. Issuing writes a file, so it
+  // takes JSON only: a cross-origin form post (no preflight) gets 415.
+  // Phase 15 step 15.12: an estimate for planned work, a p50–p90 range.
+  app.get("/api/estimates", route(async (req, res) => {
+    res.json(await api.getCostEstimate(req.query));
+  }));
+
+  app.get("/api/statements", route(async (req, res) => {
+    res.json(await api.getStatement(req.query));
+  }));
+
+  app.post("/api/statements/:projectId/:period/issue", route(async (req, res) => {
+    if (!req.is("application/json")) {
+      res.status(415).json({ error: "Send the issue request as application/json." });
+      return;
+    }
+    res.json(await api.issueStatement(req.params.projectId, req.params.period));
+  }));
+
+  app.get("/api/cost/project", route(async (req, res) => {
+    res.json(await api.getProjectCost(req.query));
+  }));
+
+  app.get("/api/cost/variance", route(async (req, res) => {
+    res.json(await api.getCostVariance(req.query));
+  }));
+
+  app.get("/api/price-book/changes", route(async (req, res) => {
+    res.json(await api.getPriceChanges(req.query));
+  }));
+
   app.get("/api/learn/scenarios", route(async (_req, res) => {
     res.json(await api.listLearnScenarios());
   }));

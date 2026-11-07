@@ -161,6 +161,11 @@ outbound network calls.
 | `platform/vscode-paths` | Resolves the active VS Code variant's user-data directory across OSes (Linux/macOS/Windows, Stable/Insiders) so `sqlite`, `jsonl`, and `vscode-settings` all locate the right files without duplicating detection logic |
 | `data-sources/vscode-settings` | Reads and merges the user (and workspace, if present) `settings.json` (JSONC) to read the prerequisite Copilot Chat debug-logging settings |
 | `services/insights` | Phase 9.11 ([plans/insights-dashboard.md](plans/insights-dashboard.md)): flattens sessions from every registered provider into the `InsightsDataset` star schema and runs injected `FindingDetector` strategies: rule-based security signals (`SecurityRule` table), robust z-score anomalies, and first-use behaviour changes. Pure apart from `InsightsService`, which loads providers through a narrow `listProviders()` port |
+| `services/cost-attribution` | Phase 15 ([plans/cost-by-repository-and-project.md](plans/cost-by-repository-and-project.md) §4, §7): `RepositoryResolver` (a folder → its repository, over a read-only `FileSystem` port, with `RemoteUrlNormalizer`), `ProjectCatalog` and `ProjectMatcher` (the projects file; one project per turn, D1), capture rules for mitmproxy, the vendor and channel resolvers, and `SessionAttributor`, which gives a session or turn its repository, project, vendor and channel (§6.4) |
+| `services/pricing` | Phase 15 §5–§6: the `PriceBook` with history (bundled `fixtures/price-book/` plus the user's versions), `CostPricer`, which gives each turn its billed, reported and priced `CostFigure`s, and `PriceChangeDetector` (documented and observed price changes) |
+| `services/cost-analysis` | Phase 15 §8: the cost cube over the Insights dataset and the pure builders for cost over time, compare, project cost and variance (usage, price and mix effects), behind `CostAnalysisService` |
+| `services/billing` | Phase 15 §8.5–§8.6: statements (draft, freeze, diff, CSV/JSON/Markdown export) and estimates (a p50–p90 range); standalone app only |
+| `data-sources/projects`, `data-sources/statements` | Phase 15: the projects file and issued statements, as JSON in the app's own settings folder (the only files the app writes besides `settings.json`, §11.2) |
 | `services/config-check` | Runs at server startup and on demand (§6.3): checks `agentDebugLog.fileLogging.enabled` and `maxRetainedSessionLogs` against constraints 8/10, producing actionable `ConfigWarning`s |
 | `domain` | The shared normalized TypeScript types (§5), plus schema validation, used by every other module and re-exported to the frontend build |
 | `api` | Thin REST layer (§8) that calls into `domain`/services and returns JSON; no business logic lives here |
@@ -341,7 +346,8 @@ ids. On the server, `services/cost-attribution/` adds `SessionAttributor`,
 `AttributionQueryService` and `repository-key-privacy`; `InsightsService`
 takes an optional `DatasetAttribution`. The MCP attribution tools are
 registered when `McpServerDeps.attribution` is given (the standalone stdio
-server); local folder paths appear only with `includePaths`.
+server); they never return local folder paths (threat-model.md §5.6; paths
+stay in `GET /api/repositories`).
 
 Price book (Phase 15 step 15.5, `packages/domain/src/price-book.ts`;
 [plans/cost-by-repository-and-project.md](plans/cost-by-repository-and-project.md)
@@ -425,13 +431,81 @@ which builds it with attribution); they and the two HTTP endpoints call the
 same `CostAnalysisService`, so their outputs are equal. `review_costs`
 gains a step that compares projects and groups findings by project.
 
+Billing statements (Phase 15 step 15.11, plan §8.5, D4, D6, D13–D15;
+`packages/domain/src/statement.ts` and `statement-export.ts`): a
+`Statement` holds one project's lines for a period (per basis, currency,
+channel, model and price version, with tokens and unit prices), unknown-
+cost and excluded lines (never summed), markup and fixed lines from the
+project's `rates`, totals per currency, the project's own currency at its
+fixed rate, coverage and provenance; `diffStatements` compares a frozen
+copy with a re-run exactly; `exportStatement` writes CSV, JSON and
+Markdown without message text. On the server, `services/billing/` holds
+the pure `buildStatement` (over the cost cube; turns placed by their day
+in the statement's time zone through `InsightTurnRow.at`) and
+`StatementService` over a `StatementStore` port
+(`FileStatementStore`, `data-sources/statements/`, exclusive create so an
+issued statement never changes); `mcp/billing-tools.ts` registers
+`get_statement` (read-only) and the prompts gain `prepare_statement`.
+Step 15.12 adds estimates: the domain's `CostEstimate`
+(`cost-estimate.ts`; a p50–p90 range at today's prices in USD with the
+unit costs and history window used, or the reason when fewer than 5 units
+have a known cost), the pure `buildCostEstimate` and `EstimateService` in
+`services/billing/`, MCP `estimate_cost` and the `estimate_work` prompt,
+and the Billing tab's `EstimatePanel`. The
+web's Billing tab (`components/billing/`) and Projects editor
+(`components/projects/`, edits as pure functions in
+`lib/projects/editor-model.ts`) are the Dashboard's.
+
+MCP across the products (Phase 15 step 15.13, plan §10.1.4–§10.1.6):
+`createMcpServer` takes `toolGroups` (`sessions`, `audit`, `cost`,
+`findings`, `attribution`, `pricing`, `costAnalysis`, `billing`; every
+group by default), and a group is registered only when its services are
+given too. The standalone stdio server serves all 19 tools and 6 prompts.
+The extension's (`createCopilotMcpServices`) serves
+`WITHOUT_BILLING_TOOL_GROUPS`: repositories over the Copilot provider
+(`createCopilotAttribution`, with no projects file, so `list_projects`
+returns none with a `reason`, D19), the bundled price book from its
+`media/` folder and the cost analyses, 17 tools and 4 prompts. Both
+identities' instructions share `COST_BASIS_INSTRUCTIONS` (the three cost
+bases, as-of-use versus today's prices, 1 AI Credit = $0.01).
+
+Price changes and variance (Phase 15 step 15.10, plan §6.4, §8.4, D11,
+D12; `packages/domain/src/price-change.ts` and `cost-variance.ts`): a priced
+`CostFigure` carries `byTokenType` (uncached input, cache read, cache
+write, output). `ObservedPriceChange` is a run of 2+ ISO weeks in a row in
+which Copilot's billed AI Credits for a model are more than 5% above (or
+below) the priced ones, each week with 20+ turns that have both
+(`confidence: "inferred"`); `PriceChangeList` holds both kinds. On the
+server, `services/pricing/price-change-detector.ts` (`PriceChangeDetector`)
+lists them; `services/insights/price-change-finding-detector.ts` raises each
+observed change as a finding of kind `price-change` (none when the dataset
+is priced at today's prices; `DetectorInput.pricing` says which); cost
+series carry `observedChanges` for the models shown. `CostVariance`
+(`services/cost-analysis/variance-analyzer.ts`, pure over the cube) splits
+the priced change between two periods per currency, model and token type
+into usage (volume at period A's average price), price and mix (the rest),
+which add up by construction (a property test checks it; the schema
+refuses effects that don't). `CostAnalysisService.explainChange` and
+`getPriceChanges` serve `GET /api/cost/variance`, `/api/price-book/changes`
+and the MCP tools `explain_cost_change` (cost group) and
+`get_price_changes` (pricing group), registered with the cost analyses,
+plus the `explain_cost_change` prompt.
+
 The Dashboard's cost tabs (Phase 15 step 15.9, plan §11.1–§11.3) are the
 web client of those two endpoints. `InsightsDashboard` shows a view switch
-(Overview, Cost over time, Compare; a `select` below 700 px of its own
-width) when `ProductFeatures.costAnalysis` is on: true in the standalone
-app, false in the extension until step 15.14, whose ApiService has no cost
-analyses (the webview RPC allow-list carries `getCostTimeSeries` and
-`getCostComparison`, and the extension answers them 404). The tabs share
+(Overview, Cost over time, Compare, and Project from step 15.10; a `select` below 700 px of its own
+width) when `ProductFeatures.costAnalysis` is on, in both products (the
+extension's ApiService has the cost analyses over its Copilot dataset from
+step 15.14). Project and Billing need `ProductFeatures.projectsAndBilling`
+too: true in the standalone app, false in the extension, which has no
+projects file or billing (D7, D19), so its switch offers Overview, Cost
+over time and Compare with a note that billing and estimates are in the
+standalone app (the webview RPC allow-list carries `getCostTimeSeries`,
+`getCostComparison`, from step 15.10 `getProjectCost` and
+`getCostVariance`, and from step 15.11 `getStatement`, `issueStatement`,
+`getProjects`, `saveProjects` and `getRepositoryList`, from step 15.12
+`getCostEstimate`; the extension answers the project and billing ones
+404). The tabs share
 the associative selections. Data flow: `lib/cost/cost-scope.ts` turns the
 selections into a request (Project, else Repository, as `groupBy` and
 `ids`; one selected Provider as `provider`; a selected No project or
@@ -593,6 +667,7 @@ a new strategy only when its caching kind is new.
 | `services/learn-simulation/pricer.ts` | `server` | token buckets × price tier → USD → AI credits (1 credit = $0.01) |
 | `services/learn-simulation/simulate-scenario.ts` | `server` | script + model → Learn `Session` (pure) |
 | `services/learn-simulation/learn-simulation-service.ts` | `server` | `getScenario`, `compareScenario`, `listVendorProfiles` behind `ApiService` |
+| `services/session-replay/request-trace-scripter.ts` | `server` | Phase 14: a real session's `RequestTrace` → `ScenarioScript` (compaction, clear, model switch, 1-hour writes; pure); calibration replays its captures through it |
 | `components/learn/*` | `web` | vendor picker, assumptions popover, sources footer, cache-outcome badge, How vendors differ card, Vendors tab |
 
 Where a rule a turn depends on is `unknown` for the chosen vendor, the turn's
@@ -1751,13 +1826,22 @@ when no such entry exists yet), so there is no need to guess/expose every
 fork as its own session the way the mitmproxy idle-gap split and
 pi-agent's per-leaf split both do. This also matches Claude Code's own UI
 mental model: one file is one conversation, possibly edited, not several.
+A compaction (`/compact` or automatic) starts a new `parentUuid` chain: its
+`system`/`compact_boundary` entry has `parentUuid: null` and names the last
+entry before it in `logicalParentUuid`. `walkBranch` follows that link too
+(with a cycle guard), so a compacted session keeps its turns from before the
+compaction (before step 14.3 it stopped there and undercounted the session).
+A `/clear` in the same file has no such link, so the branch still starts
+after it.
 
 **Turns are grouped by real user messages, but "real" needs its own
 predicate here.** `type: "user"` is shared by two different things in this
 format: a genuine human turn, and a tool-result-delivery line the CLI
 writes back after running a tool call. `turn-grouper.ts`'s
 `isRealUserMessage` distinguishes them (message content is a string, or an
-array containing at least one non-`tool_result` block) before
+array containing at least one non-`tool_result` block; CLI-written
+`isMeta` lines and a compaction's `isCompactSummary` line never count)
+before
 `groupBranchEntriesByUserMessage` (otherwise a direct port of pi's turn
 grouper) opens a new turn.
 
@@ -1801,8 +1885,13 @@ Checking specifically against a turn's own `userMessageEntry.parentUuid`
 points, rather than testing every entry indiscriminately) is sufficient to
 avoid misreporting parallel-tool-call structure as a fork: a real
 message-edit/resend is the only case that puts a genuine user turn on both
-sides of a fork point. No confirmed on-disk marker exists yet for the
-other `triggeredEvent` enum values (model-switch, compaction, clear,
+sides of a fork point. `compaction` is the turn holding the first request
+after a `compact_boundary` (`compaction.ts`; fork wins when both apply), and
+the request trace marks that request with a `compaction` event. The CLI's
+own `<synthetic>` assistant lines (written after an interruption, all-zero
+usage) are no request: they are left out of usage, the turn's model and the
+trace (`round-grouper.ts`'s `groupTurnRequestRounds`). No confirmed on-disk
+marker exists yet for the other `triggeredEvent` enum values (model-switch, clear,
 rewind, cache-expiry, instructions-change, image-change,
 reasoning-toggle) — shipped without rather than guessed, per constraint 6.
 
@@ -1953,6 +2042,59 @@ console warning. Facts/decisions from this slice:
   `helpSteps` — the exit criterion's default-retention case, confirmed
   directly rather than only via fixtures.
 
+### 6.4 Cost by repository and project (Phase 15)
+
+One pipeline serves the Dashboard, the HTTP API, the webview RPC and MCP,
+so all four give the same figure for the same selection (scenario S10).
+Details and decisions are in
+[plans/cost-by-repository-and-project.md](plans/cost-by-repository-and-project.md);
+this is the end-to-end view.
+
+1. **Where a session ran.** Each provider reports `Session.workspace` (a
+   folder, a branch, or why it has none) and `Turn.startedAt`; Claude Code
+   also `Turn.workspace` (step 15.1). mitmproxy captures record no folder.
+2. **Which repository.** `RepositoryResolver` reads the folder's git files
+   (read-only, size-capped) and gives a `RepositoryRef`: a normalised remote
+   (`github.com/org/app`, credentials stripped), `local:` for a repository
+   with no remote, a provider's recorded name, or `path:` for a folder
+   outside one; otherwise the session is Unattributed with the reason.
+   Capture rules in the projects file assign mitmproxy captures.
+3. **Which project, vendor and channel.** `SessionAttributor` applies the
+   projects file's aliases and members (exclusive, most specific wins, D1),
+   resolves the model's vendor from the vendor profiles and the channel that
+   sold the tokens (Copilot, a vendor's API, a subscription).
+4. **What it cost.** `CostPricer` gives every turn up to three figures:
+   **billed** (Copilot's own AI Credits), **reported** (a cost the log
+   records), and **priced** (tokens × the price-book version in force on
+   the turn's day, or today's prices). An unknown figure keeps its reason
+   and is never summed as 0 (constraint 6). Totals use the preferred basis
+   (billed, else reported, else priced, D3) unless a view picks one.
+5. **The dataset.** `InsightsService` flattens every provider's sessions into
+   the Insights rows with those fields (step 15.4, 15.6). The cost cube
+   (`services/cost-analysis/`) aggregates the rows by bucket, group, vendor,
+   model and token type.
+6. **Analyses.** Pure builders over the cube: cost over time and compare
+   (step 15.7), project cost, variance and price-change markers (15.10),
+   statements (15.11, frozen copies kept in the settings folder, with an
+   exact diff against a re-run) and estimates (15.12).
+7. **Clients.** `ApiService` behind `GET /api/cost/*`, `/api/statements`,
+   `/api/estimates` and the price-book routes (§8); the same methods behind
+   the extension's webview RPC; and the MCP tools in the `attribution`,
+   `pricing`, `costAnalysis` and `billing` tool groups.
+
+**What each product has.**
+
+| | Standalone app | VS Code extension |
+|---|---|---|
+| Providers | All five | Copilot only |
+| Repositories, vendors, channels | Yes | Yes |
+| Projects file, Projects editor | Yes (`projects.json`) | No (D19): every turn is in No project |
+| Price book | Bundled plus user versions | Bundled only |
+| Dashboard tabs | Overview, Cost over time, Compare, Project, Billing | Overview, Cost over time, Compare (`ProductFeatures.projectsAndBilling` false) |
+| Statements and estimates | Yes | No (D7) |
+| Side bar and status bar | — | Sessions grouped by day or repository; today's AI Credits for the workspace's repository (step 15.14) |
+| MCP | 19 tools, 6 prompts | 17 tools, 4 prompts (no `billing` group) |
+
 ## 7. `main.jsonl` parsing strategy
 
 This is the riskiest part of the system (vision §7 open question: the
@@ -2019,9 +2161,15 @@ themselves.
 | `GET /api/config/status` | `ConfigStatus` — current prerequisite-setting check results and any `warnings[]` (§6.3), including the effective `minRetainedSessionLogsThreshold` |
 | `GET /api/projects` | `ProjectsState` (Phase 15 step 15.3, [plans/cost-by-repository-and-project.md](plans/cost-by-repository-and-project.md) §7): `status` (`missing`, `valid` or `invalid`), the file in use, its `problems` and its `location` |
 | `PUT /api/projects` | Replaces the projects file with the body after validation; returns the new `ProjectsState`. 400 with `{ error, problems }` if anything is wrong, and nothing is written |
-| `GET /api/price-book?channel&model&at` | `PriceBookListing` (Phase 15 step 15.5): the price versions in force (or all), their sources, gaps, unknown lookups with reasons and user-version problems; also the standalone MCP tool `get_price_book`. Not in the extension (404) |
-| `GET /api/cost/timeseries?groupBy&ids&bucket&basis&pricing&currency&since&until&provider&limit` | `CostSeries` (Phase 15 step 15.7): cost over time for the whole selection and, with `groupBy` (`repository`, `project`, `vendor`, `model`), one line per group or per `ids` entry (comma-separated, up to 20); `bucket` `day`/`week`/`month` (default), UTC; `basis` default `preferred`; `pricing` `as-of-use` (default) or `today`; `currency` `native` (default) or `usd`; `since`/`until` inclusive ISO dates. 400 on a bad query; not in the extension (404). Project cost is this endpoint with `groupBy=project` (the MCP tool `get_project_cost` adds the project breakdowns) |
-| `GET /api/cost/compare?groupBy&ids&since&until&comparePeriod&basis&pricing&currency&provider&limit` | `CostComparison` (Phase 15 step 15.7): the plan's §8.2 measures for 2 to 20 repositories or projects over `since`..`until` (required), against the `previous` period (default) or `last-year`. 400 on a bad query; not in the extension (404) |
+| `GET /api/price-book?channel&model&at` | `PriceBookListing` (Phase 15 step 15.5): the price versions in force (or all), their sources, gaps, unknown lookups with reasons and user-version problems; also the MCP tool `get_price_book` (both products' servers from step 15.13). Not a webview method: the extension's panel has no price-book view |
+| `GET /api/cost/timeseries?groupBy&ids&bucket&basis&pricing&currency&since&until&provider&limit` | `CostSeries` (Phase 15 step 15.7): cost over time for the whole selection and, with `groupBy` (`repository`, `project`, `vendor`, `model`), one line per group or per `ids` entry (comma-separated, up to 20); `bucket` `day`/`week`/`month` (default), UTC; `basis` default `preferred`; `pricing` `as-of-use` (default) or `today`; `currency` `native` (default) or `usd`; `since`/`until` inclusive ISO dates. 400 on a bad query. In the extension too (webview RPC `getCostTimeSeries`, step 15.14), over its Copilot sessions. Project cost is this endpoint with `groupBy=project` (the MCP tool `get_project_cost` adds the project breakdowns) |
+| `GET /api/cost/compare?groupBy&ids&since&until&comparePeriod&basis&pricing&currency&provider&limit` | `CostComparison` (Phase 15 step 15.7): the plan's §8.2 measures for 2 to 20 repositories or projects over `since`..`until` (required), against the `previous` period (default) or `last-year`. 400 on a bad query. In the extension too (`getCostComparison`, step 15.14) |
+| `GET /api/cost/variance?groupBy&id&periodA&periodB&currency&provider&limit` | `CostVariance` (Phase 15 step 15.10): why a repository's or project's cost changed between two periods (`YYYY-MM` or `YYYY-MM-DD..YYYY-MM-DD`), as usage, price and mix effects per currency, model and token type that add up exactly to the change, on the priced basis as of use; turns without a priced figure are `notExplained`; also MCP `explain_cost_change`. 400 for a bad query. In the extension (`getCostVariance`) for repositories, vendors and models; it has no projects |
+| `GET /api/cost/project?projectId&since&until&bucket&basis&pricing&currency&provider&limit&topSessions` | `ProjectCost` (Phase 15 step 15.10, the Dashboard's Project tab): as MCP `get_project_cost`; 404 for an unknown project or in the extension |
+| `GET /api/price-book/changes?since&until&channel&model&kind&provider&limit` | `PriceChangeList` (Phase 15 step 15.10): documented changes (price-book version boundaries) and observed ones (Copilot billed vs priced, `inferred`), oldest first; also MCP `get_price_changes` (both products). Not a webview method; the extension's cost tabs carry the markers |
+| `GET /api/statements?projectId&period&provider&limit` | `StatementAnswer` (Phase 15 step 15.11): one project's statement for a month (`YYYY-MM`) or range (`YYYY-MM-DD..YYYY-MM-DD`) in the machine's time zone: the frozen copy with the re-run and its exact diff, else the draft and whether it can be issued; also MCP `get_statement`. 404 unknown project, 400 bad period; not in the extension (404) |
+| `GET /api/estimates?projectId\|repository&activeDays\|sessions&historyWeeks=4\|12&provider` | `CostEstimate` (Phase 15 step 15.12): the cost of planned work as a p50–p90 range at today's prices (median and 90th-percentile cost per active day or session in the last 4 or 12 weeks × the planned units), labelled `"estimate"`, never one number; under 5 units with a known cost no range, the reason instead; also MCP `estimate_cost`. 404 unknown project, 400 bad query; not in the extension (404) |
+| `POST /api/statements/:projectId/:period/issue` | Freezes the draft into `statements/<project>/<period>.json` in the app's settings folder (Phase 15 step 15.11). JSON only (415 otherwise); 409 for an open or already issued period; returns the `StatementAnswer` |
 | `GET /api/repositories` | `RepositoryList` (Phase 15 step 15.3): every repository the providers' sessions resolve to (`key`, `source`, `rootPath`, session count, providers, first and last use, projects), the Unattributed sessions grouped by reason, and each provider's status |
 | `PUT /api/config/retention-threshold` | Sets the persisted `minRetainedSessionLogsThreshold` override (body: `{ value: number }`, must be a positive integer, else 400); returns the fresh `ConfigStatus` so the caller can update both the header control and the warning banner from one response |
 
@@ -2141,7 +2289,12 @@ agent-cost-analyzer/
   prompts and responses, command and evidence excerpts) is therefore
   passed through `redactSecrets` and bounded before it is returned, and
   its tools are all read-only and never reach the network
-  ([plans/mcp-tools-v2.md](plans/mcp-tools-v2.md) §6).
+  ([plans/mcp-tools-v2.md](plans/mcp-tools-v2.md) §6). Repositories are
+  returned by their normalised remote key (credentials stripped) or, for
+  a local one, its folder name, never its path; client names and billing
+  codes come only from `get_statement`, and from `list_projects` when the
+  server is launched with `--project-billing-details` (threat-model.md §5.6). `mcp/security.test.ts` runs every tool over generated
+  folders and remote credentials to check this (Phase 15 step 15.13).
 - No secrets are logged; any credentials that happen to appear in captured
   terminal-output tool results are treated as opaque strings, never parsed or
   echoed into error messages.
@@ -2326,8 +2479,8 @@ registry. See the plan's §3 for the decisions (D1-D10).
 **As built (steps 10.8-10.10).**
 - **MCP server.** The extension offers a Copilot-only stdio MCP server
   (`dist/mcp-stdio.js`) through `vscode.lm.registerMcpServerDefinitionProvider`,
-  started with VS Code's own Electron as Node. It has the same 9 read-only
-  tools as the standalone server under its own name (`ai-credits-analyzer`),
+  started with VS Code's own Electron as Node. It started with the standalone server's 9 read-only tools (17
+  from step 15.13, below), under its own name (`ai-credits-analyzer`),
   title (AI Credits Analyzer) and Copilot-only instructions. Both servers
   send the same author, GitHub repo link (`websiteUrl`) and inline SVG/PNG
   icon in their `initialize` result (`mcp/mcp-branding.ts`). Its only input is a validated
@@ -2343,6 +2496,22 @@ registry. See the plan's §3 for the decisions (D1-D10).
 - **Docs.** The extension's README is its Marketplace page; the full
   guide is [vscode-extension-guide.md](vscode-extension-guide.md). Its
   security surfaces are in [threat-model.md](threat-model.md) §6.
+
+**As built (Phase 15 steps 15.13-15.14).** The extension's share of cost
+by repository (§6.4 has the product table):
+- **MCP.** The server gains the repository, price-book and cost tools: 17
+  in all, without the `billing` group (`WITHOUT_BILLING_TOOL_GROUPS`).
+  `list_projects` returns no projects with the reason (D19).
+- **Dashboard.** The extension's `ApiService` has the cost analyses over
+  its Copilot dataset and the bundled price book, so the panel offers
+  Cost over time and Compare; `ProductFeatures.projectsAndBilling` is
+  false, so Project and Billing stay in the standalone app.
+- **Side bar and status bar.** The Sessions view groups by day or by
+  repository (`sidebar/sessions-by-repository-tree-model.ts`, a title-bar
+  toggle on a context key, the choice in `globalState`). The status bar
+  names the workspace folder's repository with its AI Credits today.
+  Both resolve repositories through `sidebar/repository-sources.ts`, the
+  same `SessionAttributor` and `RepositoryResolver` as the Dashboard.
 
 **Runtime check (Phase 10.0, 2026-10-24).** Current stable VS Code
 (1.143.0) ships Electron 43.7.7 with Node 24.21.0. `node:sqlite`

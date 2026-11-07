@@ -10,8 +10,10 @@ import {
   type CostSeries,
   type CostSeriesLine,
   type CostTotal,
+  type CostVariance,
   type Currency,
   type PriceChangeMarker,
+  type ProjectCost,
 } from "@agent-cost-analyzer/domain";
 
 // Phase 15 step 15.9: sample GET /api/cost/* answers for the cost tabs'
@@ -169,6 +171,7 @@ export function sampleCostSeries(
     series,
     byVendor: [],
     priceChanges: options.priceChanges ?? [PRICE_MARKER],
+    observedChanges: [],
   };
 }
 
@@ -228,5 +231,60 @@ export function sampleCostComparison(): CostComparison {
     undatedTurns: 0,
     total: rows.reduce((total, row) => addTotals(total, row.total), costTotal(null)),
     rows,
+  };
+}
+
+// Step 15.10 (plan §11.4; board 3): the Project tab's two answers.
+const breakdown = (key: string, label: string, usd: number) => ({ key, label, sessions: 3, turns: 10, cost: costTotal(usd, { turns: 10, knownTurns: 10 }), coverage: coverage(10, 10) });
+const tokenTotal = (value: number) => ({ value, turns: 10, knownTurns: 10, estimated: false });
+
+export function sampleProjectCost(): ProjectCost {
+  const series = sampleCostSeries([{ key: "portal", label: "Customer portal", values: [100, 200] }], { groupBy: "project" });
+  return {
+    ...series,
+    project: { id: "portal", name: "Customer portal" },
+    byVendor: [
+      { ...breakdown("anthropic", "Anthropic", 391.8), models: [breakdown("claude-sonnet-5.5", "claude-sonnet-5.5", 284.1), breakdown("claude-opus-5.5", "claude-opus-5.5", 107.7)] },
+      { ...breakdown("openai", "OpenAI", 179.2), models: [breakdown("gpt-5.5", "gpt-5.5", 179.2)] },
+    ],
+    byRepository: [breakdown("github.com/acme/portal-web", "github.com/acme/portal-web", 571)],
+    byTokenType: [
+      { model: "claude-sonnet-5.5", vendorId: "anthropic", turns: 10, uncachedInput: tokenTotal(6_200_000), cacheWrite: tokenTotal(2_000_000), cacheRead: tokenTotal(31_400_000), reasoning: tokenTotal(500_000), output: tokenTotal(1_100_000) },
+      { model: "gpt-5.5", vendorId: "openai", turns: 10, uncachedInput: tokenTotal(1_000_000), cacheWrite: tokenTotal(0), cacheRead: tokenTotal(3_000_000), reasoning: tokenTotal(0), output: tokenTotal(400_000) },
+    ],
+    topSessions: [],
+  };
+}
+
+export function sampleCostVariance(): CostVariance {
+  return {
+    generatedAt: COST_FIXTURE_NOW.toISOString(),
+    groupBy: "project",
+    id: "portal",
+    label: "Customer portal",
+    periodA: { label: "2026-08", since: "2026-08-01", until: "2026-08-31" },
+    periodB: { label: "2026-11", since: "2026-11-01", until: "2026-11-30" },
+    basis: "priced",
+    pricing: "as-of-use",
+    currency: "usd",
+    conversion: "Every amount is in USD: AI Credits converted at 1 AI Credit = $0.01",
+    providers: [],
+    currencies: [
+      {
+        currency: "USD",
+        costA: 182.4,
+        costB: 211.2,
+        change: 28.8,
+        usage: 41.3,
+        price: -18.6,
+        mix: 6.1,
+        turnsA: 10,
+        turnsB: 12,
+        byTokenType: [],
+        models: [],
+      },
+    ],
+    notExplained: { periodA: { turns: 0 }, periodB: { turns: 2, reasons: ["Cannot price: unknown model"] } },
+    priceChanges: [PRICE_MARKER],
   };
 }

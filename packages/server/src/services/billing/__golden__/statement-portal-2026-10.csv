@@ -1,0 +1,4 @@
+kind,basis,currency,channel,model,price_version,sessions,turns,uncached_input,cache_read,cache_write,reasoning,output,amount,note
+line,billed,AI_CREDITS,github-copilot,claude-sonnet-5.5,,1,2,2000,18000,0,,1000,1.90,
+excluded,,,,,,1,2,,,,,,,"subscription use priced as API-equivalent, left off unless the project includes it"
+total,,AI_CREDITS,,,,,,,,,,,1.90,

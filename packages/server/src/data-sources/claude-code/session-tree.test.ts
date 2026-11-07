@@ -8,6 +8,13 @@ function entry(uuid: string, parentUuid: string | null, type = "assistant"): Cla
   return { type, uuid, parentUuid };
 }
 
+// A compaction writes a `system`/`compact_boundary` entry with no parentUuid
+// of its own: it names the last entry before the compaction in
+// `logicalParentUuid` instead (seen in real captures).
+function compactBoundary(uuid: string, logicalParentUuid: string): ClaudeCodeRawEntry {
+  return { type: "system", subtype: "compact_boundary", uuid, parentUuid: null, logicalParentUuid, compactMetadata: { trigger: "manual", preTokens: 900 } };
+}
+
 describe("findLeafUuids", () => {
   it("returns the single tail entry for a linear chain", () => {
     const entries = [entry("e1", null), entry("e2", "e1"), entry("e3", "e2")];
@@ -23,6 +30,12 @@ describe("findLeafUuids", () => {
 
   it("returns an empty array for an empty entry list", () => {
     expect(findLeafUuids([])).toEqual([]);
+  });
+
+  it("does not count the last entry before a compaction as a leaf: the boundary continues it", () => {
+    const entries = [entry("e1", null), entry("e2", "e1"), compactBoundary("b1", "e2"), entry("e3", "b1")];
+
+    expect(findLeafUuids(entries)).toEqual(["e3"]);
   });
 });
 
@@ -48,6 +61,24 @@ describe("walkBranch", () => {
 
   it("returns an empty array for an unknown leaf uuid", () => {
     expect(walkBranch([entry("e1", null)], "does-not-exist")).toEqual([]);
+  });
+
+  it("continues through a compaction boundary to the entries before it", () => {
+    const entries = [entry("e1", null), entry("e2", "e1"), compactBoundary("b1", "e2"), entry("e3", "b1"), compactBoundary("b2", "e3"), entry("e4", "b2")];
+
+    expect(walkBranch(entries, "e4").map((e) => e.uuid)).toEqual(["e1", "e2", "b1", "e3", "b2", "e4"]);
+  });
+
+  it("stops at a boundary whose logicalParentUuid is not in the file", () => {
+    const entries = [compactBoundary("b1", "gone"), entry("e3", "b1")];
+
+    expect(walkBranch(entries, "e3").map((e) => e.uuid)).toEqual(["b1", "e3"]);
+  });
+
+  it("stops instead of looping when the links form a cycle", () => {
+    const entries = [compactBoundary("b1", "e2"), entry("e2", "b1")];
+
+    expect(walkBranch(entries, "e2").map((e) => e.uuid)).toEqual(["b1", "e2"]);
   });
 });
 
@@ -80,6 +111,12 @@ describe("findForkPointIds", () => {
     const entries = [entry("e1", null), entry("e2", "e1"), entry("e3", "e1"), entry("e4", "e2")];
 
     expect(findForkPointIds(entries)).toEqual(new Set(["e1"]));
+  });
+
+  it("does not count a compaction's logical link as a second child", () => {
+    const entries = [entry("e1", null), entry("e2", "e1"), entry("e3", "e2"), compactBoundary("b1", "e2")];
+
+    expect(findForkPointIds(entries)).toEqual(new Set());
   });
 
   it("returns an empty set for a linear chain", () => {

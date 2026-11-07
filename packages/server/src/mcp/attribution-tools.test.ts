@@ -112,7 +112,8 @@ describe("MCP attribution tools (step 15.4)", () => {
       expect(tool?.outputSchema?.type, name).toBe("object");
     }
     expect(Object.keys(byName.get("list_repositories")?.inputSchema.properties ?? {}).sort()).toEqual(
-      ["includePaths", "includeUnattributed", "projectId", "provider", "since", "until"].sort(),
+      // threat-model.md §5.6: no includePaths: the model can't ask for local paths.
+      ["includeUnattributed", "projectId", "provider", "since", "until"].sort(),
     );
     expect(Object.keys(byName.get("list_sessions")?.inputSchema.properties ?? {})).toEqual(expect.arrayContaining(["repository", "projectId"]));
   });
@@ -141,16 +142,16 @@ describe("MCP attribution tools (step 15.4)", () => {
       expect(list.repositories.find((entry) => entry.key === "path:notes")?.aiCredits).toEqual({ value: null, knownSessions: 0, sessions: 1 });
     });
 
-    it("returns no local folder path or credential unless includePaths is set", async () => {
+    // threat-model.md §5.6: a logged session can't make the model fetch local
+    // paths; they stay in the HTTP API (GET /api/repositories).
+    it("never returns a local folder path or credential, even when includePaths is passed", async () => {
       const plain = JSON.stringify(await client.callTool({ name: "list_repositories", arguments: {} }));
-      const withPaths = repositoryListSchema.parse(
-        (await client.callTool({ name: "list_repositories", arguments: { includePaths: true } })).structuredContent,
-      );
+      const asked = JSON.stringify(await client.callTool({ name: "list_repositories", arguments: { includePaths: true } }));
 
-      expect(plain).not.toContain("/home/dev");
-      expect(plain).not.toContain(TOKEN);
-      expect(withPaths.repositories.map((entry) => entry.key)).toContain("local:/home/dev/scratch");
-      expect(JSON.stringify(withPaths)).not.toContain(TOKEN);
+      for (const text of [plain, asked]) {
+        expect(text).not.toContain("/home/dev");
+        expect(text).not.toContain(TOKEN);
+      }
     });
 
     it("filters by project, date window and Unattributed", async () => {
@@ -177,15 +178,18 @@ describe("MCP attribution tools (step 15.4)", () => {
   });
 
   describe("list_projects", () => {
-    it("returns each project's id, name, client, billing code and members, without the file's location", async () => {
+    // threat-model.md §5.6: no client name or billing code without the opt-in.
+    it("returns each project's id, name and members, without client, billing code or the file's location", async () => {
       const result = await client.callTool({ name: "list_projects", arguments: {} });
       const list = projectListSchema.parse(result.structuredContent);
 
       expect(list.status).toBe("valid");
       expect(list.projects).toEqual([
-        { id: "portal", name: "Customer portal", client: "Acme Ltd", billingCode: "ACME-7", members: [{ repository: "github.com/acme/portal" }] },
+        { id: "portal", name: "Customer portal", members: [{ repository: "github.com/acme/portal" }] },
         { id: "lab", name: "Lab", members: [{ repository: "local:scratch" }] },
       ]);
+      expect(JSON.stringify(result)).not.toContain("Acme Ltd");
+      expect(JSON.stringify(result)).not.toContain("ACME-7");
       expect(JSON.stringify(result)).not.toContain("/home/dev");
       expect(JSON.stringify(result)).not.toContain("/settings/projects.json");
     });

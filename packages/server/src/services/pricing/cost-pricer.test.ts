@@ -112,7 +112,30 @@ describe("CostPricer: tokens × the version in force", () => {
       currency: "USD",
       basis: "priced",
       priceVersionIds: ["anthropic-api:claude-sonnet-5.5:2026-10-07"],
+      byTokenType: { uncachedInput: 2, cacheRead: 0.1, cacheWrite: 2.5, output: 10 },
     });
+  });
+
+  // Step 15.10 (plan §8.4): the cost per token type, so the variance can
+  // find each cell's unit price. It sums to the amount, in its currency.
+  it("splits the amount by token type, in the figure's currency, counting both write lifetimes as cache write", () => {
+    const figure = pricer().pricer.price(
+      request({
+        channel: { known: true, channel: "github-copilot" },
+        usage: usage({ uncachedInput: k(1_000_000), cacheRead: k(1_000_000), cacheWrite: k(1_000_000), extendedCacheWrite: k(500_000), output: k(1_000_000) }),
+      }),
+    );
+    expect(figure).toMatchObject({ known: true, currency: "AI_CREDITS", byTokenType: { uncachedInput: 200, cacheRead: 20, cacheWrite: 125 + 200, output: 1000 } });
+    if (figure.known) {
+      const parts = figure.byTokenType!;
+      expect(parts.uncachedInput + parts.cacheRead + parts.cacheWrite + parts.output).toBeCloseTo(figure.amount, 9);
+    }
+  });
+
+  it("charges writes without a write price as uncached input... but books them as cache write", () => {
+    const noWritePrice = version({ id: "v-auto", tiers: [{ ...tier, cacheWriteUsdPerM: null, extendedCacheWriteUsdPerM: undefined }] });
+    const figure = pricer([noWritePrice]).pricer.price(request({ usage: usage({ uncachedInput: k(0), cacheWrite: k(1_000_000) }) }));
+    expect(figure).toMatchObject({ amount: 2, byTokenType: { uncachedInput: 0, cacheRead: 0, cacheWrite: 2, output: 0 } });
   });
 
   it("gives AI Credits on GitHub Copilot, at 1 AI Credit = $0.01", () => {

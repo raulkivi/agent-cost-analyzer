@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { loadVendorProfiles } from "../../../data-sources/vendor-profiles/loader.js";
 import type { CalibrationCapture } from "./capture.js";
-import { recordedOutcome, replayCapture } from "./replay.js";
+import { recordedOutcome, replayCapture, traceFromCapture } from "./replay.js";
 
 const profile = loadVendorProfiles(
   path.resolve(
@@ -91,12 +91,40 @@ describe("replayCapture", () => {
     expect(rows[1]!.simulated.outcome).toBe("hit");
   });
 
-  it("refuses a capture whose prompt shrinks, which the script format cannot express", () => {
-    expect(() =>
-      replayCapture(
-        capture([request(0, 0, 0, 5000), request(1, 1, 2000, 100)]),
-        profile,
-      ),
-    ).toThrow(/shrinks/);
+  it("replays a capture whose prompt shrinks as a compaction (step 14.3)", () => {
+    // 5000 read, then the prompt drops to 2000: the first request was the
+    // compaction request, so the second reads the prefix and writes the rest.
+    const rows = replayCapture(
+      capture([request(0, 0, 0, 5000), request(1, 1, 2000, 100)]),
+      profile,
+    );
+    expect(rows).toHaveLength(2);
+    expect(rows[1]!.simulated.outcome).toBe("partial");
+    expect(rows[1]!.simulated.cacheRead + rows[1]!.simulated.cacheWrite).toBe(
+      2100,
+    );
+  });
+});
+
+describe("traceFromCapture", () => {
+  it("is the capture as a request trace: times from the gaps, 1-hour writes inside all writes", () => {
+    const trace = traceFromCapture(
+      capture([request(0, 0, 0, 5000), request(1, 2.5, 5000, 600)], true),
+    );
+    expect(trace.harness).toBe("claude-code");
+    expect(trace.notTraced).toEqual([]);
+    expect(trace.requests.map((r) => Date.parse(r.startedAt))).toEqual([
+      Date.parse(trace.requests[0]!.startedAt),
+      Date.parse(trace.requests[0]!.startedAt) + 150_000,
+    ]);
+    expect(trace.requests[1]).toMatchObject({
+      index: 1,
+      turnIndex: 1,
+      model: "claude-sonnet-5.5",
+      cacheRead: 5000,
+      cacheWrite: 600,
+      extendedCacheWrite: 600,
+      output: 100,
+    });
   });
 });

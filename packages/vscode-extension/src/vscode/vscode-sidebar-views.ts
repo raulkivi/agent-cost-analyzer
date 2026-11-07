@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import { COMMAND_IDS, VIEW_IDS } from "../commands/command-ids.js";
+import { COMMAND_IDS, SESSIONS_GROUPING_CONTEXT_KEY, VIEW_IDS } from "../commands/command-ids.js";
 import { identityTranslate, type Translate } from "../l10n/localize.js";
 import type { Disposable } from "../panel/analyzer-panel.js";
 import type { LearnTreeNode } from "../sidebar/learn-tree-model.js";
@@ -89,15 +89,26 @@ function registerView<T, Item extends TreeItemLike>(
   return { dispose: () => subscriptions.forEach((subscription) => subscription.dispose()) };
 }
 
-// The Sessions view: day groups of sessions; a click opens the session in
-// the panel. Refreshes (all of it) when it becomes visible.
+export interface SessionsViewOptions {
+  // vscode.commands.executeCommand("setContext", …): the view title's
+  // grouping toggle reads the context key (step 15.14).
+  setContext?(key: string, value: unknown): void;
+}
+
+// The Sessions view: day or repository groups of sessions; a click opens
+// the session in the panel. Refreshes (all of it) when it becomes visible.
 export function registerSessionsView<Item extends TreeItemLike>(
   vscode: VscodeTreeApi<Item>,
   controller: SidebarController,
   t: Translate = identityTranslate,
+  options: SessionsViewOptions = {},
 ): Disposable {
   const { None, Collapsed, Expanded } = vscode.TreeItemCollapsibleState;
-  return registerView<SessionsTreeNode, Item>(vscode, controller, VIEW_IDS.sessions, {
+  const { setContext } = options;
+  const syncGrouping = () => setContext?.(SESSIONS_GROUPING_CONTEXT_KEY, controller.sessionsGrouping());
+  syncGrouping();
+  const grouping = controller.onDidChange(syncGrouping);
+  const view = registerView<SessionsTreeNode, Item>(vscode, controller, VIEW_IDS.sessions, {
     roots: () => controller.sessionsTree(),
     childrenOf: (node) => (node.kind === "group" ? node.children : []),
     toItem: (node) => {
@@ -106,6 +117,7 @@ export function registerSessionsView<Item extends TreeItemLike>(
           const item = new vscode.TreeItem(node.label, node.expanded ? Expanded : Collapsed);
           item.id = `group:${node.id}`;
           item.description = node.description;
+          if (node.tooltip !== undefined) item.tooltip = node.tooltip;
           return item;
         }
         case "session": {
@@ -129,6 +141,12 @@ export function registerSessionsView<Item extends TreeItemLike>(
     },
     onVisible: () => void controller.refresh(),
   });
+  return {
+    dispose: () => {
+      grouping.dispose();
+      view.dispose();
+    },
+  };
 }
 
 // The Learn view (step 10.12): the bundled scenarios by category; a click

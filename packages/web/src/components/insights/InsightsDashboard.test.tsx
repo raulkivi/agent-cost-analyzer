@@ -3,7 +3,7 @@
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
-import { sampleCostComparison, sampleCostSeries } from "../../test-support/cost-fixture.js";
+import { sampleCostComparison, sampleCostSeries, sampleCostVariance, sampleProjectCost } from "../../test-support/cost-fixture.js";
 import { sampleInsightsDataset } from "../../test-support/insights-fixture.js";
 import { InsightsDashboard } from "./InsightsDashboard.js";
 
@@ -387,6 +387,84 @@ describe("InsightsDashboard", () => {
       fireEvent.click(within(screen.getByRole("radiogroup", { name: "Dashboard view" })).getByRole("radio", { name: "Compare" }));
       expect(await screen.findByText("Compare needs two or more projects.")).toBeInTheDocument();
       expect(loadComparison).not.toHaveBeenCalled();
+    });
+
+    // Step 15.10 (plan §11.4): the Project tab, inside the selected project.
+    it("opens the Project tab inside the selected project", async () => {
+      const loadProjectCost = vi.fn().mockResolvedValue(sampleProjectCost());
+      const loadVariance = vi.fn().mockResolvedValue(sampleCostVariance());
+      render(
+        <InsightsDashboard
+          loadDataset={vi.fn().mockResolvedValue(sampleInsightsDataset())}
+          now={NOW}
+          costAnalysis
+          loadCostSeries={vi.fn().mockResolvedValue(sampleCostSeries())}
+          loadCostComparison={vi.fn().mockResolvedValue(sampleCostComparison())}
+          loadProjectCost={loadProjectCost}
+          loadCostVariance={loadVariance}
+        />,
+      );
+      await screen.findByRole("group", { name: "AI Credits" });
+      fireEvent.click(option("Project", /Customer portal/));
+      fireEvent.click(within(screen.getByRole("radiogroup", { name: "Dashboard view" })).getByRole("radio", { name: "Project" }));
+      expect(await screen.findByRole("group", { name: /Cost by vendor/ })).toBeInTheDocument();
+      expect(loadProjectCost).toHaveBeenCalledWith(expect.objectContaining({ projectId: "portal" }), expect.any(AbortSignal));
+      expect(screen.getByRole("region", { name: "Reconciliation" })).toBeInTheDocument();
+    });
+
+    // Step 15.11 (plan §11.5): Billing, and the Projects editor it opens.
+    it("opens Billing, and from its empty state the Projects editor, then goes back", async () => {
+      const user = userEvent.setup();
+      const loadDataset = vi.fn().mockResolvedValue({ ...sampleInsightsDataset(), projects: [] });
+      render(
+        <InsightsDashboard
+          loadDataset={loadDataset}
+          now={NOW}
+          costAnalysis
+          loadCostSeries={vi.fn().mockResolvedValue(sampleCostSeries())}
+          billing={{
+            loadStatement: vi.fn(),
+            loadProjects: vi.fn().mockResolvedValue({ status: "missing", file: { version: 1, projects: [], aliases: {}, captureRules: [] }, problems: [], location: "/x/projects.json" }),
+            loadRepositories: vi.fn().mockResolvedValue({ repositories: [], unattributed: [], providers: [] }),
+          }}
+        />,
+      );
+      await screen.findByRole("group", { name: "AI Credits" });
+      fireEvent.click(within(screen.getByRole("radiogroup", { name: "Dashboard view" })).getByRole("radio", { name: "Billing" }));
+      await user.click(await screen.findByRole("button", { name: "Create project" }));
+      expect(await screen.findByRole("heading", { name: "Projects" })).toBeInTheDocument();
+      expect(screen.queryByRole("group", { name: "AI Credits" })).not.toBeInTheDocument();
+      await user.click(screen.getByRole("button", { name: /Back to the Dashboard/ }));
+      await screen.findByRole("group", { name: "AI Credits" });
+      // The dataset is read again: the projects may have changed.
+      expect(loadDataset).toHaveBeenCalledTimes(2);
+    });
+
+    // Step 15.14 (plan §11.9, board 7): the extension has no projects file or
+    // billing (D7, D19), so Project and Billing are left out and the switch
+    // says where they are.
+    it("leaves out Project and Billing without projects and billing, and says where they are", async () => {
+      render(
+        <InsightsDashboard
+          loadDataset={vi.fn().mockResolvedValue(sampleInsightsDataset())}
+          now={NOW}
+          costAnalysis
+          projectsAndBilling={false}
+          loadCostSeries={vi.fn().mockResolvedValue(sampleCostSeries())}
+          loadCostComparison={vi.fn().mockResolvedValue(sampleCostComparison())}
+        />,
+      );
+      await screen.findByRole("group", { name: "AI Credits" });
+      const views = within(screen.getByRole("radiogroup", { name: "Dashboard view" })).getAllByRole("radio");
+      expect(views.map((view) => view.getAttribute("aria-label") ?? view.closest("label")?.textContent)).toEqual(["Overview", "Cost over time", "Compare"]);
+      expect(screen.getByText("Billing and estimates: in the Agent Cost Analyzer app")).toBeInTheDocument();
+    });
+
+    it("has every view and no note in the standalone app", async () => {
+      renderWithCost();
+      await screen.findByRole("group", { name: "AI Credits" });
+      expect(within(screen.getByRole("radiogroup", { name: "Dashboard view" })).getAllByRole("radio")).toHaveLength(5);
+      expect(screen.queryByText("Billing and estimates: in the Agent Cost Analyzer app")).not.toBeInTheDocument();
     });
 
     it("below 700 px offers the views as a select", async () => {

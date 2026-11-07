@@ -112,6 +112,9 @@ module.exports = {
   },
   env: { clipboard: { writeText(text) { clipboard.push(text); return Promise.resolve(); } } },
   workspace: {
+    // No folder open (step 15.14's status bar then shows every repository's total).
+    workspaceFolders: undefined,
+    onDidChangeWorkspaceFolders: () => ({ dispose() {} }),
     // Every setting counts as registered, as with Copilot Chat enabled.
     getConfiguration: () => ({ get: (id) => settings[id], inspect: (id) => ({ defaultValue: settings[id] ?? null }) }),
     // A URI is opened through the content provider of its scheme, as VS Code
@@ -671,7 +674,7 @@ describe("the built extension bundle", () => {
       subscription.dispose();
     });
 
-    it("starts the defined server, which lists the 9 tools over the Copilot provider", async () => {
+    it("starts the defined server, which lists the 17 tools over the Copilot provider (step 15.13: no billing, D7)", async () => {
       vscode.__settings[MCP_ENABLED] = true;
       const [definition] = await definitions();
       const client = new Client({ name: "bundle-load", version: "1.0.0" });
@@ -679,7 +682,7 @@ describe("the built extension bundle", () => {
         new StdioClientTransport({ command: definition!.command, args: definition!.args, env: definition!.env, stderr: "ignore" }),
       );
       try {
-        expect((await client.listTools()).tools).toHaveLength(9);
+        expect((await client.listTools()).tools).toHaveLength(17);
         const status = await client.callTool({ name: "list_log_providers", arguments: {} });
         expect((status.structuredContent as { providers: { id: string }[] }).providers.map((entry) => entry.id)).toEqual(["vscode"]);
       } finally {

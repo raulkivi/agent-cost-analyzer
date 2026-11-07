@@ -229,6 +229,12 @@ describe("projectListSchema (MCP list_projects, step 15.4)", () => {
     expect(projectListSchema.parse(sample)).toEqual(sample);
   });
 
+  // Step 15.13 (D19): a product without projects says why.
+  it("may carry the reason a product has no projects", () => {
+    const sample = { status: "missing", projects: [], problems: [], reason: "Projects are edited in the Agent Cost Analyzer app." };
+    expect(projectListSchema.parse(sample)).toEqual(sample);
+  });
+
   it("has no file location, rates or other local details", () => {
     const parsed = projectListSchema.parse({
       status: "valid",
@@ -238,5 +244,24 @@ describe("projectListSchema (MCP list_projects, step 15.4)", () => {
     });
     expect(parsed).not.toHaveProperty("location");
     expect(parsed.projects[0]).not.toHaveProperty("rates");
+  });
+});
+
+// Step 15.11 (D13, D14): fixed lines and a fixed-rate user currency per project.
+describe("project rates for statements", () => {
+  const base = { id: "portal", name: "Portal", members: [{ repository: "github.com/acme/portal" }] };
+  const parse = (rates: unknown) => projectsFileSchema.safeParse({ version: 1, projects: [{ ...base, rates }] });
+
+  it("accepts markup, fixed lines in AI Credits or USD, and a user currency at a fixed rate per USD", () => {
+    const parsed = parse({ markupPercent: 10, fixedLines: [{ label: "Seats", amount: 39, currency: "USD" }], currency: { code: "EUR", perUsd: 0.92 } });
+    expect(parsed.success).toBe(true);
+  });
+
+  it("refuses an empty label, a negative amount, an unknown currency, a code that isn't three letters and a rate of 0", () => {
+    expect(parse({ fixedLines: [{ label: "", amount: 1, currency: "USD" }] }).success).toBe(false);
+    expect(parse({ fixedLines: [{ label: "x", amount: -1, currency: "USD" }] }).success).toBe(false);
+    expect(parse({ fixedLines: [{ label: "x", amount: 1, currency: "EUR" }] }).success).toBe(false);
+    expect(parse({ currency: { code: "euro", perUsd: 1 } }).success).toBe(false);
+    expect(parse({ currency: { code: "EUR", perUsd: 0 } }).success).toBe(false);
   });
 });

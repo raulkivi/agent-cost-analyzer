@@ -11,9 +11,10 @@ Phase 12 adds branded, interactive MCP Apps views for both products.
 merged to `main`. The extension's 0.1.0 is released (tag `ext-v0.1.0`,
 2026-11-03). Open: Phase 10's owner manual checks and decisions (see its
 section), Phase 11 (not started), Phase 12 (planned), Phase 13 (in
-progress: steps 13.0-13.10 built, 13.5a calibration open), Phase 14
-(planned after 13) and Phase 15 (in progress: steps 15.0-15.9 done,
-15.10-15.15 open). A proposed plan,
+progress: steps 13.0-13.10 and 13.5a merged, the owner's eyes-on review
+of 13.8 open), Phase 14
+(planned after 13) and Phase 15 (steps 15.0-15.15 done; the owner's docs review and
+the exit criterion on real data open). A proposed plan,
 [plans/classic-subagent-credits.md](plans/classic-subagent-credits.md),
 covers classic Copilot Chat subagent AI Credits; it has no step number yet.
 Each phase has a goal, concrete deliverables, an exit criterion (how you know
@@ -1434,20 +1435,32 @@ Microsoft are listed but disabled. It ships in extension 0.2.0.
 
 ## Phase 14 — Replay real Analyze sessions on another vendor
 
+Full design: [plans/analyze-session-replay.md](plans/analyze-session-replay.md).
+
 **Goal**: answer "what would this real session have cost on another
 model?". It reuses Phase 13's simulator on the token shape (sizes, gaps,
 events) of a real Analyze session. Owner decision D18 in
 [plans/vendor-aware-learn-simulation.md](plans/vendor-aware-learn-simulation.md).
 
-**Deliverables**: to be planned when Phase 13 is done. The measured figures
-always stay visible next to the replay, and the replay is labelled
-**Simulated**.
+**Deliverables** (steps 14.0–14.8 in the plan): a per-request
+`RequestTrace` for Claude Code and Copilot (D1), a `RequestTraceScripter`
+that generalises 13.5a's `scriptFromCapture` (compaction, clear, model
+switch, 1-hour writes), a `SessionReplayService` with a self-check on the
+session's own model, priced on the session's own channel (D2), replay and
+compare routes, RPC methods and MCP tools (`replay_session`,
+`compare_models_for_session`, and `estimate_cost` with a `model`, D7), and
+**Replay on** plus **Compare models** in both products (D4, D5). The
+measured figures always stay visible next to the replay, and the replay is
+labelled **Simulated**.
 
-**Exit criterion**: to be set in its plan.
+**Exit criterion**: the plan's §13.
 
-**Dependencies**: Phase 13 (simulator, vendor profiles, calibration).
+**Dependencies**: Phase 13 (simulator, vendor profiles, calibration):
+merged.
 
-**Status (2026-11-03)**: planned, not started.
+**Status (2026-11-07)**: planned, decisions D1–D8 recorded; steps 14.0
+(threat-model rows), 14.1 (domain schemas) and 14.2 (request traces for
+Claude Code and Copilot) done; step 14.3 next.
 
 ## Phase 15 — Cost by repository and project, price history, billing
 
@@ -1476,7 +1489,7 @@ extension), and extension grouping by repository.
 15.8; Phase 13 step 13.2 (vendor price data) for steps 15.5 onwards.
 
 **Status (2026-11-06)**: in progress. The owner accepted every
-recommended decision (D1–D10, plan §13). Steps 15.0–15.9 are done; the
+recommended decision (D1–D19, plan §13). Steps 15.0–15.13 are done; the
 plan's §14 table and §14.1 notes have each step's detail:
 
 - 15.0: threat-model rows for the two new write endpoints.
@@ -1503,10 +1516,36 @@ plan's §14 table and §14.1 notes have each step's detail:
   markers, unknown cost as a gap and "View as table" on every chart; the
   §12.4.1 Playwright harness with scenarios S2 and S3 in a required
   `web-e2e` CI job; the UI check over the new tabs.
+- 15.10: price changes and variance: observed Copilot price changes as
+  inferred findings and dashed chart markers, usage/price/mix effects that
+  add up exactly (`GET /api/cost/variance`, MCP `explain_cost_change` tool
+  and prompt, `get_price_changes`), and the Dashboard's Project tab with
+  scenario S4.
+- 15.11: billing statements (draft, freeze, exact diff, CSV/JSON/Markdown
+  exports; `GET /api/statements`, the issue POST, MCP `get_statement` and
+  `prepare_statement`), the Dashboard's Billing tab and the Projects
+  editor, with scenarios S1, S5, S6 and S8.
+- 15.12: estimates (a p50–p90 range at today's prices from the median and
+  p90 cost per active day or session, no range under 5 known units;
+  `GET /api/estimates`, MCP `estimate_cost` and `estimate_work`), the
+  Billing tab's estimate panel, with scenario S7.
+- 15.13: MCP across both products (the `toolGroups` option; the
+  extension's server gains the repository, price-book and cost tools, 17
+  in all, without billing; cost-basis instructions for both; security
+  tests over every tool; the stdio exit criterion and scenario S10).
 
-Open: 15.10 (price changes and variance, Project tab; next), 15.11
-(statements, Billing tab, Projects editor), 15.12 (estimates), 15.13 (MCP
-cross-cutting work), 15.14 (VS Code extension) and 15.15 (docs).
+- 15.14: the VS Code extension (Sessions grouped by repository with a
+  title-bar toggle, the status bar per workspace repository, the
+  Dashboard's Cost over time and Compare tabs; `projectsAndBilling` keeps
+  Project and Billing in the standalone app), with scenario S9 in
+  `extension-ui`.
+
+- 15.15: the docs pass (architecture.md §4.1 modules, §6.4 cost data flow
+  and the product table, §8 and §12; the User Guide, extension guide,
+  vision non-goals and READMEs).
+
+Open: the owner's review of the docs (15.15's exit criterion) and the
+phase's exit criterion (plan §15) on a machine with real sessions.
 
 ## Summary dependency graph
 

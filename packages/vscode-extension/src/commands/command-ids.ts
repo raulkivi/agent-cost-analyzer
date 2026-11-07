@@ -12,7 +12,13 @@ export const COMMAND_IDS = {
   fixSetting: "aiCreditsAnalyzer.fixSetting",
   openLearnMode: "aiCreditsAnalyzer.openLearnMode",
   openWalkthrough: "aiCreditsAnalyzer.openWalkthrough",
+  // Step 15.14 (plan §11.9): the Sessions view's grouping toggle.
+  groupSessionsByRepository: "aiCreditsAnalyzer.groupSessionsByRepository",
+  groupSessionsByDay: "aiCreditsAnalyzer.groupSessionsByDay",
 } as const;
+
+// The context key the toggle's menu entries read: "day" or "repository".
+export const SESSIONS_GROUPING_CONTEXT_KEY = "aiCreditsAnalyzer.sessionsGrouping";
 
 export const VIEW_IDS = {
   sessions: "aiCreditsAnalyzer.sessions",

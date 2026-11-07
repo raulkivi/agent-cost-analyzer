@@ -5,6 +5,11 @@ import type {
   AuditedToolCall,
   ConfigStatus,
   CostComparison,
+  CostVariance,
+  CostEstimate,
+  StatementAnswer,
+  ProjectCost,
+  PriceChangeList,
   CostSeries,
   InsightsDataset,
   LogProviderStatus,
@@ -32,10 +37,20 @@ import {
 import { ScenarioNotFoundError, UnknownModelError } from "../learn-simulation/learn-simulation-service.js";
 import type { SessionRangeFilter, ToolCallFilter } from "../tool-audit/audit-query-service.js";
 import { isoDateBoundSchema, parseSessionRangeQuery, parseToolCallFilterQuery } from "../tool-audit/audit-query-params.js";
-import { BadRequestError, InternalError, NotFoundError } from "./api-errors.js";
+import { BadRequestError, ConflictError, InternalError, NotFoundError } from "./api-errors.js";
+import { StatementAlreadyIssuedError } from "../../data-sources/statements/file-statement-store.js";
+import {
+  AlreadyIssuedError,
+  PeriodNotEndedError,
+  UnknownStatementPeriodError,
+  UnknownStatementProjectError,
+  type StatementQueries,
+  type StatementRequest,
+} from "../billing/statement-service.js";
+import { parseEstimateQuery, type EstimateQueries } from "../billing/estimate-service.js";
 import type { PriceBookReader } from "../pricing/price-book.js";
 import type { CostAnalysisQueries } from "../cost-analysis/cost-analysis-service.js";
-import { parseCostCompareQuery, parseCostSeriesQuery } from "../cost-analysis/cost-query-params.js";
+import { parseCostCompareQuery, parseCostSeriesQuery, parseCostVarianceQuery, parsePriceChangesQuery, parseProjectCostQuery } from "../cost-analysis/cost-query-params.js";
 
 // The narrow slices of the registry and query services ApiService needs
 // (DIP) — each product's composition root passes its own registry, so
@@ -94,12 +109,19 @@ const priceBookQuerySchema = z.object({
 // Phase 15 step 15.7: cost over time and compare. Optional like the price
 // book: the extension has none yet and answers 404.
 export const COST_ANALYSIS_UNAVAILABLE_MESSAGE = "Cost analyses are not available in this product.";
+export const ESTIMATES_UNAVAILABLE_MESSAGE = "Estimates are not available in this product.";
+export const STATEMENTS_UNAVAILABLE_MESSAGE = "Billing statements are not available in this product.";
 
 export interface ApiServiceDeps {
   registry: ApiProviderRegistry;
   projects?: ApiProjects;
   priceBook?: PriceBookReader;
-  costAnalysis?: Pick<CostAnalysisQueries, "getTimeSeries" | "compare">;
+  costAnalysis?: Pick<CostAnalysisQueries, "getTimeSeries" | "compare" | "explainChange" | "getPriceChanges" | "getProjectCost">;
+  // Phase 15 step 15.11: billing statements (the standalone app; the
+  // extension gets them with step 15.14).
+  statements?: StatementQueries;
+  // Phase 15 step 15.12: estimates (the standalone app; the extension with 15.14).
+  estimates?: EstimateQueries;
   auditQueries: ApiAuditQueries;
   insights: ApiInsights;
   settings: Pick<AppSettingsStore, "readMinRetainedSessionLogsThreshold" | "writeMinRetainedSessionLogsThreshold">;
@@ -437,8 +459,108 @@ export class ApiService {
     }
   }
 
+  // Step 15.11 (plan §8.5): a project's statement for a period, the draft or
+  // the frozen copy with the re-run's diff.
+  async getStatement(query: ApiQuery = {}): Promise<StatementAnswer> {
+    const statements = this.statementQueries();
+    const request = statementRequestOf(query);
+    const answer = await this.statementCall(() => statements.get(request));
+    if (answer === null) throw new NotFoundError(`Unknown project id "${request.projectId}"`);
+    return answer;
+  }
+
+  // Step 15.11 (plan §8.5, D15): freezes the draft; writes a file.
+  async issueStatement(projectId: unknown, period: unknown): Promise<StatementAnswer> {
+    const statements = this.statementQueries();
+    const request = statementRequestOf({ projectId, period });
+    return this.statementCall(() => statements.issue(request));
+  }
+
+  // Step 15.12 (plan §8.6): GET /api/estimates, as MCP estimate_cost.
+  async getCostEstimate(query: ApiQuery = {}): Promise<CostEstimate> {
+    if (!this.deps.estimates) throw new NotFoundError(ESTIMATES_UNAVAILABLE_MESSAGE);
+    const parsed = parseEstimateQuery(query);
+    if (!parsed.ok) throw new BadRequestError(parsed.error);
+    let estimate: CostEstimate | null;
+    try {
+      estimate = await this.deps.estimates.estimate(parsed.value);
+    } catch (error) {
+      throw auditFailure("estimate", error);
+    }
+    if (estimate === null) throw new NotFoundError(`Unknown project id "${"projectId" in parsed.value ? parsed.value.projectId : ""}"`);
+    return estimate;
+  }
+
+  private statementQueries(): StatementQueries {
+    if (!this.deps.statements) throw new NotFoundError(STATEMENTS_UNAVAILABLE_MESSAGE);
+    return this.deps.statements;
+  }
+
+  private async statementCall<T>(call: () => Promise<T>): Promise<T> {
+    try {
+      return await call();
+    } catch (error) {
+      if (error instanceof UnknownStatementPeriodError) throw new BadRequestError(error.message);
+      if (error instanceof UnknownStatementProjectError) throw new NotFoundError(error.message);
+      if (error instanceof PeriodNotEndedError || error instanceof AlreadyIssuedError || error instanceof StatementAlreadyIssuedError) throw new ConflictError(error.message);
+      throw auditFailure("statement", error);
+    }
+  }
+
+  // Step 15.10 (plan §11.4): the Project tab's breakdown, as get_project_cost.
+  async getProjectCost(query: ApiQuery = {}): Promise<ProjectCost> {
+    const analysis = this.costAnalysis();
+    const parsed = parseProjectCostQuery(query);
+    if (!parsed.ok) throw new BadRequestError(parsed.error);
+    let cost: ProjectCost | null;
+    try {
+      cost = await analysis.getProjectCost(parsed.value);
+    } catch (error) {
+      throw auditFailure("project cost", error);
+    }
+    if (cost === null) throw new NotFoundError(`Unknown project id "${parsed.value.projectId}"`);
+    return cost;
+  }
+
+  // Step 15.10 (plan §8.4, §10): usage, price and mix effects between two periods.
+  async getCostVariance(query: ApiQuery = {}): Promise<CostVariance> {
+    const analysis = this.costAnalysis();
+    const parsed = parseCostVarianceQuery(query);
+    if (!parsed.ok) throw new BadRequestError(parsed.error);
+    try {
+      return await analysis.explainChange(parsed.value);
+    } catch (error) {
+      throw auditFailure("cost variance", error);
+    }
+  }
+
+  // Step 15.10 (plan §6.4): documented and observed price changes.
+  async getPriceChanges(query: ApiQuery = {}): Promise<PriceChangeList> {
+    const analysis = this.costAnalysis();
+    const parsed = parsePriceChangesQuery(query);
+    if (!parsed.ok) throw new BadRequestError(parsed.error);
+    try {
+      return await analysis.getPriceChanges(parsed.value);
+    } catch (error) {
+      throw auditFailure("price changes", error);
+    }
+  }
+
   private costAnalysis(): NonNullable<ApiServiceDeps["costAnalysis"]> {
     if (!this.deps.costAnalysis) throw new NotFoundError(COST_ANALYSIS_UNAVAILABLE_MESSAGE);
     return this.deps.costAnalysis;
   }
+}
+
+// Step 15.11: GET /api/statements?projectId&period&provider&limit.
+function statementRequestOf(query: Readonly<Record<string, unknown>>): StatementRequest {
+  const text = (value: unknown) => (typeof value === "string" && value.length > 0 ? value : undefined);
+  const projectId = text(query.projectId);
+  const period = text(query.period);
+  if (projectId === undefined) throw new BadRequestError("projectId is required.");
+  if (period === undefined) throw new BadRequestError("period is required: a month as YYYY-MM or a range as YYYY-MM-DD..YYYY-MM-DD.");
+  const provider = text(query.provider);
+  const limit = text(query.limit);
+  if (limit !== undefined && !/^\d+$/.test(limit)) throw new BadRequestError("limit must be a whole number.");
+  return { projectId, period, ...(provider !== undefined ? { providerId: provider } : {}), ...(limit !== undefined ? { limit: Number(limit) } : {}) };
 }

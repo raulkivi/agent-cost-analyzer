@@ -1,0 +1,135 @@
+{
+  "portalDays12": {
+    "label": "estimate",
+    "generatedAt": "2026-11-06T12:00:00.000Z",
+    "target": {
+      "groupBy": "project",
+      "id": "portal",
+      "name": "Customer portal"
+    },
+    "pricing": "today",
+    "currency": "USD",
+    "conversion": "Every amount is in USD at today's prices: AI Credits converted at 1 AI Credit = $0.01 (GitHub's documented rate); no other exchange rate is used.",
+    "window": {
+      "weeks": 12,
+      "since": "2026-08-15",
+      "until": "2026-11-06"
+    },
+    "unit": "activeDays",
+    "planned": 20,
+    "history": {
+      "units": 5,
+      "knownUnits": 5,
+      "turns": 5,
+      "totalUsd": 0.0255
+    },
+    "runRate": {
+      "perActiveDayUsd": 0.0051,
+      "perWeekUsd": 0.002125
+    },
+    "unitCost": {
+      "p50": 0.0062,
+      "p90": 0.0079
+    },
+    "range": {
+      "p50": 0.124,
+      "p90": 0.158
+    }
+  },
+  "portalSessions4": {
+    "label": "estimate",
+    "generatedAt": "2026-11-06T12:00:00.000Z",
+    "target": {
+      "groupBy": "project",
+      "id": "portal",
+      "name": "Customer portal"
+    },
+    "pricing": "today",
+    "currency": "USD",
+    "conversion": "Every amount is in USD at today's prices: AI Credits converted at 1 AI Credit = $0.01 (GitHub's documented rate); no other exchange rate is used.",
+    "window": {
+      "weeks": 4,
+      "since": "2026-10-10",
+      "until": "2026-11-06"
+    },
+    "unit": "sessions",
+    "planned": 10,
+    "history": {
+      "units": 0,
+      "knownUnits": 0,
+      "turns": 0,
+      "totalUsd": 0
+    },
+    "runRate": {
+      "perActiveDayUsd": null,
+      "perWeekUsd": 0
+    },
+    "unitCost": null,
+    "range": null,
+    "refusal": "Only 0 sessions with a known cost in the last 4 weeks; an estimate needs at least 5."
+  },
+  "billingDays12": {
+    "label": "estimate",
+    "generatedAt": "2026-11-06T12:00:00.000Z",
+    "target": {
+      "groupBy": "project",
+      "id": "billing",
+      "name": "Billing"
+    },
+    "pricing": "today",
+    "currency": "USD",
+    "conversion": "Every amount is in USD at today's prices: AI Credits converted at 1 AI Credit = $0.01 (GitHub's documented rate); no other exchange rate is used.",
+    "window": {
+      "weeks": 12,
+      "since": "2026-08-15",
+      "until": "2026-11-06"
+    },
+    "unit": "activeDays",
+    "planned": 20,
+    "history": {
+      "units": 3,
+      "knownUnits": 3,
+      "turns": 3,
+      "totalUsd": 0.02
+    },
+    "runRate": {
+      "perActiveDayUsd": 0.006666667,
+      "perWeekUsd": 0.001666667
+    },
+    "unitCost": null,
+    "range": null,
+    "refusal": "Only 3 active days with a known cost in the last 12 weeks; an estimate needs at least 5."
+  },
+  "repository": {
+    "label": "estimate",
+    "generatedAt": "2026-11-06T12:00:00.000Z",
+    "target": {
+      "groupBy": "repository",
+      "id": "github.com/acme/portal-web",
+      "name": "github.com/acme/portal-web"
+    },
+    "pricing": "today",
+    "currency": "USD",
+    "conversion": "Every amount is in USD at today's prices: AI Credits converted at 1 AI Credit = $0.01 (GitHub's documented rate); no other exchange rate is used.",
+    "window": {
+      "weeks": 12,
+      "since": "2026-08-15",
+      "until": "2026-11-06"
+    },
+    "unit": "activeDays",
+    "planned": 5,
+    "history": {
+      "units": 2,
+      "knownUnits": 2,
+      "turns": 2,
+      "totalUsd": 0.0158
+    },
+    "runRate": {
+      "perActiveDayUsd": 0.0079,
+      "perWeekUsd": 0.001316667
+    },
+    "unitCost": null,
+    "range": null,
+    "refusal": "Only 2 active days with a known cost in the last 12 weeks; an estimate needs at least 5."
+  }
+}

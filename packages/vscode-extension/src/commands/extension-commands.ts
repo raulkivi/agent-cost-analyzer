@@ -11,6 +11,7 @@ import { identityTranslate, type Translate } from "../l10n/localize.js";
 import { MCP_ENABLED_SETTING_ID } from "../mcp/mcp-server-definitions.js";
 import type { WalkthroughLauncher } from "../onboarding/walkthrough-offer.js";
 import { allowedSettingIds } from "../rpc/host-command-handler.js";
+import type { SessionsGrouping } from "../sidebar/sidebar-controller.js";
 import { COMMAND_IDS } from "./command-ids.js";
 
 export interface CommandPanel {
@@ -21,7 +22,7 @@ export interface CommandPanel {
 
 export interface ExtensionCommandsDeps {
   panel: CommandPanel;
-  sidebar: { refresh(): Promise<void> };
+  sidebar: { refresh(): Promise<void>; setSessionsGrouping(grouping: SessionsGrouping): void };
   hostCommands: { openSetting(settingId: string): Promise<void> };
   // Opens the Get Started walkthrough (vscode/vscode-walkthrough.ts).
   walkthrough: WalkthroughLauncher;
@@ -116,6 +117,8 @@ export class ExtensionCommands {
       [COMMAND_IDS.openLearnMode]: () => this.openLearnMode(),
       [COMMAND_IDS.openWalkthrough]: () => this.openWalkthrough(),
       [COMMAND_IDS.refreshSessions]: () => this.refreshSessions(),
+      [COMMAND_IDS.groupSessionsByRepository]: () => this.deps.sidebar.setSessionsGrouping("repository"),
+      [COMMAND_IDS.groupSessionsByDay]: () => this.deps.sidebar.setSessionsGrouping("day"),
       [COMMAND_IDS.openSession]: (target, options) => this.openSession(target, options),
       [COMMAND_IDS.openScenario]: (target) => this.openScenario(target),
       [COMMAND_IDS.showToolAudit]: (target) => this.showToolAudit(target),

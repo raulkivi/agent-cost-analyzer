@@ -121,7 +121,7 @@ async function openDashboard(page: Page, harness: Harness): Promise<void> {
 }
 
 // Step 15.9: the Dashboard's view switch is radios, or a select below 700 px.
-async function openDashboardView(page: Page, harness: Harness, label: "Cost over time" | "Compare"): Promise<void> {
+async function openDashboardView(page: Page, harness: Harness, label: "Cost over time" | "Compare" | "Project" | "Billing"): Promise<void> {
   await openDashboard(page, harness);
   const select = page.getByRole("combobox", { name: "Dashboard view" });
   if (await select.isVisible().catch(() => false)) {
@@ -266,6 +266,17 @@ const SCENARIOS: Scenario[] = [
     },
   },
   { name: "dashboard", run: openDashboard },
+  // Step 15.14 (plan §11.9, board 7): the extension's own profile and cost
+  // routes over the seeded Copilot fixture: Cost over time and Compare, and
+  // the note where Project and Billing are.
+  {
+    name: "dashboard-extension-cost-over-time",
+    run: async (page, harness) => {
+      await openDashboardView(page, harness, "Cost over time");
+      await page.getByText("Billing and estimates: in the Agent Cost Analyzer app").first().waitFor({ timeout: 10000 });
+      await page.getByRole("group", { name: "Total cost" }).waitFor({ timeout: 10000 });
+    },
+  },
   // Step 15.9 (plan §11.6): the cost tabs at 600-1600 px in the three themes.
   {
     name: "dashboard-cost-over-time",
@@ -308,6 +319,72 @@ const SCENARIOS: Scenario[] = [
     run: async (page, harness) => {
       await openDashboardView(page, harness, "Compare");
       await page.getByRole("button", { name: /^Details for / }).first().click();
+      await harness.settle(page);
+    },
+  },
+  // Step 15.11 (plan §11.5, boards 4 and 5): Billing, its dialogs, and the Projects editor (with a tie).
+  {
+    name: "dashboard-billing",
+    costTabs: true,
+    run: async (page, harness) => {
+      await openDashboardView(page, harness, "Billing");
+      await page.getByText("Differs from issued").waitFor({ timeout: 10000 });
+      await page.getByRole("button", { name: "View diff" }).click();
+      await harness.settle(page);
+    },
+  },
+  // Step 15.12 (plan §11.5, board 4): the estimate panel beside the statement.
+  {
+    name: "dashboard-billing-estimate",
+    costTabs: true,
+    run: async (page, harness) => {
+      await openDashboardView(page, harness, "Billing");
+      const figure = page.getByRole("img", { name: /^Estimate at today's prices/ });
+      await figure.waitFor({ timeout: 10000 });
+      await figure.scrollIntoViewIfNeeded();
+      await harness.settle(page);
+    },
+  },
+  {
+    name: "dashboard-billing-export",
+    costTabs: true,
+    run: async (page, harness) => {
+      await openDashboardView(page, harness, "Billing");
+      await page.getByRole("button", { name: "Export…" }).click();
+      await page.getByRole("dialog").waitFor({ timeout: 5000 });
+      await harness.settle(page);
+    },
+  },
+  {
+    name: "dashboard-projects-editor",
+    costTabs: true,
+    run: async (page, harness) => {
+      await openDashboardView(page, harness, "Billing");
+      await page.getByRole("button", { name: "Edit projects" }).click();
+      await page.getByRole("alert").waitFor({ timeout: 10000 });
+      await harness.settle(page);
+    },
+  },
+  // Step 15.10 (plan §11.4, board 3): the Project tab, inside one project.
+  {
+    name: "dashboard-project",
+    costTabs: true,
+    run: async (page, harness) => {
+      await openDashboardView(page, harness, "Project");
+      await page.getByRole("listbox", { name: "Project" }).getByRole("option").first().click();
+      await harness.settle(page);
+      await page.getByRole("img", { name: /^Why cost changed/ }).waitFor({ timeout: 10000 });
+    },
+  },
+  {
+    name: "dashboard-project-table",
+    costTabs: true,
+    run: async (page, harness) => {
+      await openDashboardView(page, harness, "Project");
+      await page.getByRole("listbox", { name: "Project" }).getByRole("option").first().click();
+      await harness.settle(page);
+      await page.getByRole("img", { name: /^Why cost changed/ }).waitFor({ timeout: 10000 });
+      await page.getByRole("region", { name: /^Why cost changed/ }).getByRole("button", { name: "View as table" }).click();
       await harness.settle(page);
     },
   },

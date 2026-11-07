@@ -11,6 +11,9 @@ import { MCP_ICONS, MCP_WEBSITE_URL } from "./mcp-branding.js";
 import { STANDALONE_MCP_IDENTITY, type McpIdentity } from "./mcp-identity.js";
 import { registerAttributionTools } from "./attribution-tools.js";
 import { registerAuditTools } from "./audit-tools.js";
+import { registerBillingTools } from "./billing-tools.js";
+import type { StatementQueries } from "../services/billing/statement-service.js";
+import type { EstimateQueries } from "../services/billing/estimate-service.js";
 import { registerCostAnalysisTools, registerCostTools } from "./cost-tools.js";
 import { registerFindingTools } from "./finding-tools.js";
 import { registerPricingTools } from "./pricing-tools.js";
@@ -25,6 +28,11 @@ import { createGuard } from "./tool-helpers.js";
 // connect it in memory. Each tool group registers itself (open/closed).
 
 export interface McpServerDeps {
+  // threat-model.md §5.6: whether list_projects returns each project's client
+  // name and billing code to the chat model. Off unless the user launches the
+  // server with --project-billing-details; statements (get_statement) always
+  // carry them, since a statement is for the client.
+  projectBillingDetails?: boolean;
   auditQueries: AuditQueryService;
   analysisQueries: AnalysisQueryService;
   getProviderStatus: () => Promise<LogProviderStatus>;
@@ -39,11 +47,28 @@ export interface McpServerDeps {
   // compare_costs. Absent for a product without them yet (the extension,
   // until step 15.13).
   costAnalysis?: CostAnalysisQueries;
+  // Phase 15 step 15.11: get_statement and prepare_statement (the standalone
+  // server; the extension's with step 15.13).
+  statements?: StatementQueries;
+  // Phase 15 step 15.12: estimate_cost and estimate_work.
+  estimates?: EstimateQueries;
   version: string;
+  // Phase 15 step 15.13 (plan §10.1.4): the tool groups this product serves,
+  // every group when omitted. A group is registered only when its services
+  // are given too. The extension leaves out billing (D7).
+  toolGroups?: readonly McpToolGroup[];
   // The name and log-source wording of the product serving the tools;
   // defaults to the standalone server's (mcp-identity.ts).
   identity?: McpIdentity;
 }
+
+// The tool groups, one module each (open/closed): sessions, audit and cost
+// (session_cost, cost_rollup) and findings are Phase 9.12's; the rest come
+// with Phase 15 and need their services.
+export const MCP_TOOL_GROUPS = ["sessions", "audit", "cost", "findings", "attribution", "pricing", "costAnalysis", "billing"] as const;
+export type McpToolGroup = (typeof MCP_TOOL_GROUPS)[number];
+// The extension's set: billing and estimates are standalone-only (D7).
+export const WITHOUT_BILLING_TOOL_GROUPS: readonly McpToolGroup[] = MCP_TOOL_GROUPS.filter((group) => group !== "billing");
 
 // Kept for the standalone server's callers; the wording lives in the identity.
 export const SERVER_INSTRUCTIONS = STANDALONE_MCP_IDENTITY.instructions;
@@ -67,16 +92,20 @@ export function createMcpServer(deps: McpServerDeps): McpServer {
   );
   const guarded = createGuard(deps.getProviderStatus);
 
-  registerSessionTools(server, toolDeps, guarded);
-  registerAuditTools(server, toolDeps, guarded);
-  registerCostTools(server, toolDeps, guarded);
-  if (deps.costAnalysis) registerCostAnalysisTools(server, toolDeps, deps.costAnalysis, guarded);
-  registerFindingTools(server, toolDeps, guarded);
-  if (deps.priceBook) registerPricingTools(server, deps.priceBook, guarded);
-  if (deps.attribution) {
-    registerAttributionTools(server, toolDeps, deps.attribution, guarded);
-  }
-  registerPrompts(server);
+  const serves = (group: McpToolGroup) => (deps.toolGroups ?? MCP_TOOL_GROUPS).includes(group);
+  const costAnalysis = serves("costAnalysis") ? deps.costAnalysis : undefined;
+  const statements = serves("billing") ? deps.statements : undefined;
+  const estimates = serves("billing") ? deps.estimates : undefined;
+
+  if (serves("sessions")) registerSessionTools(server, toolDeps, guarded);
+  if (serves("audit")) registerAuditTools(server, toolDeps, guarded);
+  if (serves("cost")) registerCostTools(server, toolDeps, guarded);
+  if (costAnalysis) registerCostAnalysisTools(server, toolDeps, costAnalysis, guarded);
+  if (serves("findings")) registerFindingTools(server, toolDeps, guarded);
+  if (serves("pricing") && deps.priceBook) registerPricingTools(server, deps.priceBook, guarded, deps.costAnalysis);
+  if (serves("attribution") && deps.attribution) registerAttributionTools(server, toolDeps, deps.attribution, guarded);
+  if (statements || estimates) registerBillingTools(server, { statements, estimates }, guarded);
+  registerPrompts(server, { costAnalysis: costAnalysis !== undefined, statements: statements !== undefined, estimates: estimates !== undefined });
 
   return server;
 }

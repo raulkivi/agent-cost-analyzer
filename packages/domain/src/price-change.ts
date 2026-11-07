@@ -3,6 +3,7 @@
 import { z } from "zod";
 import { isoCalendarDateSchema, precedenceClassOf, type PriceVersion } from "./price-book.js";
 import type { PriceTier } from "./vendor-profile.js";
+import { insightProviderStatusSchema } from "./insights.js";
 
 // Phase 15 step 15.7 (docs/plans/cost-by-repository-and-project.md §6.4
 // point 1, §10.1.1): a documented price change is the boundary between two
@@ -108,3 +109,52 @@ export function documentedPriceChanges(versions: readonly MarkerInput[], range: 
   }
   return markers.sort((a, b) => a.date.localeCompare(b.date) || a.channel.localeCompare(b.channel) || a.modelId.localeCompare(b.modelId));
 }
+
+// Phase 15 step 15.10 (plan §6.4 point 2, D11): an observed price change.
+// For Copilot turns with both a billed and a priced figure in AI Credits,
+// billed ÷ priced per model and ISO week; a run of at least two weeks in a
+// row more than 5% away from 1, the same way, each with at least 20 such
+// turns, is observed. It is evidence to check the price book against, never
+// a price by itself, so it is always `inferred`.
+export const OBSERVED_CHANGE_THRESHOLD = 0.05;
+export const OBSERVED_CHANGE_MIN_WEEKS = 2;
+export const OBSERVED_CHANGE_MIN_TURNS = 20;
+
+export const observedWeekSchema = z.object({
+  period: z.string(), // "2026-W42"
+  start: isoCalendarDateSchema,
+  end: isoCalendarDateSchema,
+  turns: z.number().int().nonnegative(), // with both figures
+  billedAiCredits: z.number().nonnegative(),
+  pricedAiCredits: z.number().nonnegative(),
+  ratio: z.number().nonnegative(), // billed ÷ priced
+});
+
+export const observedPriceChangeSchema = z.object({
+  kind: z.literal("observed"),
+  date: isoCalendarDateSchema, // the first week's Monday
+  channel: z.string().min(1),
+  modelId: z.string().min(1), // the model as the log names it
+  direction: z.enum(["above", "below"]), // billed above or below the price book
+  percent: z.number(), // (billed − priced) ÷ priced over the run, signed
+  weeks: z.array(observedWeekSchema).min(OBSERVED_CHANGE_MIN_WEEKS),
+  priceVersionIds: z.array(z.string()), // the versions the priced figures used
+  confidence: z.literal("inferred"),
+});
+
+export const anyPriceChangeSchema = z.discriminatedUnion("kind", [priceChangeMarkerSchema, observedPriceChangeSchema]);
+
+// get_price_changes and its HTTP twin: every change in the range, oldest
+// first. `providers` is the status of the providers read for observed ones.
+export const priceChangeListSchema = z.object({
+  generatedAt: z.string(),
+  since: isoCalendarDateSchema.optional(),
+  until: isoCalendarDateSchema.optional(),
+  providers: z.array(insightProviderStatusSchema),
+  changes: z.array(anyPriceChangeSchema),
+});
+
+export type ObservedWeek = z.infer<typeof observedWeekSchema>;
+export type ObservedPriceChange = z.infer<typeof observedPriceChangeSchema>;
+export type AnyPriceChange = z.infer<typeof anyPriceChangeSchema>;
+export type PriceChangeList = z.infer<typeof priceChangeListSchema>;

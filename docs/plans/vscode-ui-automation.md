@@ -35,7 +35,7 @@ automation can do.
 | 1.10 Theme and font | Switch to `Default Light Modern`, assert the body class and a themed colour (`--vscode-editor-background`) change in the webview. Set `editor.fontSize` to 20, assert `--vscode-editor-font-size` is `20px` in the webview. **Finding to confirm:** `theme-vscode.css` sizes text from `--vscode-font-size` (the workbench size), not `--vscode-editor-font-size`, so the panel may not follow `editor.fontSize`. The test pins whichever behaviour the owner chooses (§5, Q4). | Yes. |
 | 1.11 System prompt read-only | Open the fixture session with a system prompt, System prompt tab → open in editor (the `openTextDocument` host command). Assert, through `executeWorkbench`, the active editor's URI scheme is `ai-credits-analyzer-doc` (`READ_ONLY_DOCUMENT_SCHEME`), a typed key leaves `isDirty` false and the text unchanged, and select-all + copy puts the prompt on the clipboard (`vscode.env.clipboard.readText()`). | Yes. Clipboard under xvfb needs an X selection owner; to confirm in the spike. |
 | 1.13 Learn view | Through the side bar page objects: open the Learn view, click a scenario, assert the panel is in Learn mode with no scenario list in the panel and full width; click another, assert it changed; click a session in Sessions, assert Analyze mode. | Yes. |
-| 2.1, 2.2, 2.6 MCP setting | Toggle `aiCreditsAnalyzer.mcp.enabled` in User settings. Assert VS Code's own server list (*MCP: List Servers* quick pick) shows no `ai-credits-analyzer` when off, shows it when on, and its tool list has the 9 tools; off again, it's gone. The integration suite already asserts the provider level (`internal.mcpServerDefinitions`, 9 tools over stdio); this adds the workbench UI. Whether VS Code core lists extension-provided servers without Copilot Chat installed is unverified (spike T0). | Yes, if the list works without Copilot Chat. |
+| 2.1, 2.2, 2.6 MCP setting | Toggle `aiCreditsAnalyzer.mcp.enabled` in User settings. Assert VS Code's own server list (*MCP: List Servers* quick pick) shows no `ai-credits-analyzer` when off, shows it when on, and its tool list has the 17 tools (9 before step 15.13); off again, it's gone. The integration suite already asserts the provider level (`internal.mcpServerDefinitions`, 17 tools over stdio); this adds the workbench UI. Whether VS Code core lists extension-provided servers without Copilot Chat installed is unverified (spike T0). | Yes, if the list works without Copilot Chat. |
 | 2.5 Restricted Mode | A workspace folder whose `.vscode/settings.json` sets the setting `true`, user setting off, workspace trust **on** (wdio-vscode-service disables it by default). Assert no server while untrusted, trust the folder through the trust editor, assert the server appears. | Yes, if trust can be re-enabled (§2, F8). |
 | 1.12 Uninstall | Not in the first cut. The service only runs the extension from `extensionPath` as a development extension, which can't be uninstalled. Feasible only by installing the VSIX into the extensions dir, running `code --uninstall-extension`, relaunching and asserting no AI Credits Analyzer UI and an unchanged `settings.json`. Optional task T14. | Yes, if done. |
 
@@ -343,7 +343,8 @@ dependencies that never ship.
 | 1.10 | `layout-theme.e2e.ts` | Light theme changes the body class and `--vscode-editor-background`; `editor.fontSize` reaches the webview as a variable that nothing uses (Q4, decided 2026-11-04: the panel follows the workbench font; the spec pins it) |
 | 1.11 | `panel.e2e.ts` | `ai-credits-analyzer-doc` scheme, a typed key leaves it clean, copy puts the prompt on the clipboard (the clipboard works under xvfb) |
 | 1.13 | `views.e2e.ts` | Learn scenario, another, then a session; plus the Sessions count guard (F5) |
-| 2.1, 2.2, 2.6 | `mcp.e2e.ts` | VS Code's own *MCP: List Servers* (`workbench.mcp.listServer`) lists the server without Copilot Chat installed. The 9 tools stay the integration suite's |
+| 1.14 (S9) | `s9-group-by-repository.e2e.ts` | Phase 15 step 15.14: its own `s9` launch with `workspacePath` on a seeded git folder (`scripts/ui-automation/s9-fixture.mts`): Group by repository's rows, the status bar's text and accessible name against `S9_EXPECTED` (checked by `s9-fixture.test.ts`), and the Cost over time tab through the probe and judge in Dark Modern, Light Modern and High Contrast |
+| 2.1, 2.2, 2.6 | `mcp.e2e.ts` | VS Code's own *MCP: List Servers* (`workbench.mcp.listServer`) lists the server without Copilot Chat installed. The 17 tools stay the integration suite's |
 | 2.5 | `mcp-trust.e2e.ts` | Own capability: Workspace Trust on, a folder whose settings enable the server; untrusted gives no server, the Trust button in the Workspace Trust editor gives one |
 
 **Still manual:** §3 (remote), §4, the README review, 1.8's chart
@@ -351,7 +352,7 @@ judgement, 2.1's *Configure Tools* wording in Copilot Chat, and Copilot
 agent mode itself (2.3, 2.4, and a real chat for 1.4) except through the
 owner's opt-in suite (§7). 1.1-1.4 and 1.12 were automated in a second pass
 (§6.4, over fixtures); 2.3 and 2.4 only at tool level, in the integration
-suite. 2.2's "9 tools" is asserted by the integration suite, not here.
+suite. 2.2's "17 tools" is asserted by the integration suite, not here.
 
 ### 6.2 Deviations from the plan, and facts it got wrong or left open
 

@@ -134,6 +134,7 @@ const FALLBACK_FEATURES: ProductFeatures = {
   vendorSimulation: false,
   // An older server without GET /api/cost/* (or none at all): no cost tabs.
   costAnalysis: false,
+  projectsAndBilling: false,
 };
 
 const EMPTY_STATES = {
@@ -783,7 +784,7 @@ export function App({ performanceMarks = pagePerformanceMarks }: AppProps = {}) 
               )}
               <div style={mode === "analyze" ? { marginTop: "var(--space-3)" } : undefined}>
               {showDashboard ? (
-                <InsightsDashboard crossProvider={features.crossProviderInsights} costAnalysis={features.costAnalysis} />
+                <InsightsDashboard crossProvider={features.crossProviderInsights} costAnalysis={features.costAnalysis} projectsAndBilling={features.projectsAndBilling} />
               ) : mode === "analyze" && centerView === "rollup" ? (
                 <AuditRollupPanel onOpenSession={handleOpenSessionAudit} key={activeProviderId} />
               ) : mode === "analyze" && centerView === "session-audit" ? (
