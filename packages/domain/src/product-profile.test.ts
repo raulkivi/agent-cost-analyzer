@@ -18,6 +18,7 @@ describe("productProfileSchema", () => {
       vendorSimulation: false,
       costAnalysis: true,
       projectsAndBilling: true,
+      sessionReplay: true,
     },
   };
 
@@ -39,6 +40,7 @@ describe("productProfileSchema", () => {
         vendorSimulation: true,
         costAnalysis: true,
         projectsAndBilling: false,
+        sessionReplay: true,
       },
     };
 
@@ -71,6 +73,12 @@ describe("productProfileSchema", () => {
   it("rejects a profile without projectsAndBilling (Phase 15 step 15.14)", () => {
     const features: Record<string, unknown> = { ...standalone.features };
     delete features.projectsAndBilling;
+    expect(() => productProfileSchema.parse({ ...standalone, features })).toThrow();
+  });
+
+  it("rejects a profile without sessionReplay (Phase 14 step 14.7)", () => {
+    const features: Record<string, unknown> = { ...standalone.features };
+    delete features.sessionReplay;
     expect(() => productProfileSchema.parse({ ...standalone, features })).toThrow();
   });
 

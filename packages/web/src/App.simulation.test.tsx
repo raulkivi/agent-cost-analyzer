@@ -89,6 +89,7 @@ const extensionProfile: ProductProfile = {
     vendorSimulation: true,
     costAnalysis: false,
     projectsAndBilling: false,
+    sessionReplay: false,
   },
 };
 

@@ -24,19 +24,42 @@ export const TURN_COLUMNS = [
   { id: "model", label: "Model" },
 ] as const;
 
-export type TurnColumnId = (typeof TURN_COLUMNS)[number]["id"];
+// Phase 14 step 14.7: a replayed session's "Simulated" group, after the
+// measured columns (mock-up board 1). They apply only while a replay is
+// shown; the labels say Simulated wherever a column is named on its own
+// (the column chooser, the details drawer).
+export const REPLAY_TURN_COLUMNS = [
+  { id: "replayCache", label: "Simulated cache" },
+  { id: "replayCacheRead", label: "Simulated cache read" },
+  { id: "replayCost", label: "Simulated cost" },
+] as const;
 
-export const ALL_TURN_COLUMNS: TurnColumnId[] = TURN_COLUMNS.map((column) => column.id);
+type MeasuredTurnColumnId = (typeof TURN_COLUMNS)[number]["id"];
+export type ReplayTurnColumnId = (typeof REPLAY_TURN_COLUMNS)[number]["id"];
+export type TurnColumnId = MeasuredTurnColumnId | ReplayTurnColumnId;
 
-// Mock-up board 4 (Narrow.dc.html).
-export const PRIORITY_TURN_COLUMNS: TurnColumnId[] = ["turn", "trigger", "aiCredits", "cumulative"];
+export const ALL_TURN_COLUMNS: TurnColumnId[] = [...TURN_COLUMNS, ...REPLAY_TURN_COLUMNS].map((column) => column.id);
+export const ALL_TURN_COLUMN_LABELS = new Map<TurnColumnId, string>(
+  [...TURN_COLUMNS, ...REPLAY_TURN_COLUMNS].map((column) => [column.id, column.label]),
+);
 
-// Names the row, so it can't be hidden.
+const REPLAY_IDS = new Set<string>(REPLAY_TURN_COLUMNS.map((column) => column.id));
+export function isReplayColumn(id: TurnColumnId): id is ReplayTurnColumnId {
+  return REPLAY_IDS.has(id);
+}
+
+// Mock-up board 4 (Narrow.dc.html), plus the simulated cost, which stays
+// in view at every width while a replay is shown (step 14.7).
+export const PRIORITY_TURN_COLUMNS: TurnColumnId[] = ["turn", "trigger", "aiCredits", "cumulative", "replayCost"];
+
+// Turn names the row, so it can't be hidden; nor can the simulated cost,
+// the figure a replay is for.
+export const REQUIRED_TURN_COLUMNS: TurnColumnId[] = ["turn", "replayCost"];
 export const REQUIRED_TURN_COLUMN: TurnColumnId = "turn";
 
-// `ids` in display order, with the required column.
+// `ids` in display order, with the required columns.
 function inDisplayOrder(ids: readonly string[]): TurnColumnId[] {
-  return ALL_TURN_COLUMNS.filter((id) => id === REQUIRED_TURN_COLUMN || ids.includes(id));
+  return ALL_TURN_COLUMNS.filter((id) => REQUIRED_TURN_COLUMNS.includes(id) || ids.includes(id));
 }
 
 export function turnColumnsFor(layout: Layout, chosen: readonly TurnColumnId[]): TurnColumnId[] {
@@ -54,11 +77,15 @@ export function parseTurnColumns(stored: unknown): TurnColumnId[] | undefined {
   const ids = stored.filter((id): id is string => typeof id === "string");
   // A list saved before the Cache column existed that showed every column
   // meant "all of them", so the new column joins it.
-  const showedEverything = ALL_TURN_COLUMNS.every((id) => id === "cache" || ids.includes(id));
-  return inDisplayOrder(showedEverything ? [...ids, "cache"] : ids);
+  const showedEverything = TURN_COLUMNS.every((column) => column.id === "cache" || ids.includes(column.id));
+  // Every list saved since step 14.7 holds the required replayCost, so one
+  // without it predates the simulated group, which joins it.
+  const predatesReplay = !ids.includes("replayCost");
+  return inDisplayOrder([...ids, ...(showedEverything ? ["cache"] : []), ...(predatesReplay ? REPLAY_IDS : [])]);
 }
 
-// Whether a column applies to these turns: Cache only to simulated ones.
-export function columnsApplyingTo(columns: readonly TurnColumnId[], simulated: boolean): TurnColumnId[] {
-  return columns.filter((id) => id !== "cache" || simulated);
+// Whether a column applies to these turns: Cache only to simulated (Learn)
+// ones, the simulated group only while a replay is shown.
+export function columnsApplyingTo(columns: readonly TurnColumnId[], simulated: boolean, replayed = false): TurnColumnId[] {
+  return columns.filter((id) => (id !== "cache" || simulated) && (!isReplayColumn(id) || replayed));
 }

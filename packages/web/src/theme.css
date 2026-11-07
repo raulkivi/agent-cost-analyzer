@@ -683,3 +683,75 @@ main[data-layout="narrow"] .nav { flex-wrap: wrap; gap: var(--space-2); }
 .vendors-reason { font-size: 12px; margin-top: var(--space-1); max-width: 240px; overflow-wrap: anywhere; }
 .vendors-sort { padding: 0; font: inherit; font-weight: inherit; text-align: left; }
 .vendors-add { margin-top: var(--space-3); display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+
+/* Phase 14 step 14.7: a real session replayed on another model (mock-up
+   boards 1, 2, 4 and 5). Every simulated figure sits in a dashed frame and
+   carries the Simulated badge in words, so neither colour nor the dash
+   alone says it; the tint is a light wash of the accent, and the text
+   colours are the theme's own (the editor themes' stylesheet re-points the
+   tokens, and gives High Contrast a contrast-border dash with no fill). */
+.btn-sm { font-size: 12px; padding: 2px 8px; }
+.sim-badge {
+  display: inline-flex; align-items: center; gap: 4px; padding: 0 6px; height: 18px;
+  border: 1px dashed var(--color-accent-text); color: var(--color-accent-text);
+  font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; white-space: nowrap;
+}
+.sim-frame { border: 1px dashed var(--color-accent-text); background: color-mix(in srgb, var(--color-accent) 6%, transparent); }
+.table .sim-cell {
+  border-left: 1px dashed var(--color-accent-text);
+  background: color-mix(in srgb, var(--color-accent) 6%, transparent);
+}
+.table th.sim-group { text-transform: none; letter-spacing: normal; }
+.sim-group-label { display: inline-flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
+.sim-group-model { color: var(--color-text); font-weight: 600; }
+.sim-cell--gap { white-space: normal; font-size: 12px; }
+.cache-outcome { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
+.turn-metrics .sim-cell { padding-left: var(--space-1); border-left: 1px dashed var(--color-accent-text); }
+
+.replay-controls { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; min-width: 0; }
+.replay-on-reason { font-size: 12px; }
+.replay-hint { font-size: 13px; margin: 0 0 var(--space-3); }
+.replay-strip { margin-bottom: var(--space-3); }
+.replay-strip-body {
+  display: flex; flex-wrap: wrap; align-items: flex-start; gap: var(--space-3);
+  padding: var(--space-3); font-size: 13px;
+}
+.replay-total { display: flex; flex-direction: column; gap: 2px; min-width: 0; padding: var(--space-1) var(--space-2); }
+.replay-total-head { display: inline-flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
+.replay-total-value { font-size: 20px; font-variant-numeric: tabular-nums; }
+.replay-total-note { font-size: 12px; }
+.replay-strip-lines { display: flex; flex-direction: column; gap: 2px; flex: 1 1 260px; min-width: 0; overflow-wrap: anywhere; }
+.replay-self-check { display: inline; }
+.replay-self-check--failed { font-weight: 600; }
+.replay-note {
+  display: flex; flex-direction: column; gap: var(--space-1); align-items: flex-start;
+  flex: 1 1 100%; padding: var(--space-2) var(--space-3); border: 1px solid var(--color-divider); font-size: 13px;
+  margin-bottom: var(--space-3); overflow-wrap: anywhere;
+}
+.replay-strip .replay-note { margin-bottom: 0; }
+.replay-note--warn { border-color: var(--color-accent-text); }
+.replay-note-tag { font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; font-size: 11px; }
+
+.dialog.replay-panel { width: min(720px, 100%); max-height: calc(100vh - 2 * var(--space-4)); overflow-y: auto; }
+.replay-panel-head { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--space-2); }
+.replay-panel-head .dialog-title { margin: var(--space-1) 0; overflow-wrap: anywhere; }
+.replay-panel-totals { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: var(--space-2); }
+.replay-panel-section { display: flex; flex-direction: column; gap: var(--space-1); font-size: 13px; padding-top: var(--space-2); border-top: 1px solid var(--color-divider); }
+.replay-panel-section h3 { margin: 0; font-size: 15px; }
+.replay-panel-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2); }
+.replay-panel-list { margin: 0; padding-left: var(--space-3); }
+.replay-channel { font: inherit; color: inherit; background: transparent; border: 0; }
+.replay-channel--on { background: var(--color-accent-fill); color: var(--color-bg); }
+.replay-disclosure { padding: 0; font: inherit; font-weight: 600; text-align: left; }
+.replay-assumptions { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-2); }
+.replay-assumption { display: flex; flex-direction: column; gap: 2px; padding: var(--space-1) var(--space-2); border-left: 2px solid var(--color-accent-text); }
+.replay-assumption--unused { border-left-color: var(--color-divider); color: var(--color-text-muted); background: var(--color-neutral-100); }
+.replay-assumption-head { display: inline-flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
+
+.replay-turn-note { margin-top: var(--space-3); padding: var(--space-3); font-size: 13px; }
+.replay-turn-note h4 { margin: 0 0 var(--space-2); }
+.replay-turn-note-text { margin: 0 0 var(--space-2); overflow-wrap: anywhere; }
+.replay-turn-note-table { border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.replay-turn-note-table th, .replay-turn-note-table td { padding: 2px var(--space-2) 2px 0; text-align: left; font-weight: 400; }
+.replay-turn-note-table thead th { color: var(--color-text-muted); font-size: 12px; }
+.replay-turn-note-table tbody th { color: var(--color-text-muted); }

@@ -119,7 +119,10 @@ body.vscode-dark .seg-opt:has(input:checked),
 body.vscode-high-contrast .seg-opt:has(input:checked),
 body.vscode-light .filter-chip[aria-pressed="true"],
 body.vscode-dark .filter-chip[aria-pressed="true"],
-body.vscode-high-contrast .filter-chip[aria-pressed="true"] {
+body.vscode-high-contrast .filter-chip[aria-pressed="true"],
+body.vscode-light .replay-channel--on,
+body.vscode-dark .replay-channel--on,
+body.vscode-high-contrast .replay-channel--on {
   color: var(--vscode-button-foreground, var(--color-bg));
 }
 
@@ -303,4 +306,45 @@ body.vscode-high-contrast.vscode-high-contrast-light {
   --color-series-8: #e34948;
   --color-diverging-increase: #e34948;
   --color-diverging-decrease: #1c5cab;
+}
+
+/* — Phase 14 step 14.7, the replay's simulated figures (mock-up board 5):
+     the dash takes the editor's focus colour on a faint wash of it; High
+     Contrast flattens fills, so there the frame is a dashed contrastBorder
+     with no fill, and the chosen price channel gets the active-item
+     outline, as the segmented controls do. — */
+body.vscode-light .sim-badge,
+body.vscode-dark .sim-badge,
+body.vscode-light .sim-frame,
+body.vscode-dark .sim-frame,
+body.vscode-light .table .sim-cell,
+body.vscode-dark .table .sim-cell,
+body.vscode-light .turn-metrics .sim-cell,
+body.vscode-dark .turn-metrics .sim-cell {
+  border-color: var(--vscode-focusBorder, var(--color-accent-text));
+}
+body.vscode-light .sim-frame,
+body.vscode-dark .sim-frame,
+body.vscode-light .table .sim-cell,
+body.vscode-dark .table .sim-cell {
+  background: color-mix(in srgb, var(--vscode-focusBorder, #5980a6) 7%, transparent);
+}
+body.vscode-high-contrast .sim-badge,
+body.vscode-high-contrast .sim-frame,
+body.vscode-high-contrast .table .sim-cell,
+body.vscode-high-contrast .turn-metrics .sim-cell,
+body.vscode-high-contrast .replay-note--warn {
+  border-color: var(--vscode-contrastBorder, var(--color-divider));
+  background: transparent;
+}
+body.vscode-high-contrast .sim-badge {
+  color: var(--vscode-editor-foreground, var(--color-text));
+}
+body.vscode-high-contrast .replay-channel--on {
+  outline: 2px solid var(--vscode-contrastActiveBorder, #f38518);
+  outline-offset: -2px;
+}
+body.vscode-high-contrast .replay-assumption--unused {
+  background: transparent;
+  border-left-style: dashed;
 }

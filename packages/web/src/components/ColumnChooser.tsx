@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 import { useEffect, useId, useRef, useState } from "react";
 import type { KeyboardEvent } from "react";
-import { columnsApplyingTo, REQUIRED_TURN_COLUMN, TURN_COLUMNS, type TurnColumnId } from "../lib/turn-columns.js";
+import { ALL_TURN_COLUMN_LABELS, ALL_TURN_COLUMNS, columnsApplyingTo, REQUIRED_TURN_COLUMNS, type TurnColumnId } from "../lib/turn-columns.js";
 
 interface ColumnChooserProps {
   visible: readonly TurnColumnId[];
@@ -10,6 +10,8 @@ interface ColumnChooserProps {
   // The session is simulated, so the Cache column exists; otherwise it is
   // neither listed nor counted.
   simulated?: boolean;
+  // A replay is shown (step 14.7), so its simulated columns exist.
+  replayed?: boolean;
 }
 
 // The turns table's column chooser (§3.5 Layout, mock-up board 1): a
@@ -17,8 +19,8 @@ interface ColumnChooserProps {
 // checkbox per column. A disclosure, not a dialog: focus moves freely;
 // Escape closes it, back on its button, and a click outside closes it
 // without touching the focus.
-export function ColumnChooser({ visible, onChange, simulated = false }: ColumnChooserProps) {
-  const columns = TURN_COLUMNS.filter((column) => columnsApplyingTo([column.id], simulated).length > 0);
+export function ColumnChooser({ visible, onChange, simulated = false, replayed = false }: ColumnChooserProps) {
+  const columns = columnsApplyingTo(ALL_TURN_COLUMNS, simulated, replayed).map((id) => ({ id, label: ALL_TURN_COLUMN_LABELS.get(id) }));
   const [open, setOpen] = useState(false);
   const button = useRef<HTMLButtonElement>(null);
   const panelId = useId();
@@ -37,7 +39,9 @@ export function ColumnChooser({ visible, onChange, simulated = false }: ColumnCh
 
   function toggle(id: TurnColumnId): void {
     const next = visible.includes(id) ? visible.filter((column) => column !== id) : [...visible, id];
-    onChange(TURN_COLUMNS.map((column) => column.id).filter((column) => next.includes(column)));
+    // Every id in display order, those not listed now (e.g. the simulated
+    // group without a replay) kept as they were.
+    onChange(ALL_TURN_COLUMNS.filter((column) => next.includes(column)));
   }
 
   function handleKeyDown(event: KeyboardEvent): void {
@@ -51,7 +55,7 @@ export function ColumnChooser({ visible, onChange, simulated = false }: ColumnCh
   return (
     <div ref={root} className="column-chooser" onKeyDown={handleKeyDown}>
       <span className="text-muted" style={{ fontSize: 12 }}>
-        Showing {columnsApplyingTo(visible, simulated).length} of {columns.length} columns
+        Showing {columnsApplyingTo(visible, simulated, replayed).length} of {columns.length} columns
       </span>
       <button
         ref={button}
@@ -71,8 +75,8 @@ export function ColumnChooser({ visible, onChange, simulated = false }: ColumnCh
             <label key={column.id} className="column-chooser-option">
               <input
                 type="checkbox"
-                checked={column.id === REQUIRED_TURN_COLUMN || visible.includes(column.id)}
-                disabled={column.id === REQUIRED_TURN_COLUMN}
+                checked={REQUIRED_TURN_COLUMNS.includes(column.id) || visible.includes(column.id)}
+                disabled={REQUIRED_TURN_COLUMNS.includes(column.id)}
                 onChange={() => toggle(column.id)}
               />
               {column.label}

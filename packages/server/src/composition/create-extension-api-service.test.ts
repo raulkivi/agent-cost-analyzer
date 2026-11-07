@@ -9,7 +9,7 @@ import { productProfileSchema, sessionReplayComparisonSchema, sessionReplaySchem
 import { InMemoryAppSettingsStore } from "../test-support/in-memory-app-settings-store.js";
 import type { SettingsSource } from "../services/config-check/settings-source.js";
 import { COPILOT_CLI_FIXTURE_HOME, COPILOT_CLI_FIXTURE_SESSION_IDS, writeCopilotCliAgentHostStores } from "../test-support/copilot-cli-fixtures.js";
-import { createExtensionApiService } from "./create-extension-api-service.js";
+import { createExtensionApiService, extensionProductProfile } from "./create-extension-api-service.js";
 
 const fixturesRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../fixtures");
 
@@ -48,9 +48,18 @@ describe("createExtensionApiService (extension composition, vscode-extension.md 
         // no projects or billing here (D7, D19).
         costAnalysis: true,
         projectsAndBilling: false,
+        // Phase 14 step 14.7: the fixtures bundle a price book, so replays can be priced.
+        sessionReplay: true,
       },
     });
     expect(await service.getHealth()).toEqual({ status: "ok", version: "0.1.0-test" });
+  });
+
+  it("offers session replay only when the ApiService can answer one (step 14.7)", () => {
+    // The vendor profiles read their prices from the bundled price book, so a
+    // real extension always has one; the flag still follows the dependency.
+    expect(extensionProductProfile("1.0.0", { sessionReplay: false }).features.sessionReplay).toBe(false);
+    expect(extensionProductProfile("1.0.0", { sessionReplay: true }).features.sessionReplay).toBe(true);
   });
 
   it("replays a Learn scenario on a model with VS Code wording (step 13.6)", async () => {

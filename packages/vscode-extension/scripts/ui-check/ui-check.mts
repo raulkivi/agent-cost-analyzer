@@ -46,6 +46,13 @@ async function openDetailsIfCollapsed(page: Page, harness: Harness): Promise<voi
   }
 }
 
+async function openSessionReplay(page: Page, harness: Harness): Promise<void> {
+  await harness.postHostEvent(page, "selectSession", { sessionId: harness.agentHostUsageRecordsSessionId });
+  await page.getByLabel("Replay on").first().selectOption("claude-haiku-5.5");
+  await page.getByRole("region", { name: "Replay summary" }).first().waitFor({ timeout: 10000 });
+  await harness.settle(page);
+}
+
 async function openVendorsTab(page: Page, harness: Harness): Promise<void> {
   await harness.postHostEvent(page, "selectSession", { sessionId: "image-attachment-invalidation", mode: "learn" });
   await openDetailsIfCollapsed(page, harness);
@@ -242,6 +249,27 @@ const SCENARIOS: Scenario[] = [
       await harness.postHostEvent(page, "selectSession", { sessionId: harness.agentHostUsageRecordsSessionId });
       await page.getByRole("cell", { name: "300", exact: true }).first().waitFor({ timeout: 5000 });
       await page.getByRole("cell", { name: "30", exact: true }).first().waitFor({ timeout: 5000 });
+    },
+  },
+  // Phase 14 step 14.7: a Copilot session replayed on another model (mock-up
+  // board 5): the summary strip and the Simulated columns, the summary panel,
+  // and Compare models.
+  { name: "session-replay", run: openSessionReplay },
+  {
+    name: "session-replay-summary",
+    run: async (page, harness) => {
+      await openSessionReplay(page, harness);
+      await page.getByRole("button", { name: "Replay summary" }).first().click();
+      await page.getByRole("dialog").first().waitFor({ timeout: 5000 });
+      await harness.settle(page);
+    },
+  },
+  {
+    name: "session-replay-compare",
+    run: async (page, harness) => {
+      await openSessionReplay(page, harness);
+      await page.getByRole("button", { name: "Compare models" }).first().click();
+      await harness.settle(page);
     },
   },
   {

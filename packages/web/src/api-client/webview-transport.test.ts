@@ -59,8 +59,8 @@ function harness(): ContractHarness {
     hang: () => setAutoReply(() => undefined),
     succeedWith: (value) =>
       setAutoReply((req) => ({ kind: "response", id: req.id, ok: true, result: value })),
-    failWith: (status) =>
-      setAutoReply((req) => ({ kind: "response", id: req.id, ok: false, error: { status, message: "nope" } })),
+    failWith: (status, message = "nope") =>
+      setAutoReply((req) => ({ kind: "response", id: req.id, ok: false, error: { status, message } })),
   };
 }
 

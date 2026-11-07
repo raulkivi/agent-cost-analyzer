@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 import type { HostCommand, HostCommandArgs, HostEventName, PerformanceMarkName } from "@agent-cost-analyzer/domain";
 import { abortError } from "./abort.js";
+import { ApiRequestError } from "./api-request-error.js";
 import type { ApiMethodName, ApiTransport, ViewStatePersistence } from "./transport.js";
 
 // The slice of acquireVsCodeApi()'s result this transport needs; the state
@@ -141,7 +142,8 @@ export class WebviewTransport implements ApiTransport {
       entry.resolve(data.result);
       return;
     }
-    const status = isRecord(data.error) ? data.error.status : undefined;
-    entry.reject(new Error(`Request to ${entry.method} failed with status ${String(status)}`));
+    const status = isRecord(data.error) && typeof data.error.status === "number" ? data.error.status : undefined;
+    const message = isRecord(data.error) && typeof data.error.message === "string" && data.error.message.length > 0 ? data.error.message : undefined;
+    entry.reject(new ApiRequestError(entry.method, status, message));
   }
 }

@@ -23,3 +23,17 @@ describe("CacheOutcomeBadge", () => {
     expect(screen.getByText("Cache hit")).toHaveClass("sr-only");
   });
 });
+
+// Step 14.7: the replay's Cache column shows the outcome as a word and icon.
+describe("CacheOutcomeBadge with its word shown", () => {
+  it.each([
+    ["hit", "Hit"],
+    ["partial", "Partial"],
+    ["miss", "Miss"],
+    ["unknown", "Unknown"],
+  ] as const)("shows %s as %s, readable once", (outcome, word) => {
+    const { container } = render(<CacheOutcomeBadge outcome={outcome} showWord />);
+    expect(container).toHaveTextContent(word);
+    expect(container.querySelector(".sr-only")).toBeNull();
+  });
+});

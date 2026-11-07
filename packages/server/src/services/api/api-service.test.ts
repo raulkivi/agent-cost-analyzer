@@ -26,7 +26,7 @@ const profile: ProductProfile = {
   productId: "standalone",
   displayName: "Agent Cost Analyzer",
   version: "1.2.3",
-  features: { providerSelect: true, crossProviderInsights: true, settingFixes: false, openInEditor: false, sessionSidebar: false, vendorSimulation: false, costAnalysis: true, projectsAndBilling: true },
+  features: { providerSelect: true, crossProviderInsights: true, settingFixes: false, openInEditor: false, sessionSidebar: false, vendorSimulation: false, costAnalysis: true, projectsAndBilling: true, sessionReplay: false },
 };
 
 const learnScenario = { ...sampleSessions[0], id: "learn-1", mode: "learn" as const };

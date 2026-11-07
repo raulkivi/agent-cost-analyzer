@@ -34,8 +34,8 @@ function harness(): ContractHarness {
     succeedWith: (value) => {
       outcome = { status: 200, value };
     },
-    failWith: (status) => {
-      outcome = { status, value: undefined };
+    failWith: (status, message) => {
+      outcome = { status, value: message === undefined ? undefined : { error: message } };
     },
     hang: () => {
       // Like fetch: pending until its signal aborts, then an AbortError.
