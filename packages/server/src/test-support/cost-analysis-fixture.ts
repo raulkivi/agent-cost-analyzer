@@ -209,7 +209,7 @@ const providerStatus: LogProviderStatus = {
   ],
 };
 
-export type CostFixtureOptions = Pick<McpServerDeps, "toolGroups" | "identity" | "projectBillingDetails"> & {
+export type CostFixtureOptions = Pick<McpServerDeps, "toolGroups" | "identity" | "projectBillingDetails" | "appViews"> & {
   // Step 15.13: the security tests' generated home folder, remote and projects.
   home?: string;
   portalApiRemote?: string;
