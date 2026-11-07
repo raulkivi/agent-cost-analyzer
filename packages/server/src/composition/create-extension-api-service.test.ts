@@ -41,8 +41,10 @@ describe("createExtensionApiService (extension composition, vscode-extension.md 
         openInEditor: true,
         sessionSidebar: true,
         vendorSimulation: true,
-        // Step 15.9: no cost routes until step 15.14, so the tabs are hidden.
-        costAnalysis: false,
+        // Step 15.14: Cost over time and Compare over the Copilot sessions;
+        // no projects or billing here (D7, D19).
+        costAnalysis: true,
+        projectsAndBilling: false,
       },
     });
     expect(await service.getHealth()).toEqual({ status: "ok", version: "0.1.0-test" });
@@ -55,6 +57,15 @@ describe("createExtensionApiService (extension composition, vscode-extension.md 
     const comparison = await service.compareScenario("clear");
     expect(comparison.entries.length).toBeGreaterThan(1);
     expect((await service.listVendorProfiles()).length).toBe(6);
+  });
+
+  it("serves the cost analyses over the Copilot sessions, with no projects (step 15.14)", async () => {
+    const service = buildService();
+
+    const series = await service.getCostTimeSeries({ groupBy: "repository" });
+    expect(series.groupBy).toBe("repository");
+    const comparison = await service.getCostComparison({ groupBy: "repository", ids: "a,b", since: "2026-10-01", until: "2026-10-31" });
+    expect(comparison.rows).toHaveLength(2);
   });
 
   it("lists only the VS Code provider", async () => {

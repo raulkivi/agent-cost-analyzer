@@ -438,6 +438,33 @@ describe("InsightsDashboard", () => {
       expect(loadDataset).toHaveBeenCalledTimes(2);
     });
 
+    // Step 15.14 (plan §11.9, board 7): the extension has no projects file or
+    // billing (D7, D19), so Project and Billing are left out and the switch
+    // says where they are.
+    it("leaves out Project and Billing without projects and billing, and says where they are", async () => {
+      render(
+        <InsightsDashboard
+          loadDataset={vi.fn().mockResolvedValue(sampleInsightsDataset())}
+          now={NOW}
+          costAnalysis
+          projectsAndBilling={false}
+          loadCostSeries={vi.fn().mockResolvedValue(sampleCostSeries())}
+          loadCostComparison={vi.fn().mockResolvedValue(sampleCostComparison())}
+        />,
+      );
+      await screen.findByRole("group", { name: "AI Credits" });
+      const views = within(screen.getByRole("radiogroup", { name: "Dashboard view" })).getAllByRole("radio");
+      expect(views.map((view) => view.getAttribute("aria-label") ?? view.closest("label")?.textContent)).toEqual(["Overview", "Cost over time", "Compare"]);
+      expect(screen.getByText("Billing and estimates: in the Agent Cost Analyzer app")).toBeInTheDocument();
+    });
+
+    it("has every view and no note in the standalone app", async () => {
+      renderWithCost();
+      await screen.findByRole("group", { name: "AI Credits" });
+      expect(within(screen.getByRole("radiogroup", { name: "Dashboard view" })).getAllByRole("radio")).toHaveLength(5);
+      expect(screen.queryByText("Billing and estimates: in the Agent Cost Analyzer app")).not.toBeInTheDocument();
+    });
+
     it("below 700 px offers the views as a select", async () => {
       vi.stubGlobal(
         "ResizeObserver",

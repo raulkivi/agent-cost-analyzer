@@ -266,6 +266,17 @@ const SCENARIOS: Scenario[] = [
     },
   },
   { name: "dashboard", run: openDashboard },
+  // Step 15.14 (plan §11.9, board 7): the extension's own profile and cost
+  // routes over the seeded Copilot fixture: Cost over time and Compare, and
+  // the note where Project and Billing are.
+  {
+    name: "dashboard-extension-cost-over-time",
+    run: async (page, harness) => {
+      await openDashboardView(page, harness, "Cost over time");
+      await page.getByText("Billing and estimates: in the Agent Cost Analyzer app").first().waitFor({ timeout: 10000 });
+      await page.getByRole("group", { name: "Total cost" }).waitFor({ timeout: 10000 });
+    },
+  },
   // Step 15.9 (plan §11.6): the cost tabs at 600-1600 px in the three themes.
   {
     name: "dashboard-cost-over-time",

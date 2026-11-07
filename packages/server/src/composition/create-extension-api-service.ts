@@ -13,6 +13,7 @@ import { createInsightsService } from "./create-insights-service.js";
 import { createSessionAttributor } from "./create-session-attributor.js";
 import { createBundledPriceBookBeside } from "./create-price-book.js";
 import { createTurnPricer } from "./create-turn-pricer.js";
+import { createCostAnalysis } from "./create-cost-analysis.js";
 
 export interface ExtensionApiServiceOptions extends CopilotProviderCompositionOptions {
   // The effective VS Code settings the config check judges (G6: the
@@ -44,8 +45,10 @@ export function extensionProductProfile(version: string): ProductProfile {
       openInEditor: true,
       sessionSidebar: true,
       vendorSimulation: true,
-      // Step 15.9: the extension has no cost routes until step 15.14.
-      costAnalysis: false,
+      // Step 15.14: Cost over time and Compare over the Copilot sessions;
+      // no projects file and no billing here (D7, D19).
+      costAnalysis: true,
+      projectsAndBilling: false,
     },
   };
 }
@@ -54,11 +57,6 @@ export function extensionProductProfile(version: string): ProductProfile {
 // extension's own settings store. Unlike create-standalone-api-service.ts
 // it never imports the Express app or any non-Copilot provider; the
 // extension's bundle-boundary test enforces that.
-function pricerBeside(vendorProfilesDir: string) {
-  const book = createBundledPriceBookBeside(vendorProfilesDir);
-  return book ? createTurnPricer(book) : undefined;
-}
-
 export function createExtensionApiService(options: ExtensionApiServiceOptions): ApiService {
   const { learnScriptsDir, vendorProfilesDir, appVersion, settingsSource, ...compositionOptions } = options;
   const { registry, appSettings, resolvedVscodeSettingsPath } = composeCopilotProviders(compositionOptions);
@@ -67,13 +65,19 @@ export function createExtensionApiService(options: ExtensionApiServiceOptions): 
   // Copilot users see VS Code wording (D13/D14).
   const learnSimulation = new LearnSimulationService(loadScenarioScripts(learnScriptsDir), vendorProfiles, "vscode-local");
 
+  // Step 15.4: repository, vendor and channel; no projects file (D19), so
+  // every turn is in No project. Step 15.6: Copilot turns priced from the
+  // bundled price book, so billed and priced figures can be compared.
+  const priceBook = createBundledPriceBookBeside(vendorProfilesDir);
+  const insights = createInsightsService(registry, createSessionAttributor({ vendorProfiles }), priceBook ? createTurnPricer(priceBook) : undefined);
+
   return new ApiService({
     registry,
     auditQueries: new AuditQueryService(registry),
-    // Step 15.4: repository, vendor and channel; no projects file until step 15.14.
-    // Step 15.6: Copilot turns priced from the bundled price book, so billed
-    // and priced figures can be compared.
-    insights: createInsightsService(registry, createSessionAttributor({ vendorProfiles }), pricerBeside(vendorProfilesDir)),
+    insights,
+    // Step 15.14: the Dashboard's Cost over time and Compare tabs, over the
+    // same dataset, with the bundled price book's documented changes.
+    costAnalysis: createCostAnalysis(insights, priceBook),
     settings: appSettings,
     checkConfig: (minRetainedSessionLogsThreshold) =>
       checkConfig({
