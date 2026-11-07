@@ -8,6 +8,7 @@ import { FakeAppHostPort } from "../host/fake-app-host-port.js";
 import type { ToolResult } from "../host/app-host-port.js";
 import { enrichedFinding, findingsResult, SAMPLE_FINDINGS } from "./findings/fixtures.js";
 import { FindingsView } from "./FindingsView.js";
+import { exerciseEveryControl } from "../test-support/exercise-controls.js";
 
 const brand: ViewBrand = { productId: "vscode-extension", displayName: "AI Credits Analyzer", version: "0.9.0" };
 
@@ -45,11 +46,11 @@ describe("FindingsView rendering", () => {
     expect(screen.getByText("3 findings")).toBeInTheDocument();
     const critical = screen.getByRole("group", { name: "Critical" });
     expect(within(critical).getByText("1")).toBeInTheDocument();
-    expect(screen.getAllByRole("group").map((g) => g.getAttribute("aria-label"))).toEqual(["Critical", "High", "Medium", "Low", "Info"]);
+    expect(screen.getAllByRole("group").filter((g) => g.classList.contains("fv-tile")).map((g) => g.getAttribute("aria-label"))).toEqual(["Critical", "High", "Medium", "Low", "Info"]);
     const table = screen.getByRole("table", { name: "Findings" });
     expect(within(table).getByText("Read a credentials file")).toBeInTheDocument();
     expect(within(table).getByText("Rotate deploy keys")).toBeInTheDocument();
-    expect(within(table).getByText(/turn 8/)).toBeInTheDocument();
+    expect(within(table).getAllByText(/turn 8/)).toHaveLength(2); // the Session column and the narrow-width line
     expect(within(table).getAllByRole("row")).toHaveLength(4);
   });
 
@@ -280,5 +281,38 @@ describe("FindingsView never forwards finding text (plan section 6)", () => {
       expect(sentText).not.toContain(finding.sessionTitle);
       if (finding.evidence) expect(sentText).not.toContain(finding.evidence);
     }
+  });
+
+  // A14: every radio, every severity option, every evidence toggle and the
+  // Retry of a failed refetch, with logged text in every finding field.
+  it("presses every control, through a failed refetch, and sends only filters", async () => {
+    const secret = "SECRET-LOGGED-TEXT";
+    const findings = SAMPLE_FINDINGS.map((finding) => ({ ...finding, title: `${secret} title`, why: `${secret} why`, sessionTitle: `${secret} session`, evidence: `${secret} evidence` }));
+    const port = new FakeAppHostPort(); // list_findings fails at first
+    renderView(port, ok(findingsResult(findings, { total: 3 })));
+    port.pushToolInput({ since: "2026-10-01", provider: "copilot" });
+    const failing = await exerciseEveryControl();
+    port.toolResults.set("list_findings", ok(findingsResult(findings, { total: 3 })));
+    const working = await exerciseEveryControl();
+
+    const pressed = [...failing, ...working];
+    for (const name of ["radio:Security", "radio:Anomaly", "radio:Behaviour change", "radio:Price change", "radio:All", "button:Retry", "button:Redacted evidence"]) expect(pressed).toContain(name);
+    for (const severity of ["all", "low", "medium", "high", "critical"]) expect(pressed.some((name) => name.endsWith(`=${severity}`)), severity).toBe(true);
+    expect(new Set(port.calls.map((call) => call.method))).toEqual(new Set(["callTool"]));
+    expect(JSON.stringify(port.calls)).not.toContain(secret);
+    for (const args of listFindingsCalls(port)) {
+      for (const key of Object.keys(args)) expect(["since", "provider", "kind", "minSeverity"]).toContain(key);
+    }
+  });
+});
+
+// A14 visual check at 360px: what the narrow layout relies on.
+describe("FindingsView narrow layout hooks", () => {
+  it("repeats kind, session and day under each finding, for widths where those columns are hidden", () => {
+    renderView(new FakeAppHostPort());
+    const rows = within(screen.getByRole("table", { name: "Findings" })).getAllByRole("row");
+    expect(rows[1]!.querySelector(".fv-row-meta")!.textContent).toBe("Security · Rotate deploy keys · turn 8 · Oct 30");
+    expect(rows[0]!.querySelectorAll("th.fv-col-wide")).toHaveLength(3);
+    expect(rows[1]!.querySelectorAll("td.fv-col-wide")).toHaveLength(3);
   });
 });

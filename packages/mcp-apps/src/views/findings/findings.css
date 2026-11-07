@@ -18,7 +18,11 @@
   border: 1px solid var(--color-border-tertiary, var(--brand-fb-divider));
   border-radius: var(--radius-sm);
 }
-.fv-tile.is-dim { opacity: 0.5; }
+/* Below the minimum severity: de-emphasised with a dashed frame and the
+   muted text token, not opacity, which would take the text under 4.5:1 on
+   some hosts (A14; the A6 contrast tests can't see opacity). */
+.fv-tile.is-dim { background: transparent; border-style: dashed; }
+.fv-tile.is-dim .fv-tile-value { font-weight: 400; color: var(--color-text-secondary, var(--brand-fb-text-muted)); }
 .fv-tile-label { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; color: var(--color-text-secondary, var(--brand-fb-text-muted)); }
 .fv-tile-value { font-size: 21px; font-weight: 600; line-height: 1.2; font-variant-numeric: tabular-nums; }
 
@@ -29,6 +33,7 @@
 .fv-mark--info { stroke: var(--color-text-secondary, currentColor); }
 
 .fv-filters { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
+.fv-kind { margin: 0; padding: 0; border: 0; min-width: 0; }
 .fv-filters .seg { flex-wrap: wrap; }
 .fv-filters .seg-opt { padding: 3px 8px; font-size: 12px; white-space: nowrap; }
 .fv-select { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; }
@@ -83,7 +88,20 @@
   background: transparent; border: 1px solid var(--color-border-secondary, var(--brand-fb-divider)); border-radius: var(--radius-md);
 }
 
+/* Kind, session and day under the finding: only where their columns are
+   hidden. */
+.fv-row-meta { display: none; font-size: 11px; }
+
+@media (max-width: 480px) {
+  /* Five columns pushed Session and When out of view at 360px (A14 visual
+     check): they move under the finding, and the finding takes the width. */
+  .fv-table .fv-col-wide { display: none; }
+  .fv-row-meta { display: block; margin-top: 1px; }
+  .fv-finding { min-width: 0; }
+}
+
 @media (max-width: 420px) {
-  .fv-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  /* Three across (3 + 2) rather than two (2 + 2 + 1): shorter, and no lone tile. */
+  .fv-tiles { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .fv-tile-value { font-size: 19px; }
 }

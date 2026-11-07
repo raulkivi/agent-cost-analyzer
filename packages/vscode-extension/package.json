@@ -251,10 +251,6 @@
     "menus": {
       "commandPalette": [
         {
-          "command": "aiCreditsAnalyzer.openSession",
-          "when": "false"
-        },
-        {
           "command": "aiCreditsAnalyzer.openScenario",
           "when": "false"
         },

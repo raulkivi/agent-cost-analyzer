@@ -1,10 +1,11 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import type { ConfigStatus } from "@agent-cost-analyzer/domain";
+import type { ConfigStatus, Session } from "@agent-cost-analyzer/domain";
 import { describe, expect, it, vi } from "vitest";
 import { upperCaseTranslate } from "../l10n/upper-case-translate.js";
 import { COMMAND_IDS } from "./command-ids.js";
 import { ExtensionCommands } from "./extension-commands.js";
+import type { SessionPickItem } from "./session-pick-items.js";
 
 const LOGGING_SETTING = "github.copilot.chat.agentDebugLog.fileLogging.enabled";
 
@@ -27,13 +28,31 @@ function statusWith(...settingIds: string[]): ConfigStatus {
   };
 }
 
-function setup(readConfigStatus: () => Promise<ConfigStatus> = async () => statusWith(LOGGING_SETTING)) {
+function session(overrides: Partial<Session> & { id: string }): Session {
+  return {
+    mode: "analyze",
+    title: overrides.id,
+    model: "m",
+    turns: [],
+    turnCount: 1,
+    costAiCredits: { known: true, value: 1 },
+    usageDataAvailable: true,
+    ...overrides,
+  };
+}
+
+function setup(readConfigStatus: () => Promise<ConfigStatus> = async () => statusWith(LOGGING_SETTING), sessions: Session[] = []) {
   const panel = { open: vi.fn(), postWhenReady: vi.fn() };
   const sidebar = { refresh: vi.fn(async () => undefined), setSessionsGrouping: vi.fn() };
   const hostCommands = { openSetting: vi.fn(async () => undefined) };
   const walkthrough = { open: vi.fn(async () => undefined) };
-  const commands = new ExtensionCommands({ panel, sidebar, hostCommands, walkthrough, readConfigStatus });
-  return { commands, panel, sidebar, hostCommands, walkthrough };
+  const sessionSource = { list: vi.fn(async () => sessions) };
+  const picker = {
+    pick: vi.fn<(items: SessionPickItem[], placeholder: string) => Promise<string | undefined>>(async () => undefined),
+    inform: vi.fn(),
+  };
+  const commands = new ExtensionCommands({ panel, sidebar, hostCommands, walkthrough, readConfigStatus, sessions: sessionSource, picker });
+  return { commands, panel, sidebar, hostCommands, walkthrough, sessionSource, picker };
 }
 
 const selectSession = (payload: unknown) => ({ kind: "event", name: "selectSession", payload });
@@ -102,6 +121,90 @@ describe("ExtensionCommands", () => {
   });
 
   describe("openSession", () => {
+    describe("with no session id (the Command Palette)", () => {
+      const sessions = [
+        session({ id: "old", title: "Old one", startedAt: "2026-11-01T09:00:00Z" }),
+        session({ id: "new", title: "New one", startedAt: "2026-11-07T09:00:00Z", costAiCredits: { known: false, reason: "no usage data" } }),
+      ];
+
+      it("shows a picker of the sessions, newest first, with Unknown AI Credits worded as such", async () => {
+        const { commands, picker, panel } = setup(undefined, sessions);
+
+        await commands.openSession();
+
+        expect(picker.pick).toHaveBeenCalledTimes(1);
+        const items = picker.pick.mock.calls[0]![0];
+        expect(items.map((item) => item.label)).toEqual(["New one", "Old one"]);
+        expect(items[0]!.description).toContain("AI Credits: Unknown");
+        expect(items[0]!.detail).toBe("new");
+        expect(panel.open).not.toHaveBeenCalled();
+      });
+
+      it.each([undefined, null, ""])("treats %j as no session id", async (target) => {
+        const { commands, picker } = setup(undefined, sessions);
+
+        await commands.openSession(target);
+
+        expect(picker.pick).toHaveBeenCalledTimes(1);
+      });
+
+      it("opens the picked session exactly as an id argument does, keeping the options", async () => {
+        const { commands, picker, panel } = setup(undefined, sessions);
+        picker.pick.mockResolvedValue("old");
+
+        await commands.openSession(undefined, { tab: "tools" });
+
+        expect(panel.open).toHaveBeenCalledTimes(1);
+        expect(panel.postWhenReady).toHaveBeenCalledWith(selectSession({ sessionId: "old", tab: "tools" }));
+      });
+
+      it("does nothing when the picker is cancelled", async () => {
+        const { commands, picker, panel } = setup(undefined, sessions);
+        picker.pick.mockResolvedValue(undefined);
+
+        await commands.openSession();
+
+        expect(panel.open).not.toHaveBeenCalled();
+        expect(panel.postWhenReady).not.toHaveBeenCalled();
+      });
+
+      it("says there are no sessions, and shows no picker, when the list is empty", async () => {
+        const { commands, picker, panel } = setup(undefined, []);
+
+        await commands.openSession();
+
+        expect(picker.pick).not.toHaveBeenCalled();
+        expect(picker.inform).toHaveBeenCalledWith("No Copilot Chat sessions were found to open");
+        expect(panel.open).not.toHaveBeenCalled();
+      });
+
+      it("validates the picked id like any other, rejecting an unusable one", async () => {
+        const { commands, picker, panel } = setup(undefined, sessions);
+        picker.pick.mockResolvedValue("");
+
+        await expect(commands.openSession()).rejects.toThrow(/session/i);
+        expect(panel.open).not.toHaveBeenCalled();
+      });
+
+      it("is what the registered handler does with no argument", async () => {
+        const { commands, picker } = setup(undefined, sessions);
+
+        await commands.handlers()[COMMAND_IDS.openSession]!();
+
+        expect(picker.pick).toHaveBeenCalledTimes(1);
+      });
+    });
+
+    it("opens a session id argument directly, without reading the sessions or showing a picker", async () => {
+      const { commands, picker, sessionSource, panel } = setup(undefined, [session({ id: "s1" })]);
+
+      await commands.openSession("s1");
+
+      expect(picker.pick).not.toHaveBeenCalled();
+      expect(sessionSource.list).not.toHaveBeenCalled();
+      expect(panel.postWhenReady).toHaveBeenCalledWith(selectSession({ sessionId: "s1" }));
+    });
+
     it("opens the panel once and posts selectSession once, after opening", async () => {
       const { commands, panel } = setup();
       const order: string[] = [];
@@ -144,9 +247,8 @@ describe("ExtensionCommands", () => {
       const { commands, panel } = setup();
 
       for (const [target, options] of [
-        [undefined, undefined],
-        ["", undefined],
         [42, undefined],
+        [{ kind: "session" }, undefined],
         [{ sessionId: 3 }, undefined],
         ["s1", { tab: "settings" }],
         ["s1", { view: "dashboard" }],
@@ -284,6 +386,8 @@ describe("ExtensionCommands error messages (vscode-extension.md §3.5 Localizati
       hostCommands: { openSetting: async () => undefined },
       walkthrough: { open: async () => undefined },
       readConfigStatus: async () => statusWith(LOGGING_SETTING),
+      sessions: { list: async () => [] },
+      picker: { pick: async () => undefined, inform: () => undefined },
       t: upperCaseTranslate,
     });
 

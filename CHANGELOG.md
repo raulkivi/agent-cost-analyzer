@@ -9,8 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Interactive cost views for MCP Apps hosts such as Claude Desktop: the MCP
   tools `get_session_cost`, `get_cost_rollup` and `list_findings` show a
-  branded view next to the text result when `npm run build` has produced it
-  (`scripts/mcp-server.sh` serves it). Claude Code's text output is unchanged.
+  branded view next to the text result (per-turn chart and turn drill-down,
+  spend by day, model and provider with a drill-down into a session,
+  filterable findings, **Ask about this session**). Run `npm run build`;
+  `scripts/mcp-server.sh` then serves the views (`--app-views-html` names
+  another file), and without the build the server runs as before. Unknown
+  figures read "Unknown", never 0. The tools keep their names, schemas and
+  text, so Claude Code's output is unchanged; one app-only tool,
+  `get_turn_series`, feeds the chart. See the User Guide's
+  [Interactive views in the chat](docs/UserGuide.md#interactive-views-in-the-chat).
 
 ### Security
 - The MCP server no longer hands local folder paths to the chat model:

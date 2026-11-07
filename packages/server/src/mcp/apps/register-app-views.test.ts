@@ -115,6 +115,23 @@ describe("registerAppViews", () => {
     expect(byName(tools, "get_session_cost")!._meta?.ui).toEqual({ resourceUri: uri });
   });
 
+  // A14 security review (docs/plans/mcp-apps.md §6): the resource keeps the
+  // host's default CSP (no connect or resource domains, no frames) and asks
+  // for no sandbox origin, in the listing and in the read result.
+  it("declares no CSP domains, no sandbox domain and keeps the host's border", async () => {
+    ({ client } = await connectCostFixture({ appViews }));
+    const { resources } = await client.listResources();
+    const { contents } = await client.readResource({ uri: URI });
+    for (const meta of [resources[0]!._meta, contents[0]!._meta]) {
+      const ui = (meta?.ui ?? {}) as Record<string, unknown>;
+      expect(ui.csp).toBeUndefined();
+      expect(ui.domain).toBeUndefined();
+      expect(ui.permissions).toBeUndefined();
+      expect(ui.prefersBorder).not.toBe(false);
+      expect(JSON.stringify(meta ?? {})).not.toMatch(/connectDomains|resourceDomains|frameDomains|baseUriDomains/);
+    }
+  });
+
   describe("get_turn_series", () => {
     it("returns a schema-valid series", async () => {
       ({ client } = await connectCostFixture({ appViews }));

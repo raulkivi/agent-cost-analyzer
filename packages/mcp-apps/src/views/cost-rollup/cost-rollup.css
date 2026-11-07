@@ -12,12 +12,20 @@
 .rv-bar-track { display: block; height: 9px; }
 .rv-bar-fill { display: block; height: 100%; background: var(--brand-accent); }
 .rv-bar-value, .rv-bar-share { text-align: right; font-variant-numeric: tabular-nums; }
+/* An unknown spend: one "Unknown" across the value and share columns. */
+.rv-bar-unknown { grid-column: span 2; text-align: right; white-space: nowrap; }
 
 .rv-coverage { display: block; font-size: 10px; line-height: 1.3; }
+/* Provider and model under the title: only where their columns are hidden. */
+.rv-session-sub { display: none; }
 
 .rv-back { font-size: 11px; }
 .rv-back-button { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; font-weight: 600; text-decoration: none; }
 
 @media (max-width: 480px) {
   .rv-two { grid-template-columns: 1fr; }
+  /* At 360px five columns pushed AI Credits out of view (A14 visual check):
+     Provider and Model move under the session title. */
+  .view-table .rv-col-wide { display: none; }
+  .rv-session-sub { display: block; padding-left: 16px; font-size: 11px; }
 }

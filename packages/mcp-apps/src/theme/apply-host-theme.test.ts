@@ -1,8 +1,11 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
+import { readFileSync } from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { FakeAppHostPort } from "../host/fake-app-host-port.js";
-import { bindHostTheme, type ThemeApplier } from "./apply-host-theme.js";
+import { bindHostTheme, safeHostVariables, type ThemeApplier } from "./apply-host-theme.js";
 
 function recordingApplier() {
   const calls: { method: string; arg: unknown }[] = [];
@@ -56,6 +59,51 @@ describe("bindHostTheme", () => {
     bindHostTheme(port, applier, document.createElement("html"));
     port.pushHostContext({ theme: "dark" });
     expect(calls.map((call) => call.arg)).toEqual(["light", "dark"]);
+  });
+
+  // A14 security review: ext-apps' applyHostStyleVariables calls
+  // style.setProperty(key, value) on <html> for every entry, so a key that
+  // is not a custom property would set a real property (display, background-image)
+  // and a url() value would make a request. The views only read --* tokens.
+  it("passes on only custom properties, and drops values that could fetch or break out", () => {
+    const port = new FakeAppHostPort();
+    const { applier, calls } = recordingApplier();
+    bindHostTheme(port, applier, document.createElement("html"));
+    port.pushHostContext({
+      styles: {
+        variables: {
+          "--color-text-primary": "light-dark(#141413, #faf9f5)",
+          "--color-background-secondary": "var(--vscode-sideBar-background)",
+          "--font-sans": '"Anthropic Sans", system-ui, sans-serif',
+          "--color-ring-primary": undefined,
+          display: "none",
+          "background-image": "url(https://example.test/pixel)",
+          "--color-border-primary": "url(https://example.test/pixel)",
+          "--color-text-secondary": "red;} body { display: none",
+          "--color-background-primary": "IMAGE-SET('x.png' 1x)",
+          "--border-radius-sm": "expression(alert(1))",
+          "--x": "</style><script>",
+          "--bad key": "1px",
+        },
+      },
+    });
+    expect(calls).toEqual([
+      {
+        method: "variables",
+        arg: {
+          "--color-text-primary": "light-dark(#141413, #faf9f5)",
+          "--color-background-secondary": "var(--vscode-sideBar-background)",
+          "--font-sans": '"Anthropic Sans", system-ui, sans-serif',
+        },
+      },
+    ]);
+  });
+
+  it.each(["claude-light", "claude-dark", "vscode-light", "vscode-dark", "vscode-hc-dark"])("keeps every variable the %s host sent in the A0 spike", (name) => {
+    const file = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../../../docs/plans/mcp-apps-spike-results", `${name}.json`);
+    const recorded = (JSON.parse(readFileSync(file, "utf8")) as { styleVariables: { defined: Record<string, string> } }).styleVariables.defined;
+    expect(Object.keys(recorded).length).toBeGreaterThan(40);
+    expect(safeHostVariables(recorded)).toEqual(recorded);
   });
 
   it("stops applying once unsubscribed", () => {

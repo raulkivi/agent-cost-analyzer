@@ -4,7 +4,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import type { HostEvent } from "@agent-cost-analyzer/domain";
 import { createExtensionApiService } from "@agent-cost-analyzer/server/src/composition/create-extension-api-service";
-import { ExtensionCommands } from "./commands/extension-commands.js";
+import { ExtensionCommands, type SessionPicker } from "./commands/extension-commands.js";
 import { watchConfigChanges, watchExtensionChanges, type ConfigurationChangeSource, type ExtensionsChangeSource } from "./config/config-change-watcher.js";
 import type { Translate } from "./l10n/localize.js";
 import { McpServerDefinitionSource } from "./mcp/mcp-server-definitions.js";
@@ -53,6 +53,8 @@ export interface ExtensionCompositionInput {
   // Opens the Get Started walkthrough: vscode/vscode-walkthrough.ts over the
   // real API.
   walkthrough: WalkthroughLauncher;
+  // The Open Session picker: vscode/vscode-session-picker.ts over the real API.
+  sessionPicker: SessionPicker;
   // The open workspace's folder paths (vscode.workspace.workspaceFolders),
   // for the status bar's repository (step 15.14); read on every refresh.
   workspaceFolderPaths(): string[];
@@ -93,6 +95,7 @@ export function composeExtension({
   hostCommands,
   translate,
   walkthrough,
+  sessionPicker,
   workspaceFolderPaths,
 }: ExtensionCompositionInput): ComposedExtension {
   const mediaDir = path.join(extensionPath, "media");
@@ -175,6 +178,8 @@ export function composeExtension({
     sidebar,
     hostCommands,
     walkthrough,
+    sessions: { list: () => api.listSessions() },
+    picker: sessionPicker,
     readConfigStatus: () => api.getConfigStatus(),
     t: translate,
   });

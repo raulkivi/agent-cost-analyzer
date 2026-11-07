@@ -4,6 +4,7 @@ import {
   selectSessionPayloadSchema,
   type ConfigStatus,
   type HostEvent,
+  type Session,
   type SelectSessionPayload,
 } from "@agent-cost-analyzer/domain";
 import { WATCHED_SETTING_IDS } from "../config/config-change-watcher.js";
@@ -13,11 +14,19 @@ import type { WalkthroughLauncher } from "../onboarding/walkthrough-offer.js";
 import { allowedSettingIds } from "../rpc/host-command-handler.js";
 import type { SessionsGrouping } from "../sidebar/sidebar-controller.js";
 import { COMMAND_IDS } from "./command-ids.js";
+import { buildSessionPickItems, type SessionPickItem } from "./session-pick-items.js";
 
 export interface CommandPanel {
   open(): void;
   // Delivers a host event once the webview is listening (AnalyzerPanel).
   postWhenReady(message: unknown): void;
+}
+
+// The Open Session picker over the editor's UI (vscode/vscode-session-picker.ts).
+export interface SessionPicker {
+  // The id of the row the user picked; undefined when they cancelled.
+  pick(items: SessionPickItem[], placeholder: string): Promise<string | undefined>;
+  inform(message: string): void;
 }
 
 export interface ExtensionCommandsDeps {
@@ -27,6 +36,10 @@ export interface ExtensionCommandsDeps {
   // Opens the Get Started walkthrough (vscode/vscode-walkthrough.ts).
   walkthrough: WalkthroughLauncher;
   readConfigStatus(): Promise<ConfigStatus>;
+  // The sessions the Open Session picker offers: the same read as the
+  // Sessions view's (ApiService's listSessions).
+  sessions: { list(): Promise<Session[]> };
+  picker: SessionPicker;
   // Translates the messages VS Code shows when a command is refused.
   t?: Translate;
 }
@@ -73,9 +86,18 @@ export class ExtensionCommands {
 
   // Opens the panel if it's closed, then has the web app select the session
   // as a click in its own list would. `options.tab` is the right column's
-  // tab and `options.view` the center view.
+  // tab and `options.view` the center view. With no target at all (the
+  // Command Palette passes none) the user picks the session from a list;
+  // anything else that isn't a valid id is refused.
   async openSession(target?: unknown, options?: unknown): Promise<void> {
     const { tab, view } = isRecord(options) ? options : ({} as Record<string, unknown>);
+    if (target === undefined || target === null || target === "") {
+      const picked = await this.pickSession();
+      if (picked !== undefined) {
+        this.select({ sessionId: picked, tab, view });
+      }
+      return;
+    }
     this.select({ sessionId: stringArg(target, "sessionId"), tab, view });
   }
 
@@ -125,6 +147,17 @@ export class ExtensionCommands {
       [COMMAND_IDS.copyAdviceBundle]: (target) => this.copyAdviceBundle(target),
       [COMMAND_IDS.fixSetting]: (target) => this.fixSetting(target),
     };
+  }
+
+  // The id of the session the user picks, newest first; undefined when they
+  // cancel or there is none to pick.
+  private async pickSession(): Promise<string | undefined> {
+    const sessions = await this.deps.sessions.list();
+    if (sessions.length === 0) {
+      this.deps.picker.inform(this.t("No Copilot Chat sessions were found to open"));
+      return undefined;
+    }
+    return this.deps.picker.pick(buildSessionPickItems(sessions, this.t), this.t("Pick a session to open"));
   }
 
   private select(candidate: unknown): void {

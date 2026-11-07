@@ -9,6 +9,7 @@ import { createVscodeHostCommands } from "./vscode/vscode-host-commands.js";
 import { registerMcpServerDefinitions } from "./vscode/vscode-mcp-server-definitions.js";
 import { registerLearnView, registerSessionsView, registerSetupView } from "./vscode/vscode-sidebar-views.js";
 import { registerStatusBar } from "./vscode/vscode-status-bar.js";
+import { createVscodeSessionPicker } from "./vscode/vscode-session-picker.js";
 import { createVscodeWalkthrough } from "./vscode/vscode-walkthrough.js";
 
 // Entry point (package.json "main" → dist/extension.js). Activation is
@@ -30,6 +31,7 @@ export function activate(context: vscode.ExtensionContext): void {
     hostCommands: createVscodeHostCommands(vscode, documents),
     translate: vscode.l10n.t,
     walkthrough: createVscodeWalkthrough(vscode, context.extension.id),
+    sessionPicker: createVscodeSessionPicker(vscode),
     workspaceFolderPaths: () => (vscode.workspace.workspaceFolders ?? []).map((folder) => folder.uri.fsPath),
   });
   context.subscriptions.push(extension, registerReadOnlyDocuments(vscode, documents));

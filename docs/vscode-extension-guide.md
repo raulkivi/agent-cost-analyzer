@@ -1,5 +1,7 @@
 # AI Credits Analyzer: extension guide
 
+**Last changed:** 2026-11-07 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+
 AI Credits Analyzer is a VS Code extension that shows where your GitHub
 Copilot Chat tokens and AI Credits go. It reads the logs Copilot Chat
 writes on your own machine and shows each session turn by turn: prompt
@@ -398,14 +400,23 @@ would:
 ## Commands
 
 Every command is in the **AI Credits Analyzer** category of the Command
-Palette. Commands that need a session or a setting are run from the side
-bar and are hidden from the Command Palette.
+Palette. **Open Session…** is the one session command you can run from the
+Palette: it asks which session to open (see below). The other commands that
+need a session or a setting are run from the side bar and are hidden from
+the Command Palette.
+
+**Open Session…** with no session shows a picker of your sessions, newest
+first. Each row is the session title, with the start time, provider and AI
+Credits (Unknown when the log has none, never 0) beside it and the session id
+below. Typing filters on all of those, so a pasted title or id finds its
+session. Choosing a row opens it as the Sessions view does; Escape does
+nothing; with no sessions you get a short message instead.
 
 | Command | Id | What it does |
 |---|---|---|
 | Open | `aiCreditsAnalyzer.open` | Opens the analyzer panel |
 | Refresh | `aiCreditsAnalyzer.refreshSessions` | Reloads the Sessions view, the Setup view and the status bar |
-| Open Session | `aiCreditsAnalyzer.openSession` | Opens the panel on a session (side bar only) |
+| Open Session | `aiCreditsAnalyzer.openSession` | Opens the panel on a session; from the Command Palette, asks which one |
 | Open Scenario | `aiCreditsAnalyzer.openScenario` | Opens the panel on a Learn scenario (Learn view only) |
 | Show Tool Audit | `aiCreditsAnalyzer.showToolAudit` | Opens the panel on a session's tool audit (side bar only) |
 | Copy Advice Bundle | `aiCreditsAnalyzer.copyAdviceBundle` | Opens the panel on a session with the advice dialog open (side bar only) |
@@ -459,7 +470,9 @@ applies. Your user setting always applies.
 
 Nineteen read-only tools, the standalone app's MCP server's tools without
 its billing ones (`get_statement` and `estimate_cost`), over Copilot Chat
-sessions only:
+sessions only. A twentieth, `get_turn_series`, is for the interactive views
+below. It is marked app-only, so it is meant for the views, not for the model
+or for you.
 
 | Tool | What it returns |
 |---|---|
@@ -489,6 +502,47 @@ tools never report it as 0. The User Guide's
 [MCP section](UserGuide.md#querying-the-audit-from-claude-code-mcp) has
 more on the tools.
 
+### Interactive views in Copilot Chat
+
+Three of the tools show an interactive view in the chat, next to the text
+answer, when you ask about them in agent mode:
+
+| You ask about | Tool | The view shows |
+|---|---|---|
+| One session's cost | `get_session_cost` | Tiles (AI Credits, input, cache hit, output), AI Credits per turn as a chart with compaction and model-switch markers, the most expensive turns, and context overhead |
+| This week's spend | `get_cost_rollup` | Tiles, spend per day, spend by model and provider, and the most expensive sessions |
+| Anything risky | `list_findings` | Severity tiles and a table of findings, with filters |
+
+VS Code shows the views inline in the chat only (no fullscreen). They need
+no setup beyond the MCP server being on: the views ship inside the
+extension. They use the extension's name and colours and follow your VS Code
+theme. Claude Code CLI keeps the text answer.
+
+What you can click:
+
+- **A top turn** opens that turn in place (prompt excerpt, tokens, AI
+  Credits, event, tool calls). **Hide turn** closes it.
+- **A top session** in the spend view opens that session's cost view in
+  place; **Back to cost rollup** returns.
+- **The kind and minimum severity filters** in the findings view ask the
+  server again. Evidence stays collapsed until you open it.
+- **Ask about this session** (spend view) sends `Analyse session <id>` to
+  the chat. Only that fixed text goes to the model; titles, prompts and
+  evidence never do.
+- **Copy title to open in panel** (session cost view) copies the session
+  title. VS Code doesn't let a chat view open links into the editor, so
+  press Ctrl+Shift+P (Cmd+Shift+P on macOS), run **AI Credits Analyzer:
+  Open Session…** and paste the title into the picker that opens; the list
+  narrows to that session and Enter opens it. You can also open the session
+  from the Sessions view.
+
+Clicking through a view calls the server through VS Code and costs no model
+tokens. A figure the log doesn't record reads **Unknown**, never 0. The
+[User Guide](UserGuide.md#interactive-views-in-the-chat) has the same views
+for Claude Desktop.
+
+Screenshots of the views are to follow (A16).
+
 ### What goes to the model
 
 When the server is on, whatever its tools return goes into the chat's
@@ -500,6 +554,9 @@ context, and so to whichever model the chat uses:
 - repositories: their remote names (`github.com/org/repo`), never a
   remote's credentials; a local repository by its folder name only;
 - turn text: your prompts and the model's responses.
+
+What you click inside an interactive view doesn't go to the model; only the
+fixed `Analyse session <id>` message from **Ask about this session** does.
 
 Secrets found in that text are redacted first, and text is cut to a
 bounded length. The server never writes files, runs commands or reaches
@@ -626,6 +683,17 @@ on the error and open an issue.
 The optional `agent-traces.db` is read the same way; when it can't be
 read, cache-write and reasoning tokens show as unknown and everything
 else still works.
+
+### No interactive view appears
+
+- Check the tool answered in agent mode: the view appears next to the result
+  of `get_session_cost`, `get_cost_rollup` or `list_findings`, not other
+  tools'.
+- VS Code needs to be 1.109 or later to render MCP Apps (the extension
+  requires 1.144, so a supported install has it).
+- If the extension's build lacked the views file, the server runs without
+  views and you see only text. Reinstall the extension from the Marketplace
+  or Open VSX; a build from source needs `npm run build` first.
 
 ### The MCP server isn't listed in agent mode
 

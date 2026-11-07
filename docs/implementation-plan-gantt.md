@@ -76,8 +76,8 @@ gantt
     14.8 docs written, owner review (11%)  :active, p14r, after p14, 1d
 
     section MCP Apps
-    12 A0-A9, A11, A13 foundations, server, scaffold, theme, view models, U1, U3, packaging (33%) :done, p12a, 2026-11-07, 1d
-    12 A10 onward (2%) :active, p12b, after p12a, 1d
+    12 A0-A15 foundations, server, views U1-U3, packaging, review, docs (44%) :done, p12a, 2026-11-07, 1d
+    12 A16 and the increments (56%) :active, p12b, after p12a, 1d
 
     section Cost
     15 Cost by repository and project (95%) :done, p15, 2026-11-05, 3d
@@ -105,13 +105,13 @@ gantt
 - Phase 14: steps 14.0-14.7 built; 14.8's docs written, the owner's review and the §13 exit criterion on real sessions open; the extension guide's replay screenshots open (User Guide's done). Step table: [analyze-session-replay.md](plans/analyze-session-replay.md) §12.
 - Phase 15: owner's review and exit criterion on real data.
 - Phase 13: owner's eyes-on review of step 13.8.
-- Phase 12: A0b boards approved 2026-11-07 ([mockups/mcp-apps/](plans/mockups/mcp-apps/README.md)); A5 (views workspace), A6 (theme layering), A7 (view models), A9 (U1 session cost view), A10 (U2 spend view), A11 (U3 findings view) and A13 (packaging) done; next A14 (accessibility and security review), then A15 docs and A16 owner checks in both hosts (A0 host spike done 2026-11-07; results in [mcp-apps-spike.md](plans/mcp-apps-spike.md)). See [Phase 12 detail](#phase-12-detail--mcp-apps).
+- Phase 12: A0b boards approved 2026-11-07 ([mockups/mcp-apps/](plans/mockups/mcp-apps/README.md)); A5 (views workspace), A6 (theme layering), A7 (view models), A9 (U1 session cost view), A10 (U2 spend view), A11 (U3 findings view) and A13 (packaging), A14 (accessibility and security review) and A15 (docs) done; the copy-flow fix done (owner decision A: an "Open Session…" palette picker; the button copies the session title; one-click open is a follow-up); next A16, the owner checks in both hosts (A0 host spike done 2026-11-07; results in [mcp-apps-spike.md](plans/mcp-apps-spike.md)). See [Phase 12 detail](#phase-12-detail--mcp-apps).
 
 ## Phase 12 detail — MCP Apps
 
 Schedule view of the task tables in [mcp-apps.md](plans/mcp-apps.md) §7, §7.1 and §7.2. The design, exit criterion and risks stay there; this file only sequences the work.
 
-- Status: in progress (39%, 14 of 36 tasks): A0 done 2026-11-07 (owner ran the spike in VS Code Insiders 1.146 and Claude Desktop; results in `docs/plans/mcp-apps-spike-results/`), A1-A4 done 2026-11-07 (#176), A8 done 2026-11-07 (server views group), A5 done 2026-11-07 (`packages/mcp-apps` scaffold; bundle budget 900 KB by owner decision), A6 done 2026-11-07 (theme layering: `theme-mcp-host.css`, `brand.css`, contrast tests against the fallbacks, the recorded Claude set and the resolved VS Code set), A7 done 2026-11-07 (pure view models for U1-U3 in `packages/mcp-apps/src/view-models/`), A9 done 2026-11-07 (U1 `SessionCostView` with turn drill-down and copy-command button), A10 done 2026-11-07 (U2 `CostRollupView` with in-place drill-down into U1 and a fixed-template "Ask about this session"), A11 done 2026-11-07 (U3 `FindingsView` with kind and severity filters), A13 done 2026-11-07 (build order, `dist/mcp-apps/views.html` in the `.vsix`, `scripts/mcp-server.sh` serving the build), A0b boards drawn and approved by the owner 2026-11-07 ([mockups/mcp-apps/](plans/mockups/mcp-apps/README.md)); the copy-command text `AI Credits Analyzer: Open Session <id>` adopted. Dependencies met: step 10.13 is done and `ext-v0.1.0` shipped 2026-11-03; the Phase 14 and 15 tools the increments need are done.
+- Status: in progress (44%, 16 of 36 tasks): A0 done 2026-11-07 (owner ran the spike in VS Code Insiders 1.146 and Claude Desktop; results in `docs/plans/mcp-apps-spike-results/`), A1-A4 done 2026-11-07 (#176), A8 done 2026-11-07 (server views group), A5 done 2026-11-07 (`packages/mcp-apps` scaffold; bundle budget 900 KB by owner decision), A6 done 2026-11-07 (theme layering: `theme-mcp-host.css`, `brand.css`, contrast tests against the fallbacks, the recorded Claude set and the resolved VS Code set), A7 done 2026-11-07 (pure view models for U1-U3 in `packages/mcp-apps/src/view-models/`), A9 done 2026-11-07 (U1 `SessionCostView` with turn drill-down and copy-command button), A10 done 2026-11-07 (U2 `CostRollupView` with in-place drill-down into U1 and a fixed-template "Ask about this session"), A11 done 2026-11-07 (U3 `FindingsView` with kind and severity filters), A13 done 2026-11-07 (build order, `dist/mcp-apps/views.html` in the `.vsix`, `scripts/mcp-server.sh` serving the build), A14 done 2026-11-07 (axe over every view state, keyboard drill-down with focus return, the no-forwarding rule as a static test over every host call site, host style variables filtered, 360px layout fixes; findings in [mcp-apps.md](plans/mcp-apps.md) §6.1), A15 done 2026-11-07 (architecture.md §4.1.1, §4.4 and §11.4, threat-model.md §6.1, implementation-plan.md, User Guide, extension guide, both CHANGELOGs), A0b boards drawn and approved by the owner 2026-11-07 ([mockups/mcp-apps/](plans/mockups/mcp-apps/README.md)); the copy-command text `AI Credits Analyzer: Open Session <id>` adopted. Dependencies met: step 10.13 is done and `ext-v0.1.0` shipped 2026-11-03; the Phase 14 and 15 tools the increments need are done.
 
 - Each increment starts with mock-up boards the owner approves (A0b, A17b, A25b; plan §5.6).
 - Scope (updated 2026-11-07): MVP (A0-A16: U1-U3), Increment 2 (A17-A24: cost-analysis views U9-U11), Increment 3 (A25-A33: replay, price changes, statement and estimate, audit, picker). Each increment starts after the previous one's owner checks.
@@ -183,8 +183,8 @@ gantt
     A13 Packaging, medium, Sonnet (100%)         :done, a13, after a8, 2d
 
     section Review and release
-    A14 A11y and security review, medium, Opus (0%) :crit, a14, after a9 a10 a11, 2d
-    A15 Docs, medium, Sonnet (0%)                :crit, a15, after a13 a14, 2d
+    A14 A11y and security review, medium, Opus (100%) :crit, done, a14, after a9 a10 a11, 2d
+    A15 Docs, medium, Sonnet (100%)              :crit, done, a15, after a13, 2d
     A16 Owner manual checks (0%)                 :crit, a16, after a15, 1d
 
     section Increment 2 — cost analysis
@@ -218,7 +218,7 @@ gantt
 
 ### Critical path
 
-MVP: A5 → A6 → A9 → A10 → A14 → A15 → A16 (A0, A0b and A1-A5, A8 are done; A7 runs beside A6 and joins at A9). Increment 2: A17b (mock-ups and approval) → A20 → A21 → A23 → A24. Increment 3: A25b (mock-ups and approval) → A27/A28/A29/A30 → A32 → A33.
+MVP: A5 → A6 → A9 → A10 → A14 → A16 (A0, A0b, A1-A11, A13 and A15 are done). Increment 2: A17b (mock-ups and approval) → A20 → A21 → A23 → A24. Increment 3: A25b (mock-ups and approval) → A27/A28/A29/A30 → A32 → A33.
 
 ### Parallel lanes
 

@@ -20,6 +20,10 @@ html[data-host="mcp-app"] .view-shell {
   color: var(--color-text);
   max-width: 640px;
   box-sizing: border-box;
+  /* The corner marks sit 6px outside the frame: this margin keeps them in
+     the host's frame, which otherwise clips them and scrolls sideways by
+     5px (A14 visual check). */
+  margin: 6px;
 }
 html[data-host="mcp-app"] .blueprint > .corner { color: var(--brand-accent); }
 
@@ -58,7 +62,7 @@ html[data-host="mcp-app"] .blueprint > .corner { color: var(--brand-accent); }
 .view-table tr.view-row-selected > td:first-child,
 .view-table tr.view-row-detail > td { box-shadow: inset 2px 0 0 var(--color-accent-text); }
 .view-table tr.view-row-detail > td { text-align: left; white-space: normal; padding: 6px 8px 8px 12px; }
-.view-row-button { display: inline-flex; align-items: center; gap: 4px; border: 0; background: none; padding: 0; font: inherit; color: inherit; cursor: pointer; }
+.view-row-button { display: inline-flex; align-items: center; gap: 4px; border: 0; background: none; padding: 0; font: inherit; color: inherit; cursor: pointer; text-align: left; }
 .view-row-button svg { color: var(--color-accent-text); flex-shrink: 0; transition: transform 0.12s; }
 .view-chevron--open { transform: rotate(90deg); }
 
@@ -81,8 +85,10 @@ html[data-host="mcp-app"] .blueprint > .corner { color: var(--brand-accent); }
 
 .view-footer { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; padding-top: 8px; border-top: 1px solid var(--color-divider); font-size: 11px; }
 .view-footer-note { color: var(--color-text-muted); }
-.view-footer-actions { display: flex; gap: 8px; margin-left: auto; }
-.view-btn { height: 26px; padding: 0 10px; font-size: 12px; }
+.view-footer-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; margin-left: auto; }
+/* nowrap: a label that wrapped inside the fixed height spilled out of the
+   button at 360px; the actions wrap as whole buttons instead. */
+.view-btn { height: 26px; padding: 0 10px; font-size: 12px; white-space: nowrap; }
 
 .view-copied { padding: 6px 8px; font-size: 12px; border: 1px solid var(--color-divider); border-radius: var(--radius-sm); background: var(--color-surface); overflow-wrap: anywhere; }
 .view-error { display: flex; gap: 8px; padding: 8px 10px; font-size: 12px; border: 1px solid var(--color-border-danger, var(--color-divider)); background: var(--color-background-danger, var(--color-surface)); border-radius: var(--radius-sm); }
@@ -92,4 +98,7 @@ html[data-host="mcp-app"] .blueprint > .corner { color: var(--brand-accent); }
 @media (max-width: 480px) {
   .view-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .view-turn-grid { grid-template-columns: 1fr; }
+  /* The charts scale with their width; at 360px a 10px axis label drew at
+     about 6px. In viewBox units, so this draws at about 8px. */
+  .view-chart-axis { font-size: 14px; }
 }

@@ -536,8 +536,9 @@ claude mcp add agent-cost-analyzer -- /absolute/path/to/agent-cost-analyzer/scri
 ```
 
 Run `npm run build` once as well: the script then serves the interactive cost
-views (`packages/mcp-apps/dist/views.html`) to hosts that can show them.
-Without the build the server works as before, with text results only.
+views (`packages/mcp-apps/dist/views.html`) to hosts that can show them (see
+[Interactive views in the chat](#interactive-views-in-the-chat)). Without the
+build the server works as before, with text results only.
 
 | Tool | What it returns |
 |---|---|
@@ -586,11 +587,89 @@ server's instructions tell the agent this when it connects.
 Per-session tools take an optional `provider` (for example
 `"claude-code"`) and otherwise use the source selected in the web app.
 `get_cost_rollup` and `list_findings` read every available provider
-unless you pass one. Repositories are reported by folder name only
-unless you set `includePaths`. A `null` figure means the log doesn't record it; it
+unless you pass one. Local repositories are reported by folder name only, never by path. A `null` figure means the log doesn't record it; it
 is never treated as zero. The server reads local logs only and writes
 nothing. Everything a tool returns goes into the agent's context, so free
 text is redacted and truncated first.
+
+### Interactive views in the chat
+
+In a chat host that supports MCP Apps, three of the tools above show an
+interactive view next to their text answer, so you can click through a
+session instead of asking one question after another:
+
+| You ask about | Tool | The view shows |
+|---|---|---|
+| One session's cost | `get_session_cost` | Tiles (AI Credits, input, cache hit, output), AI Credits per turn as a chart with compaction and model-switch markers, the most expensive turns, and context overhead |
+| This week's spend | `get_cost_rollup` | Tiles, spend per day, spend by model and provider, and the most expensive sessions |
+| Anything risky | `list_findings` | Severity tiles and a table of findings, with filters |
+
+The views use the product's name and colours and follow the host's light or
+dark theme. They only show what the tool already returned; they read your
+logs and write nothing.
+
+**Where they appear.**
+
+| Host | Views | Display |
+|---|---|---|
+| VS Code Copilot Chat (the AI Credits Analyzer extension's MCP server) | Yes | Inline in the chat only |
+| Claude Desktop (this repo's `scripts/mcp-server.sh`) | Yes | Inline and fullscreen |
+| Claude Code CLI, pi and other terminals | No | The text answer, exactly as before |
+
+claude.ai on the web and ChatGPT can't reach a server on your machine, so
+they show nothing either. A host without MCP Apps support just shows the
+text.
+
+**What you can click.**
+
+- **A top turn** (session cost view) opens that turn in place: its prompt
+  (redacted, truncated), token usage, AI Credits, event and tool calls.
+  **Hide turn** closes it; **Retry** appears if the load failed.
+- **A top session** (cost rollup view) opens that session's cost view in
+  place. **Back to cost rollup** returns to the rollup without loading it
+  again.
+- **The filters** (findings view) are a kind selector and a minimum
+  severity. Each change asks the server again; the table you had stays on
+  screen while it loads. Each finding's redacted evidence is collapsed until
+  you open it.
+- **Ask about this session** (cost rollup view) sends one fixed message to
+  the chat, `Analyse session <id>`, and the model answers as it would for
+  any question. Nothing else from the view is ever sent to the model, not
+  the session title or a prompt: they stay in the view.
+- **Copy title to open in panel** (session cost view, VS Code only) copies
+  the session title. Hosts don't let a view open a link into VS Code, so
+  there is no link to click. Press Ctrl+Shift+P (Cmd+Shift+P on macOS), run
+  **AI Credits Analyzer: Open Session…**, paste the title into the picker and
+  press Enter, or find the session in the extension's Sessions view. The standalone product shows no
+  such button, because its web app may not be running.
+
+Clicking through a view calls the server through the host; the model never
+sees those answers, so it costs no model tokens.
+
+**Unknown means not reported.** A figure the log doesn't record reads
+**Unknown**, never 0, in every view. When only some turns have a figure the
+view says so ("known for 12 of 40 turns"), and an estimated figure carries
+an **estimate** tag.
+
+**Getting the views.** Run `npm run build` in the repo, then register
+`scripts/mcp-server.sh` as above (for Claude Desktop, as the `command` of an
+entry in `claude_desktop_config.json`, then restart it). The script adds
+`--app-views-html packages/mcp-apps/dist/views.html` for you when the built
+file exists. The VS Code extension includes the views; there is nothing to
+build.
+
+**No view appears?**
+
+- **Standalone server:** the build is missing, so the server starts with
+  text results only and says nothing. Run `npm run build`, then restart the
+  server (or the host).
+- **Your host doesn't support MCP Apps.** Claude Code CLI doesn't; it shows
+  the text answer, which is all it can show.
+- **VS Code:** use a version that renders MCP Apps (1.109 or later; the
+  extension needs 1.144 or later) and check that the extension's MCP server
+  is on ([the extension guide](vscode-extension-guide.md#interactive-views-in-copilot-chat)).
+
+Screenshots of the views are to follow (A16).
 
 ### The insights dashboard
 

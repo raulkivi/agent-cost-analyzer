@@ -10,10 +10,21 @@ export function askAboutSessionText(sessionId: string): string {
   return `Analyse session ${sessionId}`;
 }
 
+// A session id comes from the logs (a Claude Code id is the log's file
+// name), so a crafted one could carry words into the chat. The providers'
+// ids are UUIDs, hex hashes with a segment suffix and short slugs; anything
+// else hides the button rather than being sent (A14).
+const PLAIN_ID = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/;
+
+export function isPlainSessionId(sessionId: string): boolean {
+  return PLAIN_ID.test(sessionId);
+}
+
 type Phase = "idle" | "sending" | "sent" | "declined";
 
 export function AskAboutSession({ port, sessionId }: { port: AppHostPort; sessionId: string }) {
   const [phase, setPhase] = useState<Phase>("idle");
+  if (!isPlainSessionId(sessionId)) return null;
   const ask = () => {
     setPhase("sending");
     port.sendMessage(askAboutSessionText(sessionId)).then(

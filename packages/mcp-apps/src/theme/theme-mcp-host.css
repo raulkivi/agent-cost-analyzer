@@ -52,8 +52,10 @@ html[data-host="mcp-app"] {
   --color-neutral-800: var(--color-text-primary, var(--brand-fb-text));
 }
 
-/* The host's focus ring. */
-html[data-host="mcp-app"] :focus-visible {
+/* The host's focus ring, also where theme.css draws it on a radio's label
+   (U3's kind filter). */
+html[data-host="mcp-app"] :focus-visible,
+html[data-host="mcp-app"] .seg-opt:has(input:focus-visible) {
   outline-color: var(--color-ring-primary, var(--color-accent));
 }
 

@@ -15,7 +15,7 @@ import { ContextOverhead } from "./session-cost/ContextOverhead.js";
 import { CopyCommandButton, CopyCommandStatus, useCopyCommand } from "./session-cost/CopyCommandButton.js";
 import { TopTurns } from "./session-cost/TopTurns.js";
 import { TurnChart } from "./session-cost/TurnChart.js";
-import { openSessionCommand } from "./session-cost/open-command.js";
+import { sessionSearchText } from "./session-cost/open-command.js";
 import { callParsed, parseSessionCost, parseTurnSeries, useResource } from "./session-cost/tool-data.js";
 import type { SessionCost, TurnSeries } from "@agent-cost-analyzer/domain";
 
@@ -78,8 +78,8 @@ function LoadedSessionCost({ port, brand, clipboard, cost, frame }: { port: AppH
   const seriesData = series.state.status === "ready" ? series.state.data : undefined;
   const vm = useMemo(() => toSessionCostViewModel(cost, seriesData), [cost, seriesData]);
 
-  // The deep link is the extension's panel; the standalone product has none.
-  const command = openSessionCommand(vm.sessionId);
+  // The extension's "Open Session…" picker; the standalone product has none.
+  const command = sessionSearchText(vm.sessionId, vm.title);
   const copyable = clipboard !== undefined && brand.productId === "vscode-extension";
   const copy = useCopyCommand(clipboard ?? { writeText: () => Promise.resolve() }, command);
 
@@ -114,7 +114,11 @@ function LoadedSessionCost({ port, brand, clipboard, cost, frame }: { port: AppH
           <h2>AI Credits per turn</h2>
           {chartNotes.length > 0 && <span className="text-muted">{chartNotes.join(" · ")}</span>}
         </div>
-        {series.state.status === "loading" && <div className="view-skeleton" aria-busy="true" />}
+        {series.state.status === "loading" && (
+          <div className="view-skeleton" role="status">
+            <span className="sr-only">Loading the per-turn chart…</span>
+          </div>
+        )}
         {series.state.status === "error" && (
           <ErrorBox title="Couldn't load the per-turn chart." onRetry={series.load}>
             The get_turn_series call failed. The figures above come from the tool result and still stand.
