@@ -10,7 +10,7 @@ Phase 12 adds branded, interactive MCP Apps views for both products.
 **Overall status (2026-11-06):** Phases 0-10 have their code and docs
 merged to `main`. The extension's 0.1.0 is released (tag `ext-v0.1.0`,
 2026-11-03). Open: Phase 10's owner manual checks and decisions (see its
-section), Phase 11 (not started), Phase 12 (in progress: A1–A4 done; the plan
+section), Phase 11 (not started), Phase 12 (in progress: A1–A4 and A8 done; the plan
 covers the Phase 14 and 15 tools since 2026-11-07), Phase 13 (in
 progress: steps 13.0-13.10 and 13.5a merged, the owner's eyes-on review
 of 13.8 open), Phase 14
@@ -1415,7 +1415,9 @@ Increment 2 in 0.5.0 and 0.12.0, Increment 3 in 0.6.0 and 0.13.0. This
 assumes the Phase 14/15 work ships first as 0.3.0 and 0.10.0.
 
 **Status (2026-11-07)**: in progress. A1–A4 (turn series, brand
-injection and identity, web package exports) done; A0's host spike needs
+injection and identity, web package exports) and A8 (the `registerAppViews`
+server group, `get_turn_series`, `_meta.ui` on three tools, ext-apps 1.7.5)
+done; A0's host spike needs
 the owner. Plan
 updated to cover the Phase 14 and 15 tools (Increments 2 and 3).
 

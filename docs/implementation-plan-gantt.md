@@ -73,7 +73,7 @@ gantt
     14.8 docs written, owner review (11%)  :active, p14r, after p14, 1d
 
     section MCP Apps
-    12 A1-A4 foundations (11%)             :done, p12a, 2026-11-07, 1d
+    12 A1-A4, A8 foundations, server (14%) :done, p12a, 2026-11-07, 1d
     12 A0 host spike onward (0%)          :active, p12b, after p12a, 1d
 
     section Cost
@@ -108,7 +108,7 @@ gantt
 
 Schedule view of the task tables in [mcp-apps.md](plans/mcp-apps.md) §7, §7.1 and §7.2. The design, exit criterion and risks stay there; this file only sequences the work.
 
-- Status: in progress (11%, 4 of 36 tasks): A1-A4 done 2026-11-07 (foundations PR); A8 in progress; A0 needs the owner (a real VS Code Copilot Chat and Claude Desktop). Dependencies met: step 10.13 is done and `ext-v0.1.0` shipped 2026-11-03; the Phase 14 and 15 tools the increments need are done.
+- Status: in progress (14%, 5 of 36 tasks): A1-A4 done 2026-11-07 (#176), A8 done 2026-11-07 (server views group); A0's spike kit in progress; A0 needs the owner (a real VS Code Copilot Chat and Claude Desktop). Dependencies met: step 10.13 is done and `ext-v0.1.0` shipped 2026-11-03; the Phase 14 and 15 tools the increments need are done.
 - Each increment starts with mock-up boards the owner approves (A0b, A17b, A25b; plan §5.6).
 - Scope (updated 2026-11-07): MVP (A0-A16: U1-U3), Increment 2 (A17-A24: cost-analysis views U9-U11), Increment 3 (A25-A33: replay, price changes, statement and estimate, audit, picker). Each increment starts after the previous one's owner checks.
 - Target releases (plan §7.3): MVP in extension 0.4.0 / app 0.11.0, Increment 2 in 0.5.0 / 0.12.0, Increment 3 in 0.6.0 / 0.13.0, assuming the Phase 14/15 work ships first as 0.3.0 / 0.10.0.
@@ -166,7 +166,7 @@ gantt
     A7 View models, low, setup6 (0%)             :a7, after a1 a5, 1d
 
     section Server
-    A8 registerAppViews, medium, Sonnet (0%)     :crit, a8, after a1 a2 a3, 2d
+    A8 registerAppViews, medium, Sonnet (100%)   :done, a8, 2026-11-07, 1d
 
     section Views
     A9 U1 SessionCostView, medium, Sonnet (0%)   :crit, a9, after a0b a6 a7 a8, 2d

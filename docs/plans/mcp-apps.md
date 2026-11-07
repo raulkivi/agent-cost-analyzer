@@ -1,6 +1,6 @@
 # MCP Apps: branded, interactive cost views in the chat
 
-Status: **in progress: A1–A4 done (2026-11-07); planned 2026-10-28, updated
+Status: **in progress: A1–A4 and A8 done (2026-11-07); planned 2026-10-28, updated
 2026-11-07 for the Phase 14 and Phase 15 tools.** This is Phase 12 in
 [implementation-plan.md](../implementation-plan.md). Its dependencies are
 met: Phase 9.12's tools are done, step 10.13 is done and `ext-v0.1.0`
