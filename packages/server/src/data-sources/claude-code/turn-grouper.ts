@@ -16,9 +16,14 @@ function messageOf(entry: ClaudeCodeRawEntry): Record<string, unknown> | null {
 // or an array containing at least one non-tool_result block, typically
 // `{ type: "text" }`) and a tool-result-delivery line the CLI itself writes
 // back after running a tool call (message.content is an array of purely
-// `tool_result` blocks). Only the former should open a new turn.
+// `tool_result` blocks). Only the former should open a new turn. Two more
+// CLI-written `user` lines are never a human message either (both confirmed
+// against real captures): `isMeta: true` text the CLI injects itself (a
+// local command's caveat, a skill's body — splitting a turn on one would
+// split one response, one message.id, across two turns), and a compaction's
+// summary (`isCompactSummary: true`, right after its compact_boundary entry).
 export function isRealUserMessage(entry: ClaudeCodeRawEntry): boolean {
-  if (entry.type !== "user") {
+  if (entry.type !== "user" || entry.isMeta === true || entry.isCompactSummary === true) {
     return false;
   }
   const content = messageOf(entry)?.content;
@@ -39,7 +44,9 @@ export function isRealUserMessage(entry: ClaudeCodeRawEntry): boolean {
 // algorithm as pi-agent/turn-grouper.ts's groupBranchEntriesByUserMessage,
 // gated by isRealUserMessage instead of pi's isUserMessage so a
 // tool-result-delivery line never starts a new turn. Entries before the
-// first real user message have no turn to belong to and are dropped.
+// first real user message have no turn to belong to and are dropped. A
+// compaction's boundary and summary therefore stay in the turn they were
+// written in (the one before it, or the same one for a compaction mid-turn).
 export function groupBranchEntriesByUserMessage(branchEntries: ClaudeCodeRawEntry[]): ClaudeCodeTurnGroup[] {
   const groups: ClaudeCodeTurnGroup[] = [];
 

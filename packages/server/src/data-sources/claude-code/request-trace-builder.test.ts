@@ -107,4 +107,61 @@ describe("buildClaudeCodeRequestTrace", () => {
     expect(trace.requests).toEqual([]);
     expect(trace.notTraced).toEqual([{ turnIndex: 0, reason: NO_USAGE_REASON }]);
   });
+
+  it("leaves out synthetic entries (model <synthetic>, written by the CLI itself): no request, no model switch", () => {
+    const zero = usage(0, 0, 0, 0);
+    const trace = buildClaudeCodeRequestTrace("s1", [
+      group(user("u1"), assistant("m1", "2026-10-07T09:00:03.000Z", usage(10, 0, 100, 5)), assistant("syn1", "2026-10-07T09:00:04.000Z", zero, "<synthetic>")),
+      group(user("u2"), assistant("syn2", "2026-10-07T09:01:00.000Z", zero, "<synthetic>")),
+      group(user("u3"), assistant("m2", "2026-10-07T09:02:00.000Z", usage(10, 110, 0, 5))),
+    ]);
+
+    expect(trace.requests.map((request) => [request.turnIndex, request.model, request.event])).toEqual([
+      [0, "claude-sonnet-5-5", undefined],
+      [2, "claude-sonnet-5-5", undefined],
+    ]);
+    expect(trace.notTraced).toEqual([{ turnIndex: 1, reason: NO_REQUEST_REASON }]);
+  });
+
+  describe("compaction", () => {
+    const boundary = (uuid: string): ClaudeCodeRawEntry => ({ type: "system", subtype: "compact_boundary", uuid, parentUuid: null, logicalParentUuid: "x", compactMetadata: { trigger: "manual", preTokens: 900 } }) as ClaudeCodeRawEntry;
+    const summary = (uuid: string): ClaudeCodeRawEntry => ({ type: "user", uuid, isCompactSummary: true, message: { role: "user", content: "Made-up summary." } }) as ClaudeCodeRawEntry;
+
+    it("marks the first request after a compaction boundary, in the next turn or the same one", () => {
+      const trace = buildClaudeCodeRequestTrace("s1", [
+        group(user("u1"), assistant("m1", "2026-10-07T09:00:03.000Z", usage(10, 900, 0, 5)), boundary("b1"), summary("cs1")),
+        group(user("u2"), assistant("m2", "2026-10-07T09:01:00.000Z", usage(10, 0, 200, 5)), assistant("m3", "2026-10-07T09:01:30.000Z", usage(10, 200, 0, 5)), boundary("b2"), summary("cs2"), assistant("m4", "2026-10-07T09:02:00.000Z", usage(10, 0, 150, 5))),
+      ]);
+
+      expect(trace.requests.map((request) => [request.turnIndex, request.event])).toEqual([
+        [0, undefined],
+        [1, "compaction"],
+        [1, undefined],
+        [1, "compaction"],
+      ]);
+      expect(requestTraceSchema.safeParse(trace).success).toBe(true);
+    });
+
+    it("prefers compaction over model-switch when the request after a compaction also changes the model", () => {
+      const trace = buildClaudeCodeRequestTrace("s1", [
+        group(user("u1"), assistant("m1", "2026-10-07T09:00:03.000Z", usage(10, 900, 0, 5)), boundary("b1")),
+        group(user("u2"), assistant("m2", "2026-10-07T09:01:00.000Z", usage(10, 0, 200, 5), "claude-opus-5-5")),
+      ]);
+
+      expect(trace.requests.map((request) => request.event)).toEqual([undefined, "compaction"]);
+    });
+
+    it("keeps the mark for the next traced request when the first one after the boundary is in a turn left out", () => {
+      const trace = buildClaudeCodeRequestTrace("s1", [
+        group(user("u1"), assistant("m1", "2026-10-07T09:00:03.000Z", usage(10, 900, 0, 5)), boundary("b1")),
+        group(user("u2"), assistant("m2", "2026-10-07T09:01:00.000Z", { input_tokens: 4 })),
+        group(user("u3"), assistant("m3", "2026-10-07T09:02:00.000Z", usage(10, 0, 200, 5))),
+      ]);
+
+      expect(trace.requests.map((request) => [request.turnIndex, request.event])).toEqual([
+        [0, undefined],
+        [2, "compaction"],
+      ]);
+    });
+  });
 });

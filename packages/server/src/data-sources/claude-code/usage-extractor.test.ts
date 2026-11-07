@@ -80,6 +80,21 @@ describe("extractTurnUsage", () => {
     expect(extractTurnUsage(group([userText("u1")])).roundsCount).toBe(0);
   });
 
+  it("leaves a synthetic round (model <synthetic>, written by the CLI after an interruption) out of the model and the round count", () => {
+    const usage = { input_tokens: 1, output_tokens: 1, cache_read_input_tokens: 0, cache_creation_input_tokens: 0 };
+    const zero = { input_tokens: 0, output_tokens: 0, cache_read_input_tokens: 0, cache_creation_input_tokens: 0 };
+    const g = group([
+      userText("u1"),
+      assistantBlock("a1", "m1", { type: "text", text: "a" }, usage, "model-a"),
+      assistantBlock("s1", "m2", { type: "text", text: "made-up notice" }, zero, "<synthetic>"),
+    ]);
+
+    const result = extractTurnUsage(g);
+    expect(result.model).toBe("model-a");
+    expect(result.roundsCount).toBe(1);
+    expect(result.output).toEqual({ known: true, value: 1 });
+  });
+
   it("costAiCredits, tool, and vision are always unavailable — no Copilot AI Credits or tool/vision separation exists", () => {
     const usage = { input_tokens: 1, output_tokens: 1, cache_read_input_tokens: 0, cache_creation_input_tokens: 0 };
     const g = group([userText("u1"), assistantBlock("a1", "m1", { type: "text", text: "a" }, usage)]);

@@ -52,6 +52,23 @@ export function groupTurnEntriesByRound(turnEntries: ClaudeCodeRawEntry[]): Clau
   return rounds;
 }
 
+// The CLI writes an assistant line of its own, not a model's response, when
+// a request is interrupted or fails: `message.model` is "<synthetic>" and
+// every usage figure is 0 (confirmed against real captures). It is no LLM
+// request, so it never counts as one, nor as a model change.
+export const SYNTHETIC_MODEL = "<synthetic>";
+
+export function isSyntheticRound(round: ClaudeCodeRound): boolean {
+  return round.entries.some((entry) => messageOf(entry)?.model === SYNTHETIC_MODEL);
+}
+
+// The rounds that were real LLM requests: groupTurnEntriesByRound without
+// the synthetic ones. Usage and the request trace count these; the text
+// views (inspector, tool calls) still show every round.
+export function groupTurnRequestRounds(turnEntries: ClaudeCodeRawEntry[]): ClaudeCodeRound[] {
+  return groupTurnEntriesByRound(turnEntries).filter((round) => !isSyntheticRound(round));
+}
+
 // Scans every `type: "user"` entry in the turn for a `tool_result` content
 // block whose `tool_use_id` matches — a plain linear scan (not scoped to
 // one round) since, per the interleaving above, a tool_use block's result

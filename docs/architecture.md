@@ -667,6 +667,7 @@ a new strategy only when its caching kind is new.
 | `services/learn-simulation/pricer.ts` | `server` | token buckets × price tier → USD → AI credits (1 credit = $0.01) |
 | `services/learn-simulation/simulate-scenario.ts` | `server` | script + model → Learn `Session` (pure) |
 | `services/learn-simulation/learn-simulation-service.ts` | `server` | `getScenario`, `compareScenario`, `listVendorProfiles` behind `ApiService` |
+| `services/session-replay/request-trace-scripter.ts` | `server` | Phase 14: a real session's `RequestTrace` → `ScenarioScript` (compaction, clear, model switch, 1-hour writes; pure); calibration replays its captures through it |
 | `components/learn/*` | `web` | vendor picker, assumptions popover, sources footer, cache-outcome badge, How vendors differ card, Vendors tab |
 
 Where a rule a turn depends on is `unknown` for the chosen vendor, the turn's
@@ -1825,13 +1826,22 @@ when no such entry exists yet), so there is no need to guess/expose every
 fork as its own session the way the mitmproxy idle-gap split and
 pi-agent's per-leaf split both do. This also matches Claude Code's own UI
 mental model: one file is one conversation, possibly edited, not several.
+A compaction (`/compact` or automatic) starts a new `parentUuid` chain: its
+`system`/`compact_boundary` entry has `parentUuid: null` and names the last
+entry before it in `logicalParentUuid`. `walkBranch` follows that link too
+(with a cycle guard), so a compacted session keeps its turns from before the
+compaction (before step 14.3 it stopped there and undercounted the session).
+A `/clear` in the same file has no such link, so the branch still starts
+after it.
 
 **Turns are grouped by real user messages, but "real" needs its own
 predicate here.** `type: "user"` is shared by two different things in this
 format: a genuine human turn, and a tool-result-delivery line the CLI
 writes back after running a tool call. `turn-grouper.ts`'s
 `isRealUserMessage` distinguishes them (message content is a string, or an
-array containing at least one non-`tool_result` block) before
+array containing at least one non-`tool_result` block; CLI-written
+`isMeta` lines and a compaction's `isCompactSummary` line never count)
+before
 `groupBranchEntriesByUserMessage` (otherwise a direct port of pi's turn
 grouper) opens a new turn.
 
@@ -1875,8 +1885,13 @@ Checking specifically against a turn's own `userMessageEntry.parentUuid`
 points, rather than testing every entry indiscriminately) is sufficient to
 avoid misreporting parallel-tool-call structure as a fork: a real
 message-edit/resend is the only case that puts a genuine user turn on both
-sides of a fork point. No confirmed on-disk marker exists yet for the
-other `triggeredEvent` enum values (model-switch, compaction, clear,
+sides of a fork point. `compaction` is the turn holding the first request
+after a `compact_boundary` (`compaction.ts`; fork wins when both apply), and
+the request trace marks that request with a `compaction` event. The CLI's
+own `<synthetic>` assistant lines (written after an interruption, all-zero
+usage) are no request: they are left out of usage, the turn's model and the
+trace (`round-grouper.ts`'s `groupTurnRequestRounds`). No confirmed on-disk
+marker exists yet for the other `triggeredEvent` enum values (model-switch, clear,
 rewind, cache-expiry, instructions-change, image-change,
 reasoning-toggle) — shipped without rather than guessed, per constraint 6.
 

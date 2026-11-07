@@ -41,7 +41,18 @@ export class PanelView {
 
   // Step 15.14: the Dashboard's view switch, radios or (below 700 px of the
   // Dashboard's width) a select.
+  // The switch renders after the Dashboard's own heading, so wait for the
+  // option before choosing it (a single check raced the render in CI).
   async chooseDashboardView(label: string): Promise<void> {
+    await browser.waitUntil(
+      () =>
+        browser.execute((text) => {
+          const select = document.querySelector<HTMLSelectElement>("select[aria-label='Dashboard view']");
+          if (Array.from(select?.options ?? []).some((candidate) => candidate.text === text)) return true;
+          return Array.from(document.querySelectorAll<HTMLElement>("label.seg-opt")).some((element) => (element.textContent ?? "").trim() === text);
+        }, label),
+      { timeout: WAIT_MS, timeoutMsg: `No option "${label}" in the Dashboard's view switch` },
+    );
     const viaSelect = await browser.execute((text) => {
       const select = document.querySelector<HTMLSelectElement>("select[aria-label='Dashboard view']");
       const option = Array.from(select?.options ?? []).find((candidate) => candidate.text === text);

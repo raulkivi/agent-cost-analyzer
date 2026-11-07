@@ -18,6 +18,18 @@ function assistantEntry(uuid: string): ClaudeCodeRawEntry {
 function attachmentEntry(uuid: string): ClaudeCodeRawEntry {
   return { type: "attachment", uuid };
 }
+// The CLI's own text injected as a `user` line (a command caveat, a skill's
+// body), flagged isMeta — seen with string and text-block content.
+function metaUserMessage(uuid: string, content: unknown = "<caveat>made-up note</caveat>"): ClaudeCodeRawEntry {
+  return { type: "user", uuid, isMeta: true, message: { role: "user", content } };
+}
+// The summary a compaction writes right after its compact_boundary entry.
+function compactSummaryMessage(uuid: string): ClaudeCodeRawEntry {
+  return { type: "user", uuid, isCompactSummary: true, isVisibleInTranscriptOnly: true, message: { role: "user", content: "Made-up summary of the earlier work." } };
+}
+function compactBoundary(uuid: string): ClaudeCodeRawEntry {
+  return { type: "system", subtype: "compact_boundary", uuid, parentUuid: null, logicalParentUuid: "a1" };
+}
 
 describe("isRealUserMessage", () => {
   it("is true for a user entry with text content", () => {
@@ -35,6 +47,15 @@ describe("isRealUserMessage", () => {
 
   it("is true for a user entry whose content is a plain string", () => {
     expect(isRealUserMessage({ type: "user", uuid: "u1", message: { role: "user", content: "hi" } })).toBe(true);
+  });
+
+  it("is false for an isMeta user entry, with string or text-block content", () => {
+    expect(isRealUserMessage(metaUserMessage("m1"))).toBe(false);
+    expect(isRealUserMessage(metaUserMessage("m2", [{ type: "text", text: "made-up skill body" }]))).toBe(false);
+  });
+
+  it("is false for a compaction's summary entry", () => {
+    expect(isRealUserMessage(compactSummaryMessage("cs1"))).toBe(false);
   });
 });
 
@@ -76,6 +97,25 @@ describe("groupBranchEntriesByUserMessage", () => {
 
     expect(groups).toHaveLength(1);
     expect(groups[0].entries.map((e) => e.uuid)).toEqual(["u1", "a1"]);
+  });
+
+  it("keeps an isMeta entry inside the turn it falls in, so one response is never split across two turns", () => {
+    const entries = [realUserMessage("u1"), assistantEntry("a1"), metaUserMessage("meta1"), assistantEntry("a2")];
+
+    const groups = groupBranchEntriesByUserMessage(entries);
+
+    expect(groups).toHaveLength(1);
+    expect(groups[0].entries.map((e) => e.uuid)).toEqual(["u1", "a1", "meta1", "a2"]);
+  });
+
+  it("keeps a compaction's boundary and summary in the turn before it; the next real user message opens the next turn", () => {
+    const entries = [realUserMessage("u1"), assistantEntry("a1"), compactBoundary("b1"), compactSummaryMessage("cs1"), realUserMessage("u2"), assistantEntry("a2")];
+
+    const groups = groupBranchEntriesByUserMessage(entries);
+
+    expect(groups.map((g) => g.userMessageEntry.uuid)).toEqual(["u1", "u2"]);
+    expect(groups[0].entries.map((e) => e.uuid)).toEqual(["u1", "a1", "b1", "cs1"]);
+    expect(groups[1].entries.map((e) => e.uuid)).toEqual(["u2", "a2"]);
   });
 
   it("returns an empty array for an empty branch", () => {

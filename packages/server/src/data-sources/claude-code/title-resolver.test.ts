@@ -49,4 +49,11 @@ describe("resolveClaudeCodeTitle", () => {
 
     expect(resolveClaudeCodeTitle([toolResultEntry, realUserEntry()])).toBe("fix-the-thing");
   });
+
+  it("skips isMeta and compaction-summary 'user' entries when looking for the first real user entry", () => {
+    const metaEntry = realUserEntry({ uuid: "m1", isMeta: true, slug: "meta-slug" });
+    const summaryEntry = realUserEntry({ uuid: "cs1", isCompactSummary: true, slug: "summary-slug" });
+
+    expect(resolveClaudeCodeTitle([metaEntry, summaryEntry, realUserEntry()])).toBe("fix-the-thing");
+  });
 });
