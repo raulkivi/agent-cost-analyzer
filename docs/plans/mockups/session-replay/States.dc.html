@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Replay, states</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&amp;family=Barlow+Condensed:wght@500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#416180}a:hover{color:#2c455d}
+.bp{position:relative;border:1px solid rgba(29,31,32,.16)}
+.bp>i{position:absolute;width:11px;height:11px;color:rgba(29,31,32,.55)}
+.bp>i::before,.bp>i::after{content:"";position:absolute;background:currentColor}
+.bp>i::before{left:5px;top:0;width:1px;height:100%}
+.bp>i::after{top:5px;left:0;width:100%;height:1px}
+.bp>.tl{top:-6px;left:-6px}.bp>.tr{top:-6px;right:-6px}.bp>.bl{bottom:-6px;left:-6px}.bp>.br{bottom:-6px;right:-6px}
+.btn{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 11px;border:1px solid rgba(29,31,32,.16);border-radius:4px;font:inherit;font-size:13px;color:#1d1f20;background:transparent;cursor:pointer;text-decoration:none}
+.btn-p{background:#416180;border-color:#416180;color:#f2f2f3}
+.btn[disabled]{color:#5b5c5e;cursor:not-allowed;background:#e7e7ea}
+.kicker{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#416180}
+.muted{color:#5b5c5e}
+.num{font-variant-numeric:tabular-nums}
+.ttl{font-family:'Barlow Condensed',sans-serif;font-weight:600;color:#1d1f20}
+.sk{display:block;height:10px;background:#e2e2e4;border-radius:3px}
+.warn{display:inline-flex;align-items:center;gap:4px;padding:1px 6px;background:#eba524;color:#1d1f20;font-size:11px;font-weight:600;white-space:nowrap}
+.card{padding:14px 16px;display:flex;flex-direction:column;gap:8px;min-height:0;overflow:hidden}
+.sim{display:inline-flex;align-items:center;gap:4px;padding:0 6px;height:18px;border:1px dashed #416180;border-radius:3px;color:#2c455d;font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap}
+.tbl{width:100%;border-collapse:collapse;font-size:12px}
+.tbl th{font-weight:600;text-align:right;padding:4px 6px;border-bottom:1px solid rgba(29,31,32,.30);white-space:nowrap;vertical-align:bottom}
+.tbl td{text-align:right;padding:4px 6px;border-bottom:1px solid rgba(29,31,32,.10);font-variant-numeric:tabular-nums;white-space:nowrap}
+.tbl th:first-child,.tbl td:first-child,.tbl .l{text-align:left}
+.tbl .simc{background:rgba(65,97,128,.06);border-left:1px dashed rgba(65,97,128,.55);border-right:1px dashed rgba(65,97,128,.55)}
+.sel{height:30px;font:inherit;font-size:13px;padding:0 8px;border:1px solid rgba(29,31,32,.16);border-radius:4px;background:#f2f2f3;color:#1d1f20}
+.note{display:flex;gap:8px;align-items:flex-start;padding:7px 10px;border:1px solid rgba(29,31,32,.16);border-radius:4px;font-size:13px}
+.note-w{background:#fff7e6}
+.unk{font-style:italic}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.opt{display:flex;align-items:center;gap:8px;min-height:26px;padding:0 10px 0 22px;font-size:13px}
+.grp{padding:6px 10px 2px;font-size:12px;font-weight:600}
+</style>
+</helmet>
+<div style="width: 1440px; height: 900px; box-sizing: border-box; padding: 28px 32px; display: flex; flex-direction: column; gap: 18px; background: #f2f2f3; color: #1d1f20; font-family: Barlow, system-ui, sans-serif; font-size: 14px; line-height: 1.45; overflow: hidden">
+  <div style="display: flex; align-items: baseline; gap: 14px">
+    <h1 style="margin: 0; font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 30px; line-height: 1">States of the replay</h1>
+    <span class="muted" style="font-size: 13px">Every simulated figure is labelled Simulated, the measured ones stay beside it, and an unknown reads "unknown" with its reason, never 0.</span>
+  </div>
+  <div style="flex-grow: 1; min-height: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: repeat(3, minmax(0, 1fr)); gap: 18px">
+
+    <section class="bp card" aria-labelledby="sa" style="grid-row: 1 / span 2"><i class="tl"></i><i class="tr"></i><i class="bl"></i><i class="br"></i>
+      <span class="kicker">(a) Replay on · picker open</span>
+      <h2 id="sa" class="ttl" style="margin: 0; font-size: 19px">Choose a model to replay on</h2>
+      <label style="display: flex; align-items: center; gap: 8px; font-size: 13px">Replay on<select class="sel" aria-expanded="true" style="flex-grow: 1"><option>claude-sonnet-5.5</option></select></label>
+      <div role="listbox" aria-label="Models, grouped by vendor" style="border: 1px solid rgba(29,31,32,.30); border-radius: 4px; background: #f7f7f8; box-shadow: 0 6px 18px rgba(29,31,32,.14); padding: 2px 0 6px">
+        <sc-for list="{{groups}}" as="g" hint-placeholder-count="6">
+          <div role="group" aria-label="{{g.vendor}}">
+            <div class="grp" aria-hidden="true">{{g.vendor}}</div>
+            <sc-for list="{{g.models}}" as="m" hint-placeholder-count="2">
+              <div role="option" aria-selected="{{m.selected}}" aria-disabled="{{m.disabled}}" style="{{m.style}}">
+                <span style="display: flex; flex-direction: column; line-height: 1.3; padding: 3px 0">
+                  <span>{{m.label}}</span>
+                  <sc-if value="{{m.isOff}}" hint-placeholder-val="{{false}}"><span class="muted" style="font-size: 12px">Caching undocumented, so it can't be simulated</span></sc-if>
+                </span>
+                <span class="muted" style="margin-left: auto; font-size: 12px">{{m.note}}</span>
+              </div>
+            </sc-for>
+          </div>
+        </sc-for>
+      </div>
+      <p class="muted" style="margin: 0; font-size: 12px">Learn's vendor picker: one group per vendor; undocumented caching stays listed, disabled, with its reason.</p>
+    </section>
+
+    <section class="bp card" aria-busy="true" aria-labelledby="sb"><i class="tl"></i><i class="tr"></i><i class="bl"></i><i class="br"></i>
+      <span class="kicker">(b) Loading · shown after 300 ms</span>
+      <h2 id="sb" class="ttl" style="margin: 0; font-size: 17px">Replaying on claude-sonnet-5.5</h2>
+      <table class="tbl">
+        <caption class="sr">Turns with measured figures; simulated figures still loading</caption>
+        <thead><tr><th scope="col">#</th><th scope="col">Cache read</th><th scope="col">USD</th><th scope="col" class="simc"><span class="sim">Simulated</span><br>Outcome</th><th scope="col" class="simc">Cache read</th><th scope="col" class="simc">USD</th></tr></thead>
+        <tbody>
+          <sc-for list="{{loadRows}}" as="r" hint-placeholder-count="3">
+            <tr><td>{{r.n}}</td><td>{{r.read}}</td><td>{{r.usd}}</td><td class="simc" aria-hidden="true"><span class="sk" style="width: 44px; margin-left: auto"></span></td><td class="simc" aria-hidden="true"><span class="sk" style="width: 52px; margin-left: auto"></span></td><td class="simc" aria-hidden="true"><span class="sk" style="width: 34px; margin-left: auto"></span></td></tr>
+          </sc-for>
+        </tbody>
+      </table>
+      <div style="display: flex; align-items: center; gap: 10px; font-size: 13px; margin-top: auto">
+        <span role="status">Simulating 41 requests</span>
+        <button class="btn" style="margin-left: auto">Cancel</button>
+      </div>
+    </section>
+
+    <section class="bp card" aria-labelledby="sd"><i class="tl"></i><i class="tr"></i><i class="bl"></i><i class="br"></i>
+      <span class="kicker">(d) No known price channel</span>
+      <h2 id="sd" class="ttl" style="margin: 0; font-size: 17px; display: flex; align-items: center; gap: 8px">Tokens simulated, nothing priced <span class="sim">Simulated</span> <span class="muted" style="font-family: Barlow, sans-serif; font-weight: 400; font-size: 12px">on gpt-6.1-sol</span></h2>
+      <div role="status" class="note note-w" style="font-size: 12px"><span class="warn">Unpriced</span><span>No price channel is known, so nothing simulated is priced: the log records none.</span></div>
+      <table class="tbl">
+        <caption class="sr">Simulated cache figures on gpt-6.1-sol with unknown cost</caption>
+        <thead><tr><th scope="col">#</th><th scope="col" class="simc">Outcome</th><th scope="col" class="simc">Cache read</th><th scope="col" class="simc">Cache write</th><th scope="col" class="simc">Cost</th></tr></thead>
+        <tbody>
+          <sc-for list="{{unpricedRows}}" as="r" hint-placeholder-count="3">
+            <tr><td>{{r.n}}</td><td class="simc"><span style="display: inline-flex; align-items: center; gap: 4px">{{r.outcome}}</span></td><td class="simc">{{r.read}}</td><td class="simc">{{r.write}}</td><td class="simc unk" title="No price channel is known, so nothing simulated is priced">unknown</td></tr>
+          </sc-for>
+        </tbody>
+        <tfoot><tr><td style="font-weight: 600; border-top: 1px solid rgba(29,31,32,.30)">Total</td><td class="simc" style="border-top: 1px solid rgba(29,31,32,.30)"></td><td class="simc" style="font-weight: 600; border-top: 1px solid rgba(29,31,32,.30)">{{unpricedRead}}</td><td class="simc" style="font-weight: 600; border-top: 1px solid rgba(29,31,32,.30)">{{unpricedWrite}}</td><td class="simc unk" style="font-weight: 600; border-top: 1px solid rgba(29,31,32,.30)">unknown</td></tr></tfoot>
+      </table>
+    </section>
+
+    <section class="bp card" aria-labelledby="sc1"><i class="tl"></i><i class="tr"></i><i class="bl"></i><i class="br"></i>
+      <span class="kicker">(c) Not replayable · provider</span>
+      <h2 id="sc1" class="ttl" style="margin: 0; font-size: 17px">This provider's logs can't be replayed yet.</h2>
+      <p style="margin: 0; font-size: 13px">"Fix the flaky snapshot test" is a pi session. Claude Code and Copilot sessions can be replayed; pi and mitmproxy sessions follow.</p>
+      <label style="display: flex; align-items: center; gap: 8px; font-size: 13px">Replay on<select class="sel" disabled aria-describedby="c1why" style="flex-grow: 1; background: #e7e7ea; color: #5b5c5e"><option>Not available for pi sessions</option></select></label>
+      <span id="c1why" class="sr">This provider's logs can't be replayed yet.</span>
+      <p class="muted" style="margin: auto 0 0; font-size: 12px">The turns table keeps its measured columns; no simulated column is added.</p>
+    </section>
+
+    <section class="bp card" aria-labelledby="se"><i class="tl"></i><i class="tr"></i><i class="bl"></i><i class="br"></i>
+      <span class="kicker">(e) No price on that channel at that date</span>
+      <h2 id="se" class="ttl" style="margin: 0; font-size: 17px">Write the migration notes · on gpt-6.1-sol</h2>
+      <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; font-size: 12px">
+        <div style="padding: 6px 8px; border: 1px solid rgba(29,31,32,.16)"><span class="muted">Measured</span><br><strong class="num" style="font-size: 16px">$3.18</strong></div>
+        <div style="padding: 6px 8px; border: 1px dashed rgba(65,97,128,.55); background: rgba(65,97,128,.06)"><span class="sim">Simulated</span><br><strong class="unk" style="font-size: 16px">unknown</strong></div>
+        <div style="padding: 6px 8px; border: 1px dashed rgba(65,97,128,.55); background: rgba(65,97,128,.06)"><span class="muted">Difference</span><br><strong class="unk" style="font-size: 16px">unknown</strong></div>
+      </div>
+      <div role="status" class="note note-w" style="font-size: 12px"><span class="warn">Unpriced</span><span>unknown: The price book has no price for gpt-6.1-sol on openai-api before 2026-10-01. This session ran on 2026-09-14. Its simulated cache reads (1,912,400 tokens) are still shown per turn.</span></div>
+      <div style="display: flex; gap: 8px; margin-top: auto"><button class="btn">Price at Copilot's prices instead</button></div>
+    </section>
+
+    <section class="bp card" aria-labelledby="sg" style="grid-column: 1"><i class="tl"></i><i class="tr"></i><i class="bl"></i><i class="br"></i>
+      <span class="kicker">(g) Self-check unavailable</span>
+      <h2 id="sg" class="ttl" style="margin: 0; font-size: 17px">No self-check for this session</h2>
+      <div class="note" style="font-size: 13px"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#5b5c5e" stroke-width="2" style="flex-shrink: 0; margin-top: 2px"><circle cx="12" cy="12" r="9"></circle><path d="M8 12h8"></path></svg><span><strong>No self-check: the session used three models</strong> <span class="muted">(claude-opus-5.5, claude-sonnet-5.5, gpt-6.1-sol), so there is no single own model to replay against the log.</span></span></div>
+      <div class="note" style="font-size: 13px"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#5b5c5e" stroke-width="2" style="flex-shrink: 0; margin-top: 2px"><circle cx="12" cy="12" r="9"></circle><path d="M8 12h8"></path></svg><span><strong>No self-check: its own model has no vendor profile</strong> <span class="muted">(claude-opus-4.1), so it can't be replayed on itself.</span></span></div>
+      <p class="muted" style="margin: 0; font-size: 12px">Other models' simulated figures still show, without that evidence behind them.</p>
+    </section>
+
+    <section class="bp card" aria-labelledby="sc2"><i class="tl"></i><i class="tr"></i><i class="bl"></i><i class="br"></i>
+      <span class="kicker">(c) Not replayable · too long</span>
+      <h2 id="sc2" class="ttl" style="margin: 0; font-size: 17px">Session too long to replay</h2>
+      <div role="status" class="note" style="font-size: 13px"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#5b5c5e" stroke-width="2" style="flex-shrink: 0; margin-top: 2px"><circle cx="12" cy="12" r="9"></circle><path d="M5.6 5.6l12.8 12.8"></path></svg><span>This session has 23,418 requests; at most 20,000 can be replayed.</span></div>
+      <p style="margin: 0; font-size: 13px">"Nightly dependency sweep" (Claude Code, 2026-10-02). Its measured figures are unchanged.</p>
+      <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; margin-top: auto">Replay on<select class="sel" disabled style="flex-grow: 1; background: #e7e7ea; color: #5b5c5e"><option>Not available: over 20,000 requests</option></select></label>
+    </section>
+
+    <section class="bp card" aria-labelledby="sf"><i class="tl"></i><i class="tr"></i><i class="bl"></i><i class="br"></i>
+      <span class="kicker">(f) Error</span>
+      <h2 id="sf" class="ttl" style="margin: 0; font-size: 17px">Couldn't replay on claude-sonnet-5.5</h2>
+      <p style="margin: 0; font-size: 13px">The replay request failed: the server didn't answer (it may have stopped). Nothing was changed; the measured figures still stand.</p>
+      <pre style="margin: 0; padding: 6px 10px; background: #e7e7ea; font-family: ui-monospace, monospace; font-size: 12px; overflow: hidden">GET /api/sessions/…/replay?model=claude-sonnet-5.5
+  network error: connection refused</pre>
+      <div style="display: flex; gap: 8px; margin-top: auto"><button class="btn btn-p">Retry</button><button class="btn">Copy details</button></div>
+    </section>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    function n(v) { return v.toLocaleString('en-US'); }
+    var base = 'display: flex; align-items: center; gap: 8px; min-height: 26px; padding: 0 10px 0 22px; font-size: 13px; ';
+    function m(id, opts) {
+      opts = opts || {};
+      var st = opts.selected ? 'background: #416180; color: #f2f2f3' : opts.off ? 'color: #5b5c5e; cursor: not-allowed' : 'color: #1d1f20';
+      return { label: opts.off ? id + ' (not simulated)' : id, note: opts.note || '', selected: opts.selected ? 'true' : 'false', disabled: opts.off ? 'true' : 'false', isOff: !!opts.off, style: base + st };
+    }
+    var groups = [
+      { vendor: 'Anthropic', models: [m('claude-opus-5.5', { note: "session's model" }), m('claude-sonnet-5.5', { selected: true }), m('claude-haiku-5.5')] },
+      { vendor: 'OpenAI', models: [m('gpt-6.1-sol')] },
+      { vendor: 'Google', models: [m('gemini-3.8-flash')] },
+      { vendor: 'xAI', models: [m('grok-4.7')] },
+      { vendor: 'Microsoft', models: [m('mai-code-1.1-flash', { off: true })] },
+      { vendor: 'Moonshot AI', models: [m('kimi-k3', { off: true })] }
+    ];
+    var loadRows = [
+      { n: '1', read: '0', usd: '$0.21' },
+      { n: '2', read: n(38400), usd: '$0.18' },
+      { n: '3', read: n(91200), usd: '$0.33' }
+    ];
+    var un = [
+      { n: '1', outcome: 'Miss', read: 0, write: 24600 },
+      { n: '2', outcome: 'Hit', read: 24600, write: 9800 },
+      { n: '3', outcome: 'Partial', read: 28100, write: 14300 }
+    ];
+    var rRead = 0, rWrite = 0;
+    var unpricedRows = un.map(function (r) { rRead += r.read; rWrite += r.write; return { n: r.n, outcome: r.outcome, read: n(r.read), write: n(r.write) }; });
+    return { groups: groups, loadRows: loadRows, unpricedRows: unpricedRows, unpricedRead: n(rRead), unpricedWrite: n(rWrite) };
+  }
+}
+</script>
+</body>
+</html>

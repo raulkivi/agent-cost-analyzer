@@ -1,0 +1,370 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Analyze, replay on another model</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&amp;family=Barlow+Condensed:wght@500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#416180}a:hover{color:#2c455d}
+.bp{position:relative;border:1px solid rgba(29,31,32,.16)}
+.bp>i{position:absolute;width:11px;height:11px;color:rgba(29,31,32,.55)}
+.bp>i::before,.bp>i::after{content:"";position:absolute;background:currentColor}
+.bp>i::before{left:5px;top:0;width:1px;height:100%}
+.bp>i::after{top:5px;left:0;width:100%;height:1px}
+.bp>.tl{top:-6px;left:-6px}.bp>.tr{top:-6px;right:-6px}.bp>.bl{bottom:-6px;left:-6px}.bp>.br{bottom:-6px;right:-6px}
+.seg{display:inline-flex;border:1px solid rgba(29,31,32,.16);border-radius:4px;overflow:hidden}
+.seg>label,.seg>button{display:inline-flex;align-items:center;height:30px;padding:0 11px;font:inherit;font-size:13px;color:#1d1f20;background:transparent;border:0;cursor:pointer;position:relative}
+.seg>label+label,.seg>button+button{border-left:1px solid rgba(29,31,32,.16)}
+.seg>label>input{position:absolute;opacity:0;width:1px;height:1px}
+.seg>.on{background:#416180;color:#f2f2f3}
+.btn{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 11px;border:1px solid rgba(29,31,32,.16);border-radius:4px;font:inherit;font-size:13px;color:#1d1f20;background:transparent;cursor:pointer}
+.btn-sm{height:26px;padding:0 9px;font-size:12px}
+.kicker{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#416180}
+.muted{color:#5b5c5e}
+.num{font-variant-numeric:tabular-nums}
+.sel,.inp{height:30px;font:inherit;font-size:13px;padding:0 8px;border:1px solid rgba(29,31,32,.30);border-radius:4px;background:#f2f2f3;color:#1d1f20;box-sizing:border-box}
+.simb{display:inline-flex;align-items:center;height:18px;padding:0 6px;border:1px dashed #416180;border-radius:3px;font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#416180;background:#f2f2f3;white-space:nowrap}
+.tbl{width:100%;border-collapse:collapse;table-layout:fixed;font-size:12px}
+.tbl th{font-weight:600;font-size:11px;text-align:right;padding:4px 4px;border-bottom:1px solid rgba(29,31,32,.30);vertical-align:bottom;line-height:1.2}
+.tbl td{text-align:right;padding:5px 4px;border-bottom:1px solid rgba(29,31,32,.10);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-variant-numeric:tabular-nums}
+.tbl .l{text-align:left}
+.tbl .grp{font-size:11px;font-weight:600;text-align:left;border-bottom:1px solid rgba(29,31,32,.16);padding:4px}
+.tbl .sc{background:rgba(65,97,128,.07);border-bottom:1px dashed rgba(29,31,32,.34)}
+.tbl .s1{border-left:1px dashed #416180}
+.tbl .s3{border-right:1px dashed #416180}
+.tag{display:inline-flex;align-items:center;height:16px;padding:0 5px;margin-left:6px;border:1px solid rgba(29,31,32,.30);border-radius:3px;font-size:10px;color:#1d1f20;vertical-align:1px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+</style>
+</helmet>
+<div style="width: 1440px; height: 900px; box-sizing: border-box; display: flex; flex-direction: column; background: #f2f2f3; color: #1d1f20; font-family: Barlow, system-ui, sans-serif; font-size: 14px; line-height: 1.45; overflow: hidden">
+  <header style="height: 56px; flex-shrink: 0; display: flex; align-items: center; gap: 20px; padding: 0 24px; border-bottom: 1px solid rgba(29,31,32,.16)">
+    <span style="font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 20px; margin-right: auto">Agent Cost Analyzer</span>
+    <div class="seg" role="radiogroup" aria-label="Mode"><label><input type="radio" name="mode">Learn</label><label class="on"><input type="radio" name="mode" checked>Analyze</label></div>
+    <label style="display: flex; align-items: center; gap: 8px; font-size: 13px">Provider<select class="sel"><option>Claude Code</option><option>VS Code</option><option>pi</option><option>mitmproxy</option></select></label>
+  </header>
+
+  <div style="flex-grow: 1; min-height: 0; display: flex; gap: 16px; padding: 16px 20px 16px">
+
+    <aside aria-label="Sessions" style="width: 208px; flex-shrink: 0; display: flex; flex-direction: column; gap: 8px; min-height: 0">
+      <span class="kicker">Sessions · Claude Code</span>
+      <input class="inp" type="search" aria-label="Search sessions" placeholder="Search sessions" style="width: 100%">
+      <ul style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; overflow: hidden">
+        <sc-for list="{{sessions}}" as="s" hint-placeholder-count="9">
+          <li><button aria-current="{{s.current}}" style="{{s.style}}"><span style="display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500">{{s.title}}</span><span style="display: flex; justify-content: space-between; gap: 6px; font-size: 12px; color: {{s.sub}}"><span>{{s.date}}</span><span class="num">{{s.cost}}</span></span></button></li>
+        </sc-for>
+      </ul>
+    </aside>
+
+    <main style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 12px">
+      <div style="display: flex; align-items: flex-end; gap: 16px">
+        <div style="display: flex; flex-direction: column; gap: 2px; min-width: 0">
+          <h1 style="margin: 0; font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 26px; line-height: 1.1; white-space: nowrap">Refactor the price book loader</h1>
+          <span class="muted num" style="font-size: 13px">Claude Code · claude-opus-5.5 · Oct 21, 2026 · 12 turns · 41 requests</span>
+        </div>
+        <div style="margin-left: auto; display: flex; align-items: center; gap: 8px">
+          <label for="replay-on" style="font-size: 13px">Replay on</label>
+          <sc-if value="{{isOn}}" hint-placeholder-val="{{true}}">
+            <select id="replay-on" class="sel" style="width: 196px" aria-describedby="replay-off-reasons">
+              <option value="">Replay on…</option>
+              <optgroup label="Anthropic">
+                <option value="claude-opus-5.5">claude-opus-5.5 (this session)</option>
+                <option value="claude-sonnet-5.5" selected>claude-sonnet-5.5</option>
+                <option value="claude-haiku-5.5">claude-haiku-5.5</option>
+              </optgroup>
+              <optgroup label="OpenAI"><option value="gpt-6.1-sol">gpt-6.1-sol</option></optgroup>
+              <optgroup label="Google"><option value="gemini-3.8-flash">gemini-3.8-flash</option></optgroup>
+              <optgroup label="Moonshot AI"><option value="kimi-k3" disabled title="Caching undocumented">kimi-k3 (caching undocumented)</option></optgroup>
+              <optgroup label="Microsoft"><option value="mai-code-1.1-flash" disabled title="Caching undocumented">mai-code-1.1-flash (caching undocumented)</option></optgroup>
+            </select>
+          </sc-if>
+          <sc-if value="{{isOff}}" hint-placeholder-val="{{false}}">
+            <select id="replay-on" class="sel" style="width: 196px; color: #5b5c5e" aria-describedby="replay-off-reasons">
+              <option value="" selected>Replay on…</option>
+              <optgroup label="Anthropic">
+                <option value="claude-opus-5.5">claude-opus-5.5 (this session)</option>
+                <option value="claude-sonnet-5.5">claude-sonnet-5.5</option>
+                <option value="claude-haiku-5.5">claude-haiku-5.5</option>
+              </optgroup>
+              <optgroup label="OpenAI"><option value="gpt-6.1-sol">gpt-6.1-sol</option></optgroup>
+              <optgroup label="Google"><option value="gemini-3.8-flash">gemini-3.8-flash</option></optgroup>
+              <optgroup label="Moonshot AI"><option value="kimi-k3" disabled title="Caching undocumented">kimi-k3 (caching undocumented)</option></optgroup>
+              <optgroup label="Microsoft"><option value="mai-code-1.1-flash" disabled title="Caching undocumented">mai-code-1.1-flash (caching undocumented)</option></optgroup>
+            </select>
+          </sc-if>
+          <span id="replay-off-reasons" class="sr">kimi-k3 and mai-code-1.1-flash are listed but can't be replayed: their vendors don't document prompt caching.</span>
+          <a href="Compare.dc.html" class="btn btn-sm" style="text-decoration: none"><svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"></path></svg>Compare models</a>
+        </div>
+      </div>
+
+      <sc-if value="{{isOn}}" hint-placeholder-val="{{true}}">
+        <section class="bp" aria-label="Replay summary" style="padding: 8px 12px; display: flex; align-items: center; gap: 18px"><i class="tl"></i><i class="tr"></i><i class="bl"></i><i class="br"></i>
+          <div style="display: flex; flex-direction: column; gap: 0">
+            <span class="kicker">Measured · claude-opus-5.5</span>
+            <span class="num" style="font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 22px; line-height: 1.15">$4.82</span>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 0; padding: 0 10px; border: 1px dashed #416180; border-radius: 3px; background: rgba(65,97,128,.07)">
+            <span style="display: flex; align-items: center; gap: 6px"><span class="kicker">claude-sonnet-5.5</span><span class="simb">Simulated</span></span>
+            <span class="num" style="font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 22px; line-height: 1.15">$2.91</span>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 0">
+            <span class="kicker">Difference</span>
+            <span class="num" style="font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 22px; line-height: 1.15">−$1.91 <span style="font-family: Barlow, sans-serif; font-weight: 400; font-size: 13px" class="muted">−39.6% · USD</span></span>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 1px; font-size: 12px; min-width: 0; padding-left: 16px; border-left: 1px solid rgba(29,31,32,.16)">
+            <span><strong style="font-weight: 600">11 of 12 turns replayed</strong> · 1 had no complete usage figures</span>
+            <span style="display: flex; align-items: center; gap: 5px"><svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 12l5 5L20 6"></path></svg>Replay matches the log on claude-opus-5.5: 100% of compared requests</span>
+            <span class="muted">Priced at the Anthropic API's prices as of 2026-10-21</span>
+          </div>
+          <a href="Summary.dc.html" class="btn btn-sm" aria-haspopup="dialog" style="margin-left: auto; text-decoration: none; flex-shrink: 0">Replay summary<svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"></path></svg></a>
+        </section>
+      </sc-if>
+      <sc-if value="{{isOff}}" hint-placeholder-val="{{false}}">
+        <p class="muted" style="margin: 0; font-size: 13px; padding: 8px 12px; border: 1px solid rgba(29,31,32,.16)">Choose a model in Replay on to see what this session would have cost there, beside what it did cost. The replay keeps the session's turns and token counts; only caching and prices change.</p>
+      </sc-if>
+
+      <div style="flex-grow: 1; min-height: 0; overflow: hidden">
+        <sc-if value="{{isOn}}" hint-placeholder-val="{{true}}">
+          <table class="tbl">
+            <caption class="sr">Turns of the session, measured figures from the log and, in the dashed columns, figures simulated on claude-sonnet-5.5</caption>
+            <colgroup><col style="width: 24px"><col><col style="width: 92px"><col style="width: 46px"><col style="width: 58px"><col style="width: 54px"><col style="width: 50px"><col style="width: 46px"><col style="width: 64px"><col style="width: 76px"><col style="width: 58px"><col style="width: 50px"></colgroup>
+            <thead>
+              <tr>
+                <th scope="colgroup" colspan="9" class="grp">Measured · from the log · USD priced</th>
+                <th scope="colgroup" colspan="3" class="grp sc s1 s3" style="border-top: 1px dashed #416180"><span style="display: flex; align-items: center; gap: 6px"><span class="simb">Simulated</span><span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap">claude-sonnet-5.5</span></span></th>
+              </tr>
+              <tr>
+                <th scope="col">#</th><th scope="col" class="l">Prompt</th><th scope="col" class="l">Model</th><th scope="col">Input</th><th scope="col">Cache read</th><th scope="col">Cache write</th><th scope="col">Output</th><th scope="col">Cost</th><th scope="col">Cumulative</th>
+                <th scope="col" class="l sc s1">Cache</th><th scope="col" class="sc">Cache read</th><th scope="col" class="sc s3">Cost</th>
+              </tr>
+            </thead>
+            <tbody>
+              <sc-for list="{{rows}}" as="r" hint-placeholder-count="12">
+                <tr aria-selected="{{r.selected}}" onClick="{{r.select}}" style="{{r.style}}">
+                  <td>{{r.n}}</td>
+                  <td class="l" title="{{r.prompt}}">{{r.prompt}}<sc-if value="{{r.hasTag}}" hint-placeholder-val="{{false}}"><span class="tag">{{r.tag}}</span></sc-if></td>
+                  <td class="l">claude-opus-5.5</td>
+                  <td>{{r.input}}</td>
+                  <td title="{{r.unkTip}}" style="{{r.unkStyle}}">{{r.cr}}</td>
+                  <td title="{{r.unkTip}}" style="{{r.unkStyle}}">{{r.cw}}</td>
+                  <td>{{r.out}}</td>
+                  <td title="{{r.unkTip}}" style="{{r.unkStyle}}">{{r.cost}}</td>
+                  <td>{{r.cum}}</td>
+                  <sc-for list="{{r.sim}}" as="c" hint-placeholder-count="3">
+                    <td colspan="{{c.span}}" class="{{c.cls}}" style="{{c.style}}">
+                      <sc-if value="{{c.isOutcome}}" hint-placeholder-val="{{true}}"><span style="display: inline-flex; align-items: center; gap: 4px"><svg aria-hidden="true" width="11" height="11" viewBox="0 0 12 12"><circle cx="6" cy="6" r="4.6" fill="{{c.fill}}" stroke="currentColor" stroke-width="1.4"></circle><path d="{{c.half}}" fill="currentColor"></path></svg>{{c.text}}</span></sc-if>
+                      <sc-if value="{{c.isPlain}}" hint-placeholder-val="{{false}}">{{c.text}}</sc-if>
+                      <sc-if value="{{c.isGap}}" hint-placeholder-val="{{false}}"><span style="display: flex; flex-direction: column; gap: 0; white-space: normal; text-align: left; line-height: 1.25"><strong style="font-weight: 600">not replayed</strong><span class="muted" style="font-size: 11px">A request in this turn has no complete usage figures</span></span></sc-if>
+                    </td>
+                  </sc-for>
+                </tr>
+              </sc-for>
+            </tbody>
+          </table>
+        </sc-if>
+        <sc-if value="{{isOff}}" hint-placeholder-val="{{false}}">
+          <table class="tbl">
+            <caption class="sr">Turns of the session, measured figures from the log</caption>
+            <colgroup><col style="width: 24px"><col><col style="width: 100px"><col style="width: 56px"><col style="width: 70px"><col style="width: 66px"><col style="width: 58px"><col style="width: 54px"><col style="width: 72px"></colgroup>
+            <thead>
+              <tr><th scope="colgroup" colspan="9" class="grp">Measured · from the log · USD priced</th></tr>
+              <tr><th scope="col">#</th><th scope="col" class="l">Prompt</th><th scope="col" class="l">Model</th><th scope="col">Input</th><th scope="col">Cache read</th><th scope="col">Cache write</th><th scope="col">Output</th><th scope="col">Cost</th><th scope="col">Cumulative</th></tr>
+            </thead>
+            <tbody>
+              <sc-for list="{{rows}}" as="r" hint-placeholder-count="12">
+                <tr aria-selected="{{r.selected}}" onClick="{{r.select}}" style="{{r.style}}">
+                  <td>{{r.n}}</td>
+                  <td class="l" title="{{r.prompt}}">{{r.prompt}}<sc-if value="{{r.hasTag}}" hint-placeholder-val="{{false}}"><span class="tag">{{r.tag}}</span></sc-if></td>
+                  <td class="l">claude-opus-5.5</td>
+                  <td>{{r.input}}</td>
+                  <td title="{{r.unkTip}}" style="{{r.unkStyle}}">{{r.cr}}</td>
+                  <td title="{{r.unkTip}}" style="{{r.unkStyle}}">{{r.cw}}</td>
+                  <td>{{r.out}}</td>
+                  <td title="{{r.unkTip}}" style="{{r.unkStyle}}">{{r.cost}}</td>
+                  <td>{{r.cum}}</td>
+                </tr>
+              </sc-for>
+            </tbody>
+          </table>
+        </sc-if>
+        <p class="muted" style="margin: 10px 0 0; font-size: 12px">{{footnote}}</p>
+      </div>
+    </main>
+
+    <aside aria-label="Turn details" style="width: 300px; flex-shrink: 0; display: flex; flex-direction: column; gap: 12px; min-height: 0">
+      <div class="seg" role="tablist" aria-label="Turn details" style="align-self: flex-start">
+        <button role="tab" aria-selected="true" class="on">Explanation</button>
+        <button role="tab" aria-selected="false">System prompt</button>
+        <button role="tab" aria-selected="false">Tools</button>
+      </div>
+      <section role="tabpanel" aria-label="Explanation" class="bp" style="padding: 12px 14px; display: flex; flex-direction: column; gap: 10px; font-size: 13px"><i class="tl"></i><i class="tr"></i><i class="bl"></i><i class="br"></i>
+        <div style="display: flex; flex-direction: column; gap: 2px">
+          <span class="kicker">Turn {{sel.n}} of 12 · measured</span>
+          <h2 style="margin: 0; font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 18px; line-height: 1.2">{{sel.prompt}}</h2>
+        </div>
+        <p style="margin: 0">{{sel.measuredNote}}</p>
+        <dl style="margin: 0; display: grid; grid-template-columns: 1fr auto; gap: 2px 12px; font-size: 12px">
+          <dt class="muted">Cache read</dt><dd class="num" style="margin: 0; text-align: right">{{sel.cr}}</dd>
+          <dt class="muted">Cache write</dt><dd class="num" style="margin: 0; text-align: right">{{sel.cw}}</dd>
+          <dt class="muted">Cost, USD priced</dt><dd class="num" style="margin: 0; text-align: right">{{sel.cost}}</dd>
+        </dl>
+        <button class="btn btn-sm" style="align-self: flex-start" aria-haspopup="dialog">Inspect requests ({{sel.req}})</button>
+
+        <sc-if value="{{isOn}}" hint-placeholder-val="{{true}}">
+          <div style="display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; border: 1px dashed #416180; border-radius: 3px; background: rgba(65,97,128,.07)">
+            <span style="display: flex; align-items: center; gap: 6px"><span class="simb">Simulated</span><span class="kicker">on claude-sonnet-5.5</span></span>
+            <sc-if value="{{sel.replayed}}" hint-placeholder-val="{{true}}">
+              <span style="display: flex; align-items: center; gap: 6px; font-weight: 600"><svg aria-hidden="true" width="13" height="13" viewBox="0 0 12 12"><circle cx="6" cy="6" r="4.6" fill="{{sel.fill}}" stroke="currentColor" stroke-width="1.4"></circle><path d="{{sel.half}}" fill="currentColor"></path></svg>{{sel.outcomeTitle}}</span>
+              <p style="margin: 0">{{sel.simNote}}</p>
+              <dl style="margin: 0; display: grid; grid-template-columns: 1fr auto auto; gap: 2px 12px; font-size: 12px">
+                <dt></dt><dd class="muted" style="margin: 0; text-align: right">Measured</dd><dd class="muted" style="margin: 0; text-align: right">Simulated</dd>
+                <dt class="muted">Cache read</dt><dd class="num" style="margin: 0; text-align: right">{{sel.cr}}</dd><dd class="num" style="margin: 0; text-align: right">{{sel.scr}}</dd>
+                <dt class="muted">Cache write</dt><dd class="num" style="margin: 0; text-align: right">{{sel.cw}}</dd><dd class="num" style="margin: 0; text-align: right">{{sel.scw}}</dd>
+                <dt class="muted">Cost, USD</dt><dd class="num" style="margin: 0; text-align: right">{{sel.cost}}</dd><dd class="num" style="margin: 0; text-align: right">{{sel.scost}}</dd>
+              </dl>
+            </sc-if>
+            <sc-if value="{{sel.notReplayed}}" hint-placeholder-val="{{false}}">
+              <span style="display: flex; align-items: center; gap: 6px; font-weight: 600"><svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"></circle><path d="M8 12h8"></path></svg>Not replayed</span>
+              <p style="margin: 0">A request in this turn has no complete usage figures, so the replay can't script it. The turn is left out of both totals, measured and simulated, so the difference compares the same 11 turns.</p>
+            </sc-if>
+          </div>
+        </sc-if>
+        <sc-if value="{{isOff}}" hint-placeholder-val="{{false}}">
+          <p class="muted" style="margin: 0; font-size: 12px">Choose a model in Replay on to see this turn's cache outcome and cost on that model, and why.</p>
+        </sc-if>
+      </section>
+    </aside>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"replay":{"editor":"enum","options":["off","on"],"default":"on"},"selectedTurn":{"editor":"enum","options":[1,2,3,4,5,6,7,8,9,10,11,12],"default":5},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var self = this;
+    var on = (this.props.replay ?? 'on') === 'on';
+    var propTurn = Number(this.props.selectedTurn ?? 5) || 5;
+    var st = this.state || {};
+    var selN = st.forProp === propTurn && st.turn ? st.turn : propTurn;
+    if (selN < 1 || selN > 12) selN = 5;
+
+    // Per turn: prompt, requests, input, cache read, cache write, output (k tokens), measured USD;
+    // simulated on claude-sonnet-5.5: outcome, cache read, cache write, USD. Turn 7 is not replayed.
+    var T = [
+      { p: 'Read the price book loader and its tests', req: 2, inp: 1.2, cr: 35.1, cw: 35.0, out: 1.6, usd: 0.52, o: 'partial', scr: 35.1, scw: 34.9, susd: 0.31 },
+      { p: 'Why does loadPriceBook parse the CSV twice?', req: 3, inp: 3.4, cr: 128.6, cw: 7.1, out: 2.2, usd: 0.28, o: 'hit', scr: 128.6, scw: 7.1, susd: 0.17 },
+      { p: 'Split parsing from validation', req: 4, inp: 5.1, cr: 214.0, cw: 9.8, out: 4.8, usd: 0.34, o: 'hit', scr: 214.0, scw: 9.8, susd: 0.20 },
+      { p: 'Run the pricing tests and fix the failures', req: 4, inp: 8.7, cr: 262.3, cw: 12.4, out: 3.9, usd: 0.39, o: 'hit', scr: 262.3, scw: 12.4, susd: 0.24 },
+      { p: 'Keep going with the validator split', req: 2, inp: 2.9, cr: 71.4, cw: 49.1, out: 2.7, usd: 0.61, o: 'partial', scr: 70.2, scw: 48.8, susd: 0.37, tag: 'compaction' },
+      { p: 'Add a test for an empty price row', req: 3, inp: 3.3, cr: 168.9, cw: 6.6, out: 2.5, usd: 0.30, o: 'hit', scr: 168.9, scw: 6.6, susd: 0.18 },
+      { p: 'Rename PriceRow fields to match the domain', req: 4, inp: 4.6, cr: null, cw: null, out: 3.1, usd: null, o: null },
+      { p: 'Update the callers in cost-analysis', req: 4, inp: 6.2, cr: 301.5, cw: 10.3, out: 5.4, usd: 0.42, o: 'hit', scr: 301.5, scw: 10.3, susd: 0.25 },
+      { p: 'Back. Where were we?', req: 3, inp: 1.9, cr: 182.0, cw: 77.1, out: 1.8, usd: 0.68, o: 'miss', scr: 182.0, scw: 77.1, susd: 0.42 },
+      { p: 'Make the loader return a Result, not throw', req: 4, inp: 4.8, cr: 377.2, cw: 8.2, out: 4.6, usd: 0.36, o: 'hit', scr: 377.2, scw: 8.2, susd: 0.22 },
+      { p: 'Run the whole server test suite', req: 4, inp: 9.4, cr: 402.8, cw: 13.9, out: 2.9, usd: 0.44, o: 'hit', scr: 402.8, scw: 13.9, susd: 0.26 },
+      { p: 'Write the commit message', req: 4, inp: 1.5, cr: 431.6, cw: 3.2, out: 0.9, usd: 0.48, o: 'hit', scr: 431.6, scw: 3.2, susd: 0.29 }
+    ];
+    var UNK = 'unknown';
+    var UNK_TIP = 'Unknown: a request in this turn has no complete usage figures';
+    function k(v) { return v === null || v === undefined ? UNK : v.toFixed(1) + 'k'; }
+    function usd(v) { return v === null || v === undefined ? UNK : v.toFixed(2); }
+    function icon(o) {
+      return {
+        fill: o === 'hit' ? 'currentColor' : 'none',
+        half: o === 'partial' ? 'M6 1.4 A4.6 4.6 0 0 1 6 10.6 Z' : ''
+      };
+    }
+    var OUT_WORD = { hit: 'hit', partial: 'partial', miss: 'miss' };
+
+    var cum = 0;
+    var rows = T.map(function (t, i) {
+      var n = i + 1;
+      if (t.usd !== null) cum += t.usd;
+      var isSel = n === selN;
+      var sim;
+      if (t.o === null) {
+        sim = [{ span: 3, cls: 'sc s1 s3', style: 'white-space: normal; text-align: left', isOutcome: false, isPlain: false, isGap: true, text: '', fill: 'none', half: '' }];
+      } else {
+        var ic = icon(t.o);
+        sim = [
+          { span: 1, cls: 'sc s1', style: 'text-align: left', isOutcome: true, isPlain: false, isGap: false, text: OUT_WORD[t.o], fill: ic.fill, half: ic.half },
+          { span: 1, cls: 'sc', style: '', isOutcome: false, isPlain: true, isGap: false, text: k(t.scr), fill: 'none', half: '' },
+          { span: 1, cls: 'sc s3', style: '', isOutcome: false, isPlain: true, isGap: false, text: usd(t.susd), fill: 'none', half: '' }
+        ];
+      }
+      return {
+        n: n, prompt: t.p, hasTag: !!t.tag, tag: t.tag || '',
+        input: k(t.inp), cr: k(t.cr), cw: k(t.cw), out: k(t.out), cost: usd(t.usd), cum: cum.toFixed(2),
+        unkTip: t.usd === null ? UNK_TIP : '', unkStyle: t.usd === null ? 'color: #5b5c5e; font-style: italic' : '',
+        selected: isSel ? 'true' : 'false',
+        style: 'cursor: pointer; ' + (isSel ? 'background: #e1e5ea; box-shadow: inset 3px 0 0 #416180' : ''),
+        sim: sim,
+        select: function () { self.setState({ turn: n, forProp: propTurn }); }
+      };
+    });
+
+    var t = T[selN - 1];
+    var measuredNote;
+    if (selN === 5) measuredNote = 'Claude Code compacted the conversation at the start of this turn (compaction event): the prompt shrank from 96.0k to 27.4k tokens. 2 requests to claude-opus-5.5.';
+    else if (selN === 9) measuredNote = '72 minutes after turn 8. 3 requests to claude-opus-5.5; the first read nothing from cache and rewrote the prefix.';
+    else if (selN === 7) measuredNote = '4 requests to claude-opus-5.5. One of them has no cache read, cache write or cost figures in the log, so this turn\'s cost is unknown (not 0).';
+    else if (selN === 1) measuredNote = 'The session\'s first turn. 2 requests to claude-opus-5.5; the system prompt and tool definitions are written to cache.';
+    else measuredNote = t.req + ' requests to claude-opus-5.5. Each reads the prefix the one before it wrote; only new prompt text and tool results are written.';
+
+    var simNote = '', outcomeTitle = '';
+    if (t.o === 'partial' && selN === 1) {
+      outcomeTitle = 'Partial · cold start';
+      simNote = 'The first request reads nothing from cache (assumption A3, cold start) and writes the system prompt, tools and your prompt: 34.9k. The second request reads them back: 35.1k.';
+    } else if (t.o === 'partial') {
+      outcomeTitle = 'Partial · compaction';
+      simNote = 'After the compaction only the system prompt and tool definitions (18.2k) still match the cached prefix. The summary is written to cache, and the second request reads it back (52.0k): 70.2k read in all, against 71.4k in the log.';
+    } else if (t.o === 'miss') {
+      outcomeTitle = 'Miss · cache expired';
+      simNote = '72 minutes passed after turn 8, past the 1-hour cache lifetime Claude Code asks for. The first request reads nothing and rewrites the whole prefix (77.1k); the next two read it back.';
+    } else if (t.o === 'hit') {
+      outcomeTitle = 'Hit';
+      simNote = 'Every request reads the whole prefix written before it, within its 1-hour lifetime, as in the log. Only new prompt text and tool results are written (' + k(t.scw) + '). Cheaper here because claude-sonnet-5.5\'s prices are lower, not because more is cached.';
+    }
+    var ic = t.o ? icon(t.o) : { fill: 'none', half: '' };
+
+    var sessions = [
+      { title: 'Refactor the price book loader', date: 'Oct 21 · 12 turns', cost: '$4.82', cur: true },
+      { title: 'Fix the flaky cost cube test', date: 'Oct 20 · 7 turns', cost: '$1.36' },
+      { title: 'Add the price-change detector', date: 'Oct 18 · 19 turns', cost: '$3.05' },
+      { title: 'Statement CSV export', date: 'Oct 17 · 9 turns', cost: '$2.12' },
+      { title: 'Review the MCP tool schemas', date: 'Oct 15 · 5 turns', cost: '$0.88' },
+      { title: 'Bump vitest', date: 'Oct 14 · 2 turns', cost: '$0.21' },
+      { title: 'Variance analyzer, mix effect', date: 'Oct 12 · 14 turns', cost: '$2.67' },
+      { title: 'Explain the Waterfall chart', date: 'Oct 10 · 3 turns', cost: 'unknown' },
+      { title: 'Projects editor validation', date: 'Oct 9 · 11 turns', cost: '$1.94' }
+    ].map(function (s) {
+      return {
+        title: s.title, date: s.date, cost: s.cost, current: s.cur ? 'true' : 'false',
+        sub: s.cur ? '#dfe3e8' : '#5b5c5e',
+        style: 'width: 100%; display: flex; flex-direction: column; gap: 1px; padding: 6px 8px; border: 0; border-radius: 2px; font: inherit; font-size: 13px; text-align: left; cursor: pointer; ' + (s.cur ? 'background: #416180; color: #f2f2f3' : 'background: transparent; color: #1d1f20')
+      };
+    });
+
+    return {
+      isOn: on, isOff: !on, rows: rows, sessions: sessions,
+      sel: {
+        n: selN, prompt: t.p, req: t.req, measuredNote: measuredNote,
+        cr: k(t.cr), cw: k(t.cw), cost: t.usd === null ? UNK : '$' + usd(t.usd),
+        replayed: t.o !== null, notReplayed: t.o === null,
+        outcomeTitle: outcomeTitle, simNote: simNote, fill: ic.fill, half: ic.half,
+        scr: t.o ? k(t.scr) : '', scw: t.o ? k(t.scw) : '', scost: t.o ? '$' + usd(t.susd) : ''
+      },
+      footnote: on
+        ? 'Dashed columns are simulated: the same requests replayed on claude-sonnet-5.5, priced at the Anthropic API\'s prices as of 2026-10-21. Cache: hit (filled), partial (half), miss (empty). Unknown is never 0; Cumulative sums the known turns. Select a row for its explanation.'
+        : 'Unknown is never 0; Cumulative sums the known turns. Select a row for its explanation.'
+    };
+  }
+}
+</script>
+</body>
+</html>

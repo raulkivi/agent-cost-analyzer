@@ -1,0 +1,17 @@
+{
+  "v": 3,
+  "createdOnFiles": { "v": 1, "at": "2026-11-07T10:16:55Z" },
+  "title": "Session replay mock-ups",
+  "launch": { "view": "canvas" },
+  "pages": [],
+  "boards": {
+    "Main.dc.html": { "x": 0, "y": 0, "w": 1440, "h": 900, "is_interactive": true, "title": "1 · Analyze: Replay on, Simulated columns beside the measured ones (tweaks: off or on, a turn not replayed)" },
+    "Summary.dc.html": { "x": 1520, "y": 0, "w": 1440, "h": 900, "is_interactive": true, "title": "2 · Replay summary card: totals, coverage, self-check, assumptions (tweak: self-check passed or not, pricing channel)" },
+    "Compare.dc.html": { "x": 0, "y": 1020, "w": 1440, "h": 900, "title": "3 · Compare models: the session on its own model and others, ranked" },
+    "States.dc.html": { "x": 1520, "y": 1020, "w": 1440, "h": 900, "title": "4 · Picker, loading, not replayable, unknown price and error states" },
+    "VsCode.dc.html": { "x": 0, "y": 2040, "w": 1280, "h": 800, "is_interactive": true, "title": "5 · VS Code: the compact panel with Replay on and Compare models (tweak: theme)" }
+  },
+  "order": ["Main.dc.html", "Summary.dc.html", "Compare.dc.html", "States.dc.html", "VsCode.dc.html"],
+  "notes": {},
+  "designSystems": []
+}
