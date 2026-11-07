@@ -11,6 +11,8 @@
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
+    "@agent-cost-analyzer/domain": "*",
+    "@agent-cost-analyzer/web": "*",
     "@modelcontextprotocol/ext-apps": "1.7.5",
     "react": "^19.3.1",
     "react-dom": "^19.3.1"

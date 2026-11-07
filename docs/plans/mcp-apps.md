@@ -2,7 +2,7 @@
 
 **Last changed:** 2026-11-07 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
-Status: **in progress: A0, A0b, A1–A5 and A8 done (2026-11-07); planned 2026-10-28, updated
+Status: **in progress: A0, A0b, A1–A8 done (2026-11-07); planned 2026-10-28, updated
 2026-11-07 for the Phase 14 and Phase 15 tools.** This is Phase 12 in
 [implementation-plan.md](../implementation-plan.md). Its dependencies are
 met: Phase 9.12's tools are done, step 10.13 is done and `ext-v0.1.0`
@@ -172,7 +172,8 @@ Drill-downs reuse the same host-mediated path for every view (§4.3, §4.5).
   changing the app: `theme.css`, `components/ui/*` (`Blueprint`,
   `StatTile`, `StatusTag`, `Tag`, `SegmentedControl`), the charts
   (`TrendColumns`, `HorizontalBars`, `StackedColumns`, the sparkline core),
-  `components/insights/FindingsTable` and `lib/format-ai-credits`.
+  `components/insights/FindingsTable`, `lib/format-ai-credits` and `lib/contrast`
+  (the WCAG maths; added in A6 for the theme's contrast tests).
   Constraint 3 already keeps these free of any data source.
 - **Pure view models** live in `src/view-models/`, one per view:
   ```ts
@@ -180,7 +181,10 @@ Drill-downs reuse the same host-mediated path for every view (§4.3, §4.5).
   toCostRollupViewModel(rollup: CostRollup): CostRollupViewModel
   toFindingsViewModel(result: FindingsQueryResult, filter: FindingsFilter): FindingsViewModel
   ```
-  They format every figure for display:
+  `FindingsQueryResult`, `SessionCost`, `CostRollup` and `TurnSeries` are
+  the domain types. `FindingsFilter` is declared next to the model with
+  only `kind` and `minSeverity`; the server's own filter type is a
+  superset, so it is assignable. They format every figure for display:
   - AI Credits round to 2 decimal places, like `formatAiCredits`. That
     function takes a `TokenCount`, so its rounding rule is split out to
     take a plain number.
@@ -466,8 +470,8 @@ fewer, an exact spec, and acceptance tests the local agent never sees.
 | A3 | `McpIdentity.deepLinkBase` (Copilot identity only), `toViewBrand(identity, version)`, and the icon SVG exported from `mcp-branding.ts` | low | Haiku | A2 |
 | A4 | `packages/web` package exports for the reusable modules (§4.3), with no app change. Typecheck and the web tests stay green. | low | Haiku | — |
 | A5 | `packages/mcp-apps` scaffold: Vite single-file build, ext-apps 1.7.5 pinned, `AppHostPort` plus `App` adapter and fake, the view router, a bundle size budget test (≤ 900 KB uncompressed; raised from 450 KB by the owner 2026-11-07 because ext-apps pulls in zod, no patching of dependencies). Done 2026-11-07: `dist/views.html` is 672,801 bytes | medium | Sonnet | A0, A4 |
-| A6 | Theme layering: `theme-mcp-host.css`, `brand.css`, contrast tests (text ≥ 4.5:1, marks ≥ 3:1) against the fallbacks and against recorded VS Code and Claude variable sets from A0, light and dark | medium | Sonnet (frontend-design skill) | A0, A5 |
-| A7 | View models: `toSessionCostViewModel`, `toCostRollupViewModel`, `toFindingsViewModel` (§4.3), one run each | low | setup6 | A1, A5 |
+| A6 | Theme layering: `theme-mcp-host.css`, `brand.css`, contrast tests (text ≥ 4.5:1, marks ≥ 3:1) against the fallbacks and against recorded VS Code and Claude variable sets from A0, light and dark. **Done 2026-11-07:** the CSS is in `packages/mcp-apps/src/theme/` and `main.tsx` imports it after `theme.css`; `bindHostTheme` sets `data-host="mcp-app"` and applies `applyDocumentTheme`, `applyHostStyleVariables` and `applyHostFonts` from the host context, through `AppHostPort` (`HostContext.styles` added). The contrast tests (`test/theme/`) read the real CSS and cover the fallbacks, the recorded Claude set and the recorded VS Code references resolved against Light Modern, Dark Modern and Dark High Contrast (Light High Contrast was not recorded). The worst margin is 3.42:1 for marks (3:1 needed) and 5.3:1 for text (4.5:1 needed). Bundle: `dist/views.html` 693.5 KiB | medium | Sonnet (frontend-design skill) | A0, A5 |
+| A7 | View models: `toSessionCostViewModel`, `toCostRollupViewModel`, `toFindingsViewModel` (§4.3), one run each. **Done 2026-11-07:** `packages/mcp-apps/src/view-models/`, one module per view plus `format.ts`, with unit and fast-check tests. `formatAiCreditsValue(value: number)` split out of `formatAiCredits` in `packages/web`. `FindingsFilter` lives in `packages/server`, so the view models declare the two fields the view offers (`kind`, `minSeverity`) themselves. Logged text (turn excerpt, finding `detail`) sits under fields named for display only | low | setup6 | A1, A5 |
 | A8 | Server group `registerAppViews`, `ViewSource`/`FileViewSource`, `get_turn_series`, `_meta.ui` on three tools. In-memory client tests: `tools/list` metadata, `resources/read` MIME type and the injected brand, unchanged `content`. | medium | Sonnet | A1, A2, A3 |
 | A9 | U1 `SessionCostView`, with the turn drill-down and the deep-link button | medium | Sonnet | A0b, A6, A7, A8 |
 | A10 | U2 `CostRollupView`, with in-place drill-down into U1 | medium | Sonnet | A9 |

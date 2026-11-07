@@ -7,6 +7,7 @@
   "type": "module",
   "exports": {
     "./theme.css": "./src/theme.css",
+    "./lib/contrast": "./src/lib/contrast.ts",
     "./ui/Blueprint": "./src/components/ui/Blueprint.tsx",
     "./ui/StatTile": "./src/components/ui/StatTile.tsx",
     "./ui/StatusTag": "./src/components/ui/StatusTag.tsx",

@@ -75,8 +75,8 @@ gantt
     14.8 docs written, owner review (11%)  :active, p14r, after p14, 1d
 
     section MCP Apps
-    12 A0-A5, A8 foundations, spike, server, scaffold (19%) :done, p12a, 2026-11-07, 1d
-    12 A0b mock-ups done, A6 onward (3%) :active, p12b, after p12a, 1d
+    12 A0-A8 foundations, spike, server, scaffold, theme, view models (25%) :done, p12a, 2026-11-07, 1d
+    12 A0b mock-ups done, A9 onward (3%) :active, p12b, after p12a, 1d
 
     section Cost
     15 Cost by repository and project (95%) :done, p15, 2026-11-05, 3d
@@ -104,13 +104,13 @@ gantt
 - Phase 14: steps 14.0-14.7 built; 14.8's docs written, the owner's review and the §13 exit criterion on real sessions open; the extension guide's replay screenshots open (User Guide's done). See [Phase 14 detail](#phase-14-detail--analyze-session-replay).
 - Phase 15: owner's review and exit criterion on real data.
 - Phase 13: owner's eyes-on review of step 13.8.
-- Phase 12: A0b boards approved 2026-11-07 ([mockups/mcp-apps/](plans/mockups/mcp-apps/README.md)); A5 (views workspace) done; next A6 (theme) and A7 (view models) in parallel, which gate A9 and A11 (A0 host spike done 2026-11-07; results in [mcp-apps-spike.md](plans/mcp-apps-spike.md)). See [Phase 12 detail](#phase-12-detail--mcp-apps).
+- Phase 12: A0b boards approved 2026-11-07 ([mockups/mcp-apps/](plans/mockups/mcp-apps/README.md)); A5 (views workspace), A6 (theme layering) and A7 (view models) done; next A9 (U1 session cost) and A11 (U3 findings) in parallel, then A10 (U2) (A0 host spike done 2026-11-07; results in [mcp-apps-spike.md](plans/mcp-apps-spike.md)). See [Phase 12 detail](#phase-12-detail--mcp-apps).
 
 ## Phase 12 detail — MCP Apps
 
 Schedule view of the task tables in [mcp-apps.md](plans/mcp-apps.md) §7, §7.1 and §7.2. The design, exit criterion and risks stay there; this file only sequences the work.
 
-- Status: in progress (22%, 8 of 36 tasks): A0 done 2026-11-07 (owner ran the spike in VS Code Insiders 1.146 and Claude Desktop; results in `docs/plans/mcp-apps-spike-results/`), A1-A4 done 2026-11-07 (#176), A8 done 2026-11-07 (server views group), A5 done 2026-11-07 (`packages/mcp-apps` scaffold; bundle budget 900 KB by owner decision), A0b boards drawn and approved by the owner 2026-11-07 ([mockups/mcp-apps/](plans/mockups/mcp-apps/README.md)); the copy-command text `AI Credits Analyzer: Open Session <id>` adopted. Dependencies met: step 10.13 is done and `ext-v0.1.0` shipped 2026-11-03; the Phase 14 and 15 tools the increments need are done.
+- Status: in progress (28%, 10 of 36 tasks): A0 done 2026-11-07 (owner ran the spike in VS Code Insiders 1.146 and Claude Desktop; results in `docs/plans/mcp-apps-spike-results/`), A1-A4 done 2026-11-07 (#176), A8 done 2026-11-07 (server views group), A5 done 2026-11-07 (`packages/mcp-apps` scaffold; bundle budget 900 KB by owner decision), A6 done 2026-11-07 (theme layering: `theme-mcp-host.css`, `brand.css`, contrast tests against the fallbacks, the recorded Claude set and the resolved VS Code set), A7 done 2026-11-07 (pure view models for U1-U3 in `packages/mcp-apps/src/view-models/`), A0b boards drawn and approved by the owner 2026-11-07 ([mockups/mcp-apps/](plans/mockups/mcp-apps/README.md)); the copy-command text `AI Credits Analyzer: Open Session <id>` adopted. Dependencies met: step 10.13 is done and `ext-v0.1.0` shipped 2026-11-03; the Phase 14 and 15 tools the increments need are done.
 - Each increment starts with mock-up boards the owner approves (A0b, A17b, A25b; plan §5.6).
 - Scope (updated 2026-11-07): MVP (A0-A16: U1-U3), Increment 2 (A17-A24: cost-analysis views U9-U11), Increment 3 (A25-A33: replay, price changes, statement and estimate, audit, picker). Each increment starts after the previous one's owner checks.
 - Target releases (plan §7.3): MVP in extension 0.4.0 / app 0.11.0, Increment 2 in 0.5.0 / 0.12.0, Increment 3 in 0.6.0 / 0.13.0, assuming the Phase 14/15 work ships first as 0.3.0 / 0.10.0.
@@ -164,8 +164,8 @@ gantt
 
     section Views workspace
     A5 mcp-apps scaffold, medium, Sonnet (100%)  :done, a5, 2026-11-07, 1d
-    A6 Theme layering, medium, Sonnet (0%)       :crit, a6, after a5, 2d
-    A7 View models, low, setup6 (0%)             :a7, after a1 a5, 1d
+    A6 Theme layering, medium, Sonnet (100%)     :done, a6, after a5, 2d
+    A7 View models, low, setup6 (100%)           :done, a7, 2026-11-07, 1d
 
     section Server
     A8 registerAppViews, medium, Sonnet (100%)   :done, a8, 2026-11-07, 1d
