@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **MCP server: cost by repository.** The server now has 17 read-only tools,
+  up from nine. The new ones list the repositories your Copilot sessions
+  ran in, give a repository's cost over time, compare repositories, explain
+  why a cost changed (usage, price or model mix), and read the bundled price
+  book and its price changes. There are no projects in the extension:
+  `list_projects` says they are edited in the standalone app.
+
 ## [0.2.1] - 2026-11-06
 
 ### Changed

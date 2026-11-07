@@ -450,6 +450,19 @@ web's Billing tab (`components/billing/`) and Projects editor
 (`components/projects/`, edits as pure functions in
 `lib/projects/editor-model.ts`) are the Dashboard's.
 
+MCP across the products (Phase 15 step 15.13, plan §10.1.4–§10.1.6):
+`createMcpServer` takes `toolGroups` (`sessions`, `audit`, `cost`,
+`findings`, `attribution`, `pricing`, `costAnalysis`, `billing`; every
+group by default), and a group is registered only when its services are
+given too. The standalone stdio server serves all 19 tools and 6 prompts.
+The extension's (`createCopilotMcpServices`) serves
+`WITHOUT_BILLING_TOOL_GROUPS`: repositories over the Copilot provider
+(`createCopilotAttribution`, with no projects file, so `list_projects`
+returns none with a `reason`, D19), the bundled price book from its
+`media/` folder and the cost analyses, 17 tools and 4 prompts. Both
+identities' instructions share `COST_BASIS_INSTRUCTIONS` (the three cost
+bases, as-of-use versus today's prices, 1 AI Credit = $0.01).
+
 Price changes and variance (Phase 15 step 15.10, plan §6.4, §8.4, D11,
 D12; `packages/domain/src/price-change.ts` and `cost-variance.ts`): a priced
 `CostFigure` carries `byTokenType` (uncached input, cache read, cache
@@ -2198,7 +2211,12 @@ agent-cost-analyzer/
   prompts and responses, command and evidence excerpts) is therefore
   passed through `redactSecrets` and bounded before it is returned, and
   its tools are all read-only and never reach the network
-  ([plans/mcp-tools-v2.md](plans/mcp-tools-v2.md) §6).
+  ([plans/mcp-tools-v2.md](plans/mcp-tools-v2.md) §6). Repositories are
+  returned by their normalised remote key (credentials stripped) or, for
+  a local one, its folder name, unless `includePaths` is asked for; client
+  names and billing codes come only from `list_projects` and
+  `get_statement`. `mcp/security.test.ts` runs every tool over generated
+  folders and remote credentials to check this (Phase 15 step 15.13).
 - No secrets are logged; any credentials that happen to appear in captured
   terminal-output tool results are treated as opaque strings, never parsed or
   echoed into error messages.

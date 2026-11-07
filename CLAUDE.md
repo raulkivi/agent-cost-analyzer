@@ -156,6 +156,11 @@ content here.
   and `EstimateService` in `services/billing/`, `GET /api/estimates`, MCP
   `estimate_cost` and the `estimate_work` prompt, the Billing tab's
   `EstimatePanel`, decisions D16–D18, scenario S7);
+  step 15.13 is done (MCP across both products: `createMcpServer`'s
+  `toolGroups`, the extension's MCP server with 17 tools over the Copilot
+  provider and no billing, `list_projects` with no projects and a reason
+  there (D19), cost-basis instructions for both, `mcp/security.test.ts`,
+  the stdio exit criterion and scenario S10 in `web-e2e`);
   step 15.1 is done (`Session.workspace`, `Turn.startedAt`, and
   `Turn.workspace` for Claude Code, from every provider) and step 15.2
   (`RepositoryResolver` and `RemoteUrlNormalizer` in

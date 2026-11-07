@@ -81,6 +81,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A usage-scenario test suite for the standalone app (Playwright, the real
   server over a seeded fixture home at a fixed clock), run by a new
   required `web-e2e` CI job.
+- MCP across both products (Phase 15 step 15.13): the server's
+  instructions now explain the cost workflow (repositories and projects,
+  then project cost or a comparison, then why it changed), what billed,
+  reported and priced figures are, as-of-use versus today's prices, and the
+  one conversion (1 AI Credit = $0.01). The VS Code extension's MCP server
+  gains the repository, price-book and cost tools (17 tools, no billing);
+  its `list_projects` says projects are edited in this app. New tests run
+  every tool over generated folders and remote credentials and check that
+  none leaks a credential or a local path, and a usage scenario checks
+  that the Dashboard, the HTTP API and MCP give the same total.
 - Estimates (Phase 15 step 15.12): the Billing tab's "Next piece of work"
   panel estimates planned work for a project as a range, never one number:
   the median and 90th-percentile cost per active day over the last 4 or 12
