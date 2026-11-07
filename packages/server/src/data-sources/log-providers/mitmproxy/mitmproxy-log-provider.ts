@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { existsSync, readdirSync } from "node:fs";
 import path from "node:path";
 import type { Session, TokenCount, Turn, TurnInspectorDetail, TurnUsage } from "@agent-cost-analyzer/domain";

@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 // Where the extension remembers it offered the walkthrough (globalState).
 export const WALKTHROUGH_OFFERED_KEY = "aiCreditsAnalyzer.walkthroughOffered";
 

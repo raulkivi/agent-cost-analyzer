@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 // Phase 15 step 15.2 (docs/plans/cost-by-repository-and-project.md §4.2):
 // a git remote URL → the repository key, e.g. `git@github.com:Org/App.git`
 // and `https://x:TOKEN@github.com/org/app` both → `github.com/org/app`.

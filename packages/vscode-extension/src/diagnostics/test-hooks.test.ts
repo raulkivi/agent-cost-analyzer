@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { describe, expect, it, vi } from "vitest";
 import { createTestHookHandlers, INTERNAL_COMMAND_IDS, type TestHookSources } from "./test-hooks.js";
 

@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { SettingsSource } from "../../services/config-check/settings-source.js";
 import { JsoncFileSettingsSource } from "./jsonc-file-settings-source.js";
 

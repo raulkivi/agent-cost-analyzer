@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { describe, expect, it } from "vitest";
 import { auditRollupSchema, unavailableTokenCount, type SessionAudit, type ToolCallRecord } from "@agent-cost-analyzer/domain";
 import { AGENT_HOST_TOOL_CALLS_UNAVAILABLE_REASON } from "./tool-calls-availability.js";

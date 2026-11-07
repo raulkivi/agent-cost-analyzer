@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { Turn } from "@agent-cost-analyzer/domain";
 import { isFailedStatus } from "@agent-cost-analyzer/domain";
 

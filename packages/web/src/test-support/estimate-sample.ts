@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { CostEstimate } from "@agent-cost-analyzer/domain";
 
 // Phase 15 step 15.12: a sample cost estimate for the web tests and the

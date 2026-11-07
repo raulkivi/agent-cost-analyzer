@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { z } from "zod";
 import { priceTierSchema, sourceSchema, type PriceTier } from "./vendor-profile.js";
 

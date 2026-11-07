@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { describe, expect, it } from "vitest";
 import { createCacheModel } from "./index.js";
 import { BreakpointCacheModel } from "./breakpoint.js";

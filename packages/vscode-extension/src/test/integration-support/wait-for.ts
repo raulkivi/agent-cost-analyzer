@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 export interface WaitForOptions {
   timeoutMs: number;
   // How long to wait between reads; 50 ms by default.

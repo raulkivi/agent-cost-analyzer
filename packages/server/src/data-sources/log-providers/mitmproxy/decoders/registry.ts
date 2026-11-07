@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { MitmExchangeDecoder, NormalizedExchange, RawMitmExchange } from "./decoder.js";
 import { unavailableUsage } from "../normalized-usage.js";
 

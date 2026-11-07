@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { HarEntry } from "./har.js";
 
 // A capture file grouped by wall-clock proximity of consecutive entries'

@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 // Step 13.8's manual check ("pick 3 vendors on scenario 15 and confirm the
 // outcomes match the rule register"), driven in a real VS Code. The expected
 // outcomes come from docs/learn-rule-register.md, not from the simulator:

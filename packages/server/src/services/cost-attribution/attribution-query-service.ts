@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { ProjectFileProblem, ProjectList, ProjectsFile, RepositoryList, Session } from "@agent-cost-analyzer/domain";
 import type { ProjectCatalog } from "./project-catalog.js";
 import { isLocalKey, redactKeysInText, redactRepositoryKey } from "./repository-key-privacy.js";

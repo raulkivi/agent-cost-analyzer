@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { describe, expect, it } from "vitest";
 import type { CacheModel } from "../cache-model.js";
 import { UnknownCacheModel } from "./unknown.js";

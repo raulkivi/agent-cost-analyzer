@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { useId, useState } from "react";
 import type { KeyboardEvent, PointerEvent } from "react";
 import { scaleLinear } from "d3-scale";

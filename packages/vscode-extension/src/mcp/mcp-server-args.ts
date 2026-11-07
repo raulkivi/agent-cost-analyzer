@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import path from "node:path";
 
 export const USER_DATA_DIR_FLAG = "--user-data-dir";

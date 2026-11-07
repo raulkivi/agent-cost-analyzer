@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { existsSync } from "node:fs";
 import type { DatabaseSync } from "node:sqlite";
 import type { RequestTrace, Session, TurnInspectorDetail } from "@agent-cost-analyzer/domain";

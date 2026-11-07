@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 // The seam between the host's user-visible strings and `vscode.l10n`
 // (vscode-extension.md §3.5 Localization). The pure models take a Translate
 // instead of importing `vscode`; extension.ts passes `vscode.l10n.t`, which

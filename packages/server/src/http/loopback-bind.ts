@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 // threat-model.md §5.1: the API has no authentication because it is reachable
 // only from this machine (architecture.md §11.2). The Host-header guard
 // (loopback-host-guard.ts) doesn't enforce that: a client on the LAN can send

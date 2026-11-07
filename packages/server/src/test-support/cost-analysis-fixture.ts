@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { DatasetCostCubeSource } from "../services/cost-analysis/cost-analysis-service.js";
 import { priceBookHashOf, StatementService } from "../services/billing/statement-service.js";

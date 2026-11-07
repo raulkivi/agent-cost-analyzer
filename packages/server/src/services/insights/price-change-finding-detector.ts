@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { OBSERVED_CHANGE_MIN_TURNS, OBSERVED_CHANGE_THRESHOLD, type InsightFinding, type ObservedPriceChange } from "@agent-cost-analyzer/domain";
 import { PriceChangeDetector, type ObservedTurn } from "../pricing/price-change-detector.js";
 import type { DetectorInput, FindingDetector } from "./finding-detector.js";

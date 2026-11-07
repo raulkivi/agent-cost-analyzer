@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { z } from "zod";
 import { failureCategorySchema, toolCallStatusSchema, toolKindSchema } from "@agent-cost-analyzer/domain";
 import type { SessionRangeFilter, ToolCallFilter } from "./audit-query-service.js";

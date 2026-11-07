@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { CopilotHarness, ToolInventoryEntry } from "@agent-cost-analyzer/domain";
 import { AGENT_HOST_TOOL_INVENTORY_UNAVAILABLE } from "../lib/agent-host-unavailable.js";
 import { Blueprint } from "./ui/Blueprint.js";

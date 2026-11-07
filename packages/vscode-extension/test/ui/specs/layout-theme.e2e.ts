@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 // Manual checks 1.8, 1.9 and 1.10 (docs/plans/vscode-extension-manual-checks.md),
 // driven in a real VS Code (step 10.16). Each test title cites its check.
 import { browser, expect } from "@wdio/globals";

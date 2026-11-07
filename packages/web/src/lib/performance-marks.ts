@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 // Timing marks for the §3.5 performance budgets (vscode-extension.md):
 // "first-render" when the app first paints, "data-ready" when the first
 // session or scenario list is on screen. They go through the standard

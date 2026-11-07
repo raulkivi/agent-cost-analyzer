@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 /**
  * Tracks which session ids have already been logged in this process,
  * so we capture the system prompt once per session (first turn only)

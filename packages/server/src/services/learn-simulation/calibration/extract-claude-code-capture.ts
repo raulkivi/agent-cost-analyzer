@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { ClaudeCodeRawEntry } from "../../../data-sources/claude-code/claude-code-jsonl-reader.js";
 import type { CalibrationCapture, CaptureRequest } from "./capture.js";
 

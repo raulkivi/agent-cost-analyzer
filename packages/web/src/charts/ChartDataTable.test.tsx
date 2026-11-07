@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { ChartDataTable } from "./ChartDataTable.js";

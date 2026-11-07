@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 // The system prompt inspector's columns by its own width (step 10.11): the
 // structure, the text and the description side by side only when wide; at
 // medium the description moves under the other two; narrow stacks all three.

@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { describe, expect, it } from "vitest";
 import type { PriceVersion } from "./price-book.js";
 import { documentedPriceChanges, priceChangeMarkerSchema } from "./price-change.js";

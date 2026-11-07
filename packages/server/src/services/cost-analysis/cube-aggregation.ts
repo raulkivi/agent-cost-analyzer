@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import {
   AI_CREDIT_CONVERSION_NOTE,
   costFigureFor,

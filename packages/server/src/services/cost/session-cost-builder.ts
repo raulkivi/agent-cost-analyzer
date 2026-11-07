@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { costBasisTotals, type Session, type SessionCost, type TokenCount } from "@agent-cost-analyzer/domain";
 import { attributionRowFields, buildInsightRows, type RowAttributor } from "../insights/insights-dataset-builder.js";
 import type { TurnPricer } from "../pricing/turn-cost-figures.js";

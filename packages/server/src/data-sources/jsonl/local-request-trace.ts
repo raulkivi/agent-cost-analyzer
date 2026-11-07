@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { RequestTrace, TraceRequest, UntracedTurn } from "@agent-cost-analyzer/domain";
 import type { AgentTraceUsage } from "../agent-traces/agent-traces-reader.js";
 import type { JsonlEnvelope } from "./main-jsonl-reader.js";

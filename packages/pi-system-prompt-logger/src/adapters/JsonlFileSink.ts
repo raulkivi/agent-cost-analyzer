@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { dirname } from "node:path";
 import type { SystemPromptRecord } from "../domain/SystemPromptRecord.js";
 import type { FileSystemPort } from "../ports/FileSystemPort.js";

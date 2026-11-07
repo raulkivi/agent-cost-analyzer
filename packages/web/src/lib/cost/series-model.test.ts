@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { describe, expect, it } from "vitest";
 import { COST_FIXTURE_RANGE, costTotal, sampleCostSeries, THREE_PROJECTS } from "../../test-support/cost-fixture.js";
 import { chartLines, costKpis, groupPriceMarkers, indexedLines, nativeCurrencies, runningTotalLine } from "./series-model.js";

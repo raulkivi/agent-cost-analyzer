@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { AuditRollup, SessionAudit, ToolCallRecord } from "@agent-cost-analyzer/domain";
 
 function bash(command: string, program: string, outcome: ToolCallRecord["outcome"]): ToolCallRecord {

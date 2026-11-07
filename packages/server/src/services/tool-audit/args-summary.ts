@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { ToolKind } from "@agent-cost-analyzer/domain";
 import { excerptOf } from "./output-redactor.js";
 

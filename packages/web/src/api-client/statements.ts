@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { CostEstimate, ProjectsFile, ProjectsState, RepositoryList, StatementAnswer } from "@agent-cost-analyzer/domain";
 import { getApiTransport } from "./current-transport.js";
 

@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { TurnInspectorDetail } from "@agent-cost-analyzer/domain";
 import { buildContentPart } from "../log-providers/build-content-parts.js";
 import {

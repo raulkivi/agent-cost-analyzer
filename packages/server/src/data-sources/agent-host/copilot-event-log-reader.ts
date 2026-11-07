@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { createReadStream } from "node:fs";
 import { createInterface } from "node:readline";
 import type { CopilotEvent, CopilotEventLog } from "./copilot-event.js";

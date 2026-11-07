@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { LogProviderDescriptor } from "@agent-cost-analyzer/domain";
 import type { Mode } from "../state/session-store.js";
 import { Blueprint } from "./ui/Blueprint.js";

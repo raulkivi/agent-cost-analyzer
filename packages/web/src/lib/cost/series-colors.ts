@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 // Phase 15 step 15.9 (plan §11.7, dataviz): series identity colours from
 // the eight categorical tokens in theme.css (--color-series-1..8), with the
 // High Contrast dash patterns (--dash-series-1..8). The order is fixed per

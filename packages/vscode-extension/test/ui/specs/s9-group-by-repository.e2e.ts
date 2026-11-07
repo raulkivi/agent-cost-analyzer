@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 // Scenario S9 (Phase 15 step 15.14, docs/plans/cost-by-repository-and-project.md
 // §12.4.2, board 7), driven in a real VS Code: the Sessions view grouped by
 // repository, the status bar naming the workspace's repository, and the

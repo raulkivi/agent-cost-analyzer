@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# SPDX-FileCopyrightText: 2026 Raul Kivi
+# SPDX-License-Identifier: MIT
 # Starts the API server + web app (npm run dev) and opens the web app in a
 # browser once it responds. Ctrl+C stops both.
 set -euo pipefail

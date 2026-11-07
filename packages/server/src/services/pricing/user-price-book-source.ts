@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { ProjectsFile } from "@agent-cost-analyzer/domain";
 import type { PriceBookData, PriceBookSource } from "./price-book-source.js";
 

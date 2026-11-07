@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { ApiMethod, HostCommand, HostCommandArgs, HostEventName, PerformanceMarkName } from "@agent-cost-analyzer/domain";
 
 // Every named operation the UI performs against its backend: the domain's

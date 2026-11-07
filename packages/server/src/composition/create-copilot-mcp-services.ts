@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { AppSettingsStore } from "../data-sources/log-providers/app-settings.js";
 import { COST_BASIS_INSTRUCTIONS, type McpIdentity } from "../mcp/mcp-identity.js";
 import { WITHOUT_BILLING_TOOL_GROUPS, type McpServerDeps } from "../mcp/mcp-server.js";

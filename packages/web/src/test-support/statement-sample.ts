@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { Statement } from "@agent-cost-analyzer/domain";
 
 // Phase 15 step 15.11: a sample draft statement for the web tests (the same

@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { PiRawEntry } from "./pi-jsonl-reader.js";
 
 // Shared, defensive accessors over pi's `message`-wrapped entries

@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { afterEach, describe, expect, it } from "vitest";
 import { getViewStateStorage, resetViewStateStorage, setViewStateStorage } from "./current-view-state-storage.js";
 import { memoryViewStateStorage } from "./view-state-storage.js";

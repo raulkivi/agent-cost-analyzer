@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { describe, expect, it, vi } from "vitest";
 import { BadRequestError, NotFoundError } from "@agent-cost-analyzer/server/src/services/api/api-errors";
 import { MessageDispatcher, type DispatcherApi } from "./message-dispatcher.js";

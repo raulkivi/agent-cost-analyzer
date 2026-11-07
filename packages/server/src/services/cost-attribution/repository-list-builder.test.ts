@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { describe, expect, it } from "vitest";
 import { projectsFileSchema, repositoryListSchema, type RepositoryAttribution, type Session, type SessionWorkspace } from "@agent-cost-analyzer/domain";
 import { buildRepositoryList, NO_WORKSPACE_REPORTED_REASON } from "./repository-list-builder.js";

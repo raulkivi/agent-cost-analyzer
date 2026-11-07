@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { describe, expect, it } from "vitest";
 import { turnViewSchema, unavailableTokenCount, type Session, type Turn } from "@agent-cost-analyzer/domain";
 import { buildTurnView } from "./turn-view-builder.js";

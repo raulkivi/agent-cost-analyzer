@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { MAX_HOST_COMMAND_TEXT_LENGTH } from "@agent-cost-analyzer/domain";
 import type { DocumentLanguage } from "../rpc/host-command-handler.js";
 

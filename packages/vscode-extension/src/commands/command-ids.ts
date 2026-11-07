@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 // The ids package.json contributes (vscode-extension.md §3.4); the manifest
 // test keeps this list and the contributions in step.
 export const COMMAND_IDS = {

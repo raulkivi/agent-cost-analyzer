@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { Session, TokenCount, TriggeredEvent, Turn } from "@agent-cost-analyzer/domain";
 import { sumTokenCounts } from "@agent-cost-analyzer/domain";
 

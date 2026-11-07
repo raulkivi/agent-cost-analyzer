@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { describe, expect, it } from "vitest";
 import { diffStatements, parseStatementPeriod, periodHasEnded, statementSchema } from "./statement.js";
 import { sampleStatement } from "./test-support/statement-sample.js";

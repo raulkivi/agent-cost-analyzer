@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { KeyboardEvent } from "react";
 
 // Shared chart chrome: legend (identity never by colour alone — swatch +

@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 // OPT-IN, OWNER-RUN, spends real AI Credits: manual checks 1.4, 2.3 and 2.4
 // (docs/plans/vscode-extension-manual-checks.md) with a real signed-in Copilot
 // Chat in agent mode. See wdio.copilot.conf.mts for how to run it and

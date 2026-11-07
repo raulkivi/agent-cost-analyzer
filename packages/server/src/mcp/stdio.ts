@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { composeLogProviders } from "../composition/compose-log-providers.js";
 import { createStandalonePriceBook } from "../composition/create-price-book.js";

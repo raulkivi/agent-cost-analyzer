@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { formatMessage, type Translate } from "./localize.js";
 
 // A test translator standing in for a translation bundle: it upper-cases the

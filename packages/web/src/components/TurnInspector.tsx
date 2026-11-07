@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { useCallback, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import type {

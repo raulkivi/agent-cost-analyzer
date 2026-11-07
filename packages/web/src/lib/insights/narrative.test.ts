@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { describe, expect, it } from "vitest";
 import { sampleInsightsDataset } from "../../test-support/insights-fixture.js";
 import { buildNarrative } from "./narrative.js";

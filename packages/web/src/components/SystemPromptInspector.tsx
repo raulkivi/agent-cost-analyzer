@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { fetchSystemPromptText } from "../api-client/sessions.js";

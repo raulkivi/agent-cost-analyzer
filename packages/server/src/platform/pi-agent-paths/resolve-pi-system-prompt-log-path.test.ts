@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { resolvePiSystemPromptLogPath } from "./resolve-pi-system-prompt-log-path.js";

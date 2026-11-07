@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { describe, expect, it } from "vitest";
 import { AuditQueryService } from "./audit-query-service.js";
 import { FakeProvider, lookup, sampleSessions as sessions, session } from "../../test-support/audit-fakes.js";

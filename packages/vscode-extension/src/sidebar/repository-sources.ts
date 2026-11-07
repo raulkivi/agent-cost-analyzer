@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { createSessionAttributor } from "@agent-cost-analyzer/server/src/composition/create-session-attributor";
 import { NodeReadOnlyFileSystem } from "@agent-cost-analyzer/server/src/platform/file-system/node-read-only-file-system";
 import { RepositoryResolver } from "@agent-cost-analyzer/server/src/services/cost-attribution/repository-resolver";

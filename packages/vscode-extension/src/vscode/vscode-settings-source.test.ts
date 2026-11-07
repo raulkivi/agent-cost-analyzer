@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { describe, expect, it } from "vitest";
 import { describeSettingsSourceContract } from "@agent-cost-analyzer/server/src/services/config-check/settings-source-contract";
 import { checkConfig } from "@agent-cost-analyzer/server/src/services/config-check/config-check";

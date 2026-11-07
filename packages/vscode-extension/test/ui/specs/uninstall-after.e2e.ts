@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 // Manual check 1.12, second half: the launch after the analyzer was uninstalled
 // (uninstall-installed.e2e.ts) shows none of it. The settings file is not
 // checked here: wdio-vscode-service rewrites it at every launch.

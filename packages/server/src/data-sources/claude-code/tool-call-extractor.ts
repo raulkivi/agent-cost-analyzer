@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { ToolCallRecord } from "@agent-cost-analyzer/domain";
 import { summarizeToolArgs } from "../../services/tool-audit/args-summary.js";
 import { buildToolCallOutcome } from "../../services/tool-audit/outcome-builder.js";

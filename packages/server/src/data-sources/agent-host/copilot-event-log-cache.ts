@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { stat } from "node:fs/promises";
 import type { CopilotEventLog } from "./copilot-event.js";
 

@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 // Lets a test hold the host's reply to chosen webview requests, so a load is
 // slow enough to cancel (UI automation, manual check 1.6). Test mode only:
 // composition.ts creates it, but only the Test-mode hooks ever hold anything,

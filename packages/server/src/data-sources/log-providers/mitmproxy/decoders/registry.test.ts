@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { describe, expect, it } from "vitest";
 import { decodeExchange, UNRECOGNIZED_VENDOR_REASON } from "./registry.js";
 import type { MitmExchangeDecoder, RawMitmExchange } from "./decoder.js";

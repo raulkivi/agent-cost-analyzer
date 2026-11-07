@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { axeViolations } from "../support/axe.js";
 import { chooseOption, expect, openDashboard, selectListValue, test } from "../support/app-fixture.js";
 

@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 // Minimal SSE (Server-Sent Events) parsing over an already-fully-buffered
 // response body (HAR's response.content.text — mitmproxy already
 // reassembled the wire transfer, so this never touches a live stream).

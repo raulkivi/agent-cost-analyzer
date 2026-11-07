@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { z } from "zod";
 import { costBasisSchema, currencySchema, type Currency } from "./cost-figure.js";
 import { isoCalendarDateSchema } from "./price-book.js";

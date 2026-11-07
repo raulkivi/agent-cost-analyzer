@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { Plugin } from "vite";
 
 // Virtual id prefix ("\0" keeps other plugins off it); the extension of the

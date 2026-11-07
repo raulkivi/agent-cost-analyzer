@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 // Manual check 2.5 (docs/plans/vscode-extension-manual-checks.md): a folder
 // opened in Restricted Mode whose own settings turn the MCP server on gets no
 // server until it is trusted. wdio.conf.mts runs this spec in its own VS Code

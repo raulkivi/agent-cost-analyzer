@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { describe, expect, it } from "vitest";
 import { statementAnswerSchema, type ProjectsFile, type Statement } from "@agent-cost-analyzer/domain";
 import { billed, costs, cubeOf, cubeRow } from "../../test-support/cost-cube-fakes.js";

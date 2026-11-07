@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 // Reads VS Code's own *MCP: List Servers* quick pick (step 10.16), the list a
 // user sees in the workbench: what the extension's server definition provider
 // shows once VS Code has taken its definitions. It needs no Copilot Chat.

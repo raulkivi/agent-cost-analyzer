@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { CostRollup, FindingsQueryResult, InsightsDataset, SessionCost, TurnView } from "@agent-cost-analyzer/domain";
 import type { LogProvider } from "../../data-sources/log-providers/log-provider.js";
 import { buildCostRollup, type CostRollupOptions } from "../cost/cost-rollup-builder.js";

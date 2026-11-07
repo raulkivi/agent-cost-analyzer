@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { SessionNode, SessionsTreeNode } from "../../sidebar/sessions-tree-model.js";
 
 // Every session row of the Sessions view, as its tree data provider shows

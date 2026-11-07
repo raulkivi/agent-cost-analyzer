@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { ClaudeCodeLogProvider } from "../../data-sources/claude-code/claude-code-log-provider.js";
 import { resolveClaudeCodeProjectsDir } from "../../platform/claude-code-paths/resolve-claude-code-projects-dir.js";
 

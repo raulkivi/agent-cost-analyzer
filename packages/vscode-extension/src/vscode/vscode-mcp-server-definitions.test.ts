@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { describe, expect, it } from "vitest";
 import type { McpStdioServerSpec } from "../mcp/mcp-server-definitions.js";
 import { registerMcpServerDefinitions, type McpServerDefinitionProviderLike, type VscodeMcpApi } from "./vscode-mcp-server-definitions.js";

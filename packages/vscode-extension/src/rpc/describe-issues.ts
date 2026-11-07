@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 // A zod error's issues as one line for a 400 message: "field: problem; …".
 export function describeIssues(issues: readonly { path: PropertyKey[]; message: string }[]): string {
   return issues

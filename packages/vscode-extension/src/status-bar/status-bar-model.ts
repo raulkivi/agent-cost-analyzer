@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { isLocalRepositoryKey, repositoryFolderLabel, type ConfigWarning, type Session } from "@agent-cost-analyzer/domain";
 import type { RepositoryOf } from "../sidebar/sessions-by-repository-tree-model.js";
 import { identityTranslate, type Translate } from "../l10n/localize.js";

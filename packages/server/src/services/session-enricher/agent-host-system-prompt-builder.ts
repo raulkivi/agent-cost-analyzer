@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { SystemPromptComponent, TokenCount } from "@agent-cost-analyzer/domain";
 import { unavailableTokenCount } from "@agent-cost-analyzer/domain";
 import type { CopilotEvent } from "../../data-sources/agent-host/copilot-event.js";

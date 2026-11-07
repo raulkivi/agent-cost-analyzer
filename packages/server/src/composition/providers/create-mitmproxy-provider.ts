@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { MitmproxyLogProvider } from "../../data-sources/log-providers/mitmproxy/mitmproxy-log-provider.js";
 import { defaultMitmExchangeDecoders } from "../../data-sources/log-providers/mitmproxy/decoders/default-decoders.js";
 import { resolveMitmproxyCapturesDir } from "../../data-sources/log-providers/mitmproxy/resolve-mitmproxy-captures-dir.js";

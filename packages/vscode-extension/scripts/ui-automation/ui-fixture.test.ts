@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync } from "node:fs";
 import { COPILOT_CLI_FIXTURE_HOME } from "../../../server/src/test-support/copilot-cli-fixtures.ts";
 import { tmpdir } from "node:os";

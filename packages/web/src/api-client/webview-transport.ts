@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { HostCommand, HostCommandArgs, HostEventName, PerformanceMarkName } from "@agent-cost-analyzer/domain";
 import { abortError } from "./abort.js";
 import type { ApiMethodName, ApiTransport, ViewStatePersistence } from "./transport.js";

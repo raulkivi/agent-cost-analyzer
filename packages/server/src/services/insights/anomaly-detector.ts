@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { isFailedStatus, type InsightFinding, type InsightSessionRow } from "@agent-cost-analyzer/domain";
 import { callsOfSession, indexRows, type DetectorInput, type FindingDetector, type RowIndex } from "./finding-detector.js";
 

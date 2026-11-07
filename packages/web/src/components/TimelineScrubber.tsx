@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { useId } from "react";
 import { Blueprint } from "./ui/Blueprint.js";
 

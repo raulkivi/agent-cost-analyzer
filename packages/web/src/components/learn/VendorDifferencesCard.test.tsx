@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import type { VendorComparison, VendorProfileSummary } from "@agent-cost-analyzer/domain";

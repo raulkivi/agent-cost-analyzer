@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { createHash } from "node:crypto";
 import { isLocalRepositoryKey, redactRepositoryKey, repositoryFolderLabel, type RepositoryAttribution, type Session } from "@agent-cost-analyzer/domain";
 import { identityTranslate, type Translate } from "../l10n/localize.js";

@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { RequestTrace, TraceRequest, UntracedTurn } from "@agent-cost-analyzer/domain";
 import type { ClaudeCodeRawEntry } from "./claude-code-jsonl-reader.js";
 import { findCompactedRequestIds } from "./compaction.js";

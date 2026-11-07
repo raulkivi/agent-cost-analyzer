@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { redactRepositoryKey, type CostCompareGroupBy } from "@agent-cost-analyzer/domain";
 
 // Phase 15 step 15.9 (plan §11.1, §11.3): the Dashboard's list-box

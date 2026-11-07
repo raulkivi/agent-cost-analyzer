@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { useEffect, useRef } from "react";
 import type { RefObject } from "react";
 

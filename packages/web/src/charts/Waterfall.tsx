@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { formatAmount, unitLabel, type DisplayUnit } from "../lib/cost/cost-format.js";
 import { formatSigned, type WaterfallStep } from "../lib/cost/project-model.js";
 import { ViewAsTable } from "./ViewAsTable.js";

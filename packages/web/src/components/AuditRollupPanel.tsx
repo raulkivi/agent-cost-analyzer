@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { useCallback, useState } from "react";
 import type { AuditRollup } from "@agent-cost-analyzer/domain";
 import { fetchAuditRollup, type RollupQuery } from "../api-client/audit.js";

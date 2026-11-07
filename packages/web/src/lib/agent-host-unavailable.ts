@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { Session } from "@agent-cost-analyzer/domain";
 
 // What the UI says where a VS Code Agent Host session lacks data the Copilot

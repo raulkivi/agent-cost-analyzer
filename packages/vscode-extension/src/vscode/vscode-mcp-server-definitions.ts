@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { MCP_PROVIDER_ID, type McpStdioServerSpec } from "../mcp/mcp-server-definitions.js";
 import type { Disposable } from "../panel/analyzer-panel.js";
 

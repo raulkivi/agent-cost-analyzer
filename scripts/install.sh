@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# SPDX-FileCopyrightText: 2026 Raul Kivi
+# SPDX-License-Identifier: MIT
 # Adds a shell alias that starts this app (npm start) and opens it in a
 # browser. Safe to re-run — replaces its own previous entry instead of
 # duplicating it. Also offers to build and install the optional

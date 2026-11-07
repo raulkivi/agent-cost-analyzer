@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { mkdir, appendFile } from "node:fs/promises";
 import type { FileSystemPort } from "../ports/FileSystemPort.js";
 

@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import type { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { costVarianceSchema, priceChangeListSchema } from "@agent-cost-analyzer/domain";

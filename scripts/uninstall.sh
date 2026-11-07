@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# SPDX-FileCopyrightText: 2026 Raul Kivi
+# SPDX-License-Identifier: MIT
 # Removes the alias added by scripts/install.sh from your shell profile, and
 # the pi-system-prompt-logger extension if install.sh installed it. Safe to
 # re-run — a no-op if neither is present.

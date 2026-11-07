@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { PriceBookEntry, PriceBookProblem, Source } from "@agent-cost-analyzer/domain";
 
 // Phase 15 step 15.5 (docs/plans/cost-by-repository-and-project.md §9): where

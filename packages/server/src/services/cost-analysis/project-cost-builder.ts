@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { PriceBookEntry, ProjectCost } from "@agent-cost-analyzer/domain";
 import { measureTotal } from "../cost/cost-aggregation.js";
 import type { CostCube } from "./cost-cube.js";

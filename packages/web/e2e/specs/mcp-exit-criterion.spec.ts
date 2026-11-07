@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { CostBasisTotals, CostVariance } from "@agent-cost-analyzer/domain";
 import { expect, test } from "../support/app-fixture.js";
 import { connectStdioMcp, structured } from "../support/mcp-stdio.js";

@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { createRequire } from "node:module";
 import type { Page } from "@playwright/test";
 

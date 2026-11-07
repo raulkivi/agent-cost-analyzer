@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { CaptureRule } from "@agent-cost-analyzer/domain";
 import { branchPatternMatches } from "./project-matcher.js";
 

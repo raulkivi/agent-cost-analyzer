@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { z } from "zod";
 import { failureCategorySchema, toolCallStatusSchema } from "./tool-call-outcome.js";
 import { toolKindSchema } from "./tool-call-record.js";

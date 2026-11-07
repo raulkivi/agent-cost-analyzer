@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 // One line of the Copilot CLI's events.jsonl, normalized by the reader so
 // the pure builders never see malformed shapes (architecture.md §6.2.2.2).
 export interface CopilotEvent {

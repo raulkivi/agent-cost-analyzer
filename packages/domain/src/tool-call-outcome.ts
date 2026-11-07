@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { z } from "zod";
 
 // Phase 9.10 tool-call audit (docs/plans/tool-call-audit.md §4). "unknown"

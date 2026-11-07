@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { CopilotEvent } from "../../data-sources/agent-host/copilot-event.js";
 
 // Splits a Copilot CLI event log into the turns session.db recorded

@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { PerformanceMarkName } from "@agent-cost-analyzer/domain";
 
 // What the host times itself: the Sessions tree, from the start of a full

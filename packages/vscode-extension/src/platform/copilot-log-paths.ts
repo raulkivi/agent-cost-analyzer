@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { listWorkspaceDebugLogsDirPaths } from "@agent-cost-analyzer/server/src/data-sources/jsonl/session-log-path";
 import { copilotChatGlobalStoragePath } from "@agent-cost-analyzer/server/src/data-sources/sqlite/copilot-chat-global-storage-path";
 import { userSettingsFilePath } from "@agent-cost-analyzer/server/src/data-sources/vscode-settings/vscode-settings-path";

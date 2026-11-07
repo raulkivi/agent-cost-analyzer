@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { describe, expect, it } from "vitest";
 import { sessionSchema, type Session } from "@agent-cost-analyzer/domain";
 import type { LogProvider } from "./log-provider.js";

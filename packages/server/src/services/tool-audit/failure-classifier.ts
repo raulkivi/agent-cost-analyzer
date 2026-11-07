@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { MAX_EVIDENCE_EXCERPT_LENGTH, type FailureCategory, type ToolKind } from "@agent-cost-analyzer/domain";
 import { excerptOf } from "./output-redactor.js";
 

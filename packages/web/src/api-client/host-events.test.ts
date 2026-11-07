@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { resetApiTransport, setApiTransport } from "./current-transport.js";
 import { onHostEvent } from "./host-events.js";

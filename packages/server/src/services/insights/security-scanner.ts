@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { MAX_EVIDENCE_EXCERPT_LENGTH, type InsightFinding, type ToolCallRecord } from "@agent-cost-analyzer/domain";
 import { excerptOf } from "../tool-audit/output-redactor.js";
 import { statusOf } from "../tool-audit/outcome-tally.js";

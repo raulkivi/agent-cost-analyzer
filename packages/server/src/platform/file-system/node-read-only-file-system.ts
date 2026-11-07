@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { closeSync, fstatSync, openSync, readSync, statSync } from "node:fs";
 import type { FileKind, ReadOnlyFileSystem } from "../../services/cost-attribution/read-only-file-system.js";
 

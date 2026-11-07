@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { Layout } from "./layout.js";
 
 // The turns table's columns, in display order (§3.5 Layout: users choose

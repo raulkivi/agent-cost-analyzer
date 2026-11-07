@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { standaloneHostCapabilities, type HostCapabilities } from "./host-capabilities.js";
 
 // Like api-client/current-transport.ts: main.tsx installs the host's

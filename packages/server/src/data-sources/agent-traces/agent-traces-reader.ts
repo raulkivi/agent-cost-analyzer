@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { DatabaseSync } from "node:sqlite";
 
 // agent-traces.db schema (confirmed against a real capture — see

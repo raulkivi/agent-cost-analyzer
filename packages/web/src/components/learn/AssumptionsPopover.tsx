@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { useId, useRef, useState, type KeyboardEvent } from "react";
 import type { Assumption } from "@agent-cost-analyzer/domain";
 import { Tag, type TagVariant } from "../ui/Tag.js";

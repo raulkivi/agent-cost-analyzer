@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { LogProviderStatus } from "@agent-cost-analyzer/domain";
 import { fetchLogProviderStatus, setActiveLogProvider } from "./log-providers.js";
