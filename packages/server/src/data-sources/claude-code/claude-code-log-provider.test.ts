@@ -150,6 +150,93 @@ describe("ClaudeCodeLogProvider", () => {
     ]);
   });
 
+  // Phase 14 step 14.3: a compaction starts a new parentUuid chain, which
+  // the active branch must cross to reach the turns before it.
+  describe("a compacted session", () => {
+    const id = () => computeClaudeCodeFileHash(path.join(fixturesDir, "-home-dev-project", "compacted-session.jsonl"));
+
+    it("readSession keeps the turns before the compaction, the summary opening no turn of its own", async () => {
+      const provider = new ClaudeCodeLogProvider({ projectsDirPath: fixturesDir });
+
+      const session = await provider.readSession(id());
+
+      expect(session?.turns.map((turn) => turn.userMessage)).toEqual(["Please tidy the made-up widget module.", "Now add made-up tests for the widget."]);
+      expect(session?.turns[0].usage.roundsCount).toBe(2);
+      expect(session?.turns[0].usage.cacheWrite).toEqual({ known: true, value: 2030 });
+      expect(session?.turns[0].toolCalls.map((call) => call.name)).toEqual(["Read"]);
+      expect(session?.turns[0].assistantResponse).toBe("Tidied the made-up widget module.");
+      expect(session?.turns[1].usage.roundsCount).toBe(1);
+      expect(session?.startedAt).toBe("2026-09-02T10:00:00.000Z");
+      expect(session?.title).toBe("tidy-widget-module");
+    });
+
+    it("tags the turn holding the first request after the compaction as triggeredEvent: compaction", async () => {
+      const provider = new ClaudeCodeLogProvider({ projectsDirPath: fixturesDir });
+
+      const session = await provider.readSession(id());
+
+      expect(session?.turns.map((turn) => turn.triggeredEvent)).toEqual([undefined, "compaction"]);
+    });
+
+    it("readRequestTrace traces every request, marking the first after the compaction", async () => {
+      const provider = new ClaudeCodeLogProvider({ projectsDirPath: fixturesDir });
+
+      const trace = await provider.readRequestTrace(id());
+
+      expect(trace?.requests.map((r) => [r.turnIndex, r.uncachedInput, r.cacheRead, r.cacheWrite, r.event])).toEqual([
+        [0, 100, 0, 2000, undefined],
+        [0, 20, 2000, 30, undefined],
+        [1, 300, 0, 1500, "compaction"],
+      ]);
+    });
+
+    it("readTurnDetail reads the turn before the compaction by its own index", async () => {
+      const provider = new ClaudeCodeLogProvider({ projectsDirPath: fixturesDir });
+
+      const before = await provider.readTurnDetail(id(), 0);
+      const after = await provider.readTurnDetail(id(), 1);
+
+      expect(before?.rounds).toHaveLength(2);
+      expect(before?.rounds[0].request.toolCalls.map((call) => call.name)).toEqual(["Read"]);
+      expect(after?.rounds).toHaveLength(1);
+      expect(after?.rounds[0].request.addedMessages).toEqual([]);
+    });
+  });
+
+  describe("CLI-written entries (isMeta user lines, <synthetic> assistant lines)", () => {
+    const id = () => computeClaudeCodeFileHash(path.join(fixturesDir, "-home-dev-project", "meta-and-synthetic-session.jsonl"));
+
+    it("readSession keeps a response split by an isMeta line in one turn, counted once", async () => {
+      const provider = new ClaudeCodeLogProvider({ projectsDirPath: fixturesDir });
+
+      const session = await provider.readSession(id());
+
+      expect(session?.turns.map((turn) => turn.userMessage)).toEqual(["Run the made-up checks.", "And once more?"]);
+      expect(session?.turns[0].usage.roundsCount).toBe(1);
+      expect(session?.turns[0].usage.output).toEqual({ known: true, value: 70 });
+      expect(session?.turns[0].assistantResponse).toBe("The made-up checks pass.");
+    });
+
+    it("never takes <synthetic> as a model: not the turn's, not the session's", async () => {
+      const provider = new ClaudeCodeLogProvider({ projectsDirPath: fixturesDir });
+
+      const session = await provider.readSession(id());
+
+      expect(session?.turns[1].usage.roundsCount).toBe(0);
+      expect(session?.turns[1].usage.model).toBe("unknown");
+      expect(session?.model).toBe("claude-sonnet-5");
+    });
+
+    it("readRequestTrace makes one request of the split response and none of the synthetic line", async () => {
+      const provider = new ClaudeCodeLogProvider({ projectsDirPath: fixturesDir });
+
+      const trace = await provider.readRequestTrace(id());
+
+      expect(trace?.requests.map((r) => [r.turnIndex, r.model, r.uncachedInput, r.output, r.event])).toEqual([[0, "claude-sonnet-5", 500, 70, undefined]]);
+      expect(trace?.notTraced.map((t) => t.turnIndex)).toEqual([1]);
+    });
+  });
+
   // Phase 14 step 14.2: the per-request trace a replay reads.
   describe("readRequestTrace", () => {
     const idOf = (file: string) => computeClaudeCodeFileHash(path.join(fixturesDir, "-home-dev-project", `${file}.jsonl`));

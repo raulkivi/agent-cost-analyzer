@@ -1,6 +1,7 @@
 import type { RequestTrace, TraceRequest, UntracedTurn } from "@agent-cost-analyzer/domain";
 import type { ClaudeCodeRawEntry } from "./claude-code-jsonl-reader.js";
-import { groupTurnEntriesByRound, type ClaudeCodeRound } from "./round-grouper.js";
+import { findCompactedRequestIds } from "./compaction.js";
+import { groupTurnRequestRounds, type ClaudeCodeRound } from "./round-grouper.js";
 import type { ClaudeCodeTurnGroup } from "./turn-grouper.js";
 
 // Phase 14 step 14.2 (docs/plans/analyze-session-replay.md §4.1, §5): a
@@ -63,12 +64,20 @@ function figuresOf(round: ClaudeCodeRound): RequestFigures | undefined {
 // A turn is traced whole or not at all: a request with missing figures
 // would break the chain the replay reads deltas from, and an unknown is
 // never a 0 (constraint 6). A model change on the main chain is recorded
-// as a model-switch event on the first request with the new model.
+// as a model-switch event on the first request with the new model; the
+// first request after a compaction boundary (compaction.ts) is recorded as
+// a compaction event, carried on to the next traced request when its own
+// turn is left out. A request has one event: compaction wins over a model
+// switch, since the replay scripter reads a model change from the model id
+// itself, while only this event says the prompt was compacted.
 export function buildClaudeCodeRequestTrace(sessionId: string, groups: ClaudeCodeTurnGroup[]): RequestTrace {
   const requests: TraceRequest[] = [];
   const notTraced: UntracedTurn[] = [];
+  const compactedIds = findCompactedRequestIds(groups);
+  let compactionPending = false;
   groups.forEach((group, turnIndex) => {
-    const rounds = groupTurnEntriesByRound(group.entries);
+    // Synthetic rounds (the CLI's own "<synthetic>" lines) made no request.
+    const rounds = groupTurnRequestRounds(group.entries);
     if (rounds.length === 0) {
       notTraced.push({ turnIndex, reason: NO_REQUEST_REASON });
       return;
@@ -76,16 +85,20 @@ export function buildClaudeCodeRequestTrace(sessionId: string, groups: ClaudeCod
     const figures = rounds.map(figuresOf);
     if (figures.some((value) => value === undefined)) {
       notTraced.push({ turnIndex, reason: NO_USAGE_REASON });
+      compactionPending ||= rounds.some((round) => compactedIds.has(round.messageId));
       return;
     }
-    for (const value of figures as RequestFigures[]) {
+    (figures as RequestFigures[]).forEach((value, roundIndex) => {
       const previous = requests.at(-1);
       // Times are kept in order: a line written out of order never makes a
       // gap go negative.
       const startedAt = previous && value.startedAt < previous.startedAt ? previous.startedAt : value.startedAt;
+      const compacted = compactionPending || compactedIds.has(rounds[roundIndex]!.messageId);
+      compactionPending = false;
       const switched = previous !== undefined && previous.model !== value.model;
-      requests.push({ index: requests.length, turnIndex, ...value, startedAt, ...(switched ? { event: "model-switch" as const } : {}) });
-    }
+      const event = compacted ? ("compaction" as const) : switched ? ("model-switch" as const) : undefined;
+      requests.push({ index: requests.length, turnIndex, ...value, startedAt, ...(event ? { event } : {}) });
+    });
   });
   return { sessionId, providerId: PROVIDER_ID, harness: "claude-code", requests, notTraced };
 }

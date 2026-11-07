@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { ClaudeCodeRawEntry } from "./claude-code-jsonl-reader.js";
-import { findToolResultFor, groupTurnEntriesByRound } from "./round-grouper.js";
+import { findToolResultFor, groupTurnEntriesByRound, groupTurnRequestRounds, isSyntheticRound } from "./round-grouper.js";
 
 function assistantBlock(uuid: string, messageId: string, block: Record<string, unknown>): ClaudeCodeRawEntry {
   return { type: "assistant", uuid, message: { id: messageId, role: "assistant", model: "claude-x", content: [block] } };
@@ -69,5 +69,31 @@ describe("findToolResultFor", () => {
 
   it("returns undefined when no matching tool_result exists", () => {
     expect(findToolResultFor([userText("u1")], "does-not-exist")).toBeUndefined();
+  });
+});
+
+// The CLI writes an assistant line of its own (after an interruption or an
+// API error) with model "<synthetic>" and all-zero usage: no LLM request.
+function syntheticBlock(uuid: string, messageId: string): ClaudeCodeRawEntry {
+  return {
+    type: "assistant",
+    uuid,
+    message: { id: messageId, role: "assistant", model: "<synthetic>", content: [{ type: "text", text: "made-up notice" }], usage: { input_tokens: 0, output_tokens: 0, cache_read_input_tokens: 0, cache_creation_input_tokens: 0 } },
+  };
+}
+
+describe("isSyntheticRound", () => {
+  it("is true for a round the CLI wrote itself, false for a model's response", () => {
+    const rounds = groupTurnEntriesByRound([userText("u1"), assistantBlock("a1", "m1", { type: "text", text: "ok" }), syntheticBlock("s1", "m2")]);
+
+    expect(rounds.map(isSyntheticRound)).toEqual([false, true]);
+  });
+});
+
+describe("groupTurnRequestRounds", () => {
+  it("keeps only the rounds that were LLM requests, leaving out synthetic ones", () => {
+    const entries = [userText("u1"), assistantBlock("a1", "m1", { type: "text", text: "ok" }), syntheticBlock("s1", "m2"), assistantBlock("a2", "m3", { type: "text", text: "again" })];
+
+    expect(groupTurnRequestRounds(entries).map((round) => round.messageId)).toEqual(["m1", "m3"]);
   });
 });

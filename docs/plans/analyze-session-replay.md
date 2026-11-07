@@ -3,7 +3,8 @@
 **Status (2026-11-07): planned.** The owner decided D1, D2, D4, D5 and D7
 on 2026-11-07; D3, D6 and D8 take the recommendation, open for the owner to
 revisit (§11). Steps 14.0 (threat-model rows), 14.1 (domain schemas) and
-14.2 (request traces) are done (2026-11-07); step 14.3 is next.
+14.2 (request traces) and 14.3 (the scripter) are done (2026-11-07); step
+14.4 is next.
 
 The question this answers: **"What would this real session have cost on
 another model?"** It reuses Phase 13's simulator
@@ -241,7 +242,7 @@ recommendation and stay open for the owner to revisit.
 | 14.0 | Decisions D1–D8 (§11, recorded 2026-11-07); threat-model rows for the new read routes, RPC methods and MCP tools | Threat model updated. Done 2026-11-07: §4 and §6 rows and the §9 bullet, marked "plan" |
 | 14.1 | Domain `RequestTrace` and `SessionReplay` schemas | Schema tests pass. Done 2026-11-07: `request-trace.ts` (strict records, numbers only; indexes, times and turns never go back; 1-hour writes within all writes; untraced turns with reasons) and `session-replay.ts` (always `simulated: true`; a turn is replayed or has a reason; unknown totals null, never 0, with the difference null too; coverage and the self-check bounded; at most 10 compared models); 18 tests |
 | 14.2 | `RequestTraceSource` for Claude Code and Copilot (local and Agent Host), the 13.5a extractors moved and reused | Each provider's fixture gives the expected trace; calibration tests unchanged. Done 2026-11-07, see the note below |
-| 14.3 | `RequestTraceScripter` with compaction, clear, model switch and 1-hour events; replaces `scriptFromCapture` | Property tests; the 17 shrinking-prompt sessions' shapes replay without error; calibration still 99.8% |
+| 14.3 | `RequestTraceScripter` with compaction, clear, model switch and 1-hour events; replaces `scriptFromCapture` | Property tests; the 17 shrinking-prompt sessions' shapes replay without error; calibration still 99.8%. Done 2026-11-07, see the note below |
 | 14.4 | `ReplayAligner`, `SessionReplayService`, self-check, pricing per D2 | Golden replays of the fixtures; self-check passes at D12 on every calibration fixture |
 | 14.5 | API routes, RPC, MCP tools (per D7) | Route, RPC and MCP tests (schemas, read-only, redaction) |
 | 14.6 | Mock-ups (Replay on, Simulated columns, summary card, Compare models) in both products' themes | Owner approves the boards |
@@ -283,6 +284,49 @@ harnesses.
   branch and turns with the 1-hour writes inside all writes. Reusing them
   would have changed calibration; the traces reuse the providers' readers
   instead, and calibration is unchanged (its 25 tests pass).
+
+**14.3 (done 2026-11-07).** `scriptFromRequestTrace` (and the injectable
+`RequestTraceScripter`) in `services/session-replay/request-trace-scripter.ts`.
+
+- **Rules.** Input = uncached + read + write (a null write is already in the
+  uncached input, A4); carried output = output − reasoning (reasoning is
+  billed, never carried). New tokens = this input − previous input −
+  previous carried output. A `clear` event goes on its own request; a shrink
+  or a `compaction` event puts `compaction {summaryTokens}` on the request
+  before (the simulator applies it after that request). The static prefix is
+  the smallest prompt the messages were ever reset to (never more than the
+  first prompt), split half tools, half system as 13.5a did. A model change
+  is read from the model id (first model primary, any other cheaper);
+  `extended-ttl` starts on the first request with 1-hour writes.
+- **Tests.** 23: examples for each rule and fast-check properties (the
+  script parses; simulated, it never throws and every request's input is
+  the trace's exactly; no shrink gives no compaction or clear; gaps
+  round-trip). Calibration replays its captures through the scripter
+  (`traceFromCapture`); `scriptFromCapture` is gone and `calibration.test.ts`
+  is unchanged, with the same two known disagreements, so 13.5a's 99.8% holds.
+- **The 17 shrinking-prompt sessions** are on the owner's machine, not in the
+  repo. They were checked here against this machine's own real Claude Code
+  logs instead (numbers only, nothing committed), which found three provider
+  bugs, fixed in this step with the owner's go-ahead (2026-11-07):
+  - a compaction's `compact_boundary` has `parentUuid: null`, so the branch,
+    and with it Analyze and the trace, stopped at the latest compaction; the
+    walk now follows `logicalParentUuid`, and the first request after the
+    boundary carries a `compaction` event (the turn `triggeredEvent:
+    "compaction"`);
+  - `<synthetic>` assistant lines (all-zero usage) became fake requests and
+    model switches; they are left out;
+  - `isMeta` user lines opened a turn, splitting one response into two
+    identical requests; they no longer do.
+
+  After the fixes, a real 484-request session with a compaction replays
+  without error on three models, every simulated input equals the log's,
+  and on its own model the cache read is within 5% on 480 of 483 requests.
+- **Open for 14.4.** Trace model ids are the log's (`claude-opus-5-5`) and
+  need mapping to profile ids (`claude-opus-5.5`); a model switch is a role
+  (primary or cheaper), so 14.4 decides how each role is priced on the
+  replay model. A `/clear` inside a Claude Code file still starts the branch
+  after it (no link back), and a file that begins with a compaction records
+  no `compaction` event: both are recorded, not fixed.
 
 ## 13. Exit criterion
 

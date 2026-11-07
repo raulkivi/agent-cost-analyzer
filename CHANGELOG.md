@@ -24,6 +24,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (threat-model.md §5.5).
 
 ### Fixed
+- Claude Code sessions that were compacted (`/compact` or automatic) now
+  show and cost every turn, not only those after the latest compaction; the
+  turn after a compaction is marked as one.
+- Claude Code turns are no longer split by lines the CLI writes itself
+  (`isMeta`), which could count one response twice, and the CLI's
+  `<synthetic>` lines after an interruption are no longer taken as a request
+  or as the session's model.
 - Dashboard list-box values meet the 24 px minimum target size, and a chart's
   table view can be scrolled from the keyboard (found by the new
   real-browser accessibility check).
