@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { KeyboardEvent, MouseEvent } from "react";
 import { scaleLinear } from "d3-scale";
 import { roundedTopRectPath } from "./chart-parts.js";

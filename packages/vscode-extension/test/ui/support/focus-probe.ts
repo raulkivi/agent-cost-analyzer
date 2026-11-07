@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 // The computed style properties that make a focused element visibly focused.
 export interface FocusStyle {
   outlineStyle: string;

@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { describe, expect, it } from "vitest";
 import { loadVendorProfiles } from "../../data-sources/vendor-profiles/loader.js";
 import { candidateModelIds, ProfileVendorResolver, type VendorCatalogEntry } from "./vendor-resolver.js";

@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { ApiTransport, ViewStatePersistence } from "../api-client/transport.js";
 
 // Where small UI preferences live between visits (§3.5 Layout: "users

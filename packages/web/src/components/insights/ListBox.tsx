@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { useState, type KeyboardEvent, type MouseEvent } from "react";
 import type { FieldValue, ValueState } from "../../lib/associative/data-model.js";
 

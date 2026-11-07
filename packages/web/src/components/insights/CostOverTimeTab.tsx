@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { useCallback, useMemo, useState } from "react";
 import type { CostBasisChoice, CostSeries } from "@agent-cost-analyzer/domain";
 import { isAbortError } from "../../api-client/abort.js";

@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { HTMLAttributes } from "react";
 
 export type TagVariant = "accent" | "accent-2" | "neutral" | "outline";

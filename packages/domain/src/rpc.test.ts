@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { describe, expect, it } from "vitest";
 import * as domain from "./index.js";
 import { MAX_COMPARED_MODELS, sessionReplayComparisonSchema, sessionReplaySchema } from "./session-replay.js";

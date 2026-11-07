@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 // The narrow file access RepositoryResolver needs (DIP): it only asks what
 // a path is and reads small text files. No writes, no process, no network.
 export type FileKind = "file" | "directory";

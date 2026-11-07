@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { PiAgentLogProvider } from "../../data-sources/pi-agent/pi-agent-log-provider.js";
 import { resolvePiAgentSessionsDir } from "../../platform/pi-agent-paths/resolve-pi-agent-sessions-dir.js";
 import { resolvePiSystemPromptLogPath } from "../../platform/pi-agent-paths/resolve-pi-system-prompt-log-path.js";

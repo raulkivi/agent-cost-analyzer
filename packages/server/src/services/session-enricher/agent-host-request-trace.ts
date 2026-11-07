@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { RequestTrace, TraceRequest, UntracedTurn } from "@agent-cost-analyzer/domain";
 import { readCopilotCallUsage } from "./agent-host-call-usage.js";
 import type { AgentHostEventLog } from "./agent-host-session-builder.js";

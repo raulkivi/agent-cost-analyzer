@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { describe, expect, it } from "vitest";
 import type { SessionNode, SessionsTreeNode } from "../../sidebar/sessions-tree-model.js";
 import { sessionNodesOf } from "./sessions-tree.js";

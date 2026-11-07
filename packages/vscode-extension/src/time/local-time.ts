@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 // Calendar-day helpers for the sidebar and the status bar. "Today" is the
 // user's local day, so every function takes the IANA time zone to judge it
 // in (the models are tested with explicit zones); omitted, it's the

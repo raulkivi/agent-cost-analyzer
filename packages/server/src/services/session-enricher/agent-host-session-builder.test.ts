@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { beforeAll, describe, expect, it } from "vitest";
 import { sessionSchema, turnInspectorDetailSchema, type TokenCount } from "@agent-cost-analyzer/domain";
 import type { AgentHostSessionRow } from "../../data-sources/agent-host/agent-host-catalog.js";

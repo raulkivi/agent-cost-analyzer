@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { describe, expect, it } from "vitest";
 import { sumCostFigures, type CostFigure } from "./cost-figure.js";
 import { addCostTotals, bucketOf, bucketsBetween, comparisonPeriod, costInCurrency } from "./cost-analysis.js";

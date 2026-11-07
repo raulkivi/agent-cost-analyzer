@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { describe, expect, it } from "vitest";
 import { parseSystemPrompt } from "./system-prompt-parser.js";
 import { describeTag, TAG_DESCRIPTIONS } from "./system-prompt-descriptions.js";

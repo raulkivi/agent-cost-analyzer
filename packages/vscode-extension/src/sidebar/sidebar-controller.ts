@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { ConfigStatus, RepositoryAttribution, Session } from "@agent-cost-analyzer/domain";
 import { identityTranslate, type Translate } from "../l10n/localize.js";
 import type { Disposable } from "../panel/analyzer-panel.js";

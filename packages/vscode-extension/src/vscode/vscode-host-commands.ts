@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { ReadOnlyDocumentStore } from "../documents/read-only-document-store.js";
 import type { DocumentLanguage, HostCommands } from "../rpc/host-command-handler.js";
 import { READ_ONLY_DOCUMENT_SCHEME } from "./vscode-read-only-documents.js";

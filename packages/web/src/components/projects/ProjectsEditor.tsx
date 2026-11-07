@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { isLocalRepositoryKey, repositoryFolderLabel, type FixedLine, type Project, type ProjectFileProblem, type ProjectsFile, type ProjectsState, type RepositoryList } from "@agent-cost-analyzer/domain";

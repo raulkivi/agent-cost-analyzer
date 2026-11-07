@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { LogProviderRegistry } from "../data-sources/log-providers/registry.js";
 import type { McpIdentity } from "../mcp/mcp-identity.js";
 import type { McpServerDeps } from "../mcp/mcp-server.js";

@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { ProductProfile } from "@agent-cost-analyzer/domain";
 import { DatasetCostCubeSource } from "../services/cost-analysis/cost-analysis-service.js";
 import { FileStatementStore } from "../data-sources/statements/file-statement-store.js";

@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { readFileSync } from "node:fs";
 import { parse as parseJsonc } from "jsonc-parser";
 import type { SettingsSource, SettingsSourceDescription } from "../../services/config-check/settings-source.js";

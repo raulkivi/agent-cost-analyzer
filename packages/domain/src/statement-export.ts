@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { channelLabel } from "./channels.js";
 import type { Currency } from "./cost-figure.js";
 import type { Statement } from "./statement.js";

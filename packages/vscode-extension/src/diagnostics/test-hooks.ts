@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { McpStdioServerSpec } from "../mcp/mcp-server-definitions.js";
 import type { TimingMark } from "../performance/performance-recorder.js";
 import type { SessionsTreeNode } from "../sidebar/sessions-tree-model.js";

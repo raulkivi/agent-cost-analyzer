@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { useEffect, useId, useRef, useState } from "react";
 import type { Session } from "@agent-cost-analyzer/domain";
 import { standaloneHostCapabilities } from "../host/host-capabilities.js";

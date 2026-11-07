@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { describe, expect, it } from "vitest";
 import { COPILOT_MCP_IDENTITY } from "../composition/create-copilot-mcp-services.js";
 import { STANDALONE_MCP_IDENTITY } from "./mcp-identity.js";

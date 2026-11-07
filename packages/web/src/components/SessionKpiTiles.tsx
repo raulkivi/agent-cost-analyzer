@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { Turn } from "@agent-cost-analyzer/domain";
 import { sessionKpis } from "../lib/session-kpis.js";
 import { aiCreditsToUsd, formatUsd } from "../lib/ai-credits-usd.js";

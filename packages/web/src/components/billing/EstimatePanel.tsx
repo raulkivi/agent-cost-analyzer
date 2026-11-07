@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { useCallback, useId, useState } from "react";
 import type { CostEstimate } from "@agent-cost-analyzer/domain";
 import { fetchCostEstimate, type EstimateQuery } from "../../api-client/statements.js";

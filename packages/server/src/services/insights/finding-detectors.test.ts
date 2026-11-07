@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { describe, expect, it } from "vitest";
 import { insightFindingSchema, type ToolCallRecord } from "@agent-cost-analyzer/domain";
 import { analyzeSession, bash, providerSessions, turn, usage } from "../../test-support/insights-fakes.js";

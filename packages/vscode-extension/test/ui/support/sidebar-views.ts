@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 // Page object for the extension's side bar (step 10.16): the Sessions, Learn
 // and Setup views, reached through wdio-vscode-service's workbench page
 // objects (the activity bar's view control, the side bar's sections).

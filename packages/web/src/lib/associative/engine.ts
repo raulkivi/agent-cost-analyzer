@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { AssociativeModel, Evaluation, FieldDef, FieldValue, Selections, TableDef, ValueState } from "./data-model.js";
 
 // Associative selection engine (docs/plans/insights-dashboard.md §5):

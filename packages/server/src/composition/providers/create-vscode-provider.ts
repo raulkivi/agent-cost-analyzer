@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { resolveSessionStoreDbPath } from "../../data-sources/sqlite/session-store-path.js";
 import { listWorkspaceDebugLogsDirPaths } from "../../data-sources/jsonl/session-log-path.js";
 import { resolveAgentTracesDbPath } from "../../data-sources/agent-traces/agent-traces-db-path.js";

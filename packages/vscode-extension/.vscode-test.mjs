@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 // @vscode/test-cli's configuration for the real-VS Code integration suite
 // (vscode-extension.md step 10.9, D9): `npm run test:integration`, after
 // `npm run build`. It seeds a throwaway VS Code user-data dir (settings plus

@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { useEffect, useMemo, useState } from "react";
 import type { AuditedToolCall, FailureCategory, SessionAudit, ToolCallStatus } from "@agent-cost-analyzer/domain";
 import { fetchSessionAudit } from "../api-client/audit.js";

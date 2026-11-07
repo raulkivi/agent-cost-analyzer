@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 import type { ConfigurationChangeEvent } from "../config/config-change-watcher.js";

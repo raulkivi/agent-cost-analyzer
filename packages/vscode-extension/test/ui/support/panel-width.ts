@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 // The window can't be resized through the driver, and VS Code's minimum
 // window is about 400 px, so check 1.9 sets the panel's width through the
 // editor layout: its group takes a share of the editor area. The webview is

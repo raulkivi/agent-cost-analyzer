@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { normalizeMemberPath, type Project, type ProjectMember, type ProjectsFile } from "@agent-cost-analyzer/domain";
 
 // Phase 15 step 15.3 (docs/plans/cost-by-repository-and-project.md §7, D1):

@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { describe, expect, it, vi } from "vitest";
 import { MAX_HOST_COMMAND_TEXT_LENGTH, type ConfigStatus, type ConfigWarning } from "@agent-cost-analyzer/domain";
 import { HostCommandHandler, type HostCommands } from "./host-command-handler.js";

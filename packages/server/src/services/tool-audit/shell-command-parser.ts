@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 // Pure helper for the tool-call audit (docs/plans/tool-call-audit.md §6):
 // finds the program a shell command actually runs, so failures can be
 // grouped by program ("npm 12 / 3 failed"). Deliberately a small, quote-

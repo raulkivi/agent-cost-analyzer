@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { countTokens } from "gpt-tokenizer/encoding/o200k_base";
 import type { TokenCount } from "@agent-cost-analyzer/domain";
 import { estimatedTokenCount } from "@agent-cost-analyzer/domain";

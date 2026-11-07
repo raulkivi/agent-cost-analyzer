@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { useState } from "react";
 import type { InsightFinding } from "@agent-cost-analyzer/domain";
 import { FINDING_KIND_LABELS, findingCategoryLabel, SEVERITY_LABELS, SEVERITY_ORDER } from "../../lib/insights/insights-model.js";

@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 /**
  * The narrow slice of filesystem behavior JsonlFileSink needs.
  * Kept separate from node:fs so tests can supply an in-memory fake.

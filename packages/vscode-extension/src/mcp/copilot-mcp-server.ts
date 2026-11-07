@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { createCopilotMcpServices } from "@agent-cost-analyzer/server/src/composition/create-copilot-mcp-services";
 import { resolveCopilotHome } from "@agent-cost-analyzer/server/src/data-sources/agent-host/copilot-cli-paths";

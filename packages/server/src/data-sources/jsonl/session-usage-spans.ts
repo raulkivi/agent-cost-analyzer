@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { TokenCount, TurnUsage } from "@agent-cost-analyzer/domain";
 import { unavailableTokenCount as unavailable } from "@agent-cost-analyzer/domain";
 import type { JsonlEnvelope } from "./main-jsonl-reader.js";

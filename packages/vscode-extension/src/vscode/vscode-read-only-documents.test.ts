@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { describe, expect, it } from "vitest";
 import { ReadOnlyDocumentStore } from "../documents/read-only-document-store.js";
 import { READ_ONLY_DOCUMENT_SCHEME, registerReadOnlyDocuments, type VscodeReadOnlyDocumentsApi } from "./vscode-read-only-documents.js";

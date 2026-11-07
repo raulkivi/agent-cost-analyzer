@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { axeViolations } from "../support/axe.js";

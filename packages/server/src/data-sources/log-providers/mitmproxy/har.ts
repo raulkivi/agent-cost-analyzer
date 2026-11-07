@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { readFileSync } from "node:fs";
 import { redactHeaders } from "./redact-headers.js";
 import type { RawMitmExchange } from "./decoders/decoder.js";

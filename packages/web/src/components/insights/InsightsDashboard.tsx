@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { useCallback, useMemo, useState } from "react";
 import { AI_CREDIT_CONVERSION_NOTE, redactRepositoryKey, type CostBasisChoice, type CostComparison, type CostSeries, type CostEstimate, type CostVariance, type ProjectCost, type ProjectsFile, type ProjectsState, type RepositoryList, type StatementAnswer } from "@agent-cost-analyzer/domain";
 import type {

@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 // The real-VS Code integration suite (vscode-extension.md step 10.9, D9),
 // run by @vscode/test-cli in an Extension Development Host on the `stable`
 // build: `npm run build && npm run test:integration` in this package (under

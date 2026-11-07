@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { z } from "zod";
 import { addDays, redactRepositoryKey, type CostEstimate } from "@agent-cost-analyzer/domain";
 import type { CostCubeSource, ProjectDirectory } from "../cost-analysis/cost-analysis-service.js";

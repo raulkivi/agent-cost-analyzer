@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { describe, expect, it } from "vitest";
 import { costEstimateSchema, type PricingMode, type SessionReplay } from "@agent-cost-analyzer/domain";
 import { loadVendorProfiles } from "../../data-sources/vendor-profiles/loader.js";

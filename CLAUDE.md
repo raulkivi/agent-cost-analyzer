@@ -15,6 +15,9 @@ content here.
 
 ## Rules for this repo
 
+- Every new source file starts with the two-line SPDX header (see
+  [AGENTS.md](AGENTS.md)); `npm run headers:fix` adds it. Never remove
+  copyright headers or `LICENSE` when copying code.
 - Treat the docs above as the source of truth. If an implementation
   decision conflicts with them, update the relevant doc in the same change
   rather than letting it drift.

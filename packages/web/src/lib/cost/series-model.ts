@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { repositoryFolderLabel, type CostSeries, type CostSeriesLine, type Currency, type ObservedPriceChange, type PriceChangeMarker } from "@agent-cost-analyzer/domain";
 import { amountIn, formatChange, type DisplayUnit } from "./cost-format.js";
 import { keepLine, type SeriesScope } from "./cost-scope.js";

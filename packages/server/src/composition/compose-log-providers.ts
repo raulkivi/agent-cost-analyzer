@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { resolveAppSettingsDir } from "../platform/app-settings-dir/resolve-app-settings-dir.js";
 import { migrateLegacyAppSettingsDir } from "../platform/app-settings-dir/migrate-legacy-app-settings-dir.js";
 import { LogProviderRegistry } from "../data-sources/log-providers/registry.js";

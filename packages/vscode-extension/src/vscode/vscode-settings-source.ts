@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { SettingsSource, SettingsSourceDescription } from "@agent-cost-analyzer/server/src/services/config-check/settings-source";
 
 // The slice of `vscode.workspace` the source needs; extension.ts passes the

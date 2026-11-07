@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import "./fonts.js";

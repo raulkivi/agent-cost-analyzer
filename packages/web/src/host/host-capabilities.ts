@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { HostCommandArgs } from "@agent-cost-analyzer/domain";
 import type { ApiTransport } from "../api-client/transport.js";
 

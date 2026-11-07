@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { describe, expect, it, vi, afterEach } from "vitest";
 import type { ConfigStatus } from "@agent-cost-analyzer/domain";
 import { fetchConfigStatus, updateRetentionThreshold } from "./config-status.js";

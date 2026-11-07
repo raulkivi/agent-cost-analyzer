@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { describe, expect, it } from "vitest";
 import { FakeProvider } from "../../test-support/audit-fakes.js";
 import { supportsSystemPromptText, type SystemPromptTextLookup } from "./system-prompt-text-reader.js";

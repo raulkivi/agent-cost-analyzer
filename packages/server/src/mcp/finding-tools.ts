@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { findingKindSchema, findingSeveritySchema, findingsQueryResultSchema } from "@agent-cost-analyzer/domain";

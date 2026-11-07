@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { afterEach, describe, expect, it } from "vitest";
 import { fetchSessionAudit, fetchAuditRollup } from "./audit.js";
 import { fetchConfigStatus, updateRetentionThreshold } from "./config-status.js";

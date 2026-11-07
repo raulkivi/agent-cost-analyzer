@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { useId, useRef } from "react";
 import type { ReactNode } from "react";
 import { useEscapeKey, useFocusReturn } from "../../lib/focus.js";

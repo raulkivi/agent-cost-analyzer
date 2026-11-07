@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 // Where the projects file lives (DIP): ProjectCatalog reads and writes text
 // through this, so the standalone app can keep it in its settings folder
 // and tests (or later the extension's global storage) another place.

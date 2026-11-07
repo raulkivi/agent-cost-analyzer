@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { homedir } from "node:os";
 import type { ConfigStatus, ConfigWarning } from "@agent-cost-analyzer/domain";
 import { snapshotFromSettings } from "../../data-sources/vscode-settings/read-vscode-settings.js";

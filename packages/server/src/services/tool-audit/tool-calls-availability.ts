@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { Session, Turn } from "@agent-cost-analyzer/domain";
 
 // Only for an Agent Host session without an event-log marker, i.e. one whose

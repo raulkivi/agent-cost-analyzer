@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { useState } from "react";
 import { getViewStateStorage } from "./current-view-state-storage.js";
 

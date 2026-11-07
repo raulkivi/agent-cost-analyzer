@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { describe, expect, it } from "vitest";
 import type { ClaudeCodeRawEntry } from "./claude-code-jsonl-reader.js";
 import { groupBranchEntriesByUserMessage, isRealUserMessage } from "./turn-grouper.js";

@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { VendorProfile } from "@agent-cost-analyzer/domain";
 
 // Phase 15 step 15.4 (docs/plans/cost-by-repository-and-project.md §3, §8):

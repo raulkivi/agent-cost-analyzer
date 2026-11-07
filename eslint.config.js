@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import js from "@eslint/js";
 import tseslint from "typescript-eslint";
 
@@ -28,6 +30,7 @@ export default tseslint.config(
         projectService: {
           allowDefaultProject: [
             "*.js",
+            "scripts/*.mjs",
             "packages/*/vitest.config.ts",
             "packages/*/vite.config.ts",
             "packages/vscode-extension/.vscode-test.mjs",

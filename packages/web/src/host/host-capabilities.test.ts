@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { HttpTransport } from "../api-client/http-transport.js";
 import type { ApiTransport } from "../api-client/transport.js";

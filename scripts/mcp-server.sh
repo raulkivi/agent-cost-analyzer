@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# SPDX-FileCopyrightText: 2026 Raul Kivi
+# SPDX-License-Identifier: MIT
 # Launches the read-only tool-call audit MCP server over stdio, for
 # `claude mcp add agent-cost-analyzer -- /abs/path/to/scripts/mcp-server.sh`
 # (or any MCP-capable harness). Run `npm install` in the repo first.

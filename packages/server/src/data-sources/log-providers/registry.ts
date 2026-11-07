@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { LogProviderDescriptor, LogProviderStatus } from "@agent-cost-analyzer/domain";
 import { DEFAULT_ACTIVE_PROVIDER_ID, type AppSettingsStore } from "./app-settings.js";
 import type { LogProvider } from "./log-provider.js";

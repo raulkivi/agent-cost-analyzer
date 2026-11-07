@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { describe, expect, it } from "vitest";
 import { buildContentPart, PLACEHOLDER_THRESHOLD_CHARS } from "./build-content-parts.js";
 

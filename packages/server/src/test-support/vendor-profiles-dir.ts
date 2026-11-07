@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { fileURLToPath } from "node:url";
 
 // The server's vendor profiles, with the bundled price book beside them, laid

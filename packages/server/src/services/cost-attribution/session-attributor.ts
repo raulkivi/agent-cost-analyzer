@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { ProjectsFile, RepositoryAttribution, Session, SessionWorkspace, Turn } from "@agent-cost-analyzer/domain";
 import { matchCaptureRule } from "./capture-rule-matcher.js";
 import { resolveChannel, type ChannelResolution } from "./channel-resolver.js";

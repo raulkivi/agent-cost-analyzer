@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { existsSync } from "node:fs";
 import { agentHostDbPath } from "../../data-sources/agent-host/agent-host-paths.js";
 

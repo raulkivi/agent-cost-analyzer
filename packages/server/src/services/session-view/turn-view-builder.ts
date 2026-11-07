@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { preferredCostFigure, type TurnCostFigures } from "@agent-cost-analyzer/domain";
 import { NOT_ATTRIBUTED } from "../insights/insights-dataset-builder.js";
 import { TurnCostFigureBuilder } from "../pricing/turn-cost-figures.js";

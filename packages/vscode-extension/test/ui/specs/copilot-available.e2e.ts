@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 // Manual checks 1.4 (normal use) and the Copilot-Chat-present half of 1.2
 // (logging off), in a VS Code where Copilot Chat is installed and enabled
 // (step 10.16, wdio.conf.mts "copilot" launch).

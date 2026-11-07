@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { CopilotEvent } from "../../data-sources/agent-host/copilot-event.js";
 
 // Token counts for one model call, from a session.usage_record event

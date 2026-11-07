@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { describe, expect, it } from "vitest";
 import { enterWebview, leaveWebview, type FrameDriver, type WebviewFrames } from "./webview-frame.js";
 

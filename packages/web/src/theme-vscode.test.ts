@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 // @vitest-environment node
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";

@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { MessageContentPart, TurnInspectorDetail } from "@agent-cost-analyzer/domain";
 import type { JsonlEnvelope } from "../../jsonl/main-jsonl-reader.js";
 import { buildContentPart } from "../build-content-parts.js";

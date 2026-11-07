@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { Session, TurnInspectorDetail } from "@agent-cost-analyzer/domain";
 import { describeLogProviderContract } from "./contract.js";
 import type { LogProvider, LogProviderAvailability } from "./log-provider.js";

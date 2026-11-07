@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { ModelPrice, VendorProfile } from "@agent-cost-analyzer/domain";
 
 // One row of GitHub's models-and-pricing table: a model has one row per

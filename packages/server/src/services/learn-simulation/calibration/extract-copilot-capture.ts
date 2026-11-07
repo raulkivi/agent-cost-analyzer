@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { Harness } from "@agent-cost-analyzer/domain";
 import type { CopilotEvent } from "../../../data-sources/agent-host/copilot-event.js";
 import { readCopilotCallUsage } from "../../session-enricher/agent-host-call-usage.js";

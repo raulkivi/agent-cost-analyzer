@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 // Phase 15 step 15.9 (docs/plans/cost-by-repository-and-project.md
 // §12.4.1): the server's clock port. Unset, the real clock is used; the
 // usage-scenario suite sets a fixed instant so relative ranges ("last 90

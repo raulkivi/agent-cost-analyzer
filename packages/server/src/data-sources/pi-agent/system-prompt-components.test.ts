@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { describe, expect, it } from "vitest";
 import { buildPiSystemPromptComponents, buildPiSystemPromptComponentsFromState } from "./system-prompt-components.js";
 import type { PiSystemPromptState } from "./system-message-replay.js";

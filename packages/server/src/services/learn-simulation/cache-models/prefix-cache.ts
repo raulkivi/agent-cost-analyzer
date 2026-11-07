@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { CacheOutcome } from "@agent-cost-analyzer/domain";
 import {
   validPrefixTokens,

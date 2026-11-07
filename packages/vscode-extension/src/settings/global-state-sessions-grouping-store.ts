@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { SessionsGrouping, SessionsGroupingStore } from "../sidebar/sidebar-controller.js";
 import type { Memento } from "./global-state-app-settings-store.js";
 

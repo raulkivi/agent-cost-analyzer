@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { z } from "zod";
 import { isoCalendarDateSchema } from "./price-book.js";
 import { replayAssumptionSchema } from "./session-replay.js";

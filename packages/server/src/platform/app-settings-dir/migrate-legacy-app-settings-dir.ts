@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { existsSync, renameSync } from "node:fs";
 import {
   resolveAppSettingsDir,

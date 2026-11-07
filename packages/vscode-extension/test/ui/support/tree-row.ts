@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 // A tree row's text as SidebarViews.rowTexts reads it, against a label and
 // description. VS Code draws the two in separate elements, so the row's
 // innerText may have no space between them; whitespace is ignored.

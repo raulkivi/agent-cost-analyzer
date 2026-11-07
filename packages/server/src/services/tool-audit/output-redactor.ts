@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 // Masks credential-shaped substrings before any tool output leaves the
 // server (architecture.md §11.2: captured terminal output can contain
 // secrets). Pattern list mirrors the mitmproxy provider's header-stripping

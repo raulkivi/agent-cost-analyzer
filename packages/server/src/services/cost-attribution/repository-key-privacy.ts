@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 // Phase 15 step 15.4 (docs/plans/cost-by-repository-and-project.md
 // §10.1.5): MCP output enters a (usually hosted) client model's context, so
 // repositories are named by their normalised key and never by a local

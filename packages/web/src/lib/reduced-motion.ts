@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 // The slice of `window` the reduced-motion check needs; matchMedia is
 // optional because jsdom doesn't have it.
 export interface MediaQueryHost {

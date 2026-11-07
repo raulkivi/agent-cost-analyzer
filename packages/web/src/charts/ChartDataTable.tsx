@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 export interface ChartDataRow {
   key: string;
   // The row's label, rendered as its row header.

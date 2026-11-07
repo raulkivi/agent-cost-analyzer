@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 // Manual check 1.13 (docs/plans/vscode-extension-manual-checks.md) and the
 // fixture isolation guard (plan F5), driven in a real VS Code (step 10.16).
 import { browser, expect } from "@wdio/globals";

@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { VarianceCurrency } from "@agent-cost-analyzer/domain";
 import { formatAmount, usdIn, type DisplayUnit } from "./cost-format.js";
 import type { DateRange } from "./date-ranges.js";

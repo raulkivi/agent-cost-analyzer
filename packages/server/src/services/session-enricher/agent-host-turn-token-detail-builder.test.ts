@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { describe, expect, it } from "vitest";
 import type { CopilotEvent } from "../../data-sources/agent-host/copilot-event.js";
 import {

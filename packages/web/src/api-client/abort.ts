@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 // What a call rejects with when its AbortSignal fires: the same AbortError
 // fetch rejects with, so the HTTP and webview transports look alike.
 export function abortError(): Error {

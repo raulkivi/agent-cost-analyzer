@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { z } from "zod";
 
 // Log-provider selection is a separate app-level contract from Session

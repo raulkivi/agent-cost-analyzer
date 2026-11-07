@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { ToolInventoryEntry } from "@agent-cost-analyzer/domain";
 import type { JsonlEnvelope } from "./main-jsonl-reader.js";
 import { groupEnvelopesByUserMessage } from "./session-usage-spans.js";

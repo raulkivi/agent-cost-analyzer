@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import * as vscode from "vscode";
 import type { WebviewPanelHandle, WebviewPanelOptions } from "../panel/analyzer-panel.js";
 

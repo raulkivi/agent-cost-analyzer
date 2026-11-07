@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { emptyProjectsFile, type ProjectsState, type VendorProfile } from "@agent-cost-analyzer/domain";
 import { AttributionQueryService } from "../services/cost-attribution/attribution-query-service.js";
 import { RepositoryListService } from "../services/cost-attribution/repository-list-service.js";

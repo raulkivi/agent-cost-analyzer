@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 // Enters and leaves a VS Code webview with `browser.switchFrame`. The
 // wdio-vscode-service `WebView.open()/close()` use the deprecated
 // `switchToFrame`, whose notice printed hundreds of lines per run and buried

@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { describe, expect, it, vi } from "vitest";
 import type { Memento } from "./global-state-app-settings-store.js";
 import { GlobalStateSessionsGroupingStore, SESSIONS_GROUPING_KEY } from "./global-state-sessions-grouping-store.js";

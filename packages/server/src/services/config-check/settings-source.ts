@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 // Where checkConfig reads the editor's settings from (vscode-extension.md
 // G6). The standalone app reads the user settings.json file
 // (data-sources/vscode-settings/jsonc-file-settings-source.ts); the

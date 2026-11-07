@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import path from "node:path";
 import type { ConfigurationChangeSource } from "../config/config-change-watcher.js";
 import type { Disposable } from "../panel/analyzer-panel.js";

@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 // Credential-bearing header names stripped (not merely masked) before any
 // captured exchange reaches a MitmExchangeDecoder, the enricher, or the API
 // response (architecture.md §11.2/§6.2.3, phase-9-log-providers-

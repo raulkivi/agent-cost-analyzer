@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { unavailableTokenCount, type Session, type ToolCallRecord, type TurnInspectorDetail } from "@agent-cost-analyzer/domain";
 import type { LogProvider } from "../data-sources/log-providers/log-provider.js";
 import { UnknownLogProviderIdError } from "../data-sources/log-providers/registry.js";

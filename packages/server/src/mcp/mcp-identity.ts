@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 // What differs between the products that serve the MCP tools
 // (vscode-extension.md step 10.9): the server's name, title and description
 // and the texts that name log sources. Tool names, schemas and prompts are the same for every

@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { PromptNode } from "./system-prompt-parser.js";
 import { MAX_MENU_DEPTH, NEUTRAL_COLOR } from "./system-prompt-menu.js";
 

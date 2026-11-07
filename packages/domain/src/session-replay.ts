@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { z } from "zod";
 import { costBasisSchema, currencySchema } from "./cost-figure.js";
 import { cacheOutcomeSchema } from "./simulation.js";

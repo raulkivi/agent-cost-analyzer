@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 // A defensive, non-strict XML-ish parser for the tag structure GitHub
 // Copilot Chat's system prompt is built from (<instructions>,
 // <securityRequirements>, <skills><skill>..., <attachment filePath="...">,

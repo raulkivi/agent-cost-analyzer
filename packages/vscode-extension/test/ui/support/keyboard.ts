@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 // Keyboard-only helpers for the panel's webview (check 1.7, step 10.16): press
 // keys, and describe the focused element, with no mouse.
 import { browser } from "@wdio/globals";

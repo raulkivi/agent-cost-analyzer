@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { describe, expect, it, vi } from "vitest";
 import { SystemPromptLoggerExtension } from "../src/SystemPromptLoggerExtension.js";

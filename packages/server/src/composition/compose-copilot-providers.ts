@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { LogProviderRegistry } from "../data-sources/log-providers/registry.js";
 import type { AppSettingsStore } from "../data-sources/log-providers/app-settings.js";
 import {

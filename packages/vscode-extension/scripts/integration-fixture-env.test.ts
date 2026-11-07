@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { describe, expect, it } from "vitest";
 import { INTEGRATION_FIXTURE_ENV, parseIntegrationFixture } from "./integration-fixture-env.mts";
 

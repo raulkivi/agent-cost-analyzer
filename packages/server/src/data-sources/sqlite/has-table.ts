@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { DatabaseSync } from "node:sqlite";
 
 // A missing table is a shape of the world (a store from an older VS Code, or

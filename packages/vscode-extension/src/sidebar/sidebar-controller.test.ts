@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import type { ConfigStatus, ConfigWarning, Session } from "@agent-cost-analyzer/domain";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";

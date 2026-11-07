@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
 import { describe, expect, it, vi } from "vitest";
 import { describeAppSettingsStoreContract } from "@agent-cost-analyzer/server/src/data-sources/log-providers/app-settings-store-contract";
 import { GlobalStateAppSettingsStore, type Memento } from "./global-state-app-settings-store.js";
