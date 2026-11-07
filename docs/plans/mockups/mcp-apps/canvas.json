@@ -1,0 +1,23 @@
+{
+  "v": 3,
+  "createdOnFiles": { "v": 1, "at": "2026-11-07T18:00:00Z" },
+  "title": "MCP Apps MVP mock-ups (A0b)",
+  "launch": { "view": "canvas" },
+  "pages": [],
+  "boards": {
+    "SessionCost.dc.html": { "x": 0, "y": 0, "w": 2856, "h": 2100, "title": "1 · U1 session cost: KPI tiles with coverage, AI Credits per turn with event markers, top turns, a turn expanded inline, context overhead, Copy \"open in panel\" command (VS Code light, dark, HC; Claude light, dark)" },
+    "SpendRollup.dc.html": { "x": 0, "y": 2400, "w": 2856, "h": 2020, "title": "2 · U2 spend rollup: daily columns, by model and provider, top sessions, and the in-place drill-down into U1 with its back control" },
+    "Findings.dc.html": { "x": 3156, "y": 0, "w": 2856, "h": 1900, "title": "3 · U3 findings: severity tiles, kind and severity filters, findings table, collapsed and opened redacted evidence" },
+    "States.dc.html": { "x": 3156, "y": 2400, "w": 2856, "h": 2700, "title": "4 · States: Unknown, partial coverage, estimate, errors, loading, narrow 360 px, extension vs standalone branding, heading font" }
+  },
+  "order": ["SessionCost.dc.html", "SpendRollup.dc.html", "Findings.dc.html", "States.dc.html"],
+  "notes": {
+    "sample": {
+      "text": "All names, prompts and figures on these boards are invented sample data. VS Code frames resolve the recorded var(--vscode-*) references to the default Light Modern, Dark Modern and Dark High Contrast values (inferred); Claude Desktop frames use the recorded light-dark() values. Plan: docs/plans/mcp-apps.md §5.6.",
+      "w": 360,
+      "x": 6312,
+      "y": 0
+    }
+  },
+  "designSystems": []
+}
