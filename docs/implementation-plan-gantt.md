@@ -1,6 +1,6 @@
 # Implementation plan — Gantt
 
-Timeline of [implementation-plan.md](implementation-plan.md) phases. Percentages are step-based: done phases 100%, minus open owner reviews or manual checks; Phase 14 is 7 of 9 steps. Dates are first-commit to merge dates from git history (as of 2026-11-07); not-started phases have no dates and are listed below the chart.
+Timeline of [implementation-plan.md](implementation-plan.md) phases. Percentages are step-based: done phases 100%, minus open owner reviews or manual checks; Phase 14 is 8 of 9 steps. Dates are first-commit to merge dates from git history (as of 2026-11-07); not-started phases have no dates and are listed below the chart.
 
 ```mermaid
 %%{init: {
@@ -69,8 +69,8 @@ gantt
     section Simulation and replay
     13 Vendor-aware Learn simulation (95%) :done, p13, 2026-11-04, 4d
     13.8 owner review (5%)                 :active, p13r, after p13, 1d
-    14.0-14.6 replay core, API, mock-ups (78%) :done, p14, 2026-11-07, 1d
-    14.7-14.8 UI, docs (22%)               :active, p14r, after p14, 3d
+    14.0-14.7 replay core, API, mock-ups, UI (89%) :done, p14, 2026-11-07, 1d
+    14.8 docs, owner review (11%)          :active, p14r, after p14, 2d
 
     section Cost
     15 Cost by repository and project (95%) :done, p15, 2026-11-05, 3d
@@ -96,7 +96,7 @@ gantt
 
 ## Open items
 
-- Phase 14: steps 14.0-14.6 merged (14.6's boards approved by the owner), 14.7 (UI) in progress. See [Phase 14 detail](#phase-14-detail--analyze-session-replay).
+- Phase 14: steps 14.0-14.7 built (14.6's boards approved by the owner; 14.7's extension scenario first runs in CI), 14.8 (docs) next. See [Phase 14 detail](#phase-14-detail--analyze-session-replay).
 - Phase 15: owner's review and exit criterion on real data.
 - Phase 13: owner's eyes-on review of step 13.8.
 
@@ -189,7 +189,7 @@ A0 → A5 → A6 → A9 → A14 → A15 → A16.
 
 Schedule view of the step table in [analyze-session-replay.md](plans/analyze-session-replay.md) §12. Design, decisions and risks stay there; this file only sequences the work.
 
-- Status (2026-11-07): steps 14.0-14.6 merged (7 of 9, 78%); 14.7 in progress. 14.7-14.8 are estimates.
+- Status (2026-11-07): steps 14.0-14.7 done (8 of 9, 89%). 14.8 is an estimate.
 - Estimates: API/RPC/MCP 2 days, mock-ups 2 days, UI 3 days, docs 2 days. Weekends are excluded.
 - 14.6 needs the owner's approval of the boards before 14.7 starts.
 
@@ -236,16 +236,16 @@ gantt
     14.5 API routes, RPC, MCP tools (100%)          :done, s5, 2026-11-07, 1d
     14.6 Mock-ups, owner approval (100%)            :done, s6, 2026-11-07, 1d
 
+    14.7 UI in app and extension (100%)             :done, s7, 2026-11-07, 1d
+
     section Remaining
-    14.7 UI in app and extension (50%)              :active, crit, s7, 2026-11-07, 3d
     14.8 Docs, owner review (0%)                    :crit, s8, after s7, 2d
 ```
 
 ### Critical path
 
-14.7 → 14.8 (14.5 and 14.6 done).
+14.8 (everything before it done).
 
 ### Exit criteria per open step
 
-- 14.7: component, axe and keyboard tests; UI check in three VS Code themes; scenarios pass in `web-e2e` and `extension-ui`.
 - 14.8: owner reviews.

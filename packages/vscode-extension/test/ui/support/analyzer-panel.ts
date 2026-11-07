@@ -95,6 +95,62 @@ export class PanelView {
     if (!chosen) throw new Error(`No simulated model "${modelId}" in the picker`);
   }
 
+  // Step 14.7: picks a model in Analyze mode's "Replay on" select (the
+  // shared VendorPicker, as Learn's), the same way as chooseSimulationModel.
+  // The picker fills once the vendor profiles load, so it waits for the model.
+  async chooseReplayModel(modelId: string): Promise<void> {
+    await browser.waitUntil(() => this.pickReplayModel(modelId), { timeout: WAIT_MS, timeoutMsg: `No replay model "${modelId}" in the Replay on picker` });
+  }
+
+  private pickReplayModel(modelId: string): Promise<boolean> {
+    return browser.execute((id) => {
+      const select = document.querySelector<HTMLSelectElement>(".replay-on-picker select");
+      if (select === null || select.disabled) return false;
+      const setter = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, "value")?.set;
+      setter?.call(select, id);
+      select.dispatchEvent(new Event("change", { bubbles: true }));
+      return select.value === id;
+    }, modelId);
+  }
+
+  // The replay summary strip's simulated total as shown ("1.59"), or null
+  // while there is no strip for that model.
+  replaySimulatedTotal(modelId: string): Promise<string | null> {
+    return browser.execute((id) => {
+      const strip = document.querySelector("[aria-label='Replay summary']");
+      const group = strip?.querySelector("[role='group'][aria-label='Simulated total']");
+      if (!group || !(group.textContent ?? "").includes(id)) return null;
+      return group.querySelector(".replay-total-value")?.textContent?.trim() ?? null;
+    }, modelId);
+  }
+
+  // The model each Simulated column group of the turns table is for, and
+  // how many simulated cells the body has.
+  simulatedColumns(): Promise<{ models: string[]; cells: number }> {
+    return browser.execute(() => ({
+      models: Array.from(document.querySelectorAll("table thead th.sim-group .sim-group-model")).map((model) => (model.textContent ?? "").trim()),
+      cells: document.querySelectorAll("table tbody td.sim-cell").length,
+    }));
+  }
+
+  // Compare models' table, one row per model: its simulated total as shown
+  // and whether it is tagged as the session's measured model.
+  compareModelRows(): Promise<{ model: string; total: string; measured: boolean }[]> {
+    return browser.execute(() => {
+      const table = Array.from(document.querySelectorAll("table")).find((candidate) =>
+        (candidate.querySelector("caption")?.textContent ?? "").startsWith("Simulated cost of this session on each model"),
+      );
+      return Array.from(table?.querySelectorAll("tbody tr") ?? []).map((row) => {
+        const cells = row.querySelectorAll("td");
+        return {
+          model: (cells[0]?.querySelector(".mono")?.textContent ?? "").trim(),
+          total: (cells[3]?.textContent ?? "").trim(),
+          measured: (cells[0]?.textContent ?? "").includes("Measured model"),
+        };
+      });
+    });
+  }
+
   // The turns table's Cache column as the words a screen reader hears, one
   // per row ("Cache hit", "Cache outcome unknown", ...).
   cacheOutcomes(): Promise<string[]> {

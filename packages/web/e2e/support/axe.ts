@@ -8,14 +8,17 @@ import type { Page } from "@playwright/test";
 // as the component suite's test-support/axe.ts.
 const axePath = createRequire(import.meta.url).resolve("axe-core/axe.min.js");
 
-export async function axeViolations(page: Page): Promise<string[]> {
+// `exclude`: CSS selectors of parts a scenario doesn't own, each with its
+// reason at the call site.
+export async function axeViolations(page: Page, options: { exclude?: string[] } = {}): Promise<string[]> {
   await page.addScriptTag({ path: axePath });
-  return page.evaluate(async () => {
-    const axe = (window as unknown as { axe: { run: (context: Document, options: object) => Promise<{ violations: { id: string; help: string; nodes: { target: string[] }[] }[] }> } }).axe;
-    const results = await axe.run(document, {
+  return page.evaluate(async (exclude) => {
+    const axe = (window as unknown as { axe: { run: (context: Document | object, options: object) => Promise<{ violations: { id: string; help: string; nodes: { target: string[] }[] }[] }> } }).axe;
+    const context = exclude.length === 0 ? document : { include: [document], exclude: exclude.map((selector) => [selector]) };
+    const results = await axe.run(context, {
       runOnly: { type: "tag", values: ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"] },
       resultTypes: ["violations"],
     });
     return results.violations.flatMap((violation) => violation.nodes.map((node) => `${violation.id}: ${violation.help} — ${node.target.join(" ")}`));
-  });
+  }, options.exclude ?? []);
 }
