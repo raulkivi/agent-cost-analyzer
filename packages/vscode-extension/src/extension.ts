@@ -28,6 +28,7 @@ export function activate(context: vscode.ExtensionContext): void {
     hostCommands: createVscodeHostCommands(vscode, documents),
     translate: vscode.l10n.t,
     walkthrough: createVscodeWalkthrough(vscode, context.extension.id),
+    workspaceFolderPaths: () => (vscode.workspace.workspaceFolders ?? []).map((folder) => folder.uri.fsPath),
   });
   context.subscriptions.push(extension, registerReadOnlyDocuments(vscode, documents));
 
@@ -48,6 +49,9 @@ export function activate(context: vscode.ExtensionContext): void {
     }
   }
   context.subscriptions.push(
+    // Step 15.14: the status bar names the workspace's repository, so a
+    // folder added or removed re-reads it.
+    vscode.workspace.onDidChangeWorkspaceFolders(() => void extension.sidebar.refresh()),
     registerSessionsView<vscode.TreeItem>(vscode, extension.sidebar, vscode.l10n.t, {
       setContext: (key, value) => void vscode.commands.executeCommand("setContext", key, value),
     }),

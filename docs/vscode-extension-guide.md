@@ -315,8 +315,25 @@ sessions today have cost data"). Select it to open the panel.
   Select it to open the Setup view.
 - With no sessions today, the item is hidden.
 
-The item updates on each refresh, not on a timer, so after midnight it
-changes on the next refresh.
+When the open folder is in a git repository, the item shows that
+repository's AI Credits today, for example `portal-web 48.20 AI Credits
+today`, and its tooltip adds every repository's total:
+
+```
+AI Credits today
+portal-web (this workspace): 48.20
+All repositories: 61.75
+3 of 4 sessions today have cost data
+```
+
+A repository with no remote is named by its folder only. A multi-root
+workspace adds up its folders' repositories (`portal-web +1`). If the
+workspace's repository has no session today, the item shows every
+repository's total and the tooltip says so. With no folder open, or one
+outside a repository, it shows every repository's total.
+
+The item updates on each refresh, and when you add or remove a workspace
+folder, not on a timer, so after midnight it changes on the next refresh.
 
 ### Selection sync
 

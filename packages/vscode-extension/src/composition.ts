@@ -3,6 +3,8 @@ import path from "node:path";
 import type { HostEvent } from "@agent-cost-analyzer/domain";
 import { createExtensionApiService } from "@agent-cost-analyzer/server/src/composition/create-extension-api-service";
 import { createSessionAttributor } from "@agent-cost-analyzer/server/src/composition/create-session-attributor";
+import { NodeReadOnlyFileSystem } from "@agent-cost-analyzer/server/src/platform/file-system/node-read-only-file-system";
+import { RepositoryResolver } from "@agent-cost-analyzer/server/src/services/cost-attribution/repository-resolver";
 import { ExtensionCommands } from "./commands/extension-commands.js";
 import { watchConfigChanges, watchExtensionChanges, type ConfigurationChangeSource, type ExtensionsChangeSource } from "./config/config-change-watcher.js";
 import type { Translate } from "./l10n/localize.js";
@@ -51,6 +53,9 @@ export interface ExtensionCompositionInput {
   // Opens the Get Started walkthrough: vscode/vscode-walkthrough.ts over the
   // real API.
   walkthrough: WalkthroughLauncher;
+  // The open workspace's folder paths (vscode.workspace.workspaceFolders),
+  // for the status bar's repository (step 15.14); read on every refresh.
+  workspaceFolderPaths(): string[];
 }
 
 export interface ComposedExtension extends Disposable {
@@ -88,6 +93,7 @@ export function composeExtension({
   hostCommands,
   translate,
   walkthrough,
+  workspaceFolderPaths,
 }: ExtensionCompositionInput): ComposedExtension {
   const mediaDir = path.join(extensionPath, "media");
   // Copilot only (vscode-extension.md §3.1). Every log path comes from the
@@ -146,12 +152,22 @@ export function composeExtension({
   // Step 15.14 (plan §11.9): each session's repository from its folder, as
   // the Dashboard's attribution resolves it; repositories need no vendors.
   const attributor = createSessionAttributor({ vendorProfiles: [] });
+  // The workspace's own folders, resolved the same way (the extension has no
+  // projects file, so no aliases apply).
+  const folderRepositories = new RepositoryResolver(new NodeReadOnlyFileSystem());
   const sidebar = new SidebarController(
     {
       listSessions: () => api.listSessions(),
       attributeRepositories: (sessions) => {
         const snapshot = attributor.snapshot();
         return new Map(sessions.map((session) => [session.id, snapshot.repository(session)]));
+      },
+      workspaceRepositoryKeys: () => {
+        const keys = workspaceFolderPaths().flatMap((cwd) => {
+          const found = folderRepositories.resolve({ known: true, cwd });
+          return found.attributed ? [found.repository.key] : [];
+        });
+        return [...new Set(keys)];
       },
       listLearnScenarios: () => api.listLearnScenarios(),
       getConfigStatus: () => api.getConfigStatus(),

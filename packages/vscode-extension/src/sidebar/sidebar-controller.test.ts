@@ -310,6 +310,47 @@ describe("SidebarController grouping", () => {
   });
 });
 
+// Step 15.14 (plan §11.9): the status bar shows the workspace's repository.
+describe("SidebarController status bar per workspace repository", () => {
+  const PORTAL = { attributed: true as const, repository: { key: "github.com/example/portal-web", source: "git-remote" as const } };
+
+  function workspaceSetup(workspaceRepositoryKeys: SidebarSources["workspaceRepositoryKeys"]) {
+    const onInternalError = vi.fn();
+    const controller = new SidebarController(
+      {
+        relistLogSources: () => {},
+        listSessions: async () => [session("a", 4), session("b", 2)],
+        getConfigStatus: async () => status([]),
+        listLearnScenarios: async () => [],
+        attributeRepositories: () => new Map([["a", PORTAL]]),
+        workspaceRepositoryKeys,
+      },
+      { now: () => NOW, timeZone: "UTC", onInternalError },
+    );
+    return { controller, onInternalError };
+  }
+
+  it("shows today's AI Credits for the workspace's repository, read in the refresh", async () => {
+    const keys = vi.fn(() => ["github.com/example/portal-web"]);
+    const { controller } = workspaceSetup(keys);
+    await controller.refresh();
+
+    expect(controller.statusBar()?.text).toBe("$(graph) portal-web 4.00 AI Credits today");
+    expect(controller.statusBar()?.tooltip).toContain("All repositories: 6.00");
+    expect(keys).toHaveBeenCalledTimes(1);
+  });
+
+  it("falls back to every repository's total when the workspace's repositories can't be read", async () => {
+    const { controller, onInternalError } = workspaceSetup(() => {
+      throw new Error("no folders");
+    });
+    await controller.refresh();
+
+    expect(controller.statusBar()?.text).toBe("$(graph) 6.00 AI Credits today");
+    expect(onInternalError).toHaveBeenCalledWith("workspaceRepositoryKeys", expect.objectContaining({ message: "no folders" }));
+  });
+});
+
 describe("SidebarController translation (vscode-extension.md §3.5 Localization)", () => {
   it("renders the trees and the status bar through the translate function it was given", async () => {
     const controller = new SidebarController(
