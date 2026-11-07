@@ -2,7 +2,7 @@
 
 **Last changed:** 2026-11-07 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
-Status: **in progress: A1–A4 and A8 done (2026-11-07); planned 2026-10-28, updated
+Status: **in progress: A0, A0b, A1–A5 and A8 done (2026-11-07); planned 2026-10-28, updated
 2026-11-07 for the Phase 14 and Phase 15 tools.** This is Phase 12 in
 [implementation-plan.md](../implementation-plan.md). Its dependencies are
 met: Phase 9.12's tools are done, step 10.13 is done and `ext-v0.1.0`
@@ -465,7 +465,7 @@ fewer, an exact spec, and acceptance tests the local agent never sees.
 | A2 | `injectBrand(html: string, brand: ViewBrand): string` in `mcp/apps/inject-brand.ts`. Throws when the placeholder is missing; escapes HTML attribute characters. | low | setup6 | — |
 | A3 | `McpIdentity.deepLinkBase` (Copilot identity only), `toViewBrand(identity, version)`, and the icon SVG exported from `mcp-branding.ts` | low | Haiku | A2 |
 | A4 | `packages/web` package exports for the reusable modules (§4.3), with no app change. Typecheck and the web tests stay green. | low | Haiku | — |
-| A5 | `packages/mcp-apps` scaffold: Vite single-file build, ext-apps 1.7.5 pinned, `AppHostPort` plus `App` adapter and fake, the view router, a bundle size budget test (≤ 450 KB uncompressed) | medium | Sonnet | A0, A4 |
+| A5 | `packages/mcp-apps` scaffold: Vite single-file build, ext-apps 1.7.5 pinned, `AppHostPort` plus `App` adapter and fake, the view router, a bundle size budget test (≤ 900 KB uncompressed; raised from 450 KB by the owner 2026-11-07 because ext-apps pulls in zod, no patching of dependencies). Done 2026-11-07: `dist/views.html` is 672,801 bytes | medium | Sonnet | A0, A4 |
 | A6 | Theme layering: `theme-mcp-host.css`, `brand.css`, contrast tests (text ≥ 4.5:1, marks ≥ 3:1) against the fallbacks and against recorded VS Code and Claude variable sets from A0, light and dark | medium | Sonnet (frontend-design skill) | A0, A5 |
 | A7 | View models: `toSessionCostViewModel`, `toCostRollupViewModel`, `toFindingsViewModel` (§4.3), one run each | low | setup6 | A1, A5 |
 | A8 | Server group `registerAppViews`, `ViewSource`/`FileViewSource`, `get_turn_series`, `_meta.ui` on three tools. In-memory client tests: `tools/list` metadata, `resources/read` MIME type and the injected brand, unchanged `content`. | medium | Sonnet | A1, A2, A3 |
@@ -599,7 +599,7 @@ sections ships first, as extension 0.3.0 and app 0.10.0.
 | A shorter `content` for UI-capable clients would save model tokens | Changes what the model sees per host | Follow-up decision (§11) |
 | Tabs that mix fetching and rendering (Phase 15's Dashboard tabs, `CompareModelsView`, `EstimatePanel`) | The split in A17 grows into a web refactor | A17 splits only what U9–U15 render. Anything else stays. |
 | Mock-ups drawn before A0 would guess the host variables | Boards redrawn | A0b starts after A0 and uses its recorded variables |
-| Bundle size with the Increment 2/3 views | Over the 450 KB budget | Lazy route chunks inlined into the single file, or a raised budget, decided at A20 |
+| Bundle size with the Increment 2/3 views | Over the 900 KB budget (the scaffold alone is 657 KiB, mostly React and zod via ext-apps) | Lazy route chunks inlined into the single file, or a raised budget, decided at A20 |
 | Approval prompts on view-initiated calls to model-visible tools (U9–U12 drill-down) | Each click asks the user | **Resolved (A0):** `get_turn_series` is an app-only tool and did not prompt. Prompts for model-visible tools are not yet tested; check in A9. |
 
 ## 10. Rejected: A2UI
