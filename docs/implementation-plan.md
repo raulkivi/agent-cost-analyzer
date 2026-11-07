@@ -13,7 +13,8 @@ merged to `main`. The extension's 0.1.0 is released (tag `ext-v0.1.0`,
 section), Phase 11 (not started), Phase 12 (planned), Phase 13 (in
 progress: steps 13.0-13.10 and 13.5a merged, the owner's eyes-on review
 of 13.8 open), Phase 14
-(planned after 13) and Phase 15 (steps 15.0-15.15 done; the owner's docs review and
+(steps 14.0-14.7 built and 14.8's docs written; the owner's docs review
+and the §13 exit criterion on real sessions open) and Phase 15 (steps 15.0-15.15 done; the owner's docs review and
 the exit criterion on real data open). A proposed plan,
 [plans/classic-subagent-credits.md](plans/classic-subagent-credits.md),
 covers classic Copilot Chat subagent AI Credits; it has no step number yet.

@@ -84,9 +84,11 @@ This repo builds two products from one codebase:
   MCP tool results. Includes the use-case analysis, branding rules and
   tasks.
 - [Analyze session replay plan](docs/plans/analyze-session-replay.md) —
-  Phase 14 (planned): replay a real Claude Code or Copilot session on
-  another model, beside what it really cost, with a self-check on its own
-  model and a Compare models view.
+  Phase 14 (steps 14.0–14.7 built; the docs are in the owner's review):
+  replay a real Claude Code or Copilot session on another model, beside
+  what it really cost, with a self-check on its own model and a Compare
+  models view, in both products and through MCP. See the User Guide's
+  [Replaying a session on another model](docs/UserGuide.md#replaying-a-session-on-another-model).
 - [Cost by repository and project plan](docs/plans/cost-by-repository-and-project.md) —
   Phase 15 (steps 15.0–15.15 done; the owner's review of the docs and the
   exit criterion on real data are open): attribute cost to repositories, group them into
@@ -375,6 +377,16 @@ session turn by turn:
   [User Guide](docs/UserGuide.md#cost-by-repository-and-project), and
   [architecture.md §6.4](docs/architecture.md#64-cost-by-repository-and-project-phase-15)
   for how the figures are worked out.
+
+- **Replay a session on another model** — in Analyze mode, **Replay on**
+  runs a Claude Code or Copilot session's own requests and token counts
+  through another model's caching rules and prices, and shows what it
+  would have cost about, labelled **Simulated**, beside what it did cost.
+  A self-check on the session's own model, the coverage and the
+  assumptions come with it, and **Compare models** ranks up to 10 models.
+  Nothing is stored. See the
+  [User Guide](docs/UserGuide.md#replaying-a-session-on-another-model) and
+  the [plan](docs/plans/analyze-session-replay.md).
 
 - **Analyze mode** — pick one of your own real sessions (VS Code Copilot
   Chat, a Claude Code session, a mitmproxy capture, or a pi coding agent session — see the **Source**

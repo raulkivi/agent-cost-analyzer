@@ -39,6 +39,11 @@ Microsoft.
   sessions and first-time use of a tool or model. **Cost over time** and
   **Compare** show each repository's cost by week or month, with the
   dates a model's price changed.
+- **Replay on another model.** Pick a model in **Replay on** to see what a
+  session would have cost about there, beside what it did cost, in
+  Simulated columns with a summary of coverage and assumptions. **Compare
+  models** ranks up to 10 models. The session's own turns and token counts
+  are kept; only caching and prices change.
 - **Tool audit.** Every tool call in a session, why failed calls failed,
   and retried commands, plus a roll-up across sessions.
 - **Learn mode.** 18 sample sessions, in the Learn view, that show how
@@ -46,8 +51,8 @@ Microsoft.
   change what a turn costs.
 - **MCP server for Copilot agent mode** (off by default). Ask Copilot Chat
   "what did my last session cost?" and it answers from the same local logs
-  through 17 read-only tools, including cost by repository and why it
-  changed.
+  through 19 read-only tools, including cost by repository, why it
+  changed, and what a session would have cost on another model.
 
 An unknown figure is shown as unknown, never as 0.
 

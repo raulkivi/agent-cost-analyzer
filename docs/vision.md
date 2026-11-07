@@ -73,6 +73,20 @@ In addition to the shared layout, Analyze mode adds:
 - **Per-turn detail**: for the selected turn, which tools were called, and
   which files (or file ranges) were added to the prompt — each with its own
   token count — so it's clear exactly what made that turn expensive.
+- **Replay on another model** (Phase 14,
+  [plans/analyze-session-replay.md](plans/analyze-session-replay.md)): what
+  would this session have cost on a different model? The session's own
+  token counts are run through the other vendor's documented caching rules
+  and priced, turn by turn, beside what it really cost; a Compare models
+  view ranks several models at once. It is the same simulator Learn mode
+  uses, applied to a real session. Every replayed figure is labelled
+  **Simulated** and the measured figures stay beside it. The honest caveat:
+  the other model would not have behaved the same — it would have written
+  other answers and made other tool calls — and the replay assumes it did
+  (assumption A1). A self-check that replays the session on its own model
+  and compares the result with the log shows how far the caching rules can
+  be trusted. Claude Code and VS Code Copilot sessions can be replayed so
+  far, in both products; pi and mitmproxy sessions can't yet.
 
 ### 3.3 Shared layout
 
@@ -168,8 +182,8 @@ showing the behavioral-proxy fallback silently.
   - **AI Credits Analyzer**, a VS Code extension for GitHub Copilot Chat users, published to
     the VS Code Marketplace and Open VSX. It reads Copilot Chat logs only
     (no Claude Code, pi or mitmproxy support) and includes Learn and
-    Analyze modes, the tool audit, the insights dashboard and a
-    Copilot-only MCP server;
+    Analyze modes, the tool audit, the insights dashboard, session replay
+    on another model and a Copilot-only MCP server;
   - **Agent Cost Analyzer**, the standalone app (this local web app), which stays a superset:
     every log provider, including VS Code, and its own stdio MCP server.
 
@@ -201,12 +215,23 @@ showing the behavioral-proxy fallback silently.
   adds cost by repository and project, price history, frozen billing
   statements as the evidence an invoice is built from, and estimates as a
   range, never one number. It has no tax, invoice numbering or payment
-  tracking, no live price fetching (prices come from the bundled, sourced
-  price book and the user's own versions), and no forecasting on another
-  model until Phase 14's replay. Projects, statements and estimates are in
-  the standalone app only; the VS Code extension shows cost by repository.
-- Not scoped to editing or replaying sessions (no `/rewind`-style mutation of
-  real logs) — it's a read-only viewer/analyzer.
+  tracking, and no live price fetching (prices come from the bundled, sourced
+  price book and the user's own versions). An estimate on another model
+  comes from Phase 14's replay and is Simulated. Projects, statements and
+  estimates are in the standalone app only; the VS Code extension shows
+  cost by repository.
+- Not scoped to editing sessions (no `/rewind`-style mutation of real logs)
+  — it's a read-only viewer/analyzer. Phase 14's "replay on another model"
+  is a simulation over the session's token counts; it never re-runs or
+  changes the session.
+- Not a predictor of how another model would have behaved. A replay keeps
+  the session's shape (the same turns, prompts and answer lengths); only
+  caching and prices change
+  ([plans/analyze-session-replay.md](plans/analyze-session-replay.md) §2).
+  It does not re-tokenise text for another vendor's tokenizer (no content is
+  read; the counts are kept as they are), uses only the sourced prices in
+  the vendor profiles and price book (no live prices), and stores nothing:
+  a replay is computed on request and never written.
 - No dependency on the cloud-synced (DuckDB) store — the app only reads local
   sources through configured log providers (initially VS Code SQLite/
   `main.jsonl` and mitmproxy captures), by design.

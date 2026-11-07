@@ -166,6 +166,17 @@ outbound network calls.
 | `services/cost-analysis` | Phase 15 §8: the cost cube over the Insights dataset and the pure builders for cost over time, compare, project cost and variance (usage, price and mix effects), behind `CostAnalysisService` |
 | `services/billing` | Phase 15 §8.5–§8.6: statements (draft, freeze, diff, CSV/JSON/Markdown export) and estimates (a p50–p90 range); standalone app only |
 | `data-sources/projects`, `data-sources/statements` | Phase 15: the projects file and issued statements, as JSON in the app's own settings folder (the only files the app writes besides `settings.json`, §11.2) |
+| Request traces (`RequestTraceReader`) | Phase 14 ([plans/analyze-session-replay.md](plans/analyze-session-replay.md) §4.1, step 14.2): an optional `LogProvider` capability (`canReadRequestTrace`, ISP) that reads a session's main chain as a numbers-only `RequestTrace`, one record per LLM request. `ClaudeCodeLogProvider` and `VscodeLogProvider` implement it (classic store first, then Agent Host through `CopilotSessionSource.readRequestTrace`); pi and mitmproxy don't yet (D1). One pure builder per provider, each reusing its provider's own turn building: `buildClaudeCodeRequestTrace` (`data-sources/claude-code/request-trace-builder.ts`), `buildLocalRequestTrace` (`data-sources/jsonl/local-request-trace.ts`) and `buildAgentHostRequestTrace` (`services/session-enricher/agent-host-request-trace.ts`) |
+| `services/session-replay/request-trace-scripter.ts` | Phase 14 step 14.3: `scriptFromRequestTrace` (and the injectable `RequestTraceScripter`) turns a trace into a `ScenarioScript` with compaction, clear, model-switch and `extended-ttl` events (pure). It replaced 13.5a's `scriptFromCapture`; calibration replays its captures through it |
+| `services/session-replay/replay-model-resolver.ts` | Phase 14 step 14.4: `ReplayModelResolver` maps a log's model id (a date suffix, `[1m]`, `copilot/`) to a vendor profile's model through Phase 15's `candidateModelIds`; no near match is guessed, and a model whose caching is undocumented is refused |
+| `services/session-replay/replay-pricer.ts` | Phase 14 step 14.4, D2: `replayChannel` picks the price channel (a Copilot session stays on Copilot; any other goes to the target vendor's API) and `ReplayPricer` prices each simulated request through Phase 15's `CostPricer` at list prices, as of the request's date. `convertCost` converts only at 1 AI Credit = $0.01 |
+| `services/session-replay/replay-aligner.ts` | Phase 14 step 14.4: `alignReplay` sums simulated requests into the session's turns, with paired totals and coverage (pure) |
+| `services/session-replay/replay-self-check.ts` | Phase 14 step 14.4 (G4, D8): `replaySelfCheck`, calibration's own check of a replay on the session's own model against its log |
+| `services/session-replay/replay-script-variants.ts` | Phase 14 step 14.4: `withoutModelSwitches`, the script a target model runs (A1, A5) |
+| `services/session-replay/session-replay-service.ts` | Phase 14 step 14.4: `SessionReplayService` (`replay`, `compare`) composes trace, scripter, the Learn simulator, pricer, aligner and self-check over narrow ports (DIP); it owns the limits and the A1–A5 assumption texts |
+| `services/session-replay/replay-query-params.ts` | Phase 14 step 14.5: the replay options' zod schemas, shared by HTTP, the webview RPC and MCP so all three give the same messages |
+| `composition/create-session-replay.ts` | Phase 14 step 14.5: `createSessionReplay`, the one wiring of `SessionReplayService` used by the standalone app, its MCP server, the extension and its MCP server |
+| `mcp/replay-tools.ts` | Phase 14 step 14.5 (D7): the `replay` tool group, `replay_session` and `compare_models_for_session` (read-only, domain output schemas) |
 | `services/config-check` | Runs at server startup and on demand (§6.3): checks `agentDebugLog.fileLogging.enabled` and `maxRetainedSessionLogs` against constraints 8/10, producing actionable `ConfigWarning`s |
 | `domain` | The shared normalized TypeScript types (§5), plus schema validation, used by every other module and re-exported to the frontend build |
 | `api` | Thin REST layer (§8) that calls into `domain`/services and returns JSON; no business logic lives here |
@@ -192,6 +203,8 @@ SQLite, `main.jsonl`, or scenario fixtures.
 | `state/session-store` | Holds the currently loaded `Session`, selected turn index, Learn/Analyze `mode`, selected Analyze log-provider id, and right-column `rightTab` (Analyze mode only); the rest of the UI is a pure function of this state |
 | `api-client` | Fetches provider descriptors, selects the active provider, and fetches sessions through the stable REST API; it is the only frontend module that knows an HTTP boundary exists |
 | `charts/*` | D3-based AI Credits sparkline rendered in the center column's header row |
+| `components/replay/*` | Phase 14 step 14.7 (behind `ProductFeatures.sessionReplay`, both products): `ReplayOnPicker` (Learn's `VendorPicker` with an "Off (measured only)" first choice; disabled with the server's reason for pi and mitmproxy), `ReplaySummaryStrip`, `ReplaySummaryPanel` (a dialog; the assumptions open the first time), `ReplayTurnNote` in the Explanation tab, `ReplayStatus` (loading with Cancel, not replayable, errors), `ReplayPricingNote`, `SimulatedBadge` and `CompareModelsView`. `TurnsTable` gains a dashed "Simulated · <model>" column group. State in `state/use-session-replay.ts`, `use-analyze-replay.ts` and `use-replay-comparison.ts`; the client in `api-client/replay.ts` |
+| `charts/ReplayCompareBars.tsx` | Phase 14 step 14.7: the Compare models bars (one hue, the session's own model hatched and outlined, a measured reference line, an unknown total as "unknown") |
 
 ### 4.3 Shared domain/schema package
 
@@ -458,8 +471,8 @@ web's Billing tab (`components/billing/`) and Projects editor
 
 MCP across the products (Phase 15 step 15.13, plan §10.1.4–§10.1.6):
 `createMcpServer` takes `toolGroups` (`sessions`, `audit`, `cost`,
-`findings`, `attribution`, `pricing`, `costAnalysis`, `billing`; every
-group by default), and a group is registered only when its services are
+`findings`, `attribution`, `pricing`, `costAnalysis`, `replay` from
+Phase 14, `billing`; every group by default), and a group is registered only when its services are
 given too. The standalone stdio server serves all 21 tools and 6 prompts (19 before Phase 14 step 14.5 added the `replay` group).
 The extension's (`createCopilotMcpServices`) serves
 `WITHOUT_BILLING_TOOL_GROUPS`: repositories over the Copilot provider
@@ -531,6 +544,31 @@ price version), a keyboard crosshair, and `costChartTable` for "View as
 table". `CostOverTimeTab` and `CompareTab` (with `CostFilters`) compose
 them; `CompareTab` keeps the priority columns and a row's `Drawer` below
 700 px.
+
+Session replay (Phase 14 steps 14.1–14.7,
+[plans/analyze-session-replay.md](plans/analyze-session-replay.md);
+`packages/domain/src/request-trace.ts` and `session-replay.ts`; data flow
+in §6.5): a `RequestTrace` is a session's main chain as one strict,
+numbers-only `TraceRequest` per LLM request (`index`, `turnIndex`,
+`startedAt`, `model`, uncached input, cache read, `cacheWrite` with the
+1-hour `extendedCacheWrite` inside it, output, `reasoning`, and an optional
+`compaction`/`clear`/`model-switch` event), plus `notTraced` turns with
+their reasons. Indexes, times and turns never go back. `cacheWrite` is
+`null`, never 0, where the log records no writes (A4). A `SessionReplay` is
+always `simulated: true`: the target `model` and `vendorId`, the
+`measuredModels`, `pricing` (the `channel` `copilot`/`api`, or `null` with a
+reason; `asOf`; the `requested` basis), one `currency`, and per turn the
+measured cache read and cost beside the simulated cache read, write,
+outcome and cost, or a `notReplayedReason`. `totals` (measured, simulated,
+`difference`) are `null` when unknown, never 0; `coverage` counts turns and
+requests replayed and the rest by reason; `selfCheck` is the own-model check
+or `null`; `assumptions` are A1–A5 with confidence. A
+`SessionReplayComparison` holds the measured total and 1 to
+`MAX_COMPARED_MODELS` (10) entries, each a model's simulated total, its
+replayed turns and `isMeasuredModel`. `ProductFeatures.sessionReplay` (step
+14.7, `product-profile.ts`) is on exactly when the backend can answer
+replays: always in the standalone app, and in the extension when its
+bundled price book is there.
 
 Log-provider selection is a separate app-level contract, not a provider-
 specific API or UI branch:
@@ -667,8 +705,6 @@ a new strategy only when its caching kind is new.
 | `services/learn-simulation/pricer.ts` | `server` | token buckets × price tier → USD → AI credits (1 credit = $0.01) |
 | `services/learn-simulation/simulate-scenario.ts` | `server` | script + model → Learn `Session` (pure) |
 | `services/learn-simulation/learn-simulation-service.ts` | `server` | `getScenario`, `compareScenario`, `listVendorProfiles` behind `ApiService` |
-| `services/session-replay/request-trace-scripter.ts` | `server` | Phase 14: a real session's `RequestTrace` → `ScenarioScript` (compaction, clear, model switch, 1-hour writes; pure); calibration replays its captures through it |
-| `services/session-replay/session-replay-service.ts` | `server` | Phase 14: replay and compare a session on other models: `ReplayModelResolver`, `ReplayPricer` (D2, through `CostPricer`), `alignReplay`, `replaySelfCheck` (calibration's check), over narrow ports |
 | `components/learn/*` | `web` | vendor picker, assumptions popover, sources footer, cache-outcome badge, How vendors differ card, Vendors tab |
 
 Where a rule a turn depends on is `unknown` for the chosen vendor, the turn's
@@ -677,6 +713,9 @@ whole caching kind is unknown are listed but not simulated. The rules and
 their sources are in
 [plans/vendor-aware-learn-simulation.md](plans/vendor-aware-learn-simulation.md)
 §5 and [learn-rule-register.md](learn-rule-register.md).
+
+Phase 14 runs this same simulator, with the same rules, on the token shape
+of a real Analyze session (§6.5).
 
 ### 6.2 Analyze mode
 
@@ -2094,7 +2133,112 @@ this is the end-to-end view.
 | Dashboard tabs | Overview, Cost over time, Compare, Project, Billing | Overview, Cost over time, Compare (`ProductFeatures.projectsAndBilling` false) |
 | Statements and estimates | Yes | No (D7) |
 | Side bar and status bar | — | Sessions grouped by day or repository; today's AI Credits for the workspace's repository (step 15.14) |
+| Session replay (Phase 14, D5) | Replay on and Compare models for Claude Code and VS Code sessions; pi and mitmproxy not yet (D1) | Replay on and Compare models for Copilot sessions (classic and Agent Host), priced from the bundled price book |
 | MCP | 21 tools, 6 prompts | 19 tools, 4 prompts (no `billing` group) |
+
+### 6.5 Session replay (Phase 14)
+
+A replay answers "what would this real session have cost on another
+model?". It runs Phase 13's simulator (§6.1.1) on the token shape of a
+session the user really ran, and shows the result beside the measured
+figures, labelled **Simulated**. Details and decisions are in
+[plans/analyze-session-replay.md](plans/analyze-session-replay.md); this is
+the end-to-end view.
+
+```text
+provider log ──readRequestTrace──▶ RequestTrace (numbers only, per request)
+                                        │ scriptFromRequestTrace
+                                        ▼
+                                  ScenarioScript
+                 ┌──────────────────────┴──────────────────────┐
+     withoutModelSwitches                              switches kept
+                 ▼                                             ▼
+  simulateScenario(target model)          simulateScenario(own model, cheaperModelId)
+                 │                                             │
+   ReplayPricer (CostPricer, D2)                       replaySelfCheck vs trace
+                 ▼                                             │
+   alignReplay ◀── measured figures (as get_session_cost)      │
+                 ▼                                             ▼
+                 └────────────▶ SessionReplay ◀────────────────┘
+```
+
+1. **Trace.** The provider reduces its log to one record per LLM request in
+   the session's main chain (time, model, token counts; no text). A turn is
+   traced whole or not at all; an untraced turn keeps its reason.
+   Sub-agent requests are left out of the main chain (D6).
+2. **Script.** `scriptFromRequestTrace` derives each request's new tokens
+   (this input − previous input − previous output, reasoning not carried).
+   A shrinking prompt becomes `compaction` (or `clear` when the log says
+   so), a model change `model-switch`, and the first 1-hour write
+   `extended-ttl`.
+3. **Simulate.** `simulateScenario` with the target's vendor profile and
+   model and the session's harness (`claude-code`, `vscode-local`,
+   `copilot-agent-host`). Harness cache defaults are on, so Claude Code's
+   1-hour cache applies (calibration runs with them off; no capture's result
+   changes).
+4. **Price.** Each simulated request through `CostPricer` at list prices,
+   as of that request's date (D2, below).
+5. **Align.** `alignReplay` sums the requests back into the session's
+   turns, beside each turn's measured figure (the preferred figure, as
+   `get_session_cost` gives it).
+6. **Self-check.** The unchanged script on the session's own model,
+   compared request by request with the trace (G4, D8).
+
+**Rules a maintainer must keep.**
+- **Numbers only.** Traces, replays and MCP answers hold token counts, model
+  ids and turn indexes; no prompt, response, tool or path text.
+- **Unknown is never 0** (constraint 6). A turn with any unknown request is
+  not replayed, with its reason. A null `cacheWrite` stays in the uncached
+  input and the simulator infers the writes (A4). An unknown total, and its
+  difference, is `null`.
+- **Totals compare like with like.** Measured and simulated totals are over
+  the same turns: replayed, with a known measured and a known simulated
+  cost. `coverage` gives the rest with reasons. Compare models shows the
+  own-model replay's measured total.
+- **Model switches.** On a target model the whole session runs on that one
+  model (`withoutModelSwitches`, A1/A5). The self-check keeps the switches:
+  the simulator's `cheaperModelId` option runs the "cheaper" role on the
+  session's own second model. With three or more models, a second model in
+  another vendor's profile, or an own model with no profile, the self-check
+  is `null`.
+- **Self-check.** Calibration's check (13.5a, D12): the first request is not
+  compared (A3); a request matches when the cache outcome is the recorded
+  one and the read is within 5%. Through the service every calibration
+  capture gives calibration's own result, including its two known
+  disagreements (recorded in `calibration.test.ts`).
+- **Pricing (D2).** "Session channel" (the default) keeps a Copilot session
+  on Copilot's price table (AI Credits) and moves any other channel to the
+  target vendor's API (USD); `copilot` and `api` force one. No contract
+  price applies (a contract covers real use). An unknown channel gives
+  `pricing.channel: null` with its reason and nothing simulated is priced.
+  Measured figures convert only at 1 AI Credit = $0.01.
+- **Models.** A model must resolve to a vendor profile's model with
+  documented caching (`ReplayModelResolver`); no near match is guessed. Any
+  unresolved model refuses a whole comparison.
+- **Limits** (threat-model.md §4). A model id is at most 100 characters; a
+  comparison has 1 to 10 models, the session's own included; a trace over
+  20,000 requests (`MAX_REPLAY_REQUESTS`) is not replayed.
+- **Errors.** An unknown model or too many models is a 400. An unknown
+  session, or one that can't be replayed (a provider with no traces, an
+  empty trace, more than 20,000 requests, turns not numbered 0, 1, 2…), is a
+  404 with the reason. The shared error set has no 422; this matches the
+  system-prompt route's 404 for a missing artifact.
+- **Never stored.** A replay is computed on each request and not written
+  anywhere; the routes are GET only.
+
+**Provider coverage (D1).**
+
+| Provider | Trace from | Replayable |
+|---|---|---|
+| Claude Code | Every request round on the active branch, through compactions (§6.2.6) | Yes |
+| VS Code, classic (local harness) | `main.jsonl` request spans aligned to the store; writes from `agent-traces.db`, else `null` and inferred (A4) | Yes |
+| VS Code, Agent Host | The Copilot CLI event log's usage records (§6.2.2.2); writes `null` where flagged unreliable | Yes |
+| pi | — | Not yet (waits for Phase 11's real capture) |
+| mitmproxy | — | Not yet |
+
+Known gaps (plan §12.1, step 14.3): a `/clear` inside a Claude Code file
+still starts the branch after it, and a file that begins with a compaction
+records no `compaction` event.
 
 ## 7. `main.jsonl` parsing strategy
 
@@ -2157,6 +2301,8 @@ themselves.
 | `GET /api/sessions/:id/turns/:turnIndex` | `TurnInspectorDetail` — one turn's actual LLM request/response round-trip(s), scoped to only the content that turn added (Phase 9.5, §6.2.4); used for on-demand deep dives, avoiding sending every turn's full detail up front. 404 if the session or turn index doesn't exist; 400 for a non-numeric/negative `turnIndex` |
 | `GET /api/sessions/:id/audit` | `SessionAudit` (Phase 9.10, [plans/tool-call-audit.md](plans/tool-call-audit.md)): per-status totals, failure rate over known outcomes (`null` when none known), by-tool/program/category breakdowns, per-turn outcome counts, every classified call, retry groups, failure-recovery cost, and outcome coverage. Optional `?provider=<id>` audits a provider other than the active one (400 if unknown); 404 for an unknown session |
 | `GET /api/sessions/:id/tool-calls` | `{ total, calls: AuditedToolCall[] }`: one session's classified tool calls, filtered by `status`/`category`/`kind` (comma-separated enum lists), `tool`, `program`, `turn`, paged by `offset`/`limit`, optional `provider`. 400 on an invalid value |
+| `GET /api/sessions/:id/replay?model&pricing&provider` | `SessionReplay` (Phase 14 step 14.5, §6.5): the session replayed on `model` (a vendor profile's model id, at most 100 characters; log spellings resolve), per turn and in total beside the measured figures, with coverage, the self-check and the assumptions, always `simulated: true`. `pricing` is `session-channel` (default), `copilot` or `api` (D2); optional `provider`. 400 for a bad query or a model no vendor profile lists; 404 for an unknown session or one that can't be replayed, with the reason. Webview RPC `getSessionReplay` in the extension (D5); also MCP `replay_session` |
+| `GET /api/sessions/:id/replay/compare?models&pricing&provider` | `SessionReplayComparison` (Phase 14 step 14.5): the session's simulated total on each of `models` (comma-separated, 1 to 10 with the session's own model, which is added first when a profile lists it) beside its measured total. Errors as for `/replay`; any unknown model refuses the whole comparison. RPC `compareSessionReplay`; also MCP `compare_models_for_session` |
 | `GET /api/audit` | `AuditRollup` over the most recent sessions (`limit`, default 50, max 500) whose `startedAt` falls in `since`..`until` (ISO date or timestamp, compared at the bound's precision): totals, top failing commands, daily counts, per-session summary, category/program/tool breakdowns. Optional `provider` |
 | `GET /api/insights` | `InsightsDataset` (Phase 9.11, [plans/insights-dashboard.md](plans/insights-dashboard.md)): the most recent sessions from **every** registered provider (`limit` per provider, default 50, max 500; `since`/`until` as for `/api/audit`; optional `provider` restricts to one, 400 if unknown), flattened to session/turn/tool-call rows, plus security, anomaly and behaviour-change findings. Each provider's availability, error or truncation is reported in `providers[]`; one failing provider never fails the response. Since Phase 15 step 15.6 each turn row carries its billed, reported and priced `cost` figures and each session row their per-basis totals |
 | `GET /api/config/status` | `ConfigStatus` — current prerequisite-setting check results and any `warnings[]` (§6.3), including the effective `minRetainedSessionLogsThreshold` |
@@ -2175,6 +2321,18 @@ themselves.
 | `PUT /api/config/retention-threshold` | Sets the persisted `minRetainedSessionLogsThreshold` override (body: `{ value: number }`, must be a positive integer, else 400); returns the fresh `ConfigStatus` so the caller can update both the header control and the warning banner from one response |
 
 The server binds to `localhost` only (see §11.2).
+
+The webview RPC (`packages/domain/src/rpc.ts`) mirrors these methods for
+the extension. `getSessionReplay` and `compareSessionReplay` (Phase 14) are
+the first with result schemas (`apiMethodResultSchemas`), which the web
+client parses answers with. The MCP servers expose the same services: the
+standalone stdio server 21 tools and 6 prompts, the extension's 19 tools
+and 4 prompts (no `billing` group; §5). Phase 15's `estimate_cost` (billing
+group, standalone only) takes an
+optional `model` (Phase 14, D7): the project's sessions in the window (at
+most 200) are replayed on it and their simulated costs feed the unchanged
+estimate rules, with a `simulation` block. `GET /api/estimates` doesn't take
+`model` yet.
 
 ## 9. Technology stack
 
@@ -2296,6 +2454,12 @@ agent-cost-analyzer/
   codes come only from `get_statement`, and from `list_projects` when the
   server is launched with `--project-billing-details` (threat-model.md §5.6). `mcp/security.test.ts` runs every tool over generated
   folders and remote credentials to check this (Phase 15 step 15.13).
+- Session replay (Phase 14, §6.5, threat-model.md §4) is read-only and
+  bounded: GET routes only, nothing stored, numbers and model ids only in
+  every answer, a model id of at most 100 characters that a vendor profile
+  must list, at most 10 models per comparison, and no trace over 20,000
+  requests. `mcp/security.test.ts` covers the replay tools and
+  `estimate_cost` with a model.
 - No secrets are logged; any credentials that happen to appear in captured
   terminal-output tool results are treated as opaque strings, never parsed or
   echoed into error messages.
@@ -2389,6 +2553,17 @@ refactored — red-green-refactor, not tests bolted on afterward.
   suites. A property that finds a bug is kept as `it.fails` with its
   counterexample until the fix's own failing example test lands. Importing
   `fast-check` directly also satisfies OpenSSF Scorecard's Fuzzing check.
+- Session replay (Phase 14) rests on four kinds of test: fast-check
+  properties for the scripter, aligner, model resolver and pricer (the
+  script parses and simulates with every request's input equal to the
+  trace's; replays always schema-valid, with coverage that adds up and a
+  difference of simulated − measured); golden replays in
+  `services/session-replay/__golden__/` over the Claude Code, Copilot local
+  and Agent Host fixtures; the self-check over every 13.5a calibration
+  capture, which must give calibration's own result; and usage scenario R1
+  (a fixture session replayed on two models, then Compare models) in
+  `web-e2e` (`e2e/specs/r1-replay-on-two-models.spec.ts`) and
+  `extension-ui` (`test/ui/specs/r1-replay.e2e.ts`).
 
 ### 11.5 Code quality: SOLID
 
@@ -2513,6 +2688,25 @@ by repository (§6.4 has the product table):
   names the workspace folder's repository with its AI Credits today.
   Both resolve repositories through `sidebar/repository-sources.ts`, the
   same `SessionAttributor` and `RepositoryResolver` as the Dashboard.
+
+**As built (Phase 14 steps 14.5-14.7).** Session replay is in both
+products (D5; §6.4 has the product table, §6.5 the data flow):
+- **Backend.** The extension's `ApiService` gets the same
+  `createSessionReplay` wiring as the standalone app, over the Copilot
+  provider (classic and Agent Host sessions) and the bundled price book.
+  Without the price book it has no replay service, the methods answer
+  "not available" (a not-found error) and `ProductFeatures.sessionReplay`
+  is false.
+- **Webview.** The dispatcher routes `getSessionReplay` and
+  `compareSessionReplay` to the same `ApiService` methods. The panel shows
+  Replay on, the summary, the Simulated column group and Compare models,
+  from the same `components/replay/*`.
+- **MCP.** The `replay` group adds `replay_session` and
+  `compare_models_for_session`: 19 tools in all, without the `billing`
+  group.
+- **Tests.** The extension's UI check has three replay scenarios across
+  Dark Modern, Light Modern and High Contrast; scenario R1 runs in
+  `extension-ui`.
 
 **Runtime check (Phase 10.0, 2026-10-24).** Current stable VS Code
 (1.143.0) ships Electron 43.7.7 with Node 24.21.0. `node:sqlite`
