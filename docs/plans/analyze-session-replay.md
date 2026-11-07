@@ -2,8 +2,8 @@
 
 **Status (2026-11-07): planned.** The owner decided D1, D2, D4, D5 and D7
 on 2026-11-07; D3, D6 and D8 take the recommendation, open for the owner to
-revisit (§11). Step 14.0 is done (threat-model rows, 2026-11-07); no code
-yet, step 14.1 is next.
+revisit (§11). Steps 14.0 (threat-model rows) and 14.1 (domain schemas)
+are done (2026-11-07); step 14.2 is next.
 
 The question this answers: **"What would this real session have cost on
 another model?"** It reuses Phase 13's simulator
@@ -239,7 +239,7 @@ recommendation and stay open for the owner to revisit.
 | Step | Work | Exit criterion |
 |---|---|---|
 | 14.0 | Decisions D1–D8 (§11, recorded 2026-11-07); threat-model rows for the new read routes, RPC methods and MCP tools | Threat model updated. Done 2026-11-07: §4 and §6 rows and the §9 bullet, marked "plan" |
-| 14.1 | Domain `RequestTrace` and `SessionReplay` schemas | Schema tests pass |
+| 14.1 | Domain `RequestTrace` and `SessionReplay` schemas | Schema tests pass. Done 2026-11-07: `request-trace.ts` (strict records, numbers only; indexes, times and turns never go back; 1-hour writes within all writes; untraced turns with reasons) and `session-replay.ts` (always `simulated: true`; a turn is replayed or has a reason; unknown totals null, never 0, with the difference null too; coverage and the self-check bounded; at most 10 compared models); 18 tests |
 | 14.2 | `RequestTraceSource` for Claude Code and Copilot (local and Agent Host), the 13.5a extractors moved and reused | Each provider's fixture gives the expected trace; calibration tests unchanged |
 | 14.3 | `RequestTraceScripter` with compaction, clear, model switch and 1-hour events; replaces `scriptFromCapture` | Property tests; the 17 shrinking-prompt sessions' shapes replay without error; calibration still 99.8% |
 | 14.4 | `ReplayAligner`, `SessionReplayService`, self-check, pricing per D2 | Golden replays of the fixtures; self-check passes at D12 on every calibration fixture |
