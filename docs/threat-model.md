@@ -196,10 +196,19 @@ erring on masking too much.
 plugin marketplace.**
 `claude-code-action` accepts only a `.git` URL or a local path for
 `plugin_marketplaces` (its `install-plugins.ts`), so a URL can't carry a ref.
-`claude-code-review.yml` now checks out `anthropics/claude-code` at a pinned
-commit (`0ed9469…`, its main on 2026-11-07, with `persist-credentials: false`)
-and passes that folder. Dependabot doesn't bump a checkout's `ref`: bump it
-by hand after reading the diff.
+The first fix (#163) checked out `anthropics/claude-code` at a pinned commit
+and passed that folder, but it didn't hold. Claude Code refuses a local
+marketplace named `claude-code-plugins` (the name is reserved for the
+`anthropics` GitHub source), so the next review failed. And that
+marketplace's `code-review` entry follows `anthropics/claude-plugins-official`'s
+`main`, so pinning the marketplace never pinned the plugin. Now (#164)
+`claude-code-review.yml` writes a one-plugin marketplace
+(`pinned-review-plugins`) into the runner's temp folder. It names the plugin's
+own source with a `sha` (`0412be7…`, claude-plugins-official's main on
+2026-11-07; checked that a `sha` install gives exactly that commit). It is
+written by the workflow, not committed, so a PR can only change it by
+changing the workflow, which the action checks against `main` before running.
+Dependabot doesn't bump it: bump the sha by hand after reading the diff.
 
 **5.6 (Medium, concrete; done 2026-11-07) — Take `includePaths` out
 of the model's reach, and decide what `list_projects` may return.**
@@ -291,7 +300,7 @@ branch settings; those are listed as open items in §5.8.
 |---|---|---|
 | `release-extension.yml`: tag `ext-v*` to Marketplace, Open VSX and a GitHub Release | A malicious tag or build publishing to every installed copy; a stolen publishing credential | **Mostly mitigated.** The workflow's default token is `contents: read`; the publish job runs in the `release` environment (required reviewers, per the file's header) with `id-token: write`. The Marketplace sign-in is Entra ID OIDC with a federated credential, so no long-lived Azure secret exists. Open VSX still uses the secret `OVSX_PAT` until its trusted publisher is registered. Open: tag protection and the `OVSX_PAT` removal (§5.8). |
 | `claude.yml`: `@claude` in an issue, comment or review | Prompt injection through issue or PR text reaching an agent that holds `CLAUDE_CODE_OAUTH_TOKEN` and OIDC | **Mitigated in part.** Default token `contents: read` (#92); job permissions are read-only plus `id-token: write`; the action is pinned by SHA; CODEOWNERS covers `.github/workflows/`, `CLAUDE.md` and `.claude/`; a Unicode-smuggling guard scans every PR. Not verified here: who may trigger it (the action's own check is assumed to require write access). The checkout keeps its token ("@claude may push a branch"), yet the job grants `contents: read`: either the comment is stale or the action pushes with its own app token; settle it and, if stale, set `persist-credentials: false`. |
-| `claude-code-review.yml`: automatic review on every same-repository PR | The same, plus unpinned plugin code | **Mitigated in part.** Fork and Dependabot PRs are excluded, so untrusted forks never reach the token; `persist-credentials: false`; action pinned by SHA. Open: the plugin marketplace is `https://github.com/anthropics/claude-code.git` with no ref (§5.5). |
+| `claude-code-review.yml`: automatic review on every same-repository PR | The same, plus unpinned plugin code | **Mitigated.** Fork and Dependabot PRs are excluded, so untrusted forks never reach the token; `persist-credentials: false`; action pinned by SHA. The code-review plugin is pinned by sha in a marketplace the workflow writes (§5.5). |
 | `vendor-prices.yml`: weekly fetch of GitHub's Copilot price table | Untrusted fetched text written into an issue; the workflow's token misused | **Mitigated.** `contents: read` plus `issues: write` on one job; `persist-credentials: false`; it only reports and never commits. An issue created with the workflow token doesn't trigger `claude.yml`, so a hostile `@claude` in the fetched table can't start an agent. This is the only place the project initiates network egress, and it is CI, not the shipped app. |
 | `ci.yml` `extension-ui` (step 10.16) | A dev-tree vulnerability (§7) executing during the test run | **Mitigated in part.** `contents: read`, no secrets, `persist-credentials: false`, VS Code version pinned and cached, `continue-on-error`. Open: archive integrity (§5.9). |
 | Dependency intake (`dependabot.yml`) | A compromised release reaching the tree quickly | **Mitigated.** npm and Actions updates are grouped weekly with a 7-day cooldown "for the window in which compromised releases are usually yanked"; majors are excluded from version updates, security fixes still arrive; every action is pinned by SHA. |
