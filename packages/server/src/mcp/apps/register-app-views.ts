@@ -17,7 +17,16 @@ import type { ViewSource } from "./view-source.js";
 // tools it gives a view to APP_VIEW_TOOL_NAMES. A tool gets _meta.ui only
 // when the server actually registered it.
 
-export const APP_VIEW_TOOL_NAMES: readonly string[] = ["get_session_cost", "get_cost_rollup", "list_findings"];
+export const APP_VIEW_TOOL_NAMES: readonly string[] = [
+  "get_session_cost",
+  "get_cost_rollup",
+  "list_findings",
+  // A19: the Phase 15 cost-analysis tools; their routes (U9-U11) arrive with A20-A22.
+  "get_repository_cost",
+  "get_project_cost",
+  "compare_costs",
+  "explain_cost_change",
+];
 
 export function viewsResourceUri(identity: McpIdentity): string {
   return `ui://${identity.name}/views.html`;
