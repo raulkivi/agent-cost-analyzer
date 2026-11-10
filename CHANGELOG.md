@@ -8,15 +8,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - Interactive views for the cost-analysis MCP tools in MCP Apps hosts:
-  `get_repository_cost` and `get_project_cost` show cost over time by basis
-  with documented and inferred price-change markers (for a project also
-  vendor then model, tokens by type, and top sessions that open the session
-  view in place); `compare_costs` shows a comparison table whose rows open
-  the cost-over-time view in place; `explain_cost_change` shows a waterfall
-  of usage, price and mix effects, a per-model table and the turns it could
-  not explain. Every figure names its basis and currency, and a change with
-  no earlier figure says so instead of "from 0". The tools' text output is
-  unchanged.
+  - `get_repository_cost` and `get_project_cost` show cost over time by basis
+    (billed, reported, priced and the preferred total) with documented and
+    inferred price-change markers; for a project also vendor then model,
+    tokens by type, and top sessions that open the session view in place. A
+    repository has no session drill-down.
+  - `compare_costs` shows a comparison table whose rows open the cost-over-time
+    view in place, with a Back control at each level (comparison, cost over
+    time, session cost).
+  - `explain_cost_change` shows a waterfall of usage, price and mix effects, a
+    per-model table, the documented price changes and a **Not explained** tile
+    for turns with no price ("3 turns", "no price for these turns; not counted
+    as 0").
+  - Every figure names its basis and currency, AI Credits and USD stay apart,
+    partial coverage reads "known for N of M turns", and a change with no
+    earlier figure says so instead of "from 0". The tools' text output is
+    unchanged.
+
+### Changed
+- The cost-change waterfall shows a fall in the host's success colour (it was
+  an info blue close to the period-total blue); a rise stays in the danger
+  colour, and both carry their written sign.
+- The cost-over-time chart's y-axis labels no longer crowd the left edge.
 
 ## [0.10.0] - 2026-11-10
 ### Added
