@@ -25,8 +25,8 @@ function versions(ids: readonly string[]): string {
 
 function TokenTypes({ model }: { model: ModelRowView }) {
   return (
-    <div className="cc-detail">
-      <div className="cc-detail-head">
+    <div className="cv-detail">
+      <div className="cv-detail-head">
         <b>{`${model.model} by token type`}</b>
         <span className="text-muted">unit price per 1M tokens, A → B</span>
       </div>
@@ -54,7 +54,7 @@ function TokenTypes({ model }: { model: ModelRowView }) {
           </tbody>
         </table>
       </div>
-      <span className="text-muted cc-versions">{`Price versions: ${versions(model.priceVersionIdsA)} → ${versions(model.priceVersionIdsB)}`}</span>
+      <span className="text-muted cv-versions">{`Price versions: ${versions(model.priceVersionIdsA)} → ${versions(model.priceVersionIdsB)}`}</span>
     </div>
   );
 }
@@ -75,8 +75,8 @@ export function ModelTable({ block, periodA, periodB }: { block: CurrencyBlock; 
         <thead>
           <tr>
             <th className="view-left">Model</th>
-            <th className="cc-col-wide">{periodA.label}</th>
-            <th className="cc-col-wide">{periodB.label}</th>
+            <th className="cv-col-wide">{periodA.label}</th>
+            <th className="cv-col-wide">{periodB.label}</th>
             <th>Change</th>
             <th>Usage</th>
             <th>Price</th>
@@ -91,8 +91,8 @@ export function ModelTable({ block, periodA, periodB }: { block: CurrencyBlock; 
           })}
           <tr className="cv-total">
             <td className="view-left">All models</td>
-            <td className="cc-col-wide">{block.modelTotals.costAText}</td>
-            <td className="cc-col-wide">{block.modelTotals.costBText}</td>
+            <td className="cv-col-wide">{block.modelTotals.costAText}</td>
+            <td className="cv-col-wide">{block.modelTotals.costBText}</td>
             <td>{block.modelTotals.changeText}</td>
             <td>{block.modelTotals.usageText}</td>
             <td>{block.modelTotals.priceText}</td>
@@ -113,8 +113,8 @@ function ModelRows({ model, isOpen, onToggle }: { model: ModelRowView; isOpen: b
             <span>{model.model}</span>
           </button>
         </td>
-        <td className="cc-col-wide">{model.costAText}</td>
-        <td className="cc-col-wide">{model.costBText}</td>
+        <td className="cv-col-wide">{model.costAText}</td>
+        <td className="cv-col-wide">{model.costBText}</td>
         <td>{model.changeText}</td>
         <td>{model.usageText}</td>
         <td>{model.priceText}</td>

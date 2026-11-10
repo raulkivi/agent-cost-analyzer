@@ -40,7 +40,7 @@ function Tiles({ vm, block, notExplainedTile }: { vm: CostVarianceViewModel; blo
 function Block({ vm, block, withHeading, notExplainedTile }: { vm: CostVarianceViewModel; block: CurrencyBlock; withHeading: boolean; notExplainedTile: boolean }) {
   const unit = UNIT[block.currency];
   return (
-    <section className="cc-block" aria-label={`Cost change in ${unit}`}>
+    <section className="cv-block" aria-label={`Cost change in ${unit}`}>
       <h2 className={withHeading ? undefined : "sr-only"}>{unit}</h2>
       <Tiles vm={vm} block={block} notExplainedTile={notExplainedTile} />
       <div className="cv-sub">

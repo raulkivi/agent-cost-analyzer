@@ -105,7 +105,7 @@ function setup(options: { structured?: unknown; port?: FakeAppHostPort; brand?: 
 const rowOf = (name: string): HTMLElement => screen.getByRole("button", { name }).closest("tr")!;
 
 describe("CostCompareView, the table", () => {
-  // The two views share one bundle; U11 hides .cc-col-wide at 480 px, U10 hides its ratio columns at 640 px.
+  // The two views share one bundle; U11 hides .cv-col-wide at 480 px, U10 hides its ratio columns at 640 px.
   it("names its droppable ratio columns apart from U11's", () => {
     const { container } = setup();
     expect(container.querySelector(".cc-col-wide")).toBeNull();
