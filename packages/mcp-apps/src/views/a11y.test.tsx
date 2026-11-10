@@ -173,7 +173,7 @@ describe("U9 CostOverTimeView has no axe violations", () => {
   });
 
   it("the no-projects state, a tool error, an unreadable result and waiting", async () => {
-    const { unmount } = renderU9({ isError: true, errorText: 'Unknown project id "x". Call list_projects to find valid ids. No projects here.' });
+    const { unmount } = renderU9({ isError: true, errorText: `Unknown project id "x". Call list_projects to find valid ids. ${EXTENSION_NO_PROJECTS_REASON}` });
     await expectNoViolations();
     unmount();
     const second = renderU9({ isError: true, errorText: "periodB: month must be YYYY-MM" });
