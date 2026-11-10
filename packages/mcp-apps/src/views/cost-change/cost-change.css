@@ -3,7 +3,7 @@
 */
 /* U11 CostChangeView (docs/plans/mcp-apps.md §4.5, board CostChange.dc.html).
    Host tokens for structure; no colour literals (§5.4). A rise is the host's
-   danger colour, a fall its info colour, and the sign is always written too. */
+   danger colour, a fall its success colour, and the sign is always written too. */
 
 .cc-block { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
 .cc-block > h2 { margin: 0; font-size: 13px; font-weight: 600; }
@@ -12,13 +12,13 @@
 .cv-note { margin: 0; font-size: 11px; line-height: 1.4; }
 
 .cc-waterfall .waterfall-increase { fill: var(--color-text-danger, var(--color-diverging-increase)); }
-.cc-waterfall .waterfall-decrease { fill: var(--color-text-info, var(--color-diverging-decrease)); }
+.cc-waterfall .waterfall-decrease { fill: var(--color-text-success, var(--color-series-6)); }
 .cc-key { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 11px; }
 .cc-key span { display: inline-flex; align-items: center; gap: 5px; }
 .cc-swatch { display: inline-block; width: 9px; height: 9px; border-radius: 2px; }
 .cc-swatch--total { background: var(--color-series-1); }
 .cc-swatch--increase { background: var(--color-text-danger, var(--color-diverging-increase)); }
-.cc-swatch--decrease { background: var(--color-text-info, var(--color-diverging-decrease)); }
+.cc-swatch--decrease { background: var(--color-text-success, var(--color-series-6)); }
 
 .cv-total td { font-weight: 600; }
 .cc-detail { display: flex; flex-direction: column; gap: 6px; }

@@ -4,6 +4,7 @@ import { StatTile } from "@agent-cost-analyzer/web/ui/StatTile";
 import { useMemo } from "react";
 import type { ViewBrand } from "../brand/view-brand.js";
 import type { AppHostPort, ToolResult } from "../host/app-host-port.js";
+import { pluralize } from "../view-models/format.js";
 import { toCostVarianceViewModel } from "../view-models/index.js";
 import type { CostVarianceViewModel, CurrencyBlock } from "../view-models/index.js";
 import { ErrorBox } from "./SessionCostView.js";
@@ -31,7 +32,7 @@ function Tiles({ vm, block, notExplainedTile }: { vm: CostVarianceViewModel; blo
       <StatTile label={`${vm.periodA.label} (A)`} value={start?.text ?? ""} note={`priced, ${vm.pricingText}`} />
       <StatTile label={`${vm.periodB.label} (B)`} value={end?.text ?? ""} note={`priced, ${vm.pricingText}`} />
       <StatTile label="Change" value={block.changeAmountText} note={block.changePercentText} />
-      {notExplainedTile && <StatTile label="Not explained" value={`${vm.notExplained.periodA.turns} + ${vm.notExplained.periodB.turns}`} note="turns, no priced figure, not 0" />}
+      {notExplainedTile && <StatTile label="Not explained" value={pluralize(vm.notExplained.periodA.turns + vm.notExplained.periodB.turns, "turn")} note="no price for these turns; not counted as 0" />}
     </div>
   );
 }
