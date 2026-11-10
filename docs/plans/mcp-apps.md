@@ -613,6 +613,95 @@ it.
   in a Chromium harness (`test/visual/`, built on demand, not shipped).
   The hosts themselves are A16.
 
+#### A23 review, 2026-11-10 (U9–U11)
+
+Scope: `CostOverTimeView` (U9), `CostCompareView` (U10), `CostChangeView`
+(U11) and their folders, the `packages/web` modules they import, and the
+server's unknown-project-id text.
+
+**Checked, holds (now asserted by tests):**
+
+- **No forwarding.** The static scan names U9–U11's files. The only new
+  host calls are U10's `get_repository_cost` and `get_project_cost`, with a
+  row's own ids, period, basis, pricing and currency. U9 reaches U1 through
+  the shared `DrillDown` (`get_session_cost`). U11 calls nothing. Still one
+  `sendMessage` site, no `openLink`, no `updateModelContext`, and the
+  clipboard only through U1's copy hook.
+- **Logged and model-chosen text.** `src/views/hostile-text.test.tsx`
+  plants markup and an injected instruction in every text field U9–U11
+  show: row, project, session, vendor and model labels, unknown and
+  not-explained reasons, provider errors. It presses every control down to
+  U1. Nothing planted reaches the port, and no element is made from it.
+- **Error as state.** U9, U10 (and a failed U10 row) and U11 render a
+  tool's error text as a text node; the tests plant markup in it.
+- **Colours.** Every recorded host set holds U11's rise (danger) and fall
+  (success) at 3:1 or more on every ground and the surface. The tightest is
+  3.16:1, the rise on VS Code Light Modern.
+- **Keyboard.** U10 → U9 → U1 and Back at each level, Back from a failed
+  row, from the no-projects state and from a session that failed two levels
+  down, U9's top session and back, U9's currency switch, U11's model rows
+  (Enter opens, Space closes, focus stays) and View as table all work and
+  return focus to the control that opened them. No view change was needed.
+- **axe.** U9 and U10 were already covered by A20–A21, in every state the
+  task lists. U11 now runs in `a11y.test.tsx` too: loaded, expanded, the
+  waterfall as a table, two currencies with a fall, logs not fully read, no
+  earlier figure, every turn explained, nothing priced, errors, unreadable
+  and waiting. None had violations.
+
+**Fixed:**
+
+- **No-projects spoofing.** U9 and U10 found the no-projects state with a
+  regex that took any text after the unknown-id answer as the reason. The
+  project id is the model's argument, so a crafted id could put its own
+  text in that state in a product that has projects. The domain now owns
+  the wording: `unknownProjectIdText` (used by `get_project_cost`,
+  `get_statement` and `estimate_cost`) and `parseUnknownProjectIdText`,
+  which accepts only a reason the domain knows. The quoted id is capped at
+  120 characters.
+- **Allow list.** `maxTurns` was reviewed but no call sends it; it is
+  dropped, and a test now fails on any unused tool or argument name.
+  `label`, `name`, `reason`, `reasons`, `error`, `errorText`, `answer` and
+  `displayOnly` joined the fields a tool call may not read.
+- **Sinks beyond `src/`.** The sink scan now also covers every `web`
+  module the views import (Waterfall, ViewAsTable, SegmentedControl and
+  their imports), and a new test finds no URL attribute (`href`, `src`,
+  `action` and the like) on any element. Both found nothing.
+- **Contrast.** The period-total bars (theme.css series 1) were 2.99:1 on
+  Claude dark; they now use the brand's data colour, like U9's bars. On a
+  dark host that sends no colours, the diverging red and series-6 green
+  fell to 2.4–3.0:1; brand.css now has `--brand-fb-danger` and
+  `--brand-fb-success` as the fallbacks (theme.css's red and green in light,
+  lighter values in dark). The recorded VS Code palettes gained
+  `testing.iconPassed`.
+- **U11.** The model toggles had no `aria-controls`; the waterfall key's
+  swatches were not hidden from assistive tech. The "Not explained" tile
+  showed "0 turns"; it is now drawn only when turns are unexplained, as the
+  board does. U11's classes moved from U10's `cc-` prefix to its own `cv-`,
+  and the class-ownership test has no exemption left.
+- **U9 markers.** On a monthly chart an observed change drew at the start
+  of the month, not of its week (found in the visual harness).
+
+**Decision: U9's price-change markers stay out of the tab order.** The chart
+is one `role="img"` whose name counts the documented and inferred changes.
+The list under the chart gives each one's model, channel, date and prices
+as text, next in reading order. Focusable markers would need the chart
+restructured (children of an image are presentational) and would add one
+tab stop per marker that repeats the list. A test asserts the markers have
+no `tabindex`, the name counts them and the list has one item per marker.
+
+**Left open:**
+
+- **Narrow widths.** jsdom has no layout, so the 360px rules are not in the
+  component tests. U9 (project) and U11 were checked in the visual harness
+  at 360px light and 600px dark. At 600px U11's by-model table scrolls
+  sideways (Price out of view) inside its named, focusable scroller; A24
+  can judge whether that needs a narrower layout.
+- **Period-total colour.** The brand data colour replaces the board's
+  series-1 blue. A24 confirms it.
+- **Colours not recorded.** Dark High Contrast's `testing.iconPassed` is
+  VS Code's registered default, not a recording, and Light High Contrast is
+  still not covered.
+
 ## 7. Tasks
 
 TDD throughout: each task starts with a failing test (architecture.md
@@ -656,7 +745,7 @@ Starts after the MVP's exit criterion is met (A16).
 | A20 | U9 `CostOverTimeView`: series chart with price-change markers, project breakdowns, top sessions drilling into U1, and the extension's "no projects" reason. **Done 2026-11-10, built on the unapproved A17b boards (owner instruction to proceed):** `views/CostOverTimeView.tsx` plus `views/cost-over-time/`: basis tiles with one line per currency and coverage, a locally drawn weekly chart (hatched partly known, gap for Unknown, "0 turns" for idle buckets; `CostTimeChart` needs `d3-scale` and the web stylesheet), solid documented and dashed "inferred" markers, a currency switch (web `SegmentedControl`), and for a project vendor then model, tokens by type and top sessions opening U1 in place through the shared `DrillDown` (now with an `origin`). `AppHostPort`'s `ToolResult` gained `errorText`; `get_project_cost` appends the product's no-projects reason to its unknown-id error when there are no projects (extension only), and U9 shows it as plain text. `money.ts` now uses web's `formatAmount`; `formatUnitPrice`, `UNKNOWN` and `coverageNote` stay local because their outputs differ | medium | Sonnet | A17, A17b, A18, A19 |
 | A21 | U10 `CostCompareView`, with in-place drill-down into U9. **Done 2026-11-10:** `views/CostCompareView.tsx` plus `views/cost-compare/`: table with share bars, signed change ("no earlier figure"), per session, active day and turn, cache hit, a "Together" row (totals only: the tool returns no combined change) and mixed currencies apart. A row calls `get_repository_cost` or `get_project_cost` with the row's `drillDown.arguments` and renders U9 in place, so U10 → U9 → U1 works with a Back control and trail at each level (`BackButton` exported from `DrillDown`, `CostOverTimeView` takes a `frame`). Both calls are in the reviewed list of `no-forwarding.test.ts`. In the extension a project comparison returns zero-turn rows and no reason, so U10 shows a fixed copy of `EXTENSION_NO_PROJECTS_REASON` when every project row is empty | medium | Sonnet | A20 |
 | A22 | U11 `CostChangeView`: waterfall, per-model table, not-explained turns. **Done 2026-11-10:** `views/CostChangeView.tsx` plus `views/cost-change/`: web `Waterfall` per currency (rises in the host's danger colour, falls in info, the sign always written), a per-model table whose rows expand to token types, unit prices and price versions, not-explained turns with their reasons (display only), documented price changes, and a disabled "Price changes" control with a visible note until U13 (A28) adds the drill-down. U11 calls no tool. An error result shows the tool's text as plain text; tile notes follow the pricing mode | medium | Sonnet | A17, A17b, A18, A19 |
-| A23 | Accessibility and security review of U9–U11 (as A14), and docs: User Guide, extension guide, both CHANGELOGs | medium | Opus | A21, A22 |
+| A23 | Accessibility and security review of U9–U11 (as A14), and docs: User Guide, extension guide, both CHANGELOGs. **Review done 2026-11-10:** axe over every U11 state in `a11y.test.tsx` (U9 and U10 were covered), none failing; keyboard tests for U10 → U9 → U1 and Back after a failure or the no-projects state, and U11's rows and View as table, all passing as built; `hostile-text.test.tsx` plants markup and an injection in every U9–U11 text field and presses every control; the static no-forwarding scan names U9–U11, covers the `web` modules they import and URL attributes, fails on unused allow-list names (`maxTurns` dropped) and on display-text fields (`label`, `reason` and others) in tool arguments. Fixed: no-projects spoofing by a crafted project id (domain's `unknownProjectIdText`/`parseUnknownProjectIdText`, known reasons only), U11's waterfall colours under 3:1 (period total on Claude dark, red and green on a dark host with no colours), U11's toggles without `aria-controls`, its swatches, its "0 turns" tile, its `cc-` classes (now `cv-`), and U9's observed marker on a monthly chart. U9's markers stay out of the tab order (decision in §6.1). Findings and what is left open: §6.1 | medium | Opus | A21, A22 |
 | A24 | Owner's manual checks of U9–U11 in VS Code Copilot Chat and Claude Desktop, light and dark | — | owner | A23 |
 
 ### 7.2 Increment 3: replay, prices, billing, audit, picker
