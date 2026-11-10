@@ -37,19 +37,19 @@ export function webSteps(block: CurrencyBlock): WebStep[] {
 
 export function CostChangeWaterfall({ block, ariaLabel }: { block: CurrencyBlock; ariaLabel: string }) {
   return (
-    <div className="cc-waterfall">
+    <div className="cv-waterfall">
       <Waterfall ariaLabel={ariaLabel} steps={webSteps(block)} unit={block.currency} />
-      <div className="cc-key text-muted">
+      <div className="cv-key text-muted">
         <span>
-          <i className="cc-swatch cc-swatch--total" />
+          <i className="cv-swatch cv-swatch--total" aria-hidden="true" />
           period total
         </span>
         <span>
-          <i className="cc-swatch cc-swatch--increase" />
+          <i className="cv-swatch cv-swatch--increase" aria-hidden="true" />
           raises cost
         </span>
         <span>
-          <i className="cc-swatch cc-swatch--decrease" />
+          <i className="cv-swatch cv-swatch--decrease" aria-hidden="true" />
           lowers cost
         </span>
         <span>the sign is always written</span>

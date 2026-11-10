@@ -25,13 +25,6 @@ const VIEW_PREFIXES: Record<string, readonly string[]> = {
 const EXTERNAL = new Set(["stat-tile", "seg", "seg-opt", "is-dim", "is-expanded"]);
 const EXTERNAL_PREFIXES = ["waterfall-"];
 
-// Stylesheets still out of line, owned by another change (cost-change.css
-// uses cc-, which U10 owns). A matching name in that file is tolerated here
-// until that change renames it; every other file has no exemption.
-const TOLERATED: Record<string, RegExp> = {
-  "views/cost-change/cost-change.css": /^cc-/,
-};
-
 function cssFiles(dir: string): string[] {
   return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
     const full = path.join(dir, entry.name);
@@ -87,10 +80,7 @@ describe("view stylesheet class ownership", () => {
 
   for (const [file, prefixes] of Object.entries(VIEW_PREFIXES)) {
     it(`${file} defines only ${prefixes.join(" / ")} classes`, () => {
-      const tolerated = TOLERATED[file];
-      const violations = [...read(file)].filter(
-        (name) => !prefixes.some((prefix) => name.startsWith(prefix)) && !isOwnedElsewhere(name) && !(tolerated?.test(name) ?? false),
-      );
+      const violations = [...read(file)].filter((name) => !prefixes.some((prefix) => name.startsWith(prefix)) && !isOwnedElsewhere(name));
       expect(violations.sort()).toEqual([]);
     });
   }

@@ -12,7 +12,7 @@ function Period({ label, entry }: { label: string; entry: NotExplainedView }) {
     <div>
       <b>{`${label}: ${entry.turnsText}`}</b>
       {entry.displayOnly.reasons.length > 0 && (
-        <ul className="cc-reasons">
+        <ul className="cv-reasons">
           {entry.displayOnly.reasons.map((reason, index) => (
             <li key={`${index}:${reason}`}>{reason}</li>
           ))}
@@ -31,7 +31,7 @@ export function NotExplained({ vm }: { vm: CostVarianceViewModel }) {
         <span className="text-muted">{total === 0 ? "every turn has a priced figure" : `${total} ${total === 1 ? "turn" : "turns"} in all`}</span>
       </div>
       {vm.hasNotExplained && <p className="cv-note text-muted">These turns have no priced figure, so no effect is attributed to them. They are left out of every number above, not counted as 0.</p>}
-      <div className="cc-two">
+      <div className="cv-two">
         <Period label={vm.periodA.label} entry={vm.notExplained.periodA} />
         <Period label={vm.periodB.label} entry={vm.notExplained.periodB} />
       </div>

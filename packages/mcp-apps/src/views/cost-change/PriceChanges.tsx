@@ -29,7 +29,7 @@ export function PriceChanges({ vm }: { vm: CostVarianceViewModel }) {
       {vm.priceChanges.length === 0 ? (
         <p className="text-muted">No documented price change between the periods.</p>
       ) : (
-        <ul className="cc-price-list">
+        <ul className="cv-price-list">
           {vm.priceChanges.map((change) => (
             <li key={`${change.date}:${change.channel}:${change.modelId}`}>
               <span>
@@ -38,17 +38,17 @@ export function PriceChanges({ vm }: { vm: CostVarianceViewModel }) {
                   documented
                 </Tag>
               </span>
-              <span className="text-muted cc-price-lines">{change.lines.map(lineText).join("; ")}</span>
+              <span className="text-muted cv-price-lines">{change.lines.map(lineText).join("; ")}</span>
             </li>
           ))}
         </ul>
       )}
       {drillDown !== undefined && (
-        <div className="cc-price-action">
-          <button type="button" className="btn btn-secondary view-btn" disabled aria-describedby="cc-price-note">
+        <div className="cv-price-action">
+          <button type="button" className="btn btn-secondary view-btn" disabled aria-describedby="cv-price-note">
             Price changes
           </button>
-          <span id="cc-price-note" className="cc-price-note text-muted">
+          <span id="cv-price-note" className="cv-price-note text-muted">
             {`The price timeline is not available yet. It will open the timeline for ${joinNames(drillDown.models)}, the largest price ${drillDown.models.length === 1 ? "effect" : "effects"}.`}
           </span>
         </div>

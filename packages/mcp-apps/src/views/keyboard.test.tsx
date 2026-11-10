@@ -1,14 +1,16 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
+import { EXTENSION_NO_PROJECTS_REASON } from "@agent-cost-analyzer/domain";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 import type { ViewBrand } from "../brand/view-brand.js";
 import type { ToolResult } from "../host/app-host-port.js";
 import { FakeAppHostPort } from "../host/fake-app-host-port.js";
-import { comparisonRow, costComparison, costSeries, costTotal, point, projectCost } from "../view-models/cost-analysis-fixtures.js";
+import { comparisonRow, costComparison, costSeries, costTotal, costVariance, point, projectCost } from "../view-models/cost-analysis-fixtures.js";
 import { costRollup, sessionCost, turnSeries } from "../view-models/fixtures.js";
 import { turnView } from "../view-models/turn-view-fixture.js";
+import { CostChangeView } from "./CostChangeView.js";
 import { CostCompareView } from "./CostCompareView.js";
 import { CostOverTimeView } from "./CostOverTimeView.js";
 import { CostRollupView } from "./CostRollupView.js";
@@ -202,5 +204,81 @@ describe("U10 cost comparison by keyboard", () => {
     const user = userEvent.setup();
     render(<CostCompareView port={port()} brand={brand} result={ok(costComparison())} />);
     await tabTo(user, screen.getByRole("region", { name: /Cost by repository, scrollable/ }));
+  });
+
+  // A23: a drill-down that fails, and the extension's no-projects answer,
+  // still put focus on Back and return it to the row.
+  it("Back from a failed row and from the no-projects state returns focus to the row", async () => {
+    const user = userEvent.setup();
+    const failing = port();
+    failing.toolResults.set("get_repository_cost", { isError: true, errorText: "the repository key is no longer in the logs" });
+    const first = render(<CostCompareView port={failing} brand={brand} result={ok(costComparison())} />);
+    await tabTo(user, screen.getByRole("button", { name: "widgets" }));
+    await user.keyboard("{Enter}");
+    await screen.findByRole("alert");
+    await waitFor(() => expect(document.activeElement).toBe(screen.getByRole("button", { name: "Back to comparison" })));
+    await user.keyboard("{Enter}");
+    await waitFor(() => expect(document.activeElement).toBe(screen.getByRole("button", { name: "widgets" })));
+    first.unmount();
+
+    const none = port();
+    none.toolResults.set("get_project_cost", { isError: true, errorText: `Unknown project id "p1". Call list_projects to find valid ids. ${EXTENSION_NO_PROJECTS_REASON}` });
+    render(<CostCompareView port={none} brand={brand} result={ok(projects())} />);
+    await tabTo(user, screen.getByRole("button", { name: "Provider platform" }));
+    await user.keyboard(" ");
+    await screen.findByRole("heading", { name: "No projects here" });
+    await waitFor(() => expect(document.activeElement).toBe(screen.getByRole("button", { name: "Back to comparison" })));
+    await user.keyboard(" ");
+    await waitFor(() => expect(document.activeElement).toBe(screen.getByRole("button", { name: "Provider platform" })));
+  });
+
+  it("Back from a session that failed to load, two levels down, returns focus to the session row", async () => {
+    const user = userEvent.setup();
+    const fake = chainPort();
+    fake.toolResults.delete("get_session_cost");
+    render(<CostCompareView port={fake} brand={brand} result={ok(projects())} />);
+    await tabTo(user, screen.getByRole("button", { name: "Provider platform" }));
+    await user.keyboard("{Enter}");
+    await screen.findByRole("heading", { name: "Acme platform" });
+    await tabTo(user, screen.getByRole("button", { name: "Refactor provider registry" }));
+    await user.keyboard("{Enter}");
+    await screen.findByRole("alert");
+    const back = screen.getByRole("button", { name: "Back to Acme platform" });
+    await waitFor(() => expect(document.activeElement).toBe(back));
+    await user.keyboard("{Enter}");
+    await waitFor(() => expect(document.activeElement).toBe(screen.getByRole("button", { name: "Refactor provider registry" })));
+  });
+});
+
+describe("U11 cost change by keyboard", () => {
+  it("Enter opens a model's token types, Space closes them, and focus stays on the toggle", async () => {
+    const user = userEvent.setup();
+    render(<CostChangeView port={port()} brand={brand} result={ok(costVariance())} />);
+    const toggle = screen.getByRole("button", { name: "claude-sonnet-5.5" });
+    await tabTo(user, toggle);
+    await user.keyboard("{Enter}");
+    expect(toggle).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByRole("table", { name: "claude-sonnet-5.5 by token type" })).toBeInTheDocument();
+    await tabTo(user, screen.getByRole("region", { name: "claude-sonnet-5.5 token types, scrollable" }));
+    toggle.focus();
+    await user.keyboard(" ");
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+    expect(screen.queryByRole("table", { name: "claude-sonnet-5.5 by token type" })).not.toBeInTheDocument();
+    expect(document.activeElement).toBe(toggle);
+  });
+
+  it("the waterfall's View as table works from the keyboard, and the disabled Price changes control is skipped", async () => {
+    const user = userEvent.setup();
+    render(<CostChangeView port={port()} brand={brand} result={ok(costVariance())} />);
+    const viewAsTable = screen.getByRole("button", { name: "View as table" });
+    await tabTo(user, viewAsTable);
+    await user.keyboard("{Enter}");
+    expect(await screen.findByRole("table", { name: /Waterfall from 2026-09 to 2026-10/ })).toBeInTheDocument();
+    const reached: Element[] = [];
+    for (let presses = 0; presses < 40; presses += 1) {
+      await user.tab();
+      reached.push(document.activeElement!);
+    }
+    expect(reached).not.toContain(screen.getByRole("button", { name: "Price changes" }));
   });
 });

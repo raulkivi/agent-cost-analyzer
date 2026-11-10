@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
+import { EXTENSION_NO_PROJECTS_REASON, unknownProjectIdText } from "@agent-cost-analyzer/domain";
 import { act, render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { App } from "./App.js";
@@ -71,9 +72,9 @@ describe("App shell", () => {
     const port = new FakeAppHostPort();
     render(<App port={port} brand={brand} />);
     act(() => port.pushHostContext({ toolCall: { toolName: "ai-credits-analyzer-get_project_cost" } }));
-    act(() => port.pushToolResult({ isError: true, errorText: 'Unknown project id "x". Call list_projects to find valid ids. No projects here, by design.' }));
+    act(() => port.pushToolResult({ isError: true, errorText: unknownProjectIdText("x", EXTENSION_NO_PROJECTS_REASON) }));
     expect(screen.getByRole("heading", { name: "No projects here" })).toBeInTheDocument();
-    expect(screen.getByText("No projects here, by design.")).toBeInTheDocument();
+    expect(screen.getByText(EXTENSION_NO_PROJECTS_REASON)).toBeInTheDocument();
   });
 
   it("picks up context that arrived before the shell subscribed", () => {

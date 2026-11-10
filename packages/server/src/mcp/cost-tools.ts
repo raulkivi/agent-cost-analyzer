@@ -11,6 +11,7 @@ import {
   costVarianceSchema,
   projectCostSchema,
   sessionCostSchema,
+  unknownProjectIdText,
 } from "@agent-cost-analyzer/domain";
 import { costCompareRequestSchema, costSeriesRequestSchema, costVarianceRequestSchema } from "../services/cost-analysis/cost-query-params.js";
 import type { AttributionQueries } from "../services/cost-attribution/attribution-query-service.js";
@@ -160,9 +161,8 @@ function seriesRequest(args: SeriesArgs) {
 // A product with no projects says why when a project id is unknown (D19), so
 // the model and the U9 view can show the reason instead of a bare id error.
 function unknownProjectText(projectId: string, attribution: Pick<AttributionQueries, "listProjects"> | undefined): string {
-  const base = `Unknown project id "${projectId}". Call list_projects to find valid ids.`;
   const list = attribution?.listProjects();
-  return list !== undefined && list.projects.length === 0 && list.reason !== undefined ? `${base} ${list.reason}` : base;
+  return unknownProjectIdText(projectId, list !== undefined && list.projects.length === 0 ? list.reason : undefined);
 }
 
 export function registerCostAnalysisTools(

@@ -7,9 +7,10 @@ import type { ViewBrand } from "../brand/view-brand.js";
 import type { ToolResult } from "../host/app-host-port.js";
 import { FakeAppHostPort } from "../host/fake-app-host-port.js";
 import { axeViolations } from "../test-support/axe.js";
-import { comparisonChange, comparisonRow, costComparison, costSeries, costTotal, point, projectCost, usdTotal } from "../view-models/cost-analysis-fixtures.js";
+import { comparisonChange, comparisonRow, costComparison, costSeries, costTotal, costVariance, point, projectCost, usdTotal, varianceCurrency, varianceModel } from "../view-models/cost-analysis-fixtures.js";
 import { costRollup, measures, sessionCost, total, turnSeries } from "../view-models/fixtures.js";
 import { turnView } from "../view-models/turn-view-fixture.js";
+import { CostChangeView } from "./CostChangeView.js";
 import { CostCompareView } from "./CostCompareView.js";
 import { CostOverTimeView } from "./CostOverTimeView.js";
 import { CostRollupView } from "./CostRollupView.js";
@@ -172,7 +173,7 @@ describe("U9 CostOverTimeView has no axe violations", () => {
   });
 
   it("the no-projects state, a tool error, an unreadable result and waiting", async () => {
-    const { unmount } = renderU9({ isError: true, errorText: 'Unknown project id "x". Call list_projects to find valid ids. No projects here.' });
+    const { unmount } = renderU9({ isError: true, errorText: `Unknown project id "x". Call list_projects to find valid ids. ${EXTENSION_NO_PROJECTS_REASON}` });
     await expectNoViolations();
     unmount();
     const second = renderU9({ isError: true, errorText: "periodB: month must be YYYY-MM" });
@@ -280,6 +281,54 @@ describe("U10 CostCompareView has no axe violations", () => {
     renderU10(ok(projects()), none);
     fireEvent.click(screen.getByRole("button", { name: "Provider platform" }));
     await screen.findByText(REASON);
+    await expectNoViolations();
+  });
+});
+
+describe("U11 CostChangeView has no axe violations", () => {
+  const renderU11 = (result: ToolResult | undefined) => render(<CostChangeView port={port()} brand={brand} result={result} />);
+  const usd = varianceCurrency({ currency: "USD", costA: 10, costB: 8, change: -2, usage: -1, price: -1.5, mix: 0.5, models: [varianceModel({ costA: 10, costB: 8, change: -2, usage: -1, price: -1 })] });
+
+  it("loaded, with not-explained turns, a documented price change and the disabled Price changes control", async () => {
+    renderU11(ok(costVariance()));
+    expect(screen.getByRole("button", { name: "Price changes" })).toBeDisabled();
+    await expectNoViolations();
+  });
+
+  it("with a model row expanded and the waterfall as a table", async () => {
+    renderU11(ok(costVariance()));
+    fireEvent.click(screen.getByRole("button", { name: "claude-sonnet-5.5" }));
+    for (const button of screen.getAllByRole("button", { name: "View as table" })) fireEvent.click(button);
+    await expectNoViolations();
+  });
+
+  it("with two currencies, a fall, and logs not fully read", async () => {
+    renderU11(ok(costVariance({ currencies: [varianceCurrency(), usd], providers: [{ id: "copilot", label: "Copilot Chat", available: true, sessionCount: 12, truncated: true }] })));
+    expect(screen.getByRole("heading", { level: 2, name: "USD" })).toBeInTheDocument();
+    await expectNoViolations();
+  });
+
+  it("no earlier figure, every turn explained, and no price change", async () => {
+    renderU11(ok(costVariance({ currencies: [varianceCurrency({ costA: 0, costB: 5, change: 5, usage: 5, price: 0, mix: 0, models: [] })], notExplained: { periodA: { turns: 0 }, periodB: { turns: 0 } }, priceChanges: [] })));
+    await expectNoViolations();
+  });
+
+  it("nothing priced in either period", async () => {
+    renderU11(ok(costVariance({ currencies: [] })));
+    await expectNoViolations();
+  });
+
+  it("a tool error with text, one without, an unreadable result and waiting", async () => {
+    const first = renderU11({ isError: true, errorText: "periodA: month must be YYYY-MM" });
+    await expectNoViolations();
+    first.unmount();
+    const second = renderU11({ isError: true });
+    await expectNoViolations();
+    second.unmount();
+    const third = renderU11(ok({ nope: 1 }));
+    await expectNoViolations();
+    third.unmount();
+    renderU11(undefined);
     await expectNoViolations();
   });
 });
@@ -396,5 +445,80 @@ describe("semantics axe does not check", () => {
     fireEvent.click(screen.getByRole("radio", { name: "Security" }));
     expect(screen.getByRole("status")).toHaveTextContent("Loading findings");
     await waitFor(() => expect(screen.getByRole("alert")).toHaveTextContent("Couldn't load the findings"));
+  });
+});
+
+// A23: the same checks for U9-U11.
+describe("semantics axe does not check, U9-U11", () => {
+  const weekly = () =>
+    costSeries({
+      bucket: "week",
+      points: [
+        point("2026-W42", "2026-10-12", "2026-10-18", costTotal(26.2, 18, 18), costTotal(26.2, 18, 18)),
+        point("2026-W43", "2026-10-19", "2026-10-25", costTotal(21.8, 11, 18), costTotal(48, 29, 36)),
+        point("2026-W44", "2026-10-26", "2026-11-01", costTotal(11.2, 30, 30), costTotal(59.2, 59, 66)),
+      ],
+      since: "2026-10-12",
+      until: "2026-11-01",
+    });
+
+  it("U11's model toggle controls the token-type row it opens", () => {
+    render(<CostChangeView port={port()} brand={brand} result={ok(costVariance())} />);
+    const toggle = screen.getByRole("button", { name: "claude-sonnet-5.5" });
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+    fireEvent.click(toggle);
+    const controlled = document.getElementById(toggle.getAttribute("aria-controls") ?? "");
+    expect(controlled).not.toBeNull();
+    expect(within(controlled!).getByRole("table", { name: "claude-sonnet-5.5 by token type" })).toBeInTheDocument();
+  });
+
+  it("U11's waterfall key swatches are decorative; the words carry the meaning", () => {
+    const { container } = render(<CostChangeView port={port()} brand={brand} result={ok(costVariance())} />);
+    const swatches = container.querySelectorAll(".cv-swatch");
+    expect(swatches).toHaveLength(3);
+    for (const swatch of swatches) expect(swatch).toHaveAttribute("aria-hidden", "true");
+  });
+
+  // Decision (A23): the price-change markers stay out of the tab order. The
+  // chart's name counts them, and the list below the chart gives each one's
+  // model, channel, date and prices as text.
+  it("U9's price-change markers are not focusable; the chart's name counts them and the list details them", () => {
+    render(<CostOverTimeView port={port()} brand={brand} result={ok(weekly())} />);
+    const chart = screen.getByRole("img", { name: /documented price change; 1 inferred price change$/ });
+    const markers = chart.querySelectorAll("[data-marker]");
+    expect(markers.length).toBeGreaterThan(0);
+    for (const marker of markers) expect(marker.closest("[tabindex]")).toBeNull();
+    expect(within(screen.getByRole("list", { name: "Price changes in this range" })).getAllByRole("listitem")).toHaveLength(markers.length);
+  });
+
+  it("every scrolling table container in U9-U11 takes keyboard focus and has a name", () => {
+    const check = () => {
+      const scrollers = document.querySelectorAll(".view-scroll");
+      expect(scrollers.length).toBeGreaterThan(0);
+      for (const scroller of scrollers) {
+        expect(scroller).toHaveAttribute("tabindex", "0");
+        expect(scroller.getAttribute("aria-label")).toBeTruthy();
+      }
+    };
+    const u9 = render(<CostOverTimeView port={port()} brand={brand} result={ok(projectCost())} />);
+    check();
+    u9.unmount();
+    const u10 = render(<CostCompareView port={port()} brand={brand} result={ok(costComparison())} />);
+    check();
+    u10.unmount();
+    render(<CostChangeView port={port()} brand={brand} result={ok(costVariance())} />);
+    fireEvent.click(screen.getByRole("button", { name: "claude-sonnet-5.5" }));
+    check();
+  });
+
+  it("each waiting state announces itself", () => {
+    const u9 = render(<CostOverTimeView port={port()} brand={brand} result={undefined} />);
+    expect(screen.getByRole("status")).toHaveTextContent("Waiting for the cost over time");
+    u9.unmount();
+    const u10 = render(<CostCompareView port={port()} brand={brand} result={undefined} />);
+    expect(screen.getByRole("status")).toHaveTextContent("Waiting for the cost comparison");
+    u10.unmount();
+    render(<CostChangeView port={port()} brand={brand} result={undefined} />);
+    expect(screen.getByRole("status")).toHaveTextContent("Waiting for the cost change");
   });
 });

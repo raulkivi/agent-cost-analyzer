@@ -78,10 +78,10 @@ function positionOf(marker: PriceMarker, points: readonly PointView[]): number |
   const index = points.findIndex((point) => point.period === marker.period);
   const point = points[index];
   if (point === undefined) return undefined;
-  if (marker.kind === "observed") return index;
   const days = (Date.parse(point.end) - Date.parse(point.start)) / DAY_MS + 1;
   const offset = (Date.parse(marker.date) - Date.parse(point.start)) / DAY_MS;
-  return index + Math.min(1, Math.max(0, (offset + 0.5) / days));
+  // A documented change sits mid-day; an observed one from the start of its week.
+  return index + Math.min(1, Math.max(0, (marker.kind === "observed" ? offset : offset + 0.5) / days));
 }
 
 // "input +33.33 %, cache write none to $5.00 / 1M": the percent where both

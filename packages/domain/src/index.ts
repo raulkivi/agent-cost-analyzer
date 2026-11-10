@@ -473,3 +473,4 @@ export {
   type SessionReplayComparison,
 } from "./session-replay.js";
 export { EXTENSION_NO_PROJECTS_REASON } from "./no-projects-reason.js";
+export { parseUnknownProjectIdText, unknownProjectIdText, type UnknownProjectIdAnswer } from "./unknown-project-text.js";

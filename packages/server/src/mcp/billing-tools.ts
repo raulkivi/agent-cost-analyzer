@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import { costEstimateSchema, statementAnswerSchema } from "@agent-cost-analyzer/domain";
+import { costEstimateSchema, statementAnswerSchema, unknownProjectIdText } from "@agent-cost-analyzer/domain";
 import type { EstimateQueries } from "../services/billing/estimate-service.js";
 import { EstimateModelError, parseEstimateQuery } from "../services/billing/estimate-service.js";
 import { replayModelArg } from "../services/session-replay/replay-query-params.js";
@@ -38,7 +38,7 @@ export function registerBillingTools(server: McpServer, deps: { statements?: Sta
       guarded(async () => {
         try {
           const answer = await statements.get({ projectId, period });
-          if (answer === null) return toolError(`Unknown project id "${projectId}". Call list_projects to find valid ids.`);
+          if (answer === null) return toolError(unknownProjectIdText(projectId));
           if (includeLines !== false) return json(answer);
           const strip = <T extends { lines: unknown[] }>(statement: T): T => ({ ...statement, lines: [] });
           return json({ ...answer, statement: strip(answer.statement), ...(answer.rerun ? { rerun: strip(answer.rerun) } : {}) });
@@ -77,7 +77,8 @@ function registerEstimateTool(server: McpServer, estimates: EstimateQueries, gua
         if (!parsed.ok) return toolError(parsed.error);
         try {
           const estimate = await estimates.estimate({ ...parsed.value, ...(args.model !== undefined ? { model: args.model } : {}) });
-          return estimate ? json(estimate) : toolError(`Unknown project id "${args.projectId}". Call list_projects to find valid ids.`);
+          // Only an unknown project id gives no estimate; a repository always has a target.
+          return estimate ? json(estimate) : toolError(unknownProjectIdText(args.projectId ?? ""));
         } catch (error) {
           if (error instanceof EstimateModelError) return toolError(error.message);
           throw error;
