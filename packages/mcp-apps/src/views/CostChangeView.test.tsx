@@ -59,6 +59,15 @@ describe("CostChangeView content", () => {
     expect(tile.getByText("no price for these turns; not counted as 0")).toBeInTheDocument();
   });
 
+  it("draws no Not explained tile when every turn is explained, as the board does", () => {
+    setup(ok(costVariance({ ...mixed(), notExplained: { periodA: { turns: 0 }, periodB: { turns: 0 } } })));
+    expect(screen.queryByRole("group", { name: "Not explained" })).not.toBeInTheDocument();
+    expect(screen.queryByText("0 turns")).not.toBeInTheDocument();
+    expect(screen.getByRole("group", { name: "Change" })).toBeInTheDocument();
+    // The section below still says every turn has a priced figure.
+    expect(within(screen.getByRole("region", { name: "Not explained" })).getByText("every turn has a priced figure")).toBeInTheDocument();
+  });
+
   it("colours a fall with the host's success colour, not info", () => {
     const css = readFileSync(path.join(__dirname, "cost-change/cost-change.css"), "utf8");
     expect(css).toMatch(/\.waterfall-decrease\s*{\s*fill:\s*var\(--color-text-success/);

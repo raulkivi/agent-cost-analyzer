@@ -32,7 +32,7 @@ function Tiles({ vm, block, notExplainedTile }: { vm: CostVarianceViewModel; blo
       <StatTile label={`${vm.periodA.label} (A)`} value={start?.text ?? ""} note={`priced, ${vm.pricingText}`} />
       <StatTile label={`${vm.periodB.label} (B)`} value={end?.text ?? ""} note={`priced, ${vm.pricingText}`} />
       <StatTile label="Change" value={block.changeAmountText} note={block.changePercentText} />
-      {notExplainedTile && <StatTile label="Not explained" value={pluralize(vm.notExplained.periodA.turns + vm.notExplained.periodB.turns, "turn")} note="no price for these turns; not counted as 0" />}
+      {notExplainedTile && vm.hasNotExplained && <StatTile label="Not explained" value={pluralize(vm.notExplained.periodA.turns + vm.notExplained.periodB.turns, "turn")} note="no price for these turns; not counted as 0" />}
     </div>
   );
 }
