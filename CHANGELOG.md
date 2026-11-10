@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [0.10.0] - 2026-11-10
 ### Added
 - Interactive cost views for MCP Apps hosts such as Claude Desktop: the MCP
   tools `get_session_cost`, `get_cost_rollup` and `list_findings` show a
