@@ -1,5 +1,7 @@
 # AI Credits Analyzer
 
+**Last changed:** 2026-11-10 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+
 See where your GitHub Copilot Chat tokens and AI Credits go. AI Credits
 Analyzer reads the logs Copilot Chat writes on your machine and shows each
 session turn by turn: what each turn cost, how much prompt caching saved,
@@ -15,6 +17,10 @@ This is an early pre-release; please
 [report issues](https://github.com/raulkivi/agent-cost-analyzer/issues).
 Independent project; not affiliated with or endorsed by GitHub or
 Microsoft.
+
+Using Claude Code, pi or mitmproxy captures? The standalone app,
+[Agent Cost Analyzer](https://github.com/raulkivi/agent-cost-analyzer#readme),
+reads those and Copilot Chat.
 
 ![The AI Credits Analyzer panel in Dark Modern: a session's turns with token, cache and AI Credits columns, and the selected turn's explanation](https://raw.githubusercontent.com/raulkivi/agent-cost-analyzer/main/docs/images/vscode/panel-dark.png)
 
@@ -52,7 +58,10 @@ Microsoft.
 - **MCP server for Copilot agent mode** (off by default). Ask Copilot Chat
   "what did my last session cost?" and it answers from the same local logs
   through 19 read-only tools, including cost by repository, why it
-  changed, and what a session would have cost on another model.
+  changed, and what a session would have cost on another model. The cost
+  and findings tools also show interactive views in the chat: session
+  cost, spend by day and model, findings, cost over time, a repository
+  comparison, and why a cost changed.
 
 An unknown figure is shown as unknown, never as 0.
 
@@ -111,7 +120,8 @@ All commands are in the **AI Credits Analyzer** category.
 | Refresh | Reloads the Sessions and Setup views and the status bar |
 | Open Learn Mode | Opens the panel in Learn mode |
 | Open Get Started Walkthrough | Opens the walkthrough |
-| Open Session, Show Tool Audit, Copy Advice Bundle | On a session in the Sessions view |
+| Open Session… | From the Command Palette: pick a session, newest first. Also on a session in the Sessions view |
+| Show Tool Audit, Copy Advice Bundle | On a session in the Sessions view |
 | Open Scenario | On a scenario in the Learn view |
 | Fix Setting | On a row in the Setup view: opens that setting |
 
