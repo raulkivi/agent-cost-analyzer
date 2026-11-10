@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
 // @vitest-environment node
-import { readdirSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import ts from "typescript";
@@ -31,12 +31,15 @@ const NOT_SHIPPED = [/\.test\.tsx?$/, /^test-support\//, /^host\/fake-app-host-p
 
 const HOST_METHODS = new Set(["sendMessage", "openLink", "updateModelContext", "callTool", "callServerTool"]);
 // Fields that hold logged text in the domain types and view models.
-const LOGGED_TEXT = new Set(["title", "sessionTitle", "userMessage", "assistantMessage", "excerpt", "prompt", "response", "detail", "why", "evidence", "text", "content", "message", "summary", "heading"]);
+// U9-U11 (A23) add display text that is logged or model-chosen: row, series
+// and vendor labels, project names, unknown and not-explained reasons,
+// provider errors and a tool's error text.
+const LOGGED_TEXT = new Set(["title", "sessionTitle", "userMessage", "assistantMessage", "excerpt", "prompt", "response", "detail", "why", "evidence", "text", "content", "message", "summary", "heading", "label", "name", "reason", "reasons", "error", "errorText", "answer", "displayOnly"]);
 // The tools a view may call, and the argument names it may send them.
 // U10 (A21) opens a row in U9 with the row's own ids and the comparison's
 // period, basis, pricing and currency: all taken from structuredContent.
 const TOOLS = new Set(["get_turn_series", "get_turn", "get_session_cost", "list_findings", "get_repository_cost", "get_project_cost"]);
-const ARGUMENT_NAMES = new Set(["sessionId", "provider", "turnIndex", "maxTurns", "kind", "minSeverity", "repository", "projectId", "since", "until", "basis", "pricing", "currency"]);
+const ARGUMENT_NAMES = new Set(["sessionId", "provider", "turnIndex", "kind", "minSeverity", "repository", "projectId", "since", "until", "basis", "pricing", "currency"]);
 
 function walk(dir: string): string[] {
   return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => (entry.isDirectory() ? walk(path.join(dir, entry.name)) : [path.join(dir, entry.name)]));
@@ -169,6 +172,19 @@ function argumentProblems(wrapped: ts.Expression, where: string): string[] {
   return problems;
 }
 
+// The argument names a call's arguments use, through reviewed builders.
+function argumentNames(wrapped: ts.Expression): string[] {
+  let expression = wrapped;
+  while (ts.isParenthesizedExpression(expression) || ts.isAsExpression(expression) || ts.isSatisfiesExpression(expression) || ts.isNonNullExpression(expression)) expression = expression.expression;
+  const names = [expression, ...descendants(expression)].filter((node) => ts.isPropertyAssignment(node) || ts.isShorthandPropertyAssignment(node)).map((node) => (node as ts.ObjectLiteralElementLike).name!.getText());
+  if (ts.isCallExpression(expression)) {
+    const builder = calleeName(expression);
+    const found = builder === undefined ? undefined : findFunction(builder);
+    if (found) for (const statement of descendants(found.fn).filter(ts.isReturnStatement)) if (statement.expression) names.push(...argumentNames(statement.expression));
+  }
+  return names;
+}
+
 // callTool sites, seen through forwarders: a function that passes its own
 // parameters straight to callTool (callParsed) is a call site wherever it
 // is called, with the tool name and arguments at those parameters' places.
@@ -208,7 +224,18 @@ describe("no-forwarding rule (static, over every call site in src/)", () => {
 
   it("scans the shipped sources, including the views and the adapter", () => {
     const files = SOURCES.map((source) => source.file);
-    expect(files).toEqual(expect.arrayContaining([ADAPTER, "views/SessionCostView.tsx", "views/cost-rollup/AskAboutSession.tsx", "views/findings/use-findings-query.ts"]));
+    expect(files).toEqual(
+      expect.arrayContaining([
+        ADAPTER,
+        "views/SessionCostView.tsx",
+        "views/cost-rollup/AskAboutSession.tsx",
+        "views/findings/use-findings-query.ts",
+        "views/CostOverTimeView.tsx",
+        "views/CostCompareView.tsx",
+        "views/cost-compare/CompareDrillDown.tsx",
+        "views/CostChangeView.tsx",
+      ]),
+    );
     expect(files.some((file) => file.endsWith(".test.tsx"))).toBe(false);
   });
 
@@ -261,6 +288,14 @@ describe("no-forwarding rule (static, over every call site in src/)", () => {
     expect(problems).toEqual([]);
   });
 
+  it("reviews no tool or argument name that no call uses, so the lists stay minimal", () => {
+    const calls = toolCalls();
+    const tools = new Set(calls.flatMap((call) => (call.tool && ts.isStringLiteral(call.tool) ? [call.tool.text] : [])));
+    const names = new Set(calls.flatMap((call) => (call.args ? argumentNames(call.args) : [])));
+    expect([...TOOLS].filter((tool) => !tools.has(tool))).toEqual([]);
+    expect([...ARGUMENT_NAMES].filter((name) => !names.has(name))).toEqual([]);
+  });
+
   it("the adapter forwards its own parameters untouched", () => {
     const calls = uses.filter((use) => use.source.file === ADAPTER && use.kind === "call");
     expect(calls.map((use) => use.name).sort()).toEqual(["callServerTool", "openLink", "sendMessage"]);
@@ -285,8 +320,45 @@ describe("no-forwarding rule (static, over every call site in src/)", () => {
     expect(argumentProblems(parse("args"), "bad")).toEqual(["bad: arguments are args, not an object literal or a reviewed builder"]);
     expect(fixedTemplateProblems("askAboutSessionText")).toEqual([]);
     expect(fixedTemplateProblems("toolArguments")).not.toEqual([]);
+    // U9-U11's display text (A23).
+    expect(argumentProblems(parse("({ projectId: row.label })"), "bad")).toEqual(["bad: reads .label, a logged-text field"]);
+    expect(argumentProblems(parse("({ repository: explained.reason })"), "bad")).toEqual(["bad: reads .reason, a logged-text field"]);
+    expect(argumentProblems(parse("({ projectId: project.name })"), "bad")).toEqual(["bad: reads .name, a logged-text field"]);
   });
 });
+
+const WEB = path.resolve(here, "../../../web");
+
+// The web package's files the shipped views import through its exports map,
+// and their relative imports, transitively.
+function webModules(): string[] {
+  const exportsMap = (JSON.parse(readFileSync(path.join(WEB, "package.json"), "utf8")) as { exports: Record<string, string> }).exports;
+  const queue: string[] = [];
+  for (const source of SOURCES) {
+    for (const statement of source.sf.statements) {
+      if (!ts.isImportDeclaration(statement) || !ts.isStringLiteral(statement.moduleSpecifier)) continue;
+      const match = /^@agent-cost-analyzer\/web\/(.+)$/.exec(statement.moduleSpecifier.text);
+      const target = match ? exportsMap[`./${match[1]}`] : undefined;
+      if (target !== undefined && /\.tsx?$/.test(target)) queue.push(path.join(WEB, target));
+    }
+  }
+  const seen = new Set<string>();
+  while (queue.length > 0) {
+    const file = queue.pop()!;
+    if (seen.has(file)) continue;
+    seen.add(file);
+    const sf = ts.createSourceFile(file, readFileSync(file, "utf8"), ts.ScriptTarget.Latest, true);
+    for (const statement of sf.statements) {
+      if (!(ts.isImportDeclaration(statement) || ts.isExportDeclaration(statement)) || !statement.moduleSpecifier || !ts.isStringLiteral(statement.moduleSpecifier)) continue;
+      const specifier = statement.moduleSpecifier.text;
+      if (!specifier.startsWith(".")) continue;
+      const base = path.resolve(path.dirname(file), specifier.replace(/\.js$/, ""));
+      const resolved = [".ts", ".tsx"].map((extension) => base + extension).find((candidate) => existsSync(candidate));
+      if (resolved !== undefined) queue.push(resolved);
+    }
+  }
+  return [...seen].sort();
+}
 
 describe("no HTML or network sinks (static)", () => {
   const SINKS = /dangerouslySetInnerHTML|\.innerHTML\b|\.outerHTML\b|insertAdjacentHTML|document\.write|\beval\(|new Function\(|srcdoc|\bfetch\(|XMLHttpRequest|WebSocket|EventSource|sendBeacon|window\.open\(|location\.(href|assign|replace)/;
@@ -301,6 +373,28 @@ describe("no HTML or network sinks (static)", () => {
       });
     }
     expect(hits).toEqual([]);
+  });
+
+  // U9-U11 (A23) brought web's Waterfall and SegmentedControl into the
+  // bundle; every web module the views import, and its relative imports,
+  // is held to the same rule.
+  it("no web module the views import renders HTML from a string, evaluates code or opens a connection", () => {
+    const modules = webModules();
+    expect(modules.map((file) => path.relative(WEB, file).split(path.sep).join("/"))).toEqual(expect.arrayContaining(["src/charts/Waterfall.tsx", "src/charts/ViewAsTable.tsx", "src/components/ui/SegmentedControl.tsx"]));
+    const hits: string[] = [];
+    for (const file of modules) {
+      const code = readFileSync(file, "utf8").replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:])\/\/.*$/gm, "$1");
+      code.split("\n").forEach((line, index) => {
+        if (SINKS.test(line) || /<a[\s>]|\b(href|src|srcSet|xlinkHref|formAction)=/.test(line)) hits.push(`${path.relative(WEB, file)}:${index + 1}: ${line.trim()}`);
+      });
+    }
+    expect(hits).toEqual([]);
+  });
+
+  it("no view sets a URL attribute (href, src, action) on any element", () => {
+    const URL_ATTRIBUTES = new Set(["href", "src", "srcSet", "xlinkHref", "action", "formAction", "poster", "data"]);
+    const found = SOURCES.flatMap((source) => descendants(source.sf).filter((node): node is ts.JsxAttribute => ts.isJsxAttribute(node) && URL_ATTRIBUTES.has(node.name.getText())).map((node) => `${at(source, node)} ${node.name.getText()}`));
+    expect(found).toEqual([]);
   });
 
   it("no view renders a link: there is nothing to open (A12 dropped)", () => {

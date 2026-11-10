@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
 import type { Currency } from "@agent-cost-analyzer/domain";
+import { formatTick } from "@agent-cost-analyzer/web/lib/cost/cost-format";
 import type { PointView, PriceMarker } from "../../view-models/index.js";
 
 // What the U9 chart draws, decided apart from the SVG so the rules are
@@ -31,7 +32,25 @@ export interface ChartModel {
   unitLabel: string;
   bars: ChartBar[];
   max: number | null;
+  // Viewbox units left of the plot: the widest y-axis label, a gap to the axis and the edge.
+  leftInset: number;
   markers: ChartMarker[];
+}
+
+// The axis text is sized by CSS from 10 up to 18 viewBox units (narrow hosts
+// scale it up so it stays readable), and a glyph is about 0.6 em wide, so the
+// inset is worked out for the largest size: the label then never leaves the
+// chart on the left or reaches a price-change marker at the first bucket.
+export const AXIS_FONT_MAX = 18;
+// Label to plot edge (clear of a diamond at the first bucket, 5 wide) plus label to chart edge.
+export const AXIS_TO_PLOT = 8;
+export const AXIS_LABEL_GAP = AXIS_TO_PLOT + 4;
+const GLYPH_EM = 0.6;
+const DEFAULT_INSET = 36;
+
+export function leftInsetFor(labels: readonly string[]): number {
+  const widest = Math.max(0, ...labels.map((label) => label.length));
+  return Math.max(DEFAULT_INSET, Math.ceil(widest * GLYPH_EM * AXIS_FONT_MAX) + AXIS_LABEL_GAP);
 }
 
 const UNIT_LABEL: Record<Currency, string> = { AI_CREDITS: "AI Credits", USD: "USD" };
@@ -59,10 +78,10 @@ function positionOf(marker: PriceMarker, points: readonly PointView[]): number |
   const index = points.findIndex((point) => point.period === marker.period);
   const point = points[index];
   if (point === undefined) return undefined;
-  if (marker.kind === "observed") return index;
   const days = (Date.parse(point.end) - Date.parse(point.start)) / DAY_MS + 1;
   const offset = (Date.parse(marker.date) - Date.parse(point.start)) / DAY_MS;
-  return index + Math.min(1, Math.max(0, (offset + 0.5) / days));
+  // A documented change sits mid-day; an observed one from the start of its week.
+  return index + Math.min(1, Math.max(0, (marker.kind === "observed" ? offset : offset + 0.5) / days));
 }
 
 // "input +33.33 %, cache write none to $5.00 / 1M": the percent where both
@@ -84,10 +103,12 @@ function markerTitle(marker: PriceMarker): string {
 export function buildChart(points: readonly PointView[], currency: Currency | null, markers: readonly PriceMarker[]): ChartModel {
   const bars = points.map((point) => bar(point, currency));
   const known = bars.flatMap((entry) => (entry.value === null ? [] : [entry.value]));
+  const max = known.length === 0 ? null : Math.max(...known);
   return {
     unitLabel: unitLabelOf(currency),
     bars,
-    max: known.length === 0 ? null : Math.max(...known),
+    max,
+    leftInset: leftInsetFor(max === null ? [] : [formatTick(0, currency ?? "AI_CREDITS"), formatTick(max, currency ?? "AI_CREDITS")]),
     markers: markers.flatMap((marker): ChartMarker[] => {
       const position = positionOf(marker, points);
       return position === undefined ? [] : [{ kind: marker.kind, inferred: marker.inferred, position, title: markerTitle(marker) }];

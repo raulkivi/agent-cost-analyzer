@@ -4,6 +4,7 @@ import { StatTile } from "@agent-cost-analyzer/web/ui/StatTile";
 import { useMemo } from "react";
 import type { ViewBrand } from "../brand/view-brand.js";
 import type { AppHostPort, ToolResult } from "../host/app-host-port.js";
+import { pluralize } from "../view-models/format.js";
 import { toCostVarianceViewModel } from "../view-models/index.js";
 import type { CostVarianceViewModel, CurrencyBlock } from "../view-models/index.js";
 import { ErrorBox } from "./SessionCostView.js";
@@ -31,7 +32,7 @@ function Tiles({ vm, block, notExplainedTile }: { vm: CostVarianceViewModel; blo
       <StatTile label={`${vm.periodA.label} (A)`} value={start?.text ?? ""} note={`priced, ${vm.pricingText}`} />
       <StatTile label={`${vm.periodB.label} (B)`} value={end?.text ?? ""} note={`priced, ${vm.pricingText}`} />
       <StatTile label="Change" value={block.changeAmountText} note={block.changePercentText} />
-      {notExplainedTile && <StatTile label="Not explained" value={`${vm.notExplained.periodA.turns} + ${vm.notExplained.periodB.turns}`} note="turns, no priced figure, not 0" />}
+      {notExplainedTile && vm.hasNotExplained && <StatTile label="Not explained" value={pluralize(vm.notExplained.periodA.turns + vm.notExplained.periodB.turns, "turn")} note="no price for these turns; not counted as 0" />}
     </div>
   );
 }
@@ -39,7 +40,7 @@ function Tiles({ vm, block, notExplainedTile }: { vm: CostVarianceViewModel; blo
 function Block({ vm, block, withHeading, notExplainedTile }: { vm: CostVarianceViewModel; block: CurrencyBlock; withHeading: boolean; notExplainedTile: boolean }) {
   const unit = UNIT[block.currency];
   return (
-    <section className="cc-block" aria-label={`Cost change in ${unit}`}>
+    <section className="cv-block" aria-label={`Cost change in ${unit}`}>
       <h2 className={withHeading ? undefined : "sr-only"}>{unit}</h2>
       <Tiles vm={vm} block={block} notExplainedTile={notExplainedTile} />
       <div className="cv-sub">

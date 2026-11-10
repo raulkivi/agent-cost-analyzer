@@ -3,42 +3,47 @@
 */
 /* U11 CostChangeView (docs/plans/mcp-apps.md §4.5, board CostChange.dc.html).
    Host tokens for structure; no colour literals (§5.4). A rise is the host's
-   danger colour, a fall its info colour, and the sign is always written too. */
+   danger colour, a fall its success colour, and the sign is always written too. */
 
-.cc-block { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
-.cc-block > h2 { margin: 0; font-size: 13px; font-weight: 600; }
+.cv-block { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.cv-block > h2 { margin: 0; font-size: 13px; font-weight: 600; }
 .cv-sub { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
 .cv-sub > h3 { margin: 0; font-size: 12px; font-weight: 600; }
 .cv-note { margin: 0; font-size: 11px; line-height: 1.4; }
 
-.cc-waterfall .waterfall-increase { fill: var(--color-text-danger, var(--color-diverging-increase)); }
-.cc-waterfall .waterfall-decrease { fill: var(--color-text-info, var(--color-diverging-decrease)); }
-.cc-key { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 11px; }
-.cc-key span { display: inline-flex; align-items: center; gap: 5px; }
-.cc-swatch { display: inline-block; width: 9px; height: 9px; border-radius: 2px; }
-.cc-swatch--total { background: var(--color-series-1); }
-.cc-swatch--increase { background: var(--color-text-danger, var(--color-diverging-increase)); }
-.cc-swatch--decrease { background: var(--color-text-info, var(--color-diverging-decrease)); }
+.cv-waterfall .waterfall-total { fill: var(--color-accent); }
+.cv-waterfall .waterfall-increase { fill: var(--color-text-danger, var(--brand-fb-danger)); }
+.cv-waterfall .waterfall-decrease { fill: var(--color-text-success, var(--brand-fb-success)); }
+.cv-key { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 11px; }
+.cv-key span { display: inline-flex; align-items: center; gap: 5px; }
+.cv-swatch { display: inline-block; width: 9px; height: 9px; border-radius: 2px; }
+.cv-swatch--total { background: var(--color-accent); }
+.cv-swatch--increase { background: var(--color-text-danger, var(--brand-fb-danger)); }
+.cv-swatch--decrease { background: var(--color-text-success, var(--brand-fb-success)); }
 
 .cv-total td { font-weight: 600; }
-.cc-detail { display: flex; flex-direction: column; gap: 6px; }
-.cc-detail-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; font-size: 12px; }
-.cc-versions { font-size: 11px; }
+.cv-detail { display: flex; flex-direction: column; gap: 6px; }
+.cv-detail-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; font-size: 12px; }
+.cv-versions { font-size: 11px; }
 
-.cc-two { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; font-size: 12px; }
-.cc-reasons { margin: 4px 0 0; padding-left: 18px; }
+.cv-two { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; font-size: 12px; }
+.cv-reasons { margin: 4px 0 0; padding-left: 18px; }
 
-.cc-price-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; font-size: 12px; }
-.cc-price-list li { display: flex; flex-direction: column; gap: 1px; }
-.cc-price-lines { font-size: 11px; }
-.cc-price-action { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
-.cc-price-note { font-size: 11px; }
+.cv-price-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; font-size: 12px; }
+.cv-price-list li { display: flex; flex-direction: column; gap: 1px; }
+.cv-price-lines { font-size: 11px; }
+.cv-price-action { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
+.cv-price-note { font-size: 11px; }
+
+@media (max-width: 640px) {
+  /* Costs A and B drop out; the change and its two effects stay (board 13).
+     From 640 px, not 480, so Price stays in view at about 600 px (owner, 2026-11-10). */
+  .view-table .cv-col-wide { display: none; }
+}
 
 @media (max-width: 480px) {
-  .cc-two { grid-template-columns: 1fr; }
-  /* Costs A and B drop out; the change and its two effects stay (board 13). */
-  .view-table .cc-col-wide { display: none; }
+  .cv-two { grid-template-columns: 1fr; }
   /* The chart scales with its 480-unit viewBox, so 11-12 px labels render at about 7 px on a phone; sized in chart units. */
-  .cc-waterfall .waterfall-value { font-size: 17px; }
-  .cc-waterfall .waterfall-name { font-size: 16px; }
+  .cv-waterfall .waterfall-value { font-size: 17px; }
+  .cv-waterfall .waterfall-name { font-size: 16px; }
 }

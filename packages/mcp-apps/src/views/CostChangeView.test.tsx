@@ -1,5 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
+import { readFileSync } from "node:fs";
+import path from "node:path";
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
@@ -30,9 +32,11 @@ describe("CostChangeView content", () => {
     expect(row).not.toHaveClass("cc-total");
   });
 
-  it("uses no class name that U10's stylesheet also defines with other rules", () => {
+  it("uses none of U10's cc- class names: U11's own prefix is cv-", () => {
     const { container } = setup();
-    expect(container.querySelector(".cc-sub, .cc-note, .cc-total")).toBeNull();
+    for (const button of screen.getAllByRole("button", { name: /claude|View as table/ })) fireEvent.click(button);
+    const borrowed = [...container.querySelectorAll("[class]")].flatMap((element) => [...element.classList].filter((name) => name.startsWith("cc-")));
+    expect(borrowed).toEqual([]);
   });
 
   it("names the subject, both periods, the basis and the pricing mode", () => {
@@ -50,7 +54,34 @@ describe("CostChangeView content", () => {
     const change = screen.getByRole("group", { name: "Change" });
     expect(within(change).getByText("+40.00 AI Credits")).toBeInTheDocument();
     expect(within(change).getByText("+40.0 %")).toBeInTheDocument();
-    expect(within(screen.getByRole("group", { name: "Not explained" })).getByText("0 + 3")).toBeInTheDocument();
+    const tile = within(screen.getByRole("group", { name: "Not explained" }));
+    expect(tile.getByText("3 turns")).toBeInTheDocument();
+    expect(tile.getByText("no price for these turns; not counted as 0")).toBeInTheDocument();
+  });
+
+  it("draws no Not explained tile when every turn is explained, as the board does", () => {
+    setup(ok(costVariance({ ...mixed(), notExplained: { periodA: { turns: 0 }, periodB: { turns: 0 } } })));
+    expect(screen.queryByRole("group", { name: "Not explained" })).not.toBeInTheDocument();
+    expect(screen.queryByText("0 turns")).not.toBeInTheDocument();
+    expect(screen.getByRole("group", { name: "Change" })).toBeInTheDocument();
+    // The section below still says every turn has a priced figure.
+    expect(within(screen.getByRole("region", { name: "Not explained" })).getByText("every turn has a priced figure")).toBeInTheDocument();
+  });
+
+  it("colours a fall with the host's success colour, not info", () => {
+    const css = readFileSync(path.join(__dirname, "cost-change/cost-change.css"), "utf8");
+    expect(css).toMatch(/\.waterfall-decrease\s*{\s*fill:\s*var\(--color-text-success/);
+    expect(css).toMatch(/\.cv-swatch--decrease\s*{\s*background:\s*var\(--color-text-success/);
+    expect(css).not.toContain("--color-text-info");
+  });
+
+  // Owner decision 2026-11-10: at about 600 px the by-model table scrolled sideways and hid Price.
+  it("drops costs A and B from the by-model table at 640 px, so Price fits at about 600 px", () => {
+    const css = readFileSync(path.join(__dirname, "cost-change/cost-change.css"), "utf8");
+    const at640 = /@media \(max-width: 640px\)\s*{([^@]*)}/.exec(css)?.[1] ?? "";
+    expect(at640).toMatch(/\.view-table \.cv-col-wide\s*{\s*display:\s*none/);
+    const at480 = /@media \(max-width: 480px\)\s*{([^@]*)}/.exec(css)?.[1] ?? "";
+    expect(at480).not.toContain("cv-col-wide");
   });
 
   it("draws the waterfall with a written sign on every effect, so colour is never the only cue", () => {
@@ -149,7 +180,7 @@ describe("CostChangeView price changes control", () => {
     const button = screen.getByRole("button", { name: "Price changes" });
     expect(button).toBeDisabled();
     expect(screen.getByText(/The price timeline is not available yet/)).toBeInTheDocument();
-    expect(screen.getByText(/claude-sonnet-5\.5/, { selector: ".cc-price-note *, .cc-price-note" })).toBeInTheDocument();
+    expect(screen.getByText(/claude-sonnet-5\.5/, { selector: ".cv-price-note *, .cv-price-note" })).toBeInTheDocument();
     fireEvent.click(button);
     expect(port.calls).toEqual([]);
   });
