@@ -131,10 +131,10 @@ export function ComparisonTable({
             <th className="view-left">{column}</th>
             <th>Total</th>
             <th>Change</th>
-            <th className="cc-col-wide">Per session</th>
-            <th className="cc-col-wide">Per active day</th>
-            <th className="cc-col-wide">Per turn</th>
-            <th className="cc-col-wide">Cache hit</th>
+            <th className="cc-ratio">Per session</th>
+            <th className="cc-ratio">Per active day</th>
+            <th className="cc-ratio">Per turn</th>
+            <th className="cc-ratio">Cache hit</th>
           </tr>
         </thead>
         <tbody>
@@ -153,16 +153,16 @@ export function ComparisonTable({
                   <Change key={change.currency ?? index} change={change} />
                 ))}
               </td>
-              <td className="cc-col-wide">
+              <td className="cc-ratio">
                 <Lines views={row.perSession} />
               </td>
-              <td className="cc-col-wide">
+              <td className="cc-ratio">
                 <Lines views={row.perActiveDay} />
               </td>
-              <td className="cc-col-wide">
+              <td className="cc-ratio">
                 <Lines views={row.perTurn} />
               </td>
-              <td className={row.cacheHit.known ? "cc-col-wide" : "cc-col-wide view-unknown"}>{row.cacheHit.text}</td>
+              <td className={row.cacheHit.known ? "cc-ratio" : "cc-ratio view-unknown"}>{row.cacheHit.text}</td>
             </tr>
           ))}
         </tbody>
@@ -175,10 +175,10 @@ export function ComparisonTable({
               <Lines views={vm.total} notes />
             </td>
             <td />
-            <td className="cc-col-wide" />
-            <td className="cc-col-wide" />
-            <td className="cc-col-wide" />
-            <td className="cc-col-wide" />
+            <td className="cc-ratio" />
+            <td className="cc-ratio" />
+            <td className="cc-ratio" />
+            <td className="cc-ratio" />
           </tr>
         </tfoot>
       </table>

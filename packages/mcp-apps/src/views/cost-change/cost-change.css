@@ -7,9 +7,9 @@
 
 .cc-block { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
 .cc-block > h2 { margin: 0; font-size: 13px; font-weight: 600; }
-.cc-sub { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
-.cc-sub > h3 { margin: 0; font-size: 12px; font-weight: 600; }
-.cc-note { margin: 0; font-size: 11px; line-height: 1.4; }
+.cv-sub { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.cv-sub > h3 { margin: 0; font-size: 12px; font-weight: 600; }
+.cv-note { margin: 0; font-size: 11px; line-height: 1.4; }
 
 .cc-waterfall .waterfall-increase { fill: var(--color-text-danger, var(--color-diverging-increase)); }
 .cc-waterfall .waterfall-decrease { fill: var(--color-text-info, var(--color-diverging-decrease)); }
@@ -20,7 +20,7 @@
 .cc-swatch--increase { background: var(--color-text-danger, var(--color-diverging-increase)); }
 .cc-swatch--decrease { background: var(--color-text-info, var(--color-diverging-decrease)); }
 
-.cc-total td { font-weight: 600; }
+.cv-total td { font-weight: 600; }
 .cc-detail { display: flex; flex-direction: column; gap: 6px; }
 .cc-detail-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; font-size: 12px; }
 .cc-versions { font-size: 11px; }
@@ -38,4 +38,7 @@
   .cc-two { grid-template-columns: 1fr; }
   /* Costs A and B drop out; the change and its two effects stay (board 13). */
   .view-table .cc-col-wide { display: none; }
+  /* The chart scales with its 480-unit viewBox, so 11-12 px labels render at about 7 px on a phone; sized in chart units. */
+  .cc-waterfall .waterfall-value { font-size: 17px; }
+  .cc-waterfall .waterfall-name { font-size: 16px; }
 }

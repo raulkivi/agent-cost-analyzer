@@ -6,7 +6,7 @@
 // with test/visual/vite.config.ts into a scratch directory; never part of
 // dist/views.html.
 //
-//   ?view=session-cost|cost-rollup|findings|cost-compare|none  &theme=light|dark  &state=loaded|empty|error
+//   ?view=session-cost|cost-rollup|findings|cost-compare (&groupBy=project drills into the project view and its sessions)|cost-over-time|cost-change|none  &kind=repository|project (cost-over-time)  &theme=light|dark  &state=loaded|empty|error
 import { applyDocumentTheme, applyHostFonts, applyHostStyleVariables } from "@modelcontextprotocol/ext-apps";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
@@ -21,7 +21,7 @@ import type { ViewBrand } from "../../src/brand/view-brand.js";
 import { FakeAppHostPort } from "../../src/host/fake-app-host-port.js";
 import { bindHostTheme } from "../../src/theme/apply-host-theme.js";
 import { costRollup, sessionCost, turnSeries } from "../../src/view-models/fixtures.js";
-import { comparisonChange, comparisonRow, costComparison, costSeries, costTotal, projectCost } from "../../src/view-models/cost-analysis-fixtures.js";
+import { comparisonChange, comparisonRow, costComparison, costSeries, costTotal, costVariance, projectCost } from "../../src/view-models/cost-analysis-fixtures.js";
 import { turnView } from "../../src/view-models/turn-view-fixture.js";
 import { findingsResult, SAMPLE_FINDINGS } from "../../src/views/findings/fixtures.js";
 
@@ -62,6 +62,7 @@ port.toolResults.set("get_project_cost", { structuredContent: projectCost() });
 
 // U10: four rows as the board has them, one partly known and one with no earlier figure.
 const comparison = costComparison({
+  groupBy: params.get("groupBy") === "project" ? "project" : "repository",
   total: costTotal(952, 951, 952),
   rows: [
     comparisonRow({ key: "a", label: "provider-core", sessions: 38, turns: 346, total: costTotal(449, 346, 346), change: [comparisonChange(449, 380.2, 0.181)], share: [{ currency: "AI_CREDITS", share: 0.472 }] }),
@@ -71,7 +72,7 @@ const comparison = costComparison({
   ],
 });
 
-const tool = { "session-cost": "get_session_cost", "cost-rollup": "get_cost_rollup", findings: "list_findings", "cost-compare": "compare_costs", none: "list_sessions" }[view] ?? "get_session_cost";
+const tool = { "session-cost": "get_session_cost", "cost-rollup": "get_cost_rollup", findings: "list_findings", "cost-compare": "compare_costs", "cost-over-time": params.get("kind") === "project" ? "get_project_cost" : "get_repository_cost", "cost-change": "explain_cost_change", none: "list_sessions" }[view] ?? "get_session_cost";
 const data =
   view === "session-cost"
     ? sessionCost()
@@ -83,7 +84,13 @@ const data =
           : findingsResult(SAMPLE_FINDINGS, { total: 3 })
         : view === "cost-compare"
           ? comparison
-          : { sessions: [] };
+          : view === "cost-over-time"
+            ? params.get("kind") === "project"
+              ? projectCost()
+              : costSeries()
+            : view === "cost-change"
+              ? costVariance()
+              : { sessions: [] };
 
 const recorded = (theme === "dark" ? claudeDark : claudeLight) as { styleVariables: { defined: Record<string, string> } };
 bindHostTheme(port, { applyDocumentTheme, applyHostStyleVariables, applyHostFonts });
