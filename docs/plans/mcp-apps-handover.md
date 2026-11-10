@@ -1,6 +1,6 @@
 # Phase 12 (MCP Apps): session handover, 2026-11-10
 
-**Last changed:** 2026-11-10 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-11 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 This document hands the Phase 12 work over to the next session. The design, the tasks and the exit criteria are in [mcp-apps.md](mcp-apps.md). The schedule and the status are in [implementation-plan-gantt.md](../implementation-plan-gantt.md). This page gives only what a new session needs to pick the work up.
 
@@ -10,7 +10,7 @@ This document hands the Phase 12 work over to the next session. The design, the 
 - **Increment 2 built and merged to `main` 2026-11-10:** A17, A18, A19 (PR #193) and A20, A21, A22 (PR #194, merged into #193's branch first). Status 25 of 36 tasks (69%).
 - **A17b boards approved 2026-11-10** with the owner's answers in mcp-apps.md §9.1: defaults kept except question 4 (a fall uses the host's success colour) and U11's "Not explained" tile wording. A23 applied both.
 - **Next:**
-  - A24: the owner's checks of U9–U11 in VS Code Copilot Chat and Claude Desktop, light and dark, with [mcp-apps-a24-checklist.md](mcp-apps-a24-checklist.md). Owner answers after A23 (mcp-apps.md §9.1): period totals keep the brand data colour; U11's table drops costs A and B from 640 px; the owner records both High Contrast colour sets in checklist step 1.7a, then Claude adds them to the contrast tests;
+  - step 10.17 G4-G6 replace A24 (the owner's checks of U9–U11 in VS Code Copilot Chat and Claude Desktop; see [release-ui-gate.md](release-ui-gate.md)); the 0.5.0 pre-release stays published. Owner answers after A23 (mcp-apps.md §9.1): period totals keep the brand data colour; U11's table drops costs A and B from 640 px; the owner records both High Contrast colour sets in checklist step 1.7a, then Claude adds them to the contrast tests;
   - extension 0.5.0 on the Marketplace pre-release channel after #196 merges (owner, 2026-11-10), so A24 can test the published package;
   - then the Increment 2 release: extension 0.6.0, app 0.11.0.
 - **Release:** the owner asked about an extension 0.4.1; not planned, since `main` has no fixes to 0.4.0, only Increment 2 features (0.6.0 after A24, or a 0.5.0 pre-release).

@@ -2614,8 +2614,8 @@ refactored — red-green-refactor, not tests bolted on afterward.
   registered only in `ExtensionMode.Test` like the other hooks. Six launch
   configurations (main, first run, Copilot Chat on, Workspace Trust on, a
   seeded git folder for S9, and an installed VSIX for uninstall) run 13
-  spec files in the `extension-ui` CI job, which stays informational
-  (`continue-on-error`) until the owner's flake measurement. A separate
+  spec files in the `extension-ui` CI job, which is still informational
+  (`continue-on-error`) on `main` and becomes required (G1). A separate
   opt-in suite (`test:ui:vscode:copilot`, never in CI) drives a real
   signed-in Copilot chat. Coverage per manual check and the CI record:
   [vscode-ui-automation.md](plans/vscode-ui-automation.md) §6.1 and §6.9.
@@ -2629,6 +2629,14 @@ refactored — red-green-refactor, not tests bolted on afterward.
   `platform/clock/clock-from-env.ts`, and the page's clock), reads figures
   from the page and runs axe in the browser at every stop. The required
   `web-e2e` CI job runs it with no retries.
+- Release gate (step 10.17, [release-ui-gate.md](plans/release-ui-gate.md)).
+  The extension is gated by its integration suite, its Playwright UI check
+  and the `extension-ui` wdio suite. The `extension-ui` job becomes required
+  and runs in `release-extension.yml` (planned, G1). The real-Copilot suite
+  runs on the owner's machine before tagging, and its result is recorded per
+  commit (planned, D1, G2). The app is gated by `web-e2e`, which
+  `release-app.yml` runs once G1 adds it (planned). The remote checks
+  (manual checks §3) are outside the gate (D2).
 - Property-based tests (`*.property.test.ts`, `fast-check`) cover code
   that takes untrusted input or has a simple invariant: secret and header
   redaction, the SSE and shell-command parsers, the release checks and

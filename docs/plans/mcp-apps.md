@@ -1,8 +1,8 @@
 # MCP Apps: branded, interactive cost views in the chat
 
-**Last changed:** 2026-11-10 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-11 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
-Status: **in progress: the MVP (A0–A16) released 2026-11-10, A12 dropped; Increment 2: A17–A23 done, A17b boards approved 2026-11-10, next A24 (owner checks); planned 2026-10-28, updated
+Status: **in progress: the MVP (A0–A16) released 2026-11-10, A12 dropped; Increment 2: A17–A23 done, A17b boards approved 2026-11-10, next step 10.17 G4-G6 (replacing A24's owner checks); planned 2026-10-28, updated
 2026-11-07 for the Phase 14 and Phase 15 tools.** This is Phase 12 in
 [implementation-plan.md](../implementation-plan.md). Its dependencies are
 met: Phase 9.12's tools are done, step 10.13 is done and `ext-v0.1.0`
@@ -746,7 +746,7 @@ Starts after the MVP's exit criterion is met (A16).
 | A21 | U10 `CostCompareView`, with in-place drill-down into U9. **Done 2026-11-10:** `views/CostCompareView.tsx` plus `views/cost-compare/`: table with share bars, signed change ("no earlier figure"), per session, active day and turn, cache hit, a "Together" row (totals only: the tool returns no combined change) and mixed currencies apart. A row calls `get_repository_cost` or `get_project_cost` with the row's `drillDown.arguments` and renders U9 in place, so U10 → U9 → U1 works with a Back control and trail at each level (`BackButton` exported from `DrillDown`, `CostOverTimeView` takes a `frame`). Both calls are in the reviewed list of `no-forwarding.test.ts`. In the extension a project comparison returns zero-turn rows and no reason, so U10 shows a fixed copy of `EXTENSION_NO_PROJECTS_REASON` when every project row is empty | medium | Sonnet | A20 |
 | A22 | U11 `CostChangeView`: waterfall, per-model table, not-explained turns. **Done 2026-11-10:** `views/CostChangeView.tsx` plus `views/cost-change/`: web `Waterfall` per currency (rises in the host's danger colour, falls in info, the sign always written; A23 changed falls to the success colour per §9.1), a per-model table whose rows expand to token types, unit prices and price versions, not-explained turns with their reasons (display only), documented price changes, and a disabled "Price changes" control with a visible note until U13 (A28) adds the drill-down. U11 calls no tool. An error result shows the tool's text as plain text; tile notes follow the pricing mode | medium | Sonnet | A17, A17b, A18, A19 |
 | A23 | Accessibility and security review of U9–U11 (as A14), and docs: User Guide, extension guide, both CHANGELOGs. **Review done 2026-11-10:** axe over every U11 state in `a11y.test.tsx` (U9 and U10 were covered), none failing; keyboard tests for U10 → U9 → U1 and Back after a failure or the no-projects state, and U11's rows and View as table, all passing as built; `hostile-text.test.tsx` plants markup and an injection in every U9–U11 text field and presses every control; the static no-forwarding scan names U9–U11, covers the `web` modules they import and URL attributes, fails on unused allow-list names (`maxTurns` dropped) and on display-text fields (`label`, `reason` and others) in tool arguments. Fixed: no-projects spoofing by a crafted project id (domain's `unknownProjectIdText`/`parseUnknownProjectIdText`, known reasons only), U11's waterfall colours under 3:1 (period total on Claude dark, red and green on a dark host with no colours), U11's toggles without `aria-controls`, its swatches, its "0 turns" tile, its `cc-` classes (now `cv-`), and U9's observed marker on a monthly chart. U9's markers stay out of the tab order (decision in §6.1). Findings and what is left open: §6.1. **Docs done 2026-11-10:** U9–U11 sections in the User Guide and the extension guide, both CHANGELOGs' `[Unreleased]` entries checked against the code, and the A24 checklist ([mcp-apps-a24-checklist.md](mcp-apps-a24-checklist.md)). Owner decisions from §9.1 applied: a fall in the success colour, the "Not explained" tile as "N turns". Period totals use the brand data colour (`--color-accent`), not the board's series-1 blue, which failed 3:1 on Claude dark; confirmed by the owner 2026-11-10 (§9.1). Owner decision after A23: U11's by-model table drops costs A and B from 640 px so Price fits at about 600 px | medium | Opus | A21, A22 |
-| A24 | Owner's manual checks of U9–U11 in VS Code Copilot Chat and Claude Desktop, light and dark | — | owner | A23 |
+| A24 | Replaced by step 10.17 tasks G4, G5 and G6 (owner rule, 2026-11-11): U9–U11 in VS Code Copilot Chat (wdio) and Claude Desktop (Playwright fake host), light and dark, with the High Contrast sets recorded by wdio | — | none (automated, step 10.17) | A23 |
 
 ### 7.2 Increment 3: replay, prices, billing, audit, picker
 
@@ -763,7 +763,7 @@ Starts after Increment 2's exit criterion is met (A24).
 | A30 | U4 `AuditView` and U5 `SessionPickerView` (the picker sends only the fixed "Analyse session <id>" template) | medium | Sonnet | A25b, A26 |
 | A31 | Fullscreen mode for U2 and U9 (`requestDisplayMode`) | low | Haiku | A26 |
 | A32 | Accessibility and security review of A27–A31 (as A14), and docs: architecture.md, threat-model.md §6, User Guide, extension guide, both CHANGELOGs | medium | Opus | A27–A31 |
-| A33 | Owner's manual checks of Increment 3: VS Code Copilot Chat (no U14/U15 there) and Claude Desktop, light and dark | — | owner | A32 |
+| A33 | Increment 3 checks, written as wdio and Playwright specs (step 10.17), not manual: VS Code Copilot Chat (no U14/U15 there) and Claude Desktop, light and dark | — | owner | A32 |
 
 ### 7.3 Target releases
 
@@ -776,7 +776,7 @@ release workflow sends an odd minor to the Marketplace pre-release channel.
 | Release | Ships after | Extension (AI Credits Analyzer, tag `ext-v*`) | Standalone app (Agent Cost Analyzer, tag `app-v*`) |
 |---|---|---|---|
 | MVP: U1–U3 | A16 | **0.4.0** (stable) | **0.10.0** (shipped 2026-11-10) |
-| Increment 2: U9–U11 | A24 | **0.6.0** | **0.11.0** |
+| Increment 2: U9–U11 | A24 (now step 10.17 G4-G6) | **0.6.0** | **0.11.0** |
 | Increment 3: U4, U5, U12–U15 | A33 | **0.8.0** (no U14/U15) | **0.12.0** |
 
 - The MVP shipped in the same release as the Phase 14/15 work, so the app

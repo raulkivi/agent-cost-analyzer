@@ -2,7 +2,7 @@
 
 **Last changed:** 2026-11-11 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
-Status: **planned 2026-11-11.** Owner rule, 2026-11-11: every UI check
+Status: **in progress: G0 done 2026-11-11.** Owner rule, 2026-11-11: every UI check
 before a release is automated. VS Code and Copilot checks use wdio
 (`wdio-vscode-service`, [vscode-ui-automation.md](vscode-ui-automation.md));
 web-only checks use Playwright (or the integrated Chrome for exploratory

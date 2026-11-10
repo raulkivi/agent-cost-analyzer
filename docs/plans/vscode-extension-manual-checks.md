@@ -10,6 +10,11 @@ Record the result in the release PR: tick each line, add notes, and attach
 the screenshots listed at the end (they're also the ones step 10.10 puts
 in the docs). Findings that need a code fix also go in the run log below.
 
+Since 2026-11-11 (step 10.17) no row here gates a release: every UI check
+before a release is automated. This doc records what each suite covers and
+what is still manual until G3 and G7 of step 10.17 land
+([release-ui-gate.md](release-ui-gate.md)).
+
 ## Run log
 
 ### 0.1.0 (started 2026-10-27, in progress)
@@ -167,6 +172,8 @@ For a clean first run, use a new profile (*Profiles → New Profile*).
 | 2.6 | Turn the setting off again | The server disappears from the tool list. | Automated: `mcp.e2e.ts`. |
 
 ## 3. Remote check (D6, `extensionKind: ["workspace"]`)
+
+Outside the release gate (D2): an occasional check, not run before a release.
 
 Do at least one of Remote-SSH or WSL, and one Dev Container. Install the
 VSIX into the remote (*Install in <remote>*).
