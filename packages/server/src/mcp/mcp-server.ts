@@ -114,7 +114,7 @@ export function createMcpServer(deps: McpServerDeps): McpServer {
   if (serves("sessions")) registerSessionTools(server, toolDeps, guarded);
   if (serves("audit")) registerAuditTools(server, toolDeps, guarded);
   if (serves("cost")) registerCostTools(server, toolDeps, guarded);
-  if (costAnalysis) registerCostAnalysisTools(server, toolDeps, costAnalysis, guarded);
+  if (costAnalysis) registerCostAnalysisTools(server, toolDeps, costAnalysis, guarded, deps.attribution);
   if (serves("findings")) registerFindingTools(server, toolDeps, guarded);
   if (serves("pricing") && deps.priceBook) registerPricingTools(server, deps.priceBook, guarded, deps.costAnalysis);
   if (serves("attribution") && deps.attribution) registerAttributionTools(server, toolDeps, deps.attribution, guarded);

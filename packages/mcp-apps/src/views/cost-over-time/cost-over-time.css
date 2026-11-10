@@ -1,0 +1,52 @@
+/* SPDX-FileCopyrightText: 2026 Raul Kivi
+   SPDX-License-Identifier: MIT
+*/
+/* U9 CostOverTimeView (docs/plans/mcp-apps.md §4.5, board CostOverTime.dc.html).
+   Host tokens for structure; the brand shows only in the data marks. No
+   colour literals (§5.4). */
+
+.ct-tiles .stat-tile { align-content: start; }
+.ct-money { display: block; font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums; line-height: 1.3; }
+.ct-note { display: block; font-size: 10px; line-height: 1.3; color: var(--color-text-muted); }
+.ct-basis { margin: 0; font-size: 11px; }
+.ct-issues { margin: 0; padding-left: 16px; font-size: 11px; }
+
+.ct-chart-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.ct-currency { margin: 0; padding: 0; border: 0; min-width: 0; }
+
+.ct-marker { color: var(--color-text); }
+.ct-marker line { stroke: currentColor; stroke-width: 1.3; }
+.ct-marker polygon { stroke: currentColor; stroke-width: 1.5; }
+.ct-marker-inferred { color: var(--color-text-muted); }
+.ct-empty { font-size: 9px; }
+
+.ct-legend { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 0; padding: 0; list-style: none; font-size: 11px; color: var(--color-text-muted); }
+.ct-legend li { display: inline-flex; align-items: center; gap: 5px; }
+.ct-swatch { display: inline-block; width: 10px; height: 10px; flex-shrink: 0; }
+.ct-swatch-bar { background: var(--brand-accent); }
+.ct-swatch-partial { background: repeating-linear-gradient(45deg, var(--color-text-muted) 0 1px, transparent 1px 3px); border: 1px solid var(--brand-accent); }
+.ct-swatch-line { height: 0; width: 14px; border-top: 2px solid var(--color-text); }
+.ct-swatch-line-inferred { border-top: 2px dashed var(--color-text-muted); }
+
+.ct-changes { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.ct-change { display: flex; flex-direction: column; gap: 1px; font-size: 12px; padding-left: 8px; border-left: 2px solid var(--color-text); }
+.ct-change-inferred { border-left: 2px dashed var(--color-text-muted); }
+.ct-change-head { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-weight: 600; }
+
+.ct-vendors td.ct-name { text-align: left; white-space: normal; overflow-wrap: anywhere; }
+.ct-vendors tr.ct-vendor td { font-weight: 600; }
+.ct-vendors tr.ct-model td.ct-name { padding-left: 18px; }
+.ct-reason { display: block; font-weight: 400; font-size: 11px; color: var(--color-text-muted); }
+
+.ct-coverage { display: block; font-size: 10px; line-height: 1.3; }
+/* Model, start and turns under the title: only where their columns are hidden. */
+.ct-session-sub { display: none; }
+
+.ct-state { display: flex; flex-direction: column; gap: 6px; font-size: 13px; }
+.ct-state h2 { margin: 0; font-size: 14px; font-weight: 600; }
+.ct-state p { margin: 0; overflow-wrap: anywhere; }
+
+@media (max-width: 480px) {
+  .view-table .ct-col-wide { display: none; }
+  .ct-session-sub { display: block; padding-left: 16px; font-size: 11px; }
+}

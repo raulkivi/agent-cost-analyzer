@@ -2,13 +2,17 @@
 // SPDX-License-Identifier: MIT
 import type { HostContext } from "../host/app-host-port.js";
 
-export type ViewId = "session-cost" | "cost-rollup" | "findings";
+export type ViewId = "session-cost" | "cost-rollup" | "findings" | "cost-over-time" | "cost-change" | "cost-compare";
 export type ViewSelection = { view: ViewId } | { view: "none" };
 
 const BY_TOOL: Record<string, ViewId> = {
   get_session_cost: "session-cost",
   get_cost_rollup: "cost-rollup",
   list_findings: "findings",
+  get_repository_cost: "cost-over-time",
+  get_project_cost: "cost-over-time",
+  explain_cost_change: "cost-change",
+  compare_costs: "cost-compare",
 };
 
 // VS Code prefixes the tool name with the server's id ("<server>-<tool>",
@@ -30,6 +34,11 @@ function byShape(structured: unknown): ViewId | undefined {
   if (hasArray(s, "findings") && "bySeverity" in s) return "findings";
   if (hasArray(s, "topSessions") && hasArray(s, "daily")) return "cost-rollup";
   if (typeof s.sessionId === "string" && hasArray(s, "topTurns")) return "session-cost";
+  // CostSeries and ProjectCost (U9): the series with its price changes and vendor split; no MVP result has these together.
+  if (hasArray(s, "points") && hasArray(s, "priceChanges") && hasArray(s, "observedChanges") && hasArray(s, "byVendor")) return "cost-over-time";
+  if (hasArray(s, "currencies") && typeof s.periodA === "object" && typeof s.periodB === "object" && typeof s.notExplained === "object") return "cost-change";
+  // CostComparison (U10): rows with both periods and a group; checked last, so no earlier shape is taken for it.
+  if (hasArray(s, "rows") && typeof s.groupBy === "string" && typeof s.comparePeriod === "string" && typeof s.previousSince === "string" && typeof s.previousUntil === "string" && typeof s.total === "object") return "cost-compare";
   return undefined;
 }
 

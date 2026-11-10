@@ -13,6 +13,7 @@ import {
   sessionCostSchema,
 } from "@agent-cost-analyzer/domain";
 import { costCompareRequestSchema, costSeriesRequestSchema, costVarianceRequestSchema } from "../services/cost-analysis/cost-query-params.js";
+import type { AttributionQueries } from "../services/cost-attribution/attribution-query-service.js";
 import type { CostAnalysisQueries } from "../services/cost-analysis/cost-analysis-service.js";
 import { DEFAULT_TOP_PROJECT_SESSIONS, MAX_TOP_PROJECT_SESSIONS } from "../services/cost-analysis/project-cost-builder.js";
 import { DEFAULT_TOP_SESSIONS } from "../services/cost/cost-rollup-builder.js";
@@ -156,7 +157,21 @@ function seriesRequest(args: SeriesArgs) {
   return costSeriesRequestSchema.parse({ ...rest, ...(provider !== undefined ? { providerId: provider } : {}) });
 }
 
-export function registerCostAnalysisTools(server: McpServer, deps: McpToolDeps, analysis: CostAnalysisQueries, guarded: Guard): void {
+// A product with no projects says why when a project id is unknown (D19), so
+// the model and the U9 view can show the reason instead of a bare id error.
+function unknownProjectText(projectId: string, attribution: Pick<AttributionQueries, "listProjects"> | undefined): string {
+  const base = `Unknown project id "${projectId}". Call list_projects to find valid ids.`;
+  const list = attribution?.listProjects();
+  return list !== undefined && list.projects.length === 0 && list.reason !== undefined ? `${base} ${list.reason}` : base;
+}
+
+export function registerCostAnalysisTools(
+  server: McpServer,
+  deps: McpToolDeps,
+  analysis: CostAnalysisQueries,
+  guarded: Guard,
+  attribution?: Pick<AttributionQueries, "listProjects">,
+): void {
   server.registerTool(
     "get_repository_cost",
     {
@@ -199,7 +214,7 @@ export function registerCostAnalysisTools(server: McpServer, deps: McpToolDeps, 
     ({ projectId, topSessions, ...args }) =>
       guarded(async () => {
         const cost = await analysis.getProjectCost({ ...seriesRequest(args), projectId, ...(topSessions !== undefined ? { topSessions } : {}) });
-        return cost ? json(cost) : toolError(`Unknown project id "${projectId}". Call list_projects to find valid ids.`);
+        return cost ? json(cost) : toolError(unknownProjectText(projectId, attribution));
       }),
   );
 

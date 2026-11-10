@@ -1,0 +1,43 @@
+/* SPDX-FileCopyrightText: 2026 Raul Kivi
+   SPDX-License-Identifier: MIT
+*/
+/* U10 CostCompareView (docs/plans/mcp-apps.md §4.5, board CostCompare.dc.html).
+   Host tokens for structure; the brand shows only in the share bars. No
+   colour literals (§5.4). */
+
+.cc-note-line { margin: 0; font-size: 11px; }
+.cc-issues { margin: 0; padding-left: 16px; font-size: 11px; }
+
+.cc-total { display: flex; flex-direction: column; align-items: flex-end; gap: 1px; }
+.cc-total + .cc-total { margin-top: 3px; }
+.cc-line { font-weight: 600; font-variant-numeric: tabular-nums; }
+.cc-share { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 400; }
+.cc-track { display: inline-block; width: 44px; height: 6px; }
+.cc-fill { display: block; height: 100%; background: var(--brand-accent); }
+.cc-note { display: block; font-size: 10px; line-height: 1.3; font-weight: 400; }
+
+.cc-change-cell { text-align: right; }
+.cc-change { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: baseline; gap: 2px 5px; }
+.cc-change + .cc-change { margin-top: 3px; }
+.cc-change svg { align-self: center; }
+.cc-change-pct { font-weight: 600; }
+.cc-change-abs { font-size: 11px; }
+
+.view-table th.cc-name { font-weight: 400; white-space: normal; color: inherit; overflow-wrap: anywhere; }
+.cc-sub { display: block; font-size: 11px; padding-left: 16px; }
+/* Per session, per active day, per turn and cache hit under the name: only where their columns are hidden. */
+.cc-narrow { display: none; }
+
+.cc-state { display: flex; flex-direction: column; gap: 6px; font-size: 13px; }
+.cc-state p { margin: 0; overflow-wrap: anywhere; }
+.cc-state h2 { margin: 0; font-size: 14px; font-weight: 600; }
+
+.view-table tfoot th, .view-table tfoot td { font-weight: 600; border-top: 1px solid var(--color-divider); border-bottom: 0; }
+/* The scroll region caps at 340 px; "Together" stays in view instead of hiding under the rows. */
+.view-scroll .view-table tfoot th, .view-scroll .view-table tfoot td { position: sticky; bottom: 0; background: var(--color-background-primary, var(--brand-fb-ground)); }
+
+/* The four ratio columns need about 560 px beside a readable name; below that they move under the name. */
+@media (max-width: 640px) {
+  .view-table .cc-ratio { display: none; }
+  .cc-narrow { display: block; padding-left: 16px; font-size: 11px; }
+}

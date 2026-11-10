@@ -170,6 +170,16 @@ describe("createCopilotMcpServices (the extension's MCP server, vscode-extension
     expect(projectListSchema.parse((await standalone.callTool({ name: "list_projects", arguments: {} })).structuredContent).reason).toBeUndefined();
   });
 
+  it("answers get_project_cost with the unknown id and the no-projects reason; the standalone text stays plain (mcp-apps.md §9.1)", async () => {
+    const result = await copilot.callTool({ name: "get_project_cost", arguments: { projectId: "portal" } });
+    const text = (result.content as { text: string }[])[0]!.text;
+    expect(result.isError).toBe(true);
+    expect(text).toContain('Unknown project id "portal"');
+    expect(text).toMatch(/Agent Cost Analyzer app/);
+    const plain = await standalone.callTool({ name: "get_project_cost", arguments: { projectId: "portal" } });
+    expect((plain.content as { text: string }[])[0]!.text).not.toMatch(/Agent Cost Analyzer app/);
+  });
+
   it("reads the bundled price book and lists repositories over the Copilot provider", async () => {
     const book = priceBookListingSchema.parse((await copilot.callTool({ name: "get_price_book", arguments: { channel: "github-copilot" } })).structuredContent);
     const repositories = repositoryListSchema.parse((await copilot.callTool({ name: "list_repositories", arguments: {} })).structuredContent);

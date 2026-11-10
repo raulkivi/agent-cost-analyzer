@@ -22,6 +22,9 @@ export interface HostContext {
 export interface ToolResult {
   structuredContent?: unknown;
   isError?: boolean;
+  // The first text of an error result (e.g. 'Unknown project id "x"…'). Plain
+  // text for display; never sent on to the model (plan §6).
+  errorText?: string;
 }
 
 export type Unsubscribe = () => void;

@@ -6,8 +6,11 @@ import { describe, expect, it } from "vitest";
 import type { ViewBrand } from "../brand/view-brand.js";
 import type { ToolResult } from "../host/app-host-port.js";
 import { FakeAppHostPort } from "../host/fake-app-host-port.js";
+import { comparisonRow, costComparison, costSeries, costTotal, point, projectCost } from "../view-models/cost-analysis-fixtures.js";
 import { costRollup, sessionCost, turnSeries } from "../view-models/fixtures.js";
 import { turnView } from "../view-models/turn-view-fixture.js";
+import { CostCompareView } from "./CostCompareView.js";
+import { CostOverTimeView } from "./CostOverTimeView.js";
 import { CostRollupView } from "./CostRollupView.js";
 import { FindingsView } from "./FindingsView.js";
 import { SessionCostView } from "./SessionCostView.js";
@@ -129,5 +132,75 @@ describe("U3 filters and evidence by keyboard", () => {
     const user = userEvent.setup();
     render(<FindingsView brand={brand} port={new FakeAppHostPort()} result={ok(findingsResult(SAMPLE_FINDINGS, { total: 3 }))} />);
     await tabTo(user, screen.getByRole("region", { name: /Findings, scrollable/ }));
+  });
+});
+
+describe("U9 cost over time by keyboard", () => {
+  it("Tab reaches a top session, Enter opens it, and Back from the keyboard returns focus to the session", async () => {
+    const user = userEvent.setup();
+    render(<CostOverTimeView port={port()} brand={brand} result={ok(projectCost())} />);
+    const session = screen.getByRole("button", { name: "Refactor provider registry" });
+    await tabTo(user, session);
+    await user.keyboard("{Enter}");
+    const back = await screen.findByRole("button", { name: "Back to cost over time" });
+    await waitFor(() => expect(document.activeElement).toBe(back));
+    await user.keyboard("{Enter}");
+    const again = screen.getByRole("button", { name: "Refactor provider registry" });
+    await waitFor(() => expect(document.activeElement).toBe(again));
+  });
+
+  it("the currency switch is two radios reachable and changeable with the keyboard", async () => {
+    const user = userEvent.setup();
+    const mixed = { ...costTotal(10, 5, 5), amounts: [{ currency: "AI_CREDITS" as const, amount: 10, knownTurns: 5 }, { currency: "USD" as const, amount: 4, knownTurns: 5 }] };
+    render(<CostOverTimeView port={port()} brand={brand} result={ok(costSeries({ bucket: "week", points: [point("2026-W42", "2026-10-12", "2026-10-18", mixed, mixed)], total: mixed }))} />);
+    await tabTo(user, screen.getByRole("radio", { name: "AI Credits" }));
+    await user.keyboard("{ArrowRight}");
+    expect(screen.getByRole("radio", { name: "USD" })).toBeChecked();
+  });
+
+  it("the tables' scroll containers are in the tab order", async () => {
+    const user = userEvent.setup();
+    render(<CostOverTimeView port={port()} brand={brand} result={ok(projectCost())} />);
+    await tabTo(user, screen.getByRole("region", { name: /Tokens by type, scrollable/ }));
+    await tabTo(user, screen.getByRole("region", { name: /Top sessions, scrollable/ }));
+  });
+});
+
+describe("U10 cost comparison by keyboard", () => {
+  const projects = () => costComparison({ groupBy: "project", rows: [comparisonRow({ key: "p1", label: "Provider platform" }), comparisonRow({ key: "p2", label: "Other" })] });
+  const chainPort = () => {
+    const fake = port();
+    fake.toolResults.set("get_project_cost", { structuredContent: projectCost() });
+    return fake;
+  };
+
+  it("walks U10, U9 and U1 and back with Tab and Enter, landing focus at every level", async () => {
+    const user = userEvent.setup();
+    render(<CostCompareView port={chainPort()} brand={brand} result={ok(projects())} />);
+
+    await tabTo(user, screen.getByRole("button", { name: "Provider platform" }));
+    await user.keyboard("{Enter}");
+    const backToComparison = await screen.findByRole("button", { name: "Back to comparison" });
+    await waitFor(() => expect(document.activeElement).toBe(backToComparison));
+    await screen.findByRole("heading", { name: "Acme platform" });
+
+    await tabTo(user, screen.getByRole("button", { name: "Refactor provider registry" }));
+    await user.keyboard("{Enter}");
+    const backToProject = await screen.findByRole("button", { name: "Back to Acme platform" });
+    await waitFor(() => expect(document.activeElement).toBe(backToProject));
+    await screen.findByRole("img", { name: /AI Credits per turn/ });
+
+    await user.keyboard("{Enter}");
+    await waitFor(() => expect(document.activeElement).toBe(screen.getByRole("button", { name: "Refactor provider registry" })));
+
+    await tabTo(user, screen.getByRole("button", { name: "Back to comparison" }));
+    await user.keyboard(" ");
+    await waitFor(() => expect(document.activeElement).toBe(screen.getByRole("button", { name: "Provider platform" })));
+  });
+
+  it("the table's scroll container is in the tab order", async () => {
+    const user = userEvent.setup();
+    render(<CostCompareView port={port()} brand={brand} result={ok(costComparison())} />);
+    await tabTo(user, screen.getByRole("region", { name: /Cost by repository, scrollable/ }));
   });
 });

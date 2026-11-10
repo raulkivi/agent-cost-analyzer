@@ -72,15 +72,25 @@ export interface TokenTypeTotalView {
   priceText: string;
 }
 
+export interface ModelTotalsView {
+  costAText: string;
+  costBText: string;
+  changeText: string;
+  usageText: string; // a model's usage effect includes mix, so this is usage + mix
+  priceText: string;
+}
+
 export interface CurrencyBlock {
   currency: Currency;
   steps: WaterfallStep[];
   noEarlierFigure: boolean; // period A has nothing priced
   changeValue: number;
   changeText: string;
+  changeAmountText: string; // the signed amount alone; "no earlier figure" when A has nothing priced
   changePercentText?: string;
   byTokenType: TokenTypeTotalView[];
   models: ModelRowView[];
+  modelTotals: ModelTotalsView;
 }
 
 export interface NotExplainedView {
@@ -182,9 +192,17 @@ function currencyBlock(row: VarianceCurrency, variance: CostVariance): CurrencyB
     noEarlierFigure,
     changeValue: row.change,
     changeText: noEarlierFigure ? NO_EARLIER_FIGURE : `${changeAmount} (${changePercentText})`,
+    changeAmountText: noEarlierFigure ? NO_EARLIER_FIGURE : changeAmount,
     ...(changePercentText === undefined ? {} : { changePercentText }),
     byTokenType: row.byTokenType.map((total) => tokenTypeTotal(total, row.currency)),
     models: row.models.map((model) => modelRow(model, row.currency)),
+    modelTotals: {
+      costAText: formatMoney(row.costA, row.currency),
+      costBText: formatMoney(row.costB, row.currency),
+      changeText: formatSignedMoney(row.change, row.currency),
+      usageText: formatSignedMoney(row.usage + row.mix, row.currency),
+      priceText: formatSignedMoney(row.price, row.currency),
+    },
   };
 }
 

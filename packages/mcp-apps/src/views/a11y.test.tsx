@@ -6,8 +6,11 @@ import type { ViewBrand } from "../brand/view-brand.js";
 import type { ToolResult } from "../host/app-host-port.js";
 import { FakeAppHostPort } from "../host/fake-app-host-port.js";
 import { axeViolations } from "../test-support/axe.js";
+import { comparisonChange, comparisonRow, costComparison, costSeries, costTotal, point, projectCost, usdTotal } from "../view-models/cost-analysis-fixtures.js";
 import { costRollup, measures, sessionCost, total, turnSeries } from "../view-models/fixtures.js";
 import { turnView } from "../view-models/turn-view-fixture.js";
+import { CostCompareView } from "./CostCompareView.js";
+import { CostOverTimeView } from "./CostOverTimeView.js";
 import { CostRollupView } from "./CostRollupView.js";
 import { FindingsView } from "./FindingsView.js";
 import { NoViewState } from "./NoViewState.js";
@@ -116,6 +119,166 @@ describe("U2 CostRollupView has no axe violations", () => {
     await expectNoViolations();
     unmount();
     render(<CostRollupView port={port()} brand={brand} result={undefined} />);
+    await expectNoViolations();
+  });
+});
+
+describe("U9 CostOverTimeView has no axe violations", () => {
+  const weekly = [
+    point("2026-W42", "2026-10-12", "2026-10-18", costTotal(26.2, 18, 18), costTotal(26.2, 18, 18)),
+    point("2026-W43", "2026-10-19", "2026-10-25", costTotal(null, 0, 0), costTotal(26.2, 18, 18)),
+    point("2026-W44", "2026-10-26", "2026-11-01", costTotal(21.8, 11, 18), costTotal(48, 29, 36)),
+    point("2026-W45", "2026-11-02", "2026-11-08", costTotal(null, 0, 7), costTotal(48, 29, 43)),
+  ];
+  const repository = () => costSeries({ bucket: "week", points: weekly, since: "2026-10-12", until: "2026-11-08" });
+  const project = () => projectCost({ bucket: "week", points: weekly, since: "2026-10-12", until: "2026-11-08" });
+  const renderU9 = (result: ToolResult | undefined, fake = port()) => render(<CostOverTimeView port={fake} brand={brand} clipboard={clipboard} result={result} />);
+
+  it("a repository, with partly known, idle and unknown weeks and both marker kinds", async () => {
+    renderU9(ok(repository()));
+    await expectNoViolations();
+  });
+
+  it("a project, with vendors, tokens and top sessions", async () => {
+    renderU9(ok(project()));
+    await expectNoViolations();
+  });
+
+  it("with two currencies and the switch", async () => {
+    const mixed = { ...costTotal(10, 5, 5), amounts: [{ currency: "AI_CREDITS" as const, amount: 10, knownTurns: 5 }, { currency: "USD" as const, amount: 4, knownTurns: 5 }] };
+    renderU9(ok(costSeries({ bucket: "week", points: [point("2026-W42", "2026-10-12", "2026-10-18", mixed, mixed)], total: mixed })));
+    fireEvent.click(screen.getByRole("radio", { name: "USD" }));
+    await expectNoViolations();
+  });
+
+  it("drilled into a session, while it loads, and when it fails", async () => {
+    const fake = port();
+    renderU9(ok(project()), fake);
+    fireEvent.click(screen.getByRole("button", { name: "Refactor provider registry" }));
+    await expectNoViolations();
+    await screen.findByRole("button", { name: "Ask about this session" });
+    await screen.findByRole("img", { name: /AI Credits per turn/ });
+    await expectNoViolations();
+  });
+
+  it("when the drill-down fails", async () => {
+    const fake = port();
+    fake.toolResults.delete("get_session_cost");
+    renderU9(ok(project()), fake);
+    fireEvent.click(screen.getByRole("button", { name: "Refactor provider registry" }));
+    await screen.findByRole("alert");
+    await expectNoViolations();
+  });
+
+  it("the no-projects state, a tool error, an unreadable result and waiting", async () => {
+    const { unmount } = renderU9({ isError: true, errorText: 'Unknown project id "x". Call list_projects to find valid ids. No projects here.' });
+    await expectNoViolations();
+    unmount();
+    const second = renderU9({ isError: true, errorText: "periodB: month must be YYYY-MM" });
+    await expectNoViolations();
+    second.unmount();
+    const third = renderU9({ structuredContent: { nope: 1 } });
+    await expectNoViolations();
+    third.unmount();
+    renderU9(undefined);
+    await expectNoViolations();
+  });
+});
+
+describe("U10 CostCompareView has no axe violations", () => {
+  const REASON = "AI Credits Analyzer has no projects: projects are edited in the standalone Agent Cost Analyzer app. Every turn is in No project; repositories are listed as usual.";
+  const answers = (fake = port()) => {
+    fake.toolResults.set("get_repository_cost", { structuredContent: costSeries() });
+    fake.toolResults.set("get_project_cost", { structuredContent: projectCost() });
+    return fake;
+  };
+  const renderU10 = (result: ToolResult | undefined, fake = answers(), view = brand) => render(<CostCompareView port={fake} brand={view} clipboard={clipboard} result={result} />);
+  const mixed = { ...costTotal(449, 300, 300), amounts: [{ currency: "AI_CREDITS" as const, amount: 449, knownTurns: 300 }, { currency: "USD" as const, amount: 21.43, knownTurns: 46 }] };
+  const projects = () => costComparison({ groupBy: "project", rows: [comparisonRow({ key: "p1", label: "Provider platform" }), comparisonRow({ key: "p2", label: "Other" })] });
+
+  it("the table, with a change, no earlier figure, a partly known and an unknown row", async () => {
+    renderU10(
+      ok(
+        costComparison({
+          rows: [
+            comparisonRow({ key: "a", label: "alpha", change: [comparisonChange(100, 80)] }),
+            comparisonRow({ key: "b", label: "beta", change: [] }),
+            comparisonRow({ key: "c", label: "gamma", total: costTotal(40, 20, 40), change: [comparisonChange(40, 50)] }),
+            comparisonRow({ key: "d", label: "delta", total: costTotal(null, 0, 5), change: [], perSession: [], perActiveDay: [], perTurn: [], share: [], cacheHitRatio: null }),
+          ],
+        }),
+      ),
+    );
+    await expectNoViolations();
+  });
+
+  it("with two currencies, and as projects", async () => {
+    const { unmount } = renderU10(ok(costComparison({ total: mixed, rows: [comparisonRow({ key: "a", label: "alpha", total: mixed, share: [{ currency: "AI_CREDITS", share: 0.5 }, { currency: "USD", share: 0.4 }] }), comparisonRow({ key: "b", label: "beta", total: usdTotal(36.5, 9, 9) })] })));
+    await expectNoViolations();
+    unmount();
+    renderU10(ok(projects()));
+    await expectNoViolations();
+  });
+
+  it("the no-projects state, an empty list, a tool error, an unreadable result and waiting", async () => {
+    const idle = comparisonRow({ key: "p", label: "p", turns: 0, sessions: 0, previous: { ...comparisonRow().previous, turns: 0, sessions: 0 } });
+    const extension: ViewBrand = { ...brand, productId: "vscode-extension" };
+    const first = renderU10(ok(costComparison({ groupBy: "project", rows: [idle, idle] })), answers(), extension);
+    expect(screen.getByText(REASON)).toBeInTheDocument();
+    await expectNoViolations();
+    first.unmount();
+    const second = renderU10(ok(costComparison({ rows: [] })));
+    await expectNoViolations();
+    second.unmount();
+    const third = renderU10({ isError: true, errorText: "ids: give 2 to 20 ids" });
+    await expectNoViolations();
+    third.unmount();
+    const fourth = renderU10(ok({ nope: 1 }));
+    await expectNoViolations();
+    fourth.unmount();
+    renderU10(undefined);
+    await expectNoViolations();
+  });
+
+  it("each level of the chain: loading, the project, a session, and back", async () => {
+    const fake = answers();
+    renderU10(ok(projects()), fake);
+    fireEvent.click(screen.getByRole("button", { name: "Provider platform" }));
+    await expectNoViolations();
+    await screen.findByRole("heading", { name: "Acme platform" });
+    await expectNoViolations();
+    fireEvent.click(screen.getByRole("button", { name: "Refactor provider registry" }));
+    await expectNoViolations();
+    await screen.findByRole("button", { name: "Ask about this session" });
+    await screen.findByRole("img", { name: /AI Credits per turn/ });
+    await expectNoViolations();
+    fireEvent.click(screen.getByRole("button", { name: "Back to Acme platform" }));
+    await expectNoViolations();
+    fireEvent.click(screen.getByRole("button", { name: "Back to comparison" }));
+    await expectNoViolations();
+  });
+
+  it("a repository drill-down, a failed one, and the extension's no-projects answer", async () => {
+    const fake = answers();
+    const first = renderU10(ok(costComparison()), fake);
+    fireEvent.click(screen.getByRole("button", { name: "widgets" }));
+    await screen.findByRole("heading", { name: "widgets" });
+    await expectNoViolations();
+    first.unmount();
+
+    const failing = answers();
+    failing.toolResults.set("get_repository_cost", { isError: true, errorText: "the repository key is no longer in the logs" });
+    const second = renderU10(ok(costComparison()), failing);
+    fireEvent.click(screen.getByRole("button", { name: "widgets" }));
+    await screen.findByRole("alert");
+    await expectNoViolations();
+    second.unmount();
+
+    const none = answers();
+    none.toolResults.set("get_project_cost", { isError: true, errorText: `Unknown project id "p1". Call list_projects to find valid ids. ${REASON}` });
+    renderU10(ok(projects()), none);
+    fireEvent.click(screen.getByRole("button", { name: "Provider platform" }));
+    await screen.findByText(REASON);
     await expectNoViolations();
   });
 });
