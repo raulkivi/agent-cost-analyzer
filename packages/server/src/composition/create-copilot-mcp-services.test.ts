@@ -6,7 +6,7 @@ import path from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
-import { costRollupSchema, logProviderStatusSchema, priceBookListingSchema, projectListSchema, repositoryListSchema, sessionCostSchema } from "@agent-cost-analyzer/domain";
+import { costRollupSchema, EXTENSION_NO_PROJECTS_REASON, logProviderStatusSchema, priceBookListingSchema, projectListSchema, repositoryListSchema, sessionCostSchema } from "@agent-cost-analyzer/domain";
 import { createMcpServer, type McpServerDeps } from "../mcp/mcp-server.js";
 import { seedCopilotSessionStore, USAGE_SESSION_ID, writeUsageDebugLog } from "../test-support/copilot-session-store.js";
 import { composeLogProviders } from "./compose-log-providers.js";
@@ -166,7 +166,7 @@ describe("createCopilotMcpServices (the extension's MCP server, vscode-extension
     const list = projectListSchema.parse((await copilot.callTool({ name: "list_projects", arguments: {} })).structuredContent);
 
     expect(list.projects).toEqual([]);
-    expect(list.reason).toMatch(/Agent Cost Analyzer app/);
+    expect(list.reason).toBe(EXTENSION_NO_PROJECTS_REASON);
     expect(projectListSchema.parse((await standalone.callTool({ name: "list_projects", arguments: {} })).structuredContent).reason).toBeUndefined();
   });
 
@@ -175,7 +175,7 @@ describe("createCopilotMcpServices (the extension's MCP server, vscode-extension
     const text = (result.content as { text: string }[])[0]!.text;
     expect(result.isError).toBe(true);
     expect(text).toContain('Unknown project id "portal"');
-    expect(text).toMatch(/Agent Cost Analyzer app/);
+    expect(text).toContain(EXTENSION_NO_PROJECTS_REASON);
     const plain = await standalone.callTool({ name: "get_project_cost", arguments: { projectId: "portal" } });
     expect((plain.content as { text: string }[])[0]!.text).not.toMatch(/Agent Cost Analyzer app/);
   });

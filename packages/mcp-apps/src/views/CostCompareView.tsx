@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import type { CostCompareGroupBy, Currency } from "@agent-cost-analyzer/domain";
+import { EXTENSION_NO_PROJECTS_REASON, type CostCompareGroupBy, type Currency } from "@agent-cost-analyzer/domain";
 import { useMemo, useState } from "react";
 import type { ViewBrand } from "../brand/view-brand.js";
 import type { AppHostPort, ToolResult } from "../host/app-host-port.js";
@@ -12,7 +12,6 @@ import { ViewShell } from "./ViewShell.js";
 import { CompareDrillDown } from "./cost-compare/CompareDrillDown.js";
 import { ComparisonTable } from "./cost-compare/ComparisonTable.js";
 import type { OpenRow } from "./cost-compare/ComparisonTable.js";
-import { NO_PROJECTS_REASON } from "./cost-compare/no-projects.js";
 import { hasNothingToCompare, parseComparison } from "./cost-compare/parse-comparison.js";
 import "./cost-compare/cost-compare.css";
 
@@ -53,7 +52,7 @@ function NoRows({ brand, groupBy }: { brand: ViewBrand; groupBy: CostCompareGrou
     return (
       <ViewShell brand={brand} kicker={KICKER} title="No projects here" meta="project comparisons">
         <div className="cc-state">
-          <p>{brand.productId === "vscode-extension" ? NO_PROJECTS_REASON : "There are no projects to compare."}</p>
+          <p>{brand.productId === "vscode-extension" ? EXTENSION_NO_PROJECTS_REASON : "There are no projects to compare."}</p>
           <h2>What to ask instead</h2>
           <p>Cost by repository works as usual: ask for a repository&apos;s cost, or compare repositories.</p>
         </div>

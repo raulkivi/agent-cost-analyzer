@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
+import { EXTENSION_NO_PROJECTS_REASON } from "@agent-cost-analyzer/domain";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import type { ViewBrand } from "../brand/view-brand.js";
@@ -186,7 +187,7 @@ describe("U9 CostOverTimeView has no axe violations", () => {
 });
 
 describe("U10 CostCompareView has no axe violations", () => {
-  const REASON = "AI Credits Analyzer has no projects: projects are edited in the standalone Agent Cost Analyzer app. Every turn is in No project; repositories are listed as usual.";
+  const REASON = EXTENSION_NO_PROJECTS_REASON;
   const answers = (fake = port()) => {
     fake.toolResults.set("get_repository_cost", { structuredContent: costSeries() });
     fake.toolResults.set("get_project_cost", { structuredContent: projectCost() });
