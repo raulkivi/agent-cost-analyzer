@@ -188,11 +188,11 @@ outbound network calls.
 #### 4.1.1 MCP App views: runtime flow (Phase 12)
 
 A host that supports MCP Apps (VS Code Copilot Chat, Claude Desktop) shows
-an interactive view next to the text result of three tools. The server
+an interactive view next to the text result of the tools below. The server
 stays read-only and makes no network call (constraint 1); the view is one
 static file.
 
-1. **Tool call.** `tools/list` gives `get_session_cost`, `get_cost_rollup`
+1. **Tool call.** `tools/list` gives `get_session_cost`, `get_cost_rollup`, `get_repository_cost`, `get_project_cost`, `compare_costs`, `explain_cost_change`
    and `list_findings` a `_meta.ui.resourceUri` of
    `ui://<server name>/views.html` (and the legacy flat key). The model
    calls the tool as before. Its name, input schema, output schema and

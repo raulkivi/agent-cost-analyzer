@@ -16,7 +16,9 @@ import { InMemoryViewSource } from "./view-source.js";
 
 const HTML = '<!doctype html><html><head><meta name="aca-brand" content=""></head><body>views</body></html>';
 const appViews = { source: new InMemoryViewSource(HTML) };
-const VIEW_TOOLS = ["get_session_cost", "get_cost_rollup", "list_findings"];
+const MVP_VIEW_TOOLS = ["get_session_cost", "get_cost_rollup", "list_findings"];
+const COST_ANALYSIS_VIEW_TOOLS = ["get_repository_cost", "get_project_cost", "compare_costs", "explain_cost_change"];
+const VIEW_TOOLS = [...MVP_VIEW_TOOLS, ...COST_ANALYSIS_VIEW_TOOLS];
 const URI = "ui://agent-cost-analyzer/views.html";
 
 type Tools = Awaited<ReturnType<Client["listTools"]>>["tools"];
@@ -39,7 +41,7 @@ describe("registerAppViews", () => {
     expect(client.getServerCapabilities()?.resources).toBeUndefined();
   });
 
-  it("with appViews, adds only get_turn_series and _meta.ui on exactly the three tools (22 standalone)", async () => {
+  it("with appViews, adds only get_turn_series and _meta.ui on exactly the seven tools (22 standalone)", async () => {
     const plain = await connectCostFixture();
     const withViews = await connectCostFixture({ appViews });
     client = withViews.client;
@@ -61,6 +63,48 @@ describe("registerAppViews", () => {
     }
     expect(byName(after, "get_turn_series")!._meta).toEqual({ ui: { visibility: ["app"] } });
     expect(byName(after, "get_turn_series")!.annotations?.readOnlyHint).toBe(true);
+  });
+
+  it("names the view on the four cost-analysis tools without touching their results", async () => {
+    const plain = await connectCostFixture();
+    const withViews = await connectCostFixture({ appViews });
+    client = withViews.client;
+    const calls: [string, Record<string, unknown>][] = [
+      ["get_repository_cost", { repository: "github.com/acme/portal-web" }],
+      ["get_project_cost", { projectId: "portal" }],
+      ["compare_costs", { groupBy: "project", ids: ["portal", "billing"], since: "2026-10-01", until: "2026-10-31" }],
+      ["explain_cost_change", { groupBy: "project", id: "portal", periodA: "2026-09", periodB: "2026-10" }],
+    ];
+    for (const [name, args] of calls) {
+      expect(byName((await client.listTools()).tools, name)!._meta).toEqual({ ui: { resourceUri: URI }, "ui/resourceUri": URI });
+      const a = await plain.client.callTool({ name, arguments: args });
+      const b = await client.callTool({ name, arguments: args });
+      expect(a.isError, name).toBeFalsy();
+      expect(textOf(b)).toBe(textOf(a));
+      expect(b.structuredContent).toEqual(a.structuredContent);
+      expect(b).toEqual(a);
+    }
+    await plain.client.close();
+  });
+
+  it("with the extension's groups, tags exactly the registered view tools and adds no tool", async () => {
+    const plain = await connectCostFixture({ toolGroups: WITHOUT_BILLING_TOOL_GROUPS });
+    const withViews = await connectCostFixture({ appViews, toolGroups: WITHOUT_BILLING_TOOL_GROUPS });
+    client = withViews.client;
+    const before = (await plain.client.listTools()).tools;
+    const after = (await client.listTools()).tools;
+    await plain.client.close();
+    expect(before).toHaveLength(19);
+    expect(after).toHaveLength(20);
+    const tagged = after.filter((tool) => tool._meta?.ui !== undefined && tool.name !== "get_turn_series").map((tool) => tool.name);
+    expect(tagged.sort()).toEqual(VIEW_TOOLS.filter((name) => byName(before, name) !== undefined).sort());
+  });
+
+  it("gives the cost-analysis tools nothing when the costAnalysis group is off", async () => {
+    ({ client } = await connectCostFixture({ appViews, toolGroups: MCP_TOOL_GROUPS.filter((group) => group !== "costAnalysis") }));
+    const { tools } = await client.listTools();
+    for (const name of COST_ANALYSIS_VIEW_TOOLS) expect(byName(tools, name), name).toBeUndefined();
+    expect(tools.filter((tool) => tool._meta?.ui !== undefined).map((tool) => tool.name).sort()).toEqual([...MVP_VIEW_TOOLS, "get_turn_series"].sort());
   });
 
   it("has 20 tools with the extension's groups", async () => {

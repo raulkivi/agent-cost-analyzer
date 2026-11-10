@@ -166,7 +166,7 @@ describe("createCopilotMcpServer with the app views (Phase 12 A13)", () => {
     return client;
   }
 
-  it("serves the views file as text/html;profile=mcp-app and tags the three tools with _meta.ui", async () => {
+  it("serves the views file as text/html;profile=mcp-app and tags the seven registered view tools with _meta.ui", async () => {
     const client = await connect(path.join(dir, "dist", "mcp-apps", "views.html"));
     try {
       const { tools } = await client.listTools();
@@ -176,7 +176,16 @@ describe("createCopilotMcpServer with the app views (Phase 12 A13)", () => {
           .filter((tool) => tool._meta?.ui !== undefined)
           .map((tool) => tool.name)
           .sort(),
-      ).toEqual(["get_cost_rollup", "get_session_cost", "get_turn_series", "list_findings"]);
+      ).toEqual([
+        "compare_costs",
+        "explain_cost_change",
+        "get_cost_rollup",
+        "get_project_cost",
+        "get_repository_cost",
+        "get_session_cost",
+        "get_turn_series",
+        "list_findings",
+      ]);
       expect(tools.find((tool) => tool.name === "get_session_cost")!._meta).toMatchObject({ ui: { resourceUri: URI } });
       const { contents } = await client.readResource({ uri: URI });
       expect(contents[0]).toMatchObject({ uri: URI, mimeType: "text/html;profile=mcp-app" });
