@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
+import { formatAmount } from "@agent-cost-analyzer/web/lib/cost/cost-format";
 import { costInCurrency } from "@agent-cost-analyzer/domain";
 import type { CostBasisChoice, CostCurrencyChoice, CostTotal, Currency } from "@agent-cost-analyzer/domain";
 import { MINUS, UNKNOWN_TEXT, coverageNote, formatCount } from "./format.js";
@@ -8,9 +9,9 @@ import { MINUS, UNKNOWN_TEXT, coverageNote, formatCount } from "./format.js";
 // every figure names its basis and its currency, and currencies stay apart
 // unless the result is in USD. Pure.
 //
-// TODO(A17): these formatters mirror packages/web `lib/cost/cost-format`
-// and `ai-credits-usd`, which `packages/web` doesn't export yet. Move to
-// the web exports when they exist.
+// Amounts come from packages/web `lib/cost/cost-format` (A17). The unit
+// price, the "Unknown" text and the coverage note stay local: web writes
+// "unknown", has no "/ 1M" suffix and words coverage differently.
 
 export interface MoneyView {
   text: string; // "142.60 AI Credits", "$12.40" or "Unknown"
@@ -24,18 +25,9 @@ export interface MoneyView {
   unknownNote?: string;
 }
 
-const grouped2 = new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-
-function formatUsd(usd: number): string {
-  if (usd === 0) return "$0.00";
-  if (usd > 0 && usd < 0.00005) return "<$0.0001";
-  if (usd >= 1) return `$${grouped2.format(usd)}`;
-  const [whole = "0", decimals = ""] = usd.toFixed(4).split(".");
-  return `$${whole}.${decimals.replace(/0+$/, "").padEnd(2, "0")}`;
-}
-
 export function formatMoney(value: number, currency: Currency): string {
-  return currency === "USD" ? formatUsd(value) : `${grouped2.format(value)} AI Credits`;
+  const amount = formatAmount(value, currency);
+  return currency === "USD" ? amount : `${amount} AI Credits`;
 }
 
 // "+12.50 AI Credits", "−$3.00"; zero carries no sign.

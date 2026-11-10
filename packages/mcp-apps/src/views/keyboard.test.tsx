@@ -6,8 +6,10 @@ import { describe, expect, it } from "vitest";
 import type { ViewBrand } from "../brand/view-brand.js";
 import type { ToolResult } from "../host/app-host-port.js";
 import { FakeAppHostPort } from "../host/fake-app-host-port.js";
+import { costSeries, costTotal, point, projectCost } from "../view-models/cost-analysis-fixtures.js";
 import { costRollup, sessionCost, turnSeries } from "../view-models/fixtures.js";
 import { turnView } from "../view-models/turn-view-fixture.js";
+import { CostOverTimeView } from "./CostOverTimeView.js";
 import { CostRollupView } from "./CostRollupView.js";
 import { FindingsView } from "./FindingsView.js";
 import { SessionCostView } from "./SessionCostView.js";
@@ -129,5 +131,36 @@ describe("U3 filters and evidence by keyboard", () => {
     const user = userEvent.setup();
     render(<FindingsView brand={brand} port={new FakeAppHostPort()} result={ok(findingsResult(SAMPLE_FINDINGS, { total: 3 }))} />);
     await tabTo(user, screen.getByRole("region", { name: /Findings, scrollable/ }));
+  });
+});
+
+describe("U9 cost over time by keyboard", () => {
+  it("Tab reaches a top session, Enter opens it, and Back from the keyboard returns focus to the session", async () => {
+    const user = userEvent.setup();
+    render(<CostOverTimeView port={port()} brand={brand} result={ok(projectCost())} />);
+    const session = screen.getByRole("button", { name: "Refactor provider registry" });
+    await tabTo(user, session);
+    await user.keyboard("{Enter}");
+    const back = await screen.findByRole("button", { name: "Back to cost over time" });
+    await waitFor(() => expect(document.activeElement).toBe(back));
+    await user.keyboard("{Enter}");
+    const again = screen.getByRole("button", { name: "Refactor provider registry" });
+    await waitFor(() => expect(document.activeElement).toBe(again));
+  });
+
+  it("the currency switch is two radios reachable and changeable with the keyboard", async () => {
+    const user = userEvent.setup();
+    const mixed = { ...costTotal(10, 5, 5), amounts: [{ currency: "AI_CREDITS" as const, amount: 10, knownTurns: 5 }, { currency: "USD" as const, amount: 4, knownTurns: 5 }] };
+    render(<CostOverTimeView port={port()} brand={brand} result={ok(costSeries({ bucket: "week", points: [point("2026-W42", "2026-10-12", "2026-10-18", mixed, mixed)], total: mixed }))} />);
+    await tabTo(user, screen.getByRole("radio", { name: "AI Credits" }));
+    await user.keyboard("{ArrowRight}");
+    expect(screen.getByRole("radio", { name: "USD" })).toBeChecked();
+  });
+
+  it("the tables' scroll containers are in the tab order", async () => {
+    const user = userEvent.setup();
+    render(<CostOverTimeView port={port()} brand={brand} result={ok(projectCost())} />);
+    await tabTo(user, screen.getByRole("region", { name: /Tokens by type, scrollable/ }));
+    await tabTo(user, screen.getByRole("region", { name: /Top sessions, scrollable/ }));
   });
 });

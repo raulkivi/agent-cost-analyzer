@@ -6,8 +6,10 @@ import type { ViewBrand } from "../brand/view-brand.js";
 import type { ToolResult } from "../host/app-host-port.js";
 import { FakeAppHostPort } from "../host/fake-app-host-port.js";
 import { axeViolations } from "../test-support/axe.js";
+import { costSeries, costTotal, point, projectCost } from "../view-models/cost-analysis-fixtures.js";
 import { costRollup, measures, sessionCost, total, turnSeries } from "../view-models/fixtures.js";
 import { turnView } from "../view-models/turn-view-fixture.js";
+import { CostOverTimeView } from "./CostOverTimeView.js";
 import { CostRollupView } from "./CostRollupView.js";
 import { FindingsView } from "./FindingsView.js";
 import { NoViewState } from "./NoViewState.js";
@@ -116,6 +118,68 @@ describe("U2 CostRollupView has no axe violations", () => {
     await expectNoViolations();
     unmount();
     render(<CostRollupView port={port()} brand={brand} result={undefined} />);
+    await expectNoViolations();
+  });
+});
+
+describe("U9 CostOverTimeView has no axe violations", () => {
+  const weekly = [
+    point("2026-W42", "2026-10-12", "2026-10-18", costTotal(26.2, 18, 18), costTotal(26.2, 18, 18)),
+    point("2026-W43", "2026-10-19", "2026-10-25", costTotal(null, 0, 0), costTotal(26.2, 18, 18)),
+    point("2026-W44", "2026-10-26", "2026-11-01", costTotal(21.8, 11, 18), costTotal(48, 29, 36)),
+    point("2026-W45", "2026-11-02", "2026-11-08", costTotal(null, 0, 7), costTotal(48, 29, 43)),
+  ];
+  const repository = () => costSeries({ bucket: "week", points: weekly, since: "2026-10-12", until: "2026-11-08" });
+  const project = () => projectCost({ bucket: "week", points: weekly, since: "2026-10-12", until: "2026-11-08" });
+  const renderU9 = (result: ToolResult | undefined, fake = port()) => render(<CostOverTimeView port={fake} brand={brand} clipboard={clipboard} result={result} />);
+
+  it("a repository, with partly known, idle and unknown weeks and both marker kinds", async () => {
+    renderU9(ok(repository()));
+    await expectNoViolations();
+  });
+
+  it("a project, with vendors, tokens and top sessions", async () => {
+    renderU9(ok(project()));
+    await expectNoViolations();
+  });
+
+  it("with two currencies and the switch", async () => {
+    const mixed = { ...costTotal(10, 5, 5), amounts: [{ currency: "AI_CREDITS" as const, amount: 10, knownTurns: 5 }, { currency: "USD" as const, amount: 4, knownTurns: 5 }] };
+    renderU9(ok(costSeries({ bucket: "week", points: [point("2026-W42", "2026-10-12", "2026-10-18", mixed, mixed)], total: mixed })));
+    fireEvent.click(screen.getByRole("radio", { name: "USD" }));
+    await expectNoViolations();
+  });
+
+  it("drilled into a session, while it loads, and when it fails", async () => {
+    const fake = port();
+    renderU9(ok(project()), fake);
+    fireEvent.click(screen.getByRole("button", { name: "Refactor provider registry" }));
+    await expectNoViolations();
+    await screen.findByRole("button", { name: "Ask about this session" });
+    await screen.findByRole("img", { name: /AI Credits per turn/ });
+    await expectNoViolations();
+  });
+
+  it("when the drill-down fails", async () => {
+    const fake = port();
+    fake.toolResults.delete("get_session_cost");
+    renderU9(ok(project()), fake);
+    fireEvent.click(screen.getByRole("button", { name: "Refactor provider registry" }));
+    await screen.findByRole("alert");
+    await expectNoViolations();
+  });
+
+  it("the no-projects state, a tool error, an unreadable result and waiting", async () => {
+    const { unmount } = renderU9({ isError: true, errorText: 'Unknown project id "x". Call list_projects to find valid ids. No projects here.' });
+    await expectNoViolations();
+    unmount();
+    const second = renderU9({ isError: true, errorText: "periodB: month must be YYYY-MM" });
+    await expectNoViolations();
+    second.unmount();
+    const third = renderU9({ structuredContent: { nope: 1 } });
+    await expectNoViolations();
+    third.unmount();
+    renderU9(undefined);
     await expectNoViolations();
   });
 });

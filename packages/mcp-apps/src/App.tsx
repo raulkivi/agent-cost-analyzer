@@ -8,6 +8,7 @@ import { selectView } from "./router/select-view.js";
 import { SessionCostView } from "./views/SessionCostView.js";
 import { CostRollupView } from "./views/CostRollupView.js";
 import { FindingsView } from "./views/FindingsView.js";
+import { CostOverTimeView } from "./views/CostOverTimeView.js";
 import { CostChangeView } from "./views/CostChangeView.js";
 import { NoViewState } from "./views/NoViewState.js";
 
@@ -33,6 +34,8 @@ export function App({ port, brand, clipboard }: { port: AppHostPort; brand: View
       return <CostRollupView port={port} brand={brand} clipboard={clipboard} result={result} />;
     case "findings":
       return <FindingsView brand={brand} port={port} result={result} />;
+    case "cost-over-time":
+      return <CostOverTimeView port={port} brand={brand} clipboard={clipboard} result={result} />;
     case "cost-change":
       return <CostChangeView port={port} brand={brand} result={result} />;
     default:

@@ -93,6 +93,12 @@ describe("toCostSeriesViewModel chart", () => {
     const vm = toCostSeriesViewModel(costSeries({ bucket: "day", points: [{ ...base.points[0]!, period: "2026-10-07", start: "2026-10-07", end: "2026-10-07" }] }));
     expect(vm.chart.points[0]?.label).toBe("Oct 7");
   });
+
+  it("labels week buckets by the day the week starts, as the board does", () => {
+    const base = costSeries();
+    const vm = toCostSeriesViewModel(costSeries({ bucket: "week", points: [{ ...base.points[0]!, period: "2026-W32", start: "2026-08-03", end: "2026-08-09" }] }));
+    expect(vm.chart.points[0]?.label).toBe("Aug 3");
+  });
 });
 
 describe("toCostSeriesViewModel price-change markers", () => {
@@ -164,5 +170,36 @@ describe("toCostSeriesViewModel project", () => {
     const { displayOnly, ...rest } = vm.project!.topSessions[0]!;
     expect(displayOnly).toEqual({ title: "Refactor provider registry" });
     expect(JSON.stringify(rest)).not.toContain("Refactor provider registry");
+  });
+});
+
+describe("toCostSeriesViewModel shares", () => {
+  const vendor = (key: string | null, label: string, credits: number | null, models: ReturnType<typeof costSeries>["byVendor"][number]["models"] = []) => ({
+    key,
+    label,
+    sessions: 1,
+    turns: 10,
+    cost: costTotal(credits, credits === null ? 0 : 10, 10),
+    coverage: { preferred: { turns: 10, knownTurns: 10 }, billed: { turns: 10, knownTurns: 10 }, reported: { turns: 10, knownTurns: 0 }, priced: { turns: 10, knownTurns: 10 } },
+    models,
+  });
+
+  it("gives each vendor and model its share of the known total, per currency", () => {
+    const model = { key: "claude-sonnet-5.5", label: "claude-sonnet-5.5", sessions: 1, turns: 10, cost: costTotal(25, 10, 10), coverage: vendor("x", "x", 1).coverage };
+    const { byVendor } = toCostSeriesViewModel(costSeries({ byVendor: [vendor("a", "Anthropic", 75, [model]), vendor("o", "OpenAI", 25)] }));
+    expect(byVendor[0]?.shares).toEqual({ AI_CREDITS: "75 %" });
+    expect(byVendor[0]?.models[0]?.shares).toEqual({ AI_CREDITS: "25 %" });
+    expect(byVendor[1]?.shares).toEqual({ AI_CREDITS: "25 %" });
+  });
+
+  it("gives an unknown row no share, and leaves it out of the total", () => {
+    const { byVendor } = toCostSeriesViewModel(costSeries({ byVendor: [vendor("a", "Anthropic", 50), vendor(null, "Unknown vendor", null)] }));
+    expect(byVendor[0]?.shares).toEqual({ AI_CREDITS: "100 %" });
+    expect(byVendor[1]?.shares).toEqual({});
+  });
+
+  it("gives no share when the known total is 0 (no division)", () => {
+    const { byVendor } = toCostSeriesViewModel(costSeries({ byVendor: [vendor("a", "Anthropic", 0)] }));
+    expect(byVendor[0]?.shares).toEqual({});
   });
 });

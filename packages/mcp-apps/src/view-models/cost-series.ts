@@ -53,6 +53,8 @@ export interface BreakdownRowView {
   reason?: string;
   turnsText: string;
   money: MoneyView[];
+  // Share of the known vendor total in each currency; none for an unknown row.
+  shares: Partial<Record<Currency, string>>;
 }
 
 export interface VendorRowView extends BreakdownRowView {
@@ -119,11 +121,28 @@ function breakdownRow(row: CostBreakdownRow, view: CostSeries): BreakdownRowView
     ...(row.reason === undefined ? {} : { reason: row.reason }),
     turnsText: pluralize(row.turns, "turn"),
     money: moneyViews(row.cost, view.basis, view.currency),
+    shares: {},
   };
 }
 
 function vendorRow(row: VendorCostBreakdown, view: CostSeries): VendorRowView {
   return { ...breakdownRow(row, view), models: row.models.map((model) => breakdownRow(model, view)) };
+}
+
+const knownAmount = (money: MoneyView[], currency: Currency): number | null => money.find((view) => view.currency === currency && view.known)?.amount ?? null;
+
+// Vendors and their models against the known vendor total, per currency. An
+// unknown row has no share and adds nothing; a zero total divides nothing.
+function addShares(vendors: VendorRowView[]): void {
+  const currencies = [...new Set(vendors.flatMap((vendor) => vendor.money.flatMap((money) => (money.known && money.currency !== null ? [money.currency] : []))))];
+  for (const currency of currencies) {
+    const grand = vendors.reduce((sum, vendor) => sum + (knownAmount(vendor.money, currency) ?? 0), 0);
+    if (grand <= 0) continue;
+    for (const row of [...vendors, ...vendors.flatMap((vendor) => vendor.models)]) {
+      const amount = knownAmount(row.money, currency);
+      if (amount !== null) row.shares[currency] = `${Math.round((amount / grand) * 100)} %`;
+    }
+  }
 }
 
 function basisNote(view: CostSeries): string | undefined {
@@ -153,7 +172,7 @@ function pointView(point: CostPoint, view: CostSeries): PointView {
   const cost = moneyViews(point.cost, view.basis, view.currency);
   return {
     period: point.period,
-    label: view.bucket === "day" ? (formatDay(point.start) ?? point.period) : point.period,
+    label: view.bucket === "month" ? point.period : (formatDay(point.start) ?? point.period),
     start: point.start,
     end: point.end,
     turns: point.turns,
@@ -251,6 +270,7 @@ export function toCostSeriesViewModel(cost: CostSeries | ProjectCost): CostSerie
     markers: markers(cost),
     byVendor: cost.byVendor.map((row) => vendorRow(row, cost)),
   };
+  addShares(viewModel.byVendor);
   if (isProject(cost)) {
     viewModel.projectId = cost.project.id;
     viewModel.project = projectPart(cost);

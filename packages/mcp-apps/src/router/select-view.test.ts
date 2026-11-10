@@ -12,6 +12,8 @@ describe("selectView", () => {
     ["get_session_cost", "session-cost"],
     ["get_cost_rollup", "cost-rollup"],
     ["list_findings", "findings"],
+    ["get_repository_cost", "cost-over-time"],
+    ["get_project_cost", "cost-over-time"],
     ["explain_cost_change", "cost-change"],
   ])("routes toolInfo.tool.name %s to %s", (name, view) => {
     expect(selectView({ toolInfo: { tool: { name } } }, undefined)).toEqual({ view });
@@ -27,6 +29,8 @@ describe("selectView", () => {
     ["aca-spike-get_session_cost", "session-cost"],
     ["ai-credits-analyzer-get_cost_rollup", "cost-rollup"],
     ["mcp_aicreditsanal_list_findings", "findings"],
+    ["ai-credits-analyzer-get_repository_cost", "cost-over-time"],
+    ["mcp_aicreditsanal_get_project_cost", "cost-over-time"],
     ["ai-credits-analyzer-explain_cost_change", "cost-change"],
     ["mcp_aicreditsanal_explain_cost_change", "cost-change"],
   ])("routes VS Code's server-prefixed toolCall.toolName %s to %s", (toolName, view) => {
@@ -54,6 +58,17 @@ describe("selectView", () => {
     expect(selectView({}, varianceShape)).toEqual({ view: "cost-change" });
     expect(selectView({}, { currencies: [], periodA: {} })).toEqual({ view: "none" });
     expect(selectView({}, { ...rollupShape, ...varianceShape })).toEqual({ view: "cost-rollup" });
+  });
+
+  // A20: a repository or project cost result is told apart from the MVP
+  // shapes, and a project's topSessions does not make it a rollup.
+  it("routes the U9 shapes by their series, never to a rollup or a session", () => {
+    const series = { points: [], priceChanges: [], observedChanges: [], byVendor: [], total: {}, bucket: "week" };
+    expect(selectView({}, series)).toEqual({ view: "cost-over-time" });
+    expect(selectView({}, { ...series, project: { id: "p" }, topSessions: [], byTokenType: [] })).toEqual({ view: "cost-over-time" });
+    expect(selectView({}, { topSessions: [], points: [] })).toEqual({ view: "none" });
+    expect(selectView({}, { ...rollupShape, points: [] })).toEqual({ view: "cost-rollup" });
+    expect(selectView({}, { ...sessionShape, ...series })).toEqual({ view: "session-cost" });
   });
 
   it("gives a tool this bundle has no view for the neutral state, not a shape guess", () => {
