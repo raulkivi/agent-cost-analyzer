@@ -7,21 +7,21 @@ This document hands the Phase 12 work over to the next session. The design, the 
 ## 1. Where things stand
 
 - **MVP released 2026-11-10:** extension 0.4.0 (stable) and app 0.10.0 (#192), after A16's owner checks passed (#191).
-- **Increment 2 built, not yet merged:** A17, A18, A19 (PR #193) and A20, A21, A22 (PR #194, stacked on #193). Status 23 of 36 tasks (64%).
-- **A17b boards are drawn but not approved.** The owner told this session to go on with the views anyway. Approve or change the boards in `docs/plans/mockups/mcp-apps/` (`CostOverTime`, `CostCompare`, `CostChange`, `Increment2States`) and answer the six questions in mcp-apps.md §9.1; each lists the default the views use.
+- **Increment 2 built and merged to `main` 2026-11-10:** A17, A18, A19 (PR #193) and A20, A21, A22 (PR #194, merged into #193's branch first). Status 24 of 36 tasks (67%).
+- **A17b boards approved 2026-11-10** with the owner's answers in mcp-apps.md §9.1: defaults kept except question 4 (a fall uses the host's success colour) and U11's "Not explained" tile wording. A23 applies both.
 - **Next:**
-  - the owner merges #193, then #194 (GitHub retargets it to `main`);
   - A23 (Opus): accessibility and security review of U9–U11, User Guide and extension guide sections with screenshots to follow, and a check of the CHANGELOG entries this session added;
   - A24: the owner's checks of U9–U11 in VS Code Copilot Chat and Claude Desktop, light and dark; a checklist like [mcp-apps-a16-checklist.md](mcp-apps-a16-checklist.md) is needed first (A23 can write it);
   - then the Increment 2 release: extension 0.6.0, app 0.11.0.
+- **Release:** the owner asked about an extension 0.4.1; not planned, since `main` has no fixes to 0.4.0, only Increment 2 features (0.6.0 after A24, or a 0.5.0 pre-release).
 - **Inputs for A23** (from this session's visual pass, not fixed):
   - U9's y-axis top label sits tight against the left edge beside a price-change marker.
-  - U11's "Not explained" tile reads "0 + 3 turns, no priced figure, not 0"; clearer wording wanted.
-  - U11's "lowers cost" blue is close to the period-total blue (owner question 4).
+  - U11's "Not explained" tile reads "0 + 3 turns, no priced figure, not 0". Owner decision: value "3 turns", note "no price for these turns; not counted as 0".
+  - U11's "lowers cost" blue is close to the period-total blue. Owner decision (question 4): a fall uses the host's success colour.
   - CSS class names collided between U10 and U11 in the single bundle (`cc-total`, `cc-sub`, `cc-note`); fixed by renaming, but a test that each view's classes use its own prefix would stop a repeat.
   - The no-projects reason is copied in `views/cost-compare/no-projects.ts` and parsed from the server's text in `views/cost-over-time/explain-error.ts`; a server wording change breaks both silently (the generic error still shows the text).
   - U9 has no focusable price-change markers; the detail is in the list below the chart and the chart's accessible name.
-- **Open PRs:** #193, #194. **Running subagents:** none. **Worktrees:** the session's agent worktrees under `.claude/worktrees/` can be removed.
+- **Open PRs:** none for Increment 2. **Running subagents:** none. **Worktrees:** the session's agent worktrees under `.claude/worktrees/` can be removed.
 
 ## 2. PRs in Phase 12
 
