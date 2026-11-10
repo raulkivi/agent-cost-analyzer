@@ -22,6 +22,19 @@ function setup(result: ToolResult | "waiting" | "default" = "default", port = ne
 }
 
 describe("CostChangeView content", () => {
+  // U10's .cc-total is a flex column in the same bundle; a shared name turned this row into a stack of cells.
+  it("marks the all-models row with a class U10's stylesheet does not use", () => {
+    setup();
+    const row = screen.getByText("All models").closest("tr");
+    expect(row).toHaveClass("cv-total");
+    expect(row).not.toHaveClass("cc-total");
+  });
+
+  it("uses no class name that U10's stylesheet also defines with other rules", () => {
+    const { container } = setup();
+    expect(container.querySelector(".cc-sub, .cc-note, .cc-total")).toBeNull();
+  });
+
   it("names the subject, both periods, the basis and the pricing mode", () => {
     setup();
     expect(screen.getByRole("heading", { level: 1, name: "widgets" })).toBeInTheDocument();

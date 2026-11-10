@@ -89,7 +89,7 @@ export function ModelTable({ block, periodA, periodB }: { block: CurrencyBlock; 
               <ModelRows key={model.model} model={model} isOpen={isOpen} onToggle={() => toggle(model.model)} />
             );
           })}
-          <tr className="cc-total">
+          <tr className="cv-total">
             <td className="view-left">All models</td>
             <td className="cc-col-wide">{block.modelTotals.costAText}</td>
             <td className="cc-col-wide">{block.modelTotals.costBText}</td>

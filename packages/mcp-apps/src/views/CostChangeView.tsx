@@ -42,22 +42,22 @@ function Block({ vm, block, withHeading, notExplainedTile }: { vm: CostVarianceV
     <section className="cc-block" aria-label={`Cost change in ${unit}`}>
       <h2 className={withHeading ? undefined : "sr-only"}>{unit}</h2>
       <Tiles vm={vm} block={block} notExplainedTile={notExplainedTile} />
-      <div className="cc-sub">
+      <div className="cv-sub">
         <h3>What moved the cost</h3>
         {block.noEarlierFigure ? (
-          <p className="cc-note">
+          <p className="cv-note">
             {`${vm.periodA.label} has no priced figure, so there is no change to break down: no earlier figure. ${vm.periodB.label} came to ${block.steps[4]?.text ?? ""}.`}
           </p>
         ) : (
           <>
             <CostChangeWaterfall block={block} ariaLabel={`Waterfall from ${vm.periodA.label} to ${vm.periodB.label}, ${unit}`} />
-            <p className="cc-note text-muted">
+            <p className="cv-note text-muted">
               Usage: B's tokens at A's average price, before any change of model. Price: B's tokens times the change in unit price. Mix: work that moved between models. The three add up to the change.
             </p>
           </>
         )}
       </div>
-      <div className="cc-sub">
+      <div className="cv-sub">
         <h3>By model</h3>
         <ModelTable block={block} periodA={vm.periodA} periodB={vm.periodB} />
       </div>
@@ -93,9 +93,9 @@ export function CostChangeView({ brand, result }: { port: AppHostPort; brand: Vi
   const meta = `${vm.groupBy} · ${vm.periodA.label} vs ${vm.periodB.label} · priced, ${vm.pricingText}`;
   return (
     <ViewShell brand={brand} kicker={KICKER} title={vm.title} meta={meta}>
-      <p className="cc-note text-muted">This view always uses the priced basis: tokens times the price version in force when each turn ran. Billed and reported figures are not used here.</p>
+      <p className="cv-note text-muted">This view always uses the priced basis: tokens times the price version in force when each turn ran. Billed and reported figures are not used here.</p>
       {vm.providerIssues.length > 0 && (
-        <ul className="cc-note" aria-label="Providers not fully read">
+        <ul className="cv-note" aria-label="Providers not fully read">
           {vm.providerIssues.map((issue) => (
             <li key={issue}>{issue}</li>
           ))}
@@ -107,7 +107,7 @@ export function CostChangeView({ brand, result }: { port: AppHostPort; brand: Vi
       ))}
       <NotExplained vm={vm} />
       <PriceChanges vm={vm} />
-      {vm.conversionNote !== undefined && <p className="cc-note text-muted">{vm.conversionNote}</p>}
+      {vm.conversionNote !== undefined && <p className="cv-note text-muted">{vm.conversionNote}</p>}
     </ViewShell>
   );
 }
