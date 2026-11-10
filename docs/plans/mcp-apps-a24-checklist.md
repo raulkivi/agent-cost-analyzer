@@ -1,6 +1,6 @@
 # MCP Apps Increment 2: owner's checks (Phase 12, task A24)
 
-**Last changed:** 2026-11-10 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-11 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 These checks take about 60 minutes. You run the shipped U9 (cost over time), U10 (comparison) and U11 (cost change) views in the two real hosts and confirm the Increment 2 exit criterion ([mcp-apps.md](mcp-apps.md) §8.2). They follow the method of [mcp-apps-a16-checklist.md](mcp-apps-a16-checklist.md). The approved boards are in [mockups/mcp-apps/](mockups/mcp-apps/README.md); your answers of 2026-11-10 are in [mcp-apps.md](mcp-apps.md) §9.1.
 
@@ -98,7 +98,7 @@ Prompts below use `<repo>` and `<repo2>` for repository names as `list_repositor
 2. Run **Developer: Generate Color Theme From Current Settings**.
 3. Save the opened file as `docs/plans/mcp-apps-a24-results/vscode-hc-dark-theme.jsonc` or `vscode-hc-light-theme.jsonc`.
 
-Claude adds both sets to `packages/mcp-apps/test/theme/host-sets.ts` and the contrast tests after A24.
+Automated (step 10.17, G6): `npm run record:host-themes` in `packages/vscode-extension` writes both files, and `host-sets.ts` and the contrast tests read them. No hand step.
 
 **1.8 Narrow width.** Make the chat panel narrow (about 360 px) and look at U9, U10 and U11. Nothing scrolls sideways.
 

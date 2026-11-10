@@ -87,6 +87,30 @@ describe("registerAppViews", () => {
     await plain.client.close();
   });
 
+  // A24 §3: a client that does not declare MCP Apps support (Claude Code CLI)
+  // ignores _meta.ui, so the answer it reads is the text content alone.
+  it("answers the three Increment 2 tools with plain text: no HTML, ui:// or view reference", async () => {
+    ({ client } = await connectCostFixture({ appViews }));
+    const calls: [string, Record<string, unknown>][] = [
+      ["get_repository_cost", { repository: "github.com/acme/portal-web" }],
+      ["compare_costs", { groupBy: "project", ids: ["portal", "billing"], since: "2026-10-01", until: "2026-10-31" }],
+      ["explain_cost_change", { groupBy: "project", id: "portal", periodA: "2026-09", periodB: "2026-10" }],
+    ];
+    for (const [name, args] of calls) {
+      const result = await client.callTool({ name, arguments: args });
+      expect(result.isError, name).toBeFalsy();
+      const content = (result as { content: { type: string; text?: string }[] }).content;
+      expect(content.length, name).toBeGreaterThan(0);
+      for (const block of content) {
+        expect(block.type, name).toBe("text");
+        expect(block.text, name).toBeTruthy();
+        expect(block.text, name).not.toMatch(/<\/?[a-z][^>]*>|ui:\/\/|resourceUri|text\/html|mcp-app/i);
+        expect(block.text, name).not.toMatch(/\bviews?\b/i);
+      }
+      expect(JSON.stringify(result), name).not.toMatch(/ui:\/\/|resourceUri|text\/html/);
+    }
+  });
+
   it("with the extension's groups, tags exactly the registered view tools and adds no tool", async () => {
     const plain = await connectCostFixture({ toolGroups: WITHOUT_BILLING_TOOL_GROUPS });
     const withViews = await connectCostFixture({ appViews, toolGroups: WITHOUT_BILLING_TOOL_GROUPS });
