@@ -21,27 +21,51 @@ export interface SessionRef {
   providerId: string;
 }
 
-const KICKER = "Cost rollup › Session cost";
+// What the drill-down returns to. U2 is the default; U9 names itself.
+export interface DrillOrigin {
+  kicker: string; // "Cost rollup › Session cost"
+  backLabel: string; // "Back to cost rollup"
+  parent: string; // "the rollup", as in "Go back to the rollup, or retry."
+  trail?: string[]; // "Cost comparison / Provider platform": shown beside Back, with the session's title added
+}
+
+const ROLLUP_ORIGIN: DrillOrigin = { kicker: "Cost rollup › Session cost", backLabel: "Back to cost rollup", parent: "the rollup" };
 
 // The session button that opened this view is gone once it opens, and the
 // loading shell gives way to U1, so Back takes the lost focus each time it
 // mounts (A14). The rollup puts focus back on the session row.
-function BackButton({ onBack }: { onBack: () => void }) {
+// A parent that returns focus to its own row passes takeFocus={false}.
+export function BackButton({ onBack, label, trail, takeFocus = true }: { onBack: () => void; label: string; trail?: string[] | undefined; takeFocus?: boolean }) {
   const ref = useRef<HTMLButtonElement>(null);
-  useFocusOnMountIfLost(ref);
+  useFocusOnMountIfLost(ref, takeFocus);
   return (
     <div className="rv-back">
       <button ref={ref} type="button" className="view-link rv-back-button" onClick={onBack}>
         <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M15 6l-6 6 6 6" />
         </svg>
-        Back to cost rollup
+        {label}
       </button>
+      {trail !== undefined && <span className="rv-trail text-muted">{trail.join(" / ")}</span>}
     </div>
   );
 }
 
-export function DrillDown({ port, brand, clipboard, session, onBack }: { port: AppHostPort; brand: ViewBrand; clipboard: ClipboardPort | undefined; session: SessionRef; onBack: () => void }) {
+export function DrillDown({
+  port,
+  brand,
+  clipboard,
+  session,
+  onBack,
+  origin = ROLLUP_ORIGIN,
+}: {
+  port: AppHostPort;
+  brand: ViewBrand;
+  clipboard: ClipboardPort | undefined;
+  session: SessionRef;
+  onBack: () => void;
+  origin?: DrillOrigin;
+}) {
   const { sessionId, providerId } = session;
   const { state, load } = useResource<SessionCost>(
     async () => {
@@ -53,16 +77,18 @@ export function DrillDown({ port, brand, clipboard, session, onBack }: { port: A
     `${providerId}:${sessionId}`,
   );
   const result = useMemo(() => (state.status === "ready" ? { structuredContent: state.data } : undefined), [state]);
-  const lead = <BackButton onBack={onBack} />;
+  const title = state.status === "ready" ? state.data.title : undefined;
+  const trail = origin.trail === undefined ? undefined : title === undefined ? origin.trail : [...origin.trail, title];
+  const lead = <BackButton onBack={onBack} label={origin.backLabel} trail={trail} />;
 
   if (state.status === "ready") {
-    return <SessionCostView port={port} brand={brand} clipboard={clipboard} result={result} frame={{ kicker: KICKER, lead, actions: <AskAboutSession port={port} sessionId={sessionId} /> }} />;
+    return <SessionCostView port={port} brand={brand} clipboard={clipboard} result={result} frame={{ kicker: origin.kicker, lead, actions: <AskAboutSession port={port} sessionId={sessionId} /> }} />;
   }
   return (
-    <ViewShell brand={brand} kicker={KICKER} title="Session cost" lead={lead}>
+    <ViewShell brand={brand} kicker={origin.kicker} title="Session cost" lead={lead}>
       {state.status === "error" ? (
         <ErrorBox title="Couldn't load this session." onRetry={load}>
-          The get_session_cost call failed. Go back to the rollup, or retry.
+          {`The get_session_cost call failed. Go back to ${origin.parent}, or retry.`}
         </ErrorBox>
       ) : (
         <p role="status" className="text-muted">

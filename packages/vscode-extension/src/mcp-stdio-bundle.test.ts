@@ -122,7 +122,7 @@ describe("the built MCP server bundle", () => {
 
   // Phase 12 A13: dist/mcp-apps/views.html next to the bundle, as in the .vsix.
   // Without it (the test above) the server lists its 19 tools and no views.
-  it("serves dist/mcp-apps/views.html when it is there: _meta.ui on the three tools and a 20th, app-only, tool", async () => {
+  it("serves dist/mcp-apps/views.html when it is there: _meta.ui on the seven registered view tools and a 20th, app-only, tool", async () => {
     const views = path.join(installDir, "dist", "mcp-apps", "views.html");
     mkdirSync(path.dirname(views), { recursive: true });
     writeFileSync(views, '<!doctype html><html><head><meta name="aca-brand" content=""></head><body>built views</body></html>');
@@ -139,7 +139,7 @@ describe("the built MCP server bundle", () => {
           .filter((tool) => tool._meta?.ui?.resourceUri === "ui://ai-credits-analyzer/views.html")
           .map((tool) => tool.name)
           .sort(),
-      ).toEqual(["get_cost_rollup", "get_session_cost", "list_findings"]);
+      ).toEqual(["compare_costs", "explain_cost_change", "get_cost_rollup", "get_project_cost", "get_repository_cost", "get_session_cost", "list_findings"]);
     } finally {
       rmSync(path.dirname(views), { recursive: true, force: true });
     }

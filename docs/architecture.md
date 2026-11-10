@@ -1,6 +1,6 @@
 # Architecture: Agent Cost Analyzer and AI Credits Analyzer
 
-**Last changed:** 2026-11-07 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-10 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 ## 1. Purpose & scope
 
@@ -188,11 +188,11 @@ outbound network calls.
 #### 4.1.1 MCP App views: runtime flow (Phase 12)
 
 A host that supports MCP Apps (VS Code Copilot Chat, Claude Desktop) shows
-an interactive view next to the text result of three tools. The server
+an interactive view next to the text result of the tools below. The server
 stays read-only and makes no network call (constraint 1); the view is one
 static file.
 
-1. **Tool call.** `tools/list` gives `get_session_cost`, `get_cost_rollup`
+1. **Tool call.** `tools/list` gives `get_session_cost`, `get_cost_rollup`, `get_repository_cost`, `get_project_cost`, `compare_costs`, `explain_cost_change`
    and `list_findings` a `_meta.ui.resourceUri` of
    `ui://<server name>/views.html` (and the legacy flat key). The model
    calls the tool as before. Its name, input schema, output schema and
@@ -272,15 +272,19 @@ is never published; the server and the extension serve the built file.
 |---|---|
 | `host/` | `AppHostPort`, the view's only gateway to the host (`callTool`, `openLink`, `sendMessage`, `requestDisplayMode`, `onHostContext`, `onToolInput`, `onToolResult`). `ExtAppsHostPort` wraps ext-apps' `App`; `FakeAppHostPort` records calls for tests. `ClipboardPort` is the same idea for "copy this text"; a host that blocks the clipboard gets none, and the button is hidden |
 | `router/select-view.ts` | The tool name, else the result's shape, to a view id. A named tool without a view gets the neutral state and is not guessed from its shape |
-| `view-models/` | Pure functions from a domain type to display text: `toSessionCostViewModel`, `toCostRollupViewModel`, `toFindingsViewModel`, `toTurnDetailViewModel`. They own the display rules: a `null` measure reads "Unknown" and never 0 (constraint 6), AI Credits round to 2 decimals, partial coverage adds a note, `estimated` adds an "estimate" tag |
-| `views/` | `SessionCostView` (U1), `CostRollupView` (U2, drilling into U1 in place) and `FindingsView` (U3), inside the branded `ViewShell`. A view gets the port, the brand and the tool result as props |
+| `view-models/` | Pure functions from a domain type to display text: `toSessionCostViewModel`, `toCostRollupViewModel`, `toFindingsViewModel`, `toTurnDetailViewModel`. `toCostSeriesViewModel` (U9) and the other cost-analysis ones. They own the display rules: a `null` measure reads "Unknown" and never 0 (constraint 6), AI Credits round to 2 decimals, partial coverage adds a note, `estimated` adds an "estimate" tag |
+| `views/` | `SessionCostView` (U1), `CostRollupView` (U2, drilling into U1 in place), `FindingsView` (U3), `CostOverTimeView` (U9: `get_repository_cost` and `get_project_cost`, with `views/cost-over-time/` for its chart model, chart, tiles, breakdowns and error explanation; a project's top session drills into U1 in place through the shared `DrillDown`) `CostCompareView` (U10, `compare_costs`: `views/cost-compare/` holds the table, the in-place drill-down into U9 and the no-projects text; a row calls `get_repository_cost` or `get_project_cost` with its own `drillDown.arguments`, and U9 takes a `frame` so the U10 → U9 → U1 chain has a back control and a kicker trail at each level) and `CostChangeView` (U11, `explain_cost_change`: waterfall, per-model table, not-explained turns, documented price changes; calls no tool, its "Price changes" control stays disabled until U13), inside the branded `ViewShell`. A view gets the port, the brand and the tool result as props. An error result reaches a view with its first text as `errorText`, which U9 shows as plain text |
 | `brand/` | `ViewBrand` and `readBrand`, which reads the `aca-brand` meta the server filled |
 | `theme/` | `brand.css` (fixed brand tokens), `theme-mcp-host.css` (the Industry tokens pointed at the host's style variables, with fallbacks), `views.css`, and `bindHostTheme`, which applies the host's theme, variables and fonts as they arrive |
 
 **Dependency rules.** `mcp-apps` depends on `domain` (types) and on
 `web`'s presentational exports only: `theme.css`, `ui/Blueprint`,
 `ui/StatTile`, `ui/Tag`, `ui/SegmentedControl`, `lib/format-ai-credits` and
-`lib/contrast`, each listed in `web`'s `exports`, which keeps them free of
+`lib/contrast`, plus the Phase 14/15 charts (`CostTimeChart`, `Waterfall`,
+`ReplayCompareBars`, `ChartDataTable`, `ViewAsTable`), `lib/cost/*`
+(`cost-format`, `series-model`, `series-colors`, `project-model`) and
+`replay/SimulatedBadge` and `replay/ReplayPricingNote`, each listed in
+`web`'s `exports`, which keeps them free of
 any data source (constraint 3). It never imports `server`. The server in
 turn never imports `mcp-apps`: it reads the built HTML through `ViewSource`
 (DIP). The extension's build copies the file. The only link between a view

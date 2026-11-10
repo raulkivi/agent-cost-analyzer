@@ -10,6 +10,8 @@ import { InsightsService } from "../services/insights/insights-service.js";
 import { AuditQueryService } from "../services/tool-audit/audit-query-service.js";
 import { FakeProvider, lookup } from "../test-support/audit-fakes.js";
 import { connectCostFixture } from "../test-support/cost-analysis-fixture.js";
+import type { CostAnalysisQueries } from "../services/cost-analysis/cost-analysis-service.js";
+import type { AttributionQueries } from "../services/cost-attribution/attribution-query-service.js";
 import { createMcpServer } from "./mcp-server.js";
 
 // Phase 15 step 15.7 (plan §10.1.1, §10.1.3, §10.1.6): get_repository_cost,
@@ -135,6 +137,52 @@ describe("a server without cost analyses (the extension's, until step 15.13)", (
     await Promise.all([server.connect(serverTransport), local.connect(clientTransport)]);
     const { tools } = await local.listTools();
     expect(tools.filter((tool) => NEW_TOOLS.includes(tool.name))).toEqual([]);
+    await local.close();
+  });
+});
+
+// Owner question 1 (docs/plans/mcp-apps.md §9.1): the extension has no
+// projects, so the unknown-project error also says why; the standalone
+// text stays as it was.
+describe("get_project_cost with no projects", () => {
+  const REASON = "This product has no projects: edit them elsewhere.";
+
+  async function connect(attribution: AttributionQueries | undefined): Promise<Client> {
+    const provider = new FakeProvider("vscode", []);
+    const server = createMcpServer({
+      auditQueries: new AuditQueryService(lookup(provider)),
+      analysisQueries: new AnalysisQueryService(lookup(provider), new InsightsService({ listProviders: () => [provider] }, [])),
+      getProviderStatus: async () => ({ activeProviderId: "vscode", providers: [] }),
+      version: "0.0.0-test",
+      costAnalysis: { getProjectCost: async () => null } as unknown as CostAnalysisQueries,
+      ...(attribution ? { attribution } : {}),
+    });
+    const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+    const local = new Client({ name: "test-client", version: "1.0.0" });
+    await Promise.all([server.connect(serverTransport), local.connect(clientTransport)]);
+    return local;
+  }
+
+  const attributionWith = (projects: { id: string }[], reason?: string): AttributionQueries =>
+    ({ listProjects: () => ({ status: "missing", projects, problems: [], ...(reason ? { reason } : {}) }) }) as unknown as AttributionQueries;
+
+  it("names the no-projects reason after the unknown-id text", async () => {
+    const local = await connect(attributionWith([], REASON));
+    const result = await local.callTool({ name: "get_project_cost", arguments: { projectId: "portal" } });
+    expect(result.isError).toBe(true);
+    expect(textOf(result)).toContain('Unknown project id "portal"');
+    expect(textOf(result)).toContain(REASON);
+    await local.close();
+  });
+
+  it.each([
+    ["projects exist", attributionWith([{ id: "other" }], REASON)],
+    ["there is no reason", attributionWith([])],
+    ["no attribution is served", undefined],
+  ])("keeps the plain text when %s", async (_name, attribution) => {
+    const local = await connect(attribution);
+    const result = await local.callTool({ name: "get_project_cost", arguments: { projectId: "portal" } });
+    expect(textOf(result)).toBe('Unknown project id "portal". Call list_projects to find valid ids.');
     await local.close();
   });
 });

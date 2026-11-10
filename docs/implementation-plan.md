@@ -1,6 +1,6 @@
 # Implementation Plan: Agent Cost Analyzer and AI Credits Analyzer
 
-**Last changed:** 2026-11-07 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-10 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 This plan sequences [architecture.md](architecture.md) into buildable phases.
 Phases 0-9.12 build the standalone app, **Agent Cost Analyzer** (every
@@ -12,7 +12,7 @@ Phase 12 adds branded, interactive MCP Apps views for both products.
 **Overall status (2026-11-06):** Phases 0-10 have their code and docs
 merged to `main`. The extension's 0.1.0 is released (tag `ext-v0.1.0`,
 2026-11-03). Open: Phase 10's owner manual checks and decisions (see its
-section), Phase 11 (not started), Phase 12 (in progress: the MVP's code and docs, A0–A11, A13 and A15, are done, A12 is dropped, and A14's review and A16's owner checks remain; the plan
+section), Phase 11 (not started), Phase 12 (in progress: the MVP, A0–A16, released 2026-11-10 in extension 0.4.0 and app 0.10.0, A12 dropped; Increment 2 started; the plan
 covers the Phase 14 and 15 tools since 2026-11-07), Phase 13 (in
 progress: steps 13.0-13.10 and 13.5a merged, the owner's eyes-on review
 of 13.8 open), Phase 14
@@ -1420,15 +1420,16 @@ extension's MCP server and `ext-v0.1.0`); for the increments, Phase 14
 step 14.5 (replay tools) and Phase 15 steps 15.7 and 15.10–15.13 (cost
 analysis, price change, billing tools in both servers). All are met.
 
-**Target releases** (plan §7.3): MVP in extension 0.4.0 and app 0.11.0,
-Increment 2 in 0.5.0 and 0.12.0, Increment 3 in 0.6.0 and 0.13.0. This
-assumes the Phase 14/15 work ships first as 0.3.0 and 0.10.0.
+**Target releases** (plan §7.3): MVP in extension 0.4.0 and app 0.10.0
+(shipped 2026-11-10), Increment 2 in 0.6.0 and 0.11.0, Increment 3 in 0.8.0
+and 0.12.0. Stable extension releases use even minors.
 
-**Status (2026-11-07)**: in progress. The MVP (U1–U3) is built and
-documented: A0–A11, A13 and A15 are done, A12 is dropped, and A14
-(accessibility and security review) and A16 (the owner's checks in both
-hosts) remain before the MVP's exit criterion is met. Increments 2 and 3
-(A17–A33) have not started. A1–A4 (turn series, brand
+**Status (2026-11-10)**: in progress. The MVP (U1–U3, A0–A16) met its
+exit criterion and shipped in extension 0.4.0 and app 0.10.0. Increment 2:
+A17 (web exports), A18 (view models), A19 (`_meta.ui` on the four
+cost-analysis tools) and A20–A22 (views U9, U10, U11) are done; the A17b
+boards are drawn and wait for the owner's approval; next A23 (review and
+docs) and A24 (owner checks). Increment 3 (A25–A33) has not started. A1–A4 (turn series, brand
 injection and identity, web package exports) and A8 (the `registerAppViews`
 server group, `get_turn_series`, `_meta.ui` on three tools, ext-apps 1.7.5)
 done; A0 host spike done by the owner (both hosts refuse `vscode://`

@@ -4,14 +4,28 @@ import { App } from "@modelcontextprotocol/ext-apps";
 import type { AppHostPort, DisplayMode, HostContext, ToolResult } from "./app-host-port.js";
 import { LatestValue } from "./latest-value.js";
 
+interface ContentBlock {
+  type: string;
+  text?: string;
+}
+
+// The text a tool error carries (an unknown id, a bad argument), which the
+// views show as an explained state. Success results carry none: their
+// content is the model's text answer, already in the chat.
+function errorTextOf(isError: boolean | undefined, content: ContentBlock[] | undefined): { errorText?: string } {
+  if (!isError) return {};
+  const text = content?.find((block) => block.type === "text" && typeof block.text === "string" && block.text !== "")?.text;
+  return text === undefined ? {} : { errorText: text };
+}
+
 // The part of ext-apps' App the adapter uses, so tests can pass a fake App.
 export interface AppLike {
   ontoolinput: ((params: { arguments?: Record<string, unknown> }) => void) | undefined;
-  ontoolresult: ((params: { structuredContent?: unknown; isError?: boolean }) => void) | undefined;
+  ontoolresult: ((params: { structuredContent?: unknown; isError?: boolean; content?: ContentBlock[] }) => void) | undefined;
   onhostcontextchanged: ((params: unknown) => void) | undefined;
   getHostContext(): unknown;
   connect(): Promise<void>;
-  callServerTool(params: { name: string; arguments?: Record<string, unknown> }): Promise<{ structuredContent?: unknown; isError?: boolean }>;
+  callServerTool(params: { name: string; arguments?: Record<string, unknown> }): Promise<{ structuredContent?: unknown; isError?: boolean; content?: ContentBlock[] }>;
   openLink(params: { url: string }): Promise<{ isError?: boolean }>;
   sendMessage(params: { role: "user"; content: { type: "text"; text: string }[] }): Promise<{ isError?: boolean }>;
   requestDisplayMode(params: { mode: DisplayMode }): Promise<{ mode: DisplayMode }>;
@@ -29,6 +43,7 @@ export class ExtAppsHostPort implements AppHostPort {
       this.result.publish({
         structuredContent: params.structuredContent,
         ...(params.isError !== undefined ? { isError: params.isError } : {}),
+        ...errorTextOf(params.isError, params.content),
       });
     app.onhostcontextchanged = () => this.publishContext();
   }
@@ -45,7 +60,7 @@ export class ExtAppsHostPort implements AppHostPort {
 
   async callTool(name: string, args: Record<string, unknown>): Promise<ToolResult> {
     const response = await this.app.callServerTool({ name, arguments: args });
-    return { structuredContent: response.structuredContent, ...(response.isError ? { isError: true } : {}) };
+    return { structuredContent: response.structuredContent, ...(response.isError ? { isError: true } : {}), ...errorTextOf(response.isError, response.content) };
   }
 
   async openLink(url: string): Promise<boolean> {

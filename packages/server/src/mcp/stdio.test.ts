@@ -141,7 +141,7 @@ describe("stdio MCP entry point, app views", () => {
     return client;
   }
 
-  it("serves the views file as text/html;profile=mcp-app and tags the three tools with _meta.ui", async () => {
+  it("serves the views file as text/html;profile=mcp-app and tags the seven view tools with _meta.ui", async () => {
     const file = path.join(home, "views.html");
     writeFileSync(file, '<!doctype html><html><head><meta name="aca-brand" content=""></head><body>built views</body></html>');
     const client = await connect(["--app-views-html", file]);

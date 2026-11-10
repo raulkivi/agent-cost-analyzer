@@ -36,6 +36,24 @@ describe("ExtAppsHostPort", () => {
     await expect(new ExtAppsHostPort(app).callTool("x", {})).resolves.toMatchObject({ isError: true });
   });
 
+  it("keeps the first text of an error result as errorText, and none for a success", async () => {
+    const content = [{ type: "text", text: 'Unknown project id "x". No projects here.' }, { type: "text", text: "second" }];
+    const app = fakeApp({ callServerTool: vi.fn(async () => ({ isError: true, content })) });
+    await expect(new ExtAppsHostPort(app).callTool("x", {})).resolves.toEqual({ isError: true, errorText: 'Unknown project id "x". No projects here.' });
+    const ok = fakeApp({ callServerTool: vi.fn(async () => ({ structuredContent: { a: 1 }, content })) });
+    await expect(new ExtAppsHostPort(ok).callTool("x", {})).resolves.toEqual({ structuredContent: { a: 1 } });
+  });
+
+  it("delivers a pushed error result with its text, skipping non-text content", () => {
+    const app = fakeApp();
+    const port = new ExtAppsHostPort(app);
+    const seen: unknown[] = [];
+    port.onToolResult((result) => seen.push(result));
+    app.ontoolresult?.({ isError: true, content: [{ type: "image" }, { type: "text", text: "boom" }] });
+    app.ontoolresult?.({ isError: true, content: [] });
+    expect(seen).toEqual([{ structuredContent: undefined, isError: true, errorText: "boom" }, { structuredContent: undefined, isError: true }]);
+  });
+
   it("maps openLink and sendMessage, and reports host refusal or failure as false", async () => {
     const app = fakeApp();
     const port = new ExtAppsHostPort(app);

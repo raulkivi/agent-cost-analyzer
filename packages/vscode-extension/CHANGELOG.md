@@ -9,6 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **MCP server: cost-analysis views.** In VS Code Copilot Chat,
+  `get_repository_cost`, `compare_costs` and `explain_cost_change` now show
+  interactive views: cost over time by basis with price-change markers, a
+  repository comparison whose rows open the cost over time in place, and a
+  waterfall of what changed the cost. Project questions show why this
+  extension has no projects instead of an empty chart. The text output is
+  unchanged.
+
+### Changed
+
+- **MCP server:** `get_project_cost` for an unknown project id now also says
+  why there are no projects in this extension.
+
 ## [0.4.0] - 2026-11-10
 
 ### Added

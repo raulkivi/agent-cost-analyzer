@@ -12,6 +12,10 @@ describe("selectView", () => {
     ["get_session_cost", "session-cost"],
     ["get_cost_rollup", "cost-rollup"],
     ["list_findings", "findings"],
+    ["get_repository_cost", "cost-over-time"],
+    ["get_project_cost", "cost-over-time"],
+    ["explain_cost_change", "cost-change"],
+    ["compare_costs", "cost-compare"],
   ])("routes toolInfo.tool.name %s to %s", (name, view) => {
     expect(selectView({ toolInfo: { tool: { name } } }, undefined)).toEqual({ view });
   });
@@ -26,6 +30,12 @@ describe("selectView", () => {
     ["aca-spike-get_session_cost", "session-cost"],
     ["ai-credits-analyzer-get_cost_rollup", "cost-rollup"],
     ["mcp_aicreditsanal_list_findings", "findings"],
+    ["ai-credits-analyzer-get_repository_cost", "cost-over-time"],
+    ["mcp_aicreditsanal_get_project_cost", "cost-over-time"],
+    ["ai-credits-analyzer-explain_cost_change", "cost-change"],
+    ["mcp_aicreditsanal_explain_cost_change", "cost-change"],
+    ["ai-credits-analyzer-compare_costs", "cost-compare"],
+    ["mcp_aicreditsanal_compare_costs", "cost-compare"],
   ])("routes VS Code's server-prefixed toolCall.toolName %s to %s", (toolName, view) => {
     expect(selectView({ toolCall: { toolName } }, undefined)).toEqual({ view });
   });
@@ -44,6 +54,40 @@ describe("selectView", () => {
     expect(selectView({}, sessionShape)).toEqual({ view: "session-cost" });
     expect(selectView(undefined, rollupShape)).toEqual({ view: "cost-rollup" });
     expect(selectView({ theme: "dark" }, findingsShape)).toEqual({ view: "findings" });
+  });
+
+  it("recognises an explain_cost_change result by shape, apart from the other shapes", () => {
+    const varianceShape = { periodA: {}, periodB: {}, currencies: [], notExplained: {} };
+    expect(selectView({}, varianceShape)).toEqual({ view: "cost-change" });
+    expect(selectView({}, { currencies: [], periodA: {} })).toEqual({ view: "none" });
+    expect(selectView({}, { ...rollupShape, ...varianceShape })).toEqual({ view: "cost-rollup" });
+  });
+
+  // A20: a repository or project cost result is told apart from the MVP
+  // shapes, and a project's topSessions does not make it a rollup.
+  it("routes the U9 shapes by their series, never to a rollup or a session", () => {
+    const series = { points: [], priceChanges: [], observedChanges: [], byVendor: [], total: {}, bucket: "week" };
+    expect(selectView({}, series)).toEqual({ view: "cost-over-time" });
+    expect(selectView({}, { ...series, project: { id: "p" }, topSessions: [], byTokenType: [] })).toEqual({ view: "cost-over-time" });
+    expect(selectView({}, { topSessions: [], points: [] })).toEqual({ view: "none" });
+    expect(selectView({}, { ...rollupShape, points: [] })).toEqual({ view: "cost-rollup" });
+    expect(selectView({}, { ...sessionShape, ...series })).toEqual({ view: "session-cost" });
+  });
+
+  // A21: a compare_costs result is told apart from every other shape, and none
+  // of the other shapes is taken for a comparison.
+  it("routes the U10 shape by its rows and periods, never to the MVP, U9 or U11 views", () => {
+    const comparison = { groupBy: "repository", comparePeriod: "previous", previousSince: "2026-10-01", previousUntil: "2026-10-31", total: {}, rows: [] };
+    expect(selectView({}, comparison)).toEqual({ view: "cost-compare" });
+    expect(selectView({}, { ...comparison, groupBy: "project" })).toEqual({ view: "cost-compare" });
+    expect(selectView({}, { rows: [], total: {} })).toEqual({ view: "none" });
+    expect(selectView({}, { ...comparison, previousSince: undefined })).toEqual({ view: "none" });
+    expect(selectView({}, { ...comparison, rows: "x" })).toEqual({ view: "none" });
+    expect(selectView({}, { ...rollupShape, ...comparison })).toEqual({ view: "cost-rollup" });
+    expect(selectView({}, { ...sessionShape, ...comparison })).toEqual({ view: "session-cost" });
+    expect(selectView({}, { ...comparison, points: [], priceChanges: [], observedChanges: [], byVendor: [] })).toEqual({ view: "cost-over-time" });
+    expect(selectView({}, { ...comparison, currencies: [], periodA: {}, periodB: {}, notExplained: {} })).toEqual({ view: "cost-change" });
+    expect(selectView({}, { ...findingsShape, ...comparison })).toEqual({ view: "findings" });
   });
 
   it("gives a tool this bundle has no view for the neutral state, not a shape guess", () => {
