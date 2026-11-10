@@ -77,7 +77,8 @@ function registerEstimateTool(server: McpServer, estimates: EstimateQueries, gua
         if (!parsed.ok) return toolError(parsed.error);
         try {
           const estimate = await estimates.estimate({ ...parsed.value, ...(args.model !== undefined ? { model: args.model } : {}) });
-          return estimate ? json(estimate) : toolError(`Unknown project id "${args.projectId}". Call list_projects to find valid ids.`);
+          // Only an unknown project id gives no estimate; a repository always has a target.
+          return estimate ? json(estimate) : toolError(unknownProjectIdText(args.projectId ?? ""));
         } catch (error) {
           if (error instanceof EstimateModelError) return toolError(error.message);
           throw error;
