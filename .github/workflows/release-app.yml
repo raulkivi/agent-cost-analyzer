@@ -38,6 +38,18 @@ jobs:
       - run: npm run typecheck
       - run: npm run build
       - run: npm test
+      # The standalone app's usage-scenario suite, as the web-e2e job in ci.yml
+      # runs it (step 15.9). The root build above already builds packages/web.
+      - run: npx playwright install --with-deps chromium
+        working-directory: packages/web
+      - run: npm run test:e2e --workspace=packages/web -- --trace off
+      # Failure screenshots (traces are off, as the suite runs in CI).
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: failure()
+        with:
+          name: web-e2e-out
+          path: packages/web/e2e/out/
+          if-no-files-found: ignore
 
       - name: GitHub Release
         env:

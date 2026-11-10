@@ -3,7 +3,7 @@
 **Last changed:** 2026-11-11 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 Status: **merged to `main` (#117, #121, #127; later specs #139, #157,
-#172); T15 and Q2 closed by the owner's decision D4, 2026-11-11: the job becomes required and runs in the release workflow (step 10.17 G1)**; §6 records
+#172); T15 and Q2 closed by the owner's decision D4, 2026-11-11: the job is required and runs in the release workflow (step 10.17 G1, #202)**; §6 records
 what was built and learned, §6.9 the suite and its CI record as of
 2026-11-11. Extends
 [vscode-extension.md](vscode-extension.md) step 10.9 (integration suite,

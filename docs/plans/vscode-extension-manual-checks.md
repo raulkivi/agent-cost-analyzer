@@ -126,9 +126,8 @@ what is still manual until G1, G3 and G7 of step 10.17 land
 Rows marked **Automated** run in CI as the `extension-ui` job
 (`npm run test:ui:vscode`, [vscode-ui-automation.md](vscode-ui-automation.md),
 step 10.16): run them by hand only when that job is red, or for the parts
-named as still manual. The job becomes a required check on PRs and runs in
-the release workflow (owner decision D4, step 10.17 G1); until that merges,
-check its result on the release commit. Rows 1.1-1.4, 1.12 and 1.14
+named as still manual. The job is a required check on PRs and runs in the
+release workflow (owner decision D4, step 10.17 G1, #202). Rows 1.1-1.4, 1.12 and 1.14
 run there over **fixtures, not a real Copilot chat**; 2.3 and 2.4 are
 covered only at tool level by the integration suite (`npm run
 test:integration`), not in the UI. The notes say what each does not prove.
