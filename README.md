@@ -1,6 +1,6 @@
 # Agent Cost Analyzer
 
-**Last changed:** 2026-11-07 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-10 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 Independent project; not affiliated with or endorsed by GitHub or Microsoft.
 
@@ -13,6 +13,18 @@ mitmproxy captures of LLM-provider traffic — so you can see exactly what's
 driving your token usage and AI Credits spend. Export a session's
 metadata (never chat message text) to get cost-optimization analysis and
 advice from an AI chat of your choice.
+
+- **Cost by repository and project:** cost over time, side-by-side
+  comparison, and why a cost changed (usage, price and mix effects).
+- **Replay on another model:** what a real session would have cost about
+  on another model, beside what it did cost.
+- **Tool-call audit and findings:** failed tool calls and why, risky
+  commands, unusual sessions.
+- **Read-only MCP server:** ask Claude Code, Claude Desktop or Copilot
+  Chat about your costs. In MCP Apps hosts (Claude Desktop, VS Code
+  Copilot Chat) the cost and findings tools also show interactive views;
+  see
+  [Interactive views in the chat](docs/UserGuide.md#interactive-views-in-the-chat).
 
 ![App landing page, showing the Learn mode scenario list](docs/images/landing-page.png)
 
@@ -80,11 +92,14 @@ This repo builds two products from one codebase:
   tools and the Phase 9.12 additions: session and cross-provider cost,
   security/anomaly/behaviour findings, a one-turn drill-down, server
   instructions and output schemas.
-- [MCP Apps plan](docs/plans/mcp-apps.md) — Phase 12 (MVP built; owner checks in [mcp-apps-a16-checklist.md](docs/plans/mcp-apps-a16-checklist.md), handover in [mcp-apps-handover.md](docs/plans/mcp-apps-handover.md)): branded,
-  interactive views (session cost, spend rollup, findings) that MCP Apps
-  hosts such as VS Code Copilot Chat and Claude Desktop render next to the
-  MCP tool results. Includes the use-case analysis, branding rules and
-  tasks.
+- [MCP Apps plan](docs/plans/mcp-apps.md) — Phase 12 (MVP released in
+  extension 0.4.0 and app 0.10.0; Increment 2 built and in the extension
+  0.5.0 pre-release, owner checks in [mcp-apps-a24-checklist.md](docs/plans/mcp-apps-a24-checklist.md),
+  handover in [mcp-apps-handover.md](docs/plans/mcp-apps-handover.md)):
+  branded, interactive views (session cost, spend rollup, findings, cost
+  over time, cost comparison, cost change) that MCP Apps hosts such as VS
+  Code Copilot Chat and Claude Desktop render next to the MCP tool
+  results. Includes the use-case analysis, branding rules and tasks.
 - [Analyze session replay plan](docs/plans/analyze-session-replay.md) —
   Phase 14 (steps 14.0–14.7 built; the docs are in the owner's review):
   replay a real Claude Code or Copilot session on another model, beside
