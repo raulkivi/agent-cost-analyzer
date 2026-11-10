@@ -21,6 +21,7 @@ describe("App shell", () => {
     [{ toolInfo: { tool: { name: "get_session_cost" } } }, "Session cost"],
     [{ toolCall: { toolName: "get_cost_rollup" } }, "Cost rollup"],
     [{ toolInfo: { tool: { name: "list_findings" } } }, "Findings"],
+    [{ toolCall: { toolName: "ai-credits-analyzer-explain_cost_change" } }, "Cost change"],
   ])("shows the placeholder view for %j", (context, title) => {
     const port = new FakeAppHostPort();
     render(<App port={port} brand={brand} />);

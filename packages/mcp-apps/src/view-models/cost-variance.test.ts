@@ -142,3 +142,11 @@ describe("toCostVarianceViewModel notes", () => {
     expect(vm.providerIssues).toEqual(["pi: no logs found"]);
   });
 });
+
+describe("toCostVarianceViewModel model totals", () => {
+  it("totals the table: a model usage effect includes mix, so the totals add up to the change", () => {
+    const vm = toCostVarianceViewModel(costVariance({ currencies: [varianceCurrency({ costA: 100, costB: 140, change: 40, usage: 50, price: -20, mix: 10 })] }));
+    expect(vm.currencies[0]!.changeAmountText).toBe("+40.00 AI Credits");
+    expect(vm.currencies[0]!.modelTotals).toEqual({ costAText: "100.00 AI Credits", costBText: "140.00 AI Credits", changeText: "+40.00 AI Credits", usageText: "+60.00 AI Credits", priceText: "−20.00 AI Credits" });
+  });
+});

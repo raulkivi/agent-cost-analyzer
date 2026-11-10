@@ -2,13 +2,14 @@
 // SPDX-License-Identifier: MIT
 import type { HostContext } from "../host/app-host-port.js";
 
-export type ViewId = "session-cost" | "cost-rollup" | "findings";
+export type ViewId = "session-cost" | "cost-rollup" | "findings" | "cost-change";
 export type ViewSelection = { view: ViewId } | { view: "none" };
 
 const BY_TOOL: Record<string, ViewId> = {
   get_session_cost: "session-cost",
   get_cost_rollup: "cost-rollup",
   list_findings: "findings",
+  explain_cost_change: "cost-change",
 };
 
 // VS Code prefixes the tool name with the server's id ("<server>-<tool>",
@@ -30,6 +31,7 @@ function byShape(structured: unknown): ViewId | undefined {
   if (hasArray(s, "findings") && "bySeverity" in s) return "findings";
   if (hasArray(s, "topSessions") && hasArray(s, "daily")) return "cost-rollup";
   if (typeof s.sessionId === "string" && hasArray(s, "topTurns")) return "session-cost";
+  if (hasArray(s, "currencies") && typeof s.periodA === "object" && typeof s.periodB === "object" && typeof s.notExplained === "object") return "cost-change";
   return undefined;
 }
 
