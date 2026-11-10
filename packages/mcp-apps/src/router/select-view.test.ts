@@ -12,6 +12,7 @@ describe("selectView", () => {
     ["get_session_cost", "session-cost"],
     ["get_cost_rollup", "cost-rollup"],
     ["list_findings", "findings"],
+    ["explain_cost_change", "cost-change"],
   ])("routes toolInfo.tool.name %s to %s", (name, view) => {
     expect(selectView({ toolInfo: { tool: { name } } }, undefined)).toEqual({ view });
   });
@@ -26,6 +27,8 @@ describe("selectView", () => {
     ["aca-spike-get_session_cost", "session-cost"],
     ["ai-credits-analyzer-get_cost_rollup", "cost-rollup"],
     ["mcp_aicreditsanal_list_findings", "findings"],
+    ["ai-credits-analyzer-explain_cost_change", "cost-change"],
+    ["mcp_aicreditsanal_explain_cost_change", "cost-change"],
   ])("routes VS Code's server-prefixed toolCall.toolName %s to %s", (toolName, view) => {
     expect(selectView({ toolCall: { toolName } }, undefined)).toEqual({ view });
   });
@@ -44,6 +47,13 @@ describe("selectView", () => {
     expect(selectView({}, sessionShape)).toEqual({ view: "session-cost" });
     expect(selectView(undefined, rollupShape)).toEqual({ view: "cost-rollup" });
     expect(selectView({ theme: "dark" }, findingsShape)).toEqual({ view: "findings" });
+  });
+
+  it("recognises an explain_cost_change result by shape, apart from the other shapes", () => {
+    const varianceShape = { periodA: {}, periodB: {}, currencies: [], notExplained: {} };
+    expect(selectView({}, varianceShape)).toEqual({ view: "cost-change" });
+    expect(selectView({}, { currencies: [], periodA: {} })).toEqual({ view: "none" });
+    expect(selectView({}, { ...rollupShape, ...varianceShape })).toEqual({ view: "cost-rollup" });
   });
 
   it("gives a tool this bundle has no view for the neutral state, not a shape guess", () => {
