@@ -88,6 +88,9 @@ function drillDown(comparison: CostComparison, key: string): ComparisonDrillDown
     : { tool: "get_project_cost", arguments: { projectId: key, ...view } };
 }
 
+// One decimal, as the board has it: "47.2 %". The cache-hit ratio stays whole.
+const formatShare = (share: number): string => `${(share * 100).toFixed(1)} %`;
+
 function rowView(row: CostComparisonRow, comparison: CostComparison): ComparisonRowView {
   const { basis, currency } = comparison;
   return {
@@ -102,7 +105,7 @@ function rowView(row: CostComparisonRow, comparison: CostComparison): Comparison
     perSession: perCurrencyViews(row.perSession, basis, currency),
     perActiveDay: perCurrencyViews(row.perActiveDay, basis, currency),
     perTurn: perCurrencyViews(row.perTurn, basis, currency),
-    shares: row.share.map((entry): ShareView => ({ currency: entry.currency, share: entry.share, text: formatPercent(entry.share) })),
+    shares: row.share.map((entry): ShareView => ({ currency: entry.currency, share: entry.share, text: formatShare(entry.share) })),
     cacheHit: valueView(row.cacheHitRatio, formatPercent),
     outputShare: valueView(row.outputShare, formatPercent),
     drillDown: drillDown(comparison, row.key),

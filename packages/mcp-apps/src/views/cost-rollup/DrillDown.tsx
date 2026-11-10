@@ -26,6 +26,7 @@ export interface DrillOrigin {
   kicker: string; // "Cost rollup › Session cost"
   backLabel: string; // "Back to cost rollup"
   parent: string; // "the rollup", as in "Go back to the rollup, or retry."
+  trail?: string[]; // "Cost comparison / Provider platform": shown beside Back, with the session's title added
 }
 
 const ROLLUP_ORIGIN: DrillOrigin = { kicker: "Cost rollup › Session cost", backLabel: "Back to cost rollup", parent: "the rollup" };
@@ -33,9 +34,10 @@ const ROLLUP_ORIGIN: DrillOrigin = { kicker: "Cost rollup › Session cost", bac
 // The session button that opened this view is gone once it opens, and the
 // loading shell gives way to U1, so Back takes the lost focus each time it
 // mounts (A14). The rollup puts focus back on the session row.
-function BackButton({ onBack, label }: { onBack: () => void; label: string }) {
+// A parent that returns focus to its own row passes takeFocus={false}.
+export function BackButton({ onBack, label, trail, takeFocus = true }: { onBack: () => void; label: string; trail?: string[] | undefined; takeFocus?: boolean }) {
   const ref = useRef<HTMLButtonElement>(null);
-  useFocusOnMountIfLost(ref);
+  useFocusOnMountIfLost(ref, takeFocus);
   return (
     <div className="rv-back">
       <button ref={ref} type="button" className="view-link rv-back-button" onClick={onBack}>
@@ -44,6 +46,7 @@ function BackButton({ onBack, label }: { onBack: () => void; label: string }) {
         </svg>
         {label}
       </button>
+      {trail !== undefined && <span className="rv-trail text-muted">{trail.join(" / ")}</span>}
     </div>
   );
 }
@@ -74,7 +77,9 @@ export function DrillDown({
     `${providerId}:${sessionId}`,
   );
   const result = useMemo(() => (state.status === "ready" ? { structuredContent: state.data } : undefined), [state]);
-  const lead = <BackButton onBack={onBack} label={origin.backLabel} />;
+  const title = state.status === "ready" ? state.data.title : undefined;
+  const trail = origin.trail === undefined ? undefined : title === undefined ? origin.trail : [...origin.trail, title];
+  const lead = <BackButton onBack={onBack} label={origin.backLabel} trail={trail} />;
 
   if (state.status === "ready") {
     return <SessionCostView port={port} brand={brand} clipboard={clipboard} result={result} frame={{ kicker: origin.kicker, lead, actions: <AskAboutSession port={port} sessionId={sessionId} /> }} />;

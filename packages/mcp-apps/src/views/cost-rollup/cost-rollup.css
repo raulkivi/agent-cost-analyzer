@@ -19,7 +19,8 @@
 /* Provider, model and turns under the title: only where their columns are hidden. */
 .rv-session-sub { display: none; }
 
-.rv-back { font-size: 11px; }
+.rv-back { font-size: 11px; display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 10px; }
+.rv-trail { overflow-wrap: anywhere; }
 .rv-back-button { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; font-weight: 600; text-decoration: none; }
 
 @media (max-width: 480px) {

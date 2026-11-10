@@ -315,3 +315,56 @@ describe("CostOverTimeView security", () => {
     expect(port.calls.filter((call) => call.method !== "connect")).toEqual([]);
   });
 });
+
+// A21: U10 opens U9 in place and hands it a frame, so U9's own drill-down into
+// U1 carries the kicker trail and a Back to U9 beside it.
+describe("CostOverTimeView in a frame (U10 chain)", () => {
+  const frame = { kicker: "Cost comparison", trail: ["Cost comparison", "Acme platform"], lead: () => <button type="button">Back to comparison</button> };
+  const renderFramed = (structured: unknown = weeklyProject(), port = new FakeAppHostPort()) => {
+    port.toolResults.set("get_session_cost", { structuredContent: sessionCost() });
+    port.toolResults.set("get_turn_series", { structuredContent: turnSeries() });
+    render(<CostOverTimeView port={port} brand={brand} result={{ structuredContent: structured }} frame={frame} />);
+    return port;
+  };
+
+  it("puts the frame's kicker before its own and its lead above the title", () => {
+    renderFramed();
+    expect(screen.getByText("AI Credits Analyzer · Cost comparison › Project cost")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Back to comparison" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Acme platform" })).toBeInTheDocument();
+  });
+
+  it("uses the repository kicker for a repository", () => {
+    renderFramed(weeklySeries());
+    expect(screen.getByText("AI Credits Analyzer · Cost comparison › Repository cost")).toBeInTheDocument();
+  });
+
+  it("opens a session under the full trail, with Back to this view beside the trail", async () => {
+    renderFramed();
+    openSession("Refactor provider registry");
+    await screen.findByRole("group", { name: "Input tokens" });
+    expect(screen.getByText("AI Credits Analyzer · Cost comparison › Project cost › Session cost")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Back to Acme platform" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Back to comparison" })).not.toBeInTheDocument();
+    expect(screen.getByText("Cost comparison / Acme platform / Refactor provider registry")).toBeInTheDocument();
+  });
+
+  it("goes back one level to the project view without fetching again", async () => {
+    const port = renderFramed();
+    openSession("Refactor provider registry");
+    await screen.findByRole("group", { name: "Input tokens" });
+    await screen.findByRole("img", { name: /AI Credits per turn/ });
+    const before = calls(port, "callTool").length;
+    fireEvent.click(screen.getByRole("button", { name: "Back to Acme platform" }));
+    expect(screen.getByRole("table", { name: "Top sessions by cost" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Back to comparison" })).toBeInTheDocument();
+    expect(calls(port, "callTool")).toHaveLength(before);
+  });
+
+  it("shows no trail line when it is not in a frame", async () => {
+    setup({ structured: weeklyProject() });
+    openSession("Refactor provider registry");
+    await screen.findByRole("group", { name: "Input tokens" });
+    expect(screen.queryByText(/ \/ /)).not.toBeInTheDocument();
+  });
+});

@@ -31,6 +31,16 @@ import "./cost-over-time/cost-over-time.css";
 // currency choice survives. Session titles are logged text: shown in the
 // table, never sent to the host's model (§6).
 
+// Set when another view opens this one in place (U10): its kicker comes
+// first, the back control sits above the title, and the trail names the path
+// for a session opened from here. The lead is told whether it may take focus:
+// it may not while this view puts focus back on a session row it returns to.
+export interface CostOverTimeFrame {
+  kicker: string;
+  lead: (takeFocus: boolean) => ReactNode;
+  trail: string[];
+}
+
 const FALLBACK_KICKER = "Cost over time";
 
 const UNIT_OPTIONS: Record<Currency, string> = { AI_CREDITS: "AI Credits", USD: "USD" };
@@ -77,7 +87,19 @@ function bucketNotes(vm: CostSeriesViewModel, partial: number): string[] {
   return notes;
 }
 
-export function CostOverTimeView({ port, brand, clipboard, result }: { port: AppHostPort; brand: ViewBrand; clipboard?: ClipboardPort | undefined; result: ToolResult | undefined }) {
+export function CostOverTimeView({
+  port,
+  brand,
+  clipboard,
+  result,
+  frame,
+}: {
+  port: AppHostPort;
+  brand: ViewBrand;
+  clipboard?: ClipboardPort | undefined;
+  result: ToolResult | undefined;
+  frame?: CostOverTimeFrame | undefined;
+}) {
   const cost = useMemo(() => (result === undefined || result.isError ? undefined : parseCostSeries(result.structuredContent)), [result]);
   const vm = useMemo(() => (cost === undefined ? undefined : toCostSeriesViewModel(cost)), [cost]);
   const [chosen, setChosen] = useState<Currency | undefined>();
@@ -103,7 +125,8 @@ export function CostOverTimeView({ port, brand, clipboard, result }: { port: App
     );
   }
 
-  const kicker = vm.kind === "project" ? "Project cost" : "Repository cost";
+  const ownKicker = vm.kind === "project" ? "Project cost" : "Repository cost";
+  const kicker = frame === undefined ? ownKicker : `${frame.kicker} › ${ownKicker}`;
   if (selected !== undefined) {
     return (
       <DrillDown
@@ -112,7 +135,11 @@ export function CostOverTimeView({ port, brand, clipboard, result }: { port: App
         clipboard={clipboard}
         session={selected}
         onBack={() => setSelected(undefined)}
-        origin={{ kicker: `${kicker} › Session cost`, backLabel: "Back to cost over time", parent: "cost over time" }}
+        origin={
+          frame === undefined
+            ? { kicker: `${kicker} › Session cost`, backLabel: "Back to cost over time", parent: "cost over time" }
+            : { kicker: `${kicker} › Session cost`, backLabel: `Back to ${vm.title}`, parent: vm.title, trail: frame.trail }
+        }
       />
     );
   }
@@ -129,7 +156,7 @@ export function CostOverTimeView({ port, brand, clipboard, result }: { port: App
   const notes = bucketNotes(vm, partial);
 
   return (
-    <ViewShell brand={brand} kicker={kicker} title={vm.title} meta={meta}>
+    <ViewShell brand={brand} kicker={kicker} title={vm.title} meta={meta} lead={frame?.lead(returnTo === undefined)}>
       <BasisTiles tiles={vm.basisTiles} />
       <p className="ct-basis text-muted">
         {`${vm.sessionsText}, ${vm.turnsText}. Preferred basis takes billed, then reported, then priced${basisLine === undefined ? "" : `: ${basisLine}`}.`}

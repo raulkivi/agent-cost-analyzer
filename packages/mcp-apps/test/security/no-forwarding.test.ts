@@ -33,8 +33,10 @@ const HOST_METHODS = new Set(["sendMessage", "openLink", "updateModelContext", "
 // Fields that hold logged text in the domain types and view models.
 const LOGGED_TEXT = new Set(["title", "sessionTitle", "userMessage", "assistantMessage", "excerpt", "prompt", "response", "detail", "why", "evidence", "text", "content", "message", "summary", "heading"]);
 // The tools a view may call, and the argument names it may send them.
-const TOOLS = new Set(["get_turn_series", "get_turn", "get_session_cost", "list_findings"]);
-const ARGUMENT_NAMES = new Set(["sessionId", "provider", "turnIndex", "maxTurns", "kind", "minSeverity"]);
+// U10 (A21) opens a row in U9 with the row's own ids and the comparison's
+// period, basis, pricing and currency: all taken from structuredContent.
+const TOOLS = new Set(["get_turn_series", "get_turn", "get_session_cost", "list_findings", "get_repository_cost", "get_project_cost"]);
+const ARGUMENT_NAMES = new Set(["sessionId", "provider", "turnIndex", "maxTurns", "kind", "minSeverity", "repository", "projectId", "since", "until", "basis", "pricing", "currency"]);
 
 function walk(dir: string): string[] {
   return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => (entry.isDirectory() ? walk(path.join(dir, entry.name)) : [path.join(dir, entry.name)]));
@@ -244,6 +246,8 @@ describe("no-forwarding rule (static, over every call site in src/)", () => {
     const calls = toolCalls();
     expect(calls.map((call) => `${call.where.replace(/:\d+$/, "")} ${call.tool?.getText()}`).sort()).toEqual([
       'views/SessionCostView.tsx "get_turn_series"',
+      'views/cost-compare/CompareDrillDown.tsx "get_project_cost"',
+      'views/cost-compare/CompareDrillDown.tsx "get_repository_cost"',
       'views/cost-rollup/DrillDown.tsx "get_session_cost"',
       'views/findings/use-findings-query.ts "list_findings"',
       'views/session-cost/TopTurns.tsx "get_turn"',
