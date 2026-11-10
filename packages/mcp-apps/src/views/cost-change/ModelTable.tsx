@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import { useState } from "react";
+import { useId, useState } from "react";
 import type { CurrencyBlock, ModelRowView, PeriodView } from "../../view-models/index.js";
 import "./cost-change.css";
 
@@ -104,11 +104,12 @@ export function ModelTable({ block, periodA, periodB }: { block: CurrencyBlock; 
 }
 
 function ModelRows({ model, isOpen, onToggle }: { model: ModelRowView; isOpen: boolean; onToggle: () => void }) {
+  const detailId = useId();
   return (
     <>
       <tr className={isOpen ? "view-row-selected" : undefined}>
         <td className="view-left view-cell-text">
-          <button type="button" className="view-row-button" aria-expanded={isOpen} onClick={onToggle}>
+          <button type="button" className="view-row-button" aria-expanded={isOpen} aria-controls={isOpen ? detailId : undefined} onClick={onToggle}>
             <Chevron open={isOpen} />
             <span>{model.model}</span>
           </button>
@@ -120,7 +121,7 @@ function ModelRows({ model, isOpen, onToggle }: { model: ModelRowView; isOpen: b
         <td>{model.priceText}</td>
       </tr>
       {isOpen && (
-        <tr className="view-row-detail">
+        <tr id={detailId} className="view-row-detail">
           <td colSpan={6}>
             <TokenTypes model={model} />
           </td>

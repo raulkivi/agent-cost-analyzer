@@ -41,15 +41,15 @@ export function CostChangeWaterfall({ block, ariaLabel }: { block: CurrencyBlock
       <Waterfall ariaLabel={ariaLabel} steps={webSteps(block)} unit={block.currency} />
       <div className="cv-key text-muted">
         <span>
-          <i className="cv-swatch cv-swatch--total" />
+          <i className="cv-swatch cv-swatch--total" aria-hidden="true" />
           period total
         </span>
         <span>
-          <i className="cv-swatch cv-swatch--increase" />
+          <i className="cv-swatch cv-swatch--increase" aria-hidden="true" />
           raises cost
         </span>
         <span>
-          <i className="cv-swatch cv-swatch--decrease" />
+          <i className="cv-swatch cv-swatch--decrease" aria-hidden="true" />
           lowers cost
         </span>
         <span>the sign is always written</span>
