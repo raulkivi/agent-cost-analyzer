@@ -7,10 +7,10 @@ This document hands the Phase 12 work over to the next session. The design, the 
 ## 1. Where things stand
 
 - **MVP released 2026-11-10:** extension 0.4.0 (stable) and app 0.10.0 (#192), after A16's owner checks passed (#191).
-- **Increment 2 built, not yet merged:** A17, A18, A19 (PR #193) and A20, A21, A22 (PR #WAVE2, stacked on #193). Status 23 of 36 tasks (64%).
+- **Increment 2 built, not yet merged:** A17, A18, A19 (PR #193) and A20, A21, A22 (PR #194, stacked on #193). Status 23 of 36 tasks (64%).
 - **A17b boards are drawn but not approved.** The owner told this session to go on with the views anyway. Approve or change the boards in `docs/plans/mockups/mcp-apps/` (`CostOverTime`, `CostCompare`, `CostChange`, `Increment2States`) and answer the six questions in mcp-apps.md §9.1; each lists the default the views use.
 - **Next:**
-  - the owner merges #193, then #WAVE2 (GitHub retargets it to `main`);
+  - the owner merges #193, then #194 (GitHub retargets it to `main`);
   - A23 (Opus): accessibility and security review of U9–U11, User Guide and extension guide sections with screenshots to follow, and a check of the CHANGELOG entries this session added;
   - A24: the owner's checks of U9–U11 in VS Code Copilot Chat and Claude Desktop, light and dark; a checklist like [mcp-apps-a16-checklist.md](mcp-apps-a16-checklist.md) is needed first (A23 can write it);
   - then the Increment 2 release: extension 0.6.0, app 0.11.0.
@@ -21,7 +21,7 @@ This document hands the Phase 12 work over to the next session. The design, the 
   - CSS class names collided between U10 and U11 in the single bundle (`cc-total`, `cc-sub`, `cc-note`); fixed by renaming, but a test that each view's classes use its own prefix would stop a repeat.
   - The no-projects reason is copied in `views/cost-compare/no-projects.ts` and parsed from the server's text in `views/cost-over-time/explain-error.ts`; a server wording change breaks both silently (the generic error still shows the text).
   - U9 has no focusable price-change markers; the detail is in the list below the chart and the chart's accessible name.
-- **Open PRs:** #193, #WAVE2. **Running subagents:** none. **Worktrees:** the session's agent worktrees under `.claude/worktrees/` can be removed.
+- **Open PRs:** #193, #194. **Running subagents:** none. **Worktrees:** the session's agent worktrees under `.claude/worktrees/` can be removed.
 
 ## 2. PRs in Phase 12
 
@@ -40,7 +40,7 @@ This document hands the Phase 12 work over to the next session. The design, the 
 | #189 | A16 owner's checklist |
 | #190–#192 | Handover; A16 owner's checks and 12 fixes; MVP release (ext 0.4.0, app 0.10.0) |
 | #193 | Increment 2 wave 1: A17b boards, A17 web exports, A18 view models, A19 `_meta.ui` on the four cost-analysis tools |
-| #WAVE2 | Increment 2 wave 2: A20 U9, A21 U10, A22 U11, the U11 error-text and pricing-note fix, visual QA fixes, CHANGELOG entries |
+| #194 | Increment 2 wave 2: A20 U9, A21 U10, A22 U11, the U11 error-text and pricing-note fix, visual QA fixes, CHANGELOG entries |
 
 ## 3. Owner decisions (all recorded in mcp-apps.md)
 
