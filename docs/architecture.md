@@ -1,6 +1,6 @@
 # Architecture: Agent Cost Analyzer and AI Credits Analyzer
 
-**Last changed:** 2026-11-07 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-10 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 ## 1. Purpose & scope
 
@@ -280,7 +280,11 @@ is never published; the server and the extension serve the built file.
 **Dependency rules.** `mcp-apps` depends on `domain` (types) and on
 `web`'s presentational exports only: `theme.css`, `ui/Blueprint`,
 `ui/StatTile`, `ui/Tag`, `ui/SegmentedControl`, `lib/format-ai-credits` and
-`lib/contrast`, each listed in `web`'s `exports`, which keeps them free of
+`lib/contrast`, plus the Phase 14/15 charts (`CostTimeChart`, `Waterfall`,
+`ReplayCompareBars`, `ChartDataTable`, `ViewAsTable`), `lib/cost/*`
+(`cost-format`, `series-model`, `series-colors`, `project-model`) and
+`replay/SimulatedBadge` and `replay/ReplayPricingNote`, each listed in
+`web`'s `exports`, which keeps them free of
 any data source (constraint 3). It never imports `server`. The server in
 turn never imports `mcp-apps`: it reads the built HTML through `ViewSource`
 (DIP). The extension's build copies the file. The only link between a view
