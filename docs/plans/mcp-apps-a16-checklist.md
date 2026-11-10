@@ -108,4 +108,4 @@ Claude Code has no MCP Apps view. Its text output must be unchanged (§8.1).
 | Matches the approved A0b boards (differences?) | | |
 | Claude Code CLI: text output unchanged | | |
 
-When every row passes, A16 is done, and with it the Phase 12 MVP (§8.1). Report anything that fails, with a screenshot. I'll fix it before the MVP release (extension 0.3.0 / app 0.10.0, §7.3).
+When every row passes, A16 is done, and with it the Phase 12 MVP (§8.1). Report anything that fails, with a screenshot. I'll fix it before the MVP release (extension 0.4.0 / app 0.10.0, §7.3).
