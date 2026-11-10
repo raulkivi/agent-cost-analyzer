@@ -1,6 +1,6 @@
 # Agent Cost Analyzer
 
-**Last changed:** 2026-11-10 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-11 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 Independent project; not affiliated with or endorsed by GitHub or Microsoft.
 
@@ -132,8 +132,11 @@ This repo builds two products from one codebase:
   proposed: counting the AI Credits that classic Copilot Chat subagents
   log to sibling files next to `main.jsonl`, with measured impact, format
   facts, options and open questions.
+- [Automated pre-release UI gate](docs/plans/release-ui-gate.md) —
+  step 10.17 (planned): no hand checklist gates a release; wdio for VS
+  Code and Copilot, Playwright for web.
 - [VS Code UI automation plan](docs/plans/vscode-ui-automation.md) —
-  step 10.16 (merged; owner's decisions open): automating the manual
+  step 10.16 (merged): automating the manual
   checks that need a real VS Code window with `wdio-vscode-service` under
   xvfb.
 - [pi-system-prompt-logger](packages/pi-system-prompt-logger/README.md) —

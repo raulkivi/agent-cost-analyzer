@@ -1275,7 +1275,8 @@ and deviations are in its status note in the plan's §6.
 | 10.13 | Agent Host sessions (the VS Code 1.143+ default) listed with turns, tokens and AI Credits | Done; manual check 1.4 passes |
 | 10.14 | Agent Host turn text, tool calls and system prompt from the Copilot CLI event log | Done; owner's check passed 2026-11-02 |
 | 10.15 | Cache-write and reasoning tokens for Agent Host sessions | Done (#102); owner's check passed 2026-11-02 |
-| 10.16 | UI automation of the manual checks (`wdio-vscode-service`, `test/ui/`) | Merged (#117, #121, #127; later specs #139, #157, #172): 13 spec files, 38 tests; CI job informational, 76 of 78 `main` runs green 2026-11-04 to 2026-11-10; owner's decisions and T15 open ([plans/vscode-ui-automation.md](plans/vscode-ui-automation.md) §6.9) |
+| 10.16 | UI automation of the manual checks (`wdio-vscode-service`, `test/ui/`) | Merged (#117, #121, #127; later specs #139, #157, #172): 13 spec files, 38 tests; CI job informational, 76 of 78 `main` runs green 2026-11-04 to 2026-11-10; T15 closed by the owner's decision of 2026-11-11 (the job becomes required, step 10.17) ([plans/vscode-ui-automation.md](plans/vscode-ui-automation.md) §6.9) |
+| 10.17 | Automated pre-release UI gate: wdio for VS Code and Copilot, Playwright for web; no hand checklist gates a release (owner rule 2026-11-11) | Planned 2026-11-11, tasks G0-G7 ([plans/release-ui-gate.md](plans/release-ui-gate.md)); replaces the manual checks and Phase 12's A24 owner checks |
 
 **Fixes after 0.1.0** (unreleased, in the changelogs): the AI Credits in a
 session's list summary and detail now agree (#122); debug-log usage is
