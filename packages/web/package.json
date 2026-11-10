@@ -18,7 +18,18 @@
     "./charts/StackedColumns": "./src/charts/StackedColumns.tsx",
     "./charts/AiCreditsSparkline": "./src/charts/AiCreditsSparkline.tsx",
     "./insights/FindingsTable": "./src/components/insights/FindingsTable.tsx",
-    "./lib/format-ai-credits": "./src/lib/format-ai-credits.ts"
+    "./lib/format-ai-credits": "./src/lib/format-ai-credits.ts",
+    "./charts/CostTimeChart": "./src/charts/CostTimeChart.tsx",
+    "./charts/Waterfall": "./src/charts/Waterfall.tsx",
+    "./charts/ReplayCompareBars": "./src/charts/ReplayCompareBars.tsx",
+    "./charts/ChartDataTable": "./src/charts/ChartDataTable.tsx",
+    "./charts/ViewAsTable": "./src/charts/ViewAsTable.tsx",
+    "./lib/cost/cost-format": "./src/lib/cost/cost-format.ts",
+    "./lib/cost/series-model": "./src/lib/cost/series-model.ts",
+    "./lib/cost/series-colors": "./src/lib/cost/series-colors.ts",
+    "./lib/cost/project-model": "./src/lib/cost/project-model.ts",
+    "./replay/SimulatedBadge": "./src/components/replay/SimulatedBadge.tsx",
+    "./replay/ReplayPricingNote": "./src/components/replay/ReplayPricingNote.tsx"
   },
   "scripts": {
     "dev": "vite",

@@ -25,6 +25,17 @@ const REQUIRED = [
   "./charts/AiCreditsSparkline",
   "./insights/FindingsTable",
   "./lib/format-ai-credits",
+  "./charts/CostTimeChart",
+  "./charts/Waterfall",
+  "./charts/ReplayCompareBars",
+  "./charts/ChartDataTable",
+  "./charts/ViewAsTable",
+  "./lib/cost/cost-format",
+  "./lib/cost/series-model",
+  "./lib/cost/series-colors",
+  "./lib/cost/project-model",
+  "./replay/SimulatedBadge",
+  "./replay/ReplayPricingNote",
 ];
 
 const FORBIDDEN = /api-client|\/host\/|\bfetch\s*\(/;
