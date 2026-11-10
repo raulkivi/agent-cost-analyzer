@@ -1,6 +1,6 @@
 # Architecture: Agent Cost Analyzer and AI Credits Analyzer
 
-**Last changed:** 2026-11-10 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-11 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 ## 1. Purpose & scope
 
@@ -2611,7 +2611,14 @@ refactored — red-green-refactor, not tests bolted on afterward.
   config and the CI job are TDD exceptions (only a real VS Code run tests
   them, as in step 10.9). The one production seam it needed is a Test-mode
   hook that holds webview replies (`aiCreditsAnalyzer.internal.holdRequests`),
-  registered only in `ExtensionMode.Test` like the other hooks.
+  registered only in `ExtensionMode.Test` like the other hooks. Six launch
+  configurations (main, first run, Copilot Chat on, Workspace Trust on, a
+  seeded git folder for S9, and an installed VSIX for uninstall) run 13
+  spec files in the `extension-ui` CI job, which stays informational
+  (`continue-on-error`) until the owner's flake measurement. A separate
+  opt-in suite (`test:ui:vscode:copilot`, never in CI) drives a real
+  signed-in Copilot chat. Coverage per manual check and the CI record:
+  [vscode-ui-automation.md](plans/vscode-ui-automation.md) §6.1 and §6.9.
 - The standalone app has a usage-scenario suite (Phase 15 step 15.9,
   plan §12.4, `packages/web/e2e/`, `npm run test:e2e --workspace=packages/web`,
   Playwright Test): each scenario starts the real server and the web build

@@ -1,5 +1,7 @@
 # AI Credits Analyzer: manual checks (step 10.9)
 
+**Last changed:** 2026-11-11 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+
 The owner runs these once per release candidate in a **real VS Code**
 (current stable), because no test can drive them: the usability script
 from [vscode-extension.md](vscode-extension.md) §3.5, the remote check
@@ -119,9 +121,13 @@ in the docs). Findings that need a code fix also go in the run log below.
 Rows marked **Automated** run in CI as the `extension-ui` job
 (`npm run test:ui:vscode`, [vscode-ui-automation.md](vscode-ui-automation.md),
 step 10.16): run them by hand only when that job is red, or for the parts
-named as still manual. Rows 1.1-1.4, 1.12, 2.3 and 2.4 are automated too,
-but over **fixtures, not a real Copilot chat**: the notes say what each does
-not prove. §3 (remote) and §4 stay manual.
+named as still manual. The job is informational (`continue-on-error`) until
+the owner's flake measurement (plan T15): check its result on the release
+commit, since a red run doesn't fail the PR. Rows 1.1-1.4, 1.12 and 1.14
+run there over **fixtures, not a real Copilot chat**; 2.3 and 2.4 are
+covered only at tool level by the integration suite (`npm run
+test:integration`), not in the UI. The notes say what each does not prove.
+§3 (remote) and §4 stay manual.
 
 **Opt-in real-Copilot suite (owner's machine only, never CI).** Checks 1.4,
 2.3 and 2.4 with a real signed-in Copilot agent-mode chat are covered by
@@ -154,8 +160,8 @@ For a clean first run, use a new profile (*Profiles → New Profile*).
 | # | Steps | Expected | ✓ / notes |
 |---|---|---|---|
 | 2.1 | With `aiCreditsAnalyzer.mcp.enabled` off (default), open Copilot Chat agent mode → *Configure Tools* | No "AI Credits Analyzer" server is listed. | Automated: `mcp.e2e.ts`, in VS Code's own *MCP: List Servers*. Copilot's *Configure Tools* stays manual. |
-| 2.2 | Turn the setting on in **User** settings | The server appears with 19 read-only tools (17 before step 14.5, 9 before step 15.13); its name is `ai-credits-analyzer`. | Automated: `mcp.e2e.ts` (server listed; the 19 tools are the integration suite's, over stdio). |
-| 2.3 | Ask: "What did my last Copilot session cost, and what drove it?" | Copilot calls `list_sessions` / `get_session_cost` and answers with the same AI Credits the panel shows. | **Partly automated, tool level only:** the integration suite (`extension.test.ts`) starts the server as VS Code does and calls `list_sessions` and `get_session_cost` for the seeded session. **Does not prove:** Copilot choosing and calling the tools (the opt-in real-Copilot suite does that when run). The "same as the panel" assertion runs (`get_session_cost` and the Sessions view both say 9.65 for the seeded session; the list-vs-detail bug is fixed, vscode-ui-automation.md §6.6). |
+| 2.2 | Turn the setting on in **User** settings | The server appears with 20 read-only tools (19 before Phase 12 A13 added `get_turn_series`, 17 before step 14.5, 9 before step 15.13); its name is `ai-credits-analyzer`. | Automated: `mcp.e2e.ts` (server listed; the 20 tools are the integration suite's, over stdio). |
+| 2.3 | Ask: "What did my last Copilot session cost, and what drove it?" | Copilot calls `list_sessions` / `get_session_cost` and answers with the same AI Credits the panel shows. | **Partly automated, tool level only:** the integration suite (`extension.test.ts`) starts the server as VS Code does and calls `list_sessions` and `get_session_cost` for the seeded session. **Does not prove:** Copilot choosing and calling the tools (the opt-in real-Copilot suite does that when run). The "same as the panel" assertion runs (`get_session_cost` and the Sessions view both say 9.65 for the seeded session; the list-vs-detail bug is fixed, vscode-ui-automation.md §6.8). |
 | 2.4 | Ask about another agent, e.g. "show my Claude Code sessions" | The tools answer that only `vscode` is available. | **Partly automated, tool level only:** the integration suite calls `list_log_providers` (only `vscode`) and `list_sessions` with `provider: "claude-code"` (an error naming the known provider). **Does not prove:** what Copilot says to the user. |
 | 2.5 | Open an untrusted folder (Restricted Mode) whose `.vscode/settings.json` sets the setting to `true`, with the user setting off | No server is offered. After trusting the folder, it is. | Automated: `mcp-trust.e2e.ts` (Restricted Mode, then the Trust button). |
 | 2.6 | Turn the setting off again | The server disappears from the tool list. | Automated: `mcp.e2e.ts`. |
@@ -166,7 +172,7 @@ Do at least one of Remote-SSH or WSL, and one Dev Container. Install the
 VSIX into the remote (*Install in <remote>*).
 
 **Not automated, deliberately** (investigated for step 10.16, see
-[vscode-ui-automation.md](vscode-ui-automation.md) §6.4): Remote-SSH and Dev
+[vscode-ui-automation.md](vscode-ui-automation.md) §6.6): Remote-SSH and Dev
 Containers are Marketplace-only, closed-source Microsoft extensions that need
 a real ssh or container host and a server download over the network, WSL needs
 Windows, and a local `code serve-web` would only show an extension host apart

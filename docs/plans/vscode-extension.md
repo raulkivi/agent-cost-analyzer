@@ -1,5 +1,7 @@
 # VS Code extension: implementation and deployment plan
 
+**Last changed:** 2026-11-11 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+
 Status: **code and docs complete (Phase 10, #57-#80); 0.1.0 released
 (`ext-v0.1.0`, 2026-11-03).** Some VS Code manual checks stay open, see
 [vscode-extension-manual-checks.md](vscode-extension-manual-checks.md).
@@ -29,7 +31,7 @@ Progress (2026-10-28):
 | 10.13 | Agent Host sessions: read the sessions VS Code 1.143+ creates by default (manual check 1.4) | Done (`20c880b`–`756a26c`); manual check 1.4 passes with the default harness |
 | 10.14 | Agent Host turn text, tool calls and system prompt from the Copilot CLI event log (`~/.copilot/session-state/<sdkSessionId>/events.jsonl`) | Code done (`2f302b0`–`3911119`, docs commit); owner's manual check (task 11) passed 2026-11-02 |
 | 10.15 | Cache-write and reasoning tokens for Agent Host sessions from `session.usage_record` | Done (#102); owner's manual check (task 7) passed 2026-11-02 |
-| 10.16 | UI automation of the manual checks in a real VS Code (`wdio-vscode-service` under xvfb) | Merged (#117, #121, #127; T0-T13 bar T14/T15): checks 1.1-1.13 and 2.1-2.6 that need a real window are automated (second pass #121 added 1.1-1.4, 1.12, 2.3, 2.4; an opt-in real-Copilot suite is written but never run end to end); the `extension-ui` CI job is informational; owner's decisions and flake measurement open. See [vscode-ui-automation.md](vscode-ui-automation.md) §6 |
+| 10.16 | UI automation of the manual checks in a real VS Code (`wdio-vscode-service` under xvfb) | Merged (#117, #121, #127; T0-T14 done, T15 open; later specs #139, #157, #172): 13 spec files, 38 tests. Automated in a real window: 1.2, 1.3, 1.5-1.7, 1.9-1.13, 2.1, 2.2, 2.5, 2.6; partly: 1.1, 1.8 (not the charts), and 1.4 and 1.14 over fixtures; also 13.8 and R1. 2.3 and 2.4 only at tool level in the integration suite; an opt-in real-Copilot suite for 1.4, 2.3, 2.4 is written but never run end to end. The `extension-ui` CI job is informational (76 of 78 `main` runs green, 2026-11-04 to 2026-11-10); owner's decisions and flake measurement open. See [vscode-ui-automation.md](vscode-ui-automation.md) §6 |
 
 
 ## 1. Context
