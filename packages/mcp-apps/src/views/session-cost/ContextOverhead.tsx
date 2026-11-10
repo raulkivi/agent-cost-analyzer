@@ -6,7 +6,11 @@ import type { ContextOverheadView } from "../../view-models/index.js";
 // log names. Segments are sized by their known counts; an unknown component
 // has no segment and reads "Unknown" in the legend (constraint 6).
 
-const SHADES = ["var(--brand-accent-strong)", "var(--brand-accent)", "var(--color-accent-100)", "var(--color-text-secondary)"];
+// The first segment is the chart bars' data accent, so a single-segment bar
+// matches the turn chart in both themes. --brand-accent-strong is the
+// selected/hover shade, which is pale in dark mode and reads as a glaring
+// block when it is the only colour.
+const SHADES = ["var(--brand-accent)", "var(--brand-accent-strong)", "var(--color-text-muted)", "var(--color-accent-100)"];
 
 export function ContextOverhead({ overhead }: { overhead: ContextOverheadView }) {
   const { systemPrompt } = overhead;

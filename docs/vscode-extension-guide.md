@@ -1,6 +1,6 @@
 # AI Credits Analyzer: extension guide
 
-**Last changed:** 2026-11-07 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-10 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 AI Credits Analyzer is a VS Code extension that shows where your GitHub
 Copilot Chat tokens and AI Credits go. It reads the logs Copilot Chat
@@ -498,7 +498,9 @@ or for you.
 
 Four prompts start common reviews: `audit_session`, `review_costs`,
 `security_review` and `explain_cost_change`. A `null` figure means the log doesn't record it; the
-tools never report it as 0. The User Guide's
+tools never report it as 0. A session whose latest turn started in the
+last 15 minutes is marked `active`, with a sentence saying its figures
+may still change: a running chat's log is not complete yet. The User Guide's
 [MCP section](UserGuide.md#querying-the-audit-from-claude-code-mcp) has
 more on the tools.
 
@@ -541,7 +543,11 @@ tokens. A figure the log doesn't record reads **Unknown**, never 0. The
 [User Guide](UserGuide.md#interactive-views-in-the-chat) has the same views
 for Claude Desktop.
 
-Screenshots of the views are to follow (A16).
+![The session cost view in Copilot Chat with a turn opened: its tokens, cache reads and writes, and the tool calls it made](images/mcp-apps/vscode-light-u1-drilldown.png)
+
+![The cost rollup view: AI Credits, sessions, turns and cache hit, daily spend, spend by model and provider, and the top sessions](images/mcp-apps/vscode-light-u2.png)
+
+![The findings view: counts by severity, kind and severity filters, and the findings table](images/mcp-apps/vscode-light-u3.png)
 
 ### What goes to the model
 

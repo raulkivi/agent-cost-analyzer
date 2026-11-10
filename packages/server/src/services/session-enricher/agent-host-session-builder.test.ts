@@ -210,7 +210,7 @@ describe("buildAgentHostSession", () => {
   it("explains a turn's tokens like a classic turn does", () => {
     const [first] = buildAgentHostSession({ catalogRow, store }).turns;
 
-    expect(first.explanation).toMatch(/^This turn sent 200 new input token\(s\) and reused 800 from cache, producing 50 output token\(s\) using gpt-6-luna\./);
+    expect(first.explanation).toMatch(/^This turn sent 200 new input tokens and reused 800 from cache, producing 50 output tokens using gpt-6-luna\./);
   });
 
   it("explains a turn without token totals by its reason", () => {

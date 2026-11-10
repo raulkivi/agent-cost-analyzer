@@ -1,9 +1,9 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
 import { describe, expect, it } from "vitest";
-import type { InsightsDataset } from "@agent-cost-analyzer/domain";
+import type { InsightsDataset, Session } from "@agent-cost-analyzer/domain";
 import type { SessionRangeFilter } from "../tool-audit/audit-query-service.js";
-import { FakeProvider, lookup, sampleSessions } from "../../test-support/audit-fakes.js";
+import { FakeProvider, lookup, sampleSessions, session } from "../../test-support/audit-fakes.js";
 import { AnalysisQueryService, type InsightsSource } from "./analysis-query-service.js";
 import { UNATTRIBUTED_FIELDS } from "../../test-support/insights-fakes.js";
 
@@ -81,6 +81,39 @@ describe("AnalysisQueryService", () => {
     expect(found.status === "ok" && found.view.turnIndex).toBe(1);
     expect(await analysis.getTurn("missing", 0)).toEqual({ status: "unknown-session" });
     expect(await analysis.getTurn("new", 9)).toEqual({ status: "unknown-turn", turnCount: 2 });
+  });
+
+  describe("activity, judged by the injected clock (docs/plans/mcp-apps.md §4.7)", () => {
+    const now = new Date("2026-09-27T09:00:00.000Z");
+    const running: Session = (() => {
+      const base = session("running", "2026-09-27T08:00:00.000Z", [[], []]);
+      return { ...base, turns: base.turns.map((turn, index) => ({ ...turn, startedAt: `2026-09-27T08:${index === 0 ? "00" : "55"}:00.000Z` })) };
+    })();
+
+    it("flags a session whose latest turn started within the window as active", async () => {
+      const analysis = new AnalysisQueryService(lookup(new FakeProvider("fake", [running])), insightsSource(), {}, () => now);
+
+      expect(await analysis.getSessionCost("running")).toMatchObject({ lastTurnAt: "2026-09-27T08:55:00.000Z", active: true });
+    });
+
+    it("flags the rollup's active top sessions", async () => {
+      const insights = insightsSource();
+      const source: InsightsSource = {
+        async getDataset(filter) {
+          const dataset = await insights.getDataset(filter);
+          return { ...dataset, sessions: dataset.sessions.map((row) => ({ ...row, lastTurnAt: "2026-09-27T08:50:00.000Z" })) };
+        },
+      };
+      const analysis = new AnalysisQueryService(lookup(new FakeProvider("fake", [running])), source, {}, () => now);
+
+      expect((await analysis.getCostRollup({})).topSessions[0]).toMatchObject({ sessionId: "mid", active: true });
+    });
+
+    it("exposes the clock so callers describe activity against the same time", () => {
+      const analysis = new AnalysisQueryService(lookup(new FakeProvider("fake", [])), insightsSource(), {}, () => now);
+
+      expect(analysis.now()).toBe(now);
+    });
   });
 
   describe("cost basis and attribution (step 15.6)", () => {

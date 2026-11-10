@@ -27,6 +27,7 @@ import { buildPiSystemPromptComponents, buildPiSystemPromptComponentsFromState }
 import { replaySystemMessages } from "./system-message-replay.js";
 import { buildToolInventory } from "../jsonl/tool-inventory.js";
 import { readSystemPromptSidecarIndex, type SidecarIndex } from "./system-prompt-sidecar-reader.js";
+import { describeTurnUsage } from "../../services/turn-usage-sentence.js";
 
 const PROVIDER_ID = "pi-agent";
 // Phase 15 step 15.1: the folder is on the session header line only; a file
@@ -51,13 +52,7 @@ function reasonOf(tokenCount: TokenCount): string {
 
 function buildTurnExplanation(usage: TurnUsage): string {
   if (usage.uncachedInput.known && usage.output.known) {
-    let text =
-      `This turn sent ${usage.uncachedInput.value.toLocaleString()} new input token(s)` +
-      (usage.cacheRead.known && usage.cacheRead.value > 0
-        ? ` and reused ${usage.cacheRead.value.toLocaleString()} from cache`
-        : "");
-    text += `, producing ${usage.output.value.toLocaleString()} output token(s) using ${usage.model}.`;
-    return text;
+    return describeTurnUsage(usage);
   }
   return reasonOf(usage.uncachedInput) || reasonOf(usage.output) || "Usage data is unavailable for this turn.";
 }

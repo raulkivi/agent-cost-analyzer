@@ -16,7 +16,7 @@
 .rv-bar-unknown { grid-column: span 2; text-align: right; white-space: nowrap; }
 
 .rv-coverage { display: block; font-size: 10px; line-height: 1.3; }
-/* Provider and model under the title: only where their columns are hidden. */
+/* Provider, model and turns under the title: only where their columns are hidden. */
 .rv-session-sub { display: none; }
 
 .rv-back { font-size: 11px; }
@@ -25,7 +25,8 @@
 @media (max-width: 480px) {
   .rv-two { grid-template-columns: 1fr; }
   /* At 360px five columns pushed AI Credits out of view (A14 visual check):
-     Provider and Model move under the session title. */
+     Provider, Model and Turns move under the session title. Hiding Turns
+     too stopped Session being squeezed to one word per line (A16 finding 10). */
   .view-table .rv-col-wide { display: none; }
   .rv-session-sub { display: block; padding-left: 16px; font-size: 11px; }
 }

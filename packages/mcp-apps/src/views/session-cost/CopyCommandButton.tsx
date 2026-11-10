@@ -52,7 +52,7 @@ export function CopyCommandStatus({ phase, command }: { phase: Phase; command: s
         </span>
       ) : (
         <span>
-          Copied <code>{command}</code>. Run &quot;{OPEN_SESSION_COMMAND_TITLE}&quot; from the Command Palette (Ctrl+Shift+P) and paste it.
+          Copied &quot;{command}&quot;. Run &quot;{OPEN_SESSION_COMMAND_TITLE}&quot; from the Command Palette (Ctrl+Shift+P) and paste it.
         </span>
       )}
     </div>

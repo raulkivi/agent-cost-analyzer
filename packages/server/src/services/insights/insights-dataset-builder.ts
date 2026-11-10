@@ -17,6 +17,7 @@ import { excerptOf } from "../tool-audit/output-redactor.js";
 import { toolCallsUnavailableReason, turnToolCallsUnavailableReason } from "../tool-audit/tool-calls-availability.js";
 import { statusOf } from "../tool-audit/outcome-tally.js";
 import { resolveToolKind } from "../tool-audit/tool-kind-resolver.js";
+import { latestTurnStart } from "../cost/session-activity.js";
 
 // Phase 9.11 (docs/plans/insights-dashboard.md §3/§4): pure flattening of
 // normalized Sessions from every provider into the dashboard's star schema.
@@ -101,6 +102,7 @@ function validTime(value: string | undefined): Date | undefined {
 
 function sessionRow(source: ProviderSessions, session: Session, attribution: Attribution): InsightSessionRow {
   const validStart = validTime(session.startedAt);
+  const lastTurnAt = latestTurnStart(session.turns.map((turn) => turn.startedAt));
   return {
     key: sessionKeyOf(source.providerId, session.id),
     providerId: source.providerId,
@@ -111,6 +113,7 @@ function sessionRow(source: ProviderSessions, session: Session, attribution: Att
     ...(session.startedAt ? { startedAt: session.startedAt } : {}),
     ...(toolCallsUnavailableReason(session) ? { toolCallsUnavailable: true } : {}),
     ...(validStart ? { date: validStart.toISOString().slice(0, 10), hour: validStart.getUTCHours() } : {}),
+    ...(lastTurnAt ? { lastTurnAt } : {}),
     ...attributionRowFields(attribution),
   };
 }

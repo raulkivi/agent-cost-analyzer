@@ -1,6 +1,6 @@
 # User Guide
 
-**Last changed:** 2026-11-07 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-10 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 A walkthrough of the Agent Cost Analyzer's two modes — **Learn** (guided,
 bundled example sessions) and **Analyze** (your own real sessions from VS
@@ -588,7 +588,10 @@ Per-session tools take an optional `provider` (for example
 `"claude-code"`) and otherwise use the source selected in the web app.
 `get_cost_rollup` and `list_findings` read every available provider
 unless you pass one. Local repositories are reported by folder name only, never by path. A `null` figure means the log doesn't record it; it
-is never treated as zero. The server reads local logs only and writes
+is never treated as zero. A session whose latest turn started in the last
+15 minutes is marked `active` in `get_session_cost` and among
+`get_cost_rollup`'s top sessions, with a sentence saying its figures may
+still change: a running chat's log is not complete yet. The server reads local logs only and writes
 nothing. Everything a tool returns goes into the agent's context, so free
 text is redacted and truncated first.
 
@@ -669,7 +672,7 @@ build.
   extension needs 1.144 or later) and check that the extension's MCP server
   is on ([the extension guide](vscode-extension-guide.md#interactive-views-in-copilot-chat)).
 
-Screenshots of the views are to follow (A16).
+![The session cost view in Claude Desktop: AI Credits, input tokens, cache hit and output tiles, AI Credits per turn, the top turns and the context overhead](images/mcp-apps/claude-light-u1.png)
 
 ### The insights dashboard
 

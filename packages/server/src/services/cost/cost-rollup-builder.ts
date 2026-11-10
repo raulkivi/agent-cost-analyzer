@@ -11,6 +11,7 @@ import {
 } from "@agent-cost-analyzer/domain";
 import { keyMatches } from "../cost-attribution/repository-key-privacy.js";
 import { byCostDescending, cacheHitRatio, costFigures, costMeasures, costOf, groupBy, rankingFor, type TurnFigures } from "./cost-aggregation.js";
+import { sessionActivity } from "./session-activity.js";
 
 // Phase 9.12 (docs/plans/mcp-tools-v2.md §4.1): the dashboard's flat
 // InsightsDataset (every provider) → CostRollup. Pure; reusing the same
@@ -26,6 +27,12 @@ export interface CostRollupOptions {
   // or redacted as an MCP tool returned it) / project.
   repository?: string;
   projectId?: string;
+}
+
+// The time top sessions' activity is judged against; without it, no
+// activity fields.
+export interface CostRollupContext {
+  now?: Date;
 }
 
 // Keep the turns the filters match (each by its own attribution) and the
@@ -73,7 +80,7 @@ function groupsOf(
     });
 }
 
-export function buildCostRollup(source: InsightsDataset, options: CostRollupOptions = {}): CostRollup {
+export function buildCostRollup(source: InsightsDataset, options: CostRollupOptions = {}, context: CostRollupContext = {}): CostRollup {
   const dataset = filtered(source, options);
   const turnsBySession = groupBy(dataset.turns, (turn) => turn.sessionKey);
   const turnsOf = (sessionKey: string): TurnFigures[] => turnsBySession.get(sessionKey) ?? [];
@@ -107,6 +114,7 @@ export function buildCostRollup(source: InsightsDataset, options: CostRollupOpti
       title: session.title,
       model: session.model,
       ...(session.startedAt ? { startedAt: session.startedAt } : {}),
+      ...(context.now ? sessionActivity([session.lastTurnAt], context.now) : {}),
       ...costFigures(turnsOf(session.key)),
     }))
     .sort(descending)

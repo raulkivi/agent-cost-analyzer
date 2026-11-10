@@ -35,6 +35,19 @@ export type CostMeasures = z.infer<typeof costMeasuresSchema>;
 
 const ratioSchema = z.number().min(0).max(1).nullable();
 
+// A session whose latest turn started this recently is flagged active: its
+// log may still lack the running turn's final usage, cache writes and text
+// (docs/plans/mcp-apps.md §4.7). 15 minutes covers a long agentic turn plus
+// the user's think time between turns, without flagging yesterday's chats.
+export const ACTIVE_SESSION_WINDOW_MINUTES = 15;
+
+// lastTurnAt: the latest turn start the log records (absent when no turn
+// has one). active: present, and true, only within the window above.
+const sessionActivityShape = {
+  lastTurnAt: z.string().optional(),
+  active: z.boolean().optional(),
+};
+
 // Compact per-group figures (model, provider, day, session): sums over the
 // group's known turns, null when none is known.
 const costFiguresSchema = z.object({
@@ -91,6 +104,7 @@ export const sessionCostSchema = z.object({
   title: z.string(),
   model: z.string(),
   startedAt: z.string().optional(),
+  ...sessionActivityShape,
   turnCount: z.number(),
   // Step 15.6: the session's repository (null = Unattributed, with the
   // reason) and project (null = none); absent when attribution isn't
@@ -170,6 +184,7 @@ export const costRollupSchema = z.object({
       title: z.string(),
       model: z.string(),
       startedAt: z.string().optional(),
+      ...sessionActivityShape,
     }),
   ),
   // Step 15.6: who the turns' cost belongs to and who sold it.

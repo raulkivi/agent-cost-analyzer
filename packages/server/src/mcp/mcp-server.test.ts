@@ -461,3 +461,73 @@ describe("MCP server, Agent Host usage records (step 10.15)", () => {
     expect(cost.unavailableReasons.some((reason) => /usage records/i.test(reason))).toBe(true);
   });
 });
+
+// docs/plans/mcp-apps.md §4.7: a session whose latest turn started within
+// 15 minutes is flagged active, in the JSON and in a plain sentence.
+describe("active sessions in the cost tools", () => {
+  const now = new Date("2026-09-27T09:00:00.000Z");
+  const timed = (base: ReturnType<typeof session>, starts: string[]) => ({
+    ...base,
+    turns: base.turns.map((turn, index) => ({ ...turn, startedAt: starts[index] })),
+  });
+  const running = timed(session("running", "2026-09-27T08:00:00.000Z", [[], []]), ["2026-09-27T08:00:00.000Z", "2026-09-27T08:57:00.000Z"]);
+  const idle = timed(session("idle", "2026-09-26T08:00:00.000Z", [[]]), ["2026-09-26T08:00:00.000Z"]);
+  let client: Client;
+
+  beforeEach(async () => {
+    const provider = new FakeProvider("fake", [running, idle]);
+    const providers = lookup(provider);
+    const server = createMcpServer({
+      auditQueries: new AuditQueryService(providers),
+      analysisQueries: new AnalysisQueryService(providers, new InsightsService({ listProviders: () => [provider] }, [], () => now), {}, () => now),
+      getProviderStatus: async () => providerStatus,
+      version: "0.0.0-test",
+    });
+    const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+    client = new Client({ name: "test-client", version: "1.0.0" });
+    await Promise.all([server.connect(serverTransport), client.connect(clientTransport)]);
+  });
+
+  afterEach(async () => {
+    await client.close();
+  });
+
+  const texts = (result: ToolResult) => (result.content as { text: string }[]).map((item) => item.text);
+
+  it("get_session_cost flags an active session and says its figures may still change", async () => {
+    const result = await client.callTool({ name: "get_session_cost", arguments: { sessionId: "running" } });
+
+    expect(sessionCostSchema.parse(jsonOf(result))).toMatchObject({ lastTurnAt: "2026-09-27T08:57:00.000Z", active: true });
+    expect(texts(result)).toContain(
+      "This session is active (its latest turn started 3 minutes ago), so its figures may still change and the latest turn may be incomplete.",
+    );
+  });
+
+  it("get_session_cost adds no sentence for an idle session", async () => {
+    const result = await client.callTool({ name: "get_session_cost", arguments: { sessionId: "idle" } });
+
+    expect(sessionCostSchema.parse(jsonOf(result))).not.toHaveProperty("active");
+    expect(texts(result)).toHaveLength(1);
+  });
+
+  it("get_cost_rollup names its active top sessions", async () => {
+    const result = await client.callTool({ name: "get_cost_rollup", arguments: {} });
+
+    const rollup = costRollupSchema.parse(jsonOf(result));
+    expect(rollup.topSessions.find((top) => top.sessionId === "running")).toMatchObject({ active: true });
+    expect(rollup.topSessions.find((top) => top.sessionId === "idle")).not.toHaveProperty("active");
+    expect(texts(result)).toContain(
+      'This top session is active, so its figures may still change and its latest turn may be incomplete: "Session running" (fake running, latest turn started 3 minutes ago).',
+    );
+  });
+
+  it("tells the model in both tools' descriptions that active figures may still change", async () => {
+    const { tools } = await client.listTools();
+
+    for (const name of ["get_session_cost", "get_cost_rollup"]) {
+      expect(tools.find((tool) => tool.name === name)?.description, name).toContain(
+        "`active`: true marks a session whose latest turn started in the last 15 minutes; its figures may still change.",
+      );
+    }
+  });
+});

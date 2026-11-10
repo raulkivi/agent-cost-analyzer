@@ -15,6 +15,7 @@ import type {
 } from "../../data-sources/sqlite/session-store.js";
 import type { MainJsonlAvailability } from "../../data-sources/jsonl/main-jsonl-reader.js";
 import type { AnalyzeModeExtras } from "./analyze-mode-extras.js";
+import { describeTurnUsage } from "../turn-usage-sentence.js";
 
 // Two reasons, per architecture.md §6.2: one is actionable (constraint 8),
 // the other isn't. Extraction of real numbers from "events-present" logs is
@@ -214,18 +215,8 @@ function buildUnavailableUsage(fallbackTokenCount: TokenCount): TurnUsage {
   };
 }
 
-function tokenCountValue(tokenCount: TokenCount): number {
-  return tokenCount.known ? tokenCount.value : 0;
-}
-
 export function buildAnalyzeExplanation(usage: TurnUsage): string {
-  const uncachedInput = tokenCountValue(usage.uncachedInput).toLocaleString();
-  const cacheRead = tokenCountValue(usage.cacheRead).toLocaleString();
-  const output = tokenCountValue(usage.output).toLocaleString();
-  return (
-    `This turn sent ${uncachedInput} new input token(s) and reused ` +
-    `${cacheRead} from cache, producing ${output} output token(s) using ${usage.model}.`
-  );
+  return describeTurnUsage(usage);
 }
 
 // row is undefined for a debug-log turn the session store has no row for.

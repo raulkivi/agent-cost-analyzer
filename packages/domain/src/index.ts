@@ -153,6 +153,7 @@ export {
   type InsightsDataset,
 } from "./insights.js";
 export {
+  ACTIVE_SESSION_WINDOW_MINUTES,
   measureTotalSchema,
   costMeasuresSchema,
   costRankingSchema,

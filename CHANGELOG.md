@@ -18,6 +18,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   text, so Claude Code's output is unchanged; one app-only tool,
   `get_turn_series`, feeds the chart. See the User Guide's
   [Interactive views in the chat](docs/UserGuide.md#interactive-views-in-the-chat).
+- MCP tools `get_session_cost` and `get_cost_rollup` mark a session as
+  `active` when its latest turn started in the last 15 minutes, with
+  `lastTurnAt`, and add a sentence saying its figures may still change. A
+  running chat's log is not complete yet (the latest turn is undercounted),
+  so its figures are no longer presented as final.
 
 ### Security
 - The MCP server no longer hands local folder paths to the chat model:
@@ -40,6 +45,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `main`.
 
 ### Fixed
+- A turn's explanation now names cache-write tokens as well as new input and
+  cache reads, and reads "1 token" / "18 tokens" instead of "token(s)".
 - Claude Code sessions that were compacted (`/compact` or automatic) now
   show and cost every turn, not only those after the latest compaction; the
   turn after a compaction is marked as one.

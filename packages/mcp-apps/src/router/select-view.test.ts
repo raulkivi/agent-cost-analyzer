@@ -20,6 +20,20 @@ describe("selectView", () => {
     expect(selectView({ toolCall: { toolName: "get_cost_rollup" } }, undefined)).toEqual({ view: "cost-rollup" });
   });
 
+  // A0 spike: VS Code prefixes the name with the server's id
+  // (aca-spike-get_session_cost); its LM tool ids use mcp_<server>_<tool>.
+  it.each([
+    ["aca-spike-get_session_cost", "session-cost"],
+    ["ai-credits-analyzer-get_cost_rollup", "cost-rollup"],
+    ["mcp_aicreditsanal_list_findings", "findings"],
+  ])("routes VS Code's server-prefixed toolCall.toolName %s to %s", (toolName, view) => {
+    expect(selectView({ toolCall: { toolName } }, undefined)).toEqual({ view });
+  });
+
+  it("does not match a tool whose name only ends with a known name's letters", () => {
+    expect(selectView({ toolCall: { toolName: "xget_session_cost" } }, sessionShape)).toEqual({ view: "none" });
+  });
+
   it("prefers toolInfo over toolCall over shape", () => {
     const context = { toolInfo: { tool: { name: "list_findings" } }, toolCall: { toolName: "get_session_cost" } };
     expect(selectView(context, sessionShape)).toEqual({ view: "findings" });

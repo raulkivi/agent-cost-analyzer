@@ -197,6 +197,42 @@ describe("buildSessionCost", () => {
     expect(cost.cacheHitRatio).toBeNull();
   });
 
+  describe("activity (docs/plans/mcp-apps.md §4.7)", () => {
+    const now = new Date("2026-09-27T09:00:00.000Z");
+
+    it("flags the session active when its latest turn started within the window of the given clock", () => {
+      const cost = buildSessionCost(
+        session([turn(0, { startedAt: "2026-09-27T08:00:00.000Z" }), turn(1, { startedAt: "2026-09-27T08:50:00.000Z" })]),
+        {},
+        { now },
+      );
+
+      expect(sessionCostSchema.parse(cost)).toEqual(cost);
+      expect(cost).toMatchObject({ lastTurnAt: "2026-09-27T08:50:00.000Z", active: true });
+    });
+
+    it("gives only the latest turn start for a session idle longer than the window", () => {
+      const cost = buildSessionCost(session([turn(0, { startedAt: "2026-09-27T08:00:00.000Z" })]), {}, { now });
+
+      expect(cost.lastTurnAt).toBe("2026-09-27T08:00:00.000Z");
+      expect(cost).not.toHaveProperty("active");
+    });
+
+    it("never guesses activity from the session start when turns have no start time", () => {
+      const cost = buildSessionCost(session([turn(0)], { startedAt: "2026-09-27T08:59:00.000Z" }), {}, { now });
+
+      expect(cost).not.toHaveProperty("lastTurnAt");
+      expect(cost).not.toHaveProperty("active");
+    });
+
+    it("leaves activity out without a clock", () => {
+      const cost = buildSessionCost(session([turn(0, { startedAt: "2026-09-27T08:59:00.000Z" })]));
+
+      expect(cost).not.toHaveProperty("lastTurnAt");
+      expect(cost).not.toHaveProperty("active");
+    });
+  });
+
   describe("cost basis and attribution (step 15.6)", () => {
     const portal: Attribution = {
       repository: { attributed: true, repository: { key: "github.com/acme/portal", source: "git-remote" } },

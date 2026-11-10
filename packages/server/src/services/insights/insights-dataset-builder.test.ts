@@ -174,6 +174,19 @@ describe("buildInsightRows", () => {
     expect(rows.sessions[0]).not.toHaveProperty("hour");
   });
 
+  it("records the latest turn's own start on the session row, never the session's start", () => {
+    const timed = (index: number, startedAt: string): Turn => ({ ...turn(index), startedAt });
+    const rows = buildInsightRows([
+      providerSessions([
+        analyzeSession("s1", "2026-10-10T09:00:00.000Z", [timed(0, "2026-10-10T09:05:00.000Z"), timed(1, "2026-10-10T09:40:00.000Z"), turn(2)]),
+        analyzeSession("s2", "2026-10-10T09:00:00.000Z", [turn(0)]),
+      ]),
+    ]);
+    expect(rows.sessions[0].lastTurnAt).toBe("2026-10-10T09:40:00.000Z");
+    expect(rows.sessions[1]).not.toHaveProperty("lastTurnAt");
+    expect(insightSessionRowSchema.parse(rows.sessions[0])).toEqual(rows.sessions[0]);
+  });
+
   it("resolves a missing kind, defaults a missing outcome to unknown, and bounds + redacts the command", () => {
     const secret = "ghp_" + "a".repeat(36);
     const call: ToolCallRecord = { name: "run_in_terminal", argsSummary: `echo ${secret} ${"x".repeat(400)}` };

@@ -48,6 +48,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   stored.
 - **MCP server: replay.** Two more read-only tools, `replay_session` and
   `compare_models_for_session`, for 19 in all.
+- **MCP server: active sessions.** `get_session_cost` and `get_cost_rollup`
+  mark a session as `active` when its latest turn started in the last 15
+  minutes, with `lastTurnAt`, and add a sentence saying its figures may
+  still change. A running chat's log is not complete yet (the latest turn
+  is undercounted), so its figures are no longer presented as final.
+
+### Fixed
+
+- A turn's explanation now names cache-write tokens as well as new input and
+  cache reads, and reads "1 token" / "18 tokens" instead of "token(s)".
 
 ## [0.2.1] - 2026-11-06
 
