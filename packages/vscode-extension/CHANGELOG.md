@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-11-10
+
+Pre-release (Marketplace pre-release channel) for testing the cost-analysis
+views before the stable 0.6.0.
+
 ### Added
 
 - **MCP server: cost-analysis views.** In VS Code Copilot Chat,
