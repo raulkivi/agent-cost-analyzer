@@ -71,3 +71,23 @@ export function measureView(total: MeasureTotal, format: (value: number) => stri
   const note = coverageNote(total.knownTurns, total.turns);
   return { ...view, estimate: total.estimated, ...(note === undefined ? {} : { coverageNote: note }) };
 }
+
+// "Oct 27 – Nov 2", "since Oct 27", "until Nov 2"; undefined when open on both sides.
+export function periodText(since: string | undefined, until: string | undefined): string | undefined {
+  const from = formatDay(since);
+  const to = formatDay(until);
+  if (from !== undefined && to !== undefined) return `${from} – ${to}`;
+  if (from !== undefined) return `since ${from}`;
+  if (to !== undefined) return `until ${to}`;
+  return undefined;
+}
+
+// A typographic minus, so a decrease reads as one at a glance.
+export const MINUS = "−";
+
+// "+25.0 %", "−8.5 %"; a change that rounds to zero carries no sign.
+export function formatSignedPercent(ratio: number, digits = 1): string {
+  const text = `${Math.abs(ratio * 100).toFixed(digits)} %`;
+  if (Number(text.slice(0, -2)) === 0) return `${(0).toFixed(digits)} %`;
+  return ratio > 0 ? `+${text}` : `${MINUS}${text}`;
+}

@@ -4,7 +4,7 @@ import { activeView } from "./active-session.js";
 import type { ActiveView } from "./active-session.js";
 import type { CostRollup } from "@agent-cost-analyzer/domain";
 import { formatAiCreditsValue } from "@agent-cost-analyzer/web/lib/format-ai-credits";
-import { UNKNOWN_TEXT, coverageNote, formatCount, formatDay, formatPercent, formatTokens, measureView, pluralize, valueView } from "./format.js";
+import { UNKNOWN_TEXT, coverageNote, formatCount, formatDay, formatPercent, formatTokens, measureView, periodText, pluralize, valueView } from "./format.js";
 import type { MeasureView } from "./format.js";
 import { rankingLabel } from "./ranking.js";
 import type { RankedBy } from "./ranking.js";
@@ -49,15 +49,6 @@ export interface CostRollupViewModel {
   byModel: ShareRow[];
   byProvider: ShareRow[];
   topSessions: TopSessionRow[];
-}
-
-function periodText(since: string | undefined, until: string | undefined): string | undefined {
-  const from = formatDay(since);
-  const to = formatDay(until);
-  if (from !== undefined && to !== undefined) return `${from} – ${to}`;
-  if (from !== undefined) return `since ${from}`;
-  if (to !== undefined) return `until ${to}`;
-  return undefined;
 }
 
 function shareRows(groups: { label: string; aiCredits: number | null }[], grandTotal: number | null): ShareRow[] {
