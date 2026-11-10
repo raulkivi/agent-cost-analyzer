@@ -52,6 +52,15 @@ describe("App shell", () => {
     expect(screen.getByText("Read a credentials file")).toBeInTheDocument();
   });
 
+  it("hands a get_project_cost result to U9, and its error text when the tool failed", () => {
+    const port = new FakeAppHostPort();
+    render(<App port={port} brand={brand} />);
+    act(() => port.pushHostContext({ toolCall: { toolName: "ai-credits-analyzer-get_project_cost" } }));
+    act(() => port.pushToolResult({ isError: true, errorText: 'Unknown project id "x". Call list_projects to find valid ids. No projects here, by design.' }));
+    expect(screen.getByRole("heading", { name: "No projects here" })).toBeInTheDocument();
+    expect(screen.getByText("No projects here, by design.")).toBeInTheDocument();
+  });
+
   it("picks up context that arrived before the shell subscribed", () => {
     const port = new FakeAppHostPort();
     port.pushHostContext({ toolCall: { toolName: "list_findings" } });

@@ -12,6 +12,8 @@ describe("selectView", () => {
     ["get_session_cost", "session-cost"],
     ["get_cost_rollup", "cost-rollup"],
     ["list_findings", "findings"],
+    ["get_repository_cost", "cost-over-time"],
+    ["get_project_cost", "cost-over-time"],
   ])("routes toolInfo.tool.name %s to %s", (name, view) => {
     expect(selectView({ toolInfo: { tool: { name } } }, undefined)).toEqual({ view });
   });
@@ -26,6 +28,8 @@ describe("selectView", () => {
     ["aca-spike-get_session_cost", "session-cost"],
     ["ai-credits-analyzer-get_cost_rollup", "cost-rollup"],
     ["mcp_aicreditsanal_list_findings", "findings"],
+    ["ai-credits-analyzer-get_repository_cost", "cost-over-time"],
+    ["mcp_aicreditsanal_get_project_cost", "cost-over-time"],
   ])("routes VS Code's server-prefixed toolCall.toolName %s to %s", (toolName, view) => {
     expect(selectView({ toolCall: { toolName } }, undefined)).toEqual({ view });
   });
@@ -44,6 +48,17 @@ describe("selectView", () => {
     expect(selectView({}, sessionShape)).toEqual({ view: "session-cost" });
     expect(selectView(undefined, rollupShape)).toEqual({ view: "cost-rollup" });
     expect(selectView({ theme: "dark" }, findingsShape)).toEqual({ view: "findings" });
+  });
+
+  // A20: a repository or project cost result is told apart from the MVP
+  // shapes, and a project's topSessions does not make it a rollup.
+  it("routes the U9 shapes by their series, never to a rollup or a session", () => {
+    const series = { points: [], priceChanges: [], observedChanges: [], byVendor: [], total: {}, bucket: "week" };
+    expect(selectView({}, series)).toEqual({ view: "cost-over-time" });
+    expect(selectView({}, { ...series, project: { id: "p" }, topSessions: [], byTokenType: [] })).toEqual({ view: "cost-over-time" });
+    expect(selectView({}, { topSessions: [], points: [] })).toEqual({ view: "none" });
+    expect(selectView({}, { ...rollupShape, points: [] })).toEqual({ view: "cost-rollup" });
+    expect(selectView({}, { ...sessionShape, ...series })).toEqual({ view: "session-cost" });
   });
 
   it("gives a tool this bundle has no view for the neutral state, not a shape guess", () => {

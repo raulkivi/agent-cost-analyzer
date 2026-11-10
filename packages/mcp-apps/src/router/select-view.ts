@@ -2,13 +2,15 @@
 // SPDX-License-Identifier: MIT
 import type { HostContext } from "../host/app-host-port.js";
 
-export type ViewId = "session-cost" | "cost-rollup" | "findings";
+export type ViewId = "session-cost" | "cost-rollup" | "findings" | "cost-over-time";
 export type ViewSelection = { view: ViewId } | { view: "none" };
 
 const BY_TOOL: Record<string, ViewId> = {
   get_session_cost: "session-cost",
   get_cost_rollup: "cost-rollup",
   list_findings: "findings",
+  get_repository_cost: "cost-over-time",
+  get_project_cost: "cost-over-time",
 };
 
 // VS Code prefixes the tool name with the server's id ("<server>-<tool>",
@@ -30,6 +32,8 @@ function byShape(structured: unknown): ViewId | undefined {
   if (hasArray(s, "findings") && "bySeverity" in s) return "findings";
   if (hasArray(s, "topSessions") && hasArray(s, "daily")) return "cost-rollup";
   if (typeof s.sessionId === "string" && hasArray(s, "topTurns")) return "session-cost";
+  // CostSeries and ProjectCost (U9): the series with its price changes and vendor split; no MVP result has these together.
+  if (hasArray(s, "points") && hasArray(s, "priceChanges") && hasArray(s, "observedChanges") && hasArray(s, "byVendor")) return "cost-over-time";
   return undefined;
 }
 
