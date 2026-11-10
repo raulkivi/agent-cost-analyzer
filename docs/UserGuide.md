@@ -597,7 +597,7 @@ text is redacted and truncated first.
 
 ### Interactive views in the chat
 
-In a chat host that supports MCP Apps, six of the tools above show an
+In a chat host that supports MCP Apps, seven of the tools above show an
 interactive view next to their text answer, so you can click through a
 session, a repository or a project instead of asking one question after
 another:

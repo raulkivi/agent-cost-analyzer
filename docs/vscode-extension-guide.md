@@ -506,7 +506,7 @@ more on the tools.
 
 ### Interactive views in Copilot Chat
 
-Six of the tools show an interactive view in the chat, next to the text
+Seven of the tools show an interactive view in the chat, next to the text
 answer, when you ask about them in agent mode. VS Code may show a tool's name
 with the server's name in front of it; the tool is the same:
 
