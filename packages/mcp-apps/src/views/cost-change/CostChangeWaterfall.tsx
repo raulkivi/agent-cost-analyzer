@@ -8,7 +8,7 @@ import "./cost-change.css";
 // type comes from the web's own helper, which converts from USD and so does
 // not fit a result already in AI Credits; the steps are mapped here.
 // Increases and decreases always carry their written sign (colour is never
-// the only cue); cost-change.css gives them the host's danger and info.
+// the only cue); cost-change.css gives them the host's danger and success.
 
 type WebStep = Parameters<typeof Waterfall>[0]["steps"][number];
 

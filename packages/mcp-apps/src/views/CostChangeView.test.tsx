@@ -1,5 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
+import { readFileSync } from "node:fs";
+import path from "node:path";
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
@@ -50,7 +52,16 @@ describe("CostChangeView content", () => {
     const change = screen.getByRole("group", { name: "Change" });
     expect(within(change).getByText("+40.00 AI Credits")).toBeInTheDocument();
     expect(within(change).getByText("+40.0 %")).toBeInTheDocument();
-    expect(within(screen.getByRole("group", { name: "Not explained" })).getByText("0 + 3")).toBeInTheDocument();
+    const tile = within(screen.getByRole("group", { name: "Not explained" }));
+    expect(tile.getByText("3 turns")).toBeInTheDocument();
+    expect(tile.getByText("no price for these turns; not counted as 0")).toBeInTheDocument();
+  });
+
+  it("colours a fall with the host's success colour, not info", () => {
+    const css = readFileSync(path.join(__dirname, "cost-change/cost-change.css"), "utf8");
+    expect(css).toMatch(/\.waterfall-decrease\s*{\s*fill:\s*var\(--color-text-success/);
+    expect(css).toMatch(/\.cc-swatch--decrease\s*{\s*background:\s*var\(--color-text-success/);
+    expect(css).not.toContain("--color-text-info");
   });
 
   it("draws the waterfall with a written sign on every effect, so colour is never the only cue", () => {
