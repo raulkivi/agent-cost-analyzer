@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: MIT
 import { StatTile } from "@agent-cost-analyzer/web/ui/StatTile";
 import { Tag } from "@agent-cost-analyzer/web/ui/Tag";
-import { formatAiCreditsValue } from "@agent-cost-analyzer/web/lib/format-ai-credits";
 import { useMemo } from "react";
 import type { ReactNode } from "react";
 import type { ViewBrand } from "../brand/view-brand.js";
@@ -37,7 +36,9 @@ export interface DrillDownFrame {
 
 function Tile({ label, tile }: { label: string; tile: SessionCostTile }) {
   const note =
-    tile.coverageNote !== undefined || tile.estimate ? (
+    tile.unknownNote !== undefined ? (
+      tile.unknownNote
+    ) : tile.coverageNote !== undefined || tile.estimate ? (
       <>
         {tile.coverageNote}
         {tile.coverageNote !== undefined && tile.estimate ? " " : null}
@@ -83,7 +84,17 @@ function LoadedSessionCost({ port, brand, clipboard, cost, frame }: { port: AppH
   const copyable = clipboard !== undefined && brand.productId === "vscode-extension";
   const copy = useCopyCommand(clipboard ?? { writeText: () => Promise.resolve() }, command);
 
-  const meta = [vm.model, vm.turnsText, vm.startedText].filter((part) => part !== undefined).join(" · ");
+  const metaText = [vm.model, vm.turnsText, vm.startedText].filter((part) => part !== undefined).join(" · ");
+  const meta = vm.active ? (
+    <>
+      {metaText}{" "}
+      <Tag variant="outline" className="view-estimate" title={vm.activeHint}>
+        active
+      </Tag>
+    </>
+  ) : (
+    metaText
+  );
   const chartNotes = [vm.chart?.unknownNote, vm.chart?.truncatedNote].filter((note) => note !== undefined);
 
   return (
@@ -102,6 +113,8 @@ function LoadedSessionCost({ port, brand, clipboard, cost, frame }: { port: AppH
         ) : undefined
       }
     >
+      {vm.activeNote !== undefined && <p className="view-active-note text-muted">{vm.activeNote}</p>}
+
       <div className="stat-tiles view-tiles">
         <Tile label="AI Credits" tile={vm.tiles.aiCredits} />
         <Tile label="Input tokens" tile={vm.tiles.inputTokens} />
@@ -109,9 +122,9 @@ function LoadedSessionCost({ port, brand, clipboard, cost, frame }: { port: AppH
         <Tile label="Output tokens" tile={vm.tiles.output} />
       </div>
 
-      <section className="view-section" aria-label="AI Credits per turn">
+      <section className="view-section" aria-label={vm.chartTitle}>
         <div className="view-section-head">
-          <h2>AI Credits per turn</h2>
+          <h2>{vm.chartTitle}</h2>
           {chartNotes.length > 0 && <span className="text-muted">{chartNotes.join(" · ")}</span>}
         </div>
         {series.state.status === "loading" && (
@@ -124,15 +137,15 @@ function LoadedSessionCost({ port, brand, clipboard, cost, frame }: { port: AppH
             The get_turn_series call failed. The figures above come from the tool result and still stand.
           </ErrorBox>
         )}
-        {vm.chart !== undefined && <TurnChart chart={vm.chart} formatValue={formatAiCreditsValue} />}
+        {vm.chart !== undefined && <TurnChart chart={vm.chart} />}
       </section>
 
       <section className="view-section" aria-label="Top turns">
         <div className="view-section-head">
           <h2>Top turns</h2>
-          <span className="text-muted">by AI Credits · click a turn for its detail</span>
+          <span className="text-muted">{`by ${vm.rankingLabel} · click a turn for its detail`}</span>
         </div>
-        <TopTurns port={port} sessionId={vm.sessionId} provider={provider} turns={vm.topTurns} />
+        <TopTurns port={port} sessionId={vm.sessionId} provider={provider} turns={vm.topTurns} rankingLabel={vm.rankingLabel} />
       </section>
 
       <section className="view-section" aria-label="Context overhead">

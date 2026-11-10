@@ -15,6 +15,7 @@ export interface MeasureView {
   known: boolean;
   estimate: boolean;
   coverageNote?: string;
+  unknownNote?: string; // why an Unknown value is unknown, and what is known
 }
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"] as const;

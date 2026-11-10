@@ -123,12 +123,87 @@ describe("FindingsView evidence", () => {
     expect(screen.queryByText(/REDACTED/)).not.toBeInTheDocument();
   });
 
+  it("shows the detail in a full-width row below the finding, not inside its cell", () => {
+    renderView(new FakeAppHostPort());
+    const toggle = screen.getByRole("button", { name: /Redacted evidence/ });
+    const findingRow = toggle.closest("tr")!;
+    const columns = findingRow.querySelectorAll(":scope > td").length;
+    expect(toggle.closest("td")).toHaveClass("fv-finding");
+    fireEvent.click(toggle);
+
+    const detailRow = document.getElementById(toggle.getAttribute("aria-controls")!)!;
+    expect(detailRow.tagName).toBe("TR");
+    expect(detailRow).toBe(findingRow.nextElementSibling);
+    const cells = detailRow.querySelectorAll(":scope > td");
+    expect(cells).toHaveLength(1);
+    expect(cells[0]).toHaveAttribute("colspan", String(columns));
+    expect(columns).toBe(5);
+    expect(detailRow.querySelector("pre")).not.toBeNull();
+    expect(findingRow.querySelector("pre")).toBeNull();
+    expect(findingRow.querySelector(".fv-why")).toBeNull();
+  });
+
+  it("points aria-controls at the detail row only while it exists", () => {
+    renderView(new FakeAppHostPort());
+    const toggle = screen.getByRole("button", { name: /Redacted evidence/ });
+    expect(toggle).not.toHaveAttribute("aria-controls");
+    fireEvent.click(toggle);
+    expect(document.getElementById(toggle.getAttribute("aria-controls")!)).not.toBeNull();
+  });
+
+  it("lifts the height cap while a detail row is open", () => {
+    renderView(new FakeAppHostPort());
+    const scroller = screen.getByRole("table", { name: "Findings" }).parentElement!;
+    expect(scroller).not.toHaveClass("is-expanded");
+    fireEvent.click(screen.getByRole("button", { name: /Redacted evidence/ }));
+    expect(scroller).toHaveClass("is-expanded");
+  });
+
   it("renders evidence as inert text, not markup", () => {
     const hostile = enrichedFinding({ evidence: '<img src=x onerror="alert(1)">' });
     const { container } = renderView(new FakeAppHostPort(), ok(findingsResult([hostile])));
     fireEvent.click(screen.getByRole("button", { name: /Redacted evidence/ }));
     expect(container.querySelector("img")).toBeNull();
     expect(screen.getByText('<img src=x onerror="alert(1)">')).toBeInTheDocument();
+  });
+
+  it("renders backtick spans in a title as code elements", () => {
+    const f = enrichedFinding({ title: "First use of tool `AI-Credits-Analyzer-list_findings` today" });
+    const { container } = renderView(new FakeAppHostPort(), ok(findingsResult([f])));
+    const codes = container.querySelectorAll("td.fv-finding code");
+    expect(codes).toHaveLength(1);
+    expect(codes[0]!.textContent).toBe("AI-Credits-Analyzer-list_findings");
+    expect(container.querySelector("td.fv-finding")!.textContent).not.toContain("`");
+  });
+
+  it("keeps an unmatched backtick literal", () => {
+    const f = enrichedFinding({ title: "Odd `title` and a stray ` tick" });
+    const { container } = renderView(new FakeAppHostPort(), ok(findingsResult([f])));
+    const codes = container.querySelectorAll("td.fv-finding code");
+    expect([...codes].map((c) => c.textContent)).toEqual(["title"]);
+    expect(container.querySelector("td.fv-finding")!.textContent).toContain("Odd ");
+    expect(container.querySelector("td.fv-finding")!.textContent).toContain("and a stray ` tick");
+  });
+
+  it("renders hostile title markup, with and without backticks, as inert text", () => {
+    const f = enrichedFinding({ title: "<img src=x onerror=alert(1)> `<b>x</b>`" });
+    const { container } = renderView(new FakeAppHostPort(), ok(findingsResult([f])));
+    expect(container.querySelector("img")).toBeNull();
+    expect(container.querySelector("b")).toBeNull();
+    expect(container.querySelector("td.fv-finding code")!.textContent).toBe("<b>x</b>");
+  });
+
+  it("renders backtick spans in the why-flagged text as code", () => {
+    const f = enrichedFinding({ evidence: undefined, why: "Calls `list_findings` first." });
+    renderView(new FakeAppHostPort(), ok(findingsResult([f])));
+    fireEvent.click(screen.getByRole("button", { name: /Why flagged/ }));
+    expect(document.querySelector(".fv-why code")!.textContent).toBe("list_findings");
+  });
+
+  it("lays the kind options out as separate chips inside the fieldset", () => {
+    const { container } = renderView(new FakeAppHostPort());
+    const opts = container.querySelectorAll("fieldset.fv-kind .seg > .seg-opt");
+    expect(opts.length).toBeGreaterThan(1);
   });
 
   it("offers the reason alone for a finding with no evidence", () => {

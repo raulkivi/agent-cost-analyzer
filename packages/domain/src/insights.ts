@@ -66,6 +66,9 @@ export const insightSessionRowSchema = z.object({
   startedAt: z.string().optional(),
   date: z.string().optional(), // YYYY-MM-DD (UTC) from startedAt
   hour: z.number().int().min(0).max(23).optional(), // UTC hour from startedAt
+  // The latest turn's own start (never the session's): what get_cost_rollup
+  // flags a session active by.
+  lastTurnAt: z.string().optional(),
   // The provider doesn't read this session's tool calls (Agent Host): its
   // empty tool-call list means unknown, not zero.
   toolCallsUnavailable: z.boolean().optional(),

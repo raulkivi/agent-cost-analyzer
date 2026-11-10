@@ -27,7 +27,7 @@ import "./cost-rollup/cost-rollup.css";
 const KICKER = "Cost rollup";
 
 function Tile({ label, value }: { label: string; value: MeasureView }) {
-  return <StatTile label={label} value={value.text} note={value.coverageNote} />;
+  return <StatTile label={label} value={value.text} note={value.unknownNote ?? value.coverageNote} />;
 }
 
 export function CostRollupView({ port, brand, clipboard, result }: { port: AppHostPort; brand: ViewBrand; clipboard?: ClipboardPort | undefined; result: ToolResult | undefined }) {
@@ -93,10 +93,11 @@ export function CostRollupView({ port, brand, clipboard, result }: { port: AppHo
       <section className="view-section" aria-label="Top sessions">
         <div className="view-section-head">
           <h2>Top sessions</h2>
-          <span className="text-muted">click a session to open it here</span>
+          <span className="text-muted">{`by ${vm.rankingLabel} · click a session to open it here`}</span>
         </div>
         <TopSessions
           sessions={vm.topSessions}
+          rankingLabel={vm.rankingLabel}
           providerLabels={providerLabels}
           focusOnMount={returnTo}
           onOpen={(session) => {

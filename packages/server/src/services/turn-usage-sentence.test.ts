@@ -1,0 +1,52 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
+import { describe, expect, it } from "vitest";
+import type { TokenCount } from "@agent-cost-analyzer/domain";
+import { describeExchangeUsage, describeTurnUsage } from "./turn-usage-sentence.js";
+
+const known = (value: number): TokenCount => ({ known: true, value });
+const unknown: TokenCount = { known: false, reason: "not logged" };
+
+const base = { uncachedInput: known(18), cacheWrite: known(0), cacheRead: known(0), output: known(535), model: "gpt-6-luna" };
+
+describe("describeTurnUsage", () => {
+  it("mentions cache write and cache read when both are present", () => {
+    expect(describeTurnUsage({ ...base, cacheWrite: known(25815), cacheRead: known(110484) })).toBe(
+      `This turn sent 18 new input tokens, wrote ${(25815).toLocaleString()} to cache and reused ${(110484).toLocaleString()} from cache, producing 535 output tokens using gpt-6-luna.`,
+    );
+  });
+
+  it("omits cache parts that are zero", () => {
+    expect(describeTurnUsage(base)).toBe("This turn sent 18 new input tokens, producing 535 output tokens using gpt-6-luna.");
+  });
+
+  it("omits cache parts that are unknown instead of showing 0", () => {
+    expect(describeTurnUsage({ ...base, cacheWrite: unknown, cacheRead: unknown })).not.toMatch(/cache/);
+  });
+
+  it("shows only cache read when there is no cache write", () => {
+    expect(describeTurnUsage({ ...base, cacheRead: known(800) })).toBe(
+      "This turn sent 18 new input tokens and reused 800 from cache, producing 535 output tokens using gpt-6-luna.",
+    );
+  });
+
+  it("shows only cache write when there is no cache read", () => {
+    expect(describeTurnUsage({ ...base, cacheWrite: known(1) })).toBe(
+      "This turn sent 18 new input tokens and wrote 1 to cache, producing 535 output tokens using gpt-6-luna.",
+    );
+  });
+
+  it("uses the singular for exactly one token", () => {
+    expect(describeTurnUsage({ ...base, uncachedInput: known(1), output: known(1) })).toBe(
+      "This turn sent 1 new input token, producing 1 output token using gpt-6-luna.",
+    );
+  });
+});
+
+describe("describeExchangeUsage", () => {
+  it("keeps the exchange wording with proper plurals", () => {
+    expect(describeExchangeUsage({ ...base, uncachedInput: known(1) })).toBe(
+      "This exchange sent 1 input token and produced 535 output tokens using gpt-6-luna.",
+    );
+  });
+});

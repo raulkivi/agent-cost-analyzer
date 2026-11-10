@@ -25,6 +25,12 @@ describe("toCostRollupViewModel header and tiles", () => {
     expect(vm.tiles.aiCredits).toMatchObject({ text: "Unknown", known: false });
     expect(vm.tiles.cacheHit).toMatchObject({ text: "Unknown", known: false });
   });
+
+  it("says which input part is not logged when the cache hit is Unknown (A16)", () => {
+    const totals = measures(3, { cacheWrite: total(null, 0, 3), inputTokens: total(null, 0, 3) });
+    const vm = toCostRollupViewModel(costRollup({ totals, cacheHitRatio: null }));
+    expect(vm.tiles.cacheHit).toEqual({ text: "Unknown", known: false, estimate: false, unknownNote: "cache writes not logged" });
+  });
 });
 
 describe("toCostRollupViewModel daily spend", () => {
@@ -67,6 +73,7 @@ describe("toCostRollupViewModel top sessions", () => {
   it("lists sessions with ids, turns, credits and partial coverage", () => {
     const { topSessions } = toCostRollupViewModel(costRollup());
     expect(topSessions[0]).toEqual({
+      active: false,
       providerId: "copilot",
       sessionId: "7f3a9c2e",
       title: "Refactor provider registry",
@@ -74,6 +81,7 @@ describe("toCostRollupViewModel top sessions", () => {
       turnsText: "42 turns",
       startedText: "Oct 27",
       aiCredits: { text: "18.42", known: true, estimate: false, coverageNote: "known for 40 of 42 turns" },
+      inputTokens: { text: "Unknown", known: false, estimate: false },
     });
   });
 
@@ -81,5 +89,34 @@ describe("toCostRollupViewModel top sessions", () => {
     const row = toCostRollupViewModel(costRollup()).topSessions[1];
     expect(row?.aiCredits).toMatchObject({ text: "Unknown", known: false });
     expect(row?.startedText).toBeUndefined();
+  });
+});
+
+describe("toCostRollupViewModel ranking", () => {
+  it("names AI Credits as the ranking by default", () => {
+    const vm = toCostRollupViewModel(costRollup());
+    expect(vm.rankedBy).toBe("aiCredits");
+    expect(vm.rankingLabel).toBe("AI Credits");
+  });
+
+  it("names input tokens and formats each session's input tokens, Unknown when missing", () => {
+    const base = costRollup();
+    const topSessions = [{ ...base.topSessions[0]!, inputTokens: 2_100_000 }, { ...base.topSessions[1]!, inputTokens: null }];
+    const vm = toCostRollupViewModel({ ...base, rankedBy: "inputTokens", topSessions });
+    expect(vm.rankedBy).toBe("inputTokens");
+    expect(vm.rankingLabel).toBe("input tokens");
+    expect(vm.topSessions[0]?.inputTokens).toMatchObject({ text: "2.1 M", known: true });
+    expect(vm.topSessions[1]?.inputTokens).toMatchObject({ text: "Unknown", known: false });
+  });
+});
+
+describe("toCostRollupViewModel active sessions (plan §4.7)", () => {
+  it("carries the server's flag per top session, false when absent", () => {
+    const base = costRollup();
+    const [first, second] = base.topSessions;
+    const vm = toCostRollupViewModel(costRollup({ topSessions: [{ ...first!, active: true }, { ...second!, active: false }, { ...first!, sessionId: "no-flag" }] }));
+    expect(vm.topSessions.map((session) => session.active)).toEqual([true, false, false]);
+    expect(vm.topSessions[0]?.activeHint).toBe("Latest turn started in the last 15 minutes; figures may still change");
+    expect(vm.topSessions[1]?.activeHint).toBeUndefined();
   });
 });

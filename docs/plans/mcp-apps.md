@@ -1,6 +1,6 @@
 # MCP Apps: branded, interactive cost views in the chat
 
-**Last changed:** 2026-11-07 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-10 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 Status: **in progress: A0, A0b, A1–A11 and A13–A15 done (2026-11-07), A12 dropped; planned 2026-10-28, updated
 2026-11-07 for the Phase 14 and Phase 15 tools.** This is Phase 12 in
@@ -313,6 +313,34 @@ Green: MVP. Blue: Increment 2. Yellow: Increment 3. Dotted edges are in-place dr
 | `get_statement`, `estimate_cost` | billing (standalone) | U14, U15, Increment 3 |
 | `get_turn_series` (app-only, new) | appViews | Feeds U1's chart |
 
+### 4.7 Active sessions
+
+Found in A16: the newest session's log is incomplete while its chat runs.
+The latest turn is undercounted, and cache writes and turn text may be
+missing. A rollup read mid-turn then doesn't reconcile with a later
+session read.
+
+- **Rule:** a session is **active** when its latest turn started within
+  `ACTIVE_SESSION_WINDOW_MINUTES` (15) of now. One rule for every log
+  provider, in `sessionActivity` (`packages/server/src/services/cost/session-activity.ts`).
+- Only turns' own start times count. A session whose turns have none is
+  never active; the session's start is not used as a guess.
+- A start after now (clock skew) counts as active.
+- A session that just finished is flagged too, so the wording is
+  "active: figures may still change", not "in progress".
+- `SessionCost` and each `CostRollup.topSessions` entry carry
+  `lastTurnAt` (the latest turn start the log records) and `active: true`
+  (only within the window). Both are optional.
+- The clock is injected: `AnalysisQueryService` takes `now`, defaulting to
+  the system clock. The builders never read a clock.
+- Text output: when active, `get_session_cost` adds the sentence "This
+  session is active (its latest turn started N minutes ago), so its
+  figures may still change and the latest turn may be incomplete."
+  `get_cost_rollup` adds one sentence naming its active top sessions. The
+  sentence follows the JSON as a second text item. Both tool descriptions
+  say what `active` means.
+- Views: U1 shows an "active" tag beside the meta line and the note "Active session: figures may still change; the latest turn may be incomplete."; U2 shows an "active" tag on the top-sessions row, outside the title button. Both trust the server's flag and never read a clock.
+
 ## 5. Branding
 
 **Rule: the brand marks identity and data. The host owns the structure.**
@@ -610,7 +638,7 @@ fewer, an exact spec, and acceptance tests the local agent never sees.
 | A13 | Packaging: build order (views before extension and server), `dist/mcp-apps/views.html` in the `.vsix` (asserted by the package-contents test), `scripts/mcp-server.sh` serving the standalone build. **Done 2026-11-07:** root workspaces build `mcp-apps` before `server` and `vscode-extension`, and the extension's own `build` builds it first (as it does the web app), so CI's `npm run build --workspace=packages/vscode-extension` and the release build both have `packages/mcp-apps/dist/views.html`. `scripts/build.mts` copies it to `dist/mcp-apps/views.html` and fails if it is missing; `.vscodeignore` allows it and `packaging.test.ts` lists it. One helper, `resolveAppViews(path, onMissing)` (`server/src/mcp/apps/resolve-app-views.ts`), turns a path into the `appViews` option, or into nothing when the file does not exist (a bare `FileViewSource` would register the resource and tag the tools, then fail at `resources/read`); the standalone `stdio.ts` (`--app-views-html`) and the extension's `createCopilotMcpServer({ appViewsHtml })` both use it. The child process passes `<dist>/mcp-apps/views.html` with no new command-line input. `scripts/mcp-server.sh` adds `--app-views-html packages/mcp-apps/dist/views.html` when that file exists; a caller's own flag comes later and wins. Tests: resolver, real stdio entry point and the built extension bundle, with and without the file; the script's arguments; the workspace build order | medium | Sonnet | A8 |
 | A14 | Accessibility and security review of the views: axe in the component tests, keyboard drill-down, the no-forwarding rule (§6) as a test over every `sendMessage` call site. **Done 2026-11-07:** axe-core 4.14.0 (devDependency) over every state of U1–U3 and the no-view state (`src/views/a11y.test.tsx`); keyboard tests with user-event (`src/views/keyboard.test.tsx`) and focus returned after drill-in, Back and Hide turn; the rule as a static test over every host call site in `src/` (`test/security/no-forwarding.test.ts`), paired with a dynamic test per view that presses every control; host style variables filtered; the "Ask" button only for a plain session id; 360px layout fixes. Findings and what is left open: §6.1 | medium | Opus | A9–A11 |
 | A15 | Docs: architecture.md §4.1/§11.2/§12, threat-model.md §6, implementation-plan.md Phase 12 and its dependency graph, UserGuide, vscode-extension-guide, both CHANGELOGs. **Done 2026-11-07:** architecture.md gained §4.1.1 (runtime flow), §4.4 (the `packages/mcp-apps` module map and dependency rules), a §10 tree entry, a §11.2 bullet and a §11.4 testing bullet; threat-model.md gained §6.1 (MCP Apps) and its standalone-server row now lists `--project-billing-details` and `--app-views-html`; implementation-plan.md's Phase 12 section and the Gantt are current (the summary graph's edges were already right; a note says the Phase 14 and 15 edges are for the increments); the User Guide has "Interactive views in the chat" and the extension guide "Interactive views in Copilot Chat" (screenshots follow in A16); both CHANGELOGs list the views, the copy button and the unchanged text output. Written from the code. Open for A14 and the owner: `aiCreditsAnalyzer.openSession` is hidden from the Command Palette (`when: false`) and takes a session id as an argument, so the copied text `AI Credits Analyzer: Open Session <id>` does not run it when pasted; the guides send the user to the Sessions view as a fallback | medium | Sonnet | A13 |
-| A16 | Owner's manual checks: VS Code Copilot Chat in light, dark and High Contrast; Claude Desktop in light and dark; Claude Code CLI text output unchanged. Checklist and results table: [mcp-apps-a16-checklist.md](mcp-apps-a16-checklist.md) | — | owner | A13 |
+| A16 | Owner's manual checks: VS Code Copilot Chat in light, dark and High Contrast; Claude Desktop in light and dark; Claude Code CLI text output unchanged. Checklist and results table: [mcp-apps-a16-checklist.md](mcp-apps-a16-checklist.md). **Done 2026-11-10:** every row passes in VS Code Insiders 1.146, Claude Desktop 4.23118.0 and Claude Code; results and screenshots in [mcp-apps-a16-results/](mcp-apps-a16-results/README.md). Twelve findings were fixed test-first before sign-off: the router matches VS Code's server-prefixed tool names (`AI-Credits-Analyzer-get_session_cost`); Unknown input and cache-hit tiles name the known parts and what is not logged; an unlogged prompt reads "Prompt not recorded"; the server's turn explanation names cache writes and pluralises; U1's chart has turn numbers and plots the ranking measure (input tokens per turn when the server ranks by input tokens); U1 and U2 name the ranking and U2 has an Input tok. column; U3 renders backtick spans as code, its filters as chips and its detail as a full-width row; the overhead bar uses the chart colour; sessions with a turn in the last 15 minutes are flagged `active` (§4.7); and the narrow-width and copy-confirmation fixes | — | owner | A13 |
 
 A0 result (2026-11-07): both hosts refuse `vscode://` links, so A12 is dropped
 and the button copies a command.

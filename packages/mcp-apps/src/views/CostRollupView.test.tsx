@@ -85,14 +85,39 @@ describe("CostRollupView content", () => {
     expect(within(rows[1]!).getByText("known for 40 of 42 turns")).toBeInTheDocument();
   });
 
+  it("names the ranking and shows an Input tok. column beside AI Credits (ranked by AI Credits)", () => {
+    setup();
+    const table = screen.getByRole("table", { name: "Top sessions by AI Credits" });
+    expect(within(table).getByRole("columnheader", { name: "Input tok." })).toBeInTheDocument();
+    expect(screen.getByText("by AI Credits · click a session to open it here")).toBeInTheDocument();
+  });
+
+  it("ranked by input tokens: names it and shows each session's input tokens, Unknown when missing", () => {
+    const base = costRollup();
+    const topSessions = [{ ...base.topSessions[0]!, aiCredits: null, inputTokens: 2_100_000 }, { ...base.topSessions[1]!, aiCredits: null, inputTokens: null }];
+    setup({ rollup: costRollup({ rankedBy: "inputTokens", topSessions }) });
+    const table = screen.getByRole("table", { name: "Top sessions by input tokens" });
+    expect(screen.queryByRole("table", { name: "Top sessions by AI Credits" })).not.toBeInTheDocument();
+    expect(screen.getByText("by input tokens · click a session to open it here")).toBeInTheDocument();
+    const rows = within(table).getAllByRole("row");
+    expect(within(rows[1]!).getByText("2.1 M")).toBeInTheDocument();
+    expect(within(rows[2]!).getAllByText("Unknown").length).toBeGreaterThan(0);
+  });
+
   it("shows Unknown, never 0, for unknown figures", () => {
     setup({ rollup: costRollup({ totals: measures(334, { aiCredits: total(null, 0, 334) }), cacheHitRatio: null }) });
     expect(within(screen.getByRole("group", { name: "AI Credits" })).getByText("Unknown")).toBeInTheDocument();
     expect(within(screen.getByRole("group", { name: "Cache hit" })).getByText("Unknown")).toBeInTheDocument();
     const rows = within(screen.getByRole("table", { name: "Top sessions by AI Credits" })).getAllByRole("row");
-    expect(within(rows[2]!).getByText("Unknown")).toBeInTheDocument();
+    expect(within(rows[2]!).getAllByText("Unknown")).toHaveLength(2); // AI Credits and Input tok.
     expect(within(rows[2]!).queryByText("0")).not.toBeInTheDocument();
     expect(within(rows[2]!).queryByText("0.00")).not.toBeInTheDocument();
+  });
+
+  it("says why the cache hit is Unknown when cache writes are not logged (A16)", () => {
+    const totals = measures(3, { cacheWrite: total(null, 0, 3), inputTokens: total(null, 0, 3) });
+    setup({ rollup: costRollup({ totals, cacheHitRatio: null }) });
+    expect(within(screen.getByRole("group", { name: "Cache hit" })).getByText("cache writes not logged")).toBeInTheDocument();
   });
 
   it("says so when there are no sessions", () => {
@@ -319,8 +344,24 @@ describe("CostRollupView narrow layout hooks", () => {
   it("repeats provider and model under each session title, for widths where those columns are hidden", () => {
     setup();
     const rows = within(screen.getByRole("table", { name: "Top sessions by AI Credits" })).getAllByRole("row");
-    expect(rows[1]!.querySelector(".rv-session-sub")!.textContent).toBe("Copilot Chat · claude-sonnet-5.5");
-    expect(rows[0]!.querySelectorAll("th.rv-col-wide")).toHaveLength(2);
-    expect(rows[1]!.querySelectorAll("td.rv-col-wide")).toHaveLength(2);
+    const turns = rows[1]!.querySelectorAll("td")[3]!.textContent;
+    expect(rows[1]!.querySelector(".rv-session-sub")!.textContent).toBe(`Copilot Chat · claude-sonnet-5.5 · ${turns}`);
+    expect(rows[0]!.querySelectorAll("th.rv-col-wide")).toHaveLength(3);
+    expect(rows[1]!.querySelectorAll("td.rv-col-wide")).toHaveLength(3);
+    expect(within(rows[0]!).getByText("Turns")).toHaveClass("rv-col-wide");
+    expect(rows[1]!.querySelectorAll("td")[3]).toHaveClass("rv-col-wide");
+  });
+});
+
+describe("CostRollupView active sessions (plan §4.7)", () => {
+  it("tags an active row outside the title button, whose name stays the title", () => {
+    const base = costRollup();
+    const [first, second] = base.topSessions;
+    setup({ rollup: costRollup({ topSessions: [{ ...first!, active: true }, second!] }) });
+    const row = screen.getByRole("button", { name: "Refactor provider registry" }).closest("tr")!;
+    const tag = within(row).getByText("active");
+    expect(tag).toHaveAttribute("title", "Latest turn started in the last 15 minutes; figures may still change");
+    expect(tag.closest("button")).toBeNull();
+    expect(screen.getAllByText("active")).toHaveLength(1);
   });
 });

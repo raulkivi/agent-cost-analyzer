@@ -12,7 +12,9 @@ const HEIGHT = 116;
 const LEFT = 30;
 const TOP = 10;
 const BASE = 98;
-const MAX_LABELS = 8;
+// At the narrow 18-unit font a date like "Oct 28" is ~60 units wide; 6 labels
+// across the 532-unit plot are at least 88 apart, so they never touch.
+const MAX_LABELS = 6;
 
 type Daily = CostRollupViewModel["daily"];
 

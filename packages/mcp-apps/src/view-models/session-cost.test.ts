@@ -41,6 +41,54 @@ describe("toSessionCostViewModel tiles", () => {
     expect(tiles.cacheHit).toMatchObject({ text: "Unknown", known: false });
   });
 
+  // A16: Copilot Agent Host sessions log uncached input and cache reads but
+  // no cache writes, so the total stays Unknown (constraint 6) and the note
+  // gives the parts that are known.
+  it("notes the known input parts when cache writes are not logged", () => {
+    const cost = sessionCost({
+      totals: measures(1, {
+        uncachedInput: total(14_788, 1, 1),
+        cacheWrite: total(null, 0, 1),
+        cacheRead: total(119_322, 1, 1),
+        inputTokens: total(null, 0, 1),
+      }),
+      cacheHitRatio: null,
+    });
+    const { tiles } = toSessionCostViewModel(cost);
+    expect(tiles.inputTokens).toEqual({ text: "Unknown", known: false, estimate: false, unknownNote: "14.8 k uncached + 119 k cache read; cache writes not logged" });
+    expect(tiles.cacheHit).toEqual({ text: "Unknown", known: false, estimate: false, unknownNote: "cache writes not logged" });
+  });
+
+  it("names every missing input part", () => {
+    const cost = sessionCost({
+      totals: measures(1, {
+        uncachedInput: total(500, 1, 1),
+        cacheWrite: total(null, 0, 1),
+        cacheRead: total(null, 0, 1),
+        inputTokens: total(null, 0, 1),
+      }),
+      cacheHitRatio: null,
+    });
+    const { tiles } = toSessionCostViewModel(cost);
+    expect(tiles.inputTokens.unknownNote).toBe("500 uncached; cache writes and cache reads not logged");
+    expect(tiles.cacheHit.unknownNote).toBe("cache writes and cache reads not logged");
+  });
+
+  it("adds no note when no input part is known", () => {
+    const cost = sessionCost({
+      totals: measures(1, {
+        uncachedInput: total(null, 0, 1),
+        cacheWrite: total(null, 0, 1),
+        cacheRead: total(null, 0, 1),
+        inputTokens: total(null, 0, 1),
+      }),
+      cacheHitRatio: null,
+    });
+    const { tiles } = toSessionCostViewModel(cost);
+    expect(tiles.inputTokens.unknownNote).toBeUndefined();
+    expect(tiles.cacheHit.unknownNote).toBeUndefined();
+  });
+
   it("rounds AI Credits to 2 decimal places", () => {
     const cost = sessionCost({ totals: measures(2, { aiCredits: total(2.79598, 2, 2) }) });
     expect(toSessionCostViewModel(cost).tiles.aiCredits.text).toBe("2.80");
@@ -53,11 +101,19 @@ describe("toSessionCostViewModel top turns", () => {
     expect(topTurns[0]).toEqual({
       turnIndex: 17,
       excerpt: "Rewrite the decoder to stream frames instead of…",
+      excerptRecorded: true,
       eventLabel: "compaction",
       aiCredits: { text: "4.10", known: true, estimate: false },
       inputTokens: { text: "310 k", known: true, estimate: false },
     });
     expect(topTurns[1]?.eventLabel).toBe("model switch");
+  });
+
+  // A16: a turn whose text the log lacks has an empty excerpt.
+  it.each(["", "  "])("says the prompt was not recorded for the excerpt %j", (userMessage) => {
+    const base = sessionCost();
+    const cost = sessionCost({ topTurns: [{ ...base.topTurns[0]!, userMessage }] });
+    expect(toSessionCostViewModel(cost).topTurns[0]).toMatchObject({ excerpt: "Prompt not recorded", excerptRecorded: false });
   });
 
   it("shows Unknown for a turn without figures and gives it no event tag", () => {
@@ -133,5 +189,64 @@ describe("toSessionCostViewModel chart", () => {
 
   it("ignores a series that belongs to another session", () => {
     expect(toSessionCostViewModel(sessionCost(), turnSeries({ sessionId: "other" })).chart).toBeUndefined();
+  });
+});
+
+describe("toSessionCostViewModel chart measure", () => {
+  const byTokens = () => toSessionCostViewModel(sessionCost({ rankedBy: "inputTokens" }), turnSeries()).chart;
+
+  it("keeps the AI Credits titles and axis text when ranked by AI Credits", () => {
+    const chart = toSessionCostViewModel(sessionCost({ rankedBy: "aiCredits" }), turnSeries()).chart;
+    expect(chart).toMatchObject({ title: "AI Credits per turn", unitLabel: "AI Credits", maxText: "4.10" });
+  });
+
+  it("plots input tokens, formatted as tokens, when ranked by input tokens", () => {
+    const chart = byTokens();
+    expect(chart).toMatchObject({ title: "Input tokens per turn", unitLabel: "input tokens", maxValue: 310_000, maxText: "310 k" });
+    expect(chart?.points[0]).toMatchObject({ value: 100, text: "100" });
+    expect(chart?.points[2]).toMatchObject({ value: 310_000, text: "310 k", estimate: true });
+  });
+
+  it("draws a turn without input tokens as a gap and notes it", () => {
+    const chart = byTokens();
+    expect(chart?.points[1]).toMatchObject({ value: null, text: "Unknown", unknown: true });
+    expect(chart?.unknownNote).toBe("1 turn unknown");
+  });
+
+  it("has no axis text when no turn is known", () => {
+    const turns = turnSeries().turns.map((turn) => ({ ...turn, inputTokens: null }));
+    expect(toSessionCostViewModel(sessionCost({ rankedBy: "inputTokens" }), turnSeries({ turns })).chart).toMatchObject({ maxValue: null, maxText: null });
+  });
+});
+
+describe("toSessionCostViewModel ranking", () => {
+  it("names AI Credits as the ranking by default", () => {
+    const vm = toSessionCostViewModel(sessionCost());
+    expect(vm.rankedBy).toBe("aiCredits");
+    expect(vm.rankingLabel).toBe("AI Credits");
+  });
+
+  it("names input tokens when the turns were ranked by them", () => {
+    const vm = toSessionCostViewModel(sessionCost({ rankedBy: "inputTokens" }));
+    expect(vm.rankedBy).toBe("inputTokens");
+    expect(vm.rankingLabel).toBe("input tokens");
+  });
+});
+
+describe("toSessionCostViewModel active flag (plan §4.7)", () => {
+  it("carries the server's flag and the note when the session is active", () => {
+    const vm = toSessionCostViewModel(sessionCost({ active: true, lastTurnAt: "2026-11-10T10:00:00Z" }));
+    expect(vm.active).toBe(true);
+    expect(vm.activeNote).toBe("Active session: figures may still change; the latest turn may be incomplete.");
+    expect(vm.activeHint).toBe("Latest turn started in the last 15 minutes; figures may still change");
+  });
+
+  it("is inactive, without a note, when the flag is false or absent", () => {
+    for (const cost of [sessionCost(), sessionCost({ active: false })]) {
+      const vm = toSessionCostViewModel(cost);
+      expect(vm.active).toBe(false);
+      expect(vm.activeNote).toBeUndefined();
+      expect(vm.activeHint).toBeUndefined();
+    }
   });
 });

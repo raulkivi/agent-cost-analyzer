@@ -1,9 +1,14 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
+import { activeView } from "./active-session.js";
+import type { ActiveView } from "./active-session.js";
 import type { CostRollup } from "@agent-cost-analyzer/domain";
 import { formatAiCreditsValue } from "@agent-cost-analyzer/web/lib/format-ai-credits";
-import { UNKNOWN_TEXT, coverageNote, formatCount, formatDay, formatPercent, measureView, pluralize, valueView } from "./format.js";
+import { UNKNOWN_TEXT, coverageNote, formatCount, formatDay, formatPercent, formatTokens, measureView, pluralize, valueView } from "./format.js";
 import type { MeasureView } from "./format.js";
+import { rankingLabel } from "./ranking.js";
+import type { RankedBy } from "./ranking.js";
+import { inputPartNotes, withUnknownNote } from "./input-parts.js";
 
 // U2, spend rollup (docs/plans/mcp-apps.md §4.3). Pure: formats a
 // get_cost_rollup result for display. Session titles are logged text, shown
@@ -24,7 +29,7 @@ export interface DayPoint {
   unknown: boolean;
 }
 
-export interface TopSessionRow {
+export interface TopSessionRow extends ActiveView {
   providerId: string;
   sessionId: string;
   title: string;
@@ -32,9 +37,12 @@ export interface TopSessionRow {
   turnsText: string;
   startedText?: string;
   aiCredits: MeasureView;
+  inputTokens: MeasureView;
 }
 
 export interface CostRollupViewModel {
+  rankedBy: RankedBy;
+  rankingLabel: string;
   periodText?: string;
   tiles: { aiCredits: MeasureView; sessions: MeasureView; turns: MeasureView; cacheHit: MeasureView };
   daily: { points: DayPoint[]; maxValue: number | null };
@@ -69,11 +77,13 @@ export function toCostRollupViewModel(rollup: CostRollup): CostRollupViewModel {
   const knownDays = days.flatMap((day) => (day.value === null ? [] : [day.value]));
 
   const viewModel: CostRollupViewModel = {
+    rankedBy: rollup.rankedBy,
+    rankingLabel: rankingLabel(rollup.rankedBy),
     tiles: {
       aiCredits: measureView(rollup.totals.aiCredits, formatAiCreditsValue),
       sessions: valueView(rollup.sessionCount, formatCount),
       turns: valueView(rollup.turnCount, formatCount),
-      cacheHit: valueView(rollup.cacheHitRatio, formatPercent),
+      cacheHit: withUnknownNote(valueView(rollup.cacheHitRatio, formatPercent), inputPartNotes(rollup.totals).cacheHit),
     },
     daily: { points: days, maxValue: knownDays.length === 0 ? null : Math.max(...knownDays) },
     byModel: shareRows(rollup.byModel.map((row) => ({ label: row.model, aiCredits: row.aiCredits })), grandTotal),
@@ -88,8 +98,10 @@ export function toCostRollupViewModel(rollup: CostRollup): CostRollupViewModel {
         title: session.title,
         model: session.model,
         turnsText: pluralize(session.turns, "turn"),
+        ...activeView(session.active),
         ...(startedText === undefined ? {} : { startedText }),
         aiCredits: note === undefined ? aiCredits : { ...aiCredits, coverageNote: note },
+        inputTokens: valueView(session.inputTokens, formatTokens),
       };
     }),
   };

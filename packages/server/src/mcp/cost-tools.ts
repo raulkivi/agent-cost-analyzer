@@ -1,8 +1,17 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
-import { costComparisonSchema, costRollupSchema, costSeriesSchema, costVarianceSchema, projectCostSchema, sessionCostSchema } from "@agent-cost-analyzer/domain";
+import {
+  ACTIVE_SESSION_WINDOW_MINUTES,
+  costComparisonSchema,
+  costRollupSchema,
+  costSeriesSchema,
+  costVarianceSchema,
+  projectCostSchema,
+  sessionCostSchema,
+} from "@agent-cost-analyzer/domain";
 import { costCompareRequestSchema, costSeriesRequestSchema, costVarianceRequestSchema } from "../services/cost-analysis/cost-query-params.js";
 import type { CostAnalysisQueries } from "../services/cost-analysis/cost-analysis-service.js";
 import { DEFAULT_TOP_PROJECT_SESSIONS, MAX_TOP_PROJECT_SESSIONS } from "../services/cost-analysis/project-cost-builder.js";
@@ -10,6 +19,7 @@ import { DEFAULT_TOP_SESSIONS } from "../services/cost/cost-rollup-builder.js";
 import { DEFAULT_TOP_TURNS } from "../services/cost/session-cost-builder.js";
 import { DEFAULT_ROLLUP_SESSION_LIMIT } from "../services/tool-audit/audit-query-service.js";
 import type { McpToolDeps } from "./mcp-server.js";
+import { rollupActivitySentence, sessionActivitySentence } from "./session-activity-text.js";
 import {
   basisArg,
   bucketArg,
@@ -41,6 +51,15 @@ import {
 export const COST_BASIS_TEXT =
   "Cost figures carry their basis: billed (what GitHub Copilot billed, AI Credits), reported (what the agent logged itself, USD) and priced (tokens × the price version in force on the turn's channel at the turn's time; see get_price_book, and priceVersionIds). The preferred figure is billed, else reported, else priced. A priced figure with apiEquivalent: true is what the same use costs on the API, though a flat-fee plan may have covered it. An unknown figure is {known:false, reason}, never 0; totals give knownTurns of turns per basis. Currencies stay apart; `usd` converts only at 1 AI Credit = $0.01.";
 
+// docs/plans/mcp-apps.md §4.7: a running chat's log is incomplete, so its
+// figures are not final.
+const ACTIVE_TEXT = `\`active\`: true marks a session whose latest turn started in the last ${ACTIVE_SESSION_WINDOW_MINUTES} minutes; its figures may still change.`;
+
+// The JSON stays the first text item (clients parse it); the sentence follows.
+function withSentence(result: CallToolResult, sentence: string | undefined): CallToolResult {
+  return sentence ? { ...result, content: [...result.content, { type: "text", text: sentence }] } : result;
+}
+
 export function registerCostTools(server: McpServer, deps: McpToolDeps, guarded: Guard): void {
   server.registerTool(
     "get_session_cost",
@@ -48,6 +67,8 @@ export function registerCostTools(server: McpServer, deps: McpToolDeps, guarded:
       title: "Get session cost",
       description:
         "Explains what one session cost and why: token totals (uncached input, cache write, cache read, reasoning, output) and AI Credits, each with turn coverage; cache hit ratio; spend per model; the most expensive turns; cost-relevant events (compaction, cache expiry, model switch, ...); and context overhead (system-prompt parts, tools defined but never used); the session's repository and project. null means unknown, never zero — see unavailableReasons. " +
+        ACTIVE_TEXT +
+        " " +
         COST_BASIS_TEXT,
       inputSchema: {
         sessionId: sessionIdArg,
@@ -60,7 +81,7 @@ export function registerCostTools(server: McpServer, deps: McpToolDeps, guarded:
     ({ sessionId, provider, topTurns }) =>
       guarded(async () => {
         const cost = await deps.analysisQueries.getSessionCost(sessionId, provider, { topTurns });
-        return cost ? json(cost) : unknownSession(sessionId, provider);
+        return cost ? withSentence(json(cost), sessionActivitySentence(cost, deps.analysisQueries.now())) : unknownSession(sessionId, provider);
       }),
   );
 
@@ -70,6 +91,8 @@ export function registerCostTools(server: McpServer, deps: McpToolDeps, guarded:
       title: "Get cross-session cost rollup",
       description:
         "Answers \"what is driving my spend?\" across every available provider (or one, with `provider`) in a date window, optionally for one repository or project: token and AI Credits totals with coverage, per-basis cost totals, cache hit ratio, spend by provider, model, day, repository, project, vendor and channel, the most expensive sessions, and `reconciliation` (Copilot's billed AI Credits against the price book, per model and month: a steady gap means the price book is out of date). Follow up with get_session_cost on a top session. The same data the web Dashboard shows. " +
+        ACTIVE_TEXT +
+        " " +
         COST_BASIS_TEXT,
       inputSchema: {
         provider: z.string().optional().describe("Restrict to one log provider id (see list_log_providers). Default: every available provider."),
@@ -90,9 +113,10 @@ export function registerCostTools(server: McpServer, deps: McpToolDeps, guarded:
       annotations: READ_ONLY,
     },
     ({ provider, repository, projectId, since, until, limit, topSessions }) =>
-      guarded(async () =>
-        json(await deps.analysisQueries.getCostRollup({ providerId: provider, since, until, limit }, { topSessions, repository, projectId })),
-      ),
+      guarded(async () => {
+        const rollup = await deps.analysisQueries.getCostRollup({ providerId: provider, since, until, limit }, { topSessions, repository, projectId });
+        return withSentence(json(rollup), rollupActivitySentence(rollup.topSessions, deps.analysisQueries.now()));
+      }),
   );
 }
 

@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
 import { describe, expect, it } from "vitest";
-import { costRollupSchema, measureTotalSchema, sessionCostSchema, turnSeriesSchema } from "./cost.js";
+import { ACTIVE_SESSION_WINDOW_MINUTES, costRollupSchema, measureTotalSchema, sessionCostSchema, turnSeriesSchema } from "./cost.js";
 import { costBasisTotals, sumCostFigures, type TurnCostFigures } from "./cost-figure.js";
 
 const turnCost: TurnCostFigures = {
@@ -87,6 +87,19 @@ describe("sessionCostSchema", () => {
   it("rejects a cache hit ratio outside 0..1", () => {
     expect(() => sessionCostSchema.parse({ ...sampleSessionCost(), cacheHitRatio: 1.2 })).toThrow();
   });
+
+  it("carries the latest turn start and the active flag, both optional", () => {
+    const active = { ...sampleSessionCost(), lastTurnAt: "2026-09-27T08:10:00.000Z", active: true };
+    expect(sessionCostSchema.parse(active)).toEqual(active);
+    expect(sessionCostSchema.parse(sampleSessionCost())).not.toHaveProperty("active");
+    expect(sessionCostSchema.safeParse({ ...sampleSessionCost(), active: "yes" }).success).toBe(false);
+  });
+});
+
+describe("ACTIVE_SESSION_WINDOW_MINUTES", () => {
+  it("is 15 minutes", () => {
+    expect(ACTIVE_SESSION_WINDOW_MINUTES).toBe(15);
+  });
 });
 
 describe("costRollupSchema", () => {
@@ -126,6 +139,21 @@ describe("costRollupSchema", () => {
       ],
     };
     expect(costRollupSchema.parse(rollup)).toEqual(rollup);
+  });
+
+  it("carries a top session's latest turn start and active flag", () => {
+    const session = {
+      providerId: "claude-code",
+      sessionId: "s1",
+      title: "Refactor",
+      model: "claude-x",
+      lastTurnAt: "2026-09-27T08:10:00.000Z",
+      active: true,
+      ...figures,
+    };
+    const schema = costRollupSchema.shape.topSessions.element;
+    expect(schema.parse(session)).toEqual(session);
+    expect(schema.safeParse({ ...session, lastTurnAt: 5 }).success).toBe(false);
   });
 });
 

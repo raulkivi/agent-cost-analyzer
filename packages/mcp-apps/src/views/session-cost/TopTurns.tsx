@@ -7,7 +7,7 @@ import { toTurnDetailViewModel } from "../../view-models/index.js";
 import type { MeasureView, TopTurnRow, TurnDetailViewModel } from "../../view-models/index.js";
 import { callParsed, parseTurnView, useResource } from "./tool-data.js";
 
-// Top turns by AI Credits. A row opens its turn inline: get_turn through the
+// Top turns by the server's ranking (AI Credits or input tokens). A row opens its turn inline: get_turn through the
 // port, the same tool the model can call (plan §4.3, §4.5). Logged text in
 // the excerpt and the detail is shown here and goes nowhere else (§6).
 
@@ -101,7 +101,7 @@ function TurnRow({ port, sessionId, provider, turn, open, onToggle }: { port: Ap
           </button>
         </td>
         <td className="view-cell-text">
-          {turn.excerpt}
+          {turn.excerptRecorded ? turn.excerpt : <span className="view-unknown">{turn.excerpt}</span>}
           {turn.eventLabel !== undefined && (
             <>
               {" "}
@@ -145,7 +145,7 @@ function TurnRow({ port, sessionId, provider, turn, open, onToggle }: { port: Ap
 }
 
 
-export function TopTurns({ port, sessionId, provider, turns }: { port: AppHostPort; sessionId: string; provider: string | undefined; turns: TopTurnRow[] }) {
+export function TopTurns({ port, sessionId, provider, turns, rankingLabel }: { port: AppHostPort; sessionId: string; provider: string | undefined; turns: TopTurnRow[]; rankingLabel: string }) {
   const [openTurns, setOpenTurns] = useState<ReadonlySet<number>>(new Set());
   if (turns.length === 0) return <p className="text-muted">No turns.</p>;
   const toggle = (index: number) =>
@@ -156,7 +156,7 @@ export function TopTurns({ port, sessionId, provider, turns }: { port: AppHostPo
     });
   return (
     <div className="view-scroll" tabIndex={0} role="region" aria-label="Top turns, scrollable">
-      <table className="view-table" aria-label="Top turns by AI Credits">
+      <table className="view-table" aria-label={`Top turns by ${rankingLabel}`}>
         <thead>
           <tr>
             <th className="view-left">#</th>

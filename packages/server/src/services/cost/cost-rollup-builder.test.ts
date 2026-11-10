@@ -85,6 +85,28 @@ describe("buildCostRollup", () => {
     expect(rollup.topSessions[0]).toMatchObject({ providerId: "claude-code", title: "B", turns: 2, inputTokens: 1100 });
   });
 
+  it("flags top sessions whose latest turn started within the window of the given clock", () => {
+    const source = dataset();
+    source.sessions[0] = { ...source.sessions[0], lastTurnAt: "2026-09-28T08:50:00.000Z" };
+    source.sessions[1] = { ...source.sessions[1], lastTurnAt: "2026-09-27T09:10:00.000Z" };
+    const rollup = buildCostRollup(source, {}, { now: new Date("2026-09-28T09:00:00.000Z") });
+
+    expect(costRollupSchema.parse(rollup)).toEqual(rollup);
+    const byId = new Map(rollup.topSessions.map((session) => [session.sessionId, session]));
+    expect(byId.get("a")).toMatchObject({ lastTurnAt: "2026-09-28T08:50:00.000Z", active: true });
+    expect(byId.get("b")?.lastTurnAt).toBe("2026-09-27T09:10:00.000Z");
+    expect(byId.get("b")).not.toHaveProperty("active");
+    expect(byId.get("c")).not.toHaveProperty("lastTurnAt");
+    expect(byId.get("c")).not.toHaveProperty("active");
+  });
+
+  it("leaves activity out of top sessions without a clock", () => {
+    const source = dataset();
+    source.sessions[0] = { ...source.sessions[0], lastTurnAt: "2026-09-28T08:50:00.000Z" };
+
+    expect(buildCostRollup(source).topSessions.find((session) => session.sessionId === "a")).not.toHaveProperty("lastTurnAt");
+  });
+
   it("returns empty breakdowns for an empty dataset", () => {
     const empty = { ...dataset(), sessions: [], turns: [] };
     const rollup = buildCostRollup(empty);

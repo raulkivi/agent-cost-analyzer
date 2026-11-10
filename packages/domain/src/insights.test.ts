@@ -111,6 +111,15 @@ describe("insightsDatasetSchema", () => {
   });
 });
 
+describe("a session row's latest turn start", () => {
+  it("carries the latest turn start the log records, optional", () => {
+    const [session] = sampleDataset().sessions;
+    const withLastTurn = { ...session, lastTurnAt: "2026-10-10T09:40:00.000Z" };
+    expect(insightSessionRowSchema.parse(withLastTurn)).toEqual(withLastTurn);
+    expect(insightSessionRowSchema.parse(session)).not.toHaveProperty("lastTurnAt");
+  });
+});
+
 describe("attribution on insight rows (Phase 15 step 15.4)", () => {
   const turnRow = () => sampleDataset().turns[0]!;
 

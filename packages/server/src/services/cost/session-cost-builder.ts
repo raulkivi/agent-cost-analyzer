@@ -14,6 +14,7 @@ import {
   inputTokensOf,
   rankingFor,
 } from "./cost-aggregation.js";
+import { sessionActivity } from "./session-activity.js";
 
 // Phase 9.12 (docs/plans/mcp-tools-v2.md §4): Session → SessionCost. Pure.
 
@@ -34,6 +35,8 @@ export interface SessionCostContext {
   providerId?: string;
   attributor?: RowAttributor;
   pricer?: TurnPricer;
+  // The time activity is judged against; without it, no activity fields.
+  now?: Date;
 }
 
 function figure(count: TokenCount): number | null {
@@ -109,6 +112,7 @@ export function buildSessionCost(session: Session, options: SessionCostOptions =
     title: session.title,
     model: session.model,
     ...(session.startedAt ? { startedAt: session.startedAt } : {}),
+    ...(context.now ? sessionActivity(session.turns.map((turn) => turn.startedAt), context.now) : {}),
     turnCount: session.turns.length,
     ...(attribution
       ? {

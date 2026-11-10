@@ -38,6 +38,9 @@ export class AnalysisQueryService {
     private readonly providers: ProviderLookup,
     private readonly insights: InsightsSource,
     private readonly costs: SessionCostSources = {},
+    // Judges which sessions are active (docs/plans/mcp-apps.md §4.7);
+    // public so the tools phrase "N minutes ago" against the same time.
+    readonly now: () => Date = () => new Date(),
   ) {}
 
   private provider(providerId?: string): LogProvider {
@@ -52,6 +55,7 @@ export class AnalysisQueryService {
     }
     const cost = buildSessionCost(session, options, {
       providerId: provider.id,
+      now: this.now(),
       ...(this.costs.attribution ? { attributor: this.costs.attribution.snapshot() } : {}),
       ...(this.costs.pricer ? { pricer: this.costs.pricer.snapshot() } : {}),
     });
@@ -66,7 +70,7 @@ export class AnalysisQueryService {
   }
 
   async getCostRollup(range: SessionRangeFilter, options: CostRollupOptions = {}): Promise<CostRollup> {
-    const rollup = buildCostRollup(await this.insights.getDataset(range), options);
+    const rollup = buildCostRollup(await this.insights.getDataset(range), options, { now: this.now() });
     const byRepository = rollup.byRepository.map((group) =>
       group.key === null ? group : { ...group, key: redactRepositoryKey(group.key), label: redactRepositoryKey(group.label) },
     );

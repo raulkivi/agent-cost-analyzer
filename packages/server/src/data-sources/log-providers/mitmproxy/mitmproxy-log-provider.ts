@@ -11,6 +11,7 @@ import { decodeExchange } from "./decoders/registry.js";
 import type { MitmExchangeDecoder } from "./decoders/decoder.js";
 import { computeHarSessionId, computeSegmentSessionId, parseSegmentSessionId } from "./session-id.js";
 import { DEFAULT_IDLE_GAP_THRESHOLD_MS, splitEntriesByIdleGap } from "./split-entries-by-idle-gap.js";
+import { describeExchangeUsage } from "../../../services/turn-usage-sentence.js";
 
 // Phase 15 step 15.1: a HAR capture holds HTTP traffic only, so its sessions
 // are Unattributed until a capture rule (plan §7) assigns them.
@@ -33,10 +34,7 @@ function reasonOf(tokenCount: TokenCount): string {
 
 function buildExchangeExplanation(usage: TurnUsage): string {
   if (usage.uncachedInput.known && usage.output.known) {
-    return (
-      `This exchange sent ${usage.uncachedInput.value.toLocaleString()} input token(s) and ` +
-      `produced ${usage.output.value.toLocaleString()} output token(s) using ${usage.model}.`
-    );
+    return describeExchangeUsage(usage);
   }
   return reasonOf(usage.uncachedInput) || reasonOf(usage.output) || "Usage data is unavailable for this exchange.";
 }

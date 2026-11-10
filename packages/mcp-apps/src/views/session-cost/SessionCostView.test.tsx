@@ -49,6 +49,18 @@ describe("SessionCostView content", () => {
     expect(chart.querySelectorAll("[data-event]").length).toBe(1);
   });
 
+  it("names input tokens as the ranking when the server ranked by them", () => {
+    setup({ cost: sessionCost({ rankedBy: "inputTokens" }) });
+    expect(screen.getByRole("table", { name: "Top turns by input tokens" })).toBeInTheDocument();
+    expect(screen.queryByRole("table", { name: "Top turns by AI Credits" })).not.toBeInTheDocument();
+    expect(screen.getByText("by input tokens · click a turn for its detail")).toBeInTheDocument();
+  });
+
+  it("names AI Credits as the ranking otherwise", () => {
+    setup();
+    expect(screen.getByText("by AI Credits · click a turn for its detail")).toBeInTheDocument();
+  });
+
   it("lists top turns with event tags", () => {
     setup();
     const table = screen.getByRole("table", { name: "Top turns by AI Credits" });
@@ -85,6 +97,27 @@ describe("SessionCostView unknown values", () => {
     await screen.findByRole("img", { name: /AI Credits per turn/ });
   });
 
+  it("explains an Unknown input total with the known parts, and an unlogged prompt (A16)", () => {
+    const base = sessionCost();
+    const cost = sessionCost({
+      totals: measures(1, {
+        uncachedInput: total(14_788, 1, 1),
+        cacheWrite: total(null, 0, 1),
+        cacheRead: total(119_322, 1, 1),
+        inputTokens: total(null, 0, 1),
+      }),
+      cacheHitRatio: null,
+      topTurns: [{ ...base.topTurns[0]!, userMessage: "" }],
+    });
+    setup({ cost });
+    const input = screen.getByRole("group", { name: "Input tokens" });
+    expect(within(input).getByText("Unknown")).toBeInTheDocument();
+    expect(within(input).getByText("14.8 k uncached + 119 k cache read; cache writes not logged")).toBeInTheDocument();
+    expect(within(screen.getByRole("group", { name: "Cache hit" })).getByText("cache writes not logged")).toBeInTheDocument();
+    const rows = within(screen.getByRole("table", { name: "Top turns by AI Credits" })).getAllByRole("row");
+    expect(within(rows[1]!).getByText("Prompt not recorded")).toHaveClass("view-unknown");
+  });
+
   it("shows Unknown for an unknown top turn, and draws an unknown chart turn as a gap (not a zero bar)", async () => {
     setup();
     const row = within(screen.getByRole("table", { name: "Top turns by AI Credits" })).getAllByRole("row")[3]!;
@@ -92,6 +125,16 @@ describe("SessionCostView unknown values", () => {
     const chart = await screen.findByRole("img", { name: /AI Credits per turn/ });
     expect(chart.querySelectorAll("[data-unknown]")).toHaveLength(1);
     expect(chart.querySelector("[data-unknown]")!.getAttribute("fill")).toContain("url(#");
+  });
+});
+
+describe("SessionCostView chart measure", () => {
+  it("plots input tokens under its own heading when the session is ranked by input tokens", async () => {
+    setup({ cost: sessionCost({ rankedBy: "inputTokens" }) });
+    const chart = await screen.findByRole("img", { name: "Input tokens per turn, 4 turns; highest 310 k at turn 2; 1 turn unknown" });
+    expect(screen.getByRole("heading", { name: "Input tokens per turn" })).toBeInTheDocument();
+    expect(within(chart).getByText("Turn 2: 310 k input tokens (estimate), compaction, model switch")).toBeInTheDocument();
+    expect(within(chart).getByText("Turn 1: Unknown")).toBeInTheDocument();
   });
 });
 
@@ -181,7 +224,8 @@ describe("SessionCostView copy-command button", () => {
     fireEvent.click(screen.getByRole("button", { name: "Copy title to open in panel" }));
     await waitFor(() => expect(clipboard!.writeText).toHaveBeenCalledWith("Refactor provider registry"));
     expect(await screen.findByRole("button", { name: "Copied" })).toBeInTheDocument();
-    expect(screen.getByRole("status")).toHaveTextContent('Run "AI Credits Analyzer: Open Session…" from the Command Palette (Ctrl+Shift+P) and paste it.');
+    expect(screen.getByRole("status")).toHaveTextContent('Copied "Refactor provider registry". Run "AI Credits Analyzer: Open Session…" from the Command Palette (Ctrl+Shift+P) and paste it.');
+    expect(screen.getByRole("status").querySelector("code")).toBeNull(); // <code> padding read as stray spaces in High Contrast
     expect(calls(port, "openLink")).toHaveLength(0);
   });
 
@@ -303,5 +347,20 @@ describe("SessionCostView security (plan §6)", () => {
     // user, who pastes it into the Open Session picker, never to the model.
     expect(clipboard.writeText.mock.calls).toEqual(clipboard.writeText.mock.calls.map(() => [`Title ${secret}`]));
     expect(clipboard.writeText).toHaveBeenCalled();
+  });
+});
+
+describe("SessionCostView active session (plan §4.7)", () => {
+  it("shows an active tag beside the meta line and a note when the server flags it", () => {
+    setup({ cost: sessionCost({ active: true }) });
+    const meta = screen.getByText("claude-sonnet-5.5 · 42 turns · Oct 27");
+    expect(within(meta).getByText("active")).toHaveAttribute("title", "Latest turn started in the last 15 minutes; figures may still change");
+    expect(screen.getByText("Active session: figures may still change; the latest turn may be incomplete.")).toBeInTheDocument();
+  });
+
+  it("shows neither when the session is not active", () => {
+    setup();
+    expect(screen.queryByText("active")).not.toBeInTheDocument();
+    expect(screen.queryByText(/Active session/)).not.toBeInTheDocument();
   });
 });

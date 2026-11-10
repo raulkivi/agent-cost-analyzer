@@ -4,6 +4,9 @@ import type { SessionCost, TriggeredEvent, TurnSeries } from "@agent-cost-analyz
 import { formatAiCreditsValue } from "@agent-cost-analyzer/web/lib/format-ai-credits";
 import { formatDay, formatPercent, formatTokens, measureView, pluralize, valueView } from "./format.js";
 import type { MeasureView } from "./format.js";
+import { ACTIVE_NOTE, activeView } from "./active-session.js";
+import type { ActiveView } from "./active-session.js";
+import { inputPartNotes, withUnknownNote } from "./input-parts.js";
 
 // U1, session cost (docs/plans/mcp-apps.md §4.3, §5.5). Pure: formats a
 // get_session_cost result, and optionally the app-only get_turn_series
@@ -14,9 +17,13 @@ import type { MeasureView } from "./format.js";
 
 export type SessionCostTile = MeasureView;
 
+import { rankingLabel } from "./ranking.js";
+import type { RankedBy } from "./ranking.js";
+
 export interface TopTurnRow {
   turnIndex: number;
   excerpt: string; // logged text: display only, never forwarded to the model
+  excerptRecorded: boolean; // false: the log has no turn text; excerpt says so
   eventLabel?: string;
   aiCredits: MeasureView;
   inputTokens: MeasureView;
@@ -24,7 +31,7 @@ export interface TopTurnRow {
 
 export interface TurnPoint {
   turnIndex: number;
-  value: number | null; // AI Credits; null = unknown, drawn as a hatched gap
+  value: number | null; // the chart's measure; null = unknown, drawn as a hatched gap
   text: string;
   unknown: boolean;
   estimate: boolean;
@@ -34,6 +41,9 @@ export interface TurnPoint {
 export interface TurnChart {
   points: TurnPoint[];
   maxValue: number | null; // largest known value; null when none is known
+  maxText: string | null; // maxValue formatted for the y-axis, in the measure's own formatter
+  title: string; // "AI Credits per turn" | "Input tokens per turn"
+  unitLabel: string; // trails a value in a column title: "4.10 AI Credits"
   unknownNote?: string;
   truncatedNote?: string;
 }
@@ -45,7 +55,8 @@ export interface ContextOverheadView {
   unavailableReason?: string;
 }
 
-export interface SessionCostViewModel {
+export interface SessionCostViewModel extends ActiveView {
+  activeNote?: string;
   sessionId: string;
   title: string;
   model: string;
@@ -53,29 +64,61 @@ export interface SessionCostViewModel {
   startedText?: string;
   tiles: { aiCredits: SessionCostTile; inputTokens: SessionCostTile; cacheHit: SessionCostTile; output: SessionCostTile };
   chart?: TurnChart;
+  rankedBy: RankedBy;
+  chartTitle: string; // known before the series loads, so the section heading never flips
+  rankingLabel: string;
   topTurns: TopTurnRow[];
   contextOverhead: ContextOverheadView;
+}
+
+export const PROMPT_NOT_RECORDED = "Prompt not recorded";
+
+function inputTiles(cost: SessionCost): { inputTokens: SessionCostTile; cacheHit: SessionCostTile } {
+  const notes = inputPartNotes(cost.totals);
+  return {
+    inputTokens: withUnknownNote(measureView(cost.totals.inputTokens, formatTokens), notes.inputTokens),
+    cacheHit: withUnknownNote(valueView(cost.cacheHitRatio, formatPercent), notes.cacheHit),
+  };
 }
 
 export function eventLabel(event: TriggeredEvent): string {
   return event.replace(/-/g, " ");
 }
 
-function buildChart(series: TurnSeries): TurnChart {
+// Plots what the Top turns table ranks by, so a Claude Code session (no turn
+// has AI Credits) shows real columns instead of a row of unknown gaps.
+interface ChartMeasure {
+  title: string;
+  unitLabel: string;
+  read: (turn: TurnSeries["turns"][number]) => number | null;
+  format: (value: number) => string;
+}
+
+const CHART_MEASURES: Record<RankedBy, ChartMeasure> = {
+  aiCredits: { title: "AI Credits per turn", unitLabel: "AI Credits", read: (turn) => turn.aiCredits, format: formatAiCreditsValue },
+  inputTokens: { title: "Input tokens per turn", unitLabel: "input tokens", read: (turn) => turn.inputTokens, format: formatTokens },
+};
+
+function buildChart(series: TurnSeries, rankedBy: RankedBy): TurnChart {
+  const measure = CHART_MEASURES[rankedBy];
   const points = series.turns.map((turn): TurnPoint => {
-    const credits = valueView(turn.aiCredits, formatAiCreditsValue);
+    const raw = measure.read(turn);
+    const shown = valueView(raw, measure.format);
     return {
       turnIndex: turn.turnIndex,
-      value: credits.known ? turn.aiCredits : null,
-      text: credits.text,
-      unknown: !credits.known,
-      estimate: credits.known && turn.estimated,
+      value: shown.known ? raw : null,
+      text: shown.text,
+      unknown: !shown.known,
+      // `estimated` covers every figure on the turn (domain TurnSeries), input
+      // tokens included, so it applies to both measures.
+      estimate: shown.known && turn.estimated,
       eventLabels: turn.events.map(eventLabel),
     };
   });
   const known = points.flatMap((point) => (point.value === null ? [] : [point.value]));
   const unknownCount = points.length - known.length;
-  const chart: TurnChart = { points, maxValue: known.length === 0 ? null : Math.max(...known) };
+  const maxValue = known.length === 0 ? null : Math.max(...known);
+  const chart: TurnChart = { points, maxValue, maxText: maxValue === null ? null : measure.format(maxValue), title: measure.title, unitLabel: measure.unitLabel };
   if (unknownCount > 0) {
     chart.unknownNote = unknownCount === points.length && points.length > 1 ? `unknown for all ${points.length} turns` : `${pluralize(unknownCount, "turn")} unknown`;
   }
@@ -105,15 +148,19 @@ export function toSessionCostViewModel(cost: SessionCost, series?: TurnSeries): 
     title: cost.title,
     model: cost.model,
     turnsText: pluralize(cost.turnCount, "turn"),
+    ...activeView(cost.active),
+    ...(cost.active === true ? { activeNote: ACTIVE_NOTE } : {}),
     tiles: {
       aiCredits: measureView(cost.totals.aiCredits, formatAiCreditsValue),
-      inputTokens: measureView(cost.totals.inputTokens, formatTokens),
-      cacheHit: valueView(cost.cacheHitRatio, formatPercent),
+      ...inputTiles(cost),
       output: measureView(cost.totals.output, formatTokens),
     },
+    rankedBy: cost.rankedBy,
+    chartTitle: CHART_MEASURES[cost.rankedBy].title,
+    rankingLabel: rankingLabel(cost.rankedBy),
     topTurns: cost.topTurns.map((turn) => ({
       turnIndex: turn.turnIndex,
-      excerpt: turn.userMessage,
+      ...(turn.userMessage.trim() === "" ? { excerpt: PROMPT_NOT_RECORDED, excerptRecorded: false } : { excerpt: turn.userMessage, excerptRecorded: true }),
       ...(turn.triggeredEvent === undefined ? {} : { eventLabel: eventLabel(turn.triggeredEvent) }),
       aiCredits: valueView(turn.aiCredits, formatAiCreditsValue),
       inputTokens: valueView(turn.inputTokens, formatTokens),
@@ -123,7 +170,7 @@ export function toSessionCostViewModel(cost: SessionCost, series?: TurnSeries): 
   const startedText = formatDay(cost.startedAt);
   if (startedText !== undefined) viewModel.startedText = startedText;
   // A series for another session would draw the wrong turns.
-  if (series !== undefined && series.sessionId === cost.sessionId) viewModel.chart = buildChart(series);
+  if (series !== undefined && series.sessionId === cost.sessionId) viewModel.chart = buildChart(series, cost.rankedBy);
   return viewModel;
 }
 

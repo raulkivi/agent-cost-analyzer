@@ -32,6 +32,8 @@ html[data-host="mcp-app"] .blueprint > .corner { color: var(--brand-accent); }
 .view-kicker .card-kicker { margin: 0; font-weight: 600; }
 .view-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
 .view-heading h1 { margin: 0; font-family: var(--font-body); font-weight: 600; font-size: 17px; line-height: 1.2; overflow-wrap: anywhere; }
+.view-active-note { margin: 0 0 10px; font-size: 12px; }
+.rv-active-tag { margin-left: 6px; vertical-align: middle; }
 .view-meta { font-size: 12px; color: var(--color-text-muted); }
 
 .view-tiles { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
@@ -98,7 +100,15 @@ html[data-host="mcp-app"] .blueprint > .corner { color: var(--brand-accent); }
 @media (max-width: 480px) {
   .view-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .view-turn-grid { grid-template-columns: 1fr; }
-  /* The charts scale with their width; at 360px a 10px axis label drew at
-     about 6px. In viewBox units, so this draws at about 8px. */
-  .view-chart-axis { font-size: 14px; }
+  /* The charts scale with their width (viewBox 566), so the label size is in
+     viewBox units: on-screen size = font-size x container / 566, with the
+     container about 0.85 x the viewport. 13 -> 9.4px at 480; the steps below
+     keep it near 9-10px down to 360 (15 -> 9.5 at 420, 18 -> 9.7 at 360). */
+  .view-chart-axis { font-size: 13px; }
+}
+@media (max-width: 420px) {
+  .view-chart-axis { font-size: 15px; }
+}
+@media (max-width: 360px) {
+  .view-chart-axis { font-size: 18px; }
 }

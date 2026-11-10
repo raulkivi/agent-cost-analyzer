@@ -26,6 +26,7 @@ import { buildTurnInspectorDetail } from "./turn-inspector-builder.js";
 import { computeClaudeCodeFileHash, resolveClaudeCodeSessionFilePath } from "./session-id.js";
 import { resolveClaudeCodeTitle } from "./title-resolver.js";
 import { resolveSessionWorkspace, resolveTurnStartedAt, resolveTurnWorkspace } from "./workspace-resolver.js";
+import { describeTurnUsage } from "../../services/turn-usage-sentence.js";
 
 const PROVIDER_ID = "claude-code";
 const NO_AI_CREDITS_REASON =
@@ -41,13 +42,7 @@ function reasonOf(tokenCount: TokenCount): string {
 
 function buildTurnExplanation(usage: TurnUsage): string {
   if (usage.uncachedInput.known && usage.output.known) {
-    let text =
-      `This turn sent ${usage.uncachedInput.value.toLocaleString()} new input token(s)` +
-      (usage.cacheRead.known && usage.cacheRead.value > 0
-        ? ` and reused ${usage.cacheRead.value.toLocaleString()} from cache`
-        : "");
-    text += `, producing ${usage.output.value.toLocaleString()} output token(s) using ${usage.model}.`;
-    return text;
+    return describeTurnUsage(usage);
   }
   return reasonOf(usage.uncachedInput) || reasonOf(usage.output) || "Usage data is unavailable for this turn.";
 }

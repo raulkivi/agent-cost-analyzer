@@ -1,5 +1,7 @@
 # MCP tools v2: cost, security and turn drill-down, plus a UX pass
 
+**Last changed:** 2026-11-10 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+
 Status: **complete (Phase 9.12)**. This plan extends the read-only stdio MCP
 server from Phase 9.10 ([tool-call-audit.md](tool-call-audit.md) §10).
 
@@ -88,6 +90,11 @@ their output against a domain schema.
 - The cost rollup is built from the same `InsightsDataset` the dashboard
   uses. MCP and the UI therefore agree, and a provider that is unavailable
   or fails shows up in `providers[]`, never as missing spend.
+- Added 2026-11-10 ([mcp-apps.md](mcp-apps.md) §4.7): `SessionCost` and
+  each top session in `CostRollup` carry `lastTurnAt` and `active: true`
+  when the latest turn started within 15 minutes. A running chat's log is
+  incomplete, so its figures may still change. The text output then adds
+  one plain sentence saying so after the JSON.
 
 ### 4.2 New prompts
 

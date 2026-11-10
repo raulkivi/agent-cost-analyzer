@@ -11,7 +11,17 @@ const BY_TOOL: Record<string, ViewId> = {
   list_findings: "findings",
 };
 
-const hasArray = (value: Record<string, unknown>, key: string): boolean => Array.isArray(value[key]);
+// VS Code prefixes the tool name with the server's id ("<server>-<tool>",
+// A0 spike) or uses its LM tool id ("mcp_<server>_<tool>"); Claude Desktop
+// sends the bare name. A separator must precede the known name.
+function viewForToolName(name: string): ViewId | undefined {
+  for (const [tool, view] of Object.entries(BY_TOOL)) {
+    if (name === tool || name.endsWith(`-${tool}`) || name.endsWith(`_${tool}`)) return view;
+  }
+  return undefined;
+}
+
+const hasArray =(value: Record<string, unknown>, key: string): boolean => Array.isArray(value[key]);
 
 // Last resort when the host names no tool: the shape of structuredContent.
 function byShape(structured: unknown): ViewId | undefined {
@@ -31,7 +41,7 @@ function byShape(structured: unknown): ViewId | undefined {
 export function selectView(context: HostContext | undefined, structuredContent: unknown): ViewSelection {
   const name = context?.toolInfo?.tool?.name ?? context?.toolCall?.toolName;
   if (typeof name === "string" && name !== "") {
-    const view = BY_TOOL[name];
+    const view = viewForToolName(name);
     return view ? { view } : { view: "none" };
   }
   const view = byShape(structuredContent);
