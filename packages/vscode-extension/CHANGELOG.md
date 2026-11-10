@@ -19,7 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - a repository comparison whose rows open the cost over time in place, with
     a Back control (a repository has no session drill-down, so the chain stops
     there);
-  - a waterfall of usage, price and mix effects, a per-model table and a
+  - a waterfall of usage, price and mix effects (a fall in your theme's
+    success colour, a rise in its danger colour), a per-model table and a
     **Not explained** tile for turns with no price ("3 turns", "no price for
     these turns; not counted as 0").
 
@@ -32,9 +33,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **MCP server:** `get_project_cost` for an unknown project id now also says
   why there are no projects in this extension.
-- **MCP server:** the cost-change waterfall shows a fall in your theme's
-  success colour (it was an info blue), and the cost-over-time chart's y-axis
-  labels no longer crowd the left edge.
 
 ## [0.4.0] - 2026-11-10
 

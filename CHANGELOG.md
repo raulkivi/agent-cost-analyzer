@@ -16,7 +16,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `compare_costs` shows a comparison table whose rows open the cost-over-time
     view in place, with a Back control at each level (comparison, cost over
     time, session cost).
-  - `explain_cost_change` shows a waterfall of usage, price and mix effects, a
+  - `explain_cost_change` shows a waterfall of usage, price and mix effects (a
+    rise in the host's danger colour, a fall in its success colour, each with
+    its sign), a
     per-model table, the documented price changes and a **Not explained** tile
     for turns with no price ("3 turns", "no price for these turns; not counted
     as 0").
@@ -24,12 +26,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     partial coverage reads "known for N of M turns", and a change with no
     earlier figure says so instead of "from 0". The tools' text output is
     unchanged.
-
-### Changed
-- The cost-change waterfall shows a fall in the host's success colour (it was
-  an info blue close to the period-total blue); a rise stays in the danger
-  colour, and both carry their written sign.
-- The cost-over-time chart's y-axis labels no longer crowd the left edge.
 
 ## [0.10.0] - 2026-11-10
 ### Added
