@@ -1,7 +1,11 @@
 # VS Code UI automation of the manual checks
 
-Status: **merged to `main` (#117, #121, #127), awaiting the owner's decisions
-and T15 (step 10.16)**; §6 records what was built and learned. Extends
+**Last changed:** 2026-11-11 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+
+Status: **merged to `main` (#117, #121, #127; later specs #139, #157,
+#172), awaiting the owner's decisions and T15 (step 10.16)**; §6 records
+what was built and learned, §6.9 the suite and its CI record as of
+2026-11-11. Extends
 [vscode-extension.md](vscode-extension.md) step 10.9 (integration suite,
 manual checks) and step 10.11 (UI check). Automates the rows of
 [vscode-extension-manual-checks.md](vscode-extension-manual-checks.md)
@@ -35,7 +39,7 @@ automation can do.
 | 1.10 Theme and font | Switch to `Default Light Modern`, assert the body class and a themed colour (`--vscode-editor-background`) change in the webview. Set `editor.fontSize` to 20, assert `--vscode-editor-font-size` is `20px` in the webview. **Finding to confirm:** `theme-vscode.css` sizes text from `--vscode-font-size` (the workbench size), not `--vscode-editor-font-size`, so the panel may not follow `editor.fontSize`. The test pins whichever behaviour the owner chooses (§5, Q4). | Yes. |
 | 1.11 System prompt read-only | Open the fixture session with a system prompt, System prompt tab → open in editor (the `openTextDocument` host command). Assert, through `executeWorkbench`, the active editor's URI scheme is `ai-credits-analyzer-doc` (`READ_ONLY_DOCUMENT_SCHEME`), a typed key leaves `isDirty` false and the text unchanged, and select-all + copy puts the prompt on the clipboard (`vscode.env.clipboard.readText()`). | Yes. Clipboard under xvfb needs an X selection owner; to confirm in the spike. |
 | 1.13 Learn view | Through the side bar page objects: open the Learn view, click a scenario, assert the panel is in Learn mode with no scenario list in the panel and full width; click another, assert it changed; click a session in Sessions, assert Analyze mode. | Yes. |
-| 2.1, 2.2, 2.6 MCP setting | Toggle `aiCreditsAnalyzer.mcp.enabled` in User settings. Assert VS Code's own server list (*MCP: List Servers* quick pick) shows no `ai-credits-analyzer` when off, shows it when on, and its tool list has the 19 tools (17 before step 14.5, 9 before step 15.13); off again, it's gone. The integration suite already asserts the provider level (`internal.mcpServerDefinitions`, 19 tools over stdio); this adds the workbench UI. Whether VS Code core lists extension-provided servers without Copilot Chat installed is unverified (spike T0). | Yes, if the list works without Copilot Chat. |
+| 2.1, 2.2, 2.6 MCP setting | Toggle `aiCreditsAnalyzer.mcp.enabled` in User settings. Assert VS Code's own server list (*MCP: List Servers* quick pick) shows no `ai-credits-analyzer` when off, shows it when on, and its tool list has the 20 tools (19 before Phase 12 A13, 17 before step 14.5, 9 before step 15.13); off again, it's gone. The integration suite already asserts the provider level (`internal.mcpServerDefinitions`, 20 tools over stdio); this adds the workbench UI. Whether VS Code core lists extension-provided servers without Copilot Chat installed is unverified (spike T0). | Yes, if the list works without Copilot Chat. |
 | 2.5 Restricted Mode | A workspace folder whose `.vscode/settings.json` sets the setting `true`, user setting off, workspace trust **on** (wdio-vscode-service disables it by default). Assert no server while untrusted, trust the folder through the trust editor, assert the server appears. | Yes, if trust can be re-enabled (§2, F8). |
 | 1.12 Uninstall | Not in the first cut. The service only runs the extension from `extensionPath` as a development extension, which can't be uninstalled. Feasible only by installing the VSIX into the extensions dir, running `code --uninstall-extension`, relaunching and asserting no AI Credits Analyzer UI and an unchanged `settings.json`. Optional task T14. | Yes, if done. |
 
@@ -172,6 +176,9 @@ writes). ExTester is the second fallback only if 1.12 becomes a
 requirement.
 
 ## 3. Architecture
+
+The tree below is the plan. The suite as built (13 spec files, more
+support modules, the VSIX and S9 scripts) is listed in §6.9.
 
 ```
 packages/vscode-extension/
@@ -343,22 +350,25 @@ dependencies that never ship.
 | 1.10 | `layout-theme.e2e.ts` | Light theme changes the body class and `--vscode-editor-background`; `editor.fontSize` reaches the webview as a variable that nothing uses (Q4, decided 2026-11-04: the panel follows the workbench font; the spec pins it) |
 | 1.11 | `panel.e2e.ts` | `ai-credits-analyzer-doc` scheme, a typed key leaves it clean, copy puts the prompt on the clipboard (the clipboard works under xvfb) |
 | 1.13 | `views.e2e.ts` | Learn scenario, another, then a session; plus the Sessions count guard (F5) |
+| 13.8 | `learn-vendors.e2e.ts` | Phase 13 step 13.8 (#139): Learn scenario 15 simulated on Anthropic, OpenAI and xAI models; each turn's cache outcome matches [learn-rule-register.md](../learn-rule-register.md) (image turns a partial hit on Anthropic, "unknown" on the others). **Manual:** that the wording and layout read well |
 | Phase 14 (R1) | `r1-replay.e2e.ts` | Phase 14 step 14.7, main launch: the Agent Host usage-records session replayed on two models (strip total and one Simulated group each), Compare models with both and one measured model, and the replay through the probe and judge in Dark Modern, Light Modern and High Contrast |
 | 1.14 (S9) | `s9-group-by-repository.e2e.ts` | Phase 15 step 15.14: its own `s9` launch with `workspacePath` on a seeded git folder (`scripts/ui-automation/s9-fixture.mts`): Group by repository's rows, the status bar's text and accessible name against `S9_EXPECTED` (checked by `s9-fixture.test.ts`), and the Cost over time tab through the probe and judge in Dark Modern, Light Modern and High Contrast |
-| 2.1, 2.2, 2.6 | `mcp.e2e.ts` | VS Code's own *MCP: List Servers* (`workbench.mcp.listServer`) lists the server without Copilot Chat installed. The 19 tools stay the integration suite's |
+| 2.1, 2.2, 2.6 | `mcp.e2e.ts` | VS Code's own *MCP: List Servers* (`workbench.mcp.listServer`) lists the server without Copilot Chat installed. The 20 tools stay the integration suite's |
 | 2.5 | `mcp-trust.e2e.ts` | Own capability: Workspace Trust on, a folder whose settings enable the server; untrusted gives no server, the Trust button in the Workspace Trust editor gives one |
 
 **Still manual:** §3 (remote), §4, the README review, 1.8's chart
 judgement, 2.1's *Configure Tools* wording in Copilot Chat, and Copilot
 agent mode itself (2.3, 2.4, and a real chat for 1.4) except through the
 owner's opt-in suite (§7). 1.1-1.4 and 1.12 were automated in a second pass
-(§6.4, over fixtures); 2.3 and 2.4 only at tool level, in the integration
-suite. 2.2's "19 tools" is asserted by the integration suite, not here.
+(§6.6, over fixtures); 2.3 and 2.4 only at tool level, in the integration
+suite. 2.2's "20 tools" is asserted by the integration suite, not here.
 
 ### 6.2 Deviations from the plan, and facts it got wrong or left open
 
 - **Versions.** `webdriverio@9.33.0` and `@wdio/cli@9.33.0` don't exist;
-  everything wdio is pinned to 9.33.1 (exact, in `package.json`).
+  everything wdio is pinned to 9.33.1 (exact, in `package.json`), except
+  `@wdio/mocha-framework`, bumped to 10.1.0 with `serialize-javascript`
+  (#119).
 - **F2, F5, F8 verified.** The Test-mode hooks are reachable through
   `executeWorkbench`; `COPILOT_HOME` set in the config reaches VS Code (the
   Sessions guard checks it); `vscodeArgs: { disableWorkspaceTrust: false }`
@@ -404,9 +414,10 @@ suite. 2.2's "19 tools" is asserted by the integration suite, not here.
   passed (35 s and 62 s). The owner's 10-run measurement (T15) still decides
   gating, and a cold CI runner is the case not measured here.
 - **No `actions/cache` for the second download.** Only the wdio download is
-  cached (`.wdio-vscode-service`, keyed on `wdio.conf.mts`); the
-  integration suite's `.vscode-test/` is unchanged.
-- **T14 (1.12)** was built in the second pass (§6.4).
+  cached (`.wdio-vscode-service`, keyed on a hash of `wdio.conf.mts` and
+  `scripts/ui-automation/vscode-version.mts`, where `PINNED_VSCODE_VERSION`
+  lives, 1.145.0); the integration suite's `.vscode-test/` is unchanged.
+- **T14 (1.12)** was built in the second pass (§6.6).
 - **Failure artefacts:** an `afterTest` hook saves a screenshot per failing
   test into `test/ui/out/`, which the CI job uploads.
 
@@ -435,8 +446,8 @@ suite. 2.2's "19 tools" is asserted by the integration suite, not here.
 | T5-T11 | Done, see 6.1 |
 | T12 | Done, informational |
 | T13 | Done |
-| T14 | Not built (Q5) |
-| T15 | Owner |
+| T14 | Done in the second pass (#121, §6.6); Q5 answered by doing it |
+| T15 | Owner. CI evidence so far in §6.9 |
 
 ### 6.5 First CI run (PR #117) and the fix
 
@@ -453,15 +464,15 @@ bar is closed at start-up so the panel's room doesn't depend on the runner.
 Not reproduced locally (screen sizes of 1280x800 and 1600x1000, and 24 busy
 loops, all passed before and after), so the cause is inferred from the log.
 
-### 6.4 Second pass: checks 1.1-1.4, 1.12, 2.3, 2.4 and §3 (branch `feat/ui-automation-remaining`)
+### 6.6 Second pass: checks 1.1-1.4, 1.12, 2.3, 2.4 and §3 (branch `feat/ui-automation-remaining`, #121)
 
 Feasibility, decided by trying each (VS Code 1.145.0, Linux, xvfb):
 
 | Check | Verdict | How, and what it does not prove |
 |---|---|---|
-| 1.1 | Automated, partly | `first-run.e2e.ts`, a bare user-data dir: the `Welcome` tab with the analyzer's walkthrough opens, no notification about it, icon and "setup needed" show. **Not automated:** "didn't reopen after a second reload". A reload ends the wdio session (the proxy lives in the extension host), and a quit-and-relaunch cannot stand in: under the driver VS Code keeps global state in memory (its log says "Creating shared storage database at ':memory:'"; no `state.vscdb` appeared within 30 s of a quit, in 3 of 3 attempts after an earlier pass that was timing luck), so the second launch always reopens the tab. The logic is `WalkthroughOffer`'s unit tests. Not proven either: a VSIX installed in a *new profile*. |
+| 1.1 | Automated, partly | `first-run.e2e.ts`, a bare user-data dir: the `Welcome` tab with the analyzer's walkthrough opens, no notification about it, icon and "setup needed" show. **Not automated:** "didn't reopen after a second reload". A reload ends the wdio session (the proxy lives in the extension host), and a quit-and-relaunch cannot stand in: under the driver VS Code keeps global state in memory (its log says "Creating shared storage database at ':memory:'"; no `state.vscdb` appeared within 30 s of a quit, in 3 of 3 attempts after an earlier pass that was timing luck), so the second launch always reopens the tab. The logic is covered by `WalkthroughOffer`'s unit tests. Not proven either: a VSIX installed in a *new profile*. |
 | 1.2 | Automated, partly | Both halves: Copilot Chat off (`first-run`: `copilot-chat-unavailable`, Fix opens the Extensions view on the id) and Copilot Chat on (`copilot-available`: Fix opens the Settings editor on exactly the setting). `settings.json` is compared before and after each click. |
-| 1.3 | Automated | `first-run.e2e.ts`: welcome text, "Open Learn mode", 18 scenario rows (the other views collapsed, as the tree is virtualised), Setup warnings. |
+| 1.3 | Automated | `first-run.e2e.ts`: welcome text, "Open Learn mode", 17 scenario rows (the other views collapsed, as the tree is virtualised), Setup warnings. |
 | 1.4 | Automated over a fixture session; real chat opt-in only (§7) | `copilot-available.e2e.ts`. A real Copilot chat needs a signed-in account and a model: not available here. |
 | 1.12 | Automated | `uninstall-installed.e2e.ts` + `uninstall-after.e2e.ts`: `vsce package` builds the VSIX, VS Code's own CLI installs it into the launch's extensions dir, VS Code loads it as a user would (no Test-mode hooks), `workbench.extensions.uninstallExtension` removes it, and a relaunch on the profile shows nothing of it; `settings.json` is byte-identical across the uninstall. Not proven: the Extensions view's button and its reload prompt, and Marketplace installs. 3/3 green, about 3 s each launch. |
 | 2.3, 2.4 | Partly (tool level) | The integration suite starts the MCP server as VS Code does and calls `list_sessions`, `get_session_cost`, `list_log_providers` and `list_sessions` with `provider: "claude-code"`. Copilot choosing and calling the tools needs Copilot: manual, or §7. |
@@ -475,9 +486,9 @@ New facts and the decisions they forced:
 - **`--disable-extensions` blocks installed extensions.** 1.12 needs one, so `KeepExtensionsLauncher` (unit-tested, `scripts/ui-automation/keep-extensions-service.mts`) points marked launches at a wrapper that drops the flag. wdio's service hooks run in parallel, so it runs from the config's `onWorkerStart`, after the download. A second development extension cannot be added (the service's shim joins repeated `--extensionDevelopmentPath` flags into one comma-joined path), so the 1.12 launch runs an empty stand-in as its development extension (`test/ui/fixtures/empty-extension`) and the analyzer as the installed VSIX.
 - The wrapper's launch keeps extensions on, so a spec file's mutations to extension state persist between its two launches; each spec file is still one VS Code start.
 
-Run counts, this machine (24 cores): see §6.5.
+Run counts, this machine (24 cores): see §6.7.
 
-### 6.5 Run record of the second pass
+### 6.7 Run record of the second pass
 
 Full UI suite (12 spec files in 5 launches, 24 tests plus 1 skipped), this machine, Linux, 24 cores, VS Code 1.145.0 under xvfb:
 
@@ -486,13 +497,70 @@ Full UI suite (12 spec files in 5 launches, 24 tests plus 1 skipped), this machi
 | 1-3, plain | 3 of 3 green | 70 s, 71 s, 80 s |
 | 4, beside 24 busy loops | green | 164 s |
 
-Every launch starts on a freshly seeded user-data directory (a new profile each run), so "fresh profile" holds for every run; the downloaded VS Code stayed cached. Flake observations: an earlier version of the first-run spec failed under load (an unrelated VS Code notification tripped a zero-notifications assertion, now narrowed to notifications about the walkthrough) and the copilot launch's 30 s status-bar wait was too short under load (now 90 s); no flake since. The 1.1 reopen check was dropped for the reason in §6.4. A cold CI runner is still not measured (T15).
+Every launch starts on a freshly seeded user-data directory (a new profile each run), so "fresh profile" holds for every run; the downloaded VS Code stayed cached. Flake observations: an earlier version of the first-run spec failed under load (an unrelated VS Code notification tripped a zero-notifications assertion, now narrowed to notifications about the walkthrough) and the copilot launch's 30 s status-bar wait was too short under load (now 90 s); no flake since. The 1.1 reopen check was dropped for the reason in §6.6. A cold CI runner is still not measured (T15).
 
-### 6.6 Findings for the owner (second pass)
+### 6.8 Findings for the owner (second pass)
 
 - **Bug, fixed: a session's AI Credits differed between the Sessions list and its detail.** For the seeded usage session the list (and the Sessions tree, status bar and tooltip numbers built from it) said 9.64735, while the session's detail (the panel's turns, and `get_session_cost` over MCP) said 7.33953. Cause: the session's `main.jsonl` has two `user_message` turns and the session store one `turns` row; the list summed every debug-log turn, the detail only those with a store row. 9.64735 is right: it is the sum of all four `llm_request` records' `copilotUsageNanoAiu`, all billed. Both paths now use `summarizeSessionUsage`, and the detail shows the debug-log turn with its usage and why its text is missing (architecture.md §6.2.2, "Debug-log turns without a store row"). The two repro tests (`ui-fixture-credits.test.ts`, `extension.test.ts`) run again.
 - `VscodeHost.waitForExtension` reads the right profile now, but because test mode keeps state in memory it still waits for the Welcome tab on every launch of a profile (as in §6.2).
 - Q5 (uninstall): answered by doing it; it was not flaky in 3 consecutive runs.
+
+### 6.9 The suite and its CI record (fact-checked 2026-11-11)
+
+Checked against `main` at `3a2d5d5` and the GitHub Actions logs.
+
+**Default suite** (`npm run test:ui:vscode`, `wdio.conf.mts`): 13 spec
+files, 38 tests, in six launch configurations (wdio capabilities), each
+with its own seeded user-data dir; one VS Code start per spec file (13
+starts); VS Code 1.145.0 pinned:
+
+| Capability | Spec files | Tests | Checks |
+|---|---|---|---|
+| main | `keyboard`, `layout-theme`, `learn-vendors`, `mcp`, `panel`, `r1-replay`, `views` | 23 | 1.5-1.11, 1.13, 2.1, 2.2, 2.6, 13.8, R1, Sessions guard (F5) |
+| first-run (bare user-data dir) | `first-run` | 4 | 1.1 (partly), 1.2, 1.3 |
+| copilot (built-in Copilot Chat on, signed out) | `copilot-available` | 2 | 1.2, 1.4 over a fixture |
+| trust (Workspace Trust on) | `mcp-trust` | 1 | 2.5 |
+| s9 (a seeded git folder open) | `s9-group-by-repository` | 5 | 1.14 (S9) over a fixture |
+| uninstall (VSIX installed, extensions on) | `uninstall-installed`, `uninstall-after` | 3 | 1.12 |
+
+wdio's summary line reads, for example, "13 passed, 78 total (17%
+completed)": it counts every spec file once per capability (13 × 6) and
+the specs a capability filters out as not completed. 13 passed is the whole suite.
+
+**Opt-in suite** (`npm run test:ui:vscode:copilot`, §7): 1 spec file, 3
+tests (1.4, 2.3, 2.4 with a real chat). Still never run end to end.
+
+**Support modules** (`test/ui/support/`): the `vscode-host.ts` port, page
+objects `analyzer-panel.ts`, `sidebar-views.ts`, `mcp-server-list.ts`,
+`keyboard.ts`, and pure helpers with vitest tests: `focus-probe`,
+`panel-width`, `tree-row`, `walkthrough-state`, `webview-frame`,
+`ui-fixture-env`; plus `screenshots.ts` (failure screenshots) and
+`ui-fixture-stub.ts`. Fixtures and launch helpers in `scripts/ui-automation/`:
+`ui-fixture.mts`, `s9-fixture.mts`, `build-vsix.mts`, `install-vsix.mts`,
+`keep-extensions-service.mts`, `vscode-version.mts` (each script with a
+vitest test except `build-vsix` and `vscode-version`).
+
+**CI record** (`extension-ui` job in `ci.yml`, `continue-on-error: true`),
+every push to `main` from 2026-11-04 (the job's first run) to 2026-11-10:
+
+- 76 of 78 runs green; the job takes about 2.5-3.5 min.
+- `2cc4d3f` (#121): 1.4 failed on the session list-vs-detail AI Credits
+  bug (§6.8); fixed by the next merge, #122. A real failure, not a flake.
+- `92aa2bb` (#160, docs only): S9's Cost over time contrast test in Dark
+  Modern failed with `No option "Cost over time" in the panel`; the next
+  run passed. The only flake seen: 1 in 78.
+
+This is evidence for T15, not its result: T15 also needs the owner's hand
+comparison and the gating decision.
+
+**Gaps found by this check:**
+- Fixed 2026-11-11: the CI cache key hashed only `wdio.conf.mts`, but
+  `PINNED_VSCODE_VERSION` had moved to
+  `scripts/ui-automation/vscode-version.mts`, so a version bump kept the
+  old cache key. The key now hashes both files. TDD exception: YAML, only
+  a real CI run tests it.
+- `release-extension.yml` runs the integration suite and the UI check
+  (`test:ui`), not this suite (planned only once the job is required, §3).
 
 ## 7. Opt-in real-Copilot suite (owner's machine only)
 
