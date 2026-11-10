@@ -35,10 +35,14 @@
 .cv-price-action { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
 .cv-price-note { font-size: 11px; }
 
+@media (max-width: 640px) {
+  /* Costs A and B drop out; the change and its two effects stay (board 13).
+     From 640 px, not 480, so Price stays in view at about 600 px (owner, 2026-11-10). */
+  .view-table .cv-col-wide { display: none; }
+}
+
 @media (max-width: 480px) {
   .cv-two { grid-template-columns: 1fr; }
-  /* Costs A and B drop out; the change and its two effects stay (board 13). */
-  .view-table .cv-col-wide { display: none; }
   /* The chart scales with its 480-unit viewBox, so 11-12 px labels render at about 7 px on a phone; sized in chart units. */
   .cv-waterfall .waterfall-value { font-size: 17px; }
   .cv-waterfall .waterfall-name { font-size: 16px; }

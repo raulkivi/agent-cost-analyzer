@@ -75,6 +75,15 @@ describe("CostChangeView content", () => {
     expect(css).not.toContain("--color-text-info");
   });
 
+  // Owner decision 2026-11-10: at about 600 px the by-model table scrolled sideways and hid Price.
+  it("drops costs A and B from the by-model table at 640 px, so Price fits at about 600 px", () => {
+    const css = readFileSync(path.join(__dirname, "cost-change/cost-change.css"), "utf8");
+    const at640 = /@media \(max-width: 640px\)\s*{([^@]*)}/.exec(css)?.[1] ?? "";
+    expect(at640).toMatch(/\.view-table \.cv-col-wide\s*{\s*display:\s*none/);
+    const at480 = /@media \(max-width: 480px\)\s*{([^@]*)}/.exec(css)?.[1] ?? "";
+    expect(at480).not.toContain("cv-col-wide");
+  });
+
   it("draws the waterfall with a written sign on every effect, so colour is never the only cue", () => {
     setup();
     const chart = screen.getByRole("img", { name: /usage \+50\.00, price −20\.00, mix \+10\.00/ });

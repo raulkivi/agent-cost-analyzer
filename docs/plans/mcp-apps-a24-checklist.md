@@ -18,6 +18,8 @@ code-insiders --install-extension ai-credits-analyzer-<version>.vsix --force
 
 Use `code` instead of `code-insiders` if that is what you have. The repo's `install-extension` skill does the same steps. Then run **Developer: Reload Window**.
 
+Or install the Marketplace pre-release: on the extension's page in VS Code, choose **Switch to Pre-Release Version** (0.5.0 or later), then reload. This tests the published package.
+
 You need these on this machine:
 
 - Copilot Chat sessions in at least two repositories, over at least three weeks, for VS Code.
@@ -90,11 +92,20 @@ Prompts below use `<repo>` and `<repo2>` for repository names as `list_repositor
 - the card background follows the chat (transparent);
 - the focus ring shows when you Tab through the view.
 
+**1.7a Record the High Contrast colours.** No contrast test covers Light High Contrast, and the Dark High Contrast success colour is VS Code's default, not a recording. For each of **Dark High Contrast** and **Light High Contrast**:
+
+1. Switch to the theme (**Preferences: Color Theme**).
+2. Run **Developer: Generate Color Theme From Current Settings**.
+3. Save the opened file as `docs/plans/mcp-apps-a24-results/vscode-hc-dark-theme.jsonc` or `vscode-hc-light-theme.jsonc`.
+
+Claude adds both sets to `packages/mcp-apps/test/theme/host-sets.ts` and the contrast tests after A24.
+
 **1.8 Narrow width.** Make the chat panel narrow (about 360 px) and look at U9, U10 and U11. Nothing scrolls sideways.
 
 - U9: the chart scales down, labels thin out and the tiles stack.
 - U10: the per-session, per-day, per-turn and cache figures move under each row name ("per session … · per active day … · per turn … · cache hit …").
 - U11: the cost A and B columns drop out of the model table; the change and the effects stay. The waterfall labels stay readable.
+- U11 at about 600 px (a normal-width chat panel): costs A and B are already gone and the Price column is in view without sideways scrolling (owner decision 2026-11-10).
 
 **1.9 Footer.** Every view ends with **Read-only · local logs · v** and the installed version. Nothing in a view asks you to write or run anything, and you can select its text.
 
@@ -164,6 +175,8 @@ If you have no two-currency data, mark n/a.
 | 5 | Mixed currencies: AI Credits first, then USD with "$"; the header names both. | 2.3 |
 | 6 | "no earlier figure" when the earlier period has nothing priced. | 1.3, 1.5 |
 | – | **Not explained** tile: "3 turns", "no price for these turns; not counted as 0". | 1.5 |
+| – | Period totals in the brand data colour, not the board's blue (A23; the blue failed 3:1 on Claude dark). Confirmed 2026-11-10. | 1.5, 2.8 |
+| – | U11's by-model table drops costs A and B from 640 px, so Price fits at about 600 px. | 1.8 |
 
 ## 5. Results
 
@@ -198,6 +211,8 @@ If you have no two-currency data, mark n/a.
 | Dark theme readable (`vscode-dark-u10.png`, `claude-dark-u9.png`, `claude-dark-u11.png`) | | |
 | Dark High Contrast readable (`vscode-hc-dark-u11.png`) | | n/a |
 | Light High Contrast readable (`vscode-hc-light-u11.png`, optional) | | n/a |
+| High Contrast colours recorded (1.7a: `vscode-hc-dark-theme.jsonc`, `vscode-hc-light-theme.jsonc`) | | n/a |
+| U11 at about 600 px: Price in view, no sideways scroll | | |
 | Narrow, about 360 px: no sideways scroll (`vscode-narrow-u10.png`, `claude-narrow-u11.png`) | | |
 | U10 narrow: measures move under the row name; U11 narrow: costs A and B drop | | |
 | Keyboard: Tab/Enter drill-downs, Back, focus ring visible | | |
