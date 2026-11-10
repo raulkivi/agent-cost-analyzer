@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- Interactive views for the cost-analysis MCP tools in MCP Apps hosts:
+  `get_repository_cost` and `get_project_cost` show cost over time by basis
+  with documented and inferred price-change markers (for a project also
+  vendor then model, tokens by type, and top sessions that open the session
+  view in place); `compare_costs` shows a comparison table whose rows open
+  the cost-over-time view in place; `explain_cost_change` shows a waterfall
+  of usage, price and mix effects, a per-model table and the turns it could
+  not explain. Every figure names its basis and currency, and a change with
+  no earlier figure says so instead of "from 0". The tools' text output is
+  unchanged.
 
 ## [0.10.0] - 2026-11-10
 ### Added

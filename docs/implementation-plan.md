@@ -1426,9 +1426,10 @@ and 0.12.0. Stable extension releases use even minors.
 
 **Status (2026-11-10)**: in progress. The MVP (U1–U3, A0–A16) met its
 exit criterion and shipped in extension 0.4.0 and app 0.10.0. Increment 2:
-A17 (web exports), A18 (view models) and A19 (`_meta.ui` on the four
-cost-analysis tools) are done; the A17b boards are drawn and wait for the
-owner's approval. Increment 3 (A25–A33) has not started. A1–A4 (turn series, brand
+A17 (web exports), A18 (view models), A19 (`_meta.ui` on the four
+cost-analysis tools) and A20–A22 (views U9, U10, U11) are done; the A17b
+boards are drawn and wait for the owner's approval; next A23 (review and
+docs) and A24 (owner checks). Increment 3 (A25–A33) has not started. A1–A4 (turn series, brand
 injection and identity, web package exports) and A8 (the `registerAppViews`
 server group, `get_turn_series`, `_meta.ui` on three tools, ext-apps 1.7.5)
 done; A0 host spike done by the owner (both hosts refuse `vscode://`
