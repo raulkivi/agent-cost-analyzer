@@ -12,17 +12,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **MCP server: cost-analysis views.** In VS Code Copilot Chat,
-  `get_repository_cost`, `compare_costs` and `explain_cost_change` now show
-  interactive views: cost over time by basis with price-change markers, a
-  repository comparison whose rows open the cost over time in place, and a
-  waterfall of what changed the cost. Project questions show why this
-  extension has no projects instead of an empty chart. The text output is
-  unchanged.
+  `get_repository_cost`, `get_project_cost`, `compare_costs` and
+  `explain_cost_change` now show interactive views:
+  - cost over time by basis (billed, reported, priced and the preferred
+    total) with documented and inferred price-change markers;
+  - a repository comparison whose rows open the cost over time in place, with
+    a Back control (a repository has no session drill-down, so the chain stops
+    there);
+  - a waterfall of usage, price and mix effects, a per-model table and a
+    **Not explained** tile for turns with no price ("3 turns", "no price for
+    these turns; not counted as 0").
+
+  Figures that cover only some turns say "known for N of M turns", AI Credits
+  and USD stay apart, and a change with no earlier figure says so. Project
+  questions show why this extension has no projects instead of an empty chart.
+  The text output is unchanged.
 
 ### Changed
 
 - **MCP server:** `get_project_cost` for an unknown project id now also says
   why there are no projects in this extension.
+- **MCP server:** the cost-change waterfall shows a fall in your theme's
+  success colour (it was an info blue), and the cost-over-time chart's y-axis
+  labels no longer crowd the left edge.
 
 ## [0.4.0] - 2026-11-10
 

@@ -597,15 +597,19 @@ text is redacted and truncated first.
 
 ### Interactive views in the chat
 
-In a chat host that supports MCP Apps, three of the tools above show an
+In a chat host that supports MCP Apps, six of the tools above show an
 interactive view next to their text answer, so you can click through a
-session instead of asking one question after another:
+session, a repository or a project instead of asking one question after
+another:
 
 | You ask about | Tool | The view shows |
 |---|---|---|
 | One session's cost | `get_session_cost` | Tiles (AI Credits, input, cache hit, output), AI Credits per turn as a chart with compaction and model-switch markers, the most expensive turns, and context overhead |
 | This week's spend | `get_cost_rollup` | Tiles, spend per day, spend by model and provider, and the most expensive sessions |
 | Anything risky | `list_findings` | Severity tiles and a table of findings, with filters |
+| What a repository or project cost, over time | `get_repository_cost`, `get_project_cost` | Cost tiles per basis, cost per day, week or month with price-change markers; for a project also cost by vendor then model, tokens by type and the top sessions |
+| Which repository or project costs the most | `compare_costs` | A table of total, change, cost per session, per active day and per turn, and cache hit, with share bars |
+| Why the cost changed | `explain_cost_change` | A waterfall of usage, price and mix effects, a table by model, the turns it could not explain and the documented price changes |
 
 The views use the product's name and colours and follow the host's light or
 dark theme. They only show what the tool already returned; they read your
@@ -631,6 +635,20 @@ text.
 - **A top session** (cost rollup view) opens that session's cost view in
   place. **Back to cost rollup** returns to the rollup without loading it
   again.
+- **A row** (comparison view) opens that repository's or project's cost
+  over time in place. **Back to comparison** returns to the table with
+  focus on the row you left, without loading it again.
+- **A top session** (project cost over time view) opens that session's cost
+  view in place, and **Back to cost over time** returns (**Back to** the
+  project's name when you came from the comparison). So the chain is
+  comparison, then cost over time, then session cost, each with its own
+  Back. Repositories have no session drill-down: a repository's cost over
+  time has no top sessions, and the chain stops there.
+- **The currency control** (cost over time view) appears when the figures are
+  in both AI Credits and USD and switches the chart between them.
+- **A model row** (cost change view) opens to its token types, with tokens
+  and unit prices per 1M tokens from the first period to the second, and the
+  price versions used. This view calls no tool.
 - **The filters** (findings view) are a kind selector and a minimum
   severity. Each change asks the server again; the table you had stays on
   screen while it loads. Each finding's redacted evidence is collapsed until
@@ -648,6 +666,48 @@ text.
 
 Clicking through a view calls the server through the host; the model never
 sees those answers, so it costs no model tokens.
+
+**Cost over time, comparison and cost change.** Every money figure in these
+views names its basis and its currency.
+
+- **Basis.** The cost over time view shows four tiles: the total on the
+  preferred basis (billed, then reported, then priced), then billed,
+  reported and priced, each with its own coverage. The comparison follows
+  the basis you asked for. The cost change view always uses the priced
+  basis (tokens times the price in force when each turn ran), and says so.
+- **Coverage.** A tile or a cell covering only some turns says "known for
+  12 of 40 turns". A day, week or month with only some turns known is drawn
+  hatched, as a floor. A figure with nothing known reads **Unknown**, never 0.
+- **Currencies stay apart.** AI Credits and USD are never added or
+  converted. A cell with both lists AI Credits first, then USD with a "$",
+  and the comparison's **Together** row has two totals.
+- **No earlier figure.** A change against a period with nothing known reads
+  "no earlier figure", never "from 0". The cost change view then shows the
+  later period's figure and skips the waterfall.
+- **Price changes.** A change in the price book is **documented**: a solid
+  marker on the chart and a "documented" tag in the list. A change seen only
+  by comparing billed with priced figures is **inferred**: a dashed marker
+  and an "inferred" tag. The cost change view lists documented changes
+  between its two periods. Its **Price changes** button is shown disabled
+  with a note, because the price timeline it will open is not built yet.
+- **The waterfall.** It goes from the first period's total to the second's
+  through usage, price and mix. A rise uses the host's danger colour, a fall
+  its success colour, and each carries its written sign, so colour is never
+  the only cue. The three effects add up to the change. Usage is the later
+  period's tokens at the earlier period's average price, before any change
+  of model; price is the later tokens times the change in unit price; mix is
+  work that moved between models.
+- **Not explained.** Turns with no price for their model are left out of
+  every number. The **Not explained** tile counts them ("3 turns", "no price
+  for these turns; not counted as 0") and the section lists the reasons for
+  each period. They are never counted as 0.
+- **No projects.** Questions about projects in the VS Code extension show
+  **No projects here**, with the reason in place of a chart: projects are
+  edited in the standalone Agent Cost Analyzer app, and every turn is in No
+  project. The extension's chain therefore stops at the cost over time view
+  for a repository, and a project comparison shows the same state. Ask about
+  repositories instead. In the standalone product, "no projects" reads
+  "There are no projects to compare."
 
 **Unknown means not reported.** A figure the log doesn't record reads
 **Unknown**, never 0, in every view. When only some turns have a figure the

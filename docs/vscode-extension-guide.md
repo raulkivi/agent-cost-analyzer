@@ -506,14 +506,19 @@ more on the tools.
 
 ### Interactive views in Copilot Chat
 
-Three of the tools show an interactive view in the chat, next to the text
-answer, when you ask about them in agent mode:
+Six of the tools show an interactive view in the chat, next to the text
+answer, when you ask about them in agent mode. VS Code may show a tool's name
+with the server's name in front of it; the tool is the same:
 
 | You ask about | Tool | The view shows |
 |---|---|---|
 | One session's cost | `get_session_cost` | Tiles (AI Credits, input, cache hit, output), AI Credits per turn as a chart with compaction and model-switch markers, the most expensive turns, and context overhead |
 | This week's spend | `get_cost_rollup` | Tiles, spend per day, spend by model and provider, and the most expensive sessions |
 | Anything risky | `list_findings` | Severity tiles and a table of findings, with filters |
+| What a repository cost, over time | `get_repository_cost` | Cost tiles per basis, cost per day, week or month with price-change markers |
+| Which repository costs the most | `compare_costs` | A table of total, change, cost per session, per active day and per turn, and cache hit, with share bars |
+| Why a repository's cost changed | `explain_cost_change` | A waterfall of usage, price and mix effects, a table by model, the turns it could not explain and the documented price changes |
+| What a project cost | `get_project_cost` | The reason there are no projects here, in place of a chart |
 
 VS Code shows the views inline in the chat only (no fullscreen). They need
 no setup beyond the MCP server being on: the views ship inside the
@@ -537,6 +542,46 @@ What you can click:
   Open Session…** and paste the title into the picker that opens; the list
   narrows to that session and Enter opens it. You can also open the session
   from the Sessions view.
+
+- **A row** in the comparison opens that repository's cost over time in
+  place. **Back to comparison** returns to the table with focus on the row
+  you left. The chain stops there: this extension has no projects, and a
+  repository's cost over time has no top sessions, so there is no drill-down
+  into a session from it.
+- **The currency control** in the cost over time view appears when the
+  figures are in both AI Credits and USD.
+- **A model row** in the cost change view opens to its token types, unit
+  prices per 1M tokens and price versions. That view calls no tool.
+
+**Cost over time, comparison and cost change.** Every money figure names its
+basis and its currency.
+
+- **Basis.** The cost over time view shows tiles for the preferred total
+  (billed, then reported, then priced), then billed, reported and priced. The
+  cost change view always uses the priced basis and says so.
+- **Coverage.** A figure covering only some turns says "known for 12 of 40
+  turns", and a day, week or month with only some turns known is drawn
+  hatched. A figure with nothing known reads **Unknown**, never 0.
+- **Currencies stay apart.** AI Credits come first, then USD with a "$".
+  They are never added or converted.
+- **No earlier figure.** A change against a period with nothing known reads
+  "no earlier figure", never "from 0".
+- **Price changes.** Changes in the price book are **documented**: a solid
+  marker and a "documented" tag. Changes inferred from your billed AI Credits
+  are **inferred**: a dashed marker and an "inferred" tag. The cost change
+  view's **Price changes** button is shown disabled with a note, because the
+  price timeline it will open is not built yet.
+- **The waterfall.** A rise uses your theme's danger colour and a fall its
+  success colour, and each carries its written sign. The usage, price and mix
+  effects add up to the change.
+- **Not explained.** Turns with no price for their model are counted in the
+  **Not explained** tile ("3 turns", "no price for these turns; not counted
+  as 0"), listed with reasons, and left out of every number.
+- **No projects.** Asking for a project's cost shows **No projects here**
+  with this extension's reason in place of a chart: *AI Credits Analyzer has
+  no projects: projects are edited in the standalone Agent Cost Analyzer app.
+  Every turn is in No project; repositories are listed as usual.* A project
+  comparison shows the same state. Ask about repositories instead.
 
 Clicking through a view calls the server through VS Code and costs no model
 tokens. A figure the log doesn't record reads **Unknown**, never 0. The
