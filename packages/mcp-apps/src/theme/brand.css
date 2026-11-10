@@ -29,6 +29,10 @@ html[data-host="mcp-app"] {
   --brand-fb-surface: #e9e9ea;
   --brand-fb-text-muted: color-mix(in srgb, var(--brand-fb-text) 70%, transparent);
   --brand-fb-divider: color-mix(in srgb, var(--brand-fb-text) 16%, transparent);
+  /* A rise and a fall (U11's waterfall) when the host sends no danger or
+     success colour. */
+  --brand-fb-danger: var(--color-diverging-increase);
+  --brand-fb-success: var(--color-series-6);
 }
 
 html[data-host="mcp-app"][data-theme="dark"] {
@@ -44,4 +48,7 @@ html[data-host="mcp-app"][data-theme="dark"] {
   --brand-fb-surface: #38383a;
   --brand-fb-text-muted: color-mix(in srgb, var(--brand-fb-text) 70%, transparent);
   --brand-fb-divider: color-mix(in srgb, var(--brand-fb-text) 16%, transparent);
+  /* theme.css's red and green are drawn for a light ground: under 3:1 here. */
+  --brand-fb-danger: #f07a78;
+  --brand-fb-success: #5fb85f;
 }

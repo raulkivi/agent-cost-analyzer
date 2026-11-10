@@ -43,7 +43,9 @@ export const CLAUDE_SETS: HostSet[] = ["light", "dark"].map((mode) => {
 // they are resolved here against VS Code's built-in Light Modern, Dark Modern
 // and Dark High Contrast colours, the values the approved A0b boards use
 // (docs/plans/mockups/mcp-apps/README.md). Light High Contrast was not
-// recorded, so it is not listed.
+// recorded, so it is not listed. testing.iconPassed (the host's success
+// colour, U11's fall) is the boards' value for Light and Dark Modern and VS
+// Code's registered default for Dark High Contrast.
 const VSCODE_PALETTES: Record<string, Record<string, string>> = {
   "vscode-light": {
     "--vscode-foreground": "#3b3b3b",
@@ -55,6 +57,7 @@ const VSCODE_PALETTES: Record<string, Record<string, string>> = {
     "--vscode-textLink-foreground": "#005fb8",
     "--vscode-errorForeground": "#f85149",
     "--vscode-editorWarning-foreground": "#bf8803",
+    "--vscode-testing-iconPassed": "#388a34",
     "--vscode-focusBorder": "#005fb8",
   },
   "vscode-dark": {
@@ -67,6 +70,7 @@ const VSCODE_PALETTES: Record<string, Record<string, string>> = {
     "--vscode-textLink-foreground": "#4daafc",
     "--vscode-errorForeground": "#f85149",
     "--vscode-editorWarning-foreground": "#cca700",
+    "--vscode-testing-iconPassed": "#73c991",
     "--vscode-focusBorder": "#0078d4",
   },
   "vscode-hc-dark": {
@@ -78,6 +82,7 @@ const VSCODE_PALETTES: Record<string, Record<string, string>> = {
     "--vscode-widget-border": "#6fc3df",
     "--vscode-textLink-foreground": "#21a6ff",
     "--vscode-errorForeground": "#f48771",
+    "--vscode-testing-iconPassed": "#73c991",
     "--vscode-editorWarning-foreground": "#ffd370",
     "--vscode-focusBorder": "#f38518",
   },
