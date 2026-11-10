@@ -3,7 +3,7 @@
 import { describe, expect, it } from "vitest";
 import { basisTotals, costSeries, costTotal, point, usdTotal } from "../../view-models/cost-analysis-fixtures.js";
 import { toCostSeriesViewModel } from "../../view-models/index.js";
-import { buildChart } from "./chart-model.js";
+import { AXIS_FONT_MAX, AXIS_LABEL_GAP, buildChart } from "./chart-model.js";
 
 const week = (start: string, end: string, period: string, total: ReturnType<typeof costTotal>) => point(period, start, end, total, total);
 
@@ -97,5 +97,26 @@ describe("buildChart markers", () => {
   it("leaves a change outside every bucket out of the chart", () => {
     const outside = vmOf([week("2026-01-05", "2026-01-11", "2026-W02", costTotal(10, 5, 5))]);
     expect(buildChart(outside.chart.points, "AI_CREDITS", outside.markers).markers).toEqual([]);
+  });
+});
+
+describe("buildChart left inset", () => {
+  const inset = (amount: number) => buildChart(vmOf([week("2026-08-03", "2026-08-09", "2026-W32", costTotal(amount, 1, 1))]).chart.points, "AI_CREDITS", []).leftInset;
+  // Axis text is CSS-sized from 10 to 18 viewBox units on a narrow host, about 0.6 em per glyph.
+  const widest = (chars: number) => chars * 0.6 * AXIS_FONT_MAX;
+
+  it("leaves room for the widest axis label at the largest label size, plus the gap to the axis and the edge", () => {
+    for (const [amount, label] of [[26.2, "26.2"], [12_345, "12K"], [1234.5, "1235"], [0.043, "0.043"]] as const) {
+      expect(inset(amount)).toBeGreaterThanOrEqual(widest(label.length) + AXIS_LABEL_GAP);
+    }
+  });
+
+  it("grows with the label and never shrinks below the default plot margin", () => {
+    expect(inset(0.043)).toBeGreaterThan(inset(2));
+    expect(inset(2)).toBeGreaterThanOrEqual(36);
+  });
+
+  it("uses the default margin when no bucket has a figure", () => {
+    expect(buildChart([], "USD", []).leftInset).toBe(36);
   });
 });

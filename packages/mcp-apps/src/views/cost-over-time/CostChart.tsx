@@ -3,7 +3,7 @@
 import { formatTick } from "@agent-cost-analyzer/web/lib/cost/cost-format";
 import type { Currency } from "@agent-cost-analyzer/domain";
 import { useId } from "react";
-import type { ChartModel } from "./chart-model.js";
+import { AXIS_TO_PLOT, type ChartModel } from "./chart-model.js";
 import "./cost-over-time.css";
 
 // U9's cost per bucket (board CostOverTime.dc.html). Drawn here, not with the
@@ -17,7 +17,6 @@ import "./cost-over-time.css";
 
 const WIDTH = 566;
 const HEIGHT = 156;
-const LEFT = 36;
 const TOP = 20;
 const BASE = 128;
 const MAX_LABELS = 6;
@@ -47,6 +46,7 @@ export function CostChart({ chart, currency, heading, noun }: { chart: ChartMode
   const { bars } = chart;
   if (bars.length === 0) return <p className="text-muted chart-empty">{`No ${noun}s in this period.`}</p>;
 
+  const LEFT = chart.leftInset;
   const plotWidth = WIDTH - LEFT - 4;
   const step = plotWidth / bars.length;
   const barWidth = Math.max(1, Math.min(40, step * 0.7));
@@ -64,11 +64,11 @@ export function CostChart({ chart, currency, heading, noun }: { chart: ChartMode
         </pattern>
       </defs>
       <line x1={LEFT} x2={WIDTH - 4} y1={BASE} y2={BASE} stroke="var(--color-divider)" />
-      <text x={LEFT - 5} y={BASE + 3} textAnchor="end" className="view-chart-axis">
+      <text x={LEFT - AXIS_TO_PLOT} y={BASE + 3} textAnchor="end" className="view-chart-axis">
         {formatTick(0, unit)}
       </text>
       {chart.max !== null && (
-        <text x={LEFT - 5} y={TOP + 3} textAnchor="end" className="view-chart-axis">
+        <text x={LEFT - AXIS_TO_PLOT} y={TOP + 3} textAnchor="end" className="view-chart-axis">
           {formatTick(chart.max, unit)}
         </text>
       )}

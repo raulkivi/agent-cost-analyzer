@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
+import { EXTENSION_NO_PROJECTS_REASON } from "@agent-cost-analyzer/domain";
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import type { CostComparison } from "@agent-cost-analyzer/domain";
@@ -14,7 +15,7 @@ import { CostCompareView } from "./CostCompareView.js";
 const brand: ViewBrand = { productId: "standalone", displayName: "Agent Cost Analyzer", version: "0.11.0" };
 const extensionBrand: ViewBrand = { productId: "vscode-extension", displayName: "AI Credits Analyzer", version: "0.4.0" };
 
-const REASON = "AI Credits Analyzer has no projects: projects are edited in the standalone Agent Cost Analyzer app. Every turn is in No project; repositories are listed as usual.";
+const REASON = EXTENSION_NO_PROJECTS_REASON;
 
 // A port whose callTool waits for the test to answer.
 class DeferredPort extends FakeAppHostPort {

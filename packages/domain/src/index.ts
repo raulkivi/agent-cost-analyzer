@@ -472,3 +472,4 @@ export {
   type SessionReplay,
   type SessionReplayComparison,
 } from "./session-replay.js";
+export { EXTENSION_NO_PROJECTS_REASON } from "./no-projects-reason.js";

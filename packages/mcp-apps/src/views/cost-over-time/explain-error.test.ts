@@ -1,9 +1,10 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
+import { EXTENSION_NO_PROJECTS_REASON } from "@agent-cost-analyzer/domain";
 import { describe, expect, it } from "vitest";
 import { explainError } from "./explain-error.js";
 
-const REASON = "AI Credits Analyzer has no projects: projects are edited in the standalone Agent Cost Analyzer app. Every turn is in No project; repositories are listed as usual.";
+const REASON = EXTENSION_NO_PROJECTS_REASON;
 const BASE = 'Unknown project id "provider-platform". Call list_projects to find valid ids.';
 
 describe("explainError", () => {
