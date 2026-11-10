@@ -750,7 +750,7 @@ Starts after the MVP's exit criterion is met (A16).
 
 ### 7.2 Increment 3: replay, prices, billing, audit, picker
 
-Starts after Increment 2's exit criterion is met (A24).
+Starts after Increment 2's exit criterion is met (A24, now step 10.17 G4-G6).
 
 | # | Task | Complexity | Model | Depends on |
 |---|---|---|---|---|
@@ -763,7 +763,7 @@ Starts after Increment 2's exit criterion is met (A24).
 | A30 | U4 `AuditView` and U5 `SessionPickerView` (the picker sends only the fixed "Analyse session <id>" template) | medium | Sonnet | A25b, A26 |
 | A31 | Fullscreen mode for U2 and U9 (`requestDisplayMode`) | low | Haiku | A26 |
 | A32 | Accessibility and security review of A27–A31 (as A14), and docs: architecture.md, threat-model.md §6, User Guide, extension guide, both CHANGELOGs | medium | Opus | A27–A31 |
-| A33 | Increment 3 checks, written as wdio and Playwright specs (step 10.17), not manual: VS Code Copilot Chat (no U14/U15 there) and Claude Desktop, light and dark | — | owner | A32 |
+| A33 | Increment 3 checks, written as wdio and Playwright specs (step 10.17), not manual: VS Code Copilot Chat (no U14/U15 there) and Claude Desktop, light and dark | — | none (specs, step 10.17) | A32 |
 
 ### 7.3 Target releases
 

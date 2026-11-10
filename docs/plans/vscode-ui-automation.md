@@ -233,7 +233,8 @@ packages/vscode-extension/
   so the existing job's time is unchanged: `npm ci`, build, `actions/cache`
   on `.wdio-vscode-service` keyed by the pinned VS Code version, the
   suite under `xvfb-run`, `upload-artifact` of `test/ui/out/` on failure.
-  Informational (`continue-on-error: true`) until T15's flake measurement,
+  (Superseded 2026-11-11 by D4: required, and in the release workflow,
+  step 10.17 G1.) Informational (`continue-on-error: true`) until T15's flake measurement,
   then required. `release-extension.yml` gets the same step after the
   integration suite once it is required. Actions pinned by SHA as today.
 - **Runtime budget.** Each spec file is one VS Code launch (wdio
