@@ -1,6 +1,6 @@
 # Implementation plan — Gantt
 
-**Last changed:** 2026-11-10 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-11 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 Timeline of [implementation-plan.md](implementation-plan.md) phases. Percentages are step-based: done phases 100%, minus open owner reviews or manual checks; Phase 14 is 8 of 9 steps, with 14.8's docs written and in the owner's review. Dates are first-commit to merge dates from git history (as of 2026-11-07); not-started phases have no dates and are listed below the chart.
 
@@ -66,8 +66,8 @@ gantt
     10.0-10.12 Extension build (95%)       :done, p10a, 2026-10-24, 2d
     10.9/10.10 manual checks, review (5%)  :active, p10ar, after p10a, 1d
     10.13-10.15 Agent Host sessions (100%)  :done, p10b, 2026-10-28, 6d
-    10.16 UI automation (90%)              :done, p10c, 2026-11-04, 2d
-    10.16 owner decisions (10%)            :active, p10cr, after p10c, 1d
+    10.16 UI automation (100%)             :done, p10c, 2026-11-04, 2d
+    10.17 Release UI gate (0%)             :p10d, after p10c, 3d
 
     section Simulation and replay
     13 Vendor-aware Learn simulation (95%) :done, p13, 2026-11-04, 4d
@@ -104,6 +104,7 @@ gantt
 
 ## Open items
 
+- Step 10.17 (planned 2026-11-11): the automated pre-release UI gate, owner rule that no hand checklist gates a release ([release-ui-gate.md](plans/release-ui-gate.md)). It replaces the extension's manual checks and Phase 12's A24 owner checks; the Increment 2 release waits for it.
 - Phase 14: steps 14.0-14.7 built; 14.8's docs written, the owner's review and the §13 exit criterion on real sessions open; the extension guide's replay screenshots open (User Guide's done). Step table: [analyze-session-replay.md](plans/analyze-session-replay.md) §12.
 - Phase 15: owner's review and exit criterion on real data.
 - Phase 13: owner's eyes-on review of step 13.8.
