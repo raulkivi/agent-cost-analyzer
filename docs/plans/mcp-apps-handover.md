@@ -7,21 +7,20 @@ This document hands the Phase 12 work over to the next session. The design, the 
 ## 1. Where things stand
 
 - **MVP released 2026-11-10:** extension 0.4.0 (stable) and app 0.10.0 (#192), after A16's owner checks passed (#191).
-- **Increment 2 built and merged to `main` 2026-11-10:** A17, A18, A19 (PR #193) and A20, A21, A22 (PR #194, merged into #193's branch first). Status 24 of 36 tasks (67%).
-- **A17b boards approved 2026-11-10** with the owner's answers in mcp-apps.md §9.1: defaults kept except question 4 (a fall uses the host's success colour) and U11's "Not explained" tile wording. A23 applies both.
+- **Increment 2 built and merged to `main` 2026-11-10:** A17, A18, A19 (PR #193) and A20, A21, A22 (PR #194, merged into #193's branch first). Status 25 of 36 tasks (69%).
+- **A17b boards approved 2026-11-10** with the owner's answers in mcp-apps.md §9.1: defaults kept except question 4 (a fall uses the host's success colour) and U11's "Not explained" tile wording. A23 applied both.
 - **Next:**
-  - A23 (Opus): accessibility and security review of U9–U11, User Guide and extension guide sections with screenshots to follow, and a check of the CHANGELOG entries this session added;
-  - A24: the owner's checks of U9–U11 in VS Code Copilot Chat and Claude Desktop, light and dark; a checklist like [mcp-apps-a16-checklist.md](mcp-apps-a16-checklist.md) is needed first (A23 can write it);
+  - A24: the owner's checks of U9–U11 in VS Code Copilot Chat and Claude Desktop, light and dark, with [mcp-apps-a24-checklist.md](mcp-apps-a24-checklist.md). Owner questions from A23: confirm period totals in the brand data colour (series-1 blue failed 3:1 on Claude dark); judge U11's by-model table at 600 px (scrolls sideways, Price column out of view); Dark High Contrast's success colour is VS Code's default, not a recording, and Light High Contrast is still unrecorded;
   - then the Increment 2 release: extension 0.6.0, app 0.11.0.
 - **Release:** the owner asked about an extension 0.4.1; not planned, since `main` has no fixes to 0.4.0, only Increment 2 features (0.6.0 after A24, or a 0.5.0 pre-release).
-- **Inputs for A23** (from this session's visual pass, not fixed):
+- **A23 done 2026-11-10** (findings in mcp-apps.md §6.1 and the A23 row). The visual-pass inputs it worked from, all closed:
   - U9's y-axis top label sits tight against the left edge beside a price-change marker.
   - U11's "Not explained" tile reads "0 + 3 turns, no priced figure, not 0". Owner decision: value "3 turns", note "no price for these turns; not counted as 0".
   - U11's "lowers cost" blue is close to the period-total blue. Owner decision (question 4): a fall uses the host's success colour.
   - CSS class names collided between U10 and U11 in the single bundle (`cc-total`, `cc-sub`, `cc-note`); fixed by renaming, but a test that each view's classes use its own prefix would stop a repeat.
   - The no-projects reason is copied in `views/cost-compare/no-projects.ts` and parsed from the server's text in `views/cost-over-time/explain-error.ts`; a server wording change breaks both silently (the generic error still shows the text).
   - U9 has no focusable price-change markers; the detail is in the list below the chart and the chart's accessible name.
-- **Open PRs:** none for Increment 2. **Running subagents:** none. **Worktrees:** the session's agent worktrees under `.claude/worktrees/` can be removed.
+- **Open PRs:** A23 (branch `claude/a23-review-docs`). **Running subagents:** none. **Worktrees:** the session's agent worktrees under `.claude/worktrees/` can be removed.
 
 ## 2. PRs in Phase 12
 
