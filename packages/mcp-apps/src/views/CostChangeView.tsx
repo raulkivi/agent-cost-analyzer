@@ -28,8 +28,8 @@ function Tiles({ vm, block, notExplainedTile }: { vm: CostVarianceViewModel; blo
   const [start, , , , end] = block.steps;
   return (
     <div className="stat-tiles view-tiles">
-      <StatTile label={`${vm.periodA.label} (A)`} value={start?.text ?? ""} note="priced, as of use" />
-      <StatTile label={`${vm.periodB.label} (B)`} value={end?.text ?? ""} note="priced, as of use" />
+      <StatTile label={`${vm.periodA.label} (A)`} value={start?.text ?? ""} note={`priced, ${vm.pricingText}`} />
+      <StatTile label={`${vm.periodB.label} (B)`} value={end?.text ?? ""} note={`priced, ${vm.pricingText}`} />
       <StatTile label="Change" value={block.changeAmountText} note={block.changePercentText} />
       {notExplainedTile && <StatTile label="Not explained" value={`${vm.notExplained.periodA.turns} + ${vm.notExplained.periodB.turns}`} note="turns, no priced figure, not 0" />}
     </div>
@@ -79,11 +79,13 @@ export function CostChangeView({ brand, result }: { port: AppHostPort; brand: Vi
     );
   }
   if (vm === undefined) {
-    // The port hands over no error text, so the message is general; the host's
-    // own answer above this view carries the tool's reason.
+    // The tool's own text, when the host gave one, is rendered as a text node only.
+    const reason = result.isError ? result.errorText?.trim() : undefined;
     return (
       <ViewShell brand={brand} kicker={KICKER} title="Cost change">
-        <ErrorBox title="Couldn't explain the change.">explain_cost_change returned an error or a result this view can't read. The text answer above has the reason; ask again with a month such as 2026-10.</ErrorBox>
+        <ErrorBox title="Couldn't explain the change.">
+          {reason ? `The tool returned an error: ${reason}` : "explain_cost_change returned an error or a result this view can't read. The text answer above has the reason; ask again with a month such as 2026-10."}
+        </ErrorBox>
       </ViewShell>
     );
   }

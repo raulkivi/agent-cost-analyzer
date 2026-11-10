@@ -161,6 +161,27 @@ describe("CostChangeView states", () => {
     expect(port.calls).toEqual([]);
   });
 
+  it("shows the tool's error text under the heading, as text and never markup", () => {
+    const { container } = setup({ isError: true, errorText: "<img src=x onerror=alert(1)><b>bold</b> no month" });
+    const alert = screen.getByRole("alert");
+    expect(alert).toHaveTextContent("Couldn't explain the change.");
+    expect(alert).toHaveTextContent("<img src=x onerror=alert(1)><b>bold</b> no month");
+    expect(alert).not.toHaveTextContent("explain_cost_change returned an error");
+    expect(container.querySelector("img")).toBeNull();
+    expect(container.querySelectorAll("b")).toHaveLength(1); // the error box's own title
+  });
+
+  it("names today's prices on the period tiles when the result is repriced", () => {
+    setup(ok({ ...mixed(), pricing: "today" }));
+    expect(within(screen.getByRole("group", { name: "2026-09 (A)" })).getByText("priced, today's prices")).toBeInTheDocument();
+    expect(within(screen.getByRole("group", { name: "2026-10 (B)" })).getByText("priced, today's prices")).toBeInTheDocument();
+  });
+
+  it("names prices as of use on the period tiles by default", () => {
+    setup();
+    expect(within(screen.getByRole("group", { name: "2026-09 (A)" })).getByText("priced, prices as of use")).toBeInTheDocument();
+  });
+
   it("treats a result it cannot read as an error", () => {
     setup(ok({ nonsense: true }));
     expect(screen.getByRole("alert")).toHaveTextContent("Couldn't explain the change.");
