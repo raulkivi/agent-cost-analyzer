@@ -414,11 +414,9 @@ suite. 2.2's "20 tools" is asserted by the integration suite, not here.
   passed (35 s and 62 s). The owner's 10-run measurement (T15) still decides
   gating, and a cold CI runner is the case not measured here.
 - **No `actions/cache` for the second download.** Only the wdio download is
-  cached (`.wdio-vscode-service`, keyed on a hash of `wdio.conf.mts`); the
-  integration suite's `.vscode-test/` is unchanged. The pinned version now
-  lives in `scripts/ui-automation/vscode-version.mts`
-  (`PINNED_VSCODE_VERSION`, 1.145.0), which the key doesn't hash, and the
-  `ci.yml` comment still names `wdio.conf.mts` (§6.9).
+  cached (`.wdio-vscode-service`, keyed on a hash of `wdio.conf.mts` and
+  `scripts/ui-automation/vscode-version.mts`, where `PINNED_VSCODE_VERSION`
+  lives, 1.145.0); the integration suite's `.vscode-test/` is unchanged.
 - **T14 (1.12)** was built in the second pass (§6.6).
 - **Failure artefacts:** an `afterTest` hook saves a screenshot per failing
   test into `test/ui/out/`, which the CI job uploads.
@@ -556,10 +554,11 @@ This is evidence for T15, not its result: T15 also needs the owner's hand
 comparison and the gating decision.
 
 **Gaps found by this check:**
-- The CI cache key hashes `wdio.conf.mts`, but `PINNED_VSCODE_VERSION`
-  moved to `scripts/ui-automation/vscode-version.mts`, so bumping the
-  version keeps the old cache key; the `ci.yml` comment still says the
-  version is in `wdio.conf.mts`.
+- Fixed 2026-11-11: the CI cache key hashed only `wdio.conf.mts`, but
+  `PINNED_VSCODE_VERSION` had moved to
+  `scripts/ui-automation/vscode-version.mts`, so a version bump kept the
+  old cache key. The key now hashes both files. TDD exception: YAML, only
+  a real CI run tests it.
 - `release-extension.yml` runs the integration suite and the UI check
   (`test:ui`), not this suite (planned only once the job is required, §3).
 

@@ -121,11 +121,13 @@ jobs:
 
       - run: npm ci
       - run: npm run build --workspace=packages/vscode-extension
-      # The VS Code download is pinned (PINNED_VSCODE_VERSION in wdio.conf.mts).
+      # The VS Code download is pinned (PINNED_VSCODE_VERSION in
+      # scripts/ui-automation/vscode-version.mts); the key hashes it so a
+      # version bump starts a fresh cache.
       - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: packages/vscode-extension/.wdio-vscode-service
-          key: wdio-vscode-service-${{ runner.os }}-${{ hashFiles('packages/vscode-extension/wdio.conf.mts') }}
+          key: wdio-vscode-service-${{ runner.os }}-${{ hashFiles('packages/vscode-extension/wdio.conf.mts', 'packages/vscode-extension/scripts/ui-automation/vscode-version.mts') }}
       - run: xvfb-run -a -s "-screen 0 1600x1000x24" npm run test:ui:vscode --workspace=packages/vscode-extension
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
