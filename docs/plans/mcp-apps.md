@@ -2,7 +2,7 @@
 
 **Last changed:** 2026-11-10 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
-Status: **in progress: A0, A0b, A1–A11 and A13–A15 done (2026-11-07), A12 dropped; planned 2026-10-28, updated
+Status: **in progress: the MVP (A0–A16) released 2026-11-10, A12 dropped; Increment 2: A17–A19 done, A17b boards drawn, owner approval open; planned 2026-10-28, updated
 2026-11-07 for the Phase 14 and Phase 15 tools.** This is Phase 12 in
 [implementation-plan.md](../implementation-plan.md). Its dependencies are
 met: Phase 9.12's tools are done, step 10.13 is done and `ext-v0.1.0`
@@ -649,10 +649,10 @@ Starts after the MVP's exit criterion is met (A16).
 
 | # | Task | Complexity | Model | Depends on |
 |---|---|---|---|---|
-| A17b | **Increment 2 mock-ups** (§5.6): U9 for a repository and a project, U10, U11, the U10 → U9 → U1 drill-down, and the extension's "no projects" state, in both host frames, light and dark. The owner approves them before A20. | medium | Sonnet (frontend-design skill) + owner | A16 |
-| A17 | `packages/web` exports for the Phase 14/15 presentational modules (§4.5). Where a tab mixes rendering with fetching, split the rendering out first. A pure refactor: typecheck and the web and e2e tests stay green. | medium | Sonnet | A16 |
-| A18 | View models `toCostSeriesViewModel`, `toCostComparisonViewModel` and `toCostVarianceViewModel` (§4.5), one run each, with the basis, currency and "no earlier figure" rules | low | setup6 | A16 |
-| A19 | `registerAppViews` takes the registered tool names and adds `_meta.ui` to `get_repository_cost`, `get_project_cost`, `compare_costs` and `explain_cost_change`. In-memory client tests over both tool-group sets: metadata present only for registered tools, `content` unchanged. | medium | Sonnet | A16 |
+| A17b | **Increment 2 mock-ups** (§5.6): U9 for a repository and a project, U10, U11, the U10 → U9 → U1 drill-down, and the extension's "no projects" state, in both host frames, light and dark. The owner approves them before A20. **Drawn 2026-11-10, owner approval open:** `CostOverTime`, `CostCompare`, `CostChange` and `Increment2States` boards in [mockups/mcp-apps/](mockups/mcp-apps/README.md). Open questions for the owner are in §9 (Increment 2 boards). | medium | Sonnet (frontend-design skill) + owner | A16 |
+| A17 | `packages/web` exports for the Phase 14/15 presentational modules (§4.5). Where a tab mixes rendering with fetching, split the rendering out first. A pure refactor: typecheck and the web and e2e tests stay green. **Done 2026-11-10:** eleven export paths (`charts/CostTimeChart`, `Waterfall`, `ReplayCompareBars`, `ChartDataTable`, `ViewAsTable`; `lib/cost/cost-format`, `series-model`, `series-colors`, `project-model`; `replay/SimulatedBadge`, `ReplayPricingNote`); `HorizontalBars` and `StackedColumns` were already exported. No split was needed: no exported module's import closure reaches `api-client`, `/host/` or `fetch(`, which `package-exports.test.ts` asserts. | medium | Sonnet | A16 |
+| A18 | View models `toCostSeriesViewModel`, `toCostComparisonViewModel` and `toCostVarianceViewModel` (§4.5), one run each, with the basis, currency and "no earlier figure" rules. **Done 2026-11-10:** `view-models/cost-series.ts`, `cost-comparison.ts`, `cost-variance.ts`, shared `money.ts` and `analysis-common.ts`, with example and fast-check tests (no "from 0", null stays a gap, the waterfall adds up, drill-down arguments only from the input, logged text under `displayOnly`). Choices: U10 rows sort most expensive first; U11's waterfall is usage + price + mix (not-explained turns are shown apart, the type has no effect for them); U11 reads `costA === 0` as "no earlier figure". `money.ts` duplicates web's `cost-format` helpers until A20 switches to the A17 exports | low | Sonnet (no local model in this repo) | A16 |
+| A19 | `registerAppViews` takes the registered tool names and adds `_meta.ui` to `get_repository_cost`, `get_project_cost`, `compare_costs` and `explain_cost_change`. In-memory client tests over both tool-group sets: metadata present only for registered tools, `content` unchanged. **Done 2026-11-10:** `registerAppViews` already took the registered-tools map (`captureRegisteredTools`), so the four names joined `APP_VIEW_TOOL_NAMES`; both products register all four (the extension's projects are empty). Tool counts unchanged. Until A20–A22 add routes, the router answers `none` and hosts show the "No view for this result" state for the four tools. | medium | Sonnet | A16 |
 | A20 | U9 `CostOverTimeView`: series chart with price-change markers, project breakdowns, top sessions drilling into U1, and the extension's "no projects" reason | medium | Sonnet | A17, A17b, A18, A19 |
 | A21 | U10 `CostCompareView`, with in-place drill-down into U9 | medium | Sonnet | A20 |
 | A22 | U11 `CostChangeView`: waterfall, per-model table, not-explained turns | medium | Sonnet | A17, A17b, A18, A19 |
@@ -765,6 +765,19 @@ release workflow sends an odd minor to the Marketplace pre-release channel.
 | Mock-ups drawn before A0 would guess the host variables | Boards redrawn | A0b starts after A0 and uses its recorded variables |
 | Bundle size with the Increment 2/3 views | Over the 900 KB budget (the scaffold alone is 657 KiB, mostly React and zod via ext-apps) | Lazy route chunks inlined into the single file, or a raised budget, decided at A20 |
 | Approval prompts on view-initiated calls to model-visible tools (U9–U12 drill-down) | Each click asks the user | **Resolved (A0):** `get_turn_series` is an app-only tool and did not prompt. Prompts for model-visible tools are not yet tested; check in A9. |
+
+### 9.1 Increment 2 boards: questions for the owner (A17b, 2026-11-10)
+
+Wave 2 (A20–A22) proceeds on the coordinator's default for each; the owner can overrule at A17b approval.
+
+| # | Question | Default used in A20–A22 |
+|---|---|---|
+| 1 | In the extension, `get_project_cost` answers `Unknown project id "…"` with no `structuredContent`, so there is nothing to render the "no projects" reason from. | The error text names the product's no-projects reason (`EXTENSION_NO_PROJECTS_REASON`) when the attribution has no projects, and U9/U10 show an error result's text as a state, never an empty chart. |
+| 2 | `get_repository_cost` returns no top sessions, so the extension has no U9 → U1 path. Add `topSessions`? | No: the tool's output stays as it is; the drill-down to U1 exists for projects only. |
+| 3 | Show vendor then model for a repository too (the data is there)? | No: as the board, per §2's U9 scope. |
+| 4 | Waterfall colours: danger for a rise, info for a fall, plus the written sign. | As the board. |
+| 5 | Mixed-currency cells list AI Credits first, then USD with "$", the header naming both. | As the board. |
+| 6 | `explain_cost_change` when period A has no priced turns. | U11 shows "no earlier figure" (A18's `costA === 0` rule). |
 
 ## 10. Rejected: A2UI
 
