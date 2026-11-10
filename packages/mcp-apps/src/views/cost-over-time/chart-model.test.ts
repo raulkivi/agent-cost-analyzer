@@ -94,6 +94,15 @@ describe("buildChart markers", () => {
     expect(observed?.title).toBe("From the week of Oct 26: gpt-6.1-sol billed 12 % above the price book, 2 weeks in a row (inferred)");
   });
 
+  // A23 visual review: on a monthly chart the observed change from the week
+  // of Oct 26 sat at Oct 1, the month's left edge.
+  it("places an observed change at the start of its week inside a longer bucket", () => {
+    const monthly = toCostSeriesViewModel(costSeries());
+    const observed = buildChart(monthly.chart.points, "AI_CREDITS", monthly.markers).markers.find((marker) => marker.kind === "observed");
+    // 2026-10-26 starts the 26th day of the 31-day October bucket: 25/31.
+    expect(observed?.position).toBeCloseTo(25 / 31, 5);
+  });
+
   it("leaves a change outside every bucket out of the chart", () => {
     const outside = vmOf([week("2026-01-05", "2026-01-11", "2026-W02", costTotal(10, 5, 5))]);
     expect(buildChart(outside.chart.points, "AI_CREDITS", outside.markers).markers).toEqual([]);
