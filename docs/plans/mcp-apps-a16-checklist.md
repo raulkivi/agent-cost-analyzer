@@ -1,6 +1,6 @@
 # MCP Apps MVP: owner's checks (Phase 12, task A16)
 
-**Last changed:** 2026-11-07 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-10 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 These checks take about 45 minutes. You run the shipped U1–U3 views in the two real hosts and confirm the MVP exit criterion ([mcp-apps.md](mcp-apps.md) §8.1). The A0 spike ([mcp-apps-spike.md](mcp-apps-spike.md)) used a throw-away view. This run uses the real build: the `.vsix` for VS Code and `scripts/mcp-server.sh` for Claude Desktop.
 
@@ -108,4 +108,4 @@ Claude Code has no MCP Apps view. Its text output must be unchanged (§8.1).
 | Matches the approved A0b boards (differences?) | | |
 | Claude Code CLI: text output unchanged | | |
 
-When every row passes, A16 is done, and with it the Phase 12 MVP (§8.1). Report anything that fails, with a screenshot. I'll fix it before the MVP release (extension 0.4.0 / app 0.11.0, §7.3).
+When every row passes, A16 is done, and with it the Phase 12 MVP (§8.1). Report anything that fails, with a screenshot. I'll fix it before the MVP release (extension 0.3.0 / app 0.10.0, §7.3).

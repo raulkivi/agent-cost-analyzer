@@ -679,19 +679,19 @@ Starts after Increment 2's exit criterion is met (A24).
 ### 7.3 Target releases
 
 Both changelogs follow Semantic Versioning. Before 1.0, each increment
-adds features, so each one is a minor release of both products. The
-targets assume the Phase 14 and 15 work already in both `[Unreleased]`
-sections ships first, as extension 0.3.0 and app 0.10.0.
+adds features, so each one is a minor release of both products. The MVP
+shipped on 2026-11-10 together with the Phase 14 and 15 work, as extension
+0.3.0 and app 0.10.0; the later rows follow one minor version each.
 
 | Release | Ships after | Extension (AI Credits Analyzer, tag `ext-v*`) | Standalone app (Agent Cost Analyzer, tag `app-v*`) |
 |---|---|---|---|
-| MVP: U1–U3 | A16 | **0.4.0** | **0.11.0** |
-| Increment 2: U9–U11 | A24 | **0.5.0** | **0.12.0** |
-| Increment 3: U4, U5, U12–U15 | A33 | **0.6.0** (no U14/U15) | **0.13.0** |
+| MVP: U1–U3 | A16 | **0.3.0** | **0.10.0** (shipped 2026-11-10) |
+| Increment 2: U9–U11 | A24 | **0.4.0** | **0.11.0** |
+| Increment 3: U4, U5, U12–U15 | A33 | **0.5.0** (no U14/U15) | **0.12.0** |
 
-- If the MVP ships in the same release as the Phase 14/15 work, every
-  row moves down one minor version: the MVP becomes extension 0.3.0 and
-  app 0.10.0.
+- The MVP shipped in the same release as the Phase 14/15 work, so every
+  row moved down one minor version: the MVP is extension 0.3.0 and app
+  0.10.0.
 - A fix found in an owner's manual check after a release is a patch
   release (for example 0.4.1). It doesn't move the next increment's
   target.

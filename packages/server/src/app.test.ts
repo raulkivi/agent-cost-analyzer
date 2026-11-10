@@ -152,7 +152,7 @@ describe("GET /api/health", () => {
     const response = await request(app).get("/api/health");
 
     expect(response.status).toBe(200);
-    expect(response.body).toEqual({ status: "ok", version: "0.9.0" });
+    expect(response.body).toEqual({ status: "ok", version: "0.10.0" });
   });
 });
 

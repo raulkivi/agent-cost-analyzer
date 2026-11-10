@@ -2,7 +2,7 @@
   "name": "ai-credits-analyzer",
   "displayName": "%displayName%",
   "description": "%description%",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "publisher": "raulkivi",
   "icon": "icon.png",
   "private": true,

@@ -105,7 +105,7 @@ gantt
 - Phase 14: steps 14.0-14.7 built; 14.8's docs written, the owner's review and the §13 exit criterion on real sessions open; the extension guide's replay screenshots open (User Guide's done). Step table: [analyze-session-replay.md](plans/analyze-session-replay.md) §12.
 - Phase 15: owner's review and exit criterion on real data.
 - Phase 13: owner's eyes-on review of step 13.8.
-- Phase 12: A0b boards approved 2026-11-07 ([mockups/mcp-apps/](plans/mockups/mcp-apps/README.md)); A5 (views workspace), A6 (theme layering), A7 (view models), A9 (U1 session cost view), A10 (U2 spend view), A11 (U3 findings view) and A13 (packaging), A14 (accessibility and security review) and A15 (docs) done; the copy-flow fix done (owner decision A: an "Open Session…" palette picker; the button copies the session title; one-click open is a follow-up); A16 done 2026-11-10: the owner's checks pass in VS Code Copilot Chat, Claude Desktop and Claude Code, after 12 findings fixed test-first ([results](plans/mcp-apps-a16-results/README.md)); next the MVP release (extension 0.4.0 / app 0.11.0), then Increment 2 starting with A17b; session handover in [mcp-apps-handover.md](plans/mcp-apps-handover.md) (A0 host spike done 2026-11-07; results in [mcp-apps-spike.md](plans/mcp-apps-spike.md)). See [Phase 12 detail](#phase-12-detail--mcp-apps).
+- Phase 12: A0b boards approved 2026-11-07 ([mockups/mcp-apps/](plans/mockups/mcp-apps/README.md)); A5 (views workspace), A6 (theme layering), A7 (view models), A9 (U1 session cost view), A10 (U2 spend view), A11 (U3 findings view) and A13 (packaging), A14 (accessibility and security review) and A15 (docs) done; the copy-flow fix done (owner decision A: an "Open Session…" palette picker; the button copies the session title; one-click open is a follow-up); A16 done 2026-11-10: the owner's checks pass in VS Code Copilot Chat, Claude Desktop and Claude Code, after 12 findings fixed test-first ([results](plans/mcp-apps-a16-results/README.md)); next the MVP release (extension 0.3.0 / app 0.10.0), then Increment 2 starting with A17b; session handover in [mcp-apps-handover.md](plans/mcp-apps-handover.md) (A0 host spike done 2026-11-07; results in [mcp-apps-spike.md](plans/mcp-apps-spike.md)). See [Phase 12 detail](#phase-12-detail--mcp-apps).
 
 ## Phase 12 detail — MCP Apps
 
@@ -115,7 +115,7 @@ Schedule view of the task tables in [mcp-apps.md](plans/mcp-apps.md) §7, §7.1 
 
 - Each increment starts with mock-up boards the owner approves (A0b, A17b, A25b; plan §5.6).
 - Scope (updated 2026-11-07): MVP (A0-A16: U1-U3), Increment 2 (A17-A24: cost-analysis views U9-U11), Increment 3 (A25-A33: replay, price changes, statement and estimate, audit, picker). Each increment starts after the previous one's owner checks.
-- Target releases (plan §7.3): MVP in extension 0.4.0 / app 0.11.0, Increment 2 in 0.5.0 / 0.12.0, Increment 3 in 0.6.0 / 0.13.0, assuming the Phase 14/15 work ships first as 0.3.0 / 0.10.0.
+- Target releases (plan §7.3): MVP in extension 0.3.0 / app 0.10.0 (shipped with the Phase 14/15 work), Increment 2 in 0.4.0 / 0.11.0, Increment 3 in 0.5.0 / 0.12.0.
 - Estimates, not commitments: low = 1 day, medium = 2 days, spike = 1 day. Weekends are excluded. The start date 2026-11-09 is a placeholder.
 - Labels carry task ID, model and complexity. The critical path is marked red.
 - A12 is dropped: the A0 spike showed both hosts refuse `vscode://` links (the button copies a command).
@@ -211,9 +211,9 @@ gantt
     A33 Owner manual checks (0%)                 :a33, after a32, 1d
 
     section Target releases
-    Ext 0.4.0 / app 0.11.0 (MVP) :milestone, m12a, after a16, 0d
-    Ext 0.5.0 / app 0.12.0 (Increment 2) :milestone, m12b, after a24, 0d
-    Ext 0.6.0 / app 0.13.0 (Increment 3) :milestone, m12c, after a33, 0d
+    Ext 0.3.0 / app 0.10.0 (MVP) :milestone, m12a, after a16, 0d
+    Ext 0.4.0 / app 0.11.0 (Increment 2) :milestone, m12b, after a24, 0d
+    Ext 0.5.0 / app 0.12.0 (Increment 3) :milestone, m12c, after a33, 0d
 ```
 
 ### Critical path
