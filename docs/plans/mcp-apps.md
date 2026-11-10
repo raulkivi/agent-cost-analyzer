@@ -2,7 +2,7 @@
 
 **Last changed:** 2026-11-10 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
-Status: **in progress: the MVP (A0–A16) released 2026-11-10, A12 dropped; Increment 2: A17–A22 done, A17b boards drawn, owner approval open, next A23; planned 2026-10-28, updated
+Status: **in progress: the MVP (A0–A16) released 2026-11-10, A12 dropped; Increment 2: A17–A22 done, A17b boards approved 2026-11-10, next A23; planned 2026-10-28, updated
 2026-11-07 for the Phase 14 and Phase 15 tools.** This is Phase 12 in
 [implementation-plan.md](../implementation-plan.md). Its dependencies are
 met: Phase 9.12's tools are done, step 10.13 is done and `ext-v0.1.0`
@@ -649,7 +649,7 @@ Starts after the MVP's exit criterion is met (A16).
 
 | # | Task | Complexity | Model | Depends on |
 |---|---|---|---|---|
-| A17b | **Increment 2 mock-ups** (§5.6): U9 for a repository and a project, U10, U11, the U10 → U9 → U1 drill-down, and the extension's "no projects" state, in both host frames, light and dark. The owner approves them before A20. **Drawn 2026-11-10, owner approval open:** `CostOverTime`, `CostCompare`, `CostChange` and `Increment2States` boards in [mockups/mcp-apps/](mockups/mcp-apps/README.md). Open questions for the owner are in §9 (Increment 2 boards). | medium | Sonnet (frontend-design skill) + owner | A16 |
+| A17b | **Increment 2 mock-ups** (§5.6): U9 for a repository and a project, U10, U11, the U10 → U9 → U1 drill-down, and the extension's "no projects" state, in both host frames, light and dark. The owner approves them before A20. **Drawn 2026-11-10, approved by the owner 2026-11-10 with the answers in §9.1:** `CostOverTime`, `CostCompare`, `CostChange` and `Increment2States` boards in [mockups/mcp-apps/](mockups/mcp-apps/README.md). Open questions for the owner are in §9 (Increment 2 boards). | medium | Sonnet (frontend-design skill) + owner | A16 |
 | A17 | `packages/web` exports for the Phase 14/15 presentational modules (§4.5). Where a tab mixes rendering with fetching, split the rendering out first. A pure refactor: typecheck and the web and e2e tests stay green. **Done 2026-11-10:** eleven export paths (`charts/CostTimeChart`, `Waterfall`, `ReplayCompareBars`, `ChartDataTable`, `ViewAsTable`; `lib/cost/cost-format`, `series-model`, `series-colors`, `project-model`; `replay/SimulatedBadge`, `ReplayPricingNote`); `HorizontalBars` and `StackedColumns` were already exported. No split was needed: no exported module's import closure reaches `api-client`, `/host/` or `fetch(`, which `package-exports.test.ts` asserts. | medium | Sonnet | A16 |
 | A18 | View models `toCostSeriesViewModel`, `toCostComparisonViewModel` and `toCostVarianceViewModel` (§4.5), one run each, with the basis, currency and "no earlier figure" rules. **Done 2026-11-10:** `view-models/cost-series.ts`, `cost-comparison.ts`, `cost-variance.ts`, shared `money.ts` and `analysis-common.ts`, with example and fast-check tests (no "from 0", null stays a gap, the waterfall adds up, drill-down arguments only from the input, logged text under `displayOnly`). Choices: U10 rows sort most expensive first; U11's waterfall is usage + price + mix (not-explained turns are shown apart, the type has no effect for them); U11 reads `costA === 0` as "no earlier figure". `money.ts` duplicates web's `cost-format` helpers until A20 switches to the A17 exports | low | Sonnet (no local model in this repo) | A16 |
 | A19 | `registerAppViews` takes the registered tool names and adds `_meta.ui` to `get_repository_cost`, `get_project_cost`, `compare_costs` and `explain_cost_change`. In-memory client tests over both tool-group sets: metadata present only for registered tools, `content` unchanged. **Done 2026-11-10:** `registerAppViews` already took the registered-tools map (`captureRegisteredTools`), so the four names joined `APP_VIEW_TOOL_NAMES`; both products register all four (the extension's projects are empty). Tool counts unchanged. Until A20–A22 add routes, the router answers `none` and hosts show the "No view for this result" state for the four tools. | medium | Sonnet | A16 |
@@ -768,7 +768,7 @@ release workflow sends an odd minor to the Marketplace pre-release channel.
 
 ### 9.1 Increment 2 boards: questions for the owner (A17b, 2026-11-10)
 
-A20–A22 were built on the coordinator's default for each; the owner can overrule at A17b approval. Question 1 is implemented for U9 (the server's error text) and U10 (a fixed copy of the reason, because `compare_costs` returns zero-turn rows and no reason).
+A20–A22 were built on the coordinator's default for each. The owner answered all six on 2026-11-10 when approving the boards: defaults kept for 1–3, 5 and 6; question 4 changed (a fall uses the host's success colour). The owner also set U11's "Not explained" tile wording. A23 applies both changes test-first. Question 1 is implemented for U9 (the server's error text) and U10 (a fixed copy of the reason, because `compare_costs` returns zero-turn rows and no reason).
 
 | # | Question | Default used in A20–A22 |
 |---|---|---|
@@ -778,6 +778,16 @@ A20–A22 were built on the coordinator's default for each; the owner can overru
 | 4 | Waterfall colours: danger for a rise, info for a fall, plus the written sign. | As the board. |
 | 5 | Mixed-currency cells list AI Credits first, then USD with "$", the header naming both. | As the board. |
 | 6 | `explain_cost_change` when period A has no priced turns. | U11 shows "no earlier figure" (A18's `costA === 0` rule). |
+
+| # | Owner's answer (2026-11-10) |
+|---|---|
+| 1 | Keep: the error text shows as a state. A23 adds a test that ties the views' copy of the reason to the server's wording. |
+| 2 | Keep: no `topSessions` on `get_repository_cost`; U1 drill-down for projects only. |
+| 3 | Keep: no vendor-then-model breakdown for a repository. |
+| 4 | **Changed:** a rise uses the host's danger colour, a fall the host's success colour, each with the written sign. Info blue is dropped because it sits close to the period-total blue. |
+| 5 | Keep: AI Credits first, then USD with "$"; the header names both. |
+| 6 | Keep: "no earlier figure". |
+| – | U11's "Not explained" tile: value "3 turns" (the count), note "no price for these turns; not counted as 0". |
 
 ## 10. Rejected: A2UI
 

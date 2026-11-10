@@ -24,7 +24,7 @@ out as static markup, so each board also renders in a plain browser.
 ### Increment 2 boards (A17b)
 
 Drawn 2026-11-10 for task A17b in [mcp-apps.md](../../mcp-apps.md) §7.1.
-Status: **drawn, waiting for the owner's approval before A20 and A22.**
+Status: **drawn and approved by the owner (2026-11-10)**, with the answers in [mcp-apps.md](../../mcp-apps.md) §9.1. Two deviations from the boards: U11's waterfall shows a fall in the host's success colour (not info), and U11's "Not explained" tile reads "3 turns" with the note "no price for these turns; not counted as 0".
 They show U9, U10 and U11 in the same two host frames, light and dark, with
 invented neutral data (local repositories by folder name).
 
@@ -40,7 +40,7 @@ Checks for the Increment 2 boards:
 1. **Basis and currency** on every money figure; no figure is a bare number.
 2. **"No earlier figure"**, never "from 0" (U10 rows, state 7).
 3. **Documented vs inferred** price changes read apart in the chart and the list.
-4. **Waterfall colours.** Raise and lower use the host's danger and info text colours plus the written sign.
+4. **Waterfall colours.** A rise uses the host's danger text colour, a fall the success text colour (owner decision 2026-11-10), each with the written sign.
 5. **No projects** reason (state 6). `list_projects` returns the reason text; `get_project_cost` answers an unknown-id error. How the view gets the reason is an open question for A20.
 6. **Narrow U11** drops the expanded token-type detail; U10 moves its per-measure figures under each row.
 
