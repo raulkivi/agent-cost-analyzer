@@ -33,7 +33,7 @@ describe("toCostComparisonViewModel rows", () => {
     expect(row.perSession[0]).toMatchObject({ text: "11.11 AI Credits", basis: "preferred" });
     expect(row.perActiveDay[0]?.text).toBe("20.00 AI Credits");
     expect(row.perTurn[0]?.text).toBe("2.17 AI Credits");
-    expect(row.shares).toEqual([{ currency: "AI_CREDITS", share: 0.625, text: "63 %" }]);
+    expect(row.shares).toEqual([{ currency: "AI_CREDITS", share: 0.625, text: "62.5 %" }]);
     expect(row.cacheHit).toEqual({ text: "81 %", known: true, estimate: false });
     expect(row.outputShare.text).toBe("4 %");
   });
