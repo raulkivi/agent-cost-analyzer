@@ -44,8 +44,8 @@ export const COPILOT_E2E_SETTINGS = {
   "github.copilot.chat.agentDebugLog.fileLogging.maxRetainedSessionLogs": 200,
   "aiCreditsAnalyzer.mcp.enabled": true,
   // Without this, agent mode asks before each MCP tool call and the chat
-  // waits for a click. Unverified setting id on VS Code 1.145: if it is wrong
-  // the 2.3/2.4 tests time out waiting for the tool call.
+  // waits for a click (verified on VS Code 1.145, G3; its one-time opt-in
+  // dialog is pre-answered by profile-seed.mts).
   "chat.tools.global.autoApprove": true,
   "workbench.startupEditor": "none",
   "extensions.autoCheckUpdates": false,
