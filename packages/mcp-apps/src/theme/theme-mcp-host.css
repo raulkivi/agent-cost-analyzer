@@ -53,11 +53,21 @@ html[data-host="mcp-app"] {
 
   /* A rise or fall written as text (U12, U13, U15; A32): the host's danger or
      success colour drawn 30% towards the text colour, so it holds 4.5:1 on
-     every recorded host and on the fallbacks. The host colours alone fall to
-     3.16:1 on VS Code Light Modern. Bars and icons keep the host colour (3:1
-     is enough for a mark). */
+     every recorded host and on the fallbacks. Danger alone falls to 3.16:1
+     on VS Code Light Modern. A fall drawn as a mark (U11's waterfall) keeps
+     the host colour on a dark ground; rise bars and icons keep it always. */
   --view-text-rise: color-mix(in srgb, var(--color-text-danger, var(--brand-fb-danger)) 70%, var(--color-text));
   --view-text-fall: color-mix(in srgb, var(--color-text-success, var(--brand-fb-success)) 70%, var(--color-text));
+  --view-mark-fall: var(--color-text-success, var(--brand-fb-success));
+}
+
+/* On a light ground, VS Code's success colour is #73c991, 2.0:1 (measured by
+   A33 in VS Code 1.146, Light Modern): a fall written as text goes 60%
+   towards the text colour (4.5:1) and a fall drawn as a mark 40% (3:1). On a
+   dark ground the same mix would turn it grey, so it stays as above. */
+html[data-host="mcp-app"][data-theme="light"] {
+  --view-text-fall: color-mix(in srgb, var(--color-text-success, var(--brand-fb-success)) 40%, var(--color-text));
+  --view-mark-fall: color-mix(in srgb, var(--color-text-success, var(--brand-fb-success)) 60%, var(--color-text));
 }
 
 /* The host's focus ring, also where theme.css draws it on a radio's label

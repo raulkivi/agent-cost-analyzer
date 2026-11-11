@@ -109,7 +109,7 @@ has no Copilot part.
   passed/failed/skipped, `skipReason`), `aiCreditsSpent` (null if unmeasured),
   `ranAt`. Format and judge: `scripts/release-evidence/evidence.mts`.
 - **Blocks a release:** no note; a note that isn't schema-1 JSON; a run on
-  another commit; a dirty tree; a required test (1.4, 2.3, 2.4; since G4 also the 13 view rows) missing,
+  another commit; a dirty tree; a required test (1.4, 2.3, 2.4; since G4 also the 13 view rows; since G7 2.1 and 1.14; since A33 the 11 Increment 3 rows) missing,
   failed or **skipped**; any failed test. Every problem is listed by name
   (`missing-note`, `malformed`, `unknown-schema`, `wrong-commit`,
   `dirty-tree`, `test-missing`, `test-failed`, `test-skipped`).
@@ -397,6 +397,77 @@ and the real runs. Unit-tested first: `chat-history-seed.test.ts` (through the
 extension's own MCP server), `view-prompt.test.ts`, `view-overlay.test.ts`,
 and the evidence ids and required set in `evidence.test.ts`, `check.test.ts`
 and `record.test.ts`.
+
+**G4: Increment 3 rows (A33, 2026-11-11).** Phase 12's Increment 3 views in
+the same suite, `test/ui/copilot-e2e/specs/copilot-increment3-views.e2e.ts`
+(its own spec file, so its own VS Code and chat), on VS Code 1.146.
+
+- **One chat, six views.** `compare_models_for_session` (the newest seeded
+  session against `claude-sonnet-5.5` and `gpt-6.1-sol`), `replay_session`
+  (on `claude-haiku-5.5`), `get_price_changes` (90 days),
+  `get_session_audit`, `get_audit_rollup` and `list_sessions`. Never
+  `get_statement` or `estimate_cost`: the extension doesn't serve them.
+  The spec finds each view by its kicker (U4's two by title), so the order
+  Copilot calls them in doesn't matter; a missing view skips the suite (R2).
+- **Data.** The seeder (`chat-history-seed.mts`, tests first) now dates each
+  made-up session's debug log at the session's start: the fixture log is
+  from August 2026, and Copilot's prices start on 2026-10-01, so every
+  replay was Unknown. It also gives each session its own 8-character short
+  id, which U5 names its Analyse buttons by. The Increment 2 views' tool
+  answers are unchanged (compared before and after).
+- **No new chat request** is the analyzer's turn count for the run's new
+  chats, not the DOM: VS Code pins the chat's request at the top, and near
+  the first view the list renders its own row for it too, so the DOM counted
+  2 requests for 1 (first run).
+- **Required:** eleven tests, `COPILOT_INCREMENT3_ROWS` in
+  `REQUIRED_COPILOT_E2E_TESTS` (tests first in `evidence.test.ts` and
+  `check.test.ts`).
+
+| Test | Checks |
+|---|---|
+| A33 tools | The extension's `tools/list`: the six Increment 3 tools carry `_meta.ui`; `get_statement` and `estimate_cost` are absent; no view in the chat is a billing view |
+| A33 U12.compare | Kicker, Replay on other models with Simulated, the session line, the own-model check; rows measured, the session's own model, then the two models in the order asked; a model opens its replay in place (kicker trail, Back to model comparison, Simulated, self-check passed, Difference tile), Back returns focus to it; the other model by keyboard only, focus and ring back on it; no new chat request |
+| A33 U12.replay | Session replay kicker, Replay on claude-haiku-5.5 with Simulated, the per-turn chart, self-check passed, Difference, "would have cost about", no Back |
+| A33 U13 | Price changes kicker and period title, the timeline, documented changes with Source, a written sign |
+| A33 U4.session | Tool-call audit kicker, the session's title, the four tiles, failure rate Unknown and never 0 % (Copilot records no outcomes), recovery cost in "tokens, not AI Credits", calls by tool |
+| A33 U4.rollup | Tool-call failures, tiles with the rate Unknown, the per-day chart, View as table (the only control) with Unknown days, the display-only sessions table; no new chat request |
+| A33 U5.list | Sessions, the eight seeded sessions with short id, turns, model and repository, no cost, Analyse on every row, the hint that only `Analyse session <id>` is sent |
+| A33 themes | The six views in Light Modern, Dark Modern and both High Contrast themes, switched mid-run: each follows, text reaches AA and chart marks 3:1 on the chat's ground (probe and judge), a focus ring on Tab |
+| A33 narrow | About 360 px and the widest (576 px): no sideways scroll |
+| A33 footer | `Read-only · local logs · v<extension version>`, text selectable |
+| A33 U5.analyse | One press of Analyse on the newest seeded session, inside the run's AI Credits cap: the outcome is `sent` (exactly one new chat request with the fixed text), `staged` (exactly that text in the chat input, no new request) or `fallback` (the row shows the text to type); anything else fails (`analyse-outcome.mts`, unit-tested) |
+
+**U5 in real Copilot Chat (owner's question, §9.2 Q7):** `staged`, in both
+runs that pressed it. VS Code 1.146 accepts the view's message (the button
+reads Sent) and puts exactly `Analyse session <id>` in the chat input; it
+sends nothing until the user presses Enter, so the press starts no model
+turn and costs no AI Credits. Owner decision in mcp-apps.md §6.1.
+
+Findings, fixed test-first:
+
+- **VS Code Light Modern's success colour is #73c991**, not the A0b boards'
+  #388a34 that `host-sets.ts` assumed: U12's and U13's fall text read 2.9:1
+  in the real chat, and U11's fall bar would be about 2:1 (not seen here:
+  Copilot turns are never priced). `host-sets.ts` now uses #73c991, which
+  failed the contrast tests; on a light ground `--view-text-fall` is the
+  success colour 40% (4.5:1) and the new `--view-mark-fall` 60% (3:1) with
+  the text colour. Dark grounds are unchanged (the same mix turned Claude
+  dark's green grey in G5's hue check).
+- **Probe:** U12's simulated diamonds are open markers (outlined in the text
+  colour, filled with the ground to hide the line), and the probe read them
+  as bars painted the ground colour (1.0:1 in every theme). It now judges a
+  path that is both filled and stroked, outside a series, by its outline.
+
+Real runs (owner's test profile, xvfb, `claude-haiku-5.5` requested and
+observed every time; each run's note removed from the local
+`refs/notes/release-ui`, never pushed):
+
+| Run | Specs | Result | AI Credits |
+|---|---|---|---|
+| 0 | Increment 3 spec, `COPILOT_E2E_MAX_AI_CREDITS=0` | all 11 skipped unsent by the cap (launch and evidence checked) | 0 |
+| 1 | Increment 3 spec | 8 passed; U12.compare (DOM request count), themes (Tab past a view's only button) and U5.analyse (`staged`, not yet an outcome) failed | 0.4409 |
+| 2 | Increment 3 spec | 10 passed, U5.analyse `staged`; themes failed: the fall text and the open diamonds above | 0.4394 |
+| 3 | Increment 3 spec, after the fixes | **11 passed**, U5.analyse `staged` | 0.4473 |
 
 **G7 (2026-11-11).** Built on `claude/g7-extension-rows`, not merged; D11 fixes included.
 

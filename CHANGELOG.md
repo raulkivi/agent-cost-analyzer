@@ -35,6 +35,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   message, the session view shows "Ask in the chat: Analyse session <id>" in place of the button,
   instead of saying the host did not accept it.
 
+### Fixed
+- **Falls are readable where a light host's success colour is pale.** On a light theme, a fall in
+  the cost-change waterfall and its key are now drawn in the host's success colour mixed towards the
+  text colour (3:1 or more), and a fall written as text in the replay and price changes views is
+  mixed further (4.5:1 or more). Both stay green; dark themes are unchanged. Found in VS Code Light
+  Modern (#73c991, 2.0:1 on its background).
+
 ## [0.11.0] - 2026-11-11
 ### Fixed
 - **Charts are readable in High Contrast and light themes.** The "AI Credits by day" columns were

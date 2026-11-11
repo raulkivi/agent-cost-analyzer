@@ -22,6 +22,10 @@ import { S9_REPOSITORIES } from "../../../../scripts/ui-automation/s9-fixture.mt
 
 export const HISTORY_REPOSITORIES = S9_REPOSITORIES;
 
+// Models U12 compares a seeded session with (A33): both have Copilot prices
+// from 2026-10-01, so the replay has figures, not only Unknown.
+export const HISTORY_REPLAY_MODELS = ["claude-sonnet-5.5", "gpt-6.1-sol"] as const;
+
 // The seeded ChatHistory, as JSON, from the wdio launcher to its workers.
 export const CHAT_HISTORY_ENV = "AI_CREDITS_ANALYZER_COPILOT_E2E_HISTORY";
 
@@ -78,8 +82,21 @@ function day(now: Date, daysAgo: number): string {
   return new Date(now.getTime() - daysAgo * DAY_MS).toISOString().slice(0, 10);
 }
 
+// Distinct in the first 8 characters, the short id U5 shows and names its
+// Analyse button by.
 function sessionId(index: number): string {
-  return `00000000-0000-4000-a000-${String(index + 1).padStart(12, "0")}`;
+  const n = String(index + 1);
+  return `${n.padStart(8, "0")}-0000-4000-a000-${n.padStart(12, "0")}`;
+}
+
+// The fixture's debug log moved to start at `startedAt`: every `ts` (epoch
+// ms, its only time field) shifted by the same amount, so the replay prices
+// it at the session's date.
+function datedAt(debugLog: string, startedAt: Date): string {
+  const first = /"ts": (\d+)/.exec(debugLog);
+  if (!first) throw new Error("The fixture debug log has no ts");
+  const shift = startedAt.getTime() - Number(first[1]);
+  return debugLog.replace(/"ts": (\d+)/g, (_match, ts: string) => `"ts": ${Number(ts) + shift}`);
 }
 
 function writeRepository(dir: string, remote: string): void {
@@ -148,12 +165,13 @@ export function seedChatHistory({ userDataDir, reposDir, now }: SeedChatHistoryO
     db.exec("BEGIN");
     SESSIONS.forEach(({ repository, daysAgo }, index) => {
       const id = sessionId(index);
-      const startedAt = new Date(now.getTime() - daysAgo * DAY_MS).toISOString();
+      const started = new Date(now.getTime() - daysAgo * DAY_MS);
+      const startedAt = started.toISOString();
       insertSession.run(id, repositoryPaths[repository], `Placeholder ${HISTORY_REPOSITORIES[repository].folder} session ${index + 1}`, startedAt, startedAt);
       insertTurn.run(id, USAGE_LOG_USER_MESSAGE, startedAt);
       const logDir = path.join(workspaceDir, "GitHub.copilot-chat", "debug-logs", id);
       mkdirSync(logDir, { recursive: true });
-      writeFileSync(path.join(logDir, "main.jsonl"), debugLog.replaceAll(USAGE_SESSION_ID, id));
+      writeFileSync(path.join(logDir, "main.jsonl"), datedAt(debugLog.replaceAll(USAGE_SESSION_ID, id), started));
       ids.push(id);
     });
     db.exec("COMMIT");

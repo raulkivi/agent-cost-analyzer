@@ -20,10 +20,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   show a visual view: the failure rate over calls with a known outcome (unknown outcomes are counted
   apart), failure categories, recovery cost in tokens (not AI Credits), retried commands and calls by
   tool; the date-range version adds failed calls per day (also as a table), top failing commands and the sessions it
-  left out. `list_sessions` shows a session picker whose "Analyse" button sends exactly
-  "Analyse session <id>" to the chat and never a title. If the host declines or fails the message,
-  that row shows "Ask in the chat: Analyse session <id>" in place of its button. The text answers are
-  unchanged.
+  left out. `list_sessions` shows a session picker whose "Analyse" button hands exactly
+  "Analyse session <id>" to the chat and never a title; VS Code 1.146 puts it in the chat input for
+  you to send with Enter. If the host declines or fails the message, that row shows "Ask in the chat:
+  Analyse session <id>" in place of its button. The text answers are unchanged.
 - **Replay view in the chat.** `compare_models_for_session` shows each model's simulated total beside the measured one; click a model to replay it turn by turn with a chart (also as a table), the self-check result and the turns not replayed, as `replay_session` shows directly. Every simulated figure says Simulated and an unknown one says Unknown.
 
 ### Changed
@@ -31,6 +31,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **"Ask about this session" falls back to the text to type.** When the host declines or fails the
   message, the session view shows "Ask in the chat: Analyse session <id>" in place of the button,
   instead of saying the host did not accept it.
+
+### Fixed
+
+- **Falls are readable on VS Code Light Modern.** Its success colour (#73c991) is 2.0:1 on the
+  chat's background. On a light theme, a fall in the cost-change waterfall and its key are now drawn
+  in that colour mixed towards the text colour (3:1 or more), and a fall written as text in the
+  replay and price changes views is mixed further (4.5:1 or more). Both stay green; dark themes are
+  unchanged.
 
 ## [0.6.0] - 2026-11-11
 

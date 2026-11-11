@@ -37,7 +37,25 @@ export const COPILOT_VIEW_ROWS = [
 // picker) and 1.14 (cost by repository on a real git folder).
 export const COPILOT_EXTENSION_ROWS = ["2.1", "1.14"] as const;
 
-export const REQUIRED_COPILOT_E2E_TESTS = [...COPILOT_CHAT_CHECKS, ...COPILOT_VIEW_ROWS, ...COPILOT_EXTENSION_ROWS] as const;
+// A33 (Phase 12 Increment 3, docs/plans/mcp-apps.md §8.3):
+// copilot-increment3-views.e2e.ts checks the views of the Increment 3 tools
+// the extension serves (U12, U13, U4, U5; no billing view) in a real Copilot
+// Chat. "A33 U5.analyse" presses one Analyse, which starts a model turn.
+export const COPILOT_INCREMENT3_ROWS = [
+  "A33 tools",
+  "A33 U12.compare",
+  "A33 U12.replay",
+  "A33 U13",
+  "A33 U4.session",
+  "A33 U4.rollup",
+  "A33 U5.list",
+  "A33 themes",
+  "A33 narrow",
+  "A33 footer",
+  "A33 U5.analyse",
+] as const;
+
+export const REQUIRED_COPILOT_E2E_TESTS = [...COPILOT_CHAT_CHECKS, ...COPILOT_VIEW_ROWS, ...COPILOT_EXTENSION_ROWS, ...COPILOT_INCREMENT3_ROWS] as const;
 
 export type EvidenceTestState = "passed" | "failed" | "skipped";
 
