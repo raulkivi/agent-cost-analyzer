@@ -9,9 +9,11 @@ import { FakeAppHostPort } from "../host/fake-app-host-port.js";
 import { exerciseEveryControl } from "../test-support/exercise-controls.js";
 import { comparisonRow, costComparison, costSeries, costVariance, projectCost, varianceCurrency, varianceModel } from "../view-models/cost-analysis-fixtures.js";
 import { sessionCost, turnSeries } from "../view-models/fixtures.js";
+import { priceChangeList } from "../view-models/increment3-fixtures.js";
 import { CostChangeView } from "./CostChangeView.js";
 import { CostCompareView } from "./CostCompareView.js";
 import { CostOverTimeView } from "./CostOverTimeView.js";
+import { PriceChangesView } from "./PriceChangesView.js";
 
 // A23 (plan §6): the dynamic half of the no-forwarding rule for U9-U11, with
 // markup and an injected instruction planted in every text field the tools
@@ -77,7 +79,7 @@ describe("U9-U11 with logged text planted in every field", () => {
     }
   });
 
-  it("U11 shows it as text and touches the host not at all", async () => {
+  it("U11 shows it as text; its one host call is the Price changes control's, with dates only", async () => {
     const fake = port();
     const variance = costVariance({
       label: HOSTILE,
@@ -90,7 +92,7 @@ describe("U9-U11 with logged text planted in every field", () => {
     expect(pressed).toContain(`button:claude ${HOSTILE}`);
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(HOSTILE);
     expectInert(container, fake);
-    expect(fake.calls).toEqual([]);
+    expect(fake.calls).toEqual([{ method: "callTool", args: ["get_price_changes", { since: "2026-09-01", until: "2026-10-31" }] }]);
   });
 });
 
@@ -123,5 +125,52 @@ describe("U9-U11 render a tool's error text as text only", () => {
     const { container } = render(<CostChangeView port={port()} brand={brand} result={{ isError: true, errorText: HOSTILE }} />);
     expect(screen.getByRole("alert")).toHaveTextContent(HOSTILE);
     expect(container.querySelector("img")).toBeNull();
+  });
+});
+
+// A28: U13 shows model, channel, source, note and provider text, and U11's
+// Price changes control makes one call carrying only the period's dates.
+describe("U13 with logged text planted in every field", () => {
+  function hostileList() {
+    const base = priceChangeList({ since: "2026-09-01", until: "2026-10-31" });
+    const [documented, observed] = base.changes;
+    if (documented?.kind !== "documented" || observed?.kind !== "observed") throw new Error("fixture");
+    return priceChangeList({
+      since: "2026-09-01",
+      until: "2026-10-31",
+      providers: [hostileProvider],
+      changes: [
+        { ...documented, modelId: `gpt-5.5 ${HOSTILE}`, channel: `github-copilot ${HOSTILE}`, sourceIds: [HOSTILE], note: HOSTILE },
+        { ...observed, modelId: `claude-sonnet-5.5 ${HOSTILE}`, channel: `github-copilot ${HOSTILE}`, weeks: observed.weeks.map((week) => ({ ...week, period: `${week.period} ${HOSTILE}` })) },
+      ],
+    });
+  }
+
+  it("direct: shows it as text, creates no element from it and has nothing to press", async () => {
+    const fake = port();
+    const { container } = render(<PriceChangesView port={fake} brand={brand} result={ok(hostileList())} />);
+    expect(screen.getAllByText(new RegExp(SECRET)).length).toBeGreaterThan(0);
+    const pressed = await exerciseEveryControl();
+    expect(pressed).toEqual([]);
+    expectInert(container, fake);
+    expect(fake.calls).toEqual([]);
+  });
+
+  it("from U11: only the period's dates reach the host, never a model name or planted text", async () => {
+    const fake = port();
+    fake.toolResults.set("get_price_changes", ok(hostileList()));
+    const variance = costVariance({ notExplained: { periodA: { turns: 1, reasons: [HOSTILE] }, periodB: { turns: 1, reasons: [HOSTILE] } }, providers: [hostileProvider] });
+    const { container } = render(<CostChangeView port={fake} brand={brand} result={ok(variance)} />);
+    fireEvent.click(screen.getByRole("button", { name: "Price changes" }));
+    await screen.findByRole("heading", { level: 1, name: "Price changes behind the cost change" });
+    await exerciseEveryControl(document.body, { skip: /^button:Back to/ });
+    expectInert(container, fake);
+    expect(fake.calls).toEqual([{ method: "callTool", args: ["get_price_changes", { since: "2026-09-01", until: "2026-10-31" }] }]);
+  });
+
+  it("renders its error text as text only", () => {
+    const { container } = render(<PriceChangesView port={port()} brand={brand} result={{ isError: true, errorText: HOSTILE }} />);
+    expect(container.querySelector("img, script, iframe, a")).toBeNull();
+    expect(screen.getByRole("alert")).toHaveTextContent(SECRET);
   });
 });

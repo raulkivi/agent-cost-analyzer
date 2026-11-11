@@ -8,12 +8,14 @@ import type { ViewBrand } from "../brand/view-brand.js";
 import type { ToolResult } from "../host/app-host-port.js";
 import { FakeAppHostPort } from "../host/fake-app-host-port.js";
 import { comparisonRow, costComparison, costSeries, costTotal, costVariance, point, projectCost } from "../view-models/cost-analysis-fixtures.js";
+import { priceChangeList } from "../view-models/increment3-fixtures.js";
 import { costRollup, sessionCost, turnSeries } from "../view-models/fixtures.js";
 import { turnView } from "../view-models/turn-view-fixture.js";
 import { CostChangeView } from "./CostChangeView.js";
 import { CostCompareView } from "./CostCompareView.js";
 import { CostOverTimeView } from "./CostOverTimeView.js";
 import { CostRollupView } from "./CostRollupView.js";
+import { PriceChangesView } from "./PriceChangesView.js";
 import { FindingsView } from "./FindingsView.js";
 import { SessionCostView } from "./SessionCostView.js";
 import { findingsResult, SAMPLE_FINDINGS } from "./findings/fixtures.js";
@@ -267,18 +269,47 @@ describe("U11 cost change by keyboard", () => {
     expect(document.activeElement).toBe(toggle);
   });
 
-  it("the waterfall's View as table works from the keyboard, and the disabled Price changes control is skipped", async () => {
+  it("the waterfall's View as table works from the keyboard", async () => {
     const user = userEvent.setup();
     render(<CostChangeView port={port()} brand={brand} result={ok(costVariance())} />);
     const viewAsTable = screen.getByRole("button", { name: "View as table" });
     await tabTo(user, viewAsTable);
     await user.keyboard("{Enter}");
     expect(await screen.findByRole("table", { name: /Waterfall from 2026-09 to 2026-10/ })).toBeInTheDocument();
-    const reached: Element[] = [];
-    for (let presses = 0; presses < 40; presses += 1) {
+  });
+
+  // A28: Tab reaches the Price changes control, Enter opens U13 in place,
+  // Back is the first control and Enter on it returns to U11 with focus on
+  // the control it left, without a second call.
+  it("Tab and Enter open U13 from U11, Back returns focus to the Price changes control with no new call", async () => {
+    const user = userEvent.setup();
+    const fake = port();
+    fake.toolResults.set("get_price_changes", ok(priceChangeList()));
+    render(<CostChangeView port={fake} brand={brand} result={ok(costVariance())} />);
+    const open = screen.getByRole("button", { name: "Price changes" });
+    await tabTo(user, open);
+    await user.keyboard("{Enter}");
+    await screen.findByText(/1 of 2 changes in the range/);
+    const back = screen.getByRole("button", { name: "Back to cost change" });
+    expect(document.activeElement).toBe(back);
+    await user.keyboard("{Enter}");
+    expect(screen.getByRole("heading", { level: 1, name: "widgets" })).toBeInTheDocument();
+    expect(document.activeElement).toBe(screen.getByRole("button", { name: "Price changes" }));
+    expect(fake.calls.filter((call) => call.method === "callTool")).toHaveLength(1);
+  });
+});
+
+describe("U13 price changes by keyboard", () => {
+  it("Tab reaches each weekly table's scroll region and nothing else is a tab stop", async () => {
+    const user = userEvent.setup();
+    render(<PriceChangesView brand={brand} result={ok(priceChangeList())} />);
+    const region = screen.getByRole("region", { name: /claude-sonnet-5\.5 weekly billed against priced, scrollable/ });
+    await tabTo(user, region);
+    const stops: Element[] = [];
+    for (let presses = 0; presses < 6; presses += 1) {
       await user.tab();
-      reached.push(document.activeElement!);
+      stops.push(document.activeElement!);
     }
-    expect(reached).not.toContain(screen.getByRole("button", { name: "Price changes" }));
+    expect(stops.filter((stop) => stop !== document.body && stop !== region)).toEqual([]);
   });
 });

@@ -36,6 +36,10 @@ export class ViewFrame {
     return new CostChangeView(this.content);
   }
 
+  get priceChanges(): PriceChangesView {
+    return new PriceChangesView(this.content);
+  }
+
   get sessionCost(): SessionCostView {
     return new SessionCostView(this.content);
   }
@@ -241,6 +245,48 @@ export class CostComparisonView {
   }
 }
 
+// U13: when prices changed. Documented and inferred changes share one list;
+// each entry says which it is.
+export class PriceChangesView {
+  constructor(private readonly content: FrameLocator) {}
+
+  timeline(): Locator {
+    return this.content.getByRole("img", { name: /^Price changes on a timeline/ });
+  }
+
+  // The marks on the timeline: "documented" or "observed" (drawn dashed, tagged inferred).
+  marks(kind: "documented" | "observed"): Locator {
+    return this.timeline().locator(`[data-mark="${kind}"]`);
+  }
+
+  entries(kind: "documented" | "observed"): Locator {
+    return this.content.locator(`.pc-entry[data-kind="${kind}"]`);
+  }
+
+  entry(model: string): Locator {
+    return this.content.locator(".pc-entry").filter({ has: this.content.getByRole("heading", { level: 3, name: new RegExp(model) }) });
+  }
+
+  // The filter sentence U11 adds: "Showing …, the model with the largest price effect … 1 of 2 changes in the range."
+  filterNote(): Locator {
+    return this.content.locator(".pc-note");
+  }
+
+  emptyState(): Locator {
+    return this.content.locator(".pc-state");
+  }
+
+  // The colour family of a percentage written in an entry ("+25.00 %" red, "−20.00 %" green).
+  async percentHue(percent: Locator): Promise<Hue> {
+    const colour = await percent.evaluate((element) => getComputedStyle(element).color);
+    const [red, green, blue] = (colour.match(/[\d.]+/g) ?? []).map(Number);
+    if (red === undefined || green === undefined || blue === undefined) return "other";
+    if (red > green * 1.3 && red > blue * 1.3) return "red";
+    if (green > red * 1.15 && green > blue * 1.15) return "green";
+    return "other";
+  }
+}
+
 // U11: why a cost changed between two periods.
 export class CostChangeView {
   constructor(private readonly content: FrameLocator) {}
@@ -260,6 +306,15 @@ export class CostChangeView {
 
   modelTable(): Locator {
     return this.content.getByRole("table", { name: /^Change by model/ });
+  }
+
+  // The control that opens U13 in place, and the sentence beside it naming the models.
+  priceChangesButton(): Locator {
+    return this.content.getByRole("button", { name: "Price changes", exact: true });
+  }
+
+  async openPriceChanges(): Promise<void> {
+    await this.priceChangesButton().click();
   }
 
   // A column of the by-model table, which the narrow layout drops.

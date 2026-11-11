@@ -38,7 +38,7 @@ const LOGGED_TEXT = new Set(["title", "sessionTitle", "userMessage", "assistantM
 // The tools a view may call, and the argument names it may send them.
 // U10 (A21) opens a row in U9 with the row's own ids and the comparison's
 // period, basis, pricing and currency: all taken from structuredContent.
-const TOOLS = new Set(["get_turn_series", "get_turn", "get_session_cost", "list_findings", "get_repository_cost", "get_project_cost"]);
+const TOOLS = new Set(["get_turn_series", "get_turn", "get_session_cost", "list_findings", "get_repository_cost", "get_project_cost", "get_price_changes"]);
 const ARGUMENT_NAMES = new Set(["sessionId", "provider", "turnIndex", "kind", "minSeverity", "repository", "projectId", "since", "until", "basis", "pricing", "currency"]);
 
 function walk(dir: string): string[] {
@@ -234,6 +234,8 @@ describe("no-forwarding rule (static, over every call site in src/)", () => {
         "views/CostCompareView.tsx",
         "views/cost-compare/CompareDrillDown.tsx",
         "views/CostChangeView.tsx",
+        "views/PriceChangesView.tsx",
+        "views/price-changes/PriceDrillDown.tsx",
       ]),
     );
     expect(files.some((file) => file.endsWith(".test.tsx"))).toBe(false);
@@ -277,6 +279,7 @@ describe("no-forwarding rule (static, over every call site in src/)", () => {
       'views/cost-compare/CompareDrillDown.tsx "get_repository_cost"',
       'views/cost-rollup/DrillDown.tsx "get_session_cost"',
       'views/findings/use-findings-query.ts "list_findings"',
+      'views/price-changes/PriceDrillDown.tsx "get_price_changes"',
       'views/session-cost/TopTurns.tsx "get_turn"',
     ]);
     const problems: string[] = [];
