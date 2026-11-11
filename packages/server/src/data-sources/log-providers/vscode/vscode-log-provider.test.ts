@@ -6,6 +6,7 @@ import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import type { Session } from "@agent-cost-analyzer/domain";
+import { listWorkspaceDebugLogsDirPaths } from "../../jsonl/session-log-path.js";
 import { AgentHostSessionSource } from "../../agent-host/agent-host-session-source.js";
 import {
   AGENT_HOST_FIXTURE_SESSION_IDS as AGENT_HOST_IDS,
@@ -589,6 +590,63 @@ describe("VscodeLogProvider.lookupSystemPromptText", () => {
 
   it("reports unknown-session when there is no session store at all", async () => {
     await expect(provider(null).lookupSystemPromptText("session-1")).resolves.toEqual({ status: "unknown-session" });
+  });
+});
+
+// Step 10.18: a window with no folder open writes its debug logs under
+// <user-data>/User/globalStorage/github.copilot-chat/debug-logs, and its
+// session-store row has no folder.
+describe("VscodeLogProvider: a session from a window with no folder open", () => {
+  let userDataDir: string;
+  const globalDebugLogs = () => path.join(userDataDir, "User", "globalStorage", "github.copilot-chat", "debug-logs");
+
+  beforeEach(() => {
+    userDataDir = mkdtempSync(path.join(tmpdir(), "vscode-log-provider-empty-window-"));
+    mkdirSync(path.join(userDataDir, "User", "workspaceStorage", "w1"), { recursive: true });
+    seedCopilotSessionStore(path.join(userDataDir, "User", "globalStorage", "github.copilot-chat", "session-store.db"), "2026-08-08T10:00:00.000Z", null);
+  });
+
+  afterEach(() => {
+    rmSync(userDataDir, { recursive: true, force: true });
+  });
+
+  function provider(): VscodeLogProvider {
+    return new VscodeLogProvider({
+      sessionStoreDbPath: path.join(userDataDir, "User", "globalStorage", "github.copilot-chat", "session-store.db"),
+      debugLogsDirPaths: () => listWorkspaceDebugLogsDirPaths({ userDataDir }),
+      agentTracesDbPath: null,
+    });
+  }
+
+  it("lists the session with its turns, tokens and AI Credits from the global debug logs, attributed to no folder", async () => {
+    writeUsageDebugLog(globalDebugLogs());
+
+    const [listed] = await provider().listSessions();
+    const detail = await provider().readSession(USAGE_SESSION_ID);
+
+    expect(listed.turnCount).toBe(2);
+    expect(listed.usageDataAvailable).toBe(true);
+    expect(listed.costAiCredits.known && listed.costAiCredits.value).toBeCloseTo(9.64735, 9);
+    expect(detail?.turns.map((turn) => turn.index)).toEqual([0, 1]);
+    expect(detail?.turns[0].usage.output.known).toBe(true);
+    expect(detail?.workspace.known).toBe(false);
+  });
+
+  it("counts a session once when its logs are in both the workspace and the global folder", async () => {
+    writeUsageDebugLog(globalDebugLogs());
+    writeUsageDebugLog(path.join(userDataDir, "User", "workspaceStorage", "w1", "GitHub.copilot-chat", "debug-logs"));
+
+    const listed = await provider().listSessions();
+
+    expect(listed).toHaveLength(1);
+    expect(listed[0].costAiCredits.known && listed[0].costAiCredits.value).toBeCloseTo(9.64735, 9);
+  });
+
+  it("lists the session with unknown usage, without an error, when there is no global debug-logs folder", async () => {
+    const [listed] = await provider().listSessions();
+
+    expect(listed.usageDataAvailable).toBe(false);
+    expect(listed.costAiCredits.known).toBe(false);
   });
 });
 

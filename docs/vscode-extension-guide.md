@@ -1,6 +1,6 @@
 # AI Credits Analyzer: extension guide
 
-**Last changed:** 2026-11-10 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-11 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 AI Credits Analyzer is a VS Code extension that shows where your GitHub
 Copilot Chat tokens and AI Credits go. It reads the logs Copilot Chat
@@ -783,6 +783,7 @@ and `~/.vscode-server/data` (remote). Under that folder it reads:
 |---|---|
 | `User/globalStorage/github.copilot-chat/session-store.db` | Copilot Chat's session list (SQLite, opened read-only) |
 | `User/workspaceStorage/<workspace>/GitHub.copilot-chat/debug-logs/` | Each session's debug log, `main.jsonl`, with per-turn usage and AI Credits |
+| `User/globalStorage/github.copilot-chat/debug-logs/` | The same debug logs for chats in a window with no folder open; those sessions show as "No repository" |
 | `User/globalStorage/github.copilot-chat/agent-traces.db` | Optional: cache-write and reasoning tokens for Local harness chats (SQLite, opened read-only) |
 | `User/globalStorage/agent-host.db` | Agent Host session list, for VS Code 1.143 and later (SQLite, opened read-only) |
 | `agentSessionData/<session>/session.db` | Agent Host turns, tokens and AI Credits per session (SQLite, opened read-only) |

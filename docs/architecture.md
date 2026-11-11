@@ -926,7 +926,8 @@ way that weren't previously documented:
   (WAL mode). **Correction (Phase 4):** this note originally claimed
   `debug-logs/<session-id>/main.jsonl` was a sibling under the same
   `globalStorage` path — verified wrong once real logs existed to check
-  against. `main.jsonl` actually lives per-workspace, at
+  against. `main.jsonl` actually lives per-workspace (for a window with no
+  folder open, step 10.18: under `globalStorage`, see below), at
   `<user-data-dir>/User/workspaceStorage/<workspace-hash>/GitHub.copilot-chat/debug-logs/<session-id>/`
   (note the differing case, `GitHub.copilot-chat` vs. `github.copilot-chat`),
   matching what agentic-coding-explained.md §18.3 and vision.md §4 said all
@@ -1035,7 +1036,13 @@ this slice:
   and returns one candidate `.../GitHub.copilot-chat/debug-logs` path per
   workspace, since a session id's workspace hash isn't known ahead of time.
   `resolveMainJsonlPath` tries each candidate and returns whichever one's
-  `<sessionId>/main.jsonl` actually exists — `app.ts` reads the envelopes
+  `<sessionId>/main.jsonl` actually exists. **Step 10.18:** it also returns
+  `<user-data-dir>/User/globalStorage/github.copilot-chat/debug-logs`, last,
+  whether or not it exists yet. Copilot Chat writes there when the window has
+  no folder open (VS Code 1.145.0, Copilot Chat 0.73.0); such a session's
+  store row has no `cwd` or repository, so it shows as "No repository", never
+  a guessed one. A session in both places is one store row, read from the
+  first folder that has it. — `app.ts` reads the envelopes
   once at that resolved path and reuses them for both the gating
   classification and extraction, rather than reading the file twice.
 - `session-enricher.buildSession` now takes an optional `turnUsages`

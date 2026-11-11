@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Fixed
+- Copilot Chat sessions from a window with no folder open now appear. Their debug logs are
+  under Copilot Chat's `globalStorage`, which was not read, so those sessions showed no tokens or
+  AI Credits. They show as "No repository".
+
 ### Added
 - Interactive views for the cost-analysis MCP tools in MCP Apps hosts:
   - `get_repository_cost` and `get_project_cost` show cost over time by basis

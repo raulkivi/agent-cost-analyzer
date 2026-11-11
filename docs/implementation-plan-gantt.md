@@ -68,6 +68,7 @@ gantt
     10.13-10.15 Agent Host sessions (100%)  :done, p10b, 2026-10-28, 6d
     10.16 UI automation (100%)             :done, p10c, 2026-11-04, 2d
     10.17 Release UI gate (62%)            :active, p10d, after p10c, 3d
+    10.18 Copilot empty-window sessions (100%) :done, p10e, 2026-11-11, 1d
 
     section Simulation and replay
     13 Vendor-aware Learn simulation (95%) :done, p13, 2026-11-04, 4d
