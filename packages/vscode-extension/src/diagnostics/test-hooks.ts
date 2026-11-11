@@ -9,7 +9,9 @@ import type { RpcTraceEntry } from "./rpc-trace.js";
 // run in a real VS Code and can't see inside the extension otherwise.
 // extension.ts registers them only when VS Code runs the extension in
 // ExtensionMode.Test (the Extension Development Host @vscode/test-electron
-// starts), and package.json never contributes them, so an installed copy
+// starts) or Development (a run from source, as the real-Copilot suite's
+// normal mode is since G3), and package.json never contributes them, so an
+// installed copy (Production)
 // has none: nothing for users to see in the Command Palette, and nothing
 // for other extensions to call. A command, rather than an API returned from
 // activate(), for that reason: an exported API would exist in every
