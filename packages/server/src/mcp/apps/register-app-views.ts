@@ -26,6 +26,16 @@ export const APP_VIEW_TOOL_NAMES: readonly string[] = [
   "get_project_cost",
   "compare_costs",
   "explain_cost_change",
+  // A26: Increment 3; routes U12-U15, U4, U5 arrive with A27-A30. get_statement
+  // and estimate_cost exist only in the standalone product (no billing group).
+  "replay_session",
+  "compare_models_for_session",
+  "get_price_changes",
+  "get_statement",
+  "estimate_cost",
+  "get_session_audit",
+  "get_audit_rollup",
+  "list_sessions",
 ];
 
 export function viewsResourceUri(identity: McpIdentity): string {

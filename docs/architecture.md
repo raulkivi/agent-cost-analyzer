@@ -193,11 +193,15 @@ stays read-only and makes no network call (constraint 1); the view is one
 static file.
 
 1. **Tool call.** `tools/list` gives `get_session_cost`, `get_cost_rollup`, `get_repository_cost`, `get_project_cost`, `compare_costs`, `explain_cost_change`
-   and `list_findings` a `_meta.ui.resourceUri` of
+   and `list_findings`, and (A26, Increment 3) `replay_session`, `compare_models_for_session`, `get_price_changes`, `get_statement`, `estimate_cost`, `get_session_audit`, `get_audit_rollup` and `list_sessions`, a `_meta.ui.resourceUri` of
    `ui://<server name>/views.html` (and the legacy flat key). The model
    calls the tool as before. Its name, input schema, output schema and
    `content` are unchanged, so a host without MCP Apps, and Claude Code
-   CLI, get the same text.
+   CLI, get the same text. The extension has no billing group (D7), so its
+   list has no `get_statement` or `estimate_cost` and names no billing view.
+   The routes for the eight Increment 3 tools (U12–U15, U4, U5) arrive
+   with A27–A30; until then the router answers `none` and the host shows
+   "No view for this result".
 2. **Resource read.** The host reads the URI with `resources/read`. The
    server answers with the built `views.html` (MIME type
    `text/html;profile=mcp-app`) after `injectBrand` has put the product's

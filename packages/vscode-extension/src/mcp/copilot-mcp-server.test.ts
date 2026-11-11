@@ -166,7 +166,7 @@ describe("createCopilotMcpServer with the app views (Phase 12 A13)", () => {
     return client;
   }
 
-  it("serves the views file as text/html;profile=mcp-app and tags the seven registered view tools with _meta.ui", async () => {
+  it("serves the views file as text/html;profile=mcp-app and tags the thirteen registered view tools with _meta.ui", async () => {
     const client = await connect(path.join(dir, "dist", "mcp-apps", "views.html"));
     try {
       const { tools } = await client.listTools();
@@ -178,14 +178,24 @@ describe("createCopilotMcpServer with the app views (Phase 12 A13)", () => {
           .sort(),
       ).toEqual([
         "compare_costs",
+        "compare_models_for_session",
         "explain_cost_change",
+        "get_audit_rollup",
         "get_cost_rollup",
+        "get_price_changes",
         "get_project_cost",
         "get_repository_cost",
+        "get_session_audit",
         "get_session_cost",
         "get_turn_series",
         "list_findings",
+        "list_sessions",
+        "replay_session",
       ]);
+      // A26: the extension has no billing group (D7), so no billing view is named.
+      expect(tools.map((tool) => tool.name)).not.toEqual(expect.arrayContaining(["get_statement"]));
+      expect(tools.map((tool) => tool.name)).not.toEqual(expect.arrayContaining(["estimate_cost"]));
+      expect(JSON.stringify(tools.map((tool) => tool._meta ?? {}))).not.toMatch(/statement|estimate|billing|U14|U15/i);
       expect(tools.find((tool) => tool.name === "get_session_cost")!._meta).toMatchObject({ ui: { resourceUri: URI } });
       const { contents } = await client.readResource({ uri: URI });
       expect(contents[0]).toMatchObject({ uri: URI, mimeType: "text/html;profile=mcp-app" });
