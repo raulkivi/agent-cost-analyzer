@@ -10,6 +10,39 @@ permissions:
   contents: read
 
 jobs:
+  # Decides whether the heavy UI/integration jobs run (docs/plans/release-ui-gate.md
+  # G1): a docs-only PR skips them. A job skipped by its job-level `if` counts
+  # as passed for the required checks, so the PR stays mergeable. `test` never
+  # depends on this job: it holds lint, typecheck and the unit tests that read docs.
+  changes:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      docs_only: ${{ steps.scope.outputs.docs_only }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+
+      - id: scope
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          set -o pipefail
+          if [ "$EVENT_NAME" != "pull_request" ]; then
+            echo "docs_only=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          # Three-dot: the PR's own changes since it branched from the base.
+          git diff --name-only "origin/${BASE_REF}...HEAD" | node scripts/ci-change-scope.mjs >> "$GITHUB_OUTPUT"
+
   test:
     runs-on: ubuntu-latest
     steps:
@@ -35,6 +68,9 @@ jobs:
   # web build over a seeded fixture home at a fixed clock, driven headless
   # by Playwright. A required check: no retries, so a failure is real.
   web-e2e:
+    needs: changes
+    # Fail safe: run unless the changes job succeeded AND found a docs-only PR.
+    if: ${{ !cancelled() && (needs.changes.result != 'success' || needs.changes.outputs.docs_only != 'true') }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -67,6 +103,9 @@ jobs:
   # the web suite's fixture home, Claude's recorded theme sets, axe. Replaces
   # the Claude Desktop hand checks (A16 §2, A24 §2). No retries.
   mcp-apps-e2e:
+    needs: changes
+    # Fail safe: run unless the changes job succeeded AND found a docs-only PR.
+    if: ${{ !cancelled() && (needs.changes.result != 'success' || needs.changes.outputs.docs_only != 'true') }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -97,6 +136,9 @@ jobs:
   # §7.1): its unit tests, then the real-VS Code integration suite on the
   # stable build, under a virtual display.
   extension:
+    needs: changes
+    # Fail safe: run unless the changes job succeeded AND found a docs-only PR.
+    if: ${{ !cancelled() && (needs.changes.result != 'success' || needs.changes.outputs.docs_only != 'true') }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -138,6 +180,9 @@ jobs:
   # decision D4 (2026-11-11, step 10.17, docs/plans/release-ui-gate.md); the
   # release workflow runs the same suite.
   extension-ui:
+    needs: changes
+    # Fail safe: run unless the changes job succeeded AND found a docs-only PR.
+    if: ${{ !cancelled() && (needs.changes.result != 'success' || needs.changes.outputs.docs_only != 'true') }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
