@@ -629,7 +629,7 @@ describe("VscodeLogProvider: a session from a window with no folder open", () =>
     expect(listed.costAiCredits.known && listed.costAiCredits.value).toBeCloseTo(9.64735, 9);
     expect(detail?.turns.map((turn) => turn.index)).toEqual([0, 1]);
     expect(detail?.turns[0].usage.output.known).toBe(true);
-    expect(detail?.workspace.known).toBe(false);
+    expect(detail?.workspace?.known).toBe(false);
   });
 
   it("counts a session once when its logs are in both the workspace and the global folder", async () => {
