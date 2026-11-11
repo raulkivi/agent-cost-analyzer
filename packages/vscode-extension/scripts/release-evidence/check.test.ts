@@ -3,7 +3,7 @@
 import { describe, expect, it } from "vitest";
 import { checkFromEvidence, checkReleaseEvidence, renderVerdict } from "./check.mts";
 import type { GitResult, GitRunner } from "./git-notes.mts";
-import { COPILOT_VIEW_ROWS, REQUIRED_COPILOT_E2E_TESTS, type ReleaseEvidence } from "./evidence.mts";
+import { COPILOT_EXTENSION_ROWS, COPILOT_VIEW_ROWS, REQUIRED_COPILOT_E2E_TESTS, type ReleaseEvidence } from "./evidence.mts";
 
 const SHA = "0123456789abcdef0123456789abcdef01234567";
 
@@ -21,6 +21,7 @@ const PASSING: ReleaseEvidence = {
     { title: "2.3 asked to call an MCP tool", state: "passed", skipReason: null },
     { title: "2.4 asked about another agent's sessions", state: "passed", skipReason: null },
     ...COPILOT_VIEW_ROWS.map((id) => ({ title: `${id} a view`, state: "passed" as const, skipReason: null })),
+    ...COPILOT_EXTENSION_ROWS.map((id) => ({ title: `${id} an extension row`, state: "passed" as const, skipReason: null })),
   ],
   aiCreditsSpent: 0.0421,
   ranAt: "2026-11-11T10:00:00.000Z",

@@ -33,7 +33,9 @@ const MAX_X_LABELS = 20;
 // plus a gap so neighbouring labels never touch.
 const LABEL_CHAR_WIDTH = 6;
 const LABEL_GAP = 6;
-const COLOR = "var(--color-accent)";
+// An identity colour, not the accent: the accent is the button background,
+// black like the page in High Contrast (step 10.17 G7, check 1.8).
+const COLOR = "var(--color-series-1)";
 
 // One measure over time as columns: click (Ctrl/⌘ to add) selects a column
 // — a selection surface like a QlikView chart — plus "View as table".

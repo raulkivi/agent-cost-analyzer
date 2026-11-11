@@ -2,7 +2,7 @@
 
 **Last changed:** 2026-11-11 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
-Status: **in progress: G0 (#203), G1 (#202), G2 (#207), G3 (#208, #210), G4, G5 (#205, #206) and G6 (#204) done 2026-11-11; G7 in progress.** Owner rule, 2026-11-11: every UI check
+Status: **done 2026-11-11: G0 (#203), G1 (#202), G2 (#207), G3 (#208, #210), G4 (#211), G5 (#205, #206), G6 (#204) and G7 (with the D11 chart fixes) all built; G7's PR is the last to merge.** Owner rule, 2026-11-11: every UI check
 before a release is automated. VS Code and Copilot checks use wdio
 (`wdio-vscode-service`, [vscode-ui-automation.md](vscode-ui-automation.md));
 web-only checks use Playwright (or the integrated Chrome for exploratory
@@ -45,7 +45,8 @@ Fixed test-first in `cost-series.ts`.
 | D7 | A Copilot chat in an empty window (no folder open) must be visible to the analyzer. Fixed in a separate step, not in 10.17: step 10.18, done 2026-11-11 (#209). |
 | D8 | A real-Copilot release run costing up to about 2 AI Credits is acceptable; keep the prompts minimal. |
 | D9 | Any skip of a required test blocks a release (confirms G2's tightened rule). |
-| D10 | The Increment 2 release (extension 0.6.0, app 0.11.0) waits for G4 and the empty-window fix (D7), not for G7. |
+| D10 | The Increment 2 release (extension 0.6.0, app 0.11.0) waits for G4 and the empty-window fix (D7). *Superseded for G7 by D11.* |
+| D11 | The chart findings G7's judge found are fixed, not pinned: G7 merges with no exceptions, and the fixes ship in the Increment 2 release, which therefore also waits for G7 (`npm run test:ui` runs in the required `extension` job and in `release-extension.yml`, so findings would block both). |
 
 ## 2. What gates each release today, and what replaces it
 
@@ -78,7 +79,7 @@ repo.
 | G4 | MCP App views in Copilot Chat (wdio, real-Copilot suite): spike entering the view's iframe inside the chat; then specs for U1-U3 and U9-U11 over seeded repositories (A16 §1, A24 §1): render, drill-down and Back focus, Light/Dark/both High Contrast through the probe and judge, 360 and 600 px, footer | high | Opus (spike), Sonnet (specs) | G3 | A24 §1 rows each named in a spec title; green on the owner's machine |
 | G5 | Fake MCP Apps host (Playwright, `packages/mcp-apps/e2e/`): a host page with ext-apps `AppBridge` loads `dist/views.html`, relays `tools/call` to the real server over stdio on the `web-e2e` fixture home, applies Claude's recorded and VS Code's sets; specs per A16 §2 and A24 §2 (including two currencies, the full U10 → U9 → U1 chain, permission-free drill-down, narrow and fullscreen) with axe | high | Opus (host), Sonnet (specs) | — | New required CI job `mcp-apps-e2e`, also in both release workflows |
 | G6 | High Contrast sets recorded by wdio (replaces A24 1.7a) into `packages/mcp-apps/test/theme/`, added to the contrast tests; CLI text check for non-UI clients | medium | Sonnet | — | Contrast tests cover Dark and Light High Contrast; server test green |
-| G7 | Remaining extension rows: chart-mark contrast in the judge (1.8), *Configure Tools* wording (2.1) and a seeded git folder (1.14) in the real-Copilot suite, 1.1 accepted as automated | medium | Sonnet | G3 | Manual-checks doc lists no release-gating hand row |
+| G7 | Remaining extension rows: chart-mark contrast in the judge (1.8), *Configure Tools* wording (2.1) and a seeded git folder (1.14) in the real-Copilot suite, 1.1 accepted as automated | medium | Sonnet | G3 | Manual-checks doc lists no release-gating hand row; **done 2026-11-11 (branch `claude/g7-extension-rows`)** |
 
 **G6 built (2026-11-11).** `npm run record:host-themes` in
 `packages/vscode-extension` (`wdio.record.conf.mts`, run under xvfb; not part
@@ -393,6 +394,13 @@ extension's own MCP server), `view-prompt.test.ts`, `view-overlay.test.ts`,
 and the evidence ids and required set in `evidence.test.ts`, `check.test.ts`
 and `record.test.ts`.
 
+**G7 (2026-11-11).** Built on `claude/g7-extension-rows`, not merged; D11 fixes included.
+
+- **1.8 charts.** The judge's chart-mark rule (`scripts/ui-check/chart-marks.mts`, unit-tested in `chart-marks.test.ts`): (1) every data mark (bar, line, marker, legend swatch, hatching that carries meaning) reaches 3:1 against the ground it is painted on (WCAG 1.4.11), translucent paints composited first; (2) each pair of neighbouring series in a chart (order of first appearance) is told apart by ONE of: paints 3:1 apart, a different non-colour cue (stroke dash pattern or a fill pattern), or a direct label on both in the chart. A legend alone does not count (it makes the reader match colours), and neither does "View as table"; the threshold is not relaxed for light grounds. Applied in `layout-theme.e2e.ts` (default suite, CI) in four themes. Findings, all fixed test-first in `packages/web` (D11), nothing pinned: the High Contrast column fill and the sparkline stroke; the light steps of series 2-5 (orange, aqua, yellow, magenta; 1.9-2.9:1 on a light ground, now 3.7-4.3:1); the hard-coded token-type and tool-status palettes (themed `--color-series-*` and new `--color-status-*` tokens, every one 3:1 or more on light, dark and High Contrast grounds); and success against error (1.1:1 apart) and cache read against output (2.1:1 apart), which now also differ by a fill pattern (solid, hatching, dots, cross, lines), in the charts and their legends.
+- **2.1 Configure Tools** and **1.14 on a real git folder:** `copilot-e2e/specs/extension-rows.e2e.ts`, titles `2.1 ...` and `1.14 ...`; both ids are required (`COPILOT_EXTENSION_ROWS` in `REQUIRED_COPILOT_E2E_TESTS`). 2.1 sends no message; 1.14 is one chat in a real `git init` workspace with a made-up remote. First run: 6 passed, 0.1800 AI Credits (D8). A window reload does not end the wdio session in normal mode, so the persistence of the grouping is tested for real.
+- **1.1** accepted as automated (D10): `first-run.e2e.ts` and `WalkthroughOffer`'s unit tests; the manual-checks row says so.
+- TDD exceptions: the picker's DOM read, the polling and the real runs. Unit-tested: `chart-marks`, `git-folder`, `repository-status`.
+
 Order: G0 and G1 first (small, unblock D4); G5 and G6 in parallel (CI,
 no Copilot); G2 and G3 next; G4 and G7 last.
 
@@ -400,7 +408,7 @@ no Copilot); G2 and G3 next; G4 and G7 last.
 
 - **Phase 12:** A24 (owner's checks of U9-U11) becomes G4 + G5 + G6; the
   Increment 2 release (extension 0.6.0, app 0.11.0) waits for G4 and the
-  empty-window fix (D7, step 10.18, done #209), not for G7 (D10). A33
+  empty-window fix (D7, step 10.18, done #209), and G7 (D11, which superseded D10 on G7). A33
   (Increment 3 checks) is written as specs from the start.
 - **Phase 10:** the open "manual checks before release" item closes when G1,
   G3 and G7 are done.

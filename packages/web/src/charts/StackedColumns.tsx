@@ -1,10 +1,10 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import { useState } from "react";
+import { useId, useState } from "react";
 import { scaleLinear } from "d3-scale";
 import type { ToolCallStatus } from "@agent-cost-analyzer/domain";
 import { STATUS_META, STATUS_ORDER } from "../lib/audit-format.js";
-import { activateOnEnterOrSpace, ChartLegend, roundedTopRectPath } from "./chart-parts.js";
+import { activateOnEnterOrSpace, ChartLegend, patternFillStyle, roundedTopRectPath, SeriesPatternDef } from "./chart-parts.js";
 import { ViewAsTable } from "./ViewAsTable.js";
 
 export interface StackedColumn {
@@ -54,6 +54,7 @@ export function StackedColumns({
   emptyText,
 }: StackedColumnsProps) {
   const [hoveredKey, setHoveredKey] = useState<string | null>(null);
+  const patternBase = useId().replace(/:/g, "");
 
   if (columns.length === 0) {
     return <p className="text-muted chart-empty">{emptyText ?? "No data."}</p>;
@@ -94,6 +95,12 @@ export function StackedColumns({
       <div className="chart-scroll">
         <div style={{ position: "relative", width }}>
           <svg role="group" aria-label={ariaLabel} width={width} height={HEIGHT} className="chart-svg">
+            <defs>
+              {STATUS_ORDER.map((status) => {
+                const { pattern, color } = STATUS_META[status];
+                return pattern === "solid" ? null : <SeriesPatternDef key={status} id={`${patternBase}-${status}`} color={color} pattern={pattern} />;
+              })}
+            </defs>
             {ticks.map((tick) => (
               <g key={tick}>
                 <line x1={MARGIN.left} x2={width - MARGIN.right} y1={y(tick)} y2={y(tick)} className="chart-grid" />
@@ -144,7 +151,7 @@ export function StackedColumns({
                         key={status}
                         data-status={status}
                         d={roundedTopRectPath(barX, yTop, barWidth, height, isTop ? 4 : 0)}
-                        fill={STATUS_META[status].color}
+                        fill={STATUS_META[status].pattern === "solid" ? STATUS_META[status].color : `url(#${patternBase}-${status})`}
                       />
                     );
                   })}
@@ -180,7 +187,7 @@ export function StackedColumns({
                 <div key={status} className="chart-tooltip-row">
                   <span
                     className="chart-legend-swatch"
-                    style={{ background: STATUS_META[status].color }}
+                    style={patternFillStyle(STATUS_META[status].color, STATUS_META[status].pattern)}
                     aria-hidden="true"
                   />
                   <span>{STATUS_META[status].label}</span>

@@ -21,6 +21,15 @@ describe("TrendColumns", () => {
     expect(onSelect).toHaveBeenLastCalledWith("2026-10-10", true);
   });
 
+  // Step 10.17 G7 (check 1.8): the accent is the button background, which is
+  // black like the page in High Contrast, so the columns vanished.
+  it("fills the columns with the first series colour, not the button background", () => {
+    const { container } = render(<TrendColumns ariaLabel="Trend" columns={columns} format={String} />);
+
+    const fills = [...container.querySelectorAll(".chart-column path")].map((path) => path.getAttribute("fill"));
+    expect(fills).toEqual(["var(--color-series-1)", "var(--color-series-1)"]);
+  });
+
   it("skips x-axis labels that would run into each other", () => {
     const days = Array.from({ length: 14 }, (_, index) => {
       const label = `10-${String(13 + index).padStart(2, "0")}`;

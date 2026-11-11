@@ -257,15 +257,10 @@ describe("categorical series palette (cost-by-repository-and-project.md §11.7)"
   const GRAPHICS = 3;
   const SLOTS = [1, 2, 3, 4, 5, 6, 7, 8] as const;
   const HUES = ["blue", "orange", "aqua", "yellow", "magenta", "green", "violet", "red"] as const;
-  const LIGHT = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#008300", "#6250d6", "#e34948"];
+  // Light steps: slots 2-5 (orange, aqua, yellow, magenta) are darkened so every
+  // slot reaches 3:1 on a light ground too (step 10.17 G7, check 1.8).
+  const LIGHT = ["#2a78d6", "#d4551f", "#118a60", "#9c6f00", "#c2417a", "#008300", "#6250d6", "#e34948"];
   const DARK = ["#3987e5", "#d95926", "#199e70", "#c98500", "#d55181", "#008300", "#9085e9", "#e66767"];
-  // A documented warning, not a pass: on a light ground these four sit at
-  // 1.9-2.9:1. The dataviz validator allows that only with relief, which
-  // the charts give (direct labels up to four series, values in tooltips,
-  // "View as table"). No other slot, and no slot on a dark ground, gets it.
-  const LIGHT_GROUND_BELOW_3_TO_1 = new Set<string>(["orange", "aqua", "yellow", "magenta"]);
-  const LIGHT_GROUND_FLOOR = 1.9;
-
   const SERIES_THEMES: { theme: Theme; steps: string[]; light: boolean; dashed: boolean }[] = [
     { theme: "standalone", steps: LIGHT, light: true, dashed: false },
     { theme: "vscode-light-modern", steps: LIGHT, light: true, dashed: false },
@@ -273,21 +268,15 @@ describe("categorical series palette (cost-by-repository-and-project.md §11.7)"
     { theme: "vscode-high-contrast", steps: DARK, light: false, dashed: true },
   ];
 
-  describe.each(SERIES_THEMES)("$theme", ({ theme, steps, light, dashed }) => {
+  describe.each(SERIES_THEMES)("$theme", ({ theme, steps, dashed }) => {
     const value = (token: string) => tokens(theme)[token]?.toLowerCase();
 
     it("defines --color-series-1 to -8 in the fixed order", () => {
       expect(SLOTS.map((slot) => value(`--color-series-${slot}`))).toEqual(steps);
     });
 
-    it.each(SLOTS.map((slot) => [slot, HUES[slot - 1]!] as const))("series %i (%s) against the page", (slot, hue) => {
-      const contrast = ratio(theme, `var(--color-series-${slot})`, "var(--color-bg)");
-      if (light && LIGHT_GROUND_BELOW_3_TO_1.has(hue)) {
-        // The warning band: weak, but still a visible mark.
-        expect(contrast).toBeGreaterThanOrEqual(LIGHT_GROUND_FLOOR);
-      } else {
-        expect(contrast).toBeGreaterThanOrEqual(GRAPHICS);
-      }
+    it.each(SLOTS.map((slot) => [slot, HUES[slot - 1]!] as const))("series %i (%s) reaches 3:1 against the page", (slot) => {
+      expect(ratio(theme, `var(--color-series-${slot})`, "var(--color-bg)")).toBeGreaterThanOrEqual(GRAPHICS);
     });
 
     it("waterfall increases and decreases (the diverging pair) differ and reach 3:1 on the page", () => {
@@ -302,15 +291,6 @@ describe("categorical series palette (cost-by-repository-and-project.md §11.7)"
       const expected = SLOTS.map((slot) => (dashed ? ["none", "7 4", "2 3"][(slot - 1) % 3] : "none"));
       expect(SLOTS.map((slot) => value(`--dash-series-${slot}`))).toEqual(expected);
     });
-  });
-
-  it("the light-ground allowance covers only slots that need it", () => {
-    for (const theme of ["standalone", "vscode-light-modern"] as const) {
-      const below = SLOTS.filter((slot) => ratio(theme, `var(--color-series-${slot})`, "var(--color-bg)") < GRAPHICS).map(
-        (slot) => HUES[slot - 1]!,
-      );
-      expect(below.every((hue) => LIGHT_GROUND_BELOW_3_TO_1.has(hue))).toBe(true);
-    }
   });
 
   it("uses the light steps in a light High Contrast theme, whose body carries vscode-high-contrast too", () => {
@@ -333,6 +313,15 @@ describe("categorical series palette (cost-by-repository-and-project.md §11.7)"
         .map(([name]) => name),
     );
     expect(mapped).toEqual([]);
+  });
+
+  // Tool-call status marks (step 10.17 G7): one value per status that reaches
+  // 3:1 on every ground, so the same hex serves light, dark and both High
+  // Contrast themes. Status is also told by pattern and icon, never colour alone.
+  describe.each(["standalone", "vscode-light-modern", "vscode-dark-modern", "vscode-high-contrast"] as const)("status colours in %s", (theme) => {
+    it.each(["success", "error", "interrupted", "denied", "unknown"])("%s reaches 3:1 against the page", (status) => {
+      expect(ratio(theme, `var(--color-status-${status})`, "var(--color-bg)")).toBeGreaterThanOrEqual(GRAPHICS);
+    });
   });
 
   // A ninth series folds into "Other" (§11.6), never a generated hue.

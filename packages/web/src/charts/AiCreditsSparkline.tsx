@@ -59,7 +59,7 @@ function Sparkline({ turns }: AiCreditsSparklineProps) {
 
   return (
     <svg role="img" aria-label="AI Credits sparkline" width={WIDTH} height={HEIGHT}>
-      <path data-testid="ai-credits-sparkline-path" d={path ?? ""} fill="none" stroke="#4a7" strokeWidth={1.5} />
+      <path data-testid="ai-credits-sparkline-path" d={path ?? ""} fill="none" stroke="var(--color-series-1)" strokeWidth={1.5} />
     </svg>
   );
 }

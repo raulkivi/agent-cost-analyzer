@@ -24,8 +24,8 @@ const RANGE_OPTIONS = [
 
 const FAILED_SERIES = [{ id: "failed", label: "Failed", color: STATUS_META.error.color }];
 const PROGRAM_SERIES = [
-  { id: "succeeded", label: "Succeeded", color: STATUS_META.success.color },
-  { id: "failed", label: "Failed", color: STATUS_META.error.color },
+  { id: "succeeded", label: "Succeeded", color: STATUS_META.success.color, pattern: STATUS_META.success.pattern },
+  { id: "failed", label: "Failed", color: STATUS_META.error.color, pattern: STATUS_META.error.pattern },
 ];
 
 interface AuditRollupPanelProps {

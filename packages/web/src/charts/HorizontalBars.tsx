@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import { activateOnEnterOrSpace, ChartLegend, type LegendItem } from "./chart-parts.js";
+import { activateOnEnterOrSpace, ChartLegend, patternFillStyle, patternFor, type LegendItem } from "./chart-parts.js";
 import { ViewAsTable } from "./ViewAsTable.js";
 
 export interface BarRow {
@@ -23,7 +23,11 @@ interface HorizontalBarsProps {
 // Ranked horizontal bars (magnitude by category): one shared scale, value
 // at the bar tip, segments separated by a 2px surface gap. HTML rather than
 // SVG so long labels truncate with a native title instead of colliding.
-export function HorizontalBars({ ariaLabel, series, rows, selectedKey, onSelect, emptyText, format = String }: HorizontalBarsProps) {
+export function HorizontalBars({ ariaLabel, series: plainSeries, rows, selectedKey, onSelect, emptyText, format = String }: HorizontalBarsProps) {
+  // Stacked series differ by a fill pattern as well as colour (check 1.8); a
+  // lone series stays solid, and a series may name its own (a status keeps its
+  // pattern in every chart).
+  const series = plainSeries.map((s, index) => ({ ...s, pattern: s.pattern ?? (plainSeries.length > 1 ? patternFor(index) : "solid") }));
   const totals = rows.map((row) => series.reduce((sum, s) => sum + (row.values[s.id] ?? 0), 0));
   const max = Math.max(1, ...totals);
 
@@ -85,7 +89,7 @@ export function HorizontalBars({ ariaLabel, series, rows, selectedKey, onSelect,
                           className="hbar-segment"
                           style={{
                             width: `${(value / max) * 100}%`,
-                            background: s.color,
+                            ...patternFillStyle(s.color, s.pattern),
                           }}
                         />
                       ) : null;

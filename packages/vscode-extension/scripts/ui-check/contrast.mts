@@ -47,3 +47,16 @@ export function contrastRatio(foreground: Rgba, background: Rgba): number {
   const [light, dark] = [luminance(foreground), luminance(background)].sort((x, y) => y - x);
   return (light + 0.05) / (dark + 0.05);
 }
+
+const OPAQUE_FALLBACK: Rgba = { r: 255, g: 255, b: 255, a: 1 };
+
+// The opaque colour a probe's background chain (own element outwards to
+// <html>) adds up to; white where nothing is painted.
+export function groundOf(backgrounds: string[]): Rgba {
+  let ground = OPAQUE_FALLBACK;
+  for (const value of [...backgrounds].reverse()) {
+    const colour = parseCssColor(value);
+    if (colour && colour.a > 0) ground = compositeOver(colour, ground);
+  }
+  return ground;
+}

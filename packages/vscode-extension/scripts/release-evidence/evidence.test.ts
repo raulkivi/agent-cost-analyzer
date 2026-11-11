@@ -3,6 +3,7 @@
 import { describe, expect, it } from "vitest";
 import {
   COPILOT_CHAT_CHECKS,
+  COPILOT_EXTENSION_ROWS,
   COPILOT_VIEW_ROWS,
   copilotTestTitle,
   evaluateNote,
@@ -30,6 +31,7 @@ function evidence(overrides: Partial<ReleaseEvidence> = {}): ReleaseEvidence {
       { title: copilotTestTitle("2.3", "an MCP call"), state: "passed", skipReason: null },
       { title: copilotTestTitle("2.4", "another agent"), state: "passed", skipReason: null },
       ...COPILOT_VIEW_ROWS.map((id) => ({ title: copilotTestTitle(id, "a view"), state: "passed" as const, skipReason: null })),
+      ...COPILOT_EXTENSION_ROWS.map((id) => ({ title: copilotTestTitle(id, "an extension row"), state: "passed" as const, skipReason: null })),
     ],
     aiCreditsSpent: 0.0123,
     ranAt: "2026-11-11T10:00:00.000Z",
@@ -80,7 +82,13 @@ describe("copilotTestTitle and testIdOf (stable ids, so a renamed test can't dro
       "A16 U3",
       "A16 keyboard",
     ]);
-    expect(REQUIRED_COPILOT_E2E_TESTS).toEqual([...COPILOT_CHAT_CHECKS, ...COPILOT_VIEW_ROWS]);
+    expect(REQUIRED_COPILOT_E2E_TESTS).toEqual([...COPILOT_CHAT_CHECKS, ...COPILOT_VIEW_ROWS, ...COPILOT_EXTENSION_ROWS]);
+  });
+
+  // G7 (step 10.17): extension-rows.e2e.ts's 2.1 (Configure Tools) and 1.14 (a real git folder).
+  it("requires G7's extension rows 2.1 and 1.14", () => {
+    expect(COPILOT_EXTENSION_ROWS).toEqual(["2.1", "1.14"]);
+    expect(REQUIRED_COPILOT_E2E_TESTS).toEqual(expect.arrayContaining(["2.1", "1.14"]));
   });
 
   it("refuses a run without a view row", () => {

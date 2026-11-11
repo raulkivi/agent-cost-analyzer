@@ -36,6 +36,7 @@ import { nodeGit } from "./scripts/release-evidence/git-notes.mts";
 import { readRunFacts, recordEvidence } from "./scripts/release-evidence/record.mts";
 import { readRunArtifacts } from "./scripts/release-evidence/run-artifacts.mts";
 import { COPILOT_E2E_VSCODE_ARGS } from "./scripts/ui-automation/copilot-vscode-args.mts";
+import { createGitFolder, E2E_REMOTE } from "./scripts/ui-automation/git-folder.mts";
 import { KEEP_EXTENSIONS_MARKER, KeepExtensionsLauncher } from "./scripts/ui-automation/keep-extensions-service.mts";
 import { PINNED_VSCODE_VERSION } from "./scripts/ui-automation/vscode-version.mts";
 import { installWorkbenchBridge, normalModeVscodeArgs, wdioProxyModule } from "./scripts/ui-automation/workbench-bridge.mts";
@@ -56,7 +57,7 @@ if (env.status === "skip") {
 const inWorker = process.env[ROOT_ENV] !== undefined;
 const rootDir = process.env[ROOT_ENV] ?? mkdtempSync(path.join(tmpdir(), "aica-copilot-e2e-"));
 const storagePath = path.join(rootDir, "storage");
-// An empty folder to open: in an empty window Copilot Chat writes its debug
+// A git folder with a made-up remote (check 1.14) to open: in an empty window Copilot Chat writes its debug
 // logs to User/globalStorage, where the analyzer doesn't look (G3).
 const workspacePath = path.join(rootDir, "workspace");
 const evidenceDir = evidenceDirOf(rootDir);
@@ -68,7 +69,7 @@ if (!inWorker) {
   process.env.AI_CREDITS_ANALYZER_COPILOT_E2E_MODEL = env.model;
   process.on("exit", () => rmSync(rootDir, { recursive: true, force: true }));
   mkdirSync(path.join(storagePath, "settings"), { recursive: true });
-  mkdirSync(workspacePath, { recursive: true });
+  createGitFolder(workspacePath, E2E_REMOTE);
   copyProfile(env.userDataDir, path.join(storagePath, "settings"));
   // In the copy only: pick the requested model (nothing in normal mode picks
   // it for us) and add the agent whose only tools are the analyzer's (D6).

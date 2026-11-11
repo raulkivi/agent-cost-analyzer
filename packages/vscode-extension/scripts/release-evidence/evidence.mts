@@ -33,7 +33,11 @@ export const COPILOT_VIEW_ROWS = [
   "A16 keyboard",
 ] as const;
 
-export const REQUIRED_COPILOT_E2E_TESTS = [...COPILOT_CHAT_CHECKS, ...COPILOT_VIEW_ROWS] as const;
+// G7 (step 10.17): extension-rows.e2e.ts checks 2.1 (Copilot's Configure Tools
+// picker) and 1.14 (cost by repository on a real git folder).
+export const COPILOT_EXTENSION_ROWS = ["2.1", "1.14"] as const;
+
+export const REQUIRED_COPILOT_E2E_TESTS = [...COPILOT_CHAT_CHECKS, ...COPILOT_VIEW_ROWS, ...COPILOT_EXTENSION_ROWS] as const;
 
 export type EvidenceTestState = "passed" | "failed" | "skipped";
 

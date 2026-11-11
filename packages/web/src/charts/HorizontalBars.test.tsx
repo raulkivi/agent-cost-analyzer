@@ -5,8 +5,8 @@ import { describe, expect, it, vi } from "vitest";
 import { HorizontalBars } from "./HorizontalBars.js";
 
 const series = [
-  { id: "ok", label: "Succeeded", color: "#597ea3" },
-  { id: "failed", label: "Failed", color: "#d03b3b" },
+  { id: "ok", label: "Succeeded", color: "var(--color-status-success)" },
+  { id: "failed", label: "Failed", color: "var(--color-status-error)" },
 ];
 
 describe("HorizontalBars", () => {
@@ -113,5 +113,42 @@ describe("HorizontalBars", () => {
     expect(screen.getByRole("button", { name: "Customer portal 52.7%" })).toHaveTextContent("52.7%");
     fireEvent.click(screen.getByRole("button", { name: "View as table" }));
     expect(within(screen.getByRole("table", { name: "Share of total" })).getAllByRole("cell").map((cell) => cell.textContent)).toEqual(["52.7%", "52.7%"]);
+  });
+});
+
+// Step 10.17 G7 (check 1.8): stacked segments differ by more than colour.
+describe("HorizontalBars patterns", () => {
+  const stacked = [
+    { id: "a", label: "Uncached", color: "var(--color-series-1)" },
+    { id: "b", label: "Cache read", color: "var(--color-series-3)" },
+    { id: "c", label: "Output", color: "var(--color-series-2)" },
+  ];
+
+  it("hatches every stacked series but the first, each differently", () => {
+    const { container } = render(<HorizontalBars ariaLabel="Tokens" series={stacked} rows={[{ key: "m", label: "model", values: { a: 3, b: 2, c: 1 } }]} />);
+    const images = ["a", "b", "c"].map((id) => (container.querySelector(`[data-segment="${id}"]`) as HTMLElement).style.backgroundImage);
+    expect(images[0]).toBe("");
+    expect(images[1]).not.toBe("");
+    expect(images[2]).not.toBe("");
+    expect(images[1]).not.toBe(images[2]);
+  });
+
+  it("keeps a single series solid", () => {
+    const { container } = render(<HorizontalBars ariaLabel="One" series={[stacked[1]!]} rows={[{ key: "m", label: "model", values: { b: 2 } }]} />);
+    expect((container.querySelector('[data-segment="b"]') as HTMLElement).style.backgroundImage).toBe("");
+  });
+
+  it("uses a series' own pattern when it names one (a status keeps it across charts)", () => {
+    const { container } = render(
+      <HorizontalBars
+        ariaLabel="Status"
+        series={[
+          { id: "ok", label: "Succeeded", color: "var(--color-status-success)", pattern: "solid" },
+          { id: "bad", label: "Failed", color: "var(--color-status-error)", pattern: "diagonal" },
+        ]}
+        rows={[{ key: "t", label: "tool", values: { ok: 1, bad: 1 } }]}
+      />,
+    );
+    expect((container.querySelector('[data-segment="bad"]') as HTMLElement).style.backgroundImage).toContain("repeating-linear-gradient");
   });
 });

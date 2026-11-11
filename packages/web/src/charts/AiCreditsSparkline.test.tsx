@@ -20,6 +20,19 @@ describe("AiCreditsSparkline", () => {
     expect(screen.getByRole("img", { name: "AI Credits sparkline" })).toBeInTheDocument();
   });
 
+  // Step 10.17 G7 (check 1.8): a hard-coded green was 2.9:1 on a light page;
+  // the identity colour is validated at 3:1 or more in every theme.
+  it("draws the line in the first series colour, which reaches 3:1 in every theme", () => {
+    const turns = [
+      makeTurn({ index: 0, usage: { ...makeTurn().usage, costAiCredits: { known: true, value: 0.01 } } }),
+      makeTurn({ index: 1, usage: { ...makeTurn().usage, costAiCredits: { known: true, value: 0.05 } } }),
+    ];
+
+    render(<AiCreditsSparkline turns={turns} />);
+
+    expect(screen.getByTestId("ai-credits-sparkline-path")).toHaveAttribute("stroke", "var(--color-series-1)");
+  });
+
   it("shows a fallback instead of a path when fewer than two turns have a known AI Credits value", () => {
     const turns = [
       makeTurn({ index: 0, usage: { ...makeTurn().usage, costAiCredits: { known: true, value: 0.01 } } }),

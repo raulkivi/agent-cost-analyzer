@@ -11,6 +11,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Charts are readable in High Contrast and light themes.** The "AI Credits by day" columns were
+  invisible in High Contrast, and several chart colours were too faint on a light background (tokens
+  by model, tool-call status, the orange, aqua, yellow and magenta series). Every chart mark now
+  reaches 3:1 against its background.
+- **Succeeded and failed tool calls are told apart without colour.** Stacked tool-call outcomes and
+  tokens by model carry a fill pattern (hatching, dots) as well as a colour, in the charts and their
+  legends.
 - **Copilot Chat sessions from a window with no folder open now appear.** Their debug logs are
   under Copilot Chat's `globalStorage`, which was not read, so those sessions showed no tokens or
   AI Credits. They show as "No repository".

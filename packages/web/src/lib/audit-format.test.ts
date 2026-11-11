@@ -12,11 +12,18 @@ import {
 } from "./audit-format.js";
 
 describe("STATUS_META", () => {
+  it("gives every status its own fill pattern, solid for success (colour is never the only cue)", () => {
+    const patterns = STATUS_ORDER.map((status) => STATUS_META[status].pattern);
+    expect(patterns[0]).toBe("solid");
+    expect(new Set(patterns).size).toBe(STATUS_ORDER.length);
+  });
+
   it("gives every status a label, an icon and a color (identity is never color alone)", () => {
     for (const status of STATUS_ORDER) {
       expect(STATUS_META[status].label).toBeTruthy();
       expect(STATUS_META[status].icon).toBeTruthy();
-      expect(STATUS_META[status].color).toMatch(/^#[0-9a-f]{6}$/);
+      // A themed token that reaches 3:1 on every ground (theme-contrast.test.ts).
+      expect(STATUS_META[status].color).toBe(`var(--color-status-${status})`);
     }
   });
 
