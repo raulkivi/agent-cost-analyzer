@@ -12,8 +12,8 @@ This document hands the Phase 12 work over to the next session. The design, the 
 - **Next:**
   - step 10.17 G4-G6 replace A24 (the owner's checks of U9–U11 in VS Code Copilot Chat and Claude Desktop; see [release-ui-gate.md](release-ui-gate.md)); the 0.5.0 pre-release stays published. Owner answers after A23 (mcp-apps.md §9.1): period totals keep the brand data colour; U11's table drops costs A and B from 640 px; the High Contrast colour sets are recorded by wdio (G6, replacing checklist step 1.7a) and added to the contrast tests;
   - extension 0.5.0 published 2026-11-10 on the Marketplace pre-release channel (tag `ext-v0.5.0`, #197); the G4 Copilot Chat specs can run against it;
-  - then the Increment 2 release: extension 0.6.0, app 0.11.0.
-- **Release:** the owner asked about an extension 0.4.1; not planned, since `main` has no fixes to 0.4.0, only Increment 2 features. Extension 0.5.0 went to the Marketplace pre-release channel, Open VSX and a GitHub pre-release on 2026-11-10 (#197); the app stays 0.10.0 and the root CHANGELOG keeps `[Unreleased]` until 0.11.0.
+  - the Increment 2 release PR is open (extension 0.6.0, app 0.11.0; release prepared 2026-11-11): next the owner's real-Copilot run on the merged commit, push the evidence note, then the tags `ext-v0.6.0` and `app-v0.11.0`.
+- **Release:** the owner asked about an extension 0.4.1; not planned, since `main` has no fixes to 0.4.0, only Increment 2 features. Extension 0.5.0 went to the Marketplace pre-release channel, Open VSX and a GitHub pre-release on 2026-11-10 (#197); the app stays 0.10.0 on `main` until the Increment 2 release PR merges, and the root CHANGELOG's `[Unreleased]` becomes 0.11.0 there.
 - **A23 done 2026-11-10** (findings in mcp-apps.md §6.1 and the A23 row). The visual-pass inputs it worked from, all closed:
   - U9's y-axis top label sits tight against the left edge beside a price-change marker.
   - U11's "Not explained" tile reads "0 + 3 turns, no priced figure, not 0". Owner decision: value "3 turns", note "no price for these turns; not counted as 0".
