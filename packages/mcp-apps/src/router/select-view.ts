@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 import type { HostContext } from "../host/app-host-port.js";
 
-export type ViewId = "session-cost" | "cost-rollup" | "findings" | "cost-over-time" | "cost-change" | "cost-compare" | "price-changes";
+export type ViewId = "session-cost" | "cost-rollup" | "findings" | "cost-over-time" | "cost-change" | "cost-compare" | "price-changes" | "statement" | "estimate";
 export type ViewSelection = { view: ViewId } | { view: "none" };
 
 const BY_TOOL: Record<string, ViewId> = {
@@ -14,6 +14,8 @@ const BY_TOOL: Record<string, ViewId> = {
   explain_cost_change: "cost-change",
   compare_costs: "cost-compare",
   get_price_changes: "price-changes",
+  get_statement: "statement",
+  estimate_cost: "estimate",
 };
 
 // VS Code prefixes the tool name with the server's id ("<server>-<tool>",
@@ -42,6 +44,9 @@ function byShape(structured: unknown): ViewId | undefined {
   if (hasArray(s, "rows") && typeof s.groupBy === "string" && typeof s.comparePeriod === "string" && typeof s.previousSince === "string" && typeof s.previousUntil === "string" && typeof s.total === "object") return "cost-compare";
   // PriceChangeList (U13): the changes with the providers read for the observed ones.
   if (hasArray(s, "changes") && hasArray(s, "providers") && typeof s.generatedAt === "string") return "price-changes";
+  // StatementAnswer (U14) and CostEstimate (U15): standalone billing results, checked after every earlier shape.
+  if (typeof s.statement === "object" && s.statement !== null && typeof s.canIssue === "object" && hasArray(s, "issuedPeriods")) return "statement";
+  if (s.label === "estimate" && typeof s.history === "object" && typeof s.runRate === "object" && typeof s.planned === "number") return "estimate";
   return undefined;
 }
 

@@ -40,6 +40,14 @@ export class ViewFrame {
     return new PriceChangesView(this.content);
   }
 
+  get statement(): StatementView {
+    return new StatementView(this.content);
+  }
+
+  get estimate(): EstimateView {
+    return new EstimateView(this.content);
+  }
+
   get sessionCost(): SessionCostView {
     return new SessionCostView(this.content);
   }
@@ -466,5 +474,71 @@ export class FindingsView {
 
   async openEvidence(position = 0): Promise<void> {
     await this.whyFlagged().nth(position).click();
+  }
+}
+
+// U14: a project's statement for a period (standalone only, read-only).
+export class StatementView {
+  constructor(private readonly content: FrameLocator) {}
+
+  // "Draft" or "Issued <day>".
+  status(): Locator {
+    return this.content.locator(".stm-status");
+  }
+
+  totalTile(currency: "AI Credits" | "USD"): Locator {
+    return this.content.getByRole("group", { name: `Total, ${currency}`, exact: true });
+  }
+
+  linesTable(currency: "AI Credits" | "USD"): Locator {
+    return this.content.getByRole("table", { name: `Statement lines in ${currency}`, exact: true });
+  }
+
+  // The unit of each currency table, in the order shown.
+  tableUnits(): Locator {
+    return this.content.locator("section[aria-label^=\"Statement lines in\"] h2");
+  }
+
+  channelHeader(): Locator {
+    return this.content.getByRole("columnheader", { name: "Channel", exact: true });
+  }
+
+  unknownGroup(): Locator {
+    return this.content.getByRole("region", { name: "No known cost", exact: true });
+  }
+
+  // The draft's "Not issued" box.
+  draftNote(): Locator {
+    return this.content.getByRole("status").filter({ hasText: "Not issued." });
+  }
+
+  // Any control: U14 has none (no issue, re-issue or export).
+  controls(): Locator {
+    return this.content.getByRole("button");
+  }
+}
+
+// U15: the cost of planned work (standalone only, read-only).
+export class EstimateView {
+  constructor(private readonly content: FrameLocator) {}
+
+  tag(): Locator {
+    return this.content.locator(".est-tag");
+  }
+
+  rangeBar(): Locator {
+    return this.content.getByRole("img", { name: /^Estimated range/ });
+  }
+
+  tile(name: string | RegExp): Locator {
+    return this.content.getByRole("group", { name });
+  }
+
+  simulated(): Locator {
+    return this.content.getByRole("region", { name: "Simulated", exact: true });
+  }
+
+  refusal(): Locator {
+    return this.content.getByRole("status").filter({ hasText: "Not enough history to give an estimate." });
   }
 }

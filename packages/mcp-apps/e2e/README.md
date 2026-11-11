@@ -20,7 +20,7 @@ CI runs it in the `mcp-apps-e2e` job, with no retries.
 - **Host context.** `support/host-context.ts` takes the host's name, capabilities, display modes and dimensions from the A0 recordings (`docs/plans/mcp-apps-spike-results/`). It takes the theme and style variables from a host set in `test/theme/host-sets.ts` (Claude dark by default). It checks the context against ext-apps' own schema first: the view's ext-apps rejects a context with one unknown style variable and then waits silently.
 - **VS Code sets.** VS Code sends `var(--vscode-*)` references, and its webview defines the `--vscode-*` colours itself. So the host context carries only the protocol's variables, and the view is served with the set's `--vscode-*` colours on its root. A theme change mid-view does not update those colours: show a new view instead.
 - **No network.** Playwright's router serves the host page and the view from memory on two `.test` origins, with the CSP the resource declares (`support/sandbox.ts`). Any other request is refused, and the fixture fails the test.
-- **Page objects.** `support/view-frame.ts`: `ViewFrame` is the shared shell (title, kicker, trail, Back, footer, focus, axe), with lenses for U1, U2, U3, U9, U10, U11 and U13. Specs hold no selectors.
+- **Page objects.** `support/view-frame.ts`: `ViewFrame` is the shared shell (title, kicker, trail, Back, footer, focus, axe), with lenses for U1, U2, U3, U9, U10, U11, U13, U14 and U15. Specs hold no selectors.
 - **Axe.** `ViewFrame.axeViolations()` runs the web suite's axe check inside the view's frame. The view is transparent, so it first paints the host's `--color-background-primary` on the view's root as the ground behind it.
 
 ## Checklist rows covered
@@ -51,6 +51,11 @@ Every spec runs in Claude light and Claude dark (`inEachClaudeSet`), with axe in
 | A16 §2 keyboard: Tab and Enter drill-downs, Back returns focus, focus ring visible | `specs/a16-session-views.spec.ts` |
 | A16 §2 narrow 360 px and fullscreen for U1-U3 | `specs/layout-footer-permissions.spec.ts` |
 | A31 U9 and U2 fullscreen: Fullscreen requests the mode, the host switches, the control reads Exit fullscreen and keeps focus, the card widens with no sideways scroll; axe in both modes (both Claude themes) | `specs/layout-footer-permissions.spec.ts` |
+| A29 board 4 / §9.2 Q13 U14 draft statement: totals per currency, one table per currency (AI Credits first), five columns; Channel hidden at 360 px, no sideways scroll | `specs/u14-u15-billing.spec.ts` |
+| A29 board 3 / §9.2 Q14 U14 read-only: no issue, re-issue or export control, no tool call or message; a draft that cannot be issued yet says why | `specs/u14-u15-billing.spec.ts` |
+| A29 board 7 / §9.2 Q15 U15 refusal: reason, every figure Unknown, no range bar, no run rate | `specs/u14-u15-billing.spec.ts` |
+| A29 board 6 / §9.2 Q16 U15 on another model: "estimate" and "Simulated" tags, replay coverage, turns not replayed, self-check count | `specs/u14-u15-billing.spec.ts` |
+| A29 board 15 U15 at 360 px, plain and simulated: no sideways scroll | `specs/u14-u15-billing.spec.ts` |
 
 Not in a fake host:
 
@@ -60,6 +65,7 @@ Not in a fake host:
 - **A24 2.6, the title "No projects here" in U10.** `compare_costs` needs two ids and answers an unknown id with a zero-turn row, so the real server never gives U10 an empty result. The spec asserts that answer (Unknown, "no turns", never 0), and U9's error state for an unknown project. `CostCompareView.test.tsx` covers the empty state itself.
 - **A24 2.3, two currencies in U11.** U11 uses the priced basis and the fixture's AI Credits are billed, not priced, so U11 has one block. `cost-variance.test.ts` covers two blocks.
 - **A24 2.9, U9's own fullscreen layout.** Task A31 builds it. The spec asserts only that U9 renders in fullscreen without scrolling sideways.
+- **A29 board 3 and 5, an issued statement with a diff and an estimate range.** The fixture home has no issued statement (issuing is an app action) and only 4 priced active days, under the 5 an estimate needs, so the real server gives a draft and a refusal. `StatementView.test.tsx` and `EstimateView.test.tsx` cover the diff and the range bar.
 - **Claude Desktop's own chrome, the VS Code sets, A16 §1 and A24 §1.** Step 10.17 G4 and G6 cover the VS Code rows in Copilot Chat. The harness runs VS Code sets (`hostKind: "vscode"`); no spec uses them here.
 
 ## Adding a spec
