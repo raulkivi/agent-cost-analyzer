@@ -754,7 +754,7 @@ Starts after Increment 2's exit criterion is met (A24, now step 10.17 G4-G6).
 
 | # | Task | Complexity | Model | Depends on |
 |---|---|---|---|---|
-| A25b | **Increment 3 mock-ups** (§5.6): U12 in compare and replay modes (with a failed self-check), U4 and U5 in both host frames, light and dark; one states board for U13, U14 and U15 (documented vs inferred changes, an issued statement with a diff, an estimate range and a refusal), drawn in the Claude Desktop frame only for U14/U15. The owner approves them before A27. **Drawn 2026-11-11, waiting for the owner's approval:** `Replay`, `ToolCallAudit`, `SessionPicker` and `Increment3States` boards in [mockups/mcp-apps/](mockups/mcp-apps/README.md). The owner's questions are in §9.2. | medium | Sonnet (frontend-design skill) + owner | A24 |
+| A25b | **Increment 3 mock-ups** (§5.6): U12 in compare and replay modes (with a failed self-check), U4 and U5 in both host frames, light and dark; one states board for U13, U14 and U15 (documented vs inferred changes, an issued statement with a diff, an estimate range and a refusal), drawn in the Claude Desktop frame only for U14/U15. The owner approves them before A27. **Drawn 2026-11-11, approved by the owner 2026-11-11 (all 17 defaults in §9.2 kept):** `Replay`, `ToolCallAudit`, `SessionPicker` and `Increment3States` boards in [mockups/mcp-apps/](mockups/mcp-apps/README.md). The owner's questions are in §9.2. | medium | Sonnet (frontend-design skill) + owner | A24 |
 | A25 | View models `toReplayViewModel`, `toPriceChangesViewModel`, `toStatementViewModel` and `toEstimateViewModel` (§4.5), one run each, with tests that the "simulated", "inferred" and "estimate" labels are always there | low | Haiku (no local model in this repo) | A24 |
 | A26 | `_meta.ui` on `replay_session`, `compare_models_for_session`, `get_price_changes`, `get_statement`, `estimate_cost`, `get_session_audit`, `get_audit_rollup` and `list_sessions`. The test asserts that the extension's `tools/list` names no billing view. | medium | Sonnet | A24 |
 | A27 | U12 `ReplayView`, compare and replay modes, with the self-check status | medium | Sonnet | A25, A25b, A26 |
@@ -883,9 +883,9 @@ A20–A22 were built on the coordinator's default for each. The owner answered a
 
 ### 9.2 Increment 3 boards: questions for the owner (A25b, 2026-11-11)
 
-Drawn 2026-11-11 and waiting for the owner's approval. A27–A30 start on the default for each question unless the owner answers otherwise. Boards: [Replay](mockups/mcp-apps/Replay.dc.html) (U12), [ToolCallAudit](mockups/mcp-apps/ToolCallAudit.dc.html) (U4), [SessionPicker](mockups/mcp-apps/SessionPicker.dc.html) (U5) and [Increment3States](mockups/mcp-apps/Increment3States.dc.html) (U13–U15, Unknown replay, narrow 360 px).
+Drawn 2026-11-11 and approved by the owner the same day, who answered all 17 in an interview: every default kept. A27–A30 build on these answers. Boards: [Replay](mockups/mcp-apps/Replay.dc.html) (U12), [ToolCallAudit](mockups/mcp-apps/ToolCallAudit.dc.html) (U4), [SessionPicker](mockups/mcp-apps/SessionPicker.dc.html) (U5) and [Increment3States](mockups/mcp-apps/Increment3States.dc.html) (U13–U15, Unknown replay, narrow 360 px).
 
-| # | Question | Default drawn |
+| # | Question | Default drawn (kept by the owner) |
 |---|---|---|
 | 1 | `SessionReplayComparison` has no `selfCheck` (only `SessionReplay` does), but §4.5 wants the status shown. What does compare mode say? | A line "Own-model check" built from the entry flagged `isMeasuredModel`: its simulated total against the measured one (183.90 vs 186.40, −1.3 %). The request-by-request self-check shows in replay mode only. |
 | 2 | A failed self-check: show the simulated figures, or hide them? | Show them under a danger-coloured alert with the counts ("matched 37 of 44 requests") and "treat them as rough". The chart and tiles keep the "Simulated" tag. |

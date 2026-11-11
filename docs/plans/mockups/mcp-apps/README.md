@@ -46,7 +46,7 @@ Checks for the Increment 2 boards:
 
 ### Increment 3 boards (A25b)
 
-Drawn 2026-11-11 for task A25b in [mcp-apps.md](../../mcp-apps.md) §7.2. Status: **drawn, waiting for the owner's approval.** The owner's questions, each with the default A27–A30 start on, are in [mcp-apps.md](../../mcp-apps.md) §9.2. They show U12, U4 and U5 in both host frames, light and dark, and U13 to U15 on a states board (U14 and U15 in the Claude Desktop frame only, as the standalone app is their only product). The footers use the Increment 3 target versions (v0.8.0 and v0.12.0, §7.3). All sessions, models and figures are invented.
+Drawn 2026-11-11 for task A25b in [mcp-apps.md](../../mcp-apps.md) §7.2. Status: **drawn and approved by the owner (2026-11-11)**, all 17 defaults in [mcp-apps.md](../../mcp-apps.md) §9.2 kept. The owner's questions, each with the default A27–A30 start on, are in [mcp-apps.md](../../mcp-apps.md) §9.2. They show U12, U4 and U5 in both host frames, light and dark, and U13 to U15 on a states board (U14 and U15 in the Claude Desktop frame only, as the standalone app is their only product). The footers use the Increment 3 target versions (v0.8.0 and v0.12.0, §7.3). All sessions, models and figures are invented.
 
 | Board | Shows |
 | ----- | ----- |
