@@ -776,7 +776,7 @@ release workflow sends an odd minor to the Marketplace pre-release channel.
 | Release | Ships after | Extension (AI Credits Analyzer, tag `ext-v*`) | Standalone app (Agent Cost Analyzer, tag `app-v*`) |
 |---|---|---|---|
 | MVP: U1–U3 | A16 | **0.4.0** (stable) | **0.10.0** (shipped 2026-11-10) |
-| Increment 2: U9–U11 | A24 (now step 10.17 G4-G6) | **0.6.0** | **0.11.0** |
+| Increment 2: U9–U11 | A24 (now step 10.17 G4-G6) | **0.6.0** (release prepared 2026-11-11; ships when the tag is published) | **0.11.0** (release prepared 2026-11-11; ships when the tag is published) |
 | Increment 3: U4, U5, U12–U15 | A33 | **0.8.0** (no U14/U15) | **0.12.0** |
 
 - The MVP shipped in the same release as the Phase 14/15 work, so the app

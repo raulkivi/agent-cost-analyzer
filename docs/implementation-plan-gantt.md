@@ -97,6 +97,7 @@ gantt
     Extension 0.2.1 :milestone, r9, 2026-11-06, 0d
     Extension 0.4.0, App v0.10.0 :milestone, r10, 2026-11-10, 0d
     Extension 0.5.0 pre-release :milestone, r11, 2026-11-10, 0d
+    Extension 0.6.0, App v0.11.0 :milestone, r12, 2026-11-11, 0d
 ```
 
 ## Not started

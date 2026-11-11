@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-11-11
+
 ### Fixed
 
 - **Charts are readable in High Contrast and light themes.** The "AI Credits by day" columns were
