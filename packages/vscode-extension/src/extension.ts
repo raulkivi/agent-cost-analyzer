@@ -3,6 +3,7 @@
 import * as vscode from "vscode";
 import { COMMAND_IDS, VIEW_IDS } from "./commands/command-ids.js";
 import { composeExtension } from "./composition.js";
+import { TEST_HOOKS_ENV } from "./diagnostics/test-hooks.js";
 import { ReadOnlyDocumentStore } from "./documents/read-only-document-store.js";
 import { registerReadOnlyDocuments } from "./vscode/vscode-read-only-documents.js";
 import { createVscodeHostCommands } from "./vscode/vscode-host-commands.js";
@@ -45,10 +46,14 @@ export function activate(context: vscode.ExtensionContext): void {
     context.subscriptions.push(vscode.commands.registerCommand(command, run));
   }
   // The integration tests' internal commands (diagnostics/test-hooks.ts):
-  // only in an Extension Development Host (Test mode, as @vscode/test-electron
-  // starts it, or Development, as the real-Copilot suite's normal mode does,
-  // G3), never in an installed copy, which runs in Production.
-  if (context.extensionMode !== vscode.ExtensionMode.Production) {
+  // only in an Extension Development Host started by a test: Test mode, as
+  // @vscode/test-electron starts it, or Development with AICA_TEST_HOOKS=1,
+  // as the real-Copilot suite's normal mode does (G3, owner decision D5).
+  // Never in a plain F5 host or an installed copy (Production).
+  if (
+    context.extensionMode === vscode.ExtensionMode.Test ||
+    (context.extensionMode === vscode.ExtensionMode.Development && process.env[TEST_HOOKS_ENV] === "1")
+  ) {
     for (const [command, handler] of Object.entries(extension.testHookHandlers)) {
       context.subscriptions.push(vscode.commands.registerCommand(command, handler));
     }

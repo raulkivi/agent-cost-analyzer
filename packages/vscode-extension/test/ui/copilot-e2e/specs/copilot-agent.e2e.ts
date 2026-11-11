@@ -5,10 +5,6 @@
 // Chat in agent mode. See wdio.copilot.conf.mts for how to run it and
 // docs/plans/vscode-ui-automation.md §7 for what it proves. Never runs in CI.
 //
-// Not verified end to end by its author (no Copilot account on the build
-// machine): the chat-opening command's arguments, the auto-approve setting and
-// the polling below are written from VS Code's documented commands.
-//
 // Asserts only what does not depend on the model's words: a session appears
 // with known AI Credits, turns and tokens, and the MCP tool calls appear in the
 // session's tool-call audit. No assertion reads response text.
@@ -25,6 +21,7 @@ import type { SessionsTreeNode } from "../../../../src/sidebar/sessions-tree-mod
 import { wdioVscodeHost as host } from "../../support/vscode-host.js";
 import { copilotTestTitle, REQUIRED_COPILOT_E2E_TESTS } from "../../../../scripts/release-evidence/evidence.mts";
 import { modelMatches } from "../support/copilot-e2e-env.mts";
+import { COPILOT_E2E_AGENT } from "../support/copilot-e2e-settings.mts";
 import {
   COPILOT_CHAT_EXTENSION_ID,
   COPILOT_READY_LIMIT_MS,
@@ -133,7 +130,8 @@ async function waitForCopilot(): Promise<CopilotReadiness> {
 async function chatAndWaitForNewSession(prompt: string): Promise<SessionSummary> {
   // A new chat each time, so each prompt makes its own session.
   await host.command("workbench.action.chat.newChat").catch(() => undefined);
-  await host.command("workbench.action.chat.open", { query: prompt, mode: "agent" });
+  // The test-only agent: agent mode with the analyzer's MCP tools only (D6).
+  await host.command("workbench.action.chat.open", { query: prompt, mode: COPILOT_E2E_AGENT });
   let found: string | undefined;
   await browser.waitUntil(
     async () => {

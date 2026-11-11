@@ -1,11 +1,11 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import { mkdirSync, mkdtempSync, rmSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { copilotStateSeeds, seedProfileState } from "./profile-seed.mts";
+import { copilotStateSeeds, seedProfileAgent, seedProfileState } from "./profile-seed.mts";
 
 let userDataDir: string;
 
@@ -30,8 +30,8 @@ function readState(): Record<string, string> {
 }
 
 describe("what the real-Copilot suite pre-answers in its profile copy (G3)", () => {
-  it("opts in to global auto approve, so agent mode neither asks per tool nor shows the confirmation dialog", () => {
-    expect(copilotStateSeeds("claude-haiku-5.5")["chat.tools.global.autoApprove.optIn"]).toBe("true");
+  it("doesn't opt in to global auto approve (D6: the analyzer's read-only tools need no approval)", () => {
+    expect(Object.keys(copilotStateSeeds("claude-haiku-5.5"))).toEqual(["chat.currentLanguageModel.panel"]);
   });
 
   it("selects the requested Copilot model in the chat panel, by its picker identifier", () => {
@@ -57,5 +57,13 @@ describe("seeding the profile copy's global state", () => {
     seedProfileState(userDataDir, { added: "true" });
 
     expect(readState()).toEqual({ added: "true" });
+  });
+});
+
+describe("seeding the profile copy's agent file", () => {
+  it("writes it into the profile's user prompts folder", () => {
+    seedProfileAgent(userDataDir, { name: "e2e.agent.md", content: "---\nname: e2e\n---\n" });
+
+    expect(readFileSync(path.join(userDataDir, "User", "prompts", "e2e.agent.md"), "utf-8")).toBe("---\nname: e2e\n---\n");
   });
 });
