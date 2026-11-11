@@ -16,7 +16,9 @@ import { browser, expect } from "@wdio/globals";
 import { wdioVscodeHost as host } from "../../support/vscode-host.js";
 import { COPILOT_CHAT_CHECKS, copilotTestTitle } from "../../../../scripts/release-evidence/evidence.mts";
 import { AnalyzerClient, listedSessions, requireModel, sendToAgent, type SessionSummary, waitForCopilot, waitForNewSession } from "../support/copilot-chat.js";
+import { AUDIT_POLL_INTERVAL_MS, AUDIT_POLL_LIMIT_MS, pollUntil } from "../support/poll-until.mts";
 import { logToRun, skipSuite } from "../support/run-log.mts";
+import { type AuditPage, auditHoldsCall, missingToolCallMessage } from "../support/tool-call-audit.mts";
 
 const [CHECK_1_4, CHECK_2_3, CHECK_2_4] = COPILOT_CHAT_CHECKS;
 
@@ -47,6 +49,28 @@ async function chatAndWaitForNewSession(prompt: string): Promise<SessionSummary>
   creditsSpent += spent;
   logToRun({ kind: "credits", spent });
   return session;
+}
+
+// The session is listed as soon as its AI Credits are known, but Copilot's debug
+// log can still be missing the MCP call (agent mode logs its own steps first; the
+// release run on d666a43 read 0 once). So poll the audit until the call appears.
+// On timeout the failure names the tools the audit did hold, of every kind.
+async function expectMcpCallInAudit(sessionId: string, toolName: string): Promise<void> {
+  const started = Date.now();
+  const { value: calls, satisfied } = await pollUntil({
+    read: () => tool<AuditPage>("list_tool_calls", { sessionId, kind: ["mcp"] }),
+    isSatisfied: (page) => auditHoldsCall(page, toolName),
+    intervalMs: AUDIT_POLL_INTERVAL_MS,
+    timeoutMs: AUDIT_POLL_LIMIT_MS,
+    sleep: (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
+    now: Date.now,
+  });
+  if (!satisfied) {
+    const everything = await tool<AuditPage>("list_tool_calls", { sessionId, limit: 200 });
+    throw new Error(missingToolCallMessage(toolName, everything, Date.now() - started));
+  }
+  expect(calls.total).toBeGreaterThanOrEqual(1);
+  expect(JSON.stringify(calls.calls)).toContain(toolName);
 }
 
 suite("Real Copilot agent mode (checks 1.4, 2.3, 2.4; opt-in)", function () {
@@ -83,17 +107,13 @@ suite("Real Copilot agent mode (checks 1.4, 2.3, 2.4; opt-in)", function () {
     const session = await chatAndWaitForNewSession(PROMPT_MCP_PROVIDERS);
     requireModel(this, session);
 
-    const calls = await tool<{ total: number; calls: unknown[] }>("list_tool_calls", { sessionId: session.id, kind: ["mcp"] });
-    expect(calls.total).toBeGreaterThanOrEqual(1);
-    expect(JSON.stringify(calls.calls)).toMatch(/list_log_providers/);
+    await expectMcpCallInAudit(session.id, "list_log_providers");
   });
 
   test(copilotTestTitle(CHECK_2_4, "asked about another agent's sessions, Copilot's call to the tool appears in the audit"), async function () {
     const session = await chatAndWaitForNewSession(PROMPT_MCP_OTHER_AGENT);
     requireModel(this, session);
 
-    const calls = await tool<{ total: number; calls: unknown[] }>("list_tool_calls", { sessionId: session.id, kind: ["mcp"] });
-    expect(calls.total).toBeGreaterThanOrEqual(1);
-    expect(JSON.stringify(calls.calls)).toMatch(/list_sessions/);
+    await expectMcpCallInAudit(session.id, "list_sessions");
   });
 });
