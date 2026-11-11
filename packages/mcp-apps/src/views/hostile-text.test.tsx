@@ -170,6 +170,17 @@ describe("U13 with logged text planted in every field", () => {
     expect(fake.calls).toEqual([{ method: "callTool", args: ["get_price_changes", { since: "2026-09-01", until: "2026-10-31" }] }]);
   });
 
+  // A32: the period is the one value U11 sends; text planted in it is never sent.
+  it("from U11: a period that is not a plain date offers no Price changes control and sends nothing", async () => {
+    const fake = port();
+    const variance = costVariance({ periodA: { label: "2026-09", since: `2026-09-01 ${HOSTILE}`, until: "2026-09-30" } });
+    const { container } = render(<CostChangeView port={fake} brand={brand} result={ok(variance)} />);
+    expect(screen.queryByRole("button", { name: "Price changes" })).toBeNull();
+    await exerciseEveryControl();
+    expectInert(container, fake);
+    expect(fake.calls).toEqual([]);
+  });
+
   it("renders its error text as text only", () => {
     const { container } = render(<PriceChangesView port={port()} brand={brand} result={{ isError: true, errorText: HOSTILE }} />);
     expect(container.querySelector("img, script, iframe, a")).toBeNull();

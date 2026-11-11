@@ -229,6 +229,14 @@ function largestPriceEffects(currencies: readonly VarianceCurrency[]): string[] 
     .map(([model]) => model);
 }
 
+// A date the view may send back to get_price_changes: an ISO date or
+// timestamp, as the tools return them. Anything else is shown, never sent (A32).
+const PLAIN_DATE = /^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}(:\d{2}(\.\d{1,9})?)?(Z|[+-]\d{2}:\d{2})?)?$/;
+
+export function isPlainDate(value: string): boolean {
+  return PLAIN_DATE.test(value);
+}
+
 export function toCostVarianceViewModel(variance: CostVariance): CostVarianceViewModel {
   const models = largestPriceEffects(variance.currencies);
   const since = variance.periodA.since < variance.periodB.since ? variance.periodA.since : variance.periodB.since;
@@ -251,6 +259,6 @@ export function toCostVarianceViewModel(variance: CostVariance): CostVarianceVie
   };
   const conversion = conversionNoteFor(variance.currency, variance.conversion);
   if (conversion !== undefined) viewModel.conversionNote = conversion;
-  if (models.length > 0) viewModel.priceDrillDown = { tool: "get_price_changes", since, until, models };
+  if (models.length > 0 && [variance.periodA.since, variance.periodA.until, variance.periodB.since, variance.periodB.until].every(isPlainDate)) viewModel.priceDrillDown = { tool: "get_price_changes", since, until, models };
   return viewModel;
 }
