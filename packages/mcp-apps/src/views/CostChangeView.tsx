@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
 import { StatTile } from "@agent-cost-analyzer/web/ui/StatTile";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import type { ViewBrand } from "../brand/view-brand.js";
 import type { AppHostPort, ToolResult } from "../host/app-host-port.js";
 import { pluralize } from "../view-models/format.js";
@@ -14,12 +14,15 @@ import { ModelTable } from "./cost-change/ModelTable.js";
 import { NotExplained } from "./cost-change/NotExplained.js";
 import { PriceChanges } from "./cost-change/PriceChanges.js";
 import { parseCostVariance } from "./cost-change/parse-variance.js";
+import { PriceDrillDown } from "./price-changes/PriceDrillDown.js";
 import "./cost-change/cost-change.css";
 
 // U11, why did the cost change (plan §4.5, board CostChange.dc.html).
 // Renders the explain_cost_change result. Everything is in the result, so
-// the view calls no tool: rows open locally. (The "Price changes" control is
-// drawn disabled until U13, A28.) Reasons and subject names are logged text:
+// the view calls no tool of its own: rows open locally. The one exception is
+// the "Price changes" control, which calls get_price_changes through the port
+// and opens U13 in place; this view stays mounted, so Back refetches nothing
+// and focus returns to the control (A28). Reasons and subject names are logged text:
 // displayed, never sent to the host's model (§6).
 
 const KICKER = "Cost change";
@@ -66,9 +69,12 @@ function Block({ vm, block, withHeading, notExplainedTile }: { vm: CostVarianceV
   );
 }
 
-export function CostChangeView({ brand, result }: { port: AppHostPort; brand: ViewBrand; result: ToolResult | undefined }) {
+export function CostChangeView({ port, brand, result }: { port: AppHostPort; brand: ViewBrand; result: ToolResult | undefined }) {
   const variance = useMemo(() => (result === undefined || result.isError ? undefined : parseCostVariance(result.structuredContent)), [result]);
   const vm = useMemo(() => (variance === undefined ? undefined : toCostVarianceViewModel(variance)), [variance]);
+  const [pricesOpen, setPricesOpen] = useState(false);
+  // Set once U13 has been opened, so Back returns focus to the control.
+  const [returnedFromPrices, setReturnedFromPrices] = useState(false);
 
   if (result === undefined) {
     return (
@@ -91,6 +97,10 @@ export function CostChangeView({ brand, result }: { port: AppHostPort; brand: Vi
     );
   }
 
+  if (pricesOpen && vm.priceDrillDown !== undefined) {
+    return <PriceDrillDown port={port} brand={brand} request={vm.priceDrillDown} onBack={() => setPricesOpen(false)} />;
+  }
+
   const meta = `${vm.groupBy} · ${vm.periodA.label} vs ${vm.periodB.label} · priced, ${vm.pricingText}`;
   return (
     <ViewShell brand={brand} kicker={KICKER} title={vm.title} meta={meta}>
@@ -107,7 +117,14 @@ export function CostChangeView({ brand, result }: { port: AppHostPort; brand: Vi
         <Block key={block.currency} vm={vm} block={block} withHeading={vm.currencies.length > 1} notExplainedTile={index === 0} />
       ))}
       <NotExplained vm={vm} />
-      <PriceChanges vm={vm} />
+      <PriceChanges
+        vm={vm}
+        focusOnMount={returnedFromPrices}
+        onOpen={() => {
+          setReturnedFromPrices(true);
+          setPricesOpen(true);
+        }}
+      />
       {vm.conversionNote !== undefined && <p className="cv-note text-muted">{vm.conversionNote}</p>}
     </ViewShell>
   );

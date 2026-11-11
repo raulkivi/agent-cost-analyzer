@@ -50,7 +50,7 @@ export type {
   SelfCheckView,
 } from "./replay.js";
 export { toPriceChangesViewModel } from "./price-changes.js";
-export type { DocumentedChangeView, ObservedChangeView, ObservedWeekView, PriceChangesViewModel } from "./price-changes.js";
+export type { ChangeDirection, DocumentedChangeView, ModelFilterView, ObservedChangeView, PriceLineView, RangeView, ObservedWeekView, PriceChangesViewModel } from "./price-changes.js";
 export { toStatementViewModel } from "./statement.js";
 export type {
   DiffLineView,

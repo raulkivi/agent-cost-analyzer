@@ -11,6 +11,7 @@ import { FakeAppHostPort } from "../host/fake-app-host-port.js";
 import { exerciseEveryControl } from "../test-support/exercise-controls.js";
 import { axeViolations } from "../test-support/axe.js";
 import { costVariance, varianceCurrency } from "../view-models/cost-analysis-fixtures.js";
+import { priceChangeList } from "../view-models/increment3-fixtures.js";
 import { CostChangeView } from "./CostChangeView.js";
 
 const brand: ViewBrand = { productId: "vscode-extension", displayName: "AI Credits Analyzer", version: "0.4.0" };
@@ -174,20 +175,77 @@ describe("CostChangeView model table", () => {
   });
 });
 
-describe("CostChangeView price changes control", () => {
-  it("is drawn but disabled with a note, until the price timeline exists", () => {
+describe("CostChangeView price changes drill-down (U11 to U13)", () => {
+  const withPrices = (result: ToolResult = ok(priceChangeList())) => {
+    const port = new FakeAppHostPort();
+    port.toolResults.set("get_price_changes", result);
+    return port;
+  };
+  const toolCalls = (port: FakeAppHostPort) => port.calls.filter((call) => call.method === "callTool");
+
+  it("is an enabled control that says which models it opens, with no call until it is used", () => {
     const { port } = setup();
     const button = screen.getByRole("button", { name: "Price changes" });
-    expect(button).toBeDisabled();
-    expect(screen.getByText(/The price timeline is not available yet/)).toBeInTheDocument();
+    expect(button).toBeEnabled();
     expect(screen.getByText(/claude-sonnet-5\.5/, { selector: ".cv-price-note *, .cv-price-note" })).toBeInTheDocument();
-    fireEvent.click(button);
+    expect(screen.queryByText(/not available yet/)).not.toBeInTheDocument();
     expect(port.calls).toEqual([]);
   });
 
   it("is absent when no model had a price effect", () => {
     setup(ok(costVariance({ currencies: [varianceCurrency({ models: [] })] })));
     expect(screen.queryByRole("button", { name: "Price changes" })).not.toBeInTheDocument();
+  });
+
+  it("calls get_price_changes once, for U11's whole period and nothing else, as a tool call and never a message", async () => {
+    const port = withPrices();
+    setup("default", port);
+    fireEvent.click(screen.getByRole("button", { name: "Price changes" }));
+    await screen.findByRole("heading", { level: 1, name: "Price changes behind the cost change" });
+    expect(port.calls).toEqual([{ method: "callTool", args: ["get_price_changes", { since: "2026-09-01", until: "2026-10-31" }] }]);
+    expect(port.calls.some((call) => call.method === "sendMessage")).toBe(false);
+  });
+
+  it("opens U13 in place: a kicker trail, a Back control, and only the models with the largest price effect", async () => {
+    setup("default", withPrices());
+    fireEvent.click(screen.getByRole("button", { name: "Price changes" }));
+    expect(screen.getByRole("status")).toHaveTextContent("Loading price changes");
+    await screen.findByText(/1 of 2 changes in the range/);
+    expect(screen.getByText("AI Credits Analyzer · Cost change › Price changes")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Back to cost change" })).toBeInTheDocument();
+    expect(screen.getByText("Cost change / Price changes")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 3, name: /claude-sonnet-5\.5/ })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { level: 3, name: /gpt-5\.5/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Documented price changes between the periods" })).not.toBeInTheDocument();
+  });
+
+  it("goes back to U11 with no new call, and focus returns to the Price changes button", async () => {
+    const port = withPrices();
+    setup("default", port);
+    fireEvent.click(screen.getByRole("button", { name: "Price changes" }));
+    await screen.findByText(/1 of 2 changes in the range/);
+    fireEvent.click(screen.getByRole("button", { name: "Back to cost change" }));
+    expect(screen.getByRole("heading", { level: 1, name: "widgets" })).toBeInTheDocument();
+    expect(toolCalls(port)).toHaveLength(1);
+    expect(document.activeElement).toBe(screen.getByRole("button", { name: "Price changes" }));
+  });
+
+  it("says what failed, keeps Back, and retries", async () => {
+    const port = withPrices({ isError: true, errorText: "since: not a date" });
+    setup("default", port);
+    fireEvent.click(screen.getByRole("button", { name: "Price changes" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("since: not a date");
+    expect(screen.getByRole("button", { name: "Back to cost change" })).toBeInTheDocument();
+    port.toolResults.set("get_price_changes", ok(priceChangeList()));
+    fireEvent.click(screen.getByRole("button", { name: /retry/i }));
+    await screen.findByText(/1 of 2 changes in the range/);
+    expect(toolCalls(port)).toHaveLength(2);
+  });
+
+  it("shows an unreadable result as the same error", async () => {
+    setup("default", withPrices(ok({ nothing: true })));
+    fireEvent.click(screen.getByRole("button", { name: "Price changes" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent(/get_price_changes call failed/);
   });
 });
 
@@ -233,11 +291,18 @@ describe("CostChangeView states", () => {
 });
 
 describe("CostChangeView security and accessibility", () => {
-  it("every control leaves the host untouched; logged reasons never reach it", async () => {
-    const { port } = setup();
-    const pressed = await exerciseEveryControl();
+  // The Price changes control makes the view's one host call: a reviewed read
+  // tool with two dates. Nothing logged (reasons, model names) is sent, and no
+  // message goes to the model.
+  it("every control reaches the host only as the one get_price_changes call with the period's dates; logged reasons never reach it", async () => {
+    const port = new FakeAppHostPort();
+    port.toolResults.set("get_price_changes", ok(priceChangeList()));
+    setup("default", port);
+    const pressed = await exerciseEveryControl(document.body, { skip: /Back to cost change/ });
     expect(pressed).toContain("button:claude-sonnet-5.5");
-    expect(port.calls).toEqual([]);
+    expect(pressed).toContain("button:Price changes");
+    expect(port.calls).toEqual([{ method: "callTool", args: ["get_price_changes", { since: "2026-09-01", until: "2026-10-31" }] }]);
+    expect(JSON.stringify(port.calls)).not.toContain("mystery-model");
   });
 
   it("has no axe violations: loaded, expanded, table view, no earlier figure, error, waiting", async () => {

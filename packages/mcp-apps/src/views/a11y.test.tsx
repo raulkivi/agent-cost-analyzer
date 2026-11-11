@@ -1,19 +1,21 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
 import { EXTENSION_NO_PROJECTS_REASON } from "@agent-cost-analyzer/domain";
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import type { ViewBrand } from "../brand/view-brand.js";
 import type { ToolResult } from "../host/app-host-port.js";
 import { FakeAppHostPort } from "../host/fake-app-host-port.js";
 import { axeViolations } from "../test-support/axe.js";
 import { comparisonChange, comparisonRow, costComparison, costSeries, costTotal, costVariance, point, projectCost, usdTotal, varianceCurrency, varianceModel } from "../view-models/cost-analysis-fixtures.js";
+import { priceChangeList } from "../view-models/increment3-fixtures.js";
 import { costRollup, measures, sessionCost, total, turnSeries } from "../view-models/fixtures.js";
 import { turnView } from "../view-models/turn-view-fixture.js";
 import { CostChangeView } from "./CostChangeView.js";
 import { CostCompareView } from "./CostCompareView.js";
 import { CostOverTimeView } from "./CostOverTimeView.js";
 import { CostRollupView } from "./CostRollupView.js";
+import { PriceChangesView } from "./PriceChangesView.js";
 import { FindingsView } from "./FindingsView.js";
 import { NoViewState } from "./NoViewState.js";
 import { SessionCostView } from "./SessionCostView.js";
@@ -289,9 +291,9 @@ describe("U11 CostChangeView has no axe violations", () => {
   const renderU11 = (result: ToolResult | undefined) => render(<CostChangeView port={port()} brand={brand} result={result} />);
   const usd = varianceCurrency({ currency: "USD", costA: 10, costB: 8, change: -2, usage: -1, price: -1.5, mix: 0.5, models: [varianceModel({ costA: 10, costB: 8, change: -2, usage: -1, price: -1 })] });
 
-  it("loaded, with not-explained turns, a documented price change and the disabled Price changes control", async () => {
+  it("loaded, with not-explained turns, a documented price change and the Price changes control", async () => {
     renderU11(ok(costVariance()));
-    expect(screen.getByRole("button", { name: "Price changes" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Price changes" })).toBeEnabled();
     await expectNoViolations();
   });
 
@@ -520,5 +522,67 @@ describe("semantics axe does not check, U9-U11", () => {
     u10.unmount();
     render(<CostChangeView port={port()} brand={brand} result={undefined} />);
     expect(screen.getByRole("status")).toHaveTextContent("Waiting for the cost change");
+  });
+});
+
+describe("U13 PriceChangesView has no axe violations", () => {
+  const renderU13 = (result: ToolResult | undefined) => render(<PriceChangesView brand={brand} result={result} />);
+
+  it("documented and inferred changes together, with the weekly table", async () => {
+    renderU13(ok(priceChangeList({ since: "2026-10-01", until: "2026-10-31" })));
+    expect(screen.getByRole("table", { name: /weekly billed against priced/ })).toBeInTheDocument();
+    await expectNoViolations();
+  });
+
+  it("an inferred fall, an unknown percentage and a provider not fully read", async () => {
+    const base = priceChangeList();
+    const observed = base.changes[1]!;
+    renderU13(ok(priceChangeList({ changes: [base.changes[0]!, { ...observed, direction: "below", percent: -0.1 }], providers: [{ id: "pi", label: "pi", available: false, unavailableReason: "no logs", sessionCount: 0, truncated: false }] })));
+    await expectNoViolations();
+  });
+
+  it("one change only, empty, an error with text, an unreadable result and waiting", async () => {
+    const base = priceChangeList();
+    const lone = renderU13(ok(priceChangeList({ changes: [base.changes[0]!] })));
+    await expectNoViolations();
+    lone.unmount();
+    const empty = renderU13(ok(priceChangeList({ changes: [] })));
+    await expectNoViolations();
+    empty.unmount();
+    const failed = renderU13({ isError: true, errorText: "since: not a date" });
+    await expectNoViolations();
+    failed.unmount();
+    const unreadable = renderU13(ok({ changes: "x" }));
+    await expectNoViolations();
+    unreadable.unmount();
+    renderU13(undefined);
+    await expectNoViolations();
+  });
+
+  it("opened from U11: loading, the filtered timeline, an error, and the empty filter", async () => {
+    const fake = port();
+    fake.toolResults.set("get_price_changes", ok(priceChangeList({ since: "2026-09-01", until: "2026-10-31" })));
+    render(<CostChangeView port={fake} brand={brand} result={ok(costVariance())} />);
+    fireEvent.click(screen.getByRole("button", { name: "Price changes" }));
+    expect(screen.getByRole("status")).toHaveTextContent("Loading price changes");
+    await expectNoViolations();
+    await screen.findByText(/1 of 2 changes in the range/);
+    await expectNoViolations();
+    cleanup();
+
+    const failing = port();
+    failing.toolResults.set("get_price_changes", { isError: true, errorText: "since: not a date" });
+    render(<CostChangeView port={failing} brand={brand} result={ok(costVariance())} />);
+    fireEvent.click(screen.getByRole("button", { name: "Price changes" }));
+    await screen.findByRole("alert");
+    await expectNoViolations();
+    cleanup();
+
+    const none = port();
+    none.toolResults.set("get_price_changes", ok(priceChangeList({ changes: [] })));
+    render(<CostChangeView port={none} brand={brand} result={ok(costVariance())} />);
+    fireEvent.click(screen.getByRole("button", { name: "Price changes" }));
+    await screen.findByText("No price changes found in this period");
+    await expectNoViolations();
   });
 });

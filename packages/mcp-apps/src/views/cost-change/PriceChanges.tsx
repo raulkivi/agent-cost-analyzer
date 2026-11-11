@@ -1,14 +1,16 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
 import { Tag } from "@agent-cost-analyzer/web/ui/Tag";
+import { useEffect, useRef } from "react";
 import type { CostVarianceViewModel } from "../../view-models/index.js";
+import { focusIfLost } from "../focus.js";
 import "./cost-change.css";
 
 // Documented price changes between the periods (taken from the price book),
-// and the "Price changes" control the board draws. U13, the price timeline
-// it would open, is Increment 3 (A28), so the control is drawn disabled
-// with a note and calls nothing. A28 swaps in the get_price_changes
-// drill-down and its security review.
+// and the "Price changes" control that opens U13, the price timeline, in
+// place (A28). The control only reports the click; the parent makes the
+// get_price_changes call and keeps U11 mounted, so Back refetches nothing.
+// It takes focus when the parent restores U11 after Back.
 
 function lineText(line: CostVarianceViewModel["priceChanges"][number]["lines"][number]): string {
   const change = line.percentText === undefined ? `${line.fromText} → ${line.toText}` : `${line.percentText} (${line.fromText} → ${line.toText})`;
@@ -19,8 +21,13 @@ function joinNames(models: readonly string[]): string {
   return models.length < 2 ? (models[0] ?? "") : `${models.slice(0, -1).join(", ")} and ${models[models.length - 1]}`;
 }
 
-export function PriceChanges({ vm }: { vm: CostVarianceViewModel }) {
+export function PriceChanges({ vm, onOpen, focusOnMount = false }: { vm: CostVarianceViewModel; onOpen: () => void; focusOnMount?: boolean }) {
   const drillDown = vm.priceDrillDown;
+  const button = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    if (focusOnMount) focusIfLost(button.current);
+    // Mount only: a later render must not move focus.
+  }, []);
   return (
     <section className="view-section" aria-label="Documented price changes between the periods">
       <div className="view-section-head">
@@ -45,11 +52,11 @@ export function PriceChanges({ vm }: { vm: CostVarianceViewModel }) {
       )}
       {drillDown !== undefined && (
         <div className="cv-price-action">
-          <button type="button" className="btn btn-secondary view-btn" disabled aria-describedby="cv-price-note">
+          <button ref={button} type="button" className="btn btn-secondary view-btn" aria-describedby="cv-price-note" onClick={onOpen}>
             Price changes
           </button>
           <span id="cv-price-note" className="cv-price-note text-muted">
-            {`The price timeline is not available yet. It will open the timeline for ${joinNames(drillDown.models)}, the largest price ${drillDown.models.length === 1 ? "effect" : "effects"}.`}
+            {`Opens the price timeline for ${joinNames(drillDown.models)}, the largest price ${drillDown.models.length === 1 ? "effect" : "effects"}.`}
           </span>
         </div>
       )}

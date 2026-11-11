@@ -16,6 +16,7 @@ describe("selectView", () => {
     ["get_project_cost", "cost-over-time"],
     ["explain_cost_change", "cost-change"],
     ["compare_costs", "cost-compare"],
+    ["get_price_changes", "price-changes"],
   ])("routes toolInfo.tool.name %s to %s", (name, view) => {
     expect(selectView({ toolInfo: { tool: { name } } }, undefined)).toEqual({ view });
   });
@@ -36,6 +37,8 @@ describe("selectView", () => {
     ["mcp_aicreditsanal_explain_cost_change", "cost-change"],
     ["ai-credits-analyzer-compare_costs", "cost-compare"],
     ["mcp_aicreditsanal_compare_costs", "cost-compare"],
+    ["ai-credits-analyzer-get_price_changes", "price-changes"],
+    ["mcp_aicreditsanal_get_price_changes", "price-changes"],
   ])("routes VS Code's server-prefixed toolCall.toolName %s to %s", (toolName, view) => {
     expect(selectView({ toolCall: { toolName } }, undefined)).toEqual({ view });
   });
@@ -99,5 +102,10 @@ describe("selectView", () => {
     expect(selectView({}, null)).toEqual({ view: "none" });
     expect(selectView({}, "text")).toEqual({ view: "none" });
     expect(selectView({}, { sessionId: "s1" })).toEqual({ view: "none" });
+  });
+
+  it("routes a get_price_changes shape (changes, providers, generatedAt) when the host names no tool", () => {
+    expect(selectView({}, { generatedAt: "2026-11-10T12:00:00Z", providers: [], changes: [] })).toEqual({ view: "price-changes" });
+    expect(selectView({}, { providers: [], changes: [] })).toEqual({ view: "none" });
   });
 });
