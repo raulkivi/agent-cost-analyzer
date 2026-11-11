@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
 import { createRequire } from "node:module";
-import type { Page } from "@playwright/test";
+import type { Frame, Page } from "@playwright/test";
 
 // Plan §12.4.1: the axe check at every stop of a scenario, in a real
 // browser, so colour contrast is measured too (jsdom can't). WCAG 2.2 A/AA,
@@ -9,8 +9,9 @@ import type { Page } from "@playwright/test";
 const axePath = createRequire(import.meta.url).resolve("axe-core/axe.min.js");
 
 // `exclude`: CSS selectors of parts a scenario doesn't own, each with its
-// reason at the call site.
-export async function axeViolations(page: Page, options: { exclude?: string[] } = {}): Promise<string[]> {
+// reason at the call site. A frame is checked like a page: the MCP Apps
+// suite (packages/mcp-apps/e2e) checks the view inside the host's iframe.
+export async function axeViolations(page: Page | Frame, options: { exclude?: string[] } = {}): Promise<string[]> {
   await page.addScriptTag({ path: axePath });
   return page.evaluate(async (exclude) => {
     const axe = (window as unknown as { axe: { run: (context: Document | object, options: object) => Promise<{ violations: { id: string; help: string; nodes: { target: string[] }[] }[] }> } }).axe;
