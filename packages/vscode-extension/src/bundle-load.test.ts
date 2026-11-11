@@ -692,9 +692,10 @@ describe("the built extension bundle", () => {
   });
 
   // Step 10.9's integration-test seam: internal commands, registered only
-  // when VS Code runs the extension in ExtensionMode.Test. Last, since it
+  // when VS Code runs the extension in ExtensionMode.Test or, since G3,
+  // Development (never in an installed copy). Last, since it
   // activates the bundle a second time.
-  describe("test hooks (ExtensionMode.Test only)", () => {
+  describe("test hooks (ExtensionMode.Test and Development only)", () => {
     const INTERNAL = "aiCreditsAnalyzer.internal.";
     let testSubscriptions: { dispose(): void }[];
 
@@ -704,7 +705,18 @@ describe("the built extension bundle", () => {
       expect([...vscode.__commands.keys()].filter((id) => id.startsWith(INTERNAL))).toEqual([]);
     });
 
-    it("registers them in ExtensionMode.Test", () => {
+    const ALL_INTERNAL = [
+      "aiCreditsAnalyzer.internal.holdRequests",
+      "aiCreditsAnalyzer.internal.mcpServerDefinitions",
+      "aiCreditsAnalyzer.internal.perfMarks",
+      "aiCreditsAnalyzer.internal.releaseRequests",
+      "aiCreditsAnalyzer.internal.resetDiagnostics",
+      "aiCreditsAnalyzer.internal.rpcTrace",
+      "aiCreditsAnalyzer.internal.sessionsTree",
+    ];
+
+    // Activates the bundle again, in the given ExtensionMode.
+    function activateIn(extensionMode: number): void {
       const requireFromInstall = createRequire(path.join(installDir, "package.json"));
       delete requireFromInstall.cache[requireFromInstall.resolve("./dist/extension.js")];
       const extension = requireFromInstall("./dist/extension.js") as { activate(context: unknown): void };
@@ -714,19 +726,15 @@ describe("the built extension bundle", () => {
         globalStorageUri: { fsPath: path.join(userDataDir, "User", "globalStorage", "raulkivi.ai-credits-analyzer") },
         globalState: { get: () => true, update: async () => undefined },
         subscriptions: testSubscriptions,
-        extensionMode: 3, // Test
+        extensionMode,
         extension: { id: "raulkivi.ai-credits-analyzer", packageJSON: { version: "0.1.0" } },
       });
+    }
 
-      expect([...vscode.__commands.keys()].filter((id) => id.startsWith(INTERNAL)).sort()).toEqual([
-        "aiCreditsAnalyzer.internal.holdRequests",
-        "aiCreditsAnalyzer.internal.mcpServerDefinitions",
-        "aiCreditsAnalyzer.internal.perfMarks",
-        "aiCreditsAnalyzer.internal.releaseRequests",
-        "aiCreditsAnalyzer.internal.resetDiagnostics",
-        "aiCreditsAnalyzer.internal.rpcTrace",
-        "aiCreditsAnalyzer.internal.sessionsTree",
-      ]);
+    it("registers them in ExtensionMode.Test", () => {
+      activateIn(3); // Test
+
+      expect([...vscode.__commands.keys()].filter((id) => id.startsWith(INTERNAL)).sort()).toEqual(ALL_INTERNAL);
     });
 
     it("times the Sessions tree of the first refresh, and lists its session", async () => {
@@ -766,6 +774,15 @@ describe("the built extension bundle", () => {
       for (const subscription of testSubscriptions) subscription.dispose();
 
       expect([...vscode.__commands.keys()].filter((id) => id.startsWith(INTERNAL))).toEqual([]);
+    });
+
+    // G3: the real-Copilot suite runs VS Code in normal mode, where the
+    // extension under development runs in ExtensionMode.Development.
+    it("registers them in ExtensionMode.Development, an Extension Development Host run from source", () => {
+      activateIn(2); // Development
+
+      expect([...vscode.__commands.keys()].filter((id) => id.startsWith(INTERNAL)).sort()).toEqual(ALL_INTERNAL);
+      for (const subscription of testSubscriptions) subscription.dispose();
     });
   });
 });

@@ -1,7 +1,7 @@
 // One-time setup for the opt-in real-Copilot suite (docs/plans/vscode-ui-automation.md §7):
 // opens the pinned VS Code on a THROWAWAY user-data dir so you can sign in to
-// GitHub Copilot there, and pick the model (the chat's model picker; VS Code
-// remembers it in that profile). Close the window when done. The sign-in is
+// GitHub Copilot there. Close the window when done; the suite selects the
+// model in its copy (profile-seed.mts). The sign-in is
 // kept by VS Code in that dir (--password-store=basic; copilot-vscode-args.mts
 // gives the suite the same store, or it couldn't decrypt the sign-in); this
 // script never reads it. Needs a display.
@@ -22,7 +22,7 @@ const cachePath = path.resolve(import.meta.dirname, "../.wdio-vscode-service");
 const executable = await download({ cachePath, version: PINNED_VSCODE_VERSION });
 console.log(`Opening VS Code ${PINNED_VSCODE_VERSION} on ${userDataDir}.`);
 console.log("1. Sign in to GitHub (Accounts menu), enable Copilot Chat if asked.");
-console.log("2. Open Copilot Chat in agent mode and pick the model you want the suite to use (default Claude Haiku 5.5).");
-console.log("3. Close the window. Then: COPILOT_E2E=1 COPILOT_E2E_USER_DATA_DIR=<that dir> npm run test:ui:vscode:copilot");
+console.log("2. Close the window (the suite selects the model itself: COPILOT_E2E_MODEL, default claude-haiku-5.5).");
+console.log("3. Then: COPILOT_E2E=1 COPILOT_E2E_USER_DATA_DIR=<that dir> npm run test:ui:vscode:copilot");
 const child = spawn(executable, copilotSignInArgs(userDataDir), { stdio: "inherit" });
 child.on("exit", (code) => process.exit(code ?? 0));

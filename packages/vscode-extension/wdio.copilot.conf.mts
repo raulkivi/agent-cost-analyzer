@@ -24,6 +24,7 @@ import path from "node:path";
 import process from "node:process";
 import { readCopilotE2eEnv } from "./test/ui/copilot-e2e/support/copilot-e2e-env.mts";
 import { copyProfile } from "./test/ui/copilot-e2e/support/profile-copy.mts";
+import { copilotStateSeeds, seedProfileState } from "./test/ui/copilot-e2e/support/profile-seed.mts";
 import CopilotE2eResultsReporter from "./test/ui/copilot-e2e/support/results-reporter.mts";
 import { COPILOT_E2E_ROOT_ENV as ROOT_ENV, evidenceDirOf } from "./test/ui/copilot-e2e/support/run-log.mts";
 import { buildEvidence, type RunFacts } from "./scripts/release-evidence/build.mts";
@@ -33,6 +34,7 @@ import { readRunArtifacts } from "./scripts/release-evidence/run-artifacts.mts";
 import { COPILOT_E2E_VSCODE_ARGS } from "./scripts/ui-automation/copilot-vscode-args.mts";
 import { KEEP_EXTENSIONS_MARKER, KeepExtensionsLauncher } from "./scripts/ui-automation/keep-extensions-service.mts";
 import { PINNED_VSCODE_VERSION } from "./scripts/ui-automation/vscode-version.mts";
+import { installWorkbenchBridge, normalModeVscodeArgs, wdioProxyModule } from "./scripts/ui-automation/workbench-bridge.mts";
 
 // wdio loads this file in the launcher and again in every worker; only the
 // launcher copies the profile and reports the skip.
@@ -42,8 +44,8 @@ export const COPILOT_E2E_SETTINGS = {
   "github.copilot.chat.agentDebugLog.fileLogging.maxRetainedSessionLogs": 200,
   "aiCreditsAnalyzer.mcp.enabled": true,
   // Without this, agent mode asks before each MCP tool call and the chat
-  // waits for a click. Unverified setting id on VS Code 1.145: if it is wrong
-  // the 2.3/2.4 tests time out waiting for the tool call.
+  // waits for a click (verified on VS Code 1.145, G3; its one-time opt-in
+  // dialog is pre-answered by profile-seed.mts).
   "chat.tools.global.autoApprove": true,
   "workbench.startupEditor": "none",
   "extensions.autoCheckUpdates": false,
@@ -61,6 +63,9 @@ if (env.status === "skip") {
 const inWorker = process.env[ROOT_ENV] !== undefined;
 const rootDir = process.env[ROOT_ENV] ?? mkdtempSync(path.join(tmpdir(), "aica-copilot-e2e-"));
 const storagePath = path.join(rootDir, "storage");
+// An empty folder to open: in an empty window Copilot Chat writes its debug
+// logs to User/globalStorage, where the analyzer doesn't look (G3).
+const workspacePath = path.join(rootDir, "workspace");
 const evidenceDir = evidenceDirOf(rootDir);
 const git = nodeGit(import.meta.dirname);
 // Taken when the run starts, so a commit made during the run isn't credited with it.
@@ -70,7 +75,14 @@ if (!inWorker) {
   process.env.AI_CREDITS_ANALYZER_COPILOT_E2E_MODEL = env.model;
   process.on("exit", () => rmSync(rootDir, { recursive: true, force: true }));
   mkdirSync(path.join(storagePath, "settings"), { recursive: true });
+  mkdirSync(workspacePath, { recursive: true });
   copyProfile(env.userDataDir, path.join(storagePath, "settings"));
+  // In normal mode nothing auto-confirms dialogs: pre-answer global auto
+  // approve and pick the requested model, in the copy only.
+  seedProfileState(path.join(storagePath, "settings"), copilotStateSeeds(env.model));
+  // Normal mode (G3): executeWorkbench is served by a bridge extension, not
+  // the service's test runner, so VS Code reads the copy's storage and sign-in.
+  installWorkbenchBridge({ extensionsDir: path.join(storagePath, "extensions"), proxyModule: wdioProxyModule() });
   console.log(`[copilot-e2e] running on a copy of ${env.userDataDir} (User and Local State only), expecting model ${env.model}; the copy is deleted afterwards`);
   const { version } = JSON.parse(readFileSync(path.join(import.meta.dirname, "package.json"), "utf-8")) as { version: string };
   runFacts = readRunFacts(git, { extensionVersion: version, vscodeVersion: PINNED_VSCODE_VERSION, requestedModel: env.model, now: new Date() });
@@ -90,11 +102,15 @@ export const config: WebdriverIO.Config = {
       "wdio:vscodeOptions": {
         extensionPath: import.meta.dirname,
         storagePath,
+        workspacePath,
         userSettings: COPILOT_E2E_SETTINGS,
         verboseLogging: false,
         // --password-store=basic, as the sign-in script used: without it VS Code
-        // uses the OS keyring and can't decrypt the copied sign-in.
-        vscodeArgs: { ...COPILOT_E2E_VSCODE_ARGS },
+        // uses the OS keyring and can't decrypt the copied sign-in. And no
+        // --extensionTestsPath: with one, VS Code keeps application storage and
+        // secrets in memory and never sees the copied sign-in (G3); and shared
+        // storage in the run, not in ~/.vscode-shared.
+        vscodeArgs: { ...COPILOT_E2E_VSCODE_ARGS, ...normalModeVscodeArgs(storagePath) },
       },
     } as WebdriverIO.Capabilities,
   ],

@@ -2,7 +2,7 @@
 
 **Last changed:** 2026-11-11 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
-Status: **in progress: G0, G1 (#202), G2 (#207), G5 (#205, #206) and G6 (#204) done 2026-11-11.** Owner rule, 2026-11-11: every UI check
+Status: **in progress: G0, G1 (#202), G2 (#207), G5 (#205, #206) and G6 (#204) done 2026-11-11; G3 built and green once on the owner's machine (branch `claude/g3-copilot-normal-mode`), owner rerun on the merged commit pending.** Owner rule, 2026-11-11: every UI check
 before a release is automated. VS Code and Copilot checks use wdio
 (`wdio-vscode-service`, [vscode-ui-automation.md](vscode-ui-automation.md));
 web-only checks use Playwright (or the integrated Chrome for exploratory
@@ -157,7 +157,78 @@ from the local repository; nothing was pushed. TDD
 exceptions: the wdio config hooks, the results reporter, the readiness polling
 and the workflow YAML; only a real run tests them. Not verified: the workflow
 steps on GitHub (they run on the next `ext-v*` tag), and the readiness signals
-with a signed-in profile (G3).
+with a signed-in profile (G3; since verified, see below).
+
+**G3: normal mode (2026-11-11).** The owner's run on `main` skipped all three
+tests after the 120 s wait ("no GitHub account; no Copilot language model")
+although the test profile is signed in.
+
+- **Root cause.** wdio-vscode-service always starts VS Code with
+  `--extensionTestsPath` (its proxy, which serves `browser.executeWorkbench`).
+  VS Code 1.145's main process then keeps application storage, shared storage
+  and so the secret store in memory (`getStorageOptions()` returns
+  `useInMemoryStorage: !!extensionTestsLocationURI`), so a copied profile's
+  sign-in is never read. The password-store fix above was needed but not
+  enough.
+- **Fix: normal mode.** `vscodeArgs` override the service's own
+  `extensionTestsPath` key with `""` (the service merges
+  `{ ...its args, ...vscodeArgs }`; VS Code treats an empty path as no tests
+  location). The same proxy is then loaded by a throwaway bridge extension
+  (`scripts/ui-automation/workbench-bridge.mts`) that the launcher writes into
+  the run's extensions dir and lists in its `extensions.json`; on start-up
+  (`activationEvents: ["*"]`) it imports the service's `proxy/index.js` and
+  calls `run(vscode)`, as the test runner would. It is generated into the
+  temporary copy only: never in the `.vsix` (allow-listed `.vscodeignore`) or
+  the default suite.
+- **What normal mode changed, and the fixes.** Each found by a run:
+  - VS Code opened the owner's real `~/.vscode-shared/sharedStorage/state.vscdb`
+    (shared storage lives outside `--user-data-dir`): the suite passes
+    `--shared-data-dir=<run>/storage/shared-data`. The first spike run touched
+    the owner's file once before this fix.
+  - The analyzer under development runs in `ExtensionMode.Development`, not
+    `Test`, so its test hooks were missing: `extension.ts` now registers them
+    in any mode but `Production` (threat-model.md row updated).
+  - Nothing auto-confirms dialogs: `chat.tools.global.autoApprove` raised its
+    one-time "Enable global auto approve?" dialog and the chat waited on it.
+    The launcher seeds `chat.tools.global.autoApprove.optIn` in the copy's
+    `User/globalStorage/state.vscdb` (`profile-seed.mts`, unit-tested).
+  - The panel model: the profile had no `chat.currentLanguageModel.panel`
+    (the owner's pick was stored for the Copilot CLI session type), so the
+    chat ran on Auto, routed to GPT-6 Luna. The launcher seeds it with
+    `copilot/<COPILOT_E2E_MODEL>`, so the run uses the requested model
+    without the manual picker step.
+  - With no folder open, Copilot Chat writes its debug logs to
+    `User/globalStorage/github.copilot-chat/debug-logs/`, which the analyzer
+    doesn't read (it reads `workspaceStorage/*/GitHub.copilot-chat/debug-logs`),
+    so no session appeared. The suite opens an empty temp folder. **Product
+    gap for the owner:** a user's chat in an empty window is invisible to the
+    analyzer.
+- **Verified** (VS Code 1.145.0, xvfb, owner's test profile copy): main log
+  creates shared storage under the run (not `:memory:`), `executeWorkbench`
+  answers `vscode.version` in 0.4 s, one GitHub account (label present) and
+  33 Copilot models after 4.1 s.
+
+- **First green run** (commit `1f2027e` on `claude/g3-copilot-normal-mode`,
+  clean tree, owner's test profile, xvfb): Copilot ready after 1.0 s; 1.4,
+  2.3 and 2.4 passed in 27.9 s; model requested and observed
+  `claude-haiku-5.5` in all three sessions (the Copilot log id equals the
+  picker id); 0.7643 AI Credits spent; the gate printed `PASS`. The note was
+  removed from the local `refs/notes/release-ui` afterwards (restored to the
+  ref as it was before the session) and never pushed: the owner reruns on the
+  release commit.
+- **TDD exceptions:** the wdio config, the generated bridge's run against a
+  real VS Code and the real runs. Unit-tested: `workbench-bridge.test.ts`
+  (argument override, shared-data dir, proxy path, install and
+  `extensions.json`, the generated bridge running a stand-in proxy),
+  `profile-seed.test.ts`, and the bundle-load test for hooks in
+  `Development` mode.
+- **Exposure** (threat-model.md): the bridge evaluates what the service's
+  WebSocket server sends, exactly as the service's test runner did; it opens
+  no port of its own (it connects out to the service's `localhost` port).
+  Normal mode does not change that. `chat.tools.global.autoApprove` lets the
+  agent run any tool, including terminal commands and MCP servers it
+  discovers on the machine (the run listed the owner's `jcodemunch`), without
+  asking: the prompts are fixed and short, but a model could still act.
 
 Order: G0 and G1 first (small, unblock D4); G5 and G6 in parallel (CI,
 no Copilot); G2 and G3 next; G4 and G7 last.
@@ -186,3 +257,9 @@ no Copilot); G2 and G3 next; G4 and G7 last.
 - **R4 Fake host fidelity (G5).** It proves the views against the
   protocol and Claude's recorded theme, not Claude Desktop's own chrome.
   Accepted by D3.
+- **R5 Normal mode leans on internals (G3).** The real-Copilot suite depends on
+  wdio-vscode-service's arg key (`extensionTestsPath`) and proxy module path,
+  and on VS Code state keys (`chat.tools.global.autoApprove.optIn`,
+  `chat.currentLanguageModel.panel`). A service or VS Code update can break
+  it; the symptom is a readiness skip, a stuck chat or the wrong model, all of
+  which block the release (G2) rather than pass it. Recheck after a bump.
