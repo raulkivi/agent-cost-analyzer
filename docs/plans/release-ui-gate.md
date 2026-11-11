@@ -9,6 +9,14 @@ web-only checks use Playwright (or the integrated Chrome for exploratory
 runs). No hand checklist gates a release. Builds on step 10.16 and the
 standalone app's `web-e2e` suite (Phase 15 step 15.9).
 
+Progress: G5's fake host is built (2026-11-11, `packages/mcp-apps/e2e/`, CI
+job `mcp-apps-e2e`), with smoke specs for A24 2.1, 2.5 and 2.7 in Claude
+dark ([README](../../packages/mcp-apps/e2e/README.md)). The rest of the
+A16 §2 and A24 §2 specs and the release workflows' job are next. The fake
+host has no permission prompt, so A24 2.10 proves only that a drill-down is
+a plain `tools/call`; whether Claude Desktop prompts stays outside the gate
+(R4).
+
 ## 1. Owner decisions (2026-11-11)
 
 | # | Decision |
