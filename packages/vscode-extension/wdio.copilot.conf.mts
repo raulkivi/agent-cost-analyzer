@@ -63,6 +63,9 @@ if (env.status === "skip") {
 const inWorker = process.env[ROOT_ENV] !== undefined;
 const rootDir = process.env[ROOT_ENV] ?? mkdtempSync(path.join(tmpdir(), "aica-copilot-e2e-"));
 const storagePath = path.join(rootDir, "storage");
+// An empty folder to open: in an empty window Copilot Chat writes its debug
+// logs to User/globalStorage, where the analyzer doesn't look (G3).
+const workspacePath = path.join(rootDir, "workspace");
 const evidenceDir = evidenceDirOf(rootDir);
 const git = nodeGit(import.meta.dirname);
 // Taken when the run starts, so a commit made during the run isn't credited with it.
@@ -72,6 +75,7 @@ if (!inWorker) {
   process.env.AI_CREDITS_ANALYZER_COPILOT_E2E_MODEL = env.model;
   process.on("exit", () => rmSync(rootDir, { recursive: true, force: true }));
   mkdirSync(path.join(storagePath, "settings"), { recursive: true });
+  mkdirSync(workspacePath, { recursive: true });
   copyProfile(env.userDataDir, path.join(storagePath, "settings"));
   // In normal mode nothing auto-confirms dialogs: pre-answer global auto
   // approve and pick the requested model, in the copy only.
@@ -98,6 +102,7 @@ export const config: WebdriverIO.Config = {
       "wdio:vscodeOptions": {
         extensionPath: import.meta.dirname,
         storagePath,
+        workspacePath,
         userSettings: COPILOT_E2E_SETTINGS,
         verboseLogging: false,
         // --password-store=basic, as the sign-in script used: without it VS Code
