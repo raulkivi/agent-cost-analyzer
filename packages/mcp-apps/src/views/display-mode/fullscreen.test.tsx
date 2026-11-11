@@ -107,6 +107,22 @@ describe.each([
   });
 });
 
+// The narrow layout is CSS on the view's width, which jsdom does not apply, so the
+// width rule is checked in e2e (G5, 360 px fullscreen). Here: fullscreen changes
+// no markup the narrow layout depends on, so the phone-width layout is the same.
+describe("U2 narrow-layout markup in fullscreen", () => {
+  it("renders the session sub-line the narrow layout shows, in inline and in fullscreen", async () => {
+    const port = portWith(CLAUDE);
+    const { container } = renderU2(port);
+    const inline = container.querySelectorAll(".rv-session-sub").length;
+    expect(inline).toBeGreaterThan(0);
+
+    port.pushHostContext({ displayMode: "fullscreen" });
+    await screen.findByRole("button", { name: "Exit fullscreen" });
+    expect(container.querySelectorAll(".rv-session-sub")).toHaveLength(inline);
+  });
+});
+
 describe("views without fullscreen", () => {
   // A view that is not U2 or U9 never shows the control, even when the host offers it.
   it.each([
