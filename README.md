@@ -242,6 +242,8 @@ runtime, never hardcoded:
     per-workspace rather than globally. Since a session's workspace isn't
     known ahead of time, the app scans every folder under
     `<user-data-dir>/User/workspaceStorage/*/GitHub.copilot-chat/debug-logs/`
+    (and `<user-data-dir>/User/globalStorage/github.copilot-chat/debug-logs/`,
+    where chats in a window with no folder open are logged)
     and uses whichever one contains `<session-id>/main.jsonl`. This log is
     off by default — see
     [Enabling GitHub Copilot Chat debug logging](#enabling-github-copilot-chat-debug-logging)

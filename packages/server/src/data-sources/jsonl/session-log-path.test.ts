@@ -27,14 +27,13 @@ describe("listWorkspaceDebugLogsDirPaths", () => {
     ).toEqual([]);
   });
 
-  it("returns [] when workspaceStorage doesn't exist yet", () => {
-    mkdirSync(path.join(fakeHome, ".config", "Code - Insiders", "User"), {
-      recursive: true,
-    });
+  it("lists only the global debug-logs folder when workspaceStorage doesn't exist yet (it may be created later)", () => {
+    const userDir = path.join(fakeHome, ".config", "Code - Insiders", "User");
+    mkdirSync(userDir, { recursive: true });
 
     expect(
       listWorkspaceDebugLogsDirPaths({ platform: "linux", homeDir: fakeHome }),
-    ).toEqual([]);
+    ).toEqual([path.join(userDir, "globalStorage", "github.copilot-chat", "debug-logs")]);
   });
 
   it("returns one debug-logs dir per workspace-storage subdirectory (real logs live per-workspace, not in globalStorage)", () => {
@@ -57,8 +56,21 @@ describe("listWorkspaceDebugLogsDirPaths", () => {
       [
         path.join(workspaceStorageDir, "hash1", "GitHub.copilot-chat", "debug-logs"),
         path.join(workspaceStorageDir, "hash2", "GitHub.copilot-chat", "debug-logs"),
-      ].sort(),
+        path.join(workspaceStorageDir, "..", "globalStorage", "github.copilot-chat", "debug-logs"),
+      ].map((dir) => path.normalize(dir)).sort(),
     );
+  });
+
+  it("lists the global debug-logs folder last: a window with no folder open writes its logs there, not per workspace", () => {
+    const userDataDir = path.join(fakeHome, "user-data");
+    mkdirSync(path.join(userDataDir, "User", "workspaceStorage", "hash1"), { recursive: true });
+
+    const dirs = listWorkspaceDebugLogsDirPaths({ userDataDir });
+
+    expect(dirs).toEqual([
+      path.join(userDataDir, "User", "workspaceStorage", "hash1", "GitHub.copilot-chat", "debug-logs"),
+      path.join(userDataDir, "User", "globalStorage", "github.copilot-chat", "debug-logs"),
+    ]);
   });
 });
 
@@ -131,10 +143,11 @@ describe("listWorkspaceDebugLogsDirPaths with an explicit userDataDir (vscode-ex
 
     expect(listWorkspaceDebugLogsDirPaths({ userDataDir, platform: "darwin", homeDir: "/nonexistent" })).toEqual([
       path.join(userDataDir, "User", "workspaceStorage", "abc", "GitHub.copilot-chat", "debug-logs"),
+      path.join(userDataDir, "User", "globalStorage", "github.copilot-chat", "debug-logs"),
     ]);
   });
 
-  it("returns [] when it has no workspaceStorage yet", () => {
-    expect(listWorkspaceDebugLogsDirPaths({ userDataDir })).toEqual([]);
+  it("lists only the global folder when it has no workspaceStorage yet", () => {
+    expect(listWorkspaceDebugLogsDirPaths({ userDataDir })).toEqual([path.join(userDataDir, "User", "globalStorage", "github.copilot-chat", "debug-logs")]);
   });
 });

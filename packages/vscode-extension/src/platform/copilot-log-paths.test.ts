@@ -26,6 +26,8 @@ describe("copilotLogPathsFromUserDataDir (vscode-extension.md D4)", () => {
       debugLogsDirPaths: [
         path.join(userDataDir, "User", "workspaceStorage", "w1", "GitHub.copilot-chat", "debug-logs"),
         path.join(userDataDir, "User", "workspaceStorage", "w2", "GitHub.copilot-chat", "debug-logs"),
+        // A window with no folder open logs here (step 10.18).
+        path.join(userDataDir, "User", "globalStorage", "github.copilot-chat", "debug-logs"),
       ],
       agentTracesDbPath: path.join(userDataDir, "User", "globalStorage", "github.copilot-chat", "agent-traces.db"),
       // VS Code's Agent Host stores (step 10.13) live under it too.
@@ -39,7 +41,7 @@ describe("copilotLogPathsFromUserDataDir (vscode-extension.md D4)", () => {
 
     expect(paths.sessionStoreDbPath).not.toBeNull();
     expect(paths.agentTracesDbPath).not.toBeNull();
-    expect(paths.debugLogsDirPaths).toEqual([]);
+    expect(paths.debugLogsDirPaths).toEqual([path.join(userDataDir, "User", "globalStorage", "github.copilot-chat", "debug-logs")]);
   });
 
   it("says 'none' for every path when the user-data dir is unknown, instead of falling back to this machine's defaults", () => {
@@ -65,12 +67,13 @@ describe("copilotDebugLogsDirPaths (re-listed on the sidebar's Refresh)", () => 
   });
 
   it("lists the workspaces that exist now, so one first opened later shows up on the next call", () => {
-    expect(copilotDebugLogsDirPaths(userDataDir)).toEqual([]);
+    expect(copilotDebugLogsDirPaths(userDataDir)).toEqual([path.join(userDataDir, "User", "globalStorage", "github.copilot-chat", "debug-logs")]);
 
     mkdirSync(path.join(userDataDir, "User", "workspaceStorage", "w1"), { recursive: true });
 
     expect(copilotDebugLogsDirPaths(userDataDir)).toEqual([
       path.join(userDataDir, "User", "workspaceStorage", "w1", "GitHub.copilot-chat", "debug-logs"),
+      path.join(userDataDir, "User", "globalStorage", "github.copilot-chat", "debug-logs"),
     ]);
   });
 
