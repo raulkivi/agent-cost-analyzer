@@ -15,7 +15,7 @@
 .sp-id { font-family: var(--font-mono, ui-monospace, monospace); }
 .sp-action { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
 .sp-analyse { min-width: 64px; }
-.sp-status { font-size: 11px; }
+.sp-fallback { font-size: 11px; line-height: 1.4; max-width: 26ch; overflow-wrap: anywhere; }
 .sp-hint { margin: 0; font-size: 11px; line-height: 1.4; }
 .sp-empty { display: flex; flex-direction: column; gap: 2px; padding: 8px 0; font-size: 13px; }
 .sp-empty > p { margin: 0; font-size: 12px; }

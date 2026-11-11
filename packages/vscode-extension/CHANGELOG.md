@@ -21,9 +21,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   apart), failure categories, recovery cost in tokens (not AI Credits), retried commands and calls by
   tool; the date-range version adds failed calls per day, top failing commands and the sessions it
   left out. `list_sessions` shows a session picker whose "Analyse" button sends exactly
-  "Analyse session <id>" to the chat and never a title; a host that cannot send chat messages shows
-  "Ask in the chat: Analyse session <id>" instead. The text answers are unchanged.
+  "Analyse session <id>" to the chat and never a title. If the host declines or fails the message,
+  that row shows "Ask in the chat: Analyse session <id>" in place of its button. The text answers are
+  unchanged.
 - **Replay view in the chat (U12).** `compare_models_for_session` shows each model's simulated total beside the measured one; click a model to replay it turn by turn with a chart, the self-check result and the turns not replayed. Every simulated figure says Simulated and an unknown one says Unknown.
+
+### Changed
+
+- **"Ask about this session" falls back to the text to type.** When the host declines or fails the
+  message, the session view shows "Ask in the chat: Analyse session <id>" in place of the button,
+  instead of saying the host did not accept it.
 
 ## [0.6.0] - 2026-11-11
 

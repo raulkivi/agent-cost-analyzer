@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 import { messagesOffTemplate, modelTurnsIn, toolCallsIn } from "../support/call-log.js";
 import type { McpHost } from "../support/mcp-host.js";
-import { APP_VERSION, expect, inEachClaudeSet, test } from "../support/host-fixture.js";
+import { APP_VERSION, expect, inEachClaudeSet, test, VSCODE_SETS } from "../support/host-fixture.js";
 
 // A30 (docs/plans/mcp-apps.md §4.5, §8.3; owner answers Q6 to Q10 in §9.2):
 // U4 (tool-call audit) and U5 (session picker) in Claude Desktop, light and
@@ -16,6 +16,7 @@ const CLAUDE_CODE = { provider: "claude-code" };
 const OCTOBER = { since: "2026-10-01", until: "2026-10-31" };
 // The fixture's Claude Code session ids are 16 hex digits: "Analyse session <id>" and nothing else.
 const FIXTURE_ID_MESSAGE = /^Analyse session [0-9a-f]{16}$/;
+const FIXTURE_ID_FALLBACK = /^Ask in the chat: Analyse session [0-9a-f]{16}$/;
 
 // The fixture's Claude Code session ids are hashes that change with each fixture home, so the model finds one first.
 async function portalWebSession(host: McpHost): Promise<{ sessionId: string; provider: string }> {
@@ -79,6 +80,36 @@ inEachClaudeSet(() => {
     await view.pressEnter();
     await expect.poll(() => modelTurnsIn(host.calls)).toHaveLength(1);
     expect(messagesOffTemplate(host.calls)).toEqual([]);
+  });
+
+  test("A30 U5 the host declines (owner, 2026-11-11: try, then fall back): that row reads the text to type and loses its button, the others still offer Analyse; axe clean", async ({ host }) => {
+    host.declineMessages = true;
+    const view = await host.show("list_sessions", { ...CLAUDE_CODE, ...OCTOBER });
+    const count = await view.picker.rows().count();
+    const shortId = ((await view.picker.rows().first().locator(".sp-id").textContent()) ?? "").trim();
+
+    await view.picker.analyseButton(shortId).click();
+
+    await expect(view.picker.askInChat(shortId)).toHaveText(FIXTURE_ID_FALLBACK);
+    await expect(view.picker.rowButtons(shortId)).toHaveCount(0);
+    await expect(view.picker.buttons().filter({ hasText: "Analyse" })).toHaveCount(count - 1);
+    // One attempt, the fixed template, nothing else.
+    expect(modelTurnsIn(host.calls)).toHaveLength(1);
+    expect(messagesOffTemplate(host.calls)).toEqual([]);
+    expect(toolCallsIn(host.calls)).toEqual([]);
+    expect(await view.axeViolations()).toEqual([]);
+  });
+
+  test("A30 U5 at 360 px after the host declines: the text to type wraps in the row, nothing scrolls sideways", async ({ host }) => {
+    host.declineMessages = true;
+    const view = await host.show("list_sessions", { ...CLAUDE_CODE, ...OCTOBER }, { width: 360 });
+    const shortId = ((await view.picker.rows().first().locator(".sp-id").textContent()) ?? "").trim();
+
+    await view.picker.analyseButton(shortId).click();
+
+    await expect(view.picker.askInChat(shortId)).toHaveText(FIXTURE_ID_FALLBACK);
+    expect(await view.scrollsSideways()).toBe(false);
+    expect(await view.axeViolations()).toEqual([]);
   });
 
   test("A30 U5 no match: says what to try and offers no button", async ({ host }) => {
@@ -147,5 +178,28 @@ inEachClaudeSet(() => {
     await expect(rollup.audit.tile("Failure rate")).toBeVisible();
     expect(await rollup.scrollsSideways()).toBe(false);
     expect(await rollup.axeViolations()).toEqual([]);
+  });
+});
+
+// Owner, 2026-11-11 (§9.2 Q7): try, then fall back. VS Code's recorded host
+// capabilities list no `message`, yet U2's message was sent there in A16, so
+// U5 offers Analyse. G4 (A33) confirms it in real Copilot Chat.
+test.describe("in VS Code", () => {
+  test.use({ hostKind: "vscode", hostSet: VSCODE_SETS[1] });
+
+  test("A30 U5 in a host that advertises no `message` capability: Analyse on every row, the click sends the fixed template, then Sent; axe clean", async ({ host }) => {
+    const view = await host.show("list_sessions", { ...CLAUDE_CODE, ...OCTOBER });
+    const count = await view.picker.rows().count();
+    await expect(view.picker.buttons()).toHaveCount(count);
+    await expect(view.picker.hint()).toHaveText("A click sends only Analyse session <id> to the chat. Titles and other session text are never sent.");
+    const shortId = ((await view.picker.rows().first().locator(".sp-id").textContent()) ?? "").trim();
+
+    await view.picker.analyseButton(shortId).click();
+
+    await expect(view.picker.sentButton(shortId)).toBeDisabled();
+    expect(modelTurnsIn(host.calls)).toHaveLength(1);
+    expect(host.calls.flatMap((call) => (call.method === "ui/message" ? call.texts : []))).toEqual([expect.stringMatching(FIXTURE_ID_MESSAGE)]);
+    expect(messagesOffTemplate(host.calls)).toEqual([]);
+    expect(await view.axeViolations()).toEqual([]);
   });
 });

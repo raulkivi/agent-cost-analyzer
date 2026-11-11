@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { fireEvent, render, screen, within } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
 import type { ViewBrand } from "../brand/view-brand.js";
 import type { ToolResult } from "../host/app-host-port.js";
 import { FakeAppHostPort } from "../host/fake-app-host-port.js";
@@ -88,13 +88,29 @@ describe("SessionPickerView Analyse", () => {
     expect(sent(port)).toEqual(["Analyse session 5b91d0c4"]);
   });
 
-  it("keeps Analyse when the host declines, and says so", async () => {
+  // Owner, 2026-11-11 (§9.2 Q7): try, then fall back.
+  it("when the host declines, puts the text to type in place of that row's button", async () => {
     const port = new FakeAppHostPort();
     port.sendMessageResult = false;
     setup(ok(list()), port);
     fireEvent.click(screen.getByRole("button", { name: "Analyse session 5b91d0c4" }));
-    expect(await screen.findByText("Not sent")).toBeInTheDocument();
-    await waitFor(() => expect(screen.getByRole("button", { name: "Analyse session 5b91d0c4" })).toBeEnabled());
+    const row = screen.getAllByRole("listitem")[1]!;
+    expect(await within(row).findByRole("status")).toHaveTextContent("Ask in the chat: Analyse session 5b91d0c4");
+    expect(within(row).queryByRole("button")).toBeNull();
+    // The other rows still try.
+    expect(screen.getByRole("button", { name: "Analyse session 7f3a9c2e" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Analyse session 2c07e8a1" })).toBeEnabled();
+    expect(sent(port)).toEqual(["Analyse session 5b91d0c4"]);
+  });
+
+  it("falls back the same way when sending fails", async () => {
+    const port = new FakeAppHostPort();
+    vi.spyOn(port, "sendMessage").mockRejectedValue(new Error("no chat"));
+    setup(ok(list()), port);
+    fireEvent.click(screen.getByRole("button", { name: "Analyse session 7f3a9c2e" }));
+    const row = screen.getAllByRole("listitem")[0]!;
+    expect(await within(row).findByRole("status")).toHaveTextContent("Ask in the chat: Analyse session 7f3a9c2e-1111-4222-8333-444455556666");
+    expect(within(row).queryByRole("button")).toBeNull();
   });
 
   it("offers no button for an id that is not a plain id", () => {
@@ -103,7 +119,7 @@ describe("SessionPickerView Analyse", () => {
     expect(screen.getByText("Odd id")).toBeInTheDocument();
   });
 
-  it("in a host without chat messages hides the buttons and says what to type", () => {
+  it("in a host that says it cannot send chat messages hides the buttons and says what to type", () => {
     const port = new FakeAppHostPort();
     port.messagingAvailable = false;
     setup(ok(list()), port);

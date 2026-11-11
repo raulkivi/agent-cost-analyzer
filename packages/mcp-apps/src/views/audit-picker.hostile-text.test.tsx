@@ -54,7 +54,7 @@ describe("U5 with logged text planted in every field", () => {
     expectInert(container, port);
   });
 
-  it("shows it as text in a host without chat messages, and sends nothing", () => {
+  it("shows it as text in a host that says it cannot send chat messages, and sends nothing", () => {
     const port = new FakeAppHostPort();
     port.messagingAvailable = false;
     const { container } = render(<SessionPickerView port={port} brand={brand} result={ok(hostileList)} />);

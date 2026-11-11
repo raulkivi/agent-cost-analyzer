@@ -14,8 +14,9 @@ import "./session-picker/session-picker.css";
 // list_sessions result. Each row has an "Analyse" button that sends exactly
 // "Analyse session <id>" to the chat (owner answer Q6). A session's title is
 // logged text: it is shown in the row and goes nowhere else, so the message
-// never carries it (§6). A host that offered no chat messages gets no button,
-// and the hint says what to type instead (Q7).
+// never carries it (§6). A host that says it cannot send chat messages gets no
+// button and the hint says what to type; a declined send puts that text in
+// the row instead (Q7; owner, 2026-11-11: try, then fall back).
 
 const KICKER = "Sessions";
 

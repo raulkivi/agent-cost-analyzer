@@ -9,7 +9,7 @@ export class FakeAppHostPort implements AppHostPort {
   toolResults = new Map<string, ToolResult>();
   openLinkResult = true;
   sendMessageResult = true;
-  // false: a host that did not offer chat messages (U5 shows what to type instead).
+  // false: a host that explicitly said it cannot send chat messages (U2 and U5 show what to type instead).
   messagingAvailable = true;
   connected = false;
   // The host's latest context, merged: a host may send any subset of fields.

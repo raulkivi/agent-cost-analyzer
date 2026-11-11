@@ -47,6 +47,8 @@ export class McpHost {
   private servedSet: HostSet;
   // Tool results the relay answers in place of the server's, for states the fixture home can't produce (see showResult).
   private readonly cannedAnswers = new Map<string, CallToolResult>();
+  // true: the host answers ui/message with an error, as a host that cannot start a turn would.
+  declineMessages = false;
 
   private constructor(
     private readonly page: Page,
@@ -133,6 +135,7 @@ export class McpHost {
     if (method === "tools/call") return this.server.callTool({ name: String(params.name), arguments: (params.arguments ?? {}) as Record<string, unknown> });
     // The fake host opens no link and starts no model turn; it only records.
     if (method === "ui/open-link") return { isError: true };
+    if (method === "ui/message" && this.declineMessages) return { isError: true };
     return {};
   }
 }

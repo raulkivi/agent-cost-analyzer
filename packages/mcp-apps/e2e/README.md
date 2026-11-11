@@ -59,6 +59,8 @@ Every spec runs in Claude light and Claude dark (`inEachClaudeSet`), with axe in
 | A29 board 15 U15 at 360 px, plain and simulated: no sideways scroll | `specs/u14-u15-billing.spec.ts` |
 | A30 U5 list: rows with title, short id, turns, model and no cost; an Analyse button on every row; the hint that only the fixed text is sent | `specs/a30-audit-picker.spec.ts` |
 | A30 U5 Analyse sends exactly one message matching `Analyse session <id>` (no title, no other host call), the button turns into a disabled Sent, and pressing it again sends nothing; by keyboard too | `specs/a30-audit-picker.spec.ts` |
+| A30 U5 the host declines (owner, 2026-11-11, §9.2 Q7: try, then fall back): that row reads "Ask in the chat: Analyse session <id>" in place of its button, the other rows keep Analyse, one attempt only; 360 px with no sideways scroll | `specs/a30-audit-picker.spec.ts` |
+| A30 U5 in a VS Code host (recorded capabilities with no `message`, one VS Code set): Analyse on every row, the click sends the fixed template, then Sent | `specs/a30-audit-picker.spec.ts` |
 | A30 U5 no match: "No sessions match" and what to try, no button; 360 px with no sideways scroll | `specs/a30-audit-picker.spec.ts` |
 | A30 U4 session and rollup: tiles with the failure rate Unknown (never 0 %) where no tool call is recorded, recovery cost labelled "tokens, not AI Credits", no chart without days, a display-only sessions table, no host call; 360 px | `specs/a30-audit-picker.spec.ts` |
 
@@ -71,7 +73,7 @@ Not in a fake host:
 - **A24 2.3, two currencies in U11.** U11 uses the priced basis and the fixture's AI Credits are billed, not priced, so U11 has one block. `cost-variance.test.ts` covers two blocks.
 - **A24 2.9, U9's own fullscreen layout.** Task A31 builds it. The spec asserts only that U9 renders in fullscreen without scrolling sideways.
 - **A29 board 3 and 5, an issued statement with a diff and an estimate range.** The fixture home has no issued statement (issuing is an app action) and only 4 priced active days, under the 5 an estimate needs, so the real server gives a draft and a refusal. `StatementView.test.tsx` and `EstimateView.test.tsx` cover the diff and the range bar.
-- **Claude Desktop's own chrome, the VS Code sets, A16 §1 and A24 §1.** Step 10.17 G4 and G6 cover the VS Code rows in Copilot Chat. The harness runs VS Code sets (`hostKind: "vscode"`); no spec uses them here.
+- **Claude Desktop's own chrome, the VS Code sets, A16 §1 and A24 §1.** Step 10.17 G4 and G6 cover the VS Code rows in Copilot Chat. The harness runs VS Code sets (`hostKind: "vscode"`); only the A30 U5 VS Code row uses one, to show that a host advertising no `message` still gets Analyse. G4 (A33) confirms in real Copilot Chat that it sends.
 
 ## Adding a spec
 

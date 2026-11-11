@@ -73,11 +73,12 @@ export class ExtAppsHostPort implements AppHostPort {
     }
   }
 
-  // The host's `message` capability, known once connected. Unknown counts as
-  // available, so the button is not hidden before the host has answered.
+  // Owner, 2026-11-11 (plan §9.2 Q7): try, then fall back. VS Code lists no
+  // `message` capability yet sends, so a missing capability is not a "no";
+  // only an explicit `message: false` is. A declined send falls back in the view.
   canSendMessage(): boolean {
     const capabilities = this.app.getHostCapabilities?.();
-    return capabilities === undefined || (capabilities as { message?: unknown }).message !== undefined;
+    return (capabilities as { message?: unknown } | undefined)?.message !== false;
   }
 
   async sendMessage(text: string): Promise<boolean> {

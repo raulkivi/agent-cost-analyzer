@@ -89,11 +89,11 @@ describe("U5 SessionPickerView has no axe violations", () => {
     port.sendMessageResult = false;
     renderU5(ok(sessions()), port);
     fireEvent.click(screen.getByRole("button", { name: "Analyse session 5b91d0c4" }));
-    await screen.findByText("Not sent");
+    expect(await screen.findByText(/^Ask in the chat:/)).toHaveTextContent("Ask in the chat: Analyse session 5b91d0c4");
     await expectNoViolations();
   });
 
-  it("in a host without chat messages, with no match, waiting and error", async () => {
+  it("in a host that says it cannot send chat messages, with no match, waiting and error", async () => {
     const port = new FakeAppHostPort();
     port.messagingAvailable = false;
     const plain = renderU5(ok(sessions()), port);

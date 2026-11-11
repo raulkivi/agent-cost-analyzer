@@ -695,6 +695,15 @@ export class SessionPickerView {
     return this.content.locator(".sp-hint");
   }
 
+  // After the host declines a send: the text to type, in that row's place of its button.
+  askInChat(shortId: string): Locator {
+    return this.rows().filter({ hasText: shortId }).getByRole("status");
+  }
+
+  rowButtons(shortId: string): Locator {
+    return this.rows().filter({ hasText: shortId }).getByRole("button");
+  }
+
   noMatch(): Locator {
     return this.content.getByText("No sessions match", { exact: true });
   }

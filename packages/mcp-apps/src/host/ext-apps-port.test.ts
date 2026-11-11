@@ -69,12 +69,15 @@ describe("ExtAppsHostPort", () => {
     await expect(refusing.sendMessage("t")).resolves.toBe(false);
   });
 
-  // A30: U5 hides its button, and says what to type, in a host that did not offer chat messages.
-  it("reports whether the host offered chat messages: its `message` capability, and yes while the capabilities are not known", () => {
+  // Owner, 2026-11-11 (§9.2 Q7): try, then fall back. VS Code advertises no
+  // `message` capability yet sends, so only an explicit "no" hides the affordance.
+  it("reports chat messages as available unless the host explicitly says it cannot send them", () => {
     expect(new ExtAppsHostPort(fakeApp()).canSendMessage()).toBe(true);
     expect(new ExtAppsHostPort(fakeApp({ getHostCapabilities: () => undefined })).canSendMessage()).toBe(true);
     expect(new ExtAppsHostPort(fakeApp({ getHostCapabilities: () => ({ message: { text: {} } }) })).canSendMessage()).toBe(true);
-    expect(new ExtAppsHostPort(fakeApp({ getHostCapabilities: () => ({ openLinks: {}, serverTools: {} }) })).canSendMessage()).toBe(false);
+    // VS Code's recorded capabilities (mcp-apps-spike-results/vscode-dark.json): no `message`, yet U2's message was sent (A16).
+    expect(new ExtAppsHostPort(fakeApp({ getHostCapabilities: () => ({ openLinks: {}, serverTools: { listChanged: true }, updateModelContext: {} }) })).canSendMessage()).toBe(true);
+    expect(new ExtAppsHostPort(fakeApp({ getHostCapabilities: () => ({ openLinks: {}, message: false }) })).canSendMessage()).toBe(false);
   });
 
   it("returns the mode the host granted, or the current one when the request fails", async () => {
