@@ -45,7 +45,8 @@ Fixed test-first in `cost-series.ts`.
 | D7 | A Copilot chat in an empty window (no folder open) must be visible to the analyzer. Fixed in a separate step, not in 10.17: step 10.18, done 2026-11-11 (#209). |
 | D8 | A real-Copilot release run costing up to about 2 AI Credits is acceptable; keep the prompts minimal. |
 | D9 | Any skip of a required test blocks a release (confirms G2's tightened rule). |
-| D10 | The Increment 2 release (extension 0.6.0, app 0.11.0) waits for G4 and the empty-window fix (D7), not for G7. |
+| D10 | The Increment 2 release (extension 0.6.0, app 0.11.0) waits for G4 and the empty-window fix (D7). *Superseded for G7 by D11.* |
+| D11 | The chart findings G7's judge found are fixed, not pinned: G7 merges with no exceptions, and the fixes ship in the Increment 2 release, which therefore also waits for G7 (`npm run test:ui` runs in the required `extension` job and in `release-extension.yml`, so findings would block both). |
 
 ## 2. What gates each release today, and what replaces it
 
@@ -267,9 +268,9 @@ although the test profile is signed in.
   Normal mode does not change that. Since D6 the chat is offered only the
   analyzer's read-only MCP tools and nothing is auto-approved.
 
-**G7 (2026-11-11).** Built on `claude/g7-extension-rows`, not merged.
+**G7 (2026-11-11).** Built on `claude/g7-extension-rows`, not merged; D11 fixes included.
 
-- **1.8 charts.** The judge's chart-mark rule (`scripts/ui-check/chart-marks.mts`, unit-tested in `chart-marks.test.ts`): (1) every data mark (bar, line, marker, legend swatch, hatching that carries meaning) reaches 3:1 against the ground it is painted on (WCAG 1.4.11), translucent paints composited first; (2) each pair of neighbouring series in a chart (order of first appearance) is told apart by ONE of: paints 3:1 apart, a different non-colour cue (stroke dash pattern or a fill pattern), or a direct label on both in the chart. A legend alone does not count (it makes the reader match colours), and neither does "View as table"; the threshold is not relaxed for light grounds. Applied in `layout-theme.e2e.ts` (default suite, CI) in four themes. Findings: two fixed test-first in `packages/web` (High Contrast column fill, sparkline stroke); the token-type palette and the tool-status "unknown" grey stay open and are pinned in the spec: owner decision (themed tokens plus a pattern or label cue).
+- **1.8 charts.** The judge's chart-mark rule (`scripts/ui-check/chart-marks.mts`, unit-tested in `chart-marks.test.ts`): (1) every data mark (bar, line, marker, legend swatch, hatching that carries meaning) reaches 3:1 against the ground it is painted on (WCAG 1.4.11), translucent paints composited first; (2) each pair of neighbouring series in a chart (order of first appearance) is told apart by ONE of: paints 3:1 apart, a different non-colour cue (stroke dash pattern or a fill pattern), or a direct label on both in the chart. A legend alone does not count (it makes the reader match colours), and neither does "View as table"; the threshold is not relaxed for light grounds. Applied in `layout-theme.e2e.ts` (default suite, CI) in four themes. Findings, all fixed test-first in `packages/web` (D11), nothing pinned: the High Contrast column fill and the sparkline stroke; the light steps of series 2-5 (orange, aqua, yellow, magenta; 1.9-2.9:1 on a light ground, now 3.7-4.3:1); the hard-coded token-type and tool-status palettes (themed `--color-series-*` and new `--color-status-*` tokens, every one 3:1 or more on light, dark and High Contrast grounds); and success against error (1.1:1 apart) and cache read against output (2.1:1 apart), which now also differ by a fill pattern (solid, hatching, dots, cross, lines), in the charts and their legends.
 - **2.1 Configure Tools** and **1.14 on a real git folder:** `copilot-e2e/specs/extension-rows.e2e.ts`, titles `2.1 ...` and `1.14 ...` (add `"1.14"` and `"2.1"` to `REQUIRED_COPILOT_E2E_TESTS`). 2.1 sends no message; 1.14 is one chat in a real `git init` workspace with a made-up remote. First run: 6 passed, 0.1800 AI Credits (D8). A window reload does not end the wdio session in normal mode, so the persistence of the grouping is tested for real.
 - **1.1** accepted as automated (D10): `first-run.e2e.ts` and `WalkthroughOffer`'s unit tests; the manual-checks row says so.
 - TDD exceptions: the picker's DOM read, the polling and the real runs. Unit-tested: `chart-marks`, `git-folder`, `repository-status`.
@@ -281,7 +282,7 @@ no Copilot); G2 and G3 next; G4 and G7 last.
 
 - **Phase 12:** A24 (owner's checks of U9-U11) becomes G4 + G5 + G6; the
   Increment 2 release (extension 0.6.0, app 0.11.0) waits for G4 and the
-  empty-window fix (D7, step 10.18, done #209), not for G7 (D10). A33
+  empty-window fix (D7, step 10.18, done #209), and G7 (D11, which superseded D10 on G7). A33
   (Increment 3 checks) is written as specs from the start.
 - **Phase 10:** the open "manual checks before release" item closes when G1,
   G3 and G7 are done.

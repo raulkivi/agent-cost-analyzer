@@ -63,17 +63,17 @@ const SESSIONS_PER_PROVIDER = 200;
 const TOP_SESSIONS = 10;
 
 const TOKEN_SERIES = [
-  { id: "uncachedInput", label: "Uncached input", color: "#2c455d" },
-  { id: "cacheWrite", label: "Cache write", color: "#eba524" },
-  { id: "cacheRead", label: "Cache read", color: "#94bce3" },
-  { id: "reasoning", label: "Reasoning", color: "#7a7a7d" },
-  { id: "output", label: "Output", color: "#597ea3" },
+  { id: "uncachedInput", label: "Uncached input", color: "var(--color-series-1)" },
+  { id: "cacheWrite", label: "Cache write", color: "var(--color-series-4)" },
+  { id: "cacheRead", label: "Cache read", color: "var(--color-series-3)" },
+  { id: "reasoning", label: "Reasoning", color: "var(--color-series-7)" },
+  { id: "output", label: "Output", color: "var(--color-series-2)" },
 ];
 
 const TOOL_SERIES = [
-  { id: "succeeded", label: "Succeeded", color: STATUS_META.success.color },
-  { id: "failed", label: "Failed", color: STATUS_META.error.color },
-  { id: "unknown", label: "Unknown", color: STATUS_META.unknown.color },
+  { id: "succeeded", label: "Succeeded", color: STATUS_META.success.color, pattern: STATUS_META.success.pattern },
+  { id: "failed", label: "Failed", color: STATUS_META.error.color, pattern: STATUS_META.error.pattern },
+  { id: "unknown", label: "Unknown", color: STATUS_META.unknown.color, pattern: STATUS_META.unknown.pattern },
 ];
 
 // Step 15.6 (plan §5, D3): totals use each turn's preferred basis unless the

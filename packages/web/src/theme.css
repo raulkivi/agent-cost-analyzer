@@ -59,18 +59,26 @@
      (cost-by-repository-and-project.md §11.7): the dataviz reference
      palette in its fixed order, validated on this ground (#f2f2f3). A
      series keeps its slot when filters change; past eight it folds into
-     "Other". Slots 2-5 (orange, aqua, yellow, magenta) are under 3:1 here,
-     a documented warning relieved by direct labels, tooltips and "View as
-     table" (theme-contrast.test.ts). Series colour marks, never text.
+     "Other". Slots 2-5 (orange, aqua, yellow, magenta) are darkened from the
+     reference so every slot reaches 3:1 here (step 10.17 G7, check 1.8;
+     theme-contrast.test.ts). Series colour marks, never text.
      The editor-theme stylesheet gives dark themes their own dark steps. */
   --color-series-1: #2a78d6; /* blue */
-  --color-series-2: #eb6834; /* orange */
-  --color-series-3: #1baf7a; /* aqua */
-  --color-series-4: #eda100; /* yellow */
-  --color-series-5: #e87ba4; /* magenta */
+  --color-series-2: #d4551f; /* orange */
+  --color-series-3: #118a60; /* aqua */
+  --color-series-4: #9c6f00; /* yellow */
+  --color-series-5: #c2417a; /* magenta */
   --color-series-6: #008300; /* green */
   --color-series-7: #6250d6; /* violet */
   --color-series-8: #e34948; /* red */
+  /* Tool-call status marks: one value per status that reaches 3:1 on a light,
+     a dark and a High Contrast ground alike (theme-contrast.test.ts). Status
+     is always also a pattern (chart-parts.tsx) and an icon, never colour alone. */
+  --color-status-success: #2f7fb0;
+  --color-status-error: #d6453d;
+  --color-status-interrupted: #a67400;
+  --color-status-denied: #7a5bb5;
+  --color-status-unknown: #767676;
   /* Waterfall increases and decreases, always with a written sign. */
   --color-diverging-increase: #e34948;
   --color-diverging-decrease: #1c5cab;

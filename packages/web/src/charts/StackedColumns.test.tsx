@@ -29,6 +29,22 @@ describe("StackedColumns", () => {
     ]);
   });
 
+  // Step 10.17 G7 (check 1.8): success and error were 1.1:1 apart. Every
+  // status but the first is drawn with its own hatch, so colour is not the only cue.
+  it("draws each status in its themed colour, all but success hatched with a pattern of their own", () => {
+    const { container } = render(<StackedColumns ariaLabel="x" columns={columns} axisLabel="Turn" />);
+    const fills = new Map([...container.querySelectorAll("[data-status]")].map((el) => [el.getAttribute("data-status"), el.getAttribute("fill")]));
+    expect(fills.get("success")).toBe("var(--color-status-success)");
+    const error = fills.get("error")!;
+    const interrupted = fills.get("interrupted")!;
+    expect(error).toMatch(/^url\(#.+\)$/);
+    expect(interrupted).toMatch(/^url\(#.+\)$/);
+    expect(error).not.toBe(interrupted);
+    const patternOf = (fill: string) => container.querySelector(fill.slice(4, -1))!;
+    expect(patternOf(error).querySelector("rect[data-series-fill]")).toHaveAttribute("fill", "var(--color-status-error)");
+    expect(patternOf(error).querySelectorAll("path, line, circle").length).toBeGreaterThan(0);
+  });
+
   it("shows a legend with icon + label for each status present", () => {
     render(<StackedColumns ariaLabel="x" columns={columns} axisLabel="Turn" />);
     const legend = screen.getByRole("list", { name: "Legend" });

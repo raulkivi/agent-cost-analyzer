@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
 import type { FailureCategory, ToolCallStatus } from "@agent-cost-analyzer/domain";
+import type { SeriesPattern } from "../charts/chart-parts.js";
 
 // Outcome is a *state*, so it gets a status encoding rather than a
 // categorical one. Success deliberately wears the app's own steel-blue
@@ -8,16 +9,19 @@ import type { FailureCategory, ToolCallStatus } from "@agent-cost-analyzer/domai
 // failures are what should draw the eye — and blue-vs-red stays separable
 // for red-green colour-vision deficiency (validated with the dataviz
 // validator against --color-bg #f2f2f3, all pairs: CVD ΔE ≥ 16, normal-
-// vision ΔE ≥ 16.5). Amber/grey sit below 3:1 contrast, so every use pairs
-// the colour with an icon + text label, a legend and a table view.
+// vision ΔE ≥ 16.5). Since step 10.17 G7 (check 1.8) each colour is a token
+// that reaches 3:1 on every ground (theme.css), and each status also has its
+// own fill pattern, so marks never rest on colour alone: success and error
+// were 1.1:1 apart. Every use also pairs the colour with an icon + text label,
+// a legend and a table view.
 export const STATUS_ORDER: ToolCallStatus[] = ["success", "error", "interrupted", "denied", "unknown"];
 
-export const STATUS_META: Record<ToolCallStatus, { label: string; icon: string; color: string }> = {
-  success: { label: "Succeeded", icon: "✓", color: "#597ea3" },
-  error: { label: "Failed", icon: "✕", color: "#d03b3b" },
-  interrupted: { label: "Interrupted", icon: "⏸", color: "#eba524" },
-  denied: { label: "Denied", icon: "⛔", color: "#3d2f5c" },
-  unknown: { label: "Unknown", icon: "?", color: "#c4c4c7" },
+export const STATUS_META: Record<ToolCallStatus, { label: string; icon: string; color: string; pattern: SeriesPattern }> = {
+  success: { label: "Succeeded", icon: "✓", color: "var(--color-status-success)", pattern: "solid" },
+  error: { label: "Failed", icon: "✕", color: "var(--color-status-error)", pattern: "diagonal" },
+  interrupted: { label: "Interrupted", icon: "⏸", color: "var(--color-status-interrupted)", pattern: "dots" },
+  denied: { label: "Denied", icon: "⛔", color: "var(--color-status-denied)", pattern: "cross" },
+  unknown: { label: "Unknown", icon: "?", color: "var(--color-status-unknown)", pattern: "horizontal" },
 };
 
 export const CATEGORY_LABELS: Record<FailureCategory, string> = {

@@ -95,8 +95,21 @@ export const PROBE_SCRIPT = `(() => {
     const labelled = el.hasAttribute("data-step") || !!svg.querySelector("[data-direct-label]");
     const pattern = patternOf(el);
     if (pattern) {
-      const hatch = pattern.querySelector("line, path");
-      if (hatch) pushMark(el, "hatch", getComputedStyle(hatch).stroke, "pattern", labelled);
+      const tile = pattern.querySelector("rect[data-series-fill]");
+      const hatch = pattern.querySelector("line, path, circle");
+      if (tile) {
+        // A series drawn as a patterned tile: the tile's colour is the bar,
+        // the hatching on it the cue, and must show against the tile.
+        const tileFill = getComputedStyle(tile).fill;
+        const cue = "pattern:" + pattern.id;
+        pushMark(el, "bar", tileFill, cue, labelled);
+        if (hatch) {
+          const hatchPaint = hatch.tagName === "circle" ? getComputedStyle(hatch).fill : getComputedStyle(hatch).stroke;
+          marks.push({ chart: chartOf(el), series: seriesOf(el), kind: "hatch", paint: hatchPaint, backgrounds: [tileFill, ...backgroundsOf(el)], cue, labelled });
+        }
+      } else if (hatch) {
+        pushMark(el, "hatch", getComputedStyle(hatch).stroke, "pattern", labelled);
+      }
       continue;
     }
     const filled = style.fill !== "none" && style.fill !== "rgba(0, 0, 0, 0)" && !/^url/.test(style.fill) && el.getAttribute("fill") !== "transparent";
@@ -117,7 +130,8 @@ export const PROBE_SCRIPT = `(() => {
     if (!shown(el)) continue;
     const row = el.closest(".hbar-row, [data-row]");
     const alone = !!row && row.querySelectorAll("[data-segment], [data-bar]").length === 1;
-    pushMark(el, "bar", getComputedStyle(el).backgroundColor, "", alone);
+    const image = getComputedStyle(el).backgroundImage;
+    pushMark(el, "bar", getComputedStyle(el).backgroundColor, image === "none" ? "" : image, alone);
   }
   for (const el of document.body.querySelectorAll(".chart-legend-swatch, .cost-tooltip-key")) {
     if (!shown(el)) continue;
