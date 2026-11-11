@@ -331,7 +331,7 @@ passes but a human fails.
 ## 6. What was built (2026-11-04, branch `worktree-agent-a096a711cedd6f415`)
 
 Built with the recommended path: `wdio-vscode-service@8.0.0`, run against
-pinned stable VS Code 1.145.0 under `xvfb-run -a -s "-screen 0 1600x1000x24"`.
+pinned stable VS Code 1.146.0 (bumped from 1.145.0, 2026-11-11) under `xvfb-run -a -s "-screen 0 1600x1000x24"`.
 The spike (T0) went **go**: no patch to the service was needed, and the
 whole suite (6 spec files, one VS Code start per file) takes about 35 s
 with a warm download cache. The `npm audit` delta is the

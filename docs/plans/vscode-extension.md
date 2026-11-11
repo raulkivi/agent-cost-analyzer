@@ -215,7 +215,9 @@ flowchart LR
   and Node version for `node:sqlite` (R1) and one VS Code API level for
   MCP registration (D7). The trade-off is that users on an older VS Code
   keep the last extension version that was compatible with their editor.
-  The Marketplace handles this automatically.
+  The Marketplace handles this automatically. Current: `^1.146.0`
+  (stable 1.146.0, 2026-11-11; `@types/vscode` stays 1.144.0, the newest
+  typings published).
 - **D10: Native sidebar for navigation, editor panel for analysis**
   (decided 2026-10-24). The extension adds an Activity Bar icon whose view
   container holds native TreeViews (not webviews): **Sessions** and
