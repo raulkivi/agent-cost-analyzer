@@ -23,6 +23,7 @@ const VIEW_PREFIXES: Record<string, readonly string[]> = {
   "views/statement/statement.css": ["stm-"],
   "views/estimate/estimate.css": ["est-"],
   "views/session-picker/session-picker.css": ["sp-"],
+  "views/replay/replay.css": ["rp-"],
 };
 
 // Classes a view's CSS may mention but another module owns: web's shared

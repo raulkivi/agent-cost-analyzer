@@ -38,8 +38,11 @@ const LOGGED_TEXT = new Set(["title", "sessionTitle", "userMessage", "assistantM
 // The tools a view may call, and the argument names it may send them.
 // U10 (A21) opens a row in U9 with the row's own ids and the comparison's
 // period, basis, pricing and currency: all taken from structuredContent.
-const TOOLS = new Set(["get_turn_series", "get_turn", "get_session_cost", "list_findings", "get_repository_cost", "get_project_cost", "get_price_changes"]);
-const ARGUMENT_NAMES = new Set(["sessionId", "provider", "turnIndex", "kind", "minSeverity", "repository", "projectId", "since", "until", "basis", "pricing", "currency"]);
+// U13 (A28) is opened from U11 with get_price_changes and U11's period.
+// U12 (A27) opens a model of a comparison in replay mode with replay_session,
+// the result's session id, provider and the model id it lists.
+const TOOLS = new Set(["get_turn_series", "get_turn", "get_session_cost", "list_findings", "get_repository_cost", "get_project_cost", "get_price_changes", "replay_session"]);
+const ARGUMENT_NAMES = new Set(["sessionId", "provider", "turnIndex", "kind", "minSeverity", "repository", "projectId", "since", "until", "basis", "pricing", "currency", "model"]);
 
 function walk(dir: string): string[] {
   return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => (entry.isDirectory() ? walk(path.join(dir, entry.name)) : [path.join(dir, entry.name)]));
@@ -240,6 +243,8 @@ describe("no-forwarding rule (static, over every call site in src/)", () => {
         "views/EstimateView.tsx",
         "views/AuditView.tsx",
         "views/SessionPickerView.tsx",
+        "views/ReplayView.tsx",
+        "views/replay/ReplayDrillDown.tsx",
       ]),
     );
     expect(files.some((file) => file.endsWith(".test.tsx"))).toBe(false);
@@ -290,6 +295,7 @@ describe("no-forwarding rule (static, over every call site in src/)", () => {
       'views/cost-rollup/DrillDown.tsx "get_session_cost"',
       'views/findings/use-findings-query.ts "list_findings"',
       'views/price-changes/PriceDrillDown.tsx "get_price_changes"',
+      'views/replay/ReplayDrillDown.tsx "replay_session"',
       'views/session-cost/TopTurns.tsx "get_turn"',
     ]);
     const problems: string[] = [];

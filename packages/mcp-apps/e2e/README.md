@@ -20,7 +20,7 @@ CI runs it in the `mcp-apps-e2e` job, with no retries.
 - **Host context.** `support/host-context.ts` takes the host's name, capabilities, display modes and dimensions from the A0 recordings (`docs/plans/mcp-apps-spike-results/`). It takes the theme and style variables from a host set in `test/theme/host-sets.ts` (Claude dark by default). It checks the context against ext-apps' own schema first: the view's ext-apps rejects a context with one unknown style variable and then waits silently.
 - **VS Code sets.** VS Code sends `var(--vscode-*)` references, and its webview defines the `--vscode-*` colours itself. So the host context carries only the protocol's variables, and the view is served with the set's `--vscode-*` colours on its root. A theme change mid-view does not update those colours: show a new view instead.
 - **No network.** Playwright's router serves the host page and the view from memory on two `.test` origins, with the CSP the resource declares (`support/sandbox.ts`). Any other request is refused, and the fixture fails the test.
-- **Page objects.** `support/view-frame.ts`: `ViewFrame` is the shared shell (title, kicker, trail, Back, footer, focus, axe), with lenses for U1, U2, U3, U4, U5, U9, U10, U11, U13, U14 and U15. Specs hold no selectors.
+- **Page objects.** `support/view-frame.ts`: `ViewFrame` is the shared shell (title, kicker, trail, Back, footer, focus, axe), with lenses for U1, U2, U3, U4, U5, U9, U10, U11, U12, U13, U14 and U15. `host.showResult(tool, structuredContent, { answers })` shows a canned result (and answers the view's own tool calls) for states the fixture home cannot produce. Specs hold no selectors.
 - **Axe.** `ViewFrame.axeViolations()` runs the web suite's axe check inside the view's frame. The view is transparent, so it first paints the host's `--color-background-primary` on the view's root as the ground behind it.
 
 ## Checklist rows covered
@@ -44,6 +44,7 @@ Every spec runs in Claude light and Claude dark (`inEachClaudeSet`), with axe in
 | A24 2.11 footer: product name in the kicker, `Read-only · local logs · v<app version>` on all six views | `specs/layout-footer-permissions.spec.ts` |
 | A28 U13 direct: timeline, documented changes with % per token type and sources, written signs and hues, empty state, 360 px | `specs/u13-price-changes.spec.ts` |
 | A28 U11 → U13: one `get_price_changes` call for U11's period, kicker trail and Back, Back restores U11 with no new call and focus on the button, keyboard, 360 px | `specs/u13-price-changes.spec.ts` |
+| A27 U12 compare and replay: real server (own-model check, tool order, click a model, Back and focus, no model turn) and the board states a fixture home cannot produce (§9.2 Q1-Q5: floor, Unknown, failed self-check, chart cues, gap; boards 8-10: Unknown replay, 360 px) | `specs/u12-replay.spec.ts` |
 | A16 §2 U1: tiles, chart, top turns, a turn opens and hides, no copy button in Claude | `specs/a16-session-views.spec.ts` |
 | A16 §2 "Unknown, never 0" | `specs/a16-session-views.spec.ts` |
 | A16 §2 U2: tiles, charts, session drill-down, Back to cost rollup, Ask about this session | `specs/a16-session-views.spec.ts` |

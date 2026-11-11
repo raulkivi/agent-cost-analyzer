@@ -41,6 +41,7 @@ export type {
 export { toReplayViewModel, SIMULATED_LABEL, MEASURED_LABEL } from "./replay.js";
 export type {
   CompareEntryView,
+  OwnModelCheckView,
   ReplayCompareViewModel,
   ReplayCoverageView,
   ReplayDetailViewModel,

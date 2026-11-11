@@ -2696,7 +2696,7 @@ refactored — red-green-refactor, not tests bolted on afterward.
   fallbacks and the host variable sets recorded in the A0 spike (VS Code
   Light Modern, Dark Modern and Dark High Contrast, and Claude Desktop). The
   bundle test (`test/bundle-size.test.ts`) runs the production build and
-  asserts at most 900 KB, exactly one brand placeholder, no external
+  asserts at most 1.2 MiB (raised from 900 KB by the owner on 2026-11-11), exactly one brand placeholder, no external
   script, stylesheet or font, and a clean load in jsdom. On the server,
   in-memory MCP client tests (`register-app-views.test.ts`) assert the
   `tools/list` metadata, the resource's MIME type and injected brand,

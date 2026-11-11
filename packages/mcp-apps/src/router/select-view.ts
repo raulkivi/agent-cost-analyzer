@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 import type { HostContext } from "../host/app-host-port.js";
 
-export type ViewId = "session-cost" | "cost-rollup" | "findings" | "cost-over-time" | "cost-change" | "cost-compare" | "price-changes" | "statement" | "estimate" | "audit" | "session-picker";
+export type ViewId = "session-cost" | "cost-rollup" | "findings" | "cost-over-time" | "cost-change" | "cost-compare" | "price-changes" | "statement" | "estimate" | "audit" | "session-picker" | "replay";
 export type ViewSelection = { view: ViewId } | { view: "none" };
 
 const BY_TOOL: Record<string, ViewId> = {
@@ -19,6 +19,8 @@ const BY_TOOL: Record<string, ViewId> = {
   get_session_audit: "audit",
   get_audit_rollup: "audit",
   list_sessions: "session-picker",
+  replay_session: "replay",
+  compare_models_for_session: "replay",
 };
 
 // VS Code prefixes the tool name with the server's id ("<server>-<tool>",
@@ -58,6 +60,9 @@ function byShape(structured: unknown): ViewId | undefined {
   }
   // U5 (A30): list_sessions answers a count of matches and the sessions.
   if (typeof s.total === "number" && hasArray(s, "sessions")) return "session-picker";
+  // SessionReplay and SessionReplayComparison (U12): always labelled simulated by the tool.
+  if (s.simulated === true && typeof s.totals === "object" && typeof s.coverage === "object" && hasArray(s, "turns")) return "replay";
+  if (s.simulated === true && typeof s.measured === "object" && s.measured !== null && hasArray(s, "entries")) return "replay";
   return undefined;
 }
 

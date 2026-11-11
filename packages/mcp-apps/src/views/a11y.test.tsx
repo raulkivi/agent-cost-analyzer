@@ -18,6 +18,8 @@ import { CostRollupView } from "./CostRollupView.js";
 import { PriceChangesView } from "./PriceChangesView.js";
 import { FindingsView } from "./FindingsView.js";
 import { NoViewState } from "./NoViewState.js";
+import { ReplayView } from "./ReplayView.js";
+import { boardComparison, boardReplay, lost, mea, sim } from "./replay/fixtures.js";
 import { SessionCostView } from "./SessionCostView.js";
 import { findingsResult, SAMPLE_FINDINGS } from "./findings/fixtures.js";
 
@@ -366,6 +368,109 @@ describe("U3 FindingsView has no axe violations", () => {
     fireEvent.click(screen.getByRole("radio", { name: "Security" }));
     await screen.findByRole("alert");
     await expectNoViolations();
+  });
+});
+
+describe("U12 ReplayView has no axe violations", () => {
+  const renderU12 = (result: ToolResult | undefined, fake = new FakeAppHostPort()) => render(<ReplayView port={fake} brand={brand} result={result} />);
+
+  it("compare mode: every row kind (own model, fully known, a floor, Unknown)", async () => {
+    renderU12(ok(boardComparison()));
+    await expectNoViolations();
+  });
+
+  it("compare mode with a missing own-model check and an unknown measured total", async () => {
+    renderU12(ok(boardComparison({ measured: { value: null, knownTurns: 0, turns: 42 }, entries: boardComparison().entries.filter((entry) => !entry.isMeasuredModel) })));
+    await expectNoViolations();
+  });
+
+  it("replay mode: a failed self-check, the chart, a gap, the reasons and the assumptions", async () => {
+    renderU12(ok(boardReplay()));
+    await expectNoViolations();
+  });
+
+  it("replay mode with the table open, the assumptions open, a passed and a missing self-check", async () => {
+    const first = renderU12(ok(boardReplay({ selfCheck: { model: "claude-sonnet-5.5", requests: 44, matching: 44, readTolerancePercent: 5, passed: true } })));
+    fireEvent.click(screen.getByRole("button", { name: "View as table" }));
+    screen.getByText("Show 2 assumptions").closest("details")!.setAttribute("open", "");
+    await expectNoViolations();
+    first.unmount();
+    renderU12(ok(boardReplay({ selfCheck: null })));
+    await expectNoViolations();
+  });
+
+  it("replay mode with no price: Unknown and no chart", async () => {
+    const unknown = { cacheRead: 1, cacheWrite: 1, outcome: "hit" as const, cost: { known: false as const, reason: "no price" } };
+    renderU12(
+      ok(
+        boardReplay({
+          pricing: { channel: null, reason: "no price", asOf: "2026-10-14", requested: "session-channel" },
+          turns: [
+            { turnIndex: 0, measured: mea(2), simulated: unknown },
+            { turnIndex: 1, measured: lost, simulated: unknown },
+          ],
+          totals: { measured: { value: 2, knownTurns: 1, turns: 2 }, simulated: { value: null, knownTurns: 0, turns: 2 }, difference: null },
+          coverage: { turns: 2, replayedTurns: 2, requests: 2, replayedRequests: 2, notReplayed: [] },
+        }),
+      ),
+    );
+    await expectNoViolations();
+  });
+
+  it("the drill-down: loading, loaded, and failed", async () => {
+    const fake = new FakeAppHostPort();
+    fake.toolResults.set("replay_session", ok(boardReplay({ turns: [{ turnIndex: 0, measured: mea(2), simulated: sim(1) }] })));
+    const { unmount } = renderU12(ok(boardComparison()), fake);
+    fireEvent.click(screen.getByRole("button", { name: "gpt-6.1-sol" }));
+    await expectNoViolations();
+    await screen.findByText("Self-check failed.");
+    await expectNoViolations();
+    unmount();
+    renderU12(ok(boardComparison()), new FakeAppHostPort());
+    fireEvent.click(screen.getByRole("button", { name: "gpt-6.1-sol" }));
+    await screen.findByRole("alert");
+    await expectNoViolations();
+  });
+
+  it("a tool error, an unreadable result and waiting", async () => {
+    const first = renderU12({ isError: true, errorText: "Unknown session id" });
+    await expectNoViolations();
+    first.unmount();
+    const second = renderU12(ok({ nope: 1 }));
+    await expectNoViolations();
+    second.unmount();
+    renderU12(undefined);
+    await expectNoViolations();
+  });
+});
+
+describe("semantics axe does not check, U12", () => {
+  it("the chart's name summarises it, with the series, the size and the turns not replayed", () => {
+    render(<ReplayView port={new FakeAppHostPort()} brand={brand} result={ok(boardReplay())} />);
+    expect(screen.getByRole("img", { name: /AI Credits per turn, measured and simulated on gpt-6.1-sol; 6 turns; highest measured 4.26 AI Credits at turn 2; 2 turns not replayed/ })).toBeInTheDocument();
+  });
+
+  it("a failed or missing check is an alert, and a passed one is not", () => {
+    const first = render(<ReplayView port={new FakeAppHostPort()} brand={brand} result={ok(boardReplay())} />);
+    expect(screen.getByRole("alert")).toHaveTextContent("Self-check failed.");
+    first.unmount();
+    render(<ReplayView port={new FakeAppHostPort()} brand={brand} result={ok(boardReplay({ selfCheck: { model: "m", requests: 1, matching: 1, readTolerancePercent: 5, passed: true } }))} />);
+    expect(screen.queryByRole("alert")).toBeNull();
+  });
+
+  it("the table toggle says whether it is open and what it controls, and the table container is focusable and named", () => {
+    render(<ReplayView port={new FakeAppHostPort()} brand={brand} result={ok(boardReplay())} />);
+    const toggle = screen.getByRole("button", { name: "View as table" });
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+    fireEvent.click(toggle);
+    expect(toggle).toHaveAttribute("aria-controls");
+    expect(document.getElementById(toggle.getAttribute("aria-controls")!)).toContainElement(screen.getByRole("table"));
+    expect(screen.getByRole("region", { name: "Per-turn credits, scrollable" })).toHaveAttribute("tabindex", "0");
+  });
+
+  it("the waiting state announces itself", () => {
+    render(<ReplayView port={new FakeAppHostPort()} brand={brand} result={undefined} />);
+    expect(screen.getByRole("status")).toHaveTextContent("Waiting for the replay");
   });
 });
 

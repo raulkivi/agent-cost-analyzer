@@ -17,8 +17,10 @@ import { CostOverTimeView } from "./CostOverTimeView.js";
 import { CostRollupView } from "./CostRollupView.js";
 import { PriceChangesView } from "./PriceChangesView.js";
 import { FindingsView } from "./FindingsView.js";
+import { ReplayView } from "./ReplayView.js";
 import { SessionCostView } from "./SessionCostView.js";
 import { findingsResult, SAMPLE_FINDINGS } from "./findings/fixtures.js";
+import { boardComparison, boardReplay } from "./replay/fixtures.js";
 
 // A14 (docs/plans/mcp-apps.md §7): every drill-down and filter works from
 // the keyboard alone (Tab, Enter, Space, arrows), and focus lands somewhere
@@ -311,5 +313,64 @@ describe("U13 price changes by keyboard", () => {
       stops.push(document.activeElement!);
     }
     expect(stops.filter((stop) => stop !== document.body && stop !== region)).toEqual([]);
+  });
+});
+
+describe("U12 replay by keyboard", () => {
+  const replayPort = (): FakeAppHostPort => {
+    const fake = new FakeAppHostPort();
+    fake.toolResults.set("replay_session", { structuredContent: boardReplay() });
+    return fake;
+  };
+
+  it("Tab reaches a model, Enter opens its replay with focus on Back, and Back returns focus to the model", async () => {
+    const user = userEvent.setup();
+    render(<ReplayView port={replayPort()} brand={brand} result={ok(boardComparison())} />);
+
+    await tabTo(user, screen.getByRole("button", { name: "gpt-6.1-sol" }));
+    await user.keyboard("{Enter}");
+    await screen.findByText("Self-check failed.");
+    const back = screen.getByRole("button", { name: "Back to model comparison" });
+    await waitFor(() => expect(document.activeElement).toBe(back));
+
+    await user.keyboard(" ");
+    await waitFor(() => expect(document.activeElement).toBe(screen.getByRole("button", { name: "gpt-6.1-sol" })));
+  });
+
+  it("the measured row is not in the tab order: only the models are", async () => {
+    const user = userEvent.setup();
+    render(<ReplayView port={replayPort()} brand={brand} result={ok(boardComparison())} />);
+    const reached: string[] = [];
+    for (let presses = 0; presses < 5; presses += 1) {
+      await user.tab();
+      reached.push(document.activeElement?.textContent ?? "");
+    }
+    expect(reached).toEqual(["claude-sonnet-5.5", "claude-haiku-5.5", "gpt-6.1-sol", "local-llama-4", "claude-opus-5.5"]);
+  });
+
+  it("View as table works from the keyboard, and its container is in the tab order", async () => {
+    const user = userEvent.setup();
+    render(<ReplayView port={replayPort()} brand={brand} result={ok(boardReplay())} />);
+    const toggle = screen.getByRole("button", { name: "View as table" });
+    await tabTo(user, toggle);
+    await user.keyboard("{Enter}");
+    expect(toggle).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByRole("table", { name: /Per-turn credits/ })).toBeInTheDocument();
+    await tabTo(user, screen.getByRole("region", { name: "Per-turn credits, scrollable" }));
+    toggle.focus();
+    await user.keyboard(" ");
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+  });
+
+  it("Back from a replay that failed to load returns focus to the model", async () => {
+    const user = userEvent.setup();
+    const failing = new FakeAppHostPort();
+    render(<ReplayView port={failing} brand={brand} result={ok(boardComparison())} />);
+    await tabTo(user, screen.getByRole("button", { name: "claude-haiku-5.5" }));
+    await user.keyboard("{Enter}");
+    await screen.findByRole("alert");
+    await waitFor(() => expect(document.activeElement).toBe(screen.getByRole("button", { name: "Back to model comparison" })));
+    await user.keyboard("{Enter}");
+    await waitFor(() => expect(document.activeElement).toBe(screen.getByRole("button", { name: "claude-haiku-5.5" })));
   });
 });

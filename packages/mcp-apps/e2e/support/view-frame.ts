@@ -48,6 +48,10 @@ export class ViewFrame {
     return new EstimateView(this.content);
   }
 
+  get replay(): ReplayView {
+    return new ReplayView(this.content);
+  }
+
   get sessionCost(): SessionCostView {
     return new SessionCostView(this.content);
   }
@@ -371,6 +375,88 @@ export class CostChangeView {
   // The written sign of an effect ("+$0.011", "−$0.094"), never colour alone.
   effectValue(effect: "usage" | "price" | "mix"): Locator {
     return this.waterfall().first().locator(`[data-value="${effect}"]`);
+  }
+}
+
+// U12: a session replayed on another model, in compare mode and in replay mode.
+export class ReplayView {
+  constructor(private readonly content: FrameLocator) {}
+
+  // Compare mode. The rows in the order shown: "measured", then each model's id.
+  async rowOrder(): Promise<(string | null)[]> {
+    return this.content.getByRole("list", { name: "Simulated total per model" }).getByRole("listitem").evaluateAll((rows) => rows.map((row) => row.getAttribute("data-row")));
+  }
+
+  row(model: string): Locator {
+    return this.content.locator(`li[data-row="${model}"]`);
+  }
+
+  measuredRow(): Locator {
+    return this.row("measured");
+  }
+
+  modelButton(model: string): Locator {
+    return this.content.getByRole("button", { name: model, exact: true });
+  }
+
+  // The box under the title: "Own-model check:" in compare mode, the self-check in replay mode
+  // (a failed or missing one is an alert).
+  checkBox(): Locator {
+    return this.content.locator(".rp-callout").first();
+  }
+
+  // The simulated tag beside the title.
+  titleTag(): Locator {
+    return this.content.getByRole("heading", { level: 1 }).getByText("Simulated", { exact: true });
+  }
+
+  tile(name: string | RegExp): Locator {
+    return this.content.getByRole("group", { name });
+  }
+
+  chart(): Locator {
+    return this.content.getByRole("img", { name: /AI Credits per turn|USD per turn/ });
+  }
+
+  // The stroke dash of a series' line ("5 3" for the dashed simulated one), or null for a solid line.
+  async lineDash(series: "measured" | "simulated"): Promise<string | null> {
+    return this.chart().locator(`[data-series="${series}"] polyline`).first().getAttribute("stroke-dasharray");
+  }
+
+  // The marks of a series: filled dots (circles) for measured, open diamonds (paths) for simulated.
+  marks(series: "measured" | "simulated"): Locator {
+    return this.chart().locator(series === "measured" ? '[data-series="measured"] circle' : '[data-series="simulated"] path');
+  }
+
+  // The hatched bands over turns not replayed.
+  gaps(): Locator {
+    return this.chart().locator("[data-gap]");
+  }
+
+  // The words drawn in the chart itself: the direct labels.
+  chartLabels(): Locator {
+    return this.chart().locator("text");
+  }
+
+  tableToggle(): Locator {
+    return this.content.getByRole("button", { name: /^(View as table|Hide table)$/ });
+  }
+
+  table(): Locator {
+    return this.content.getByRole("table", { name: "Per-turn credits, measured and simulated" });
+  }
+
+  notReplayed(): Locator {
+    return this.content.getByRole("region", { name: "Not replayed" });
+  }
+
+  assumptions(): Locator {
+    return this.content.locator("details.rp-assumptions");
+  }
+
+  // The bar of a compare row, if it has one: an Unknown model has none.
+  bar(model: string): Locator {
+    return this.row(model).locator("[data-bar]");
   }
 }
 
