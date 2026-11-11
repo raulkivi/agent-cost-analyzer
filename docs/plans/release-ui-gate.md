@@ -468,6 +468,12 @@ observed every time; each run's note removed from the local
 | 1 | Increment 3 spec | 8 passed; U12.compare (DOM request count), themes (Tab past a view's only button) and U5.analyse (`staged`, not yet an outcome) failed | 0.4409 |
 | 2 | Increment 3 spec | 10 passed, U5.analyse `staged`; themes failed: the fall text and the open diamonds above | 0.4394 |
 | 3 | Increment 3 spec, after the fixes | **11 passed**, U5.analyse `staged` | 0.4473 |
+| 4 | whole suite on commit `5da99bb`, clean tree | **all 33 passed** (1.4, 2.3, 2.4 in 24.3 s; the 11 Increment 3 tests in 11 min 32 s; the 13 Increment 2 view tests in 13 min 0 s; 2.1 and 1.14 in 30.1 s), every session `claude-haiku-5.5`, U5.analyse `staged`, gate **`PASS`** | 0.5004 + 0.4560 + 0.4678 + 0.1300 = **1.5542** |
+
+A33 spent 2.8818 AI Credits in all (runs 1-4), within the owner's budget of
+6; the whole suite now costs about 1.55 per run, under D12's cap of 3. The
+owner reruns on the release commit.
+
 
 **G7 (2026-11-11).** Built on `claude/g7-extension-rows`, not merged; D11 fixes included.
 
