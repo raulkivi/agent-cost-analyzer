@@ -21,7 +21,8 @@ export interface CopilotLogPaths {
   vscodeSettingsPath: string | null;
 }
 
-// Just the per-workspace debug-logs folders, listed now: the sidebar's
+// The per-workspace debug-logs folders plus the global one (a window with
+// no folder open, step 10.18), listed now: the sidebar's
 // Refresh calls it again so a workspace first opened after activation is
 // found without a reload. A null user-data dir has none.
 export function copilotDebugLogsDirPaths(userDataDir: string | null): string[] {

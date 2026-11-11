@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Copilot Chat sessions from a window with no folder open now appear.** Their debug logs are
+  under Copilot Chat's `globalStorage`, which was not read, so those sessions showed no tokens or
+  AI Credits. They show as "No repository".
 - **MCP server: cost-over-time currency control.** With figures in two
   currencies, the control listed USD first and started on USD when the first
   week had only USD. It now lists AI Credits first, then USD, and starts on

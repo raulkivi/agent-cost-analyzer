@@ -42,7 +42,7 @@ Fixed test-first in `cost-series.ts`.
 | D4 | The `extension-ui` CI job is required on every PR (`continue-on-error` removed) and also runs in `release-extension.yml`. This closes 10.16's T15 and Q2. |
 | D5 | The analyzer's `aiCreditsAnalyzer.internal.*` test hooks register in `ExtensionMode.Test` as before, and in `ExtensionMode.Development` only when the environment variable `AICA_TEST_HOOKS=1` is set (the real-Copilot suite sets it for the VS Code it launches). A plain F5 Development host registers none; Production none. |
 | D6 | The real-Copilot suite approves only the AI Credits Analyzer's MCP tools, not every tool: no global auto approve. The run's profile copy also has no terminal and no other MCP server (discovery from other apps' configs off). |
-| D7 | A Copilot chat in an empty window (no folder open) must be visible to the analyzer. Fixed in a separate step, not in 10.17. |
+| D7 | A Copilot chat in an empty window (no folder open) must be visible to the analyzer. Fixed in a separate step, not in 10.17: step 10.18, done 2026-11-11 (#209). |
 | D8 | A real-Copilot release run costing up to about 2 AI Credits is acceptable; keep the prompts minimal. |
 | D9 | Any skip of a required test blocks a release (confirms G2's tightened rule). |
 | D10 | The Increment 2 release (extension 0.6.0, app 0.11.0) waits for G4 and the empty-window fix (D7), not for G7. |
@@ -274,7 +274,7 @@ no Copilot); G2 and G3 next; G4 and G7 last.
 
 - **Phase 12:** A24 (owner's checks of U9-U11) becomes G4 + G5 + G6; the
   Increment 2 release (extension 0.6.0, app 0.11.0) waits for G4 and the
-  empty-window fix (D7, its own step outside 10.17), not for G7 (D10). A33
+  empty-window fix (D7, step 10.18, done #209), not for G7 (D10). A33
   (Increment 3 checks) is written as specs from the start.
 - **Phase 10:** the open "manual checks before release" item closes when G1,
   G3 and G7 are done.

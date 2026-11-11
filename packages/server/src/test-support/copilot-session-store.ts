@@ -37,14 +37,15 @@ export const USAGE_MAIN_JSONL = path.resolve(path.dirname(fileURLToPath(import.m
 export const USAGE_LOG_USER_MESSAGE = "<redacted user message content>";
 
 // One Copilot Chat session ("Fix the bug", one turn) in a new session store
-// at dbPath, started at `startedAt`.
-export function seedCopilotSessionStore(dbPath: string, startedAt: string): void {
+// at dbPath, started at `startedAt`. `folder: null` is a window with no
+// folder open: the store row has no cwd and no repository.
+export function seedCopilotSessionStore(dbPath: string, startedAt: string, folder: { cwd: string; repository: string } | null = { cwd: "/repo", repository: "org/repo" }): void {
   mkdirSync(path.dirname(dbPath), { recursive: true });
   const db = new DatabaseSync(dbPath);
   db.exec(COPILOT_SESSION_STORE_SCHEMA);
   db.prepare(
-    "INSERT INTO sessions (id, cwd, repository, branch, host_type, summary, agent_name, agent_description, created_at, updated_at) VALUES (?, '/repo', 'org/repo', 'main', 'desktop', 'Fix the bug', 'GitHub Copilot Chat', 'chat', ?, ?)",
-  ).run(USAGE_SESSION_ID, startedAt, startedAt);
+    "INSERT INTO sessions (id, cwd, repository, branch, host_type, summary, agent_name, agent_description, created_at, updated_at) VALUES (?, ?, ?, 'main', 'desktop', 'Fix the bug', 'GitHub Copilot Chat', 'chat', ?, ?)",
+  ).run(USAGE_SESSION_ID, folder?.cwd ?? null, folder?.repository ?? null, startedAt, startedAt);
   db.prepare("INSERT INTO turns (session_id, turn_index, user_message, assistant_response, timestamp) VALUES (?, 0, ?, 'hello', ?)").run(
     USAGE_SESSION_ID,
     USAGE_LOG_USER_MESSAGE,

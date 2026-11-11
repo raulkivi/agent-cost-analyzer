@@ -16,15 +16,17 @@ interface ListWorkspaceDebugLogsDirPathsOptions {
 // session id can never be used to escape a debug-logs directory (§11.2).
 const SESSION_ID_PATTERN = /^[a-zA-Z0-9-]+$/;
 
-// Real debug logs live per-workspace, under
-// <user-data-dir>/User/workspaceStorage/<workspace-hash>/GitHub.copilot-chat/debug-logs/<session-id>/
-// (confirmed against this machine's logs, and matches
-// agentic-coding-explained.md §18.3/vision.md §4) — NOT under
-// User/globalStorage/github.copilot-chat/debug-logs as originally assumed in
-// Phase 4's first pass; globalStorage only holds session-store.db (§6.2).
-// A session id's workspace hash isn't known ahead of time, so every
-// workspace-storage subdirectory is a candidate; resolveMainJsonlPath below
-// picks whichever one actually has the session.
+// Copilot Chat writes a session's debug logs in one of two places, under
+// <user-data-dir>/User/:
+// - workspaceStorage/<workspace-hash>/GitHub.copilot-chat/debug-logs/<session-id>/
+//   for a window with a folder open (confirmed against this machine's logs,
+//   agentic-coding-explained.md §18.3/vision.md §4);
+// - globalStorage/github.copilot-chat/debug-logs/<session-id>/ for a window
+//   with no folder open (step 10.18; VS Code 1.145.0, Copilot Chat 0.73.0).
+// A session id's location isn't known ahead of time, so every workspace
+// subdirectory plus the global folder is a candidate; resolveMainJsonlPath
+// below picks whichever one actually has the session. The global folder is
+// listed last and whether or not it exists yet: the lookup is lazy.
 export function listWorkspaceDebugLogsDirPaths(
   options: ListWorkspaceDebugLogsDirPathsOptions = {},
 ): string[] {
@@ -33,12 +35,19 @@ export function listWorkspaceDebugLogsDirPaths(
     return [];
   }
 
+  const globalDebugLogsDir = path.join(
+    userDataDir,
+    "User",
+    "globalStorage",
+    "github.copilot-chat",
+    "debug-logs",
+  );
   const workspaceStorageDir = path.join(userDataDir, "User", "workspaceStorage");
   if (!existsSync(workspaceStorageDir)) {
-    return [];
+    return [globalDebugLogsDir];
   }
 
-  return readdirSync(workspaceStorageDir, { withFileTypes: true })
+  const workspaceDirs = readdirSync(workspaceStorageDir, { withFileTypes: true })
     .filter((entry) => entry.isDirectory())
     .map((entry) =>
       path.join(
@@ -48,6 +57,7 @@ export function listWorkspaceDebugLogsDirPaths(
         "debug-logs",
       ),
     );
+  return [...workspaceDirs, globalDebugLogsDir];
 }
 
 export function isValidSessionId(sessionId: string): boolean {

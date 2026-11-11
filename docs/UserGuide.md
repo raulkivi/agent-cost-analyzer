@@ -1,6 +1,6 @@
 # User Guide
 
-**Last changed:** 2026-11-10 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-11 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 A walkthrough of the Agent Cost Analyzer's two modes — **Learn** (guided,
 bundled example sessions) and **Analyze** (your own real sessions from VS
@@ -184,6 +184,8 @@ header area also holds the **Retention** field described below:
   Copilot harness and its Agent Host; those sessions are listed with their
   tokens and AI Credits. Their prompt and response text, turn inspector, tool
   calls and system prompt come from the Copilot CLI's event log, read locally.
+  Chats in a VS Code window with no folder open are listed too, with their
+  tokens and AI Credits, as "No repository".
   Cache-write and reasoning tokens come from the same log's per-call usage
   records (Copilot CLI 1.0.95 and later). They're used only when the records
   add up to the turn's token totals; otherwise both show as unknown, with the
