@@ -9,11 +9,9 @@ This document hands the Phase 12 work over to the next session. The design, the 
 - **MVP released 2026-11-10:** extension 0.4.0 (stable) and app 0.10.0 (#192), after A16's owner checks passed (#191).
 - **Increment 2 built and merged to `main` 2026-11-10:** A17, A18, A19 (PR #193) and A20, A21, A22 (PR #194, merged into #193's branch first). Status 25 of 36 tasks (69%).
 - **A17b boards approved 2026-11-10** with the owner's answers in mcp-apps.md §9.1: defaults kept except question 4 (a fall uses the host's success colour) and U11's "Not explained" tile wording. A23 applied both.
-- **Next:**
-  - A24 is replaced by automated checks (step 10.17, done 2026-11-11, [release-ui-gate.md](release-ui-gate.md)): G4 runs U1–U3 and U9–U11 in a real Copilot Chat (#211), G5 in a fake MCP Apps host with Claude's themes (#205, #206), G6 records VS Code's High Contrast colours (#204); owner answers after A23 (mcp-apps.md §9.1) are applied.
-  - extension 0.5.0 stays on the Marketplace pre-release channel (tag `ext-v0.5.0`, #197) until 0.6.0 replaces it;
-  - the Increment 2 release PR is open (extension 0.6.0, app 0.11.0; release prepared 2026-11-11): next the owner's real-Copilot run on the merged commit, push the evidence note, then the tags `ext-v0.6.0` and `app-v0.11.0`.
-- **Release:** the owner asked about an extension 0.4.1; not planned, since `main` has no fixes to 0.4.0, only Increment 2 features. Extension 0.5.0 went to the Marketplace pre-release channel, Open VSX and a GitHub pre-release on 2026-11-10 (#197); the app stays 0.10.0 on `main` until the Increment 2 release PR merges, and the root CHANGELOG's `[Unreleased]` becomes 0.11.0 there.
+- **Increment 2 released 2026-11-11:** extension 0.6.0 (tag `ext-v0.6.0`, stable, VS Code 1.146 required) and app 0.11.0 (tag `app-v0.11.0`). The extension passed the real-Copilot gate on `964e9a8` (22/22 required tests). A24 is replaced by the automated checks of step 10.17 ([release-ui-gate.md](release-ui-gate.md)). Extension 0.5.0 (pre-release, #197) is superseded.
+- **Next: Increment 3.** Start with A25b mock-up boards for the owner's approval. Write A33's checks as wdio and Playwright specs from the start (step 10.17 rule), not as manual checks.
+- **Release:** the owner asked about an extension 0.4.1; not planned, since `main` has no fixes to 0.4.0, only Increment 2 features.
 - **A23 done 2026-11-10** (findings in mcp-apps.md §6.1 and the A23 row). The visual-pass inputs it worked from, all closed:
   - U9's y-axis top label sits tight against the left edge beside a price-change marker.
   - U11's "Not explained" tile reads "0 + 3 turns, no priced figure, not 0". Owner decision: value "3 turns", note "no price for these turns; not counted as 0".
