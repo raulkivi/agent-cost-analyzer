@@ -2,7 +2,7 @@
 
 **Last changed:** 2026-11-11 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
-Status: **in progress: the MVP (A0–A16) released 2026-11-10, A12 dropped; Increment 2 (A17–A24, A24 replaced by step 10.17) released 2026-11-11 in extension 0.6.0 and app 0.11.0; next Increment 3 (A25b boards); planned 2026-10-28, updated
+Status: **in progress: the MVP (A0–A16) released 2026-11-10, A12 dropped; Increment 2 (A17–A24, A24 replaced by step 10.17) released 2026-11-11 in extension 0.6.0 and app 0.11.0; Increment 3 (A25–A32) built and reviewed 2026-11-11, next A33 (its checks as specs); planned 2026-10-28, updated
 2026-11-07 for the Phase 14 and Phase 15 tools.** This is Phase 12 in
 [implementation-plan.md](../implementation-plan.md). Its dependencies are
 met: Phase 9.12's tools are done, step 10.13 is done and `ext-v0.1.0`
@@ -702,6 +702,142 @@ no `tabindex`, the name counts them and the list has one item per marker.
   VS Code's registered default, not a recording, and Light High Contrast is
   still not covered.
 
+#### A32 review, 2026-11-11 (U4, U5, U12–U15, fullscreen)
+
+Scope: `ReplayView` (U12) and `replay/`, `PriceChangesView` (U13) and the
+U11 → U13 drill-down, `StatementView` (U14), `EstimateView` (U15),
+`AuditView` (U4), `SessionPickerView` (U5), the fullscreen control in U2 and
+U9 (`display-mode/`), the shared `AskAboutSession.tsx` hook with the owner's
+try-then-fall-back rule (§9.2 Q7), and the fake host's canned results.
+
+**Checked, holds (now asserted by tests):**
+
+- **No forwarding.** The new host calls are `replay_session` from U12's
+  compare mode (the result's session id and provider, and a model id only
+  when `isPlainModelId` passes; any other model is a disabled row) and
+  `get_price_changes` from U11 (`since` and `until` only). U5's Analyse
+  shares U2's `useAnalyse`, so there is still one `sendMessage` site, whose
+  text is `askAboutSessionText(sessionId)` behind `isPlainSessionId`. U4,
+  U13 opened directly, U14 and U15 call nothing. No `openLink`, no
+  `updateModelContext`. The static scan now also covers
+  `requestDisplayMode` (one hook, a literal mode) and requires the
+  plain-value guards on U12's model and U11's dates.
+- **U5 "try, then fall back" (owner, 2026-11-11).** `canSendMessage()` is
+  false only when the host says `message: false`. A press sends exactly
+  `Analyse session <id>` once: the button is disabled while the host
+  answers and reads a disabled **Sent** after. A declined or failed send
+  puts "Ask in the chat: Analyse session <id>" in that row (U2: in place of
+  the button) and is never retried by the view, not when the host context
+  changes and not when the result is shown again. Opening the session in U2
+  again shows the button again: a new press is the user's.
+- **Logged and model-chosen text.** The hostile-text tests plant markup and
+  an injected instruction in every new text field: U12's model ids,
+  measured models, self-check model, not-replayed and unknown reasons,
+  pricing reason and assumptions; U13's model, channel, source ids, note,
+  week labels and provider errors; U14's project, client, billing code,
+  line model and channel, unknown and left-off reasons, fixed lines, why it
+  can't be issued, issued periods and diff line keys; U15's target,
+  refusal, model, method, reasons and assumptions; U4's commands, titles,
+  tool names and reasons; U5's titles, models, repositories and crafted
+  ids. Each test presses every control. Nothing planted reaches the port,
+  and no element is made from it. Source ids are text, never links.
+- **Billing in the extension.** U14 and U15 render the neutral state for
+  the extension's brand, with none of the result; the extension's server
+  registers no billing tool (A26).
+- **CSP and network.** No new sink in the shipped code or the `web`
+  modules it imports. The fake host serves the view with the resource's
+  CSP and refuses any other request; none was refused.
+- **Keyboard.** U12 model → replay → Back (focus on the model), Back from
+  a failed replay, U11 → U13 → Back (focus on Price changes), U5's Analyse
+  by Tab, Enter and Space with Sent skipped, the fullscreen control (Enter
+  and Space, focus kept across the switch), U14's tab stops (its scrollers
+  only) and U15 (nothing to tab to) work as built.
+- **Charts.** U12's per-turn chart is named with its series, size and
+  turns not replayed, and has View as table; measured is a solid line with
+  filled dots, simulated a dashed line with open diamonds, each labelled in
+  the chart. U12's compare bars are solid or hatched, each named by its
+  row, with the figure as text. U13's timeline names its counts and the list
+  under it gives each change; documented and inferred differ by solid or
+  dashed diamond and rail. U15's range bar is an image named with both
+  ends, hatched with a solid border and labelled at each end. U4's
+  categories carry their counts as text. Every data mark uses the brand data
+  colour (3:1 in every recorded set), the text colour or the muted text
+  colour.
+- **axe**, none failing, in `a11y.test.tsx`, `audit-picker.a11y.test.tsx`,
+  `billing-views.security-a11y.test.tsx`, `fullscreen.test.tsx` and
+  `FullscreenButton.test.tsx`. U12: compare mode with every row kind, a
+  missing own-model check, an unknown measured total, a model that can't be
+  replayed; replay mode with a failed, passed and missing self-check, the
+  table and assumptions open, no price; the drill-down loading, loaded,
+  failed and after Back; a tool error, an unreadable result, waiting. U13:
+  documented and inferred together, an inferred fall, an unknown
+  percentage, a provider not fully read, one change, empty, an error,
+  unreadable, waiting; from U11 loading, filtered, failed, empty and after
+  Back. U14: a draft, one that can't be issued, an issued statement with a
+  diff and one that matches, partial coverage with no unknown, left-off or
+  fixed lines, an error, unreadable, waiting, the extension's neutral
+  state. U15: a range, a simulated range, a refusal, an error, unreadable,
+  waiting, the extension. U4: a session, unknown outcomes, no recorded tool
+  calls, an Unknown recovery cost; a rollup, with gaps, with every session
+  left out, with the per-day table open; an error with text, unreadable,
+  waiting. U5: the list, a pending send, Sent, declined, failed, a row
+  whose id can't be sent, a host that can't send, no match, an error with
+  text, waiting. U2: the "Ask in the chat" fallback after a declined send
+  and in a host that can't send. Fullscreen: U2 and U9 inline and
+  fullscreen. G5 runs axe again in the built view at each stop, in Claude
+  light and dark, including colour contrast.
+- **360 px.** G5 shows every Increment 3 view at 360 px with no sideways
+  scroll, the canned states below included.
+
+**Fixed:**
+
+- **Rise and fall text under 4.5:1.** U12's change and difference, U13's
+  percentages and U15's failed self-check are text in the host's danger or
+  success colour. Those colours are made for marks: 3.16:1 (danger) and
+  4.07:1 (success) on VS Code Light Modern, 3.26:1 and 4.08:1 on the light
+  fallbacks. `--view-text-rise` and `--view-text-fall` mix the host colour
+  70% with the text colour (4.6:1 or more on every recorded set). The
+  contrast test checks every view stylesheet's danger or success text.
+  U11's waterfall bars keep the host colours (3:1 is enough for a mark).
+- **U12's not-replayed hatching.** Painted at 45% opacity it fell to
+  1.9–3.0:1, under the chart-marks rule's 3:1 (D11). It is drawn at full
+  strength now, as U2's and U4's gaps are.
+- **U11 → U13 sent the result's period as it came.** A period that is not
+  an ISO date or timestamp now offers no Price changes control
+  (`isPlainDate`), so planted text is shown and never sent.
+- **U4's per-day chart had no text form.** Each day's figure sat only in a
+  `<title>` under a `role="img"`; the chart now has View as table, with
+  Unknown written for a day with no known outcome.
+- **Error text.** U4 and U5 dropped a tool's error text; they show it as
+  text now. U14 and U15 showed it uncapped; all cap it at 500 characters.
+- **Coverage gaps.** The issued statement diff, the estimate range bar, an
+  inferred rise and audits with failed calls were in component tests only.
+  `e2e/specs/a32-coverage-gaps.spec.ts` shows them in the built view from
+  canned results (`host.showResult`), in Claude light and dark, with axe at
+  each stop and at 360 px.
+
+**Decision: the session id and provider sent to `replay_session` are not
+held to the plain-id rule.** They go to this server as tool arguments,
+never to the model, as U2's and U10's drill-downs do, and a crafted id
+still names the real session. Only the model, which the tool's own schema
+limits, gets the guard.
+
+**Left open:**
+
+- **Hover tint under muted text.** U12's row hover (`--color-accent-100`)
+  puts the row's muted sub-lines at 4.38:1 on VS Code Dark Modern (4.5:1
+  needed), on hover only. U1's expanded turn row uses the same tint and
+  predates Increment 3.
+- **VS Code's warning and danger grounds.** The recorded VS Code sets
+  reference `--vscode-inputValidation-*` colours they don't record, so the
+  contrast tests can't check U12's callouts or U14's alert on VS Code
+  (their text is the host's text colour). A33's G4 runs in real Copilot
+  Chat.
+- **Real hosts.** That U5's Analyse sends in real Copilot Chat, and whether
+  Claude Desktop asks before a view's `replay_session` or
+  `get_price_changes` call, are A33's (the fake host has no prompts, risk
+  R4).
+
 ## 7. Tasks
 
 TDD throughout: each task starts with a failing test (architecture.md
@@ -757,12 +893,12 @@ Starts after Increment 2's exit criterion is met (A24, now step 10.17 G4-G6).
 | A25b | **Increment 3 mock-ups** (§5.6): U12 in compare and replay modes (with a failed self-check), U4 and U5 in both host frames, light and dark; one states board for U13, U14 and U15 (documented vs inferred changes, an issued statement with a diff, an estimate range and a refusal), drawn in the Claude Desktop frame only for U14/U15. The owner approves them before A27. **Drawn 2026-11-11, approved by the owner 2026-11-11 (all 17 defaults in §9.2 kept):** `Replay`, `ToolCallAudit`, `SessionPicker` and `Increment3States` boards in [mockups/mcp-apps/](mockups/mcp-apps/README.md). The owner's questions are in §9.2. | medium | Sonnet (frontend-design skill) + owner | A24 |
 | A25 | View models `toReplayViewModel`, `toPriceChangesViewModel`, `toStatementViewModel` and `toEstimateViewModel` (§4.5), one run each, with tests that the "simulated", "inferred" and "estimate" labels are always there. **Done 2026-11-11:** four pure view models in `packages/mcp-apps/src/view-models/` (`replay`, `price-changes`, `statement`, `estimate`), each with its test file plus `increment3.property.test.ts` (labels always present, null reads "Unknown", AI Credits before USD); exported from `index.ts` | low | Sonnet (Haiku ran out of budget) | A24 |
 | A26 | `_meta.ui` on `replay_session`, `compare_models_for_session`, `get_price_changes`, `get_statement`, `estimate_cost`, `get_session_audit`, `get_audit_rollup` and `list_sessions`. The test asserts that the extension's `tools/list` names no billing view. **Done 2026-11-11:** the eight names joined `APP_VIEW_TOOL_NAMES`; the extension tags 13 tools (no `get_statement`/`estimate_cost`), the standalone 15; tool counts unchanged; plain-text test extended; the router answers `none` for the new tools until A27–A30. | medium | Sonnet | A24 |
-| A27 | U12 `ReplayView`, compare and replay modes, with the self-check status | medium | Sonnet | A25, A25b, A26 |
-| A28 | U13 `PriceChangesView`, and the U11 → U13 drill-down | medium | Sonnet | A25, A25b, A26 |
-| A29 | U14 `StatementView` and U15 `EstimateView`, standalone only, read-only | medium | Sonnet | A25, A25b, A26 |
-| A30 | U4 `AuditView` and U5 `SessionPickerView` (the picker sends only the fixed "Analyse session <id>" template) | medium | Sonnet | A25b, A26 |
-| A31 | Fullscreen mode for U2 and U9 (`requestDisplayMode`) | low | Haiku | A26 |
-| A32 | Accessibility and security review of A27–A31 (as A14), and docs: architecture.md, threat-model.md §6, User Guide, extension guide, both CHANGELOGs | medium | Opus | A27–A31 |
+| A27 | U12 `ReplayView`, compare and replay modes, with the self-check status. **Done 2026-11-11:** `views/ReplayView.tsx` and `views/replay/` (prefix `rp-`); routed for `replay_session` and `compare_models_for_session`; a model opens its replay through `replay_session` with the ids (plain model ids only). View model gained the percent, floor, own-model check and self-check wording. Fake-host specs `e2e/specs/u12-replay.spec.ts`. Deviations from the board: the title is "Replay on <model>" (the tools return no session title); no "compaction" label (no data); a replay's difference note says turns not replayed are in neither total, because the tool's totals are paired like with like | medium | Sonnet | A25, A25b, A26 |
+| A28 | U13 `PriceChangesView`, and the U11 → U13 drill-down. **Done 2026-11-11:** `views/PriceChangesView.tsx` plus `views/price-changes/` (timeline, change entries, `PriceDrillDown`); `get_price_changes` routes to U13. Documented and inferred changes share one oldest-first timeline and stay apart by tag, solid or dashed diamond and rail, and the weekly table; a rise is the host's danger colour and a fall its success colour, with the sign (Q11). U11's "Price changes" control is enabled: one `get_price_changes` tool call with U11's period (no model argument, the tool takes one model), filtered client-side to the up to 3 models by price effect, "N of M changes in the range" (Q12); a spelling-only model match (`model-match.ts`: U11 names `claude-sonnet-5-5-20261001`, the price book `claude-sonnet-5.5`). Back restores U11 with no new call and focus on the button. A percentage with no price on one side reads "no earlier price" or "no later price", never 0 | medium | Sonnet | A25, A25b, A26 |
+| A29 | U14 `StatementView` and U15 `EstimateView`, standalone only, read-only. **Done 2026-11-11:** `StatementView` (one table per currency, AI Credits first; Channel hidden at 480 px or less; the issued diff under an amber "the issued copy stays the record" alert; a draft says why it cannot be issued yet) and `EstimateView` (p50–p90 range bar tagged "estimate", no run rate, a "Simulated" block with replay coverage and the self-check count, a refusal with every figure Unknown) in `packages/mcp-apps/src/views/`, routed from `get_statement` and `estimate_cost`; in the extension both render the neutral state and none of the result. Component, axe, keyboard, hostile-text and no-forwarding tests; G5 specs `e2e/specs/u14-u15-billing.spec.ts` (Claude light and dark). The fixture has no issued statement and too little history for a range, so the issued diff and the range bar are covered by component tests only | medium | Sonnet | A25, A25b, A26 |
+| A30 | U4 `AuditView` and U5 `SessionPickerView` (the picker sends only the fixed "Analyse session <id>" template). **Done 2026-11-11:** `toSessionAuditViewModel`, `toAuditRollupViewModel` and `toSessionListViewModel` in `view-models/`; the router sends `get_session_audit` and `get_audit_rollup` to U4 and `list_sessions` to U5; `AppHostPort.canSendMessage()` is false only when the host explicitly says it cannot send (owner, 2026-11-11, Q7: try, then fall back); U5's per-row button shares `AskAboutSession.tsx`'s single `sendMessage` site. Component, a11y, keyboard, hostile-text and G5 specs (Claude light and dark). `get_session_audit` omits `calls` unless asked, so neither the router nor the parser needs it. The recorded VS Code host advertises no `message` capability (A0) yet U2's message was sent there (A16), so U5 offers Analyse and, on a declined or failed send, puts "Ask in the chat: Analyse session <id>" in that row; U2's "Ask about this session" does the same through the shared hook, and G5 covers a declining host and a VS Code host. **G4 (A33) must confirm in real Copilot Chat that U5's Analyse sends** | medium | Sonnet | A25b, A26 |
+| A31 | Fullscreen mode for U2 and U9 (`requestDisplayMode`). **Done 2026-11-11:** a Fullscreen control in the footer of U2 and U9 when the host lists `fullscreen`; it reads Exit fullscreen in fullscreen, keeps focus, and the views drop the narrow collapse there. `AppHostPort.requestDisplayMode` already existed on the port and adapter; `FakeAppHostPort` now switches modes like a host. G5 covers both in both Claude themes. VS Code offers only inline, so no control there | low | Haiku | A26 |
+| A32 | Accessibility and security review of A27–A31 (as A14), and docs: architecture.md, threat-model.md §6, User Guide, extension guide, both CHANGELOGs. **Review done 2026-11-11** (§6.1, A32 review): axe over every U4, U5, U12–U15 and fullscreen state, none failing; keyboard paths, the no-forwarding rule over `replay_session`, `get_price_changes`, U5's message and now `requestDisplayMode`, hostile text in every new field, and the U5 fallback (one send per press, never retried) all held as built. Fixed test-first: rise and fall text under 4.5:1 on VS Code Light Modern and the light fallbacks (`--view-text-rise`/`--view-text-fall`), U12's not-replayed hatching at 1.9–3.0:1, U11 sending its period to `get_price_changes` without checking it is a date, U4's per-day chart with no text form (now View as table), U4 and U5 dropping a tool's error text. The four coverage gaps (issued statement diff, estimate range, inferred rise, audits with failed calls) are G5 specs from canned results (`e2e/specs/a32-coverage-gaps.spec.ts`). Open: §6.1. **Docs done 2026-11-11:** architecture.md §4.1.1, §4.4 and §11.4, threat-model.md §6.1, the User Guide (U12–U15, U4, U5, fullscreen) and the extension guide (U12, U13, U4, U5; no fullscreen in VS Code), both CHANGELOGs' `[Unreleased]` checked against the code. No screenshots: no script makes them from made-up data | medium | Opus | A27–A31 |
 | A33 | Increment 3 checks, written as wdio and Playwright specs (step 10.17), not manual: VS Code Copilot Chat (no U14/U15 there) and Claude Desktop, light and dark | — | none (specs, step 10.17) | A32 |
 
 ### 7.3 Target releases
@@ -852,7 +988,7 @@ release workflow sends an odd minor to the Marketplace pre-release channel.
 | A shorter `content` for UI-capable clients would save model tokens | Changes what the model sees per host | Follow-up decision (§11) |
 | Tabs that mix fetching and rendering (Phase 15's Dashboard tabs, `CompareModelsView`, `EstimatePanel`) | The split in A17 grows into a web refactor | A17 splits only what U9–U15 render. Anything else stays. |
 | Mock-ups drawn before A0 would guess the host variables | Boards redrawn | A0b starts after A0 and uses its recorded variables |
-| Bundle size with the Increment 2/3 views | Over the 900 KB budget (the scaffold alone is 657 KiB, mostly React and zod via ext-apps) | Lazy route chunks inlined into the single file, or a raised budget. **A20–A22: not needed**, `dist/views.html` is 861,899 bytes (842 KiB) with U9–U11; Increment 3 will likely pass 900 KiB, so decide at A27 |
+| Bundle size with the Increment 2/3 views | Over the 900 KB budget (the scaffold alone is 657 KiB, mostly React and zod via ext-apps) | Lazy route chunks inlined into the single file, or a raised budget. **A20–A22: not needed**, `dist/views.html` is 861,899 bytes (842 KiB) with U9–U11; Increment 3 will likely pass 900 KiB, so decide at A27. **Decided 2026-11-11:** the owner raised the budget to 1.2 MiB (1,258,291 bytes) instead of lazy chunks; `test/bundle-size.test.ts` asserts it. With U12 (A27) `dist/views.html` is 891,909 bytes (871 KiB) |
 | Approval prompts on view-initiated calls to model-visible tools (U9–U12 drill-down) | Each click asks the user | **Resolved (A0):** `get_turn_series` is an app-only tool and did not prompt. Prompts for model-visible tools are not yet tested; check in A9. |
 
 ### 9.1 Increment 2 boards: questions for the owner (A17b, 2026-11-10)
@@ -893,7 +1029,7 @@ Drawn 2026-11-11 and approved by the owner the same day, who answered all 17 in 
 | 4 | Compare mode: row order and the measured row. | Measured row first, then the entries in the tool's order (the session's own model first), not sorted by cost. A model with no price shows "Unknown" and no bar. |
 | 5 | U12 cues: measured and simulated are told apart without colour. | Measured solid bar or solid line with filled dots; simulated hatched bar or dashed line with open diamonds; both lines carry a direct label. |
 | 6 | U5: how does a user pick? | A "Analyse" button per row (the row itself is not a click target). After the click the button reads "Sent" and is disabled. The hint line states that only "Analyse session <id>" is sent and never a title. |
-| 7 | U5 in a host without `sendMessage`. | The button is hidden and the hint reads "Ask in the chat: Analyse session <id>". Rows stay as a plain list. |
+| 7 | U5 in a host without `sendMessage`. | The button is hidden and the hint reads "Ask in the chat: Analyse session <id>". Rows stay as a plain list. **Changed (owner, 2026-11-11): try then fall back, because VS Code doesn't advertise `message` yet sends.** The button shows unless the host explicitly says it cannot send; a declined or failed send puts "Ask in the chat: Analyse session <id>" in that row (and in U2's place of "Ask about this session"). |
 | 8 | U5 rows: what do they show? | Title (truncated, full text in a tooltip), short id, start, turn count, model and repository key; no cost, because `list_sessions` returns none. No match shows "No sessions match" with what to try. |
 | 9 | U4 recovery cost: `get_session_audit` gives tokens of the affected turns, not AI Credits. | Show tokens, labelled "tokens, not AI Credits", with the note that per-round tokens are not recorded; no conversion. |
 | 10 | U4 rollup: do session rows open that session's audit in place (like U2)? §4.5 lists no U4 drill-down. | No: the sessions table is display only. Sessions with unrecorded tool calls are named ("3 sessions", with the reason) and left out of every figure. |

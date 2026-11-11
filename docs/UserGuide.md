@@ -599,7 +599,7 @@ text is redacted and truncated first.
 
 ### Interactive views in the chat
 
-In a chat host that supports MCP Apps, seven of the tools above show an
+In a chat host that supports MCP Apps, fifteen of the tools above show an
 interactive view next to their text answer, so you can click through a
 session, a repository or a project instead of asking one question after
 another:
@@ -612,6 +612,12 @@ another:
 | What a repository or project cost, over time | `get_repository_cost`, `get_project_cost` | Cost tiles per basis, cost per day, week or month with price-change markers; for a project also cost by vendor then model, tokens by type and the top sessions |
 | Which repository or project costs the most | `compare_costs` | A table of total, change, cost per session, per active day and per turn, and cache hit, with share bars |
 | Why the cost changed | `explain_cost_change` | A waterfall of usage, price and mix effects, a table by model, the turns it could not explain and the documented price changes |
+| What a session would have cost on other models | `compare_models_for_session`, `replay_session` | Each model's simulated total beside the measured one, with the own-model check; one model's replay turn by turn with the self-check, a chart and the turns not replayed. **Simulated** |
+| When prices changed | `get_price_changes` | A timeline of documented and inferred price changes, with % per token type, sources and, for an inferred change, the weekly billed-against-priced figures |
+| A project's statement (standalone only) | `get_statement` | Totals and lines per currency, turns of unknown cost and, for an issued period, how a re-run today differs from the issued copy |
+| What planned work will cost (standalone only) | `estimate_cost` | A p50–p90 range tagged **estimate**, the history it used, and on another model the replay coverage and self-check. **Simulated** on another model |
+| Why tool calls failed | `get_session_audit`, `get_audit_rollup` | The failure rate, failure categories, recovery cost in tokens, retried commands and calls by tool; over a date range also failed calls per day, top failing commands and the sessions |
+| Which session to look at | `list_sessions` | A list of sessions with an **Analyse** button per row |
 
 The views use the product's name and colours and follow the host's light or
 dark theme. They only show what the tool already returned; they read your
@@ -655,10 +661,34 @@ text.
   severity. Each change asks the server again; the table you had stays on
   screen while it loads. Each finding's redacted evidence is collapsed until
   you open it.
+- **A model** (replay comparison) replays the session on that model in
+  place, turn by turn. **Back to model comparison** returns with focus on
+  the model you left, without loading the comparison again. A model id the
+  view can't send back as-is is shown but not clickable.
+- **Price changes** (cost change view) opens the price timeline in place
+  for the cost change's period, filtered to the (up to three) models with
+  the largest price effect, and says how many changes in the range that
+  leaves ("2 of 4 changes in the range"). **Back to cost change** returns
+  with focus on the button, without a new call.
+- **View as table** (replay chart, and failed calls per day in the audit)
+  shows the chart's figures as a table, with **Unknown** written where a
+  figure isn't known. In the replay, **Show 2 assumptions** (the count varies) lists what the
+  simulation assumes.
+- **Fullscreen** (cost rollup and cost over time views, Claude Desktop
+  only) asks the host for fullscreen; the button then reads **Exit
+  fullscreen**. The charts and tables use the wider window, and a narrow
+  window still gets the narrow layout. VS Code offers only the inline
+  view, so the button isn't there.
 - **Ask about this session** (cost rollup view) sends one fixed message to
   the chat, `Analyse session <id>`, and the model answers as it would for
   any question. Nothing else from the view is ever sent to the model, not
-  the session title or a prompt: they stay in the view.
+  the session title or a prompt: they stay in the view. If the host
+  declines or can't send it, the view shows **Ask in the chat: Analyse
+  session <id>** for you to type instead; it doesn't try again by itself.
+- **Analyse** (session picker) sends the same fixed message for that row's
+  session and then reads **Sent**. If the host declines, that row shows
+  the text to type instead. A session whose id isn't a plain id gets no
+  button. The row itself is not a button.
 - **Copy title to open in panel** (session cost view, VS Code only) copies
   the session title. Hosts don't let a view open a link into VS Code, so
   there is no link to click. Press Ctrl+Shift+P (Cmd+Shift+P on macOS), run
@@ -690,8 +720,8 @@ views names its basis and its currency.
   marker on the chart and a "documented" tag in the list. A change seen only
   by comparing billed with priced figures is **inferred**: a dashed marker
   and an "inferred" tag. The cost change view lists documented changes
-  between its two periods. Its **Price changes** button is shown disabled
-  with a note, because the price timeline it will open is not built yet.
+  between its two periods, and its **Price changes** button opens the price
+  timeline described below.
 - **The waterfall.** It goes from the first period's total to the second's
   through usage, price and mix. A rise uses the host's danger colour, a fall
   its success colour, and each carries its written sign, so colour is never
@@ -710,6 +740,56 @@ views names its basis and its currency.
   for a repository, and a project comparison shows the same state. Ask about
   repositories instead. In the standalone product, "no projects" reads
   "There are no projects to compare."
+
+**Replay, price changes, statements, estimates, audits and the session
+picker.**
+
+- **Replay is simulated.** Every replayed figure carries a **Simulated**
+  tag and assumes the same conversation and token counts; it is what the
+  session would have cost about, not what was billed. The comparison lists
+  the measured total first, then the models in the tool's order. A model
+  replayed for only some turns shows "≥" before its total, "known for 40 of
+  42 turns" and "partial" in place of a percentage; a model with no price
+  reads **Unknown** and has no bar. Measured is a solid bar, simulated a
+  hatched one.
+- **The self-check is never hidden.** The comparison opens with the
+  own-model check: the session's own model replayed, against the log. A
+  replay opens with its self-check. A failed or missing check is an alert
+  above the figures ("Treat them as rough, not as a quote"); the figures
+  stay. On the per-turn chart, measured is a solid line with filled dots
+  and simulated a dashed line with open diamonds, each labelled; turns not
+  replayed are a hatched gap, listed with their reasons below the chart.
+- **Price changes.** Documented and inferred changes share one timeline,
+  oldest first, and stay apart by tag, by a solid or dashed diamond and
+  rail, and, for an inferred change, a weekly table of billed against
+  priced AI Credits. A rise is written in red and a fall in green, each
+  with its sign. A side with no price reads "no earlier price" or "no later
+  price", never 0 %. Sources are listed as text.
+- **Statements (standalone only).** One table per currency, AI Credits
+  first; the channel column hides on a narrow window. Turns of unknown cost
+  are counted and never priced at 0. For an issued period, an amber alert
+  says a re-run today differs from the issued copy and that the issued copy
+  stays the statement of record, then lists issued, re-run and difference
+  per changed line and per currency. A draft says whether it can be issued
+  yet. The view has no issue, re-issue or export button: statements are
+  issued in the app.
+- **Estimates (standalone only).** Always a p50 to p90 range tagged
+  **estimate**, never one number, and no run rate. On another model the
+  figures are **Simulated** too, with the sessions and turns replayed, the
+  turns not replayed and the self-check count. Too little history shows the
+  reason and every figure **Unknown**.
+- **Tool-call audits.** The failure rate counts only calls whose outcome
+  is known; calls with an unknown outcome are counted apart, never as a
+  success or a failure, and with none known the rate reads **Unknown**.
+  Recovery cost is in tokens, labelled "tokens, not AI Credits". Sessions
+  whose tool calls aren't recorded are named in a **Left out** tile and are
+  in no figure. Commands are shown as written. Nothing in the audit opens
+  anything.
+- **The session picker** shows each session's title, short id, start,
+  turns, model and repository, and no cost (`list_sessions` returns none).
+  No match shows **No sessions match** with what to try.
+- **Not in VS Code.** The statement and estimate views exist only in the
+  standalone product; the extension has no billing tools.
 
 **Unknown means not reported.** A figure the log doesn't record reads
 **Unknown**, never 0, in every view. When only some turns have a figure the

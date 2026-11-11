@@ -1,0 +1,27 @@
+/* SPDX-FileCopyrightText: 2026 Raul Kivi
+   SPDX-License-Identifier: MIT
+*/
+/* U15 EstimateView (docs/plans/mcp-apps.md §4.5, §9.2 Q15/Q16; board
+   Increment3States.dc.html). Host tokens only (§5.4). Own prefix: est-.
+   The range mark is not told apart by colour alone: hatching, a solid border
+   and a direct label on each end (D11). */
+
+.est-tag { display: inline-flex; align-items: center; height: 16px; padding: 0 5px; margin-left: 6px; border: 1px dashed var(--color-accent-text); border-radius: 3px; color: var(--color-accent-text); font-size: 10px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; white-space: nowrap; vertical-align: 1px; }
+.est-section { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.est-section > h2 { margin: 0; font-size: 13px; font-weight: 600; }
+.est-section .text-muted { font-size: 11px; }
+.est-bar { position: relative; height: 62px; margin: 4px 10px 0; }
+.est-axis { position: absolute; left: 0; right: 0; top: 34px; border-top: 1px solid var(--color-text-muted); }
+.est-span { position: absolute; top: 27px; height: 14px; box-sizing: border-box; border: 1.5px solid var(--color-accent); background: repeating-linear-gradient(135deg, var(--color-accent) 0 2px, transparent 2px 5px); }
+.est-tick { position: absolute; top: 21px; height: 26px; border-left: 2px solid var(--color-text); }
+.est-label { position: absolute; top: 0; font-size: 11px; line-height: 1.25; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.est-label--p50 { transform: translateX(-100%); text-align: right; padding-right: 4px; }
+.est-label--p90 { padding-left: 4px; }
+.est-bound { position: absolute; top: 50px; font-size: 10.5px; color: var(--color-text-muted); white-space: nowrap; }
+.est-bound--max { transform: translateX(-100%); }
+.est-note { margin: 0; font-size: 11px; line-height: 1.4; }
+.est-alert { display: flex; gap: 8px; padding: 8px 10px; font-size: 12px; border-radius: var(--radius-sm); border: 1px solid var(--color-border-warning, var(--color-divider)); background: var(--color-background-warning, var(--color-surface)); }
+.est-alert > svg { flex-shrink: 0; margin-top: 1px; color: var(--color-text-warning, inherit); }
+.est-list { margin: 0; padding-left: 16px; font-size: 12px; display: flex; flex-direction: column; gap: 2px; overflow-wrap: anywhere; }
+.est-failed { color: var(--view-text-rise); }
+.est-tiles .stat-tile-value { overflow-wrap: anywhere; }

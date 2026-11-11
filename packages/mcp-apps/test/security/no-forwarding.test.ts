@@ -29,7 +29,9 @@ const ADAPTER = "host/ext-apps-port.ts";
 // Test doubles and test helpers live in src/ but never ship.
 const NOT_SHIPPED = [/\.test\.tsx?$/, /^test-support\//, /^host\/fake-app-host-port\.ts$/];
 
-const HOST_METHODS = new Set(["sendMessage", "openLink", "updateModelContext", "callTool", "callServerTool"]);
+// requestDisplayMode (A31) carries no text, but is held to the same rules so a
+// call site cannot hide: a literal mode, from one hook (A32).
+const HOST_METHODS = new Set(["sendMessage", "openLink", "updateModelContext", "callTool", "callServerTool", "requestDisplayMode"]);
 // Fields that hold logged text in the domain types and view models.
 // U9-U11 (A23) add display text that is logged or model-chosen: row, series
 // and vendor labels, project names, unknown and not-explained reasons,
@@ -38,8 +40,11 @@ const LOGGED_TEXT = new Set(["title", "sessionTitle", "userMessage", "assistantM
 // The tools a view may call, and the argument names it may send them.
 // U10 (A21) opens a row in U9 with the row's own ids and the comparison's
 // period, basis, pricing and currency: all taken from structuredContent.
-const TOOLS = new Set(["get_turn_series", "get_turn", "get_session_cost", "list_findings", "get_repository_cost", "get_project_cost"]);
-const ARGUMENT_NAMES = new Set(["sessionId", "provider", "turnIndex", "kind", "minSeverity", "repository", "projectId", "since", "until", "basis", "pricing", "currency"]);
+// U13 (A28) is opened from U11 with get_price_changes and U11's period.
+// U12 (A27) opens a model of a comparison in replay mode with replay_session,
+// the result's session id, provider and the model id it lists.
+const TOOLS = new Set(["get_turn_series", "get_turn", "get_session_cost", "list_findings", "get_repository_cost", "get_project_cost", "get_price_changes", "replay_session"]);
+const ARGUMENT_NAMES = new Set(["sessionId", "provider", "turnIndex", "kind", "minSeverity", "repository", "projectId", "since", "until", "basis", "pricing", "currency", "model"]);
 
 function walk(dir: string): string[] {
   return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => (entry.isDirectory() ? walk(path.join(dir, entry.name)) : [path.join(dir, entry.name)]));
@@ -234,9 +239,23 @@ describe("no-forwarding rule (static, over every call site in src/)", () => {
         "views/CostCompareView.tsx",
         "views/cost-compare/CompareDrillDown.tsx",
         "views/CostChangeView.tsx",
+        "views/PriceChangesView.tsx",
+        "views/price-changes/PriceDrillDown.tsx",
+        "views/StatementView.tsx",
+        "views/EstimateView.tsx",
+        "views/AuditView.tsx",
+        "views/SessionPickerView.tsx",
+        "views/ReplayView.tsx",
+        "views/replay/ReplayDrillDown.tsx",
       ]),
     );
     expect(files.some((file) => file.endsWith(".test.tsx"))).toBe(false);
+  });
+
+  // A29: the billing views are read-only displays; no control can issue, export or ask anything.
+  it("makes U14 and U15 call no host method at all", () => {
+    const billing = uses.filter((use) => /^views\/(StatementView\.tsx|EstimateView\.tsx|statement\/|estimate\/)/.test(use.source.file));
+    expect(billing.map((use) => `${at(use.source, use.node)} ${use.name}`)).toEqual([]);
   });
 
   it("never takes a host method by reference, alias or destructuring", () => {
@@ -249,6 +268,32 @@ describe("no-forwarding rule (static, over every call site in src/)", () => {
 
   it("never calls openLink outside the adapter (A12 dropped)", () => {
     expect(outsideAdapter.filter((use) => use.name === "openLink" && use.kind === "call").map((use) => at(use.source, use.node))).toEqual([]);
+  });
+
+  // A32: the fullscreen switch (A31) asks for a literal mode, from one hook.
+  it("requests a display mode only from useDisplayMode, with a literal mode", () => {
+    const requests = outsideAdapter.filter((use) => use.name === "requestDisplayMode" && use.kind === "call");
+    expect(requests.map((use) => use.source.file)).toEqual(["views/display-mode/use-display-mode.ts"]);
+    for (const use of requests) {
+      const [mode, ...rest] = (use.node as ts.CallExpression).arguments;
+      expect(rest).toHaveLength(0);
+      const literals = mode && ts.isConditionalExpression(mode) ? [mode.whenTrue, mode.whenFalse] : [mode];
+      for (const literal of literals) expect(literal && ts.isStringLiteral(literal) && ["inline", "fullscreen"].includes(literal.text), `${at(use.source, use.node)}: ${literal?.getText()}`).toBe(true);
+    }
+  });
+
+  // A32: the two Increment 3 drill-downs send values from the result only
+  // after a plain-value guard in the shipped code: U12's model id, U11's dates.
+  it("guards the model sent to replay_session and the dates sent to get_price_changes", () => {
+    const guardedIn = (file: string, guard: string) => {
+      const source = SOURCES.find((candidate) => candidate.file === file)!;
+      return descendants(source.sf).some((node) => ts.isCallExpression(node) && calleeName(node) === guard);
+    };
+    expect(guardedIn("views/replay/ReplayDrillDown.tsx", "isPlainModelId")).toBe(true);
+    expect(guardedIn("views/replay/CompareRows.tsx", "isPlainModelId")).toBe(true);
+    expect(guardedIn("view-models/cost-variance.ts", "every")).toBe(true);
+    const builder = SOURCES.find((candidate) => candidate.file === "view-models/cost-variance.ts")!;
+    expect(builder.sf.getFullText()).toMatch(/\]\.every\(isPlainDate\)\) viewModel\.priceDrillDown = /);
   });
 
   it("has exactly one sendMessage call site, and it sends a fixed template naming an id", () => {
@@ -277,6 +322,8 @@ describe("no-forwarding rule (static, over every call site in src/)", () => {
       'views/cost-compare/CompareDrillDown.tsx "get_repository_cost"',
       'views/cost-rollup/DrillDown.tsx "get_session_cost"',
       'views/findings/use-findings-query.ts "list_findings"',
+      'views/price-changes/PriceDrillDown.tsx "get_price_changes"',
+      'views/replay/ReplayDrillDown.tsx "replay_session"',
       'views/session-cost/TopTurns.tsx "get_turn"',
     ]);
     const problems: string[] = [];
@@ -298,7 +345,7 @@ describe("no-forwarding rule (static, over every call site in src/)", () => {
 
   it("the adapter forwards its own parameters untouched", () => {
     const calls = uses.filter((use) => use.source.file === ADAPTER && use.kind === "call");
-    expect(calls.map((use) => use.name).sort()).toEqual(["callServerTool", "openLink", "sendMessage"]);
+    expect(calls.map((use) => use.name).sort()).toEqual(["callServerTool", "openLink", "requestDisplayMode", "sendMessage"]);
     for (const use of calls) {
       const fn = enclosingFunction(use.node)!;
       const params = new Set(fn.parameters.map((param) => param.name.getText()));

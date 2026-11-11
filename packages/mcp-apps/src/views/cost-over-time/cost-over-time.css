@@ -46,6 +46,7 @@
 .ct-state h2 { margin: 0; font-size: 14px; font-weight: 600; }
 .ct-state p { margin: 0; overflow-wrap: anywhere; }
 
+/* The narrow layout follows the view's width in fullscreen too (A31): fullscreen only lifts the card's 640 px cap. */
 @media (max-width: 480px) {
   .view-table .ct-col-wide { display: none; }
   .ct-session-sub { display: block; padding-left: 16px; font-size: 11px; }

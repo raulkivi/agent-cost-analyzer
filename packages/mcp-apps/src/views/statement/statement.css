@@ -1,0 +1,28 @@
+/* SPDX-FileCopyrightText: 2026 Raul Kivi
+   SPDX-License-Identifier: MIT
+*/
+/* U14 StatementView (docs/plans/mcp-apps.md §4.5, §9.2 Q13/Q14; board
+   Increment3States.dc.html). Host tokens only, no colour literals (§5.4).
+   Own prefix: stm-. */
+
+.stm-status { display: inline-flex; align-items: center; gap: 5px; font-weight: 600; font-size: 12px; }
+.stm-section { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.stm-cur { display: flex; align-items: baseline; flex-wrap: wrap; gap: 2px 8px; }
+.stm-cur h2, .stm-section > h2 { margin: 0; font-size: 13px; font-weight: 600; }
+.stm-cur .text-muted { font-size: 11px; }
+.stm-total td { font-weight: 600; border-top: 1px solid var(--color-divider); }
+.stm-diff-row > td { background: var(--color-accent-100); }
+.stm-diff-row > td:first-child { box-shadow: inset 2px 0 0 var(--color-accent-text); }
+.stm-tag { display: inline-block; margin-left: 4px; padding: 0 4px; font-size: 10px; font-weight: 600; border: 1px dashed var(--color-accent-text); border-radius: 3px; color: var(--color-accent-text); white-space: nowrap; }
+.stm-alert { display: flex; gap: 8px; padding: 8px 10px; font-size: 12px; border-radius: var(--radius-sm); }
+.stm-alert > svg { flex-shrink: 0; margin-top: 1px; }
+.stm-alert--warn { border: 1px solid var(--color-border-warning, var(--color-divider)); background: var(--color-background-warning, var(--color-surface)); }
+.stm-alert--warn > svg { color: var(--color-text-warning, inherit); }
+.stm-alert--info { border: 1px solid var(--color-divider); background: var(--color-surface); }
+.stm-note { margin: 0; font-size: 11px; line-height: 1.4; }
+.stm-list { margin: 0; padding-left: 16px; font-size: 12px; display: flex; flex-direction: column; gap: 2px; overflow-wrap: anywhere; }
+
+/* Channel is the first column to go on a phone (§9.2 Q13). */
+@media (max-width: 480px) {
+  .view-table .stm-col-channel { display: none; }
+}

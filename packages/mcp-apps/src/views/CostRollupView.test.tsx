@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import type { ViewBrand } from "../brand/view-brand.js";
 import type { ToolResult } from "../host/app-host-port.js";
 import { FakeAppHostPort } from "../host/fake-app-host-port.js";
@@ -259,13 +259,48 @@ describe("CostRollupView Ask about this session", () => {
     }
   });
 
-  it("says so when the host does not take the message", async () => {
+  // Owner, 2026-11-11 (§9.2 Q7): try, then fall back, as U5 does.
+  it("when the host does not take the message, puts the text to type in place of the button", async () => {
     const port = new FakeAppHostPort();
     port.sendMessageResult = false;
     setup({ port });
     openSession("Refactor provider registry");
     fireEvent.click(await ask());
-    expect(await screen.findByText("The host didn't accept the message.")).toBeInTheDocument();
+    expect(await screen.findByText(/^Ask in the chat:/)).toHaveTextContent("Ask in the chat: Analyse session 7f3a9c2e");
+    expect(screen.queryByRole("button", { name: "Ask about this session" })).not.toBeInTheDocument();
+    expect(calls(port, "sendMessage")).toHaveLength(1);
+  });
+
+  // A32: one send per press, and the fallback is never retried by the view.
+  it("sends once while a send is pending, and a declined send is not retried when the host context changes", async () => {
+    const port = new FakeAppHostPort();
+    let answer: (accepted: boolean) => void = () => undefined;
+    vi.spyOn(port, "sendMessage").mockImplementation((text) => {
+      port.calls.push({ method: "sendMessage", args: [text] });
+      return new Promise((resolve) => (answer = resolve));
+    });
+    setup({ port });
+    openSession("Refactor provider registry");
+    const button = await ask();
+    fireEvent.click(button);
+    fireEvent.click(button);
+    expect(button).toBeDisabled();
+    answer(false);
+    expect(await screen.findByText(/^Ask in the chat:/)).toHaveTextContent("Ask in the chat: Analyse session 7f3a9c2e");
+    port.pushHostContext({ theme: "dark" });
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(screen.queryByRole("button", { name: "Ask about this session" })).not.toBeInTheDocument();
+    expect(calls(port, "sendMessage")).toHaveLength(1);
+  });
+
+  it("in a host that says it cannot send chat messages, shows the text to type and no button", async () => {
+    const port = new FakeAppHostPort();
+    port.messagingAvailable = false;
+    setup({ port });
+    openSession("Refactor provider registry");
+    expect(await screen.findByText(/^Ask in the chat:/)).toHaveTextContent("Ask in the chat: Analyse session 7f3a9c2e");
+    expect(screen.queryByRole("button", { name: "Ask about this session" })).not.toBeInTheDocument();
+    expect(calls(port, "sendMessage")).toEqual([]);
   });
 });
 

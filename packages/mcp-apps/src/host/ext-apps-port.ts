@@ -24,6 +24,8 @@ export interface AppLike {
   ontoolresult: ((params: { structuredContent?: unknown; isError?: boolean; content?: ContentBlock[] }) => void) | undefined;
   onhostcontextchanged: ((params: unknown) => void) | undefined;
   getHostContext(): unknown;
+  // Optional so a test double can leave it out; the ext-apps App has it.
+  getHostCapabilities?(): object | undefined;
   connect(): Promise<void>;
   callServerTool(params: { name: string; arguments?: Record<string, unknown> }): Promise<{ structuredContent?: unknown; isError?: boolean; content?: ContentBlock[] }>;
   openLink(params: { url: string }): Promise<{ isError?: boolean }>;
@@ -69,6 +71,14 @@ export class ExtAppsHostPort implements AppHostPort {
     } catch {
       return false;
     }
+  }
+
+  // Owner, 2026-11-11 (plan §9.2 Q7): try, then fall back. VS Code lists no
+  // `message` capability yet sends, so a missing capability is not a "no";
+  // only an explicit `message: false` is. A declined send falls back in the view.
+  canSendMessage(): boolean {
+    const capabilities = this.app.getHostCapabilities?.();
+    return (capabilities as { message?: unknown } | undefined)?.message !== false;
   }
 
   async sendMessage(text: string): Promise<boolean> {

@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
 import { describe, expect, it } from "vitest";
+import { estimate, refusedEstimate, statementAnswer } from "../view-models/increment3-fixtures.js";
 import { selectView } from "./select-view.js";
 
 const sessionShape = { sessionId: "s1", title: "t", topTurns: [] };
@@ -16,6 +17,11 @@ describe("selectView", () => {
     ["get_project_cost", "cost-over-time"],
     ["explain_cost_change", "cost-change"],
     ["compare_costs", "cost-compare"],
+    ["get_price_changes", "price-changes"],
+    ["get_statement", "statement"],
+    ["estimate_cost", "estimate"],
+    ["replay_session", "replay"],
+    ["compare_models_for_session", "replay"],
   ])("routes toolInfo.tool.name %s to %s", (name, view) => {
     expect(selectView({ toolInfo: { tool: { name } } }, undefined)).toEqual({ view });
   });
@@ -36,6 +42,10 @@ describe("selectView", () => {
     ["mcp_aicreditsanal_explain_cost_change", "cost-change"],
     ["ai-credits-analyzer-compare_costs", "cost-compare"],
     ["mcp_aicreditsanal_compare_costs", "cost-compare"],
+    ["ai-credits-analyzer-get_price_changes", "price-changes"],
+    ["mcp_aicreditsanal_get_price_changes", "price-changes"],
+    ["ai-credits-analyzer-replay_session", "replay"],
+    ["mcp_aicreditsanal_compare_models_for_session", "replay"],
   ])("routes VS Code's server-prefixed toolCall.toolName %s to %s", (toolName, view) => {
     expect(selectView({ toolCall: { toolName } }, undefined)).toEqual({ view });
   });
@@ -90,8 +100,43 @@ describe("selectView", () => {
     expect(selectView({}, { ...findingsShape, ...comparison })).toEqual({ view: "findings" });
   });
 
+  // A30: U4 (a session audit and an audit rollup share one view) and U5.
+  it("routes the audit and session-list tools by name", () => {
+    expect(selectView({ toolInfo: { tool: { name: "get_session_audit" } } }, undefined)).toEqual({ view: "audit" });
+    expect(selectView({ toolInfo: { tool: { name: "get_audit_rollup" } } }, undefined)).toEqual({ view: "audit" });
+    expect(selectView({ toolCall: { toolName: "ai-credit-analyser-get_audit_rollup" } }, undefined)).toEqual({ view: "audit" });
+    expect(selectView({ toolInfo: { tool: { name: "list_sessions" } } }, undefined)).toEqual({ view: "session-picker" });
+    expect(selectView({ toolCall: { toolName: "mcp_ai-credits_list_sessions" } }, undefined)).toEqual({ view: "session-picker" });
+  });
+
+  it("routes the U4 and U5 shapes, and no other shape to them", () => {
+    const sessionAudit = { sessionId: "s1", totals: {}, byTool: [], byFailureCategory: [], retries: [], perTurn: [], failureRecoveryCost: {} };
+    const rollupAudit = { totals: {}, byTool: [], byFailureCategory: [], topFailingCommands: [], daily: [], sessions: [] };
+    const list = { total: 2, sessions: [{ id: "a" }] };
+    expect(selectView({}, sessionAudit)).toEqual({ view: "audit" });
+    expect(selectView({}, rollupAudit)).toEqual({ view: "audit" });
+    expect(selectView({}, list)).toEqual({ view: "session-picker" });
+    expect(selectView({}, { total: {}, sessions: [] })).toEqual({ view: "none" });
+    expect(selectView({}, { total: 2, sessions: "x" })).toEqual({ view: "none" });
+    expect(selectView({}, { ...rollupShape, ...rollupAudit })).toEqual({ view: "cost-rollup" });
+    expect(selectView({}, { ...rollupAudit, topFailingCommands: undefined })).toEqual({ view: "none" });
+  });
+
+  // A27: replay_session and compare_models_for_session answer with simulated
+  // results that share a sessionId but no MVP field.
+  it("routes the U12 shapes by simulated, their turns or entries, never to another view", () => {
+    const replay = { simulated: true, sessionId: "s1", providerId: "p", turns: [], totals: {}, coverage: {} };
+    const comparison = { simulated: true, sessionId: "s1", providerId: "p", measured: {}, entries: [] };
+    expect(selectView({}, replay)).toEqual({ view: "replay" });
+    expect(selectView({}, comparison)).toEqual({ view: "replay" });
+    expect(selectView({}, { ...replay, simulated: false })).toEqual({ view: "none" });
+    expect(selectView({}, { ...replay, turns: "x" })).toEqual({ view: "none" });
+    expect(selectView({}, { ...comparison, measured: undefined })).toEqual({ view: "none" });
+    expect(selectView({}, { ...sessionShape, ...replay })).toEqual({ view: "session-cost" });
+  });
+
   it("gives a tool this bundle has no view for the neutral state, not a shape guess", () => {
-    expect(selectView({ toolInfo: { tool: { name: "get_statement" } } }, sessionShape)).toEqual({ view: "none" });
+    expect(selectView({ toolInfo: { tool: { name: "list_projects" } } }, sessionShape)).toEqual({ view: "none" });
   });
 
   it("gives unknown, empty or non-object results the neutral state", () => {
@@ -99,5 +144,28 @@ describe("selectView", () => {
     expect(selectView({}, null)).toEqual({ view: "none" });
     expect(selectView({}, "text")).toEqual({ view: "none" });
     expect(selectView({}, { sessionId: "s1" })).toEqual({ view: "none" });
+  });
+
+  it("routes a get_price_changes shape (changes, providers, generatedAt) when the host names no tool", () => {
+    expect(selectView({}, { generatedAt: "2026-11-10T12:00:00Z", providers: [], changes: [] })).toEqual({ view: "price-changes" });
+    expect(selectView({}, { providers: [], changes: [] })).toEqual({ view: "none" });
+  });
+});
+
+// A29: U14 and U15, by name (bare and VS Code-prefixed) and by shape.
+describe("selectView for the billing views", () => {
+  it.each([
+    ["ai-credits-analyzer-get_statement", "statement"],
+    ["mcp_aicreditsanal_estimate_cost", "estimate"],
+  ])("routes toolCall.toolName %s to %s", (toolName, view) => {
+    expect(selectView({ toolCall: { toolName } }, undefined)).toEqual({ view });
+  });
+
+  it("recognises a StatementAnswer and a CostEstimate by shape, apart from the other shapes", () => {
+    expect(selectView({}, statementAnswer())).toEqual({ view: "statement" });
+    expect(selectView({}, estimate())).toEqual({ view: "estimate" });
+    expect(selectView({}, refusedEstimate())).toEqual({ view: "estimate" });
+    expect(selectView({}, { statement: {}, canIssue: {} })).toEqual({ view: "none" });
+    expect(selectView({}, { label: "forecast", history: {}, runRate: {}, planned: 1 })).toEqual({ view: "none" });
   });
 });

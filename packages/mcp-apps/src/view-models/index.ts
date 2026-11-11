@@ -41,6 +41,7 @@ export type {
 export { toReplayViewModel, SIMULATED_LABEL, MEASURED_LABEL } from "./replay.js";
 export type {
   CompareEntryView,
+  OwnModelCheckView,
   ReplayCompareViewModel,
   ReplayCoverageView,
   ReplayDetailViewModel,
@@ -50,7 +51,7 @@ export type {
   SelfCheckView,
 } from "./replay.js";
 export { toPriceChangesViewModel } from "./price-changes.js";
-export type { DocumentedChangeView, ObservedChangeView, ObservedWeekView, PriceChangesViewModel } from "./price-changes.js";
+export type { ChangeDirection, DocumentedChangeView, ModelFilterView, ObservedChangeView, PriceLineView, RangeView, ObservedWeekView, PriceChangesViewModel } from "./price-changes.js";
 export { toStatementViewModel } from "./statement.js";
 export type {
   DiffLineView,
@@ -67,3 +68,7 @@ export type { EstimateSimulationView, EstimateViewModel } from "./estimate.js";
 export { NO_EARLIER_FIGURE } from "./analysis-common.js";
 export type { DocumentedPriceChange, PriceChangeLine } from "./analysis-common.js";
 export type { MoneyView } from "./money.js";
+export { toAuditRollupViewModel, toSessionAuditViewModel } from "./audit.js";
+export type { AuditRollupViewModel, AuditTile, CategoryBars, CategoryRow, CommandRow, DayPoint as AuditDayPoint, SessionAuditViewModel } from "./audit.js";
+export { toSessionListViewModel } from "./session-list.js";
+export type { SessionListEntry, SessionListInput, SessionListViewModel, SessionRow } from "./session-list.js";

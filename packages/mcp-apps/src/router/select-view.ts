@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 import type { HostContext } from "../host/app-host-port.js";
 
-export type ViewId = "session-cost" | "cost-rollup" | "findings" | "cost-over-time" | "cost-change" | "cost-compare";
+export type ViewId = "session-cost" | "cost-rollup" | "findings" | "cost-over-time" | "cost-change" | "cost-compare" | "price-changes" | "statement" | "estimate" | "audit" | "session-picker" | "replay";
 export type ViewSelection = { view: ViewId } | { view: "none" };
 
 const BY_TOOL: Record<string, ViewId> = {
@@ -13,6 +13,14 @@ const BY_TOOL: Record<string, ViewId> = {
   get_project_cost: "cost-over-time",
   explain_cost_change: "cost-change",
   compare_costs: "cost-compare",
+  get_price_changes: "price-changes",
+  get_statement: "statement",
+  estimate_cost: "estimate",
+  get_session_audit: "audit",
+  get_audit_rollup: "audit",
+  list_sessions: "session-picker",
+  replay_session: "replay",
+  compare_models_for_session: "replay",
 };
 
 // VS Code prefixes the tool name with the server's id ("<server>-<tool>",
@@ -39,6 +47,22 @@ function byShape(structured: unknown): ViewId | undefined {
   if (hasArray(s, "currencies") && typeof s.periodA === "object" && typeof s.periodB === "object" && typeof s.notExplained === "object") return "cost-change";
   // CostComparison (U10): rows with both periods and a group; checked last, so no earlier shape is taken for it.
   if (hasArray(s, "rows") && typeof s.groupBy === "string" && typeof s.comparePeriod === "string" && typeof s.previousSince === "string" && typeof s.previousUntil === "string" && typeof s.total === "object") return "cost-compare";
+  // PriceChangeList (U13): the changes with the providers read for the observed ones.
+  if (hasArray(s, "changes") && hasArray(s, "providers") && typeof s.generatedAt === "string") return "price-changes";
+  // StatementAnswer (U14) and CostEstimate (U15): standalone billing results, checked after every earlier shape.
+  if (typeof s.statement === "object" && s.statement !== null && typeof s.canIssue === "object" && hasArray(s, "issuedPeriods")) return "statement";
+  if (s.label === "estimate" && typeof s.history === "object" && typeof s.runRate === "object" && typeof s.planned === "number") return "estimate";
+  // U4 (A30): a session audit (calls, retries, recovery cost) and an audit rollup (failing commands, per-day outcomes, sessions).
+  if (hasArray(s, "byFailureCategory") && typeof s.totals === "object" && s.totals !== null) {
+    // `calls` is left out unless asked for (includeCalls), so it is not part of the shape.
+    if (hasArray(s, "retries") && hasArray(s, "perTurn") && typeof s.failureRecoveryCost === "object") return "audit";
+    if (hasArray(s, "topFailingCommands") && hasArray(s, "daily") && hasArray(s, "sessions")) return "audit";
+  }
+  // U5 (A30): list_sessions answers a count of matches and the sessions.
+  if (typeof s.total === "number" && hasArray(s, "sessions")) return "session-picker";
+  // SessionReplay and SessionReplayComparison (U12): always labelled simulated by the tool.
+  if (s.simulated === true && typeof s.totals === "object" && typeof s.coverage === "object" && hasArray(s, "turns")) return "replay";
+  if (s.simulated === true && typeof s.measured === "object" && s.measured !== null && hasArray(s, "entries")) return "replay";
   return undefined;
 }
 

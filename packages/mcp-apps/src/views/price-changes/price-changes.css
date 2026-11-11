@@ -1,0 +1,53 @@
+/* SPDX-FileCopyrightText: 2026 Raul Kivi
+   SPDX-License-Identifier: MIT
+*/
+/* U13 PriceChangesView (docs/plans/mcp-apps.md §4.5, board Increment3States.dc.html).
+   Host tokens only, no colour literals (§5.4). Documented: solid diamond and
+   rail. Observed (inferred): dashed hollow diamond and dashed rail. A rise is
+   the host's danger colour, a fall its success colour, and the sign is always
+   written too, inferred changes included (§9.2 Q11). The text tokens draw
+   the host colours towards the text colour so they hold 4.5:1 (A32). */
+
+.pc-note { margin: 0; font-size: 11px; line-height: 1.4; }
+.pc-issues { margin: 0; padding-left: 16px; font-size: 11px; }
+.pc-state { display: flex; flex-direction: column; gap: 6px; font-size: 13px; }
+
+.pc-timeline { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.pc-chart { display: block; max-width: 100%; height: auto; }
+.pc-rail-line { stroke: var(--color-text-muted); stroke-width: 1; }
+.pc-mark { color: var(--color-text); }
+.pc-mark polygon { fill: currentColor; stroke: currentColor; stroke-width: 1.4; }
+.pc-mark-inferred polygon { fill: var(--color-bg, var(--color-background-primary, transparent)); stroke-dasharray: 2.2 1.8; }
+.pc-axis { font-size: 11px; fill: var(--color-text-muted); }
+.pc-legend { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 0; padding: 0; list-style: none; font-size: 11px; color: var(--color-text-muted); }
+.pc-legend li { display: inline-flex; align-items: center; gap: 5px; }
+
+.pc-list { display: flex; flex-direction: column; margin: 0; padding: 0; list-style: none; }
+.pc-entry { display: grid; grid-template-columns: 64px 20px minmax(0, 1fr); gap: 0 6px; padding: 2px 0 12px; }
+.pc-date { font-size: 11px; color: var(--color-text-muted); text-align: right; padding-top: 3px; }
+.pc-rail { position: relative; display: flex; justify-content: center; }
+.pc-rail::before { content: ""; position: absolute; top: 16px; bottom: -14px; width: 0; border-left: 1.5px solid var(--color-text-muted); }
+.pc-rail-inferred::before { border-left-style: dashed; }
+.pc-entry:last-child .pc-rail::before { display: none; }
+.pc-rail svg { position: relative; margin-top: 3px; background: var(--color-bg, var(--color-background-primary, transparent)); }
+.pc-body { display: flex; flex-direction: column; gap: 4px; min-width: 0; overflow-wrap: anywhere; }
+.pc-name { margin: 0; font-size: 13px; font-weight: 600; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.pc-lines { display: flex; flex-direction: column; gap: 1px; margin: 0; font-size: 12px; }
+.pc-line { display: grid; grid-template-columns: minmax(70px, auto) auto 1fr; gap: 0 12px; align-items: baseline; }
+.pc-line dt, .pc-line dd { margin: 0; }
+.pc-prices { font-variant-numeric: tabular-nums; }
+.pc-percent { font-weight: 600; text-align: right; font-variant-numeric: tabular-nums; }
+.pc-rise { color: var(--view-text-rise); }
+.pc-fall { color: var(--view-text-fall); }
+.pc-flat { color: var(--color-text-muted); }
+.pc-source { margin: 0; font-size: 11px; line-height: 1.4; }
+.pc-observed { margin: 0; font-size: 12px; }
+.pc-caption { caption-side: top; text-align: left; font-size: 11px; padding-bottom: 3px; }
+.pc-weeks .pc-caption { white-space: normal; }
+
+@media (max-width: 480px) {
+  .pc-entry { grid-template-columns: 50px 18px minmax(0, 1fr); }
+  /* The chart scales with its 480-unit viewBox, so 11 px labels render at about 7 px on a phone; sized in chart units. */
+  .pc-axis { font-size: 15px; }
+  .pc-line { grid-template-columns: minmax(0, auto) minmax(0, 1fr) auto; gap: 0 8px; }
+}

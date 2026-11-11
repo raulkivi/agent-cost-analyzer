@@ -506,7 +506,7 @@ more on the tools.
 
 ### Interactive views in Copilot Chat
 
-Seven of the tools show an interactive view in the chat, next to the text
+Thirteen of the tools show an interactive view in the chat, next to the text
 answer, when you ask about them in agent mode. VS Code may show a tool's name
 with the server's name in front of it; the tool is the same:
 
@@ -519,6 +519,13 @@ with the server's name in front of it; the tool is the same:
 | Which repository costs the most | `compare_costs` | A table of total, change, cost per session, per active day and per turn, and cache hit, with share bars |
 | Why a repository's cost changed | `explain_cost_change` | A waterfall of usage, price and mix effects, a table by model, the turns it could not explain and the documented price changes |
 | What a project cost | `get_project_cost` | The reason there are no projects here, in place of a chart |
+| What a session would have cost on other models | `compare_models_for_session`, `replay_session` | Each model's simulated total beside the measured one, with the own-model check; one model's replay turn by turn with the self-check, a chart and the turns not replayed. **Simulated** |
+| When prices changed | `get_price_changes` | A timeline of documented and inferred price changes, with % per token type, sources and, for an inferred change, the weekly billed-against-priced figures |
+| Why tool calls failed | `get_session_audit`, `get_audit_rollup` | The failure rate, failure categories, recovery cost in tokens, retried commands and calls by tool; over a date range also failed calls per day, top failing commands and the sessions |
+| Which session to look at | `list_sessions` | A list of sessions with an **Analyse** button per row |
+
+The billing tools (`get_statement`, `estimate_cost`) and their views are in
+the standalone app only.
 
 VS Code shows the views inline in the chat only (no fullscreen). They need
 no setup beyond the MCP server being on: the views ship inside the
@@ -535,7 +542,20 @@ What you can click:
   server again. Evidence stays collapsed until you open it.
 - **Ask about this session** (spend view) sends `Analyse session <id>` to
   the chat. Only that fixed text goes to the model; titles, prompts and
-  evidence never do.
+  evidence never do. If Copilot Chat doesn't take the message, the view
+  shows **Ask in the chat: Analyse session <id>** for you to type; it
+  doesn't try again by itself.
+- **Analyse** (session picker) sends the same fixed text for that row's
+  session and then reads **Sent**, or shows the text to type if the message
+  isn't taken. The row itself is not a button.
+- **A model** in the replay comparison replays the session on that model in
+  place; **Back to model comparison** returns with focus on that model.
+- **Price changes** in the cost change view opens the price timeline in
+  place for its period, filtered to the (up to three) models with the
+  largest price effect; **Back to cost change** returns without a new call.
+- **View as table** (replay chart, failed calls per day in the audit) shows
+  the chart's figures as a table, with **Unknown** where a figure isn't
+  known.
 - **Copy title to open in panel** (session cost view) copies the session
   title. VS Code doesn't let a chat view open links into the editor, so
   press Ctrl+Shift+P (Cmd+Shift+P on macOS), run **AI Credits Analyzer:
@@ -569,8 +589,7 @@ basis and its currency.
 - **Price changes.** Changes in the price book are **documented**: a solid
   marker and a "documented" tag. Changes inferred from your billed AI Credits
   are **inferred**: a dashed marker and an "inferred" tag. The cost change
-  view's **Price changes** button is shown disabled with a note, because the
-  price timeline it will open is not built yet.
+  view's **Price changes** button opens the price timeline.
 - **The waterfall.** A rise uses your theme's danger colour and a fall its
   success colour, and each carries its written sign. The usage, price and mix
   effects add up to the change.
@@ -582,6 +601,30 @@ basis and its currency.
   no projects: projects are edited in the standalone Agent Cost Analyzer app.
   Every turn is in No project; repositories are listed as usual.* A project
   comparison shows the same state. Ask about repositories instead.
+
+**Replay, price changes, audits and the session picker.**
+
+- **Replay is simulated.** Every replayed figure carries a **Simulated**
+  tag: what the session would have cost about on that model, not what was
+  billed. A model replayed for only some turns shows "≥" before its total
+  and "partial"; a model with no price reads **Unknown**. The comparison
+  opens with the own-model check and a replay with its self-check; a failed
+  or missing check is an alert above the figures, which stay. Measured is
+  solid (bar, or line with filled dots), simulated hatched or dashed with
+  open diamonds; turns not replayed are a hatched gap, listed with reasons.
+- **Price changes.** Documented and inferred changes share one timeline and
+  stay apart by tag, by a solid or dashed diamond and rail, and a weekly
+  table for an inferred change. A rise is written in red and a fall in
+  green, each with its sign.
+- **Tool-call audits.** The failure rate counts only calls with a known
+  outcome; unknown outcomes are counted apart, and with none known the rate
+  reads **Unknown**. Recovery cost is in tokens, "tokens, not AI Credits".
+  Commands are shown as written, and nothing in the audit opens anything.
+- **The session picker** shows title, short id, start, turns, model and
+  repository, and no cost.
+
+Fullscreen isn't offered in VS Code, so the Fullscreen button that Claude
+Desktop shows on the spend and cost over time views doesn't appear here.
 
 Clicking through a view calls the server through VS Code and costs no model
 tokens. A figure the log doesn't record reads **Unknown**, never 0. The
@@ -607,7 +650,8 @@ context, and so to whichever model the chat uses:
 - turn text: your prompts and the model's responses.
 
 What you click inside an interactive view doesn't go to the model; only the
-fixed `Analyse session <id>` message from **Ask about this session** does.
+fixed `Analyse session <id>` message from **Ask about this session** or the
+session picker's **Analyse** does.
 
 Secrets found in that text are redacted first, and text is cut to a
 bounded length. The server never writes files, runs commands or reaches

@@ -1,12 +1,12 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
 // @vitest-environment node
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { contrastRatio, type Rgb } from "@agent-cost-analyzer/web/lib/contrast";
 import { describe, expect, it } from "vitest";
-import { cascadeVars, resolveColor } from "./css-vars.js";
+import { cascadeVars, parseRules, resolveColor } from "./css-vars.js";
 import { CLAUDE_SETS, FALLBACK_SETS, SHEETS, VSCODE_SETS, type HostSet } from "./host-sets.js";
 
 // Plan §5 / task A6: text at 4.5:1 or more and marks at 3:1 or more, in light
@@ -143,9 +143,52 @@ describe.each(ALL_SETS)("contrast of U11's waterfall marks: $name", (set) => {
   });
 });
 
+// A32: Increment 3 writes rises and falls as text in the host's danger and
+// success colours (U12's change and difference, U13's percentages, U15's
+// failed self-check). Text needs 4.5:1, not the 3:1 of U11's bars, and the
+// host colours alone fall to 3.16:1 (danger, VS Code Light Modern) and
+// 4.07:1 (success). Every `color:` in a view stylesheet that names the danger
+// or success colour is checked here; an icon beside words is decorative and
+// is not text.
+const VIEWS_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../src/views");
+
+function viewStylesheets(dir: string): string[] {
+  return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => (entry.isDirectory() ? viewStylesheets(path.join(dir, entry.name)) : entry.name.endsWith(".css") ? [path.join(dir, entry.name)] : []));
+}
+
+const TONED_TEXT = viewStylesheets(VIEWS_DIR).flatMap((file) =>
+  parseRules(readFileSync(file, "utf8")).flatMap((rule) =>
+    rule.declarations
+      .filter(([property, value]) => property === "color" && /danger|success|--view-text-(rise|fall)/.test(value))
+      .flatMap(([, value]) => rule.selectors.filter((selector) => !/-icon\b/.test(selector)).map((selector) => ({ file: path.basename(file), selector, value }))),
+  ),
+);
+
+function tonedTextChecksFor(set: HostSet): Check[] {
+  const vars = cascadeVars(SHEETS, { theme: set.theme, hostVars: set.hostVars });
+  const colour = (value: string, backdrop?: Rgb) => resolveColor(value, vars, set.theme, backdrop);
+  const grounds = "--color-background-primary" in set.hostVars ? ["var(--color-background-primary)", "var(--color-background-secondary)", "var(--color-background-tertiary)"] : ["var(--brand-fb-ground)"];
+  return [...grounds, "var(--color-surface)"].flatMap((background) => {
+    const ground = colour(background);
+    return TONED_TEXT.map(({ file, selector, value }) => ({ label: `${file} ${selector} (${value}) on ${background}`, ratio: contrastRatio(colour(value, ground), ground), minimum: TEXT }));
+  });
+}
+
+describe("rise and fall written as text (A32)", () => {
+  it("finds the toned text in U12, U13 and U15", () => {
+    expect(TONED_TEXT.map(({ selector }) => selector).sort()).toEqual([".est-failed", ".pc-fall", ".pc-rise", ".rp-change--decrease", ".rp-change--increase", ".rp-money--decrease", ".rp-money--increase"]);
+  });
+});
+
+describe.each(ALL_SETS)("contrast of rise and fall text: $name", (set) => {
+  it.each(tonedTextChecksFor(set).map((check) => [check.label, check] as const))("%s", (_label, check) => {
+    expect(check.ratio, `${check.ratio.toFixed(2)}:1`).toBeGreaterThanOrEqual(check.minimum);
+  });
+});
+
 describe("contrast: tightest margins (informational)", () => {
   it("lists the closest pairs", () => {
-    const rows = ALL_SETS.flatMap((set) => [...checksFor(set), ...waterfallChecksFor(set)].map((check) => ({ set: set.name, ...check, margin: check.ratio / check.minimum })));
+    const rows = ALL_SETS.flatMap((set) => [...checksFor(set), ...waterfallChecksFor(set), ...tonedTextChecksFor(set)].map((check) => ({ set: set.name, ...check, margin: check.ratio / check.minimum })));
     rows.sort((a, b) => a.margin - b.margin);
     for (const row of rows.slice(0, 8)) console.info(`${row.ratio.toFixed(2)}:1 (min ${row.minimum}) ${row.set}: ${row.label}`);
     expect(rows.length).toBeGreaterThan(0);
