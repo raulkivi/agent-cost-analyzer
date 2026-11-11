@@ -16,6 +16,8 @@ packages/vscode-extension/.wdio-vscode-service/
 packages/vscode-extension/test/ui/out/
 # The standalone app's usage-scenario suite (step 15.9): failure screenshots and traces
 packages/web/e2e/out/
+# The MCP App views in a fake host (step 10.17 G5): failure screenshots
+packages/mcp-apps/e2e/out/
 *.tsbuildinfo
 
 # Test coverage

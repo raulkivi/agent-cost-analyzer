@@ -17,12 +17,14 @@ const stdioEntry = path.resolve(webDir, "../server/src/mcp/stdio.ts");
 // Variables that would point a provider or the app's settings outside the fixture home.
 const OUTSIDE_HOME = ["XDG_CONFIG_HOME", "APPDATA", "COPILOT_HOME", "CLAUDE_CONFIG_DIR", "PI_CODING_AGENT_DIR"];
 
-export async function connectStdioMcp(home: string): Promise<Client> {
+// `args`: the entry point's own flags, such as --app-views-html for the MCP
+// Apps suite (packages/mcp-apps/e2e), which reads the views resource too.
+export async function connectStdioMcp(home: string, options: { args?: string[]; clientName?: string } = {}): Promise<Client> {
   const env: Record<string, string> = {};
   for (const [name, value] of Object.entries(process.env)) if (value !== undefined && !OUTSIDE_HOME.includes(name)) env[name] = value;
   Object.assign(env, { HOME: home, USERPROFILE: home });
-  const client = new Client({ name: "usage-scenario", version: "1.0.0" });
-  await client.connect(new StdioClientTransport({ command: tsx, args: [stdioEntry], env, cwd: webDir, stderr: "ignore" }));
+  const client = new Client({ name: options.clientName ?? "usage-scenario", version: "1.0.0" });
+  await client.connect(new StdioClientTransport({ command: tsx, args: [stdioEntry, ...(options.args ?? [])], env, cwd: webDir, stderr: "ignore" }));
   return client;
 }
 

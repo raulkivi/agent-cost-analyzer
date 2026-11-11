@@ -2656,7 +2656,7 @@ refactored — red-green-refactor, not tests bolted on afterward.
   `web-e2e` (`e2e/specs/r1-replay-on-two-models.spec.ts`) and
   `extension-ui` (`test/ui/specs/r1-replay.e2e.ts`).
 
-- The MCP App views (Phase 12, `packages/mcp-apps`) have six kinds of
+- The MCP App views (Phase 12, `packages/mcp-apps`) have seven kinds of
   test. View-model unit tests and fast-check properties
   (`view-models.property.test.ts`) pin the display rules: a `null` measure
   always reads "Unknown", a known one never does, AI Credits keep two
@@ -2678,8 +2678,18 @@ refactored — red-green-refactor, not tests bolted on afterward.
   and 19 without; `injectBrand`, `ViewSource` and `resolveAppViews` have
   unit tests. Stdio tests start the real entry points with and without the
   file (`stdio.test.ts`, `mcp-stdio-bundle.test.ts`), and `packaging.test.ts`
-  asserts `dist/mcp-apps/views.html` is in the `.vsix`. No test proves real
-  rendering in each host; that is the owner's manual check (A16).
+  asserts `dist/mcp-apps/views.html` is in the `.vsix`. The fake-host suite
+  (step 10.17 G5, `packages/mcp-apps/e2e/`, `npm run test:e2e
+  --workspace=packages/mcp-apps`, the `mcp-apps-e2e` CI job, no retries) renders the built `views.html` in Chromium through ext-apps'
+  `AppBridge`, with the host context of Claude Desktop or VS Code as the A0
+  spike recorded it and a theme set from `test/theme/host-sets.ts`. Every
+  `tools/call` the view makes goes to the real stdio server over the
+  `web-e2e` fixture home; the specs assert the calls the host recorded (a
+  drill-down is a tool call, never a message), focus on Back, and axe in
+  the view's frame. It proves the views against the protocol and the
+  recorded theme sets, not each host's own chrome (risk R4 in
+  [release-ui-gate.md](plans/release-ui-gate.md)); the views inside the
+  real Copilot Chat are G4's.
 
 ### 11.5 Code quality: SOLID
 

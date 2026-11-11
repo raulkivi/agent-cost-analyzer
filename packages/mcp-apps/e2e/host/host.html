@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Fake MCP Apps host</title>
+    <style>
+      body { margin: 0; padding: 16px; background: #262624; }
+      #chat { display: flex; flex-direction: column; gap: 8px; }
+      iframe { border: 0; display: block; background: transparent; }
+      body.fullscreen { padding: 0; }
+    </style>
+  </head>
+  <body>
+    <main id="chat" aria-label="Conversation"></main>
+    <script type="module" src="./host-page.ts"></script>
+  </body>
+</html>
