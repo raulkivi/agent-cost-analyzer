@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Fullscreen for the cost rollup and cost-over-time views.** In MCP App hosts that offer fullscreen
+  (Claude Desktop), the cost rollup (`get_cost_rollup`) and cost-over-time views (`get_repository_cost`,
+  `get_project_cost`) show a Fullscreen control. In fullscreen the charts and tables use the wider
+  window. VS Code offers only the inline view, so the control does not appear there.
+
 ## [0.11.0] - 2026-11-11
 ### Fixed
 - **Charts are readable in High Contrast and light themes.** The "AI Credits by day" columns were

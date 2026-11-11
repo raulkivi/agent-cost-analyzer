@@ -48,6 +48,7 @@ Every spec runs in Claude light and Claude dark (`inEachClaudeSet`), with axe in
 | A16 §2 U3: tiles, filters reload through `list_findings`, evidence collapsed, then plain text | `specs/a16-session-views.spec.ts` |
 | A16 §2 keyboard: Tab and Enter drill-downs, Back returns focus, focus ring visible | `specs/a16-session-views.spec.ts` |
 | A16 §2 narrow 360 px and fullscreen for U1-U3 | `specs/layout-footer-permissions.spec.ts` |
+| A31 U9 and U2 fullscreen: Fullscreen requests the mode, the host switches, the control reads Exit fullscreen and keeps focus, the card widens with no sideways scroll; axe in both modes (both Claude themes) | `specs/layout-footer-permissions.spec.ts` |
 
 Not in a fake host:
 

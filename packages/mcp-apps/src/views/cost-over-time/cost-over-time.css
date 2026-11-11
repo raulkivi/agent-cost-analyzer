@@ -46,7 +46,8 @@
 .ct-state h2 { margin: 0; font-size: 14px; font-weight: 600; }
 .ct-state p { margin: 0; overflow-wrap: anywhere; }
 
+/* Fullscreen (A31) keeps every column: the host gave the room. */
 @media (max-width: 480px) {
-  .view-table .ct-col-wide { display: none; }
-  .ct-session-sub { display: block; padding-left: 16px; font-size: 11px; }
+  .view-shell:not([data-display-mode="fullscreen"]) .view-table .ct-col-wide { display: none; }
+  .view-shell:not([data-display-mode="fullscreen"]) .ct-session-sub { display: block; padding-left: 16px; font-size: 11px; }
 }

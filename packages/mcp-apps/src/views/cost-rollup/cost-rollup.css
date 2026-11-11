@@ -23,11 +23,12 @@
 .rv-trail { overflow-wrap: anywhere; }
 .rv-back-button { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; font-weight: 600; text-decoration: none; }
 
+/* Fullscreen (A31) keeps the wide layout whatever the width: the host gave the room. */
 @media (max-width: 480px) {
-  .rv-two { grid-template-columns: 1fr; }
+  .view-shell:not([data-display-mode="fullscreen"]) .rv-two { grid-template-columns: 1fr; }
   /* At 360px five columns pushed AI Credits out of view (A14 visual check):
      Provider, Model and Turns move under the session title. Hiding Turns
      too stopped Session being squeezed to one word per line (A16 finding 10). */
-  .view-table .rv-col-wide { display: none; }
-  .rv-session-sub { display: block; padding-left: 16px; font-size: 11px; }
+  .view-shell:not([data-display-mode="fullscreen"]) .view-table .rv-col-wide { display: none; }
+  .view-shell:not([data-display-mode="fullscreen"]) .rv-session-sub { display: block; padding-left: 16px; font-size: 11px; }
 }

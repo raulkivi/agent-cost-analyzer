@@ -100,6 +100,43 @@ inEachClaudeSet(() => {
     }
   });
 
+  // A31: the Fullscreen control on U9 and U2 asks the host for fullscreen; the
+  // host switches and pushes the mode back, the control reads Exit fullscreen
+  // and keeps focus, and the card takes the room without sideways scroll.
+  // Inline the card is capped at 640 px; this check runs in both Claude themes.
+  const showU2 = (host: McpHost, options = {}) => host.show("get_cost_rollup", OCTOBER, options);
+  const expectFullscreenWidens = async (view: Awaited<ReturnType<typeof showU9>>) => {
+    const inlineWidth = await view.shellWidth();
+    expect(await view.axeViolations()).toEqual([]);
+
+    await view.content.getByRole("button", { name: "Fullscreen", exact: true }).click();
+    await expect(view.content.getByRole("button", { name: "Exit fullscreen", exact: true })).toBeFocused();
+    expect(await view.shellWidth()).toBeGreaterThan(inlineWidth);
+    expect(await view.scrollsSideways()).toBe(false);
+    expect(await view.axeViolations()).toEqual([]);
+
+    await view.content.getByRole("button", { name: "Exit fullscreen", exact: true }).click();
+    await expect(view.content.getByRole("button", { name: "Fullscreen", exact: true })).toBeFocused();
+  };
+
+  test("A31 U9 fullscreen: Fullscreen requests the mode, the host switches, the card widens with no sideways scroll; axe in both modes", async ({ host }) => {
+    const view = await showU9(host, { width: 900 });
+    await expectFullscreenWidens(view);
+    expect(host.calls.filter((call) => call.method === "ui/request-display-mode")).toEqual([
+      { method: "ui/request-display-mode", mode: "fullscreen" },
+      { method: "ui/request-display-mode", mode: "inline" },
+    ]);
+  });
+
+  test("A31 U2 fullscreen: Fullscreen requests the mode, the host switches, the card widens with no sideways scroll; axe in both modes", async ({ host }) => {
+    const view = await showU2(host, { width: 900 });
+    await expectFullscreenWidens(view);
+    expect(host.calls.filter((call) => call.method === "ui/request-display-mode")).toEqual([
+      { method: "ui/request-display-mode", mode: "fullscreen" },
+      { method: "ui/request-display-mode", mode: "inline" },
+    ]);
+  });
+
   test("A16 2 fullscreen: Claude offers it and U1, U2 and U3 render in it; axe clean", async ({ host }) => {
     const views = [
       await host.show("get_session_cost", SESSION, { displayMode: "fullscreen" }),

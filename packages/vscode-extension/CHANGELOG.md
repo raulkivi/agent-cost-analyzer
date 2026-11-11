@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Fullscreen for the cost rollup and cost-over-time views.** Where the MCP App host offers
+  fullscreen, these views show a Fullscreen control and use the wider window. VS Code offers only the
+  inline view, so the control does not appear in the extension.
+
 ## [0.6.0] - 2026-11-11
 
 ### Changed
