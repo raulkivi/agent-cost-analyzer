@@ -754,7 +754,7 @@ Starts after Increment 2's exit criterion is met (A24, now step 10.17 G4-G6).
 
 | # | Task | Complexity | Model | Depends on |
 |---|---|---|---|---|
-| A25b | **Increment 3 mock-ups** (§5.6): U12 in compare and replay modes (with a failed self-check), U4 and U5 in both host frames, light and dark; one states board for U13, U14 and U15 (documented vs inferred changes, an issued statement with a diff, an estimate range and a refusal), drawn in the Claude Desktop frame only for U14/U15. The owner approves them before A27. | medium | Sonnet (frontend-design skill) + owner | A24 |
+| A25b | **Increment 3 mock-ups** (§5.6): U12 in compare and replay modes (with a failed self-check), U4 and U5 in both host frames, light and dark; one states board for U13, U14 and U15 (documented vs inferred changes, an issued statement with a diff, an estimate range and a refusal), drawn in the Claude Desktop frame only for U14/U15. The owner approves them before A27. **Drawn 2026-11-11, waiting for the owner's approval:** `Replay`, `ToolCallAudit`, `SessionPicker` and `Increment3States` boards in [mockups/mcp-apps/](mockups/mcp-apps/README.md). The owner's questions are in §9.2. | medium | Sonnet (frontend-design skill) + owner | A24 |
 | A25 | View models `toReplayViewModel`, `toPriceChangesViewModel`, `toStatementViewModel` and `toEstimateViewModel` (§4.5), one run each, with tests that the "simulated", "inferred" and "estimate" labels are always there | low | setup6 | A24 |
 | A26 | `_meta.ui` on `replay_session`, `compare_models_for_session`, `get_price_changes`, `get_statement`, `estimate_cost`, `get_session_audit`, `get_audit_rollup` and `list_sessions`. The test asserts that the extension's `tools/list` names no billing view. | medium | Sonnet | A24 |
 | A27 | U12 `ReplayView`, compare and replay modes, with the self-check status | medium | Sonnet | A25, A25b, A26 |
@@ -880,6 +880,30 @@ A20–A22 were built on the coordinator's default for each. The owner answered a
 | – | After A23 (2026-11-10): period totals keep the brand data colour (`--color-accent`), not the board's series-1 blue, which failed 3:1 on Claude dark. |
 | – | After A23 (2026-11-10): U11's by-model table drops costs A and B from 640 px (was 480 px), so Price stays in view at about 600 px. |
 | – | After A23 (2026-11-10): the owner records the VS Code Dark and Light High Contrast colours during A24 (checklist step 1.7a); Claude adds them to the contrast tests. |
+
+### 9.2 Increment 3 boards: questions for the owner (A25b, 2026-11-11)
+
+Drawn 2026-11-11 and waiting for the owner's approval. A27–A30 start on the default for each question unless the owner answers otherwise. Boards: [Replay](mockups/mcp-apps/Replay.dc.html) (U12), [ToolCallAudit](mockups/mcp-apps/ToolCallAudit.dc.html) (U4), [SessionPicker](mockups/mcp-apps/SessionPicker.dc.html) (U5) and [Increment3States](mockups/mcp-apps/Increment3States.dc.html) (U13–U15, Unknown replay, narrow 360 px).
+
+| # | Question | Default drawn |
+|---|---|---|
+| 1 | `SessionReplayComparison` has no `selfCheck` (only `SessionReplay` does), but §4.5 wants the status shown. What does compare mode say? | A line "Own-model check" built from the entry flagged `isMeasuredModel`: its simulated total against the measured one (183.90 vs 186.40, −1.3 %). The request-by-request self-check shows in replay mode only. |
+| 2 | A failed self-check: show the simulated figures, or hide them? | Show them under a danger-coloured alert with the counts ("matched 37 of 44 requests") and "treat them as rough". The chart and tiles keep the "Simulated" tag. |
+| 3 | Turns not replayed (partial coverage). The tool's `difference` still compares a partial simulated total with the full measured one. | Compare rows show "≥ total", "known for 40 of 42 turns" and "partial" in place of a percent. Replay mode shows the tool's difference with the note that the 2 turns not replayed (7.61 measured) are only in Measured; the chart leaves a hatched gap. |
+| 4 | Compare mode: row order and the measured row. | Measured row first, then the entries in the tool's order (the session's own model first), not sorted by cost. A model with no price shows "Unknown" and no bar. |
+| 5 | U12 cues: measured and simulated are told apart without colour. | Measured solid bar or solid line with filled dots; simulated hatched bar or dashed line with open diamonds; both lines carry a direct label. |
+| 6 | U5: how does a user pick? | A "Analyse" button per row (the row itself is not a click target). After the click the button reads "Sent" and is disabled. The hint line states that only "Analyse session <id>" is sent and never a title. |
+| 7 | U5 in a host without `sendMessage`. | The button is hidden and the hint reads "Ask in the chat: Analyse session <id>". Rows stay as a plain list. |
+| 8 | U5 rows: what do they show? | Title (truncated, full text in a tooltip), short id, start, turn count, model and repository key; no cost, because `list_sessions` returns none. No match shows "No sessions match" with what to try. |
+| 9 | U4 recovery cost: `get_session_audit` gives tokens of the affected turns, not AI Credits. | Show tokens, labelled "tokens, not AI Credits", with the note that per-round tokens are not recorded; no conversion. |
+| 10 | U4 rollup: do session rows open that session's audit in place (like U2)? §4.5 lists no U4 drill-down. | No: the sessions table is display only. Sessions with unrecorded tool calls are named ("3 sessions", with the reason) and left out of every figure. |
+| 11 | U13 rises and falls: colour. | As U11 (§9.1 question 4): a rise in the host's danger text colour, a fall in the success colour, each with the written sign, including for inferred changes. Documented and inferred stay apart by tag, solid or dashed diamond, solid or dashed rail, and the weekly table. |
+| 12 | U13 opened from U11 is "filtered to the models with the largest price effect". How many? | Up to 3 models, by the size of the price effect in U11's change; the view says which models and "2 of 4 changes in the range". |
+| 13 | U14 statement lines: which columns? | Basis, channel, model, turns and amount in the line's currency, one table per currency with AI Credits first; tokens and unit prices are not shown. Channel hides at 480 px or less. |
+| 14 | U14 diff wording and scope. | An amber alert "A re-run today differs from the issued copy. The issued copy stays the statement of record." Then issued, re-run and difference per changed line, per currency total, added sessions, unknown turns and whether the price book or projects file changed. No issue, re-issue or export control, and a draft says why it cannot be issued yet. |
+| 15 | U15: show the run rate? | No. History shows units and coverage; the per-active-day figure is a p50–p90 range. A single `runRate` number would read as an estimate. |
+| 16 | U15 on another model. | The title carries "estimate" and "Simulated"; a block lists sessions and turns replayed, turns not replayed with the reason, and the self-check count ("5 of 6 passed, 1 failed, the range may be off"). |
+| 17 | Footer versions on the boards. | The Increment 3 targets from §7.3: AI Credits Analyzer v0.8.0 and Agent Cost Analyzer v0.12.0. |
 
 ## 10. Rejected: A2UI
 
