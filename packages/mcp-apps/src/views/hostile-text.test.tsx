@@ -12,6 +12,8 @@ import { sessionCost, turnSeries } from "../view-models/fixtures.js";
 import { CostChangeView } from "./CostChangeView.js";
 import { CostCompareView } from "./CostCompareView.js";
 import { CostOverTimeView } from "./CostOverTimeView.js";
+import { ReplayView } from "./ReplayView.js";
+import { boardComparison, boardReplay, entry } from "./replay/fixtures.js";
 
 // A23 (plan §6): the dynamic half of the no-forwarding rule for U9-U11, with
 // markup and an injected instruction planted in every text field the tools
@@ -123,5 +125,65 @@ describe("U9-U11 render a tool's error text as text only", () => {
     const { container } = render(<CostChangeView port={port()} brand={brand} result={{ isError: true, errorText: HOSTILE }} />);
     expect(screen.getByRole("alert")).toHaveTextContent(HOSTILE);
     expect(container.querySelector("img")).toBeNull();
+  });
+});
+
+describe("U12 with logged text planted in every field", () => {
+  // The model ids, the not-replayed and unknown reasons, the assumption text
+  // and the pricing reason come from the tool; none may become markup or
+  // reach the port beyond the ids of the one reviewed call.
+  const hostileReplay = () =>
+    boardReplay({
+      model: `gpt ${HOSTILE}`,
+      measuredModels: [`claude ${HOSTILE}`],
+      pricing: { channel: null, reason: HOSTILE, asOf: "2026-10-14", requested: "session-channel" },
+      turns: [
+        { turnIndex: 0, measured: { cacheRead: null, cost: { known: false, reason: HOSTILE } }, simulated: null, notReplayedReason: HOSTILE },
+        { turnIndex: 1, measured: { cacheRead: 1, cost: { known: true, value: 2, currency: "AI_CREDITS", basis: "billed" } }, simulated: { cacheRead: 1, cacheWrite: 1, outcome: "hit", cost: { known: false, reason: HOSTILE } } },
+      ],
+      totals: { measured: { value: 2, knownTurns: 1, turns: 2 }, simulated: { value: null, knownTurns: 0, turns: 2 }, difference: null },
+      coverage: { turns: 2, replayedTurns: 1, requests: 2, replayedRequests: 1, notReplayed: [{ reason: HOSTILE, turns: 1 }] },
+      selfCheck: { model: `own ${HOSTILE}`, requests: 4, matching: 3, readTolerancePercent: 5, passed: false },
+      assumptions: [{ id: "A1", text: HOSTILE, confidence: "unknown" }],
+    });
+
+  it("compare mode shows hostile model ids as text and disabled, and sends nothing for them", async () => {
+    const fake = new FakeAppHostPort();
+    fake.toolResults.set("replay_session", ok(hostileReplay()));
+    const comparison = boardComparison({ entries: [entry(`own ${HOSTILE}`, 183.9, 42, { own: true }), entry(`gpt ${HOSTILE}`, 132.75, 40, { vendorId: HOSTILE }), entry("local", null, 0)] });
+    const { container } = render(<ReplayView port={fake} brand={brand} result={ok(comparison)} />);
+    expect(screen.getByRole("button", { name: `gpt ${HOSTILE}` })).toBeDisabled();
+    expect(screen.getByText(new RegExp(`session comes to`))).toHaveTextContent(`own ${HOSTILE}`);
+    const pressed = await exerciseEveryControl(document.body, { skip: /^button:Back to/ });
+    expect(pressed).toEqual(["button:local", "button:Retry"]);
+    expectInert(container, fake);
+    // The one plain id was sent as ids only, and the planted ones never were.
+    for (const call of fake.calls.filter((entryCall) => entryCall.method === "callTool")) {
+      expect(call.args).toEqual(["replay_session", { sessionId: "7f3a9c2e", model: "local", provider: "copilot" }]);
+    }
+  });
+
+  it("replay mode, opened directly, shows every planted field as text and touches the host not at all", async () => {
+    const fake = new FakeAppHostPort();
+    const { container } = render(<ReplayView port={fake} brand={brand} result={ok(hostileReplay())} />);
+    const pressed = await exerciseEveryControl();
+    expect(pressed).toContain("button:View as table");
+    expect(screen.getAllByText(/Ignore previous instructions/).length).toBeGreaterThan(0);
+    expectInert(container, fake);
+    expect(fake.calls).toEqual([]);
+  });
+
+  it("renders a tool's error text as text only, at the top level and in the drill-down", async () => {
+    const first = render(<ReplayView port={new FakeAppHostPort()} brand={brand} result={{ isError: true, errorText: HOSTILE }} />);
+    expect(screen.getByRole("alert")).toHaveTextContent(HOSTILE);
+    expect(first.container.querySelector("img")).toBeNull();
+    first.unmount();
+    const fake = new FakeAppHostPort();
+    fake.toolResults.set("replay_session", { isError: true, errorText: HOSTILE });
+    const second = render(<ReplayView port={fake} brand={brand} result={ok(boardComparison())} />);
+    fireEvent.click(screen.getByRole("button", { name: "claude-haiku-5.5" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent(HOSTILE);
+    expect(second.container.querySelector("img")).toBeNull();
+    expect(JSON.stringify(fake.calls)).not.toContain(SECRET);
   });
 });

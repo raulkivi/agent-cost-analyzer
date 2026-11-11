@@ -7,6 +7,7 @@ import { App } from "./App.js";
 import { FakeAppHostPort } from "./host/fake-app-host-port.js";
 import { GENERIC_BRAND, type ViewBrand } from "./brand/view-brand.js";
 import { costComparison } from "./view-models/cost-analysis-fixtures.js";
+import { replay, replayComparison } from "./view-models/increment3-fixtures.js";
 import { findingsResult, SAMPLE_FINDINGS } from "./views/findings/fixtures.js";
 
 const brand: ViewBrand = { productId: "vscode-extension", displayName: "AI Credits Analyzer", version: "0.9.0" };
@@ -66,6 +67,19 @@ describe("App shell", () => {
     render(<App port={second} brand={brand} />);
     act(() => second.pushToolResult({ structuredContent: costComparison() }));
     expect(screen.getByRole("table", { name: "Cost by repository" })).toBeInTheDocument();
+  });
+
+  it("hands a compare_models_for_session and a replay_session result to U12, by tool name and by shape", () => {
+    const first = new FakeAppHostPort();
+    const { unmount } = render(<App port={first} brand={brand} />);
+    act(() => first.pushHostContext({ toolInfo: { tool: { name: "compare_models_for_session" } } }));
+    act(() => first.pushToolResult({ structuredContent: replayComparison() }));
+    expect(screen.getByRole("heading", { name: /Replay on other models/ })).toBeInTheDocument();
+    unmount();
+    const second = new FakeAppHostPort();
+    render(<App port={second} brand={brand} />);
+    act(() => second.pushToolResult({ structuredContent: replay() }));
+    expect(screen.getByRole("heading", { name: /Replay on claude-sonnet-5.5/ })).toBeInTheDocument();
   });
 
   it("hands a get_project_cost result to U9, and its error text when the tool failed", () => {

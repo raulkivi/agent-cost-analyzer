@@ -45,6 +45,8 @@ export class McpHost {
   private shown = 0;
   // The set of the view being shown, for the --vscode-* colours it is served with.
   private servedSet: HostSet;
+  // Tool results the relay answers in place of the server's, for states the fixture home can't produce (see showResult).
+  private readonly cannedAnswers = new Map<string, CallToolResult>();
 
   private constructor(
     private readonly page: Page,
@@ -79,6 +81,28 @@ export class McpHost {
     const definition = this.tools.get(tool);
     if (!definition) throw new Error(`The server has no tool ${tool}`);
     const toolResult = (await this.server.callTool({ name: tool, arguments: args })) as CallToolResult;
+    return this.present(definition, args, toolResult, options);
+  }
+
+  // A call the spec makes to find an id (list_sessions), outside the view and not in `calls`.
+  async lookup(tool: string, args: Record<string, unknown>): Promise<unknown> {
+    return ((await this.server.callTool({ name: tool, arguments: args })) as CallToolResult).structuredContent;
+  }
+
+  // The model calls `tool` and the server answers `structuredContent`: a state the fixture home
+  // can't produce (a failed self-check, a partly replayed model, an unpriced one), still shown by
+  // the built view through the bridge. `answers` are what the view's own tool calls get back
+  // (keyed by tool name); any other call goes to the real server.
+  async showResult(tool: string, structuredContent: unknown, options: ShowOptions & { args?: Record<string, unknown>; answers?: Record<string, unknown> } = {}): Promise<ViewFrame> {
+    const definition = this.tools.get(tool);
+    if (!definition) throw new Error(`The server has no tool ${tool}`);
+    this.cannedAnswers.clear();
+    for (const [name, answer] of Object.entries(options.answers ?? {})) this.cannedAnswers.set(name, { content: [{ type: "text", text: JSON.stringify(answer) }], structuredContent: answer as Record<string, unknown> });
+    const toolResult: CallToolResult = { content: [{ type: "text", text: JSON.stringify(structuredContent) }], structuredContent: structuredContent as Record<string, unknown> };
+    return this.present(definition, options.args ?? {}, toolResult, options);
+  }
+
+  private async present(definition: Tool, args: Record<string, unknown>, toolResult: CallToolResult, options: ShowOptions): Promise<ViewFrame> {
     const index = this.shown++;
     this.servedSet = options.set ?? this.set;
     const request: ShowViewRequest = {
@@ -100,6 +124,7 @@ export class McpHost {
 
   private async relay(method: string, params: Record<string, unknown>): Promise<unknown> {
     this.calls.push(hostCallOf(method, params));
+    if (method === "tools/call" && this.cannedAnswers.has(String(params.name))) return this.cannedAnswers.get(String(params.name));
     if (method === "tools/call") return this.server.callTool({ name: String(params.name), arguments: (params.arguments ?? {}) as Record<string, unknown> });
     // The fake host opens no link and starts no model turn; it only records.
     if (method === "ui/open-link") return { isError: true };

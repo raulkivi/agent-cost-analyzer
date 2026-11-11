@@ -29,6 +29,7 @@ export function ViewShell({
   kicker,
   title,
   meta,
+  titleTag,
   actions,
   lead,
   children,
@@ -37,6 +38,8 @@ export function ViewShell({
   kicker: string;
   title: string;
   meta?: ReactNode;
+  // Beside the title, inside the heading: a label that must travel with it ("Simulated", U12).
+  titleTag?: ReactNode;
   actions?: ReactNode;
   // Between the kicker and the title: the back control of an in-place drill-down.
   lead?: ReactNode;
@@ -62,7 +65,10 @@ export function ViewShell({
       </div>
       {lead}
       <div className="view-heading">
-        <h1 id="view-title">{title}</h1>
+        <h1 id="view-title">
+          {title}
+          {titleTag !== undefined && <> {titleTag}</>}
+        </h1>
         {meta !== undefined && <span className="view-meta">{meta}</span>}
       </div>
       {children}

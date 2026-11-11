@@ -16,6 +16,8 @@ describe("selectView", () => {
     ["get_project_cost", "cost-over-time"],
     ["explain_cost_change", "cost-change"],
     ["compare_costs", "cost-compare"],
+    ["replay_session", "replay"],
+    ["compare_models_for_session", "replay"],
   ])("routes toolInfo.tool.name %s to %s", (name, view) => {
     expect(selectView({ toolInfo: { tool: { name } } }, undefined)).toEqual({ view });
   });
@@ -36,6 +38,8 @@ describe("selectView", () => {
     ["mcp_aicreditsanal_explain_cost_change", "cost-change"],
     ["ai-credits-analyzer-compare_costs", "cost-compare"],
     ["mcp_aicreditsanal_compare_costs", "cost-compare"],
+    ["ai-credits-analyzer-replay_session", "replay"],
+    ["mcp_aicreditsanal_compare_models_for_session", "replay"],
   ])("routes VS Code's server-prefixed toolCall.toolName %s to %s", (toolName, view) => {
     expect(selectView({ toolCall: { toolName } }, undefined)).toEqual({ view });
   });
@@ -88,6 +92,19 @@ describe("selectView", () => {
     expect(selectView({}, { ...comparison, points: [], priceChanges: [], observedChanges: [], byVendor: [] })).toEqual({ view: "cost-over-time" });
     expect(selectView({}, { ...comparison, currencies: [], periodA: {}, periodB: {}, notExplained: {} })).toEqual({ view: "cost-change" });
     expect(selectView({}, { ...findingsShape, ...comparison })).toEqual({ view: "findings" });
+  });
+
+  // A27: replay_session and compare_models_for_session answer with simulated
+  // results that share a sessionId but no MVP field.
+  it("routes the U12 shapes by simulated, their turns or entries, never to another view", () => {
+    const replay = { simulated: true, sessionId: "s1", providerId: "p", turns: [], totals: {}, coverage: {} };
+    const comparison = { simulated: true, sessionId: "s1", providerId: "p", measured: {}, entries: [] };
+    expect(selectView({}, replay)).toEqual({ view: "replay" });
+    expect(selectView({}, comparison)).toEqual({ view: "replay" });
+    expect(selectView({}, { ...replay, simulated: false })).toEqual({ view: "none" });
+    expect(selectView({}, { ...replay, turns: "x" })).toEqual({ view: "none" });
+    expect(selectView({}, { ...comparison, measured: undefined })).toEqual({ view: "none" });
+    expect(selectView({}, { ...sessionShape, ...replay })).toEqual({ view: "session-cost" });
   });
 
   it("gives a tool this bundle has no view for the neutral state, not a shape guess", () => {

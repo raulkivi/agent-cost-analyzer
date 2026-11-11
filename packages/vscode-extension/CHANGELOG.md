@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Replay view in the chat (U12).** `compare_models_for_session` shows each model's simulated total beside the measured one; click a model to replay it turn by turn with a chart, the self-check result and the turns not replayed. Every simulated figure says Simulated and an unknown one says Unknown.
+
 ## [0.6.0] - 2026-11-11
 
 ### Changed

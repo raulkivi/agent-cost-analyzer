@@ -18,6 +18,7 @@ const VIEW_PREFIXES: Record<string, readonly string[]> = {
   "views/cost-over-time/cost-over-time.css": ["ct-"],
   "views/cost-rollup/cost-rollup.css": ["rv-"],
   "views/findings/findings.css": ["fv-", "findings-"],
+  "views/replay/replay.css": ["rp-"],
 };
 
 // Classes a view's CSS may mention but another module owns: web's shared
