@@ -338,6 +338,7 @@
     "screenshots": "tsx scripts/ui-check/screenshots.mts",
     "test:ui:vscode": "wdio run wdio.conf.mts",
     "test:ui:vscode:copilot": "wdio run wdio.copilot.conf.mts",
+    "record:host-themes": "wdio run wdio.record.conf.mts",
     "test:ui:vscode:copilot:signin": "node scripts/copilot-e2e-signin.mts"
   },
   "devDependencies": {

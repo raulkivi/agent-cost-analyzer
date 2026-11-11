@@ -103,7 +103,7 @@ Prompts below use `<repo>` and `<repo2>` for repository names as `list_repositor
 2. Run **Developer: Generate Color Theme From Current Settings**.
 3. Save the opened file as `docs/plans/mcp-apps-a24-results/vscode-hc-dark-theme.jsonc` or `vscode-hc-light-theme.jsonc`.
 
-Claude adds both sets to `packages/mcp-apps/test/theme/host-sets.ts` and the contrast tests after A24.
+Automated (step 10.17, G6): `npm run record:host-themes` in `packages/vscode-extension` writes both files, and `host-sets.ts` and the contrast tests read them. No hand step.
 
 **1.8 Narrow width.** Make the chat panel narrow (about 360 px) and look at U9, U10 and U11. Nothing scrolls sideways.
 

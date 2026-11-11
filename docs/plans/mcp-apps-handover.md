@@ -21,7 +21,7 @@ This document hands the Phase 12 work over to the next session. The design, the 
   - CSS class names collided between U10 and U11 in the single bundle (`cc-total`, `cc-sub`, `cc-note`); fixed by renaming, but a test that each view's classes use its own prefix would stop a repeat.
   - The no-projects reason is copied in `views/cost-compare/no-projects.ts` and parsed from the server's text in `views/cost-over-time/explain-error.ts`; a server wording change breaks both silently (the generic error still shows the text).
   - U9 has no focusable price-change markers; the detail is in the list below the chart and the chart's accessible name.
-- **Open PRs (2026-11-11):** step 10.17's G0 (#203) and G6 (#204); G5 (Playwright fake host) in progress. **Worktrees:** the session's agent worktrees under `.claude/worktrees/` can be removed.
+- **Step 10.17 (2026-11-11):** G0 (#203), G1 (#202) and G6 (#204) merged; G5 (Playwright fake host) built on a branch, PR next. **Worktrees:** the session's agent worktrees under `.claude/worktrees/` can be removed.
 
 ## 2. PRs in Phase 12
 
