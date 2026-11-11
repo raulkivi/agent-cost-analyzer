@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-11-12
+
 ### Added
 
 - **Fullscreen for the cost rollup and cost-over-time views.** Where the MCP App host offers

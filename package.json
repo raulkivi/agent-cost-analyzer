@@ -1,7 +1,7 @@
 {
   "name": "agent-cost-analyzer",
   "private": true,
-  "version": "0.11.0",
+  "version": "0.12.0",
   "description": "Agent Cost Analyzer: local app to understand and optimize agentic coding costs — learn how prompt caching and token accounting work, analyze your own Copilot Chat, Claude Code, pi and mitmproxy sessions turn by turn, audit tool calls, and export metadata for AI-assisted cost advice. Also builds the Copilot-only AI Credits Analyzer VS Code extension. Monorepo root.",
   "license": "MIT",
   "author": "Raul Kivi",

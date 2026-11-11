@@ -1,6 +1,6 @@
 # MCP Apps: branded, interactive cost views in the chat
 
-**Last changed:** 2026-11-11 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-12 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 Status: **in progress: the MVP (A0–A16) released 2026-11-10, A12 dropped; Increment 2 (A17–A24, A24 replaced by step 10.17) released 2026-11-11 in extension 0.6.0 and app 0.11.0; Increment 3 (A25–A32) built and reviewed 2026-11-11, A33 (its checks as specs) done 2026-11-11, so Increment 3 is ready for the owner's release run; planned 2026-10-28, updated
 2026-11-07 for the Phase 14 and Phase 15 tools.** This is Phase 12 in
@@ -932,7 +932,7 @@ release workflow sends an odd minor to the Marketplace pre-release channel.
 |---|---|---|---|
 | MVP: U1–U3 | A16 | **0.4.0** (stable) | **0.10.0** (shipped 2026-11-10) |
 | Increment 2: U9–U11 | A24 (now step 10.17 G4-G6) | **0.6.0** (shipped 2026-11-11) | **0.11.0** (shipped 2026-11-11) |
-| Increment 3: U4, U5, U12–U15 | A33 | **0.8.0** (no U14/U15) | **0.12.0** |
+| Increment 3: U4, U5, U12–U15 | A33 | **0.8.0** (no U14/U15; release prepared 2026-11-12; ships when the tags are published) | **0.12.0** (release prepared 2026-11-12; ships when the tags are published) |
 
 - The MVP shipped in the same release as the Phase 14/15 work, so the app
   rows moved down one minor version. The extension skipped 0.3.0 (an odd
