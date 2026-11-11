@@ -7,7 +7,7 @@ import type { ViewBrand } from "../brand/view-brand.js";
 import type { ToolResult } from "../host/app-host-port.js";
 import { FakeAppHostPort } from "../host/fake-app-host-port.js";
 import { exerciseEveryControl } from "../test-support/exercise-controls.js";
-import { costSeries, costTotal, point, projectCost } from "../view-models/cost-analysis-fixtures.js";
+import { costSeries, costTotal, point, projectCost, usdTotal } from "../view-models/cost-analysis-fixtures.js";
 import { sessionCost, turnSeries } from "../view-models/fixtures.js";
 import { CostOverTimeView } from "./CostOverTimeView.js";
 
@@ -135,6 +135,14 @@ describe("CostOverTimeView, repository", () => {
     expect(within(chart).getByText("Oct 12: $4.00")).toBeInTheDocument();
     expect(screen.getByText("preferred basis · USD")).toBeInTheDocument();
     expect(screen.getByText(/Currencies are never added together\./)).toBeInTheDocument();
+  });
+
+  it("lists AI Credits first and selects it, even when the first week has only USD (§9.1 answer 5)", () => {
+    const usdOnly = usdTotal(0.5, 3, 3);
+    const mixed = { ...costTotal(10, 5, 5), amounts: [{ currency: "AI_CREDITS" as const, amount: 10, knownTurns: 5 }, { currency: "USD" as const, amount: 4, knownTurns: 5 }] };
+    setup({ structured: weeklySeries({ points: [week("2026-10-05", "2026-10-11", "2026-W41", usdOnly), week("2026-10-12", "2026-10-18", "2026-W42", mixed)], total: mixed }) });
+    expect(screen.getAllByRole("radio").map((radio) => radio.getAttribute("value"))).toEqual(["AI_CREDITS", "USD"]);
+    expect(screen.getByRole("radio", { name: "AI Credits" })).toBeChecked();
   });
 
   it("is a gap with the reason when nothing is known, never 0", () => {

@@ -22,6 +22,9 @@ const mcpAppsDir = path.resolve(import.meta.dirname, "../..");
 const VIEWS_HTML = path.join(mcpAppsDir, "dist/views.html");
 const RECORDINGS = path.resolve(mcpAppsDir, "../../docs/plans/mcp-apps-spike-results");
 
+// The app's version, which every view's footer shows (the server reads its own package.json).
+export const APP_VERSION = (JSON.parse(readFileSync(path.join(mcpAppsDir, "../server/package.json"), "utf8")) as { version: string }).version;
+
 export const CLAUDE_DARK = CLAUDE_SETS.find((set) => set.theme === "dark")!;
 export const CLAUDE_LIGHT = CLAUDE_SETS.find((set) => set.theme === "light")!;
 export { CLAUDE_SETS, VSCODE_SETS };
@@ -33,13 +36,15 @@ function recordedProfile(kind: HostKind, set: HostSet): HostProfile {
   return hostProfileFrom(JSON.parse(readFileSync(path.join(RECORDINGS, file), "utf8")) as HostRecording);
 }
 
-export const test = base.extend<{ hostKind: HostKind; hostSet: HostSet; host: McpHost }>({
+export const test = base.extend<{ hostKind: HostKind; hostSet: HostSet; withProjects: boolean; host: McpHost }>({
   hostKind: ["claude", { option: true }],
   hostSet: [CLAUDE_DARK, { option: true }],
-  host: async ({ page, hostKind, hostSet }, use) => {
+  // false: the fixture home has no projects file (A24 2.6).
+  withProjects: [true, { option: true }],
+  host: async ({ page, hostKind, hostSet, withProjects }, use) => {
     if (!existsSync(VIEWS_HTML)) throw new Error("packages/mcp-apps/dist/views.html is not built: run `npm run build --workspace=packages/mcp-apps` first");
     const home = mkdtempSync(path.join(os.tmpdir(), "aca-e2e-mcp-apps-"));
-    createFixtureHome(home);
+    createFixtureHome(home, { projects: withProjects });
     const server = await connectStdioMcp(home, { args: ["--app-views-html", VIEWS_HTML], clientName: "fake-mcp-apps-host" });
     try {
       const host = await McpHost.open(page, server, recordedProfile(hostKind, hostSet), hostSet);
@@ -52,5 +57,15 @@ export const test = base.extend<{ hostKind: HostKind; hostSet: HostSet; host: Mc
     }
   },
 });
+
+// Runs the same specs in each of Claude's recorded theme sets (light, dark).
+export function inEachClaudeSet(define: () => void): void {
+  for (const set of CLAUDE_SETS) {
+    test.describe(set.theme, () => {
+      test.use({ hostSet: set });
+      define();
+    });
+  }
+}
 
 export { expect };

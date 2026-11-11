@@ -2,20 +2,35 @@
 
 **Last changed:** 2026-11-11 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
-Status: **in progress: G0, G1 (#202), G2 and G6 (#204) done 2026-11-11; G5's host merged (#205).** Owner rule, 2026-11-11: every UI check
+Status: **in progress: G0, G1 (#202), G2 (#207), G5 (#205, #206) and G6 (#204) done 2026-11-11.** Owner rule, 2026-11-11: every UI check
 before a release is automated. VS Code and Copilot checks use wdio
 (`wdio-vscode-service`, [vscode-ui-automation.md](vscode-ui-automation.md));
 web-only checks use Playwright (or the integrated Chrome for exploratory
 runs). No hand checklist gates a release. Builds on step 10.16 and the
 standalone app's `web-e2e` suite (Phase 15 step 15.9).
 
-Progress: G5's fake host is built (2026-11-11, `packages/mcp-apps/e2e/`, CI
-job `mcp-apps-e2e`), with smoke specs for A24 2.1, 2.5 and 2.7 in Claude
-dark ([README](../../packages/mcp-apps/e2e/README.md)). The rest of the
-A16 §2 and A24 §2 specs and the release workflows' job are next. The fake
-host has no permission prompt, so A24 2.10 proves only that a drill-down is
-a plain `tools/call`; whether Claude Desktop prompts stays outside the gate
-(R4).
+Progress: G5 is built (2026-11-11, `packages/mcp-apps/e2e/`, CI job
+`mcp-apps-e2e`, and the same steps in `release-app.yml` and
+`release-extension.yml`). Every row of A24 §2 and A16 §2 that a fake host can
+check is a spec named after its row, run in Claude light and dark with axe
+in the frame at each stop ([README](../../packages/mcp-apps/e2e/README.md)
+has the row table). What a fake host cannot check:
+
+- A24 2.10: the fake host has no permission prompt, so the spec proves only
+  that a drill-down is one plain `tools/call`; whether Claude Desktop asks
+  stays outside the gate (R4).
+- A24 2.6: `compare_costs` never returns an empty project result from the
+  real server (two ids are required, an unknown id gives a zero-turn row),
+  so the "No projects here" title is covered by a component test, and the
+  spec asserts what the server answers.
+- A24 2.3 for U11: the fixture has no priced AI Credits turn, so U11 shows
+  one currency block; a view-model test covers two.
+- A24 2.9: U9's fullscreen layout is task A31; the spec asserts that U9
+  renders in fullscreen.
+
+The first run found one view bug: with two currencies, U9's Currency control
+listed USD first and started on USD (§9.1 answer 5 says AI Credits first).
+Fixed test-first in `cost-series.ts`.
 
 ## 1. Owner decisions (2026-11-11)
 
