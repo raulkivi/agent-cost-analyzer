@@ -47,7 +47,7 @@ Fixed test-first in `cost-series.ts`.
 | D9 | Any skip of a required test blocks a release (confirms G2's tightened rule). |
 | D10 | The Increment 2 release (extension 0.6.0, app 0.11.0) waits for G4 and the empty-window fix (D7). *Superseded for G7 by D11.* |
 | D11 | The chart findings G7's judge found are fixed, not pinned: G7 merges with no exceptions, and the fixes ship in the Increment 2 release, which therefore also waits for G7 (`npm run test:ui` runs in the required `extension` job and in `release-extension.yml`, so findings would block both). |
-| D12 | **Proposed (2026-11-11), for the owner to confirm:** hard cap 3 AI Credits per real-Copilot run. `COPILOT_E2E_MAX_AI_CREDITS` (default 3; `0` sends no chat) is checked before every chat against what the run's chats have cost so far; a refused chat skips with "budget exceeded", and the gate refuses the skip (D9). Checked between chats, so a run can pass the cap by at most one chat (about 0.6 AI Credits). See R5. |
+| D12 | **Proposed (2026-11-11), for the owner to confirm:** hard cap 3 AI Credits per real-Copilot run. `COPILOT_E2E_MAX_AI_CREDITS` (default 3; `0` sends no chat) is checked before every chat against what the run's chats have cost so far; a refused chat skips with "budget exceeded", and the gate refuses the skip (D9). Checked between chats, so a run can pass the cap by at most one chat: about 0.6 AI Credits on the right model, but 16 on Sonnet 5.5 (VS Code 1.146, R5). |
 
 ## 2. What gates each release today, and what replaces it
 
@@ -491,8 +491,9 @@ no Copilot); G2 and G3 next; G4 and G7 last.
     not from the state the suite wrote. If that isn't the requested model
     (exact match on Copilot's name or id, so Auto, a fast variant or a
     failed selection all refuse), nothing is sent and the test skips,
-    naming the model shown. A wrong model costs 0 AI Credits; the gate still
-    refuses the skip (D9). Then a plain `workbench.action.chat.open` with
+    naming the model shown. A picker on the wrong model costs 0 AI Credits,
+    and the gate still refuses the skip (D9). The real run below shows the
+    picker isn't enough on 1.146. Then a plain `workbench.action.chat.open` with
     the query sends from the same chat. The decision is
     `pre-send-model.mts` (unit-tested). The after-chat check of the logged
     model id stays.
@@ -517,3 +518,31 @@ no Copilot); G2 and G3 next; G4 and G7 last.
   suite with `COPILOT_E2E_MODEL=no-such-model` (every chat refused by the
   guard; 2.1 passed) and with `COPILOT_E2E_MAX_AI_CREDITS=0` (every chat
   refused by the cap; 2.1 passed). All three spec files launched in both.
+
+  **Still open: the guard doesn't stop the wrong model on 1.146.** One real
+  run on `bc9b46f` (clean tree, `COPILOT_E2E_MAX_AI_CREDITS=2`, a watchdog
+  that stops the run when one chat costs more than 1 AI Credit). Before
+  1.4's chat the picker showed "Claude Haiku 5.5", so the guard sent it.
+  The session was logged as `claude-sonnet-5.5` and cost **16.0553 AI
+  Credits**, about what the owner's run spent on its Sonnet chat (16.38 for
+  one Sonnet and two GPT-6 Luna chats). The after-chat check skipped 1.4.
+  The cap then skipped 2.3 and 2.4 unsent, and the watchdog stopped the run.
+  Its process-group kill also made the next two spec files fail to start, so
+  this run says nothing about the launch fix after real chats. Gate:
+  `BLOCKED`; note removed, never pushed. So on 1.146 the picker is not what
+  decides the first chat's model. Not yet known: whether the window's first
+  chat always goes to another model (Copilot Fusion, Copilot's router, was
+  the picker's model for the first new chat in the no-chat runs), or whether
+  the request takes the session's model and not the picker's. Finding out
+  needs more paid chats. Until then:
+
+  - **Don't run the real-Copilot suite on VS Code 1.146.** The pre-send
+    guard catches a picker that shows another model, but not this. The cap
+    limits the loss to one chat (about 16 AI Credits on Sonnet 5.5), not 0.
+  - Options for the owner: run the release gate on 1.145.0 (22/22 at
+    `a4e1764`; the guards work there too, since 1.145 has the same open
+    command, `modelSelector` and picker name), or allow a paid
+    investigation. The next guard to try: while the chat runs, read the
+    session's model from Copilot's debug log as soon as its first request is
+    logged, and cancel the chat (`workbench.action.chat.cancel`) on a
+    mismatch. That limits a wrong model to one request.
