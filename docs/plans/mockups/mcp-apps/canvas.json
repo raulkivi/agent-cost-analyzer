@@ -4,7 +4,7 @@
     "v": 1,
     "at": "2026-11-07T18:00:00Z"
   },
-  "title": "MCP Apps mock-ups (A0b MVP, A17b Increment 2)",
+  "title": "MCP Apps mock-ups (A0b MVP, A17b Increment 2, A25b Increment 3)",
   "launch": {
     "view": "canvas"
   },
@@ -65,6 +65,34 @@
       "w": 2856,
       "h": 5850,
       "title": "8 · Increment 2 states: U10 to U9 to U1 drill-down with back controls, no projects (extension), no earlier figure, unknown and partial, mixed currencies, error, narrow 360 px"
+    },
+    "Replay.dc.html": {
+      "x": 9968,
+      "y": 0,
+      "w": 2856,
+      "h": 2400,
+      "title": "9 · U12 replay: compare mode and replay mode with a failed self-check, Simulated on every figure (VS Code light, dark; Claude light, dark)"
+    },
+    "ToolCallAudit.dc.html": {
+      "x": 9968,
+      "y": 2700,
+      "w": 2856,
+      "h": 2500,
+      "title": "10 · U4 tool-call audit: one session (failure categories, recovery cost in tokens, retried commands) and the rollup, in both hosts, light and dark"
+    },
+    "SessionPicker.dc.html": {
+      "x": 9968,
+      "y": 5500,
+      "w": 2856,
+      "h": 1750,
+      "title": "11 · U5 session picker: the pick list in both hosts, light and dark, and the chat after the click (only the fixed \"Analyse session <id>\" text is sent)"
+    },
+    "Increment3States.dc.html": {
+      "x": 9968,
+      "y": 7550,
+      "w": 2856,
+      "h": 6100,
+      "title": "12 · Increment 3 states: U13 documented vs inferred price changes, U14 issued statement with a diff and a draft, U15 estimate range, simulated and refusal, Unknown replay, narrow 360 px"
     }
   },
   "order": [
@@ -75,7 +103,11 @@
     "CostOverTime.dc.html",
     "CostCompare.dc.html",
     "CostChange.dc.html",
-    "Increment2States.dc.html"
+    "Increment2States.dc.html",
+    "Replay.dc.html",
+    "ToolCallAudit.dc.html",
+    "SessionPicker.dc.html",
+    "Increment3States.dc.html"
   ],
   "notes": {
     "sample": {

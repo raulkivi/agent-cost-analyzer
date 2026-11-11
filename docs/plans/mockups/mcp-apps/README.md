@@ -1,6 +1,6 @@
-# MCP Apps mock-ups (A0b MVP, A17b Increment 2)
+# MCP Apps mock-ups (A0b MVP, A17b Increment 2, A25b Increment 3)
 
-**Last changed:** 2026-11-10 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-11 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 Boards for task A0b in [mcp-apps.md](../../mcp-apps.md) §5.6 and §7. They
 show the MVP views U1, U2 and U3 inside a VS Code Copilot Chat frame and a
@@ -43,6 +43,24 @@ Checks for the Increment 2 boards:
 4. **Waterfall colours.** A rise uses the host's danger text colour, a fall the success text colour (owner decision 2026-11-10), each with the written sign.
 5. **No projects** reason (state 6). `list_projects` returns the reason text; `get_project_cost` answers an unknown-id error. How the view gets the reason is an open question for A20.
 6. **Narrow U11** hides the model table's Cost A and Cost B columns at 640 px or less (owner decision 2026-11-10, so Price fits at about 600 px) (the board drew it dropping the token-type detail); U10 moves its per-measure figures under each row.
+
+### Increment 3 boards (A25b)
+
+Drawn 2026-11-11 for task A25b in [mcp-apps.md](../../mcp-apps.md) §7.2. Status: **drawn and approved by the owner (2026-11-11)**, all 17 defaults in [mcp-apps.md](../../mcp-apps.md) §9.2 kept. The owner's questions, each with the default A27–A30 start on, are in [mcp-apps.md](../../mcp-apps.md) §9.2. They show U12, U4 and U5 in both host frames, light and dark, and U13 to U15 on a states board (U14 and U15 in the Claude Desktop frame only, as the standalone app is their only product). The footers use the Increment 3 target versions (v0.8.0 and v0.12.0, §7.3). All sessions, models and figures are invented.
+
+| Board | Shows |
+| ----- | ----- |
+| [Replay.dc.html](Replay.dc.html) | U12 (`compare_models_for_session`, `replay_session`). Compare mode: measured row, simulated rows (hatched bars, signed change, "≥" and "known for 31 of 42 turns" for partial rows, "Unknown" for a model with no price), the own-model check and the pricing note. Replay mode: back control, a failed self-check alert, tiles, measured vs simulated per turn (solid line vs dashed line, direct labels, a gap for turns not replayed), the reasons and a collapsed assumptions list. Both modes in VS Code light and dark and Claude light and dark. "Simulated" is on every simulated figure. |
+| [ToolCallAudit.dc.html](ToolCallAudit.dc.html) | U4 (`get_session_audit`, `get_audit_rollup`). Session: tiles with the failure rate over known outcomes and the unknown count, failure categories, recovery cost in tokens, retried commands and a by-tool table, in all four frames. Rollup: failed calls per day, categories, top failing commands, sessions, and the sessions left out for unrecorded tool calls, in VS Code dark and Claude light. |
+| [SessionPicker.dc.html](SessionPicker.dc.html) | U5 (`list_sessions`). The pick list in all four frames (a hovered row in the dark ones), and the chat after a click in VS Code light and Claude dark, with the fixed user message "Analyse session 7f3a9c2e" and the row's "Sent" state. |
+| [Increment3States.dc.html](Increment3States.dc.html) | U13 (`get_price_changes`) called directly and drilled into from U11 in place, with documented (solid) and inferred (dashed) changes apart. U14 (`get_statement`): an issued October statement with a re-run diff, and a November draft that cannot be issued yet, with unknown-cost turns. U15 (`estimate_cost`): a p50–p90 range, the same on another model ("estimate" and "Simulated"), and a refusal. U12 with an Unknown simulated cost. Narrow 360 px for U12 (compare and replay), U4, U5 (list, no match), U13, U14 and U15, and the U5 list in a host without `sendMessage`. |
+
+Checks for the Increment 3 boards:
+
+1. **Labels.** "Simulated" on every replay figure, "inferred" on every observed price change, "estimate" on every U15 range; basis and currency on every money figure; "Unknown" and never 0 for unpriced models, unknown-cost turns and unrecorded tool calls.
+2. **Colour is never the only cue.** Measured vs simulated, documented vs inferred and the estimate range each differ by a fill pattern or dash pattern as well as paint, and carry a direct label. Rises use the host's danger text colour and falls the success colour, each with the written sign (§9.1 question 4).
+3. **Read-only.** U14 has no issue control; U5 sends only the fixed template; commands and titles are logged text shown as plain text.
+4. **Failed self-check** is an alert above the figures, not a footnote.
 
 ## What the owner should check
 
