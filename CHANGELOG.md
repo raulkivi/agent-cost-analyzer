@@ -17,6 +17,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Copilot Chat sessions from a window with no folder open now appear. Their debug logs are
   under Copilot Chat's `globalStorage`, which was not read, so those sessions showed no tokens or
   AI Credits. They show as "No repository".
+- MCP App cost-change view (`explain_cost_change`): the "Not explained" reasons no longer widen
+  the view past the chat, so nothing scrolls sideways; a long unbroken word in a reason (a
+  setting id) now wraps.
 
 ### Added
 - Interactive views for the cost-analysis MCP tools in MCP Apps hosts:

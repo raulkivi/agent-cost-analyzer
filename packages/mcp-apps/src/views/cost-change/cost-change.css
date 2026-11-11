@@ -26,8 +26,10 @@
 .cv-detail-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; font-size: 12px; }
 .cv-versions { font-size: 11px; }
 
-.cv-two { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; font-size: 12px; }
-.cv-reasons { margin: 4px 0 0; padding-left: 18px; }
+/* minmax(0, 1fr) and anywhere: a logged reason with a long unbroken word (a
+   setting id) wraps in its column instead of widening the view (found by G4). */
+.cv-two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; font-size: 12px; }
+.cv-reasons { margin: 4px 0 0; padding-left: 18px; overflow-wrap: anywhere; }
 
 .cv-price-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; font-size: 12px; }
 .cv-price-list li { display: flex; flex-direction: column; gap: 1px; }
@@ -42,7 +44,7 @@
 }
 
 @media (max-width: 480px) {
-  .cv-two { grid-template-columns: 1fr; }
+  .cv-two { grid-template-columns: minmax(0, 1fr); }
   /* The chart scales with its 480-unit viewBox, so 11-12 px labels render at about 7 px on a phone; sized in chart units. */
   .cv-waterfall .waterfall-value { font-size: 17px; }
   .cv-waterfall .waterfall-name { font-size: 16px; }

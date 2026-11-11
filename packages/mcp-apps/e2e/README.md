@@ -39,6 +39,7 @@ Every spec runs in Claude light and Claude dark (`inEachClaudeSet`), with axe in
 | A24 2.7 U11 for a project and for a repository: period tiles, Change, Not explained, waterfall, model table | `specs/u11-cost-change.spec.ts` |
 | A24 2.8 waterfall: a fall is green, a rise is red, neither is blue, each with its written sign | `specs/u11-cost-change.spec.ts` |
 | A24 2.9 360 px: no sideways scroll for U9, U10, U11, and their narrow layouts; fullscreen renders U9 | `specs/layout-footer-permissions.spec.ts` |
+| A24 2.9 U11 at 560 px with turns not explained in both periods: the logged reasons wrap, no sideways scroll (a view bug G4 found in Copilot Chat) | `specs/u11-cost-change.spec.ts` |
 | A24 2.10 a drill-down is exactly one plain `tools/call` and nothing else | `specs/layout-footer-permissions.spec.ts` |
 | A24 2.11 footer: product name in the kicker, `Read-only · local logs · v<app version>` on all six views | `specs/layout-footer-permissions.spec.ts` |
 | A16 §2 U1: tiles, chart, top turns, a turn opens and hides, no copy button in Claude | `specs/a16-session-views.spec.ts` |

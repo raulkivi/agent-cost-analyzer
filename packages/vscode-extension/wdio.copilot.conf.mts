@@ -1,6 +1,7 @@
 // The opt-in, owner-run suite that drives a REAL signed-in Copilot Chat
 // (docs/plans/vscode-ui-automation.md §7): checks 1.4, 2.3 and 2.4 with a real
-// agent-mode chat. It spends AI Credits, so it is not part of
+// agent-mode chat, and the MCP App views in that chat (step 10.17 G4,
+// copilot-views.e2e.ts). It spends AI Credits, so it is not part of
 // `npm run test:ui:vscode`, the extension-ui CI job or `npm test`, and it does
 // nothing unless COPILOT_E2E=1 and COPILOT_E2E_USER_DATA_DIR point at the
 // throwaway profile you signed in with (`npm run test:ui:vscode:copilot:signin`).
@@ -26,6 +27,7 @@ import { TEST_HOOKS_ENV } from "./src/diagnostics/test-hooks.ts";
 import { readCopilotE2eEnv } from "./test/ui/copilot-e2e/support/copilot-e2e-env.mts";
 import { copyProfile } from "./test/ui/copilot-e2e/support/profile-copy.mts";
 import { COPILOT_E2E_SETTINGS, copilotE2eAgentFile } from "./test/ui/copilot-e2e/support/copilot-e2e-settings.mts";
+import { CHAT_HISTORY_ENV, clearChatHistory, seedChatHistory } from "./test/ui/copilot-e2e/support/chat-history-seed.mts";
 import { copilotStateSeeds, seedProfileAgent, seedProfileState } from "./test/ui/copilot-e2e/support/profile-seed.mts";
 import CopilotE2eResultsReporter from "./test/ui/copilot-e2e/support/results-reporter.mts";
 import { COPILOT_E2E_ROOT_ENV as ROOT_ENV, evidenceDirOf } from "./test/ui/copilot-e2e/support/run-log.mts";
@@ -73,6 +75,16 @@ if (!inWorker) {
   // it for us) and add the agent whose only tools are the analyzer's (D6).
   seedProfileState(path.join(storagePath, "settings"), copilotStateSeeds(env.model));
   seedProfileAgent(path.join(storagePath, "settings"), copilotE2eAgentFile());
+  // G4: the copy's earlier chats out, then made-up sessions in two
+  // repositories over several weeks, for the MCP App view specs; the workers
+  // read what was seeded from the env. No view shows the owner's chats.
+  clearChatHistory(path.join(storagePath, "settings"));
+  const history = seedChatHistory({ userDataDir: path.join(storagePath, "settings"), reposDir: path.join(rootDir, "repos"), now: new Date() });
+  process.env[CHAT_HISTORY_ENV] = JSON.stringify(history);
+  // An empty Copilot CLI home: the analyzer reads none of the owner's Copilot
+  // CLI sessions, and Copilot Chat writes its own logs into the run.
+  mkdirSync(path.join(rootDir, "copilot-home"), { recursive: true });
+  process.env.COPILOT_HOME = path.join(rootDir, "copilot-home");
   // Normal mode (G3): executeWorkbench is served by a bridge extension, not
   // the service's test runner, so VS Code reads the copy's storage and sign-in.
   installWorkbenchBridge({ extensionsDir: path.join(storagePath, "extensions"), proxyModule: wdioProxyModule() });

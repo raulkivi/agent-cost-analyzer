@@ -74,4 +74,18 @@ inEachClaudeSet(() => {
     expect(await fall.axeViolations()).toEqual([]);
     expect(await rise.axeViolations()).toEqual([]);
   });
+
+  // Found by G4 in a real Copilot Chat (a 561 px view): the Not explained
+  // reasons sit in two columns, and a logged reason with a long unbroken
+  // word (a setting id) widened its column past the view.
+  // Both periods hold the fixture's one Copilot turn (2026-10-27), whose
+  // reason names github.copilot.chat.otel.dbSpanExporter.enabled.
+  test("A24 2.9 U11 with turns not explained, at 560 px: the logged reasons wrap in their two columns and nothing scrolls sideways", async ({ host }) => {
+    const copilotDay = { since: "2026-10-27", until: "2026-10-27" };
+    const view = await host.show("explain_cost_change", { ...REPOSITORY, periodA: copilotDay, periodB: copilotDay }, { width: 560 });
+
+    await expect(view.content.getByText(/dbSpanExporter/)).toHaveCount(2);
+    expect(await view.width()).toBeLessThanOrEqual(560);
+    expect(await view.scrollsSideways()).toBe(false);
+  });
 });

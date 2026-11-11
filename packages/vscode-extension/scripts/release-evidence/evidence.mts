@@ -12,7 +12,32 @@ export const COPILOT_E2E_SUITE = "copilot-e2e";
 // The real-chat checks of docs/plans/vscode-extension-manual-checks.md the
 // suite covers. Spec titles start with these ids (copilotTestTitle), so a
 // renamed or deleted test shows up as missing instead of dropping out.
-export const REQUIRED_COPILOT_E2E_TESTS = ["1.4", "2.3", "2.4"] as const;
+export const COPILOT_CHAT_CHECKS = ["1.4", "2.3", "2.4"] as const;
+
+// G4 (step 10.17): the MCP App view rows of mcp-apps-a24-checklist.md §1 and
+// mcp-apps-a16-checklist.md §1 that copilot-views.e2e.ts checks in a real
+// Copilot Chat. A16's themes and narrow rows run inside A24 1.7 and 1.8.
+export const COPILOT_VIEW_ROWS = [
+  "A24 1.1",
+  "A24 1.2",
+  "A24 1.3",
+  "A24 1.4",
+  "A24 1.5",
+  "A24 1.6",
+  "A24 1.7",
+  "A24 1.8",
+  "A24 1.9",
+  "A16 U1",
+  "A16 U2",
+  "A16 U3",
+  "A16 keyboard",
+] as const;
+
+// G7 (step 10.17): extension-rows.e2e.ts checks 2.1 (Copilot's Configure Tools
+// picker) and 1.14 (cost by repository on a real git folder).
+export const COPILOT_EXTENSION_ROWS = ["2.1", "1.14"] as const;
+
+export const REQUIRED_COPILOT_E2E_TESTS = [...COPILOT_CHAT_CHECKS, ...COPILOT_VIEW_ROWS, ...COPILOT_EXTENSION_ROWS] as const;
 
 export type EvidenceTestState = "passed" | "failed" | "skipped";
 
@@ -66,8 +91,9 @@ export function copilotTestTitle(id: string, text: string): string {
   return `${id} ${text}`;
 }
 
+// A check id ("2.3") or a checklist row id ("A24 1.1", "A16 U1", "A16 keyboard"; G4).
 export function testIdOf(title: string): string | undefined {
-  return /^(\d+\.\d+) \S/.exec(title)?.[1];
+  return /^(\d+\.\d+|A\d+ [A-Za-z0-9.]+) \S/.exec(title)?.[1];
 }
 
 type Parsed = { ok: true; evidence: ReleaseEvidence } | { ok: false; problems: Problem[] };
