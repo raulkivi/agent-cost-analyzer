@@ -1,6 +1,6 @@
 # Phase 12 (MCP Apps): session handover, 2026-11-10
 
-**Last changed:** 2026-11-11 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-12 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 This document hands the Phase 12 work over to the next session. The design, the tasks and the exit criteria are in [mcp-apps.md](mcp-apps.md). The schedule and the status are in [implementation-plan-gantt.md](../implementation-plan-gantt.md). This page gives only what a new session needs to pick the work up.
 
@@ -10,7 +10,7 @@ This document hands the Phase 12 work over to the next session. The design, the 
 - **Increment 2 built and merged to `main` 2026-11-10:** A17, A18, A19 (PR #193) and A20, A21, A22 (PR #194, merged into #193's branch first). Status 25 of 36 tasks (69%).
 - **A17b boards approved 2026-11-10** with the owner's answers in mcp-apps.md §9.1: defaults kept except question 4 (a fall uses the host's success colour) and U11's "Not explained" tile wording. A23 applied both.
 - **Increment 2 released 2026-11-11:** extension 0.6.0 (tag `ext-v0.6.0`, stable, VS Code 1.146 required) and app 0.11.0 (tag `app-v0.11.0`). The extension passed the real-Copilot gate on `964e9a8` (22/22 required tests). A24 is replaced by the automated checks of step 10.17 ([release-ui-gate.md](release-ui-gate.md)). Extension 0.5.0 (pre-release, #197) is superseded.
-- **Next: Increment 3.** Start with A25b mock-up boards for the owner's approval. Write A33's checks as wdio and Playwright specs from the start (step 10.17 rule), not as manual checks.
+- **Release PR open 2026-11-12:** extension 0.8.0 and app 0.12.0 (release prepared 2026-11-12; the CHANGELOGs carry the Increment 3 entries). The PR builds on #223 (the Increment 3 checks), which must merge first. Next: the owner's real-Copilot run on the merged commit (33 required tests, about 1.6 AI Credits, cap 3), push the evidence note, then the tags `ext-v0.8.0` and `app-v0.12.0`.
 - **Release:** the owner asked about an extension 0.4.1; not planned, since `main` has no fixes to 0.4.0, only Increment 2 features.
 - **A23 done 2026-11-10** (findings in mcp-apps.md §6.1 and the A23 row). The visual-pass inputs it worked from, all closed:
   - U9's y-axis top label sits tight against the left edge beside a price-change marker.

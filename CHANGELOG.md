@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.12.0] - 2026-11-12
 ### Added
 - **Fullscreen for the cost rollup and cost-over-time views.** In MCP App hosts that offer fullscreen
   (Claude Desktop), the cost rollup (`get_cost_rollup`) and cost-over-time views (`get_repository_cost`,

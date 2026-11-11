@@ -1,6 +1,6 @@
 # Implementation plan — Gantt
 
-**Last changed:** 2026-11-11 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-12 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 Timeline of [implementation-plan.md](implementation-plan.md) phases. Percentages are step-based: done phases 100%, minus open owner reviews or manual checks; Phase 14 is 8 of 9 steps, with 14.8's docs written and in the owner's review. Dates are first-commit to merge dates from git history (as of 2026-11-07); not-started phases have no dates and are listed below the chart.
 
@@ -98,6 +98,7 @@ gantt
     Extension 0.4.0, App v0.10.0 :milestone, r10, 2026-11-10, 0d
     Extension 0.5.0 pre-release :milestone, r11, 2026-11-10, 0d
     Extension 0.6.0, App v0.11.0 :milestone, r12, 2026-11-11, 0d
+    Extension 0.8.0, App v0.12.0 :milestone, r13, 2026-11-12, 0d
 ```
 
 ## Not started
