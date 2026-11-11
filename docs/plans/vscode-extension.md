@@ -2185,6 +2185,13 @@ suite only, to cover the D4 path derivation for real.
 **Extension, on tag `ext-v*`.** New workflow
 `.github/workflows/release-extension.yml`:
 
+0. **Release evidence (step 10.17 D1, G2, 2026-11-11).** Before tagging, the
+   owner runs the real-Copilot suite on the release commit (clean tree,
+   `npm run build` first), checks `npm run release:evidence --workspace=packages/vscode-extension`
+   and pushes the note: `git push origin refs/notes/release-ui`. The workflow
+   fetches that ref and runs `release-evidence-check.mts` on the tagged commit
+   after the tag check; no passing note, no release
+   ([release-ui-gate.md](release-ui-gate.md)).
 1. **Engine check (D9).** A script reads the current stable version from
    `https://update.code.visualstudio.com/api/releases/stable` and fails
    the release if `engines.vscode` doesn't match it. The fix is a bump in

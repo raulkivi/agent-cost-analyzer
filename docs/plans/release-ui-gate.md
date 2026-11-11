@@ -2,7 +2,7 @@
 
 **Last changed:** 2026-11-11 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
-Status: **in progress: G0, G1 (#202), G5 (#205 and the Claude Desktop specs) and G6 (#204) done 2026-11-11.** Owner rule, 2026-11-11: every UI check
+Status: **in progress: G0, G1 (#202), G2 (#207), G5 (#205, #206) and G6 (#204) done 2026-11-11.** Owner rule, 2026-11-11: every UI check
 before a release is automated. VS Code and Copilot checks use wdio
 (`wdio-vscode-service`, [vscode-ui-automation.md](vscode-ui-automation.md));
 web-only checks use Playwright (or the integrated Chrome for exploratory
@@ -67,7 +67,7 @@ repo.
 |---|---|---|---|---|---|
 | G0 | Docs: the rule in architecture.md §11, CLAUDE.md's repo rules, manual-checks doc reframed as "what the suites cover", mcp-apps.md A24/A33 as automated tasks, vscode-ui-automation.md T15/Q2 closed by D4 | low | Haiku | — | Docs say the same thing; no CHANGELOG entry |
 | G1 | CI: drop `continue-on-error` from `extension-ui`; `release-extension.yml` runs `test:ui:vscode` under xvfb with the cached download; `release-app.yml` builds web and runs `test:e2e`. Owner: mark `extension-ui` and `web-e2e` required in branch protection | low | Haiku | — | Both release workflows fail on a red suite; green on a dry-run tag in a fork or a `workflow_dispatch` run |
-| G2 | Release evidence for D1: the real-Copilot suite writes its result (commit, VS Code version, tests passed, skipped with reasons, AI Credits spent) as a git note under `refs/notes/release-ui`; `release-check.mts` reads the note for the tagged commit and refuses a missing, failed or skipped-without-reason result | high | Opus | — | Unit tests for the note format and the check; the release workflow fetches notes and fails without one |
+| G2 | Release evidence for D1: the real-Copilot suite writes its result (commit, VS Code version, tests passed, skipped with reasons, AI Credits spent) as a git note under `refs/notes/release-ui`; a release check reads the note for the tagged commit and refuses a missing, failed or skipped result (tightened from "skipped without reason", see below) | high | Opus | — | Unit tests for the note format and the check; the release workflow fetches notes and fails without one |
 | G3 | First end-to-end run of the real-Copilot suite with the owner (sign-in, model, `chat.tools.global.autoApprove`), fix what breaks | medium | Opus + owner | — | 3 tests green on the owner's machine; note written (G2) |
 | G4 | MCP App views in Copilot Chat (wdio, real-Copilot suite): spike entering the view's iframe inside the chat; then specs for U1-U3 and U9-U11 over seeded repositories (A16 §1, A24 §1): render, drill-down and Back focus, Light/Dark/both High Contrast through the probe and judge, 360 and 600 px, footer | high | Opus (spike), Sonnet (specs) | G3 | A24 §1 rows each named in a spec title; green on the owner's machine |
 | G5 | Fake MCP Apps host (Playwright, `packages/mcp-apps/e2e/`): a host page with ext-apps `AppBridge` loads `dist/views.html`, relays `tools/call` to the real server over stdio on the `web-e2e` fixture home, applies Claude's recorded and VS Code's sets; specs per A16 §2 and A24 §2 (including two currencies, the full U10 → U9 → U1 chain, permission-free drill-down, narrow and fullscreen) with axe | high | Opus (host), Sonnet (specs) | — | New required CI job `mcp-apps-e2e`, also in both release workflows |
@@ -85,6 +85,79 @@ Dark and Light High Contrast. Light High Contrast reuses the Light Modern A0
 style-variable report (references only; the recording supplies the colours).
 The CLI text check is `register-app-views.test.ts` ("answers the three
 Increment 2 tools with plain text"). Re-record after a VS Code version bump.
+
+**G2 built (2026-11-11).** The real-Copilot run (`wdio.copilot.conf.mts`, only
+with `COPILOT_E2E=1`) records its result as a git note on the commit it started
+on, under `refs/notes/release-ui`, and prints the gate's verdict and the push
+command; it never pushes. The release workflow fetches the notes ref and runs
+`release-evidence-check.mts` on the tagged commit right after `release-check.mts`,
+before any test or publish step. Only `ext-v*` tags are gated; the app's release
+has no Copilot part.
+
+- **Record** (JSON, schema 1): `schema`, `suite` (`copilot-e2e`), `commit`
+  (full SHA of HEAD when the run started), `dirty` (tracked or untracked
+  changes; ignored files don't count), `extensionVersion`, `vscodeVersion`,
+  `model` (`requested`, `observed` ids), `tests` (each `title`, `state`
+  passed/failed/skipped, `skipReason`), `aiCreditsSpent` (null if unmeasured),
+  `ranAt`. Format and judge: `scripts/release-evidence/evidence.mts`.
+- **Blocks a release:** no note; a note that isn't schema-1 JSON; a run on
+  another commit; a dirty tree; a required test (1.4, 2.3, 2.4) missing,
+  failed or **skipped**; any failed test. Every problem is listed by name
+  (`missing-note`, `malformed`, `unknown-schema`, `wrong-commit`,
+  `dirty-tree`, `test-missing`, `test-failed`, `test-skipped`).
+- **Skip rule tightened.** The plan refused only a skip without a reason. A
+  required test that skipped, with any reason, now blocks: a run where Copilot
+  never called the tool, or ran another model, proves nothing about the
+  release. The message quotes the recorded reason so the owner knows what to
+  fix before rerunning. A test the release doesn't require may skip.
+- **Stable ids.** Spec titles start with the ids in
+  `REQUIRED_COPILOT_E2E_TESTS` (`copilotTestTitle`), so a renamed or deleted
+  test shows up as `test-missing` instead of dropping out of the gate.
+- **Readiness wait** (owner request, 2026-11-11). `suiteSetup` no longer checks
+  the sign-in once: it polls every 2 s for up to 120 s until a GitHub account
+  is signed in, Copilot Chat (`GitHub.copilot-chat`) is active and
+  `vscode.lm.selectChatModels({ vendor: "copilot" })` returns a model, and
+  logs how long that took. Only then does it skip, with a reason naming each
+  part that wasn't ready; the reason goes into the evidence. A slow start-up
+  no longer skips the run (and so no longer blocks a release). A failed read
+  of the signals is logged, never passed off as "not ready".
+- **Password store** (owner's first real run, 2026-11-11). All three tests
+  skipped in 1.2 s with "no GitHub account" although the copied profile held
+  the sign-in: the sign-in script used `--password-store=basic`, the suite
+  didn't, so its VS Code used the OS keyring and couldn't decrypt the secret.
+  Both now take their arguments from `scripts/ui-automation/copilot-vscode-args.mts`
+  (unit-tested). The suite also drops `--disable-extensions` and runs with
+  `--ozone-platform=x11`, so under `xvfb-run` it never opens on a Wayland
+  desktop.
+- **Latest run wins.** A later run on the same commit replaces the note, pass
+  or fail.
+- **Residual:** the run tests `dist/` as built; build at that commit first.
+  The note is a self-gate for the owner, not a defence against someone with
+  push access (threat-model §8).
+
+How the owner uses it:
+
+1. Commit everything; `npm run build` at the repo root.
+2. `COPILOT_E2E=1 COPILOT_E2E_USER_DATA_DIR=<profile> xvfb-run -a npm run test:ui:vscode:copilot --workspace=packages/vscode-extension`
+   (or on a display). The run ends with the verdict: `PASS` or `BLOCKED` with
+   each problem.
+3. `npm run release:evidence --workspace=packages/vscode-extension` (or
+   `-- <sha>`) shows the note and the verdict the release workflow will give.
+4. `git push origin refs/notes/release-ui`, then push the `ext-v*` tag on the
+   same commit. On a fresh clone, `git fetch origin refs/notes/release-ui:refs/notes/release-ui`
+   first.
+
+Verified: unit tests for the record, judge, builder, run log, git commands
+(fake runner, plus one temporary repository) and the check; a run with
+`COPILOT_E2E` unset still exits 0 with its message; a run with `COPILOT_E2E=1`
+and an empty profile waited 120 s (Copilot Chat active; no account, no
+model), skipped all three tests with the readiness reason, wrote a note, and
+the check refused it (dirty tree, three skips). Those test notes were deleted
+from the local repository; nothing was pushed. TDD
+exceptions: the wdio config hooks, the results reporter, the readiness polling
+and the workflow YAML; only a real run tests them. Not verified: the workflow
+steps on GitHub (they run on the next `ext-v*` tag), and the readiness signals
+with a signed-in profile (G3).
 
 Order: G0 and G1 first (small, unblock D4); G5 and G6 in parallel (CI,
 no Copilot); G2 and G3 next; G4 and G7 last.
@@ -105,7 +178,9 @@ no Copilot); G2 and G3 next; G4 and G7 last.
   spike decides; if it fails, G5's fake host covers the views and G4 is
   limited to "a view appears under the tool call".
 - **R2 Real-Copilot flakiness.** A live model may not call the tool; the
-  suite skips with a named reason and G2 refuses an unexplained skip.
+  suite skips with a named reason and G2 refuses the skip (any skip of a
+  required test, explained or not): the owner reruns until it passes. A slow
+  Copilot start-up is waited for (up to 120 s), not skipped.
 - **R3 Required wdio job.** One flake in 78 runs; a red PR now blocks the
   merge. Mitigation: state-based waits; a flake gets a fix, not a retry.
 - **R4 Fake host fidelity (G5).** It proves the views against the

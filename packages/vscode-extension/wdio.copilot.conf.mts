@@ -11,17 +11,31 @@
 // It runs VS Code on a COPY of that profile (profile-copy.mts: only `User` and
 // `Local State`), deleted afterwards. It never reads, prints or stores the
 // sign-in: VS Code finds it in the copied state.
-import { mkdirSync, mkdtempSync, rmSync } from "node:fs";
+//
+// Release evidence (owner decision D1, docs/plans/release-ui-gate.md G2): when
+// the run ends, onComplete writes its result as a git note on the commit it
+// started on (refs/notes/release-ui), dirty tree and skips included, prints
+// the release gate's verdict and the push command, and never pushes.
+// TDD exception: the hooks below only run in a real wdio run; what they call
+// (scripts/release-evidence/) is unit-tested.
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import process from "node:process";
 import { readCopilotE2eEnv } from "./test/ui/copilot-e2e/support/copilot-e2e-env.mts";
 import { copyProfile } from "./test/ui/copilot-e2e/support/profile-copy.mts";
+import CopilotE2eResultsReporter from "./test/ui/copilot-e2e/support/results-reporter.mts";
+import { COPILOT_E2E_ROOT_ENV as ROOT_ENV, evidenceDirOf } from "./test/ui/copilot-e2e/support/run-log.mts";
+import { buildEvidence, type RunFacts } from "./scripts/release-evidence/build.mts";
+import { nodeGit } from "./scripts/release-evidence/git-notes.mts";
+import { readRunFacts, recordEvidence } from "./scripts/release-evidence/record.mts";
+import { readRunArtifacts } from "./scripts/release-evidence/run-artifacts.mts";
+import { COPILOT_E2E_VSCODE_ARGS } from "./scripts/ui-automation/copilot-vscode-args.mts";
+import { KEEP_EXTENSIONS_MARKER, KeepExtensionsLauncher } from "./scripts/ui-automation/keep-extensions-service.mts";
 import { PINNED_VSCODE_VERSION } from "./scripts/ui-automation/vscode-version.mts";
 
 // wdio loads this file in the launcher and again in every worker; only the
 // launcher copies the profile and reports the skip.
-const ROOT_ENV = "AI_CREDITS_ANALYZER_COPILOT_E2E_ROOT";
 export const COPILOT_E2E_SETTINGS = {
   // Local harness chats record token data only with debug logging on.
   "github.copilot.chat.agentDebugLog.fileLogging.enabled": true,
@@ -47,6 +61,10 @@ if (env.status === "skip") {
 const inWorker = process.env[ROOT_ENV] !== undefined;
 const rootDir = process.env[ROOT_ENV] ?? mkdtempSync(path.join(tmpdir(), "aica-copilot-e2e-"));
 const storagePath = path.join(rootDir, "storage");
+const evidenceDir = evidenceDirOf(rootDir);
+const git = nodeGit(import.meta.dirname);
+// Taken when the run starts, so a commit made during the run isn't credited with it.
+let runFacts: RunFacts | undefined;
 if (!inWorker) {
   process.env[ROOT_ENV] = rootDir;
   process.env.AI_CREDITS_ANALYZER_COPILOT_E2E_MODEL = env.model;
@@ -54,6 +72,9 @@ if (!inWorker) {
   mkdirSync(path.join(storagePath, "settings"), { recursive: true });
   copyProfile(env.userDataDir, path.join(storagePath, "settings"));
   console.log(`[copilot-e2e] running on a copy of ${env.userDataDir} (User and Local State only), expecting model ${env.model}; the copy is deleted afterwards`);
+  const { version } = JSON.parse(readFileSync(path.join(import.meta.dirname, "package.json"), "utf-8")) as { version: string };
+  runFacts = readRunFacts(git, { extensionVersion: version, vscodeVersion: PINNED_VSCODE_VERSION, requestedModel: env.model, now: new Date() });
+  if (runFacts.dirty) console.log("[copilot-e2e] the working tree has changes: the release evidence will record that, and the release gate refuses it");
 }
 
 export const config: WebdriverIO.Config = {
@@ -64,24 +85,40 @@ export const config: WebdriverIO.Config = {
     {
       browserName: "vscode",
       browserVersion: PINNED_VSCODE_VERSION,
+      // The service starts VS Code with --disable-extensions; Copilot Chat must load.
+      [KEEP_EXTENSIONS_MARKER]: true,
       "wdio:vscodeOptions": {
         extensionPath: import.meta.dirname,
         storagePath,
         userSettings: COPILOT_E2E_SETTINGS,
         verboseLogging: false,
-        vscodeArgs: {
-          "disable-renderer-backgrounding": true,
-          "disable-backgrounding-occluded-windows": true,
-          "disable-features": "CalculateNativeWinOcclusion",
-        },
+        // --password-store=basic, as the sign-in script used: without it VS Code
+        // uses the OS keyring and can't decrypt the copied sign-in.
+        vscodeArgs: { ...COPILOT_E2E_VSCODE_ARGS },
       },
-    },
+    } as WebdriverIO.Capabilities,
   ],
   services: [["vscode", { cachePath: path.join(import.meta.dirname, ".wdio-vscode-service") }]],
+  // The vscode service has downloaded VS Code and set `binary` by now.
+  onWorkerStart: (_cid, capabilities) => {
+    new KeepExtensionsLauncher({ dir: path.join(rootDir, "bin") }).prepare([capabilities as never]);
+  },
   framework: "mocha",
-  reporters: ["spec"],
+  reporters: ["spec", [CopilotE2eResultsReporter, { evidenceDir }]],
   logLevel: "warn",
   // A real chat turn takes a while.
   mochaOpts: { ui: "tdd", timeout: 600_000 },
   outputDir: path.join(import.meta.dirname, "test/ui/out"),
+  // Launcher only, after every worker has written its results.
+  onComplete() {
+    if (runFacts === undefined) return;
+    try {
+      const { results, log } = readRunArtifacts(evidenceDir);
+      const evidence = buildEvidence(runFacts, results, log);
+      recordEvidence({ git, writeFile: (file, text) => writeFileSync(file, text), log: (line) => console.log(line) }, evidence, path.join(rootDir, "evidence.json"));
+    } catch (error) {
+      console.error(`[copilot-e2e] couldn't record the release evidence: ${(error as Error).message}`);
+      process.exitCode = 1;
+    }
+  },
 };
