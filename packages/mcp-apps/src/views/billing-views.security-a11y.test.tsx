@@ -54,6 +54,41 @@ describe("U14 and U15 have no axe violations", () => {
     renderEstimate(ok(value()));
     await expectNoViolations();
   });
+
+  // A32: the states A29 left out of the axe run.
+  it("U14, an issued statement whose re-run matches, and one with no unknown, left-off or fixed lines and partial coverage", async () => {
+    const answer = issuedAnswerWithDiff();
+    const first = renderStatement(ok({ ...answer, diff: { ...answer.diff!, changed: false, lines: [], totals: [] } }));
+    expect(screen.getByText("A re-run today matches the issued copy.")).toBeInTheDocument();
+    await expectNoViolations();
+    first.unmount();
+    renderStatement(ok(statementAnswer({ statement: statement({ unknown: [], excluded: [], fixedLines: [], coverage: { turns: 10, knownTurns: 4 } }) })));
+    await expectNoViolations();
+  });
+
+  it("U14, an unreadable result, and in the extension", async () => {
+    const first = renderStatement(ok({ nothing: true }));
+    await expectNoViolations();
+    first.unmount();
+    render(<StatementView port={new FakeAppHostPort()} brand={{ ...brand, productId: "vscode-extension" }} result={ok(issuedAnswerWithDiff())} />);
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("No view for this result");
+    await expectNoViolations();
+  });
+
+  it("U15, waiting, an error, an unreadable result, and in the extension", async () => {
+    const waiting = render(<EstimateView port={new FakeAppHostPort()} brand={brand} result={undefined} />);
+    await expectNoViolations();
+    waiting.unmount();
+    const failed = renderEstimate({ isError: true, errorText: "Unknown project id nope" });
+    await expectNoViolations();
+    failed.unmount();
+    const unreadable = renderEstimate(ok({ nothing: true }));
+    await expectNoViolations();
+    unreadable.unmount();
+    render(<EstimateView port={new FakeAppHostPort()} brand={{ ...brand, productId: "vscode-extension" }} result={ok(simulatedEstimate())} />);
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("No view for this result");
+    await expectNoViolations();
+  });
 });
 
 describe("U14 and U15 from the keyboard", () => {

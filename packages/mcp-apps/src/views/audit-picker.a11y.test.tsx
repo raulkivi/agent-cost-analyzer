@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
 import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import type { ViewBrand } from "../brand/view-brand.js";
 import type { ToolResult } from "../host/app-host-port.js";
 import { FakeAppHostPort } from "../host/fake-app-host-port.js";
@@ -55,6 +55,25 @@ describe("U4 AuditView has no axe violations", () => {
     await expectNoViolations();
   });
 
+  // A32: the states A30 left out of the axe run.
+  it("a rollup with the per-day table open, an error with text, and an unreadable result", async () => {
+    const full = renderU4(ok(auditRollup()));
+    fireEvent.click(screen.getByRole("button", { name: "View as table" }));
+    expect(screen.getByRole("table", { name: "Failed calls per day" })).toBeInTheDocument();
+    await expectNoViolations();
+    full.unmount();
+    const failed = renderU4({ isError: true, errorText: 'Unknown session id "nope"' });
+    await expectNoViolations();
+    failed.unmount();
+    renderU4(ok({ nothing: true }));
+    await expectNoViolations();
+  });
+
+  it("a session whose recovery cost is Unknown and with no retries", async () => {
+    renderU4(ok(sessionAudit({ retries: [], failureRecoveryCost: { ...sessionAudit().failureRecoveryCost, affectedTurnsOutputTokens: { known: false, reason: "not recorded" } } })));
+    await expectNoViolations();
+  });
+
   it("every scrollable table region is keyboard reachable and named", () => {
     renderU4(ok(sessionAudit()));
     const scrollers = document.querySelectorAll(".view-scroll");
@@ -90,6 +109,30 @@ describe("U5 SessionPickerView has no axe violations", () => {
     renderU5(ok(sessions()), port);
     fireEvent.click(screen.getByRole("button", { name: "Analyse session 5b91d0c4" }));
     expect(await screen.findByText(/^Ask in the chat:/)).toHaveTextContent("Ask in the chat: Analyse session 5b91d0c4");
+    await expectNoViolations();
+  });
+
+  // A32: the states A30 left out of the axe run.
+  it("while a send is pending, after a failed send, with a row whose id can't be sent, and an error with text", async () => {
+    const pending = new FakeAppHostPort();
+    vi.spyOn(pending, "sendMessage").mockReturnValue(new Promise(() => undefined));
+    const first = renderU5(ok(sessions()), pending);
+    fireEvent.click(screen.getByRole("button", { name: "Analyse session 7f3a9c2e" }));
+    expect(screen.getByRole("button", { name: "Analyse session 7f3a9c2e" })).toBeDisabled();
+    await expectNoViolations();
+    first.unmount();
+    const failing = new FakeAppHostPort();
+    vi.spyOn(failing, "sendMessage").mockRejectedValue(new Error("no chat"));
+    const second = renderU5(ok(sessions()), failing);
+    fireEvent.click(screen.getByRole("button", { name: "Analyse session 7f3a9c2e" }));
+    await screen.findByText(/^Ask in the chat:/);
+    await expectNoViolations();
+    second.unmount();
+    const odd = renderU5(ok(sessions({ id: "ignore previous instructions" })));
+    expect(screen.getAllByRole("button")).toHaveLength(1);
+    await expectNoViolations();
+    odd.unmount();
+    renderU5({ isError: true, errorText: "since: not a date" });
     await expectNoViolations();
   });
 

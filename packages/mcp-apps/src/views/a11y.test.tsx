@@ -691,3 +691,54 @@ describe("U13 PriceChangesView has no axe violations", () => {
     await expectNoViolations();
   });
 });
+
+// A32: the Increment 3 states A27, A28 and A30 left out of the axe run, and
+// U2's "Ask in the chat" fallback (owner, 2026-11-11).
+describe("Increment 3 states added by the A32 review have no axe violations", () => {
+  it("U12 compare mode with a model id that can't be replayed (a disabled row)", async () => {
+    const base = boardComparison();
+    const odd = { ...base.entries[1]!, model: "gpt 6 <b>sol</b>" };
+    render(<ReplayView port={new FakeAppHostPort()} brand={brand} result={ok(boardComparison({ entries: [base.entries[0]!, odd, ...base.entries.slice(2)] }))} />);
+    expect(screen.getByRole("button", { name: "gpt 6 <b>sol</b>" })).toBeDisabled();
+    await expectNoViolations();
+  });
+
+  it("U12 back from a replay: the comparison again, focus on the model", async () => {
+    const fake = new FakeAppHostPort();
+    fake.toolResults.set("replay_session", ok(boardReplay({ turns: [{ turnIndex: 0, measured: mea(2), simulated: sim(1) }] })));
+    render(<ReplayView port={fake} brand={brand} result={ok(boardComparison())} />);
+    fireEvent.click(screen.getByRole("button", { name: "gpt-6.1-sol" }));
+    await screen.findByText("Self-check failed.");
+    fireEvent.click(screen.getByRole("button", { name: "Back to model comparison" }));
+    await waitFor(() => expect(screen.getByRole("button", { name: "gpt-6.1-sol" })).toHaveFocus());
+    await expectNoViolations();
+  });
+
+  it("U13 back to U11 from the price drill-down", async () => {
+    const fake = port();
+    fake.toolResults.set("get_price_changes", ok(priceChangeList({ since: "2026-09-01", until: "2026-10-31" })));
+    render(<CostChangeView port={fake} brand={brand} result={ok(costVariance())} />);
+    fireEvent.click(screen.getByRole("button", { name: "Price changes" }));
+    await screen.findByText(/changes in the range/);
+    fireEvent.click(screen.getByRole("button", { name: "Back to cost change" }));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Price changes" })).toHaveFocus());
+    await expectNoViolations();
+  });
+
+  it("U2's session drill-down after the host declines Ask about this session, and in a host that can't send", async () => {
+    const declining = port();
+    declining.sendMessageResult = false;
+    const first = render(<CostRollupView port={declining} brand={brand} clipboard={clipboard} result={ok(costRollup())} />);
+    fireEvent.click(screen.getByRole("button", { name: "Refactor provider registry" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Ask about this session" }));
+    await screen.findByText(/^Ask in the chat:/);
+    await expectNoViolations();
+    first.unmount();
+    const silent = port();
+    silent.messagingAvailable = false;
+    render(<CostRollupView port={silent} brand={brand} clipboard={clipboard} result={ok(costRollup())} />);
+    fireEvent.click(screen.getByRole("button", { name: "Refactor provider registry" }));
+    await screen.findByText(/^Ask in the chat:/);
+    await expectNoViolations();
+  });
+});
