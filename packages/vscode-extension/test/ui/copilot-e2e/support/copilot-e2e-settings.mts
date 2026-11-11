@@ -27,6 +27,12 @@ export const COPILOT_E2E_SETTINGS = {
     "cursor-workspace": false,
   },
   "chat.tools.terminal.enableAutoApprove": false,
+  // VS Code 1.146 turned this on by default (1.145: off, experimental): new
+  // panel chats then run in the Copilot SDK harness (agent host), which has
+  // its own model pool (it ignored the picker's Claude Haiku 5.5 and ran
+  // Sonnet 5.5, release-ui-gate.md R5), doesn't load the test agent without
+  // a migration, and doesn't write the debug log the analyzer reads.
+  "chat.defaultToCopilotHarness": false,
   "workbench.startupEditor": "none",
   "extensions.autoCheckUpdates": false,
   "update.mode": "none",

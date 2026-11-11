@@ -35,4 +35,8 @@ describe("the real-Copilot suite's tool access (owner decision D6)", () => {
     expect(file.content).toContain(`tools: ['${ANALYZER_TOOL_SET}/*']\n`);
     expect(file.content.match(/^tools:/gm)).toHaveLength(1);
   });
+
+  it("keeps new chats on VS Code's local harness, where the test agent, the selected model and Copilot's debug log apply (1.146 defaults to the Copilot SDK harness)", () => {
+    expect(COPILOT_E2E_SETTINGS["chat.defaultToCopilotHarness"]).toBe(false);
+  });
 });
