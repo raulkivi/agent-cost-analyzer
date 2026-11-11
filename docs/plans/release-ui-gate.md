@@ -47,7 +47,7 @@ Fixed test-first in `cost-series.ts`.
 | D9 | Any skip of a required test blocks a release (confirms G2's tightened rule). |
 | D10 | The Increment 2 release (extension 0.6.0, app 0.11.0) waits for G4 and the empty-window fix (D7). *Superseded for G7 by D11.* |
 | D11 | The chart findings G7's judge found are fixed, not pinned: G7 merges with no exceptions, and the fixes ship in the Increment 2 release, which therefore also waits for G7 (`npm run test:ui` runs in the required `extension` job and in `release-extension.yml`, so findings would block both). |
-| D12 | **Proposed (2026-11-11), for the owner to confirm:** hard cap 3 AI Credits per real-Copilot run. `COPILOT_E2E_MAX_AI_CREDITS` (default 3; `0` sends no chat) is checked before every chat against what the run's chats have cost so far; a refused chat skips with "budget exceeded", and the gate refuses the skip (D9). Checked between chats, so a run can pass the cap by at most one chat: about 0.6 AI Credits on the right model, but 16 on Sonnet 5.5 (VS Code 1.146, R5). |
+| D12 | Hard cap 3 AI Credits per real-Copilot run (proposed and confirmed by the owner, 2026-11-11). `COPILOT_E2E_MAX_AI_CREDITS` (default 3; `0` sends no chat) is checked before every chat against what the run's chats have cost so far; a refused chat skips with "budget exceeded", and the gate refuses the skip (D9). Checked between chats, so a run can pass the cap by at most one chat: about 0.6 AI Credits on the right model, but 16 on Sonnet 5.5 (VS Code 1.146, R5). |
 
 ## 2. What gates each release today, and what replaces it
 
@@ -450,16 +450,25 @@ no Copilot); G2 and G3 next; G4 and G7 last.
      ran on `claude-sonnet-5.5` and `gpt-6-luna`, not the seeded
      `claude-haiku-5.5` (about 1.3 expected, D8 about 2). The after-chat
      model check skipped each test, but only after the chat had been paid
-     for. Cause, found without sending a chat: the storage key and the code
-     that reads it are the same in 1.145 and 1.146, and the chat's first
-     start shows the seeded model. But on 1.146,
-     `workbench.action.chat.newChat`, which the specs run before every chat,
-     can start the new chat on another model. Read from the picker in
-     no-chat runs: Copilot Fusion (Copilot's router), GPT-6 Luna and Claude
-     Fable 5. (The owner's profile stores GPT-6 Luna for the Copilot CLI
-     session type, `chat.currentLanguageModel.panel.agent-host-copilotcli`.)
-     The 1.146 code path that does this wasn't pinned down; the fix doesn't
-     depend on it.
+     for. **Root cause** (read from 1.146's bundled workbench, confirmed by
+     no-chat probes): two settings changed their default from `false`
+     (1.145, experimental) to `true`: `chat.defaultToCopilotHarness` ("new
+     editor and panel chat sessions default to the Agent Host Copilot SDK
+     instead of the local harness") and `chat.editor.preferCopilotHarness`.
+     With the agent host available, the second turns even a local choice
+     back into the SDK harness (`selectionReason: "copilotPreference"`). So
+     every new chat ran in the Copilot SDK harness, with its own model pool:
+     the `copilot/…` model the suite seeded or selected doesn't apply there.
+     The first chat ran on that harness's default (Sonnet 5.5), later ones
+     on the owner's stored pick for it (GPT-6 Luna,
+     `chat.currentLanguageModel.panel.agent-host-copilotcli`). The SDK
+     harness also wants the test agent migrated ("1 user customization needs
+     an update"), so the chats ran as plain Agent, with every tool (D6).
+     A second, older cause showed up once the chats were local: while a chat
+     is empty (a staged prompt doesn't count), VS Code resets its mode to
+     `chat.newSession.defaultMode` whenever the agent list refreshes
+     (`_setEmptyModelState`, the same in 1.145), and agent discovery runs
+     after start-up. The default `""` means plain Agent.
   2. *`session not created: Chrome instance exited`* for `copilot-views.e2e.ts`
      and `extension-rows.e2e.ts`. Every spec file starts its own VS Code on
      the same profile copy, and VS Code is single-instance per profile: a
@@ -477,9 +486,19 @@ no Copilot); G2 and G3 next; G4 and G7 last.
      Chromium (150.0.7871.124) matches 1.146's Electron (Chromium
      150.0.7871.250, the same as 1.145's), so the driver is not the cause.
      The no-account smoke run had no chat in progress, so its VS Code quit.
+     Once the chats ran on the local harness (`807b250`), every VS Code quit
+     on its own within a second, so the sessions held open were most likely
+     the SDK harness's agent sessions. The release wait below stays as a
+     safeguard.
 
   Fixes (test-only, no product change):
 
+  - **Local harness, test agent (the root cause):** the run's settings
+    (`copilot-e2e-settings.mts`, unit-tested) set
+    `chat.defaultToCopilotHarness` and `chat.editor.preferCopilotHarness` to
+    `false`, and `chat.newSession.defaultMode` to `aica-e2e`. No-chat probe:
+    four new chats in a row settled within 1 s on Local, `aica-e2e` and
+    Claude Haiku 5.5.
   - **Model selection:** `sendToAgent` (`copilot-chat.ts`) starts each chat
     with `workbench.action.chat.open` and `modelSelector: { vendor:
     "copilot", id: COPILOT_E2E_MODEL }`, which both 1.145 and 1.146 support
@@ -491,13 +510,24 @@ no Copilot); G2 and G3 next; G4 and G7 last.
     not from the state the suite wrote. If that isn't the requested model
     (exact match on Copilot's name or id, so Auto, a fast variant or a
     failed selection all refuse), nothing is sent and the test skips,
-    naming the model shown. A picker on the wrong model costs 0 AI Credits,
-    and the gate still refuses the skip (D9). The real run below shows the
-    picker isn't enough on 1.146. Then a plain `workbench.action.chat.open` with
-    the query sends from the same chat. The decision is
+    naming the model shown. It also requires the input to show the `Local`
+    session target and the `aica-e2e` agent, waiting up to 5 s for the three
+    to settle. A wrong picker, harness or agent costs 0 AI Credits, and the
+    gate still refuses the skip (D9). Then a plain `workbench.action.chat.open`
+    with the query sends from the same chat. The decisions are
     `pre-send-model.mts` (unit-tested). The after-chat check of the logged
     model id stays.
-  - **AI Credits cap (D12, proposed):** `credit-budget.mts` (unit-tested)
+  - **In-flight guard (owner request, 2026-11-11):** after sending, the suite
+    reads the run's new Copilot debug logs (`main.jsonl`) every 250 ms. When
+    the first `llm_request` names another model, or a Copilot CLI session
+    appears in the run's `COPILOT_HOME` (the SDK harness), it runs
+    `workbench.action.chat.cancel` (checked in 1.146's code), records the
+    AI Credits logged so far, and writes a stop marker so every later chat of
+    the run skips unsent. Then the test skips. A wrong model costs its first
+    request (a Sonnet-class agent request is 1-5 AI Credits in the repo's
+    fixture), not the whole chat. Decisions: `in-flight-model.mts`
+    (unit-tested).
+  - **AI Credits cap (D12, decided):** `credit-budget.mts` (unit-tested)
     sums the run log's `credits` entries, which every spec file appends to,
     and `sendToAgent` refuses to send once the sum reaches
     `COPILOT_E2E_MAX_AI_CREDITS` (default 3): "AI Credits budget exceeded:
@@ -519,30 +549,18 @@ no Copilot); G2 and G3 next; G4 and G7 last.
   guard; 2.1 passed) and with `COPILOT_E2E_MAX_AI_CREDITS=0` (every chat
   refused by the cap; 2.1 passed). All three spec files launched in both.
 
-  **Still open: the guard doesn't stop the wrong model on 1.146.** One real
-  run on `bc9b46f` (clean tree, `COPILOT_E2E_MAX_AI_CREDITS=2`, a watchdog
-  that stops the run when one chat costs more than 1 AI Credit). Before
-  1.4's chat the picker showed "Claude Haiku 5.5", so the guard sent it.
-  The session was logged as `claude-sonnet-5.5` and cost **16.0553 AI
-  Credits**, about what the owner's run spent on its Sonnet chat (16.38 for
-  one Sonnet and two GPT-6 Luna chats). The after-chat check skipped 1.4.
-  The cap then skipped 2.3 and 2.4 unsent, and the watchdog stopped the run.
-  Its process-group kill also made the next two spec files fail to start, so
-  this run says nothing about the launch fix after real chats. Gate:
-  `BLOCKED`; note removed, never pushed. So on 1.146 the picker is not what
-  decides the first chat's model. Not yet known: whether the window's first
-  chat always goes to another model (Copilot Fusion, Copilot's router, was
-  the picker's model for the first new chat in the no-chat runs), or whether
-  the request takes the session's model and not the picker's. Finding out
-  needs more paid chats. Until then:
+  Real runs during the fix (each note removed afterwards, never pushed):
 
-  - **Don't run the real-Copilot suite on VS Code 1.146.** The pre-send
-    guard catches a picker that shows another model, but not this. The cap
-    limits the loss to one chat (about 16 AI Credits on Sonnet 5.5), not 0.
-  - Options for the owner: run the release gate on 1.145.0 (22/22 at
-    `a4e1764`; the guards work there too, since 1.145 has the same open
-    command, `modelSelector` and picker name), or allow a paid
-    investigation. The next guard to try: while the chat runs, read the
-    session's model from Copilot's debug log as soon as its first request is
-    logged, and cancel the chat (`workbench.action.chat.cancel`) on a
-    mismatch. That limits a wrong model to one request.
+  | Commit | What changed | Result | AI Credits |
+  |---|---|---|---|
+  | `bc9b46f` | picker selection and pre-send picker check only | 1.4's chat ran on `claude-sonnet-5.5` with the picker on Claude Haiku 5.5 (SDK harness); after-chat check skipped it; cap skipped 2.3 and 2.4; a watchdog stopped the run, so the later spec files never started | **16.0553** |
+  | `4c40f0c` | + local-harness settings, + Local/agent pre-send check | every chat refused unsent: the input showed plain Agent (the mode reset above) | 0 |
+  | `807b250` | + `chat.newSession.defaultMode`, + settle wait | **22/22 passed**, every session `claude-haiku-5.5`, each first request logged after 2.8-4.5 s on `claude-haiku-5.5` (`panel/editAgent`), no cancel, no profile-release wait needed (each VS Code quit on its own), gate **`PASS`** | **1.0967** (1.4, 2.3, 2.4: 0.1121 + 0.1863 + 0.2056; views 0.4627; 1.14 0.1300) |
+
+  The in-flight cancel has not fired in a real run: no wrong model got that
+  far once the chats were local. Its cost per wrong-model chat is the first
+  request's (unit-tested decision, not measured).
+
+  Also seen: VS Code 1.146 discovers agents from `~/.claude/agents` too (the
+  owner's own agents appear in the run's mode picker). The run selects
+  `aica-e2e` by name, so they are listed but never used.
