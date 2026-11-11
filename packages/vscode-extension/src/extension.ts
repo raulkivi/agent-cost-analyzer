@@ -45,9 +45,10 @@ export function activate(context: vscode.ExtensionContext): void {
     context.subscriptions.push(vscode.commands.registerCommand(command, run));
   }
   // The integration tests' internal commands (diagnostics/test-hooks.ts):
-  // only in the Extension Development Host that @vscode/test-electron
-  // starts, never in an installed copy.
-  if (context.extensionMode === vscode.ExtensionMode.Test) {
+  // only in an Extension Development Host (Test mode, as @vscode/test-electron
+  // starts it, or Development, as the real-Copilot suite's normal mode does,
+  // G3), never in an installed copy, which runs in Production.
+  if (context.extensionMode !== vscode.ExtensionMode.Production) {
     for (const [command, handler] of Object.entries(extension.testHookHandlers)) {
       context.subscriptions.push(vscode.commands.registerCommand(command, handler));
     }
