@@ -45,7 +45,9 @@ export const CLAUDE_SETS: HostSet[] = ["light", "dark"].map((mode) => {
 // Modern colours, the values the approved A0b boards use
 // (docs/plans/mockups/mcp-apps/README.md), and against the recorded Dark and
 // Light High Contrast themes below. testing.iconPassed (the host's success
-// colour, U11's fall) is the boards' value for Light and Dark Modern.
+// colour, U11's fall) is #73c991 in both Light and Dark Modern: VS Code's
+// default, which A33's run in VS Code 1.146 measured (U12's and U13's fall
+// text at 2.9:1 on Light Modern). The A0b boards drew #388a34 for Light Modern.
 const VSCODE_PALETTES: Record<string, Record<string, string>> = {
   "vscode-light": {
     "--vscode-foreground": "#3b3b3b",
@@ -57,7 +59,7 @@ const VSCODE_PALETTES: Record<string, Record<string, string>> = {
     "--vscode-textLink-foreground": "#005fb8",
     "--vscode-errorForeground": "#f85149",
     "--vscode-editorWarning-foreground": "#bf8803",
-    "--vscode-testing-iconPassed": "#388a34",
+    "--vscode-testing-iconPassed": "#73c991",
     "--vscode-focusBorder": "#005fb8",
   },
   "vscode-dark": {

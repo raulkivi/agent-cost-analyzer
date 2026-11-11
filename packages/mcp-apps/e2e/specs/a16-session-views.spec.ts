@@ -117,16 +117,16 @@ inEachClaudeSet(() => {
     await expect(view.title()).toHaveText("Cost rollup");
 
     await view.tabTo("portal-web");
-    expect(await view.focusRingVisible()).toBe(true);
+    await expect.poll(() => view.focusRingVisible()).toBe(true);
     await view.pressEnter();
     await expect(view.backButton("Back to cost rollup")).toBeVisible();
 
     await view.tabTo("Back to cost rollup");
-    expect(await view.focusRingVisible()).toBe(true);
+    await expect.poll(() => view.focusRingVisible()).toBe(true);
     await view.pressEnter();
     await expect(view.title()).toHaveText("Cost rollup");
     await expect.poll(() => view.focusedControl()).toBe("portal-web");
-    expect(await view.focusRingVisible()).toBe(true);
+    await expect.poll(() => view.focusRingVisible()).toBe(true);
   });
 
   test("A16 2 keyboard: Tab and Enter open a turn in U1", async ({ host }) => {
@@ -134,7 +134,7 @@ inEachClaudeSet(() => {
     await expect(view.title()).toHaveText("Fix the bug");
 
     await view.tabTo("Turn 0");
-    expect(await view.focusRingVisible()).toBe(true);
+    await expect.poll(() => view.focusRingVisible()).toBe(true);
     await view.pressEnter();
     await expect(view.sessionCost.turnDetail(0)).toBeVisible();
   });

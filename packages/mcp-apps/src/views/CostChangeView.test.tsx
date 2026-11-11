@@ -69,10 +69,13 @@ describe("CostChangeView content", () => {
     expect(within(screen.getByRole("region", { name: "Not explained" })).getByText("every turn has a priced figure")).toBeInTheDocument();
   });
 
-  it("colours a fall with the host's success colour, not info", () => {
+  // A33: the success colour drawn as a mark (--view-mark-fall), which holds 3:1 on VS Code Light Modern.
+  it("colours a fall with the host's success colour as a mark, not info", () => {
     const css = readFileSync(path.join(__dirname, "cost-change/cost-change.css"), "utf8");
-    expect(css).toMatch(/\.waterfall-decrease\s*{\s*fill:\s*var\(--color-text-success/);
-    expect(css).toMatch(/\.cv-swatch--decrease\s*{\s*background:\s*var\(--color-text-success/);
+    const theme = readFileSync(path.join(__dirname, "../theme/theme-mcp-host.css"), "utf8");
+    expect(css).toMatch(/\.waterfall-decrease\s*{\s*fill:\s*var\(--view-mark-fall\)/);
+    expect(css).toMatch(/\.cv-swatch--decrease\s*{\s*background:\s*var\(--view-mark-fall\)/);
+    expect(theme).toMatch(/--view-mark-fall:\s*color-mix\(in srgb, var\(--color-text-success/);
     expect(css).not.toContain("--color-text-info");
   });
 

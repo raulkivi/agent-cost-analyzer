@@ -13,13 +13,13 @@
 
 .cv-waterfall .waterfall-total { fill: var(--color-accent); }
 .cv-waterfall .waterfall-increase { fill: var(--color-text-danger, var(--brand-fb-danger)); }
-.cv-waterfall .waterfall-decrease { fill: var(--color-text-success, var(--brand-fb-success)); }
+.cv-waterfall .waterfall-decrease { fill: var(--view-mark-fall); }
 .cv-key { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 11px; }
 .cv-key span { display: inline-flex; align-items: center; gap: 5px; }
 .cv-swatch { display: inline-block; width: 9px; height: 9px; border-radius: 2px; }
 .cv-swatch--total { background: var(--color-accent); }
 .cv-swatch--increase { background: var(--color-text-danger, var(--brand-fb-danger)); }
-.cv-swatch--decrease { background: var(--color-text-success, var(--brand-fb-success)); }
+.cv-swatch--decrease { background: var(--view-mark-fall); }
 
 .cv-total td { font-weight: 600; }
 .cv-detail { display: flex; flex-direction: column; gap: 6px; }

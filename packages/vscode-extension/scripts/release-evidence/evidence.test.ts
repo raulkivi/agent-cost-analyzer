@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import {
   COPILOT_CHAT_CHECKS,
   COPILOT_EXTENSION_ROWS,
+  COPILOT_INCREMENT3_ROWS,
   COPILOT_VIEW_ROWS,
   copilotTestTitle,
   evaluateNote,
@@ -32,6 +33,7 @@ function evidence(overrides: Partial<ReleaseEvidence> = {}): ReleaseEvidence {
       { title: copilotTestTitle("2.4", "another agent"), state: "passed", skipReason: null },
       ...COPILOT_VIEW_ROWS.map((id) => ({ title: copilotTestTitle(id, "a view"), state: "passed" as const, skipReason: null })),
       ...COPILOT_EXTENSION_ROWS.map((id) => ({ title: copilotTestTitle(id, "an extension row"), state: "passed" as const, skipReason: null })),
+      ...COPILOT_INCREMENT3_ROWS.map((id) => ({ title: copilotTestTitle(id, "an Increment 3 view"), state: "passed" as const, skipReason: null })),
     ],
     aiCreditsSpent: 0.0123,
     ranAt: "2026-11-11T10:00:00.000Z",
@@ -57,6 +59,8 @@ describe("copilotTestTitle and testIdOf (stable ids, so a renamed test can't dro
     ["A24 1.1 U9 repository cost over time", "A24 1.1"],
     ["A16 U1 session cost", "A16 U1"],
     ["A16 keyboard Tab and Enter", "A16 keyboard"],
+    ["A33 U12.compare replay on other models", "A33 U12.compare"],
+    ["A33 U5.analyse one row's Analyse", "A33 U5.analyse"],
   ])("reads a checklist row id from %j", (title, id) => {
     expect(testIdOf(title)).toBe(id);
   });
@@ -82,7 +86,34 @@ describe("copilotTestTitle and testIdOf (stable ids, so a renamed test can't dro
       "A16 U3",
       "A16 keyboard",
     ]);
-    expect(REQUIRED_COPILOT_E2E_TESTS).toEqual([...COPILOT_CHAT_CHECKS, ...COPILOT_VIEW_ROWS, ...COPILOT_EXTENSION_ROWS]);
+    expect(REQUIRED_COPILOT_E2E_TESTS).toEqual([...COPILOT_CHAT_CHECKS, ...COPILOT_VIEW_ROWS, ...COPILOT_EXTENSION_ROWS, ...COPILOT_INCREMENT3_ROWS]);
+  });
+
+  // A33 (Phase 12 Increment 3): copilot-increment3-views.e2e.ts, the views of
+  // the Increment 3 tools the extension serves (no billing view there).
+  it("requires the Increment 3 view rows (A33)", () => {
+    expect(COPILOT_INCREMENT3_ROWS).toEqual([
+      "A33 tools",
+      "A33 U12.compare",
+      "A33 U12.replay",
+      "A33 U13",
+      "A33 U4.session",
+      "A33 U4.rollup",
+      "A33 U5.list",
+      "A33 themes",
+      "A33 narrow",
+      "A33 footer",
+      "A33 U5.analyse",
+    ]);
+    expect(COPILOT_INCREMENT3_ROWS.every((id) => testIdOf(copilotTestTitle(id, "x")) === id)).toBe(true);
+  });
+
+  it("refuses a run that skipped an Increment 3 row", () => {
+    const record = evidence({
+      tests: evidence().tests.map((test) => (testIdOf(test.title) === "A33 U5.analyse" ? { ...test, state: "skipped" as const, skipReason: "budget exceeded" } : test)),
+    });
+
+    expect(codes(judgeEvidence(record, expectation))).toEqual(["test-skipped"]);
   });
 
   // G7 (step 10.17): extension-rows.e2e.ts's 2.1 (Configure Tools) and 1.14 (a real git folder).

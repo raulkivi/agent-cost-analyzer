@@ -540,14 +540,15 @@ What you can click:
   place; **Back to cost rollup** returns.
 - **The kind and minimum severity filters** in the findings view ask the
   server again. Evidence stays collapsed until you open it.
-- **Ask about this session** (spend view) sends `Analyse session <id>` to
-  the chat. Only that fixed text goes to the model; titles, prompts and
-  evidence never do. If Copilot Chat doesn't take the message, the view
-  shows **Ask in the chat: Analyse session <id>** for you to type; it
-  doesn't try again by itself.
-- **Analyse** (session picker) sends the same fixed text for that row's
-  session and then reads **Sent**, or shows the text to type if the message
-  isn't taken. The row itself is not a button.
+- **Ask about this session** (spend view) puts `Analyse session <id>` in
+  the chat input; press Enter to send it (VS Code 1.146 doesn't send a
+  view's message by itself). Only that fixed text goes to the model;
+  titles, prompts and evidence never do. If Copilot Chat doesn't take the
+  message, the view shows **Ask in the chat: Analyse session <id>** for you
+  to type; it doesn't try again by itself.
+- **Analyse** (session picker) puts the same fixed text for that row's
+  session in the chat input and then reads **Sent**, or shows the text to
+  type if the message isn't taken. The row itself is not a button.
 - **A model** in the replay comparison replays the session on that model in
   place; **Back to model comparison** returns with focus on that model.
 - **Price changes** in the cost change view opens the price timeline in

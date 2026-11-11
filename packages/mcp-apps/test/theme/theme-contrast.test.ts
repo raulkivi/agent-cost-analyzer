@@ -116,10 +116,13 @@ describe.each(ALL_SETS)("contrast: $name", (set) => {
 });
 
 describe("U11 waterfall fills", () => {
-  it("are the host's danger and success colours with the brand's fallbacks, and the brand's data colour", () => {
+  // A33: VS Code Light Modern's success colour (#73c991) is 2.0:1 on its
+  // ground, so a fall is drawn with --view-mark-fall, the success colour
+  // drawn towards the text colour, as a fall written as text is.
+  it("are the host's danger colour, the success colour as a mark, both with the brand's fallbacks, and the brand's data colour", () => {
     expect(WATERFALL_FILLS).toEqual({
       rise: "var(--color-text-danger, var(--brand-fb-danger))",
-      fall: "var(--color-text-success, var(--brand-fb-success))",
+      fall: "var(--view-mark-fall)",
       "period total": "var(--color-accent)",
     });
   });

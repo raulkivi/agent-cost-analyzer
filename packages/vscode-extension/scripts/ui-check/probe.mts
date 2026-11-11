@@ -118,6 +118,10 @@ export const PROBE_SCRIPT = `(() => {
       pushMark(el, "marker", filled ? style.fill : style.stroke, "", labelled);
     } else if (el.tagName === "path" && stroked && !filled) {
       pushMark(el, "line", style.stroke, style.strokeDasharray === "none" ? "" : style.strokeDasharray, labelled);
+    } else if (el.tagName === "path" && stroked && filled && !series) {
+      // An open marker (U12's simulated diamonds, A33): its outline is the
+      // mark; the fill is the ground, painted to hide the line under it.
+      pushMark(el, "marker", style.stroke, "", labelled);
     } else if (filled && series) {
       pushMark(el, "bar", style.fill, "", labelled);
     } else if (filled && el.tagName === "path") {

@@ -2,7 +2,7 @@
 
 **Last changed:** 2026-11-11 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
-Status: **in progress: the MVP (A0–A16) released 2026-11-10, A12 dropped; Increment 2 (A17–A24, A24 replaced by step 10.17) released 2026-11-11 in extension 0.6.0 and app 0.11.0; Increment 3 (A25–A32) built and reviewed 2026-11-11, next A33 (its checks as specs); planned 2026-10-28, updated
+Status: **in progress: the MVP (A0–A16) released 2026-11-10, A12 dropped; Increment 2 (A17–A24, A24 replaced by step 10.17) released 2026-11-11 in extension 0.6.0 and app 0.11.0; Increment 3 (A25–A32) built and reviewed 2026-11-11, A33 (its checks as specs) done 2026-11-11, so Increment 3 is ready for the owner's release run; planned 2026-10-28, updated
 2026-11-07 for the Phase 14 and Phase 15 tools.** This is Phase 12 in
 [implementation-plan.md](../implementation-plan.md). Its dependencies are
 met: Phase 9.12's tools are done, step 10.13 is done and `ext-v0.1.0`
@@ -831,12 +831,31 @@ limits, gets the guard.
 - **VS Code's warning and danger grounds.** The recorded VS Code sets
   reference `--vscode-inputValidation-*` colours they don't record, so the
   contrast tests can't check U12's callouts or U14's alert on VS Code
-  (their text is the host's text colour). A33's G4 runs in real Copilot
-  Chat.
-- **Real hosts.** That U5's Analyse sends in real Copilot Chat, and whether
-  Claude Desktop asks before a view's `replay_session` or
-  `get_price_changes` call, are A33's (the fake host has no prompts, risk
-  R4).
+  (their text is the host's text colour). A33's G4 judges U12's own-model
+  check and self-check callouts in real Copilot Chat in four themes (no
+  finding); the seeded session's checks pass, so a warning or danger
+  callout is still not seen in VS Code.
+- **U5 in VS Code: closed by A33 (2026-11-11), with a finding for the
+  owner.** In real Copilot Chat on VS Code 1.146, Analyse neither sends nor
+  falls back: VS Code accepts the message, so the button reads **Sent**,
+  and puts exactly `Analyse session <id>` in the chat input, unsent. The
+  chat gains no request and no model turn until the user presses Enter.
+  Seen in both of A33's runs that pressed it (`A33 U5.analyse`, outcome
+  `staged`). The view's message carries only the fixed text, as built.
+  **Owner decision open:** whether "Sent" should read differently in a
+  host that stages the message (a view can't tell staged from sent: the
+  host answers the same), and whether the extension guide's wording
+  (changed to "puts … in the chat input") is enough. U2's "Ask about this
+  session" uses the same message, so it should behave the same (not run
+  by A33: it would start a model turn in a host that sends).
+- **Claude Desktop's permission prompts (A24 2.10 for Increment 3).** A
+  fake host shows none and Claude Desktop can't be driven, so A33 covers
+  this only as "a drill-down is one plain `tools/call`" (G5,
+  `a33-increment3-rows.spec.ts`: U12 model → `replay_session`, U11 → U13
+  `get_price_changes`, nothing else reaches the host). **Owner decision
+  open:** whether Claude Desktop asks before a view's `replay_session` or
+  `get_price_changes` call stays outside the gate (risk R4), or the owner
+  checks it by hand once.
 
 ## 7. Tasks
 
@@ -899,7 +918,7 @@ Starts after Increment 2's exit criterion is met (A24, now step 10.17 G4-G6).
 | A30 | U4 `AuditView` and U5 `SessionPickerView` (the picker sends only the fixed "Analyse session <id>" template). **Done 2026-11-11:** `toSessionAuditViewModel`, `toAuditRollupViewModel` and `toSessionListViewModel` in `view-models/`; the router sends `get_session_audit` and `get_audit_rollup` to U4 and `list_sessions` to U5; `AppHostPort.canSendMessage()` is false only when the host explicitly says it cannot send (owner, 2026-11-11, Q7: try, then fall back); U5's per-row button shares `AskAboutSession.tsx`'s single `sendMessage` site. Component, a11y, keyboard, hostile-text and G5 specs (Claude light and dark). `get_session_audit` omits `calls` unless asked, so neither the router nor the parser needs it. The recorded VS Code host advertises no `message` capability (A0) yet U2's message was sent there (A16), so U5 offers Analyse and, on a declined or failed send, puts "Ask in the chat: Analyse session <id>" in that row; U2's "Ask about this session" does the same through the shared hook, and G5 covers a declining host and a VS Code host. **G4 (A33) must confirm in real Copilot Chat that U5's Analyse sends** | medium | Sonnet | A25b, A26 |
 | A31 | Fullscreen mode for U2 and U9 (`requestDisplayMode`). **Done 2026-11-11:** a Fullscreen control in the footer of U2 and U9 when the host lists `fullscreen`; it reads Exit fullscreen in fullscreen, keeps focus, and the views drop the narrow collapse there. `AppHostPort.requestDisplayMode` already existed on the port and adapter; `FakeAppHostPort` now switches modes like a host. G5 covers both in both Claude themes. VS Code offers only inline, so no control there | low | Haiku | A26 |
 | A32 | Accessibility and security review of A27–A31 (as A14), and docs: architecture.md, threat-model.md §6, User Guide, extension guide, both CHANGELOGs. **Review done 2026-11-11** (§6.1, A32 review): axe over every U4, U5, U12–U15 and fullscreen state, none failing; keyboard paths, the no-forwarding rule over `replay_session`, `get_price_changes`, U5's message and now `requestDisplayMode`, hostile text in every new field, and the U5 fallback (one send per press, never retried) all held as built. Fixed test-first: rise and fall text under 4.5:1 on VS Code Light Modern and the light fallbacks (`--view-text-rise`/`--view-text-fall`), U12's not-replayed hatching at 1.9–3.0:1, U11 sending its period to `get_price_changes` without checking it is a date, U4's per-day chart with no text form (now View as table), U4 and U5 dropping a tool's error text. The four coverage gaps (issued statement diff, estimate range, inferred rise, audits with failed calls) are G5 specs from canned results (`e2e/specs/a32-coverage-gaps.spec.ts`). Open: §6.1. **Docs done 2026-11-11:** architecture.md §4.1.1, §4.4 and §11.4, threat-model.md §6.1, the User Guide (U12–U15, U4, U5, fullscreen) and the extension guide (U12, U13, U4, U5; no fullscreen in VS Code), both CHANGELOGs' `[Unreleased]` checked against the code. No screenshots: no script makes them from made-up data | medium | Opus | A27–A31 |
-| A33 | Increment 3 checks, written as wdio and Playwright specs (step 10.17), not manual: VS Code Copilot Chat (no U14/U15 there) and Claude Desktop, light and dark | — | none (specs, step 10.17) | A32 |
+| A33 | Increment 3 checks, written as wdio and Playwright specs (step 10.17), not manual: VS Code Copilot Chat (no U14/U15 there) and Claude Desktop, light and dark. **Done 2026-11-11** (branch `claude/a33-increment3-checks`). **G4, real Copilot Chat (VS Code 1.146):** `copilot-increment3-views.e2e.ts`, one chat in the `aica-e2e` agent calls `compare_models_for_session`, `replay_session`, `get_price_changes`, `get_session_audit`, `get_audit_rollup` and `list_sessions` in one step over the made-up history; eleven tests, all required by the release gate (`COPILOT_INCREMENT3_ROWS`): the extension's tool list (six views, no billing tool), U12 compare with the model drill-down and Back by mouse and keyboard, U12 replay, U13, U4 session and rollup, U5's list, four themes with the probe and judge, 360 px and the widest, the footer, and U5's Analyse. The seeder now dates each session's debug log at its start (Copilot prices start 2026-10-01, so the replay has figures) and gives each session its own short id. **U5 in VS Code:** Analyse puts exactly `Analyse session <id>` in the chat input, unsent, and the button reads Sent (§6.1). **G5, fake host:** `a33-increment3-rows.spec.ts`, the footer on every Increment 3 view and U12's and U13's drill-downs as one plain `tools/call` each, in Claude light and dark with axe; the rest of §8.3 was already covered (A27–A32). **Found and fixed test-first:** VS Code Light Modern's success colour is #73c991 (2.0:1), not the boards' #388a34, so U12's and U13's fall text was 2.9:1 and U11's fall bar about 2:1; on a light ground the fall is now mixed towards the text colour (`--view-text-fall`, `--view-mark-fall`). The probe read U12's open diamonds as bars painted the ground colour (1.0:1); it now judges an outlined path by its outline. Claude's permission prompts stay outside the gate (§6.1). Real runs: three of the new spec (0.44 AI Credits each), then the whole real-Copilot suite on `5da99bb`, 33 of 33 passed, gate `PASS`, 1.5542 AI Credits; 2.8818 in all ([release-ui-gate.md](release-ui-gate.md) G4, "Increment 3 rows (A33)") | — | none (specs, step 10.17) | A32 |
 
 ### 7.3 Target releases
 
@@ -971,6 +990,18 @@ release workflow sends an odd minor to the Marketplace pre-release channel.
   template.
 - No view can write anything (§6).
 - The views match the owner-approved A25b boards.
+
+**Status (A33, 2026-11-11): met in the gate, with two owner decisions
+open (§6.1).** VS Code Copilot Chat: U12, U13, U4 and U5 render and
+drill down in a real chat, and the extension's `tools/list` names no
+billing tool (G4, `copilot-increment3-views.e2e.ts`). Claude Desktop: every
+Increment 3 view in the fake host with Claude's light and dark sets, axe
+clean (G5). "Simulated", "estimate" and "inferred" are asserted in G5
+(A27, A29, A32) and in the view-model property tests (A25). U5 sends only
+its template (G5); in VS Code 1.146 the template lands in the chat input,
+unsent. No view writes: every host call in G5 is a read-only `tools/call`
+or the template. Open: whether Claude Desktop asks before a view's tool
+call, and whether U5's "Sent" fits a host that stages the message.
 
 ## 9. Open questions and risks
 

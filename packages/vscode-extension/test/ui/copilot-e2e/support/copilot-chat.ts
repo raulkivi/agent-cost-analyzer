@@ -138,6 +138,17 @@ export class AnalyzerClient {
     return session;
   }
 
+  // Every session the server lists, newest first.
+  async sessions(): Promise<SessionSummary[]> {
+    return (await this.tool<{ sessions: SessionSummary[] }>("list_sessions", { limit: 200 })).sessions;
+  }
+
+  // The tools the extension's server offers, with whether each has an MCP App view (`_meta.ui`).
+  async tools(): Promise<{ name: string; hasView: boolean }[]> {
+    const { tools } = await this.client.listTools();
+    return tools.map((tool) => ({ name: tool.name, hasView: (tool._meta as { ui?: unknown } | undefined)?.ui !== undefined }));
+  }
+
   async aiCredits(sessionId: string): Promise<number | null> {
     const cost = await this.tool<{ totals: { aiCredits: { value: number | null } } }>("get_session_cost", { sessionId });
     return cost.totals.aiCredits.value;
@@ -171,6 +182,15 @@ export function recordChatCredits(spent: number): void {
   const total = creditsSpent(runLog());
   console.log(`[copilot-e2e] AI Credits spent by the run so far: ${total.toFixed(4)} (cap ${MAX_AI_CREDITS}, ${MAX_AI_CREDITS_ENV})`);
   if (total >= MAX_AI_CREDITS) console.log("[copilot-e2e] AI Credits budget exceeded: every remaining chat skips unsent");
+}
+
+// Whether the run may start one more model turn that sendToAgent doesn't send
+// (A33: U5's Analyse sends from the view): the same cap and stop marker.
+export function mayStartTurn(): { send: true } | { send: false; reason: string } {
+  const stopped = stopReason();
+  if (stopped !== undefined) return { send: false, reason: `an earlier chat of this run was cancelled (${stopped}); nothing was sent.` };
+  const budget = budgetCheck(runLog(), MAX_AI_CREDITS);
+  return budget.send ? { send: true } : budget;
 }
 
 // The accessible names in the chat input; the model picker's is "Models, <name>".

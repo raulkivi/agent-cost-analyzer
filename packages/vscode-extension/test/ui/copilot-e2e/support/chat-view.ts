@@ -17,6 +17,7 @@ import { hasVisibleFocusIndicator } from "../../support/focus-probe.js";
 import { judgeProbe, type Probe } from "../../../../scripts/ui-check/judge.mts";
 import { PROBE_SCRIPT } from "../../../../scripts/ui-check/probe.mts";
 import { isWithinTolerance } from "../../support/panel-width.js";
+import type { AnalyseRowState } from "./analyse-outcome.mts";
 import { overlayOver, type Rect } from "./view-overlay.mts";
 
 const PART = ".mcp-app-part";
@@ -115,12 +116,15 @@ export class ChatView {
     throw new Error(`The view has no ${selector} "${name}"`);
   }
 
-  // Tabs from the view's first control until a button has focus.
+  // Tabs from the view's first control until a button has focus. When Tab
+  // leaves the view (past its last control), focus goes back to its first
+  // control, as tabTo does: a view whose only button is its first control
+  // (U12's replay, U4's rollup: View as table) is reached on the way round.
   async tabToAButton(limit = 40): Promise<void> {
     await this.focusFirstControl();
     for (let presses = 0; presses < limit; presses++) {
       await browser.keys(["Tab"]);
-      if (!(await browser.execute(() => document.hasFocus()))) break;
+      if (!(await browser.execute(() => document.hasFocus()))) await this.focusFirstControl();
       if (await browser.execute(() => document.activeElement?.tagName === "BUTTON")) return;
     }
     throw new Error(`Tab reached no button in the view in ${limit} presses`);
@@ -213,6 +217,24 @@ export class ChatView {
     });
   }
 
+  // U12 compare mode: the rows in the order shown, "measured" then each model id.
+  async replayRows(): Promise<string[]> {
+    return browser.execute(() =>
+      Array.from(document.querySelectorAll('[aria-label="Simulated total per model"] li[data-row]'), (row) => row.getAttribute("data-row") ?? ""),
+    );
+  }
+
+  // U5: what one row shows after its Analyse was pressed (A33): its button
+  // reads Sent, it shows the text to type in place of the button, or neither.
+  async analyseRow(shortId: string): Promise<AnalyseRowState> {
+    return browser.execute((id: string) => {
+      if (document.querySelector(`button[aria-label="Sent: session ${id}"]`)) return "sent";
+      const row = Array.from(document.querySelectorAll('[aria-label="Sessions"] > li')).find((candidate) => candidate.textContent?.includes(id));
+      const status = row?.querySelector('[role="status"]')?.textContent ?? "";
+      return status.startsWith("Ask in the chat:") ? "fallback" : "pending";
+    }, shortId) as Promise<AnalyseRowState>;
+  }
+
   // Text contrast (WCAG AA) and fit, judged as layout-theme.e2e.ts does.
   // The view is transparent, so the chat's ground (read in the workbench) is
   // painted on its root first; the probe would otherwise assume white.
@@ -258,6 +280,17 @@ export class ChatViews {
   // Chat requests shown in the chat: a drill-down inside a view must not add one.
   async requestCount(): Promise<number> {
     return browser.$$(REQUEST).length;
+  }
+
+  // The text of each request the chat shows (the list is virtualised: only
+  // requests near the visible part are in the DOM).
+  async requestTexts(): Promise<string[]> {
+    return browser.execute((selector: string) => Array.from(document.querySelectorAll(selector), (element) => (element as HTMLElement).innerText), `${REQUEST} .value .rendered-markdown`);
+  }
+
+  // What the chat input shows ("" when empty; an empty input shows its placeholder outside the lines).
+  async inputText(): Promise<string> {
+    return browser.execute(() => (document.querySelector(".interactive-input-part .interactive-input-editor .view-lines") as HTMLElement | null)?.innerText ?? "");
   }
 
   // Waits until the chat's last response has finished.

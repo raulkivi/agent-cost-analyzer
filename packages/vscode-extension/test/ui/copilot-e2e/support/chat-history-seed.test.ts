@@ -9,7 +9,7 @@ import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { seedCopilotSessionStore } from "@agent-cost-analyzer/server/src/test-support/copilot-session-store";
 import { FIXTURE_VENDOR_PROFILES_DIR } from "@agent-cost-analyzer/server/src/test-support/vendor-profiles-dir";
 import { createCopilotMcpServer } from "../../../../src/mcp/copilot-mcp-server.js";
-import { clearChatHistory, HISTORY_REPOSITORIES, seedChatHistory } from "./chat-history-seed.mts";
+import { clearChatHistory, HISTORY_REPLAY_MODELS, HISTORY_REPOSITORIES, seedChatHistory } from "./chat-history-seed.mts";
 
 // The made-up chat history the G4 view specs read (step 10.17): sessions in
 // two repositories over several weeks, with known AI Credits, seeded into
@@ -133,6 +133,65 @@ describe("seedChatHistory", () => {
     const cost = await call<{ totals: { aiCredits: { value: number | null } } }>(mcp, "get_session_cost", { sessionId: history.sessionIds[0] });
 
     expect(cost.totals.aiCredits.value).toBeGreaterThan(0);
+  });
+
+  // A33 (Increment 3 views in G4): U12 replays a seeded session. Copilot's
+  // prices start on 2026-10-01, so each debug log is dated at its session's
+  // start (the fixture log is from August, when no Copilot price is known).
+  it("dates each session's debug log at the session's start", async () => {
+    const { userDataDir, copilotHome, history } = seeded({ existingStore: false });
+    const mcp = await serverOver(userDataDir, copilotHome);
+
+    const { sessions } = await call<{ sessions: { id: string; startedAt: string }[] }>(mcp, "list_sessions", { limit: 50 });
+    const newest = sessions.find((session) => session.id === history.sessionIds[0])!;
+    const replay = await call<{ pricing: { asOf: string } }>(mcp, "replay_session", { sessionId: newest.id, model: HISTORY_REPLAY_MODELS[0] });
+
+    expect(replay.pricing.asOf).toBe(newest.startedAt.slice(0, 10));
+  });
+
+  // U5 names each row's Analyse button by the id's first 8 characters.
+  it("gives every session its own short id", () => {
+    const { history } = seeded({ existingStore: false });
+
+    expect(new Set(history.sessionIds.map((id) => id.slice(0, 8))).size).toBe(history.sessionIds.length);
+  });
+
+  it("replays the newest session on its own model and the compared models with a price", async () => {
+    const { userDataDir, copilotHome, history } = seeded({ existingStore: false });
+    const mcp = await serverOver(userDataDir, copilotHome);
+
+    const comparison = await call<{ measured: { value: number | null }; entries: { model: string; total: { value: number | null }; isMeasuredModel: boolean }[] }>(
+      mcp,
+      "compare_models_for_session",
+      { sessionId: history.sessionIds[0], models: [...HISTORY_REPLAY_MODELS] },
+    );
+
+    expect(comparison.measured.value).toBeGreaterThan(0);
+    expect(comparison.entries.map((entry) => entry.model)).toEqual([expect.any(String), ...HISTORY_REPLAY_MODELS]);
+    expect(comparison.entries[0]!.isMeasuredModel).toBe(true);
+    expect(comparison.entries.every((entry) => entry.total.value !== null && entry.total.value > 0)).toBe(true);
+  });
+
+  it("gives the audit views tool calls in every session, with outcomes Copilot doesn't record", async () => {
+    const { userDataDir, copilotHome, history } = seeded({ existingStore: false });
+    const mcp = await serverOver(userDataDir, copilotHome);
+
+    const audit = await call<{ totals: { toolCalls: number; unknown: number } }>(mcp, "get_session_audit", { sessionId: history.sessionIds[0] });
+    const rollup = await call<{ sessionCount: number; daily: unknown[] }>(mcp, "get_audit_rollup", { since: history.periods.last90Days.since });
+
+    expect(audit.totals.toolCalls).toBeGreaterThan(0);
+    expect(audit.totals.unknown).toBe(audit.totals.toolCalls);
+    expect(rollup.sessionCount).toBe(history.sessionIds.length);
+    expect(rollup.daily.length).toBeGreaterThanOrEqual(4);
+  });
+
+  it("has documented price changes in the last 90 days for the price-changes view", async () => {
+    const { userDataDir, copilotHome, history } = seeded({ existingStore: false });
+    const mcp = await serverOver(userDataDir, copilotHome);
+
+    const { changes } = await call<{ changes: { kind: string }[] }>(mcp, "get_price_changes", { ...history.periods.last90Days });
+
+    expect(changes.some((change) => change.kind === "documented")).toBe(true);
   });
 });
 

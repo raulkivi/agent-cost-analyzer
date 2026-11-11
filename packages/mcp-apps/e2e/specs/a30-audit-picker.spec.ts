@@ -76,7 +76,7 @@ inEachClaudeSet(() => {
     const view = await host.show("list_sessions", { ...CLAUDE_CODE, ...OCTOBER });
     const shortId = ((await view.picker.rows().first().locator(".sp-id").textContent()) ?? "").trim();
     await view.tabTo(`Analyse session ${shortId}`);
-    expect(await view.focusRingVisible()).toBe(true);
+    await expect.poll(() => view.focusRingVisible()).toBe(true);
     await view.pressEnter();
     await expect.poll(() => modelTurnsIn(host.calls)).toHaveLength(1);
     expect(messagesOffTemplate(host.calls)).toEqual([]);
