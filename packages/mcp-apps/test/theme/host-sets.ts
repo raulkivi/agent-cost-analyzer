@@ -4,6 +4,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import type { Theme } from "./css-vars.js";
+import { hostPalette, parseRecordedColours } from "./vscode-theme-recording.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(here, "../../../..");
@@ -40,12 +41,11 @@ export const CLAUDE_SETS: HostSet[] = ["light", "dark"].map((mode) => {
 
 // VS Code sends var(--vscode-*) references, which the webview resolves
 // against the active theme. The A0 reports record the references only, so
-// they are resolved here against VS Code's built-in Light Modern, Dark Modern
-// and Dark High Contrast colours, the values the approved A0b boards use
-// (docs/plans/mockups/mcp-apps/README.md). Light High Contrast was not
-// recorded, so it is not listed. testing.iconPassed (the host's success
-// colour, U11's fall) is the boards' value for Light and Dark Modern and VS
-// Code's registered default for Dark High Contrast.
+// they are resolved here against VS Code's built-in Light Modern and Dark
+// Modern colours, the values the approved A0b boards use
+// (docs/plans/mockups/mcp-apps/README.md), and against the recorded Dark and
+// Light High Contrast themes below. testing.iconPassed (the host's success
+// colour, U11's fall) is the boards' value for Light and Dark Modern.
 const VSCODE_PALETTES: Record<string, Record<string, string>> = {
   "vscode-light": {
     "--vscode-foreground": "#3b3b3b",
@@ -73,31 +73,38 @@ const VSCODE_PALETTES: Record<string, Record<string, string>> = {
     "--vscode-testing-iconPassed": "#73c991",
     "--vscode-focusBorder": "#0078d4",
   },
-  "vscode-hc-dark": {
-    "--vscode-foreground": "#ffffff",
-    "--vscode-descriptionForeground": "#ffffff",
-    "--vscode-editor-background": "#000000",
-    "--vscode-sideBar-background": "#000000",
-    "--vscode-activityBar-background": "#000000",
-    "--vscode-widget-border": "#6fc3df",
-    "--vscode-textLink-foreground": "#21a6ff",
-    "--vscode-errorForeground": "#f48771",
-    "--vscode-testing-iconPassed": "#73c991",
-    "--vscode-editorWarning-foreground": "#ffd370",
-    "--vscode-focusBorder": "#f38518",
-  },
 };
 
-const VSCODE_LABELS: Record<string, string> = {
-  "vscode-light": "VS Code Light Modern",
-  "vscode-dark": "VS Code Dark Modern",
-  "vscode-hc-dark": "VS Code Dark High Contrast",
-};
+interface VscodeSetSource {
+  label: string;
+  // The A0 report whose style-variable references and document theme the set uses.
+  report: string;
+  // Where the palette comes from: a recording of the theme, else the table above.
+  recording?: string;
+  palette?: string;
+}
 
-export const VSCODE_SETS: HostSet[] = Object.entries(VSCODE_PALETTES).map(([file, palette]) => {
-  const report = recorded(`${file}.json`);
+// The High Contrast palettes are recordings of VS Code's own resolved colours
+// (A24 1.7a, `npm run record:host-themes`), not defaults. The A0 style-variable
+// references were recorded for Dark High Contrast only; Light High Contrast uses
+// the Light Modern report (document theme "light"), assuming VS Code maps the
+// same --vscode-* references in every theme and only the colours differ.
+const VSCODE_SOURCES: VscodeSetSource[] = [
+  { label: "VS Code Light Modern", report: "vscode-light.json", palette: "vscode-light" },
+  { label: "VS Code Dark Modern", report: "vscode-dark.json", palette: "vscode-dark" },
+  { label: "VS Code Dark High Contrast", report: "vscode-hc-dark.json", recording: "vscode-hc-dark-theme.jsonc" },
+  { label: "VS Code Light High Contrast", report: "vscode-light.json", recording: "vscode-hc-light-theme.jsonc" },
+];
+
+function recordedPalette(file: string): Record<string, string> {
+  return hostPalette(parseRecordedColours(readFileSync(path.join(repoRoot, "docs/plans/mcp-apps-a24-results", file), "utf8")));
+}
+
+export const VSCODE_SETS: HostSet[] = VSCODE_SOURCES.map((source) => {
+  const report = recorded(source.report);
+  const palette = source.recording !== undefined ? recordedPalette(source.recording) : VSCODE_PALETTES[source.palette!]!;
   return {
-    name: `${VSCODE_LABELS[file]} (recorded references, resolved)`,
+    name: `${source.label} (recorded references, resolved)`,
     theme: report.theme.appliedToDocument,
     hostVars: { ...palette, ...report.styleVariables.defined },
   };

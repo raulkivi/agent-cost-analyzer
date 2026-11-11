@@ -2,7 +2,7 @@
 
 **Last changed:** 2026-11-11 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
-Status: **planned 2026-11-11.** Owner rule, 2026-11-11: every UI check
+Status: **in progress: G0, G1 (#202) and G6 (#204) done 2026-11-11.** Owner rule, 2026-11-11: every UI check
 before a release is automated. VS Code and Copilot checks use wdio
 (`wdio-vscode-service`, [vscode-ui-automation.md](vscode-ui-automation.md));
 web-only checks use Playwright (or the integrated Chrome for exploratory
@@ -58,6 +58,18 @@ repo.
 | G5 | Fake MCP Apps host (Playwright, `packages/mcp-apps/e2e/`): a host page with ext-apps `AppBridge` loads `dist/views.html`, relays `tools/call` to the real server over stdio on the `web-e2e` fixture home, applies Claude's recorded and VS Code's sets; specs per A16 §2 and A24 §2 (including two currencies, the full U10 → U9 → U1 chain, permission-free drill-down, narrow and fullscreen) with axe | high | Opus (host), Sonnet (specs) | — | New required CI job `mcp-apps-e2e`, also in both release workflows |
 | G6 | High Contrast sets recorded by wdio (replaces A24 1.7a) into `packages/mcp-apps/test/theme/`, added to the contrast tests; CLI text check for non-UI clients | medium | Sonnet | — | Contrast tests cover Dark and Light High Contrast; server test green |
 | G7 | Remaining extension rows: chart-mark contrast in the judge (1.8), *Configure Tools* wording (2.1) and a seeded git folder (1.14) in the real-Copilot suite, 1.1 accepted as automated | medium | Sonnet | G3 | Manual-checks doc lists no release-gating hand row |
+
+**G6 built (2026-11-11).** `npm run record:host-themes` in
+`packages/vscode-extension` (`wdio.record.conf.mts`, run under xvfb; not part
+of `test:ui:vscode` or CI) switches to Default High Contrast and Default High
+Contrast Light, runs *Developer: Generate Color Theme From Current Settings*
+and writes `docs/plans/mcp-apps-a24-results/vscode-hc-{dark,light}-theme.jsonc`.
+`host-sets.ts` reads both palettes from them (pure parser
+`vscode-theme-recording.ts`, vitest-tested), so `theme-contrast.test.ts` covers
+Dark and Light High Contrast. Light High Contrast reuses the Light Modern A0
+style-variable report (references only; the recording supplies the colours).
+The CLI text check is `register-app-views.test.ts` ("answers the three
+Increment 2 tools with plain text"). Re-record after a VS Code version bump.
 
 Order: G0 and G1 first (small, unblock D4); G5 and G6 in parallel (CI,
 no Copilot); G2 and G3 next; G4 and G7 last.

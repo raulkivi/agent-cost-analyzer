@@ -54,6 +54,20 @@ jobs:
       - run: npx playwright install --with-deps chromium
         working-directory: packages/vscode-extension
       - run: npm run test:ui --workspace=packages/vscode-extension
+      # The real-VS Code suite (same as the extension-ui job in ci.yml, which
+      # is a required check by D4). The VS Code download is cached by the
+      # pinned version, as in ci.yml.
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: packages/vscode-extension/.wdio-vscode-service
+          key: wdio-vscode-service-${{ runner.os }}-${{ hashFiles('packages/vscode-extension/wdio.conf.mts', 'packages/vscode-extension/scripts/ui-automation/vscode-version.mts') }}
+      - run: xvfb-run -a -s "-screen 0 1600x1000x24" npm run test:ui:vscode --workspace=packages/vscode-extension
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: failure()
+        with:
+          name: vscode-ui-out
+          path: packages/vscode-extension/test/ui/out/
+          if-no-files-found: ignore
 
       - name: Package
         env:

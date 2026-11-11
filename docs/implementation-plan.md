@@ -9,10 +9,11 @@ extension sharing the same code (vision §5). Phase 11 pins the standalone
 app's pi provider against a real captured session, postponed from Phase 9.6.
 Phase 12 adds branded, interactive MCP Apps views for both products.
 
-**Overall status (2026-11-06):** Phases 0-10 have their code and docs
+**Overall status (2026-11-10):** Phases 0-10 have their code and docs
 merged to `main`. The extension's 0.1.0 is released (tag `ext-v0.1.0`,
-2026-11-03). Open: Phase 10's owner manual checks and decisions (see its
-section), Phase 11 (not started), Phase 12 (in progress: the MVP, A0–A16, released 2026-11-10 in extension 0.4.0 and app 0.10.0, A12 dropped; Increment 2 started; the plan
+2026-11-03); the latest stable is 0.4.0 and 0.5.0 is a pre-release
+(2026-11-10). Open: Phase 10's owner manual checks and decisions (see its
+section), Phase 11 (not started), Phase 12 (in progress: the MVP, A0–A16, released 2026-11-10 in extension 0.4.0 and app 0.10.0, A12 dropped; Increment 2's A17–A23 done, next A24, the owner's checks, on the 0.5.0 pre-release; the plan
 covers the Phase 14 and 15 tools since 2026-11-07), Phase 13 (in
 progress: steps 13.0-13.10 and 13.5a merged, the owner's eyes-on review
 of 13.8 open), Phase 14
@@ -1429,8 +1430,10 @@ and 0.12.0. Stable extension releases use even minors.
 exit criterion and shipped in extension 0.4.0 and app 0.10.0. Increment 2:
 A17 (web exports), A18 (view models), A19 (`_meta.ui` on the four
 cost-analysis tools) and A20–A22 (views U9, U10, U11) are done; the A17b
-boards are drawn and wait for the owner's approval; next A23 (review and
-docs) and A24 (owner checks). Increment 3 (A25–A33) has not started. A1–A4 (turn series, brand
+boards are approved (owner's answers in
+[plans/mcp-apps.md](plans/mcp-apps.md) §9.1); A23 (review and docs) is
+done; extension 0.5.0 is out as a pre-release (2026-11-10) for A24, the
+owner's checks, which come next; then extension 0.6.0 and app 0.11.0. Increment 3 (A25–A33) has not started. A1–A4 (turn series, brand
 injection and identity, web package exports) and A8 (the `registerAppViews`
 server group, `get_turn_series`, `_meta.ui` on three tools, ext-apps 1.7.5)
 done; A0 host spike done by the owner (both hosts refuse `vscode://`
