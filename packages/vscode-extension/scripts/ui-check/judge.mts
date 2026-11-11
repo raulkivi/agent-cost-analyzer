@@ -1,7 +1,10 @@
 // Judges what the UI check's browser probe saw (step 10.11): the page must
 // fit the panel's width, and every visible text must reach WCAG AA contrast
-// (4.5:1, or 3:1 for large text) against the ground it is painted on.
-import { compositeOver, contrastRatio, parseCssColor, type Rgba } from "./contrast.mts";
+// (4.5:1, or 3:1 for large text) against the ground it is painted on; every
+// chart mark must reach 3:1 and be told from its neighbour series
+// (chart-marks.mts).
+import { judgeChartMarks, type ProbedMark } from "./chart-marks.mts";
+import { compositeOver, contrastRatio, groundOf, parseCssColor } from "./contrast.mts";
 
 export interface ProbedText {
   label: string;
@@ -18,17 +21,8 @@ export interface Probe {
   scrollWidth: number;
   overflowing: string[];
   texts: ProbedText[];
-}
-
-const OPAQUE_FALLBACK: Rgba = { r: 255, g: 255, b: 255, a: 1 };
-
-function groundOf(backgrounds: string[]): Rgba {
-  let ground = OPAQUE_FALLBACK;
-  for (const value of [...backgrounds].reverse()) {
-    const colour = parseCssColor(value);
-    if (colour && colour.a > 0) ground = compositeOver(colour, ground);
-  }
-  return ground;
+  // The page's chart marks; absent when the caller didn't probe them.
+  marks?: ProbedMark[];
 }
 
 function isLarge(text: ProbedText): boolean {
@@ -56,5 +50,6 @@ export function judgeProbe(probe: Probe): string[] {
       findings.push(finding);
     }
   }
+  findings.push(...judgeChartMarks(probe.marks ?? []));
   return findings;
 }

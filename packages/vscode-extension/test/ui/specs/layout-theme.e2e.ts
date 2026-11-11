@@ -3,6 +3,7 @@
 // Manual checks 1.8, 1.9 and 1.10 (docs/plans/vscode-extension-manual-checks.md),
 // driven in a real VS Code (step 10.16). Each test title cites its check.
 import { browser, expect } from "@wdio/globals";
+import { judgeChartMarks } from "../../../scripts/ui-check/chart-marks.mts";
 import { judgeProbe, type Probe } from "../../../scripts/ui-check/judge.mts";
 import { PROBE_SCRIPT } from "../../../scripts/ui-check/probe.mts";
 import { layoutFor } from "../../../../web/src/lib/layout.js";
@@ -37,6 +38,72 @@ async function probe(view: PanelView): Promise<Probe> {
   void view;
   return (await browser.execute(`return ${PROBE_SCRIPT}`)) as Probe;
 }
+
+const CHART_THEMES = [
+  ["Default High Contrast", "vscode-high-contrast"],
+  ["Default High Contrast Light", "vscode-high-contrast-light"],
+  ["Default Dark Modern", "vscode-dark"],
+  ["Default Light Modern", "vscode-light"],
+] as const;
+
+// Findings the judge's chart rule has on charts nobody has fixed yet, pinned
+// like the font-size test below: the threshold is not relaxed, the test names
+// what is open and fails when it changes, so a fix removes its line and a new
+// finding is never hidden. Owner decision needed (docs/plans/vscode-ui-automation.md
+// section 6.9): the token-type and tool-status palettes are hard-coded hex
+// values (InsightsDashboard.tsx, audit-format.ts) that miss 3:1 on one ground
+// each, and stacked segments are told apart by colour and legend only.
+const OPEN_CHART_FINDINGS: Record<"dark" | "light", string[]> = {
+  dark: [
+    "dashboard overview: chart mark contrast N:1 < 3: Tokens by model uncachedInput (bar)",
+    "dashboard overview: series not distinguishable: Tokens by model cacheRead / output (colours N:1 apart; no different dash or pattern, no direct label on both)",
+  ],
+  light: [
+    "dashboard overview: chart mark contrast N:1 < 3: Tokens by model cacheRead (bar)",
+    "dashboard overview: chart mark contrast N:1 < 3: Tool calls by tool unknown (bar)",
+    "dashboard overview: series not distinguishable: Tokens by model cacheRead / output (colours N:1 apart; no different dash or pattern, no direct label on both)",
+    "tool audit: chart mark contrast N:1 < 3: Tool-call outcomes per turn unknown (bar)",
+  ],
+};
+const withoutRatios = (finding: string) => finding.replace(/\d+\.\d+:1/g, "N:1");
+
+interface ChartView {
+  name: string;
+  // Fewer marks than this means the chart did not draw (a vacuous pass).
+  minMarks: number;
+  open(view: PanelView): Promise<void>;
+}
+
+// The panel's chart views in the main launch's fixture. The Dashboard's Cost over
+// time tab draws no mark here or in the S9 fixture (too little cost history), so
+// its lines are judged only by the UI check (npm run test:ui), whose fixtures draw them.
+const CHART_VIEWS: ChartView[] = [
+  {
+    name: "session turns",
+    minMarks: 1,
+    open: async (view) => {
+      await view.chooseOption("Turns");
+      await view.waitForTurnRows(1);
+    },
+  },
+  {
+    name: "dashboard overview",
+    minMarks: 1,
+    open: async (view) => {
+      await view.chooseOption("Dashboard");
+      await view.waitForText("Insights");
+      await view.chooseDashboardView("Overview");
+    },
+  },
+  {
+    name: "tool audit",
+    minMarks: 1,
+    open: async (view) => {
+      await view.chooseOption("Tool audit");
+      await view.waitForText("Tool-call outcomes per turn");
+    },
+  },
+];
 
 suite("Themes and font (checks 1.8, 1.10)", () => {
   suiteSetup(async () => {
@@ -85,6 +152,33 @@ suite("Themes and font (checks 1.8, 1.10)", () => {
 
       await saveScreenshot(`1.8-${bodyClass}`);
       expect(findings).toEqual([]);
+    });
+  }
+
+  // "Charts still distinguishable" (check 1.8), the judge's chart-mark rule
+  // (scripts/ui-check/chart-marks.mts): every data mark 3:1 against its ground,
+  // neighbouring series told apart by colour, dash/pattern or direct labels.
+  // Each view is probed in all four themes; a view that draws no mark would
+  // pass vacuously, so each must report the marks it expects.
+  for (const [theme, bodyClass] of CHART_THEMES) {
+    test(`1.8 ${theme}: chart marks reach 3:1 and neighbouring series are distinguishable (open findings pinned)`, async () => {
+      await useTheme(theme, bodyClass);
+      await panel.focusIntoPanel();
+      const report = await panel.inside(async (view) => {
+        const results: string[] = [];
+        for (const chartView of CHART_VIEWS) {
+          await chartView.open(view);
+          const probed = await probe(view);
+          const marks = probed.marks ?? [];
+          const findings = judgeChartMarks(marks);
+          console.log(`1.8 ${theme} / ${chartView.name}: ${marks.length} marks in ${[...new Set(marks.map((mark) => mark.chart))].join(" | ")}; findings ${JSON.stringify(findings)}`);
+          if (marks.length < chartView.minMarks) throw new Error(`${chartView.name} draws ${marks.length} chart marks, expected at least ${chartView.minMarks}`);
+          results.push(...findings.map((finding) => `${chartView.name}: ${finding}`));
+        }
+        return results;
+      });
+      await saveScreenshot(`1.8-charts-${bodyClass}`);
+      expect(report.map(withoutRatios)).toEqual(OPEN_CHART_FINDINGS[bodyClass.includes("light") ? "light" : "dark"]);
     });
   }
 

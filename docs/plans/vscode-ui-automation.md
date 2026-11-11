@@ -347,7 +347,7 @@ dependencies that never ship.
 | 1.5 | `panel.e2e.ts` | 150-turn session: 151 rows with the header, `first-render` about 100 ms and `data-ready` about 130 ms against the 1 s budget, selecting a turn about 10 ms against a 500 ms bound, no sideways overflow |
 | 1.6 | `panel.e2e.ts` | The new `holdRequests`/`releaseRequests` hooks hold `getInsights`; Cancel, "Loading cancelled", Retry, dashboard |
 | 1.7 | `keyboard.e2e.ts` | Down/Enter in the Sessions tree, Tab walk with a visible focus indicator on every stop, column chooser Enter/Escape and focus return, Pretty/Raw/Icicle radios by arrow keys, arrow keys inside the diagram, View as table `aria-pressed` |
-| 1.8 | `layout-theme.e2e.ts` | Both High Contrast themes: the UI check's probe and judge on the real page (zero findings), focus outline, selected row. Screenshots in `test/ui/out/`. **Manual:** "charts still distinguishable" |
+| 1.8 | `layout-theme.e2e.ts` | Both High Contrast themes: the UI check's probe and judge on the real page (zero findings), focus outline, selected row. Screenshots in `test/ui/out/`. Since G7 also the chart-mark rule in four themes (below) |
 | 1.9 | `layout-theme.e2e.ts` | 640 px gives `medium`, 360 px gives `narrow` (view `<select>`, no radio group); no sideways scroll once the setup banner is dismissed; the banner itself fits 360 and 320 px |
 | 1.10 | `layout-theme.e2e.ts` | Light theme changes the body class and `--vscode-editor-background`; `editor.fontSize` reaches the webview as a variable that nothing uses (Q4, decided 2026-11-04: the panel follows the workbench font; the spec pins it) |
 | 1.11 | `panel.e2e.ts` | `ai-credits-analyzer-doc` scheme, a typed key leaves it clean, copy puts the prompt on the clipboard (the clipboard works under xvfb) |
@@ -358,10 +358,11 @@ dependencies that never ship.
 | 2.1, 2.2, 2.6 | `mcp.e2e.ts` | VS Code's own *MCP: List Servers* (`workbench.mcp.listServer`) lists the server without Copilot Chat installed. The 20 tools stay the integration suite's |
 | 2.5 | `mcp-trust.e2e.ts` | Own capability: Workspace Trust on, a folder whose settings enable the server; untrusted gives no server, the Trust button in the Workspace Trust editor gives one |
 
-**Still manual:** §3 (remote), §4, the README review, 1.8's chart
-judgement, 2.1's *Configure Tools* wording in Copilot Chat, and Copilot
-agent mode itself (2.3, 2.4, and a real chat for 1.4) except through the
-owner's opt-in suite (§7). 1.1-1.4 and 1.12 were automated in a second pass
+**Still manual:** §3 (remote), §4 and the README review, none of which
+gates a release (D2). 1.8's chart judgement (the judge's chart-mark rule,
+below), 2.1's *Configure Tools* wording in Copilot Chat and 1.14 on a real
+git folder (§7 items 5 and 6) and Copilot agent mode itself (2.3, 2.4, and a
+real chat for 1.4, §7) are automated since step 10.17 G7. 1.1-1.4 and 1.12 were automated in a second pass
 (§6.6, over fixtures); 2.3 and 2.4 only at tool level, in the integration
 suite. 2.2's "20 tools" is asserted by the integration suite, not here.
 
@@ -529,8 +530,12 @@ wdio's summary line reads, for example, "13 passed, 78 total (17%
 completed)": it counts every spec file once per capability (13 × 6) and
 the specs a capability filters out as not completed. 13 passed is the whole suite.
 
-**Opt-in suite** (`npm run test:ui:vscode:copilot`, §7): 1 spec file, 3
-tests (1.4, 2.3, 2.4 with a real chat). Still never run end to end.
+**Chart marks (check 1.8, step 10.17 G7).** The probe (`probe.mts`) reports each chart's data marks and `judgeProbe` applies the judge's chart-mark rule (`scripts/ui-check/chart-marks.mts`, unit-tested in `chart-marks.test.ts`): (1) every data mark (bar, line, marker, legend swatch, hatching that carries meaning) reaches 3:1 against the ground it is painted on (WCAG 1.4.11), translucent paints composited first; (2) each pair of neighbouring series in a chart (order of first appearance) is told apart by ONE of: paints 3:1 apart, a different non-colour cue (stroke dash pattern or a fill pattern), or a direct label on both in the chart. A legend alone does not count (it makes the reader match colours), and neither does "View as table"; the threshold is not relaxed for light grounds. `layout-theme.e2e.ts` probes the session's turns, the Dashboard's Overview and the Tool audit in Default High Contrast, High Contrast Light, Dark Modern and Light Modern, failing a view that draws fewer marks than expected (no vacuous pass). Findings: fixed test-first in `packages/web` (`TrendColumns` filled with `--color-accent`, the button background, invisible in High Contrast; the sparkline's hard-coded `#4a7` was 2.9:1 on a light page: both now `--color-series-1`). Open and pinned in the spec, never hidden: the token-type palette (`InsightsDashboard.tsx`) and the tool-status "unknown" grey (`audit-format.ts`) are hard-coded hex values under 3:1 on one ground each, and stacked segments (tokens by model) differ by colour and legend only. A fix needs themed tokens and a pattern or label cue: an owner decision. The Cost over time tab draws no mark in the wdio fixtures; the Playwright UI check (`npm run test:ui`) judges it. `npm run test:ui` itself now also reports these chart findings in its many scenarios (the replay and share-of-total bars pass because each is named by its row).
+
+**Opt-in suite** (`npm run test:ui:vscode:copilot`, §7): 2 spec files:
+`copilot-agent.e2e.ts` (1.4, 2.3, 2.4 with a real chat) and
+`extension-rows.e2e.ts` (G7: 2.1 *Configure Tools*, 2 tests, no chat; 1.14 on
+a real git folder, 4 tests, one chat).
 
 **Support modules** (`test/ui/support/`): the `vscode-host.ts` port, page
 objects `analyzer-panel.ts`, `sidebar-views.ts`, `mcp-server-list.ts`,
@@ -566,7 +571,7 @@ comparison and the gating decision.
 
 ## 7. Opt-in real-Copilot suite (owner's machine only)
 
-`npm run test:ui:vscode:copilot` covers checks 1.4, 2.3 and 2.4 with a **real signed-in Copilot agent-mode chat**. It is **not** part of `test:ui:vscode`, the `extension-ui` job or `npm test`; its specs live in `test/ui/copilot-e2e/` (outside the default spec glob) and its config, `wdio.copilot.conf.mts`, exits 0 with a message unless `COPILOT_E2E=1` and `COPILOT_E2E_USER_DATA_DIR` are set, so CI cannot pick it up. It spends real AI Credits.
+`npm run test:ui:vscode:copilot` covers checks 1.4, 2.3, 2.4 and 1.14 with a **real signed-in Copilot agent-mode chat**, and 2.1's *Configure Tools* wording with the real picker. It is **not** part of `test:ui:vscode`, the `extension-ui` job or `npm test`; its specs live in `test/ui/copilot-e2e/` (outside the default spec glob) and its config, `wdio.copilot.conf.mts`, exits 0 with a message unless `COPILOT_E2E=1` and `COPILOT_E2E_USER_DATA_DIR` are set, so CI cannot pick it up. It spends real AI Credits.
 
 **Status: green end to end (2026-11-11, step 10.17 G3).** On the owner's signed-in test profile, under xvfb, with owner decisions D5 and D6: Copilot ready after 0.7 s, 1.4, 2.3 and 2.4 passed in 27.9 s on `claude-haiku-5.5` (observed log id `claude-haiku-5.5`), 0.9313 AI Credits, gate `PASS` ([release-ui-gate.md](release-ui-gate.md) G3). It needed normal mode (see "Normal mode" below). Pure parts are unit-tested (`copilot-e2e-env.test.ts`, `profile-copy.test.ts`, `profile-seed.test.ts`, `copilot-e2e-settings.test.ts`, `copilot-readiness.test.ts`, `workbench-bridge.test.ts`); without the env vars it still skips cleanly.
 
@@ -589,6 +594,8 @@ comparison and the gating decision.
 2. 1.4: a new chat in the test-only agent with a fixed prompt ("Reply with the single word: ok"). Waits (polling every 5 s, up to 4 minutes, no sleeps) for a new session with **known AI Credits**, then asserts through the MCP tools (`list_sessions`, `get_session_cost`) that it has at least one turn, AI Credits above 0, and that the status bar shows today's credits.
 3. 2.3, 2.4: two more new chats that ask Copilot to call `list_log_providers`, and `list_sessions` with `provider: "claude-code"`; asserts only that the session's tool-call audit (`list_tool_calls`, kind `mcp`) holds a call to that tool. It never asserts on response text.
 4. **Model check:** after each chat it compares the session's model id with `COPILOT_E2E_MODEL` through a normaliser (case, spaces, dots and dashes ignored; a dated suffix is fine). It prints `observed Copilot log id for <model>: <id>` every time, so the owner can add Haiku 5.5's real id to the Copilot log id register (learn-rule-register item 10, where it is only inferred). A different model (not selected, not on the plan, a fallback) **skips** the test with a message naming the model that ran; the spelling never fails a run. The release gate refuses that skip (G2): pick the model and rerun.
+5. **2.1, Copilot's Configure Tools (step 10.17 G7, `specs/extension-rows.e2e.ts`).** No message is sent: it costs no AI Credits. It opens agent mode (`workbench.action.chat.open` with `mode: "agent"`) and runs `workbench.action.chat.configureTools`, the command VS Code 1.145 registers for the chat input's tools button (read from `workbench.desktop.main.js`: a quick tree whose buckets are Built-In, then one per MCP server under the server's label, listed even before its tools are read). It reads the tree's rows from the DOM (`.quick-input-widget .monaco-list-row`) and polls, reopening the picker each time because it is built on open. With `aiCreditsAnalyzer.mcp.enabled` off, no row names "AI Credits Analyzer" while the picker still lists Copilot's own tools (10 rows in the first run: so the absence is not an empty picker); with it on, a row does. Not proven: the tools under the server's row. Pure part: none (a DOM read); `ConfigureToolsPicker` is a TDD exception.
+6. **1.14, a real git folder (G7).** The suite's workspace is no longer an empty folder: `scripts/ui-automation/git-folder.mts` (unit-tested) makes a real `git init` folder with `origin` = `https://github.com/aica-e2e/demo.git`, a made-up remote that is never contacted. One short chat (the same fixed prompt, the analyzer-only agent, nothing auto-approved) runs there; then: Group Sessions by Repository lists `github.com/aica-e2e/demo` holding the new session, with a known sum above 0 (read by `repository-status.mts`, unit-tested: never `0.00`, never "unknown") that is at least the session's credits; the status bar's accessible name reads "AI Credits today: N in demo, ..." with N at least the session's credits; and the choice survives a window reload. **A reload does not end the session in normal mode** (found by trying it, 2026-11-11): the bridge extension (G3) reconnects from the new extension host, whose process id differs, and the Sessions view still groups by repository without choosing again, so the persistence is tested in the real VS Code and not only through `GlobalStateSessionsGroupingStore`'s unit tests. §6.6's "a reload ends the wdio session" holds for the default suite, where the service's own test runner serves the proxy. Assertions read only the analyzer's tree data and status bar, never the model's text. First run: 0.1800 AI Credits for the one chat.
 
 **Cost:** three short prompts on a $0.10/$0.50 per million model; measured 0.7643 and 0.9313 AI Credits for the three sessions (two runs, 2026-11-11): the agent's system prompt dominates, not the prompts. Up to about 2 AI Credits per release run is acceptable (D8). The run prints `AI Credits spent by the sessions of this run: <n>` at the end.
 

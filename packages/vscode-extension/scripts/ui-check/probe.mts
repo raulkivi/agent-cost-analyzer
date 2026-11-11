@@ -52,7 +52,79 @@ export const PROBE_SCRIPT = `(() => {
       bold: Number(style.fontWeight) >= 600,
     });
   }
-  return { viewportWidth, scrollWidth: document.documentElement.scrollWidth, overflowing, texts };
+  // Chart marks (chart-marks.ts): svg shapes and html bars that carry data,
+  // found by the series attributes the chart components set, plus the legend
+  // swatches. Gridlines, bands, crosshairs and transparent hit areas are not
+  // data and are not marks.
+  const SERIES_ATTRS = ["data-line", "data-status", "data-segment", "data-bar", "data-step"];
+  const seriesOf = (el) => {
+    for (const name of SERIES_ATTRS) {
+      const owner = el.closest("[" + name + "]");
+      if (owner) return owner.getAttribute(name);
+    }
+    return "";
+  };
+  const chartOf = (el) => {
+    const named = el.closest("[role='group'][aria-label], [role='img'][aria-label], .hbars[aria-label], .chart[aria-label]");
+    const name = named ? named.getAttribute("aria-label") : (el.closest("svg") || {getAttribute: () => null}).getAttribute("aria-label");
+    return (name || "chart").split(". Arrow")[0].slice(0, 60);
+  };
+  // From the parent: a bar's own background is its paint, not its ground.
+  const backgroundsOf = (el) => {
+    const out = [];
+    for (let a = el.parentElement; a; a = a.parentElement) out.push(getComputedStyle(a).backgroundColor);
+    return out;
+  };
+  const patternOf = (el) => {
+    const m = /url\\(["']?#([^"')]+)["']?\\)/.exec(getComputedStyle(el).fill);
+    return m ? document.getElementById(m[1]) : null;
+  };
+  const marks = [];
+  const pushMark = (el, kind, paint, cue, labelled) => {
+    marks.push({ chart: chartOf(el), series: seriesOf(el), kind, paint, backgrounds: backgroundsOf(el), cue, labelled });
+  };
+  for (const el of document.body.querySelectorAll("svg path, svg rect, svg circle, svg polyline")) {
+    if (!shown(el) || el.closest("defs")) continue;
+    const cls = typeof el.className === "string" ? el.className : (el.getAttribute("class") || "");
+    if (/(grid|baseline|band|crosshair|axis|link|marker-line)/.test(cls)) continue;
+    const svg = el.closest("svg");
+    const style = getComputedStyle(el);
+    const series = seriesOf(el);
+    const isChart = svg.classList.contains("chart-svg") || svg.classList.contains("waterfall") || svg.getAttribute("role") === "img" && svg.hasAttribute("aria-label");
+    if (!isChart) continue;
+    const labelled = el.hasAttribute("data-step") || !!svg.querySelector("[data-direct-label]");
+    const pattern = patternOf(el);
+    if (pattern) {
+      const hatch = pattern.querySelector("line, path");
+      if (hatch) pushMark(el, "hatch", getComputedStyle(hatch).stroke, "pattern", labelled);
+      continue;
+    }
+    const filled = style.fill !== "none" && style.fill !== "rgba(0, 0, 0, 0)" && !/^url/.test(style.fill) && el.getAttribute("fill") !== "transparent";
+    const stroked = style.stroke !== "none" && parseFloat(style.strokeWidth) > 0;
+    if (el.tagName === "circle") {
+      pushMark(el, "marker", filled ? style.fill : style.stroke, "", labelled);
+    } else if (el.tagName === "path" && stroked && !filled) {
+      pushMark(el, "line", style.stroke, style.strokeDasharray === "none" ? "" : style.strokeDasharray, labelled);
+    } else if (filled && series) {
+      pushMark(el, "bar", style.fill, "", labelled);
+    } else if (filled && el.tagName === "path") {
+      pushMark(el, "bar", style.fill, "", labelled);
+    }
+  }
+  // Html bars. A bar alone in its row (a replay bar, one segment of a row) is
+  // named by the row's label; segments stacked in a row only by the legend.
+  for (const el of document.body.querySelectorAll("[data-segment], [data-bar]")) {
+    if (!shown(el)) continue;
+    const row = el.closest(".hbar-row, [data-row]");
+    const alone = !!row && row.querySelectorAll("[data-segment], [data-bar]").length === 1;
+    pushMark(el, "bar", getComputedStyle(el).backgroundColor, "", alone);
+  }
+  for (const el of document.body.querySelectorAll(".chart-legend-swatch, .cost-tooltip-key")) {
+    if (!shown(el)) continue;
+    const item = el.closest("li");
+    marks.push({ chart: "legend", series: item ? item.textContent.trim().slice(0, 30) : "", kind: "swatch", paint: getComputedStyle(el).backgroundColor, backgrounds: backgroundsOf(el.parentElement), cue: "", labelled: true });
+  }
+  return { viewportWidth, scrollWidth: document.documentElement.scrollWidth, overflowing, texts, marks };
 })()`;
 
 export async function probePage(page: Page): Promise<Probe> {

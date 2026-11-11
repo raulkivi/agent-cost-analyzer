@@ -2,7 +2,7 @@
 
 **Last changed:** 2026-11-11 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
-Status: **in progress: G0, G1 (#202), G2 (#207), G5 (#205, #206) and G6 (#204) done 2026-11-11; G3 built and green on the owner's machine (PR #208, with D5 and D6), owner rerun on the merged commit pending.** Owner rule, 2026-11-11: every UI check
+Status: **in progress: G0, G1 (#202), G2 (#207), G5 (#205, #206), G6 (#204) and G7 (branch `claude/g7-extension-rows`) done 2026-11-11; G3 built and green on the owner's machine (PR #208, with D5 and D6), owner rerun on the merged commit pending.** Owner rule, 2026-11-11: every UI check
 before a release is automated. VS Code and Copilot checks use wdio
 (`wdio-vscode-service`, [vscode-ui-automation.md](vscode-ui-automation.md));
 web-only checks use Playwright (or the integrated Chrome for exploratory
@@ -78,7 +78,7 @@ repo.
 | G4 | MCP App views in Copilot Chat (wdio, real-Copilot suite): spike entering the view's iframe inside the chat; then specs for U1-U3 and U9-U11 over seeded repositories (A16 §1, A24 §1): render, drill-down and Back focus, Light/Dark/both High Contrast through the probe and judge, 360 and 600 px, footer | high | Opus (spike), Sonnet (specs) | G3 | A24 §1 rows each named in a spec title; green on the owner's machine |
 | G5 | Fake MCP Apps host (Playwright, `packages/mcp-apps/e2e/`): a host page with ext-apps `AppBridge` loads `dist/views.html`, relays `tools/call` to the real server over stdio on the `web-e2e` fixture home, applies Claude's recorded and VS Code's sets; specs per A16 §2 and A24 §2 (including two currencies, the full U10 → U9 → U1 chain, permission-free drill-down, narrow and fullscreen) with axe | high | Opus (host), Sonnet (specs) | — | New required CI job `mcp-apps-e2e`, also in both release workflows |
 | G6 | High Contrast sets recorded by wdio (replaces A24 1.7a) into `packages/mcp-apps/test/theme/`, added to the contrast tests; CLI text check for non-UI clients | medium | Sonnet | — | Contrast tests cover Dark and Light High Contrast; server test green |
-| G7 | Remaining extension rows: chart-mark contrast in the judge (1.8), *Configure Tools* wording (2.1) and a seeded git folder (1.14) in the real-Copilot suite, 1.1 accepted as automated | medium | Sonnet | G3 | Manual-checks doc lists no release-gating hand row |
+| G7 | Remaining extension rows: chart-mark contrast in the judge (1.8), *Configure Tools* wording (2.1) and a seeded git folder (1.14) in the real-Copilot suite, 1.1 accepted as automated | medium | Sonnet | G3 | Manual-checks doc lists no release-gating hand row; **done 2026-11-11 (branch `claude/g7-extension-rows`)** |
 
 **G6 built (2026-11-11).** `npm run record:host-themes` in
 `packages/vscode-extension` (`wdio.record.conf.mts`, run under xvfb; not part
@@ -266,6 +266,13 @@ although the test profile is signed in.
   no port of its own (it connects out to the service's `localhost` port).
   Normal mode does not change that. Since D6 the chat is offered only the
   analyzer's read-only MCP tools and nothing is auto-approved.
+
+**G7 (2026-11-11).** Built on `claude/g7-extension-rows`, not merged.
+
+- **1.8 charts.** The judge's chart-mark rule (`scripts/ui-check/chart-marks.mts`, unit-tested in `chart-marks.test.ts`): (1) every data mark (bar, line, marker, legend swatch, hatching that carries meaning) reaches 3:1 against the ground it is painted on (WCAG 1.4.11), translucent paints composited first; (2) each pair of neighbouring series in a chart (order of first appearance) is told apart by ONE of: paints 3:1 apart, a different non-colour cue (stroke dash pattern or a fill pattern), or a direct label on both in the chart. A legend alone does not count (it makes the reader match colours), and neither does "View as table"; the threshold is not relaxed for light grounds. Applied in `layout-theme.e2e.ts` (default suite, CI) in four themes. Findings: two fixed test-first in `packages/web` (High Contrast column fill, sparkline stroke); the token-type palette and the tool-status "unknown" grey stay open and are pinned in the spec: owner decision (themed tokens plus a pattern or label cue).
+- **2.1 Configure Tools** and **1.14 on a real git folder:** `copilot-e2e/specs/extension-rows.e2e.ts`, titles `2.1 ...` and `1.14 ...` (add `"1.14"` and `"2.1"` to `REQUIRED_COPILOT_E2E_TESTS`). 2.1 sends no message; 1.14 is one chat in a real `git init` workspace with a made-up remote. First run: 6 passed, 0.1800 AI Credits (D8). A window reload does not end the wdio session in normal mode, so the persistence of the grouping is tested for real.
+- **1.1** accepted as automated (D10): `first-run.e2e.ts` and `WalkthroughOffer`'s unit tests; the manual-checks row says so.
+- TDD exceptions: the picker's DOM read, the polling and the real runs. Unit-tested: `chart-marks`, `git-folder`, `repository-status`.
 
 Order: G0 and G1 first (small, unblock D4); G5 and G6 in parallel (CI,
 no Copilot); G2 and G3 next; G4 and G7 last.
