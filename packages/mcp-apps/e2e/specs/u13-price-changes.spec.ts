@@ -102,7 +102,7 @@ inEachClaudeSet(() => {
     await view.pressEnter();
     await expect(view.title()).toHaveText("Price changes behind the cost change");
     await expect.poll(() => view.focusedControl()).toBe("Back to cost change");
-    expect(await view.focusRingVisible()).toBe(true);
+    await expect.poll(() => view.focusRingVisible()).toBe(true);
     await view.pressEnter();
     await expect.poll(() => view.focusedControl()).toBe("Price changes");
   });
