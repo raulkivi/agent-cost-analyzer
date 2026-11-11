@@ -2,7 +2,7 @@
 
 **Last changed:** 2026-11-11 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
-Status: **in progress: G0, G1 (#202), G2 (#207), G5 (#205, #206) and G6 (#204) done 2026-11-11; G3 built and green on the owner's machine (PR #208, with D5 and D6), owner rerun on the merged commit pending; G4 built (branch `claude/g4-copilot-chat-views`), its 13 view tests required by the gate, owner run on the merged commit pending.** Owner rule, 2026-11-11: every UI check
+Status: **in progress: G0, G1 (#202), G2 (#207), G5 (#205, #206) and G6 (#204) done 2026-11-11; G3 built and green on the owner's machine (PR #208, with D5 and D6), owner rerun on the merged commit pending; G4 built and green (branch `claude/g4-copilot-chat-views`: 16 of 16 tests, 1.24 AI Credits, gate PASS), its 13 view tests required by the gate, owner run on the merged commit pending.** Owner rule, 2026-11-11: every UI check
 before a release is automated. VS Code and Copilot checks use wdio
 (`wdio-vscode-service`, [vscode-ui-automation.md](vscode-ui-automation.md));
 web-only checks use Playwright (or the integrated Chrome for exploratory
@@ -385,6 +385,7 @@ observed every time; each run's note removed from the local
 | 2 | spike: the eight-call prompt | eight views, overlays and wheel scrolling recorded | 0.4723 |
 | 3-6 | views spec while it was built | setup width, then wheel over views, then U11 overflow (the bug) | 0.5732, 0.5748, 0.5785, 0.5798 |
 | 7 | whole suite | 1.4, 2.3, 2.4 and 10 view tests passed; 1.1, 1.3, 1.5 failed: VS Code had deleted the seeded debug logs before the second launch | 0.7357 + 0.5473 = 1.2830 |
+| 8 | whole suite on commit `7ddb37f`, clean tree | **all 16 passed** (3 chat checks in 27.9 s, 13 view tests in 13 min 6 s); one click fell back to the element's own `click()`; gate `PASS` | 0.7722 + 0.4634 = 1.2356 |
 
 TDD exceptions: the spec, the page objects in `chat-view.ts`, the wdio config
 and the real runs. Unit-tested first: `chat-history-seed.test.ts` (through the
