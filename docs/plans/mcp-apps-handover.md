@@ -10,8 +10,8 @@ This document hands the Phase 12 work over to the next session. The design, the 
 - **Increment 2 built and merged to `main` 2026-11-10:** A17, A18, A19 (PR #193) and A20, A21, A22 (PR #194, merged into #193's branch first). Status 25 of 36 tasks (69%).
 - **A17b boards approved 2026-11-10** with the owner's answers in mcp-apps.md §9.1: defaults kept except question 4 (a fall uses the host's success colour) and U11's "Not explained" tile wording. A23 applied both.
 - **Next:**
-  - step 10.17 G4-G6 replace A24 (the owner's checks of U9–U11 in VS Code Copilot Chat and Claude Desktop; see [release-ui-gate.md](release-ui-gate.md)); the 0.5.0 pre-release stays published. Owner answers after A23 (mcp-apps.md §9.1): period totals keep the brand data colour; U11's table drops costs A and B from 640 px; the High Contrast colour sets are recorded by wdio (G6, replacing checklist step 1.7a) and added to the contrast tests;
-  - extension 0.5.0 published 2026-11-10 on the Marketplace pre-release channel (tag `ext-v0.5.0`, #197); the G4 Copilot Chat specs can run against it;
+  - A24 is replaced by automated checks (step 10.17, done 2026-11-11, [release-ui-gate.md](release-ui-gate.md)): G4 runs U1–U3 and U9–U11 in a real Copilot Chat (#211), G5 in a fake MCP Apps host with Claude's themes (#205, #206), G6 records VS Code's High Contrast colours (#204); owner answers after A23 (mcp-apps.md §9.1) are applied.
+  - extension 0.5.0 stays on the Marketplace pre-release channel (tag `ext-v0.5.0`, #197) until 0.6.0 replaces it;
   - the Increment 2 release PR is open (extension 0.6.0, app 0.11.0; release prepared 2026-11-11): next the owner's real-Copilot run on the merged commit, push the evidence note, then the tags `ext-v0.6.0` and `app-v0.11.0`.
 - **Release:** the owner asked about an extension 0.4.1; not planned, since `main` has no fixes to 0.4.0, only Increment 2 features. Extension 0.5.0 went to the Marketplace pre-release channel, Open VSX and a GitHub pre-release on 2026-11-10 (#197); the app stays 0.10.0 on `main` until the Increment 2 release PR merges, and the root CHANGELOG's `[Unreleased]` becomes 0.11.0 there.
 - **A23 done 2026-11-10** (findings in mcp-apps.md §6.1 and the A23 row). The visual-pass inputs it worked from, all closed:
@@ -21,7 +21,7 @@ This document hands the Phase 12 work over to the next session. The design, the 
   - CSS class names collided between U10 and U11 in the single bundle (`cc-total`, `cc-sub`, `cc-note`); fixed by renaming, but a test that each view's classes use its own prefix would stop a repeat.
   - The no-projects reason is copied in `views/cost-compare/no-projects.ts` and parsed from the server's text in `views/cost-over-time/explain-error.ts`; a server wording change breaks both silently (the generic error still shows the text).
   - U9 has no focusable price-change markers; the detail is in the list below the chart and the chart's accessible name.
-- **Step 10.17 (2026-11-11):** G0 (#203), G1 (#202) and G6 (#204) merged; G5 (Playwright fake host) built on a branch, PR next. **Worktrees:** the session's agent worktrees under `.claude/worktrees/` can be removed.
+- **Step 10.17 done 2026-11-11** (#202–#212): every pre-release UI check is a wdio or Playwright spec; a ruleset on `main` requires 9 CI checks; an extension release needs a passing real-Copilot run recorded as a git note on the tagged commit. Step 10.18 (#209): Copilot chats from windows with no folder open now appear. Agent worktrees removed.
 
 ## 2. PRs in Phase 12
 
