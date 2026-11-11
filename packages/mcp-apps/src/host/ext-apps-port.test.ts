@@ -69,6 +69,14 @@ describe("ExtAppsHostPort", () => {
     await expect(refusing.sendMessage("t")).resolves.toBe(false);
   });
 
+  // A30: U5 hides its button, and says what to type, in a host that did not offer chat messages.
+  it("reports whether the host offered chat messages: its `message` capability, and yes while the capabilities are not known", () => {
+    expect(new ExtAppsHostPort(fakeApp()).canSendMessage()).toBe(true);
+    expect(new ExtAppsHostPort(fakeApp({ getHostCapabilities: () => undefined })).canSendMessage()).toBe(true);
+    expect(new ExtAppsHostPort(fakeApp({ getHostCapabilities: () => ({ message: { text: {} } }) })).canSendMessage()).toBe(true);
+    expect(new ExtAppsHostPort(fakeApp({ getHostCapabilities: () => ({ openLinks: {}, serverTools: {} }) })).canSendMessage()).toBe(false);
+  });
+
   it("returns the mode the host granted, or the current one when the request fails", async () => {
     const app = fakeApp({ requestDisplayMode: vi.fn(async () => ({ mode: "inline" as const })) });
     await expect(new ExtAppsHostPort(app).requestDisplayMode("fullscreen")).resolves.toBe("inline");

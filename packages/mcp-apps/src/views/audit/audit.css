@@ -1,0 +1,32 @@
+/* SPDX-FileCopyrightText: 2026 Raul Kivi
+   SPDX-License-Identifier: MIT
+*/
+/* U4 AuditView (docs/plans/mcp-apps.md §4.5, board ToolCallAudit.dc.html).
+   Host tokens for structure; the brand shows only in the data marks. No
+   colour literals (§5.4). */
+
+.au-bars { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 5px; }
+.au-bar-row { display: grid; grid-template-columns: minmax(0, 150px) 1fr 36px; align-items: center; gap: 8px; font-size: 12px; }
+.au-bar-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.au-bar-track { display: block; height: 9px; }
+.au-bar-fill { display: block; height: 100%; background: var(--brand-accent); }
+.au-bar-value { text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; }
+
+.au-recovery { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px 14px; }
+.au-fact { display: flex; flex-direction: column; gap: 1px; min-width: 0; font-size: 12px; }
+.au-fact > b { font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.au-fact-note { font-size: 11px; line-height: 1.35; overflow-wrap: anywhere; }
+.au-note { margin: 0; font-size: 11px; line-height: 1.4; }
+
+/* Logged text (a command, a tool name): monospace, and a long unbroken word wraps. */
+.au-command { font-family: var(--font-mono, ui-monospace, monospace); font-size: 11px; overflow-wrap: anywhere; }
+.au-sub { display: none; font-size: 11px; }
+.au-when { display: block; font-size: 11px; }
+
+@media (max-width: 480px) {
+  .au-recovery { grid-template-columns: 1fr; }
+  .au-bar-row { grid-template-columns: minmax(0, 118px) 1fr 30px; }
+  /* The Category column moves under the command so the counts stay in view. */
+  .view-table .au-col-wide { display: none; }
+  .au-sub { display: block; }
+}

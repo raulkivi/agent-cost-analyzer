@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 import type { HostContext } from "../host/app-host-port.js";
 
-export type ViewId = "session-cost" | "cost-rollup" | "findings" | "cost-over-time" | "cost-change" | "cost-compare";
+export type ViewId = "session-cost" | "cost-rollup" | "findings" | "cost-over-time" | "cost-change" | "cost-compare" | "audit" | "session-picker";
 export type ViewSelection = { view: ViewId } | { view: "none" };
 
 const BY_TOOL: Record<string, ViewId> = {
@@ -13,6 +13,9 @@ const BY_TOOL: Record<string, ViewId> = {
   get_project_cost: "cost-over-time",
   explain_cost_change: "cost-change",
   compare_costs: "cost-compare",
+  get_session_audit: "audit",
+  get_audit_rollup: "audit",
+  list_sessions: "session-picker",
 };
 
 // VS Code prefixes the tool name with the server's id ("<server>-<tool>",
@@ -39,6 +42,14 @@ function byShape(structured: unknown): ViewId | undefined {
   if (hasArray(s, "currencies") && typeof s.periodA === "object" && typeof s.periodB === "object" && typeof s.notExplained === "object") return "cost-change";
   // CostComparison (U10): rows with both periods and a group; checked last, so no earlier shape is taken for it.
   if (hasArray(s, "rows") && typeof s.groupBy === "string" && typeof s.comparePeriod === "string" && typeof s.previousSince === "string" && typeof s.previousUntil === "string" && typeof s.total === "object") return "cost-compare";
+  // U4 (A30): a session audit (calls, retries, recovery cost) and an audit rollup (failing commands, per-day outcomes, sessions).
+  if (hasArray(s, "byFailureCategory") && typeof s.totals === "object" && s.totals !== null) {
+    // `calls` is left out unless asked for (includeCalls), so it is not part of the shape.
+    if (hasArray(s, "retries") && hasArray(s, "perTurn") && typeof s.failureRecoveryCost === "object") return "audit";
+    if (hasArray(s, "topFailingCommands") && hasArray(s, "daily") && hasArray(s, "sessions")) return "audit";
+  }
+  // U5 (A30): list_sessions answers a count of matches and the sessions.
+  if (typeof s.total === "number" && hasArray(s, "sessions")) return "session-picker";
   return undefined;
 }
 

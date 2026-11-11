@@ -67,3 +67,7 @@ export type { EstimateSimulationView, EstimateViewModel } from "./estimate.js";
 export { NO_EARLIER_FIGURE } from "./analysis-common.js";
 export type { DocumentedPriceChange, PriceChangeLine } from "./analysis-common.js";
 export type { MoneyView } from "./money.js";
+export { toAuditRollupViewModel, toSessionAuditViewModel } from "./audit.js";
+export type { AuditRollupViewModel, AuditTile, CategoryBars, CategoryRow, CommandRow, DayPoint as AuditDayPoint, SessionAuditViewModel } from "./audit.js";
+export { toSessionListViewModel } from "./session-list.js";
+export type { SessionListEntry, SessionListInput, SessionListViewModel, SessionRow } from "./session-list.js";

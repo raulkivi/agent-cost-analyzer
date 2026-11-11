@@ -11,6 +11,8 @@ import { FindingsView } from "./views/FindingsView.js";
 import { CostOverTimeView } from "./views/CostOverTimeView.js";
 import { CostChangeView } from "./views/CostChangeView.js";
 import { CostCompareView } from "./views/CostCompareView.js";
+import { AuditView } from "./views/AuditView.js";
+import { SessionPickerView } from "./views/SessionPickerView.js";
 import { NoViewState } from "./views/NoViewState.js";
 
 // Depends on the port only (DIP): the host, the brand and the data come in.
@@ -41,6 +43,10 @@ export function App({ port, brand, clipboard }: { port: AppHostPort; brand: View
       return <CostChangeView port={port} brand={brand} result={result} />;
     case "cost-compare":
       return <CostCompareView port={port} brand={brand} clipboard={clipboard} result={result} />;
+    case "audit":
+      return <AuditView brand={brand} result={result} />;
+    case "session-picker":
+      return <SessionPickerView port={port} brand={brand} result={result} />;
     default:
       return <NoViewState brand={brand} />;
   }

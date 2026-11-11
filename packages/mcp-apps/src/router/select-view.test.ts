@@ -90,6 +90,28 @@ describe("selectView", () => {
     expect(selectView({}, { ...findingsShape, ...comparison })).toEqual({ view: "findings" });
   });
 
+  // A30: U4 (a session audit and an audit rollup share one view) and U5.
+  it("routes the audit and session-list tools by name", () => {
+    expect(selectView({ toolInfo: { tool: { name: "get_session_audit" } } }, undefined)).toEqual({ view: "audit" });
+    expect(selectView({ toolInfo: { tool: { name: "get_audit_rollup" } } }, undefined)).toEqual({ view: "audit" });
+    expect(selectView({ toolCall: { toolName: "ai-credit-analyser-get_audit_rollup" } }, undefined)).toEqual({ view: "audit" });
+    expect(selectView({ toolInfo: { tool: { name: "list_sessions" } } }, undefined)).toEqual({ view: "session-picker" });
+    expect(selectView({ toolCall: { toolName: "mcp_ai-credits_list_sessions" } }, undefined)).toEqual({ view: "session-picker" });
+  });
+
+  it("routes the U4 and U5 shapes, and no other shape to them", () => {
+    const sessionAudit = { sessionId: "s1", totals: {}, byTool: [], byFailureCategory: [], retries: [], perTurn: [], failureRecoveryCost: {} };
+    const rollupAudit = { totals: {}, byTool: [], byFailureCategory: [], topFailingCommands: [], daily: [], sessions: [] };
+    const list = { total: 2, sessions: [{ id: "a" }] };
+    expect(selectView({}, sessionAudit)).toEqual({ view: "audit" });
+    expect(selectView({}, rollupAudit)).toEqual({ view: "audit" });
+    expect(selectView({}, list)).toEqual({ view: "session-picker" });
+    expect(selectView({}, { total: {}, sessions: [] })).toEqual({ view: "none" });
+    expect(selectView({}, { total: 2, sessions: "x" })).toEqual({ view: "none" });
+    expect(selectView({}, { ...rollupShape, ...rollupAudit })).toEqual({ view: "cost-rollup" });
+    expect(selectView({}, { ...rollupAudit, topFailingCommands: undefined })).toEqual({ view: "none" });
+  });
+
   it("gives a tool this bundle has no view for the neutral state, not a shape guess", () => {
     expect(selectView({ toolInfo: { tool: { name: "get_statement" } } }, sessionShape)).toEqual({ view: "none" });
   });

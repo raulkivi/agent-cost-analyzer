@@ -35,6 +35,8 @@ export interface AppHostPort {
   callTool(name: string, args: Record<string, unknown>): Promise<ToolResult>;
   // False when the host declined; a missing capability hides the affordance.
   openLink(url: string): Promise<boolean>;
+  // Whether the host offered chat messages; false hides the affordance that sends one.
+  canSendMessage(): boolean;
   // Fixed templates naming ids only; never logged text (plan §4.3).
   sendMessage(text: string): Promise<boolean>;
   requestDisplayMode(mode: DisplayMode): Promise<DisplayMode>;

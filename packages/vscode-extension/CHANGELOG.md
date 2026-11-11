@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Tool-call audit and session picker in Copilot Chat.** `get_session_audit` and `get_audit_rollup`
+  show a visual view: the failure rate over calls with a known outcome (unknown outcomes are counted
+  apart), failure categories, recovery cost in tokens (not AI Credits), retried commands and calls by
+  tool; the date-range version adds failed calls per day, top failing commands and the sessions it
+  left out. `list_sessions` shows a session picker whose "Analyse" button sends exactly
+  "Analyse session <id>" to the chat and never a title; a host that cannot send chat messages shows
+  "Ask in the chat: Analyse session <id>" instead. The text answers are unchanged.
+
 ## [0.6.0] - 2026-11-11
 
 ### Changed
