@@ -1,0 +1,31 @@
+{
+  "schema": 1,
+  "suite": "copilot-e2e",
+  "commit": "16389dceb47a41d1e2582c1f5272d307bf820873",
+  "dirty": false,
+  "extensionVersion": "0.5.0",
+  "vscodeVersion": "1.145.0",
+  "model": {
+    "requested": "claude-haiku-5.5",
+    "observed": []
+  },
+  "tests": [
+    {
+      "title": "1.4 a real agent-mode chat produces a session with known AI Credits, turns and tokens, and the MCP tools offer it",
+      "state": "skipped",
+      "skipReason": "Copilot wasn't ready after 120 s: no GitHub account is signed in in the copied profile (run npm run test:ui:vscode:copilot:signin once); no Copilot language model is available."
+    },
+    {
+      "title": "2.3 asked to call an MCP tool, Copilot's call appears in the session's tool-call audit",
+      "state": "skipped",
+      "skipReason": "Copilot wasn't ready after 120 s: no GitHub account is signed in in the copied profile (run npm run test:ui:vscode:copilot:signin once); no Copilot language model is available."
+    },
+    {
+      "title": "2.4 asked about another agent's sessions, Copilot's call to the tool appears in the audit",
+      "state": "skipped",
+      "skipReason": "Copilot wasn't ready after 120 s: no GitHub account is signed in in the copied profile (run npm run test:ui:vscode:copilot:signin once); no Copilot language model is available."
+    }
+  ],
+  "aiCreditsSpent": null,
+  "ranAt": "2026-11-11T01:31:55.548Z"
+}
