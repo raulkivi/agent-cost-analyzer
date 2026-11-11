@@ -18,7 +18,19 @@ const HTML = '<!doctype html><html><head><meta name="aca-brand" content=""></hea
 const appViews = { source: new InMemoryViewSource(HTML) };
 const MVP_VIEW_TOOLS = ["get_session_cost", "get_cost_rollup", "list_findings"];
 const COST_ANALYSIS_VIEW_TOOLS = ["get_repository_cost", "get_project_cost", "compare_costs", "explain_cost_change"];
-const VIEW_TOOLS = [...MVP_VIEW_TOOLS, ...COST_ANALYSIS_VIEW_TOOLS];
+// A26: the Increment 3 tools; their routes (U12-U15, U4, U5) arrive with A27-A30.
+const INCREMENT3_VIEW_TOOLS = [
+  "replay_session",
+  "compare_models_for_session",
+  "get_price_changes",
+  "get_statement",
+  "estimate_cost",
+  "get_session_audit",
+  "get_audit_rollup",
+  "list_sessions",
+];
+const BILLING_VIEW_TOOLS = ["get_statement", "estimate_cost"];
+const VIEW_TOOLS = [...MVP_VIEW_TOOLS, ...COST_ANALYSIS_VIEW_TOOLS, ...INCREMENT3_VIEW_TOOLS];
 const URI = "ui://agent-cost-analyzer/views.html";
 
 type Tools = Awaited<ReturnType<Client["listTools"]>>["tools"];
@@ -41,7 +53,7 @@ describe("registerAppViews", () => {
     expect(client.getServerCapabilities()?.resources).toBeUndefined();
   });
 
-  it("with appViews, adds only get_turn_series and _meta.ui on exactly the seven tools (22 standalone)", async () => {
+  it("with appViews, adds only get_turn_series and _meta.ui on exactly the fifteen tools (22 standalone)", async () => {
     const plain = await connectCostFixture();
     const withViews = await connectCostFixture({ appViews });
     client = withViews.client;
@@ -111,6 +123,50 @@ describe("registerAppViews", () => {
     }
   });
 
+  it("names the view on the eight Increment 3 tools without changing the tool count", async () => {
+    ({ client } = await connectCostFixture({ appViews }));
+    const { tools } = await client.listTools();
+    expect(tools).toHaveLength(22);
+    for (const name of INCREMENT3_VIEW_TOOLS) {
+      expect(byName(tools, name)!._meta, name).toEqual({ ui: { resourceUri: URI }, "ui/resourceUri": URI });
+    }
+  });
+
+  // A24 §3 pattern, extended to Increment 3: a client without MCP Apps support reads text alone.
+  it("answers the Increment 3 tools with plain text: no HTML, ui:// or view reference", async () => {
+    ({ client } = await connectCostFixture({ appViews }));
+    const calls: [string, Record<string, unknown>][] = [
+      ["replay_session", { sessionId: "cp-1", model: "gpt-5" }],
+      ["compare_models_for_session", { sessionId: "cp-1", models: ["gpt-5", "claude-sonnet-4"] }],
+      ["get_price_changes", {}],
+      ["get_session_audit", { sessionId: "cp-1" }],
+      ["get_audit_rollup", {}],
+      ["list_sessions", {}],
+      ["get_statement", { projectId: "portal", period: "2026-10" }],
+      ["estimate_cost", { projectId: "portal", days: 10 }],
+    ];
+    for (const [name, args] of calls) {
+      const result = await client.callTool({ name, arguments: args });
+      const content = (result as { content: { type: string; text?: string }[] }).content;
+      expect(content.length, name).toBeGreaterThan(0);
+      for (const block of content) {
+        expect(block.type, name).toBe("text");
+        expect(block.text, name).toBeTruthy();
+        expect(block.text, name).not.toMatch(/<\/?[a-z][^>]*>|ui:\/\/|resourceUri|text\/html|mcp-app/i);
+      }
+      expect(JSON.stringify(result), name).not.toMatch(/ui:\/\/|resourceUri|text\/html/);
+    }
+  });
+
+  it("names no billing view in the extension's tools/list", async () => {
+    ({ client } = await connectCostFixture({ appViews, toolGroups: WITHOUT_BILLING_TOOL_GROUPS }));
+    const { tools } = await client.listTools();
+    for (const name of BILLING_VIEW_TOOLS) expect(byName(tools, name), name).toBeUndefined();
+    expect(tools.filter((tool) => tool._meta?.ui !== undefined && tool.name !== "get_turn_series")).toHaveLength(13);
+    // Nothing in any tool's _meta points at a billing view either.
+    expect(JSON.stringify(tools.map((tool) => tool._meta ?? {}))).not.toMatch(/statement|estimate|billing|U14|U15/i);
+  });
+
   it("with the extension's groups, tags exactly the registered view tools and adds no tool", async () => {
     const plain = await connectCostFixture({ toolGroups: WITHOUT_BILLING_TOOL_GROUPS });
     const withViews = await connectCostFixture({ appViews, toolGroups: WITHOUT_BILLING_TOOL_GROUPS });
@@ -128,7 +184,9 @@ describe("registerAppViews", () => {
     ({ client } = await connectCostFixture({ appViews, toolGroups: MCP_TOOL_GROUPS.filter((group) => group !== "costAnalysis") }));
     const { tools } = await client.listTools();
     for (const name of COST_ANALYSIS_VIEW_TOOLS) expect(byName(tools, name), name).toBeUndefined();
-    expect(tools.filter((tool) => tool._meta?.ui !== undefined).map((tool) => tool.name).sort()).toEqual([...MVP_VIEW_TOOLS, "get_turn_series"].sort());
+    const expected = [...MVP_VIEW_TOOLS, ...INCREMENT3_VIEW_TOOLS].filter((name) => byName(tools, name) !== undefined);
+    expect(expected.length).toBeGreaterThan(MVP_VIEW_TOOLS.length);
+    expect(tools.filter((tool) => tool._meta?.ui !== undefined).map((tool) => tool.name).sort()).toEqual([...expected, "get_turn_series"].sort());
   });
 
   it("has 20 tools with the extension's groups", async () => {
@@ -162,7 +220,9 @@ describe("registerAppViews", () => {
     const cost = await connectCostFixture({ appViews, toolGroups: ["sessions", "audit"] });
     const onlyOtherGroups = (await cost.client.listTools()).tools;
     await cost.client.close();
-    expect(onlyOtherGroups.filter((tool) => (tool._meta?.ui as { resourceUri?: string } | undefined)?.resourceUri !== undefined)).toEqual([]);
+    const tagged = onlyOtherGroups.filter((tool) => (tool._meta?.ui as { resourceUri?: string } | undefined)?.resourceUri !== undefined);
+    expect(tagged.map((tool) => tool.name).sort()).toEqual(VIEW_TOOLS.filter((name) => byName(onlyOtherGroups, name) !== undefined).sort());
+    expect(tagged.map((tool) => tool.name)).not.toContain("get_session_cost");
   });
 
   it.each([
