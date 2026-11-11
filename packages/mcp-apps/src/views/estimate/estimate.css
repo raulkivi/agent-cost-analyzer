@@ -23,5 +23,5 @@
 .est-alert { display: flex; gap: 8px; padding: 8px 10px; font-size: 12px; border-radius: var(--radius-sm); border: 1px solid var(--color-border-warning, var(--color-divider)); background: var(--color-background-warning, var(--color-surface)); }
 .est-alert > svg { flex-shrink: 0; margin-top: 1px; color: var(--color-text-warning, inherit); }
 .est-list { margin: 0; padding-left: 16px; font-size: 12px; display: flex; flex-direction: column; gap: 2px; overflow-wrap: anywhere; }
-.est-failed { color: var(--color-text-danger, var(--brand-fb-danger)); }
+.est-failed { color: var(--view-text-rise); }
 .est-tiles .stat-tile-value { overflow-wrap: anywhere; }

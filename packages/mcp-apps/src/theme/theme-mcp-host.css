@@ -50,6 +50,14 @@ html[data-host="mcp-app"] {
   --color-neutral-100: color-mix(in srgb, var(--color-text-primary, var(--brand-fb-text)) 8%, var(--color-background-primary, var(--brand-fb-ground)));
   --color-neutral-200: color-mix(in srgb, var(--color-text-primary, var(--brand-fb-text)) 14%, var(--color-background-primary, var(--brand-fb-ground)));
   --color-neutral-800: var(--color-text-primary, var(--brand-fb-text));
+
+  /* A rise or fall written as text (U12, U13, U15; A32): the host's danger or
+     success colour drawn 30% towards the text colour, so it holds 4.5:1 on
+     every recorded host and on the fallbacks. The host colours alone fall to
+     3.16:1 on VS Code Light Modern. Bars and icons keep the host colour (3:1
+     is enough for a mark). */
+  --view-text-rise: color-mix(in srgb, var(--color-text-danger, var(--brand-fb-danger)) 70%, var(--color-text));
+  --view-text-fall: color-mix(in srgb, var(--color-text-success, var(--brand-fb-success)) 70%, var(--color-text));
 }
 
 /* The host's focus ring, also where theme.css draws it on a radio's label

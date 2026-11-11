@@ -5,7 +5,8 @@
    Host tokens only, no colour literals (§5.4). Documented: solid diamond and
    rail. Observed (inferred): dashed hollow diamond and dashed rail. A rise is
    the host's danger colour, a fall its success colour, and the sign is always
-   written too, inferred changes included (§9.2 Q11). */
+   written too, inferred changes included (§9.2 Q11). The text tokens draw
+   the host colours towards the text colour so they hold 4.5:1 (A32). */
 
 .pc-note { margin: 0; font-size: 11px; line-height: 1.4; }
 .pc-issues { margin: 0; padding-left: 16px; font-size: 11px; }
@@ -36,8 +37,8 @@
 .pc-line dt, .pc-line dd { margin: 0; }
 .pc-prices { font-variant-numeric: tabular-nums; }
 .pc-percent { font-weight: 600; text-align: right; font-variant-numeric: tabular-nums; }
-.pc-rise { color: var(--color-text-danger, var(--brand-fb-danger)); }
-.pc-fall { color: var(--color-text-success, var(--brand-fb-success)); }
+.pc-rise { color: var(--view-text-rise); }
+.pc-fall { color: var(--view-text-fall); }
 .pc-flat { color: var(--color-text-muted); }
 .pc-source { margin: 0; font-size: 11px; line-height: 1.4; }
 .pc-observed { margin: 0; font-size: 12px; }
