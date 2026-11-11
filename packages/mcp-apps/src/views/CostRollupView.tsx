@@ -10,6 +10,8 @@ import { toCostRollupViewModel } from "../view-models/index.js";
 import type { MeasureView } from "../view-models/index.js";
 import { ErrorBox } from "./SessionCostView.js";
 import { ViewShell } from "./ViewShell.js";
+import { FullscreenButton } from "./display-mode/FullscreenButton.js";
+import { useDisplayMode } from "./display-mode/use-display-mode.js";
 import { DailyChart } from "./cost-rollup/DailyChart.js";
 import { DrillDown } from "./cost-rollup/DrillDown.js";
 import type { SessionRef } from "./cost-rollup/DrillDown.js";
@@ -36,6 +38,7 @@ export function CostRollupView({ port, brand, clipboard, result }: { port: AppHo
   const [selected, setSelected] = useState<SessionRef | undefined>();
   // The session last opened, so Back can return focus to its row (A14).
   const [returnTo, setReturnTo] = useState<SessionRef | undefined>();
+  const display = useDisplayMode(port);
 
   if (result === undefined) {
     return (
@@ -59,7 +62,14 @@ export function CostRollupView({ port, brand, clipboard, result }: { port: AppHo
 
   const providerLabels = new Map(rollup.byProvider.map((row) => [row.providerId, row.providerLabel]));
   return (
-    <ViewShell brand={brand} kicker={KICKER} title="Cost rollup" meta={vm.periodText}>
+    <ViewShell
+      brand={brand}
+      kicker={KICKER}
+      title="Cost rollup"
+      meta={vm.periodText}
+      displayMode={display.mode}
+      actions={display.fullscreenOffered ? <FullscreenButton mode={display.mode} onToggle={display.toggleFullscreen} /> : undefined}
+    >
       <div className="stat-tiles view-tiles">
         <Tile label="AI Credits" value={vm.tiles.aiCredits} />
         <Tile label="Sessions" value={vm.tiles.sessions} />

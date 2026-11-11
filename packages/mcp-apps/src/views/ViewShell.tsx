@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 import type { ReactNode } from "react";
 import type { ViewBrand } from "../brand/view-brand.js";
+import type { DisplayMode } from "../host/app-host-port.js";
 
 // The branded frame shared by U1-U3 (plan §5.1, §5.5): the corner-mark card,
 // the product mark and kicker, the title, and the read-only footer. `meta`
@@ -31,6 +32,7 @@ export function ViewShell({
   meta,
   actions,
   lead,
+  displayMode,
   children,
 }: {
   brand: ViewBrand;
@@ -40,6 +42,9 @@ export function ViewShell({
   actions?: ReactNode;
   // Between the kicker and the title: the back control of an in-place drill-down.
   lead?: ReactNode;
+  // Set by views that lay out for the host's display mode (A31): CSS reads it
+  // as data-display-mode, so the narrow layouts can yield to fullscreen.
+  displayMode?: DisplayMode;
   children?: ReactNode;
 }) {
   const footer = brand.version ? `Read-only · local logs · v${brand.version}` : "Read-only · local logs";
@@ -49,7 +54,7 @@ export function ViewShell({
     // and the footer inside it is not a nested contentinfo landmark (A14:
     // axe landmark-contentinfo-is-top-level). Same classes and corner marks
     // as Blueprint.
-    <main className="blueprint card view-shell" aria-labelledby="view-title">
+    <main className="blueprint card view-shell" aria-labelledby="view-title" data-display-mode={displayMode}>
       <i className="corner tl" />
       <i className="corner tr" />
       <i className="corner bl" />

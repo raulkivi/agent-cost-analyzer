@@ -761,7 +761,7 @@ Starts after Increment 2's exit criterion is met (A24, now step 10.17 G4-G6).
 | A28 | U13 `PriceChangesView`, and the U11 → U13 drill-down | medium | Sonnet | A25, A25b, A26 |
 | A29 | U14 `StatementView` and U15 `EstimateView`, standalone only, read-only | medium | Sonnet | A25, A25b, A26 |
 | A30 | U4 `AuditView` and U5 `SessionPickerView` (the picker sends only the fixed "Analyse session <id>" template) | medium | Sonnet | A25b, A26 |
-| A31 | Fullscreen mode for U2 and U9 (`requestDisplayMode`) | low | Haiku | A26 |
+| A31 | Fullscreen mode for U2 and U9 (`requestDisplayMode`). **Done 2026-11-11:** a Fullscreen control in the footer of U2 and U9 when the host lists `fullscreen`; it reads Exit fullscreen in fullscreen, keeps focus, and the views drop the narrow collapse there. `AppHostPort.requestDisplayMode` already existed on the port and adapter; `FakeAppHostPort` now switches modes like a host. G5 covers both in both Claude themes. VS Code offers only inline, so no control there | low | Haiku | A26 |
 | A32 | Accessibility and security review of A27–A31 (as A14), and docs: architecture.md, threat-model.md §6, User Guide, extension guide, both CHANGELOGs | medium | Opus | A27–A31 |
 | A33 | Increment 3 checks, written as wdio and Playwright specs (step 10.17), not manual: VS Code Copilot Chat (no U14/U15 there) and Claude Desktop, light and dark | — | none (specs, step 10.17) | A32 |
 

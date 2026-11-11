@@ -11,6 +11,8 @@ import { toCostSeriesViewModel } from "../view-models/index.js";
 import type { CostSeriesViewModel } from "../view-models/index.js";
 import { ErrorBox } from "./SessionCostView.js";
 import { ViewShell } from "./ViewShell.js";
+import { FullscreenButton } from "./display-mode/FullscreenButton.js";
+import { useDisplayMode } from "./display-mode/use-display-mode.js";
 import { BasisTiles } from "./cost-over-time/BasisTiles.js";
 import { CostChart } from "./cost-over-time/CostChart.js";
 import { PriceChangeList } from "./cost-over-time/PriceChangeList.js";
@@ -106,6 +108,7 @@ export function CostOverTimeView({
   const [selected, setSelected] = useState<SessionRef | undefined>();
   // The session last opened, so Back can return focus to its row.
   const [returnTo, setReturnTo] = useState<SessionRef | undefined>();
+  const display = useDisplayMode(port);
 
   if (result === undefined) {
     return (
@@ -156,7 +159,15 @@ export function CostOverTimeView({
   const notes = bucketNotes(vm, partial);
 
   return (
-    <ViewShell brand={brand} kicker={kicker} title={vm.title} meta={meta} lead={frame?.lead(returnTo === undefined)}>
+    <ViewShell
+      brand={brand}
+      kicker={kicker}
+      title={vm.title}
+      meta={meta}
+      lead={frame?.lead(returnTo === undefined)}
+      displayMode={display.mode}
+      actions={display.fullscreenOffered ? <FullscreenButton mode={display.mode} onToggle={display.toggleFullscreen} /> : undefined}
+    >
       <BasisTiles tiles={vm.basisTiles} />
       <p className="ct-basis text-muted">
         {`${vm.sessionsText}, ${vm.turnsText}. Preferred basis takes billed, then reported, then priced${basisLine === undefined ? "" : `: ${basisLine}`}.`}

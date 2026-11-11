@@ -120,6 +120,11 @@ export class ViewFrame {
     return (await this.frame()).evaluate(() => document.documentElement.clientWidth);
   }
 
+  // The view's card width in CSS pixels: capped inline, wider in fullscreen (A31).
+  async shellWidth(): Promise<number> {
+    return (await this.frame()).evaluate(() => document.querySelector("main.view-shell")?.getBoundingClientRect().width ?? 0);
+  }
+
   // WCAG 2.2 A/AA in the view's own document. The view's card is
   // transparent and the host paints its ground behind the iframe, which axe
   // inside the frame cannot see, so the host's ground variable is painted

@@ -9,6 +9,9 @@
 
 html[data-host="mcp-app"] body { margin: 0; }
 
+/* Fullscreen (A31): the card takes the host's width, so charts and tables get the room. */
+html[data-host="mcp-app"] .view-shell[data-display-mode="fullscreen"] { max-width: none; }
+
 html[data-host="mcp-app"] .view-shell {
   gap: 12px;
   padding: 14px 16px 12px;
