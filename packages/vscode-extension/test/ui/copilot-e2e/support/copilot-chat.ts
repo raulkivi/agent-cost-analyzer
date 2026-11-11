@@ -3,10 +3,13 @@
 // What every real-Copilot spec needs (vscode-ui-automation.md §7): wait for
 // Copilot to be ready, open a chat in the test-only agent, reach the
 // analyzer's own MCP server to read what the chat did, and check the model.
-// Shared by copilot-agent.e2e.ts (checks 1.4, 2.3, 2.4) and
-// copilot-views.e2e.ts (G4, the MCP App views).
+// Shared by copilot-agent.e2e.ts (checks 1.4, 2.3, 2.4), copilot-views.e2e.ts
+// (G4, the MCP App views) and extension-rows.e2e.ts (1.14). Every chat goes
+// through sendToAgent, which sends only within the run's AI Credits cap and
+// only when the chat's model picker shows the requested model (R5).
 // TDD exception: the polling and the chat need a real VS Code; the decisions
-// (copilot-readiness.mts, modelMatches) are unit-tested.
+// (copilot-readiness.mts, modelMatches, pre-send-model.mts, credit-budget.mts)
+// are unit-tested.
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import { browser } from "@wdio/globals";
@@ -14,8 +17,11 @@ import { INTERNAL_COMMAND_IDS } from "../../../../src/diagnostics/test-hooks.js"
 import type { McpStdioServerSpec } from "../../../../src/mcp/mcp-server-definitions.js";
 import type { SessionsTreeNode } from "../../../../src/sidebar/sessions-tree-model.js";
 import { wdioVscodeHost as host } from "../../support/vscode-host.js";
+import { readRunArtifacts } from "../../../../scripts/release-evidence/run-artifacts.mts";
 import { modelMatches } from "./copilot-e2e-env.mts";
 import { COPILOT_E2E_AGENT } from "./copilot-e2e-settings.mts";
+import { budgetCheck, creditsSpent, DEFAULT_MAX_AI_CREDITS, MAX_AI_CREDITS_ENV, MAX_AI_CREDITS_INTERNAL_ENV } from "./credit-budget.mts";
+import { preSendModelCheck, shownModelOf } from "./pre-send-model.mts";
 import {
   COPILOT_CHAT_EXTENSION_ID,
   COPILOT_READY_LIMIT_MS,
@@ -25,9 +31,12 @@ import {
   type CopilotSignals,
   NOT_OBSERVED,
 } from "./copilot-readiness.mts";
-import { logToRun, skipTest } from "./run-log.mts";
+import { COPILOT_E2E_ROOT_ENV, evidenceDirOf, logToRun, skipSuite, skipTest } from "./run-log.mts";
 
 export const MODEL = process.env.AI_CREDITS_ANALYZER_COPILOT_E2E_MODEL ?? "claude-haiku-5.5";
+const MAX_AI_CREDITS = Number(process.env[MAX_AI_CREDITS_INTERNAL_ENV] ?? DEFAULT_MAX_AI_CREDITS);
+// How long the picker may take to show the model the open command selected.
+const PICKER_SETTLE_MS = 5_000;
 
 let lastSignalError = "";
 
@@ -139,10 +148,78 @@ export async function listedSessions(): Promise<{ sessionId: string; creditsKnow
   return sessionNodes(tree).map((node) => ({ sessionId: node.sessionId, creditsKnown: /^\d/.test(node.description) }));
 }
 
-// A new chat in the test-only agent: agent mode with the analyzer's MCP tools only (D6).
-export async function sendToAgent(prompt: string): Promise<void> {
+// The run log every spec file of the run appends to (run-log.mts).
+function runLog() {
+  const root = process.env[COPILOT_E2E_ROOT_ENV];
+  return root === undefined || root === "" ? [] : readRunArtifacts(evidenceDirOf(root)).log;
+}
+
+// What a chat cost, for the release evidence and the run's cap; says when the cap is reached.
+export function recordChatCredits(spent: number): void {
+  logToRun({ kind: "credits", spent });
+  const total = creditsSpent(runLog());
+  console.log(`[copilot-e2e] AI Credits spent by the run so far: ${total.toFixed(4)} (cap ${MAX_AI_CREDITS}, ${MAX_AI_CREDITS_ENV})`);
+  if (total >= MAX_AI_CREDITS) console.log("[copilot-e2e] AI Credits budget exceeded: every remaining chat skips unsent");
+}
+
+// The accessible names in the chat input; the model picker's is "Models, <name>".
+async function inputLabels(): Promise<string[]> {
+  return browser.execute(() => Array.from(document.querySelectorAll(".interactive-input-part [aria-label]"), (element) => element.getAttribute("aria-label") ?? ""));
+}
+
+// The model the chat will use, as its picker shows it; polled briefly in case the picker lags the selection.
+async function shownModel(wanted: (shown: string) => boolean): Promise<string | undefined> {
+  let shown: string | undefined;
+  await browser
+    .waitUntil(
+      async () => {
+        shown = shownModelOf(await inputLabels());
+        return shown !== undefined && wanted(shown);
+      },
+      { timeout: PICKER_SETTLE_MS, interval: 250 },
+    )
+    .catch(() => undefined);
+  return shown;
+}
+
+// Copilot's name for the requested model ("Claude Haiku 5.5"), as the picker shows it.
+async function requestedModelName(): Promise<string | undefined> {
+  const name: unknown = await browser
+    .executeWorkbench(async (vscode, id: string) => (await vscode.lm.selectChatModels({ vendor: "copilot", id }))[0]?.name, MODEL)
+    .catch(() => undefined);
+  return typeof name === "string" ? name : undefined;
+}
+
+// A new chat in the test-only agent: agent mode with the analyzer's MCP tools
+// only (D6). Sent only while the run is under its AI Credits cap, and only
+// when the chat's picker shows MODEL: VS Code 1.146 can start a new chat on
+// another model whatever the seeded state says (R5), so the open command
+// selects the model (modelSelector) and the picker is read back from the
+// widget. Otherwise the test (or, from a suiteSetup, the suite) skips unsent.
+export async function sendToAgent(context: Mocha.Context, prompt: string, scope: "test" | "suite" = "test"): Promise<void> {
+  const skip = scope === "suite" ? skipSuite : skipTest;
+  const budget = budgetCheck(runLog(), MAX_AI_CREDITS);
+  if (!budget.send) skip(context, budget.reason);
+
   await host.command("workbench.action.chat.newChat").catch(() => undefined);
-  await host.command("workbench.action.chat.open", { query: prompt, mode: COPILOT_E2E_AGENT });
+  let selectError: string | undefined;
+  // isPartialQuery puts the prompt in the input without sending it.
+  await host
+    .command("workbench.action.chat.open", { mode: COPILOT_E2E_AGENT, modelSelector: { vendor: "copilot", id: MODEL }, query: prompt, isPartialQuery: true })
+    .catch((error: unknown) => {
+      selectError = error instanceof Error ? error.message : String(error);
+    });
+  const requested = { id: MODEL, name: await requestedModelName() };
+  const shown = await shownModel((name) => preSendModelCheck({ requested, shown: name }).send);
+  console.log(`[copilot-e2e] the chat's model picker shows ${shown === undefined ? "no model" : `"${shown}"`} before sending`);
+  const decision = preSendModelCheck({ requested, shown, selectError });
+  if (!decision.send) {
+    // Drops the unsent prompt.
+    await host.command("workbench.action.chat.newChat").catch(() => undefined);
+    skip(context, decision.reason);
+  }
+  // The generic open has no mode of its own: it sends from the same chat, on the model just read.
+  await host.command("workbench.action.chat.open", { query: prompt });
 }
 
 // Waits for a session that isn't in `known` to show known AI Credits, and returns its id.

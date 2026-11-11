@@ -17,10 +17,10 @@ import type { GroupNode, SessionsTreeNode } from "../../../../src/sidebar/sessio
 import { copilotTestTitle } from "../../../../scripts/release-evidence/evidence.mts";
 import { E2E_REPOSITORY } from "../../../../scripts/ui-automation/git-folder.mts";
 import { wdioVscodeHost as host } from "../../support/vscode-host.js";
-import { COPILOT_E2E_AGENT } from "../support/copilot-e2e-settings.mts";
+import { recordChatCredits, sendToAgent } from "../support/copilot-chat.js";
 import { ANALYZER_SERVER_LABEL, ConfigureToolsPicker } from "../support/configure-tools-picker.js";
 import { groupCredits, repositoryStatusCredits } from "../support/repository-status.mts";
-import { logToRun, skipSuite } from "../support/run-log.mts";
+import { skipSuite } from "../support/run-log.mts";
 import { waitForCopilotReady } from "../support/wait-for-copilot.js";
 
 const MCP_SETTING = "aiCreditsAnalyzer.mcp.enabled";
@@ -106,6 +106,9 @@ suite("Check 1.14 on a real git folder (opt-in; one chat)", function () {
     await useCopilot(this);
     await host.command(COMMAND_IDS.groupSessionsByDay);
     knownSessionIds = new Set(sessionIds(await sessionsTree()));
+    // Every 1.14 test needs the chat: unsent, and the suite skips, over the AI
+    // Credits cap or when the picker shows another model.
+    await sendToAgent(this, PROMPT, "suite");
   });
 
   suiteTeardown(async () => {
@@ -114,8 +117,6 @@ suite("Check 1.14 on a real git folder (opt-in; one chat)", function () {
   });
 
   test(copilotTestTitle("1.14", "a real agent-mode chat in the git folder produces a session with known AI Credits"), async () => {
-    await host.command("workbench.action.chat.newChat").catch(() => undefined);
-    await host.command("workbench.action.chat.open", { query: PROMPT, mode: COPILOT_E2E_AGENT });
     let found: { id: string; description: string } | undefined;
     await browser.waitUntil(
       async () => {
@@ -131,7 +132,7 @@ suite("Check 1.14 on a real git folder (opt-in; one chat)", function () {
     expect(credits).not.toBeNull();
     expect(credits!).toBeGreaterThan(0);
     chat = { id: found!.id, credits: credits! };
-    logToRun({ kind: "credits", spent: credits! });
+    recordChatCredits(credits!);
   });
 
   test(copilotTestTitle("1.14", "Group Sessions by Repository lists the folder's repository with the new session's AI Credits, never 0"), async () => {

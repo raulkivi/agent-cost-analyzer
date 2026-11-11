@@ -15,9 +15,9 @@
 import { browser, expect } from "@wdio/globals";
 import { wdioVscodeHost as host } from "../../support/vscode-host.js";
 import { COPILOT_CHAT_CHECKS, copilotTestTitle } from "../../../../scripts/release-evidence/evidence.mts";
-import { AnalyzerClient, listedSessions, requireModel, sendToAgent, type SessionSummary, waitForCopilot, waitForNewSession } from "../support/copilot-chat.js";
+import { AnalyzerClient, listedSessions, recordChatCredits, requireModel, sendToAgent, type SessionSummary, waitForCopilot, waitForNewSession } from "../support/copilot-chat.js";
 import { AUDIT_POLL_INTERVAL_MS, AUDIT_POLL_LIMIT_MS, pollUntil } from "../support/poll-until.mts";
-import { logToRun, skipSuite } from "../support/run-log.mts";
+import { skipSuite } from "../support/run-log.mts";
 import { type AuditPage, auditHoldsCall, missingToolCallMessage } from "../support/tool-call-audit.mts";
 
 const [CHECK_1_4, CHECK_2_3, CHECK_2_4] = COPILOT_CHAT_CHECKS;
@@ -37,17 +37,18 @@ async function tool<T>(name: string, args: Record<string, unknown>): Promise<T> 
   return analyzer!.tool<T>(name, args);
 }
 
-// Sends a prompt to agent mode and waits for a session that was not there
+// Sends a prompt to agent mode (unsent, and the test skips, over the AI Credits
+// cap or on another model) and waits for a session that was not there
 // before to show known AI Credits. Returns it.
-async function chatAndWaitForNewSession(prompt: string): Promise<SessionSummary> {
+async function chatAndWaitForNewSession(context: Mocha.Context, prompt: string): Promise<SessionSummary> {
   // A new chat each time, so each prompt makes its own session.
-  await sendToAgent(prompt);
+  await sendToAgent(context, prompt);
   const found = await waitForNewSession(knownSessionIds, TURN_TIMEOUT_MS);
   knownSessionIds.add(found);
   const session = await analyzer!.session(found);
   const spent = (await analyzer!.aiCredits(found)) ?? 0;
   creditsSpent += spent;
-  logToRun({ kind: "credits", spent });
+  recordChatCredits(spent);
   return session;
 }
 
@@ -93,7 +94,7 @@ suite("Real Copilot agent mode (checks 1.4, 2.3, 2.4; opt-in)", function () {
   });
 
   test(copilotTestTitle(CHECK_1_4, "a real agent-mode chat produces a session with known AI Credits, turns and tokens, and the MCP tools offer it"), async function () {
-    const session = await chatAndWaitForNewSession(PROMPT_PLAIN);
+    const session = await chatAndWaitForNewSession(this, PROMPT_PLAIN);
     requireModel(this, session);
 
     expect(session.turnCount).toBeGreaterThanOrEqual(1);
@@ -104,14 +105,14 @@ suite("Real Copilot agent mode (checks 1.4, 2.3, 2.4; opt-in)", function () {
   });
 
   test(copilotTestTitle(CHECK_2_3, "asked to call an MCP tool, Copilot's call appears in the session's tool-call audit"), async function () {
-    const session = await chatAndWaitForNewSession(PROMPT_MCP_PROVIDERS);
+    const session = await chatAndWaitForNewSession(this, PROMPT_MCP_PROVIDERS);
     requireModel(this, session);
 
     await expectMcpCallInAudit(session.id, "list_log_providers");
   });
 
   test(copilotTestTitle(CHECK_2_4, "asked about another agent's sessions, Copilot's call to the tool appears in the audit"), async function () {
-    const session = await chatAndWaitForNewSession(PROMPT_MCP_OTHER_AGENT);
+    const session = await chatAndWaitForNewSession(this, PROMPT_MCP_OTHER_AGENT);
     requireModel(this, session);
 
     await expectMcpCallInAudit(session.id, "list_sessions");

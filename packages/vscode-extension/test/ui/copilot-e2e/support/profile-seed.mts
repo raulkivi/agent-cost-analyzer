@@ -5,7 +5,9 @@
 // - the chat panel's model: the sign-in window may have left it on Auto,
 //   which routes to whichever model Copilot picks. A plain key in the
 //   profile's global state (User/globalStorage/state.vscdb, default-profile
-//   scope);
+//   scope). Only the chat's first start reads it: VS Code 1.146 can start a
+//   new chat on another model (R5), so every chat also selects the model with
+//   the open command and checks the picker before sending (copilot-chat.ts);
 // - the test-only agent the specs chat in (copilot-e2e-settings.mts), a file
 //   in the profile's prompts folder.
 // Nothing here reads the sign-in. No auto-approve opt-in is seeded (D6).

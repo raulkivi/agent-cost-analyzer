@@ -34,9 +34,20 @@ describe("readCopilotE2eEnv (opt-in real-Copilot suite)", () => {
   });
 
   it("runs with the Claude Haiku 5.5 default, and the override when COPILOT_E2E_MODEL is set", () => {
-    expect(readCopilotE2eEnv({ COPILOT_E2E: "1", COPILOT_E2E_USER_DATA_DIR: dir })).toEqual({ status: "run", userDataDir: dir, model: DEFAULT_COPILOT_E2E_MODEL });
+    expect(readCopilotE2eEnv({ COPILOT_E2E: "1", COPILOT_E2E_USER_DATA_DIR: dir })).toEqual({ status: "run", userDataDir: dir, model: DEFAULT_COPILOT_E2E_MODEL, maxAiCredits: 3 });
     expect(DEFAULT_COPILOT_E2E_MODEL).toBe("claude-haiku-5.5");
     expect(readCopilotE2eEnv({ COPILOT_E2E: "1", COPILOT_E2E_USER_DATA_DIR: dir, COPILOT_E2E_MODEL: "gpt-6-luna" })).toMatchObject({ model: "gpt-6-luna" });
+  });
+
+  it("caps the run's AI Credits at 3 by default, and at COPILOT_E2E_MAX_AI_CREDITS when set", () => {
+    expect(readCopilotE2eEnv({ COPILOT_E2E: "1", COPILOT_E2E_USER_DATA_DIR: dir, COPILOT_E2E_MAX_AI_CREDITS: "2" })).toMatchObject({ status: "run", maxAiCredits: 2 });
+  });
+
+  it("skips, naming the variable, when COPILOT_E2E_MAX_AI_CREDITS isn't a number of at least 0: no run without a cap", () => {
+    expect(readCopilotE2eEnv({ COPILOT_E2E: "1", COPILOT_E2E_USER_DATA_DIR: dir, COPILOT_E2E_MAX_AI_CREDITS: "lots" })).toEqual({
+      status: "skip",
+      reason: expect.stringContaining("COPILOT_E2E_MAX_AI_CREDITS"),
+    });
   });
 });
 

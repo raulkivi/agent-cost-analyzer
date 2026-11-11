@@ -47,6 +47,7 @@ Fixed test-first in `cost-series.ts`.
 | D9 | Any skip of a required test blocks a release (confirms G2's tightened rule). |
 | D10 | The Increment 2 release (extension 0.6.0, app 0.11.0) waits for G4 and the empty-window fix (D7). *Superseded for G7 by D11.* |
 | D11 | The chart findings G7's judge found are fixed, not pinned: G7 merges with no exceptions, and the fixes ship in the Increment 2 release, which therefore also waits for G7 (`npm run test:ui` runs in the required `extension` job and in `release-extension.yml`, so findings would block both). |
+| D12 | **Proposed (2026-11-11), for the owner to confirm:** hard cap 3 AI Credits per real-Copilot run. `COPILOT_E2E_MAX_AI_CREDITS` (default 3; `0` sends no chat) is checked before every chat against what the run's chats have cost so far; a refused chat skips with "budget exceeded", and the gate refuses the skip (D9). Checked between chats, so a run can pass the cap by at most one chat (about 0.6 AI Credits). See R5. |
 
 ## 2. What gates each release today, and what replaces it
 
@@ -225,7 +226,8 @@ although the test profile is signed in.
     (the owner's pick was stored for the Copilot CLI session type), so the
     chat ran on Auto, routed to GPT-6 Luna. The launcher seeds it with
     `copilot/<COPILOT_E2E_MODEL>`, so the run uses the requested model
-    without the manual picker step.
+    without the manual picker step. On VS Code 1.146 the seed is not
+    enough: every chat now selects the model and checks the picker (R5).
   - With no folder open, Copilot Chat writes its debug logs to
     `User/globalStorage/github.copilot-chat/debug-logs/`, which the analyzer
     doesn't read (it reads `workspaceStorage/*/GitHub.copilot-chat/debug-logs`),
@@ -439,3 +441,79 @@ no Copilot); G2 and G3 next; G4 and G7 last.
   `chat.currentLanguageModel.panel`). A service or VS Code update can break
   it; the symptom is a readiness skip, a stuck chat or the wrong model, all of
   which block the release (G2) rather than pass it. Recheck after a bump.
+
+  **Incident, VS Code 1.146 (2026-11-11).** The owner's release run on
+  `5922f21` (#215 pinned 1.146.0; the same suite passed 22/22 on 1.145.0 at
+  `a4e1764`) went wrong twice:
+
+  1. *Wrong model, 16.38 AI Credits.* The three `copilot-agent.e2e.ts` chats
+     ran on `claude-sonnet-5.5` and `gpt-6-luna`, not the seeded
+     `claude-haiku-5.5` (about 1.3 expected, D8 about 2). The after-chat
+     model check skipped each test, but only after the chat had been paid
+     for. Cause, found without sending a chat: the storage key and the code
+     that reads it are the same in 1.145 and 1.146, and the chat's first
+     start shows the seeded model. But on 1.146,
+     `workbench.action.chat.newChat`, which the specs run before every chat,
+     can start the new chat on another model. Read from the picker in
+     no-chat runs: Copilot Fusion (Copilot's router), GPT-6 Luna and Claude
+     Fable 5. (The owner's profile stores GPT-6 Luna for the Copilot CLI
+     session type, `chat.currentLanguageModel.panel.agent-host-copilotcli`.)
+     The 1.146 code path that does this wasn't pinned down; the fix doesn't
+     depend on it.
+  2. *`session not created: Chrome instance exited`* for `copilot-views.e2e.ts`
+     and `extension-rows.e2e.ts`. Every spec file starts its own VS Code on
+     the same profile copy, and VS Code is single-instance per profile: a
+     second launch hands over to a running one and exits (tested: it exits
+     0 within 6 s). After the real chats the previous VS Code didn't quit.
+     The likely reason, read from the code and not reproduced with a real
+     chat: with a chat request or a local agent session still in progress,
+     VS Code's `chatLifecycleHandler` vetoes the quit with a confirmation
+     nobody answers. chromedriver then kills only wdio-vscode-service's
+     launcher shim (`dist/chromium/index.js`, which starts `code` with
+     `execFile` and never passes signals on), and the orphaned VS Code keeps
+     the profile. Reproduced without a chat: an unsaved file with
+     `files.hotExit: "off"` blocks the quit in the same way, and the next
+     spec file failed with the owner's exact error. chromedriver's
+     Chromium (150.0.7871.124) matches 1.146's Electron (Chromium
+     150.0.7871.250, the same as 1.145's), so the driver is not the cause.
+     The no-account smoke run had no chat in progress, so its VS Code quit.
+
+  Fixes (test-only, no product change):
+
+  - **Model selection:** `sendToAgent` (`copilot-chat.ts`) starts each chat
+    with `workbench.action.chat.open` and `modelSelector: { vendor:
+    "copilot", id: COPILOT_E2E_MODEL }`, which both 1.145 and 1.146 support
+    (it throws `No language models found matching selector` for an unknown
+    id). The prompt goes into the input with `isPartialQuery`, which does
+    not send it. The seed stays for the first start.
+  - **Pre-send guard:** before every message it reads the model from the
+    chat input's picker (its accessible name, `Models, Claude Haiku 5.5`),
+    not from the state the suite wrote. If that isn't the requested model
+    (exact match on Copilot's name or id, so Auto, a fast variant or a
+    failed selection all refuse), nothing is sent and the test skips,
+    naming the model shown. A wrong model costs 0 AI Credits; the gate still
+    refuses the skip (D9). Then a plain `workbench.action.chat.open` with
+    the query sends from the same chat. The decision is
+    `pre-send-model.mts` (unit-tested). The after-chat check of the logged
+    model id stays.
+  - **AI Credits cap (D12, proposed):** `credit-budget.mts` (unit-tested)
+    sums the run log's `credits` entries, which every spec file appends to,
+    and `sendToAgent` refuses to send once the sum reaches
+    `COPILOT_E2E_MAX_AI_CREDITS` (default 3): "AI Credits budget exceeded:
+    the run has spent X of COPILOT_E2E_MAX_AI_CREDITS=Y; nothing was sent".
+    The skip reason goes into the release evidence. 1.14's chat moved into
+    its suite's `suiteSetup`, so a refusal skips its four tests instead of
+    failing three of them.
+  - **Launch between spec files:** the config's `onWorkerEnd`, which the
+    wdio launcher awaits before the next spec file, runs `releaseProfile`
+    (`scripts/ui-automation/profile-release.mts`, unit-tested). It waits up
+    to 30 s for every process started with the run's `--user-data-dir` to
+    exit, then sends SIGTERM, then SIGKILL after 5 s, and logs what it had
+    to do. Verified on the unsaved-file reproduction: the profile was
+    released after 35.1 s (SIGTERM, then SIGKILL) and the next spec file
+    started.
+
+  No-chat runs on 1.146 (0 AI Credits, notes reset afterwards): the whole
+  suite with `COPILOT_E2E_MODEL=no-such-model` (every chat refused by the
+  guard; 2.1 passed) and with `COPILOT_E2E_MAX_AI_CREDITS=0` (every chat
+  refused by the cap; 2.1 passed). All three spec files launched in both.

@@ -22,7 +22,7 @@ import { OUT_DIR, saveScreenshot } from "../../support/screenshots.js";
 import { wdioVscodeHost as host } from "../../support/vscode-host.js";
 import { CHAT_HISTORY_ENV, HISTORY_REPOSITORIES, type ChatHistory } from "../support/chat-history-seed.mts";
 import { ChatViews, type ChatView, type ViewSnapshot } from "../support/chat-view.js";
-import { AnalyzerClient, listedSessions, MODEL, sendToAgent, waitForCopilot, waitForNewSession } from "../support/copilot-chat.js";
+import { AnalyzerClient, listedSessions, MODEL, recordChatCredits, sendToAgent, waitForCopilot, waitForNewSession } from "../support/copilot-chat.js";
 import { modelMatches } from "../support/copilot-e2e-env.mts";
 import { logToRun, skipSuite } from "../support/run-log.mts";
 import { type ViewCall, viewsPrompt } from "../support/view-prompt.mts";
@@ -98,7 +98,8 @@ suite("MCP App views in a real Copilot Chat (A24 §1, A16 §1; opt-in)", functio
     const known = new Set((await listedSessions()).map((node) => node.sessionId));
     analyzer = await AnalyzerClient.connect();
 
-    await sendToAgent(viewsPrompt(viewCalls(history!)));
+    // Unsent, and the suite skips, over the AI Credits cap or on another model.
+    await sendToAgent(this, viewsPrompt(viewCalls(history!)), "suite");
     // A live model may make fewer calls than asked (risk R2): the run skips
     // with the reason, and the release gate refuses the skip.
     const wanted = Object.keys(VIEW).length;
@@ -122,7 +123,7 @@ suite("MCP App views in a real Copilot Chat (A24 §1, A16 §1; opt-in)", functio
   suiteTeardown(async () => {
     if (chatSessionId !== undefined && analyzer !== undefined) {
       const spent = (await analyzer.aiCredits(chatSessionId)) ?? 0;
-      logToRun({ kind: "credits", spent });
+      recordChatCredits(spent);
       console.log(`[copilot-e2e] AI Credits spent by the views chat: ${spent.toFixed(4)}`);
     }
     await analyzer?.close();
