@@ -268,6 +268,8 @@ although the test profile is signed in.
   Normal mode does not change that. Since D6 the chat is offered only the
   analyzer's read-only MCP tools and nothing is auto-approved.
 
+**G3/G4 follow-up: audit race (2026-11-11).** The owner's release run on `d666a43` failed 2.3 (`list_tool_calls`, kind `mcp`, `total: 0`); it had passed three times. The spec read the audit once, right after the session appeared, before Copilot's debug log held the MCP call. 2.3 and 2.4 now poll every 2 s for up to 90 s and, on timeout, list the tool names the audit held (all kinds), so a repeat says whether Copilot never called the tool or the audit did not record it. Only a real run tests the wiring.
+
 **G4: MCP App views in Copilot Chat (2026-11-11).** The spike worked (risk R1
 closed): the views are reachable and driven like any VS Code webview. The
 spec is `test/ui/copilot-e2e/specs/copilot-views.e2e.ts` in the real-Copilot
