@@ -36,6 +36,10 @@ export const COPILOT_E2E_SETTINGS = {
   // choice back into the SDK harness, so both are needed.
   "chat.defaultToCopilotHarness": false,
   "chat.editor.preferCopilotHarness": false,
+  // While a chat is empty (a staged prompt doesn't count), VS Code resets its
+  // mode to this one whenever the agent list refreshes (agent discovery runs
+  // after start-up); left empty, that is plain Agent, with every tool (D6).
+  "chat.newSession.defaultMode": COPILOT_E2E_AGENT,
   "workbench.startupEditor": "none",
   "extensions.autoCheckUpdates": false,
   "update.mode": "none",

@@ -41,4 +41,8 @@ describe("the real-Copilot suite's tool access (owner decision D6)", () => {
     // Otherwise 1.146 turns a local choice back into the Copilot SDK harness ("copilotPreference").
     expect(COPILOT_E2E_SETTINGS["chat.editor.preferCopilotHarness"]).toBe(false);
   });
+
+  it("starts every new chat in the test agent: an empty chat falls back to this mode whenever the agent list refreshes", () => {
+    expect(COPILOT_E2E_SETTINGS["chat.newSession.defaultMode"]).toBe(COPILOT_E2E_AGENT);
+  });
 });

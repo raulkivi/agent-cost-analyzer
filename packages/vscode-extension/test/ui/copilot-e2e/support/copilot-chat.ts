@@ -178,19 +178,19 @@ async function inputLabels(): Promise<string[]> {
   return browser.execute(() => Array.from(document.querySelectorAll(".interactive-input-part [aria-label]"), (element) => element.getAttribute("aria-label") ?? ""));
 }
 
-// The model the chat will use, as its picker shows it; polled briefly in case the picker lags the selection.
-async function shownModel(wanted: (shown: string) => boolean): Promise<string | undefined> {
-  let shown: string | undefined;
+// The chat input's labels once `ready` holds, or as they are when the settle time passes.
+async function settledLabels(ready: (labels: string[]) => boolean): Promise<string[]> {
+  let labels: string[] = [];
   await browser
     .waitUntil(
       async () => {
-        shown = shownModelOf(await inputLabels());
-        return shown !== undefined && wanted(shown);
+        labels = await inputLabels();
+        return ready(labels);
       },
       { timeout: PICKER_SETTLE_MS, interval: 250 },
     )
     .catch(() => undefined);
-  return shown;
+  return labels;
 }
 
 // Copilot's name for the requested model ("Claude Haiku 5.5"), as the picker shows it.
@@ -223,11 +223,17 @@ export async function sendToAgent(context: Mocha.Context, prompt: string, scope:
       selectError = error instanceof Error ? error.message : String(error);
     });
   const requested = { id: MODEL, name: await requestedModelName() };
-  const shown = await shownModel((name) => preSendModelCheck({ requested, shown: name }).send);
+  // The picker, the agent and the session target render one after another.
+  const preSend = (labels: string[]) => {
+    const model = preSendModelCheck({ requested, shown: shownModelOf(labels), selectError });
+    return model.send ? preSendSessionCheck(labels, COPILOT_E2E_AGENT) : model;
+  };
+  const labels = await settledLabels((current) => preSend(current).send);
+  const shown = shownModelOf(labels);
   console.log(`[copilot-e2e] the chat's model picker shows ${shown === undefined ? "no model" : `"${shown}"`} before sending`);
-  const modelDecision = preSendModelCheck({ requested, shown, selectError });
-  const decision = modelDecision.send ? preSendSessionCheck(await inputLabels(), COPILOT_E2E_AGENT) : modelDecision;
+  const decision = preSend(labels);
   if (!decision.send) {
+    console.log(`[copilot-e2e] the chat input showed: ${JSON.stringify(labels.filter((label) => label.length < 80))}`);
     // Drops the unsent prompt.
     await host.command("workbench.action.chat.newChat").catch(() => undefined);
     skip(context, decision.reason);
