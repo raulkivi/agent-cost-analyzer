@@ -301,6 +301,22 @@ export class PriceChangesView {
     return this.content.locator(".pc-state");
   }
 
+  // An observed (inferred) entry's billed-against-priced percentage, as written ("+12.0 %").
+  observedPercent(model: string): Locator {
+    return this.entry(model).locator(".pc-observed b");
+  }
+
+  // An observed entry's weekly billed-against-priced table.
+  weeklyTable(model: string): Locator {
+    return this.content.getByRole("table", { name: `${model} weekly billed against priced`, exact: true });
+  }
+
+  // Whether the first timeline mark of a kind has a dashed outline: inferred differs from documented without colour.
+  async markDashed(kind: "documented" | "observed"): Promise<boolean> {
+    const dash = await this.marks(kind).first().locator("polygon").evaluate((element) => getComputedStyle(element).strokeDasharray);
+    return dash !== "" && dash !== "none";
+  }
+
   // The colour family of a percentage written in an entry ("+25.00 %" red, "−20.00 %" green).
   async percentHue(percent: Locator): Promise<Hue> {
     const colour = await percent.evaluate((element) => getComputedStyle(element).color);
@@ -610,6 +626,33 @@ export class StatementView {
   controls(): Locator {
     return this.content.getByRole("button");
   }
+
+  // The amber box over an issued statement whose re-run differs, or the note that it matches.
+  issuedDiffAlert(): Locator {
+    return this.content.getByRole("status").filter({ hasText: "A re-run today differs from the issued copy." });
+  }
+
+  issuedMatchesNote(): Locator {
+    return this.content.getByRole("status").filter({ hasText: "A re-run today matches the issued copy." });
+  }
+
+  diffTable(): Locator {
+    return this.content.getByRole("table", { name: "Issued against re-run, per line", exact: true });
+  }
+
+  // One row of the diff, by its line label ("billed, github-copilot, gpt-5.5") or a total ("Total, USD").
+  diffRow(label: string): Locator {
+    return this.diffTable().getByRole("row").filter({ hasText: label });
+  }
+
+  whatElseChanged(): Locator {
+    return this.content.getByRole("list", { name: "What else changed", exact: true });
+  }
+
+  // The scrollable table regions: the only things in U14 that take focus.
+  scrollRegions(): Locator {
+    return this.content.getByRole("region", { name: /, scrollable$/ });
+  }
 }
 
 // U15: the cost of planned work (standalone only, read-only).
@@ -622,6 +665,11 @@ export class EstimateView {
 
   rangeBar(): Locator {
     return this.content.getByRole("img", { name: /^Estimated range/ });
+  }
+
+  // "About $95.00 to $210.00 USD": the range in words above the bar.
+  rangeHeading(): Locator {
+    return this.content.getByRole("region", { name: "Estimated range", exact: true }).getByRole("heading", { level: 2 });
   }
 
   tile(name: string | RegExp): Locator {
@@ -655,6 +703,25 @@ export class AuditView {
 
   failedPerDay(): Locator {
     return this.content.getByRole("img", { name: /^Failed calls per day/ });
+  }
+
+  // Each day's column as its tooltip reads ("Oct 19: 9 failed calls", "Oct 20: Unknown").
+  failedPerDayTitles(): Locator {
+    return this.failedPerDay().locator("title");
+  }
+
+  // Days with no known outcome: a hatched gap, not a zero column.
+  unknownDays(): Locator {
+    return this.failedPerDay().locator("[data-unknown]");
+  }
+
+  // The chart's text form (A32): View as table, then one row per day.
+  viewPerDayAsTable(): Locator {
+    return this.content.getByRole("button", { name: "View as table", exact: true });
+  }
+
+  perDayRows(): Locator {
+    return this.table("Failed calls per day").getByRole("row");
   }
 
   table(name: string): Locator {

@@ -6,10 +6,10 @@ import { APP_VERSION, expect, inEachClaudeSet, test } from "../support/host-fixt
 // U14 (statement) and U15 (estimate) in Claude Desktop, light and dark, on
 // the standalone fixture home (docs/plans/mcp-apps.md §4.5, §9.2 Q13-Q16,
 // board Increment3States.dc.html cells 3-7, 14 and 15). Standalone only: the
-// extension names no billing view. The fixture has no issued statement, so
-// the issued diff (board cell 3) is covered by the component tests. Its
-// history has 4 priced active days, under the 5 an estimate needs, so a range
-// (board cell 5) is covered by the component tests too; the refusal is real.
+// extension names no billing view. The fixture has no issued statement, and
+// its history has 4 priced active days, under the 5 an estimate needs, so the
+// issued diff (board cell 3) and a range (board cell 5) are shown from canned
+// results in a32-coverage-gaps.spec.ts; the refusal here is real.
 
 const PORTAL_OCTOBER = { projectId: "portal", period: "2026-10" };
 const PORTAL_NOVEMBER = { projectId: "portal", period: "2026-11" };
