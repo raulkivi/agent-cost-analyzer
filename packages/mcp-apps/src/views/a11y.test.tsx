@@ -536,7 +536,7 @@ describe("U13 PriceChangesView has no axe violations", () => {
 
   it("an inferred fall, an unknown percentage and a provider not fully read", async () => {
     const base = priceChangeList();
-    const observed = base.changes[1]!;
+    const observed = base.changes.find((change) => change.kind === "observed")!;
     renderU13(ok(priceChangeList({ changes: [base.changes[0]!, { ...observed, direction: "below", percent: -0.1 }], providers: [{ id: "pi", label: "pi", available: false, unavailableReason: "no logs", sessionCount: 0, truncated: false }] })));
     await expectNoViolations();
   });

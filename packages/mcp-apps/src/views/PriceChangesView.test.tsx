@@ -69,7 +69,7 @@ describe("PriceChangesView content", () => {
 
   it("colours an inferred fall as a fall, with its minus", () => {
     const base = priceChangeList();
-    const observed = base.changes[1]!;
+    const observed = base.changes.find((change) => change.kind === "observed")!;
     setup(ok(priceChangeList({ changes: [{ ...observed, direction: "below", percent: -0.1 }] })));
     expect(within(entry("observed")).getByText("−10 %")).toHaveClass("pc-fall");
     expect(within(entry("observed")).getByText(/below the price book/)).toBeInTheDocument();
