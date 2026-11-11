@@ -274,6 +274,21 @@ describe("ReplayView, replay mode", () => {
     expect(screen.getByRole("img", { name: /2 turns not replayed/ })).toBeInTheDocument();
   });
 
+  // A32, chart-marks rule (D11): hatching that carries meaning holds 3:1. The
+  // hatch is drawn in the muted text colour (4.5:1 or more on every host);
+  // painted at 45% it fell to 1.9-3.0:1, so it is drawn at full strength, as
+  // U2's and U4's gaps are.
+  it("paints the gap's hatching at full strength, so it holds 3:1", () => {
+    direct();
+    const chart = screen.getByRole("img", { name: /AI Credits per turn/ });
+    const band = chart.querySelector("[data-gap] rect")!;
+    expect(band.getAttribute("opacity") ?? "1").toBe("1");
+    expect(band.getAttribute("fill-opacity") ?? "1").toBe("1");
+    const hatch = chart.querySelector("pattern line")!;
+    expect(hatch).toHaveAttribute("stroke", "var(--color-text-muted)");
+    expect(hatch.getAttribute("stroke-opacity") ?? "1").toBe("1");
+  });
+
   it("offers the per-turn figures as a table, with the reason and Unknown for what was not replayed", () => {
     direct();
     expect(screen.queryByRole("table", { name: /Per-turn/ })).toBeNull();

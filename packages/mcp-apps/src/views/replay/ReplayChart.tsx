@@ -64,7 +64,7 @@ export function ReplayChart({ chart, model }: { chart: ReplayChartModel; model: 
         const to = x(gap.to) + bandHalf;
         return (
           <g key={gap.from} data-gap="">
-            <rect x={from} y={TOP - 8} width={to - from} height={BASE - TOP + 8} fill={`url(#${hatchId})`} opacity="0.45">
+            <rect x={from} y={TOP - 8} width={to - from} height={BASE - TOP + 8} fill={`url(#${hatchId})`}>
               <title>{gap.title}</title>
             </rect>
             <text x={(from + to) / 2} y={TOP - 11} textAnchor="middle" className="view-chart-axis">
