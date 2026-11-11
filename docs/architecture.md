@@ -2660,7 +2660,9 @@ refactored — red-green-refactor, not tests bolted on afterward.
   (`docs.test.ts`), `docs/scenarios/**` (`docs-drift.test.ts`) and the
   recorded themes in `docs/plans/mcp-apps-spike-results/` and
   `mcp-apps-a24-results/` (the `mcp-apps` theme and e2e support). Every
-  `CHANGELOG.md` is code. An empty diff is not docs-only.
+  `CHANGELOG.md` is code. An empty diff is not docs-only. The heavy jobs
+  fail safe: they run unless the `changes` job succeeded and reported
+  docs-only.
 - Property-based tests (`*.property.test.ts`, `fast-check`) cover code
   that takes untrusted input or has a simple invariant: secret and header
   redaction, the SSE and shell-command parsers, the release checks and

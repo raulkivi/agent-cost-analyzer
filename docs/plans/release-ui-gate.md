@@ -417,6 +417,9 @@ carry `needs: changes` and a job-level `if`, which GitHub reports as success
 for a required check, so the ruleset's names still report. No `paths` filter
 or `[skip ci]`: those would stop the workflow reporting and block the PR.
 `test` never skips (lint, typecheck, and the unit tests that read docs).
+The heavy jobs fail safe: they run unless the `changes` job succeeded and
+found a docs-only PR, so a broken `changes` job can't turn them into
+skipped (passing) checks.
 Docs that a test reads count as code: `docs/vscode-extension-guide.md`,
 `docs/UserGuide.md`, `docs/threat-model.md`, `CONTRIBUTING.md`
 (`docs.test.ts`), `docs/scenarios/**` (`docs-drift.test.ts`),

@@ -69,7 +69,8 @@ jobs:
   # by Playwright. A required check: no retries, so a failure is real.
   web-e2e:
     needs: changes
-    if: needs.changes.outputs.docs_only != 'true'
+    # Fail safe: run unless the changes job succeeded AND found a docs-only PR.
+    if: ${{ !cancelled() && (needs.changes.result != 'success' || needs.changes.outputs.docs_only != 'true') }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -103,7 +104,8 @@ jobs:
   # the Claude Desktop hand checks (A16 §2, A24 §2). No retries.
   mcp-apps-e2e:
     needs: changes
-    if: needs.changes.outputs.docs_only != 'true'
+    # Fail safe: run unless the changes job succeeded AND found a docs-only PR.
+    if: ${{ !cancelled() && (needs.changes.result != 'success' || needs.changes.outputs.docs_only != 'true') }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -135,7 +137,8 @@ jobs:
   # stable build, under a virtual display.
   extension:
     needs: changes
-    if: needs.changes.outputs.docs_only != 'true'
+    # Fail safe: run unless the changes job succeeded AND found a docs-only PR.
+    if: ${{ !cancelled() && (needs.changes.result != 'success' || needs.changes.outputs.docs_only != 'true') }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -178,7 +181,8 @@ jobs:
   # release workflow runs the same suite.
   extension-ui:
     needs: changes
-    if: needs.changes.outputs.docs_only != 'true'
+    # Fail safe: run unless the changes job succeeded AND found a docs-only PR.
+    if: ${{ !cancelled() && (needs.changes.result != 'success' || needs.changes.outputs.docs_only != 'true') }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
