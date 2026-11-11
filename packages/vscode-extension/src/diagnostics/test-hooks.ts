@@ -9,13 +9,15 @@ import type { RpcTraceEntry } from "./rpc-trace.js";
 // run in a real VS Code and can't see inside the extension otherwise.
 // extension.ts registers them only when VS Code runs the extension in
 // ExtensionMode.Test (the Extension Development Host @vscode/test-electron
-// starts) or Development (a run from source, as the real-Copilot suite's
-// normal mode is since G3), and package.json never contributes them, so an
-// installed copy (Production)
-// has none: nothing for users to see in the Command Palette, and nothing
-// for other extensions to call. A command, rather than an API returned from
+// starts) or in Development with TEST_HOOKS_ENV=1 (the real-Copilot suite's
+// normal mode, G3, owner decision D5), and package.json never contributes
+// them, so a plain F5 host and an installed copy (Production) have none:
+// nothing for users to see in the Command Palette, and nothing for other
+// extensions to call. A command, rather than an API returned from
 // activate(), for that reason: an exported API would exist in every
 // installed copy.
+export const TEST_HOOKS_ENV = "AICA_TEST_HOOKS";
+
 export const INTERNAL_COMMAND_IDS = {
   // The recorded timing marks (performance/performance-recorder.ts).
   perfMarks: "aiCreditsAnalyzer.internal.perfMarks",

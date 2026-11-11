@@ -22,9 +22,11 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "nod
 import { tmpdir } from "node:os";
 import path from "node:path";
 import process from "node:process";
+import { TEST_HOOKS_ENV } from "./src/diagnostics/test-hooks.ts";
 import { readCopilotE2eEnv } from "./test/ui/copilot-e2e/support/copilot-e2e-env.mts";
 import { copyProfile } from "./test/ui/copilot-e2e/support/profile-copy.mts";
-import { copilotStateSeeds, seedProfileState } from "./test/ui/copilot-e2e/support/profile-seed.mts";
+import { COPILOT_E2E_SETTINGS, copilotE2eAgentFile } from "./test/ui/copilot-e2e/support/copilot-e2e-settings.mts";
+import { copilotStateSeeds, seedProfileAgent, seedProfileState } from "./test/ui/copilot-e2e/support/profile-seed.mts";
 import CopilotE2eResultsReporter from "./test/ui/copilot-e2e/support/results-reporter.mts";
 import { COPILOT_E2E_ROOT_ENV as ROOT_ENV, evidenceDirOf } from "./test/ui/copilot-e2e/support/run-log.mts";
 import { buildEvidence, type RunFacts } from "./scripts/release-evidence/build.mts";
@@ -36,23 +38,12 @@ import { KEEP_EXTENSIONS_MARKER, KeepExtensionsLauncher } from "./scripts/ui-aut
 import { PINNED_VSCODE_VERSION } from "./scripts/ui-automation/vscode-version.mts";
 import { installWorkbenchBridge, normalModeVscodeArgs, wdioProxyModule } from "./scripts/ui-automation/workbench-bridge.mts";
 
+// The analyzer's test hooks in a Development-mode extension host (owner
+// decision D5); VS Code and its extension host inherit this process's environment.
+process.env[TEST_HOOKS_ENV] = "1";
+
 // wdio loads this file in the launcher and again in every worker; only the
 // launcher copies the profile and reports the skip.
-export const COPILOT_E2E_SETTINGS = {
-  // Local harness chats record token data only with debug logging on.
-  "github.copilot.chat.agentDebugLog.fileLogging.enabled": true,
-  "github.copilot.chat.agentDebugLog.fileLogging.maxRetainedSessionLogs": 200,
-  "aiCreditsAnalyzer.mcp.enabled": true,
-  // Without this, agent mode asks before each MCP tool call and the chat
-  // waits for a click (verified on VS Code 1.145, G3; its one-time opt-in
-  // dialog is pre-answered by profile-seed.mts).
-  "chat.tools.global.autoApprove": true,
-  "workbench.startupEditor": "none",
-  "extensions.autoCheckUpdates": false,
-  "update.mode": "none",
-  "telemetry.telemetryLevel": "off",
-};
-
 const env = readCopilotE2eEnv(process.env);
 if (env.status === "skip") {
   if (process.env[ROOT_ENV] === undefined) console.log(`[copilot-e2e] SKIPPED: ${env.reason}`);
@@ -77,9 +68,10 @@ if (!inWorker) {
   mkdirSync(path.join(storagePath, "settings"), { recursive: true });
   mkdirSync(workspacePath, { recursive: true });
   copyProfile(env.userDataDir, path.join(storagePath, "settings"));
-  // In normal mode nothing auto-confirms dialogs: pre-answer global auto
-  // approve and pick the requested model, in the copy only.
+  // In the copy only: pick the requested model (nothing in normal mode picks
+  // it for us) and add the agent whose only tools are the analyzer's (D6).
   seedProfileState(path.join(storagePath, "settings"), copilotStateSeeds(env.model));
+  seedProfileAgent(path.join(storagePath, "settings"), copilotE2eAgentFile());
   // Normal mode (G3): executeWorkbench is served by a bridge extension, not
   // the service's test runner, so VS Code reads the copy's storage and sign-in.
   installWorkbenchBridge({ extensionsDir: path.join(storagePath, "extensions"), proxyModule: wdioProxyModule() });

@@ -67,7 +67,7 @@ gantt
     10.9/10.10 manual checks, review (5%)  :active, p10ar, after p10a, 1d
     10.13-10.15 Agent Host sessions (100%)  :done, p10b, 2026-10-28, 6d
     10.16 UI automation (100%)             :done, p10c, 2026-11-04, 2d
-    10.17 Release UI gate (62%)            :active, p10d, after p10c, 3d
+    10.17 Release UI gate (75%)            :active, p10d, after p10c, 3d
     10.18 Copilot empty-window sessions (100%) :done, p10e, 2026-11-11, 1d
 
     section Simulation and replay
@@ -105,7 +105,7 @@ gantt
 
 ## Open items
 
-- Step 10.17 (in progress, 5 of 8 tasks: G0 (#203), G1 (#202), G2 (release evidence, #207), G5 (fake MCP Apps host #205, Claude Desktop specs #206) and G6 (#204) done 2026-11-11; G3 needs the owner's first real-Copilot run): the automated pre-release UI gate, owner rule that no hand checklist gates a release ([release-ui-gate.md](plans/release-ui-gate.md)). It replaces the extension's manual checks and Phase 12's A24 owner checks; the Increment 2 release waits for it.
+- Step 10.17 (in progress, 6 of 8 tasks: G0 (#203), G1 (#202), G2 (#207), G3 (real-Copilot suite in normal mode, first green run, #208), G5 (#205, #206) and G6 (#204) done 2026-11-11; G4 next, then G7; the Increment 2 release waits for G4 (D10; step 10.18 done, #209)): the automated pre-release UI gate, owner rule that no hand checklist gates a release ([release-ui-gate.md](plans/release-ui-gate.md)). It replaces the extension's manual checks and Phase 12's A24 owner checks; the Increment 2 release waits for it.
 - Phase 14: steps 14.0-14.7 built; 14.8's docs written, the owner's review and the §13 exit criterion on real sessions open; the extension guide's replay screenshots open (User Guide's done). Step table: [analyze-session-replay.md](plans/analyze-session-replay.md) §12.
 - Phase 15: owner's review and exit criterion on real data.
 - Phase 13: owner's eyes-on review of step 13.8.

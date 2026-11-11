@@ -1,25 +1,23 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-// Pre-answers, in the real-Copilot suite's profile COPY (never the source),
-// what VS Code would otherwise ask in a normal-mode run (G3), where no test
-// runner auto-confirms dialogs:
-// - the one-time "Enable global auto approve?" dialog that
-//   `chat.tools.global.autoApprove` raises on the first tool call; the chat
-//   waits on it, so the first test times out;
+// Prepares the real-Copilot suite's profile COPY (never the source) for a
+// normal-mode run (G3), where no test runner auto-confirms anything:
 // - the chat panel's model: the sign-in window may have left it on Auto,
-//   which routes to whichever model Copilot picks.
-// Both are plain keys in the profile's global state (User/globalStorage/state.vscdb,
-// application and default-profile scope). Nothing here reads the sign-in.
-import { mkdirSync } from "node:fs";
+//   which routes to whichever model Copilot picks. A plain key in the
+//   profile's global state (User/globalStorage/state.vscdb, default-profile
+//   scope);
+// - the test-only agent the specs chat in (copilot-e2e-settings.mts), a file
+//   in the profile's prompts folder.
+// Nothing here reads the sign-in. No auto-approve opt-in is seeded (D6).
+import { mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 
-export const GLOBAL_AUTO_APPROVE_OPT_IN_KEY = "chat.tools.global.autoApprove.optIn";
 export const PANEL_MODEL_KEY = "chat.currentLanguageModel.panel";
 
 // `model` is the suite's model id (COPILOT_E2E_MODEL), also the Copilot picker's id.
 export function copilotStateSeeds(model: string): Record<string, string> {
-  return { [GLOBAL_AUTO_APPROVE_OPT_IN_KEY]: "true", [PANEL_MODEL_KEY]: `copilot/${model}` };
+  return { [PANEL_MODEL_KEY]: `copilot/${model}` };
 }
 
 export function seedProfileState(userDataDir: string, entries: Record<string, string>): void {
@@ -34,4 +32,10 @@ export function seedProfileState(userDataDir: string, entries: Record<string, st
   } finally {
     db.close();
   }
+}
+
+export function seedProfileAgent(userDataDir: string, agent: { name: string; content: string }): void {
+  const dir = path.join(userDataDir, "User", "prompts");
+  mkdirSync(dir, { recursive: true });
+  writeFileSync(path.join(dir, agent.name), agent.content);
 }

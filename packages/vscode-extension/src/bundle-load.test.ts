@@ -692,8 +692,8 @@ describe("the built extension bundle", () => {
   });
 
   // Step 10.9's integration-test seam: internal commands, registered only
-  // when VS Code runs the extension in ExtensionMode.Test or, since G3,
-  // Development (never in an installed copy). Last, since it
+  // when VS Code runs the extension in ExtensionMode.Test or, since G3 (D5),
+  // Development with AICA_TEST_HOOKS=1 (never in an installed copy). Last, since it
   // activates the bundle a second time.
   describe("test hooks (ExtensionMode.Test and Development only)", () => {
     const INTERNAL = "aiCreditsAnalyzer.internal.";
@@ -776,12 +776,38 @@ describe("the built extension bundle", () => {
       expect([...vscode.__commands.keys()].filter((id) => id.startsWith(INTERNAL))).toEqual([]);
     });
 
-    // G3: the real-Copilot suite runs VS Code in normal mode, where the
-    // extension under development runs in ExtensionMode.Development.
-    it("registers them in ExtensionMode.Development, an Extension Development Host run from source", () => {
+    // G3, D5: the real-Copilot suite runs VS Code in normal mode, where the
+    // extension under development runs in ExtensionMode.Development; it sets
+    // AICA_TEST_HOOKS=1 for that launch. A plain F5 host gets no hooks.
+    it("registers none in ExtensionMode.Development without AICA_TEST_HOOKS, a plain run from source", () => {
+      delete process.env.AICA_TEST_HOOKS;
       activateIn(2); // Development
 
+      expect([...vscode.__commands.keys()].filter((id) => id.startsWith(INTERNAL))).toEqual([]);
+      for (const subscription of testSubscriptions) subscription.dispose();
+    });
+
+    it("registers them in ExtensionMode.Development when the suite sets AICA_TEST_HOOKS=1", () => {
+      process.env.AICA_TEST_HOOKS = "1";
+      try {
+        activateIn(2); // Development
+      } finally {
+        delete process.env.AICA_TEST_HOOKS;
+      }
+
       expect([...vscode.__commands.keys()].filter((id) => id.startsWith(INTERNAL)).sort()).toEqual(ALL_INTERNAL);
+      for (const subscription of testSubscriptions) subscription.dispose();
+    });
+
+    it("registers none in production even with AICA_TEST_HOOKS set", () => {
+      process.env.AICA_TEST_HOOKS = "1";
+      try {
+        activateIn(1); // Production
+      } finally {
+        delete process.env.AICA_TEST_HOOKS;
+      }
+
+      expect([...vscode.__commands.keys()].filter((id) => id.startsWith(INTERNAL))).toEqual([]);
       for (const subscription of testSubscriptions) subscription.dispose();
     });
   });
