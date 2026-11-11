@@ -38,5 +38,7 @@ describe("the real-Copilot suite's tool access (owner decision D6)", () => {
 
   it("keeps new chats on VS Code's local harness, where the test agent, the selected model and Copilot's debug log apply (1.146 defaults to the Copilot SDK harness)", () => {
     expect(COPILOT_E2E_SETTINGS["chat.defaultToCopilotHarness"]).toBe(false);
+    // Otherwise 1.146 turns a local choice back into the Copilot SDK harness ("copilotPreference").
+    expect(COPILOT_E2E_SETTINGS["chat.editor.preferCopilotHarness"]).toBe(false);
   });
 });

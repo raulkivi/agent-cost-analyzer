@@ -19,6 +19,24 @@ export function shownModelOf(ariaLabels: readonly string[]): string | undefined 
   return undefined;
 }
 
+// The session target picker's accessible name for VS Code's own harness.
+const LOCAL_HARNESS = "Local";
+
+// VS Code 1.146 also shows the chat's harness and agent in the input: the
+// model picker means nothing in the Copilot SDK harness (it has its own
+// model pool, R5), and plain Agent mode would offer every tool, not only the
+// analyzer's (D6). Both labels are exact, as 1.146 renders them.
+export function preSendSessionCheck(ariaLabels: readonly string[], agent: string): PreSendDecision {
+  const labels = ariaLabels.map((label) => label.trim());
+  if (!labels.includes(LOCAL_HARNESS)) {
+    return { send: false, reason: `the chat isn't in VS Code's ${LOCAL_HARNESS} harness (the Copilot SDK harness picks its own model); nothing was sent.` };
+  }
+  if (!labels.includes(agent)) {
+    return { send: false, reason: `the chat isn't in the ${agent} agent (its tool list didn't load); nothing was sent.` };
+  }
+  return { send: true };
+}
+
 export interface RequestedModel {
   // COPILOT_E2E_MODEL, the Copilot picker's id.
   id: string;

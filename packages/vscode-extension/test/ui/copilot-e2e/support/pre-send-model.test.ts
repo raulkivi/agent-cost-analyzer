@@ -1,7 +1,26 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
 import { describe, expect, it } from "vitest";
-import { preSendModelCheck, shownModelOf } from "./pre-send-model.mts";
+import { preSendModelCheck, preSendSessionCheck, shownModelOf } from "./pre-send-model.mts";
+
+describe("preSendSessionCheck (VS Code 1.146: the harness and the agent the chat will run in)", () => {
+  const LOCAL_IN_AGENT = ["Add Context... (Ctrl+/)", "aica-e2e", "Models, Claude Haiku 5.5", "Local", "Permission picker, Default permissions"];
+
+  it("sends from VS Code's local harness in the test agent", () => {
+    expect(preSendSessionCheck(LOCAL_IN_AGENT, "aica-e2e")).toEqual({ send: true });
+  });
+
+  it("refuses the Copilot SDK harness (no Local session target), whose model the suite doesn't pick", () => {
+    const decision = preSendSessionCheck(["aica-e2e", "Models, Claude Haiku 5.5", "Copilot"], "aica-e2e");
+
+    expect(decision).toEqual({ send: false, reason: expect.stringContaining("Local") });
+    expect(decision).toMatchObject({ reason: expect.stringContaining("nothing was sent") });
+  });
+
+  it("refuses plain Agent mode: the test agent's tool list (D6) didn't load", () => {
+    expect(preSendSessionCheck(["Agent", "Models, Claude Haiku 5.5", "Local"], "aica-e2e")).toEqual({ send: false, reason: expect.stringContaining("aica-e2e") });
+  });
+});
 
 describe("shownModelOf (the chat input's model picker)", () => {
   it("reads the model name from the picker's accessible name, as VS Code 1.146 renders it", () => {

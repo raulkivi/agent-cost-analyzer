@@ -24,7 +24,7 @@ import { modelMatches } from "./copilot-e2e-env.mts";
 import { COPILOT_E2E_AGENT } from "./copilot-e2e-settings.mts";
 import { budgetCheck, creditsSpent, DEFAULT_MAX_AI_CREDITS, MAX_AI_CREDITS_ENV, MAX_AI_CREDITS_INTERNAL_ENV } from "./credit-budget.mts";
 import { firstModelRequest, type InFlightCheck, inFlightCheck, loggedCredits, newEntries } from "./in-flight-model.mts";
-import { preSendModelCheck, shownModelOf } from "./pre-send-model.mts";
+import { preSendModelCheck, preSendSessionCheck, shownModelOf } from "./pre-send-model.mts";
 import {
   COPILOT_CHAT_EXTENSION_ID,
   COPILOT_READY_LIMIT_MS,
@@ -225,7 +225,8 @@ export async function sendToAgent(context: Mocha.Context, prompt: string, scope:
   const requested = { id: MODEL, name: await requestedModelName() };
   const shown = await shownModel((name) => preSendModelCheck({ requested, shown: name }).send);
   console.log(`[copilot-e2e] the chat's model picker shows ${shown === undefined ? "no model" : `"${shown}"`} before sending`);
-  const decision = preSendModelCheck({ requested, shown, selectError });
+  const modelDecision = preSendModelCheck({ requested, shown, selectError });
+  const decision = modelDecision.send ? preSendSessionCheck(await inputLabels(), COPILOT_E2E_AGENT) : modelDecision;
   if (!decision.send) {
     // Drops the unsent prompt.
     await host.command("workbench.action.chat.newChat").catch(() => undefined);
