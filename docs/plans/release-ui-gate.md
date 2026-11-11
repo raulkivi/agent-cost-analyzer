@@ -2,7 +2,7 @@
 
 **Last changed:** 2026-11-11 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
-Status: **in progress: G0, G1 (#202), G2 (#207), G5 (#205, #206) and G6 (#204) done 2026-11-11; G3 built and green once on the owner's machine (branch `claude/g3-copilot-normal-mode`), owner rerun on the merged commit pending.** Owner rule, 2026-11-11: every UI check
+Status: **in progress: G0, G1 (#202), G2 (#207), G5 (#205, #206) and G6 (#204) done 2026-11-11; G3 built and green on the owner's machine (PR #208, with D5 and D6), owner rerun on the merged commit pending.** Owner rule, 2026-11-11: every UI check
 before a release is automated. VS Code and Copilot checks use wdio
 (`wdio-vscode-service`, [vscode-ui-automation.md](vscode-ui-automation.md));
 web-only checks use Playwright (or the integrated Chrome for exploratory
@@ -40,6 +40,12 @@ Fixed test-first in `cost-series.ts`.
 | D2 | §3 of the manual checks (Remote-SSH, WSL, Dev Container) leaves the release gate; it stays an occasional check. |
 | D3 | The Claude Desktop hand checks (MCP Apps A16 §2, A24 §2) are replaced by Playwright over the real `views.html` in a fake MCP Apps host with Claude's recorded theme sets. |
 | D4 | The `extension-ui` CI job is required on every PR (`continue-on-error` removed) and also runs in `release-extension.yml`. This closes 10.16's T15 and Q2. |
+| D5 | The analyzer's `aiCreditsAnalyzer.internal.*` test hooks register in `ExtensionMode.Test` as before, and in `ExtensionMode.Development` only when the environment variable `AICA_TEST_HOOKS=1` is set (the real-Copilot suite sets it for the VS Code it launches). A plain F5 Development host registers none; Production none. |
+| D6 | The real-Copilot suite approves only the AI Credits Analyzer's MCP tools, not every tool: no global auto approve. The run's profile copy also has no terminal and no other MCP server (discovery from other apps' configs off). |
+| D7 | A Copilot chat in an empty window (no folder open) must be visible to the analyzer. Fixed in a separate step, not in 10.17. |
+| D8 | A real-Copilot release run costing up to about 2 AI Credits is acceptable; keep the prompts minimal. |
+| D9 | Any skip of a required test blocks a release (confirms G2's tightened rule). |
+| D10 | The Increment 2 release (extension 0.6.0, app 0.11.0) waits for G4 and the empty-window fix (D7), not for G7. |
 
 ## 2. What gates each release today, and what replaces it
 
@@ -186,12 +192,34 @@ although the test profile is signed in.
     `--shared-data-dir=<run>/storage/shared-data`. The first spike run touched
     the owner's file once before this fix.
   - The analyzer under development runs in `ExtensionMode.Development`, not
-    `Test`, so its test hooks were missing: `extension.ts` now registers them
-    in any mode but `Production` (threat-model.md row updated).
-  - Nothing auto-confirms dialogs: `chat.tools.global.autoApprove` raised its
-    one-time "Enable global auto approve?" dialog and the chat waited on it.
-    The launcher seeds `chat.tools.global.autoApprove.optIn` in the copy's
-    `User/globalStorage/state.vscdb` (`profile-seed.mts`, unit-tested).
+    `Test`, so its test hooks were missing. Per D5, `extension.ts` registers
+    them in `Development` only with `AICA_TEST_HOOKS=1`, which
+    `wdio.copilot.conf.mts` sets; VS Code's extension host inherits it
+    (checked: the variable reads `1` there and all 7 hooks register).
+  - Nothing auto-confirms dialogs: `chat.tools.global.autoApprove: true`
+    raised its one-time "Enable global auto approve?" dialog and the chat
+    waited on it. First fixed by seeding the opt-in; replaced per D6 (next
+    item).
+  - **Tool approval (D6).** What VS Code 1.145 offers, read from its
+    `workbench.desktop.main.js`: `chat.tools.global.autoApprove` takes `true`
+    or a map of tool id to `true` (per-tool approval, still behind the
+    one-time opt-in); `chat.tools.eligibleForAutoApproval` (keyed
+    `server/tool`) only makes a tool *ineligible*; terminal commands have
+    their own `chat.tools.terminal.*` rules. But an MCP tool asks for
+    approval only when it lacks `readOnlyHint` (`canRequestPreApproval:
+    !readOnlyHint`, no confirmation message otherwise), and every analyzer
+    tool is annotated read-only (`READ_ONLY` in `packages/server/src/mcp/tool-helpers.ts`).
+    So the analyzer's tools run without approval and the suite approves
+    nothing: no global auto approve in any form, no opt-in seed,
+    `chat.tools.terminal.enableAutoApprove: false`. A tool that would ask
+    stalls the chat and fails the test rather than acting. On top, the specs
+    chat in a test-only agent, `User/prompts/aica-e2e.agent.md` in the
+    profile copy, with `tools: ['ai-credits-analyzer/*']` (the tool set
+    VS Code names after the server's label), so no other tool is offered,
+    and `chat.mcp.discovery.enabled` is off for every source. The owner's
+    `jcodemunch` came from discovery (`~/.copilot/mcp-config.json`, the
+    `copilot` source), not from the profile, which has no `mcp.json`.
+    Settings and agent file: `copilot-e2e-settings.mts` (unit-tested).
   - The panel model: the profile had no `chat.currentLanguageModel.panel`
     (the owner's pick was stored for the Copilot CLI session type), so the
     chat ran on Auto, routed to GPT-6 Luna. The launcher seeds it with
@@ -208,27 +236,36 @@ although the test profile is signed in.
   answers `vscode.version` in 0.4 s, one GitHub account (label present) and
   33 Copilot models after 4.1 s.
 
-- **First green run** (commit `1f2027e` on `claude/g3-copilot-normal-mode`,
-  clean tree, owner's test profile, xvfb): Copilot ready after 1.0 s; 1.4,
-  2.3 and 2.4 passed in 27.9 s; model requested and observed
-  `claude-haiku-5.5` in all three sessions (the Copilot log id equals the
-  picker id); 0.7643 AI Credits spent; the gate printed `PASS`. The note was
-  removed from the local `refs/notes/release-ui` afterwards (restored to the
-  ref as it was before the session) and never pushed: the owner reruns on the
-  release commit.
+- **First green run** (commit `1f2027e`, global auto approve): Copilot ready
+  after 1.0 s; 1.4, 2.3 and 2.4 passed in 27.9 s on `claude-haiku-5.5`
+  (observed log id `claude-haiku-5.5`, the picker id); 0.7643 AI Credits;
+  gate `PASS`.
+- **Run with D5 and D6** (commit `7bc1d36`, clean tree, owner's test profile,
+  xvfb): Copilot ready after 0.7 s; 1.4, 2.3 and 2.4 passed in 27.9 s;
+  model requested and observed `claude-haiku-5.5` in all three sessions;
+  0.9313 AI Credits (within D8); gate `PASS`. Tools the chat called, from the
+  sessions' Copilot debug logs: `manage_todo_list` and `tool_search`
+  (Copilot's to-do list and its loader for deferred tools, which searches
+  only the request's available tools), then `mcp_ai_credits_an_list_log_providers`
+  (2.3) and `mcp_ai_credits_an_list_sessions` (2.4); no terminal, file,
+  browser or other MCP tool. No approval dialog appeared and no setting
+  approved anything. **Not proven:** the full list of tools offered to the
+  model (`tools_0.json`; the capture script didn't parse its format, and the
+  copy is deleted at exit). The notes of both runs were removed from the
+  local `refs/notes/release-ui` (reset to the owner's note on `16389dc`) and
+  never pushed: the owner reruns on the release commit.
 - **TDD exceptions:** the wdio config, the generated bridge's run against a
   real VS Code and the real runs. Unit-tested: `workbench-bridge.test.ts`
   (argument override, shared-data dir, proxy path, install and
   `extensions.json`, the generated bridge running a stand-in proxy),
-  `profile-seed.test.ts`, and the bundle-load test for hooks in
-  `Development` mode.
+  `profile-seed.test.ts`, `copilot-e2e-settings.test.ts`, and the
+  bundle-load tests for hooks in `Development` mode with and without
+  `AICA_TEST_HOOKS`.
 - **Exposure** (threat-model.md): the bridge evaluates what the service's
   WebSocket server sends, exactly as the service's test runner did; it opens
   no port of its own (it connects out to the service's `localhost` port).
-  Normal mode does not change that. `chat.tools.global.autoApprove` lets the
-  agent run any tool, including terminal commands and MCP servers it
-  discovers on the machine (the run listed the owner's `jcodemunch`), without
-  asking: the prompts are fixed and short, but a model could still act.
+  Normal mode does not change that. Since D6 the chat is offered only the
+  analyzer's read-only MCP tools and nothing is auto-approved.
 
 Order: G0 and G1 first (small, unblock D4); G5 and G6 in parallel (CI,
 no Copilot); G2 and G3 next; G4 and G7 last.
@@ -236,7 +273,8 @@ no Copilot); G2 and G3 next; G4 and G7 last.
 ## 4. Effect on other plans
 
 - **Phase 12:** A24 (owner's checks of U9-U11) becomes G4 + G5 + G6; the
-  Increment 2 release (extension 0.6.0, app 0.11.0) waits for them. A33
+  Increment 2 release (extension 0.6.0, app 0.11.0) waits for G4 and the
+  empty-window fix (D7, its own step outside 10.17), not for G7 (D10). A33
   (Increment 3 checks) is written as specs from the start.
 - **Phase 10:** the open "manual checks before release" item closes when G1,
   G3 and G7 are done.

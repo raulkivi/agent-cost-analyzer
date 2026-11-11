@@ -2612,7 +2612,7 @@ refactored — red-green-refactor, not tests bolted on afterward.
   them, as in step 10.9). The one production seam it needed is a Test-mode
   hook that holds webview replies (`aiCreditsAnalyzer.internal.holdRequests`),
   registered only in `ExtensionMode.Test` like the other hooks (and, since
-  step 10.17 G3, `Development`, never `Production`). Six launch
+  step 10.17 G3, `Development` with `AICA_TEST_HOOKS=1`; never `Production`). Six launch
   configurations (main, first run, Copilot Chat on, Workspace Trust on, a
   seeded git folder for S9, and an installed VSIX for uninstall) run 13
   spec files in the `extension-ui` CI job, a required check since step
@@ -2792,9 +2792,9 @@ registry. See the plan's §3 for the decisions (D1-D10).
 - **Tests in a real VS Code.** A `@vscode/test-cli` suite runs on stable
   VS Code in CI. The webview posts its timing marks to the host, which
   checks the §3.5 performance budgets. Test-only commands exist only in
-  an Extension Development Host (`ExtensionMode.Test`, or `Development`
-  for the real-Copilot suite's normal mode, step 10.17 G3), never in an
-  installed copy.
+  `ExtensionMode.Test`, or in `Development` with `AICA_TEST_HOOKS=1`
+  (the real-Copilot suite's normal mode, step 10.17 G3, decision D5); never
+  in a plain F5 host or an installed copy.
 - **Packaging and release.** Minified bundles in an allow-listed `.vsix`
   (about 2.6 MB). `ext-v*` tags publish to the Marketplace (Entra ID) and
   Open VSX; `app-v*` tags make a GitHub Release of the standalone app.
