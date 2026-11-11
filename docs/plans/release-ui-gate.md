@@ -408,6 +408,23 @@ and `record.test.ts`.
 Order: G0 and G1 first (small, unblock D4); G5 and G6 in parallel (CI,
 no Copilot); G2 and G3 next; G4 and G7 last.
 
+### G1 follow-up: docs-only PRs (owner decision 2026-11-11)
+
+A PR whose changed paths are all under `docs/**` or root-level `*.md` skips
+`extension-ui`, `web-e2e`, `mcp-apps-e2e` and `extension`. A `changes` job in
+`ci.yml` classifies the diff (`scripts/ci-change-scope.mjs`); the four jobs
+carry `needs: changes` and a job-level `if`, which GitHub reports as success
+for a required check, so the ruleset's names still report. No `paths` filter
+or `[skip ci]`: those would stop the workflow reporting and block the PR.
+`test` never skips (lint, typecheck, and the unit tests that read docs).
+Docs that a test reads count as code: `docs/vscode-extension-guide.md`,
+`docs/UserGuide.md`, `docs/threat-model.md`, `CONTRIBUTING.md`
+(`docs.test.ts`), `docs/scenarios/**` (`docs-drift.test.ts`),
+`docs/plans/mcp-apps-spike-results/**` and `mcp-apps-a24-results/**` (the
+`mcp-apps` theme and e2e support). Every `CHANGELOG.md` is code. An empty diff
+is not docs-only. `claude-code-review.yml` uses the same job, as `paths-ignore`
+can't express the exceptions.
+
 ## 4. Effect on other plans
 
 - **Phase 12:** A24 (owner's checks of U9-U11) becomes G4 + G5 + G6; the

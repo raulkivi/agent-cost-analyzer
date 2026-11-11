@@ -14,9 +14,37 @@ permissions:
   contents: read
 
 jobs:
+  # Same docs-only rule as ci.yml (scripts/ci-change-scope.mjs). A workflow-level
+  # `paths-ignore` can't express it: the docs that tests read are exceptions
+  # inside docs/**, and paths-ignore takes no negations.
+  changes:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      docs_only: ${{ steps.scope.outputs.docs_only }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+
+      - id: scope
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          set -o pipefail
+          git diff --name-only "origin/${BASE_REF}...HEAD" | node scripts/ci-change-scope.mjs >> "$GITHUB_OUTPUT"
+
   claude-review:
+    needs: changes
     # Dependabot and fork PRs get no repository secrets, so the token would be empty.
-    if: github.event.pull_request.user.login != 'dependabot[bot]' && github.event.pull_request.head.repo.full_name == github.repository
+    # A docs-only PR needs no code review.
+    if: needs.changes.outputs.docs_only != 'true' && github.event.pull_request.user.login != 'dependabot[bot]' && github.event.pull_request.head.repo.full_name == github.repository
     # Optional: Filter by PR author
     # if: |
     #   github.event.pull_request.user.login == 'external-contributor' ||

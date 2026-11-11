@@ -2649,6 +2649,18 @@ refactored — red-green-refactor, not tests bolted on afterward.
   commit (planned, D1, G2). The app is gated by `web-e2e`, which
   `release-app.yml` also runs (G1). The remote checks
   (manual checks §3) are outside the gate (D2).
+- Docs-only PRs skip the heavy jobs (owner decision 2026-11-11). A `changes`
+  job in `ci.yml` runs `scripts/ci-change-scope.mjs` over the PR's diff; when
+  every path is under `docs/**` or is a root-level `*.md`, `extension-ui`,
+  `web-e2e`, `mcp-apps-e2e` and `extension` are skipped by a job-level `if`,
+  which GitHub reports as success for the required checks, so the PR stays
+  mergeable. `test` never skips: it holds lint, typecheck and the unit tests
+  that read docs. Docs that a test reads count as code: the extension guide,
+  `docs/UserGuide.md`, `docs/threat-model.md`, `CONTRIBUTING.md`
+  (`docs.test.ts`), `docs/scenarios/**` (`docs-drift.test.ts`) and the
+  recorded themes in `docs/plans/mcp-apps-spike-results/` and
+  `mcp-apps-a24-results/` (the `mcp-apps` theme and e2e support). Every
+  `CHANGELOG.md` is code. An empty diff is not docs-only.
 - Property-based tests (`*.property.test.ts`, `fast-check`) cover code
   that takes untrusted input or has a simple invariant: secret and header
   redaction, the SSE and shell-command parsers, the release checks and
