@@ -6,6 +6,7 @@ import { describe, expect, it } from "vitest";
 import { App } from "./App.js";
 import { FakeAppHostPort } from "./host/fake-app-host-port.js";
 import { GENERIC_BRAND, type ViewBrand } from "./brand/view-brand.js";
+import { estimate, statementAnswer } from "./view-models/increment3-fixtures.js";
 import { costComparison } from "./view-models/cost-analysis-fixtures.js";
 import { findingsResult, SAMPLE_FINDINGS } from "./views/findings/fixtures.js";
 
@@ -42,7 +43,7 @@ describe("App shell", () => {
   it("shows a neutral state for an unknown result", () => {
     const port = new FakeAppHostPort();
     render(<App port={port} brand={GENERIC_BRAND} />);
-    act(() => port.pushHostContext({ toolInfo: { tool: { name: "get_statement" } } }));
+    act(() => port.pushHostContext({ toolInfo: { tool: { name: "list_projects" } } }));
     expect(screen.getByRole("heading", { name: "No view for this result" })).toBeInTheDocument();
   });
 
@@ -82,5 +83,29 @@ describe("App shell", () => {
     port.pushHostContext({ toolCall: { toolName: "list_findings" } });
     render(<App port={port} brand={brand} />);
     expect(screen.getByRole("heading", { name: "Findings" })).toBeInTheDocument();
+  });
+
+  // A29: get_statement and estimate_cost route to U14 and U15 in the standalone app only.
+  it.each([
+    ["get_statement", statementAnswer(), "Customer portal · October 2026"],
+    ["estimate_cost", estimate(), "Estimate for Customer portal"],
+  ])("routes %s to its billing view in the standalone app", (tool, structuredContent, title) => {
+    const port = new FakeAppHostPort();
+    render(<App port={port} brand={{ productId: "standalone", displayName: "Agent Cost Analyzer", version: "0.12.0" }} />);
+    act(() => port.pushHostContext({ toolInfo: { tool: { name: tool } } }));
+    act(() => port.pushToolResult({ structuredContent }));
+    expect(screen.getByRole("heading", { level: 1, name: title })).toBeInTheDocument();
+  });
+
+  it.each([
+    ["get_statement", statementAnswer()],
+    ["estimate_cost", estimate()],
+  ])("shows the extension nothing of a %s result", (tool, structuredContent) => {
+    const port = new FakeAppHostPort();
+    const { container } = render(<App port={port} brand={brand} />);
+    act(() => port.pushHostContext({ toolInfo: { tool: { name: tool } } }));
+    act(() => port.pushToolResult({ structuredContent }));
+    expect(screen.getByRole("heading", { name: "No view for this result" })).toBeInTheDocument();
+    expect(container).not.toHaveTextContent(/Customer portal|statement|estimate|USD|\$/i);
   });
 });

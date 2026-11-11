@@ -234,9 +234,17 @@ describe("no-forwarding rule (static, over every call site in src/)", () => {
         "views/CostCompareView.tsx",
         "views/cost-compare/CompareDrillDown.tsx",
         "views/CostChangeView.tsx",
+        "views/StatementView.tsx",
+        "views/EstimateView.tsx",
       ]),
     );
     expect(files.some((file) => file.endsWith(".test.tsx"))).toBe(false);
+  });
+
+  // A29: the billing views are read-only displays; no control can issue, export or ask anything.
+  it("makes U14 and U15 call no host method at all", () => {
+    const billing = uses.filter((use) => /^views\/(StatementView\.tsx|EstimateView\.tsx|statement\/|estimate\/)/.test(use.source.file));
+    expect(billing.map((use) => `${at(use.source, use.node)} ${use.name}`)).toEqual([]);
   });
 
   it("never takes a host method by reference, alias or destructuring", () => {

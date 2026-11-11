@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- MCP App views for billing (standalone app only; the extension has none): `get_statement` shows a
+  project's statement per currency with its totals, coverage, turns of unknown cost and, for an issued
+  period, how a re-run today differs from the issued copy; `estimate_cost` shows the p50 to p90 range
+  tagged "estimate", labelled "Simulated" on another model, or the reason when there is too little
+  history. Both are read-only.
 
 ## [0.11.0] - 2026-11-11
 ### Fixed

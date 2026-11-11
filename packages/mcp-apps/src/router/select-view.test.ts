@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
 import { describe, expect, it } from "vitest";
+import { estimate, refusedEstimate, statementAnswer } from "../view-models/increment3-fixtures.js";
 import { selectView } from "./select-view.js";
 
 const sessionShape = { sessionId: "s1", title: "t", topTurns: [] };
@@ -16,6 +17,8 @@ describe("selectView", () => {
     ["get_project_cost", "cost-over-time"],
     ["explain_cost_change", "cost-change"],
     ["compare_costs", "cost-compare"],
+    ["get_statement", "statement"],
+    ["estimate_cost", "estimate"],
   ])("routes toolInfo.tool.name %s to %s", (name, view) => {
     expect(selectView({ toolInfo: { tool: { name } } }, undefined)).toEqual({ view });
   });
@@ -91,7 +94,7 @@ describe("selectView", () => {
   });
 
   it("gives a tool this bundle has no view for the neutral state, not a shape guess", () => {
-    expect(selectView({ toolInfo: { tool: { name: "get_statement" } } }, sessionShape)).toEqual({ view: "none" });
+    expect(selectView({ toolInfo: { tool: { name: "list_projects" } } }, sessionShape)).toEqual({ view: "none" });
   });
 
   it("gives unknown, empty or non-object results the neutral state", () => {
@@ -99,5 +102,23 @@ describe("selectView", () => {
     expect(selectView({}, null)).toEqual({ view: "none" });
     expect(selectView({}, "text")).toEqual({ view: "none" });
     expect(selectView({}, { sessionId: "s1" })).toEqual({ view: "none" });
+  });
+});
+
+// A29: U14 and U15, by name (bare and VS Code-prefixed) and by shape.
+describe("selectView for the billing views", () => {
+  it.each([
+    ["ai-credits-analyzer-get_statement", "statement"],
+    ["mcp_aicreditsanal_estimate_cost", "estimate"],
+  ])("routes toolCall.toolName %s to %s", (toolName, view) => {
+    expect(selectView({ toolCall: { toolName } }, undefined)).toEqual({ view });
+  });
+
+  it("recognises a StatementAnswer and a CostEstimate by shape, apart from the other shapes", () => {
+    expect(selectView({}, statementAnswer())).toEqual({ view: "statement" });
+    expect(selectView({}, estimate())).toEqual({ view: "estimate" });
+    expect(selectView({}, refusedEstimate())).toEqual({ view: "estimate" });
+    expect(selectView({}, { statement: {}, canIssue: {} })).toEqual({ view: "none" });
+    expect(selectView({}, { label: "forecast", history: {}, runRate: {}, planned: 1 })).toEqual({ view: "none" });
   });
 });
