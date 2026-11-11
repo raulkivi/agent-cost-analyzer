@@ -2,12 +2,13 @@
 // (docs/plans/vscode-ui-automation.md §7). Never part of the default UI suite
 // or CI: it runs only with COPILOT_E2E=1, and skips with a reason otherwise.
 import { existsSync } from "node:fs";
+import { parseMaxAiCredits } from "./credit-budget.mts";
 
 // Claude Haiku 5.5 and GPT-6 Luna cost the same (docs/learn-rule-register.md);
 // COPILOT_E2E_MODEL=gpt-6-luna picks the other.
 export const DEFAULT_COPILOT_E2E_MODEL = "claude-haiku-5.5";
 
-export type CopilotE2eEnv = { status: "skip"; reason: string } | { status: "run"; userDataDir: string; model: string };
+export type CopilotE2eEnv = { status: "skip"; reason: string } | { status: "run"; userDataDir: string; model: string; maxAiCredits: number };
 
 export function readCopilotE2eEnv(env: Record<string, string | undefined>): CopilotE2eEnv {
   if (env.COPILOT_E2E !== "1") {
@@ -20,7 +21,10 @@ export function readCopilotE2eEnv(env: Record<string, string | undefined>): Copi
   if (!existsSync(userDataDir)) {
     return { status: "skip", reason: `COPILOT_E2E_USER_DATA_DIR (${userDataDir}) does not exist: run npm run test:ui:vscode:copilot:signin once to create it.` };
   }
-  return { status: "run", userDataDir, model: env.COPILOT_E2E_MODEL?.trim() || DEFAULT_COPILOT_E2E_MODEL };
+  // A run never starts without a cap on what its chats may spend (D12, proposed).
+  const budget = parseMaxAiCredits(env.COPILOT_E2E_MAX_AI_CREDITS);
+  if (!budget.ok) return { status: "skip", reason: budget.reason };
+  return { status: "run", userDataDir, model: env.COPILOT_E2E_MODEL?.trim() || DEFAULT_COPILOT_E2E_MODEL, maxAiCredits: budget.max };
 }
 
 // Lowercase letters and digits only, so "Claude Haiku 5.5", "claude-haiku-5.5"

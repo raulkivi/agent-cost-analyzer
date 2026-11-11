@@ -27,6 +27,19 @@ export const COPILOT_E2E_SETTINGS = {
     "cursor-workspace": false,
   },
   "chat.tools.terminal.enableAutoApprove": false,
+  // VS Code 1.146 turned both on by default (1.145: off, experimental): new
+  // panel chats then run in the Copilot SDK harness (agent host), which has
+  // its own model pool (it ignored the picker's Claude Haiku 5.5 and ran
+  // Sonnet 5.5, release-ui-gate.md R5), doesn't load the test agent without
+  // a migration, and doesn't write the debug log the analyzer reads. With
+  // the agent host available, preferCopilotHarness alone turns a local
+  // choice back into the SDK harness, so both are needed.
+  "chat.defaultToCopilotHarness": false,
+  "chat.editor.preferCopilotHarness": false,
+  // While a chat is empty (a staged prompt doesn't count), VS Code resets its
+  // mode to this one whenever the agent list refreshes (agent discovery runs
+  // after start-up); left empty, that is plain Agent, with every tool (D6).
+  "chat.newSession.defaultMode": COPILOT_E2E_AGENT,
   "workbench.startupEditor": "none",
   "extensions.autoCheckUpdates": false,
   "update.mode": "none",
