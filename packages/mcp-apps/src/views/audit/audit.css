@@ -17,6 +17,7 @@
 .au-fact > b { font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
 .au-fact-note { font-size: 11px; line-height: 1.35; overflow-wrap: anywhere; }
 .au-note { margin: 0; font-size: 11px; line-height: 1.4; }
+.au-table-toggle { margin-left: auto; }
 
 /* Logged text (a command, a tool name): monospace, and a long unbroken word wraps. */
 .au-command { font-family: var(--font-mono, ui-monospace, monospace); font-size: 11px; overflow-wrap: anywhere; }

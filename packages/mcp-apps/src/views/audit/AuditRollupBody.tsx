@@ -1,16 +1,37 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
 import { StatTile } from "@agent-cost-analyzer/web/ui/StatTile";
+import { useId, useState } from "react";
 import type { AuditRollupViewModel } from "../../view-models/index.js";
 import { AuditTile } from "./AuditTile.js";
 import { CategoryList } from "./CategoryList.js";
-import { FailedPerDayChart } from "./FailedPerDayChart.js";
+import { FailedPerDayChart, FailedPerDayTable } from "./FailedPerDayChart.js";
 import "./audit.css";
 
 // U4 for a date range. The sessions table is display only: no row opens
 // anything (owner answer Q10). Sessions whose tool calls are not recorded
 // are named in the "Left out" tile and are in no figure. Commands and titles
 // are logged text, shown as text and never sent to the host's model (§6).
+
+// The chart and its text form: role="img" hides each column's <title>, so
+// "View as table" lists every day's figure (A32), as U12's chart does.
+function FailedPerDay({ daily }: { daily: AuditRollupViewModel["daily"] }) {
+  const [table, setTable] = useState(false);
+  const tableId = useId();
+  return (
+    <section className="view-section" aria-label="Failed calls per day">
+      <div className="view-section-head">
+        <h2>Failed calls per day</h2>
+        <span className="text-muted">error, interrupted and denied</span>
+        <button type="button" className="view-link au-table-toggle" aria-expanded={table} aria-controls={tableId} onClick={() => setTable((open) => !open)}>
+          {table ? "Hide table" : "View as table"}
+        </button>
+      </div>
+      <FailedPerDayChart daily={daily} />
+      <div id={tableId}>{table && <FailedPerDayTable daily={daily} />}</div>
+    </section>
+  );
+}
 
 export function AuditRollupBody({ vm }: { vm: AuditRollupViewModel }) {
   return (
@@ -28,15 +49,7 @@ export function AuditRollupBody({ vm }: { vm: AuditRollupViewModel }) {
         </p>
       )}
 
-      {vm.daily.points.length > 0 && (
-        <section className="view-section" aria-label="Failed calls per day">
-          <div className="view-section-head">
-            <h2>Failed calls per day</h2>
-            <span className="text-muted">error, interrupted and denied</span>
-          </div>
-          <FailedPerDayChart daily={vm.daily} />
-        </section>
-      )}
+      {vm.daily.points.length > 0 && <FailedPerDay daily={vm.daily} />}
 
       <section className="view-section" aria-label="Why calls failed">
         <div className="view-section-head">

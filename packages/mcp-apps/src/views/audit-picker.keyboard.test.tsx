@@ -57,11 +57,27 @@ describe("U5 by keyboard", () => {
 });
 
 describe("U4 by keyboard", () => {
-  it("offers nothing to press: only its scrollable table regions take focus", async () => {
+  it("offers nothing to press but the chart's View as table: its table regions take focus", async () => {
     const user = userEvent.setup();
     render(<AuditView brand={brand} result={ok(auditRollup())} />);
-    expect(screen.queryByRole("button")).toBeNull();
+    expect(screen.getAllByRole("button").map((button) => button.textContent)).toEqual(["View as table"]);
     const regions = screen.getAllByRole("region", { name: /scrollable$/ });
     for (const region of regions) await tabTo(user, region);
+  });
+
+  // A32: the per-day figures by keyboard, and focus stays on the toggle.
+  it("View as table opens and closes the per-day table from the keyboard", async () => {
+    const user = userEvent.setup();
+    render(<AuditView brand={brand} result={ok(auditRollup())} />);
+    const toggle = screen.getByRole("button", { name: "View as table" });
+    await tabTo(user, toggle);
+    await user.keyboard("{Enter}");
+    expect(toggle).toHaveFocus();
+    expect(toggle).toHaveAttribute("aria-expanded", "true");
+    await tabTo(user, screen.getByRole("region", { name: "Failed calls per day, scrollable" }));
+    await user.tab({ shift: true });
+    expect(toggle).toHaveFocus();
+    await user.keyboard(" ");
+    expect(screen.queryByRole("table", { name: "Failed calls per day" })).toBeNull();
   });
 });

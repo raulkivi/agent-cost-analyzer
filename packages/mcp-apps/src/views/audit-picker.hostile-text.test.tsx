@@ -94,7 +94,8 @@ describe("U4 with logged text planted in every field", () => {
     const port = new FakeAppHostPort();
     const { container } = render(<AuditView brand={brand} result={ok(rollup)} />);
     expect(screen.getByText(`Fix ${HOSTILE}`)).toBeInTheDocument();
-    expect(await exerciseEveryControl(document.body)).toEqual([]);
+    // The only control opens the per-day table (A32); it sends nothing.
+    expect(await exerciseEveryControl(document.body)).toEqual(["button:View as table", "button:Hide table"]);
     expect(container.querySelector("img, script, iframe, a")).toBeNull();
     expect(port.calls).toEqual([]);
   });

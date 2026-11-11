@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import type { ViewBrand } from "../brand/view-brand.js";
 import type { ToolResult } from "../host/app-host-port.js";
@@ -102,6 +102,26 @@ describe("AuditView for a date range", () => {
     expect(chart.querySelectorAll("[data-unknown]")).toHaveLength(1);
   });
 
+  // A32: role="img" hides each column's <title>, so the per-day figures need
+  // a text form, as U12's chart has: View as table, Unknown written, never 0.
+  it("offers the failed calls per day as a table, with Unknown for a day with no known outcome", () => {
+    setup(ok(auditRollup()));
+    expect(screen.queryByRole("table", { name: "Failed calls per day" })).toBeNull();
+    const toggle = screen.getByRole("button", { name: "View as table" });
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+    fireEvent.click(toggle);
+    expect(toggle).toHaveAttribute("aria-expanded", "true");
+    expect(toggle).toHaveTextContent("Hide table");
+    const table = screen.getByRole("table", { name: "Failed calls per day" });
+    expect(document.getElementById(toggle.getAttribute("aria-controls")!)).toContainElement(table);
+    const rows = within(table).getAllByRole("row").map((row) => row.textContent);
+    expect(rows).toEqual(["DayFailed calls", "Oct 199", "Oct 20Unknown", "Oct 2118"]);
+    expect(within(table).getByText("Unknown")).toHaveClass("view-unknown");
+    expect(screen.getByRole("region", { name: "Failed calls per day, scrollable" })).toHaveAttribute("tabindex", "0");
+    fireEvent.click(toggle);
+    expect(screen.queryByRole("table", { name: "Failed calls per day" })).toBeNull();
+  });
+
   it("shows categories, the top failing commands and the sessions as display-only text", () => {
     setup(ok(auditRollup()));
     expect(screen.getByRole("list", { name: "149 failed calls by category" })).toBeInTheDocument();
@@ -110,8 +130,8 @@ describe("AuditView for a date range", () => {
     expect(within(commands).getByText("41")).toBeInTheDocument();
     const sessions = screen.getByRole("table", { name: "Most failures by session" });
     expect(within(sessions).getByText("Fix flaky invoice test")).toBeInTheDocument();
-    // No drill-down (owner answer Q10): nothing to press.
-    expect(screen.queryByRole("button")).toBeNull();
+    // No drill-down (owner answer Q10): the chart's View as table is the only control.
+    expect(screen.getAllByRole("button").map((button) => button.textContent)).toEqual(["View as table"]);
   });
 
   it("makes no host call: it has nothing to send and nothing to open", () => {

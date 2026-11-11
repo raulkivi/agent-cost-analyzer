@@ -82,3 +82,27 @@ export function FailedPerDayChart({ daily }: { daily: Daily }) {
     </svg>
   );
 }
+
+// "View as table" for the chart (A32): one row per day, Unknown written, never 0.
+export function FailedPerDayTable({ daily }: { daily: Daily }) {
+  return (
+    <div className="view-scroll" tabIndex={0} role="region" aria-label="Failed calls per day, scrollable">
+      <table className="view-table" aria-label="Failed calls per day">
+        <thead>
+          <tr>
+            <th className="view-left">Day</th>
+            <th>Failed calls</th>
+          </tr>
+        </thead>
+        <tbody>
+          {daily.points.map((point, index) => (
+            <tr key={`${point.label}-${index}`}>
+              <td className="view-left">{point.label}</td>
+              <td className={point.value === null ? "view-unknown" : undefined}>{point.text}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
