@@ -182,7 +182,7 @@ function pointView(point: CostPoint, view: CostSeries): PointView {
   };
 }
 
-function observedMarker(change: ObservedPriceChange): ObservedPriceChangeMarker {
+export function observedMarker(change: ObservedPriceChange): ObservedPriceChangeMarker {
   return {
     kind: "observed",
     inferred: true,

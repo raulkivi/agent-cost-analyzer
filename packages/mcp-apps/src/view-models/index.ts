@@ -38,6 +38,32 @@ export type {
   TokenTypeTotalView,
   WaterfallStep,
 } from "./cost-variance.js";
+export { toReplayViewModel, SIMULATED_LABEL, MEASURED_LABEL } from "./replay.js";
+export type {
+  CompareEntryView,
+  ReplayCompareViewModel,
+  ReplayCoverageView,
+  ReplayDetailViewModel,
+  ReplayFigure,
+  ReplayTurnRow,
+  ReplayViewModel,
+  SelfCheckView,
+} from "./replay.js";
+export { toPriceChangesViewModel } from "./price-changes.js";
+export type { DocumentedChangeView, ObservedChangeView, ObservedWeekView, PriceChangesViewModel } from "./price-changes.js";
+export { toStatementViewModel } from "./statement.js";
+export type {
+  DiffLineView,
+  DiffTotalView,
+  GroupView,
+  StatementDiffView,
+  StatementLineView,
+  StatementTotalView,
+  StatementViewModel,
+  UnknownGroupView,
+} from "./statement.js";
+export { toEstimateViewModel, ESTIMATE_LABEL } from "./estimate.js";
+export type { EstimateSimulationView, EstimateViewModel } from "./estimate.js";
 export { NO_EARLIER_FIGURE } from "./analysis-common.js";
 export type { DocumentedPriceChange, PriceChangeLine } from "./analysis-common.js";
 export type { MoneyView } from "./money.js";

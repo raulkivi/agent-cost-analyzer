@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import type { CostCurrencyChoice, InsightProviderStatus, PriceChange, PriceChangeMarker, PricingMode } from "@agent-cost-analyzer/domain";
+import type { CostCurrencyChoice, Currency, InsightProviderStatus, PriceChange, PriceChangeMarker, PricingMode } from "@agent-cost-analyzer/domain";
 import { formatDay } from "./format.js";
 import { formatUnitPrice } from "./money.js";
 
@@ -27,6 +27,11 @@ export function providerIssues(providers: readonly InsightProviderStatus[]): str
     if (provider.truncated) issues.push(`${provider.label}: more sessions matched than the limit; the figures cover the most recent ones`);
     return issues;
   });
+}
+
+// AI Credits before USD (§4.5): the billing unit comes first, whatever order the data has.
+export function creditsFirst<T extends { currency: Currency }>(items: readonly T[]): T[] {
+  return [...items].sort((a, b) => Number(a.currency === "USD") - Number(b.currency === "USD"));
 }
 
 const TOKEN_TYPE_TEXT: Record<PriceChange["tokenType"], string> = {
