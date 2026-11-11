@@ -32,9 +32,10 @@ export function AuditView({ brand, result }: { brand: ViewBrand; result: ToolRes
     );
   }
   if (parsed === undefined) {
+    const reason = result.isError ? result.errorText?.trim() : undefined;
     return (
       <ViewShell brand={brand} kicker={KICKER} title="Tool-call audit">
-        <ErrorBox title="Couldn't load the tool-call audit.">The tool returned an error or a result this view can't read. The text answer above is complete.</ErrorBox>
+        <ErrorBox title="Couldn't load the tool-call audit.">{reason ? `The tool returned an error: ${reason.slice(0, 500)}` : "The tool returned an error or a result this view can't read. The text answer above is complete."}</ErrorBox>
       </ViewShell>
     );
   }

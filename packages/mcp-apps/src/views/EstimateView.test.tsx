@@ -101,6 +101,12 @@ describe("U15 EstimateView, states and the extension", () => {
     expect(screen.getByRole("alert")).toHaveTextContent("The tool returned an error: Unknown project id nope");
   });
 
+  // A32: capped at 500 characters, as the other views' error text is.
+  it("caps a long error text", () => {
+    setup({ isError: true, errorText: `Unknown project id nope ${"x".repeat(900)}` });
+    expect(screen.getByRole("alert").textContent!.length).toBeLessThan(600);
+  });
+
   it("shows nothing billing-related in the extension, even with a result", () => {
     const { container } = setup(ok(simulatedEstimate()), extension);
     expect(screen.getByRole("heading", { level: 1, name: "No view for this result" })).toBeInTheDocument();

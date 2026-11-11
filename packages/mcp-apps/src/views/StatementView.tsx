@@ -106,7 +106,7 @@ function StatementBody({ brand, result }: { brand: ViewBrand; result: ToolResult
     return (
       <ViewShell brand={brand} kicker={KICKER} title="Statement">
         <ErrorBox title="Couldn't show the statement.">
-          {reason ? `The tool returned an error: ${reason}` : "get_statement returned an error or a result this view can't read. The text answer above has the reason; check the project id and the period."}
+          {reason ? `The tool returned an error: ${reason.slice(0, 500)}` : "get_statement returned an error or a result this view can't read. The text answer above has the reason; check the project id and the period."}
         </ErrorBox>
       </ViewShell>
     );

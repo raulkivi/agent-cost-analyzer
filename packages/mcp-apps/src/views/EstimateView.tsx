@@ -122,7 +122,7 @@ function EstimateBody({ brand, result }: { brand: ViewBrand; result: ToolResult 
     return (
       <ViewShell brand={brand} kicker={KICKER} title="Estimate">
         <ErrorBox title="Couldn't show the estimate.">
-          {reason ? `The tool returned an error: ${reason}` : "estimate_cost returned an error or a result this view can't read. The text answer above has the reason; check the project id."}
+          {reason ? `The tool returned an error: ${reason.slice(0, 500)}` : "estimate_cost returned an error or a result this view can't read. The text answer above has the reason; check the project id."}
         </ErrorBox>
       </ViewShell>
     );

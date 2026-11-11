@@ -34,9 +34,10 @@ export function SessionPickerView({ port, brand, result }: { port: AppHostPort; 
     );
   }
   if (vm === undefined) {
+    const reason = result.isError ? result.errorText?.trim() : undefined;
     return (
       <ViewShell brand={brand} kicker={KICKER} title="Sessions">
-        <ErrorBox title="Couldn't load the session list.">The tool returned an error or a result this view can't read. The text answer above is complete.</ErrorBox>
+        <ErrorBox title="Couldn't load the session list.">{reason ? `The tool returned an error: ${reason.slice(0, 500)}` : "The tool returned an error or a result this view can't read. The text answer above is complete."}</ErrorBox>
       </ViewShell>
     );
   }

@@ -142,4 +142,12 @@ describe("SessionPickerView states", () => {
     setup(ok({ total: "x" }));
     expect(screen.getByRole("alert")).toBeInTheDocument();
   });
+
+  // A32: as every other view, an error says what the tool said, as text, capped.
+  it("shows the tool's error text", () => {
+    setup({ isError: true, errorText: `since: not a date. ${"x".repeat(600)}` });
+    const alert = screen.getByRole("alert");
+    expect(alert).toHaveTextContent("The tool returned an error: since: not a date.");
+    expect(alert.textContent!.length).toBeLessThan(600);
+  });
 });
