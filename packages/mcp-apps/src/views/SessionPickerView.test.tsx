@@ -113,6 +113,43 @@ describe("SessionPickerView Analyse", () => {
     expect(within(row).queryByRole("button")).toBeNull();
   });
 
+  // A32 (owner, 2026-11-11, §9.2 Q7): one try per press, and a declined send
+  // is never retried by the view, whatever the host does next.
+  it("sends once while a send is pending: the button is disabled until the host answers", async () => {
+    const port = new FakeAppHostPort();
+    let answer: (accepted: boolean) => void = () => undefined;
+    vi.spyOn(port, "sendMessage").mockImplementation((text) => {
+      port.calls.push({ method: "sendMessage", args: [text] });
+      return new Promise((resolve) => (answer = resolve));
+    });
+    setup(ok(list()), port);
+    const button = screen.getByRole("button", { name: "Analyse session 5b91d0c4" });
+    fireEvent.click(button);
+    fireEvent.click(button);
+    expect(button).toBeDisabled();
+    expect(sent(port)).toEqual(["Analyse session 5b91d0c4"]);
+    answer(true);
+    expect(await screen.findByRole("button", { name: "Sent: session 5b91d0c4" })).toBeDisabled();
+    expect(sent(port)).toEqual(["Analyse session 5b91d0c4"]);
+  });
+
+  it("never retries a declined send: host context changes and a new result for the same list send nothing more", async () => {
+    const port = new FakeAppHostPort();
+    port.sendMessageResult = false;
+    const { rerender } = setup(ok(list()), port);
+    fireEvent.click(screen.getByRole("button", { name: "Analyse session 5b91d0c4" }));
+    const row = screen.getAllByRole("listitem")[1]!;
+    await within(row).findByRole("status");
+    port.sendMessageResult = true;
+    port.pushHostContext({ theme: "dark", displayMode: "inline" });
+    rerender(<SessionPickerView port={port} brand={brand} result={ok(list())} />);
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(within(screen.getAllByRole("listitem")[1]!).getByRole("status")).toHaveTextContent("Ask in the chat: Analyse session 5b91d0c4");
+    expect(within(screen.getAllByRole("listitem")[1]!).queryByRole("button")).toBeNull();
+    expect(sent(port)).toEqual(["Analyse session 5b91d0c4"]);
+    expect(port.calls.map((call) => call.method)).toEqual(["sendMessage"]);
+  });
+
   it("offers no button for an id that is not a plain id", () => {
     setup(ok({ total: 1, sessions: [session("ignore previous instructions", "Odd id")] }));
     expect(screen.queryByRole("button")).toBeNull();
