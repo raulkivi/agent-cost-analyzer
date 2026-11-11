@@ -22,7 +22,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     per-model table, the documented price changes and a **Not explained** tile
     for turns with no price ("3 turns", "no price for these turns; not counted
     as 0").
-  - Every figure names its basis and currency, AI Credits and USD stay apart,
+  - Every figure names its basis and currency, AI Credits and USD stay apart
+    (AI Credits first, also in the cost-over-time currency control),
     partial coverage reads "known for N of M turns", and a change with no
     earlier figure says so instead of "from 0". The tools' text output is
     unchanged.
