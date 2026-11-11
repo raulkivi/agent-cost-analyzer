@@ -11,6 +11,7 @@ never in a public issue.
 
 The docs are the source of truth. Skim these before a non-trivial change:
 
+- [docs/README.md](docs/README.md): developer doc index, build and test, repo layout
 - [docs/vision.md](docs/vision.md): scope and non-goals
 - [docs/architecture.md](docs/architecture.md): design, guiding constraints,
   and the engineering practices (TDD and SOLID, section 11)
@@ -89,7 +90,7 @@ npm run package --workspace=packages/vscode-extension # writes a .vsix next to t
    `docs/architecture.md`.
 4. Run `npm run lint`, `npm run typecheck`, `npm run build` and `npm test`. CI
    runs the same four.
-5. Update the README or `docs/` when behavior changes, and add a line under
+5. Update the README (users) or `docs/` (developers and users) when behavior changes, and add a line under
    `[Unreleased]` in [CHANGELOG.md](CHANGELOG.md).
 6. Open a pull request using the template.
 

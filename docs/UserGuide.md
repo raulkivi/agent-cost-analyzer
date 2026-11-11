@@ -6,7 +6,7 @@ A walkthrough of the Agent Cost Analyzer's two modes — **Learn** (guided,
 bundled example sessions) and **Analyze** (your own real sessions from VS
 Code Copilot Chat, Claude Code, pi or mitmproxy captures) — with
 screenshots of every major feature. For install steps, see the
-[README](../README.md); for the app's design/architecture, see
+[README](../README.md) and [standalone app setup](standalone-app.md); for the app's design/architecture, see
 [architecture.md](architecture.md).
 
 **Using VS Code with GitHub Copilot Chat?** The AI Credits Analyzer
@@ -232,7 +232,7 @@ say they only affect Local harness chats:
 
 Click **Dismiss** to hide it for the session; the header's **Config**
 button reopens it later. See the
-[README's "Enabling GitHub Copilot Chat debug logging"](../README.md#enabling-github-copilot-chat-debug-logging)
+[standalone app doc's "Enabling GitHub Copilot Chat debug logging"](standalone-app.md#enabling-github-copilot-chat-debug-logging)
 section for the exact settings.json steps. Once every check passes, the
 Config button becomes a static confirmation instead of something to click:
 
@@ -250,8 +250,8 @@ to be able to look. Changes save automatically when you click away from
 the field.
 
 For Local harness chats, cache-write and reasoning tokens need a *separate*,
-optional setting on top of the one above — see the README's
-["Enabling richer cache-write/reasoning numbers"](../README.md#enabling-richer-cache-writereasoning-numbers-optional)
+optional setting on top of the one above — see the standalone app doc's
+["Enabling richer cache-write/reasoning numbers"](standalone-app.md#enabling-richer-cache-writereasoning-numbers-optional)
 section for the steps. Skipping it doesn't limit anything else — every
 other Analyze mode figure works the same either way — it just leaves
 those two columns showing em dashes.

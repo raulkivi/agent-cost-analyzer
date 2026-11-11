@@ -17,7 +17,7 @@ const EXTENSION_README = "packages/vscode-extension/README.md";
 const EXTENSION_CHANGELOG = "packages/vscode-extension/CHANGELOG.md";
 const GUIDE = "docs/vscode-extension-guide.md";
 // Every doc whose relative links and anchors must resolve.
-const LINKED_DOCS = ["README.md", "docs/UserGuide.md", GUIDE, "CONTRIBUTING.md", "docs/threat-model.md", EXTENSION_CHANGELOG];
+const LINKED_DOCS = ["README.md", "docs/README.md", "docs/standalone-app.md", "docs/UserGuide.md", GUIDE, "CONTRIBUTING.md", "docs/threat-model.md", EXTENSION_CHANGELOG];
 
 // Absolute URLs into this repo's main branch, which must name files that exist.
 const REPO_URL = /^https:\/\/github\.com\/raulkivi\/agent-cost-analyzer\/(?:blob|tree)\/main\/([^#?]*)(?:[?#].*)?$/;

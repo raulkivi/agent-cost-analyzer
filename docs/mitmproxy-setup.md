@@ -14,8 +14,8 @@ provider for **non-Copilot coding agents that call vendor APIs directly**
 Chat's own token/cache data. Copilot Chat's traffic is GitHub-routed
 (`api.githubcopilot.com`), and the richer numbers (cache-write, reasoning
 tokens) are already available with far less setup via
-`agent-traces.db` — see the README's ["Enabling richer cache-write/
-reasoning numbers"](../README.md#enabling-richer-cache-writereasoning-numbers-optional)
+`agent-traces.db` — see the standalone app doc's ["Enabling richer cache-write/
+reasoning numbers"](standalone-app.md#enabling-richer-cache-writereasoning-numbers-optional)
 section. There's also no confirmed/built decoder for
 `api.githubcopilot.com`'s specific wire shape yet (only direct Anthropic
 and OpenAI API shapes are recognized today — see

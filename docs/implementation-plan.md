@@ -128,7 +128,7 @@ and a 1-hour-breakpoint variant), an instructions-file edit, a silent
 `.instructions.md` pull-in, inline-vs-subagent exploration bloat, a
 cascading model-switch-then-TTL-lapse, an image attachment invalidating the
 cache, toggling extended thinking/reasoning budget, and a subagent on a
-cheaper model — see [README.md](../README.md#using-the-app) for the
+cheaper model — see [standalone-app.md](standalone-app.md#using-the-app) for the
 user-facing list. This addresses vision.md §7's open question on which
 additional advanced scenarios to build; keeping the set in sync with
 [agentic-coding-explained.md](agentic-coding-explained.md) as that doc

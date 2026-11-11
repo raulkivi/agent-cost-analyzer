@@ -1,444 +1,125 @@
 # Agent Cost Analyzer
 
-**Last changed:** 2026-11-11 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-12 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 Independent project; not affiliated with or endorsed by GitHub or Microsoft.
 
-A local app that helps you optimize the cost of agentic coding. It explains
-how prompt caching, token accounting, and tool calls actually work under the
-hood, then gives you the same turn-by-turn breakdown for your own real
-sessions — from VS Code Copilot Chat sessions, [Claude Code](https://claude.com/claude-code)
-CLI sessions, [pi coding agent](https://pi.dev) session logs, or local
-mitmproxy captures of LLM-provider traffic — so you can see exactly what's
-driving your token usage and AI Credits spend. Export a session's
-metadata (never chat message text) to get cost-optimization analysis and
-advice from an AI chat of your choice.
+See where the tokens and money go when an AI agent writes code for you. This
+repository gives you two products that read the logs your coding agents
+already write on your own machine and show every session turn by turn:
 
-- **Cost by repository and project:** cost over time, side-by-side
-  comparison, and why a cost changed (usage, price and mix effects).
-- **Replay on another model:** what a real session would have cost about
-  on another model, beside what it did cost.
-- **Tool-call audit and findings:** failed tool calls and why, risky
-  commands, unusual sessions.
-- **Read-only MCP server:** ask Claude Code, Claude Desktop or Copilot
-  Chat about your costs. In MCP Apps hosts (Claude Desktop, VS Code
-  Copilot Chat) the cost and findings tools also show interactive views;
-  see
-  [Interactive views in the chat](docs/UserGuide.md#interactive-views-in-the-chat).
+- **AI Credits Analyzer** is a VS Code extension for GitHub Copilot Chat and
+  its AI Credits.
+- **Agent Cost Analyzer** is a standalone app for Claude Code, GitHub
+  Copilot, the pi coding agent and mitmproxy captures of LLM traffic.
 
-![App landing page, showing the Learn mode scenario list](docs/images/landing-page.png)
+Both run locally and are read-only. Nothing leaves your machine.
 
-*The "Industry" design system: steel-blue accent, hairline "blueprint"
-cards with corner registration marks, Barlow/Barlow Condensed type.*
+![The AI Credits Analyzer extension in VS Code: Sessions grouped by day with their AI Credits, a session open in the panel, and today's AI Credits in the status bar](docs/images/vscode/sidebar.png)
 
-## Which product should I use?
+## What you can find out
 
-This repo builds two products from one codebase:
+- What a session, a repository or a project cost, and how that changed over
+  time.
+- Why a cost changed: more usage, a price change, or a different model mix.
+- What a real session would have cost on another model.
+- Which tool calls failed and why, which commands were risky, and which
+  sessions look unusual.
+- How prompt caching, context compaction and model switches change what a
+  turn costs. Learn mode explains this with sample sessions, so it is useful
+  before you have any data of your own.
+- All of the above from an AI chat, through a read-only MCP server (see
+  [Ask your AI chat](#ask-your-ai-chat)).
 
-- **Using VS Code with GitHub Copilot Chat?** Use the **AI Credits
-  Analyzer** extension. It runs inside VS Code, reads your Copilot Chat
-  logs there, and covers Copilot only. See the
-  [extension guide](docs/vscode-extension-guide.md). Install it from the
-  [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=raulkivi.ai-credits-analyzer)
-  or [Open VSX](https://open-vsx.org/extension/raulkivi/ai-credits-analyzer),
-  or build a VSIX as described in
-  [CONTRIBUTING.md](CONTRIBUTING.md#working-on-the-vs-code-extension).
+## Which one do I need?
 
-  ![The AI Credits Analyzer extension in VS Code: Sessions grouped by day with their AI Credits, a session open in the panel, and today's AI Credits in the status bar](docs/images/vscode/sidebar.png)
+| You use | Install |
+|---|---|
+| GitHub Copilot Chat in VS Code | AI Credits Analyzer, the extension |
+| Claude Code, pi, mitmproxy captures, or several tools at once | Agent Cost Analyzer, the standalone app (it reads Copilot Chat sessions too) |
 
-- **Using Claude Code, pi, or mitmproxy captures, or want every provider in
-  one place?** Use this standalone app, **Agent Cost Analyzer**. It also
-  reads VS Code Copilot Chat sessions. Set it up below.
+## Get started: AI Credits Analyzer (VS Code)
 
-## Documentation
+1. Install **AI Credits Analyzer** from the
+   [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=raulkivi.ai-credits-analyzer),
+   or from [Open VSX](https://open-vsx.org/extension/raulkivi/ai-credits-analyzer)
+   for VSCodium and similar editors. It needs VS Code 1.146 or later and
+   GitHub Copilot Chat.
+2. Turn on Copilot Chat's debug file logging, so Copilot Chat records token
+   and AI Credits data. The extension's **Setup** view has a **Fix** button
+   that opens the setting
+   (`github.copilot.chat.agentDebugLog.fileLogging.enabled`), and a
+   walkthrough opens on first start. Newer chats that run through Copilot's
+   Agent Host don't need it.
+3. Chat with Copilot as usual, then pick a session in the **Sessions** view.
 
-- [User Guide](docs/UserGuide.md) — illustrated walkthrough of the
-  standalone app's Learn mode and Analyze mode, screen by screen.
-- [VS Code extension guide](docs/vscode-extension-guide.md) — install, use
-  and configure the AI Credits Analyzer extension (Copilot only).
-- [Vision](docs/vision.md) — the problem, goals, product concept (Learn vs.
-  Analyze mode), data sources, and non-goals.
-- [Architecture](docs/architecture.md) — system design: components, domain
-  model, data flow, API design, tech stack, and project structure.
-- [Implementation plan](docs/implementation-plan.md) — phase-by-phase build
-  plan with exit criteria and dependencies.
-- [Agentic coding explained](docs/agentic-coding-explained.md) — reference
-  document on sessions, turns, tool calls, prompt caching, and token
-  accounting; the source material Learn mode's scenarios are seeded from.
-- [Learn-mode scenarios](docs/scenarios/README.md) — indexed worked examples
-  for all 18 bundled scenarios, each with a per-turn token/cache table and,
-  where useful, a sequence diagram or bar chart.
-- [Learn scenarios fact-check](docs/learn-scenarios-fact-check.md) — every
-  scenario claim checked against Anthropic, OpenAI, Google, xAI, GitHub and
-  VS Code docs, with sources, fixed slips and proposed re-models.
-- [AI-assisted coding terminology](docs/terminology.md) — alphabetical
-  glossary of AI-assisted coding terms, cross-referenced with the reference
-  document above.
-- [Copilot Chat source investigation](docs/copilot-chat-source-investigation.md) —
-  findings from inspecting the Copilot Chat extension's own source for
-  richer cache/token-usage log data than `main.jsonl` carries.
-- [mitmproxy setup](docs/mitmproxy-setup.md) — how to install mitmproxy,
-  trust its CA, capture LLM-provider traffic, and export it as a `.har`
-  file the app's `mitmproxy` provider can read.
-- [Threat model](docs/threat-model.md) — trust boundaries, STRIDE analysis
-  of the API/data-source surface, and verified mitigations (path
-  traversal, SQL injection, XSS, CSRF) vs. residual risks.
-- [Tool-call audit plan](docs/plans/tool-call-audit.md) — design and
-  decisions for the tool-call audit (outcomes, failure classification,
-  cross-session rollup, audit charts) and its read-only MCP server
-  (`scripts/mcp-server.sh`; see the User Guide's "Querying the audit from
-  Claude Code").
-- [MCP tools v2 plan](docs/plans/mcp-tools-v2.md) — assessment of the MCP
-  tools and the Phase 9.12 additions: session and cross-provider cost,
-  security/anomaly/behaviour findings, a one-turn drill-down, server
-  instructions and output schemas.
-- [MCP Apps plan](docs/plans/mcp-apps.md) — Phase 12 (MVP released in
-  extension 0.4.0 and app 0.10.0; Increment 2 released in extension 0.6.0
-  and app 0.11.0 on 2026-11-11; handover in
-  [mcp-apps-handover.md](docs/plans/mcp-apps-handover.md)):
-  branded, interactive views (session cost, spend rollup, findings, cost
-  over time, cost comparison, cost change) that MCP Apps hosts such as VS
-  Code Copilot Chat and Claude Desktop render next to the MCP tool
-  results. Includes the use-case analysis, branding rules and tasks.
-- [Analyze session replay plan](docs/plans/analyze-session-replay.md) —
-  Phase 14 (steps 14.0–14.7 built; the docs are in the owner's review):
-  replay a real Claude Code or Copilot session on another model, beside
-  what it really cost, with a self-check on its own model and a Compare
-  models view, in both products and through MCP. See the User Guide's
-  [Replaying a session on another model](docs/UserGuide.md#replaying-a-session-on-another-model).
-- [Cost by repository and project plan](docs/plans/cost-by-repository-and-project.md) —
-  Phase 15 (steps 15.0–15.15 done; the owner's review of the docs and the
-  exit criterion on real data are open): attribute cost to repositories, group them into
-  projects, compare them over time, split a project by vendor and model,
-  versioned model prices with price-change markers, billing statements
-  and estimates.
-- [Insights dashboard plan](docs/plans/insights-dashboard.md) — design and
-  decisions for the QlikView-style associative dashboard across every
-  provider: cost and tokens, tool calls and failures, and security
-  signals (risky commands, anomalies, behaviour changes) that say what
-  happened, when and why.
-- [VS Code extension plan](docs/plans/vscode-extension.md) — Phase 10
-  (code and docs done through step 10.11; screenshots and release pending): AI Credits
-  Analyzer, a separate, Copilot-only VS Code extension in
-  `packages/vscode-extension` that shares code with this standalone app
-  (Agent Cost Analyzer). It covers the code analysis, the test-first steps
-  with their status, the product boundary, and shipping to the Marketplace
-  and Open VSX.
-- [VS Code extension manual checks](docs/plans/vscode-extension-manual-checks.md) —
-  the checks the owner runs in a real VS Code before each extension
-  release: usability script, MCP server in Copilot agent mode, and remote
-  windows.
-- [Classic subagent credits plan](docs/plans/classic-subagent-credits.md) —
-  proposed: counting the AI Credits that classic Copilot Chat subagents
-  log to sibling files next to `main.jsonl`, with measured impact, format
-  facts, options and open questions.
-- [Automated pre-release UI gate](docs/plans/release-ui-gate.md) —
-  step 10.17 (planned): no hand checklist gates a release; wdio for VS
-  Code and Copilot, Playwright for web.
-- [VS Code UI automation plan](docs/plans/vscode-ui-automation.md) —
-  step 10.16 (merged): automating the manual
-  checks that need a real VS Code window with `wdio-vscode-service` under
-  xvfb.
-- [pi-system-prompt-logger](packages/pi-system-prompt-logger/README.md) —
-  optional Pi coding-agent extension, vendored in this repo, that captures
-  pi's assembled system prompt to a JSONL sidecar log so Analyze mode's
-  system prompt inspector can show it for pi sessions. `npm run configure`
-  offers to build and install it for you; see that README for manual
-  install steps or to change the install location.
+Full steps, commands and settings: the
+[extension guide](docs/vscode-extension-guide.md).
 
-## Setup
+## Get started: Agent Cost Analyzer (standalone app)
 
-### Setup via an AI coding agent
-
-Paste this into a coding harness (Claude Code, Copilot, Cursor, etc.) to
-have it install and run the app for you:
-
-```
-Set up and run the Agent Cost Analyzer:
-1. Clone https://github.com/raulkivi/agent-cost-analyzer.git (or use the
-   existing checkout if already in this repo) and cd into it.
-2. Confirm Node.js 22+ is installed (the server uses node:sqlite).
-3. Run `npm install`, then `npm run dev` to start the API server
-   (127.0.0.1:3001) and web app (127.0.0.1:5173); open the web app URL
-   when both are up.
-4. Check `GET /api/config/status` and report any config warnings.
-5. If Analyze mode needs full per-turn token/cache numbers for Local
-   harness chats, add to VS Code's user settings.json and reload the window:
-   "github.copilot.chat.agentDebugLog.fileLogging.enabled": true,
-   "github.copilot.chat.agentDebugLog.fileLogging.maxRetainedSessionLogs": 200,
-   "github.copilot.chat.otel.dbSpanExporter.enabled": true (optional, adds
-   cache-write/reasoning tokens)
-```
-
-### Manual setup
-
-**Prerequisites**
-
-- Node.js 22+ (the server uses the built-in, still-experimental
-  `node:sqlite` module).
-- Linux, macOS or Windows. To analyze Copilot Chat sessions you also need
-  VS Code (Stable or Insiders) with the GitHub Copilot Chat extension; for
-  the other providers you need only their own logs or captures (see below).
-  The app only reads local files — for VS Code, the local session-store
-  SQLite database and per-session debug logs — so it works fully offline. The macOS and Windows paths are
-  not yet verified against a real install (see
-  [architecture.md](docs/architecture.md)).
-
-**Install and run**
+The app runs from this repository and needs Node.js 22 or newer.
 
 ```sh
 git clone https://github.com/raulkivi/agent-cost-analyzer.git
 cd agent-cost-analyzer
 npm install
-npm run dev        # starts the API server (127.0.0.1:3001) and the web app (127.0.0.1:5173)
+npm start
 ```
 
-Open http://127.0.0.1:5173 in a browser. Or run `npm start` instead of
-`npm run dev` — it does the same thing and also opens the web app in your
-default browser once it's ready.
+`npm start` runs the app and opens it in your browser at
+http://127.0.0.1:5173. Learn mode works straight away. Switch to Analyze mode
+and pick a source (VS Code Copilot Chat, Claude Code, pi or mitmproxy) to see
+your own sessions. Claude Code and pi need no setup, because the app reads
+their session files directly.
 
-To launch it from anywhere with one word, run `npm run configure` once —
-it adds a `cpchat` alias to your shell profile (`~/.zshrc`/`~/.bashrc`,
-autodetected; re-running it is safe and just updates the same entry). Set
-`CPCHAT_ALIAS=foo npm run configure` to pick a different alias name. After
-`source`-ing your profile (or opening a new terminal), `cpchat` starts the
-app and opens the browser; Ctrl+C in that terminal stops both the server
-and the web app. `npm run configure` also asks whether to install
-[pi-system-prompt-logger](packages/pi-system-prompt-logger/README.md), an
-optional extension that captures the pi coding agent's assembled system
-prompt for Analyze mode — answer `y` to build and drop it into
-`~/.pi/agent/extensions/` automatically. Run `npm run unconfigure` to
-remove both the alias and, if installed, that extension.
-Learn mode works immediately —
-its scenarios are bundled fixtures. Analyze mode lists any real Copilot
-Chat sessions it finds in your local VS Code session store.
+![The standalone app on load, with Learn and Analyze modes](docs/images/landing-page.png)
 
-Other commands (from the repo root):
+More: [setup and data sources](docs/standalone-app.md) (where each tool keeps
+its logs, the Copilot Chat settings, a one-paste setup prompt for an AI coding
+agent) and the [User Guide](docs/UserGuide.md) (a screen-by-screen tour).
 
-```sh
-npm test           # runs vitest for every workspace
-npm run lint        # eslint across the repo
-npm run typecheck    # tsc --noEmit for every workspace, test files included
-npm run build        # type-checks/builds every workspace
-```
+## Ask your AI chat
 
-## How each provider finds your logs
+Both products include a local, read-only MCP server. Connect it to Claude
+Code, Claude Desktop or Copilot Chat and ask "what drove my spend this week?"
+or "which commands failed most?". In hosts that support MCP Apps, such as
+Claude Desktop and VS Code Copilot Chat, the cost and findings answers also
+show interactive views.
 
-Analyze mode reads local files directly — nothing is uploaded, and no
-provider needs manual configuration just to be *found* (Copilot Chat's
-provider does need a setting turned on to get full per-turn numbers, see
-below). Every path below is computed from your OS home directory at
-runtime, never hardcoded:
+- Extension: turn on the `aiCreditsAnalyzer.mcp.enabled` setting. See
+  [the MCP server for Copilot agent mode](docs/vscode-extension-guide.md#the-mcp-server-for-copilot-agent-mode).
+- Standalone app: see
+  [Querying the audit from Claude Code (MCP)](docs/UserGuide.md#querying-the-audit-from-claude-code-mcp)
+  and [Interactive views in the chat](docs/UserGuide.md#interactive-views-in-the-chat).
 
-- **VS Code (local Copilot Chat)** — several files, since VS Code splits
-  its state:
-  - **Session list** comes from `session-store.db`, a SQLite database
-    under VS Code's `globalStorage`:
-    `~/.config/Code - Insiders/User/globalStorage/github.copilot-chat/session-store.db`
-    on Linux, `~/Library/Application Support/Code - Insiders/...` on macOS,
-    `%APPDATA%\Code - Insiders\...` on Windows (falls back to the Stable
-    `Code` folder in each case if Insiders isn't installed).
-  - **Per-turn token/cache detail** comes from `main.jsonl`, written
-    per-workspace rather than globally. Since a session's workspace isn't
-    known ahead of time, the app scans every folder under
-    `<user-data-dir>/User/workspaceStorage/*/GitHub.copilot-chat/debug-logs/`
-    (and `<user-data-dir>/User/globalStorage/github.copilot-chat/debug-logs/`,
-    where chats in a window with no folder open are logged)
-    and uses whichever one contains `<session-id>/main.jsonl`. This log is
-    off by default — see
-    [Enabling GitHub Copilot Chat debug logging](#enabling-github-copilot-chat-debug-logging)
-    below.
-  - **Optional cache-write/reasoning tokens** come from `agent-traces.db`,
-    next to `session-store.db` in the same `globalStorage` folder — also
-    off by default, see
-    [Enabling richer cache-write/reasoning numbers](#enabling-richer-cache-writereasoning-numbers-optional)
-    below.
-  - **Agent Host sessions** (VS Code 1.143 and later, where the Copilot
-    harness is the default) come from `globalStorage/agent-host.db` and
-    `agentSessionData/<session>/session.db` in the same user-data folder.
-    `session.db` gives each turn's uncached input, cache read, output and AI
-    Credits. Prompt and response text, the turn inspector, tool calls and the
-    system prompt come from the Copilot CLI's event log,
-    `<COPILOT_HOME or ~/.copilot>/session-state/<sdkSessionId>/events.jsonl`,
-    read locally when a session is opened. Cache-write and reasoning tokens
-    come from the log's per-call usage records (Copilot CLI 1.0.95 and later),
-    not from `agent-traces.db`. They're used only when the records add up to
-    the turn's token totals in `session.db`; otherwise they're unknown, with
-    the reason. Tool and vision tokens stay unknown. The Tools tab stays
-    unavailable, since the log records no tool definitions. These sessions
-    need none of the settings below.
-  - macOS and Windows paths are implemented but not yet verified against a
-    real install. Multi-profile VS Code setups are not supported on any OS
-    (see [architecture.md](docs/architecture.md)).
+## Privacy and your data
 
-- **mitmproxy** — reads `.har` capture files you export yourself after
-  recording LLM-provider traffic with mitmproxy (see
-  [mitmproxy setup](docs/mitmproxy-setup.md)). There's no OS-level
-  discovery here — you manually drop the exported `.har` file into this
-  app's own settings directory, under a `mitmproxy-captures` subfolder:
-  `~/.config/agent-cost-analyzer/mitmproxy-captures/` on Linux (respects
-  `$XDG_CONFIG_HOME`), `~/Library/Application Support/agent-cost-analyzer/...`
-  on macOS, `%APPDATA%/agent-cost-analyzer/...` on Windows. Each `.har` is
-  split into one or more sessions by idle gaps in the captured traffic.
+- Everything runs on your machine. Neither product sends your data anywhere
+  or reports telemetry.
+- They only read: your tools' own session logs (Copilot Chat's session store
+  and debug logs, `~/.claude/projects/`, `~/.pi/agent/sessions/`, and
+  mitmproxy captures you export yourself). They never change those files or
+  your tools' settings.
+- Exporting a session for AI advice copies metadata only (token usage, cache
+  efficiency, tool usage, AI Credits). It never includes your chat text.
 
-- **[pi coding agent](https://pi.dev)** — reads pi's own session JSONL
-  files directly; no export step needed. pi auto-saves every session
-  (unless run with `pi --no-session`) to one fixed location,
-  `~/.pi/agent/sessions/`, in a `--<project-path-with-slashes-as-dashes>--`
-  subfolder per project. Because pi sessions are a branchable tree
-  (fork/rewind create siblings), a single file with multiple leaf branches
-  becomes multiple sessions in the app. pi's own session format has no
-  system-prompt/tool-inventory artifact to read, so those tabs stay empty
-  for pi sessions unless you've installed
-  [`pi-system-prompt-logger`](packages/pi-system-prompt-logger/README.md)
-  (`npm run configure` offers to do this for you) — it captures the missing
-  artifact from outside pi's own session format, and the system prompt
-  inspector shows it once a captured session exists. `toolInventory` stays
-  unpopulated either way (see
-  [architecture.md §6.2.5](docs/architecture.md#625-pi-agent-provider-flow)).
+What the extension reads, file by file:
+[Privacy and what the extension reads](docs/vscode-extension-guide.md#privacy-and-what-the-extension-reads).
 
-- **[Claude Code](https://claude.com/claude-code) CLI** — reads Claude
-  Code's own session JSONL files directly; no export step and no setting
-  needed. Claude Code writes every session to `~/.claude/projects/`, one
-  subfolder per project (named from the project's path with slashes
-  replaced by dashes) and one `<session-id>.jsonl` file per session. Each
-  file becomes one session in the app, following the file's own pointer to
-  its active branch. Per-turn usage, including cache read/write and
-  reasoning tokens, comes from the file; the system prompt and tool
-  inventory tabs stay empty for Claude Code sessions. Subagent transcripts
-  (`<session-id>/subagents/`) aren't read (see
-  [architecture.md §6.2.6](docs/architecture.md#626-claude-code-cli-provider-flow)).
+## Learn more
 
-## Enabling GitHub Copilot Chat debug logging
-
-Analyze mode's real per-turn token/cache numbers (uncached input, cache
-read, output, and AI Credits) come from Copilot Chat's own debug log
-(`main.jsonl`). By default VS Code only writes a minimal log with no usage
-data, so this setting has to be turned on explicitly:
-
-1. Open your VS Code user `settings.json` (Command Palette → **Preferences:
-   Open User Settings (JSON)**), normally at
-   `~/.config/Code/User/settings.json` (Stable) or
-   `~/.config/Code - Insiders/User/settings.json` (Insiders) on Linux,
-   `~/Library/Application Support/Code/User/settings.json` (Stable) or
-   `~/Library/Application Support/Code - Insiders/User/settings.json`
-   (Insiders) on macOS, and `%APPDATA%\Code\User\settings.json` or
-   `%APPDATA%\Code - Insiders\User\settings.json` on Windows.
-2. Add:
-   ```json
-   "github.copilot.chat.agentDebugLog.fileLogging.enabled": true,
-   "github.copilot.chat.agentDebugLog.fileLogging.maxRetainedSessionLogs": 200
-   ```
-   The retention setting is optional but recommended — VS Code's own
-   default (50) can prune logs for sessions you'd still want to analyze
-   later.
-3. Reload the VS Code window (Command Palette → **Developer: Reload
-   Window**) for the setting to take effect.
-
-Only *future* sessions started after this reload will have full token/cache
-detail — logging is not retroactive. The app checks this automatically on
-startup: if the setting is missing, off, or the retention is too low, a
-warning banner explains exactly what to fix and where (see
-`GET /api/config/status`). When `agent-host.db` exists, these two warnings
-are optional instead, since they only affect chats run with the Local
-harness. Sessions recorded before enabling it still show up in Analyze
-mode, just without per-token figures.
-
-## Enabling richer cache-write/reasoning numbers (optional)
-
-Two more per-turn figures — cache-write and reasoning tokens — aren't
-exposed by `main.jsonl` at all, no matter how the setting above is
-configured. For chats run through the Local harness they come from a second,
-separate optional local source, `agent-traces.db`, that Copilot Chat can also
-write. This is purely additive: the app works fully without it, just showing
-those two figures as unavailable. Agent Host sessions don't need it; their
-figures come from the Copilot CLI's event log.
-
-1. Open your VS Code user `settings.json` (same file as above).
-2. Add:
-   ```json
-   "github.copilot.chat.otel.dbSpanExporter.enabled": true
-   ```
-3. Reload the VS Code window (Command Palette → **Developer: Reload
-   Window**) for the setting to take effect.
-
-Same non-retroactive caveat as above — only future sessions started after
-the reload will have cache-write/reasoning data. The app checks this
-setting too on startup (`GET /api/config/status`), surfaced as a
-lower-priority, dismissible suggestion rather than a required warning,
-since Analyze mode's other numbers work fine without it.
-
-## Using the app
-
-The app has two modes that share the same layout — a turns table, an
-explanation/detail panel, and a timeline scrubber to step through a
-session turn by turn:
-
-- **Learn mode** — pick one of the 18 bundled scenarios (cache basics, a
-  subagent's own session, context compaction, a model switch mid-session,
-  an MCP tool change mid-session, `/clear`, `/rewind`, session forking,
-  cache TTL expiry, an instructions-file edit, a silent `.instructions.md`
-  pull-in, inline vs. subagent-isolated exploration, a 1-hour cache
-  breakpoint, cascading model-switch-then-TTL-lapse triggers, an image
-  attachment invalidating the cache, toggling extended thinking, nested
-  forking, and a subagent on a cheaper model) to see a guided, turn-by-turn
-  walkthrough of how caching and token accounting work, with a
-  plain-language explanation for each turn. Each scenario is simulated on a
-  vendor and model you pick (real prices, documented cache rules), with a
-  Cache column and an assumptions popover; see the
-  [User Guide](docs/UserGuide.md#choosing-a-vendor-and-model).
-
-  ![Learn mode with a scenario selected: turns table, AI Credits sparkline, timeline scrubber, and the explanation panel](docs/images/learn-scenario.png)
-
-- **Cost by repository and project** — the Analyze-mode Dashboard attributes
-  every session to a repository, vendor and channel, and groups repositories
-  into projects you define in `projects.json`. Cost over time, Compare and
-  the Project tab show where it went and why it changed (usage, price or
-  model mix); Billing issues a frozen monthly statement per project and
-  estimates the next piece of work as a range. See the
-  [User Guide](docs/UserGuide.md#cost-by-repository-and-project), and
-  [architecture.md §6.4](docs/architecture.md#64-cost-by-repository-and-project-phase-15)
-  for how the figures are worked out.
-
-- **Replay a session on another model** — in Analyze mode, **Replay on**
-  runs a Claude Code or Copilot session's own requests and token counts
-  through another model's caching rules and prices, and shows what it
-  would have cost about, labelled **Simulated**, beside what it did cost.
-  A self-check on the session's own model, the coverage and the
-  assumptions come with it, and **Compare models** ranks up to 10 models.
-  Nothing is stored. See the
-  [User Guide](docs/UserGuide.md#replaying-a-session-on-another-model) and
-  the [plan](docs/plans/analyze-session-replay.md).
-
-- **Analyze mode** — pick one of your own real sessions (VS Code Copilot
-  Chat, a Claude Code session, a mitmproxy capture, or a pi coding agent session — see the **Source**
-  dropdown in the [User Guide](docs/UserGuide.md#choosing-a-log-provider)) to
-  see the same breakdown for what actually happened, plus (for VS Code
-  Copilot Chat sessions, once debug logging is enabled, above) a
-  system-prompt breakdown, the full tool inventory
-  cross-referenced against which tools were actually invoked, and per-turn
-  tool-call/file detail — behind a tabbed right-column panel that's
-  Analyze-mode-only:
-
-  ![Analyze mode's tabbed right panel: Explanation, System prompt, and Tools](docs/images/analyze-tabs.png)
-
-  From the System prompt tab, click **Open system prompt inspector** to
-  drill into the full captured prompt: a structure tree of every section,
-  its raw text (plain or pretty-printed) with the selected section
-  highlighted, and a plain-language description of what that section is
-  for and whether it's independently sourced.
-
-  ![The System prompt inspector: structure tree, raw text with the selected section highlighted, and its description](docs/images/guide-system-prompt-inspector.png)
-
-- **AI-advice export** (Learn or Analyze) — tick the checkbox on any
-  session card to select it for advice, then use the **Export advice**
-  bar to copy a metadata-only bundle — token usage, cache efficiency,
-  tool usage, prompt composition, AI Credits, never chat message text —
-  formatted to paste into an LLM chat for advice on your agentic-coding
-  workflow.
-
-  ![The advice-export dialog with a preview of the copyable metadata bundle](docs/images/guide-advice-export-dialog.png)
+- [User Guide](docs/UserGuide.md): the standalone app, screen by screen.
+- [Extension guide](docs/vscode-extension-guide.md): install, use and
+  configure the extension.
+- [Standalone app setup and data sources](docs/standalone-app.md)
+- [Extension changelog](packages/vscode-extension/CHANGELOG.md) and
+  [app changelog](CHANGELOG.md)
+- [Releases](https://github.com/raulkivi/agent-cost-analyzer/releases)
+- [Report a problem or ask a question](https://github.com/raulkivi/agent-cost-analyzer/issues)
 
 ## License
 
 [MIT](LICENSE)
+
+Contributing / developer documentation: [CONTRIBUTING.md](CONTRIBUTING.md) and [docs/README.md](docs/README.md).
