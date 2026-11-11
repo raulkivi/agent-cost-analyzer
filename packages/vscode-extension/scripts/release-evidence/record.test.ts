@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 import { describe, expect, it } from "vitest";
 import { buildEvidence } from "./build.mts";
+import { REQUIRED_COPILOT_E2E_TESTS } from "./evidence.mts";
 import type { GitResult, GitRunner } from "./git-notes.mts";
 import { readRunFacts, recordEvidence } from "./record.mts";
 
@@ -63,7 +64,7 @@ describe("recordEvidence (the run's onComplete)", () => {
   });
 
   it("prints the verdict and the push command for a passing run", () => {
-    const { text } = record(["1.4", "2.3", "2.4"].map((id) => ({ title: `${id} t`, parent: "S", state: "passed" as const })));
+    const { text } = record(REQUIRED_COPILOT_E2E_TESTS.map((id) => ({ title: `${id} t`, parent: "S", state: "passed" as const })));
 
     expect(text).toContain("PASS");
     expect(text).toContain("git push origin refs/notes/release-ui");

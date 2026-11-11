@@ -18,6 +18,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   currencies, the control listed USD first and started on USD when the first
   week had only USD. It now lists AI Credits first, then USD, and starts on
   AI Credits.
+- **MCP server: cost-change view.** In Copilot Chat, the "Not explained"
+  reasons widened the view past the chat, so it scrolled sideways (a reason
+  names a long setting id). The reasons now wrap.
 
 ## [0.5.0] - 2026-11-10
 

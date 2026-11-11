@@ -2,7 +2,7 @@
 
 **Last changed:** 2026-11-11 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
-Status: **in progress: G0, G1 (#202), G2 (#207), G5 (#205, #206) and G6 (#204) done 2026-11-11; G3 built and green on the owner's machine (PR #208, with D5 and D6), owner rerun on the merged commit pending.** Owner rule, 2026-11-11: every UI check
+Status: **in progress: G0 (#203), G1 (#202), G2 (#207), G3 (#208, #210), G4, G5 (#205, #206) and G6 (#204) done 2026-11-11; G7 in progress.** Owner rule, 2026-11-11: every UI check
 before a release is automated. VS Code and Copilot checks use wdio
 (`wdio-vscode-service`, [vscode-ui-automation.md](vscode-ui-automation.md));
 web-only checks use Playwright (or the integrated Chrome for exploratory
@@ -72,7 +72,7 @@ repo.
 | # | Task | Cx | Model | Depends | Exit |
 |---|---|---|---|---|---|
 | G0 | Docs: the rule in architecture.md §11, CLAUDE.md's repo rules, manual-checks doc reframed as "what the suites cover", mcp-apps.md A24/A33 as automated tasks, vscode-ui-automation.md T15/Q2 closed by D4 | low | Haiku | — | Docs say the same thing; no CHANGELOG entry |
-| G1 | CI: drop `continue-on-error` from `extension-ui`; `release-extension.yml` runs `test:ui:vscode` under xvfb with the cached download; `release-app.yml` builds web and runs `test:e2e`. Owner: mark `extension-ui` and `web-e2e` required in branch protection | low | Haiku | — | Both release workflows fail on a red suite; green on a dry-run tag in a fork or a `workflow_dispatch` run |
+| G1 | CI: drop `continue-on-error` from `extension-ui`; `release-extension.yml` runs `test:ui:vscode` under xvfb with the cached download; `release-app.yml` builds web and runs `test:e2e`. Owner: mark `extension-ui` and `web-e2e` required in branch protection. **Done 2026-11-11:** ruleset 27004539 on `main` (created on the owner's go) requires `extension-ui`, `web-e2e`, `mcp-apps-e2e`, `test`, `extension`, `scan`, `Analyze (actions)`, `Analyze (javascript-typescript)` and `CodeQL`; branches needn't be up to date; repository admins may bypass. Scorecard (`analysis`) is left out: it never runs on a PR. `claude-review` stays advisory | low | Haiku | — | Both release workflows fail on a red suite; green on a dry-run tag in a fork or a `workflow_dispatch` run |
 | G2 | Release evidence for D1: the real-Copilot suite writes its result (commit, VS Code version, tests passed, skipped with reasons, AI Credits spent) as a git note under `refs/notes/release-ui`; a release check reads the note for the tagged commit and refuses a missing, failed or skipped result (tightened from "skipped without reason", see below) | high | Opus | — | Unit tests for the note format and the check; the release workflow fetches notes and fails without one |
 | G3 | First end-to-end run of the real-Copilot suite with the owner (sign-in, model, `chat.tools.global.autoApprove`), fix what breaks | medium | Opus + owner | — | 3 tests green on the owner's machine; note written (G2) |
 | G4 | MCP App views in Copilot Chat (wdio, real-Copilot suite): spike entering the view's iframe inside the chat; then specs for U1-U3 and U9-U11 over seeded repositories (A16 §1, A24 §1): render, drill-down and Back focus, Light/Dark/both High Contrast through the probe and judge, 360 and 600 px, footer | high | Opus (spike), Sonnet (specs) | G3 | A24 §1 rows each named in a spec title; green on the owner's machine |
@@ -107,7 +107,7 @@ has no Copilot part.
   passed/failed/skipped, `skipReason`), `aiCreditsSpent` (null if unmeasured),
   `ranAt`. Format and judge: `scripts/release-evidence/evidence.mts`.
 - **Blocks a release:** no note; a note that isn't schema-1 JSON; a run on
-  another commit; a dirty tree; a required test (1.4, 2.3, 2.4) missing,
+  another commit; a dirty tree; a required test (1.4, 2.3, 2.4; since G4 also the 13 view rows) missing,
   failed or **skipped**; any failed test. Every problem is listed by name
   (`missing-note`, `malformed`, `unknown-schema`, `wrong-commit`,
   `dirty-tree`, `test-missing`, `test-failed`, `test-skipped`).
@@ -267,6 +267,132 @@ although the test profile is signed in.
   Normal mode does not change that. Since D6 the chat is offered only the
   analyzer's read-only MCP tools and nothing is auto-approved.
 
+**G4: MCP App views in Copilot Chat (2026-11-11).** The spike worked (risk R1
+closed): the views are reachable and driven like any VS Code webview. The
+spec is `test/ui/copilot-e2e/specs/copilot-views.e2e.ts` in the real-Copilot
+suite; page objects in `support/chat-view.ts`.
+
+- **Frame path** (VS Code 1.145, Copilot Chat in the secondary side bar):
+  workbench → `.webview-overlay-content > iframe.webview` → its
+  `iframe#active-frame[title="MCP App"]` → the view's document (title "Cost
+  views"). Two `switchFrame` steps, as for the analyzer's own panel. The
+  overlay is **not inside the chat's DOM**: each tool call renders a
+  placeholder `.chat-tool-invocation-part .mcp-app-part > .mcp-app-webview`
+  in the chat list (`.interactive-list`, a virtualised monaco list), and
+  VS Code lays an overlay webview over it. Nothing links the two, so the
+  spec picks the overlay that covers the placeholder (`view-overlay.mts`,
+  unit-tested). Overlays exist only for views near the visible part of the
+  list (others are `visibility: hidden`); the placeholder starts at 300 px
+  high and grows to the view's height, at most 75 % of the window.
+- **Moving and clicking.** The list has no `scrollIntoView`: the spec
+  scrolls it with the mouse wheel over the list's margin until the view's
+  placeholder sits below the request VS Code pins at the top. Another
+  view's overlay can lie over a click point; the click then falls back to
+  the element's own `click()` and says so in the log. Keys reach a view only
+  while its frame has focus.
+- **Reading a view:** one script returns kicker, title, the line under it,
+  `role=group` tiles with their text, table, chart and button names, alerts,
+  footer and text (`ViewSnapshot`), in the vocabulary of G5's `ViewFrame`.
+- **One chat, eight views.** A fixed prompt (`view-prompt.mts`, unit-tested)
+  asks the `aica-e2e` agent to call `get_repository_cost` (portal, weekly,
+  90 days), `get_project_cost` (`demo`), `compare_costs` (both
+  repositories, last 28 days), `explain_cost_change` (portal, days 42-22
+  against 21-1), `get_repository_cost` (`no-such-repo`), `get_session_cost`,
+  `get_cost_rollup` and `list_findings`, all in one step. Haiku 5.5 makes
+  the eight calls in parallel. Fewer views than asked skips the suite with
+  the count as the reason (R2), which the gate refuses.
+- **Data.** Before VS Code starts, the copy is cleared of earlier chats
+  (`clearChatHistory`: the Agent Host catalog, empty-window chats, Copilot
+  Chat's store rows and debug logs) and seeded (`seedChatHistory`): eight
+  made-up sessions in S9's two repositories over 38 days, each with the
+  server fixture's real debug log under its own id, so AI Credits are known.
+  `COPILOT_HOME` points at an empty folder in the run. Why: the owner's
+  test profile held Agent Host sessions from real work, which the analyzer
+  listed (the first spike run saw them); no view now shows them.
+- **Drill-downs make no model turn:** after each drill-down and Back the
+  chat still shows one request (`.interactive-request`), and at the end the
+  analyzer reports the chat's session at one turn.
+- **Required:** all 13 tests are in `REQUIRED_COPILOT_E2E_TESTS`
+  (`COPILOT_VIEW_ROWS`, ids such as `A24 1.4` and `A16 U1`; `testIdOf` reads
+  them). None is left optional: over seeded data each asserts only on the
+  views, so the model's words never decide them.
+
+| Test | Checks |
+|---|---|
+| A24 1.1 | U9 repository: kicker, title, weekly period line, the four basis tiles (Billed in AI Credits, Reported Unknown), the cost-per-week chart; no top sessions, vendor or token tables; no currency control |
+| A24 1.2 | U9 project: No projects here, the extension's reason, What to ask instead, `Unknown project id "demo"`, no chart |
+| A24 1.3 | U10: title, units sentence, rows most expensive first (as buttons), a signed change in percent, Together, never "from 0" |
+| A24 1.4 | U10 → U9 in place: kicker, trail, U9 loaded with its chart, no top sessions; Back with focus on the row; a second row by keyboard only (Tab, Enter, Tab to Back, Enter) with focus and ring back on it; no new chat request |
+| A24 1.5 | U11 with nothing priced (below): kicker, the period line, the priced-basis note, "No priced figures in either period.", Not explained counted per period with the reason, never 0, the documented price changes section |
+| A24 1.6 | Unknown repository: U9 with every basis tile Unknown, "0 sessions, 0 turns.", no bars (see the finding below) |
+| A24 1.7 | U9, U10, U11 and A16's U1-U3 in Light Modern, Dark Modern, Dark and Light High Contrast, switched mid-run: each view follows (body class, `data-theme`), every text reaches WCAG AA on the chat's own ground (the probe and judge of `layout-theme.e2e.ts`), a focus ring on Tab |
+| A24 1.8 | The six views at about 360 px and at the widest the chat allows (576 px in the suite's window, against the checklist's 600): no sideways scroll; at 360 px U10's per-session figures move under the row name |
+| A24 1.9 | All eight views end with `Read-only · local logs · v<extension version>` and their text can be selected |
+| A16 U1 | Tiles, per-turn chart, top turns; a turn opens in place and hides; Copy title names *AI Credits Analyzer: Open Session*; no "0 AI Credits"; no new chat request |
+| A16 U2 | Daily chart, by model, by provider, top sessions; a session opens U1 in place, Back to cost rollup returns focus to it; no new chat request |
+| A16 U3 | Severity tiles; the kind filter reloads in place; no new chat request |
+| A16 keyboard | U1: Tab to a top turn, Enter opens it; U2: Enter drills in, Back by keyboard returns focus to the session |
+
+Not checkable here, and why (each is covered elsewhere):
+
+- **U11's priced states** (1.5's tiles, waterfall colours, model table and
+  its rows, the disabled Price changes button; 1.8's columns at 360 and
+  600 px): Copilot's debug logs record no cache-write count, so no Copilot
+  turn is priced and U11 shows only its "nothing priced" state. G5 covers
+  them (A24 2.7-2.9) with priced Claude Code turns.
+- **1.1's partial-week hatching and price-change markers, 1.3's "no earlier
+  figure" and Unknown rows:** the seeded turns are all known and no price
+  changes in range; G5 and the view tests cover them.
+- **1.6's second bullet** (stop the server, click a row, Retry, Back): not
+  automated; the drill-down's error state is a view test
+  (`CompareDrillDown`).
+- **1.7's chart marks** (hatching, markers, waterfall bars in High
+  Contrast): the judge checks text only; chart-mark contrast is G7.
+- **A16 U1's paste into Open Session:** outside the view (the command is
+  hidden and takes an id, A15).
+- **A16 U2's Ask about this session:** it starts a new model turn in the
+  real chat (an agent run, more AI Credits); G5 asserts the fixed template.
+- **A16 U3's severity filter and evidence rows:** the seeded history has no
+  findings; G5 covers them.
+
+Findings:
+
+- **View bug, fixed test-first:** U11's Not explained reasons sit in two
+  grid columns; a reason with a long unbroken word (Copilot's
+  `github.copilot.chat.otel.dbSpanExporter.enabled`) in both widened the
+  view to 658 px in a 561 px chat, so it scrolled sideways in every theme.
+  A G5 spec reproduced it at 560 px (both periods holding the fixture's
+  Copilot turn); `cost-change.css` now uses `minmax(0, 1fr)` columns and
+  `overflow-wrap: anywhere` on the reasons.
+- **Checklist vs server, for the owner:** A24 1.6 expects "Couldn't load the
+  cost over time." for an unknown repository, but `get_repository_cost`
+  answers an unknown key with an empty series, not an error (as
+  `compare_costs` does, G5's A24 2.6). The spec asserts the real answer.
+- **VS Code's workspace-storage clean-up:** 30 s after start-up the shared
+  process deletes every `workspaceStorage` folder whose name isn't 32
+  characters and that no window uses. The suite's second VS Code launch then
+  found no seeded debug logs (run 7 below); the seeded folder now has a
+  32-character id. `ui-fixture.mts`'s `integration-workspace` folder has the
+  same exposure in runs longer than 30 s.
+
+Real runs (owner's test profile, xvfb, `claude-haiku-5.5` requested and
+observed every time; each run's note removed from the local
+`refs/notes/release-ui`, never pushed):
+
+| Run | Specs | Result | AI Credits |
+|---|---|---|---|
+| 1 | spike: one `get_repository_cost` | view found, frame path recorded | not measured (one short chat) |
+| 2 | spike: the eight-call prompt | eight views, overlays and wheel scrolling recorded | 0.4723 |
+| 3-6 | views spec while it was built | setup width, then wheel over views, then U11 overflow (the bug) | 0.5732, 0.5748, 0.5785, 0.5798 |
+| 7 | whole suite | 1.4, 2.3, 2.4 and 10 view tests passed; 1.1, 1.3, 1.5 failed: VS Code had deleted the seeded debug logs before the second launch | 0.7357 + 0.5473 = 1.2830 |
+| 8 | whole suite on commit `7ddb37f`, clean tree | **all 16 passed** (3 chat checks in 27.9 s, 13 view tests in 13 min 6 s); one click fell back to the element's own `click()`; gate `PASS` | 0.7722 + 0.4634 = 1.2356 |
+
+TDD exceptions: the spec, the page objects in `chat-view.ts`, the wdio config
+and the real runs. Unit-tested first: `chat-history-seed.test.ts` (through the
+extension's own MCP server), `view-prompt.test.ts`, `view-overlay.test.ts`,
+and the evidence ids and required set in `evidence.test.ts`, `check.test.ts`
+and `record.test.ts`.
+
 Order: G0 and G1 first (small, unblock D4); G5 and G6 in parallel (CI,
 no Copilot); G2 and G3 next; G4 and G7 last.
 
@@ -285,7 +411,9 @@ no Copilot); G2 and G3 next; G4 and G7 last.
 - **R1 Copilot Chat frames (G4).** MCP App views render in a nested iframe
   inside the chat webview; selectors and frame order are unverified. The
   spike decides; if it fails, G5's fake host covers the views and G4 is
-  limited to "a view appears under the tool call".
+  limited to "a view appears under the tool call". **Closed by G4's spike
+  (2026-11-11):** the views are overlay webviews entered in two frame
+  steps; see G4.
 - **R2 Real-Copilot flakiness.** A live model may not call the tool; the
   suite skips with a named reason and G2 refuses the skip (any skip of a
   required test, explained or not): the owner reruns until it passes. A slow
