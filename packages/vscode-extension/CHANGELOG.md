@@ -14,17 +14,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Fullscreen for the cost rollup and cost-over-time views.** Where the MCP App host offers
   fullscreen, these views show a Fullscreen control and use the wider window. VS Code offers only the
   inline view, so the control does not appear in the extension.
-- **MCP App price changes view (`get_price_changes`).** A timeline of when prices changed. Documented changes (from the price book: a solid diamond and rail, % per token type, sources) and observed ones (inferred from billed against priced figures: a dashed hollow diamond and rail, the "inferred" tag, a weekly billed-vs-priced table) stay apart. A rise is written in the host's danger colour and a fall in its success colour, each with its sign.
+- **MCP App price changes view (`get_price_changes`).** A timeline of when prices changed. Documented changes (from the price book: a solid diamond and rail, % per token type, sources) and observed ones (inferred from billed against priced figures: a dashed hollow diamond and rail, the "inferred" tag, a weekly billed-vs-priced table) stay apart. A rise is written in red and a fall in green (your theme's danger and success colours, drawn towards the text colour so they stay readable), each with its sign.
 - **"Price changes" in the cost-change view now works.** It opens the price timeline in place for the cost change's period, filtered to the (up to three) models with the largest price effect, with a Back control that restores the cost change without a new call.
 - **Tool-call audit and session picker in Copilot Chat.** `get_session_audit` and `get_audit_rollup`
   show a visual view: the failure rate over calls with a known outcome (unknown outcomes are counted
   apart), failure categories, recovery cost in tokens (not AI Credits), retried commands and calls by
-  tool; the date-range version adds failed calls per day, top failing commands and the sessions it
+  tool; the date-range version adds failed calls per day (also as a table), top failing commands and the sessions it
   left out. `list_sessions` shows a session picker whose "Analyse" button sends exactly
   "Analyse session <id>" to the chat and never a title. If the host declines or fails the message,
   that row shows "Ask in the chat: Analyse session <id>" in place of its button. The text answers are
   unchanged.
-- **Replay view in the chat (U12).** `compare_models_for_session` shows each model's simulated total beside the measured one; click a model to replay it turn by turn with a chart, the self-check result and the turns not replayed. Every simulated figure says Simulated and an unknown one says Unknown.
+- **Replay view in the chat.** `compare_models_for_session` shows each model's simulated total beside the measured one; click a model to replay it turn by turn with a chart (also as a table), the self-check result and the turns not replayed, as `replay_session` shows directly. Every simulated figure says Simulated and an unknown one says Unknown.
 
 ### Changed
 

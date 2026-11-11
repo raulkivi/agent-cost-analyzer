@@ -198,10 +198,12 @@ static file.
    calls the tool as before. Its name, input schema, output schema and
    `content` are unchanged, so a host without MCP Apps, and Claude Code
    CLI, get the same text. The extension has no billing group (D7), so its
-   list has no `get_statement` or `estimate_cost` and names no billing view.
-   The routes for the eight Increment 3 tools (U12–U15, U4, U5) arrive
-   with A27–A30; until then the router answers `none` and the host shows
-   "No view for this result".
+   list has no `get_statement` or `estimate_cost` and names no billing view;
+   U14 and U15 also render the neutral "No view for this result" state for
+   the extension's brand. The router sends the Increment 3 tools to U12
+   (`replay_session`, `compare_models_for_session`), U13
+   (`get_price_changes`), U14 (`get_statement`), U15 (`estimate_cost`), U4
+   (`get_session_audit`, `get_audit_rollup`) and U5 (`list_sessions`).
 2. **Resource read.** The host reads the URI with `resources/read`. The
    server answers with the built `views.html` (MIME type
    `text/html;profile=mcp-app`) after `injectBrand` has put the product's
@@ -214,17 +216,30 @@ static file.
    `toolCall.toolName` (VS Code), then the shape of `structuredContent`.
 4. **Drill-down.** A click makes the view call a tool through the host,
    which forwards it to this server: `get_turn_series` for the chart,
-   `get_turn` for an expanded turn, `get_session_cost` from the rollup, and
-   `list_findings` for the filters. The answers go to the view and never to
-   the model, so exploring a session spends no model tokens.
+   `get_turn` for an expanded turn, `get_session_cost` from the rollup and
+   from a project's top session, `list_findings` for the filters,
+   `get_repository_cost` or `get_project_cost` from a comparison row,
+   `get_price_changes` from the cost change view (its period, only when both
+   ends are ISO dates) and `replay_session` from the replay comparison (the
+   result's ids and a plain model id). Arguments are ids, dates and filters
+   from the current `structuredContent`, never display text. The answers go
+   to the view and never to the model, so exploring a session spends no
+   model tokens. U4, U13 opened directly, U14 and U15 call nothing. In a
+   host that offers it (Claude Desktop), U2 and U9 also ask for fullscreen
+   with `requestDisplayMode`.
    `get_turn_series` is app-only (`_meta.ui.visibility: ["app"]`), so the
    host keeps it out of the model's tool list. `tools/list` therefore has
    22 tools on the standalone server and 20 on the extension's when the
    views are served, and 21 and 19 without them.
 5. **Back to the chat.** The view reaches the chat in two ways only:
-   `sendMessage` with the fixed text `Analyse session <id>`, and (extension
-   only) a button that copies the session title for the extension's
-   **AI Credits Analyzer: Open Session…** picker. Both hosts refuse a
+   `sendMessage` with the fixed text `Analyse session <id>` (U2's "Ask about
+   this session" and U5's per-row "Analyse", one shared call site, a plain id
+   only), and (extension only) a button that copies the session title for
+   the extension's **AI Credits Analyzer: Open Session…** picker. The
+   message follows "try, then fall back" (owner, 2026-11-11): VS Code
+   advertises no `message` capability yet sends, so the button shows unless
+   the host says `message: false`, and a declined or failed send shows the
+   same text for the user to type, with no retry. Both hosts refuse a
    `vscode://` link, so there is no deep link and no `openLink` call.
    Logged text is never forwarded ([threat-model.md](threat-model.md) §6.1).
 
@@ -266,18 +281,18 @@ makes constraint 3 (decoupling) actually enforceable rather than aspirational.
 
 ### 4.4 MCP App views package (`packages/mcp-apps`, Phase 12)
 
-Responsibilities: render the three cost views inside an MCP Apps host,
-purely from tool results. It is a Vite workspace whose build
+Responsibilities: render the cost, findings, replay, price, billing, audit
+and session-picker views inside an MCP Apps host, purely from tool results. It is a Vite workspace whose build
 (`vite-plugin-singlefile`) writes one self-contained `dist/views.html`, with
 scripts and CSS inline and no external resource, font or network access. It
 is never published; the server and the extension serve the built file.
 
 | Module | Responsibility |
 |---|---|
-| `host/` | `AppHostPort`, the view's only gateway to the host (`callTool`, `openLink`, `sendMessage`, `requestDisplayMode`, `onHostContext`, `onToolInput`, `onToolResult`). `ExtAppsHostPort` wraps ext-apps' `App`; `FakeAppHostPort` records calls for tests. `ClipboardPort` is the same idea for "copy this text"; a host that blocks the clipboard gets none, and the button is hidden |
+| `host/` | `AppHostPort`, the view's only gateway to the host (`callTool`, `openLink`, `canSendMessage`, `sendMessage`, `requestDisplayMode`, `onHostContext`, `onToolInput`, `onToolResult`). `canSendMessage` is false only when the host's capabilities say `message: false` (owner, 2026-11-11: try, then fall back). `ExtAppsHostPort` wraps ext-apps' `App`; `FakeAppHostPort` records calls for tests. `ClipboardPort` is the same idea for "copy this text"; a host that blocks the clipboard gets none, and the button is hidden |
 | `router/select-view.ts` | The tool name, else the result's shape, to a view id. A named tool without a view gets the neutral state and is not guessed from its shape |
-| `view-models/` | Pure functions from a domain type to display text: `toSessionCostViewModel`, `toCostRollupViewModel`, `toFindingsViewModel`, `toTurnDetailViewModel`. `toCostSeriesViewModel` (U9) and the other cost-analysis ones. They own the display rules: a `null` measure reads "Unknown" and never 0 (constraint 6), AI Credits round to 2 decimals, partial coverage adds a note, `estimated` adds an "estimate" tag |
-| `views/` | `SessionCostView` (U1), `CostRollupView` (U2, drilling into U1 in place), `FindingsView` (U3), `CostOverTimeView` (U9: `get_repository_cost` and `get_project_cost`, with `views/cost-over-time/` for its chart model, chart, tiles, breakdowns and error explanation; a project's top session drills into U1 in place through the shared `DrillDown`) `CostCompareView` (U10, `compare_costs`: `views/cost-compare/` holds the table, the in-place drill-down into U9 and the no-projects text; a row calls `get_repository_cost` or `get_project_cost` with its own `drillDown.arguments`, and U9 takes a `frame` so the U10 → U9 → U1 chain has a back control and a kicker trail at each level) and `CostChangeView` (U11, `explain_cost_change`: waterfall, per-model table, not-explained turns, documented price changes; calls no tool, its "Price changes" control stays disabled until U13), inside the branded `ViewShell`. A view gets the port, the brand and the tool result as props. An error result reaches a view with its first text as `errorText`, which U9 shows as plain text |
+| `view-models/` | Pure functions from a domain type to display text: `toSessionCostViewModel`, `toCostRollupViewModel`, `toFindingsViewModel`, `toTurnDetailViewModel`. `toCostSeriesViewModel` (U9) and the other cost-analysis ones. Increment 3: `toReplayViewModel`, `toPriceChangesViewModel`, `toStatementViewModel`, `toEstimateViewModel`, `toSessionAuditViewModel`, `toAuditRollupViewModel` and `toSessionListViewModel`, which always carry the "Simulated", "inferred" and "estimate" labels. They own the display rules: a `null` measure reads "Unknown" and never 0 (constraint 6), AI Credits round to 2 decimals, partial coverage adds a note, `estimated` adds an "estimate" tag |
+| `views/` | `SessionCostView` (U1), `CostRollupView` (U2, drilling into U1 in place), `FindingsView` (U3), `CostOverTimeView` (U9: `get_repository_cost` and `get_project_cost`, with `views/cost-over-time/` for its chart model, chart, tiles, breakdowns and error explanation; a project's top session drills into U1 in place through the shared `DrillDown`) `CostCompareView` (U10, `compare_costs`: `views/cost-compare/` holds the table, the in-place drill-down into U9 and the no-projects text; a row calls `get_repository_cost` or `get_project_cost` with its own `drillDown.arguments`, and U9 takes a `frame` so the U10 → U9 → U1 chain has a back control and a kicker trail at each level), `CostChangeView` (U11, `explain_cost_change`: waterfall, per-model table, not-explained turns, documented price changes; its "Price changes" control opens U13 in place through `price-changes/PriceDrillDown`), `ReplayView` (U12, `replay_session` and `compare_models_for_session`: compare mode, and replay mode in place through `replay/ReplayDrillDown`), `PriceChangesView` (U13, `get_price_changes`), `StatementView` (U14) and `EstimateView` (U15), both standalone only and read-only, `AuditView` (U4, `get_session_audit` and `get_audit_rollup`, display only) and `SessionPickerView` (U5, `list_sessions`, a per-row "Analyse" through the shared `cost-rollup/AskAboutSession.tsx` hook), inside the branded `ViewShell`. `display-mode/` holds the fullscreen control for U2 and U9. A view gets the port, the brand and the tool result as props. An error result reaches a view with its first text as `errorText`, which every view shows as plain text, capped at 500 characters |
 | `brand/` | `ViewBrand` and `readBrand`, which reads the `aca-brand` meta the server filled |
 | `theme/` | `brand.css` (fixed brand tokens), `theme-mcp-host.css` (the Industry tokens pointed at the host's style variables, with fallbacks), `views.css`, and `bindHostTheme`, which applies the host's theme, variables and fonts as they arrive |
 
@@ -2691,10 +2706,15 @@ refactored — red-green-refactor, not tests bolted on afterward.
   each view with Testing Library over `FakeAppHostPort` and a fake
   clipboard, click the drill-downs, filters and buttons, and assert the
   calls the port recorded, including that no `sendMessage`, `updateModelContext`
-  or `openLink` call carries logged text. The contrast tests (`test/theme/`)
+  or `openLink` call carries logged text. Per view, an axe test covers every
+  rendered state, a keyboard test every drill-down and Back, and a
+  hostile-text test plants markup and an injected instruction in every text
+  field and presses every control (A14, A23, A32). The static
+  `no-forwarding.test.ts` finds every host call site in the shipped code. The contrast tests (`test/theme/`)
   read the real CSS and check text at 4.5:1 and marks at 3:1 against the
   fallbacks and the host variable sets recorded in the A0 spike (VS Code
-  Light Modern, Dark Modern and Dark High Contrast, and Claude Desktop). The
+  Light Modern, Dark Modern and Dark High Contrast, and Claude Desktop),
+  including every rise or fall a view stylesheet writes as text (A32). The
   bundle test (`test/bundle-size.test.ts`) runs the production build and
   asserts at most 1.2 MiB (raised from 900 KB by the owner on 2026-11-11), exactly one brand placeholder, no external
   script, stylesheet or font, and a clean load in jsdom. On the server,
@@ -2712,7 +2732,11 @@ refactored — red-green-refactor, not tests bolted on afterward.
   `tools/call` the view makes goes to the real stdio server over the
   `web-e2e` fixture home; the specs assert the calls the host recorded (a
   drill-down is a tool call, never a message), focus on Back, and axe in
-  the view's frame. It proves the views against the protocol and the
+  the view's frame. For states the fixture home can't produce (a failed
+  self-check, an issued statement with a diff, an estimate range, an
+  inferred rise, audits with failed calls), `host.showResult` answers the
+  model's call with a canned result built from the view models' fixtures
+  (A27, A32). It proves the views against the protocol and the
   recorded theme sets, not each host's own chrome (risk R4 in
   [release-ui-gate.md](plans/release-ui-gate.md)); the views inside the
   real Copilot Chat are G4's.
