@@ -1,6 +1,6 @@
 # Phase 12 (MCP Apps): session handover, 2026-11-10
 
-**Last changed:** 2026-11-10 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-11 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 This document hands the Phase 12 work over to the next session. The design, the tasks and the exit criteria are in [mcp-apps.md](mcp-apps.md). The schedule and the status are in [implementation-plan-gantt.md](../implementation-plan-gantt.md). This page gives only what a new session needs to pick the work up.
 
@@ -10,10 +10,10 @@ This document hands the Phase 12 work over to the next session. The design, the 
 - **Increment 2 built and merged to `main` 2026-11-10:** A17, A18, A19 (PR #193) and A20, A21, A22 (PR #194, merged into #193's branch first). Status 25 of 36 tasks (69%).
 - **A17b boards approved 2026-11-10** with the owner's answers in mcp-apps.md §9.1: defaults kept except question 4 (a fall uses the host's success colour) and U11's "Not explained" tile wording. A23 applied both.
 - **Next:**
-  - A24: the owner's checks of U9–U11 in VS Code Copilot Chat and Claude Desktop, light and dark, with [mcp-apps-a24-checklist.md](mcp-apps-a24-checklist.md). Owner answers after A23 (mcp-apps.md §9.1): period totals keep the brand data colour; U11's table drops costs A and B from 640 px; the owner records both High Contrast colour sets in checklist step 1.7a, then Claude adds them to the contrast tests;
-  - extension 0.5.0 on the Marketplace pre-release channel after #196 merges (owner, 2026-11-10), so A24 can test the published package;
+  - step 10.17 G4-G6 replace A24 (the owner's checks of U9–U11 in VS Code Copilot Chat and Claude Desktop; see [release-ui-gate.md](release-ui-gate.md)); the 0.5.0 pre-release stays published. Owner answers after A23 (mcp-apps.md §9.1): period totals keep the brand data colour; U11's table drops costs A and B from 640 px; the High Contrast colour sets are recorded by wdio (G6, replacing checklist step 1.7a) and added to the contrast tests;
+  - extension 0.5.0 published 2026-11-10 on the Marketplace pre-release channel (tag `ext-v0.5.0`, #197); the G4 Copilot Chat specs can run against it;
   - then the Increment 2 release: extension 0.6.0, app 0.11.0.
-- **Release:** the owner asked about an extension 0.4.1; not planned, since `main` has no fixes to 0.4.0, only Increment 2 features (0.6.0 after A24, or a 0.5.0 pre-release).
+- **Release:** the owner asked about an extension 0.4.1; not planned, since `main` has no fixes to 0.4.0, only Increment 2 features. Extension 0.5.0 went to the Marketplace pre-release channel, Open VSX and a GitHub pre-release on 2026-11-10 (#197); the app stays 0.10.0 and the root CHANGELOG keeps `[Unreleased]` until 0.11.0.
 - **A23 done 2026-11-10** (findings in mcp-apps.md §6.1 and the A23 row). The visual-pass inputs it worked from, all closed:
   - U9's y-axis top label sits tight against the left edge beside a price-change marker.
   - U11's "Not explained" tile reads "0 + 3 turns, no priced figure, not 0". Owner decision: value "3 turns", note "no price for these turns; not counted as 0".
@@ -21,7 +21,7 @@ This document hands the Phase 12 work over to the next session. The design, the 
   - CSS class names collided between U10 and U11 in the single bundle (`cc-total`, `cc-sub`, `cc-note`); fixed by renaming, but a test that each view's classes use its own prefix would stop a repeat.
   - The no-projects reason is copied in `views/cost-compare/no-projects.ts` and parsed from the server's text in `views/cost-over-time/explain-error.ts`; a server wording change breaks both silently (the generic error still shows the text).
   - U9 has no focusable price-change markers; the detail is in the list below the chart and the chart's accessible name.
-- **Open PRs:** A23 (branch `claude/a23-review-docs`). **Running subagents:** none. **Worktrees:** the session's agent worktrees under `.claude/worktrees/` can be removed.
+- **Step 10.17 (2026-11-11):** G0 (#203), G1 (#202) and G6 (#204) merged; G5 (Playwright fake host) built on a branch, PR next. **Worktrees:** the session's agent worktrees under `.claude/worktrees/` can be removed.
 
 ## 2. PRs in Phase 12
 
@@ -41,6 +41,10 @@ This document hands the Phase 12 work over to the next session. The design, the 
 | #190–#192 | Handover; A16 owner's checks and 12 fixes; MVP release (ext 0.4.0, app 0.10.0) |
 | #193 | Increment 2 wave 1: A17b boards, A17 web exports, A18 view models, A19 `_meta.ui` on the four cost-analysis tools |
 | #194 | Increment 2 wave 2: A20 U9, A21 U10, A22 U11, the U11 error-text and pricing-note fix, visual QA fixes, CHANGELOG entries |
+| #195 | A17b boards approved; the owner's answers in mcp-apps.md §9.1 |
+| #196 | A23 accessibility and security review of U9–U11, docs, A24 checklist; U11 table drops costs A and B from 640 px |
+| #197 | Extension 0.5.0 pre-release |
+| #198 | READMEs list the MCP views and link the standalone app |
 
 ## 3. Owner decisions (all recorded in mcp-apps.md)
 

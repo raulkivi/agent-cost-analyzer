@@ -102,11 +102,11 @@ jobs:
 
   # The manual checks that need a real workbench and webview, driven with
   # wdio-vscode-service under a virtual display (step 10.16,
-  # docs/plans/vscode-ui-automation.md). Informational until the owner's flake
-  # measurement (plan task T15): a red run doesn't fail the PR.
+  # docs/plans/vscode-ui-automation.md). A required check on every PR by owner
+  # decision D4 (2026-11-11, step 10.17, docs/plans/release-ui-gate.md); the
+  # release workflow runs the same suite.
   extension-ui:
     runs-on: ubuntu-latest
-    continue-on-error: true
     permissions:
       contents: read
     steps:

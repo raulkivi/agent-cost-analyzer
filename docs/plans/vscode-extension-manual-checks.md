@@ -10,6 +10,11 @@ Record the result in the release PR: tick each line, add notes, and attach
 the screenshots listed at the end (they're also the ones step 10.10 puts
 in the docs). Findings that need a code fix also go in the run log below.
 
+Since 2026-11-11 (step 10.17) no row here gates a release: every UI check
+before a release is automated. This doc records what each suite covers and
+what is still manual until G1, G3 and G7 of step 10.17 land
+([release-ui-gate.md](release-ui-gate.md)).
+
 ## Run log
 
 ### 0.1.0 (started 2026-10-27, in progress)
@@ -121,9 +126,8 @@ in the docs). Findings that need a code fix also go in the run log below.
 Rows marked **Automated** run in CI as the `extension-ui` job
 (`npm run test:ui:vscode`, [vscode-ui-automation.md](vscode-ui-automation.md),
 step 10.16): run them by hand only when that job is red, or for the parts
-named as still manual. The job is informational (`continue-on-error`) until
-the owner's flake measurement (plan T15): check its result on the release
-commit, since a red run doesn't fail the PR. Rows 1.1-1.4, 1.12 and 1.14
+named as still manual. The job is a required check on PRs and runs in the
+release workflow (owner decision D4, step 10.17 G1, #202). Rows 1.1-1.4, 1.12 and 1.14
 run there over **fixtures, not a real Copilot chat**; 2.3 and 2.4 are
 covered only at tool level by the integration suite (`npm run
 test:integration`), not in the UI. The notes say what each does not prove.
@@ -167,6 +171,8 @@ For a clean first run, use a new profile (*Profiles → New Profile*).
 | 2.6 | Turn the setting off again | The server disappears from the tool list. | Automated: `mcp.e2e.ts`. |
 
 ## 3. Remote check (D6, `extensionKind: ["workspace"]`)
+
+Outside the release gate (D2): an occasional check, not run before a release.
 
 Do at least one of Remote-SSH or WSL, and one Dev Container. Install the
 VSIX into the remote (*Install in <remote>*).

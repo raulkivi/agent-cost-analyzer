@@ -3,7 +3,7 @@
 **Last changed:** 2026-11-11 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 Status: **merged to `main` (#117, #121, #127; later specs #139, #157,
-#172), awaiting the owner's decisions and T15 (step 10.16)**; §6 records
+#172); T15 and Q2 closed by the owner's decision D4, 2026-11-11: the job is required and runs in the release workflow (step 10.17 G1, #202)**; §6 records
 what was built and learned, §6.9 the suite and its CI record as of
 2026-11-11. Extends
 [vscode-extension.md](vscode-extension.md) step 10.9 (integration suite,
@@ -233,7 +233,8 @@ packages/vscode-extension/
   so the existing job's time is unchanged: `npm ci`, build, `actions/cache`
   on `.wdio-vscode-service` keyed by the pinned VS Code version, the
   suite under `xvfb-run`, `upload-artifact` of `test/ui/out/` on failure.
-  Informational (`continue-on-error: true`) until T15's flake measurement,
+  (Superseded 2026-11-11 by D4: required, and in the release workflow,
+  step 10.17 G1.) Informational (`continue-on-error: true`) until T15's flake measurement,
   then required. `release-extension.yml` gets the same step after the
   integration suite once it is required. Actions pinned by SHA as today.
 - **Runtime budget.** Each spec file is one VS Code launch (wdio
@@ -315,6 +316,7 @@ passes but a human fails.
    Playwright `_electron` with no new dependencies?
 2. **Q2 CI time and gating:** a separate parallel job, informational for
    how long before it's required? Run it in `release-extension.yml` too?
+   Answered 2026-11-11 (D4): required on PRs and in `release-extension.yml`.
 3. **Q3 Stable vs Insiders:** pin stable in CI (D9) and run Insiders only
    locally (the owner's machine has no stable), or add a nightly
    Insiders job to catch the next VS Code early?
@@ -447,7 +449,7 @@ suite. 2.2's "20 tools" is asserted by the integration suite, not here.
 | T12 | Done, informational |
 | T13 | Done |
 | T14 | Done in the second pass (#121, §6.6); Q5 answered by doing it |
-| T15 | Owner. CI evidence so far in §6.9 |
+| T15 | Closed by owner decision D4, 2026-11-11 (step 10.17) |
 
 ### 6.5 First CI run (PR #117) and the fix
 

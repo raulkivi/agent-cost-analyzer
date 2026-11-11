@@ -1,5 +1,7 @@
 # CLAUDE.md
 
+**Last changed:** 2026-11-11 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+
 Project-specific guidance for working in this repo. Full context lives in
 the docs below — read them before making changes; don't duplicate their
 content here.
@@ -41,3 +43,7 @@ content here.
   and the per-phase plans in `docs/plans/`
   (progress table: [docs/plans/vscode-extension.md](docs/plans/vscode-extension.md)).
   Do not record status in this file.
+- New pre-release UI checks are written as wdio or Playwright specs, never
+  as manual checklist rows. A check neither tool can drive needs the
+  owner's explicit exception. See
+  [docs/plans/release-ui-gate.md](docs/plans/release-ui-gate.md).

@@ -2,6 +2,11 @@
 
 **Last changed:** 2026-11-11 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
+> **Superseded 2026-11-11 by step 10.17** ([release-ui-gate.md](release-ui-gate.md)):
+> G4 (wdio specs in Copilot Chat), G5 (Playwright fake host for Claude
+> Desktop) and G6 (High Contrast sets recorded by wdio) replace these checks.
+> This page is kept as the source of the assertions those specs implement.
+
 These checks take about 60 minutes. You run the shipped U9 (cost over time), U10 (comparison) and U11 (cost change) views in the two real hosts and confirm the Increment 2 exit criterion ([mcp-apps.md](mcp-apps.md) §8.2). They follow the method of [mcp-apps-a16-checklist.md](mcp-apps-a16-checklist.md). The approved boards are in [mockups/mcp-apps/](mockups/mcp-apps/README.md); your answers of 2026-11-10 are in [mcp-apps.md](mcp-apps.md) §9.1.
 
 Write each answer in the results table (§5). Screenshots go to `docs/plans/mcp-apps-a24-results/`, using the file names in the table. Check them for private repository names, session titles and paths before you commit them; the User Guide and the extension guide reuse them afterwards.
