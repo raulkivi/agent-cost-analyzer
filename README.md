@@ -93,9 +93,9 @@ This repo builds two products from one codebase:
   security/anomaly/behaviour findings, a one-turn drill-down, server
   instructions and output schemas.
 - [MCP Apps plan](docs/plans/mcp-apps.md) — Phase 12 (MVP released in
-  extension 0.4.0 and app 0.10.0; Increment 2 built and in the extension
-  0.5.0 pre-release, owner checks in [mcp-apps-a24-checklist.md](docs/plans/mcp-apps-a24-checklist.md),
-  handover in [mcp-apps-handover.md](docs/plans/mcp-apps-handover.md)):
+  extension 0.4.0 and app 0.10.0; Increment 2 released in extension 0.6.0
+  and app 0.11.0 on 2026-11-11; handover in
+  [mcp-apps-handover.md](docs/plans/mcp-apps-handover.md)):
   branded, interactive views (session cost, spend rollup, findings, cost
   over time, cost comparison, cost change) that MCP Apps hosts such as VS
   Code Copilot Chat and Claude Desktop render next to the MCP tool
