@@ -164,9 +164,13 @@ describe("PriceChangesView filtered by U11", () => {
 describe("PriceChangesView stylesheet", () => {
   const css = readFileSync(path.resolve(path.dirname(new URL(import.meta.url).pathname), "price-changes", "price-changes.css"), "utf8");
 
+  // A32: through the text tokens, which hold the host's colour at 4.5:1.
   it("colours a rise with the host's danger colour and a fall with its success colour", () => {
-    expect(css).toMatch(/\.pc-rise \{ color: var\(--color-text-danger/);
-    expect(css).toMatch(/\.pc-fall \{ color: var\(--color-text-success/);
+    expect(css).toMatch(/\.pc-rise \{ color: var\(--view-text-rise\)/);
+    expect(css).toMatch(/\.pc-fall \{ color: var\(--view-text-fall\)/);
+    const host = readFileSync(path.resolve(path.dirname(new URL(import.meta.url).pathname), "..", "theme", "theme-mcp-host.css"), "utf8");
+    expect(host).toMatch(/--view-text-rise: color-mix\(in srgb, var\(--color-text-danger, /);
+    expect(host).toMatch(/--view-text-fall: color-mix\(in srgb, var\(--color-text-success, /);
   });
 
   it("uses no colour literals", () => {
