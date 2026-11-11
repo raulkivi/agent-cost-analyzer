@@ -9,6 +9,8 @@ export class FakeAppHostPort implements AppHostPort {
   toolResults = new Map<string, ToolResult>();
   openLinkResult = true;
   sendMessageResult = true;
+  // false: a host that did not offer chat messages (U5 shows what to type instead).
+  messagingAvailable = true;
   connected = false;
   // The host's latest context, merged: a host may send any subset of fields.
   private hostContext: HostContext = {};
@@ -38,6 +40,9 @@ export class FakeAppHostPort implements AppHostPort {
   async openLink(url: string): Promise<boolean> {
     this.calls.push({ method: "openLink", args: [url] });
     return this.openLinkResult;
+  }
+  canSendMessage(): boolean {
+    return this.messagingAvailable;
   }
   async sendMessage(text: string): Promise<boolean> {
     this.calls.push({ method: "sendMessage", args: [text] });

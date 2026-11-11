@@ -74,6 +74,11 @@ export class McpHost {
     return host;
   }
 
+  // The model calls `tool` and reads the answer, with no view shown (e.g. list_sessions, to find an id for a later call).
+  async callAsModel(tool: string, args: Record<string, unknown>): Promise<CallToolResult> {
+    return (await this.server.callTool({ name: tool, arguments: args })) as CallToolResult;
+  }
+
   // The model calls `tool`; its view appears under the call.
   async show(tool: string, args: Record<string, unknown>, options: ShowOptions = {}): Promise<ViewFrame> {
     const definition = this.tools.get(tool);

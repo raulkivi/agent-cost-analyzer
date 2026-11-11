@@ -22,16 +22,24 @@ export function isPlainSessionId(sessionId: string): boolean {
 
 type Phase = "idle" | "sending" | "sent" | "declined";
 
-export function AskAboutSession({ port, sessionId }: { port: AppHostPort; sessionId: string }) {
+// The one place a session id becomes a chat message: U2/U1's "Ask about this
+// session" and U5's per-row "Analyse" both send through here (§4.3, §4.5).
+function useAnalyse(port: AppHostPort, sessionId: string): { phase: Phase; send: () => void } {
   const [phase, setPhase] = useState<Phase>("idle");
-  if (!isPlainSessionId(sessionId)) return null;
-  const ask = () => {
+  const send = () => {
+    if (!isPlainSessionId(sessionId)) return;
     setPhase("sending");
     port.sendMessage(askAboutSessionText(sessionId)).then(
       (accepted) => setPhase(accepted ? "sent" : "declined"),
       () => setPhase("declined"),
     );
   };
+  return { phase, send };
+}
+
+export function AskAboutSession({ port, sessionId }: { port: AppHostPort; sessionId: string }) {
+  const { phase, send } = useAnalyse(port, sessionId);
+  if (!isPlainSessionId(sessionId)) return null;
   return (
     <>
       {phase === "sent" && (
@@ -44,8 +52,29 @@ export function AskAboutSession({ port, sessionId }: { port: AppHostPort; sessio
           The host didn&apos;t accept the message.
         </span>
       )}
-      <button type="button" className="btn btn-secondary view-btn" disabled={phase === "sending"} onClick={ask}>
+      <button type="button" className="btn btn-secondary view-btn" disabled={phase === "sending"} onClick={send}>
         Ask about this session
+      </button>
+    </>
+  );
+}
+
+// U5's per-row button (owner answer Q6): "Analyse", then a disabled "Sent".
+// `shortId` only names the button for assistive tech; the message carries the
+// full session id and nothing else, never the row's title.
+export function AnalyseRowButton({ port, sessionId, shortId }: { port: AppHostPort; sessionId: string; shortId: string }) {
+  const { phase, send } = useAnalyse(port, sessionId);
+  if (!isPlainSessionId(sessionId)) return null;
+  const done = phase === "sent";
+  return (
+    <>
+      {phase === "declined" && (
+        <span role="status" className="text-muted sp-status">
+          Not sent
+        </span>
+      )}
+      <button type="button" className="btn btn-secondary view-btn sp-analyse" aria-label={done ? `Sent: session ${shortId}` : `Analyse session ${shortId}`} disabled={phase === "sending" || done} onClick={send}>
+        {done ? "Sent" : "Analyse"}
       </button>
     </>
   );

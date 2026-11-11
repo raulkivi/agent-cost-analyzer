@@ -24,6 +24,8 @@ export interface AppLike {
   ontoolresult: ((params: { structuredContent?: unknown; isError?: boolean; content?: ContentBlock[] }) => void) | undefined;
   onhostcontextchanged: ((params: unknown) => void) | undefined;
   getHostContext(): unknown;
+  // Optional so a test double can leave it out; the ext-apps App has it.
+  getHostCapabilities?(): object | undefined;
   connect(): Promise<void>;
   callServerTool(params: { name: string; arguments?: Record<string, unknown> }): Promise<{ structuredContent?: unknown; isError?: boolean; content?: ContentBlock[] }>;
   openLink(params: { url: string }): Promise<{ isError?: boolean }>;
@@ -69,6 +71,13 @@ export class ExtAppsHostPort implements AppHostPort {
     } catch {
       return false;
     }
+  }
+
+  // The host's `message` capability, known once connected. Unknown counts as
+  // available, so the button is not hidden before the host has answered.
+  canSendMessage(): boolean {
+    const capabilities = this.app.getHostCapabilities?.();
+    return capabilities === undefined || (capabilities as { message?: unknown }).message !== undefined;
   }
 
   async sendMessage(text: string): Promise<boolean> {

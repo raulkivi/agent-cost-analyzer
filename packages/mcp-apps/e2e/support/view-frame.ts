@@ -60,6 +60,14 @@ export class ViewFrame {
     return new FindingsView(this.content);
   }
 
+  get audit(): AuditView {
+    return new AuditView(this.content);
+  }
+
+  get picker(): SessionPickerView {
+    return new SessionPickerView(this.content);
+  }
+
   title(): Locator {
     return this.content.getByRole("heading", { level: 1 });
   }
@@ -540,5 +548,68 @@ export class EstimateView {
 
   refusal(): Locator {
     return this.content.getByRole("status").filter({ hasText: "Not enough history to give an estimate." });
+  }
+}
+
+// U4: the tool-call audit of one session or of a date range.
+export class AuditView {
+  constructor(private readonly content: FrameLocator) {}
+
+  tile(name: string): Locator {
+    return this.content.getByRole("group", { name, exact: true });
+  }
+
+  categories(): Locator {
+    return this.content.getByRole("list", { name: /failed calls? by category$/ });
+  }
+
+  recovery(): Locator {
+    return this.content.getByRole("region", { name: "Recovery cost", exact: true });
+  }
+
+  failedPerDay(): Locator {
+    return this.content.getByRole("img", { name: /^Failed calls per day/ });
+  }
+
+  table(name: string): Locator {
+    return this.content.getByRole("table", { name, exact: true });
+  }
+}
+
+// U5: the session picker. A row is not a control; its Analyse button is.
+export class SessionPickerView {
+  constructor(private readonly content: FrameLocator) {}
+
+  list(): Locator {
+    return this.content.getByRole("list", { name: "Sessions", exact: true });
+  }
+
+  rows(): Locator {
+    return this.list().getByRole("listitem");
+  }
+
+  row(title: string): Locator {
+    return this.rows().filter({ hasText: title });
+  }
+
+  // "Analyse session <short id>" until sent, then "Sent: session <short id>".
+  analyseButton(shortId: string): Locator {
+    return this.content.getByRole("button", { name: `Analyse session ${shortId}`, exact: true });
+  }
+
+  sentButton(shortId: string): Locator {
+    return this.content.getByRole("button", { name: `Sent: session ${shortId}`, exact: true });
+  }
+
+  buttons(): Locator {
+    return this.content.getByRole("button");
+  }
+
+  hint(): Locator {
+    return this.content.locator(".sp-hint");
+  }
+
+  noMatch(): Locator {
+    return this.content.getByText("No sessions match", { exact: true });
   }
 }

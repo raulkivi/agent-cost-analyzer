@@ -13,6 +13,7 @@ import { describe, expect, it } from "vitest";
 const src = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..", "src");
 
 const VIEW_PREFIXES: Record<string, readonly string[]> = {
+  "views/audit/audit.css": ["au-"],
   "views/cost-compare/cost-compare.css": ["cc-"],
   "views/cost-change/cost-change.css": ["cv-"],
   "views/cost-over-time/cost-over-time.css": ["ct-"],
@@ -21,6 +22,7 @@ const VIEW_PREFIXES: Record<string, readonly string[]> = {
   "views/price-changes/price-changes.css": ["pc-"],
   "views/statement/statement.css": ["stm-"],
   "views/estimate/estimate.css": ["est-"],
+  "views/session-picker/session-picker.css": ["sp-"],
 };
 
 // Classes a view's CSS may mention but another module owns: web's shared

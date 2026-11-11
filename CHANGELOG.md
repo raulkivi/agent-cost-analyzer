@@ -19,6 +19,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   cost and, for an issued period, how a re-run today differs from the issued copy; `estimate_cost`
   shows the p50 to p90 range tagged "estimate", labelled "Simulated" on another model, or the reason
   when there is too little history. Both are read-only.
+- **Tool-call audit and session picker in the chat (MCP Apps).** `get_session_audit` and
+  `get_audit_rollup` show a visual view: the failure rate over calls with a known outcome (calls with
+  an unknown outcome are counted apart, never as success or failure), failure categories, the tokens
+  spent recovering from failures (tokens, not AI Credits), retried commands and calls by tool; the
+  date-range version adds failed calls per day, top failing commands and the sessions, and names the
+  sessions left out because their tool calls are not recorded. `list_sessions` shows a session picker
+  whose "Analyse" button sends exactly "Analyse session <id>" to the chat and never a title; a host
+  that cannot send chat messages shows "Ask in the chat: Analyse session <id>" instead. The text
+  answers are unchanged.
 
 ## [0.11.0] - 2026-11-11
 ### Fixed

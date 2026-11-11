@@ -20,7 +20,7 @@ CI runs it in the `mcp-apps-e2e` job, with no retries.
 - **Host context.** `support/host-context.ts` takes the host's name, capabilities, display modes and dimensions from the A0 recordings (`docs/plans/mcp-apps-spike-results/`). It takes the theme and style variables from a host set in `test/theme/host-sets.ts` (Claude dark by default). It checks the context against ext-apps' own schema first: the view's ext-apps rejects a context with one unknown style variable and then waits silently.
 - **VS Code sets.** VS Code sends `var(--vscode-*)` references, and its webview defines the `--vscode-*` colours itself. So the host context carries only the protocol's variables, and the view is served with the set's `--vscode-*` colours on its root. A theme change mid-view does not update those colours: show a new view instead.
 - **No network.** Playwright's router serves the host page and the view from memory on two `.test` origins, with the CSP the resource declares (`support/sandbox.ts`). Any other request is refused, and the fixture fails the test.
-- **Page objects.** `support/view-frame.ts`: `ViewFrame` is the shared shell (title, kicker, trail, Back, footer, focus, axe), with lenses for U1, U2, U3, U9, U10, U11, U13, U14 and U15. Specs hold no selectors.
+- **Page objects.** `support/view-frame.ts`: `ViewFrame` is the shared shell (title, kicker, trail, Back, footer, focus, axe), with lenses for U1, U2, U3, U4, U5, U9, U10, U11, U13, U14 and U15. Specs hold no selectors.
 - **Axe.** `ViewFrame.axeViolations()` runs the web suite's axe check inside the view's frame. The view is transparent, so it first paints the host's `--color-background-primary` on the view's root as the ground behind it.
 
 ## Checklist rows covered
@@ -56,11 +56,15 @@ Every spec runs in Claude light and Claude dark (`inEachClaudeSet`), with axe in
 | A29 board 7 / §9.2 Q15 U15 refusal: reason, every figure Unknown, no range bar, no run rate | `specs/u14-u15-billing.spec.ts` |
 | A29 board 6 / §9.2 Q16 U15 on another model: "estimate" and "Simulated" tags, replay coverage, turns not replayed, self-check count | `specs/u14-u15-billing.spec.ts` |
 | A29 board 15 U15 at 360 px, plain and simulated: no sideways scroll | `specs/u14-u15-billing.spec.ts` |
+| A30 U5 list: rows with title, short id, turns, model and no cost; an Analyse button on every row; the hint that only the fixed text is sent | `specs/a30-audit-picker.spec.ts` |
+| A30 U5 Analyse sends exactly one message matching `Analyse session <id>` (no title, no other host call), the button turns into a disabled Sent, and pressing it again sends nothing; by keyboard too | `specs/a30-audit-picker.spec.ts` |
+| A30 U5 no match: "No sessions match" and what to try, no button; 360 px with no sideways scroll | `specs/a30-audit-picker.spec.ts` |
+| A30 U4 session and rollup: tiles with the failure rate Unknown (never 0 %) where no tool call is recorded, recovery cost labelled "tokens, not AI Credits", no chart without days, a display-only sessions table, no host call; 360 px | `specs/a30-audit-picker.spec.ts` |
 
 Not in a fake host:
 
 - **A28, an observed (inferred) change in U13.** The fixture's Copilot sessions are too few for one (20 turns a week, two weeks in a row), so the inferred rendering is covered by `PriceChangesView.test.tsx`. The rise hue is checked there too: the fixture price book in the range has only falls.
-
+- **A30, U4 with failed calls.** The fixture home's sessions record no tool calls, so the spec sees the Unknown failure rate and an empty chart. The categories, recovery cost, retried commands and the per-day chart with a hatched gap are covered by `audit.test.ts`, `AuditView.test.tsx` and the a11y and hostile-text tests.
 - **A24 2.10, whether Claude asks for permission.** The fake host has no permission prompt (risk R4). The spec proves only that a drill-down is a plain `tools/call`.
 - **A24 2.6, the title "No projects here" in U10.** `compare_costs` needs two ids and answers an unknown id with a zero-turn row, so the real server never gives U10 an empty result. The spec asserts that answer (Unknown, "no turns", never 0), and U9's error state for an unknown project. `CostCompareView.test.tsx` covers the empty state itself.
 - **A24 2.3, two currencies in U11.** U11 uses the priced basis and the fixture's AI Credits are billed, not priced, so U11 has one block. `cost-variance.test.ts` covers two blocks.

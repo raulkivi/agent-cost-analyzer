@@ -238,6 +238,8 @@ describe("no-forwarding rule (static, over every call site in src/)", () => {
         "views/price-changes/PriceDrillDown.tsx",
         "views/StatementView.tsx",
         "views/EstimateView.tsx",
+        "views/AuditView.tsx",
+        "views/SessionPickerView.tsx",
       ]),
     );
     expect(files.some((file) => file.endsWith(".test.tsx"))).toBe(false);
