@@ -250,9 +250,13 @@ function title(cost: CostSeries | ProjectCost): string {
   return cost.series.length === 1 ? (cost.series[0]?.label ?? "Repository") : "Repository";
 }
 
+const CURRENCY_ORDER: readonly Currency[] = ["AI_CREDITS", "USD"];
+
 export function toCostSeriesViewModel(cost: CostSeries | ProjectCost): CostSeriesViewModel {
   const points = cost.points.map((point) => pointView(point, cost));
-  const currencies = [...new Set(points.flatMap((point) => point.cost.flatMap((money) => (money.currency === null ? [] : [money.currency]))))];
+  // AI Credits first, then USD (mcp-apps.md §9.1 answer 5), not the order the buckets happen to show them.
+  const present = new Set(points.flatMap((point) => point.cost.flatMap((money) => (money.currency === null ? [] : [money.currency]))));
+  const currencies = CURRENCY_ORDER.filter((currency) => present.has(currency));
   const viewModel: CostSeriesViewModel = {
     kind: isProject(cost) ? "project" : "repository",
     title: title(cost),

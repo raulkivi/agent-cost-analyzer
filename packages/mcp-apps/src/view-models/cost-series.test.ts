@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
 import { describe, expect, it } from "vitest";
-import { basisTotals, costSeries, costTotal, projectCost, usdTotal } from "./cost-analysis-fixtures.js";
+import { basisTotals, costSeries, costTotal, point, projectCost, usdTotal } from "./cost-analysis-fixtures.js";
 import { toCostSeriesViewModel } from "./cost-series.js";
 
 describe("toCostSeriesViewModel header", () => {
@@ -86,6 +86,15 @@ describe("toCostSeriesViewModel chart", () => {
     expect(chart.points[1]).toMatchObject({ unknown: true });
     expect(chart.points[1]?.cost[0]).toMatchObject({ amount: null, text: "Unknown" });
     expect(chart.points[1]?.cumulative[0]?.amount).toBe(100);
+  });
+
+  // mcp-apps.md §9.1 answer 5: AI Credits first, then USD, whichever currency the first bucket knows.
+  it("lists the currencies AI Credits first, then USD, even when the first bucket has only USD", () => {
+    const usdOnly = usdTotal(0.5, 3, 3);
+    const both = { ...costTotal(10, 5, 5), amounts: [{ currency: "AI_CREDITS" as const, amount: 10, knownTurns: 5 }, { currency: "USD" as const, amount: 4, knownTurns: 5 }] };
+    const base = costSeries();
+    const series = { ...base, points: [point("2026-09", "2026-09-01", "2026-09-30", usdOnly, usdOnly), point("2026-10", "2026-10-01", "2026-10-31", both, both)] };
+    expect(toCostSeriesViewModel(series).chart.currencies).toEqual(["AI_CREDITS", "USD"]);
   });
 
   it("labels day buckets by day", () => {
