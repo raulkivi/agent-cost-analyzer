@@ -1,0 +1,34 @@
+{
+  "schema": 1,
+  "suite": "copilot-e2e",
+  "commit": "5922f216e0dc6881f882c51ea683423027f00edb",
+  "dirty": false,
+  "extensionVersion": "0.6.0",
+  "vscodeVersion": "1.146.0",
+  "model": {
+    "requested": "claude-haiku-5.5",
+    "observed": [
+      "claude-sonnet-5.5",
+      "gpt-6-luna"
+    ]
+  },
+  "tests": [
+    {
+      "title": "1.4 a real agent-mode chat produces a session with known AI Credits, turns and tokens, and the MCP tools offer it",
+      "state": "skipped",
+      "skipReason": "the session ran on \"claude-sonnet-5.5\", not claude-haiku-5.5 (not selected in the chat's model picker, not on your plan, or Copilot fell back)."
+    },
+    {
+      "title": "2.3 asked to call an MCP tool, Copilot's call appears in the session's tool-call audit",
+      "state": "skipped",
+      "skipReason": "the session ran on \"gpt-6-luna\", not claude-haiku-5.5 (not selected in the chat's model picker, not on your plan, or Copilot fell back)."
+    },
+    {
+      "title": "2.4 asked about another agent's sessions, Copilot's call to the tool appears in the audit",
+      "state": "skipped",
+      "skipReason": "the session ran on \"gpt-6-luna\", not claude-haiku-5.5 (not selected in the chat's model picker, not on your plan, or Copilot fell back)."
+    }
+  ],
+  "aiCreditsSpent": 16.378479500000005,
+  "ranAt": "2026-11-11T11:54:24.494Z"
+}
