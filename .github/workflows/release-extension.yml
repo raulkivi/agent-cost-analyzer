@@ -32,6 +32,15 @@ jobs:
         with:
           persist-credentials: false
 
+      # The real-Copilot run's evidence notes (release-ui-gate.md D1, G2). The
+      # repository is public, so the fetch needs no token.
+      - name: Fetch release evidence
+        run: |
+          if ! git fetch --no-tags origin refs/notes/release-ui:refs/notes/release-ui; then
+            echo "::error title=No release evidence::Couldn't fetch refs/notes/release-ui from origin; it exists once the first evidence note is pushed. Run the real-Copilot suite (npm run test:ui:vscode:copilot) on this commit, then git push origin refs/notes/release-ui. See docs/plans/release-ui-gate.md, G2."
+            exit 1
+          fi
+
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 22
@@ -45,6 +54,11 @@ jobs:
         env:
           TAG: ${{ github.ref_name }}
         run: node packages/vscode-extension/scripts/release-check.mts "$TAG" ext-v packages/vscode-extension/package.json --engine >> "$GITHUB_OUTPUT"
+
+      # D1: the owner's real-Copilot run must have passed on the tagged commit,
+      # from a clean tree, with checks 1.4, 2.3 and 2.4 passed (a skip blocks).
+      - name: Release evidence
+        run: node packages/vscode-extension/scripts/release-evidence-check.mts HEAD
 
       - run: npm run lint
       - run: npm run typecheck
