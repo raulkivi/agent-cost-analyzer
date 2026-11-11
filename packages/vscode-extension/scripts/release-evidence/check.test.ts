@@ -3,7 +3,7 @@
 import { describe, expect, it } from "vitest";
 import { checkFromEvidence, checkReleaseEvidence, renderVerdict } from "./check.mts";
 import type { GitResult, GitRunner } from "./git-notes.mts";
-import type { ReleaseEvidence } from "./evidence.mts";
+import { COPILOT_VIEW_ROWS, REQUIRED_COPILOT_E2E_TESTS, type ReleaseEvidence } from "./evidence.mts";
 
 const SHA = "0123456789abcdef0123456789abcdef01234567";
 
@@ -20,6 +20,7 @@ const PASSING: ReleaseEvidence = {
     { title: "1.4 a real agent-mode chat", state: "passed", skipReason: null },
     { title: "2.3 asked to call an MCP tool", state: "passed", skipReason: null },
     { title: "2.4 asked about another agent's sessions", state: "passed", skipReason: null },
+    ...COPILOT_VIEW_ROWS.map((id) => ({ title: `${id} a view`, state: "passed" as const, skipReason: null })),
   ],
   aiCreditsSpent: 0.0421,
   ranAt: "2026-11-11T10:00:00.000Z",
@@ -57,7 +58,7 @@ describe("checkReleaseEvidence (the release workflow's gate, D1)", () => {
 
   it("refuses a run whose tests were all skipped, one problem per test", () => {
     const result = checkReleaseEvidence(gitWithNote(note(ALL_SKIPPED)), "HEAD");
-    expect(result.problems.map((p) => p.code)).toEqual(["test-skipped", "test-skipped", "test-skipped"]);
+    expect(result.problems.map((p) => p.code)).toEqual(REQUIRED_COPILOT_E2E_TESTS.map(() => "test-skipped"));
   });
 
   it("refuses a malformed note", () => {
@@ -68,7 +69,7 @@ describe("checkReleaseEvidence (the release workflow's gate, D1)", () => {
 describe("checkFromEvidence (the verdict a run prints on its own record)", () => {
   it("judges the record against its own commit", () => {
     expect(checkFromEvidence(PASSING)).toEqual({ commit: SHA, evidence: PASSING, problems: [] });
-    expect(checkFromEvidence(ALL_SKIPPED).problems.map((p) => p.code)).toEqual(["test-skipped", "test-skipped", "test-skipped"]);
+    expect(checkFromEvidence(ALL_SKIPPED).problems.map((p) => p.code)).toEqual(REQUIRED_COPILOT_E2E_TESTS.map(() => "test-skipped"));
   });
 });
 
@@ -89,8 +90,8 @@ describe("renderVerdict (what the owner and the workflow log read)", () => {
     expect(text).toContain("skipped  2.3 asked to call an MCP tool (no GitHub account is signed in in the copied profile)");
     expect(text).toContain("observed: none");
     expect(text).toContain("AI Credits spent: unknown");
-    expect(text).toMatch(/BLOCKED: 4 problems/);
-    expect(lines.filter((line) => /^ {2}- \[(dirty-tree|test-skipped)\]/.test(line))).toHaveLength(4);
+    expect(text).toMatch(new RegExp(`BLOCKED: ${REQUIRED_COPILOT_E2E_TESTS.length + 1} problems`));
+    expect(lines.filter((line) => /^ {2}- \[(dirty-tree|test-skipped)\]/.test(line))).toHaveLength(REQUIRED_COPILOT_E2E_TESTS.length + 1);
   });
 
   it("names the missing note without an evidence summary", () => {

@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: MIT
 import { describe, expect, it } from "vitest";
 import {
+  COPILOT_CHAT_CHECKS,
+  COPILOT_VIEW_ROWS,
   copilotTestTitle,
   evaluateNote,
   judgeEvidence,
@@ -27,6 +29,7 @@ function evidence(overrides: Partial<ReleaseEvidence> = {}): ReleaseEvidence {
       { title: copilotTestTitle("1.4", "a real chat"), state: "passed", skipReason: null },
       { title: copilotTestTitle("2.3", "an MCP call"), state: "passed", skipReason: null },
       { title: copilotTestTitle("2.4", "another agent"), state: "passed", skipReason: null },
+      ...COPILOT_VIEW_ROWS.map((id) => ({ title: copilotTestTitle(id, "a view"), state: "passed" as const, skipReason: null })),
     ],
     aiCreditsSpent: 0.0123,
     ranAt: "2026-11-11T10:00:00.000Z",
@@ -47,12 +50,43 @@ describe("copilotTestTitle and testIdOf (stable ids, so a renamed test can't dro
     expect(testIdOf(title)).toBe("2.3");
   });
 
-  it.each(["asked to call 2.3", "2.3", "2.3-x something", "", "v2.3 something"])("finds no id in %j", (title) => {
+  // G4: the MCP App view rows of the A24 and A16 checklists.
+  it.each([
+    ["A24 1.1 U9 repository cost over time", "A24 1.1"],
+    ["A16 U1 session cost", "A16 U1"],
+    ["A16 keyboard Tab and Enter", "A16 keyboard"],
+  ])("reads a checklist row id from %j", (title, id) => {
+    expect(testIdOf(title)).toBe(id);
+  });
+
+  it.each(["asked to call 2.3", "2.3", "2.3-x something", "", "v2.3 something", "A24 1.1", "A24", "B24 1.1 x", "a24 1.1 x"])("finds no id in %j", (title) => {
     expect(testIdOf(title)).toBeUndefined();
   });
 
-  it("names the three real-chat checks the release needs", () => {
-    expect(REQUIRED_COPILOT_E2E_TESTS).toEqual(["1.4", "2.3", "2.4"]);
+  it("names the three real-chat checks and the MCP App view rows (G4) the release needs", () => {
+    expect(COPILOT_CHAT_CHECKS).toEqual(["1.4", "2.3", "2.4"]);
+    expect(COPILOT_VIEW_ROWS).toEqual([
+      "A24 1.1",
+      "A24 1.2",
+      "A24 1.3",
+      "A24 1.4",
+      "A24 1.5",
+      "A24 1.6",
+      "A24 1.7",
+      "A24 1.8",
+      "A24 1.9",
+      "A16 U1",
+      "A16 U2",
+      "A16 U3",
+      "A16 keyboard",
+    ]);
+    expect(REQUIRED_COPILOT_E2E_TESTS).toEqual([...COPILOT_CHAT_CHECKS, ...COPILOT_VIEW_ROWS]);
+  });
+
+  it("refuses a run without a view row", () => {
+    const record = evidence({ tests: evidence().tests.filter((test) => testIdOf(test.title) !== "A24 1.4") });
+
+    expect(codes(judgeEvidence(record, expectation))).toEqual(["test-missing"]);
   });
 });
 
@@ -124,7 +158,7 @@ describe("judgeEvidence (owner decision D1)", () => {
   });
 
   it("refuses a failed required test", () => {
-    const record = evidence({ tests: [...evidence().tests.slice(0, 2), { title: "2.4 x", state: "failed", skipReason: null }] });
+    const record = evidence({ tests: evidence().tests.map((test) => (testIdOf(test.title) === "2.4" ? { title: "2.4 x", state: "failed" as const, skipReason: null } : test)) });
     expect(judgeEvidence(record, expectation)).toEqual([{ code: "test-failed", message: expect.stringContaining("2.4") }]);
   });
 
@@ -163,9 +197,7 @@ describe("judgeEvidence (owner decision D1)", () => {
     expect(codes(judgeEvidence(record, { ...expectation, commit: SHA.toUpperCase() }))).toEqual([
       "wrong-commit",
       "dirty-tree",
-      "test-missing",
-      "test-missing",
-      "test-missing",
+      ...REQUIRED_COPILOT_E2E_TESTS.map(() => "test-missing"),
     ]);
   });
 });
