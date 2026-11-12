@@ -1088,9 +1088,9 @@ Revisit if Copilot Chat or Claude adopts it.
 
 ## 11. Out of scope (follow-ups)
 
-- Migrating to MCP SDK 2 and ext-apps 2.x: done 2026-11-12 (M0–M5 in
-  [mcp-sdk-2-migration.md](mcp-sdk-2-migration.md)); the release check
-  (M6) is the owner's.
+- Migrating to MCP SDK 2 and ext-apps 2.x: done 2026-11-12 (M0–M6 in
+  [mcp-sdk-2-migration.md](mcp-sdk-2-migration.md)); released in
+  extension 0.10.0 and app 0.13.0.
 - Views for `get_price_book`, `list_repositories` and `list_projects`
   (U16, U17).
 - A shorter `content` when the client declares `io.modelcontextprotocol/ui`.

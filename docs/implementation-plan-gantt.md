@@ -79,6 +79,7 @@ gantt
     section MCP Apps
     12 MVP A0-A16: foundations, server, views U1-U3, packaging, review, docs, owner checks (47%) :done, p12a, 2026-11-07, 2d
     12 Increments 2 and 3 (19 of 19 tasks) :done, p12b, after p12a, 1d
+    12 MCP SDK 2 migration M0-M6 (100%) :done, p12c, 2026-11-12, 1d
 
     section Cost
     15 Cost by repository and project (95%) :done, p15, 2026-11-05, 3d
@@ -99,13 +100,12 @@ gantt
     Extension 0.5.0 pre-release :milestone, r11, 2026-11-10, 0d
     Extension 0.6.0, App v0.11.0 :milestone, r12, 2026-11-11, 0d
     Extension 0.8.0, App v0.12.0 :milestone, r13, 2026-11-12, 0d
-    Extension 0.10.0, App v0.13.0 (prepared) :milestone, r14, 2026-11-12, 0d
+    Extension 0.10.0, App v0.13.0 :milestone, r14, 2026-11-12, 0d
 ```
 
 ## Not started
 
 - Phase 11 (0%) — pi provider real-capture verification.
-- Phase 12 follow-up (M0 to M5 done 2026-11-12: the views, both MCP servers and the stdio test clients on ext-apps 2.0.4 and SDK 2.4.0; SDK 1 removed from every package.json; docs updated and the security review found no defect and no new surface; M6, the release check, is the owner's; release PR for extension 0.10.0 and app 0.13.0 opened 2026-11-12) — MCP SDK 2 and ext-apps 2.x migration, M0–M6; owner decisions D1–D4 taken 2026-11-12 (D3, D4 settled by M0 findings) ([mcp-sdk-2-migration.md](plans/mcp-sdk-2-migration.md)).
 
 ## Open items
 

@@ -6,14 +6,14 @@ Where the work stands at the end of the 2026-11-10 to 2026-11-12 sessions, for w
 
 ## Where things stand
 
-- `main` at #226 (`603820e`), no open PRs.
+- `main` at #240 (`1d372f0`), no open PRs.
 - **Phase 12 (MCP Apps) is done.** Increment 2 shipped in extension 0.6.0 and app 0.11.0 (2026-11-11); Increment 3 shipped in extension 0.8.0 (VS Code Marketplace, Open VSX, GitHub) and app 0.12.0 (2026-11-12), tags `ext-v0.8.0` and `app-v0.12.0` on `dacf3ed`. The real-Copilot release gate passed 33 of 33 required tests (1.54 AI Credits). Details: [plans/mcp-apps.md](plans/mcp-apps.md), [plans/mcp-apps-handover.md](plans/mcp-apps-handover.md).
 - **Step 10.17, the automated pre-release UI gate, is done** ([plans/release-ui-gate.md](plans/release-ui-gate.md)): no hand checklist gates a release. VS Code and Copilot checks are wdio specs, web checks are Playwright specs. Decisions D1–D12 are recorded there.
   - A ruleset on `main` requires 9 CI checks (`extension-ui`, `web-e2e`, `mcp-apps-e2e`, `test`, `extension`, `scan`, both CodeQL Analyze jobs, `CodeQL`); repository admins may bypass.
   - Docs-only PRs skip the heavy UI and integration jobs; `test` always runs.
 - **Step 10.18 is done:** Copilot Chat sessions from a window with no folder open now appear (#209).
 - The root README is user-oriented; the developer documentation index is [README.md](README.md) in this folder.
-- **Release prepared 2026-11-12:** extension 0.10.0 and app 0.13.0 carry the MCP SDK 2 and ext-apps 2.x migration ([plans/mcp-sdk-2-migration.md](plans/mcp-sdk-2-migration.md)) and the keyboard-focus fix in the MCP App views. Next: the real-Copilot gate on the merged commit, then the tags `ext-v0.10.0` and `app-v0.13.0`.
+- **Extension 0.10.0 and app 0.13.0 released 2026-11-12** (tags `ext-v0.10.0`, `app-v0.13.0` on `1d372f0`): the MCP SDK 2 and ext-apps 2.x migration ([plans/mcp-sdk-2-migration.md](plans/mcp-sdk-2-migration.md)) and the keyboard-focus fix in the MCP App views. Real-Copilot gate 33 of 33, 1.55 AI Credits.
 
 ## Releasing the extension
 
@@ -38,7 +38,7 @@ Before tagging, check that `engines.vscode` still matches the current stable VS 
 - U12's row hover puts muted text at 4.38:1 on Dark Modern; VS Code's callout backgrounds aren't in the recorded theme sets (§6.1).
 - Watch CI for the `a16-session-views` keyboard test. If it fails again, the focus fix didn't cover the cause.
 - The real-Copilot suite tests VS Code's local chat harness only; sessions from the Copilot SDK harness (VS Code 1.146's default) aren't covered there.
-- Phase 12 follow-ups ([plans/mcp-apps.md](plans/mcp-apps.md) §11): MCP SDK 2 and ext-apps 2.x, views U16/U17, shorter tool text for clients that show views, Learn cards in chat, a one-click "Open" from U1.
+- Phase 12 follow-ups ([plans/mcp-apps.md](plans/mcp-apps.md) §11): views U16/U17, shorter tool text for clients that show views, Learn cards in chat, a one-click "Open" from U1.
 
 ## Next candidates
 
