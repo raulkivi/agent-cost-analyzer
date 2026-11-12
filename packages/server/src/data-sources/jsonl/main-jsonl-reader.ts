@@ -13,6 +13,9 @@ export interface JsonlEnvelope {
   dur?: number;
   sid?: string;
   spanId?: string;
+  // Names the span that started this one; on a child_session_ref, the parent's
+  // runSubagent tool_call (absent on a searchSubagent ref).
+  parentSpanId?: string;
   type: string;
   name?: string;
   status?: string;
@@ -22,7 +25,8 @@ export interface JsonlEnvelope {
 // Every `attrs` key any extractor in this codebase reads (llm-request-
 // extractor.ts's inputTokens/outputTokens/cachedTokens/copilotUsageNanoAiu/model/
 // responseId, app.ts's systemPromptFile/toolsFile, system-prompt-breakdown.ts's
-// details).
+// details, and the subagent link keys child-session-refs.ts and the subagent
+// run reader use).
 // `attrs` is otherwise an undocumented, per-provider payload that can carry
 // arbitrarily large content (raw prompt/tool-call data) nothing here reads
 // — a 2026-08-08 code/security review's high finding. Dropping
@@ -38,6 +42,13 @@ const KNOWN_ATTRS_KEYS = [
   "systemPromptFile",
   "toolsFile",
   "details",
+  // Step 10.19, subagent links: ids, file names and labels only, never the
+  // run's prompt, response, tool or hook text.
+  "childSessionId",
+  "childLogFile",
+  "label",
+  "parentSessionId",
+  "agentName",
 ] as const;
 
 export type AttrsProjector = (attrs: unknown) => Record<string, unknown> | undefined;
