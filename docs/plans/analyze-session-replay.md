@@ -1,13 +1,14 @@
 # Phase 14: Replay a real Analyze session on another model
 
-**Status (2026-11-07): planned.** The owner decided D1, D2, D4, D5 and D7
-on 2026-11-07; D3, D6 and D8 take the recommendation, open for the owner to
-revisit (§11). Steps 14.0 (threat-model rows), 14.1 (domain schemas) and
-14.2 (request traces), 14.3 (the scripter), 14.4 (the replay service) and
-14.5 (routes, RPC and MCP) are done (2026-11-07); step 14.6's mock-ups are
-drawn and approved by the owner and step 14.7 (the UI in both products) is
-built (2026-11-07), and step 14.8's docs are written; the owner's review of
-them and the §13 exit criterion on real sessions are open.
+**Last changed:** 2026-11-12 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+
+**Status: built (8 of 9 steps); the owner's review is open.** Steps
+14.0–14.7 are done (2026-11-07) and shipped from extension 0.4.0 and app
+0.10.0; step 14.8's docs are written. Open: the owner's review of the docs,
+the extension guide's replay screenshots (the User Guide's are done) and
+the §13 exit criterion on real sessions. The owner decided D1, D2, D4, D5
+and D7 on 2026-11-07; D3, D6 and D8 take the recommendation, open for the
+owner to revisit (§11).
 
 The question this answers: **"What would this real session have cost on
 another model?"** It reuses Phase 13's simulator

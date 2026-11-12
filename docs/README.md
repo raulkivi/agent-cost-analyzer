@@ -117,9 +117,9 @@ An npm workspace:
   with their status, the product boundary, and shipping to the Marketplace
   and Open VSX.
 - [VS Code extension manual checks](plans/vscode-extension-manual-checks.md) —
-  the checks the owner runs in a real VS Code before each extension
-  release: usability script, MCP server in Copilot agent mode, and remote
-  windows.
+  record of the owner's hand checks before step 10.17 automated them, what
+  each suite now covers, and the two checks that stay manual (remote
+  windows, screenshots); none gates a release.
 - [Classic subagent credits plan](plans/classic-subagent-credits.md) —
   proposed: counting the AI Credits that classic Copilot Chat subagents
   log to sibling files next to `main.jsonl`, with measured impact, format
