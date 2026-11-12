@@ -10,6 +10,7 @@
   "command.copyAdviceBundle.title": "Copy Advice Bundle",
   "command.fixSetting.title": "Fix Setting",
   "command.openLearnMode.title": "Open Learn Mode",
+  "command.setMonthlyAllowance.title": "Set Monthly AI Credits Allowance",
   "viewsContainer.title": "AI Credits Analyzer",
   "view.sessions.name": "Sessions",
   "view.learn.name": "Learn",

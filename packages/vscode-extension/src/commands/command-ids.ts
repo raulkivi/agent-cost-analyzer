@@ -15,6 +15,8 @@ export const COMMAND_IDS = {
   // Step 15.14 (plan §11.9): the Sessions view's grouping toggle.
   groupSessionsByRepository: "aiCreditsAnalyzer.groupSessionsByRepository",
   groupSessionsByDay: "aiCreditsAnalyzer.groupSessionsByDay",
+  // Step 10.21 (plan §3.7): opens the allowance setting; writes nothing.
+  setMonthlyAllowance: "aiCreditsAnalyzer.setMonthlyAllowance",
 } as const;
 
 // The context key the toggle's menu entries read: "day" or "repository".

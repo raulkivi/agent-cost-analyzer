@@ -223,6 +223,16 @@ describe("package.json contributions (vscode-extension.md §3.5)", () => {
     );
   });
 
+  // Step 10.21 (MA7): takes no argument, so the palette lists it (no hiding entry).
+  it("lists Set Monthly AI Credits Allowance in the Command Palette, titled from package.nls.json", () => {
+    const command = (contributes.commands ?? []).find((candidate) => candidate.command === COMMAND_IDS.setMonthlyAllowance);
+    const hidden = (contributes.menus?.commandPalette ?? []).filter((entry) => entry.command === COMMAND_IDS.setMonthlyAllowance);
+
+    expect(command?.title).toBe("%command.setMonthlyAllowance.title%");
+    expect(text(command?.title)).toBe("Set Monthly AI Credits Allowance");
+    expect(hidden).toEqual([]);
+  });
+
   // Open Session picks its session in a QuickPick when run without one, so
   // the palette lists it (and the MCP App view's copy button names it).
   it("lists Open Session… in the Command Palette, titled with an ellipsis", () => {

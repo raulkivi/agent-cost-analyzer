@@ -121,6 +121,12 @@
         "title": "%command.groupSessionsByDay.title%",
         "category": "%category%",
         "icon": "$(calendar)"
+      },
+      {
+        "command": "aiCreditsAnalyzer.setMonthlyAllowance",
+        "title": "%command.setMonthlyAllowance.title%",
+        "category": "%category%",
+        "icon": "$(settings-gear)"
       }
     ],
     "viewsContainers": {

@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Set Monthly AI Credits Allowance command.** Opens the Settings editor on
+  `aiCreditsAnalyzer.monthlyAllowance.aiCredits`, where you type the allowance. The command
+  changes no setting.
+
 ## [0.10.0] - 2026-11-12
 
 ### Changed

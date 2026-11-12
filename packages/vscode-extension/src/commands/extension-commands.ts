@@ -12,6 +12,7 @@ import { identityTranslate, type Translate } from "../l10n/localize.js";
 import { MCP_ENABLED_SETTING_ID } from "../mcp/mcp-server-definitions.js";
 import type { WalkthroughLauncher } from "../onboarding/walkthrough-offer.js";
 import { allowedSettingIds } from "../rpc/host-command-handler.js";
+import { ALLOWANCE_SETTING_IDS } from "../settings/allowance-settings.js";
 import type { SessionsGrouping } from "../sidebar/sidebar-controller.js";
 import { COMMAND_IDS } from "./command-ids.js";
 import { buildSessionPickItems, type SessionPickItem } from "./session-pick-items.js";
@@ -132,6 +133,12 @@ export class ExtensionCommands {
     await this.deps.hostCommands.openSetting(settingId);
   }
 
+  // Opens the allowance in the Settings editor. Unlike fixSetting it needs no
+  // warning to name the setting, and it never writes: the user types the value.
+  async setMonthlyAllowance(): Promise<void> {
+    await this.deps.hostCommands.openSetting(ALLOWANCE_SETTING_IDS.aiCredits);
+  }
+
   // Every handler by contributed command id, bound to this instance.
   handlers(): Record<string, Handler> {
     return {
@@ -146,6 +153,7 @@ export class ExtensionCommands {
       [COMMAND_IDS.showToolAudit]: (target) => this.showToolAudit(target),
       [COMMAND_IDS.copyAdviceBundle]: (target) => this.copyAdviceBundle(target),
       [COMMAND_IDS.fixSetting]: (target) => this.fixSetting(target),
+      [COMMAND_IDS.setMonthlyAllowance]: () => this.setMonthlyAllowance(),
     };
   }
 

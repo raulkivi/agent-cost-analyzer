@@ -425,6 +425,7 @@ nothing; with no sessions you get a short message instead.
 | Open Get Started Walkthrough | `aiCreditsAnalyzer.openWalkthrough` | Opens the Get Started walkthrough |
 | Group Sessions by Repository | `aiCreditsAnalyzer.groupSessionsByRepository` | Groups the Sessions view by repository |
 | Group Sessions by Day | `aiCreditsAnalyzer.groupSessionsByDay` | Groups the Sessions view by day (the default) |
+| Set Monthly AI Credits Allowance | `aiCreditsAnalyzer.setMonthlyAllowance` | Opens the Settings editor on `aiCreditsAnalyzer.monthlyAllowance.aiCredits`; changes nothing |
 
 **Fix Setting** opens only the Copilot Chat logging settings the setup
 check judges and `aiCreditsAnalyzer.mcp.enabled`. Any other setting id is
