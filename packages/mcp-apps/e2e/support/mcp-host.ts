@@ -3,8 +3,8 @@
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { getToolUiResourceUri, type McpUiDisplayMode, type McpUiHostContext, type McpUiResourceCsp } from "@modelcontextprotocol/ext-apps/app-bridge";
-import type { Client } from "@modelcontextprotocol/sdk/client/index.js";
-import type { CallToolResult, Tool } from "@modelcontextprotocol/sdk/types.js";
+import type { Client } from "@modelcontextprotocol/client";
+import type { CallToolResult, Tool } from "@modelcontextprotocol/client";
 import type { Page } from "@playwright/test";
 import type { HostSet } from "../../test/theme/host-sets.js";
 import type { ShowViewRequest } from "../host/host-page.js";
@@ -120,13 +120,14 @@ export class McpHost {
       toolInput: args,
       toolResult,
     };
-    await this.page.evaluate((shown) => window.fakeHost.showView(shown), request);
+    // Passed as a plain record so Playwright's Unboxed<> does not recurse through the v2 CallToolResult type.
+    await this.page.evaluate((shown) => window.fakeHost.showView(shown as unknown as ShowViewRequest), request as unknown as Record<string, unknown>);
     return new ViewFrame(this.page, index);
   }
 
   // A host context change for the view shown last, as a host sends one when the user switches theme or resizes.
   async changeHostContext(change: McpUiHostContext): Promise<void> {
-    await this.page.evaluate((changed) => window.fakeHost.changeHostContext(changed), change);
+    await this.page.evaluate((changed) => window.fakeHost.changeHostContext(changed as McpUiHostContext), change as unknown as Record<string, unknown>);
   }
 
   private async relay(method: string, params: Record<string, unknown>): Promise<unknown> {
