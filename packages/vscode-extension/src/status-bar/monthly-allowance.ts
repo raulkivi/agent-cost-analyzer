@@ -4,7 +4,8 @@ import type { Session } from "@agent-cost-analyzer/domain";
 import { identityTranslate, type Translate } from "../l10n/localize.js";
 import type { AllowanceSettings } from "../settings/allowance-settings.js";
 import { periodOf } from "../time/billing-period.js";
-import { billedCredits, knownSum, sessionDayKey } from "./session-credits.js";
+import { dayKeyOf, dayStartInstant } from "../time/local-time.js";
+import { billedCredits, knownSum } from "./session-credits.js";
 
 // The monthly AI Credits allowance gauge (step 10.21, plan
 // monthly-allowance.md §3.2 to §3.4). Pure and free of `vscode`: the status
@@ -106,11 +107,6 @@ function daysLeftText(daysLeft: number, t: Translate): string {
   return daysLeft === 1 ? t("1 day left") : t("{0} days left", daysLeft);
 }
 
-function earliest(keys: string[]): string | undefined {
-  // Day keys sort as text.
-  return keys.reduce<string | undefined>((min, key) => (min === undefined || key < min ? key : min), undefined);
-}
-
 export function buildMonthlyAllowance({ sessions, now, timeZone, settings, t = identityTranslate }: MonthlyAllowanceInput): MonthlyAllowanceView {
   const allowance = usableAllowance(settings.aiCredits);
   if (allowance === undefined) {
@@ -119,13 +115,17 @@ export function buildMonthlyAllowance({ sessions, now, timeZone, settings, t = i
   const period = periodOf(now, timeZone, settings.resetDay);
   // A session without a readable start cannot be placed in a period, so it
   // is left out. A session is attributed wholly to the day it started (§3.5).
+  // The period's two boundary instants are computed once, so each session costs
+  // one Date.parse instead of one Intl.DateTimeFormat (§3.6).
+  const from = dayStartInstant(period.startKey, timeZone);
+  const until = dayStartInstant(period.endKeyExclusive, timeZone);
   const inPeriod: Session[] = [];
-  const dayKeys: string[] = [];
+  let oldest = Number.POSITIVE_INFINITY;
   for (const session of sessions) {
-    const key = sessionDayKey(session, timeZone);
-    if (key !== undefined && key >= period.startKey && key < period.endKeyExclusive) {
+    const started = session.startedAt === undefined ? Number.NaN : Date.parse(session.startedAt);
+    if (started >= from && started < until) {
       inPeriod.push(session);
-      dayKeys.push(key);
+      oldest = Math.min(oldest, started);
     }
   }
   // D7 (v1): whole-session known or unknown. An `estimated` value is a local
@@ -164,7 +164,7 @@ export function buildMonthlyAllowance({ sessions, now, timeZone, settings, t = i
       : t("AI Credits this month: {0} of {1} allowance, {2} percent, {3}, {4}. Open Sessions.", usedText, allowanceText, percent, days, coverage);
   }
 
-  const countedSinceKey = earliest(dayKeys);
+  const countedSinceKey = inPeriod.length === 0 ? undefined : dayKeyOf(new Date(oldest), timeZone);
   const tooltip = [
     t("Monthly allowance: {0} AI Credits", allowanceText),
     remaining === null ? undefined : remaining > 0 ? t("Up to {0} AI Credits remain", CENTS.format(remaining)) : t("No AI Credits remain"),
