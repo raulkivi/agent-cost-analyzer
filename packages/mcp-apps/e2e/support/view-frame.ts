@@ -125,9 +125,17 @@ export class ViewFrame {
   async tabTo(name: string, limit = 80): Promise<void> {
     for (let presses = 0; presses < limit; presses++) {
       await this.page.keyboard.press("Tab");
-      if ((await this.focusedControl()) === name) return;
+      if ((await this.focusedControl()) === name && (await this.focusSettled(name))) return;
     }
     throw new Error(`Tab did not reach "${name}" in ${limit} presses`);
+  }
+
+  // Focus can land on a control a view is about to replace (a loading shell giving way to its
+  // result), and a key pressed then goes to the detached node. Two frames later the swap has
+  // committed; the control must still hold focus.
+  private async focusSettled(name: string): Promise<boolean> {
+    await (await this.frame()).evaluate(() => new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))));
+    return (await this.focusedControl()) === name;
   }
 
   async pressEnter(): Promise<void> {
