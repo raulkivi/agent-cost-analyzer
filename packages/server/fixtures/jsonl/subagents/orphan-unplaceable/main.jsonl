@@ -1,0 +1,6 @@
+{"v":1,"ts":1790000000000,"dur":0,"sid":"orphan-unplaceable","type":"session_start","name":"session_start","spanId":"span-orphan-unplaceable-1","status":"ok","attrs":{"copilotVersion":"0.0.0","vscodeVersion":"0.0.0"}}
+{"v":1,"ts":1790000010000,"dur":0,"sid":"orphan-unplaceable","type":"user_message","name":"user_message","spanId":"span-orphan-unplaceable-2","status":"ok","attrs":{"content":"Fixture prompt 1"}}
+{"v":1,"ts":1790000010010,"dur":0,"sid":"orphan-unplaceable","type":"turn_start","name":"turn_start","spanId":"span-orphan-unplaceable-3","status":"ok","attrs":{"turnId":"1"}}
+{"v":1,"ts":1790000010100,"dur":800,"sid":"orphan-unplaceable","type":"llm_request","name":"llm_request","spanId":"span-orphan-unplaceable-4","status":"ok","attrs":{"inputTokens":1000,"outputTokens":200,"cachedTokens":400,"copilotUsageNanoAiu":2000000000,"model":"fixture-main-model","responseId":"resp-main-1","debugName":"panel/editAgent","requestPayload":"fixture payload"}}
+{"v":1,"ts":1790000010900,"dur":0,"sid":"orphan-unplaceable","type":"agent_response","name":"agent_response","spanId":"span-orphan-unplaceable-5","status":"ok","attrs":{"response":"Fixture response","reasoning":""}}
+{"v":1,"ts":1790000019000,"dur":0,"sid":"orphan-unplaceable","type":"turn_end","name":"turn_end","spanId":"span-orphan-unplaceable-6","status":"ok","attrs":{"turnId":"1"}}
