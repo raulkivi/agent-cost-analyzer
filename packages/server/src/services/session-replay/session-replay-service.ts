@@ -8,6 +8,7 @@ import {
   type Currency,
   type MeasuredCost,
   type ReplayAssumption,
+  type ReplayCoverage,
   type ReplayPricing,
   type ReplaySelfCheck,
   type RequestTrace,
@@ -18,6 +19,7 @@ import {
   type SimulatedCost,
   type Turn,
   type VendorProfile,
+  sumTokenCounts,
 } from "@agent-cost-analyzer/domain";
 import {
   canReadRequestTrace,
@@ -240,6 +242,43 @@ function inCurrency(figure: CostFigure, currency: Currency): MeasuredCost {
     : { known: true, value, currency, basis: figure.basis };
 }
 
+// D11: the trace is the main chain, so a turn that folds in subagent runs is
+// compared on its own usage (the folded figures would include requests the
+// replay leaves out).
+function mainAgentTurn(turn: Turn): Turn {
+  const { subagents, ownUsage, ...main } = turn.usage;
+  if (subagents === undefined || ownUsage === undefined) return turn;
+  // The log records no extended write or own cost for classic turns, so the
+  // spread keeps nothing folded that the own figures should replace.
+  return { ...turn, usage: { ...main, ...ownUsage } };
+}
+
+const RUN_COST_UNKNOWN_REASON =
+  "At least one subagent run's AI Credits are unknown.";
+
+// The runs the replay leaves out, for the coverage line.
+function subagentRunsOutside(
+  turns: Turn[],
+): ReplayCoverage["subagentRuns"] {
+  const runs = turns.flatMap((turn) => turn.usage.subagents ?? []);
+  if (runs.length === 0) return undefined;
+  return {
+    runs: runs.length,
+    costAiCredits: sumTokenCounts(
+      runs.map((run) => run.costAiCredits),
+      RUN_COST_UNKNOWN_REASON,
+    ),
+  };
+}
+
+function withSubagentRuns(
+  coverage: ReplayCoverage,
+  turns: Turn[],
+): ReplayCoverage {
+  const subagentRuns = subagentRunsOutside(turns);
+  return subagentRuns === undefined ? coverage : { ...coverage, subagentRuns };
+}
+
 function assumptionsFor(trace: RequestTrace): ReplayAssumption[] {
   const { A1, A2, A3, A4, A5 } = REPLAY_ASSUMPTIONS;
   const inferredWrites = trace.requests.some((r) => r.cacheWrite === null);
@@ -420,16 +459,15 @@ export class SessionReplayService implements SessionReplayQueries {
       loaded.sessionChannel,
       target.vendorId,
     );
-    const figures = session.turns.map((turn) =>
-      this.measuredFigure(loaded, turn),
-    );
+    const mainTurns = session.turns.map(mainAgentTurn);
+    const figures = mainTurns.map((turn) => this.measuredFigure(loaded, turn));
     const currency = currencyOf(channel, figures);
 
     const simulatedRequests = simulated.turns.map(
       (turn, position): SimulatedRequest =>
         this.simulatedRequest(loaded, turn, channel, position),
     );
-    const measured = session.turns.map((turn, position) => ({
+    const measured = mainTurns.map((turn, position) => ({
       cacheRead: turn.usage.cacheRead.known ? turn.usage.cacheRead.value : null,
       cost: inCurrency(figures[position]!, currency),
     }));
@@ -460,6 +498,7 @@ export class SessionReplayService implements SessionReplayQueries {
         },
         currency,
         ...aligned,
+        coverage: withSubagentRuns(aligned.coverage, session.turns),
         selfCheck: loaded.selfCheck(),
         assumptions: loaded.assumptions,
       },
