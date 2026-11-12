@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { serveStdio } from "@modelcontextprotocol/server/stdio";
 import { composeLogProviders } from "../composition/compose-log-providers.js";
 import { createStandalonePriceBook } from "../composition/create-price-book.js";
 import { createStandaloneAttribution } from "../composition/create-standalone-attribution.js";
@@ -8,7 +8,7 @@ import { createMcpServices } from "../composition/mcp-services.js";
 import { createTurnPricer } from "../composition/create-turn-pricer.js";
 import { loadVendorProfiles } from "../data-sources/vendor-profiles/loader.js";
 import { readAppVersion } from "../composition/app-version.js";
-import { createMcpServer } from "./mcp-server.js";
+import { createMcpServer, type McpServerDeps } from "./mcp-server.js";
 import { resolveAppViews } from "./apps/resolve-app-views.js";
 import { parseStdioArgs } from "./stdio-args.js";
 import { FileStatementStore } from "../data-sources/statements/file-statement-store.js";
@@ -31,7 +31,7 @@ const priceBook = createStandalonePriceBook(resolvedAppSettingsDir, attribution.
 // threat-model.md §5.6: list_projects shares client names and billing codes
 // with the chat model only when the user asks for it at launch.
 const { projectBillingDetails, appViewsHtml } = parseStdioArgs(process.argv.slice(2));
-const server = createMcpServer({
+const deps: McpServerDeps = {
   projectBillingDetails,
   // --app-views-html (scripts/mcp-server.sh passes the built views.html): the views resource and _meta.ui; no file, no views.
   ...resolveAppViews(appViewsHtml, (missing) => console.error(`agent-cost-analyzer MCP server: no app views at ${missing}; starting without them (run npm run build).`)),
@@ -45,7 +45,14 @@ const server = createMcpServer({
   // estimate_cost's model, on the same profiles and price book.
   { profiles: vendorProfiles, priceBook }),
   priceBook,
-});
+};
 
-await server.connect(new StdioServerTransport());
+// docs/plans/mcp-sdk-2-migration.md D1: serveStdio answers 2025-era clients
+// (initialize) and 2026-07-28 ones (server/discover, the per-request _meta
+// envelope). It calls the factory once per connection and once per discover
+// probe, so the services above are composed once and the factory only
+// builds a server over them.
+serveStdio(() => createMcpServer(deps), {
+  onerror: (error) => console.error(`agent-cost-analyzer MCP server: ${error.message}`),
+});
 console.error(`agent-cost-analyzer MCP server ${version} ready on stdio (read-only, local logs only).`);

@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
 import { afterEach, describe, expect, it } from "vitest";
-import type { Client } from "@modelcontextprotocol/sdk/client/index.js";
+import type { Client } from "@modelcontextprotocol/client";
 import { connectCostFixture } from "../test-support/cost-analysis-fixture.js";
 import { MCP_TOOL_GROUPS, WITHOUT_BILLING_TOOL_GROUPS } from "./mcp-server.js";
 

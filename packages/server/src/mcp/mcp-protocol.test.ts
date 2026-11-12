@@ -1,8 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { Client } from "@modelcontextprotocol/sdk/client/index.js";
-import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
+import { Client, InMemoryTransport } from "@modelcontextprotocol/client";
 import { composeCostFixture, connectCostFixture } from "../test-support/cost-analysis-fixture.js";
 import { InMemoryViewSource } from "./apps/view-source.js";
 import { createMcpServer, MAX_TOOL_INPUT_ELEMENTS, type McpServerDeps } from "./mcp-server.js";
@@ -41,13 +40,17 @@ describe("MCP protocol behaviour on SDK 2", () => {
     expect(result.isError).toBe(true);
   });
 
-  it("advertises every input and output schema in JSON Schema 2020-12", async () => {
+  // A tool without arguments gets SDK 2's bare empty object schema, which
+  // names no dialect (as on SDK 1).
+  it("advertises every output schema and every argument schema in JSON Schema 2020-12", async () => {
     ({ client } = await connectCostFixture({ appViews }));
     const { tools } = await client.listTools();
 
     for (const tool of tools) {
-      expect((tool.inputSchema as { $schema?: string }).$schema ?? JSON_SCHEMA_2020_12, tool.name).toBe(JSON_SCHEMA_2020_12);
-      expect((tool.outputSchema as { $schema?: string } | undefined)?.$schema ?? JSON_SCHEMA_2020_12, tool.name).toBe(JSON_SCHEMA_2020_12);
+      const input = tool.inputSchema as { $schema?: string; properties?: object };
+      if (Object.keys(input.properties ?? {}).length === 0) expect(input, tool.name).toEqual({ type: "object", properties: {} });
+      else expect(input.$schema, tool.name).toBe(JSON_SCHEMA_2020_12);
+      expect((tool.outputSchema as { $schema?: string } | undefined)?.$schema, tool.name).toBe(JSON_SCHEMA_2020_12);
     }
   });
 });

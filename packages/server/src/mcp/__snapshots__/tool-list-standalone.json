@@ -41,9 +41,6 @@
           "destructiveHint": false,
           "idempotentHint": true,
           "openWorldHint": false
-        },
-        "execution": {
-          "taskSupport": "forbidden"
         }
       },
       {
@@ -55,9 +52,6 @@
           "destructiveHint": false,
           "idempotentHint": true,
           "openWorldHint": false
-        },
-        "execution": {
-          "taskSupport": "forbidden"
         }
       },
       {
@@ -69,9 +63,6 @@
           "destructiveHint": false,
           "idempotentHint": true,
           "openWorldHint": false
-        },
-        "execution": {
-          "taskSupport": "forbidden"
         }
       },
       {
@@ -83,9 +74,6 @@
           "destructiveHint": false,
           "idempotentHint": true,
           "openWorldHint": false
-        },
-        "execution": {
-          "taskSupport": "forbidden"
         }
       },
       {
@@ -97,9 +85,6 @@
           "destructiveHint": false,
           "idempotentHint": true,
           "openWorldHint": false
-        },
-        "execution": {
-          "taskSupport": "forbidden"
         }
       },
       {
@@ -111,9 +96,6 @@
           "destructiveHint": false,
           "idempotentHint": true,
           "openWorldHint": false
-        },
-        "execution": {
-          "taskSupport": "forbidden"
         }
       },
       {
@@ -125,9 +107,6 @@
           "destructiveHint": false,
           "idempotentHint": true,
           "openWorldHint": false
-        },
-        "execution": {
-          "taskSupport": "forbidden"
         }
       },
       {
@@ -139,9 +118,6 @@
           "destructiveHint": false,
           "idempotentHint": true,
           "openWorldHint": false
-        },
-        "execution": {
-          "taskSupport": "forbidden"
         }
       },
       {
@@ -153,9 +129,6 @@
           "destructiveHint": false,
           "idempotentHint": true,
           "openWorldHint": false
-        },
-        "execution": {
-          "taskSupport": "forbidden"
         }
       },
       {
@@ -167,9 +140,6 @@
           "destructiveHint": false,
           "idempotentHint": true,
           "openWorldHint": false
-        },
-        "execution": {
-          "taskSupport": "forbidden"
         }
       },
       {
@@ -181,9 +151,6 @@
           "destructiveHint": false,
           "idempotentHint": true,
           "openWorldHint": false
-        },
-        "execution": {
-          "taskSupport": "forbidden"
         }
       },
       {
@@ -195,9 +162,6 @@
           "destructiveHint": false,
           "idempotentHint": true,
           "openWorldHint": false
-        },
-        "execution": {
-          "taskSupport": "forbidden"
         }
       },
       {
@@ -209,9 +173,6 @@
           "destructiveHint": false,
           "idempotentHint": true,
           "openWorldHint": false
-        },
-        "execution": {
-          "taskSupport": "forbidden"
         }
       },
       {
@@ -223,9 +184,6 @@
           "destructiveHint": false,
           "idempotentHint": true,
           "openWorldHint": false
-        },
-        "execution": {
-          "taskSupport": "forbidden"
         }
       },
       {
@@ -237,9 +195,6 @@
           "destructiveHint": false,
           "idempotentHint": true,
           "openWorldHint": false
-        },
-        "execution": {
-          "taskSupport": "forbidden"
         }
       },
       {
@@ -251,9 +206,6 @@
           "destructiveHint": false,
           "idempotentHint": true,
           "openWorldHint": false
-        },
-        "execution": {
-          "taskSupport": "forbidden"
         }
       },
       {
@@ -265,9 +217,6 @@
           "destructiveHint": false,
           "idempotentHint": true,
           "openWorldHint": false
-        },
-        "execution": {
-          "taskSupport": "forbidden"
         }
       },
       {
@@ -279,9 +228,6 @@
           "destructiveHint": false,
           "idempotentHint": true,
           "openWorldHint": false
-        },
-        "execution": {
-          "taskSupport": "forbidden"
         }
       },
       {
@@ -293,9 +239,6 @@
           "destructiveHint": false,
           "idempotentHint": true,
           "openWorldHint": false
-        },
-        "execution": {
-          "taskSupport": "forbidden"
         }
       },
       {
@@ -307,9 +250,6 @@
           "destructiveHint": false,
           "idempotentHint": true,
           "openWorldHint": false
-        },
-        "execution": {
-          "taskSupport": "forbidden"
         }
       },
       {
@@ -321,9 +261,6 @@
           "destructiveHint": false,
           "idempotentHint": true,
           "openWorldHint": false
-        },
-        "execution": {
-          "taskSupport": "forbidden"
         }
       }
     ],
@@ -475,9 +412,6 @@
           "idempotentHint": true,
           "openWorldHint": false
         },
-        "execution": {
-          "taskSupport": "forbidden"
-        },
         "_meta": {
           "ui": {
             "resourceUri": "ui://agent-cost-analyzer/views.html"
@@ -494,9 +428,6 @@
           "destructiveHint": false,
           "idempotentHint": true,
           "openWorldHint": false
-        },
-        "execution": {
-          "taskSupport": "forbidden"
         },
         "_meta": {
           "ui": {
@@ -515,9 +446,6 @@
           "idempotentHint": true,
           "openWorldHint": false
         },
-        "execution": {
-          "taskSupport": "forbidden"
-        },
         "_meta": {
           "ui": {
             "resourceUri": "ui://agent-cost-analyzer/views.html"
@@ -534,9 +462,6 @@
           "destructiveHint": false,
           "idempotentHint": true,
           "openWorldHint": false
-        },
-        "execution": {
-          "taskSupport": "forbidden"
         },
         "_meta": {
           "ui": {
@@ -555,9 +480,6 @@
           "idempotentHint": true,
           "openWorldHint": false
         },
-        "execution": {
-          "taskSupport": "forbidden"
-        },
         "_meta": {
           "ui": {
             "resourceUri": "ui://agent-cost-analyzer/views.html"
@@ -575,9 +497,6 @@
           "idempotentHint": true,
           "openWorldHint": false
         },
-        "execution": {
-          "taskSupport": "forbidden"
-        },
         "_meta": {
           "ui": {
             "resourceUri": "ui://agent-cost-analyzer/views.html"
@@ -594,9 +513,6 @@
           "destructiveHint": false,
           "idempotentHint": true,
           "openWorldHint": false
-        },
-        "execution": {
-          "taskSupport": "forbidden"
         }
       },
       {
@@ -608,9 +524,6 @@
           "destructiveHint": false,
           "idempotentHint": true,
           "openWorldHint": false
-        },
-        "execution": {
-          "taskSupport": "forbidden"
         },
         "_meta": {
           "ui": {
@@ -629,9 +542,6 @@
           "idempotentHint": true,
           "openWorldHint": false
         },
-        "execution": {
-          "taskSupport": "forbidden"
-        },
         "_meta": {
           "ui": {
             "resourceUri": "ui://agent-cost-analyzer/views.html"
@@ -648,9 +558,6 @@
           "destructiveHint": false,
           "idempotentHint": true,
           "openWorldHint": false
-        },
-        "execution": {
-          "taskSupport": "forbidden"
         },
         "_meta": {
           "ui": {
@@ -669,9 +576,6 @@
           "idempotentHint": true,
           "openWorldHint": false
         },
-        "execution": {
-          "taskSupport": "forbidden"
-        },
         "_meta": {
           "ui": {
             "resourceUri": "ui://agent-cost-analyzer/views.html"
@@ -688,9 +592,6 @@
           "destructiveHint": false,
           "idempotentHint": true,
           "openWorldHint": false
-        },
-        "execution": {
-          "taskSupport": "forbidden"
         },
         "_meta": {
           "ui": {
@@ -709,9 +610,6 @@
           "idempotentHint": true,
           "openWorldHint": false
         },
-        "execution": {
-          "taskSupport": "forbidden"
-        },
         "_meta": {
           "ui": {
             "resourceUri": "ui://agent-cost-analyzer/views.html"
@@ -728,9 +626,6 @@
           "destructiveHint": false,
           "idempotentHint": true,
           "openWorldHint": false
-        },
-        "execution": {
-          "taskSupport": "forbidden"
         }
       },
       {
@@ -742,9 +637,6 @@
           "destructiveHint": false,
           "idempotentHint": true,
           "openWorldHint": false
-        },
-        "execution": {
-          "taskSupport": "forbidden"
         },
         "_meta": {
           "ui": {
@@ -764,9 +656,6 @@
           "idempotentHint": true,
           "openWorldHint": false
         },
-        "execution": {
-          "taskSupport": "forbidden"
-        },
         "_meta": {
           "ui": {
             "resourceUri": "ui://agent-cost-analyzer/views.html"
@@ -783,9 +672,6 @@
           "destructiveHint": false,
           "idempotentHint": true,
           "openWorldHint": false
-        },
-        "execution": {
-          "taskSupport": "forbidden"
         }
       },
       {
@@ -797,9 +683,6 @@
           "destructiveHint": false,
           "idempotentHint": true,
           "openWorldHint": false
-        },
-        "execution": {
-          "taskSupport": "forbidden"
         }
       },
       {
@@ -811,9 +694,6 @@
           "destructiveHint": false,
           "idempotentHint": true,
           "openWorldHint": false
-        },
-        "execution": {
-          "taskSupport": "forbidden"
         }
       },
       {
@@ -825,9 +705,6 @@
           "destructiveHint": false,
           "idempotentHint": true,
           "openWorldHint": false
-        },
-        "execution": {
-          "taskSupport": "forbidden"
         },
         "_meta": {
           "ui": {
@@ -845,9 +722,6 @@
           "destructiveHint": false,
           "idempotentHint": true,
           "openWorldHint": false
-        },
-        "execution": {
-          "taskSupport": "forbidden"
         }
       },
       {
@@ -859,9 +733,6 @@
           "destructiveHint": false,
           "idempotentHint": true,
           "openWorldHint": false
-        },
-        "execution": {
-          "taskSupport": "forbidden"
         },
         "_meta": {
           "ui": {

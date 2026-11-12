@@ -39,6 +39,18 @@ export function normaliseSchemaDialect(schema: unknown): unknown {
 
 const byName = (a: Json, b: Json) => String(a.name).localeCompare(String(b.name));
 
+// SDK 1 listed `execution: { taskSupport: "forbidden" }` on every tool;
+// SDK 2 has no Tasks support in core and leaves `execution` out. The spec
+// default of an absent taskSupport is "forbidden", so both say the same:
+// the default is dropped and any other value is kept.
+function withoutDefaultExecution(tool: Json): Json {
+  const execution = tool.execution as Json | undefined;
+  if (execution === undefined || JSON.stringify(execution) !== JSON.stringify({ taskSupport: "forbidden" })) return tool;
+  const rest = { ...tool };
+  delete rest.execution;
+  return rest;
+}
+
 // Everything but the server's version (the products pass their own) and the
 // order of tools (compared order-independent, sorted by name).
 export async function readMcpSurface(client: McpSurfaceClient): Promise<Json> {
@@ -53,7 +65,7 @@ export async function readMcpSurface(client: McpSurfaceClient): Promise<Json> {
     capabilities,
     instructions: client.getInstructions(),
     tools: [...tools].sort(byName).map((tool) => ({
-      ...tool,
+      ...withoutDefaultExecution(tool),
       inputSchema: normaliseSchemaDialect(tool.inputSchema),
       outputSchema: normaliseSchemaDialect(tool.outputSchema),
     })),

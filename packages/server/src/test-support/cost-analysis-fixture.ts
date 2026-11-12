@@ -1,11 +1,10 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import { Client } from "@modelcontextprotocol/sdk/client/index.js";
+import { Client, InMemoryTransport } from "@modelcontextprotocol/client";
 import { DatasetCostCubeSource } from "../services/cost-analysis/cost-analysis-service.js";
 import { priceBookHashOf, StatementService } from "../services/billing/statement-service.js";
 import { InMemoryStatementStore } from "./in-memory-statement-store.js";
 import { EstimateService } from "../services/billing/estimate-service.js";
-import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import type { LogProviderStatus, RequestTrace, Session, TokenCount, Turn, TurnUsage } from "@agent-cost-analyzer/domain";
 import type { RequestTraceReader } from "../data-sources/log-providers/log-provider.js";
 import { loadVendorProfiles } from "../data-sources/vendor-profiles/loader.js";

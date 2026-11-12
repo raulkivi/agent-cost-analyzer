@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { McpServer } from "@modelcontextprotocol/server";
 import { z } from "zod";
 import {
   auditedToolCallSchema,
@@ -36,14 +36,14 @@ export function registerAuditTools(server: McpServer, deps: McpToolDeps, guarded
       title: "Get session tool-call audit",
       description:
         "Summarises how one session's tool calls went: totals by outcome (success/error/interrupted/denied/unknown), failure rate, breakdowns by tool, shell program and failure category (command-not-found, wrong-directory, invalid-arguments, dependency-missing, git-state, ...), per-turn counts, retried commands, the tokens spent recovering from failures, and outcome coverage. Start here for \"why did the agent struggle?\"; use list_tool_calls for the individual calls.",
-      inputSchema: {
+      inputSchema: z.object({
         sessionId: sessionIdArg,
         provider: providerArg(deps.identity),
         includeCalls: z
           .boolean()
           .optional()
           .describe("Also return every classified call (default false; can be large — prefer list_tool_calls with filters)."),
-      },
+      }),
       outputSchema: sessionAuditSchema.partial({ calls: true }),
       annotations: READ_ONLY,
     },
@@ -68,7 +68,7 @@ export function registerAuditTools(server: McpServer, deps: McpToolDeps, guarded
       title: "List classified tool calls",
       description:
         "Lists one session's tool calls with outcome, exit code, failure category, a redacted stderr excerpt, the command and program, and the turn index. Filter by outcome, failure category, tool kind (shell, file-write, web, mcp, subagent, ...), tool name, shell program or turn; page with offset/limit (`total` counts every match). For a VS Code Agent Host session without a Copilot CLI event log the list is empty and toolCallsUnavailableReason says why: the calls are unknown, not zero.",
-      inputSchema: {
+      inputSchema: z.object({
         sessionId: sessionIdArg,
         provider: providerArg(deps.identity),
         status: z.array(toolCallStatusSchema).optional().describe('Keep only these outcomes, e.g. ["error","interrupted","denied"].'),
@@ -79,7 +79,7 @@ export function registerAuditTools(server: McpServer, deps: McpToolDeps, guarded
         turnIndex: turnIndexSchema.optional().describe("Only this 0-based turn."),
         offset: offsetSchema.optional().describe("Skip this many matching calls (default 0)."),
         limit: limitSchema.optional().describe(`Maximum calls to return (default ${DEFAULT_TOOL_CALL_LIMIT}).`),
-      },
+      }),
       outputSchema: z.object({
         total: z.number(),
         offset: z.number(),
@@ -105,12 +105,12 @@ export function registerAuditTools(server: McpServer, deps: McpToolDeps, guarded
       title: "Get cross-session tool-call rollup",
       description:
         "Aggregates tool-call outcomes across one provider's most recent sessions in a date window: totals, failure rate, the top failing commands (and in how many sessions they failed), failures per day, a per-session summary, and breakdowns by tool, program and failure category. Sessions whose tool calls are unknown (a VS Code Agent Host session without a Copilot CLI event log) are not included in any count or rate; sessionsWithUnknownToolCalls says how many were left out and toolCallsUnavailableReason why. Use it for \"which commands keep failing?\".",
-      inputSchema: {
+      inputSchema: z.object({
         provider: providerArg(deps.identity),
         since: sinceArg,
         until: untilArg,
         limit: sessionsPerProviderArg(DEFAULT_ROLLUP_SESSION_LIMIT),
-      },
+      }),
       outputSchema: auditRollupSchema,
       annotations: READ_ONLY,
     },

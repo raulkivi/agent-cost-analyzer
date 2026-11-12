@@ -1,8 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { Client } from "@modelcontextprotocol/sdk/client/index.js";
-import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
+import { Client, InMemoryTransport } from "@modelcontextprotocol/client";
 import { costComparisonSchema, costSeriesSchema, projectCostSchema } from "@agent-cost-analyzer/domain";
 import type { ApiService } from "../services/api/api-service.js";
 import { AnalysisQueryService } from "../services/analysis/analysis-query-service.js";

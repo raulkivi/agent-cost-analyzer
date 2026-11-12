@@ -4,7 +4,7 @@ import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import type { Client } from "@modelcontextprotocol/sdk/client/index.js";
+import type { Client } from "@modelcontextprotocol/client";
 import { RESOURCE_MIME_TYPE } from "@modelcontextprotocol/ext-apps/server";
 import { connectCostFixture } from "../../test-support/cost-analysis-fixture.js";
 import { resolveAppViews } from "./resolve-app-views.js";

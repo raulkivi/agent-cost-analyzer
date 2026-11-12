@@ -1,7 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
+import type { McpServer, CallToolResult } from "@modelcontextprotocol/server";
 import { z } from "zod";
 import {
   ACTIVE_SESSION_WINDOW_MINUTES,
@@ -72,11 +71,11 @@ export function registerCostTools(server: McpServer, deps: McpToolDeps, guarded:
         ACTIVE_TEXT +
         " " +
         COST_BASIS_TEXT,
-      inputSchema: {
+      inputSchema: z.object({
         sessionId: sessionIdArg,
         provider: providerArg(deps.identity),
         topTurns: z.number().int().min(1).max(50).optional().describe(`How many of the most expensive turns to return (default ${DEFAULT_TOP_TURNS}).`),
-      },
+      }),
       outputSchema: sessionCostSchema,
       annotations: READ_ONLY,
     },
@@ -96,7 +95,7 @@ export function registerCostTools(server: McpServer, deps: McpToolDeps, guarded:
         ACTIVE_TEXT +
         " " +
         COST_BASIS_TEXT,
-      inputSchema: {
+      inputSchema: z.object({
         provider: z.string().optional().describe("Restrict to one log provider id (see list_log_providers). Default: every available provider."),
         repository: repositoryArg.optional().describe("Only turns attributed to this repository key (from list_repositories)."),
         projectId: projectIdArg.optional().describe("Only turns in this project (from list_projects)."),
@@ -110,7 +109,7 @@ export function registerCostTools(server: McpServer, deps: McpToolDeps, guarded:
           .max(100)
           .optional()
           .describe(`How many of the most expensive sessions to return (default ${DEFAULT_TOP_SESSIONS}).`),
-      },
+      }),
       outputSchema: costRollupSchema,
       annotations: READ_ONLY,
     },
@@ -181,7 +180,7 @@ export function registerCostAnalysisTools(
         SERIES_TEXT +
         " " +
         COST_BASIS_TEXT,
-      inputSchema: { repository: repositoryArg, ...seriesArgs(deps) },
+      inputSchema: z.object({ repository: repositoryArg, ...seriesArgs(deps) }),
       outputSchema: costSeriesSchema,
       annotations: READ_ONLY,
     },
@@ -197,7 +196,7 @@ export function registerCostAnalysisTools(
         SERIES_TEXT +
         " " +
         COST_BASIS_TEXT,
-      inputSchema: {
+      inputSchema: z.object({
         projectId: projectIdArg,
         ...seriesArgs(deps),
         topSessions: z
@@ -207,7 +206,7 @@ export function registerCostAnalysisTools(
           .max(MAX_TOP_PROJECT_SESSIONS)
           .optional()
           .describe(`How many of the most expensive sessions to return (default ${DEFAULT_TOP_PROJECT_SESSIONS}, max ${MAX_TOP_PROJECT_SESSIONS}).`),
-      },
+      }),
       outputSchema: projectCostSchema,
       annotations: READ_ONLY,
     },
@@ -225,7 +224,7 @@ export function registerCostAnalysisTools(
       description:
         "Compares 2 to 20 repositories (keys from list_repositories) or projects (ids from list_projects) over one period: per id the total with coverage, the change against the previous period (or the same dates last year), cost per session, per active day and per turn, share of the compared total, cache-hit ratio and output share. Money measures are per currency unless currency is \"usd\"; a change against a period with nothing known is null, never \"from 0\". Defaults: the preferred basis, prices as of use, native currencies, the previous period. " +
         COST_BASIS_TEXT,
-      inputSchema: {
+      inputSchema: z.object({
         groupBy: z.enum(["repository", "project"]).describe('Compare repositories or projects.'),
         ids: costIdsArg,
         since: costSinceArg.unwrap().describe('First day of the period, inclusive: "YYYY-MM-DD" (UTC).'),
@@ -236,7 +235,7 @@ export function registerCostAnalysisTools(
         currency: currencyArg,
         provider: providerArg(deps.identity).describe("Restrict to one log provider id (see list_log_providers). Default: every available provider."),
         limit: sessionsPerProviderArg(DEFAULT_ROLLUP_SESSION_LIMIT),
-      },
+      }),
       outputSchema: costComparisonSchema,
       annotations: READ_ONLY,
     },
@@ -257,7 +256,7 @@ export function registerCostAnalysisTools(
         "On the priced basis, as of use (tokens × the price version in force when each turn ran), per currency: the usage effect (more or fewer tokens at A's average price), the price effect (B's tokens × the change in unit price) and the mix effect (work moved between models), which add up exactly to the change; " +
         "per model and token type (uncached input, cache read, cache write, output) with unit prices and the price versions behind them; turns without a priced figure counted as notExplained with reasons, never 0; and the documented price changes between the periods. " +
         "Follow up with get_price_changes for the models with the largest price effect. Local repositories are named by folder only. Currencies stay apart unless currency is \"usd\" (1 AI Credit = $0.01).",
-      inputSchema: {
+      inputSchema: z.object({
         groupBy: z.enum(["repository", "project"]).describe("Explain a repository's or a project's change."),
         id: z.string().min(1).describe("The repository key or project id."),
         periodA: periodArg,
@@ -265,7 +264,7 @@ export function registerCostAnalysisTools(
         currency: currencyArg,
         provider: providerArg(deps.identity).describe("Restrict to one log provider id (see list_log_providers). Default: every available provider."),
         limit: sessionsPerProviderArg(DEFAULT_ROLLUP_SESSION_LIMIT),
-      },
+      }),
       outputSchema: costVarianceSchema,
       annotations: READ_ONLY,
     },

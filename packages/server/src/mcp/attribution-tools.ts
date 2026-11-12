@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { McpServer } from "@modelcontextprotocol/server";
 import { z } from "zod";
 import { projectListSchema, repositoryListSchema } from "@agent-cost-analyzer/domain";
 import type { AttributionQueries } from "../services/cost-attribution/attribution-query-service.js";
@@ -20,13 +20,13 @@ export function registerAttributionTools(server: McpServer, deps: McpToolDeps, a
       title: "List repositories",
       description:
         "Lists the code repositories the sessions worked in, across every available provider unless `provider` is given: start here to find a `repository` key for list_sessions or to see which project each repository is in. Each entry has its key (a normalised remote such as github.com/org/app; a repository without a remote, or a folder outside one, is local:<folder name> or path:<folder name>), session and turn counts, first and last use, AI Credits with coverage (null is unknown, never zero) and project ids. Sessions with no repository are grouped by reason under `unattributed`. Local folder paths are never returned.",
-      inputSchema: {
+      inputSchema: z.object({
         provider: providerArg(deps.identity).describe("Log provider id (see list_log_providers). Omit to read every available provider."),
         since: sinceArg,
         until: untilArg,
         projectId: projectIdArg.optional().describe("Only repositories with a member in this project (see list_projects)."),
         includeUnattributed: z.boolean().optional().describe("Include the Unattributed buckets with their reasons (default true)."),
-      },
+      }),
       outputSchema: repositoryListSchema,
       annotations: READ_ONLY,
     },

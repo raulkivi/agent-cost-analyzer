@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
 import { describe, expect, it } from "vitest";
-import type { Client } from "@modelcontextprotocol/sdk/client/index.js";
+import type { Client } from "@modelcontextprotocol/client";
 import { connectCostFixture } from "../test-support/cost-analysis-fixture.js";
 import { readMcpSurface, surfaceFixture, type McpSurfaceClient } from "../test-support/mcp-surface.js";
 import { InMemoryViewSource } from "./apps/view-source.js";

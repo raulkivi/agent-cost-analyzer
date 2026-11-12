@@ -5,8 +5,8 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { Client } from "@modelcontextprotocol/sdk/client/index.js";
-import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
+import { StdioClientTransport } from "@modelcontextprotocol/client/stdio";
+import { Client } from "@modelcontextprotocol/client";
 import {
   initializeLegacy,
   MODERN_PROTOCOL_VERSION,
