@@ -3,7 +3,9 @@
 import { describe, expect, it } from "vitest";
 import {
   sessionSchema,
+  type SubagentRunUsage,
   type SystemPromptComponent,
+  type TokenCount,
   type ToolInventoryEntry,
   type TurnUsage,
 } from "@agent-cost-analyzer/domain";
@@ -198,6 +200,134 @@ describe("summarizeSessionUsage", () => {
 
   it("reports the model and usage availability as unknown when no turn has usage", () => {
     expect(summarizeSessionUsage("missing", [0, 1], [])).toMatchObject({ model: "unknown", usageDataAvailable: false, turnCount: 2 });
+  });
+
+  describe("with classic subagent runs (step 10.19)", () => {
+    const credits = (value: number): TokenCount => ({ known: true, value });
+    const runWith = (id: string, costAiCredits: TokenCount): SubagentRunUsage => ({
+      id,
+      label: "runSubagent-Explore",
+      model: "claude-haiku-4.5",
+      roundsCount: 2,
+      uncachedInput: credits(10),
+      cacheWrite: credits(0),
+      cacheRead: credits(10),
+      reasoning: credits(0),
+      output: credits(10),
+      costAiCredits,
+      attribution: "child-session-ref",
+    });
+    const noRuns = { byLogTurn: new Map<number, SubagentRunUsage[]>(), sessionUnknownReasons: [] };
+
+    it("has no subagentSpend when no run was read and no subagent log left a reason", () => {
+      expect(summarizeSessionUsage("events-present", [0], [known(1)], noRuns)).not.toHaveProperty("subagentSpend");
+      expect(summarizeSessionUsage("events-present", [0], [known(1)])).not.toHaveProperty("subagentSpend");
+    });
+
+    it("sums the runs' AI Credits across log turns into subagentSpend", () => {
+      const figures = summarizeSessionUsage("events-present", [0, 1], [known(1.5), known(2.25)], {
+        byLogTurn: new Map([
+          [1, [runWith("toolu_b", credits(0.5))]],
+          [0, [runWith("toolu_a", credits(0.25)), runWith("toolu_c", credits(0))]],
+        ]),
+        sessionUnknownReasons: [],
+      });
+
+      expect(figures.subagentSpend).toEqual({ runs: 3, costAiCredits: credits(0.75) });
+      expect(figures.costAiCredits).toEqual(credits(3.75));
+    });
+
+    it("counts 0.00 runs as a known 0 spend (D8)", () => {
+      const figures = summarizeSessionUsage("events-present", [0], [known(1)], {
+        byLogTurn: new Map([[0, [runWith("toolu_search", credits(0))]]]),
+        sessionUnknownReasons: [],
+      });
+
+      expect(figures.subagentSpend).toEqual({ runs: 1, costAiCredits: credits(0) });
+    });
+
+    it("makes the session's AI Credits and subagentSpend unknown with the first subagent reason, even when every turn is known", () => {
+      const figures = summarizeSessionUsage("events-present", [0], [known(1)], {
+        byLogTurn: new Map([[0, [runWith("toolu_a", credits(0.25))]]]),
+        sessionUnknownReasons: ["first reason", "second reason"],
+      });
+
+      expect(figures.costAiCredits).toEqual({ known: false, reason: "first reason" });
+      expect(figures.subagentSpend).toEqual({ runs: 1, costAiCredits: { known: false, reason: "first reason" } });
+    });
+
+    it("prefers the subagent reason over the turn-sum fallback", () => {
+      const figures = summarizeSessionUsage("events-present", [0, 1], [known(1), unknown()], {
+        byLogTurn: new Map(),
+        sessionUnknownReasons: ["a subagent reason"],
+      });
+
+      expect(figures.costAiCredits).toEqual({ known: false, reason: "a subagent reason" });
+    });
+
+    it("reports an unknown spend over 0 runs when no run could be read", () => {
+      const figures = summarizeSessionUsage("events-present", [0], [known(1)], {
+        byLogTurn: new Map(),
+        sessionUnknownReasons: ["a subagent reason"],
+      });
+
+      expect(figures.subagentSpend).toEqual({ runs: 0, costAiCredits: { known: false, reason: "a subagent reason" } });
+    });
+
+    it("keeps the log's own reason when main.jsonl has no usage events", () => {
+      const figures = summarizeSessionUsage("logging-never-enabled", [0], [], {
+        byLogTurn: new Map(),
+        sessionUnknownReasons: ["a subagent reason"],
+      });
+
+      expect(figures.costAiCredits).toEqual({ known: false, reason: LOGGING_NEVER_ENABLED_REASON });
+    });
+
+    it("never reports an unknown spend as 0", () => {
+      const figures = summarizeSessionUsage("events-present", [0], [known(1)], {
+        byLogTurn: new Map([[0, [runWith("toolu_a", { known: false, reason: "run reason" })]]]),
+        sessionUnknownReasons: ["run reason"],
+      });
+
+      expect(figures.subagentSpend?.costAiCredits).toEqual({ known: false, reason: "run reason" });
+    });
+
+    it("reaches the session summary and the full session, schema-valid", () => {
+      const subagentRuns = {
+        byLogTurn: new Map([[0, [runWith("toolu_a", credits(0.25))]]]),
+        sessionUnknownReasons: [],
+      };
+      const notExposed: TokenCount = { known: false, reason: "not exposed" };
+      const usage: TurnUsage = {
+        uncachedInput: credits(10),
+        cacheWrite: notExposed,
+        cacheRead: credits(10),
+        tool: notExposed,
+        vision: notExposed,
+        reasoning: notExposed,
+        output: credits(10),
+        costAiCredits: credits(1.25),
+        model: "claude-sonnet-5",
+      };
+      const summary = buildSessionSummary(
+        sessionRow,
+        summarizeSessionUsage("events-present", [0], [usage], subagentRuns),
+      );
+      const session = buildSession({
+        sessionRow,
+        turnRows: [],
+        fileRows: [],
+        mainJsonlAvailability: "events-present",
+        turnUsages: [usage],
+        subagentRuns,
+      });
+
+      for (const built of [summary, session]) {
+        expect(() => sessionSchema.parse(built)).not.toThrow();
+        expect(built.subagentSpend).toEqual({ runs: 1, costAiCredits: credits(0.25) });
+      }
+      expect(buildSessionSummary(sessionRow)).not.toHaveProperty("subagentSpend");
+    });
   });
 });
 
