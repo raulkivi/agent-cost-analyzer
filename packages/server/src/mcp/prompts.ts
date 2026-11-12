@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { McpServer } from "@modelcontextprotocol/server";
 import { z } from "zod";
 
 // Canned workflows (docs/plans/tool-call-audit.md §10, mcp-tools-v2.md §4.2).
@@ -24,7 +24,7 @@ export function registerPrompts(server: McpServer, options: { costAnalysis?: boo
     {
       title: "Audit a session's tool calls",
       description: "Explain why an agent session's tool calls failed and how to avoid it next time.",
-      argsSchema: { sessionId: z.string(), provider: z.string().optional() },
+      argsSchema: z.object({ sessionId: z.string(), provider: z.string().optional() }),
     },
     ({ sessionId, provider }) =>
       userMessage(
@@ -42,7 +42,7 @@ export function registerPrompts(server: McpServer, options: { costAnalysis?: boo
     {
       title: "Review what drives my AI spend",
       description: "Find the sessions, turns and habits that drive token and AI Credits spend, and suggest savings.",
-      argsSchema: { since: z.string().optional(), provider: z.string().optional() },
+      argsSchema: z.object({ since: z.string().optional(), provider: z.string().optional() }),
     },
     ({ since, provider }) =>
       userMessage(
@@ -63,7 +63,7 @@ export function registerPrompts(server: McpServer, options: { costAnalysis?: boo
     {
       title: "Review what my agents did that was risky",
       description: "Review security findings: what happened, when, why it matters, and which guardrails would prevent it.",
-      argsSchema: { since: z.string().optional(), provider: z.string().optional() },
+      argsSchema: z.object({ since: z.string().optional(), provider: z.string().optional() }),
     },
     ({ since, provider }) =>
       userMessage(
@@ -83,7 +83,7 @@ export function registerPrompts(server: McpServer, options: { costAnalysis?: boo
       {
         title: "Prepare a client statement",
         description: "Summarise a project's statement for a period and draft a short note to the client.",
-        argsSchema: { projectId: z.string(), period: z.string() },
+        argsSchema: z.object({ projectId: z.string(), period: z.string() }),
       },
       ({ projectId, period }) =>
         userMessage(
@@ -103,7 +103,7 @@ export function registerPrompts(server: McpServer, options: { costAnalysis?: boo
       {
         title: "Estimate planned work",
         description: "Give a cost range for planned work on a project, its inputs and the main uncertainty.",
-        argsSchema: { projectId: z.string(), activeDays: z.string() },
+        argsSchema: z.object({ projectId: z.string(), activeDays: z.string() }),
       },
       ({ projectId, activeDays }) =>
         userMessage(
@@ -122,7 +122,7 @@ export function registerPrompts(server: McpServer, options: { costAnalysis?: boo
     {
       title: "Explain why a cost changed",
       description: "Say whether more work, a price change or a model change drove a repository's or project's cost between two periods, and what to do about each.",
-      argsSchema: { groupBy: z.enum(["repository", "project"]), id: z.string(), periodA: z.string(), periodB: z.string() },
+      argsSchema: z.object({ groupBy: z.enum(["repository", "project"]), id: z.string(), periodA: z.string(), periodB: z.string() }),
     },
     ({ groupBy, id, periodA, periodB }) =>
       userMessage(

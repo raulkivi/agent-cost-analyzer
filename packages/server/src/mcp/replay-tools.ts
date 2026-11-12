@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { McpServer } from "@modelcontextprotocol/server";
 import { z } from "zod";
 import { MAX_COMPARED_MODELS, sessionReplayComparisonSchema, sessionReplaySchema } from "@agent-cost-analyzer/domain";
 import { replayModelArg, replayPricingArg } from "../services/session-replay/replay-query-params.js";
@@ -47,7 +47,7 @@ export function registerReplayTools(server: McpServer, deps: McpToolDeps, replay
         "The self-check (selfCheck) is the same replay on the session's own model compared with its log (cache read within 5%): if it didn't pass, trust the figures less; null when the own model has no vendor profile. " +
         "Totals compare like with like (the turns replayed with a known measured and simulated cost); coverage gives the turns and requests not replayed with their reasons, and an unknown figure is null with a reason, never 0. " +
         "A session whose provider's logs can't be replayed yet answers with the reason.",
-      inputSchema: { sessionId: sessionIdArg, model: modelArg, pricing: pricingArg, provider: providerArg(deps.identity) },
+      inputSchema: z.object({ sessionId: sessionIdArg, model: modelArg, pricing: pricingArg, provider: providerArg(deps.identity) }),
       outputSchema: sessionReplaySchema,
       annotations: READ_ONLY,
     },
@@ -66,7 +66,7 @@ export function registerReplayTools(server: McpServer, deps: McpToolDeps, replay
         "Use to compare what one session (id from list_sessions) would have cost on several models: each model's simulated total and replayed turns beside the session's measured total, in one currency. " +
         `${SIMULATED_NOTE} ` +
         "For the per-turn figures, the coverage reasons and the self-check, call replay_session with one model. A model no vendor profile lists refuses the whole comparison, with the reason.",
-      inputSchema: { sessionId: sessionIdArg, models: modelsArg, pricing: pricingArg, provider: providerArg(deps.identity) },
+      inputSchema: z.object({ sessionId: sessionIdArg, models: modelsArg, pricing: pricingArg, provider: providerArg(deps.identity) }),
       outputSchema: sessionReplayComparisonSchema,
       annotations: READ_ONLY,
     },

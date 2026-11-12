@@ -1,11 +1,10 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import { Client } from "@modelcontextprotocol/sdk/client/index.js";
+import { Client, InMemoryTransport } from "@modelcontextprotocol/client";
 import { DatasetCostCubeSource } from "../services/cost-analysis/cost-analysis-service.js";
 import { priceBookHashOf, StatementService } from "../services/billing/statement-service.js";
 import { InMemoryStatementStore } from "./in-memory-statement-store.js";
 import { EstimateService } from "../services/billing/estimate-service.js";
-import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import type { LogProviderStatus, RequestTrace, Session, TokenCount, Turn, TurnUsage } from "@agent-cost-analyzer/domain";
 import type { RequestTraceReader } from "../data-sources/log-providers/log-provider.js";
 import { loadVendorProfiles } from "../data-sources/vendor-profiles/loader.js";
@@ -263,7 +262,7 @@ export function composeCostFixture({ home = FIXTURE_HOME, portalApiRemote, proje
   });
   // The cost routes read only costAnalysis, statements and estimates (app.ts passes req.query unchanged).
   const api = new ApiService({ costAnalysis, statements, estimates } as unknown as ApiServiceDeps);
-  const server = createMcpServer({
+  const deps: McpServerDeps = {
     auditQueries: new AuditQueryService(lookup),
     analysisQueries: new AnalysisQueryService(lookup, insights, { attribution: attributor, pricer }),
     getProviderStatus: async () => providerStatus,
@@ -276,8 +275,9 @@ export function composeCostFixture({ home = FIXTURE_HOME, portalApiRemote, proje
     estimates,
     sessionReplay,
     ...options,
-  });
-  return { api, server, insights, costAnalysis, statements, sessionReplay };
+  };
+  const server = createMcpServer(deps);
+  return { api, server, deps, insights, costAnalysis, statements, sessionReplay };
 }
 
 export async function connectCostFixture(options: CostFixtureOptions = {}): Promise<{ client: Client; api: ApiService }> {

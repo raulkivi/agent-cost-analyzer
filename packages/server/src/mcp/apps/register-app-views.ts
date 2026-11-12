@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import type { McpServer, RegisteredTool } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { McpServer, RegisteredTool } from "@modelcontextprotocol/server";
 import { RESOURCE_MIME_TYPE, RESOURCE_URI_META_KEY, registerAppResource, registerAppTool } from "@modelcontextprotocol/ext-apps/server";
 import { z } from "zod";
 import { turnSeriesSchema } from "@agent-cost-analyzer/domain";
@@ -94,11 +94,11 @@ export function registerAppViews(server: McpServer, deps: AppViewsDeps, register
       title: "Get a session's per-turn series",
       description:
         "App-only: the per-turn figures (AI Credits, input, cache read, output, events) behind a session's cost chart. Called by the cost view, not by the model; use get_session_cost for the model-facing summary.",
-      inputSchema: {
+      inputSchema: z.object({
         sessionId: sessionIdArg,
         provider: providerArg(deps.identity),
         maxTurns: z.number().int().min(1).max(MAX_TURNS_LIMIT).optional().describe(`How many turns to return, from the first (default ${DEFAULT_MAX_TURNS}, max ${MAX_TURNS_LIMIT}).`),
-      },
+      }),
       outputSchema: turnSeriesSchema,
       annotations: READ_ONLY,
       _meta: { ui: { visibility: ["app"] } },

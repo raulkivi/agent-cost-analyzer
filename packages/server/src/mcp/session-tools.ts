@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { McpServer } from "@modelcontextprotocol/server";
 import { COST_BASIS_TEXT } from "./cost-tools.js";
 import { z } from "zod";
 import { copilotHarnessSchema, logProviderStatusSchema, turnViewSchema } from "@agent-cost-analyzer/domain";
@@ -74,7 +74,7 @@ export function registerSessionTools(server: McpServer, deps: McpToolDeps, guard
       description: attribution
         ? "Finds agent sessions of one provider, most recent first: start here to get the session ids every other per-session tool needs. Filter by a title/id substring, a start-date window, a repository and a project; each session names its repository key (null with unattributedReason when it has none) and project. `total` is the number of matches before `limit`, so you can tell whether to narrow the search."
         : "Finds agent sessions of one provider, most recent first: start here to get the session ids every other per-session tool needs. Filter by a title/id substring and a start-date window. `total` is the number of matches before `limit`, so you can tell whether to narrow the search.",
-      inputSchema: attribution ? { ...baseInput, ...attributionInput } : baseInput,
+      inputSchema: z.object(attribution ? { ...baseInput, ...attributionInput } : baseInput),
       outputSchema: z.object({ total: z.number(), sessions: z.array(attribution ? attributedSessionSummarySchema : sessionSummarySchema) }),
       annotations: READ_ONLY,
     },
@@ -119,7 +119,7 @@ export function registerSessionTools(server: McpServer, deps: McpToolDeps, guard
       description:
         "Reads one turn of a session: the user prompt and assistant response (secrets redacted, truncated to maxTextChars), its token usage and AI Credits, any triggered event (compaction, model switch, cache expiry, ...) and its tool calls with outcomes. The text and tool calls are unknown, with a reason, for a VS Code Agent Host turn whose Copilot CLI event log is missing, unreadable or has no match. Use it to explain why a turn found by get_session_cost or list_tool_calls was expensive or failed. `cost` gives the turn's billed, reported and priced figures (the priced one names its price version) and `preferredCost` the one totals use. " +
         COST_BASIS_TEXT,
-      inputSchema: {
+      inputSchema: z.object({
         sessionId: sessionIdArg,
         turnIndex: turnIndexSchema.describe("0-based turn index, e.g. from get_session_cost's topTurns or list_tool_calls."),
         provider: providerArg(deps.identity),
@@ -130,7 +130,7 @@ export function registerSessionTools(server: McpServer, deps: McpToolDeps, guard
           .max(20_000)
           .optional()
           .describe(`Maximum characters per text field (default ${DEFAULT_MAX_TEXT_CHARS}).`),
-      },
+      }),
       outputSchema: turnViewSchema,
       annotations: READ_ONLY,
     },

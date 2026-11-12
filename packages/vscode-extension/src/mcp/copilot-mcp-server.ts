@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { McpServer } from "@modelcontextprotocol/server";
 import { createCopilotMcpServices } from "@agent-cost-analyzer/server/src/composition/create-copilot-mcp-services";
 import { resolveCopilotHome } from "@agent-cost-analyzer/server/src/data-sources/agent-host/copilot-cli-paths";
 import { createMcpServer } from "@agent-cost-analyzer/server/src/mcp/mcp-server";
@@ -28,9 +28,20 @@ export interface CopilotMcpServerOptions {
 // same way the extension host derives them (copilot-log-paths.ts). The
 // process outlives many chats, so the per-workspace debug-logs folders are
 // re-listed on every lookup, and a workspace opened later is still found.
-export function createCopilotMcpServer({ userDataDir, version, copilotHome = resolveCopilotHome(), vendorProfilesDir, appViewsHtml }: CopilotMcpServerOptions): McpServer {
+//
+// serveStdio (docs/plans/mcp-sdk-2-migration.md D1) calls the factory once
+// per connection and once more per server/discover probe it may discard,
+// so the services and the views lookup are composed here, once; each call
+// of the factory only builds a server over them.
+export function createCopilotMcpServerFactory({
+  userDataDir,
+  version,
+  copilotHome = resolveCopilotHome(),
+  vendorProfilesDir,
+  appViewsHtml,
+}: CopilotMcpServerOptions): () => McpServer {
   const { sessionStoreDbPath, agentTracesDbPath, agentHostUserDataDir } = copilotLogPathsFromUserDataDir(userDataDir);
-  return createMcpServer({
+  const deps = {
     ...createCopilotMcpServices({
       sessionStoreDbPath,
       agentTracesDbPath,
@@ -41,5 +52,11 @@ export function createCopilotMcpServer({ userDataDir, version, copilotHome = res
       vendorProfilesDir,
     }),
     ...resolveAppViews(appViewsHtml, (missing) => console.error(`AI Credits Analyzer MCP server: no app views at ${missing}; starting without them.`)),
-  });
+  };
+  return () => createMcpServer(deps);
+}
+
+// One server over freshly composed services (the in-process tests).
+export function createCopilotMcpServer(options: CopilotMcpServerOptions): McpServer {
+  return createCopilotMcpServerFactory(options)();
 }

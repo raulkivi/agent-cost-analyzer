@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: MIT
 import { statSync } from "node:fs";
 import path from "node:path";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { serveStdio } from "@modelcontextprotocol/server/stdio";
 import { readAppVersion } from "@agent-cost-analyzer/server/src/composition/app-version";
-import { createCopilotMcpServer } from "./copilot-mcp-server.js";
+import { createCopilotMcpServerFactory } from "./copilot-mcp-server.js";
 import { parseMcpServerArgs } from "./mcp-server-args.js";
 
 // Entry point of the extension's MCP child process (dist/mcp-stdio.js,
@@ -38,8 +38,12 @@ async function main(): Promise<void> {
   // Phase 12 A13: the MCP App views, copied there by scripts/build.mts; a
   // missing file means the server starts without them.
   const appViewsHtml = path.join(__dirname, "mcp-apps", "views.html");
-  const server = createCopilotMcpServer({ userDataDir: args.userDataDir, version, vendorProfilesDir, appViewsHtml });
-  await server.connect(new StdioServerTransport());
+  // docs/plans/mcp-sdk-2-migration.md D1: serveStdio answers 2025-era
+  // clients (initialize) and 2026-07-28 ones (server/discover, the
+  // per-request _meta envelope).
+  serveStdio(createCopilotMcpServerFactory({ userDataDir: args.userDataDir, version, vendorProfilesDir, appViewsHtml }), {
+    onerror: (error) => process.stderr.write(`${PREFIX} ${error.message}\n`),
+  });
   process.stderr.write(`${PREFIX} ${version} ready on stdio (read-only, Copilot Chat logs only).\n`);
 }
 

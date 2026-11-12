@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { McpServer } from "@modelcontextprotocol/server";
 import { z } from "zod";
 import { findingKindSchema, findingSeveritySchema, findingsQueryResultSchema } from "@agent-cost-analyzer/domain";
 import { DEFAULT_MAX_FINDINGS } from "../services/insights/findings-query.js";
@@ -19,7 +19,7 @@ export function registerFindingTools(server: McpServer, deps: McpToolDeps, guard
       title: "List security, anomaly and behaviour-change findings",
       description:
         "Lists what the analyzer flagged across every available provider (or one) in a date window, most severe first: security (credential access, pipe-to-shell, destructive or history-rewriting commands, privilege escalation, data upload, ...), anomalies (cost or failure outliers), behaviour changes (first use of a program, tool or model) and price changes (kind \"price-change\": GitHub Copilot billing a model steadily above or below the price book, inferred; see get_price_changes). Each finding says what happened, when, in which session and turn, why it was flagged, with redacted evidence. Use get_turn to see the context.",
-      inputSchema: {
+      inputSchema: z.object({
         provider: z.string().optional().describe("Restrict to one log provider id (see list_log_providers). Default: every available provider."),
         since: sinceArg,
         until: untilArg,
@@ -29,7 +29,7 @@ export function registerFindingTools(server: McpServer, deps: McpToolDeps, guard
         category: z.string().optional().describe('Exact category, case-insensitive, e.g. "credential-access" or "cost-outlier".'),
         sessionId: z.string().optional().describe("Only findings in this session."),
         maxResults: limitSchema.optional().describe(`Maximum findings to return (default ${DEFAULT_MAX_FINDINGS}); total and bySeverity count every match.`),
-      },
+      }),
       outputSchema: findingsQueryResultSchema,
       annotations: READ_ONLY,
     },

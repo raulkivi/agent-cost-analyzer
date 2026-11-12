@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
+import type { CallToolResult } from "@modelcontextprotocol/server";
 import { z } from "zod";
 import type { LogProviderStatus } from "@agent-cost-analyzer/domain";
 import { UnknownLogProviderIdError } from "../data-sources/log-providers/registry.js";

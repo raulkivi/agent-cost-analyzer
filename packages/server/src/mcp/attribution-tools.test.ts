@@ -2,8 +2,7 @@
 // SPDX-License-Identifier: MIT
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import fc from "fast-check";
-import { Client } from "@modelcontextprotocol/sdk/client/index.js";
-import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
+import { Client, InMemoryTransport } from "@modelcontextprotocol/client";
 import { projectListSchema, repositoryListSchema, type LogProviderStatus, type Session } from "@agent-cost-analyzer/domain";
 import { AnalysisQueryService } from "../services/analysis/analysis-query-service.js";
 import { AttributionQueryService } from "../services/cost-attribution/attribution-query-service.js";

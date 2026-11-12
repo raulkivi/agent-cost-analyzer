@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { McpServer } from "@modelcontextprotocol/server";
 import type { LogProviderStatus } from "@agent-cost-analyzer/domain";
 import type { AnalysisQueryService } from "../services/analysis/analysis-query-service.js";
 import type { PriceBookReader } from "../services/pricing/price-book.js";
@@ -28,8 +28,11 @@ import type { ViewSource } from "./apps/view-source.js";
 // Local, read-only MCP interface over the analyzer (docs/plans/
 // tool-call-audit.md §10, docs/plans/mcp-tools-v2.md) so a user can attach
 // it to Claude Code or any MCP-capable harness and query their own
-// sessions. Transport-agnostic: stdio.ts connects it over stdio; tests
+// sessions. Transport-agnostic: stdio.ts serves it over stdio; tests
 // connect it in memory. Each tool group registers itself (open/closed).
+// createMcpServer is serveStdio's factory, called once per connection and
+// once more per server/discover probe, so it only builds a server over the
+// deps it is given: no I/O, no output, no service calls.
 
 export interface McpServerDeps {
   // threat-model.md §5.6: whether list_projects returns each project's client
@@ -84,6 +87,15 @@ export const WITHOUT_BILLING_TOOL_GROUPS: readonly McpToolGroup[] = MCP_TOOL_GRO
 // Kept for the standalone server's callers; the wording lives in the identity.
 export const SERVER_INSTRUCTIONS = STANDALONE_MCP_IDENTITY.instructions;
 
+// SDK 2.3.0's guard on a tools/call's arguments (array elements plus object
+// members, counted before validation). The largest legitimate argument is
+// list_tool_calls with every filter value once: 38 (compare_costs with 20
+// ids: 30). 256 leaves more than six times that and still bounds the work
+// a pathological call causes, such as an enum filter repeated thousands of
+// times, which the schemas allow. A call over it is answered with an
+// isError result naming the limit (mcp-protocol.test.ts pins both).
+export const MAX_TOOL_INPUT_ELEMENTS = 256;
+
 // What the tool groups see: the deps with the identity resolved.
 export type McpToolDeps = McpServerDeps & { identity: McpIdentity };
 
@@ -99,7 +111,10 @@ export function createMcpServer(deps: McpServerDeps): McpServer {
       websiteUrl: MCP_WEBSITE_URL,
       icons: MCP_ICONS,
     },
-    { instructions: identity.instructions },
+    // No cache hints (D4, docs/plans/mcp-sdk-2-migration.md §6): SDK 2 answers
+    // 2026-07-28 requests with ttlMs 0, so a host never keeps the views file
+    // past an update.
+    { instructions: identity.instructions, maxToolInputElements: MAX_TOOL_INPUT_ELEMENTS },
   );
   const guarded = createGuard(deps.getProviderStatus);
 

@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { McpServer } from "@modelcontextprotocol/server";
 import { z } from "zod";
 import { costEstimateSchema, statementAnswerSchema, unknownProjectIdText } from "@agent-cost-analyzer/domain";
 import type { EstimateQueries } from "../services/billing/estimate-service.js";
@@ -26,11 +26,11 @@ export function registerBillingTools(server: McpServer, deps: { statements?: Sta
         "Use to see what one project (id from list_projects) costs for a period: the frozen statement if the period is issued, with the re-run beside it and the exact diff (late logs, a price-book change), else the draft and whether it can be issued (only an ended period can). " +
         "Lines per basis, currency, channel, model and price version with tokens and unit prices; turns with unknown cost listed with their reason, never counted as 0; subscription (API-equivalent) use left off unless the project includes it; the project's markup, fixed lines and own currency at its fixed rate; totals per currency; coverage; provenance (app version, price book, projects file, session ids). " +
         "Months are calendar months in the statement's time zone. This tool never issues a statement: issuing is done in the app.",
-      inputSchema: {
+      inputSchema: z.object({
         projectId: z.string().min(1).describe("The project id, from list_projects."),
         period: z.string().min(1).describe('A month "YYYY-MM", or a range "YYYY-MM-DD..YYYY-MM-DD".'),
         includeLines: z.boolean().optional().describe("Include the lines (default true); totals, unknown lines and provenance are always there."),
-      },
+      }),
       outputSchema: statementAnswerSchema,
       annotations: READ_ONLY,
     },
@@ -60,14 +60,14 @@ function registerEstimateTool(server: McpServer, estimates: EstimateQueries, gua
         "It is the median and 90th-percentile cost per active day (or per session) in the last 4 or 12 weeks × the planned active days (or sessions); days or sessions with any unpriced turn are left out and counted. " +
         "With fewer than 5 known days or sessions there is no range: `refusal` says why. AI Credits are converted at 1 AI Credit = $0.01. " +
         "With `model`, it estimates on that model instead: every session of the target in the window is replayed on it (as replay_session does) and the unit costs are the simulated ones, priced on each session's own channel as of when it ran (pricing \"as-of-use\"). Those figures are Simulated (same conversation and token counts assumed); `simulation` gives the method, the sessions and turns replayed, the rest by reason, how many self-checks passed, and the assumptions.",
-      inputSchema: {
+      inputSchema: z.object({
         projectId: z.string().min(1).optional().describe("The project id, from list_projects (or give repository)."),
         repository: z.string().min(1).optional().describe("A repository key, from list_repositories (or give projectId)."),
         activeDays: z.number().int().min(1).optional().describe("Planned active days (or give sessions)."),
         sessions: z.number().int().min(1).optional().describe("Planned sessions (or give activeDays)."),
         historyWeeks: z.union([z.literal(4), z.literal(12)]).optional().describe("History window in weeks: 4 or 12 (default)."),
         model: replayModelArg.optional().describe('Estimate on this model instead (a model id a vendor profile lists, e.g. "claude-haiku-5.5"): the target\'s sessions replayed on it, Simulated.'),
-      },
+      }),
       outputSchema: costEstimateSchema,
       annotations: READ_ONLY,
     },

@@ -17,8 +17,10 @@
   },
   "dependencies": {
     "@agent-cost-analyzer/domain": "*",
-    "@modelcontextprotocol/ext-apps": "1.7.5",
-    "@modelcontextprotocol/sdk": "^1.32.2",
+    "@modelcontextprotocol/client": "2.4.0",
+    "@modelcontextprotocol/core": "2.4.0",
+    "@modelcontextprotocol/ext-apps": "2.0.4",
+    "@modelcontextprotocol/server": "2.4.0",
     "express": "^5.3.0",
     "gpt-tokenizer": "^4.1.0",
     "jsonc-parser": "^3.3.1"

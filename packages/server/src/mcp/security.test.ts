@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 import { describe, expect, it } from "vitest";
 import fc from "fast-check";
-import type { Client } from "@modelcontextprotocol/sdk/client/index.js";
+import type { Client } from "@modelcontextprotocol/client";
 import { connectCostFixture, fixtureProjects } from "../test-support/cost-analysis-fixture.js";
 
 // Phase 15 step 15.13 (plan §10.1.5, §10.1.6): tool output enters a hosted

@@ -4,8 +4,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
-import { Client } from "@modelcontextprotocol/sdk/client/index.js";
-import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
+import { Client, InMemoryTransport } from "@modelcontextprotocol/client";
 import {
   seedCopilotSessionStore,
   USAGE_SESSION_ID,
@@ -22,7 +21,7 @@ import {
   writeCopilotCliAgentHostStores,
 } from "@agent-cost-analyzer/server/src/test-support/copilot-cli-fixtures";
 import { FIXTURE_VENDOR_PROFILES_DIR } from "@agent-cost-analyzer/server/src/test-support/vendor-profiles-dir";
-import { createCopilotMcpServer, type CopilotMcpServerOptions } from "./copilot-mcp-server.js";
+import { createCopilotMcpServer, createCopilotMcpServerFactory, type CopilotMcpServerOptions } from "./copilot-mcp-server.js";
 
 type ToolResult = Awaited<ReturnType<Client["callTool"]>>;
 
@@ -216,6 +215,55 @@ describe("createCopilotMcpServer with the app views (Phase 12 A13)", () => {
       expect(tools.some((tool) => tool._meta !== undefined)).toBe(false);
     } finally {
       await client.close();
+    }
+  });
+});
+
+// docs/plans/mcp-sdk-2-migration.md M2: serveStdio calls the server factory
+// once per connection and once more for a server/discover probe it may
+// discard, so the services and the views lookup are composed once, when
+// the factory is made, and each call only builds a server over them.
+describe("createCopilotMcpServerFactory as serveStdio's factory (MCP SDK 2)", () => {
+  let userDataDir: string;
+
+  beforeAll(() => {
+    userDataDir = mkdtempSync(path.join(tmpdir(), "copilot-mcp-server-factory-"));
+    mkdirSync(path.join(userDataDir, "User"), { recursive: true });
+  });
+  afterAll(() => {
+    rmSync(userDataDir, { recursive: true, force: true });
+  });
+
+  it("composes once: calling it twice writes nothing, and each call builds its own server with the 19 tools", async () => {
+    const stderr = vi.spyOn(process.stderr, "write").mockImplementation(() => true);
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    try {
+      const factory = createCopilotMcpServerFactory({
+        userDataDir,
+        version: "0.1.0-test",
+        vendorProfilesDir: FIXTURE_VENDOR_PROFILES_DIR,
+        appViewsHtml: path.join(userDataDir, "missing", "views.html"),
+      });
+      expect(consoleError).toHaveBeenCalledTimes(1);
+      consoleError.mockClear();
+      stderr.mockClear();
+
+      const first = factory();
+      const second = factory();
+
+      expect(consoleError).not.toHaveBeenCalled();
+      expect(stderr).not.toHaveBeenCalled();
+      expect(second).not.toBe(first);
+      for (const server of [first, second]) {
+        const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+        const client = new Client({ name: "test-client", version: "1.0.0" });
+        await Promise.all([server.connect(serverTransport), client.connect(clientTransport)]);
+        expect((await client.listTools()).tools).toHaveLength(19);
+        await client.close();
+      }
+    } finally {
+      stderr.mockRestore();
+      consoleError.mockRestore();
     }
   });
 });
