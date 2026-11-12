@@ -2,7 +2,7 @@
 
 **Last changed:** 2026-11-13 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
-Status: **owner decisions accepted 2026-11-12 (every recommendation); mock-up approved 2026-11-13; code and docs done (MA0 to MA11), in review; MA12 open**. Step **10.21** in [implementation-plan.md](../implementation-plan.md); [classic-subagent-credits-implementation.md](classic-subagent-credits-implementation.md) holds 10.19 and its audit follow-up 10.20.
+Status: **done 2026-11-13 (MA0 to MA12; §12 exit criterion met)**. Owner decisions accepted 2026-11-12 (every recommendation); mock-up approved 2026-11-13. MA13 (standalone app) is a later increment. Step **10.21** in [implementation-plan.md](../implementation-plan.md); [classic-subagent-credits-implementation.md](classic-subagent-credits-implementation.md) holds 10.19 and its audit follow-up 10.20.
 
 ## 1. Why
 
@@ -146,7 +146,7 @@ TDD in every task: the failing test is written and seen red first (CLAUDE.md, ar
 | MA9 | wdio specs (see §7) and the fixture seed; a `now` parameter for `catalogRows` and `writeCopilotCliAgentHostStores`, threaded from `createUiFixture`; the reset day derived from the run date (§13 (d)) | Specs green in the UI suite and in CI (`npm run test:ui:vscode`) | medium | Sonnet | MA5, MA6, MA7 |
 | MA10 | Threat-model rows (§8) | Rows written, test names cited | low | Haiku | MA3, MA5 |
 | MA11 | Docs (§9) | Each listed doc updated, headers set, doc tests green (`docs.test.ts`) | low | Haiku | MA5, MA6, MA7 |
-| MA12 | Review: code review, accessibility pass, full test suite, headers (`npm run headers:fix`), bundle-load tests | One exit criterion (§12) met; `main` commit per CLAUDE.md | medium | Opus | MA8 to MA11 |
+| MA12 | **Done 2026-11-13 (§14).** Review: code review, accessibility pass, full test suite, headers (`npm run headers:fix`), bundle-load tests | One exit criterion (§12) met; `main` commit per CLAUDE.md | medium | Opus | MA8 to MA11 |
 | MA13 (later) | Standalone app Cost over time view: allowance line for the month (D8) | Own plan | n/a | n/a | MA12 |
 
 ## 7. UI checks (wdio, no manual rows)
@@ -236,3 +236,20 @@ Answered from VS Code source (`microsoft/vscode` `main`, read 2026-11-12) and `@
   - Known credits: the usage session, Agent Host sessions and the large session; seeded sessions 1..N−1 are unknown, which a known-versus-unknown spec can use.
   - Flake guard: derive the reset day from the run date (e.g. `min(day of (now − 3 days), 28)`), keep N under 72 h, seed all fixtures with the same `now`.
 - **Decisions.** D1, D9 and D10 stand. D9 adds the separate id; D10 needs no `machine-overridable` fallback.
+
+## 14. MA12 review (2026-11-13)
+
+Reviewed `git diff origin/main...HEAD` (MA1 to MA11) against §3 to §12, architecture constraints 6 and 11, §11.4/§11.5 and the release UI gate.
+
+- **Correctness.** Period edges (reset day, month, year, February, DST, zone), unknown never 0, `estimated` counted as unknown, the "at least" wording and the boundary-instant comparison match the plan and have tests. The memo key holds the period start and the day of the period, so a render after midnight or in a new period recomputes; a test now pins that (it failed with the day dropped from the key). The allowance watcher and the gauge item are disposed. No bug found in the product code.
+- **SOLID/CUPID.** `vscode` appears only in `vscode/vscode-status-bar.ts` and `vscode/vscode-sidebar-views.ts`; the period, the model, the settings reader and the controller are pure.
+- **Accessibility.** The status item and the Sessions row carry a full label (level sentence first); the level is in words and the icon, the background only adds to them; role `button` on the item.
+- **Security.** The threat-model §6 rows match the code; every test they cite exists. The texts use numbers, day keys and fixed strings only.
+- **Tests fixed.**
+  - `copilot-available.e2e.ts` check 1.4: its "only the usage session has cost data" assertion ran only when one session was known, which the MA9 fixture sessions made never true, so it skipped silently. It now matches the status bar's known and total counts and its sum to the sessions under Today in the Sessions tree.
+  - `monthly-allowance-trust.e2e.ts`: a fixed 3 s pause before asserting the row absent could pass before the sessions were read; it now waits for the sessions first.
+  - A stray blank line in `sessions-by-repository-tree-model.ts` (no 10.21 change there) is removed.
+- **MA9 note (usage session dropping out after its log was copied into the global debug-log folder at run time).** Not a server reader bug. `resolveMainJsonlPath` tries the workspace folders before the global one, so a copy with the same session id never shadows the workspace log (test "counts a session once when its logs are in both the workspace and the global folder"). A probe with the fixture's layout, copying the log into the global folder after the first listing, under the same id and under a new id with the `sid` inside unchanged, kept the usage session at 9.65 known AI Credits each time. The drop seen in MA9 is outside the reader: most likely the run-time copy itself (a Copilot Chat enabled in that window owns the global folder), which the seeded empty-window session replaced. No follow-up.
+- **D7 measured on the owner's data** (VS Code sessions 2026-11-01 to 2026-11-10, read through the analyzer's own cost rollup): 20 sessions, 13 with cost data, 7 with none, and no session partly known. A per-turn path would add nothing there, so v1 stays as it is; the gauge would read "at least 132.18 … 13 of 20 sessions".
+- **Docs.** The architecture, extension guide, threat-model and CHANGELOG text match the code. The User Guide covers the standalone app only, so the gauge's user text is in the extension guide (MA11), which is where §9's User Guide items went.
+- **Open for release, not for §12:** the real-Copilot check of the gauge in a live window (release UI gate).
