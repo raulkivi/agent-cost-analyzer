@@ -7,7 +7,14 @@ export {
   sumTokenCounts,
   type TokenCount,
 } from "./token-count.js";
-export { turnUsageSchema, type TurnUsage } from "./turn-usage.js";
+export {
+  turnUsageSchema,
+  ownTurnUsageSchema,
+  subagentRunUsageSchema,
+  type TurnUsage,
+  type OwnTurnUsage,
+  type SubagentRunUsage,
+} from "./turn-usage.js";
 export {
   toolCallRecordSchema,
   toolKindSchema,
@@ -109,6 +116,8 @@ export {
   copilotEventLogStatusSchema,
   copilotHarnessSchema,
   sessionSchema,
+  subagentSpendSchema,
+  type SubagentSpend,
   type CopilotEventLogStatus,
   type CopilotHarness,
   type Session,
@@ -132,6 +141,9 @@ export {
 export {
   insightSessionRowSchema,
   insightTurnRowSchema,
+  costLineSchema,
+  costLinesOf,
+  type CostLine,
   insightToolCallRowSchema,
   findingKindSchema,
   findingSeveritySchema,

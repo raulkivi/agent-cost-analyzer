@@ -80,6 +80,23 @@ export const insightSessionRowSchema = z.object({
 
 export type InsightSessionRow = z.infer<typeof insightSessionRowSchema>;
 
+// Step 10.19 (plan §4.5): one model's share of a turn that also ran subagents.
+// The figures are the row's, split by the model that produced them; unknown
+// stays null. A row's lines sum to the row.
+export const costLineSchema = z.object({
+  model: z.string(),
+  uncachedInput: tokenFigureSchema,
+  cacheWrite: tokenFigureSchema,
+  cacheRead: tokenFigureSchema,
+  reasoning: tokenFigureSchema,
+  output: tokenFigureSchema,
+  aiCredits: tokenFigureSchema,
+  cost: turnCostFiguresSchema.optional(),
+  subagent: z.boolean(), // a subagent run's line, not the main agent's
+});
+
+export type CostLine = z.infer<typeof costLineSchema>;
+
 export const insightTurnRowSchema = z.object({
   key: z.string(),
   sessionKey: z.string(),
@@ -103,9 +120,32 @@ export const insightTurnRowSchema = z.object({
   // Step 15.6 (plan §5): the turn's billed, reported and priced figures,
   // each unknown with a reason, never 0. The server always sets it.
   cost: turnCostFiguresSchema.optional(),
+  // Step 10.19: present only for turns that ran subagents.
+  lines: z.array(costLineSchema).optional(),
 }).superRefine(checkAttribution);
 
 export type InsightTurnRow = z.infer<typeof insightTurnRowSchema>;
+
+// The lines model-keyed consumers group by: the row's own lines, else the row
+// itself as the one main-agent line.
+export function costLinesOf(row: InsightTurnRow): CostLine[] {
+  if (row.lines) {
+    return row.lines;
+  }
+  return [
+    {
+      model: row.model,
+      uncachedInput: row.uncachedInput,
+      cacheWrite: row.cacheWrite,
+      cacheRead: row.cacheRead,
+      reasoning: row.reasoning,
+      output: row.output,
+      aiCredits: row.aiCredits,
+      cost: row.cost,
+      subagent: false,
+    },
+  ];
+}
 
 export const insightToolCallRowSchema = z.object({
   key: z.string(),

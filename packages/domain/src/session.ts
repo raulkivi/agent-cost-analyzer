@@ -27,6 +27,16 @@ export const copilotEventLogStatusSchema = z.discriminatedUnion("status", [
 
 export type CopilotEventLogStatus = z.infer<typeof copilotEventLogStatusSchema>;
 
+// Step 10.19 (D12): the AI Credits a classic session's subagent runs added to
+// its total, for the Sessions view tooltip and the KPI tile. Unknown when any
+// run is (constraint 6). Absent: no run was read.
+export const subagentSpendSchema = z.object({
+  runs: z.number().int().nonnegative(),
+  costAiCredits: tokenCountSchema,
+});
+
+export type SubagentSpend = z.infer<typeof subagentSpendSchema>;
+
 export const sessionSchema = z.object({
   id: z.string(),
   mode: z.enum(["learn", "analyze"]),
@@ -36,6 +46,7 @@ export const sessionSchema = z.object({
   turns: z.array(turnSchema),
   turnCount: z.number(),
   costAiCredits: tokenCountSchema,
+  subagentSpend: subagentSpendSchema.optional(), // classic Copilot sessions only
   systemPrompt: z.array(systemPromptComponentSchema).optional(), // Analyze mode only
   toolInventory: z.array(toolInventoryEntrySchema).optional(), // Analyze mode only
   usageDataAvailable: z.boolean(),
