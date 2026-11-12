@@ -14,7 +14,7 @@ import {
   type McpUiHostCapabilities,
   type McpUiHostContext,
 } from "@modelcontextprotocol/ext-apps/app-bridge";
-import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
+import type { CallToolResult } from "@modelcontextprotocol/client";
 
 export interface ShowViewRequest {
   viewUrl: string;
