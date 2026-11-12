@@ -170,6 +170,35 @@
           "default": false,
           "order": 1,
           "markdownDescription": "%configuration.mcp.enabled.markdownDescription%"
+        },
+        "aiCreditsAnalyzer.monthlyAllowance.aiCredits": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "default": null,
+          "minimum": 0,
+          "scope": "application",
+          "order": 2,
+          "markdownDescription": "%configuration.monthlyAllowance.aiCredits.markdownDescription%"
+        },
+        "aiCreditsAnalyzer.monthlyAllowance.resetDay": {
+          "type": "integer",
+          "default": 1,
+          "minimum": 1,
+          "maximum": 28,
+          "scope": "application",
+          "order": 3,
+          "markdownDescription": "%configuration.monthlyAllowance.resetDay.markdownDescription%"
+        },
+        "aiCreditsAnalyzer.monthlyAllowance.warnAtPercent": {
+          "type": "integer",
+          "default": 80,
+          "minimum": 1,
+          "maximum": 100,
+          "scope": "application",
+          "order": 4,
+          "markdownDescription": "%configuration.monthlyAllowance.warnAtPercent.markdownDescription%"
         }
       }
     },

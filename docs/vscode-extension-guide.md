@@ -1,6 +1,6 @@
 # AI Credits Analyzer: extension guide
 
-**Last changed:** 2026-11-11 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-12 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 AI Credits Analyzer is a VS Code extension that shows where your GitHub
 Copilot Chat tokens and AI Credits go. It reads the logs Copilot Chat
@@ -435,10 +435,15 @@ refused.
 | Setting | Default | What it does |
 |---|---|---|
 | `aiCreditsAnalyzer.mcp.enabled` | `false` | Offers Copilot Chat a read-only MCP server over your Copilot Chat sessions. See [The MCP server](#the-mcp-server-for-copilot-agent-mode). |
+| `aiCreditsAnalyzer.monthlyAllowance.aiCredits` | not set | Your plan's monthly allowance in AI Credits. Empty or 0 turns the monthly gauge off. User settings only. |
+| `aiCreditsAnalyzer.monthlyAllowance.resetDay` | `1` | Day of the month (1 to 28) your billing period starts, in your local time zone. User settings only. |
+| `aiCreditsAnalyzer.monthlyAllowance.warnAtPercent` | `80` | Percentage of the allowance at which the gauge warns. User settings only. |
 
-That is the extension's only setting. It reads, but never writes, the
-Copilot Chat settings listed under
-[Fix buttons](#fix-buttons-and-what-they-change).
+The three monthly allowance settings are user-scope only: a workspace's
+`.vscode/settings.json` cannot set them. The extension reads, but never
+writes, them and the Copilot Chat settings listed under
+[Fix buttons](#fix-buttons-and-what-they-change). The gauge itself is not
+shown yet.
 
 ## The MCP server for Copilot agent mode
 

@@ -8,6 +8,7 @@ import { COMMAND_IDS, SESSIONS_GROUPING_CONTEXT_KEY, VIEW_IDS } from "./commands
 import { WATCHED_SETTING_IDS } from "./config/config-change-watcher.js";
 import { INTERNAL_COMMAND_IDS } from "./diagnostics/test-hooks.js";
 import { MCP_ENABLED_SETTING_ID, MCP_PROVIDER_ID } from "./mcp/mcp-server-definitions.js";
+import { ALLOWANCE_SETTING_IDS } from "./settings/allowance-settings.js";
 import { SESSION_CONTEXT_VALUE, SETUP_WARNING_CONTEXT_VALUE } from "./vscode/vscode-sidebar-views.js";
 
 const packageDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -37,7 +38,17 @@ interface ConfigurationSection {
   title?: string;
   properties: Record<
     string,
-    { type?: string; default?: unknown; scope?: string; markdownDescription?: string; order?: number; enum?: unknown[]; markdownEnumDescriptions?: string[] }
+    {
+      type?: string | string[];
+      default?: unknown;
+      scope?: string;
+      minimum?: number;
+      maximum?: number;
+      markdownDescription?: string;
+      order?: number;
+      enum?: unknown[];
+      markdownEnumDescriptions?: string[];
+    }
   >;
 }
 
@@ -234,8 +245,8 @@ describe("package.json contributions (vscode-extension.md §3.5)", () => {
     const configurations = [contributes.configuration ?? []].flat();
     const properties = configurations.flatMap((section) => Object.entries(section.properties));
 
-    // The MCP switch (step 10.8) is the only aiCreditsAnalyzer.* setting.
-    expect(properties.map(([id]) => id)).toEqual([MCP_ENABLED_SETTING_ID]);
+    // The MCP switch (step 10.8) and the monthly allowance trio (step 10.21).
+    expect(properties.map(([id]) => id)).toEqual([MCP_ENABLED_SETTING_ID, ...Object.values(ALLOWANCE_SETTING_IDS)]);
     for (const section of configurations) {
       expect(text(section.title)).toBe("AI Credits Analyzer");
     }
@@ -255,6 +266,38 @@ describe("package.json contributions (vscode-extension.md §3.5)", () => {
     expect(untrusted?.supported).toBe("limited");
     expect(untrusted?.restrictedConfigurations).toEqual([MCP_ENABLED_SETTING_ID]);
     expect(text(untrusted?.description)).toMatch(/MCP server/);
+  });
+
+  describe("monthly allowance settings (step 10.21)", () => {
+    const properties = Object.fromEntries([contributes.configuration ?? []].flat().flatMap((section) => Object.entries(section.properties)));
+    const ids = Object.values(ALLOWANCE_SETTING_IDS);
+
+    it("are user-scope only (application), so a workspace cannot set them", () => {
+      for (const id of ids) {
+        expect(properties[id]?.scope, id).toBe("application");
+      }
+    });
+
+    it("are not in restrictedConfigurations, which application scope makes redundant", () => {
+      const restricted = manifest.capabilities?.untrustedWorkspaces?.restrictedConfigurations ?? [];
+
+      for (const id of ids) {
+        expect(restricted, id).not.toContain(id);
+      }
+    });
+
+    it("carry minimums, maximums and defaults", () => {
+      expect(properties[ALLOWANCE_SETTING_IDS.aiCredits]).toMatchObject({ type: ["number", "null"], default: null, minimum: 0 });
+      expect(properties[ALLOWANCE_SETTING_IDS.resetDay]).toMatchObject({ type: "integer", default: 1, minimum: 1, maximum: 28 });
+      expect(properties[ALLOWANCE_SETTING_IDS.warnAtPercent]).toMatchObject({ type: "integer", default: 80, minimum: 1, maximum: 100 });
+    });
+
+    it("have a resolvable description, and the allowance's names its unit", () => {
+      for (const id of ids) {
+        expect(text(properties[id]?.markdownDescription).length, id).toBeGreaterThan(20);
+      }
+      expect(text(properties[ALLOWANCE_SETTING_IDS.aiCredits]?.markdownDescription)).toContain("AI Credits");
+    });
   });
 
   it("keeps the MCP server off by default, and says plainly what turning it on sends to the model", () => {
