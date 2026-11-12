@@ -1,0 +1,49 @@
+{
+  "v": 3,
+  "createdOnFiles": {
+    "v": 1,
+    "at": "2026-11-12T12:00:00Z"
+  },
+  "title": "Classic Copilot subagent credits mock-ups (SA0b)",
+  "launch": {
+    "view": "canvas"
+  },
+  "pages": [],
+  "boards": {
+    "TurnsTable.dc.html": {
+      "x": 0,
+      "y": 0,
+      "w": 1160,
+      "h": 1900,
+      "title": "1 \u00b7 Turns table: marker and tooltip"
+    },
+    "ExplanationPanel.dc.html": {
+      "x": 0,
+      "y": 2200,
+      "w": 1160,
+      "h": 5750,
+      "title": "2 \u00b7 Explanation panel: Subagents this turn"
+    },
+    "KpiAndSessionsTooltip.dc.html": {
+      "x": 0,
+      "y": 8250,
+      "w": 1160,
+      "h": 5460,
+      "title": "3 \u00b7 KPI tile sub-line and Sessions tree tooltip"
+    },
+    "TurnInspector.dc.html": {
+      "x": 0,
+      "y": 14010,
+      "w": 1160,
+      "h": 3250,
+      "title": "4 \u00b7 Turn inspector note"
+    },
+    "U1TurnDetail.dc.html": {
+      "x": 0,
+      "y": 17560,
+      "w": 1160,
+      "h": 6460,
+      "title": "5 \u00b7 MCP App U1 turn detail with runs"
+    }
+  }
+}
