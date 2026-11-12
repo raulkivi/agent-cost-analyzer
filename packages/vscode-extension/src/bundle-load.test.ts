@@ -152,9 +152,11 @@ module.exports = {
       treeViews.set(viewId, { provider: options.treeDataProvider, setVisible: (visible) => visibility.fire({ visible }) });
       return { onDidChangeVisibility: visibility.event, dispose() { treeViews.delete(viewId); } };
     },
-    createStatusBarItem(alignment, priority) {
+    createStatusBarItem(...args) {
+      // Both real overloads: (alignment, priority?) and (id, alignment, priority?).
+      const [id, alignment, priority] = typeof args[0] === "string" ? args : [undefined, ...args];
       const item = {
-        alignment, priority, text: "", visible: false,
+        id, alignment, priority, text: "", visible: false,
         show() { item.visible = true; }, hide() { item.visible = false; },
         dispose() { statusBarItems.splice(statusBarItems.indexOf(item), 1); },
       };
@@ -219,6 +221,7 @@ interface StubTreeView {
 }
 
 interface StubStatusBarItem {
+  id?: string;
   text: string;
   visible: boolean;
   command?: string;
@@ -523,7 +526,8 @@ describe("the built extension bundle", () => {
     it("registers every contributed command, both views and the status bar item", () => {
       expect([...vscode.__commands.keys()].sort()).toEqual(Object.values(COMMAND_IDS).sort());
       expect([...vscode.__treeViews.keys()].sort()).toEqual(Object.values(VIEW_IDS).sort());
-      expect(vscode.__statusBarItems).toHaveLength(1);
+      // Today's item and the monthly allowance gauge (step 10.21).
+      expect(vscode.__statusBarItems.map((item) => item.id)).toEqual([undefined, "aiCreditsAnalyzer.monthlyAllowance"]);
     });
 
     it("lists the session store's sessions in the Sessions view from the first read, with its cost unknown", async () => {

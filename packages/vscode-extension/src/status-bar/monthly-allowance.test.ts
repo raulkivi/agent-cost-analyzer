@@ -70,14 +70,14 @@ describe("buildMonthlyAllowance: the month's figures", () => {
       coverage: { known: 2, total: 2 },
       countedSinceKey: "2026-11-03",
     });
-    expect(view.text).toBe("$(dashboard) 312.40 of 1,000 AI Credits (31 %)");
+    expect(view.text).toBe("$(dashboard) 312.40 of 1,000 AI Credits");
   });
 
   it("never counts an unknown session as 0: the sum is a lower bound and the words say 'at least'", () => {
     const view = shown(build([session(IN, 300), session(LATER, 12.4), session(LATER, null)]));
 
     expect(view).toMatchObject({ used: 312.4, atLeast: true, percent: 31, remaining: 687.6, coverage: { known: 2, total: 3 } });
-    expect(view.text).toBe("$(dashboard) At least 312.40 of 1,000 AI Credits (31 %)");
+    expect(view.text).toBe("$(dashboard) at least 312.40 of 1,000 AI Credits");
     expect(view.tooltip).toContain("2 of 3 sessions this month have cost data");
     expect(view.tooltip).toContain("The total may be higher: sessions without cost data are not counted.");
   });
@@ -103,7 +103,7 @@ describe("buildMonthlyAllowance: the month's figures", () => {
     const view = shown(build([session(IN, 1.004), session(LATER, 2.003)], { settings: { ...SETTINGS, aiCredits: 12345.5 } }));
 
     expect(view.used).toBe(3.01);
-    expect(view.text).toBe("$(dashboard) 3.01 of 12,345.5 AI Credits (0 %)");
+    expect(view.text).toBe("$(dashboard) 3.01 of 12,345.5 AI Credits");
   });
 });
 
@@ -113,14 +113,14 @@ describe("buildMonthlyAllowance: levels, in words as well as colour", () => {
 
     expect(view.level).toBe("normal");
     expect(view.percent).toBe(79);
-    expect(view.text).toBe("$(dashboard) 799.00 of 1,000 AI Credits (79 %)");
+    expect(view.text).toBe("$(dashboard) 799.00 of 1,000 AI Credits");
   });
 
   it("is near at exactly the warning percentage (80 %), and says so", () => {
     const view = used(800);
 
     expect(view.level).toBe("near");
-    expect(view.text).toBe("$(warning) Near limit: 800.00 of 1,000 AI Credits (80 %)");
+    expect(view.text).toBe("$(warning) 800.00 of 1,000 AI Credits · near limit");
     expect(view.ariaLabel.startsWith("Near limit. ")).toBe(true);
   });
 
@@ -132,7 +132,7 @@ describe("buildMonthlyAllowance: levels, in words as well as colour", () => {
     const view = used(1000);
 
     expect(view).toMatchObject({ level: "over", percent: 100, remaining: 0 });
-    expect(view.text).toBe("$(error) Over: 1,000.00 of 1,000 AI Credits (100 %)");
+    expect(view.text).toBe("$(error) 1,000.00 of 1,000 AI Credits · over");
     expect(view.ariaLabel.startsWith("Over the allowance. ")).toBe(true);
   });
 
@@ -140,13 +140,13 @@ describe("buildMonthlyAllowance: levels, in words as well as colour", () => {
     const view = used(1042.1);
 
     expect(view).toMatchObject({ level: "over", percent: 104, remaining: 0 });
-    expect(view.text).toBe("$(error) Over: 1,042.10 of 1,000 AI Credits (104 %)");
+    expect(view.text).toBe("$(error) 1,042.10 of 1,000 AI Credits · over");
     expect(view.tooltip).toContain("No AI Credits remain");
   });
 
   it("keeps 'at least' in the near and over words when some sessions are unknown", () => {
-    expect(shown(build([session(IN, 812.4), session(LATER, null)])).text).toBe("$(warning) Near limit: at least 812.40 of 1,000 AI Credits (81 %)");
-    expect(shown(build([session(IN, 1042.1), session(LATER, null)])).text).toBe("$(error) Over: at least 1,042.10 of 1,000 AI Credits (104 %)");
+    expect(shown(build([session(IN, 812.4), session(LATER, null)])).text).toBe("$(warning) at least 812.40 of 1,000 AI Credits · near limit");
+    expect(shown(build([session(IN, 1042.1), session(LATER, null)])).text).toBe("$(error) at least 1,042.10 of 1,000 AI Credits · over");
   });
 
   it("warns at the user's percentage", () => {
@@ -205,7 +205,7 @@ describe("buildMonthlyAllowance: which sessions count", () => {
     const view = shown(build([session(IN, 100), session(LATER, { known: true, value: 50, estimated: true })]));
 
     expect(view).toMatchObject({ used: 100, atLeast: true, coverage: { known: 1, total: 2 } });
-    expect(view.text).toBe("$(dashboard) At least 100.00 of 1,000 AI Credits (10 %)");
+    expect(view.text).toBe("$(dashboard) at least 100.00 of 1,000 AI Credits");
   });
 
   it("never shows a session's title, which is logged text", () => {
@@ -220,6 +220,7 @@ describe("buildMonthlyAllowance: tooltip, screen-reader label and Sessions row",
     expect(shown(build([session(IN, 300), session(LATER, 12.4)])).tooltip).toBe(
       [
         "Monthly allowance: 1,000 AI Credits",
+        "31 % of the allowance used",
         "Up to 687.60 AI Credits remain",
         "19 days left",
         "Period started 2026-11-01",
@@ -256,11 +257,23 @@ describe("buildMonthlyAllowance: tooltip, screen-reader label and Sessions row",
     expect(shown(build([])).ariaLabel).toBe("No sessions this month, 1,000 AI Credits allowance, 19 days left. Open Sessions.");
   });
 
-  it("gives the Sessions view row its text", () => {
-    expect(used(312.4).rowText).toBe("This month: 312.40 of 1,000 AI Credits (31 %) · 19 days left");
-    expect(used(800).rowText).toBe("This month: Near limit: 800.00 of 1,000 AI Credits (80 %) · 19 days left");
-    expect(shown(build([session(IN, null)])).rowText).toBe("This month: AI Credits unknown · 19 days left");
-    expect(shown(build([])).rowText).toBe("This month: no sessions · 19 days left");
+  it("gives the Sessions view row its label (the state) and its muted description (days left)", () => {
+    const row = (view: MonthlyAllowanceView) => ({ label: shown(view).rowLabel, description: shown(view).rowDescription });
+
+    expect(row(used(312.4))).toEqual({ label: "This month: 312.40 of 1,000 AI Credits", description: "· 19 days left" });
+    expect(row(used(800)).label).toBe("This month: 800.00 of 1,000 AI Credits · near limit");
+    expect(row(used(1042.1)).label).toBe("This month: 1,042.10 of 1,000 AI Credits · over");
+    expect(row(build([session(IN, null)])).label).toBe("This month: AI Credits unknown");
+    expect(row(build([]))).toEqual({ label: "This month: no sessions", description: "· 19 days left" });
+  });
+
+  it("keeps the percentage out of the bar text and the row, in the tooltip and the label", () => {
+    const view = used(812.4);
+
+    expect(view.text).not.toContain("%");
+    expect(view.rowLabel).not.toContain("%");
+    expect(view.tooltip).toContain("81 % of the allowance used");
+    expect(view.ariaLabel).toContain("81 percent");
   });
 });
 
@@ -268,9 +281,10 @@ describe("buildMonthlyAllowance: translation (vscode-extension.md §3.5 Localiza
   it("translates every text piece but keeps numbers and the codicon outside the message", () => {
     const view = shown(build([session(IN, 812.4), session(LATER, null)], { t: T }));
 
-    expect(view.text).toBe("$(warning) NEAR LIMIT: AT LEAST 812.40 OF 1,000 AI CREDITS (81 %)");
+    expect(view.text).toBe("$(warning) AT LEAST 812.40 OF 1,000 AI CREDITS · NEAR LIMIT");
     expect(view.tooltip.split("\n")).toEqual([
       "MONTHLY ALLOWANCE: 1,000 AI CREDITS",
+      "AT LEAST 81 % OF THE ALLOWANCE USED",
       "UP TO 187.60 AI CREDITS REMAIN",
       "19 DAYS LEFT",
       "PERIOD STARTED 2026-11-01",
@@ -282,7 +296,8 @@ describe("buildMonthlyAllowance: translation (vscode-extension.md §3.5 Localiza
     expect(view.ariaLabel).toBe(
       "NEAR LIMIT. AI CREDITS THIS MONTH: AT LEAST 812.40 OF 1,000 ALLOWANCE, 81 PERCENT, 19 DAYS LEFT, 1 OF 2 SESSIONS THIS MONTH HAVE COST DATA. OPEN SESSIONS.",
     );
-    expect(view.rowText).toBe("THIS MONTH: NEAR LIMIT: AT LEAST 812.40 OF 1,000 AI CREDITS (81 %) · 19 DAYS LEFT");
+    expect(view.rowLabel).toBe("THIS MONTH: AT LEAST 812.40 OF 1,000 AI CREDITS · NEAR LIMIT");
+    expect(view.rowDescription).toBe("· 19 DAYS LEFT");
   });
 
   it("translates the unknown and no-sessions states", () => {

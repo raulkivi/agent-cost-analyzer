@@ -42,8 +42,10 @@ export interface MonthlyAllowance {
   text: string;
   tooltip: string;
   ariaLabel: string;
-  // The Sessions view header row.
-  rowText: string;
+  // The Sessions view header row: the state as the label, the days left as
+  // the muted description.
+  rowLabel: string;
+  rowDescription: string;
 }
 
 export type MonthlyAllowanceView = HiddenAllowance | MonthlyAllowance;
@@ -79,17 +81,17 @@ function levelOf(percentExact: number, warnAtPercent: number): AllowanceLevel {
 }
 
 // Whole messages per level and bound, so a translator never assembles
-// "at least" from fragments.
-function knownFigure(level: AllowanceLevel, atLeast: boolean, used: string, allowance: string, percent: number, t: Translate): string {
+// "at least" from fragments. The figure comes first and the level word last,
+// so truncation keeps the figure (owner decision 1, 2026-11-13); the
+// percentage lives in the tooltip and the aria label only (decision 3).
+function knownFigure(level: AllowanceLevel, atLeast: boolean, used: string, allowance: string, t: Translate): string {
   if (level === "over") {
-    return atLeast ? t("Over: at least {0} of {1} AI Credits ({2} %)", used, allowance, percent) : t("Over: {0} of {1} AI Credits ({2} %)", used, allowance, percent);
+    return atLeast ? t("at least {0} of {1} AI Credits · over", used, allowance) : t("{0} of {1} AI Credits · over", used, allowance);
   }
   if (level === "near") {
-    return atLeast
-      ? t("Near limit: at least {0} of {1} AI Credits ({2} %)", used, allowance, percent)
-      : t("Near limit: {0} of {1} AI Credits ({2} %)", used, allowance, percent);
+    return atLeast ? t("at least {0} of {1} AI Credits · near limit", used, allowance) : t("{0} of {1} AI Credits · near limit", used, allowance);
   }
-  return atLeast ? t("At least {0} of {1} AI Credits ({2} %)", used, allowance, percent) : t("{0} of {1} AI Credits ({2} %)", used, allowance, percent);
+  return atLeast ? t("at least {0} of {1} AI Credits", used, allowance) : t("{0} of {1} AI Credits", used, allowance);
 }
 
 function levelSentence(level: AllowanceLevel, t: Translate): string {
@@ -146,19 +148,19 @@ export function buildMonthlyAllowance({ sessions, now, timeZone, settings, t = i
   const usedText = used === null ? "" : CENTS.format(used);
 
   let figure: string;
-  let rowText: string;
+  let rowLabel: string;
   let ariaMain: string;
   if (total === 0) {
     figure = t("No sessions this month");
-    rowText = t("This month: no sessions · {0}", days);
+    rowLabel = t("This month: no sessions");
     ariaMain = t("No sessions this month, {0} AI Credits allowance, {1}. Open Sessions.", allowanceText, days);
   } else if (used === null || percent === null) {
     figure = t("AI Credits this month: unknown");
-    rowText = t("This month: AI Credits unknown · {0}", days);
+    rowLabel = t("This month: AI Credits unknown");
     ariaMain = t("AI Credits this month: unknown, {0} allowance, {1}, {2}. Open Sessions.", allowanceText, days, coverage);
   } else {
-    figure = knownFigure(level, atLeast, usedText, allowanceText, percent, t);
-    rowText = t("This month: {0} · {1}", figure, days);
+    figure = knownFigure(level, atLeast, usedText, allowanceText, t);
+    rowLabel = t("This month: {0}", figure);
     ariaMain = atLeast
       ? t("AI Credits this month: at least {0} of {1} allowance, {2} percent, {3}, {4}. Open Sessions.", usedText, allowanceText, percent, days, coverage)
       : t("AI Credits this month: {0} of {1} allowance, {2} percent, {3}, {4}. Open Sessions.", usedText, allowanceText, percent, days, coverage);
@@ -167,6 +169,7 @@ export function buildMonthlyAllowance({ sessions, now, timeZone, settings, t = i
   const countedSinceKey = inPeriod.length === 0 ? undefined : dayKeyOf(new Date(oldest), timeZone);
   const tooltip = [
     t("Monthly allowance: {0} AI Credits", allowanceText),
+    percent === null ? undefined : atLeast ? t("At least {0} % of the allowance used", percent) : t("{0} % of the allowance used", percent),
     remaining === null ? undefined : remaining > 0 ? t("Up to {0} AI Credits remain", CENTS.format(remaining)) : t("No AI Credits remain"),
     days,
     t("Period started {0}", period.startKey),
@@ -191,6 +194,7 @@ export function buildMonthlyAllowance({ sessions, now, timeZone, settings, t = i
     text: `${CODICONS[level]} ${figure}`,
     tooltip: tooltip.join("\n"),
     ariaLabel: `${levelSentence(level, t)}${ariaMain}`,
-    rowText,
+    rowLabel,
+    rowDescription: t("· {0}", days),
   };
 }

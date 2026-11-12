@@ -30,4 +30,5 @@ export const VIEW_IDS = {
 
 // VS Code registers `<view id>.focus` for every contributed view: it reveals
 // the view and opens its container.
+export const FOCUS_SESSIONS_VIEW_COMMAND = `${VIEW_IDS.sessions}.focus`;
 export const FOCUS_SETUP_VIEW_COMMAND = `${VIEW_IDS.setup}.focus`;
