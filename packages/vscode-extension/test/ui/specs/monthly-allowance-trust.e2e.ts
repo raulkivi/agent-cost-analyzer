@@ -19,9 +19,12 @@ interface TreeNode {
   label?: string;
 }
 
+function sessionsTree(): Promise<TreeNode[]> {
+  return host.hook<TreeNode[]>(INTERNAL_COMMAND_IDS.sessionsTree);
+}
+
 async function allowanceRow(): Promise<TreeNode | undefined> {
-  const tree = await host.hook<TreeNode[]>(INTERNAL_COMMAND_IDS.sessionsTree);
-  return tree.find((node) => node.kind === "message" && node.id === "monthly-allowance");
+  return (await sessionsTree()).find((node) => node.kind === "message" && node.id === "monthly-allowance");
 }
 
 const fixture = parseUiFixture(process.env[TRUST_FIXTURE_ENV], TRUST_FIXTURE_ENV);
@@ -48,7 +51,11 @@ suite("Monthly allowance in a Restricted workspace (step 10.21, MA9)", () => {
 
     // No user value: no gauge, however large the folder's value. (Copilot Chat is not enabled in
     // this launch, so the status bar says "setup needed"; the Sessions row is the gauge's other face.)
-    await browser.pause(3000);
+    // Wait for the sessions to be read first: before that the row is absent anyway, which proves nothing.
+    await browser.waitUntil(async () => (await sessionsTree()).some((node) => node.kind === "group"), {
+      timeout: 30_000,
+      timeoutMsg: "the Sessions tree never listed the fixture's sessions",
+    });
     expect(await gaugeDom()).toBeUndefined();
     expect(await allowanceRow()).toBeUndefined();
 
