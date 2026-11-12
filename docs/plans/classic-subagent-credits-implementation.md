@@ -211,7 +211,7 @@ Every task writes its failing test first (architecture.md §11.4). No local mode
 
 | ID | Work | Exit criterion | Complexity | Model | Depends on |
 |---|---|---|---|---|---|
-| SA0 | **Re-measure.** Read-only script over the owner's `Code` and `Code - Insiders` user data (both `workspaceStorage` and `globalStorage` debug-log folders): counts and sums only, as design §1.1. Confirm the file layout and field names still match design §2. | A findings note in this plan with today's baseline (missing AI Credits per session); layout confirmed or §4 changed | low | Sonnet (script), owner (run) | — |
+| SA0 | **Re-measure.** **Done 2026-11-12 (§14).** Read-only script over the owner's `Code` and `Code - Insiders` user data (both `workspaceStorage` and `globalStorage` debug-log folders): counts and sums only, as design §1.1. Confirm the file layout and field names still match design §2. | A findings note in this plan with today's baseline (missing AI Credits per session); layout confirmed or §4 changed | low | Sonnet (script), owner (run) | — |
 | SA0b | **Mock-ups.** Turns table marker and tooltip, Explanation panel block, KPI sub-line, Sessions view tooltip, U1 turn detail; states: known, 0.00 run, unknown run, matched by time; light, dark, High Contrast; 320 px and 640 px. In `docs/plans/mockups/classic-subagents/`. | Owner approves before SA13–SA15 | medium | Sonnet (frontend-design skill) + owner | — |
 | SA1 | **Threat-model rows** (§8) added to `docs/threat-model.md` §4 before any reader code. | Rows merged | low | Haiku | — |
 | SA2 | **Fixtures** (§4.9) for the server. | Fixture files exist; a test reads each with `readMainJsonlFile` and finds the expected event counts | medium | Sonnet | SA0 |
@@ -311,9 +311,34 @@ On the owner's machine, the classic sessions' AI Credits rise by exactly SA0's m
 
 ## 13. Not verified
 
-- That Copilot Chat still writes subagent files and `child_session_ref` in today's version, and in the `globalStorage` folder for empty windows (SA0).
-- How many classic subagent logs remain in the owner's retained logs today (SA0).
+- That Copilot Chat 0.74 still writes subagent files: the newest classic session (2026-11-10, 0.74) ran no subagent. Versions 0.60–0.69 do (§14).
+- Subagent files in the `globalStorage` folder for empty windows: its one session ran no subagent (§14).
 - Whether Agent Host subagents ran on other models than their turn's (D14).
 - How the replay currently treats measured figures of Agent Host turns that include subagent calls (read only for classic; checked in SA11).
 - The exact list of model-keyed consumers in §4.5 comes from a search of `services/`; `packages/web` charts that group by model client-side were not searched.
 - That `MAX_SUBAGENT_FILES_PER_SESSION` = 200 is a sensible cap (design §1.1 saw at most 3 per session).
+
+## 14. SA0 findings (2026-11-12)
+
+Script: `packages/server/scripts/measure-subagent-spend.mts` (pure helpers in `subagent-spend-lib.mts`, tested). Run from the repo root: `npx tsx packages/server/scripts/measure-subagent-spend.mts [--json] [--user-data <dir>]`. Output is counts, sums, session ids, model names and dates only.
+
+- **Layout:** unchanged from design §2. `runSubagent-<agent>-<id>.jsonl` and `searchSubagent-<id>.jsonl` sit next to `main.jsonl`; `child_session_ref.attrs.childLogFile`; `llm_request` attrs `copilotUsageNanoAiu`, `model`, `inputTokens`, `outputTokens`, `debugName`. §4 needs no change.
+- **Where:** `Code` has no debug logs; all are in `Code - Insiders` (28 `workspaceStorage` roots, 1 `globalStorage` root).
+- **Sessions:** 259 with `main.jsonl`; 13 have subagent files (max 3 per session); 17 files: 12 `runSubagent`, 5 `searchSubagent`; 191 requests, all with numeric AI Credits.
+- **Baseline:** 177.64 AI Credits missing, all from `runSubagent`; `searchSubagent` runs are 0.00 (`copilot-search-a`). Main totals count 6856.53. Per-session figures equal design §1.1.
+- **Edge cases seen:** dangling refs 0, orphan files 0, nested refs 0, subagent-named requests inside `main.jsonl` 0.
+- **Models:** `claude-haiku-4.5` 155 requests, `gpt-5.6-luna` 21, `copilot-search-a` 15.
+- **Versions:** every classic session with a subagent tool call has a ref and a file (Aug–Sep 2026, Copilot Chat 0.60–0.69). Sessions 2026-03 to 2026-07 (0.43–0.60) have none. Newest subagent file 2026-09-29; retention removed none since 2026-11-05.
+- **D15:** not triggered; logs with the gap remain.
+
+| Session | Date | Counted | Missing | Runs |
+|---|---|---|---|---|
+| a3aca176 | 2026-09-21 | 46.53 | 54.65 | 3 run |
+| ec9857ae | 2026-09-12 | 99.42 | 42.06 | 2 run |
+| 94dfedf7 | 2026-09-23 | 83.08 | 29.78 | 2 run |
+| 739434f5 | 2026-09-21 | 172.54 | 23.83 | 1 run |
+| f98af48a | 2026-09-29 | 231.22 | 13.59 | 1 run |
+| 69477d27 | 2026-09-21 | 38.58 | 8.33 | 1 run |
+| 466d29f8 | 2026-09-12 | 26.69 | 4.03 | 1 run |
+| 8a80d1cf | 2026-09-12 | 9.05 | 1.38 | 1 run |
+| 19e7f1ab, 4e20fad3, 65c7bd11, 2dc18e24, c921b7b9 | 2026-08-08/09 | 44.99–460.69 | 0.00 | 1 search each |
