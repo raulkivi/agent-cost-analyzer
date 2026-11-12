@@ -22,7 +22,8 @@ const LABEL_PATTERN = /^(runSubagent-[A-Za-z0-9_ -]{1,64}|searchSubagent)$/;
 const AGENT_NAME_PATTERN = new RegExp(`^[A-Za-z0-9_ .-]{1,${MAX_AGENT_NAME_LENGTH}}$`);
 const MODEL_PATTERN = new RegExp(`^[A-Za-z0-9_.:/@+-]{1,${MAX_SUBAGENT_MODEL_LENGTH}}$`);
 
-export const NESTED_SUBAGENTS_REASON = "nested subagents are not read";
+export const NESTED_SUBAGENTS_REASON =
+  "A subagent run started another subagent run, which is not read, so the AI Credits it used are unknown.";
 export const SUBAGENT_LOG_INCOMPLETE_REASON =
   "The subagent log has lines that could not be parsed, so its figures may leave requests out.";
 export const SUBAGENT_REQUEST_UNUSABLE_REASON =

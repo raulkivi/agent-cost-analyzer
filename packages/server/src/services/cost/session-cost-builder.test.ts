@@ -274,6 +274,25 @@ describe("buildSessionCost", () => {
       expect(cost.cost.priced.knownTurns).toBe(0);
     });
   });
+
+  describe("subagent runs (step 10.19)", () => {
+    it("summarises the runs and their AI Credits from the session's subagent spend", () => {
+      const withSpend = session([turn(0)], { subagentSpend: { runs: 3, costAiCredits: k(54.65) } });
+      const cost = buildSessionCost(withSpend);
+      expect(sessionCostSchema.parse(cost)).toEqual(cost);
+      expect(cost.subagents).toEqual({ runs: 3, aiCredits: 54.65 });
+    });
+
+    it("keeps unknown AI Credits null with the reason, never 0 (constraint 6)", () => {
+      const reason = "The log of a subagent run is missing.";
+      const cost = buildSessionCost(session([turn(0)], { subagentSpend: { runs: 1, costAiCredits: unavailableTokenCount(reason) } }));
+      expect(cost.subagents).toEqual({ runs: 1, aiCredits: null, unavailableReason: reason });
+    });
+
+    it("leaves the summary out when no run was read", () => {
+      expect(buildSessionCost(session([turn(0)]))).not.toHaveProperty("subagents");
+    });
+  });
 });
 
 // Step 10.19 (classic subagents plan §4.5): byModel groups a turn's cost

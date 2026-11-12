@@ -38,6 +38,10 @@ export const COST_BASIS_INSTRUCTIONS = [
 export const REPLAY_INSTRUCTIONS =
   "Replay on another model: replay_session (one model, per turn) and compare_models_for_session (several, totals) run a session's own request trace through another model's caching rules and prices. Their figures are Simulated, assuming the same conversation and token counts: say \"would have cost about\". Check selfCheck (the replay on the session's own model against its log) and coverage (turns not replayed, with reasons) before relying on them.";
 
+// Step 10.19: classic Copilot Chat subagent runs, the same for both products.
+export const SUBAGENT_INSTRUCTIONS =
+  "Subagent runs: in a VS Code Copilot Chat session, a turn's tokens and AI Credits include the subagent runs it started. get_turn lists them in usage.subagents and gives the main agent's own figures in usage.ownUsage; get_session_cost's `subagents` totals the runs. Replay covers the main agent only: coverage.subagentRuns counts the runs it leaves out.";
+
 export const STANDALONE_MCP_IDENTITY: McpIdentity = {
   name: "agent-cost-analyzer",
   title: "Agent Cost Analyzer",
@@ -51,6 +55,7 @@ export const STANDALONE_MCP_IDENTITY: McpIdentity = {
     "Cost by repository and project: list_repositories and list_projects first, then get_project_cost or get_repository_cost (over time, by vendor and model) or compare_costs (several side by side), then explain_cost_change (usage, price and mix effects) and get_price_changes for the price changes behind it.",
     COST_BASIS_INSTRUCTIONS,
     REPLAY_INSTRUCTIONS,
+    SUBAGENT_INSTRUCTIONS,
     "Billing: get_statement reads a project's statement for a period; statements are issued only in the app, never by a tool. estimate_cost gives the cost of planned work as a p50–p90 range at today's prices, never one number; with `model`, on that model, simulated by replaying the project's sessions.",
   ].join("\n\n"),
   logSourcesDescription: "VS Code Copilot Chat, Claude Code CLI, pi, mitmproxy captures",

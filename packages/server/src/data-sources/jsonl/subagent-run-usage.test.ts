@@ -91,8 +91,11 @@ describe("extractSubagentRunUsage over the SA2 fixtures", () => {
     );
 
     for (const figure of [run.uncachedInput, run.cacheRead, run.output, run.costAiCredits]) {
-      expect(figure).toEqual({ known: false, reason: "nested subagents are not read" });
+      expect(figure).toEqual({ known: false, reason: NESTED_SUBAGENTS_REASON });
     }
+    expect(NESTED_SUBAGENTS_REASON).toBe(
+      "A subagent run started another subagent run, which is not read, so the AI Credits it used are unknown.",
+    );
     expect(subagentRunUsageSchema.safeParse(run).success).toBe(true);
   });
 

@@ -43,6 +43,32 @@ describe("describeTurnUsage", () => {
   });
 });
 
+describe("describeTurnUsage with subagent runs (step 10.19)", () => {
+  const run = (costAiCredits: TokenCount) => ({ costAiCredits });
+  const plain = "This turn sent 18 new input tokens, producing 535 output tokens using gpt-6-luna";
+
+  it("names the AI Credits and the number of subagent runs", () => {
+    expect(describeTurnUsage({ ...base, subagents: [run(known(40)), run(known(2.5))] })).toBe(
+      `${plain}, incl. 42.5 AI Credits from 2 subagent runs.`,
+    );
+  });
+
+  it("uses the singular for one run", () => {
+    expect(describeTurnUsage({ ...base, subagents: [run(known(42.06))] })).toBe(`${plain}, incl. 42.06 AI Credits from 1 subagent run.`);
+  });
+
+  it("names the runs without a figure when any run's AI Credits are unknown, never 0", () => {
+    const sentence = describeTurnUsage({ ...base, subagents: [run(known(40)), run(unknown)] });
+    expect(sentence).toBe(`${plain}, incl. 2 subagent runs (their AI Credits are unknown).`);
+    expect(sentence).not.toMatch(/\b0 AI Credits/);
+  });
+
+  it("is unchanged without runs", () => {
+    expect(describeTurnUsage({ ...base, subagents: [] })).toBe(`${plain}.`);
+    expect(describeTurnUsage(base)).toBe(`${plain}.`);
+  });
+});
+
 describe("describeExchangeUsage", () => {
   it("keeps the exchange wording with proper plurals", () => {
     expect(describeExchangeUsage({ ...base, uncachedInput: known(1) })).toBe(

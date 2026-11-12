@@ -80,6 +80,17 @@ function contextOverhead(session: Session): SessionCost["contextOverhead"] {
   return overhead;
 }
 
+function subagentSummary(session: Session): Pick<SessionCost, "subagents"> {
+  const spend = session.subagentSpend;
+  if (!spend) return {};
+  const { costAiCredits } = spend;
+  return {
+    subagents: costAiCredits.known
+      ? { runs: spend.runs, aiCredits: costAiCredits.value }
+      : { runs: spend.runs, aiCredits: null, unavailableReason: costAiCredits.reason },
+  };
+}
+
 export function buildSessionCost(session: Session, options: SessionCostOptions = {}, context: SessionCostContext = {}): SessionCost {
   const providerId = context.providerId ?? session.providerId ?? "";
   const { turns: rows } = buildInsightRows([{ providerId, providerLabel: "", sessions: [session] }], context.attributor, context.pricer);
@@ -130,6 +141,7 @@ export function buildSessionCost(session: Session, options: SessionCostOptions =
     topTurns,
     events: session.turns.flatMap((turn) => (turn.triggeredEvent ? [{ turnIndex: turn.index, event: turn.triggeredEvent }] : [])),
     contextOverhead: contextOverhead(session),
+    ...subagentSummary(session),
     unavailableReasons: unavailableReasons(session),
   };
 }
