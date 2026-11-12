@@ -1,0 +1,98 @@
+{
+  "v": 3,
+  "createdOnFiles": {
+    "v": 1,
+    "at": "2026-11-13T09:00:00Z"
+  },
+  "title": "Savings report mock-ups (SR11)",
+  "launch": {
+    "view": "canvas"
+  },
+  "pages": [],
+  "boards": {
+    "Dashboard.dc.html": {
+      "x": 0,
+      "y": 0,
+      "w": 1488,
+      "h": 1390,
+      "title": "1 · Standalone Savings tab: ranked changes per currency, range and \"up to\" amounts, coverage, Simulated section, Not analysed"
+    },
+    "Detail.dc.html": {
+      "x": 0,
+      "y": 1510,
+      "w": 1488,
+      "h": 1260,
+      "title": "2 · Detail of \"Tools loaded but never used\": amount, how the range is set, evidence, inferred grouping, per-tool estimates, action text with Copy, sessions, price versions"
+    },
+    "DetailMore.dc.html": {
+      "x": 0,
+      "y": 2890,
+      "w": 1560,
+      "h": 1160,
+      "title": "3 · Detail variants: Claude Code idle cache with the 1-hour sentence, upper bound with unknown requests, Simulated with replay checks"
+    },
+    "States.dc.html": {
+      "x": 0,
+      "y": 4170,
+      "w": 1488,
+      "h": 2020,
+      "title": "4 · States: loading with Cancel, cancelled, empty window, nothing found, error with Retry, missing trace or inventory, every amount unknown"
+    },
+    "Narrow.dc.html": {
+      "x": 0,
+      "y": 6310,
+      "w": 1520,
+      "h": 1480,
+      "title": "5 · Standalone Savings tab at 320 px: list, Simulated and Not analysed, detail"
+    },
+    "VsCodeDark.dc.html": {
+      "x": 0,
+      "y": 7910,
+      "w": 1408,
+      "h": 1310,
+      "title": "6 · VS Code panel, Dark Modern, wide: Copilot sessions only, list and detail"
+    },
+    "VsCodeLight.dc.html": {
+      "x": 0,
+      "y": 9340,
+      "w": 1408,
+      "h": 1310,
+      "title": "7 · VS Code panel, Light Modern, wide"
+    },
+    "VsCodeHC.dc.html": {
+      "x": 0,
+      "y": 10770,
+      "w": 1408,
+      "h": 1310,
+      "title": "8 · VS Code panel, Dark High Contrast, wide: borders, patterns and words carry meaning, not colour"
+    },
+    "VsCodeNarrow.dc.html": {
+      "x": 0,
+      "y": 12200,
+      "w": 2200,
+      "h": 1740,
+      "title": "9 · VS Code panel at 320 px in Dark Modern, Light Modern and High Contrast: list and detail"
+    },
+    "VsCodeStates.dc.html": {
+      "x": 0,
+      "y": 14060,
+      "w": 1760,
+      "h": 1300,
+      "title": "10 · VS Code panel states (Dark Modern): loading with Cancel, empty, error with Retry, every amount unknown, nothing found, cancelled"
+    }
+  },
+  "order": [
+    "Dashboard.dc.html",
+    "Detail.dc.html",
+    "DetailMore.dc.html",
+    "States.dc.html",
+    "Narrow.dc.html",
+    "VsCodeDark.dc.html",
+    "VsCodeLight.dc.html",
+    "VsCodeHC.dc.html",
+    "VsCodeNarrow.dc.html",
+    "VsCodeStates.dc.html"
+  ],
+  "notes": {},
+  "designSystems": []
+}
