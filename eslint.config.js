@@ -40,7 +40,7 @@ export default tseslint.config(
             "packages/vscode-extension/wdio.record.conf.mts",
           ],
           // Config and script files outside any tsconfig: a handful, by design.
-          maximumDefaultProjectFileMatchCount_THIS_WILL_SLOW_DOWN_LINTING: 21,
+          maximumDefaultProjectFileMatchCount_THIS_WILL_SLOW_DOWN_LINTING: 24,
         },
         tsconfigRootDir: import.meta.dirname,
       },
