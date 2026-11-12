@@ -130,17 +130,17 @@ TDD in every task: the failing test is written and seen red first (CLAUDE.md, ar
 
 | ID | Work | Exit criterion | Complexity | Model | Depends on |
 |---|---|---|---|---|---|
-| MA0 | Spike, no product code: (a) read an `application` setting in a remote (`extensionKind: workspace`) window and in a Restricted workspace; (b) which `ThemeColor` ids a status-bar item may use (error and warning); (c) two items' order and truncation; (d) fixture session timestamps can be seeded "now" for wdio (see MA9). Notes in this file. | Each of (a) to (d) answered with how it was checked; D-recommendations updated | low | Sonnet | none |
+| MA0 | **Done 2026-11-12 (§13).** Spike, no product code: (a) read an `application` setting in a remote (`extensionKind: workspace`) window and in a Restricted workspace; (b) which `ThemeColor` ids a status-bar item may use (error and warning); (c) two items' order and truncation; (d) fixture session timestamps can be seeded "now" for wdio (see MA9). Notes in this file. | Each of (a) to (d) answered with how it was checked; D-recommendations updated | low | Sonnet | none |
 | MA0b | Mock-up boards (§5) | Boards drawn; owner approval recorded here | medium | Sonnet (frontend-design skill) + owner | MA0 |
 | MA1 | `time/billing-period.ts` + tests: period for a reset day (1 to 28), month and year boundaries, February, DST changes, a non-default zone, `daysLeft` on the first and last day. Red first | Tests green; no `vscode` import | medium | Sonnet | D1 |
 | MA2 | Extract `session-credits.ts`; `status-bar/monthly-allowance.ts` + tests: known-only sum, unknown never 0, "at least" wording, all-unknown, no sessions, exactly at the allowance, over, near threshold edges (79.9, 80, 100 percent), allowance not set or invalid, sessions at the period edges, a session without `startedAt`, an `estimated` AI Credits value (decide per D7 note), translation through `Translate` | Tests green; existing `status-bar-model.test.ts` unchanged and green | high | Opus | MA1 |
 | MA3 | Contribute the settings in `package.json` and `package.nls.json`; `settings/allowance-settings.ts` + tests (non-number, NaN, negative, string, 0); manifest test: scope `application`, minimum, defaults, nls keys present | `manifest.test.ts` and the reader tests green; the setting is absent from the workspace-settable list | medium | Sonnet | MA0, D1, D4 |
 | MA4 | Controller wiring: `SidebarControllerOptions.allowance` (a getter, so `sidebar-controller.ts` stays free of `vscode`), `monthlyAllowance()` with memoization, `settingsChanged()`; settings watcher in `config-change-watcher.ts`; wiring in `composition.ts` | Tests: a setting change re-renders without calling `listSessions` or `relistLogSources`; a refresh recomputes; a failing getter is logged through `onInternalError` and hides the gauge | medium | Sonnet | MA2, MA3 |
-| MA5 | Status-bar adapter: second item in `vscode/vscode-status-bar.ts` (text, tooltip, `accessibilityInformation`, background for near and over), hidden when not set | `vscode-status-bar.test.ts` extended and green: each level's text, label, background, hide, dispose, and that the colour is never the only signal | medium | Sonnet | MA0b approved, MA4 |
+| MA5 | Status-bar adapter: second item in `vscode/vscode-status-bar.ts`, created with its own id and name (`createStatusBarItem("monthlyAllowance", Left, 99)` plus `name`; add the 3-argument overload to `VscodeStatusBarApi`, §13 (c)) (text, tooltip, `accessibilityInformation`, background for near and over), hidden when not set | `vscode-status-bar.test.ts` extended and green: each level's text, label, background, hide, dispose, and that the colour is never the only signal | medium | Sonnet | MA0b approved, MA4 |
 | MA6 | Sessions view header row in `sessions-tree-model.ts` (and its grouped variant `sessions-by-repository-tree-model.ts`) | Tree-model tests green: row first, hidden when not set, with the load-error tree and with the empty tree | low | Sonnet | MA0b approved, MA4 |
 | MA7 | Command "Set Monthly AI Credits Allowance" in `commands/command-ids.ts` and the command registry, opening `@id:aiCreditsAnalyzer.monthlyAllowance.aiCredits` in the Settings editor (it writes nothing); `package.json` command and title in nls | Command test green; manifest test lists it | low | Haiku | MA3 |
 | MA8 | Performance test: 5,000 synthetic summaries through `monthlyAllowance()`, with a counting `SidebarSources` | Under the budget in §3.6; zero extra source calls per setting change; if over, the boundary-instant optimisation lands | medium | Sonnet | MA4 |
-| MA9 | wdio specs (see §7) and the fixture seed | Specs green in the UI suite and in CI (`npm run test:ui:vscode`) | medium | Sonnet | MA5, MA6, MA7 |
+| MA9 | wdio specs (see §7) and the fixture seed; a `now` parameter for `catalogRows` and `writeCopilotCliAgentHostStores`, threaded from `createUiFixture`; the reset day derived from the run date (§13 (d)) | Specs green in the UI suite and in CI (`npm run test:ui:vscode`) | medium | Sonnet | MA5, MA6, MA7 |
 | MA10 | Threat-model rows (§8) | Rows written, test names cited | low | Haiku | MA3, MA5 |
 | MA11 | Docs (§9) | Each listed doc updated, headers set, doc tests green (`docs.test.ts`) | low | Haiku | MA5, MA6, MA7 |
 | MA12 | Review: code review, accessibility pass, full test suite, headers (`npm run headers:fix`), bundle-load tests | One exit criterion (§12) met; `main` commit per CLAUDE.md | medium | Opus | MA8 to MA11 |
@@ -213,3 +213,23 @@ The fixture's sessions need start times inside the current period when the run h
 ## 12. Exit criterion
 
 With `aiCreditsAnalyzer.monthlyAllowance.aiCredits` set in user settings, the extension shows month-to-date AI Credits against it in the status bar and the Sessions view, with days left, coverage and a words-first warning at the threshold, never counting an unknown session as 0, and with no extra log read per refresh or setting change; the unit tests, the new wdio specs and the full suite pass, the docs and threat-model rows are updated, and the owner approved the mock-up.
+
+## 13. MA0 findings (2026-11-12)
+
+Answered from VS Code source (`microsoft/vscode` `main`, read 2026-11-12) and `@types/vscode` 1.146.0. No live remote window was run.
+
+- **(a) `application` setting.**
+  - Remote window: the extension host gets configuration from the renderer (`mainThreadConfiguration.ts` → `$initializeConfiguration`). `application` values come from the local user's settings; the remote settings file is parsed with `REMOTE_MACHINE_SCOPES`, which has no `application`. Source reading only.
+  - Restricted workspace: `WORKSPACE_SCOPES` excludes `application`, so a workspace can't set it; user settings aren't filtered by trust.
+  - `restrictedConfigurations` listing is redundant for an `application` setting (§3.7 stands). The MA9 Restricted-workspace spec still proves it end to end.
+- **(b) Background colours.** Only `statusBarItem.errorBackground` and `statusBarItem.warningBackground`; any other id is dropped at runtime (`extHostStatusBar.ts`). The foreground follows automatically.
+- **(c) Order and truncation.**
+  - Left items sort by descending priority, then insertion order: today's item (100), then the gauge (99).
+  - Each item is capped at 40vw and ellipsised; the lowest-priority left item clips first. "Near limit: 812.40 of 1,000 AI Credits" is about 330 px. Keep the figure early; full detail in tooltip and `ariaLabel`.
+  - Gap: id-less items share one entry id per extension, so hide-toggling hides both and the context menu shows two identical entries. The gauge gets its own id and name (MA5). Today's item keeps no id, so users who hid it stay as they are.
+- **(d) Fixture timestamps.**
+  - `createUiFixture(rootDir, { now })` stamps seeded session N at `now − N h`, at run time in the wdio launcher.
+  - Agent Host and Copilot CLI fixture sessions use a fixed start (`catalogRows()` in `copilot-cli-fixtures.ts`: 2026-09-30 plus index × 60 s), outside any current period. MA9 adds a `now` parameter.
+  - Known credits: the usage session, Agent Host sessions and the large session; seeded sessions 1..N−1 are unknown, which a known-versus-unknown spec can use.
+  - Flake guard: derive the reset day from the run date (e.g. `min(day of (now − 3 days), 28)`), keep N under 72 h, seed all fixtures with the same `now`.
+- **Decisions.** D1, D9 and D10 stand. D9 adds the separate id; D10 needs no `machine-overridable` fallback.
