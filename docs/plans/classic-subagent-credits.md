@@ -2,10 +2,12 @@
 
 **Last changed:** 2026-11-12 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
-Status: **proposed** (design only, not started; plan merged in #124). Not
-yet a numbered step; see open question 9. `ext-v0.1.0` shipped on
-2026-11-03 without this fix, so classic-harness totals that omit subagent
-spend stay partial until it lands (a 0.1.x or 0.2.0 change).
+Status: **accepted; implementation is step 10.19** of
+[implementation-plan.md](../implementation-plan.md), planned in
+[classic-subagent-credits-implementation.md](classic-subagent-credits-implementation.md)
+(owner decisions accepted 2026-11-12; plan merged in #124). `ext-v0.1.0`
+shipped on 2026-11-03 without this fix, so classic-harness totals that omit
+subagent spend stay partial until it lands.
 
 ## 1. Context
 

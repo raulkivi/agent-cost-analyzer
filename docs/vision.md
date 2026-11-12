@@ -1,5 +1,7 @@
 # Vision: Agent Cost Analyzer and AI Credits Analyzer
 
+**Last changed:** 2026-11-12 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+
 ## 1. Problem
 
 Agentic coding sessions (VS Code GitHub Copilot Chat, Claude Code, and similar
@@ -87,6 +89,11 @@ In addition to the shared layout, Analyze mode adds:
   and compares the result with the log shows how far the caching rules can
   be trusted. Claude Code and VS Code Copilot sessions can be replayed so
   far, in both products; pi and mitmproxy sessions can't yet.
+- **Savings report** (Phase 16, [plans/savings-report.md](plans/savings-report.md)):
+  one ranked list of what to change to spend less (unused tool definitions,
+  cache breaks, failed calls, a cheaper model), each with the evidence and an
+  estimated saving per week as a range or a labelled upper bound. Recommendations
+  are text; the app never changes settings or files.
 
 ### 3.3 Shared layout
 
@@ -209,7 +216,11 @@ showing the behavioral-proxy fallback silently.
   associates cost, tool calls and **security signals** (risky commands,
   credential access, statistical anomalies, first-time behaviour) and says
   what happened, when and why. The signals are prompts to look, not
-  intrusion detection, and the dashboard stays read-only and local.
+  intrusion detection, and the dashboard stays read-only and local. A third
+  (Phase 16, [plans/savings-report.md](plans/savings-report.md)) is the
+  **savings report**: a ranked list of opportunities to spend less, each
+  with an estimated saving as a range or an "up to" figure and its coverage.
+  Recommendations are text; the app never changes settings or files.
 - Not an invoicing or accounting system. Phase 15
   ([plans/cost-by-repository-and-project.md](plans/cost-by-repository-and-project.md))
   adds cost by repository and project, price history, frozen billing

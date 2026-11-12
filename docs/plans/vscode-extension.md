@@ -1,6 +1,6 @@
 # VS Code extension: implementation and deployment plan
 
-**Last changed:** 2026-11-11 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-12 · **Source:** https://github.com/raulkivi/agent-cost-analyzer · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 Status: **code and docs complete (Phase 10, #57-#80); 0.1.0 released
 (`ext-v0.1.0`, 2026-11-03).** Some VS Code manual checks stay open, see
@@ -34,6 +34,9 @@ Progress (2026-10-28):
 | 10.16 | UI automation of the manual checks in a real VS Code (`wdio-vscode-service` under xvfb) | Merged (#117, #121, #127; T0-T14 done, T15 open; later specs #139, #157, #172): 13 spec files, 38 tests. Automated in a real window: 1.2, 1.3, 1.5-1.7, 1.9-1.13, 2.1, 2.2, 2.5, 2.6; partly: 1.1, 1.8 (not the charts), and 1.4 and 1.14 over fixtures; also 13.8 and R1. 2.3 and 2.4 only at tool level in the integration suite; an opt-in real-Copilot suite for 1.4, 2.3, 2.4 is written but never run end to end. The `extension-ui` CI job is informational (76 of 78 `main` runs green, 2026-11-04 to 2026-11-10); the owner decided 2026-11-11 to make it required (T15 closed, step 10.17). See [vscode-ui-automation.md](vscode-ui-automation.md) §6 |
 | 10.17 | Automated pre-release UI gate: wdio for VS Code and Copilot, Playwright for web | Done 2026-11-11 ([release-ui-gate.md](release-ui-gate.md)) |
 | 10.18 | Copilot Chat sessions from empty windows (debug logs under `globalStorage`) | Done 2026-11-11 |
+| 10.19 | AI Credits of classic Copilot Chat subagents ([classic-subagent-credits-implementation.md](classic-subagent-credits-implementation.md)) | Planned; decisions accepted 2026-11-12; started 2026-11-12 |
+| 10.20 | Classic subagent tool calls in the tool audit (follow-up from 10.19 D3) | Follow-up, not planned yet |
+| 10.21 | Monthly AI Credits allowance gauge ([monthly-allowance.md](monthly-allowance.md)) | Planned; decisions accepted 2026-11-12; started 2026-11-12 |
 
 
 ## 1. Context
