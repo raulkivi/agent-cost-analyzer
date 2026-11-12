@@ -12,7 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - **The MCP server speaks the MCP 2026-07-28 protocol too.** The MCP server now also serves clients on
   the MCP 2026-07-28 protocol, alongside today's clients, and a call to a tool it doesn't have is
-  answered with a protocol error instead of a tool error.
+  answered with a protocol error instead of a tool error. Tool schemas are now advertised as JSON
+  Schema 2020-12; the tools, their arguments and results are unchanged.
 
 ### Fixed
 - **Keyboard focus after a drill-down loads.** In the MCP App views, when a drill-down finished
