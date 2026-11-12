@@ -22,6 +22,9 @@ export { PINNED_VSCODE_VERSION };
 // The spec that needs Workspace Trust on and a workspace folder (check 2.5);
 // it gets its own VS Code launch, and every other spec runs in the main one.
 const TRUST_SPEC = "./test/ui/specs/mcp-trust.e2e.ts";
+// Step 10.21 MA9: the same launch, a folder whose settings set a huge monthly
+// allowance. It runs first, while the folder is untrusted (TRUST_SPEC trusts it).
+const MONTHLY_TRUST_SPEC = "./test/ui/specs/monthly-allowance-trust.e2e.ts";
 
 // Checks 1.1-1.3: a VS Code that has never seen Copilot Chat or the extension.
 const FIRST_RUN_SPEC = "./test/ui/specs/first-run.e2e.ts";
@@ -35,7 +38,7 @@ const UNINSTALL_AFTER_SPEC = "./test/ui/specs/uninstall-after.e2e.ts";
 // Scenario S9 (Phase 15 step 15.14): a workspace folder that is a git
 // repository, so the status bar names it.
 const S9_SPEC = "./test/ui/specs/s9-group-by-repository.e2e.ts";
-const OWN_LAUNCH_SPECS = [TRUST_SPEC, FIRST_RUN_SPEC, COPILOT_SPEC, UNINSTALL_INSTALLED_SPEC, UNINSTALL_AFTER_SPEC, S9_SPEC];
+const OWN_LAUNCH_SPECS = [TRUST_SPEC, MONTHLY_TRUST_SPEC, FIRST_RUN_SPEC, COPILOT_SPEC, UNINSTALL_INSTALLED_SPEC, UNINSTALL_AFTER_SPEC, S9_SPEC];
 
 // wdio loads this file in the launcher and again in every worker. Only the
 // launcher seeds the fixtures: its root and fixtures reach the workers (and so
@@ -56,9 +59,12 @@ function seeded<T>(envName: string, create: () => T): T {
   process.env[envName] = JSON.stringify(value);
   return value;
 }
-const fixture = seeded(UI_FIXTURE_ENV, () => createUiFixture(rootDir));
+// One instant for every fixture, so the monthly allowance specs' sessions
+// (and their billing period, derived from the run date) agree.
+const RUN_NOW = new Date();
+const fixture = seeded(UI_FIXTURE_ENV, () => createUiFixture(rootDir, { now: RUN_NOW }));
 const firstRunFixture = seeded(FIRST_RUN_FIXTURE_ENV, () => createFirstRunFixture(path.join(rootDir, "first-run")));
-const copilotFixture = seeded(COPILOT_FIXTURE_ENV, () => createUiFixture(path.join(rootDir, "copilot"), { sessionCount: 3 }));
+const copilotFixture = seeded(COPILOT_FIXTURE_ENV, () => createUiFixture(path.join(rootDir, "copilot"), { sessionCount: 3, now: RUN_NOW }));
 const uninstallFixture = seeded(UNINSTALL_FIXTURE_ENV, () => {
   const created = createFirstRunFixture(path.join(rootDir, "uninstall"));
   // What a user who followed a Fix button has set by hand (check 1.12 expects it to survive).
@@ -68,12 +74,12 @@ const uninstallFixture = seeded(UNINSTALL_FIXTURE_ENV, () => {
 // Check 2.5: a folder whose own settings turn the MCP server on, opened with
 // Workspace Trust enabled (the service disables it by default, F8), so VS Code
 // starts it in Restricted Mode.
-const trustFixture = seeded(TRUST_FIXTURE_ENV, () => createUiFixture(path.join(rootDir, "trust"), { sessionCount: 1 }));
+const trustFixture = seeded(TRUST_FIXTURE_ENV, () => createUiFixture(path.join(rootDir, "trust"), { sessionCount: 1, now: RUN_NOW }));
 const s9Fixture = seeded(S9_FIXTURE_ENV, () => createS9Fixture(path.join(rootDir, "s9")));
 const trustWorkspace = path.join(rootDir, "trust-workspace");
 if (!inWorker) {
   mkdirSync(path.join(trustWorkspace, ".vscode"), { recursive: true });
-  writeFileSync(path.join(trustWorkspace, ".vscode", "settings.json"), `${JSON.stringify({ "aiCreditsAnalyzer.mcp.enabled": true }, null, 2)}\n`);
+  writeFileSync(path.join(trustWorkspace, ".vscode", "settings.json"), `${JSON.stringify({ "aiCreditsAnalyzer.mcp.enabled": true, "aiCreditsAnalyzer.monthlyAllowance.aiCredits": 999_999 }, null, 2)}\n`);
 }
 // The Copilot CLI event log is read from COPILOT_HOME (F5); the launcher's
 // environment reaches chromedriver and so VS Code.
@@ -138,7 +144,7 @@ const LAUNCHES: Record<string, object> = {
       verboseLogging: false,
       vscodeArgs: { ...CHROMIUM_FLAGS, disableWorkspaceTrust: false },
     },
-    specs: [TRUST_SPEC],
+    specs: [MONTHLY_TRUST_SPEC, TRUST_SPEC],
   },
   // Scenario S9 (plan §12.4.2): Copilot sessions in two repositories,
   // portal-web open as the workspace folder.

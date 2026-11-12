@@ -57,14 +57,16 @@ export function copilotCliFixtureTurnRefs(name: CopilotCliFixtureName): AgentHos
 }
 
 // Each fixture session as a catalog row, newest last, cloned from the 10.13
-// catalog fixture's first session.
-function catalogRows(): AgentHostTableRows {
+// catalog fixture's first session. With `now` the sessions start in the
+// minutes just before it (so they fall in the current billing period, step
+// 10.21 MA9); without, at the catalog fixture's fixed start.
+function catalogRows(now?: Date): AgentHostTableRows {
   const template = readAgentHostFixtureRows("catalog-rows.json").sessions_v2[0]!;
   return {
     sessions_v2: FIXTURE_NAMES.map((name, index) => ({
       ...template,
       session_uri: `copilotcli:/${COPILOT_CLI_FIXTURE_SESSION_IDS[name]}`,
-      start_time: (template.start_time as number) + index * 60_000,
+      start_time: now ? now.getTime() - (FIXTURE_NAMES.length - index) * 60_000 : (template.start_time as number) + index * 60_000,
     })),
     chats_v2: copilotCliFixtureRows.chats_v2,
   };
@@ -82,8 +84,8 @@ function sessionRows(name: CopilotCliFixtureName): AgentHostTableRows {
   return { turns, turn_usage: turns.map((turn) => ({ turn_id: turn.id, usage })) };
 }
 
-export function writeCopilotCliAgentHostStores(userDataDir: string): void {
-  writeAgentHostCatalog(userDataDir, catalogRows());
+export function writeCopilotCliAgentHostStores(userDataDir: string, now?: Date): void {
+  writeAgentHostCatalog(userDataDir, catalogRows(now));
   for (const name of FIXTURE_NAMES) {
     writeAgentSessionDb(userDataDir, COPILOT_CLI_FIXTURE_SESSION_IDS[name], sessionRows(name));
   }

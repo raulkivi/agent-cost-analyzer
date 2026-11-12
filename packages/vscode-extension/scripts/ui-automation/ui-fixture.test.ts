@@ -9,7 +9,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { createExtensionApiService } from "@agent-cost-analyzer/server/src/composition/create-extension-api-service";
 import { InMemoryAppSettingsStore } from "@agent-cost-analyzer/server/src/test-support/in-memory-app-settings-store";
 import { copilotLogPathsFromUserDataDir } from "../../src/platform/copilot-log-paths.js";
-import { LARGE_SESSION_TURNS, createFirstRunFixture, createUiFixture } from "./ui-fixture.mts";
+import { EMPTY_WINDOW_SESSION_ID, LARGE_SESSION_TURNS, createFirstRunFixture, createUiFixture } from "./ui-fixture.mts";
 
 
 // The fixture the VS Code UI automation (wdio.conf.mts, step 10.16) seeds,
@@ -72,6 +72,34 @@ describe("createUiFixture (step 10.16)", () => {
 
     const sessions = await apiOver(fixture.userDataDir, fixture.copilotHome).listSessions();
     expect(sessions.length).toBe(fixture.listedSessionCount);
+  });
+
+  // Step 10.21 MA9: a session of a window with no folder (step 10.18), whose debug log is in the global storage.
+  it("seeds an empty-window session with AI Credits, beside the workspace usage session", async () => {
+    const now = new Date("2031-05-17T12:00:00Z");
+    const fixture = createUiFixture(rootDir, { sessionCount: 3, now });
+
+    const sessions = await apiOver(fixture.userDataDir, fixture.copilotHome).listSessions();
+    const emptyWindow = sessions.find((session) => session.id === EMPTY_WINDOW_SESSION_ID);
+    const usage = sessions.find((session) => session.id === fixture.usageSessionId);
+
+    expect(emptyWindow?.costAiCredits.known).toBe(true);
+    expect(usage?.costAiCredits.known).toBe(true);
+    expect(Date.parse(emptyWindow!.startedAt!)).toBeLessThan(now.getTime());
+    expect(now.getTime() - Date.parse(emptyWindow!.startedAt!)).toBeLessThan(72 * 3_600_000);
+  });
+
+  // Step 10.21 MA9: the monthly allowance gauge counts only the current period.
+  it("starts every listed session, Agent Host and CLI ones included, within 72 hours before `now`", async () => {
+    const now = new Date("2031-05-17T12:00:00Z");
+    const fixture = createUiFixture(rootDir, { sessionCount: 3, now });
+
+    const sessions = await apiOver(fixture.userDataDir, fixture.copilotHome).listSessions();
+    const ages = sessions.map((session) => (now.getTime() - Date.parse(session.startedAt!)) / 3_600_000);
+
+    expect(sessions).toHaveLength(fixture.listedSessionCount);
+    expect(Math.min(...ages)).toBeGreaterThanOrEqual(0);
+    expect(Math.max(...ages)).toBeLessThan(72);
   });
 
   // VS Code's storage cleaner deletes workspace storage that names no
