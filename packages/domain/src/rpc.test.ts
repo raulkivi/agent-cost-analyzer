@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 import { describe, expect, it } from "vitest";
 import * as domain from "./index.js";
+import { savingsReportSchema } from "./savings.js";
 import { MAX_COMPARED_MODELS, sessionReplayComparisonSchema, sessionReplaySchema } from "./session-replay.js";
 import {
   apiMethodSchema,
@@ -57,6 +58,7 @@ describe("apiMethodSchema", () => {
       "getCostEstimate",
       "getSessionReplay",
       "compareSessionReplay",
+      "getSavingsReport",
     ]);
   });
 
@@ -213,6 +215,34 @@ describe("apiMethodParamsSchemas (vscode-extension.md §4)", () => {
     it("validates their results with the domain replay schemas", () => {
       expect(apiMethodResultSchemas.getSessionReplay).toBe(sessionReplaySchema);
       expect(apiMethodResultSchemas.compareSessionReplay).toBe(sessionReplayComparisonSchema);
+    });
+  });
+
+  // Phase 16 SR12 (threat-model.md "RPC allow-list growth (Phase 16)"): one
+  // read-only method, the savings route's params; no limit can be sent.
+  describe("getSavingsReport", () => {
+    const schema = apiMethodParamsSchemas.getSavingsReport;
+
+    it("takes an optional window, provider, pricing mode and simulated flag", () => {
+      expect(schema.safeParse({}).success).toBe(true);
+      expect(schema.safeParse({ since: "2026-10-01", until: "2026-10-31", provider: "vscode", pricing: "today", includeSimulated: true }).success).toBe(true);
+      expect(schema.safeParse({ pricing: "as-of-use", includeSimulated: false }).success).toBe(true);
+    });
+
+    it.each([
+      [{ since: 20261001 }],
+      [{ since: "x".repeat(11) }],
+      [{ provider: 5 }],
+      [{ pricing: "cheapest" }],
+      [{ includeSimulated: "yes" }],
+      [{ limit: 5000 }],
+      [{ extra: "x" }],
+    ])("rejects %j", (params) => {
+      expect(schema.safeParse(params).success).toBe(false);
+    });
+
+    it("validates its result with the domain report schema", () => {
+      expect(apiMethodResultSchemas.getSavingsReport).toBe(savingsReportSchema);
     });
   });
 

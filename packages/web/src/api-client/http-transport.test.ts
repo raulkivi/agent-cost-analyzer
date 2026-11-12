@@ -106,6 +106,12 @@ describe("HttpTransport URL mapping", () => {
       { sessionId: "a/b c", model: "x&y=z", pricing: "api", provider: "claude-code" },
       "/api/sessions/a%2Fb%20c/replay?model=x%26y%3Dz&pricing=api&provider=claude-code",
     ],
+    ["getSavingsReport", {}, "/api/savings"],
+    [
+      "getSavingsReport",
+      { since: "2026-10-01", until: "2026-10-31", provider: "claude-code", pricing: "today", includeSimulated: true },
+      "/api/savings?since=2026-10-01&until=2026-10-31&provider=claude-code&pricing=today&includeSimulated=true",
+    ],
     [
       "compareSessionReplay",
       { sessionId: "s1", models: ["claude-sonnet-5.5", "gpt-6.1-sol"], pricing: "session-channel" },

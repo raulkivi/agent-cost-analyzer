@@ -103,6 +103,8 @@ function toRequest(method: ApiMethodName, params: unknown): HttpRequest {
       const { sessionId, ...query } = p;
       return { url: `/api/sessions/${encodeURIComponent(String(sessionId))}/replay/compare${queryString(query)}` };
     }
+    case "getSavingsReport": // { since?, until?, provider?, pricing?, includeSimulated? }
+      return { url: `/api/savings${queryString(p)}` };
     case "getStatement": // { projectId, period, provider?, limit? }
       return { url: `/api/statements${queryString(p)}` };
     case "issueStatement": // { projectId, period }: JSON only (threat model)

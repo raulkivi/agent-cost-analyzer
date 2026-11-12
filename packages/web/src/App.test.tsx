@@ -931,13 +931,13 @@ describe("App", () => {
       productId: "standalone",
       displayName: "Agent Cost Analyzer",
       version: "0.8.0",
-      features: { providerSelect: true, crossProviderInsights: true, settingFixes: false, openInEditor: false, sessionSidebar: false, vendorSimulation: false, costAnalysis: false, projectsAndBilling: false, sessionReplay: false },
+      features: { providerSelect: true, crossProviderInsights: true, settingFixes: false, openInEditor: false, sessionSidebar: false, vendorSimulation: false, costAnalysis: false, projectsAndBilling: false, sessionReplay: false, savingsReport: false },
     };
     const extensionProfile: ProductProfile = {
       productId: "vscode-extension",
       displayName: "AI Credits Analyzer",
       version: "0.1.0",
-      features: { providerSelect: false, crossProviderInsights: false, settingFixes: true, openInEditor: true, sessionSidebar: false, vendorSimulation: false, costAnalysis: false, projectsAndBilling: false, sessionReplay: false },
+      features: { providerSelect: false, crossProviderInsights: false, settingFixes: true, openInEditor: true, sessionSidebar: false, vendorSimulation: false, costAnalysis: false, projectsAndBilling: false, sessionReplay: false, savingsReport: false },
     };
 
     function editorHost() {
@@ -1147,7 +1147,7 @@ describe("App", () => {
         productId: "vscode-extension",
         displayName: "AI Credits Analyzer",
         version: "0.1.0",
-        features: { providerSelect: false, crossProviderInsights: false, settingFixes: true, openInEditor: true, sessionSidebar: true, vendorSimulation: false, costAnalysis: false, projectsAndBilling: false, sessionReplay: false },
+        features: { providerSelect: false, crossProviderInsights: false, settingFixes: true, openInEditor: true, sessionSidebar: true, vendorSimulation: false, costAnalysis: false, projectsAndBilling: false, sessionReplay: false, savingsReport: false },
       };
 
       it("shows no session list of its own in Analyze mode, and points to the sidebar until a session is picked", async () => {

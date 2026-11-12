@@ -21,6 +21,7 @@ import { createInsightsService } from "./create-insights-service.js";
 import { createStandaloneAttribution } from "./create-standalone-attribution.js";
 import { createTurnPricer } from "./create-turn-pricer.js";
 import { createCostAnalysis, projectDirectoryOf } from "./create-cost-analysis.js";
+import { createSavingsReport } from "./create-savings-report.js";
 import { createSessionReplay } from "./create-session-replay.js";
 
 export interface StandaloneApiServiceOptions extends LogProviderCompositionOptions {
@@ -57,6 +58,7 @@ export function standaloneProductProfile(version: string): ProductProfile {
       projectsAndBilling: true,
       // Phase 14 step 14.7: its ApiService always has a session replay.
       sessionReplay: true,
+      savingsReport: true,
     },
   };
 }
@@ -79,6 +81,7 @@ export function createStandaloneApiService(options: StandaloneApiServiceOptions 
 
   const pricer = createTurnPricer(priceBook, now);
   const insights = createInsightsService(registry, attribution.dataset, pricer, now);
+  const sessionReplay = createSessionReplay({ providers: registry, profiles: vendorProfiles, priceBook, pricer, attribution: attribution.dataset });
 
   const learnSimulation = new LearnSimulationService(
     loadScenarioScripts(learnScriptsDir),
@@ -109,7 +112,10 @@ export function createStandaloneApiService(options: StandaloneApiServiceOptions 
     }),
     // Phase 14 step 14.5: replays priced from the same price book, with the
     // session's measured figures from the same attribution and pricer.
-    sessionReplay: createSessionReplay({ providers: registry, profiles: vendorProfiles, priceBook, pricer, attribution: attribution.dataset }),
+    sessionReplay,
+    // Phase 16 SR12 (D10 is the extension's): every provider, the replay above
+    // for the cheaper-model saving, and the same pricer and attribution.
+    savingsReport: createSavingsReport({ providers: registry, profiles: vendorProfiles, priceBook, pricer, attribution: attribution.dataset, replay: sessionReplay, ...(now ? { now } : {}) }),
     auditQueries: new AuditQueryService(registry),
     insights,
     settings: appSettings,

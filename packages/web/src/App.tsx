@@ -144,6 +144,7 @@ const FALLBACK_FEATURES: ProductFeatures = {
   costAnalysis: false,
   projectsAndBilling: false,
   sessionReplay: false,
+  savingsReport: false,
 };
 
 const EMPTY_STATES = {

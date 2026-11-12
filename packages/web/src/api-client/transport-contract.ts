@@ -52,6 +52,7 @@ const CASES: Array<[ApiMethodName, unknown]> = [
   ["getCostEstimate", { projectId: "portal", activeDays: 20, historyWeeks: 12 }],
   ["getSessionReplay", { sessionId: "s1", model: "gpt-6.1-sol" }],
   ["compareSessionReplay", { sessionId: "s1", models: ["claude-sonnet-5.5", "gpt-6.1-sol"] }],
+  ["getSavingsReport", { since: "2026-10-01", includeSimulated: false }],
 ];
 
 // Behaviour every ApiTransport adapter must share, so api-client can't tell

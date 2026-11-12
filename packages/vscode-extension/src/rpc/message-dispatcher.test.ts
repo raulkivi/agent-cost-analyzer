@@ -37,6 +37,7 @@ function fakeApi(overrides: Partial<DispatcherApi> = {}): DispatcherApi {
     getCostEstimate: vi.fn(async () => ({}) as never),
     getSessionReplay: vi.fn(async () => ({}) as never),
     compareSessionReplay: vi.fn(async () => ({}) as never),
+    getSavingsReport: vi.fn(async () => ({}) as never),
   };
   return { ...api, ...overrides };
 }
@@ -273,6 +274,9 @@ describe("MessageDispatcher (vscode-extension.md §4)", () => {
     ["getSessionReplay", { model: "m" }, "sessionId"],
     ["getSessionReplay", { sessionId: "s1", model: "m".repeat(101) }, "model"],
     ["getSessionReplay", { sessionId: "s1", model: "m", pricing: "cheapest" }, "pricing"],
+    ["getSavingsReport", { limit: 5000 }, "limit"],
+    ["getSavingsReport", { pricing: "cheapest" }, "pricing"],
+    ["getSavingsReport", { includeSimulated: "yes" }, "includeSimulated"],
     ["compareSessionReplay", { sessionId: "s1", models: [] }, "models"],
     ["compareSessionReplay", { sessionId: "s1", models: Array.from({ length: 11 }, (_, i) => `m${i}`) }, "models"],
   ])("rejects %s params %j with a 400 that names the field %s, without calling the service", async (method, params, field) => {
@@ -369,6 +373,31 @@ describe("MessageDispatcher (vscode-extension.md §4)", () => {
 
       expect(api.listSessions).not.toHaveBeenCalled();
     });
+  });
+
+  // Phase 16 SR12: read-only, the HTTP route's query as the transport sends it.
+  it("routes getSavingsReport to ApiService with the query as text and a signal (SR12)", async () => {
+    const api = fakeApi();
+
+    await new MessageDispatcher(api).dispatch(request("getSavingsReport", { since: "2026-10-01", provider: "vscode", pricing: "today", includeSimulated: true }));
+
+    expect(api.getSavingsReport).toHaveBeenCalledWith({ since: "2026-10-01", provider: "vscode", pricing: "today", includeSimulated: "true" }, expect.any(AbortSignal));
+  });
+
+  it("aborts the signal of a savings report the webview cancelled", async () => {
+    let seen: AbortSignal | undefined;
+    const getSavingsReport = vi.fn((_query?: unknown, signal?: AbortSignal) => {
+      seen = signal;
+      return new Promise<never>((_resolve, reject) => signal?.addEventListener("abort", () => reject(signal.reason)));
+    });
+    const dispatcher = new MessageDispatcher(fakeApi({ getSavingsReport }));
+    const reply = dispatcher.dispatch(request("getSavingsReport", {}));
+
+    expect(seen?.aborted).toBe(false);
+    await dispatcher.dispatch({ kind: "cancel", id: "req-1" });
+
+    expect(seen?.aborted).toBe(true);
+    expect(await reply).toBeUndefined();
   });
 
   describe("cancel", () => {

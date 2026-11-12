@@ -90,6 +90,7 @@ const extensionProfile: ProductProfile = {
     costAnalysis: false,
     projectsAndBilling: false,
     sessionReplay: false,
+    savingsReport: false,
   },
 };
 
