@@ -266,6 +266,32 @@ describe("registerSessionsView", () => {
     expect(views[0]!.provider.getTreeItem(group).label).toBe("Today");
   });
 
+  it("with an allowance and no sessions, keeps the empty-state links as clickable rows below the row", async () => {
+    const { api, views } = fakeVscode();
+    const controller = new SidebarController(
+      {
+        relistLogSources: () => undefined,
+        listSessions: async () => [],
+        listLearnScenarios: async () => [],
+        getConfigStatus: async () => ({ checkedAt: "x", vscodeUserSettingsPath: null, loggingEnabled: true, maxRetainedSessionLogs: 200, minRetainedSessionLogsThreshold: 200, warnings: [] }),
+      },
+      { now: () => new Date("2026-10-24T15:00:00Z"), timeZone: "UTC", allowance: () => ({ aiCredits: 100, resetDay: 1, warnAtPercent: 80 }) },
+    );
+    registerSessionsView(api, controller);
+    await controller.refresh();
+    const items = views[0]!.provider.getChildren().map((node) => views[0]!.provider.getTreeItem(node));
+
+    expect(items.map((item) => item.label).slice(1)).toEqual([
+      "No Copilot Chat sessions with token data yet.",
+      "While you wait, see how caching and AI Credits work with sample sessions.",
+      "Open Learn mode",
+      "Get started",
+    ]);
+    expect(items[3]!.command).toMatchObject({ command: "aiCreditsAnalyzer.openLearnMode" });
+    expect(items[4]!.command).toMatchObject({ command: "aiCreditsAnalyzer.openWalkthrough" });
+    expect(items[1]!.command).toBeUndefined();
+  });
+
   it("shows the error message node with an error icon", async () => {
     const { api, views } = fakeVscode();
     const { controller, listSessions } = controllerWith();

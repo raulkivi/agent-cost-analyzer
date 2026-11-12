@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
 import type { Session } from "@agent-cost-analyzer/domain";
+import { COMMAND_IDS } from "../commands/command-ids.js";
 import { identityTranslate, type Translate } from "../l10n/localize.js";
 import type { MonthlyAllowanceView } from "../status-bar/monthly-allowance.js";
 import { dayKeyOf, previousDayKey, timeOfDayOf } from "../time/local-time.js";
@@ -41,6 +42,8 @@ export interface MessageNode {
   icon: "error" | "warning" | "dashboard" | "info";
   tooltip?: string;
   ariaLabel?: string;
+  // A clickable row: runs this command, like a link in the view's welcome content.
+  command?: { command: string; title: string };
 }
 
 export type SessionsTreeNode = GroupNode | SessionNode | MessageNode;
@@ -120,11 +123,24 @@ const ALLOWANCE_ROW_ID = "monthly-allowance";
 const ALLOWANCE_ICONS = { normal: "dashboard", near: "warning", over: "error" } as const;
 const HIDDEN: MonthlyAllowanceView = { level: "hidden" };
 
+// The Sessions view's welcome content (package.nls.json welcome.sessions) as
+// rows, for when the allowance row stops VS Code showing that content. Same
+// wording and the same two commands as its links.
+function emptyStateRows(t: Translate): MessageNode[] {
+  const link = (label: string, command: string): MessageNode => ({ kind: "message", label, description: "", icon: "info", command: { command, title: label } });
+  return [
+    { kind: "message", label: t("No Copilot Chat sessions with token data yet."), description: "", icon: "info" },
+    { kind: "message", label: t("While you wait, see how caching and AI Credits work with sample sessions."), description: "", icon: "info" },
+    link(t("Open Learn mode"), COMMAND_IDS.openLearnMode),
+    link(t("Get started"), COMMAND_IDS.openWalkthrough),
+  ];
+}
+
 // Puts the monthly allowance row (step 10.21 MA6) first in the Sessions view: the
 // state as the label, the days left as the muted description. The words and
 // the icon carry the level; the theme colours of the icon only add to them.
 // Nothing is added for a hidden allowance. With no other node the row stays
-// and the empty-state sentence follows it (the view's welcome content would
+// and the empty-state rows follow it (the view's welcome content would
 // otherwise disappear behind the row).
 export function withAllowanceRow(nodes: SessionsTreeNode[], allowance: MonthlyAllowanceView = HIDDEN, t: Translate = identityTranslate): SessionsTreeNode[] {
   if (allowance.level === "hidden") {
@@ -139,8 +155,7 @@ export function withAllowanceRow(nodes: SessionsTreeNode[], allowance: MonthlyAl
     tooltip: allowance.tooltip,
     ariaLabel: allowance.ariaLabel,
   };
-  const empty: MessageNode = { kind: "message", label: t("No Copilot Chat sessions with token data yet."), description: "", icon: "info" };
-  return nodes.length === 0 ? [row, empty, ...nodes] : [row, ...nodes];
+  return nodes.length === 0 ? [row, ...emptyStateRows(t)] : [row, ...nodes];
 }
 
 // Sessions grouped by local day (newest day first, then newest session

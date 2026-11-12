@@ -233,7 +233,7 @@ describe("the monthly allowance row (step 10.21 MA6)", () => {
   it("stays alone above the empty-state message when there are no sessions", () => {
     const tree = withAllowanceRow(buildSessionsByRepositoryTree([], repositoryOf, NOW, "UTC"), allowanceOf(null));
 
-    expect(tree.map((node) => node.kind)).toEqual(["message", "message"]);
+    expect(tree.every((node) => node.kind === "message")).toBe(true);
     expect(tree[0]).toMatchObject({ id: "monthly-allowance", label: "This month: no sessions", description: "· 8 days left" });
     expect(tree[1]).toMatchObject({ label: "No Copilot Chat sessions with token data yet." });
   });
