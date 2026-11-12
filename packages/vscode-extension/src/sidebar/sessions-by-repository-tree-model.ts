@@ -134,5 +134,4 @@ export function buildSessionsByRepositoryTree(
       children: members.map((member) => sessionNode(member, now, timeZone, t)),
     };
   });
-
 }
