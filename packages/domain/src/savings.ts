@@ -148,3 +148,5 @@ export type SavingsActionParams = z.infer<typeof savingsActionParamsSchema>;
 export type SavingsOpportunity = z.infer<typeof savingsOpportunitySchema>;
 export type SavingsNotAnalysed = z.infer<typeof savingsNotAnalysedSchema>;
 export type SavingsReport = z.infer<typeof savingsReportSchema>;
+export type SavingsWindow = z.infer<typeof savingsWindowSchema>;
+export type SavingsSessionRef = z.infer<typeof savingsSessionRefSchema>;

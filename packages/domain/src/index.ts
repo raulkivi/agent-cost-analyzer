@@ -517,5 +517,7 @@ export {
   type SavingsOpportunity,
   type SavingsNotAnalysed,
   type SavingsReport,
+  type SavingsWindow,
+  type SavingsSessionRef,
 } from "./savings.js";
 export { SAVINGS_ACTION_PARAMS, savingsActionText } from "./savings-actions.js";
