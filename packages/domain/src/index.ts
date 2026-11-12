@@ -493,3 +493,28 @@ export {
 } from "./session-replay.js";
 export { EXTENSION_NO_PROJECTS_REASON } from "./no-projects-reason.js";
 export { parseUnknownProjectIdText, unknownProjectIdText, type UnknownProjectIdAnswer } from "./unknown-project-text.js";
+export {
+  MAX_SAVINGS_NAME_LENGTH,
+  savingsOpportunityKindSchema,
+  savingsBasisSchema,
+  savingsLabelSchema,
+  savingsAmountSchema,
+  savingsSessionRefSchema,
+  savingsEvidenceSchema,
+  savingsCoverageSchema,
+  savingsActionParamsSchema,
+  savingsOpportunitySchema,
+  savingsWindowSchema,
+  savingsNotAnalysedSchema,
+  savingsReportSchema,
+  type SavingsOpportunityKind,
+  type SavingsBasis,
+  type SavingsLabel,
+  type SavingsAmount,
+  type SavingsEvidence,
+  type SavingsCoverage,
+  type SavingsActionParams,
+  type SavingsOpportunity,
+  type SavingsNotAnalysed,
+  type SavingsReport,
+} from "./savings.js";
