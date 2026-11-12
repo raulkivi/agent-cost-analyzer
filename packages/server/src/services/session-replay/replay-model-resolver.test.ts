@@ -115,6 +115,15 @@ describe("ReplayModelResolver", () => {
     );
   });
 
+  it("finds a profile model whatever its caching, for callers with their own rules (SR4)", () => {
+    const microsoft = profiles.find((p) => p.vendorId === "microsoft")!;
+    const model = microsoft.models[0]!;
+    expect(resolver.findModel(model.modelId.toUpperCase())).toEqual({ profile: microsoft, model });
+    expect(resolver.findModel("claude-opus-5-5")?.model.modelId).toBe("claude-opus-5.5");
+    expect(resolver.findModel("no-such-model")).toBeUndefined();
+    expect(resolver.findModel("<synthetic>")).toBeUndefined();
+  });
+
   it("knows no model when no profiles are loaded", () => {
     expect(new ReplayModelResolver([]).resolve("claude-opus-5.5").known).toBe(
       false,

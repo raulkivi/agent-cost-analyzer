@@ -19,10 +19,10 @@ export type ReplayModelResolution =
 const NO_MODEL_IDS = new Set(["", "unknown", "<synthetic>"]);
 const NO_MODEL_REASON = "The log records no model, so there is none to replay.";
 
-type Entry = { profile: VendorProfile; model: VendorProfile["models"][number] };
+export type ProfileModel = { profile: VendorProfile; model: VendorProfile["models"][number] };
 
 export class ReplayModelResolver {
-  private readonly byModelId = new Map<string, Entry>();
+  private readonly byModelId = new Map<string, ProfileModel>();
 
   constructor(profiles: readonly VendorProfile[]) {
     for (const profile of profiles) {
@@ -34,13 +34,20 @@ export class ReplayModelResolver {
     }
   }
 
+  // The profile model a log's id names, whatever its caching; undefined
+  // when no profile lists it or the log names no model.
+  findModel(recordedModelId: string): ProfileModel | undefined {
+    if (NO_MODEL_IDS.has(recordedModelId.trim().toLowerCase())) return undefined;
+    return candidateModelIds(recordedModelId)
+      .map((candidate) => this.byModelId.get(candidate))
+      .find((found) => found !== undefined);
+  }
+
   resolve(recordedModelId: string): ReplayModelResolution {
     if (NO_MODEL_IDS.has(recordedModelId.trim().toLowerCase())) {
       return { known: false, reason: NO_MODEL_REASON };
     }
-    const entry = candidateModelIds(recordedModelId)
-      .map((candidate) => this.byModelId.get(candidate))
-      .find((found) => found !== undefined);
+    const entry = this.findModel(recordedModelId);
     if (entry === undefined) {
       return {
         known: false,

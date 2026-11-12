@@ -1,0 +1,9 @@
+{
+  "sessionId": "calibration-copilot-9edaebc4",
+  "providerId": "copilot-local",
+  "harness": "vscode-local",
+  "requests": 40,
+  "breaks": [],
+  "intended": [],
+  "unchecked": []
+}

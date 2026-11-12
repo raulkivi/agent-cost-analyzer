@@ -1,0 +1,9 @@
+{
+  "sessionId": "claude-code-meta-and-synthetic-session",
+  "providerId": "claude-code",
+  "harness": "claude-code",
+  "requests": 1,
+  "breaks": [],
+  "intended": [],
+  "unchecked": []
+}

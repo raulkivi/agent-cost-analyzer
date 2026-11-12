@@ -1,0 +1,9 @@
+{
+  "sessionId": "copilot-local-usage-session",
+  "providerId": "vscode",
+  "harness": "vscode-local",
+  "requests": 4,
+  "breaks": [],
+  "intended": [],
+  "unchecked": []
+}

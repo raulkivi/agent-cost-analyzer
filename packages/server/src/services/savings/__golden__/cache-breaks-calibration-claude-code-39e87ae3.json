@@ -1,0 +1,34 @@
+{
+  "sessionId": "calibration-claude-code-39e87ae3",
+  "providerId": "claude-code",
+  "harness": "claude-code",
+  "requests": 52,
+  "breaks": [
+    {
+      "requestIndex": 14,
+      "turnIndex": 14,
+      "startedAt": "2026-01-01T00:27:53.568Z",
+      "model": "claude-opus-5.5",
+      "previousModel": "claude-opus-5.5",
+      "gapMinutes": 0.0759,
+      "previousPromptTokens": 73709,
+      "promptTokens": 77828,
+      "cacheRead": 32810,
+      "lostTokens": 40899,
+      "cacheWriteRecorded": true,
+      "caveats": [],
+      "class": "unexplained",
+      "lifetime": {
+        "minMinutes": 60,
+        "maxMinutes": 60,
+        "basis": "recorded-1h-writes"
+      },
+      "cause": {
+        "recorded": false,
+        "reason": "Not recorded in the log; usually an instructions file or the tool list changed, or the provider evicted the cache."
+      }
+    }
+  ],
+  "intended": [],
+  "unchecked": []
+}

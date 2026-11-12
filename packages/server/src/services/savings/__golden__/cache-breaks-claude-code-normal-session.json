@@ -1,0 +1,9 @@
+{
+  "sessionId": "claude-code-normal-session",
+  "providerId": "claude-code",
+  "harness": "claude-code",
+  "requests": 3,
+  "breaks": [],
+  "intended": [],
+  "unchecked": []
+}

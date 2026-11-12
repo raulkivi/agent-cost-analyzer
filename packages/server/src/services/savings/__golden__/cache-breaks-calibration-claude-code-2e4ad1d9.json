@@ -1,0 +1,32 @@
+{
+  "sessionId": "calibration-claude-code-2e4ad1d9",
+  "providerId": "claude-code",
+  "harness": "claude-code",
+  "requests": 27,
+  "breaks": [
+    {
+      "requestIndex": 20,
+      "turnIndex": 20,
+      "startedAt": "2026-01-01T01:43:54.495Z",
+      "model": "claude-opus-5.5",
+      "previousModel": "claude-opus-5.5",
+      "gapMinutes": 99.89398333333334,
+      "previousPromptTokens": 116763,
+      "promptTokens": 118340,
+      "cacheRead": 24200,
+      "lostTokens": 92563,
+      "cacheWriteRecorded": true,
+      "caveats": [
+        "start-to-start-gap"
+      ],
+      "class": "idle-expiry",
+      "lifetime": {
+        "minMinutes": 60,
+        "maxMinutes": 60,
+        "basis": "recorded-1h-writes"
+      }
+    }
+  ],
+  "intended": [],
+  "unchecked": []
+}

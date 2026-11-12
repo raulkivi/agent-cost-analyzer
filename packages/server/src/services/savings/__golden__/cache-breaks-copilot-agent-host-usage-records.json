@@ -1,0 +1,9 @@
+{
+  "sessionId": "copilot-agent-host-usage-records",
+  "providerId": "vscode",
+  "harness": "copilot-agent-host",
+  "requests": 5,
+  "breaks": [],
+  "intended": [],
+  "unchecked": []
+}
