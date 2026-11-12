@@ -5,6 +5,7 @@ import type { RepositoryOf } from "../sidebar/sessions-by-repository-tree-model.
 import { identityTranslate, type Translate } from "../l10n/localize.js";
 import { COMMAND_IDS, FOCUS_SETUP_VIEW_COMMAND } from "../commands/command-ids.js";
 import { dayKeyOf } from "../time/local-time.js";
+import { knownSum, sessionStartedOn } from "./session-credits.js";
 
 // What the status-bar item shows (vscode-extension.md D10, step 10.6). Pure
 // and free of `vscode`: vscode/vscode-status-bar.ts applies it to the item.
@@ -24,36 +25,11 @@ export interface StatusBarState extends TodayStatus {
   warning: boolean;
 }
 
-function sessionStartedOn(session: Session, dayKey: string, timeZone: string | undefined): boolean {
-  if (session.startedAt === undefined) {
-    return false;
-  }
-  const start = Date.parse(session.startedAt);
-  return !Number.isNaN(start) && dayKeyOf(new Date(start), timeZone) === dayKey;
-}
-
 // Step 15.14 (plan §11.9): the repositories of the open workspace's folders
 // (several in a multi-root workspace) and each session's repository.
 export interface WorkspaceRepositories {
   repositoryKeys: string[];
   repositoryOf: RepositoryOf;
-}
-
-interface KnownSum {
-  known: number;
-  total: number;
-}
-
-function knownSum(sessions: Session[]): KnownSum {
-  let known = 0;
-  let total = 0;
-  for (const session of sessions) {
-    if (session.costAiCredits.known) {
-      known += 1;
-      total += session.costAiCredits.value;
-    }
-  }
-  return { known, total };
 }
 
 // What a person reads in the status bar: "portal-web" for a remote, a local
