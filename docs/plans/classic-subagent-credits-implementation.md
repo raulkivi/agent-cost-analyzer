@@ -1,6 +1,6 @@
 # AI Credits of classic Copilot Chat subagents: implementation plan (step 10.19)
 
-**Last changed:** 2026-11-12 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-13 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 Status: **planned; owner decisions accepted 2026-11-12 (every recommendation); implementation started 2026-11-12**. Turns the design in [classic-subagent-credits.md](classic-subagent-credits.md) (status "proposed", #124) into a numbered step. The owner decisions in §9 are accepted.
 
@@ -212,7 +212,7 @@ Every task writes its failing test first (architecture.md §11.4). No local mode
 | ID | Work | Exit criterion | Complexity | Model | Depends on |
 |---|---|---|---|---|---|
 | SA0 | **Re-measure.** **Done 2026-11-12 (§14).** Read-only script over the owner's `Code` and `Code - Insiders` user data (both `workspaceStorage` and `globalStorage` debug-log folders): counts and sums only, as design §1.1. Confirm the file layout and field names still match design §2. | A findings note in this plan with today's baseline (missing AI Credits per session); layout confirmed or §4 changed | low | Sonnet (script), owner (run) | — |
-| SA0b | **Mock-ups.** Turns table marker and tooltip, Explanation panel block, KPI sub-line, Sessions view tooltip, U1 turn detail; states: known, 0.00 run, unknown run, matched by time; light, dark, High Contrast; 320 px and 640 px. In `docs/plans/mockups/classic-subagents/`. | Owner approves before SA13–SA15 | medium | Sonnet (frontend-design skill) + owner | — |
+| SA0b | **Approved 2026-11-13** (#244; answers in [mockups/classic-subagents/README.md](mockups/classic-subagents/README.md)). **Mock-ups.** Turns table marker and tooltip, Explanation panel block, KPI sub-line, Sessions view tooltip, U1 turn detail; states: known, 0.00 run, unknown run, matched by time; light, dark, High Contrast; 320 px and 640 px. In `docs/plans/mockups/classic-subagents/`. | Owner approves before SA13–SA15 | medium | Sonnet (frontend-design skill) + owner | — |
 | SA1 | **Threat-model rows** (§8) added to `docs/threat-model.md` §4 before any reader code. | Rows merged | low | Haiku | — |
 | SA2 | **Fixtures** (§4.9) for the server. | Fixture files exist; a test reads each with `readMainJsonlFile` and finds the expected event counts | medium | Sonnet | SA0 |
 | SA3 | **Domain.** `subagentRunUsageSchema`, `TurnUsage.subagents` and `ownUsage`, `Session.subagentSpend`, `InsightTurnRow.lines`, `costLinesOf`. | Schema tests: valid, unknown figures, absent, hostile `label`/`id` rejected; Learn fixtures still parse | medium | Sonnet | D1, D10, D12 |

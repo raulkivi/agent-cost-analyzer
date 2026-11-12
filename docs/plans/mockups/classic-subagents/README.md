@@ -1,6 +1,6 @@
 # Classic subagent credits mock-ups (SA0b)
 
-**Last changed:** 2026-11-12 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-13 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 Boards for task SA0b of step 10.19 in
 [classic-subagent-credits-implementation.md](../../local/classic-subagent-credits-implementation.md) §6.
@@ -42,3 +42,16 @@ Contrast, at 640 px and 320 px. Unknown is never shown as 0.
 6. Narrow layout has no hover: the tooltip text is a visible line in the details drawer (drawn). OK?
 7. Agent column: label and agent are both shown (`runSubagent-Explore · Explore`). Show the agent name only, with the label in a tooltip?
 8. KPI sub-line wording: "incl. 54.65 from 3 subagent runs" (plan) versus the table's "subagents". Align to "subagent runs" everywhere?
+
+## Owner decisions (2026-11-13)
+
+Approved with these answers to the open questions above (the owner took the recommendations):
+
+1. All runs 0.00: show the marker; D8 shows 0.00 runs.
+2. "Matched by time": in the Explanation block, the U1 run list and the turns-table tooltip; not in the KPI sub-line or the inspector note.
+3. Unknown turn cell: the em dash plus the dashed marker, as drawn; the table already shows unknown as an em dash.
+4. Sessions tooltip for an unplaceable orphan: show the reason sentence, as drawn.
+5. Inspector: a text note only, no button (D4).
+6. Narrow layouts: show the tooltip text as a visible drawer line, as drawn.
+7. Run rows: the agent name; the label only when there is no agent name.
+8. Wording: "subagent runs" everywhere (also the term in `docs/terminology.md`).
