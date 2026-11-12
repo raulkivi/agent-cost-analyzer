@@ -69,6 +69,21 @@ describe("SidebarController monthly allowance (step 10.21 MA4)", () => {
     expect(controller.monthlyAllowance()).toMatchObject({ level: "normal", allowance: 100, used: 30, percent: 30 });
   });
 
+  it("puts the row first in the Sessions tree, in either grouping, and drops it when hidden", async () => {
+    let settings: AllowanceSettings = SET;
+    const { controller } = setup(() => settings);
+    await controller.refresh();
+
+    expect(controller.sessionsTree()[0]).toMatchObject({ kind: "message", id: "monthly-allowance", label: "This month: 30.00 of 100 AI Credits" });
+    expect(controller.sessionsTree()[1]?.kind).toBe("group");
+    controller.setSessionsGrouping("repository");
+    expect(controller.sessionsTree()[0]).toMatchObject({ id: "monthly-allowance" });
+
+    settings = { ...SET, aiCredits: null };
+    controller.settingsChanged();
+    expect(controller.sessionsTree().every((node) => node.kind === "group")).toBe(true);
+  });
+
   it("memoizes the model while the sessions, the period and the settings are unchanged", async () => {
     const { controller } = setup(() => ({ ...SET }));
     await controller.refresh();

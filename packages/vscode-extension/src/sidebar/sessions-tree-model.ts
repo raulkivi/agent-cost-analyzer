@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 import type { Session } from "@agent-cost-analyzer/domain";
 import { identityTranslate, type Translate } from "../l10n/localize.js";
+import type { MonthlyAllowanceView } from "../status-bar/monthly-allowance.js";
 import { dayKeyOf, previousDayKey, timeOfDayOf } from "../time/local-time.js";
 
 // The Sessions tree as plain data (vscode-extension.md D10, step 10.6). Pure
@@ -33,9 +34,13 @@ export interface GroupNode {
 // A line of text in place of sessions, e.g. why there are none.
 export interface MessageNode {
   kind: "message";
+  // Set on a row that must keep its identity across refreshes.
+  id?: string;
   label: string;
   description: string;
-  icon: "error";
+  icon: "error" | "warning" | "dashboard" | "info";
+  tooltip?: string;
+  ariaLabel?: string;
 }
 
 export type SessionsTreeNode = GroupNode | SessionNode | MessageNode;
@@ -109,6 +114,33 @@ export function groupDescription(sessions: Session[], t: Translate): string {
 interface Dated {
   session: Session;
   start: Date | undefined;
+}
+
+const ALLOWANCE_ROW_ID = "monthly-allowance";
+const ALLOWANCE_ICONS = { normal: "dashboard", near: "warning", over: "error" } as const;
+const HIDDEN: MonthlyAllowanceView = { level: "hidden" };
+
+// Puts the monthly allowance row (step 10.21 MA6) first in the Sessions view: the
+// state as the label, the days left as the muted description. The words and
+// the icon carry the level; the theme colours of the icon only add to them.
+// Nothing is added for a hidden allowance. With no other node the row stays
+// and the empty-state sentence follows it (the view's welcome content would
+// otherwise disappear behind the row).
+export function withAllowanceRow(nodes: SessionsTreeNode[], allowance: MonthlyAllowanceView = HIDDEN, t: Translate = identityTranslate): SessionsTreeNode[] {
+  if (allowance.level === "hidden") {
+    return nodes;
+  }
+  const row: MessageNode = {
+    kind: "message",
+    id: ALLOWANCE_ROW_ID,
+    label: allowance.rowLabel,
+    description: allowance.rowDescription,
+    icon: ALLOWANCE_ICONS[allowance.level],
+    tooltip: allowance.tooltip,
+    ariaLabel: allowance.ariaLabel,
+  };
+  const empty: MessageNode = { kind: "message", label: t("No Copilot Chat sessions with token data yet."), description: "", icon: "info" };
+  return nodes.length === 0 ? [row, empty, ...nodes] : [row, ...nodes];
 }
 
 // Sessions grouped by local day (newest day first, then newest session

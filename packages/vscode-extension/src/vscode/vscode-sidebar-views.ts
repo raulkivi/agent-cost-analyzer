@@ -133,7 +133,10 @@ export function registerSessionsView<Item extends TreeItemLike>(
         }
         case "message": {
           const item = new vscode.TreeItem(node.label, None);
+          if (node.id !== undefined) item.id = `message:${node.id}`;
           item.description = node.description;
+          if (node.tooltip !== undefined) item.tooltip = node.tooltip;
+          if (node.ariaLabel !== undefined) item.accessibilityInformation = { label: node.ariaLabel };
           item.iconPath = new vscode.ThemeIcon(node.icon);
           return item;
         }

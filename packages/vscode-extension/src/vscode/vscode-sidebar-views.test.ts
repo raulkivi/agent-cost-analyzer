@@ -236,6 +236,36 @@ describe("registerSessionsView", () => {
     expect(views[0]!.provider.getTreeItem(group)).toMatchObject({ label: "2026-09-01", collapsibleState: 1 });
   });
 
+  // Step 10.21 MA6: the allowance row is a message row with an id, a tooltip and a label.
+  it("shows the monthly allowance row first, with its icon, tooltip and screen-reader label", async () => {
+    const { api, views } = fakeVscode();
+    const controller = new SidebarController(
+      {
+        relistLogSources: () => undefined,
+        listSessions: async () => [session("a", 85)],
+        listLearnScenarios: async () => [],
+        getConfigStatus: async () => ({ checkedAt: "x", vscodeUserSettingsPath: null, loggingEnabled: true, maxRetainedSessionLogs: 200, minRetainedSessionLogsThreshold: 200, warnings: [] }),
+      },
+      { now: () => new Date("2026-10-24T15:00:00Z"), timeZone: "UTC", allowance: () => ({ aiCredits: 100, resetDay: 1, warnAtPercent: 80 }) },
+    );
+    registerSessionsView(api, controller);
+    await controller.refresh();
+    const [row, group] = views[0]!.provider.getChildren();
+    const item = views[0]!.provider.getTreeItem(row);
+
+    expect(item).toMatchObject({
+      id: "message:monthly-allowance",
+      label: "This month: 85.00 of 100 AI Credits · near limit",
+      description: "· 8 days left",
+      collapsibleState: 0,
+    });
+    expect((item.iconPath as FakeThemeIcon).id).toBe("warning");
+    expect(item.tooltip).toContain("Monthly allowance: 100 AI Credits");
+    expect(item.accessibilityInformation?.label).toMatch(/^Near limit\. /);
+    expect(item.command).toBeUndefined();
+    expect(views[0]!.provider.getTreeItem(group).label).toBe("Today");
+  });
+
   it("shows the error message node with an error icon", async () => {
     const { api, views } = fakeVscode();
     const { controller, listSessions } = controllerWith();

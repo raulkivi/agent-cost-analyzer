@@ -9,7 +9,7 @@ import { periodOf } from "../time/billing-period.js";
 import { buildStatusBarState, type StatusBarState } from "../status-bar/status-bar-model.js";
 import { buildLearnTree, learnLoadErrorTree, type LearnTreeNode } from "./learn-tree-model.js";
 import { buildSessionsByRepositoryTree, type RepositoryOf } from "./sessions-by-repository-tree-model.js";
-import { buildSessionsTree, sessionsLoadErrorTree, type SessionsTreeNode } from "./sessions-tree-model.js";
+import { buildSessionsTree, sessionsLoadErrorTree, withAllowanceRow, type SessionsTreeNode } from "./sessions-tree-model.js";
 
 // Step 15.14 (plan §11.9): how the Sessions tree groups its sessions.
 export type SessionsGrouping = "day" | "repository";
@@ -139,11 +139,13 @@ export class SidebarController {
       return [];
     }
     if (this.sessions === "error") {
-      return sessionsLoadErrorTree(this.translate());
+      return withAllowanceRow(sessionsLoadErrorTree(this.translate()), this.monthlyAllowance(), this.translate());
     }
-    return this.grouping === "repository"
-      ? buildSessionsByRepositoryTree(this.sessions, this.repositoryOf, this.now(), this.options.timeZone, this.translate())
-      : buildSessionsTree(this.sessions, this.now(), this.options.timeZone, this.translate());
+    const groups =
+      this.grouping === "repository"
+        ? buildSessionsByRepositoryTree(this.sessions, this.repositoryOf, this.now(), this.options.timeZone, this.translate())
+        : buildSessionsTree(this.sessions, this.now(), this.options.timeZone, this.translate());
+    return withAllowanceRow(groups, this.monthlyAllowance(), this.translate());
   }
 
   learnTree(): LearnTreeNode[] {
