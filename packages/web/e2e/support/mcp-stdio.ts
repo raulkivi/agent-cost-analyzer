@@ -1,8 +1,8 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
 import path from "node:path";
-import { Client } from "@modelcontextprotocol/sdk/client/index.js";
-import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
+import { Client } from "@modelcontextprotocol/client";
+import { StdioClientTransport } from "@modelcontextprotocol/client/stdio";
 
 // Phase 15 step 15.13 (plan §10.1.6, §12.4.2 S10): the standalone stdio MCP
 // server (packages/server/src/mcp/stdio.ts, what scripts/mcp-server.sh

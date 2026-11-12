@@ -16,8 +16,8 @@
 // in ExtensionMode.Test.
 import * as assert from "node:assert/strict";
 import * as vscode from "vscode";
-import { Client } from "@modelcontextprotocol/sdk/client/index.js";
-import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
+import { Client } from "@modelcontextprotocol/client";
+import { StdioClientTransport } from "@modelcontextprotocol/client/stdio";
 import { INTEGRATION_FIXTURE_ENV, parseIntegrationFixture } from "../../../scripts/integration-fixture-env.mts";
 import { COMMAND_IDS, VIEW_IDS } from "../../commands/command-ids.js";
 import type { RpcTraceEntry } from "../../diagnostics/rpc-trace.js";

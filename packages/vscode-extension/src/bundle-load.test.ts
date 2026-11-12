@@ -8,8 +8,8 @@ import { fileURLToPath } from "node:url";
 import { DatabaseSync } from "node:sqlite";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { build } from "esbuild";
-import { Client } from "@modelcontextprotocol/sdk/client/index.js";
-import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
+import { Client } from "@modelcontextprotocol/client";
+import { StdioClientTransport } from "@modelcontextprotocol/client/stdio";
 import { extensionBundleOptions, mcpServerBundleOptions } from "../scripts/esbuild-options.mts";
 import { COMMAND_IDS, VIEW_IDS } from "./commands/command-ids.js";
 

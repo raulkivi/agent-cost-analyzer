@@ -12,8 +12,8 @@
 // in-flight-model.mts) are unit-tested.
 import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
-import { Client } from "@modelcontextprotocol/sdk/client/index.js";
-import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
+import { Client } from "@modelcontextprotocol/client";
+import { StdioClientTransport } from "@modelcontextprotocol/client/stdio";
 import { browser } from "@wdio/globals";
 import { INTERNAL_COMMAND_IDS } from "../../../../src/diagnostics/test-hooks.js";
 import type { McpStdioServerSpec } from "../../../../src/mcp/mcp-server-definitions.js";

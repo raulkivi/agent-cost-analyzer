@@ -4,8 +4,7 @@ import { existsSync, mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync 
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { Client } from "@modelcontextprotocol/sdk/client/index.js";
-import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
+import { Client, InMemoryTransport } from "@modelcontextprotocol/client";
 import { seedCopilotSessionStore } from "@agent-cost-analyzer/server/src/test-support/copilot-session-store";
 import { FIXTURE_VENDOR_PROFILES_DIR } from "@agent-cost-analyzer/server/src/test-support/vendor-profiles-dir";
 import { createCopilotMcpServer } from "../../../../src/mcp/copilot-mcp-server.js";

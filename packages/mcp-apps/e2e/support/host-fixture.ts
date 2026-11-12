@@ -5,7 +5,7 @@ import os from "node:os";
 import path from "node:path";
 import { test as base, expect } from "@playwright/test";
 import { createFixtureHome } from "../../../web/e2e/support/fixture-home.mts";
-import { connectStdioMcp } from "./stdio-server.js";
+import { connectStdioMcp } from "../../../web/e2e/support/mcp-stdio.js";
 import { CLAUDE_SETS, VSCODE_SETS, type HostSet } from "../../test/theme/host-sets.js";
 import { hostProfileFrom, type HostProfile, type HostRecording } from "./host-context.js";
 import { McpHost } from "./mcp-host.js";
