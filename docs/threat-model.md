@@ -1,42 +1,13 @@
 # Threat model
 
-**Last changed:** 2026-11-11 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-12 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
-Reviewed against the codebase as of `78657f3` (2026-10-26). Verified by
-reading the actual routes, SQL access, session-ID resolution, redaction
-logic, network bindings and both MCP servers — not assumed from the
-architecture docs alone. Sections 1–5 were first written against
-`e7bd2c2` (2026-09-09) and re-checked at `78657f3`; in between, the
-code gained the standalone MCP server, `/api/insights`, the turn route
-and the settings folder move. Section 6 (the AI Credits Analyzer VS Code extension) was
-reviewed against `5d3c7c1` (2026-10-24) by reading
-`packages/vscode-extension/src` and re-checked at `78657f3` (steps 10.11
-and 10.12 added no host command, RPC method or CSP change).
-
-**Reassessed 2026-11-06 against `39efe7a`** (60 commits since `78657f3`):
-routes, MCP tools, the extension's RPC and host commands, workflows,
-dependabot, CODEOWNERS and `npm audit` were re-read; §4 and §6 gained rows,
-§8 (supply chain, CI and release) is new, §5 and §7 are updated, and §9
-lists what the planned Phase 15 steps must add. Two things were read from
-plans, not code, and are marked "plan": the Phase 15 steps not built yet, and
-the real-Copilot test suite, which was never run.
-
-### What changed in the environment since `78657f3`
-
-- **The extension is published** (Marketplace and Open VSX, 0.1.0 on
-  2026-11-03, 0.2.1 now). It runs on other people's machines, so the webview,
-  RPC and MCP-child findings in §6 now protect third parties, and a
-  compromised publisher account or release pipeline reaches them (§8).
-- **The data model grew** past session logs: a user-written projects file
-  (client names, billing codes), a bundled price book and vendor profiles, a
-  Learn simulator, Agent Host sessions and the Copilot CLI event log.
-- **The MCP server grew** from 9 to 12 tools, adding repository and project
-  attribution, cost basis and price-book tools. Each returns more about the
-  user's work to the client's chat model.
-- **Automation grew:** a weekly price-diff workflow, a UI-automation CI job,
-  two AI workflows with write-capable OIDC, and CODEOWNERS.
-- **Dependency risk moved to dev tooling:** `npm audit` shows 0 production
-  findings and 48 in the dev tree (§7).
+Verified by reading the code, not assumed from the architecture docs. Full
+reviews at `78657f3` (2026-10-26) and `39efe7a` (2026-11-06); since then each
+phase added its rows as it was built (Phase 14 in §4, Phase 15 in §4 and §6,
+Phase 12 in §6.1, step 10.17 in §8). Updated 2026-11-12 at `9c43ac2`: the
+user price versions read (§4), and the repository, ruleset and `release`
+environment settings read through the GitHub API (§5.8, §8).
 
 ## 1. System summary
 
@@ -149,25 +120,23 @@ chat model (§4).
 | `GET /api/estimates`, MCP `estimate_cost` (Phase 15 step 15.12) | Information disclosure; a malformed query | **Mitigated.** Read-only, behind the loopback host guard like every route; the MCP server is local stdio. An estimate holds only totals, unit costs, counts and the project's name, never session titles or message text. The query goes through `estimateRequestSchema` (one target, one unit, a whole number of 1 or more, 4 or 12 weeks); anything else is a 400, and an unknown project a 404. |
 | Web SPA rendering of session/turn content | Stored/DOM XSS via a malicious or prompt-injected LLM response captured through mitmproxy | **Mitigated.** No `dangerouslySetInnerHTML`, no markdown-to-raw-HTML pipeline (no `react-markdown`+`rehype-raw`, `marked`, or `DOMPurify` in the web package) was found. All captured content renders as React text nodes, which auto-escape. |
 | mitmproxy HAR ingestion → `redactHeaders` | Information disclosure — captured credentials reaching the UI/exports | **Real, partial gap.** `redact-headers.ts` redacts a fixed denylist (`authorization`, `x-api-key`, `api-key`, `proxy-authorization`, `cookie`, `set-cookie`) at *read* time. It does **not** cover: (a) API keys passed as URL query parameters (a real pattern for some providers, e.g. `?key=...`), and (b) non-standard vendor auth headers outside the fixed list. A user who captures traffic to a provider using either pattern will see the raw credential surfaced in the Turn Inspector / any exported session, even though they reasonably believe "sensitive headers are redacted." |
-| `packages/pi-system-prompt-logger` install | Privilege boundary crossing into a 3rd-party agent runtime | **Accepted.** This vendored extension runs inside `@earendil-works/pi-coding-agent`'s own process once installed via `npm run configure`, so installing it extends trust into that runtime. Earlier upstream CVEs (predictable temp extension install paths → local privilege escalation; `auth.json` write race) were tracked as Dependabot alerts under the package's previous name, `@mariozechner/pi-coding-agent`; as of 2026-10-26 no Dependabot alert is open for the pi package. Re-check on each pi upgrade. |
-| Standalone MCP server (`packages/server/src/mcp/`, `scripts/mcp-server.sh`) | Information disclosure to a third-party model; prompt injection from logged content; argument injection | **Mitigated, with the data flow accepted.** Off unless the user registers it with an MCP client. It takes two optional command-line arguments (`stdio-args.ts`): `--project-billing-details` (a flag, §5.6) and `--app-views-html <path>` (also `=<path>`; the built views page, §6.1; a missing value is an error and a missing file is ignored). Unknown arguments are ignored and nothing is passed to a shell. Its only environment input is where to read, as for the API (the home directory, `APPDATA`, `XDG_CONFIG_HOME`, and `PI_SYSTEM_PROMPT_LOG_PATH` for the pi logger's sidecar), set by the same user who starts it. It opens no port and makes no network calls; stdout carries JSON-RPC only. All 21 model-visible tools (re-counted 2026-11-07: 21 `registerTool` calls, each with a `READ_ONLY` annotation), and the app-only `get_turn_series` when the views are served (§6.1), are annotated read-only, and their arguments are zod-checked (`maxTextChars` 200–20,000; session ids resolve through the same provider lookup as the API, so the path-traversal row above applies). It reads every provider, including mitmproxy captures. Free text it returns (prompts, responses, tool output excerpts) goes through `redactSecrets` and is truncated. Residual: (a) that redaction is pattern-based — GitHub, GitLab, npm, Hugging Face and Slack tokens, `sk-` keys, Stripe `sk_`/`rk_` keys, Google `AIza…` keys, AWS access keys, JWTs, private keys, bearer/basic credentials and `password=`/`api_key=`-style pairs — so a credential in another format can still reach the model (§5.4); (b) logged content is untrusted text, so a prompt injection captured in a session can reach the model as a tool result; the tools are read-only, so it can steer the chat but not act through this server. |
+| `packages/pi-system-prompt-logger` install | Privilege boundary crossing into a 3rd-party agent runtime | **Accepted.** This vendored extension runs inside `@earendil-works/pi-coding-agent`'s own process once installed via `npm run configure`, so installing it extends trust into that runtime. Re-check Dependabot alerts for the pi package on each pi upgrade. |
+| Standalone MCP server (`packages/server/src/mcp/`, `scripts/mcp-server.sh`) | Information disclosure to a third-party model; prompt injection from logged content; argument injection | **Mitigated, with the data flow accepted.** Off unless the user registers it with an MCP client. It takes two optional command-line arguments (`stdio-args.ts`): `--project-billing-details` (a flag, §5.6) and `--app-views-html <path>` (also `=<path>`; the built views page, §6.1; a missing value is an error and a missing file is ignored). Unknown arguments are ignored and nothing is passed to a shell. Its only environment input is where to read, as for the API (the home directory, `APPDATA`, `XDG_CONFIG_HOME`, and `PI_SYSTEM_PROMPT_LOG_PATH` for the pi logger's sidecar), set by the same user who starts it. It opens no port and makes no network calls; stdout carries JSON-RPC only. All 21 model-visible tools (re-counted 2026-11-07: 21 `registerTool` calls, each with a `READ_ONLY` annotation), and the app-only `get_turn_series` when the views are served (§6.1), are annotated read-only, and their arguments are zod-checked (`maxTextChars` 200–20,000; session ids resolve through the same provider lookup as the API, so the path-traversal row above applies). It reads every provider, including mitmproxy captures. Free text it returns (prompts, responses, tool output excerpts) goes through `redactSecrets` and is truncated. Residual: (a) that redaction is pattern-based — GitHub, GitLab, npm, Hugging Face and Slack tokens, `sk-` keys, Stripe `sk_`/`rk_` keys, Google `AIza…` keys, AWS access keys, JWTs, private keys, bearer/basic credentials and `password=`/`api_key=`-style pairs — so a credential in another format can still reach the model (§5.4); (b) logged content is untrusted text, so a prompt injection captured in a session can reach the model as a tool result; the tools are read-only, so it can steer the chat but not act through this server. The replay tools (`replay_session`, `compare_models_for_session`, Phase 14) and `estimate_cost` with a `model` return numbers, model ids and turn indexes only, take the HTTP routes' limits (`replay-query-params.ts`: a model id of at most 100 characters from a vendor profile, at most 10 models) and refuse with a reason; an estimate on another model replays at most 200 sessions (`MAX_ESTIMATE_REPLAY_SESSIONS`). A replay is computed on request and never stored. Tests: `replay-tools.test.ts`, `mcp/security.test.ts`. |
 | MCP attribution tools (`list_repositories`, `list_projects`, `attribution-tools.ts`, 2026-11-05) | Information disclosure of client names, billing codes and folder paths to the chat model; a prompt-injected session steering the tool arguments | **Mitigated, with the data flow accepted; one residual.** Both tools are read-only. `list_repositories` returns repository keys and folder *names* only: since 2026-11-07 it has no `includePaths` argument (an old one is ignored), so instructions in a session's logged text can't make the model fetch local paths; they stay in `GET /api/repositories`. `list_projects` returns ids, names and members; client names and billing codes only when the user launches the server with `--project-billing-details`, and in `get_statement`. Tests: `attribution-tools.test.ts`, `mcp/security.test.ts` (§5.6, done). |
 | Agent Host and Copilot CLI event-log readers (`data-sources/agent-host/`, steps 10.13–10.15) | Path traversal through a session id; unbounded reads; hostile log content | **Mitigated.** Both path builders (`agentSessionDbPath`, `copilotEventLogPath`) test the id against `^[0-9A-Za-z][0-9A-Za-z-]*$` before joining and return `null` otherwise, the same pattern as the VS Code row above. One event-log line is capped at 8 MiB (`MAX_EVENT_LINE_CHARS`), and a line that doesn't parse is dropped. The Copilot home comes from `COPILOT_HOME` or the home directory, set by the user who starts the process. Content renders as React text (XSS row). |
 | New read-only routes: `GET /api/price-book`, `/api/vendors`, `/api/learn/scenarios/:id/simulation` and `/comparison`, `/api/repositories` | Information disclosure; input handling | **Mostly mitigated, one item unverified.** All sit behind the loopback host guard (`app.use(createLoopbackHostGuard…)` runs before `express.json()` and every route, re-read in `app.ts`). They serve bundled data and derived figures, and write nothing. Not re-read at route level: how the scenario `:id` and the `modelId`/`modelIds` query values are resolved. Confirm it is a lookup in the bundled list, not a path (§5.7). |
-| Price book and vendor profiles (`fixtures/price-book/`, `fixtures/vendor-profiles/`) | Tampering with prices to mislead spend figures; a user-supplied version file | **Accepted.** Bundled files are reviewed data edits with a cited source (CODEOWNERS covers `/scripts/` and `package.json`, not `fixtures/`: see §5.8). The weekly `vendor-prices` workflow only reports drift. The plan's user price versions are a future write path (§9). |
+| Price book and vendor profiles (`fixtures/price-book/`, `fixtures/vendor-profiles/`) | Tampering with prices to mislead spend figures; a user-supplied version file | **Accepted.** Bundled files are reviewed data edits with a cited source (CODEOWNERS covers every path, but no rule requires its review: §5.8). The weekly `vendor-prices` workflow only reports drift. A bundled file that fails its schema or cites no source stops startup. |
+| User price versions (Phase 15 step 15.5: `channels.priceVersions` in `projects.json`; `UserPriceBookSource`, `CompositePriceBookSource`, `PriceBook.priceFor`) | Tampering with every priced figure through a user-written price; a version that silently replaces a bundled price or a billed figure | **Mitigated, one residual.** Standalone app and its MCP server only; the extension reads the bundled book alone (`createBundledPriceBookBeside`). They arrive only through `PUT /api/projects` (the row above: whole-file schema, 100 kB body, 0600 temp file and rename) or a hand edit of the file, both by the OS user. `priceVersionSchema` checks each version (ISO dates with `effectiveTo` after `effectiveFrom`, non-negative prices, ascending tiers, `promoEndsAt` only on a promo, a scope only on a contract), and `validateProjectsFile` refuses a duplicate id, an overlap and an unknown project. When the book loads, a user version that clashes with a bundled one (same id, or a list price over a bundled list price) is left out with a problem, so a user can't replace a bundled list price; only a contract, which is meant to win, applies over it (repository scope, then project, then unscoped). Prices change only the priced figure: billed comes from the log's own AI Credits and reported from the agent's own cost, and the preferred basis takes billed, then reported. Every priced figure names its `priceVersionIds`, and `GET /api/price-book` and `get_price_book` tag each version `origin: "user"`. A version's `note` is the user's own text and reaches the model through `get_price_book`. Residual: the web UI doesn't show that a priced figure came from a user version (§5.10). |
 | Legacy settings folder move (`migrate-legacy-app-settings-dir.ts`) | Tampering with files outside the app's folder | **Mitigated.** Runs at start, takes no external input, and only renames the newest existing legacy folder to the current name under the same settings base; it does nothing if the current folder already exists, so it never merges into or overwrites one. |
 | `GET /api/sessions/:id/replay` and `/replay/compare`, request-trace readers (Phase 14, steps 14.4–14.5: `app.ts`, `ApiService.getSessionReplay`/`compareSessionReplay`, `services/session-replay/replay-query-params.ts`; [plans/analyze-session-replay.md](plans/analyze-session-replay.md)) | Path traversal through the session id; denial of service by a costly simulation; a hostile log inflating figures | **Mitigated (step 14.5).** Both routes are GET only (any other method is unrouted, 404) and sit behind the loopback host guard like every route. The session id is resolved by the provider's existing lookup (as the first row), so no new path is built from input; the trace readers reuse the providers' own bounded readers and read no file the session view doesn't. The query is parsed by one zod module shared with the RPC and MCP: `model` is a trimmed, non-empty id of at most 100 characters, `models` (comma-separated or an array) is deduplicated and must hold 1–10 ids, `pricing` is `session-channel`, `copilot` or `api`, and anything else is a 400 before any read. `model` and `models` must then be model ids from a vendor profile (the service's allow-list, 400 with its reason otherwise; an unknown `provider` is 400 too); `models` is capped at 10 per compare, the session's own model included (`TooManyComparedModelsError`, 400). A trace over 20,000 requests is refused with a reason rather than simulated (enforced in `SessionReplayService`; the longest real traces seen are 484 requests, and a synthetic 20,000-request trace simulates in about 0.15 s, so a compare of 10 models stays within a few seconds); a session that exists but can't be replayed answers 404 with the reason, as a session with no captured system prompt does (the shared error set has no 422). The answer holds numbers, model ids and turn indexes only: `app.replay.test.ts` asserts no fixture, temp or home directory path and no file name reaches a response, error bodies included; any other failure goes to the generic internal-error path. Trace records are numbers only, schema-checked as non-negative integers; a figure a hostile log inflates stays labelled **Simulated** (`simulated: true` in every answer) and never changes a measured, billed or statement figure. Nothing is written. |
 | Everything else reachable only via the API | Elevation of privilege | Not found. The server process only ever reads files under the invoking user's own home directory / configured dirs with that user's own OS privileges; no `sudo`, no `child_process.exec`, no setuid patterns anywhere in `packages/server`. |
 
 ## 5. Recommendations (priority order)
 
-**5.1 (Low, preventive; done 2026-11-07) — Guard the loopback-only
-assumption in code, not just convention.**
-`server.ts` now calls `assertLoopbackBindHost(host)` (`http/loopback-bind.ts`)
-before it listens: anything but `127.0.0.1`, `::1` or `localhost` fails at
-start with the reason, so a change to `0.0.0.0` can't turn the app into an
-unauthenticated LAN service silently. Tested in `loopback-bind.test.ts`. The
-Host-header guard (§4) stays: it covers DNS rebinding, this covers the bind.
+**5.1 (Low, preventive; done 2026-11-07) — Guard the loopback bind in
+code.** `server.ts` calls `assertLoopbackBindHost(host)` before it listens,
+so a bind to anything but `127.0.0.1`, `::1` or `localhost` fails at start
+(`loopback-bind.test.ts`). The Host-header guard (§4) covers DNS rebinding.
 
 **5.2 (Medium, concrete; header patterns done, query-string redaction n/a because captured URLs are not retained) — Widen credential redaction beyond the fixed
 header denylist.**
@@ -188,59 +157,39 @@ for it as of 2026-10-26; check again when pi is upgraded. Worth a one-line
 callout in `docs/architecture.md`'s existing pi-agent section.
 
 **5.4 (Low, concrete; done 2026-10-27) — Widen `redactSecrets` for MCP
-tool results.**
-Tool results leave the machine (§4), so `redactSecrets` now also masks
-Google API keys, Stripe secret and restricted keys, npm, GitLab and
-Hugging Face tokens. Add a pattern whenever a new key format turns up,
-erring on masking too much.
+tool results.** Add a pattern whenever a new key format turns up, erring on
+masking too much.
 
-**5.5 (Medium, concrete; done 2026-11-07) — Pin the code-review
-plugin marketplace.**
-`claude-code-action` accepts only a `.git` URL or a local path for
-`plugin_marketplaces` (its `install-plugins.ts`), so a URL can't carry a ref.
-The first fix (#163) checked out `anthropics/claude-code` at a pinned commit
-and passed that folder, but it didn't hold. Claude Code refuses a local
-marketplace named `claude-code-plugins` (the name is reserved for the
-`anthropics` GitHub source), so the next review failed. And that
-marketplace's `code-review` entry follows `anthropics/claude-plugins-official`'s
-`main`, so pinning the marketplace never pinned the plugin. Now (#164)
+**5.5 (Medium, concrete; done 2026-11-07) — Pin the code-review plugin.**
 `claude-code-review.yml` writes a one-plugin marketplace
-(`pinned-review-plugins`) into the runner's temp folder. It names the plugin's
-own source with a `sha` (`0412be7…`, claude-plugins-official's main on
-2026-11-07; checked that a `sha` install gives exactly that commit). It is
-written by the workflow, not committed, so a PR can only change it by
-changing the workflow, which the action checks against `main` before running.
-Dependabot doesn't bump it: bump the sha by hand after reading the diff.
+(`pinned-review-plugins`) into the runner's temp folder that names the
+plugin's source by `sha`. A PR can change it only by changing the workflow,
+which the action checks against `main`. Dependabot doesn't bump it: bump
+the sha by hand after reading the diff.
 
-**5.6 (Medium, concrete; done 2026-11-07) — Take `includePaths` out
-of the model's reach, and decide what `list_projects` may return.**
-Done with the cheapest option: `list_repositories` has no `includePaths`
-argument any more (an old one is ignored), and paths stay in the HTTP API
-(`GET /api/repositories`). `list_projects` returns project ids, names and
-members; client names and billing codes only when the user launches the
-standalone server with `--project-billing-details`
-(`scripts/mcp-server.sh` passes its arguments through). `get_statement`
-keeps them, since a statement is for the client. Tests in
-`attribution-tools.test.ts` and `mcp/security.test.ts`.
+**5.6 (Medium, concrete; done 2026-11-07) — Keep paths, client names and
+billing codes from the model.** `list_repositories` has no `includePaths`;
+`list_projects` returns client names and billing codes only with
+`--project-billing-details`; `get_statement` keeps them (§4).
 
-**5.7 (Low, concrete; done 2026-11-07) — Verify the new read routes'
-id handling.**
-Verified: `GET /api/learn/scenarios/:id` (and `/simulation`, `/comparison`)
-look the scenario up with `scripts.find` and the `model`/`models` values with
-`profile.models.find`, in memory; neither reaches a path join. `app.test.ts`
-now sends traversal-shaped scenario ids (encoded `../`) to all three routes
-(404, nothing read) and traversal-shaped model ids to both query forms (400).
+**5.7 (Low, concrete; done 2026-11-07) — Verify the read routes' id
+handling.** Scenario and model ids are in-memory lookups, never a path;
+`app.test.ts` sends traversal-shaped ids to every such route.
 
 **5.8 (Low, concrete; open, found 2026-11-06) — Release and repository
-settings that the repository cannot show.**
-- Confirm "Require review from Code Owners" is on for `main` (CODEOWNERS
-  does nothing without it) and add `/packages/server/fixtures/` and
-  `/packages/server/src/services/pricing/` to it, since a changed price
-  changes every reported figure.
-- Protect the `ext-v*` tag pattern, so only the owner can start a release.
-- Delete `OVSX_PAT` once the Open VSX trusted publisher is registered, as the
-  workflow comment says, and note the date here.
-- Confirm the `release` environment still lists required reviewers.
+settings.** Read through the GitHub API on 2026-11-12:
+- **Code-owner review is not required.** CODEOWNERS starts with
+  `* @raulkivi`, so it covers every path, `fixtures/` and
+  `services/pricing/` included, but `main` has no branch protection and its
+  one ruleset (27004539) requires status checks only. Add "Require review
+  from Code Owners" to the ruleset if a second maintainer joins; with one
+  owner it would block every PR.
+- **`ext-v*` tags are not protected:** no tag ruleset exists. Add one so
+  only the owner can create or move a release tag.
+- **`OVSX_PAT`** is still in use; delete it once the Open VSX trusted
+  publisher is registered, as the workflow comment says.
+- **Done:** the `release` environment requires the owner's review and
+  deploys only from `ext-v*` tags.
 
 **5.9 (Low, preventive; open, found 2026-11-06) — Keep the dev tooling
 contained.**
@@ -250,6 +199,11 @@ high findings (§7). Keep that job free of secrets and with
 `wdio-vscode-service` verifies the VS Code archive it downloads (not read),
 and run the real-Copilot suite only with a dedicated test GitHub account
 (§8).
+
+**5.10 (Low, concrete; open, found 2026-11-12) — Show user prices as
+the user's.** The web UI shows a priced figure without saying it came from a
+user price version; only the price-book listing and `priceVersionIds` tell.
+Label it where the figure is shown (§4, user price versions).
 
 Nothing else in the reviewed surface (SQL access, path resolution,
 settings writes, CSRF exposure, XSS exposure, DNS rebinding — the last
@@ -275,7 +229,7 @@ an optional MCP child process.
 | Host commands (`rpc/host-command-handler.ts`, `vscode/vscode-host-commands.ts`) | Using the webview to steer the editor | **Mitigated.** Only `openSetting`, `copyToClipboard` and `openTextDocument` exist, each with a zod-checked argument shape. `openSetting` is allowed only for the settings the current config status warns about plus the two Copilot logging settings, so the webview can't point the user at an arbitrary setting. `openTextDocument` text is capped at 5 Mi characters and the language is one of plaintext, markdown or json. |
 | Read-only documents (`vscode/vscode-read-only-documents.ts`, `documents/read-only-document-store.ts`) | Editing or saving content by accident; unbounded memory | **Mitigated.** A system prompt or advice bundle opens through a `TextDocumentContentProvider` under its own URI scheme, so the editor can't edit or save it and no file is written. The backing store holds at most 20 documents and drops the oldest; each path is used once, so a stale link can't show a newer document. |
 | Settings changes | Silent changes to the user's VS Code configuration | **Mitigated.** The extension never writes VS Code settings. The Setup view's Fix buttons and the webview's `openSetting` only open VS Code's Settings editor on the named setting (`workbench.action.openSettings`); the user makes the change. The extension's own state (active provider, retention threshold, walkthrough shown) is kept in `globalState`. |
-| MCP child process (`mcp/stdio.ts`, `mcp/mcp-server-args.ts`, `mcp/mcp-server-definitions.ts`) | Argument injection, file reads outside VS Code's logs, network use, leaking data to a model | **Mitigated, with the data flow accepted.** VS Code starts `dist/mcp-stdio.js` itself, without a shell. Its one input is `--user-data-dir <path>`, checked before anything is read: exactly that flag and value, an absolute, already-normalized path (no `..`, no doubled or trailing separator, not the root, no control characters) that contains VS Code's `User` folder; otherwise it exits 2. The only environment variable the extension passes is `ELECTRON_RUN_AS_NODE=1`; the code reads no other environment input. stdout carries JSON-RPC only; diagnostics go to stderr. All tools are annotated read-only and the process makes no network calls and writes no files. Free text it returns is redacted and truncated first. By design, what a tool returns goes to whichever chat model the user is using, which is why the server is off by default. Since Phase 15 step 15.13 it serves 17 tools, adding repositories (remote keys only, credentials stripped, a local repository by its folder name), the price book and the cost analyses, and since Phase 14 step 14.5 19, adding `replay_session` and `compare_models_for_session` (numbers and model ids only); it also reads the vendor profiles and the bundled price book from the extension's own `media/` folder and, since Phase 12 A13, the MCP App views page from `dist/mcp-apps/views.html` (a fixed path next to the bundle, not an argument), and nothing else outside VS Code's logs. It has no billing tools. A test runs every standalone tool over generated folders and remote credentials and checks that none leaks either (`mcp/security.test.ts`). |
+| MCP child process (`mcp/stdio.ts`, `mcp/mcp-server-args.ts`, `mcp/mcp-server-definitions.ts`) | Argument injection, file reads outside VS Code's logs, network use, leaking data to a model | **Mitigated, with the data flow accepted.** VS Code starts `dist/mcp-stdio.js` itself, without a shell. Its one input is `--user-data-dir <path>`, checked before anything is read: exactly that flag and value, an absolute, already-normalized path (no `..`, no doubled or trailing separator, not the root, no control characters) that contains VS Code's `User` folder; otherwise it exits 2. The only environment variable the extension passes is `ELECTRON_RUN_AS_NODE=1`; the code reads no other environment input. stdout carries JSON-RPC only; diagnostics go to stderr. All tools are annotated read-only and the process makes no network calls and writes no files. Free text it returns is redacted and truncated first. By design, what a tool returns goes to whichever chat model the user is using, which is why the server is off by default. It serves 19 tools (20 with the views): sessions, audits, findings, repositories (remote keys only, credentials stripped, a local repository by its folder name), the price book, the cost analyses and the replay tools (numbers and model ids only). It also reads the vendor profiles and the bundled price book from the extension's own `media/` folder and, since Phase 12 A13, the MCP App views page from `dist/mcp-apps/views.html` (a fixed path next to the bundle, not an argument), and nothing else outside VS Code's logs. It has no billing tools. A test runs every standalone tool over generated folders and remote credentials and checks that none leaks either (`mcp/security.test.ts`). |
 | `aiCreditsAnalyzer.mcp.enabled` | Workspace-controlled opt-in to the data flow above | **Mitigated, with a trusted-workspace case accepted.** The setting defaults to `false`, and is listed in `capabilities.untrustedWorkspaces.restrictedConfigurations`, so a workspace in Restricted Mode can't turn it on through `.vscode/settings.json`. A workspace the user has chosen to trust can, and that is accepted: trusting a workspace already lets it run code and tasks. Turning it off removes the server without a reload. |
 | Test hooks (`diagnostics/test-hooks.ts`, `extension.ts`) | A command that exposes internals in a normal install | **Mitigated.** The `aiCreditsAnalyzer.internal.*` commands (timing marks, RPC trace, tree nodes, MCP definitions, and since step 10.16 `holdRequests`/`releaseRequests`) are registered only when VS Code runs the extension in `ExtensionMode.Test` or, since step 10.17 G3 (owner decision D5, 2026-11-11), in `ExtensionMode.Development` with the environment variable `AICA_TEST_HOOKS=1`, which only the real-Copilot suite sets for the VS Code it launches; `package.json` never contributes them. An installed copy runs in `Production` and has none, even with the variable set, and a plain F5 development host has none. Residual, accepted: a developer who sets the variable gets the hooks in their own development host. The extension returns no API object for other extensions. The `RequestGate` the hold hook drives is an optional dispatcher dependency; without it, `dispatch` awaits nothing. Manifest and bundle-load tests assert the hooks are absent in production (plan T4). |
 | RPC allow-list growth (`rpc/message-dispatcher.ts`, Learn simulation, step 13.7) | A new webview-callable method widening the host's reach | **Mitigated.** Three methods were added, `getScenario`, `compareScenario` and `listVendorProfiles`. Each is read-only, its params go through the method's zod schema, and ApiService validates the values again. No write method and no host command was added. Phase 15's `PUT /api/projects` is not an RPC method; it stays on the HTTP side. |
@@ -283,7 +237,7 @@ an optional MCP child process.
 | RPC allow-list growth (Phase 14, step 14.5) | A new webview-callable method widening the host's reach | **Mitigated (step 14.5).** Two read-only methods, `getSessionReplay` and `compareSessionReplay`, with the HTTP routes' params and limits (model ids from a vendor profile, at most 10 models), checked by their zod schemas and again by ApiService through the same `replay-query-params.ts` parser as the routes, so both transports refuse the same input with the same message and status. The extension wires the service over its Copilot-only registry and bundled price book (D5); without a price book the methods answer 404 "Session replay is not available in this product." No write method and no host command. |
 | `openSetting` host command (`vscode/vscode-host-commands.ts`, 2026-11-04) | Steering the editor to an unintended setting or extension | **Mitigated.** The allow-list in `rpc/host-command-handler.ts` still runs first. The adapter now opens `@id:<setting>` (an exact match, not a fuzzy search); when Copilot Chat is not installed it searches the marketplace for the fixed id `GitHub.copilot-chat`; for an unregistered key it opens `settings.json` with `revealSetting` and `edit: false`. The user still makes every change; the extension writes no setting. |
 | Agent Host stores via the extension (`copilot-log-paths.ts`, `agentHostUserDataDir`) | Reading outside VS Code's own data | **Mitigated.** The reader gets VS Code's user-data directory, the same one the MCP child's `--user-data-dir` check requires to contain `User`. Per-session paths follow the id check in §4. |
-| Distribution (Marketplace and Open VSX, from 2026-11-03) | Impersonation, typosquatting, a poisoned update reaching users | **Partly mitigated.** The `raulkivi` publisher and the Open VSX namespace are claimed; the VSIX is built with `vsce package --no-dependencies` from an esbuild bundle, so no `node_modules` ships. Publishing is gated by the `release` environment (§8). Open: the minimum engine is `^1.145.0`, so users on older VS Code stay on an older, unpatched build. |
+| Distribution (Marketplace and Open VSX, from 2026-11-03) | Impersonation, typosquatting, a poisoned update reaching users | **Partly mitigated.** The `raulkivi` publisher and the Open VSX namespace are claimed; the VSIX is built with `vsce package --no-dependencies` from an esbuild bundle, so no `node_modules` ships. Publishing is gated by the `release` environment (§8). Open: the minimum engine is `^1.146.0`, so users on older VS Code stay on an older, unpatched build. |
 
 ### 6.1 MCP App views (Phase 12, both products)
 
@@ -298,13 +252,13 @@ that support MCP Apps (VS Code Copilot Chat, Claude Desktop; design in
 the server (trusted code, the OS user's process), the host (VS Code or
 Claude Desktop, which owns the iframe) and the view (`packages/mcp-apps`,
 one static HTML page, treated as a web page that shows untrusted text).
-Status as of Increment 3 (U1–U5 and U9–U15, not yet released). The reviews
+Status: Increment 3 (U1–U5 and U9–U15), released 2026-11-12 in extension 0.8.0 and app 0.12.0. The reviews
 are in [plans/mcp-apps.md](plans/mcp-apps.md) §6.1: A14 for U1–U3, A23 for
 U9–U11, A32 for U4, U5, U12–U15 and fullscreen.
 
 | Surface | Threat | Verified finding |
 |---|---|---|
-| The iframe and its CSP (`mcp/apps/register-app-views.ts`, `packages/mcp-apps/vite.config.ts`) | The page reaching the network, loading code or embedding frames; exfiltrating what it shows | **Mitigated by the host's sandbox.** The host renders the page in a sandboxed iframe. The resource declares no `csp` domains (no `connectDomains`, no `resourceDomains`) and no `_meta.ui.domain`, so the spec's default CSP applies: no `connect-src`, no frames, no external resource. The build is one file (`vite-plugin-singlefile`) with scripts and CSS inline, fonts not bundled (headings ask for a local font, then the host's) and `assetsInlineLimit: 0`, so nothing is fetched at run time. `bundle-size.test.ts` asserts no external script, stylesheet, `@font-face` or `url(http…)`. The only way out is the host's postMessage channel, which the next rows limit. Residual: the guarantee rests on the host enforcing its sandbox and CSP; a host that doesn't is outside this app. Real hosts are checked by hand (A16) |
+| The iframe and its CSP (`mcp/apps/register-app-views.ts`, `packages/mcp-apps/vite.config.ts`) | The page reaching the network, loading code or embedding frames; exfiltrating what it shows | **Mitigated by the host's sandbox.** The host renders the page in a sandboxed iframe. The resource declares no `csp` domains (no `connectDomains`, no `resourceDomains`) and no `_meta.ui.domain`, so the spec's default CSP applies: no `connect-src`, no frames, no external resource. The build is one file (`vite-plugin-singlefile`) with scripts and CSS inline, fonts not bundled (headings ask for a local font, then the host's) and `assetsInlineLimit: 0`, so nothing is fetched at run time. `bundle-size.test.ts` asserts no external script, stylesheet, `@font-face` or `url(http…)`. The only way out is the host's postMessage channel, which the next rows limit. Residual: the guarantee rests on the host enforcing its sandbox and CSP; a host that doesn't is outside this app. Before each extension release the views run in a real VS Code Copilot Chat (wdio, step 10.17 G4); Claude Desktop can't be driven, so a Playwright fake host replays its recorded context (G5) |
 | Host-supplied style variables and fonts (`theme/apply-host-theme.ts`) | The host (or anything posing as it over postMessage) injecting CSS or fonts that hide or spoof content | **Accepted, host trusted.** The view applies `applyHostStyleVariables`, `applyDocumentTheme` and `applyHostFonts` from ext-apps with the host's `hostContext.styles`. These can restyle the view, nothing more: they run in the same iframe and CSP, so they can't read data or reach the network, and the view's own labels ("Unknown", "estimate") are text in the DOM, not CSS. Every token has a fallback, so a host that sends none still gets a readable view |
 | Data the view receives (`views/*`, `view-models/*`) | Logged text rendered as HTML or script; secrets in what is shown | **Mitigated.** The view gets only what the tools already return: `structuredContent` of the model-visible view tools listed above, plus `get_turn` (a prompt excerpt, token usage and tool-call outcomes), `get_session_cost`, `get_turn_series`, `list_findings`, `get_repository_cost`, `get_project_cost`, `get_price_changes` and `replay_session` when it drills down. That output has already gone through `redactSecrets` and truncation on the server (§4). Logged text can reach the view: a session title, a turn's prompt excerpt, a finding's explanation and its evidence; for U9–U11 also repository and project labels, vendor and model labels, unknown and not-explained reasons, and a provider's error. A tool's error text, which can quote the model's own arguments (an unknown project id), is shown by U9–U11 as a state in place of a chart. React renders every string as text; the code has no `dangerouslySetInnerHTML`. U9 and U10 recognise the extension's no-projects answer with the domain's `parseUnknownProjectIdText`, which accepts only a reason the domain knows, so a crafted project id can't make that state show its own text (A23). Increment 3 adds model ids, replay reasons and assumptions (U12), price-book model, channel, source ids and notes (U13), project, client, billing code and statement line text (U14), estimate targets, refusals and assumptions (U15), tool-call commands, tool names and session titles (U4) and session titles, models and repositories (U5); every view shows a tool's error text as text, capped at 500 characters. A price source is text, never a link: the views render no `<a>` and set no URL attribute. The A32 tests plant markup and an injected instruction in each of these fields and press every control (A32). Evidence is collapsed by default and shown as text. A view model keeps these fields under names marked display-only. Residual: redaction is pattern-based (§5.4), so a credential in another format shows in the view as it already does in the tool result |
 | No forwarding to the model (`views/cost-rollup/AskAboutSession.tsx`, `host/app-host-port.ts`) | Prompt injection: instructions in logged text relayed into the chat by a click | **Mitigated.** The model never sees a drill-down result. The view's only message to the chat is `sendMessage` with `Analyse session <id>`, a fixed template that carries the session id and no other text (not the title, not an excerpt), and only for a plain id (`isPlainSessionId`). It is sent from one place, the `useAnalyse` hook that U2's "Ask about this session" and U5's per-row "Analyse" share, on a click. **Try, then fall back (owner, 2026-11-11):** VS Code advertises no `message` capability yet sends, so the button shows unless the host says `message: false`. A press sends once (the button is disabled while the host answers); a declined or failed send shows "Ask in the chat: Analyse session <id>" for the user to type and is never retried by the view. The fallback text is the same fixed template, shown, not sent. The view never calls `updateModelContext` (the port has no such method), and never calls `openLink` (the port has one, but no view uses it). `requestDisplayMode` (fullscreen, U2 and U9) is called from one hook with a literal mode. A static test (`no-forwarding.test.ts`) parses every shipped source and every `packages/web` module the views import, finds every host call site and HTML or network sink, and fails on an unreviewed tool, argument name or sink, or on an argument read from a display-text field. Each view's dynamic test presses every control with logged text planted in every field and checks what reached the port (A14 for U1–U3, A23 for U9–U11, A32 for U4, U5 and U12–U15) |
@@ -323,8 +277,8 @@ U9–U11, A32 for U4, U5, U12–U15 and fullscreen.
 
 ## 8. Supply chain, CI and release (new 2026-11-06)
 
-Read from `.github/` at `39efe7a`. The repository can't show organisation or
-branch settings; those are listed as open items in §5.8.
+Read from `.github/` at `39efe7a`, updated 2026-11-12. Repository settings
+were read through the GitHub API; what is open is in §5.8.
 
 | Surface | Threat | Verified finding |
 |---|---|---|
@@ -333,57 +287,8 @@ branch settings; those are listed as open items in §5.8.
 | `claude.yml`: `@claude` in an issue, comment or review | Prompt injection through issue or PR text reaching an agent that holds `CLAUDE_CODE_OAUTH_TOKEN` and OIDC | **Mitigated in part.** Default token `contents: read` (#92); job permissions are read-only plus `id-token: write`; the action is pinned by SHA; CODEOWNERS covers `.github/workflows/`, `CLAUDE.md` and `.claude/`; a Unicode-smuggling guard scans every PR. Not verified here: who may trigger it (the action's own check is assumed to require write access). The checkout keeps its token ("@claude may push a branch"), yet the job grants `contents: read`: either the comment is stale or the action pushes with its own app token; settle it and, if stale, set `persist-credentials: false`. |
 | `claude-code-review.yml`: automatic review on every same-repository PR | The same, plus unpinned plugin code | **Mitigated.** Fork and Dependabot PRs are excluded, so untrusted forks never reach the token; `persist-credentials: false`; action pinned by SHA. The code-review plugin is pinned by sha in a marketplace the workflow writes (§5.5). |
 | `vendor-prices.yml`: weekly fetch of GitHub's Copilot price table | Untrusted fetched text written into an issue; the workflow's token misused | **Mitigated.** `contents: read` plus `issues: write` on one job; `persist-credentials: false`; it only reports and never commits. An issue created with the workflow token doesn't trigger `claude.yml`, so a hostile `@claude` in the fetched table can't start an agent. This is the only place the project initiates network egress, and it is CI, not the shipped app. |
-| `ci.yml` `extension-ui` (step 10.16) | A dev-tree vulnerability (§7) executing during the test run | **Mitigated in part.** `contents: read`, no secrets, `persist-credentials: false`, VS Code version pinned and cached, `continue-on-error`. Open: archive integrity (§5.9). |
+| `ci.yml` `extension-ui` (step 10.16) | A dev-tree vulnerability (§7) executing during the test run | **Mitigated in part.** `contents: read`, no secrets, `persist-credentials: false`, VS Code version pinned and cached. A required check since step 10.17 G1. Open: archive integrity (§5.9). |
+| Required checks (ruleset 27004539 on `main`, step 10.17 G1; docs-only skip, #221) | A change merging without its tests; a PR passing as docs-only to skip the UI suites | **Mitigated, admin bypass accepted.** Nine checks are required: `test`, `extension`, `extension-ui`, `web-e2e`, `mcp-apps-e2e`, `scan`, both CodeQL Analyze jobs and `CodeQL`. Repository admins may bypass, which with one owner is the owner. A PR that changes only docs skips the heavy jobs, which then report as skipped and pass. `scripts/ci-change-scope.mjs` decides, fails safe (the jobs run unless it succeeds and says docs-only), counts the docs that tests read as code, and `test` always runs. |
 | Dependency intake (`dependabot.yml`) | A compromised release reaching the tree quickly | **Mitigated.** npm and Actions updates are grouped weekly with a 7-day cooldown "for the window in which compromised releases are usually yanked"; majors are excluded from version updates, security fixes still arrive; every action is pinned by SHA. |
-| Review gate (`CODEOWNERS`, #101) | A change to CI, release, dependencies, redaction or the MCP server merging unreviewed | **Partly verified.** The file lists these paths explicitly, owns itself and `docs/threat-model.md`. It only blocks a merge if branch protection requires code-owner review, which the repository can't show (§5.8). It does not list `fixtures/` or `services/pricing/` (§5.8). |
+| Review gate (`CODEOWNERS`, #101) | A change to CI, release, dependencies, redaction or the MCP server merging unreviewed | **Partly verified.** The file lists these paths explicitly, owns itself and `docs/threat-model.md`. Its first line, `* @raulkivi`, covers every other path. It blocks nothing: no rule requires code-owner review (§5.8). |
 | `scorecard.yml` | Drift in repository hygiene going unnoticed | **In place.** Runs the OpenSSF Scorecard and uploads SARIF; the action is pinned by SHA. |
-
-## 9. Forward look: what Phase 15 must add before it ships
-
-Read from `docs/plans/cost-by-repository-and-project.md`; none of this is built.
-Each step should add its rows to §4 in the same change, as step 15.0 did.
-
-- **Statements (15.11): new writes and exports.** `StatementStore` is the third
-  user-content write path. Reuse the `projects.json` pattern: fixed file
-  name, whole-file schema validation, temp file at mode 0600 then rename,
-  size limits. CSV export is a known injection route: project and client
-  names starting with `=`, `+`, `-` or `@` become spreadsheet formulas, so
-  prefix or quote them, and test it.
-- **User price versions (15.5 onward).** A user-written price file is a
-  tampering path for every figure. Validate with the `PriceVersion` schema,
-  require a source field, label user versions in every output, and never let
-  one override a `billed` figure.
-- **MCP cross-cutting work (15.13).** `get_statement`, `estimate_cost` and the
-  prompts return more of the user's billing detail to a third-party model.
-  Apply §5.6 first: opt-in for client names, billing codes and paths. Add the
-  planned §10.1.5 security tests (argument injection, redaction) for every new
-  tool.
-- **Extension tabs (15.14, done).** The Cost over time and Compare tabs
-  reuse the existing read-only RPC methods; no method was added. The
-  Sessions view's repository groups and the status bar name a local
-  repository by its folder only, never its path (a hashed TreeItem id).
-  Any new method still needs the same schema check and a row in §6.
-- **Phase 14 (session replay; step 14.0 added the rows above, step 14.5 built the routes, RPC methods and MCP tools).**
-  MCP (done in step 14.5): `replay_session` and `compare_models_for_session`
-  (`mcp/replay-tools.ts`, a `replay` tool group served by both products), and
-  `estimate_cost`'s new `model`, return numbers, model ids and turn indexes
-  only: no prompt or response text, no paths, no client names (the
-  projects-file opt-in of §5.6 applies to `estimate_cost` as now). All are
-  annotated read-only. Their arguments use the HTTP routes' zod pieces
-  (`replay-query-params.ts`: a model id of at most 100 characters, at most 10
-  models) and the service's allow-list of vendor-profile model ids; a refusal
-  (unknown session or model, not replayable, too many models) is a tool error
-  with its reason. An estimate on another model replays at most 200 sessions
-  (`MAX_ESTIMATE_REPLAY_SESSIONS`), each under the 20,000-request cap, and
-  refuses more with a reason. Tests: `replay-tools.test.ts`,
-  `mcp/security.test.ts` (both tools in the every-tool read-only, no-path and
-  no-credential property, and no turn text or title from them or from
-  `estimate_cost` with a model), `stdio.test.ts` and
-  `create-copilot-mcp-services.test.ts`. A replay is computed on request and
-  never stored, so it adds no write path. The over-trust risk (a
-  precise-looking figure resting on assumptions A1–A5) is a product risk,
-  handled by the Simulated label, the
-  assumptions and the self-check, not a security one.
-- **Phase 12 (MCP Apps views, planned).** Views rendered inside the MCP
-  client are a new untrusted-content boundary with their own sandbox and CSP;
-  reassess before building.
