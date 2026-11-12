@@ -1,5 +1,7 @@
 # Changelog
 
+**Last changed:** 2026-11-13 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+
 All notable changes to AI Credits Analyzer, the VS Code extension, are
 documented in this file. The standalone app, Agent Cost Analyzer, has its
 own changelog at the repository root.
@@ -10,9 +12,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- **Set Monthly AI Credits Allowance command.** Opens the Settings editor on
-  `aiCreditsAnalyzer.monthlyAllowance.aiCredits`, where you type the allowance. The command
-  changes no setting.
+- **Monthly AI Credits allowance gauge.** Set `aiCreditsAnalyzer.monthlyAllowance.aiCredits` to
+  your plan's monthly allowance, or run **Set Monthly AI Credits Allowance** to open it in the
+  Settings editor (the command changes no setting). The status bar then shows the month to date
+  against the allowance, with a warning near the limit (80 % by default, `warnAtPercent`) and when
+  over. The Sessions view's first row shows the same figures with the days left. Unknown sessions
+  are never counted as 0, so the figure reads "at least" when some sessions have no cost data. The
+  gauge shows no notification and changes no setting.
 
 ## [0.10.0] - 2026-11-12
 

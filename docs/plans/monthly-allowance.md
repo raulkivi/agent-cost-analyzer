@@ -2,7 +2,7 @@
 
 **Last changed:** 2026-11-13 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
-Status: **planned; owner decisions accepted 2026-11-12 (every recommendation); implementation started 2026-11-12**. Step **10.21** in [implementation-plan.md](../implementation-plan.md); [classic-subagent-credits-implementation.md](classic-subagent-credits-implementation.md) holds 10.19 and its audit follow-up 10.20.
+Status: **owner decisions accepted 2026-11-12 (every recommendation); mock-up approved 2026-11-13; code and docs done (MA0 to MA11), in review; MA12 open**. Step **10.21** in [implementation-plan.md](../implementation-plan.md); [classic-subagent-credits-implementation.md](classic-subagent-credits-implementation.md) holds 10.19 and its audit follow-up 10.20.
 
 ## 1. Why
 
@@ -59,10 +59,10 @@ The month figure is the same computation over a wider window, so it needs no new
 | Case | Gauge text | Rule |
 |---|---|---|
 | Allowance not set | item hidden; Sessions row hidden | No nag. The command from MA7 and the docs explain how to set it. |
-| Some sessions unknown | "At least 312.40 of 1,000 AI Credits (31 %)" and tooltip "4 of 9 sessions this month have cost data" | The sum covers known sessions only, so it is a lower bound and the words say so. |
+| Some sessions unknown | "at least 312.40 of 1,000 AI Credits" (no percentage in the bar; tooltip "At least 31 % of the allowance used" and "4 of 9 sessions this month have cost data") | The sum covers known sessions only, so it is a lower bound and the words say so. |
 | No session has cost data | "AI Credits this month: unknown" | Never 0. No percentage. |
 | No sessions this month | "No sessions this month" | A true zero is only shown when sessions exist and every one is known. With none, say so. |
-| Over the allowance | "Over: 1,042.10 of 1,000 AI Credits" | Level `over`. With unknown sessions: "At least 1,042.10 ...". |
+| Over the allowance | "1,042.10 of 1,000 AI Credits · over" | Level `over`. With unknown sessions: "at least 1,042.10 of 1,000 AI Credits · over". |
 | Required config warning | today's item takes over as now; the gauge item hides | Numbers are not usable. |
 
 A lower bound can only under-warn. The tooltip says "may be higher" when any session is unknown.
@@ -99,13 +99,16 @@ Contributed in `package.json` under `contributes.configuration.properties` (next
 
 ### 3.8 Surfaces
 
-- **Status bar.** A second item, left, priority 99 (after today's item). One item per concept keeps today's item unchanged and lets the gauge show on days with no sessions (today's item hides then). Click opens the Sessions view. Text carries the state in words, and the background colour only adds to it, as `vscode-status-bar.ts` already does:
+- **Status bar.** A second item, left, priority 99 (after today's item), id `aiCreditsAnalyzer.monthlyAllowance`, named "AI Credits Analyzer: Monthly Allowance". One item per concept keeps today's item unchanged and lets the gauge show on days with no sessions (today's item hides then). Click opens the Sessions view. Text carries the state in words, figure first so truncation keeps it, and the background colour only adds to it, as `vscode-status-bar.ts` already does. Approved 2026-11-13 ([mock-up README](mockups/vscode-extension/README.md), owner decisions 1 to 4 and 9). No percentage in the bar:
   - ok: `$(dashboard) 312.40 of 1,000 AI Credits`
-  - near: `$(warning) Near limit: 812.40 of 1,000 AI Credits` (warning background)
-  - over: `$(error) Over: 1,042.10 of 1,000 AI Credits` (error background; unverified that `statusBarItem.errorBackground` exists for this use, MA0)
-  - `ariaLabel` spells out everything, for example "AI Credits this month: at least 312.40 of 1,000 allowance, 31 percent, 12 days left, 4 of 9 sessions have cost data. Open Sessions." Role `button`, as today.
+  - near: `$(warning) 812.40 of 1,000 AI Credits · near limit` (warning background)
+  - over: `$(error) 1,042.10 of 1,000 AI Credits · over` (error background)
+  - partial data: `$(warning) at least 812.40 of 1,000 AI Credits · near limit`, and `at least … · over` (decision 2)
+  - `ariaLabel` spells out everything, for example "AI Credits this month: at least 312.40 of 1,000 allowance, 31 percent, 12 days left, 4 of 9 sessions have cost data. Open Sessions." Level sentence first when near or over. Role `button`, as today.
   - The codicon stays outside the translated message (existing rule).
-- **Sessions view.** A first `message` node (kind exists in `sidebar/sessions-tree-model.ts`) "This month: 312.40 of 1,000 AI Credits · 12 days left". The tooltip adds remaining ("up to 687.60 remain", since used is a lower bound), the period start and the coverage line.
+  - Measured in a live window (MA5, 2026-11-13), text contrast on the fill: Dark Modern warning about 5.8:1, error 6.69:1; Light Modern 7.26:1 and 5.49:1; High Contrast Light 6.24:1 and 6.61:1. High Contrast (dark) draws no fill, so the icon and the words carry the level there. Lowest measured: 5.49:1.
+- **Sessions view.** A first `message` node (kind exists in `sidebar/sessions-tree-model.ts`). Its label is the state and its muted description the days left (decision 6): "This month: 812.40 of 1,000 AI Credits · near limit" with "· 12 days left". The tooltip adds remaining ("up to 687.60 remain", since used is a lower bound), the period start and the coverage line. With no sessions the row stays and says "This month: no sessions"; the existing empty-state message still shows below it (decision 5).
+  - **Filter limit (MA6, 2026-11-13).** Decision 5 asked for the row to stay while a filter hides every session. An extension cannot pin a row, so VS Code's own tree filter hides it while filtering, and the row returns when the filter clears. The status-bar gauge stays visible throughout. Checked by `test/ui/specs/monthly-allowance.e2e.ts` ("VS Code's own filter hides the row with every session, and the row is back once the filter is cleared; the gauge stays in the status bar").
 - **Panel (webview).** Out of scope for v1. The panel shows sessions and turns; a month gauge there needs an RPC method and its zod schema (threat-model §6 allow-list rows). Revisit after the mock-up (D5).
 - **Days left.** Inclusive of today, computed from the period end. "1 day left" on the last day.
 
@@ -131,7 +134,7 @@ TDD in every task: the failing test is written and seen red first (CLAUDE.md, ar
 | ID | Work | Exit criterion | Complexity | Model | Depends on |
 |---|---|---|---|---|---|
 | MA0 | **Done 2026-11-12 (§13).** Spike, no product code: (a) read an `application` setting in a remote (`extensionKind: workspace`) window and in a Restricted workspace; (b) which `ThemeColor` ids a status-bar item may use (error and warning); (c) two items' order and truncation; (d) fixture session timestamps can be seeded "now" for wdio (see MA9). Notes in this file. | Each of (a) to (d) answered with how it was checked; D-recommendations updated | low | Sonnet | none |
-| MA0b | Mock-up boards (§5). **Approved 2026-11-13** (#245; answers in [mockups/vscode-extension/README.md](mockups/vscode-extension/README.md)): figure-first bar text with no percentage, item name "AI Credits Analyzer: Monthly Allowance" | Boards drawn; owner approval recorded here | medium | Sonnet (frontend-design skill) + owner | MA0 |
+| MA0b | Mock-up boards (§5). **Approved 2026-11-13** (#245; owner answers in [mockups/vscode-extension/README.md](mockups/vscode-extension/README.md)): figure-first bar text, no percentage, item name "AI Credits Analyzer: Monthly Allowance" | Boards drawn; owner approval recorded here | medium | Sonnet (frontend-design skill) + owner | MA0 |
 | MA1 | `time/billing-period.ts` + tests: period for a reset day (1 to 28), month and year boundaries, February, DST changes, a non-default zone, `daysLeft` on the first and last day. Red first | Tests green; no `vscode` import | medium | Sonnet | D1 |
 | MA2 | Extract `session-credits.ts`; `status-bar/monthly-allowance.ts` + tests: known-only sum, unknown never 0, "at least" wording, all-unknown, no sessions, exactly at the allowance, over, near threshold edges (79.9, 80, 100 percent), allowance not set or invalid, sessions at the period edges, a session without `startedAt`, an `estimated` AI Credits value (decide per D7 note), translation through `Translate` | Tests green; existing `status-bar-model.test.ts` unchanged and green | high | Opus | MA1 |
 | MA3 | Contribute the settings in `package.json` and `package.nls.json`; `settings/allowance-settings.ts` + tests (non-number, NaN, negative, string, 0); manifest test: scope `application`, minimum, defaults, nls keys present | `manifest.test.ts` and the reader tests green; the setting is absent from the workspace-settable list | medium | Sonnet | MA0, D1, D4 |

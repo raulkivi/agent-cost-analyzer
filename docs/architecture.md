@@ -1,6 +1,6 @@
 # Architecture: Agent Cost Analyzer and AI Credits Analyzer
 
-**Last changed:** 2026-11-12 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-13 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 ## 1. Purpose & scope
 
@@ -2906,6 +2906,29 @@ by repository (§6.4 has the product table):
   names the workspace folder's repository with its AI Credits today.
   Both resolve repositories through `sidebar/repository-sources.ts`, the
   same `SessionAttributor` and `RepositoryResolver` as the Dashboard.
+
+**As built (step 10.21, monthly allowance).** A month-to-date AI Credits
+gauge against the user's allowance, in the status bar and the Sessions view
+(plan [plans/monthly-allowance.md](plans/monthly-allowance.md)):
+- **Model.** `status-bar/monthly-allowance.ts` is pure and has no `vscode`
+  import. It takes the cached session summaries, `now`, the time zone and
+  the settings, and returns the level (`normal`, `near`, `over`), the text,
+  tooltip and label. The period comes from `time/billing-period.ts`. The
+  sum is `status-bar/session-credits.ts`, shared with today's item. An
+  unknown session is never 0 and makes the figure "at least".
+- **Setting.** `aiCreditsAnalyzer.monthlyAllowance.aiCredits`, `.resetDay`
+  and `.warnAtPercent`, all `application` scope, so a workspace file cannot
+  set them (threat-model §6). `settings/allowance-settings.ts` reads them
+  through `ConfigurationReader` on each call.
+- **No-rescan rule.** The gauge reads the sessions the controller already
+  holds. A setting change calls `SidebarController.settingsChanged()`,
+  which re-renders from that cache: no `listSessions` and no
+  `relistLogSources`. The model is memoised on its inputs, and
+  `sidebar/monthly-allowance-performance.test.ts` asserts both the budget
+  and the zero source calls.
+- **Adapter.** A second status-bar item, id `aiCreditsAnalyzer.monthlyAllowance`,
+  priority 99, is the only `vscode` code. It is hidden when the allowance
+  is not set and while the setup warning shows.
 
 **As built (Phase 14 steps 14.5-14.7).** Session replay is in both
 products (D5; §6.4 has the product table, §6.5 the data flow):
