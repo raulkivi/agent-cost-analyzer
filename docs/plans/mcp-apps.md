@@ -1092,16 +1092,25 @@ Revisit if Copilot Chat or Claude adopts it.
   [mcp-sdk-2-migration.md](mcp-sdk-2-migration.md)); released in
   extension 0.10.0 and app 0.13.0.
 - Views for `get_price_book`, `list_repositories` and `list_projects`
-  (U16, U17).
+  (U16, U17). Since the SDK 2 migration, a tool's `_meta.ui` change updates
+  the tool-list snapshots (`tool-list-standalone.json`,
+  `tool-list-extension.json`) on purpose.
 - A shorter `content` when the client declares `io.modelcontextprotocol/ui`.
   The model would get a summary, the view would get `structuredContent`,
-  and the saving would be measured with the tool itself.
+  and the saving would be measured with the tool itself. Under MCP
+  2026-07-28 a client sends its capabilities in each request's `_meta`,
+  not once at `initialize`, so the check is per request and must work for
+  both protocol eras ([mcp-sdk-2-migration.md](mcp-sdk-2-migration.md)
+  §2.1).
 - Learn-mode explainer cards in the chat (U8).
 - A remote server for claude.ai or ChatGPT. It conflicts with constraint 1.
 - Any write action from a view.
 - One-click "Open in AI Credits Analyzer" from U1 (§4.4 option B): an
   app-only tool plus a local server-to-extension channel. It replaces the
   copy-and-pick flow and needs a threat-model entry for the new channel.
+  It stays a server tool, not one the view registers: from ext-apps 2.1,
+  view-registered tools are mirrored to the page's `document.modelContext`
+  unless `webMcpBridge` is off ([mcp-sdk-2-migration.md](mcp-sdk-2-migration.md) §9a).
 
 ## Sources
 
