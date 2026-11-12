@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **Keyboard focus after a drill-down loads.** In the MCP App views, when a drill-down finished
+  loading, its Back button was replaced and focus was restored only after the next paint, so an
+  Enter pressed in that moment did nothing. Focus now moves to the new control in the same render.
+
 ## [0.12.0] - 2026-11-12
 ### Added
 - **Fullscreen for the cost rollup and cost-over-time views.** In MCP App hosts that offer fullscreen
