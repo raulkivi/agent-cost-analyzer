@@ -23,7 +23,8 @@ export interface SavingsSessionInput {
   // Per request index, built from allow-listed metadata only (hashes, counts).
   promptChanges?: ReadonlyMap<number, PromptChangeMarker>;
   audit?: SessionAudit;
-  // The preferred cost figure of each turn, by turn index.
+  // Each turn's priced cost figure, by turn index: it names its price
+  // versions, which a priced saving shows (the preferred figure may not).
   turnCosts?: ReadonlyMap<number, CostFigure>;
 }
 
