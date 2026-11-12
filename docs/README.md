@@ -81,9 +81,10 @@ An npm workspace:
   tools and the Phase 9.12 additions: session and cross-provider cost,
   security/anomaly/behaviour findings, a one-turn drill-down, server
   instructions and output schemas.
-- [MCP Apps plan](plans/mcp-apps.md) — Phase 12 (MVP released in
-  extension 0.4.0 and app 0.10.0; Increment 2 released in extension 0.6.0
-  and app 0.11.0 on 2026-11-11; handover in
+- [MCP Apps plan](plans/mcp-apps.md) — Phase 12 (done: MVP released in
+  extension 0.4.0 and app 0.10.0; Increment 2 in extension 0.6.0 and app
+  0.11.0 on 2026-11-11; Increment 3 in extension 0.8.0 and app 0.12.0 on
+  2026-11-12; handover in
   [mcp-apps-handover.md](plans/mcp-apps-handover.md)):
   branded, interactive views (session cost, spend rollup, findings, cost
   over time, cost comparison, cost change) that MCP Apps hosts such as VS
