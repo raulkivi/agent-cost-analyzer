@@ -1310,8 +1310,8 @@ server (off, on with 9 tools and `get_session_cost`, off again).
 5. Done: the first release, tag `ext-v0.1.0` (odd minor, so the
    pre-release channel), 2026-11-03.
 
-The dev-only `@azure/msal-node` advisory is accepted
-([threat-model.md](threat-model.md) §7, 2026-10-27).
+The dev-only `@azure/msal-node` advisory was accepted on 2026-10-27 and
+fixed on 2026-11-12 (`@azure/identity` 4.14.1; [threat-model.md](threat-model.md) §7).
 
 **Exit criterion**: the plan's §10.
 
