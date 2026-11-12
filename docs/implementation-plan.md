@@ -1,6 +1,6 @@
 # Implementation Plan: Agent Cost Analyzer and AI Credits Analyzer
 
-**Last changed:** 2026-11-11 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-12 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 This plan sequences [architecture.md](architecture.md) into buildable phases.
 Phases 0-9.12 build the standalone app, **Agent Cost Analyzer** (every
@@ -13,8 +13,7 @@ Phase 12 adds branded, interactive MCP Apps views for both products.
 merged to `main`. The extension's 0.1.0 is released (tag `ext-v0.1.0`,
 2026-11-03); the latest stable is 0.6.0 (2026-11-11), and 0.5.0 was a
 pre-release (2026-11-10). Open: Phase 10's owner manual checks and decisions (see its
-section), Phase 11 (not started), Phase 12 (in progress: the MVP, A0–A16, released 2026-11-10 in extension 0.4.0 and app 0.10.0, A12 dropped; Increment 2 (A17–A24) released 2026-11-11 in extension 0.6.0 and app 0.11.0; next Increment 3, starting with A25b; the plan
-covers the Phase 14 and 15 tools since 2026-11-07), Phase 13 (in
+section), Phase 11 (not started), Phase 12 (done: the MVP, A0–A16, released 2026-11-10 in extension 0.4.0 and app 0.10.0, A12 dropped; Increment 2 (A17–A24) released 2026-11-11 in extension 0.6.0 and app 0.11.0; Increment 3 (A25–A33) released 2026-11-12 in extension 0.8.0 and app 0.12.0; follow-ups in plans/mcp-apps.md §11), Phase 13 (in
 progress: steps 13.0-13.10 and 13.5a merged, the owner's eyes-on review
 of 13.8 open), Phase 14
 (steps 14.0-14.7 built and 14.8's docs written; the owner's docs review
@@ -128,7 +127,7 @@ and a 1-hour-breakpoint variant), an instructions-file edit, a silent
 `.instructions.md` pull-in, inline-vs-subagent exploration bloat, a
 cascading model-switch-then-TTL-lapse, an image attachment invalidating the
 cache, toggling extended thinking/reasoning budget, and a subagent on a
-cheaper model — see [README.md](../README.md#using-the-app) for the
+cheaper model — see [standalone-app.md](standalone-app.md#using-the-app) for the
 user-facing list. This addresses vision.md §7's open question on which
 additional advanced scenarios to build; keeping the set in sync with
 [agentic-coding-explained.md](agentic-coding-explained.md) as that doc
@@ -1425,15 +1424,14 @@ analysis, price change, billing tools in both servers). All are met.
 
 **Target releases** (plan §7.3): MVP in extension 0.4.0 and app 0.10.0
 (shipped 2026-11-10), Increment 2 in 0.6.0 and 0.11.0 (shipped 2026-11-11),
-Increment 3 in 0.8.0 and 0.12.0. Stable extension releases use even minors.
+Increment 3 in 0.8.0 and 0.12.0 (shipped 2026-11-12). Stable extension releases use even minors.
 
-**Status (2026-11-11)**: in progress. The MVP (U1–U3, A0–A16) met its
+**Status (2026-11-12)**: done. Increment 3 (A25–A33: views U12, U13, U14/U15, U4, U5 and fullscreen, the A32 review, and A33's checks as specs) released 2026-11-12 in extension 0.8.0 and app 0.12.0, after the real-Copilot gate passed 33 of 33 on `dacf3ed`; the follow-ups are in [plans/mcp-apps.md](plans/mcp-apps.md) §11. The MVP (U1–U3, A0–A16) met its
 exit criterion and shipped in extension 0.4.0 and app 0.10.0. Increment 2
 (A17–A24, views U9, U10, U11) released 2026-11-11 in extension 0.6.0 and
 app 0.11.0. A24 was replaced by the automated pre-release gate (step 10.17);
 the real-Copilot run on `964e9a8` passed 22 of 22 required tests. Extension
-0.5.0 was a pre-release (2026-11-10). Increment 3 (A25–A33) has not started;
-its first task is A25b, the mock-up boards for owner approval. Earlier
+0.5.0 was a pre-release (2026-11-10). Earlier
 Increment 2 detail: the A17b boards are approved (owner's answers in
 [plans/mcp-apps.md](plans/mcp-apps.md) §9.1); A23 (review and docs) is done. A1–A4 (turn series, brand
 injection and identity, web package exports) and A8 (the `registerAppViews`

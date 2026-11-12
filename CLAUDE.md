@@ -6,7 +6,7 @@ Project-specific guidance for working in this repo. Full context lives in
 the docs below — read them before making changes; don't duplicate their
 content here.
 
-- [README.md](README.md) — doc index
+- [docs/README.md](docs/README.md) — developer doc index (the root [README.md](README.md) is for users)
 - [docs/vision.md](docs/vision.md) — product scope, non-goals
 - [docs/architecture.md](docs/architecture.md) — system design, guiding
   constraints, engineering practices (TDD + SOLID)

@@ -120,6 +120,8 @@ inEachClaudeSet(() => {
     await expect.poll(() => view.focusRingVisible()).toBe(true);
     await view.pressEnter();
     await expect(view.backButton("Back to cost rollup")).toBeVisible();
+    // Back is already there while the session loads; Tab only once U1 has replaced the loading shell.
+    await expect(view.title()).toHaveText("portal-web");
 
     await view.tabTo("Back to cost rollup");
     await expect.poll(() => view.focusRingVisible()).toBe(true);
