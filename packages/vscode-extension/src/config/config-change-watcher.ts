@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
 import type { Disposable } from "../panel/analyzer-panel.js";
+import { ALLOWANCE_SETTING_IDS } from "../settings/allowance-settings.js";
 
 // The slices of vscode.workspace / vscode.ConfigurationChangeEvent the
 // watcher needs, so it's testable without VS Code; extension.ts passes the
@@ -25,6 +26,22 @@ export const WATCHED_SETTING_IDS = [
   "github.copilot.chat.agentDebugLog.fileLogging.enabled",
   "github.copilot.chat.agentDebugLog.fileLogging.maxRetainedSessionLogs",
 ] as const;
+
+// Step 10.21: kept apart from WATCHED_SETTING_IDS, which drives the Copilot
+// config check; an allowance change only re-renders the gauge.
+export function watchAllowanceChanges(source: ConfigurationChangeSource, notify: () => void): Disposable {
+  const settingIds = Object.values(ALLOWANCE_SETTING_IDS);
+  return source.onDidChangeConfiguration((event) => {
+    if (!settingIds.some((settingId) => event.affectsConfiguration(settingId))) {
+      return;
+    }
+    try {
+      notify();
+    } catch {
+      // A view may have just been disposed; the next change tries again.
+    }
+  });
+}
 
 // Calls `notify` once per change that affects either watched setting, so the
 // host can tell the webview to re-fetch the config status (the `configChanged`

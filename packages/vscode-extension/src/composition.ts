@@ -5,7 +5,7 @@ import path from "node:path";
 import type { HostEvent } from "@agent-cost-analyzer/domain";
 import { createExtensionApiService } from "@agent-cost-analyzer/server/src/composition/create-extension-api-service";
 import { ExtensionCommands, type SessionPicker } from "./commands/extension-commands.js";
-import { watchConfigChanges, watchExtensionChanges, type ConfigurationChangeSource, type ExtensionsChangeSource } from "./config/config-change-watcher.js";
+import { watchAllowanceChanges, watchConfigChanges, watchExtensionChanges, type ConfigurationChangeSource, type ExtensionsChangeSource } from "./config/config-change-watcher.js";
 import type { Translate } from "./l10n/localize.js";
 import { McpServerDefinitionSource } from "./mcp/mcp-server-definitions.js";
 import { WalkthroughOffer, type WalkthroughLauncher } from "./onboarding/walkthrough-offer.js";
@@ -25,6 +25,7 @@ import { createRepositorySources } from "./sidebar/repository-sources.js";
 import { SidebarController } from "./sidebar/sidebar-controller.js";
 import { GlobalStateAppSettingsStore, type Memento } from "./settings/global-state-app-settings-store.js";
 import { GlobalStateSessionsGroupingStore } from "./settings/global-state-sessions-grouping-store.js";
+import { readAllowanceSettings } from "./settings/allowance-settings.js";
 import { VscodeSettingsSource, type ConfigurationReader, type ExtensionsReader } from "./vscode/vscode-settings-source.js";
 import { createVscodeWebviewPanel } from "./vscode/vscode-webview-panel.js";
 
@@ -165,6 +166,7 @@ export function composeExtension({
     },
     {
       translate,
+      allowance: () => readAllowanceSettings(workspace.getConfiguration()),
       grouping: new GlobalStateSessionsGroupingStore(globalState, (error) => console.error("AI Credits Analyzer: could not save the Sessions grouping", error)),
       onInternalError: (source, error) => console.error(`AI Credits Analyzer: ${source} failed`, error),
       timing: {
@@ -194,6 +196,8 @@ export function composeExtension({
   const configWatch = watchConfigChanges(workspace, refreshConfig);
   // Enabling or disabling Copilot Chat changes the config check too (G6).
   const extensionsWatch = watchExtensionChanges(extensions, refreshConfig);
+  // Step 10.21: an allowance setting re-renders the gauge from the cache.
+  const allowanceWatch = watchAllowanceChanges(workspace, () => sidebar.settingsChanged());
 
   const walkthroughOffer = new WalkthroughOffer(globalState, walkthrough, {
     onError: (error) => console.error("AI Credits Analyzer: could not offer the walkthrough", error),
@@ -219,6 +223,7 @@ export function composeExtension({
     dispose: () => {
       configWatch.dispose();
       extensionsWatch.dispose();
+      allowanceWatch.dispose();
       mcpServers.dispose();
       panel.dispose();
     },

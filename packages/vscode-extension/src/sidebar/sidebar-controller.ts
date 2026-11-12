@@ -3,6 +3,9 @@
 import type { ConfigStatus, RepositoryAttribution, Session } from "@agent-cost-analyzer/domain";
 import { identityTranslate, type Translate } from "../l10n/localize.js";
 import type { Disposable } from "../panel/analyzer-panel.js";
+import type { AllowanceSettings } from "../settings/allowance-settings.js";
+import { buildMonthlyAllowance, type MonthlyAllowanceView } from "../status-bar/monthly-allowance.js";
+import { periodOf } from "../time/billing-period.js";
 import { buildStatusBarState, type StatusBarState } from "../status-bar/status-bar-model.js";
 import { buildLearnTree, learnLoadErrorTree, type LearnTreeNode } from "./learn-tree-model.js";
 import { buildSessionsByRepositoryTree, type RepositoryOf } from "./sessions-by-repository-tree-model.js";
@@ -54,7 +57,7 @@ export interface SidebarControllerOptions {
   translate?: Translate;
   // Hears every failure of a source; the views only show a generic error.
   onInternalError?: (
-    source: "listSessions" | "listLearnScenarios" | "getConfigStatus" | "relistLogSources" | "attributeRepositories" | "workspaceRepositoryKeys",
+    source: "listSessions" | "listLearnScenarios" | "getConfigStatus" | "relistLogSources" | "attributeRepositories" | "workspaceRepositoryKeys" | "allowance",
     error: unknown,
   ) => void;
   // Times each full refresh that read the sessions, from its start to the
@@ -63,7 +66,13 @@ export interface SidebarControllerOptions {
   timing?: { now(): number; sessionsTreeBuilt(durationMs: number): void };
   // Step 15.14: the saved grouping; by day for this session only without one.
   grouping?: SessionsGroupingStore;
+  // Step 10.21: the monthly allowance settings, read on every use so a
+  // changed setting shows at once (a getter keeps this file free of `vscode`).
+  // Without it the gauge is hidden.
+  allowance?: () => AllowanceSettings;
 }
+
+const HIDDEN_ALLOWANCE: MonthlyAllowanceView = { level: "hidden" };
 
 // The data behind the Sessions tree, the Setup view and the status bar:
 // read once per refresh, so the three can't disagree, and with no polling
@@ -81,6 +90,7 @@ export class SidebarController {
   private fullRefresh: Promise<void> | undefined;
   private configRefresh: Promise<void> | undefined;
   private readonly listeners = new Set<() => void>();
+  private allowanceMemo: { sessions: Session[]; translate: Translate; key: string; view: MonthlyAllowanceView } | undefined;
 
   constructor(
     private readonly sources: SidebarSources,
@@ -159,6 +169,41 @@ export class SidebarController {
       t: this.translate(),
       workspace: { repositoryKeys: this.workspaceKeys, repositoryOf: this.repositoryOf },
     });
+  }
+
+  // The monthly allowance gauge's model (step 10.21). Hidden until the
+  // sessions are read, when they failed to read, without a getter, or when the
+  // getter throws. Memoized on the sessions list, the period (and day) and the
+  // settings, so a render that changed none of them does no work.
+  monthlyAllowance(): MonthlyAllowanceView {
+    const sessions = this.sessions;
+    if (!this.options.allowance || !Array.isArray(sessions)) {
+      return HIDDEN_ALLOWANCE;
+    }
+    let settings: AllowanceSettings;
+    try {
+      settings = this.options.allowance();
+    } catch (error) {
+      this.options.onInternalError?.("allowance", error);
+      return HIDDEN_ALLOWANCE;
+    }
+    const now = this.now();
+    const period = periodOf(now, this.options.timeZone, settings.resetDay);
+    const translate = this.translate();
+    const key = JSON.stringify([period.startKey, period.dayOfPeriod, settings.aiCredits, settings.resetDay, settings.warnAtPercent]);
+    const memo = this.allowanceMemo;
+    if (memo && memo.sessions === sessions && memo.translate === translate && memo.key === key) {
+      return memo.view;
+    }
+    const view = buildMonthlyAllowance({ sessions, now, timeZone: this.options.timeZone, settings, t: translate });
+    this.allowanceMemo = { sessions, translate, key, view };
+    return view;
+  }
+
+  // An allowance setting changed: tell the views to render again from what
+  // was read last. No source is called.
+  settingsChanged(): void {
+    this.notify();
   }
 
   private translate(): Translate {
