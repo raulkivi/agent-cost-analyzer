@@ -464,6 +464,7 @@ export {
   type TraceRequest,
   type UntracedTurn,
   type RequestTrace,
+  type PromptChangeMarker,
 } from "./request-trace.js";
 export {
   MAX_COMPARED_MODELS,

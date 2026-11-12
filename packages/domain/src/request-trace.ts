@@ -73,6 +73,17 @@ export const requestTraceSchema = z
     });
   });
 
+// Phase 16 SR4/SR6: what changed in a request's prompt since the same agent's
+// previous prompt (VS Code: the same debugName; Claude Code: the same
+// querySource). Each field: true changed, false recorded unchanged, absent not
+// recorded by that provider's log. Provider-neutral and a flag only: no prompt
+// text or file content is ever part of it.
+export interface PromptChangeMarker {
+  tools?: boolean;
+  systemPrompt?: boolean;
+  instructions?: boolean;
+}
+
 export type TraceEvent = z.infer<typeof traceEventSchema>;
 export type TraceRequest = z.infer<typeof traceRequestSchema>;
 export type UntracedTurn = z.infer<typeof untracedTurnSchema>;

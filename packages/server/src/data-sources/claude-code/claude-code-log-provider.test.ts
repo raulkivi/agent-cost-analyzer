@@ -364,6 +364,48 @@ describe("ClaudeCodeLogProvider", () => {
     });
   });
 
+  describe("cache-break trace (Phase 16 SR6)", () => {
+    const line = (entry: Record<string, unknown>) => JSON.stringify({ sessionId: "s", cwd: "/p", ...entry });
+    const assistant = (uuid: string, parentUuid: string, id: string, at: string) =>
+      line({
+        type: "assistant",
+        uuid,
+        parentUuid,
+        timestamp: at,
+        requestRef: `ref-${id}`,
+        message: { id, model: "claude-sonnet-5", role: "assistant", content: [], usage: { input_tokens: 10, cache_read_input_tokens: 100, cache_creation_input_tokens: 0, output_tokens: 5 } },
+      });
+    const request = (id: string, shapeHash: string) => line({ type: "api-request", id: `ref-${id}`, querySource: "repl_main_thread", shapeHash });
+
+    it("gives the trace with a tools-changed marker where the request shape changed", async () => {
+      const dir = mkdtempSync(path.join(tmpdir(), "cc-breaks-"));
+      const target = path.join(dir, "-home-dev-project", "s.jsonl");
+      mkdirSync(path.dirname(target), { recursive: true });
+      appendFileSync(
+        target,
+        [
+          line({ type: "user", uuid: "u1", parentUuid: null, timestamp: "2026-10-07T09:00:00.000Z", message: { role: "user", content: "hi" } }),
+          request("m1", "h1"),
+          assistant("a1", "u1", "m1", "2026-10-07T09:00:01.000Z"),
+          request("m2", "h2"),
+          assistant("a2", "a1", "m2", "2026-10-07T09:00:05.000Z"),
+        ].join("\n") + "\n",
+      );
+      try {
+        const result = await new ClaudeCodeLogProvider({ projectsDirPath: dir }).readCacheBreakTrace(computeClaudeCodeFileHash(target));
+
+        expect(result?.trace.requests).toHaveLength(2);
+        expect(result?.promptChanges.get(1)).toEqual({ tools: true });
+      } finally {
+        rmSync(dir, { recursive: true, force: true });
+      }
+    });
+
+    it("is null for an unknown session", async () => {
+      await expect(new ClaudeCodeLogProvider({ projectsDirPath: fixturesDir }).readCacheBreakTrace("does-not-exist")).resolves.toBeNull();
+    });
+  });
+
 });
 
 describeLogProviderContract("ClaudeCodeLogProvider", {

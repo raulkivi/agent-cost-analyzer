@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import type { Harness, RequestTrace, TraceRequest } from "@agent-cost-analyzer/domain";
+import type { Harness, PromptChangeMarker, RequestTrace, TraceRequest } from "@agent-cost-analyzer/domain";
 import { idleMinutes, requestInputTotal } from "../session-replay/request-trace-scripter.js";
 
 // Phase 16 SR4 (docs/plans/savings-report.md §4 O2–O4, §12 D7, §15): which
@@ -38,16 +38,10 @@ export type CacheRules =
 
 export type CacheRulesLookup = (model: string) => CacheRules;
 
-// What changed in a request's prompt since the same agent's previous prompt
-// (VS Code: the same debugName; Claude Code: the same querySource). Each
-// field: true changed, false recorded unchanged, absent not recorded by
-// that provider's log. Provider-neutral, so each provider maps its own
-// signals (tools-file hash, shapeHash, instructions attachment) onto it.
-export interface PromptChangeMarker {
-  tools?: boolean;
-  systemPrompt?: boolean;
-  instructions?: boolean;
-}
+// What changed in a request's prompt (the domain type, request-trace.ts): each
+// provider maps its own signals (tools-file hash, shapeHash, instructions
+// attachment) onto it.
+export type { PromptChangeMarker };
 
 export type PromptChangeKind = "tools-changed" | "instructions-changed" | "system-prompt-changed";
 

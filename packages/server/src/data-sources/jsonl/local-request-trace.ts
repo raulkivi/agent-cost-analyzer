@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import type { RequestTrace, TraceRequest, UntracedTurn } from "@agent-cost-analyzer/domain";
+import { createHash } from "node:crypto";
+import type { PromptChangeMarker, RequestTrace, TraceRequest, UntracedTurn } from "@agent-cost-analyzer/domain";
+import type { CacheBreakTrace } from "../log-providers/log-provider.js";
 import type { AgentTraceUsage } from "../agent-traces/agent-traces-reader.js";
 import type { JsonlEnvelope } from "./main-jsonl-reader.js";
 import { groupEnvelopesByUserMessage } from "./session-usage-spans.js";
@@ -59,33 +61,118 @@ function figuresOf(envelope: JsonlEnvelope, agentTraceUsage: Map<string, AgentTr
   };
 }
 
+interface TracedSpan {
+  turnIndex: number;
+  span: JsonlEnvelope;
+  figures: Figures;
+}
+
 // A turn is traced whole or not at all; a log turn that can't be placed is
 // left out rather than put in the wrong turn (as readSession does). Every
-// session turn with no traced request is listed with its reason.
-export function buildLocalRequestTrace({ sessionId, envelopes, alignment, sessionTurnIndexes, agentTraceUsage }: LocalRequestTraceInput): RequestTrace {
-  const requests: TraceRequest[] = [];
+// session turn with no traced request is listed with its reason. `accept`
+// narrows the spans considered (the main agent, for the cache-break trace).
+function tracedSpans(input: LocalRequestTraceInput, accept: (span: JsonlEnvelope) => boolean): { spans: TracedSpan[]; reasons: Map<number, string> } {
+  const spans: TracedSpan[] = [];
   const reasons = new Map<number, string>();
-  groupEnvelopesByUserMessage(envelopes).forEach((group, logTurn) => {
-    const turnIndex = alignment[logTurn];
+  groupEnvelopesByUserMessage(input.envelopes).forEach((group, logTurn) => {
+    const turnIndex = input.alignment[logTurn];
     if (turnIndex === null || turnIndex === undefined) return;
-    const spans = group.filter((envelope) => envelope.type === "llm_request");
-    if (spans.length === 0) return;
-    const figures = spans.map((span) => figuresOf(span, agentTraceUsage));
+    const requests = group.filter((envelope) => envelope.type === "llm_request" && accept(envelope));
+    if (requests.length === 0) return;
+    const figures = requests.map((span) => figuresOf(span, input.agentTraceUsage));
     if (figures.some((value) => value === null)) {
       reasons.set(turnIndex, UNUSABLE_REQUEST_REASON);
       return;
     }
-    for (const value of figures as Figures[]) {
-      const previous = requests.at(-1);
-      const startedAt = previous && value.startedAt < previous.startedAt ? previous.startedAt : value.startedAt;
-      const switched = previous !== undefined && previous.model !== value.model;
-      requests.push({ index: requests.length, turnIndex, ...value, startedAt, ...(switched ? { event: "model-switch" as const } : {}) });
-    }
+    requests.forEach((span, position) => spans.push({ turnIndex, span, figures: figures[position]! }));
   });
+  return { spans, reasons };
+}
+
+function assemble(input: LocalRequestTraceInput, { spans, reasons }: ReturnType<typeof tracedSpans>): RequestTrace {
+  const requests: TraceRequest[] = [];
+  for (const { turnIndex, figures } of spans) {
+    const previous = requests.at(-1);
+    const startedAt = previous && figures.startedAt < previous.startedAt ? previous.startedAt : figures.startedAt;
+    const switched = previous !== undefined && previous.model !== figures.model;
+    requests.push({ index: requests.length, turnIndex, ...figures, startedAt, ...(switched ? { event: "model-switch" as const } : {}) });
+  }
   const traced = new Set(requests.map((request) => request.turnIndex));
-  const notTraced: UntracedTurn[] = [...new Set(sessionTurnIndexes)]
+  const notTraced: UntracedTurn[] = [...new Set(input.sessionTurnIndexes)]
     .sort((a, b) => a - b)
     .filter((turnIndex) => !traced.has(turnIndex))
     .map((turnIndex) => ({ turnIndex, reason: reasons.get(turnIndex) ?? NOT_IN_DEBUG_LOG_REASON }));
-  return { sessionId, providerId: PROVIDER_ID, harness: "vscode-local", requests, notTraced };
+  return { sessionId: input.sessionId, providerId: PROVIDER_ID, harness: "vscode-local", requests, notTraced };
+}
+
+export function buildLocalRequestTrace(input: LocalRequestTraceInput): RequestTrace {
+  return assemble(input, tracedSpans(input, () => true));
+}
+
+// Phase 16 SR6 (docs/plans/savings-report.md §4 O3, §15 a): the cache follows
+// one agent's prompt. The main agent is `debugName` panel/editAgent; the
+// summariser, todo agent and language-model wrapper have their own prompt and
+// tools files, so their requests are left out of this trace.
+export const MAIN_AGENT_DEBUG_NAME = "panel/editAgent";
+
+const isMainAgent = (span: JsonlEnvelope): boolean => span.attrs?.debugName === MAIN_AGENT_DEBUG_NAME;
+
+// The prompt and tools file names the main agent's requests name, for the
+// caller to hash (it owns the file access).
+export function promptFileNames(envelopes: readonly JsonlEnvelope[]): string[] {
+  const names = new Set<string>();
+  for (const span of envelopes) {
+    if (span.type !== "llm_request" || !isMainAgent(span)) continue;
+    for (const key of ["systemPromptFile", "toolsFile"] as const) {
+      const name = span.attrs?.[key];
+      if (typeof name === "string") names.add(name);
+    }
+  }
+  return [...names];
+}
+
+export interface LocalCacheBreakInput extends LocalRequestTraceInput {
+  // Content hash of each prompt or tools file by name; null when it could not
+  // be read. Equal content under different names is the same prompt (SR0).
+  fileHashes: ReadonlyMap<string, string | null>;
+}
+
+const digest = (text: string): string => createHash("sha256").update(text).digest("hex");
+
+// The "Custom Instructions" text in force at each envelope (the latest event
+// before it), as a hash: only whether it changed matters, never its text.
+function instructionHashes(envelopes: readonly JsonlEnvelope[]): Map<JsonlEnvelope, string | undefined> {
+  const at = new Map<JsonlEnvelope, string | undefined>();
+  let current: string | undefined;
+  for (const envelope of envelopes) {
+    if (envelope.type === "generic" && envelope.name === "Custom Instructions" && typeof envelope.attrs?.details === "string") {
+      current = digest(envelope.attrs.details);
+    }
+    at.set(envelope, current);
+  }
+  return at;
+}
+
+export function buildLocalCacheBreakTrace(input: LocalCacheBreakInput): CacheBreakTrace {
+  const traced = tracedSpans(input, isMainAgent);
+  const trace = assemble(input, traced);
+  const instructions = instructionHashes(input.envelopes);
+  const hashOf = (span: JsonlEnvelope, key: "systemPromptFile" | "toolsFile"): string | undefined => {
+    const name = span.attrs?.[key];
+    return typeof name === "string" ? (input.fileHashes.get(name) ?? undefined) : undefined;
+  };
+  const promptChanges = new Map<number, PromptChangeMarker>();
+  traced.spans.forEach(({ span }, index) => {
+    const previous = traced.spans[index - 1]?.span;
+    if (previous === undefined) return;
+    const marker: PromptChangeMarker = {};
+    const compare = (field: keyof PromptChangeMarker, now: string | undefined, before: string | undefined) => {
+      if (now !== undefined && before !== undefined) marker[field] = now !== before;
+    };
+    compare("tools", hashOf(span, "toolsFile"), hashOf(previous, "toolsFile"));
+    compare("systemPrompt", hashOf(span, "systemPromptFile"), hashOf(previous, "systemPromptFile"));
+    compare("instructions", instructions.get(span), instructions.get(previous));
+    if (Object.keys(marker).length > 0) promptChanges.set(index, marker);
+  });
+  return { trace, promptChanges };
 }

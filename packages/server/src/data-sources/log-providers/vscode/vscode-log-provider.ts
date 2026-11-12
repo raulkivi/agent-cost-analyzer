@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
 import { existsSync } from "node:fs";
+import path from "node:path";
 import type { DatabaseSync } from "node:sqlite";
 import type {
   RequestTrace,
@@ -42,8 +43,9 @@ import {
   buildSessionSummary,
   summarizeSessionUsage,
 } from "../../../services/session-enricher/session-enricher.js";
-import type { LogProvider, LogProviderAvailability, RequestTraceReader } from "../log-provider.js";
-import { buildLocalRequestTrace } from "../../jsonl/local-request-trace.js";
+import type { CacheBreakTrace, CacheBreakTraceReader, LogProvider, LogProviderAvailability, RequestTraceReader } from "../log-provider.js";
+import { buildLocalCacheBreakTrace, buildLocalRequestTrace, promptFileNames, type LocalRequestTraceInput } from "../../jsonl/local-request-trace.js";
+import { readArtifactContentHash } from "../../jsonl/prompt-artifact-reader.js";
 import type { SystemPromptTextLookup, SystemPromptTextReader } from "../system-prompt-text-reader.js";
 import type { CopilotSessionSource } from "./copilot-session-source.js";
 
@@ -82,7 +84,7 @@ const PROVIDER_ID = "vscode";
 // Host), injected as a CopilotSessionSource: ids are UUIDs in both stores,
 // so each lookup asks the classic store first and the second store only for
 // an id the classic store doesn't have.
-export class VscodeLogProvider implements LogProvider, SystemPromptTextReader, RequestTraceReader {
+export class VscodeLogProvider implements LogProvider, SystemPromptTextReader, RequestTraceReader, CacheBreakTraceReader {
   readonly id = PROVIDER_ID;
   readonly label = "VS Code (local Copilot Chat)";
 
@@ -241,9 +243,39 @@ export class VscodeLogProvider implements LogProvider, SystemPromptTextReader, R
     return (await this.agentHostSessions?.readRequestTrace?.(sessionId)) ?? null;
   }
 
+  // Phase 16 SR6: the main agent's chain with what changed in each prompt
+  // (local harness only: Agent Host's log records no such signal).
+  async readCacheBreakTrace(sessionId: string): Promise<CacheBreakTrace | null> {
+    const classic = await this.readClassicCacheBreakTrace(sessionId);
+    if (classic !== "unknown-session") {
+      return classic;
+    }
+    const trace = await this.agentHostSessions?.readRequestTrace?.(sessionId);
+    return trace ? { trace, promptChanges: new Map() } : null;
+  }
+
+  private async readClassicCacheBreakTrace(sessionId: string): Promise<CacheBreakTrace | "unknown-session"> {
+    const input = await this.classicTraceInput(sessionId);
+    if (input === "unknown-session") {
+      return input;
+    }
+    const mainJsonlPath = resolveMainJsonlPath(this.debugLogsDirPaths(), input.sessionId);
+    const dir = mainJsonlPath ? path.dirname(mainJsonlPath) : null;
+    const fileHashes = new Map<string, string | null>();
+    for (const name of promptFileNames(input.envelopes)) {
+      fileHashes.set(name, dir ? await readArtifactContentHash(dir, name) : null);
+    }
+    return buildLocalCacheBreakTrace({ ...input, fileHashes });
+  }
+
   // The same reads and alignment as readClassicSession, so the trace's turn
   // indexes are the session's: the store's rows and the placed log turns.
   private async readClassicRequestTrace(sessionId: string): Promise<RequestTrace | "unknown-session"> {
+    const input = await this.classicTraceInput(sessionId);
+    return input === "unknown-session" ? input : buildLocalRequestTrace(input);
+  }
+
+  private async classicTraceInput(sessionId: string): Promise<LocalRequestTraceInput | "unknown-session"> {
     const db = this.openDb();
     if (!db) {
       return "unknown-session";
@@ -258,13 +290,13 @@ export class VscodeLogProvider implements LogProvider, SystemPromptTextReader, R
       const envelopes = mainJsonlPath ? (await readMainJsonlFile(mainJsonlPath)).envelopes : [];
       const alignment = alignLogTurnsToStore(logTurnDigests(envelopes), storeTurnKeys(turnRows));
       const placed = alignment.filter((index): index is number => index !== null);
-      return buildLocalRequestTrace({
+      return {
         sessionId: sessionRow.id,
         envelopes,
         alignment,
         sessionTurnIndexes: [...turnRows.map((row) => row.turn_index), ...placed],
         agentTraceUsage: loadAgentTraceUsageForResponseIds(this.options.agentTracesDbPath, collectResponseIds(envelopes)),
-      });
+      };
     } finally {
       db.close();
     }

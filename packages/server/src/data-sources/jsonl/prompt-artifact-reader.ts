@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
+import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 
@@ -107,4 +108,20 @@ export async function readToolDefinitionsRaw(
   fileName: string,
 ): Promise<unknown[] | null> {
   return readArtifactContentArray(dirPath, fileName);
+}
+
+// A hash of the artifact file's raw content, to tell whether a prompt or tool
+// list changed without keeping its text (Phase 16 SR6). Null when the name is
+// not a bare filename or the file can't be read.
+export async function readArtifactContentHash(dirPath: string, fileName: string): Promise<string | null> {
+  if (!isValidArtifactFileName(fileName)) {
+    return null;
+  }
+  try {
+    return createHash("sha256")
+      .update(await readFile(path.join(dirPath, fileName)))
+      .digest("hex");
+  } catch {
+    return null;
+  }
 }

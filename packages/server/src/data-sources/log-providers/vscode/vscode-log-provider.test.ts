@@ -947,3 +947,80 @@ describe("VscodeLogProvider.readRequestTrace", () => {
     await expect(provider.readRequestTrace("does-not-exist")).resolves.toBeNull();
   });
 });
+
+// Phase 16 SR6 (docs/plans/savings-report.md §4 O3, §15): the cache-break
+// trace, with prompt-change markers from the main agent's files (local) or
+// none (Agent Host: no signal recorded).
+describe("VscodeLogProvider.readCacheBreakTrace", () => {
+  it("traces a local session's main agent and records unchanged prompt files by content hash", async () => {
+    const dir = mkdtempSync(path.join(tmpdir(), "vscode-log-provider-breaks-"));
+    try {
+      const dbPath = path.join(dir, "session-store.db");
+      const debugLogsDirPath = path.join(dir, "debug-logs");
+      seedCopilotSessionStore(dbPath, "2026-08-08T10:00:00.000Z");
+      writeUsageDebugLog(debugLogsDirPath);
+      // The log names system_prompt_0.json and tools_0.json on every request.
+      const sessionDir = path.join(debugLogsDirPath, USAGE_SESSION_ID);
+      writeFileSync(path.join(sessionDir, "system_prompt_0.json"), "{\"content\":\"[]\"}");
+      writeFileSync(path.join(sessionDir, "tools_0.json"), "{\"content\":\"[]\"}");
+      const provider = new VscodeLogProvider({ sessionStoreDbPath: dbPath, debugLogsDirPaths: [debugLogsDirPath], agentTracesDbPath: null });
+
+      const result = await provider.readCacheBreakTrace(USAGE_SESSION_ID);
+
+      expect(result?.trace.harness).toBe("vscode-local");
+      expect(result?.trace.requests).toHaveLength(4);
+      // Same files on every request: recorded unchanged, never a guess.
+      expect(result?.promptChanges.get(1)).toMatchObject({ tools: false, systemPrompt: false });
+      expect(result?.promptChanges.has(0)).toBe(false);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("records no tools or system-prompt signal when the prompt files are gone", async () => {
+    const dir = mkdtempSync(path.join(tmpdir(), "vscode-log-provider-breaks-"));
+    try {
+      const dbPath = path.join(dir, "session-store.db");
+      const debugLogsDirPath = path.join(dir, "debug-logs");
+      seedCopilotSessionStore(dbPath, "2026-08-08T10:00:00.000Z");
+      writeUsageDebugLog(debugLogsDirPath);
+      const provider = new VscodeLogProvider({ sessionStoreDbPath: dbPath, debugLogsDirPaths: [debugLogsDirPath], agentTracesDbPath: null });
+
+      const result = await provider.readCacheBreakTrace(USAGE_SESSION_ID);
+
+      expect(result?.trace.requests).toHaveLength(4);
+      for (const marker of result?.promptChanges.values() ?? []) {
+        expect(marker).not.toHaveProperty("tools");
+        expect(marker).not.toHaveProperty("systemPrompt");
+      }
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("gives an Agent Host trace with no markers", async () => {
+    const userDataDir = mkdtempSync(path.join(tmpdir(), "vscode-log-provider-breaks-ah-"));
+    try {
+      writeCopilotCliAgentHostStores(userDataDir);
+      const provider = new VscodeLogProvider({
+        sessionStoreDbPath: null,
+        debugLogsDirPaths: [],
+        agentTracesDbPath: null,
+        agentHostSessions: new AgentHostSessionSource({ userDataDir, copilotHome: COPILOT_CLI_FIXTURE_HOME }),
+      });
+
+      const result = await provider.readCacheBreakTrace(COPILOT_CLI_FIXTURE_SESSION_IDS.usageRecords);
+
+      expect(result?.trace.harness).toBe("copilot-agent-host");
+      expect(result?.promptChanges.size).toBe(0);
+    } finally {
+      rmSync(userDataDir, { recursive: true, force: true });
+    }
+  });
+
+  it("returns null for a session neither store has", async () => {
+    const provider = new VscodeLogProvider({ sessionStoreDbPath: null, debugLogsDirPaths: [], agentTracesDbPath: null });
+
+    await expect(provider.readCacheBreakTrace("does-not-exist")).resolves.toBeNull();
+  });
+});

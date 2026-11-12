@@ -53,8 +53,13 @@ export class NotAnalysedLedger {
     this.byReason.set(key, entry);
   }
 
-  has(session: SavingsSessionInput): boolean {
-    return [...this.byReason.values()].some((entry) => entry.sessions.has(session));
+  // The sessions by reason, to count them against one opportunity's coverage.
+  sessionsByReason(): Map<string, Set<SavingsSessionInput>> {
+    const result = new Map<string, Set<SavingsSessionInput>>();
+    for (const entry of this.byReason.values()) {
+      result.set(entry.reason, new Set([...(result.get(entry.reason) ?? []), ...entry.sessions]));
+    }
+    return result;
   }
 
   // The report-level list over several ledgers: a session counts once per
