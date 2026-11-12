@@ -35,7 +35,7 @@ const CALLS: [name: string, args: Record<string, unknown>][] = [
   ["explain_cost_change", { groupBy: "project", id: "portal", periodA: "2026-09", periodB: "2026-10" }],
   ["get_statement", { projectId: "portal", period: "2026-10" }],
   ["estimate_cost", { projectId: "portal", activeDays: 20 }],
-  // Phase 14 step 14.5 (D7; threat-model.md §9): the replay group.
+  // Phase 14 step 14.5 (D7; threat-model.md §4, standalone MCP server row): the replay group.
   ["replay_session", { sessionId: "cc-1", model: "claude-haiku-5.5", provider: "claude-code" }],
   ["compare_models_for_session", { sessionId: "cp-1", models: ["claude-haiku-5.5", "gpt-6.1-sol"], provider: "vscode" }],
 ];
@@ -91,7 +91,7 @@ describe("MCP security across every tool (step 15.13, plan §10.1.5)", () => {
     );
   }, 60_000);
 
-  // Phase 14 step 14.5 (threat-model.md §9): a replay returns numbers, model
+  // Phase 14 step 14.5 (threat-model.md §4): a replay returns numbers, model
   // ids and turn indexes only, never a turn's text or the session's title,
   // and estimate_cost on another model the same.
   it("returns no turn text or session title from the replay tools or estimate_cost with a model", async () => {
