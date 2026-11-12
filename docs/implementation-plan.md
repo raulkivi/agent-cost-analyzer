@@ -18,9 +18,13 @@ progress: steps 13.0-13.10 and 13.5a merged, the owner's eyes-on review
 of 13.8 open), Phase 14
 (steps 14.0-14.7 built and 14.8's docs written; the owner's docs review
 and the §13 exit criterion on real sessions open) and Phase 15 (steps 15.0-15.15 done; the owner's docs review and
-the exit criterion on real data open). A proposed plan,
-[plans/classic-subagent-credits.md](plans/classic-subagent-credits.md),
-covers classic Copilot Chat subagent AI Credits; it has no step number yet.
+the exit criterion on real data open). Step 10.19
+([plans/classic-subagent-credits-implementation.md](plans/classic-subagent-credits-implementation.md),
+design in [plans/classic-subagent-credits.md](plans/classic-subagent-credits.md))
+covers classic Copilot Chat subagent AI Credits. Step 10.21
+([plans/monthly-allowance.md](plans/monthly-allowance.md)) and Phase 16
+([plans/savings-report.md](plans/savings-report.md)) are planned; the owner
+accepted their decisions on 2026-11-12.
 Each phase has a goal, concrete deliverables, an exit criterion (how you know
 it's done), and its dependencies. Phases are ordered so the riskiest/least
 certain work (real `main.jsonl` parsing) happens after there's already a
@@ -1277,6 +1281,9 @@ and deviations are in its status note in the plan's §6.
 | 10.16 | UI automation of the manual checks (`wdio-vscode-service`, `test/ui/`) | Merged (#117, #121, #127; later specs #139, #157, #172): 13 spec files, 38 tests; CI job informational, 76 of 78 `main` runs green 2026-11-04 to 2026-11-10; T15 closed by the owner's decision of 2026-11-11 (the job becomes required, step 10.17) ([plans/vscode-ui-automation.md](plans/vscode-ui-automation.md) §6.9) |
 | 10.17 | Automated pre-release UI gate: wdio for VS Code and Copilot, Playwright for web; no hand checklist gates a release (owner rule 2026-11-11) | Done 2026-11-11, tasks G0-G7 ([plans/release-ui-gate.md](plans/release-ui-gate.md)): CI and both release workflows run every UI suite; a ruleset on `main` requires 9 checks; extension releases need a passing real-Copilot run recorded on the tagged commit; replaces the manual checks and Phase 12's A24 owner checks |
 | 10.18 | Copilot Chat sessions from empty windows (no folder open): read the debug logs Copilot Chat writes under `globalStorage` | Done 2026-11-11 (found by 10.17 G3, owner decision D7) |
+| 10.19 | AI Credits of classic Copilot Chat subagents: read each run's debug log and fold it into the parent session's totals, per model ([plans/classic-subagent-credits-implementation.md](plans/classic-subagent-credits-implementation.md), design [plans/classic-subagent-credits.md](plans/classic-subagent-credits.md)) | Planned; owner decisions D1-D15 accepted 2026-11-12; implementation started 2026-11-12 (spike SA0 first) |
+| 10.20 | Classic subagent tool calls in the tool audit and security findings (follow-up from 10.19 D3) | Follow-up, not planned yet |
+| 10.21 | Monthly AI Credits allowance gauge in the extension: status-bar item and Sessions row ([plans/monthly-allowance.md](plans/monthly-allowance.md)) | Planned; owner decisions D1-D10 accepted 2026-11-12; implementation started 2026-11-12 (spike MA0 first) |
 
 **Fixes after 0.1.0** (unreleased, in the changelogs): the AI Credits in a
 session's list summary and detail now agree (#122); debug-log usage is
@@ -1597,6 +1604,41 @@ plan's §14 table and §14.1 notes have each step's detail:
 
 Open: the owner's review of the docs (15.15's exit criterion) and the
 phase's exit criterion (plan §15) on a machine with real sessions.
+
+## Phase 16 — Savings report
+
+Full design: [plans/savings-report.md](plans/savings-report.md).
+
+**Goal**: answer "what should I change to spend less, and about how much
+would each change save?". One ranked list across sessions and providers,
+each opportunity with the change to make, its evidence, and an estimated
+saving per week as a range or a labelled upper bound. Recommendations are
+text; the app never changes settings or files (vision §6, owner decision D1).
+
+**Deliverables** (tasks SR0–SR22 in the plan):
+
+- Increment 1 (SR0–SR17): a `services/savings` module (counterfactual
+  pricer over `CostPricer`, cache-break classifier and detectors for unused
+  tools, cache breaks, failed calls and cheaper models, a ranker), the
+  HTTP route and RPC method, and a Savings tab in the standalone app and the
+  extension, with Playwright and wdio specs.
+- Increment 2 (SR18–SR22, after Increment 1 is released): the
+  `get_savings_report` MCP tool and its MCP App view (U18).
+
+**Exit criterion**: the plan's §14: over 30 days of real Claude Code and
+Copilot sessions, the Savings tab in both products and (after Increment 2)
+`get_savings_report` list the same ranked opportunities, each amount
+labelled with its basis, range or "up to", and coverage; the owner checks
+one idle-expiry break and one unused tool by hand against the turn's tokens
+and the price book; the app writes no file and changes no setting.
+
+**Dependencies**: Phase 15 (price book, `CostPricer`, cost figures) and
+Phase 14 (replay, for the cheaper-model detector) for Increment 1; Phase 9.10
+(tool-call audit); Phase 12 and its MCP Apps views for Increment 2.
+
+**Status (2026-11-12)**: planned; the owner accepted decisions D1–D12 and
+started implementation on 2026-11-12. Spike SR0 (read-only, on the owner's
+logs) first.
 
 ## Summary dependency graph
 

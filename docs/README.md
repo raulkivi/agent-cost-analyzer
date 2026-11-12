@@ -126,8 +126,18 @@ An npm workspace:
   record of the owner's hand checks before step 10.17 automated them, what
   each suite now covers, and the two checks that stay manual (remote
   windows, screenshots); none gates a release.
+- [Classic subagent credits implementation plan](plans/classic-subagent-credits-implementation.md) —
+  step 10.19 (planned, owner decisions accepted 2026-11-12): tasks SA0 to
+  SA17 that fold subagent runs into the totals, with UI checks, threat-model
+  rows and risks.
+- [Monthly allowance plan](plans/monthly-allowance.md) — step 10.21
+  (planned): a user-set monthly AI Credits allowance with a status-bar gauge
+  and a Sessions row in the extension.
+- [Savings report plan](plans/savings-report.md) — Phase 16 (planned): a
+  ranked list of what to change to spend less, with estimated savings, in
+  both products and (Increment 2) as an MCP tool and view.
 - [Classic subagent credits plan](plans/classic-subagent-credits.md) —
-  proposed: counting the AI Credits that classic Copilot Chat subagents
+  step 10.19's design: counting the AI Credits that classic Copilot Chat subagents
   log to sibling files next to `main.jsonl`, with measured impact, format
   facts, options and open questions.
 - [Automated pre-release UI gate](plans/release-ui-gate.md) —

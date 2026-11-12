@@ -69,6 +69,8 @@ gantt
     10.16 UI automation (100%)             :done, p10c, 2026-11-04, 2d
     10.17 Release UI gate (100%)           :done, p10d, after p10c, 1d
     10.18 Copilot empty-window sessions (100%) :done, p10e, 2026-11-11, 1d
+    10.19 Classic subagent AI Credits (0%) :active, p10f, 2026-11-12, 1d
+    10.21 Monthly allowance gauge (0%)     :active, p10g, 2026-11-12, 1d
 
     section Simulation and replay
     13 Vendor-aware Learn simulation (95%) :done, p13, 2026-11-04, 4d
@@ -84,6 +86,9 @@ gantt
     section Cost
     15 Cost by repository and project (95%) :done, p15, 2026-11-05, 3d
     15.15 owner review, real data (5%)     :active, p15r, after p15, 1d
+
+    section Savings
+    16 Savings report (0%)                 :active, p16, 2026-11-12, 1d
 
     section Releases
     App v0.3.0-alpha :milestone, r0, 2026-08-09, 0d
@@ -109,6 +114,9 @@ gantt
 
 ## Open items
 
+- Step 10.19 (classic subagent AI Credits, 0%): owner decisions D1-D15 accepted 2026-11-12, implementation started 2026-11-12; spike SA0 first. Plan: [classic-subagent-credits-implementation.md](plans/classic-subagent-credits-implementation.md). Step 10.20 (subagent tool calls in the audit) is a follow-up, not planned.
+- Step 10.21 (monthly allowance gauge, 0%): decisions D1-D10 accepted 2026-11-12, implementation started 2026-11-12; spike MA0 first. Plan: [monthly-allowance.md](plans/monthly-allowance.md).
+- Phase 16 (savings report, 0%): decisions D1-D12 accepted 2026-11-12, implementation started 2026-11-12; spike SR0 first. Plan: [savings-report.md](plans/savings-report.md). No detail chart yet; add one when its tasks start landing.
 - Phase 14: steps 14.0-14.7 built; 14.8's docs written, the owner's review and the §13 exit criterion on real sessions open; the extension guide's replay screenshots open (User Guide's done). Step table: [analyze-session-replay.md](plans/analyze-session-replay.md) §12.
 - Phase 15: owner's review and exit criterion on real data.
 - Phase 13: owner's eyes-on review of step 13.8.
