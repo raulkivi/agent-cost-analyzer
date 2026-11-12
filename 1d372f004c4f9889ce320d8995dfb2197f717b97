@@ -1,0 +1,183 @@
+{
+  "schema": 1,
+  "suite": "copilot-e2e",
+  "commit": "1d372f004c4f9889ce320d8995dfb2197f717b97",
+  "dirty": false,
+  "extensionVersion": "0.10.0",
+  "vscodeVersion": "1.146.0",
+  "model": {
+    "requested": "claude-haiku-5.5",
+    "observed": [
+      "claude-haiku-5.5"
+    ]
+  },
+  "tests": [
+    {
+      "title": "1.4 a real agent-mode chat produces a session with known AI Credits, turns and tokens, and the MCP tools offer it",
+      "state": "passed",
+      "skipReason": null
+    },
+    {
+      "title": "2.3 asked to call an MCP tool, Copilot's call appears in the session's tool-call audit",
+      "state": "passed",
+      "skipReason": null
+    },
+    {
+      "title": "2.4 asked about another agent's sessions, Copilot's call to the tool appears in the audit",
+      "state": "passed",
+      "skipReason": null
+    },
+    {
+      "title": "A33 tools the extension's tools/list gives the six Increment 3 tools a view and names no billing tool (get_statement, estimate_cost); the chat shows no billing view",
+      "state": "passed",
+      "skipReason": null
+    },
+    {
+      "title": "A33 U12.compare U12 compare: Replay on other models, Simulated, the own-model check, measured row first then the models in the tool's order; a model opens its replay in place, Back returns focus to it, by mouse and keyboard, with no new chat request",
+      "state": "passed",
+      "skipReason": null
+    },
+    {
+      "title": "A33 U12.replay U12 replay opened directly: Session replay kicker, Replay on <model> with Simulated, the per-turn chart, a passed self-check, the difference tile, no Back",
+      "state": "passed",
+      "skipReason": null
+    },
+    {
+      "title": "A33 U13 U13 price changes: kicker, title with the period, the timeline, documented changes tagged with their sources, written signs, no chat request",
+      "state": "passed",
+      "skipReason": null
+    },
+    {
+      "title": "A33 U4.session U4 session audit: Tool-call audit kicker, the session's title, tiles with the failure rate Unknown (never 0 %) because Copilot records no outcomes, recovery cost in tokens, not AI Credits, calls by tool",
+      "state": "passed",
+      "skipReason": null
+    },
+    {
+      "title": "A33 U4.rollup U4 rollup: Tool-call failures, tiles with the failure rate Unknown, failed calls per day as Unknown days with View as table, the display-only sessions table; no tool call or chat request",
+      "state": "passed",
+      "skipReason": null
+    },
+    {
+      "title": "A33 U5.list U5 session picker: Sessions, the seeded sessions with short id, turns, model and repository, no cost, an Analyse button per row, the hint that only Analyse session <id> is sent",
+      "state": "passed",
+      "skipReason": null
+    },
+    {
+      "title": "A33 themes U12, U13, U4 and U5 follow Light Modern, Dark Modern, Dark and Light High Contrast mid-run; text reaches AA on the chat's ground; focus ring on Tab",
+      "state": "passed",
+      "skipReason": null
+    },
+    {
+      "title": "A33 narrow narrow chat, about 360 px, and a normal one, about 600 px: U12, U13, U4 and U5 don't scroll sideways",
+      "state": "passed",
+      "skipReason": null
+    },
+    {
+      "title": "A33 footer footer: every Increment 3 view ends with Read-only · local logs · v<extension version>, and its text can be selected",
+      "state": "passed",
+      "skipReason": null
+    },
+    {
+      "title": "A33 U5.analyse U5 Analyse in VS Code (no `message` capability advertised): one press adds exactly one chat request, Analyse session <id>, or puts exactly that text in the chat input unsent, or the row shows Ask in the chat: Analyse session <id>; which one is recorded",
+      "state": "passed",
+      "skipReason": null
+    },
+    {
+      "title": "A24 1.1 U9 repository cost over time: kicker, title, period line, four basis tiles, weekly chart, no sessions, vendor or token tables, no currency control",
+      "state": "passed",
+      "skipReason": null
+    },
+    {
+      "title": "A24 1.2 U9 project in the extension: No projects here, the extension's reason, what to ask instead, the tool's answer, no chart",
+      "state": "passed",
+      "skipReason": null
+    },
+    {
+      "title": "A24 1.3 U10 repository comparison: title, units sentence, rows most expensive first, change with sign, Together, rows are buttons",
+      "state": "passed",
+      "skipReason": null
+    },
+    {
+      "title": "A24 1.4 U10 → U9 drill-down in place: kicker, trail, Back with focus on the row, keyboard only, no new chat request",
+      "state": "passed",
+      "skipReason": null
+    },
+    {
+      "title": "A24 1.5 U11 cost change with nothing priced: kicker, the priced basis named, both periods, no figures, Not explained counted per period with the reason, never 0, documented price changes section",
+      "state": "passed",
+      "skipReason": null
+    },
+    {
+      "title": "A24 1.6 error state, unknown repository: the real server answers an empty series, so U9 shows Unknown tiles and no turns, never 0, and no bars",
+      "state": "passed",
+      "skipReason": null
+    },
+    {
+      "title": "A24 1.7 themes: U9, U10, U11 and A16's U1-U3 follow Light Modern, Dark Modern, Dark and Light High Contrast mid-run; text reaches AA on the chat's ground; focus ring on Tab",
+      "state": "passed",
+      "skipReason": null
+    },
+    {
+      "title": "A24 1.8 narrow chat, about 360 px, and a normal one, about 600 px: U9, U10, U11 and A16's U1-U3 don't scroll sideways; at 360 px U10 moves its figures under the row name",
+      "state": "passed",
+      "skipReason": null
+    },
+    {
+      "title": "A24 1.9 footer: every view ends with Read-only · local logs · v<extension version>, and its text can be selected",
+      "state": "passed",
+      "skipReason": null
+    },
+    {
+      "title": "A16 U1 session cost: tiles, per-turn chart, top turns; a turn opens in place and hides; Copy title names Open Session; unknown figures read Unknown, never 0",
+      "state": "passed",
+      "skipReason": null
+    },
+    {
+      "title": "A16 U2 spend rollup: daily chart, by model, by provider, top sessions; a session drills into U1 in place and Back returns with no new chat request",
+      "state": "passed",
+      "skipReason": null
+    },
+    {
+      "title": "A16 U3 findings: severity tiles and the findings summary; the kind filter reloads in place with no new chat request",
+      "state": "passed",
+      "skipReason": null
+    },
+    {
+      "title": "A16 keyboard U1: Tab to a top turn and Enter opens it; U2: Enter on a session drills in and Back returns focus to it",
+      "state": "passed",
+      "skipReason": null
+    },
+    {
+      "title": "2.1 with aiCreditsAnalyzer.mcp.enabled off, agent mode's Configure Tools lists no AI Credits Analyzer server",
+      "state": "passed",
+      "skipReason": null
+    },
+    {
+      "title": "2.1 with the setting on, Configure Tools lists the server under its label, AI Credits Analyzer",
+      "state": "passed",
+      "skipReason": null
+    },
+    {
+      "title": "1.14 a real agent-mode chat in the git folder produces a session with known AI Credits",
+      "state": "passed",
+      "skipReason": null
+    },
+    {
+      "title": "1.14 Group Sessions by Repository lists the folder's repository with the new session's AI Credits, never 0",
+      "state": "passed",
+      "skipReason": null
+    },
+    {
+      "title": "1.14 the status bar names the folder's repository with today's AI Credits",
+      "state": "passed",
+      "skipReason": null
+    },
+    {
+      "title": "1.14 the grouping choice survives a window reload",
+      "state": "passed",
+      "skipReason": null
+    }
+  ],
+  "aiCreditsSpent": 1.5475630000000002,
+  "ranAt": "2026-11-12T21:01:16.033Z"
+}
