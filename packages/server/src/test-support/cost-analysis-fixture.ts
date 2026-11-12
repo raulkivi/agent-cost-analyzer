@@ -263,7 +263,7 @@ export function composeCostFixture({ home = FIXTURE_HOME, portalApiRemote, proje
   });
   // The cost routes read only costAnalysis, statements and estimates (app.ts passes req.query unchanged).
   const api = new ApiService({ costAnalysis, statements, estimates } as unknown as ApiServiceDeps);
-  const server = createMcpServer({
+  const deps: McpServerDeps = {
     auditQueries: new AuditQueryService(lookup),
     analysisQueries: new AnalysisQueryService(lookup, insights, { attribution: attributor, pricer }),
     getProviderStatus: async () => providerStatus,
@@ -276,8 +276,9 @@ export function composeCostFixture({ home = FIXTURE_HOME, portalApiRemote, proje
     estimates,
     sessionReplay,
     ...options,
-  });
-  return { api, server, insights, costAnalysis, statements, sessionReplay };
+  };
+  const server = createMcpServer(deps);
+  return { api, server, deps, insights, costAnalysis, statements, sessionReplay };
 }
 
 export async function connectCostFixture(options: CostFixtureOptions = {}): Promise<{ client: Client; api: ApiService }> {

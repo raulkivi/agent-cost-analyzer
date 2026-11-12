@@ -11,7 +11,7 @@ import { InMemoryViewSource } from "./apps/view-source.js";
 // capabilities, the views resource, prompts), pinned by a snapshot taken on
 // SDK 1.32.2 and ext-apps 1.7.5. A change of SDK must leave it as it is;
 // only the JSON Schema dialect of the advertised schemas may change, which
-// readMcpSurface normalises and mcp-schema-dialect.test.ts asserts.
+// readMcpSurface normalises and mcp-protocol.test.ts asserts.
 
 const appViews = { source: new InMemoryViewSource('<!doctype html><html><head><meta name="aca-brand" content=""></head><body>views</body></html>') };
 

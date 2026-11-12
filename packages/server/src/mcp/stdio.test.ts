@@ -7,6 +7,13 @@ import { fileURLToPath } from "node:url";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
+import {
+  initializeLegacy,
+  MODERN_PROTOCOL_VERSION,
+  modernEnvelope,
+  spawnJsonRpcStdio,
+  type JsonRpcStdioPeer,
+} from "../test-support/json-rpc-stdio.js";
 import { costRollupSchema, priceBookListingSchema, projectListSchema, repositoryListSchema, sessionCostSchema, sessionReplaySchema } from "@agent-cost-analyzer/domain";
 
 // End-to-end: spawns the real stdio entry point (what `claude mcp add`
@@ -164,5 +171,75 @@ describe("stdio MCP entry point, app views", () => {
     expect(tools.some((tool) => tool._meta !== undefined)).toBe(false);
     const result = await client.callTool({ name: "list_sessions", arguments: { provider: "claude-code" } });
     expect(result.isError).toBeFalsy();
+  }, 60_000);
+});
+
+// docs/plans/mcp-sdk-2-migration.md D1: the entry point serves 2025-era
+// clients (an `initialize` at 2025-06-18 or 2025-11-25) and 2026-07-28
+// clients (`server/discover`, then requests carrying the `_meta`
+// envelope) from one process; D4: the views resource answers a 2026-07-28
+// read with `ttlMs: 0`, so a host never keeps views older than the server.
+describe("stdio MCP entry point, protocol revisions (MCP SDK 2, D1, D4)", () => {
+  let home: string;
+  let viewsFile: string;
+  const peers: JsonRpcStdioPeer[] = [];
+  const VIEWS_URI = "ui://agent-cost-analyzer/views.html";
+
+  beforeAll(() => {
+    home = mkdtempSync(path.join(tmpdir(), "mcp-stdio-revisions-home-"));
+    cpSync(fixtureProjectDir, path.join(home, ".claude", "projects", "-home-dev-project"), { recursive: true });
+    viewsFile = path.join(home, "views.html");
+    writeFileSync(viewsFile, '<!doctype html><html><head><meta name="aca-brand" content=""></head><body>built views</body></html>');
+  });
+
+  afterAll(async () => {
+    await Promise.all(peers.map((peer) => peer.close()));
+    rmSync(home, { recursive: true, force: true });
+  });
+
+  function start(): JsonRpcStdioPeer {
+    const peer = spawnJsonRpcStdio(
+      path.join(repoRoot, "node_modules", ".bin", "tsx"),
+      [path.join(here, "stdio.ts"), "--app-views-html", viewsFile],
+      { PATH: process.env.PATH ?? "", HOME: home },
+    );
+    peers.push(peer);
+    return peer;
+  }
+
+  it.each(["2025-06-18", "2025-11-25"])("answers a 2025-era initialize at %s with that version and lists its 22 tools", async (protocolVersion) => {
+    const peer = start();
+
+    const initialized = await initializeLegacy(peer, protocolVersion);
+    const listed = await peer.request("tools/list");
+
+    expect(initialized.result).toMatchObject({ protocolVersion, serverInfo: { name: "agent-cost-analyzer" } });
+    expect((listed.result?.tools as unknown[]).length).toBe(22);
+  }, 60_000);
+
+  it("answers server/discover with 2026-07-28 and serves 2026-07-28 requests on the same connection", async () => {
+    const peer = start();
+
+    const discovered = await peer.request("server/discover", { _meta: modernEnvelope() });
+    const listed = await peer.request("tools/list", { _meta: modernEnvelope() });
+
+    expect(discovered.error).toBeUndefined();
+    expect(discovered.result?.supportedVersions).toContain(MODERN_PROTOCOL_VERSION);
+    expect(discovered.result?.capabilities).toMatchObject({ tools: {}, resources: {}, prompts: {} });
+    expect((listed.result?.tools as unknown[]).length).toBe(22);
+  }, 60_000);
+
+  it("answers a 2026-07-28 read of the views resource with ttlMs 0, and a 2025-era one without cache hints", async () => {
+    const modern = start();
+    const legacy = start();
+    await initializeLegacy(legacy, "2025-11-25");
+
+    const modernRead = await modern.request("resources/read", { uri: VIEWS_URI, _meta: modernEnvelope() });
+    const legacyRead = await legacy.request("resources/read", { uri: VIEWS_URI });
+
+    expect(modernRead.error).toBeUndefined();
+    expect(modernRead.result).toMatchObject({ ttlMs: 0, contents: [{ uri: VIEWS_URI, mimeType: "text/html;profile=mcp-app" }] });
+    expect(legacyRead.result).toMatchObject({ contents: [{ uri: VIEWS_URI }] });
+    expect(legacyRead.result).not.toHaveProperty("ttlMs");
   }, 60_000);
 });
