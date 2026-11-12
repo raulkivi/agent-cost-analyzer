@@ -581,6 +581,40 @@ returns none with a `reason`, D19), the bundled price book from its
 identities' instructions share `COST_BASIS_INSTRUCTIONS` (the three cost
 bases, as-of-use versus today's prices, 1 AI Credit = $0.01).
 
+MCP SDK and transport (since 2026-11-12,
+[plans/mcp-sdk-2-migration.md](plans/mcp-sdk-2-migration.md)):
+- **Packages.** `@modelcontextprotocol/server`, `client` and `core`
+  2.4.0 and `@modelcontextprotocol/ext-apps` 2.0.4, each pinned exactly.
+  `@modelcontextprotocol/sdk` 1.x is gone. `packages/server` lists
+  `client` because ext-apps needs it as a peer; only tests import it.
+- **`serveStdio`.** Both stdio entries (`packages/server/src/mcp/stdio.ts`,
+  the extension's `src/mcp/stdio.ts`) call `serveStdio` from
+  `@modelcontextprotocol/server/stdio` with a server factory (D1). One
+  process serves 2025-era clients (`initialize`, e.g. at 2025-06-18 or
+  2025-11-25) and MCP 2026-07-28 clients (`server/discover`, then a
+  `_meta` envelope on every request).
+- **Server factory.** `() => createMcpServer(deps)` in the standalone
+  entry, `createCopilotMcpServerFactory(options)` in the extension.
+  `serveStdio` calls it once per connection plus once for a
+  `server/discover` probe it may discard. So the services are composed
+  once, outside it, and `createMcpServer` only builds a server: no I/O, no
+  output.
+- **Argument size.** `createMcpServer` sets `maxToolInputElements` to
+  `MAX_TOOL_INPUT_ELEMENTS` (256). A `tools/call` whose arguments hold
+  more array elements and object members gets an `isError` result naming
+  the limit, before validation. The largest legitimate call has 38.
+- **Unknown tool.** A call to a tool the server doesn't serve is a
+  JSON-RPC error `-32602` (D2); on SDK 1 it was an `isError` result. An
+  unknown argument value is still an `isError` result.
+- **Cache hints.** None set (D4): 2026-07-28 results carry the SDK's
+  `ttlMs: 0`, so a host re-reads `views.html` after an update.
+- **Schemas.** Tool schemas are advertised as JSON Schema 2020-12.
+- **Tests.** `tool-list-contract.test.ts` and
+  `copilot-tool-list-contract.test.ts` compare `tools/list`, instructions,
+  capabilities, the views resource and the prompts with snapshots taken
+  on SDK 1. `mcp-protocol.test.ts`, `stdio.test.ts` and the extension's
+  `stdio-protocol.test.ts` pin the behaviour above.
+
 Price changes and variance (Phase 15 step 15.10, plan §6.4, §8.4, D11,
 D12; `packages/domain/src/price-change.ts` and `cost-variance.ts`): a priced
 `CostFigure` carries `byTokenType` (uncached input, cache read, cache
@@ -2440,6 +2474,7 @@ estimate rules, with a `simulation` block. `GET /api/estimates` doesn't take
 | Visualization | D3.js | Explicitly suggested in vision §5; fine-grained control over the turns table's per-token-type bars and the scrubber |
 | Settings parsing | `jsonc-parser` (same library VS Code itself uses) | `settings.json` allows comments/trailing commas; a strict `JSON.parse` would break on real-world files (§6.3) |
 | Token estimation | `gpt-tokenizer` (`o200k_base` encoding), pure JS/no native build step | Matches VS Code's own model-catalog encoding for Claude models (§6.2.2 Phase 6 addendum); only ever used to produce an explicitly `estimated: true` `TokenCount`, never a substitute for real usage data |
+| MCP | `@modelcontextprotocol/server`, `client`, `core` 2.4.0 and `@modelcontextprotocol/ext-apps` 2.0.4, pinned exactly | The official TypeScript SDK and MCP Apps library; `serveStdio` serves 2025-era and 2026-07-28 clients (§5, "MCP SDK and transport") |
 | Monorepo tooling | npm workspaces | Small project; avoids adding a build-orchestration tool (Turborepo/Nx) before it's needed |
 
 These are default choices consistent with the constraints, not locked in —
@@ -2552,6 +2587,10 @@ on `domain` and on `web`'s presentational exports only, never on `server`
   codes come only from `get_statement`, and from `list_projects` when the
   server is launched with `--project-billing-details` (threat-model.md §5.6). `mcp/security.test.ts` runs every tool over generated
   folders and remote credentials to check this (Phase 15 step 15.13).
+  Since MCP SDK 2 (2026-11-12) a `tools/call` whose arguments hold more
+  than 256 array elements and object members is refused before
+  validation, and a call to an unknown tool is a JSON-RPC error `-32602`
+  (§5, "MCP SDK and transport").
 - Session replay (Phase 14, §6.5, threat-model.md §4) is read-only and
   bounded: GET routes only, nothing stored, numbers and model ids only in
   every answer, a model id of at most 100 characters that a vendor profile
@@ -2837,7 +2876,7 @@ registry. See the plan's §3 for the decisions (D1-D10).
   title (AI Credits Analyzer) and Copilot-only instructions. Both servers
   send the same author, GitHub repo link (`websiteUrl`) and inline SVG/PNG
   icon in their `initialize` result (`mcp/mcp-branding.ts`). Its only input is a validated
-  `--user-data-dir`; the MCP App views (Phase 12) are the one file it also serves, `dist/mcp-apps/views.html`, copied there from `packages/mcp-apps/dist/views.html` by `scripts/build.mts`, and without it the server starts without views. It's off until `aiCreditsAnalyzer.mcp.enabled` is on,
+  `--user-data-dir`; the MCP App views (Phase 12) are the one file it also serves, `dist/mcp-apps/views.html`, copied there from `packages/mcp-apps/dist/views.html` by `scripts/build.mts`, and without it the server starts without views. Since 2026-11-12 it runs under `serveStdio` with `createCopilotMcpServerFactory`, as the standalone server does (§5, "MCP SDK and transport"). It's off until `aiCreditsAnalyzer.mcp.enabled` is on,
   and an untrusted workspace can't turn it on (`restrictedConfigurations`).
 - **Tests in a real VS Code.** A `@vscode/test-cli` suite runs on stable
   VS Code in CI. The webview posts its timing marks to the host, which

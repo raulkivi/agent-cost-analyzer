@@ -104,7 +104,7 @@ gantt
 ## Not started
 
 - Phase 11 (0%) — pi provider real-capture verification.
-- Phase 12 follow-up (M0 to M4 done 2026-11-12: the views, both MCP servers and the stdio test clients on ext-apps 2.0.4 and SDK 2.4.0; SDK 1 removed from every package.json; M5–M6 not started) — MCP SDK 2 and ext-apps 2.x migration, M0–M6; owner decisions D1–D4 taken 2026-11-12 (D3, D4 settled by M0 findings) ([mcp-sdk-2-migration.md](plans/mcp-sdk-2-migration.md)).
+- Phase 12 follow-up (M0 to M5 done 2026-11-12: the views, both MCP servers and the stdio test clients on ext-apps 2.0.4 and SDK 2.4.0; SDK 1 removed from every package.json; docs updated and the security review found no defect and no new surface; M6, the release check, is the owner's) — MCP SDK 2 and ext-apps 2.x migration, M0–M6; owner decisions D1–D4 taken 2026-11-12 (D3, D4 settled by M0 findings) ([mcp-sdk-2-migration.md](plans/mcp-sdk-2-migration.md)).
 
 ## Open items
 
