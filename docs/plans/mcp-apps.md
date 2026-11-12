@@ -157,10 +157,16 @@ Drill-downs reuse the same host-mediated path for every view (§4.3, §4.5).
   `mcp-branding.ts`, #95) next to the tool call, so the view's mark and
   the host's server icon are the same glyph.
 - **Dependency pin.** `@modelcontextprotocol/ext-apps` is pinned to
-  **1.7.5** exactly. 2.x needs the split MCP SDK 2 packages
-  (`@modelcontextprotocol/server|client|core`), which share no types with
-  `@modelcontextprotocol/sdk` 1.x. The wire protocol is the same, so the
-  SDK 2 migration is its own follow-up (§11).
+  **2.0.4** exactly, on the split MCP SDK 2 packages
+  (`@modelcontextprotocol/server`, `client` and `core`, 2.4.0 exactly),
+  since the SDK 2 migration (2026-11-12,
+  [mcp-sdk-2-migration.md](mcp-sdk-2-migration.md)).
+  - It was 1.7.5 because 2.x needs SDK 2, which shares no types with
+    `@modelcontextprotocol/sdk` 1.x. The migration removed SDK 1, so that
+    reason is gone.
+  - 2.0.4, not 2.1.0: 2.1.0 adds only the WebMCP bridge. A bump to 2.1.0
+    or later passes `webMcpBridge: false` to `App` and adds a test that the
+    view declares no `tools` capability (mcp-sdk-2-migration.md §2.1).
 
 ### 4.3 Views (`packages/mcp-apps`, new workspace)
 
@@ -1014,7 +1020,7 @@ call, and whether U5's "Sent" fits a host that stages the message.
 | Display modes | **Resolved:** VS Code `inline` only; Claude Desktop `inline` and `fullscreen`. Views must not depend on fullscreen. | — |
 | Claude Desktop sends concrete `light-dark()` colours and fonts; VS Code sends `var(--vscode-*)` | A6 layers both onto the brand tokens | A6, using the recorded sets in `mcp-apps-spike-results/` |
 | `local()` heading font | Usually absent, so the host font is used. Accepted (§5.3). | — |
-| Spec draft changes (App-provided tools, `object-src 'none'`) | Minor | Pin 1.7.5; review at the SDK 2 migration |
+| Spec draft changes (App-provided tools, `object-src 'none'`) | Minor | **Reviewed at the SDK 2 migration (2026-11-12, mcp-sdk-2-migration.md §9 "M5 review"):** the views are on ext-apps 2.0.4 and register no app tools; 2.0.4 has no WebMCP bridge, so they gained no host call. The views use no `<object>`, so `object-src 'none'` changes nothing. Hosts dropping the double sandbox is host-side; the views still rely on the host's sandbox and CSP (threat-model §6.1) |
 | Bundle size (React, d3 parts) | Slow first render | Budget test in A5 |
 | A shorter `content` for UI-capable clients would save model tokens | Changes what the model sees per host | Follow-up decision (§11) |
 | Tabs that mix fetching and rendering (Phase 15's Dashboard tabs, `CompareModelsView`, `EstimatePanel`) | The split in A17 grows into a web refactor | A17 splits only what U9–U15 render. Anything else stays. |
@@ -1082,8 +1088,9 @@ Revisit if Copilot Chat or Claude adopts it.
 
 ## 11. Out of scope (follow-ups)
 
-- Migrating to MCP SDK 2 and ext-apps 2.x: planned 2026-11-12 in
-  [mcp-sdk-2-migration.md](mcp-sdk-2-migration.md).
+- Migrating to MCP SDK 2 and ext-apps 2.x: done 2026-11-12 (M0–M5 in
+  [mcp-sdk-2-migration.md](mcp-sdk-2-migration.md)); the release check
+  (M6) is the owner's.
 - Views for `get_price_book`, `list_repositories` and `list_projects`
   (U16, U17).
 - A shorter `content` when the client declares `io.modelcontextprotocol/ui`.
