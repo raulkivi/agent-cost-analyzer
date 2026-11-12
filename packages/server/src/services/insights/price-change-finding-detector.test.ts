@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 import { describe, expect, it } from "vitest";
 import { insightFindingSchema, type InsightTurnRow } from "@agent-cost-analyzer/domain";
-import { billed, costs, priced } from "../../test-support/cost-cube-fakes.js";
+import { billed, costLine, costs, priced } from "../../test-support/cost-cube-fakes.js";
 import type { DetectorInput } from "./finding-detector.js";
 import { PriceChangeFindingDetector } from "./price-change-finding-detector.js";
 
@@ -68,5 +68,29 @@ describe("PriceChangeFindingDetector", () => {
   it("raises nothing for turns without both figures", () => {
     const unpriced = steady.map((row) => ({ ...row, cost: costs({ billed: billed(12) }) }));
     expect(new PriceChangeFindingDetector().detect(input(unpriced))).toEqual([]);
+  });
+});
+
+// Step 10.19 (classic subagents plan §4.5, SA10 exit): billed and priced are
+// compared per cost line's model. The main agent on Sonnet is billed exactly
+// as priced; only its runs on Sol are billed 20 % above. By the turn's model
+// alone, Sonnet would show a false 10 % gap.
+describe("PriceChangeFindingDetector with subagent runs", () => {
+  function withRuns(date: string, session: string): InsightTurnRow[] {
+    return rows(date, 20, 1, session).map((row) => ({
+      ...row,
+      aiCredits: 22,
+      cost: costs({ billed: billed(22), priced: priced(20, "gh:mixed", "AI_CREDITS") }),
+      lines: [
+        costLine("claude-sonnet-5.5", "anthropic", costs({ billed: billed(10), priced: priced(10, "gh:sonnet:2026-10-01", "AI_CREDITS") }), { subagent: false }),
+        costLine("gpt-6.1-sol", "openai", costs({ billed: billed(12), priced: priced(10, "gh:sol:2026-10-01", "AI_CREDITS") })),
+      ],
+    }));
+  }
+
+  it("raises no false finding on the turn's model, and finds the run's model's own gap", () => {
+    const findings = new PriceChangeFindingDetector().detect(input([...withRuns("2026-10-14", "a"), ...withRuns("2026-10-21", "b")]));
+    expect(findings.map((finding) => finding.key)).toEqual(["price-change:github-copilot:gpt-6.1-sol:2026-10-12"]);
+    expect(findings[0]!.sessionKey).toBe("vscode:a");
   });
 });

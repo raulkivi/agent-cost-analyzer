@@ -108,6 +108,27 @@ describe("chart measures", () => {
     expect(rows[0]).toMatchObject({ uncachedInput: 300, cacheWrite: 300, cacheRead: 1600, reasoning: 0, output: 150 });
   });
 
+  // Step 10.19 (classic subagents plan §4.5): a turn's subagent runs count under their own model.
+  it("sums tokens by each cost line's model, so a subagent run's model gets its own tokens", () => {
+    const first = dataset.turns[0];
+    const line = (model: string, uncachedInput: number, subagent: boolean) => ({
+      model,
+      uncachedInput,
+      cacheWrite: 0,
+      cacheRead: 0,
+      reasoning: null,
+      output: 0,
+      aiCredits: null,
+      subagent,
+    });
+    const withRun = { ...first!, model: "claude", uncachedInput: 150, cacheWrite: 0, cacheRead: 0, reasoning: null, output: 0, lines: [line("claude", 100, false), line("haiku-run", 50, true)] };
+    const rows = tokensByModel([withRun]);
+    expect(rows.map((row) => [row.model, row.uncachedInput])).toEqual([
+      ["claude", 100],
+      ["haiku-run", 50],
+    ]);
+  });
+
   it("counts tool calls per tool as succeeded / failed / unknown", () => {
     expect(toolCallsByTool(dataset.toolCalls)).toEqual([
       { name: "Bash", succeeded: 1, failed: 1, unknown: 0 },

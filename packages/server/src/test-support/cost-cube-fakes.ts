@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import type { CostFigure, TurnCostFigures } from "@agent-cost-analyzer/domain";
+import type { CostFigure, CostLine, TurnCostFigures } from "@agent-cost-analyzer/domain";
 import type { CostCube, CostCubeRow } from "../services/cost-analysis/cost-cube.js";
 
 // Hand-written cost-cube rows for the step 15.7 builder tests: each test
@@ -62,5 +62,22 @@ export function cubeOf(rows: CostCubeRow[], undatedTurns = 0): CostCube {
     undatedTurns,
     projectName: (id) => names[id] ?? id,
     vendorLabel: (id) => vendors[id] ?? id,
+  };
+}
+
+// Step 10.19: one cost line of a turn that ran subagents (plan §4.5).
+export function costLine(model: string, vendorId: string | null, cost: TurnCostFigures, overrides: Partial<CostLine> = {}): CostLine {
+  return {
+    model,
+    vendorId,
+    uncachedInput: 100,
+    cacheWrite: 0,
+    cacheRead: 300,
+    reasoning: null,
+    output: 100,
+    aiCredits: null,
+    cost,
+    subagent: model !== "main",
+    ...overrides,
   };
 }

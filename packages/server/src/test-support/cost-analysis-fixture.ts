@@ -46,7 +46,7 @@ export const FIXTURE_NOW = new Date("2026-11-06T12:00:00.000Z");
 const k = (value: number): TokenCount => ({ known: true, value });
 const u = (reason: string): TokenCount => ({ known: false, reason });
 
-function usage(model: string, overrides: Partial<TurnUsage>): TurnUsage {
+export function usage(model: string, overrides: Partial<TurnUsage>): TurnUsage {
   return {
     uncachedInput: k(0),
     cacheWrite: k(0),
@@ -62,11 +62,11 @@ function usage(model: string, overrides: Partial<TurnUsage>): TurnUsage {
   };
 }
 
-function turnOf(index: number, startedAt: string, turnUsage: TurnUsage): Turn {
+export function turnOf(index: number, startedAt: string, turnUsage: TurnUsage): Turn {
   return { index, userMessage: `prompt ${index}`, assistantResponse: "", toolCalls: [], usage: turnUsage, explanation: "", startedAt };
 }
 
-function sessionOf(id: string, providerId: string, cwd: string, turns: Turn[]): Session {
+export function sessionOf(id: string, providerId: string, cwd: string, turns: Turn[]): Session {
   return {
     id,
     mode: "analyze",
@@ -213,11 +213,13 @@ export type CostFixtureOptions = Pick<McpServerDeps, "toolGroups" | "identity" |
   home?: string;
   portalApiRemote?: string;
   projects?: unknown;
+  // Step 10.19: the VS Code sessions, when a test needs others (e.g. with subagent runs).
+  copilot?: Session[];
 };
 
-export function composeCostFixture({ home = FIXTURE_HOME, portalApiRemote, projects = fixtureProjects, ...options }: CostFixtureOptions = {}) {
+export function composeCostFixture({ home = FIXTURE_HOME, portalApiRemote, projects = fixtureProjects, copilot = copilotSessions, ...options }: CostFixtureOptions = {}) {
   const providers = [
-    new TracedFakeProvider("vscode", rehome(copilotSessions, home), "vscode-local"),
+    new TracedFakeProvider("vscode", rehome(copilot, home), "vscode-local"),
     new TracedFakeProvider("claude-code", rehome(claudeCodeSessions, home), "claude-code"),
     new FakeProvider("pi-agent", rehome(piSessions, home)),
   ];

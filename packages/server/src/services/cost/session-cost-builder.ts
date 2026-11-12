@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import { costBasisTotals, type Session, type SessionCost, type TokenCount } from "@agent-cost-analyzer/domain";
+import { costBasisTotals, splitByModel, type Session, type SessionCost, type TokenCount } from "@agent-cost-analyzer/domain";
 import { attributionRowFields, buildInsightRows, type RowAttributor } from "../insights/insights-dataset-builder.js";
 import type { TurnPricer } from "../pricing/turn-cost-figures.js";
 import { excerptOf } from "../tool-audit/output-redactor.js";
@@ -102,7 +102,8 @@ export function buildSessionCost(session: Session, options: SessionCostOptions =
     .sort(byCostDescending(rankedBy))
     .slice(0, options.topTurns ?? DEFAULT_TOP_TURNS);
 
-  const byModel = [...groupBy(rows, (row) => row.model)]
+  // Step 10.19: by each cost line's model, so a subagent run's model gets its share.
+  const byModel = [...groupBy(rows.flatMap(splitByModel), (row) => row.model)]
     .map(([model, modelRows]) => ({ model, ...costFigures(modelRows) }))
     .sort(byCostDescending(rankedBy));
 

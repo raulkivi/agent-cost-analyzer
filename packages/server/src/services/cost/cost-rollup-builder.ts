@@ -4,6 +4,8 @@ import {
   buildCostReconciliation,
   channelLabel,
   costBasisTotals,
+  splitByModel,
+  splitByVendor,
   type CostGroup,
   type CostRollup,
   type InsightsDataset,
@@ -53,13 +55,13 @@ type GroupKey = { key: string | null; reason?: string };
 
 // One group per value, known values by preferred USD (descending) then key,
 // the unknown bucket last.
-function groupsOf(
-  turns: readonly InsightTurnRow[],
-  keyOf: (turn: InsightTurnRow) => GroupKey,
+function groupsOf<T extends Pick<InsightTurnRow, "cost">>(
+  turns: readonly T[],
+  keyOf: (turn: T) => GroupKey,
   label: (key: string) => string,
   unknownLabel: string,
 ): CostGroup[] {
-  const groups = new Map<string | null, { reason?: string; turns: InsightTurnRow[] }>();
+  const groups = new Map<string | null, { reason?: string; turns: T[] }>();
   for (const turn of turns) {
     const { key, reason } = keyOf(turn);
     const group = groups.get(key) ?? { ...(reason ? { reason } : {}), turns: [] };
@@ -99,7 +101,11 @@ export function buildCostRollup(source: InsightsDataset, options: CostRollupOpti
     }))
     .sort(descending);
 
-  const byModel = [...groupBy(dataset.turns, (turn) => turn.model)]
+  // Step 10.19 (classic subagents plan §4.5): model- and vendor-keyed parts
+  // group a turn's cost lines, so each subagent run's model and vendor get
+  // their share; a turn counts once per model (vendor) it used.
+  const modelParts = dataset.turns.flatMap(splitByModel);
+  const byModel = [...groupBy(modelParts, (turn) => turn.model)]
     .map(([model, turns]) => ({ model, ...costFigures(turns) }))
     .sort(descending);
 
@@ -143,7 +149,7 @@ export function buildCostRollup(source: InsightsDataset, options: CostRollupOpti
     ),
     byProject: groupsOf(dataset.turns, (turn) => ({ key: turn.projectId }), (key) => projectNames.get(key) ?? key, "No project"),
     byVendor: groupsOf(
-      dataset.turns,
+      dataset.turns.flatMap(splitByVendor),
       (turn) => ({ key: turn.vendorId, ...(turn.vendorUnknownReason ? { reason: turn.vendorUnknownReason } : {}) }),
       (key) => vendorLabels.get(key) ?? key,
       "Unknown vendor",
@@ -155,7 +161,7 @@ export function buildCostRollup(source: InsightsDataset, options: CostRollupOpti
       "Unknown channel",
     ),
     reconciliation: buildCostReconciliation(
-      dataset.turns.map((turn) => ({ month: turn.date?.slice(0, 7), model: turn.model, cost: costOf(turn) })),
+      modelParts.map((turn) => ({ month: turn.date?.slice(0, 7), model: turn.model, cost: costOf(turn) })),
     ),
   };
 }

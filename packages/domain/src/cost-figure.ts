@@ -105,6 +105,52 @@ export function toUsd(figure: CostFigure): number | null {
   return figure.currency === "USD" ? figure.amount : figure.amount * USD_PER_AI_CREDIT;
 }
 
+// Step 10.19 (classic subagents plan §4.5): one figure from several parts,
+// such as a turn's cost lines (one per model). Known only when every part
+// is, else unknown with the first unknown part's reason (constraint 6);
+// parts in different currencies are never added.
+export function addCostFigures(parts: readonly CostFigure[]): CostFigure {
+  const unknownPart = parts.find((part) => !part.known);
+  if (unknownPart !== undefined) return unknownPart;
+  const known = parts as readonly KnownCostFigure[];
+  const [first] = known;
+  if (first === undefined) return unknownCost("There is no part to add.");
+  if (known.length === 1) return first;
+  const currencies = [...new Set(known.map((part) => part.currency))];
+  if (currencies.length > 1) return unknownCost(`The parts are in different currencies (${currencies.join(", ")}), so they are not added.`);
+  const versions = [...new Set(known.flatMap((part) => part.priceVersionIds ?? []))];
+  const notes = [...new Set(known.flatMap((part) => part.notes ?? []))];
+  const withParts = known.every((part) => part.byTokenType !== undefined);
+  return {
+    known: true,
+    amount: known.reduce((sum, part) => sum + part.amount, 0),
+    currency: first.currency,
+    basis: first.basis,
+    ...(versions.length > 0 ? { priceVersionIds: versions } : {}),
+    ...(known.some((part) => part.estimated === true) ? { estimated: true } : {}),
+    ...(known.some((part) => part.apiEquivalent === true) ? { apiEquivalent: true } : {}),
+    ...(notes.length > 0 ? { notes } : {}),
+    ...(withParts
+      ? {
+          byTokenType: {
+            uncachedInput: known.reduce((sum, part) => sum + part.byTokenType!.uncachedInput, 0),
+            cacheRead: known.reduce((sum, part) => sum + part.byTokenType!.cacheRead, 0),
+            cacheWrite: known.reduce((sum, part) => sum + part.byTokenType!.cacheWrite, 0),
+            output: known.reduce((sum, part) => sum + part.byTokenType!.output, 0),
+          },
+        }
+      : {}),
+  };
+}
+
+export function addTurnCostFigures(parts: readonly TurnCostFigures[]): TurnCostFigures {
+  return {
+    billed: addCostFigures(parts.map((part) => part.billed)),
+    reported: addCostFigures(parts.map((part) => part.reported)),
+    priced: addCostFigures(parts.map((part) => part.priced)),
+  };
+}
+
 export const costAmountSchema = z.object({
   currency: currencySchema,
   amount: z.number().nonnegative(),

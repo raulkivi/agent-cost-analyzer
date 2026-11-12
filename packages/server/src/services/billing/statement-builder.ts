@@ -3,7 +3,9 @@
 import {
   AI_CREDIT_CONVERSION_NOTE,
   localDate,
+  costFigureFor,
   preferredCostFigure,
+  splitByModel,
   STATEMENT_VERSION,
   USD_PER_AI_CREDIT,
   type Currency,
@@ -71,6 +73,16 @@ function sumTokens(rows: readonly CostCubeRow[], type: (typeof TOKEN_TYPES)[numb
 }
 
 const sessionCount = (rows: readonly CostCubeRow[]) => new Set(rows.map((row) => row.sessionKey)).size;
+const turnCount = (rows: readonly CostCubeRow[]) => new Set(rows.map((row) => row.turnKey)).size;
+
+// Step 10.19 (classic subagents plan §4.5): a turn with a known cost is
+// billed per model it used, each part at the turn's own basis, so a
+// subagent run's model gets its own line. A turn whose cost is unknown
+// never reaches here, so its known lines are never billed alone.
+function billedParts(row: CostCubeRow, figure: KnownCostFigure): { row: CostCubeRow; figure: KnownCostFigure }[] {
+  const parts = splitByModel(row).map((part) => ({ row: part, figure: costFigureFor(part.cost, figure.basis) }));
+  return parts.every((part) => part.figure.known) ? (parts as { row: CostCubeRow; figure: KnownCostFigure }[]) : [{ row, figure }];
+}
 
 function toLine(key: string, acc: LineAccumulator): StatementLine {
   const tokens = Object.fromEntries(TOKEN_TYPES.map((type) => [type, sumTokens(acc.rows, type)])) as StatementLine["tokens"];
@@ -91,7 +103,7 @@ function toLine(key: string, acc: LineAccumulator): StatementLine {
     model: acc.row.model,
     priceVersionId: priced ? (acc.figure.priceVersionIds?.[0] ?? null) : null,
     sessions: sessionCount(acc.rows),
-    turns: acc.rows.length,
+    turns: turnCount(acc.rows),
     tokens,
     unitPrices,
     amount: round(acc.amount),
@@ -125,12 +137,14 @@ export function buildStatement(cube: CostCube, inputs: StatementInputs): Stateme
       excludedRows.push(row);
       continue;
     }
-    const key = lineKey(figure, row);
-    const acc = lines.get(key) ?? { figure, row, rows: [], amount: 0, parts: { uncachedInput: 0, cacheRead: 0, cacheWrite: 0, output: 0 } };
-    acc.rows.push(row);
-    acc.amount += figure.amount;
-    for (const type of PRICED_TYPES) acc.parts[type] += figure.byTokenType?.[type] ?? 0;
-    lines.set(key, acc);
+    for (const part of billedParts(row, figure)) {
+      const key = lineKey(part.figure, part.row);
+      const acc = lines.get(key) ?? { figure: part.figure, row: part.row, rows: [], amount: 0, parts: { uncachedInput: 0, cacheRead: 0, cacheWrite: 0, output: 0 } };
+      acc.rows.push(part.row);
+      acc.amount += part.figure.amount;
+      for (const type of PRICED_TYPES) acc.parts[type] += part.figure.byTokenType?.[type] ?? 0;
+      lines.set(key, acc);
+    }
   }
   const statementLines = [...lines].sort(([a], [b]) => a.localeCompare(b)).map(([key, acc]) => toLine(key, acc));
 

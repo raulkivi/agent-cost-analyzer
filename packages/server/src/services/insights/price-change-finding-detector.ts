@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import { OBSERVED_CHANGE_MIN_TURNS, OBSERVED_CHANGE_THRESHOLD, type InsightFinding, type ObservedPriceChange } from "@agent-cost-analyzer/domain";
+import { OBSERVED_CHANGE_MIN_TURNS, OBSERVED_CHANGE_THRESHOLD, splitByModel, type InsightFinding, type ObservedPriceChange } from "@agent-cost-analyzer/domain";
 import { PriceChangeDetector, type ObservedTurn } from "../pricing/price-change-detector.js";
 import type { DetectorInput, FindingDetector } from "./finding-detector.js";
 
@@ -9,6 +9,8 @@ import type { DetectorInput, FindingDetector } from "./finding-detector.js";
 // finding of kind "price-change". A finding belongs to a session, so it is
 // linked to the first session of the run's first week. With the dataset at
 // today's prices the gap is the price change itself, so nothing is raised.
+// Step 10.19: billed and priced are compared per cost line's model, so a
+// subagent run's gap never shows on the turn's model.
 
 const fmt = (value: number) => String(Math.round(value * 100) / 100);
 
@@ -23,7 +25,7 @@ export class PriceChangeFindingDetector implements FindingDetector {
 
   detect(input: DetectorInput): InsightFinding[] {
     if (input.pricing === "today") return [];
-    const turns: ObservedTurn[] = input.rows.turns.flatMap((row) =>
+    const turns: ObservedTurn[] = input.rows.turns.flatMap(splitByModel).flatMap((row) =>
       row.date !== undefined && row.cost !== undefined ? [{ date: row.date, model: row.model, channel: row.channel, sessionKey: row.sessionKey, cost: row.cost }] : [],
     );
     return this.detector.observed(turns).map((change) => {

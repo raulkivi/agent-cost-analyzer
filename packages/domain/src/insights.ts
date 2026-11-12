@@ -4,7 +4,7 @@ import { z } from "zod";
 import { failureCategorySchema, toolCallStatusSchema } from "./tool-call-outcome.js";
 import { toolKindSchema } from "./tool-call-record.js";
 import { triggeredEventSchema } from "./turn.js";
-import { costBasisTotalsSchema, turnCostFiguresSchema } from "./cost-figure.js";
+import { addTurnCostFigures, costBasisTotalsSchema, turnCostFiguresSchema } from "./cost-figure.js";
 
 // Phase 9.11 insights dashboard (docs/plans/insights-dashboard.md §3): a
 // small star schema of flat, already-redacted rows across every provider.
@@ -93,6 +93,10 @@ export const costLineSchema = z.object({
   aiCredits: tokenFigureSchema,
   cost: turnCostFiguresSchema.optional(),
   subagent: z.boolean(), // a subagent run's line, not the main agent's
+  // The vendor of this line's model, so a vendor breakdown credits a run's
+  // vendor too; absent: the row's. null: unknown, with the reason.
+  vendorId: z.string().min(1).nullable().optional(),
+  vendorUnknownReason: z.string().min(1).optional(),
 });
 
 export type CostLine = z.infer<typeof costLineSchema>;
@@ -145,6 +149,87 @@ export function costLinesOf(row: InsightTurnRow): CostLine[] {
       subagent: false,
     },
   ];
+}
+
+const LINE_FIGURES = ["uncachedInput", "cacheWrite", "cacheRead", "reasoning", "output", "aiCredits"] as const;
+
+// Several lines as one (e.g. a turn's lines of one model): each figure is
+// their sum, null when any line's is (never a partial sum); the model and
+// vendor are the first line's.
+export function mergeCostLines(lines: readonly CostLine[]): CostLine {
+  const [first] = lines;
+  if (first === undefined) throw new Error("mergeCostLines needs at least one line");
+  if (lines.length === 1) return first;
+  const figures = Object.fromEntries(
+    LINE_FIGURES.map((field) => [field, lines.some((line) => line[field] === null) ? null : lines.reduce((sum, line) => sum + line[field]!, 0)]),
+  ) as Pick<CostLine, (typeof LINE_FIGURES)[number]>;
+  const costs = lines.flatMap((line) => (line.cost ? [line.cost] : []));
+  return {
+    model: first.model,
+    ...figures,
+    ...(costs.length === lines.length ? { cost: addTurnCostFigures(costs) } : {}),
+    subagent: lines.every((line) => line.subagent),
+    ...(first.vendorId !== undefined ? { vendorId: first.vendorId } : {}),
+    ...(first.vendorUnknownReason !== undefined ? { vendorUnknownReason: first.vendorUnknownReason } : {}),
+  };
+}
+
+// A part whose lines carry no cost figures: unknown, never the whole turn's.
+const NO_LINE_COST = { known: false as const, reason: "This cost line carries no cost figures." };
+const LINES_WITHOUT_COST = { billed: NO_LINE_COST, reported: NO_LINE_COST, priced: NO_LINE_COST };
+
+// What a row needs to be split by its lines: an Insights turn row or a
+// cost-cube row.
+type LineFields = "model" | "uncachedInput" | "cacheWrite" | "cacheRead" | "reasoning" | "output" | "aiCredits" | "vendorId" | "vendorUnknownReason" | "cost" | "lines";
+export type SplittableRow = Pick<InsightTurnRow, LineFields>;
+
+// A row split by a key of its lines (e.g. their model): one copy of the row
+// per key, in first-use order, with that key's lines merged as its figures,
+// model, vendor and cost, and those lines kept, so a part can be split
+// again. A row without lines is its own one part. A line without a vendor
+// of its own has the row's.
+export function splitRowByLines<R extends SplittableRow>(row: R, keyOf: (line: CostLine) => string): R[] {
+  if (!row.lines) return [row];
+  const groups = new Map<string, CostLine[]>();
+  for (const line of row.lines) {
+    const withVendor: CostLine =
+      line.vendorId !== undefined
+        ? line
+        : { ...line, vendorId: row.vendorId, ...(row.vendorUnknownReason !== undefined ? { vendorUnknownReason: row.vendorUnknownReason } : {}) };
+    const key = keyOf(withVendor);
+    groups.set(key, [...(groups.get(key) ?? []), withVendor]);
+  }
+  return [...groups.values()].map((lines) => {
+    const merged = mergeCostLines(lines);
+    const part: R = {
+      ...row,
+      model: merged.model,
+      uncachedInput: merged.uncachedInput,
+      cacheWrite: merged.cacheWrite,
+      cacheRead: merged.cacheRead,
+      reasoning: merged.reasoning,
+      output: merged.output,
+      aiCredits: merged.aiCredits,
+      vendorId: merged.vendorId ?? null,
+      cost: merged.cost ?? LINES_WITHOUT_COST,
+      lines,
+    };
+    // The part's vendor reason is its lines', never the row's.
+    if (merged.vendorUnknownReason === undefined) delete part.vendorUnknownReason;
+    else part.vendorUnknownReason = merged.vendorUnknownReason;
+    return part;
+  });
+}
+
+// One part per model the turn used: what a by-model total counts, so a
+// turn counts once per model it used and each run's model gets its share.
+export function splitByModel<R extends SplittableRow>(row: R): R[] {
+  return splitRowByLines(row, (line) => line.model);
+}
+
+// One part per vendor the turn's models belong to.
+export function splitByVendor<R extends SplittableRow>(row: R): R[] {
+  return splitRowByLines(row, (line) => line.vendorId ?? "");
 }
 
 export const insightToolCallRowSchema = z.object({

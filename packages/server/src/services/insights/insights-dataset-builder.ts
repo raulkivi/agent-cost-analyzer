@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
 import type {
+  CostLine,
   InsightSessionRow,
   InsightToolCallRow,
   InsightTurnRow,
@@ -12,6 +13,7 @@ import type {
 } from "@agent-cost-analyzer/domain";
 import { costBasisTotals, MAX_EVIDENCE_EXCERPT_LENGTH } from "@agent-cost-analyzer/domain";
 import { TurnCostFigureBuilder, type TurnPricer } from "../pricing/turn-cost-figures.js";
+import { turnLinesOf } from "../pricing/turn-cost-lines.js";
 import type { Attribution, AttributionSnapshot } from "../cost-attribution/session-attributor.js";
 import { excerptOf } from "../tool-audit/output-redactor.js";
 import { toolCallsUnavailableReason, turnToolCallsUnavailableReason } from "../tool-audit/tool-calls-availability.js";
@@ -118,6 +120,29 @@ function sessionRow(source: ProviderSessions, session: Session, attribution: Att
   };
 }
 
+// Step 10.19 (plan §4.5): a turn that ran subagents gets one line per part
+// (main agent, then each run), each priced on its own model in the turn's
+// channel and scope, and attributed to its model's vendor.
+function costLinesFor(source: ProviderSessions, session: Session, turn: Turn, attributor: RowAttributor, attribution: Attribution, pricer: TurnPricer): CostLine[] | undefined {
+  return turnLinesOf(turn.usage)?.map(({ usage, subagent }) => {
+    const lineTurn: Turn = { ...turn, usage };
+    const { vendor } = attributor.turn(source.providerId, session, lineTurn);
+    return {
+      model: usage.model,
+      uncachedInput: figure(usage.uncachedInput),
+      cacheWrite: figure(usage.cacheWrite),
+      cacheRead: figure(usage.cacheRead),
+      reasoning: figure(usage.reasoning),
+      output: figure(usage.output),
+      aiCredits: figure(usage.costAiCredits),
+      cost: pricer.figuresFor(source.providerId, session, lineTurn, attribution),
+      subagent,
+      vendorId: vendor.known ? vendor.vendorId : null,
+      ...(vendor.known ? {} : { vendorUnknownReason: vendor.reason }),
+    };
+  });
+}
+
 function turnRow(
   sessionKey: string,
   session: Session,
@@ -125,6 +150,7 @@ function turnRow(
   toolCallsUnknown: boolean,
   attribution: Attribution,
   cost: TurnCostFigures,
+  lines: CostLine[] | undefined,
 ): InsightTurnRow {
   const { usage } = turn;
   const time = validTime(turn.startedAt) ?? validTime(session.startedAt);
@@ -146,6 +172,7 @@ function turnRow(
     ...attributionRowFields(attribution),
     ...(time ? { date: time.toISOString().slice(0, 10), at: time.toISOString() } : {}),
     cost,
+    ...(lines ? { lines } : {}),
   };
 }
 
@@ -188,7 +215,8 @@ export function buildInsightRows(
         const attribution = attributor.turn(source.providerId, session, turn);
         const cost = pricer.figuresFor(source.providerId, session, turn, attribution);
         turnCosts.push(cost);
-        rows.turns.push(turnRow(sessionKey, session, turn, unknownCalls, attribution, cost));
+        const lines = costLinesFor(source, session, turn, attributor, attribution, pricer);
+        rows.turns.push(turnRow(sessionKey, session, turn, unknownCalls, attribution, cost, lines));
         turn.toolCalls.forEach((call, callIndex) => rows.toolCalls.push(toolCallRow(turnKey, call, callIndex)));
       }
       row.cost = costBasisTotals(turnCosts);

@@ -3,6 +3,7 @@
 import {
   AI_CREDIT_CONVERSION_NOTE,
   documentedPriceChanges,
+  splitByModel,
   USD_PER_AI_CREDIT,
   varianceTokenTypes,
   type CostCompareGroupBy,
@@ -103,6 +104,9 @@ function cellOf(type: VarianceTokenType, acc: CellAccumulator): VarianceCell {
   };
 }
 
+// Distinct turns: a turn's cost lines on several models are explained apart.
+const turnsIn = (items: readonly Explained[], period: Period): number => new Set(items.filter((item) => item.period === period).map((item) => item.row.turnKey)).size;
+
 function currencyRow(currency: Currency, items: readonly Explained[]): VarianceCurrency {
   const models = new Map<string, ModelAccumulator>();
   for (const item of items) {
@@ -165,16 +169,17 @@ function currencyRow(currency: Currency, items: readonly Explained[]): VarianceC
     usage,
     price,
     mix: costB - costA - usage - price,
-    turnsA: items.filter((item) => item.period === "A").length,
-    turnsB: items.filter((item) => item.period === "B").length,
+    turnsA: turnsIn(items, "A"),
+    turnsB: turnsIn(items, "B"),
     byTokenType,
     models: modelRows.sort((a, b) => Math.abs(b.change) - Math.abs(a.change) || a.model.localeCompare(b.model)),
   };
 }
 
-function notExplainedOf(reasons: readonly string[]) {
-  const unique = [...new Set(reasons)].sort();
-  return { turns: reasons.length, ...(unique.length > 0 ? { reasons: unique } : {}) };
+// A turn counts once, even when several of its cost lines are unexplained.
+function notExplainedOf(parts: readonly { turnKey: string; reason: string }[]) {
+  const unique = [...new Set(parts.map((part) => part.reason))].sort();
+  return { turns: new Set(parts.map((part) => part.turnKey)).size, ...(unique.length > 0 ? { reasons: unique } : {}) };
 }
 
 function priceChangesOf(items: readonly Explained[], versions: readonly PriceBookEntry[], since: string, until: string): PriceChangeMarker[] {
@@ -191,11 +196,12 @@ export function buildCostVariance(cube: CostCube, query: CostVarianceQuery, pric
   const grouping = groupingFor(query.groupBy, cube);
   const selected = cube.rows.filter((row) => grouping.matches(row, query.id));
   const explained: Explained[] = [];
-  const unexplained: Record<Period, string[]> = { A: [], B: [] };
+  const unexplained: Record<Period, { turnKey: string; reason: string }[]> = { A: [], B: [] };
   for (const [period, range] of [["A", query.periodA], ["B", query.periodB]] as const) {
-    for (const row of inDateRange(selected, range.since, range.until)) {
+    // Step 10.19: each cost line on its own model (a subagent run's too).
+    for (const row of inDateRange(selected, range.since, range.until).flatMap(splitByModel)) {
       const result = explain(row, period, query.currency);
-      if ("reason" in result) unexplained[period].push(result.reason);
+      if ("reason" in result) unexplained[period].push({ turnKey: row.turnKey, reason: result.reason });
       else explained.push(result);
     }
   }

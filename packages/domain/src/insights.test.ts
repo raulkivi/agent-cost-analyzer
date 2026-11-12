@@ -4,6 +4,9 @@ import { describe, expect, it } from "vitest";
 import {
   costLineSchema,
   costLinesOf,
+  mergeCostLines,
+  splitByModel,
+  splitByVendor,
   findingsQueryResultSchema,
   insightFindingSchema,
   insightSessionRowSchema,
@@ -299,5 +302,74 @@ describe("cost lines of a turn row (step 10.19)", () => {
         subagent: false,
       },
     ]);
+  });
+});
+
+describe("cost lines per model (step 10.19, plan §4.5)", () => {
+  const baseRow = sampleDataset().turns[0]!;
+  const main = costLineSchema.parse(mainLine);
+  const sameModelRun = costLineSchema.parse({ ...runLine, model: "gpt-5", uncachedInput: 10, cacheRead: 5, output: 1, aiCredits: 0.5, cost: figures(0.5) });
+
+  it("mergeCostLines adds every figure, null when any line's is null", () => {
+    expect(mergeCostLines([main, sameModelRun])).toEqual({
+      model: "gpt-5",
+      uncachedInput: 110,
+      cacheWrite: null,
+      cacheRead: 55,
+      reasoning: null,
+      output: 21,
+      aiCredits: 2.5,
+      cost: { billed: billed(2.5), reported: unknownFigure, priced: unknownFigure },
+      subagent: false,
+    });
+  });
+
+  it("mergeCostLines keeps the first line's vendor", () => {
+    const merged = mergeCostLines([{ ...main, vendorId: "openai" }, { ...sameModelRun, vendorId: "openai" }]);
+    expect(merged.vendorId).toBe("openai");
+  });
+
+  it("splitByModel gives one copy of the row per model, its lines of that model merged, in first-use order", () => {
+    const row = insightTurnRowSchema.parse({ ...baseRow, aiCredits: 3.6, lines: [mainLine, runLine, sameModelRun] });
+    const parts = splitByModel(row);
+    expect(parts.map((part) => [part.key, part.model, part.aiCredits, part.uncachedInput, part.cost?.billed])).toEqual([
+      [row.key, "gpt-5", 2.5, 110, billed(2.5)],
+      [row.key, "claude-haiku-4.5", 1.1, 500, billed(1.1)],
+    ]);
+    // Each part keeps its own lines, so it can be split again.
+    expect(parts[0]!.lines).toEqual([
+      { ...mainLine, vendorId: "anthropic" },
+      { ...sameModelRun, vendorId: "anthropic" },
+    ]);
+  });
+
+  it("splitByModel never gives a part the whole turn's cost when its lines carry none", () => {
+    const withoutCost = (line: typeof mainLine) => ({ ...line, cost: undefined });
+    const row = insightTurnRowSchema.parse({ ...baseRow, cost: figures(3), lines: [withoutCost(mainLine), withoutCost(runLine)] });
+    for (const part of splitByModel(row)) expect(part.cost?.billed.known).toBe(false);
+  });
+
+  it("splitByModel gives the row itself when it has no lines", () => {
+    const row = insightTurnRowSchema.parse(baseRow);
+    expect(splitByModel(row)).toEqual([row]);
+  });
+
+  it("splitByVendor credits each line's vendor, a line without one the row's", () => {
+    const row = insightTurnRowSchema.parse({
+      ...baseRow,
+      lines: [mainLine, { ...runLine, vendorId: "openai" }, { ...runLine, model: "x", vendorId: null, vendorUnknownReason: "No vendor profile lists the model." }],
+    });
+    const parts = splitByVendor(row);
+    expect(parts.map((part) => [part.vendorId, part.vendorUnknownReason, part.model, part.aiCredits])).toEqual([
+      ["anthropic", undefined, "gpt-5", 2],
+      ["openai", undefined, "claude-haiku-4.5", 1.1],
+      [null, "No vendor profile lists the model.", "x", 1.1],
+    ]);
+    for (const part of parts) expect(insightTurnRowSchema.safeParse(part).success).toBe(true);
+  });
+
+  it("accepts a line's vendor, or an unknown vendor with its reason", () => {
+    expect(costLineSchema.parse({ ...runLine, vendorId: "anthropic" }).vendorId).toBe("anthropic");
+    expect(costLineSchema.parse({ ...runLine, vendorId: null, vendorUnknownReason: "unknown model" }).vendorId).toBeNull();
   });
 });

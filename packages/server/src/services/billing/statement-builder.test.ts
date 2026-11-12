@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 import { describe, expect, it } from "vitest";
 import { parseStatementPeriod, statementSchema, type CostFigure, type Project } from "@agent-cost-analyzer/domain";
-import { billed, costs, cubeOf, cubeRow, reported, unknownFigure } from "../../test-support/cost-cube-fakes.js";
+import { billed, costLine, costs, cubeOf, cubeRow, reported, unknownFigure } from "../../test-support/cost-cube-fakes.js";
 import { buildStatement, type StatementInputs } from "./statement-builder.js";
 
 // Phase 15 step 15.11 (plan §8.5, D4, D6, D13, D14): one project's statement
@@ -146,5 +146,49 @@ describe("buildStatement", () => {
       row("2026-10-05T10:00:00Z", { model: "a", cost: costs({ billed: billed(2) }) }),
     ];
     expect(buildStatement(cubeOf(rows), inputs)).toEqual(buildStatement(cubeOf([...rows].reverse()), inputs));
+  });
+});
+
+// Step 10.19 (classic subagents plan §4.5, D13): a turn that ran subagents
+// is billed per cost line, each on its own model; coverage still counts the
+// turn once.
+describe("buildStatement with subagent runs", () => {
+  const copilot = { sessionKey: "vscode:s1", providerId: "vscode", sessionId: "s1", sessionTitle: "Fix", channel: "github-copilot" };
+
+  it("bills each line on its own model, counting the turn once", () => {
+    const cube = cubeOf([
+      row("2026-10-05T10:00:00Z", {
+        ...copilot,
+        model: "claude-sonnet-5.5",
+        cost: costs({ billed: billed(3) }),
+        lines: [
+          costLine("claude-sonnet-5.5", "anthropic", costs({ billed: billed(2) }), { uncachedInput: 10, subagent: false }),
+          costLine("gpt-6.1-sol", "openai", costs({ billed: billed(1) }), { uncachedInput: 5 }),
+        ],
+      }),
+    ]);
+    const statement = statementSchema.parse(buildStatement(cube, inputs));
+    expect(statement.lines.map((line) => [line.model, line.turns, line.sessions, line.amount, line.tokens.uncachedInput])).toEqual([
+      ["claude-sonnet-5.5", 1, 1, 2, 10],
+      ["gpt-6.1-sol", 1, 1, 1, 5],
+    ]);
+    expect(statement.coverage).toEqual({ turns: 1, knownTurns: 1 });
+    expect(statement.totals).toEqual([{ currency: "AI_CREDITS", lines: 3, markup: 0, fixed: 0, total: 3 }]);
+  });
+
+  it("lists a turn whose cost is unknown by its reason, never billing its known lines", () => {
+    const cube = cubeOf([
+      row("2026-10-05T10:00:00Z", {
+        ...copilot,
+        cost: costs({ billed: unknownFigure("The subagent log is missing.") }),
+        lines: [
+          costLine("claude-sonnet-5.5", "anthropic", costs({ billed: billed(2) }), { subagent: false }),
+          costLine("unknown", null, costs({ billed: unknownFigure("The subagent log is missing.") })),
+        ],
+      }),
+    ]);
+    const statement = buildStatement(cube, inputs);
+    expect(statement.lines).toEqual([]);
+    expect(statement.unknown.map((group) => [group.turns, group.reason.includes("The subagent log is missing.")])).toEqual([[1, true]]);
   });
 });

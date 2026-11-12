@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 import { describe, expect, it } from "vitest";
 import { costSeriesSchema, type PriceBookEntry } from "@agent-cost-analyzer/domain";
-import { billed, costs, cubeOf, cubeRow, priced, reported, unknownFigure } from "../../test-support/cost-cube-fakes.js";
+import { billed, costLine, costs, cubeOf, cubeRow, priced, reported, unknownFigure } from "../../test-support/cost-cube-fakes.js";
 import { buildCostSeries, type CostSeriesQuery } from "./time-series-builder.js";
 
 // Phase 15 step 15.7 (plan §8.1, §10.1.1 CostSeries): cost over time, a pure
@@ -193,5 +193,74 @@ describe("buildCostSeries: observed price changes", () => {
     expect(buildCostSeries(cube, { ...october, groupBy: "project", ids: ["other"] }, []).observedChanges).toEqual([]);
     expect(buildCostSeries(cube, { ...october, since: "2026-10-13" }, []).observedChanges).toEqual([]);
     expect(buildCostSeries(cube, { ...october, pricing: "today" }, []).observedChanges).toEqual([]);
+  });
+});
+
+// Step 10.19 (classic subagents plan §4.5): a turn that ran subagents is one
+// cube row with one cost line per model; the model and vendor dimensions
+// group lines, so each run's model gets its share, and a turn counts once
+// per model it used.
+describe("buildCostSeries: turns with subagent runs", () => {
+  const withRun = () =>
+    cubeRow({
+      date: "2026-10-05",
+      model: "claude-sonnet-5.5",
+      vendorId: "anthropic",
+      uncachedInput: 200,
+      cacheRead: 600,
+      output: 200,
+      cost: costs({ priced: priced(1.5, "v") }),
+      lines: [
+        costLine("claude-sonnet-5.5", "anthropic", costs({ priced: priced(1, "v") }), { subagent: false }),
+        costLine("gpt-6.1-sol", "openai", costs({ priced: priced(0.5, "w") })),
+      ],
+    });
+
+  it("groups by each line's model, a turn counted once per model it used", () => {
+    const series = costSeriesSchema.parse(buildCostSeries(cubeOf([withRun(), cubeRow({ date: "2026-10-06", model: "gpt-6.1-sol", cost: costs({ priced: priced(2, "w") }) })]), { ...view, groupBy: "model" }, []));
+    expect(series.series.map((line) => [line.key, line.turns, line.total.usd])).toEqual([
+      ["gpt-6.1-sol", 2, 2.5],
+      ["claude-sonnet-5.5", 1, 1],
+    ]);
+    expect(series.turns).toBe(2);
+    expect(series.total.usd).toBe(3.5);
+  });
+
+  it("counts a turn once in a selection of several of its models", () => {
+    const series = buildCostSeries(cubeOf([withRun()]), { ...view, groupBy: "model", ids: ["claude-sonnet-5.5", "gpt-6.1-sol"] }, []);
+    expect(series.turns).toBe(1);
+    expect(series.points.find((point) => point.period === "2026-10")!.turns).toBe(1);
+    expect(series.total.usd).toBe(1.5);
+    expect(buildCostSeries(cubeOf([withRun()]), { ...view, groupBy: "model", ids: ["gpt-6.1-sol"] }, []).total.usd).toBe(0.5);
+  });
+
+  it("breaks the selection down by each line's vendor, then model", () => {
+    const series = buildCostSeries(cubeOf([withRun()]), view, []);
+    expect(series.byVendor.map((vendor) => [vendor.key, vendor.cost.usd, vendor.models.map((model) => [model.key, model.cost.usd])])).toEqual([
+      ["anthropic", 1, [["claude-sonnet-5.5", 1]]],
+      ["openai", 0.5, [["gpt-6.1-sol", 0.5]]],
+    ]);
+  });
+
+  // Every turn: the main agent on Sonnet billed exactly as priced; its run on
+  // Sol billed 20 % above. Grouped by the turn's model, Sonnet would show a
+  // false 10 % gap; by line, only Sol's gap shows.
+  it("finds observed price changes per line's model, never a false one on the turn's model", () => {
+    const turns = (date: string) =>
+      Array.from({ length: 20 }, () =>
+        cubeRow({
+          date,
+          model: "claude-sonnet-5.5",
+          channel: "github-copilot",
+          cost: costs({ billed: billed(22), priced: priced(20, "gh:v", "AI_CREDITS") }),
+          lines: [
+            costLine("claude-sonnet-5.5", "anthropic", costs({ billed: billed(10), priced: priced(10, "gh:sonnet", "AI_CREDITS") }), { subagent: false }),
+            costLine("gpt-6.1-sol", "openai", costs({ billed: billed(12), priced: priced(10, "gh:sol", "AI_CREDITS") })),
+          ],
+        }),
+      );
+    const cube = cubeOf([...turns("2026-10-13"), ...turns("2026-10-20")]);
+    const series = buildCostSeries(cube, { ...view, since: "2026-10-01", until: "2026-10-31" }, []);
+    expect(series.observedChanges.map((change) => [change.modelId, change.direction])).toEqual([["gpt-6.1-sol", "above"]]);
   });
 });

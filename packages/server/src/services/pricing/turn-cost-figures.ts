@@ -1,9 +1,10 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import { unknownCost, type CostFigure, type PricingMode, type Session, type Turn, type TurnCostFigures, type TurnUsage } from "@agent-cost-analyzer/domain";
+import { addCostFigures, unknownCost, type CostFigure, type PricingMode, type Session, type Turn, type TurnCostFigures, type TurnUsage } from "@agent-cost-analyzer/domain";
 import type { Attribution } from "../cost-attribution/session-attributor.js";
 import type { CacheWriteLifetime, PricingRequest } from "./cost-pricer.js";
 import type { PriceScope } from "./price-book.js";
+import { turnLinesOf } from "./turn-cost-lines.js";
 
 // Phase 15 step 15.6 (docs/plans/cost-by-repository-and-project.md §5): a
 // turn's billed, reported and priced figures. Billed and reported come from
@@ -93,23 +94,34 @@ export class TurnCostFigureBuilder implements TurnPricer, TurnPricing {
     return mode === this.mode ? this : new TurnCostFigureBuilder(this.pricer, mode);
   }
 
+  // Step 10.19 (plan §4.5): a turn that ran subagents is priced line by
+  // line, each on its own model, and summed; any unknown line makes it
+  // unknown with that line's reason. Its runs are sold on the turn's
+  // channel, in the turn's scope. Billed is the folded AI Credits, which
+  // the lines sum to.
   figuresFor(providerId: string, session: Session, turn: Turn, attribution: Attribution): TurnCostFigures {
+    const lines = turnLinesOf(turn.usage);
     return {
       billed: billedFigure(turn.usage),
       reported: reportedFigure(turn.usage),
-      priced: this.pricer
-        ? this.pricer.price(
-            {
-              usage: turn.usage,
-              channel: attribution.channel,
-              ...(turn.startedAt !== undefined ? { turnStartedAt: turn.startedAt } : {}),
-              ...(session.startedAt !== undefined ? { sessionStartedAt: session.startedAt } : {}),
-              scope: scopeOf(attribution),
-              ...pricingPolicyFor(providerId),
-            },
-            this.mode,
-          )
-        : unknownCost(NO_PRICE_BOOK_REASON),
+      priced: lines
+        ? addCostFigures(lines.map((line) => this.priced(providerId, session, turn, line.usage, attribution)))
+        : this.priced(providerId, session, turn, turn.usage, attribution),
     };
+  }
+
+  private priced(providerId: string, session: Session, turn: Turn, usage: TurnUsage, attribution: Attribution): CostFigure {
+    if (!this.pricer) return unknownCost(NO_PRICE_BOOK_REASON);
+    return this.pricer.price(
+      {
+        usage,
+        channel: attribution.channel,
+        ...(turn.startedAt !== undefined ? { turnStartedAt: turn.startedAt } : {}),
+        ...(session.startedAt !== undefined ? { sessionStartedAt: session.startedAt } : {}),
+        scope: scopeOf(attribution),
+        ...pricingPolicyFor(providerId),
+      },
+      this.mode,
+    );
   }
 }

@@ -6,6 +6,7 @@ import {
   bucketsBetween,
   costBasisTotals,
   documentedPriceChanges,
+  splitByModel,
   type CostBucket,
   type CostPoint,
   type CostSeries,
@@ -25,6 +26,7 @@ import {
   groupsForIds,
   inDateRange,
   sessionCount,
+  turnCount,
   viewFields,
   viewTotal,
   type CostView,
@@ -57,7 +59,7 @@ function pointsOf(rows: readonly CostCubeRow[], range: { from: string; to: strin
     const inBucket = byPeriod.get(bucket.period) ?? [];
     const cost = viewTotal(inBucket, query);
     cumulative = addCostTotals(cumulative, cost);
-    return { ...bucket, sessions: sessionCount(inBucket), turns: inBucket.length, cost, cumulative, coverage: coverageOf(inBucket) };
+    return { ...bucket, sessions: sessionCount(inBucket), turns: turnCount(inBucket), cost, cumulative, coverage: coverageOf(inBucket) };
   });
 }
 
@@ -96,6 +98,8 @@ export function priceChangesFor(rows: readonly CostCubeRow[], priceVersions: rea
 // the channel/model pairs the selection used. A billing gap is the model's,
 // so it is found over every turn of the cube. At today's prices every turn
 // has one price, so the gap is the price change itself: none are listed.
+// Step 10.19: billed and priced are compared per cost line's model, so a
+// subagent run's model never shows as a gap on the turn's model.
 export function observedChangesFor(
   cube: CostCube,
   selected: readonly CostCubeRow[],
@@ -104,9 +108,9 @@ export function observedChangesFor(
 ): ObservedPriceChange[] {
   if (range === undefined || pricing === "today") return [];
   const pairs = new Map<string, { channel: string; modelId: string }>();
-  for (const row of selected) if (row.channel !== null) pairs.set(JSON.stringify([row.channel, row.model]), { channel: row.channel, modelId: row.model });
+  for (const row of selected.flatMap(splitByModel)) if (row.channel !== null) pairs.set(JSON.stringify([row.channel, row.model]), { channel: row.channel, modelId: row.model });
   if (pairs.size === 0) return [];
-  return new PriceChangeDetector().observed(cube.rows, { since: range.from, until: range.to, pairs: [...pairs.values()] });
+  return new PriceChangeDetector().observed(cube.rows.flatMap(splitByModel), { since: range.from, until: range.to, pairs: [...pairs.values()] });
 }
 
 export function buildCostSeries(cube: CostCube, query: CostSeriesQuery, priceVersions: readonly PriceBookEntry[]): CostSeries {
@@ -126,7 +130,7 @@ export function buildCostSeries(cube: CostCube, query: CostSeriesQuery, priceVer
     ...(query.ids && query.ids.length > 0 ? { ids: grouping ? query.ids.map((id) => grouping.outputKey(id)) : [...query.ids] } : {}),
     providers: cube.providers,
     sessions: sessionCount(selected),
-    turns: selected.length,
+    turns: turnCount(selected),
     undatedTurns: cube.undatedTurns,
     total: viewTotal(selected, query),
     totals: costBasisTotals(selected.map((row) => row.cost)),
@@ -136,7 +140,7 @@ export function buildCostSeries(cube: CostCube, query: CostSeriesQuery, priceVer
       label: group.label,
       ...(group.reason ? { reason: group.reason } : {}),
       sessions: sessionCount(group.rows),
-      turns: group.rows.length,
+      turns: turnCount(group.rows),
       total: viewTotal(group.rows, query),
       coverage: coverageOf(group.rows),
       points: pointsOf(group.rows, range, query),
