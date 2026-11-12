@@ -95,7 +95,7 @@ An npm workspace:
 - [MCP SDK 2 migration plan](plans/mcp-sdk-2-migration.md) — planned
   Phase 12 follow-up: moving both MCP servers and the views from
   `@modelcontextprotocol/sdk` 1.x and ext-apps 1.7.5 to the split SDK 2
-  packages and ext-apps 2.x; tasks M0–M6 and owner decisions D1–D3.
+  packages and ext-apps 2.x; tasks M0–M6 and owner decisions D1–D4.
 - [Analyze session replay plan](plans/analyze-session-replay.md) —
   Phase 14 (steps 14.0–14.7 built; the docs are in the owner's review):
   replay a real Claude Code or Copilot session on another model, beside
