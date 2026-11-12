@@ -1,6 +1,6 @@
 # VS Code extension mock-ups
 
-**Last changed:** 2026-11-12 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-13 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 Boards in the `.dc.html` format, listed in `canvas.json`. They reference `./support.js`, which isn't in the repo. Every state is static markup, so each board also renders in a plain browser. All figures are invented.
 
@@ -35,3 +35,17 @@ Plan: [monthly-allowance.md](../../monthly-allowance.md) §3.4, §3.8, §5, §10
 7. **Settings titles.** The editor generates "Monthly Allowance: AI Credits", "Reset Day", "Warn At Percent" from the ids. Accept, or add a category title?
 8. **Colours.** Warning and error backgrounds are VS Code's theme defaults as drawn from memory; MA5 verifies them and the contrast (white text) in a live window.
 9. **Hide menu.** The gauge gets its own id and name (plan §13c). Proposed name: "AI Credits: monthly allowance".
+
+### Owner decisions (2026-11-13)
+
+Approved with these answers (the owner took the recommendations):
+
+1. Figure first: `$(warning) 812.40 of 1,000 AI Credits · near limit`, so truncation keeps the figure; the icon, background and aria label carry the level too.
+2. Combined states: `at least 812.40 of 1,000 AI Credits · near limit` (and `· over`).
+3. No percentage in the bar text; it stays in the tooltip and the aria label.
+4. Thousands separators in the gauge only; today's item stays as it is.
+5. The Sessions row stays when there are no sessions or a filter hides them all; the existing empty-state message still shows below it.
+6. Sessions row: the state as the label, "· N days left" as the muted description.
+7. Settings titles: the generated ones.
+8. Colours: MA5 checks the warning and error backgrounds and the text contrast in a live window.
+9. Status-bar item name: "AI Credits Analyzer: Monthly Allowance".

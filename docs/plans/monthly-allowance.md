@@ -1,6 +1,6 @@
 # Monthly AI Credits allowance gauge (extension first)
 
-**Last changed:** 2026-11-12 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-13 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 Status: **planned; owner decisions accepted 2026-11-12 (every recommendation); implementation started 2026-11-12**. Step **10.21** in [implementation-plan.md](../implementation-plan.md); [classic-subagent-credits-implementation.md](classic-subagent-credits-implementation.md) holds 10.19 and its audit follow-up 10.20.
 
@@ -131,7 +131,7 @@ TDD in every task: the failing test is written and seen red first (CLAUDE.md, ar
 | ID | Work | Exit criterion | Complexity | Model | Depends on |
 |---|---|---|---|---|---|
 | MA0 | **Done 2026-11-12 (§13).** Spike, no product code: (a) read an `application` setting in a remote (`extensionKind: workspace`) window and in a Restricted workspace; (b) which `ThemeColor` ids a status-bar item may use (error and warning); (c) two items' order and truncation; (d) fixture session timestamps can be seeded "now" for wdio (see MA9). Notes in this file. | Each of (a) to (d) answered with how it was checked; D-recommendations updated | low | Sonnet | none |
-| MA0b | Mock-up boards (§5) | Boards drawn; owner approval recorded here | medium | Sonnet (frontend-design skill) + owner | MA0 |
+| MA0b | Mock-up boards (§5). **Approved 2026-11-13** (#245; answers in [mockups/vscode-extension/README.md](mockups/vscode-extension/README.md)): figure-first bar text with no percentage, item name "AI Credits Analyzer: Monthly Allowance" | Boards drawn; owner approval recorded here | medium | Sonnet (frontend-design skill) + owner | MA0 |
 | MA1 | `time/billing-period.ts` + tests: period for a reset day (1 to 28), month and year boundaries, February, DST changes, a non-default zone, `daysLeft` on the first and last day. Red first | Tests green; no `vscode` import | medium | Sonnet | D1 |
 | MA2 | Extract `session-credits.ts`; `status-bar/monthly-allowance.ts` + tests: known-only sum, unknown never 0, "at least" wording, all-unknown, no sessions, exactly at the allowance, over, near threshold edges (79.9, 80, 100 percent), allowance not set or invalid, sessions at the period edges, a session without `startedAt`, an `estimated` AI Credits value (decide per D7 note), translation through `Translate` | Tests green; existing `status-bar-model.test.ts` unchanged and green | high | Opus | MA1 |
 | MA3 | Contribute the settings in `package.json` and `package.nls.json`; `settings/allowance-settings.ts` + tests (non-number, NaN, negative, string, 0); manifest test: scope `application`, minimum, defaults, nls keys present | `manifest.test.ts` and the reader tests green; the setting is absent from the workspace-settable list | medium | Sonnet | MA0, D1, D4 |
