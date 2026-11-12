@@ -5,6 +5,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { makeTurn } from "../test-support/turn-fixture.js";
+import { makeRun, makeTurnWithRuns } from "../test-support/subagent-fixture.js";
 import { TurnsTable } from "./TurnsTable.js";
 
 describe("TurnsTable", () => {
@@ -387,5 +388,60 @@ describe("TurnsTable", () => {
       );
       expect(container.querySelector("[title]")).toBeNull();
     });
+  });
+});
+
+describe("TurnsTable subagent marker", () => {
+  const reason = "The subagent log runSubagent-Plan this turn started is missing.";
+  const marker = (name: RegExp | string) => screen.getByRole("img", { name });
+
+  it("marks a turn that ran subagent runs, naming the share in its tooltip and accessible name", () => {
+    const turns = [makeTurn({ index: 1 }), makeTurnWithRuns([makeRun(), makeRun({ id: "call_2", costAiCredits: { known: true, value: 11.95 } })], { index: 2 })];
+    render(<TurnsTable turns={turns} selectedTurnIndex={0} onSelectTurn={() => {}} />);
+
+    const cell = marker("incl. 42.06 AI Credits from 2 subagent runs");
+    expect(cell).toHaveAttribute("title", "incl. 42.06 AI Credits from 2 subagent runs");
+    expect(cell.closest("td")).toHaveTextContent("46.31");
+    expect(screen.getAllByRole("img", { name: /subagent/ })).toHaveLength(1);
+  });
+
+  it("still marks a turn whose runs all cost 0.00", () => {
+    const turn = makeTurnWithRuns([makeRun({ roundsCount: 0, costAiCredits: { known: true, value: 0 } })], { own: 3.18 });
+    render(<TurnsTable turns={[turn]} selectedTurnIndex={0} onSelectTurn={() => {}} />);
+    expect(marker("incl. 0.00 AI Credits from 1 subagent run")).toBeInTheDocument();
+  });
+
+  it("says 'matched by time' in the tooltip", () => {
+    const turn = makeTurnWithRuns([makeRun({ attribution: "timestamp" })]);
+    render(<TurnsTable turns={[turn]} selectedTurnIndex={0} onSelectTurn={() => {}} />);
+    expect(marker("incl. 30.11 AI Credits from 1 subagent run, matched by time")).toBeInTheDocument();
+  });
+
+  it("shows an unknown turn as an em dash with a dashed marker and the reason, never a figure", () => {
+    const turn = makeTurnWithRuns([makeRun()], { unreadReason: reason });
+    render(<TurnsTable turns={[turn]} selectedTurnIndex={0} onSelectTurn={() => {}} />);
+
+    const unknown = marker(`AI Credits unknown: ${reason}`);
+    expect(unknown).toHaveClass("subagent-marker--unknown");
+    expect(unknown.closest("td")).toHaveTextContent(/^—/);
+  });
+
+  it("keeps the table one Tab stop: the marker is not focusable and arrows still move between rows", async () => {
+    const turns = [makeTurnWithRuns([makeRun()], { index: 1 }), makeTurnWithRuns([makeRun()], { index: 2 })];
+    const onSelect = vi.fn();
+    render(<TurnsTable turns={turns} selectedTurnIndex={0} onSelectTurn={onSelect} />);
+
+    for (const img of screen.getAllByRole("img", { name: /subagent/ })) expect(img).not.toHaveAttribute("tabindex");
+    const user = userEvent.setup();
+    await user.tab();
+    expect(screen.getAllByRole("row")[1]).toHaveFocus();
+    await user.keyboard("{ArrowDown}");
+    expect(onSelect).toHaveBeenLastCalledWith(1);
+  });
+
+  it("renders hostile agent text only as text (the marker carries no run text)", () => {
+    const turn = makeTurnWithRuns([makeRun({ agentName: "<img src=x onerror=alert(1)>" })]);
+    const { container } = render(<TurnsTable turns={[turn]} selectedTurnIndex={0} onSelectTurn={() => {}} />);
+    expect(container.querySelector("img")).toBeNull();
   });
 });

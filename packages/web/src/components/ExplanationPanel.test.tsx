@@ -1,8 +1,9 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { makeTurn } from "../test-support/turn-fixture.js";
+import { makeRun, makeTurnWithRuns } from "../test-support/subagent-fixture.js";
 import { ExplanationPanel } from "./ExplanationPanel.js";
 
 describe("ExplanationPanel", () => {
@@ -169,5 +170,78 @@ describe("ExplanationPanel", () => {
 
     expect(screen.queryByText("Simulated")).not.toBeInTheDocument();
     expect(screen.queryByText("Simulation note")).not.toBeInTheDocument();
+  });
+});
+
+describe("ExplanationPanel subagent runs", () => {
+  const reason = "The subagent log runSubagent-Plan this turn started is missing.";
+  const block = () => screen.getByRole("region", { name: "Subagent runs this turn" });
+
+  it("has no block for a turn without runs", () => {
+    render(<ExplanationPanel turn={makeTurn()} mode="analyze" />);
+    expect(screen.queryByRole("region", { name: "Subagent runs this turn" })).not.toBeInTheDocument();
+  });
+
+  it("lists a row per run with the agent name, model, requests and AI Credits, then the totals", () => {
+    const turn = makeTurnWithRuns([makeRun(), makeRun({ id: "call_2", agentName: "Plan", label: "runSubagent-Plan", roundsCount: 9, costAiCredits: { known: true, value: 11.95 } })]);
+    render(<ExplanationPanel turn={turn} mode="analyze" />);
+
+    const rows = within(block()).getAllByRole("listitem");
+    expect(rows).toHaveLength(2);
+    expect(rows[0]).toHaveTextContent("Explore");
+    expect(rows[0]).not.toHaveTextContent("runSubagent-Explore");
+    expect(rows[0]).toHaveTextContent("claude-haiku-4.5");
+    expect(rows[0]).toHaveTextContent("14 requests");
+    expect(rows[0]).toHaveTextContent("30.11 AI Credits");
+    expect(rows[1]).toHaveTextContent("9 requests");
+    const totals = within(block()).getByRole("group", { name: "Turn totals" });
+    expect(totals).toHaveTextContent("Main agent 4.25");
+    expect(totals).toHaveTextContent("Subagent runs 42.06");
+    expect(totals).toHaveTextContent("Turn 46.31");
+  });
+
+  it("falls back to the label when a run has no agent name", () => {
+    const noAgent = makeRun();
+    delete noAgent.agentName;
+    render(<ExplanationPanel turn={makeTurnWithRuns([noAgent])} mode="analyze" />);
+    expect(within(block()).getByRole("listitem")).toHaveTextContent("runSubagent-Explore");
+  });
+
+  it("shows a 0.00 run as 0.00 with 0 requests", () => {
+    const turn = makeTurnWithRuns([makeRun({ roundsCount: 0, costAiCredits: { known: true, value: 0 } })], { own: 3.18 });
+    render(<ExplanationPanel turn={turn} mode="analyze" />);
+    expect(within(block()).getByRole("listitem")).toHaveTextContent("0 requests");
+    expect(within(block()).getByRole("listitem")).toHaveTextContent("0.00 AI Credits");
+  });
+
+  it("says 'matched by time' on a run placed by time only", () => {
+    const turn = makeTurnWithRuns([makeRun({ attribution: "timestamp" }), makeRun({ id: "call_2", label: "searchSubagent" })]);
+    render(<ExplanationPanel turn={turn} mode="analyze" />);
+    const [first, second] = within(block()).getAllByRole("listitem");
+    expect(first).toHaveTextContent("matched by time");
+    expect(second).not.toHaveTextContent("matched by time");
+  });
+
+  it("shows an unread run's reason, an em dash and never 'unknown' as a model", () => {
+    const turn = makeTurnWithRuns([makeRun({ costAiCredits: { known: true, value: 7.2 } })], { unreadReason: reason });
+    render(<ExplanationPanel turn={turn} mode="analyze" />);
+
+    const rows = within(block()).getAllByRole("listitem");
+    expect(rows).toHaveLength(2);
+    expect(rows[1]).toHaveTextContent(reason);
+    expect(rows[1]).toHaveTextContent("—");
+    expect(rows[1]).not.toHaveTextContent(/\bunknown\b.*claude|model unknown/i);
+    const totals = within(block()).getByRole("group", { name: "Turn totals" });
+    expect(totals).toHaveTextContent("Main agent 4.25");
+    expect(totals).toHaveTextContent("Subagent runs unknown");
+    expect(totals).toHaveTextContent("Turn unknown");
+  });
+
+  it("renders hostile agent, label and model text as text", () => {
+    const hostile = "<img src=x onerror=alert(1)>";
+    const turn = makeTurnWithRuns([makeRun({ agentName: hostile, model: "<script>alert(1)</script>" })]);
+    const { container } = render(<ExplanationPanel turn={turn} mode="analyze" />);
+    expect(within(block()).getByText(hostile)).toBeInTheDocument();
+    expect(container.querySelector("img, script")).toBeNull();
   });
 });

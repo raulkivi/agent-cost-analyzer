@@ -160,4 +160,23 @@ describe("createInsightsModel", () => {
     expect(new Set(grouped)).toEqual(new Set(Object.values(FIELD)));
     expect(grouped).toHaveLength(Object.values(FIELD).length);
   });
+
+  it("a turn matches a model when any of its cost lines has it, and never lists an unread run's model", () => {
+    const dataset = sampleInsightsDataset();
+    const line = (model: string, subagent: boolean) => ({
+      model,
+      uncachedInput: 1,
+      cacheWrite: 0,
+      cacheRead: 0,
+      reasoning: 0,
+      output: 1,
+      aiCredits: 1,
+      subagent,
+    });
+    const [first, ...rest] = dataset.turns;
+    dataset.turns = [{ ...first!, lines: [line(first!.model, false), line("haiku-run", true), line("unknown", true)] }, ...rest];
+    const evaluation = createAssociativeEngine(createInsightsModel(dataset)).evaluate({ [FIELD.model]: ["haiku-run"] });
+    expect(evaluation.rows<InsightTurnRow>("turns").map((row) => row.key)).toEqual([first!.key]);
+    expect(evaluation.values(FIELD.model).map((value) => value.value)).not.toContain("unknown");
+  });
 });

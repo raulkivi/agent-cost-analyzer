@@ -37,3 +37,24 @@ describe("SessionKpiTiles (narrow layout, mock-up board 4)", () => {
     expect(screen.getByRole("group", { name: "AI Credits" })).not.toHaveAttribute("title");
   });
 });
+
+describe("SessionKpiTiles subagent sub-line", () => {
+  const tile = () => screen.getByRole("group", { name: "AI Credits" });
+
+  it("adds no sub-line without subagent spend", () => {
+    render(<SessionKpiTiles turns={[makeTurn()]} />);
+    expect(tile()).not.toHaveTextContent(/subagent/);
+  });
+
+  it("names the credits and runs, including a 0.00 run", () => {
+    const { rerender } = render(<SessionKpiTiles turns={[makeTurn()]} subagentSpend={{ runs: 3, costAiCredits: { known: true, value: 54.65 } }} />);
+    expect(tile()).toHaveTextContent("incl. 54.65 from 3 subagent runs");
+    rerender(<SessionKpiTiles turns={[makeTurn()]} subagentSpend={{ runs: 1, costAiCredits: { known: true, value: 0 } }} />);
+    expect(tile()).toHaveTextContent("incl. 0.00 from 1 subagent run");
+  });
+
+  it("gives the reason when the spend is unknown, never a figure", () => {
+    render(<SessionKpiTiles turns={[makeTurn()]} subagentSpend={{ runs: 1, costAiCredits: { known: false, reason: "1 subagent log is missing." } }} />);
+    expect(tile()).toHaveTextContent("unknown: 1 subagent log is missing.");
+  });
+});

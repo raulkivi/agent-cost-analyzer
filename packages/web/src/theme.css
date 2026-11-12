@@ -765,3 +765,21 @@ main[data-layout="narrow"] .nav { flex-wrap: wrap; gap: var(--space-2); }
 .replay-turn-note-table th, .replay-turn-note-table td { padding: 2px var(--space-2) 2px 0; text-align: left; font-weight: 400; }
 .replay-turn-note-table thead th { color: var(--color-text-muted); font-size: 12px; }
 .replay-turn-note-table tbody th { color: var(--color-text-muted); }
+
+/* Step 10.19 (SA13): classic subagent runs. The marker is a fork glyph whose
+   words are in its accessible name; dashed when the figure is unknown. */
+.subagent-marker { display: inline-flex; vertical-align: -2px; margin-left: 4px; color: var(--color-accent-text); }
+.subagent-marker svg { width: 12px; height: 12px; }
+.subagent-marker--unknown { color: var(--color-text); }
+.subagent-marker--unknown svg { stroke-dasharray: 2 1.6; }
+.turn-metrics-subagents { font-size: 12px; margin: var(--space-2) 0 0; }
+.subagent-block { margin-top: var(--space-3); border-top: 1px solid var(--color-divider); padding-top: var(--space-2); }
+.subagent-block-title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--color-text-muted); margin-bottom: 6px; }
+.subagent-runs { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.subagent-run { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px var(--space-2); font-size: 12px; padding: 4px 6px; border: 1px solid transparent; }
+.subagent-run--unknown { border: 1px dashed var(--color-text); }
+.subagent-run-name { font-weight: 600; overflow-wrap: anywhere; }
+.subagent-run-credits { margin-left: auto; font-variant-numeric: tabular-nums; }
+.subagent-run-reason { flex-basis: 100%; font-style: italic; }
+.subagent-totals { display: flex; flex-wrap: wrap; gap: 4px var(--space-3); font-size: 12px; margin-top: 6px; font-variant-numeric: tabular-nums; }
+.subagent-note { font-size: 13px; padding: var(--space-2) var(--space-3); border: 1px solid var(--color-divider); }

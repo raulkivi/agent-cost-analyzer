@@ -3,6 +3,7 @@
 import { render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { makeTurn } from "../test-support/turn-fixture.js";
+import { makeRun, makeTurnWithRuns } from "../test-support/subagent-fixture.js";
 import { TurnMetrics } from "./TurnMetrics.js";
 
 // The narrow layout's details drawer: the metrics its priority columns hide
@@ -48,5 +49,24 @@ describe("TurnMetrics with a replay", () => {
   it("leaves the simulated figures out without a replay", () => {
     render(<TurnMetrics turns={[makeTurn({ index: 0 })]} turnIndex={0} columns={["replayCache", "model"]} />);
     expect(screen.queryByText("Simulated cache")).not.toBeInTheDocument();
+  });
+});
+
+describe("TurnMetrics subagent line (narrow layouts have no hover)", () => {
+  it("shows the tooltip text as a visible line under the metrics", () => {
+    const turn = makeTurnWithRuns([makeRun({ attribution: "timestamp" })]);
+    render(<TurnMetrics turns={[turn]} turnIndex={0} columns={["output"]} />);
+    expect(screen.getByText("incl. 30.11 AI Credits from 1 subagent run, matched by time")).toBeVisible();
+  });
+
+  it("shows the reason for an unknown turn", () => {
+    const turn = makeTurnWithRuns([], { unreadReason: "The subagent log is missing." });
+    render(<TurnMetrics turns={[turn]} turnIndex={0} columns={[]} />);
+    expect(screen.getByText("AI Credits unknown: The subagent log is missing.")).toBeVisible();
+  });
+
+  it("shows no line for a turn without runs", () => {
+    render(<TurnMetrics turns={[makeTurn()]} turnIndex={0} columns={["output"]} />);
+    expect(screen.queryByText(/subagent/)).not.toBeInTheDocument();
   });
 });

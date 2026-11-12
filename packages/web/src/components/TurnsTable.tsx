@@ -12,6 +12,7 @@ import { formatSimulatedCost, replayCostTitle } from "../lib/replay-format.js";
 import { ALL_TURN_COLUMN_LABELS, ALL_TURN_COLUMNS, columnsApplyingTo, isReplayColumn, type TurnColumnId } from "../lib/turn-columns.js";
 import { CacheOutcomeBadge } from "./learn/CacheOutcomeBadge.js";
 import { SimulatedBadge } from "./replay/SimulatedBadge.js";
+import { SubagentMarker } from "./SubagentMarker.js";
 import { Tag } from "./ui/Tag.js";
 
 const CUMULATIVE_COST_UNKNOWN_REASON =
@@ -114,7 +115,12 @@ const VALUES: Record<TurnColumnId, (props: CellProps) => ReactNode> = {
   vision: ({ turn }) => formatTokenCount(turn.usage.vision),
   reasoning: ({ turn }) => formatTokenCount(turn.usage.reasoning),
   output: ({ turn }) => formatTokenCount(turn.usage.output),
-  aiCredits: ({ turn }) => <CreditsCell turn={turn} credits={turn.usage.costAiCredits} />,
+  aiCredits: ({ turn }) => (
+    <>
+      <CreditsCell turn={turn} credits={turn.usage.costAiCredits} />
+      <SubagentMarker turn={turn} />
+    </>
+  ),
   cumulative: ({ turn, turns, turnIndex }) => (
     <CreditsCell turn={turn} credits={cumulativeCostThrough(turns, turnIndex)} />
   ),

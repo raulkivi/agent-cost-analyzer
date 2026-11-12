@@ -3,6 +3,7 @@
 import type { Turn } from "@agent-cost-analyzer/domain";
 import type { Mode } from "../state/session-store.js";
 import { TRIGGER_LABELS } from "../lib/trigger-labels.js";
+import { SubagentRunsBlock } from "./SubagentRunsBlock.js";
 import { Blueprint } from "./ui/Blueprint.js";
 import { StatusTag } from "./ui/StatusTag.js";
 import { Tag } from "./ui/Tag.js";
@@ -150,6 +151,7 @@ export function ExplanationPanel({
           {turn.simulation.note}
         </p>
       )}
+      <SubagentRunsBlock turn={turn} />
       {mode === "analyze" && (
         <ToolCallsThisTurn
           turn={turn}

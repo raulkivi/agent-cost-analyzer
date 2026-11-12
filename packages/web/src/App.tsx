@@ -692,6 +692,7 @@ export function App({ performanceMarks = pagePerformanceMarks }: AppProps = {}) 
           turnIndex={selectedTurnIndex}
           sessionTitle={session.title}
           triggeredEvent={selectedTurn?.triggeredEvent}
+          turn={selectedTurn ?? undefined}
           usageDataAvailable={session.usageDataAvailable}
           onClose={() => setTurnInspectorOpen(false)}
         />
@@ -907,7 +908,7 @@ export function App({ performanceMarks = pagePerformanceMarks }: AppProps = {}) 
                       )}
                     </div>
                   </div>
-                  {layout === "narrow" && <SessionKpiTiles turns={session.turns} />}
+                  {layout === "narrow" && <SessionKpiTiles turns={session.turns} subagentSpend={session.subagentSpend} />}
                   {replayShown && !analyzeReplay.unavailableReason && (
                     readyReplay ? (
                       <ReplaySummaryStrip
