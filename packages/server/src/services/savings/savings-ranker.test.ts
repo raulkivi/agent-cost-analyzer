@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
 import { describe, expect, it } from "vitest";
-import { savingsReportSchema, type Currency, type SavingsAmount, type SavingsNotAnalysed, type SavingsOpportunity } from "@agent-cost-analyzer/domain";
+import { savingsReportSchema, type Currency, type SavingsAmount, type SavingsLeftOut, type SavingsOpportunity } from "@agent-cost-analyzer/domain";
 import { WINDOW } from "../../test-support/savings-fakes.js";
 import { perWeek } from "./savings-amounts.js";
 import { SavingsRanker } from "./savings-ranker.js";
@@ -47,7 +47,7 @@ function simulated(key: string, saving: number): SavingsOpportunity {
 
 const unknown = (key: string): SavingsOpportunity => opportunity(key, { known: false, reason: "No session could be priced." });
 
-const rank = (results: Parameters<SavingsRanker["rank"]>[0]["results"], leftOut: SavingsNotAnalysed[] = []) =>
+const rank = (results: Parameters<SavingsRanker["rank"]>[0]["results"], leftOut: SavingsLeftOut[] = []) =>
   new SavingsRanker().rank({ window: WINDOW, pricing: "as-of-use", results, leftOut });
 
 describe("SavingsRanker", () => {
@@ -90,7 +90,7 @@ describe("SavingsRanker", () => {
     expect(report.simulated.map((o) => o.key)).toEqual(["sim-small", "sim-large"]);
   });
 
-  it("merges every detector's Not analysed list and the sessions the service left out, sorted by kind, provider and reason", () => {
+  it("merges every detector's Not analysed list sorted by kind, provider and reason, and lists the sessions the service left out once, sorted by provider and reason", () => {
     const report = rank(
       [
         { opportunities: [], notAnalysed: [{ kind: "failed-tool-calls", providerId: "vscode", reason: "No audit.", sessions: 1 }] },
@@ -102,15 +102,22 @@ describe("SavingsRanker", () => {
           ],
         },
       ],
-      [{ kind: "failed-tool-calls", providerId: "claude-code", reason: "Over the cap.", sessions: 4 }],
+      [
+        { providerId: "vscode", reason: "Unreadable.", sessions: 1 },
+        { providerId: "claude-code", reason: "Over the cap.", sessions: 4 },
+      ],
     );
 
     expect(report.notAnalysed.map((row) => [row.kind, row.providerId, row.reason])).toEqual([
       ["unused-tools", "claude-code", "No inventory."],
       ["unused-tools", "vscode", "No inventory."],
-      ["failed-tool-calls", "claude-code", "Over the cap."],
       ["failed-tool-calls", "vscode", "No audit."],
     ]);
+    expect(report.sessionsLeftOut).toEqual([
+      { providerId: "claude-code", reason: "Over the cap.", sessions: 4 },
+      { providerId: "vscode", reason: "Unreadable.", sessions: 1 },
+    ]);
+    expect(savingsReportSchema.parse(report)).toEqual(report);
   });
 
   it("gives a schema-valid report with its window and pricing mode and no grand total (D4)", () => {

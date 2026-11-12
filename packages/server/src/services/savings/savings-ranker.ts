@@ -5,6 +5,7 @@ import {
   USD_PER_AI_CREDIT,
   type PricingMode,
   type SavingsAmount,
+  type SavingsLeftOut,
   type SavingsNotAnalysed,
   type SavingsOpportunity,
   type SavingsReport,
@@ -23,8 +24,8 @@ export interface RankInput {
   window: SavingsWindow;
   pricing: PricingMode;
   results: readonly DetectorResult[];
-  // Sessions no detector saw (over the session cap, unreadable), per kind.
-  leftOut?: readonly SavingsNotAnalysed[];
+  // Sessions no detector saw (over the session cap, unreadable), once per report.
+  leftOut?: readonly SavingsLeftOut[];
 }
 
 const KIND_ORDER: readonly string[] = savingsOpportunityKindSchema.options;
@@ -49,6 +50,10 @@ function byKindProviderReason(a: SavingsNotAnalysed, b: SavingsNotAnalysed): num
   return KIND_ORDER.indexOf(a.kind) - KIND_ORDER.indexOf(b.kind) || a.providerId.localeCompare(b.providerId) || a.reason.localeCompare(b.reason);
 }
 
+function byProviderReason(a: SavingsLeftOut, b: SavingsLeftOut): number {
+  return a.providerId.localeCompare(b.providerId) || a.reason.localeCompare(b.reason);
+}
+
 export class SavingsRanker {
   rank(input: RankInput): SavingsReport {
     const all = input.results.flatMap((result) => result.opportunities);
@@ -57,7 +62,8 @@ export class SavingsRanker {
       pricing: input.pricing,
       opportunities: all.filter((opportunity) => opportunity.kind !== "cheaper-model").sort(byHighEnd),
       simulated: all.filter((opportunity) => opportunity.kind === "cheaper-model"),
-      notAnalysed: [...input.results.flatMap((result) => result.notAnalysed), ...(input.leftOut ?? [])].sort(byKindProviderReason),
+      notAnalysed: input.results.flatMap((result) => result.notAnalysed).sort(byKindProviderReason),
+      ...(input.leftOut && input.leftOut.length > 0 ? { sessionsLeftOut: [...input.leftOut].sort(byProviderReason) } : {}),
     };
   }
 }

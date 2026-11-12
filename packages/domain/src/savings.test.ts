@@ -157,6 +157,13 @@ describe("savingsOpportunitySchema", () => {
 });
 
 describe("savingsReportSchema", () => {
+  it("takes an optional report-level list of sessions left out, and rejects a bad one", () => {
+    const leftOut = { providerId: "claude-code", reason: "Over the 2-session cap.", sessions: 2 };
+    expect(() => savingsReportSchema.parse(report({ sessionsLeftOut: [leftOut] }))).not.toThrow();
+    expect(() => savingsReportSchema.parse(report({ sessionsLeftOut: [{ ...leftOut, sessions: -1 }] }))).toThrow();
+    expect(() => savingsReportSchema.parse(report({ sessionsLeftOut: [{ ...leftOut, reason: "" }] }))).toThrow();
+  });
+
   it("accepts a report", () => {
     expect(savingsReportSchema.parse(report())).toEqual(report());
   });

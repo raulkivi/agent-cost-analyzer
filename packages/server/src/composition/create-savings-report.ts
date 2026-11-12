@@ -40,11 +40,10 @@ export function createSavingsReport(options: SavingsReportOptions): SavingsServi
     providers: options.providers,
     // Open/closed: a new opportunity is one more line here.
     detectors: [
-      { kind: "unused-tools", detector: new UnusedToolsDetector() },
-      { kind: "idle-cache-expiry", detector: new CacheBreakDetector() },
-      { kind: "failed-tool-calls", detector: new FailedCallsDetector() },
+      { detector: new UnusedToolsDetector() },
+      { detector: new CacheBreakDetector() },
+      { detector: new FailedCallsDetector() },
       {
-        kind: "cheaper-model",
         simulated: true,
         detector: new CheaperModelDetector({ comparer: options.replay, candidates: new ProfileCheaperModels(profiles), priceVersions: replayPriceVersions(priceBook) }),
       },

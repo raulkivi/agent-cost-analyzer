@@ -116,11 +116,10 @@ describe("SavingsService over every detector", () => {
     },
   };
   const detectors: RegisteredDetector[] = [
-    { kind: "unused-tools", detector: new UnusedToolsDetector() },
-    { kind: "idle-cache-expiry", detector: new CacheBreakDetector() },
-    { kind: "failed-tool-calls", detector: new FailedCallsDetector() },
+    { detector: new UnusedToolsDetector() },
+    { detector: new CacheBreakDetector() },
+    { detector: new FailedCallsDetector() },
     {
-      kind: "cheaper-model",
       simulated: true,
       detector: new CheaperModelDetector({ comparer, candidates: { candidatesFor: () => ["claude-haiku-5.5"] }, priceVersions: () => ["anthropic-api:claude-haiku-5.5:2026-10-07"] }),
     },
@@ -163,8 +162,8 @@ describe("SavingsService loading", () => {
     const provider = new FakeProvider("claude-code", [...sessionsOn(10, 20), session("old", { startedAt: "2026-09-01T12:00:00.000Z" })]);
 
     const report = await serviceOver([provider], [
-      { kind: "unused-tools", detector: first },
-      { kind: "failed-tool-calls", detector: second },
+      { detector: first },
+      { detector: second },
     ]).report({ since: "2026-10-01", until: "2026-10-31" }, { pricing: "today" });
 
     expect(idsSeenBy(first)).toEqual(["d20", "d10"]);
@@ -174,33 +173,31 @@ describe("SavingsService loading", () => {
     expect(first.inputs[0]!.sessions[0]).toMatchObject({ providerId: "claude-code", channel: ANTHROPIC });
   });
 
-  it("reads the most recent sessions first, one at a time, up to the limit, and lists the rest under each kind", async () => {
+  it("reads the most recent sessions first, one at a time, up to the limit, and lists the rest once, report-wide", async () => {
     const detector = new RecordingDetector();
     const provider = new CountingProvider("claude-code", sessionsOn(10, 12, 14, 16));
 
     const report = await serviceOver([provider], [
-      { kind: "unused-tools", detector },
-      { kind: "idle-cache-expiry", detector: new RecordingDetector() },
+      { detector },
+      { detector: new RecordingDetector() },
     ]).report({ limit: 2 });
 
     expect(idsSeenBy(detector)).toEqual(["d16", "d14"]);
     expect(provider.reads).toBe(2);
     expect(provider.maxRunning).toBe(1);
     const reason = "Over the 2-session cap: only the 2 most recent sessions in the window were read.";
-    expect(report.notAnalysed).toEqual([
-      { kind: "unused-tools", providerId: "claude-code", reason, sessions: 2 },
-      { kind: "idle-cache-expiry", providerId: "claude-code", reason, sessions: 2 },
-    ]);
+    expect(report.sessionsLeftOut).toEqual([{ providerId: "claude-code", reason, sessions: 2 }]);
+    expect(report.notAnalysed).toEqual([]);
   });
 
   it(`never reads more than ${MAX_ROLLUP_SESSION_LIMIT} sessions, whatever limit is asked (threat model §11)`, async () => {
     const many = Array.from({ length: MAX_ROLLUP_SESSION_LIMIT + 2 }, (_, n) => session(`s${n}`, { startedAt: new Date(Date.parse(day(10)) + n * 60_000).toISOString() }));
     const provider = new FakeProvider("claude-code", many);
 
-    const report = await serviceOver([provider], [{ kind: "unused-tools", detector: new RecordingDetector() }]).report({ limit: 10_000 });
+    const report = await serviceOver([provider], [{ detector: new RecordingDetector() }]).report({ limit: 10_000 });
 
     expect(provider.reads).toBe(MAX_ROLLUP_SESSION_LIMIT);
-    expect(report.notAnalysed).toEqual([{ kind: "unused-tools", providerId: "claude-code", reason: expect.stringContaining(`${MAX_ROLLUP_SESSION_LIMIT}-session cap`), sessions: 2 }]);
+    expect(report.sessionsLeftOut).toEqual([{ providerId: "claude-code", reason: expect.stringContaining(`${MAX_ROLLUP_SESSION_LIMIT}-session cap`), sessions: 2 }]);
   });
 
   it("caps across providers together, newest first", async () => {
@@ -208,17 +205,17 @@ describe("SavingsService loading", () => {
     const a = new FakeProvider("a", [session("a1", { startedAt: day(11) }), session("a2", { startedAt: day(20) })]);
     const b = new FakeProvider("b", [session("b1", { startedAt: day(15) })]);
 
-    const report = await serviceOver([a, b], [{ kind: "unused-tools", detector }]).report({ limit: 2 });
+    const report = await serviceOver([a, b], [{ detector }]).report({ limit: 2 });
 
     expect(idsSeenBy(detector)).toEqual(["a2", "b1"]);
-    expect(report.notAnalysed).toEqual([{ kind: "unused-tools", providerId: "a", reason: expect.stringContaining("cap"), sessions: 1 }]);
+    expect(report.sessionsLeftOut).toEqual([{ providerId: "a", reason: expect.stringContaining("cap"), sessions: 1 }]);
   });
 
   it("reads only the provider asked for, and refuses an unknown one", async () => {
     const detector = new RecordingDetector();
     const a = new FakeProvider("a", [session("a1", { startedAt: day(11) })]);
     const b = new FakeProvider("b", [session("b1", { startedAt: day(15) })]);
-    const service = serviceOver([a, b], [{ kind: "unused-tools", detector }]);
+    const service = serviceOver([a, b], [{ detector }]);
 
     await service.report({ providerId: "b" });
 
@@ -236,7 +233,7 @@ describe("SavingsService loading", () => {
     const detector = new RecordingDetector();
     const off = new Unavailable("mitmproxy", sessionsOn(12));
 
-    await serviceOver([off, new FakeProvider("claude-code", sessionsOn(14))], [{ kind: "unused-tools", detector }]).report();
+    await serviceOver([off, new FakeProvider("claude-code", sessionsOn(14))], [{ detector }]).report();
 
     expect(idsSeenBy(detector)).toEqual(["d14"]);
     expect(off.reads).toBe(0);
@@ -251,10 +248,10 @@ describe("SavingsService loading", () => {
     }
     const detector = new RecordingDetector();
 
-    const report = await serviceOver([new Flaky("claude-code", sessionsOn(12, 14))], [{ kind: "failed-tool-calls", detector }]).report();
+    const report = await serviceOver([new Flaky("claude-code", sessionsOn(12, 14))], [{ detector }]).report();
 
     expect(idsSeenBy(detector)).toEqual(["d14"]);
-    expect(report.notAnalysed).toEqual([{ kind: "failed-tool-calls", providerId: "claude-code", reason: "The session's log could not be read.", sessions: 1 }]);
+    expect(report.sessionsLeftOut).toEqual([{ providerId: "claude-code", reason: "The session's log could not be read.", sessions: 1 }]);
   });
 });
 
@@ -264,7 +261,7 @@ describe("SavingsService cancellation", () => {
     const detector = new RecordingDetector();
     const provider = new CountingProvider("claude-code", sessionsOn(10, 11, 12, 13), (reads) => reads === 2 && controller.abort());
 
-    await expect(serviceOver([provider], [{ kind: "unused-tools", detector }]).report({}, {}, controller.signal)).rejects.toMatchObject({ name: "AbortError" });
+    await expect(serviceOver([provider], [{ detector }]).report({}, {}, controller.signal)).rejects.toMatchObject({ name: "AbortError" });
 
     expect(provider.reads).toBe(2);
     expect(detector.inputs).toEqual([]);
@@ -276,8 +273,8 @@ describe("SavingsService cancellation", () => {
     const second = new RecordingDetector();
 
     const run = serviceOver([new FakeProvider("claude-code", sessionsOn(10))], [
-      { kind: "unused-tools", detector: first },
-      { kind: "failed-tool-calls", detector: second },
+      { detector: first },
+      { detector: second },
     ]).report({}, {}, controller.signal);
 
     await expect(run).rejects.toMatchObject({ name: "AbortError" });
@@ -290,7 +287,7 @@ describe("SavingsService cancellation", () => {
     const controller = new AbortController();
     controller.abort();
 
-    await expect(serviceOver([provider], [{ kind: "unused-tools", detector: new RecordingDetector() }]).report({}, {}, controller.signal)).rejects.toMatchObject({ name: "AbortError" });
+    await expect(serviceOver([provider], [{ detector: new RecordingDetector() }]).report({}, {}, controller.signal)).rejects.toMatchObject({ name: "AbortError" });
     expect(provider.reads).toBe(0);
   });
 });
@@ -298,7 +295,7 @@ describe("SavingsService cancellation", () => {
 describe("SavingsService simulated detectors", () => {
   it("runs a simulated detector only with includeSimulated (D5)", async () => {
     const simulated = new RecordingDetector();
-    const service = serviceOver([new FakeProvider("claude-code", sessionsOn(10))], [{ kind: "cheaper-model", detector: simulated, simulated: true }]);
+    const service = serviceOver([new FakeProvider("claude-code", sessionsOn(10))], [{ detector: simulated, simulated: true }]);
 
     await service.report();
     expect(simulated.inputs).toEqual([]);

@@ -141,6 +141,14 @@ export const savingsNotAnalysedSchema = z.object({
   sessions: count,
 });
 
+// Sessions the whole report left out (over the session cap, unreadable log),
+// listed once per report and not per kind. The reason is a fixed sentence.
+export const savingsLeftOutSchema = z.object({
+  providerId: z.string().min(1),
+  reason: z.string().min(1),
+  sessions: count,
+});
+
 export const savingsReportSchema = z
   .object({
     window: savingsWindowSchema,
@@ -150,6 +158,8 @@ export const savingsReportSchema = z
     // Their own unranked section.
     simulated: z.array(savingsOpportunitySchema),
     notAnalysed: z.array(savingsNotAnalysedSchema),
+    // Absent when every session in the window was read.
+    sessionsLeftOut: z.array(savingsLeftOutSchema).optional(),
   })
   .superRefine((report, ctx) => {
     if (report.opportunities.some((opportunity) => opportunity.kind === "cheaper-model")) {
@@ -169,6 +179,7 @@ export type SavingsEvidence = z.infer<typeof savingsEvidenceSchema>;
 export type SavingsCoverage = z.infer<typeof savingsCoverageSchema>;
 export type SavingsActionParams = z.infer<typeof savingsActionParamsSchema>;
 export type SavingsOpportunity = z.infer<typeof savingsOpportunitySchema>;
+export type SavingsLeftOut = z.infer<typeof savingsLeftOutSchema>;
 export type SavingsNotAnalysed = z.infer<typeof savingsNotAnalysedSchema>;
 export type SavingsReport = z.infer<typeof savingsReportSchema>;
 export type SavingsWindow = z.infer<typeof savingsWindowSchema>;

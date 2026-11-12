@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import type { PricingMode, SavingsNotAnalysed, SavingsOpportunityKind, SavingsReport, Session } from "@agent-cost-analyzer/domain";
+import type { PricingMode, SavingsLeftOut, SavingsReport, Session } from "@agent-cost-analyzer/domain";
 import type { LogProvider } from "../../data-sources/log-providers/log-provider.js";
 import { UnknownLogProviderIdError } from "../../data-sources/log-providers/registry.js";
 import type { ProviderSource } from "../insights/insights-service.js";
@@ -18,8 +18,8 @@ import { savingsWindowOf } from "./savings-window.js";
 // savings report on request. Loads the window's most recent sessions, one at
 // a time and at most MAX_ROLLUP_SESSION_LIMIT across providers (each read can
 // parse a large log), runs the registered detectors over them and ranks the
-// result. Sessions it could not give the detectors are listed under every
-// kind it ran, never dropped. Cancelled through the AbortSignal between
+// result. Sessions it could not give the detectors are listed once, as
+// the report's sessionsLeftOut, never dropped. Cancelled through the AbortSignal between
 // sessions and between detectors: it rejects with the signal's reason (an
 // AbortError), as a cancelled fetch does. Nothing is stored.
 
@@ -39,10 +39,8 @@ export interface SavingsOptions {
   includeSimulated?: boolean;
 }
 
-// A detector as the report runs it. `kind` is the kind its Not-analysed rows
-// use, so sessions the service left out are listed beside them.
+// A detector as the report runs it.
 export interface RegisteredDetector {
-  kind: SavingsOpportunityKind;
   detector: SavingsDetector;
   // A replay (Simulated): run only with includeSimulated.
   simulated?: boolean;
@@ -82,8 +80,8 @@ class LeftOut {
     this.counts.set(key, entry);
   }
 
-  under(kinds: readonly SavingsOpportunityKind[]): SavingsNotAnalysed[] {
-    return kinds.flatMap((kind) => [...this.counts.values()].map((entry) => ({ kind, ...entry })));
+  entries(): SavingsLeftOut[] {
+    return [...this.counts.values()];
   }
 }
 
@@ -116,8 +114,7 @@ export class SavingsService implements SavingsQueries {
       results.push(await detector.detect(input));
     }
     signal?.throwIfAborted();
-    const kinds = [...new Set(registered.map((entry) => entry.kind))];
-    return this.ranker.rank({ window, pricing, results, leftOut: leftOut.under(kinds) });
+    return this.ranker.rank({ window, pricing, results, leftOut: leftOut.entries() });
   }
 
   private selectProviders(providerId: string | undefined): LogProvider[] {
