@@ -114,6 +114,30 @@ describe("savingsOpportunitySchema", () => {
     expect(() => savingsOpportunitySchema.parse(opportunity({ kind: "cheaper-model" }))).toThrow(/simulated/);
   });
 
+  describe("simulation (a cheaper-model replay's self-check, coverage and assumptions)", () => {
+    const sim = simulated as SavingsOpportunity["perWeek"];
+    const simulation = {
+      model: "claude-haiku-5.5",
+      selfCheck: { requests: 20, matching: 19, passed: false },
+      coverage: { turns: 10, replayedTurns: 9, requests: 20, replayedRequests: 18 },
+      assumptions: [{ id: "A1", text: "Same conversation." }],
+    };
+    const cheaper = (extra: Partial<SavingsOpportunity> = {}) => opportunity({ kind: "cheaper-model", perWeek: sim, perWindow: sim, ...extra });
+
+    it("is carried by a cheaper-model opportunity", () => {
+      expect(savingsOpportunitySchema.parse(cheaper({ simulation })).simulation).toEqual(simulation);
+    });
+
+    it("is rejected on any other kind", () => {
+      expect(() => savingsOpportunitySchema.parse(opportunity({ simulation }))).toThrow(/simulation/);
+    });
+
+    it("rejects more matching requests than requests, or more replayed turns than turns", () => {
+      expect(() => savingsOpportunitySchema.parse(cheaper({ simulation: { ...simulation, selfCheck: { requests: 2, matching: 3, passed: false } } }))).toThrow();
+      expect(() => savingsOpportunitySchema.parse(cheaper({ simulation: { ...simulation, coverage: { ...simulation.coverage, replayedTurns: 11 } } }))).toThrow();
+    });
+  });
+
   it("rejects a simulated amount on any other kind", () => {
     const sim = simulated as SavingsOpportunity["perWeek"];
     expect(() => savingsOpportunitySchema.parse(opportunity({ perWeek: sim, perWindow: sim }))).toThrow(/simulated/);

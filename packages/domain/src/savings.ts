@@ -79,6 +79,23 @@ export const savingsCoverageSchema = z
 // capped names only (savings-actions.ts).
 export const savingsActionParamsSchema = z.record(z.string().min(1), z.union([z.number(), z.string().max(MAX_SAVINGS_NAME_LENGTH)]));
 
+const savingsCount = count;
+
+// A cheaper-model replay's own checks, carried with the saving (§7: it always
+// shows assumption A1 and the self-check). Counts only; the assumption texts
+// are the replay's fixed sentences.
+export const savingsSimulationSchema = z
+  .object({
+    model: z.string().min(1).max(MAX_SAVINGS_NAME_LENGTH),
+    selfCheck: z
+      .object({ requests: savingsCount, matching: savingsCount, passed: z.boolean() })
+      .refine((check) => check.matching <= check.requests, { message: "matching cannot exceed requests", path: ["matching"] }),
+    coverage: z
+      .object({ turns: savingsCount, replayedTurns: savingsCount, requests: savingsCount, replayedRequests: savingsCount })
+      .refine((coverage) => coverage.replayedTurns <= coverage.turns && coverage.replayedRequests <= coverage.requests, { message: "a replay cannot cover more than there is", path: ["replayedTurns"] }),
+    assumptions: z.array(z.object({ id: z.string().min(1), text: z.string().min(1) })),
+  });
+
 export const savingsOpportunitySchema = z
   .object({
     key: z.string().min(1).max(MAX_SAVINGS_NAME_LENGTH * 2),
@@ -93,8 +110,13 @@ export const savingsOpportunitySchema = z
     actionParams: savingsActionParamsSchema,
     // The grouping or cause is a guess (e.g. an MCP server read from a `mcp_` name).
     inferred: z.boolean(),
+    // cheaper-model only.
+    simulation: savingsSimulationSchema.optional(),
   })
   .superRefine((opportunity, ctx) => {
+    if (opportunity.simulation !== undefined && opportunity.kind !== "cheaper-model") {
+      ctx.addIssue({ code: "custom", path: ["simulation"], message: "only a cheaper-model opportunity carries a simulation" });
+    }
     // D3: a Simulated saving is never ranked with the priced ones, so the
     // kind and the basis must agree.
     for (const field of ["perWeek", "perWindow"] as const) {
@@ -141,6 +163,7 @@ export const savingsReportSchema = z
 export type SavingsOpportunityKind = z.infer<typeof savingsOpportunityKindSchema>;
 export type SavingsBasis = z.infer<typeof savingsBasisSchema>;
 export type SavingsLabel = z.infer<typeof savingsLabelSchema>;
+export type SavingsSimulation = z.infer<typeof savingsSimulationSchema>;
 export type SavingsAmount = z.infer<typeof savingsAmountSchema>;
 export type SavingsEvidence = z.infer<typeof savingsEvidenceSchema>;
 export type SavingsCoverage = z.infer<typeof savingsCoverageSchema>;

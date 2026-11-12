@@ -1,0 +1,334 @@
+{
+  "opportunities": [
+    {
+      "key": "cheaper-model:cc-big:claude-sonnet-5",
+      "kind": "cheaper-model",
+      "subject": "claude-sonnet-5",
+      "sessions": [
+        {
+          "providerId": "claude-code",
+          "sessionId": "cc-big"
+        }
+      ],
+      "evidence": {
+        "sessions": 1,
+        "requests": 8,
+        "tokens": null,
+        "occurrences": 2
+      },
+      "perWeek": {
+        "known": true,
+        "currency": "USD",
+        "low": 0.21,
+        "high": 0.21,
+        "basis": "simulated",
+        "label": "simulated",
+        "priceVersionIds": [
+          "anthropic-api:claude-haiku-5.5:2026-10-07"
+        ]
+      },
+      "perWindow": {
+        "known": true,
+        "currency": "USD",
+        "low": 0.8999999999999999,
+        "high": 0.8999999999999999,
+        "basis": "simulated",
+        "label": "simulated",
+        "priceVersionIds": [
+          "anthropic-api:claude-haiku-5.5:2026-10-07"
+        ]
+      },
+      "coverage": {
+        "sessionsInWindow": 4,
+        "sessionsAnalysed": 2,
+        "notAnalysed": [
+          {
+            "reason": "The session's turn costs were not given, so it can't be ranked by cost.",
+            "sessions": 1
+          },
+          {
+            "reason": "This provider's logs can't be replayed yet.",
+            "sessions": 1
+          }
+        ]
+      },
+      "actionParams": {
+        "model": "claude-sonnet-5",
+        "percent": 55,
+        "matchPercent": 100
+      },
+      "inferred": false,
+      "simulation": {
+        "model": "claude-sonnet-5",
+        "selfCheck": {
+          "requests": 8,
+          "matching": 8,
+          "passed": true
+        },
+        "coverage": {
+          "turns": 2,
+          "replayedTurns": 2,
+          "requests": 8,
+          "replayedRequests": 8
+        },
+        "assumptions": [
+          {
+            "id": "A1",
+            "text": "Same conversation: the other model is assumed to get the same prompts."
+          }
+        ]
+      }
+    },
+    {
+      "key": "cheaper-model:cc-big:claude-haiku-5.5",
+      "kind": "cheaper-model",
+      "subject": "claude-haiku-5.5",
+      "sessions": [
+        {
+          "providerId": "claude-code",
+          "sessionId": "cc-big"
+        }
+      ],
+      "evidence": {
+        "sessions": 1,
+        "requests": 8,
+        "tokens": null,
+        "occurrences": 2
+      },
+      "perWeek": {
+        "known": true,
+        "currency": "USD",
+        "low": 0.39666666666666667,
+        "high": 0.39666666666666667,
+        "basis": "simulated",
+        "label": "simulated",
+        "priceVersionIds": [
+          "anthropic-api:claude-haiku-5.5:2026-10-07"
+        ]
+      },
+      "perWindow": {
+        "known": true,
+        "currency": "USD",
+        "low": 1.7,
+        "high": 1.7,
+        "basis": "simulated",
+        "label": "simulated",
+        "priceVersionIds": [
+          "anthropic-api:claude-haiku-5.5:2026-10-07"
+        ]
+      },
+      "coverage": {
+        "sessionsInWindow": 4,
+        "sessionsAnalysed": 2,
+        "notAnalysed": [
+          {
+            "reason": "The session's turn costs were not given, so it can't be ranked by cost.",
+            "sessions": 1
+          },
+          {
+            "reason": "This provider's logs can't be replayed yet.",
+            "sessions": 1
+          }
+        ]
+      },
+      "actionParams": {
+        "model": "claude-haiku-5.5",
+        "percent": 15,
+        "matchPercent": 100
+      },
+      "inferred": false,
+      "simulation": {
+        "model": "claude-haiku-5.5",
+        "selfCheck": {
+          "requests": 8,
+          "matching": 8,
+          "passed": true
+        },
+        "coverage": {
+          "turns": 2,
+          "replayedTurns": 2,
+          "requests": 8,
+          "replayedRequests": 8
+        },
+        "assumptions": [
+          {
+            "id": "A1",
+            "text": "Same conversation: the other model is assumed to get the same prompts."
+          }
+        ]
+      }
+    },
+    {
+      "key": "cheaper-model:cc-small:claude-sonnet-5",
+      "kind": "cheaper-model",
+      "subject": "claude-sonnet-5",
+      "sessions": [
+        {
+          "providerId": "claude-code",
+          "sessionId": "cc-small"
+        }
+      ],
+      "evidence": {
+        "sessions": 1,
+        "requests": 8,
+        "tokens": null,
+        "occurrences": 2
+      },
+      "perWeek": {
+        "known": true,
+        "currency": "USD",
+        "low": 0.21,
+        "high": 0.21,
+        "basis": "simulated",
+        "label": "simulated",
+        "priceVersionIds": [
+          "anthropic-api:claude-haiku-5.5:2026-10-07"
+        ]
+      },
+      "perWindow": {
+        "known": true,
+        "currency": "USD",
+        "low": 0.8999999999999999,
+        "high": 0.8999999999999999,
+        "basis": "simulated",
+        "label": "simulated",
+        "priceVersionIds": [
+          "anthropic-api:claude-haiku-5.5:2026-10-07"
+        ]
+      },
+      "coverage": {
+        "sessionsInWindow": 4,
+        "sessionsAnalysed": 2,
+        "notAnalysed": [
+          {
+            "reason": "The session's turn costs were not given, so it can't be ranked by cost.",
+            "sessions": 1
+          },
+          {
+            "reason": "This provider's logs can't be replayed yet.",
+            "sessions": 1
+          }
+        ]
+      },
+      "actionParams": {
+        "model": "claude-sonnet-5",
+        "percent": 55,
+        "matchPercent": 100
+      },
+      "inferred": false,
+      "simulation": {
+        "model": "claude-sonnet-5",
+        "selfCheck": {
+          "requests": 8,
+          "matching": 8,
+          "passed": true
+        },
+        "coverage": {
+          "turns": 2,
+          "replayedTurns": 2,
+          "requests": 8,
+          "replayedRequests": 8
+        },
+        "assumptions": [
+          {
+            "id": "A1",
+            "text": "Same conversation: the other model is assumed to get the same prompts."
+          }
+        ]
+      }
+    },
+    {
+      "key": "cheaper-model:cc-small:claude-haiku-5.5",
+      "kind": "cheaper-model",
+      "subject": "claude-haiku-5.5",
+      "sessions": [
+        {
+          "providerId": "claude-code",
+          "sessionId": "cc-small"
+        }
+      ],
+      "evidence": {
+        "sessions": 1,
+        "requests": 8,
+        "tokens": null,
+        "occurrences": 2
+      },
+      "perWeek": {
+        "known": true,
+        "currency": "USD",
+        "low": 0.39666666666666667,
+        "high": 0.39666666666666667,
+        "basis": "simulated",
+        "label": "simulated",
+        "priceVersionIds": [
+          "anthropic-api:claude-haiku-5.5:2026-10-07"
+        ]
+      },
+      "perWindow": {
+        "known": true,
+        "currency": "USD",
+        "low": 1.7,
+        "high": 1.7,
+        "basis": "simulated",
+        "label": "simulated",
+        "priceVersionIds": [
+          "anthropic-api:claude-haiku-5.5:2026-10-07"
+        ]
+      },
+      "coverage": {
+        "sessionsInWindow": 4,
+        "sessionsAnalysed": 2,
+        "notAnalysed": [
+          {
+            "reason": "The session's turn costs were not given, so it can't be ranked by cost.",
+            "sessions": 1
+          },
+          {
+            "reason": "This provider's logs can't be replayed yet.",
+            "sessions": 1
+          }
+        ]
+      },
+      "actionParams": {
+        "model": "claude-haiku-5.5",
+        "percent": 15,
+        "matchPercent": 100
+      },
+      "inferred": false,
+      "simulation": {
+        "model": "claude-haiku-5.5",
+        "selfCheck": {
+          "requests": 8,
+          "matching": 8,
+          "passed": true
+        },
+        "coverage": {
+          "turns": 2,
+          "replayedTurns": 2,
+          "requests": 8,
+          "replayedRequests": 8
+        },
+        "assumptions": [
+          {
+            "id": "A1",
+            "text": "Same conversation: the other model is assumed to get the same prompts."
+          }
+        ]
+      }
+    }
+  ],
+  "notAnalysed": [
+    {
+      "kind": "cheaper-model",
+      "providerId": "claude-code",
+      "reason": "The session's turn costs were not given, so it can't be ranked by cost.",
+      "sessions": 1
+    },
+    {
+      "kind": "cheaper-model",
+      "providerId": "pi-agent",
+      "reason": "This provider's logs can't be replayed yet.",
+      "sessions": 1
+    }
+  ]
+}
