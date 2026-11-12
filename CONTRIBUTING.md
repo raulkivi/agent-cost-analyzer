@@ -1,5 +1,7 @@
 # Contributing
 
+**Last changed:** 2026-11-12 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+
 Thanks for helping improve Agent Cost Analyzer (this repo, `agent-cost-analyzer`, also builds the AI Credits Analyzer VS Code extension). This is a personal project
 maintained on a best-effort basis, so replies may take a few days.
 
@@ -75,10 +77,11 @@ npm run package --workspace=packages/vscode-extension # writes a .vsix next to t
 - **Install a VSIX.** After `npm run package`, use *Extensions: Install from
   VSIX...* in the Command Palette and pick the file. This is how to try a
   build before it is published; releases are on the Marketplace and Open VSX.
-- **Manual checks.** Some things no test can drive (the usability script, the
-  MCP server in Copilot agent mode, remote windows). Release candidates are
-  checked by hand against
-  [docs/plans/vscode-extension-manual-checks.md](docs/plans/vscode-extension-manual-checks.md).
+- **Release checks.** No hand checklist gates a release: the UI checks are
+  wdio and Playwright specs ([docs/plans/release-ui-gate.md](docs/plans/release-ui-gate.md)).
+  [docs/plans/vscode-extension-manual-checks.md](docs/plans/vscode-extension-manual-checks.md)
+  records what each suite covers and the two checks that stay manual
+  (remote windows, screenshots).
 
 ## Making a change
 

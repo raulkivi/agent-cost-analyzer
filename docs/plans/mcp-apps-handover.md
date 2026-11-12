@@ -1,19 +1,16 @@
-# Phase 12 (MCP Apps): session handover, 2026-11-10 to 2026-11-12
+# Phase 12 (MCP Apps): handover record, 2026-11-10 to 2026-11-12
 
 **Last changed:** 2026-11-12 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
-This document hands the Phase 12 work over to the next session. The design, the tasks and the exit criteria are in [mcp-apps.md](mcp-apps.md). The schedule and the status are in [implementation-plan-gantt.md](../implementation-plan-gantt.md). This page gives only what a new session needs to pick the work up.
+Phase 12 is done. The design, the tasks and the exit criteria are in [mcp-apps.md](mcp-apps.md). The schedule and the status are in [implementation-plan-gantt.md](../implementation-plan-gantt.md). This page keeps the Phase 12 record: the PRs, the owner's decisions, the implementation facts and how the work ran. The current state of the repository, the release procedure, open owner decisions and next candidates are in [session-handover.md](../session-handover.md).
 
 ## 1. Where things stand
 
-- **Phase 12 is complete.** `main` is at `603820e` (#226), with no open PRs and no agent worktrees.
+- **Phase 12 is complete** (36 of 36 tasks).
 - **MVP released 2026-11-10:** extension 0.4.0 (stable) and app 0.10.0 (#192), after A16's owner checks passed (#191).
 - **Increment 2 released 2026-11-11:** extension 0.6.0 (tag `ext-v0.6.0`, stable, VS Code 1.146 required) and app 0.11.0 (tag `app-v0.11.0`). The extension passed the real-Copilot gate on `964e9a8` (22/22 required tests). A24 is replaced by the automated checks of step 10.17 ([release-ui-gate.md](release-ui-gate.md)). Extension 0.5.0 (pre-release, #197) is superseded.
 - **Increment 3 released 2026-11-12:** extension 0.8.0 (stable; VS Code Marketplace, Open VSX and GitHub, tag `ext-v0.8.0`) and app 0.12.0 (tag `app-v0.12.0`), both on `dacf3ed`. The real-Copilot gate passed 33 of 33 required tests (1.54 AI Credits).
-- **Unreleased on `main`:** the keyboard-focus fix after a drill-down loads (#226; both CHANGELOGs, `[Unreleased]` → Fixed). It ships with the next release.
 - **Step 10.17 done 2026-11-11** (#202–#212): every pre-release UI check is a wdio or Playwright spec; a ruleset on `main` requires 9 CI checks; an extension release needs a passing real-Copilot run recorded as a git note on the tagged commit. Docs-only PRs skip the heavy jobs (#221).
-- **Step 10.18 done** (#209): Copilot chats from windows with no folder open now appear.
-- **Root README is for users** (#226); the developer doc index is [docs/README.md](../README.md).
 
 ## 2. PRs in Phase 12
 
@@ -60,16 +57,7 @@ This document hands the Phase 12 work over to the next session. The design, the 
 - **U5 and U2 messages (Q7, 2026-11-11):** try `sendMessage`, then fall back to "Ask in the chat: Analyse session <id>".
 - **Mock-ups:** the A0b, A17b and A25b boards are approved. A deviation from them is fine when the PR body lists it.
 
-## 4. Open owner decisions
-
-- **U5's "Sent" label:** VS Code 1.146 only stages `Analyse session <id>` in the chat input, unsent (mcp-apps.md §6.1).
-- **Claude Desktop permission prompts** for view-initiated calls; outside the release gate (§6.1).
-- **Standalone app download:** users clone the repo and run `npm start`; decide whether to publish a download.
-- **threat-model.md §5.8** (open since 2026-11-06): code-owner review on `main`, `ext-v*` tag protection, `release` environment reviewers, CODEOWNERS for `fixtures/` and `services/pricing/`.
-- **Open VSX trusted publisher** not registered: `release-extension.yml` still uses the `OVSX_PAT` environment secret. Register it at open-vsx.org, switch to trusted publishing, delete `OVSX_PAT`.
-- **`npm audit` dev tree** (the wdio-vscode-service chain) accepted for dev only (threat-model §7).
-
-## 5. Key implementation facts
+## 4. Key implementation facts
 
 - **Packages:**
   - `packages/mcp-apps` holds the views. It depends on `domain` and on web's presentational exports, never on `server`.
@@ -95,36 +83,21 @@ This document hands the Phase 12 work over to the next session. The design, the 
 - **Contrast tests** cover the fallbacks, the recorded Claude set, and VS Code Light Modern, Dark Modern, Dark High Contrast and Light High Contrast (`test/theme/host-sets.ts`; the High Contrast sets recorded by wdio in #204).
 - **Open security items:** host fonts (`applyHostFonts` injects the host's `@font-face` as given) and host trust (mcp-apps.md §6.1).
 
-## 6. Follow-ups (not scheduled)
+## 5. Code follow-ups found in Phase 12
 
-- U12's row hover puts muted text at 4.38:1 on VS Code Dark Modern; VS Code callout backgrounds can't be tested (§6.1).
-- Watch CI for the `a16-session-views` keyboard flake; if it recurs, the layout-effect fix missed the cause.
-- mcp-apps.md §11: SDK 2 / ext-apps 2.x, U16/U17, shorter content for UI clients, Learn cards (U8), one-click Open (decision B).
-- The real-Copilot suite tests only VS Code's local harness; sessions from the SDK harness (1.146's default) are unchecked there.
+The owner decisions and the other follow-ups are in [session-handover.md](../session-handover.md) and mcp-apps.md §6.1 and §11.
+
 - CSS class prefixes per view are a convention, with no test that each view uses its own (U10/U11 once collided).
 - The no-projects reason is copied in `views/cost-compare/no-projects.ts` and parsed from the server's text in `views/cost-over-time/explain-error.ts`; a server wording change breaks both silently.
 
-## 7. Releasing the extension
-
-1. A version-bump PR (both CHANGELOGs: retitle `[Unreleased]`), merged by the owner.
-2. Check that `engines.vscode` still matches current stable VS Code (D9). A VS Code bump means rerunning the real suite (R5: 1.146 changed the Copilot harness default).
-3. On the merged commit, the owner runs `npm run build`, then
-   `COPILOT_E2E=1 COPILOT_E2E_USER_DATA_DIR=~/.cache/aica-copilot-e2e/user-data xvfb-run -a npm run test:ui:vscode:copilot --workspace=packages/vscode-extension`
-   (33 tests, about 1.6 AI Credits, cap 3, about 26 minutes).
-4. `npm run release:evidence --workspace=packages/vscode-extension`, then `git push origin refs/notes/release-ui`.
-5. Push the tags (`ext-v*`, `app-v*`); the owner approves the `release` environment.
-
-An agent running the real suite uses `env -u WAYLAND_DISPLAY` with xvfb, keeps the 3-credit cap, and resets `refs/notes/release-ui` afterwards.
-
-## 8. How this session worked
+## 6. How the Phase 12 work ran
 
 - **Subagents in worktrees.** Each task ran in an isolated worktree on a local branch, based on the designated branch's tip. Subagents never push. Launch them from the repo root so worktrees don't nest.
 - **One PR per wave.** I merged the subagents' branches into a wave branch, reconciled the docs and the Gantt counts, ran the checks, and opened one PR per wave.
-- **Stacked PRs:** retarget the child to `main` before the parent merges; a deleted base branch closed #224.
 - **Worktrees have no `node_modules`.** `@agent-cost-analyzer/*` then resolves to the main checkout, and stale vite caches can make tests pass against old code. Briefs tell agents to run `npm ci --prefer-offline` in the worktree first; the coordinator reruns every check on the integrated branch in the main checkout.
 - **Shared brief.** Agents read one common brief (setup, reading list, rules, checks, report) plus a task paragraph.
-- **Merging is the owner's.** Merge a PR only when the owner asks; never approve the `release` environment.
 - **Playwright MCP writes `.playwright-mcp/` into the main checkout**, even from a worktree; delete it before committing. Screenshots stay in the session scratchpad, never in the repo.
+- **Merging and stacked PRs:** see session-handover.md's working notes.
 - **PR tracking.** Subscribe to PR activity and set a 50-minute check-in. After the owner squash-merges, main equals the PR head, so check that `git diff HEAD origin/main` is empty, then merge main back into a still-open branch with `-s ours`.
 - **Checks before a push.** Run these from the repo root and check each exit code rather than grepping the output:
   - `npm run headers:check`
@@ -141,9 +114,3 @@ An agent running the real suite uses `env -u WAYLAND_DISPLAY` with xvfb, keeps t
   - Every updated doc gets **Last changed** and **Source** in its header.
   - The Gantt is updated in the same change as the status, including the bars, percentages, Open items and the detail chart.
   - Each PR body follows `.github/pull_request_template.md`.
-
-## 9. Next candidates
-
-- **Phase 11** (pi real-capture verification): blocked on the owner's real pi sessions; the first step is to write capture instructions.
-- **Owner reviews still open:** Phase 13 (13.8 eyes-on), Phase 14 (14.8 docs, §13 exit on real sessions), Phase 15 (docs review, exit on real data).
-- The open owner decisions in §4.

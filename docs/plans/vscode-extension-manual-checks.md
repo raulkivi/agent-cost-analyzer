@@ -1,23 +1,22 @@
-# AI Credits Analyzer: manual checks (step 10.9)
+# AI Credits Analyzer: manual checks record (step 10.9)
 
-**Last changed:** 2026-11-11 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-12 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
-The owner runs these once per release candidate in a **real VS Code**
-(current stable), because no test can drive them: the usability script
-from [vscode-extension.md](vscode-extension.md) §3.5, the remote check
-(D6), and Copilot agent mode using the MCP server (10.8's exit check).
-Record the result in the release PR: tick each line, add notes, and attach
-the screenshots listed at the end (they're also the ones step 10.10 puts
-in the docs). Findings that need a code fix also go in the run log below.
+No row here gates a release. Since 2026-11-11 (step 10.17) every UI check
+before a release is automated: wdio specs for VS Code and Copilot Chat,
+Playwright specs for the web app ([release-ui-gate.md](release-ui-gate.md)).
+This doc records what each suite covers, what is still manual (§3, the
+remote check, and §4, the screenshots; neither gates a release), and the
+owner's hand runs before the gate existed.
 
-Since 2026-11-11 (step 10.17) no row here gates a release: every UI check
-before a release is automated. This doc records what each suite covers and
-what is still manual ([release-ui-gate.md](release-ui-gate.md)); with G7
-(2026-11-11) no row is left that a release waits for by hand.
+Until then the owner ran these once per release candidate in a real VS
+Code: the usability script from [vscode-extension.md](vscode-extension.md)
+§3.5, the remote check (D6), and Copilot agent mode using the MCP server
+(10.8's exit check).
 
 ## Run log
 
-### 0.1.0 (started 2026-10-27, in progress)
+### 0.1.0 (2026-10-27 to 2026-11-03; closed)
 
 - **Deviation:** run in VS Code Insiders 1.144.0, Linux, because this
   machine has no stable VS Code.
@@ -109,9 +108,10 @@ what is still manual ([release-ui-gate.md](release-ui-gate.md)); with G7
   - 1.9: at 640 px the sessions list stacks above the panel with no
     horizontal overflow; Columns is replaced by Details. Chrome's minimum
     width is 500 px, so 360 px wasn't tested.
-- **Not yet run:** 1.5-1.7 and 1.9 in VS Code; 1.8, 1.10-1.13 (1.12
-  last); §2.1-2.6 in Copilot agent mode (the server itself answered over
-  stdio, 9 tools); §3.
+- **Not run by hand before 0.1.0 shipped (`ext-v0.1.0`, 2026-11-03):**
+  1.5-1.7 and 1.9 in VS Code; 1.8, 1.10-1.13; §2.1-2.6 in Copilot agent
+  mode (the server itself answered over stdio, 9 tools); §3. The table
+  below says which of these are now automated.
 
 ## 0. Install the candidate
 
