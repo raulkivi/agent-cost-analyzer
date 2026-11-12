@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-11-12
+
 ### Changed
 - **The MCP server speaks the MCP 2026-07-28 protocol too.** The MCP server now also serves clients on
   the MCP 2026-07-28 protocol, alongside today's clients, and a call to a tool it doesn't have is

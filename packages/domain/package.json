@@ -1,7 +1,7 @@
 {
   "name": "@agent-cost-analyzer/domain",
   "private": true,
-  "version": "0.12.0",
+  "version": "0.13.0",
   "license": "MIT",
   "author": "Raul Kivi",
   "type": "module",
