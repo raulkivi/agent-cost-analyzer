@@ -13,7 +13,7 @@ Where the work stands at the end of the 2026-11-10 to 2026-11-12 sessions, for w
   - Docs-only PRs skip the heavy UI and integration jobs; `test` always runs.
 - **Step 10.18 is done:** Copilot Chat sessions from a window with no folder open now appear (#209).
 - The root README is user-oriented; the developer documentation index is [README.md](README.md) in this folder.
-- **Unreleased on `main`:** the keyboard-focus fix in the MCP App views (Back takes focus in the render that mounts it). It ships with the next release.
+- **Release prepared 2026-11-12:** extension 0.10.0 and app 0.13.0 carry the MCP SDK 2 and ext-apps 2.x migration ([plans/mcp-sdk-2-migration.md](plans/mcp-sdk-2-migration.md)) and the keyboard-focus fix in the MCP App views. Next: the real-Copilot gate on the merged commit, then the tags `ext-v0.10.0` and `app-v0.13.0`.
 
 ## Releasing the extension
 

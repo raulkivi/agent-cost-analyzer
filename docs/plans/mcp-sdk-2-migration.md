@@ -2,7 +2,7 @@
 
 **Last changed:** 2026-11-12 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
-Status: **M0 to M5 done 2026-11-12 (findings and the M5 review in §9); owner decisions D1–D4 taken 2026-11-12 (§6); M6, the release check, is the owner's.**
+Status: **M0 to M5 done 2026-11-12 (findings and the M5 review in §9); owner decisions D1–D4 taken 2026-11-12 (§6); M6, the release check, is the owner's; the release PR for extension 0.10.0 and app 0.13.0 is open (2026-11-12).**
 
 Moves both MCP servers, the extension's MCP child and the MCP App views from `@modelcontextprotocol/sdk` 1.32.2 and `@modelcontextprotocol/ext-apps` 1.7.5 to the split SDK 2 packages and ext-apps 2.x. It is the first follow-up in [mcp-apps.md](mcp-apps.md) §11. The pin and its reason are in mcp-apps.md §4.2.
 
