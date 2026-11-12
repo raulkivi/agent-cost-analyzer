@@ -134,6 +134,7 @@ describe("listSubagentLogFiles", () => {
     expect(listSubagentLogFiles(sessionDir)).toEqual({
       fileNames: ["runSubagent-Explore-call_a.jsonl", "searchSubagent-call_b.jsonl"],
       tooMany: false,
+      unreadable: false,
     });
   });
 
@@ -144,10 +145,17 @@ describe("listSubagentLogFiles", () => {
     expect(listSubagentLogFiles(sessionDir).fileNames).toEqual(["runSubagent-Explore-call_link.jsonl", "searchSubagent-call_dir.jsonl"]);
   });
 
-  it("returns an empty list for a missing folder and for one without subagent files", () => {
-    expect(listSubagentLogFiles(path.join(root, "nope"))).toEqual({ fileNames: [], tooMany: false });
+  it("returns an empty, readable list for a folder without subagent files", () => {
     touch("main.jsonl");
-    expect(listSubagentLogFiles(sessionDir)).toEqual({ fileNames: [], tooMany: false });
+    expect(listSubagentLogFiles(sessionDir)).toEqual({ fileNames: [], tooMany: false, unreadable: false });
+  });
+
+  // Constraint 6: an empty list for a folder that couldn't be read would hide
+  // orphan files, so the caller must be able to tell it from "no files".
+  it("reports an unreadable folder instead of an empty listing", () => {
+    expect(listSubagentLogFiles(path.join(root, "nope"))).toEqual({ fileNames: [], tooMany: false, unreadable: true });
+    touch("main.jsonl");
+    expect(listSubagentLogFiles(path.join(sessionDir, "main.jsonl"))).toEqual({ fileNames: [], tooMany: false, unreadable: true });
   });
 
   it("has a per-session cap of 200", () => {

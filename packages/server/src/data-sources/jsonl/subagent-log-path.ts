@@ -42,6 +42,10 @@ export interface SubagentLogListing {
   // report a symlink or directory instead of the scan hiding it.
   fileNames: string[];
   tooMany: boolean;
+  // The folder couldn't be read, so files may exist that this listing can't
+  // see. Not the same as an empty listing: the caller makes the session total
+  // unknown rather than silently leaving orphan files out (constraint 6).
+  unreadable: boolean;
 }
 
 export function listSubagentLogFiles(sessionDir: string): SubagentLogListing {
@@ -49,12 +53,13 @@ export function listSubagentLogFiles(sessionDir: string): SubagentLogListing {
   try {
     names = readdirSync(sessionDir);
   } catch {
-    return { fileNames: [], tooMany: false };
+    return { fileNames: [], tooMany: false, unreadable: true };
   }
 
   const matching = names.filter((name) => SUBAGENT_LOG_NAME.test(name)).sort();
   return {
     fileNames: matching.slice(0, MAX_SUBAGENT_FILES_PER_SESSION),
     tooMany: matching.length > MAX_SUBAGENT_FILES_PER_SESSION,
+    unreadable: false,
   };
 }
