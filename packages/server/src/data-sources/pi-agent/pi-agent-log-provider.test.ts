@@ -185,11 +185,20 @@ describe("PiAgentLogProvider", () => {
     it("populates toolInventory from every tool declared on the branch, with the turns that invoked each", async () => {
       const session = await new PiAgentLogProvider({ sessionsDirPath: fixturesDir }).readSession(schemaSessionId);
 
-      expect(session?.toolInventory).toEqual([
+      expect(session?.toolInventory?.map(({ name, loaded, invokedInTurns }) => ({ name, loaded, invokedInTurns }))).toEqual([
         { name: "read", loaded: true, invokedInTurns: [] },
         { name: "bash", loaded: true, invokedInTurns: [0] },
         { name: "write", loaded: true, invokedInTurns: [] },
       ]);
+    });
+
+    it("counts a pi tool's definition from the declaration persisted in the file; a tool removed since is unknown with a reason", async () => {
+      const session = await new PiAgentLogProvider({ sessionsDirPath: fixturesDir }).readSession(schemaSessionId);
+      const [read, bash, write] = session?.toolInventory ?? [];
+
+      expect(read.definitionTokens).toMatchObject({ known: true, estimated: true });
+      expect(bash.definitionTokens).toMatchObject({ known: true, estimated: true });
+      expect(write.definitionTokens).toEqual({ known: false, reason: expect.stringContaining("no longer declared") });
     });
 
     it("leaves toolInventory unset for a session file with no system messages", async () => {

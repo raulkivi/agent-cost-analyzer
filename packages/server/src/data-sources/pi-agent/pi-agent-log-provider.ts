@@ -25,9 +25,17 @@ import { buildTurnInspectorDetail } from "./turn-inspector-builder.js";
 import { computeBranchSessionId, computePiFileHash, parseBranchSessionId } from "./session-id.js";
 import { buildPiSystemPromptComponents, buildPiSystemPromptComponentsFromState } from "./system-prompt-components.js";
 import { replaySystemMessages } from "./system-message-replay.js";
+import { toolDefinitionTokenLookup, type ToolDefinitionTokenReasons } from "../jsonl/tool-definition-tokens.js";
 import { buildToolInventory } from "../jsonl/tool-inventory.js";
 import { readSystemPromptSidecarIndex, type SidecarIndex } from "./system-prompt-sidecar-reader.js";
 import { describeTurnUsage } from "../../services/turn-usage-sentence.js";
+
+// Phase 16 SR2: pi persists each declared tool's description and parameters in
+// the session file; a tool removed before the branch's end keeps no definition.
+const PI_TOOL_DEFINITION_REASONS: ToolDefinitionTokenReasons = {
+  unreadable: "pi's session file holds no tool declarations, so this tool's definition size is unknown.",
+  absent: "This tool is no longer declared at the end of the session, so its definition size is unknown (pi keeps no definition for a removed tool).",
+};
 
 const PROVIDER_ID = "pi-agent";
 // Phase 15 step 15.1: the folder is on the session header line only; a file
@@ -197,6 +205,7 @@ export class PiAgentLogProvider implements LogProvider, SystemPromptTextReader {
       ? buildToolInventory(
           inFileSystemPrompt.declaredToolNames,
           turns.map((turn) => turn.toolCalls.map((call) => call.name)),
+          toolDefinitionTokenLookup(inFileSystemPrompt.tools, PI_TOOL_DEFINITION_REASONS),
         )
       : undefined;
 

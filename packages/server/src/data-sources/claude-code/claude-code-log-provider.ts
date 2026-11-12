@@ -21,6 +21,7 @@ import { groupTurnEntriesByRound, groupTurnRequestRounds } from "./round-grouper
 import { findCompactedRequestIds } from "./compaction.js";
 import { extractTurnUsage } from "./usage-extractor.js";
 import { extractToolCalls } from "./tool-call-extractor.js";
+import { buildClaudeCodeToolInventory } from "./tool-shape-inventory.js";
 import { indexToolResults } from "./tool-result-index.js";
 import { buildTurnInspectorDetail } from "./turn-inspector-builder.js";
 import { computeClaudeCodeFileHash, resolveClaudeCodeSessionFilePath } from "./session-id.js";
@@ -190,6 +191,10 @@ export class ClaudeCodeLogProvider implements LogProvider, RequestTraceReader {
     const modelTurns = knownUsageTurns.filter((turn) => (turn.usage.roundsCount ?? 0) > 0);
     const model = modelTurns.at(-1)?.usage.model ?? "unknown";
     const startedAt = resolveStartedAt(branch);
+    const toolInventory = buildClaudeCodeToolInventory(
+      entries,
+      turns.map((turn) => turn.toolCalls.map((call) => call.name)),
+    );
 
     return {
       id: computeClaudeCodeFileHash(filePath),
@@ -203,6 +208,7 @@ export class ClaudeCodeLogProvider implements LogProvider, RequestTraceReader {
       usageDataAvailable: knownUsageTurns.length > 0,
       ...(startedAt ? { startedAt } : {}),
       workspace,
+      ...(toolInventory ? { toolInventory } : {}),
     };
   }
 
@@ -214,7 +220,8 @@ export class ClaudeCodeLogProvider implements LogProvider, RequestTraceReader {
   async listSessions(): Promise<Session[]> {
     const sessions = await Promise.all(this.listSessionFilePaths().map((filePath) => this.buildSessionFromFile(filePath)));
     return sessions
-      .map((session) => ({ ...session, turns: [] }))
+      // The inventory is detail (Analyze), not part of a session summary.
+      .map((session) => ({ ...session, turns: [], toolInventory: undefined }))
       .sort((a, b) => (b.startedAt ?? "").localeCompare(a.startedAt ?? ""));
   }
 

@@ -11,6 +11,7 @@ import {
   readToolDefinitionsRaw,
 } from "../../data-sources/jsonl/prompt-artifact-reader.js";
 import { buildSystemPromptBreakdown } from "../../data-sources/jsonl/system-prompt-breakdown.js";
+import { toolDefinitionTokenLookup } from "../../data-sources/jsonl/tool-definition-tokens.js";
 import {
   buildToolInventory,
   extractInvokedToolNamesByTurn,
@@ -94,6 +95,10 @@ export async function buildAnalyzeModeExtras(
       loadedToolNames?.length ?? null,
       toolDefinitions !== null ? JSON.stringify(toolDefinitions) : null,
     ),
-    toolInventory: buildToolInventory(loadedToolNames, invokedToolNamesByTurn),
+    toolInventory: buildToolInventory(
+      loadedToolNames,
+      invokedToolNamesByTurn,
+      toolDefinitionTokenLookup(toolDefinitions),
+    ),
   };
 }
