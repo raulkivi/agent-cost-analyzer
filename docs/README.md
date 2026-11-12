@@ -39,6 +39,8 @@ An npm workspace:
 
 ## Documentation index
 
+- [Session handover](session-handover.md): where the work stands, how to
+  release, open decisions and next candidates.
 - [Standalone app: setup and data sources](standalone-app.md): install,
   run, provider log locations, Copilot Chat settings and a tour of the app.
 - [User Guide](UserGuide.md) — illustrated walkthrough of the
