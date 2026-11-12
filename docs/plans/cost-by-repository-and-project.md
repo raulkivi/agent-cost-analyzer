@@ -1,5 +1,7 @@
 # Phase 15: Cost by repository and project, price history, billing and estimates
 
+**Last changed:** 2026-11-12 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+
 Status: **In progress**: steps 15.0–15.13 are done (see §14.1). The owner accepted
 every recommended decision on 2026-11-05 ([§13](#13-decisions)). The UI
 design (§11) was then revised against the project's existing design and UX
@@ -2054,8 +2056,9 @@ decision D19 (the extension's project tools have no projects yet) is in
 TDD exceptions: the security and exit-criterion tests guard behaviour
 that earlier steps built, so they passed when written (the redaction was
 broken on purpose once to see the property test fail); S10 was written
-after the views it reads. The `@modelcontextprotocol/sdk` dev dependency
-of `packages/web` is for the e2e suite's stdio client. Not yet: the
+after the views it reads. The `@modelcontextprotocol/client` dependency
+of `packages/web` (`@modelcontextprotocol/sdk` before the SDK 2
+migration) is for the e2e suite's stdio client. Not yet: the
 extension's own projects (15.14 or later) and its Dashboard tabs (15.14).
 
 **15.14 (done 2026-11-07).** The VS Code extension (§11.9), with the

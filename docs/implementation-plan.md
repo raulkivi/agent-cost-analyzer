@@ -1379,7 +1379,8 @@ unchanged.
     `list_findings`;
   - the app-only `get_turn_series` tool;
   - `@modelcontextprotocol/ext-apps` pinned to 1.7.5, the last line that
-    works with `@modelcontextprotocol/sdk` 1.x.
+    works with `@modelcontextprotocol/sdk` 1.x (2.0.4 on SDK 2 since
+    2026-11-12, [plans/mcp-sdk-2-migration.md](plans/mcp-sdk-2-migration.md)).
 - New `packages/mcp-apps` workspace: a single-file Vite build of three
   views (session cost, spend rollup, findings). They reuse `packages/web`'s
   UI primitives and charts and are driven by pure view models through an
@@ -1435,7 +1436,7 @@ the real-Copilot run on `964e9a8` passed 22 of 22 required tests. Extension
 Increment 2 detail: the A17b boards are approved (owner's answers in
 [plans/mcp-apps.md](plans/mcp-apps.md) §9.1); A23 (review and docs) is done. A1–A4 (turn series, brand
 injection and identity, web package exports) and A8 (the `registerAppViews`
-server group, `get_turn_series`, `_meta.ui` on three tools, ext-apps 1.7.5)
+server group, `get_turn_series`, `_meta.ui` on three tools, ext-apps 1.7.5, now 2.0.4)
 done; A0 host spike done by the owner (both hosts refuse `vscode://`
 links, so A12 is dropped and U1 copies the command text); A0b mock-ups
 approved; A5 `packages/mcp-apps` scaffold done (single-file Vite build,

@@ -1,5 +1,7 @@
 # AI Credits of classic Copilot Chat subagents
 
+**Last changed:** 2026-11-12 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+
 Status: **proposed** (design only, not started; plan merged in #124). Not
 yet a numbered step; see open question 9. `ext-v0.1.0` shipped on
 2026-11-03 without this fix, so classic-harness totals that omit subagent
@@ -367,7 +369,7 @@ model (owner, 2026-10-29: Claude subagents only in this repo).
 | 7 | Pure `mergeSubagentUsage(turnUsages, runsByTurn)` (§4.2), including the `agent-traces.db` join for `cacheWrite`/`reasoning`; `summarizeSessionUsage` takes the unplaceable marker | high | Opus |
 | 8 | Provider wiring: one shared classic-usage reader for `summarizeSessionWithCost` and `readClassicSession`; the contract fixture gains a session with subagents, so "list equals detail" covers them; provider tests for every unknown reason | medium | Sonnet |
 | 9 | Explanation text in `session-enricher` names the subagent share | low | Haiku |
-| 10 | `session-cost-builder`: `byModel` split, `subagents` summary; `cost.ts` schema; MCP descriptions and server instructions | medium | Sonnet |
+| 10 | `session-cost-builder`: `byModel` split, `subagents` summary; `cost.ts` schema; MCP descriptions and server instructions; the tool-list snapshots (`packages/server/src/mcp/__snapshots__/tool-list-standalone.json` and `packages/vscode-extension/src/mcp/__snapshots__/tool-list-extension.json`) updated on purpose | medium | Sonnet |
 | 11 | `InsightsDataset` `subagentRuns` rows linked to turns; `cost-rollup-builder` `byModel` split; associative-engine link test | medium | Sonnet |
 | 12 | Web: AI Credits cell marker and tooltip in `TurnsTable`; "Subagents this turn" in `ExplanationPanel`; UI check seeds a session with runs (shared by the extension webview) | medium | Sonnet |
 | 13 | Extension: tests that the status bar and sessions tree show the higher totals from a fixture with runs | low | Haiku |
