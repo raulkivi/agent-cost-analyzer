@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 import { describe, expect, it } from "vitest";
 import { toTurnDetailViewModel } from "./turn-detail.js";
-import { turnView } from "./turn-view-fixture.js";
+import { subagentRun, turnView, turnViewWithRuns } from "./turn-view-fixture.js";
 
 describe("toTurnDetailViewModel", () => {
   it("formats the header, event line, prompt excerpt and token rows", () => {
@@ -40,5 +40,52 @@ describe("toTurnDetailViewModel", () => {
 
   it("omits the event line when the turn has no event", () => {
     expect(toTurnDetailViewModel(turnView({ triggeredEvent: undefined, explanation: "" })).eventText).toBeUndefined();
+  });
+
+  describe("subagent runs (step 10.19)", () => {
+    it("has no subagent section when no run was read", () => {
+      expect(toTurnDetailViewModel(turnView()).subagents).toBeUndefined();
+    });
+
+    it("lists runs by agent name with the note, the main agent's share and the subagents' share", () => {
+      const vm = toTurnDetailViewModel(turnViewWithRuns([subagentRun(), subagentRun({ id: "call_b", label: "runSubagent-Plan", agentName: "Plan", roundsCount: 9, costAiCredits: { known: true, value: 11.95 } })]));
+      const section = vm.subagents!;
+      expect(section.heading).toBe("Subagent runs (2)");
+      expect(section.note).toEqual({ text: "incl. 42.06 from 2 subagent runs", known: true });
+      expect(section.mainAgent.text).toBe("4.25");
+      expect(section.subagents.text).toBe("42.06");
+      expect(section.runs.map((run) => [run.name, run.model, run.requests, run.aiCredits.text])).toEqual([
+        ["Explore", "claude-haiku-4.5", "14 requests", "30.11"],
+        ["Plan", "claude-haiku-4.5", "9 requests", "11.95"],
+      ]);
+    });
+
+    it("names the run by its label only when there is no agent name", () => {
+      const noName = { ...subagentRun(), agentName: undefined };
+      expect(toTurnDetailViewModel(turnViewWithRuns([noName])).subagents!.runs[0]!.name).toBe("runSubagent-Explore");
+    });
+
+    it("shows the marker note at 0.00, singular for one run", () => {
+      const vm = toTurnDetailViewModel(turnViewWithRuns([subagentRun({ label: "searchSubagent", agentName: undefined, roundsCount: 0, costAiCredits: { known: true, value: 0 } })]));
+      expect(vm.subagents!.note.text).toBe("incl. 0.00 from 1 subagent run");
+      expect(vm.subagents!.runs[0]).toMatchObject({ requests: "0 requests", aiCredits: { text: "0.00", known: true } });
+      expect(vm.subagents!.subagents.text).toBe("0.00");
+    });
+
+    it("says matched by time on the note and the run", () => {
+      const vm = toTurnDetailViewModel(turnViewWithRuns([subagentRun({ attribution: "timestamp" })]));
+      expect(vm.subagents!.note.text).toBe("incl. 30.11 from 1 subagent run, matched by time");
+      expect(vm.subagents!.runs[0]!.matchedByTime).toBe(true);
+    });
+
+    it("reads an unknown run as Unknown with its reason, never 0, and the turn note says unknown", () => {
+      const vm = toTurnDetailViewModel(turnViewWithRuns([subagentRun(), subagentRun({ id: "call_b", label: "runSubagent-Plan", agentName: "Plan", model: "", costAiCredits: { known: false, reason: "The subagent log runSubagent-Plan is missing." } })]));
+      const section = vm.subagents!;
+      expect(section.note).toEqual({ text: "unknown: The subagent log runSubagent-Plan is missing.", known: false });
+      expect(section.subagents).toMatchObject({ text: "Unknown", known: false });
+      expect(section.mainAgent.text).toBe("4.25");
+      expect(section.runs[1]).toMatchObject({ model: "model unknown", requests: "—", aiCredits: { text: "Unknown", known: false }, reason: "The subagent log runSubagent-Plan is missing." });
+      expect(vm.aiCredits.known).toBe(false);
+    });
   });
 });

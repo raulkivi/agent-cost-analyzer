@@ -10,7 +10,7 @@ import { axeViolations } from "../test-support/axe.js";
 import { comparisonChange, comparisonRow, costComparison, costSeries, costTotal, costVariance, point, projectCost, usdTotal, varianceCurrency, varianceModel } from "../view-models/cost-analysis-fixtures.js";
 import { priceChangeList } from "../view-models/increment3-fixtures.js";
 import { costRollup, measures, sessionCost, total, turnSeries } from "../view-models/fixtures.js";
-import { turnView } from "../view-models/turn-view-fixture.js";
+import { subagentRun, turnView, turnViewWithRuns } from "../view-models/turn-view-fixture.js";
 import { CostChangeView } from "./CostChangeView.js";
 import { CostCompareView } from "./CostCompareView.js";
 import { CostOverTimeView } from "./CostOverTimeView.js";
@@ -70,6 +70,15 @@ describe("U1 SessionCostView has no axe violations", () => {
     renderU1(ok(sessionCost()));
     fireEvent.click(screen.getByRole("button", { name: /Turn 17/ }));
     await screen.findByText("Turn 17 · claude-sonnet-5.5");
+    await expectNoViolations();
+  });
+
+  it("with a turn expanded that lists subagent runs, known and unknown", async () => {
+    const fake = port();
+    fake.toolResults.set("get_turn", ok(turnViewWithRuns([subagentRun({ attribution: "timestamp" }), subagentRun({ id: "call_b", label: "runSubagent-Plan", model: "", costAiCredits: { known: false, reason: "The subagent log is missing." } })])));
+    renderU1(ok(sessionCost()), fake);
+    fireEvent.click(screen.getByRole("button", { name: /Turn 17/ }));
+    await screen.findByText("Subagent runs (2)");
     await expectNoViolations();
   });
 

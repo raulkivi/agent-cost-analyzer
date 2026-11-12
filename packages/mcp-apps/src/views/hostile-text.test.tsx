@@ -9,6 +9,8 @@ import { FakeAppHostPort } from "../host/fake-app-host-port.js";
 import { exerciseEveryControl } from "../test-support/exercise-controls.js";
 import { comparisonRow, costComparison, costSeries, costVariance, projectCost, varianceCurrency, varianceModel } from "../view-models/cost-analysis-fixtures.js";
 import { sessionCost, turnSeries } from "../view-models/fixtures.js";
+import { subagentRun, turnViewWithRuns } from "../view-models/turn-view-fixture.js";
+import { SessionCostView } from "./SessionCostView.js";
 import { priceChangeList } from "../view-models/increment3-fixtures.js";
 import { CostChangeView } from "./CostChangeView.js";
 import { CostCompareView } from "./CostCompareView.js";
@@ -245,5 +247,18 @@ describe("U12 with logged text planted in every field", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent(HOSTILE);
     expect(second.container.querySelector("img")).toBeNull();
     expect(JSON.stringify(fake.calls)).not.toContain(SECRET);
+  });
+});
+
+describe("U1 turn detail with logged text planted in a subagent run", () => {
+  it("shows the agent name, model and unknown reason as text and sends none of it", async () => {
+    const fake = port();
+    const run = subagentRun({ agentName: `Agent ${HOSTILE}`, model: `model ${HOSTILE}`, costAiCredits: { known: false, reason: HOSTILE } });
+    fake.toolResults.set("get_turn", ok(turnViewWithRuns([run])));
+    const { container } = render(<SessionCostView port={fake} brand={brand} clipboard={{ writeText: async () => undefined }} result={ok(sessionCost())} />);
+    fireEvent.click(await screen.findByRole("button", { name: /Turn 17/ }));
+    expect(await screen.findByText(`Agent ${HOSTILE}`, { exact: false })).toBeInTheDocument();
+    expect(screen.getAllByText(HOSTILE, { exact: false }).length).toBeGreaterThan(0);
+    expectInert(container, fake);
   });
 });

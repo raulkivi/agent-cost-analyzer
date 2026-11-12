@@ -6,7 +6,7 @@ import { FakeAppHostPort } from "../../host/fake-app-host-port.js";
 import type { ClipboardPort } from "../../host/clipboard-port.js";
 import type { ViewBrand } from "../../brand/view-brand.js";
 import { sessionCost, total, turnSeries, measures } from "../../view-models/fixtures.js";
-import { turnView } from "../../view-models/turn-view-fixture.js";
+import { subagentRun, turnView, turnViewWithRuns } from "../../view-models/turn-view-fixture.js";
 import { SessionCostView } from "../SessionCostView.js";
 import { exerciseEveryControl } from "../../test-support/exercise-controls.js";
 
@@ -215,6 +215,52 @@ describe("SessionCostView turn drill-down", () => {
     fireEvent.click(screen.getByRole("button", { name: /Turn 17/ }));
     await screen.findByText("Turn 17 · claude-sonnet-5.5");
     expect(calls(port, "callTool").map((call) => call.args)).toContainEqual(["get_turn", { sessionId: "7f3a9c2e", turnIndex: 17, provider: "claude-code" }]);
+  });
+});
+
+describe("SessionCostView turn drill-down with subagent runs", () => {
+  async function openWith(view: ReturnType<typeof turnView>) {
+    const handle = setup();
+    handle.port.toolResults.set("get_turn", { structuredContent: view });
+    fireEvent.click(screen.getByRole("button", { name: /Turn 17/ }));
+    await screen.findByText("Subagent runs (" + (view.usage.subagents?.length ?? 0) + ")");
+    return handle;
+  }
+
+  it("lists the runs under the turn with the marker note, agent names and the shares", async () => {
+    await openWith(turnViewWithRuns([subagentRun(), subagentRun({ id: "call_b", label: "runSubagent-Plan", agentName: "Plan", roundsCount: 9, costAiCredits: { known: true, value: 11.95 } })]));
+    const list = screen.getByRole("list");
+    expect(within(list).getAllByRole("listitem").map((item) => item.textContent)).toEqual([
+      "Exploreclaude-haiku-4.514 requests30.11 AI Credits",
+      "Planclaude-haiku-4.59 requests11.95 AI Credits",
+    ]);
+    expect(screen.getByText("incl. 42.06 from 2 subagent runs")).toBeInTheDocument();
+    expect(screen.getByText("Main agent").parentElement).toHaveTextContent("Main agent 4.25");
+  });
+
+  it("shows the marker at 0.00 and says matched by time on the run", async () => {
+    await openWith(turnViewWithRuns([subagentRun({ attribution: "timestamp", roundsCount: 0, costAiCredits: { known: true, value: 0 } })]));
+    expect(screen.getByText("incl. 0.00 from 1 subagent run, matched by time")).toBeInTheDocument();
+    expect(within(screen.getByRole("list")).getByText("matched by time")).toBeInTheDocument();
+    expect(screen.getByText("0 requests")).toBeInTheDocument();
+  });
+
+  it("shows an unknown run as Unknown with its reason, never 0", async () => {
+    await openWith(turnViewWithRuns([subagentRun({ label: "runSubagent-Plan", agentName: undefined, model: "", costAiCredits: { known: false, reason: "The subagent log runSubagent-Plan is missing." } })]));
+    const item = within(screen.getByRole("list")).getByRole("listitem");
+    expect(item).toHaveTextContent("runSubagent-Plan");
+    expect(item).toHaveTextContent("model unknown");
+    expect(item).toHaveTextContent("Unknown");
+    expect(item).toHaveTextContent("The subagent log runSubagent-Plan is missing.");
+    expect(item.textContent).not.toMatch(/\b0\.00\b/);
+    expect(screen.getByText("unknown: The subagent log runSubagent-Plan is missing.")).toBeInTheDocument();
+  });
+
+  it("shows no subagent section for a turn without runs", async () => {
+    setup();
+    fireEvent.click(screen.getByRole("button", { name: /Turn 17/ }));
+    await screen.findByText("Turn 17 · claude-sonnet-5.5");
+    expect(screen.queryByText(/Subagent runs/)).toBeNull();
   });
 });
 

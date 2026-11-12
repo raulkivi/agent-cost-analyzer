@@ -19,4 +19,10 @@ describe("parseReplay", () => {
     expect(parseSessionReplay(replayComparison())).toBeUndefined();
     expect(parseSessionReplay({ ...replay(), turns: undefined })).toBeUndefined();
   });
+
+  it("keeps the optional coverage.subagentRuns", () => {
+    const base = replay();
+    const withRuns = { ...base, coverage: { ...base.coverage, subagentRuns: { runs: 2, costAiCredits: { known: true, value: 3.5 } } } };
+    expect(parseSessionReplay(withRuns)?.coverage.subagentRuns).toEqual({ runs: 2, costAiCredits: { known: true, value: 3.5 } });
+  });
 });

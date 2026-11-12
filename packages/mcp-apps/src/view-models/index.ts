@@ -10,7 +10,7 @@ export type { RankedBy } from "./ranking.js";
 export { UNKNOWN_TEXT } from "./format.js";
 export type { MeasureView } from "./format.js";
 export { toTurnDetailViewModel } from "./turn-detail.js";
-export type { TurnDetailViewModel } from "./turn-detail.js";
+export type { TurnDetailViewModel, SubagentRunRow, SubagentSectionViewModel } from "./turn-detail.js";
 export { toCostSeriesViewModel } from "./cost-series.js";
 export type {
   BasisTile,
