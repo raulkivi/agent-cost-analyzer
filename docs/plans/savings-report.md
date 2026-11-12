@@ -143,11 +143,19 @@ Credit = $0.01, no other rate).
 ### O3. Cache lost with no idle gap (instructions or tools changed)
 
 - **Detect.** As O2, but within the TTL and with no trace event.
-- **Cause.** Shown as "not recorded in the log; usually an instructions
-  file or the tool list changed, or the provider evicted the cache". It
-  names "instructions changed" only where SR0 shows the log records it
-  (VS Code local: a different `systemPromptFile` on a later `llm_request`
-  span is the candidate signal; unverified).
+- **Cause.** Named only where the log records it (SR0, §15):
+  - VS Code local, main agent (`debugName` `panel/editAgent`) only: a
+    changed tools-file content hash → "tools changed"; a changed
+    system-prompt-file content hash → "system prompt changed, cause not
+    recorded"; "instructions changed" only when the "Custom Instructions"
+    span text also changed. Compare content hashes, not file names.
+  - Claude Code: a `shapeHash` change between consecutive requests of the
+    same `querySource` → "tools changed"; a change in the `instructions`
+    attachment → "instructions changed".
+  - Agent Host and the rest: "not recorded in the log; usually an
+    instructions file or the tool list changed, or the provider evicted
+    the cache". `promptCacheBreakState` and `instruction.update` are
+    candidate signals, not decoded yet.
 - **Saving and action.** As O2. Action: "Edit instructions files and
   enable or disable tools between sessions, not during one."
 
@@ -243,7 +251,7 @@ Recommendation (D2): a new `services/savings` module, not a fifth
 
 | Opportunity | VS Code local | Agent Host | Claude Code | pi | mitmproxy |
 |---|---|---|---|---|---|
-| O1 unused tools | Yes, with debug logging (tools file) | Unverified (SR0) | No: the log records invoked tools only | Total only, via the sidecar; per tool unverified | No tool inventory |
+| O1 unused tools | Yes, with debug logging (tools file; the list changes mid-session, so use the per-request list) | No: total tokens only (`toolDefinitionsTokens`) | Yes, per tool with server (`api-request-shape` `shape.tools`; deferred tools at name-only cost) | Total only, via the sidecar; per tool unverified | No tool inventory |
 | O2–O4 cache breaks | Yes (trace; writes inferred without `agent-traces.db`) | Yes (trace) | Yes (trace) | No trace yet (Phase 14 D1) | No trace yet |
 | O5 failed calls | Yes, where outcomes are logged ([tool-call-audit.md](tool-call-audit.md) §5) | No: tool calls unknown | Yes | Per audit §5 | Per audit §5 |
 | O6 cheaper model | Yes | Yes | Yes | No | No |
@@ -311,9 +319,9 @@ repo.
 
 | ID | Work | Exit criterion | Complexity | Model | Depends on |
 |---|---|---|---|---|---|
-| SR0 | Spike (1 day, no merge): over the owner's own local logs, check (a) whether VS Code local's `systemPromptFile`/`toolsFile` changes within a session when instructions or tools change, (b) whether Copilot's tools file names the MCP server, (c) whether Agent Host sessions carry a tool inventory, (d) whether Claude Code records loaded MCP tools or `CLAUDE.md` changes. Reads local files only; runs no chat | Answers recorded in this plan's §4 and §6; unverified marks removed or kept | medium | Sonnet | — |
+| SR0 | **Done 2026-11-12 (§15).** Spike (1 day, no merge): over the owner's own local logs, check (a) whether VS Code local's `systemPromptFile`/`toolsFile` changes within a session when instructions or tools change, (b) whether Copilot's tools file names the MCP server, (c) whether Agent Host sessions carry a tool inventory, (d) whether Claude Code records loaded MCP tools or `CLAUDE.md` changes. Reads local files only; runs no chat | Answers recorded in this plan's §4 and §6; unverified marks removed or kept | medium | Sonnet | — |
 | SR1 | Domain: `savings.ts` schemas and types; failing tests for range, upper bound, simulated, unknown with reason, `low > high` rejected, simulated without its label rejected | `npm run typecheck` and domain tests green | medium | Sonnet | — |
-| SR2 | `ToolInventoryEntry.definitionTokens` for VS Code local (per tool from `readToolDefinitionsRaw` through `estimateTokenCount`) and pi where its sidecar allows; test first with a tools-file fixture and a missing-file case (unknown with reason) | Session fixtures carry per-tool estimated tokens; existing Tools tab tests unchanged | medium | Sonnet | SR0, SR1 |
+| SR2 | `ToolInventoryEntry.definitionTokens` for VS Code local (per tool from `readToolDefinitionsRaw` through `estimateTokenCount`, per request, since the list changes mid-session), Claude Code (from `api-request-shape` `shape.tools` per `shapeHash`: `description` plus `input_schema`; `defer_loading` tools at name-only cost) and pi where its sidecar allows; test first with a tools-file fixture and a missing-file case (unknown with reason) | Session fixtures carry per-tool estimated tokens; existing Tools tab tests unchanged | medium | Sonnet | SR0, SR1 |
 | SR3 | `CounterfactualPricer` over `CostPricer`: tests for Anthropic API and GitHub Copilot channels, a model with no price on the date (unknown with reason), unknown cache writes (range) | Golden figures match hand-computed price-book values | medium | Sonnet | SR1 |
 | SR4 | `cache-break-classifier.ts`: tests over Claude Code and Copilot traces for idle expiry, model switch, compaction (excluded), unexplained, short prompts under `minCacheableTokens`, start-to-start gap caveat | Golden classification over the request-trace fixtures that `session-replay.golden.test.ts` replays | high | Opus | SR1, D7 |
 | SR5 | `UnusedToolsDetector` across the window, MCP server grouping (`mcp__` exact, `mcp_` inferred) | Golden report on a multi-session fixture | medium | Sonnet | SR2, SR3 |
@@ -390,3 +398,24 @@ labelled with its basis, range or "up to", and coverage; the owner checks
 one idle-expiry break and one unused tool by hand against the turn's
 tokens and the price book and finds them equal within rounding; and the
 app writes no file and changes no setting.
+
+## 15. SR0 findings (2026-11-12)
+
+Read-only over the owner's logs: 259 VS Code local sessions (all `Code - Insiders`), 84 Agent Host `events.jsonl` plus 948 `session.db`, 1431 Claude Code sessions. Counts only; no content kept.
+
+- **(a) VS Code local prompt files change mid-session: yes.**
+  - Files are numbered (`system_prompt_N.json`, `tools_N.json`). A name never held two contents; equal content under different names 47 times. Compare content hashes.
+  - Main agent (`panel/editAgent`, 4526 spans): system prompt changed in 34 sessions (163 times), tools in 42 sessions (59 times; add-only 36, remove-only 15, both 8). Only 23 of 59 tool changes coincided with a system-prompt change.
+  - After a system-prompt change, cached tokens fell under half the previous input in 45 of 159 measurable requests.
+  - "Custom Instructions" span text changed in 13 sessions; 13 of 19 such changes were followed by a system-prompt change. 25 sessions changed the system prompt with no instruction change, so most changes have no recorded cause.
+  - Other agents (`copilotLanguageModelWrapper`, `backgroundTodoAgent`, `summarizeConversationHistory`) use other files; compare within one `debugName`.
+  - 22 `activate_*` virtual-group stubs in 3 sessions can hide tools from the list.
+- **(b) Copilot's tools file names no MCP server.** Entry keys are `type`, `name`, `description`, `parameters`. MCP tools are `mcp_<...>` with 3–8 `_` segments, so server boundaries can't be recovered. Grouping stays "inferred".
+- **(c) Agent Host has no per-tool inventory.** No tools table in `session.db`; `toolDefinitionsTokens` on `session.shutdown` (82 sessions) gives the total only. Also seen: `session.usage_checkpoint.promptCacheBreakState` (74 sessions; values not decoded), `instruction.update` (11 sessions), `session.model_change` (37 sessions, supports O4).
+- **(d) Claude Code records loaded tools and instructions: yes.**
+  - `api-request-shape` (1912 events) holds `shape.tools[]` (`name`, `description`, `input_schema`, `defer_loading` on 5982 of 29,388 entries) and `shape.system[]`. Every `api-request` carries a resolvable `shapeHash`.
+  - 8087 of 31,299 tool entries are `mcp__<server>__<tool>`: the server is exact.
+  - `shapeHash` changed per `querySource` 542 times in 404 sessions; 541 were tool-list-only changes.
+  - Attachments: `deferred_tools_delta` (`addedNames`/`removedNames`), `mcp_instructions_delta`, `instructions` (`files[]`; changed mid-session in 26 sessions), `nested_memory`, `tools-used`, `compact_boundary` (28).
+  - Deferred tools: their definitions aren't in every prompt, so O1 counts them at name-only cost; 208 invoked MCP tools were missing from the deferred deltas, so `shape.tools` is the loaded set.
+- **Open.** pi per-tool counts (not examined). Decoding `promptCacheBreakState` (a follow-up if O3 for Agent Host is wanted). Real Analyze traces could set `triggeredEvent: "instructions-change"` from these signals for VS Code local and Claude Code; a design choice for SR4.
