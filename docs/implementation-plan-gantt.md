@@ -104,7 +104,7 @@ gantt
 ## Not started
 
 - Phase 11 (0%) — pi provider real-capture verification.
-- Phase 12 follow-up (0%, planned 2026-11-12) — MCP SDK 2 and ext-apps 2.x migration, M0–M6; owner decisions D1–D3 first ([mcp-sdk-2-migration.md](plans/mcp-sdk-2-migration.md)).
+- Phase 12 follow-up (0%, planned 2026-11-12) — MCP SDK 2 and ext-apps 2.x migration, M0–M6; owner decisions D1–D4 first ([mcp-sdk-2-migration.md](plans/mcp-sdk-2-migration.md)).
 
 ## Open items
 
