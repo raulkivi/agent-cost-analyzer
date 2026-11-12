@@ -2,7 +2,7 @@
 
 **Last changed:** 2026-11-12 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
-Status: **M0 done 2026-11-12 (findings in §9); M1–M6 not started.** Four owner decisions (§6) come before M1; D3 and D4 shrink after M0.
+Status: **M0 done 2026-11-12 (findings in §9); owner decisions D1–D4 taken 2026-11-12 (§6); M1–M6 not started.**
 
 Moves both MCP servers, the extension's MCP child and the MCP App views from `@modelcontextprotocol/sdk` 1.32.2 and `@modelcontextprotocol/ext-apps` 1.7.5 to the split SDK 2 packages and ext-apps 2.x. It is the first follow-up in [mcp-apps.md](mcp-apps.md) §11. The pin and its reason are in mcp-apps.md §4.2.
 
@@ -98,13 +98,14 @@ Models per the planning rules: Haiku for mechanical edits, Sonnet for typical wo
 
 Critical path: M0 → D1–D4 → M2 → M3 → M4 → M5 → M6. M1 can run beside M2.
 
-## 6. Owner decisions (before M1)
+## 6. Owner decisions (decided 2026-11-12)
 
-- **D1. Protocol versions.** Move both stdio entries to `serveStdio`, which serves 2025-era and 2026-07-28 clients (recommended), or keep `connect(new StdioServerTransport())` until a host needs 2026-07-28. M0 found no host on 2026-07-28 (Claude Desktop negotiated 2025-11-25; VS Code logs nothing, §9e), so both choices work today; `serveStdio` (recommended) is the forward-compatible one and its default `legacy: 'serve'` keeps 2025-era clients working.
-- **D2. Unknown-tool error.** Accept that a call to an unknown or disabled tool becomes a JSON-RPC error (`-32602`) instead of `isError: true` (recommended: it is the SDK's behaviour and no view calls an unknown tool), or keep the old answer with a wrapper.
-- **D3. Bundle budget.** Settled by M0: `dist/views.html` is 741,922 bytes with ext-apps 2.0.4 against 957,451 today (-22.5%), far under the 1.2 MiB budget. The guide's "25% larger" doesn't apply to this repo's npm bundling. Recommend closing D3 with no change; lowering the budget is optional.
+The owner took every recommendation on 2026-11-12.
 
-- **D4. Cache hints for the views resource.** Settled by default: the SDK emits `ttlMs: 0`, `cacheScope: 'private'` unless the server sets a hint, and 2025-era responses carry none (§9b). Recommend leaving the default, so a host never shows views older than the installed server. Set a longer TTL (server option `cacheHints: { 'resources/read': { ttlMs } }`) only if an owner measurement shows host re-reads are a cost.
+- **D1. Protocol versions: `serveStdio`.** Both stdio entries move to `serveStdio`, which serves 2025-era and 2026-07-28 clients; its default `legacy: 'serve'` keeps today's hosts working. M0 found no host on 2026-07-28 yet (Claude Desktop negotiated 2025-11-25; VS Code logs no MCP version, §9e). M2 tests `server/discover` and a 2025-era `initialize` on each entry.
+- **D2. Unknown-tool error: accept SDK 2's behaviour.** A call to an unknown or disabled tool becomes a JSON-RPC error (`-32602`) instead of `isError: true`. No view calls an unknown tool. M2 updates the tests that expect `isError` for an unknown *tool*; those for an unknown argument value keep theirs.
+- **D3. Bundle budget: raise if needed; not needed.** `dist/views.html` is 741,922 bytes with ext-apps 2.0.4 against 957,451 today (-22.5%), far under 1.2 MiB. The budget stays.
+- **D4. Cache hints: `ttlMs: 0`.** The SDK already emits `ttlMs: 0`, `cacheScope: 'private'` unless the server sets a hint, and 2025-era responses carry none (§9b). M2 sets no hint and adds a test that `resources/read` of `views.html` answers `ttlMs: 0` on a 2026-07-28 request, so a host never shows views older than the installed server.
 
 ## 7. Risks
 
