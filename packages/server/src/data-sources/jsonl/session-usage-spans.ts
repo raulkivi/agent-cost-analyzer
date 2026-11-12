@@ -94,9 +94,9 @@ export function collectResponseIds(envelopes: JsonlEnvelope[]): string[] {
 // has a responseId that resolves in the map — same all-or-nothing shape as
 // aggregateAiCredits, so a partially-enriched turn doesn't silently show a
 // number that's missing some of its requests' contributions.
-function aggregateAgentTraceUsage(
+export function aggregateAgentTraceUsage(
   requests: LlmRequestUsage[],
-  agentTraceUsageByResponseId: Map<string, AgentTraceUsage>,
+  agentTraceUsageByResponseId: ReadonlyMap<string, AgentTraceUsage>,
 ): { cacheWrite: TokenCount; reasoning: TokenCount } {
   let cacheWrite = 0;
   let reasoning = 0;

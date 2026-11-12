@@ -6,7 +6,7 @@ import { subagentRunUsageSchema } from "@agent-cost-analyzer/domain";
 import { describe, expect, it } from "vitest";
 import type { JsonlEnvelope } from "./main-jsonl-reader.js";
 import { readMainJsonlFile } from "./main-jsonl-reader.js";
-import { extractSubagentRunUsage, MAX_SUBAGENT_MODEL_LENGTH } from "./subagent-run-usage.js";
+import { extractSubagentRunUsage, MAX_SUBAGENT_MODEL_LENGTH, NESTED_SUBAGENTS_REASON } from "./subagent-run-usage.js";
 
 const fixturesDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../../fixtures/jsonl/subagents");
 
@@ -241,5 +241,46 @@ describe("extractSubagentRunUsage identity", () => {
 
     expect(JSON.stringify(result)).not.toContain("xxxx");
     expect(subagentRunUsageSchema.safeParse(readRun(result)).success).toBe(true);
+  });
+});
+
+describe("extractSubagentRunUsage with the agent-traces join", () => {
+  const traced = (responseId: string) => okRequest({ responseId });
+
+  it("keeps cacheWrite and reasoning unknown without a join, as the list reads them", () => {
+    const run = readRun(extractSubagentRunUsage([traced("r-1")], 1, ref));
+
+    expect(run.cacheWrite).toMatchObject({ known: false });
+    expect(run.reasoning).toMatchObject({ known: false });
+  });
+
+  it("sums cacheWrite and reasoning over the run's requests when every responseId resolves", () => {
+    const join = new Map([
+      ["r-1", { cacheWrite: 10, reasoning: 1 }],
+      ["r-2", { cacheWrite: 20, reasoning: 2 }],
+    ]);
+
+    const run = readRun(extractSubagentRunUsage([traced("r-1"), traced("r-2")], 2, ref, "child-session-ref", join));
+
+    expect(run.cacheWrite).toEqual({ known: true, value: 30 });
+    expect(run.reasoning).toEqual({ known: true, value: 3 });
+  });
+
+  it("leaves both unknown when one request's responseId is missing from the join", () => {
+    const join = new Map([["r-1", { cacheWrite: 10, reasoning: 1 }]]);
+
+    const run = readRun(extractSubagentRunUsage([traced("r-1"), traced("r-2")], 2, ref, "child-session-ref", join));
+
+    expect(run.cacheWrite).toMatchObject({ known: false });
+    expect(run.reasoning).toMatchObject({ known: false });
+  });
+
+  it("keeps the join out of a run whose figures are unknown for another reason", () => {
+    const join = new Map([["r-1", { cacheWrite: 10, reasoning: 1 }]]);
+    const nested: JsonlEnvelope = { type: "child_session_ref" };
+
+    const run = readRun(extractSubagentRunUsage([traced("r-1"), nested], 2, ref, "child-session-ref", join));
+
+    expect(run.cacheWrite).toEqual({ known: false, reason: NESTED_SUBAGENTS_REASON });
   });
 });

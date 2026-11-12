@@ -20,6 +20,7 @@ import {
 } from "../../../test-support/copilot-cli-fixtures.js";
 import {
   seedCopilotSessionStore,
+  seedSubagentFixtureSession,
   USAGE_SESSION_ID,
   writeUsageDebugLog,
 } from "../../../test-support/copilot-session-store.js";
@@ -423,6 +424,22 @@ describeLogProviderContract("VscodeLogProvider (debug log ahead of the session s
   unknownSessionId: "does-not-exist",
   buildUnavailableProvider: () => new VscodeLogProvider({ sessionStoreDbPath: null, debugLogsDirPaths: [], agentTracesDbPath: null }),
   turnIndexWithRoundTrip: 1,
+});
+
+// Step 10.19: a session whose turns started a subagent run and a search; the
+// list must report the AI Credits, turn count and model the detail does.
+describeLogProviderContract("VscodeLogProvider (session with subagent runs)", {
+  buildAvailableProvider: () => {
+    const dir = mkdtempSync(path.join(tmpdir(), "vscode-log-provider-contract-runs-"));
+    const dbPath = path.join(dir, "session-store.db");
+    const debugLogsDirPath = path.join(dir, "debug-logs");
+    seedSubagentFixtureSession(dbPath, debugLogsDirPath, "run-and-search");
+    return new VscodeLogProvider({ sessionStoreDbPath: dbPath, debugLogsDirPaths: [debugLogsDirPath], agentTracesDbPath: null });
+  },
+  knownSessionId: "run-and-search",
+  unknownSessionId: "does-not-exist",
+  buildUnavailableProvider: () => new VscodeLogProvider({ sessionStoreDbPath: null, debugLogsDirPaths: [], agentTracesDbPath: null }),
+  turnIndexWithRoundTrip: 0,
 });
 
 // Debug logging switched on at the session's third turn: the log holds only that turn.

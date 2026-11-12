@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
 import type { SubagentRunUsage } from "@agent-cost-analyzer/domain";
+import type { AgentTraceUsage } from "../agent-traces/agent-traces-reader.js";
 import type { ChildSessionRef } from "./child-session-refs.js";
 import type { JsonlEnvelope, MainJsonlReadResult } from "./main-jsonl-reader.js";
 import {
@@ -8,6 +9,7 @@ import {
   type SubagentLogListing,
   type SubagentLogResolution,
 } from "./subagent-log-path.js";
+import { collectResponseIds } from "./session-usage-spans.js";
 import { extractSubagentRunUsage, type SubagentRunIdentity } from "./subagent-run-usage.js";
 
 // Plain sentences: each reaches the UI and the MCP tools as the reason a
@@ -46,6 +48,10 @@ export interface SubagentAttributionInput {
   // Per 0-based log turn, its user_message's ts (logTurnStartTimes).
   logTurnStarts: readonly (number | null)[];
   source: SubagentLogSource;
+  // Looks up a run's requests in agent-traces.db by responseId, to fill its
+  // cacheWrite and reasoning. Given by the detail read only; without it they
+  // stay unknown, as in the list.
+  agentTraceUsage?: (responseIds: string[]) => ReadonlyMap<string, AgentTraceUsage>;
 }
 
 export interface SubagentAttribution {
@@ -110,6 +116,7 @@ async function readRun(
   fileName: string,
   identity: SubagentRunIdentity,
   attribution: SubagentRunUsage["attribution"],
+  agentTraceUsage: SubagentAttributionInput["agentTraceUsage"],
 ): Promise<RunReadOutcome> {
   const resolution = source.resolve(fileName);
   if (resolution.status !== "found") {
@@ -123,7 +130,8 @@ async function readRun(
     return { status: "unreadable", reason: SUBAGENT_LOG_READ_FAILED_REASON };
   }
 
-  const read = extractSubagentRunUsage(content.envelopes, content.rawLineCount, identity, attribution);
+  const traces = agentTraceUsage?.(collectResponseIds(content.envelopes));
+  const read = extractSubagentRunUsage(content.envelopes, content.rawLineCount, identity, attribution, traces);
   return read.status === "read" ? { ...read, parentSessionId: parentSessionIdOf(content.envelopes) } : read;
 }
 
@@ -160,8 +168,7 @@ class AttributionBuilder {
 // Each ref's run goes to the ref's log turn. Returns the file names the refs
 // name, so none of them is read again as an orphan.
 async function attributeRefs(
-  refs: readonly ChildSessionRef[],
-  source: SubagentLogSource,
+  { refs, source, agentTraceUsage }: SubagentAttributionInput,
   builder: AttributionBuilder,
 ): Promise<Set<string>> {
   const referenced = new Set<string>();
@@ -182,7 +189,7 @@ async function attributeRefs(
       continue;
     }
 
-    const outcome = await readRun(source, ref.childLogFile, ref, "child-session-ref");
+    const outcome = await readRun(source, ref.childLogFile, ref, "child-session-ref", agentTraceUsage);
     if (outcome.status === "read") {
       builder.place(ref.logTurnIndex, outcome.run);
     } else {
@@ -200,12 +207,12 @@ function startedAtMs(run: SubagentRunUsage): number {
 // to this session and its start falls in exactly one log turn's window.
 async function attributeOrphans(
   fileNames: readonly string[],
-  { folderId, logTurnStarts, source }: SubagentAttributionInput,
+  { folderId, logTurnStarts, source, agentTraceUsage }: SubagentAttributionInput,
   builder: AttributionBuilder,
 ): Promise<void> {
   const placed: { logTurn: number; run: SubagentRunUsage }[] = [];
   for (const fileName of fileNames) {
-    const outcome = await readRun(source, fileName, { childSessionId: null, label: null }, "timestamp");
+    const outcome = await readRun(source, fileName, { childSessionId: null, label: null }, "timestamp", agentTraceUsage);
     if (outcome.status === "unreadable") {
       builder.sessionUnknown(outcome.reason);
       continue;
@@ -243,7 +250,7 @@ export async function attributeSubagentRuns(input: SubagentAttributionInput): Pr
     return builder.build();
   }
 
-  const referenced = await attributeRefs(input.refs, input.source, builder);
+  const referenced = await attributeRefs(input, builder);
   if (listing.unreadable) {
     builder.sessionUnknown(SUBAGENT_FOLDER_UNREADABLE_REASON);
   }

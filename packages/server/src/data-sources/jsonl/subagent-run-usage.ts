@@ -4,7 +4,12 @@ import { unavailableTokenCount, type SubagentRunUsage, type TokenCount } from "@
 import type { ChildSessionRef } from "./child-session-refs.js";
 import { extractLlmRequestUsage, type LlmRequestUsage } from "./llm-request-extractor.js";
 import type { JsonlEnvelope } from "./main-jsonl-reader.js";
-import { AGENT_TRACES_UNAVAILABLE_REASON, AI_CREDITS_NOT_AVAILABLE_REASON } from "./session-usage-spans.js";
+import type { AgentTraceUsage } from "../agent-traces/agent-traces-reader.js";
+import {
+  aggregateAgentTraceUsage,
+  AGENT_TRACES_UNAVAILABLE_REASON,
+  AI_CREDITS_NOT_AVAILABLE_REASON,
+} from "./session-usage-spans.js";
 
 const UNKNOWN_MODEL = "unknown";
 export const MAX_SUBAGENT_MODEL_LENGTH = 64;
@@ -90,6 +95,9 @@ export function extractSubagentRunUsage(
   rawLineCount: number,
   ref: SubagentRunIdentity,
   attribution: SubagentRunUsage["attribution"] = "child-session-ref",
+  // The agent-traces.db rows by responseId (the detail read only). Without it
+  // cacheWrite and reasoning stay unknown, as in the list.
+  agentTraceUsage?: ReadonlyMap<string, AgentTraceUsage>,
 ): SubagentRunRead {
   if (envelopes.length === 0) {
     return { status: "unreadable", reason: "The subagent log has no readable events." };
@@ -120,6 +128,15 @@ export function extractSubagentRunUsage(
   const sum = (pick: (request: LlmRequestUsage) => number): TokenCount =>
     unknownReason === null ? known(requests.reduce((total, request) => total + pick(request), 0)) : unavailableTokenCount(unknownReason);
 
+  // Same all-or-nothing join as a turn's: unknown when any request's
+  // responseId is missing from the rows.
+  const joined =
+    unknownReason !== null
+      ? { cacheWrite: unavailableTokenCount(unknownReason), reasoning: unavailableTokenCount(unknownReason) }
+      : agentTraceUsage === undefined
+        ? { cacheWrite: unavailableTokenCount(AGENT_TRACES_UNAVAILABLE_REASON), reasoning: unavailableTokenCount(AGENT_TRACES_UNAVAILABLE_REASON) }
+        : aggregateAgentTraceUsage(requests, agentTraceUsage);
+
   const startedAt = startedAtOf(start);
   return {
     status: "read",
@@ -130,9 +147,9 @@ export function extractSubagentRunUsage(
       model: latestKnownModel(requests),
       roundsCount: requestEnvelopes.length,
       uncachedInput: sum((request) => request.uncachedInput),
-      cacheWrite: unavailableTokenCount(AGENT_TRACES_UNAVAILABLE_REASON),
+      cacheWrite: joined.cacheWrite,
       cacheRead: sum((request) => request.cacheRead),
-      reasoning: unavailableTokenCount(AGENT_TRACES_UNAVAILABLE_REASON),
+      reasoning: joined.reasoning,
       output: sum((request) => request.output),
       costAiCredits: unknownReason === null ? aiCreditsOf(requests) : unavailableTokenCount(unknownReason),
       ...(startedAt === undefined ? {} : { startedAt }),

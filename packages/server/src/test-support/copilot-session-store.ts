@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import { copyFileSync, mkdirSync } from "node:fs";
+import { copyFileSync, cpSync, mkdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { DatabaseSync } from "node:sqlite";
@@ -60,4 +60,37 @@ export function writeUsageDebugLog(debugLogsDir: string): void {
   const sessionDir = path.join(debugLogsDir, USAGE_SESSION_ID);
   mkdirSync(sessionDir, { recursive: true });
   copyFileSync(USAGE_MAIN_JSONL, path.join(sessionDir, "main.jsonl"));
+}
+
+const SUBAGENT_FIXTURES_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../fixtures/jsonl/subagents");
+
+// One synthetic classic session from fixtures/jsonl/subagents/<caseName> (step
+// 10.19): its folder, main.jsonl and subagent logs, copied under a debug-logs
+// dir, and a store row, with a turn per user_message ("Fixture prompt N", the
+// text the fixture's log carries), added to the store at dbPath (created if
+// absent). The session id is the case name unless given: the fixture's orphan
+// runs name the case name as their parentSessionId.
+export function seedSubagentFixtureSession(dbPath: string, debugLogsDir: string, caseName: string, startedAt = "2026-09-21T10:00:00.000Z", sessionId = caseName): string {
+  const sessionDir = path.join(debugLogsDir, sessionId);
+  mkdirSync(path.dirname(dbPath), { recursive: true });
+  cpSync(path.join(SUBAGENT_FIXTURES_DIR, caseName), sessionDir, { recursive: true });
+  const turnCount = readFileSync(path.join(sessionDir, "main.jsonl"), "utf8")
+    .split("\n")
+    .filter((line) => line.includes('"type":"user_message"')).length;
+
+  const db = new DatabaseSync(dbPath);
+  db.exec(COPILOT_SESSION_STORE_SCHEMA.replaceAll("CREATE TABLE", "CREATE TABLE IF NOT EXISTS"));
+  db.prepare(
+    "INSERT INTO sessions (id, cwd, repository, branch, host_type, summary, agent_name, agent_description, created_at, updated_at) VALUES (?, '/repo', 'org/repo', 'main', 'desktop', 'Fixture session', 'GitHub Copilot Chat', 'chat', ?, ?)",
+  ).run(sessionId, startedAt, startedAt);
+  for (let index = 0; index < turnCount; index++) {
+    db.prepare("INSERT INTO turns (session_id, turn_index, user_message, assistant_response, timestamp) VALUES (?, ?, ?, 'ok', ?)").run(
+      sessionId,
+      index,
+      `Fixture prompt ${index + 1}`,
+      startedAt,
+    );
+  }
+  db.close();
+  return sessionId;
 }

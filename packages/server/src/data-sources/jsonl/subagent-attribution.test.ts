@@ -594,3 +594,28 @@ describe("logTurnAt", () => {
     expect(logTurnAt(starts, at)).toBe(expected);
   });
 });
+
+describe("attributeSubagentRuns with an agent-traces lookup", () => {
+  it("asks the lookup for each run's responseIds and fills cacheWrite and reasoning from it", async () => {
+    const sessionDir = path.join(fixturesDir, "run-and-search");
+    const { envelopes } = await readMainJsonlFile(path.join(sessionDir, "main.jsonl"));
+    const asked: string[][] = [];
+
+    const result = await attributeSubagentRuns({
+      folderId: "run-and-search",
+      refs: collectChildSessionRefs(envelopes),
+      logTurnStarts: logTurnStartTimes(envelopes),
+      source: folderSubagentLogSource(sessionDir),
+      agentTraceUsage: (responseIds) => {
+        asked.push(responseIds);
+        return new Map(responseIds.map((id) => [id, { cacheWrite: 5, reasoning: 1 }]));
+      },
+    });
+
+    expect(asked).toHaveLength(2);
+    expect(asked.every((ids) => ids.length > 0)).toBe(true);
+    const [run] = result.byLogTurn.get(0) ?? [];
+    expect(run.cacheWrite).toMatchObject({ known: true });
+    expect(run.reasoning).toMatchObject({ known: true });
+  });
+});
