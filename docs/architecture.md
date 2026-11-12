@@ -1,6 +1,6 @@
 # Architecture: Agent Cost Analyzer and AI Credits Analyzer
 
-**Last changed:** 2026-11-11 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-12 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 ## 1. Purpose & scope
 
@@ -1895,7 +1895,8 @@ extension that captures the fully assembled system prompt plus selected
 tools/skills/context files — which older pi session files lack — to a
 separate JSONL sidecar log
 (`~/.pi/agent/logs/system-prompts.jsonl`, or `$PI_SYSTEM_PROMPT_LOG_PATH`)
-from outside pi's own session format. `PiAgentLogProvider` optionally reads
+from outside pi's own session format. Installing it extends trust into pi's
+own process ([threat-model.md](threat-model.md) §4, §5.3). `PiAgentLogProvider` optionally reads
 it:
 
 - `system-prompt-sidecar-reader.ts`'s `readSystemPromptSidecarIndex` streams
