@@ -31,7 +31,7 @@ const configStatus: ConfigStatus = {
   warnings: [],
 };
 
-function setup(getSettings: () => AllowanceSettings) {
+function setup(getSettings: () => AllowanceSettings, now: () => Date = () => NOW) {
   const sources: SidebarSources = {
     relistLogSources: vi.fn(),
     listSessions: vi.fn(async () => [session("a", 30)]),
@@ -39,7 +39,7 @@ function setup(getSettings: () => AllowanceSettings) {
     listLearnScenarios: vi.fn(async () => []),
   };
   const onInternalError = vi.fn();
-  const controller = new SidebarController(sources, { now: () => NOW, timeZone: "UTC", onInternalError, allowance: getSettings });
+  const controller = new SidebarController(sources, { now, timeZone: "UTC", onInternalError, allowance: getSettings });
   const onChange = vi.fn();
   controller.onDidChange(onChange);
   return { controller, sources, onChange, onInternalError };
@@ -89,6 +89,21 @@ describe("SidebarController monthly allowance (step 10.21 MA4)", () => {
     await controller.refresh();
 
     expect(controller.monthlyAllowance()).toBe(controller.monthlyAllowance());
+  });
+
+  // No refresh happens at midnight; the next render must not reuse the
+  // previous day's model (days left) or the previous period's sum.
+  it("recomputes once the day or the period changes, with the sessions and settings unchanged", async () => {
+    let now = new Date("2026-10-24T23:59:59Z");
+    const { controller } = setup(() => SET, () => now);
+    await controller.refresh();
+    expect(controller.monthlyAllowance()).toMatchObject({ daysLeft: 8, used: 30 });
+
+    now = new Date("2026-10-25T00:00:01Z");
+    expect(controller.monthlyAllowance()).toMatchObject({ daysLeft: 7, used: 30 });
+
+    now = new Date("2026-11-01T00:00:01Z");
+    expect(controller.monthlyAllowance()).toMatchObject({ daysLeft: 30, used: null, period: { startKey: "2026-11-01" } });
   });
 
   it("a setting change re-renders without listing sessions or log folders", async () => {
