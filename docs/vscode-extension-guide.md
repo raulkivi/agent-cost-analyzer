@@ -222,8 +222,9 @@ counts; only caching and prices change.
   own model and the prices used. **Replay summary** opens the detail as a
   dialog, with the assumptions behind the replay; Escape closes it.
 - **Main agent only.** A classic chat's turn is replayed on the main
-  agent's own usage. The coverage line lists the subagent runs the replay
-  leaves out.
+  agent's own usage; its subagent runs are left out, and the panel doesn't
+  list them. The MCP `replay_session` result counts them in
+  `coverage.subagentRuns`.
 - **Prices.** A Copilot session is priced at GitHub Copilot's prices, in
   AI Credits (hover a simulated cost for its USD), as of the session's
   date. The **Price channel** switch in the summary prices it at the
@@ -470,10 +471,10 @@ against the allowance:
 The gauge is a lower bound on what is recorded here, not your bill. It
 doesn't see:
 
-- Subagent runs whose AI Credits are unknown (a missing or unreadable log,
-  or a run that can't be matched to a turn). Known runs are part of each
-  session's total, so the session counts as unknown and the figure reads
-  "at least".
+- Sessions with a subagent run whose AI Credits are unknown (a missing or
+  unreadable log, or a run that can't be matched to a turn). Such a
+  session's total is unknown, so the gauge leaves it out and the figure
+  reads "at least".
 - Sessions whose logs Copilot has already pruned. Copilot keeps the last
   `maxRetainedSessionLogs` logs; the tooltip names the oldest session
   counted.

@@ -4,7 +4,7 @@
 
 Status: approved 2026-11-13; plan steps 10.22 (Phase 0 and Phase 1) and
 10.23 (Phase 2) in [implementation-plan.md](../implementation-plan.md).
-Phase 0 in progress.
+Phase 0 done 2026-11-13; Phase 1 next.
 
 ## 1. Goal
 
@@ -418,8 +418,8 @@ Phase 2 PRs:
 Start here.
 
 1. ~~Owner answers D1–D8 (§3).~~ Done 2026-11-13, with D10–D12.
-2. Phase 0, the text fixes (0.1–0.3): small; can start once D1 is
-   answered, ideally before the tags are cut.
+2. ~~Phase 0, the text fixes (0.1–0.3).~~ Done 2026-11-13; PR to land
+   before the tags are cut.
 3. Phase 1: 1.0 (the ffmpeg-under-Xvfb spike, main session), then the
    waves of §10.4, each task through the brief (§10.2) and the review
    gate (§10.6). Commit and close Phase 1 at its exit.
@@ -564,3 +564,15 @@ review rejections.
 - 2026-11-13: owner accepted the recommended option for D1–D8 and
   D10–D12; E11 not recorded. Plan published to `docs/plans/`; steps 10.22
   and 10.23 added to the Gantt. Phase 0 started (wave P0).
+- 2026-11-13: Phase 0 done (0.1 Haiku, 0.2 and 0.3 Sonnet; all passed
+  review first time). Review fixes by the main session: 0.3 said the
+  panel's replay coverage lists the left-out subagent runs; it doesn't
+  (0.2 found that only the MCP `replay_session` result carries
+  `coverage.subagentRuns`, the web replay UI doesn't show it), and its
+  gauge wording was rewritten against `monthly-allowance.ts`. Open for the
+  owner: (a) no app or panel UI shows the subagent runs a replay left out,
+  though the 0.12.0 changelog implies it; (b) the extension README says 18
+  Learn sessions, the extension guide 17 Copilot scenarios.
+- 2026-11-13: spike 1.0 started. wdio-vscode-service can't resize the
+  window (`setWindowRect` fails: `Browser.getWindowForTarget` unknown).
+  `xdotool` is not installed (Phase 2 route R1 needs it).

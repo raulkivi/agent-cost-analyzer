@@ -64,7 +64,7 @@ reads those and Copilot Chat.
   Simulated columns with a summary of coverage and assumptions. **Compare
   models** ranks up to 10 models. The session's own turns and token counts
   are kept; only caching and prices change. A classic chat is compared on
-  the main agent only; the coverage lists the subagent runs left out.
+  the main agent only: its subagent runs are left out.
 - **Subagent runs.** A classic Copilot Chat turn's AI Credits include the
   subagent runs it started. Open a turn to see each run's agent, model,
   requests and AI Credits, or why they are unknown.
