@@ -1,6 +1,6 @@
 # AI-Assisted Coding Terminology
 
-*Last updated: 2026-09-02*
+**Last changed:** 2026-11-13 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 A glossary of terms used when working with AI coding assistants (GitHub
 Copilot, Claude Code, Cursor, and similar tools), sorted alphabetically.
@@ -698,6 +698,18 @@ compact summary to the parent.
 *Example: spawning a subagent to "search the codebase for all usages of
 X and summarize" so the parent session isn't bloated with every
 intermediate search result. **(this project)***
+
+## Subagent run
+
+One execution of a subagent, with its own requests and its own AI
+Credits. Classic Copilot Chat writes each run to its own debug log next
+to the session's `main.jsonl`; this project reads those logs and folds
+each run's AI Credits into the turn that started it, so the turn and
+session totals include them. Run figures stay on the run's own model.
+
+*Example: a turn that called `runSubagent` on `claude-haiku-4.5` shows the
+run's 42.06 AI Credits inside the turn's total, with the run listed in the
+Explanation panel.*
 
 ## Sycophancy
 

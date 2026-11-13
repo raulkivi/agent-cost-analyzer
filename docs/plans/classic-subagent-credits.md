@@ -1,13 +1,15 @@
 # AI Credits of classic Copilot Chat subagents
 
-**Last changed:** 2026-11-12 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-13 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
-Status: **accepted; implementation is step 10.19** of
+Status: **accepted; built as step 10.19** (SA0-SA17 done 2026-11-13; the owner's real-data check SA18 open) of
 [implementation-plan.md](../implementation-plan.md), planned in
 [classic-subagent-credits-implementation.md](classic-subagent-credits-implementation.md)
 (owner decisions accepted 2026-11-12; plan merged in #124). `ext-v0.1.0`
 shipped on 2026-11-03 without this fix, so classic-harness totals that omit
-subagent spend stay partial until it lands.
+subagent spend stay partial until it is released. The implementation plan's
+§3 lists where this design differed from the code, and its §15 the
+deviations found while building.
 
 ## 1. Context
 

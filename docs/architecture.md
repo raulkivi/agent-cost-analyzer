@@ -444,6 +444,31 @@ type RepositoryAttribution =
   | { attributed: false; reason: string };
 ```
 
+Classic subagent runs (step 10.19, `packages/domain`;
+[plans/classic-subagent-credits-implementation.md](plans/classic-subagent-credits-implementation.md)
+§4.1). All additions are optional:
+
+- `subagentRunUsageSchema`: one run of a classic Copilot Chat subagent.
+  `id` (`^[A-Za-z0-9_-]{1,128}$`, the tool call id), `label`
+  (`runSubagent-<agent>` or `searchSubagent`), optional `agentName` (at most 64
+  characters), `model`, `roundsCount`, the token fields and `costAiCredits`
+  as `TokenCount`, optional `startedAt` and `attribution`
+  (`child-session-ref` or `timestamp`).
+- `TurnUsage.subagents` (the runs read) and `TurnUsage.ownUsage` (the main
+  agent's own token fields, `costAiCredits` and `model`) are present
+  together or not at all. The turn's other fields are everything billed for
+  the turn: own plus the runs, unknown when any part is. `tool`, `vision`,
+  `model` and `roundsCount` stay the main agent's.
+- `Session.subagentSpend { runs, costAiCredits }`: what the runs added, set
+  by `summarizeSessionUsage` for the list and the detail alike.
+- `InsightTurnRow.lines`: `costLineSchema[]`, one per model (the main
+  agent's, each run's, and an `unknown`-model line for an unread run), each
+  with token figures, `aiCredits`, `cost` (`TurnCostFigures`), `subagent`
+  and `vendorId` (with `vendorUnknownReason`) so a vendor breakdown credits a
+  run's vendor. Present only for turns with runs; the lines sum to the row.
+  `costLinesOf(row)` returns `row.lines ?? [row]`.
+
+
 Attribution (Phase 15 step 15.4): `RepositorySource` also has
 `capture-rule`; mitmproxy sessions carry `Session.capture?: { filePath }`, a
 local path never put into MCP output. `InsightSessionRow`/`InsightTurnRow`
@@ -1380,6 +1405,52 @@ now owns this enrichment as an internal detail of the VS Code provider —
 through `VscodeLogProvider`. `agent-traces.db` is still not a separate
 `LogProvider` id, per the 2026-08-10 decision.
 
+##### Classic subagent runs (step 10.19)
+
+Classic Copilot Chat writes each subagent run to its own file next to the
+session's `main.jsonl`: `runSubagent-<agent>-<toolCallId>.jsonl` or
+`searchSubagent-<toolCallId>.jsonl`. The parent's `main.jsonl` names it in a
+`child_session_ref` event. Before this step those runs were left out, so
+classic totals were partial. `readClassicUsage`
+(`data-sources/jsonl/classic-usage-reader.ts`) is the one reader behind the
+list, the detail, the status bar and the MCP tools, so they cannot drift.
+
+- **Files.** `subagent-log-path.ts`: a name must match `SUBAGENT_LOG_NAME`
+  (no separator, only the `.jsonl` suffix), is resolved in the session's own
+  folder (workspace or the empty-window global folder) and must `lstat` as a
+  regular file; a symlink or directory is refused. At most
+  `MAX_SUBAGENT_FILES_PER_SESSION` (200) are listed; above that none is read
+  and the session is unknown. Each file streams through `readMainJsonlFile`
+  with the same attrs allow-list, which gained `childSessionId`,
+  `childLogFile`, `label`, `parentSessionId` and `agentName` (ids and labels
+  only, no content).
+- **Read-gating.** A folder's logs are read only when `main.jsonl` has a
+  `child_session_ref` or the folder holds a matching file name; other
+  sessions cost one directory listing.
+- **Run usage.** `extractSubagentRunUsage` sums the run's `llm_request`s like
+  a main turn. AI Credits are all-or-nothing; a run with no requests is a
+  known 0; a run holding a nested `child_session_ref` is unknown ("nested
+  subagents are not read"). In the detail read only, the run's `responseId`s
+  join `agent-traces.db` for `cacheWrite` and `reasoning`.
+- **Placement.** `attributeSubagentRuns` places a run by its ref's log turn
+  (`child-session-ref`). A matching file no ref names is placed by time
+  (`timestamp`) when its `session_start.parentSessionId` is the folder's id
+  and its start falls in exactly one log turn's window
+  `[user_message.ts, next user_message.ts)`. `mergeSubagentUsage` folds the
+  runs per log turn, then `alignLogTurnsToStore` lays the merged turns on
+  store turns, so one alignment serves usage and runs.
+- **Unknown rules** (constraint 6; each reason is a fixed sentence, no log
+  text). Any of these makes the turn or the session's AI Credits unknown,
+  never a lower known number:
+  - a ref whose file is missing, has an invalid name, is not a regular file
+    or can't be read (the turn's folded figures are unknown; the run has no
+    data row, the UI shows "Subagent run not read" from the reason);
+  - a ref before the session's first `user_message`;
+  - an orphan file that can't be read, is not this session's, or whose start
+    is in no single window;
+  - a nested run, or a request with no AI Credits;
+  - more than 200 matching files, or a folder that can't be listed.
+
 #### 6.2.2.1 VS Code Agent Host sessions (step 10.13)
 
 **Why.** VS Code 1.143 made the Copilot harness the default for new
@@ -2250,6 +2321,13 @@ this is the end-to-end view.
    the turn's day, or today's prices). An unknown figure keeps its reason
    and is never summed as 0 (constraint 6). Totals use the preferred basis
    (billed, else reported, else priced, D3) unless a view picks one.
+   A turn that ran classic subagents (step 10.19) is billed on more than
+   one model, so it prices as **cost lines**: `turnLinesOf` splits it into
+   the main agent's own line (`ownUsage`), one line per run on the run's
+   model, and, when the reader folded in a run it could not read, an
+   `unknown`-model line that stands for it. Each line is priced on its own
+   model; any unknown line makes the priced figure unknown with its reason,
+   and billed sums the lines' AI Credits.
 5. **The dataset.** `InsightsService` flattens every provider's sessions into
    the Insights rows with those fields (step 15.4, 15.6). The cost cube
    (`services/cost-analysis/`) aggregates the rows by bucket, group, vendor,
@@ -2258,6 +2336,13 @@ this is the end-to-end view.
    (step 15.7), project cost, variance and price-change markers (15.10),
    statements (15.11, frozen copies kept in the settings folder, with an
    exact diff against a re-run) and estimates (15.12).
+   Rows stay one per turn (turn counts and statement coverage count rows);
+   only model-keyed code reads `costLinesOf`: `byModel` in session cost and
+   rollups, the cube's model dimension, price-change markers, variance by
+   model, statement lines, the observed price-change findings (billed
+   against priced per line) and the first-time-model finding. A statement
+   re-run now includes the runs, so an issued statement may show a diff
+   against its frozen copy (D13).
 7. **Clients.** `ApiService` behind `GET /api/cost/*`, `/api/statements`,
    `/api/estimates` and the price-book routes (§8); the same methods behind
    the extension's webview RPC; and the MCP tools in the `attribution`,
@@ -2291,7 +2376,12 @@ the end-to-end view.
 1. **Trace.** The provider reduces its log to one record per LLM request in
    the session's main chain (time, model, token counts; no text). A turn is
    traced whole or not at all; an untraced turn keeps its reason.
-   Sub-agent requests are left out of the main chain (D6).
+   Sub-agent requests are left out of the main chain (D6). For a classic
+   turn that folded in subagent runs (step 10.19) the measured figure the
+   replay compares is the main agent's `ownUsage`, so measured and simulated
+   cover the same requests; `coverage.subagentRuns` lists the runs not
+   replayed and their AI Credits (unknown when one is), and the session's
+   full measured total stays visible beside it.
 2. **Script.** `scriptFromRequestTrace` derives each request's new tokens
    (this input − previous input − previous output, reasoning not carried).
    A shrinking prompt becomes `compaction` (or `clear` when the log says
@@ -2567,6 +2657,13 @@ on `domain` and on `web`'s presentational exports only, never on `server`
   loopback hostname, any port. Only the raw `Host` header is read, never
   `X-Forwarded-Host` (`trust proxy` stays off). The Vite dev server itself
   rejects non-loopback hosts via its own default `server.allowedHosts`.
+- **Subagent log names (step 10.19).** `childLogFile` comes from a log file,
+  so it is checked against `SUBAGENT_LOG_NAME` (no separator, `runSubagent-`
+  or `searchSubagent-` prefix, `.jsonl` suffix) before use, resolved in the
+  session's own folder only, and must `lstat` as a regular file (no symlink).
+  Files per session are capped at 200, and `label`, `agentName` and `id` are
+  pinned by schema patterns and length caps before reaching the UI or MCP.
+  Threat model §4.
 - `sessionId` (and any other path parameter used to build a filesystem path
   under `debug-logs/`) is validated against an allow-list pattern before use,
   to prevent path traversal into arbitrary files on disk.

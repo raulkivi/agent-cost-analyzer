@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **Totals now include classic Copilot Chat subagent runs.** A classic chat that called a subagent
+  (`runSubagent`, `searchSubagent`) wrote the run to its own debug log, which the analyzer left out.
+  Each run's AI Credits are now added to the turn that started it, in the turns table, the session
+  total, the dashboard and the MCP tools. Some totals rise. Some become unknown, with a reason: a
+  run's log is missing or can't be read, a run can't be matched to a turn, or a session has more than
+  200 subagent logs. A run whose log no event names is matched by time and labelled so.
+- **Per-model figures, statements and price-change findings credit each run's model.** A turn that
+  ran subagents on another model now counts under each model it used. Statements issued earlier may
+  show a diff when re-run, because the re-run includes the runs.
+- **Replay compares the main agent.** A replayed turn is compared on the main agent's own usage; the
+  coverage line lists the subagent runs it left out.
+
+### Added
+- **A subagent marker, block and tile line in the panel.** The turns table marks AI Credits that
+  include subagent runs, the Explanation tab lists the runs with turn totals, and the session tile says
+  "incl. X from N subagent runs". The MCP App turn detail lists the runs too.
+
+### Fixed
+- **Opened-turn detail text contrast in VS Code Dark Modern.** The opened-turn detail in the MCP App
+  view now sits on a neutral row background, so its text is readable.
+
 ## [0.13.0] - 2026-11-12
 
 ### Changed

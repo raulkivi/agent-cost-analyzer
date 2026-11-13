@@ -186,6 +186,7 @@ Everything else works as the [User Guide](UserGuide.md) describes:
 | Turn inspector (request and response per round) | [The turn inspector](UserGuide.md#the-turn-inspector) |
 | **Tool audit** and **All sessions** views | [Auditing tool calls](UserGuide.md#auditing-tool-calls) |
 | **Dashboard** view | [The insights dashboard](UserGuide.md#the-insights-dashboard) |
+| Subagent marker and **Subagent runs this turn** block | [Classic Copilot Chat subagent runs](UserGuide.md#classic-copilot-chat-subagent-runs) |
 | **Cost over time** and **Compare** | [Cost over time and Compare](UserGuide.md#cost-over-time-and-compare); the cost basis and prices in [Cost by repository and project](UserGuide.md#cost-by-repository-and-project) |
 | **Replay on** and **Compare models** (a session on another model, **Simulated**) | [Replaying a session on another model](#replaying-a-session-on-another-model) below, and in full in the [User Guide](UserGuide.md#replaying-a-session-on-another-model) |
 | Exporting an AI-advice bundle | [Exporting an AI-advice bundle](UserGuide.md#exporting-an-ai-advice-bundle) |
@@ -264,7 +265,9 @@ dates (YYYY-MM-DD), newest first. Sessions with no start time go in an
   unknown cost is never shown as 0.
 - A day's row shows the sum of the known costs and how many are unknown,
   for example `12.40 · 1 unknown`.
-- Hover a session for its turn count, start time and model.
+- Hover a session for its turn count, start time and model. When a
+  classic chat ran subagents, the tooltip adds "incl. 54.65 AI Credits from
+  3 subagent runs" (or the reason when those are unknown).
 - Select a session to open the panel on it.
 - Right-click a session for **Open Session**, **Show Tool Audit** and
   **Copy Advice Bundle**.
@@ -594,7 +597,10 @@ theme. Claude Code CLI keeps the text answer.
 What you can click:
 
 - **A top turn** opens that turn in place (prompt excerpt, tokens, AI
-  Credits, event, tool calls). **Hide turn** closes it.
+  Credits, event, tool calls). **Hide turn** closes it. A turn that ran
+  classic subagents also lists them under **Subagent runs (N)**: agent,
+  model, requests and AI Credits, with the reason for a run whose AI Credits
+  are unknown.
 - **A top session** in the spend view opens that session's cost view in
   place; **Back to cost rollup** returns.
 - **The kind and minimum severity filters** in the findings view ask the
@@ -817,6 +823,9 @@ as 0. Common reasons:
   was on;
 - for Local harness chats, Copilot Chat deleted the session's debug log
   (raise `github.copilot.chat.agentDebugLog.fileLogging.maxRetainedSessionLogs`);
+- for Local harness chats, a subagent run's debug log is missing, can't be
+  read or matched to a turn, or the session has more than 200 of them (the
+  panel names the reason);
 - for Local harness chats, cache-write and reasoning tokens need the optional
   `github.copilot.chat.otel.dbSpanExporter.enabled` setting;
 - for Agent Host chats, cache-write and reasoning tokens need per-call usage
@@ -887,6 +896,7 @@ and `~/.vscode-server/data` (remote). Under that folder it reads:
 |---|---|
 | `User/globalStorage/github.copilot-chat/session-store.db` | Copilot Chat's session list (SQLite, opened read-only) |
 | `User/workspaceStorage/<workspace>/GitHub.copilot-chat/debug-logs/` | Each session's debug log, `main.jsonl`, with per-turn usage and AI Credits |
+| `User/workspaceStorage/<workspace>/GitHub.copilot-chat/debug-logs/<session>/runSubagent-*.jsonl`, `searchSubagent-*.jsonl` | Each classic subagent run's debug log next to `main.jsonl` (ids, labels, counts, models and AI Credits only) |
 | `User/globalStorage/github.copilot-chat/debug-logs/` | The same debug logs for chats in a window with no folder open; those sessions show as "No repository" |
 | `User/globalStorage/github.copilot-chat/agent-traces.db` | Optional: cache-write and reasoning tokens for Local harness chats (SQLite, opened read-only) |
 | `User/globalStorage/agent-host.db` | Agent Host session list, for VS Code 1.143 and later (SQLite, opened read-only) |
