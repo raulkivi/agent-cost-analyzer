@@ -204,12 +204,15 @@ const realDeps: MakeGifDeps = {
   tempPath: (name) => path.join(tmpdir(), `aica-demo-${process.pid}-${name}`),
 };
 
+// `npm run -w` runs in the package directory; INIT_CWD is where the user typed it.
+const callerDir = process.env.INIT_CWD ?? process.cwd();
+
 async function main(argv: string[]): Promise<void> {
   const args = parseArgs(argv);
   const result = await makeGif(
     {
-      input: path.resolve(args.input),
-      outDir: path.resolve(args.outDir ?? DEFAULT_OUT_DIR),
+      input: path.resolve(callerDir, args.input),
+      outDir: args.outDir === undefined ? DEFAULT_OUT_DIR : path.resolve(callerDir, args.outDir),
       trim: args.trim,
     },
     realDeps,
