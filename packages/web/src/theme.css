@@ -783,3 +783,61 @@ main[data-layout="narrow"] .nav { flex-wrap: wrap; gap: var(--space-2); }
 .subagent-run-reason { flex-basis: 100%; font-style: italic; }
 .subagent-totals { display: flex; flex-wrap: wrap; gap: 4px var(--space-3); font-size: 12px; margin-top: 6px; font-variant-numeric: tabular-nums; }
 .subagent-note { font-size: 13px; padding: var(--space-2) var(--space-3); border: 1px solid var(--color-divider); }
+/* Phase 16 SR14: the Savings tab (docs/plans/mockups/savings-report). Meaning
+   is in words and patterns, never colour alone: solid = likely, hatched =
+   possible, dashed tags = inferred, estimate, Simulated. */
+.savings-tab { display: flex; flex-direction: column; gap: var(--space-3); min-width: 0; font-size: 13px; }
+.savings-filters { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-3); }
+.savings-filter { display: inline-flex; align-items: center; gap: var(--space-2); }
+.savings-scope { padding: 2px var(--space-2); border: 1px solid var(--color-divider); }
+.savings-body { display: block; min-width: 0; }
+.savings-body--split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--space-4); align-items: start; }
+.savings-lists { display: flex; flex-direction: column; gap: var(--space-3); min-width: 0; }
+.savings-lists p, .savings-detail p { margin: 0; }
+.savings-note { padding: var(--space-2) var(--space-3); border: 1px solid var(--color-divider); border-left: 3px solid var(--color-accent-text); }
+.savings-group-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-1) var(--space-3); }
+.savings-group-head h3 { margin: 0; font-size: 18px; }
+.savings-bar-caption { font-size: 12px; margin: 0; }
+.savings-list { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--color-divider); }
+.savings-row { border-bottom: 1px solid var(--color-divider); }
+.savings-row-button { display: grid; grid-template-columns: auto minmax(0, 1fr) minmax(0, auto); gap: var(--space-2) var(--space-4); align-items: center; width: 100%; padding: var(--space-3); font: inherit; color: inherit; text-align: left; background: transparent; border: 0; border-left: 3px solid transparent; cursor: pointer; outline-offset: -2px; }
+.savings-row-button:hover { background: color-mix(in srgb, var(--color-text) 6%, transparent); }
+.savings-row-button[aria-pressed="true"] { border-left-color: var(--color-accent-text); background: color-mix(in srgb, var(--color-accent) 12%, transparent); outline: 1px solid var(--color-accent-text); outline-offset: -1px; }
+.savings-rank { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border: 1px solid var(--color-divider); border-radius: 50%; font-size: 12px; }
+.savings-row-main, .savings-row-amount { display: flex; flex-direction: column; gap: 2px; min-width: 0; overflow-wrap: anywhere; }
+.savings-row-amount { align-items: flex-end; text-align: right; }
+.savings-row-title { font-weight: 600; }
+.savings-subject { display: inline-flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); font-family: monospace; font-size: 12px; overflow-wrap: anywhere; }
+.savings-amount-text { font-variant-numeric: tabular-nums; font-weight: 600; }
+.savings-amount-text--unknown { font-style: italic; }
+.savings-coverage { font-size: 12px; }
+.savings-tag { display: inline-flex; align-items: center; padding: 0 var(--space-2); border: 1px dashed var(--color-text-muted); font-family: var(--font-body); font-size: 11px; line-height: 16px; white-space: nowrap; }
+.savings-tag--sim { border-color: var(--color-accent-text); color: var(--color-accent-text); font-weight: 600; }
+.savings-bar { position: relative; display: block; width: 120px; max-width: 100%; height: 8px; border: 1px solid var(--color-text-muted); background: var(--color-divider); overflow: hidden; }
+.savings-bar i { position: absolute; top: 0; bottom: 0; }
+.savings-bar-sure { left: 0; background: var(--color-accent-fill); }
+.savings-bar-maybe { background: repeating-linear-gradient(135deg, var(--color-accent-fill) 0 2px, transparent 2px 5px); }
+.savings-bar--sim .savings-bar-maybe { background: repeating-linear-gradient(135deg, var(--color-accent-text) 0 1px, transparent 1px 4px); }
+.savings-not-analysed { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1.4fr) minmax(0, 2fr) auto; gap: var(--space-2) var(--space-3); padding: var(--space-2) var(--space-3); overflow-wrap: anywhere; }
+.savings-detail { display: flex; flex-direction: column; gap: var(--space-2); min-width: 0; padding: var(--space-3); border: 1px solid var(--color-divider); overflow-wrap: anywhere; }
+.savings-close { align-self: flex-end; }
+.savings-detail-title { margin: 0; font-size: 20px; }
+.savings-subject-line { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+.savings-amount { font-size: 18px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.savings-block { display: flex; flex-direction: column; gap: var(--space-1); padding-top: var(--space-2); border-top: 1px solid var(--color-divider); }
+.savings-block h5 { margin: 0; font-size: 14px; }
+.savings-kv { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: var(--space-1) var(--space-4); margin: 0; }
+.savings-kv dt { color: var(--color-text-muted); }
+.savings-kv dd { margin: 0; }
+.savings-action { padding: var(--space-3); border: 1px solid var(--color-divider); background: var(--color-surface); }
+.savings-action-bar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-3); }
+.savings-copy-status { min-height: 1em; font-size: 12px; }
+.savings-sessions { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-1); }
+.savings-sessions li { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2); }
+.savings-versions summary { cursor: pointer; font-weight: 600; }
+.savings-versions ul { margin: var(--space-1) 0 0; padding-left: var(--space-4); }
+@media (max-width: 640px) {
+  .savings-row-button { grid-template-columns: auto minmax(0, 1fr); }
+  .savings-row-amount { grid-column: 2; align-items: flex-start; text-align: left; }
+  .savings-not-analysed { grid-template-columns: minmax(0, 1fr); }
+}

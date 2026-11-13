@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Savings tab.** A ranked list of changes that would cost less: tools loaded but never used, cache lost
+  after an idle gap or with no idle gap, a model switched mid-session, repeated failed tool calls. Each row
+  shows a range or an "up to" figure per week, its coverage and the fixed action text with Copy; one list
+  per currency (AI Credits, US dollars), never converted or added up. A Simulated section holds replays on
+  a cheaper model, apart and unranked, and "Not analysed" lists what could not be checked and why. In the
+  app it follows Billing on the Dashboard; in the extension it follows Dashboard in the panel.
+- **A subagent marker, block and tile line in the panel.** The turns table marks AI Credits that
+  include subagent runs, the Explanation tab lists the runs with turn totals, and the session tile says
+  "incl. X from N subagent runs". The MCP App turn detail lists the runs too.
+
 ### Changed
 - **Totals now include classic Copilot Chat subagent runs.** A classic chat that called a subagent
   (`runSubagent`, `searchSubagent`) wrote the run to its own debug log, which the analyzer left out.
@@ -19,11 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   show a diff when re-run, because the re-run includes the runs.
 - **Replay compares the main agent.** A replayed turn is compared on the main agent's own usage; the
   coverage line lists the subagent runs it left out.
-
-### Added
-- **A subagent marker, block and tile line in the panel.** The turns table marks AI Credits that
-  include subagent runs, the Explanation tab lists the runs with turn totals, and the session tile says
-  "incl. X from N subagent runs". The MCP App turn detail lists the runs too.
+- Savings action text now writes numbers with thousands separators ("5,400 tokens").
 
 ### Fixed
 - **Opened-turn detail text contrast in VS Code Dark Modern.** The opened-turn detail in the MCP App
