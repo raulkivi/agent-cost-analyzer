@@ -230,7 +230,7 @@ Every task writes its failing test first (architecture.md §11.4). No local mode
 | SA15 | **Done 2026-11-13.** Tree tooltip line, UI fixture sessions, wdio spec (see §15 for fixture changes). **Extension.** Tree tooltips; status bar test; UI fixture sessions (§4.9); a list-equals-detail unit test like `ui-fixture-credits.test.ts`; the wdio spec (§7). | `extension` and `extension-ui` CI jobs pass | medium | Sonnet | SA0b, SA9, SA13 |
 | SA16 | **Done 2026-11-13.** Fixture-home session and Playwright spec. **Standalone app.** Fixture home session; Playwright spec (§7). | `web-e2e` passes | medium | Sonnet | SA10, SA13 |
 | SA17 | **Done 2026-11-13.** Docs of §10 updated 2026-11-13. **Docs** (§10). | Docs match the code; Gantt updated | medium | Sonnet | SA10–SA16 |
-| SA18 | **Real-data check and release.** Re-run SA0's script against the built server: list, detail, status bar figure, `get_session_cost`, `get_cost_rollup`. Then the release gate. | The exit criterion (§12) | low | owner, Sonnet (script) | SA17 |
+| SA18 | **Real-data check and release.** The check is automated by the opt-in suite `packages/server/scripts/sa18-subagent-credits.real.test.mts` (§14): SA0 as the oracle against the built server for list, detail, `get_session_cost` and `get_cost_rollup`. The owner reviews a run, checks the status bar, panel and U1 figures, then the release gate. | The exit criterion (§12) | low | owner, Sonnet (suite) | SA17 |
 
 Critical path: SA0 → SA2 → SA4/SA5 → SA6 → SA7 → SA8 → SA9 → SA10 → SA16 → SA17 → SA18. SA0b and SA1 run beside SA2–SA9; SA11 and SA12 beside SA10.
 
@@ -309,6 +309,8 @@ The design's open questions 1–9 map to D1–D9; D10–D15 are new.
 
 On the owner's machine, the classic sessions' AI Credits rise by exactly SA0's measured missing amount (±0.01) per session, with the same figure in the Sessions view, the panel, the status bar, `get_session_cost`, `get_cost_rollup` and U1; `byModel` credits each run's model; every unknown rule in §4.4 and design §4.3 has a test; and CI plus the release gate pass with the specs in §7.
 
+The automated check (SA18) is run by the owner or an agent on a machine with the logs, not in CI: see §14 "SA18 suite". For the Sessions view, panel, status bar and U1 the figure is the same `costAiCredits`/`get_session_cost` value the suite asserts, so only the display remains for the owner's look.
+
 ## 13. Not verified
 
 - That Copilot Chat 0.74 still writes subagent files: the newest classic session (2026-11-10, 0.74) ran no subagent. Versions 0.60–0.69 do (§14).
@@ -342,6 +344,16 @@ Script: `packages/server/scripts/measure-subagent-spend.mts` (pure helpers in `s
 | 466d29f8 | 2026-09-12 | 26.69 | 4.03 | 1 run |
 | 8a80d1cf | 2026-09-12 | 9.05 | 1.38 | 1 run |
 | 19e7f1ab, 4e20fad3, 65c7bd11, 2dc18e24, c921b7b9 | 2026-08-08/09 | 44.99–460.69 | 0.00 | 1 search each |
+
+### SA18 suite (automated real-data check)
+
+Run from the repo root, with the logs on this machine: `npm run test:real-data` (sets `REAL_DATA=1`; `npm test` and CI skip it, with the reason in the test name). `REAL_DATA_USER_DATA="<dir>,<dir>"` replaces the default `~/.config/Code` and `~/.config/Code - Insiders`. It is read-only and prints session ids, dates, sums, counts and model names only.
+
+- **Oracle:** SA0's lib (`subagent-spend-lib.mts`, folder scan in `subagent-spend-scan.mts`), which reads the raw logs and shares no code with the server.
+- **Actual:** the extension composition (`createExtensionApiService`, `createCopilotMcpServices`) per user-data dir, MCP over an in-memory client.
+- **Asserts, per session with subagent files:** list AI Credits = detail = counted + missing (±0.01); `get_session_cost` total = counted + missing, its `subagents` total = missing and its runs = files; searchSubagent-only sessions miss 0.00 and total = counted; total minus the subagent share = counted; `byModel` sums to the total and credits at least each run model's subagent share.
+- **Aggregate:** the sum of missing over all sessions = SA0's grand total; `get_cost_rollup` for 2026-08-01..2026-10-01 = the sum of the session totals in that range.
+- **Findings while building it:** the server lists only sessions with a session-store row, so 4e20fad3 (searchSubagent only, missing 0.00) is not listed; the suite requires an unlisted session to miss 0.00. A list summary is unknown when any turn's credits are, while the rollup sums the known turns, so for list-unknown sessions the rollup is compared with `get_session_cost`'s known-turn total.
 
 ## 15. Deviations from the design while building (SA17)
 

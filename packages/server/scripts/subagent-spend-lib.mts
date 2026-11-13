@@ -47,6 +47,7 @@ interface RequestSums {
   nanoAiu: number;
   withoutCredits: number;
   models: Record<string, number>;
+  nanoAiuByModel: Record<string, number>;
   subagentNamed: number;
   refs: string[];
 }
@@ -59,6 +60,7 @@ function sumEvents(events: Event[]): RequestSums {
     nanoAiu: 0,
     withoutCredits: 0,
     models: {},
+    nanoAiuByModel: {},
     subagentNamed: 0,
     refs: [],
   };
@@ -73,9 +75,11 @@ function sumEvents(events: Event[]): RequestSums {
       continue;
     s.requests += 1;
     const n = a.copilotUsageNanoAiu;
-    if (typeof n === "number" && Number.isFinite(n) && n >= 0) s.nanoAiu += n;
-    else s.withoutCredits += 1;
     const model = typeof a.model === "string" ? a.model : "unknown";
+    if (typeof n === "number" && Number.isFinite(n) && n >= 0) {
+      s.nanoAiu += n;
+      s.nanoAiuByModel[model] = (s.nanoAiuByModel[model] ?? 0) + n;
+    } else s.withoutCredits += 1;
     s.models[model] = (s.models[model] ?? 0) + 1;
     if (
       typeof a.debugName === "string" &&
@@ -94,6 +98,9 @@ export interface SessionSummary {
   requestsByKind: Record<SubagentKind, number>;
   aiCreditsByKind: Record<SubagentKind, number>;
   models: Record<string, number>;
+  // The subagent runs' credits per request model: the independent oracle for
+  // where the server credits the subagent share (SA18).
+  subagentAiCreditsByModel: Record<string, number>;
   danglingRefs: number;
   orphanFiles: number;
   nestedRefs: number;
@@ -127,6 +134,7 @@ export function summarizeSession(input: {
     requestsByKind: { runSubagent: 0, searchSubagent: 0 },
     aiCreditsByKind: { runSubagent: 0, searchSubagent: 0 },
     models: {},
+    subagentAiCreditsByModel: {},
     danglingRefs: mainSums.refs.filter(
       (r) => !isSafeBareName(r) || !present.has(r),
     ).length,
@@ -154,6 +162,9 @@ export function summarizeSession(input: {
     if (!refNames.has(f.name)) out.orphanFiles += 1;
     for (const [m, c] of Object.entries(sums.models))
       out.models[m] = (out.models[m] ?? 0) + c;
+    for (const [m, n] of Object.entries(sums.nanoAiuByModel))
+      out.subagentAiCreditsByModel[m] =
+        (out.subagentAiCreditsByModel[m] ?? 0) + nanoAiuToAiCredits(n);
   }
   out.missingAiCredits = nanoAiuToAiCredits(nano);
   return out;

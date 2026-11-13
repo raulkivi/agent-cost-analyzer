@@ -36,6 +36,7 @@
     "lint": "eslint .",
     "headers:check": "node scripts/spdx-headers.mjs --check",
     "headers:fix": "node scripts/spdx-headers.mjs --fix",
+    "test:real-data": "npm run test:real-data --workspace=packages/server",
     "test:scripts": "node --test scripts/*.test.mjs",
     "format": "prettier --write .",
     "mcp": "bash scripts/mcp-server.sh",

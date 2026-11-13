@@ -9,23 +9,10 @@
 // for ~/.config/Code and ~/.config/Code - Insiders unless --user-data is given.
 // Prints counts, sums, session ids, model names and dates only: never prompts,
 // responses, tool output, titles, file contents or paths.
-import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { homedir } from "node:os";
 import path from "node:path";
-import {
-  aggregateSessions,
-  classifySubagentFileName,
-  type SessionSummary,
-  summarizeSession,
-} from "./subagent-spend-lib.mjs";
-
-type Folder = "workspaceStorage" | "globalStorage";
-interface Row {
-  edition: string;
-  folder: Folder;
-  sessionId: string;
-  summary: SessionSummary;
-}
+import { aggregateSessions } from "./subagent-spend-lib.mjs";
+import { measureUserDataDirs } from "./subagent-spend-scan.mjs";
 
 const args = process.argv.slice(2);
 const asJson = args.includes("--json");
@@ -38,77 +25,11 @@ if (userDirs.length === 0)
     path.join(homedir(), ".config", "Code - Insiders"),
   );
 
-const safeList = (dir: string): string[] => {
-  try {
-    return readdirSync(dir);
-  } catch {
-    return [];
-  }
-};
-const isDir = (p: string) => {
-  try {
-    return statSync(p).isDirectory();
-  } catch {
-    return false;
-  }
-};
-
-function debugLogRoots(userData: string): { folder: Folder; dir: string }[] {
-  const user = path.join(userData, "User");
-  const roots: { folder: Folder; dir: string }[] = [];
-  for (const hash of safeList(path.join(user, "workspaceStorage")))
-    roots.push({
-      folder: "workspaceStorage",
-      dir: path.join(
-        user,
-        "workspaceStorage",
-        hash,
-        "GitHub.copilot-chat",
-        "debug-logs",
-      ),
-    });
-  roots.push({
-    folder: "globalStorage",
-    dir: path.join(user, "globalStorage", "github.copilot-chat", "debug-logs"),
-  });
-  return roots.filter((r) => isDir(r.dir));
-}
-
-const rows: Row[] = [];
-const rootsByKind: Record<string, number> = {};
-let otherJsonlNames = 0;
-for (const userData of userDirs) {
-  const edition = path.basename(userData);
-  for (const { folder, dir } of debugLogRoots(userData)) {
-    rootsByKind[`${edition}/${folder}`] =
-      (rootsByKind[`${edition}/${folder}`] ?? 0) + 1;
-    for (const sessionId of safeList(dir)) {
-      const sessionDir = path.join(dir, sessionId);
-      if (!isDir(sessionDir)) continue;
-      const mainPath = path.join(sessionDir, "main.jsonl");
-      if (!existsSync(mainPath)) continue;
-      const files: { name: string; text: string }[] = [];
-      for (const name of safeList(sessionDir)) {
-        if (name !== "main.jsonl" && classifySubagentFileName(name) === null)
-          otherJsonlNames += name.endsWith(".jsonl") ? 1 : 0;
-        if (classifySubagentFileName(name) === null) continue;
-        files.push({
-          name,
-          text: readFileSync(path.join(sessionDir, name), "utf8"),
-        });
-      }
-      rows.push({
-        edition,
-        folder,
-        sessionId,
-        summary: summarizeSession({
-          mainText: readFileSync(mainPath, "utf8"),
-          files,
-        }),
-      });
-    }
-  }
-}
+const {
+  rows,
+  rootsByKind,
+  otherJsonlFiles: otherJsonlNames,
+} = measureUserDataDirs(userDirs);
 
 const withFiles = rows
   .filter((r) => r.summary.files > 0)
