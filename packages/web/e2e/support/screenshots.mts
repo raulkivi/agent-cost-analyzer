@@ -10,6 +10,7 @@ import path from "node:path";
 import { createInterface } from "node:readline";
 import { chromium, type Page } from "playwright";
 import { FIXTURE_NOW } from "./fixture-clock.ts";
+import { SUBAGENT_SESSION_TITLE } from "./fixture-home.mts";
 
 const webDir = path.resolve(import.meta.dirname, "../..");
 const outDir = path.resolve(process.argv[2] ?? path.join(webDir, "../../docs/images"));
@@ -44,7 +45,7 @@ async function dashboard(width: number, height: number): Promise<Page> {
   return page;
 }
 
-async function openView(page: Page, view: "Cost over time" | "Compare" | "Project" | "Billing") {
+async function openView(page: Page, view: "Cost over time" | "Compare" | "Project" | "Billing" | "Savings") {
   const select = page.getByRole("combobox", { name: "Dashboard view" });
   if (await select.isVisible().catch(() => false)) await select.selectOption({ label: view });
   else await radio(page, "Dashboard view", view);
@@ -178,6 +179,36 @@ try {
   await page.getByRole("button", { name: "Compare models" }).click();
   await page.getByRole("table", { name: /Simulated cost of this session on each model/ }).waitFor();
   await shoot(page, "guide-replay-compare.png");
+  await page.close();
+
+  // Task 1.9: the Savings tab (the 2026-10-30 Claude Code session: an idle gap and a model switch).
+  page = await dashboard(1440, 1000);
+  await openView(page, "Savings");
+  await page.getByTestId("savings-tab").getByRole("list", { name: "US dollars" }).waitFor();
+  await shoot(page, "guide-dashboard-savings.png");
+  await page.close();
+
+  page = await dashboard(360, 800);
+  await openView(page, "Savings");
+  await page.getByTestId("savings-tab").getByRole("list", { name: "US dollars" }).waitFor();
+  await page.evaluate(() => document.querySelector("[data-testid=savings-tab]")?.scrollIntoView({ block: "start" }));
+  await shoot(page, "guide-dashboard-savings-360.png");
+  await page.close();
+
+  // Task 1.9: the subagent marker in the turns table of a Copilot Chat session.
+  page = await browser.newPage({ viewport: { width: 1440, height: 1000 }, deviceScaleFactor: 2 });
+  await page.clock.setFixedTime(new Date(FIXTURE_NOW));
+  await page.goto(`http://127.0.0.1:${port}/`);
+  await page.getByText("Analyze", { exact: true }).click();
+  const vscodeSwitched = page.waitForResponse((response) => response.url().endsWith("/api/log-providers/active") && response.ok());
+  await page.getByRole("combobox", { name: "Log provider" }).selectOption("vscode");
+  await vscodeSwitched;
+  await page.getByRole("button", { name: SUBAGENT_SESSION_TITLE }).click();
+  await page.getByRole("heading", { name: SUBAGENT_SESSION_TITLE }).waitFor();
+  await page.locator("table tbody .subagent-marker[role=img]").first().waitFor();
+  await page.locator("table tbody tr").first().click();
+  await page.getByRole("region", { name: "Subagent runs this turn" }).waitFor();
+  await shoot(page, "guide-analyze-subagent.png");
   await page.close();
 } finally {
   await browser.close();
