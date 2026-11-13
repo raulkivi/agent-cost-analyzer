@@ -610,6 +610,18 @@ review rejections.
   owner: (a) no app or panel UI shows the subagent runs a replay left out,
   though the 0.12.0 changelog implies it; (b) the extension README says 18
   Learn sessions, the extension guide 17 Copilot scenarios.
+- 2026-11-13: Phase 1 code merged (PR #256). 1.10 final free takes by
+  the main session in one run: all 9 extension scenes and W1–W3 pass. GIFs
+  (with the suggested trims): E1 1.22 MB, E3 1.13, E4 1.85, E5 1.67, E6
+  2.06 (21.1 s master, trim `1,20`), E7 1.23, E8 1.84, E10 1.93, W1 1.52,
+  W2 1.87, W3 3.18; about 20 MB in all, over D8's 18 MB for Phase 1.
+  Waiting for the owner's review, the trims and the paid E2/E9 takes.
+- 2026-11-13: walkthrough check with the VSIX installed (VS Code 1.146.0):
+  enabling Copilot Chat in a running window keeps our walkthrough listed
+  and `aiCreditsAnalyzer.openWalkthrough` works, so no product bug; the
+  loss is specific to the development extension the demo loads. (Enabled
+  via `enableAll`; the Extensions view's button and a reload weren't
+  driven.)
 - 2026-11-13: 1.8 merged: `saveStill(name)` writes to `<masters>/stills/`
   (walkthrough from E1, sidebar from E6, savings from E5, allowance from
   E7; mcp-agent-mode from the paid E9); the screenshot harness gains
