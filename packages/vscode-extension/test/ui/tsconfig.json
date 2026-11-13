@@ -9,6 +9,6 @@
     "lib": ["ES2023", "DOM"]
   },
   "include": ["./**/*.ts", "./**/*.mts", "../../wdio.conf.mts", "../../wdio.copilot.conf.mts",
-    "../../wdio.record.conf.mts", "../../scripts/copilot-e2e-signin.mts", "../../scripts/ui-automation/*.mts"],
+    "../../wdio.record.conf.mts", "../../wdio.demo.conf.mts", "../../wdio.demo-copilot.conf.mts", "../../scripts/copilot-e2e-signin.mts", "../../scripts/ui-automation/*.mts"],
   "exclude": []
 }
