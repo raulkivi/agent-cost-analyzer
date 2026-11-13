@@ -610,6 +610,13 @@ review rejections.
   owner: (a) no app or panel UI shows the subagent runs a replay left out,
   though the 0.12.0 changelog implies it; (b) the extension README says 18
   Learn sessions, the extension guide 17 Copilot scenarios.
+- 2026-11-13: 1.6a (Sonnet) merged, first review: `demo-fixture.mts`
+  (`createDemoFixture(root, { variant: "ready" | "setup-problem" })`,
+  read in scenes with `parseDemoFixture(process.env[DEMO_FIXTURE_ENV])`);
+  two launches, `e1-*.demo.ts` on the setup-problem variant. The
+  Copilot-disabled banner came from the built-in Copilot Chat being off in
+  a fresh profile; the demo config enables it in `before`. Combined smoke
+  run with the 1.4 driver checked by the main session. Wave P1-3 started.
 - 2026-11-13: 1.4 (Sonnet) merged, first review. VS Code 1.146 has no
   setting that hides the Accounts entry (`workbench.activity.showAccounts`
   is a storage key) or the "[Extension Development Host]" prefix, so the
