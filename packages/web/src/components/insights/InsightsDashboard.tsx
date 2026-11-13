@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
 import { useCallback, useMemo, useState } from "react";
+import type { ReactNode } from "react";
 import { AI_CREDIT_CONVERSION_NOTE, redactRepositoryKey, type CostBasisChoice, type CostComparison, type CostSeries, type CostEstimate, type CostVariance, type ProjectCost, type ProjectsFile, type ProjectsState, type RepositoryList, type StatementAnswer } from "@agent-cost-analyzer/domain";
 import type {
   FailureCategory,
@@ -87,17 +88,26 @@ const COST_BASIS_OPTIONS = [
 
 // Phase 15 step 15.9 (plan §11.1): the Dashboard's views. Step 15.10 adds
 // Project; step 15.11 adds Billing and the Projects editor it opens.
-type DashboardView = "overview" | "cost-over-time" | "compare" | "project" | "billing";
+type DashboardView = "overview" | "cost-over-time" | "compare" | "project" | "billing" | "savings";
 const VIEW_OPTIONS = [
   { value: "overview", label: "Overview" },
   { value: "cost-over-time", label: "Cost over time" },
   { value: "compare", label: "Compare" },
   { value: "project", label: "Project" },
   { value: "billing", label: "Billing" },
+  // Phase 16 SR14 (owner decision, SR11 question 11): after Billing, in the
+  // standalone app only, and only when the page passes a `savings` tab.
+  { value: "savings", label: "Savings" },
 ] as const;
 // Step 15.14 (plan §11.9): without projects and billing (the extension, D7,
 // D19) only the first three views, and a note saying where the rest are.
-const COST_VIEW_OPTIONS = VIEW_OPTIONS.filter((option) => option.value !== "project" && option.value !== "billing");
+const COST_VIEW_OPTIONS = VIEW_OPTIONS.filter((option) => option.value !== "project" && option.value !== "billing" && option.value !== "savings");
+const OVERVIEW_ONLY = VIEW_OPTIONS.filter((option) => option.value === "overview");
+
+function viewOptionsFor(costAnalysis: boolean, projectsAndBilling: boolean, savings: boolean) {
+  const base = !costAnalysis ? OVERVIEW_ONLY : projectsAndBilling ? VIEW_OPTIONS.filter((option) => option.value !== "savings") : COST_VIEW_OPTIONS;
+  return savings ? [...base, VIEW_OPTIONS[VIEW_OPTIONS.length - 1]!] : base;
+}
 export const PROJECTS_AND_BILLING_ELSEWHERE = "Billing and estimates: in the Agent Cost Analyzer app";
 // Below this the views are a select (plan §11.1), as the session view's are.
 const VIEW_SELECT_BELOW = 700;
@@ -134,6 +144,9 @@ interface InsightsDashboardProps {
   loadCostVariance?: (query: CostVarianceQuery, signal: AbortSignal) => Promise<CostVariance>;
   // Step 15.11: the Billing tab and the Projects editor (injectable for tests).
   billing?: BillingDeps;
+  // Phase 16 SR14: the Savings tab, supplied by the page so this dashboard
+  // knows nothing of reports; its view appears only when given.
+  savings?: ReactNode;
 }
 
 export interface BillingDeps {
@@ -168,6 +181,7 @@ export function InsightsDashboard({
   loadProjectCost,
   loadCostVariance,
   billing = {},
+  savings,
 }: InsightsDashboardProps) {
   const [editingProjects, setEditingProjects] = useState(false);
   const [preset, setPreset] = useState<RangePreset>("30");
@@ -240,6 +254,7 @@ export function InsightsDashboard({
             loadProjectCost={loadProjectCost}
             loadCostVariance={loadCostVariance}
             billing={billing}
+            savings={savings}
             onEditProjects={() => setEditingProjects(true)}
             key={state.data.generatedAt + preset}
           />
@@ -276,6 +291,7 @@ interface DashboardBodyProps {
   loadProjectCost?: InsightsDashboardProps["loadProjectCost"];
   loadCostVariance?: InsightsDashboardProps["loadCostVariance"];
   billing: BillingDeps;
+  savings?: ReactNode;
   onEditProjects: () => void;
 }
 
@@ -290,7 +306,7 @@ function costOrders(dataset: InsightsDataset): CostOrders {
   return { project: (dataset.projects ?? []).map((project) => project.id), repository: [...repositories].sort() };
 }
 
-function DashboardBody({ dataset, crossProvider, costAnalysis, projectsAndBilling, now, loadCostSeries, loadCostComparison, loadProjectCost, loadCostVariance, billing, onEditProjects }: DashboardBodyProps) {
+function DashboardBody({ dataset, crossProvider, costAnalysis, projectsAndBilling, now, loadCostSeries, loadCostComparison, loadProjectCost, loadCostVariance, billing, savings, onEditProjects }: DashboardBodyProps) {
   const model = useMemo(() => createInsightsModel(dataset), [dataset]);
   const orders = useMemo(() => costOrders(dataset), [dataset]);
   const [dashboardView, setDashboardView] = useState<DashboardView>("overview");
@@ -339,6 +355,27 @@ function DashboardBody({ dataset, crossProvider, costAnalysis, projectsAndBillin
     .join(", ");
   const highOrWorse = kpis.securityFindingsBySeverity.critical + kpis.securityFindingsBySeverity.high;
 
+  const viewOptions = viewOptionsFor(costAnalysis, projectsAndBilling, savings !== undefined);
+  const switchView = (
+    <ViewSwitch
+      value={dashboardView}
+      onChange={setDashboardView}
+      options={viewOptions}
+      asSelect={mainWidth !== undefined && mainWidth > 0 && mainWidth < VIEW_SELECT_BELOW}
+      note={projectsAndBilling || !costAnalysis ? undefined : PROJECTS_AND_BILLING_ELSEWHERE}
+    />
+  );
+
+  // The Savings tab has no field list boxes or selections: it is its own report.
+  if (dashboardView === "savings" && savings !== undefined) {
+    return (
+      <div className="insights-main" ref={measure}>
+        {switchView}
+        {savings}
+      </div>
+    );
+  }
+
   return (
     <div className="insights-layout">
       <aside className="insights-listboxes" aria-label="Fields">
@@ -365,15 +402,7 @@ function DashboardBody({ dataset, crossProvider, costAnalysis, projectsAndBillin
       </aside>
 
       <div className="insights-main" ref={measure}>
-        {costAnalysis && (
-          <ViewSwitch
-            value={dashboardView}
-            onChange={setDashboardView}
-            options={projectsAndBilling ? VIEW_OPTIONS : COST_VIEW_OPTIONS}
-            asSelect={mainWidth !== undefined && mainWidth > 0 && mainWidth < VIEW_SELECT_BELOW}
-            note={projectsAndBilling ? undefined : PROJECTS_AND_BILLING_ELSEWHERE}
-          />
-        )}
+        {viewOptions.length > 1 && switchView}
         <CurrentSelections
           selections={selections}
           fieldLabel={fieldLabel}

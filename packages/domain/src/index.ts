@@ -464,6 +464,7 @@ export {
   type TraceRequest,
   type UntracedTurn,
   type RequestTrace,
+  type PromptChangeMarker,
 } from "./request-trace.js";
 export {
   MAX_COMPARED_MODELS,
@@ -493,3 +494,35 @@ export {
 } from "./session-replay.js";
 export { EXTENSION_NO_PROJECTS_REASON } from "./no-projects-reason.js";
 export { parseUnknownProjectIdText, unknownProjectIdText, type UnknownProjectIdAnswer } from "./unknown-project-text.js";
+export {
+  MAX_SAVINGS_NAME_LENGTH,
+  savingsOpportunityKindSchema,
+  savingsBasisSchema,
+  savingsLabelSchema,
+  savingsAmountSchema,
+  savingsSessionRefSchema,
+  savingsEvidenceSchema,
+  savingsCoverageSchema,
+  savingsActionParamsSchema,
+  savingsSimulationSchema,
+  savingsOpportunitySchema,
+  savingsWindowSchema,
+  savingsNotAnalysedSchema,
+  savingsLeftOutSchema,
+  savingsReportSchema,
+  type SavingsOpportunityKind,
+  type SavingsBasis,
+  type SavingsLabel,
+  type SavingsAmount,
+  type SavingsEvidence,
+  type SavingsCoverage,
+  type SavingsActionParams,
+  type SavingsSimulation,
+  type SavingsOpportunity,
+  type SavingsNotAnalysed,
+  type SavingsLeftOut,
+  type SavingsReport,
+  type SavingsWindow,
+  type SavingsSessionRef,
+} from "./savings.js";
+export { SAVINGS_ACTION_PARAMS, savingsActionText } from "./savings-actions.js";

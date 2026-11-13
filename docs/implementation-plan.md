@@ -22,9 +22,9 @@ the exit criterion on real data open). Step 10.19
 ([plans/classic-subagent-credits-implementation.md](plans/classic-subagent-credits-implementation.md),
 design in [plans/classic-subagent-credits.md](plans/classic-subagent-credits.md))
 covers classic Copilot Chat subagent AI Credits (built; the owner's real-data check open). Step 10.21
-([plans/monthly-allowance.md](plans/monthly-allowance.md)) and Phase 16
-([plans/savings-report.md](plans/savings-report.md)) are planned; the owner
-accepted their decisions on 2026-11-12.
+([plans/monthly-allowance.md](plans/monthly-allowance.md)) is planned and
+Phase 16 ([plans/savings-report.md](plans/savings-report.md)) has its Increment 1 built (the
+owner accepted both plans' decisions on 2026-11-12).
 Each phase has a goal, concrete deliverables, an exit criterion (how you know
 it's done), and its dependencies. Phases are ordered so the riskiest/least
 certain work (real `main.jsonl` parsing) happens after there's already a
@@ -1636,9 +1636,29 @@ and the price book; the app writes no file and changes no setting.
 Phase 14 (replay, for the cheaper-model detector) for Increment 1; Phase 9.10
 (tool-call audit); Phase 12 and its MCP Apps views for Increment 2.
 
-**Status (2026-11-12)**: planned; the owner accepted decisions D1–D12 and
-started implementation on 2026-11-12. Spike SR0 (read-only, on the owner's
-logs) first.
+**Status (2026-11-13)**: Increment 1 (SR0-SR17) is built, code and docs;
+Increment 2 (SR18-SR22) is not started.
+
+- Built: the `services/savings` module with detectors O1-O6 (O1 unused
+  tools, O2 idle cache expiry, O3 unexplained cache break, O4 model switch,
+  O5 failed calls, O6 cheaper model, Simulated), `GET /api/savings` and RPC
+  `getSavingsReport`, and the Savings tab in the standalone app (a Dashboard
+  view after Billing) and in the extension (a view after Dashboard, Copilot
+  sessions only). Docs: User Guide "The savings report", the extension guide,
+  architecture §4.1, §4.2, §5, §6.6, §8 and §11.2, threat-model §4, §6 and §7,
+  vision §3.2 and §6, both changelogs.
+- Provider coverage (SR0, plan §15): O1 for VS Code local (with debug
+  logging) and Claude Code, not Agent Host (total tokens only), pi or
+  mitmproxy; O2-O4 for VS Code, Agent Host and Claude Code; O5 where outcomes
+  are logged; O6 for VS Code, Agent Host and Claude Code.
+- SR16 review (plan §16): five findings fixed (names cleaned by
+  `savings-names.ts`, action-text bidi characters, labels that could be
+  dropped, focus below 600 px, the Simulated bar's contrast in High
+  Contrast), three recorded (D15's provider switch, the redactor's glued-token
+  gap, uncapped session ids).
+- Open: the owner's docs review; D13 and D14 (SR7's thresholds) and D15
+  (the provider switch from "Open in Analyze"); the exit criterion on real
+  data (§14); the release. Increment 2 starts after Increment 1 is released.
 
 ## Summary dependency graph
 

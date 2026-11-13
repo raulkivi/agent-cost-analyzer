@@ -73,7 +73,14 @@ function figuresOf(round: ClaudeCodeRound): RequestFigures | undefined {
 // switch, since the replay scripter reads a model change from the model id
 // itself, while only this event says the prompt was compacted.
 export function buildClaudeCodeRequestTrace(sessionId: string, groups: ClaudeCodeTurnGroup[]): RequestTrace {
+  return buildClaudeCodeRequestTraceWithRounds(sessionId, groups).trace;
+}
+
+// The trace and, for each request in it, the round it came from (Phase 16
+// SR6: the round's entries link a request to its `api-request` line).
+export function buildClaudeCodeRequestTraceWithRounds(sessionId: string, groups: ClaudeCodeTurnGroup[]): { trace: RequestTrace; rounds: ClaudeCodeRound[] } {
   const requests: TraceRequest[] = [];
+  const roundOfRequest: ClaudeCodeRound[] = [];
   const notTraced: UntracedTurn[] = [];
   const compactedIds = findCompactedRequestIds(groups);
   let compactionPending = false;
@@ -100,7 +107,8 @@ export function buildClaudeCodeRequestTrace(sessionId: string, groups: ClaudeCod
       const switched = previous !== undefined && previous.model !== value.model;
       const event = compacted ? ("compaction" as const) : switched ? ("model-switch" as const) : undefined;
       requests.push({ index: requests.length, turnIndex, ...value, startedAt, ...(event ? { event } : {}) });
+      roundOfRequest.push(rounds[roundIndex]!);
     });
   });
-  return { sessionId, providerId: PROVIDER_ID, harness: "claude-code", requests, notTraced };
+  return { trace: { sessionId, providerId: PROVIDER_ID, harness: "claude-code", requests, notTraced }, rounds: roundOfRequest };
 }

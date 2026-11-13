@@ -102,6 +102,21 @@ describe("createUiFixture (step 10.16)", () => {
     expect(Math.max(...ages)).toBeLessThan(72);
   });
 
+  // Phase 16 SR13: the savings report over the fixture (default 30-day window to
+  // today), through the extension's own ApiService: what SR15's specs expect.
+  it("gives the savings report an unused MCP server and repeated failed rg calls to find", async () => {
+    const fixture = createUiFixture(rootDir, { sessionCount: 3 });
+
+    const report = await apiOver(fixture.userDataDir, fixture.copilotHome).getSavingsReport();
+
+    const unused = report.opportunities.find((o) => o.kind === "unused-tools");
+    expect(unused).toMatchObject({ subject: fixture.savings.unusedToolsServer, sessions: [{ providerId: "vscode", sessionId: fixture.savings.localSessionId }] });
+    expect(unused?.perWindow.known).toBe(true);
+    const failed = report.opportunities.find((o) => o.kind === "failed-tool-calls");
+    expect(failed).toMatchObject({ subject: fixture.savings.failedCallsProgram, evidence: { occurrences: fixture.savings.failedCallsCount }, sessions: [{ sessionId: fixture.savings.agentHostSessionId }] });
+    expect(failed?.perWindow.known).toBe(true);
+  });
+
   // VS Code's storage cleaner deletes workspace storage that names no
   // existing folder, and with it the seeded Copilot debug logs: the usage
   // session then shows without its numbers.

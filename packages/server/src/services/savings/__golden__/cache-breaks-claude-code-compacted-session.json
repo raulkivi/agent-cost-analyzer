@@ -1,0 +1,25 @@
+{
+  "sessionId": "claude-code-compacted-session",
+  "providerId": "claude-code",
+  "harness": "claude-code",
+  "requests": 3,
+  "breaks": [],
+  "intended": [
+    {
+      "requestIndex": 2,
+      "turnIndex": 1,
+      "startedAt": "2026-09-02T10:11:05.000Z",
+      "model": "claude-sonnet-5",
+      "previousModel": "claude-sonnet-5",
+      "gapMinutes": 10.916666666666666,
+      "previousPromptTokens": 2050,
+      "promptTokens": 1800,
+      "cacheRead": 0,
+      "lostTokens": 1800,
+      "cacheWriteRecorded": true,
+      "caveats": [],
+      "event": "compaction"
+    }
+  ],
+  "unchecked": []
+}

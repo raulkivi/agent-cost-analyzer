@@ -1,0 +1,152 @@
+{
+  "opportunities": [
+    {
+      "key": "unused-tools:github:AI_CREDITS",
+      "kind": "unused-tools",
+      "subject": "github",
+      "sessions": [
+        {
+          "providerId": "vscode",
+          "sessionId": "cp"
+        }
+      ],
+      "evidence": {
+        "sessions": 1,
+        "requests": 5,
+        "tokens": {
+          "known": true,
+          "value": 150,
+          "estimated": true
+        },
+        "occurrences": null
+      },
+      "perWeek": {
+        "known": true,
+        "currency": "AI_CREDITS",
+        "low": 0.0035,
+        "high": 0.034999999999999996,
+        "basis": "priced",
+        "label": "range",
+        "priceVersionIds": [
+          "github-copilot:claude-sonnet-5:2026-10-01"
+        ]
+      },
+      "perWindow": {
+        "known": true,
+        "currency": "AI_CREDITS",
+        "low": 0.015,
+        "high": 0.14999999999999997,
+        "basis": "priced",
+        "label": "range",
+        "priceVersionIds": [
+          "github-copilot:claude-sonnet-5:2026-10-01"
+        ]
+      },
+      "coverage": {
+        "sessionsInWindow": 5,
+        "sessionsAnalysed": 3,
+        "notAnalysed": [
+          {
+            "reason": "The log records no tool inventory for this session.",
+            "sessions": 1
+          },
+          {
+            "reason": "VS Code's Agent Host records the total tool-definition tokens only, not each tool, so unused tools can't be found.",
+            "sessions": 1
+          }
+        ]
+      },
+      "actionParams": {
+        "group": "github",
+        "tools": 2,
+        "tokens": 150,
+        "sessions": 1,
+        "days": 30
+      },
+      "inferred": true
+    },
+    {
+      "key": "unused-tools:linear:USD",
+      "kind": "unused-tools",
+      "subject": "linear",
+      "sessions": [
+        {
+          "providerId": "claude-code",
+          "sessionId": "s1"
+        },
+        {
+          "providerId": "claude-code",
+          "sessionId": "s2"
+        }
+      ],
+      "evidence": {
+        "sessions": 2,
+        "requests": 30,
+        "tokens": {
+          "known": true,
+          "value": 800,
+          "estimated": true
+        },
+        "occurrences": null
+      },
+      "perWeek": {
+        "known": true,
+        "currency": "USD",
+        "low": 0.0011200000000000001,
+        "high": 0.0112,
+        "basis": "priced",
+        "label": "range",
+        "priceVersionIds": [
+          "anthropic-api:claude-sonnet-5:2026-10-01"
+        ]
+      },
+      "perWindow": {
+        "known": true,
+        "currency": "USD",
+        "low": 0.0048000000000000004,
+        "high": 0.048,
+        "basis": "priced",
+        "label": "range",
+        "priceVersionIds": [
+          "anthropic-api:claude-sonnet-5:2026-10-01"
+        ]
+      },
+      "coverage": {
+        "sessionsInWindow": 5,
+        "sessionsAnalysed": 3,
+        "notAnalysed": [
+          {
+            "reason": "The log records no tool inventory for this session.",
+            "sessions": 1
+          },
+          {
+            "reason": "VS Code's Agent Host records the total tool-definition tokens only, not each tool, so unused tools can't be found.",
+            "sessions": 1
+          }
+        ]
+      },
+      "actionParams": {
+        "group": "linear",
+        "tools": 2,
+        "tokens": 800,
+        "sessions": 2,
+        "days": 30
+      },
+      "inferred": false
+    }
+  ],
+  "notAnalysed": [
+    {
+      "kind": "unused-tools",
+      "providerId": "pi-agent",
+      "reason": "The log records no tool inventory for this session.",
+      "sessions": 1
+    },
+    {
+      "kind": "unused-tools",
+      "providerId": "vscode",
+      "reason": "VS Code's Agent Host records the total tool-definition tokens only, not each tool, so unused tools can't be found.",
+      "sessions": 1
+    }
+  ]
+}

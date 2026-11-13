@@ -1,8 +1,8 @@
 # Savings report: ranked, quantified fixes
 
-**Last changed:** 2026-11-12 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-13 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
-**Status: planned; owner decisions accepted 2026-11-12 (every recommendation); implementation started 2026-11-12.** Phase 16 in
+**Status: Increment 1 built (SR0-SR17, 2026-11-13); owner decisions D1-D12 accepted 2026-11-12, D13-D15 to decide; Increment 2 not started.** Phase 16 in
 [implementation-plan.md](../implementation-plan.md) (owner decision D9).
 
 The question this answers: **"What should I change to spend less, and
@@ -26,6 +26,8 @@ and (Increment 2) as an MCP tool with an MCP App view.
 12. Owner decisions
 13. Risks
 14. Exit criterion
+15. SR0 findings
+16. SR16 review
 
 ## 1. Why
 
@@ -335,8 +337,8 @@ repo.
 | SR13 | Test fixtures for the e2e homes: a Claude Code session with an idle gap and a model switch, a VS Code local session with an unused MCP server and failed `rg` calls | Fixtures load in `web-e2e` and `extension-ui` homes; server golden test over them | medium | Sonnet | SR10 |
 | SR14 | Web: `SavingsTab`, detail, Simulated section, Not analysed, Copy, links into Analyze; component, axe (four theme fixtures) and keyboard tests | Matches the SR11 boards; labels asserted | medium | Sonnet | SR11, SR12 |
 | SR15 | UI specs: Playwright `web-e2e` `sv1-savings-report.spec.ts` (every figure equals the API, labels present, axe); wdio `extension-ui` `sv1-savings.e2e.ts` (three themes, compact width, Copy) | Both specs pass in CI; no manual checklist row | medium | Sonnet | SR13, SR14 |
-| SR16 | Accessibility and security review (hostile tool and program names in every field, no write path, unknown never 0, labels not droppable) | Findings fixed test-first; results in this plan | medium | Opus | SR14 |
-| SR17 | Docs: User Guide "Savings report", extension guide, root and extension CHANGELOG `[Unreleased]`, architecture.md (§4.1/§4.2 rows, §5 types, a new §6 data-flow section, §8 route and RPC, §11.2), vision.md §3.2 and §6 (D1), threat-model.md (§11), implementation-plan.md phase section, Gantt | Docs match the code; owner review | medium | Sonnet | SR16 |
+| SR16 | **Done 2026-11-13 (§16).** Accessibility and security review (hostile tool and program names in every field, no write path, unknown never 0, labels not droppable) | Findings fixed test-first; results in this plan | medium | Opus | SR14 |
+| SR17 | **Done 2026-11-13.** Docs: User Guide "Savings report", extension guide, root and extension CHANGELOG `[Unreleased]`, architecture.md (§4.1/§4.2 rows, §5 types, a new §6 data-flow section, §8 route and RPC, §11.2), vision.md §3.2 and §6 (D1), threat-model.md (§11), implementation-plan.md phase section, Gantt | Docs match the code; owner review | medium | Sonnet | SR16 |
 
 **Increment 2: MCP tool and view** (starts after Increment 1 is released)
 
@@ -354,7 +356,7 @@ repo.
 |---|---|---|
 | `GET /api/savings`, RPC `getSavingsReport` | Information disclosure; denial of service through a large window or many replays | Loopback host guard; zod query (`savings-query-params.ts`); session cap from `MAX_ROLLUP_SESSION_LIMIT`; replay capped at K sessions × at most 3 models, off unless asked; cancellable |
 | Log-derived names in the report (tool, MCP server, program, instruction file) | Prompt injection or markup through a crafted name; a secret in a command name | Rendered as text; `redactSecrets` and a length cap; base names only, no paths; hostile-text tests in web and U18 |
-| Copy action (extension and web) | Copying attacker-chosen text the user then runs | Copies the fixed template with parameters folded to one line, control characters removed, capped (as the copy-title row in §6.1) |
+| Copy action (extension and web) | Copying attacker-chosen text the user then runs | Copies the fixed template with parameters folded to one line, control characters removed, capped at 600 characters (SR16: a fixed template with names capped at 80 fits whole; §6.1's 120 is for a free-text title) |
 | `openSetting` | Widening the editor surface | Unchanged if D6 is taken; any new setting id is a fixed list in `HostCommandHandler` with its own row |
 | MCP `get_savings_report` | Log content to a hosted model | Numbers, ids, model ids and capped redacted names only; covered by `mcp/security.test.ts` |
 | U18 view | Relaying logged text into the chat | No new `sendMessage` site; drill-down arguments are ids from `structuredContent`; no-forwarding test |
@@ -375,6 +377,9 @@ repo.
 | D10 | Extension parity | **Accepted 2026-11-12:** Same tab, Copilot sessions only |
 | D11 | Include the report in the AI-advice bundle | **Accepted 2026-11-12:** Later, not in v1 |
 | D12 | Per-tool token counts from the local tokenizer | **Accepted 2026-11-12:** Accept, labelled "estimate" (constraint 6 exception) |
+| D13 | Which failed calls O5 counts (chosen by the SR7 detector, recorded in SR16) | **To confirm:** Leave out `user-rejected` (the user said no) and `test-or-build-failure` (a failing test run is the work, not a mistake); count every other category, `unclassified` included |
+| D14 | How often a failure must repeat for O5 (chosen in SR7, recorded in SR16) | **To confirm:** At least 2 failed calls per program (or tool), failure category and currency over the window, across sessions |
+| D15 | "Open in Analyze" on another provider's session (found in SR16) | **To decide:** Today it switches the active provider, as the Provider select does, and the server saves that choice in the app's own settings file. Recommendation: accept it as navigation state (it is not the user's editor or agent settings), and word §14's "writes no file" as "changes none of your settings or files" |
 
 ## 13. Risks
 
@@ -419,3 +424,53 @@ Read-only over the owner's logs: 259 VS Code local sessions (all `Code - Insider
   - Attachments: `deferred_tools_delta` (`addedNames`/`removedNames`), `mcp_instructions_delta`, `instructions` (`files[]`; changed mid-session in 26 sessions), `nested_memory`, `tools-used`, `compact_boundary` (28).
   - Deferred tools: their definitions aren't in every prompt, so O1 counts them at name-only cost; 208 invoked MCP tools were missing from the deferred deltas, so `shape.tools` is the loaded set.
 - **Open.** pi per-tool counts (not examined). Decoding `promptCacheBreakState` (a follow-up if O3 for Agent Host is wanted). Real Analyze traces could set `triggeredEvent: "instructions-change"` from these signals for VS Code local and Claude Code; a design choice for SR4.
+
+## 16. SR16 review
+
+2026-11-13, by Claude Opus 5.5, after rebasing the branch onto main with step 10.19 (classic subagent credits, #249).
+
+**Rebase.** Conflicts and how they were resolved:
+
+- `main-jsonl-reader.ts`: both attribute keys kept (10.19's subagent links, SR6's `debugName`).
+- `ui-fixture.mts`: both sides' sessions kept; `listedSessionCount` is main's value + 2; the savings session's debug logs now go to the 32-character `WORKSPACE_STORAGE_ID` folder (the old `integration-workspace` path no longer exists after main's rename).
+- `monthly-allowance.e2e.ts`: `KNOWN_SESSIONS` = main's 3 + Copilot CLI sessions + 1 (the savings Agent Host session).
+- `a16-session-views.spec.ts` (U3), set from the run, not guessed: 11 findings, 2 Medium. Five come from the usage fixtures, four from 10.19's classic session, and two from the savings Claude Code session ("First use of model claude-opus-5-5-20261001", and an output-token anomaly). With 19 sessions the median output is 600, so the savings session's 2,800 tokens is 4.7× the median (robust z 3.7) and portal-web's 3,000 is 5.0× (robust z 4.0). The spec was 6 findings and median 550 on this branch, and 9 findings and median 550 on main.
+- `CHANGELOG.md`, `a11y.test.tsx`, `theme.css`: both sides kept.
+
+**Findings.**
+
+| # | Severity | Where | Finding | Status |
+|---|---|---|---|---|
+| R1 | Medium | `server/src/services/savings/detectors/failed-calls-detector.ts:59`, `unused-tools-detector.ts:31-34` | Tool, MCP server and program names went into the report sliced to 80 characters only: a credential, a line break or a bidi override in a name reached the report, both tabs and the action text. §11 asked for `redactSecrets` and a cap | Fixed: `savings-names.ts` (`savingsName`: fold, redact, cap by code point), with hostile-name detector tests |
+| R2 | Low | `domain/src/savings-actions.ts:36` | The action template's name parameter removed C0/C1 controls but not bidi or zero-width characters, so the shown text could read differently from what Copy puts on the clipboard | Fixed |
+| R3 | Medium | `domain/src/savings.ts:92-131` | Labels could be dropped: a cheaper-model opportunity could omit its simulation (no self-check, no A1, §7), a self-check of 0 requests showed as "0%", and unused-tools tokens could lose `estimated` (D12) | Fixed: schema refinements and tests |
+| R4 | Medium (a11y) | `web/src/components/savings/SavingsTab.tsx:327`, `SavingsDetail.tsx:151-155` | Below 600 px the detail replaces the list, so the focused row button was removed and focus fell to the page | Fixed: the detail focuses its Back button |
+| R5 | Medium (a11y) | `web/src/theme.css:822` | The Simulated bar's hatch used `--color-accent-text`, 1.3:1 on the bar track in High Contrast, so the hatched part (the non-colour cue) vanished | Fixed: fill colour; `theme-contrast.test.ts` checks the solid part and both hatches at 3:1 on the track in five theme sets |
+| R6 | Low | `web/src/App.tsx:586`, `server/src/data-sources/log-providers/registry.ts:69` | "Open in Analyze" on another provider's session switches the active provider, which the server saves in the app's settings file. It is the Provider select's own write, not a new one, and the extension (no Provider select) only navigates | Recorded: D15 |
+| R7 | Low | `server/src/services/tool-audit/output-redactor.ts:10` | The shared redactor's `\b` anchors miss a token glued to a word character (`x_ghp_…`). Not new to Phase 16; savings names are folded and split before redaction, so an `mcp__<token>__x` server is masked | Recorded: follow-up for the redactor |
+| R8 | Info | `domain/src/savings.ts:58`, `web/src/components/savings/SavingsDetail.tsx:208` | Session ids have no length cap in the schema. They come from file names and the session store, are rendered as text and wrap | Recorded |
+
+**Checked, no finding.**
+
+- No write path: `GET /api/savings` only (other methods 404, `app.savings.test.ts`); the service and detectors open no file for writing; the tab's actions are Copy and the session links.
+- `GET /api/savings` is behind the loopback host guard (`app.savings.test.ts`); RPC `getSavingsReport` is on the allow-list with a strict params schema, no `limit` (`domain/src/rpc.test.ts`); the extension refuses non-Copilot providers (`create-extension-api-service.test.ts`).
+- Session cap `MAX_ROLLUP_SESSION_LIMIT`, no caller can raise it; replays off unless `includeSimulated` (`savings-service.test.ts`, the tab's default); D5's 5 sessions × 3 models.
+- Cancellation: the HTTP route aborts on client close; the webview's `cancel` aborts the dispatcher's signal (`message-dispatcher.test.ts`); the service stops between sessions and detectors.
+- Unknown is never 0: amounts are `known: false` with a reason, shown as "Not priced" with no bar; null counts show "Unknown"; an unpriced row is unranked and last.
+- Labels ("range", "up to", "Not priced", "inferred", "estimate", "Simulated") come from `savings-view.ts` and the row, not CSS, and component tests assert each; R3 closes the schema side.
+- Hostile names render as text in both tabs (`SavingsTab.test.tsx`, the same component in the extension); Copy text is one line without control or bidi characters (new test).
+- Copy cap: 600 characters, kept. The text is a fixed template with names capped at 80, so the longest one fits whole (new test); §6.1's 120 is for a free-text title. §11 updated.
+- Accessibility: axe clean in the four theme fixtures (`a11y.test.tsx`); keyboard: Tab, Enter, Space, Escape; focus returns to the row on close (wide and narrow); "Copied" and the load states are live regions.
+
+**Data gaps against the boards (SR14).**
+
+- Session titles: not added. A title is log-derived text (often the first prompt), and §8 sends session ids, not titles, to a hosted model. Follow-up: the tab looks titles up in the session list the app already loads, so the report and the Increment 2 tool stay ids-only. If titles ever go into the report, they pass `savingsName`-style redaction and a cap and render as text.
+- Per-tool tokens for unused tools: not added. Follow-up with Increment 2 (U18 needs the same field): an optional, capped list (at most 20 tools, names through `savingsName`, tokens marked estimate) on unused-tools opportunities.
+
+**Other notes.**
+
+- SR7's thresholds are recorded as D13 and D14 for the owner to confirm.
+- Commit 466ae39 (`refactor(16): SR10 list sessions left out once per report`, 63d2139 after the rebase) does not typecheck on its own. The history is left as is; the branch tip typechecks.
+- For SR17: threat-model.md needs the §11 rows with these results (R1, the 600-character Copy cap, D15).
+
+**Suites at the end of SR16** (all green): `npm test` 8,844 tests (domain 542, web 1,906, mcp-apps 1,657, server 3,547, pi-system-prompt-logger 15, extension 1,177); typecheck, lint and headers:check clean; web e2e 17 passed; MCP Apps e2e 179 passed; extension UI suite (free, xvfb) 17 spec files, 78 tests passed.

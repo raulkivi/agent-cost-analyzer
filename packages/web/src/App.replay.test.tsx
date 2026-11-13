@@ -38,6 +38,7 @@ const standalone: ProductProfile = {
     costAnalysis: false,
     projectsAndBilling: false,
     sessionReplay: true,
+    savingsReport: true,
   },
 };
 

@@ -49,6 +49,7 @@ const KNOWN_ATTRS_KEYS = [
   "label",
   "parentSessionId",
   "agentName",
+  "debugName",
 ] as const;
 
 export type AttrsProjector = (attrs: unknown) => Record<string, unknown> | undefined;

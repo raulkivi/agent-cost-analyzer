@@ -19,6 +19,7 @@ import type {
   RepositoryList,
   Session,
   SessionAudit,
+  SavingsReport,
   SessionReplay,
   SessionReplayComparison,
   TurnInspectorDetail,
@@ -52,6 +53,9 @@ import {
 import { parseEstimateQuery, type EstimateQueries } from "../billing/estimate-service.js";
 import type { PriceBookReader } from "../pricing/price-book.js";
 import type { CostAnalysisQueries } from "../cost-analysis/cost-analysis-service.js";
+import { parseSavingsQuery } from "../savings/savings-query-params.js";
+import type { SavingsQueries } from "../savings/savings-service.js";
+import { InvalidSavingsWindowError } from "../savings/savings-window.js";
 import { TooManyComparedModelsError, type ReplayResult, type SessionReplayQueries } from "../session-replay/session-replay-service.js";
 import { parseCompareQuery, parseReplayQuery } from "../session-replay/replay-query-params.js";
 import { parseCostCompareQuery, parseCostSeriesQuery, parseCostVarianceQuery, parsePriceChangesQuery, parseProjectCostQuery } from "../cost-analysis/cost-query-params.js";
@@ -119,6 +123,10 @@ export const STATEMENTS_UNAVAILABLE_MESSAGE = "Billing statements are not availa
 // product without a price book can't price a replay and answers 404.
 export const SESSION_REPLAY_UNAVAILABLE_MESSAGE = "Session replay is not available in this product.";
 
+// Phase 16 SR12: the savings report. Optional like the replay: a product
+// without a price book can't price a counterfactual and answers 404.
+export const SAVINGS_REPORT_UNAVAILABLE_MESSAGE = "The savings report is not available in this product.";
+
 export interface ApiServiceDeps {
   registry: ApiProviderRegistry;
   projects?: ApiProjects;
@@ -131,6 +139,8 @@ export interface ApiServiceDeps {
   estimates?: EstimateQueries;
   // Phase 14 step 14.5: a session replayed on another model (both products, D5).
   sessionReplay?: SessionReplayQueries;
+  // Phase 16 step SR12: the savings report (both products, D10).
+  savingsReport?: SavingsQueries;
   auditQueries: ApiAuditQueries;
   insights: ApiInsights;
   settings: Pick<AppSettingsStore, "readMinRetainedSessionLogsThreshold" | "writeMinRetainedSessionLogsThreshold">;
@@ -516,6 +526,29 @@ export class ApiService {
     const parsed = parseCompareQuery(query);
     if (!parsed.ok) throw new BadRequestError(parsed.error);
     return replayAnswer(sessionId, () => replays.compare({ sessionId, ...parsed.value }));
+  }
+
+  // Phase 16 SR12 (plan §5.3): GET /api/savings?since&until&provider&pricing&includeSimulated.
+  // `signal` is the caller's cancellation (a disconnected client, the
+  // webview's cancel): the report stops reading sessions and rejects with its
+  // reason, which is passed on as it is, not worded as a failure.
+  async getSavingsReport(query: ApiQuery = {}, signal?: AbortSignal): Promise<SavingsReport> {
+    const savings = this.deps.savingsReport;
+    if (!savings) throw new NotFoundError(SAVINGS_REPORT_UNAVAILABLE_MESSAGE);
+    const parsed = parseSavingsQuery(query);
+    if (!parsed.ok) throw new BadRequestError(parsed.error);
+    const { since, until, providerId, pricing, includeSimulated } = parsed.value;
+    try {
+      return await savings.report(
+        { ...(providerId !== undefined ? { providerId } : {}), ...(since !== undefined ? { since } : {}), ...(until !== undefined ? { until } : {}) },
+        { ...(pricing !== undefined ? { pricing } : {}), includeSimulated },
+        signal,
+      );
+    } catch (error) {
+      if (signal?.aborted) throw error;
+      if (error instanceof InvalidSavingsWindowError) throw new BadRequestError(error.message);
+      throw auditFailure("savings report", error);
+    }
   }
 
   private sessionReplays(): SessionReplayQueries {

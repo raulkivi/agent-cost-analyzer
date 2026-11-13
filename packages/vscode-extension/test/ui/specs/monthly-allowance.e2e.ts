@@ -20,7 +20,8 @@ const THEME_SETTING = "workbench.colorTheme";
 const FIND_MODE_SETTING = "workbench.list.defaultFindMode";
 const WARN_AT_PERCENT = 80;
 // The usage session, the empty-window session, the classic session with subagent runs (step 10.19) and the Copilot CLI sessions of the fixture.
-const KNOWN_SESSIONS = 3 + Object.keys(COPILOT_CLI_FIXTURE_SESSION_IDS).length;
+// Plus the savings fixture's Agent Host session (Phase 16 SR13); its local session has no cost data.
+const KNOWN_SESSIONS = 3 + Object.keys(COPILOT_CLI_FIXTURE_SESSION_IDS).length + 1;
 const MONTH_ROW = /^This month: /;
 
 interface TreeNode {

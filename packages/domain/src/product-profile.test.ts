@@ -19,6 +19,7 @@ describe("productProfileSchema", () => {
       costAnalysis: true,
       projectsAndBilling: true,
       sessionReplay: true,
+      savingsReport: true,
     },
   };
 
@@ -41,6 +42,7 @@ describe("productProfileSchema", () => {
         costAnalysis: true,
         projectsAndBilling: false,
         sessionReplay: true,
+        savingsReport: true,
       },
     };
 

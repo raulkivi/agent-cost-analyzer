@@ -101,6 +101,7 @@ function invoke(
   api: DispatcherApi,
   method: ApiMethod,
   params: Params,
+  signal: AbortSignal,
 ): Promise<unknown> {
   switch (method) {
     case "listSessions":
@@ -175,6 +176,10 @@ function invoke(
       return api.getSessionReplay(...sessionQuery(params));
     case "compareSessionReplay":
       return api.compareSessionReplay(...sessionQuery(params));
+    // Phase 16 SR12: read-only; ApiService parses the query and the abort
+    // signal stops the report when the webview cancels.
+    case "getSavingsReport":
+      return api.getSavingsReport(toQuery(params), signal);
     case "issueStatement": {
       const { projectId, period } = params as { projectId: string; period: string };
       return api.issueStatement(projectId, period);
@@ -192,13 +197,16 @@ function invoke(
 //
 // A `cancel` message (domain rpc.ts) makes the dispatcher forget a request
 // that is still running: its reply, success or failure, is dropped, so
-// nothing is posted for that id. The ApiService call itself isn't
-// interrupted — it reads log files synchronously, so there is nothing to
-// abort part-way — and its work simply finishes unheard.
+// nothing is posted for that id. Most ApiService calls aren't interrupted —
+// they read log files synchronously, so there is nothing to abort part-way —
+// and their work simply finishes unheard. The savings report is the one
+// that reads many sessions in turn, so it gets an AbortSignal, aborted by
+// the cancel, and stops between sessions.
 export class MessageDispatcher {
   // Ids of the requests being answered, and the subset the webview cancelled.
   private readonly running = new Set<string>();
   private readonly cancelled = new Set<string>();
+  private readonly aborts = new Map<string, AbortController>();
 
   constructor(
     private readonly api: DispatcherApi,
@@ -228,7 +236,10 @@ export class MessageDispatcher {
     if (message.kind === "cancel") {
       // Only a request still running is remembered, so a cancel that lost
       // the race with its reply doesn't suppress a later request with that id.
-      if (this.running.has(message.id)) this.cancelled.add(message.id);
+      if (this.running.has(message.id)) {
+        this.cancelled.add(message.id);
+        this.aborts.get(message.id)?.abort();
+      }
       return undefined;
     }
     if (message.kind !== "request") {
@@ -249,15 +260,18 @@ export class MessageDispatcher {
       return failure(id, 400, describeInvalidParams(method.data, parsed.error));
     }
     this.running.add(id);
+    const abort = new AbortController();
+    this.aborts.set(id, abort);
     try {
       // Awaited only when there is a gate, so production adds no tick.
       if (this.options.requestGate)
         await this.options.requestGate.waitFor(method.data);
-      const reply = await this.answer(id, method.data, parsed.data as Params);
+      const reply = await this.answer(id, method.data, parsed.data as Params, abort.signal);
       return this.cancelled.has(id) ? undefined : reply;
     } finally {
       this.running.delete(id);
       this.cancelled.delete(id);
+      this.aborts.delete(id);
     }
   }
 
@@ -276,13 +290,14 @@ export class MessageDispatcher {
     id: string,
     method: ApiMethod,
     params: Params,
+    signal: AbortSignal,
   ): Promise<RpcResponse> {
     try {
       return {
         kind: "response",
         id,
         ok: true,
-        result: await invoke(this.api, method, params),
+        result: await invoke(this.api, method, params, signal),
       };
     } catch (error) {
       if (error instanceof ApiError) {

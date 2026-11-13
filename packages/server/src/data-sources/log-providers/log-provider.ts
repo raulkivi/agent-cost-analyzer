@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import type { RequestTrace, Session, TurnInspectorDetail } from "@agent-cost-analyzer/domain";
+import type { PromptChangeMarker, RequestTrace, Session, TurnInspectorDetail } from "@agent-cost-analyzer/domain";
 
 // The provider-neutral boundary (architecture.md §6.2.1/§12): every log
 // source — VS Code local logs, mitmproxy captures, or a future source —
@@ -55,4 +55,25 @@ export interface RequestTraceReader {
 
 export function canReadRequestTrace(provider: LogProvider): provider is LogProvider & RequestTraceReader {
   return typeof (provider as Partial<RequestTraceReader>).readRequestTrace === "function";
+}
+
+// Phase 16 SR6 (docs/plans/savings-report.md §4 O2–O4, §15): the trace the
+// cache-break classifier reads. For a provider whose log has several agents
+// (VS Code: debugName; Claude Code: querySource) it is the chain the cache
+// follows, and `promptChanges` says what changed in each request's prompt
+// since the same agent's previous one, from hashes and flags only (never
+// prompt text). Empty where the log records no such signal. A separate
+// optional capability (ISP), as RequestTraceReader.
+export interface CacheBreakTrace {
+  trace: RequestTrace;
+  // By trace request index; a request with no entry has no recorded signal.
+  promptChanges: ReadonlyMap<number, PromptChangeMarker>;
+}
+
+export interface CacheBreakTraceReader {
+  readCacheBreakTrace(sessionId: string): Promise<CacheBreakTrace | null>;
+}
+
+export function canReadCacheBreakTrace(provider: LogProvider): provider is LogProvider & CacheBreakTraceReader {
+  return typeof (provider as Partial<CacheBreakTraceReader>).readCacheBreakTrace === "function";
 }

@@ -44,6 +44,7 @@ describe("GET /api/product", () => {
         costAnalysis: true,
         projectsAndBilling: true,
         sessionReplay: true,
+        savingsReport: true,
       },
     });
   });

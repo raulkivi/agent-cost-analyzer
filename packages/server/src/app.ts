@@ -188,6 +188,22 @@ export function createApp(options: CreateAppOptions = {}): Express {
     res.json(await api.compareSessionReplay(req.params.id, req.query));
   }));
 
+  // Phase 16 step SR12: the savings report, computed on request and never
+  // stored. GET only. A client that disconnects before the answer stops the
+  // report from reading further sessions.
+  app.get("/api/savings", route(async (req, res) => {
+    const controller = new AbortController();
+    res.on("close", () => {
+      if (!res.writableFinished) controller.abort();
+    });
+    try {
+      res.json(await api.getSavingsReport(req.query, controller.signal));
+    } catch (error) {
+      if (controller.signal.aborted) return;
+      throw error;
+    }
+  }));
+
   app.get("/api/audit", route(async (req, res) => {
     res.json(await api.getAuditRollup(req.query));
   }));

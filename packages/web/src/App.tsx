@@ -8,6 +8,7 @@ import {
   type LogProviderDescriptor,
   type ProductFeatures,
   type ProductProfile,
+  type SavingsSessionRef,
   type Session,
   type VendorProfileSummary,
 } from "@agent-cost-analyzer/domain";
@@ -39,6 +40,7 @@ import { SessionKpiTiles } from "./components/SessionKpiTiles.js";
 import { TurnMetrics } from "./components/TurnMetrics.js";
 import { Drawer } from "./components/ui/Drawer.js";
 import { InsightsDashboard } from "./components/insights/InsightsDashboard.js";
+import { SavingsTab } from "./components/savings/SavingsTab.js";
 import { SessionAuditPanel } from "./components/SessionAuditPanel.js";
 import { ConfigWarningBanner } from "./components/ConfigWarningBanner.js";
 import { ExplanationPanel } from "./components/ExplanationPanel.js";
@@ -90,7 +92,11 @@ const CENTER_VIEW_OPTIONS = [
   { value: "dashboard", label: "Dashboard" },
 ] as const;
 
-type CenterView = (typeof CENTER_VIEW_OPTIONS)[number]["value"];
+// Phase 16 SR14 (owner decision, SR11 question 11): the extension's Savings
+// view follows Dashboard; the standalone app's is a Dashboard view after Billing.
+const SAVINGS_CENTER_VIEW = { value: "savings", label: "Savings" } as const;
+
+type CenterView = (typeof CENTER_VIEW_OPTIONS)[number]["value"] | typeof SAVINGS_CENTER_VIEW.value;
 
 // A session or scenario list's fetch (§3.5 States).
 type ListLoad = { status: "loading" } | { status: "error"; message: string } | { status: "ready"; items: Session[] };
@@ -122,11 +128,11 @@ function gridColumns(layout: Layout, listColumn: boolean): string {
 function centerColumnStyle(
   layout: Layout,
   listColumn: boolean,
-  showDashboard: boolean,
+  fullWidth: boolean,
   hideRightColumn: boolean,
 ): CSSProperties | undefined {
   if (layout === "narrow") return undefined;
-  if (showDashboard) return { gridColumn: "1 / -1" };
+  if (fullWidth) return { gridColumn: "1 / -1" };
   return layout === "wide" && hideRightColumn ? { gridColumn: listColumn ? "2 / -1" : "1 / -1" } : undefined;
 }
 
@@ -144,6 +150,7 @@ const FALLBACK_FEATURES: ProductFeatures = {
   costAnalysis: false,
   projectsAndBilling: false,
   sessionReplay: false,
+  savingsReport: false,
 };
 
 const EMPTY_STATES = {
@@ -376,6 +383,17 @@ export function App({ performanceMarks = pagePerformanceMarks }: AppProps = {}) 
     ? (vendorProfiles.find((profile) => profile.vendorId === readyReplay.vendorId)?.displayName ?? readyReplay.vendorId)
     : "";
 
+  const extensionScope = !features.crossProviderInsights;
+  const savingsTab =
+    features.savingsReport && mode === "analyze" ? (
+      <SavingsTab
+        providers={providers.map((provider) => ({ id: provider.id, label: provider.label }))}
+        copilotOnly={extensionScope}
+        openSessionLabel={extensionScope ? "Open session" : "Open in Analyze"}
+        onOpenSession={handleOpenSavingsSession}
+      />
+    ) : undefined;
+
   const selectedTurn = session?.turns[selectedTurnIndex] ?? null;
   const inspectorShown = session !== null && (inspectorOpen || turnInspectorOpen);
   // "All sessions" hides the right column; the dashboard brings its own
@@ -385,7 +403,15 @@ export function App({ performanceMarks = pagePerformanceMarks }: AppProps = {}) 
   const listColumn = !features.sessionSidebar;
   const layout = layoutFor(containerWidth, { listColumn });
   const showDashboard = mode === "analyze" && centerView === "dashboard";
-  const hideRightColumn = mode === "analyze" && (centerView === "rollup" || showDashboard);
+  // Where the Savings tab lives: a Dashboard view where the Billing tab is
+  // (the standalone app), else a view of its own after Dashboard (the extension).
+  const savingsInDashboard = features.savingsReport && features.projectsAndBilling;
+  const savingsInCenter = features.savingsReport && !features.projectsAndBilling;
+  const centerViewOptions = savingsInCenter ? [...CENTER_VIEW_OPTIONS, SAVINGS_CENTER_VIEW] : CENTER_VIEW_OPTIONS;
+  const showSavings = mode === "analyze" && savingsInCenter && centerView === "savings";
+  // These views read every provider themselves, so they hide the session list.
+  const fullWidthView = showDashboard || showSavings;
+  const hideRightColumn = mode === "analyze" && (centerView === "rollup" || fullWidthView);
   const visibleColumns = turnColumnsFor(layout, chosenColumns);
   const showDetailsDrawer = layout !== "wide" && detailsOpen && !hideRightColumn && selectedTurn !== null;
   const listLoad = mode === "learn" ? scenarioList : sessionList;
@@ -400,7 +426,7 @@ export function App({ performanceMarks = pagePerformanceMarks }: AppProps = {}) 
   }, [listLoaded, performanceMarks]);
   // The dashboard reads every provider, so an empty active provider must
   // not hide it.
-  const showEmptyState = listLoaded && listForMode.length === 0 && !showDashboard;
+  const showEmptyState = listLoaded && listForMode.length === 0 && !fullWidthView;
   const allAiCreditsKnown =
     session !== null && session.turns.length > 0 && session.turns.every((turn) => turn.usage.costAiCredits.known);
   // toolInventory only comes from a parsed main.jsonl; a turn's toolCalls
@@ -545,6 +571,26 @@ export function App({ performanceMarks = pagePerformanceMarks }: AppProps = {}) 
       setAdviceDialogOpen(true);
     }
     openAnalyzeSession(sessionId, tab);
+  }
+
+  // A session of a Savings row, opened in the turns view. Another provider's
+  // session needs that provider made active first (the standalone app's).
+  function handleOpenSavingsSession(ref: SavingsSessionRef): void {
+    setInspectorOpen(false);
+    setTurnInspectorOpen(false);
+    setCenterView("turns");
+    if (!features.providerSelect || ref.providerId === activeProviderId) {
+      openAnalyzeSession(ref.sessionId);
+      return;
+    }
+    setActiveLogProvider(ref.providerId)
+      .then((status) => {
+        latestSessionRequestId.current++;
+        setProviders(status.providers);
+        setActiveProviderId(status.activeProviderId);
+        openAnalyzeSession(ref.sessionId);
+      })
+      .catch((error: Error) => setFetchError(error.message));
   }
 
   function handleOpenSessionAudit(sessionId: string): void {
@@ -734,7 +780,7 @@ export function App({ performanceMarks = pagePerformanceMarks }: AppProps = {}) 
             }}
           >
             {listColumn && (
-            <div style={showDashboard ? { display: "none" } : undefined}>
+            <div style={fullWidthView ? { display: "none" } : undefined}>
               <AsyncView
                 status={listLoad.status}
                 loadingText={mode === "learn" ? "Loading scenarios…" : "Loading sessions…"}
@@ -775,7 +821,7 @@ export function App({ performanceMarks = pagePerformanceMarks }: AppProps = {}) 
               productName={productProfile?.displayName}
             />
 
-            <div style={centerColumnStyle(layout, listColumn, showDashboard, hideRightColumn)}>
+            <div style={centerColumnStyle(layout, listColumn, fullWidthView, hideRightColumn)}>
               {mode === "analyze" &&
                 (layout === "narrow" ? (
                   <label className="view-select">
@@ -785,7 +831,7 @@ export function App({ performanceMarks = pagePerformanceMarks }: AppProps = {}) 
                       value={centerView}
                       onChange={(event) => setCenterView(event.target.value as CenterView)}
                     >
-                      {CENTER_VIEW_OPTIONS.map((option) => (
+                      {centerViewOptions.map((option) => (
                         <option key={option.value} value={option.value}>
                           {option.label}
                         </option>
@@ -795,7 +841,7 @@ export function App({ performanceMarks = pagePerformanceMarks }: AppProps = {}) 
                 ) : (
                   <SegmentedControl
                     name="center-view"
-                    options={CENTER_VIEW_OPTIONS}
+                    options={centerViewOptions}
                     value={centerView}
                     onChange={setCenterView}
                     className="center-view-seg"
@@ -811,8 +857,10 @@ export function App({ performanceMarks = pagePerformanceMarks }: AppProps = {}) 
                 </div>
               )}
               <div style={mode === "analyze" ? { marginTop: "var(--space-3)" } : undefined}>
-              {showDashboard ? (
-                <InsightsDashboard crossProvider={features.crossProviderInsights} costAnalysis={features.costAnalysis} projectsAndBilling={features.projectsAndBilling} />
+              {showSavings ? (
+                savingsTab
+              ) : showDashboard ? (
+                <InsightsDashboard crossProvider={features.crossProviderInsights} costAnalysis={features.costAnalysis} projectsAndBilling={features.projectsAndBilling} savings={savingsInDashboard ? savingsTab : undefined} />
               ) : mode === "analyze" && centerView === "rollup" ? (
                 <AuditRollupPanel onOpenSession={handleOpenSessionAudit} key={activeProviderId} />
               ) : mode === "analyze" && centerView === "session-audit" ? (

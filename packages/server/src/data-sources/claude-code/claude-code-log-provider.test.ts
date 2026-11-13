@@ -1,5 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
+import { cpSync, mkdirSync, mkdtempSync, appendFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
@@ -313,6 +315,97 @@ describe("ClaudeCodeLogProvider", () => {
       await expect(provider.readTurnDetail(id, 999)).resolves.toBeNull();
     });
   });
+  describe("tool inventory (Phase 16 SR2)", () => {
+    const shapeLine = JSON.stringify({
+      type: "api-request-shape",
+      shapeHash: "h1",
+      shape: { system: [], tools: [{ name: "Read", description: "Reads a file.", input_schema: { type: "object" } }, { name: "Bash", description: "Runs a command.", input_schema: { type: "object" } }] },
+    });
+    const requestLine = JSON.stringify({ type: "api-request", id: "r1", querySource: "repl_main_thread", shapeHash: "h1" });
+
+    function withShapeLines(lines: string[]): { dir: string; sessionId: string } {
+      const dir = mkdtempSync(path.join(tmpdir(), "cc-shape-"));
+      const target = path.join(dir, "-home-dev-project", "normal-session.jsonl");
+      mkdirSync(path.dirname(target), { recursive: true });
+      cpSync(path.join(fixturesDir, "-home-dev-project", "normal-session.jsonl"), target, { recursive: true });
+      appendFileSync(target, `\n${lines.join("\n")}\n`);
+      return { dir, sessionId: computeClaudeCodeFileHash(target) };
+    }
+
+    it("lists the tools of the recorded request shape with estimated definition tokens", async () => {
+      const { dir, sessionId } = withShapeLines([shapeLine, requestLine]);
+      try {
+        const session = await new ClaudeCodeLogProvider({ projectsDirPath: dir }).readSession(sessionId);
+
+        expect(session?.toolInventory?.map((entry) => entry.name)).toEqual(["Read", "Bash"]);
+        expect(session?.toolInventory?.every((entry) => entry.definitionTokens?.known === true)).toBe(true);
+      } finally {
+        rmSync(dir, { recursive: true, force: true });
+      }
+    });
+
+    it("has no tool inventory when the log records no request shape", async () => {
+      const session = await new ClaudeCodeLogProvider({ projectsDirPath: fixturesDir }).readSession(
+        computeClaudeCodeFileHash(path.join(fixturesDir, "-home-dev-project", "normal-session.jsonl")),
+      );
+
+      expect(session?.toolInventory).toBeUndefined();
+    });
+
+    it("keeps the inventory out of the session list", async () => {
+      const { dir } = withShapeLines([shapeLine, requestLine]);
+      try {
+        const sessions = await new ClaudeCodeLogProvider({ projectsDirPath: dir }).listSessions();
+
+        expect(sessions.every((session) => session.toolInventory === undefined)).toBe(true);
+      } finally {
+        rmSync(dir, { recursive: true, force: true });
+      }
+    });
+  });
+
+  describe("cache-break trace (Phase 16 SR6)", () => {
+    const line = (entry: Record<string, unknown>) => JSON.stringify({ sessionId: "s", cwd: "/p", ...entry });
+    const assistant = (uuid: string, parentUuid: string, id: string, at: string) =>
+      line({
+        type: "assistant",
+        uuid,
+        parentUuid,
+        timestamp: at,
+        requestRef: `ref-${id}`,
+        message: { id, model: "claude-sonnet-5", role: "assistant", content: [], usage: { input_tokens: 10, cache_read_input_tokens: 100, cache_creation_input_tokens: 0, output_tokens: 5 } },
+      });
+    const request = (id: string, shapeHash: string) => line({ type: "api-request", id: `ref-${id}`, querySource: "repl_main_thread", shapeHash });
+
+    it("gives the trace with a tools-changed marker where the request shape changed", async () => {
+      const dir = mkdtempSync(path.join(tmpdir(), "cc-breaks-"));
+      const target = path.join(dir, "-home-dev-project", "s.jsonl");
+      mkdirSync(path.dirname(target), { recursive: true });
+      appendFileSync(
+        target,
+        [
+          line({ type: "user", uuid: "u1", parentUuid: null, timestamp: "2026-10-07T09:00:00.000Z", message: { role: "user", content: "hi" } }),
+          request("m1", "h1"),
+          assistant("a1", "u1", "m1", "2026-10-07T09:00:01.000Z"),
+          request("m2", "h2"),
+          assistant("a2", "a1", "m2", "2026-10-07T09:00:05.000Z"),
+        ].join("\n") + "\n",
+      );
+      try {
+        const result = await new ClaudeCodeLogProvider({ projectsDirPath: dir }).readCacheBreakTrace(computeClaudeCodeFileHash(target));
+
+        expect(result?.trace.requests).toHaveLength(2);
+        expect(result?.promptChanges.get(1)).toEqual({ tools: true });
+      } finally {
+        rmSync(dir, { recursive: true, force: true });
+      }
+    });
+
+    it("is null for an unknown session", async () => {
+      await expect(new ClaudeCodeLogProvider({ projectsDirPath: fixturesDir }).readCacheBreakTrace("does-not-exist")).resolves.toBeNull();
+    });
+  });
+
 });
 
 describeLogProviderContract("ClaudeCodeLogProvider", {

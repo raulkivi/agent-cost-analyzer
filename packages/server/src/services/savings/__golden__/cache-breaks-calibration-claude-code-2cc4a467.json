@@ -1,0 +1,9 @@
+{
+  "sessionId": "calibration-claude-code-2cc4a467",
+  "providerId": "claude-code",
+  "harness": "claude-code",
+  "requests": 51,
+  "breaks": [],
+  "intended": [],
+  "unchecked": []
+}

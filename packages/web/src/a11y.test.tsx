@@ -21,6 +21,7 @@ import { sampleCostComparison, sampleCostSeries } from "./test-support/cost-fixt
 import { sampleInsightsDataset } from "./test-support/insights-fixture.js";
 import { makeReplay, REPLAY_PROFILES } from "./test-support/replay-fixture.js";
 import { makeRun, makeTurnWithRuns } from "./test-support/subagent-fixture.js";
+import { makeSavingsReport, UNPRICED_ROW } from "./test-support/savings-fixture.js";
 import { makeTurn } from "./test-support/turn-fixture.js";
 import themeCss from "./theme.css?raw";
 import vscodeThemeCss from "./theme-vscode.css?raw";
@@ -151,7 +152,7 @@ const extensionProfile: ProductProfile = {
   productId: "vscode-extension",
   displayName: "AI Credits Analyzer",
   version: "0.1.0",
-  features: { providerSelect: false, crossProviderInsights: false, settingFixes: true, openInEditor: true, sessionSidebar: false, vendorSimulation: false, costAnalysis: false, projectsAndBilling: false, sessionReplay: false },
+  features: { providerSelect: false, crossProviderInsights: false, settingFixes: true, openInEditor: true, sessionSidebar: false, vendorSimulation: false, costAnalysis: false, projectsAndBilling: false, sessionReplay: false, savingsReport: false },
 };
 
 interface Backend {
@@ -160,6 +161,8 @@ interface Backend {
   profile: ProductProfile | null;
   // Step 14.7: the open session is a Claude Code one, so it can be replayed.
   replayable?: boolean;
+  // Phase 16 SR14: the savings report the fake backend answers.
+  savings?: ReturnType<typeof makeSavingsReport>;
 }
 
 let backend: Backend;
@@ -193,6 +196,7 @@ function fakeFetch(url: string) {
       ],
     });
   if (url.startsWith("/api/insights")) return json(sampleInsightsDataset());
+  if (url.startsWith("/api/savings")) return json(backend.savings ?? makeSavingsReport());
   if (url.startsWith("/api/cost/timeseries")) return json(sampleCostSeries());
   if (url.startsWith("/api/cost/compare")) return json(sampleCostComparison());
   if (url.startsWith("/api/audit"))
@@ -331,7 +335,7 @@ describe.each(Object.keys(THEMES) as ThemeName[])("axe: no WCAG 2.2 AA violation
       productId: "standalone",
       displayName: "Agent Cost Analyzer",
       version: "0.9.0",
-      features: { providerSelect: true, crossProviderInsights: true, settingFixes: false, openInEditor: false, sessionSidebar: false, vendorSimulation: false, costAnalysis: true, projectsAndBilling: true, sessionReplay: false },
+      features: { providerSelect: true, crossProviderInsights: true, settingFixes: false, openInEditor: false, sessionSidebar: false, vendorSimulation: false, costAnalysis: true, projectsAndBilling: true, sessionReplay: false, savingsReport: false },
     };
 
     async function openCostTab(name: "Cost over time" | "Compare") {
@@ -364,6 +368,71 @@ describe.each(Object.keys(THEMES) as ThemeName[])("axe: no WCAG 2.2 AA violation
       await screen.findByRole("table", { name: /Compare/ });
       await expectNoViolations();
       for (const toggle of screen.getAllByRole("button", { name: "View as table" })) fireEvent.click(toggle);
+      await expectNoViolations();
+    });
+  });
+
+  // Phase 16 SR14: the Savings tab in the standalone app (a Dashboard view)
+  // and in the extension (a view after Dashboard), each in this theme.
+  describe("Savings tab", () => {
+    const savingsProfile = (extension: boolean): ProductProfile => ({
+      productId: extension ? "vscode-extension" : "standalone",
+      displayName: extension ? "AI Credits Analyzer" : "Agent Cost Analyzer",
+      version: "0.13.0",
+      features: {
+        providerSelect: !extension,
+        crossProviderInsights: !extension,
+        settingFixes: extension,
+        openInEditor: extension,
+        sessionSidebar: false,
+        vendorSimulation: false,
+        costAnalysis: true,
+        projectsAndBilling: !extension,
+        sessionReplay: false,
+        savingsReport: true,
+      },
+    });
+
+    async function openSavings(extension: boolean) {
+      backend.profile = savingsProfile(extension);
+      await openAnalyzeSession();
+      if (extension) {
+        fireEvent.click(await screen.findByLabelText("Savings"));
+      } else {
+        fireEvent.click(screen.getByLabelText("Dashboard"));
+        await screen.findByRole("group", { name: "AI Credits" });
+        fireEvent.click(within(screen.getByRole("radiogroup", { name: "Dashboard view" })).getByRole("radio", { name: "Savings" }));
+      }
+      await screen.findByRole("list", { name: "AI Credits" });
+    }
+
+    it.each([false, true])("the ranked lists, Simulated and Not analysed (extension: %s)", async (extension) => {
+      await openSavings(extension);
+
+      await expectNoViolations();
+    });
+
+    it("a row's detail, with the price versions open", async () => {
+      await openSavings(false);
+      fireEvent.click(within(screen.getByRole("list", { name: "AI Credits" })).getAllByRole("button")[1]!);
+      await screen.findByRole("region", { name: "Savings detail" });
+      screen.getByText(/^Price versions/).closest("details")!.setAttribute("open", "");
+
+      await expectNoViolations();
+    });
+
+    it("a Simulated row's detail", async () => {
+      await openSavings(false);
+      fireEvent.click(within(screen.getByRole("list", { name: "Simulated savings" })).getByRole("button"));
+      await screen.findByRole("region", { name: "Savings detail" });
+
+      await expectNoViolations();
+    });
+
+    it("every amount unknown, with sessions left out", async () => {
+      backend = { ...backend, savings: makeSavingsReport({ opportunities: [UNPRICED_ROW], simulated: [], sessionsLeftOut: [{ providerId: "vscode", reason: "over the session limit", sessions: 3 }] }) };
+      await openSavings(false);
+
       await expectNoViolations();
     });
   });
@@ -504,7 +573,7 @@ describe.each(Object.keys(THEMES) as ThemeName[])("axe: no WCAG 2.2 AA violation
         productId: "standalone",
         displayName: "Agent Cost Analyzer",
         version: "0.9.0",
-        features: { providerSelect: true, crossProviderInsights: true, settingFixes: false, openInEditor: false, sessionSidebar: false, vendorSimulation: true, costAnalysis: false, projectsAndBilling: false, sessionReplay: true },
+        features: { providerSelect: true, crossProviderInsights: true, settingFixes: false, openInEditor: false, sessionSidebar: false, vendorSimulation: true, costAnalysis: false, projectsAndBilling: false, sessionReplay: true, savingsReport: true },
       };
       await openAnalyzeSession();
       const picker = await screen.findByLabelText("Replay on");
@@ -642,7 +711,7 @@ describe.each(Object.keys(THEMES) as ThemeName[])("axe: no WCAG 2.2 AA violation
         productId: "standalone",
         displayName: "Agent Cost Analyzer",
         version: "0.9.0",
-        features: { providerSelect: true, crossProviderInsights: true, settingFixes: false, openInEditor: false, sessionSidebar: false, vendorSimulation: false, costAnalysis: true, projectsAndBilling: true, sessionReplay: false },
+        features: { providerSelect: true, crossProviderInsights: true, settingFixes: false, openInEditor: false, sessionSidebar: false, vendorSimulation: false, costAnalysis: true, projectsAndBilling: true, sessionReplay: false, savingsReport: false },
       };
       await openAnalyzeSession();
       fireEvent.change(screen.getByRole("combobox", { name: /^view$/i }), { target: { value: "dashboard" } });

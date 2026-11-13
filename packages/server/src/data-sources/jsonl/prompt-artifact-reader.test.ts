@@ -4,6 +4,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import {
+  readArtifactContentHash,
   readSystemPromptText,
   readToolDefinitionNames,
   readToolDefinitionsRaw,
@@ -111,5 +112,22 @@ describe("readToolDefinitionsRaw", () => {
     const entries = await readToolDefinitionsRaw(fixturesDir, "sub/../tools_0.json");
 
     expect(entries).toBeNull();
+  });
+});
+
+// Phase 16 SR6 (savings-report.md §15 a): equal content under different file
+// names is the same prompt, so a change is a different content hash.
+describe("readArtifactContentHash", () => {
+  it("hashes the file's content, the same for the same content", async () => {
+    const hash = await readArtifactContentHash(fixturesDir, "tools_0.json");
+
+    expect(hash).toMatch(/^[0-9a-f]{64}$/);
+    expect(await readArtifactContentHash(fixturesDir, "tools_0.json")).toBe(hash);
+    expect(await readArtifactContentHash(fixturesDir, "system_prompt_0.json")).not.toBe(hash);
+  });
+
+  it("is null for a missing file or a name that is not a bare filename", async () => {
+    expect(await readArtifactContentHash(fixturesDir, "tools_missing.json")).toBeNull();
+    expect(await readArtifactContentHash(fixturesDir, "../jsonl/tools_0.json")).toBeNull();
   });
 });

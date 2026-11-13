@@ -1,0 +1,124 @@
+{
+  "window": {
+    "since": "2026-10-08",
+    "until": "2026-11-06",
+    "days": 30
+  },
+  "pricing": "as-of-use",
+  "opportunities": [
+    {
+      "key": "model-switch:USD",
+      "kind": "model-switch",
+      "subject": "Model switches",
+      "sessions": [
+        {
+          "providerId": "claude-code",
+          "sessionId": "<claude-code-session>"
+        }
+      ],
+      "evidence": {
+        "sessions": 1,
+        "requests": 4,
+        "tokens": {
+          "known": true,
+          "value": 34000
+        },
+        "occurrences": 1
+      },
+      "perWeek": {
+        "known": true,
+        "currency": "USD",
+        "low": 0,
+        "high": 0.06188000000000001,
+        "basis": "priced",
+        "label": "upper-bound",
+        "priceVersionIds": [
+          "anthropic-api:claude-opus-5.5:2026-10-01"
+        ]
+      },
+      "perWindow": {
+        "known": true,
+        "currency": "USD",
+        "low": 0,
+        "high": 0.26520000000000005,
+        "basis": "priced",
+        "label": "upper-bound",
+        "priceVersionIds": [
+          "anthropic-api:claude-opus-5.5:2026-10-01"
+        ]
+      },
+      "coverage": {
+        "sessionsInWindow": 1,
+        "sessionsAnalysed": 1,
+        "notAnalysed": []
+      },
+      "actionParams": {
+        "times": 1,
+        "tokens": 34000
+      },
+      "inferred": false
+    },
+    {
+      "key": "idle-cache-expiry:USD:60",
+      "kind": "idle-cache-expiry",
+      "subject": "Idle longer than 60 minutes",
+      "sessions": [
+        {
+          "providerId": "claude-code",
+          "sessionId": "<claude-code-session>"
+        }
+      ],
+      "evidence": {
+        "sessions": 1,
+        "requests": 4,
+        "tokens": {
+          "known": true,
+          "value": 33500
+        },
+        "occurrences": 1
+      },
+      "perWeek": {
+        "known": true,
+        "currency": "USD",
+        "low": 0,
+        "high": 0.030485000000000005,
+        "basis": "priced",
+        "label": "upper-bound",
+        "priceVersionIds": [
+          "anthropic-api:claude-sonnet-5.5:2026-10-07"
+        ]
+      },
+      "perWindow": {
+        "known": true,
+        "currency": "USD",
+        "low": 0,
+        "high": 0.13065000000000002,
+        "basis": "priced",
+        "label": "upper-bound",
+        "priceVersionIds": [
+          "anthropic-api:claude-sonnet-5.5:2026-10-07"
+        ]
+      },
+      "coverage": {
+        "sessionsInWindow": 1,
+        "sessionsAnalysed": 1,
+        "notAnalysed": []
+      },
+      "actionParams": {
+        "breaks": 1,
+        "minutes": 60,
+        "tokens": 33500
+      },
+      "inferred": false
+    }
+  ],
+  "simulated": [],
+  "notAnalysed": [
+    {
+      "kind": "unused-tools",
+      "providerId": "claude-code",
+      "reason": "The log records no tool inventory for this session.",
+      "sessions": 1
+    }
+  ]
+}

@@ -16,6 +16,7 @@ import { createSessionAttributor } from "./create-session-attributor.js";
 import { createBundledPriceBookBeside } from "./create-price-book.js";
 import { createTurnPricer } from "./create-turn-pricer.js";
 import { createCostAnalysis } from "./create-cost-analysis.js";
+import { createSavingsReport } from "./create-savings-report.js";
 import { createSessionReplay } from "./create-session-replay.js";
 
 export interface ExtensionApiServiceOptions extends CopilotProviderCompositionOptions {
@@ -37,7 +38,7 @@ export interface ExtensionApiServiceOptions extends CopilotProviderCompositionOp
 // openTextDocument host commands (step 10.5), so setting fixes and
 // open-in-editor are on. Session replay (step 14.7) is on exactly when the
 // ApiService has a replay to answer with, which needs the bundled price book.
-export function extensionProductProfile(version: string, { sessionReplay }: { sessionReplay: boolean }): ProductProfile {
+export function extensionProductProfile(version: string, { sessionReplay, savingsReport }: { sessionReplay: boolean; savingsReport: boolean }): ProductProfile {
   return {
     productId: "vscode-extension",
     displayName: "AI Credits Analyzer",
@@ -54,6 +55,8 @@ export function extensionProductProfile(version: string, { sessionReplay }: { se
       costAnalysis: true,
       projectsAndBilling: false,
       sessionReplay,
+      // Phase 16 SR12: on with the bundled price book, like the replay.
+      savingsReport,
     },
   };
 }
@@ -82,6 +85,12 @@ export function createExtensionApiService(options: ExtensionApiServiceOptions): 
   const sessionReplay =
     priceBook && pricer ? createSessionReplay({ providers: registry, profiles: vendorProfiles, priceBook, pricer, attribution }) : undefined;
 
+  // D10: Copilot sessions only (the registry above), priced from the bundled price book.
+  const savingsReport =
+    priceBook && pricer && sessionReplay
+      ? createSavingsReport({ providers: registry, profiles: vendorProfiles, priceBook, pricer, attribution, replay: sessionReplay })
+      : undefined;
+
   return new ApiService({
     registry,
     auditQueries: new AuditQueryService(registry),
@@ -93,6 +102,7 @@ export function createExtensionApiService(options: ExtensionApiServiceOptions): 
     // priced from the bundled price book with the same attribution and
     // pricer as the Dashboard.
     ...(sessionReplay ? { sessionReplay } : {}),
+    ...(savingsReport ? { savingsReport } : {}),
     settings: appSettings,
     checkConfig: (minRetainedSessionLogsThreshold) =>
       checkConfig({
@@ -104,6 +114,6 @@ export function createExtensionApiService(options: ExtensionApiServiceOptions): 
     learnScenarios: createSimulatedScenarioCatalog(learnSimulation),
     learnSimulation,
     appVersion,
-    productProfile: extensionProductProfile(appVersion, { sessionReplay: sessionReplay !== undefined }),
+    productProfile: extensionProductProfile(appVersion, { sessionReplay: sessionReplay !== undefined, savingsReport: savingsReport !== undefined }),
   });
 }

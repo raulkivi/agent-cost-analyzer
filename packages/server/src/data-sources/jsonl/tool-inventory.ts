@@ -3,6 +3,7 @@
 import type { ToolInventoryEntry } from "@agent-cost-analyzer/domain";
 import type { JsonlEnvelope } from "./main-jsonl-reader.js";
 import { groupEnvelopesByUserMessage } from "./session-usage-spans.js";
+import type { ToolDefinitionTokenLookup } from "./tool-definition-tokens.js";
 
 // One entry per SQLite turn_index (array position), each the ordered list of
 // tool_call event names within that turn's group — reuses the same
@@ -26,7 +27,26 @@ export function extractInvokedToolNamesByTurn(
 // way) would be constraint-6 fabrication, so when the loaded list itself is
 // unavailable we only report tools we have direct proof of: the ones
 // actually invoked.
+//
+// `definitionTokensFor` (Phase 16 SR2), when given, sets each entry's
+// `definitionTokens`; without it the entries stay as they were.
 export function buildToolInventory(
+  loadedToolNames: string[] | null,
+  invokedNamesByTurn: string[][],
+  definitionTokensFor?: ToolDefinitionTokenLookup,
+): ToolInventoryEntry[] {
+  return withDefinitionTokens(buildEntries(loadedToolNames, invokedNamesByTurn), definitionTokensFor);
+}
+
+function withDefinitionTokens(
+  entries: ToolInventoryEntry[],
+  definitionTokensFor: ToolDefinitionTokenLookup | undefined,
+): ToolInventoryEntry[] {
+  if (!definitionTokensFor) return entries;
+  return entries.map((entry) => ({ ...entry, definitionTokens: definitionTokensFor(entry.name) }));
+}
+
+function buildEntries(
   loadedToolNames: string[] | null,
   invokedNamesByTurn: string[][],
 ): ToolInventoryEntry[] {

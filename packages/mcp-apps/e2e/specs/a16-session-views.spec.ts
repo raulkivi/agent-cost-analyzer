@@ -90,17 +90,21 @@ inEachClaudeSet(() => {
 
     await expect(view.title()).toHaveText("Findings");
     await expect(view.kicker()).toHaveText("Agent Cost Analyzer · Findings");
-    await expect(u3.summary()).toHaveText("9 findings");
-    await expect(u3.severityTile("Medium")).toContainText("1");
+    // Five from the usage fixtures, four from the classic subagent session
+    // (step 10.19) and two from the savings fixture's Claude Code session
+    // (Phase 16 SR13): "First use of model claude-opus-5-5-20261001" and its
+    // 2,800 output tokens, an anomaly once the median across 19 sessions is 600.
+    await expect(u3.summary()).toHaveText("11 findings");
+    await expect(u3.severityTile("Medium")).toContainText("2");
     await expect(u3.table()).toBeVisible();
     // Evidence is collapsed by default.
     await expect(u3.whyFlagged().first()).toHaveAttribute("aria-expanded", "false");
     expect(await view.axeViolations()).toEqual([]);
 
     await u3.chooseKind("Anomaly");
-    await expect(u3.summary()).toHaveText("1 finding");
+    await expect(u3.summary()).toHaveText("2 findings");
     await u3.chooseMinSeverity("Medium and above");
-    await expect(u3.summary()).toHaveText("1 finding");
+    await expect(u3.summary()).toHaveText("2 findings");
     expect(toolCallsIn(host.calls).map((call) => call.name)).toEqual(["list_findings", "list_findings"]);
     expect(toolCallsIn(host.calls)[0]!.arguments).toMatchObject({ kind: ["anomaly"] });
     expect(toolCallsIn(host.calls)[1]!.arguments).toMatchObject({ kind: ["anomaly"], minSeverity: "medium" });
@@ -108,7 +112,11 @@ inEachClaudeSet(() => {
 
     await u3.openEvidence();
     await expect(u3.whyFlagged().first()).toHaveAttribute("aria-expanded", "true");
-    await expect(u3.table()).toContainText("Output tokens 3,000 is 5.5× the median 550");
+    // The median is 600 with the classic (10.19) and savings (SR13) sessions.
+    await expect(u3.table()).toContainText("Output tokens 2,800 is 4.7× the median 600 across 19 sessions");
+    await u3.openEvidence(1);
+    await expect(u3.whyFlagged().nth(1)).toHaveAttribute("aria-expanded", "true");
+    await expect(u3.table()).toContainText("Output tokens 3,000 is 5.0× the median 600 across 19 sessions");
     expect(await view.axeViolations()).toEqual([]);
   });
 

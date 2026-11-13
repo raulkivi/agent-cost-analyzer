@@ -179,6 +179,8 @@ outbound network calls.
 | `services/session-replay/replay-query-params.ts` | Phase 14 step 14.5: the replay options' zod schemas, shared by HTTP, the webview RPC and MCP so all three give the same messages |
 | `composition/create-session-replay.ts` | Phase 14 step 14.5: `createSessionReplay`, the one wiring of `SessionReplayService` used by the standalone app, its MCP server, the extension and its MCP server |
 | `mcp/replay-tools.ts` | Phase 14 step 14.5 (D7): the `replay` tool group, `replay_session` and `compare_models_for_session` (read-only, domain output schemas) |
+| `services/savings/` | Phase 16 ([plans/savings-report.md](plans/savings-report.md) §5.2): the savings report, a service of its own and not a finding kind (D2). `SavingsService.report(filter, options, signal)` loads the window's sessions one at a time (at most `MAX_ROLLUP_SESSION_LIMIT`, 500, newest first) through `SavingsSessionLoader`, runs the registered `SavingsDetector` strategies and ranks the result with the pure `SavingsRanker`. Detectors take plain data and return plain data: `UnusedToolsDetector` (O1), `CacheBreakDetector` (O2–O4, over the pure `cache-break-classifier.ts` and `cache-rules.ts`), `FailedCallsDetector` (O5, over `buildSessionAudit`) and `CheaperModelDetector` (O6, over a `ReplayComparer` port, with `cheaper-model-candidates.ts`). `CounterfactualPricer` prices N tokens as one token type versus another through `CostPricer`. `savings-names.ts` (`savingsName`) folds, redacts and caps every log-derived name; `savings-window.ts` is the window (30 days to today by default); `savings-query-params.ts` is the zod query schema shared by HTTP and RPC |
+| `composition/create-savings-report.ts` | Phase 16 SR10: `createSavingsReport`, the one wiring of `SavingsService` over the price book, attribution, turn pricer and session replay, used by the standalone app and the extension (Increment 2 adds both MCP servers) |
 | `mcp/apps/` | Phase 12 ([plans/mcp-apps.md](plans/mcp-apps.md) §4.2): the MCP App views as a tool group. `registerAppViews` registers the one `ui://<server name>/views.html` resource, adds `_meta.ui.resourceUri` to the tools in `APP_VIEW_TOOL_NAMES` that the server actually registered (`captureRegisteredTools` records them, so the other groups don't change) and registers the app-only `get_turn_series`. `ViewSource` is the port for the HTML (`FileViewSource` reads the built file on every call, `InMemoryViewSource` is the test double). `injectBrand` fills the page's `aca-brand` meta with the escaped `ViewBrand` from `toViewBrand(identity, version)`. `resolveAppViews(path, onMissing)` turns a path into the `appViews` option, or into nothing when the file is missing, so both entry points start without the group instead of failing at `resources/read` |
 | `services/cost/turn-series-builder.ts` | Phase 12 A1: `buildTurnSeries` turns a session into the bounded per-turn figures (default 500 turns, at most 2000) that `get_turn_series` returns for the chart. `SessionCost` carries only `topTurns` |
 | `services/config-check` | Runs at server startup and on demand (§6.3): checks `agentDebugLog.fileLogging.enabled` and `maxRetainedSessionLogs` against constraints 8/10, producing actionable `ConfigWarning`s |
@@ -271,6 +273,7 @@ SQLite, `main.jsonl`, or scenario fixtures.
 | `charts/*` | D3-based AI Credits sparkline rendered in the center column's header row |
 | `components/replay/*` | Phase 14 step 14.7 (behind `ProductFeatures.sessionReplay`, both products): `ReplayOnPicker` (Learn's `VendorPicker` with an "Off (measured only)" first choice; disabled with the server's reason for pi and mitmproxy), `ReplaySummaryStrip`, `ReplaySummaryPanel` (a dialog; the assumptions open the first time), `ReplayTurnNote` in the Explanation tab, `ReplayStatus` (loading with Cancel, not replayable, errors), `ReplayPricingNote`, `SimulatedBadge` and `CompareModelsView`. `TurnsTable` gains a dashed "Simulated · <model>" column group. State in `state/use-session-replay.ts`, `use-analyze-replay.ts` and `use-replay-comparison.ts`; the client in `api-client/replay.ts` |
 | `charts/ReplayCompareBars.tsx` | Phase 14 step 14.7: the Compare models bars (one hue, the session's own model hatched and outlined, a measured reference line, an unknown total as "unknown") |
+| `components/savings/*`, `lib/savings/savings-view.ts` | Phase 16 SR14 (behind `ProductFeatures.savingsReport`, both products): `SavingsTab` (the filters, one list per currency, the Simulated and Not analysed sections, cancel and refresh through `useCancellableLoad`), `SavingsRow`, `SavingsDetail` (evidence, replay checks, the fixed action text with Copy, session links, price versions) and `SavingsLabel`. `savings-view.ts` builds every label ("up to", range, "Not priced", "estimate", "inferred") and `copyableText` (one line, capped at 600 characters) from the amount, never in CSS, so tests can assert them. In the standalone app the tab is the Dashboard's `savings` view after Billing; in the extension (`copilotOnly`) it is a view of its own after Dashboard |
 
 ### 4.3 Shared domain/schema package
 
@@ -727,6 +730,32 @@ replayed turns and `isMeasuredModel`. `ProductFeatures.sessionReplay` (step
 14.7, `product-profile.ts`) is on exactly when the backend can answer
 replays: always in the standalone app, and in the extension when its
 bundled price book is there.
+
+Savings report (Phase 16, `packages/domain/src/savings.ts` and
+`savings-actions.ts`; data flow in §6.6): a `SavingsReport` holds the
+`window` (`since`, `until`, `days`), the `pricing` mode, ranked
+`opportunities` (priced only), `simulated` opportunities in their own
+section, `notAnalysed` (per kind and provider, with a reason) and an
+optional `sessionsLeftOut` (over the session cap, unreadable log). A
+`SavingsOpportunity` has a `kind` (`unused-tools`, `idle-cache-expiry`,
+`unexplained-cache-break`, `model-switch`, `failed-tool-calls`,
+`cheaper-model`), a capped `subject`, its `sessions`, `evidence` (counts and
+tokens, each nullable; unused-tools tokens carry `estimated`), `coverage`,
+`perWeek` and `perWindow` amounts, `actionParams`, an `inferred` flag and,
+for `cheaper-model` only, a `simulation` (the model, the self-check, the
+coverage and assumption A1). A `SavingsAmount` is known (`currency`, `low`,
+`high`, `basis` `priced` or `simulated`, `label` `range`, `upper-bound` or
+`simulated`, the price version ids) or unknown with a reason, never 0.
+Schema refinements keep the labels from being dropped: `low` ≤ `high`; an
+upper bound has `low` 0; the simulated basis, the simulated label and the
+`cheaper-model` kind go together; a cheaper-model opportunity carries its
+simulation. `savingsActionText(kind, params)` is the fixed second-person
+template; its parameters are numbers, model ids and names of at most
+`MAX_SAVINGS_NAME_LENGTH` (80) characters. `ProductFeatures.savingsReport`
+is on exactly when the backend can price counterfactuals: always in the
+standalone app, and in the extension when its bundled price book is there.
+`ToolInventoryEntry.definitionTokens` (optional, additive) carries the
+per-tool estimate that O1 needs.
 
 Log-provider selection is a separate app-level contract, not a provider-
 specific API or UI branch:
@@ -2456,6 +2485,93 @@ Known gaps (plan §12.1, step 14.3): a `/clear` inside a Claude Code file
 still starts the branch after it, and a file that begins with a compaction
 records no `compaction` event.
 
+### 6.6 Savings report (Phase 16)
+
+A savings report answers "what should I change to spend less, and about
+how much would each change save?". Design, decisions and the review are in
+[plans/savings-report.md](plans/savings-report.md); this is the end-to-end
+view. Nothing is stored and nothing is written.
+
+1. **Request.** `GET /api/savings?since&until&provider&pricing&includeSimulated`
+   or the RPC `getSavingsReport`, both parsed by `savings-query-params.ts`
+   (400 on a bad date or pricing mode; no `limit`, the cap is the
+   service's). The window is 30 days to today by default, both ends
+   inclusive UTC dates, compared with each session's start; amounts are per
+   week (days ÷ 7).
+2. **Load.** Sessions of the selected providers in the window, newest
+   first, at most 500 in all. Each is read through `SavingsSessionLoader`
+   (turn costs from the same attribution and pricer as the Dashboard, the
+   tool inventory, the request trace where `canReadRequestTrace`, the
+   audit). A session over the cap or with an unreadable log goes to
+   `sessionsLeftOut` with a fixed sentence (a raw error can hold a path).
+3. **Detect.** Each detector runs in turn, so the cancel signal is checked
+   between them:
+   - **O1 unused tools.** A tool, or an MCP server (`mcp__<server>__<tool>`
+     is exact; Copilot's `mcp_<server>_<tool>` is `inferred`), loaded in
+     sessions of the window and invoked in none. Tokens are
+     `estimateTokenCount` over the definition (an estimate, D12). Saving is
+     a **range**: tokens × requests × the cache-read price to the uncached
+     price.
+   - **O2–O4 cache breaks.** The classifier compares each request's cache
+     read with the previous prompt. A break needs lost tokens of at least
+     the vendor's `minCacheableTokens` and half the previous prompt (D7).
+     It is `idle-cache-expiry` after a gap longer than the vendor's cache
+     lifetime, `model-switch` after a trace `model-switch` event, else
+     `unexplained-cache-break`. A compaction is intended and left out. The
+     cause is named only where the log records it: VS Code local's main
+     agent by tools-file and system-prompt-file content hash (never by file
+     name), Claude Code by `shapeHash` and the `instructions` attachment.
+     Agent Host and the rest say "not recorded in the log". Saving is
+     **up to**: the lost tokens at the rate they were billed at minus the
+     cache-read rate, with no lower bound.
+   - **O5 failed calls.** From the audit, grouped over the window by
+     failure category and program (or tool). A group counts at 2 or more
+     failed calls; `user-rejected` and `test-or-build-failure` are left out
+     (D13, D14 await the owner). Saving is **up to**: the priced cost of
+     the affected turns.
+   - **O6 cheaper model.** Only with `includeSimulated`. The 5 most
+     expensive replayable sessions, replayed on up to 3 cheaper documented
+     models of the same vendor (D5) through `SessionReplayService.compare`.
+     The amount is `simulated` and carries the replay's self-check,
+     coverage and A1.
+4. **Rank.** `SavingsRanker` orders priced opportunities by the high end of
+   the window amount (D3), the low end breaking ties, an unknown amount last
+   (it sorts at a rate of 1 AI Credit = $0.01 so currencies order together;
+   nothing is converted for display). Simulated opportunities keep their own
+   section. There is no grand total (D4).
+5. **Show.** One list per currency. Labels come from the view model. Copy
+   puts the action text on the clipboard folded to one line and capped at
+   600 characters (§11.2).
+
+**Rules a maintainer must keep.**
+- **Unknown is never 0** (constraint 6). An amount with no price is
+  `known: false` with a reason and shows as "Not priced"; an unknown count
+  shows as "Unknown".
+- **Not analysed, with a reason.** A provider or session that cannot give an
+  opportunity is listed under `notAnalysed`; it is never a saving of 0.
+- **Names are cleaned once.** Every tool, MCP server and program name passes
+  `savingsName` (fold line breaks, bidi and zero-width characters,
+  `redactSecrets`, cap at 80 code points) before it is a subject or an action
+  parameter. The shared redactor misses a token glued to a word character
+  (`x_ghp_…`; threat-model §4 records the follow-up).
+- **Text, not changes.** The action is fixed wording in the second person and
+  never says the app changed anything (vision §6, D1).
+- **Counterfactual, so never billed.** An amount is `priced` or `simulated`,
+  lists its price versions and never touches a billed, reported or statement
+  figure.
+
+**Provider coverage (plan §6, as corrected by SR0).**
+
+| Opportunity | VS Code local | Agent Host | Claude Code | pi | mitmproxy |
+|---|---|---|---|---|---|
+| O1 unused tools | Yes, with debug logging | No: total tokens only | Yes, per tool with server | No (total only) | No |
+| O2–O4 cache breaks | Yes | Yes | Yes | No trace | No trace |
+| O5 failed calls | Where outcomes are logged | No | Yes | Per audit | Per audit |
+| O6 cheaper model | Yes | Yes | Yes | No | No |
+
+The extension serves Copilot sessions only (local and Agent Host); Claude
+Code, pi and mitmproxy rows are the standalone app's.
+
 ## 7. `main.jsonl` parsing strategy
 
 This is the riskiest part of the system (vision §7 open question: the
@@ -2519,6 +2635,7 @@ themselves.
 | `GET /api/sessions/:id/tool-calls` | `{ total, calls: AuditedToolCall[] }`: one session's classified tool calls, filtered by `status`/`category`/`kind` (comma-separated enum lists), `tool`, `program`, `turn`, paged by `offset`/`limit`, optional `provider`. 400 on an invalid value |
 | `GET /api/sessions/:id/replay?model&pricing&provider` | `SessionReplay` (Phase 14 step 14.5, §6.5): the session replayed on `model` (a vendor profile's model id, at most 100 characters; log spellings resolve), per turn and in total beside the measured figures, with coverage, the self-check and the assumptions, always `simulated: true`. `pricing` is `session-channel` (default), `copilot` or `api` (D2); optional `provider`. 400 for a bad query or a model no vendor profile lists; 404 for an unknown session or one that can't be replayed, with the reason. Webview RPC `getSessionReplay` in the extension (D5); also MCP `replay_session` |
 | `GET /api/sessions/:id/replay/compare?models&pricing&provider` | `SessionReplayComparison` (Phase 14 step 14.5): the session's simulated total on each of `models` (comma-separated, 1 to 10 with the session's own model, which is added first when a profile lists it) beside its measured total. Errors as for `/replay`; any unknown model refuses the whole comparison. RPC `compareSessionReplay`; also MCP `compare_models_for_session` |
+| `GET /api/savings?since&until&provider&pricing&includeSimulated` | `SavingsReport` (Phase 16 SR12, §6.6): ranked opportunities, the Simulated ones apart, `notAnalysed` and `sessionsLeftOut`. `since` and `until` are `YYYY-MM-DD` (default: the last 30 days); `provider` limits to one log provider; `pricing` is `as-of-use` (default) or `today`; `includeSimulated` (default false) runs the cheaper-model replays. No `limit`: the session cap is the service's. A bad query or window is 400; a product with no price book answers 404; computed on request, aborted when the client closes, never stored. GET only |
 | `GET /api/audit` | `AuditRollup` over the most recent sessions (`limit`, default 50, max 500) whose `startedAt` falls in `since`..`until` (ISO date or timestamp, compared at the bound's precision): totals, top failing commands, daily counts, per-session summary, category/program/tool breakdowns. Optional `provider` |
 | `GET /api/insights` | `InsightsDataset` (Phase 9.11, [plans/insights-dashboard.md](plans/insights-dashboard.md)): the most recent sessions from **every** registered provider (`limit` per provider, default 50, max 500; `since`/`until` as for `/api/audit`; optional `provider` restricts to one, 400 if unknown), flattened to session/turn/tool-call rows, plus security, anomaly and behaviour-change findings. Each provider's availability, error or truncation is reported in `providers[]`; one failing provider never fails the response. Since Phase 15 step 15.6 each turn row carries its billed, reported and priced `cost` figures and each session row their per-basis totals |
 | `GET /api/config/status` | `ConfigStatus` — current prerequisite-setting check results and any `warnings[]` (§6.3), including the effective `minRetainedSessionLogsThreshold` |
@@ -2539,7 +2656,9 @@ themselves.
 The server binds to `localhost` only (see §11.2).
 
 The webview RPC (`packages/domain/src/rpc.ts`) mirrors these methods for
-the extension. `getSessionReplay` and `compareSessionReplay` (Phase 14) are
+the extension. `getSavingsReport` (Phase 16, `savingsReportSchema`) takes the
+route's query and is cancellable through the dispatcher's abort signal.
+`getSessionReplay` and `compareSessionReplay` (Phase 14) are
 the first with result schemas (`apiMethodResultSchemas`), which the web
 client parses answers with. The MCP servers expose the same services: the
 standalone stdio server 21 tools and 6 prompts, the extension's 19 tools
@@ -2694,6 +2813,19 @@ on `domain` and on `web`'s presentational exports only, never on `server`
   must list, at most 10 models per comparison, and no trace over 20,000
   requests. `mcp/security.test.ts` covers the replay tools and
   `estimate_cost` with a model.
+- The savings report (Phase 16, §6.6, threat-model.md §4) is read-only and
+  bounded: `GET /api/savings` only (other methods are unrouted), behind the
+  loopback host guard, nothing stored. The query is parsed by one zod
+  module shared with the RPC; the session cap is
+  `MAX_ROLLUP_SESSION_LIMIT` and no caller can raise it; replays run only
+  with `includeSimulated`, for at most 5 sessions on at most 3 models; the
+  HTTP route and the webview's cancel abort the work. Names from logs (tool,
+  MCP server, program) pass `savingsName` (folded to one line, bidi and
+  zero-width characters removed, `redactSecrets`, capped at 80 characters),
+  and the action text is a fixed template whose parameters are numbers,
+  model ids and those names, so a hostile name cannot add markup or
+  instructions. Copy puts that text on the clipboard folded to one line and
+  capped at 600 characters.
 - No secrets are logged; any credentials that happen to appear in captured
   terminal-output tool results are treated as opaque strings, never parsed or
   echoed into error messages.

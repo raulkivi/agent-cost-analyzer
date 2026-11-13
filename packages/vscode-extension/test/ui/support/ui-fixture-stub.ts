@@ -14,6 +14,13 @@ export function createUiFixtureStub(): UiFixture {
     largeSessionId: "00000000-0000-4000-9000-000000000150",
     largeSessionTurns: 150,
     systemPromptMarker: "MARKER",
-    listedSessionCount: 207,
+    savings: {
+      unusedToolsServer: "acmedocs",
+      localSessionId: "00000000-0000-4000-9000-000000000021",
+      failedCallsProgram: "rg",
+      failedCallsCount: 3,
+      agentHostSessionId: "9a1b2c3d-5555-4e6f-8a07-000000000020",
+    },
+    listedSessionCount: 209,
   };
 }

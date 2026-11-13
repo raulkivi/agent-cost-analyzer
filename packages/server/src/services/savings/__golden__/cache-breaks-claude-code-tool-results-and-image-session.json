@@ -1,0 +1,9 @@
+{
+  "sessionId": "claude-code-tool-results-and-image-session",
+  "providerId": "claude-code",
+  "harness": "claude-code",
+  "requests": 3,
+  "breaks": [],
+  "intended": [],
+  "unchecked": []
+}

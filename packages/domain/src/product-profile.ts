@@ -32,6 +32,10 @@ export const productFeaturesSchema = z.object({
   // exactly when the backend can answer replays (the standalone app always;
   // the extension when its bundled price book is there to price them).
   sessionReplay: z.boolean(),
+  // The savings report (Phase 16 SR12): on exactly when the backend can
+  // price counterfactuals (the standalone app always; the extension when its
+  // bundled price book is there).
+  savingsReport: z.boolean(),
 });
 
 export type ProductFeatures = z.infer<typeof productFeaturesSchema>;

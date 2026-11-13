@@ -87,3 +87,27 @@ describe("buildToolInventory", () => {
     expect(buildToolInventory([], [])).toEqual([]);
   });
 });
+
+describe("buildToolInventory definition tokens", () => {
+  const tokens = (name: string) => ({ known: true as const, value: name.length, estimated: true });
+
+  it("adds each entry's definition tokens when a lookup is given", () => {
+    expect(buildToolInventory(["read_file"], [["read_file", "stray_tool"]], tokens)).toEqual([
+      { name: "read_file", loaded: true, invokedInTurns: [0], definitionTokens: tokens("read_file") },
+      { name: "stray_tool", loaded: false, invokedInTurns: [0], definitionTokens: tokens("stray_tool") },
+    ]);
+  });
+
+  it("keeps an unknown count, with its reason, on the entry", () => {
+    const unknown = () => ({ known: false as const, reason: "The tools file could not be read, so this tool's definition size is unknown." });
+
+    expect(buildToolInventory(null, [["read_file"]], unknown)).toEqual([
+      { name: "read_file", loaded: true, invokedInTurns: [0], definitionTokens: unknown() },
+    ]);
+  });
+
+  it("leaves definitionTokens off when no lookup is given", () => {
+    expect(buildToolInventory(["read_file"], [[]])).toEqual([{ name: "read_file", loaded: true, invokedInTurns: [] }]);
+  });
+});
+

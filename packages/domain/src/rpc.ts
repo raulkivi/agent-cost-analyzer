@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
 import { z } from "zod";
+import { savingsReportSchema } from "./savings.js";
 import { MAX_COMPARED_MODELS, sessionReplayComparisonSchema, sessionReplaySchema } from "./session-replay.js";
 
 // The ApiService method names (vscode-extension.md D2/§4), shared by the
@@ -45,6 +46,8 @@ export const apiMethodSchema = z.enum([
   // Phase 14 step 14.5: a session replayed on other models. Read-only.
   "getSessionReplay",
   "compareSessionReplay",
+  // Phase 16 step SR12: the savings report. Read-only.
+  "getSavingsReport",
 ]);
 
 export type ApiMethod = z.infer<typeof apiMethodSchema>;
@@ -145,6 +148,18 @@ export const apiMethodParamsSchemas = {
   }),
   getSessionReplay: z.object({ ...replayQuery, model: replayModelId }).strict(),
   compareSessionReplay: z.object({ ...replayQuery, models: z.array(replayModelId).min(1).max(MAX_COMPARED_MODELS) }).strict(),
+  // Strict, and no limit: the report's session cap is the server's alone
+  // (threat-model.md "RPC allow-list growth (Phase 16)"). The dates are
+  // checked again by ApiService, through savings-query-params.ts.
+  getSavingsReport: z
+    .object({
+      since: z.string().max(10).optional(),
+      until: z.string().max(10).optional(),
+      provider: z.string().optional(),
+      pricing: z.enum(["as-of-use", "today"]).optional(),
+      includeSimulated: z.boolean().optional(),
+    })
+    .strict(),
   getCostVariance: z.object({
     groupBy: z.string(),
     id: z.string().min(1),
@@ -161,6 +176,7 @@ export const apiMethodParamsSchemas = {
 export const apiMethodResultSchemas = {
   getSessionReplay: sessionReplaySchema,
   compareSessionReplay: sessionReplayComparisonSchema,
+  getSavingsReport: savingsReportSchema,
 } as const satisfies Partial<Record<ApiMethod, z.ZodType>>;
 
 // webview -> host (vscode-extension.md §4). `params` stays unknown here: the

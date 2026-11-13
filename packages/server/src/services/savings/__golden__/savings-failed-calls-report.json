@@ -1,0 +1,184 @@
+{
+  "opportunities": [
+    {
+      "key": "failed-tool-calls:npm:wrong-directory:USD",
+      "kind": "failed-tool-calls",
+      "subject": "npm",
+      "sessions": [
+        {
+          "providerId": "claude-code",
+          "sessionId": "s2"
+        }
+      ],
+      "evidence": {
+        "sessions": 1,
+        "requests": null,
+        "tokens": null,
+        "occurrences": 2
+      },
+      "perWeek": {
+        "known": true,
+        "currency": "USD",
+        "low": 0,
+        "high": 0.028,
+        "basis": "priced",
+        "label": "upper-bound",
+        "priceVersionIds": [
+          "anthropic-api:m:2026-10-01"
+        ]
+      },
+      "perWindow": {
+        "known": true,
+        "currency": "USD",
+        "low": 0,
+        "high": 0.12,
+        "basis": "priced",
+        "label": "upper-bound",
+        "priceVersionIds": [
+          "anthropic-api:m:2026-10-01"
+        ]
+      },
+      "coverage": {
+        "sessionsInWindow": 4,
+        "sessionsAnalysed": 3,
+        "notAnalysed": [
+          {
+            "reason": "The Copilot CLI event log is missing.",
+            "sessions": 1
+          }
+        ]
+      },
+      "actionParams": {
+        "name": "npm",
+        "calls": 2,
+        "sessions": 1,
+        "category": "wrong-directory"
+      },
+      "inferred": false
+    },
+    {
+      "key": "failed-tool-calls:rg:command-not-found:AI_CREDITS",
+      "kind": "failed-tool-calls",
+      "subject": "rg",
+      "sessions": [
+        {
+          "providerId": "vscode",
+          "sessionId": "s1"
+        }
+      ],
+      "evidence": {
+        "sessions": 1,
+        "requests": null,
+        "tokens": null,
+        "occurrences": 3
+      },
+      "perWeek": {
+        "known": true,
+        "currency": "AI_CREDITS",
+        "low": 0,
+        "high": 7,
+        "basis": "priced",
+        "label": "upper-bound",
+        "priceVersionIds": [
+          "github-copilot:m:2026-10-01"
+        ]
+      },
+      "perWindow": {
+        "known": true,
+        "currency": "AI_CREDITS",
+        "low": 0,
+        "high": 30,
+        "basis": "priced",
+        "label": "upper-bound",
+        "priceVersionIds": [
+          "github-copilot:m:2026-10-01"
+        ]
+      },
+      "coverage": {
+        "sessionsInWindow": 4,
+        "sessionsAnalysed": 3,
+        "notAnalysed": [
+          {
+            "reason": "The Copilot CLI event log is missing.",
+            "sessions": 1
+          }
+        ]
+      },
+      "actionParams": {
+        "name": "rg",
+        "calls": 3,
+        "sessions": 1,
+        "category": "command-not-found"
+      },
+      "inferred": false
+    },
+    {
+      "key": "failed-tool-calls:rg:command-not-found:USD",
+      "kind": "failed-tool-calls",
+      "subject": "rg",
+      "sessions": [
+        {
+          "providerId": "claude-code",
+          "sessionId": "s1"
+        },
+        {
+          "providerId": "claude-code",
+          "sessionId": "s2"
+        }
+      ],
+      "evidence": {
+        "sessions": 2,
+        "requests": null,
+        "tokens": null,
+        "occurrences": 4
+      },
+      "perWeek": {
+        "known": true,
+        "currency": "USD",
+        "low": 0,
+        "high": 0.08866666666666669,
+        "basis": "priced",
+        "label": "upper-bound",
+        "priceVersionIds": [
+          "anthropic-api:m:2026-10-01"
+        ]
+      },
+      "perWindow": {
+        "known": true,
+        "currency": "USD",
+        "low": 0,
+        "high": 0.38000000000000006,
+        "basis": "priced",
+        "label": "upper-bound",
+        "priceVersionIds": [
+          "anthropic-api:m:2026-10-01"
+        ]
+      },
+      "coverage": {
+        "sessionsInWindow": 4,
+        "sessionsAnalysed": 3,
+        "notAnalysed": [
+          {
+            "reason": "The Copilot CLI event log is missing.",
+            "sessions": 1
+          }
+        ]
+      },
+      "actionParams": {
+        "name": "rg",
+        "calls": 4,
+        "sessions": 2,
+        "category": "command-not-found"
+      },
+      "inferred": false
+    }
+  ],
+  "notAnalysed": [
+    {
+      "kind": "failed-tool-calls",
+      "providerId": "vscode",
+      "reason": "The Copilot CLI event log is missing.",
+      "sessions": 1
+    }
+  ]
+}

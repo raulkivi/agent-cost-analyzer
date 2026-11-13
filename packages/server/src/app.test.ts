@@ -750,8 +750,8 @@ describe("GET /api/sessions/:id", () => {
 
     expect(() => sessionSchema.parse(response.body)).not.toThrow();
     expect(response.body.toolInventory).toEqual([
-      { name: "read_file", loaded: true, invokedInTurns: [0] },
-      { name: "create_file", loaded: true, invokedInTurns: [] },
+      { name: "read_file", loaded: true, invokedInTurns: [0], definitionTokens: { known: true, value: 18, estimated: true } },
+      { name: "create_file", loaded: true, invokedInTurns: [], definitionTokens: { known: true, value: 18, estimated: true } },
     ]);
     expect(response.body.systemPrompt).toEqual([
       {

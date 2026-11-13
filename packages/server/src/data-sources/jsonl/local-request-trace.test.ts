@@ -4,8 +4,8 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { requestTraceSchema } from "@agent-cost-analyzer/domain";
-import { readMainJsonlFile } from "./main-jsonl-reader.js";
-import { buildLocalRequestTrace, NOT_IN_DEBUG_LOG_REASON, UNUSABLE_REQUEST_REASON } from "./local-request-trace.js";
+import { readMainJsonlFile, type JsonlEnvelope } from "./main-jsonl-reader.js";
+import { buildLocalCacheBreakTrace, buildLocalRequestTrace, MAIN_AGENT_DEBUG_NAME, NOT_IN_DEBUG_LOG_REASON, promptFileNames, UNUSABLE_REQUEST_REASON } from "./local-request-trace.js";
 
 // Phase 14 step 14.2 (docs/plans/analyze-session-replay.md §4.1, §5): a
 // local-harness Copilot session as one record per llm_request span of its
@@ -81,5 +81,93 @@ describe("buildLocalRequestTrace", () => {
 
     expect(trace.requests.map((r) => r.turnIndex)).toEqual([1, 1]);
     expect(trace.notTraced).toEqual([{ turnIndex: 0, reason: UNUSABLE_REQUEST_REASON }]);
+  });
+});
+
+// Phase 16 SR6 (docs/plans/savings-report.md §4 O3, §15 a): the main agent's
+// chain (`debugName` panel/editAgent) with what changed in each prompt, from
+// content hashes of the prompt and tools files and the "Custom Instructions"
+// event. Other agents (summariser, todo agent) have their own prompts and are
+// left out. Synthetic envelopes only.
+describe("buildLocalCacheBreakTrace", () => {
+  let ts = 1_786_200_000_000;
+  const user = (digest: string): JsonlEnvelope => ({ type: "user_message", ts: (ts += 1000), attrs: { contentDigest: digest } });
+  const instructions = (details: string): JsonlEnvelope => ({ type: "generic", name: "Custom Instructions", ts: (ts += 1000), attrs: { details } });
+  const request = (files: { systemPromptFile: string; toolsFile: string }, debugName = MAIN_AGENT_DEBUG_NAME): JsonlEnvelope => ({
+    type: "llm_request",
+    ts: (ts += 1000),
+    attrs: { model: "claude-sonnet-5", debugName, inputTokens: 1000, cachedTokens: 900, outputTokens: 10, ...files },
+  });
+  const files = (system: string, tools: string) => ({ systemPromptFile: system, toolsFile: tools });
+  const base = { sessionId: "s1", alignment: [0], sessionTurnIndexes: [0], agentTraceUsage: new Map() };
+
+  it("keeps the main agent's requests only, with the debugName read from the log", () => {
+    const envelopes = [user("a"), request(files("s1.json", "t1.json")), request(files("x.json", "y.json"), "summarizeConversationHistory"), request(files("s1.json", "t1.json"))];
+
+    const { trace } = buildLocalCacheBreakTrace({ ...base, envelopes, fileHashes: new Map() });
+
+    expect(trace.requests.map((r) => r.index)).toEqual([0, 1]);
+    expect(requestTraceSchema.parse(trace)).toEqual(trace);
+  });
+
+  it("marks tools and system prompt changed by content hash, not by file name", () => {
+    const envelopes = [user("a"), request(files("s1.json", "t1.json")), request(files("s2.json", "t2.json")), request(files("s3.json", "t2b.json"))];
+    const fileHashes = new Map([
+      ["s1.json", "S1"],
+      ["s2.json", "S1"],
+      ["s3.json", "S2"],
+      ["t1.json", "T1"],
+      ["t2.json", "T2"],
+      ["t2b.json", "T2"],
+    ]);
+
+    const { promptChanges } = buildLocalCacheBreakTrace({ ...base, envelopes, fileHashes });
+
+    expect(promptChanges.get(0)).toBeUndefined();
+    expect(promptChanges.get(1)).toEqual({ tools: true, systemPrompt: false });
+    expect(promptChanges.get(2)).toEqual({ tools: false, systemPrompt: true });
+  });
+
+  it("marks instructions changed only when the Custom Instructions text changed too; unchanged is recorded as false", () => {
+    const envelopes = [
+      user("a"),
+      instructions("context included: [1] CLAUDE.md"),
+      request(files("s1.json", "t1.json")),
+      request(files("s2.json", "t1.json")),
+      instructions("context included: [2] CLAUDE.md, AGENTS.md"),
+      request(files("s3.json", "t1.json")),
+    ];
+    const fileHashes = new Map([
+      ["s1.json", "S1"],
+      ["s2.json", "S2"],
+      ["s3.json", "S3"],
+      ["t1.json", "T1"],
+    ]);
+
+    const { promptChanges } = buildLocalCacheBreakTrace({ ...base, envelopes, fileHashes });
+
+    expect(promptChanges.get(1)).toEqual({ tools: false, systemPrompt: true, instructions: false });
+    expect(promptChanges.get(2)).toEqual({ tools: false, systemPrompt: true, instructions: true });
+  });
+
+  it("records nothing for a signal whose file could not be read, and keeps no text in a marker", () => {
+    const envelopes = [user("a"), instructions("SECRET INSTRUCTIONS"), request(files("s1.json", "t1.json")), request(files("s2.json", "t2.json"))];
+    const fileHashes = new Map<string, string | null>([
+      ["s1.json", null],
+      ["s2.json", "S2"],
+      ["t1.json", "T1"],
+      ["t2.json", "T2"],
+    ]);
+
+    const { promptChanges } = buildLocalCacheBreakTrace({ ...base, envelopes, fileHashes });
+
+    expect(promptChanges.get(1)).toEqual({ tools: true, instructions: false });
+    expect(JSON.stringify([...promptChanges])).not.toContain("SECRET");
+  });
+
+  it("lists the distinct prompt and tools file names of the main agent's requests", () => {
+    const envelopes = [user("a"), request(files("s1.json", "t1.json")), request(files("s1.json", "t2.json")), request(files("sx.json", "tx.json"), "backgroundTodoAgent")];
+
+    expect(promptFileNames(envelopes).sort()).toEqual(["s1.json", "t1.json", "t2.json"]);
   });
 });
