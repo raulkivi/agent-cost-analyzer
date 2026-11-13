@@ -350,3 +350,4 @@ Script: `packages/server/scripts/measure-subagent-spend.mts` (pure helpers in `s
 - **Workspace-storage folder in the UI fixture.** The fixture's `workspaceStorage` folder is renamed to a 32-character id, because VS Code deletes workspace-storage folders with other names.
 - **`copilot-available` spec.** After rebasing on step 10.21 it keeps main's check (the status bar's known and total counts equal the Sessions tree's Today rows); the classic session with subagent runs is one of those rows, so no hard-coded session count remains.
 - **Fresh worktrees need `npm run build` before wdio**, since the UI suite loads the built extension.
+- **`monthly-allowance` spec.** Its known-session count rises by one: the classic session with subagent runs is a session with cost data.
