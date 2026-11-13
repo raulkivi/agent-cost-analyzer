@@ -1,6 +1,6 @@
 # AI Credits Analyzer
 
-**Last changed:** 2026-11-10 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-13 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 See where your GitHub Copilot Chat tokens and AI Credits go. AI Credits
 Analyzer reads the logs Copilot Chat writes on your machine and shows each
@@ -40,16 +40,34 @@ reads those and Copilot Chat.
 - **Status bar.** Today's AI Credits for the open folder's repository,
   with every repository's total and how many of today's sessions have cost
   data in the tooltip.
+- **Monthly AI Credits allowance gauge.** Set
+  `aiCreditsAnalyzer.monthlyAllowance.aiCredits` to your plan's allowance,
+  or run **Set Monthly AI Credits Allowance**. A second status-bar item
+  then shows the month to date against it, with a warning near the limit
+  (80 % by default) and when over. The first row of the Sessions view shows
+  the same figures with the days left. It shows no notification and
+  changes no setting.
 - **Insights dashboard.** Spend by day and model, cache hit ratio, tool
   calls and failures, and signals to review: risky commands, unusual
   sessions and first-time use of a tool or model. **Cost over time** and
   **Compare** show each repository's cost by week or month, with the
   dates a model's price changed.
+- **Savings report.** **Savings**, after **Dashboard** in the panel, ranks
+  changes that would have cost less over your Copilot sessions: tools
+  loaded but never used, cache lost after an idle gap, a model switched
+  mid-session, repeated failed tool calls and, with **Include simulated**,
+  a cheaper model. Each row has a range or "up to" figure per week in AI
+  Credits, its coverage and **Copy text**. It adds no total and changes no
+  setting or file.
 - **Replay on another model.** Pick a model in **Replay on** to see what a
   session would have cost about there, beside what it did cost, in
   Simulated columns with a summary of coverage and assumptions. **Compare
   models** ranks up to 10 models. The session's own turns and token counts
-  are kept; only caching and prices change.
+  are kept; only caching and prices change. A classic chat is compared on
+  the main agent only; the coverage lists the subagent runs left out.
+- **Subagent runs.** A classic Copilot Chat turn's AI Credits include the
+  subagent runs it started. Open a turn to see each run's agent, model,
+  requests and AI Credits, or why they are unknown.
 - **Tool audit.** Every tool call in a session, why failed calls failed,
   and retried commands, plus a roll-up across sessions.
 - **Learn mode.** 18 sample sessions, in the Learn view, that show how
@@ -124,12 +142,17 @@ All commands are in the **AI Credits Analyzer** category.
 | Show Tool Audit, Copy Advice Bundle | On a session in the Sessions view |
 | Open Scenario | On a scenario in the Learn view |
 | Fix Setting | On a row in the Setup view: opens that setting |
+| Group Sessions by Repository, Group Sessions by Day | Groups the Sessions view |
+| Set Monthly AI Credits Allowance | Opens `aiCreditsAnalyzer.monthlyAllowance.aiCredits` in the Settings editor; changes nothing |
 
 ## Settings
 
 | Setting | Default | What it does |
 |---|---|---|
 | `aiCreditsAnalyzer.mcp.enabled` | `false` | Offers Copilot Chat agent mode a read-only MCP server over your Copilot Chat sessions |
+| `aiCreditsAnalyzer.monthlyAllowance.aiCredits` | not set | Your plan's monthly allowance in AI Credits; empty or 0 turns the gauge off |
+| `aiCreditsAnalyzer.monthlyAllowance.resetDay` | `1` | Day of the month (1 to 28) your billing period starts |
+| `aiCreditsAnalyzer.monthlyAllowance.warnAtPercent` | `80` | Percentage of the allowance at which the gauge warns |
 
 ## Privacy
 
