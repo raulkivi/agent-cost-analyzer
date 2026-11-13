@@ -86,6 +86,13 @@ describe("savingsActionText", () => {
     expect(group.startsWith("evil server")).toBe(true);
   });
 
+  it("removes bidi overrides and zero-width characters from a name, so the shown text reads as it is stored (SR16)", () => {
+    const text = savingsActionText("failed-tool-calls", { ...SAMPLE["failed-tool-calls"], name: "rg\u202e\u2066\u200bkcatta" });
+
+    expect(text).not.toMatch(/[\u200b-\u200f\u202a-\u202e\u2066-\u2069\ufeff]/);
+    expect(text.startsWith("rg kcatta failed")).toBe(true);
+  });
+
   it("rejects a parameter that is not a number where a number is declared", () => {
     expect(() => savingsActionText("model-switch", { times: "two", tokens: 1 })).toThrow(/times/);
     expect(() => savingsActionText("model-switch", { times: Number.NaN, tokens: 1 })).toThrow(/times/);

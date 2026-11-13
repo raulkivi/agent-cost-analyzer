@@ -32,8 +32,8 @@ const OPTIONAL_PARAMS: Readonly<Record<SavingsOpportunityKind, Readonly<Record<s
 };
 
 const MODEL_ID = /^[A-Za-z0-9][A-Za-z0-9._:/@+-]{0,79}$/;
-// eslint-disable-next-line no-control-regex
-const CONTROL_OR_SPACE_RUN = /[\u0000- \u007f-\u009f]+/g;
+// Control (Cc), format (Cf: bidi and zero-width) and separator characters.
+const CONTROL_OR_SPACE_RUN = /[\p{Cc}\p{Cf}\p{Z}\s]+/gu;
 
 // en-US grouping, as the monthly gauge does (D: owner answer to SR11 question 5).
 const GROUPED = new Intl.NumberFormat("en-US", { maximumFractionDigits: 1 });
