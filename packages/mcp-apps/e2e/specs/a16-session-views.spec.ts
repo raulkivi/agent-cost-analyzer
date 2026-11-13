@@ -90,7 +90,9 @@ inEachClaudeSet(() => {
 
     await expect(view.title()).toHaveText("Findings");
     await expect(view.kicker()).toHaveText("Agent Cost Analyzer · Findings");
-    await expect(u3.summary()).toHaveText("9 findings");
+    // Five from the usage fixtures and "First use of model claude-opus-5-5-20261001",
+    // which the savings fixture's model switch (Phase 16 SR13) adds.
+    await expect(u3.summary()).toHaveText("6 findings");
     await expect(u3.severityTile("Medium")).toContainText("1");
     await expect(u3.table()).toBeVisible();
     // Evidence is collapsed by default.
@@ -108,6 +110,7 @@ inEachClaudeSet(() => {
 
     await u3.openEvidence();
     await expect(u3.whyFlagged().first()).toHaveAttribute("aria-expanded", "true");
+    // The median moved from 500 to 550 with the savings fixture's session (SR13).
     await expect(u3.table()).toContainText("Output tokens 3,000 is 5.5× the median 550");
     expect(await view.axeViolations()).toEqual([]);
   });

@@ -1,0 +1,131 @@
+{
+  "window": {
+    "since": "2026-10-01",
+    "until": "2026-11-06",
+    "days": 37
+  },
+  "pricing": "as-of-use",
+  "opportunities": [
+    {
+      "key": "failed-tool-calls:rg:command-not-found:AI_CREDITS",
+      "kind": "failed-tool-calls",
+      "subject": "rg",
+      "sessions": [
+        {
+          "providerId": "vscode",
+          "sessionId": "9a1b2c3d-5555-4e6f-8a07-000000000020"
+        }
+      ],
+      "evidence": {
+        "sessions": 1,
+        "requests": null,
+        "tokens": null,
+        "occurrences": 3
+      },
+      "perWeek": {
+        "known": true,
+        "currency": "AI_CREDITS",
+        "low": 0,
+        "high": 1.8464864864864865,
+        "basis": "priced",
+        "label": "upper-bound",
+        "priceVersionIds": [
+          "github-copilot:claude-sonnet-5:2026-10-01"
+        ]
+      },
+      "perWindow": {
+        "known": true,
+        "currency": "AI_CREDITS",
+        "low": 0,
+        "high": 9.76,
+        "basis": "priced",
+        "label": "upper-bound",
+        "priceVersionIds": [
+          "github-copilot:claude-sonnet-5:2026-10-01"
+        ]
+      },
+      "coverage": {
+        "sessionsInWindow": 3,
+        "sessionsAnalysed": 3,
+        "notAnalysed": []
+      },
+      "actionParams": {
+        "name": "rg",
+        "calls": 3,
+        "sessions": 1,
+        "category": "command-not-found"
+      },
+      "inferred": false
+    },
+    {
+      "key": "unused-tools:acmedocs:AI_CREDITS",
+      "kind": "unused-tools",
+      "subject": "acmedocs",
+      "sessions": [
+        {
+          "providerId": "vscode",
+          "sessionId": "00000000-0000-4000-9000-000000000021"
+        }
+      ],
+      "evidence": {
+        "sessions": 1,
+        "requests": 4,
+        "tokens": {
+          "known": true,
+          "value": 414,
+          "estimated": true
+        },
+        "occurrences": null
+      },
+      "perWeek": {
+        "known": true,
+        "currency": "AI_CREDITS",
+        "low": 0.006265945945945947,
+        "high": 0.06265945945945946,
+        "basis": "priced",
+        "label": "range",
+        "priceVersionIds": [
+          "github-copilot:claude-sonnet-5:2026-10-01"
+        ]
+      },
+      "perWindow": {
+        "known": true,
+        "currency": "AI_CREDITS",
+        "low": 0.033120000000000004,
+        "high": 0.3312,
+        "basis": "priced",
+        "label": "range",
+        "priceVersionIds": [
+          "github-copilot:claude-sonnet-5:2026-10-01"
+        ]
+      },
+      "coverage": {
+        "sessionsInWindow": 3,
+        "sessionsAnalysed": 2,
+        "notAnalysed": [
+          {
+            "reason": "VS Code's Agent Host records the total tool-definition tokens only, not each tool, so unused tools can't be found.",
+            "sessions": 1
+          }
+        ]
+      },
+      "actionParams": {
+        "group": "acmedocs",
+        "tools": 2,
+        "tokens": 414,
+        "sessions": 1,
+        "days": 37
+      },
+      "inferred": true
+    }
+  ],
+  "simulated": [],
+  "notAnalysed": [
+    {
+      "kind": "unused-tools",
+      "providerId": "vscode",
+      "reason": "VS Code's Agent Host records the total tool-definition tokens only, not each tool, so unused tools can't be found.",
+      "sessions": 1
+    }
+  ]
+}

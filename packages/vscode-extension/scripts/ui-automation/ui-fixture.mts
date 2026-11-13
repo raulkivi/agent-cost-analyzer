@@ -9,6 +9,7 @@ import { DatabaseSync } from "node:sqlite";
 import { pathToFileURL } from "node:url";
 import { COPILOT_CLI_FIXTURE_HOME, COPILOT_CLI_FIXTURE_SESSION_IDS, writeCopilotCliAgentHostStores } from "../../../server/src/test-support/copilot-cli-fixtures.ts";
 import { USAGE_LOG_USER_MESSAGE, USAGE_MAIN_JSONL, USAGE_SESSION_ID, seedSubagentFixtureSession } from "../../../server/src/test-support/copilot-session-store.ts";
+import { SAVINGS_AGENT_HOST_SESSION_ID, SAVINGS_VSCODE_SESSION_ID, writeSavingsAgentHostSession, writeSavingsVscodeSession } from "../../../server/src/test-support/savings-fixtures.ts";
 import { createIntegrationFixture, USER_SETTINGS } from "../integration-fixture.mts";
 
 // VS Code's shared process deletes, 30 s after start-up, every workspaceStorage
@@ -68,6 +69,18 @@ export interface UiFixture {
   largeSessionId: string;
   largeSessionTurns: number;
   systemPromptMarker: string;
+  // Phase 16 SR13: what the savings report finds in the Copilot sessions
+  // (D10). Both sessions start 3 days before `now`, inside the default
+  // 30-day window and after the price book's first prices.
+  savings: {
+    // A local session loading an MCP server (`mcp_acmedocs_*`) no turn calls.
+    unusedToolsServer: string;
+    localSessionId: string;
+    // An Agent Host session in which `rg` failed 3 times (command not found).
+    failedCallsProgram: string;
+    failedCallsCount: number;
+    agentHostSessionId: string;
+  };
   // Sessions the Sessions view must list (Copilot Chat, empty-window and Agent Host): the isolation guard (F5).
   listedSessionCount: number;
 }
@@ -99,6 +112,14 @@ export function createUiFixture(rootDir: string, options: UiFixtureOptions = {})
   const copilotHome = path.join(rootDir, "copilot-home");
   cpSync(COPILOT_CLI_FIXTURE_HOME, copilotHome, { recursive: true, filter: (source) => path.basename(source) !== "logs" });
 
+  const savingsStart = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000);
+  writeSavingsVscodeSession({
+    sessionStoreDbPath: path.join(userDir, "globalStorage", "github.copilot-chat", "session-store.db"),
+    debugLogsDir: path.join(workspaceStorage, WORKSPACE_STORAGE_ID, "GitHub.copilot-chat", "debug-logs"),
+    startedAt: savingsStart.toISOString(),
+  });
+  writeSavingsAgentHostSession({ userDataDir, copilotHome, startedAtMs: savingsStart.getTime() + 60 * 60 * 1000 });
+
   return {
     storagePath,
     userDataDir,
@@ -109,7 +130,16 @@ export function createUiFixture(rootDir: string, options: UiFixtureOptions = {})
     largeSessionId: LARGE_SESSION_ID,
     largeSessionTurns: LARGE_SESSION_TURNS,
     systemPromptMarker: SYSTEM_PROMPT_MARKER,
-    listedSessionCount: base.sessionCount + 2 + 2 + Object.keys(COPILOT_CLI_FIXTURE_SESSION_IDS).length,
+    savings: {
+      unusedToolsServer: "acmedocs",
+      localSessionId: SAVINGS_VSCODE_SESSION_ID,
+      failedCallsProgram: "rg",
+      failedCallsCount: 3,
+      agentHostSessionId: SAVINGS_AGENT_HOST_SESSION_ID,
+    },
+    // The large and empty-window sessions, the two classic subagent sessions,
+    // the Copilot CLI fixtures and the two savings sessions.
+    listedSessionCount: base.sessionCount + 2 + 2 + Object.keys(COPILOT_CLI_FIXTURE_SESSION_IDS).length + 2,
   };
 }
 

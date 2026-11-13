@@ -17,6 +17,8 @@
 import { copyFileSync, mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
+import { writeClaudeCodeSession, type ClaudeCodeTurn } from "../../../server/src/test-support/claude-code-session-writer.ts";
+import { writeSavingsClaudeCodeSession } from "../../../server/src/test-support/savings-fixtures.ts";
 import {
   seedCopilotSessionStore,
   seedSubagentFixtureSession,
@@ -27,18 +29,6 @@ import {
 export { FIXTURE_NOW } from "./fixture-clock.ts";
 
 const SERVER_FIXTURES = path.resolve(import.meta.dirname, "../../../server/fixtures");
-
-// Claude Sonnet 5.5 as Claude Code logs it; the price book maps it to
-// claude-sonnet-5.5 on anthropic-api (cache reads cut on 2026-10-07).
-const SONNET = "claude-sonnet-5-5-20261001";
-
-interface ClaudeTurn {
-  at: string; // ISO time of the user message
-  input: number;
-  cacheWrite?: number;
-  cacheRead?: number;
-  output: number;
-}
 
 interface PiTurn {
   at: string;
@@ -64,59 +54,8 @@ function plusSeconds(iso: string, seconds: number): string {
   return new Date(Date.parse(iso) + seconds * 1000).toISOString();
 }
 
-function claudeCodeSession(home: string, id: string, cwd: string, turns: ClaudeTurn[]): void {
-  const slug = cwd.replace(/[^A-Za-z0-9]/g, "-");
-  const lines: unknown[] = [];
-  let parent: string | null = null;
-  turns.forEach((turn, index) => {
-    const userId = `u${index}`;
-    const assistantId = `a${index}`;
-    lines.push({
-      parentUuid: parent,
-      isSidechain: false,
-      promptId: `p${index}`,
-      type: "user",
-      message: { role: "user", content: [{ type: "text", text: `Placeholder prompt ${index + 1}.` }] },
-      uuid: userId,
-      timestamp: turn.at,
-      permissionMode: "default",
-      origin: { kind: "human" },
-      userType: "external",
-      entrypoint: "cli",
-      cwd,
-      sessionId: id,
-      version: "2.1.263",
-      gitBranch: "main",
-    });
-    lines.push({
-      type: "assistant",
-      parentUuid: userId,
-      isSidechain: false,
-      message: {
-        model: SONNET,
-        id: `msg_${id.slice(0, 8)}_${index}`,
-        type: "message",
-        role: "assistant",
-        content: [{ type: "text", text: "Placeholder answer." }],
-        usage: {
-          input_tokens: turn.input,
-          cache_creation_input_tokens: turn.cacheWrite ?? 0,
-          cache_read_input_tokens: turn.cacheRead ?? 0,
-          output_tokens: turn.output,
-          output_tokens_details: { thinking_tokens: 0 },
-          service_tier: "standard",
-          cache_creation: { ephemeral_1h_input_tokens: turn.cacheWrite ?? 0, ephemeral_5m_input_tokens: 0 },
-        },
-      },
-      uuid: assistantId,
-      timestamp: plusSeconds(turn.at, 5),
-      cwd,
-      sessionId: id,
-      gitBranch: "main",
-    });
-    parent = assistantId;
-  });
-  write(path.join(home, ".claude", "projects", slug, `${id}.jsonl`), `${lines.map((line) => JSON.stringify(line)).join("\n")}\n`);
+function claudeCodeSession(home: string, id: string, cwd: string, turns: ClaudeCodeTurn[]): void {
+  writeClaudeCodeSession(path.join(home, ".claude", "projects"), id, cwd, turns);
 }
 
 function piSession(home: string, id: string, cwd: string, turns: PiTurn[]): void {
@@ -258,6 +197,13 @@ export function createFixtureHome(home: string, options: FixtureOptions = {}): F
 
   // No project: a local repository and a capture with no folder.
   claudeCodeSession(home, "c0000000-0000-4000-8000-000000000008", folders.scratch, [{ at: "2026-10-22T10:00:00.000Z", input: 1000, output: 200 }]);
+
+  // Phase 16 SR13: the savings report's Claude Code findings (an idle gap past
+  // the harness's 1-hour cache and a model switch), in the scratch repository
+  // so no project's figures move. 2026-10-30 is inside the default 30-day
+  // window to FIXTURE_NOW (2026-10-08 to 2026-11-06) and after the price
+  // book's first prices, so the specs need no `pricing: "today"`.
+  writeSavingsClaudeCodeSession(path.join(home, ".claude", "projects"), folders.scratch, "2026-10-30");
 
   const appSettingsDir = path.join(home, ".config", "agent-cost-analyzer");
   if (options.projects !== false) write(
