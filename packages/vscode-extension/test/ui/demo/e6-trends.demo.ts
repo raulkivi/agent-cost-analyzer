@@ -10,7 +10,7 @@ import { AnalyzerPanel } from "../support/analyzer-panel.js";
 import { SidebarViews } from "../support/sidebar-views.js";
 import { wdioVscodeHost as host } from "../support/vscode-host.js";
 import { runDemoScene, type DemoDriver, type DemoScene } from "./support/demo-driver.ts";
-import { analyzerStatusItem, closeSidebar, installWorkbenchPointer, showPointerIn } from "./support/1.6e-helpers.ts";
+import { analyzerStatusItem, closeSidebar } from "./support/1.6e-helpers.ts";
 
 const fixture = parseDemoFixture(process.env.AICA_DEMO_FIXTURE);
 const panel = new AnalyzerPanel(host);
@@ -63,8 +63,6 @@ const scene: DemoScene = {
       label: "open the Sessions view",
       beatMs: 800,
       action: async () => {
-        await installWorkbenchPointer();
-        await showPointerIn("workbench");
         await host.command("workbench.view.extension.aiCreditsAnalyzer");
         await sidebar.showAlone("sessions");
         await browser.waitUntil(async () => (await sidebar.rowTexts("sessions")).length > 1, { timeout: 30_000 });
@@ -76,6 +74,8 @@ const scene: DemoScene = {
       action: async (driver) => {
         const header = await browser.$("//div[contains(@class,'pane-header')][contains(translate(normalize-space(.),'SESSIONS','sessions'),'sessions')]");
         await driver.pointerTo(await header.getElement());
+        // A view's title actions show while the real mouse is over its header.
+        await header.moveTo();
         const action = await browser.$(`a.action-label[aria-label='${GROUP_ACTION}']`);
         await action.waitForExist({ timeout: 10_000, timeoutMsg: `no "${GROUP_ACTION}" action in the Sessions title` });
         await driver.click(await action.getElement());

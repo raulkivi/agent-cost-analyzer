@@ -10,7 +10,7 @@ import { AnalyzerPanel } from "../support/analyzer-panel.js";
 import { SidebarViews } from "../support/sidebar-views.js";
 import { wdioVscodeHost as host } from "../support/vscode-host.js";
 import { runDemoScene, type DemoDriver, type DemoScene } from "./support/demo-driver.ts";
-import { installWorkbenchPointer, menuItem, openContextMenu, sessionRow, showPointerIn } from "./support/1.6e-helpers.ts";
+import { menuItem, openContextMenu, sessionRow } from "./support/1.6e-helpers.ts";
 
 const fixture = parseDemoFixture(process.env.AICA_DEMO_FIXTURE);
 const panel = new AnalyzerPanel(host);
@@ -19,22 +19,15 @@ const tab = (label: string): string => `//label[contains(@class,'seg-opt')][norm
 
 // Right-click the audit session's row and choose `item`.
 async function fromContextMenu(driver: DemoDriver, item: string): Promise<void> {
-  await showPointerIn("workbench");
   const row = await sessionRow(fixture.auditSession.title);
   await driver.pointerTo(await row.getElement());
   // The tree recycles row elements while it repaints: take the row again just before the click.
   await openContextMenu(await sessionRow(fixture.auditSession.title));
   const entry = await menuItem(item);
-  // Menu items act on mouse-up, so this is a driver (native) click, after the glide and ripple.
-  await driver.pointerTo(await entry.getElement());
-  await browser.execute(() => window.__demoPointer.ripple());
-  await browser.pause(150);
-  await entry.click();
-  // The real mouse stays over the menu item's spot, where it would hover a tree row (a tooltip in the take).
+  await driver.click(await entry.getElement());
   await browser.action("pointer").move({ x: 760, y: 700 }).perform();
   const workbench = await browser.getWorkbench();
   await browser.waitUntil(async () => (await workbench.getAllWebviews()).length > 0, { timeout: 30_000, timeoutMsg: "the panel did not open" });
-  await showPointerIn("webview");
 }
 
 const scene: DemoScene = {
@@ -46,7 +39,6 @@ const scene: DemoScene = {
       label: "show the Sessions view",
       beatMs: 600,
       action: async () => {
-        await installWorkbenchPointer();
         await host.command("workbench.view.extension.aiCreditsAnalyzer");
         await sidebar.showAlone("sessions");
         await sessionRow(fixture.auditSession.title);
