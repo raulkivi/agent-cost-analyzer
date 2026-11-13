@@ -77,6 +77,21 @@ function costText(session: Session, t: Translate): string {
   return session.costAiCredits.known ? formatAiCredits(session.costAiCredits.value) : t("AI Credits unknown");
 }
 
+// Step 10.19 (D12): what a classic session's subagent runs added, one tooltip
+// line; plain text, worded as the web app's Sessions list. An unknown spend
+// gives its reason, never a figure (constraint 6).
+function subagentLine(session: Session, t: Translate): string | undefined {
+  const spend = session.subagentSpend;
+  if (spend === undefined) {
+    return undefined;
+  }
+  if (!spend.costAiCredits.known) {
+    return t("AI Credits unknown: {0}", spend.costAiCredits.reason);
+  }
+  const credits = formatAiCredits(spend.costAiCredits.value);
+  return spend.runs === 1 ? t("incl. {0} AI Credits from {1} subagent run", credits, spend.runs) : t("incl. {0} AI Credits from {1} subagent runs", credits, spend.runs);
+}
+
 export function toSessionNode(session: Session, start: Date | undefined, timeZone: string | undefined, t: Translate): SessionNode {
   const cost = costText(session, t);
   const turns = turnCountText(session.turnCount, t);
@@ -91,7 +106,7 @@ export function toSessionNode(session: Session, start: Date | undefined, timeZon
     sessionId: session.id,
     label: session.title,
     description: cost,
-    tooltip: `${session.title}\n${details}\n${costLine}`,
+    tooltip: [session.title, details, costLine, subagentLine(session, t)].filter((line) => line !== undefined).join("\n"),
     ariaLabel: t("{0}, {1}, {2}", session.title, costLine, turns),
   };
 }

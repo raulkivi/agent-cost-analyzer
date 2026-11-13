@@ -85,6 +85,8 @@ suite("Copilot Chat installed, fixture sessions (checks 1.4, 1.2)", () => {
     // The sum of the known sessions' AI Credits; each row is rounded to cents.
     const rowsSum = today.credits.reduce((sum, value) => sum + value, 0);
     expect(Math.abs(Number(total) - rowsSum)).toBeLessThanOrEqual(0.005 * today.credits.length + 1e-9);
+    // Step 10.19: the classic session with subagent runs is one of today's
+    // sessions with cost data; its folded figure is in this sum like the others.
 
     await sidebar.select("sessions", fixture.usageSessionTitle);
     await browser.waitUntil(async () => (await (await browser.getWorkbench()).getAllWebviews()).length > 0, { timeout: 30_000 });

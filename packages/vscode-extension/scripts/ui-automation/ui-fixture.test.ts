@@ -9,7 +9,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { createExtensionApiService } from "@agent-cost-analyzer/server/src/composition/create-extension-api-service";
 import { InMemoryAppSettingsStore } from "@agent-cost-analyzer/server/src/test-support/in-memory-app-settings-store";
 import { copilotLogPathsFromUserDataDir } from "../../src/platform/copilot-log-paths.js";
-import { EMPTY_WINDOW_SESSION_ID, LARGE_SESSION_TURNS, createFirstRunFixture, createUiFixture } from "./ui-fixture.mts";
+import { EMPTY_WINDOW_SESSION_ID, LARGE_SESSION_TURNS, WORKSPACE_STORAGE_ID, createFirstRunFixture, createUiFixture } from "./ui-fixture.mts";
 
 
 // The fixture the VS Code UI automation (wdio.conf.mts, step 10.16) seeds,
@@ -108,9 +108,19 @@ describe("createUiFixture (step 10.16)", () => {
   it("names an existing folder for the seeded workspace storage, so VS Code's cleaner keeps it", () => {
     const fixture = createUiFixture(rootDir, { sessionCount: 1 });
 
-    const workspaceStorage = path.join(fixture.userDataDir, "User", "workspaceStorage", "integration-workspace");
+    const workspaceStorage = path.join(fixture.userDataDir, "User", "workspaceStorage", WORKSPACE_STORAGE_ID);
     const { folder } = JSON.parse(readFileSync(path.join(workspaceStorage, "workspace.json"), "utf-8")) as { folder: string };
     expect(existsSync(fileURLToPath(folder))).toBe(true);
+  });
+
+  // VS Code's clean-up deletes, 30 s after start-up, workspace storage whose
+  // name isn't a 32-character workspace id and that no window uses.
+  it("names the seeded workspace storage like a workspace id, so the long UI runs keep its debug logs", () => {
+    const fixture = createUiFixture(rootDir, { sessionCount: 1 });
+
+    const folders = readdirSync(path.join(fixture.userDataDir, "User", "workspaceStorage"));
+    expect(folders).toEqual([WORKSPACE_STORAGE_ID]);
+    expect(WORKSPACE_STORAGE_ID).toMatch(/^[0-9a-f]{32}$/);
   });
 
   it("points the Copilot CLI home at a directory of event logs", () => {

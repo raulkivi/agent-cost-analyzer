@@ -157,6 +157,56 @@ describe("buildSessionsTree", () => {
       expect(today?.children[0]?.tooltip).not.toContain("0.00");
     });
 
+    it("adds the subagent line to the tooltip of a session with runs, not to its description (step 10.19)", () => {
+      const [today] = buildSessionsTree(
+        [session({ id: "a", startedAt: "2026-10-24T09:00:00Z", costAiCredits: { known: true, value: 6 }, subagentSpend: { runs: 2, costAiCredits: { known: true, value: 1.25 } } })],
+        NOW,
+        "UTC",
+      );
+
+      expect(today?.children[0]?.description).toBe("6.00");
+      expect(today?.children[0]?.tooltip).toMatch(/\n6\.00 AI Credits\nincl\. 1\.25 AI Credits from 2 subagent runs$/);
+    });
+
+    it("uses the singular for one run and still shows a 0.00 run", () => {
+      const [today] = buildSessionsTree(
+        [session({ id: "a", startedAt: "2026-10-24T09:00:00Z", subagentSpend: { runs: 1, costAiCredits: { known: true, value: 0 } } })],
+        NOW,
+        "UTC",
+      );
+
+      expect(today?.children[0]?.tooltip).toContain("incl. 0.00 AI Credits from 1 subagent run");
+      expect(today?.children[0]?.tooltip).not.toContain("1 subagent runs");
+    });
+
+    it("gives the reason, never a figure, when the subagent spend is unknown", () => {
+      const [today] = buildSessionsTree(
+        [
+          session({
+            id: "a",
+            startedAt: "2026-10-24T09:00:00Z",
+            costAiCredits: { known: false, reason: "a subagent log is missing" },
+            subagentSpend: { runs: 1, costAiCredits: { known: false, reason: "a subagent log is missing" } },
+          }),
+        ],
+        NOW,
+        "UTC",
+      );
+
+      expect(today?.children[0]?.tooltip).toContain("AI Credits unknown: a subagent log is missing");
+    });
+
+    it("translates the subagent line but not the reason, which is data", () => {
+      const [today] = buildSessionsTree(
+        [session({ id: "a", startedAt: "2026-10-24T09:00:00Z", subagentSpend: { runs: 2, costAiCredits: { known: true, value: 1.25 } } })],
+        NOW,
+        "UTC",
+        T,
+      );
+
+      expect(today?.children[0]?.tooltip).toContain("INCL. 1.25 AI CREDITS FROM 2 SUBAGENT RUNS");
+    });
+
     it("sums only the known costs in a group and counts the unknown ones", () => {
       const [today] = buildSessionsTree(
         [
