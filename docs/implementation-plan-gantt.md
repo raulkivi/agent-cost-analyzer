@@ -69,7 +69,7 @@ gantt
     10.16 UI automation (100%)             :done, p10c, 2026-11-04, 2d
     10.17 Release UI gate (100%)           :done, p10d, after p10c, 1d
     10.18 Copilot empty-window sessions (100%) :done, p10e, 2026-11-11, 1d
-    10.19 Classic subagent AI Credits (19 of 20 tasks) :active, p10f, 2026-11-12, 2d
+    10.19 Classic subagent AI Credits (100%) :done, p10f, 2026-11-12, 2d
     10.21 Monthly allowance gauge (100%)   :done, p10g, 2026-11-12, 2d
 
     section Simulation and replay
@@ -115,8 +115,8 @@ gantt
 
 ## Open items
 
-- Release prepared 2026-11-13: extension 0.12.0 and app 0.14.0 carry steps 10.19 and 10.21 and Phase 16 Increment 1. Before tagging: SA18 and the savings exit criterion on real data, D13-D15, then the real-Copilot gate.
-- Step 10.19 (classic subagent AI Credits, 19 of 20 tasks): SA0, SA0b and SA1-SA17 done 2026-11-13; SA18, the owner's real-data check (automated by `npm run test:real-data`, which compares the built server with SA0's measurement; the owner reviews a run) and the release, open. Plan: [classic-subagent-credits-implementation.md](plans/classic-subagent-credits-implementation.md). Step 10.20 (subagent tool calls in the audit) is a follow-up, not planned.
+- Release prepared 2026-11-13: extension 0.12.0 and app 0.14.0 carry steps 10.19 and 10.21 and Phase 16 Increment 1. Before tagging: the savings exit criterion on real data, D13-D15, then the real-Copilot gate.
+- Step 10.19 (classic subagent AI Credits, 100%): done 2026-11-13 (SA0 to SA18, 20 of 20 tasks; exit criterion met: `npm run test:real-data` passed 10 of 10 on the owner's logs, 177.64 AI Credits added, owner sign-off 2026-11-13). Before release: the real-Copilot gate. Plan: [classic-subagent-credits-implementation.md](plans/classic-subagent-credits-implementation.md). Step 10.20 (subagent tool calls in the audit) is a follow-up, not planned.
 - Step 10.21 (monthly allowance gauge, 100%): done 2026-11-13 (MA0 to MA12, 14 of 14 tasks; exit criterion met, review in plan §14). Before release: the real-Copilot check of the gauge in a live window (release UI gate). MA13 (standalone app) is a later increment. The Sessions row is hidden while VS Code's filter is active (plan §3.8). Plan: [monthly-allowance.md](plans/monthly-allowance.md).
 - Phase 16 (savings report, 78%, 18 of 23 tasks): Increment 1 (SR0-SR17) done 2026-11-13, code and docs; SR16 review in plan §16 (5 findings fixed, 3 recorded). Open: owner review of the docs and the exit criterion on real data (30 days of Claude Code and Copilot sessions, one idle-expiry break and one unused tool checked by hand), D13-D15 owner decisions (SR7 thresholds, the active-provider switch from "Open in Analyze"), the release, then Increment 2 (SR18-SR22: MCP tool and view U18), not started. Plan: [savings-report.md](plans/savings-report.md).
 - Phase 14: steps 14.0-14.7 built; 14.8's docs written, the owner's review and the §13 exit criterion on real sessions open; the extension guide's replay screenshots open (User Guide's done). Step table: [analyze-session-replay.md](plans/analyze-session-replay.md) §12.

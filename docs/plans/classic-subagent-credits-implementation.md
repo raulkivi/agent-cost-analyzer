@@ -2,7 +2,7 @@
 
 **Last changed:** 2026-11-13 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
-Status: **built 2026-11-13 (SA0-SA17); SA18, the owner's real-data check and the release, open; owner decisions accepted 2026-11-12 (every recommendation)**. Turns the design in [classic-subagent-credits.md](classic-subagent-credits.md) (status "proposed", #124) into a numbered step. The owner decisions in §9 are accepted.
+Status: **done 2026-11-13 (SA0-SA18; §12 exit criterion met, owner sign-off 2026-11-13); the release open; owner decisions accepted 2026-11-12 (every recommendation)**. Turns the design in [classic-subagent-credits.md](classic-subagent-credits.md) (status "proposed", #124) into a numbered step. The owner decisions in §9 are accepted.
 
 ## 1. Why
 
@@ -230,7 +230,7 @@ Every task writes its failing test first (architecture.md §11.4). No local mode
 | SA15 | **Done 2026-11-13.** Tree tooltip line, UI fixture sessions, wdio spec (see §15 for fixture changes). **Extension.** Tree tooltips; status bar test; UI fixture sessions (§4.9); a list-equals-detail unit test like `ui-fixture-credits.test.ts`; the wdio spec (§7). | `extension` and `extension-ui` CI jobs pass | medium | Sonnet | SA0b, SA9, SA13 |
 | SA16 | **Done 2026-11-13.** Fixture-home session and Playwright spec. **Standalone app.** Fixture home session; Playwright spec (§7). | `web-e2e` passes | medium | Sonnet | SA10, SA13 |
 | SA17 | **Done 2026-11-13.** Docs of §10 updated 2026-11-13. **Docs** (§10). | Docs match the code; Gantt updated | medium | Sonnet | SA10–SA16 |
-| SA18 | **Real-data check and release.** The check is automated by the opt-in suite `packages/server/scripts/sa18-subagent-credits.real.test.mts` (§14): SA0 as the oracle against the built server for list, detail, `get_session_cost` and `get_cost_rollup`. The owner reviews a run, checks the status bar, panel and U1 figures, then the release gate. | The exit criterion (§12) | low | owner, Sonnet (suite) | SA17 |
+| SA18 | **Done 2026-11-13** (#253): the suite passed 10 of 10 on the owner's logs (§14); owner sign-off 2026-11-13. **Real-data check and release.** The check is automated by the opt-in suite `packages/server/scripts/sa18-subagent-credits.real.test.mts` (§14): SA0 as the oracle against the built server for list, detail, `get_session_cost` and `get_cost_rollup`. The owner reviews a run, checks the status bar, panel and U1 figures, then the release gate. | The exit criterion (§12) | low | owner, Sonnet (suite) | SA17 |
 
 Critical path: SA0 → SA2 → SA4/SA5 → SA6 → SA7 → SA8 → SA9 → SA10 → SA16 → SA17 → SA18. SA0b and SA1 run beside SA2–SA9; SA11 and SA12 beside SA10.
 
@@ -353,6 +353,7 @@ Run from the repo root, with the logs on this machine: `npm run test:real-data` 
 - **Actual:** the extension composition (`createExtensionApiService`, `createCopilotMcpServices`) per user-data dir, MCP over an in-memory client.
 - **Asserts, per session with subagent files:** list AI Credits = detail = counted + missing (±0.01); `get_session_cost` total = counted + missing, its `subagents` total = missing and its runs = files; searchSubagent-only sessions miss 0.00 and total = counted; total minus the subagent share = counted; `byModel` sums to the total and credits at least each run model's subagent share.
 - **Aggregate:** the sum of missing over all sessions = SA0's grand total; `get_cost_rollup` for 2026-08-01..2026-10-01 = the sum of the session totals in that range.
+- **Result 2026-11-13 (owner sign-off):** 10 of 10 pass. SA0: 259 sessions, 13 with subagent files, 177.64 AI Credits missing; the server adds exactly 177.64, and every listed session matches within 0.01. `get_cost_rollup` 2026-08-01..2026-10-01: 7803.96 on both sides (120 sessions).
 - **Findings while building it:** the server lists only sessions with a session-store row, so 4e20fad3 (searchSubagent only, missing 0.00) is not listed; the suite requires an unlisted session to miss 0.00. A list summary is unknown when any turn's credits are, while the rollup sums the known turns, so for list-unknown sessions the rollup is compared with `get_session_cost`'s known-turn total.
 
 ## 15. Deviations from the design while building (SA17)

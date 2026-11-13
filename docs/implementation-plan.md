@@ -21,8 +21,8 @@ and the §13 exit criterion on real sessions open) and Phase 15 (steps 15.0-15.1
 the exit criterion on real data open). Step 10.19
 ([plans/classic-subagent-credits-implementation.md](plans/classic-subagent-credits-implementation.md),
 design in [plans/classic-subagent-credits.md](plans/classic-subagent-credits.md))
-covers classic Copilot Chat subagent AI Credits (built; the owner's real-data check open). Step 10.21
-([plans/monthly-allowance.md](plans/monthly-allowance.md)) is planned and
+covers classic Copilot Chat subagent AI Credits (done 2026-11-13). Step 10.21
+([plans/monthly-allowance.md](plans/monthly-allowance.md)) is done and
 Phase 16 ([plans/savings-report.md](plans/savings-report.md)) has its Increment 1 built (the
 owner accepted both plans' decisions on 2026-11-12).
 Each phase has a goal, concrete deliverables, an exit criterion (how you know
@@ -1281,7 +1281,7 @@ and deviations are in its status note in the plan's §6.
 | 10.16 | UI automation of the manual checks (`wdio-vscode-service`, `test/ui/`) | Merged (#117, #121, #127; later specs #139, #157, #172): 13 spec files, 38 tests; CI job informational, 76 of 78 `main` runs green 2026-11-04 to 2026-11-10; T15 closed by the owner's decision of 2026-11-11 (the job becomes required, step 10.17) ([plans/vscode-ui-automation.md](plans/vscode-ui-automation.md) §6.9) |
 | 10.17 | Automated pre-release UI gate: wdio for VS Code and Copilot, Playwright for web; no hand checklist gates a release (owner rule 2026-11-11) | Done 2026-11-11, tasks G0-G7 ([plans/release-ui-gate.md](plans/release-ui-gate.md)): CI and both release workflows run every UI suite; a ruleset on `main` requires 9 checks; extension releases need a passing real-Copilot run recorded on the tagged commit; replaces the manual checks and Phase 12's A24 owner checks |
 | 10.18 | Copilot Chat sessions from empty windows (no folder open): read the debug logs Copilot Chat writes under `globalStorage` | Done 2026-11-11 (found by 10.17 G3, owner decision D7) |
-| 10.19 | AI Credits of classic Copilot Chat subagents: read each run's debug log and fold it into the parent session's totals, per model ([plans/classic-subagent-credits-implementation.md](plans/classic-subagent-credits-implementation.md), design [plans/classic-subagent-credits.md](plans/classic-subagent-credits.md)) | Built 2026-11-13 (SA0-SA17 of 19 tasks); SA18, the owner's real-data check on the exit criterion, and the release are open |
+| 10.19 | AI Credits of classic Copilot Chat subagents: read each run's debug log and fold it into the parent session's totals, per model ([plans/classic-subagent-credits-implementation.md](plans/classic-subagent-credits-implementation.md), design [plans/classic-subagent-credits.md](plans/classic-subagent-credits.md)) | Done 2026-11-13 (SA0 to SA18, exit criterion met on the owner's logs by `npm run test:real-data`); the release is open |
 | 10.20 | Classic subagent tool calls in the tool audit and security findings (follow-up from 10.19 D3) | Follow-up, not planned yet |
 | 10.21 | Monthly AI Credits allowance gauge in the extension: status-bar item and Sessions row ([plans/monthly-allowance.md](plans/monthly-allowance.md)) | Done 2026-11-13 (MA0 to MA12, exit criterion met); owner decisions D1-D10 accepted 2026-11-12; mock-up approved 2026-11-13; MA13 (standalone app) later |
 
