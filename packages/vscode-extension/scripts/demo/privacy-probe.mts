@@ -31,3 +31,10 @@ export function findForbidden(
   }
   return hits;
 }
+
+// What a recording must never show, whatever the scene: the OS home directory and user
+// name, then the DEMO_FORBIDDEN terms. A default too short to be a useful needle is skipped.
+export function forbiddenTerms(demoForbidden: string | undefined, os: { homedir: string; username: string }): string[] {
+  const defaults = [os.homedir, os.username].filter((t) => t.length >= MIN_TERM_LENGTH);
+  return [...parseForbidden(demoForbidden), ...defaults];
+}

@@ -4,4 +4,4 @@
 // It sends nothing, so it costs no AI Credits.
 import { smokeScene } from "../demo/support/smoke-scene.ts";
 
-smokeScene("Demo E0 smoke (real Copilot profile)");
+smokeScene("Demo E0 smoke (real Copilot profile)", "smoke-copilot");

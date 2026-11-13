@@ -12,11 +12,16 @@ import { FRAME } from "../../../../scripts/demo/ffmpeg-args.mts";
 export const DEMO_USER_SETTINGS: Record<string, unknown> = {
   "workbench.colorTheme": "Default Dark Modern",
   "window.zoomLevel": 0,
-  // The folder name only, so a path never shows in the title bar.
-  "window.title": "${rootName}",
+  // A fixed title, so neither a path nor "[Extension Development Host]" shows in the title bar.
+  "window.title": "AI Credits Analyzer",
   "editor.fontFamily": "DejaVu Sans Mono",
   "workbench.startupEditor": "none",
   "workbench.tips.enabled": false,
+  // No "[Extension Development Host] Search" box in the title bar. With it off the title bar
+  // shows the window title, so that is a fixed string (the default template adds the
+  // "[Extension Development Host]" prefix). The Accounts avatar is not a setting in VS Code
+  // 1.146 (a storage toggle); runDemoScene hides it through the activity bar's menu.
+  "window.commandCenter": false,
   "update.mode": "none",
   "extensions.autoCheckUpdates": false,
   "telemetry.telemetryLevel": "off",
