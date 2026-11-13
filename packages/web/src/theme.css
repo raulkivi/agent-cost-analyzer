@@ -817,7 +817,9 @@ main[data-layout="narrow"] .nav { flex-wrap: wrap; gap: var(--space-2); }
 .savings-bar i { position: absolute; top: 0; bottom: 0; }
 .savings-bar-sure { left: 0; background: var(--color-accent-fill); }
 .savings-bar-maybe { background: repeating-linear-gradient(135deg, var(--color-accent-fill) 0 2px, transparent 2px 5px); }
-.savings-bar--sim .savings-bar-maybe { background: repeating-linear-gradient(135deg, var(--color-accent-text) 0 1px, transparent 1px 4px); }
+/* Thin stripes in the fill colour: --color-accent-text is a link blue that
+   High Contrast puts at 1.3:1 on the bar track (SR16). */
+.savings-bar--sim .savings-bar-maybe { background: repeating-linear-gradient(135deg, var(--color-accent-fill) 0 1px, transparent 1px 4px); }
 .savings-not-analysed { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1.4fr) minmax(0, 2fr) auto; gap: var(--space-2) var(--space-3); padding: var(--space-2) var(--space-3); overflow-wrap: anywhere; }
 .savings-detail { display: flex; flex-direction: column; gap: var(--space-2); min-width: 0; padding: var(--space-3); border: 1px solid var(--color-divider); overflow-wrap: anywhere; }
 .savings-close { align-self: flex-end; }

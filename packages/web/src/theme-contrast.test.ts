@@ -330,3 +330,28 @@ describe("categorical series palette (cost-by-repository-and-project.md §11.7)"
     expect(names.filter((name) => /^--color-series-(9|\d{2,})$/.test(name))).toEqual([]);
   });
 });
+
+// Phase 16 SR16: the savings bars (SavingsRow.tsx) draw the likely low end
+// solid and the possible rest hatched. The words carry the meaning, but the
+// two parts must still be told apart without colour: the hatch is the cue,
+// so its stripes and the solid fill reach WCAG 1.4.11's 3:1 on the track.
+describe("savings bars (SR16)", () => {
+  const GRAPHICS = 3;
+  const firstColour = (value: string | undefined): string => {
+    const match = /var\(--[a-z0-9-]+\)/.exec(value ?? "");
+    if (!match) throw new Error(`no colour token in ${value}`);
+    return match[0];
+  };
+
+  describe.each(THEMES)("%s", (theme) => {
+    const track = () => declared(theme, ".savings-bar", "background") ?? "";
+
+    it("the solid part reaches 3:1 on the track", () => {
+      expect(ratio(theme, firstColour(declared(theme, ".savings-bar-sure", "background")), track())).toBeGreaterThanOrEqual(GRAPHICS);
+    });
+
+    it.each([".savings-bar-maybe", ".savings-bar--sim .savings-bar-maybe"])("the hatch stripes of %s reach 3:1 on the track", (selector) => {
+      expect(ratio(theme, firstColour(declared(theme, selector, "background")), track())).toBeGreaterThanOrEqual(GRAPHICS);
+    });
+  });
+});
