@@ -221,6 +221,10 @@ counts; only caching and prices change.
   totals, the difference, the coverage, the self-check on the session's
   own model and the prices used. **Replay summary** opens the detail as a
   dialog, with the assumptions behind the replay; Escape closes it.
+- **Main agent only.** A classic chat's turn is replayed on the main
+  agent's own usage; its subagent runs are left out, and the panel doesn't
+  list them. The MCP `replay_session` result counts them in
+  `coverage.subagentRuns`.
 - **Prices.** A Copilot session is priced at GitHub Copilot's prices, in
   AI Credits (hover a simulated cost for its USD), as of the session's
   date. The **Price channel** switch in the summary prices it at the
@@ -300,7 +304,10 @@ dates (YYYY-MM-DD), newest first. Sessions with no start time go in an
   for example `12.40 · 1 unknown`.
 - Hover a session for its turn count, start time and model. When a
   classic chat ran subagents, the tooltip adds "incl. 54.65 AI Credits from
-  3 subagent runs" (or the reason when those are unknown).
+  3 subagent runs" (or the reason when those are unknown). A classic
+  chat's subagent runs are part of the AI Credits of the turn that started
+  them, so they are in the turns table, the session total and the dashboard.
+  Open a turn to see each run's agent, model, requests and AI Credits.
 - Select a session to open the panel on it.
 - Right-click a session for **Open Session**, **Show Tool Audit** and
   **Copy Advice Bundle**.
@@ -464,8 +471,10 @@ against the allowance:
 The gauge is a lower bound on what is recorded here, not your bill. It
 doesn't see:
 
-- Subagent spend of classic Copilot Chat runs, until that is counted
-  (the figure is low by that spend).
+- Sessions with a subagent run whose AI Credits are unknown (a missing or
+  unreadable log, or a run that can't be matched to a turn). Such a
+  session's total is unknown, so the gauge leaves it out and the figure
+  reads "at least".
 - Sessions whose logs Copilot has already pruned. Copilot keeps the last
   `maxRetainedSessionLogs` logs; the tooltip names the oldest session
   counted.

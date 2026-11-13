@@ -133,6 +133,9 @@ An npm workspace:
 - [Monthly allowance plan](plans/monthly-allowance.md) — step 10.21
   (planned): a user-set monthly AI Credits allowance with a status-bar gauge
   and a Sessions row in the extension.
+- [Docs refresh and demo recordings plan](plans/docs-refresh-and-demo-recordings.md) —
+  steps 10.22 and 10.23: README and User Guide updates, then GIF demos
+  recorded by wdio, Playwright and Claude Desktop under Xvfb.
 - [Savings report plan](plans/savings-report.md) — Phase 16: a
   ranked list of what to change to spend less, with estimated savings.
   Increment 1 (the Savings tab in both products) is built; Increment 2 (an

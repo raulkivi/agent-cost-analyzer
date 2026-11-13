@@ -298,8 +298,9 @@ the session's `main.jsonl`.
   unknown with a reason. Per-model figures credit each run's model, and the
   dashboard's **model** list box matches a turn when its own model or any
   run's model is selected.
-- **Replay.** A replay compares the main agent only; the coverage line
-  lists the runs it left out and their AI Credits.
+- **Replay.** A replay compares the main agent only. The app doesn't list
+  the runs it leaves out; the MCP `replay_session` result does, in
+  `coverage.subagentRuns` (the run count and their AI Credits).
 
 ### The three-tab right panel
 
@@ -433,7 +434,7 @@ cost, measured beside simulated.
   instead. The only conversion is 1 AI Credit = $0.01.
 - **Coverage.** How many turns and requests were replayed, and each reason
   a turn wasn't, with its turn numbers. Only the session's main chain is
-  replayed: sub-agent requests are left out.
+  replayed: subagent runs are left out, and the app doesn't list them.
 - **Self-check.** The same replay on the session's own model, compared
   request by request with the log. A request matches when its cache hit or
   miss is exactly the log's and its cache read is within 5%. The first
@@ -616,6 +617,11 @@ The replay tools give the same figures as
 in the app. Like the app, they can't replay pi or mitmproxy sessions yet,
 and they refuse a model no vendor profile lists, with the reason.
 
+In a VS Code Copilot Chat session, `get_turn` lists a turn's subagent runs
+in `usage.subagents` and the main agent's own figures in `usage.ownUsage`.
+Replay compares the main agent only; `coverage.subagentRuns` counts the
+runs it leaves out.
+
 Every cost figure says its basis: **billed** (what the vendor billed,
 GitHub Copilot's AI Credits), **reported** (a cost the log itself records)
 or **priced** (tokens times the price book's price for that model and
@@ -676,6 +682,11 @@ text.
 
 - **A top turn** (session cost view) opens that turn in place: its prompt
   (redacted, truncated), token usage, AI Credits, event and tool calls.
+  For a VS Code Copilot Chat turn that started subagents, the detail also
+  shows **Subagent runs (N)**: one row per run with its agent, model,
+  requests and AI Credits, and a **Main agent** and a **Subagent runs**
+  figure that split the turn's AI Credits. Other providers have no such
+  block.
   **Hide turn** closes it; **Retry** appears if the load failed.
 - **A top session** (cost rollup view) opens that session's cost view in
   place. **Back to cost rollup** returns to the rollup without loading it
