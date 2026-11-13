@@ -1,7 +1,23 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
 import { describe, expect, it } from "vitest";
-import { findForbidden, parseForbidden } from "./privacy-probe.mts";
+import { findForbidden, forbiddenTerms, parseForbidden } from "./privacy-probe.mts";
+
+describe("forbiddenTerms", () => {
+  const os = { homedir: "/home/alice", username: "alice" };
+  it("always forbids the home directory and the user name", () => {
+    expect(forbiddenTerms(undefined, os)).toEqual(["/home/alice", "alice"]);
+  });
+  it("adds the DEMO_FORBIDDEN terms", () => {
+    expect(forbiddenTerms("Acme Corp, secret", os)).toEqual(["Acme Corp", "secret", "/home/alice", "alice"]);
+  });
+  it("skips a default shorter than the minimum term length", () => {
+    expect(forbiddenTerms(undefined, { homedir: "/root", username: "ab" })).toEqual(["/root"]);
+  });
+  it("still rejects a too-short DEMO_FORBIDDEN term", () => {
+    expect(() => forbiddenTerms("ab", os)).toThrow(/ab/);
+  });
+});
 
 describe("parseForbidden", () => {
   it("returns an empty list for undefined or blank", () => {
