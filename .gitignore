@@ -63,3 +63,4 @@ ds-bundle/
 mitm/
 # Claude Code sub-agent worktrees (temporary, local only)
 .claude/worktrees/
+/demo-masters/
