@@ -536,7 +536,7 @@ Phase 2 reuses it.
 | Masters directory | 1.9 | `process.env.AICA_DEMO_MASTERS ?? <repo root>/demo-masters` (git-ignored); every recorder writes its MP4/WebM and JSON there, named by `sceneOutputs` |
 | `test/ui/copilot-e2e/support/copilot-launch.mts` | 1.2 | `prepareCopilotLaunch(options?: { specs?: string[]; userSettings?: Record<string, unknown>; rootEnv?: string; seedChatHistory?: boolean; tmpPrefix?: string }, deps?): { run: { userDataDir; model; maxAiCredits }; inWorker: boolean; paths: CopilotLaunchPaths; config }`. `config` (specs, `maxInstances`, capabilities, services, `onWorkerStart` keep-extensions, `onWorkerEnd` release-profile) is spread into a wdio config; the caller adds framework, reporters and its own hooks. Defaults: the release suite's specs and `COPILOT_E2E_SETTINGS` (overrides merge on top), `COPILOT_E2E_ROOT_ENV`, history seeded. Not opted in (`COPILOT_E2E` unset): prints the skip and exits 0. Pure helpers: `copilotLaunchPaths`, `copilotUserSettings`, `copilotLaunchVscodeArgs`, `copilotCapability`, `launcherEnv`. The demo config keeps the default `rootEnv`: `sendToAgent` reads `COPILOT_E2E_ROOT_ENV` for the run log and the AI Credits cap. Built 2026-11-13 |
 | `wdio.demo.conf.mts`, `wdio.demo-copilot.conf.mts` | 1.3 | Specs `./test/ui/demo/**/*.demo.ts` (free) and `./test/ui/demo-copilot/**/*.demo.ts` (paid), modelled on `wdio.record.conf.mts`; scripts `demo:record`, `demo:record:copilot` |
-| `test/ui/demo/support/demo-driver.ts` | 1.4 | `pointerTo(el)`, `click(el)`, `typeSlowly(text)`, `beat(ms)`, `probePrivacy()`, `runDemoScene(scene)` (records, plays, asserts, discards on failure) |
+| `test/ui/demo/support/demo-driver.ts` | 1.4 | `type DemoAction = (driver: DemoDriver) => Promise<void>`; `type DemoScene = Scene<DemoAction>`; `class DemoDriver { pointerTo(el); click(el); typeSlowly(text, delayMs = 60); beat(ms); probePrivacy() }` (workbench and webview elements alike); `runDemoScene(scene, { assertEnd? }): Promise<string>` (clears notifications, hides clutter, records, plays, asserts, probes privacy, writes the JSON; discards the MP4 on any failure); `hideWorkbenchClutter()` (CSS: Accounts, title-bar Sign In, window title). `forbiddenTerms(DEMO_FORBIDDEN, { homedir, username })` in `privacy-probe.mts` adds the home path and username by default. Built 2026-11-13 |
 | `scripts/demo/desktop/*.mts` | 2.1 | Pure: `clickPoint(match, minScore)`, `waitForMatch(probe, { timeoutMs, intervalMs }, clock)`, `promptKeystrokes(text, delayMs)`; adapter `xdotool.mts`. The template matcher is chosen by 2.0 and written back here |
 
 ### 10.4 Who runs what, and in which order
@@ -610,6 +610,11 @@ review rejections.
   owner: (a) no app or panel UI shows the subagent runs a replay left out,
   though the 0.12.0 changelog implies it; (b) the extension README says 18
   Learn sessions, the extension guide 17 Copilot scenarios.
+- 2026-11-13: 1.4 (Sonnet) merged, first review. VS Code 1.146 has no
+  setting that hides the Accounts entry (`workbench.activity.showAccounts`
+  is a storage key) or the "[Extension Development Host]" prefix, so the
+  driver hides them, the title-bar Sign In and the window title with an
+  injected style rule; checked in frames of both configs.
 - 2026-11-13: 1.9b merged: W1–W3 record through x11grab in headed
   Chromium (`--ozone-platform=x11`, `--kiosk`, then CDP fullscreen, since
   `--kiosk` alone keeps the toolbar without a window manager). GIFs: W1
