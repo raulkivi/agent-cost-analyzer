@@ -465,6 +465,30 @@ describe("SavingsTab: narrow (320 px)", () => {
     globalThis.ResizeObserver = original;
   });
 
+  function narrowObserver() {
+    globalThis.ResizeObserver = class {
+      constructor(private readonly callback: ResizeObserverCallback) {}
+      observe() {
+        this.callback([{ contentRect: { width: 320 } } as ResizeObserverEntry], this as unknown as ResizeObserver);
+      }
+      disconnect() {}
+      unobserve() {}
+    };
+  }
+
+  // SR16: the row that had focus is gone once the detail replaces the list,
+  // so focus moves to the detail's Back button instead of the page.
+  it("moves focus into the detail when it replaces the list", async () => {
+    narrowObserver();
+    const user = userEvent.setup();
+    renderTab();
+    await ready();
+
+    await user.click(within(rowOf("github")).getByRole("button"));
+
+    expect(screen.getByRole("button", { name: "Back to the list" })).toHaveFocus();
+  });
+
   it("replaces the list with the detail, and Back returns to the list", async () => {
     globalThis.ResizeObserver = class {
       constructor(private readonly callback: ResizeObserverCallback) {}

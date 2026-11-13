@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { SavingsOpportunity, SavingsSessionRef } from "@agent-cost-analyzer/domain";
 import {
   actionTextOf,
@@ -37,6 +37,9 @@ interface SavingsDetailProps {
   copyToClipboard: (text: string) => Promise<void>;
   onClose: () => void;
   closeLabel: string;
+  // Narrow layout: the detail replaces the list and the row that had focus,
+  // so focus starts on the close button.
+  focusOnOpen?: boolean;
 }
 
 function rangeExplanation(opportunity: SavingsOpportunity): string {
@@ -145,7 +148,11 @@ function ActionBlock({ opportunity, copyToClipboard }: { opportunity: SavingsOpp
   );
 }
 
-export function SavingsDetail({ opportunity, days, providerLabel, openSessionLabel, onOpenSession, copyToClipboard, onClose, closeLabel }: SavingsDetailProps) {
+export function SavingsDetail({ opportunity, days, providerLabel, openSessionLabel, onOpenSession, copyToClipboard, onClose, closeLabel, focusOnOpen = false }: SavingsDetailProps) {
+  const closeButton = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    if (focusOnOpen) closeButton.current?.focus();
+  }, [focusOnOpen]);
   const simulated = opportunity.kind === "cheaper-model";
   const providers = [...new Set(opportunity.sessions.map((session) => providerLabel(session.providerId)))];
   const versions = [
@@ -157,7 +164,7 @@ export function SavingsDetail({ opportunity, days, providerLabel, openSessionLab
 
   return (
     <section aria-label="Savings detail" className="savings-detail" data-testid="savings-detail">
-      <button type="button" className="btn btn-secondary savings-close" onClick={onClose}>
+      <button type="button" className="btn btn-secondary savings-close" onClick={onClose} ref={closeButton}>
         {closeLabel}
       </button>
       <h4 className="savings-detail-title">

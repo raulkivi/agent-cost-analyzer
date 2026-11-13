@@ -324,6 +324,7 @@ function SavingsReportView({ report, copilotOnly, nothingFound, providerLabel, o
         copyToClipboard={copyToClipboard}
         onClose={close}
         closeLabel={narrow ? "Back to the list" : "Close detail"}
+        focusOnOpen={narrow}
       />
     );
 
