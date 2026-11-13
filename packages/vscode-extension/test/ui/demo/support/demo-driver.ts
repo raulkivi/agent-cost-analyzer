@@ -45,13 +45,19 @@ declare global {
   }
 }
 
+// Only the workbench document holds `.monaco-workbench`. (`window.parent !== window` read
+// false inside the analyzer webview under wdio, so the pointer was drawn a second time there.)
+function inWebview(): Promise<boolean> {
+  return browser.execute(() => document.querySelector(".monaco-workbench") === null);
+}
+
 export class DemoDriver {
   private at: Point = START_POINT;
 
   // Glides the drawn pointer to the middle of `el`, wherever it lives: the workbench or
   // the analyzer webview (an iframe inside an iframe; the overlay is drawn in the top document).
   async pointerTo(el: Target): Promise<void> {
-    const inFrame = await browser.execute(() => window.parent !== window);
+    const inFrame = await inWebview();
     const rect = await browser.execute((e: Element) => {
       const r = e.getBoundingClientRect();
       return { x: r.x, y: r.y, width: r.width, height: r.height };
@@ -68,13 +74,16 @@ export class DemoDriver {
     this.at = to;
   }
 
-  // Pointer, ripple, a short pause, then the DOM click the specs use.
+  // Pointer, ripple, a short pause, then the click. In the workbench a WebDriver
+  // click (real mouse events): a DOM click() doesn't select a tree row. In a webview
+  // the DOM click the specs use.
   async click(el: Target): Promise<void> {
     await this.pointerTo(el);
-    const inFrame = await browser.execute(() => window.parent !== window);
+    const inFrame = await inWebview();
     await this.withTopDocument(inFrame, () => browser.execute(() => window.__demoPointer.ripple()));
     await browser.pause(CLICK_PAUSE_MS);
-    await browser.execute((e: HTMLElement) => e.click(), el as never);
+    if (inFrame) await browser.execute((e: HTMLElement) => e.click(), el as never);
+    else await el.click();
   }
 
   async typeSlowly(text: string, delayMs = 60): Promise<void> {
@@ -107,11 +116,12 @@ export class DemoDriver {
 
   // The positions of the outer webview iframe in the workbench and of `#active-frame` in it.
   private async webviewOffsets(): Promise<Point[]> {
-    const workbench = await browser.getWorkbench();
-    const [webview] = await workbench.getAllWebviews();
-    if (!webview) throw new Error("A pointer target is in a frame, but no webview is open");
+    // Leave first: getWorkbench() waits for `.monaco-workbench`, which only the top document has.
     await leaveWebview(browser);
     try {
+      const workbench = await browser.getWorkbench();
+      const [webview] = await workbench.getAllWebviews();
+      if (!webview) throw new Error("A pointer target is in a frame, but no webview is open");
       const outer = await browser.execute((e: Element) => {
         const r = e.getBoundingClientRect();
         return { x: r.x, y: r.y };

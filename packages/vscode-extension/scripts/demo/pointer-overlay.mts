@@ -7,15 +7,29 @@
 
 // An IIFE over the globals `window` and `document`, so a fake pair can run it in unit tests.
 export const POINTER_OVERLAY_SCRIPT = `(function () {
-  if (window.__demoPointer) return;
   var ID = "__demo-pointer";
-  var arrow =
-    '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">' +
-    '<path d="M2 2 L2 19 L6.5 14.8 L9.6 21.6 L12.4 20.4 L9.3 13.6 L15.5 13.4 Z" ' +
-    'fill="#ffffff" stroke="#1b1b1f" stroke-width="1.6" stroke-linejoin="round"/></svg>';
-  var pointer = document.createElement("div");
+  // wdio can run later scripts in another JS realm on the same document (after
+  // switchFrame), where this window's __demoPointer is invisible: so the element is
+  // found by id and its position kept on it, and every realm drives the one pointer.
+  var existing = document.getElementById(ID);
+  if (window.__demoPointer && existing) return;
+  // DOM nodes, not innerHTML: VS Code's workbench enforces Trusted Types.
+  var SVG_NS = "http://www.w3.org/2000/svg";
+  var svg = document.createElementNS(SVG_NS, "svg");
+  svg.setAttribute("width", "24");
+  svg.setAttribute("height", "24");
+  svg.setAttribute("viewBox", "0 0 24 24");
+  var path = document.createElementNS(SVG_NS, "path");
+  path.setAttribute("d", "M2 2 L2 19 L6.5 14.8 L9.6 21.6 L12.4 20.4 L9.3 13.6 L15.5 13.4 Z");
+  path.setAttribute("fill", "#ffffff");
+  path.setAttribute("stroke", "#1b1b1f");
+  path.setAttribute("stroke-width", "1.6");
+  path.setAttribute("stroke-linejoin", "round");
+  svg.appendChild(path);
+  var pointer = existing || document.createElement("div");
+  if (!existing) {
   pointer.id = ID;
-  pointer.innerHTML = arrow;
+  pointer.appendChild(svg);
   var s = pointer.style;
   s.position = "fixed";
   s.left = "0px";
@@ -26,16 +40,15 @@ export const POINTER_OVERLAY_SCRIPT = `(function () {
   s.zIndex = "2147483647";
   s.filter = "drop-shadow(0 1px 2px rgba(0,0,0,0.45))";
   document.documentElement.appendChild(pointer);
-  var x = 0;
-  var y = 0;
+  }
   window.__demoPointer = {
     moveTo: function (nx, ny) {
-      x = nx;
-      y = ny;
       pointer.style.left = nx + "px";
       pointer.style.top = ny + "px";
     },
     ripple: function () {
+      var x = parseFloat(pointer.style.left) || 0;
+      var y = parseFloat(pointer.style.top) || 0;
       var ring = document.createElement("div");
       var r = ring.style;
       r.position = "fixed";
