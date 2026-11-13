@@ -9,6 +9,7 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "test": "vitest run",
+    "test:real-data": "REAL_DATA=1 vitest run scripts/sa18-subagent-credits.real.test.mts",
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "mcp": "tsx src/mcp/stdio.ts",
