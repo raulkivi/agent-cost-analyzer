@@ -531,7 +531,9 @@ Phase 2 reuses it.
 | `scripts/demo/privacy-probe.mts` | 1.1 | `parseForbidden(value: string \| undefined): string[]` (`DEMO_FORBIDDEN`, comma-separated, trimmed, empties dropped); `findForbidden(texts: { source: string; text: string }[], forbidden: string[]): { source: string; match: string }[]` (case-insensitive) |
 | `scripts/demo/pointer-target.mts` | 1.1 | `type Point = { x: number; y: number }`; `type Rect = Point & { width: number; height: number }`; `targetPoint(element: Rect, frameOffsets: Point[]): Point` (centre plus the sum of offsets); `glidePath(from: Point, to: Point, steps: number): Point[]` (eased, ends exactly on `to`) |
 | `scripts/demo/recorder.mts` | 1.3 | `startRecorder(o: { display: string; width: number; height: number; fps: number; out: string }, spawn?: typeof import("node:child_process").spawn): { stop(): Promise<void>; discard(): Promise<void> }` (`stop` sends `q`; `discard` stops and deletes the MP4); unit-tested with a fake `spawn` |
-| `scripts/demo/make-gif.mts` | 1.5 | CLI `npm run demo:gif -- <input.mp4\|webm> [--trim <start>,<duration>]`; exits non-zero over `GIF_DEFAULTS.maxBytes` |
+| `scripts/demo/make-gif.mts` | 1.5 | CLI `npm run demo:gif -- <input.mp4\|webm> [--trim <start>,<duration>] [--out-dir <dir>]` (default `docs/images/demo/`); refuses over `GIF_DEFAULTS.maxSeconds` before converting and deletes a GIF over `GIF_DEFAULTS.maxBytes`; exit 1 on either. Built 2026-11-13 |
+| `scripts/demo/pointer-overlay.mts` | 1.9 | `POINTER_OVERLAY_SCRIPT`: browser-side source that installs the drawn pointer and `window.__demoPointer = { moveTo(x, y), ripple() }`; framework-free, so wdio (1.4) and Playwright (1.9, 2.2) share it |
+| Masters directory | 1.9 | `process.env.AICA_DEMO_MASTERS ?? <repo root>/demo-masters` (git-ignored); every recorder writes its MP4/WebM and JSON there, named by `sceneOutputs` |
 | `test/ui/copilot-e2e/support/copilot-launch.mts` | 1.2 | The launcher setup moved out of `wdio.copilot.conf.mts`; exact shape decided by 1.2 and written back into this row before 1.3 starts |
 | `wdio.demo.conf.mts`, `wdio.demo-copilot.conf.mts` | 1.3 | Specs `./test/ui/demo/**/*.demo.ts` (free) and `./test/ui/demo-copilot/**/*.demo.ts` (paid), modelled on `wdio.record.conf.mts`; scripts `demo:record`, `demo:record:copilot` |
 | `test/ui/demo/support/demo-driver.ts` | 1.4 | `pointerTo(el)`, `click(el)`, `typeSlowly(text)`, `beat(ms)`, `probePrivacy()`, `runDemoScene(scene)` (records, plays, asserts, discards on failure) |
@@ -608,6 +610,10 @@ review rejections.
   owner: (a) no app or panel UI shows the subagent runs a replay left out,
   though the 0.12.0 changelog implies it; (b) the extension README says 18
   Learn sessions, the extension guide 17 Copilot scenarios.
+- 2026-11-13: 1.1 (Sonnet) and 1.5 (Haiku) merged into `claude/demo-phase1`,
+  both first review. Review fix to 1.5: relative paths resolve from
+  `INIT_CWD` (the caller's directory), not the package directory. 1.9
+  started early (it needs only 1.5) and owns the shared pointer overlay.
 - 2026-11-13: spike 1.0 done (main session); findings in §5. Frame
   1200×800 instead of 1440×900, since VS Code's first window can't be
   resized without a window manager. Spike 1.0 started first: wdio-vscode-service can't resize the
