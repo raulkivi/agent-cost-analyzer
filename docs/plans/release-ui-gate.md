@@ -1,6 +1,6 @@
 # Automated pre-release UI gate (step 10.17)
 
-**Last changed:** 2026-11-11 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-13 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 Status: **done 2026-11-11: G0 (#203), G1 (#202), G2 (#207), G3 (#208, #210), G4 (#211), G5 (#205, #206), G6 (#204) and G7 (with the D11 chart fixes) all built; G7's PR is the last to merge.** Owner rule, 2026-11-11: every UI check
 before a release is automated. VS Code and Copilot checks use wdio
@@ -196,7 +196,8 @@ although the test profile is signed in.
   - The analyzer under development runs in `ExtensionMode.Development`, not
     `Test`, so its test hooks were missing. Per D5, `extension.ts` registers
     them in `Development` only with `AICA_TEST_HOOKS=1`, which
-    `wdio.copilot.conf.mts` sets; VS Code's extension host inherits it
+    `copilot-launch.mts` (imported by `wdio.copilot.conf.mts` since step
+    10.22) sets; VS Code's extension host inherits it
     (checked: the variable reads `1` there and all 7 hooks register).
   - Nothing auto-confirms dialogs: `chat.tools.global.autoApprove: true`
     raised its one-time "Enable global auto approve?" dialog and the chat

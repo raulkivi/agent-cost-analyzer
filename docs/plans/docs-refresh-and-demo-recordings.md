@@ -534,7 +534,7 @@ Phase 2 reuses it.
 | `scripts/demo/make-gif.mts` | 1.5 | CLI `npm run demo:gif -- <input.mp4\|webm> [--trim <start>,<duration>] [--out-dir <dir>]` (default `docs/images/demo/`); refuses over `GIF_DEFAULTS.maxSeconds` before converting and deletes a GIF over `GIF_DEFAULTS.maxBytes`; exit 1 on either. Built 2026-11-13 |
 | `scripts/demo/pointer-overlay.mts` | 1.9 | `POINTER_OVERLAY_SCRIPT`: browser-side source that installs the drawn pointer and `window.__demoPointer = { moveTo(x, y), ripple() }`; framework-free, so wdio (1.4) and Playwright (1.9, 2.2) share it |
 | Masters directory | 1.9 | `process.env.AICA_DEMO_MASTERS ?? <repo root>/demo-masters` (git-ignored); every recorder writes its MP4/WebM and JSON there, named by `sceneOutputs` |
-| `test/ui/copilot-e2e/support/copilot-launch.mts` | 1.2 | The launcher setup moved out of `wdio.copilot.conf.mts`; exact shape decided by 1.2 and written back into this row before 1.3 starts |
+| `test/ui/copilot-e2e/support/copilot-launch.mts` | 1.2 | `prepareCopilotLaunch(options?: { specs?: string[]; userSettings?: Record<string, unknown>; rootEnv?: string; seedChatHistory?: boolean; tmpPrefix?: string }, deps?): { run: { userDataDir; model; maxAiCredits }; inWorker: boolean; paths: CopilotLaunchPaths; config }`. `config` (specs, `maxInstances`, capabilities, services, `onWorkerStart` keep-extensions, `onWorkerEnd` release-profile) is spread into a wdio config; the caller adds framework, reporters and its own hooks. Defaults: the release suite's specs and `COPILOT_E2E_SETTINGS` (overrides merge on top), `COPILOT_E2E_ROOT_ENV`, history seeded. Not opted in (`COPILOT_E2E` unset): prints the skip and exits 0. Pure helpers: `copilotLaunchPaths`, `copilotUserSettings`, `copilotLaunchVscodeArgs`, `copilotCapability`, `launcherEnv`. The demo config keeps the default `rootEnv`: `sendToAgent` reads `COPILOT_E2E_ROOT_ENV` for the run log and the AI Credits cap. Built 2026-11-13 |
 | `wdio.demo.conf.mts`, `wdio.demo-copilot.conf.mts` | 1.3 | Specs `./test/ui/demo/**/*.demo.ts` (free) and `./test/ui/demo-copilot/**/*.demo.ts` (paid), modelled on `wdio.record.conf.mts`; scripts `demo:record`, `demo:record:copilot` |
 | `test/ui/demo/support/demo-driver.ts` | 1.4 | `pointerTo(el)`, `click(el)`, `typeSlowly(text)`, `beat(ms)`, `probePrivacy()`, `runDemoScene(scene)` (records, plays, asserts, discards on failure) |
 | `scripts/demo/desktop/*.mts` | 2.1 | Pure: `clickPoint(match, minScore)`, `waitForMatch(probe, { timeoutMs, intervalMs }, clock)`, `promptKeystrokes(text, delayMs)`; adapter `xdotool.mts`. The template matcher is chosen by 2.0 and written back here |
@@ -610,6 +610,9 @@ review rejections.
   owner: (a) no app or panel UI shows the subagent runs a replay left out,
   though the 0.12.0 changelog implies it; (b) the extension README says 18
   Learn sessions, the extension guide 17 Copilot scenarios.
+- 2026-11-13: 1.2 (Opus) merged, first review: the release suite's free
+  run gave identical results before and after (4 spec files, 2 passing,
+  31 skipped); its two git notes removed. Next: 1.3.
 - 2026-11-13: 1.1 (Sonnet) and 1.5 (Haiku) merged into `claude/demo-phase1`,
   both first review. Review fix to 1.5: relative paths resolve from
   `INIT_CWD` (the caller's directory), not the package directory. 1.9
