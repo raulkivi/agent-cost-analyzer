@@ -610,6 +610,12 @@ review rejections.
   owner: (a) no app or panel UI shows the subagent runs a replay left out,
   though the 0.12.0 changelog implies it; (b) the extension README says 18
   Learn sessions, the extension guide 17 Copilot scenarios.
+- 2026-11-13: 1.8 merged: `saveStill(name)` writes to `<masters>/stills/`
+  (walkthrough from E1, sidebar from E6, savings from E5, allowance from
+  E7; mcp-agent-mode from the paid E9); the screenshot harness gains
+  `savings-dark.png` and re-shoots five panel stills (the new Savings tab).
+  For 1.10: `sidebar.png` shows a busy Compare panel beside the views,
+  `savings.png` 5 of 6 rows. Phase 1 code PR opened.
 - 2026-11-13: 1.6b2 merged: the setup-problem launch no longer enables
   Copilot Chat before E1; E1 opens the walkthrough first, then enables it
   (33.1 s; trims `1,19` or `14,19`). `--spec` now runs a scene only in its
