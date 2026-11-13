@@ -1,6 +1,6 @@
 # Agent Cost Analyzer
 
-**Last changed:** 2026-11-12 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-13 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 Independent project; not affiliated with or endorsed by GitHub or Microsoft.
 
@@ -25,6 +25,13 @@ Both run locally and are read-only. Nothing leaves your machine.
 - What a real session would have cost on another model.
 - Which tool calls failed and why, which commands were risky, and which
   sessions look unusual.
+- Which changes would lower your spend: the Savings report ranks them, each
+  with an estimated weekly range or "up to" figure. The standalone app covers
+  all its sources; the extension covers GitHub Copilot sessions.
+- How much of a monthly AI Credits allowance you have used (extension only).
+  Set the allowance and the status bar shows the month to date against it,
+  with a warning near the limit. The Sessions view shows the same figures
+  with the days left.
 - How prompt caching, context compaction and model switches change what a
   turn costs. Learn mode explains this with sample sessions, so it is useful
   before you have any data of your own.
@@ -58,7 +65,7 @@ Full steps, commands and settings: the
 
 ## Get started: Agent Cost Analyzer (standalone app)
 
-The app runs from this repository and needs Node.js 22 or newer.
+The app runs from this repository and needs Node.js 22.18 or newer.
 
 ```sh
 git clone https://github.com/raulkivi/agent-cost-analyzer.git
