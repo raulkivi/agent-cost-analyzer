@@ -19,6 +19,7 @@ import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import {
   seedCopilotSessionStore,
+  seedSubagentFixtureSession,
   USAGE_SESSION_ID,
   writeUsageDebugLog,
 } from "../../../server/src/test-support/copilot-session-store.ts";
@@ -178,6 +179,29 @@ function copilotSession(home: string, cwd: string, startedAt: string): void {
   writeUsageDebugLog(path.join(userDir, "workspaceStorage", "e2e-workspace", "GitHub.copilot-chat", "debug-logs"));
 }
 
+// Step 10.19 (SA16): a classic Copilot Chat session with subagent runs (the
+// server's run-and-search fixture: an "Explore" runSubagent on turn 1 and a
+// searchSubagent run at 0.00 on turn 2), in the local scratch repository so
+// the projects' figures stay as they were. Its AI Credits: 2 main requests of
+// 2 each, plus the Explore run's 1.10.
+export const SUBAGENT_SESSION_ID = "00000000-0000-4000-9000-0000000000a1";
+export const SUBAGENT_SESSION_TITLE = "Subagent runs session";
+export const SUBAGENT_SESSION_CREDITS = 5.1;
+export const SUBAGENT_RUNS_CREDITS = 1.1;
+export const SUBAGENT_RUN_MODEL = "fixture-sub-model";
+
+function copilotSubagentSession(home: string, cwd: string, startedAt: string): void {
+  const userDir = path.join(home, ".config", "Code", "User");
+  const dbPath = path.join(userDir, "globalStorage", "github.copilot-chat", "session-store.db");
+  seedSubagentFixtureSession(dbPath, path.join(userDir, "workspaceStorage", "e2e-workspace", "GitHub.copilot-chat", "debug-logs"), "run-and-search", startedAt, SUBAGENT_SESSION_ID);
+  const db = new DatabaseSync(dbPath);
+  try {
+    db.prepare("UPDATE sessions SET cwd = ?, repository = NULL, summary = ? WHERE id = ?").run(cwd, SUBAGENT_SESSION_TITLE, SUBAGENT_SESSION_ID);
+  } finally {
+    db.close();
+  }
+}
+
 export interface FixtureHome {
   home: string;
   appSettingsDir: string;
@@ -214,6 +238,7 @@ export function createFixtureHome(home: string, options: FixtureOptions = {}): F
   claudeCodeSession(home, "c0000000-0000-4000-8000-000000000003", folders.portalApi, [{ at: "2026-10-12T14:00:00.000Z", input: 4000, cacheRead: 40_000, output: 1500 }]);
   piSession(home, "p0000000-0000-4000-8000-000000000004", folders.portalApi, [{ at: "2026-10-20T08:00:00.000Z", input: 3000, output: 500, costUsd: 0.05 }]);
   copilotSession(home, folders.portalWeb, "2026-10-27T11:00:00.000Z");
+  copilotSubagentSession(home, folders.scratch, "2026-10-28T11:00:00.000Z");
 
   // Billing service.
   claudeCodeSession(home, "c0000000-0000-4000-8000-000000000005", folders.billing, [{ at: "2026-10-14T10:00:00.000Z", input: 6000, cacheRead: 10_000, output: 1000 }]);
