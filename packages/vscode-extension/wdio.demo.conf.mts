@@ -7,10 +7,12 @@
 //
 // Two launches, each on its own fixture (scripts/ui-automation/demo-fixture.mts):
 //   ready          every scene but E1: Copilot Chat enabled, debug logging on, nothing for Setup to flag.
-//   setup-problem  scenes named e1-*.demo.ts: Copilot Chat enabled, debug logging unset, so Setup flags it.
-// Both enable the Copilot Chat built in to VS Code (off in a new profile) once the workbench
-// is up: without it the analyzer says "GitHub Copilot Chat is disabled or not installed" in the
-// panel and "setup needed" in the status bar, whatever the settings hold.
+//   setup-problem  scenes named e1-*.demo.ts: debug logging unset, so Setup flags it; the scene
+//                  enables Copilot Chat itself (see `before`).
+// The ready launch enables the Copilot Chat built in to VS Code (off in a new profile) once the
+// workbench is up: without it the analyzer says "GitHub Copilot Chat is disabled or not installed"
+// in the panel and "setup needed" in the status bar, whatever the settings hold. Each launch
+// excludes the other launch's scenes, so `--spec <file>` runs a scene only in its own launch.
 //
 // TDD exception: wdio glue; the scenes assert their own end state, and what they call
 // (scripts/demo/, scripts/ui-automation/demo-fixture.mts) is unit-tested.
@@ -77,6 +79,8 @@ function launch(fixture: DemoFixture): object {
     },
     // wdio reads per-capability spec lists; its capability type doesn't declare them.
     specs: specsOf(fixture.variant),
+    // So `--spec <file>` (which replaces the spec list) still runs a scene only in its own launch.
+    exclude: specsOf(fixture.variant === "ready" ? "setup-problem" : "ready"),
   };
 }
 
@@ -103,10 +107,14 @@ export const config: WebdriverIO.Config = {
   logLevel: "warn",
   mochaOpts: { ui: "tdd", timeout: 180_000 },
   outputDir: path.join(import.meta.dirname, "test/ui/out"),
-  before: async () => {
+  before: async (capability) => {
     // A wrong Xvfb size must never record garbage.
     await assertWindowFillsFrame(() => browser.execute(readWindowBox));
-    await enableCopilotChat();
+    // The setup-problem launch (scene E1) enables Copilot Chat itself, after showing the
+    // Get Started walkthrough: enabling any extension drops this extension's walkthrough
+    // from VS Code's Welcome registry, so doing it here would leave nothing to show.
+    const options = (capability as { "wdio:vscodeOptions"?: { storagePath?: string } })["wdio:vscodeOptions"];
+    if (fixtureOf(options?.storagePath).variant === "ready") await enableCopilotChat();
   },
 };
 
