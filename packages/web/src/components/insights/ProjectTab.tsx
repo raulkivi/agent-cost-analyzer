@@ -3,6 +3,7 @@
 import { useCallback, useMemo, useState } from "react";
 import {
   buildCostReconciliation,
+  splitByModel,
   type CostBasisChoice,
   type CostVariance,
   type InsightFinding,
@@ -274,7 +275,8 @@ function Reconciliation({
   turns: readonly InsightTurnRow[];
 }) {
   const inScope = turns.filter((turn) => turn.projectId === projectId && turn.date !== undefined && turn.date >= range.since && turn.date <= range.until);
-  const rows = buildCostReconciliation(inScope.flatMap((turn) => (turn.cost ? [{ month: turn.date!.slice(0, 7), model: turn.model, cost: turn.cost }] : [])));
+  // Step 10.19: per cost line's model, so a subagent run is reconciled under its own model.
+  const rows = buildCostReconciliation(inScope.flatMap(splitByModel).flatMap((turn) => (turn.cost ? [{ month: turn.date!.slice(0, 7), model: turn.model, cost: turn.cost }] : [])));
   const models = [...new Set(rows.map((row) => row.model))].sort();
   const months = [...new Set(rows.map((row) => row.month))].sort();
   const sessions = new Set(inScope.map((turn) => turn.sessionKey));

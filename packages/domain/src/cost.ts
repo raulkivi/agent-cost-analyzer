@@ -121,6 +121,12 @@ export const sessionCostSchema = z.object({
   topTurns: z.array(turnCostSchema),
   events: z.array(z.object({ turnIndex: z.number(), event: triggeredEventSchema })),
   contextOverhead: contextOverheadSchema,
+  // Step 10.19: the subagent runs included in the totals above (classic
+  // Copilot Chat). aiCredits is null, with the reason, when any run's is
+  // unknown; absent when no run was read.
+  subagents: z
+    .object({ runs: z.number().int().nonnegative(), aiCredits: z.number().nullable(), unavailableReason: z.string().optional() })
+    .optional(),
   unavailableReasons: z.array(z.string()),
 });
 

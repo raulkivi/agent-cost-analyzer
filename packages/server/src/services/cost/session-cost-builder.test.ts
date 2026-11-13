@@ -12,6 +12,7 @@ import {
 import { buildSessionCost } from "./session-cost-builder.js";
 import type { Attribution } from "../cost-attribution/session-attributor.js";
 import type { TurnPricer } from "../pricing/turn-cost-figures.js";
+import { foldRuns, mainUsage, subagentRun } from "../../test-support/subagent-usage-fakes.js";
 
 const k = (value: number, estimated?: boolean): TokenCount => ({ known: true, value, ...(estimated ? { estimated } : {}) });
 const NO_CREDITS = "This log format records no AI Credits.";
@@ -272,5 +273,48 @@ describe("buildSessionCost", () => {
       expect(cost).not.toHaveProperty("repositoryKey");
       expect(cost.cost.priced.knownTurns).toBe(0);
     });
+  });
+
+  describe("subagent runs (step 10.19)", () => {
+    it("summarises the runs and their AI Credits from the session's subagent spend", () => {
+      const withSpend = session([turn(0)], { subagentSpend: { runs: 3, costAiCredits: k(54.65) } });
+      const cost = buildSessionCost(withSpend);
+      expect(sessionCostSchema.parse(cost)).toEqual(cost);
+      expect(cost.subagents).toEqual({ runs: 3, aiCredits: 54.65 });
+    });
+
+    it("keeps unknown AI Credits null with the reason, never 0 (constraint 6)", () => {
+      const reason = "The log of a subagent run is missing.";
+      const cost = buildSessionCost(session([turn(0)], { subagentSpend: { runs: 1, costAiCredits: unavailableTokenCount(reason) } }));
+      expect(cost.subagents).toEqual({ runs: 1, aiCredits: null, unavailableReason: reason });
+    });
+
+    it("leaves the summary out when no run was read", () => {
+      expect(buildSessionCost(session([turn(0)]))).not.toHaveProperty("subagents");
+    });
+  });
+});
+
+// Step 10.19 (classic subagents plan §4.5): byModel groups a turn's cost
+// lines, so each subagent run's model gets its own share; turns stay one
+// row each.
+describe("buildSessionCost with subagent runs", () => {
+  it("credits each run's model in byModel, counting a turn once per model it used", () => {
+    const cost = buildSessionCost(
+      session(
+        [
+          turn(0, { usage: foldRuns(mainUsage({ model: "model-a", costAiCredits: k(1.5) }), [subagentRun({ model: "model-b", costAiCredits: k(0.25) }), subagentRun({ id: "r2", model: "model-a", costAiCredits: k(0.5) })]) }),
+          turn(1, { usage: mainUsage({ model: "model-a", costAiCredits: k(1) }) }),
+        ],
+        { providerId: "vscode" },
+      ),
+    );
+    expect(cost.turnCount).toBe(2);
+    expect(cost.totals.aiCredits).toMatchObject({ value: 3.25, turns: 2 });
+    expect(cost.byModel.map((entry) => [entry.model, entry.turns, entry.aiCredits])).toEqual([
+      ["model-a", 2, 3],
+      ["model-b", 1, 0.25],
+    ]);
+    expect(sessionCostSchema.parse(cost)).toEqual(cost);
   });
 });

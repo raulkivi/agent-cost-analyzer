@@ -251,3 +251,33 @@ describe("SessionList", () => {
     });
   });
 });
+
+describe("SessionList subagent line", () => {
+  it("shows the subagent spend under the session's credits", () => {
+    render(
+      <SessionList
+        mode="analyze"
+        sessions={[makeSession({ costAiCredits: { known: true, value: 54.65 }, subagentSpend: { runs: 3, costAiCredits: { known: true, value: 54.65 } } })]}
+        selectedSessionId={null}
+        onSelect={vi.fn()}
+      />,
+    );
+    expect(screen.getByText("incl. 54.65 AI Credits from 3 subagent runs")).toBeInTheDocument();
+  });
+
+  it("shows the reason of an unknown spend and nothing for a session without runs", () => {
+    render(
+      <SessionList
+        mode="analyze"
+        sessions={[
+          makeSession({ id: "a", title: "A", subagentSpend: { runs: 1, costAiCredits: { known: false, reason: "The subagent log is missing." } } }),
+          makeSession({ id: "b", title: "B" }),
+        ]}
+        selectedSessionId={null}
+        onSelect={vi.fn()}
+      />,
+    );
+    expect(screen.getByText("AI Credits unknown: The subagent log is missing.")).toBeInTheDocument();
+    expect(screen.getAllByText(/subagent/)).toHaveLength(1);
+  });
+});

@@ -975,3 +975,90 @@ describe("SessionReplayService.compare (D4)", () => {
     ).resolves.toEqual({ status: "unknown-session" });
   });
 });
+
+// Step 10.19 (plan §4.7, D11): a classic turn's figures fold in its subagent
+// runs, but the trace is the main chain, so the measured side is ownUsage.
+describe("SessionReplayService.replay: subagent runs (step 10.19)", () => {
+  const run = (costAiCredits: TokenCount) => ({
+    id: "call_run1",
+    label: "runSubagent-Explore" as const,
+    model: SONNET,
+    roundsCount: 3,
+    uncachedInput: k(0),
+    cacheWrite: k(0),
+    cacheRead: k(900),
+    reasoning: unavailableTokenCount("n/a"),
+    output: k(50),
+    costAiCredits,
+    attribution: "child-session-ref" as const,
+  });
+
+  // Turn 1 folds two runs: 2 own AI Credits + 40 + 2.5 from the runs.
+  function withRuns(runCosts: TokenCount[]): Session {
+    const session = copilotSession(FOUR_SONNET);
+    const turn = session.turns[1]!;
+    const own = { ...turn.usage, cacheRead: k(100) };
+    const runs = runCosts.map((cost) => run(cost));
+    const total = runCosts.every((c) => c.known)
+      ? k(2 + runCosts.reduce((sum, c) => sum + (c.known ? c.value : 0), 0))
+      : unavailableTokenCount("a run is unknown");
+    turn.usage = {
+      ...turn.usage,
+      cacheRead: k(1000),
+      costAiCredits: total,
+      subagents: runs,
+      ownUsage: {
+        uncachedInput: own.uncachedInput,
+        cacheWrite: own.cacheWrite,
+        cacheRead: own.cacheRead,
+        tool: own.tool,
+        vision: own.vision,
+        reasoning: own.reasoning,
+        output: own.output,
+        costAiCredits: k(2),
+        model: SONNET,
+      },
+    };
+    return session;
+  }
+
+  const providerWith = (session: Session) =>
+    new TraceProvider("vscode", [session], [traceOf("vscode", "vscode-local", FOUR_SONNET)]);
+  const replayOf = async (session: Session) => {
+    const result = await serviceOf([providerWith(session)]).replay({ sessionId: "s-1", model: "gpt-6.1-sol" });
+    if (result.status !== "ok") throw new Error(result.status);
+    return result.value;
+  };
+
+  it("compares the main agent's own figures, not the folded ones", async () => {
+    const replay = await replayOf(withRuns([k(40), k(2.5)]));
+    expect(replay.turns[1]!.measured).toEqual({
+      cacheRead: 100,
+      cost: { known: true, value: 2, currency: "AI_CREDITS", basis: "billed" },
+    });
+    expect(replay.totals.measured).toEqual({ value: 8, knownTurns: 4, turns: 4 });
+    expect(sessionReplaySchema.safeParse(replay).success).toBe(true);
+  });
+
+  it("names the runs outside the replay and their AI Credits in the coverage", async () => {
+    const replay = await replayOf(withRuns([k(40), k(2.5)]));
+    expect(replay.coverage.subagentRuns).toEqual({ runs: 2, costAiCredits: { known: true, value: 42.5 } });
+  });
+
+  it("keeps an unknown run's AI Credits unknown in the coverage (constraint 6)", async () => {
+    const replay = await replayOf(withRuns([k(40), unavailableTokenCount("a run log is missing")]));
+    expect(replay.coverage.subagentRuns?.runs).toBe(2);
+    expect(replay.coverage.subagentRuns?.costAiCredits.known).toBe(false);
+  });
+
+  it("leaves the coverage unchanged for a session without runs", async () => {
+    const replay = await replayOf(copilotSession(FOUR_SONNET));
+    expect(replay.coverage.subagentRuns).toBeUndefined();
+  });
+
+  it("leaves the self-check unchanged by the runs", async () => {
+    const plain = await replayOf(copilotSession(FOUR_SONNET));
+    const folded = await replayOf(withRuns([k(40)]));
+    expect(folded.selfCheck).toEqual(plain.selfCheck);
+  });
+});

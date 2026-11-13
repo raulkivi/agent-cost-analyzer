@@ -513,6 +513,11 @@ export class SessionCostView {
     return this.content.getByRole("row").filter({ hasText: new RegExp(`^Turn ${turnIndex} · `) });
   }
 
+  // The opened turn's subagent runs (step 10.19): the group the "Subagent runs (n)" heading names.
+  subagentRuns(): Locator {
+    return this.content.getByRole("group", { name: /^Subagent runs \(/ });
+  }
+
   async hideTurn(): Promise<void> {
     await this.content.getByRole("button", { name: "Hide turn", exact: true }).click();
   }

@@ -32,6 +32,13 @@ describe.each([
     expect(text).toMatch(/today's prices/i);
   });
 
+  it("say that a turn's figures include its subagent runs and where the runs are listed (step 10.19)", () => {
+    expect(text).toMatch(/subagent runs/);
+    expect(text).toContain("usage.subagents");
+    expect(text).toContain("usage.ownUsage");
+    expect(text).toMatch(/replay.*main agent/is);
+  });
+
   it("give the only conversion: 1 AI Credit = $0.01, and no other exchange rate", () => {
     expect(text).toContain("1 AI Credit = $0.01");
     expect(text).toMatch(/no other exchange rate/i);

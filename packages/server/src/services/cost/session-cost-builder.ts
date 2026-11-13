@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import { costBasisTotals, type Session, type SessionCost, type TokenCount } from "@agent-cost-analyzer/domain";
+import { costBasisTotals, splitByModel, type Session, type SessionCost, type TokenCount } from "@agent-cost-analyzer/domain";
 import { attributionRowFields, buildInsightRows, type RowAttributor } from "../insights/insights-dataset-builder.js";
 import type { TurnPricer } from "../pricing/turn-cost-figures.js";
 import { excerptOf } from "../tool-audit/output-redactor.js";
@@ -80,6 +80,17 @@ function contextOverhead(session: Session): SessionCost["contextOverhead"] {
   return overhead;
 }
 
+function subagentSummary(session: Session): Pick<SessionCost, "subagents"> {
+  const spend = session.subagentSpend;
+  if (!spend) return {};
+  const { costAiCredits } = spend;
+  return {
+    subagents: costAiCredits.known
+      ? { runs: spend.runs, aiCredits: costAiCredits.value }
+      : { runs: spend.runs, aiCredits: null, unavailableReason: costAiCredits.reason },
+  };
+}
+
 export function buildSessionCost(session: Session, options: SessionCostOptions = {}, context: SessionCostContext = {}): SessionCost {
   const providerId = context.providerId ?? session.providerId ?? "";
   const { turns: rows } = buildInsightRows([{ providerId, providerLabel: "", sessions: [session] }], context.attributor, context.pricer);
@@ -102,7 +113,8 @@ export function buildSessionCost(session: Session, options: SessionCostOptions =
     .sort(byCostDescending(rankedBy))
     .slice(0, options.topTurns ?? DEFAULT_TOP_TURNS);
 
-  const byModel = [...groupBy(rows, (row) => row.model)]
+  // Step 10.19: by each cost line's model, so a subagent run's model gets its share.
+  const byModel = [...groupBy(rows.flatMap(splitByModel), (row) => row.model)]
     .map(([model, modelRows]) => ({ model, ...costFigures(modelRows) }))
     .sort(byCostDescending(rankedBy));
 
@@ -129,6 +141,7 @@ export function buildSessionCost(session: Session, options: SessionCostOptions =
     topTurns,
     events: session.turns.flatMap((turn) => (turn.triggeredEvent ? [{ turnIndex: turn.index, event: turn.triggeredEvent }] : [])),
     contextOverhead: contextOverhead(session),
+    ...subagentSummary(session),
     unavailableReasons: unavailableReasons(session),
   };
 }

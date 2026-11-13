@@ -9,6 +9,7 @@ import {
 } from "@agent-cost-analyzer/domain";
 import type { Attribution } from "../cost-attribution/session-attributor.js";
 import { analyzeSession, bash, providerSessions, turn, usage } from "../../test-support/insights-fakes.js";
+import { foldRuns, mainUsage, subagentRun } from "../../test-support/subagent-usage-fakes.js";
 import { buildInsightRows, NOT_ATTRIBUTED, type RowAttributor } from "./insights-dataset-builder.js";
 import type { CostFigure, Session, Turn } from "@agent-cost-analyzer/domain";
 import { costBasisTotals } from "@agent-cost-analyzer/domain";
@@ -258,5 +259,57 @@ describe("buildInsightRows", () => {
       const rows = buildInsightRows([providerSessions([analyzeSession("s1", "2026-10-30T10:00:00.000Z", [own, turn(1)])], "vscode")]);
       expect(rows.turns.map((row) => row.at)).toEqual(["2026-10-31T23:30:00.000Z", "2026-10-30T10:00:00.000Z"]);
     });
+  });
+});
+
+// Step 10.19 (classic subagents plan §4.5): a turn that ran subagents keeps
+// one row, with one cost line per part (main agent, then each run), each on
+// its own model and vendor, priced on its own.
+describe("cost lines of a turn with subagent runs", () => {
+  const priceByModel = {
+    price: (request: { usage: { model: string; costAiCredits: { known: boolean } } }): CostFigure =>
+      request.usage.model === "gpt-6.1-sol"
+        ? { known: true, amount: 0.2, currency: "AI_CREDITS", basis: "priced", priceVersionIds: ["sol"] }
+        : { known: true, amount: 1.4, currency: "AI_CREDITS", basis: "priced", priceVersionIds: ["sonnet"] },
+  };
+  const vendorOf = (model: string): Attribution["vendor"] =>
+    model === "gpt-6.1-sol" ? { known: true, vendorId: "openai", basis: "profile" } : model === "unknown" ? { known: false, reason: "No vendor profile lists the model." } : portal.vendor;
+  const byModelAttributor: RowAttributor = { session: () => portal, turn: (_providerId, _session, t) => ({ ...portal, vendor: vendorOf(t.usage.model) }) };
+
+  function rowsOf(turnUsage: Turn["usage"]) {
+    const session = analyzeSession("s1", "2026-10-10T09:00:00.000Z", [turn(0, [], turnUsage)], "claude-sonnet-5.5");
+    return buildInsightRows([providerSessions([session], "vscode", "VS Code")], byModelAttributor, new TurnCostFigureBuilder(priceByModel));
+  }
+
+  it("gives the row one line for the main agent and one per run, each on its model and vendor, priced on its own", () => {
+    const { turns } = rowsOf(foldRuns(mainUsage(), [subagentRun()]));
+    expect(turns).toHaveLength(1);
+    const row = insightTurnRowSchema.parse(turns[0]);
+    expect(row.model).toBe("claude-sonnet-5.5");
+    expect(row.aiCredits).toBe(1.75);
+    expect(row.lines!.map((line) => [line.model, line.vendorId, line.subagent, line.aiCredits, line.uncachedInput, line.cost?.priced.known && line.cost.priced.amount])).toEqual([
+      ["claude-sonnet-5.5", "anthropic", false, 1.5, 1000, 1.4],
+      ["gpt-6.1-sol", "openai", true, 0.25, 100, 0.2],
+    ]);
+    // The row's priced figure is the sum of its lines'.
+    expect(row.cost!.priced).toMatchObject({ known: true, amount: expect.closeTo(1.6, 10), priceVersionIds: ["sonnet", "sol"] });
+  });
+
+  it("has no lines for a turn that ran no subagent", () => {
+    expect(rowsOf(mainUsage()).turns[0]!.lines).toBeUndefined();
+  });
+
+  it("keeps an unread run as an unknown line, so the row stays unknown and its known lines never sum to it", () => {
+    const { turns } = rowsOf(foldRuns(mainUsage(), [subagentRun()], "The subagent log is missing."));
+    const row = turns[0]!;
+    expect(row.aiCredits).toBeNull();
+    expect(row.cost!.billed).toEqual({ known: false, reason: "The subagent log is missing." });
+    expect(row.lines!.map((line) => [line.model, line.aiCredits, line.vendorId])).toEqual([
+      ["claude-sonnet-5.5", 1.5, "anthropic"],
+      ["gpt-6.1-sol", 0.25, "openai"],
+      ["unknown", null, null],
+    ]);
+    expect(row.lines![2]!.vendorUnknownReason).toBe("No vendor profile lists the model.");
+    expect(row.lines![2]!.cost!.billed).toEqual({ known: false, reason: "The subagent log is missing." });
   });
 });

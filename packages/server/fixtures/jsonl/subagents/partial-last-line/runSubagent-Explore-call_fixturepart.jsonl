@@ -1,0 +1,8 @@
+{"v":1,"ts":1790000011600,"dur":0,"sid":"call_fixturepart","type":"session_start","name":"session_start","spanId":"span-call_fixturepart-1","status":"ok","attrs":{"parentSessionId":"partial-last-line","label":"runSubagent-Explore","copilotVersion":"0.0.0","vscodeVersion":"0.0.0"}}
+{"v":1,"ts":1790000011610,"dur":0,"sid":"call_fixturepart","type":"user_message","name":"user_message","spanId":"span-call_fixturepart-2","status":"ok","attrs":{"content":"Fixture subagent task"}}
+{"v":1,"ts":1790000011620,"dur":0,"sid":"call_fixturepart","type":"subagent","name":"subagent","spanId":"span-call_fixturepart-3","status":"ok","attrs":{"agentName":"Explore"}}
+{"v":1,"ts":1790000011700,"dur":0,"sid":"call_fixturepart","type":"turn_start","name":"turn_start","spanId":"span-call_fixturepart-4","status":"ok","attrs":{"turnId":"1"}}
+{"v":1,"ts":1790000011750,"dur":400,"sid":"call_fixturepart","type":"llm_request","name":"llm_request","spanId":"span-call_fixturepart-5","status":"ok","attrs":{"inputTokens":800,"outputTokens":100,"cachedTokens":300,"copilotUsageNanoAiu":500000000,"model":"fixture-sub-model","responseId":"resp-call_fixturepart","debugName":"tool/runSubagent-Explore","requestPayload":"fixture payload"}}
+{"v":1,"ts":1790000012200,"dur":0,"sid":"call_fixturepart","type":"tool_call","name":"read_file","spanId":"span-call_fixturepart-6","status":"ok","attrs":{"args":{},"result":"Fixture tool result"}}
+{"v":1,"ts":1790000012500,"dur":0,"sid":"call_fixturepart","type":"turn_end","name":"turn_end","spanId":"span-call_fixturepart-7","status":"ok","attrs":{"turnId":"1"}}
+{"v":1,"ts":1790000009999,"type":"llm_req

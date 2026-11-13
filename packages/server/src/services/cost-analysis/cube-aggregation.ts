@@ -4,6 +4,8 @@ import {
   AI_CREDIT_CONVERSION_NOTE,
   costFigureFor,
   costInCurrency,
+  splitByModel,
+  splitByVendor,
   sumCostFigures,
   type BasisCoverage,
   type CostBasisChoice,
@@ -48,6 +50,12 @@ export function sessionCount(rows: readonly CostCubeRow[]): number {
   return new Set(rows.map((row) => row.sessionKey)).size;
 }
 
+// Step 10.19: distinct turns, so a turn split into several models' parts
+// (splitByModel) still counts once.
+export function turnCount(rows: readonly CostCubeRow[]): number {
+  return new Set(rows.map((row) => row.turnKey)).size;
+}
+
 // Keep the rows dated inside [since, until] (inclusive ISO dates).
 export function inDateRange(rows: readonly CostCubeRow[], since?: string, until?: string): CostCubeRow[] {
   return rows.filter((row) => (since === undefined || row.date >= since) && (until === undefined || row.date <= until));
@@ -60,8 +68,11 @@ export interface GroupKey {
 
 // What a grouping reads from a row, how it labels a key, and what it calls
 // the unknown bucket. Repository keys are always redacted (§10.1.5): local
-// keys become the folder's name, in HTTP and MCP alike.
+// keys become the folder's name, in HTTP and MCP alike. Step 10.19: `rowsOf`
+// splits a turn into the parts the grouping keys (one per model or vendor
+// its cost lines used), so each subagent run's model gets its share.
 export interface Grouping {
+  rowsOf(row: CostCubeRow): CostCubeRow[];
   keyOf(row: CostCubeRow): GroupKey;
   matches(row: CostCubeRow, id: string): boolean;
   outputKey(key: string): string;
@@ -69,10 +80,14 @@ export interface Grouping {
   unknownLabel: string;
 }
 
+// A turn as its one part, for groupings no cost line changes.
+export const wholeRow = (row: CostCubeRow): CostCubeRow[] => [row];
+
 export function groupingFor(groupBy: CostSeriesGroupBy, cube: Pick<CostCube, "projectName" | "vendorLabel">): Grouping {
   switch (groupBy) {
     case "repository":
       return {
+        rowsOf: wholeRow,
         keyOf: (row) => ({ key: row.repositoryKey, ...(row.unattributedReason ? { reason: row.unattributedReason } : {}) }),
         matches: (row, id) => row.repositoryKey !== null && keyMatches(row.repositoryKey, id),
         outputKey: redactRepositoryKey,
@@ -81,6 +96,7 @@ export function groupingFor(groupBy: CostSeriesGroupBy, cube: Pick<CostCube, "pr
       };
     case "project":
       return {
+        rowsOf: wholeRow,
         keyOf: (row) => ({ key: row.projectId }),
         matches: (row, id) => row.projectId === id,
         outputKey: (key) => key,
@@ -89,6 +105,7 @@ export function groupingFor(groupBy: CostSeriesGroupBy, cube: Pick<CostCube, "pr
       };
     case "vendor":
       return {
+        rowsOf: splitByVendor,
         keyOf: (row) => ({ key: row.vendorId, ...(row.vendorUnknownReason ? { reason: row.vendorUnknownReason } : {}) }),
         matches: (row, id) => row.vendorId === id,
         outputKey: (key) => key,
@@ -97,6 +114,7 @@ export function groupingFor(groupBy: CostSeriesGroupBy, cube: Pick<CostCube, "pr
       };
     default:
       return {
+        rowsOf: splitByModel,
         keyOf: (row) => ({ key: row.model }),
         matches: (row, id) => row.model === id,
         outputKey: (key) => key,
@@ -118,7 +136,7 @@ export interface RowGroup {
 // local repositories with one folder name stay two groups.
 export function groupRows(rows: readonly CostCubeRow[], grouping: Grouping, view: Pick<CostView, "basis" | "currency">): RowGroup[] {
   const groups = new Map<string | null, { reason?: string; rows: CostCubeRow[] }>();
-  for (const row of rows) {
+  for (const row of rows.flatMap((turn) => grouping.rowsOf(turn))) {
     const { key, reason } = grouping.keyOf(row);
     const group = groups.get(key) ?? { ...(reason ? { reason } : {}), rows: [] };
     group.rows.push(row);
@@ -142,8 +160,9 @@ export function groupRows(rows: readonly CostCubeRow[], grouping: Grouping, view
 
 // The rows each asked-for id matches, in the order asked.
 export function groupsForIds(rows: readonly CostCubeRow[], ids: readonly string[], grouping: Grouping): RowGroup[] {
+  const parts = rows.flatMap((turn) => grouping.rowsOf(turn));
   return ids.map((id) => {
-    const matching = rows.filter((row) => grouping.matches(row, id));
+    const matching = parts.filter((row) => grouping.matches(row, id));
     const key = grouping.outputKey(id);
     return { key, label: grouping.label(id), rows: matching };
   });
@@ -155,7 +174,7 @@ export function breakdownRow(group: RowGroup, view: Pick<CostView, "basis" | "cu
     label: group.label,
     ...(group.reason ? { reason: group.reason } : {}),
     sessions: sessionCount(group.rows),
-    turns: group.rows.length,
+    turns: turnCount(group.rows),
     cost: viewTotal(group.rows, view),
     coverage: coverageOf(group.rows),
   };

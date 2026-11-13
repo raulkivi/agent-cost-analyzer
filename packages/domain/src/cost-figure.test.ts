@@ -240,3 +240,52 @@ describe("priced figure byTokenType", () => {
     expect(() => costFigureSchema.parse({ known: true, amount: 3, currency: "USD", basis: "reported", byTokenType: { uncachedInput: 3, cacheRead: 0, cacheWrite: 0, output: 0 } })).toThrow();
   });
 });
+
+// Step 10.19 (classic subagents plan §4.5): a turn's cost is the sum of its
+// cost lines, one per model; unknown when any line is, never a partial sum.
+describe("addCostFigures and addTurnCostFigures", () => {
+  it("adds known parts, keeping every price version, note and cost per token type", async () => {
+    const { addCostFigures } = await import("./cost-figure.js");
+    const a = priced(1, "AI_CREDITS", { priceVersionIds: ["v1"], notes: ["n1"], byTokenType: { uncachedInput: 0.5, cacheRead: 0.25, cacheWrite: 0, output: 0.25 } });
+    const b = priced(2, "AI_CREDITS", { priceVersionIds: ["v2", "v1"], estimated: true, notes: ["n1", "n2"], byTokenType: { uncachedInput: 1, cacheRead: 0, cacheWrite: 0.5, output: 0.5 } });
+    expect(addCostFigures([a, b])).toEqual({
+      known: true,
+      amount: 3,
+      currency: "AI_CREDITS",
+      basis: "priced",
+      priceVersionIds: ["v1", "v2"],
+      estimated: true,
+      notes: ["n1", "n2"],
+      byTokenType: { uncachedInput: 1.5, cacheRead: 0.25, cacheWrite: 0.5, output: 0.75 },
+    });
+  });
+
+  it("is unknown with the first unknown part's reason when any part is unknown", async () => {
+    const { addCostFigures } = await import("./cost-figure.js");
+    expect(addCostFigures([billed(1), unknown("run not read"), unknown("other")])).toEqual(unknown("run not read"));
+  });
+
+  it("never adds parts in different currencies", async () => {
+    const { addCostFigures } = await import("./cost-figure.js");
+    const sum = addCostFigures([priced(1, "AI_CREDITS"), priced(1, "USD")]);
+    expect(sum.known).toBe(false);
+  });
+
+  it("keeps a single part as it is, and is unknown with nothing to add", async () => {
+    const { addCostFigures } = await import("./cost-figure.js");
+    expect(addCostFigures([billed(1.5)])).toEqual(billed(1.5));
+    expect(addCostFigures([]).known).toBe(false);
+  });
+
+  it("adds a cost per token type only when every part has one", async () => {
+    const { addCostFigures } = await import("./cost-figure.js");
+    const sum = addCostFigures([priced(1, "USD", { byTokenType: { uncachedInput: 1, cacheRead: 0, cacheWrite: 0, output: 0 } }), priced(1)]);
+    expect(sum.known && sum.byTokenType).toBeUndefined();
+  });
+
+  it("adds each basis of turn cost figures on its own", async () => {
+    const { addTurnCostFigures } = await import("./cost-figure.js");
+    const sum = addTurnCostFigures([figures({ billed: billed(1), priced: priced(1, "AI_CREDITS") }), figures({ billed: billed(2), priced: unknown("no price for the run") })]);
+    expect(sum).toEqual({ billed: billed(3), reported: unknown("no reported figure"), priced: unknown("no price for the run") });
+  });
+});

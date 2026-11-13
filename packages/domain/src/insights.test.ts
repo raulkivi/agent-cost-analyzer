@@ -2,6 +2,11 @@
 // SPDX-License-Identifier: MIT
 import { describe, expect, it } from "vitest";
 import {
+  costLineSchema,
+  costLinesOf,
+  mergeCostLines,
+  splitByModel,
+  splitByVendor,
   findingsQueryResultSchema,
   insightFindingSchema,
   insightSessionRowSchema,
@@ -223,5 +228,148 @@ describe("findingsQueryResultSchema", () => {
       findings: findings.map((finding) => ({ ...finding, providerId: "claude-code", sessionId: "s1", sessionTitle: "Fix tests" })),
     };
     expect(findingsQueryResultSchema.parse(result)).toEqual(result);
+  });
+});
+
+const billed = (amount: number) => ({ known: true, amount, currency: "AI_CREDITS", basis: "billed" });
+const unknownFigure = { known: false, reason: "no price" };
+const figures = (amount: number) => ({ billed: billed(amount), reported: unknownFigure, priced: unknownFigure });
+
+const mainLine = {
+  model: "gpt-5",
+  uncachedInput: 100,
+  cacheWrite: null,
+  cacheRead: 50,
+  reasoning: null,
+  output: 20,
+  aiCredits: 2,
+  cost: figures(2),
+  subagent: false,
+};
+const runLine = {
+  model: "claude-haiku-4.5",
+  uncachedInput: 500,
+  cacheWrite: null,
+  cacheRead: 600,
+  reasoning: null,
+  output: 200,
+  aiCredits: 1.1,
+  cost: figures(1.1),
+  subagent: true,
+};
+
+describe("cost lines of a turn row (step 10.19)", () => {
+  const baseRow = sampleDataset().turns[0]!;
+
+  it("accepts a turn row with one line per model, and a row without lines", () => {
+    const withLines = { ...baseRow, lines: [mainLine, runLine] };
+    expect(insightTurnRowSchema.parse(withLines)).toEqual(withLines);
+    expect(insightTurnRowSchema.parse(baseRow).lines).toBeUndefined();
+  });
+
+  it("keeps a line's unknown figures as null with an unknown cost figure, never 0", () => {
+    const line = costLineSchema.parse(runLine);
+    expect(line.cacheWrite).toBeNull();
+    expect(line.cost?.priced).toEqual(unknownFigure);
+  });
+
+  it("rejects a line without a model or a subagent flag", () => {
+    const noModel: Record<string, unknown> = { ...runLine };
+    delete noModel.model;
+    const noFlag: Record<string, unknown> = { ...runLine };
+    delete noFlag.subagent;
+    expect(costLineSchema.safeParse(noModel).success).toBe(false);
+    expect(costLineSchema.safeParse(noFlag).success).toBe(false);
+  });
+
+  it("costLinesOf returns the row's lines when it has them", () => {
+    const row = insightTurnRowSchema.parse({ ...baseRow, lines: [mainLine, runLine] });
+    expect(costLinesOf(row)).toEqual([mainLine, runLine]);
+  });
+
+  it("costLinesOf returns the row itself as one main-agent line when it has none", () => {
+    const row = insightTurnRowSchema.parse({ ...baseRow, cost: figures(0.5) });
+    expect(costLinesOf(row)).toEqual([
+      {
+        model: "claude-sonnet",
+        uncachedInput: 100,
+        cacheWrite: 50,
+        cacheRead: 1000,
+        reasoning: null,
+        output: 20,
+        aiCredits: 0.5,
+        cost: figures(0.5),
+        subagent: false,
+      },
+    ]);
+  });
+});
+
+describe("cost lines per model (step 10.19, plan §4.5)", () => {
+  const baseRow = sampleDataset().turns[0]!;
+  const main = costLineSchema.parse(mainLine);
+  const sameModelRun = costLineSchema.parse({ ...runLine, model: "gpt-5", uncachedInput: 10, cacheRead: 5, output: 1, aiCredits: 0.5, cost: figures(0.5) });
+
+  it("mergeCostLines adds every figure, null when any line's is null", () => {
+    expect(mergeCostLines([main, sameModelRun])).toEqual({
+      model: "gpt-5",
+      uncachedInput: 110,
+      cacheWrite: null,
+      cacheRead: 55,
+      reasoning: null,
+      output: 21,
+      aiCredits: 2.5,
+      cost: { billed: billed(2.5), reported: unknownFigure, priced: unknownFigure },
+      subagent: false,
+    });
+  });
+
+  it("mergeCostLines keeps the first line's vendor", () => {
+    const merged = mergeCostLines([{ ...main, vendorId: "openai" }, { ...sameModelRun, vendorId: "openai" }]);
+    expect(merged.vendorId).toBe("openai");
+  });
+
+  it("splitByModel gives one copy of the row per model, its lines of that model merged, in first-use order", () => {
+    const row = insightTurnRowSchema.parse({ ...baseRow, aiCredits: 3.6, lines: [mainLine, runLine, sameModelRun] });
+    const parts = splitByModel(row);
+    expect(parts.map((part) => [part.key, part.model, part.aiCredits, part.uncachedInput, part.cost?.billed])).toEqual([
+      [row.key, "gpt-5", 2.5, 110, billed(2.5)],
+      [row.key, "claude-haiku-4.5", 1.1, 500, billed(1.1)],
+    ]);
+    // Each part keeps its own lines, so it can be split again.
+    expect(parts[0]!.lines).toEqual([
+      { ...mainLine, vendorId: "anthropic" },
+      { ...sameModelRun, vendorId: "anthropic" },
+    ]);
+  });
+
+  it("splitByModel never gives a part the whole turn's cost when its lines carry none", () => {
+    const withoutCost = (line: typeof mainLine) => ({ ...line, cost: undefined });
+    const row = insightTurnRowSchema.parse({ ...baseRow, cost: figures(3), lines: [withoutCost(mainLine), withoutCost(runLine)] });
+    for (const part of splitByModel(row)) expect(part.cost?.billed.known).toBe(false);
+  });
+
+  it("splitByModel gives the row itself when it has no lines", () => {
+    const row = insightTurnRowSchema.parse(baseRow);
+    expect(splitByModel(row)).toEqual([row]);
+  });
+
+  it("splitByVendor credits each line's vendor, a line without one the row's", () => {
+    const row = insightTurnRowSchema.parse({
+      ...baseRow,
+      lines: [mainLine, { ...runLine, vendorId: "openai" }, { ...runLine, model: "x", vendorId: null, vendorUnknownReason: "No vendor profile lists the model." }],
+    });
+    const parts = splitByVendor(row);
+    expect(parts.map((part) => [part.vendorId, part.vendorUnknownReason, part.model, part.aiCredits])).toEqual([
+      ["anthropic", undefined, "gpt-5", 2],
+      ["openai", undefined, "claude-haiku-4.5", 1.1],
+      [null, "No vendor profile lists the model.", "x", 1.1],
+    ]);
+    for (const part of parts) expect(insightTurnRowSchema.safeParse(part).success).toBe(true);
+  });
+
+  it("accepts a line's vendor, or an unknown vendor with its reason", () => {
+    expect(costLineSchema.parse({ ...runLine, vendorId: "anthropic" }).vendorId).toBe("anthropic");
+    expect(costLineSchema.parse({ ...runLine, vendorId: null, vendorUnknownReason: "unknown model" }).vendorId).toBeNull();
   });
 });

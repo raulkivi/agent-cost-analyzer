@@ -3,7 +3,7 @@
 import { describe, expect, it } from "vitest";
 import fc from "fast-check";
 import { costVarianceSchema, type CostFigure, type PriceBookEntry } from "@agent-cost-analyzer/domain";
-import { billed, costs, cubeOf, cubeRow, unknownFigure } from "../../test-support/cost-cube-fakes.js";
+import { billed, costLine, costs, cubeOf, cubeRow, unknownFigure } from "../../test-support/cost-cube-fakes.js";
 import type { CostCubeRow } from "./cost-cube.js";
 import { buildCostVariance, type CostVarianceQuery } from "./variance-analyzer.js";
 
@@ -181,5 +181,28 @@ describe("buildCostVariance", () => {
       }),
       { numRuns: 300 },
     );
+  });
+});
+
+// Step 10.19 (classic subagents plan §4.5): a turn that ran subagents is
+// explained per cost line, each on its own model.
+describe("buildCostVariance with subagent runs", () => {
+  it("explains each line on its own model and counts the turn once", () => {
+    const own = outputTurn("2026-10-10", "sonnet", 1_000_000, 10);
+    const run = outputTurn("2026-10-10", "haiku", 1_000_000, 2);
+    const turn = outputTurn("2026-10-10", "sonnet", 2_000_000, 6, {
+      cost: costs({ priced: { known: true, amount: 12, currency: "USD", basis: "priced", priceVersionIds: ["sonnet:10", "haiku:2"], byTokenType: { uncachedInput: 0, cacheRead: 0, cacheWrite: 0, output: 12 } } }),
+      lines: [
+        costLine("sonnet", "anthropic", own.cost, { uncachedInput: 0, cacheRead: 0, cacheWrite: 0, output: 1_000_000, subagent: false }),
+        costLine("haiku", "anthropic", run.cost, { uncachedInput: 0, cacheRead: 0, cacheWrite: 0, output: 1_000_000 }),
+      ],
+    });
+    const cube = cubeOf([outputTurn("2026-08-10", "sonnet", 1_000_000, 10), turn]);
+    const [usd] = costVarianceSchema.parse(buildCostVariance(cube, query, [])).currencies;
+    expect(usd).toMatchObject({ costA: 10, costB: 12, turnsA: 1, turnsB: 1 });
+    expect(usd!.models.map((model) => [model.model, model.costA, model.costB, model.byTokenType[0]!.unitPriceB])).toEqual([
+      ["haiku", 0, 2, 2],
+      ["sonnet", 10, 10, 10],
+    ]);
   });
 });

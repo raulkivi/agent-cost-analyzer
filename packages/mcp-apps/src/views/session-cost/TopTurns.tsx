@@ -4,7 +4,7 @@ import { useId, useRef, useState } from "react";
 import type { AppHostPort } from "../../host/app-host-port.js";
 import { Tag } from "@agent-cost-analyzer/web/ui/Tag";
 import { toTurnDetailViewModel } from "../../view-models/index.js";
-import type { MeasureView, TopTurnRow, TurnDetailViewModel } from "../../view-models/index.js";
+import type { MeasureView, SubagentSectionViewModel, TopTurnRow, TurnDetailViewModel } from "../../view-models/index.js";
 import { callParsed, parseTurnView, useResource } from "./tool-data.js";
 
 // Top turns by the server's ranking (AI Credits or input tokens). A row opens its turn inline: get_turn through the
@@ -20,6 +20,60 @@ function Chevron({ open }: { open: boolean }) {
     <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className={open ? "view-chevron view-chevron--open" : "view-chevron"}>
       <path d="M9 6l6 6-6 6" />
     </svg>
+  );
+}
+
+// The fork glyph is decoration: the words beside it carry the meaning.
+function ForkMark({ known }: { known: boolean }) {
+  return (
+    <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" strokeDasharray={known ? undefined : "3 2.4"} className="view-sa-mark">
+      <circle cx="6" cy="5" r="2.2" />
+      <circle cx="18" cy="5" r="2.2" />
+      <circle cx="12" cy="19" r="2.2" />
+      <path d="M6 7.2v2.3c0 1.4 1.1 2.5 2.5 2.5h7c1.4 0 2.5-1.1 2.5-2.5V7.2M12 12v4.8" />
+    </svg>
+  );
+}
+
+function SubagentRuns({ section, aiCredits }: { section: SubagentSectionViewModel; aiCredits: MeasureView }) {
+  const headingId = useId();
+  return (
+    <div className="view-sa" role="group" aria-labelledby={headingId}>
+      <div className="view-turn-credits">
+        <span className="view-label">AI Credits</span> <Figure value={aiCredits} />
+        <span className={section.note.known ? "view-sa-note" : "view-sa-note view-unknown"}>
+          <ForkMark known={section.note.known} />
+          {section.note.text}
+        </span>
+      </div>
+      <span id={headingId} className="view-label">
+        {section.heading}
+      </span>
+      <ul className="view-sa-runs">
+        {section.runs.map((run) => (
+          <li key={run.id} className={run.aiCredits.known ? "view-sa-run" : "view-sa-run view-sa-run--unknown"}>
+            <span className="view-sa-name">
+              {run.name}
+              {run.matchedByTime && <Tag variant="outline">matched by time</Tag>}
+            </span>
+            <span className={run.model === "model unknown" ? "view-unknown" : "text-muted"}>{run.model}</span>
+            <span className="text-muted">{run.requests}</span>
+            <span>
+              <Figure value={run.aiCredits} /> {run.aiCredits.known && <span className="text-muted">AI Credits</span>}
+            </span>
+            {run.reason !== undefined && <span className="view-sa-why">{run.reason}</span>}
+          </li>
+        ))}
+      </ul>
+      <div className="view-sa-totals text-muted">
+        <span>
+          Main agent <b>{section.mainAgent.text}</b>
+        </span>
+        <span>
+          Subagent runs <b className={section.subagents.known ? undefined : "view-unknown"}>{section.subagents.text}</b>
+        </span>
+      </div>
+    </div>
   );
 }
 
@@ -62,6 +116,7 @@ function TurnDetail({ detail, onHide }: { detail: TurnDetailViewModel; onHide: (
           </dl>
         </div>
       </div>
+      {detail.subagents !== undefined && <SubagentRuns section={detail.subagents} aiCredits={detail.aiCredits} />}
       <div className="view-turn-tools">
         <span className="view-label">Tool calls</span> <span className={detail.toolCalls.count === "Unknown" ? "view-unknown" : undefined}>{detail.toolCalls.count}</span>
         {detail.toolCalls.summary && <span className="text-muted"> · {detail.toolCalls.summary}</span>}

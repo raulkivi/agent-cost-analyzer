@@ -8,6 +8,9 @@ import { costOf } from "../cost/cost-aggregation.js";
 // row per dated turn of the Insights dataset (step 15.4's attribution, step
 // 15.6's cost figures), joined to its session's provider, title and start.
 // The time series, compare and project builders are pure functions over it.
+// Step 10.19: a turn that ran subagents stays one row and keeps its cost
+// lines (classic subagents plan §4.5); only model- and vendor-keyed code
+// splits it (splitByModel, splitByVendor).
 
 export type CostCubeRow = Pick<
   InsightTurnRow,
@@ -26,6 +29,7 @@ export type CostCubeRow = Pick<
   | "output"
   | "aiCredits"
   | "estimated"
+  | "lines"
 > & {
   turnKey: string;
   sessionKey: string;
@@ -89,6 +93,7 @@ export function buildCostCube(dataset: InsightsDataset): CostCube {
       aiCredits: turn.aiCredits,
       estimated: turn.estimated,
       cost: costOf(turn),
+      ...(turn.lines !== undefined ? { lines: turn.lines } : {}),
     });
   }
   return {

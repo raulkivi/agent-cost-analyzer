@@ -3,6 +3,7 @@
 import { z } from "zod";
 import { costBasisSchema, currencySchema } from "./cost-figure.js";
 import { cacheOutcomeSchema } from "./simulation.js";
+import { tokenCountSchema } from "./token-count.js";
 import { confidenceSchema, harnessSchema } from "./vendor-profile.js";
 
 // Phase 14 step 14.1 (docs/plans/analyze-session-replay.md §3, §8): a real
@@ -76,6 +77,9 @@ export const replayCoverageSchema = z
     requests: count,
     replayedRequests: count,
     notReplayed: z.array(z.object({ reason: z.string().min(1), turns: count }).strict()),
+    // Step 10.19 (D11): subagent runs sit outside the replay (it covers the main
+    // agent); absent when no run was read. Unknown AI Credits keep their reason.
+    subagentRuns: z.object({ runs: count, costAiCredits: tokenCountSchema }).strict().optional(),
   })
   .strict()
   .refine((coverage) => coverage.replayedTurns <= coverage.turns, { message: "replayedTurns cannot exceed turns", path: ["replayedTurns"] })

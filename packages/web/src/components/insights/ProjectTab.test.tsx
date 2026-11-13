@@ -123,6 +123,31 @@ describe("ProjectTab (plan §11.4, board 3)", () => {
     expect(within(table).getAllByRole("row").map((row) => row.textContent)).toEqual(["ModelSep 2026Oct 2026", "gpt-5.5+10.00+24.00"]);
   });
 
+  // Step 10.19 (classic subagents plan §4.5): billed minus priced per cost line's model.
+  it("reconciles a turn's subagent runs under their own model", async () => {
+    const own = copilotTurn("2026-10-10", 110, 100);
+    const run = copilotTurn("2026-10-10", 24, 20);
+    const line = (turn: InsightTurnRow, model: string, subagent: boolean) => ({
+      model,
+      uncachedInput: turn.uncachedInput,
+      cacheWrite: turn.cacheWrite,
+      cacheRead: turn.cacheRead,
+      reasoning: turn.reasoning,
+      output: turn.output,
+      aiCredits: turn.aiCredits,
+      cost: turn.cost!,
+      subagent,
+    });
+    const withRun: InsightTurnRow = {
+      ...copilotTurn("2026-10-10", 134, 120),
+      lines: [line(own, "gpt-5.5", false), line(run, "claude-haiku-5", true)],
+    };
+    renderTab({ turns: [withRun] });
+    const section = await screen.findByRole("region", { name: "Reconciliation" });
+    const table = within(section).getByRole("table", { name: /Billed minus priced/ });
+    expect(within(table).getAllByRole("row").map((row) => row.textContent)).toEqual(["ModelOct 2026", "claude-haiku-5+4.00", "gpt-5.5+10.00"]);
+  });
+
   it("says when there is nothing to reconcile", async () => {
     renderTab({ findings: [], turns: [] });
     const section = await screen.findByRole("region", { name: "Reconciliation" });

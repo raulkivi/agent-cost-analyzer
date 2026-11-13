@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 import type { SessionReplay, Turn } from "@agent-cost-analyzer/domain";
 import { ALL_TURN_COLUMN_LABELS, columnsApplyingTo, isReplayColumn, type TurnColumnId } from "../lib/turn-columns.js";
+import { subagentSummary } from "../lib/subagent-runs.js";
 import { TurnColumnValue } from "./TurnsTable.js";
 
 interface TurnMetricsProps {
@@ -20,7 +21,9 @@ export function TurnMetrics({ turns, turnIndex, columns, replay }: TurnMetricsPr
   const turn = turns[turnIndex];
   if (!turn) return null;
   const replayTurn = replay?.turns.find((candidate) => candidate.turnIndex === turn.index);
+  const subagents = subagentSummary(turn);
   return (
+    <>
     <dl className="turn-metrics">
       {columnsApplyingTo(columns, turn.simulation !== undefined, replay !== undefined).map((id) => (
         <div key={id} className={isReplayColumn(id) ? "sim-cell" : undefined}>
@@ -31,5 +34,8 @@ export function TurnMetrics({ turns, turnIndex, columns, replay }: TurnMetricsPr
         </div>
       ))}
     </dl>
+    {/* No hover here: the marker's tooltip text is a visible line. */}
+    {subagents && <p className="turn-metrics-subagents text-muted">{subagents.text}</p>}
+    </>
   );
 }

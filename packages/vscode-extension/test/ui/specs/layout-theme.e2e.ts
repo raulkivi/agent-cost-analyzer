@@ -10,7 +10,9 @@ import { layoutFor } from "../../../../web/src/lib/layout.js";
 import { AnalyzerPanel, type PanelView } from "../support/analyzer-panel.js";
 import { hasVisibleFocusIndicator } from "../support/focus-probe.js";
 import { isWithinTolerance, nextGroupFraction } from "../support/panel-width.js";
+import { judgeNonTextContrast, type NonTextSample } from "../support/non-text-contrast.js";
 import { saveScreenshot } from "../support/screenshots.js";
+import { DANGLING_SESSION, SUBAGENT_SESSION } from "../../../scripts/ui-automation/ui-fixture.mts";
 import { parseUiFixture, UI_FIXTURE_ENV } from "../support/ui-fixture-env.mts";
 import { wdioVscodeHost as host } from "../support/vscode-host.js";
 
@@ -83,6 +85,74 @@ const CHART_VIEWS: ChartView[] = [
     },
   },
 ];
+
+// Step 10.19 (SA15): what the subagent marker and the Explanation block draw
+// that is not text: each marker's glyph (its computed stroke) and an unread
+// run's dashed border, with the grounds they sit on.
+async function subagentNonTextSamples(): Promise<NonTextSample[]> {
+  return browser.execute(() => {
+    const samples: { label: string; paint: string; backgrounds: string[] }[] = [];
+    const groundsOf = (element: Element) => {
+      const grounds: string[] = [];
+      for (let ancestor = element.parentElement; ancestor; ancestor = ancestor.parentElement) grounds.push(getComputedStyle(ancestor).backgroundColor);
+      return grounds;
+    };
+    for (const marker of Array.from(document.querySelectorAll(".subagent-marker svg"))) {
+      const unknown = marker.closest(".subagent-marker--unknown") !== null;
+      samples.push({ label: unknown ? "unknown marker glyph" : "marker glyph", paint: getComputedStyle(marker).stroke, backgrounds: groundsOf(marker) });
+    }
+    for (const run of Array.from(document.querySelectorAll(".subagent-run--unknown"))) {
+      samples.push({ label: "unknown run border", paint: getComputedStyle(run).borderTopColor, backgrounds: groundsOf(run) });
+    }
+    return samples;
+  });
+}
+
+async function openSubagentTurn(sessionId: string): Promise<void> {
+  await panel.reset();
+  await panel.openSession(sessionId);
+  await panel.inside(async (view) => {
+    await view.waitForTurnRows(1);
+    await view.selectTurn(0);
+    await view.showTab("Explanation");
+    await browser.waitUntil(async () => (await view.subagentBlock()) !== null, { timeout: 30_000, timeoutMsg: "the Explanation panel shows no subagent block" });
+  });
+}
+
+suite("Subagent marker and block in every theme (step 10.19)", () => {
+  suiteSetup(async () => {
+    await host.waitForExtension();
+  });
+
+  suiteTeardown(async () => {
+    await host.setSetting(THEME_SETTING, undefined);
+  });
+
+  for (const [theme, bodyClass] of CHART_THEMES) {
+    for (const [sessionId, what] of [
+      [SUBAGENT_SESSION.id, "known"],
+      [DANGLING_SESSION.id, "unknown"],
+    ] as const) {
+      test(`${theme}: the ${what} marker and block reach 3:1 (glyph, border) and AA (text)`, async () => {
+        await openSubagentTurn(sessionId);
+        await useTheme(theme, bodyClass);
+        await panel.focusIntoPanel();
+
+        const { samples, textFindings } = await panel.inside(async (view) => {
+          await view.selectTurn(0);
+          const probed = await probe(view);
+          expect(probed.texts.length).toBeGreaterThan(10);
+          return { samples: await subagentNonTextSamples(), textFindings: judgeProbe(probed) };
+        });
+
+        await saveScreenshot(`10.19-${what}-${bodyClass}`);
+        expect(samples.length).toBeGreaterThan(0);
+        expect(judgeNonTextContrast(samples)).toEqual([]);
+        expect(textFindings).toEqual([]);
+      });
+    }
+  }
+});
 
 suite("Themes and font (checks 1.8, 1.10)", () => {
   suiteSetup(async () => {
@@ -251,6 +321,34 @@ suite("Narrow panel (check 1.9)", () => {
       await saveScreenshot(`1.9-${target}`);
     });
   }
+
+  // Step 10.19: at 320 px the marker stays in the row, the page does not
+  // scroll sideways, and the narrow layout says what the marker means as a
+  // visible line (board answer 6), not only in a tooltip.
+  test("10.19 at 320 px the subagent marker fits and the turn's drawer says what it means", async () => {
+    await panel.reset();
+    await panel.openSession(SUBAGENT_SESSION.id);
+    const width = await resizeSoPanelIs(320);
+    console.log(`10.19 panel is ${width} px wide`);
+
+    await panel.inside(async (view) => {
+      await view.waitForTurnRows(1);
+      await view.dismissConfigBanner();
+      await view.requestFrame();
+      const { scrollWidth, clientWidth } = await view.horizontalOverflow();
+      if (scrollWidth > clientWidth) console.log(`10.19 overflow ${JSON.stringify((await probe(view)).overflowing)}`);
+      expect(scrollWidth).toBeLessThanOrEqual(clientWidth);
+      // The markers draw once the session's usage has loaded, after its rows.
+      await browser.waitUntil(async () => (await view.subagentMarkers()).length === 2, { timeout: 30_000, timeoutMsg: "the turns table shows no subagent markers" });
+      expect(await view.markerWithinRow(0)).toBe(true);
+
+      await view.openTurnDetails(0);
+      await browser.waitUntil(async () => (await view.drawerSubagentLine()) !== null, { timeout: 30_000, timeoutMsg: "the narrow layout's drawer shows no subagent line" });
+      expect(await view.drawerSubagentLine()).toBe("incl. 1.10 AI Credits from 1 subagent run");
+      expect(judgeNonTextContrast(await subagentNonTextSamples())).toEqual([]);
+    });
+    await saveScreenshot("10.19-320");
+  });
 
   // Found by this automation: with Copilot Chat missing (the baseline here)
   // the config warning banner was wider than a 360 px panel. A fresh panel

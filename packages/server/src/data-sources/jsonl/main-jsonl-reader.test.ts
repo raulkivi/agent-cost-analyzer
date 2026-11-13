@@ -158,3 +158,58 @@ describe("classifyEnvelopesAvailability", () => {
     expect(classifyEnvelopesAvailability([], 1)).toBe("parse-failures");
   });
 });
+
+describe("parseEnvelopeLine: subagent link keys (step 10.19)", () => {
+  it("keeps a child_session_ref's ids and label and the envelope's parentSpanId", () => {
+    const envelope = parseEnvelopeLine(
+      JSON.stringify({
+        type: "child_session_ref",
+        spanId: "span-ref",
+        parentSpanId: "span-tool",
+        attrs: { childSessionId: "call_x", childLogFile: "runSubagent-Explore-call_x.jsonl", label: "runSubagent-Explore" },
+      }),
+    );
+
+    expect(envelope?.parentSpanId).toBe("span-tool");
+    expect(envelope?.attrs).toEqual({
+      childSessionId: "call_x",
+      childLogFile: "runSubagent-Explore-call_x.jsonl",
+      label: "runSubagent-Explore",
+    });
+  });
+
+  it("keeps a subagent file's parentSessionId and agentName", () => {
+    const start = parseEnvelopeLine(
+      JSON.stringify({ type: "session_start", attrs: { parentSessionId: "parent-1", label: "searchSubagent", copilotVersion: "0.0.0" } }),
+    );
+    const named = parseEnvelopeLine(JSON.stringify({ type: "subagent", attrs: { agentName: "Explore" } }));
+
+    expect(start?.attrs).toEqual({ parentSessionId: "parent-1", label: "searchSubagent" });
+    expect(named?.attrs).toEqual({ agentName: "Explore" });
+  });
+
+  it("leaves parentSpanId undefined on an envelope without one", () => {
+    expect(parseEnvelopeLine(JSON.stringify({ type: "llm_request" }))?.parentSpanId).toBeUndefined();
+  });
+
+  it("still drops content keys of subagent-file events", () => {
+    const contentAttrs = {
+      content: "task prompt",
+      response: "answer",
+      reasoning: "thoughts",
+      args: { path: "/x" },
+      result: "tool output",
+      error: "boom",
+      command: "ls",
+      input: "hook input",
+      output: "hook output",
+      resultKind: "success",
+      category: "c",
+    };
+    for (const type of ["user_message", "agent_response", "tool_call", "hook", "generic"]) {
+      const envelope = parseEnvelopeLine(JSON.stringify({ type, attrs: { ...contentAttrs, agentName: "Explore" } }));
+      const keys = Object.keys(envelope?.attrs ?? {}).filter((key) => key !== "contentDigest");
+      expect(keys, type).toEqual(["agentName"]);
+    }
+  });
+});

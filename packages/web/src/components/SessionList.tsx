@@ -7,6 +7,7 @@ import type { Mode } from "../state/session-store.js";
 import { formatAiCredits } from "../lib/format-ai-credits.js";
 import { formatRelativeTime } from "../lib/format-relative-time.js";
 import { onKeyActivate } from "../lib/on-key-activate.js";
+import { sessionListSubagentLine } from "../lib/subagent-runs.js";
 import { Blueprint } from "./ui/Blueprint.js";
 
 interface SessionListProps {
@@ -139,6 +140,9 @@ export function SessionList({
                       <> · {formatAiCredits(session.costAiCredits)} AI Credits</>
                     )}
                   </div>
+                  {session.subagentSpend && (
+                    <div className="card-meta">{sessionListSubagentLine(session.subagentSpend)}</div>
+                  )}
                 </button>
                 {onToggleAdvice && (
                   <label

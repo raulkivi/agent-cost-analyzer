@@ -8,8 +8,15 @@ import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { pathToFileURL } from "node:url";
 import { COPILOT_CLI_FIXTURE_HOME, COPILOT_CLI_FIXTURE_SESSION_IDS, writeCopilotCliAgentHostStores } from "../../../server/src/test-support/copilot-cli-fixtures.ts";
-import { USAGE_LOG_USER_MESSAGE, USAGE_MAIN_JSONL, USAGE_SESSION_ID } from "../../../server/src/test-support/copilot-session-store.ts";
+import { USAGE_LOG_USER_MESSAGE, USAGE_MAIN_JSONL, USAGE_SESSION_ID, seedSubagentFixtureSession } from "../../../server/src/test-support/copilot-session-store.ts";
 import { createIntegrationFixture, USER_SETTINGS } from "../integration-fixture.mts";
+
+// VS Code's shared process deletes, 30 s after start-up, every workspaceStorage
+// folder whose name isn't 32 characters long (a folder workspace's id) and that
+// no window uses, and with it the seeded debug logs (the Sessions view then
+// shows AI Credits unknown for every classic session). The seeded folder is
+// named like a workspace id so the long UI runs keep their logs.
+export const WORKSPACE_STORAGE_ID = "a11ce5ed1f1a4e0dbf7e0c0de0000001";
 
 export const LARGE_SESSION_TURNS = 150;
 export const LARGE_SESSION_ID = "00000000-0000-4000-9000-000000000150";
@@ -22,6 +29,26 @@ const SYSTEM_PROMPT = [
   SYSTEM_PROMPT_MARKER,
   "<instructions>Keep going until the user's query is completely resolved.</instructions>",
 ].join("\n");
+
+// Step 10.19 (SA15): two classic sessions from the server's subagent fixtures.
+// The first has a runSubagent ("Explore") and a searchSubagent run (0.00,
+// D8); `expectedCredits` is its folded total (two main requests of 2 AI
+// Credits and the Explore run at 1.1). The second names a child log that is not
+// there, so its AI Credits are unknown.
+export const SUBAGENT_SESSION = {
+  id: "00000000-0000-4000-9000-0000000000a1",
+  title: "Subagent runs session",
+  caseName: "run-and-search",
+  expectedCredits: 5.1,
+  // How long before the fixture's `now` it started.
+  agoMs: 30_000,
+};
+export const DANGLING_SESSION = {
+  id: "00000000-0000-4000-9000-0000000000a2",
+  title: "Dangling subagent session",
+  caseName: "dangling-ref",
+  agoMs: 45_000,
+};
 
 export interface UiFixtureOptions {
   sessionCount?: number;
@@ -55,14 +82,17 @@ export function createUiFixture(rootDir: string, options: UiFixtureOptions = {})
   renameSync(base.userDataDir, userDataDir);
 
   const userDir = path.join(userDataDir, "User");
-  const debugDir = path.join(userDir, "workspaceStorage", "integration-workspace", "GitHub.copilot-chat", "debug-logs", base.usageSessionId);
+  const workspaceStorage = path.join(userDir, "workspaceStorage");
+  renameSync(path.join(workspaceStorage, "integration-workspace"), path.join(workspaceStorage, WORKSPACE_STORAGE_ID));
+  const debugDir = path.join(workspaceStorage, WORKSPACE_STORAGE_ID, "GitHub.copilot-chat", "debug-logs", base.usageSessionId);
   writeFileSync(path.join(debugDir, "system_prompt_0.json"), JSON.stringify({ content: JSON.stringify([{ type: "text", content: SYSTEM_PROMPT }]) }));
 
   // VS Code deletes workspace storage that names no existing folder; naming
   // the fixture's own root keeps the debug logs.
-  writeFileSync(path.join(userDir, "workspaceStorage", "integration-workspace", "workspace.json"), JSON.stringify({ folder: pathToFileURL(rootDir).href }));
+  writeFileSync(path.join(workspaceStorage, WORKSPACE_STORAGE_ID, "workspace.json"), JSON.stringify({ folder: pathToFileURL(rootDir).href }));
   seedLargeSession(path.join(userDir, "globalStorage", "github.copilot-chat", "session-store.db"), now);
   seedEmptyWindowSession(userDir, now);
+  seedSubagentSessions(userDir, now);
   writeCopilotCliAgentHostStores(userDataDir, now);
   // A copy: once enabled, the Copilot Chat built in to VS Code writes its own
   // logs into COPILOT_HOME, which must not be the repo's fixture directory.
@@ -79,7 +109,7 @@ export function createUiFixture(rootDir: string, options: UiFixtureOptions = {})
     largeSessionId: LARGE_SESSION_ID,
     largeSessionTurns: LARGE_SESSION_TURNS,
     systemPromptMarker: SYSTEM_PROMPT_MARKER,
-    listedSessionCount: base.sessionCount + 2 + Object.keys(COPILOT_CLI_FIXTURE_SESSION_IDS).length,
+    listedSessionCount: base.sessionCount + 2 + 2 + Object.keys(COPILOT_CLI_FIXTURE_SESSION_IDS).length,
   };
 }
 
@@ -120,6 +150,21 @@ function seedEmptyWindowSession(userDir: string, now: Date): void {
     db.prepare("INSERT INTO turns (session_id, turn_index, user_message, assistant_response, timestamp) VALUES (?, 0, ?, 'hello', ?)").run(EMPTY_WINDOW_SESSION_ID, USAGE_LOG_USER_MESSAGE, startedAt);
   } finally {
     db.close();
+  }
+}
+
+function seedSubagentSessions(userDir: string, now: Date): void {
+  const dbPath = path.join(userDir, "globalStorage", "github.copilot-chat", "session-store.db");
+  const debugLogsDir = path.join(userDir, "workspaceStorage", WORKSPACE_STORAGE_ID, "GitHub.copilot-chat", "debug-logs");
+  for (const session of [SUBAGENT_SESSION, DANGLING_SESSION]) {
+    const startedAt = new Date(now.getTime() - session.agoMs).toISOString();
+    seedSubagentFixtureSession(dbPath, debugLogsDir, session.caseName, startedAt, session.id);
+    const db = new DatabaseSync(dbPath);
+    try {
+      db.prepare("UPDATE sessions SET summary = ? WHERE id = ?").run(session.title, session.id);
+    } finally {
+      db.close();
+    }
   }
 }
 

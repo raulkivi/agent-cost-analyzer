@@ -51,6 +51,13 @@ function prepare(model: AssociativeModel): { ordered: PreparedTable[]; byId: Map
   return { ordered, byId };
 }
 
+// The field's values for a row, each once (a row counts once per value).
+function valuesOf(field: FieldDef, row: unknown): readonly string[] {
+  if (field.values) return [...new Set(field.values(row))];
+  const value = field.value(row);
+  return value === undefined ? [] : [value];
+}
+
 export function createAssociativeEngine(model: AssociativeModel) {
   const { ordered, byId } = prepare(model);
   const fieldsById = new Map(model.fields.map((field) => [field.id, field]));
@@ -81,8 +88,8 @@ export function createAssociativeEngine(model: AssociativeModel) {
         table.def.rows.map(
           (row, index) =>
             ownSelections.every((field) => {
-              const value = field.value(row);
-              return value !== undefined && active.get(field.id)!.has(value);
+              const wanted = active.get(field.id)!;
+              return valuesOf(field, row).some((value) => wanted.has(value));
             }) && parentsWithSurvivingChild.every((parents) => parents.has(index)),
         ),
       );
@@ -121,8 +128,8 @@ export function createAssociativeEngine(model: AssociativeModel) {
     function presentValues(field: FieldDef, alive: boolean[]): Map<string, number> {
       const counts = new Map<string, number>();
       tableOf(field.table).def.rows.forEach((row, index) => {
-        const value = field.value(row);
-        if (value !== undefined && alive[index]) {
+        if (!alive[index]) return;
+        for (const value of valuesOf(field, row)) {
           counts.set(value, (counts.get(value) ?? 0) + 1);
         }
       });
@@ -150,8 +157,7 @@ export function createAssociativeEngine(model: AssociativeModel) {
         }
         const all = new Set<string>();
         table.def.rows.forEach((row) => {
-          const value = field.value(row);
-          if (value !== undefined) {
+          for (const value of valuesOf(field, row)) {
             all.add(value);
           }
         });

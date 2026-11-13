@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: MIT
 import type {
   Session,
+  SubagentRunUsage,
+  SubagentSpend,
   TokenCount,
   ToolCallRecord,
   Turn,
@@ -76,30 +78,67 @@ export interface SessionUsageFigures {
   costAiCredits: TokenCount;
   model: string;
   usageDataAvailable: boolean;
+  subagentSpend?: SubagentSpend;
+}
+
+// A classic session's subagent runs, as subagent-attribution.ts's
+// attributeSubagentRuns returns them (step 10.19).
+export interface SessionSubagentRuns {
+  byLogTurn: ReadonlyMap<number, readonly SubagentRunUsage[]>;
+  // Empty exactly when every subagent log was read, placed and has known AI
+  // Credits.
+  sessionUnknownReasons: readonly string[];
+}
+
+// D12: the runs read and the AI Credits they added; unknown, never 0, when
+// any subagent log left a reason. Absent when there is nothing to report.
+function subagentSpendOf({ byLogTurn, sessionUnknownReasons }: SessionSubagentRuns): SubagentSpend | undefined {
+  const runs = [...byLogTurn.entries()].sort(([a], [b]) => a - b).flatMap(([, turnRuns]) => turnRuns);
+  const [reason] = sessionUnknownReasons;
+  if (runs.length === 0 && reason === undefined) {
+    return undefined;
+  }
+  return {
+    runs: runs.length,
+    costAiCredits:
+      reason === undefined
+        ? sumTokenCounts(runs.map((run) => run.costAiCredits), USAGE_UNAVAILABLE_REASON)
+        : unavailableTokenCount(reason),
+  };
 }
 
 // Every turn counts: each session-store turn and each debug-log turn the
 // store lacks. AI Credits are all-or-nothing across them (constraint 6: no
 // silently-partial total), and unknown rather than 0 with nothing to sum.
+// With subagent runs, the turns already hold them (mergeSubagentUsage); a
+// subagent reason (a run unread, unplaced or unknown) makes the session
+// unknown even where every turn is known, and names why ahead of the
+// turn-sum fallback.
 export function summarizeSessionUsage(
   mainJsonlAvailability: MainJsonlAvailability,
   storeTurnIndices: readonly number[],
   turnUsages: readonly (TurnUsage | null)[],
+  subagentRuns?: SessionSubagentRuns,
 ): SessionUsageFigures {
   const fallback = unavailableTokenCount(reasonForAvailability(mainJsonlAvailability));
   const turnIndices = [...storeTurnIndices, ...logOnlyTurnIndices(storeTurnIndices, turnUsages)];
   const knownUsages = turnUsages.filter((usage): usage is TurnUsage => usage !== null);
+  const subagentReason = subagentRuns?.sessionUnknownReasons[0];
+  const subagentSpend = subagentRuns === undefined ? undefined : subagentSpendOf(subagentRuns);
   return {
     turnCount: turnIndices.length,
     costAiCredits:
       mainJsonlAvailability !== "events-present" || turnIndices.length === 0
         ? fallback
-        : sumTokenCounts(
-            turnIndices.map((index) => turnUsages[index]?.costAiCredits ?? fallback),
-            USAGE_UNAVAILABLE_REASON,
-          ),
+        : subagentReason !== undefined
+          ? unavailableTokenCount(subagentReason)
+          : sumTokenCounts(
+              turnIndices.map((index) => turnUsages[index]?.costAiCredits ?? fallback),
+              USAGE_UNAVAILABLE_REASON,
+            ),
     model: knownUsages.at(-1)?.model ?? UNKNOWN_MODEL,
     usageDataAvailable: knownUsages.length > 0,
+    ...(subagentSpend === undefined ? {} : { subagentSpend }),
   };
 }
 
@@ -264,6 +303,7 @@ export function buildSessionSummary(
     turns: [],
     turnCount: usage.turnCount,
     costAiCredits: usage.costAiCredits,
+    ...(usage.subagentSpend === undefined ? {} : { subagentSpend: usage.subagentSpend }),
     usageDataAvailable: usage.usageDataAvailable,
     copilotHarness: "local",
     ...(row.created_at ? { startedAt: row.created_at } : {}),
@@ -278,7 +318,9 @@ export interface AnalyzeEnrichment extends Partial<AnalyzeModeExtras> {
   turnRows: TurnRow[];
   fileRows: SessionFileRow[];
   mainJsonlAvailability: MainJsonlAvailability;
+  // Placed per store turn index, with any subagent runs already merged in.
   turnUsages?: (TurnUsage | null)[];
+  subagentRuns?: SessionSubagentRuns;
 }
 
 export function buildSession(enrichment: AnalyzeEnrichment): Session {
@@ -291,6 +333,7 @@ export function buildSession(enrichment: AnalyzeEnrichment): Session {
     invokedToolNamesByTurn = [],
     systemPrompt = [],
     toolInventory = [],
+    subagentRuns,
   } = enrichment;
 
   const fallbackTokenCount = unavailableTokenCount(
@@ -310,7 +353,7 @@ export function buildSession(enrichment: AnalyzeEnrichment): Session {
   return {
     ...buildSessionSummary(
       sessionRow,
-      summarizeSessionUsage(mainJsonlAvailability, storeTurnIndices, turnUsages),
+      summarizeSessionUsage(mainJsonlAvailability, storeTurnIndices, turnUsages, subagentRuns),
     ),
     systemPrompt,
     toolInventory,

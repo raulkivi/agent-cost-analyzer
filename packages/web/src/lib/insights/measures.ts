@@ -3,6 +3,7 @@
 import {
   costFigureFor,
   isFailedStatus,
+  splitByModel,
   sumCostFigures,
   type CostBasisChoice,
   type CostTotal,
@@ -120,8 +121,9 @@ export function aiCreditsByDay(
 export const TOKEN_KINDS = ["uncachedInput", "cacheWrite", "cacheRead", "reasoning", "output"] as const;
 export type TokenKind = (typeof TOKEN_KINDS)[number];
 
+// Step 10.19: by each cost line's model, so a subagent run's tokens count under its own model.
 export function tokensByModel(turns: readonly InsightTurnRow[]): ({ model: string } & Record<TokenKind, number>)[] {
-  return [...groupBy(turns, (turn) => turn.model)]
+  return [...groupBy(turns.flatMap(splitByModel), (turn) => turn.model)]
     .map(([model, modelTurns]) => ({
       model,
       ...(Object.fromEntries(

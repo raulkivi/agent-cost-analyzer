@@ -3,6 +3,7 @@
 import { describe, expect, it } from "vitest";
 import { turnCostFiguresSchema, type CostFigure } from "@agent-cost-analyzer/domain";
 import { analyzeSession, turn, usage } from "../../test-support/insights-fakes.js";
+import { foldRuns, mainUsage, subagentRun } from "../../test-support/subagent-usage-fakes.js";
 import type { Attribution } from "../cost-attribution/session-attributor.js";
 import type { PricingRequest } from "./cost-pricer.js";
 import { billedFigure, pricingPolicyFor, reportedFigure, TurnCostFigureBuilder } from "./turn-cost-figures.js";
@@ -107,6 +108,44 @@ describe("TurnCostFigureBuilder", () => {
     const figures = new TurnCostFigureBuilder().figuresFor("vscode", analyzeSession("s", undefined, [t]), t, attribution);
     expect(figures.priced).toEqual({ known: false, reason: "No price book is configured for this product, so no turn is priced." });
     expect(figures.billed.known).toBe(true);
+  });
+});
+
+// Step 10.19 (classic subagents plan §4.5): a turn that ran subagents is
+// priced line by line, each on its own model, and the lines summed.
+describe("TurnCostFigureBuilder with subagent runs", () => {
+  const byModel = (amounts: Record<string, CostFigure>) => ({ price: (request: PricingRequest) => amounts[request.usage.model]! });
+  const priced = (amount: number, versionId: string): CostFigure => ({ known: true, amount, currency: "AI_CREDITS", basis: "priced", priceVersionIds: [versionId] });
+
+  it("prices the main agent's own usage and each run's on its own model, and sums them", () => {
+    const { requests, pricer } = recordingPricer();
+    const t = turn(0, [], foldRuns(mainUsage(), [subagentRun()]));
+    new TurnCostFigureBuilder(pricer).figuresFor("vscode", analyzeSession("s", "2026-10-08T00:00:00Z", [t]), t, attribution);
+    expect(requests.map((request) => [request.usage.model, request.usage.costAiCredits, request.usage.roundsCount])).toEqual([
+      ["claude-sonnet-5.5", { known: true, value: 1.5 }, 3],
+      ["gpt-6.1-sol", { known: true, value: 0.25 }, 7],
+    ]);
+
+    const figures = new TurnCostFigureBuilder(byModel({ "claude-sonnet-5.5": priced(2, "sonnet"), "gpt-6.1-sol": priced(0.5, "sol") })).figuresFor(
+      "vscode",
+      analyzeSession("s", "2026-10-08T00:00:00Z", [t]),
+      t,
+      attribution,
+    );
+    expect(figures.priced).toEqual({ known: true, amount: 2.5, currency: "AI_CREDITS", basis: "priced", priceVersionIds: ["sonnet", "sol"] });
+    // Billed is the folded AI Credits: the main agent's plus the run's.
+    expect(figures.billed).toEqual({ known: true, amount: 1.75, currency: "AI_CREDITS", basis: "billed" });
+  });
+
+  it("is unknown with the line's reason when any line can't be priced", () => {
+    const t = turn(0, [], foldRuns(mainUsage(), [subagentRun()]));
+    const figures = new TurnCostFigureBuilder(byModel({ "claude-sonnet-5.5": priced(2, "sonnet"), "gpt-6.1-sol": { known: false, reason: "Cannot price: no price for gpt-6.1-sol" } })).figuresFor(
+      "vscode",
+      analyzeSession("s", "2026-10-08T00:00:00Z", [t]),
+      t,
+      attribution,
+    );
+    expect(figures.priced).toEqual({ known: false, reason: "Cannot price: no price for gpt-6.1-sol" });
   });
 });
 

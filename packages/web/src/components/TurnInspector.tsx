@@ -6,12 +6,14 @@ import type {
   ContentPlaceholder,
   MessageContentPart,
   TriggeredEvent,
+  Turn,
   TurnInspectorDetail,
 } from "@agent-cost-analyzer/domain";
 import { fetchTurnInspectorDetail } from "../api-client/sessions.js";
 import { TURN_INSPECTOR_UNAVAILABLE_TITLE } from "../lib/agent-host-unavailable.js";
 import { useEscapeKey, useFocusReturn } from "../lib/focus.js";
 import { useCancellableLoad } from "../lib/use-cancellable-load.js";
+import { subagentInspectorNote } from "../lib/subagent-runs.js";
 import { TRIGGER_LABELS } from "../lib/trigger-labels.js";
 import { buildPrettyTokens, PAYLOAD_TOKEN_COLORS, unescapeText } from "../lib/turn-payload-pretty.js";
 import type { PayloadToken } from "../lib/turn-payload-pretty.js";
@@ -29,6 +31,8 @@ interface TurnInspectorProps {
   // call the UI made before this could be opened — lets the empty state
   // pick the right message without waiting on this endpoint's own fetch.
   usageDataAvailable: boolean;
+  // The turn shown, for the note about subagent runs this view leaves out (D4).
+  turn?: Turn | undefined;
   onClose: () => void;
 }
 
@@ -210,6 +214,7 @@ export function TurnInspector({
   sessionTitle,
   triggeredEvent,
   usageDataAvailable,
+  turn,
   onClose,
 }: TurnInspectorProps) {
   // Nothing to load when the session has no usage data; otherwise the
@@ -235,6 +240,7 @@ export function TurnInspector({
   useFocusReturn(backButton);
   useEscapeKey(onClose);
   const [format, setFormat] = useState<PayloadFormat>("pretty");
+  const subagentNote = turn ? subagentInspectorNote(turn) : undefined;
   // The picked round belongs to the detail it was picked in, so a newly
   // loaded turn starts at round 0 without a reset effect racing a click.
   const [roundPick, setRoundPick] = useState<{ detail: TurnInspectorDetail; round: number } | null>(null);
@@ -258,6 +264,12 @@ export function TurnInspector({
           <SegmentedControl name="turnFormat" options={FORMAT_OPTIONS} value={format} onChange={setFormat} />
         </div>
       </div>
+
+      {subagentNote && (
+        <div role="note" className="subagent-note">
+          <strong>{subagentNote.heading}</strong> <span className="text-muted">{subagentNote.body}</span>
+        </div>
+      )}
 
       <AsyncView
         status={

@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import type { TokenCount } from "@agent-cost-analyzer/domain";
+import { sumTokenCounts, type TokenCount } from "@agent-cost-analyzer/domain";
 
 export interface UsageSentenceInput {
   uncachedInput: TokenCount;
@@ -8,6 +8,8 @@ export interface UsageSentenceInput {
   cacheRead: TokenCount;
   output: TokenCount;
   model: string;
+  // Step 10.19: the classic Copilot subagent runs folded into the figures.
+  subagents?: readonly { costAiCredits: TokenCount }[];
 }
 
 // Callers gate on uncachedInput/output being known; the fallback to 0 only
@@ -39,10 +41,26 @@ function joinClauses(clauses: string[]): string {
   return `, ${clauses[0]} and ${clauses[1]}`;
 }
 
+// "incl. 42.06 AI Credits from 1 subagent run": the share of the figures that
+// the runs account for. An unknown run makes the share unknown, so no figure
+// is shown (constraint 6).
+function subagentClause(runs: UsageSentenceInput["subagents"]): string {
+  if (runs === undefined || runs.length === 0) return "";
+  const noun = runs.length === 1 ? "subagent run" : "subagent runs";
+  const total = sumTokenCounts(
+    runs.map((run) => run.costAiCredits),
+    "",
+  );
+  if (!total.known) return `, incl. ${runs.length} ${noun} (their AI Credits are unknown)`;
+  const credits = total.value.toLocaleString(undefined, { maximumFractionDigits: 2 });
+  return `, incl. ${credits} AI Credits from ${runs.length} ${noun}`;
+}
+
 export function describeTurnUsage(usage: UsageSentenceInput): string {
   return (
     `This turn sent ${tokens(valueOf(usage.uncachedInput), "new input")}` +
-    `${joinClauses(cacheClauses(usage))}, producing ${tokens(valueOf(usage.output), "output")} using ${usage.model}.`
+    `${joinClauses(cacheClauses(usage))}, producing ${tokens(valueOf(usage.output), "output")} using ${usage.model}` +
+    `${subagentClause(usage.subagents)}.`
   );
 }
 

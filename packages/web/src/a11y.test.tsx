@@ -7,6 +7,10 @@ import { App } from "./App.js";
 import { resetApiTransport } from "./api-client/current-transport.js";
 import { ReplayStatus } from "./components/replay/ReplayStatus.js";
 import { ReplaySummaryStrip } from "./components/replay/ReplaySummaryStrip.js";
+import { ExplanationPanel } from "./components/ExplanationPanel.js";
+import { SessionKpiTiles } from "./components/SessionKpiTiles.js";
+import { TurnInspector } from "./components/TurnInspector.js";
+import { TurnMetrics } from "./components/TurnMetrics.js";
 import { TurnsTable } from "./components/TurnsTable.js";
 import { AsyncView, cancelledEmptyState } from "./components/ui/AsyncView.js";
 import { resetHostCapabilities, setHostCapabilities } from "./host/current-host-capabilities.js";
@@ -16,6 +20,7 @@ import { axeViolations } from "./test-support/axe.js";
 import { sampleCostComparison, sampleCostSeries } from "./test-support/cost-fixture.js";
 import { sampleInsightsDataset } from "./test-support/insights-fixture.js";
 import { makeReplay, REPLAY_PROFILES } from "./test-support/replay-fixture.js";
+import { makeRun, makeTurnWithRuns } from "./test-support/subagent-fixture.js";
 import { makeTurn } from "./test-support/turn-fixture.js";
 import themeCss from "./theme.css?raw";
 import vscodeThemeCss from "./theme-vscode.css?raw";
@@ -529,6 +534,41 @@ describe.each(Object.keys(THEMES) as ThemeName[])("axe: no WCAG 2.2 AA violation
         </main>,
       );
       await expectNoViolations();
+    });
+
+    // Step 10.19 (SA13): the four states of the approved mock-ups.
+    describe("subagent runs", () => {
+      const reason = "The subagent log runSubagent-Plan this turn started is missing.";
+      const states = {
+        known: makeTurnWithRuns([makeRun(), makeRun({ id: "call_2", agentName: "Plan", costAiCredits: { known: true, value: 11.95 } })]),
+        "0.00 run": makeTurnWithRuns([makeRun({ roundsCount: 0, costAiCredits: { known: true, value: 0 } })]),
+        unknown: makeTurnWithRuns([makeRun()], { unreadReason: reason }),
+        "matched by time": makeTurnWithRuns([makeRun({ attribution: "timestamp" })]),
+      };
+
+      it.each(Object.entries(states))("the turns table, explanation block, drawer line and inspector note: %s", async (_name, turn) => {
+        render(
+          <main>
+            <TurnsTable turns={[makeTurn({ index: 1 }), turn]} selectedTurnIndex={1} onSelectTurn={vi.fn()} />
+            <TurnMetrics turns={[turn]} turnIndex={0} columns={["output"]} />
+            <ExplanationPanel turn={turn} mode="analyze" />
+            <TurnInspector sessionId="s" turnIndex={2} turn={turn} usageDataAvailable={false} onClose={vi.fn()} />
+          </main>,
+        );
+        await expectNoViolations();
+      });
+
+      it.each([
+        ["known", { runs: 3, costAiCredits: { known: true as const, value: 54.65 } }],
+        ["unknown", { runs: 1, costAiCredits: { known: false as const, reason } }],
+      ])("the KPI tile sub-line: %s", async (_name, spend) => {
+        render(
+          <main>
+            <SessionKpiTiles turns={[makeTurn()]} subagentSpend={spend} />
+          </main>,
+        );
+        await expectNoViolations();
+      });
     });
 
     it("the not replayable, loading and error states", async () => {

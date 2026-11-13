@@ -67,7 +67,7 @@ export function registerCostTools(server: McpServer, deps: McpToolDeps, guarded:
     {
       title: "Get session cost",
       description:
-        "Explains what one session cost and why: token totals (uncached input, cache write, cache read, reasoning, output) and AI Credits, each with turn coverage; cache hit ratio; spend per model; the most expensive turns; cost-relevant events (compaction, cache expiry, model switch, ...); and context overhead (system-prompt parts, tools defined but never used); the session's repository and project. null means unknown, never zero — see unavailableReasons. " +
+        "Explains what one session cost and why: token totals (uncached input, cache write, cache read, reasoning, output) and AI Credits, each with turn coverage; cache hit ratio; spend per model; the most expensive turns; cost-relevant events (compaction, cache expiry, model switch, ...); and context overhead (system-prompt parts, tools defined but never used); the session's repository and project; `subagents` (runs and their AI Credits) when a Copilot Chat session's totals include subagent runs. null means unknown, never zero — see unavailableReasons. " +
         ACTIVE_TEXT +
         " " +
         COST_BASIS_TEXT,

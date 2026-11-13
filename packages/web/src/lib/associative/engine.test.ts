@@ -127,4 +127,26 @@ describe("associative engine", () => {
     expect(() => engine.evaluate({}).values("nope")).toThrow(/Unknown field/);
     expect(() => engine.evaluate({}).rows("nope")).toThrow(/Unknown table/);
   });
+
+  it("matches a row on any of the values a multi-valued field gives it", () => {
+    const multi: AssociativeModel = {
+      tables: [{ id: "orders", rows: orders, key: (row) => (row as Order).id }],
+      fields: [
+        {
+          id: "tags",
+          label: "Tags",
+          table: "orders",
+          value: (row) => (row as Order).year,
+          values: (row) => ((row as Order).id === "o1" ? ["a", "b"] : ["b"]),
+        },
+      ],
+    };
+    const multiEngine = createAssociativeEngine(multi);
+    expect(ids(multiEngine.evaluate({ tags: ["a"] }).rows("orders"))).toEqual(["o1"]);
+    expect(ids(multiEngine.evaluate({ tags: ["b"] }).rows("orders"))).toEqual(["o1", "o2", "o3"]);
+    expect(multiEngine.evaluate({}).values("tags").map((value) => [value.value, value.count])).toEqual([
+      ["a", 1],
+      ["b", 3],
+    ]);
+  });
 });

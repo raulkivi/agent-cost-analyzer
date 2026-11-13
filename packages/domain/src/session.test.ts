@@ -210,4 +210,38 @@ describe("sessionSchema", () => {
 
     expect(() => sessionSchema.parse(sample)).toThrow();
   });
+
+  it("accepts the session's subagent spend, known or unknown, and omits it when absent", () => {
+    const base = {
+      id: "session-123",
+      mode: "analyze",
+      title: "Real session",
+      model: "gpt-4o",
+      turns: [],
+      turnCount: 0,
+      costAiCredits: { known: true, value: 2.5 },
+      usageDataAvailable: true,
+    };
+    const known = { ...base, subagentSpend: { runs: 3, costAiCredits: { known: true, value: 54.65 } } };
+    expect(sessionSchema.parse(known)).toEqual(known);
+    const unknown = { ...base, subagentSpend: { runs: 1, costAiCredits: { known: false, reason: "a run log is missing" } } };
+    expect(sessionSchema.parse(unknown)).toEqual(unknown);
+    expect(sessionSchema.parse(base).subagentSpend).toBeUndefined();
+  });
+
+  it("rejects a subagent spend with a negative or fractional run count", () => {
+    const base = {
+      id: "s",
+      mode: "analyze",
+      title: "t",
+      model: "m",
+      turns: [],
+      turnCount: 0,
+      costAiCredits: { known: true, value: 0 },
+      usageDataAvailable: true,
+    };
+    const spend = (runs: number) => ({ runs, costAiCredits: { known: true, value: 1 } });
+    expect(sessionSchema.safeParse({ ...base, subagentSpend: spend(-1) }).success).toBe(false);
+    expect(sessionSchema.safeParse({ ...base, subagentSpend: spend(1.5) }).success).toBe(false);
+  });
 });

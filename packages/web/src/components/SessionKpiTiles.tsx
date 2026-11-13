@@ -1,7 +1,8 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import type { Turn } from "@agent-cost-analyzer/domain";
+import type { SubagentSpend, Turn } from "@agent-cost-analyzer/domain";
 import { sessionKpis } from "../lib/session-kpis.js";
+import { sessionSubagentLine } from "../lib/subagent-runs.js";
 import { aiCreditsToUsd, formatUsd } from "../lib/ai-credits-usd.js";
 import { StatTile } from "./ui/StatTile.js";
 
@@ -18,11 +19,14 @@ function usdTitle(turns: Turn[]): string | undefined {
   return `≈ ${formatUsd(aiCreditsToUsd(total))}`;
 }
 
-export function SessionKpiTiles({ turns }: { turns: Turn[] }) {
+export function SessionKpiTiles({ turns, subagentSpend }: { turns: Turn[]; subagentSpend?: SubagentSpend | undefined }) {
   const kpis = sessionKpis(turns);
+  // Step 10.19 (D12): what the subagent runs added, under the total.
+  const subagentLine = sessionSubagentLine(subagentSpend);
+  const note = [kpis.aiCredits.note, subagentLine].filter(Boolean).join(" · ") || undefined;
   return (
     <div className="kpi-grid">
-      <StatTile label="AI Credits" {...kpis.aiCredits} title={usdTitle(turns)} />
+      <StatTile label="AI Credits" value={kpis.aiCredits.value} note={note} title={usdTitle(turns)} />
       <StatTile label="Cache read" {...kpis.cacheRead} />
       <StatTile label="Turns" {...kpis.turns} />
       <StatTile label="Tool calls" {...kpis.toolCalls} />

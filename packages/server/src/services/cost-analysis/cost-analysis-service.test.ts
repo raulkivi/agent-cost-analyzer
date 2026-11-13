@@ -3,7 +3,7 @@
 import { describe, expect, it } from "vitest";
 import type { PriceBookEntry, PricingMode } from "@agent-cost-analyzer/domain";
 import type { SessionRangeFilter } from "../tool-audit/audit-query-service.js";
-import { billed, costs, cubeOf, cubeRow, priced } from "../../test-support/cost-cube-fakes.js";
+import { billed, costLine, costs, cubeOf, cubeRow, priced } from "../../test-support/cost-cube-fakes.js";
 import type { CostCube } from "./cost-cube.js";
 import { CostAnalysisService, DatasetCostCubeSource } from "./cost-analysis-service.js";
 
@@ -111,6 +111,27 @@ describe("DatasetCostCubeSource", () => {
       ["observed", "2026-10-12"],
     ]);
     expect(list.providers).toHaveLength(1);
+  });
+
+  // Step 10.19 (classic subagents plan §4.5): billed and priced are compared
+  // per cost line's model, so a run's gap is never the turn's model's.
+  it("finds observed changes per cost line's model", async () => {
+    const turns = (date: string) =>
+      Array.from({ length: 20 }, () =>
+        cubeRow({
+          date,
+          channel: "github-copilot",
+          model: "claude-sonnet-5.5",
+          cost: costs({ billed: billed(22), priced: priced(20, "gh", "AI_CREDITS") }),
+          lines: [
+            costLine("claude-sonnet-5.5", "anthropic", costs({ billed: billed(10), priced: priced(10, "gh", "AI_CREDITS") }), { subagent: false }),
+            costLine("gpt-6.1-sol", "openai", costs({ billed: billed(12), priced: priced(10, "gh:sol", "AI_CREDITS") })),
+          ],
+        }),
+      );
+    const { service } = setup(cubeOf([...turns("2026-10-13"), ...turns("2026-10-20")]));
+    const list = await service.getPriceChanges({ since: "2026-10-01", until: "2026-10-31", kind: "observed" });
+    expect(list.changes.map((change) => [change.kind, change.modelId])).toEqual([["observed", "gpt-6.1-sol"]]);
   });
 
   it("reads no sessions for documented changes alone", async () => {

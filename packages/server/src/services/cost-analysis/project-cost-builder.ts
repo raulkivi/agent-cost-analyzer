@@ -3,7 +3,7 @@
 import type { PriceBookEntry, ProjectCost } from "@agent-cost-analyzer/domain";
 import { measureTotal } from "../cost/cost-aggregation.js";
 import type { CostCube } from "./cost-cube.js";
-import { breakdownRow, coverageOf, groupingFor, groupRows, viewTotal } from "./cube-aggregation.js";
+import { breakdownRow, coverageOf, groupingFor, groupRows, turnCount, viewTotal, wholeRow } from "./cube-aggregation.js";
 import { buildCostSeries, type CostSeriesQuery } from "./time-series-builder.js";
 
 // Phase 15 step 15.7 (docs/plans/cost-by-repository-and-project.md §8.3,
@@ -29,7 +29,7 @@ export function buildProjectCost(cube: CostCube, query: ProjectCostQuery, priceV
     (row) => grouping.matches(row, projectId) && (view.since === undefined || row.date >= view.since) && (view.until === undefined || row.date <= view.until),
   );
   const models = groupRows(rows, groupingFor("model", cube), view);
-  const sessions = groupRows(rows, { ...groupingFor("model", cube), keyOf: (row) => ({ key: row.sessionKey }) }, view);
+  const sessions = groupRows(rows, { ...groupingFor("model", cube), rowsOf: wholeRow, keyOf: (row) => ({ key: row.sessionKey }) }, view);
 
   return {
     ...series,
@@ -38,7 +38,7 @@ export function buildProjectCost(cube: CostCube, query: ProjectCostQuery, priceV
     byTokenType: models.map((group) => ({
       model: group.label,
       vendorId: group.rows[0]!.vendorId,
-      turns: group.rows.length,
+      turns: turnCount(group.rows),
       uncachedInput: measureTotal(group.rows, (row) => row.uncachedInput),
       cacheWrite: measureTotal(group.rows, (row) => row.cacheWrite),
       cacheRead: measureTotal(group.rows, (row) => row.cacheRead),

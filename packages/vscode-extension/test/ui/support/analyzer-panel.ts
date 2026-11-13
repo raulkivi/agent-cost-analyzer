@@ -24,6 +24,13 @@ export class PanelView {
     await browser.waitUntil(async () => (await this.turnRowCount()) >= count, { timeout: WAIT_MS, timeoutMsg: `${count} turn rows did not render` });
   }
 
+  // Enter on the nth turn row (§3.5): in the narrow layout this opens the
+  // turn's details drawer.
+  async openTurnDetails(index: number): Promise<void> {
+    await browser.execute((position) => (document.querySelectorAll("table tbody tr")[position] as HTMLElement).focus(), index);
+    await browser.keys(["Enter"]);
+  }
+
   // Clicks the nth (0-based) turn row.
   async selectTurn(index: number): Promise<void> {
     await browser.execute((position) => (document.querySelectorAll("table tbody tr")[position] as HTMLElement).click(), index);
@@ -181,6 +188,51 @@ export class PanelView {
         (row) => row.children[column]?.querySelector(".sr-only")?.textContent?.trim() ?? "",
       );
     });
+  }
+
+  // Step 10.19: the subagent markers of the turns table, one per turn that
+  // has runs: the words a screen reader hears (aria-label), the tooltip
+  // (title), whether it is the dashed unknown marker, and the row it is in.
+  subagentMarkers(): Promise<{ row: number; label: string; title: string; unknown: boolean }[]> {
+    return browser.execute(() =>
+      Array.from(document.querySelectorAll<HTMLElement>("table tbody .subagent-marker[role='img']")).map((marker) => ({
+        row: Array.from(document.querySelectorAll("table tbody tr")).indexOf(marker.closest("tr") as Element),
+        label: marker.getAttribute("aria-label") ?? "",
+        title: marker.getAttribute("title") ?? "",
+        unknown: marker.classList.contains("subagent-marker--unknown"),
+      })),
+    );
+  }
+
+  // The Explanation panel's "Subagent runs this turn" block: a line per run
+  // and the turn totals, or null while the block is not shown.
+  subagentBlock(): Promise<{ runs: string[]; totals: string } | null> {
+    return browser.execute(() => {
+      const block = Array.from(document.querySelectorAll("section")).find((section) => (section.querySelector(".subagent-block-title")?.textContent ?? "").trim() === "Subagent runs this turn");
+      if (!block) return null;
+      // innerText, not textContent: the rendered text keeps a space between the spans.
+      const clean = (text: string | undefined) => (text ?? "").replace(/\s+/g, " ").trim();
+      return {
+        runs: Array.from(block.querySelectorAll<HTMLElement>("li")).map((item) => clean(item.innerText)),
+        totals: clean(block.querySelector<HTMLElement>("[role='group'][aria-label='Turn totals']")?.innerText),
+      };
+    });
+  }
+
+  // Whether a row's marker lies inside the row's box (not pushed out of the viewport).
+  markerWithinRow(row: number): Promise<boolean> {
+    return browser.execute((position) => {
+      const tableRow = document.querySelectorAll("table tbody tr")[position];
+      const marker = tableRow?.querySelector(".subagent-marker");
+      if (!tableRow || !marker) return false;
+      const box = marker.getBoundingClientRect();
+      return box.width > 0 && box.left >= 0 && box.right <= document.documentElement.clientWidth;
+    }, row);
+  }
+
+  // The narrow layout's visible drawer line about subagent runs (board answer 6).
+  drawerSubagentLine(): Promise<string | null> {
+    return browser.execute(() => document.querySelector(".turn-metrics-subagents")?.textContent?.trim() ?? null);
   }
 
   hasText(text: string): Promise<boolean> {

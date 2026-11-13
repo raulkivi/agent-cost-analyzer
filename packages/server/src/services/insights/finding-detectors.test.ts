@@ -3,6 +3,7 @@
 import { describe, expect, it } from "vitest";
 import { insightFindingSchema, type ToolCallRecord } from "@agent-cost-analyzer/domain";
 import { analyzeSession, bash, providerSessions, turn, usage } from "../../test-support/insights-fakes.js";
+import { foldRuns, mainUsage, subagentRun } from "../../test-support/subagent-usage-fakes.js";
 import { AnomalyDetector, robustZScore } from "./anomaly-detector.js";
 import { BehaviorChangeDetector } from "./behavior-change-detector.js";
 import { buildInsightRows, type ProviderSessions } from "./insights-dataset-builder.js";
@@ -156,6 +157,18 @@ describe("BehaviorChangeDetector", () => {
   function day(n: number) {
     return `2026-09-${String(n).padStart(2, "0")}T10:00:00.000Z`;
   }
+
+  // Step 10.19 (classic subagents plan §4.5): a subagent run's model is a model the session used.
+  it("flags the first use of a model only a subagent run used", () => {
+    // The run the reader couldn't read has no model: it is no first use.
+    const withRun = turn(0, [], foldRuns(mainUsage({ model: "m" }), [subagentRun({ model: "run-model" })], "The subagent log is missing."));
+    const sessions = ["a", "b", "c", "d"].map((id, index) => analyzeSession(id, day(index + 1), [turn(0)]));
+    sessions.push(analyzeSession("e", day(5), [withRun]));
+    const findings = new BehaviorChangeDetector().detect(inputFor([providerSessions(sessions)]));
+    expect(findings.map((finding) => [finding.ruleId, finding.sessionKey, finding.title, finding.turnIndex])).toEqual([
+      ["behavior.new-model", "fake:e", "First use of model `run-model`", 0],
+    ]);
+  });
 
   it("flags the first use of a program, tool or model after the baseline, once", () => {
     const sessions = [

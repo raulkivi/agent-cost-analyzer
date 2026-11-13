@@ -19,8 +19,8 @@ const sidebar = new SidebarViews();
 const THEME_SETTING = "workbench.colorTheme";
 const FIND_MODE_SETTING = "workbench.list.defaultFindMode";
 const WARN_AT_PERCENT = 80;
-// The usage session, the empty-window session and the Copilot CLI sessions of the fixture.
-const KNOWN_SESSIONS = 2 + Object.keys(COPILOT_CLI_FIXTURE_SESSION_IDS).length;
+// The usage session, the empty-window session, the classic session with subagent runs (step 10.19) and the Copilot CLI sessions of the fixture.
+const KNOWN_SESSIONS = 3 + Object.keys(COPILOT_CLI_FIXTURE_SESSION_IDS).length;
 const MONTH_ROW = /^This month: /;
 
 interface TreeNode {

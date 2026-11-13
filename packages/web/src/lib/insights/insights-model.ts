@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import { channelLabel, isLocalRepositoryKey, preferredCostFigure, repositoryFolderLabel } from "@agent-cost-analyzer/domain";
+import { channelLabel, costLinesOf, isLocalRepositoryKey, preferredCostFigure, repositoryFolderLabel } from "@agent-cost-analyzer/domain";
 import type {
   FailureCategory,
   FindingKind,
@@ -103,6 +103,8 @@ export function findingCategoryLabel(category: string): string {
 
 const USAGE_KNOWN = "known";
 const USAGE_UNKNOWN = "unknown";
+// The model an unread subagent run's cost line carries (its cost holds the reason).
+const UNKNOWN_MODEL = "unknown";
 
 // Step 15.4: a row with no repository, project, vendor or channel is still
 // listed and selectable, under one of these values, so its cost is never
@@ -143,6 +145,12 @@ function placeholdersLast(label: (value: string) => string) {
 
 function withPlaceholders(label: (value: string) => string): (value: string) => string {
   return (value) => PLACEHOLDER_LABELS[value] ?? label(value);
+}
+
+function modelsOf(row: InsightTurnRow): string[] {
+  return costLinesOf(row)
+    .map((line) => line.model)
+    .filter((model) => model !== UNKNOWN_MODEL);
 }
 
 function field<Row>(
@@ -222,7 +230,12 @@ export function createInsightsModel(dataset: InsightsDataset): AssociativeModel 
       field<InsightSessionRow>(FIELD.session, "Session", TABLE.sessions, (row) => row.key, {
         display: (value) => sessionTitles.get(value) ?? value,
       }),
-      field<InsightTurnRow>(FIELD.model, "Model", TABLE.turns, (row) => row.model),
+      {
+        ...field<InsightTurnRow>(FIELD.model, "Model", TABLE.turns, (row) => row.model),
+        // Step 10.19: a run's own model counts too; an unread run's line
+        // carries "unknown", which is a reason, not a model.
+        values: (row) => modelsOf(row as InsightTurnRow),
+      },
       field<InsightTurnRow>(FIELD.trigger, "Trigger event", TABLE.turns, (row) => row.triggeredEvent, {
         display: (value) => TRIGGER_LABELS[value as TriggeredEvent] ?? value,
       }),

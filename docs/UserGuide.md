@@ -1,6 +1,6 @@
 # User Guide
 
-**Last changed:** 2026-11-11 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-13 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 A walkthrough of the Agent Cost Analyzer's two modes — **Learn** (guided,
 bundled example sessions) and **Analyze** (your own real sessions from VS
@@ -263,6 +263,43 @@ uses — this is a real (numbers-only) example, with em dashes for the
 usage figures this particular log didn't capture:
 
 ![A real Analyze session's turns table, with em dashes for unrecorded figures](images/guide-analyze-table.png)
+
+#### Classic Copilot Chat subagent runs
+
+A VS Code (classic Copilot Chat) turn that called a subagent shows the
+run's AI Credits inside the turn's total, so the row, the session and the
+dashboard all include them. Each run is read from its own debug log next to
+the session's `main.jsonl`.
+
+- **Marker.** A small subagent glyph after the AI Credits value. Its
+  tooltip (and accessible name) reads "incl. 42.06 AI Credits from 1
+  subagent run".
+- **Explanation block.** The Explanation tab gains **Subagent runs this
+  turn**: one row per run with its agent, model, requests and AI Credits.
+  A `searchSubagent` run that cost nothing shows **0.00**, because the log
+  says 0. A **Turn totals** group below sums the turn's own AI Credits, the
+  runs' and the total.
+- **Matched by time.** A run's log that no `child_session_ref` names is
+  placed on the turn whose prompt window holds its start time. Such a run is
+  labelled "matched by time"; a start time in no single window leaves the
+  session's AI Credits unknown.
+- **Unknown, with a reason.** A total is unknown, never lower, when a run's
+  log is missing, is not a regular file (for example a symbolic link), can't
+  be read, has no readable events, holds nested subagents (not read), has a
+  request with no AI Credits, can't be matched to a turn, started before the
+  session's first prompt, or when the folder has more than 200 subagent logs
+  or can't be listed. A run that could not be read has no row of its own:
+  the block shows **Subagent run not read** with the reason.
+- **Turn inspector.** It keeps the main agent's rounds and says "N subagent
+  runs are not shown here".
+- **Session tile.** The session's AI Credits tile adds "incl. 54.65 from 3
+  subagent runs".
+- **Totals changed.** Sessions you saw before can now read higher, or
+  unknown with a reason. Per-model figures credit each run's model, and the
+  dashboard's **model** list box matches a turn when its own model or any
+  run's model is selected.
+- **Replay.** A replay compares the main agent only; the coverage line
+  lists the runs it left out and their AI Credits.
 
 ### The three-tab right panel
 

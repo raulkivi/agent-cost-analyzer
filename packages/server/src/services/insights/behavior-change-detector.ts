@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import type { FindingSeverity, InsightFinding, InsightSessionRow } from "@agent-cost-analyzer/domain";
+import { costLinesOf, type FindingSeverity, type InsightFinding, type InsightSessionRow } from "@agent-cost-analyzer/domain";
+import { UNREAD_RUNS_MODEL } from "../pricing/turn-cost-lines.js";
 import { indexRows, type DetectorInput, type FindingDetector } from "./finding-detector.js";
 
 // First appearance of a program, tool or model after a baseline window
@@ -45,6 +46,12 @@ export class BehaviorChangeDetector implements FindingDetector {
       const occurrences: Occurrence[] = [{ dimension: "model", value: session.model, at: session.startedAt }];
       for (const turn of index.turnsBySession.get(session.key) ?? []) {
         occurrences.push({ dimension: "model", value: turn.model, turnIndex: turn.turnIndex, at: session.startedAt });
+        // Step 10.19: the models of the turn's subagent runs, too (not runs
+        // the reader couldn't read: their model is unknown).
+        for (const line of costLinesOf(turn)) {
+          if (line.subagent && line.model === UNREAD_RUNS_MODEL) continue;
+          occurrences.push({ dimension: "model", value: line.model, turnIndex: turn.turnIndex, at: session.startedAt });
+        }
         for (const call of index.callsByTurn.get(turn.key) ?? []) {
           const where = { turnIndex: turn.turnIndex, toolCallKey: call.key, at: call.startedAt ?? session.startedAt };
           occurrences.push({ dimension: "tool", value: call.name, ...where });

@@ -87,3 +87,15 @@ describe("buildCostCube", () => {
     expect(cube.vendorLabel("openai")).toBe("OpenAI");
   });
 });
+
+// Step 10.19: a turn that ran subagents stays one cube row and keeps its cost lines.
+describe("buildCostCube with cost lines", () => {
+  it("keeps one row per turn and carries its lines", () => {
+    const line = { model: "gpt-6.1-sol", uncachedInput: 1, cacheWrite: 0, cacheRead: 0, reasoning: null, output: 1, aiCredits: 0.5, subagent: true };
+    const turns = dataset.turns.map((turn, index) => (index === 0 ? { ...turn, lines: [line] } : turn));
+    const cube = buildCostCube({ ...dataset, turns });
+    expect(cube.rows).toHaveLength(buildCostCube(dataset).rows.length);
+    expect(cube.rows[0]!.lines).toEqual([line]);
+    expect(buildCostCube(dataset).rows[0]!.lines).toBeUndefined();
+  });
+});

@@ -218,3 +218,71 @@ describe("buildCostRollup", () => {
     });
   });
 });
+
+// Step 10.19 (classic subagents plan §4.5): model- and vendor-keyed parts
+// of the rollup group a turn's cost lines; turn counts stay one per row.
+describe("buildCostRollup with subagent runs", () => {
+  const none = { known: false as const, reason: "n/a" };
+  const billed = (amount: number) => ({ known: true as const, amount, currency: "AI_CREDITS" as const, basis: "billed" as const });
+  const pricedAi = (amount: number, id: string) => ({ known: true as const, amount, currency: "AI_CREDITS" as const, basis: "priced" as const, priceVersionIds: [id] });
+  const copilot = { repositoryKey: "github.com/acme/api", projectId: null, vendorId: "anthropic", channel: "github-copilot" };
+  const line = (model: string, vendorId: string, credits: number, priced: number, subagent: boolean) => ({
+    model,
+    vendorId,
+    uncachedInput: 10,
+    cacheWrite: 0,
+    cacheRead: 90,
+    reasoning: null,
+    output: 5,
+    aiCredits: credits,
+    cost: { billed: billed(credits), reported: none, priced: pricedAi(priced, `github-copilot:${model}:1`) },
+    subagent,
+  });
+
+  function withRuns(): InsightsDataset {
+    const base = dataset();
+    return {
+      ...base,
+      vendors: [{ id: "anthropic", label: "Anthropic" }, { id: "openai", label: "OpenAI" }],
+      turns: [
+        turnRow("vscode:c", 0, {
+          ...copilot,
+          model: "model-b",
+          uncachedInput: 20,
+          cacheRead: 180,
+          output: 10,
+          aiCredits: 2.5,
+          date: "2026-10-02",
+          cost: { billed: billed(2.5), reported: none, priced: pricedAi(2.5, "github-copilot:model-b:1") },
+          lines: [line("model-b", "anthropic", 2, 2, false), line("gpt-x", "openai", 0.5, 0.5, true)],
+        }),
+      ],
+      sessions: base.sessions.filter((session) => session.key === "vscode:c"),
+    };
+  }
+
+  it("credits each run's model in byModel, with the turn counted once per model", () => {
+    const rollup = buildCostRollup(withRuns());
+    expect(costRollupSchema.parse(rollup)).toEqual(rollup);
+    expect(rollup.turnCount).toBe(1);
+    expect(rollup.byModel.map((entry) => [entry.model, entry.turns, entry.aiCredits, entry.inputTokens])).toEqual([
+      ["model-b", 1, 2, 100],
+      ["gpt-x", 1, 0.5, 100],
+    ]);
+  });
+
+  it("credits each run's vendor in byVendor", () => {
+    const rollup = buildCostRollup(withRuns());
+    expect(rollup.byVendor.map((group) => [group.key, group.label, group.turns, group.cost.billed.amounts[0]?.amount])).toEqual([
+      ["anthropic", "Anthropic", 1, 2],
+      ["openai", "OpenAI", 1, 0.5],
+    ]);
+  });
+
+  it("reconciles billed with priced per line's model, not the turn's", () => {
+    expect(buildCostRollup(withRuns()).reconciliation.map((row) => [row.model, row.billedAiCredits, row.pricedAiCredits])).toEqual([
+      ["gpt-x", 0.5, 0.5],
+      ["model-b", 2, 2],
+    ]);
+  });
+});

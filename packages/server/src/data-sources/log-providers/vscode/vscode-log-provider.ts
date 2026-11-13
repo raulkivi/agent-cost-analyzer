@@ -8,18 +8,11 @@ import type {
   SystemPromptComponent,
   ToolInventoryEntry,
   TurnInspectorDetail,
-  TurnUsage,
 } from "@agent-cost-analyzer/domain";
-import {
-  classifyEnvelopesAvailability,
-  readMainJsonlFile,
-  type MainJsonlAvailability,
-} from "../../jsonl/main-jsonl-reader.js";
+import { classifyEnvelopesAvailability, readMainJsonlFile } from "../../jsonl/main-jsonl-reader.js";
+import { readClassicUsage } from "../../jsonl/classic-usage-reader.js";
 import { resolveMainJsonlPath } from "../../jsonl/session-log-path.js";
-import {
-  collectResponseIds,
-  extractTurnUsages,
-} from "../../jsonl/session-usage-spans.js";
+import { collectResponseIds } from "../../jsonl/session-usage-spans.js";
 import { readMainJsonlEnvelopesForTurn } from "../../jsonl/turn-inspector-reader.js";
 import { buildTurnInspectorDetail } from "./turn-inspector-builder.js";
 import { loadAgentTraceUsageForResponseIds } from "../../agent-traces/agent-traces-reader.js";
@@ -139,20 +132,16 @@ export class VscodeLogProvider implements LogProvider, SystemPromptTextReader, R
   // the whole list.
   private async summarizeSessionWithCost(row: SessionRow, storeTurns: TurnKeyRow[]): Promise<Session> {
     try {
-      const mainJsonlPath = resolveMainJsonlPath(this.debugLogsDirPaths(), row.id);
-      let mainJsonlAvailability: MainJsonlAvailability = "missing";
-      let turnUsages: (TurnUsage | null)[] = [];
-      if (mainJsonlPath) {
-        const { envelopes, rawLineCount } = await readMainJsonlFile(mainJsonlPath);
-        mainJsonlAvailability = classifyEnvelopesAvailability(envelopes, rawLineCount);
-        if (mainJsonlAvailability === "events-present") {
-          const alignment = alignLogTurnsToStore(logTurnDigests(envelopes), storeTurnKeys(storeTurns));
-          turnUsages = placeByStoreIndex(extractTurnUsages(envelopes), alignment);
-        }
-      }
+      const usage = await readClassicUsage({
+        mainJsonlPath: resolveMainJsonlPath(this.debugLogsDirPaths(), row.id),
+        storeTurns,
+      });
       const storeTurnIndices = storeTurns.map((turn) => turn.turn_index);
       return {
-        ...buildSessionSummary(row, summarizeSessionUsage(mainJsonlAvailability, storeTurnIndices, turnUsages)),
+        ...buildSessionSummary(
+          row,
+          summarizeSessionUsage(usage.availability, storeTurnIndices, usage.turnUsages, usage.attribution),
+        ),
         providerId: PROVIDER_ID,
       };
     } catch {
@@ -209,25 +198,18 @@ export class VscodeLogProvider implements LogProvider, SystemPromptTextReader, R
       const fileRows = getSessionFileRows(db, sessionRow.id);
       const mainJsonlPath = resolveMainJsonlPath(this.debugLogsDirPaths(), sessionRow.id);
 
-      let mainJsonlAvailability: MainJsonlAvailability = "missing";
-      let turnUsages: (TurnUsage | null)[] = [];
+      const usage = await readClassicUsage({
+        mainJsonlPath,
+        storeTurns: turnRows,
+        agentTracesDbPath: this.options.agentTracesDbPath,
+      });
       let invokedToolNamesByTurn: string[][] = [];
       let systemPrompt: SystemPromptComponent[] = [];
       let toolInventory: ToolInventoryEntry[] = [];
-      if (mainJsonlPath) {
-        const { envelopes, rawLineCount } = await readMainJsonlFile(mainJsonlPath);
-        mainJsonlAvailability = classifyEnvelopesAvailability(envelopes, rawLineCount);
-        if (mainJsonlAvailability === "events-present") {
-          const agentTraceUsageByResponseId = loadAgentTraceUsageForResponseIds(
-            this.options.agentTracesDbPath,
-            collectResponseIds(envelopes),
-          );
-          const alignment = alignLogTurnsToStore(logTurnDigests(envelopes), storeTurnKeys(turnRows));
-          turnUsages = placeByStoreIndex(extractTurnUsages(envelopes, agentTraceUsageByResponseId), alignment);
-          const extras = await buildAnalyzeModeExtras(envelopes, mainJsonlPath);
-          ({ systemPrompt, toolInventory } = extras);
-          invokedToolNamesByTurn = placeByStoreIndex(extras.invokedToolNamesByTurn, alignment);
-        }
+      if (mainJsonlPath && usage.availability === "events-present") {
+        const extras = await buildAnalyzeModeExtras(usage.envelopes, mainJsonlPath);
+        ({ systemPrompt, toolInventory } = extras);
+        invokedToolNamesByTurn = placeByStoreIndex(extras.invokedToolNamesByTurn, usage.alignment);
       }
 
       return {
@@ -235,11 +217,12 @@ export class VscodeLogProvider implements LogProvider, SystemPromptTextReader, R
           sessionRow,
           turnRows,
           fileRows,
-          mainJsonlAvailability,
-          turnUsages,
+          mainJsonlAvailability: usage.availability,
+          turnUsages: usage.turnUsages,
           invokedToolNamesByTurn,
           systemPrompt,
           toolInventory,
+          subagentRuns: usage.attribution,
         }),
         providerId: PROVIDER_ID,
       };

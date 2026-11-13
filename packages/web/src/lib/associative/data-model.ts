@@ -18,6 +18,9 @@ export interface FieldDef {
   table: string;
   // undefined = this row has no value for the field (not listed, not selectable).
   value(row: unknown): string | undefined;
+  // A row that carries several values for the field (a turn's models);
+  // when set, a row matches a selection on any of them and `value` is unused.
+  values?(row: unknown): readonly string[];
   display?(value: string): string;
   // Orders values within the same state; default is by display label.
   compare?(a: string, b: string): number;

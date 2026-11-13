@@ -3,6 +3,7 @@
 import { describe, expect, it } from "vitest";
 import * as domain from "./index.js";
 import { sessionReplayComparisonSchema, sessionReplaySchema, type SessionReplay } from "./session-replay.js";
+import type { TokenCount } from "./token-count.js";
 
 // Phase 14 step 14.1 (docs/plans/analyze-session-replay.md §8): what a
 // replay returns. The measured side stays beside the simulated one, and
@@ -64,6 +65,14 @@ describe("sessionReplaySchema", () => {
   it("can't replay more turns or requests than the session has", () => {
     expect(sessionReplaySchema.safeParse(replay({ coverage: { ...replay().coverage, replayedTurns: 3 } })).success).toBe(false);
     expect(sessionReplaySchema.safeParse(replay({ coverage: { ...replay().coverage, replayedRequests: 3 } })).success).toBe(false);
+  });
+
+  it("accepts the subagent runs outside the replay, known or unknown, and omits them when absent (step 10.19)", () => {
+    const withRuns = (costAiCredits: TokenCount) => replay({ coverage: { ...replay().coverage, subagentRuns: { runs: 2, costAiCredits } } });
+    expect(sessionReplaySchema.safeParse(withRuns({ known: true, value: 54.65 })).success).toBe(true);
+    expect(sessionReplaySchema.safeParse(withRuns({ known: false, reason: "a run log is missing" })).success).toBe(true);
+    expect(sessionReplaySchema.parse(replay()).coverage.subagentRuns).toBeUndefined();
+    expect(sessionReplaySchema.safeParse(replay({ coverage: { ...replay().coverage, subagentRuns: { runs: -1, costAiCredits: { known: true, value: 1 } } } })).success).toBe(false);
   });
 
   it("passes the self-check only when every request matched", () => {

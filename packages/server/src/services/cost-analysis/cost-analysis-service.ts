@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 import {
   comparisonPeriod,
+  splitByModel,
   type CostComparison,
   type CostSeries,
   type CostVariance,
@@ -145,7 +146,8 @@ export class CostAnalysisService implements CostAnalysisQueries {
       ...(request.since ? { since: request.since } : {}),
       ...(request.until ? { until: request.until } : {}),
       providers: cube?.providers ?? [],
-      changes: new PriceChangeDetector().list({ versions: this.versions(), turns: cube?.rows ?? [] }, filter),
+      // Step 10.19: per cost line's model, so a subagent run's gap is its own model's.
+      changes: new PriceChangeDetector().list({ versions: this.versions(), turns: (cube?.rows ?? []).flatMap(splitByModel) }, filter),
     };
   }
 

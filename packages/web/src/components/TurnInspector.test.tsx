@@ -1,10 +1,11 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { TurnInspectorDetail } from "@agent-cost-analyzer/domain";
 import { TurnInspector } from "./TurnInspector.js";
+import { makeRun, makeTurnWithRuns } from "../test-support/subagent-fixture.js";
 
 const TWO_ROUND_DETAIL: TurnInspectorDetail = {
   turnIndex: 3,
@@ -394,5 +395,36 @@ describe("TurnInspector", () => {
 
     expect(await screen.findByText("Request · round 0")).toBeInTheDocument();
     expect(fetchStub).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe("TurnInspector subagent note (D4: text only, no button)", () => {
+  const props = { sessionId: "session-1", turnIndex: 2, usageDataAvailable: false, onClose: () => {} };
+
+  it("has no note without runs", () => {
+    render(<TurnInspector {...props} />);
+    expect(screen.queryByRole("note")).not.toBeInTheDocument();
+  });
+
+  it("says how many runs are left out and where their credits are, with no button added", () => {
+    const turn = makeTurnWithRuns([makeRun(), makeRun({ id: "call_2", costAiCredits: { known: true, value: 11.95 } })]);
+    render(<TurnInspector {...props} turn={turn} />);
+
+    const note = screen.getByRole("note");
+    expect(note).toHaveTextContent("2 subagent runs are not shown here.");
+    expect(note).toHaveTextContent("Their 42.06 AI Credits are in this turn's total. The rounds below are the main agent's.");
+    expect(within(note).queryByRole("button")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /see subagents/i })).not.toBeInTheDocument();
+  });
+
+  it("does not say 'matched by time' in the note", () => {
+    render(<TurnInspector {...props} turn={makeTurnWithRuns([makeRun({ attribution: "timestamp" })])} />);
+    expect(screen.getByRole("note")).not.toHaveTextContent(/matched by time/);
+  });
+
+  it("renders hostile text only as text", () => {
+    const turn = makeTurnWithRuns([makeRun({ agentName: "<img src=x onerror=alert(1)>" })]);
+    const { container } = render(<TurnInspector {...props} turn={turn} />);
+    expect(container.querySelector("img")).toBeNull();
   });
 });
