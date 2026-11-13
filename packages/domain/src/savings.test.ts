@@ -106,6 +106,13 @@ describe("savingsOpportunitySchema", () => {
     expect(() => savingsOpportunitySchema.parse(opportunity({ evidence: { sessions: 1, requests: null, tokens: null, occurrences: null } }))).not.toThrow();
   });
 
+  // SR16, D12: unused-tools tokens come from the local tokenizer, so the
+  // "estimate" label can't be dropped.
+  it("rejects unused-tools tokens that are not marked as an estimate", () => {
+    expect(() => savingsOpportunitySchema.parse(opportunity({ evidence: { sessions: 1, requests: 40, tokens: { known: true, value: 1200 }, occurrences: null } }))).toThrow(/estimate/);
+    expect(() => savingsOpportunitySchema.parse(opportunity({ evidence: { sessions: 1, requests: 40, tokens: { known: true, value: 1200, estimated: false }, occurrences: null } }))).toThrow(/estimate/);
+  });
+
   it("rejects an unknown kind", () => {
     expect(() => savingsOpportunitySchema.parse({ ...opportunity(), kind: "other" })).toThrow();
   });
@@ -130,6 +137,13 @@ describe("savingsOpportunitySchema", () => {
 
     it("is rejected on any other kind", () => {
       expect(() => savingsOpportunitySchema.parse(opportunity({ simulation }))).toThrow(/simulation/);
+    });
+
+    // SR16, plan §7: O6 always carries assumption A1 and the self-check.
+    it("is required on a cheaper-model opportunity, with assumption A1 and at least one request compared", () => {
+      expect(() => savingsOpportunitySchema.parse(cheaper())).toThrow(/simulation/);
+      expect(() => savingsOpportunitySchema.parse(cheaper({ simulation: { ...simulation, assumptions: [] } }))).toThrow(/A1/);
+      expect(() => savingsOpportunitySchema.parse(cheaper({ simulation: { ...simulation, selfCheck: { requests: 0, matching: 0, passed: false } } }))).toThrow();
     });
 
     it("rejects more matching requests than requests, or more replayed turns than turns", () => {
@@ -170,7 +184,13 @@ describe("savingsReportSchema", () => {
 
   it("keeps simulated opportunities apart from the ranked list", () => {
     const sim = simulated as SavingsOpportunity["perWeek"];
-    const cheaper = opportunity({ key: "cheaper-model:s1", kind: "cheaper-model", perWeek: sim, perWindow: sim });
+    const simulation = {
+      model: "claude-haiku-5.5",
+      selfCheck: { requests: 20, matching: 19, passed: false },
+      coverage: { turns: 10, replayedTurns: 9, requests: 20, replayedRequests: 18 },
+      assumptions: [{ id: "A1", text: "Same conversation." }],
+    };
+    const cheaper = opportunity({ key: "cheaper-model:s1", kind: "cheaper-model", perWeek: sim, perWindow: sim, simulation });
     expect(() => savingsReportSchema.parse(report({ simulated: [cheaper] }))).not.toThrow();
     expect(() => savingsReportSchema.parse(report({ opportunities: [cheaper] }))).toThrow(/ranked/);
     expect(() => savingsReportSchema.parse(report({ simulated: [opportunity()] }))).toThrow(/simulated/);

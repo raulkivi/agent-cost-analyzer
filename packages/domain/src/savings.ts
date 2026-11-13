@@ -88,13 +88,16 @@ export const savingsSimulationSchema = z
   .object({
     model: z.string().min(1).max(MAX_SAVINGS_NAME_LENGTH),
     selfCheck: z
-      .object({ requests: savingsCount, matching: savingsCount, passed: z.boolean() })
+      // At least one request compared: a self-check of none would read as 0%.
+      .object({ requests: savingsCount.min(1), matching: savingsCount, passed: z.boolean() })
       .refine((check) => check.matching <= check.requests, { message: "matching cannot exceed requests", path: ["matching"] }),
     coverage: z
       .object({ turns: savingsCount, replayedTurns: savingsCount, requests: savingsCount, replayedRequests: savingsCount })
       .refine((coverage) => coverage.replayedTurns <= coverage.turns && coverage.replayedRequests <= coverage.requests, { message: "a replay cannot cover more than there is", path: ["replayedTurns"] }),
     assumptions: z.array(z.object({ id: z.string().min(1), text: z.string().min(1) })),
-  });
+  })
+  // §7: O6 always shows assumption A1 (same conversation, same token counts).
+  .refine((simulation) => simulation.assumptions.some((assumption) => assumption.id === "A1"), { message: "a simulation carries assumption A1", path: ["assumptions"] });
 
 export const savingsOpportunitySchema = z
   .object({
@@ -116,6 +119,16 @@ export const savingsOpportunitySchema = z
   .superRefine((opportunity, ctx) => {
     if (opportunity.simulation !== undefined && opportunity.kind !== "cheaper-model") {
       ctx.addIssue({ code: "custom", path: ["simulation"], message: "only a cheaper-model opportunity carries a simulation" });
+    }
+    // SR16: the labels can't be dropped. A cheaper-model saving shows its
+    // self-check and A1 (§7); unused-tools tokens are a local-tokenizer
+    // estimate (D12).
+    if (opportunity.kind === "cheaper-model" && opportunity.simulation === undefined) {
+      ctx.addIssue({ code: "custom", path: ["simulation"], message: "a cheaper-model opportunity carries its simulation" });
+    }
+    const tokens = opportunity.evidence.tokens;
+    if (opportunity.kind === "unused-tools" && tokens?.known === true && tokens.estimated !== true) {
+      ctx.addIssue({ code: "custom", path: ["evidence", "tokens"], message: "unused-tools tokens are an estimate" });
     }
     // D3: a Simulated saving is never ranked with the priced ones, so the
     // kind and the basis must agree.
