@@ -3,15 +3,18 @@
 // (<storagePath>/settings), plus a 150-turn session (check 1.5), a system
 // prompt (1.11) and the Copilot CLI event logs. Node runs this directly
 // (type stripping), like the other fixture modules.
-import { cpSync, mkdirSync, renameSync, writeFileSync } from "node:fs";
+import { cpSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { pathToFileURL } from "node:url";
 import { COPILOT_CLI_FIXTURE_HOME, COPILOT_CLI_FIXTURE_SESSION_IDS, writeCopilotCliAgentHostStores } from "../../../server/src/test-support/copilot-cli-fixtures.ts";
+import { USAGE_LOG_USER_MESSAGE, USAGE_MAIN_JSONL, USAGE_SESSION_ID } from "../../../server/src/test-support/copilot-session-store.ts";
 import { createIntegrationFixture, USER_SETTINGS } from "../integration-fixture.mts";
 
 export const LARGE_SESSION_TURNS = 150;
 export const LARGE_SESSION_ID = "00000000-0000-4000-9000-000000000150";
+// A session of a window with no folder open (step 10.18): its debug log lives in the global storage.
+export const EMPTY_WINDOW_SESSION_ID = "00000000-0000-4000-a000-0000000000e1";
 // Text the System prompt tab must show for the usage session.
 export const SYSTEM_PROMPT_MARKER = "UI-AUTOMATION-SYSTEM-PROMPT-MARKER";
 const SYSTEM_PROMPT = [
@@ -38,7 +41,7 @@ export interface UiFixture {
   largeSessionId: string;
   largeSessionTurns: number;
   systemPromptMarker: string;
-  // Sessions the Sessions view must list (Copilot Chat plus Agent Host): the isolation guard (F5).
+  // Sessions the Sessions view must list (Copilot Chat, empty-window and Agent Host): the isolation guard (F5).
   listedSessionCount: number;
 }
 
@@ -59,7 +62,8 @@ export function createUiFixture(rootDir: string, options: UiFixtureOptions = {})
   // the fixture's own root keeps the debug logs.
   writeFileSync(path.join(userDir, "workspaceStorage", "integration-workspace", "workspace.json"), JSON.stringify({ folder: pathToFileURL(rootDir).href }));
   seedLargeSession(path.join(userDir, "globalStorage", "github.copilot-chat", "session-store.db"), now);
-  writeCopilotCliAgentHostStores(userDataDir);
+  seedEmptyWindowSession(userDir, now);
+  writeCopilotCliAgentHostStores(userDataDir, now);
   // A copy: once enabled, the Copilot Chat built in to VS Code writes its own
   // logs into COPILOT_HOME, which must not be the repo's fixture directory.
   const copilotHome = path.join(rootDir, "copilot-home");
@@ -75,7 +79,7 @@ export function createUiFixture(rootDir: string, options: UiFixtureOptions = {})
     largeSessionId: LARGE_SESSION_ID,
     largeSessionTurns: LARGE_SESSION_TURNS,
     systemPromptMarker: SYSTEM_PROMPT_MARKER,
-    listedSessionCount: base.sessionCount + 1 + Object.keys(COPILOT_CLI_FIXTURE_SESSION_IDS).length,
+    listedSessionCount: base.sessionCount + 2 + Object.keys(COPILOT_CLI_FIXTURE_SESSION_IDS).length,
   };
 }
 
@@ -98,6 +102,25 @@ export function createFirstRunFixture(rootDir: string): FirstRunFixture {
   mkdirSync(path.join(userDataDir, "User"), { recursive: true });
   writeFileSync(path.join(userDataDir, "User", "settings.json"), `${JSON.stringify(userSettings, null, 2)}\n`);
   return { storagePath, userDataDir, userSettings };
+}
+
+// The usage log under another session id, in the global debug logs (no
+// workspace), with a store row of its own: it has AI Credits, like the usage
+// session, and starts two minutes before `now`.
+function seedEmptyWindowSession(userDir: string, now: Date): void {
+  const logDir = path.join(userDir, "globalStorage", "github.copilot-chat", "debug-logs", EMPTY_WINDOW_SESSION_ID);
+  mkdirSync(logDir, { recursive: true });
+  writeFileSync(path.join(logDir, "main.jsonl"), readFileSync(USAGE_MAIN_JSONL, "utf8").replaceAll(USAGE_SESSION_ID, EMPTY_WINDOW_SESSION_ID));
+  const startedAt = new Date(now.getTime() - 120_000).toISOString();
+  const db = new DatabaseSync(path.join(userDir, "globalStorage", "github.copilot-chat", "session-store.db"));
+  try {
+    db.prepare(
+      "INSERT INTO sessions (id, cwd, repository, branch, host_type, summary, agent_name, agent_description, created_at, updated_at) VALUES (?, NULL, NULL, NULL, 'desktop', 'Empty window session', 'GitHub Copilot Chat', 'chat', ?, ?)",
+    ).run(EMPTY_WINDOW_SESSION_ID, startedAt, startedAt);
+    db.prepare("INSERT INTO turns (session_id, turn_index, user_message, assistant_response, timestamp) VALUES (?, 0, ?, 'hello', ?)").run(EMPTY_WINDOW_SESSION_ID, USAGE_LOG_USER_MESSAGE, startedAt);
+  } finally {
+    db.close();
+  }
 }
 
 function seedLargeSession(dbPath: string, now: Date): void {

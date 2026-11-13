@@ -4,6 +4,7 @@ import type { ConfigStatus, Session } from "@agent-cost-analyzer/domain";
 import { describe, expect, it, vi } from "vitest";
 import { upperCaseTranslate } from "../l10n/upper-case-translate.js";
 import { COMMAND_IDS } from "./command-ids.js";
+import { ALLOWANCE_SETTING_IDS } from "../settings/allowance-settings.js";
 import { ExtensionCommands } from "./extension-commands.js";
 import type { SessionPickItem } from "./session-pick-items.js";
 
@@ -343,6 +344,30 @@ describe("ExtensionCommands", () => {
       await commands.fixSetting({ nothing: true });
 
       expect(hostCommands.openSetting).toHaveBeenCalledWith(LOGGING_SETTING);
+    });
+  });
+
+  // Step 10.21 (MA7): the Settings editor opens on the allowance; the command
+  // takes no argument and has no setter, so it can't write the setting.
+  describe("setMonthlyAllowance", () => {
+    it("opens the Settings editor on the allowance setting and changes nothing", async () => {
+      const { commands, hostCommands, panel, sidebar, sessionSource } = setup();
+
+      await commands.setMonthlyAllowance();
+
+      expect(hostCommands.openSetting.mock.calls).toEqual([[ALLOWANCE_SETTING_IDS.aiCredits]]);
+      expect(panel.open).not.toHaveBeenCalled();
+      expect(panel.postWhenReady).not.toHaveBeenCalled();
+      expect(sidebar.refresh).not.toHaveBeenCalled();
+      expect(sessionSource.list).not.toHaveBeenCalled();
+    });
+
+    it("is registered under its contributed id, and runs with no argument", async () => {
+      const { commands, hostCommands } = setup();
+
+      await commands.handlers()[COMMAND_IDS.setMonthlyAllowance]!();
+
+      expect(hostCommands.openSetting).toHaveBeenCalledWith(ALLOWANCE_SETTING_IDS.aiCredits);
     });
   });
 

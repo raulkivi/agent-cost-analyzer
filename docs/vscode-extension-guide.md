@@ -1,6 +1,6 @@
 # AI Credits Analyzer: extension guide
 
-**Last changed:** 2026-11-11 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-13 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 AI Credits Analyzer is a VS Code extension that shows where your GitHub
 Copilot Chat tokens and AI Credits go. It reads the logs Copilot Chat
@@ -295,6 +295,12 @@ when you select **Refresh**. It doesn't watch files in the background, so
 select **Refresh** after a chat to see new sessions. Refresh also finds
 workspaces you opened for the first time after VS Code started.
 
+When the monthly allowance is set, the first row reads **This month**
+with the state, for example `812.40 of 1,000 AI Credits · near limit`, and
+**· 12 days left** beside it. VS Code's own filter hides that row while
+you filter the view; the status-bar gauge stays visible. See
+[Monthly allowance gauge](#monthly-allowance-gauge).
+
 When there are no sessions with token data yet, the view says so and
 offers **Open Learn mode** and **Get started**.
 
@@ -385,6 +391,53 @@ outside a repository, it shows every repository's total.
 The item updates on each refresh, and when you add or remove a workspace
 folder, not on a timer, so after midnight it changes on the next refresh.
 
+#### Monthly allowance gauge
+
+Set `aiCreditsAnalyzer.monthlyAllowance.aiCredits` to your plan's monthly
+AI Credits allowance. The **Set Monthly AI Credits Allowance** command opens
+that setting in the Settings editor and changes nothing. Until the setting
+is set, the gauge is hidden.
+
+A second status-bar item, placed after today's, shows the month to date
+against the allowance:
+
+| State | Status bar text | Background |
+|---|---|---|
+| Normal | `312.40 of 1,000 AI Credits` | none |
+| Near the limit (from `warnAtPercent`, 80 by default) | `812.40 of 1,000 AI Credits · near limit` | warning |
+| Over the allowance (100 % or more) | `1,042.10 of 1,000 AI Credits · over` | error |
+| Some sessions have no cost data | `at least 312.40 of 1,000 AI Credits` (also with `· near limit` or `· over`) | as above |
+| No session this month has cost data | `AI Credits this month: unknown` | none |
+| No sessions this month | `No sessions this month` | none |
+
+- The figure comes first, so a narrow status bar keeps it. The level is
+  in the words and the icon as well as the background colour.
+- The percentage is in the tooltip and the screen-reader label, not in the
+  bar.
+- The tooltip gives the percentage, the AI Credits that remain ("up to",
+  since the figure can be low), the days left (today counts), the period
+  start, how many of the month's sessions have cost data and the oldest
+  session counted.
+- The period starts on `resetDay` (1 by default, 1 to 28) in your local
+  time zone. Set it to match your GitHub billing page.
+- The gauge never shows a notification, changes no setting and makes no
+  network request. It doesn't project the month's total or show a run
+  rate.
+- Select the item to open the Sessions view.
+
+The gauge is a lower bound on what is recorded here, not your bill. It
+doesn't see:
+
+- Subagent spend of classic Copilot Chat runs, until that is counted
+  (the figure is low by that spend).
+- Sessions whose logs Copilot has already pruned. Copilot keeps the last
+  `maxRetainedSessionLogs` logs; the tooltip names the oldest session
+  counted.
+- Spend made elsewhere: github.com chat, the cloud coding agent, other
+  machines, another VS Code user-data folder.
+- Attribution by start day: a session that starts on the last day of a
+  period and runs into the next counts wholly in the first.
+
 ### Selection sync
 
 Selecting a session in the Sessions view, or running **Open Session**,
@@ -425,6 +478,7 @@ nothing; with no sessions you get a short message instead.
 | Open Get Started Walkthrough | `aiCreditsAnalyzer.openWalkthrough` | Opens the Get Started walkthrough |
 | Group Sessions by Repository | `aiCreditsAnalyzer.groupSessionsByRepository` | Groups the Sessions view by repository |
 | Group Sessions by Day | `aiCreditsAnalyzer.groupSessionsByDay` | Groups the Sessions view by day (the default) |
+| Set Monthly AI Credits Allowance | `aiCreditsAnalyzer.setMonthlyAllowance` | Opens the Settings editor on `aiCreditsAnalyzer.monthlyAllowance.aiCredits`; changes nothing |
 
 **Fix Setting** opens only the Copilot Chat logging settings the setup
 check judges and `aiCreditsAnalyzer.mcp.enabled`. Any other setting id is
@@ -435,10 +489,15 @@ refused.
 | Setting | Default | What it does |
 |---|---|---|
 | `aiCreditsAnalyzer.mcp.enabled` | `false` | Offers Copilot Chat a read-only MCP server over your Copilot Chat sessions. See [The MCP server](#the-mcp-server-for-copilot-agent-mode). |
+| `aiCreditsAnalyzer.monthlyAllowance.aiCredits` | not set | Your plan's monthly allowance in AI Credits. Empty or 0 turns the monthly gauge off. User settings only. |
+| `aiCreditsAnalyzer.monthlyAllowance.resetDay` | `1` | Day of the month (1 to 28) your billing period starts, in your local time zone. User settings only. |
+| `aiCreditsAnalyzer.monthlyAllowance.warnAtPercent` | `80` | Percentage of the allowance at which the gauge warns. User settings only. |
 
-That is the extension's only setting. It reads, but never writes, the
-Copilot Chat settings listed under
-[Fix buttons](#fix-buttons-and-what-they-change).
+The three monthly allowance settings are user-scope only: a workspace's
+`.vscode/settings.json` cannot set them. The extension reads, but never
+writes, them and the Copilot Chat settings listed under
+[Fix buttons](#fix-buttons-and-what-they-change). The gauge is described
+under [Monthly allowance gauge](#monthly-allowance-gauge).
 
 ## The MCP server for Copilot agent mode
 

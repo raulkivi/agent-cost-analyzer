@@ -35,6 +35,18 @@ describe("createVscodeHostCommands (vscode-extension.md G8)", () => {
     expect(api.commands.executeCommand).toHaveBeenCalledWith("workbench.action.openSettings", `@id:${COPILOT_SETTING}`);
   });
 
+  // Step 10.21 (MA7): the allowance is the extension's own setting, not a Copilot one.
+  it("opens the Settings editor on the allowance setting by its exact @id", async () => {
+    const { api, store } = fakeVscode();
+
+    await createVscodeHostCommands(api, store).openSetting("aiCreditsAnalyzer.monthlyAllowance.aiCredits");
+
+    expect(api.commands.executeCommand).toHaveBeenCalledWith(
+      "workbench.action.openSettings",
+      "@id:aiCreditsAnalyzer.monthlyAllowance.aiCredits",
+    );
+  });
+
   it("opens the Settings editor on an exact @id match for a registered Copilot setting even when Copilot Chat is missing", async () => {
     const { api, store } = fakeVscode({ copilotChatInstalled: false });
 

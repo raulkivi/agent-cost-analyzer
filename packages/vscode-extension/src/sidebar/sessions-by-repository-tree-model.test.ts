@@ -3,7 +3,11 @@
 import type { RepositoryAttribution, Session } from "@agent-cost-analyzer/domain";
 import { describe, expect, it } from "vitest";
 import { upperCaseTranslate as T } from "../l10n/upper-case-translate.js";
+import type { Translate } from "../l10n/localize.js";
+import type { AllowanceSettings } from "../settings/allowance-settings.js";
+import { buildMonthlyAllowance, type MonthlyAllowanceView } from "../status-bar/monthly-allowance.js";
 import { buildSessionsByRepositoryTree, type RepositoryOf } from "./sessions-by-repository-tree-model.js";
+import { withAllowanceRow } from "./sessions-tree-model.js";
 
 // Phase 15 step 15.14 (plan §11.9, board 7): the Sessions tree grouped by
 // the repository each session's folder belongs to.
@@ -23,6 +27,18 @@ function session(overrides: Partial<Session> & { id: string }): Session {
 }
 
 const NOW = new Date("2026-10-24T15:00:00Z");
+
+const ALLOWANCE_SETTINGS: AllowanceSettings = { aiCredits: 100, resetDay: 1, warnAtPercent: 80 };
+
+function allowanceOf(spent: number | null, t?: Translate): MonthlyAllowanceView {
+  return buildMonthlyAllowance({
+    sessions: spent === null ? [] : [session({ id: "portal-spent", startedAt: "2026-10-05T09:00:00Z", costAiCredits: { known: true, value: spent } })],
+    now: NOW,
+    timeZone: "UTC",
+    settings: ALLOWANCE_SETTINGS,
+    t,
+  });
+}
 
 function remote(key: string): RepositoryAttribution {
   return { attributed: true, repository: { key, source: "git-remote", rootPath: `/home/dev/src/${key.split("/").at(-1)}` } };
@@ -175,5 +191,61 @@ describe("buildSessionsByRepositoryTree", () => {
     expect(tree[0]?.children[0]?.description).toBe("1.00 · TODAY 14:02");
     expect(tree[0]?.children[0]?.label).toBe("portal-1");
     expect(tree[1]?.description).toBe("1 UNKNOWN");
+  });
+});
+
+describe("the monthly allowance row (step 10.21 MA6)", () => {
+  const one = [session({ id: "portal-1" })];
+
+  it("is the first node, a message row: the state as the label, the days left as the muted description", () => {
+    const tree = withAllowanceRow(buildSessionsByRepositoryTree(one, repositoryOf, NOW, "UTC"), allowanceOf(85));
+
+    expect(tree[0]).toMatchObject({
+      kind: "message",
+      id: "monthly-allowance",
+      label: "This month: 85.00 of 100 AI Credits · near limit",
+      description: "· 8 days left",
+      icon: "warning",
+    });
+    expect(tree[0]).toHaveProperty("tooltip", expect.stringContaining("Monthly allowance: 100 AI Credits"));
+    expect(tree[0]).toHaveProperty("ariaLabel", expect.stringMatching(/^Near limit\. /));
+    expect(tree[1]?.kind).toBe("group");
+  });
+
+  it("has the level in the words and an icon per level, never colour alone", () => {
+    const icons = [10, 85, 120].map((spent) => {
+      const [row] = withAllowanceRow(buildSessionsByRepositoryTree(one, repositoryOf, NOW, "UTC"), allowanceOf(spent));
+      return row?.kind === "message" ? [row.icon, row.label] : [];
+    });
+
+    expect(icons).toEqual([
+      ["dashboard", "This month: 10.00 of 100 AI Credits"],
+      ["warning", "This month: 85.00 of 100 AI Credits · near limit"],
+      ["error", "This month: 120.00 of 100 AI Credits · over"],
+    ]);
+  });
+
+  it("is absent when the allowance is hidden", () => {
+    expect(withAllowanceRow(buildSessionsByRepositoryTree(one, repositoryOf, NOW, "UTC"), { level: "hidden" }).every((node) => node.kind === "group")).toBe(true);
+    expect(withAllowanceRow(buildSessionsByRepositoryTree(one, repositoryOf, NOW, "UTC"), undefined)).toEqual(withAllowanceRow(buildSessionsByRepositoryTree(one, repositoryOf, NOW, "UTC"), { level: "hidden" }));
+  });
+
+  it("stays alone above the empty-state message when there are no sessions", () => {
+    const tree = withAllowanceRow(buildSessionsByRepositoryTree([], repositoryOf, NOW, "UTC"), allowanceOf(null));
+
+    expect(tree.every((node) => node.kind === "message")).toBe(true);
+    expect(tree[0]).toMatchObject({ id: "monthly-allowance", label: "This month: no sessions", description: "· 8 days left" });
+    expect(tree[1]).toMatchObject({ label: "No Copilot Chat sessions with token data yet." });
+  });
+
+  it("leaves the tree empty for no sessions and a hidden allowance", () => {
+    expect(withAllowanceRow(buildSessionsByRepositoryTree([], repositoryOf, NOW, "UTC"), { level: "hidden" })).toEqual([]);
+  });
+
+  it("translates its label, description, tooltip and screen-reader label", () => {
+    const [row] = withAllowanceRow(buildSessionsByRepositoryTree(one, repositoryOf, NOW, "UTC"), allowanceOf(85, T), T);
+
+    expect(row).toMatchObject({ label: "THIS MONTH: 85.00 OF 100 AI CREDITS · NEAR LIMIT", description: "· 8 DAYS LEFT" });
+    expect(row).toHaveProperty("ariaLabel", expect.stringMatching(/^NEAR LIMIT\. /));
   });
 });

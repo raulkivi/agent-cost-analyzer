@@ -10,6 +10,7 @@
   "command.copyAdviceBundle.title": "Copy Advice Bundle",
   "command.fixSetting.title": "Fix Setting",
   "command.openLearnMode.title": "Open Learn Mode",
+  "command.setMonthlyAllowance.title": "Set Monthly AI Credits Allowance",
   "viewsContainer.title": "AI Credits Analyzer",
   "view.sessions.name": "Sessions",
   "view.learn.name": "Learn",
@@ -39,5 +40,8 @@
   "configuration.title": "AI Credits Analyzer",
   "capabilities.untrustedWorkspaces.description": "In Restricted Mode, an untrusted workspace's settings can't turn on the MCP server.",
   "configuration.mcp.enabled.markdownDescription": "Offer Copilot Chat a read-only MCP server that answers questions about your Copilot Chat sessions from your local logs.\n\n**When on, read-only and redacted Copilot Chat session data (costs, tool calls, findings, turn text) is sent to whichever model the chat uses.** Secrets found in that text are redacted first, and the server never writes, runs commands or reaches the network. Off by default; in a workspace you haven't trusted, that workspace's settings can't turn it on.",
+  "configuration.monthlyAllowance.aiCredits.markdownDescription": "Your plan's monthly allowance, in **AI Credits** (not premium requests or dollars). Leave empty or 0 to turn the monthly gauge off. Read from your user settings only; a workspace cannot set it. The extension never fetches your plan, so type the number from your GitHub billing page.",
+  "configuration.monthlyAllowance.resetDay.markdownDescription": "Day of the month (1 to 28) your billing period starts, judged in your local time zone. Set it to match your GitHub billing page. The monthly gauge counts AI Credits from this day.",
+  "configuration.monthlyAllowance.warnAtPercent.markdownDescription": "Percentage (1 to 100) of the monthly allowance, in **AI Credits**, at which the gauge warns that you are near the limit. It reads \"over\" at 100 percent.",
   "mcpServerDefinitionProvider.label": "AI Credits Analyzer"
 }

@@ -3,7 +3,10 @@
 import type { Session } from "@agent-cost-analyzer/domain";
 import { describe, expect, it } from "vitest";
 import { upperCaseTranslate as T } from "../l10n/upper-case-translate.js";
-import { buildSessionsTree, sessionsLoadErrorTree } from "./sessions-tree-model.js";
+import type { Translate } from "../l10n/localize.js";
+import type { AllowanceSettings } from "../settings/allowance-settings.js";
+import { buildMonthlyAllowance, type MonthlyAllowanceView } from "../status-bar/monthly-allowance.js";
+import { buildSessionsTree, sessionsLoadErrorTree, withAllowanceRow } from "./sessions-tree-model.js";
 
 function session(overrides: Partial<Session> & { id: string }): Session {
   return {
@@ -19,6 +22,18 @@ function session(overrides: Partial<Session> & { id: string }): Session {
 }
 
 const NOW = new Date("2026-10-24T15:00:00Z");
+
+const ALLOWANCE_SETTINGS: AllowanceSettings = { aiCredits: 100, resetDay: 1, warnAtPercent: 80 };
+
+function allowanceOf(spent: number | null, t?: Translate): MonthlyAllowanceView {
+  return buildMonthlyAllowance({
+    sessions: spent === null ? [] : [session({ id: "portal-spent", startedAt: "2026-10-05T09:00:00Z", costAiCredits: { known: true, value: spent } })],
+    now: NOW,
+    timeZone: "UTC",
+    settings: ALLOWANCE_SETTINGS,
+    t,
+  });
+}
 
 describe("buildSessionsTree", () => {
   it("is empty for no sessions", () => {
@@ -314,5 +329,87 @@ describe("translation (vscode-extension.md §3.5 Localization)", () => {
         icon: "error",
       },
     ]);
+  });
+});
+
+describe("the monthly allowance row (step 10.21 MA6)", () => {
+  const one = [session({ id: "a", startedAt: "2026-10-24T09:00:00Z" })];
+
+  it("is the first node, a message row: the state as the label, the days left as the muted description", () => {
+    const tree = withAllowanceRow(buildSessionsTree(one, NOW, "UTC"), allowanceOf(85));
+
+    expect(tree[0]).toMatchObject({
+      kind: "message",
+      id: "monthly-allowance",
+      label: "This month: 85.00 of 100 AI Credits · near limit",
+      description: "· 8 days left",
+      icon: "warning",
+    });
+    expect(tree[0]).toHaveProperty("tooltip", expect.stringContaining("Monthly allowance: 100 AI Credits"));
+    expect(tree[0]).toHaveProperty("ariaLabel", expect.stringMatching(/^Near limit\. /));
+    expect(tree[1]?.kind).toBe("group");
+  });
+
+  it("has the level in the words and an icon per level, never colour alone", () => {
+    const icons = [10, 85, 120].map((spent) => {
+      const [row] = withAllowanceRow(buildSessionsTree(one, NOW, "UTC"), allowanceOf(spent));
+      return row?.kind === "message" ? [row.icon, row.label] : [];
+    });
+
+    expect(icons).toEqual([
+      ["dashboard", "This month: 10.00 of 100 AI Credits"],
+      ["warning", "This month: 85.00 of 100 AI Credits · near limit"],
+      ["error", "This month: 120.00 of 100 AI Credits · over"],
+    ]);
+  });
+
+  it("is absent when the allowance is hidden", () => {
+    expect(withAllowanceRow(buildSessionsTree(one, NOW, "UTC"), { level: "hidden" }).every((node) => node.kind === "group")).toBe(true);
+    expect(withAllowanceRow(buildSessionsTree(one, NOW, "UTC"), undefined)).toEqual(withAllowanceRow(buildSessionsTree(one, NOW, "UTC"), { level: "hidden" }));
+  });
+
+  it("stays alone above the empty-state message when there are no sessions", () => {
+    const tree = withAllowanceRow(buildSessionsTree([], NOW, "UTC"), allowanceOf(null));
+
+    expect(tree.every((node) => node.kind === "message")).toBe(true);
+    expect(tree[0]).toMatchObject({ id: "monthly-allowance", label: "This month: no sessions", description: "· 8 days left" });
+    expect(tree[1]).toMatchObject({ label: "No Copilot Chat sessions with token data yet." });
+  });
+
+  it("keeps the welcome content's links below the row as rows that run the same commands", () => {
+    const tree = withAllowanceRow(buildSessionsTree([], NOW, "UTC"), allowanceOf(null));
+    const rows = tree.slice(1).map((node) => (node.kind === "message" ? { label: node.label, command: node.command?.command } : undefined));
+
+    expect(rows).toEqual([
+      { label: "No Copilot Chat sessions with token data yet.", command: undefined },
+      { label: "While you wait, see how caching and AI Credits work with sample sessions.", command: undefined },
+      { label: "Open Learn mode", command: "aiCreditsAnalyzer.openLearnMode" },
+      { label: "Get started", command: "aiCreditsAnalyzer.openWalkthrough" },
+    ]);
+  });
+
+  it("leaves the tree empty for no sessions and a hidden allowance", () => {
+    expect(withAllowanceRow(buildSessionsTree([], NOW, "UTC"), { level: "hidden" })).toEqual([]);
+  });
+
+  it("translates its label, description, tooltip and screen-reader label", () => {
+    const [row] = withAllowanceRow(buildSessionsTree(one, NOW, "UTC"), allowanceOf(85, T), T);
+
+    expect(row).toMatchObject({ label: "THIS MONTH: 85.00 OF 100 AI CREDITS · NEAR LIMIT", description: "· 8 DAYS LEFT" });
+    expect(row).toHaveProperty("ariaLabel", expect.stringMatching(/^NEAR LIMIT\. /));
+  });
+});
+
+describe("sessionsLoadErrorTree with the monthly allowance row", () => {
+  it("puts the row first and keeps the error", () => {
+    const tree = withAllowanceRow(sessionsLoadErrorTree(), allowanceOf(85));
+
+    expect(tree.map((node) => node.kind)).toEqual(["message", "message"]);
+    expect(tree[0]).toMatchObject({ id: "monthly-allowance", icon: "warning" });
+    expect(tree[1]).toMatchObject({ icon: "error", label: "Couldn't read your Copilot Chat sessions" });
+  });
+
+  it("is unchanged when the allowance is hidden", () => {
+    expect(withAllowanceRow(sessionsLoadErrorTree(), { level: "hidden" })).toEqual(sessionsLoadErrorTree());
   });
 });

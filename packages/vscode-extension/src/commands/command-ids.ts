@@ -15,6 +15,8 @@ export const COMMAND_IDS = {
   // Step 15.14 (plan §11.9): the Sessions view's grouping toggle.
   groupSessionsByRepository: "aiCreditsAnalyzer.groupSessionsByRepository",
   groupSessionsByDay: "aiCreditsAnalyzer.groupSessionsByDay",
+  // Step 10.21 (plan §3.7): opens the allowance setting; writes nothing.
+  setMonthlyAllowance: "aiCreditsAnalyzer.setMonthlyAllowance",
 } as const;
 
 // The context key the toggle's menu entries read: "day" or "repository".
@@ -28,4 +30,5 @@ export const VIEW_IDS = {
 
 // VS Code registers `<view id>.focus` for every contributed view: it reveals
 // the view and opens its container.
+export const FOCUS_SESSIONS_VIEW_COMMAND = `${VIEW_IDS.sessions}.focus`;
 export const FOCUS_SETUP_VIEW_COMMAND = `${VIEW_IDS.setup}.focus`;

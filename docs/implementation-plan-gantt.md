@@ -1,6 +1,6 @@
 # Implementation plan — Gantt
 
-**Last changed:** 2026-11-12 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-13 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 Timeline of [implementation-plan.md](implementation-plan.md) phases. Percentages are step-based: done phases 100%, minus open owner reviews or manual checks; Phase 14 is 8 of 9 steps, with 14.8's docs written and in the owner's review. Dates are first-commit to merge dates from git history (as of 2026-11-07); not-started phases have no dates and are listed below the chart.
 
@@ -70,7 +70,7 @@ gantt
     10.17 Release UI gate (100%)           :done, p10d, after p10c, 1d
     10.18 Copilot empty-window sessions (100%) :done, p10e, 2026-11-11, 1d
     10.19 Classic subagent AI Credits (0%) :active, p10f, 2026-11-12, 1d
-    10.21 Monthly allowance gauge (0%)     :active, p10g, 2026-11-12, 1d
+    10.21 Monthly allowance gauge (100%)   :done, p10g, 2026-11-12, 2d
 
     section Simulation and replay
     13 Vendor-aware Learn simulation (95%) :done, p13, 2026-11-04, 4d
@@ -115,7 +115,7 @@ gantt
 ## Open items
 
 - Step 10.19 (classic subagent AI Credits, 0%): owner decisions D1-D15 accepted 2026-11-12, implementation started 2026-11-12; spike SA0 first. Plan: [classic-subagent-credits-implementation.md](plans/classic-subagent-credits-implementation.md). Step 10.20 (subagent tool calls in the audit) is a follow-up, not planned.
-- Step 10.21 (monthly allowance gauge, 0%): decisions D1-D10 accepted 2026-11-12, implementation started 2026-11-12; spike MA0 first. Plan: [monthly-allowance.md](plans/monthly-allowance.md).
+- Step 10.21 (monthly allowance gauge, 100%): done 2026-11-13 (MA0 to MA12, 14 of 14 tasks; exit criterion met, review in plan §14). Before release: the real-Copilot check of the gauge in a live window (release UI gate). MA13 (standalone app) is a later increment. The Sessions row is hidden while VS Code's filter is active (plan §3.8). Plan: [monthly-allowance.md](plans/monthly-allowance.md).
 - Phase 16 (savings report, 0%): decisions D1-D12 accepted 2026-11-12, implementation started 2026-11-12; spike SR0 first. Plan: [savings-report.md](plans/savings-report.md). No detail chart yet; add one when its tasks start landing.
 - Phase 14: steps 14.0-14.7 built; 14.8's docs written, the owner's review and the §13 exit criterion on real sessions open; the extension guide's replay screenshots open (User Guide's done). Step table: [analyze-session-replay.md](plans/analyze-session-replay.md) §12.
 - Phase 15: owner's review and exit criterion on real data.

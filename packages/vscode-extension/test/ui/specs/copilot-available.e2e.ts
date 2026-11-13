@@ -12,6 +12,8 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { browser, expect } from "@wdio/globals";
+import { INTERNAL_COMMAND_IDS } from "../../../src/diagnostics/test-hooks.js";
+import type { GroupNode, SessionsTreeNode } from "../../../src/sidebar/sessions-tree-model.js";
 import { AnalyzerPanel } from "../support/analyzer-panel.js";
 import { SidebarViews } from "../support/sidebar-views.js";
 import { COPILOT_FIXTURE_ENV, parseUiFixture } from "../support/ui-fixture-env.mts";
@@ -25,6 +27,17 @@ const LOGGING_SETTING = "github.copilot.chat.agentDebugLog.fileLogging.enabled";
 
 function statusItems(): Promise<string[]> {
   return browser.getWorkbench().then((workbench) => workbench.getStatusBar().getItems());
+}
+
+const TODAY_STATUS = /AI Credits today: ([\d.]+), (\d+) of (\d+) sessions? today (?:has|have) cost data/;
+
+// Today's sessions as the extension's own Sessions tree holds them: how many,
+// and the AI Credits of each one with cost data (an unknown one shows words).
+async function todaysSessions(): Promise<{ count: number; credits: number[] }> {
+  const tree = await host.hook<SessionsTreeNode[]>(INTERNAL_COMMAND_IDS.sessionsTree);
+  const today = tree.find((node): node is GroupNode => node.kind === "group" && node.label === "Today");
+  const descriptions = today?.children.map((session) => session.description) ?? [];
+  return { count: descriptions.length, credits: descriptions.filter((text) => /^\d+\.\d\d$/.test(text)).map(Number) };
 }
 
 suite("Copilot Chat installed, fixture sessions (checks 1.4, 1.2)", () => {
@@ -48,13 +61,30 @@ suite("Copilot Chat installed, fixture sessions (checks 1.4, 1.2)", () => {
     // A session without cost data says so, never a 0.
     expect(rows.filter((row) => row.includes("AI Credits unknown")).length).toBeGreaterThan(0);
 
-    const status = (await statusItems()).find((item) => item.includes("AI Credits today"))!;
-    const coverage = /AI Credits today: ([\d.]+), (\d+) of (\d+) sessions? today have cost data/.exec(status);
-    expect(coverage).not.toBeNull();
-    const [, total, known] = coverage!;
+    // The status bar counts exactly today's sessions with cost data, the ones
+    // the Sessions tree lists under Today: the usage session and, since step
+    // 10.21 MA9, the empty-window and Copilot CLI fixture sessions too.
+    let status = "";
+    let today = { count: 0, credits: [] as number[] };
+    try {
+      await browser.waitUntil(
+        async () => {
+          status = (await statusItems()).find((item) => item.includes("AI Credits today")) ?? "";
+          today = await todaysSessions();
+          const coverage = TODAY_STATUS.exec(status);
+          return coverage !== null && Number(coverage[2]) === today.credits.length && Number(coverage[3]) === today.count;
+        },
+        { timeout: 30_000, interval: 500 },
+      );
+    } catch {
+      throw new Error(`the status bar's coverage does not match today's sessions: "${status}", Today has ${JSON.stringify(today)}`);
+    }
+    const [, total, known] = TODAY_STATUS.exec(status)!;
     expect(Number(known)).toBeGreaterThanOrEqual(1);
-    // Only the usage session has cost data among today's sessions (the others have no turns' usage).
-    if (known === "1") expect(total).toBe(credits);
+    expect(today.credits).toContain(Number(credits));
+    // The sum of the known sessions' AI Credits; each row is rounded to cents.
+    const rowsSum = today.credits.reduce((sum, value) => sum + value, 0);
+    expect(Math.abs(Number(total) - rowsSum)).toBeLessThanOrEqual(0.005 * today.credits.length + 1e-9);
 
     await sidebar.select("sessions", fixture.usageSessionTitle);
     await browser.waitUntil(async () => (await (await browser.getWorkbench()).getAllWebviews()).length > 0, { timeout: 30_000 });

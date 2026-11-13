@@ -1,8 +1,10 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
 import { describe, expect, it, vi } from "vitest";
+import { ALLOWANCE_SETTING_IDS } from "../settings/allowance-settings.js";
 import {
   WATCHED_SETTING_IDS,
+  watchAllowanceChanges,
   watchConfigChanges,
   watchExtensionChanges,
   type ConfigurationChangeEvent,
@@ -87,6 +89,57 @@ describe("watchConfigChanges (vscode-extension.md §6 step 10.4)", () => {
     expect(() => workspace.change(WATCHED_SETTING_IDS[0])).not.toThrow();
     workspace.change(WATCHED_SETTING_IDS[0]);
     expect(notify).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe("watchAllowanceChanges (step 10.21 MA4)", () => {
+  it.each(Object.values(ALLOWANCE_SETTING_IDS))("notifies when %s changes", (settingId) => {
+    const workspace = new FakeWorkspace();
+    const notify = vi.fn();
+    watchAllowanceChanges(workspace, notify);
+
+    workspace.change(settingId);
+
+    expect(notify).toHaveBeenCalledTimes(1);
+  });
+
+  it("notifies once when several allowance settings change together", () => {
+    const workspace = new FakeWorkspace();
+    const notify = vi.fn();
+    watchAllowanceChanges(workspace, notify);
+
+    workspace.change(...Object.values(ALLOWANCE_SETTING_IDS));
+
+    expect(notify).toHaveBeenCalledTimes(1);
+  });
+
+  it("ignores other settings, and the Copilot config check ignores the allowance ones", () => {
+    const workspace = new FakeWorkspace();
+    const allowance = vi.fn();
+    const config = vi.fn();
+    watchAllowanceChanges(workspace, allowance);
+    watchConfigChanges(workspace, config);
+
+    workspace.change("editor.fontSize", WATCHED_SETTING_IDS[0]);
+    expect(allowance).not.toHaveBeenCalled();
+    workspace.change(ALLOWANCE_SETTING_IDS.aiCredits);
+
+    expect(allowance).toHaveBeenCalledTimes(1);
+    expect(config).toHaveBeenCalledTimes(1);
+  });
+
+  it("stops once disposed and keeps listening after notify throws", () => {
+    const workspace = new FakeWorkspace();
+    const notify = vi.fn(() => {
+      throw new Error("gone");
+    });
+    const subscription = watchAllowanceChanges(workspace, notify);
+
+    expect(() => workspace.change(ALLOWANCE_SETTING_IDS.resetDay)).not.toThrow();
+    workspace.change(ALLOWANCE_SETTING_IDS.resetDay);
+    expect(notify).toHaveBeenCalledTimes(2);
+    subscription.dispose();
+    expect(workspace.listeners.size).toBe(0);
   });
 });
 
