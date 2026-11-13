@@ -610,6 +610,13 @@ review rejections.
   owner: (a) no app or panel UI shows the subagent runs a replay left out,
   though the 0.12.0 changelog implies it; (b) the extension README says 18
   Learn sessions, the extension guide 17 Copilot scenarios.
+- 2026-11-13: 1.6e (E6 19.6 s, E8 15.1 s; real context menu under Xvfb)
+  and 1.6b (E10 21.6 s, trim `1,19`; E1 31.6 s, trim `3,19`) merged. E1
+  lacks the walkthrough: enabling Copilot Chat with `enableAll` in the
+  demo config drops our walkthrough from VS Code's registry; and `--spec`
+  ran a scene in both launches. Both go to follow-up 1.6b2. All free
+  scenes re-run on the merged branch by the main session and checked in
+  frames.
 - 2026-11-13: 1.6c (E3, E4), 1.6d (E5, E7) and 1.7 (E2, E9, proven at
   cap 0 up to the send) merged, first review. All three hit the same
   driver bugs, fixed by the main session (74f0698): the overlay's
