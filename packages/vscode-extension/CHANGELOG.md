@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.12.0] - 2026-11-13
+
 ### Added
 - **Savings view in the panel.** **Savings**, after **Dashboard** in the panel's view switch, ranks changes
   that would cost less over your GitHub Copilot sessions: tools loaded but never used, cache lost after an
