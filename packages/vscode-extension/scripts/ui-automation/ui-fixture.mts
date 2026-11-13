@@ -70,7 +70,7 @@ export interface UiFixture {
   largeSessionTurns: number;
   systemPromptMarker: string;
   // Phase 16 SR13: what the savings report finds in the Copilot sessions
-  // (D10). Both sessions start 2 days before `now`, inside the default
+  // (D10). Both sessions start within 30 minutes before `now`, inside the default
   // 30-day window and after the price book's first prices.
   savings: {
     // A local session loading an MCP server (`mcp_acmedocs_*`) no turn calls.
@@ -112,13 +112,14 @@ export function createUiFixture(rootDir: string, options: UiFixtureOptions = {})
   const copilotHome = path.join(rootDir, "copilot-home");
   cpSync(COPILOT_CLI_FIXTURE_HOME, copilotHome, { recursive: true, filter: (source) => path.basename(source) !== "logs" });
 
-  const savingsStart = new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000);
+  // Today, like the other sessions: the monthly allowance spec expects the month's and today's cost to agree.
+  const savingsStart = new Date(now.getTime() - 30 * 60 * 1000);
   writeSavingsVscodeSession({
     sessionStoreDbPath: path.join(userDir, "globalStorage", "github.copilot-chat", "session-store.db"),
     debugLogsDir: path.join(workspaceStorage, WORKSPACE_STORAGE_ID, "GitHub.copilot-chat", "debug-logs"),
     startedAt: savingsStart.toISOString(),
   });
-  writeSavingsAgentHostSession({ userDataDir, copilotHome, startedAtMs: savingsStart.getTime() + 60 * 60 * 1000 });
+  writeSavingsAgentHostSession({ userDataDir, copilotHome, startedAtMs: savingsStart.getTime() + 10 * 60 * 1000 });
 
   return {
     storagePath,
