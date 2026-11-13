@@ -610,6 +610,14 @@ review rejections.
   owner: (a) no app or panel UI shows the subagent runs a replay left out,
   though the 0.12.0 changelog implies it; (b) the extension README says 18
   Learn sessions, the extension guide 17 Copilot scenarios.
+- 2026-11-13: 1.6b2 merged: the setup-problem launch no longer enables
+  Copilot Chat before E1; E1 opens the walkthrough first, then enables it
+  (33.1 s; trims `1,19` or `14,19`). `--spec` now runs a scene only in its
+  own launch. Open for the owner: enabling Copilot Chat in a running window
+  dropped our walkthrough from VS Code's registry for the development
+  extension; not checked with an installed VSIX, so it may affect real
+  users. Setup rows stay truncated in the side bar (about 900 px of text).
+  1.8 started.
 - 2026-11-13: 1.6e (E6 19.6 s, E8 15.1 s; real context menu under Xvfb)
   and 1.6b (E10 21.6 s, trim `1,19`; E1 31.6 s, trim `3,19`) merged. E1
   lacks the walkthrough: enabling Copilot Chat with `enableAll` in the
