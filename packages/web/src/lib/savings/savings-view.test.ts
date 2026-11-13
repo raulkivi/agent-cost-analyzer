@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
 import { describe, expect, it } from "vitest";
+import { MAX_SAVINGS_NAME_LENGTH, savingsActionText, type SavingsActionParams, type SavingsOpportunityKind } from "@agent-cost-analyzer/domain";
 import { CLAUDE_IDLE, FAILED_CALLS, IDLE_CACHE, makeSavingsReport, SIMULATED, UNPRICED_ROW, UNUSED_TOOLS, range, UNPRICED } from "../../test-support/savings-fixture.js";
 import { actionTextOf, amountText, barSegments, copyableText, coverageText, groupByCurrency, KIND_TITLES, perSessionText, windowAmountText } from "./savings-view.js";
 
@@ -120,5 +121,29 @@ describe("copyableText (threat-model §6.1: folded to one line, no control chara
 
   it("caps the length", () => {
     expect(copyableText("x".repeat(5000))).toHaveLength(600);
+  });
+
+  // SR16: the cap is 600, not the 120 of a copied title (threat-model §6.1),
+  // because the text is a fixed template whose names are capped at 80: the
+  // longest one a detector can produce fits whole, so Copy never cuts a
+  // sentence, and a longer text can only be a bug.
+  it("never cuts the longest action text a template can produce", () => {
+    const name = "n".repeat(MAX_SAVINGS_NAME_LENGTH);
+    const big = 999_999_999_999.9;
+    const longest: Record<SavingsOpportunityKind, SavingsActionParams[]> = {
+      "unused-tools": [{ group: name, tools: big, tokens: big, sessions: big, days: big }],
+      "idle-cache-expiry": [{ breaks: big, minutes: big, tokens: big, extendedMinutes: big }],
+      "unexplained-cache-break": [{ breaks: big, tokens: big }],
+      "model-switch": [{ times: big, tokens: big }],
+      "failed-tool-calls": ["dependency-missing", "permission-denied", "unclassified"].map((category) => ({ name, calls: big, sessions: big, category })),
+      "cheaper-model": [{ model: `m${"o".repeat(79)}`, percent: big, matchPercent: big }],
+    };
+
+    for (const [kind, cases] of Object.entries(longest) as [SavingsOpportunityKind, SavingsActionParams[]][]) {
+      for (const params of cases) {
+        const text = savingsActionText(kind, params);
+        expect(copyableText(text), kind).toBe(text);
+      }
+    }
   });
 });
