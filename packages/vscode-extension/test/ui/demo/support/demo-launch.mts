@@ -78,3 +78,9 @@ export function dropSavedWindowState(storageJsonPath: string): void {
 export function mastersDir(env: Record<string, string | undefined> = process.env): string {
   return env.AICA_DEMO_MASTERS ?? path.resolve(import.meta.dirname, "../../../../../../demo-masters");
 }
+
+// Where a scene's still lands: <masters>/stills/<name>.png (never straight into docs).
+export function stillPath(name: string, env: Record<string, string | undefined> = process.env): string {
+  if (!/^[a-z0-9][a-z0-9-]*$/.test(name)) throw new Error(`Invalid still name "${name}": use lower-case letters, digits and dashes, no extension`);
+  return path.join(mastersDir(env), "stills", `${name}.png`);
+}

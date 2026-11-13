@@ -7,6 +7,7 @@
 import { mkdirSync } from "node:fs";
 import path from "node:path";
 import type { Page } from "playwright";
+import { createDemoFixture } from "../ui-automation/demo-fixture.mts";
 import { createShowcaseFixture } from "./showcase-fixture.mts";
 import { VSCODE_THEMES, type VscodeTheme } from "./vscode-themes.mts";
 import { startHarness, type Harness } from "./webview-harness.mts";
@@ -16,7 +17,7 @@ interface Shot {
   theme: VscodeTheme;
   width: number;
   height: number;
-  view: "turns" | "dashboard";
+  view: "turns" | "dashboard" | "savings";
 }
 
 const SHOTS: Shot[] = [
@@ -25,6 +26,7 @@ const SHOTS: Shot[] = [
   { file: "high-contrast.png", theme: VSCODE_THEMES.hc, width: 1440, height: 660, view: "turns" },
   { file: "narrow.png", theme: VSCODE_THEMES.dark, width: 640, height: 680, view: "turns" },
   { file: "dashboard.png", theme: VSCODE_THEMES.dark, width: 1280, height: 900, view: "dashboard" },
+  { file: "savings-dark.png", theme: VSCODE_THEMES.dark, width: 1280, height: 900, view: "savings" },
 ];
 
 function outDir(): string {
@@ -52,8 +54,31 @@ async function openDashboard(page: Page, harness: Harness): Promise<void> {
   await harness.settle(page);
 }
 
+// Analyze, then Savings (the option appears once the host's product profile has loaded).
+async function openSavings(page: Page, harness: Harness): Promise<void> {
+  await page.locator("label.seg-opt", { hasText: /^Analyze$/ }).click();
+  await harness.settle(page);
+  await page.locator("label.seg-opt", { hasText: /^Savings$/ }).click();
+  await page.locator("[data-testid='savings-row']").first().waitFor({ timeout: 30_000 });
+  await harness.settle(page);
+}
+
 const dir = outDir();
 mkdirSync(dir, { recursive: true });
+
+async function takeShots(harness: Harness, shots: Shot[]): Promise<void> {
+  for (const shot of shots) {
+    const page = await harness.open(shot.theme, shot.width, shot.height);
+    await harness.postHostEvent(page, "selectSession", { sessionId: harness.usageSessionId });
+    if (shot.view === "dashboard") await openDashboard(page, harness);
+    else if (shot.view === "savings") await openSavings(page, harness);
+    else await selectTurn(page, harness, FEATURED_TURN);
+    await page.screenshot({ path: path.join(dir, shot.file) });
+    await page.close();
+    console.log(`✓ ${path.join(dir, shot.file)}`);
+  }
+}
+
 const harness = await startHarness({
   seed: (rootDir) => {
     const fixture = createShowcaseFixture(rootDir);
@@ -62,15 +87,21 @@ const harness = await startHarness({
   deviceScaleFactor: 2,
 });
 try {
-  for (const shot of SHOTS) {
-    const page = await harness.open(shot.theme, shot.width, shot.height);
-    await harness.postHostEvent(page, "selectSession", { sessionId: harness.usageSessionId });
-    if (shot.view === "dashboard") await openDashboard(page, harness);
-    else await selectTurn(page, harness, FEATURED_TURN);
-    await page.screenshot({ path: path.join(dir, shot.file) });
-    await page.close();
-    console.log(`✓ ${path.join(dir, shot.file)}`);
-  }
+  await takeShots(harness, SHOTS.filter((shot) => shot.view !== "savings"));
 } finally {
   await harness.close();
+}
+
+// The Savings report needs sessions with findings: the demo scenes' made-up data (E5), not the showcase's.
+const savingsHarness = await startHarness({
+  seed: (rootDir) => {
+    const fixture = createDemoFixture(rootDir);
+    return { userDataDir: fixture.userDataDir, usageSessionId: fixture.readSession.id };
+  },
+  deviceScaleFactor: 2,
+});
+try {
+  await takeShots(savingsHarness, SHOTS.filter((shot) => shot.view === "savings"));
+} finally {
+  await savingsHarness.close();
 }

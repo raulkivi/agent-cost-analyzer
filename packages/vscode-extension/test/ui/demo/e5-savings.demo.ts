@@ -8,7 +8,8 @@ import { AnalyzerPanel } from "../support/analyzer-panel.js";
 import { readSavings, waitForSavings } from "../support/savings-view.js";
 import { wdioVscodeHost as host } from "../support/vscode-host.js";
 import { runDemoScene, type DemoScene } from "./support/demo-driver.ts";
-import { chooseSelectValue } from "./support/1.6d-helpers.ts";
+import { chooseSelectValue, inTopContext } from "./support/1.6d-helpers.ts";
+import { saveStill } from "./support/stills.ts";
 
 const panel = new AnalyzerPanel(host);
 const WAIT_MS = 30_000;
@@ -46,7 +47,16 @@ const scene: DemoScene = {
     },
     { label: "7 days", beatMs: 900, action: (driver) => panel.inside(() => chooseSelectValue(driver, WINDOW_SELECT, "7")) },
     { label: "90 days", beatMs: 900, action: (driver) => panel.inside(() => chooseSelectValue(driver, WINDOW_SELECT, "90")) },
-    { label: "back to 30 days", beatMs: 700, action: (driver) => panel.inside(() => chooseSelectValue(driver, WINDOW_SELECT, "30")) },
+    {
+      label: "back to 30 days",
+      beatMs: 700,
+      action: async (driver) => {
+        await panel.inside(() => chooseSelectValue(driver, WINDOW_SELECT, "30"));
+        await panel.inside(() => waitForSavings());
+        await inTopContext();
+        await saveStill("savings");
+      },
+    },
     {
       label: "open the first row's detail",
       beatMs: 1_800,

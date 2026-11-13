@@ -9,6 +9,7 @@ import { DEMO_SETUP_PROBLEM_FIXTURE_ENV, parseDemoFixture } from "../../../scrip
 import { SidebarViews, VIEW_CONTAINER_TITLE } from "../support/sidebar-views.js";
 import { wdioVscodeHost as host } from "../support/vscode-host.js";
 import { runDemoScene, type DemoAction, type DemoScene } from "./support/demo-driver.ts";
+import { saveStill } from "./support/stills.ts";
 
 parseDemoFixture(process.env[DEMO_SETUP_PROBLEM_FIXTURE_ENV], DEMO_SETUP_PROBLEM_FIXTURE_ENV);
 const sidebar = new SidebarViews();
@@ -75,6 +76,7 @@ const scene: DemoScene = {
         await (await browser.$(walkthroughStep("Enable Copilot Chat debug logging"))).waitForDisplayed({ timeout: 30_000 });
         await enableCopilotChat();
         await (await browser.$(walkthroughStep("Enable Copilot Chat debug logging"))).waitForDisplayed({ timeout: 10_000, timeoutMsg: "the walkthrough page did not survive enabling Copilot Chat" });
+        await saveStill("walkthrough");
       },
     },
     {

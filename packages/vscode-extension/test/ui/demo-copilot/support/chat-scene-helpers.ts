@@ -7,8 +7,6 @@
 // would show the list jumping, so this enters the overlay without scrolling.
 // TDD exception: wdio glue over a real VS Code and Copilot; the decisions it
 // calls (sendToAgent's guards, overlayOver, glidePath) are unit-tested.
-import { mkdirSync } from "node:fs";
-import path from "node:path";
 import { browser } from "@wdio/globals";
 import { glidePath, targetPoint, type Point } from "../../../../scripts/demo/pointer-target.mts";
 import { POINTER_OVERLAY_SCRIPT } from "../../../../scripts/demo/pointer-overlay.mts";
@@ -17,7 +15,6 @@ import { ChatView, ChatViews } from "../../copilot-e2e/support/chat-view.js";
 import { MODEL, waitForCopilot } from "../../copilot-e2e/support/copilot-chat.js";
 import { overlayOver, type Rect } from "../../copilot-e2e/support/view-overlay.mts";
 import { skipTest } from "../../copilot-e2e/support/run-log.mts";
-import { mastersDir } from "../../demo/support/demo-launch.mts";
 import { wdioVscodeHost as host } from "../../support/vscode-host.js";
 
 const GLIDE_STEPS = 25;
@@ -83,11 +80,8 @@ export async function widenChat(target: number): Promise<void> {
   }
 }
 
-// Saves a still next to the masters (task 1.8 turns these into docs images).
-export async function saveStill(name: string): Promise<void> {
-  mkdirSync(mastersDir(), { recursive: true });
-  await browser.saveScreenshot(path.join(mastersDir(), name));
-}
+// The scenes' stills all land in <masters>/stills (task 1.8).
+export { saveStill } from "../../demo/support/stills.ts";
 
 // Marks the first element of `selector` whose text contains `needle` (whitespace ignored), so a
 // scene can reach it with markedElement(); returns whether there was one.

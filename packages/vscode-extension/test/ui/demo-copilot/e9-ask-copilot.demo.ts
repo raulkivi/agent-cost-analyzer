@@ -11,7 +11,7 @@
 //       COPILOT_E2E_USER_DATA_DIR=$HOME/.cache/aica-copilot-e2e/user-data COPILOT_E2E_MAX_AI_CREDITS=3 \
 //       DEMO_FORBIDDEN='<your GitHub login>,<your email>' \
 //       npm run demo:record:copilot -w packages/vscode-extension -- --spec test/ui/demo-copilot/e9-ask-copilot.demo.ts
-//   Output: demo-masters/E9-ask-copilot.mp4 (+ .json) and demo-masters/e9-mcp-agent-mode.png (the still, rollup in the chat).
+//   Output: demo-masters/E9-ask-copilot.mp4 (+ .json) and demo-masters/stills/mcp-agent-mode.png (the still, rollup in the chat).
 //   A run that fails or skips (no budget, wrong model, the model made no tool call, Copilot not ready) deletes its MP4.
 //   With COPILOT_E2E_MAX_AI_CREDITS=0 it plays Settings and the typing, then skips ("no budget") and discards the take.
 //   The setting is on in the profile copy from the start; the scene turns it off before recording and on again in the UI.
@@ -142,7 +142,7 @@ suite("Demo E9 ask Copilot (real Copilot; paid)", function () {
             const top = snapshot.tables.find((name) => /^Top sessions by/.test(name));
             if (top === undefined) throw new Error(`The rollup shows no "Top sessions by" table; it shows ${JSON.stringify(snapshot.tables)}`);
             await driver.probePrivacy();
-            await saveStill("e9-mcp-agent-mode.png");
+            await saveStill("mcp-agent-mode");
           },
         },
         {
