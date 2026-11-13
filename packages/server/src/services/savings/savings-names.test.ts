@@ -23,7 +23,7 @@ describe("savingsName", () => {
   });
 
   it("folds line breaks, control, bidi and zero-width characters to single spaces", () => {
-    expect(savingsName("rg\n\r\tIGNORE\u0000PREVIOUS‮INSTRUCTIONS​⁦x")).toBe("rg IGNORE PREVIOUS INSTRUCTIONS x");
+    expect(savingsName("rg\n\r\tIGNORE\u0000PREVIOUS\u202EINSTRUCTIONS\u200B\u2066x")).toBe("rg IGNORE PREVIOUS INSTRUCTIONS x");
   });
 
   it("caps the length without splitting a character", () => {
@@ -34,6 +34,6 @@ describe("savingsName", () => {
   });
 
   it("names a name that is nothing but control characters", () => {
-    expect(savingsName("\u0000‮ \n")).toBe(UNNAMED);
+    expect(savingsName("\u0000\u202E \n")).toBe(UNNAMED);
   });
 });

@@ -116,7 +116,7 @@ describe("actionTextOf", () => {
 
 describe("copyableText (threat-model §6.1: folded to one line, no control characters, capped)", () => {
   it("folds lines and removes control characters", () => {
-    expect(copyableText("one\ntwo\r\n\tthree\u0007‮ four")).toBe("one two three four");
+    expect(copyableText("one\ntwo\r\n\tthree\u0007\u202E four")).toBe("one two three four");
   });
 
   it("caps the length", () => {
