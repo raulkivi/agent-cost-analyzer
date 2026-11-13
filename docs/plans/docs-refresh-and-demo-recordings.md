@@ -610,6 +610,13 @@ review rejections.
   owner: (a) no app or panel UI shows the subagent runs a replay left out,
   though the 0.12.0 changelog implies it; (b) the extension README says 18
   Learn sessions, the extension guide 17 Copilot scenarios.
+- 2026-11-13: 1.9b merged: W1–W3 record through x11grab in headed
+  Chromium (`--ozone-platform=x11`, `--kiosk`, then CDP fullscreen, since
+  `--kiosk` alone keeps the toolbar without a window manager). GIFs: W1
+  1.48 MB 13.6 s, W2 1.90 MB 15.1 s, W3 3.58 MB 18.1 s. For the 1.10
+  review: W2's Simulated columns sit mostly off-screen right at 1200 px
+  (scroll the table or hide measured columns first); headed Chromium
+  shows classic scrollbars; W3 has little size headroom.
 - 2026-11-13: 1.3 (Sonnet) merged, first review. Its recorder adds
   `ready()` to the §10.3 shape (resolves once ffmpeg is still running after
   500 ms), so a scene never runs unrecorded. The copied Copilot profile
