@@ -976,7 +976,8 @@ single **Provider** selection; any other selection (a model, a date, a tool)
 is named under the filters as "Not applied here", so a figure never only
 looks filtered. The VS Code extension has both views too, over its Copilot
 sessions; **Project** and **Billing** (below) are only in this app, because
-the extension has no projects.
+the extension has no projects. **Savings** ([below](#the-savings-report)) is
+a view here and, in the extension, a view of its own.
 
 The filters sit in one row: the date range first (**This month**, **Last
 month**, **Last 90 days**, **This year**), then, on Cost over time, the
@@ -1142,6 +1143,102 @@ The panel reads `GET /api/estimates`, which also takes `sessions` instead
 of `activeDays`. The MCP tool `estimate_cost` gives the same answer, and
 the `estimate_work` prompt turns it into a short estimate with its inputs
 and main uncertainty.
+
+#### The savings report
+
+**Savings** lists changes that would have cost less, ranked, each with the
+change to make, its evidence and an estimated saving per week. It is a
+view of the Dashboard's view switch, after **Billing**. It reads the most
+recent sessions in the window from the selected providers (at most 500)
+and computes the report when you open it; nothing is stored.
+
+**The filters.**
+
+- **Window.** Last 7, 30 (the default) or 90 days, by each session's start.
+  The note under the filters gives the dates and says how a week is
+  counted (days ÷ 7).
+- **Provider.** All providers, or one.
+- **Prices.** **As of use** (the default) or **Today's prices**.
+- **Include simulated.** Off by default: it replays your most expensive
+  sessions on other models, which takes longer.
+- **Refresh** recomputes. A long load shows **Cancel**.
+
+**What it checks.**
+
+| Change | Found when | Amount |
+|---|---|---|
+| Tools loaded but never used | A tool, or an MCP server's tools, was loaded in sessions of the window and ran in none; each request resends its definition | A range per week: the cache-read price (likely) to the uncached price |
+| Cache lost after an idle gap | A request's cache read fell short of the last prompt after a gap longer than the vendor's cache lifetime | "Up to" per week |
+| Cache lost with no idle gap | The same, within the cache lifetime. The cause is named only where the log records it (tools, system prompt or instructions changed) | "Up to" per week |
+| Model switched mid-session | A switch followed by a cache read below the threshold | "Up to" per week |
+| Repeated failed tool calls | The same program or tool failed at least twice with the same failure category | "Up to" per week: the cost of the affected turns |
+| A cheaper model | A replay of one of your 5 most expensive sessions on up to 3 cheaper models of the same vendor | **Simulated** (below) |
+
+A cache break counts when the lost tokens are at least the vendor's
+minimum cacheable size and half of the previous prompt. Failed calls where
+the user said no, and failing test or build runs, are not counted: they are
+choices and the work itself.
+
+What each provider gives:
+
+| Provider | Unused tools | Cache breaks | Failed calls | Cheaper model |
+|---|---|---|---|---|
+| VS Code Copilot Chat (local) | Yes, with debug logging | Yes | Yes, where outcomes are logged | Yes |
+| VS Code Agent Host | No: only the total tool-definition tokens | Yes | No: tool calls unknown | Yes |
+| Claude Code | Yes, per tool and MCP server | Yes | Yes | Yes |
+| pi | No | No: no request trace yet | Per the [tool-call audit](#auditing-tool-calls) | No |
+| mitmproxy | No | No | Per the tool-call audit | No |
+
+**Reading a row.** Each row has the kind, the subject (a tool, MCP server
+or program), the amount per week, a bar and its coverage ("38 of 41
+sessions; 3 had no request trace").
+
+- **Range** ("6.2–38.4 AI Credits per week"): the solid part of the bar
+  is the low end, the hatched part the rest up to the high end.
+- **Up to** ("up to 12.0 AI Credits per week"): no lower bound is claimed,
+  because a break is not always avoidable.
+- **estimate**: the tokens are counted by a local tokenizer over the tool
+  definitions, not by the vendor.
+- **inferred**: the grouping is a guess. Copilot names MCP tools
+  `mcp_<server>_<tool>`, and a server name can hold `_`.
+- **Not priced**: no price for that model on that date. It has no bar,
+  never counts as 0 and sorts last.
+
+Every figure is a counterfactual priced from the price book, so it can't be
+billed. Rows are ranked by the high end, one list per currency (AI Credits
+for Copilot, US dollars otherwise); amounts are never converted between
+them. **There is no total**: the opportunities overlap, so adding them
+would count some savings twice.
+
+**The detail.** Select a row to open its evidence (sessions, requests,
+tokens, occurrences, coverage), how the amount is set, the amount over the
+whole window, the change to make and the price versions behind it.
+
+- **Copy text** puts the change on the clipboard as one line, at most 600
+  characters. The text is fixed wording with your numbers and names filled
+  in; it says what to do, never that anything was done. The report changes
+  none of your settings or files.
+- **Open in Analyze** opens a session of the row in the turns view. For a
+  session of another provider it also switches the selected provider, as
+  the Provider select does, and the app saves that choice in its own
+  settings.
+- Below 600 px the detail replaces the list; **Back** returns to it.
+
+**Simulated.** A cheaper-model replay is shown apart, unranked and never
+beside the priced rows: "Replayed on *model*, the same conversation would
+have cost about X% of what it did". It carries the replay's self-check
+(how many requests of the session's own-model replay match the log), its
+coverage and its assumptions. The other model would not have answered the
+same way.
+
+**Not analysed.** What could not be checked is listed with the reason,
+never shown as a saving of 0: a provider with no tool inventory or request
+trace, a session whose log could not be read, or sessions over the
+500-session cap (only the most recent are read). A row's coverage line
+counts them too.
+
+The report reads `GET /api/savings` (`since`, `until`, `provider`,
+`pricing`, `includeSimulated`).
 
 ## Charts as tables
 

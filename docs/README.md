@@ -1,6 +1,6 @@
 # Developer documentation
 
-**Last changed:** 2026-11-12 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-13 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 For people building or changing Agent Cost Analyzer and the AI Credits
 Analyzer extension. Users: start at the [root README](../README.md).
@@ -133,9 +133,10 @@ An npm workspace:
 - [Monthly allowance plan](plans/monthly-allowance.md) — step 10.21
   (planned): a user-set monthly AI Credits allowance with a status-bar gauge
   and a Sessions row in the extension.
-- [Savings report plan](plans/savings-report.md) — Phase 16 (planned): a
-  ranked list of what to change to spend less, with estimated savings, in
-  both products and (Increment 2) as an MCP tool and view.
+- [Savings report plan](plans/savings-report.md) — Phase 16: a
+  ranked list of what to change to spend less, with estimated savings.
+  Increment 1 (the Savings tab in both products) is built; Increment 2 (an
+  MCP tool and view) is planned.
 - [Classic subagent credits plan](plans/classic-subagent-credits.md) —
   step 10.19's design: counting the AI Credits that classic Copilot Chat subagents
   log to sibling files next to `main.jsonl`, with measured impact, format

@@ -2,7 +2,7 @@
 
 **Last changed:** 2026-11-13 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
-**Status: planned; owner decisions accepted 2026-11-12 (every recommendation); implementation started 2026-11-12.** Phase 16 in
+**Status: Increment 1 built (SR0-SR17, 2026-11-13); owner decisions D1-D12 accepted 2026-11-12, D13-D15 to decide; Increment 2 not started.** Phase 16 in
 [implementation-plan.md](../implementation-plan.md) (owner decision D9).
 
 The question this answers: **"What should I change to spend less, and
@@ -338,7 +338,7 @@ repo.
 | SR14 | Web: `SavingsTab`, detail, Simulated section, Not analysed, Copy, links into Analyze; component, axe (four theme fixtures) and keyboard tests | Matches the SR11 boards; labels asserted | medium | Sonnet | SR11, SR12 |
 | SR15 | UI specs: Playwright `web-e2e` `sv1-savings-report.spec.ts` (every figure equals the API, labels present, axe); wdio `extension-ui` `sv1-savings.e2e.ts` (three themes, compact width, Copy) | Both specs pass in CI; no manual checklist row | medium | Sonnet | SR13, SR14 |
 | SR16 | **Done 2026-11-13 (§16).** Accessibility and security review (hostile tool and program names in every field, no write path, unknown never 0, labels not droppable) | Findings fixed test-first; results in this plan | medium | Opus | SR14 |
-| SR17 | Docs: User Guide "Savings report", extension guide, root and extension CHANGELOG `[Unreleased]`, architecture.md (§4.1/§4.2 rows, §5 types, a new §6 data-flow section, §8 route and RPC, §11.2), vision.md §3.2 and §6 (D1), threat-model.md (§11), implementation-plan.md phase section, Gantt | Docs match the code; owner review | medium | Sonnet | SR16 |
+| SR17 | **Done 2026-11-13.** Docs: User Guide "Savings report", extension guide, root and extension CHANGELOG `[Unreleased]`, architecture.md (§4.1/§4.2 rows, §5 types, a new §6 data-flow section, §8 route and RPC, §11.2), vision.md §3.2 and §6 (D1), threat-model.md (§11), implementation-plan.md phase section, Gantt | Docs match the code; owner review | medium | Sonnet | SR16 |
 
 **Increment 2: MCP tool and view** (starts after Increment 1 is released)
 

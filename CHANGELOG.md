@@ -10,10 +10,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - **Savings tab.** A ranked list of changes that would cost less: tools loaded but never used, cache lost
   after an idle gap or with no idle gap, a model switched mid-session, repeated failed tool calls. Each row
-  shows a range or an "up to" figure per week, its coverage and the fixed action text with Copy; one list
-  per currency (AI Credits, US dollars), never converted or added up. A Simulated section holds replays on
-  a cheaper model, apart and unranked, and "Not analysed" lists what could not be checked and why. In the
-  app it follows Billing on the Dashboard; in the extension it follows Dashboard in the panel.
+  shows a range or an "up to" figure per week, its coverage and the fixed action text with Copy (one line,
+  at most 600 characters); one list per currency (AI Credits, US dollars), never converted, and no total,
+  because the opportunities overlap. Rows carry "estimate", "inferred" or "Not priced" where they apply.
+  A Simulated section holds replays on a cheaper model, apart and unranked and off until "Include
+  simulated" is ticked, and "Not analysed" lists what could not be checked and why. Pick the last 7, 30
+  or 90 days. In the app it follows Billing on the Dashboard; in the extension it follows Dashboard in the
+  panel (GitHub Copilot sessions only). The report changes no setting or file. "Open in Analyze" on
+  another provider's session switches the selected provider, as the Provider select does. API:
+  `GET /api/savings`. See the User Guide's "The savings report".
 - **A subagent marker, block and tile line in the panel.** The turns table marks AI Credits that
   include subagent runs, the Explanation tab lists the runs with turn totals, and the session tile says
   "incl. X from N subagent runs". The MCP App turn detail lists the runs too.

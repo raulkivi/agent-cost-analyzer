@@ -88,7 +88,7 @@ gantt
     15.15 owner review, real data (5%)     :active, p15r, after p15, 1d
 
     section Savings
-    16 Savings report (74%, 17 of 23 tasks) :active, p16, 2026-11-12, 2d
+    16 Savings report (78%, 18 of 23 tasks) :active, p16, 2026-11-12, 2d
 
     section Releases
     App v0.3.0-alpha :milestone, r0, 2026-08-09, 0d
@@ -116,7 +116,7 @@ gantt
 
 - Step 10.19 (classic subagent AI Credits, 17 of 19 tasks): SA0-SA17 done 2026-11-13; SA18, the owner's real-data check (re-run SA0's script against the built server) and the release, open. Plan: [classic-subagent-credits-implementation.md](plans/classic-subagent-credits-implementation.md). Step 10.20 (subagent tool calls in the audit) is a follow-up, not planned.
 - Step 10.21 (monthly allowance gauge, 100%): done 2026-11-13 (MA0 to MA12, 14 of 14 tasks; exit criterion met, review in plan §14). Before release: the real-Copilot check of the gauge in a live window (release UI gate). MA13 (standalone app) is a later increment. The Sessions row is hidden while VS Code's filter is active (plan §3.8). Plan: [monthly-allowance.md](plans/monthly-allowance.md).
-- Phase 16 (savings report, 74%, 17 of 23 tasks): SR0-SR16 done by 2026-11-13; SR16 review in plan §16 (5 findings fixed, 3 recorded). Open: SR17 docs, D13-D15 owner decisions (SR7 thresholds, the active-provider switch from "Open in Analyze"), then Increment 2 (SR18-SR22) after release. Plan: [savings-report.md](plans/savings-report.md).
+- Phase 16 (savings report, 78%, 18 of 23 tasks): Increment 1 (SR0-SR17) done 2026-11-13, code and docs; SR16 review in plan §16 (5 findings fixed, 3 recorded). Open: owner review of the docs and the exit criterion on real data (30 days of Claude Code and Copilot sessions, one idle-expiry break and one unused tool checked by hand), D13-D15 owner decisions (SR7 thresholds, the active-provider switch from "Open in Analyze"), the release, then Increment 2 (SR18-SR22: MCP tool and view U18), not started. Plan: [savings-report.md](plans/savings-report.md).
 - Phase 14: steps 14.0-14.7 built; 14.8's docs written, the owner's review and the §13 exit criterion on real sessions open; the extension guide's replay screenshots open (User Guide's done). Step table: [analyze-session-replay.md](plans/analyze-session-replay.md) §12.
 - Phase 15: owner's review and exit criterion on real data.
 - Phase 13: owner's eyes-on review of step 13.8.
@@ -124,7 +124,7 @@ gantt
 
 ## Phase 16 detail — Savings report
 
-Schedule view of the task table in [savings-report.md](plans/savings-report.md) §10. Status: Increment 1 17 of 18 tasks (SR0-SR16 done 2026-11-12 to 2026-11-13; SR17 docs open); Increment 2 (SR18-SR22) starts after Increment 1 is released.
+Schedule view of the task table in [savings-report.md](plans/savings-report.md) §10. Status: Increment 1 18 of 18 code and docs tasks done (SR0-SR17, 2026-11-12 to 2026-11-13); the owner's docs review, D13-D15 and the release are open. Increment 2 (SR18-SR22) is not started; it begins after Increment 1 is released.
 
 ```mermaid
 %%{init: {
@@ -170,10 +170,10 @@ gantt
     SR14 Savings tab (100%)                          :done, sr14, 2026-11-13, 1d
     SR15 UI specs (100%)                             :done, sr15, 2026-11-13, 1d
     SR16 A11y and security review, Opus (100%)       :done, sr16, 2026-11-13, 1d
-    SR17 Docs, Sonnet (0%)                           :active, sr17, after sr16, 1d
+    SR17 Docs, Sonnet (100%)                         :done, sr17, after sr16, 1d
 
     section Increment 2
-    SR18-SR22 MCP tool, U18 view, specs, review (0%) :sr18, after sr17, 5d
+    SR18-SR22 MCP tool, U18 view, specs, review (0%, not started) :sr18, after sr17, 5d
 ```
 
 ## Phase 12 detail — MCP Apps

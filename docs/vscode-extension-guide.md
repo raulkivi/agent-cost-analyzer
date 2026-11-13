@@ -246,6 +246,39 @@ A replay is computed when you ask for it and never stored. Agent mode can
 ask for the same figures through `replay_session` and
 `compare_models_for_session` ([What it offers](#what-it-offers)).
 
+### The savings report
+
+**Savings**, after **Dashboard** in the panel's view switch, lists changes
+that would have cost less, ranked, each with its evidence, an estimated
+saving per week and the change to make. It reads your GitHub Copilot
+sessions only (the tab says "GitHub Copilot sessions only"). Claude Code
+and pi savings are in the standalone app, and the tab says so. How to read
+a row, the labels (**up to**, range, **estimate**, **inferred**, **Not
+priced**, **Simulated**) and the checks are in the User Guide's
+[The savings report](UserGuide.md#the-savings-report).
+
+What differs in the panel:
+
+- **Window and prices.** Last 7, 30 (default) or 90 days; **As of use** or
+  **Today's prices**. There is no Provider filter.
+- **Checks for Copilot.** Unused tools (local sessions with debug logging;
+  an Agent Host session gives only a total, so it is listed under **Not
+  analysed**), cache lost after an idle gap or with no gap, a model
+  switched mid-session, repeated failed tool calls (where Copilot logged
+  the outcome) and, with **Include simulated**, a cheaper model.
+- **Cheaper model.** Replays use the extension's bundled price book. Off
+  until you tick **Include simulated**.
+- **Copy text** uses the same clipboard command as the other copy buttons.
+  It copies one line of fixed wording, at most 600 characters. The panel
+  never changes a setting or a file because of the report.
+- **Open session** opens the row's session in the turns view.
+- **No total.** Opportunities overlap, so none is added up.
+
+The tab is on when the extension's price book is available. The report is
+computed when you open the tab or press **Refresh**, can be cancelled, and
+is never stored. It reads the same logs as the other views and makes no
+network request.
+
 ## The side bar and status bar
 
 The extension adds an **AI Credits Analyzer** icon to the Activity Bar. Its

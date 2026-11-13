@@ -1,6 +1,6 @@
 # Vision: Agent Cost Analyzer and AI Credits Analyzer
 
-**Last changed:** 2026-11-12 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-13 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 ## 1. Problem
 
@@ -92,8 +92,12 @@ In addition to the shared layout, Analyze mode adds:
 - **Savings report** (Phase 16, [plans/savings-report.md](plans/savings-report.md)):
   one ranked list of what to change to spend less (unused tool definitions,
   cache breaks, failed calls, a cheaper model), each with the evidence and an
-  estimated saving per week as a range or a labelled upper bound. Recommendations
-  are text; the app never changes settings or files.
+  estimated saving per week as a range or a labelled upper bound. Replays on
+  a cheaper model are labelled **Simulated** and kept apart from the ranked
+  list, nothing is added into one total (the opportunities overlap), and what
+  could not be checked is listed with the reason. It is in both products; the
+  extension covers Copilot sessions and points to the app for the rest.
+  Recommendations are text; the app never changes settings or files.
 
 ### 3.3 Shared layout
 
@@ -219,8 +223,11 @@ showing the behavioral-proxy fallback silently.
   intrusion detection, and the dashboard stays read-only and local. A third
   (Phase 16, [plans/savings-report.md](plans/savings-report.md)) is the
   **savings report**: a ranked list of opportunities to spend less, each
-  with an estimated saving as a range or an "up to" figure and its coverage.
-  Recommendations are text; the app never changes settings or files.
+  with an estimated saving as a range or an "up to" figure and its coverage;
+  it has no total and keeps Simulated replays apart. Recommendations are text;
+  the app never changes settings or files (the one write it can cause is the
+  navigation state of "Open in Analyze" switching the selected provider,
+  which the app saves in its own settings, as the Provider select does).
 - Not an invoicing or accounting system. Phase 15
   ([plans/cost-by-repository-and-project.md](plans/cost-by-repository-and-project.md))
   adds cost by repository and project, price history, frozen billing

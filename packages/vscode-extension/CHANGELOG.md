@@ -12,6 +12,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Savings view in the panel.** **Savings**, after **Dashboard** in the panel's view switch, ranks changes
+  that would cost less over your GitHub Copilot sessions: tools loaded but never used, cache lost after an
+  idle gap or with no idle gap, a model switched mid-session, repeated failed tool calls, and with
+  **Include simulated** a cheaper model. Each row shows a range or an "up to" figure per week in AI
+  Credits, its coverage, and fixed action text with **Copy text** (one line, at most 600 characters). There
+  is no total, and what could not be checked is listed under **Not analysed**. Claude Code and pi savings
+  are in the standalone app. The report changes no setting or file.
 - **Monthly AI Credits allowance gauge.** Set `aiCreditsAnalyzer.monthlyAllowance.aiCredits` to
   your plan's monthly allowance, or run **Set Monthly AI Credits Allowance** to open it in the
   Settings editor (the command changes no setting). The status bar then shows the month to date
