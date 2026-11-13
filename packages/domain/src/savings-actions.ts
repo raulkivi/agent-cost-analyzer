@@ -35,11 +35,14 @@ const MODEL_ID = /^[A-Za-z0-9][A-Za-z0-9._:/@+-]{0,79}$/;
 // eslint-disable-next-line no-control-regex
 const CONTROL_OR_SPACE_RUN = /[\u0000- \u007f-\u009f]+/g;
 
+// en-US grouping, as the monthly gauge does (D: owner answer to SR11 question 5).
+const GROUPED = new Intl.NumberFormat("en-US", { maximumFractionDigits: 1 });
+
 function number(kind: string, key: string, value: unknown): string {
   if (typeof value !== "number" || !Number.isFinite(value) || value < 0) {
     throw new Error(`savings action ${kind}: parameter "${key}" must be a finite number, 0 or more`);
   }
-  return String(Number.isInteger(value) ? value : Math.round(value * 10) / 10);
+  return GROUPED.format(Number.isInteger(value) ? value : Math.round(value * 10) / 10);
 }
 
 function modelId(kind: string, key: string, value: unknown): string {

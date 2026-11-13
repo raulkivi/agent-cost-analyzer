@@ -30,7 +30,7 @@ describe("savingsActionText", () => {
     expect(text).not.toMatch(/[{}]|undefined|NaN/);
     for (const value of Object.values(SAMPLE[kind])) {
       if (kind === "failed-tool-calls" && value === "command-not-found") continue; // selects fixed advice, never echoed
-      expect(text).toContain(String(value));
+      expect(text).toContain(typeof value === "number" ? value.toLocaleString("en-US") : String(value));
     }
   });
 
@@ -52,6 +52,13 @@ describe("savingsActionText", () => {
       }
       expect(Object.keys(SAVINGS_ACTION_PARAMS[kind]).sort()).toEqual(Object.keys(SAMPLE[kind]).sort());
     }
+  });
+
+  it("groups thousands in number parameters", () => {
+    expect(savingsActionText("unused-tools", { ...SAMPLE["unused-tools"], tokens: 5400 })).toContain("about 5,400 tokens");
+    expect(savingsActionText("idle-cache-expiry", { ...SAMPLE["idle-cache-expiry"], tokens: 412000 })).toContain("about 412,000 tokens");
+    expect(savingsActionText("model-switch", { times: 2, tokens: 1234567.89 })).toContain("resent 1,234,567.9 tokens");
+    expect(savingsActionText("unused-tools", { ...SAMPLE["unused-tools"], tools: 999 })).toContain("(999 tools");
   });
 
   it("names the 1-hour cache option only when its lifetime is given", () => {
