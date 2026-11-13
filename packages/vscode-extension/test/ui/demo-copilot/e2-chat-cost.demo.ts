@@ -10,7 +10,7 @@
 //       COPILOT_E2E_USER_DATA_DIR=$HOME/.cache/aica-copilot-e2e/user-data COPILOT_E2E_MAX_AI_CREDITS=3 \
 //       DEMO_FORBIDDEN='<your GitHub login>,<your email>' \
 //       npm run demo:record:copilot -w packages/vscode-extension -- --spec test/ui/demo-copilot/e2-chat-cost.demo.ts
-//   Output: demo-masters/E2-chat-cost.mp4 (+ .json) and demo-masters/e2-sidebar.png (the still, before the hover).
+//   Output: demo-masters/E2-chat-cost.mp4 (+ .json) and demo-masters/stills/e2-sidebar.png (the still, before the hover).
 //   A run that fails or skips (no budget, wrong model, Copilot not ready) deletes its MP4; nothing is kept.
 //   With COPILOT_E2E_MAX_AI_CREDITS=0 it plays up to the send, then skips ("no budget") and discards the take.
 //   Check in the MP4, frame by frame where it matters:
@@ -22,7 +22,6 @@
 //     - the wait for the answer is long: suggest a trim window (start,duration) that cuts the waiting.
 //   The prompt asks for no tools: the test agent has only the analyzer's tools and the opened git folder is empty,
 //   so "summarise a file" (the plan's example) is not possible.
-import path from "node:path";
 import { browser, expect } from "@wdio/globals";
 import { COMMAND_IDS } from "../../../src/commands/command-ids.js";
 import type { SessionNode, SessionsTreeNode } from "../../../src/sidebar/sessions-tree-model.js";
@@ -30,7 +29,7 @@ import { INTERNAL_COMMAND_IDS } from "../../../src/diagnostics/test-hooks.js";
 import { AnalyzerClient, listedSessions, recordChatCredits, requireModel, sendToAgent, waitForNewSession } from "../copilot-e2e/support/copilot-chat.js";
 import { ChatViews } from "../copilot-e2e/support/chat-view.js";
 import { runDemoScene, type DemoScene } from "../demo/support/demo-driver.ts";
-import { mastersDir } from "../demo/support/demo-launch.mts";
+import { stillPath } from "../demo/support/demo-launch.mts";
 import { wdioVscodeHost as host } from "../support/vscode-host.js";
 import { clearToasts, find, hoverForTooltip, markedElement, markElement, prepareCopilotScene, saveStill, stageChatPrompt, widenChat } from "./support/chat-scene-helpers.ts";
 
@@ -114,7 +113,7 @@ suite("Demo E2 chat and its cost (real Copilot; paid)", function () {
             }
             await browser.waitUntil(() => markElement(SESSION_ROWS, node.label), { timeout: 30_000, timeoutMsg: `the Sessions view shows no row for "${node.label}"` });
             await driver.pointerTo(await markedElement());
-            await saveStill("e2-sidebar.png");
+            await saveStill("e2-sidebar", { keepHover: true });
           },
         },
         {
@@ -149,7 +148,7 @@ suite("Demo E2 chat and its cost (real Copilot; paid)", function () {
           expect(status.some((item) => item.startsWith("AI Credits today"))).toBe(true);
         },
       });
-      console.log(`E2 master: ${mp4}; still: ${path.join(mastersDir(), "e2-sidebar.png")}`);
+      console.log(`E2 master: ${mp4}; still: ${stillPath("e2-sidebar")}`);
     } finally {
       // What the chat cost counts toward the run's cap, whether or not the take was kept.
       if (sessionId !== undefined) recordChatCredits((await analyzer.aiCredits(sessionId).catch(() => null)) ?? 0);

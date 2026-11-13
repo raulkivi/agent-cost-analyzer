@@ -11,6 +11,7 @@ import { SidebarViews } from "../support/sidebar-views.js";
 import { wdioVscodeHost as host } from "../support/vscode-host.js";
 import { runDemoScene, type DemoDriver, type DemoScene } from "./support/demo-driver.ts";
 import { analyzerStatusItem, closeSidebar } from "./support/1.6e-helpers.ts";
+import { saveStill } from "./support/stills.ts";
 
 const fixture = parseDemoFixture(process.env.AICA_DEMO_FIXTURE);
 const panel = new AnalyzerPanel(host);
@@ -60,18 +61,21 @@ const scene: DemoScene = {
     },
     { label: "hold on Compare", beatMs: 1_500, action: async () => undefined },
     {
-      label: "open the Sessions view",
-      beatMs: 800,
+      label: "open the Sessions view, with Setup below it",
+      beatMs: 500,
       action: async () => {
         await host.command("workbench.view.extension.aiCreditsAnalyzer");
-        await sidebar.showAlone("sessions");
+        await sidebar.showOnly(["sessions", "setup"]);
         await browser.waitUntil(async () => (await sidebar.rowTexts("sessions")).length > 1, { timeout: 30_000 });
+        await browser.waitUntil(async () => ((await sidebar.rowTexts("setup")).join(" ")).includes("No setup problems found"), { timeout: 30_000, timeoutMsg: "Setup does not read: No setup problems found" });
+        await saveStill("sidebar");
       },
     },
     {
       label: "Group Sessions by Repository",
       beatMs: 1_500,
       action: async (driver) => {
+        await sidebar.showAlone("sessions");
         const header = await browser.$("//div[contains(@class,'pane-header')][contains(translate(normalize-space(.),'SESSIONS','sessions'),'sessions')]");
         await driver.pointerTo(await header.getElement());
         // A view's title actions show while the real mouse is over its header.

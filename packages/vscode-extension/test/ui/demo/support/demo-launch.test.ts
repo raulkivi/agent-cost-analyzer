@@ -4,7 +4,7 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { dropSavedWindowState, frameProblem, mastersDir } from "./demo-launch.mts";
+import { dropSavedWindowState, frameProblem, mastersDir, stillPath } from "./demo-launch.mts";
 
 describe("frameProblem", () => {
   it("accepts a window within a few pixels of the frame", () => {
@@ -25,6 +25,17 @@ describe("mastersDir", () => {
   it("honours AICA_DEMO_MASTERS, else <repo root>/demo-masters", () => {
     expect(mastersDir({ AICA_DEMO_MASTERS: "/x/m" })).toBe("/x/m");
     expect(mastersDir({})).toMatch(/\/demo-masters$/);
+  });
+});
+
+describe("stillPath", () => {
+  it("puts a named still in <masters>/stills as a PNG", () => {
+    expect(stillPath("sidebar", { AICA_DEMO_MASTERS: "/x/m" })).toBe("/x/m/stills/sidebar.png");
+  });
+
+  it("refuses a name that is not a plain file stem", () => {
+    expect(() => stillPath("../sidebar", {})).toThrow(/still name/);
+    expect(() => stillPath("a.png", {})).toThrow(/still name/);
   });
 });
 

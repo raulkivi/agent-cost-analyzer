@@ -73,13 +73,20 @@ export class SidebarViews {
 
   // Gives the view the side bar's room by collapsing the other two.
   async showAlone(name: keyof typeof SECTION_INDEX): Promise<void> {
-    await this.section(name);
-    await browser.execute((title: string) => {
+    await this.showOnly([name]);
+  }
+
+  // Expands the named views and collapses the rest.
+  async showOnly(names: (keyof typeof SECTION_INDEX)[]): Promise<void> {
+    const [first] = names;
+    if (first === undefined) throw new Error("showOnly needs at least one view");
+    await this.section(first);
+    await browser.execute((titles: string[]) => {
       for (const header of Array.from(document.querySelectorAll<HTMLElement>(".pane-header"))) {
-        const isTarget = (header.textContent ?? "").trim().toLowerCase() === title;
+        const isTarget = titles.includes((header.textContent ?? "").trim().toLowerCase());
         if (header.classList.contains("expanded") !== isTarget && header.closest(".pane")?.closest(".monaco-pane-view")) header.click();
       }
-    }, name);
+    }, names);
   }
 
   // Clicks an inline action (its title, e.g. "Fix Setting") on the row whose text contains `rowText`.

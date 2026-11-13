@@ -10,6 +10,7 @@ import { wdioVscodeHost as host } from "../support/vscode-host.js";
 import { DEMO_FIXTURE_ENV, parseDemoFixture } from "../../../scripts/ui-automation/demo-fixture.mts";
 import { runDemoScene, type DemoScene } from "./support/demo-driver.ts";
 import { clickAndFocus, inTopContext } from "./support/1.6d-helpers.ts";
+import { saveStill } from "./support/stills.ts";
 
 const fixture = parseDemoFixture(process.env[DEMO_FIXTURE_ENV], DEMO_FIXTURE_ENV);
 const sidebar = new SidebarViews();
@@ -83,6 +84,8 @@ const scene: DemoScene = {
         const item = await (await browser.$(`[id='${GAUGE_ITEM_ID}']`)).getElement();
         await driver.pointerTo(item);
         await item.moveTo();
+        await browser.waitUntil(async () => (await browser.$(".monaco-hover")).isDisplayed(), { timeout: 10_000, timeoutMsg: "the gauge tooltip did not show" });
+        await saveStill("allowance", { keepHover: true });
       },
     },
   ],
