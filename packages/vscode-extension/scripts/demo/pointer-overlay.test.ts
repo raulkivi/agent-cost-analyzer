@@ -5,6 +5,8 @@ import { POINTER_OVERLAY_SCRIPT } from "./pointer-overlay.mts";
 
 type FakeEl = {
   tag: string;
+  ns?: string;
+  attrs: Record<string, string>;
   id: string;
   style: Record<string, string>;
   children: FakeEl[];
@@ -15,15 +17,19 @@ type FakeEl = {
   remove(): void;
 };
 
-function fakeEl(tag: string): FakeEl {
+function fakeEl(tag: string, ns?: string): FakeEl {
   const el: FakeEl = {
     tag,
+    ns,
+    attrs: {},
     id: "",
     style: {},
     children: [],
     innerHTML: "",
     removed: false,
-    setAttribute() {},
+    setAttribute(name, value) {
+      el.attrs[name] = value;
+    },
     appendChild(child) {
       el.children.push(child);
       return child;
@@ -36,7 +42,7 @@ function fakeEl(tag: string): FakeEl {
 }
 
 function fakeDocument(root: FakeEl) {
-  return { documentElement: root, createElement: fakeEl, getElementById: (id: string) => root.children.find((c) => c.id === id) ?? null };
+  return { documentElement: root, createElement: (tag: string) => fakeEl(tag), createElementNS: (ns: string, tag: string) => fakeEl(tag, ns), getElementById: (id: string) => root.children.find((c) => c.id === id) ?? null };
 }
 
 function install() {
@@ -54,7 +60,13 @@ describe("POINTER_OVERLAY_SCRIPT", () => {
     expect(pointer.style.position).toBe("fixed");
     expect(pointer.style.pointerEvents).toBe("none");
     expect(Number(pointer.style.zIndex)).toBeGreaterThanOrEqual(2147483000);
-    expect(pointer.innerHTML).toContain("<svg");
+    // VS Code's workbench enforces Trusted Types: an innerHTML assignment throws there.
+    expect(pointer.innerHTML).toBe("");
+    const svg = pointer.children[0]!;
+    expect(svg.tag).toBe("svg");
+    expect(svg.ns).toBe("http://www.w3.org/2000/svg");
+    expect(svg.children[0]!.tag).toBe("path");
+    expect(svg.children[0]!.attrs.d).toMatch(/^M2 2 /);
     const api = win.__demoPointer as { moveTo: unknown; ripple: unknown };
     expect(typeof api.moveTo).toBe("function");
     expect(typeof api.ripple).toBe("function");
@@ -79,6 +91,21 @@ describe("POINTER_OVERLAY_SCRIPT", () => {
     expect(timers.length).toBe(1);
     timers[0]!();
     expect(ring.removed).toBe(true);
+  });
+
+  it("a second realm on the same document drives the same pointer (wdio switches realms after switchFrame)", () => {
+    const first = install();
+    const secondWin: Record<string, unknown> = { setTimeout: () => undefined };
+    new Function("window", "document", POINTER_OVERLAY_SCRIPT)(secondWin, fakeDocument(first.root));
+    expect(first.root.children.filter((c) => c.tag === "div")).toHaveLength(1);
+    (first.win.__demoPointer as { moveTo(x: number, y: number): void }).moveTo(100, 200);
+    const api = secondWin.__demoPointer as { moveTo(x: number, y: number): void; ripple(): void };
+    api.ripple();
+    const ring = first.root.children[1]!;
+    expect(ring.style.left).toBe("100px");
+    expect(ring.style.top).toBe("200px");
+    api.moveTo(5, 6);
+    expect(first.root.children[0]!.style.left).toBe("5px");
   });
 
   it("is idempotent: a second install keeps the first pointer", () => {
