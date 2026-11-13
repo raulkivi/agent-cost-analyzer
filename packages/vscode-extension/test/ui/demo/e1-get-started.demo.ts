@@ -43,9 +43,24 @@ const fixSetting = (rowText: string, settingId: string, control: string): DemoAc
   await driver.pointerTo(target);
   await target.moveTo();
   await driver.click(await (await browser.$(fixAction(rowText))).getElement());
+  // The row's tooltip names the settings file (an absolute temp path): move the real pointer off the row.
+  await browser.action("pointer").move({ x: 800, y: 700 }).perform();
   await browser.waitUntil(() => settingsEditorShows(settingId), { timeout: 30_000, timeoutMsg: `the Settings editor was not opened on ${settingId}` });
   await (await browser.$(control)).waitForDisplayed({ timeout: 15_000 });
 };
+
+const WALKTHROUGH_ID = "raulkivi.ai-credits-analyzer#aiCreditsAnalyzer.getStarted";
+const WALKTHROUGH = "//*[contains(@class,'gettingStartedContainer')]";
+const walkthroughStep = (title: string): string => `${WALKTHROUGH}//*[contains(@class,'getting-started-step')][contains(.,'${title}')]`;
+const openTheSetting = (step: string): string => `${walkthroughStep(step)}//*[self::a or self::button][normalize-space()='Open the setting']`;
+const RETENTION_STEP = "Keep at least 200 sessions";
+
+// What the ready launch does at start (wdio.demo.conf.mts `before`). Here it comes after the
+// walkthrough, because enabling an extension drops this extension's walkthrough from VS Code's registry.
+async function enableCopilotChat(): Promise<void> {
+  await host.command("workbench.extensions.action.enableAll");
+  await browser.waitUntil(() => browser.executeWorkbench((vscode) => vscode.extensions.getExtension("GitHub.copilot-chat") !== undefined), { timeout: 90_000, interval: 500, timeoutMsg: "Copilot Chat is not enabled" });
+}
 
 const scene: DemoScene = {
   id: "E1",
@@ -53,12 +68,45 @@ const scene: DemoScene = {
   title: "Get started",
   steps: [
     {
-      label: "open the AI Credits Analyzer side bar on the Setup view, which flags three settings",
+      label: "the Get Started walkthrough: five steps",
+      beatMs: 2_000,
+      action: async () => {
+        await host.command("workbench.action.openWalkthrough", WALKTHROUGH_ID);
+        await (await browser.$(walkthroughStep("Enable Copilot Chat debug logging"))).waitForDisplayed({ timeout: 30_000 });
+        await enableCopilotChat();
+        await (await browser.$(walkthroughStep("Enable Copilot Chat debug logging"))).waitForDisplayed({ timeout: 10_000, timeoutMsg: "the walkthrough page did not survive enabling Copilot Chat" });
+      },
+    },
+    {
+      label: "the retention step and its Open the setting button lead into the Settings editor",
+      beatMs: 1_000,
+      action: async (driver) => {
+        await driver.click(await (await browser.$(walkthroughStep(RETENTION_STEP))).getElement());
+        const button = await browser.$(openTheSetting(RETENTION_STEP));
+        await button.waitForDisplayed({ timeout: 15_000 });
+        await driver.click(await button.getElement());
+        await browser.waitUntil(() => settingsEditorShows(RETENTION_SETTING), { timeout: 30_000, timeoutMsg: "the Settings editor was not opened on the retention setting" });
+        await (await browser.$(SETTINGS_NUMBER)).waitForDisplayed({ timeout: 15_000 });
+      },
+    },
+    {
+      label: "type 200 into the field",
+      beatMs: 1_200,
+      action: async (driver) => {
+        await driver.click(await (await browser.$(SETTINGS_NUMBER)).getElement());
+        await browser.keys(["Control", "a"]);
+        await driver.typeSlowly("200");
+        await browser.keys(["Tab"]);
+        await browser.waitUntil(async () => (await host.setting(RETENTION_SETTING)) === 200, { timeout: 15_000, timeoutMsg: "the retention setting did not become 200" });
+      },
+    },
+    {
+      label: "open the side bar on the Setup view, which flags the two settings left",
       beatMs: 1_800,
       action: async (driver) => {
         await driver.click(await (await browser.$(ACTIVITY_ICON)).getElement());
         await sidebar.showAlone("setup");
-        await browser.waitUntil(async () => (await setupHasRow(LOGGING_ROW_TEXT)) && (await setupHasRow(RETENTION_ROW_TEXT)) && (await setupHasRow(TRACES_ROW_TEXT)), { timeout: 30_000, timeoutMsg: "Setup did not flag the three settings" });
+        await browser.waitUntil(async () => (await setupHasRow(LOGGING_ROW_TEXT)) && (await setupHasRow(TRACES_ROW_TEXT)) && !(await setupHasRow(RETENTION_ROW_TEXT)), { timeout: 30_000, timeoutMsg: "Setup did not flag the logging and traces settings" });
       },
     },
     { label: "Fix Setting on debug logging opens exactly that setting", beatMs: 1_200, action: fixSetting(LOGGING_ROW_TEXT, LOGGING_SETTING, SETTINGS_CHECKBOX) },
@@ -69,19 +117,6 @@ const scene: DemoScene = {
         await driver.click(await (await browser.$(SETTINGS_CHECKBOX)).getElement());
         await browser.waitUntil(async () => (await host.setting(LOGGING_SETTING)) === true, { timeout: 15_000, timeoutMsg: "the logging setting did not turn on" });
         await browser.waitUntil(async () => !(await setupHasRow(LOGGING_ROW_TEXT)), { timeout: 30_000, timeoutMsg: "Setup still flags debug logging" });
-      },
-    },
-    { label: "Fix Setting on 'keep at least 200 sessions' opens the retention setting", beatMs: 1_000, action: fixSetting(RETENTION_ROW_TEXT, RETENTION_SETTING, SETTINGS_NUMBER) },
-    {
-      label: "type 200 into the field",
-      beatMs: 1_200,
-      action: async (driver) => {
-        await driver.click(await (await browser.$(SETTINGS_NUMBER)).getElement());
-        await browser.keys(["Control", "a"]);
-        await driver.typeSlowly("200");
-        await browser.keys(["Tab"]);
-        await browser.waitUntil(async () => (await host.setting(RETENTION_SETTING)) === 200, { timeout: 15_000, timeoutMsg: "the retention setting did not become 200" });
-        await browser.waitUntil(async () => !(await setupHasRow(RETENTION_ROW_TEXT)), { timeout: 30_000, timeoutMsg: "Setup still flags the retention" });
       },
     },
     { label: "Fix Setting on the agent traces row", beatMs: 1_000, action: fixSetting(TRACES_ROW_TEXT, TRACES_SETTING, SETTINGS_CHECKBOX) },
@@ -109,7 +144,6 @@ const scene: DemoScene = {
 suite("Demo E1 Get started (made-up data, setup-problem launch)", () => {
   test("E1 plays through Setup and the settings", async () => {
     await host.waitForExtension({ keepStartupEditors: true });
-    // VS Code's own Welcome page is open here, not this extension's walkthrough.
     await host.command("workbench.action.closeAllEditors");
     await host.command("workbench.action.closeAuxiliaryBar");
     await host.command("workbench.action.closeSidebar");
