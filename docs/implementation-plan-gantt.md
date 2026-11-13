@@ -71,7 +71,7 @@ gantt
     10.18 Copilot empty-window sessions (100%) :done, p10e, 2026-11-11, 1d
     10.19 Classic subagent AI Credits (100%) :done, p10f, 2026-11-12, 2d
     10.21 Monthly allowance gauge (100%)   :done, p10g, 2026-11-12, 2d
-    10.22 Extension demo recordings (32%, 7 of 22 tasks) :active, p10h, 2026-11-13, 3d
+    10.22 Extension demo recordings (36%, 8 of 22 tasks) :active, p10h, 2026-11-13, 3d
     10.23 Claude Desktop demo recordings (0%, not started) :p10i, after p10h, 3d
 
     section Simulation and replay
@@ -121,7 +121,7 @@ gantt
 - Release prepared 2026-11-13: extension 0.12.0 and app 0.14.0 carry steps 10.19 and 10.21 and Phase 16 Increment 1. Before tagging: the savings exit criterion on real data, D13-D15, then the real-Copilot gate.
 - Step 10.19 (classic subagent AI Credits, 100%): done 2026-11-13 (SA0 to SA18, 20 of 20 tasks; exit criterion met: `npm run test:real-data` passed 10 of 10 on the owner's logs, 177.64 AI Credits added, owner sign-off 2026-11-13). Before release: the real-Copilot gate. Plan: [classic-subagent-credits-implementation.md](plans/classic-subagent-credits-implementation.md). Step 10.20 (subagent tool calls in the audit) is a follow-up, not planned.
 - Step 10.21 (monthly allowance gauge, 100%): done 2026-11-13 (MA0 to MA12, 14 of 14 tasks; exit criterion met, review in plan §14). Before release: the real-Copilot check of the gauge in a live window (release UI gate). MA13 (standalone app) is a later increment. The Sessions row is hidden while VS Code's filter is active (plan §3.8). Plan: [monthly-allowance.md](plans/monthly-allowance.md).
-- Step 10.22 (extension demo recordings, 32%, 7 of 22 tasks): owner accepted D1-D8 and D10-D12 on 2026-11-13 (E11 not recorded). Phase 0 (text fixes 0.1-0.3) done 2026-11-13 (PR #255), to land before the 0.12.0/0.14.0 tags (D1); owner to check two findings in the plan's §11 (replay UI doesn't list left-out subagent runs; Learn count 17 vs 18); then Phase 1: spike 1.0 done (frame 1200x800, plan §5), 1.1, 1.2 and 1.5 done, 1.3 and 1.9 in progress; then scenes 1.6a-1.10 and docs 1.11-1.14. Plan: [docs-refresh-and-demo-recordings.md](plans/docs-refresh-and-demo-recordings.md).
+- Step 10.22 (extension demo recordings, 36%, 8 of 22 tasks): owner accepted D1-D8 and D10-D12 on 2026-11-13 (E11 not recorded). Phase 0 (text fixes 0.1-0.3) done 2026-11-13 (PR #255), to land before the 0.12.0/0.14.0 tags (D1); owner to check two findings in the plan's §11 (replay UI doesn't list left-out subagent runs; Learn count 17 vs 18); then Phase 1: spike 1.0 done (frame 1200x800, plan §5), 1.1, 1.2, 1.3 and 1.5 done, 1.4, 1.6a and 1.9 in progress; then scenes 1.6a-1.10 and docs 1.11-1.14. Plan: [docs-refresh-and-demo-recordings.md](plans/docs-refresh-and-demo-recordings.md).
 - Phase 16 (savings report, 78%, 18 of 23 tasks): Increment 1 (SR0-SR17) done 2026-11-13, code and docs; SR16 review in plan §16 (5 findings fixed, 3 recorded). Open: owner review of the docs and the exit criterion on real data (30 days of Claude Code and Copilot sessions, one idle-expiry break and one unused tool checked by hand), D13-D15 owner decisions (SR7 thresholds, the active-provider switch from "Open in Analyze"), the release, then Increment 2 (SR18-SR22: MCP tool and view U18), not started. Plan: [savings-report.md](plans/savings-report.md).
 - Phase 14: steps 14.0-14.7 built; 14.8's docs written, the owner's review and the §13 exit criterion on real sessions open; the extension guide's replay screenshots open (User Guide's done). Step table: [analyze-session-replay.md](plans/analyze-session-replay.md) §12.
 - Phase 15: owner's review and exit criterion on real data.
@@ -130,7 +130,7 @@ gantt
 
 ## Steps 10.22 and 10.23 detail — Demo recordings
 
-Schedule view of the task tables in [docs-refresh-and-demo-recordings.md](plans/docs-refresh-and-demo-recordings.md) §6. Status: owner decisions answered 2026-11-13; Phase 0 done; Phase 1 spike 1.0, 1.1, 1.2 and 1.5 done (7 of 22 tasks); 1.3 and 1.9 in progress. Phase 2 (step 10.23) starts after Phase 1's exit.
+Schedule view of the task tables in [docs-refresh-and-demo-recordings.md](plans/docs-refresh-and-demo-recordings.md) §6. Status: owner decisions answered 2026-11-13; Phase 0 done; Phase 1 spike 1.0 and 1.1-1.3, 1.5 done (8 of 22 tasks); 1.4, 1.6a and 1.9 in progress. Phase 2 (step 10.23) starts after Phase 1's exit.
 
 ```mermaid
 %%{init: {
@@ -171,10 +171,10 @@ gantt
 
     section Phase 1 tooling
     1.0 ffmpeg under Xvfb spike (100%)              :done, d10, after d0, 1d
-    1.1-1.5 Pure modules, launcher, configs, helpers, GIF (60%) :active, d11, after d10, 2d
+    1.1-1.5 Pure modules, launcher, configs, helpers, GIF (80%) :active, d11, after d10, 2d
 
     section Phase 1 recording
-    1.6a-1.9 Fixture, scenes, stills, app (0%)      :d16, after d11, 2d
+    1.6a-1.9 Fixture, scenes, stills, app (0%)      :active, d16, after d11, 2d
     1.10 Final takes, owner review (0%)            :d110, after d16, 1d
 
     section Phase 1 docs
