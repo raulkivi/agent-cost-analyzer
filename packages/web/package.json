@@ -37,7 +37,7 @@
     "build": "vite build",
     "build:extension": "vite build --mode extension",
     "test:e2e": "playwright test -c e2e/playwright.config.ts",
-    "demo:record": "playwright test -c e2e/playwright.demo.config.ts",
+    "demo:record": "env -u WAYLAND_DISPLAY xvfb-run -a -s \"-screen 0 1200x800x24\" playwright test -c e2e/playwright.demo.config.ts",
     "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.app.json && tsc --noEmit -p e2e/tsconfig.json"
   },
   "dependencies": {

@@ -1,10 +1,11 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import { mkdirSync } from "node:fs";
-import path from "node:path";
 import type { Locator, Page } from "@playwright/test";
 import { POINTER_OVERLAY_SCRIPT } from "../../../../vscode-extension/scripts/demo/pointer-overlay.mts";
 import { glidePath, type Point } from "../../../../vscode-extension/scripts/demo/pointer-target.mts";
+import { FRAME } from "../../../../vscode-extension/scripts/demo/ffmpeg-args.mts";
+import { startRecorder } from "../../../../vscode-extension/scripts/demo/recorder.mts";
+import { frameProblem, mastersDir } from "../../../../vscode-extension/test/ui/demo/support/demo-launch.mts";
 import { sceneOutputs } from "../../../../vscode-extension/scripts/demo/output-names.mts";
 import { assertScene, playScene, totalBeatMs, type Scene } from "../../../../vscode-extension/scripts/demo/scene-timeline.mts";
 
@@ -13,7 +14,6 @@ import { assertScene, playScene, totalBeatMs, type Scene } from "../../../../vsc
 export type DemoAction = (page: Page, pointer: Pointer) => Promise<void>;
 export type DemoScene = Scene<DemoAction>;
 
-const repoRoot = path.resolve(import.meta.dirname, "../../../../..");
 const GLIDE_STEPS = 18;
 const GLIDE_FRAME_MS = 22;
 
@@ -59,28 +59,44 @@ export class Pointer {
   }
 }
 
-export function mastersDir(): string {
-  return process.env.AICA_DEMO_MASTERS ?? path.join(repoRoot, "demo-masters");
-}
-
-// The shared naming rule, with the extension Playwright's recorder produces.
-export function masterPath(scene: DemoScene): string {
-  return sceneOutputs(scene, { masters: mastersDir(), gifs: mastersDir() }).mp4.replace(/\.mp4$/, ".webm");
-}
-
 export async function play(page: Page, scene: DemoScene, pointer: Pointer): Promise<void> {
   assertScene(scene);
   await playScene(scene, (action) => action(page, pointer), (ms) => page.waitForTimeout(ms));
 }
 
-// Called only after the end-state assertion passed, so a failing scene leaves no video.
-export async function finish(page: Page, scene: DemoScene): Promise<string> {
-  const video = page.video();
-  await page.context().close();
-  if (!video) throw new Error("No video: is video enabled in the demo config?");
-  const out = masterPath(scene);
-  mkdirSync(path.dirname(out), { recursive: true });
-  await video.saveAs(out);
+// x11grab records the whole X screen, so the browser must fill it with no chrome. Without a
+// window manager --kiosk doesn't hide the toolbar; fullscreen through CDP does.
+async function fillFrame(page: Page): Promise<void> {
+  const session = await page.context().newCDPSession(page);
+  const { windowId } = await session.send("Browser.getWindowForTarget");
+  await session.send("Browser.setWindowBounds", { windowId, bounds: { windowState: "fullscreen" } });
+  await page.waitForTimeout(500);
+}
+
+async function assertPageFillsFrame(page: Page): Promise<void> {
+  const box = await page.evaluate(() => ({ x: window.screenX, y: window.screenY, width: window.innerWidth, height: window.innerHeight }));
+  const problem = frameProblem(box);
+  if (problem !== undefined) throw new Error(`The browser window is ${box.width}x${box.height} at ${box.x},${box.y}: ${problem}`);
+}
+
+// Records the X display while `body` (the scene and its end-state assertions) runs.
+// A failing scene discards its MP4.
+export async function recordScene(page: Page, scene: DemoScene, body: () => Promise<void>): Promise<string> {
+  await fillFrame(page);
+  await assertPageFillsFrame(page);
+  const out = sceneOutputs(scene, { masters: mastersDir(), gifs: mastersDir() }).mp4;
+  const display = process.env.DISPLAY;
+  if (!display) throw new Error("DISPLAY is not set: run under xvfb-run (npm run demo:record does)");
+  const recorder = startRecorder({ display, width: FRAME.width, height: FRAME.height, fps: FRAME.fps, out });
+  try {
+    await recorder.ready();
+    await page.waitForTimeout(800);
+    await body();
+    await recorder.stop();
+  } catch (error) {
+    await recorder.discard();
+    throw error;
+  }
   return out;
 }
 

@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
 import { expect, test } from "../support/app-fixture.js";
-import { finish, play, Pointer, totalBeatMs, type DemoScene } from "./support/demo-driver.js";
+import { play, recordScene, Pointer, totalBeatMs, type DemoScene } from "./support/demo-driver.js";
 
 // W1, "Learn mode" (docs/plans/docs-refresh-and-demo-recordings.md §4.1):
 // pick a scenario, step through its turns, then the cache-expiry and
@@ -30,13 +30,13 @@ test("W1: Learn mode, scenarios and their cache and compaction markers", async (
   await expect(page.getByRole("list", { name: "Scenarios" }).getByRole("button").first()).toBeVisible();
   const pointer = new Pointer(page);
   await pointer.install();
-  await page.waitForTimeout(800);
 
+  await recordScene(page, W1, async () => {
   await play(page, W1, pointer);
 
   // End state: the compaction scenario with its trigger shown and turn 3 selected.
   await expect(page.getByRole("heading", { name: "Context Compaction Mid-Session" })).toBeVisible();
   await expect(turn(page, 3)).toHaveAttribute("aria-selected", "true");
   await expect(turn(page, 3)).toContainText("compaction");
-  await finish(page, W1);
+  });
 });

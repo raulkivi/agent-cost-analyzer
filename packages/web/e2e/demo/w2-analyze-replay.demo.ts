@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 import type { Page } from "@playwright/test";
 import { expect, test } from "../support/app-fixture.js";
-import { finish, play, Pointer, totalBeatMs, type DemoScene } from "./support/demo-driver.js";
+import { play, recordScene, Pointer, totalBeatMs, type DemoScene } from "./support/demo-driver.js";
 
 // W2, "Analyze and replay" (docs/plans/docs-refresh-and-demo-recordings.md
 // §4.1): pick a provider and a session, open a turn, replay the session on
@@ -40,12 +40,12 @@ test("W2: Analyze a Claude Code session and replay it on another model", async (
   await expect(page.getByText("Analyze", { exact: true })).toBeVisible();
   const pointer = new Pointer(page);
   await pointer.install();
-  await page.waitForTimeout(800);
 
+  await recordScene(page, W2, async () => {
   await play(page, W2, pointer);
 
   // End state: the Simulated columns and the replay strip are on screen.
   await expect(page.getByRole("columnheader", { name: `Simulated ${MODEL}` })).toBeVisible();
   await expect(page.getByRole("region", { name: "Replay summary" })).toContainText(`on ${MODEL}`);
-  await finish(page, W2);
+  });
 });
