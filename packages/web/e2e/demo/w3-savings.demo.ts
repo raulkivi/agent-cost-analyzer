@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 import type { Page } from "@playwright/test";
 import { expect, test } from "../support/app-fixture.js";
-import { finish, play, Pointer, totalBeatMs, type DemoScene } from "./support/demo-driver.js";
+import { play, recordScene, Pointer, totalBeatMs, type DemoScene } from "./support/demo-driver.js";
 
 // W3, "Savings" (docs/plans/docs-refresh-and-demo-recordings.md §4.1):
 // Dashboard, Savings tab, the 7/30/90 day windows, then a row's detail and
@@ -61,11 +61,11 @@ test("W3: the Savings tab, its windows and Open in Analyze", async ({ page, app 
   await expect(page.getByText("Analyze", { exact: true })).toBeVisible();
   const pointer = new Pointer(page);
   await pointer.install();
-  await page.waitForTimeout(800);
 
+  await recordScene(page, W3, async () => {
   await play(page, W3, pointer);
 
   // End state: Analyze shows the opened session's turns.
   await expect(page.locator("table tbody tr").first()).toBeVisible();
-  await finish(page, W3);
+  });
 });
