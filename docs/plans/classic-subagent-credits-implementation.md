@@ -348,5 +348,5 @@ Script: `packages/server/scripts/measure-subagent-spend.mts` (pure helpers in `s
 - **Unread runs have no data row.** A ref whose log can't be read leaves no `subagents` entry: the turn's folded figures are unknown with the reason, and `cost lines` get an `unknown`-model line. The UI shows "Subagent run not read" from that reason, with no run count.
 - **`vendorId` on cost lines.** `costLineSchema` carries `vendorId` (and `vendorUnknownReason`) so a vendor breakdown credits a run's vendor; §4.1 listed only model, figures, `cost` and `subagent`.
 - **Workspace-storage folder in the UI fixture.** The fixture's `workspaceStorage` folder is renamed to a 32-character id, because VS Code deletes workspace-storage folders with other names.
-- **`copilot-available` spec.** It now expects exactly 2 sessions with cost data today, as the two seeded classic sessions change the status bar's count.
+- **`copilot-available` spec.** After rebasing on step 10.21 it keeps main's check (the status bar's known and total counts equal the Sessions tree's Today rows); the classic session with subagent runs is one of those rows, so no hard-coded session count remains.
 - **Fresh worktrees need `npm run build` before wdio**, since the UI suite loads the built extension.
