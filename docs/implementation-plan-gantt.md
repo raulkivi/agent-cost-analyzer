@@ -106,6 +106,7 @@ gantt
     Extension 0.6.0, App v0.11.0 :milestone, r12, 2026-11-11, 0d
     Extension 0.8.0, App v0.12.0 :milestone, r13, 2026-11-12, 0d
     Extension 0.10.0, App v0.13.0 :milestone, r14, 2026-11-12, 0d
+    Extension 0.12.0, App v0.14.0 (prepared) :milestone, r15, 2026-11-13, 0d
 ```
 
 ## Not started
@@ -114,6 +115,7 @@ gantt
 
 ## Open items
 
+- Release prepared 2026-11-13: extension 0.12.0 and app 0.14.0 carry steps 10.19 and 10.21 and Phase 16 Increment 1. Before tagging: SA18 and the savings exit criterion on real data, D13-D15, then the real-Copilot gate.
 - Step 10.19 (classic subagent AI Credits, 19 of 20 tasks): SA0, SA0b and SA1-SA17 done 2026-11-13; SA18, the owner's real-data check (re-run SA0's script against the built server) and the release, open. Plan: [classic-subagent-credits-implementation.md](plans/classic-subagent-credits-implementation.md). Step 10.20 (subagent tool calls in the audit) is a follow-up, not planned.
 - Step 10.21 (monthly allowance gauge, 100%): done 2026-11-13 (MA0 to MA12, 14 of 14 tasks; exit criterion met, review in plan §14). Before release: the real-Copilot check of the gauge in a live window (release UI gate). MA13 (standalone app) is a later increment. The Sessions row is hidden while VS Code's filter is active (plan §3.8). Plan: [monthly-allowance.md](plans/monthly-allowance.md).
 - Phase 16 (savings report, 78%, 18 of 23 tasks): Increment 1 (SR0-SR17) done 2026-11-13, code and docs; SR16 review in plan §16 (5 findings fixed, 3 recorded). Open: owner review of the docs and the exit criterion on real data (30 days of Claude Code and Copilot sessions, one idle-expiry break and one unused tool checked by hand), D13-D15 owner decisions (SR7 thresholds, the active-provider switch from "Open in Analyze"), the release, then Increment 2 (SR18-SR22: MCP tool and view U18), not started. Plan: [savings-report.md](plans/savings-report.md).
