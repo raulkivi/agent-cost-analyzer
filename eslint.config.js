@@ -38,6 +38,8 @@ export default tseslint.config(
             "packages/vscode-extension/wdio.conf.mts",
             "packages/vscode-extension/wdio.copilot.conf.mts",
             "packages/vscode-extension/wdio.record.conf.mts",
+            "packages/vscode-extension/wdio.demo.conf.mts",
+            "packages/vscode-extension/wdio.demo-copilot.conf.mts",
           ],
           // Config and script files outside any tsconfig, by design; the SA18
           // real-data suite and the SA0 scan raised the count past 24.
