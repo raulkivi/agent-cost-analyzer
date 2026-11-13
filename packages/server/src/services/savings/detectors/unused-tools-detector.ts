@@ -1,8 +1,9 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import { estimatedTokenCount, MAX_SAVINGS_NAME_LENGTH, type SavingsAmount, type SavingsOpportunity, type ToolInventoryEntry } from "@agent-cost-analyzer/domain";
+import { estimatedTokenCount, type SavingsAmount, type SavingsOpportunity, type ToolInventoryEntry } from "@agent-cost-analyzer/domain";
 import { currencyOf, NotAnalysedLedger, perWeek, sumAmount, unknownAmount, type PricedPart } from "../savings-amounts.js";
 import type { DetectorResult, SavingsDetector, SavingsInput, SavingsSessionInput } from "../savings-detector.js";
+import { foldName, savingsName } from "../savings-names.js";
 
 // Phase 16 SR5 (docs/plans/savings-report.md §4 O1, §6): tools (and MCP
 // servers) loaded in sessions of the window and invoked in none of them. Each
@@ -23,12 +24,14 @@ interface Group {
 // mcp__<server>__<tool>: the server is exact. mcp_<server>_<tool…>: a server
 // name can itself hold `_`, so the first segment is a guess. Anything else is
 // its own group.
-function groupOf(toolName: string): Group {
+// The name is folded to one line first, so a line break can't hide the server.
+function groupOf(rawName: string): Group {
+  const toolName = foldName(rawName);
   const exact = /^mcp__([^_](?:.*?[^_])?)__.+$/.exec(toolName);
-  if (exact) return { subject: exact[1]!.slice(0, MAX_SAVINGS_NAME_LENGTH), inferred: false };
+  if (exact) return { subject: savingsName(exact[1]!), inferred: false };
   const loose = /^mcp_([^_]+)_.+$/.exec(toolName);
-  if (loose) return { subject: loose[1]!.slice(0, MAX_SAVINGS_NAME_LENGTH), inferred: true };
-  return { subject: toolName.slice(0, MAX_SAVINGS_NAME_LENGTH), inferred: false };
+  if (loose) return { subject: savingsName(loose[1]!), inferred: true };
+  return { subject: savingsName(toolName), inferred: false };
 }
 
 // Requests of a session by model: from the request trace, else the turns'
