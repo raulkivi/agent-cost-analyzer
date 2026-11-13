@@ -9,7 +9,7 @@ import { SidebarViews } from "../support/sidebar-views.js";
 import { wdioVscodeHost as host } from "../support/vscode-host.js";
 import { DEMO_FIXTURE_ENV, parseDemoFixture } from "../../../scripts/ui-automation/demo-fixture.mts";
 import { runDemoScene, type DemoScene } from "./support/demo-driver.ts";
-import { clickAndFocus, inTopContext, installPointerOverlay } from "./support/1.6d-helpers.ts";
+import { clickAndFocus, inTopContext } from "./support/1.6d-helpers.ts";
 
 const fixture = parseDemoFixture(process.env[DEMO_FIXTURE_ENV], DEMO_FIXTURE_ENV);
 const sidebar = new SidebarViews();
@@ -29,7 +29,6 @@ const scene: DemoScene = {
       label: "the workbench before an allowance is set",
       beatMs: 1_000,
       action: async () => {
-        await installPointerOverlay();
         await host.command("workbench.action.closeSidebar");
         await host.command("workbench.action.closeAllEditors");
         await browser.executeWorkbench((vscode) => vscode.commands.executeCommand("notifications.clearAll"));

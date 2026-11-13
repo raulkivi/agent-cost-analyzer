@@ -32,7 +32,7 @@ import { ChatViews } from "../copilot-e2e/support/chat-view.js";
 import { runDemoScene, type DemoScene } from "../demo/support/demo-driver.ts";
 import { mastersDir } from "../demo/support/demo-launch.mts";
 import { wdioVscodeHost as host } from "../support/vscode-host.js";
-import { clearToasts, find, hoverForTooltip, installPointerOverlay, markedElement, markElement, prepareCopilotScene, saveStill, stageChatPrompt, widenChat } from "./support/chat-scene-helpers.ts";
+import { clearToasts, find, hoverForTooltip, markedElement, markElement, prepareCopilotScene, saveStill, stageChatPrompt, widenChat } from "./support/chat-scene-helpers.ts";
 
 // Fixed and short: few tokens, few AI Credits.
 const PROMPT = "In one short sentence, explain what a git branch is. Do not call any tools.";
@@ -55,7 +55,6 @@ suite("Demo E2 chat and its cost (real Copilot; paid)", function () {
   test("E2 plays through the driver", async function () {
     await prepareCopilotScene(this);
     await host.command("workbench.action.closeSidebar");
-    await installPointerOverlay();
     await host.command(COMMAND_IDS.groupSessionsByDay);
     const known = new Set((await listedSessions()).map((node) => node.sessionId));
     const analyzer = await AnalyzerClient.connect();

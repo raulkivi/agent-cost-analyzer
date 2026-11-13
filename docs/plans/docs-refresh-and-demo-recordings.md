@@ -610,6 +610,18 @@ review rejections.
   owner: (a) no app or panel UI shows the subagent runs a replay left out,
   though the 0.12.0 changelog implies it; (b) the extension README says 18
   Learn sessions, the extension guide 17 Copilot scenarios.
+- 2026-11-13: 1.6c (E3, E4), 1.6d (E5, E7) and 1.7 (E2, E9, proven at
+  cap 0 up to the send) merged, first review. All three hit the same
+  driver bugs, fixed by the main session (74f0698): the overlay's
+  `innerHTML` is refused by the workbench's Trusted Types policy; the
+  webview check `window.parent !== window` reads false in the analyzer
+  webview under wdio, so a second arrow was drawn inside it; a DOM
+  `click()` doesn't select a tree row. Scene-local overlay workarounds
+  removed. Over 20 s, GIF trim windows for the owner (§10.7): E3 32.6 s
+  (`--trim 8,18`), E5 20.6 s (`0.5,20`), E7 21.6 s (`1.5,20`); E2 and E9
+  wait for the answer, trim after the first paid take. E2's prompt is "In
+  one short sentence, explain what a git branch is. Do not call any
+  tools." (the test agent has only the analyzer's tools).
 - 2026-11-13: 1.6a (Sonnet) merged, first review: `demo-fixture.mts`
   (`createDemoFixture(root, { variant: "ready" | "setup-problem" })`,
   read in scenes with `parseDemoFixture(process.env[DEMO_FIXTURE_ENV])`);

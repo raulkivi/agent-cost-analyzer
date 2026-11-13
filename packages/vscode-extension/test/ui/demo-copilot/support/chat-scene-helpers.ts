@@ -38,55 +38,6 @@ export async function prepareCopilotScene(context: Mocha.Context): Promise<void>
   if (readiness.status === "gave-up") skipTest(context, readiness.reason);
 }
 
-// The drawn pointer (scripts/demo/pointer-overlay.mts) built with DOM calls only. In the signed-in
-// profile's workbench the shared script's `innerHTML` is refused (TrustedHTML), so it would throw on the
-// first glide. Installing this first defines window.__demoPointer, and the shared script then returns
-// at once; the look and the API (moveTo, ripple) are the same.
-const TRUSTED_POINTER_SCRIPT = `(function () {
-  if (window.__demoPointer) return;
-  var svgNs = "http://www.w3.org/2000/svg";
-  var pointer = document.createElement("div");
-  pointer.id = "__demo-pointer";
-  var svg = document.createElementNS(svgNs, "svg");
-  svg.setAttribute("width", "24");
-  svg.setAttribute("height", "24");
-  svg.setAttribute("viewBox", "0 0 24 24");
-  var path = document.createElementNS(svgNs, "path");
-  path.setAttribute("d", "M2 2 L2 19 L6.5 14.8 L9.6 21.6 L12.4 20.4 L9.3 13.6 L15.5 13.4 Z");
-  path.setAttribute("fill", "#ffffff");
-  path.setAttribute("stroke", "#1b1b1f");
-  path.setAttribute("stroke-width", "1.6");
-  path.setAttribute("stroke-linejoin", "round");
-  svg.appendChild(path);
-  pointer.appendChild(svg);
-  var s = pointer.style;
-  s.position = "fixed"; s.left = "0px"; s.top = "0px"; s.width = "24px"; s.height = "24px";
-  s.pointerEvents = "none"; s.zIndex = "2147483647"; s.filter = "drop-shadow(0 1px 2px rgba(0,0,0,0.45))";
-  document.documentElement.appendChild(pointer);
-  var x = 0; var y = 0;
-  window.__demoPointer = {
-    moveTo: function (nx, ny) { x = nx; y = ny; pointer.style.left = nx + "px"; pointer.style.top = ny + "px"; },
-    ripple: function () {
-      var ring = document.createElement("div");
-      var r = ring.style;
-      r.position = "fixed"; r.left = x + "px"; r.top = y + "px"; r.width = "36px"; r.height = "36px";
-      r.marginLeft = "-18px"; r.marginTop = "-18px"; r.borderRadius = "50%";
-      r.border = "3px solid rgba(255,255,255,0.9)"; r.boxShadow = "0 0 0 1px rgba(27,27,31,0.6)";
-      r.pointerEvents = "none"; r.zIndex = "2147483646";
-      document.documentElement.appendChild(ring);
-      if (typeof ring.animate === "function") {
-        ring.animate([{ transform: "scale(0.3)", opacity: 1 }, { transform: "scale(1.4)", opacity: 0 }], { duration: 450, easing: "ease-out" });
-      }
-      window.setTimeout(function () { ring.remove(); }, 450);
-    },
-  };
-})();`;
-
-export async function installPointerOverlay(): Promise<void> {
-  await browser.switchFrame(null);
-  await browser.execute(TRUSTED_POINTER_SCRIPT);
-}
-
 // Opens a chat in the test-only agent with `prompt` typed in the input and
 // NOT sent, so a viewer sees the prompt before it goes. sendToAgent repeats
 // this on a fresh chat and then sends, within the AI Credits cap.

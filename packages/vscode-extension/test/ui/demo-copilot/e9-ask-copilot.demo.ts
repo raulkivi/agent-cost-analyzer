@@ -30,7 +30,7 @@ import { AnalyzerClient, listedSessions, recordChatCredits, requireModel, sendTo
 import { skipTest } from "../copilot-e2e/support/run-log.mts";
 import { runDemoScene, type DemoScene } from "../demo/support/demo-driver.ts";
 import { wdioVscodeHost as host } from "../support/vscode-host.js";
-import { clearToasts, DemoChatViews, find, installPointerOverlay, prepareCopilotScene, saveStill, stageChatPrompt, widenChat } from "./support/chat-scene-helpers.ts";
+import { clearToasts, DemoChatViews, find, prepareCopilotScene, saveStill, stageChatPrompt, widenChat } from "./support/chat-scene-helpers.ts";
 
 const PROMPT = "What drove my spend this week?";
 const SETTING = "aiCreditsAnalyzer.mcp.enabled";
@@ -55,7 +55,6 @@ suite("Demo E9 ask Copilot (real Copilot; paid)", function () {
     await host.setSetting(SETTING, false);
     await browser.waitUntil(async () => (await serverDefinitions()) === 0, { timeout: 30_000, timeoutMsg: "the MCP server stayed on after the setting was turned off" });
     await host.command("workbench.action.closeSidebar");
-    await installPointerOverlay();
     const known = new Set((await listedSessions()).map((node) => node.sessionId));
     const chat = new DemoChatViews();
     let analyzer: AnalyzerClient | undefined;
