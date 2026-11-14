@@ -377,9 +377,9 @@ repo.
 | D10 | Extension parity | **Accepted 2026-11-12:** Same tab, Copilot sessions only |
 | D11 | Include the report in the AI-advice bundle | **Accepted 2026-11-12:** Later, not in v1 |
 | D12 | Per-tool token counts from the local tokenizer | **Accepted 2026-11-12:** Accept, labelled "estimate" (constraint 6 exception) |
-| D13 | Which failed calls O5 counts (chosen by the SR7 detector, recorded in SR16) | **To confirm:** Leave out `user-rejected` (the user said no) and `test-or-build-failure` (a failing test run is the work, not a mistake); count every other category, `unclassified` included |
-| D14 | How often a failure must repeat for O5 (chosen in SR7, recorded in SR16) | **To confirm:** At least 2 failed calls per program (or tool), failure category and currency over the window, across sessions |
-| D15 | "Open in Analyze" on another provider's session (found in SR16) | **To decide:** Today it switches the active provider, as the Provider select does, and the server saves that choice in the app's own settings file. Recommendation: accept it as navigation state (it is not the user's editor or agent settings), and word §14's "writes no file" as "changes none of your settings or files" |
+| D13 | Which failed calls O5 counts (chosen by the SR7 detector, recorded in SR16) | **Confirmed 2026-11-14:** Leave out `user-rejected` (the user said no) and `test-or-build-failure` (a failing test run is the work, not a mistake); count every other category, `unclassified` included |
+| D14 | How often a failure must repeat for O5 (chosen in SR7, recorded in SR16) | **Confirmed 2026-11-14:** At least 2 failed calls per program (or tool), failure category and currency over the window, across sessions |
+| D15 | "Open in Analyze" on another provider's session (found in SR16) | **Accepted 2026-11-14 (the recommendation):** It switches the active provider, as the Provider select does, and the server saves that choice in the app's own settings file. Recommendation: accept it as navigation state (it is not the user's editor or agent settings), and word §14's "writes no file" as "changes none of your settings or files" |
 
 ## 13. Risks
 
@@ -402,7 +402,8 @@ sessions: the Savings tab in both products and (after Increment 2)
 labelled with its basis, range or "up to", and coverage; the owner checks
 one idle-expiry break and one unused tool by hand against the turn's
 tokens and the price book and finds them equal within rounding; and the
-app writes no file and changes no setting.
+app changes none of your settings or files (D15: the active provider it
+keeps in its own settings file is navigation state).
 
 ### Automated check
 
