@@ -108,6 +108,45 @@ describe("session-store", () => {
     db.close();
   });
 
+  describe("scope by surface (§18.2, owner decision 2026-11-14)", () => {
+    function seedScope(db: DatabaseSync): void {
+      db.exec(SCHEMA);
+      db.exec(`
+        INSERT INTO sessions (id, host_type, agent_name, updated_at) VALUES
+          ('panel', 'vscode', 'panel/editAgent', '2026-01-01T00:00:01.000Z'),
+          ('summarize', 'vscode', 'summarizeConversationHistory', '2026-01-01T00:00:02.000Z'),
+          ('chat', 'vscode', 'GitHub Copilot Chat', '2026-01-01T00:00:03.000Z'),
+          ('cli', 'cli', 'Copilot CLI', '2026-01-01T00:00:04.000Z'),
+          ('coding-agent', 'cloud', 'Copilot Coding Agent', '2026-01-01T00:00:05.000Z'),
+          ('other-host', 'desktop', 'panel/editAgent', '2026-01-01T00:00:06.000Z');
+        INSERT INTO turns (session_id, turn_index, user_message) VALUES
+          ('panel', 0, 'a'), ('summarize', 0, 'b'), ('cli', 0, 'c');
+      `);
+    }
+
+    it("lists Chat-panel (host type vscode) sessions whatever their stored agent name, once each", () => {
+      const db = new DatabaseSync(dbFile);
+      seedScope(db);
+
+      const ids = listSessionRows(db).map((row) => row.id);
+
+      expect(ids).toEqual(["chat", "summarize", "panel"]);
+      db.close();
+    });
+
+    it("getSessionRow finds the helper-named Chat-panel sessions and still hides CLI, coding-agent and other-host ones", () => {
+      const db = new DatabaseSync(dbFile);
+      seedScope(db);
+
+      expect(getSessionRow(db, "panel")?.turn_count).toBe(1);
+      expect(getSessionRow(db, "summarize")?.turn_count).toBe(1);
+      for (const hidden of ["cli", "coding-agent", "other-host"]) {
+        expect(getSessionRow(db, hidden)).toBeUndefined();
+      }
+      db.close();
+    });
+  });
+
   it("listSessionRows includes each session's turn_count without a per-session query", () => {
     const db = new DatabaseSync(dbFile);
     seedDb(db);

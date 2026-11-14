@@ -93,6 +93,30 @@ describe("VscodeLogProvider", () => {
     expect(full?.providerId).toBe("vscode");
   });
 
+  it("lists and reads a Chat-panel session stored under a helper's agent name, once, and not a CLI one", async () => {
+    const db = new DatabaseSync(dbPath);
+    db.exec(`
+      INSERT INTO sessions (id, cwd, repository, branch, host_type, summary, agent_name, agent_description, created_at, updated_at)
+      VALUES
+        ('helper', '/repo', 'org/repo', 'main', 'vscode', 'Helper-named', 'summarizeConversationHistory', 'chat', '2026-01-03T00:00:00.000Z', '2026-01-03T00:00:00.000Z'),
+        ('cli', '/repo', 'org/repo', 'main', 'cli', 'CLI', 'Copilot CLI', 'chat', '2026-01-04T00:00:00.000Z', '2026-01-04T00:00:00.000Z');
+      INSERT INTO turns (session_id, turn_index, user_message, assistant_response, timestamp)
+      VALUES ('helper', 0, 'hi', 'hello', '2026-01-03T00:00:00.000Z');
+    `);
+    db.close();
+    const provider = new VscodeLogProvider({
+      sessionStoreDbPath: dbPath,
+      debugLogsDirPaths: [],
+      agentTracesDbPath: null,
+    });
+
+    const ids = (await provider.listSessions()).map((session) => session.id);
+
+    expect(ids.sort()).toEqual(["helper", "session-1"]);
+    expect((await provider.readSession("helper"))?.turns).toHaveLength(1);
+    await expect(provider.readSession("cli")).resolves.toBeNull();
+  });
+
   it("returns null from readSession for an id the store doesn't have", async () => {
     const provider = new VscodeLogProvider({
       sessionStoreDbPath: dbPath,

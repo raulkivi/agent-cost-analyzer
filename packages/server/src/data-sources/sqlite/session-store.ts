@@ -3,6 +3,16 @@
 import { DatabaseSync } from "node:sqlite";
 
 const COPILOT_CHAT_AGENT_NAME = "GitHub Copilot Chat";
+const CHAT_PANEL_HOST_TYPE = "vscode";
+
+// The one scope rule (vision §18.2) for every consumer: a store session is
+// Copilot Chat spend when it ran in the Chat panel (host type `vscode`),
+// whatever agent name the store took from one of its requests
+// (`panel/editAgent`, `summarizeConversationHistory`; owner decision
+// 2026-11-14). Sessions of the Copilot CLI, the Coding Agent and subagents
+// have another host type and another agent name, so they stay out. The
+// legacy agent-name match keeps every session the rule listed before.
+const SCOPE_PREDICATE = "(host_type = ? OR agent_name = ?)";
 
 export interface SessionRow {
   id: string;
@@ -64,14 +74,14 @@ const TURN_COUNT_SELECT =
 
 export function listSessionRows(db: DatabaseSync): SessionRow[] {
   return db
-    .prepare(`${TURN_COUNT_SELECT} WHERE agent_name = ? ORDER BY updated_at DESC`)
-    .all(COPILOT_CHAT_AGENT_NAME) as unknown as SessionRow[];
+    .prepare(`${TURN_COUNT_SELECT} WHERE ${SCOPE_PREDICATE} ORDER BY updated_at DESC`)
+    .all(CHAT_PANEL_HOST_TYPE, COPILOT_CHAT_AGENT_NAME) as unknown as SessionRow[];
 }
 
 export function getSessionRow(db: DatabaseSync, id: string): SessionRow | undefined {
   return db
-    .prepare(`${TURN_COUNT_SELECT} WHERE agent_name = ? AND id = ?`)
-    .get(COPILOT_CHAT_AGENT_NAME, id) as unknown as SessionRow | undefined;
+    .prepare(`${TURN_COUNT_SELECT} WHERE ${SCOPE_PREDICATE} AND id = ?`)
+    .get(CHAT_PANEL_HOST_TYPE, COPILOT_CHAT_AGENT_NAME, id) as unknown as SessionRow | undefined;
 }
 
 export function getTurnRows(db: DatabaseSync, sessionId: string): TurnRow[] {

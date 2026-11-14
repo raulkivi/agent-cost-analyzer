@@ -1,5 +1,7 @@
 # Agentic Coding in VS Code GitHub Copilot
 
+**Last changed:** 2026-11-14 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+
 This document explains the core concepts behind agentic coding sessions in VS Code
 GitHub Copilot: sessions, turns, tool calls, caching, and token accounting.
 
@@ -1701,6 +1703,12 @@ whichever is active and the tool description tells you which SQL dialect
 (local) to keep the analysis scoped to interactive chat and exclude other
 surfaces (Copilot CLI, Copilot Coding Agent, subagents) that have very
 different AI Credits profiles.
+
+The analyzer itself scopes local store sessions by surface instead (owner
+decision 2026-11-14): `host_type = 'vscode'` (the Chat panel) or the agent
+name above. The store takes `agent_name` from one request, so a Chat-panel
+session can carry a helper's name (`panel/editAgent`,
+`summarizeConversationHistory`); the agent-name filter alone drops those.
 
 ### 18.3 Raw per-session debug logs (JSONL) — the source both stores are built from
 
