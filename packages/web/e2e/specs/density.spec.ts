@@ -7,6 +7,21 @@ import { expect, openDashboard, test } from "../support/app-fixture.js";
 // horizontal scrollbar. P6/P7 add the Phase 17 exit checks below.
 test.use({ viewport: { width: 1440, height: 900 } });
 
+// Ledger mode (dense-ledger-ui.md L3) must meet the same budgets. Until the
+// colour-mode switch drives the attribute from the OS scheme, a run can force
+// it: ACA_FORCE_COLOR_MODE=dark|light.
+test.beforeEach(async ({ page }) => {
+  const mode = process.env.ACA_FORCE_COLOR_MODE;
+  if (mode) {
+    await page.addInitScript((value) => {
+      // documentElement may not exist yet when init scripts run.
+      const set = () => document.documentElement?.setAttribute("data-color-mode", value);
+      set();
+      document.addEventListener("readystatechange", set);
+    }, mode);
+  }
+});
+
 test("P3: the Learn scenario list has no horizontal overflow and compact rows", async ({ page, app }) => {
   await page.goto(app.baseURL);
   const list = page.getByRole("list", { name: "Scenarios" });

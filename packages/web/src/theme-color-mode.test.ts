@@ -49,7 +49,9 @@ describe("ledger colour modes in theme.css (dense-ledger-ui.md L1)", () => {
 
     expect(scoped.length).toBeGreaterThan(0);
     for (const selector of scoped.flatMap((rule) => rule.selectors)) {
-      expect(selector).toMatch(/^html\[data-color-mode="(light|dark)"\](?![\w-])/);
+      // Either one mode, or the attribute-presence form the ledger component
+      // rules use (L3): any mode, so light and dark share one rule.
+      expect(selector).toMatch(/^html\[data-color-mode(="(light|dark)")?\](?![\w-])/);
     }
   });
 
@@ -142,5 +144,122 @@ describe("ledger colour modes in theme.css (dense-ledger-ui.md L1)", () => {
     expect(modeTokens("light").get("--color-surface")).toBe("#f4f2f0");
     expect(modeTokens("dark").get("--color-bg")).toBe("#161d27");
     expect(modeTokens("dark").get("--color-surface")).toBe("#212730");
+  });
+});
+
+// L3: ledger component rules. They use the presence selector so they apply in
+// both modes and never reach a host that does not set the attribute.
+describe("ledger component rules (dense-ledger-ui.md L3)", () => {
+  const ledger = (selector: string): Map<string, string> =>
+    new Map(
+      rules
+        .filter((rule) => rule.selectors.includes(`html[data-color-mode] ${selector}`))
+        .flatMap((rule) => [...rule.declarations]),
+    );
+
+  it("hides the blueprint corner marks and keeps the hairline border", () => {
+    expect(ledger(".blueprint > .corner").get("display")).toBe("none");
+    expect(css).toMatch(/\.blueprint\s*\{[^}]*border:\s*1px solid var\(--color-divider\)/);
+  });
+
+  it.each([".table th", ".card-kicker", ".stat-tile-label", "h6", ".field > label"])(
+    "sets %s as a mono uppercase 11px label with 0.12em tracking",
+    (selector) => {
+      const declarations = ledger(selector);
+      expect(declarations.get("font-family"), selector).toBe("var(--font-mono)");
+      expect(declarations.get("font-size")).toBe("11px");
+      expect(declarations.get("letter-spacing")).toBe("0.12em");
+      expect(declarations.get("text-transform")).toBe("uppercase");
+      expect(declarations.get("color")).toBe("var(--color-text-muted)");
+    },
+  );
+
+  it("sizes body and controls at 12px", () => {
+    expect(rules.some((rule) => rule.selectors.includes("html[data-color-mode] body") && rule.declarations.get("font-size") === "12px")).toBe(true);
+    for (const selector of [".seg-opt", ".btn", ".input", ".filter-chip"]) {
+      expect(ledger(selector).get("font-size"), selector).toBe("12px");
+    }
+  });
+
+  it.each([
+    ["h1", "22px"],
+    ["h2", "18px"],
+    ["h3", "15px"],
+    ["h4", "13px"],
+  ])("sets %s mono at %s, weight 600, no tracking", (selector, size) => {
+    const declarations = ledger(selector);
+    expect(declarations.get("font-size")).toBe(size);
+    expect(declarations.get("font-weight")).toBe("600");
+    expect(declarations.get("letter-spacing")).toBe("0");
+  });
+
+  it.each([".table td", ".stat-tile-value", ".chart-axis-text", ".hbar-value", ".listbox-count"])(
+    "gives %s mono tabular numbers",
+    (selector) => {
+      const declarations = ledger(selector);
+      expect(declarations.get("font-family"), selector).toBe("var(--font-mono)");
+      expect(declarations.get("font-variant-numeric")).toBe("tabular-nums");
+    },
+  );
+
+  it("sets KPI values at 16px", () => {
+    expect(ledger(".stat-tile-value").get("font-size")).toBe("16px");
+  });
+
+  it.each([".insights-narrative", ".explanation-text", ".assumptions-list", ".dialog-body"])(
+    "sets %s as serif prose",
+    (selector) => {
+      const declarations = ledger(selector);
+      expect(declarations.get("font-family"), selector).toBe("var(--font-prose)");
+      expect(declarations.get("font-size")).toBe("14px");
+      expect(declarations.get("line-height")).toBe("1.5");
+    },
+  );
+
+  it("keeps the KPI footnote mono 11px muted", () => {
+    const declarations = ledger(".stat-tiles-footnote");
+    expect(declarations.get("font-family")).toBe("var(--font-mono)");
+    expect(declarations.get("font-size")).toBe("11px");
+    expect(declarations.get("color")).toBe("var(--color-text-muted)");
+  });
+
+  // Each axis of a layer is its own gradient: 20px fine and 100px major cells.
+  it("draws the graph-paper grid on body only, as fine and major layers", () => {
+    const body = rules.find((rule) => rule.selectors.includes("html[data-color-mode] body"))!.declarations;
+    expect(body.get("background-image")?.match(/linear-gradient/g)).toHaveLength(4);
+    expect(body.get("background-size")).toBe("20px 20px, 20px 20px, 100px 100px, 100px 100px");
+    const others = rules.filter((rule) => !rule.selectors.includes("html[data-color-mode] body"));
+    for (const rule of others) expect(rule.declarations.get("background-image") ?? "", rule.selectors.join()).not.toMatch(/linear-gradient/);
+  });
+
+  it.each([".blueprint", ".card", ".audit-section", ".stat-tile", ".table-scroll"])(
+    "keeps the grid out of %s with an opaque ground",
+    (selector) => {
+      expect(ledger(selector).get("background")).toBe("var(--color-bg)");
+    },
+  );
+
+  it("keeps selected controls an accent fill with ground-coloured text", () => {
+    expect(css).toMatch(/\.seg-opt:has\(input:checked\)\s*\{[^}]*background:\s*var\(--color-accent-fill\);\s*color:\s*var\(--color-bg\)/);
+  });
+
+  // Density budgets measured with Commit Mono (Dashboard <= 1470px, KPI tiles
+  // <= 80px, Learn turns table without sideways scroll at 1440).
+  it("tightens tiles, panels, tables and the turns table to hold the density budgets", () => {
+    expect(ledger(".stat-tile").get("padding")).toBe("3px 6px");
+    expect(ledger(".stat-tile-note").get("line-height")).toBe("1.1");
+    expect(ledger(".audit-section").get("padding")).toBe("6px");
+    expect(ledger(".seg-opt").get("padding-inline")).toBe("7px");
+    expect(ledger(".table").get("font-size")).toBe("12px");
+    expect(ledger(".turns-table td").get("padding")).toBe("4px");
+    expect(ledger(".turns-table th").get("font-size")).toBe("10px");
+    expect(ledger(".turns-table th").get("letter-spacing")).toBe("0.06em");
+  });
+
+  it("uses the mono token, not bare monospace, outside :root's fallback", () => {
+    const bare = rules.flatMap((rule) =>
+      [...rule.declarations].filter(([property, value]) => property === "font-family" && /(^|[\s,])monospace$/.test(value) && !value.startsWith("var(")).map(() => rule.selectors.join(",")),
+    );
+    expect(bare).toEqual([]);
   });
 });
