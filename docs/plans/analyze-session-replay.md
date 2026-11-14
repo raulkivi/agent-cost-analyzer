@@ -5,9 +5,9 @@
 **Status: built (8 of 9 steps); the owner's review is open.** Steps
 14.0–14.7 are done (2026-11-07) and shipped from extension 0.4.0 and app
 0.10.0; step 14.8's docs are written. Open: the owner's review of the docs,
-the extension guide's replay screenshots (the User Guide's are done) and
-the owner's sign-off of the §13 exit check, which passed on the owner's
-logs on 2026-11-14. The owner decided D1, D2, D4, D5
+the extension guide's replay screenshots (the User Guide's are done). The
+§13 exit check passed on the owner's logs and the owner signed it off on
+2026-11-14. The owner decided D1, D2, D4, D5
 and D7 on 2026-11-07; D3, D6 and D8 take the recommendation, open for the
 owner to revisit (§11).
 
@@ -578,7 +578,7 @@ compared across two prompts (all 6 such requests missed D12 in the 12
 single-model sessions among the 40 newest).
 
 **Run on the owner's machine, 2026-11-14, after the change (all 11
-assertions pass), pending the owner's sign-off:**
+assertions pass); the owner signed it off on 2026-11-14 (exit criterion met):**
 
 | Provider | Sessions | Turns | Requests | Self-checks passed | Requests matching |
 |---|---|---|---|---|---|
