@@ -1,6 +1,6 @@
 # Session handover
 
-**Last changed:** 2026-11-12 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-14 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 Where the work stands at the end of the 2026-11-10 to 2026-11-12 sessions, for whoever picks it up next. Status of record stays in [implementation-plan-gantt.md](implementation-plan-gantt.md) and the plans under [plans/](plans/).
 
@@ -27,11 +27,14 @@ Before tagging, check that `engines.vscode` still matches the current stable VS 
 
 ## Open decisions for the owner
 
-- **U5's "Sent" label.** In VS Code 1.146, pressing Analyse puts `Analyse session <id>` into the chat input without sending it, and the view can't tell that apart from a send ([plans/mcp-apps.md](plans/mcp-apps.md) §6.1).
-- **Claude Desktop permission prompts** for calls a view makes. A fake host can only show that a drill-down is one plain `tools/call` (§6.1).
-- **A download for the standalone app.** Today users clone the repository and run `npm start`.
-- **Repository protections**, open since 2026-11-06 ([threat-model.md](threat-model.md) §5.8): code-owner review on `main`, `ext-v*` tag protection, `release` environment reviewers, CODEOWNERS for `fixtures/` and `services/pricing/`.
-- **Open VSX trusted publishing:** register the trusted publisher, switch the release workflow to `--trusted-publishing`, and delete the `OVSX_PAT` secret.
+Decided 2026-11-14 ([1.0.0 release](implementation-plan.md#100-release)):
+
+- **U5's "Sent" label:** U5 and U2 read "Added to chat", with the hint "Press send in the chat to run it." (a 1.0 task; [plans/mcp-apps.md](plans/mcp-apps.md) §6.1).
+- **Claude Desktop permission prompts:** risk R4 accepted, no gate row (§6.1).
+- **A download for the standalone app:** the npm package `agent-cost-analyzer`, run as `npx agent-cost-analyzer` (a 1.0 criterion).
+- **`ext-v*` and `app-v*` tag protection** and **Open VSX trusted publishing** (delete `OVSX_PAT`): 1.0 criteria ([threat-model.md](threat-model.md) §5.8).
+
+Still open: code-owner review on `main` (§5.8; not a 1.0 criterion).
 
 ## Follow-ups (not scheduled)
 

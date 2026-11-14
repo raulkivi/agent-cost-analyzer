@@ -553,7 +553,9 @@ can't express the exceptions.
   merge. Mitigation: state-based waits; a flake gets a fix, not a retry.
 - **R4 Fake host fidelity (G5).** It proves the views against the
   protocol and Claude's recorded theme, not Claude Desktop's own chrome.
-  Accepted by D3.
+  Accepted by D3. Claude Desktop's permission prompts for a view's tool
+  calls fall under it: accepted by the owner on 2026-11-14, no gate row
+  ([mcp-apps.md](mcp-apps.md) §6.1).
 - **R5 Normal mode leans on internals (G3).** The real-Copilot suite depends on
   wdio-vscode-service's arg key (`extensionTestsPath`) and proxy module path,
   and on VS Code state keys (`chat.tools.global.autoApprove.optIn`,

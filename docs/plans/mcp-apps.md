@@ -2,7 +2,7 @@
 
 **Last changed:** 2026-11-14 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
-Status: **done: the MVP (A0–A16) released 2026-11-10, A12 dropped; Increment 2 (A17–A24, A24 replaced by step 10.17) released 2026-11-11 in extension 0.6.0 and app 0.11.0; Increment 3 (A25–A32) built and reviewed 2026-11-11, A33 (its checks as specs) done 2026-11-11; Increment 3 released 2026-11-12 in extension 0.8.0 and app 0.12.0 (the real-Copilot gate passed 33 of 33 on `dacf3ed`); follow-ups in §11; planned 2026-10-28, updated
+Status: **done: the MVP (A0–A16) released 2026-11-10, A12 dropped; Increment 2 (A17–A24, A24 replaced by step 10.17) released 2026-11-11 in extension 0.6.0 and app 0.11.0; Increment 3 (A25–A32) built and reviewed 2026-11-11, A33 (its checks as specs) done 2026-11-11; Increment 3 released 2026-11-12 in extension 0.8.0 and app 0.12.0 (the real-Copilot gate passed 33 of 33 on `dacf3ed`); §6.1's two owner decisions closed 2026-11-14 (U5 and U2 "Added to chat" is a 1.0 task); follow-ups in §11; planned 2026-10-28, updated
 2026-11-07 for the Phase 14 and Phase 15 tools.** This is Phase 12 in
 [implementation-plan.md](../implementation-plan.md). Its dependencies are
 met: Phase 9.12's tools are done, step 10.13 is done and `ext-v0.1.0`
@@ -848,12 +848,17 @@ limits, gets the guard.
   chat gains no request and no model turn until the user presses Enter.
   Seen in both of A33's runs that pressed it (`A33 U5.analyse`, outcome
   `staged`). The view's message carries only the fixed text, as built.
-  **Owner decision open:** whether "Sent" should read differently in a
-  host that stages the message (a view can't tell staged from sent: the
+  The question put to the owner: whether "Sent" should read differently in
+  a host that stages the message (a view can't tell staged from sent: the
   host answers the same), and whether the extension guide's wording
   (changed to "puts … in the chat input") is enough. U2's "Ask about this
   session" uses the same message, so it should behave the same (not run
   by A33: it would start a model turn in a host that sends).
+  **Decided by the owner, 2026-11-14:** after a click U5's Analyse button
+  reads **Added to chat** (not "Sent"), with the hint "Press send in the
+  chat to run it." U2's "Ask about this session" gets the same wording.
+  It is a 1.0 task: code, tests and both guides' wording (task V1 in
+  [implementation-plan.md](../implementation-plan.md#100-release)).
 - **Claude Desktop's permission prompts (A24 2.10 for Increment 3).** A
   fake host shows none. Claude Desktop can be driven for demos by simulated
   keyboard and mouse in Xvfb (spike 2.0, [docs-refresh-and-demo-recordings.md](docs-refresh-and-demo-recordings.md) §4.3).
@@ -864,9 +869,12 @@ limits, gets the guard.
     otherwise.
   A33 covers the calls only as "a drill-down is one plain `tools/call`" (G5,
   `a33-increment3-rows.spec.ts`: U12 model → `replay_session`, U11 → U13
-  `get_price_changes`, nothing else reaches the host). **Owner decision
-  open:** whether the owner checks the prompts for `replay_session` and
-  `get_price_changes` by hand once, or leaves them out (risk R4).
+  `get_price_changes`, nothing else reaches the host). The question put
+  to the owner: whether the owner checks the prompts for `replay_session`
+  and `get_price_changes` by hand once, or leaves them out (risk R4).
+  **Decided by the owner, 2026-11-14:** risk R4 accepted, no gate row.
+  The prompts are Claude Desktop's own behaviour, seen during the step
+  10.23 demo recordings.
 
 ## 7. Tasks
 
@@ -1003,7 +1011,7 @@ release workflow sends an odd minor to the Marketplace pre-release channel.
 - The views match the owner-approved A25b boards.
 
 **Status (A33, 2026-11-11): met in the gate, with two owner decisions
-open (§6.1).** VS Code Copilot Chat: U12, U13, U4 and U5 render and
+open (§6.1); both closed 2026-11-14.** VS Code Copilot Chat: U12, U13, U4 and U5 render and
 drill down in a real chat, and the extension's `tools/list` names no
 billing tool (G4, `copilot-increment3-views.e2e.ts`). Claude Desktop: every
 Increment 3 view in the fake host with Claude's light and dark sets, axe
@@ -1011,8 +1019,9 @@ clean (G5). "Simulated", "estimate" and "inferred" are asserted in G5
 (A27, A29, A32) and in the view-model property tests (A25). U5 sends only
 its template (G5); in VS Code 1.146 the template lands in the chat input,
 unsent. No view writes: every host call in G5 is a read-only `tools/call`
-or the template. Open: whether Claude Desktop asks before a view's tool
-call, and whether U5's "Sent" fits a host that stages the message.
+or the template. Both owner decisions closed 2026-11-14 (§6.1): U5 and
+U2 will read "Added to chat" (a 1.0 task), and Claude Desktop's
+permission prompts stay outside the gate (risk R4 accepted).
 
 ## 9. Open questions and risks
 

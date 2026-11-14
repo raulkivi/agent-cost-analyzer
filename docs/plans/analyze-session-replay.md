@@ -1,6 +1,6 @@
 # Phase 14: Replay a real Analyze session on another model
 
-**Last changed:** 2026-11-12 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-14 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 **Status: built (8 of 9 steps); the owner's review is open.** Steps
 14.0–14.7 are done (2026-11-07) and shipped from extension 0.4.0 and app
@@ -511,3 +511,18 @@ Phase 13's D12 tolerance; replayed on two other models, the Analyze view
 shows measured and Simulated figures side by side with coverage and
 assumptions, the Compare models view ranks the models, and MCP gives the
 same totals as the UI.
+
+**Checked by an automated test (owner decision 2026-11-14, a 1.0
+criterion, C3 in [implementation-plan.md](../implementation-plan.md#100-release)):**
+
+- A `REAL_DATA` test over the owner's logs, skipped unless `REAL_DATA=1`
+  and part of `npm run test:real-data`, as `savings-exit.real.test.mts`.
+- Its oracle reads the raw Claude Code and Copilot logs and the bundled
+  price book, with no code from the request-trace builders, the replay
+  service or the pricer, and rebuilds each session's measured totals.
+- It asserts the self-check against that oracle at D12's tolerance,
+  measured and Simulated figures with coverage and assumptions side by
+  side, the compare ranking, and equal totals from the UI's API and the
+  MCP tools.
+- The owner signs off its output; the test alone does not mark the
+  criterion met.

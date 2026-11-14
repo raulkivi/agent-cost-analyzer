@@ -1,6 +1,6 @@
 # Phase 15: Cost by repository and project, price history, billing and estimates
 
-**Last changed:** 2026-11-12 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-14 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 Status: **In progress**: steps 15.0–15.13 are done (see §14.1). The owner accepted
 every recommended decision on 2026-11-05 ([§13](#13-decisions)). The UI
@@ -2157,3 +2157,19 @@ repositories grouped into two projects:
 - the ten usage scenarios of §12.4 pass (S1–S8 and S10 in the required
   `web-e2e` job, S9 in `extension-ui`);
 - no unknown cost is shown or summed as zero anywhere.
+
+**Checked by an automated test (owner decision 2026-11-14, a 1.0
+criterion, C4 in [implementation-plan.md](../implementation-plan.md#100-release)):**
+
+- A `REAL_DATA` test over the owner's logs and projects file, skipped
+  unless `REAL_DATA=1` and part of `npm run test:real-data`, as
+  `savings-exit.real.test.mts`.
+- Its oracle reads the raw logs, the projects file and the bundled price
+  book, with no code from the cost cube, the pricer or the repository
+  resolver, and rebuilds each repository's and project's cost per month.
+- It asserts those figures in the API and the MCP tools, usage, price and
+  mix effects that add up exactly, a statement that keeps its figures
+  after a price-book change (in a temporary copy, so nothing on the
+  machine is written), and no unknown cost summed as zero.
+- The owner signs off its output; the test alone does not mark the
+  criterion met.
