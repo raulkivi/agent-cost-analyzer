@@ -15,8 +15,7 @@ estimates.
 
 ![A Copilot agent-mode chat answers; its session appears under Today in the Sessions view with its AI Credits, and the tooltips show the session and the status bar's AI Credits today](https://raw.githubusercontent.com/raulkivi/agent-cost-analyzer/main/docs/images/demo/e2-chat-cost.gif)
 
-This is an early pre-release; please
-[report issues](https://github.com/raulkivi/agent-cost-analyzer/issues).
+Please [report issues](https://github.com/raulkivi/agent-cost-analyzer/issues).
 Independent project; not affiliated with or endorsed by GitHub or
 Microsoft.
 
@@ -82,10 +81,13 @@ reads those and Copilot Chat.
 - **MCP server for Copilot agent mode** (off by default). Ask Copilot Chat
   "what did my last session cost?" and it answers from the same local logs
   through 19 read-only tools, including cost by repository, why it
-  changed, and what a session would have cost on another model. The cost
-  and findings tools also show interactive views in the chat: session
-  cost, spend by day and model, findings, cost over time, a repository
-  comparison, and why a cost changed.
+  changed, and what a session would have cost on another model. Thirteen
+  of the tools also show interactive views in the chat: session cost,
+  spend by day and model, findings, cost over time by repository or
+  project, a repository comparison, why a cost changed, price changes,
+  replay on other models, the tool-call audit of a session and across
+  sessions, and a session list whose **Analyse** button asks about a
+  session.
 
   ![Copilot agent mode answers "What drove my spend this week?" with the cost rollup view in the chat; drilling into the top session and a turn, then Back](https://raw.githubusercontent.com/raulkivi/agent-cost-analyzer/main/docs/images/demo/e9-ask-copilot.gif)
 
