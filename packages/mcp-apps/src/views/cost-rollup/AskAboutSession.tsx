@@ -49,6 +49,10 @@ function AskInChat({ sessionId, className }: { sessionId: string; className: str
   );
 }
 
+// The hosts stage the message in the chat input; the user presses send.
+const PRESS_SEND = "Press send in the chat to run it.";
+const ADDED_TO_CHAT = "Added to chat";
+
 export function AskAboutSession({ port, sessionId }: { port: AppHostPort; sessionId: string }) {
   const { phase, send } = useAnalyse(port, sessionId);
   if (!isPlainSessionId(sessionId)) return null;
@@ -57,17 +61,17 @@ export function AskAboutSession({ port, sessionId }: { port: AppHostPort; sessio
     <>
       {phase === "sent" && (
         <span role="status" className="text-muted">
-          Sent to the chat.
+          {PRESS_SEND}
         </span>
       )}
-      <button type="button" className="btn btn-secondary view-btn" disabled={phase === "sending"} onClick={send}>
-        Ask about this session
+      <button type="button" className="btn btn-secondary view-btn" disabled={phase === "sending" || phase === "sent"} onClick={send}>
+        {phase === "sent" ? ADDED_TO_CHAT : "Ask about this session"}
       </button>
     </>
   );
 }
 
-// U5's per-row button (owner answer Q6): "Analyse", then a disabled "Sent";
+// U5's per-row button (owner answer Q6): "Analyse", then a disabled "Added to chat" with a press-send hint (owner, 2026-11-14: the hosts stage the message);
 // after a declined or failed send, that row's text to type (Q7, 2026-11-11).
 // `shortId` only names the button for assistive tech; the message carries the
 // full session id and nothing else, never the row's title.
@@ -77,8 +81,15 @@ export function AnalyseRowButton({ port, sessionId, shortId }: { port: AppHostPo
   if (phase === "fallback") return <AskInChat sessionId={sessionId} className="text-muted sp-fallback" />;
   const done = phase === "sent";
   return (
-    <button type="button" className="btn btn-secondary view-btn sp-analyse" aria-label={done ? `Sent: session ${shortId}` : `Analyse session ${shortId}`} disabled={phase === "sending" || done} onClick={send}>
-      {done ? "Sent" : "Analyse"}
-    </button>
+    <>
+      {done && (
+        <span role="status" className="text-muted sp-fallback sp-staged">
+          {PRESS_SEND}
+        </span>
+      )}
+      <button type="button" className="btn btn-secondary view-btn sp-analyse" aria-label={done ? `${ADDED_TO_CHAT}: session ${shortId}` : `Analyse session ${shortId}`} disabled={phase === "sending" || done} onClick={send}>
+        {done ? ADDED_TO_CHAT : "Analyse"}
+      </button>
+    </>
   );
 }

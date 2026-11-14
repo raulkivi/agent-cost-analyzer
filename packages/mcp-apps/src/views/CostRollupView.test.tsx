@@ -228,7 +228,9 @@ describe("CostRollupView Ask about this session", () => {
     fireEvent.click(await ask());
     await waitFor(() => expect(calls(port, "sendMessage")).toHaveLength(1));
     expect(calls(port, "sendMessage")[0]!.args).toEqual(["Analyse session 7f3a9c2e"]);
-    expect(await screen.findByText("Sent to the chat.")).toBeInTheDocument();
+    expect(await screen.findByText("Press send in the chat to run it.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Added to chat" })).toBeDisabled();
+    expect(screen.queryByRole("button", { name: "Ask about this session" })).not.toBeInTheDocument();
   });
 
   // A14: a session id comes from the logs (a Claude Code id is a file name),

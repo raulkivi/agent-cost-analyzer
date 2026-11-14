@@ -676,8 +676,10 @@ What you can click:
   message, the view shows **Ask in the chat: Analyse session <id>** for you
   to type; it doesn't try again by itself.
 - **Analyse** (session picker) puts the same fixed text for that row's
-  session in the chat input and then reads **Sent**, or shows the text to
-  type if the message isn't taken. The row itself is not a button.
+  session in the chat input and then reads **Added to chat**, with the hint
+  "Press send in the chat to run it.", or shows the text to type if the
+  message isn't taken. **Ask about this session** reads the same after a
+  click. The row itself is not a button.
 - **A model** in the replay comparison replays the session on that model in
   place; **Back to model comparison** returns with focus on that model.
 - **Price changes** in the cost change view opens the price timeline in

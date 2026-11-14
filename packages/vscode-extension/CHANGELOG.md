@@ -18,6 +18,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Learn's Vendors tab fits the panel's side column: one block per model instead of a six-column table, so names no longer wrap and the Misses column is no longer cut off. Sorting moves to a **Sort by** selector.
 
+### Changed
+- The chat views' **Analyse** (session picker) and **Ask about this session** buttons now read **Added to chat** after a click, with the hint "Press send in the chat to run it.", since the hosts put the message in the chat input rather than sending it.
+
 ## [0.12.0] - 2026-11-14
 
 ### Added

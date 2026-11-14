@@ -101,7 +101,7 @@ gantt
     C3 Phase 14 real-data check (0%)          :c3, 2026-11-16, 1d
     C4 Phase 15 real-data check (0%)          :c4, 2026-11-16, 1d
     C5 Savings Increment 2 finished (in progress) :active, c5, 2026-11-14, 2d
-    C6 U5 and U2 Added to chat (0%)           :c6, 2026-11-16, 1d
+    C6 U5 and U2 Added to chat (100%)         :done, c6, 2026-11-14, 1d
     C7 Desktop prompts, R4 accepted (100%)    :done, c7, 2026-11-14, 1d
     C8 npm package agent-cost-analyzer (0%)   :c8, 2026-11-16, 1d
     C9 MA13 allowance in the app (0%)         :c9, 2026-11-16, 1d
@@ -147,7 +147,7 @@ gantt
 - Phase 14: steps 14.0-14.7 built; 14.8's docs written, the owner's review and the §13 exit criterion on real sessions open; the extension guide's replay screenshots open (User Guide's done). Step table: [analyze-session-replay.md](plans/analyze-session-replay.md) §12.
 - Phase 15: owner's review and exit criterion on real data.
 - Phase 13 (vendor-aware Learn simulation, 100%): done 2026-11-14 with the owner's eyes-on review of step 13.8. Follow-up from that review, fixed 2026-11-14 for the next release: the Vendors tab shows one block per model, so it fits the narrow side column (names no longer wrap, no column scrolls off; `density.spec.ts` at 1440 and 360 px, light and dark). Calibration stays Claude Code only (owner, 2026-11-14). Plan: [vendor-aware-learn-simulation.md](plans/vendor-aware-learn-simulation.md).
-- 1.0.0 (both products, 2 of 14 criteria met): owner decisions 2026-11-14; no target date, released when C1-C14 are met. Done: C1 (Phase 10 closed: 10.9 superseded by step 10.17, 10.10 covered by the 0.12.0 reviews) and C7 (Claude Desktop permission prompts, risk R4 accepted). Next: V1 (U5 and U2 "Added to chat"), V2 (threat-model §5.10 label), V3 and V4 (Phase 14 and 15 real-data checks), the four per-feature plans (npm package, MA13, step 10.20, Savings Increment 3) and the owner steps (tag ruleset, Open VSX trusted publisher, pi captures). Not in 1.0: mitmproxy tool calls (F6), threat-model §5.9. Criteria, tasks and the release procedure: [implementation-plan.md](implementation-plan.md#100-release).
+- 1.0.0 (both products, 3 of 14 criteria met): owner decisions 2026-11-14; no target date, released when C1-C14 are met. Done: C1 (Phase 10 closed: 10.9 superseded by step 10.17, 10.10 covered by the 0.12.0 reviews) C6 (U5 and U2 read "Added to chat") and C7 (Claude Desktop permission prompts, risk R4 accepted). Next: V2 (threat-model §5.10 label), V3 and V4 (Phase 14 and 15 real-data checks), the four per-feature plans (npm package, MA13, step 10.20, Savings Increment 3) and the owner steps (tag ruleset, Open VSX trusted publisher, pi captures). Not in 1.0: mitmproxy tool calls (F6), threat-model §5.9. Criteria, tasks and the release procedure: [implementation-plan.md](implementation-plan.md#100-release).
 
 ## Steps 10.22 and 10.23 detail — Demo recordings
 

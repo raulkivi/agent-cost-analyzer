@@ -758,13 +758,18 @@ export class SessionPickerView {
     return this.rows().filter({ hasText: title });
   }
 
-  // "Analyse session <short id>" until sent, then "Sent: session <short id>".
+  // "Analyse session <short id>" until clicked, then "Added to chat: session <short id>".
   analyseButton(shortId: string): Locator {
     return this.content.getByRole("button", { name: `Analyse session ${shortId}`, exact: true });
   }
 
   sentButton(shortId: string): Locator {
-    return this.content.getByRole("button", { name: `Sent: session ${shortId}`, exact: true });
+    return this.content.getByRole("button", { name: `Added to chat: session ${shortId}`, exact: true });
+  }
+
+  // The hint after a click: the host put the message in the chat input.
+  pressSendHint(): Locator {
+    return this.content.getByText("Press send in the chat to run it.");
   }
 
   buttons(): Locator {

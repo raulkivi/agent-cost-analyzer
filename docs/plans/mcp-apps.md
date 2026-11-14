@@ -731,7 +731,7 @@ try-then-fall-back rule (§9.2 Q7), and the fake host's canned results.
 - **U5 "try, then fall back" (owner, 2026-11-11).** `canSendMessage()` is
   false only when the host says `message: false`. A press sends exactly
   `Analyse session <id>` once: the button is disabled while the host
-  answers and reads a disabled **Sent** after. A declined or failed send
+  answers and reads a disabled **Added to chat** after (**Sent** before 2026-11-14). A declined or failed send
   puts "Ask in the chat: Analyse session <id>" in that row (U2: in place of
   the button) and is never retried by the view, not when the host context
   changes and not when the result is shown again. Opening the session in U2
@@ -755,7 +755,7 @@ try-then-fall-back rule (§9.2 Q7), and the fake host's canned results.
   CSP and refuses any other request; none was refused.
 - **Keyboard.** U12 model → replay → Back (focus on the model), Back from
   a failed replay, U11 → U13 → Back (focus on Price changes), U5's Analyse
-  by Tab, Enter and Space with Sent skipped, the fullscreen control (Enter
+  by Tab, Enter and Space with the used button skipped, the fullscreen control (Enter
   and Space, focus kept across the switch), U14's tab stops (its scrollers
   only) and U15 (nothing to tab to) work as built.
 - **Charts.** U12's per-turn chart is named with its series, size and
@@ -786,7 +786,7 @@ try-then-fall-back rule (§9.2 Q7), and the fake host's canned results.
   waiting, the extension. U4: a session, unknown outcomes, no recorded tool
   calls, an Unknown recovery cost; a rollup, with gaps, with every session
   left out, with the per-day table open; an error with text, unreadable,
-  waiting. U5: the list, a pending send, Sent, declined, failed, a row
+  waiting. U5: the list, a pending send, Added to chat, declined, failed, a row
   whose id can't be sent, a host that can't send, no match, an error with
   text, waiting. U2: the "Ask in the chat" fallback after a declined send
   and in a host that can't send. Fullscreen: U2 and U9 inline and
@@ -843,7 +843,7 @@ limits, gets the guard.
   callout is still not seen in VS Code.
 - **U5 in VS Code: closed by A33 (2026-11-11), with a finding for the
   owner.** In real Copilot Chat on VS Code 1.146, Analyse neither sends nor
-  falls back: VS Code accepts the message, so the button reads **Sent**,
+  falls back: VS Code accepts the message, so the button read **Sent**,
   and puts exactly `Analyse session <id>` in the chat input, unsent. The
   chat gains no request and no model turn until the user presses Enter.
   Seen in both of A33's runs that pressed it (`A33 U5.analyse`, outcome
@@ -857,8 +857,9 @@ limits, gets the guard.
   **Decided by the owner, 2026-11-14:** after a click U5's Analyse button
   reads **Added to chat** (not "Sent"), with the hint "Press send in the
   chat to run it." U2's "Ask about this session" gets the same wording.
-  It is a 1.0 task: code, tests and both guides' wording (task V1 in
-  [implementation-plan.md](../implementation-plan.md#100-release)).
+  It was a 1.0 task (V1 in
+  [implementation-plan.md](../implementation-plan.md#100-release)): done
+  2026-11-14 in the V1 PR (code, tests and both guides' wording).
 - **Claude Desktop's permission prompts (A24 2.10 for Increment 3).** A
   fake host shows none. Claude Desktop can be driven for demos by simulated
   keyboard and mouse in Xvfb (spike 2.0, [docs-refresh-and-demo-recordings.md](docs-refresh-and-demo-recordings.md) §4.3).
@@ -1079,7 +1080,7 @@ Drawn 2026-11-11 and approved by the owner the same day, who answered all 17 in 
 | 3 | Turns not replayed (partial coverage). The tool's `difference` still compares a partial simulated total with the full measured one. | Compare rows show "≥ total", "known for 40 of 42 turns" and "partial" in place of a percent. Replay mode shows the tool's difference with the note that the 2 turns not replayed (7.61 measured) are only in Measured; the chart leaves a hatched gap. |
 | 4 | Compare mode: row order and the measured row. | Measured row first, then the entries in the tool's order (the session's own model first), not sorted by cost. A model with no price shows "Unknown" and no bar. |
 | 5 | U12 cues: measured and simulated are told apart without colour. | Measured solid bar or solid line with filled dots; simulated hatched bar or dashed line with open diamonds; both lines carry a direct label. |
-| 6 | U5: how does a user pick? | A "Analyse" button per row (the row itself is not a click target). After the click the button reads "Sent" and is disabled. The hint line states that only "Analyse session <id>" is sent and never a title. |
+| 6 | U5: how does a user pick? | A "Analyse" button per row (the row itself is not a click target). After the click the button reads "Added to chat" (was "Sent" until 2026-11-14) and is disabled. The hint line states that only "Analyse session <id>" is sent and never a title. |
 | 7 | U5 in a host without `sendMessage`. | The button is hidden and the hint reads "Ask in the chat: Analyse session <id>". Rows stay as a plain list. **Changed (owner, 2026-11-11): try then fall back, because VS Code doesn't advertise `message` yet sends.** The button shows unless the host explicitly says it cannot send; a declined or failed send puts "Ask in the chat: Analyse session <id>" in that row (and in U2's place of "Ask about this session"). |
 | 8 | U5 rows: what do they show? | Title (truncated, full text in a tooltip), short id, start, turn count, model and repository key; no cost, because `list_sessions` returns none. No match shows "No sessions match" with what to try. |
 | 9 | U4 recovery cost: `get_session_audit` gives tokens of the affected turns, not AI Credits. | Show tokens, labelled "tokens, not AI Credits", with the note that per-round tokens are not recorded; no conversion. |

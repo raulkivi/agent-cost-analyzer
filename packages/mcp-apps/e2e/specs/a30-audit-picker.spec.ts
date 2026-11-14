@@ -43,7 +43,7 @@ inEachClaudeSet(() => {
     expect(await view.axeViolations()).toEqual([]);
   });
 
-  test("A30 U5 Analyse: exactly one message, the fixed template with the row's id, no title; the button turns into a disabled Sent; nothing else is sent; axe clean", async ({ host }) => {
+  test("A30 U5 Analyse: exactly one message, the fixed template with the row's id, no title; the button turns into a disabled Added to chat with the press-send hint; nothing else is sent; axe clean", async ({ host }) => {
     const view = await host.show("list_sessions", { ...CLAUDE_CODE, ...OCTOBER });
     const first = view.picker.rows().first();
     const title = (await first.locator(".sp-title").textContent()) ?? "";
@@ -64,8 +64,9 @@ inEachClaudeSet(() => {
     expect(toolCallsIn(host.calls)).toEqual([]);
 
     await expect(view.picker.sentButton(shortId)).toBeDisabled();
-    await expect(view.picker.sentButton(shortId)).toHaveText("Sent");
-    // The other rows still offer Analyse, and pressing Sent again sends nothing.
+    await expect(view.picker.sentButton(shortId)).toHaveText("Added to chat");
+    await expect(view.picker.pressSendHint()).toBeVisible();
+    // The other rows still offer Analyse, and pressing Added to chat again sends nothing.
     await expect(view.picker.buttons().filter({ hasText: "Analyse" })).toHaveCount((await view.picker.rows().count()) - 1);
     await view.picker.sentButton(shortId).click({ force: true });
     expect(modelTurnsIn(host.calls)).toHaveLength(1);
@@ -187,7 +188,7 @@ inEachClaudeSet(() => {
 test.describe("in VS Code", () => {
   test.use({ hostKind: "vscode", hostSet: VSCODE_SETS[1] });
 
-  test("A30 U5 in a host that advertises no `message` capability: Analyse on every row, the click sends the fixed template, then Sent; axe clean", async ({ host }) => {
+  test("A30 U5 in a host that advertises no `message` capability: Analyse on every row, the click sends the fixed template, then Added to chat; axe clean", async ({ host }) => {
     const view = await host.show("list_sessions", { ...CLAUDE_CODE, ...OCTOBER });
     const count = await view.picker.rows().count();
     await expect(view.picker.buttons()).toHaveCount(count);

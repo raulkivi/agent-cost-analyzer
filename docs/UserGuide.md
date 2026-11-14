@@ -765,12 +765,16 @@ text.
 - **Ask about this session** (cost rollup view) sends one fixed message to
   the chat, `Analyse session <id>`, and the model answers as it would for
   any question. Nothing else from the view is ever sent to the model, not
-  the session title or a prompt: they stay in the view. If the host
+  the session title or a prompt: they stay in the view. After the click
+  the button reads **Added to chat** and a hint says to press send in the
+  chat; the host only puts the message in the chat input. If the host
   declines or can't send it, the view shows **Ask in the chat: Analyse
   session <id>** for you to type instead; it doesn't try again by itself.
 - **Analyse** (session picker) sends the same fixed message for that row's
-  session and then reads **Sent**. If the host declines, that row shows
-  the text to type instead. A session whose id isn't a plain id gets no
+  session and then reads **Added to chat** with the hint "Press send in
+  the chat to run it.", because the host puts the message in the chat
+  input and you press send. If the host declines, that row shows the
+  text to type instead. A session whose id isn't a plain id gets no
   button. The row itself is not a button.
 - **Copy title to open in panel** (session cost view, VS Code only) copies
   the session title. Hosts don't let a view open a link into VS Code, so

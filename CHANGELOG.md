@@ -17,6 +17,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - pi sessions' system prompt now matches what pi sent when the `pi-system-prompt-logger` extension is installed (exact text and size; pi's own sections as the breakdown, the extensions' additions as their own part), and says so when it is incomplete.
 - Learn's Vendors tab fits its column: one block per model (name, per-turn strip, labelled figures) instead of a six-column table, so model names stay on one line and nothing scrolls sideways. Sorting moves to a **Sort by** selector.
 
+### Changed
+- The chat views' **Analyse** (session picker) and **Ask about this session** buttons now read **Added to chat** after a click, with the hint "Press send in the chat to run it.", since the hosts put the message in the chat input rather than sending it.
+
 ## [0.14.0] - 2026-11-14
 
 ### Added

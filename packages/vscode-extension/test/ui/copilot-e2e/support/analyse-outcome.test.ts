@@ -16,7 +16,7 @@ describe("analyseOutcome", () => {
   const message = "Analyse session 00000008-0000-4000-a000-000000000008";
   const prompt = "Call these all 6 ai-credits-analyzer MCP tools …";
 
-  it("is sent when the chat gained one turn, shows one request with the fixed text, and the view says Sent", () => {
+  it("is sent when the chat gained one turn, shows one request with the fixed text, and the view says Added to chat", () => {
     const outcome = analyseOutcome({ sessionId, turnsBefore: 1, turnsAfter: 2, requestTexts: [prompt, message], row: "sent" });
 
     expect(outcome).toEqual({ kind: "sent", request: message });
@@ -36,7 +36,7 @@ describe("analyseOutcome", () => {
 
   // VS Code 1.146 (A33's first run): the view's message is accepted, but it
   // lands in the chat input, unsent; the user still presses Enter.
-  it("is staged when the chat gained no turn, its input holds exactly the fixed text, and the view says Sent", () => {
+  it("is staged when the chat gained no turn, its input holds exactly the fixed text, and the view says Added to chat", () => {
     const outcome = analyseOutcome({ sessionId, turnsBefore: 1, turnsAfter: 1, requestTexts: [prompt], row: "sent", inputText: `${message}${NO_BREAK_SPACE}` });
 
     expect(outcome).toEqual({ kind: "staged", input: message });
@@ -54,7 +54,7 @@ describe("analyseOutcome", () => {
     ["the text twice", 2, [message, message], "sent", /2 requests show the fixed text/],
     ["two new turns", 3, [message], "sent", /2 new chat requests/],
     ["a request and the fallback", 2, [message], "fallback", /both/],
-    ["Sent with no new turn", 1, [prompt], "sent", /says Sent but the chat gained no request/],
+    ["Added to chat with no new turn", 1, [prompt], "sent", /says Added to chat but the chat gained no request/],
     ["the text with no new turn", 1, [message], "pending", /shows the fixed text but gained no turn/],
     ["nothing at all", 1, [prompt], "pending", /neither/],
   ] as const)("fails on %s", (_name, turnsAfter, requestTexts, row, reason) => {

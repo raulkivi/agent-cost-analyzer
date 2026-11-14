@@ -95,11 +95,11 @@ describe("U5 SessionPickerView has no axe violations", () => {
   });
   const renderU5 = (result: ToolResult | undefined, port = new FakeAppHostPort()) => render(<SessionPickerView port={port} brand={brand} result={result} />);
 
-  it("the list, and after Sent", async () => {
+  it("the list, and after Added to chat", async () => {
     renderU5(ok(sessions()));
     await expectNoViolations();
     fireEvent.click(screen.getByRole("button", { name: "Analyse session 7f3a9c2e" }));
-    await screen.findByRole("button", { name: "Sent: session 7f3a9c2e" });
+    await screen.findByRole("button", { name: "Added to chat: session 7f3a9c2e" });
     await expectNoViolations();
   });
 
