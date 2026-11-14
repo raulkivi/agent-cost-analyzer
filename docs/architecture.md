@@ -996,7 +996,7 @@ sequenceDiagram
     participant Log as main.jsonl
 
     UI->>API: GET /api/sessions
-    API->>SQL: listSessions(agent_name = 'GitHub Copilot Chat')
+    API->>SQL: listSessions(host_type = 'vscode' OR agent_name = 'GitHub Copilot Chat')
     SQL->>DB: SELECT ...
     DB--&gt;>SQL: rows
     SQL--&gt;>API: session summaries

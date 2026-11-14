@@ -145,7 +145,10 @@ using only the always-available SQLite store — before touching the riskier
   (tracked in architecture §13).
 - `data-sources/sqlite`: read-only queries against `sessions`/`turns`/
   `checkpoints`/`session_files`/`session_refs`, filtered to
-  `agent_name = 'GitHub Copilot Chat'` (vision §18.2 scoping rule).
+  Chat-panel sessions: host type `vscode`, or agent name `GitHub Copilot Chat`
+  (agentic-coding-explained §18.2 scoping rule; by surface since 2026-11-14,
+  so sessions stored under a helper's agent name such as `panel/editAgent`
+  count).
 - `services/session-enricher`: for this phase, always sets
   `usageDataAvailable: false` and marks every `TurnUsage` field
   `{ known: false, reason: "main.jsonl parsing not yet implemented" }` —
