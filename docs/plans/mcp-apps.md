@@ -1,6 +1,6 @@
 # MCP Apps: branded, interactive cost views in the chat
 
-**Last changed:** 2026-11-12 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-14 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 Status: **done: the MVP (A0–A16) released 2026-11-10, A12 dropped; Increment 2 (A17–A24, A24 replaced by step 10.17) released 2026-11-11 in extension 0.6.0 and app 0.11.0; Increment 3 (A25–A32) built and reviewed 2026-11-11, A33 (its checks as specs) done 2026-11-11; Increment 3 released 2026-11-12 in extension 0.8.0 and app 0.12.0 (the real-Copilot gate passed 33 of 33 on `dacf3ed`); follow-ups in §11; planned 2026-10-28, updated
 2026-11-07 for the Phase 14 and Phase 15 tools.** This is Phase 12 in
@@ -855,13 +855,18 @@ limits, gets the guard.
   session" uses the same message, so it should behave the same (not run
   by A33: it would start a model turn in a host that sends).
 - **Claude Desktop's permission prompts (A24 2.10 for Increment 3).** A
-  fake host shows none and Claude Desktop can't be driven, so A33 covers
-  this only as "a drill-down is one plain `tools/call`" (G5,
+  fake host shows none. Claude Desktop can be driven for demos by simulated
+  keyboard and mouse in Xvfb (spike 2.0, [docs-refresh-and-demo-recordings.md](docs-refresh-and-demo-recordings.md) §4.3).
+  - Each tool asks for permission once per profile; "Always allow" keeps it.
+  - A view's message (U5 Analyse) is put in the composer under a caution
+    note and sent only when the user presses send.
+  - Permission prompts stay outside the release gate unless this plan says
+    otherwise.
+  A33 covers the calls only as "a drill-down is one plain `tools/call`" (G5,
   `a33-increment3-rows.spec.ts`: U12 model → `replay_session`, U11 → U13
   `get_price_changes`, nothing else reaches the host). **Owner decision
-  open:** whether Claude Desktop asks before a view's `replay_session` or
-  `get_price_changes` call stays outside the gate (risk R4), or the owner
-  checks it by hand once.
+  open:** whether the owner checks the prompts for `replay_session` and
+  `get_price_changes` by hand once, or leaves them out (risk R4).
 
 ## 7. Tasks
 
