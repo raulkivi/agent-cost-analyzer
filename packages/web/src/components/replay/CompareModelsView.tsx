@@ -9,6 +9,7 @@ import {
 } from "@agent-cost-analyzer/domain";
 import { ReplayCompareBars, type ReplayCompareBar } from "../../charts/ReplayCompareBars.js";
 import { formatAmount, formatChange, UNKNOWN, unitLabel } from "../../lib/cost/cost-format.js";
+import { subagentRunsSentence } from "../../lib/replay-format.js";
 import { useContainerWidth } from "../../lib/use-container-width.js";
 import { useReplayComparison } from "../../state/use-replay-comparison.js";
 import { VendorPicker } from "../learn/VendorPicker.js";
@@ -314,6 +315,7 @@ function ComparisonResult({ data, wide, vendorName, onRemove }: ResultProps) {
           <span>
             {reference.replayedTurns} of {reference.total.turns} turns replayed on {reference.model}
           </span>
+          {subagentRunsSentence(data.subagentRuns) !== undefined && <span>{subagentRunsSentence(data.subagentRuns)}</span>}
         </div>
         <Assumptions />
       </div>

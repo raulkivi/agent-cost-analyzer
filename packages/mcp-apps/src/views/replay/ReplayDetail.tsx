@@ -168,6 +168,7 @@ export function ReplayDetail({ brand, vm, kicker, lead }: { brand: ViewBrand; vm
       </section>
 
       {vm.coverage.partial && <NotReplayed vm={vm} />}
+      {vm.coverage.subagentRunsText !== undefined && <p className="rp-basis text-muted">{vm.coverage.subagentRunsText}</p>}
       <Assumptions vm={vm} />
       <p className="rp-basis text-muted">{`Simulated: assumes the same conversation and token counts, ${vm.pricingText}. It is not what was billed.`}</p>
     </ViewShell>

@@ -368,6 +368,7 @@ export class SessionReplayService implements SessionReplayQueries {
         currency: reference.currency,
         measuredModels: value.measuredModels,
         measured: reference.totals.measured,
+        ...(reference.coverage.subagentRuns === undefined ? {} : { subagentRuns: reference.coverage.subagentRuns }),
         entries: replays.map((replay) => {
           const isOwn = replay.model === ownModelId;
           return {

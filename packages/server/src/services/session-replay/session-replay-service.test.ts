@@ -1054,6 +1054,12 @@ describe("SessionReplayService.replay: subagent runs (step 10.19)", () => {
     return result.value;
   };
 
+  const compareOf = async (session: Session) => {
+    const result = await serviceOf([providerWith(session)]).compare({ sessionId: "s-1", models: ["gpt-6.1-sol"] });
+    if (result.status !== "ok") throw new Error(result.status);
+    return result.value;
+  };
+
   it("compares the main agent's own figures, not the folded ones", async () => {
     const replay = await replayOf(withRuns([k(40), k(2.5)]));
     expect(replay.turns[1]!.measured).toEqual({
@@ -1073,6 +1079,11 @@ describe("SessionReplayService.replay: subagent runs (step 10.19)", () => {
     const replay = await replayOf(withRuns([k(40), unavailableTokenCount("a run log is missing")]));
     expect(replay.coverage.subagentRuns?.runs).toBe(2);
     expect(replay.coverage.subagentRuns?.costAiCredits.known).toBe(false);
+  });
+
+  it("carries the runs outside the replay into a comparison", async () => {
+    const comparison = await compareOf(withRuns([k(40), k(2.5)]));
+    expect(comparison.subagentRuns).toEqual({ runs: 2, costAiCredits: { known: true, value: 42.5 } });
   });
 
   it("leaves the coverage unchanged for a session without runs", async () => {

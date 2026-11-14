@@ -66,6 +66,16 @@ describe("toReplayViewModel, replay mode", () => {
     expect(full.coverage).toMatchObject({ text: "3 of 3 turns replayed", partial: false, notReplayed: [] });
   });
 
+  it("lists the subagent runs the replay leaves out, and nothing without them", () => {
+    const base = replay().coverage;
+    expect(detail().coverage.subagentRunsText).toBeUndefined();
+    const withRuns = detail({ coverage: { ...base, subagentRuns: { runs: 2, costAiCredits: { known: true, value: 3.5 } } } });
+    expect(withRuns.coverage.subagentRunsText).toBe("2 subagent runs not replayed: replay covers the main agent only");
+    const one = detail({ coverage: { ...base, subagentRuns: { runs: 1, costAiCredits: { known: false, reason: "a run log is missing" } } } });
+    expect(one.coverage.subagentRunsText).toBe("1 subagent run not replayed: replay covers the main agent only");
+    expect(detail({ coverage: { ...base, subagentRuns: { runs: 0, costAiCredits: { known: true, value: 0 } } } }).coverage.subagentRunsText).toBeUndefined();
+  });
+
   it("lists turns with measured and simulated figures, and the reason for an unreplayed one", () => {
     const [first, second] = detail().turns;
     expect(first).toMatchObject({ turnIndex: 0, replayed: true, outcomeText: "partial cache hit" });

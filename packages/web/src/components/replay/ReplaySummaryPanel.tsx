@@ -11,6 +11,8 @@ import {
   selfCheckDetail,
   selfCheckRule,
   splitAssumption,
+  subagentRunsCostSentence,
+  subagentRunsSentence,
 } from "../../lib/replay-format.js";
 import { useFirstTimeOpen } from "../../state/use-first-time-open.js";
 import { Tag, type TagVariant } from "../ui/Tag.js";
@@ -122,6 +124,11 @@ function CoverageSection({ replay }: { replay: SessionReplay }) {
       <span>
         {coverage.replayedTurns} of {coverage.turns} turns replayed ({coverage.replayedRequests} of {coverage.requests} requests)
       </span>
+      {subagentRunsSentence(coverage.subagentRuns) !== undefined && (
+        <span>
+          {subagentRunsSentence(coverage.subagentRuns)}. {subagentRunsCostSentence(coverage.subagentRuns)}
+        </span>
+      )}
       {coverage.notReplayed.length > 0 && (
         <ul className="replay-panel-list">
           {coverage.notReplayed.map((group) => {

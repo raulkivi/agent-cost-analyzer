@@ -32,6 +32,12 @@ describe("ReplaySummaryStrip (step 14.7, board 1)", () => {
     expect(strip).toHaveTextContent("Priced at the Anthropic API's prices as of 2026-10-21");
   });
 
+  it("adds the subagent runs the replay leaves out to the coverage line", () => {
+    const coverage = makeReplay().coverage;
+    const { strip } = renderStrip(makeReplay({ coverage: { ...coverage, subagentRuns: { runs: 2, costAiCredits: { known: true, value: 42.5 } } } }));
+    expect(strip).toHaveTextContent("2 subagent runs not replayed: replay covers the main agent only");
+  });
+
   it("words a failed self-check as a warning", () => {
     const { strip } = renderStrip(makeReplay({ selfCheck: { model: "claude-opus-5.5", models: ["claude-opus-5.5"], requests: 40, matching: 37, readTolerancePercent: 5, passed: false } }));
     expect(within(strip).getByText("Replay matches the log on claude-opus-5.5: 93% of compared requests").closest(".replay-self-check")).toHaveClass("replay-self-check--failed");

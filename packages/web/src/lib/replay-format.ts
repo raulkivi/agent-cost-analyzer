@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import type { Currency, ReplayCoverage, ReplayPricing, ReplaySelfCheck, SimulatedCost } from "@agent-cost-analyzer/domain";
+import type { Currency, ReplayCoverage, ReplayPricing, ReplaySelfCheck, ReplaySubagentRuns, SimulatedCost } from "@agent-cost-analyzer/domain";
 import { aiCreditsToUsd, formatUsd } from "./ai-credits-usd.js";
 
 // Phase 14 step 14.7: the words and numbers the replay views share (mock-up
@@ -49,12 +49,28 @@ export function formatReplayDifference(
   return { amount, percent: `${signed(Math.abs(share).toFixed(1), share)}%` };
 }
 
+// The runs the replay leaves out: it covers the main agent only. Nothing for
+// none, or when the log recorded no run.
+export function subagentRunsSentence(runs: ReplaySubagentRuns | undefined): string | undefined {
+  if (runs === undefined || runs.runs === 0) return undefined;
+  return `${runs.runs} subagent ${runs.runs === 1 ? "run" : "runs"} not replayed: replay covers the main agent only`;
+}
+
+// Their AI Credits, or why they are unknown (an unknown is never 0).
+export function subagentRunsCostSentence(runs: ReplaySubagentRuns | undefined): string | undefined {
+  if (runs === undefined || subagentRunsSentence(runs) === undefined) return undefined;
+  const cost = runs.costAiCredits;
+  return cost.known ? `Their cost is ${formatReplayAmount(cost.value, "AI_CREDITS")} AI Credits.` : `Their cost is ${UNKNOWN}: ${cost.reason}`;
+}
+
 export function coverageSentence(coverage: ReplayCoverage): string {
   const base = `${coverage.replayedTurns} of ${coverage.turns} turns replayed`;
   const missing = coverage.notReplayed.reduce((sum, group) => sum + group.turns, 0);
-  if (coverage.notReplayed.length === 0 || missing === 0) return base;
-  if (coverage.notReplayed.length === 1) return `${base}; ${missing} not replayed: ${coverage.notReplayed[0]!.reason}`;
-  return `${base}; ${missing} not replayed, for ${coverage.notReplayed.length} reasons`;
+  let sentence = base;
+  if (coverage.notReplayed.length === 1 && missing > 0) sentence = `${base}; ${missing} not replayed: ${coverage.notReplayed[0]!.reason}`;
+  else if (coverage.notReplayed.length > 1 && missing > 0) sentence = `${base}; ${missing} not replayed, for ${coverage.notReplayed.length} reasons`;
+  const subagents = subagentRunsSentence(coverage.subagentRuns);
+  return subagents === undefined ? sentence : `${sentence}; ${subagents}`;
 }
 
 // G4: "Replay matches the log on <model>: N% of compared requests". A failed

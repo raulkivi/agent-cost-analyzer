@@ -127,6 +127,13 @@ describe("sessionReplayComparisonSchema", () => {
     expect(sessionReplayComparisonSchema.safeParse(both).success).toBe(false);
   });
 
+  it("accepts the subagent runs left out of the comparison, and omits them when absent", () => {
+    const runs = { runs: 2, costAiCredits: { known: true as const, value: 3.5 } };
+    expect(sessionReplayComparisonSchema.parse({ ...comparison, subagentRuns: runs }).subagentRuns).toEqual(runs);
+    expect(sessionReplayComparisonSchema.parse(comparison).subagentRuns).toBeUndefined();
+    expect(sessionReplayComparisonSchema.safeParse({ ...comparison, subagentRuns: { runs: -1, costAiCredits: runs.costAiCredits } }).success).toBe(false);
+  });
+
   it("accepts the session's total on several models", () => {
     expect(sessionReplayComparisonSchema.parse(comparison)).toEqual(comparison);
   });

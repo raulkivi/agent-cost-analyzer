@@ -52,6 +52,28 @@ describe("ReplaySummaryPanel (step 14.7, board 2)", () => {
     expect(coverage).toHaveTextContent("Both totals cover the same 2 turns");
   });
 
+  it("lists the subagent runs the replay leaves out, with their cost", () => {
+    const coverage = makeReplay().coverage;
+    const { dialog } = renderPanel(makeReplay({ coverage: { ...coverage, subagentRuns: { runs: 2, costAiCredits: { known: true, value: 42.5 } } } }));
+    const region = within(dialog).getByRole("region", { name: "Coverage" });
+    expect(region).toHaveTextContent("2 subagent runs not replayed: replay covers the main agent only");
+    expect(region).toHaveTextContent("Their cost is 42.50 AI Credits.");
+  });
+
+  it("says a subagent cost is unknown, never 0, and shows nothing without runs", () => {
+    const coverage = makeReplay().coverage;
+    const { dialog } = renderPanel(makeReplay({ coverage: { ...coverage, subagentRuns: { runs: 1, costAiCredits: { known: false, reason: "a run log is missing" } } } }));
+    const region = within(dialog).getByRole("region", { name: "Coverage" });
+    expect(region).toHaveTextContent("1 subagent run not replayed");
+    expect(region).toHaveTextContent("Their cost is unknown: a run log is missing");
+    expect(region).not.toHaveTextContent("0.00 AI Credits");
+  });
+
+  it("shows no subagent line without runs", () => {
+    const { dialog } = renderPanel();
+    expect(dialog).not.toHaveTextContent("subagent");
+  });
+
   it("words the self-check both ways, with the 5% / exact rule", () => {
     const { dialog } = renderPanel();
     const check = within(dialog).getByRole("region", { name: "Self-check" });
