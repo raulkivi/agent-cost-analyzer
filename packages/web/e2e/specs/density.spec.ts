@@ -28,7 +28,7 @@ test("Phase 17 exit: the Dashboard is dense at 1440x900", async ({ page, app }) 
   await openDashboard(page, app.baseURL);
 
   const scrollHeight = await page.evaluate(() => document.documentElement.scrollHeight);
-  expect(scrollHeight).toBeLessThanOrEqual(1470);
+  expect(scrollHeight).toBeLessThanOrEqual(1480); // 1470 + 10: the ten session links are 24px targets (axe target-size)
 
   const firstTile = await page.locator(".stat-tile").first().boundingBox();
   expect(firstTile!.y).toBeLessThanOrEqual(340);

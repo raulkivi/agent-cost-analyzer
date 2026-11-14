@@ -539,6 +539,10 @@ a { color: var(--color-accent-text); text-underline-offset: 3px; }
 .findings-kind { font-size: 11px; }
 .findings-wrap { max-height: 420px; }
 .cell-session { max-width: 320px; }
+/* The Overview's session link is a 24px target (WCAG 2.5.8); the cell drops
+   its vertical padding so the row stays one line tall. */
+.table td.cell-session { padding-block: 0; }
+.table .cell-session .btn-ghost { display: inline-block; min-height: 24px; line-height: 22px; }
 .table tbody tr:hover { background: color-mix(in srgb, var(--color-text) 4%, transparent); }
 
 /* — truncation helper, applied per-spec to card titles, table Trigger/Model

@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The savings report in the chat: `get_savings_report` shows its ranked changes as a view (a range or "up to" per week, coverage, the Simulated section, Not analysed). A row opens in place with its action text and sessions; a session opens its cost or its replay in place, with Back. It sends nothing to the chat.
 
 ### Fixed
+- The standalone app's Overview passes the axe accessibility check: the AI Credits by day columns' names match their visible labels, and the session links in Most expensive sessions are 24px targets.
 - pi sessions' system prompt now matches what pi sent when the `pi-system-prompt-logger` extension is installed (exact text and size; pi's own sections as the breakdown, the extensions' additions as their own part), and says so when it is incomplete.
 - Learn's Vendors tab fits its column: one block per model (name, per-turn strip, labelled figures) instead of a six-column table, so model names stay on one line and nothing scrolls sideways. Sorting moves to a **Sort by** selector.
 

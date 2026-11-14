@@ -270,7 +270,7 @@ describe("ledger component rules (dense-ledger-ui.md L3)", () => {
     expect(css).toMatch(/\.seg-opt:has\(input:checked\)\s*\{[^}]*background:\s*var\(--color-accent-fill\);\s*color:\s*var\(--color-bg\)/);
   });
 
-  // Density budgets measured with Commit Mono (Dashboard <= 1470px, KPI tiles
+  // Density budgets measured with Commit Mono (Dashboard <= 1480px, KPI tiles
   // <= 80px, Learn turns table without sideways scroll at 1440).
   it("tightens tiles, panels, tables and the turns table to hold the density budgets", () => {
     expect(ledger(".stat-tile").get("padding")).toBe("3px 6px");

@@ -132,7 +132,6 @@ export function TrendColumns({
                   }
                 }}
               >
-                <title>{describe(column)}</title>
                 <rect
                   x={bandX + 1}
                   y={MARGIN.top}

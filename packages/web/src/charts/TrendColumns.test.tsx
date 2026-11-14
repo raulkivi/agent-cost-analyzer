@@ -109,6 +109,17 @@ describe("TrendColumns", () => {
     expect(within(table).getByText("2 of 2 turns known")).toBeInTheDocument();
   });
 
+  // axe label-content-name-mismatch: a column's text content (a <title>
+  // child counts as text) must be its visible axis label, which the
+  // aria-label contains.
+  it("keeps only the visible axis label as a column's text content", () => {
+    const { container } = render(<TrendColumns ariaLabel="Trend" columns={columns} format={String} />);
+    for (const column of container.querySelectorAll(".chart-column")) {
+      expect(column.textContent).toMatch(/^\d\d-\d\d$/);
+      expect(column.getAttribute("aria-label")).toContain(column.textContent);
+    }
+  });
+
   it("shows the empty text without data", () => {
     render(<TrendColumns ariaLabel="Trend" columns={[]} format={String} emptyText="Nothing yet." />);
     expect(screen.getByText("Nothing yet.")).toBeInTheDocument();
