@@ -195,9 +195,11 @@ code-owner review is not one:
   one ruleset (27004539) requires status checks only. Add "Require review
   from Code Owners" to the ruleset if a second maintainer joins; with one
   owner it would block every PR.
-- **`ext-v*` and `app-v*` tags are not protected:** no tag ruleset
-  exists. Add one so only the owner can create or move a release tag
-  (1.0 criterion C12).
+- **Done 2026-11-14 (1.0 criterion C12):** tag ruleset 27281699 "Release
+  tags" (enforcement active) blocks creating, moving and deleting
+  `refs/tags/ext-v*` and `refs/tags/app-v*`; only the repository admin role
+  (the owner) bypasses it. Read through
+  `gh api repos/raulkivi/agent-cost-analyzer/rulesets/27281699`.
 - **`OVSX_PAT`** is still in use; delete it once the Open VSX trusted
   publisher is registered, as the workflow comment says (1.0 criterion
   C13).
@@ -319,7 +321,7 @@ were read through the GitHub API; what is open is in §5.8.
 
 | Surface | Threat | Verified finding |
 |---|---|---|
-| `release-extension.yml`: tag `ext-v*` to Marketplace, Open VSX and a GitHub Release | A malicious tag or build publishing to every installed copy; a stolen publishing credential | **Mostly mitigated.** The workflow's default token is `contents: read`; the publish job runs in the `release` environment (required reviewers, per the file's header) with `id-token: write`. The Marketplace sign-in is Entra ID OIDC with a federated credential, so no long-lived Azure secret exists. Open VSX still uses the secret `OVSX_PAT` until its trusted publisher is registered. Open: tag protection and the `OVSX_PAT` removal (§5.8). |
+| `release-extension.yml`: tag `ext-v*` to Marketplace, Open VSX and a GitHub Release | A malicious tag or build publishing to every installed copy; a stolen publishing credential | **Mostly mitigated.** The workflow's default token is `contents: read`; the publish job runs in the `release` environment (required reviewers, per the file's header) with `id-token: write`. The Marketplace sign-in is Entra ID OIDC with a federated credential, so no long-lived Azure secret exists. Open VSX still uses the secret `OVSX_PAT` until its trusted publisher is registered. Tags: ruleset 27281699 lets only the owner create, move or delete `ext-v*`/`app-v*` (2026-11-14). Open: the `OVSX_PAT` removal (§5.8). |
 | Release evidence notes, `refs/notes/release-ui` (step 10.17 G2, 2026-11-11): the owner's real-Copilot run writes a git note on the commit; `release-extension.yml` fetches the ref and refuses an `ext-v*` tag whose commit has no passing note | A forged or stale note letting an untested commit release; the fetch needing a credential | **Self-gate, by design.** Anyone with push access can write the ref, so it guards the owner against releasing without the run, not against a malicious maintainer: forging a note needs push rights, which already allow worse (pushing the tag, editing the workflow). The judge binds the note to the tagged commit's full SHA, refuses a dirty tree and any failed, skipped or missing required test, and lists every problem. The run never pushes; the owner pushes the ref. The build job keeps `contents: read` and `persist-credentials: false`; on a public repository the notes fetch needs no token (checked 2026-11-11: an anonymous fetch of a missing ref fails with "couldn't find remote ref", which the step turns into a named error). The note holds commit, versions, model ids, test titles, skip reasons and AI Credits: no path, prompt text or sign-in. |
 | `claude.yml`: `@claude` in an issue, comment or review | Prompt injection through issue or PR text reaching an agent that holds `CLAUDE_CODE_OAUTH_TOKEN` and OIDC | **Mitigated in part.** Default token `contents: read` (#92); job permissions are read-only plus `id-token: write`; the action is pinned by SHA; CODEOWNERS covers `.github/workflows/`, `CLAUDE.md` and `.claude/`; a Unicode-smuggling guard scans every PR. Not verified here: who may trigger it (the action's own check is assumed to require write access). The checkout persists no credential (`persist-credentials: false`, 2026-11-12): the job's token is `contents: read`, and the action sets its own token on the git remote before it pushes (its `git-config.ts`). |
 | `claude-code-review.yml`: automatic review on every same-repository PR | The same, plus unpinned plugin code | **Mitigated.** Fork and Dependabot PRs are excluded, so untrusted forks never reach the token; `persist-credentials: false`; action pinned by SHA. The code-review plugin is pinned by sha in a marketplace the workflow writes (§5.5). |
