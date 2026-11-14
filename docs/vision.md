@@ -1,6 +1,6 @@
 # Vision: Agent Cost Analyzer and AI Credits Analyzer
 
-**Last changed:** 2026-11-13 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-14 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 ## 1. Problem
 
@@ -120,9 +120,10 @@ flowchart TB
 
 Applies to both modes identically; Analyze mode additionally tabs the right
 panel between Explanation, System prompt breakdown, and Tool inventory.
-Visual treatment (the "Industry" design system — hairline-bordered
-"blueprint" cards, steel-blue mono accent, square corners) is specified in
-`docs/implementation-plan.md`'s Phase 8.
+Visual treatment: the standalone app uses the "ledger" theme (monospace
+interface and numbers, serif explanations, square hairline panels, light,
+dark or auto; Phase 17). The VS Code panel and the MCP views keep their host
+themes with the "Industry" tokens (Phase 8) as the fallback.
 
 ## 4. Data sources for Analyze mode
 

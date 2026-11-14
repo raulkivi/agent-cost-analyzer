@@ -117,6 +117,14 @@ describe("SessionList", () => {
     expect(onSelect).toHaveBeenCalledWith(sessions[0]);
   });
 
+  it("shows the full title as a tooltip on the truncated title without changing the accessible name", () => {
+    const sessions = [makeSession({ id: "s1", title: "A very long scenario title that truncates" })];
+    render(<SessionList mode="learn" sessions={sessions} selectedSessionId={null} onSelect={vi.fn()} />);
+
+    expect(screen.getByText("A very long scenario title that truncates")).toHaveAttribute("title", "A very long scenario title that truncates");
+    expect(screen.getByRole("button", { name: "A very long scenario title that truncates" })).toBeInTheDocument();
+  });
+
   it("filters the list by title via the search input", () => {
     const sessions = [makeSession({ id: "s1", title: "Alpha" }), makeSession({ id: "s2", title: "Beta" })];
     render(<SessionList mode="learn" sessions={sessions} selectedSessionId={null} onSelect={vi.fn()} />);

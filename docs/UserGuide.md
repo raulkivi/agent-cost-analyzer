@@ -1,6 +1,6 @@
 # User Guide
 
-**Last changed:** 2026-11-13 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-14 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 A walkthrough of the Agent Cost Analyzer's two modes — **Learn** (guided,
 bundled example sessions) and **Analyze** (your own real sessions from VS
@@ -37,6 +37,15 @@ Both modes use the same three-column layout:
 - **Right column** — an **Explanation** panel for the selected turn; in
   Analyze mode this becomes a three-tab panel (Explanation / System
   prompt / Tools).
+
+### Colour theme
+
+The header has an **Auto / Light / Dark** switch.
+
+- **Auto** (the default) follows your operating system's light or dark setting and changes with it.
+- **Light** and **Dark** fix the theme.
+- The choice is stored in your browser, not on the server.
+- The switch is in the standalone app only; the VS Code panel follows your VS Code theme.
 
 Clicking a table row, dragging the scrubber, or pressing **Enter/Space**
 on a focused row or card all drive the same "selected turn" state, so the

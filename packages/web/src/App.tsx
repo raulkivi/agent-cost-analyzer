@@ -22,6 +22,7 @@ import { fetchScenario, fetchVendorProfiles } from "./api-client/vendor-simulati
 import { fetchSession, fetchSessions } from "./api-client/sessions.js";
 import { AdviceExportDialog } from "./components/AdviceExportDialog.js";
 import { AdviceExportTriggerBar } from "./components/AdviceExportTriggerBar.js";
+import { useColorMode } from "./lib/use-color-mode.js";
 import { AppHeader } from "./components/AppHeader.js";
 import { AuditRollupPanel } from "./components/AuditRollupPanel.js";
 import { ColumnChooser } from "./components/ColumnChooser.js";
@@ -330,6 +331,7 @@ export function App({ performanceMarks = pagePerformanceMarks }: AppProps = {}) 
   // affordance shows only when the product offers it and the host can do it.
   const features = productProfile?.features ?? FALLBACK_FEATURES;
   const host = getHostCapabilities();
+  const colorMode = useColorMode(host.colorMode === true);
   const { openSetting, openTextDocument } = host;
   const handleFixSetting =
     features.settingFixes && openSetting
@@ -703,6 +705,7 @@ export function App({ performanceMarks = pagePerformanceMarks }: AppProps = {}) 
         displayName={productProfile?.displayName}
         providerSelect={features.providerSelect}
         profilePending={!profileSettled}
+        colorMode={host.colorMode ? { preference: colorMode.preference, onChange: colorMode.setPreference } : undefined}
         statusText={health ? `status: ${health.status} · v${health.version}` : "Checking server…"}
       />
       {fetchError && (

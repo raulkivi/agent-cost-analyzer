@@ -113,7 +113,7 @@ export function SessionList({
                   onKeyDown={(event) => handleCardKeyDown(event, index)}
                   onFocus={() => setFocusedId(session.id)}
                 >
-                  <span className="card-title truncate session-row-title">{session.title}</span>
+                  <span className="card-title truncate session-row-title" title={session.title}>{session.title}</span>
                   <span className="session-row-meta">
                     {kickerText && (
                       <>

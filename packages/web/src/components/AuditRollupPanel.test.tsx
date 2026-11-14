@@ -87,6 +87,14 @@ describe("AuditRollupPanel", () => {
     expect(first).toHaveTextContent("2");
   });
 
+  // L6: at 360px the five-column Sessions table pushed the page 50-90px
+  // wider than the viewport; each table scrolls inside its panel instead.
+  it.each(["Sessions", "Top failing commands"])("keeps the %s table in a sideways-scrolling wrapper", async (name) => {
+    renderPanel();
+    const table = await screen.findByRole("table", { name });
+    expect(table.parentElement).toHaveClass("table-scroll");
+  });
+
   it("opens a session's audit from the sessions table", async () => {
     const { onOpenSession } = renderPanel();
 

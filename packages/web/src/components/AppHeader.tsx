@@ -2,7 +2,9 @@
 // SPDX-License-Identifier: MIT
 import type { LogProviderDescriptor } from "@agent-cost-analyzer/domain";
 import type { Mode } from "../state/session-store.js";
+import type { ColorModePreference } from "../lib/color-mode.js";
 import { Blueprint } from "./ui/Blueprint.js";
+import { ColorModeSwitch } from "./ColorModeSwitch.js";
 import { SegmentedControl } from "./ui/SegmentedControl.js";
 import { Tag } from "./ui/Tag.js";
 
@@ -39,6 +41,8 @@ interface AppHeaderProps {
   profilePending?: boolean;
   // Server health line; sits in the header so it costs no row of its own.
   statusText?: string;
+  // Present only where the host offers a colour theme (standalone app).
+  colorMode?: { preference: ColorModePreference; onChange: (preference: ColorModePreference) => void };
 }
 
 const DEFAULT_DISPLAY_NAME = "Session Analyzer";
@@ -57,6 +61,7 @@ export function AppHeader({
   providerSelect = true,
   profilePending = false,
   statusText,
+  colorMode,
 }: AppHeaderProps) {
   return (
     <header className="nav">
@@ -117,6 +122,7 @@ export function AppHeader({
       {statusText !== undefined && (
         <span className="text-muted app-status app-status--inline">{statusText}</span>
       )}
+      {colorMode && <ColorModeSwitch {...colorMode} />}
       {hasConfigWarnings ? (
         <button
           className="btn btn-secondary ml-2"
