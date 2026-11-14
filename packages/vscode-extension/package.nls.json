@@ -1,6 +1,6 @@
 {
   "displayName": "AI Credits Analyzer",
-  "description": "See where your GitHub Copilot Chat tokens and AI Credits go: prompt caching, per-turn cost, tool-call failures and insights, from your local logs.",
+  "description": "See where your GitHub Copilot Chat tokens and AI Credits go: per-turn cost, prompt caching, a monthly allowance gauge, savings tips and replay on other models, from your local logs.",
   "command.open.title": "Open",
   "category": "AI Credits Analyzer",
   "command.refreshSessions.title": "Refresh",

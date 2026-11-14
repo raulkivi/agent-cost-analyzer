@@ -1,6 +1,6 @@
 # Monthly AI Credits allowance gauge (extension first)
 
-**Last changed:** 2026-11-13 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-14 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 Status: **done 2026-11-13 (MA0 to MA12; §12 exit criterion met)**. Owner decisions accepted 2026-11-12 (every recommendation); mock-up approved 2026-11-13. MA13 (standalone app) is a later increment. Step **10.21** in [implementation-plan.md](../implementation-plan.md); [classic-subagent-credits-implementation.md](classic-subagent-credits-implementation.md) holds 10.19 and its audit follow-up 10.20.
 
@@ -252,4 +252,4 @@ Reviewed `git diff origin/main...HEAD` (MA1 to MA11) against §3 to §12, archit
 - **MA9 note (usage session dropping out after its log was copied into the global debug-log folder at run time).** Not a server reader bug. `resolveMainJsonlPath` tries the workspace folders before the global one, so a copy with the same session id never shadows the workspace log (test "counts a session once when its logs are in both the workspace and the global folder"). A probe with the fixture's layout, copying the log into the global folder after the first listing, under the same id and under a new id with the `sid` inside unchanged, kept the usage session at 9.65 known AI Credits each time. The drop seen in MA9 is outside the reader: most likely the run-time copy itself (a Copilot Chat enabled in that window owns the global folder), which the seeded empty-window session replaced. No follow-up.
 - **D7 measured on the owner's data** (VS Code sessions 2026-11-01 to 2026-11-10, read through the analyzer's own cost rollup): 20 sessions, 13 with cost data, 7 with none, and no session partly known. A per-turn path would add nothing there, so v1 stays as it is; the gauge would read "at least 132.18 … 13 of 20 sessions".
 - **Docs.** The architecture, extension guide, threat-model and CHANGELOG text match the code. The User Guide covers the standalone app only, so the gauge's user text is in the extension guide (MA11), which is where §9's User Guide items went.
-- **Open for release, not for §12:** the real-Copilot check of the gauge in a live window (release UI gate).
+- **Release (2026-11-14):** the owner accepted the gauge's wdio specs (`monthly-allowance.e2e.ts`, `monthly-allowance-trust.e2e.ts`, green in CI on the release commit) in place of a live real-Copilot check; shipped in extension 0.12.0.
