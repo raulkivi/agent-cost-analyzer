@@ -11,18 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Changed
-
-- Denser panel: smaller spacing, 28px table rows, one toolbar row on the Dashboard, compact KPI tiles with the cost explanation in a footnote, a trend chart that fills its panel and one-line empty charts.
-- Bar labels and code-style text now use the editor font instead of the browser's default monospace.
-
-### Fixed
-
-- Copilot logs whose records hold the characters U+2028 or U+2029, or a lone carriage return, inside a message are no longer split and dropped, so those sessions show all their requests and costs.
-- In a narrow panel the All sessions audit's tables scroll inside their panels instead of making the view wider.
-- The replay coverage line now lists the subagent runs it leaves out, as the 0.12.0 notes said: "N subagent runs not replayed: replay covers the main agent only", and the replay summary adds their AI Credits (or "unknown").
-
-## [0.12.0] - 2026-11-13
+## [0.12.0] - 2026-11-14
 
 ### Added
 - **Savings view in the panel.** **Savings**, after **Dashboard** in the panel's view switch, ranks changes
@@ -56,10 +45,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   show a diff when re-run, because the re-run includes the runs.
 - **Replay compares the main agent.** A replayed turn is compared on the main agent's own usage; the
   coverage line lists the subagent runs it left out.
+- Denser panel: smaller spacing, 28px table rows, one toolbar row on the Dashboard, compact KPI tiles with the cost explanation in a footnote, a trend chart that fills its panel and one-line empty charts.
+- Bar labels and code-style text now use the editor font instead of the browser's default monospace.
 
 ### Fixed
 - **Opened-turn detail text contrast in VS Code Dark Modern.** The opened-turn detail in the MCP App
   view now sits on a neutral row background, so its text is readable.
+- Copilot logs whose records hold the characters U+2028 or U+2029, or a lone carriage return, inside a message are no longer split and dropped, so those sessions show all their requests and costs.
+- In a narrow panel the All sessions audit's tables scroll inside their panels instead of making the view wider.
 
 ## [0.10.0] - 2026-11-12
 

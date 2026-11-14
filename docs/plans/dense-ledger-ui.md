@@ -2,7 +2,7 @@
 
 **Last changed:** 2026-11-14 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
-**Status: Increment 1 (P0-P7) done 2026-11-14; owner decisions D1-D4 accepted 2026-11-14; Increment 2 (L1-L6) done 2026-11-14. Exit criterion met except the owner's eyes-on review.** Phase 17 in
+**Status: Increment 1 (P0-P7) done 2026-11-14; owner decisions D1-D4 accepted 2026-11-14; Increment 2 (L1-L6) done 2026-11-14. Exit criterion met 2026-11-14, with the owner's eyes-on review.** Phase 17 in
 [implementation-plan.md](../implementation-plan.md).
 
 The question this answers: **"Why does the web UI need so much scrolling,

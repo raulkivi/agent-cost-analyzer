@@ -9,26 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
-
-- Light and dark colour themes with an Auto/Light/Dark switch in the header; Auto follows the OS setting.
-
-### Changed
-
-- New look: monospace interface and numbers (Commit Mono), serif explanations (Source Serif 4), square hairline panels; Barlow is no longer bundled.
-
-- Denser layout: smaller spacing and type, 28px table rows, one toolbar row on the Dashboard, compact session and scenario lists that fill the column, 80px KPI tiles with the cost explanation in a footnote, a trend chart that fills its panel, one-line empty charts and a collapsed Learn sources list. The Dashboard is about 40% shorter.
-- The server status and version moved into the header.
-
-### Fixed
-
-- Log records holding the characters U+2028 or U+2029, or a lone carriage return, inside a message are no longer split and dropped: the readers for Claude Code logs, VS Code Copilot debug and event logs, pi sessions, the turn inspector and pi system-prompt sidecars split records at line feeds only, so those sessions' requests, costs and savings figures are complete (found by the savings real-data check; one Claude Code session had lost a third of its requests).
-- The MCP server (insights, cost analyses, prices, `estimate_cost`, `get_statement`) now follows `AGENT_COST_ANALYZER_NOW` like the web app; it used the real date before, which only differed when the clock is fixed (tests and demos).
-- `compare_models_for_session` and the Replay view no longer label a session that switched models (e.g. Sonnet, then Opus) as measured on its first model alone: the result lists `measuredModels` in order, flags the first-model entry `isMixedSessionModel` instead of `isMeasuredModel`, the view says "measured on A, then B" and makes no own-model check; `replay_session`'s `selfCheck` gains `models`, and the self-check line (in the Replay view and the web app) names every model it ran.
-- On a narrow screen the All sessions audit's tables scroll inside their panels instead of making the page wider.
-- The replay coverage line now lists the subagent runs it leaves out, as the 0.12.0 notes said: "N subagent runs not replayed: replay covers the main agent only" in the web app, the VS Code panel and the Replay view; the summary panel adds their AI Credits (or "unknown"), and `compare_models_for_session` gains an optional `subagentRuns`.
-
-## [0.14.0] - 2026-11-13
+## [0.14.0] - 2026-11-14
 
 ### Added
 - **Savings tab.** A ranked list of changes that would cost less: tools loaded but never used, cache lost
@@ -45,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **A subagent marker, block and tile line in the panel.** The turns table marks AI Credits that
   include subagent runs, the Explanation tab lists the runs with turn totals, and the session tile says
   "incl. X from N subagent runs". The MCP App turn detail lists the runs too.
+- Light and dark colour themes with an Auto/Light/Dark switch in the header; Auto follows the OS setting.
 
 ### Changed
 - **Totals now include classic Copilot Chat subagent runs.** A classic chat that called a subagent
@@ -59,10 +41,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Replay compares the main agent.** A replayed turn is compared on the main agent's own usage; the
   coverage line lists the subagent runs it left out.
 - Savings action text now writes numbers with thousands separators ("5,400 tokens").
+- New look: monospace interface and numbers (Commit Mono), serif explanations (Source Serif 4), square hairline panels; Barlow is no longer bundled.
+- Denser layout: smaller spacing and type, 28px table rows, one toolbar row on the Dashboard, compact session and scenario lists that fill the column, 80px KPI tiles with the cost explanation in a footnote, a trend chart that fills its panel, one-line empty charts and a collapsed Learn sources list. The Dashboard is about 40% shorter.
+- The server status and version moved into the header.
 
 ### Fixed
 - **Opened-turn detail text contrast in VS Code Dark Modern.** The opened-turn detail in the MCP App
   view now sits on a neutral row background, so its text is readable.
+- Log records holding the characters U+2028 or U+2029, or a lone carriage return, inside a message are no longer split and dropped: the readers for Claude Code logs, VS Code Copilot debug and event logs, pi sessions, the turn inspector and pi system-prompt sidecars split records at line feeds only, so those sessions' requests, costs and savings figures are complete (found by the savings real-data check; one Claude Code session had lost a third of its requests).
+- The MCP server (insights, cost analyses, prices, `estimate_cost`, `get_statement`) now follows `AGENT_COST_ANALYZER_NOW` like the web app; it used the real date before, which only differed when the clock is fixed (tests and demos).
+- `compare_models_for_session` and the Replay view no longer label a session that switched models (e.g. Sonnet, then Opus) as measured on its first model alone: the result lists `measuredModels` in order, flags the first-model entry `isMixedSessionModel` instead of `isMeasuredModel`, the view says "measured on A, then B" and makes no own-model check; `replay_session`'s `selfCheck` gains `models`, and the self-check line (in the Replay view and the web app) names every model it ran.
+- On a narrow screen the All sessions audit's tables scroll inside their panels instead of making the page wider.
 
 ## [0.13.0] - 2026-11-12
 
