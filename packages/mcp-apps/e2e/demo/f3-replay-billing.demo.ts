@@ -9,8 +9,8 @@ import { recordScene } from "./support/record.js";
 
 const PROVIDER = "claude-code";
 
-// F3 (docs/plans/docs-refresh-and-demo-recordings.md §4.2): the replay views, then the statement and the estimate.
-test("F3: compare models, replay; statement; estimate", async ({ page, host }) => {
+// F3 (docs/plans/docs-refresh-and-demo-recordings.md §4.2): the replay views, then the statement.
+test("F3: compare models, replay; statement", async ({ page, host }) => {
   // The fixture's 2026-10-05 session, found by its start (as u12-replay.spec.ts does).
   const { sessions } = (await host.lookup("list_sessions", { provider: PROVIDER })) as { sessions: { id: string; startedAt?: string }[] };
   const found = sessions.find((session) => session.startedAt === "2026-10-05T09:00:00.000Z");
@@ -29,9 +29,9 @@ test("F3: compare models, replay; statement; estimate", async ({ page, host }) =
   await recordScene(page, scene, async () => {
     await play(page, scene, pointer);
 
-    // End state: the estimate on another model, its simulated block shown; the replay was a plain tool call.
-    await expect(context.view.title()).toHaveText("Estimate on claude-haiku-5.5");
-    await expect(context.view.estimate.simulated()).toBeVisible();
+    // End state: the project's draft statement; the replay was a plain tool call.
+    await expect(context.view.title()).toHaveText("Customer portal · October 2026");
+    await expect(context.view.statement.status()).toHaveText("Draft");
     expect(host.calls.some((call) => call.method === "tools/call" && call.name === "replay_session")).toBe(true);
     expect(modelTurnsIn(host.calls)).toEqual([]);
   });

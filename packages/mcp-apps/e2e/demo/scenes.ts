@@ -37,7 +37,6 @@ export const F2_ARGS = { groupBy: "project", id: "portal", periodA: BEFORE, peri
 export const F2_CURRENCY_ARGS = { projectId: "portal", ...OCTOBER };
 export const f3Args = (session: DemoContext["session"]) => ({ ...session, models: ["gpt-6.1-sol", "claude-opus-5.5"] });
 export const STATEMENT_ARGS = { projectId: "portal", period: "2026-10" };
-export const ESTIMATE_ARGS = { projectId: "portal", activeDays: 10, model: "claude-haiku-5.5" };
 
 export const F1 = (context: DemoContext): DemoScene => ({
   id: "F1",
@@ -104,7 +103,7 @@ export const F2 = (context: DemoContext): DemoScene => ({
 export const F3 = (context: DemoContext): DemoScene => ({
   id: "F3",
   slug: "replay-billing",
-  title: "Model comparison, statement and estimate",
+  title: "Model comparison, replay and statement",
   steps: [
     { label: "Look at the model comparison", beatMs: 2400, action: (_page, pointer) => pointer.glideTo(context.view.replay.measuredRow()) },
     { label: "Replay the session on one model", beatMs: 2800, action: (_page, pointer) => pointer.click(context.view.replay.modelButton("gpt-6.1-sol")) },
@@ -114,15 +113,7 @@ export const F3 = (context: DemoContext): DemoScene => ({
       beatMs: 2600,
       action: async (_page, pointer) => {
         context.view = await context.host.show("get_statement", STATEMENT_ARGS, FULLSCREEN);
-        await pointer.glideTo(context.view.statement.totalTile("AI Credits"));
-      },
-    },
-    {
-      label: "Show an estimate on another model",
-      beatMs: 2600,
-      action: async (_page, pointer) => {
-        context.view = await context.host.show("estimate_cost", ESTIMATE_ARGS, FULLSCREEN);
-        await pointer.glideTo(context.view.estimate.simulated());
+        await pointer.glideTo(context.view.statement.linesTable("USD").getByRole("row").first());
       },
     },
   ],
