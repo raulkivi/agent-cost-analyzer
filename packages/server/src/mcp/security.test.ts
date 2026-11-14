@@ -38,6 +38,8 @@ const CALLS: [name: string, args: Record<string, unknown>][] = [
   // Phase 14 step 14.5 (D7; threat-model.md §4, standalone MCP server row): the replay group.
   ["replay_session", { sessionId: "cc-1", model: "claude-haiku-5.5", provider: "claude-code" }],
   ["compare_models_for_session", { sessionId: "cp-1", models: ["claude-haiku-5.5", "gpt-6.1-sol"], provider: "vscode" }],
+  // Phase 16 SR19 (savings-report.md §8, threat-model.md §11): the savings report, with the replays on.
+  ["get_savings_report", { includeSimulated: true, limit: 20 }],
 ];
 const REPLAY_TOOLS = ["replay_session", "compare_models_for_session"];
 const NAMED_CLIENT_TOOLS = ["list_projects", "get_statement"];
@@ -107,6 +109,29 @@ describe("MCP security across every tool (step 15.13, plan §10.1.5)", () => {
         const text = JSON.stringify(result);
         expect(text).not.toMatch(/prompt \d/);
         expect(text).not.toMatch(/Session (cc|cp)-\d/);
+      }
+    } finally {
+      await client.close();
+    }
+  });
+
+  // Phase 16 SR19: a savings row is numbers, ids, model ids and capped names;
+  // never a turn's text, a session title, a path or a credential. Read-only
+  // like the rest (the first test); unknown amounts keep their reason.
+  it("returns no turn text, session title, local path or credential from get_savings_report, with or without the replays", async () => {
+    const home = "/home/secretuser";
+    const secret = "S3cretT0kenValue99";
+    const { client } = await connectCostFixture({ home, portalApiRemote: `https://dev:${secret}@github.com/acme/portal-api.git` });
+    try {
+      for (const includeSimulated of [false, true]) {
+        const result = await client.callTool({ name: "get_savings_report", arguments: { includeSimulated, limit: 20 } });
+        expect(result.isError, JSON.stringify(result.content)).not.toBe(true);
+        const text = JSON.stringify(result);
+        expect(text).not.toMatch(/prompt \d/);
+        expect(text).not.toMatch(/Session (cc|cp|pi)-\d/);
+        expect(text).not.toContain(home);
+        expect(text).not.toContain(secret);
+        expect(result.structuredContent).toHaveProperty("includeSimulated", includeSimulated);
       }
     } finally {
       await client.close();

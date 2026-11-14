@@ -19,6 +19,8 @@ import { registerFindingTools } from "./finding-tools.js";
 import { registerPricingTools } from "./pricing-tools.js";
 import { registerPrompts } from "./prompts.js";
 import { registerReplayTools } from "./replay-tools.js";
+import { registerSavingsTools } from "./savings-tools.js";
+import type { SavingsQueries } from "../services/savings/savings-service.js";
 import type { SessionReplayQueries } from "../services/session-replay/session-replay-service.js";
 import { registerSessionTools } from "./session-tools.js";
 import { createGuard } from "./tool-helpers.js";
@@ -62,6 +64,9 @@ export interface McpServerDeps {
   // Phase 14 step 14.5 (D5, D7): replay_session and
   // compare_models_for_session, in both products, where a price book exists.
   sessionReplay?: SessionReplayQueries;
+  // Phase 16 SR19: get_savings_report, over the service the Savings tab reads.
+  // Both products pass it where they have a price book and replays.
+  savingsReport?: SavingsQueries;
   version: string;
   // Phase 12 (docs/plans/mcp-apps.md §4.2): the MCP App views. When given,
   // the server serves the views resource, the app-only get_turn_series and
@@ -78,8 +83,8 @@ export interface McpServerDeps {
 
 // The tool groups, one module each (open/closed): sessions, audit and cost
 // (session_cost, cost_rollup) and findings are Phase 9.12's; the rest come
-// with Phase 15 and need their services; replay comes with Phase 14.
-export const MCP_TOOL_GROUPS = ["sessions", "audit", "cost", "findings", "attribution", "pricing", "costAnalysis", "replay", "billing"] as const;
+// with Phase 15 and need their services; replay comes with Phase 14, savings with Phase 16.
+export const MCP_TOOL_GROUPS = ["sessions", "audit", "cost", "findings", "attribution", "pricing", "costAnalysis", "replay", "savings", "billing"] as const;
 export type McpToolGroup = (typeof MCP_TOOL_GROUPS)[number];
 // The extension's set: billing and estimates are standalone-only (D7).
 export const WITHOUT_BILLING_TOOL_GROUPS: readonly McpToolGroup[] = MCP_TOOL_GROUPS.filter((group) => group !== "billing");
@@ -134,11 +139,12 @@ export function createMcpServer(deps: McpServerDeps): McpServer {
   if (serves("pricing") && deps.priceBook) registerPricingTools(server, deps.priceBook, guarded, deps.costAnalysis);
   if (serves("attribution") && deps.attribution) registerAttributionTools(server, toolDeps, deps.attribution, guarded);
   if (serves("replay") && deps.sessionReplay) registerReplayTools(server, toolDeps, deps.sessionReplay, guarded);
+  if (serves("savings") && deps.savingsReport) registerSavingsTools(server, toolDeps, deps.savingsReport, guarded);
   if (statements || estimates) registerBillingTools(server, { statements, estimates }, guarded);
   if (deps.appViews && registered) {
     registerAppViews(server, { identity, version: deps.version, source: deps.appViews.source, analysisQueries: deps.analysisQueries }, registered, guarded);
   }
-  registerPrompts(server, { costAnalysis: costAnalysis !== undefined, statements: statements !== undefined, estimates: estimates !== undefined });
+  registerPrompts(server, { costAnalysis: costAnalysis !== undefined, statements: statements !== undefined, estimates: estimates !== undefined, savings: serves("savings") && deps.savingsReport !== undefined });
 
   return server;
 }
