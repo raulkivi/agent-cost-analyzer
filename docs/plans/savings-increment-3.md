@@ -2,10 +2,13 @@
 
 **Last changed:** 2026-11-14 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
-**Status: plan, awaiting the owner's approval (task V23 in
+**Status: Plan approved 2026-11-14 (task V23 in
 [implementation-plan.md](../implementation-plan.md#100-release), criterion
-C11).** No code before the owner approves this plan; no UI code before the
-owner approves the boards (V23b). Scope decided by the owner 2026-11-14 in
+C11).** Decisions D22–D32 accepted. No UI code before the
+owner approves the boards (V23b). **Scope change 2026-11-14 (owner):** the
+owner runs pi only on a local model (unpriced), so V28 (the pi request trace
+and O2–O4 for pi, §7.2) moves after 1.0; V27 (pi O1 per tool, wasted tokens
+shown, amounts "Not priced" with the reason) stays in 1.0. Scope decided by the owner 2026-11-14 in
 [savings-report.md](savings-report.md) §2, goal G6. Increments 1 and 2, their
 design, honesty rules and owner decisions D1–D21 are in that plan and are not
 repeated here; decisions in this plan continue its numbering from D22.
@@ -226,7 +229,7 @@ system messages. V27 verifies and completes it:
    tool had when it was declared, so it is no longer unknown.
 3. Sidecar-only sessions (no system messages in the file): D29.
 
-### 7.2 A pi request trace (V28)
+### 7.2 A pi request trace (V28) — after 1.0 (owner 2026-11-14)
 
 A pure builder `buildPiRequestTrace(branchEntries, turns)` in
 `data-sources/pi-agent/pi-request-trace.ts`, tested over the hand-made
@@ -366,6 +369,8 @@ Rows to add to or amend in [threat-model.md](../threat-model.md) §4 and
 | pi branch ids in tool output (R16) | An uncapped id from a file name | Unchanged residual (must round-trip); V28 tests the round trip |
 
 ## 12. Owner decisions
+
+Decided 2026-11-14: the owner accepted each recommendation (D22–D32).
 
 | # | Decision | Recommendation |
 |---|---|---|

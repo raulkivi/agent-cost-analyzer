@@ -2,7 +2,7 @@
 
 **Last changed:** 2026-11-14 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
-Status: **done 2026-11-13 (MA0 to MA12; §12 exit criterion met)**. Owner decisions accepted 2026-11-12 (every recommendation); mock-up approved 2026-11-13. MA13 (standalone app) is a 1.0 criterion (owner, 2026-11-14), planned in `docs/plans/monthly-allowance-standalone.md` (not written yet). Step **10.21** in [implementation-plan.md](../implementation-plan.md); [classic-subagent-credits-implementation.md](classic-subagent-credits-implementation.md) holds 10.19 and its audit follow-up 10.20.
+Status: **done 2026-11-13 (MA0 to MA12; §12 exit criterion met)**. Owner decisions accepted 2026-11-12 (every recommendation); mock-up approved 2026-11-13. MA13 (standalone app) is a 1.0 criterion (owner, 2026-11-14), planned in [monthly-allowance-standalone.md](monthly-allowance-standalone.md) (approved 2026-11-14). Step **10.21** in [implementation-plan.md](../implementation-plan.md); [classic-subagent-credits-implementation.md](classic-subagent-credits-implementation.md) holds 10.19 and its audit follow-up 10.20.
 
 ## 1. Why
 
@@ -147,7 +147,7 @@ TDD in every task: the failing test is written and seen red first (CLAUDE.md, ar
 | MA10 | **Done 2026-11-13.** Threat-model rows (§8) | Rows written, test names cited | low | Haiku | MA3, MA5 |
 | MA11 | **Done 2026-11-13.** Docs (§9) | Each listed doc updated, headers set, doc tests green (`docs.test.ts`) | low | Haiku | MA5, MA6, MA7 |
 | MA12 | **Done 2026-11-13 (§14).** Review: code review, accessibility pass, full test suite, headers (`npm run headers:fix`), bundle-load tests | One exit criterion (§12) met; `main` commit per CLAUDE.md | medium | Opus | MA8 to MA11 |
-| MA13 (1.0) | Standalone app Cost over time view: allowance line for the month (D8); a 1.0 criterion (owner, 2026-11-14) | Own plan: `docs/plans/monthly-allowance-standalone.md` | n/a | n/a | MA12 |
+| MA13 (1.0) | Standalone app Cost over time view: allowance line for the month (D8); a 1.0 criterion (owner, 2026-11-14) | Own plan: [monthly-allowance-standalone.md](monthly-allowance-standalone.md), approved 2026-11-14 | n/a | n/a | MA12 |
 
 ## 7. UI checks (wdio, no manual rows)
 
