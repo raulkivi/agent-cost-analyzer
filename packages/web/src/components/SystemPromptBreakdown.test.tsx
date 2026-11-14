@@ -26,6 +26,22 @@ describe("SystemPromptBreakdown", () => {
     expect(screen.queryByText(/agentDebugLog/)).not.toBeInTheDocument();
   });
 
+  it("shows the note under the breakdown when the prompt shown is not the exact one sent", () => {
+    const components: SystemPromptComponent[] = [
+      { kind: "built-in", label: "Base system prompt (100 characters)", tokenCount: { known: true, value: 500 } },
+    ];
+
+    render(<SystemPromptBreakdown components={components} note="Extension additions are missing." />);
+
+    expect(screen.getByRole("note")).toHaveTextContent("Extension additions are missing.");
+  });
+
+  it("shows no note element without a note", () => {
+    render(<SystemPromptBreakdown components={[]} />);
+
+    expect(screen.queryByRole("note")).not.toBeInTheDocument();
+  });
+
   it("renders the card kicker and one meter row per component", () => {
     const components: SystemPromptComponent[] = [
       { kind: "built-in", label: "Base system prompt (100 characters)", tokenCount: { known: true, value: 500 } },

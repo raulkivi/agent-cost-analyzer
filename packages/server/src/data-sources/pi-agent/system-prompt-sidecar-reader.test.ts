@@ -52,10 +52,10 @@ describe("readSystemPromptSidecarIndex", () => {
 
     const index = await readSystemPromptSidecarIndex(filePath);
 
-    expect(index.get(path.resolve(sessionFile))?.systemPrompt).toBe("test");
+    expect(index.get(path.resolve(sessionFile))?.[0].systemPrompt).toBe("test");
   });
 
-  it("keeps the earliest record when two lines share the same resolved sessionFile", async () => {
+  it("keeps every record of a session file, ordered by capturedAt", async () => {
     const sessionFile = path.join(dir, "sessions", "s1.jsonl");
     const filePath = path.join(dir, "system-prompts.jsonl");
     const first = record({
@@ -75,7 +75,7 @@ describe("readSystemPromptSidecarIndex", () => {
 
     const index = await readSystemPromptSidecarIndex(filePath);
 
-    expect(index.get(path.resolve(sessionFile))?.systemPrompt).toBe("first");
+    expect(index.get(path.resolve(sessionFile))?.map((r) => r.systemPrompt)).toEqual(["first", "second"]);
   });
 
   it("skips a record with no sessionFile", async () => {
@@ -102,7 +102,7 @@ describe("readSystemPromptSidecarIndex", () => {
     const index = await readSystemPromptSidecarIndex(filePath);
 
     expect(index.size).toBe(1);
-    expect(index.get(path.resolve(sessionFile))?.systemPrompt).toBe("test");
+    expect(index.get(path.resolve(sessionFile))?.[0].systemPrompt).toBe("test");
   });
 });
 
@@ -120,7 +120,7 @@ describe("readSystemPromptSidecarIndex record separators", () => {
       const index = await readSystemPromptSidecarIndex(filePath);
 
       expect(index.size).toBe(2);
-      expect(index.get(path.resolve("/home/dev/.pi/agent/sessions/session-1.jsonl"))?.systemPrompt).toBe(systemPrompt);
+      expect(index.get(path.resolve("/home/dev/.pi/agent/sessions/session-1.jsonl"))?.[0].systemPrompt).toBe(systemPrompt);
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }

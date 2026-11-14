@@ -154,7 +154,7 @@ An npm workspace:
 - [pi-system-prompt-logger](../packages/pi-system-prompt-logger/README.md) —
   optional Pi coding-agent extension, vendored in this repo, that captures
   pi's assembled system prompt to a JSONL sidecar log so Analyze mode's
-  system prompt inspector can show it for pi sessions. `npm run configure`
+  system prompt inspector shows the exact prompt pi sent (pi's own saved copy omits other extensions' additions). `npm run configure`
   offers to build and install it for you; see that README for manual
   install steps or to change the install location.
 

@@ -48,6 +48,8 @@ export const sessionSchema = z.object({
   costAiCredits: tokenCountSchema,
   subagentSpend: subagentSpendSchema.optional(), // classic Copilot sessions only
   systemPrompt: z.array(systemPromptComponentSchema).optional(), // Analyze mode only
+  // pi sessions only: set when the system prompt shown is not the exact one sent (what is missing, and how to get it).
+  systemPromptNote: z.string().optional(),
   toolInventory: z.array(toolInventoryEntrySchema).optional(), // Analyze mode only
   usageDataAvailable: z.boolean(),
   category: z.string().optional(), // Learn mode only — authored per fixture

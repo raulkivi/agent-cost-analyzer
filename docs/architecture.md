@@ -2009,8 +2009,11 @@ list `toolsAdded`/`toolsRemoved`, or reset with `replace: true`; a
 `compaction` entry's optional `systemMessage` is a complete checkpoint.
 `system-message-replay.ts`'s `replaySystemMessages` replays them along the
 branch exactly like pi-ai's `getCurrentSystemMessage`/`getSystemMessageText`
-(`dist/utils/transcript.js`, `dist/utils/text.js`) into the final prompt
-text and tool set, plus every tool declared anywhere on the branch.
+(`dist/utils/transcript.js`, `dist/utils/text.js`) into the prompt pi saved
+(it omits text other pi extensions add at send time; measured 2026-11-14 on
+124 sessions: pi's sections cover 77-93% of the exact prompt, median 86%,
+never an exact match) and tool set, plus every tool declared anywhere on the
+branch.
 `system-prompt-components.ts`'s `buildPiSystemPromptComponentsFromState`
 turns that into components: a `built-in` component for the base `content`
 and one per named section (section names are pi's own and free-form, so
@@ -2024,7 +2027,35 @@ system message (recorded before pi persisted them) leave both unset and
 fall back to the sidecar below for `systemPrompt`; `toolInventory` stays
 unset for them.
 
-**Sidecar fallback: `systemPrompt` via an optional sidecar log
+**Combining both sources (2026-11-14, `resolve-pi-system-prompt.ts`).** The
+sidecar holds the exact prompt sent, after other extensions changed it; the
+file holds pi's own sections. Per branch:
+
+- Both present: text and size (the system-prompt inspector and context
+  overhead) come from the sidecar. `system-prompt-combiner.ts`'s
+  `buildCombinedSystemPrompt` finds each in-file piece (base content, each
+  section) verbatim in the sidecar text, longest first, each at its earliest
+  non-overlapping position, and names those parts. Everything else becomes one
+  `Added by pi extensions` component. A section that does not occur verbatim
+  (in practice `mcp_servers`, which pi rewrites) is not guessed at: it falls
+  into that remainder. Parts concatenate to exactly the sidecar text, so
+  they add up to `systemPromptChars`; whitespace between two named parts is
+  attached to the preceding part instead of producing an empty extension
+  part. The `tool-definitions` component stays sized from `toolsAdded`.
+- File only: pi's text and breakdown, plus `Session.systemPromptNote` (shown
+  under the breakdown) saying the prompt omits extension additions and that
+  `pi-system-prompt-logger` records the exact one.
+- Sidecar only (older files): unchanged, no note.
+
+`system-prompt-sidecar-matcher.ts` picks the record: the sidecar index keeps
+every record of a session file in `capturedAt` order, and a branch uses the
+latest one captured at or before the branch's last entry timestamp (a record
+for a later model or prompt change belongs to a later point or another
+branch). With no such record, or no timestamps, the earliest record is used.
+`npm run test:real-data:pi` checks this over the local pi files: rebuilt size
+equals `systemPromptChars` and the parts sum to it.
+
+**Sidecar: `systemPrompt` via an optional sidecar log
 (Phase 9.8).** `packages/pi-system-prompt-logger` (§10) is a vendored Pi
 extension that captures the fully assembled system prompt plus selected
 tools/skills/context files — which older pi session files lack — to a
@@ -2038,12 +2069,11 @@ it:
   the sidecar log into a `Map` keyed by each record's resolved `sessionFile`
   path — the only reliable join key, since `session-id.ts`'s
   `computePiFileHash` is a one-way hash and a `Session.id` can't be reversed
-  back to a file path. **Known simplification pending real-data
-  verification**: if a forked/rewound session's file has multiple sidecar
-  records (one per branch), the earliest-captured one wins and is applied to
-  every branch — the sidecar's own `sessionId` field vs. a session file's
-  own `header.id` are an unconfirmed equivalence, so `sessionFile` sidesteps
-  that uncertainty rather than resolving it.
+  back to a file path. Records of one file are all kept, in `capturedAt`
+  order (the matcher above chooses per branch) — the sidecar's own
+  `sessionId` field vs. a session file's own `header.id` are an unconfirmed
+  equivalence, so `sessionFile` sidesteps that uncertainty rather than
+  resolving it.
 - `system-prompt-components.ts`'s `buildPiSystemPromptComponents` turns a
   matched record into `SystemPromptComponent[]`, mirroring
   `buildSystemPromptBreakdown`'s VS Code shape: one `built-in` component
@@ -2055,9 +2085,9 @@ it:
   `selectedTools.length` when present.
 - A new `PiAgentLogProvider.readSystemPromptText(sessionId)` method — not on
   the shared `LogProvider` interface (ISP: `VscodeLogProvider`/
-  `MitmproxyLogProvider` have no equivalent) — returns the replayed in-file
-  prompt text when the branch has system messages, else the matched sidecar
-  record's raw text, or `null`. Since Phase 10.1, `GET
+  `MitmproxyLogProvider` have no equivalent) — returns the matched sidecar
+  record's exact text when there is one, else the replayed in-file prompt,
+  or `null`. Since Phase 10.1, `GET
   /api/sessions/:id/system-prompt` no longer branches on the provider id.
   Providers that have a system-prompt artifact implement the optional
   `SystemPromptTextReader` capability
@@ -2185,7 +2215,7 @@ written to disk anywhere by Claude Code CLI (only per-turn dynamic
 `addedMessages`, not the session-level system prompt). This differs from
 pi-agent (§6.2.5), whose session files persist the prompt as system
 messages (with an optional vendored sidecar-logger extension as the
-fallback for older files) — no equivalent exists (or is planned) for
+complement, and the fallback for older files) — no equivalent exists (or is planned) for
 Claude Code CLI, so there is no third branch on `GET
 /api/sessions/:id/system-prompt`: `claude-code`, like `mitmproxy`, doesn't
 implement `SystemPromptTextReader`, so every id answers 404 `Unknown

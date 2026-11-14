@@ -1,5 +1,7 @@
 # pi-system-prompt-logger
 
+**Last changed:** 2026-11-14 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+
 A Pi coding-agent extension that captures the fully assembled system prompt
 (base prompt + tools + guidelines + context files + skills) once per session
 and appends it to a JSONL log. See `DESIGN.md` for the architecture and
@@ -7,9 +9,21 @@ verified API details.
 
 This package lives inside the `agent-cost-analyzer` monorepo as
 `packages/pi-system-prompt-logger`, one of its npm workspaces. It has no
-runtime dependency on `packages/server`/`packages/web` and isn't consumed by
-them yet — it's a standalone extension you build and install into your own
+runtime dependency on `packages/server`/`packages/web`; the app reads its log file, not its code. It is
+a standalone extension you build and install into your own
 `pi` installation, same as when it was a separate repo.
+
+## Why install it
+
+pi saves its own system prompt in the session file, but that copy leaves out
+text other pi extensions add when a request is sent (for example a sandbox
+extension's working-directory and mount notes). This logger records the
+final prompt pi actually sends, so it stays recommended. The Agent Cost
+Analyzer combines both: the exact text and size come from this log, pi's own
+sections are named as the breakdown, and the rest is shown as **Added by pi
+extensions**. Without the log the app shows pi's saved prompt and says it is
+incomplete. For sessions recorded before pi saved its prompt, this log is the
+only source.
 
 ## Requirements
 

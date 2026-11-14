@@ -59,6 +59,22 @@ describe("sessionSchema", () => {
     expect(sessionSchema.parse(sample)).toEqual(sample);
   });
 
+  it("accepts an optional systemPromptNote", () => {
+    const sample = {
+      id: "s",
+      mode: "analyze",
+      title: "t",
+      model: "m",
+      turns: [],
+      turnCount: 0,
+      costAiCredits: { known: false, reason: "n/a" },
+      usageDataAvailable: false,
+      systemPromptNote: "Extension additions are missing.",
+    };
+
+    expect(sessionSchema.parse(sample).systemPromptNote).toBe("Extension additions are missing.");
+  });
+
   it("accepts optional category (Learn) and startedAt (Analyze) fields", () => {
     const learnSample = {
       id: "learn-cache-write-read",

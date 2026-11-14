@@ -221,8 +221,16 @@ header area also holds the **Retention** field described below:
   branch tip. Token totals include everything pi records — assistant
   replies, nested tool usage, cache warming and compaction/branch summaries
   — and reasoning tokens when the model's provider reports them. The
-  system prompt and tool list come from the session file itself (or, for
-  older sessions, from the optional `pi-system-prompt-logger` extension).
+  system prompt and tool list come from the session file itself. pi's
+  saved prompt leaves out text that other pi extensions add when a request
+  is sent (for example a sandbox extension's working-directory and mount
+  notes), so it is smaller than what the model received. The optional
+  `pi-system-prompt-logger` extension records the exact prompt and stays
+  recommended: when it is installed, the system prompt view shows the exact
+  text and size, pi's own sections as the breakdown, and everything else as
+  one **Added by pi extensions** part. Without it the view says the prompt
+  is incomplete. Sessions recorded before pi saved its prompt use the
+  logger's record alone.
   Tool-call and vision token breakdowns, plus AI Credits (a GitHub
   Copilot-specific billing unit pi has no equivalent of), aren't available
   for pi sessions.

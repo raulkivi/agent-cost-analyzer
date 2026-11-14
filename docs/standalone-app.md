@@ -1,6 +1,6 @@
 # Agent Cost Analyzer: setup and data sources
 
-**Last changed:** 2026-11-12 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-14 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 How to install and run the standalone Agent Cost Analyzer app, where it
 finds each provider's logs, which Copilot Chat settings to turn on, and a
@@ -149,14 +149,15 @@ runtime, never hardcoded:
   `~/.pi/agent/sessions/`, in a `--<project-path-with-slashes-as-dashes>--`
   subfolder per project. Because pi sessions are a branchable tree
   (fork/rewind create siblings), a single file with multiple leaf branches
-  becomes multiple sessions in the app. pi's own session format has no
-  system-prompt/tool-inventory artifact to read, so those tabs stay empty
-  for pi sessions unless you've installed
+  becomes multiple sessions in the app. pi's session files hold its own system prompt and
+  tool list, but the prompt leaves out text other pi extensions add when a
+  request is sent. Installing
   [`pi-system-prompt-logger`](../packages/pi-system-prompt-logger/README.md)
-  (`npm run configure` offers to do this for you) — it captures the missing
-  artifact from outside pi's own session format, and the system prompt
-  inspector shows it once a captured session exists. `toolInventory` stays
-  unpopulated either way (see
+  (`npm run configure` offers to do this for you) records the exact prompt
+  from outside pi's own session format; the app then shows that exact text
+  and size, with pi's sections as the breakdown and the extensions' text as
+  one part. Sessions recorded before pi saved its prompt need the logger
+  (see
   [architecture.md §6.2.5](architecture.md#625-pi-agent-provider-flow)).
 
 - **[Claude Code](https://claude.com/claude-code) CLI** — reads Claude
