@@ -101,6 +101,15 @@ describe("BillingTab (plan §11.5, board 4)", () => {
     });
   });
 
+  it("says how many sessions a source's session limit left unread, as a warning", async () => {
+    const statement = sampleStatement({ notRead: [{ providerId: "claude-code", label: "Claude Code CLI", sessions: 37 }] });
+    renderTab({ loadStatement: vi.fn().mockResolvedValue({ statement, canIssue: { ok: true }, issuedPeriods: [] }) });
+    await screen.findByRole("table", { name: /Statement lines/ });
+    expect(screen.getByRole("status", { name: "Sessions not read" })).toHaveTextContent(
+      "Claude Code CLI: 37 sessions not read (the per-source session limit); their turns are not on this statement.",
+    );
+  });
+
   it("issues only after confirming in a dialog, then shows the frozen copy", async () => {
     const user = userEvent.setup();
     const loadStatement = vi.fn().mockResolvedValueOnce(draftAnswer()).mockResolvedValue(issuedAnswer());

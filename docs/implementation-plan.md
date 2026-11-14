@@ -16,7 +16,7 @@ The [1.0.0 release](#100-release) section lists what both products need for 1.0.
 - Released: extension 0.12.0 and app 0.14.0 on 2026-11-14 (tags `ext-v0.12.0` and `app-v0.14.0` on `613724e`).
 - Next release: extension 0.14.0 (stable) and app 0.15.0, carrying Phase 16 Increment 2 and PRs #272 (Marketplace listing), #274 (Learn Vendors tab), #279 (pi system prompt) and #280 (mitmproxy docs).
 - Done: Phases 0-10, 12, 13, 16 and 17; steps 10.19 and 10.21-10.23. Phase 10's manual checks and docs review were closed by the owner on 2026-11-14.
-- Open: Phase 11 (not started); Phase 14 (the owner's docs review; exit criterion met 2026-11-14); Phase 15 (exit criterion on real data, an automated check).
+- Open: Phase 11 (not started); Phase 14 (the owner's docs review; exit criterion met 2026-11-14); Phase 15 (the owner's docs review, step 15.15; exit criterion met 2026-11-14, C4).
 - 1.0.0: both products together, no target date; criteria and tasks in [1.0.0 release](#100-release) (owner decisions 2026-11-14).
 - Current status of record: [implementation-plan-gantt.md](implementation-plan-gantt.md).
 
@@ -1632,9 +1632,10 @@ plan's §14 table and §14.1 notes have each step's detail:
   and the product table, §8 and §12; the User Guide, extension guide,
   vision non-goals and READMEs).
 
-Open: the owner's review of the docs (15.15's exit criterion) and the
-phase's exit criterion (plan §15) on a machine with real sessions, now
-an automated check (owner decision 2026-11-14).
+Exit criterion met 2026-11-14: the automated real-data check (V4, C4,
+`npm run test:real-data:cost-by-project`, PR #290) passed on the owner's
+logs and the owner signed off its output. Open: the owner's review of the
+docs (15.15).
 
 ## Phase 16 — Savings report
 
@@ -1768,7 +1769,7 @@ app installs from npm, and the release path's security gaps are closed.
 | C1 | Phase 10 closed: 10.9's manual checks superseded by step 10.17's release gate; 10.10's docs review covered by the owner's reviews for 0.12.0 | Phase 10 | Done 2026-11-14 | Phase 10 at 100% in the Gantt |
 | C2 | pi provider pinned against real captures | Phase 11 | Capture tooling ready (PR #288); owner capture next. The sidecar rule is decided (PR #279) | Phase 11's exit criterion |
 | C3 | Replay of real sessions verified | Phase 14 | Done 2026-11-14 (V3, PR #289, `npm run test:real-data:replay`): the owner signed off the check's output | A `REAL_DATA` check with an oracle computed from raw logs passes on the owner's logs (plan §13); the owner signs off its output |
-| C4 | Cost by repository and project verified | Phase 15 | Not started (15.0-15.15 built) | A `REAL_DATA` check with an oracle computed from raw logs passes on the owner's logs and projects file (plan §15); the owner signs off its output |
+| C4 | Cost by repository and project verified | Phase 15 | Done 2026-11-14 (V4, PR #290, `npm run test:real-data:cost-by-project`): the owner signed off the check's output | A `REAL_DATA` check with an oracle computed from raw logs passes on the owner's logs and projects file (plan §15); the owner signs off its output |
 | C5 | Savings Increment 2 finished | Phase 16 (SR21, SR22) | Done 2026-11-14: SR21 (PR #281), V5 and V6 (PR #285); the owner signed off the check's output | `npm run test:real-data:savings` also checks `get_savings_report`; the owner signs off its output |
 | C6 | U5's Analyse reads **Added to chat** after a click, with the hint "Press send in the chat to run it."; U2's "Ask about this session" the same | Phase 12 follow-up | Done 2026-11-14 | Component and G5 specs assert the label and hint; the G4 real-Copilot row expects them; both guides use the wording |
 | C7 | Claude Desktop permission prompts | Phase 12 | Done 2026-11-14: risk R4 accepted, no gate row | None |

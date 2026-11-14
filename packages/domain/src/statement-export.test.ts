@@ -25,6 +25,13 @@ describe("exportStatement", () => {
     ]);
   });
 
+  it("says in CSV and Markdown how many sessions a source's limit left unread", () => {
+    const statement = sampleStatement({ notRead: [{ providerId: "claude-code", label: "Claude Code CLI", sessions: 37 }] });
+    expect(exportStatement(statement, "csv")).toContain("not-read,,,,,,37,,,,,,,,Claude Code CLI: 37 sessions not read (the per-source session limit); their turns are not on this statement");
+    expect(exportStatement(statement, "markdown")).toContain("Claude Code CLI: 37 sessions not read (the per-source session limit); their turns are not on this statement.");
+    expect(exportStatement(sampleStatement(), "markdown")).not.toContain("not read");
+  });
+
   it("quotes CSV fields that need it, and neutralises spreadsheet formulas", () => {
     const statement = sampleStatement({ unknown: [{ reason: '=HYPERLINK("x"), "quoted"', turns: 1, sessions: 1 }] });
     expect(exportStatement(statement, "csv")).toContain(`unknown,,,,,,1,1,,,,,,,"'=HYPERLINK(""x""), ""quoted"""`);

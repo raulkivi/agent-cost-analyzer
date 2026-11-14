@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 import {
   channelLabel,
   exportStatement,
+  notReadText,
   parseStatementPeriod,
   type CostEstimate,
   type Statement,
@@ -349,6 +350,13 @@ function StatementTables({ statement }: { statement: Statement }) {
         <p className="cost-note">
           In all: {statement.userCurrency.code} {fixed2(statement.userCurrency.total)} ({statement.userCurrency.conversion})
         </p>
+      )}
+      {(statement.notRead ?? []).length > 0 && (
+        <div role="status" aria-label="Sessions not read" className="cost-note">
+          {statement.notRead!.map((entry) => (
+            <p key={entry.providerId}>{notReadText(entry)}.</p>
+          ))}
+        </div>
       )}
       {statement.excluded.map((line) => (
         <p key={line.reason} className="text-muted cost-note">

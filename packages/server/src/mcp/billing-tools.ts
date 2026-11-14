@@ -24,7 +24,7 @@ export function registerBillingTools(server: McpServer, deps: { statements?: Sta
       title: "Get a project's billing statement",
       description:
         "Use to see what one project (id from list_projects) costs for a period: the frozen statement if the period is issued, with the re-run beside it and the exact diff (late logs, a price-book change), else the draft and whether it can be issued (only an ended period can). " +
-        "Lines per basis, currency, channel, model and price version with tokens and unit prices; turns with unknown cost listed with their reason, never counted as 0; subscription (API-equivalent) use left off unless the project includes it; the project's markup, fixed lines and own currency at its fixed rate; totals per currency; coverage; provenance (app version, price book, projects file, session ids). " +
+        "Lines per basis, currency, channel, model and price version with tokens and unit prices; turns with unknown cost listed with their reason, never counted as 0; subscription (API-equivalent) use left off unless the project includes it; the project's markup, fixed lines and own currency at its fixed rate; totals per currency; coverage; provenance (app version, price book, projects file, session ids); `notRead`, when present, counts the sessions per source that the session limit left unread, whose turns are not on the statement: say so with any total. " +
         "Months are calendar months in the statement's time zone. This tool never issues a statement: issuing is done in the app.",
       inputSchema: z.object({
         projectId: z.string().min(1).describe("The project id, from list_projects."),

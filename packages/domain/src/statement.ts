@@ -83,6 +83,9 @@ export const statementSchema = z
     lines: z.array(statementLineSchema),
     unknown: z.array(groupLineSchema), // no known cost: counted, never 0
     excluded: z.array(groupLineSchema), // known but left off (D4)
+    // Sessions a source's session limit left unread: their turns are not on
+    // the statement, so it says so instead of reading smaller (plan §8.5).
+    notRead: z.array(z.object({ providerId: z.string(), label: z.string(), sessions: count.min(1) })).optional(),
     markupPercent: z.number().nonnegative().optional(),
     markup: z.array(z.object({ currency: currencySchema, base: money, amount: money })),
     fixedLines: z.array(fixedLineSchema),

@@ -118,7 +118,13 @@ export class InsightsService {
         }
       }
       return {
-        status: { ...base, available: true, sessionCount: sessions.length, truncated: matching.length > limit },
+        status: {
+          ...base,
+          available: true,
+          sessionCount: sessions.length,
+          truncated: matching.length > limit,
+          ...(matching.length > limit ? { sessionsLeftOut: matching.length - limit } : {}),
+        },
         sessions: { providerId: provider.id, providerLabel: provider.label, sessions },
       };
     } catch (error) {

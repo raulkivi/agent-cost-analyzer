@@ -181,7 +181,7 @@ describe("InsightsService", () => {
     const dataset = await service([provider]).getDataset({ since: "2026-10-02", until: "2026-10-05", limit: 2 });
 
     expect(dataset.sessions.map((session) => session.sessionId)).toEqual(["s5", "s4"]);
-    expect(dataset.providers[0]).toMatchObject({ sessionCount: 2, truncated: true });
+    expect(dataset.providers[0]).toMatchObject({ sessionCount: 2, truncated: true, sessionsLeftOut: 2 });
     expect(dataset).toMatchObject({ since: "2026-10-02", until: "2026-10-05" });
     expect(provider.reads).toBe(2);
   });

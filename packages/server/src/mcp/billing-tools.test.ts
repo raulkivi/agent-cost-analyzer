@@ -31,6 +31,9 @@ describe("MCP billing tools (step 15.11)", () => {
     expect(tool?.annotations?.readOnlyHint).toBe(true);
     expect(tool?.outputSchema?.type).toBe("object");
     expect(tool?.description).toMatch(/never issues/i);
+    // A statement never reads as smaller than it is: sessions a source's limit left unread are named.
+    expect(tool?.description).toMatch(/notRead/);
+    expect((tool?.outputSchema?.properties as Record<string, { properties?: Record<string, unknown> }>).statement?.properties).toHaveProperty("notRead");
     expect(Object.keys(tool?.inputSchema.properties ?? {})).toEqual(expect.arrayContaining(["projectId", "period", "includeLines"]));
     expect(tools.some((candidate) => /issue/.test(candidate.name))).toBe(false);
   });

@@ -445,7 +445,7 @@ export {
   type StatementDiff,
   type StatementAnswer,
 } from "./statement.js";
-export { exportStatement, type StatementExportFormat, type StatementExportOptions } from "./statement-export.js";
+export { exportStatement, notReadText, type StatementExportFormat, type StatementExportOptions } from "./statement-export.js";
 export {
   MIN_ESTIMATE_UNITS,
   ESTIMATE_HISTORY_WEEKS,

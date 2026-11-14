@@ -278,6 +278,8 @@ export const insightProviderStatusSchema = z.object({
   unavailableReason: z.string().optional(),
   sessionCount: z.number(),
   truncated: z.boolean(), // more sessions matched than the per-provider limit
+  // How many matching sessions the limit left unread (set when truncated).
+  sessionsLeftOut: z.number().int().nonnegative().optional(),
   error: z.string().optional(),
 });
 

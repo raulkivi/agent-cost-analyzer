@@ -177,6 +177,11 @@ export function buildStatement(cube: CostCube, inputs: StatementInputs): Stateme
       }
     : undefined;
 
+  // Plan §8.5: sessions a source's limit left unread are named, never a silently smaller statement.
+  const notRead = cube.providers
+    .filter((provider) => provider.truncated && (provider.sessionsLeftOut ?? 0) > 0)
+    .map((provider) => ({ providerId: provider.id, label: provider.label, sessions: provider.sessionsLeftOut! }));
+
   const sessions = new Map<string, { providerId: string; sessionId: string; title?: string }>();
   for (const row of rows) sessions.set(row.sessionKey, { providerId: row.providerId, sessionId: row.sessionId, ...(row.sessionTitle ? { title: row.sessionTitle } : {}) });
 
@@ -196,6 +201,7 @@ export function buildStatement(cube: CostCube, inputs: StatementInputs): Stateme
     lines: statementLines,
     unknown: groups([...unknownReasons.keys()], (row) => unknownReasons.get(row)!),
     excluded: excludedRows.length > 0 ? [{ reason: EXCLUDED_REASON, turns: excludedRows.length, sessions: sessionCount(excludedRows) }] : [],
+    ...(notRead.length > 0 ? { notRead } : {}),
     ...(rates.markupPercent !== undefined ? { markupPercent: percent } : {}),
     markup,
     fixedLines,

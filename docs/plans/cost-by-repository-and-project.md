@@ -435,6 +435,14 @@ them, as **not explained**, never as 0 (constraint 6).
 - a provenance block: app version, price-book version, project-file hash,
   and the list of session ids included.
 
+A statement takes every turn dated in its period, whenever its session
+started: it reads every session started up to a day after the period (for
+the time zone), up to 500 per source (the most a request may read), not a
+view's default 50 (fixed 2026-11-14 by the §15 check). When a source has
+more, the statement's `notRead` names the source and how many sessions were
+not read, and the Billing tab, `get_statement` and the CSV and Markdown
+exports say so: never a silently smaller statement.
+
 **Freezing**: "Issue statement" writes the statement as JSON under
 `statements/<project>/<period>.json` in the app's settings folder (beside
 `projects.json`, so `resolveAppSettingsDir`'s override applies; step
@@ -2173,3 +2181,178 @@ criterion, C4 in [implementation-plan.md](../implementation-plan.md#100-release)
   machine is written), and no unknown cost summed as zero.
 - The owner signs off its output; the test alone does not mark the
   criterion met.
+
+### 15.1 The check (task V4)
+
+**Status: exit criterion met; the owner signed off the check's output 2026-11-14 (C4, PR #290).**
+
+`npm run test:real-data:cost-by-project` (also part of `npm run test:real-data`)
+runs `packages/server/scripts/cost-by-project-exit.real.test.mts` over the
+machine's own logs. It skips unless `REAL_DATA=1` (the npm script sets it), so
+`npm test` and CI are unaffected. It prints counts, months, rounded totals and
+hashed repository ids, never prompt text, titles or paths.
+
+**Setup.** The owner has no projects file, so the check writes one to a
+temporary settings folder: two projects over the four repositories with the
+most Copilot or Claude Code turns (project A opts into subscription use, D4).
+The standalone app's `ApiService` (what the Dashboard calls) and its MCP server
+(composed as `mcp/stdio.ts` does) run over that folder; the owner's settings are
+never touched. Claude Code and pi are read through a view of their stable files
+(a file written in the last 15 minutes is left out and counted). Copilot's
+VS Code Agent Host sessions are compared too: the products read them as the app
+finds them, and the oracle rebuilds them from their raw stores.
+
+**Oracle.** `scripts/cost-by-project-oracle.mts`, unit-tested in
+`cost-by-project-oracle.test.mts` (a test checks it imports nothing from the
+product but `savings-oracle.mts`'s model spellings). It reads:
+
+- repository (§4.2, re-implemented): walk up to `.git`, follow a `.git` file to
+  its `gitdir` and `commondir`, take `origin` (else the first remote) and
+  normalise it; `local:<root>` without a remote; `path:<folder>` outside a
+  repository; the recorded repository only when the folder is gone;
+- turns, from the raw logs: Claude Code (the active branch, real prompts, one
+  request per message id, `<synthetic>` left out), pi (a user message to the
+  next, every usage), Copilot Chat (session-store rows of interactive chat,
+  agent name `GitHub Copilot Chat` per
+  [agentic-coding-explained.md](../agentic-coding-explained.md) §18.2, usage
+  from the debug log's turn with the same prompt, plus the subagent runs it
+  started);
+- Copilot's VS Code Agent Host: the catalog `User/globalStorage/agent-host.db`
+  (read-only, tombstoned sessions skipped), each session's
+  `agentSessionData/<id>/session.db` turns in row order with their
+  `turn_usage`, placed on the user messages the user typed (not a subagent's or
+  an agent's) in the Copilot CLI's `~/.copilot/session-state/<sdk id>/events.jsonl`;
+  billed `copilotUsage.totalNanoAiu` / 1e9; cache writes known only when the
+  turn's usage records sum to its totals and each reports them;
+- figures: billed `copilotUsageNanoAiu` / 1e9; reported pi `cost.total`; priced
+  tokens × the list version in force on the turn's channel at its time, from the
+  price-book JSON (Claude Code writes at the 1-hour rate unless split, Copilot's
+  unknown writes inside uncached input, AI Credits at $0.01); preferred billed,
+  else reported, else priced;
+- projects: whole-repository members of the projects file.
+
+**Assertions.**
+
+1. Copilot (classic and Agent Host) and Claude Code, each: every repository's
+   and project's series per month, per basis (preferred, billed, reported,
+   priced) and currency (turns, sessions, known turns, amounts) equals the
+   oracle's. Money within
+   1e-9 relative (summation order only), counts exactly.
+2. pi, in its own test (Phase 11 hasn't pinned the provider): the same per
+   repository.
+3. Every provider together: `get_project_cost` for both projects (MCP equal to
+   the Dashboard), its totals per basis, months and member rows; `compare_costs`
+   and `get_repository_cost` for the members (MCP equal to the Dashboard); and
+   `compare_costs` over every repository against the oracle.
+4. `explain_cost_change` for project A between its two latest priced months:
+   MCP equal to the Dashboard, each period's cost and turns per currency equal
+   to the oracle's, not-explained turns equal to its unpriced turns, and usage
+   + price + mix equal to the change within 1e-9 relative.
+5. `get_price_changes`: MCP equal to the Dashboard, one change per price-book
+   version that follows an earlier one in the window.
+6. A statement for project A's latest ended month (UTC) is issued in the
+   temporary folder: its totals and coverage equal the oracle's (1e-6,
+   statements round). A contract price at twice the list price of its top
+   priced model, scoped to project A, is then added to the temporary projects
+   file: the issued statement is unchanged (Dashboard and MCP), and the
+   re-run's diff equals the oracle's priced amount for that model.
+7. No total anywhere has an amount over no known turn, and known turns never
+   exceed turns.
+8. No MCP answer holds the home folder's path or the first 32 characters of
+   any prompt. A statement's session titles are searched apart and counted, not
+   failed: a statement holds titles by design (§8.5), and a title is the
+   source's own.
+9. Read-only: the app's own settings folder (by content) and every session log
+   read (by size and mtime) are unchanged.
+
+**Run, 2026-11-14, on the owner's machine: 11 of 11 passed (about 11 minutes),
+pending the owner's sign-off.**
+
+- Read: Claude Code 222 sessions and 3,004 turns (1 live file left out); pi 261
+  files and 465 turns (no forks); Copilot Chat's classic store 115 sessions and
+  606 turns; the Agent Host 63 sessions and 179 turns, 8,010.44 AI Credits on
+  172 of them; 134 repositories, 1 unattributed turn.
+- Copilot (classic and Agent Host): 23 repositories, 31 repository-months × 4
+  bases, 14,207.88 AI Credits preferred (6,197.44 classic + 8,010.44 Agent
+  Host): 0 differences. Claude Code: 34 repositories, 40 repository-months × 4
+  bases, $1,615.67 priced (API-equivalent): 0 differences. pi: 88
+  repositories, reported cost on 465 turns ($0.00, local models), priced on
+  none: 0 differences.
+- Project A (2 repositories): 2,390 turns in 246 sessions over 4 months,
+  11,701.92 AI Credits + $1,209.12, 2,106 turns known. Project B: 1,009 turns
+  in 86 sessions, 1,212.38 AI Credits + $332.84, 949 known. MCP equal to the
+  Dashboard and the oracle for both, and for every repository.
+- `explain_cost_change` for project A, October to November: USD $991.83 to
+  $217.29, change −$774.55 = usage −$723.00 + price $0.45 + mix −$51.99; AI
+  Credits (priced) 42.17 to 1.36, change −40.81 = usage −30.04 + price 0.00 +
+  mix −10.77; both sums exact to 0.
+- `get_price_changes`: 8 documented changes, one per price-book version that
+  follows an earlier one.
+- Statement for project A, October: 9 lines, 5,244.21 AI Credits + $991.83,
+  coverage 1,169 of 1,264 turns as the oracle (95 turns listed as unknown);
+  after the contract price the issued copy is unchanged and the re-run's diff
+  is $991.83, as the oracle's.
+- Unknown never 0: 15,654 totals in 41 answers, 0 problems. Privacy: 19 MCP
+  answers, 1,974 prompt openings, 0 found outside session titles; 5 of the
+  statement's 123 session titles hold a prompt's opening, all Agent Host.
+  Read-only: 784 fingerprints unchanged.
+
+**Found.**
+
+- Bug, fixed in this change: a statement read only the 50 latest sessions per
+  source that started within a day of its period, so it left turns off without
+  saying so (the first run: 408 of October's 1,166 turns). It now reads every
+  session started up to a day after the period, up to 500 per source (§8.5).
+- For the owner: VS Code titles some Agent Host sessions with the opening of
+  their first prompt (14 of the 109 stored sessions: the catalog's summary and
+  the store's `customTitle` alike), and the app shows that title, so a
+  statement's session titles can hold prompt text (the first run failed
+  assertion 8 on `get_statement` alone; the final run counts 5 such titles,
+  all Agent Host). Options: keep it (it is VS Code's own title;
+  the exports can leave titles out), treat a title equal to the first prompt's
+  opening as untitled (needs the event log when listing), or leave titles out
+  of statements by default.
+- For the owner: 4 session-store sessions whose agent name is
+  `panel/editAgent` or `summarizeConversationHistory` are left out of every
+  view by the §18.2 scope rule. They are ordinary Chat-panel chats; see
+  [§15.2](#152-sessions-left-out-by-182-spike-2026-11-14) for the findings and
+  the recommendation, which is the owner's decision.
+- Limitation L1 (known): a Claude Code turn of several requests whose summed
+  prompt passes the first tier of a tiered price (Claude Haiku 5.5) is
+  unknown, since a turn keeps only the sum; the oracle expects the same.
+- Not covered: pi is rerun after Phase 11 pins its provider.
+
+### 15.2 Sessions left out by §18.2 (spike, 2026-11-14)
+
+The Copilot Chat reader keeps session-store sessions whose agent name is
+`GitHub Copilot Chat`
+([agentic-coding-explained.md](../agentic-coding-explained.md) §18.2). On the
+owner's machine 4 sessions carry another agent name:
+
+| Created | Agent name | Store turns | Prompts in log | Requests | AI Credits in log |
+|---|---|---:|---:|---:|---:|
+| 2026-08-01 | panel/editAgent | 1 | 0 | 0 | 0.00 |
+| 2026-08-08 | panel/editAgent | 1 | 2 | 26 | 44.99 |
+| 2026-09-12 | summarizeConversationHistory | 15 | 15 | 107 | 37.01 |
+| 2026-09-29 | summarizeConversationHistory | 4 | 4 | 30 | 753.85 |
+
+**Findings.**
+
+- They are ordinary agent-mode chats in the Chat panel: host type `vscode`, a
+  debug-log folder in the workspace, and most requests are the main agent's
+  `panel/editAgent` (26, 99 and 27 in the three sessions with requests).
+- The store's agent name seems taken from one request, not from the surface
+  the chat ran in.
+- None is the Copilot CLI, the Coding Agent or a subagent, the surfaces §18.2
+  means to exclude.
+- No double counting found: no response id appears in another session's log;
+  no other request has the same time (±2 s) and token counts; 1 of 21 prompts
+  was typed twice, each with its own requests; none is an Agent Host session.
+- Totals: 835.85 AI Credits in the logs against 824.63 on store turns; the
+  2026-08-08 session has 2 log prompts for 1 store turn.
+
+**Recommendation.** Count them as Copilot Chat spend, selecting store sessions
+by surface (host type `vscode`) instead of by agent name.
+
+**Owner's decision, 2026-11-14: "count them".** Store sessions are selected by
+host type `vscode` instead of agent name; implemented in a separate PR.

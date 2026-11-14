@@ -13,6 +13,7 @@ import {
   type StatementPeriod,
 } from "@agent-cost-analyzer/domain";
 import type { CostCubeSource } from "../cost-analysis/cost-analysis-service.js";
+import { MAX_ROLLUP_SESSION_LIMIT } from "../tool-audit/audit-query-service.js";
 import { buildStatement } from "./statement-builder.js";
 import type { StatementStore } from "./statement-store.js";
 
@@ -118,12 +119,14 @@ export class StatementService implements StatementQueries {
   }
 
   private async draft(request: StatementRequest, period: StatementPeriod, project: Project, file: ProjectsFile) {
-    // A day either side covers any time zone; turns are then placed by their own day.
+    // Plan §8.5, nothing silently drops out: a session started before the
+    // period can hold turns in it, so every session started up to a day after
+    // it (for the time zone), as many as a request may read; turns are then
+    // placed by their own day.
     const cube = await this.deps.cubes.getCube(
       {
         ...(request.providerId !== undefined ? { providerId: request.providerId } : {}),
-        ...(request.limit !== undefined ? { limit: request.limit } : {}),
-        since: addDays(period.since, -1),
+        limit: request.limit ?? MAX_ROLLUP_SESSION_LIMIT,
         until: addDays(period.until, 1),
       },
       "as-of-use",
