@@ -24,6 +24,16 @@ const WARNING =
   "Price and cache data is over 90 days old and may be out of date.";
 
 describe("SourcesFooter", () => {
+  // Phase 17 P5: 20+ links made the Learn tab a wall of text.
+  it("folds the links into a collapsed details headed by the count", () => {
+    const { container } = render(<SourcesFooter sources={sources} oldestCheckedAt="2026-11-03" now={new Date("2026-11-05")} />);
+    const details = container.querySelector("details");
+    expect(details).not.toBeNull();
+    expect(details).not.toHaveAttribute("open");
+    expect(details!.querySelector("summary")).toHaveTextContent("Sources (2)");
+    expect(screen.getByRole("link", { name: "GitHub pricing table", hidden: true })).toBeInTheDocument();
+  });
+
   it("lists each source as a link and the check date", () => {
     render(
       <SourcesFooter

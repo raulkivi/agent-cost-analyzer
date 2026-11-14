@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 import type { KeyboardEvent, MouseEvent } from "react";
 import { scaleLinear } from "d3-scale";
+import { useContainerWidth } from "../lib/use-container-width.js";
 import { roundedTopRectPath } from "./chart-parts.js";
 import { ViewAsTable } from "./ViewAsTable.js";
 
@@ -24,10 +25,13 @@ interface TrendColumnsProps {
   emptyText?: string;
 }
 
-const HEIGHT = 150;
+const HEIGHT = 120;
 const MARGIN = { top: 10, right: 8, bottom: 24, left: 40 };
-const STEP = 26;
-const MAX_BAR = 18;
+// Below MIN_STEP columns scroll (.chart-scroll) rather than squeeze; above
+// it the step grows to fill the panel so two days are not a 100px sliver.
+const FALLBACK_STEP = 26;
+const MIN_STEP = 14;
+const MAX_BAR = 24;
 const MAX_X_LABELS = 20;
 // .chart-axis-text is 10px with tabular figures: about 6px a character,
 // plus a gap so neighbouring labels never touch.
@@ -49,10 +53,16 @@ export function TrendColumns({
   onSelect,
   emptyText,
 }: TrendColumnsProps) {
+  // Hooks run before the empty-state return to keep their order stable.
+  const [scrollRef, containerWidth] = useContainerWidth<HTMLDivElement>();
   if (columns.length === 0) {
     return <p className="text-muted chart-empty">{emptyText ?? "No data."}</p>;
   }
-  const width = MARGIN.left + MARGIN.right + columns.length * STEP;
+  // Text stays undistorted because the svg is drawn at its real pixel width
+  // instead of being stretched by a viewBox. Unmeasured (no ResizeObserver,
+  // first paint) keeps the fixed step.
+  const step = containerWidth === undefined ? FALLBACK_STEP : Math.max(MIN_STEP, (containerWidth - MARGIN.left - MARGIN.right) / columns.length);
+  const width = MARGIN.left + MARGIN.right + columns.length * step;
   const plotBottom = HEIGHT - MARGIN.bottom;
   const max = Math.max(...columns.map((column) => column.value), 0);
   const y = scaleLinear()
@@ -61,7 +71,7 @@ export function TrendColumns({
     .range([plotBottom, MARGIN.top]);
   const ticks = y.ticks(4);
   const widestLabel = Math.max(...columns.map((column) => column.label.length)) * LABEL_CHAR_WIDTH + LABEL_GAP;
-  const labelEvery = Math.max(Math.ceil(columns.length / MAX_X_LABELS), Math.ceil(widestLabel / STEP));
+  const labelEvery = Math.max(Math.ceil(columns.length / MAX_X_LABELS), Math.ceil(widestLabel / step));
   const hasNotes = columns.some((column) => column.note);
   const describe = (column: TrendColumn) =>
     `${column.label}: ${format(column.value)}${column.note ? ` (${column.note})` : ""}`;
@@ -79,7 +89,7 @@ export function TrendColumns({
         })),
       }}
     >
-      <div className="chart-scroll">
+      <div className="chart-scroll" ref={scrollRef}>
         <svg role="group" aria-label={ariaLabel} width={width} height={HEIGHT} className="chart-svg">
           {ticks.map((tick) => (
             <g key={tick}>
@@ -90,9 +100,9 @@ export function TrendColumns({
             </g>
           ))}
           {columns.map((column, index) => {
-            const bandX = MARGIN.left + index * STEP;
-            const barWidth = Math.min(MAX_BAR, STEP - 6);
-            const barX = bandX + (STEP - barWidth) / 2;
+            const bandX = MARGIN.left + index * step;
+            const barWidth = Math.min(MAX_BAR, step - 6);
+            const barX = bandX + (step - barWidth) / 2;
             const selected = selectedKeys.includes(column.key);
             const select = (event: MouseEvent | KeyboardEvent) =>
               onSelect?.(column.key, event.ctrlKey || event.metaKey);
@@ -117,7 +127,7 @@ export function TrendColumns({
                 <rect
                   x={bandX + 1}
                   y={MARGIN.top}
-                  width={STEP - 2}
+                  width={step - 2}
                   height={plotBottom - MARGIN.top}
                   className={selected ? "chart-band chart-band--selected" : "chart-band"}
                 />
@@ -125,7 +135,7 @@ export function TrendColumns({
                   <path d={roundedTopRectPath(barX, top, barWidth, Math.max(1, plotBottom - top), 4)} fill={COLOR} />
                 )}
                 {index % labelEvery === 0 && (
-                  <text x={bandX + STEP / 2} y={plotBottom + 15} textAnchor="middle" className="chart-axis-text">
+                  <text x={bandX + step / 2} y={plotBottom + 15} textAnchor="middle" className="chart-axis-text">
                     {column.label}
                   </text>
                 )}
