@@ -40,13 +40,14 @@ export class ScreenProbe {
     this.frameAt = this.now();
   }
 
-  async scores(names: string[]): Promise<Record<string, Match>> {
+  async scores(names: string[], minX?: number): Promise<Record<string, Match>> {
     await this.grab();
-    const out = await this.run("python3", ["-I", MATCH_PY, this.frameFile, ...names.map(templatePath)], {});
+    const region = minX === undefined ? [] : ["--min-x", String(minX)];
+    const out = await this.run("python3", ["-I", MATCH_PY, ...region, this.frameFile, ...names.map(templatePath)], {});
     return JSON.parse(out) as Record<string, Match>;
   }
 
-  async find(name: string): Promise<Match | undefined> {
-    return (await this.scores([name]))[name];
+  async find(name: string, minX?: number): Promise<Match | undefined> {
+    return (await this.scores([name], minX))[name];
   }
 }

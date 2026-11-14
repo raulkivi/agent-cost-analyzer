@@ -13,7 +13,8 @@ export interface ActionDeps {
     move(point: Point): Promise<void>;
   };
   // Best match of a template in a fresh frame, whatever its score.
-  find(template: string): Promise<Match | undefined>;
+  // `minX` limits the search to x >= minX (the side pane, once open).
+  find(template: string, minX?: number): Promise<Match | undefined>;
   startRecording(): Promise<void>;
   clock: Clock;
   pacing: { typeDelayMs: number; timeoutMs: number; intervalMs: number };
@@ -30,18 +31,22 @@ const AFTER_PROMPT_CLICK_MS = 500;
 export const PANE_POINT: Point = { x: 1130, y: 520 };
 // The frame's bottom-right corner, over nothing clickable: a pointer left on a button changes its look (hover).
 export const POINTER_REST: Point = { x: 1590, y: 990 };
+// The side pane's left edge in the 1600x1000 frame: the chat column ends at about x = 800.
+export const PANE_MIN_X = 806;
 
 export function createActionRunner(deps: ActionDeps): ActionRunner {
   let retake = false;
+  // Once the pane is open, a scene's templates are searched in it only: Claude may show copies of the view inline.
+  let paneOpen = false;
   const wait = { timeoutMs: deps.pacing.timeoutMs, intervalMs: deps.pacing.intervalMs };
 
-  const seen = async (template: string): Promise<Match | undefined> => {
-    const match = await deps.find(template);
+  const seen = async (template: string, minX?: number): Promise<Match | undefined> => {
+    const match = await deps.find(template, minX);
     return match && match.score >= MIN_SCORE ? match : undefined;
   };
 
   // Every wait also clears a permission prompt, else a hidden prompt would stall the answer.
-  const probe = (template: string) => async () => {
+  const probe = (template: string, inPane = paneOpen) => async () => {
     const prompt = await seen("always-allow");
     if (prompt) {
       retake = true;
@@ -50,7 +55,7 @@ export function createActionRunner(deps: ActionDeps): ActionRunner {
       await deps.input.move(POINTER_REST);
       await deps.clock.sleep(AFTER_PROMPT_CLICK_MS);
     }
-    return seen(template);
+    return seen(template, inPane ? PANE_MIN_X : undefined);
   };
 
   return {
@@ -68,11 +73,14 @@ export function createActionRunner(deps: ActionDeps): ActionRunner {
           await waitForMatch(action.template, probe(action.template), wait, deps.clock);
           return;
         case "waitAnswerDone":
-          return waitForGone("stop", probe("stop"), wait, deps.clock);
+          // The stop button is in the chat's composer, never in the pane.
+          return waitForGone("stop", probe("stop", false), wait, deps.clock);
         case "click": {
           const match = await waitForMatch(action.template, probe(action.template), wait, deps.clock);
           const centre = clickPoint(match)!;
-          return deps.input.click(action.at ? { x: action.at.x, y: centre.y + action.at.dy } : centre);
+          await deps.input.click(action.at ? { x: action.at.x, y: centre.y + action.at.dy } : centre);
+          if (action.opensPane) paneOpen = true;
+          return;
         }
         case "press":
           return deps.input.key(action.key);

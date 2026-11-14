@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 import { describe, expect, it } from "vitest";
 import type { Match } from "./click-point.mts";
-import { createActionRunner, PANE_POINT, POINTER_REST, type ActionDeps } from "./action-runner.mts";
+import { createActionRunner, PANE_MIN_X, PANE_POINT, POINTER_REST, type ActionDeps } from "./action-runner.mts";
 
 const hit = (x: number, y: number): Match => ({ x, y, width: 20, height: 10, score: 0.95 });
 
@@ -18,7 +18,8 @@ function setup(screen: (template: string, call: number) => Match | undefined) {
       scrollDown: async (p, clicks) => void log.push(`scroll:${p.x},${p.y},${clicks}`),
       move: async (p) => void log.push(`move:${p.x},${p.y}`),
     },
-    find: async (template) => {
+    find: async (template, minX) => {
+      if (minX !== undefined) log.push(`find:${template}>=${minX}`);
       const n = (calls.get(template) ?? 0) + 1;
       calls.set(template, n);
       return screen(template, n);
@@ -79,6 +80,13 @@ describe("createActionRunner", () => {
     const { run, log } = setup((t) => (t === "replay-kicker" ? hit(450, 380) : undefined));
     await run.perform({ kind: "click", template: "replay-kicker", at: { x: 1086, dy: -54 } });
     expect(log).toEqual(["click:1086,331"]);
+  });
+  it("after the click that opens the pane, searches later templates in the pane only: Claude may show copies of the view inline", async () => {
+    const { run, log } = setup((t) => (t === "findings-kicker" || t === "why-flagged" ? hit(100, 100) : undefined));
+    await run.perform({ kind: "click", template: "findings-kicker", at: { x: 1086, dy: -54 }, opensPane: true });
+    await run.perform({ kind: "click", template: "why-flagged" });
+    expect(log).toContain(`find:why-flagged>=${PANE_MIN_X}`);
+    expect(log.some((l) => l.startsWith("find:findings-kicker"))).toBe(false);
   });
   it("presses a key", async () => {
     const { run, log } = setup(() => undefined);

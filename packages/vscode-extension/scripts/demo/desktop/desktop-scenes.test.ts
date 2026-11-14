@@ -40,7 +40,7 @@ describe("M1", () => {
 const ALL = Object.values(DESKTOP_SCENES);
 const prompts: Record<string, RegExp> = {
   M2: /Customer portal.*1-6 October.*7-31 October/,
-  M3: /October.*statement.*Customer portal/,
+  M3: /^Show me the Customer portal project.s statement for October\.$/,
   M4: /Claude Code sessions.*analyse/i,
   M5: /risky.*October/,
   M6: /scratch.*30 October.*Haiku.*Luna/,
@@ -70,6 +70,10 @@ describe.each(ALL)("scene $id ($slug)", (scene) => {
     const prompt = scene.steps.find((s) => s.action.kind === "prompt")!.action as { text: string };
     expect(prompt.text).not.toMatch(/this (week|month)|today|yesterday/i);
     if (scene.id !== "M7") expect(prompt.text).toMatch(/October|30 October/);
+  });
+  it("marks the click that opens the pane, so later clicks search the pane only", () => {
+    const open = scene.steps.find((s) => s.label === "Open the host side pane")!.action;
+    expect(open).toMatchObject({ kind: "click", opensPane: true });
   });
   it("types only ASCII: xdotool dropped the en dash of \"1–6 October\"", () => {
     const prompt = scene.steps.find((s) => s.action.kind === "prompt")!.action as { text: string };
@@ -138,7 +142,7 @@ describe("scene specifics", () => {
   });
   it("M6 opens the pane of the model comparison, not of the session picker Claude may show above it", () => {
     const open = DESKTOP_SCENES.M6!.steps.find((s) => s.label === "Open the host side pane")!.action;
-    expect(open).toEqual({ kind: "click", template: "replay-kicker", at: { x: 1086, dy: -54 } });
+    expect(open).toMatchObject({ kind: "click", template: "replay-kicker", at: { x: 1086, dy: -54 } });
   });
   it("M6 replays a model after the pane is open, then goes Back", () => {
     const steps = order("M6");
