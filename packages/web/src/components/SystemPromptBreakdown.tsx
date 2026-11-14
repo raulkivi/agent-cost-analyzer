@@ -27,6 +27,7 @@ interface SystemPromptBreakdownProps {
   providerId?: string;
   unavailableReason?: string;
   eventLogRead?: boolean; // Agent Host session whose event log was read
+  note?: string; // Session.systemPromptNote: why the shown prompt is not the exact one sent
   onOpenInspector?: () => void;
 }
 
@@ -35,8 +36,9 @@ export function SystemPromptBreakdown({
   providerId,
   unavailableReason,
   eventLogRead,
+  note,
   onOpenInspector,
-}: SystemPromptBreakdownProps) {
+}:SystemPromptBreakdownProps) {
   const maxValue = Math.max(
     0,
     ...components.map((component) =>
@@ -128,6 +130,11 @@ export function SystemPromptBreakdown({
             </div>
           </div>
         ))
+      )}
+      {note && components.length > 0 && (
+        <p role="note" className="text-muted" style={{ fontSize: 12, margin: 0 }}>
+          {note}
+        </p>
       )}
     </Blueprint>
   );

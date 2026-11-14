@@ -54,22 +54,15 @@ export function parseSidecarLine(
 }
 
 // Keyed by the record's resolved `sessionFile` absolute path — the only
-// reliable join key. The sidecar's own `sessionId` (pi's
-// ctx.sessionManager.getSessionId()) vs. a session file's own header.id are
-// an unconfirmed equivalence (no real capture obtained yet); `sessionFile`
-// is a plain path this provider can compare directly against the file
-// paths it already resolves itself. Records with no `sessionFile` can never
-// be joined and are skipped, not stored under a synthetic key.
-export type SidecarIndex = Map<string, PiSystemPromptSidecarRecord>;
+// reliable join key. The sidecar's own `sessionId` vs. a session file's own
+// header.id are an unconfirmed equivalence; `sessionFile` is a plain path this
+// provider can compare directly against the file paths it already resolves.
+// Records with no `sessionFile` can never be joined and are skipped.
+// A session can have several records (model or prompt changes), kept in
+// capturedAt order; system-prompt-sidecar-matcher.ts picks the right one.
+export type SidecarIndex = Map<string, PiSystemPromptSidecarRecord[]>;
 
 // Streams the file (never fully buffered), mirroring readPiSessionFile.
-// Keeps the EARLIEST record per resolved sessionFile when duplicates exist
-// (first-seen-wins, since the file is append-only) — a known
-// simplification pending real-data verification: a forked/rewound pi
-// session shares one file across multiple Session branches in this app,
-// and the extension captures the system prompt once per session before any
-// fork existed, so "earliest wins" is the closest available approximation
-// until a real multi-branch capture confirms the right behavior.
 export async function readSystemPromptSidecarIndex(
   filePath: string | null | undefined,
 ): Promise<SidecarIndex> {
@@ -84,9 +77,16 @@ export async function readSystemPromptSidecarIndex(
       continue;
     }
     const key = path.resolve(record.sessionFile);
-    if (!index.has(key)) {
-      index.set(key, record);
+    const records = index.get(key);
+    if (records) {
+      records.push(record);
+    } else {
+      index.set(key, [record]);
     }
+  }
+  for (const records of index.values()) {
+    // Stable: file order breaks ties and unparsable dates.
+    records.sort((a, b) => (Date.parse(a.capturedAt) || 0) - (Date.parse(b.capturedAt) || 0));
   }
   return index;
 }

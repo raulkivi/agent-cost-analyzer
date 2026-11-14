@@ -306,16 +306,55 @@ describe("PiAgentLogProvider", () => {
       ]);
     });
 
-    it("prefers the in-file system prompt over a matching sidecar record", async () => {
+    const IN_FILE_PROMPT =
+      "You are an expert coding assistant.\n\n<tools>\n- read: Read a file\n- bash: Run a shell command\n</tools>\n\n<skills>\n- review\n</skills>";
+
+    it("combines a sidecar record with the in-file sections: exact text and size, pi's sections as the breakdown, the rest as extension additions", async () => {
       const schemaSessionPath = path.join(fixturesDir, "schema-v3-session.jsonl");
-      const systemPromptLogPath = writeSidecarLog(schemaSessionPath);
+      const exact = `${IN_FILE_PROMPT}\n\nVM mounts: /work`;
+      const systemPromptLogPath = writeSidecarLog(schemaSessionPath, {
+        capturedAt: "2026-08-05T09:00:01.000Z",
+        systemPrompt: exact,
+        systemPromptChars: exact.length,
+      });
+      const provider = new PiAgentLogProvider({ sessionsDirPath: fixturesDir, systemPromptLogPath });
+      const id = computePiFileHash(schemaSessionPath);
+
+      const session = await provider.readSession(id);
+
+      expect(session?.systemPrompt?.map((c) => c.label)).toEqual([
+        "Base system prompt (35 characters)",
+        'Prompt section "tools" (64 characters)',
+        'Prompt section "skills" (27 characters)',
+        "Added by pi extensions (18 characters)",
+        "Tool definitions (2 tools)",
+      ]);
+      expect(session?.systemPromptNote).toBeUndefined();
+      await expect(provider.readSystemPromptText(id)).resolves.toBe(exact);
+      expect(session?.toolInventory?.map((t) => t.name)).toEqual(["read", "bash", "write"]);
+    });
+
+    it("keeps the in-file prompt and says so when no sidecar record matches", async () => {
+      const schemaSessionPath = path.join(fixturesDir, "schema-v3-session.jsonl");
+      const systemPromptLogPath = writeSidecarLog("/some/other/session.jsonl");
       const provider = new PiAgentLogProvider({ sessionsDirPath: fixturesDir, systemPromptLogPath });
       const id = computePiFileHash(schemaSessionPath);
 
       const session = await provider.readSession(id);
 
       expect(session?.systemPrompt?.[0].label).toBe("Base system prompt (35 characters)");
-      await expect(provider.readSystemPromptText(id)).resolves.toMatch(/^You are an expert coding assistant\./);
+      expect(session?.systemPromptNote).toMatch(/pi-system-prompt-logger/);
+      await expect(provider.readSystemPromptText(id)).resolves.toBe(IN_FILE_PROMPT);
+    });
+
+    it("sets no note for a sidecar-only (older) session", async () => {
+      const normalSessionPath = path.join(fixturesDir, "normal-session.jsonl");
+      const systemPromptLogPath = writeSidecarLog(normalSessionPath);
+      const provider = new PiAgentLogProvider({ sessionsDirPath: fixturesDir, systemPromptLogPath });
+
+      const session = await provider.readSession(computePiFileHash(normalSessionPath));
+
+      expect(session?.systemPromptNote).toBeUndefined();
     });
 
     it("readSession leaves systemPrompt unset when systemPromptLogPath is omitted", async () => {

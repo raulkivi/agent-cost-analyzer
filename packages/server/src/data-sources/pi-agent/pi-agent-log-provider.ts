@@ -23,8 +23,7 @@ import { groupBranchEntriesByUserMessage, type PiTurnGroup } from "./turn-groupe
 import { extractToolCalls, extractTurnUsage } from "./usage-extractor.js";
 import { buildTurnInspectorDetail } from "./turn-inspector-builder.js";
 import { computeBranchSessionId, computePiFileHash, parseBranchSessionId } from "./session-id.js";
-import { buildPiSystemPromptComponents, buildPiSystemPromptComponentsFromState } from "./system-prompt-components.js";
-import { replaySystemMessages } from "./system-message-replay.js";
+import { resolvePiSystemPrompt } from "./resolve-pi-system-prompt.js";
 import { toolDefinitionTokenLookup, type ToolDefinitionTokenReasons } from "../jsonl/tool-definition-tokens.js";
 import { buildToolInventory } from "../jsonl/tool-inventory.js";
 import { readSystemPromptSidecarIndex, type SidecarIndex } from "./system-prompt-sidecar-reader.js";
@@ -190,17 +189,10 @@ export class PiAgentLogProvider implements LogProvider, SystemPromptTextReader {
     const knownUsageTurns = turns.filter((turn) => turn.usage.output.known);
     const model = knownUsageTurns.length > 0 ? knownUsageTurns[knownUsageTurns.length - 1].usage.model : "unknown";
     const id = leafCount > 1 ? computeBranchSessionId(filePath, leafId) : computePiFileHash(filePath);
-    // System prompt: prefer what pi persisted in the session file itself
-    // (system messages / compaction checkpoint, replayed along this branch);
-    // fall back to the optional pi-system-prompt-logger sidecar for sessions
-    // recorded before pi persisted system messages.
-    const inFileSystemPrompt = replaySystemMessages(branch);
-    const sidecarRecord = inFileSystemPrompt ? undefined : sidecarIndex.get(path.resolve(filePath));
-    const systemPrompt = inFileSystemPrompt
-      ? buildPiSystemPromptComponentsFromState(inFileSystemPrompt)
-      : sidecarRecord
-        ? buildPiSystemPromptComponents(sidecarRecord)
-        : undefined;
+    const { components: systemPrompt, note: systemPromptNote, state: inFileSystemPrompt } = resolvePiSystemPrompt(
+      branch,
+      sidecarIndex.get(path.resolve(filePath)),
+    );
     const toolInventory = inFileSystemPrompt
       ? buildToolInventory(
           inFileSystemPrompt.declaredToolNames,
@@ -222,6 +214,7 @@ export class PiAgentLogProvider implements LogProvider, SystemPromptTextReader {
       ...(header ? { startedAt: header.timestamp } : {}),
       workspace: knownWorkspace(header?.cwd) ?? unknownWorkspace(PI_NO_FOLDER_REASON),
       ...(systemPrompt ? { systemPrompt } : {}),
+      ...(systemPromptNote ? { systemPromptNote } : {}),
       ...(toolInventory ? { toolInventory } : {}),
     };
   }
@@ -313,19 +306,19 @@ export class PiAgentLogProvider implements LogProvider, SystemPromptTextReader {
   // (SystemPromptInspector) — not part of the shared LogProvider interface
   // (ISP: MitmproxyLogProvider/ClaudeCodeLogProvider have no equivalent);
   // exposed to the API through lookupSystemPromptText above, the optional
-  // SystemPromptTextReader capability. The in-file system prompt (replayed along
-  // this branch) wins; otherwise re-reads the sidecar log fresh each call,
-  // same "no caching layer" posture as readTurnDetail.
+  // SystemPromptTextReader capability. The matching sidecar record's exact text wins;
+  // otherwise the in-file prompt replayed along this branch. Re-reads the
+  // sidecar log fresh each call, same "no caching layer" posture as
+  // readTurnDetail.
   async readSystemPromptText(sessionId: string): Promise<string | null> {
     const resolved = await this.resolveBranch(sessionId);
     if (!resolved) {
       return null;
     }
-    const inFileSystemPrompt = replaySystemMessages(walkBranch(resolved.entries, resolved.leafId));
-    if (inFileSystemPrompt) {
-      return inFileSystemPrompt.text;
-    }
     const sidecarIndex = await this.loadSidecarIndex();
-    return sidecarIndex.get(path.resolve(resolved.filePath))?.systemPrompt ?? null;
+    return resolvePiSystemPrompt(
+      walkBranch(resolved.entries, resolved.leafId),
+      sidecarIndex.get(path.resolve(resolved.filePath)),
+    ).text;
   }
 }
