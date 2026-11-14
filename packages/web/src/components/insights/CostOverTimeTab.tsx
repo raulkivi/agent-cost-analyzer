@@ -16,6 +16,7 @@ import { AsyncView, cancelledEmptyState } from "../ui/AsyncView.js";
 import { Blueprint } from "../ui/Blueprint.js";
 import { SegmentedControl } from "../ui/SegmentedControl.js";
 import { StatTile } from "../ui/StatTile.js";
+import { UserPriceTag } from "../ui/UserPriceTag.js";
 import { BUCKET_ADVERB, CostFilters, costKicker, PRICING_LABEL, type CostFilterState } from "./CostFilters.js";
 
 // Phase 15 step 15.9 (plan §11.1, §11.2; board 1, Main.dc.html): the
@@ -128,7 +129,13 @@ export function CostOverTimeTab({ selections, fieldLabel, orders, placeholders, 
         {state.kind === "ready" && kpis && (
           <>
             <div className="cost-kpis">
-              <StatTile label="Total cost" value={withUnit(formatAmount(kpis.total, unit), unit)} note={coverageNote(kpis.coverage)} />
+              <StatTile label="Total cost" value={withUnit(formatAmount(kpis.total, unit), unit)}
+                note={
+                  <>
+                    {coverageNote(kpis.coverage)}<UserPriceTag ids={kpis.userPriceVersionIds} />
+                  </>
+                }
+              />
               <StatTile
                 label="Change vs previous period"
                 value={formatChange(kpis.change)}

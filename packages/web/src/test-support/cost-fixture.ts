@@ -288,3 +288,16 @@ export function sampleCostVariance(): CostVariance {
     priceChanges: [PRICE_MARKER],
   };
 }
+
+// 1.0 V2 (threat-model 5.10): a total whose priced turns used the user's own
+// price versions, as the server marks it.
+export function withUserPrices(total: CostTotal, ids: string[]): CostTotal {
+  return { ...total, userPriceVersionIds: ids };
+}
+
+// A series where one line (by index) used user versions: its total and the
+// view total name them, as the server's sums do.
+export function userPricedSeries(series: CostSeries, lineIndex: number, ids: string[]): CostSeries {
+  const lines = series.series.map((line, index) => (index === lineIndex ? { ...line, total: withUserPrices(line.total, ids) } : line));
+  return { ...series, series: lines, total: withUserPrices(series.total, ids) };
+}

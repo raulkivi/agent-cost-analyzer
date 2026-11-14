@@ -7,6 +7,7 @@ import { useCancellableLoad } from "../../lib/use-cancellable-load.js";
 import { AsyncView, cancelledEmptyState } from "../ui/AsyncView.js";
 import { Blueprint } from "../ui/Blueprint.js";
 import { SegmentedControl } from "../ui/SegmentedControl.js";
+import { UserPriceTag } from "../ui/UserPriceTag.js";
 
 // Phase 15 step 15.12 (plan §8.6, §11.5; board 4): the Billing tab's
 // estimate panel. Planned active days and a 4- or 12-week history; the
@@ -101,6 +102,7 @@ function EstimateBody({ estimate }: { estimate: CostEstimate }) {
       </div>
       <div className="estimate-units text-muted">
         AI Credits · {dollars(range.p50)} – {dollars(range.p90)}
+        <UserPriceTag ids={estimate.userPriceVersionIds} />
       </div>
       <figcaption className="cost-note">
         A range, never one number. From {history.knownUnits} {unitWord}s with a known cost, {window.since} to {window.until}

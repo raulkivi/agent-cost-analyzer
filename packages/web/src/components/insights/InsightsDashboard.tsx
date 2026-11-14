@@ -38,6 +38,7 @@ import { useContainerWidth } from "../../lib/use-container-width.js";
 import { AsyncView, cancelledEmptyState } from "../ui/AsyncView.js";
 import { Blueprint } from "../ui/Blueprint.js";
 import { SegmentedControl } from "../ui/SegmentedControl.js";
+import { UserPriceTag } from "../ui/UserPriceTag.js";
 import { StatTile } from "../ui/StatTile.js";
 import { CompareTab } from "./CompareTab.js";
 import { CostOverTimeTab, type CostOrders } from "./CostOverTimeTab.js";
@@ -499,7 +500,11 @@ function DashboardBody({ dataset, crossProvider, now, loadCostSeries, loadCostCo
               label="Cost"
               wide
               value={formatCostTotal(cost)}
-              note={`${cost.knownTurns} of ${cost.turns} turns known`}
+              note={
+                <>
+                  {`${cost.knownTurns} of ${cost.turns} turns known`}<UserPriceTag ids={cost.userPriceVersionIds} />
+                </>
+              }
             />
             <StatTile
               label="AI Credits"

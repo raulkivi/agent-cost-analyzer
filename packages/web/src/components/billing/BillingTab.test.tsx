@@ -3,7 +3,7 @@
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
-import { diffStatements, type StatementAnswer } from "@agent-cost-analyzer/domain";
+import { diffStatements, type Statement, type StatementAnswer } from "@agent-cost-analyzer/domain";
 import { sampleStatement } from "../../test-support/statement-sample.js";
 import { BillingTab } from "./BillingTab.js";
 
@@ -62,6 +62,43 @@ describe("BillingTab (plan §11.5, board 4)", () => {
     expect(totals).toHaveTextContent(/AI Credits.*120\.00.*12\.00.*0\.00.*132\.00/);
     expect(screen.getByText(/EUR 36\.29/)).toBeInTheDocument();
     expect(screen.getByText("Provenance")).toBeInTheDocument();
+  });
+
+  // 1.0 V2 (threat-model 5.10)
+  describe("your own price versions", () => {
+    const pricedLine = (id: string, userPriced: boolean): Statement["lines"][number] => ({
+      key: `priced|USD|anthropic-api|claude-sonnet-5.5|${id}`,
+      basis: "priced",
+      currency: "USD",
+      channel: "anthropic-api",
+      model: "claude-sonnet-5.5",
+      priceVersionId: id,
+      sessions: 1,
+      turns: 2,
+      tokens: { uncachedInput: 10, cacheRead: 0, cacheWrite: 0, reasoning: null, output: 5 },
+      unitPrices: { uncachedInput: 3, cacheRead: null, cacheWrite: null, output: 15 },
+      amount: 1.5,
+      apiEquivalent: false,
+      ...(userPriced ? { userPriced: true as const } : {}),
+    });
+    const withLines = (...lines: Statement["lines"]): StatementAnswer => ({ statement: sampleStatement({ lines: [sampleStatement().lines[0]!, ...lines] }), canIssue: { ok: true }, issuedPeriods: [] });
+
+    it("labels a line priced with a user version, and the totals that include it, but not billed or bundled lines", async () => {
+      renderTab({ loadStatement: vi.fn().mockResolvedValue(withLines(pricedLine("mine-1", true), pricedLine("bundled-1", false))) });
+      const lines = await screen.findByRole("table", { name: /Statement lines/ });
+      const row = (name: RegExp) => within(lines).getByRole("row", { name });
+      expect(within(row(/mine-1/)).getByRole("note", { name: "Priced with your own price version: mine-1" })).toBeInTheDocument();
+      expect(within(row(/bundled-1/)).queryByRole("note")).not.toBeInTheDocument();
+      expect(within(row(/gpt-5.5/)).queryByRole("note")).not.toBeInTheDocument();
+      expect(screen.getAllByRole("note", { name: /your own price/ })).toHaveLength(2);
+      expect(screen.getByText(/Totals include lines priced with price versions you added/)).toBeInTheDocument();
+    });
+
+    it("shows no label when every line is billed, reported or bundled-priced", async () => {
+      renderTab({ loadStatement: vi.fn().mockResolvedValue(withLines(pricedLine("bundled-1", false))) });
+      await screen.findByRole("table", { name: /Statement lines/ });
+      expect(screen.queryByRole("note", { name: /your own price/ })).not.toBeInTheDocument();
+    });
   });
 
   it("issues only after confirming in a dialog, then shows the frozen copy", async () => {

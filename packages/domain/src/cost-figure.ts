@@ -30,6 +30,10 @@ const knownCostFigureSchema = z.object({
   basis: costBasisSchema,
   // priced only: the price versions the amount used.
   priceVersionIds: z.array(z.string().min(1)).min(1).optional(),
+  // priced only (1.0 V2, threat-model 5.10): the subset of priceVersionIds the
+  // user added themselves (origin "user"). Omitted when none was used, so a
+  // bundled-only figure, and every figure the extension makes, never has it.
+  userPriceVersionIds: z.array(z.string().min(1)).min(1).optional(),
   // A token count behind it was a local-tokenizer estimate.
   estimated: z.boolean().optional(),
   // priced only: tokens a flat-fee plan may have covered (Claude Code), so
@@ -54,8 +58,11 @@ const unknownCostFigureSchema = z.object({ known: z.literal(false), reason: z.st
 export const costFigureSchema = z
   .discriminatedUnion("known", [knownCostFigureSchema, unknownCostFigureSchema])
   .superRefine((figure, ctx) => {
-    if (figure.known && figure.basis !== "priced" && (figure.priceVersionIds !== undefined || figure.apiEquivalent !== undefined)) {
+    if (figure.known && figure.basis !== "priced" && (figure.priceVersionIds !== undefined || figure.apiEquivalent !== undefined || figure.userPriceVersionIds !== undefined)) {
       ctx.addIssue({ code: "custom", path: ["priceVersionIds"], message: "price versions and apiEquivalent belong to priced figures only" });
+    }
+    if (figure.known && figure.userPriceVersionIds?.some((id) => !figure.priceVersionIds?.includes(id))) {
+      ctx.addIssue({ code: "custom", path: ["userPriceVersionIds"], message: "user price versions must be among the figure's price versions" });
     }
     if (figure.known && figure.basis !== "priced" && figure.byTokenType !== undefined) {
       ctx.addIssue({ code: "custom", path: ["byTokenType"], message: "a cost per token type belongs to priced figures only" });
@@ -109,6 +116,10 @@ export function toUsd(figure: CostFigure): number | null {
 // such as a turn's cost lines (one per model). Known only when every part
 // is, else unknown with the first unknown part's reason (constraint 6);
 // parts in different currencies are never added.
+export function unionSorted(ids: readonly string[]): string[] {
+  return [...new Set(ids)].sort();
+}
+
 export function addCostFigures(parts: readonly CostFigure[]): CostFigure {
   const unknownPart = parts.find((part) => !part.known);
   if (unknownPart !== undefined) return unknownPart;
@@ -119,6 +130,7 @@ export function addCostFigures(parts: readonly CostFigure[]): CostFigure {
   const currencies = [...new Set(known.map((part) => part.currency))];
   if (currencies.length > 1) return unknownCost(`The parts are in different currencies (${currencies.join(", ")}), so they are not added.`);
   const versions = [...new Set(known.flatMap((part) => part.priceVersionIds ?? []))];
+  const userVersions = unionSorted(known.flatMap((part) => part.userPriceVersionIds ?? []));
   const notes = [...new Set(known.flatMap((part) => part.notes ?? []))];
   const withParts = known.every((part) => part.byTokenType !== undefined);
   return {
@@ -127,6 +139,7 @@ export function addCostFigures(parts: readonly CostFigure[]): CostFigure {
     currency: first.currency,
     basis: first.basis,
     ...(versions.length > 0 ? { priceVersionIds: versions } : {}),
+    ...(userVersions.length > 0 ? { userPriceVersionIds: userVersions } : {}),
     ...(known.some((part) => part.estimated === true) ? { estimated: true } : {}),
     ...(known.some((part) => part.apiEquivalent === true) ? { apiEquivalent: true } : {}),
     ...(notes.length > 0 ? { notes } : {}),
@@ -169,6 +182,9 @@ export const costTotalSchema = z
     usd: z.number().nonnegative().nullable(),
     estimated: z.boolean(),
     apiEquivalentTurns: z.number().int().nonnegative(),
+    // The user-added price versions behind priced figures in it (1.0 V2,
+    // threat-model 5.10); omitted when none, so billed and reported totals never have it.
+    userPriceVersionIds: z.array(z.string().min(1)).min(1).optional(),
   })
   .refine((total) => total.knownTurns <= total.turns, { message: "knownTurns cannot exceed turns", path: ["knownTurns"] });
 
@@ -199,6 +215,7 @@ export function sumCostFigures(figures: readonly CostFigure[]): CostTotal {
   let usd: number | null = null;
   let estimated = false;
   let apiEquivalentTurns = 0;
+  const userVersions: string[] = [];
   for (const figure of figures) {
     if (!figure.known) continue;
     knownTurns += 1;
@@ -209,7 +226,9 @@ export function sumCostFigures(figures: readonly CostFigure[]): CostTotal {
     usd = (usd ?? 0) + toUsd(figure)!;
     estimated ||= figure.estimated === true;
     if (figure.apiEquivalent === true) apiEquivalentTurns += 1;
+    userVersions.push(...(figure.userPriceVersionIds ?? []));
   }
+  const userPriceVersionIds = unionSorted(userVersions);
   return {
     turns: figures.length,
     knownTurns,
@@ -220,6 +239,7 @@ export function sumCostFigures(figures: readonly CostFigure[]): CostTotal {
     usd,
     estimated,
     apiEquivalentTurns,
+    ...(userPriceVersionIds.length > 0 ? { userPriceVersionIds } : {}),
   };
 }
 
@@ -256,6 +276,8 @@ export const costReconciliationRowSchema = z.object({
   ratio: z.number().nonnegative().nullable(), // billed ÷ priced; null when priced is 0 or none compared
   billedOnlyTurns: z.number().int().nonnegative(), // billed, but no priced figure
   priceVersionIds: z.array(z.string()),
+  // The user-added subset of those versions (1.0 V2, threat-model 5.10); omitted when none.
+  userPriceVersionIds: z.array(z.string().min(1)).min(1).optional(),
 });
 
 export type CostReconciliationRow = z.infer<typeof costReconciliationRowSchema>;
@@ -269,17 +291,18 @@ export interface ReconciliationInput {
 const round = (value: number) => Math.round(value * 1e9) / 1e9;
 
 export function buildCostReconciliation(turns: readonly ReconciliationInput[]): CostReconciliationRow[] {
-  const groups = new Map<string, { month: string; model: string; billed: number; priced: number; turns: number; billedOnly: number; versions: Set<string> }>();
+  const groups = new Map<string, { month: string; model: string; billed: number; priced: number; turns: number; billedOnly: number; versions: Set<string>; userVersions: Set<string> }>();
   for (const turn of turns) {
     const { billed, priced } = turn.cost;
     if (turn.month === undefined || !billed.known || billed.currency !== "AI_CREDITS") continue;
     const key = JSON.stringify([turn.month, turn.model]);
-    const group = groups.get(key) ?? { month: turn.month, model: turn.model, billed: 0, priced: 0, turns: 0, billedOnly: 0, versions: new Set() };
+    const group = groups.get(key) ?? { month: turn.month, model: turn.model, billed: 0, priced: 0, turns: 0, billedOnly: 0, versions: new Set(), userVersions: new Set() };
     if (priced.known && priced.currency === "AI_CREDITS") {
       group.turns += 1;
       group.billed += billed.amount;
       group.priced += priced.amount;
       for (const id of priced.priceVersionIds ?? []) group.versions.add(id);
+      for (const id of priced.userPriceVersionIds ?? []) group.userVersions.add(id);
     } else {
       group.billedOnly += 1;
     }
@@ -299,6 +322,7 @@ export function buildCostReconciliation(turns: readonly ReconciliationInput[]): 
         ratio: compared && group.priced > 0 ? round(group.billed / group.priced) : null,
         billedOnlyTurns: group.billedOnly,
         priceVersionIds: [...group.versions].sort(),
+        ...(group.userVersions.size > 0 ? { userPriceVersionIds: [...group.userVersions].sort() } : {}),
       };
     });
 }

@@ -4,7 +4,7 @@ import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import type { InsightFinding, InsightTurnRow } from "@agent-cost-analyzer/domain";
-import { COST_FIXTURE_NOW, sampleCostVariance, sampleProjectCost } from "../../test-support/cost-fixture.js";
+import { COST_FIXTURE_NOW, sampleCostVariance, sampleProjectCost, withUserPrices } from "../../test-support/cost-fixture.js";
 import { ProjectTab } from "./ProjectTab.js";
 
 // Phase 15 step 15.10 (plan §8.3, §8.4, §11.4; board 3): the Dashboard's
@@ -105,6 +105,45 @@ describe("ProjectTab (plan §11.4, board 3)", () => {
     expect(chart).toHaveAccessibleName(/usage \+4,130\.00, price −1,860\.00, mix \+610\.00/);
     expect(screen.getByText(/2 turns in Nov 2026 have no priced figure and are not explained/)).toBeInTheDocument();
     expect(screen.getByText(/Priced basis, as of use: usage is/)).toBeInTheDocument();
+  });
+
+  // 1.0 V2 (threat-model 5.10)
+  describe("your own price versions", () => {
+    const NAME = "Priced with your own price version: mine-1";
+
+    it("labels the project total and the chosen vendor's total when a user version priced them, and the other vendor not", async () => {
+      const cost = sampleProjectCost();
+      cost.total = withUserPrices(cost.total, ["mine-1"]);
+      cost.byVendor[1] = { ...cost.byVendor[1]!, cost: withUserPrices(cost.byVendor[1]!.cost, ["mine-1"]) };
+      renderTab({ loadProjectCost: vi.fn().mockResolvedValue(cost) });
+      const byVendor = await screen.findByRole("region", { name: "Cost by vendor" });
+      expect(within(byVendor).getByRole("note", { name: NAME })).toBeInTheDocument();
+      const models = screen.getByRole("region", { name: /Models, and the tokens/ });
+      expect(within(models).queryByRole("note")).not.toBeInTheDocument();
+      await userEvent.click(within(screen.getByRole("group", { name: /Cost by vendor/ })).getByRole("button", { name: /OpenAI/ }));
+      expect(within(screen.getByRole("region", { name: /Models, and the tokens/ })).getByRole("note", { name: NAME })).toBeInTheDocument();
+    });
+
+    it("labels the why-cost-changed explanation, which is over priced figures", async () => {
+      renderTab({ loadVariance: vi.fn().mockResolvedValue({ ...sampleCostVariance(), userPriceVersionIds: ["mine-1"] }) });
+      const section = (await screen.findByRole("img", { name: /Why cost changed/ })).closest("section")!;
+      expect(within(section).getByRole("note", { name: NAME })).toBeInTheDocument();
+    });
+
+    it("labels the reconciliation when its priced side used a user version", async () => {
+      const turn = copilotTurn("2026-10-10", 224, 200);
+      turn.cost = { ...turn.cost!, priced: { known: true, amount: 200, currency: "AI_CREDITS", basis: "priced", priceVersionIds: ["mine-1"], userPriceVersionIds: ["mine-1"] } };
+      renderTab({ turns: [turn] });
+      const section = await screen.findByRole("region", { name: "Reconciliation" });
+      expect(within(section).getByRole("note", { name: NAME })).toBeInTheDocument();
+    });
+
+    it("shows no label for bundled-only prices", async () => {
+      renderTab();
+      await screen.findByRole("region", { name: "Reconciliation" });
+      await screen.findByRole("img", { name: /Why cost changed/ });
+      expect(screen.queryByRole("note", { name: /your own price/ })).not.toBeInTheDocument();
+    });
   });
 
   it("reloads the variance when another month is picked", async () => {

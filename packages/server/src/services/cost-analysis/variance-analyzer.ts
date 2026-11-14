@@ -4,6 +4,7 @@ import {
   AI_CREDIT_CONVERSION_NOTE,
   documentedPriceChanges,
   splitByModel,
+  unionSorted,
   USD_PER_AI_CREDIT,
   varianceTokenTypes,
   type CostCompareGroupBy,
@@ -53,6 +54,7 @@ interface Explained {
   currency: Currency;
   scale: number; // native → the view's currency
   versions: string[];
+  userVersions: string[]; // the user-added subset (1.0 V2)
   parts: Record<VarianceTokenType, number>;
 }
 
@@ -80,6 +82,7 @@ function explain(row: CostCubeRow, period: Period, currency: CostCurrencyChoice)
     currency: currency === "usd" ? "USD" : figure.currency,
     scale: toUsd ? USD_PER_AI_CREDIT : 1,
     versions: figure.priceVersionIds ?? [],
+    userVersions: figure.userPriceVersionIds ?? [],
     parts: figure.byTokenType,
   };
 }
@@ -207,6 +210,7 @@ export function buildCostVariance(cube: CostCube, query: CostVarianceQuery, pric
   }
   const start = query.periodA.since < query.periodB.since ? query.periodA.since : query.periodB.since;
   const end = query.periodA.until > query.periodB.until ? query.periodA.until : query.periodB.until;
+  const userPriceVersionIds = unionSorted(explained.flatMap((item) => item.userVersions));
   return {
     generatedAt: cube.generatedAt,
     groupBy: query.groupBy,
@@ -225,5 +229,6 @@ export function buildCostVariance(cube: CostCube, query: CostVarianceQuery, pric
     }),
     notExplained: { periodA: notExplainedOf(unexplained.A), periodB: notExplainedOf(unexplained.B) },
     priceChanges: priceChangesOf(explained, priceVersions, start, end),
+    ...(userPriceVersionIds.length > 0 ? { userPriceVersionIds } : {}),
   };
 }

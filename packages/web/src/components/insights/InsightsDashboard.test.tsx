@@ -5,6 +5,7 @@ import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { sampleCostComparison, sampleCostSeries, sampleCostVariance, sampleProjectCost } from "../../test-support/cost-fixture.js";
 import { sampleInsightsDataset } from "../../test-support/insights-fixture.js";
+import type { InsightsDataset } from "@agent-cost-analyzer/domain";
 import { InsightsDashboard } from "./InsightsDashboard.js";
 
 const NOW = new Date("2026-10-11T12:00:00.000Z");
@@ -182,6 +183,49 @@ describe("InsightsDashboard", () => {
       expect(tile("Cost")).toHaveTextContent("—");
       expect(tile("Cost")).toHaveTextContent("0 of 1 turns known");
       expect(screen.getByRole("listitem", { name: "Cost basis: Cost unknown" })).toBeInTheDocument();
+    });
+
+    // 1.0 V2 (threat-model 5.10): "your prices" on a cost computed with a user version.
+    describe("your own price versions", () => {
+      // cc:s1:0 has only a priced figure; mark it as made with a user version.
+      function userPricedDataset(): InsightsDataset {
+        const dataset = sampleInsightsDataset();
+        const turn = dataset.turns.find((row) => row.key === "cc:s1:0")!;
+        const priced = turn.cost!.priced;
+        if (priced.known) turn.cost = { ...turn.cost!, priced: { ...priced, priceVersionIds: [...priced.priceVersionIds!, "mine-1"], userPriceVersionIds: ["mine-1"] } };
+        return dataset;
+      }
+
+      it("labels the Cost tile when a priced turn in it used a user version, naming the version", async () => {
+        renderDashboard(vi.fn().mockResolvedValue(userPricedDataset()));
+        await screen.findByRole("group", { name: "Cost" });
+        expect(within(tile("Cost")).getByRole("note", { name: "Priced with your own price version: mine-1" })).toHaveTextContent("your prices");
+      });
+
+      it("does not label billed or reported totals, which no user version prices", async () => {
+        const user = userEvent.setup();
+        renderDashboard(vi.fn().mockResolvedValue(userPricedDataset()));
+        await screen.findByRole("group", { name: "Cost" });
+        await user.click(screen.getByRole("radio", { name: "Billed" }));
+        expect(within(tile("Cost")).queryByRole("note")).not.toBeInTheDocument();
+        await user.click(screen.getByRole("radio", { name: "Reported" }));
+        expect(within(tile("Cost")).queryByRole("note")).not.toBeInTheDocument();
+        await user.click(screen.getByRole("radio", { name: "Priced" }));
+        expect(within(tile("Cost")).getByRole("note")).toBeInTheDocument();
+      });
+
+      it("does not label bundled-only prices", async () => {
+        renderDashboard();
+        await screen.findByRole("group", { name: "Cost" });
+        expect(within(tile("Cost")).queryByRole("note")).not.toBeInTheDocument();
+      });
+
+      it("does not label a total with no known cost", async () => {
+        renderDashboard();
+        await screen.findByRole("group", { name: "Cost" });
+        fireEvent.click(option("Cost basis", /Cost unknown/));
+        expect(within(tile("Cost")).queryByRole("note")).not.toBeInTheDocument();
+      });
     });
 
     it("selects a basis and switches the view's basis with the keyboard alone", async () => {

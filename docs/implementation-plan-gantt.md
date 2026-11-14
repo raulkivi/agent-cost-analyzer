@@ -109,7 +109,7 @@ gantt
     C11 Savings Increment 3 (0%)              :c11, 2026-11-16, 1d
     C12 Release tag ruleset (0%)              :c12, 2026-11-16, 1d
     C13 Open VSX trusted publishing (0%)      :c13, 2026-11-16, 1d
-    C14 User price label, 5.10 (0%)           :c14, 2026-11-16, 1d
+    C14 User price label, 5.10 (100%)         :done, c14, 2026-11-14, 1d
     1.0.0 both products                       :milestone, r100, after c1 c2 c3 c4 c5 c6 c7 c8 c9 c10 c11 c12 c13 c14, 0d
 
     section Releases

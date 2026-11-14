@@ -3,6 +3,7 @@
 import type { Ref } from "react";
 import type { SavingsOpportunity } from "@agent-cost-analyzer/domain";
 import { amountText, barSegments, coverageText, KIND_TITLES } from "../../lib/savings/savings-view.js";
+import { UserPriceTag } from "../ui/UserPriceTag.js";
 import { SavingsLabel } from "./SavingsLabel.js";
 
 // One row of a ranked list or of the Simulated section (boards Dashboard,
@@ -45,6 +46,7 @@ export function SavingsRow({ opportunity, rank, maxHigh, selected, onSelect, but
         </span>
         <span className="savings-row-amount">
           <span className={amount.known ? "savings-amount-text" : "savings-amount-text savings-amount-text--unknown"}>{amountText(amount)}</span>
+          {amount.known && <UserPriceTag ids={amount.userPriceVersionIds} />}
           {!amount.known && <span className="text-muted">{amount.reason}</span>}
           {bar && (
             <span className={simulated ? "savings-bar savings-bar--sim" : "savings-bar"} aria-hidden="true">

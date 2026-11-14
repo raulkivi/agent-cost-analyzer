@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { COST_FIXTURE_NOW, sampleCostComparison, sampleCostSeries } from "../../test-support/cost-fixture.js";
+import { COST_FIXTURE_NOW, sampleCostComparison, sampleCostSeries, withUserPrices } from "../../test-support/cost-fixture.js";
 import { CompareTab } from "./CompareTab.js";
 
 const ORDERS = { project: ["portal", "billing", "tools"], repository: ["github.com/acme/a", "github.com/acme/b"] };
@@ -67,6 +67,31 @@ describe("CompareTab (plan §11.3, boards 2a and 2b)", () => {
     const total = within(table).getByRole("row", { name: /Selection/ });
     expect(cells(total)[0]).toBe("1,144.00");
     expect(screen.getByText(/Internal tools: 84% of turns have a known cost/)).toBeInTheDocument();
+  });
+
+  // 1.0 V2 (threat-model 5.10)
+  describe("your own price versions", () => {
+    function userPricedComparison() {
+      const comparison = sampleCostComparison();
+      comparison.rows[1]!.total = withUserPrices(comparison.rows[1]!.total, ["mine-1"]);
+      comparison.total = withUserPrices(comparison.total, ["mine-1"]);
+      return comparison;
+    }
+
+    it("labels the total of a row, and of the selection, that used a user version; other rows stay unlabelled", async () => {
+      renderTab({ loadComparison: vi.fn().mockResolvedValue(userPricedComparison()) });
+      await screen.findByRole("table", { name: /Compare/ });
+      const billing = screen.getByRole("row", { name: /Billing service/ });
+      expect(within(billing).getByRole("note", { name: "Priced with your own price version: mine-1" })).toBeInTheDocument();
+      expect(within(screen.getByRole("row", { name: /Customer portal/ })).queryByRole("note")).not.toBeInTheDocument();
+      expect(within(screen.getByRole("row", { name: /Selection/ })).getByRole("note")).toBeInTheDocument();
+    });
+
+    it("shows no label when no row used a user version", async () => {
+      renderTab();
+      await screen.findByRole("table", { name: /Compare/ });
+      expect(screen.queryByRole("note", { name: /your own price/ })).not.toBeInTheDocument();
+    });
   });
 
   it("compares the selected repositories when grouped by repository", async () => {

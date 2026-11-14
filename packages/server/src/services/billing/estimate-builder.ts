@@ -6,6 +6,7 @@ import {
   MIN_ESTIMATE_UNITS,
   percentile,
   toUsd,
+  unionSorted,
   type CostEstimate,
   type EstimateUnit,
 } from "@agent-cost-analyzer/domain";
@@ -36,6 +37,7 @@ interface Unit {
   rows: CostCubeRow[];
   known: boolean;
   usd: number;
+  userVersions: string[];
 }
 
 // The figure a turn is estimated from: its priced one (at today's prices),
@@ -49,7 +51,8 @@ function unitsOf(rows: readonly CostCubeRow[], keyOf: (row: CostCubeRow) => stri
   return [...groups.values()].map((members) => {
     const figures = members.map(figureOf);
     const known = figures.every((figure) => figure.known);
-    return { rows: members, known, usd: known ? figures.reduce((sum, figure) => sum + (toUsd(figure) ?? 0), 0) : 0 };
+    const userVersions = figures.flatMap((figure) => (figure.known ? (figure.userPriceVersionIds ?? []) : []));
+    return { rows: members, known, usd: known ? figures.reduce((sum, figure) => sum + (toUsd(figure) ?? 0), 0) : 0, userVersions };
   });
 }
 
@@ -78,6 +81,7 @@ export function buildCostEstimate(cube: CostCube, query: EstimateQuery, figureOf
   const totalUsd = round(known.reduce((sum, unit) => sum + unit.usd, 0));
   const knownDaysUsd = knownDays.reduce((sum, unit) => sum + unit.usd, 0);
 
+  const userPriceVersionIds = unionSorted(known.flatMap((unit) => unit.userVersions));
   const base = {
     label: "estimate" as const,
     generatedAt: cube.generatedAt,
@@ -90,6 +94,7 @@ export function buildCostEstimate(cube: CostCube, query: EstimateQuery, figureOf
     planned: query.planned,
     history: { units: units.length, knownUnits: known.length, turns: rows.length, totalUsd },
     runRate: { perActiveDayUsd: knownDays.length > 0 ? round(knownDaysUsd / knownDays.length) : null, perWeekUsd: round(knownDaysUsd / query.weeks) },
+    ...(userPriceVersionIds.length > 0 ? { userPriceVersionIds } : {}),
   };
 
   if (known.length < MIN_ESTIMATE_UNITS) {

@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
 import { describe, expect, it } from "vitest";
-import { costEstimateSchema } from "@agent-cost-analyzer/domain";
+import { costEstimateSchema, type CostFigure } from "@agent-cost-analyzer/domain";
 import { billed, costs, cubeOf, cubeRow, priced, unknownFigure } from "../../test-support/cost-cube-fakes.js";
 import { buildCostEstimate, estimateRows, type EstimateQuery } from "./estimate-builder.js";
 
@@ -88,3 +88,22 @@ describe("buildCostEstimate", () => {
     expect(estimateRows(cube, query).map((row) => row.turnKey)).toEqual(rows.map((row) => row.turnKey));
   });
 });
+
+// 1.0 V2 (threat-model 5.10): an estimate built from figures priced with the
+// user's own versions says so, once, sorted.
+describe("buildCostEstimate: user price versions", () => {
+  const userDay = (date: string, usd: number, id: string) =>
+    day(date, usd, { cost: costs({ priced: { ...priced(usd, id), userPriceVersionIds: [id] } as CostFigure }) });
+  const dates = ["2026-10-01", "2026-10-02", "2026-10-03", "2026-10-04", "2026-10-05"];
+
+  it("names the user versions behind the units the estimate used", () => {
+    const cube = cubeOf(dates.map((date, index) => (index < 2 ? userDay(date, 10, index === 0 ? "mine-b" : "mine-a") : day(date, 10))));
+    expect(costEstimateSchema.parse(buildCostEstimate(cube, query)).userPriceVersionIds).toEqual(["mine-a", "mine-b"]);
+  });
+
+  it("has none when only bundled versions priced them", () => {
+    const cube = cubeOf(dates.map((date) => day(date, 10)));
+    expect("userPriceVersionIds" in buildCostEstimate(cube, query)).toBe(false);
+  });
+});
+

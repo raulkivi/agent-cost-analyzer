@@ -289,3 +289,28 @@ describe("CostPricer: at today's prices (plan §6.2)", () => {
     expect(pricer().pricer.price(request({ turnStartedAt: undefined }), "today").known).toBe(true);
   });
 });
+
+// 1.0 V2 (threat-model 5.10): a figure priced with a user's own version says so.
+describe("CostPricer: user price versions", () => {
+  const MINE = version({ id: "mine-2026-10-01", origin: "user" });
+
+  it("names a user version it priced with, in userPriceVersionIds", () => {
+    const figure = pricer([MINE]).pricer.price(request());
+    expect(figure).toMatchObject({ known: true, priceVersionIds: ["mine-2026-10-01"], userPriceVersionIds: ["mine-2026-10-01"] });
+  });
+
+  it("marks it at today's prices too", () => {
+    const figure = pricer([MINE]).pricer.price(request(), "today");
+    expect(figure).toMatchObject({ known: true, userPriceVersionIds: ["mine-2026-10-01"] });
+  });
+
+  it("never marks a bundled version, so the extension (bundled book only) never sets it", () => {
+    const figure = pricer().pricer.price(request());
+    expect(figure.known && "userPriceVersionIds" in figure).toBe(false);
+  });
+
+  it("leaves an unpriceable turn unknown, with no marker", () => {
+    const figure = pricer([MINE]).pricer.price(request({ usage: usage({ model: "mystery-model" }) }));
+    expect(figure).toMatchObject({ known: false });
+  });
+});

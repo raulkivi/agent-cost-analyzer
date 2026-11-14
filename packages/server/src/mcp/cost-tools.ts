@@ -50,7 +50,7 @@ import {
 // What every cost figure means, shared by the cost tools and get_turn. It
 // names no provider, since the extension's server shares it.
 export const COST_BASIS_TEXT =
-  "Cost figures carry their basis: billed (what GitHub Copilot billed, AI Credits), reported (what the agent logged itself, USD) and priced (tokens × the price version in force on the turn's channel at the turn's time; see get_price_book, and priceVersionIds). The preferred figure is billed, else reported, else priced. A priced figure with apiEquivalent: true is what the same use costs on the API, though a flat-fee plan may have covered it. An unknown figure is {known:false, reason}, never 0; totals give knownTurns of turns per basis. Currencies stay apart; `usd` converts only at 1 AI Credit = $0.01.";
+  "Cost figures carry their basis: billed (what GitHub Copilot billed, AI Credits), reported (what the agent logged itself, USD) and priced (tokens × the price version in force on the turn's channel at the turn's time; see get_price_book, and priceVersionIds). The preferred figure is billed, else reported, else priced. A priced figure with apiEquivalent: true is what the same use costs on the API, though a flat-fee plan may have covered it. A priced figure with userPriceVersionIds used price versions the user added themselves (not bundled prices); say so when you quote it. An unknown figure is {known:false, reason}, never 0; totals give knownTurns of turns per basis. Currencies stay apart; `usd` converts only at 1 AI Credit = $0.01.";
 
 // docs/plans/mcp-apps.md §4.7: a running chat's log is incomplete, so its
 // figures are not final.

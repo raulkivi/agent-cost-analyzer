@@ -521,6 +521,13 @@ and `apiEquivalent`, optional `estimated` and `notes`) or unknown with a
 `amounts[]` entry per currency, `usd` converted only at 1 AI Credit =
 $0.01, `apiEquivalentTurns`); `CostBasisTotals` holds one per basis plus
 `preferredBasisTurns`, the price versions used and the conversion text.
+A priced figure made with a version the user added (origin `"user"`) also
+names it in `userPriceVersionIds` (a subset of `priceVersionIds`, set by
+`CostPricer`, the one place that knows the origin; omitted when none, so the
+extension's bundled-only book never sets it). `addCostFigures`, `CostTotal`
+(`sumCostFigures`, `addCostTotals`), the variance, statement lines, savings
+amounts and estimates carry the union, and the web UI renders it as the
+"your prices" label (`UserPriceTag`) without consulting the price book.
 `CostReconciliationRow` compares billed and priced AI Credits per model and
 month. `TurnUsage` gains optional `extendedCacheWrite` (the 1-hour subset of
 cache writes: Claude Code `cache_creation.ephemeral_1h_input_tokens`, pi

@@ -157,6 +157,7 @@ function priceWith(version: PriceBookEntry, request: PricingRequest, channel: st
     currency,
     basis: "priced",
     priceVersionIds: [version.id],
+    ...(version.origin === "user" ? { userPriceVersionIds: [version.id] } : {}),
     ...(estimated ? { estimated: true } : {}),
     ...(request.apiEquivalent ? { apiEquivalent: true } : {}),
     ...(allNotes.length > 0 ? { notes: allNotes } : {}),

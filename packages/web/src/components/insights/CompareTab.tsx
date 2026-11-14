@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
-import type { KeyboardEvent } from "react";
+import type { KeyboardEvent, ReactNode } from "react";
 import {
   repositoryFolderLabel,
   type ComparePeriod,
@@ -10,6 +10,7 @@ import {
   type CostComparison,
   type CostComparisonRow,
   type CostSeries,
+  type CostTotal,
 } from "@agent-cost-analyzer/domain";
 import { fetchCostComparison, fetchCostTimeSeries, type CostCompareQuery, type CostSeriesQuery } from "../../api-client/cost-analysis.js";
 import { CostTimeChart } from "../../charts/CostTimeChart.js";
@@ -24,6 +25,7 @@ import { AsyncView, cancelledEmptyState } from "../ui/AsyncView.js";
 import { Blueprint } from "../ui/Blueprint.js";
 import { Drawer } from "../ui/Drawer.js";
 import { SegmentedControl } from "../ui/SegmentedControl.js";
+import { UserPriceTag } from "../ui/UserPriceTag.js";
 import { CostFilters, costKicker, PRICING_LABEL, type CostFilterState } from "./CostFilters.js";
 import { ignoredNote, type CostOrders } from "./CostOverTimeTab.js";
 
@@ -43,7 +45,7 @@ type ColumnId = "total" | "change" | "perSession" | "perActiveDay" | "share" | "
 interface Column {
   id: ColumnId;
   header: (unit: DisplayUnit) => string;
-  cell: (row: CostComparisonRow, unit: DisplayUnit) => string;
+  cell: (row: CostComparisonRow, unit: DisplayUnit) => ReactNode;
 }
 
 const firstUsd = (amounts: readonly { currency: string; amount: number }[]): number | null => amounts.find((amount) => amount.currency === "USD")?.amount ?? null;
@@ -51,7 +53,7 @@ const unitHeader = (label: string) => (unit: DisplayUnit) => `${label} (${unitLa
 const changeRatio = (row: CostComparisonRow) => row.change.find((change) => change.currency === "USD")?.ratio ?? null;
 
 const COLUMNS: readonly Column[] = [
-  { id: "total", header: unitHeader("Total"), cell: (row, unit) => formatAmount(usdIn(row.total.usd, unit), unit) },
+  { id: "total", header: unitHeader("Total"), cell: (row, unit) => <TotalCell total={row.total} unit={unit} /> },
   { id: "change", header: () => "Change", cell: (row) => formatChange(changeRatio(row)) },
   { id: "perSession", header: unitHeader("Per session"), cell: (row, unit) => formatAmount(usdIn(firstUsd(row.perSession), unit), unit) },
   { id: "perActiveDay", header: unitHeader("Per active day"), cell: (row, unit) => formatAmount(usdIn(firstUsd(row.perActiveDay), unit), unit) },
@@ -315,6 +317,15 @@ function CompareBody({ data, groupBy, unit, narrow, palette, kicker }: CompareBo
   );
 }
 
+// A total in the shown unit, with "your prices" when a user price version is behind it.
+function TotalCell({ total, unit }: { total: CostTotal; unit: DisplayUnit }) {
+  return (
+    <>
+      {formatAmount(usdIn(total.usd, unit), unit)}<UserPriceTag ids={total.userPriceVersionIds} />
+    </>
+  );
+}
+
 function SelectionRow({ comparison, columns, unit, narrow }: { comparison: CostComparison; columns: readonly Column[]; unit: DisplayUnit; narrow: boolean }) {
   const rows = comparison.rows;
   const current = comparison.total.usd;
@@ -322,8 +333,8 @@ function SelectionRow({ comparison, columns, unit, narrow }: { comparison: CostC
   const previous = previousKnown ? rows.reduce((sum, row) => sum + row.previous.total.usd!, 0) : null;
   const sessions = rows.reduce((sum, row) => sum + row.sessions, 0);
   const coverage = rows.reduce((sum, row) => ({ turns: sum.turns + row.coverage.preferred.turns, knownTurns: sum.knownTurns + row.coverage.preferred.knownTurns }), { turns: 0, knownTurns: 0 });
-  const cells: Partial<Record<ColumnId, string>> = {
-    total: formatAmount(usdIn(current, unit), unit),
+  const cells: Partial<Record<ColumnId, ReactNode>> = {
+    total: <TotalCell total={comparison.total} unit={unit} />,
     change: formatChange(current === null || previous === null || previous === 0 ? null : (current - previous) / previous),
     perSession: current === null || sessions === 0 ? "unknown" : formatAmount(usdIn(current / sessions, unit), unit),
     share: "100.0%",
@@ -343,8 +354,8 @@ function SelectionRow({ comparison, columns, unit, narrow }: { comparison: CostC
 }
 
 function RowDetails({ row, unit }: { row: CostComparisonRow; unit: DisplayUnit }) {
-  const entries: [string, string][] = [
-    [`Total (${unitLabel(unit)})`, formatAmount(usdIn(row.total.usd, unit), unit)],
+  const entries: [string, ReactNode][] = [
+    [`Total (${unitLabel(unit)})`, <TotalCell key="total" total={row.total} unit={unit} />],
     ["Previous period", formatAmount(usdIn(row.previous.total.usd, unit), unit)],
     ["Change", formatChange(changeRatio(row))],
     [`Per session (${row.sessions} sessions)`, formatAmount(usdIn(firstUsd(row.perSession), unit), unit)],

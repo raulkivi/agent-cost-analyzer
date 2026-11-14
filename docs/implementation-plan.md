@@ -1777,7 +1777,7 @@ app installs from npm, and the release path's security gaps are closed.
 | C11 | Savings Increment 3: scope (a)-(d) in [plans/savings-report.md](plans/savings-report.md) §2 | Phase 16 | Not started; scope decided | Its plan's exit criterion; the savings real-data check covers pi |
 | C12 | Only the owner creates or moves `ext-v*` and `app-v*` tags | [threat-model.md](threat-model.md) §5.8 | Open | A tag ruleset, read through the GitHub API, restricts creating, moving and deleting those tags to the owner |
 | C13 | Open VSX trusted publishing; `OVSX_PAT` deleted | threat-model.md §5.8 | Open | A release publishes to Open VSX without `OVSX_PAT`; the secret no longer exists |
-| C14 | Figures priced from a user price version say so where shown | threat-model.md §5.10 | Open | Component and Playwright tests assert the label |
+| C14 | Figures priced from a user price version say so where shown | threat-model.md §5.10 | Done 2026-11-14 (V2): the web UI labels them; MCP Apps views are not labelled | Component and Playwright tests assert the label |
 
 Not in 1.0.0:
 

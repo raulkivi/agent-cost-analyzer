@@ -38,6 +38,8 @@ const knownSavingsAmountSchema = z.object({
   basis: savingsBasisSchema,
   label: savingsLabelSchema,
   priceVersionIds: z.array(z.string().min(1)).min(1),
+  // The user-added subset of priceVersionIds (1.0 V2, threat-model 5.10); omitted when none.
+  userPriceVersionIds: z.array(z.string().min(1)).min(1).optional(),
 });
 
 const unknownSavingsAmountSchema = z.object({ known: z.literal(false), reason: z.string().min(1) });

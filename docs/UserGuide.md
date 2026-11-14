@@ -1063,7 +1063,11 @@ app's settings folder, beside `settings.json`:
 
 Prices come from a bundled, dated **price book** (GitHub Copilot's table from
 2026-10-01 and the Anthropic, OpenAI and Google APIs'). Add your own contract
-prices under `channels.priceVersions` in `projects.json`. A price that isn't
+prices under `channels.priceVersions` in `projects.json`. A figure priced
+with one of your versions is labelled **your prices**, with the version id in
+the label's accessible name and tooltip: on the Overview's Cost tile, Cost over
+time, Compare, the Project tab, a statement's lines and the estimate, and on
+Savings rows. Billed and reported figures never carry it. A price that isn't
 in the book is shown as unknown with a reason, never as 0. Learn mode's
 simulated prices come from the same book.
 

@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import type { Currency, PricingMode, TokenCount, TurnUsage } from "@agent-cost-analyzer/domain";
+import { unionSorted, type Currency, type PricingMode, type TokenCount, type TurnUsage } from "@agent-cost-analyzer/domain";
 import type { ChannelResolution } from "../cost-attribution/channel-resolver.js";
 import type { CacheWriteLifetime, CostPricer } from "../pricing/cost-pricer.js";
 import type { PriceScope } from "../pricing/price-book.js";
@@ -30,10 +30,10 @@ export interface CounterfactualQuery {
 }
 
 export type CounterfactualSaving =
-  | { known: true; currency: Currency; low: number; high: number; priceVersionIds: string[] }
+  | { known: true; currency: Currency; low: number; high: number; priceVersionIds: string[]; userPriceVersionIds?: string[] }
   | { known: false; reason: string };
 
-type KindCost = { known: true; amount: number; currency: Currency; versions: string[] } | { known: false; reason: string };
+type KindCost = { known: true; amount: number; currency: Currency; versions: string[]; userVersions: string[] } | { known: false; reason: string };
 
 const known = (value: number): TokenCount => ({ known: true, value });
 const NOT_APPLICABLE: TokenCount = { known: false, reason: "not part of a counterfactual price" };
@@ -69,6 +69,7 @@ export class CounterfactualPricer {
     const priced = billed.filter((figure) => figure.known);
     const amounts = priced.map((figure) => figure.amount);
     const insteadAmount = instead?.known ? instead.amount : 0;
+    const userVersions = unionSorted(figures.flatMap((figure) => (figure.known ? figure.userVersions : [])));
     return {
       known: true,
       currency: priced[0].currency,
@@ -76,6 +77,7 @@ export class CounterfactualPricer {
       low: Math.max(0, Math.min(...amounts) - insteadAmount),
       high: Math.max(0, Math.max(...amounts) - insteadAmount),
       priceVersionIds: [...new Set(figures.flatMap((figure) => (figure.known ? figure.versions : [])))].sort(),
+      ...(userVersions.length > 0 ? { userPriceVersionIds: userVersions } : {}),
     };
   }
 
@@ -93,7 +95,7 @@ export class CounterfactualPricer {
       mode,
     );
     return figure.known
-      ? { known: true, amount: figure.amount, currency: figure.currency, versions: figure.priceVersionIds ?? [] }
+      ? { known: true, amount: figure.amount, currency: figure.currency, versions: figure.priceVersionIds ?? [], userVersions: figure.userPriceVersionIds ?? [] }
       : { known: false, reason: figure.reason };
   }
 }
