@@ -131,6 +131,9 @@ function pricingText(pricing: ReplayPricing): string {
   return `priced at ${prices} as of ${pricing.asOf}`;
 }
 
+// One model by name; after a model switch, every model in the order the session used them.
+const modelsText = (models: readonly string[]): string => models.join(", then ");
+
 function selfCheckView(check: ReplaySelfCheck | null): SelfCheckView {
   if (check === null) {
     return {
@@ -143,13 +146,13 @@ function selfCheckView(check: ReplaySelfCheck | null): SelfCheckView {
   }
   const counts = `${formatCount(check.matching)} of ${formatCount(check.requests)} requests match the log (cache read within ${check.readTolerancePercent} %)`;
   const matched = `${formatCount(check.matching)} of ${formatCount(check.requests)} requests`;
-  if (check.passed) return { status: "passed", callout: false, text: `Self-check passed: ${counts}`, title: "Self-check passed", detail: `on ${check.model}: ${matched} matched within ${check.readTolerancePercent} % cache read.` };
+  if (check.passed) return { status: "passed", callout: false, text: `Self-check passed: ${counts}`, title: "Self-check passed", detail: `on ${modelsText(check.models)}: ${matched} matched within ${check.readTolerancePercent} % cache read.` };
   return {
     status: "failed",
     callout: true,
     text: `Self-check failed: ${counts}; don't rely on the simulated figures`,
     title: "Self-check failed.",
-    detail: `Replaying the session on its own model (${check.model}) matched ${matched} within ${check.readTolerancePercent} % cache read, so the simulated figures below may be off. Treat them as rough, not as a quote.`,
+    detail: `Replaying the session on its own model${check.models.length > 1 ? "s" : ""} (${modelsText(check.models)}) matched ${matched} within ${check.readTolerancePercent} % cache read, so the simulated figures below may be off. Treat them as rough, not as a quote.`,
   };
 }
 

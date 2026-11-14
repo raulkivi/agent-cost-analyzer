@@ -232,6 +232,11 @@ describe("ReplayView, replay mode", () => {
     expect(within(screen.getByRole("group", { name: /Simulated on gpt-6.1-sol/ })).getByText("8.32 AI Credits")).toBeInTheDocument();
   });
 
+  it("names every model a switching session's failed self-check ran", () => {
+    direct({ selfCheck: { model: "claude-sonnet-5.5", models: ["claude-sonnet-5.5", "claude-opus-5.5"], requests: 3, matching: 2, readTolerancePercent: 5, passed: false } });
+    expect(screen.getByRole("alert")).toHaveTextContent("Replaying the session on its own models (claude-sonnet-5.5, then claude-opus-5.5) matched 2 of 3 requests");
+  });
+
   it("states a passed self-check without an alert", () => {
     direct({ selfCheck: { model: "claude-sonnet-5.5", models: ["claude-sonnet-5.5"], requests: 44, matching: 44, readTolerancePercent: 5, passed: true } });
     expect(screen.queryByRole("alert")).toBeNull();

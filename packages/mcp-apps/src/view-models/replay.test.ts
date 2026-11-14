@@ -208,6 +208,13 @@ describe("toReplayViewModel, the self-check box wording (plan §9.2 Q2)", () => 
     expect(vm.selfCheck.detail).toBe("Replaying the session on its own model (claude-opus-5.5) matched 37 of 44 requests within 5 % cache read, so the simulated figures below may be off. Treat them as rough, not as a quote.");
   });
 
+  it("names every model a switching session's self-check ran, in order", () => {
+    const vm = detail({ selfCheck: { model: "claude-sonnet-5.5", models: ["claude-sonnet-5.5", "claude-opus-5.5"], requests: 3, matching: 2, readTolerancePercent: 5, passed: false } });
+    expect(vm.selfCheck.detail).toBe("Replaying the session on its own models (claude-sonnet-5.5, then claude-opus-5.5) matched 2 of 3 requests within 5 % cache read, so the simulated figures below may be off. Treat them as rough, not as a quote.");
+    const passed = detail({ selfCheck: { model: "claude-sonnet-5.5", models: ["claude-sonnet-5.5", "claude-opus-5.5"], requests: 3, matching: 3, readTolerancePercent: 5, passed: true } });
+    expect(passed.selfCheck.detail).toBe("on claude-sonnet-5.5, then claude-opus-5.5: 3 of 3 requests matched within 5 % cache read.");
+  });
+
   it("words a passed and a missing check", () => {
     expect(detail().selfCheck).toMatchObject({ title: "Self-check passed", detail: "on claude-opus-5.5: 8 of 8 requests matched within 5 % cache read." });
     expect(detail({ selfCheck: null }).selfCheck).toMatchObject({ title: "No self-check.", detail: expect.stringContaining("Treat them as rough") });
