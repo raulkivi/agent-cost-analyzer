@@ -229,7 +229,7 @@ export function TurnsTable({
 
   return (
     <table
-      className="table"
+      className="table turns-table"
       style={shown.length === columnsApplyingTo(ALL_TURN_COLUMNS, simulated, replayed).length ? { minWidth: MIN_WIDTH_ALL_COLUMNS } : undefined}
     >
       {grouped && replay && (

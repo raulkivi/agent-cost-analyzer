@@ -1,6 +1,6 @@
 # Changelog
 
-**Last changed:** 2026-11-13 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-14 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 All notable changes to this project are documented in this file.
 
@@ -8,6 +8,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+### Changed
+
+- Denser layout: smaller spacing and type, 28px table rows, one toolbar row on the Dashboard, compact session and scenario lists that fill the column, 80px KPI tiles with the cost explanation in a footnote, a trend chart that fills its panel, one-line empty charts and a collapsed Learn sources list. The Dashboard is about 40% shorter.
+- The server status and version moved into the header.
 
 ## [0.14.0] - 2026-11-13
 

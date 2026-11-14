@@ -42,10 +42,11 @@ describe("HorizontalBars", () => {
   });
 
   it("shows a legend only for more than one series", () => {
-    const { rerender } = render(<HorizontalBars ariaLabel="x" series={series} rows={[]} />);
+    const rows = [{ key: "npm", label: "npm", values: { ok: 1, failed: 1 } }];
+    const { rerender } = render(<HorizontalBars ariaLabel="x" series={series} rows={rows} />);
     expect(screen.getByRole("list", { name: "Legend" })).toBeInTheDocument();
 
-    rerender(<HorizontalBars ariaLabel="x" series={[series[1]]} rows={[]} />);
+    rerender(<HorizontalBars ariaLabel="x" series={[series[1]]} rows={rows} />);
     expect(screen.queryByRole("list", { name: "Legend" })).not.toBeInTheDocument();
   });
 
@@ -99,6 +100,13 @@ describe("HorizontalBars", () => {
   it("renders an empty state", () => {
     render(<HorizontalBars ariaLabel="x" series={series} rows={[]} emptyText="Nothing failed." />);
     expect(screen.getByText("Nothing failed.")).toBeInTheDocument();
+  });
+
+  // Phase 17 P5: an empty chart is a title and one line, not a legend over nothing.
+  it("shows no legend or table toggle when empty", () => {
+    render(<HorizontalBars ariaLabel="x" series={series} rows={[]} emptyText="Nothing failed." />);
+    expect(screen.queryByRole("list", { name: "Legend" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "View as table" })).not.toBeInTheDocument();
   });
   // Step 15.9: the Compare tab's share-of-total bars write shares, not counts.
   it("formats values, totals and table cells with the given format", () => {

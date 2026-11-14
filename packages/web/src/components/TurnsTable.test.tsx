@@ -444,4 +444,9 @@ describe("TurnsTable subagent marker", () => {
     const { container } = render(<TurnsTable turns={[turn]} selectedTurnIndex={0} onSelectTurn={() => {}} />);
     expect(container.querySelector("img")).toBeNull();
   });
+
+  it("marks the table for the tighter cell padding", () => {
+    render(<TurnsTable turns={[]} selectedTurnIndex={0} onSelectTurn={() => {}} />);
+    expect(screen.getByRole("table")).toHaveClass("turns-table");
+  });
 });

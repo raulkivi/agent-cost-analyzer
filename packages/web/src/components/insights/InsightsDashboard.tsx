@@ -185,6 +185,11 @@ export function InsightsDashboard({
 }: InsightsDashboardProps) {
   const [editingProjects, setEditingProjects] = useState(false);
   const [preset, setPreset] = useState<RangePreset>("30");
+  // View and cost basis live here, beside the one toolbar that controls them,
+  // so the toolbar stays mounted (and keeps focus) across loading and ready.
+  const [dashboardView, setDashboardView] = useState<DashboardView>("overview");
+  const [costBasis, setCostBasis] = useState<CostBasisChoice>("preferred");
+  const [measure, width] = useContainerWidth<HTMLDivElement>();
   const [nowTime] = useState(() => (now ?? new Date()).getTime());
   // The load is cancellable (Cancel on its skeleton): the signal reaches the
   // transport, which stops waiting (and tells the extension host to).
@@ -194,11 +199,24 @@ export function InsightsDashboard({
   );
   const { state, cancel, retry } = useCancellableLoad(loadFor);
 
+  const title = crossProvider ? "Insights across all providers" : "Insights";
+  const bodyShown = state.kind === "ready" && state.data.sessions.length > 0;
+  const viewOptions = viewOptionsFor(costAnalysis, projectsAndBilling, savings !== undefined);
+
+  // A new range starts over on Overview, as the remounted body used to.
+  function changeRange(next: RangePreset) {
+    setPreset(next);
+    setDashboardView("overview");
+    setCostBasis("preferred");
+  }
+
   if (editingProjects) {
     return (
       <ProjectsEditor
         onBack={() => {
           setEditingProjects(false);
+          setDashboardView("overview");
+          setCostBasis("preferred");
           retry();
         }}
         {...(billing.loadProjects ? { loadProjects: billing.loadProjects } : {})}
@@ -209,11 +227,24 @@ export function InsightsDashboard({
   }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-4)" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: "var(--space-3)", flexWrap: "wrap" }}>
-        <h3 style={{ margin: 0 }}>{crossProvider ? "Insights across all providers" : "Insights"}</h3>
-        <SegmentedControl name="insights-range" options={RANGE_OPTIONS} value={preset} onChange={setPreset} />
-      </div>
+    <div ref={measure} className="dashboard-root">
+      <DashboardToolbar title={title} preset={preset} onPresetChange={changeRange}>
+        {bodyShown && viewOptions.length > 1 && (
+          <ViewSwitch
+            value={dashboardView}
+            onChange={setDashboardView}
+            options={viewOptions}
+            asSelect={width !== undefined && width > 0 && width < VIEW_SELECT_BELOW}
+            note={projectsAndBilling || !costAnalysis ? undefined : PROJECTS_AND_BILLING_ELSEWHERE}
+          />
+        )}
+        {bodyShown && dashboardView === "overview" && (
+          <div className="insights-cost-basis" role="group" aria-label="Cost basis for totals">
+            <span className="text-muted text-xs">Cost basis for totals</span>
+            <SegmentedControl name="insights-cost-basis" options={COST_BASIS_OPTIONS} value={costBasis} onChange={setCostBasis} />
+          </div>
+        )}
+      </DashboardToolbar>
       <AsyncView
         status={
           state.kind === "ready"
@@ -246,8 +277,6 @@ export function InsightsDashboard({
           <DashboardBody
             dataset={state.data}
             crossProvider={crossProvider}
-            costAnalysis={costAnalysis}
-            projectsAndBilling={projectsAndBilling}
             now={new Date(nowTime)}
             loadCostSeries={loadCostSeries}
             loadCostComparison={loadCostComparison}
@@ -255,6 +284,8 @@ export function InsightsDashboard({
             loadCostVariance={loadCostVariance}
             billing={billing}
             savings={savings}
+            dashboardView={dashboardView}
+            costBasis={costBasis}
             onEditProjects={() => setEditingProjects(true)}
             key={state.data.generatedAt + preset}
           />
@@ -283,8 +314,6 @@ function providerNotes(dataset: InsightsDataset): string[] {
 interface DashboardBodyProps {
   dataset: InsightsDataset;
   crossProvider: boolean;
-  costAnalysis: boolean;
-  projectsAndBilling: boolean;
   now: Date;
   loadCostSeries?: InsightsDashboardProps["loadCostSeries"];
   loadCostComparison?: InsightsDashboardProps["loadCostComparison"];
@@ -292,6 +321,8 @@ interface DashboardBodyProps {
   loadCostVariance?: InsightsDashboardProps["loadCostVariance"];
   billing: BillingDeps;
   savings?: ReactNode;
+  dashboardView: DashboardView;
+  costBasis: CostBasisChoice;
   onEditProjects: () => void;
 }
 
@@ -306,14 +337,12 @@ function costOrders(dataset: InsightsDataset): CostOrders {
   return { project: (dataset.projects ?? []).map((project) => project.id), repository: [...repositories].sort() };
 }
 
-function DashboardBody({ dataset, crossProvider, costAnalysis, projectsAndBilling, now, loadCostSeries, loadCostComparison, loadProjectCost, loadCostVariance, billing, savings, onEditProjects }: DashboardBodyProps) {
+function DashboardBody({ dataset, crossProvider, now, loadCostSeries, loadCostComparison, loadProjectCost, loadCostVariance, billing, savings, dashboardView, costBasis, onEditProjects }: DashboardBodyProps) {
   const model = useMemo(() => createInsightsModel(dataset), [dataset]);
   const orders = useMemo(() => costOrders(dataset), [dataset]);
-  const [dashboardView, setDashboardView] = useState<DashboardView>("overview");
   const [measure, mainWidth] = useContainerWidth<HTMLDivElement>();
   const engine = useMemo(() => createAssociativeEngine(model), [model]);
   const [history, setHistory] = useState(emptyHistory);
-  const [costBasis, setCostBasis] = useState<CostBasisChoice>("preferred");
   const selections = history.present;
   const evaluation = useMemo(() => engine.evaluate(selections), [engine, selections]);
 
@@ -325,8 +354,15 @@ function DashboardBody({ dataset, crossProvider, costAnalysis, projectsAndBillin
   };
   const kpis = computeKpis(view);
   const cost = costTotalFor(view.turns, costBasis);
-  const inAll = cost.amounts.length > 1 && cost.usd !== null ? ` · about ${formatUsd(cost.usd)} in all at` : " ·";
-  const apiEquivalentNote = cost.apiEquivalentTurns > 0 ? ` · ${cost.apiEquivalentTurns} API-equivalent` : "";
+  // Kept out of the Cost tile: a paragraph there made every tile in the row tall.
+  const costFootnote = [
+    "Cost:",
+    cost.apiEquivalentTurns > 0 ? `${cost.apiEquivalentTurns} API-equivalent turns in the cost.` : null,
+    cost.amounts.length > 1 && cost.usd !== null ? `About ${formatUsd(cost.usd)} in all.` : null,
+    AI_CREDIT_CONVERSION_NOTE,
+  ]
+    .filter(Boolean)
+    .join(" ");
   const fieldsById = new Map(model.fields.map((field) => [field.id, field]));
   const fieldLabel = (fieldId: string) => fieldsById.get(fieldId)?.label ?? fieldId;
   const valueLabel = (fieldId: string, value: string) => fieldsById.get(fieldId)?.display?.(value) ?? value;
@@ -355,22 +391,10 @@ function DashboardBody({ dataset, crossProvider, costAnalysis, projectsAndBillin
     .join(", ");
   const highOrWorse = kpis.securityFindingsBySeverity.critical + kpis.securityFindingsBySeverity.high;
 
-  const viewOptions = viewOptionsFor(costAnalysis, projectsAndBilling, savings !== undefined);
-  const switchView = (
-    <ViewSwitch
-      value={dashboardView}
-      onChange={setDashboardView}
-      options={viewOptions}
-      asSelect={mainWidth !== undefined && mainWidth > 0 && mainWidth < VIEW_SELECT_BELOW}
-      note={projectsAndBilling || !costAnalysis ? undefined : PROJECTS_AND_BILLING_ELSEWHERE}
-    />
-  );
-
   // The Savings tab has no field list boxes or selections: it is its own report.
   if (dashboardView === "savings" && savings !== undefined) {
     return (
       <div className="insights-main" ref={measure}>
-        {switchView}
         {savings}
       </div>
     );
@@ -381,7 +405,7 @@ function DashboardBody({ dataset, crossProvider, costAnalysis, projectsAndBillin
       <aside className="insights-listboxes" aria-label="Fields">
         {listBoxGroups(crossProvider).map((group) => (
           <div key={group.title} className="insights-listbox-group">
-            <h6 style={{ margin: 0 }}>{group.title}</h6>
+            <h6 className="m-0">{group.title}</h6>
             {group.fields.map((fieldId) => (
               <ListBox
                 key={fieldId}
@@ -402,8 +426,7 @@ function DashboardBody({ dataset, crossProvider, costAnalysis, projectsAndBillin
       </aside>
 
       <div className="insights-main" ref={measure}>
-        {viewOptions.length > 1 && switchView}
-        <CurrentSelections
+                <CurrentSelections
           selections={selections}
           fieldLabel={fieldLabel}
           valueLabel={valueLabel}
@@ -471,16 +494,12 @@ function DashboardBody({ dataset, crossProvider, costAnalysis, projectsAndBillin
             </section>
           </Blueprint>
 
-          <div className="insights-cost-basis" role="group" aria-label="Cost basis for totals">
-            <span className="text-muted" style={{ fontSize: 12 }}>Cost basis for totals</span>
-            <SegmentedControl name="insights-cost-basis" options={COST_BASIS_OPTIONS} value={costBasis} onChange={setCostBasis} />
-          </div>
-
           <div className="stat-tiles">
             <StatTile
               label="Cost"
+              wide
               value={formatCostTotal(cost)}
-              note={`${cost.knownTurns} of ${cost.turns} turns known${apiEquivalentNote}${inAll} ${AI_CREDIT_CONVERSION_NOTE}`}
+              note={`${cost.knownTurns} of ${cost.turns} turns known`}
             />
             <StatTile
               label="AI Credits"
@@ -513,10 +532,13 @@ function DashboardBody({ dataset, crossProvider, costAnalysis, projectsAndBillin
               alert={highOrWorse > 0}
             />
           </div>
+          <p className="stat-tiles-footnote" data-testid="stat-tiles-footnote">
+            {costFootnote}
+          </p>
 
           <Blueprint className="audit-section">
-            <div className="card-kicker">AI Credits by day</div>
             <TrendColumns
+              kicker="AI Credits by day"
               ariaLabel="AI Credits by day"
               axisLabel="Day"
               valueLabel="AI Credits"
@@ -538,8 +560,8 @@ function DashboardBody({ dataset, crossProvider, costAnalysis, projectsAndBillin
 
           <div className="audit-grid-2">
             <Blueprint className="audit-section">
-              <div className="card-kicker">Tokens by model</div>
               <HorizontalBars
+                kicker="Tokens by model"
                 ariaLabel="Tokens by model"
                 series={TOKEN_SERIES}
                 rows={tokensByModel(view.turns).map((row) => ({
@@ -553,8 +575,8 @@ function DashboardBody({ dataset, crossProvider, costAnalysis, projectsAndBillin
               />
             </Blueprint>
             <Blueprint className="audit-section">
-              <div className="card-kicker">Tool calls by tool</div>
               <HorizontalBars
+                kicker="Tool calls by tool"
                 ariaLabel="Tool calls by tool"
                 series={TOOL_SERIES}
                 rows={toolCallsByTool(view.toolCalls)
@@ -566,8 +588,8 @@ function DashboardBody({ dataset, crossProvider, costAnalysis, projectsAndBillin
               />
             </Blueprint>
             <Blueprint className="audit-section">
-              <div className="card-kicker">Why calls failed</div>
               <HorizontalBars
+                kicker="Why calls failed"
                 ariaLabel="Failures by category"
                 series={FAILED_SERIES}
                 rows={countBy(view.toolCalls, (call) => call.failureCategory).map((row) => ({
@@ -581,8 +603,8 @@ function DashboardBody({ dataset, crossProvider, costAnalysis, projectsAndBillin
               />
             </Blueprint>
             <Blueprint className="audit-section">
-              <div className="card-kicker">Shell programs</div>
               <HorizontalBars
+                kicker="Shell programs"
                 ariaLabel="Shell programs"
                 series={CALLS_SERIES}
                 rows={countBy(view.toolCalls, (call) => call.program)
@@ -597,7 +619,7 @@ function DashboardBody({ dataset, crossProvider, costAnalysis, projectsAndBillin
 
           <Blueprint className="audit-section">
             <div className="card-kicker">Signals to review</div>
-            <p className="text-muted" style={{ fontSize: 12, margin: 0 }}>
+            <p className="text-muted text-xs m-0">
               Rule-based security signals, statistical anomalies and behaviour changes. Each is a prompt to look, not a verdict.
             </p>
             <FindingsTable
@@ -609,41 +631,61 @@ function DashboardBody({ dataset, crossProvider, costAnalysis, projectsAndBillin
 
           <Blueprint className="audit-section">
             <div className="card-kicker">Most expensive sessions</div>
-            <table className="table" aria-label="Most expensive sessions" style={{ fontSize: 13 }}>
-              <thead>
-                <tr>
-                  <th>Session</th>
-                  {crossProvider && <th>Provider</th>}
-                  <th>Started</th>
-                  <th>Turns</th>
-                  <th>AI Credits</th>
-                </tr>
-              </thead>
-              <tbody>
-                {topSessionsByCredits(view.sessions, view.turns, TOP_SESSIONS).map(({ session, aiCredits, turns }) => (
-                  <tr key={session.key}>
-                    <td className="truncate" style={{ maxWidth: 320 }}>
-                      <button type="button" className="btn btn-ghost" onClick={() => select(FIELD.session, session.key)}>
-                        {session.title}
-                      </button>
-                    </td>
-                    {crossProvider && <td>{session.providerLabel}</td>}
-                    <td>{session.date ?? "—"}</td>
-                    <td>{turns}</td>
-                    <td>
-                      {aiCredits.known > 0 ? aiCredits.total.toFixed(2) : "—"}
-                      {aiCredits.known > 0 && aiCredits.known < aiCredits.count && (
-                        <span className="text-muted" style={{ fontSize: 11 }}> ({aiCredits.known} of {aiCredits.count} known)</span>
-                      )}
-                    </td>
+            <div className="table-scroll">
+              <table className="table ledger-table" aria-label="Most expensive sessions">
+                <thead>
+                  <tr>
+                    <th>Session</th>
+                    {crossProvider && <th>Provider</th>}
+                    <th>Started</th>
+                    <th>Turns</th>
+                    <th>AI Credits</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {topSessionsByCredits(view.sessions, view.turns, TOP_SESSIONS).map(({ session, aiCredits, turns }) => (
+                    <tr key={session.key}>
+                      <td className="truncate cell-session">
+                        <button type="button" className="btn btn-ghost" onClick={() => select(FIELD.session, session.key)}>
+                          {session.title}
+                        </button>
+                      </td>
+                      {crossProvider && <td>{session.providerLabel}</td>}
+                      <td>{session.date ?? "—"}</td>
+                      <td>{turns}</td>
+                      <td>
+                        {aiCredits.known > 0 ? aiCredits.total.toFixed(2) : "—"}
+                        {aiCredits.known > 0 && aiCredits.known < aiCredits.count && (
+                          <span className="text-muted text-2xs"> ({aiCredits.known} of {aiCredits.count} known)</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </Blueprint>
           </>
         )}
       </div>
+    </div>
+  );
+}
+
+interface DashboardToolbarProps {
+  title: string;
+  preset: RangePreset;
+  onPresetChange: (preset: RangePreset) => void;
+  children?: ReactNode;
+}
+
+// One wrapping row: title, range, then the body's view switch and cost basis.
+function DashboardToolbar({ title, preset, onPresetChange, children }: DashboardToolbarProps) {
+  return (
+    <div className="toolbar">
+      <h3 className="m-0">{title}</h3>
+      <SegmentedControl name="insights-range" options={RANGE_OPTIONS} value={preset} onChange={onPresetChange} />
+      {children}
     </div>
   );
 }

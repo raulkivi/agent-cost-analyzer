@@ -49,4 +49,15 @@ describe("ViewAsTable", () => {
     fireEvent.click(screen.getByRole("button", { name: "View as table" }));
     expect(screen.getByText("legend")).toBeInTheDocument();
   });
+
+  it("puts a kicker on the toolbar row, before the toggle, to save a row", () => {
+    render(
+      <ViewAsTable table={table} kicker="Tokens by model">
+        <p>the chart</p>
+      </ViewAsTable>,
+    );
+    const kicker = screen.getByText("Tokens by model");
+    expect(kicker).toHaveClass("card-kicker");
+    expect(kicker.closest(".chart-toolbar")).toContainElement(screen.getByRole("button", { name: "View as table" }));
+  });
 });

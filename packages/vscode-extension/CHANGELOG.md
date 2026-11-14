@@ -1,6 +1,6 @@
 # Changelog
 
-**Last changed:** 2026-11-13 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-14 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 All notable changes to AI Credits Analyzer, the VS Code extension, are
 documented in this file. The standalone app, Agent Cost Analyzer, has its
@@ -10,6 +10,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+### Changed
+
+- Denser panel: smaller spacing, 28px table rows, one toolbar row on the Dashboard, compact KPI tiles with the cost explanation in a footnote, a trend chart that fills its panel and one-line empty charts.
 
 ## [0.12.0] - 2026-11-13
 

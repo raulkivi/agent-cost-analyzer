@@ -54,22 +54,6 @@ const FORMAT_OPTIONS = [
   { value: "raw", label: "Raw" },
 ] as const;
 
-const SUB_LABEL_STYLE = {
-  fontSize: 10,
-  textTransform: "uppercase" as const,
-  letterSpacing: "0.06em",
-  color: "var(--color-text-muted)",
-};
-
-const PAYLOAD_PRE_STYLE = {
-  margin: 0,
-  whiteSpace: "pre-wrap" as const,
-  wordBreak: "break-word" as const,
-  fontFamily: "monospace",
-  fontSize: 12,
-  lineHeight: 1.6,
-};
-
 const NO_LOGGING_MESSAGE =
   "No request/response data captured for this session — enable agentDebugLog.fileLogging.enabled and reload VS Code.";
 const NO_ROUND_TRIP_MESSAGE = "This turn made no request to the model, so there is no request or response to show.";
@@ -120,7 +104,7 @@ function isEncryptedReasoning(parts: MessageContentPart[]): boolean {
 }
 
 function SubLabel({ children }: { children: ReactNode }) {
-  return <div style={{ ...SUB_LABEL_STYLE, marginBottom: 4 }}>{children}</div>;
+  return <div className="sub-label sub-label--stacked">{children}</div>;
 }
 
 function ContentPartsView({
@@ -134,7 +118,7 @@ function ContentPartsView({
 }) {
   if (parts.length === 0) {
     return (
-      <p className="text-muted" style={{ fontSize: 12, margin: 0 }}>
+      <p className="text-muted text-xs m-0">
         —
       </p>
     );
@@ -143,11 +127,11 @@ function ContentPartsView({
     <div style={{ maxHeight, overflowY: "auto" }}>
       {parts.map((part, index) =>
         part.kind === "text" ? (
-          <pre key={index} style={PAYLOAD_PRE_STYLE}>
+          <pre key={index} className="payload-pre">
             {renderTokens(payloadTokens(part.text, format))}
           </pre>
         ) : (
-          <Tag key={index} variant="outline" style={{ display: "inline-flex", margin: "2px 4px 2px 0" }}>
+          <Tag key={index} variant="outline" className="tag-attachment">
             {attachmentLabel(part)}
           </Tag>
         ),
@@ -161,11 +145,11 @@ function UserMessageView({ parts }: { parts: MessageContentPart[] }) {
     <>
       {parts.map((part, index) =>
         part.kind === "text" ? (
-          <p key={index} style={{ margin: 0, fontSize: 14 }}>
+          <p key={index} className="m-0 text-md">
             {part.text}
           </p>
         ) : (
-          <Tag key={index} variant="outline" style={{ display: "inline-flex", margin: "2px 4px 2px 0" }}>
+          <Tag key={index} variant="outline" className="tag-attachment">
             {attachmentLabel(part)}
           </Tag>
         ),
@@ -185,17 +169,10 @@ function ToolCallsView({
     return null;
   }
   return (
-    <div
-      style={{
-        marginBottom: "var(--space-3)",
-        display: "flex",
-        flexDirection: "column",
-        gap: "var(--space-3)",
-      }}
-    >
+    <div className="inspector-tool-calls">
       {toolCalls.map((toolCall, index) => (
-        <div key={`${toolCall.name}-${index}`} style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-          <Tag variant="neutral" style={{ fontFamily: "monospace", alignSelf: "flex-start" }}>
+        <div key={`${toolCall.name}-${index}`} className="inspector-tool-call">
+          <Tag variant="neutral" className="tag-mono self-start">
             {toolCall.name}
           </Tag>
           <SubLabel>Args</SubLabel>
@@ -248,19 +225,19 @@ export function TurnInspector({
   const selectedRound = roundPick && roundPick.detail === loadedDetail ? roundPick.round : 0;
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-3)", padding: "var(--space-4)" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: "var(--space-3)", flexWrap: "wrap" }}>
+    <div className="inspector">
+      <div className="inspector-row">
         <button ref={backButton} type="button" className="btn btn-secondary" onClick={onClose}>
           ← Back to session
         </button>
         {sessionTitle && (
-          <span className="text-muted" style={{ fontSize: 12 }}>
+          <span className="text-muted text-xs">
             {sessionTitle}
           </span>
         )}
-        <h4 style={{ margin: 0 }}>Turn {turnIndex + 1} inspector</h4>
+        <h4 className="m-0">Turn {turnIndex + 1} inspector</h4>
         {triggeredEvent && <Tag variant="outline">{TRIGGER_LABELS[triggeredEvent]}</Tag>}
-        <div style={{ marginLeft: "auto" }}>
+        <div className="ml-auto">
           <SegmentedControl name="turnFormat" options={FORMAT_OPTIONS} value={format} onChange={setFormat} />
         </div>
       </div>
@@ -307,8 +284,8 @@ export function TurnInspector({
             return (
               <>
                 {detail.userMessage.length > 0 && (
-                  <Blueprint style={{ padding: "var(--space-3)" }}>
-                    <div className="card-kicker" style={{ marginBottom: "var(--space-2)" }}>
+                  <Blueprint className="blueprint--tight">
+                    <div className="card-kicker kicker--stacked">
                       User message
                     </div>
                     <UserMessageView parts={detail.userMessage} />
@@ -316,22 +293,22 @@ export function TurnInspector({
                 )}
 
                 {detail.rounds.length > 1 && (
-                  <div style={{ display: "flex", alignItems: "center", gap: "var(--space-3)", flexWrap: "wrap" }}>
+                  <div className="inspector-row">
                     <SegmentedControl
                       name="turnRound"
                       options={roundOptions}
                       value={String(round.request.index)}
                       onChange={(value) => setRoundPick({ detail, round: Number(value) })}
                     />
-                    <span className="text-muted" style={{ fontSize: 12 }}>
+                    <span className="text-muted text-xs">
                       {detail.rounds.length} rounds in this turn
                     </span>
                   </div>
                 )}
 
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--space-4)" }}>
-                  <Blueprint style={{ padding: "var(--space-3)" }}>
-                    <div className="card-kicker" style={{ marginBottom: "var(--space-2)" }}>
+                <div className="inspector-columns">
+                  <Blueprint className="blueprint--tight">
+                    <div className="card-kicker kicker--stacked">
                       Request · round {round.request.index}
                     </div>
                     <ToolCallsView toolCalls={round.request.toolCalls} format={format} />
@@ -342,38 +319,23 @@ export function TurnInspector({
                       </>
                     )}
                   </Blueprint>
-                  <Blueprint style={{ padding: "var(--space-3)" }}>
-                    <div className="card-kicker" style={{ marginBottom: "var(--space-2)" }}>
+                  <Blueprint className="blueprint--tight">
+                    <div className="card-kicker kicker--stacked">
                       Response · round {round.response.index}
                     </div>
                     <ContentPartsView parts={round.response.response} format={format} maxHeight={320} />
                     {round.response.reasoning && isEncryptedReasoning(round.response.reasoning) && (
-                      <div
-                        style={{
-                          marginTop: "var(--space-2)",
-                          borderTop: "1px solid var(--color-divider)",
-                          paddingTop: "var(--space-2)",
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "var(--space-2)",
-                        }}
-                      >
+                      <div className="inspector-reasoning inspector-reasoning--row">
                         <div className="card-kicker">Reasoning</div>
                         <Tag variant="outline">encrypted</Tag>
-                        <span className="text-muted" style={{ fontSize: 11 }}>
+                        <span className="text-muted text-2xs">
                           withheld by the provider
                         </span>
                       </div>
                     )}
                     {round.response.reasoning && !isEncryptedReasoning(round.response.reasoning) && (
-                      <div
-                        style={{
-                          marginTop: "var(--space-2)",
-                          borderTop: "1px solid var(--color-divider)",
-                          paddingTop: "var(--space-2)",
-                        }}
-                      >
-                        <div className="card-kicker" style={{ marginBottom: "var(--space-2)" }}>
+                      <div className="inspector-reasoning">
+                        <div className="card-kicker kicker--stacked">
                           Reasoning
                         </div>
                         <ContentPartsView parts={round.response.reasoning} format={format} maxHeight={200} />

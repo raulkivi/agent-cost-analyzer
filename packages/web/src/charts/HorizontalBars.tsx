@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
+import type { ReactNode } from "react";
 import { activateOnEnterOrSpace, ChartLegend, patternFillStyle, patternFor, type LegendItem } from "./chart-parts.js";
 import { ViewAsTable } from "./ViewAsTable.js";
 
@@ -18,12 +19,14 @@ interface HorizontalBarsProps {
   emptyText?: string;
   // How a value reads (bar tip, accessible name, table); counts by default.
   format?: (value: number) => string;
+  // Shown on the toolbar row beside "View as table".
+  kicker?: ReactNode;
 }
 
 // Ranked horizontal bars (magnitude by category): one shared scale, value
 // at the bar tip, segments separated by a 2px surface gap. HTML rather than
 // SVG so long labels truncate with a native title instead of colliding.
-export function HorizontalBars({ ariaLabel, series: plainSeries, rows, selectedKey, onSelect, emptyText, format = String }: HorizontalBarsProps) {
+export function HorizontalBars({ ariaLabel, series: plainSeries, rows, selectedKey, onSelect, emptyText, format = String, kicker }: HorizontalBarsProps) {
   // Stacked series differ by a fill pattern as well as colour (check 1.8); a
   // lone series stays solid, and a series may name its own (a status keeps its
   // pattern in every chart).
@@ -51,12 +54,13 @@ export function HorizontalBars({ ariaLabel, series: plainSeries, rows, selectedK
   return (
     <div role="group" aria-label={ariaLabel}>
       {rows.length === 0 ? (
-        <div className="chart">
-          {legend && <div className="chart-toolbar">{legend}</div>}
+        // Nothing to key a legend to, so the empty state is one muted line.
+        <>
+          {kicker !== undefined && <div className="card-kicker">{kicker}</div>}
           <p className="text-muted chart-empty">{emptyText ?? "No data."}</p>
-        </div>
+        </>
       ) : (
-        <ViewAsTable table={table} legend={legend}>
+        <ViewAsTable table={table} legend={legend} kicker={kicker}>
           <div className="hbars">
             {rows.map((row, index) => {
               const selected = row.key === selectedKey;

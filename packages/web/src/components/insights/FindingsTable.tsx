@@ -23,14 +23,14 @@ function bySeverityThenLatest(a: InsightFinding, b: InsightFinding): number {
 export function FindingsTable({ findings, sessionTitle, onSelectSession }: FindingsTableProps) {
   const [showAll, setShowAll] = useState(false);
   if (findings.length === 0) {
-    return <p className="text-muted" style={{ fontSize: 13, margin: 0 }}>No signals for the current selections.</p>;
+    return <p className="text-muted text-sm m-0">No signals for the current selections.</p>;
   }
   const sorted = [...findings].sort(bySeverityThenLatest);
   const shown = showAll ? sorted : sorted.slice(0, INITIAL_ROWS);
   return (
     <>
-      <div className="chart-table-wrap" style={{ maxHeight: 420 }}>
-        <table className="table findings-table" aria-label="Signals to review" style={{ fontSize: 13 }}>
+      <div className="chart-table-wrap findings-wrap">
+        <table className="table findings-table" aria-label="Signals to review">
           <thead>
             <tr>
               <th>Severity</th>
@@ -49,12 +49,12 @@ export function FindingsTable({ findings, sessionTitle, onSelectSession }: Findi
                     <span className={`severity-tag severity-tag--${finding.severity}`}>{SEVERITY_LABELS[finding.severity]}</span>
                   </td>
                   <td>
-                    <div>{finding.title}</div>
-                    <div className="text-muted" style={{ fontSize: 11 }}>
-                      {FINDING_KIND_LABELS[finding.kind]} · {findingCategoryLabel(finding.category)}
-                    </div>
+                    {finding.title}
+                    <span className="findings-kind text-muted">
+                      {" "}· {FINDING_KIND_LABELS[finding.kind]} · {findingCategoryLabel(finding.category)}
+                    </span>
                   </td>
-                  <td style={{ whiteSpace: "nowrap" }}>{finding.at ? formatWhen(finding.at) : "—"}</td>
+                  <td className="nowrap">{finding.at ? formatWhen(finding.at) : "—"}</td>
                   <td>
                     <div>{finding.why}</div>
                     {finding.evidence && (
@@ -66,8 +66,7 @@ export function FindingsTable({ findings, sessionTitle, onSelectSession }: Findi
                   <td>
                     <button
                       type="button"
-                      className="btn btn-ghost truncate"
-                      style={{ maxWidth: 220, textAlign: "left" }}
+                      className="btn btn-ghost truncate findings-where"
                       onClick={() => onSelectSession(finding.sessionKey)}
                     >
                       {where}
@@ -80,7 +79,7 @@ export function FindingsTable({ findings, sessionTitle, onSelectSession }: Findi
         </table>
       </div>
       {!showAll && sorted.length > INITIAL_ROWS && (
-        <button type="button" className="btn btn-ghost" style={{ alignSelf: "flex-start" }} onClick={() => setShowAll(true)}>
+        <button type="button" className="btn btn-ghost self-start" onClick={() => setShowAll(true)}>
           Show all {sorted.length}
         </button>
       )}

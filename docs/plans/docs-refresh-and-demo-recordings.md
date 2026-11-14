@@ -1,6 +1,6 @@
 # Docs refresh and demo recordings: plan
 
-**Last changed:** 2026-11-13 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-14 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 Status: approved 2026-11-13; plan steps 10.22 (Phase 0 and Phase 1) and
 10.23 (Phase 2) in [implementation-plan.md](../implementation-plan.md).
@@ -686,3 +686,4 @@ review rejections.
   resized without a window manager. Spike 1.0 started first: wdio-vscode-service can't resize the
   window (`setWindowRect` fails: `Browser.getWindowForTarget` unknown).
   `xdotool` is not installed (Phase 2 route R1 needs it).
+- 2026-11-14: tasks 1.10-1.14 (final takes, owner review, docs embedding) are held until Phase 17 (dense ledger UI, [dense-ledger-ui.md](dense-ledger-ui.md)) merges, owner decision D2 of that plan. The scenes are then retaken once in the new look; the earlier takes serve as drafts only.

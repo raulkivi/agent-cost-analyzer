@@ -28,8 +28,9 @@ export function SourcesFooter({
 }: SourcesFooterProps) {
   return (
     <footer className="sources-footer">
-      <h3 className="sources-footer-title">Sources</h3>
-      <ul className="sources-footer-list">
+      <details className="sources-footer-details">
+        <summary className="sources-footer-title">Sources ({sources.length})</summary>
+        <ul className="sources-footer-list">
         {sources.map((source) => (
           <li key={source.id}>
             <a href={source.url} target="_blank" rel="noopener noreferrer">
@@ -37,7 +38,8 @@ export function SourcesFooter({
             </a>
           </li>
         ))}
-      </ul>
+        </ul>
+      </details>
       <p className="sources-footer-checked">Checked {oldestCheckedAt}</p>
       {isStale(oldestCheckedAt, now) && (
         <p role="status" className="sources-footer-warning">
