@@ -197,6 +197,8 @@ header area also holds the **Retention** field described below:
   Copilot harness and its Agent Host; those sessions are listed with their
   tokens and AI Credits. Their prompt and response text, turn inspector, tool
   calls and system prompt come from the Copilot CLI's event log, read locally.
+  When VS Code titles such a session with the opening of its first prompt, it
+  is shown as untitled ("Session <id>"), so prompt text never appears as a title.
   Chats in a VS Code window with no folder open are listed too, with their
   tokens and AI Credits, as "No repository".
   Cache-write and reasoning tokens come from the same log's per-call usage

@@ -19,6 +19,7 @@ import type { CopilotSessionSource } from "../log-providers/vscode/copilot-sessi
 import { openReadOnlyDb } from "../sqlite/session-store.js";
 import { getAgentHostSessionRow, listAgentHostSessionRows, readAgentHostSdkSessionId, type AgentHostSessionRow } from "./agent-host-catalog.js";
 import { agentHostDbPath, agentSessionDbPath } from "./agent-host-paths.js";
+import { isPromptEchoTitle, readFirstUserPrompt } from "./agent-host-prompt-title.js";
 import {
   readAgentHostSessionModel,
   readAgentHostSessionTitle,
@@ -76,6 +77,11 @@ function readStoreContents(db: DatabaseSync): AgentHostSessionStoreContents {
 // that names its event log.
 interface CatalogEntry {
   row: AgentHostSessionRow;
+  sdkSessionId: string | null;
+}
+
+interface ListedRow {
+  catalogRow: AgentHostSessionRow;
   sdkSessionId: string | null;
 }
 
@@ -179,20 +185,60 @@ export class AgentHostSessionSource implements CopilotSessionSource {
       : { available: false, unavailableReason: UNAVAILABLE_REASON };
   }
 
+  // The first prompt, to tell a title VS Code took from it (untitled for the
+  // app) from one the user set. Read from the head of the log only, and only
+  // when there is a title to check, so listing stays cheap.
+  private async firstPrompt(sdkSessionId: string | null): Promise<string | null> {
+    const logPath =
+      this.options.copilotHome === null || sdkSessionId === null ? null : copilotEventLogPath(this.options.copilotHome, sdkSessionId);
+    return logPath === null ? null : readFirstUserPrompt(logPath);
+  }
+
+  // Each candidate title (the store's customTitle, the catalog's summary) is
+  // judged on its own, so an echo of the prompt never hides a real title.
+  private async withoutPromptTitles(
+    catalogRow: AgentHostSessionRow,
+    store: AgentHostSessionStoreContents | null,
+    sdkSessionId: string | null,
+  ): Promise<{ catalogRow: AgentHostSessionRow; store: AgentHostSessionStoreContents | null }> {
+    if (catalogRow.title === null && (store?.title ?? null) === null) {
+      return { catalogRow, store };
+    }
+    const prompt = await this.firstPrompt(sdkSessionId);
+    if (prompt === null) {
+      return { catalogRow, store };
+    }
+    const echoes = (title: string | null): boolean => title !== null && isPromptEchoTitle(title, prompt);
+    return {
+      catalogRow: echoes(catalogRow.title) ? { ...catalogRow, title: null } : catalogRow,
+      store: store !== null && echoes(store.title) ? { ...store, title: null } : store,
+    };
+  }
+
   // Chats opened but never sent (a session.db that was read and holds no
   // turns) have nothing to analyze, so they're left out of every list
   // (readSession still finds them by id). A missing or unreadable session.db
   // stays listed with unknown usage: unknown is shown, never hidden (constraint 6).
-  // No event log is opened here: listing stays cheap however large the logs.
+  // No event log is parsed here: listing stays cheap however large the logs
+  // (only a titled session's first user message is read, from the log's head).
   async listSessions(): Promise<Session[]> {
-    return this.withCatalog(
+    const entries = this.withCatalog(
       (catalog) =>
-        listAgentHostSessionRows(catalog).flatMap((catalogRow) => {
-          const store = this.readStoreForList(catalogRow.id);
-          return store !== null && store.turns.length === 0 ? [] : [buildAgentHostSessionSummary({ catalogRow, store })];
-        }),
-      [],
+        listAgentHostSessionRows(catalog).map((catalogRow) => ({
+          catalogRow,
+          sdkSessionId: readAgentHostSdkSessionId(catalog, catalogRow.sessionUri),
+        })),
+      [] as ListedRow[],
     );
+    const sessions: Session[] = [];
+    for (const { catalogRow, sdkSessionId } of entries) {
+      const store = this.readStoreForList(catalogRow.id);
+      if (store !== null && store.turns.length === 0) {
+        continue;
+      }
+      sessions.push(buildAgentHostSessionSummary({ ...(await this.withoutPromptTitles(catalogRow, store, sdkSessionId)) }));
+    }
+    return sessions;
   }
 
   // Unlike the list, a store that can't be read rejects (the LogProvider
@@ -204,7 +250,8 @@ export class AgentHostSessionSource implements CopilotSessionSource {
     }
     const read = this.withStore(sessionId, (db) => ({ store: readStoreContents(db), turnRefs: readAgentHostTurnEventIds(db) }));
     const eventLog = await this.loadEventLog(entry.sdkSessionId, read?.turnRefs ?? []);
-    return buildAgentHostSession({ catalogRow: entry.row, store: read?.store ?? null, eventLog });
+    const { catalogRow, store } = await this.withoutPromptTitles(entry.row, read?.store ?? null, entry.sdkSessionId);
+    return buildAgentHostSession({ catalogRow, store, eventLog });
   }
 
   // session.db decides whether the turn exists, so the log is opened only for

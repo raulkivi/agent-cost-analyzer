@@ -453,7 +453,10 @@ statement is never recomputed. Re-running the period later shows a
 **diff against the frozen copy** (late logs, a price-book fix) instead of
 silently changing it. Exports: CSV (lines), JSON (full), Markdown (for a
 client email). Exports contain session ids and titles but never message
-text; titles can be omitted with an option.
+text; titles can be omitted with an option. A session title that is the
+opening of its first prompt (VS Code does this for some Agent Host sessions)
+is treated as untitled at the source, so a statement never carries prompt
+text (fix of 2026-11-14, found in V4).
 
 ### 8.6 Estimates (G9)
 
