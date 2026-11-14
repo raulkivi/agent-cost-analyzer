@@ -173,8 +173,8 @@ describe("Learn mode with vendor simulation (step 13.7)", () => {
     await user.click(await screen.findByRole("button", { name: /cache basics/i }));
     await user.click(await screen.findByLabelText("Vendors"));
 
-    expect(await screen.findByRole("columnheader", { name: "Total AI credits" })).toBeInTheDocument();
-    expect(within(screen.getByRole("table", { name: /each vendor/ })).getByText("gpt-6.1-sol")).toBeInTheDocument();
+    expect(await screen.findByLabelText("Sort by")).toBeInTheDocument();
+    expect(within(screen.getByRole("list", { name: /each vendor/ })).getByText("gpt-6.1-sol")).toBeInTheDocument();
     expect(calls.filter((c) => c.method === "compareScenario").length).toBeGreaterThan(0);
 
     await user.selectOptions(screen.getByLabelText("Add a model"), "claude-opus-5.5");

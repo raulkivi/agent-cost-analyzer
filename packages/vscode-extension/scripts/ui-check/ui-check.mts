@@ -58,7 +58,7 @@ async function openVendorsTab(page: Page, harness: Harness): Promise<void> {
   await openDetailsIfCollapsed(page, harness);
   // The tab control's radios are visually hidden, so click its label.
   await page.locator("label.seg-opt", { hasText: "Vendors" }).first().click();
-  await page.getByRole("table", { name: /each vendor/ }).waitFor({ timeout: 10000 });
+  await page.getByRole("list", { name: /each vendor/ }).waitFor({ timeout: 10000 });
   await harness.settle(page);
 }
 
