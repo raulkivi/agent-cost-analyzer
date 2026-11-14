@@ -76,4 +76,32 @@ describe("theme.css (vscode-extension.md §3.5)", () => {
       expect(block() ?? "").toMatch(/scroll-behavior:\s*auto\s*!important/);
     });
   });
+
+  // Phase 17 density pass: compact scale in every host.
+  describe("density", () => {
+    const rule = (selector: string) =>
+      new RegExp(`(?:^|\\n)${selector.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*\\{([^}]*)\\}`).exec(readTheme())?.[1] ?? "";
+
+    it("uses the compact spacing scale", () => {
+      const css = readTheme();
+      const scale = { 1: "2px", 2: "4px", 3: "6px", 4: "8px", 6: "12px", 8: "16px" };
+      for (const [step, value] of Object.entries(scale)) {
+        expect(css).toMatch(new RegExp(`--space-${step}:\\s*${value};`));
+      }
+    });
+
+    it("sets body text to 13px", () => {
+      expect(rule("body")).toMatch(/font-size:\s*13px/);
+    });
+
+    it("keeps table cells to 4px 8px padding", () => {
+      expect(rule(".table th")).toMatch(/padding:\s*4px 8px/);
+      expect(rule(".table td")).toMatch(/padding:\s*4px 8px/);
+    });
+
+    it("compacts segmented options and inputs", () => {
+      expect(rule(".seg-opt")).toMatch(/padding:\s*4px 10px/);
+      expect(rule(".input")).toMatch(/min-height:\s*28px/);
+    });
+  });
 });
