@@ -34,6 +34,8 @@ const PHASE_15_TOOLS_WITHOUT_BILLING = [
 ];
 // Phase 14 step 14.5 (D5, D7): the replay group, in both products.
 const REPLAY_TOOLS = ["replay_session", "compare_models_for_session"];
+// Phase 16 SR19: the savings group, in both products.
+const SAVINGS_TOOLS = ["get_savings_report"];
 const BILLING_TOOLS = ["get_statement", "estimate_cost"];
 const CORE_PROMPTS = ["audit_session", "review_costs", "security_review"];
 
@@ -47,24 +49,24 @@ describe("createMcpServer's toolGroups (step 15.13)", () => {
     client = undefined;
   });
 
-  it("registers every group by default: the 9 Phase 9.12 tools, the 10 Phase 15 ones and the 2 Phase 14 ones (21), and 6 prompts", async () => {
+  it("registers every group by default: the 9 Phase 9.12 tools, the 10 Phase 15 ones and the 2 Phase 14 ones and the Phase 16 savings one (22), and 6 prompts", async () => {
     ({ client } = await connectCostFixture());
     const { tools } = await client.listTools();
     const { prompts } = await client.listPrompts();
 
-    expect(sorted(tools.map((tool) => tool.name))).toEqual(sorted([...CORE_TOOLS, ...PHASE_15_TOOLS_WITHOUT_BILLING, ...REPLAY_TOOLS, ...BILLING_TOOLS]));
-    expect(tools).toHaveLength(21);
+    expect(sorted(tools.map((tool) => tool.name))).toEqual(sorted([...CORE_TOOLS, ...PHASE_15_TOOLS_WITHOUT_BILLING, ...REPLAY_TOOLS, ...SAVINGS_TOOLS, ...BILLING_TOOLS]));
+    expect(tools).toHaveLength(22);
     expect(tools.every((tool) => tool.annotations?.readOnlyHint === true && tool.outputSchema?.type === "object")).toBe(true);
     expect(sorted(prompts.map((prompt) => prompt.name))).toEqual(sorted([...CORE_PROMPTS, "explain_cost_change", "prepare_statement", "estimate_work"]));
   });
 
-  it("leaves out the billing group's tools and prompts when it isn't listed (the extension's set: 19 tools, 4 prompts)", async () => {
+  it("leaves out the billing group's tools and prompts when it isn't listed (the extension's set: 20 tools, 4 prompts)", async () => {
     ({ client } = await connectCostFixture({ toolGroups: WITHOUT_BILLING_TOOL_GROUPS }));
     const { tools } = await client.listTools();
     const { prompts } = await client.listPrompts();
 
-    expect(sorted(tools.map((tool) => tool.name))).toEqual(sorted([...CORE_TOOLS, ...PHASE_15_TOOLS_WITHOUT_BILLING, ...REPLAY_TOOLS]));
-    expect(tools).toHaveLength(19);
+    expect(sorted(tools.map((tool) => tool.name))).toEqual(sorted([...CORE_TOOLS, ...PHASE_15_TOOLS_WITHOUT_BILLING, ...REPLAY_TOOLS, ...SAVINGS_TOOLS]));
+    expect(tools).toHaveLength(20);
     expect(sorted(prompts.map((prompt) => prompt.name))).toEqual(sorted([...CORE_PROMPTS, "explain_cost_change"]));
   });
 

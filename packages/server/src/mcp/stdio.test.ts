@@ -80,11 +80,11 @@ describe("stdio MCP entry point", () => {
     expect(findings.isError).toBeFalsy();
   }, 60_000);
 
-  // Phase 14 step 14.5 (D7): 21 tools and 6 prompts, the replay group among
+  // Phase 14 step 14.5 (D7): 22 tools and 6 prompts, the replay group among
   // them, and replay_session over the real-capture Claude Code fixture.
-  it("lists 21 read-only tools and 6 prompts, and replays the fixture session on another model, labelled simulated", async () => {
+  it("lists 22 read-only tools and 6 prompts, and replays the fixture session on another model, labelled simulated", async () => {
     const { tools } = await client.listTools();
-    expect(tools).toHaveLength(21);
+    expect(tools).toHaveLength(22);
     expect((await client.listPrompts()).prompts).toHaveLength(6);
     expect(tools.every((tool) => tool.annotations?.readOnlyHint === true)).toBe(true);
 
@@ -163,11 +163,11 @@ describe("stdio MCP entry point, app views", () => {
     expect((contents[0] as { text: string }).text).toContain("built views");
   }, 60_000);
 
-  it("starts normally with its 21 tools and no views when the file is missing", async () => {
+  it("starts normally with its 22 tools and no views when the file is missing", async () => {
     const client = await connect(["--app-views-html", path.join(home, "missing", "views.html")]);
 
     const { tools } = await client.listTools();
-    expect(tools).toHaveLength(21);
+    expect(tools).toHaveLength(22);
     expect(tools.some((tool) => tool._meta !== undefined)).toBe(false);
     const result = await client.callTool({ name: "list_sessions", arguments: { provider: "claude-code" } });
     expect(result.isError).toBeFalsy();
@@ -207,14 +207,14 @@ describe("stdio MCP entry point, protocol revisions (MCP SDK 2, D1, D4)", () => 
     return peer;
   }
 
-  it.each(["2025-06-18", "2025-11-25"])("answers a 2025-era initialize at %s with that version and lists its 22 tools", async (protocolVersion) => {
+  it.each(["2025-06-18", "2025-11-25"])("answers a 2025-era initialize at %s with that version and lists its 23 tools", async (protocolVersion) => {
     const peer = start();
 
     const initialized = await initializeLegacy(peer, protocolVersion);
     const listed = await peer.request("tools/list");
 
     expect(initialized.result).toMatchObject({ protocolVersion, serverInfo: { name: "agent-cost-analyzer" } });
-    expect((listed.result?.tools as unknown[]).length).toBe(22);
+    expect((listed.result?.tools as unknown[]).length).toBe(23);
   }, 60_000);
 
   it("answers server/discover with 2026-07-28 and serves 2026-07-28 requests on the same connection", async () => {
@@ -226,7 +226,7 @@ describe("stdio MCP entry point, protocol revisions (MCP SDK 2, D1, D4)", () => 
     expect(discovered.error).toBeUndefined();
     expect(discovered.result?.supportedVersions).toContain(MODERN_PROTOCOL_VERSION);
     expect(discovered.result?.capabilities).toMatchObject({ tools: {}, resources: {}, prompts: {} });
-    expect((listed.result?.tools as unknown[]).length).toBe(22);
+    expect((listed.result?.tools as unknown[]).length).toBe(23);
   }, 60_000);
 
   it("answers a 2026-07-28 read of the views resource with ttlMs 0, and a 2025-era one without cache hints", async () => {

@@ -53,10 +53,10 @@ describe("createCopilotMcpServer (vscode-extension.md D7)", () => {
   });
 
   // Step 15.13 (plan §10.1.6): every group but billing (D7); Phase 14 step 14.5 adds replay (D5).
-  it("serves the 19 read-only tools with the given version, without get_statement or estimate_cost", async () => {
+  it("serves the 20 read-only tools with the given version, without get_statement or estimate_cost", async () => {
     const { tools } = await client.listTools();
 
-    expect(tools).toHaveLength(19);
+    expect(tools).toHaveLength(20);
     expect(tools.map((tool) => tool.name)).toEqual(expect.arrayContaining(["replay_session", "compare_models_for_session"]));
     expect(tools.map((tool) => tool.name)).not.toEqual(expect.arrayContaining(["get_statement"]));
     expect(tools.map((tool) => tool.name)).not.toEqual(expect.arrayContaining(["estimate_cost"]));
@@ -169,7 +169,7 @@ describe("createCopilotMcpServer with the app views (Phase 12 A13)", () => {
     const client = await connect(path.join(dir, "dist", "mcp-apps", "views.html"));
     try {
       const { tools } = await client.listTools();
-      expect(tools).toHaveLength(20);
+      expect(tools).toHaveLength(21);
       expect(
         tools
           .filter((tool) => tool._meta?.ui !== undefined)
@@ -207,11 +207,11 @@ describe("createCopilotMcpServer with the app views (Phase 12 A13)", () => {
   it.each([
     ["no path", undefined],
     ["a path to a file that is not there", "/nonexistent/dist/mcp-apps/views.html"],
-  ])("lists the 19 normal tools and no views for %s", async (_label, appViewsHtml) => {
+  ])("lists the 20 normal tools and no views for %s", async (_label, appViewsHtml) => {
     const client = await connect(appViewsHtml);
     try {
       const { tools } = await client.listTools();
-      expect(tools).toHaveLength(19);
+      expect(tools).toHaveLength(20);
       expect(tools.some((tool) => tool._meta !== undefined)).toBe(false);
     } finally {
       await client.close();
@@ -234,7 +234,7 @@ describe("createCopilotMcpServerFactory as serveStdio's factory (MCP SDK 2)", ()
     rmSync(userDataDir, { recursive: true, force: true });
   });
 
-  it("composes once: calling it twice writes nothing, and each call builds its own server with the 19 tools", async () => {
+  it("composes once: calling it twice writes nothing, and each call builds its own server with the 20 tools", async () => {
     const stderr = vi.spyOn(process.stderr, "write").mockImplementation(() => true);
     const consoleError = vi.spyOn(console, "error").mockImplementation(() => undefined);
     try {
@@ -258,7 +258,7 @@ describe("createCopilotMcpServerFactory as serveStdio's factory (MCP SDK 2)", ()
         const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
         const client = new Client({ name: "test-client", version: "1.0.0" });
         await Promise.all([server.connect(serverTransport), client.connect(clientTransport)]);
-        expect((await client.listTools()).tools).toHaveLength(19);
+        expect((await client.listTools()).tools).toHaveLength(20);
         await client.close();
       }
     } finally {

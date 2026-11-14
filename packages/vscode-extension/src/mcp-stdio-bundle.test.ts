@@ -85,8 +85,8 @@ describe("the built MCP server bundle", () => {
     rmSync(installDir, { recursive: true, force: true });
   });
 
-  // Step 15.13 (plan §10.1.6): every tool group but billing (D7); Phase 14 step 14.5 adds replay (D5): 19 tools.
-  it("answers initialize, tools/list with the 19 tools and prompts/list with 4 prompts, and writes nothing but JSON-RPC to stdout", async () => {
+  // Step 15.13 (plan §10.1.6): every tool group but billing (D7); Phase 14 step 14.5 adds replay (D5): 20 tools with get_savings_report.
+  it("answers initialize, tools/list with the 20 tools and prompts/list with 4 prompts, and writes nothing but JSON-RPC to stdout", async () => {
     const { lines } = await initializeAndListTools(bundle, userDataDir);
     const messages = lines.map((line) => JSON.parse(line) as JsonRpcMessage);
 
@@ -103,6 +103,7 @@ describe("the built MCP server bundle", () => {
       "get_price_changes",
       "get_project_cost",
       "get_repository_cost",
+      "get_savings_report",
       "get_session_audit",
       "get_session_cost",
       "get_turn",
@@ -121,8 +122,8 @@ describe("the built MCP server bundle", () => {
   }, 60_000);
 
   // Phase 12 A13: dist/mcp-apps/views.html next to the bundle, as in the .vsix.
-  // Without it (the test above) the server lists its 19 tools and no views.
-  it("serves dist/mcp-apps/views.html when it is there: _meta.ui on the thirteen registered view tools and a 20th, app-only, tool", async () => {
+  // Without it (the test above) the server lists its 20 tools and no views.
+  it("serves dist/mcp-apps/views.html when it is there: _meta.ui on the thirteen registered view tools and a 21st, app-only, tool", async () => {
     const views = path.join(installDir, "dist", "mcp-apps", "views.html");
     mkdirSync(path.dirname(views), { recursive: true });
     writeFileSync(views, '<!doctype html><html><head><meta name="aca-brand" content=""></head><body>built views</body></html>');
@@ -133,7 +134,7 @@ describe("the built MCP server bundle", () => {
         _meta?: { ui?: { resourceUri?: string } };
       }[];
 
-      expect(tools).toHaveLength(20);
+      expect(tools).toHaveLength(21);
       expect(
         tools
           .filter((tool) => tool._meta?.ui?.resourceUri === "ui://ai-credits-analyzer/views.html")

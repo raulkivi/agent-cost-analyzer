@@ -19,6 +19,7 @@ import type { VendorProfile } from "@agent-cost-analyzer/domain";
 import type { PriceBook } from "../services/pricing/price-book.js";
 import { ReplayModelResolver } from "../services/session-replay/replay-model-resolver.js";
 import { createSessionReplay } from "./create-session-replay.js";
+import { createSavingsReport } from "./create-savings-report.js";
 
 // The services createMcpServer takes, over whichever registry a product's
 // composition root built: every provider for the standalone stdio server
@@ -72,6 +73,12 @@ export function createMcpServices(
     replay && pricer
       ? createSessionReplay({ providers: registry, profiles: replay.profiles, priceBook: replay.priceBook, pricer, ...(attribution ? { attribution: attribution.dataset } : {}) })
       : undefined;
+  // Phase 16 SR19: the savings report as the Savings tab has it (the same
+  // wiring, createSavingsReport); it needs the price book, attribution and replays.
+  const savingsReport =
+    replay && pricer && attribution && sessionReplay
+      ? createSavingsReport({ providers: registry, profiles: replay.profiles, priceBook: replay.priceBook, pricer, attribution: attribution.dataset, replay: sessionReplay, ...(now ? { now } : {}) })
+      : undefined;
   return {
     auditQueries: new AuditQueryService(registry),
     analysisQueries: new AnalysisQueryService(registry, insights, {
@@ -82,6 +89,7 @@ export function createMcpServices(
     version,
     ...(identity ? { identity } : {}),
     ...(sessionReplay ? { sessionReplay } : {}),
+    ...(savingsReport ? { savingsReport } : {}),
     ...(attribution ? { attribution: attribution.queries } : {}),
     ...(attribution
       ? {
