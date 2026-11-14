@@ -305,7 +305,7 @@ describe("get_savings_report hostile names", () => {
     const text = JSON.stringify(result);
 
     expect(result.isError, text).not.toBe(true);
-    for (const forbidden of ["‮", "​", " ", SECRET]) expect(text).not.toContain(forbidden);
+    for (const forbidden of ["\u202E", "\u200B", "\u2028", SECRET]) expect(text).not.toContain(forbidden);
     const row = structured(result).opportunities[0]!;
     for (const field of [row.perWeek.reason, row.perWindow.reason, row.evidence.tokens.reason]) {
       expect(field).toMatch(/^The price book has no model matching evil/);
