@@ -214,7 +214,7 @@ fixture has no config warnings, so Config is a tag.
 | 5 | Low | `AuditRollupPanel.tsx:175,206` | All sessions at 360px: the Sessions table pushed the page to 452px (412px before the ledger) | Fixed: both tables in `.table-scroll`; unit test and `density.spec.ts` |
 | 6 | Low | `theme-contrast.test.ts:140` | The harness read only `html[data-color-mode="…"]` rules, not the L3 `html[data-color-mode]` ones, so `.card-kicker` and `.table th` were checked with their base colours | Fixed, with a test. Not vacuous: breaking dark `--color-text-muted` failed 10 tests and `--color-control-border` 2; restored |
 | 7 | Low | `theme.css:1234` | `.dialog-body` serif reached the radios, checkboxes, labels and preview of the statement and advice export dialogs (D3: serif is for prose) | Fixed: `.dialog-body > p` only |
-| 8 | Low | `theme.css:1169` | Headings and `--font-heading-weight` ask for 600 but Commit Mono ships 400 and 700 here, so they render 700; weight 500 renders 400 | Recorded: bundle `commit-mono/latin-600.css` or declare 700 |
+| 8 | Low | `theme.css:1169` | Headings and `--font-heading-weight` ask for 600 but Commit Mono ships 400 and 700 here, so they render 700; weight 500 renders 400 | Fixed: ledger `--font-heading-weight` and h1-h4 are 700, `.stat-tile-value` 400 (the bundled weights); `theme-color-mode.test.ts` |
 | 9 | Low | `theme.css:291-307, 772` | Hard-coded light colours (alert red, white list box, QlikView greys) are patched per selector for dark; light ledger keeps a white list box on parchment | Recorded: move to tokens in a follow-up |
 | 10 | Low | `use-color-mode.ts` | No `storage` listener: other open tabs keep the old mode until reload | Recorded |
 | 11 | Low | `host/current-host-capabilities.ts:16` | Unit tests rendering `App` use the standalone default (`colorMode: true`), so they set the attribute on jsdom's root and read real `localStorage` | Recorded |
@@ -235,11 +235,13 @@ design.
 
 **Measurements** (fixture, 1440x900)
 
-- Dashboard height: 1,467px in light and dark, 3px under the 1,470px limit.
-  Proposed fix, not applied: in ledger mode tighten `.hbar-row` (line-height
-  1.3, padding 2px). The 7-row Tokens by model chart sets the height of its
-  grid row, so this gains about 20px without hiding anything. Next option:
-  narrative at 13px/1.4 (about 15px).
+- Dashboard height: 1,467px in light and dark before the fix, 3px under the
+  1,470px limit. Fixed: in ledger mode `.hbar-row` has line-height 1.3 and
+  padding 2px 4px, and `.hbars` has no gap. The rows keep `min-height: 24px`:
+  they are `role="button"`, and without it axe's 24px target-size check
+  failed on Compare (S3/S4 specs). The row tightening alone gained 2px; the
+  gap removal brings the Dashboard to 1,453px in light and dark (17px of
+  margin). Next option if needed: narrative at 13px/1.4 (about 15px).
 - KPI tiles 79px, first tile top 326px, table rows at most 30px, no
   sideways scroll in the list or at 360px: `density.spec.ts` green in both
   projects.
@@ -248,7 +250,9 @@ design.
   serif 13px 12 of 18 (84%); serif 12px 11 of 18 (87%); Industry 12 of 18
   (82%). Recommendation: keep mono (D3 keeps serif for prose) and add the
   full title as a `title` tooltip; serif 13px if the owner prefers
-  Industry-level legibility in the list.
+  Industry-level legibility in the list. Done: the title span carries a
+  `title` tooltip with the full title; the button's `aria-label` already
+  holds the title, so the accessible name is unchanged.
 
 ## 11. Session log
 

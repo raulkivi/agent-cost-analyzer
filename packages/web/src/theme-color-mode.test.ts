@@ -187,10 +187,10 @@ describe("ledger component rules (dense-ledger-ui.md L3)", () => {
     ["h2", "18px"],
     ["h3", "15px"],
     ["h4", "13px"],
-  ])("sets %s mono at %s, weight 600, no tracking", (selector, size) => {
+  ])("sets %s mono at %s, weight 700, no tracking", (selector, size) => {
     const declarations = ledger(selector);
     expect(declarations.get("font-size")).toBe(size);
-    expect(declarations.get("font-weight")).toBe("600");
+    expect(declarations.get("font-weight")).toBe("700");
     expect(declarations.get("letter-spacing")).toBe("0");
   });
 
@@ -281,6 +281,24 @@ describe("ledger component rules (dense-ledger-ui.md L3)", () => {
     expect(ledger(".turns-table td").get("padding")).toBe("4px");
     expect(ledger(".turns-table th").get("font-size")).toBe("10px");
     expect(ledger(".turns-table th").get("letter-spacing")).toBe("0.06em");
+  });
+
+  // Commit Mono is bundled at 400 and 700 only (fonts.ts): 600 and 500 would
+  // be snapped by the browser, so the ledger asks for the real weights.
+  it.each(MODES)("%s mode: heading weights ask for a bundled Commit Mono weight", (mode) => {
+    expect(modeTokens(mode).get("--font-heading-weight")).toBe("700");
+    for (const heading of ["h1", "h2", "h3", "h4"]) {
+      expect(ledger(heading).get("font-weight") ?? ledger("h1,h2,h3,h4").get("font-weight"), heading).toBe("700");
+    }
+    expect(ledger(".stat-tile-value").get("font-weight")).toBe("400");
+  });
+
+  it("tightens the Tokens by model bars so the Dashboard clears its height limit", () => {
+    expect(ledger(".hbar-row").get("line-height")).toBe("1.3");
+    expect(ledger(".hbar-row").get("padding")).toBe("2px 4px");
+    // Interactive rows stay 24px targets (WCAG 2.5.8) once the gap is gone.
+    expect(ledger(".hbar-row").get("min-height")).toBe("24px");
+    expect(ledger(".hbars").get("gap")).toBe("0");
   });
 
   it("uses the mono token, not bare monospace, outside :root's fallback", () => {
