@@ -2,7 +2,7 @@
 
 **Last changed:** 2026-11-14 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
-**Status: Increment 1 built (SR0-SR17, 2026-11-13); owner decisions D1-D12 accepted 2026-11-12, D13-D15 answered 2026-11-14; Increment 1 exit criterion met 2026-11-14 (owner sign-off on the automated check, §14); the owner approved the docs 2026-11-14; ships in app 0.14.0 and extension 0.12.0; Increment 2 not started.** Phase 16 in
+**Status: Increment 2 started 2026-11-14 (SR18 boards approved, SR19 `get_savings_report` merged in PR #275; SR20-SR22 next). Increment 1 built (SR0-SR17, 2026-11-13); owner decisions D1-D12 accepted 2026-11-12, D13-D15 answered 2026-11-14; Increment 1 exit criterion met 2026-11-14 (owner sign-off on the automated check, §14); the owner approved the docs 2026-11-14; ships in app 0.14.0 and extension 0.12.0; Increment 2 not started.** Phase 16 in
 [implementation-plan.md](../implementation-plan.md) (owner decision D9).
 
 The question this answers: **"What should I change to spend less, and
@@ -380,6 +380,12 @@ repo.
 | D13 | Which failed calls O5 counts (chosen by the SR7 detector, recorded in SR16) | **Confirmed 2026-11-14:** Leave out `user-rejected` (the user said no) and `test-or-build-failure` (a failing test run is the work, not a mistake); count every other category, `unclassified` included |
 | D14 | How often a failure must repeat for O5 (chosen in SR7, recorded in SR16) | **Confirmed 2026-11-14:** At least 2 failed calls per program (or tool), failure category and currency over the window, across sessions |
 | D15 | "Open in Analyze" on another provider's session (found in SR16) | **Accepted 2026-11-14 (the recommendation):** It switches the active provider, as the Provider select does, and the server saves that choice in the app's own settings file. Recommendation: accept it as navigation state (it is not the user's editor or agent settings), and word §14's "writes no file" as "changes none of your settings or files" |
+| D16 | U18 drill-down: a row covers many sessions, U1 and U12 show one | Accepted 2026-11-14: a row opens in place with its evidence, action text, the three largest sessions and price versions; each session has Open cost (U1) or Open replay (U12) in place; Back returns focus to that session button (boards `Savings.dc.html` frames 5-8). |
+| D17 | U18's Simulated section when `includeSimulated` is off | Accepted 2026-11-14: stays visible and says to ask in the chat ("show my savings including simulated replays"); no button, so the only message stays "Analyse session <id>". `includeSimulated` is available to the model, off by default (owner, the same day). |
+| D18 | Fewer rows returned than exist (`limit`, default 10) | Accepted 2026-11-14: text only, "Showing the N highest of M changes. Ask in the chat for more, up to 20."; no view-initiated "show more" call. |
+| D19 | Session titles in U18 | Accepted 2026-11-14: ids and model ids only; titles appear after drilling into U1 (no prompt-derived text in the tool result). |
+| D20 | U18 loading state | Accepted 2026-11-14: no Cancel; the host owns the call; error and empty states say what to do in text. |
+| D21 | U18 boards (SR18) | Approved 2026-11-14: `docs/plans/mockups/mcp-apps/Savings.dc.html`, `SavingsStates.dc.html`; drill-downs exactly U1 and U12, no Copy button in U18. |
 
 ## 13. Risks
 
