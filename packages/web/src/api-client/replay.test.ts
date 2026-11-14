@@ -25,8 +25,9 @@ const comparison = {
   sessionId: "s1",
   providerId: "claude-code",
   currency: "USD",
+  measuredModels: ["a"],
   measured: total,
-  entries: [{ model: "a", vendorId: "anthropic", total, replayedTurns: 1, isMeasuredModel: true }],
+  entries: [{ model: "a", vendorId: "anthropic", total, replayedTurns: 1, isMeasuredModel: true, isMixedSessionModel: false }],
 };
 
 function stubFetch(body: unknown) {

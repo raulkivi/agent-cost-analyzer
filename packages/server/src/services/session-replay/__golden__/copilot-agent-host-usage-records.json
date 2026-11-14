@@ -124,6 +124,9 @@
     },
     "selfCheck": {
       "model": "claude-sonnet-5",
+      "models": [
+        "claude-sonnet-5"
+      ],
       "requests": 4,
       "matching": 0,
       "readTolerancePercent": 5,
@@ -282,6 +285,9 @@
     },
     "selfCheck": {
       "model": "claude-sonnet-5",
+      "models": [
+        "claude-sonnet-5"
+      ],
       "requests": 4,
       "matching": 0,
       "readTolerancePercent": 5,
@@ -440,6 +446,9 @@
     },
     "selfCheck": {
       "model": "claude-sonnet-5",
+      "models": [
+        "claude-sonnet-5"
+      ],
       "requests": 4,
       "matching": 0,
       "readTolerancePercent": 5,

@@ -399,7 +399,7 @@ describe("U12 ReplayView has no axe violations", () => {
   });
 
   it("replay mode with the table open, the assumptions open, a passed and a missing self-check", async () => {
-    const first = renderU12(ok(boardReplay({ selfCheck: { model: "claude-sonnet-5.5", requests: 44, matching: 44, readTolerancePercent: 5, passed: true } })));
+    const first = renderU12(ok(boardReplay({ selfCheck: { model: "claude-sonnet-5.5", models: ["claude-sonnet-5.5"], requests: 44, matching: 44, readTolerancePercent: 5, passed: true } })));
     fireEvent.click(screen.getByRole("button", { name: "View as table" }));
     screen.getByText("Show 2 assumptions").closest("details")!.setAttribute("open", "");
     await expectNoViolations();
@@ -463,7 +463,7 @@ describe("semantics axe does not check, U12", () => {
     const first = render(<ReplayView port={new FakeAppHostPort()} brand={brand} result={ok(boardReplay())} />);
     expect(screen.getByRole("alert")).toHaveTextContent("Self-check failed.");
     first.unmount();
-    render(<ReplayView port={new FakeAppHostPort()} brand={brand} result={ok(boardReplay({ selfCheck: { model: "m", requests: 1, matching: 1, readTolerancePercent: 5, passed: true } }))} />);
+    render(<ReplayView port={new FakeAppHostPort()} brand={brand} result={ok(boardReplay({ selfCheck: { model: "m", models: ["m"], requests: 1, matching: 1, readTolerancePercent: 5, passed: true } }))} />);
     expect(screen.queryByRole("alert")).toBeNull();
   });
 

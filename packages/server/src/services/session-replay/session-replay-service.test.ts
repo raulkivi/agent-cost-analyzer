@@ -733,6 +733,7 @@ describe("SessionReplayService.replay: self-check (G4, D8)", () => {
     if (result.status !== "ok") throw new Error(result.status);
     expect(result.value.selfCheck).toEqual({
       model: SONNET,
+      models: [SONNET],
       requests: 3,
       matching: 3,
       readTolerancePercent: 5,
@@ -772,6 +773,7 @@ describe("SessionReplayService.replay: self-check (G4, D8)", () => {
     });
     expect(result.value.selfCheck).toMatchObject({
       model: SONNET,
+      models: [SONNET, "claude-opus-5.5"],
       requests: 3,
     });
   });
@@ -872,6 +874,7 @@ describe("SessionReplayService.compare (D4)", () => {
       sessionId: "s-1",
       providerId: "vscode",
       currency: "AI_CREDITS",
+      measuredModels: [SONNET],
       measured: { value: 8, knownTurns: 4, turns: 4 },
     });
     expect(comparison.entries).toEqual([
@@ -881,6 +884,7 @@ describe("SessionReplayService.compare (D4)", () => {
         total: { value: 4, knownTurns: 4, turns: 4 },
         replayedTurns: 4,
         isMeasuredModel: true,
+        isMixedSessionModel: false,
       },
       {
         model: "gpt-6.1-sol",
@@ -888,6 +892,7 @@ describe("SessionReplayService.compare (D4)", () => {
         total: { value: 4, knownTurns: 4, turns: 4 },
         replayedTurns: 4,
         isMeasuredModel: false,
+        isMixedSessionModel: false,
       },
       {
         model: "claude-haiku-5.5",
@@ -895,6 +900,7 @@ describe("SessionReplayService.compare (D4)", () => {
         total: { value: 4, knownTurns: 4, turns: 4 },
         replayedTurns: 4,
         isMeasuredModel: false,
+        isMixedSessionModel: false,
       },
     ]);
   });
@@ -910,6 +916,24 @@ describe("SessionReplayService.compare (D4)", () => {
     ).toEqual([
       [SONNET, true],
       ["gpt-6.1-sol", false],
+    ]);
+  });
+
+  it("names every model a switching session used and flags its own entry as mixed, not as the measured model", async () => {
+    const result = await serviceOf([
+      copilotProvider([SONNET, SONNET, SONNET, "claude-opus-5.5"]),
+    ]).compare({ sessionId: "s-1", models: ["claude-haiku-5.5"] });
+    if (result.status !== "ok") throw new Error(result.status);
+    expect(result.value.measuredModels).toEqual([SONNET, "claude-opus-5.5"]);
+    expect(
+      result.value.entries.map((e) => [
+        e.model,
+        e.isMeasuredModel,
+        e.isMixedSessionModel,
+      ]),
+    ).toEqual([
+      [SONNET, false, true],
+      ["claude-haiku-5.5", false, false],
     ]);
   });
 

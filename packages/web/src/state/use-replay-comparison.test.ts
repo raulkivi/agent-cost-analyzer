@@ -16,8 +16,9 @@ const COMPARISON: SessionReplayComparison = {
   sessionId: "s1",
   providerId: "claude-code",
   currency: "USD",
+  measuredModels: ["claude-opus-5.5"],
   measured: { value: 4.82, knownTurns: 11, turns: 12 },
-  entries: [{ model: "claude-opus-5.5", vendorId: "anthropic", total: { value: 4.79, knownTurns: 11, turns: 12 }, replayedTurns: 11, isMeasuredModel: true }],
+  entries: [{ model: "claude-opus-5.5", vendorId: "anthropic", total: { value: 4.79, knownTurns: 11, turns: 12 }, replayedTurns: 11, isMeasuredModel: true, isMixedSessionModel: false }],
 };
 
 // Calls the test settles by hand; each rejects with an AbortError when its

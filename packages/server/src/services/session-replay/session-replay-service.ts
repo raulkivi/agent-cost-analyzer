@@ -257,9 +257,7 @@ const RUN_COST_UNKNOWN_REASON =
   "At least one subagent run's AI Credits are unknown.";
 
 // The runs the replay leaves out, for the coverage line.
-function subagentRunsOutside(
-  turns: Turn[],
-): ReplayCoverage["subagentRuns"] {
+function subagentRunsOutside(turns: Turn[]): ReplayCoverage["subagentRuns"] {
   const runs = turns.flatMap((turn) => turn.usage.subagents ?? []);
   if (runs.length === 0) return undefined;
   return {
@@ -368,14 +366,21 @@ export class SessionReplayService implements SessionReplayQueries {
         sessionId: reference.sessionId,
         providerId: reference.providerId,
         currency: reference.currency,
+        measuredModels: value.measuredModels,
         measured: reference.totals.measured,
-        entries: replays.map((replay) => ({
-          model: replay.model,
-          vendorId: replay.vendorId,
-          total: replay.totals.simulated,
-          replayedTurns: replay.coverage.replayedTurns,
-          isMeasuredModel: replay.model === ownModelId,
-        })),
+        entries: replays.map((replay) => {
+          const isOwn = replay.model === ownModelId;
+          return {
+            model: replay.model,
+            vendorId: replay.vendorId,
+            total: replay.totals.simulated,
+            replayedTurns: replay.coverage.replayedTurns,
+            // A session that switched models has no single measured model:
+            // its own entry is the replay of its first model, flagged mixed.
+            isMeasuredModel: isOwn && value.measuredModels.length === 1,
+            isMixedSessionModel: isOwn && value.measuredModels.length > 1,
+          };
+        }),
       },
     };
   }
@@ -574,7 +579,10 @@ export class SessionReplayService implements SessionReplayQueries {
         harness: trace.harness,
         ...(cheaperModelId !== undefined ? { cheaperModelId } : {}),
       });
-      return replaySelfCheck(trace, simulated, own.modelId);
+      return replaySelfCheck(trace, simulated, [
+        own.modelId,
+        ...(cheaperModelId !== undefined ? [cheaperModelId] : []),
+      ]);
     } catch {
       return null;
     }

@@ -34,7 +34,7 @@ function replay(overrides: Partial<SessionReplay> = {}): SessionReplay {
     ],
     totals: { measured: { value: 0.042, knownTurns: 1, turns: 2 }, simulated: { value: 0.031, knownTurns: 1, turns: 2 }, difference: -0.011 },
     coverage: { turns: 2, replayedTurns: 1, requests: 2, replayedRequests: 2, notReplayed: [{ reason: "The log has no token counts for this turn.", turns: 1 }] },
-    selfCheck: { model: "claude-sonnet-5.5", requests: 2, matching: 2, readTolerancePercent: 5, passed: true },
+    selfCheck: { model: "claude-sonnet-5.5", models: ["claude-sonnet-5.5"], requests: 2, matching: 2, readTolerancePercent: 5, passed: true },
     assumptions: [{ id: "A1", text: "The other model answers with the same number of tokens.", confidence: "inferred" }],
     ...overrides,
   };
@@ -99,12 +99,33 @@ describe("sessionReplayComparisonSchema", () => {
     sessionId: "s1",
     providerId: "claude-code",
     currency: "USD" as const,
+    measuredModels: ["claude-sonnet-5.5"],
     measured: { value: 0.042, knownTurns: 1, turns: 2 },
     entries: [
-      { model: "claude-sonnet-5.5", vendorId: "anthropic", total: { value: 0.04, knownTurns: 1, turns: 2 }, replayedTurns: 1, isMeasuredModel: true },
-      { model: "gpt-5.6-terra", vendorId: "openai", total: { value: 0.031, knownTurns: 1, turns: 2 }, replayedTurns: 1, isMeasuredModel: false },
+      { model: "claude-sonnet-5.5", vendorId: "anthropic", total: { value: 0.04, knownTurns: 1, turns: 2 }, replayedTurns: 1, isMeasuredModel: true, isMixedSessionModel: false },
+      { model: "gpt-5.6-terra", vendorId: "openai", total: { value: 0.031, knownTurns: 1, turns: 2 }, replayedTurns: 1, isMeasuredModel: false, isMixedSessionModel: false },
     ],
   };
+
+  it("needs the models the session used", () => {
+    const without: Record<string, unknown> = { ...comparison };
+    delete without.measuredModels;
+    expect(sessionReplayComparisonSchema.safeParse(without).success).toBe(false);
+  });
+
+  it("accepts a mixed session's own entry, flagged mixed with both models named", () => {
+    const mixed = {
+      ...comparison,
+      measuredModels: ["claude-sonnet-5.5", "claude-opus-5.5"],
+      entries: [{ ...comparison.entries[0]!, isMeasuredModel: false, isMixedSessionModel: true }, comparison.entries[1]!],
+    };
+    expect(sessionReplayComparisonSchema.parse(mixed)).toEqual(mixed);
+  });
+
+  it("refuses an entry that is both the measured model and a mixed session's", () => {
+    const both = { ...comparison, entries: [{ ...comparison.entries[0]!, isMixedSessionModel: true }, comparison.entries[1]!] };
+    expect(sessionReplayComparisonSchema.safeParse(both).success).toBe(false);
+  });
 
   it("accepts the session's total on several models", () => {
     expect(sessionReplayComparisonSchema.parse(comparison)).toEqual(comparison);

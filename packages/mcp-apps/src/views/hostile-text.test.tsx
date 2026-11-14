@@ -205,7 +205,7 @@ describe("U12 with logged text planted in every field", () => {
       ],
       totals: { measured: { value: 2, knownTurns: 1, turns: 2 }, simulated: { value: null, knownTurns: 0, turns: 2 }, difference: null },
       coverage: { turns: 2, replayedTurns: 1, requests: 2, replayedRequests: 1, notReplayed: [{ reason: HOSTILE, turns: 1 }] },
-      selfCheck: { model: `own ${HOSTILE}`, requests: 4, matching: 3, readTolerancePercent: 5, passed: false },
+      selfCheck: { model: `own ${HOSTILE}`, models: [`own ${HOSTILE}`], requests: 4, matching: 3, readTolerancePercent: 5, passed: false },
       assumptions: [{ id: "A1", text: HOSTILE, confidence: "unknown" }],
     });
 

@@ -50,6 +50,12 @@ describe("ReplayView, compare mode", () => {
     expect(screen.queryByRole("alert")).toBeNull();
   });
 
+  it("says measured on A, then B for a session that switched models, and calls out that there is no own-model check", () => {
+    setup(boardComparison({ measuredModels: ["claude-sonnet-5.5", "claude-opus-5.5"], entries: [{ ...entry("claude-sonnet-5.5", 183.9, 42), isMixedSessionModel: true }, entry("claude-haiku-5.5", 38.2, 42)] }));
+    expect(screen.getByText("Session 7f3a9c2e · 42 turns · measured on claude-sonnet-5.5, then claude-opus-5.5")).toBeInTheDocument();
+    expect(screen.getByRole("alert")).toHaveTextContent("No own-model check");
+  });
+
   it("calls out a missing own-model check", () => {
     setup(boardComparison({ entries: [entry("claude-haiku-5.5", 38.2, 42)] }));
     expect(screen.getByRole("alert")).toHaveTextContent("No own-model check");
@@ -227,7 +233,7 @@ describe("ReplayView, replay mode", () => {
   });
 
   it("states a passed self-check without an alert", () => {
-    direct({ selfCheck: { model: "claude-sonnet-5.5", requests: 44, matching: 44, readTolerancePercent: 5, passed: true } });
+    direct({ selfCheck: { model: "claude-sonnet-5.5", models: ["claude-sonnet-5.5"], requests: 44, matching: 44, readTolerancePercent: 5, passed: true } });
     expect(screen.queryByRole("alert")).toBeNull();
     expect(screen.getByText("Self-check passed")).toBeInTheDocument();
     expect(screen.getByText(/44 of 44 requests matched within 5 % cache read/)).toBeInTheDocument();
@@ -346,7 +352,7 @@ describe("ReplayView, replay mode", () => {
       ],
       totals: { measured: { value: 5, knownTurns: 2, turns: 2 }, simulated: { value: null, knownTurns: 0, turns: 2 }, difference: null },
       coverage: { turns: 2, replayedTurns: 2, requests: 2, replayedRequests: 2, notReplayed: [] },
-      selfCheck: { model: "claude-sonnet-5.5", requests: 44, matching: 44, readTolerancePercent: 5, passed: true },
+      selfCheck: { model: "claude-sonnet-5.5", models: ["claude-sonnet-5.5"], requests: 44, matching: 44, readTolerancePercent: 5, passed: true },
     });
     const simulated = screen.getByRole("group", { name: /Simulated on local-llama-4/ });
     expect(simulated).toHaveTextContent("Unknown");

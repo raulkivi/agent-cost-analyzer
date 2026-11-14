@@ -75,7 +75,7 @@ function replayOf(request: ReplayRequest, turns: SessionReplay["turns"], selfChe
     turns,
     totals: { measured: { value: null, knownTurns: 0, turns: 0 }, simulated: { value: null, knownTurns: 0, turns: 0 }, difference: null },
     coverage: { turns: turns.length, replayedTurns: turns.length, requests: turns.length, replayedRequests: turns.length, notReplayed: [] },
-    selfCheck: selfCheckPassed === null ? null : { model: "claude-sonnet-5.5", requests: 1, matching: selfCheckPassed ? 1 : 0, readTolerancePercent: 5, passed: selfCheckPassed },
+    selfCheck: selfCheckPassed === null ? null : { model: "claude-sonnet-5.5", models: ["claude-sonnet-5.5"], requests: 1, matching: selfCheckPassed ? 1 : 0, readTolerancePercent: 5, passed: selfCheckPassed },
     assumptions: [REPLAY_ASSUMPTIONS.A1, REPLAY_ASSUMPTIONS.A2],
   };
 }

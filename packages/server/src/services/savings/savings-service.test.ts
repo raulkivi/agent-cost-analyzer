@@ -109,7 +109,7 @@ describe("SavingsService over every detector", () => {
         turns: [],
         totals: { measured: { value: 1, knownTurns: 2, turns: 2 }, simulated: { value: 0.25, knownTurns: 2, turns: 2 }, difference: -0.75 },
         coverage: { turns: 2, replayedTurns: 2, requests: 2, replayedRequests: 2, notReplayed: [] },
-        selfCheck: { model: "claude-sonnet-5", requests: 1, matching: 1, readTolerancePercent: 5, passed: true },
+        selfCheck: { model: "claude-sonnet-5", models: ["claude-sonnet-5"], requests: 1, matching: 1, readTolerancePercent: 5, passed: true },
         assumptions: [{ id: "A1", text: "Same conversation.", confidence: "unknown" }],
       });
       return { status: "ok" as const, value };
