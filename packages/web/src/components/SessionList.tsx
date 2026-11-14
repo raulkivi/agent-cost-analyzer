@@ -76,44 +76,28 @@ export function SessionList({
 
   return (
     <div>
-      <h6 style={{ margin: "0 0 var(--space-2) var(--space-1)" }}>
+      <h6 className="session-list-heading">
         {mode === "learn" ? "Scenarios" : "Sessions"}
       </h6>
-      <div className="field" style={{ marginBottom: "var(--space-2)" }}>
+      <div className="field session-list-search">
         <input
           className="input"
-          style={{ fontSize: 13 }}
           placeholder="Search…"
           aria-label={mode === "learn" ? "Search scenarios" : "Search sessions"}
           value={query}
           onChange={(event) => setQuery(event.target.value)}
         />
       </div>
-      <ul
-        aria-label={mode === "learn" ? "Scenarios" : "Sessions"}
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          gap: "var(--space-2)",
-          maxHeight: 520,
-          overflowY: "auto",
-          paddingRight: 2,
-          margin: 0,
-          paddingLeft: 0,
-          listStyle: "none",
-        }}
-      >
-        {filtered.map((session, index) => {
-          const tabIndex = session.id === tabStopId ? 0 : -1;
-          return (
-            <li key={session.id}>
-              <Blueprint
-                style={{
-                  position: "relative",
-                  background: session.id === selectedSessionId ? "var(--color-accent-100)" : undefined,
-                }}
-              >
-                {/* The card and its advice checkbox are siblings, not one
+      {/* One frame round the whole list; per-row frames made 88-120px rows. */}
+      <Blueprint>
+        <ul className="session-list" aria-label={mode === "learn" ? "Scenarios" : "Sessions"}>
+          {filtered.map((session, index) => {
+            const tabIndex = session.id === tabStopId ? 0 : -1;
+            const selected = session.id === selectedSessionId;
+            const kickerText = kicker(mode, session);
+            return (
+              <li key={session.id} className={selected ? "session-row session-row--selected" : "session-row"}>
+                {/* The row button and its advice checkbox are siblings, not one
                     inside the other (no nested interactive controls). */}
                 <button
                   ref={(element) => {
@@ -121,34 +105,32 @@ export function SessionList({
                     else cards.current.delete(session.id);
                   }}
                   type="button"
-                  className="session-card-button"
+                  className={onToggleAdvice ? "session-card-button session-card-button--with-check" : "session-card-button"}
                   tabIndex={tabIndex}
                   aria-label={session.title}
-                  aria-current={session.id === selectedSessionId ? "true" : undefined}
+                  aria-current={selected ? "true" : undefined}
                   onClick={() => onSelect(session)}
                   onKeyDown={(event) => handleCardKeyDown(event, index)}
                   onFocus={() => setFocusedId(session.id)}
-                  style={{ paddingRight: onToggleAdvice ? 26 : undefined }}
                 >
-                  {kicker(mode, session) && <div className="card-kicker">{kicker(mode, session)}</div>}
-                  <div className="card-title truncate" style={{ fontSize: 15, marginTop: 2 }}>
-                    {session.title}
-                  </div>
-                  <div className="card-meta" style={{ marginTop: 6 }}>
-                    {session.turnCount} {session.turnCount === 1 ? "turn" : "turns"}
-                    {session.costAiCredits.known && (
-                      <> · {formatAiCredits(session.costAiCredits)} AI Credits</>
+                  <span className="card-title truncate session-row-title">{session.title}</span>
+                  <span className="session-row-meta">
+                    {kickerText && (
+                      <>
+                        <span className="card-kicker">{kickerText}</span>
+                        {" · "}
+                      </>
                     )}
-                  </div>
+                    {session.turnCount} {session.turnCount === 1 ? "turn" : "turns"}
+                    {session.costAiCredits.known && <> · {formatAiCredits(session.costAiCredits)} AI Credits</>}
+                  </span>
+                  {/* A cost explanation, so it stays visible (never hide estimate/unknown labels). */}
                   {session.subagentSpend && (
-                    <div className="card-meta">{sessionListSubagentLine(session.subagentSpend)}</div>
+                    <span className="session-row-note">{sessionListSubagentLine(session.subagentSpend)}</span>
                   )}
                 </button>
                 {onToggleAdvice && (
-                  <label
-                    title="Select for advice export"
-                    style={{ position: "absolute", top: 6, right: 6, lineHeight: 0 }}
-                  >
+                  <label title="Select for advice export" className="session-row-check">
                     <input
                       type="checkbox"
                       tabIndex={tabIndex}
@@ -158,13 +140,13 @@ export function SessionList({
                     />
                   </label>
                 )}
-              </Blueprint>
-            </li>
-          );
-        })}
-      </ul>
+              </li>
+            );
+          })}
+        </ul>
+      </Blueprint>
       {filtered.length === 0 && (
-        <p className="text-muted" style={{ fontSize: 12 }}>
+        <p className="text-muted session-list-empty">
           No matches.
         </p>
       )}

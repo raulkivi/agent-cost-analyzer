@@ -780,7 +780,7 @@ export function App({ performanceMarks = pagePerformanceMarks }: AppProps = {}) 
             }}
           >
             {listColumn && (
-            <div style={fullWidthView ? { display: "none" } : undefined}>
+            <div className="list-column" style={fullWidthView ? { display: "none" } : undefined}>
               <AsyncView
                 status={listLoad.status}
                 loadingText={mode === "learn" ? "Loading scenarios…" : "Loading sessions…"}
