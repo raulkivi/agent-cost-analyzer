@@ -265,13 +265,42 @@ a { color: var(--color-accent-text); text-underline-offset: 3px; }
   font-size: 18px; margin-right: auto;
 }
 
-/* — session list card: a plain full-width button inside the blueprint
-     frame, beside (not around) its advice checkbox — */
+/* — session list: compact two-line rows under one frame (Phase 17 P3).
+     The list scrolls inside the sticky left column; the row button and its
+     advice checkbox are siblings — */
+.list-column {
+  position: sticky; top: var(--space-4);
+  display: flex; flex-direction: column; min-height: 0;
+}
+.session-list-heading { margin: 0 0 var(--space-2) var(--space-1); }
+.session-list-search { margin-bottom: var(--space-2); }
+.session-list-search .input { font-size: 13px; }
+.session-list-empty { font-size: 12px; }
+.session-list {
+  display: flex; flex-direction: column; margin: 0; padding: 0; list-style: none;
+  max-height: calc(100vh - 120px); overflow-y: auto; overflow-x: hidden;
+}
+.session-row {
+  position: relative; border-bottom: 1px solid var(--color-divider);
+  border-left: 2px solid transparent;
+}
+.session-row:hover { background: color-mix(in srgb, var(--color-accent-100) 50%, transparent); }
+.session-row--selected, .session-row--selected:hover {
+  background: var(--color-accent-100); border-left-color: var(--color-accent);
+}
 .session-card-button {
-  display: block; width: 100%; padding: var(--space-3); text-align: left;
+  display: flex; flex-direction: column; width: 100%; min-width: 0;
+  padding: var(--space-2) var(--space-3); text-align: left;
   font: inherit; color: inherit; background: transparent; border: 0; cursor: pointer;
 }
-.session-card-button:focus-visible { outline-offset: -2px; }
+.session-card-button--with-check { padding-right: 26px; }
+.session-card-button:focus-visible { outline: 2px solid var(--color-accent); outline-offset: -2px; }
+.session-row-title { font-size: 13px; line-height: 1.25; }
+.session-row-meta, .session-row-note {
+  font-size: 11px; line-height: 1.3; color: var(--color-text-muted);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.session-row-check { position: absolute; top: var(--space-2); right: var(--space-3); line-height: 0; }
 /* — turns table rows take focus (arrow keys, §3.5) — */
 .table tbody tr:focus-visible { outline: 2px solid var(--color-accent); outline-offset: -2px; }
 
