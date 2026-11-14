@@ -167,3 +167,24 @@ describe("readCopilotEventLog", () => {
     expect(log?.events.some((e) => e.id === "huge")).toBe(false);
   });
 });
+
+describe("readCopilotEventLog record separators", () => {
+  it("keeps an event whole when its text holds U+2028, U+2029 or a lone carriage return", async () => {
+    const dir = mkdtempSync(path.join(tmpdir(), "copilot-event-sep-"));
+    try {
+      const filePath = path.join(dir, "events.jsonl");
+      const text = "a\u2028b\u2029c\rd";
+      const first = ev({ id: "e1", data: { text } });
+      expect(first).toContain("\u2028");
+      writeFileSync(filePath, `${first}\n${ev({ id: "e2" })}\r\n`);
+
+      const log = await readCopilotEventLog(filePath);
+
+      expect(log?.events.map((event) => event.id)).toEqual(["e1", "e2"]);
+      expect((log?.events[0].data as { text: string }).text).toBe(text);
+      expect(log?.skippedLines).toBe(0);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+});

@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import { createReadStream, existsSync } from "node:fs";
-import { createInterface } from "node:readline";
+import { existsSync } from "node:fs";
+import { readRecordLines } from "../../platform/files/read-record-lines.js";
 
 // Generic line shape for Claude Code CLI's own JSONL session format
 // (confirmed against real captures under ~/.claude/projects on this
@@ -61,22 +61,16 @@ export async function readClaudeCodeSessionFile(filePath: string): Promise<Claud
   const entries: ClaudeCodeRawEntry[] = [];
   let rawLineCount = 0;
 
-  const lines = createInterface({
-    input: createReadStream(filePath, "utf-8"),
-    crlfDelay: Infinity,
-  });
-
-  for await (const line of lines) {
+  for await (const line of readRecordLines(filePath)) {
     if (!line.trim()) {
       continue;
     }
     rawLineCount += 1;
 
     const parsed = parseClaudeCodeJsonlLine(line);
-    if (!parsed) {
-      continue;
+    if (parsed) {
+      entries.push(parsed);
     }
-    entries.push(parsed);
   }
 
   return { entries, rawLineCount };

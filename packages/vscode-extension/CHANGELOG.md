@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Copilot logs whose records hold the characters U+2028 or U+2029, or a lone carriage return, inside a message are no longer split and dropped, so those sessions show all their requests and costs.
 - In a narrow panel the All sessions audit's tables scroll inside their panels instead of making the view wider.
 - The replay coverage line now lists the subagent runs it leaves out, as the 0.12.0 notes said: "N subagent runs not replayed: replay covers the main agent only", and the replay summary adds their AI Credits (or "unknown").
 
