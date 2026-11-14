@@ -55,6 +55,7 @@ test("V2: figures priced from a user price version say 'your prices'; billed, re
   await selectListValue(page, "Project", /Customer portal/);
   const cost = page.getByRole("group", { name: "Cost", exact: true });
   await expect(cost.getByRole("note", { name: NAME })).toHaveText("your prices");
+  expect(await axeViolations(page)).toEqual([]);
   // Billed and reported totals are never labelled, whatever priced the other turns.
   const basis = page.getByRole("group", { name: "Cost basis for totals" });
   await basis.locator("label.seg-opt", { hasText: "Billed" }).click();
