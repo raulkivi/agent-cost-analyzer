@@ -128,7 +128,8 @@ inEachClaudeSet(() => {
 
     await expect(view.backButton("Back to savings")).toBeVisible();
     await expect(view.kicker()).toHaveText("Agent Cost Analyzer · Savings › Session replay");
-    expect(toolCallsIn(host.calls)).toEqual([{ name: "replay_session", arguments: { sessionId: "9d02e4c1", model: "claude-haiku-5.5", provider: "vscode" } }]);
+    // The drill-down header shows before the host records the call, so wait for it.
+    await expect.poll(() => toolCallsIn(host.calls)).toEqual([{ name: "replay_session", arguments: { sessionId: "9d02e4c1", model: "claude-haiku-5.5", provider: "vscode" } }]);
     await view.back("Back to savings");
     expect(await view.focusedControl()).toBe("Open replay for session 9d02e4c1");
     expect(modelTurnsIn(host.calls)).toEqual([]);
