@@ -614,6 +614,12 @@ review rejections.
   owner: (a) no app or panel UI shows the subagent runs a replay left out,
   though the 0.12.0 changelog implies it; (b) the extension README says 18
   Learn sessions, the extension guide 17 Copilot scenarios.
+- 2026-11-14: all free takes re-recorded from one build with the ledger
+  design (after `npm ci`: Phase 17 changed dependencies, and a stale
+  checkout built an old `dist`). All 9 extension scenes and W1–W3 pass.
+  GIFs: E1 1.18 MB, E3 1.07, E4 2.79, E5 2.18, E6 2.42, E7 1.39, E8 2.36,
+  E10 1.83, W1 3.80, W2 3.81, W3 5.05; about 28 MB (the dark ledger grid
+  costs the W GIFs more). Waiting for the owner's review.
 - 2026-11-14: the standalone app's ledger design (Phase 17, PR #259)
   landed after the W takes. Owner decision: W demos in dark, to match the
   extension, and W1 opens by flipping the header's colour switch from
