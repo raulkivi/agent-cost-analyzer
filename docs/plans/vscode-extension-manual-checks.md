@@ -1,6 +1,6 @@
 # AI Credits Analyzer: manual checks record (step 10.9)
 
-**Last changed:** 2026-11-12 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-14 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 No row here gates a release. Since 2026-11-11 (step 10.17) every UI check
 before a release is automated: wdio specs for VS Code and Copilot Chat,
@@ -206,10 +206,11 @@ data (`scripts/ui-check/showcase-fixture.mts`) at 2× scale. Run it again
 after a UI change. `panel-dark.png` shows the panel alone, without the
 side bar.
 
-Done in a real VS Code window: 3, 4 and 7, taken in a throwaway profile
-seeded with the same made-up data (`createShowcaseFixture`, run with
-`--user-data-dir` and `--extensions-dir`); 7 with Copilot Chat signed in
-and `aiCreditsAnalyzer.mcp.enabled` on.
+Automated: 3, 4 and 7 are now produced by the demo scenes (step 10.22):
+`sidebar.png` by E6, `walkthrough.png` by E1 and `mcp-agent-mode.png` by
+E9, each through `saveStill`. Commands, frame and privacy rules are in
+[vscode-ui-automation.md](vscode-ui-automation.md) §8. The retake
+instructions below are for the manual route, now superseded for these three.
 
 The list, for retakes:
 

@@ -1,6 +1,6 @@
 # Developer documentation
 
-**Last changed:** 2026-11-13 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-14 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 For people building or changing Agent Cost Analyzer and the AI Credits
 Analyzer extension. Users: start at the [root README](../README.md).
@@ -150,7 +150,7 @@ An npm workspace:
 - [VS Code UI automation plan](plans/vscode-ui-automation.md) —
   step 10.16 (merged): automating the manual
   checks that need a real VS Code window with `wdio-vscode-service` under
-  xvfb.
+  xvfb. §8: demo recording commands, privacy rules and the GIF budget.
 - [pi-system-prompt-logger](../packages/pi-system-prompt-logger/README.md) —
   optional Pi coding-agent extension, vendored in this repo, that captures
   pi's assembled system prompt to a JSONL sidecar log so Analyze mode's
