@@ -598,7 +598,7 @@ a { color: var(--color-accent-text); text-underline-offset: 3px; }
 }
 .hbar-row:hover { background: color-mix(in srgb, var(--color-text) 5%, transparent); }
 .hbar-row--selected, .hbar-row--selected:hover { background: var(--color-accent-100); }
-.hbar-label { font-family: monospace; font-size: 12px; }
+.hbar-label { font-family: var(--font-mono); font-size: 12px; }
 .hbar-track { display: flex; align-items: center; gap: 2px; min-width: 0; }
 .hbar-segment { height: 12px; min-width: 2px; }
 .hbar-segment:last-of-type { border-radius: 0 4px 4px 0; }
@@ -623,7 +623,7 @@ a { color: var(--color-accent-text); text-underline-offset: 3px; }
 .filter-chip[aria-pressed="true"] { background: var(--color-accent-fill); border-color: var(--color-accent-fill); color: var(--color-bg); }
 .audit-section { display: flex; flex-direction: column; gap: var(--space-2); padding: 8px; }
 .audit-grid-2 { align-items: start; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: var(--space-4); }
-.mono { font-family: monospace; font-size: 12px; }
+.mono { font-family: var(--font-mono); font-size: 12px; }
 .failure-badge { display: inline-flex; align-items: center; gap: 2px; margin-left: 6px; font-size: 11px; color: #b02a2a; font-weight: 500; }
 
 /* — Insights dashboard (Phase 9.11, docs/plans/insights-dashboard.md):
@@ -734,7 +734,7 @@ a { color: var(--color-accent-text); text-underline-offset: 3px; }
 .estimate-units { font-size: 12px; margin-top: 2px; }
 .billing-issued { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
 .billing-formats { display: flex; gap: 16px; margin-bottom: 8px; }
-.billing-preview { width: 100%; font-family: var(--font-mono, monospace); font-size: 12px; box-sizing: border-box; }
+.billing-preview { width: 100%; font-family: var(--font-mono); font-size: 12px; box-sizing: border-box; }
 .cost-marker-line-observed { stroke: var(--color-text); stroke-opacity: 0.6; stroke-width: 1; stroke-dasharray: 4 3; }
 .cost-direct-label { font-size: 12px; fill: var(--color-text); }
 .cost-direct-value { font-size: 12px; fill: var(--color-text-muted); font-variant-numeric: tabular-nums; }
@@ -875,7 +875,7 @@ main[data-layout="narrow"] .nav { flex-wrap: wrap; gap: var(--space-2); }
 .mt-2 { margin-top: var(--space-2); }
 .mt-4 { margin-top: var(--space-4); }
 .btn-compact { font-size: 12px; padding: var(--space-1) var(--space-4); }
-.tag-mono { font-family: monospace; }
+.tag-mono { font-family: var(--font-mono); }
 .tag-lead { display: inline-flex; margin-top: var(--space-3); }
 .tag-lead + .tag-lead { margin-left: var(--space-3); }
 .tag-attachment { display: inline-flex; margin: var(--space-1) var(--space-2) var(--space-1) 0; }
@@ -905,7 +905,7 @@ main[data-layout="narrow"] .nav { flex-wrap: wrap; gap: var(--space-2); }
 .inspector-tool-call { display: flex; flex-direction: column; gap: var(--space-2); }
 .inspector-reasoning { margin-top: var(--space-2); border-top: 1px solid var(--color-divider); padding-top: var(--space-2); }
 .inspector-reasoning--row { display: flex; align-items: center; gap: var(--space-2); }
-.payload-pre { margin: 0; white-space: pre-wrap; word-break: break-word; font-family: monospace; font-size: 12px; line-height: 1.6; }
+.payload-pre { margin: 0; white-space: pre-wrap; word-break: break-word; font-family: var(--font-mono); font-size: 12px; line-height: 1.6; }
 
 /* — app shell — */
 .nav-logo { width: 24px; height: 24px; flex: none; background: var(--color-accent-900); }
@@ -1104,7 +1104,7 @@ main[data-layout="narrow"] .nav { flex-wrap: wrap; gap: var(--space-2); }
 .savings-row-main, .savings-row-amount { display: flex; flex-direction: column; gap: 2px; min-width: 0; overflow-wrap: anywhere; }
 .savings-row-amount { align-items: flex-end; text-align: right; }
 .savings-row-title { font-weight: 600; }
-.savings-subject { display: inline-flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); font-family: monospace; font-size: 12px; overflow-wrap: anywhere; }
+.savings-subject { display: inline-flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); font-family: var(--font-mono); font-size: 12px; overflow-wrap: anywhere; }
 .savings-amount-text { font-variant-numeric: tabular-nums; font-weight: 600; }
 .savings-amount-text--unknown { font-style: italic; }
 .savings-coverage { font-size: 12px; }
@@ -1139,4 +1139,83 @@ main[data-layout="narrow"] .nav { flex-wrap: wrap; gap: var(--space-2); }
   .savings-row-button { grid-template-columns: auto minmax(0, 1fr); }
   .savings-row-amount { grid-column: 2; align-items: flex-start; text-align: left; }
   .savings-not-analysed { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* — ledger component rules (dense-ledger-ui.md L3) —
+   html[data-color-mode] is set only by the standalone app, so none of this
+   reaches the VS Code webview or the MCP Apps views. Mono is 15-20% wider than
+   Barlow, hence the 12px base; serif is reserved for running prose. */
+html[data-color-mode] body {
+  font-size: 12px;
+  /* Faint graph paper on the page only: 20px fine and 100px major cells.
+     Panels get an opaque ground below so the grid shows in the gutters. */
+  background-image:
+    linear-gradient(to right, color-mix(in srgb, var(--color-text) 4%, transparent) 1px, transparent 1px),
+    linear-gradient(to bottom, color-mix(in srgb, var(--color-text) 4%, transparent) 1px, transparent 1px),
+    linear-gradient(to right, color-mix(in srgb, var(--color-text) 2%, transparent) 1px, transparent 1px),
+    linear-gradient(to bottom, color-mix(in srgb, var(--color-text) 2%, transparent) 1px, transparent 1px);
+  background-size: 20px 20px, 20px 20px, 100px 100px, 100px 100px;
+}
+html[data-color-mode] .blueprint,
+html[data-color-mode] .card,
+html[data-color-mode] .audit-section,
+html[data-color-mode] .stat-tile,
+html[data-color-mode] .table-scroll { background: var(--color-bg); }
+html[data-color-mode] .blueprint > .corner { display: none; }
+
+html[data-color-mode] h1,
+html[data-color-mode] h2,
+html[data-color-mode] h3,
+html[data-color-mode] h4 { font-family: var(--font-mono); font-weight: 600; letter-spacing: 0; }
+html[data-color-mode] h1 { font-size: 22px; }
+html[data-color-mode] h2 { font-size: 18px; }
+html[data-color-mode] h3 { font-size: 15px; }
+html[data-color-mode] h4 { font-size: 13px; }
+
+html[data-color-mode] .table th,
+html[data-color-mode] .card-kicker,
+html[data-color-mode] .stat-tile-label,
+html[data-color-mode] h6,
+html[data-color-mode] .field > label {
+  font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+/* A header that is already a sentence-case group stays one (see .sim-group). */
+html[data-color-mode] .table th.sim-group { text-transform: none; letter-spacing: normal; }
+
+html[data-color-mode] .seg-opt,
+html[data-color-mode] .btn,
+html[data-color-mode] .input,
+html[data-color-mode] .filter-chip { font-size: 12px; }
+/* Mono options are wider than Barlow's: trimmed padding keeps the Analyze
+   toolbar (range, view, cost basis) from wrapping onto a third row. */
+html[data-color-mode] .seg-opt { padding-inline: 7px; }
+/* Tighter note and label leading keeps wrapped KPI tiles within 80px. */
+html[data-color-mode] .stat-tile { padding: 3px 6px; }
+html[data-color-mode] .audit-section { padding: 6px; }
+html[data-color-mode] .insights-main { gap: var(--space-3); }
+html[data-color-mode] .stat-tile-label,
+html[data-color-mode] .stat-tile-note { line-height: 1.1; }
+
+/* 12px mono with tighter leading keeps wrapped rows within the Phase 17
+   height budget. */
+html[data-color-mode] .table { font-size: 12px; line-height: 1.3; }
+html[data-color-mode] .table td,
+html[data-color-mode] .stat-tile-value,
+html[data-color-mode] .chart-axis-text,
+html[data-color-mode] .hbar-value,
+html[data-color-mode] .listbox-count { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+html[data-color-mode] .stat-tile-value { font-size: 16px; }
+/* Fifteen mono columns must fit the 880px Learn centre without sideways
+   scrolling: slimmer cell padding and a smaller, less tracked header. */
+html[data-color-mode] .turns-table th,
+html[data-color-mode] .turns-table td { padding: 4px; }
+html[data-color-mode] .turns-table th { font-size: 10px; letter-spacing: 0.06em; }
+html[data-color-mode] .stat-tiles-footnote { font-family: var(--font-mono); font-size: 11px; color: var(--color-text-muted); }
+
+html[data-color-mode] .insights-narrative,
+html[data-color-mode] .explanation-text,
+html[data-color-mode] .assumptions-list,
+html[data-color-mode] .dialog-body {
+  font-family: var(--font-prose); font-size: 14px; line-height: 1.5; text-transform: none; letter-spacing: normal; opacity: 1;
 }
