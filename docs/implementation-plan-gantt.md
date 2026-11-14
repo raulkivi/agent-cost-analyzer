@@ -2,7 +2,7 @@
 
 **Last changed:** 2026-11-14 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
-Timeline of [implementation-plan.md](implementation-plan.md) phases. Percentages are step-based: done phases 100%, minus open owner reviews or manual checks; Phase 14 is 8 of 9 steps, with 14.8's docs written and in the owner's review. Dates are first-commit to merge dates from git history (as of 2026-11-07); not-started phases have no dates and are listed below the chart.
+Timeline of [implementation-plan.md](implementation-plan.md) phases. Percentages are step-based: done phases 100%, minus open owner reviews or manual checks; Phase 14 is 8 of 9 steps, with 14.8's docs written and in the owner's review. Dates are first-commit to merge dates from git history (as of 2026-11-07); not-started phases have no dates and are listed below the chart. The 1.0.0 section has one bar per criterion in [implementation-plan.md](implementation-plan.md#100-release); bars not started start at a placeholder date, 2026-11-16.
 
 ```mermaid
 %%{init: {
@@ -63,8 +63,8 @@ gantt
     9.12 MCP tools v2 (100%)                :done, p912, 2026-10-12, 1d
 
     section VS Code extension
-    10.0-10.12 Extension build (95%)       :done, p10a, 2026-10-24, 2d
-    10.9/10.10 manual checks, review (5%)  :active, p10ar, after p10a, 1d
+    10.0-10.12 Extension build (100%)      :done, p10a, 2026-10-24, 2d
+    10.9/10.10 closed by owner decision (100%) :done, p10ar, 2026-11-14, 1d
     10.13-10.15 Agent Host sessions (100%)  :done, p10b, 2026-10-28, 6d
     10.16 UI automation (100%)             :done, p10c, 2026-11-04, 2d
     10.17 Release UI gate (100%)           :done, p10d, after p10c, 1d
@@ -95,6 +95,23 @@ gantt
     section UI density
     17 Dense ledger UI (100%, 14 of 14 tasks) :active, p17, 2026-11-14, 5d
 
+    section 1.0.0
+    C1 Phase 10 closed (100%)                 :done, c1, 2026-11-14, 1d
+    C2 Phase 11 pi real captures (0%)         :c2, 2026-11-16, 1d
+    C3 Phase 14 real-data check (0%)          :c3, 2026-11-16, 1d
+    C4 Phase 15 real-data check (0%)          :c4, 2026-11-16, 1d
+    C5 Savings Increment 2 finished (in progress) :active, c5, 2026-11-14, 2d
+    C6 U5 and U2 Added to chat (0%)           :c6, 2026-11-16, 1d
+    C7 Desktop prompts, R4 accepted (100%)    :done, c7, 2026-11-14, 1d
+    C8 npm package agent-cost-analyzer (0%)   :c8, 2026-11-16, 1d
+    C9 MA13 allowance in the app (0%)         :c9, 2026-11-16, 1d
+    C10 Step 10.20 subagent tool calls (0%)   :c10, 2026-11-16, 1d
+    C11 Savings Increment 3 (0%)              :c11, 2026-11-16, 1d
+    C12 Release tag ruleset (0%)              :c12, 2026-11-16, 1d
+    C13 Open VSX trusted publishing (0%)      :c13, 2026-11-16, 1d
+    C14 User price label, 5.10 (0%)           :c14, 2026-11-16, 1d
+    1.0.0 both products                       :milestone, r100, after c1 c2 c3 c4 c5 c6 c7 c8 c9 c10 c11 c12 c13 c14, 0d
+
     section Releases
     App v0.3.0-alpha :milestone, r0, 2026-08-09, 0d
     App v0.4.0-alpha :milestone, r1, 2026-08-10, 0d
@@ -116,7 +133,7 @@ gantt
 
 ## Not started
 
-- Phase 11 (0%) — pi provider real-capture verification.
+- Phase 11 (0%) — pi provider real-capture verification; required for 1.0.0 (criterion C2, owner 2026-11-14).
 
 ## Open items
 
@@ -130,7 +147,7 @@ gantt
 - Phase 14: steps 14.0-14.7 built; 14.8's docs written, the owner's review and the §13 exit criterion on real sessions open; the extension guide's replay screenshots open (User Guide's done). Step table: [analyze-session-replay.md](plans/analyze-session-replay.md) §12.
 - Phase 15: owner's review and exit criterion on real data.
 - Phase 13 (vendor-aware Learn simulation, 100%): done 2026-11-14 with the owner's eyes-on review of step 13.8. Follow-up from that review, fixed 2026-11-14 for the next release: the Vendors tab shows one block per model, so it fits the narrow side column (names no longer wrap, no column scrolls off; `density.spec.ts` at 1440 and 360 px, light and dark). Calibration stays Claude Code only (owner, 2026-11-14). Plan: [vendor-aware-learn-simulation.md](plans/vendor-aware-learn-simulation.md).
-- Phase 12 (done): the owner's decisions on U5's "Sent" label and Claude Desktop permission prompts ([mcp-apps.md](plans/mcp-apps.md) §6.1); follow-ups in §11. Record: [mcp-apps-handover.md](plans/mcp-apps-handover.md); current state: [session-handover.md](session-handover.md).
+- 1.0.0 (both products, 2 of 14 criteria met): owner decisions 2026-11-14; no target date, released when C1-C14 are met. Done: C1 (Phase 10 closed: 10.9 superseded by step 10.17, 10.10 covered by the 0.12.0 reviews) and C7 (Claude Desktop permission prompts, risk R4 accepted). Next: V1 (U5 and U2 "Added to chat"), V2 (threat-model §5.10 label), V3 and V4 (Phase 14 and 15 real-data checks), the four per-feature plans (npm package, MA13, step 10.20, Savings Increment 3) and the owner steps (tag ruleset, Open VSX trusted publisher, pi captures). Not in 1.0: mitmproxy tool calls (F6), threat-model §5.9. Criteria, tasks and the release procedure: [implementation-plan.md](implementation-plan.md#100-release).
 
 ## Steps 10.22 and 10.23 detail — Demo recordings
 

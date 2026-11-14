@@ -52,7 +52,9 @@ An npm workspace:
 - [Architecture](architecture.md) — system design: components, domain
   model, data flow, API design, tech stack, and project structure.
 - [Implementation plan](implementation-plan.md) — phase-by-phase build
-  plan with exit criteria and dependencies.
+  plan with exit criteria and dependencies. Its
+  [1.0.0 release](implementation-plan.md#100-release) section holds the
+  1.0.0 criteria, tasks and release procedure.
 - [Agentic coding explained](agentic-coding-explained.md) — reference
   document on sessions, turns, tool calls, prompt caching, and token
   accounting; the source material Learn mode's scenarios are seeded from.

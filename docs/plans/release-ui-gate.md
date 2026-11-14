@@ -1,6 +1,6 @@
 # Automated pre-release UI gate (step 10.17)
 
-**Last changed:** 2026-11-13 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-14 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 Status: **done 2026-11-11: G0 (#203), G1 (#202), G2 (#207), G3 (#208, #210), G4 (#211), G5 (#205, #206), G6 (#204) and G7 (with the D11 chart fixes) all built; G7's PR is the last to merge.** Owner rule, 2026-11-11: every UI check
 before a release is automated. VS Code and Copilot checks use wdio
@@ -532,7 +532,9 @@ can't express the exceptions.
   merge. Mitigation: state-based waits; a flake gets a fix, not a retry.
 - **R4 Fake host fidelity (G5).** It proves the views against the
   protocol and Claude's recorded theme, not Claude Desktop's own chrome.
-  Accepted by D3.
+  Accepted by D3. Claude Desktop's permission prompts for a view's tool
+  calls fall under it: accepted by the owner on 2026-11-14, no gate row
+  ([mcp-apps.md](mcp-apps.md) §6.1).
 - **R5 Normal mode leans on internals (G3).** The real-Copilot suite depends on
   wdio-vscode-service's arg key (`extensionTestsPath`) and proxy module path,
   and on VS Code state keys (`chat.tools.global.autoApprove.optIn`,

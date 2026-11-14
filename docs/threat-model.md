@@ -1,6 +1,6 @@
 # Threat model
 
-**Last changed:** 2026-11-13 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-14 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 Verified by reading the code, not assumed from the architecture docs. Full
 reviews at `78657f3` (2026-10-26) and `39efe7a` (2026-11-06); since then each
@@ -182,23 +182,29 @@ billing codes from the model.** `list_repositories` has no `includePaths`;
 handling.** Scenario and model ids are in-memory lookups, never a path;
 `app.test.ts` sends traversal-shaped ids to every such route.
 
-**5.8 (Low, concrete; open, found 2026-11-06) — Release and repository
-settings.** Read through the GitHub API on 2026-11-12:
+**5.8 (Low, concrete; open, found 2026-11-06; two items are 1.0
+criteria) — Release and repository settings.** Read through the GitHub
+API on 2026-11-12. Tag protection and the `OVSX_PAT` removal are 1.0
+criteria (owner, 2026-11-14; C12 and C13 in
+[implementation-plan.md](implementation-plan.md#100-release));
+code-owner review is not one:
 - **Code-owner review is not required.** CODEOWNERS starts with
   `* @raulkivi`, so it covers every path, `fixtures/` and
   `services/pricing/` included, but `main` has no branch protection and its
   one ruleset (27004539) requires status checks only. Add "Require review
   from Code Owners" to the ruleset if a second maintainer joins; with one
   owner it would block every PR.
-- **`ext-v*` tags are not protected:** no tag ruleset exists. Add one so
-  only the owner can create or move a release tag.
+- **`ext-v*` and `app-v*` tags are not protected:** no tag ruleset
+  exists. Add one so only the owner can create or move a release tag
+  (1.0 criterion C12).
 - **`OVSX_PAT`** is still in use; delete it once the Open VSX trusted
-  publisher is registered, as the workflow comment says.
+  publisher is registered, as the workflow comment says (1.0 criterion
+  C13).
 - **Done:** the `release` environment requires the owner's review and
   deploys only from `ext-v*` tags.
 
-**5.9 (Low, preventive; open, found 2026-11-06) — Keep the dev tooling
-contained.**
+**5.9 (Low, preventive; open, found 2026-11-06; not a 1.0 criterion,
+owner 2026-11-14) — Keep the dev tooling contained.**
 The `extension-ui` job and the real-Copilot suite pull in a dev tree with 16
 high findings (§7). Keep that job free of secrets and with
 `persist-credentials: false` (both true today), check whether
@@ -206,8 +212,9 @@ high findings (§7). Keep that job free of secrets and with
 and run the real-Copilot suite only with a dedicated test GitHub account
 (§8).
 
-**5.10 (Low, concrete; open, found 2026-11-12) — Show user prices as
-the user's.** The web UI shows a priced figure without saying it came from a
+**5.10 (Low, concrete; open, found 2026-11-12; a 1.0 criterion, C14 in
+[implementation-plan.md](implementation-plan.md#100-release)) — Show user
+prices as the user's.** The web UI shows a priced figure without saying it came from a
 user price version; only the price-book listing and `priceVersionIds` tell.
 Label it where the figure is shown (§4, user price versions).
 

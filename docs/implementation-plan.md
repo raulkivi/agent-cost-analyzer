@@ -9,25 +9,17 @@ extension sharing the same code (vision §5). Phase 11 pins the standalone
 app's pi provider against a real captured session, postponed from Phase 9.6.
 Phase 12 adds branded, interactive MCP Apps views for both products.
 Phase 17 makes the UI denser in every host, then gives the standalone app a ledger theme.
+The [1.0.0 release](#100-release) section lists what both products need for 1.0.0.
 
-**Overall status (2026-11-14):** Phases 0-10 have their code and docs
-merged to `main`. The extension's 0.1.0 is released (tag `ext-v0.1.0`,
-2026-11-03); the latest stable is 0.6.0 (2026-11-11), and 0.5.0 was a
-pre-release (2026-11-10). Open: Phase 10's owner manual checks and decisions (see its
-section), Phase 11 (not started), Phase 12 (done: the MVP, A0–A16, released 2026-11-10 in extension 0.4.0 and app 0.10.0, A12 dropped; Increment 2 (A17–A24) released 2026-11-11 in extension 0.6.0 and app 0.11.0; Increment 3 (A25–A33) released 2026-11-12 in extension 0.8.0 and app 0.12.0; follow-ups in plans/mcp-apps.md §11), Phase 13 (in
-progress: steps 13.0-13.10 and 13.5a merged, the owner's eyes-on review
-of 13.8 open), Phase 14
-(steps 14.0-14.7 built and 14.8's docs written; the owner's docs review
-and the §13 exit criterion on real sessions open) and Phase 15 (steps 15.0-15.15 done; the owner's docs review and
-the exit criterion on real data open). Step 10.19
-([plans/classic-subagent-credits-implementation.md](plans/classic-subagent-credits-implementation.md),
-design in [plans/classic-subagent-credits.md](plans/classic-subagent-credits.md))
-covers classic Copilot Chat subagent AI Credits (done 2026-11-13). Step 10.21
-([plans/monthly-allowance.md](plans/monthly-allowance.md)) is done and
-Phase 16 ([plans/savings-report.md](plans/savings-report.md)) has its Increment 1 built (the
-owner accepted both plans' decisions on 2026-11-12). Phase 17
-([plans/dense-ledger-ui.md](plans/dense-ledger-ui.md)) has Increment 1 (density, P0-P7)
-and Increment 2 L1-L6 (ledger theme and review) done 2026-11-14; the owner's eyes-on review is the last open exit item; it holds step 10.22 tasks 1.10-1.14 until it merges.
+**Overall status (2026-11-14):**
+
+- Released: extension 0.12.0 and app 0.14.0 on 2026-11-14 (tags `ext-v0.12.0` and `app-v0.14.0` on `613724e`).
+- Next release: extension 0.14.0 (stable) and app 0.15.0, carrying Phase 16 Increment 2 and PRs #272 (Marketplace listing), #274 (Learn Vendors tab), #279 (pi system prompt) and #280 (mitmproxy docs).
+- Done: Phases 0-10, 12, 13 and 17; steps 10.19 and 10.21-10.23. Phase 10's manual checks and docs review were closed by the owner on 2026-11-14.
+- Open: Phase 11 (not started); Phases 14 and 15 (exit criteria on real data, now automated checks); Phase 16 Increment 2 (SR18-SR20 merged, SR21 in PR #281, SR22 next).
+- 1.0.0: both products together, no target date; criteria and tasks in [1.0.0 release](#100-release) (owner decisions 2026-11-14).
+- Current status of record: [implementation-plan-gantt.md](implementation-plan-gantt.md).
+
 Each phase has a goal, concrete deliverables, an exit criterion (how you know
 it's done), and its dependencies. Phases are ordered so the riskiest/least
 certain work (real `main.jsonl` parsing) happens after there's already a
@@ -1011,8 +1003,10 @@ doesn't.
   sidecar log into a `Map` keyed by each record's resolved `sessionFile`
   path — the only reliable join key, since `session-id.ts`'s
   `computePiFileHash` is a one-way hash a `Session.id` can't be reversed
-  from. Earliest-record-wins on a shared file (forked/rewound sessions) is
-  a known simplification pending real-data verification.
+  from. Earliest-record-wins on a shared file (forked/rewound sessions) was
+  a known simplification pending real-data verification. Replaced
+  2026-11-14 (PR #279): a branch uses the latest record captured at or
+  before its last entry (architecture.md §6.2.5).
 - `data-sources/pi-agent/system-prompt-components.ts`: turns a matched
   record into `SystemPromptComponent[]`, mirroring
   `system-prompt-breakdown.ts`'s VS Code shape (one real-count `built-in`
@@ -1265,6 +1259,11 @@ CI) run in a real stable VS Code, and every CI run builds an installable
 `.vsix`. 0.1.0 is published on the Marketplace and Open VSX. Each step's details
 and deviations are in its status note in the plan's §6.
 
+**Status (2026-11-14)**: done (100%). Owner decision 2026-11-14:
+- 10.9's manual checks are closed as superseded by step 10.17's automated release gate.
+- 10.10's docs review is closed as covered by the owner's reviews for 0.12.0.
+- Step 10.20 and MA13 (step 10.21's standalone increment) are 1.0 criteria ([1.0.0 release](#100-release)).
+
 | Step | What | State |
 |---|---|---|
 | 10.0 | Runtime check: `node:sqlite` works in VS Code's Electron | Done (#57) |
@@ -1276,8 +1275,8 @@ and deviations are in its status note in the plan's §6.
 | 10.6 | Native Sessions/Setup sidebar, status bar, selection sync | Done (#67) |
 | 10.7 | Accessibility, responsive layout, AsyncView, local fonts, walkthrough, l10n | Done (#69) |
 | 10.8 | Copilot-only MCP server in the extension, plus UI follow-ups from 10.7 | Done (#71); real Copilot agent-mode check in 10.9 |
-| 10.9 | Integration tests in real VS Code, performance budgets, usability run, packaging | Done (#72; integration suite green in CI); owner's manual checks open |
-| 10.10 | Documentation: extension README/listing, extension user guide, two-product README and User Guide | Done (#73); screenshots done; owner review open |
+| 10.9 | Integration tests in real VS Code, performance budgets, usability run, packaging | Done (#72; integration suite green in CI); the owner's manual checks closed 2026-11-14 as superseded by step 10.17's automated release gate (owner decision) |
+| 10.10 | Documentation: extension README/listing, extension user guide, two-product README and User Guide | Done (#73); screenshots done; the owner's review closed 2026-11-14 as covered by the owner's reviews for 0.12.0 (owner decision) |
 | 10.11 | UX review for VS Code: panel fits any width, readable in light, dark and High Contrast, native look, automated UI check | Done (#77) |
 | 10.12 | Learn scenarios in the side bar (a Learn view), like the Sessions view; the panel has no list of its own | Done (#80) |
 | 10.13 | Agent Host sessions (the VS Code 1.143+ default) listed with turns, tokens and AI Credits | Done; manual check 1.4 passes |
@@ -1287,10 +1286,10 @@ and deviations are in its status note in the plan's §6.
 | 10.17 | Automated pre-release UI gate: wdio for VS Code and Copilot, Playwright for web; no hand checklist gates a release (owner rule 2026-11-11) | Done 2026-11-11, tasks G0-G7 ([plans/release-ui-gate.md](plans/release-ui-gate.md)): CI and both release workflows run every UI suite; a ruleset on `main` requires 9 checks; extension releases need a passing real-Copilot run recorded on the tagged commit; replaces the manual checks and Phase 12's A24 owner checks |
 | 10.18 | Copilot Chat sessions from empty windows (no folder open): read the debug logs Copilot Chat writes under `globalStorage` | Done 2026-11-11 (found by 10.17 G3, owner decision D7) |
 | 10.19 | AI Credits of classic Copilot Chat subagents: read each run's debug log and fold it into the parent session's totals, per model ([plans/classic-subagent-credits-implementation.md](plans/classic-subagent-credits-implementation.md), design [plans/classic-subagent-credits.md](plans/classic-subagent-credits.md)) | Done 2026-11-13 (SA0 to SA18, exit criterion met on the owner's logs by `npm run test:real-data`); the release is open |
-| 10.20 | Classic subagent tool calls in the tool audit and security findings (follow-up from 10.19 D3) | Follow-up, not planned yet |
-| 10.21 | Monthly AI Credits allowance gauge in the extension: status-bar item and Sessions row ([plans/monthly-allowance.md](plans/monthly-allowance.md)) | Done 2026-11-13 (MA0 to MA12, exit criterion met); owner decisions D1-D10 accepted 2026-11-12; mock-up approved 2026-11-13; MA13 (standalone app) later |
+| 10.20 | Classic subagent tool calls in the tool audit and security findings (follow-up from 10.19 D3) | Not started; a 1.0 criterion (owner, 2026-11-14); its plan is `docs/plans/subagent-tool-audit.md`, to be written ([1.0.0 release](#100-release)) |
+| 10.21 | Monthly AI Credits allowance gauge in the extension: status-bar item and Sessions row ([plans/monthly-allowance.md](plans/monthly-allowance.md)) | Done 2026-11-13 (MA0 to MA12, exit criterion met); owner decisions D1-D10 accepted 2026-11-12; mock-up approved 2026-11-13; MA13 (standalone app) is a 1.0 criterion (owner, 2026-11-14), plan `docs/plans/monthly-allowance-standalone.md` to be written |
 | 10.22 | Extension demo recordings: README and User Guide brought up to date with extension 0.12.0 and app 0.14.0 (Phase 0), then GIF demos of the extension in VS Code with Copilot and of the standalone app, recorded by wdio and Playwright under Xvfb (Phase 1) ([plans/docs-refresh-and-demo-recordings.md](plans/docs-refresh-and-demo-recordings.md)) | Done 2026-11-14: Phase 0 (PR #255), Phase 1 code (PRs #256, #257) and docs with media; 13 owner-approved demo GIFs |
-| 10.23 | Claude Desktop demo recordings: MCP App views in Claude Desktop (M1-M6) and fake-host close-ups (F1-F3) (same plan, Phase 2) | Not started; owner decisions D10-D12 accepted 2026-11-13; starts after 10.22's Phase 1 exit |
+| 10.23 | Claude Desktop demo recordings: MCP App views in Claude Desktop (M1-M6) and fake-host close-ups (F1-F3) (same plan, Phase 2) | Done 2026-11-14 (PR #262): M1-M7 and F1-F3 recorded, owner-approved and in the docs |
 
 **Fixes after 0.1.0** (unreleased, in the changelogs): the AI Credits in a
 session's list summary and detail now agree (#122); debug-log usage is
@@ -1301,22 +1300,19 @@ setup banner fits 320/360 px panels (#125).
 Sessions view, the §3.5 performance budgets with 200 sessions, and the MCP
 server (off, on with 9 tools and `get_session_cost`, off again).
 
-**Open before the first release** (owner):
-1. The manual checks
-   ([plans/vscode-extension-manual-checks.md](plans/vscode-extension-manual-checks.md)):
-   the usability script, Copilot agent mode using the MCP server
-   (including the Restricted Mode guard), and the Remote-SSH/WSL and Dev
-   Container check. Started 2026-10-27 on 0.1.0; 1.1-1.4 and 1.13 pass
-   (1.4 only with the Local harness, see item 4); 1.5-1.12, §2 and §3
-   are open (see the run log there).
-2. The owner's review of the extension README and guide. The 8
-   screenshots are in place (manual checks §4).
+**Open before the first release** (owner; all closed):
+1. Closed 2026-11-14 (owner decision): the manual checks
+   ([plans/vscode-extension-manual-checks.md](plans/vscode-extension-manual-checks.md)),
+   superseded by step 10.17's automated release gate. Started 2026-10-27
+   on 0.1.0; 1.1-1.4 and 1.13 passed by hand.
+2. Closed 2026-11-14 (owner decision): the owner's review of the
+   extension README and guide, covered by the owner's reviews for 0.12.0.
 3. Publishing setup (plan §7.0): done on 2026-10-27; the Open VSX
    ownership claim (#14833) was granted on 2026-10-28, and the owner revoked the
    Open VSX administrator's Reader access on 2026-11-02.
    The Entra ID app, the `release` environment, the Open VSX namespace,
-   `OVSX_PAT` and the icon are in place; trusted publishing replaces
-   `OVSX_PAT` after the first release.
+   `OVSX_PAT` and the icon are in place. Open VSX trusted publishing,
+   replacing `OVSX_PAT`, is a 1.0 criterion ([1.0.0 release](#100-release)).
 4. Done: step 10.13 (Agent Host sessions). Since VS Code 1.143 new
    sessions run through the Agent Host; both products now list them with
    turns, tokens and AI Credits. Manual check 1.4 passes with the default
@@ -1352,9 +1348,11 @@ place.
   or `turn-inspector-builder.ts`.
 - Decisions on the open items in
   [providers/pi-provider.md](providers/pi-provider.md): which turn a
-  `branch_summary`'s usage counts toward, fork vs. rewind tagging, the
-  sidecar's earliest-record-wins rule for forked sessions, and `sessionId`
-  vs. `header.id`.
+  `branch_summary`'s usage counts toward, fork vs. rewind tagging, and
+  `sessionId` vs. `header.id`. The sidecar rule for forked sessions is
+  decided (PR #279, 2026-11-14): a branch uses the latest record captured
+  at or before its last entry, else the earliest; the real fork capture
+  confirms it.
 - architecture.md §6.2.5 and §13, providers/pi-provider.md and this
   section updated to match.
 
@@ -1365,7 +1363,9 @@ calls the provider provisional.
 **Dependencies**: Phase 9.6 (the provider), Phase 9.8 (the sidecar join).
 Needs pi installed and one real run on the owner's machine.
 
-**Status (2026-10-28)**: not started.
+**Status (2026-11-14)**: not started. Required for 1.0 (owner,
+2026-11-14); Savings Increment 3's pi coverage builds on it
+([1.0.0 release](#100-release)).
 
 ## Phase 12 — MCP Apps: branded, interactive views in the chat
 
@@ -1441,6 +1441,10 @@ analysis, price change, billing tools in both servers). All are met.
 (shipped 2026-11-10), Increment 2 in 0.6.0 and 0.11.0 (shipped 2026-11-11),
 Increment 3 in 0.8.0 and 0.12.0 (shipped 2026-11-12). Stable extension releases use even minors.
 
+**Owner decisions (2026-11-14)** closing [plans/mcp-apps.md](plans/mcp-apps.md) §6.1's two open items:
+- U5's Analyse button reads **Added to chat** after a click (not "Sent"), with the hint "Press send in the chat to run it."; U2's "Ask about this session" gets the same wording. This is a 1.0 task ([1.0.0 release](#100-release)).
+- Claude Desktop's permission prompts: risk R4 accepted, no gate row (the host's own behaviour, seen in the step 10.23 recordings).
+
 **Status (2026-11-12)**: done. Increment 3 (A25–A33: views U12, U13, U14/U15, U4, U5 and fullscreen, the A32 review, and A33's checks as specs) released 2026-11-12 in extension 0.8.0 and app 0.12.0, after the real-Copilot gate passed 33 of 33 on `dacf3ed`; the follow-ups are in [plans/mcp-apps.md](plans/mcp-apps.md) §11. The MVP (U1–U3, A0–A16) met its
 exit criterion and shipped in extension 0.4.0 and app 0.10.0. Increment 2
 (A17–A24, views U9, U10, U11) released 2026-11-11 in extension 0.6.0 and
@@ -1490,6 +1494,9 @@ unknown.
 **Dependencies**: Phase 10 (the extension, its Learn view from step 10.12
 and `ext-v0.1.0`). Not Phase 11 or 12.
 
+**Status (2026-11-14)**: done, with the owner's eyes-on review of step
+13.8 ([implementation-plan-gantt.md](implementation-plan-gantt.md)).
+
 **Status (2026-11-05)**: in progress, step 13.0 (rule register). The
 register is drafted (#115), verified (#116), has the owner's decisions
 recorded (#120) and had two unsourced claims corrected (#123). Step
@@ -1518,10 +1525,18 @@ compare routes, RPC methods and MCP tools (`replay_session`,
 measured figures always stay visible next to the replay, and the replay is
 labelled **Simulated**.
 
-**Exit criterion**: the plan's §13.
+**Exit criterion**: the plan's §13, checked by an automated `REAL_DATA`
+test over the owner's logs. Its oracle is computed from the raw logs and
+the bundled price book, independent of the code under test, like `npm run
+test:real-data:savings` and step 10.19's SA18 check (`npm run
+test:real-data`). The owner signs off the output (owner decision
+2026-11-14, a 1.0 criterion).
 
 **Dependencies**: Phase 13 (simulator, vendor profiles, calibration):
 merged.
+
+**Status (2026-11-14)**: steps 14.0-14.7 built and 14.8's docs written.
+Open: the owner's docs review and the automated exit check above.
 
 **Status (2026-11-07)**: planned, decisions D1–D8 recorded; steps 14.0
 (threat-model rows), 14.1 (domain schemas) and 14.2 (request traces for
@@ -1548,7 +1563,11 @@ the builder it calls), ten end-to-end usage-scenario tests (plan §12.4: a
 required Playwright `web-e2e` job for the standalone app, wdio specs for the
 extension), and extension grouping by repository.
 
-**Exit criterion**: the plan's §15.
+**Exit criterion**: the plan's §15, checked by an automated `REAL_DATA`
+test over the owner's logs and projects file. Its oracle is computed from
+the raw logs and the bundled price book, independent of the code under
+test, like `npm run test:real-data:savings`. The owner signs off the output
+(owner decision 2026-11-14, a 1.0 criterion).
 
 **Dependencies**: Phase 9.11 (insights dataset) for steps 15.1–15.4 and
 15.8; Phase 13 step 13.2 (vendor price data) for steps 15.5 onwards.
@@ -1610,7 +1629,8 @@ plan's §14 table and §14.1 notes have each step's detail:
   vision non-goals and READMEs).
 
 Open: the owner's review of the docs (15.15's exit criterion) and the
-phase's exit criterion (plan §15) on a machine with real sessions.
+phase's exit criterion (plan §15) on a machine with real sessions, now
+an automated check (owner decision 2026-11-14).
 
 ## Phase 16 — Savings report
 
@@ -1631,6 +1651,11 @@ text; the app never changes settings or files (vision §6, owner decision D1).
   extension, with Playwright and wdio specs.
 - Increment 2 (SR18–SR22, after Increment 1 is released): the
   `get_savings_report` MCP tool and its MCP App view (U18).
+- Increment 3 (1.0, owner decision 2026-11-14; tasks to be planned in
+  `docs/plans/savings-increment-3.md`): pi coverage (O1 per tool, O2–O4
+  cache breaks from a pi request trace), per-tool tokens on unused-tools
+  rows, each session's date and saving in a row's session list, and
+  session titles looked up client-side in the app's report.
 
 **Exit criterion**: the plan's §14: over 30 days of real Claude Code and
 Copilot sessions, the Savings tab in both products and (after Increment 2)
@@ -1638,10 +1663,18 @@ Copilot sessions, the Savings tab in both products and (after Increment 2)
 labelled with its basis, range or "up to", and coverage; the owner checks
 one idle-expiry break and one unused tool by hand against the turn's tokens
 and the price book; the app writes no file and changes no setting.
+Increment 2's exit (owner decision 2026-11-14): `npm run
+test:real-data:savings` is extended to `get_savings_report`, and the owner
+signs off its output.
 
 **Dependencies**: Phase 15 (price book, `CostPricer`, cost figures) and
 Phase 14 (replay, for the cheaper-model detector) for Increment 1; Phase 9.10
 (tool-call audit); Phase 12 and its MCP Apps views for Increment 2.
+
+**Status (2026-11-14)**: Increment 1 released in app 0.14.0 and
+extension 0.12.0 (exit criterion met 2026-11-14). Increment 2: SR18-SR20
+merged (PRs #276, #275, #278), SR21 in PR #281, SR22 next; it ships in
+extension 0.14.0 and app 0.15.0. Increment 3 is a 1.0 criterion.
 
 **Status (2026-11-13)**: Increment 1 (SR0-SR17) is built, code and docs;
 Increment 2 (SR18-SR22) is not started.
@@ -1700,6 +1733,146 @@ look.
 **Status (2026-11-14)**: Increment 1 (P0-P7) done: the Dashboard on the e2e
 fixture is 1,467px tall at 1440x900 (was 2,444px), checked by
 `packages/web/e2e/specs/density.spec.ts`. Increment 2: L1-L6 done 2026-11-14 (tokens and fonts, colour-mode switch, ledger rules, light and dark Playwright projects, docs and media, review: 7 findings fixed, 7 recorded in the plan's §10). Exit criterion: all met except the owner's eyes-on review. After the merge, step 10.22 resumes at task 1.10 (retakes in the new look).
+
+## 1.0.0 release
+
+Decided by the owner on 2026-11-14. Status lives in
+[implementation-plan-gantt.md](implementation-plan-gantt.md) (section
+"1.0.0").
+
+**Goal**: both products, the standalone app **Agent Cost Analyzer** and
+the VS Code extension **AI Credits Analyzer**, reach 1.0.0 together. Every
+open phase's exit criterion is met by an automated check, the standalone
+app installs from npm, and the release path's security gaps are closed.
+
+**Versioning**:
+
+- Both products move to 1.0.0 in one release. No target date: 1.0.0
+  ships when every criterion below is met.
+- After 1.0.0 they version independently, as today.
+- The extension keeps odd minor = Marketplace pre-release channel
+  (`.github/workflows/release-extension.yml`); 1.0.0 is stable.
+- The release before 1.0.0 is extension 0.14.0 (stable) and app 0.15.0:
+  Phase 16 Increment 2 and PRs #272, #274, #279 and #280.
+
+### Criteria
+
+| # | Criterion | Phase or step | Status | Exit check |
+|---|---|---|---|---|
+| C1 | Phase 10 closed: 10.9's manual checks superseded by step 10.17's release gate; 10.10's docs review covered by the owner's reviews for 0.12.0 | Phase 10 | Done 2026-11-14 | Phase 10 at 100% in the Gantt |
+| C2 | pi provider pinned against real captures | Phase 11 | Not started; the sidecar rule is decided (PR #279) | Phase 11's exit criterion |
+| C3 | Replay of real sessions verified | Phase 14 | Not started (14.0-14.8 built) | A `REAL_DATA` check with an oracle computed from raw logs passes on the owner's logs (plan §13); the owner signs off its output |
+| C4 | Cost by repository and project verified | Phase 15 | Not started (15.0-15.15 built) | A `REAL_DATA` check with an oracle computed from raw logs passes on the owner's logs and projects file (plan §15); the owner signs off its output |
+| C5 | Savings Increment 2 finished | Phase 16 (SR21, SR22) | In progress: SR21 in PR #281 | `npm run test:real-data:savings` also checks `get_savings_report`; the owner signs off its output |
+| C6 | U5's Analyse reads **Added to chat** after a click, with the hint "Press send in the chat to run it."; U2's "Ask about this session" the same | Phase 12 follow-up | Not started | Component and G5 specs assert the label and hint; the G4 real-Copilot row expects them; both guides use the wording |
+| C7 | Claude Desktop permission prompts | Phase 12 | Done 2026-11-14: risk R4 accepted, no gate row | None |
+| C8 | Standalone app on npm as `agent-cost-analyzer`, run as `npx agent-cost-analyzer` | New step | Not started; the name is free on npm (2026-11-14) | A CI job packs the package, runs it from the tarball and loads the app; the 1.0.0 publish comes from npm trusted publishing (OIDC) |
+| C9 | Monthly allowance in the standalone app (MA13) | Step 10.21 | Not started | Its plan's exit criterion |
+| C10 | Classic subagent tool calls in the tool-call audit and security findings | Step 10.20 | Not started | Its plan's exit criterion; [threat-model.md](threat-model.md) §7's residual row closed |
+| C11 | Savings Increment 3: scope (a)-(d) in [plans/savings-report.md](plans/savings-report.md) §2 | Phase 16 | Not started; scope decided | Its plan's exit criterion; the savings real-data check covers pi |
+| C12 | Only the owner creates or moves `ext-v*` and `app-v*` tags | [threat-model.md](threat-model.md) §5.8 | Open | A tag ruleset, read through the GitHub API, restricts creating, moving and deleting those tags to the owner |
+| C13 | Open VSX trusted publishing; `OVSX_PAT` deleted | threat-model.md §5.8 | Open | A release publishes to Open VSX without `OVSX_PAT`; the secret no longer exists |
+| C14 | Figures priced from a user price version say so where shown | threat-model.md §5.10 | Open | Component and Playwright tests assert the label |
+
+Not in 1.0.0:
+
+- mitmproxy tool calls ([plans/tool-call-audit.md](plans/tool-call-audit.md) F6).
+- threat-model.md §5.9 (dev tooling containment).
+- Code-owner review on `main` (§5.8; it would block every PR with one owner).
+
+### Per-feature plans
+
+Each larger item gets its own plan before code, approved by the owner.
+None is written yet:
+
+| Item | Criterion | Planned file |
+|---|---|---|
+| npm package and trusted publishing | C8 | `docs/plans/npm-package.md` |
+| Monthly allowance in the standalone app (MA13) | C9 | `docs/plans/monthly-allowance-standalone.md` |
+| Classic subagent tool calls in the audit (step 10.20) | C10 | `docs/plans/subagent-tool-audit.md` |
+| Savings Increment 3 | C11 | `docs/plans/savings-increment-3.md` |
+
+Each plan splits its build rows below into tasks with their own
+complexity and model.
+
+### Tasks
+
+TDD in every code task (architecture.md §11.4). No local model in this
+repo. "Owner step" marks work that needs the owner's hands or accounts.
+
+| ID | Task | Criterion | Complexity | Model | Depends on |
+|---|---|---|---|---|---|
+| V1 | U5 **Added to chat** and its hint, U2 the same: view and view-model text, component and G5 specs, the G4 row's expectation (`analyse-outcome.mts`), extension guide and User Guide wording, both CHANGELOGs | C6 | low | Sonnet | — |
+| V2 | Label figures priced from a user price version wherever the web UI shows a priced figure; component and Playwright tests; threat-model §5.10 marked done | C14 | medium | Sonnet | — |
+| V3 | Phase 14 exit check: a `REAL_DATA` test and an oracle from raw Claude Code and Copilot logs (measured totals, the self-check at D12 tolerance, UI and MCP totals equal); an npm script, also part of `npm run test:real-data` | C3 | high | Opus | — |
+| V4 | Phase 15 exit check: a `REAL_DATA` test and an oracle from raw logs, the projects file and the price book (cost per repository and project per month, variance effects that add up, a frozen statement after a price-book change in a temporary copy, MCP equal to the Dashboard, no unknown summed as 0); an npm script, also part of `npm run test:real-data` | C4 | high | Opus | — |
+| V5 | SR22: review and docs for Increment 2 ([plans/savings-report.md](plans/savings-report.md) §10) | C5 | medium | Opus | SR21 (PR #281) |
+| V6 | Increment 2 exit: `savings-exit.real.test.mts` calls `get_savings_report` through an in-memory MCP client and requires the same rows as the Savings tab | C5 | medium | Sonnet | SR19 (merged) |
+| V7 | Tag ruleset for `ext-v*` and `app-v*`: create, update and delete restricted, the owner the only bypass | C12 | low | Owner step | — |
+| V8 | threat-model.md §5.8 and §8 updated with the ruleset's id, read through the GitHub API | C12 | low | Haiku | V7 |
+| V9 | Register the Open VSX trusted publisher for the namespace | C13 | low | Owner step | — |
+| V10 | `release-extension.yml` publishes to Open VSX through trusted publishing, without `OVSX_PAT`; threat-model.md §8 row | C13 | low | Sonnet | V9 |
+| V11 | After a release published by V10, delete the `OVSX_PAT` secret; threat-model.md §5.8 marked done | C13 | low | Owner step | V10 and a 0.x release |
+| V12 | Phase 11 capture instructions and a redaction script for pi session files and the sidecar log | C2 | medium | Sonnet | — |
+| V13 | Capture two pi sessions with `pi-system-prompt-logger` installed: one linear, one with a fork or rewind | C2 | low | Owner step | V12 |
+| V14 | Phase 11: real fixtures, field diff, fixes test-first, the open pi decisions put to the owner, architecture.md §6.2.5 and providers/pi-provider.md updated | C2 | high | Opus | V13 |
+| V15 | Plan `docs/plans/npm-package.md`: which workspace publishes, bundle, `bin`, files list, publish job, threat-model rows, README install section | C8 | medium | Opus | — |
+| V16 | Build the npm package: bundled server and web build, `bin`, a CI job that packs it, runs it from the tarball and loads the app | C8 | high | Opus | V15 approved |
+| V17 | npm trusted publishing (OIDC) from `release-app.yml` in the `release` environment, whose deployment rule today allows only `ext-v*` tags; the owner configures the trusted publisher on npmjs.com and adds `app-v*` to the environment | C8 | medium | Sonnet + owner step | V16 |
+| V18 | npm docs: root README install section, standalone-app.md, threat-model.md rows for the publish path, CHANGELOG | C8 | low | Sonnet | V16, V17 |
+| V19 | Plan `docs/plans/monthly-allowance-standalone.md` (where the allowance is set in the app, the Cost over time line, providers with partial AI Credits; monthly-allowance.md D8) | C9 | medium | Opus | — |
+| V20 | Build MA13 per its plan | C9 | medium | Sonnet | V19 approved |
+| V21 | Plan `docs/plans/subagent-tool-audit.md` (classic subagent runs' tool calls in the audit, rollups and security findings; 10.19 D3) | C10 | medium | Opus | — |
+| V22 | Build step 10.20 per its plan; threat-model.md §7's residual row closed | C10 | high | Opus | V21 approved |
+| V23 | Plan `docs/plans/savings-increment-3.md` | C11 | medium | Opus | — |
+| V24 | Increment 3 (c): each session's date and saving in a row's session list | C11 | medium | Sonnet | V23 approved |
+| V25 | Increment 3 (d): session titles in the app's report, looked up client-side; never in the MCP tool output or sent to a model | C11 | medium | Sonnet | V23 approved |
+| V26 | Increment 3 (b): per-tool tokens for unused tools (at most 20, names through `savingsName`, marked estimate) | C11 | medium | Sonnet | V23 approved |
+| V27 | Increment 3 (a): O1 per tool for pi | C11 | medium | Sonnet | V14, V23 approved |
+| V28 | Increment 3 (a): a pi request trace (Phase 14 D1) and O2–O4 for pi | C11 | high | Opus | V14, V23 approved |
+| V29 | Increment 3 review and docs; the savings real-data check covers pi | C11 | medium | Opus | V24-V28 |
+| V30 | 1.0.0 bump PR: both products to 1.0.0, both CHANGELOGs, README, the Gantt | Release | low | Haiku | C1-C14 met |
+| V31 | Release procedure below | Release | low | Owner step | V30 merged |
+
+### Suggested order
+
+1. Independent small tasks first: V1, V2, V3, V4. V5 and V6 finish
+   Increment 2 before the extension 0.14.0 and app 0.15.0 release.
+2. Owner steps whenever convenient: V7 (then V8), V9 (then V10), V13
+   (after V12). Land V10 before a 0.x release, so 1.0.0 is not Open
+   VSX's first trusted publish; V11 follows that release.
+3. The four plans in parallel: V15, V19, V21, V23. No code before the
+   owner approves a plan.
+4. Builds: V16-V18 (npm), V20 (MA13), V22 (10.20), V24-V26 (Savings
+   Increment 3 without pi).
+5. After Phase 11 (V14): V27, V28, then V29.
+6. Release: V30, then V31.
+
+The longest chain is pi: V12 → V13 → V14 → V28 → V29 → V30 → V31.
+
+### Release procedure
+
+The owner approves each step that publishes.
+
+1. Every criterion C1-C14 is met and the Gantt's 1.0.0 bars are at 100%.
+2. V30's bump PR merges: the root `package.json` (app) and
+   `packages/vscode-extension/package.json` at 1.0.0, both CHANGELOGs'
+   `[Unreleased]` retitled `[1.0.0]` with the date.
+3. On the merged commit with a clean tree: `npm run build`, then `npm run
+   test:real-data` on the owner's logs (step 10.19's SA18, savings with
+   `get_savings_report`, pi, Phase 14 and Phase 15). The owner signs off
+   the output.
+4. The real-Copilot gate on the same commit must end `PASS` (step 10.17,
+   [plans/release-ui-gate.md](plans/release-ui-gate.md)); then `npm run
+   release:evidence --workspace=packages/vscode-extension` and `git push
+   origin refs/notes/release-ui`.
+5. The owner tags the commit `ext-v1.0.0` and `app-v1.0.0` (only the
+   owner can, C12), pushes both tags and approves the `release`
+   environment: the Marketplace, Open VSX through trusted publishing, the
+   GitHub Releases and npm through trusted publishing.
+6. Check the published artifacts: the Marketplace and Open VSX list 1.0.0
+   on the stable channel; `npx agent-cost-analyzer@1.0.0` starts the app.
+7. The Gantt marks the 1.0.0 milestone done.
 
 ## Summary dependency graph
 

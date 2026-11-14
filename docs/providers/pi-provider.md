@@ -1,5 +1,7 @@
 # pi coding-agent LogProvider — working notes
 
+**Last changed:** 2026-11-14 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+
 Internal engineering summary of the `PiAgentLogProvider`, kept alongside the
 authoritative description in
 [architecture.md §6.2.5](../architecture.md#625-pi-agent-provider-flow).
@@ -35,7 +37,7 @@ idle-gap split.
 | [turn-inspector-builder.ts](../../packages/server/src/data-sources/pi-agent/turn-inspector-builder.ts) | Builds `TurnInspectorDetail` from a turn's raw entries (Analyze-mode drill-down) |
 | [resolve-pi-agent-sessions-dir.ts](../../packages/server/src/platform/pi-agent-paths/resolve-pi-agent-sessions-dir.ts) | Locates `~/.pi/agent/sessions/` and lists session files for the current cwd |
 | [resolve-pi-system-prompt-log-path.ts](../../packages/server/src/platform/pi-agent-paths/resolve-pi-system-prompt-log-path.ts) | Resolves the optional `pi-system-prompt-logger` sidecar log path (`PI_SYSTEM_PROMPT_LOG_PATH` env override, else `~/.pi/agent/logs/system-prompts.jsonl`) |
-| [system-prompt-sidecar-reader.ts](../../packages/server/src/data-sources/pi-agent/system-prompt-sidecar-reader.ts) | Reads the sidecar JSONL into a `Map` keyed by resolved `sessionFile` path (earliest-wins on duplicates) |
+| [system-prompt-sidecar-reader.ts](../../packages/server/src/data-sources/pi-agent/system-prompt-sidecar-reader.ts) | Reads the sidecar JSONL into a `Map` keyed by resolved `sessionFile` path, keeping every record of a file in `capturedAt` order; `system-prompt-sidecar-matcher.ts` picks one per branch (PR #279) |
 | [system-message-replay.ts](../../packages/server/src/data-sources/pi-agent/system-message-replay.ts) | `replaySystemMessages` — replays a branch's `role: "system"` messages (and compaction checkpoints) into the current prompt text, sections and tools, like pi-ai's `getCurrentSystemMessage` |
 | [system-prompt-components.ts](../../packages/server/src/data-sources/pi-agent/system-prompt-components.ts) | `buildPiSystemPromptComponentsFromState` (in-file system prompt) and `buildPiSystemPromptComponents` (sidecar fallback) → `SystemPromptComponent[]`, mirroring `buildSystemPromptBreakdown`'s VS Code shape |
 | `packages/server/fixtures/pi-agent/*.jsonl` | Test fixtures: `schema-v3-session` (follows the published schema in the vendored package: system messages, `arguments`, `thinking`, toolResult usage, a `cache_warm` usage entry, a compaction with usage and `systemMessage`), plus the older hand-authored `normal-session`, `forked-session`, `malformed-lines-session`, `no-usage-session`. No static sidecar-log fixture exists — its `sessionFile` would be checkout-path-dependent, so tests synthesize one into a tmpdir instead |
@@ -64,7 +66,8 @@ format. When a user has installed it (`npm run configure` offers to) and a
 session's file has a matching captured record,
 `pi-agent-log-provider.ts` reads it via `system-prompt-sidecar-reader.ts`
 (joined on resolved `sessionFile` path — see architecture.md §6.2.5 for the
-full join-key reasoning and its known earliest-wins-on-fork simplification)
+full join-key reasoning; since PR #279 a branch uses the latest record
+captured at or before its last entry, else the earliest)
 and builds `SystemPromptComponent[]` via `system-prompt-components.ts`.
 
 Knock-on effects in the UI for pi sessions:
@@ -185,7 +188,8 @@ side by side with its own `system-prompts.jsonl` record, giving both the
 real-session-format capture this section needs *and* a real look at
 `selectedTools`/`skillNames`/`contextFilePaths`/`sessionId`-vs-`header.id`
 semantics — the last of which Phase 9.8's `sessionFile`-based join
-deliberately sidesteps rather than resolves (see architecture.md §6.2.5's
-"known simplification" note). A real capture with a forked/rewound session
-would additionally confirm or refute the earliest-record-wins assumption
-for that case.
+deliberately sidesteps rather than resolves (see architecture.md §6.2.5).
+The rule for a forked/rewound session's records is decided (PR #279,
+2026-11-14): a branch uses the latest record captured at or before its
+last entry, else the earliest. A real fork capture confirms it. Phase 11
+is required for 1.0.0 (owner, 2026-11-14).

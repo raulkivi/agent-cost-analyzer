@@ -64,7 +64,7 @@ Checks for the Increment 3 boards:
 
 ### Savings report boards (SR18)
 
-Drawn 2026-11-14 for task SR18 in [savings-report.md](../../savings-report.md) §9 and §10. Status: **approved by the owner 2026-11-14** (decisions D16-D21 in savings-report.md §12); SR20 builds the view from them. They show U18 (`get_savings_report`) in the same two host frames, light and dark, with the savings rows' vocabulary from [`../savings-report/`](../savings-report/README.md). Footers use the next target versions (extension v0.13.0, standalone app v0.15.0). All sessions, models and figures are invented.
+Drawn 2026-11-14 for task SR18 in [savings-report.md](../../savings-report.md) §9 and §10. Status: **approved by the owner 2026-11-14** (decisions D16-D21 in savings-report.md §12); SR20 builds the view from them. They show U18 (`get_savings_report`) in the same two host frames, light and dark, with the savings rows' vocabulary from [`../savings-report/`](../savings-report/README.md). Footers use the target versions planned when they were drawn (extension v0.13.0, standalone app v0.15.0); the release is extension 0.14.0 and app 0.15.0 (owner, 2026-11-14). All sessions, models and figures are invented.
 
 | Board | Shows |
 | ----- | ----- |

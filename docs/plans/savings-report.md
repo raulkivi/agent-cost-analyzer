@@ -61,6 +61,20 @@ and (Increment 2) as an MCP tool with an MCP App view.
   not already allow (D6).
 - G5. Increment 2: `get_savings_report` MCP tool and a U18 view (U16 and U17 are reserved by [mcp-apps.md](mcp-apps.md) §11), following
   [mcp-apps.md](mcp-apps.md).
+- G6. Increment 3 (1.0): decided scope, owner 2026-11-14 (criterion C11
+  in [implementation-plan.md](../implementation-plan.md#100-release)).
+  Tasks are to be planned in `docs/plans/savings-increment-3.md`; no task
+  table yet.
+  - (a) pi coverage: O2–O4 cache breaks, which need a pi request trace
+    (Phase 14 D1), and O1 unused tools per tool. Both build on Phase 11's
+    real pi captures.
+  - (b) Per-tool tokens for unused tools: at most 20 tools, names through
+    `savingsName`, marked estimate (the §16 follow-up).
+  - (c) Each session's date and saving in a row's session list (the U18
+    boards show them; the detectors have the data).
+  - (d) Session titles in the app's report, looked up client-side; never
+    sent to the model and never in the MCP tool output (the §16
+    follow-up).
 
 **Non-goals** (checked against vision §6)
 
@@ -420,6 +434,10 @@ settings, config and session files are unchanged. `get_savings_report`
 (Increment 2) is checked when it exists. The check found and fixed a log
 reader bug (records torn at U+2028/U+2029).
 
+**Increment 2 exit (owner decision 2026-11-14):** the automated check
+below is extended to `get_savings_report`, which must list the same rows
+as the Savings tab; the owner signs off its output. A 1.0 criterion (C5).
+
 ### Automated check
 
 `npm run test:real-data:savings` (also part of `npm run test:real-data`) runs
@@ -522,8 +540,8 @@ Read-only over the owner's logs: 259 VS Code local sessions (all `Code - Insider
 
 **Data gaps against the boards (SR14).**
 
-- Session titles: not added. A title is log-derived text (often the first prompt), and §8 sends session ids, not titles, to a hosted model. Follow-up: the tab looks titles up in the session list the app already loads, so the report and the Increment 2 tool stay ids-only. If titles ever go into the report, they pass `savingsName`-style redaction and a cap and render as text.
-- Per-tool tokens for unused tools: not added. Follow-up with Increment 2 (U18 needs the same field): an optional, capped list (at most 20 tools, names through `savingsName`, tokens marked estimate) on unused-tools opportunities.
+- Session titles: not added. A title is log-derived text (often the first prompt), and §8 sends session ids, not titles, to a hosted model. Follow-up: the tab looks titles up in the session list the app already loads, so the report and the Increment 2 tool stay ids-only. If titles ever go into the report, they pass `savingsName`-style redaction and a cap and render as text. In Increment 3 (G6 (d), owner 2026-11-14).
+- Per-tool tokens for unused tools: not added. Follow-up with Increment 2 (U18 needs the same field): an optional, capped list (at most 20 tools, names through `savingsName`, tokens marked estimate) on unused-tools opportunities. In Increment 3 (G6 (b), owner 2026-11-14).
 
 **Other notes.**
 
