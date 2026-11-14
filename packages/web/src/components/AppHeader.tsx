@@ -63,20 +63,18 @@ export function AppHeader({
       {/* The brand; the VS Code theme hides it, since the editor tab
           already names the panel (step 10.11). */}
       <div className="nav-brand-block">
-        <Blueprint
-          style={{ width: 32, height: 32, flex: "none", background: "var(--color-accent-900)" }}
-        />
+        <Blueprint className="nav-logo" />
         {profilePending ? (
           <div data-testid="brand-placeholder" aria-busy="true" className="nav-brand-placeholder" />
         ) : (
           <div className="nav-brand">{displayName}</div>
         )}
       </div>
-      <div style={{ marginRight: "auto" }} />
+      <div className="mr-auto" />
       <SegmentedControl name="mode" options={MODE_OPTIONS} value={mode} onChange={onModeChange} />
       {!profilePending && providerSelect && mode === "analyze" && providers.length > 0 && onProviderChange && (
-        <label style={{ display: "flex", alignItems: "center", gap: "var(--space-1)", marginLeft: "var(--space-2)" }}>
-          <span className="text-muted" style={{ fontSize: 11 }}>
+        <label className="nav-field">
+          <span className="text-muted text-2xs">
             Source
           </span>
           <select
@@ -95,8 +93,8 @@ export function AppHeader({
         </label>
       )}
       {minRetainedSessionLogsThreshold !== undefined && onRetentionThresholdChange && (
-        <label style={{ display: "flex", alignItems: "center", gap: "var(--space-1)", marginLeft: "var(--space-2)" }}>
-          <span className="text-muted" style={{ fontSize: 11 }}>
+        <label className="nav-field">
+          <span className="text-muted text-2xs">
             Retention
           </span>
           <input
@@ -121,14 +119,13 @@ export function AppHeader({
       )}
       {hasConfigWarnings ? (
         <button
-          className="btn btn-secondary"
-          style={{ marginLeft: "var(--space-2)" }}
+          className="btn btn-secondary ml-2"
           onClick={onConfigClick}
         >
           Config
         </button>
       ) : (
-        <Tag variant="neutral" style={{ marginLeft: "var(--space-2)" }}>
+        <Tag variant="neutral" className="ml-2">
           Config &#10003;
         </Tag>
       )}

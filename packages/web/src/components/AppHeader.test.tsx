@@ -300,4 +300,13 @@ describe("AppHeader", () => {
       expect(screen.getByLabelText("Analyze")).toBeChecked();
     });
   });
+
+  it("draws the logo at 24px through the stylesheet", () => {
+    const { container } = render(
+      <AppHeader mode="learn" onModeChange={vi.fn()} hasConfigWarnings={false} onConfigClick={vi.fn()} />,
+    );
+    const logo = container.querySelector(".nav-logo") as HTMLElement;
+    expect(logo).not.toBeNull();
+    expect(logo.style.width).toBe("");
+  });
 });

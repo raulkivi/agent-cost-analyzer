@@ -31,37 +31,13 @@ function ToolCallsThisTurn({
   onOpenTurnInspector?: () => void;
 }) {
   return (
-    <div
-      style={{
-        marginTop: "var(--space-3)",
-        borderTop: "1px solid var(--color-divider)",
-        paddingTop: "var(--space-2)",
-      }}
-    >
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: "var(--space-2)",
-          marginBottom: 6,
-        }}
-      >
-        <div
-          style={{
-            fontSize: 11,
-            textTransform: "uppercase",
-            letterSpacing: "0.06em",
-            color: "var(--color-text-muted)",
-          }}
-        >
-          Tool calls this turn
-        </div>
+    <div className="tool-calls-block">
+      <div className="tool-calls-head">
+        <div className="sub-label">Tool calls this turn</div>
         {onOpenTurnInspector && (
           <button
             type="button"
-            className="btn btn-secondary"
-            style={{ fontSize: 11, padding: "2px 8px" }}
+            className="btn btn-secondary btn-compact"
             onClick={onOpenTurnInspector}
           >
             Inspect request/response
@@ -69,42 +45,30 @@ function ToolCallsThisTurn({
         )}
       </div>
       {!toolCallsAvailable ? (
-        <p className="text-muted" style={{ fontSize: 12, margin: 0 }}>
+        <p className="text-muted text-xs m-0">
           {turn.toolCallsUnavailableReason ??
             eventLogUnavailableReason ??
             "Tool-call detail unavailable for this session."}
         </p>
       ) : turn.toolCalls.length === 0 ? (
-        <p className="text-muted" style={{ fontSize: 12, margin: 0 }}>
+        <p className="text-muted text-xs m-0">
           No tools called this turn.
         </p>
       ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+        <div className="tool-call-list">
           {turn.toolCalls.map((toolCall, index) => (
-            <div
-              key={`${toolCall.name}-${index}`}
-              style={{ fontSize: 12, display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}
-            >
-              <Tag variant="neutral" style={{ fontFamily: "monospace" }}>
+            <div key={`${toolCall.name}-${index}`} className="tool-call-row">
+              <Tag variant="neutral" className="tag-mono">
                 {toolCall.name}
               </Tag>
               {toolCall.outcome && <StatusTag outcome={toolCall.outcome} />}
               {toolCall.shell && (
-                <span
-                  title={toolCall.shell.command}
-                  className="mono truncate"
-                  style={{ maxWidth: 220, display: "inline-block", verticalAlign: "bottom" }}
-                >
+                <span title={toolCall.shell.command} className="mono truncate tool-call-command">
                   {toolCall.shell.command}
                 </span>
               )}
               {(toolCall.filesTouched ?? []).map((file) => (
-                <span
-                  key={file}
-                  title={file}
-                  className="text-muted truncate"
-                  style={{ maxWidth: 180, display: "inline-block", verticalAlign: "bottom" }}
-                >
+                <span key={file} title={file} className="text-muted truncate tool-call-file">
                   {file}
                 </span>
               ))}
@@ -125,28 +89,28 @@ export function ExplanationPanel({
 }: ExplanationPanelProps) {
   if (!turn) {
     return (
-      <Blueprint style={{ padding: "var(--space-3)" }}>
-        <p style={{ margin: 0 }}>No turn selected.</p>
+      <Blueprint className="blueprint--tight">
+        <p className="m-0">No turn selected.</p>
       </Blueprint>
     );
   }
 
   return (
-    <Blueprint style={{ padding: "var(--space-3)" }}>
+    <Blueprint className="blueprint--tight">
       <div className="card-kicker">Turn {turn.index} · why</div>
       {turn.triggeredEvent && (
-        <Tag variant="outline" style={{ marginTop: 6, display: "inline-flex" }}>
+        <Tag variant="outline" className="tag-lead">
           {TRIGGER_LABELS[turn.triggeredEvent]}
         </Tag>
       )}
       {turn.simulation && (
-        <Tag variant="accent" style={{ marginTop: 6, marginLeft: turn.triggeredEvent ? 6 : 0, display: "inline-flex" }}>
+        <Tag variant="accent" className="tag-lead">
           Simulated
         </Tag>
       )}
-      <p style={{ fontSize: 14, margin: "8px 0 0" }}>{turn.explanation}</p>
+      <p className="explanation-text">{turn.explanation}</p>
       {turn.simulation && (
-        <p style={{ fontSize: 13, margin: "8px 0 0" }}>
+        <p className="explanation-text">
           <span className="sr-only">Simulation note</span>
           {turn.simulation.note}
         </p>

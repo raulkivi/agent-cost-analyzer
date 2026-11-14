@@ -13,4 +13,11 @@ describe("StatTile", () => {
     expect(tile).toHaveTextContent("3 of 4 known");
     expect(screen.getByText("75%")).toHaveClass("stat-tile-value--alert");
   });
+
+  it("spans two columns when wide, for a value that would wrap", () => {
+    render(<StatTile label="Cost" value="14.75 AI Credits + $0.808" wide />);
+    expect(screen.getByRole("group", { name: "Cost" })).toHaveClass("stat-tile--wide");
+    render(<StatTile label="Turns" value="4" />);
+    expect(screen.getByRole("group", { name: "Turns" })).not.toHaveClass("stat-tile--wide");
+  });
 });

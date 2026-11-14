@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import type { KeyboardEvent, MouseEvent } from "react";
+import type { KeyboardEvent, MouseEvent, ReactNode } from "react";
 import { scaleLinear } from "d3-scale";
 import { useContainerWidth } from "../lib/use-container-width.js";
 import { roundedTopRectPath } from "./chart-parts.js";
@@ -23,6 +23,8 @@ interface TrendColumnsProps {
   selectedKeys?: readonly string[];
   onSelect?: (key: string, additive: boolean) => void;
   emptyText?: string;
+  // Shown on the toolbar row beside "View as table".
+  kicker?: ReactNode;
 }
 
 const HEIGHT = 120;
@@ -52,11 +54,17 @@ export function TrendColumns({
   selectedKeys = [],
   onSelect,
   emptyText,
+  kicker,
 }: TrendColumnsProps) {
   // Hooks run before the empty-state return to keep their order stable.
   const [scrollRef, containerWidth] = useContainerWidth<HTMLDivElement>();
   if (columns.length === 0) {
-    return <p className="text-muted chart-empty">{emptyText ?? "No data."}</p>;
+    return (
+      <>
+        {kicker !== undefined && <div className="card-kicker">{kicker}</div>}
+        <p className="text-muted chart-empty">{emptyText ?? "No data."}</p>
+      </>
+    );
   }
   // Text stays undistorted because the svg is drawn at its real pixel width
   // instead of being stretched by a viewBox. Unmeasured (no ResizeObserver,
@@ -78,6 +86,7 @@ export function TrendColumns({
 
   return (
     <ViewAsTable
+      kicker={kicker}
       table={{
         caption: ariaLabel,
         rowHeader: axisLabel,

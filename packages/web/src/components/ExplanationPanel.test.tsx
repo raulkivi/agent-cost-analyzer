@@ -244,4 +244,11 @@ describe("ExplanationPanel subagent runs", () => {
     expect(within(block()).getByText(hostile)).toBeInTheDocument();
     expect(container.querySelector("img, script")).toBeNull();
   });
+
+  it("sets the explanation at body size through a class, not an inline style", () => {
+    render(<ExplanationPanel turn={makeTurn({ explanation: "why this happened" })} mode="learn" />);
+    const text = screen.getByText("why this happened");
+    expect(text).toHaveClass("explanation-text");
+    expect(text.getAttribute("style")).toBeNull();
+  });
 });

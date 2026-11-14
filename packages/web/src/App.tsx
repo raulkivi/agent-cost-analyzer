@@ -115,7 +115,7 @@ const SIMULATION_MODEL_KEY = "learnSimulationModel";
 // list and centre at medium, with the right column in a drawer; one column
 // at narrow widths. The centre is minmax(0, 1fr) so the turns table scrolls
 // inside it instead of widening the page past the panel (step 10.11).
-const RIGHT_COLUMN_WIDTH = 320;
+const RIGHT_COLUMN_WIDTH = 288;
 
 function gridColumns(layout: Layout, listColumn: boolean): string {
   const list = listColumn ? `${LIST_COLUMN_WIDTH}px ` : "";
@@ -631,9 +631,9 @@ export function App({ performanceMarks = pagePerformanceMarks }: AppProps = {}) 
           className="right-tab-seg"
         />
       ) : (
-        <h6 style={{ margin: "0 0 0 var(--space-1)" }}>Explanation</h6>
+        <h6 className="panel-heading">Explanation</h6>
       )}
-      <div style={{ marginTop: "var(--space-2)" }}>
+      <div className="mt-2">
         {mode === "learn" && rightTab === "vendors" && sessionIsSimulated && (
           comparisonLoad.status === "ready" && comparisonLoad.comparison ? (
             <VendorsTab
@@ -644,7 +644,7 @@ export function App({ performanceMarks = pagePerformanceMarks }: AppProps = {}) 
               onRemoveModel={extraModels.remove}
             />
           ) : (
-            <p className="text-muted" role={comparisonLoad.status === "error" ? "alert" : "status"} style={{ fontSize: 13 }}>
+            <p className="text-muted text-sm" role={comparisonLoad.status === "error" ? "alert" : "status"}>
               {comparisonLoad.status === "error"
                 ? `Couldn't compare vendors: ${comparisonLoad.error}`
                 : "Comparing vendors…"}
@@ -706,10 +706,7 @@ export function App({ performanceMarks = pagePerformanceMarks }: AppProps = {}) 
         statusText={health ? `status: ${health.status} · v${health.version}` : "Checking server…"}
       />
       {fetchError && (
-        <p
-          role="alert"
-          style={{ fontSize: 12, margin: "var(--space-2) var(--space-4) 0", color: "var(--color-accent-800)" }}
-        >
+        <p role="alert" className="fetch-error">
           {fetchError}
         </p>
       )}
@@ -746,8 +743,8 @@ export function App({ performanceMarks = pagePerformanceMarks }: AppProps = {}) 
           it is still there to take focus back when it closes (§3.5). */}
       <div hidden={inspectorShown}>
         {showEmptyState ? (
-          <div style={{ padding: "var(--space-8) var(--space-4)", display: "flex", justifyContent: "center" }}>
-            <Blueprint style={{ maxWidth: 460 }}>
+          <div className="empty-state-wrap">
+            <Blueprint className="empty-state-card">
               <AsyncView
                 status="empty"
                 loadingText=""
@@ -768,15 +765,7 @@ export function App({ performanceMarks = pagePerformanceMarks }: AppProps = {}) 
             </Blueprint>
           </div>
         ) : (
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: gridColumns(layout, listColumn),
-              gap: "var(--space-4)",
-              padding: "var(--space-4)",
-              alignItems: "start",
-            }}
-          >
+          <div className="app-grid" style={{ gridTemplateColumns: gridColumns(layout, listColumn) }}>
             {listColumn && (
             <div className="list-column" style={fullWidthView ? { display: "none" } : undefined}>
               <AsyncView
@@ -848,7 +837,6 @@ export function App({ performanceMarks = pagePerformanceMarks }: AppProps = {}) 
               {mode === "learn" && simulationModelId !== undefined && simulationProfile !== undefined && (
                 <div
                   className="learn-simulation-bar"
-                  style={{ display: "flex", alignItems: "center", gap: "var(--space-2)", flexWrap: "wrap", marginBottom: "var(--space-3)" }}
                 >
                   <VendorPicker profiles={vendorProfiles} value={simulationModelId} onChange={handleModelChange} />
                   <AssumptionsPopover assumptions={simulationProfile.assumptions} />
@@ -871,7 +859,7 @@ export function App({ performanceMarks = pagePerformanceMarks }: AppProps = {}) 
                     onShowAllSessions={() => setCenterView("rollup")}
                   />
                 ) : (
-                  <p className="text-muted" style={{ fontSize: 13 }}>
+                  <p className="text-muted text-sm">
                     Select a session to audit its tool calls.
                   </p>
                 )
@@ -892,18 +880,8 @@ export function App({ performanceMarks = pagePerformanceMarks }: AppProps = {}) 
                 />
               ) : session ? (
                 <>
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "var(--space-2)",
-                      flexWrap: "wrap",
-                      marginBottom: "var(--space-3)",
-                    }}
-                  >
-                    <h3 className="truncate" style={{ margin: 0, maxWidth: 360 }}>
-                      {session.title}
-                    </h3>
+                  <div className="session-head">
+                    <h3 className="truncate session-title">{session.title}</h3>
                     <Tag variant="accent">{session.model}</Tag>
                     {sessionIsSimulated && <Tag variant="outline">Simulated</Tag>}
                     <Tag variant={session.usageDataAvailable ? "accent" : "outline"}>
@@ -912,9 +890,7 @@ export function App({ performanceMarks = pagePerformanceMarks }: AppProps = {}) 
                     {allAiCreditsKnown ? (
                       <AiCreditsSparkline turns={session.turns} />
                     ) : (
-                      <span className="text-muted" style={{ fontSize: 12 }}>
-                        AI Credits: unavailable
-                      </span>
+                      <span className="text-muted text-xs">AI Credits: unavailable</span>
                     )}
                     {replayShown && (
                       <div className="replay-controls">
@@ -937,15 +913,14 @@ export function App({ performanceMarks = pagePerformanceMarks }: AppProps = {}) 
                         )}
                       </div>
                     )}
-                    <div style={{ marginLeft: "auto", display: "flex", gap: "var(--space-2)", alignItems: "center" }}>
+                    <div className="session-actions">
                       {layout !== "narrow" && !compareShown && (
                         <ColumnChooser visible={chosenColumns} onChange={handleColumnsChange} simulated={sessionIsSimulated} replayed={tableReplay !== undefined} />
                       )}
                       {layout !== "wide" && (
                         <button
                           type="button"
-                          className="btn btn-secondary"
-                          style={{ fontSize: 12, padding: "2px 8px" }}
+                          className="btn btn-secondary btn-compact"
                           aria-expanded={showDetailsDrawer}
                           onClick={() => setDetailsOpen((current) => !current)}
                         >
@@ -1029,7 +1004,7 @@ export function App({ performanceMarks = pagePerformanceMarks }: AppProps = {}) 
                   {sessionIsSimulated && simulationProfile && (
                     <SourcesFooter sources={simulationProfile.sources} oldestCheckedAt={simulationProfile.oldestCheckedAt} />
                   )}
-                  <div style={{ marginTop: "var(--space-4)" }}>
+                  <div className="mt-4">
                     <TimelineScrubber
                       turnCount={session.turns.length}
                       selectedTurnIndex={selectedTurnIndex}
@@ -1038,7 +1013,7 @@ export function App({ performanceMarks = pagePerformanceMarks }: AppProps = {}) 
                   </div>
                 </>
               ) : (
-                <p className="text-muted" style={{ fontSize: 13 }}>
+                <p className="text-muted text-sm">
                   {listColumn
                     ? `Select a ${mode === "learn" ? "scenario" : "session"} to view its turns.`
                     : mode === "learn"

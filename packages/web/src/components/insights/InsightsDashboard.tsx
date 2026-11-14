@@ -227,7 +227,7 @@ export function InsightsDashboard({
   }
 
   return (
-    <div ref={measure} style={{ display: "flex", flexDirection: "column", gap: "var(--space-4)" }}>
+    <div ref={measure} className="dashboard-root">
       <DashboardToolbar title={title} preset={preset} onPresetChange={changeRange}>
         {bodyShown && viewOptions.length > 1 && (
           <ViewSwitch
@@ -240,7 +240,7 @@ export function InsightsDashboard({
         )}
         {bodyShown && dashboardView === "overview" && (
           <div className="insights-cost-basis" role="group" aria-label="Cost basis for totals">
-            <span className="text-muted" style={{ fontSize: 12 }}>Cost basis for totals</span>
+            <span className="text-muted text-xs">Cost basis for totals</span>
             <SegmentedControl name="insights-cost-basis" options={COST_BASIS_OPTIONS} value={costBasis} onChange={setCostBasis} />
           </div>
         )}
@@ -405,7 +405,7 @@ function DashboardBody({ dataset, crossProvider, now, loadCostSeries, loadCostCo
       <aside className="insights-listboxes" aria-label="Fields">
         {listBoxGroups(crossProvider).map((group) => (
           <div key={group.title} className="insights-listbox-group">
-            <h6 style={{ margin: 0 }}>{group.title}</h6>
+            <h6 className="m-0">{group.title}</h6>
             {group.fields.map((fieldId) => (
               <ListBox
                 key={fieldId}
@@ -497,6 +497,7 @@ function DashboardBody({ dataset, crossProvider, now, loadCostSeries, loadCostCo
           <div className="stat-tiles">
             <StatTile
               label="Cost"
+              wide
               value={formatCostTotal(cost)}
               note={`${cost.knownTurns} of ${cost.turns} turns known`}
             />
@@ -536,8 +537,8 @@ function DashboardBody({ dataset, crossProvider, now, loadCostSeries, loadCostCo
           </p>
 
           <Blueprint className="audit-section">
-            <div className="card-kicker">AI Credits by day</div>
             <TrendColumns
+              kicker="AI Credits by day"
               ariaLabel="AI Credits by day"
               axisLabel="Day"
               valueLabel="AI Credits"
@@ -559,8 +560,8 @@ function DashboardBody({ dataset, crossProvider, now, loadCostSeries, loadCostCo
 
           <div className="audit-grid-2">
             <Blueprint className="audit-section">
-              <div className="card-kicker">Tokens by model</div>
               <HorizontalBars
+                kicker="Tokens by model"
                 ariaLabel="Tokens by model"
                 series={TOKEN_SERIES}
                 rows={tokensByModel(view.turns).map((row) => ({
@@ -574,8 +575,8 @@ function DashboardBody({ dataset, crossProvider, now, loadCostSeries, loadCostCo
               />
             </Blueprint>
             <Blueprint className="audit-section">
-              <div className="card-kicker">Tool calls by tool</div>
               <HorizontalBars
+                kicker="Tool calls by tool"
                 ariaLabel="Tool calls by tool"
                 series={TOOL_SERIES}
                 rows={toolCallsByTool(view.toolCalls)
@@ -587,8 +588,8 @@ function DashboardBody({ dataset, crossProvider, now, loadCostSeries, loadCostCo
               />
             </Blueprint>
             <Blueprint className="audit-section">
-              <div className="card-kicker">Why calls failed</div>
               <HorizontalBars
+                kicker="Why calls failed"
                 ariaLabel="Failures by category"
                 series={FAILED_SERIES}
                 rows={countBy(view.toolCalls, (call) => call.failureCategory).map((row) => ({
@@ -602,8 +603,8 @@ function DashboardBody({ dataset, crossProvider, now, loadCostSeries, loadCostCo
               />
             </Blueprint>
             <Blueprint className="audit-section">
-              <div className="card-kicker">Shell programs</div>
               <HorizontalBars
+                kicker="Shell programs"
                 ariaLabel="Shell programs"
                 series={CALLS_SERIES}
                 rows={countBy(view.toolCalls, (call) => call.program)
@@ -618,7 +619,7 @@ function DashboardBody({ dataset, crossProvider, now, loadCostSeries, loadCostCo
 
           <Blueprint className="audit-section">
             <div className="card-kicker">Signals to review</div>
-            <p className="text-muted" style={{ fontSize: 12, margin: 0 }}>
+            <p className="text-muted text-xs m-0">
               Rule-based security signals, statistical anomalies and behaviour changes. Each is a prompt to look, not a verdict.
             </p>
             <FindingsTable
@@ -630,37 +631,39 @@ function DashboardBody({ dataset, crossProvider, now, loadCostSeries, loadCostCo
 
           <Blueprint className="audit-section">
             <div className="card-kicker">Most expensive sessions</div>
-            <table className="table" aria-label="Most expensive sessions" style={{ fontSize: 13 }}>
-              <thead>
-                <tr>
-                  <th>Session</th>
-                  {crossProvider && <th>Provider</th>}
-                  <th>Started</th>
-                  <th>Turns</th>
-                  <th>AI Credits</th>
-                </tr>
-              </thead>
-              <tbody>
-                {topSessionsByCredits(view.sessions, view.turns, TOP_SESSIONS).map(({ session, aiCredits, turns }) => (
-                  <tr key={session.key}>
-                    <td className="truncate" style={{ maxWidth: 320 }}>
-                      <button type="button" className="btn btn-ghost" onClick={() => select(FIELD.session, session.key)}>
-                        {session.title}
-                      </button>
-                    </td>
-                    {crossProvider && <td>{session.providerLabel}</td>}
-                    <td>{session.date ?? "—"}</td>
-                    <td>{turns}</td>
-                    <td>
-                      {aiCredits.known > 0 ? aiCredits.total.toFixed(2) : "—"}
-                      {aiCredits.known > 0 && aiCredits.known < aiCredits.count && (
-                        <span className="text-muted" style={{ fontSize: 11 }}> ({aiCredits.known} of {aiCredits.count} known)</span>
-                      )}
-                    </td>
+            <div className="table-scroll">
+              <table className="table ledger-table" aria-label="Most expensive sessions">
+                <thead>
+                  <tr>
+                    <th>Session</th>
+                    {crossProvider && <th>Provider</th>}
+                    <th>Started</th>
+                    <th>Turns</th>
+                    <th>AI Credits</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {topSessionsByCredits(view.sessions, view.turns, TOP_SESSIONS).map(({ session, aiCredits, turns }) => (
+                    <tr key={session.key}>
+                      <td className="truncate cell-session">
+                        <button type="button" className="btn btn-ghost" onClick={() => select(FIELD.session, session.key)}>
+                          {session.title}
+                        </button>
+                      </td>
+                      {crossProvider && <td>{session.providerLabel}</td>}
+                      <td>{session.date ?? "—"}</td>
+                      <td>{turns}</td>
+                      <td>
+                        {aiCredits.known > 0 ? aiCredits.total.toFixed(2) : "—"}
+                        {aiCredits.known > 0 && aiCredits.known < aiCredits.count && (
+                          <span className="text-muted text-2xs"> ({aiCredits.known} of {aiCredits.count} known)</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </Blueprint>
           </>
         )}
@@ -680,7 +683,7 @@ interface DashboardToolbarProps {
 function DashboardToolbar({ title, preset, onPresetChange, children }: DashboardToolbarProps) {
   return (
     <div className="toolbar">
-      <h3 style={{ margin: 0 }}>{title}</h3>
+      <h3 className="m-0">{title}</h3>
       <SegmentedControl name="insights-range" options={RANGE_OPTIONS} value={preset} onChange={onPresetChange} />
       {children}
     </div>
