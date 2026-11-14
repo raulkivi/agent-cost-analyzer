@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 import { describe, expect, it } from "vitest";
 import type { Match } from "./click-point.mts";
-import { createActionRunner, PANE_POINT, type ActionDeps } from "./action-runner.mts";
+import { createActionRunner, PANE_POINT, POINTER_REST, type ActionDeps } from "./action-runner.mts";
 
 const hit = (x: number, y: number): Match => ({ x, y, width: 20, height: 10, score: 0.95 });
 
@@ -16,6 +16,7 @@ function setup(screen: (template: string, call: number) => Match | undefined) {
       type: async (text) => void log.push(`type:${text}`),
       click: async (p) => void log.push(`click:${p.x},${p.y}`),
       scrollDown: async (p, clicks) => void log.push(`scroll:${p.x},${p.y},${clicks}`),
+      move: async (p) => void log.push(`move:${p.x},${p.y}`),
     },
     find: async (template) => {
       const n = (calls.get(template) ?? 0) + 1;
@@ -61,8 +62,23 @@ describe("createActionRunner", () => {
       return undefined;
     });
     await run.perform({ kind: "waitFor", template: "row-scratch" });
-    expect(log).toEqual(["click:20,15"]);
+    expect(log).toEqual(["click:20,15", `move:${POINTER_REST.x},${POINTER_REST.y}`]);
     expect(run.retakeNeeded()).toBe(true);
+  });
+  it("moves the pointer off Always allow after each click, so a prompt still showing (hovered) matches again", async () => {
+    const { run, log } = setup((t, n) => {
+      if (t === "always-allow") return n <= 2 ? hit(10, 10) : undefined;
+      if (t === "row-scratch") return n >= 2 ? hit(0, 0) : undefined;
+      return undefined;
+    });
+    await run.perform({ kind: "waitFor", template: "row-scratch" });
+    expect(log.filter((l) => l.startsWith("click:"))).toEqual(["click:20,15", "click:20,15"]);
+    expect(log.filter((l) => l.startsWith("move:"))).toHaveLength(2);
+  });
+  it("presses a key", async () => {
+    const { run, log } = setup(() => undefined);
+    await run.perform({ kind: "press", key: "Return" });
+    expect(log).toEqual(["key:Return"]);
   });
   it("does not flag a retake when no prompt appeared", async () => {
     const { run } = setup((t) => (t === "row-scratch" ? hit(0, 0) : undefined));

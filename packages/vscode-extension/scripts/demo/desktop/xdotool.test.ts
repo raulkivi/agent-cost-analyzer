@@ -24,6 +24,11 @@ describe("Xdotool", () => {
     await xdo.scrollDown({ x: 1130, y: 520 }, 6);
     expect(calls[0].args).toEqual(["mousemove", "1130", "520", "click", "--repeat", "6", "--delay", "60", "5"]);
   });
+  it("moves the pointer without clicking", async () => {
+    const { xdo, calls } = setup();
+    await xdo.move({ x: 1590, y: 990 });
+    expect(calls[0].args).toEqual(["mousemove", "1590", "990"]);
+  });
   it("presses a key chord", async () => {
     const { xdo, calls } = setup();
     await xdo.key("ctrl+n");

@@ -120,6 +120,11 @@ describe("scene specifics", () => {
     expect(steps.indexOf("waitFor:audit-kicker")).toBeGreaterThan(analyse);
     expect(steps.lastIndexOf("waitAnswerDone")).toBeGreaterThan(steps.indexOf("waitFor:audit-kicker"));
   });
+  it("M4 sends the message Analyse put in the composer: Desktop waits for Enter", () => {
+    const steps = DESKTOP_SCENES.M4!.steps.map((s) => s.action);
+    const analyse = steps.findIndex((a) => a.kind === "click" && a.template === "analyse-button");
+    expect(steps[analyse + 1]).toEqual({ kind: "press", key: "Return" });
+  });
   it("M5 filters before it opens an evidence", () => {
     const steps = order("M5");
     expect(steps.indexOf("click:kind-anomaly")).toBeLessThan(steps.indexOf("click:why-flagged"));

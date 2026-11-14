@@ -10,6 +10,7 @@ export interface ActionDeps {
     type(text: string, delayMs: number): Promise<void>;
     click(point: Point): Promise<void>;
     scrollDown(point: Point, clicks: number): Promise<void>;
+    move(point: Point): Promise<void>;
   };
   // Best match of a template in a fresh frame, whatever its score.
   find(template: string): Promise<Match | undefined>;
@@ -27,6 +28,8 @@ export interface ActionRunner {
 const AFTER_PROMPT_CLICK_MS = 500;
 // Over the host's side pane (the right half of the 1600x1000 frame), where the view sits once it is expanded.
 export const PANE_POINT: Point = { x: 1130, y: 520 };
+// The frame's bottom-right corner, over nothing clickable: a pointer left on a button changes its look (hover).
+export const POINTER_REST: Point = { x: 1590, y: 990 };
 
 export function createActionRunner(deps: ActionDeps): ActionRunner {
   let retake = false;
@@ -43,6 +46,8 @@ export function createActionRunner(deps: ActionDeps): ActionRunner {
     if (prompt) {
       retake = true;
       await deps.input.click(clickPoint(prompt)!);
+      // A hovered button no longer matches its template; moved away, a prompt that is still showing is clicked again.
+      await deps.input.move(POINTER_REST);
       await deps.clock.sleep(AFTER_PROMPT_CLICK_MS);
     }
     return seen(template);
@@ -68,6 +73,8 @@ export function createActionRunner(deps: ActionDeps): ActionRunner {
           const match = await waitForMatch(action.template, probe(action.template), wait, deps.clock);
           return deps.input.click(clickPoint(match)!);
         }
+        case "press":
+          return deps.input.key(action.key);
         case "scrollPane":
           return deps.input.scrollDown(PANE_POINT, action.clicks);
         case "beat":

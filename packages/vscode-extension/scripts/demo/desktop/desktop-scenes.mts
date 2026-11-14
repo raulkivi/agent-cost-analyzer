@@ -10,6 +10,8 @@ export type DesktopAction =
   | { kind: "prompt"; text: string }
   | { kind: "startRecording" }
   | { kind: "click"; template: string }
+  // A key press with nothing typed, e.g. Return to send what a view put in the composer.
+  | { kind: "press"; key: string }
   // Wheel-down over the side pane; the views are taller than the pane, and the target is in the last screenful.
   | { kind: "scrollPane"; clicks: number }
   | { kind: "beat" };
@@ -95,7 +97,9 @@ const M4: DesktopScene = {
     step("Wait for the session picker", { kind: "waitFor", template: "sessions-kicker" }, 1500),
     step("Wait for the answer", { kind: "waitAnswerDone" }, 1500),
     step("Open the host side pane", { kind: "click", template: "expand" }, 3000),
-    step("Analyse the session", { kind: "click", template: "analyse-button" }, 1000),
+    step("Analyse the session", { kind: "click", template: "analyse-button" }, 1500),
+    // Desktop puts the view's "Analyse session <id>" in the composer under a caution note and waits for Enter.
+    step("Send it", { kind: "press", key: "Return" }, 500),
     step("Wait for the session audit", { kind: "waitFor", template: "audit-kicker" }, 1500),
     step("Wait for the answer", { kind: "waitAnswerDone" }, 3500),
   ],
