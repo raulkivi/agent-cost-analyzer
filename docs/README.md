@@ -146,6 +146,10 @@ An npm workspace:
   step 10.19's design: counting the AI Credits that classic Copilot Chat subagents
   log to sibling files next to `main.jsonl`, with measured impact, format
   facts, options and open questions.
+- [Claude Code subagents plan](plans/claude-code-subagents.md) — 1.0
+  criterion C15 (plan in owner review): counting the usage in Claude Code's
+  `subagents/` transcripts in every total, with the CS0 spike's findings,
+  owner decisions and a real-data check.
 - [Automated pre-release UI gate](plans/release-ui-gate.md) —
   step 10.17 (planned): no hand checklist gates a release; wdio for VS
   Code and Copilot, Playwright for web.

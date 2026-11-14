@@ -1779,6 +1779,7 @@ app installs from npm, and the release path's security gaps are closed.
 | C12 | Only the owner creates or moves `ext-v*` and `app-v*` tags | [threat-model.md](threat-model.md) §5.8 | Open | A tag ruleset, read through the GitHub API, restricts creating, moving and deleting those tags to the owner |
 | C13 | Open VSX trusted publishing; `OVSX_PAT` deleted | threat-model.md §5.8 | Open | A release publishes to Open VSX without `OVSX_PAT`; the secret no longer exists |
 | C14 | Figures priced from a user price version say so where shown | threat-model.md §5.10 | Done 2026-11-14: the web UI (V2, PR #286) and the chat views (V2b) label them | Component and Playwright tests assert the label in the web UI and in every chat view that shows a priced figure |
+| C15 | Claude Code subagent usage counted | [plans/claude-code-subagents.md](plans/claude-code-subagents.md) | Plan written, owner review | A `REAL_DATA` check with an oracle computed from raw Claude Code transcripts passes on the owner's logs (plan §10); the owner signs off its output |
 
 Not in 1.0.0:
 
@@ -1789,13 +1790,14 @@ Not in 1.0.0:
 ### Per-feature plans
 
 Each larger item gets its own plan before code, approved by the owner.
-None is written yet:
+Only C15's is written (owner review):
 
 | Item | Criterion | Planned file |
 |---|---|---|
 | npm package and trusted publishing | C8 | `docs/plans/npm-package.md` |
 | Monthly allowance in the standalone app (MA13) | C9 | `docs/plans/monthly-allowance-standalone.md` |
 | Classic subagent tool calls in the audit (step 10.20) | C10 | `docs/plans/subagent-tool-audit.md` |
+| Claude Code subagent usage | C15 | [plans/claude-code-subagents.md](plans/claude-code-subagents.md) (written 2026-11-14) |
 | Savings Increment 3 | C11 | `docs/plans/savings-increment-3.md` |
 
 Each plan splits its build rows below into tasks with their own
@@ -1838,7 +1840,9 @@ repo. "Owner step" marks work that needs the owner's hands or accounts.
 | V27 | Increment 3 (a): O1 per tool for pi | C11 | medium | Sonnet | V14, V23 approved |
 | V28 | Increment 3 (a): a pi request trace (Phase 14 D1) and O2–O4 for pi | C11 | high | Opus | V14, V23 approved |
 | V29 | Increment 3 review and docs; the savings real-data check covers pi | C11 | medium | Opus | V24-V28 |
-| V30 | 1.0.0 bump PR: both products to 1.0.0, both CHANGELOGs, README, the Gantt | Release | low | Haiku | C1-C14 met |
+| V32 | Plan [plans/claude-code-subagents.md](plans/claude-code-subagents.md): Claude Code subagent transcripts in every total, with spike CS0 (done 2026-11-14), owner decisions D1-D16 and the real-data check (written 2026-11-14; owner review) | C15 | medium | Opus | — |
+| V33 | Build C15 per its plan (CS0b-CS16), ending with the owner's sign-off of the real-data check | C15 | high | Opus, Sonnet per plan task | V32 approved; CS14 also V21 approved |
+| V30 | 1.0.0 bump PR: both products to 1.0.0, both CHANGELOGs, README, the Gantt | Release | low | Haiku | C1-C15 met |
 | V31 | Release procedure below | Release | low | Owner step | V30 merged |
 
 ### Suggested order
@@ -1861,13 +1865,13 @@ The longest chain is pi: V12 → V13 → V14 → V28 → V29 → V30 → V31.
 
 The owner approves each step that publishes.
 
-1. Every criterion C1-C14 is met and the Gantt's 1.0.0 bars are at 100%.
+1. Every criterion C1-C15 is met and the Gantt's 1.0.0 bars are at 100%.
 2. V30's bump PR merges: the root `package.json` (app) and
    `packages/vscode-extension/package.json` at 1.0.0, both CHANGELOGs'
    `[Unreleased]` retitled `[1.0.0]` with the date.
 3. On the merged commit with a clean tree: `npm run build`, then `npm run
    test:real-data` on the owner's logs (step 10.19's SA18, savings with
-   `get_savings_report`, pi, Phase 14 and Phase 15). The owner signs off
+   `get_savings_report`, pi, Phase 14, Phase 15 and C15). The owner signs off
    the output.
 4. The real-Copilot gate on the same commit must end `PASS` (step 10.17,
    [plans/release-ui-gate.md](plans/release-ui-gate.md)); then `npm run
