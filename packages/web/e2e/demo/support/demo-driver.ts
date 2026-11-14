@@ -101,3 +101,9 @@ export async function recordScene(page: Page, scene: DemoScene, body: () => Prom
 }
 
 export { totalBeatMs };
+
+// Sets the colour preference before the app's first render (it reads localStorage then).
+// A Playwright test gets a fresh context, so the choice never leaks into another scene.
+export async function presetColorMode(page: Page, mode: "light" | "dark"): Promise<void> {
+  await page.addInitScript((value) => window.localStorage.setItem("aca.colorMode", value), mode);
+}
