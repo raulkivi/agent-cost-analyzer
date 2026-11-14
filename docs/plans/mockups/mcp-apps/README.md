@@ -1,6 +1,6 @@
-# MCP Apps mock-ups (A0b MVP, A17b Increment 2, A25b Increment 3)
+# MCP Apps mock-ups (A0b MVP, A17b Increment 2, A25b Increment 3, SR18 savings)
 
-**Last changed:** 2026-11-11 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-14 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 Boards for task A0b in [mcp-apps.md](../../mcp-apps.md) §5.6 and §7. They
 show the MVP views U1, U2 and U3 inside a VS Code Copilot Chat frame and a
@@ -61,6 +61,22 @@ Checks for the Increment 3 boards:
 2. **Colour is never the only cue.** Measured vs simulated, documented vs inferred and the estimate range each differ by a fill pattern or dash pattern as well as paint, and carry a direct label. Rises use the host's danger text colour and falls the success colour, each with the written sign (§9.1 question 4).
 3. **Read-only.** U14 has no issue control; U5 sends only the fixed template; commands and titles are logged text shown as plain text.
 4. **Failed self-check** is an alert above the figures, not a footnote.
+
+### Savings report boards (SR18)
+
+Drawn 2026-11-14 for task SR18 in [savings-report.md](../../savings-report.md) §9 and §10. Status: **approved by the owner 2026-11-14** (decisions D16-D21 in savings-report.md §12); SR20 builds the view from them. They show U18 (`get_savings_report`) in the same two host frames, light and dark, with the savings rows' vocabulary from [`../savings-report/`](../savings-report/README.md). Footers use the next target versions (extension v0.13.0, standalone app v0.15.0). All sessions, models and figures are invented.
+
+| Board | Shows |
+| ----- | ----- |
+| [Savings.dc.html](Savings.dc.html) | U18 in all four frames with `includeSimulated` off (the default): ranked rows per currency, "up to" and range amounts with hatched and solid bars, coverage and labels on every row, the Simulated section saying how to ask for it, Not analysed. Then the drill-down: a row opened in place (focus ring on the session button, as after Back), U1 in place with Back, a Simulated row opened with `includeSimulated` on, U12 in place with Back. Board notes carry the accessibility notes (heading order, row semantics, keyboard path). |
+| [SavingsStates.dc.html](SavingsStates.dc.html) | Loading, empty window, every amount unknown (with the reason), no trace for a provider, `includeSimulated` off, error with Retry, and narrow 360 px (a plain list and a Simulated row open). |
+
+Checks for the savings boards:
+
+1. **Labels.** "inferred" and "estimate" on unused-tools rows, "Simulated" on every replay figure, "Not priced" with its reason and never 0, basis and currency on every amount, coverage on every row.
+2. **Read-only and no new messages.** No Copy button; the Simulated section is text, not a control; the only message stays "Analyse session <id>" (inside U1). Drill-downs are exactly U1 and U12, in place, with Back.
+3. **Model-bound payload.** Rows show session ids, model ids and capped names only; no session titles until the drill-down (U1 and U12 load their own).
+4. **No grand total** (D4); the note says opportunities overlap.
 
 ## What the owner should check
 

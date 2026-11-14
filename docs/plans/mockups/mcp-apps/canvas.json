@@ -4,7 +4,7 @@
     "v": 1,
     "at": "2026-11-07T18:00:00Z"
   },
-  "title": "MCP Apps mock-ups (A0b MVP, A17b Increment 2, A25b Increment 3)",
+  "title": "MCP Apps mock-ups (A0b MVP, A17b Increment 2, A25b Increment 3, SR18 savings)",
   "launch": {
     "view": "canvas"
   },
@@ -15,84 +15,98 @@
       "y": 0,
       "w": 2856,
       "h": 2100,
-      "title": "1 · U1 session cost: KPI tiles with coverage, AI Credits per turn with event markers, top turns, a turn expanded inline, context overhead, Copy \"open in panel\" command (VS Code light, dark, HC; Claude light, dark)"
+      "title": "1 \u00b7 U1 session cost: KPI tiles with coverage, AI Credits per turn with event markers, top turns, a turn expanded inline, context overhead, Copy \"open in panel\" command (VS Code light, dark, HC; Claude light, dark)"
     },
     "SpendRollup.dc.html": {
       "x": 0,
       "y": 2400,
       "w": 2856,
       "h": 2020,
-      "title": "2 · U2 spend rollup: daily columns, by model and provider, top sessions, and the in-place drill-down into U1 with its back control"
+      "title": "2 \u00b7 U2 spend rollup: daily columns, by model and provider, top sessions, and the in-place drill-down into U1 with its back control"
     },
     "Findings.dc.html": {
       "x": 3156,
       "y": 0,
       "w": 2856,
       "h": 1900,
-      "title": "3 · U3 findings: severity tiles, kind and severity filters, findings table, collapsed and opened redacted evidence"
+      "title": "3 \u00b7 U3 findings: severity tiles, kind and severity filters, findings table, collapsed and opened redacted evidence"
     },
     "States.dc.html": {
       "x": 3156,
       "y": 2400,
       "w": 2856,
       "h": 2700,
-      "title": "4 · States: Unknown, partial coverage, estimate, errors, loading, narrow 360 px, extension vs standalone branding, heading font"
+      "title": "4 \u00b7 States: Unknown, partial coverage, estimate, errors, loading, narrow 360 px, extension vs standalone branding, heading font"
     },
     "CostOverTime.dc.html": {
       "x": 6812,
       "y": 0,
       "w": 2856,
       "h": 2780,
-      "title": "5 · U9 cost over time: repository (VS Code light, dark; Claude light, dark) and project (Claude light, dark): basis tiles with coverage, cost per week with documented and observed price-change markers, vendor then model, tokens by type, top sessions"
+      "title": "5 \u00b7 U9 cost over time: repository (VS Code light, dark; Claude light, dark) and project (Claude light, dark): basis tiles with coverage, cost per week with documented and observed price-change markers, vendor then model, tokens by type, top sessions"
     },
     "CostCompare.dc.html": {
       "x": 6812,
       "y": 3080,
       "w": 2856,
       "h": 1260,
-      "title": "6 · U10 compare: repositories (VS Code) and projects (Claude), total, change, per session, per active day, per turn, cache hit, share bars, no earlier figure"
+      "title": "6 \u00b7 U10 compare: repositories (VS Code) and projects (Claude), total, change, per session, per active day, per turn, cache hit, share bars, no earlier figure"
     },
     "CostChange.dc.html": {
       "x": 6812,
       "y": 4640,
       "w": 2856,
       "h": 2150,
-      "title": "7 · U11 cost change: waterfall of usage, price and mix effects, per-model table with unit prices, not-explained turns, documented price changes, Price changes control"
+      "title": "7 \u00b7 U11 cost change: waterfall of usage, price and mix effects, per-model table with unit prices, not-explained turns, documented price changes, Price changes control"
     },
     "Increment2States.dc.html": {
       "x": 6812,
       "y": 7090,
       "w": 2856,
       "h": 5850,
-      "title": "8 · Increment 2 states: U10 to U9 to U1 drill-down with back controls, no projects (extension), no earlier figure, unknown and partial, mixed currencies, error, narrow 360 px"
+      "title": "8 \u00b7 Increment 2 states: U10 to U9 to U1 drill-down with back controls, no projects (extension), no earlier figure, unknown and partial, mixed currencies, error, narrow 360 px"
     },
     "Replay.dc.html": {
       "x": 9968,
       "y": 0,
       "w": 2856,
       "h": 2400,
-      "title": "9 · U12 replay: compare mode and replay mode with a failed self-check, Simulated on every figure (VS Code light, dark; Claude light, dark)"
+      "title": "9 \u00b7 U12 replay: compare mode and replay mode with a failed self-check, Simulated on every figure (VS Code light, dark; Claude light, dark)"
     },
     "ToolCallAudit.dc.html": {
       "x": 9968,
       "y": 2700,
       "w": 2856,
       "h": 2500,
-      "title": "10 · U4 tool-call audit: one session (failure categories, recovery cost in tokens, retried commands) and the rollup, in both hosts, light and dark"
+      "title": "10 \u00b7 U4 tool-call audit: one session (failure categories, recovery cost in tokens, retried commands) and the rollup, in both hosts, light and dark"
     },
     "SessionPicker.dc.html": {
       "x": 9968,
       "y": 5500,
       "w": 2856,
       "h": 1750,
-      "title": "11 · U5 session picker: the pick list in both hosts, light and dark, and the chat after the click (only the fixed \"Analyse session <id>\" text is sent)"
+      "title": "11 \u00b7 U5 session picker: the pick list in both hosts, light and dark, and the chat after the click (only the fixed \"Analyse session <id>\" text is sent)"
     },
     "Increment3States.dc.html": {
       "x": 9968,
       "y": 7550,
       "w": 2856,
       "h": 6100,
-      "title": "12 · Increment 3 states: U13 documented vs inferred price changes, U14 issued statement with a diff and a draft, U15 estimate range, simulated and refusal, Unknown replay, narrow 360 px"
+      "title": "12 \u00b7 Increment 3 states: U13 documented vs inferred price changes, U14 issued statement with a diff and a draft, U15 estimate range, simulated and refusal, Unknown replay, narrow 360 px"
+    },
+    "Savings.dc.html": {
+      "x": 13268,
+      "y": 0,
+      "w": 2856,
+      "h": 3200,
+      "title": "13 \u00b7 U18 savings report: ranked changes per currency with range and \"up to\" amounts, coverage, Simulated off by default, Not analysed (VS Code light, dark; Claude light, dark), and the in-place drill-down into U1 and U12"
+    },
+    "SavingsStates.dc.html": {
+      "x": 13268,
+      "y": 3500,
+      "w": 2856,
+      "h": 3220,
+      "title": "14 \u00b7 U18 states: loading, empty window, every amount unknown, no trace for a provider, includeSimulated off, error with Retry, narrow 360 px"
     }
   },
   "order": [
@@ -107,11 +121,13 @@
     "Replay.dc.html",
     "ToolCallAudit.dc.html",
     "SessionPicker.dc.html",
-    "Increment3States.dc.html"
+    "Increment3States.dc.html",
+    "Savings.dc.html",
+    "SavingsStates.dc.html"
   ],
   "notes": {
     "sample": {
-      "text": "All names, prompts and figures on these boards are invented sample data. VS Code frames resolve the recorded var(--vscode-*) references to the default Light Modern, Dark Modern and Dark High Contrast values (inferred); Claude Desktop frames use the recorded light-dark() values. Plan: docs/plans/mcp-apps.md §5.6.",
+      "text": "All names, prompts and figures on these boards are invented sample data. VS Code frames resolve the recorded var(--vscode-*) references to the default Light Modern, Dark Modern and Dark High Contrast values (inferred); Claude Desktop frames use the recorded light-dark() values. Plan: docs/plans/mcp-apps.md \u00a75.6.",
       "w": 360,
       "x": 6312,
       "y": 0
