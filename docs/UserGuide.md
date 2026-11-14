@@ -262,6 +262,18 @@ can raise or lower it to match how far back you actually want Analyze mode
 to be able to look. Changes save automatically when you click away from
 the field.
 
+Claude Code deletes its own session files after 30 days unless you change
+its `cleanupPeriodDays` setting, so Analyze mode, the dashboard's 30- and
+90-day windows and the savings report can't see older Claude Code work. To
+keep more, set it in `~/.claude/settings.json`, for example:
+
+```json
+{ "cleanupPeriodDays": 90 }
+```
+
+It keeps sessions from then on; files Claude Code already deleted don't
+come back. The app doesn't check or change this setting.
+
 For Local harness chats, cache-write and reasoning tokens need a *separate*,
 optional setting on top of the one above — see the standalone app doc's
 ["Enabling richer cache-write/reasoning numbers"](standalone-app.md#enabling-richer-cache-writereasoning-numbers-optional)
