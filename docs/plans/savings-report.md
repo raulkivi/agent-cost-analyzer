@@ -2,7 +2,7 @@
 
 **Last changed:** 2026-11-14 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
-**Status: Increment 1 built (SR0-SR17, 2026-11-13); owner decisions D1-D12 accepted 2026-11-12, D13-D15 to decide; Increment 2 not started.** Phase 16 in
+**Status: Increment 1 built (SR0-SR17, 2026-11-13); owner decisions D1-D12 accepted 2026-11-12, D13-D15 answered 2026-11-14; Increment 1 exit criterion met 2026-11-14 (owner sign-off on the automated check, §14); Increment 2 not started.** Phase 16 in
 [implementation-plan.md](../implementation-plan.md) (owner decision D9).
 
 The question this answers: **"What should I change to spend less, and
@@ -404,6 +404,15 @@ one idle-expiry break and one unused tool by hand against the turn's
 tokens and the price book and finds them equal within rounding; and the
 app changes none of your settings or files (D15: the active provider it
 keeps in its own settings file is navigation state).
+
+**Met for Increment 1, 2026-11-14:** the owner signed off on the automated
+check below, run on their logs (16 October to 14 November): the idle-expiry
+row (35 breaks in 24 sessions, up to $89.89) and the unused-tool row
+(`Workflow`, $3.28 to $65.58) equal the independent oracle within 1e-13,
+the two products' Copilot reports are equal, and 1,420 fingerprints of
+settings, config and session files are unchanged. `get_savings_report`
+(Increment 2) is checked when it exists. The check found and fixed a log
+reader bug (records torn at U+2028/U+2029).
 
 ### Automated check
 
