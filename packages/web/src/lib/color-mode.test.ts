@@ -106,8 +106,9 @@ describe("initColorMode (the pre-render step in main.tsx)", () => {
 // resolveColorMode and the stored preference for every case.
 describe("index.html's pre-paint colour-mode script", () => {
   const indexHtml = readFileSync(path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "..", "index.html"), "utf-8");
-  const head = indexHtml.slice(0, indexHtml.indexOf("</head>"));
-  const inline = [...head.matchAll(/<script>([\s\S]*?)<\/script>/g)].map((match) => match[1]!);
+  // Parsed, not regex-matched: an HTML parser handles tag case and attributes.
+  const head = new DOMParser().parseFromString(indexHtml, "text/html").head;
+  const inline = [...head.querySelectorAll("script:not([src])")].map((script) => script.textContent ?? "");
 
   function runInline(storage: ColorModeStorage | null, prefersDark: boolean): HTMLElement {
     const root = document.createElement("html");
