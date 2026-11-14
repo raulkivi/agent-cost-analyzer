@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 import { z } from "zod";
 import { costBasisSchema, currencySchema } from "./cost-figure.js";
+import { helperRequestsSchema } from "./request-trace.js";
 import { cacheOutcomeSchema } from "./simulation.js";
 import { tokenCountSchema } from "./token-count.js";
 import { confidenceSchema, harnessSchema } from "./vendor-profile.js";
@@ -83,6 +84,8 @@ export const replayCoverageSchema = z
     notReplayed: z.array(z.object({ reason: z.string().min(1), turns: count }).strict()),
     // Absent when no run was read.
     subagentRuns: replaySubagentRunsSchema.optional(),
+    // Copilot's helper agents' requests, outside the replay (their cost stays in the measured figures); absent when none.
+    helperRequests: helperRequestsSchema.optional(),
   })
   .strict()
   .refine((coverage) => coverage.replayedTurns <= coverage.turns, { message: "replayedTurns cannot exceed turns", path: ["replayedTurns"] })
@@ -164,6 +167,8 @@ export const sessionReplayComparisonSchema = z
       .max(MAX_COMPARED_MODELS),
     // The runs every entry leaves out, as in a single replay's coverage; absent when no run was read.
     subagentRuns: replaySubagentRunsSchema.optional(),
+    // The helper agents' requests every entry leaves out, as in a single replay's coverage.
+    helperRequests: helperRequestsSchema.optional(),
   })
   .strict();
 

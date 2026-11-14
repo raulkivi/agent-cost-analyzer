@@ -69,9 +69,18 @@ describe("ReplaySummaryPanel (step 14.7, board 2)", () => {
     expect(region).not.toHaveTextContent("0.00 AI Credits");
   });
 
+  it("lists the helper agents' requests the replay leaves out, with their cost kept in the measured figures", () => {
+    const coverage = makeReplay().coverage;
+    const { dialog } = renderPanel(makeReplay({ coverage: { ...coverage, helperRequests: { requests: 3, costAiCredits: { known: true, value: 0.25 } } } }));
+    const region = within(dialog).getByRole("region", { name: "Coverage" });
+    expect(region).toHaveTextContent("3 helper-agent requests not replayed: each has a prompt of its own (todo list, conversation summary)");
+    expect(region).toHaveTextContent("Their cost, 0.25 AI Credits, stays in the measured figures.");
+  });
+
   it("shows no subagent line without runs", () => {
     const { dialog } = renderPanel();
     expect(dialog).not.toHaveTextContent("subagent");
+    expect(dialog).not.toHaveTextContent("helper-agent");
   });
 
   it("words the self-check both ways, with the 5% / exact rule", () => {

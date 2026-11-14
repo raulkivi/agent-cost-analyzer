@@ -11,6 +11,8 @@ import {
   selfCheckDetail,
   selfCheckRule,
   splitAssumption,
+  helperRequestsCostSentence,
+  helperRequestsSentence,
   subagentRunsCostSentence,
   subagentRunsSentence,
 } from "../../lib/replay-format.js";
@@ -127,6 +129,11 @@ function CoverageSection({ replay }: { replay: SessionReplay }) {
       {subagentRunsSentence(coverage.subagentRuns) !== undefined && (
         <span>
           {subagentRunsSentence(coverage.subagentRuns)}. {subagentRunsCostSentence(coverage.subagentRuns)}
+        </span>
+      )}
+      {helperRequestsSentence(coverage.helperRequests) !== undefined && (
+        <span>
+          {helperRequestsSentence(coverage.helperRequests)}. {helperRequestsCostSentence(coverage.helperRequests)}
         </span>
       )}
       {coverage.notReplayed.length > 0 && (

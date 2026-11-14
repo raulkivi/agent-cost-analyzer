@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
 import { z } from "zod";
+import { tokenCountSchema } from "./token-count.js";
 import { harnessSchema } from "./vendor-profile.js";
 
 // Phase 14 step 14.1 (docs/plans/analyze-session-replay.md §4.1): a
@@ -44,6 +45,12 @@ export const traceRequestSchema = z
     path: ["extendedCacheWrite"],
   });
 
+// Requests of the session's helper agents (Copilot's todo list, conversation
+// summary and the like) that the trace leaves out of the main chain: each has a
+// prompt of its own, so it isn't part of the main agent's cache. Absent when
+// there are none; their AI Credits are unknown with a reason, never 0.
+export const helperRequestsSchema = z.object({ requests: z.number().int().positive(), costAiCredits: tokenCountSchema }).strict();
+
 export const untracedTurnSchema = z.object({ turnIndex: z.number().int().nonnegative(), reason: z.string().min(1) }).strict();
 
 export const requestTraceSchema = z
@@ -55,6 +62,7 @@ export const requestTraceSchema = z
     // Turns with no usable request (no token counts, a sub-agent only, D6),
     // each with its reason; counted in the replay's coverage (constraint 6).
     notTraced: z.array(untracedTurnSchema),
+    helperRequests: helperRequestsSchema.optional(),
   })
   .strict()
   .superRefine((trace, ctx) => {
@@ -87,4 +95,5 @@ export interface PromptChangeMarker {
 export type TraceEvent = z.infer<typeof traceEventSchema>;
 export type TraceRequest = z.infer<typeof traceRequestSchema>;
 export type UntracedTurn = z.infer<typeof untracedTurnSchema>;
+export type HelperRequests = z.infer<typeof helperRequestsSchema>;
 export type RequestTrace = z.infer<typeof requestTraceSchema>;

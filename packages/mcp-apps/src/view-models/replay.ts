@@ -34,6 +34,7 @@ export interface ReplayCoverageView {
   text: string;
   partial: boolean;
   subagentRunsText?: string; // "2 subagent runs not replayed: replay covers the main agent only"; absent for none
+  helperRequestsText?: string; // "3 helper-agent requests not replayed: ..."; absent for none (plan §13, finding 1)
   notReplayed: { reason: string; turnsText: string }[];
 }
 
@@ -162,12 +163,19 @@ function subagentRunsText(coverage: ReplayCoverage): string | undefined {
   return runs === 0 ? undefined : `${pluralize(runs, "subagent run")} not replayed: replay covers the main agent only`;
 }
 
+function helperRequestsText(coverage: ReplayCoverage): string | undefined {
+  const requests = coverage.helperRequests?.requests ?? 0;
+  return requests === 0 ? undefined : `${pluralize(requests, "helper-agent request")} not replayed: each has a prompt of its own (todo list, conversation summary)`;
+}
+
 function coverageView(coverage: ReplayCoverage): ReplayCoverageView {
   const subagentText = subagentRunsText(coverage);
+  const helperText = helperRequestsText(coverage);
   return {
     text: `${formatCount(coverage.replayedTurns)} of ${formatCount(coverage.turns)} turns replayed`,
     partial: coverage.replayedTurns < coverage.turns,
     ...(subagentText === undefined ? {} : { subagentRunsText: subagentText }),
+    ...(helperText === undefined ? {} : { helperRequestsText: helperText }),
     notReplayed: coverage.notReplayed.map((group) => ({ reason: group.reason, turnsText: pluralize(group.turns, "turn") })),
   };
 }

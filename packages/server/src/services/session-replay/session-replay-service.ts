@@ -269,12 +269,19 @@ function subagentRunsOutside(turns: Turn[]): ReplayCoverage["subagentRuns"] {
   };
 }
 
-function withSubagentRuns(
+// The requests the replay leaves out of the main chain: subagent runs (D11)
+// and Copilot's helper agents' requests (plan §13, finding 1).
+function withLeftOut(
   coverage: ReplayCoverage,
   turns: Turn[],
+  trace: RequestTrace,
 ): ReplayCoverage {
   const subagentRuns = subagentRunsOutside(turns);
-  return subagentRuns === undefined ? coverage : { ...coverage, subagentRuns };
+  return {
+    ...coverage,
+    ...(subagentRuns === undefined ? {} : { subagentRuns }),
+    ...(trace.helperRequests === undefined ? {} : { helperRequests: trace.helperRequests }),
+  };
 }
 
 function assumptionsFor(trace: RequestTrace): ReplayAssumption[] {
@@ -369,6 +376,7 @@ export class SessionReplayService implements SessionReplayQueries {
         measuredModels: value.measuredModels,
         measured: reference.totals.measured,
         ...(reference.coverage.subagentRuns === undefined ? {} : { subagentRuns: reference.coverage.subagentRuns }),
+        ...(reference.coverage.helperRequests === undefined ? {} : { helperRequests: reference.coverage.helperRequests }),
         entries: replays.map((replay) => {
           const isOwn = replay.model === ownModelId;
           return {
@@ -504,7 +512,7 @@ export class SessionReplayService implements SessionReplayQueries {
         },
         currency,
         ...aligned,
-        coverage: withSubagentRuns(aligned.coverage, session.turns),
+        coverage: withLeftOut(aligned.coverage, session.turns, trace),
         selfCheck: loaded.selfCheck(),
         assumptions: loaded.assumptions,
       },

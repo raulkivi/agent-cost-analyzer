@@ -160,9 +160,15 @@ describe("CompareModelsView", () => {
     expect(screen.getByText("3 subagent runs not replayed: replay covers the main agent only")).toBeInTheDocument();
   });
 
+  it("lists the helper agents' requests the comparison leaves out in the coverage block", async () => {
+    await renderReady({ ...COMPARISON, helperRequests: { requests: 3, costAiCredits: { known: true, value: 0.25 } } });
+    expect(screen.getByText("3 helper-agent requests not replayed: each has a prompt of its own (todo list, conversation summary)")).toBeInTheDocument();
+  });
+
   it("shows no subagent line when the comparison has no runs left out", async () => {
     await renderReady();
     expect(screen.queryByText(/subagent run/)).toBeNull();
+    expect(screen.queryByText(/helper-agent/)).toBeNull();
   });
 
   it("removing a model asks again without it, keeping the own model", async () => {

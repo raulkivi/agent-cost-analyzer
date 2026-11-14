@@ -11,6 +11,7 @@ import {
   replayCostTitle,
   selfCheckSentence,
   splitAssumption,
+  helperRequestsCostSentence,
   subagentRunsCostSentence,
 } from "./replay-format.js";
 
@@ -55,6 +56,21 @@ describe("replay formatting (step 14.7)", () => {
     expect(coverageSentence(withRuns(1))).toContain("; 1 subagent run not replayed: replay covers the main agent only");
     expect(coverageSentence(withRuns(0))).toBe(coverageSentence(replay.coverage));
     expect(coverageSentence(replay.coverage)).not.toContain("subagent");
+  });
+
+  // Owner decision 2026-11-14 (analyze-session-replay.md §13, finding 1).
+  it("lists the helper agents' requests the replay leaves out, and says nothing for none", () => {
+    const replay = makeReplay();
+    const withHelpers = (requests: number) => ({ ...replay.coverage, helperRequests: { requests, costAiCredits: { known: true as const, value: 0.25 } } });
+    expect(coverageSentence(withHelpers(3))).toContain("; 3 helper-agent requests not replayed: each has a prompt of its own (todo list, conversation summary)");
+    expect(coverageSentence(withHelpers(1))).toContain("; 1 helper-agent request not replayed: each has a prompt of its own (todo list, conversation summary)");
+    expect(coverageSentence(replay.coverage)).not.toContain("helper");
+  });
+
+  it("words the helper requests' cost as kept in the measured figures, unknown when it is", () => {
+    expect(helperRequestsCostSentence({ requests: 3, costAiCredits: { known: true, value: 0.25 } })).toBe("Their cost, 0.25 AI Credits, stays in the measured figures.");
+    expect(helperRequestsCostSentence({ requests: 1, costAiCredits: { known: false, reason: "not recorded" } })).toBe("Their cost is unknown: not recorded");
+    expect(helperRequestsCostSentence(undefined)).toBeUndefined();
   });
 
   it("words the cost of the runs left out, unknown when it is", () => {
