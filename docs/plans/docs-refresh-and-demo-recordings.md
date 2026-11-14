@@ -6,7 +6,7 @@ Status: approved 2026-11-13; plan steps 10.22 (Phase 0 and Phase 1) and
 10.23 (Phase 2) in [implementation-plan.md](../implementation-plan.md).
 Phase 0 done 2026-11-13; Phase 1 done 2026-11-14 (step 10.22); Phase 2
 (step 10.23) started 2026-11-14: spike 2.0 passed (§4.3), 2.1 and 2.2
-done; M1 recorded (draft, owner review open); next M2–M6 (2.3).
+done; M1–M7 recorded (2.3), owner review (2.4) open.
 
 ## 1. Goal
 
@@ -829,4 +829,34 @@ review rejections.
   "kratt" next to the tool status; Claude's answer mentions the fixture's
   "fixture-main-model" names. `AICA_DEMO_DEBUG_DIR` keeps the last probed
   frame of a failed take (it can show the account; never in the repo).
+- 2026-11-14: 2.3 (Sonnet) merged, first review: M2–M7 as scene data,
+  `createDemoDesktopHome` (the Copilot test models renamed to
+  claude-sonnet-5.5, claude-haiku-5.5, gemini-3.8-flash, D21), templates
+  cut from the fake host in Claude's light set. Scene changes from §4.2
+  (main session and 2.3): M2 is the cost-change waterfall → Price
+  changes → Back for 1-6 vs 7-31 October (September has no priced
+  figure); M3 is the statement only, asked as "Show me …" ("Draft" made
+  Claude write and open its own Markdown file); M4 starts at the session
+  picker (the fixture's audit rollup has no failures), Analyse, then the
+  send button; M7 is the estimate for the Mobile app (Customer portal has
+  2 priced days and always refuses; the range holds until about
+  2026-12-26, since the window follows the real clock). Live takes by
+  the main session, about 20 in all, each fixing one Desktop behaviour
+  (tests first): Always allow can stay up and a hovered button doesn't
+  match, so the pointer moves off and retries; Desktop puts a view's
+  message in the composer and waits, with focus in the view, so M4
+  clicks send; Claude often shows several views, so each scene opens the
+  pane at a fixed offset (x 1086, 54 px up) from its own view's kicker
+  and then matches templates in the pane only (`match.py --min-x 806`);
+  xdotool dropped an en dash, so prompts are ASCII (tested); fake-host
+  crops of buttons scored 0.83–0.86 live, so Price changes and Why
+  flagged are live crops; the composer check polls past the caret.
+  Final takes M1–M7 without a permission prompt, Desktop 5.11492.5; GIFs
+  trimmed to start 1 s before the view appears (D19): M1 1.57 MB, M2
+  2.34 MB, M4 1.64 MB, M5 1.33 MB, M6 1.35 MB (20 s each), M3 1.01 MB
+  16.4 s, M7 1.08 MB 15.4 s. Found: `compare_models_for_session` names
+  claude-sonnet-5.5 as the measured model of the Opus "scratch" session
+  (also on the shared fixture), and Claude points out the mismatch in
+  M6's answer: a product bug for the owner. M4's take ends while Claude
+  is still analysing, with a findings view in the pane.
 - 2026-11-14: tasks 1.10-1.14 (final takes, owner review, docs embedding) are held until Phase 17 (dense ledger UI, [dense-ledger-ui.md](dense-ledger-ui.md)) merges, owner decision D2 of that plan. The scenes are then retaken once in the new look; the earlier takes serve as drafts only.
