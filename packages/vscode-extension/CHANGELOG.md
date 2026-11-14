@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Copilot Chat sessions whose stored agent name was a helper's (`panel/editAgent`, `summarizeConversationHistory`) are now listed and counted. They are ordinary Chat-panel chats (the store takes the name from one request) and were left out of every view; sessions are now selected by surface (Chat panel), still leaving out the Copilot CLI, the Coding Agent and subagents.
+- An Agent Host session that VS Code titled with the opening of its first prompt (some are, in the catalog and in the session's `customTitle`) now shows as untitled everywhere, so session lists, statements, exports and MCP answers such as `get_statement` no longer carry prompt text. A title you set yourself is kept.
 - Replaying a local Copilot Chat session on another model now follows the main agent's requests only. The todo-list agent's and the conversation summary's requests have prompts of their own; they used to be replayed as part of the main agent's cache, which made the self-check unavailable (a helper on another vendor's model) or fail next to them. They are now left out and listed in the replay's coverage with their AI Credits (`coverage.helperRequests` in `replay_session` and `compare_models_for_session`); their cost stays in the measured figures.
 - Learn's Vendors tab fits the panel's side column: one block per model instead of a six-column table, so names no longer wrap and the Misses column is no longer cut off. Sorting moves to a **Sort by** selector.
 
