@@ -67,23 +67,24 @@ describe("SessionPickerView content", () => {
 });
 
 describe("SessionPickerView Analyse", () => {
-  it("sends exactly 'Analyse session <id>' for the row, then shows a disabled Sent", async () => {
+  it("sends exactly 'Analyse session <id>' for the row, then shows a disabled Added to chat and the press-send hint", async () => {
     const { port } = setup(ok(list()));
     fireEvent.click(screen.getByRole("button", { name: "Analyse session 7f3a9c2e" }));
     expect(sent(port)).toEqual(["Analyse session 7f3a9c2e-1111-4222-8333-444455556666"]);
-    const done = await screen.findByRole("button", { name: "Sent: session 7f3a9c2e" });
+    const done = await screen.findByRole("button", { name: "Added to chat: session 7f3a9c2e" });
     expect(done).toBeDisabled();
-    expect(done).toHaveTextContent("Sent");
+    expect(done).toHaveTextContent("Added to chat");
+    expect(screen.getByText("Press send in the chat to run it.")).toBeInTheDocument();
     // The other rows still offer Analyse.
     expect(screen.getByRole("button", { name: "Analyse session 5b91d0c4" })).toBeEnabled();
     // And the click did nothing else.
     expect(port.calls.map((call) => call.method)).toEqual(["sendMessage"]);
   });
 
-  it("does not send twice for a Sent row", async () => {
+  it("does not send twice for an Added to chat row", async () => {
     const { port } = setup(ok(list()));
     fireEvent.click(screen.getByRole("button", { name: "Analyse session 5b91d0c4" }));
-    const done = await screen.findByRole("button", { name: "Sent: session 5b91d0c4" });
+    const done = await screen.findByRole("button", { name: "Added to chat: session 5b91d0c4" });
     fireEvent.click(done);
     expect(sent(port)).toEqual(["Analyse session 5b91d0c4"]);
   });
@@ -129,7 +130,7 @@ describe("SessionPickerView Analyse", () => {
     expect(button).toBeDisabled();
     expect(sent(port)).toEqual(["Analyse session 5b91d0c4"]);
     answer(true);
-    expect(await screen.findByRole("button", { name: "Sent: session 5b91d0c4" })).toBeDisabled();
+    expect(await screen.findByRole("button", { name: "Added to chat: session 5b91d0c4" })).toBeDisabled();
     expect(sent(port)).toEqual(["Analyse session 5b91d0c4"]);
   });
 

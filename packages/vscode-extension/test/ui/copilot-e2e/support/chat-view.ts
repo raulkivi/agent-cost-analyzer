@@ -225,10 +225,10 @@ export class ChatView {
   }
 
   // U5: what one row shows after its Analyse was pressed (A33): its button
-  // reads Sent, it shows the text to type in place of the button, or neither.
+  // reads Added to chat, it shows the text to type in place of the button, or neither.
   async analyseRow(shortId: string): Promise<AnalyseRowState> {
     return browser.execute((id: string) => {
-      if (document.querySelector(`button[aria-label="Sent: session ${id}"]`)) return "sent";
+      if (document.querySelector(`button[aria-label="Added to chat: session ${id}"]`)) return "sent";
       const row = Array.from(document.querySelectorAll('[aria-label="Sessions"] > li')).find((candidate) => candidate.textContent?.includes(id));
       const status = row?.querySelector('[role="status"]')?.textContent ?? "";
       return status.startsWith("Ask in the chat:") ? "fallback" : "pending";

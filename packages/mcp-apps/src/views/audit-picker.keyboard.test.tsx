@@ -30,7 +30,7 @@ async function tabTo(user: ReturnType<typeof userEvent.setup>, target: HTMLEleme
 }
 
 describe("U5 by keyboard", () => {
-  it("Tab reaches a row's Analyse, Enter sends one message, and the button reads Sent and is skipped", async () => {
+  it("Tab reaches a row's Analyse, Enter sends one message, and the button reads Added to chat and is skipped", async () => {
     const user = userEvent.setup();
     const port = new FakeAppHostPort();
     render(<SessionPickerView port={port} brand={brand} result={ok(list)} />);
@@ -38,7 +38,7 @@ describe("U5 by keyboard", () => {
     await tabTo(user, first);
     await user.keyboard("{Enter}");
     expect(port.calls.filter((call) => call.method === "sendMessage").map((call) => call.args[0])).toEqual(["Analyse session 7f3a9c2e"]);
-    const sent = await screen.findByRole("button", { name: "Sent: session 7f3a9c2e" });
+    const sent = await screen.findByRole("button", { name: "Added to chat: session 7f3a9c2e" });
     expect(sent).toBeDisabled();
     // The next Tab lands on the next row's button, not on the disabled one.
     await user.tab();
@@ -51,7 +51,7 @@ describe("U5 by keyboard", () => {
     render(<SessionPickerView port={port} brand={brand} result={ok(list)} />);
     await tabTo(user, screen.getByRole("button", { name: "Analyse session 5b91d0c4" }), 3);
     await user.keyboard(" ");
-    expect(await screen.findByRole("button", { name: "Sent: session 5b91d0c4" })).toBeDisabled();
+    expect(await screen.findByRole("button", { name: "Added to chat: session 5b91d0c4" })).toBeDisabled();
     expect(screen.getAllByRole("button")).toHaveLength(2);
   });
 });

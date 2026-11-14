@@ -82,6 +82,8 @@ inEachClaudeSet(() => {
     await view.sessionCost.askAboutSession();
     await expect.poll(() => modelTurnsIn(host.calls)).toHaveLength(1);
     expect(messagesOffTemplate(host.calls)).toEqual([]);
+    await expect(view.content.getByRole("button", { name: "Added to chat", exact: true })).toBeDisabled();
+    await expect(view.content.getByText("Press send in the chat to run it.")).toBeVisible();
   });
 
   test("A16 2 U3 renders, filters reload in place, evidence collapsed: severity tiles and table; the kind and severity filters call list_findings; evidence opens as plain text; axe clean", async ({ host }) => {

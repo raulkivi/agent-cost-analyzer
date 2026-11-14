@@ -13,7 +13,7 @@
 // "exactly one new request" is the analyzer's turn count for the run's new
 // chats, and the text is read from the requests the chat shows.
 
-// The row after the press: its button reads Sent, it shows the text to type,
+// The row after the press: its button reads Added to chat, it shows the text to type,
 // or neither has happened yet.
 export type AnalyseRowState = "sent" | "fallback" | "pending";
 
@@ -54,8 +54,8 @@ export function analyseOutcome({ sessionId, turnsBefore, turnsAfter, requestText
   if (row === "sent") {
     const input = collapse(inputText);
     if (input === message) return { kind: "staged", input };
-    if (input !== "") return { kind: "failed", reason: `the view says Sent, the chat gained no request, and its input holds something else: ${JSON.stringify(input)}` };
-    return { kind: "failed", reason: "the view says Sent but the chat gained no request" };
+    if (input !== "") return { kind: "failed", reason: `the view says Added to chat, the chat gained no request, and its input holds something else: ${JSON.stringify(input)}` };
+    return { kind: "failed", reason: "the view says Added to chat but the chat gained no request" };
   }
   return { kind: "failed", reason: "neither a new chat request nor the row's text to type appeared" };
 }
