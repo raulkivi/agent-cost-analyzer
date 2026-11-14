@@ -74,6 +74,38 @@ describe("turnInspectorDetailSchema", () => {
     expect(turnInspectorDetailSchema.parse(sample)).toEqual(sample);
   });
 
+  // pi's context_edit: a later entry left a response or tool result out of
+  // (or replaced it in) the model's context; usage still counts.
+  it("accepts a context edit on a response round and on a tool call", () => {
+    const edit = { kind: "omitted", note: "left out of later context" };
+    const sample = {
+      turnIndex: 0,
+      userMessage: [],
+      rounds: [
+        {
+          request: {
+            index: 0,
+            addedMessages: [],
+            toolCalls: [{ name: "read", args: [], result: [], contextEdit: edit }],
+          },
+          response: { index: 0, response: [], contextEdit: { kind: "replaced", note: "replaced" } },
+        },
+      ],
+    };
+
+    expect(turnInspectorDetailSchema.parse(sample)).toEqual(sample);
+  });
+
+  it("rejects an unknown context edit kind", () => {
+    const sample = {
+      turnIndex: 0,
+      userMessage: [],
+      rounds: [{ request: { index: 0, addedMessages: [], toolCalls: [] }, response: { index: 0, response: [], contextEdit: { kind: "hidden", note: "x" } } }],
+    };
+
+    expect(() => turnInspectorDetailSchema.parse(sample)).toThrow();
+  });
+
   it("rejects an unknown content-part kind", () => {
     const sample = {
       turnIndex: 0,

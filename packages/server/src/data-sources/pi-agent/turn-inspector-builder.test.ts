@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
 import { describe, expect, it } from "vitest";
+import { latestContextEdits } from "./context-edits.js";
 import type { PiRawEntry } from "./pi-jsonl-reader.js";
 import type { PiTurnGroup } from "./turn-grouper.js";
 import { buildTurnInspectorDetail } from "./turn-inspector-builder.js";
@@ -89,5 +90,47 @@ describe("buildTurnInspectorDetail", () => {
 
     expect(detail.rounds[0].response.reasoning).toEqual([{ kind: "text", text: "check the file" }]);
     expect(detail.rounds[1].request.toolCalls[0].args).toEqual([{ kind: "text", text: expect.stringContaining("a.ts") }]);
+  });
+
+  // pi 1.5.2 length/overflow recovery (docs/compaction.md "Overflow and Length
+  // Recovery Ordering"): the failed attempt and its tool results get
+  // context_edit omissions, then a compaction, then the retry.
+  describe("context_edit", () => {
+    const recoveryTurn = (): PiRawEntry[] => [
+      userMessage("u1", "write a long list"),
+      assistantMessage("a1", [{ type: "toolCall", id: "call-1", name: "read", arguments: { path: "a.ts" } }]),
+      toolResultMessage("t1", "call-1", "read", "contents"),
+      assistantMessage("a2", [{ type: "text", text: "1. truncated" }]),
+      { type: "context_edit", id: "e1", targetId: "a2", replacement: null },
+      { type: "compaction", id: "c1", summary: "Summary of the work so far", firstKeptEntryId: "u1", tokensBefore: 10 },
+      assistantMessage("a3", [{ type: "text", text: "1. retried" }]),
+    ];
+
+    it("marks an omitted response round, and leaves the others unmarked", () => {
+      const entries = recoveryTurn();
+      const detail = buildTurnInspectorDetail(0, group(entries), latestContextEdits(entries));
+
+      expect(detail.rounds[1].response.contextEdit).toEqual({ kind: "omitted", note: expect.any(String) });
+      expect(detail.rounds[0].response.contextEdit).toBeUndefined();
+      expect(detail.rounds[2].response.contextEdit).toBeUndefined();
+    });
+
+    it("marks an omitted or replaced tool result on its tool call", () => {
+      const entries = [
+        ...recoveryTurn().slice(0, 4),
+        { type: "context_edit", id: "e2", targetId: "t1", replacement: "shorter" },
+      ];
+      const detail = buildTurnInspectorDetail(0, group(entries), latestContextEdits(entries));
+
+      expect(detail.rounds[1].request.toolCalls[0].contextEdit).toEqual({ kind: "replaced", note: expect.any(String) });
+    });
+
+    it("shows a compaction's summary as added text and no raw context_edit or metadata entry", () => {
+      const entries = recoveryTurn();
+      const detail = buildTurnInspectorDetail(0, group(entries), latestContextEdits(entries));
+
+      expect(detail.rounds[2].request.addedMessages).toEqual([{ kind: "text", text: "Summary of the work so far" }]);
+      expect(JSON.stringify(detail.rounds.map((r) => r.request))).not.toMatch(/targetId|firstKeptEntryId/);
+    });
   });
 });

@@ -24,10 +24,22 @@ export const messageContentPartSchema = z.union([
 
 export type MessageContentPart = z.infer<typeof messageContentPartSchema>;
 
+// A later log entry changed what the model saw of this part (pi's
+// `context_edit`): "omitted" left it out of every later request, "replaced"
+// swapped its content. Raw history and usage are unchanged, so the part's
+// tokens still count.
+export const contextEditSchema = z.object({
+  kind: z.enum(["omitted", "replaced"]),
+  note: z.string(),
+});
+
+export type ContextEdit = z.infer<typeof contextEditSchema>;
+
 const toolCallPartSchema = z.object({
   name: z.string(),
   args: z.array(messageContentPartSchema),
   result: z.array(messageContentPartSchema),
+  contextEdit: contextEditSchema.optional(),
 });
 
 const turnRequestRoundSchema = z.object({
@@ -40,6 +52,7 @@ const turnResponseRoundSchema = z.object({
   index: z.number(),
   response: z.array(messageContentPartSchema),
   reasoning: z.array(messageContentPartSchema).optional(),
+  contextEdit: contextEditSchema.optional(),
 });
 
 // rounds: [] is a valid, non-error value — it means this turn genuinely made

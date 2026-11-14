@@ -39,6 +39,7 @@
     "test:real-data": "npm run test:real-data --workspace=packages/server",
     "test:real-data:savings": "npm run test:real-data:savings --workspace=packages/server",
     "test:real-data:pi": "npm run test:real-data:pi --workspace=packages/server",
+    "fixtures:generate-pi": "npm run fixtures:generate-pi --workspace=packages/server --",
     "test:real-data:replay": "npm run test:real-data:replay --workspace=packages/server",
     "test:real-data:cost-by-project": "npm run test:real-data:cost-by-project --workspace=packages/server",
     "test:scripts": "node --test scripts/*.test.mjs",

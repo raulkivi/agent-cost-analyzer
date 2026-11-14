@@ -132,6 +132,8 @@ export {
 } from "./log-provider.js";
 export {
   contentPlaceholderSchema,
+  contextEditSchema,
+  type ContextEdit,
   type ContentPlaceholder,
   messageContentPartSchema,
   type MessageContentPart,

@@ -100,7 +100,7 @@ Read in the code on 2026-11-14.
 | `harnessSchema`: `vscode-local`, `copilot-agent-host`, `claude-code` | `domain/src/vendor-profile.ts` | (a): a trace needs a harness value (D28) |
 | One session per pi leaf branch; each holds the whole root-to-leaf path, so a shared prefix appears in every sibling | `session-tree.ts`, `pi-agent-log-provider.ts` | (a): double counting (§7.4, D27) |
 | Real-data check and its independent oracle (Claude Code only) | `packages/server/scripts/savings-exit.real.test.mts`, `savings-oracle.mts` (imports only `gpt-tokenizer`) | §14: extended per task |
-| Phase 11 status: capture tooling done (V12, PR #288); the owner's two captures (V13) and the fixtures, field diff and fixes (V14) are open | [implementation-plan.md](../implementation-plan.md) Phase 11, [providers/pi-provider.md](../providers/pi-provider.md) | (a) depends on V14 |
+| Phase 11 status: V13 is replaced by automated generation (owner 2026-11-14); V14 (generated fixtures, field diff, fixes, `context_edit`) is done and in review | [implementation-plan.md](../implementation-plan.md) Phase 11, [providers/pi-provider.md](../providers/pi-provider.md) | (a) depends on V14 |
 
 ## 4. Design: (c) each session's date and saving
 
@@ -382,7 +382,7 @@ Decided 2026-11-14: the owner accepted each recommendation (D22–D32).
 | D27 | Forked pi sessions | Count a shared prefix once per file, under the first branch in leaf order; the first request after a branch point is unchecked with a fixed reason (§7.4) |
 | D28 | Scope of the pi trace | Savings only: pi implements `CacheBreakTraceReader`, not `RequestTraceReader`; `harnessSchema` gains `pi`; replay and O6 for pi stay off until a post-1.0 plan |
 | D29 | pi sessions with only the sidecar (no system messages in the file) | Leave them under Not analysed with the reason (the sidecar has tool names, no definitions). If V14 shows the owner's pi writes no system messages, revisit: extend the logger to capture definitions |
-| D30 | pi data for the real-data check | Add to V13's capture steps: one pause longer than 5 minutes in the linear session (an idle expiry on Anthropic's default lifetime) and one tool left unused; the check fails, with that instruction, when the window holds no pi session |
+| D30 | pi data for the real-data check | Add to V13's capture steps: one pause longer than 5 minutes in the linear session (an idle expiry on Anthropic's default lifetime) and one tool left unused; the check fails, with that instruction, when the window holds no pi session. The generated `pi-linear` fixture has both (310 s pause, `write` unused; 2026-11-14) |
 | D31 | SR22 findings | Fold R12 and R15 into V24, R14 into V26; R13 and R16 stay recorded (§8) |
 | D32 | Mock-ups | Amend the existing boards (§10) and approve them once (V23b) before V24–V26's UI code; the server halves of V24 and V26 may start before |
 

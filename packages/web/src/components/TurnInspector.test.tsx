@@ -232,6 +232,44 @@ describe("TurnInspector", () => {
     expect(screen.queryByRole("button", { name: /reasoning/i })).not.toBeInTheDocument();
   });
 
+  // pi's context_edit: the response and tool result stay visible, marked.
+  it("marks a response and a tool call a later context edit left out of the model's context", async () => {
+    stubFetchJson({
+      turnIndex: 0,
+      userMessage: [],
+      rounds: [
+        {
+          request: {
+            index: 0,
+            addedMessages: [],
+            toolCalls: [
+              {
+                name: "read",
+                args: [],
+                result: [{ kind: "text", text: "contents" }],
+                contextEdit: { kind: "replaced", note: "Tool result replaced later." },
+              },
+            ],
+          },
+          response: {
+            index: 0,
+            response: [{ kind: "text", text: "1. truncated" }],
+            contextEdit: { kind: "omitted", note: "Left out of later requests; tokens still count." },
+          },
+        },
+      ],
+    } satisfies TurnInspectorDetail);
+
+    render(<TurnInspector sessionId="session-1" turnIndex={0} usageDataAvailable={true} onClose={() => {}} />);
+    await screen.findByText("Request · round 0");
+
+    expect(screen.getByText("1. truncated")).toBeInTheDocument();
+    expect(screen.getByText("omitted from later context")).toBeInTheDocument();
+    expect(screen.getByText("Left out of later requests; tokens still count.")).toBeInTheDocument();
+    expect(screen.getByText("replaced in later context")).toBeInTheDocument();
+    expect(screen.getByText("Tool result replaced later.")).toBeInTheDocument();
+  });
+
   it("renders encrypted reasoning as a labeled state, not the literal string", async () => {
     stubFetchJson(ENCRYPTED_REASONING_DETAIL);
 

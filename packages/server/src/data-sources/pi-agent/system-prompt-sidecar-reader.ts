@@ -53,10 +53,10 @@ export function parseSidecarLine(
   }
 }
 
-// Keyed by the record's resolved `sessionFile` absolute path — the only
-// reliable join key. The sidecar's own `sessionId` vs. a session file's own
-// header.id are an unconfirmed equivalence; `sessionFile` is a plain path this
-// provider can compare directly against the file paths it already resolves.
+// Keyed by the record's resolved `sessionFile` absolute path. The record's
+// `sessionId` equals the session header's id (Phase 11 generated sessions,
+// pi 1.5.2), but `sessionFile` is a plain path this provider can compare
+// directly against the file paths it already resolves.
 // Records with no `sessionFile` can never be joined and are skipped.
 // A session can have several records (model or prompt changes), kept in
 // capturedAt order; system-prompt-sidecar-matcher.ts picks the right one.

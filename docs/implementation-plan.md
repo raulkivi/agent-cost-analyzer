@@ -1336,50 +1336,55 @@ dependency: the extension ships no pi code (plan §3.1).
 ## Phase 11 — pi provider real-capture verification
 
 **Goal**: pin `PiAgentLogProvider` (Phase 9.6, architecture.md §6.2.5)
-against a real, redacted pi session, the one step Phase 9.6 left open.
+against sessions the real pi wrote, the one step Phase 9.6 left open.
 Split out of Phase 9.6 on 2026-10-28 so the open pi work is tracked in one
 place.
 
 **Deliverables**:
-- Redacted real `~/.pi/agent/sessions/**/*.jsonl` captures in
-  `packages/server/fixtures/pi-agent/`: one linear session and one with a
-  `compaction` and a `context_edit` (owner decision 2026-11-14: the owner
-  never branches pi sessions; session B is one of their existing sessions
-  with both, since pi writes `context_edit` only on overflow/length
-  recovery). Both with `pi-system-prompt-logger` installed, so each has its
-  `system-prompts.jsonl` record beside it. Forks and rewinds stay covered by
-  the synthetic `forked-session.jsonl`.
-- `context_edit` handled: the provider reads it (today it ignores it) and
-  docs/providers/pi-provider.md documents what it changes — pi says it
-  edits model context only, not raw history or usage — with a failing test
-  against the real fixture first.
-- The real captures' field names diffed against
+- Generated fixtures instead of manual captures (owner decision
+  2026-11-14): `npm run fixtures:generate-pi` drives the owner's real pi
+  with the local model through four scenarios (linear with an idle gap,
+  compaction, `context_edit` recovery, fork), with
+  `pi-system-prompt-logger` installed, redacts every session and its
+  sidecar records, and writes them with a manifest to
+  `packages/server/fixtures/pi-agent/generated/`. Generation runs only on
+  the owner's PC (the one local-model exception in this repo); CI reads
+  the committed files. Regenerate after a pi update. Steps:
+  [providers/pi-provider.md](providers/pi-provider.md#generating-pi-fixtures).
+- The generated sessions' field names diffed against
   `fixtures/pi-agent/schema-v3-session.jsonl`. Each mismatch gets a failing
-  test against the real fixture first, then a fix in `usage-extractor.ts`
-  or `turn-inspector-builder.ts`.
+  test against the generated fixture first, then a fix in the provider.
+- `context_edit` handled: usage unchanged, the turn inspector marks what a
+  later edit left out of or replaced in the model's context.
 - Decisions on the open items in
   [providers/pi-provider.md](providers/pi-provider.md): which turn a
   `branch_summary`'s usage counts toward, fork vs. rewind tagging, and
   `sessionId` vs. `header.id`. The sidecar rule for forked sessions is
   decided (PR #279, 2026-11-14): a branch uses the latest record captured
-  at or before its last entry, else the earliest; the real fork capture
-  confirms it.
+  at or before its last entry, else the earliest.
 - architecture.md §6.2.5 and §13, providers/pi-provider.md and this
   section updated to match.
 
 **Exit criterion**: `describeLogProviderContract` and the pi-agent unit
-tests pass against both real captures, and architecture.md §6.2.5 no longer
-calls the provider provisional.
+tests pass against the generated fixtures, and architecture.md §6.2.5 no
+longer calls the provider provisional.
 
 **Dependencies**: Phase 9.6 (the provider), Phase 9.8 (the sidecar join).
-Needs pi installed and one real run on the owner's machine.
+Needs pi and the local model on the owner's machine to regenerate.
 
-**Status (2026-11-14)**: capture tooling ready (V12, PR #288): redaction CLI
-with a leak scan and a provider check, and the owner's capture steps in
-[providers/pi-provider.md](providers/pi-provider.md#capturing-a-real-session-for-phase-11).
-Next: the owner captures two sessions (V13), then V14. Required for 1.0 (owner,
-2026-11-14); Savings Increment 3's pi coverage builds on it
-([1.0.0 release](#100-release)).
+**Status (2026-11-14)**: done in the PR "feat(pi): generate pi fixtures
+with the real pi and local model; Phase 11 against them" (V14), in review.
+The generator ran with pi 1.5.2 and `llamacpp/qwen3.8-flash-next:setup6`
+(full run 7.5 minutes, 310 s idle gap); the contract suite and the
+generated-fixture tests pass. Found and fixed: `context_edit` entries and a
+compaction between two rounds were printed as raw JSON in the turn
+inspector, and omitted attempts were not marked. Settled: the sidecar's
+`sessionId` is the header id; a resumed session's second record is picked
+by the PR #279 rule. Open: `/fork` copies the parent's entries into the new
+file, so usage counts twice across both files (the owner never forks; not
+fixed); in-file `/tree` branching cannot be scripted in RPC mode, so
+`branch_summary` stays pinned by hand-authored fixtures. Savings Increment
+3's pi coverage builds on this ([1.0.0 release](#100-release)).
 
 ## Phase 12 — MCP Apps: branded, interactive views in the chat
 
@@ -1778,7 +1783,7 @@ app installs from npm, and the release path's security gaps are closed.
 | # | Criterion | Phase or step | Status | Exit check |
 |---|---|---|---|---|
 | C1 | Phase 10 closed: 10.9's manual checks superseded by step 10.17's release gate; 10.10's docs review covered by the owner's reviews for 0.12.0 | Phase 10 | Done 2026-11-14 | Phase 10 at 100% in the Gantt |
-| C2 | pi provider pinned against real captures | Phase 11 | Capture tooling ready (PR #288); owner capture next. The sidecar rule is decided (PR #279) | Phase 11's exit criterion |
+| C2 | pi provider pinned against real captures | Phase 11 | Done in review (V14): generated fixtures from the real pi and local model replace the manual capture (owner 2026-11-14); contract and provider tests pass on them | Phase 11's exit criterion |
 | C3 | Replay of real sessions verified | Phase 14 | Done 2026-11-14 (V3, PR #289, `npm run test:real-data:replay`): the owner signed off the check's output | A `REAL_DATA` check with an oracle computed from raw logs passes on the owner's logs (plan §13); the owner signs off its output |
 | C4 | Cost by repository and project verified | Phase 15 | Done 2026-11-14 (V4, PR #290, `npm run test:real-data:cost-by-project`): the owner signed off the check's output | A `REAL_DATA` check with an oracle computed from raw logs passes on the owner's logs and projects file (plan §15); the owner signs off its output |
 | C5 | Savings Increment 2 finished | Phase 16 (SR21, SR22) | Done 2026-11-14: SR21 (PR #281), V5 and V6 (PR #285); the owner signed off the check's output | `npm run test:real-data:savings` also checks `get_savings_report`; the owner signs off its output |
@@ -1836,9 +1841,9 @@ repo. "Owner step" marks work that needs the owner's hands or accounts.
 | V9 | Register the Open VSX trusted publisher for the namespace | C13 | low | Owner step | — |
 | V10 | `release-extension.yml` publishes to Open VSX through trusted publishing, without `OVSX_PAT`; threat-model.md §8 row | C13 | low | Sonnet | V9 |
 | V11 | After a release published by V10, delete the `OVSX_PAT` secret; threat-model.md §5.8 marked done | C13 | low | Owner step | V10 and a 0.x release |
-| V12 | Phase 11 capture instructions and a redaction script for pi session files and the sidecar log (done, PR #288: `npm run fixtures:redact-pi -w packages/server`; steps in [providers/pi-provider.md](providers/pi-provider.md#capturing-a-real-session-for-phase-11)) | C2 | medium | Sonnet | — |
-| V13 | Two pi sessions with `pi-system-prompt-logger` installed, local model inside Gondolin: one new linear capture, and one existing session with a `compaction` and a `context_edit` (owner 2026-11-14), both redacted | C2 | low | Owner step | V12 |
-| V14 | Phase 11: real fixtures, field diff, fixes test-first, the open pi decisions put to the owner, architecture.md §6.2.5 and providers/pi-provider.md updated | C2 | high | Opus | V13 |
+| V12 | Phase 11 capture instructions and a redaction script for pi session files and the sidecar log (done, PR #288: `npm run fixtures:redact-pi -w packages/server`; the generator reuses its library) | C2 | medium | Sonnet | — |
+| V13 | Replaced by automated generation (owner 2026-11-14): `npm run fixtures:generate-pi` drives the real pi with the local model ([providers/pi-provider.md](providers/pi-provider.md#generating-pi-fixtures)) | C2 | — | — | V12 |
+| V14 | Phase 11: generated fixtures, field diff, fixes test-first, `context_edit` handling, the open pi decisions put to the owner, architecture.md §6.2.5 and providers/pi-provider.md updated (done, in review) | C2 | high | Opus | V13 |
 | V15 | Plan `docs/plans/npm-package.md`: which workspace publishes, bundle, `bin`, files list, publish job, threat-model rows, README install section | C8 | medium | Opus | — |
 | V16 | Build the npm package: bundled server and web build, `bin`, a CI job that packs it, runs it from the tarball and loads the app | C8 | high | Opus | V15 approved |
 | V17 | npm trusted publishing (OIDC) from `release-app.yml` in the `release` environment, whose deployment rule today allows only `ext-v*` tags; the owner configures the trusted publisher on npmjs.com and adds `app-v*` to the environment | C8 | medium | Sonnet + owner step | V16 |
@@ -1865,8 +1870,8 @@ repo. "Owner step" marks work that needs the owner's hands or accounts.
 
 1. Independent small tasks first: V1, V2, V3, V4. V5 and V6 finish
    Increment 2 before the extension 0.14.0 and app 0.15.0 release.
-2. Owner steps whenever convenient: V7 (then V8), V9 (then V10), V13
-   (after V12). Land V10 before a 0.x release, so 1.0.0 is not Open
+2. Owner steps whenever convenient: V7 (then V8), V9 (then V10). V13 is
+   replaced by automated generation. Land V10 before a 0.x release, so 1.0.0 is not Open
    VSX's first trusted publish; V11 follows that release.
 3. The four plans (V15, V19, V21, V23) are approved; V23b (the boards)
    comes before any Increment 3 UI code.
@@ -1875,7 +1880,7 @@ repo. "Owner step" marks work that needs the owner's hands or accounts.
 5. After Phase 11 (V14): V27, then V29 (V28 after 1.0).
 6. Release: V30, then V31.
 
-The longest chain is pi: V12 → V13 → V14 → V27 → V29 → V30 → V31.
+The longest chain is pi: V14 → V27 → V29 → V30 → V31.
 
 ### Release procedure
 
