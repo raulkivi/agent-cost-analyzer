@@ -114,6 +114,11 @@ function hostMethodUses(): Use[] {
   return uses;
 }
 
+// The model id that reaches ReplayDrillDown from U18 passes isPlainModelId first.
+function guardedModel(): boolean {
+  return SOURCES.some((source) => source.file.startsWith("view-models/savings") && !source.file.includes("fixtures") && descendants(source.sf).some((node) => ts.isCallExpression(node) && calleeName(node) === "isPlainModelId"));
+}
+
 function findFunction(name: string): { source: Source; fn: ts.FunctionDeclaration } | undefined {
   for (const source of SOURCES) {
     for (const node of descendants(source.sf)) if (ts.isFunctionDeclaration(node) && node.name?.text === name) return { source, fn: node };
@@ -247,6 +252,8 @@ describe("no-forwarding rule (static, over every call site in src/)", () => {
         "views/SessionPickerView.tsx",
         "views/ReplayView.tsx",
         "views/replay/ReplayDrillDown.tsx",
+        "views/SavingsView.tsx",
+        "views/savings/SavingsRow.tsx",
       ]),
     );
     expect(files.some((file) => file.endsWith(".test.tsx"))).toBe(false);
@@ -256,6 +263,18 @@ describe("no-forwarding rule (static, over every call site in src/)", () => {
   it("makes U14 and U15 call no host method at all", () => {
     const billing = uses.filter((use) => /^views\/(StatementView\.tsx|EstimateView\.tsx|statement\/|estimate\/)/.test(use.source.file));
     expect(billing.map((use) => `${at(use.source, use.node)} ${use.name}`)).toEqual([]);
+  });
+
+  // SR20 (D16, D21): U18 has no host call of its own. Its two drill-downs reuse
+  // the reviewed call sites of U2 (get_session_cost) and U12 (replay_session), so
+  // the allow-list below grows by nothing: exactly those two tools, ids only.
+  it("makes U18 call no host method itself and reach only DrillDown and ReplayDrillDown", () => {
+    const savings = SOURCES.filter((source) => /^views\/(SavingsView\.tsx|savings\/)/.test(source.file));
+    expect(savings.map((source) => source.file)).toEqual(expect.arrayContaining(["views/SavingsView.tsx", "views/savings/SavingsRow.tsx"]));
+    expect(uses.filter((use) => /^views\/(SavingsView\.tsx|savings\/)/.test(use.source.file)).map((use) => `${at(use.source, use.node)} ${use.name}`)).toEqual([]);
+    const rendered = savings.flatMap((source) => descendants(source.sf).filter((node): node is ts.JsxSelfClosingElement => ts.isJsxSelfClosingElement(node)).map((node) => node.tagName.getText()));
+    expect(rendered.filter((tag) => tag === "DrillDown" || tag === "ReplayDrillDown").sort()).toEqual(["DrillDown", "ReplayDrillDown"]);
+    expect(guardedModel()).toBe(true);
   });
 
   it("never takes a host method by reference, alias or destructuring", () => {

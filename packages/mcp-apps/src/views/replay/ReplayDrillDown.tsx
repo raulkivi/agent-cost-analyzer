@@ -28,7 +28,15 @@ export interface ReplayTarget {
 const KICKER = "Replay on other models › Session replay";
 const BACK_LABEL = "Back to model comparison";
 
-export function ReplayDrillDown({ port, brand, target, onBack }: { port: AppHostPort; brand: ViewBrand; target: ReplayTarget; onBack: () => void }) {
+// Where the drill-down came from: U12's comparison by default, U18 names itself.
+export interface ReplayOrigin {
+  kicker: string;
+  backLabel: string;
+  trail: string[];
+  parent: string;
+}
+
+export function ReplayDrillDown({ port, brand, target, onBack, origin }: { port: AppHostPort; brand: ViewBrand; target: ReplayTarget; onBack: () => void; origin?: ReplayOrigin }) {
   const { sessionId, providerId, model } = target;
   // Why the last call failed: the tool's own text, shown as plain text.
   const failure = useRef<string | undefined>(undefined);
@@ -53,15 +61,17 @@ export function ReplayDrillDown({ port, brand, target, onBack }: { port: AppHost
     const built = toReplayViewModel(state.data);
     return built.mode === "replay" ? built : undefined;
   }, [state]);
-  const lead = <BackButton onBack={onBack} label={BACK_LABEL} trail={["Replay comparison", model]} />;
+  const kicker = origin?.kicker ?? KICKER;
+  const parent = origin?.parent ?? "the comparison";
+  const lead = <BackButton onBack={onBack} label={origin?.backLabel ?? BACK_LABEL} trail={origin?.trail ?? ["Replay comparison", model]} />;
 
-  if (vm !== undefined) return <ReplayDetail brand={brand} vm={vm} kicker={KICKER} lead={lead} />;
+  if (vm !== undefined) return <ReplayDetail brand={brand} vm={vm} kicker={kicker} lead={lead} />;
   const reason = failure.current?.trim();
   return (
-    <ViewShell brand={brand} kicker={KICKER} title={`Replay on ${model}`} lead={lead}>
+    <ViewShell brand={brand} kicker={kicker} title={`Replay on ${model}`} lead={lead}>
       {state.status === "error" ? (
         <ErrorBox title="Couldn't load this replay." onRetry={load}>
-          {reason === undefined || reason === "" ? "The replay_session call failed. Go back to the comparison, or retry." : `The replay_session call failed: ${reason.slice(0, 500)}`}
+          {reason === undefined || reason === "" ? `The replay_session call failed. Go back to ${parent}, or retry.` : `The replay_session call failed: ${reason.slice(0, 500)}`}
         </ErrorBox>
       ) : (
         <p role="status" className="text-muted">

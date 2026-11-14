@@ -517,6 +517,12 @@
           "destructiveHint": false,
           "idempotentHint": true,
           "openWorldHint": false
+        },
+        "_meta": {
+          "ui": {
+            "resourceUri": "ui://ai-credits-analyzer/views.html"
+          },
+          "ui/resourceUri": "ui://ai-credits-analyzer/views.html"
         }
       },
       {

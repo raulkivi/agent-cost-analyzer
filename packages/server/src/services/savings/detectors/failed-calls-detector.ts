@@ -3,6 +3,7 @@
 import { type Currency, type SavingsAmount, type SavingsOpportunity } from "@agent-cost-analyzer/domain";
 import { isFailedCall } from "../../tool-audit/outcome-tally.js";
 import { currencyOf, NotAnalysedLedger, perWeek, sumAmount, unknownAmount, type PricedPart } from "../savings-amounts.js";
+import { sessionsByContribution } from "../savings-session-order.js";
 import type { DetectorResult, SavingsDetector, SavingsInput, SavingsSessionInput } from "../savings-detector.js";
 import { savingsName } from "../savings-names.js";
 
@@ -77,6 +78,7 @@ export class FailedCallsDetector implements SavingsDetector {
 
   private opportunityOf(key: string, bucket: Bucket, input: SavingsInput, unusable: NotAnalysedLedger, priceFailures: NotAnalysedLedger): SavingsOpportunity {
     const parts: PricedPart[] = [];
+    const contribution = new Map<SavingsSessionInput, number>();
     const failures = new Map<string, Set<SavingsSessionInput>>();
     for (const occurrence of bucket.occurrences.values()) {
       const turnParts: PricedPart[] = [];
@@ -94,6 +96,7 @@ export class FailedCallsDetector implements SavingsDetector {
       // is left out of the amount and counted in the coverage.
       if (failure === undefined) {
         parts.push(...turnParts);
+        contribution.set(occurrence.session, turnParts.reduce((total, part) => total + part.high, 0));
       } else {
         failures.set(failure, (failures.get(failure) ?? new Set()).add(occurrence.session));
         priceFailures.add(occurrence.session, failure);
@@ -106,7 +109,7 @@ export class FailedCallsDetector implements SavingsDetector {
       key,
       kind: "failed-tool-calls",
       subject: bucket.name,
-      sessions: occurrences.map(({ session }) => ({ providerId: session.providerId, sessionId: session.session.id })),
+      sessions: sessionsByContribution(occurrences.map(({ session }) => ({ ref: { providerId: session.providerId, sessionId: session.session.id }, high: contribution.get(session) }))),
       // Rounds and per-turn tokens are not split by failure group in the audit.
       evidence: { sessions: occurrences.length, requests: null, tokens: null, occurrences: calls },
       perWeek: perWeek(window, input.window),

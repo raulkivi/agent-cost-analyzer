@@ -72,11 +72,11 @@
       "sessions": [
         {
           "providerId": "claude-code",
-          "sessionId": "s1"
+          "sessionId": "s2"
         },
         {
           "providerId": "claude-code",
-          "sessionId": "s2"
+          "sessionId": "s1"
         }
       ],
       "evidence": {

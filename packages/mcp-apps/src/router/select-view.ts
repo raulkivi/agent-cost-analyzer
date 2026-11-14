@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 import type { HostContext } from "../host/app-host-port.js";
 
-export type ViewId = "session-cost" | "cost-rollup" | "findings" | "cost-over-time" | "cost-change" | "cost-compare" | "price-changes" | "statement" | "estimate" | "audit" | "session-picker" | "replay";
+export type ViewId = "session-cost" | "cost-rollup" | "findings" | "cost-over-time" | "cost-change" | "cost-compare" | "price-changes" | "statement" | "estimate" | "audit" | "session-picker" | "replay" | "savings";
 export type ViewSelection = { view: ViewId } | { view: "none" };
 
 const BY_TOOL: Record<string, ViewId> = {
@@ -21,6 +21,7 @@ const BY_TOOL: Record<string, ViewId> = {
   list_sessions: "session-picker",
   replay_session: "replay",
   compare_models_for_session: "replay",
+  get_savings_report: "savings",
 };
 
 // VS Code prefixes the tool name with the server's id ("<server>-<tool>",
@@ -58,6 +59,8 @@ function byShape(structured: unknown): ViewId | undefined {
     if (hasArray(s, "retries") && hasArray(s, "perTurn") && typeof s.failureRecoveryCost === "object") return "audit";
     if (hasArray(s, "topFailingCommands") && hasArray(s, "daily") && hasArray(s, "sessions")) return "audit";
   }
+  // U18 (SR20): the savings report, whose rows are in opportunities and simulated.
+  if (hasArray(s, "opportunities") && hasArray(s, "simulated") && hasArray(s, "notAnalysed") && typeof s.window === "object" && typeof s.includeSimulated === "boolean") return "savings";
   // U5 (A30): list_sessions answers a count of matches and the sessions.
   if (typeof s.total === "number" && hasArray(s, "sessions")) return "session-picker";
   // SessionReplay and SessionReplayComparison (U12): always labelled simulated by the tool.

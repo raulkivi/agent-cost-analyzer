@@ -165,7 +165,7 @@ describe("createCopilotMcpServer with the app views (Phase 12 A13)", () => {
     return client;
   }
 
-  it("serves the views file as text/html;profile=mcp-app and tags the thirteen registered view tools with _meta.ui", async () => {
+  it("serves the views file as text/html;profile=mcp-app and tags the fourteen registered view tools with _meta.ui", async () => {
     const client = await connect(path.join(dir, "dist", "mcp-apps", "views.html"));
     try {
       const { tools } = await client.listTools();
@@ -184,6 +184,7 @@ describe("createCopilotMcpServer with the app views (Phase 12 A13)", () => {
         "get_price_changes",
         "get_project_cost",
         "get_repository_cost",
+        "get_savings_report",
         "get_session_audit",
         "get_session_cost",
         "get_turn_series",

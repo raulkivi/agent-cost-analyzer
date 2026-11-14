@@ -32,8 +32,8 @@ describe("UnusedToolsDetector: MCP servers", () => {
       subject: "linear",
       inferred: false,
       sessions: [
-        { providerId: "claude-code", sessionId: "s1" },
         { providerId: "claude-code", sessionId: "s2" },
+        { providerId: "claude-code", sessionId: "s1" },
       ],
       evidence: { sessions: 2, requests: 30, tokens: { known: true, value: 800, estimated: true }, occurrences: null },
       actionParams: { group: "linear", tools: 2, tokens: 800, sessions: 2, days: 30 },

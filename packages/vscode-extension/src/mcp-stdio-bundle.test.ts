@@ -123,7 +123,7 @@ describe("the built MCP server bundle", () => {
 
   // Phase 12 A13: dist/mcp-apps/views.html next to the bundle, as in the .vsix.
   // Without it (the test above) the server lists its 20 tools and no views.
-  it("serves dist/mcp-apps/views.html when it is there: _meta.ui on the thirteen registered view tools and a 21st, app-only, tool", async () => {
+  it("serves dist/mcp-apps/views.html when it is there: _meta.ui on the fourteen registered view tools and a 21st, app-only, tool", async () => {
     const views = path.join(installDir, "dist", "mcp-apps", "views.html");
     mkdirSync(path.dirname(views), { recursive: true });
     writeFileSync(views, '<!doctype html><html><head><meta name="aca-brand" content=""></head><body>built views</body></html>');
@@ -149,6 +149,7 @@ describe("the built MCP server bundle", () => {
         "get_price_changes",
         "get_project_cost",
         "get_repository_cost",
+        "get_savings_report",
         "get_session_audit",
         "get_session_cost",
         "list_findings",

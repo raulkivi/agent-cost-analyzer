@@ -4,6 +4,7 @@ import type { Currency, SavingsActionParams, SavingsAmount, SavingsOpportunity, 
 import { pricingPolicyFor } from "../../pricing/turn-cost-figures.js";
 import { classifyCacheBreaks, type CacheBreak, type PromptChangeKind } from "../cache-break-classifier.js";
 import { currencyOf, NotAnalysedLedger, perWeek, sumAmount, unknownAmount, type PricedPart } from "../savings-amounts.js";
+import { sessionsByContribution } from "../savings-session-order.js";
 import type { DetectorResult, SavingsDetector, SavingsInput, SavingsSessionInput } from "../savings-detector.js";
 
 // Phase 16 SR6 (docs/plans/savings-report.md §4 O2–O4, §7): the cache breaks
@@ -97,6 +98,7 @@ export class CacheBreakDetector implements SavingsDetector {
   ): SavingsOpportunity {
     const { descriptor, currency, found } = group;
     const parts: PricedPart[] = [];
+    const contribution = new Map<SavingsSessionInput, number>();
     const failures = new Map<string, Set<SavingsSessionInput>>();
     for (const { session, channel, cacheBreak } of found) {
       const saving = input.pricer.saving(
@@ -116,6 +118,7 @@ export class CacheBreakDetector implements SavingsDetector {
       );
       if (saving.known) {
         parts.push(saving);
+        contribution.set(session, (contribution.get(session) ?? 0) + saving.high);
       } else {
         failures.set(saving.reason, (failures.get(saving.reason) ?? new Set()).add(session));
         priceFailures.add(session, saving.reason);
@@ -138,7 +141,7 @@ export class CacheBreakDetector implements SavingsDetector {
       key,
       kind: descriptor.kind,
       subject: descriptor.subject,
-      sessions: sessions.map((entry) => ({ providerId: entry.providerId, sessionId: entry.session.id })),
+      sessions: sessionsByContribution(sessions.map((entry) => ({ ref: { providerId: entry.providerId, sessionId: entry.session.id }, high: contribution.get(entry) }))),
       evidence: {
         sessions: sessions.length,
         requests: sessions.reduce((total, entry) => total + (entry.trace?.requests.length ?? 0), 0),
