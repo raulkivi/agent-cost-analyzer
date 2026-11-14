@@ -98,3 +98,38 @@ test.describe("at 360px", () => {
     expect(scrollWidth).toBeLessThanOrEqual(clientWidth);
   });
 });
+
+// Step 13.8 owner review: the Vendors tab sat in the ~290px side column, so
+// model names wrapped onto three lines and the Misses column scrolled away.
+for (const viewport of [
+  { width: 1440, height: 900 },
+  { width: 360, height: 800 },
+]) {
+  test(`Vendors tab fits its column without wrapping model names at ${viewport.width}px`, async ({ page, app }) => {
+    await page.setViewportSize(viewport);
+    await page.goto(app.baseURL);
+    await page.getByRole("button", { name: /Cache TTL: A Break Longer Than an Hour/ }).click();
+    // Below the wide layout the right column sits in the Details drawer.
+    const details = page.getByRole("button", { name: "Details", exact: true });
+    if (await details.isVisible()) await details.click();
+    await page.locator("label:has(input[value=vendors])").click();
+    const tab = page.locator(".vendors-tab");
+    await expect(tab.getByRole("heading").first()).toBeVisible();
+
+    const overflow = await tab.evaluate((element) => ({
+      tab: [element.scrollWidth, element.clientWidth] as const,
+      page: [document.documentElement.scrollWidth, document.documentElement.clientWidth] as const,
+      inner: [...element.querySelectorAll("*")].filter((child) => !child.closest(".sr-only") && child.scrollWidth > child.clientWidth + 1).map((child) => child.className || child.tagName),
+    }));
+    expect(overflow.tab[0]).toBeLessThanOrEqual(overflow.tab[1]);
+    expect(overflow.page[0]).toBeLessThanOrEqual(overflow.page[1]);
+    expect(overflow.inner).toEqual([]);
+
+    // A model name is a single line: its height is about one line of its font.
+    const names = await tab.getByRole("heading").evaluateAll((headings) =>
+      headings.map((heading) => ({ height: heading.getBoundingClientRect().height, line: parseFloat(getComputedStyle(heading).lineHeight) || 20 })),
+    );
+    expect(names.length).toBeGreaterThan(0);
+    for (const name of names) expect(name.height).toBeLessThanOrEqual(name.line * 1.5);
+  });
+}

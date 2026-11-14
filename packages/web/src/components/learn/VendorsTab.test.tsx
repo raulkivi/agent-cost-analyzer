@@ -84,43 +84,47 @@ function renderTab(extra: Partial<React.ComponentProps<typeof VendorsTab>> = {})
   return { ...utils, onAdd, onRemove };
 }
 
-const bodyRows = () => screen.getAllByRole("row").slice(1);
-const modelOrder = () => bodyRows().map((row) => within(row).getAllByRole("cell")[0]!.textContent ?? "");
+const blocks = () => within(screen.getByRole("list", { name: /each vendor/ })).getAllByRole("listitem");
+const blockFor = (name: string) => blocks().find((block) => within(block).queryByText(name))!;
+// The value shown under a label inside one model's block (dt -> next dd).
+const figure = (block: HTMLElement, label: string) => within(block).getByText(label, { selector: "dt" }).nextElementSibling;
+const modelOrder = () => blocks().map((block) => within(block).getByRole("heading").textContent ?? "");
 
 describe("VendorsTab", () => {
-  it("shows one row per model with total credits, USD, hit ratio, misses and the most expensive turn", () => {
+  it("shows one block per model with every labelled figure", () => {
     renderTab();
-    const sonnet = bodyRows().find((row) => within(row).queryByText("Claude Sonnet 5.5"))!;
-    const cells = within(sonnet).getAllByRole("cell");
-    expect(cells[1]).toHaveTextContent("3.00");
-    expect(cells[2]).toHaveTextContent("$0.03");
-    expect(cells[3]).toHaveTextContent("50%");
-    expect(cells[4]).toHaveTextContent("1");
-    expect(cells[5]).toHaveTextContent("Turn 1 (2.00)");
+    expect(blocks()).toHaveLength(3);
+    const sonnet = blockFor("Claude Sonnet 5.5");
+    expect(within(sonnet).getByRole("heading")).toHaveTextContent("Claude Sonnet 5.5");
+    expect(figure(sonnet, "Total AI credits")).toHaveTextContent("3.00");
+    expect(figure(sonnet, "USD")).toHaveTextContent("$0.03");
+    expect(figure(sonnet, "Cache hits")).toHaveTextContent("50%");
+    expect(figure(sonnet, "Misses")).toHaveTextContent("1");
+    expect(figure(sonnet, "Most expensive turn")).toHaveTextContent("Turn 1 (2.00)");
   });
 
   it("shows unavailable, never zero, when a model's figures are unknown", () => {
     renderTab();
-    const grok = bodyRows().find((row) => within(row).queryByText("Grok 4.7"))!;
-    const cells = within(grok).getAllByRole("cell");
-    for (const index of [1, 2, 3, 5]) expect(cells[index]).toHaveTextContent("unavailable");
+    const grok = blockFor("Grok 4.7");
+    for (const label of ["Total AI credits", "USD", "Cache hits", "Most expensive turn"]) {
+      expect(figure(grok, label)).toHaveTextContent("unavailable");
+    }
   });
 
   it("has a per-turn strip of outcome marks for each model", () => {
     renderTab();
-    const opus = bodyRows().find((row) => within(row).queryByText("Claude Opus 5.5"))!;
+    const opus = blockFor("Claude Opus 5.5");
     expect(within(opus).getByText("Cache miss")).toBeInTheDocument();
     expect(within(opus).getByText("Cache partial hit")).toBeInTheDocument();
   });
 
-  it("sorts by a column header and reports aria-sort", () => {
+  it("sorts with a Sort by select and a direction button", () => {
     renderTab();
-    fireEvent.click(screen.getByRole("button", { name: /Total AI credits/ }));
-    expect(screen.getByRole("columnheader", { name: /Total AI credits/ })).toHaveAttribute("aria-sort", "ascending");
+    fireEvent.change(screen.getByLabelText("Sort by"), { target: { value: "total" } });
     expect(modelOrder()[0]).toContain("Claude Opus 5.5");
     expect(modelOrder().at(-1)).toContain("Grok 4.7");
-    fireEvent.click(screen.getByRole("button", { name: /Total AI credits/ }));
-    expect(screen.getByRole("columnheader", { name: /Total AI credits/ })).toHaveAttribute("aria-sort", "descending");
+    fireEvent.click(screen.getByRole("button", { name: /Ascending/ }));
+    expect(screen.getByRole("button", { name: /Descending/ })).toBeInTheDocument();
     expect(modelOrder()[0]).toContain("Claude Sonnet 5.5");
   });
 

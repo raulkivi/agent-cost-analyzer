@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- Learn's Vendors tab fits the panel's side column: one block per model instead of a six-column table, so names no longer wrap and the Misses column is no longer cut off. Sorting moves to a **Sort by** selector.
+
 ## [0.12.0] - 2026-11-14
 
 ### Added

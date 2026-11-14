@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- Learn's Vendors tab fits its column: one block per model (name, per-turn strip, labelled figures) instead of a six-column table, so model names stay on one line and nothing scrolls sideways. Sorting moves to a **Sort by** selector.
+
 ## [0.14.0] - 2026-11-14
 
 ### Added
