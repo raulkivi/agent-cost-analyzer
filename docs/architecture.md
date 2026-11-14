@@ -180,8 +180,9 @@ outbound network calls.
 | `services/session-replay/replay-query-params.ts` | Phase 14 step 14.5: the replay options' zod schemas, shared by HTTP, the webview RPC and MCP so all three give the same messages |
 | `composition/create-session-replay.ts` | Phase 14 step 14.5: `createSessionReplay`, the one wiring of `SessionReplayService` used by the standalone app, its MCP server, the extension and its MCP server |
 | `mcp/replay-tools.ts` | Phase 14 step 14.5 (D7): the `replay` tool group, `replay_session` and `compare_models_for_session` (read-only, domain output schemas) |
-| `services/savings/` | Phase 16 ([plans/savings-report.md](plans/savings-report.md) §5.2): the savings report, a service of its own and not a finding kind (D2). `SavingsService.report(filter, options, signal)` loads the window's sessions one at a time (at most `MAX_ROLLUP_SESSION_LIMIT`, 500, newest first) through `SavingsSessionLoader`, runs the registered `SavingsDetector` strategies and ranks the result with the pure `SavingsRanker`. Detectors take plain data and return plain data: `UnusedToolsDetector` (O1), `CacheBreakDetector` (O2–O4, over the pure `cache-break-classifier.ts` and `cache-rules.ts`), `FailedCallsDetector` (O5, over `buildSessionAudit`) and `CheaperModelDetector` (O6, over a `ReplayComparer` port, with `cheaper-model-candidates.ts`). `CounterfactualPricer` prices N tokens as one token type versus another through `CostPricer`. `savings-names.ts` (`savingsName`) folds, redacts and caps every log-derived name; `savings-window.ts` is the window (30 days to today by default); `savings-query-params.ts` is the zod query schema shared by HTTP and RPC |
-| `composition/create-savings-report.ts` | Phase 16 SR10: `createSavingsReport`, the one wiring of `SavingsService` over the price book, attribution, turn pricer and session replay, used by the standalone app and the extension (Increment 2 adds both MCP servers) |
+| `services/savings/` | Phase 16 ([plans/savings-report.md](plans/savings-report.md) §5.2): the savings report, a service of its own and not a finding kind (D2). `SavingsService.report(filter, options, signal)` loads the window's sessions one at a time (at most `MAX_ROLLUP_SESSION_LIMIT`, 500, newest first) through `SavingsSessionLoader`, runs the registered `SavingsDetector` strategies and ranks the result with the pure `SavingsRanker`. Detectors take plain data and return plain data: `UnusedToolsDetector` (O1), `CacheBreakDetector` (O2–O4, over the pure `cache-break-classifier.ts` and `cache-rules.ts`), `FailedCallsDetector` (O5, over `buildSessionAudit`) and `CheaperModelDetector` (O6, over a `ReplayComparer` port, with `cheaper-model-candidates.ts`). `CounterfactualPricer` prices N tokens as one token type versus another through `CostPricer`. `savings-names.ts` (`savingsName`) folds, redacts and caps every log-derived name; `savings-window.ts` is the window (30 days to today by default); `savings-query-params.ts` is the zod query schema shared by HTTP, RPC and MCP; `savings-session-order.ts` (`sessionsByContribution`, D16) lists each opportunity's sessions largest contribution first, for O1, O2–O4 and O5 |
+| `composition/create-savings-report.ts` | Phase 16 SR10: `createSavingsReport`, the one wiring of `SavingsService` over the price book, attribution, turn pricer and session replay, used by the standalone app, the extension and both MCP servers (`mcp-services.ts`, Increment 2) |
+| `mcp/savings-tools.ts`, `mcp/savings-tool-output.ts` | Phase 16 SR19 (plan §8): the `savings` tool group, `get_savings_report` (read-only, both servers; `limit` 1–20, default 10; `includeSimulated` off by default). `savingsToolOutput` cuts the report to `limit` rows with their rank and at most 10 session ids each (`sessionsTotal` says how many), renders the fixed action text, and folds, redacts and caps every log-derived string (names through `savingsName`; reasons, including an unknown amount's, through `excerptOf` at 600 characters, SR22). `savingsReportText` is the ranked text answer for a host without views. `review_costs` starts from this tool when the group is served |
 | `mcp/apps/` | Phase 12 ([plans/mcp-apps.md](plans/mcp-apps.md) §4.2): the MCP App views as a tool group. `registerAppViews` registers the one `ui://<server name>/views.html` resource, adds `_meta.ui.resourceUri` to the tools in `APP_VIEW_TOOL_NAMES` that the server actually registered (`captureRegisteredTools` records them, so the other groups don't change) and registers the app-only `get_turn_series`. `ViewSource` is the port for the HTML (`FileViewSource` reads the built file on every call, `InMemoryViewSource` is the test double). `injectBrand` fills the page's `aca-brand` meta with the escaped `ViewBrand` from `toViewBrand(identity, version)`. `resolveAppViews(path, onMissing)` turns a path into the `appViews` option, or into nothing when the file is missing, so both entry points start without the group instead of failing at `resources/read` |
 | `services/cost/turn-series-builder.ts` | Phase 12 A1: `buildTurnSeries` turns a session into the bounded per-turn figures (default 500 turns, at most 2000) that `get_turn_series` returns for the chart. `SessionCost` carries only `topTurns` |
 | `services/config-check` | Runs at server startup and on demand (§6.3): checks `agentDebugLog.fileLogging.enabled` and `maxRetainedSessionLogs` against constraints 8/10, producing actionable `ConfigWarning`s |
@@ -196,7 +197,7 @@ stays read-only and makes no network call (constraint 1); the view is one
 static file.
 
 1. **Tool call.** `tools/list` gives `get_session_cost`, `get_cost_rollup`, `get_repository_cost`, `get_project_cost`, `compare_costs`, `explain_cost_change`
-   and `list_findings`, and (A26, Increment 3) `replay_session`, `compare_models_for_session`, `get_price_changes`, `get_statement`, `estimate_cost`, `get_session_audit`, `get_audit_rollup` and `list_sessions`, a `_meta.ui.resourceUri` of
+   and `list_findings`, and (A26, Increment 3) `replay_session`, `compare_models_for_session`, `get_price_changes`, `get_statement`, `estimate_cost`, `get_session_audit`, `get_audit_rollup` and `list_sessions`, and (Phase 16 SR20) `get_savings_report`, a `_meta.ui.resourceUri` of
    `ui://<server name>/views.html` (and the legacy flat key). The model
    calls the tool as before. Its name, input schema, output schema and
    `content` are unchanged, so a host without MCP Apps, and Claude Code
@@ -206,7 +207,8 @@ static file.
    the extension's brand. The router sends the Increment 3 tools to U12
    (`replay_session`, `compare_models_for_session`), U13
    (`get_price_changes`), U14 (`get_statement`), U15 (`estimate_cost`), U4
-   (`get_session_audit`, `get_audit_rollup`) and U5 (`list_sessions`).
+   (`get_session_audit`, `get_audit_rollup`) and U5 (`list_sessions`);
+   `get_savings_report` goes to U18 in both products.
 2. **Resource read.** The host reads the URI with `resources/read`. The
    server answers with the built `views.html` (MIME type
    `text/html;profile=mcp-app`) after `injectBrand` has put the product's
@@ -223,8 +225,11 @@ static file.
    from a project's top session, `list_findings` for the filters,
    `get_repository_cost` or `get_project_cost` from a comparison row,
    `get_price_changes` from the cost change view (its period, only when both
-   ends are ISO dates) and `replay_session` from the replay comparison (the
-   result's ids and a plain model id). Arguments are ids, dates and filters
+   ends are ISO dates), `replay_session` from the replay comparison (the
+   result's ids and a plain model id), and from U18 a session of an open
+   row: `get_session_cost` (U1 in place) or, on a cheaper-model row,
+   `replay_session` with the simulated model (U12 in place, a plain model
+   id only; D16). Arguments are ids, dates and filters
    from the current `structuredContent`, never display text. The answers go
    to the view and never to the model, so exploring a session spends no
    model tokens. U4, U13 opened directly, U14 and U15 call nothing. In a
@@ -232,8 +237,9 @@ static file.
    with `requestDisplayMode`.
    `get_turn_series` is app-only (`_meta.ui.visibility: ["app"]`), so the
    host keeps it out of the model's tool list. `tools/list` therefore has
-   22 tools on the standalone server and 20 on the extension's when the
-   views are served, and 21 and 19 without them.
+   23 tools on the standalone server and 21 on the extension's when the
+   views are served, and 22 and 20 without them (Phase 16 SR19 added
+   `get_savings_report` to both).
 5. **Back to the chat.** The view reaches the chat in two ways only:
    `sendMessage` with the fixed text `Analyse session <id>` (U2's "Ask about
    this session" and U5's per-row "Analyse", one shared call site, a plain id
@@ -285,8 +291,8 @@ makes constraint 3 (decoupling) actually enforceable rather than aspirational.
 
 ### 4.4 MCP App views package (`packages/mcp-apps`, Phase 12)
 
-Responsibilities: render the cost, findings, replay, price, billing, audit
-and session-picker views inside an MCP Apps host, purely from tool results. It is a Vite workspace whose build
+Responsibilities: render the cost, findings, replay, price, billing, audit,
+session-picker and savings views inside an MCP Apps host, purely from tool results. It is a Vite workspace whose build
 (`vite-plugin-singlefile`) writes one self-contained `dist/views.html`, with
 scripts and CSS inline and no external resource, font or network access. It
 is never published; the server and the extension serve the built file.
@@ -295,8 +301,8 @@ is never published; the server and the extension serve the built file.
 |---|---|
 | `host/` | `AppHostPort`, the view's only gateway to the host (`callTool`, `openLink`, `canSendMessage`, `sendMessage`, `requestDisplayMode`, `onHostContext`, `onToolInput`, `onToolResult`). `canSendMessage` is false only when the host's capabilities say `message: false` (owner, 2026-11-11: try, then fall back). `ExtAppsHostPort` wraps ext-apps' `App`; `FakeAppHostPort` records calls for tests. `ClipboardPort` is the same idea for "copy this text"; a host that blocks the clipboard gets none, and the button is hidden |
 | `router/select-view.ts` | The tool name, else the result's shape, to a view id. A named tool without a view gets the neutral state and is not guessed from its shape |
-| `view-models/` | Pure functions from a domain type to display text: `toSessionCostViewModel`, `toCostRollupViewModel`, `toFindingsViewModel`, `toTurnDetailViewModel`. `toCostSeriesViewModel` (U9) and the other cost-analysis ones. Increment 3: `toReplayViewModel`, `toPriceChangesViewModel`, `toStatementViewModel`, `toEstimateViewModel`, `toSessionAuditViewModel`, `toAuditRollupViewModel` and `toSessionListViewModel`, which always carry the "Simulated", "inferred" and "estimate" labels. They own the display rules: a `null` measure reads "Unknown" and never 0 (constraint 6), AI Credits round to 2 decimals, partial coverage adds a note, `estimated` adds an "estimate" tag |
-| `views/` | `SessionCostView` (U1), `CostRollupView` (U2, drilling into U1 in place), `FindingsView` (U3), `CostOverTimeView` (U9: `get_repository_cost` and `get_project_cost`, with `views/cost-over-time/` for its chart model, chart, tiles, breakdowns and error explanation; a project's top session drills into U1 in place through the shared `DrillDown`) `CostCompareView` (U10, `compare_costs`: `views/cost-compare/` holds the table, the in-place drill-down into U9 and the no-projects text; a row calls `get_repository_cost` or `get_project_cost` with its own `drillDown.arguments`, and U9 takes a `frame` so the U10 → U9 → U1 chain has a back control and a kicker trail at each level), `CostChangeView` (U11, `explain_cost_change`: waterfall, per-model table, not-explained turns, documented price changes; its "Price changes" control opens U13 in place through `price-changes/PriceDrillDown`), `ReplayView` (U12, `replay_session` and `compare_models_for_session`: compare mode, and replay mode in place through `replay/ReplayDrillDown`), `PriceChangesView` (U13, `get_price_changes`), `StatementView` (U14) and `EstimateView` (U15), both standalone only and read-only, `AuditView` (U4, `get_session_audit` and `get_audit_rollup`, display only) and `SessionPickerView` (U5, `list_sessions`, a per-row "Analyse" through the shared `cost-rollup/AskAboutSession.tsx` hook), inside the branded `ViewShell`. `display-mode/` holds the fullscreen control for U2 and U9. A view gets the port, the brand and the tool result as props. An error result reaches a view with its first text as `errorText`, which every view shows as plain text, capped at 500 characters |
+| `view-models/` | Pure functions from a domain type to display text: `toSessionCostViewModel`, `toCostRollupViewModel`, `toFindingsViewModel`, `toTurnDetailViewModel`. `toCostSeriesViewModel` (U9) and the other cost-analysis ones. Increment 3: `toReplayViewModel`, `toPriceChangesViewModel`, `toStatementViewModel`, `toEstimateViewModel`, `toSessionAuditViewModel`, `toAuditRollupViewModel` and `toSessionListViewModel`, and (Phase 16) `toSavingsViewModel` (U18: one list per currency in the server's order, "up to" and range from `web`'s `savings-view.ts`, "Not priced" with the reason, the Simulated section's text, D17, and the truncation sentence, D18), which always carry the "Simulated", "inferred" and "estimate" labels. They own the display rules: a `null` measure reads "Unknown" and never 0 (constraint 6), AI Credits round to 2 decimals, partial coverage adds a note, `estimated` adds an "estimate" tag |
+| `views/` | `SessionCostView` (U1), `CostRollupView` (U2, drilling into U1 in place), `FindingsView` (U3), `CostOverTimeView` (U9: `get_repository_cost` and `get_project_cost`, with `views/cost-over-time/` for its chart model, chart, tiles, breakdowns and error explanation; a project's top session drills into U1 in place through the shared `DrillDown`) `CostCompareView` (U10, `compare_costs`: `views/cost-compare/` holds the table, the in-place drill-down into U9 and the no-projects text; a row calls `get_repository_cost` or `get_project_cost` with its own `drillDown.arguments`, and U9 takes a `frame` so the U10 → U9 → U1 chain has a back control and a kicker trail at each level), `CostChangeView` (U11, `explain_cost_change`: waterfall, per-model table, not-explained turns, documented price changes; its "Price changes" control opens U13 in place through `price-changes/PriceDrillDown`), `ReplayView` (U12, `replay_session` and `compare_models_for_session`: compare mode, and replay mode in place through `replay/ReplayDrillDown`), `PriceChangesView` (U13, `get_price_changes`), `StatementView` (U14) and `EstimateView` (U15), both standalone only and read-only, `AuditView` (U4, `get_session_audit` and `get_audit_rollup`, display only) and `SessionPickerView` (U5, `list_sessions`, a per-row "Analyse" through the shared `cost-rollup/AskAboutSession.tsx` hook) and `SavingsView` (U18, `get_savings_report`: `views/savings/` holds `SavingsRow` and `parse-savings.ts`; a row opens in place, and its first three sessions open U1 through the shared `DrillDown` or U12 through `ReplayDrillDown`, D16; no host call of its own, no Copy, no Cancel, D20, D21), inside the branded `ViewShell`. `display-mode/` holds the fullscreen control for U2 and U9. A view gets the port, the brand and the tool result as props. An error result reaches a view with its first text as `errorText`, which every view shows as plain text, capped at 500 characters |
 | `brand/` | `ViewBrand` and `readBrand`, which reads the `aca-brand` meta the server filled |
 | `theme/` | `brand.css` (fixed brand tokens), `theme-mcp-host.css` (the Industry tokens pointed at the host's style variables, with fallbacks), `views.css`, and `bindHostTheme`, which applies the host's theme, variables and fonts as they arrive |
 
@@ -306,7 +312,7 @@ is never published; the server and the extension serve the built file.
 `lib/contrast`, plus the Phase 14/15 charts (`CostTimeChart`, `Waterfall`,
 `ReplayCompareBars`, `ChartDataTable`, `ViewAsTable`), `lib/cost/*`
 (`cost-format`, `series-model`, `series-colors`, `project-model`) and
-`replay/SimulatedBadge` and `replay/ReplayPricingNote`, each listed in
+`replay/SimulatedBadge`, `replay/ReplayPricingNote` and `lib/savings/savings-view` (U18's amount text and labels), each listed in
 `web`'s `exports`, which keeps them free of
 any data source (constraint 3). It never imports `server`. The server in
 turn never imports `mcp-apps`: it reads the built HTML through `ViewSource`
@@ -600,13 +606,13 @@ web's Billing tab (`components/billing/`) and Projects editor
 MCP across the products (Phase 15 step 15.13, plan §10.1.4–§10.1.6):
 `createMcpServer` takes `toolGroups` (`sessions`, `audit`, `cost`,
 `findings`, `attribution`, `pricing`, `costAnalysis`, `replay` from
-Phase 14, `billing`; every group by default), and a group is registered only when its services are
-given too. The standalone stdio server serves all 21 tools and 6 prompts (19 before Phase 14 step 14.5 added the `replay` group).
+Phase 14, `savings` from Phase 16, `billing`; every group by default), and a group is registered only when its services are
+given too. The standalone stdio server serves all 22 tools and 6 prompts (21 before Phase 16 SR19 added the `savings` group, 19 before Phase 14 step 14.5 added `replay`).
 The extension's (`createCopilotMcpServices`) serves
 `WITHOUT_BILLING_TOOL_GROUPS`: repositories over the Copilot provider
 (`createCopilotAttribution`, with no projects file, so `list_projects`
 returns none with a `reason`, D19), the bundled price book from its
-`media/` folder, the cost analyses and the replay tools, 19 tools and 4 prompts. Both
+`media/` folder, the cost analyses, the replay tools and the savings report, 20 tools and 4 prompts. Both
 identities' instructions share `COST_BASIS_INSTRUCTIONS` (the three cost
 bases, as-of-use versus today's prices, 1 AI Credit = $0.01).
 
@@ -2420,7 +2426,7 @@ this is the end-to-end view.
 | Statements and estimates | Yes | No (D7) |
 | Side bar and status bar | — | Sessions grouped by day or repository; today's AI Credits for the workspace's repository (step 15.14) |
 | Session replay (Phase 14, D5) | Replay on and Compare models for Claude Code and VS Code sessions; pi and mitmproxy not yet (D1) | Replay on and Compare models for Copilot sessions (classic and Agent Host), priced from the bundled price book |
-| MCP | 21 tools, 6 prompts | 19 tools, 4 prompts (no `billing` group) |
+| MCP | 22 tools, 6 prompts | 20 tools, 4 prompts (no `billing` group) |
 
 ### 6.5 Session replay (Phase 14)
 
@@ -2558,7 +2564,7 @@ view. Nothing is stored and nothing is written.
    - **O5 failed calls.** From the audit, grouped over the window by
      failure category and program (or tool). A group counts at 2 or more
      failed calls; `user-rejected` and `test-or-build-failure` are left out
-     (D13, D14 await the owner). Saving is **up to**: the priced cost of
+     (D13, D14, confirmed by the owner 2026-11-14). Saving is **up to**: the priced cost of
      the affected turns.
    - **O6 cheaper model.** Only with `includeSimulated`. The 5 most
      expensive replayable sessions, replayed on up to 3 cheaper documented
@@ -2573,6 +2579,15 @@ view. Nothing is stored and nothing is written.
 5. **Show.** One list per currency. Labels come from the view model. Copy
    puts the action text on the clipboard folded to one line and capped at
    600 characters (§11.2).
+6. **MCP (Increment 2).** `get_savings_report` takes the same query
+   (`savings-query-params.ts`) plus `limit` (1–20, default 10) and returns
+   the same ranked rows, cut to `limit`, each with its rank, at most 10
+   session ids (largest first, D16) and the fixed action text; names and
+   reasons are folded, redacted and capped (`savings-tool-output.ts`).
+   `includeSimulated` is off unless the model asks. U18 renders it in the
+   chat (§4.1.1, §4.4); its only drill-downs are U1 and U12, in place.
+   The real-data check (`npm run test:real-data:savings`) asserts the
+   tool's rows equal the Savings tab's on the owner's logs.
 
 **Rules a maintainer must keep.**
 - **Unknown is never 0** (constraint 6). An amount with no price is
@@ -2692,7 +2707,7 @@ route's query and is cancellable through the dispatcher's abort signal.
 `getSessionReplay` and `compareSessionReplay` (Phase 14) are
 the first with result schemas (`apiMethodResultSchemas`), which the web
 client parses answers with. The MCP servers expose the same services: the
-standalone stdio server 21 tools and 6 prompts, the extension's 19 tools
+standalone stdio server 22 tools and 6 prompts, the extension's 20 tools
 and 4 prompts (no `billing` group; §5), plus the app-only `get_turn_series`
 in each when the views are served (§4.1.1). Phase 15's `estimate_cost` (billing
 group, standalone only) takes an
@@ -3024,8 +3039,8 @@ refactored — red-green-refactor, not tests bolted on afterward.
   script, stylesheet or font, and a clean load in jsdom. On the server,
   in-memory MCP client tests (`register-app-views.test.ts`) assert the
   `tools/list` metadata, the resource's MIME type and injected brand,
-  unchanged tool `content`, and 22 and 20 tools with the views against 21
-  and 19 without; `injectBrand`, `ViewSource` and `resolveAppViews` have
+  unchanged tool `content`, and 23 and 21 tools with the views against 22
+  and 20 without; `injectBrand`, `ViewSource` and `resolveAppViews` have
   unit tests. Stdio tests start the real entry points with and without the
   file (`stdio.test.ts`, `mcp-stdio-bundle.test.ts`), and `packaging.test.ts`
   asserts `dist/mcp-apps/views.html` is in the `.vsix`. The fake-host suite
@@ -3207,8 +3222,8 @@ products (D5; §6.4 has the product table, §6.5 the data flow):
   Replay on, the summary, the Simulated column group and Compare models,
   from the same `components/replay/*`.
 - **MCP.** The `replay` group adds `replay_session` and
-  `compare_models_for_session`: 19 tools in all, without the `billing`
-  group.
+  `compare_models_for_session`: 19 tools in all at Phase 14, without the
+  `billing` group (20 since Phase 16 SR19 added `get_savings_report`).
 - **Tests.** The extension's UI check has three replay scenarios across
   Dark Modern, Light Modern and High Contrast; scenario R1 runs in
   `extension-ui`.

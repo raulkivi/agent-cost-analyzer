@@ -7,11 +7,11 @@
 //
 // One chat in the test-only agent asks Copilot to call get_savings_report
 // once over the made-up history (chat-history-seed.mts), in its own spec file
-// so a missed tool call skips only these rows. The made-up history may or
-// may not hold a saving, so the spec asserts the view's frame always and the
-// row detail and the drill-down when a row is there; either way the view must
-// be the Savings one. Drill-downs are the view's own tool calls, not model
-// turns: the chat must show no new request.
+// so a missed tool call skips only these rows. The made-up history holds one
+// saving (SR22: the create_file tool no seeded turn calls, a priced
+// unused-tools row; chat-history-seed.test.ts checks it), so the spec opens
+// that row and drills into its first session. Drill-downs are the view's own
+// tool calls, not model turns: the chat must show no new request.
 // TDD exception: the spec runs only against a real VS Code and Copilot; the
 // ids it reports under are unit-tested (evidence.test.ts).
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
@@ -36,6 +36,9 @@ const CHAT_TIMEOUT_MS = 300_000;
 const NORMAL_WIDTH = 600;
 const NARROW_WIDTH = 360;
 const EMPTY_TEXT = "No savings found in this window.";
+// The seeded history's one saving (chat-history-seed.test.ts).
+const SEEDED_SUBJECT = "create_file";
+const SEEDED_TITLE = "Tools loaded but never used";
 // A row's chevron button is the only button of the view that carries aria-expanded.
 const ROW = "button[aria-expanded]";
 
@@ -120,7 +123,7 @@ suite("U18 savings view in a real Copilot Chat (SR21; opt-in)", function () {
     if (this.currentTest?.state === "failed") await saveScreenshot(`sr21-failed-${this.currentTest.title.slice(0, 40).replace(/[^\w.-]+/g, "-")}`);
   });
 
-  test(copilotTestTitle("SR21 U18", "U18 savings report: Savings kicker, Possible savings, the period and basis line, the ranked-by-the-high-end note, Simulated off says how to ask in text with no control; a row opens in place with its evidence, What to change and the sessions heading, Open cost opens the session in place and Back returns focus to it, by mouse; or, with no saving in the window, the empty line; no new chat request"), async () => {
+  test(copilotTestTitle("SR21 U18", "U18 savings report: Savings kicker, Possible savings, the period and basis line, the ranked-by-the-high-end note, Simulated off says how to ask in text with no control; a row opens in place with its evidence, What to change and the sessions heading, Open cost opens the session in place and Back returns focus to it, by mouse; the seeded unused-tools row is there to open; no new chat request"), async () => {
     await views.inside(viewIndex, async (view: ChatView) => {
       const savings = keep("u18", await view.snapshot());
       expect(savings.kicker).toBe(KICKER);
@@ -133,12 +136,11 @@ suite("U18 savings view in a real Copilot Chat (SR21; opt-in)", function () {
       // No Copy and no Cancel (D20, D21); the Simulated section has no control at all.
       expect(savings.buttons.filter((name) => /copy|cancel/i.test(name))).toEqual([]);
 
-      if ((await rowCount()) === 0) {
-        // Nothing to rank: the view says so, and invents no row or amount.
-        expect(savings.text).toContain(EMPTY_TEXT);
-        return;
-      }
+      // The seeded saving: a ranked, priced row (SR22).
+      expect(await rowCount()).toBeGreaterThanOrEqual(1);
       expect(savings.text).not.toContain(EMPTY_TEXT);
+      expect(savings.text).toContain(SEEDED_TITLE);
+      expect(savings.text).toContain(SEEDED_SUBJECT);
       expect(savings.text).toMatch(/per week/);
       // Never a bare 0 for an unknown amount.
       expect(savings.text).not.toMatch(/\b0 AI Credits per week/);
@@ -154,11 +156,11 @@ suite("U18 savings view in a real Copilot Chat (SR21; opt-in)", function () {
       expect(opened.text).toMatch(/(Largest \d+ of \d+ sessions|\d+ sessions?), over the \d+ days/);
       expect(opened.text).toMatch(/Prices: \S+, in force on the dates of these requests\./);
 
-      // Open cost: U1 in place, then Back returns focus to the session button. A row
-      // with no plain session id has no button; then only the detail is checked.
+      // Open cost: U1 in place, then Back returns focus to the session button.
+      // The seeded session ids are plain, so the button is there.
       const open = (await browser.$$("button.sv-open").getElements())[0];
-      if (open === undefined) return;
-      const label = String(await open.getAttribute("aria-label"));
+      expect(open).toBeDefined();
+      const label = String(await open!.getAttribute("aria-label"));
       expect(label).toMatch(/^Open (cost|replay) for session /);
       await view.click(label);
       await view.waitForTitle(/\S/);

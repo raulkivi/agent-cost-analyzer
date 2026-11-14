@@ -16,6 +16,7 @@ import {
   savingsWindowSchema,
   type SavingsActionParams,
   type SavingsAmount,
+  type SavingsEvidence,
   type SavingsOpportunity,
   type SavingsReport,
 } from "@agent-cost-analyzer/domain";
@@ -28,8 +29,9 @@ import { excerptOf } from "../services/tool-audit/output-redactor.js";
 // string passed through redactSecrets and excerptOf at a fixed cap and the
 // action text rendered from its fixed template. Ids, kinds, amounts with
 // basis and label, coverage and price version ids pass through as they are:
-// an unknown amount keeps its reason and is never 0. No prompt, response,
-// file content or path is in a report to begin with; nothing here adds one.
+// an unknown amount keeps its reason (folded, redacted, capped) and is never
+// 0. No prompt, response, file content or path is in a report to begin with;
+// nothing here adds one.
 
 export const MAX_SAVINGS_TOOL_OPPORTUNITIES = 20;
 export const DEFAULT_SAVINGS_TOOL_OPPORTUNITIES = 10;
@@ -87,6 +89,17 @@ function actionOf(opportunity: SavingsOpportunity): string {
   }
 }
 
+// An unknown amount's or token count's reason can quote a model id from the
+// log (SR22), so it is folded, redacted and capped like the coverage reasons.
+function amountOf(amount: SavingsAmount): SavingsAmount {
+  return amount.known ? amount : { known: false, reason: sentence(amount.reason) };
+}
+
+function evidenceOf(evidence: SavingsEvidence): SavingsEvidence {
+  const { tokens } = evidence;
+  return tokens === null || tokens.known ? evidence : { ...evidence, tokens: { ...tokens, reason: sentence(tokens.reason) } };
+}
+
 function viewOf(opportunity: SavingsOpportunity, rank: number): OpportunityView {
   const { simulation, sessions } = opportunity;
   return {
@@ -96,9 +109,9 @@ function viewOf(opportunity: SavingsOpportunity, rank: number): OpportunityView 
     subject: savingsName(opportunity.subject),
     sessions: sessions.slice(0, MAX_SAVINGS_TOOL_SESSIONS),
     sessionsTotal: sessions.length,
-    evidence: opportunity.evidence,
-    perWeek: opportunity.perWeek,
-    perWindow: opportunity.perWindow,
+    evidence: evidenceOf(opportunity.evidence),
+    perWeek: amountOf(opportunity.perWeek),
+    perWindow: amountOf(opportunity.perWindow),
     coverage: { ...opportunity.coverage, notAnalysed: opportunity.coverage.notAnalysed.map((entry) => ({ ...entry, reason: sentence(entry.reason) })) },
     action: actionOf(opportunity),
     inferred: opportunity.inferred,

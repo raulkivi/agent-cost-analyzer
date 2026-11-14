@@ -1,6 +1,6 @@
 # MCP Apps Increment 2: owner's checks (Phase 12, task A24)
 
-**Last changed:** 2026-11-11 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-14 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 > **Superseded 2026-11-11 by step 10.17** ([release-ui-gate.md](release-ui-gate.md)):
 > G4 (wdio specs in Copilot Chat), G5 (Playwright fake host for Claude
@@ -36,7 +36,7 @@ Prompts below use `<repo>` and `<repo2>` for repository names as `list_repositor
 
 ## 1. VS Code Copilot Chat (inline views)
 
-1. Check that `aiCreditsAnalyzer.mcp.enabled` is on. **MCP: List Servers** → **AI Credits Analyzer** should list **20 tools**.
+1. Check that `aiCreditsAnalyzer.mcp.enabled` is on. **MCP: List Servers** → **AI Credits Analyzer** should list **21 tools** (20 before Phase 16 SR19 added `get_savings_report`).
 2. Open Copilot Chat in **Agent** mode. Check that the AI Credits Analyzer tools are enabled in the tools picker.
 3. Use the **Light Modern** theme for the first pass (`Ctrl+K Ctrl+T`).
 
@@ -116,7 +116,7 @@ Automated (step 10.17, G6): `npm run record:host-themes` in `packages/vscode-ext
 
 ## 2. Claude Desktop (inline and fullscreen)
 
-1. Use the same `claude_desktop_config.json` entry as in A16. Quit Claude Desktop fully and restart it. The server should list **22 tools**.
+1. Use the same `claude_desktop_config.json` entry as in A16. Quit Claude Desktop fully and restart it. The server should list **23 tools** (22 before Phase 16 SR19 added `get_savings_report`).
 2. Run the prompts of §1 with these differences:
    - Name repositories as `list_repositories` shows them (a local repository by folder name, a remote as `github.com/org/repo`).
    - The product name in the kicker and footer reads **Agent Cost Analyzer**, and the version is the app's.

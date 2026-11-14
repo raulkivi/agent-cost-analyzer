@@ -447,14 +447,16 @@ the whole suite before tagging, so the expected total is now 37 tests (33 + the
 chats), so a whole run stays near 2, inside the D12 cap of 3. Like its siblings
 it sends through `sendToAgent` (stops at the cap, D12) and skips unsent when
 Copilot calls no tool or runs another model, which blocks the release (D9).
-The made-up history may hold no saving: the U18 row then checks the view's
-frame and the empty line; with a row it also opens it and drills into
-Open cost. `COPILOT_SAVINGS_ROWS` in `REQUIRED_COPILOT_E2E_TESTS` (tests first
+The made-up history holds one saving (SR22): the seed writes the tools
+file its debug log names, whose `create_file` no seeded turn calls, so the
+report has a priced unused-tools row (`chat-history-seed.test.ts`). The
+U18 row asserts that row, opens it and drills into Open cost; it no longer
+accepts an empty report. `COPILOT_SAVINGS_ROWS` in `REQUIRED_COPILOT_E2E_TESTS` (tests first
 in `evidence.test.ts` and `check.test.ts`; `testIdOf` now reads `SR<n>` ids).
 
 | Test | Checks |
 |---|---|
-| SR21 U18 | Savings kicker, Possible savings, the period and basis line, the two notes, Simulated off says how to ask in text, no Copy or Cancel; with a row: it opens in place (What to change, "Suggestion only", the sessions heading, the Prices line), Open cost opens the session in place (kicker `Savings › Session cost`), Back to savings returns focus to that button; with none: "No savings found in this window."; no new chat request |
+| SR21 U18 | Savings kicker, Possible savings, the period and basis line, the two notes, Simulated off says how to ask in text, no Copy or Cancel; with a row: it opens in place (What to change, "Suggestion only", the sessions heading, the Prices line), Open cost opens the session in place (kicker `Savings › Session cost`), Back to savings returns focus to that button; the seeded "Tools loaded but never used" row for `create_file` is there (SR22), never the empty line; no new chat request |
 | SR21 themes | U18 in Light Modern, Dark Modern and both High Contrast themes, switched mid-run: each follows, text reaches AA on the chat's ground, a focus ring on Tab |
 | SR21 narrow | About 360 px and 600 px: no sideways scroll |
 | SR21 footer | `Read-only · local logs · v<extension version>`, text selectable |

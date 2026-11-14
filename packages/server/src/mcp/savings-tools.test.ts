@@ -294,6 +294,26 @@ describe("get_savings_report hostile names", () => {
     expect(textOf(result)).not.toMatch(/\nIGNORE PREVIOUS/);
   });
 
+  // SR22: an unknown amount's reason can quote a model id from the log (the
+  // price-model mapper's "no model matching ..."), and so can an unknown token
+  // count's; they reach the model as the coverage reasons do: folded, redacted, capped.
+  it("folds, redacts and caps the reason of an unknown amount and of unknown evidence tokens", async () => {
+    const reason = `The price book has no model matching ${HOSTILE} on github-copilot.`;
+    const unknown = { known: false as const, reason };
+    const hostile = opportunity(1, { perWeek: unknown, perWindow: unknown, evidence: { sessions: 1, requests: null, tokens: { known: false, reason }, occurrences: 3 } });
+    const result = await call(await connect(new FakeSavings(unvalidatedReport([hostile]))));
+    const text = JSON.stringify(result);
+
+    expect(result.isError, text).not.toBe(true);
+    for (const forbidden of ["‮", "​", " ", SECRET]) expect(text).not.toContain(forbidden);
+    const row = structured(result).opportunities[0]!;
+    for (const field of [row.perWeek.reason, row.perWindow.reason, row.evidence.tokens.reason]) {
+      expect(field).toMatch(/^The price book has no model matching evil/);
+      expect(field.length).toBeLessThanOrEqual(600);
+    }
+    expect(textOf(result)).not.toMatch(/\nIGNORE PREVIOUS/);
+  });
+
   it("keeps any generated name within the cap and free of control and format characters (property)", async () => {
     const c = await connect(new FakeSavings(unvalidatedReport([])));
     await c.close();

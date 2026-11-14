@@ -80,14 +80,14 @@ reads those and Copilot Chat.
   change what a turn costs.
 - **MCP server for Copilot agent mode** (off by default). Ask Copilot Chat
   "what did my last session cost?" and it answers from the same local logs
-  through 19 read-only tools, including cost by repository, why it
-  changed, and what a session would have cost on another model. Thirteen
-  of the tools also show interactive views in the chat: session cost,
-  spend by day and model, findings, cost over time by repository or
-  project, a repository comparison, why a cost changed, price changes,
-  replay on other models, the tool-call audit of a session and across
-  sessions, and a session list whose **Analyse** button asks about a
-  session.
+  through 20 read-only tools, including cost by repository, why it
+  changed, what a session would have cost on another model, and the
+  savings report. Fourteen of the tools also show interactive views in
+  the chat: session cost, spend by day and model, findings, cost over time
+  by repository or project, a repository comparison, why a cost changed,
+  price changes, replay on other models, the tool-call audit of a session
+  and across sessions, a session list whose **Analyse** button asks about
+  a session, and the ranked savings.
 
   ![Copilot agent mode answers "What drove my spend this week?" with the cost rollup view in the chat; drilling into the top session and a turn, then Back](https://raw.githubusercontent.com/raulkivi/agent-cost-analyzer/main/docs/images/demo/e9-ask-copilot.gif)
 

@@ -6,9 +6,10 @@
 // Credits) under its own session id, so U9, U10 and U11 have something to
 // show. Seeded into the run's profile copy before VS Code starts; the
 // owner's own chats are never what a spec asserts on. The repositories are
-// scenario S9's (s9-fixture.mts).
+// scenario S9's (s9-fixture.mts). The prompt files the log names come along,
+// so the savings report (U18) finds the tool no turn calls.
 import { createHash } from "node:crypto";
-import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { pathToFileURL } from "node:url";
@@ -51,6 +52,11 @@ const SESSIONS: readonly { repository: RepositoryName; daysAgo: number }[] = [
 // characters long (a folder workspace's id) and that no window uses, so the
 // id is 32 hex characters; its workspace.json names an existing folder.
 const WORKSPACE_STORAGE_ID = createHash("md5").update("aica-e2e-history").digest("hex");
+
+// The prompt files the fixture debug log names (systemPromptFile, toolsFile),
+// next to it in the server's fixtures. The tools file defines create_file,
+// which no turn calls, so U18 (SR22) has a priced unused-tools row to open.
+const PROMPT_FILES = ["system_prompt_0.json", "tools_0.json"] as const;
 
 export interface DateRange {
   since: string;
@@ -172,6 +178,7 @@ export function seedChatHistory({ userDataDir, reposDir, now }: SeedChatHistoryO
       const logDir = path.join(workspaceDir, "GitHub.copilot-chat", "debug-logs", id);
       mkdirSync(logDir, { recursive: true });
       writeFileSync(path.join(logDir, "main.jsonl"), datedAt(debugLog.replaceAll(USAGE_SESSION_ID, id), started));
+      for (const file of PROMPT_FILES) copyFileSync(path.join(path.dirname(USAGE_MAIN_JSONL), file), path.join(logDir, file));
       ids.push(id);
     });
     db.exec("COMMIT");
