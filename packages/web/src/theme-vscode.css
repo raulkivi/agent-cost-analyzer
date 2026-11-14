@@ -47,6 +47,10 @@ body.vscode-high-contrast {
      Barlow, so these were the system fallback until now). */
   --font-body: var(--vscode-font-family, "Barlow", system-ui, sans-serif);
   --font-heading: var(--vscode-font-family, "Barlow Condensed", system-ui, sans-serif);
+  /* The ledger's mono and prose roles (dense-ledger-ui.md L1) take the
+     editor's own fonts: the webview never gets the ledger's. */
+  --font-mono: var(--vscode-editor-font-family, ui-monospace, monospace);
+  --font-prose: var(--vscode-font-family, system-ui, sans-serif);
   font-size: var(--vscode-font-size, 15px);
 }
 

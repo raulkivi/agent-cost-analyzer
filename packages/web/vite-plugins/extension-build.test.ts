@@ -58,7 +58,7 @@ describe("web build in extension mode (vscode-extension.md G7, G12)", () => {
   });
 
   // The webview uses the editor's font (--vscode-font-family), so the
-  // standalone app's bundled Barlow would be dead weight in the .vsix.
+  // standalone app's bundled fonts would be dead weight in the .vsix.
   it("ships no font files and no @font-face", () => {
     const assets = readdirSync(path.join(outDir, "assets"));
 

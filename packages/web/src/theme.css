@@ -5,7 +5,10 @@
    design handoff (Design/GitHub chat analyser design 2.zip,
    design_handoff_session_analyser_ui/styles.css). This file is the source
    of truth for the app's look; retune tokens/classes here, not inline.
-   Barlow and Barlow Condensed are bundled locally (fonts.ts), never fetched. */
+   :root is the Industry set, the look of the VS Code webview and the MCP
+   Apps views (each maps its host's fonts). The standalone app's ledger
+   theme overrides it under html[data-color-mode] below; its fonts are
+   bundled locally (fonts.ts), never fetched. */
 
 :root {
   --color-bg: #f2f2f3;
@@ -96,6 +99,10 @@
   --font-heading: "Barlow Condensed", system-ui, sans-serif;
   --font-heading-weight: 600;
   --font-body: "Barlow", system-ui, sans-serif;
+  /* The ledger's two extra font roles (dense-ledger-ui.md D3). Outside it,
+     mono is the system monospace and prose the body font, as before. */
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --font-prose: var(--font-body);
 
   --space-1: 2px;
   --space-2: 4px;
@@ -114,6 +121,188 @@
   --shadow-md: 0 3px 10px color-mix(in srgb, #2b2b2d 16%, transparent);
   --shadow-lg: 0 12px 32px color-mix(in srgb, #2b2b2d 22%, transparent);
 }
+
+/* — Ledger theme (dense-ledger-ui.md L1, D1): the standalone app's light and
+     dark colour modes, set on <html> by the app itself. Only the standalone
+     app sets data-color-mode, so the VS Code webview and the MCP Apps
+     views (whose light/dark switch is another attribute) keep the
+     Industry :root above.
+     Tonal approach after pi.dev: one blue accent plus rust, faint alpha
+     hairlines, square corners, no shadows; mono UI, serif only for prose.
+     Text-safe roles reach 4.5:1 on --color-bg, --color-surface and
+     --color-accent-100; marks and boundaries 3:1 (theme-contrast.test.ts,
+     standalone-light and standalone-dark). Keep these blocks top-level:
+     the contrast harness reads flat rules only. — */
+html[data-color-mode="light"] {
+  color-scheme: light;
+  --color-bg: #ebe7e4; /* parchment */
+  --color-surface: #f4f2f0; /* panel */
+  --color-text: #252f3d;
+  --color-text-muted: #5c5752;
+  --color-accent: #5b7698;
+  --color-accent-2: #b86b52; /* rust */
+  --color-accent-text: #4b607c;
+  --color-accent-fill: #4b607c;
+  --color-divider: color-mix(in srgb, #8b847d 40%, transparent);
+  --color-control-border: #7d766f;
+
+  --color-neutral-100: #e2ddd9;
+  --color-neutral-200: #d6d0cb;
+  --color-neutral-300: #c4bdb7;
+  --color-neutral-400: #aaa39c;
+  --color-neutral-500: #8b847d;
+  --color-neutral-600: #716a64;
+  --color-neutral-700: #5c5752;
+  --color-neutral-800: #45413d;
+  --color-neutral-900: #2e2b29;
+
+  --color-accent-100: #dde3ea;
+  --color-accent-200: #c9d3de;
+  --color-accent-300: #aebdcc;
+  --color-accent-400: #8fa3b8;
+  --color-accent-500: #6f87a1;
+  --color-accent-600: #5b7698;
+  --color-accent-700: #4b607c;
+  --color-accent-800: #34445a;
+  --color-accent-900: #26313f;
+
+  --color-accent-2-100: #f0ddd5;
+  --color-accent-2-200: #e5c3b6;
+  --color-accent-2-300: #d6a491;
+  --color-accent-2-400: #c7856e;
+  --color-accent-2-500: #b86b52;
+  --color-accent-2-600: #9b5641;
+  --color-accent-2-700: #7f4432;
+  --color-accent-2-800: #6e3423;
+  --color-accent-2-900: #4a2318;
+
+  /* The Industry light steps, re-checked at 3:1 on parchment (lowest:
+     red, 3.2:1). */
+  --color-series-1: #2a78d6;
+  --color-series-2: #d4551f;
+  --color-series-3: #118a60;
+  --color-series-4: #9c6f00;
+  --color-series-5: #c2417a;
+  --color-series-6: #008300;
+  --color-series-7: #6250d6;
+  --color-series-8: #e34948;
+  --color-status-success: #2f7fb0;
+  --color-status-error: #d6453d;
+  --color-status-interrupted: #a67400;
+  --color-status-denied: #7a5bb5;
+  --color-status-unknown: #767676;
+  --color-diverging-increase: #e34948;
+  --color-diverging-decrease: #1c5cab;
+
+  --font-mono: "Commit Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --font-prose: "Source Serif 4", Georgia, serif;
+  --font-body: var(--font-mono);
+  --font-heading: var(--font-mono);
+
+  --radius-sm: 0;
+  --radius-md: 0;
+  --radius-lg: 0;
+  --shadow-sm: none;
+  --shadow-md: none;
+  --shadow-lg: none;
+}
+
+html[data-color-mode="dark"] {
+  color-scheme: dark;
+  --color-bg: #161d27; /* canvas */
+  --color-surface: #212730; /* panel */
+  --color-text: #ebe7e4;
+  --color-text-muted: #9fa4ab;
+  --color-accent: #6a9fcc;
+  --color-accent-2: #e8704f; /* rust */
+  --color-accent-text: #7aaad4;
+  --color-accent-fill: #6a9fcc;
+  --color-divider: color-mix(in srgb, #495059 50%, transparent);
+  --color-control-border: #6b737e;
+
+  /* Ramps run from the ground up: the 100 steps are dark tints (selected
+     rows, tag grounds) and the 800 steps light text on them, as in the
+     VS Code dark mapping. 900 stays near-black: it is the dialog scrim. */
+  --color-neutral-100: #252f3d; /* soft panel */
+  --color-neutral-200: #2e3846;
+  --color-neutral-300: #3a4452;
+  --color-neutral-400: #4f5865;
+  --color-neutral-500: #6b737e;
+  --color-neutral-600: #858c95;
+  --color-neutral-700: #9fa4ab;
+  --color-neutral-800: #c9cdd1;
+  --color-neutral-900: #0b0f14;
+
+  --color-accent-100: #243246;
+  --color-accent-200: #2b3d55;
+  --color-accent-300: #36506e;
+  --color-accent-400: #4a6d91;
+  --color-accent-500: #5d88b3;
+  --color-accent-600: #6a9fcc;
+  --color-accent-700: #8ab4da;
+  --color-accent-800: #b3cde6;
+  --color-accent-900: #d4e3f1;
+
+  --color-accent-2-100: #3a2a27;
+  --color-accent-2-200: #4e332c;
+  --color-accent-2-300: #6b3f32;
+  --color-accent-2-400: #a4533b;
+  --color-accent-2-500: #e8704f;
+  --color-accent-2-600: #ec8a6e;
+  --color-accent-2-700: #efa08a;
+  --color-accent-2-800: #f0b4a0;
+  --color-accent-2-900: #f6d3c7;
+
+  /* The editor-theme stylesheet's dark steps, validated on dark grounds
+     (lowest here: green, 3.4:1 on the canvas). */
+  --color-series-1: #3987e5;
+  --color-series-2: #d95926;
+  --color-series-3: #199e70;
+  --color-series-4: #c98500;
+  --color-series-5: #d55181;
+  --color-series-6: #008300;
+  --color-series-7: #9085e9;
+  --color-series-8: #e66767;
+  /* Same hue per status as in light (success stays blue), lifted for the
+     dark canvas. */
+  --color-status-success: #5d9fd6;
+  --color-status-error: #e8704f;
+  --color-status-interrupted: #e8993a;
+  --color-status-denied: #9085e9;
+  --color-status-unknown: #8b929b;
+  --color-diverging-increase: #e34948;
+  --color-diverging-decrease: #3987e5;
+
+  --font-mono: "Commit Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --font-prose: "Source Serif 4", Georgia, serif;
+  --font-body: var(--font-mono);
+  --font-heading: var(--font-mono);
+
+  --radius-sm: 0;
+  --radius-md: 0;
+  --radius-lg: 0;
+  --shadow-sm: none;
+  --shadow-md: none;
+  --shadow-lg: none;
+}
+
+/* Colours theme.css hard-codes for a light page (the alert red, the
+   list box's QlikView greys), corrected for the dark canvas. */
+html[data-color-mode="dark"] .stat-tile-value--alert,
+html[data-color-mode="dark"] .failure-badge,
+html[data-color-mode="dark"] .async-error-icon {
+  color: #e8704f;
+}
+html[data-color-mode="dark"] .async-error-message {
+  border-color: #e8704f; background: color-mix(in srgb, #e8704f 8%, var(--color-bg));
+}
+html[data-color-mode="dark"] .listbox,
+html[data-color-mode="dark"] .listbox-value--possible {
+  background: var(--color-surface);
+}
+html[data-color-mode="dark"] .listbox-value--possible:hover { background: var(--color-accent-100); }
+html[data-color-mode="dark"] .listbox-value--alternative { background: #323c4a; color: var(--color-text); }
+html[data-color-mode="dark"] .listbox-value--excluded { background: #4f5865; color: var(--color-text); }
 
 *, *::before, *::after { box-sizing: border-box; }
 
@@ -194,7 +383,9 @@ a { color: var(--color-accent-text); text-underline-offset: 3px; }
   width: 100%; min-height: 28px; padding: 3px 8px; font: inherit;
   font-size: 13px; color: var(--color-text); caret-color: var(--color-accent);
   background: var(--color-surface);
-  border: 1px solid var(--color-divider); border-radius: var(--radius-md);
+  /* The ledger sets --color-control-border: its hairlines are too faint
+     to mark a field (3:1, WCAG 1.4.11). */
+  border: 1px solid var(--color-control-border, var(--color-divider)); border-radius: var(--radius-md);
 }
 .input:hover { border-color: color-mix(in srgb, var(--color-text) 45%, transparent); }
 .input:focus-visible { border-color: var(--color-accent); outline-offset: 0; }

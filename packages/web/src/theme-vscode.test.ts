@@ -85,6 +85,9 @@ describe("VS Code theme mapping (vscode-extension.md step 10.5)", () => {
     ["--color-accent", "--vscode-button-background"],
     ["--font-body", "--vscode-font-family"],
     ["--font-heading", "--vscode-font-family"],
+    // Phase 17 L1: the ledger's font roles take the editor's fonts here.
+    ["--font-mono", "--vscode-editor-font-family"],
+    ["--font-prose", "--vscode-font-family"],
     ["font-size", "--vscode-font-size"],
   ])("maps %s to %s", (token, variable) => {
     expect(tokenRule(parseRules(readVscodeTheme())).declarations.get(token)).toMatch(new RegExp(`^var\\(${variable},`));

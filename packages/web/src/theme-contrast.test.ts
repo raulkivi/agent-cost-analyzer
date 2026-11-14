@@ -11,10 +11,12 @@ import { PAYLOAD_TOKEN_COLORS } from "./lib/turn-payload-pretty.js";
 // Text contrast of the theme's own colour pairs (vscode-extension.md §3.5:
 // at least 4.5:1). jsdom computes no colours, so axe's color-contrast rule
 // can't run in the component tests; this checks the stylesheets instead,
-// for the standalone app (theme.css), for a webview whose theme defines
-// none of the --vscode-* variables (theme-vscode.css's fallbacks), and for
-// VS Code's own default themes (Dark Modern, Light Modern, High Contrast):
-// step 10.11 found text that only failed with a real theme's colours.
+// for the standalone app (theme.css, its Industry :root and the ledger's
+// light and dark colour modes, dense-ledger-ui.md L1), for a webview whose
+// theme defines none of the --vscode-* variables (theme-vscode.css's
+// fallbacks), and for VS Code's own default themes (Dark Modern, Light
+// Modern, High Contrast): step 10.11 found text that only failed with a
+// real theme's colours.
 
 const srcDir = path.dirname(fileURLToPath(import.meta.url));
 const AA_TEXT = 4.5;
@@ -42,7 +44,23 @@ function parseRules(css: string): Rule[] {
 const standaloneRules = parseRules(readFileSync(path.join(srcDir, "theme.css"), "utf-8"));
 const vscodeRules = parseRules(readFileSync(path.join(srcDir, "theme-vscode.css"), "utf-8"));
 
-type Theme = "standalone" | "vscode-fallback" | "vscode-dark-modern" | "vscode-light-modern" | "vscode-high-contrast";
+type Theme =
+  | "standalone"
+  | "standalone-light"
+  | "standalone-dark"
+  | "vscode-fallback"
+  | "vscode-dark-modern"
+  | "vscode-light-modern"
+  | "vscode-high-contrast";
+
+// The ledger's colour modes: theme.css rules under html[data-color-mode],
+// which only the standalone app sets (dense-ledger-ui.md D1).
+const COLOR_MODES: Partial<Record<Theme, "light" | "dark">> = { "standalone-light": "light", "standalone-dark": "dark" };
+
+function colorModeScope(theme: Theme): string | undefined {
+  const mode = COLOR_MODES[theme];
+  return mode ? `html[data-color-mode="${mode}"]` : undefined;
+}
 
 // The --vscode-* variables VS Code's default themes give a webview (the
 // ones theme-vscode.css reads; the extension's UI check uses the same).
@@ -110,22 +128,30 @@ const VSCODE_THEME_VARS: Partial<Record<Theme, { bodyClass: string; vars: Record
 };
 
 function bodyClassOf(theme: Theme): string | undefined {
-  if (theme === "standalone") return undefined;
+  if (theme.startsWith("standalone")) return undefined;
   return VSCODE_THEME_VARS[theme]?.bodyClass ?? "vscode-dark";
 }
 
 // The last declaration of `property` for `selector`; in a webview,
-// theme-vscode.css's `body.vscode-dark <selector>` rule wins.
+// theme-vscode.css's `body.vscode-dark <selector>` rule wins, and in a
+// colour mode theme.css's `html[data-color-mode="…"] <selector>` rule.
 function declared(theme: Theme, selector: string, property: string): string | undefined {
   const lookup = (rules: Rule[], wanted: string) =>
     rules.filter((rule) => rule.selectors.includes(wanted) && rule.declarations.has(property)).at(-1)?.declarations.get(property);
   const base = lookup(standaloneRules, selector);
+  const scope = colorModeScope(theme);
+  if (scope) return lookup(standaloneRules, `${scope} ${selector}`) ?? base;
   const bodyClass = bodyClassOf(theme);
   return bodyClass ? (lookup(vscodeRules, `body.${bodyClass} ${selector}`) ?? base) : base;
 }
 
 function tokens(theme: Theme): Record<string, string> {
   const root = Object.fromEntries(standaloneRules.find((rule) => rule.selectors.includes(":root"))!.declarations);
+  const scope = colorModeScope(theme);
+  if (scope) {
+    const mode = standaloneRules.filter((rule) => rule.selectors.includes(scope)).flatMap((rule) => [...rule.declarations]);
+    return { ...root, ...Object.fromEntries(mode) };
+  }
   const bodyClass = bodyClassOf(theme);
   if (!bodyClass) return root;
   // Every rule on the bare body class, in source order: the shared token
@@ -154,7 +180,7 @@ function ruleRatio(theme: Theme, selector: string, ground?: string, colorPropert
   return ratio(theme, foreground, background);
 }
 
-const THEMES: Theme[] = ["standalone", "vscode-fallback", "vscode-dark-modern", "vscode-light-modern", "vscode-high-contrast"];
+const THEMES: Theme[] = ["standalone", "standalone-light", "standalone-dark", "vscode-fallback", "vscode-dark-modern", "vscode-light-modern", "vscode-high-contrast"];
 // Every ground muted or accent text sits on: the page, inputs and list-box
 // headers, and selected rows, cards and the config banner.
 const GROUNDS = ["var(--color-bg)", "var(--color-surface)", "var(--color-accent-100)"];
@@ -261,8 +287,14 @@ describe("categorical series palette (cost-by-repository-and-project.md §11.7)"
   // slot reaches 3:1 on a light ground too (step 10.17 G7, check 1.8).
   const LIGHT = ["#2a78d6", "#d4551f", "#118a60", "#9c6f00", "#c2417a", "#008300", "#6250d6", "#e34948"];
   const DARK = ["#3987e5", "#d95926", "#199e70", "#c98500", "#d55181", "#008300", "#9085e9", "#e66767"];
+  // The ledger's light mode sits on parchment (#ebe7e4), darker than the
+  // Industry ground; the light steps still reach 3:1 there (lowest: red,
+  // 3.2:1), so it pins them too. Its dark mode reuses the dark steps.
+  const LEDGER_LIGHT = LIGHT;
   const SERIES_THEMES: { theme: Theme; steps: string[]; light: boolean; dashed: boolean }[] = [
     { theme: "standalone", steps: LIGHT, light: true, dashed: false },
+    { theme: "standalone-light", steps: LEDGER_LIGHT, light: true, dashed: false },
+    { theme: "standalone-dark", steps: DARK, light: false, dashed: false },
     { theme: "vscode-light-modern", steps: LIGHT, light: true, dashed: false },
     { theme: "vscode-dark-modern", steps: DARK, light: false, dashed: false },
     { theme: "vscode-high-contrast", steps: DARK, light: false, dashed: true },
@@ -318,7 +350,8 @@ describe("categorical series palette (cost-by-repository-and-project.md §11.7)"
   // Tool-call status marks (step 10.17 G7): one value per status that reaches
   // 3:1 on every ground, so the same hex serves light, dark and both High
   // Contrast themes. Status is also told by pattern and icon, never colour alone.
-  describe.each(["standalone", "vscode-light-modern", "vscode-dark-modern", "vscode-high-contrast"] as const)("status colours in %s", (theme) => {
+  const STATUS_THEMES = ["standalone", "standalone-light", "standalone-dark", "vscode-light-modern", "vscode-dark-modern", "vscode-high-contrast"] as const;
+  describe.each(STATUS_THEMES)("status colours in %s", (theme) => {
     it.each(["success", "error", "interrupted", "denied", "unknown"])("%s reaches 3:1 against the page", (status) => {
       expect(ratio(theme, `var(--color-status-${status})`, "var(--color-bg)")).toBeGreaterThanOrEqual(GRAPHICS);
     });
@@ -353,5 +386,28 @@ describe("savings bars (SR16)", () => {
     it.each([".savings-bar-maybe", ".savings-bar--sim .savings-bar-maybe"])("the hatch stripes of %s reach 3:1 on the track", (selector) => {
       expect(ratio(theme, firstColour(declared(theme, selector, "background")), track())).toBeGreaterThanOrEqual(GRAPHICS);
     });
+  });
+});
+
+// The ledger's hairlines are faint by design, so the boundaries a reader
+// needs to find a control or the focus carry WCAG 1.4.11's 3:1 instead: the
+// input border and the accent (focus outline, caret, marks) on the page and
+// on panels.
+describe.each(["standalone-light", "standalone-dark"] as const)("ledger boundaries, %s", (theme) => {
+  const GRAPHICS = 3;
+  const PANEL_GROUNDS = ["var(--color-bg)", "var(--color-surface)"];
+
+  // Through a token, not a scoped .input rule: that would outrank
+  // .input:hover and .input:focus-visible and hide their feedback.
+  it("draws the input border in --color-control-border, the hairline where it is unset", () => {
+    expect(declared(theme, ".input", "border")).toContain("var(--color-control-border, var(--color-divider))");
+  });
+
+  it.each(PANEL_GROUNDS)("the control border reaches 3:1 on %s", (ground) => {
+    expect(ratio(theme, "var(--color-control-border)", ground)).toBeGreaterThanOrEqual(GRAPHICS);
+  });
+
+  it.each(PANEL_GROUNDS)("the accent reaches 3:1 on %s", (ground) => {
+    expect(ratio(theme, "var(--color-accent)", ground)).toBeGreaterThanOrEqual(GRAPHICS);
   });
 });
