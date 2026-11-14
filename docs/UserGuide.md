@@ -864,10 +864,10 @@ an **estimate** tag.
 **Recorded examples.** These recordings run in Claude Desktop with made-up
 sample data.
 
-**Cost rollup.** A week's spend across Claude Code, Copilot and pi, opened
-fullscreen, then one top session opened to its turns.
+**Cost rollup.** October's spend across Claude Code, Copilot and pi, opened
+in the side pane, then the top session and one of its turns.
 
-![Cost rollup for the week in Claude Desktop, expanded to fullscreen, then one of the top sessions opened to its list of turns](images/demo/m1-cost-rollup.gif)
+![Cost rollup for October in Claude Desktop, opened in the side pane, then the top session and one of its turns](images/demo/m1-cost-rollup.gif)
 
 **Cost change.** A project's cost between two periods as a waterfall, then
 the price changes behind it.
