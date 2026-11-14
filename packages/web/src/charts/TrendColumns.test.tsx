@@ -114,9 +114,13 @@ describe("TrendColumns", () => {
   // aria-label contains.
   it("keeps only the visible axis label as a column's text content", () => {
     const { container } = render(<TrendColumns ariaLabel="Trend" columns={columns} format={String} />);
-    for (const column of container.querySelectorAll(".chart-column")) {
-      expect(column.textContent).toMatch(/^\d\d-\d\d$/);
-      expect(column.getAttribute("aria-label")).toContain(column.textContent);
+    // Axis labels are thinned to every Nth column by the measured width, so a
+    // column's text is its label or nothing, never anything else.
+    const texts = [...container.querySelectorAll(".chart-column")].map((column) => ({ text: column.textContent ?? "", label: column.getAttribute("aria-label") ?? "" }));
+    expect(texts.some(({ text }) => text !== "")).toBe(true);
+    for (const { text, label } of texts) {
+      expect(text === "" || /^\d\d-\d\d$/.test(text)).toBe(true);
+      expect(label).toContain(text);
     }
   });
 
