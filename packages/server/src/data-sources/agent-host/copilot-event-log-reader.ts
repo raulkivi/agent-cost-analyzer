@@ -1,8 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import { createReadStream } from "node:fs";
-import { createInterface } from "node:readline";
 import type { CopilotEvent, CopilotEventLog } from "./copilot-event.js";
+import { readRecordLines } from "../../platform/files/read-record-lines.js";
 
 export type { CopilotEvent, CopilotEventLog } from "./copilot-event.js";
 
@@ -63,45 +62,27 @@ export async function readCopilotEventLog(
   options: ReadCopilotEventLogOptions = {},
 ): Promise<CopilotEventLog | null> {
   const maxLineChars = options.maxLineChars ?? MAX_EVENT_LINE_CHARS;
-  const stream = createReadStream(filePath, { encoding: "utf8" });
-  const rl = createInterface({ input: stream, crlfDelay: Infinity });
   const events: CopilotEvent[] = [];
   let skippedLines = 0;
 
-  // readline never rejects on a stream error; capture it ourselves.
-  let streamError: unknown;
-  const failed = new Promise<void>((resolve) => {
-    stream.once("error", (err) => {
-      streamError = err;
-      resolve();
-    });
-  });
-
   try {
-    const consume = (async () => {
-      for await (const line of rl) {
-        if (line.trim() === "") continue;
-        if (line.length > maxLineChars) {
-          skippedLines++;
-          continue;
-        }
-        const event = parseCopilotEventLine(line);
-        if (event === null) {
-          skippedLines++;
-          continue;
-        }
-        if (options.include && !options.include(event.type)) continue;
-        events.push(event);
+    for await (const line of readRecordLines(filePath)) {
+      if (line.trim() === "") continue;
+      if (line.length > maxLineChars) {
+        skippedLines++;
+        continue;
       }
-    })();
-    await Promise.race([consume, failed]);
-    if (streamError !== undefined) throw streamError;
+      const event = parseCopilotEventLine(line);
+      if (event === null) {
+        skippedLines++;
+        continue;
+      }
+      if (options.include && !options.include(event.type)) continue;
+      events.push(event);
+    }
   } catch (err) {
     if (isMissingPath(err)) return null;
     throw err;
-  } finally {
-    rl.close();
-    stream.destroy();
   }
   return { events, skippedLines };
 }

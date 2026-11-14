@@ -1,5 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
@@ -76,5 +78,28 @@ describe("readMainJsonlEnvelopesForTurn", () => {
 
   it("returns null when the file doesn't exist", async () => {
     await expect(readMainJsonlEnvelopesForTurn(missingPath, 0)).resolves.toBeNull();
+  });
+});
+
+describe("readMainJsonlEnvelopesForTurn record separators", () => {
+  it("keeps a record whole when its text holds U+2028, U+2029 or a lone carriage return", async () => {
+    const dir = mkdtempSync(path.join(tmpdir(), "turn-inspector-"));
+    try {
+      const filePath = path.join(dir, "main.jsonl");
+      const name = "a\u2028b\u2029c\rd";
+      const lines = [
+        JSON.stringify({ ts: 1, sid: "s", type: "user_message", name: "u", attrs: {} }),
+        JSON.stringify({ ts: 2, sid: "s", type: "tool_call", name, attrs: {} }),
+        JSON.stringify({ ts: 3, sid: "s", type: "agent_response", name: "r", attrs: {} }),
+      ];
+      expect(lines[1]).toContain("\u2028");
+      writeFileSync(filePath, `${lines.join("\n")}\n`);
+
+      const result = await readMainJsonlEnvelopesForTurn(filePath, 0);
+
+      expect(result!.turnEnvelopes.map((envelope) => envelope.name)).toEqual(["u", name, "r"]);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 });

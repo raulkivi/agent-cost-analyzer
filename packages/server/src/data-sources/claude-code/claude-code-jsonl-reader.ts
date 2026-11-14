@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import { createReadStream, existsSync } from "node:fs";
+import { existsSync } from "node:fs";
+import { readRecordLines } from "../../platform/files/read-record-lines.js";
 
 // Generic line shape for Claude Code CLI's own JSONL session format
 // (confirmed against real captures under ~/.claude/projects on this
@@ -60,9 +61,9 @@ export async function readClaudeCodeSessionFile(filePath: string): Promise<Claud
   const entries: ClaudeCodeRawEntry[] = [];
   let rawLineCount = 0;
 
-  const take = (line: string) => {
+  for await (const line of readRecordLines(filePath)) {
     if (!line.trim()) {
-      return;
+      continue;
     }
     rawLineCount += 1;
 
@@ -70,18 +71,7 @@ export async function readClaudeCodeSessionFile(filePath: string): Promise<Claud
     if (parsed) {
       entries.push(parsed);
     }
-  };
-
-  // A record ends at "\n" only (a "\r" before it is trimmed by the parser).
-  // readline would also split at U+2028, U+2029 and a lone "\r", which
-  // JSON.stringify leaves raw inside strings, tearing a record in two.
-  let carry = "";
-  for await (const chunk of createReadStream(filePath, "utf-8")) {
-    const lines = (carry + chunk).split("\n");
-    carry = lines.pop() ?? "";
-    lines.forEach(take);
   }
-  take(carry);
 
   return { entries, rawLineCount };
 }

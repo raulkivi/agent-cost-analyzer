@@ -1,8 +1,8 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import { createReadStream, existsSync } from "node:fs";
-import { createInterface } from "node:readline";
+import { existsSync } from "node:fs";
 import path from "node:path";
+import { readRecordLines } from "../../platform/files/read-record-lines.js";
 
 // Structural mirror of packages/pi-system-prompt-logger's own
 // SystemPromptRecord — deliberately duplicated, not imported.
@@ -78,11 +78,7 @@ export async function readSystemPromptSidecarIndex(
     return index;
   }
 
-  const lines = createInterface({
-    input: createReadStream(filePath, "utf-8"),
-    crlfDelay: Infinity,
-  });
-  for await (const line of lines) {
+  for await (const line of readRecordLines(filePath)) {
     const record = parseSidecarLine(line);
     if (!record || !record.sessionFile) {
       continue;

@@ -1,5 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
@@ -210,6 +212,27 @@ describe("parseEnvelopeLine: subagent link keys (step 10.19)", () => {
       const envelope = parseEnvelopeLine(JSON.stringify({ type, attrs: { ...contentAttrs, agentName: "Explore" } }));
       const keys = Object.keys(envelope?.attrs ?? {}).filter((key) => key !== "contentDigest");
       expect(keys, type).toEqual(["agentName"]);
+    }
+  });
+});
+
+describe("readMainJsonlFile record separators", () => {
+  it("keeps a record whole when its text holds U+2028, U+2029 or a lone carriage return", async () => {
+    const dir = mkdtempSync(path.join(tmpdir(), "main-jsonl-"));
+    try {
+      const filePath = path.join(dir, "main.jsonl");
+      const name = "a\u2028b\u2029c\rd";
+      const first = JSON.stringify({ ts: 1, sid: "s", type: "tool_call", name, attrs: {} });
+      const second = JSON.stringify({ ts: 2, sid: "s", type: "agent_response", name: "r", attrs: {} });
+      expect(first).toContain("\u2028");
+      writeFileSync(filePath, `${first}\n${second}\r\n`);
+
+      const result = await readMainJsonlFile(filePath);
+
+      expect(result.envelopes.map((envelope) => envelope.name)).toEqual([name, "r"]);
+      expect(result.rawLineCount).toBe(2);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
     }
   });
 });

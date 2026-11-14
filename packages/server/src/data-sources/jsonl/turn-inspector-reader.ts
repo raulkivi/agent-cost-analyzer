@@ -1,8 +1,8 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import { createReadStream, existsSync } from "node:fs";
-import { createInterface } from "node:readline";
+import { existsSync } from "node:fs";
 import { createAttrsProjector, parseEnvelopeLine, type JsonlEnvelope } from "./main-jsonl-reader.js";
+import { readRecordLines } from "../../platform/files/read-record-lines.js";
 
 // The wide-content attrs keys the narrow KNOWN_ATTRS_KEYS allow-list
 // deliberately drops (main-jsonl-reader.ts's high-severity-finding fix) —
@@ -62,12 +62,7 @@ export async function readMainJsonlEnvelopesForTurn(
   let previousInputMessagesLength = 0;
   let foundTarget = false;
 
-  const lines = createInterface({
-    input: createReadStream(filePath, "utf-8"),
-    crlfDelay: Infinity,
-  });
-
-  for await (const line of lines) {
+  for await (const line of readRecordLines(filePath)) {
     const envelope = parseEnvelopeLine(line, projectWideAttrs);
     if (!envelope) {
       continue;

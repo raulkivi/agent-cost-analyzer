@@ -104,3 +104,31 @@ describe("readPiSessionFile", () => {
     expect(result.entries).toHaveLength(1);
   });
 });
+
+describe("readPiSessionFile record separators", () => {
+  let dir: string;
+  beforeEach(() => {
+    dir = mkdtempSync(path.join(tmpdir(), "pi-jsonl-sep-"));
+  });
+  afterEach(() => rmSync(dir, { recursive: true, force: true }));
+
+  it("keeps a record whole when its text holds U+2028, U+2029 or a lone carriage return", async () => {
+    const filePath = path.join(dir, "session.jsonl");
+    const header = JSON.stringify({ type: "session", version: 3, id: "s1", timestamp: "t", cwd: "/p" });
+    const message = JSON.stringify({
+      type: "message",
+      id: "e1",
+      parentId: "s1",
+      message: { role: "user", content: "a\u2028b\u2029c\rd" },
+    });
+    const next = JSON.stringify({ type: "message", id: "e2", parentId: "e1", message: { role: "assistant" } });
+    expect(message).toContain("\u2028");
+    writeFileSync(filePath, `${header}\n${message}\n${next}\r\n`);
+
+    const result = await readPiSessionFile(filePath);
+
+    expect(result.header?.id).toBe("s1");
+    expect(result.entries.map((entry) => entry.id)).toEqual(["e1", "e2"]);
+    expect(result.rawLineCount).toBe(3);
+  });
+});

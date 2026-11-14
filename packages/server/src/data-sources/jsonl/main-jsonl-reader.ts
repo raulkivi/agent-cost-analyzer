@@ -1,8 +1,8 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import { createReadStream, existsSync } from "node:fs";
-import { createInterface } from "node:readline";
+import { existsSync } from "node:fs";
 import { userMessageDigest } from "./log-turn-alignment.js";
+import { readRecordLines } from "../../platform/files/read-record-lines.js";
 
 // Generic envelope shape (architecture.md §7). Only `type` is relied on by
 // this adapter; everything else is intentionally optional/untyped since the
@@ -143,12 +143,7 @@ export async function readMainJsonlFile(
 
   const envelopes: JsonlEnvelope[] = [];
   let rawLineCount = 0;
-  const lines = createInterface({
-    input: createReadStream(filePath, "utf-8"),
-    crlfDelay: Infinity,
-  });
-
-  for await (const line of lines) {
+  for await (const line of readRecordLines(filePath)) {
     if (!line.trim()) {
       continue;
     }

@@ -105,3 +105,24 @@ describe("readSystemPromptSidecarIndex", () => {
     expect(index.get(path.resolve(sessionFile))?.systemPrompt).toBe("test");
   });
 });
+
+describe("readSystemPromptSidecarIndex record separators", () => {
+  it("keeps a record whole when its prompt holds U+2028, U+2029 or a lone carriage return", async () => {
+    const dir = mkdtempSync(path.join(tmpdir(), "pi-sidecar-sep-"));
+    try {
+      const filePath = path.join(dir, "sidecar.jsonl");
+      const systemPrompt = "a\u2028b\u2029c\rd";
+      const first = JSON.stringify(record({ systemPrompt }));
+      const second = JSON.stringify(record({ sessionFile: "/home/dev/.pi/agent/sessions/session-2.jsonl" }));
+      expect(first).toContain("\u2028");
+      writeFileSync(filePath, `${first}\n${second}\r\n`);
+
+      const index = await readSystemPromptSidecarIndex(filePath);
+
+      expect(index.size).toBe(2);
+      expect(index.get(path.resolve("/home/dev/.pi/agent/sessions/session-1.jsonl"))?.systemPrompt).toBe(systemPrompt);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+});

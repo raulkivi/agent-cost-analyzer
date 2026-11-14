@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import { createReadStream, existsSync } from "node:fs";
-import { createInterface } from "node:readline";
+import { existsSync } from "node:fs";
+import { readRecordLines } from "../../platform/files/read-record-lines.js";
 
 // Generic line shape for pi's JSONL session format
 // (https://pi.dev/docs/latest/session-format): every line beyond the header
@@ -75,12 +75,7 @@ export async function readPiSessionFile(filePath: string): Promise<PiSessionRead
   const entries: PiRawEntry[] = [];
   let rawLineCount = 0;
 
-  const lines = createInterface({
-    input: createReadStream(filePath, "utf-8"),
-    crlfDelay: Infinity,
-  });
-
-  for await (const line of lines) {
+  for await (const line of readRecordLines(filePath)) {
     if (!line.trim()) {
       continue;
     }
