@@ -94,6 +94,11 @@ recorded.
 | D21 | Claude's answer names the fixture's "fixture-main-model" models | Answered 2026-11-14: the Desktop takes use a demo variant of the fixture with realistic model names; the shared e2e fixture stays unchanged. M1 is retaken on it with M2–M6. | 2.3 |
 | D22 | Who runs M2–M6 | Answered 2026-11-14: a subagent writes the scenes; the main session records the live takes. | 2.3 |
 | D23 | F1–F3 | Approved 2026-11-14 by the owner as final. | 2.4 |
+| D24 | `compare_models_for_session` names the wrong measured model in M6 | Answered 2026-11-14: fix it first (own branch, tests first), then retake M6. | 2.3 |
+| D25 | M4 ends while Claude is still analysing | Answered 2026-11-14: acceptable. | 2.4 |
+| D26 | Scene changes M2, M4, M7 (§11, 2026-11-14) | Answered 2026-11-14: accepted; §4.2 updated. | 2.3 |
+| D27 | M1–M7 | Approved 2026-11-14 by the owner, apart from M6's retake (D24). | 2.4 |
+| D28 | Media budget (D8) | Answered 2026-11-14: raised; all ten Phase 2 GIFs are committed (about 16 MB). | 2.5 |
 
 
 ## 4. Scenes
@@ -162,11 +167,12 @@ points at the e2e fixture home with the fixed clock (`HOME` and
 | ID | Prompt | Views and interactions | Shows what E9 can't |
 |---|---|---|---|
 | M1 | "What did my coding agents cost this week?" | Cost rollup → **Fullscreen** → top session → open a turn → Back | Claude Code, Copilot and pi together; USD and AI Credits side by side; fullscreen |
-| M2 | "Why did the Customer portal project cost more in October?" | `compare_costs` → project cost over time → top session, Back at each level; cost-change waterfall → **Price changes** → Back | Projects, the three-level chain, usage/price/mix effects, documented and inferred price changes |
-| M3 | "Draft October's statement for Customer portal", then "What would the next feature cost on Sonnet?" | Statement per currency with coverage; estimate p50–p90 tagged **estimate**, **Simulated** on another model | Billing views (standalone only) |
-| M4 | "Which commands failed most this month?" | Audit rollup → session picker → **Analyse** sends "Analyse session <id>" → session audit | A view handing a request back to the chat |
-| M5 | "Anything risky in my sessions this week?" | Findings: severity tiles, kind and severity filters, evidence opened | Findings across providers |
-| M6 | "What would session X have cost on GPT-6 Luna or Haiku?" | Compare models → click a model → replay turn by turn, self-check, turns not replayed | Replay in a chat (E4 shows the panel) |
+| M2 | "How did the Customer portal project's cost change between 1-6 October and 7-31 October, and why?" | Cost-change waterfall → **Price changes** → Back (D26; F1 shows the drill-down chain) | Usage/price/mix effects, documented price changes |
+| M3 | "Show me the Customer portal project's statement for October." | Statement per currency with coverage | Billing views (standalone only) |
+| M4 | "Show my Claude Code sessions from 30 October so I can pick one to analyse." | Session picker → **Analyse** puts "Analyse session <id>" in the composer → send → Claude's analysis (D25, D26) | A view handing a request back to the chat |
+| M5 | "Anything risky in my sessions in October?" | Findings: severity tiles, the Anomaly filter, evidence opened | Findings across providers |
+| M6 | 'What would my Claude Code session "scratch" from 30 October have cost on Claude Haiku 5.5 or GPT-6 Luna?' | Compare models → click a model → replay turn by turn → Back | Replay in a chat (E4 shows the panel) |
+| M7 | "What would ten more active days on the Mobile app cost?" | Estimate p50–p90 tagged **estimate** (D26; the range holds until about 2026-12-26) | Estimates |
 
 Close-ups in the Playwright fake host (`packages/mcp-apps/e2e`), free and
 deterministic. The recording is cropped to the view alone, with no window
