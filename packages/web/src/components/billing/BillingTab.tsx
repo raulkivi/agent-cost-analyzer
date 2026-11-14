@@ -18,6 +18,7 @@ import { useEscapeKey, useFocusTrap } from "../../lib/focus.js";
 import { useCancellableLoad } from "../../lib/use-cancellable-load.js";
 import { AsyncView, cancelledEmptyState } from "../ui/AsyncView.js";
 import { Blueprint } from "../ui/Blueprint.js";
+import { UserPriceTag } from "../ui/UserPriceTag.js";
 
 // Phase 15 step 15.11 (plan §8.5, §11.5; board 4): the Dashboard's Billing
 // tab. One project and period: the draft statement with exact dates (a bill
@@ -240,6 +241,7 @@ function StatementTables({ statement }: { statement: Statement }) {
     const values = Object.values(line.tokens);
     return values.every((value) => value === null) ? "unknown" : values.reduce<number>((sum, value) => sum + (value ?? 0), 0).toLocaleString("en-US");
   };
+  const userPriceVersions = [...new Set(statement.lines.flatMap((line) => (line.userPriced && line.priceVersionId ? [line.priceVersionId] : [])))].sort();
   return (
     <>
       <div className="table-scroll">
@@ -267,7 +269,10 @@ function StatementTables({ statement }: { statement: Statement }) {
               <tr key={line.key}>
                 <td>{line.channel ? channelLabel(line.channel) : "unknown channel"}</td>
                 <td>{line.model}</td>
-                <td>{line.priceVersionId ?? "—"}</td>
+                <td>
+                  {line.priceVersionId ?? "—"}
+                  {line.userPriced && line.priceVersionId && <UserPriceTag ids={[line.priceVersionId]} />}
+                </td>
                 <td>
                   {line.basis}
                   {line.apiEquivalent ? " (API-equivalent)" : ""}
@@ -334,6 +339,11 @@ function StatementTables({ statement }: { statement: Statement }) {
           </tbody>
         </table>
       </div>
+      {userPriceVersions.length > 0 && (
+        <p className="text-muted cost-note">
+          <UserPriceTag ids={userPriceVersions} /> Totals include lines priced with price versions you added.
+        </p>
+      )}
       {statement.fixedLines.length > 0 && <p className="text-muted cost-note">Fixed lines: {statement.fixedLines.map((line) => `${line.label} ${fixed2(line.amount)} ${unit(line.currency)}`).join("; ")}.</p>}
       {statement.userCurrency && (
         <p className="cost-note">

@@ -21,6 +21,7 @@ import { SEVERITY_LABELS } from "../../lib/insights/insights-model.js";
 import { useCancellableLoad } from "../../lib/use-cancellable-load.js";
 import { AsyncView, cancelledEmptyState } from "../ui/AsyncView.js";
 import { Blueprint } from "../ui/Blueprint.js";
+import { UserPriceTag } from "../ui/UserPriceTag.js";
 import { CostFilters, costKicker, PRICING_LABEL, type CostFilterState } from "./CostFilters.js";
 import { ignoredNote } from "./CostOverTimeTab.js";
 
@@ -186,7 +187,10 @@ function VendorBreakdown({ cost, unit, kicker }: { cost: ProjectCost; unit: Disp
     <div className="cost-project-grid">
       <Blueprint className="audit-section">
         <section aria-labelledby="cost-vendor-title">
-          <div className="card-kicker">{costKicker([kicker, `${total} ${unitLabel(unit)}`])}</div>
+          <div className="card-kicker">
+            {costKicker([kicker, `${total} ${unitLabel(unit)}`])}
+            <UserPriceTag ids={cost.total.userPriceVersionIds} />
+          </div>
           <h4 id="cost-vendor-title" className="cost-chart-title">
             Cost by vendor
           </h4>
@@ -204,7 +208,10 @@ function VendorBreakdown({ cost, unit, kicker }: { cost: ProjectCost; unit: Disp
       </Blueprint>
       <Blueprint className="audit-section">
         <section aria-labelledby="cost-models-title">
-          <div className="card-kicker">{costKicker([vendorName, `${formatAmount(usdIn(vendor?.cost.usd ?? null, unit), unit)} ${unitLabel(unit)}`])}</div>
+          <div className="card-kicker">
+            {costKicker([vendorName, `${formatAmount(usdIn(vendor?.cost.usd ?? null, unit), unit)} ${unitLabel(unit)}`])}
+            <UserPriceTag ids={vendor?.cost.userPriceVersionIds} />
+          </div>
           <h4 id="cost-models-title" className="cost-chart-title">
             Models, and the tokens their cost is made of
           </h4>
@@ -238,6 +245,11 @@ function VarianceBody({ variance, unit }: { variance: CostVariance; unit: Displa
   ] as const;
   return (
     <>
+      {variance.userPriceVersionIds && (
+        <p className="text-muted cost-note">
+          <UserPriceTag ids={variance.userPriceVersionIds} /> Some of these priced figures use price versions you added.
+        </p>
+      )}
       {variance.currencies.length === 0 ? (
         <p className="text-muted chart-empty">No priced turns in either month, so there is nothing to explain.</p>
       ) : (
@@ -277,6 +289,7 @@ function Reconciliation({
   const inScope = turns.filter((turn) => turn.projectId === projectId && turn.date !== undefined && turn.date >= range.since && turn.date <= range.until);
   // Step 10.19: per cost line's model, so a subagent run is reconciled under its own model.
   const rows = buildCostReconciliation(inScope.flatMap(splitByModel).flatMap((turn) => (turn.cost ? [{ month: turn.date!.slice(0, 7), model: turn.model, cost: turn.cost }] : [])));
+  const userVersions = [...new Set(rows.flatMap((row) => row.userPriceVersionIds ?? []))].sort();
   const models = [...new Set(rows.map((row) => row.model))].sort();
   const months = [...new Set(rows.map((row) => row.month))].sort();
   const sessions = new Set(inScope.map((turn) => turn.sessionKey));
@@ -289,7 +302,10 @@ function Reconciliation({
   return (
     <Blueprint className="audit-section">
       <section aria-labelledby="cost-reconciliation-title">
-        <div className="card-kicker">Copilot turns · billed vs price book</div>
+        <div className="card-kicker">
+          Copilot turns · billed vs price book
+          <UserPriceTag ids={userVersions} />
+        </div>
         <h4 id="cost-reconciliation-title" className="cost-chart-title">
           Reconciliation
         </h4>

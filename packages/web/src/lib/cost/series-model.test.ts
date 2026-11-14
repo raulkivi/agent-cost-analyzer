@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 import { describe, expect, it } from "vitest";
 import { COST_FIXTURE_RANGE, costTotal, sampleCostSeries, THREE_PROJECTS } from "../../test-support/cost-fixture.js";
+import { userPricedSeries } from "../../test-support/cost-fixture.js";
 import { chartLines, costKpis, groupPriceMarkers, indexedLines, nativeCurrencies, runningTotalLine } from "./series-model.js";
 import { SeriesPalette, seriesStyle } from "./series-colors.js";
 
@@ -160,5 +161,24 @@ describe("observedMarkerGroups", () => {
       },
     ] as never);
     expect(groups).toEqual([expect.objectContaining({ kind: "observed", date: "2026-10-05", modelId: "gpt-5.5", label: "Observed · gpt-5.5 +12%", markers: [] })]);
+  });
+});
+
+describe("user price versions on lines and KPIs (1.0 V2)", () => {
+  const palette = new SeriesPalette(["portal", "billing", "tools"]);
+  const options = { palette, unit: "AI_CREDITS" } as const;
+  const range = { since: "2026-08-09", until: "2026-11-06" } as never;
+
+  it("carries each line's user price versions, and the KPIs name the union", () => {
+    const series = userPricedSeries(userPricedSeries(sampleCostSeries(), 0, ["a"]), 2, ["a", "b"]);
+    const lines = chartLines(series, options);
+    expect(lines.map((line) => line.userPriceVersionIds)).toEqual([["a"], [], ["a", "b"]]);
+    expect(costKpis(lines, undefined, range, options).userPriceVersionIds).toEqual(["a", "b"]);
+  });
+
+  it("has none for a series no user version priced", () => {
+    const lines = chartLines(sampleCostSeries(), options);
+    expect(lines.every((line) => line.userPriceVersionIds.length === 0)).toBe(true);
+    expect(costKpis(lines, undefined, range, options).userPriceVersionIds).toEqual([]);
   });
 });

@@ -214,6 +214,7 @@ export {
   addTurnCostFigures,
   costBasisTotals,
   buildCostReconciliation,
+  unionSorted,
   type Currency,
   type CostBasis,
   type CostBasisChoice,

@@ -3,7 +3,7 @@
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { SavingsReport } from "@agent-cost-analyzer/domain";
+import type { SavingsAmount, SavingsReport } from "@agent-cost-analyzer/domain";
 import type { SavingsQuery } from "../../api-client/savings.js";
 import { IDLE_CACHE, makeSavingsReport, opportunity, SAVINGS_FIXTURE_NOW, UNPRICED_ROW, UNUSED_TOOLS } from "../../test-support/savings-fixture.js";
 import { SavingsTab } from "./SavingsTab.js";
@@ -279,6 +279,29 @@ describe("SavingsTab: detail", () => {
     fireEvent.click(within(rowOf("github")).getByRole("button"));
 
     expect(within(screen.getByRole("region", { name: "Savings detail" })).getAllByRole("button", { name: /^Open session/ })).not.toHaveLength(0);
+  });
+
+  // 1.0 V2 (threat-model 5.10)
+  describe("your own price versions", () => {
+    const userPriced = (amount: SavingsAmount): SavingsAmount => (amount.known ? { ...amount, priceVersionIds: [...amount.priceVersionIds, "mine-1"], userPriceVersionIds: ["mine-1"] } : amount);
+    const reportWithUserPrice = () =>
+      makeSavingsReport({ opportunities: [{ ...IDLE_CACHE, perWeek: userPriced(IDLE_CACHE.perWeek), perWindow: userPriced(IDLE_CACHE.perWindow) }, UNUSED_TOOLS] });
+
+    it("labels the row and the detail of a saving priced with a user version, not the others", async () => {
+      renderTab({ loadReport: vi.fn().mockResolvedValue(reportWithUserPrice()) });
+      await ready();
+      const labelled = screen.getAllByRole("note", { name: "Priced with your own price version: mine-1" });
+      expect(labelled).toHaveLength(1);
+      expect(rowOf("claude-sonnet-5.5")).toContainElement(labelled[0]!);
+      fireEvent.click(within(rowOf("claude-sonnet-5.5")).getByRole("button"));
+      expect(within(screen.getByRole("region", { name: "Savings detail" })).getByRole("note", { name: /your own price version: mine-1/ })).toBeInTheDocument();
+    });
+
+    it("shows no label when only bundled versions priced the savings", async () => {
+      renderTab();
+      await ready();
+      expect(screen.queryByRole("note", { name: /your own price/ })).not.toBeInTheDocument();
+    });
   });
 
   it("collapses the price versions until asked", async () => {

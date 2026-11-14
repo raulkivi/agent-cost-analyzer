@@ -53,6 +53,9 @@ export const statementLineSchema = z.object({
     .nullable(),
   amount: money,
   apiEquivalent: z.boolean(),
+  // Priced lines only (1.0 V2, threat-model 5.10): the price version is one
+  // the user added; omitted otherwise, so older statements still parse.
+  userPriced: z.literal(true).optional(),
 });
 
 const groupLineSchema = z.object({ reason: z.string(), turns: count, sessions: count });

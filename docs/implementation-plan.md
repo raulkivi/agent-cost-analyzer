@@ -1777,7 +1777,7 @@ app installs from npm, and the release path's security gaps are closed.
 | C11 | Savings Increment 3: scope (a)-(d) in [plans/savings-report.md](plans/savings-report.md) §2 | Phase 16 | Not started; scope decided | Its plan's exit criterion; the savings real-data check covers pi |
 | C12 | Only the owner creates or moves `ext-v*` and `app-v*` tags | [threat-model.md](threat-model.md) §5.8 | Open | A tag ruleset, read through the GitHub API, restricts creating, moving and deleting those tags to the owner |
 | C13 | Open VSX trusted publishing; `OVSX_PAT` deleted | threat-model.md §5.8 | Open | A release publishes to Open VSX without `OVSX_PAT`; the secret no longer exists |
-| C14 | Figures priced from a user price version say so where shown | threat-model.md §5.10 | Open | Component and Playwright tests assert the label |
+| C14 | Figures priced from a user price version say so where shown | threat-model.md §5.10 | In progress: the web UI labels them (V2, PR #286); the chat views (MCP Apps) next (V2b, owner 2026-11-14) | Component and Playwright tests assert the label in the web UI and in every chat view that shows a priced figure |
 
 Not in 1.0.0:
 
@@ -1808,7 +1808,8 @@ repo. "Owner step" marks work that needs the owner's hands or accounts.
 | ID | Task | Criterion | Complexity | Model | Depends on |
 |---|---|---|---|---|---|
 | V1 | U5 **Added to chat** and its hint, U2 the same: view and view-model text, component and G5 specs, the G4 row's expectation (`analyse-outcome.mts`), extension guide and User Guide wording, both CHANGELOGs | C6 | low | Sonnet | — |
-| V2 | Label figures priced from a user price version wherever the web UI shows a priced figure; component and Playwright tests; threat-model §5.10 marked done | C14 | medium | Sonnet | — |
+| V2 | Label figures priced from a user price version wherever the web UI shows a priced figure; component and Playwright tests | C14 | medium | Sonnet | — |
+| V2b | The same "your prices" tag in the MCP Apps views: `userPriceVersionIds` on the views' money type, the tag in each view that shows a priced figure; component and G5 Playwright specs; threat-model §5.10 marked done (owner 2026-11-14) | C14 | medium | Sonnet | V2 |
 | V3 | Phase 14 exit check: a `REAL_DATA` test and an oracle from raw Claude Code and Copilot logs (measured totals, the self-check at D12 tolerance, UI and MCP totals equal); an npm script, also part of `npm run test:real-data` | C3 | high | Opus | — |
 | V4 | Phase 15 exit check: a `REAL_DATA` test and an oracle from raw logs, the projects file and the price book (cost per repository and project per month, variance effects that add up, a frozen statement after a price-book change in a temporary copy, MCP equal to the Dashboard, no unknown summed as 0); an npm script, also part of `npm run test:real-data` | C4 | high | Opus | — |
 | V5 | SR22: review and docs for Increment 2 ([plans/savings-report.md](plans/savings-report.md) §10) | C5 | medium | Opus | SR21 (PR #281) |

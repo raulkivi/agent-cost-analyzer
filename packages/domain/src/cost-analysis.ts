@@ -11,6 +11,7 @@ import {
   type CostAmount,
   type CostTotal,
   type Currency,
+  unionSorted,
 } from "./cost-figure.js";
 import { insightProviderStatusSchema } from "./insights.js";
 import { isoCalendarDateSchema } from "./price-book.js";
@@ -259,6 +260,7 @@ export function addCostTotals(a: CostTotal, b: CostTotal): CostTotal {
     if (parts.length === 0) return [];
     return [{ currency, amount: parts.reduce((sum, part) => sum + part.amount, 0), knownTurns: parts.reduce((sum, part) => sum + part.knownTurns, 0) }];
   });
+  const userPriceVersionIds = unionSorted([...(a.userPriceVersionIds ?? []), ...(b.userPriceVersionIds ?? [])]);
   return {
     turns: a.turns + b.turns,
     knownTurns: a.knownTurns + b.knownTurns,
@@ -266,6 +268,7 @@ export function addCostTotals(a: CostTotal, b: CostTotal): CostTotal {
     usd: a.usd === null && b.usd === null ? null : (a.usd ?? 0) + (b.usd ?? 0),
     estimated: a.estimated || b.estimated,
     apiEquivalentTurns: a.apiEquivalentTurns + b.apiEquivalentTurns,
+    ...(userPriceVersionIds.length > 0 ? { userPriceVersionIds } : {}),
   };
 }
 

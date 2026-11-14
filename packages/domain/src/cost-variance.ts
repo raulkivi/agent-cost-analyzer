@@ -119,6 +119,9 @@ export const costVarianceSchema = z.object({
   notExplained: z.object({ periodA: notExplainedSchema, periodB: notExplainedSchema }),
   // Documented changes from period A's start to period B's end, for the models compared.
   priceChanges: z.array(priceChangeMarkerSchema),
+  // The user-added price versions behind the explained figures (1.0 V2,
+  // threat-model 5.10); omitted when none.
+  userPriceVersionIds: z.array(z.string().min(1)).min(1).optional(),
 });
 
 export type VarianceCell = z.infer<typeof varianceCellSchema>;

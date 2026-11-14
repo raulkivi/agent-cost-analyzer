@@ -11,6 +11,7 @@ import {
   amountText,
   windowAmountText,
 } from "../../lib/savings/savings-view.js";
+import { UserPriceTag } from "../ui/UserPriceTag.js";
 import { SavingsLabel } from "./SavingsLabel.js";
 
 // Phase 16 SR14 (plan §5.3, §7; boards Detail and DetailMore): one opportunity
@@ -177,7 +178,10 @@ export function SavingsDetail({ opportunity, days, providerLabel, openSessionLab
         {providers.length > 0 && <span className="text-muted">{providers.join(", ")}</span>}
       </div>
 
-      <p className="savings-amount">{amountText(opportunity.perWeek)}</p>
+      <p className="savings-amount">
+        {amountText(opportunity.perWeek)}
+        {opportunity.perWeek.known && <UserPriceTag ids={opportunity.perWeek.userPriceVersionIds} />}
+      </p>
       {simulated && <p>{perSessionText(opportunity)}</p>}
       {windowText !== "" && <p>{windowText}</p>}
       <p className="text-muted">

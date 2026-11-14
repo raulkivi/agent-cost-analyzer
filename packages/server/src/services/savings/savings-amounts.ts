@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import type { Currency, SavingsAmount, SavingsCoverage, SavingsNotAnalysed, SavingsOpportunityKind, SavingsWindow } from "@agent-cost-analyzer/domain";
+import { unionSorted, type Currency, type SavingsAmount, type SavingsCoverage, type SavingsNotAnalysed, type SavingsOpportunityKind, type SavingsWindow } from "@agent-cost-analyzer/domain";
 import type { SavingsSessionInput } from "./savings-detector.js";
 
 // Phase 16 SR5: the small arithmetic every detector shares, so no detector
@@ -10,6 +10,8 @@ export interface PricedPart {
   low: number;
   high: number;
   priceVersionIds: readonly string[];
+  // The user-added subset (1.0 V2); absent when none.
+  userPriceVersionIds?: readonly string[];
 }
 
 export function unknownAmount(reason: string): SavingsAmount {
@@ -20,6 +22,7 @@ export function unknownAmount(reason: string): SavingsAmount {
 // is not always avoidable.
 export function sumAmount(currency: Currency, parts: readonly PricedPart[], label: "range" | "upper-bound"): SavingsAmount {
   if (parts.length === 0) return unknownAmount("No session could be priced.");
+  const userPriceVersionIds = unionSorted(parts.flatMap((part) => part.userPriceVersionIds ?? []));
   return {
     known: true,
     currency,
@@ -28,6 +31,7 @@ export function sumAmount(currency: Currency, parts: readonly PricedPart[], labe
     basis: "priced",
     label,
     priceVersionIds: [...new Set(parts.flatMap((part) => part.priceVersionIds))].sort(),
+    ...(userPriceVersionIds.length > 0 ? { userPriceVersionIds } : {}),
   };
 }
 

@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import { estimatedTokenCount, type SavingsAmount, type SavingsOpportunity, type ToolInventoryEntry } from "@agent-cost-analyzer/domain";
+import { estimatedTokenCount, unionSorted, type SavingsAmount, type SavingsOpportunity, type ToolInventoryEntry } from "@agent-cost-analyzer/domain";
 import { currencyOf, NotAnalysedLedger, perWeek, sumAmount, unknownAmount, type PricedPart } from "../savings-amounts.js";
 import { sessionsByContribution } from "../savings-session-order.js";
 import type { DetectorResult, SavingsDetector, SavingsInput, SavingsSessionInput } from "../savings-detector.js";
@@ -194,13 +194,15 @@ export class UnusedToolsDetector implements SavingsDetector {
       );
       if (!saving.known) return saving;
       if (saving.currency !== currency) return { known: false, reason: `Priced in ${saving.currency}, not ${currency}.` };
-      parts.push({ low: saving.low * requests, high: saving.high * requests, priceVersionIds: saving.priceVersionIds });
+      parts.push({ low: saving.low * requests, high: saving.high * requests, priceVersionIds: saving.priceVersionIds, ...(saving.userPriceVersionIds ? { userPriceVersionIds: saving.userPriceVersionIds } : {}) });
     }
+    const userVersions = unionSorted(parts.flatMap((part) => part.userPriceVersionIds ?? []));
     return {
       known: true,
       low: parts.reduce((sum, part) => sum + part.low, 0),
       high: parts.reduce((sum, part) => sum + part.high, 0),
       priceVersionIds: [...new Set(parts.flatMap((part) => part.priceVersionIds))],
+      ...(userVersions.length > 0 ? { userPriceVersionIds: userVersions } : {}),
     };
   }
 }

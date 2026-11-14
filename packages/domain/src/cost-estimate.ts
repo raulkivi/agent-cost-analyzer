@@ -70,6 +70,9 @@ export const costEstimateSchema = z
     range: z.object({ p50: usd, p90: usd }).nullable(),
     refusal: z.string().min(1).optional(),
     simulation: estimateSimulationSchema.optional(),
+    // The user-added price versions behind the figures it used (1.0 V2,
+    // threat-model 5.10); omitted when none.
+    userPriceVersionIds: z.array(z.string().min(1)).min(1).optional(),
   })
   .superRefine((estimate, ctx) => {
     if ((estimate.range === null) !== (estimate.refusal !== undefined) || (estimate.range === null) !== (estimate.unitCost === null)) {

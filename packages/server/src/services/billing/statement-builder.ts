@@ -84,6 +84,10 @@ function billedParts(row: CostCubeRow, figure: KnownCostFigure): { row: CostCube
   return parts.every((part) => part.figure.known) ? (parts as { row: CostCubeRow; figure: KnownCostFigure }[]) : [{ row, figure }];
 }
 
+// The line is keyed by the figure's first price version (lineKey), so it is
+// user-priced when that version is one the user added.
+const userPricedLine = (figure: KnownCostFigure): boolean => figure.userPriceVersionIds?.includes(figure.priceVersionIds?.[0] ?? "") === true;
+
 function toLine(key: string, acc: LineAccumulator): StatementLine {
   const tokens = Object.fromEntries(TOKEN_TYPES.map((type) => [type, sumTokens(acc.rows, type)])) as StatementLine["tokens"];
   const priced = acc.figure.basis === "priced";
@@ -108,6 +112,7 @@ function toLine(key: string, acc: LineAccumulator): StatementLine {
     unitPrices,
     amount: round(acc.amount),
     apiEquivalent: acc.figure.apiEquivalent === true,
+    ...(priced && userPricedLine(acc.figure) ? { userPriced: true as const } : {}),
   };
 }
 

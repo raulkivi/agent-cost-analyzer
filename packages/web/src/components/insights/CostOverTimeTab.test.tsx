@@ -4,7 +4,7 @@ import { fireEvent, render, screen, waitFor, within } from "@testing-library/rea
 import { describe, expect, it, vi } from "vitest";
 import type { CostSeries } from "@agent-cost-analyzer/domain";
 import type { CostSeriesQuery } from "../../api-client/cost-analysis.js";
-import { COST_FIXTURE_NOW, MORE_PROJECTS, sampleCostSeries, THREE_PROJECTS } from "../../test-support/cost-fixture.js";
+import { COST_FIXTURE_NOW, MORE_PROJECTS, sampleCostSeries, THREE_PROJECTS, userPricedSeries } from "../../test-support/cost-fixture.js";
 import { CostOverTimeTab } from "./CostOverTimeTab.js";
 
 const ORDERS = { project: ["portal", "billing", "tools", "data", "mobile"], repository: [] as string[] };
@@ -56,6 +56,19 @@ describe("CostOverTimeTab (plan §11.2, board 1)", () => {
     expect(screen.getByRole("group", { name: "Change vs previous period" })).toBeInTheDocument();
     expect(screen.getByRole("group", { name: "Cost per active day" })).toBeInTheDocument();
     expect(screen.getByText(/some turns have no known cost/i)).toBeInTheDocument();
+  });
+
+  // 1.0 V2 (threat-model 5.10)
+  it("labels the total 'your prices' when a line's priced turns used a user version", async () => {
+    renderTab({ loadSeries: loader(userPricedSeries(sampleCostSeries(), 1, ["mine-1"])) });
+    const total = await screen.findByRole("group", { name: "Total cost" });
+    expect(within(total).getByRole("note", { name: "Priced with your own price version: mine-1" })).toHaveTextContent("your prices");
+  });
+
+  it("shows no 'your prices' label for billed, reported or bundled-priced cost", async () => {
+    renderTab();
+    const total = await screen.findByRole("group", { name: "Total cost" });
+    expect(within(total).queryByRole("note")).not.toBeInTheDocument();
   });
 
   it("draws two to four series as lines, with the weekly kicker, and the gap as unknown in the table", async () => {

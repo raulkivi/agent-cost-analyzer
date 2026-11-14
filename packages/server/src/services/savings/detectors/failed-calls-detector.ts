@@ -89,7 +89,7 @@ export class FailedCallsDetector implements SavingsDetector {
         else if (!figure.known) failure = figure.reason;
         else if (figure.currency !== bucket.currency) failure = `Priced in ${figure.currency}, not ${bucket.currency}.`;
         else if (figure.priceVersionIds === undefined) failure = NO_VERSION;
-        else turnParts.push({ low: 0, high: figure.amount, priceVersionIds: figure.priceVersionIds });
+        else turnParts.push({ low: 0, high: figure.amount, priceVersionIds: figure.priceVersionIds, ...(figure.userPriceVersionIds ? { userPriceVersionIds: figure.userPriceVersionIds } : {}) });
         if (failure !== undefined) break;
       }
       // An upper bound that leaves a turn out is no upper bound: the session

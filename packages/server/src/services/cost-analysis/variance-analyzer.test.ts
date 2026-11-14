@@ -206,3 +206,23 @@ describe("buildCostVariance with subagent runs", () => {
     ]);
   });
 });
+
+// 1.0 V2 (threat-model 5.10): the explanation is over priced figures, so it
+// says when any of them used the user's own price versions.
+describe("buildCostVariance: user price versions", () => {
+  const withUser = (row: CostCubeRow, ids: string[]): CostCubeRow => {
+    const priced = row.cost.priced;
+    if (!priced.known) return row;
+    return { ...row, cost: { ...row.cost, priced: { ...priced, priceVersionIds: [...priced.priceVersionIds!, ...ids], userPriceVersionIds: ids } } };
+  };
+
+  it("names the user versions behind the explained figures, sorted", () => {
+    const cube = cubeOf([withUser(outputTurn("2026-08-10", "sonnet", 1_000_000, 10), ["mine-b"]), withUser(outputTurn("2026-10-10", "sonnet", 1_000_000, 8), ["mine-a"])]);
+    expect(costVarianceSchema.parse(buildCostVariance(cube, query, [])).userPriceVersionIds).toEqual(["mine-a", "mine-b"]);
+  });
+
+  it("has none when only bundled versions priced the turns", () => {
+    const cube = cubeOf([outputTurn("2026-08-10", "sonnet", 1_000_000, 10), outputTurn("2026-10-10", "sonnet", 1_000_000, 8)]);
+    expect("userPriceVersionIds" in buildCostVariance(cube, query, [])).toBe(false);
+  });
+});

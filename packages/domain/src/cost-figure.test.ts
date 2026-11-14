@@ -211,6 +211,18 @@ describe("buildCostReconciliation (plan §5: billed vs priced per model and mont
     for (const row of rows) costReconciliationRowSchema.parse(row);
   });
 
+  it("names the user price versions behind the priced side, and omits them when none (1.0 V2)", () => {
+    const mine = {
+      month: "2026-10",
+      model: "gpt-6-sol",
+      cost: figures({ billed: billed(50), priced: priced(40, "AI_CREDITS", { priceVersionIds: ["mine"], userPriceVersionIds: ["mine"] }) }),
+    };
+    const [row] = buildCostReconciliation([mine, copilot("2026-10", "gpt-6-sol", 10, 10)]);
+    expect(row!.userPriceVersionIds).toEqual(["mine"]);
+    costReconciliationRowSchema.parse(row);
+    expect("userPriceVersionIds" in buildCostReconciliation([copilot("2026-10", "m", 1, 1)])[0]!).toBe(false);
+  });
+
   it("leaves out turns with no billed AI Credits or no month", () => {
     expect(
       buildCostReconciliation([
@@ -287,5 +299,83 @@ describe("addCostFigures and addTurnCostFigures", () => {
     const { addTurnCostFigures } = await import("./cost-figure.js");
     const sum = addTurnCostFigures([figures({ billed: billed(1), priced: priced(1, "AI_CREDITS") }), figures({ billed: billed(2), priced: unknown("no price for the run") })]);
     expect(sum).toEqual({ billed: billed(3), reported: unknown("no reported figure"), priced: unknown("no price for the run") });
+  });
+});
+
+describe("user price versions (1.0 V2, threat-model 5.10)", () => {
+  const user = (amount: number, ids = ["mine"], extra: Partial<CostFigure> = {}) =>
+    priced(amount, "USD", { priceVersionIds: ["bundled-1", ...ids], userPriceVersionIds: ids, ...extra });
+
+  it("allows userPriceVersionIds on a priced figure only, and only among its price versions", () => {
+    expect(costFigureSchema.safeParse(user(1)).success).toBe(true);
+    expect(costFigureSchema.safeParse({ ...billed(1), userPriceVersionIds: ["mine"] }).success).toBe(false);
+    expect(costFigureSchema.safeParse(priced(1, "USD", { userPriceVersionIds: ["other"] })).success).toBe(false);
+  });
+
+  it("addCostFigures keeps the union of the parts' user versions", async () => {
+    const { addCostFigures } = await import("./cost-figure.js");
+    const sum = addCostFigures([user(1, ["mine"]), priced(1), user(1, ["mine", "yours"])]);
+    expect(sum.known && sum.userPriceVersionIds).toEqual(["mine", "yours"]);
+    const plain = addCostFigures([priced(1), priced(2)]);
+    expect(plain.known && "userPriceVersionIds" in plain).toBe(false);
+  });
+
+  it("sumCostFigures names the user versions behind a total, and omits them when none is used", () => {
+    expect(sumCostFigures([user(1), priced(2), unknown("x")]).userPriceVersionIds).toEqual(["mine"]);
+    expect("userPriceVersionIds" in sumCostFigures([priced(1), billed(1), reported(1)])).toBe(false);
+  });
+
+  it("billed and reported totals never carry them, whatever the priced figure used", () => {
+    const totals = costBasisTotals([figures({ billed: billed(5), priced: user(1) })]);
+    expect(totals.priced.userPriceVersionIds).toEqual(["mine"]);
+    expect("userPriceVersionIds" in totals.billed).toBe(false);
+    // The preferred figure is billed here, so the preferred total is not user-priced.
+    expect("userPriceVersionIds" in totals.preferred).toBe(false);
+  });
+
+  it("addCostTotals unions them", async () => {
+    const { addCostTotals } = await import("./cost-analysis.js");
+    const total = addCostTotals(sumCostFigures([user(1, ["a"])]), sumCostFigures([user(1, ["b"]), priced(1)]));
+    expect(total.userPriceVersionIds).toEqual(["a", "b"]);
+    expect("userPriceVersionIds" in addCostTotals(sumCostFigures([priced(1)]), sumCostFigures([priced(1)]))).toBe(false);
+  });
+});
+
+describe("user price versions (1.0 V2, threat-model 5.10)", () => {
+  const user = (amount: number, ids = ["mine"], extra: Partial<CostFigure> = {}) =>
+    priced(amount, "USD", { priceVersionIds: ["bundled-1", ...ids], userPriceVersionIds: ids, ...extra });
+
+  it("allows userPriceVersionIds on a priced figure only, and only among its price versions", () => {
+    expect(costFigureSchema.safeParse(user(1)).success).toBe(true);
+    expect(costFigureSchema.safeParse({ ...billed(1), userPriceVersionIds: ["mine"] }).success).toBe(false);
+    expect(costFigureSchema.safeParse(priced(1, "USD", { userPriceVersionIds: ["other"] })).success).toBe(false);
+  });
+
+  it("addCostFigures keeps the union of the parts' user versions", async () => {
+    const { addCostFigures } = await import("./cost-figure.js");
+    const sum = addCostFigures([user(1, ["mine"]), priced(1), user(1, ["mine", "yours"])]);
+    expect(sum.known && sum.userPriceVersionIds).toEqual(["mine", "yours"]);
+    const plain = addCostFigures([priced(1), priced(2)]);
+    expect(plain.known && "userPriceVersionIds" in plain).toBe(false);
+  });
+
+  it("sumCostFigures names the user versions behind a total, and omits them when none is used", () => {
+    expect(sumCostFigures([user(1), priced(2), unknown("x")]).userPriceVersionIds).toEqual(["mine"]);
+    expect("userPriceVersionIds" in sumCostFigures([priced(1), billed(1), reported(1)])).toBe(false);
+  });
+
+  it("billed and reported totals never carry them, whatever the priced figure used", () => {
+    const totals = costBasisTotals([figures({ billed: billed(5), priced: user(1) })]);
+    expect(totals.priced.userPriceVersionIds).toEqual(["mine"]);
+    expect("userPriceVersionIds" in totals.billed).toBe(false);
+    // The preferred figure is billed here, so the preferred total is not user-priced.
+    expect("userPriceVersionIds" in totals.preferred).toBe(false);
+  });
+
+  it("addCostTotals unions them", async () => {
+    const { addCostTotals } = await import("./cost-analysis.js");
+    const total = addCostTotals(sumCostFigures([user(1, ["a"])]), sumCostFigures([user(1, ["b"]), priced(1)]));
+    expect(total.userPriceVersionIds).toEqual(["a", "b"]);
+    expect("userPriceVersionIds" in addCostTotals(sumCostFigures([priced(1)]), sumCostFigures([priced(1)]))).toBe(false);
   });
 });

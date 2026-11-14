@@ -56,4 +56,14 @@ describe("EstimatePanel (plan §11.5, board 4)", () => {
     expect(await screen.findByText(/Only 3 active days/)).toBeInTheDocument();
     expect(screen.queryByRole("img", { name: /^Estimate/ })).not.toBeInTheDocument();
   });
+
+  // 1.0 V2 (threat-model 5.10)
+  it("labels the range when the figures behind it used a user price version, and not otherwise", async () => {
+    const { unmount } = render(<EstimatePanel projectId="portal" loadEstimate={vi.fn().mockResolvedValue(estimate({ userPriceVersionIds: ["mine-1"] }))} />);
+    expect(await screen.findByRole("note", { name: "Priced with your own price version: mine-1" })).toBeInTheDocument();
+    unmount();
+    render(<EstimatePanel projectId="portal" loadEstimate={vi.fn().mockResolvedValue(estimate())} />);
+    await screen.findByRole("img", { name: /^Estimate/ });
+    expect(screen.queryByRole("note", { name: /your own price/ })).not.toBeInTheDocument();
+  });
 });

@@ -106,3 +106,31 @@ describe("CounterfactualPricer", () => {
     expect(pricer.saving(withoutDate, "today")).toMatchObject({ known: true, currency: "USD" });
   });
 });
+
+// 1.0 V2 (threat-model 5.10): a saving priced with the user's own version says so.
+describe("CounterfactualPricer: user price versions", () => {
+  const mine = {
+    id: "mine-1",
+    channel: "anthropic-api",
+    modelId: "my-own-model",
+    currency: "USD" as const,
+    effectiveFrom: "2026-01-01",
+    tiers: [{ inputUsdPerM: 1, cachedInputUsdPerM: 0.1, cacheWriteUsdPerM: 1.25, outputUsdPerM: 5 }],
+    kind: "list" as const,
+    sourceIds: [],
+    origin: "user" as const,
+  };
+  const withUser = new PriceBook({ load: () => ({ versions: [mine], sources: [], problems: [] }) }).snapshot();
+  const userPricer = new CounterfactualPricer(new CostPricer({ prices: withUser, models: new CandidatePriceModelMapper(withUser), now: () => NOW }));
+
+  it("names the user version the saving used", () => {
+    const saving = userPricer.saving(query({ model: "my-own-model" }));
+    expect(saving).toMatchObject({ known: true, priceVersionIds: ["mine-1"], userPriceVersionIds: ["mine-1"] });
+  });
+
+  it("has none for a bundled version", () => {
+    const saving = pricer.saving(query());
+    expect(saving.known && "userPriceVersionIds" in saving).toBe(false);
+  });
+});
+

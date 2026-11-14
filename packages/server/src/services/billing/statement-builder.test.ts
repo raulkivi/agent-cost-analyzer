@@ -85,6 +85,22 @@ describe("buildStatement", () => {
     expect(statement).toMatchObject({ status: "draft", project: { id: "portal", name: "Customer portal", client: "ACME", billingCode: "AC-7" }, period: october });
   });
 
+  // 1.0 V2 (threat-model 5.10): a line billed at a user's own price version says so.
+  it("marks a priced line whose version the user added, and no other line", () => {
+    const parts = { uncachedInput: 3, cacheRead: 0, cacheWrite: 0, output: 1 };
+    const turn = (at: string, versionId: string, user: boolean) =>
+      row(at, {
+        model: "claude-sonnet-5.5",
+        channel: "anthropic-api",
+        cost: costs({ priced: { ...priced(4, versionId, parts), ...(user ? { userPriceVersionIds: [versionId] } : {}) } as CostFigure }),
+      });
+    const statement = statementSchema.parse(
+      buildStatement(cubeOf([turn("2026-10-05T10:00:00Z", "mine-1", true), turn("2026-10-06T10:00:00Z", "bundled-1", false), row("2026-10-07T10:00:00Z", { cost: costs({ billed: billed(10) }), channel: "github-copilot" })]), inputs),
+    );
+    const byVersion = Object.fromEntries(statement.lines.map((line) => [line.priceVersionId ?? line.basis, line.userPriced]));
+    expect(byVersion).toEqual({ "mine-1": true, "bundled-1": undefined, billed: undefined });
+  });
+
   it("bills by calendar day in the statement's time zone (D6)", () => {
     const cube = cubeOf([
       // 22:30Z on Sep 30 is Oct 1 in Tallinn (UTC+3): in.

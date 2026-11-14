@@ -31,6 +31,8 @@ export interface ChartLine {
   total: number | null;
   coverage: { turns: number; knownTurns: number };
   currencies: Currency[];
+  // The user's own price versions behind the line's priced figures (1.0 V2); empty when none.
+  userPriceVersionIds: string[];
 }
 
 interface LineOptions {
@@ -60,6 +62,7 @@ function toLine(line: CostSeriesLine, groupBy: CostSeries["groupBy"], { palette,
     total: line.total.turns === 0 ? 0 : amountIn(line.total, unit),
     coverage: { turns: line.total.turns, knownTurns: line.total.knownTurns },
     currencies: line.total.amounts.map((amount) => amount.currency),
+    userPriceVersionIds: line.total.userPriceVersionIds ?? [],
   };
 }
 
@@ -83,6 +86,7 @@ export interface CostKpis {
   change: number | null;
   activeDays: number | null;
   perActiveDay: number | null;
+  userPriceVersionIds: string[];
 }
 
 // `summary`: the same scope day by day from the start of the previous
@@ -91,7 +95,8 @@ export interface CostKpis {
 export function costKpis(lines: readonly ChartLine[], summary: CostSeries | undefined, range: DateRange, options: LineOptions): CostKpis {
   const coverage = lines.reduce((sum, line) => ({ turns: sum.turns + line.coverage.turns, knownTurns: sum.knownTurns + line.coverage.knownTurns }), { turns: 0, knownTurns: 0 });
   const total = coverage.turns === 0 ? 0 : sumKnown(lines.map((line) => line.total));
-  if (!summary) return { total, coverage, previous: null, change: null, activeDays: null, perActiveDay: null };
+  const userPriceVersionIds = [...new Set(lines.flatMap((line) => line.userPriceVersionIds))].sort();
+  if (!summary) return { total, coverage, previous: null, change: null, activeDays: null, perActiveDay: null, userPriceVersionIds };
   const keys = new Set(lines.map((line) => line.key));
   const days = chartLines(summary, options).filter((line) => keys.has(line.key)).flatMap((line) => line.points);
   const previousDays = days.filter((point) => point.end < range.since && point.turns > 0);
@@ -99,7 +104,7 @@ export function costKpis(lines: readonly ChartLine[], summary: CostSeries | unde
   const activeDays = new Set(days.filter((point) => point.start >= range.since && point.start <= range.until && point.turns > 0).map((point) => point.period)).size;
   const change = total === null || previous === null || previous === 0 ? null : (total - previous) / previous;
   const perActiveDay = total === null || activeDays === 0 ? null : total / activeDays;
-  return { total, coverage, previous, change, activeDays, perActiveDay };
+  return { total, coverage, previous, change, activeDays, perActiveDay, userPriceVersionIds };
 }
 
 // The running total of the known amounts, as its own small chart (never a
