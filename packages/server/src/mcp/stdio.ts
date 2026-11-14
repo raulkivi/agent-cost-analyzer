@@ -10,6 +10,7 @@ import { loadVendorProfiles } from "../data-sources/vendor-profiles/loader.js";
 import { readAppVersion } from "../composition/app-version.js";
 import { createMcpServer, type McpServerDeps } from "./mcp-server.js";
 import { resolveAppViews } from "./apps/resolve-app-views.js";
+import { clockFromEnv } from "../platform/clock/clock-from-env.js";
 import { parseStdioArgs } from "./stdio-args.js";
 import { FileStatementStore } from "../data-sources/statements/file-statement-store.js";
 import { priceBookHashOf } from "../services/billing/statement-service.js";
@@ -31,11 +32,12 @@ const priceBook = createStandalonePriceBook(resolvedAppSettingsDir, attribution.
 // threat-model.md §5.6: list_projects shares client names and billing codes
 // with the chat model only when the user asks for it at launch.
 const { projectBillingDetails, appViewsHtml } = parseStdioArgs(process.argv.slice(2));
+const now = clockFromEnv();
 const deps: McpServerDeps = {
   projectBillingDetails,
   // --app-views-html (scripts/mcp-server.sh passes the built views.html): the views resource and _meta.ui; no file, no views.
   ...resolveAppViews(appViewsHtml, (missing) => console.error(`agent-cost-analyzer MCP server: no app views at ${missing}; starting without them (run npm run build).`)),
-  ...createMcpServices(registry, version, undefined, attribution, createTurnPricer(priceBook), priceBook, {
+  ...createMcpServices(registry, version, undefined, attribution, createTurnPricer(priceBook, now), priceBook, {
     // Step 15.11: get_statement reads the statements the app issued.
     store: new FileStatementStore(resolvedAppSettingsDir),
     projects: attribution.catalog,
@@ -43,7 +45,9 @@ const deps: McpServerDeps = {
   },
   // Phase 14 step 14.5: replay_session, compare_models_for_session and
   // estimate_cost's model, on the same profiles and price book.
-  { profiles: vendorProfiles, priceBook }),
+  { profiles: vendorProfiles, priceBook },
+  // AGENT_COST_ANALYZER_NOW, as the standalone app reads it (server.ts).
+  now),
   priceBook,
 };
 
