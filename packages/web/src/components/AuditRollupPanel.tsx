@@ -172,28 +172,30 @@ function RollupBody({ rollup, onOpenSession }: { rollup: AuditRollup; onOpenSess
 
       <Blueprint className="audit-section">
         <div className="card-kicker">Top failing commands</div>
-        <table className="table" aria-label="Top failing commands" style={{ fontSize: 13 }}>
-          <thead>
-            <tr>
-              <th>Command</th>
-              <th>Why</th>
-              <th>Failures</th>
-              <th>Sessions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rollup.topFailingCommands.map((row) => (
-              <tr key={row.command}>
-                <td className="mono truncate" style={{ maxWidth: 360 }} title={row.command}>
-                  {row.command}
-                </td>
-                <td>{row.failureCategory ? CATEGORY_LABELS[row.failureCategory] : "—"}</td>
-                <td>{row.failures}</td>
-                <td>{row.sessions}</td>
+        <div className="table-scroll">
+          <table className="table" aria-label="Top failing commands" style={{ fontSize: 13 }}>
+            <thead>
+              <tr>
+                <th>Command</th>
+                <th>Why</th>
+                <th>Failures</th>
+                <th>Sessions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {rollup.topFailingCommands.map((row) => (
+                <tr key={row.command}>
+                  <td className="mono truncate" style={{ maxWidth: 360 }} title={row.command}>
+                    {row.command}
+                  </td>
+                  <td>{row.failureCategory ? CATEGORY_LABELS[row.failureCategory] : "—"}</td>
+                  <td>{row.failures}</td>
+                  <td>{row.sessions}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
         {rollup.topFailingCommands.length === 0 && (
           <p className="text-muted" style={{ fontSize: 13, margin: 0 }}>No shell command failed.</p>
         )}
@@ -201,39 +203,41 @@ function RollupBody({ rollup, onOpenSession }: { rollup: AuditRollup; onOpenSess
 
       <Blueprint className="audit-section">
         <div className="card-kicker">Sessions</div>
-        <table className="table" aria-label="Sessions" style={{ fontSize: 13 }}>
-          <thead>
-            <tr>
-              <th>Session</th>
-              <th>Started</th>
-              <th>Tool calls</th>
-              <th>Failed</th>
-              <th>Failure rate</th>
-            </tr>
-          </thead>
-          <tbody>
-            {[...rollup.sessions]
-              .sort((a, b) => b.failed - a.failed || (b.startedAt ?? "").localeCompare(a.startedAt ?? ""))
-              .map((row) => (
-                <tr key={row.sessionId}>
-                  <td className="truncate" style={{ maxWidth: 320 }}>
-                    <button
-                      type="button"
-                      className="btn btn-ghost"
-                      style={{ padding: 0, fontFamily: "var(--font-body)", fontWeight: 400 }}
-                      onClick={() => onOpenSession(row.sessionId)}
-                    >
-                      {row.title}
-                    </button>
-                  </td>
-                  <td>{row.startedAt ? row.startedAt.slice(0, 16).replace("T", " ") : "—"}</td>
-                  <td>{row.toolCalls}</td>
-                  <td>{row.failed}</td>
-                  <td>{formatFailureRate(row.toolCalls - row.unknown > 0 ? row.failed / (row.toolCalls - row.unknown) : null)}</td>
-                </tr>
-              ))}
-          </tbody>
-        </table>
+        <div className="table-scroll">
+          <table className="table" aria-label="Sessions" style={{ fontSize: 13 }}>
+            <thead>
+              <tr>
+                <th>Session</th>
+                <th>Started</th>
+                <th>Tool calls</th>
+                <th>Failed</th>
+                <th>Failure rate</th>
+              </tr>
+            </thead>
+            <tbody>
+              {[...rollup.sessions]
+                .sort((a, b) => b.failed - a.failed || (b.startedAt ?? "").localeCompare(a.startedAt ?? ""))
+                .map((row) => (
+                  <tr key={row.sessionId}>
+                    <td className="truncate" style={{ maxWidth: 320 }}>
+                      <button
+                        type="button"
+                        className="btn btn-ghost"
+                        style={{ padding: 0, fontFamily: "var(--font-body)", fontWeight: 400 }}
+                        onClick={() => onOpenSession(row.sessionId)}
+                      >
+                        {row.title}
+                      </button>
+                    </td>
+                    <td>{row.startedAt ? row.startedAt.slice(0, 16).replace("T", " ") : "—"}</td>
+                    <td>{row.toolCalls}</td>
+                    <td>{row.failed}</td>
+                    <td>{formatFailureRate(row.toolCalls - row.unknown > 0 ? row.failed / (row.toolCalls - row.unknown) : null)}</td>
+                  </tr>
+                ))}
+            </tbody>
+          </table>
+        </div>
       </Blueprint>
     </>
   );

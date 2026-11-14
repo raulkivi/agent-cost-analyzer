@@ -1182,6 +1182,16 @@ html[data-color-mode] .field > label {
 }
 /* A header that is already a sentence-case group stays one (see .sim-group). */
 html[data-color-mode] .table th.sim-group { text-transform: none; letter-spacing: normal; }
+/* Compare's row headers are project and repository names, body text there
+   (.cost-compare-table tbody th); this outranks that rule, so restate it. */
+html[data-color-mode] .cost-compare-table tbody th,
+html[data-color-mode] .cost-compare-table tfoot th {
+  font-size: 12px; letter-spacing: normal; text-transform: none; color: var(--color-text);
+}
+/* Less tracking and a slimmer Details button keep Compare inside its scroll
+   box at 360px; the wide mono labels pushed the buttons past its edge. */
+html[data-color-mode] .cost-compare-table thead th { letter-spacing: 0.06em; }
+html[data-color-mode] .cost-details-button { padding-inline: 6px; }
 
 html[data-color-mode] .seg-opt,
 html[data-color-mode] .btn,
@@ -1190,6 +1200,11 @@ html[data-color-mode] .filter-chip { font-size: 12px; }
 /* Mono options are wider than Barlow's: trimmed padding keeps the Analyze
    toolbar (range, view, cost basis) from wrapping onto a third row. */
 html[data-color-mode] .seg-opt { padding-inline: 7px; }
+/* Keyboard focus lands on the checked option, whose accent fill hides an
+   accent ring: draw it in the ground colour there (3:1 on the fill). Only
+   the colour is set here, so it shows only with the :focus-visible outline
+   (and needs no VS Code focus mapping: this never reaches the webview). */
+html[data-color-mode] .seg-opt:has(input:checked) { outline-color: var(--color-bg); }
 /* Tighter note and label leading keeps wrapped KPI tiles within 80px. */
 html[data-color-mode] .stat-tile { padding: 3px 6px; }
 html[data-color-mode] .audit-section { padding: 6px; }
@@ -1216,6 +1231,9 @@ html[data-color-mode] .stat-tiles-footnote { font-family: var(--font-mono); font
 html[data-color-mode] .insights-narrative,
 html[data-color-mode] .explanation-text,
 html[data-color-mode] .assumptions-list,
-html[data-color-mode] .dialog-body {
+html[data-color-mode] .dialog-body > p {
   font-family: var(--font-prose); font-size: 14px; line-height: 1.5; text-transform: none; letter-spacing: normal; opacity: 1;
 }
+/* Dialog bodies also hold radios, checkboxes and previews, which stay mono;
+   only the paragraphs above are prose. */
+html[data-color-mode] .dialog-body { opacity: 1; }

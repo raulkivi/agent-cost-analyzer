@@ -27,7 +27,7 @@ covers classic Copilot Chat subagent AI Credits (done 2026-11-13). Step 10.21
 Phase 16 ([plans/savings-report.md](plans/savings-report.md)) has its Increment 1 built (the
 owner accepted both plans' decisions on 2026-11-12). Phase 17
 ([plans/dense-ledger-ui.md](plans/dense-ledger-ui.md)) has Increment 1 (density, P0-P7)
-and Increment 2 L1-L5 (ledger theme) done 2026-11-14, L6 review next; it holds step 10.22 tasks 1.10-1.14 until it merges.
+and Increment 2 L1-L6 (ledger theme and review) done 2026-11-14; the owner's eyes-on review is the last open exit item; it holds step 10.22 tasks 1.10-1.14 until it merges.
 Each phase has a goal, concrete deliverables, an exit criterion (how you know
 it's done), and its dependencies. Phases are ordered so the riskiest/least
 certain work (real `main.jsonl` parsing) happens after there's already a
@@ -1699,7 +1699,7 @@ look.
 
 **Status (2026-11-14)**: Increment 1 (P0-P7) done: the Dashboard on the e2e
 fixture is 1,467px tall at 1440x900 (was 2,444px), checked by
-`packages/web/e2e/specs/density.spec.ts`. Increment 2: L1-L5 done 2026-11-14 (tokens and fonts, colour-mode switch, ledger rules, light and dark Playwright projects, docs and media); L6 review next.
+`packages/web/e2e/specs/density.spec.ts`. Increment 2: L1-L6 done 2026-11-14 (tokens and fonts, colour-mode switch, ledger rules, light and dark Playwright projects, docs and media, review: 7 findings fixed, 7 recorded in the plan's §10). Exit criterion: all met except the owner's eyes-on review. After the merge, step 10.22 resumes at task 1.10 (retakes in the new look).
 
 ## Summary dependency graph
 

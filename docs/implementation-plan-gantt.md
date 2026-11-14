@@ -93,7 +93,7 @@ gantt
     16 Savings report (78%, 18 of 23 tasks) :active, p16, 2026-11-12, 2d
 
     section UI density
-    17 Dense ledger UI (93%, 13 of 14 tasks)  :active, p17, 2026-11-14, 5d
+    17 Dense ledger UI (100%, 14 of 14 tasks) :active, p17, 2026-11-14, 5d
 
     section Releases
     App v0.3.0-alpha :milestone, r0, 2026-08-09, 0d
@@ -125,7 +125,7 @@ gantt
 - Step 10.19 (classic subagent AI Credits, 100%): done 2026-11-13 (SA0 to SA18, 20 of 20 tasks; exit criterion met: `npm run test:real-data` passed 10 of 10 on the owner's logs, 177.64 AI Credits added, owner sign-off 2026-11-13). Before release: the real-Copilot gate. Plan: [classic-subagent-credits-implementation.md](plans/classic-subagent-credits-implementation.md). Step 10.20 (subagent tool calls in the audit) is a follow-up, not planned.
 - Step 10.21 (monthly allowance gauge, 100%): done 2026-11-13 (MA0 to MA12, 14 of 14 tasks; exit criterion met, review in plan §14). Before release: the real-Copilot check of the gauge in a live window (release UI gate). MA13 (standalone app) is a later increment. The Sessions row is hidden while VS Code's filter is active (plan §3.8). Plan: [monthly-allowance.md](plans/monthly-allowance.md).
 - Step 10.22 (extension demo recordings, 77%, 17 of 22 tasks): tasks 1.10-1.14 are held until Phase 17 merges (owner decision D2, 2026-11-14), then retaken once in the new look. Owner accepted D1-D8 and D10-D12 on 2026-11-13 (E11 not recorded). Phase 0 (text fixes 0.1-0.3) done 2026-11-13 (PR #255), to land before the 0.12.0/0.14.0 tags (D1); owner to check two findings in the plan's §11 (replay UI doesn't list left-out subagent runs; Learn count 17 vs 18); then Phase 1: spike 1.0 done (frame 1200x800, plan §5), tooling 1.1-1.5, fixture 1.6a, scenes 1.6b-1.6e, real-Copilot scenes 1.7 (written; owner runs the paid takes) stills 1.8 and app task 1.9 done; next the final takes and owner review (1.10), held until Phase 17 merges; then scenes 1.6a-1.10 and docs 1.11-1.14. Plan: [docs-refresh-and-demo-recordings.md](plans/docs-refresh-and-demo-recordings.md).
-- Phase 17 (dense ledger UI, 93%, 13 of 14 tasks): Increment 1 (P0-P7) and Increment 2 L1-L5 done 2026-11-14, L6 review next; the Dashboard on the e2e fixture went from 2,444px to 1,467px tall at 1440x900 (`density.spec.ts`). Increment 1 (P1-P7) is the density pass in every host; Increment 2 (L1-L6) is the standalone ledger theme with light and dark modes (L1-L5 done). It holds step 10.22 tasks 1.10-1.14 until it merges (owner decision D2). Plan: [dense-ledger-ui.md](plans/dense-ledger-ui.md). Standalone stills outside `screenshots.mts` (landing page, Learn scenario, older guide images) and the VS Code panel stills are retaken with step 10.22's final takes.
+- Phase 17 (dense ledger UI, 100%, 14 of 14 tasks): Increment 1 (P0-P7) and Increment 2 (L1-L6) done 2026-11-14; the L6 review fixed 7 findings and recorded 7 (plan §10). Open: the owner's eyes-on review (the last exit item), then merge, which unblocks step 10.22's retakes (tasks 1.10-1.14); the Dashboard on the e2e fixture went from 2,444px to 1,467px tall at 1440x900 (`density.spec.ts`). Increment 1 (P1-P7) is the density pass in every host; Increment 2 (L1-L6) is the standalone ledger theme with light and dark modes. It holds step 10.22 tasks 1.10-1.14 until it merges (owner decision D2). Plan: [dense-ledger-ui.md](plans/dense-ledger-ui.md). Standalone stills outside `screenshots.mts` (landing page, Learn scenario, older guide images) and the VS Code panel stills are retaken with step 10.22's final takes.
 - Phase 16 (savings report, 78%, 18 of 23 tasks): Increment 1 (SR0-SR17) done 2026-11-13, code and docs; SR16 review in plan §16 (5 findings fixed, 3 recorded). Open: owner review of the docs and the exit criterion on real data (30 days of Claude Code and Copilot sessions, one idle-expiry break and one unused tool checked by hand), D13-D15 owner decisions (SR7 thresholds, the active-provider switch from "Open in Analyze"), the release, then Increment 2 (SR18-SR22: MCP tool and view U18), not started. Plan: [savings-report.md](plans/savings-report.md).
 - Phase 14: steps 14.0-14.7 built; 14.8's docs written, the owner's review and the §13 exit criterion on real sessions open; the extension guide's replay screenshots open (User Guide's done). Step table: [analyze-session-replay.md](plans/analyze-session-replay.md) §12.
 - Phase 15: owner's review and exit criterion on real data.
@@ -244,7 +244,7 @@ gantt
 
 ## Phase 17 detail — Dense ledger UI
 
-Schedule view of the task tables in [dense-ledger-ui.md](plans/dense-ledger-ui.md) §6. Status: Increment 1 (P0-P7) and Increment 2 L1-L5 done 2026-11-14, 13 of 14 tasks; L6 review next; step 10.22 tasks 1.10-1.14 wait for the merge (owner decision D2).
+Schedule view of the task tables in [dense-ledger-ui.md](plans/dense-ledger-ui.md) §6. Status: Increment 1 (P0-P7) and Increment 2 (L1-L6) done 2026-11-14, 14 of 14 tasks; open: the owner's eyes-on review; step 10.22 tasks 1.10-1.14 resume after the merge (owner decision D2).
 
 ```mermaid
 %%{init: {
@@ -296,7 +296,7 @@ gantt
     L3 Ledger component rules, medium, Sonnet (100%)   :done, l3, after l1, 1d
     L4 Playwright dark and switch, medium, Sonnet (100%) :done, l4, after l2, 1d
     L5 Docs and media, medium, Sonnet (100%)           :done, l5, after l4, 1d
-    L6 Review, medium, Opus (0%)                     :l6, after l5, 1d
+    L6 Review, medium, Opus (100%)                   :done, l6, after l5, 1d
 ```
 
 ## Phase 12 detail — MCP Apps

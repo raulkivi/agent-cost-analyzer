@@ -20,6 +20,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Denser layout: smaller spacing and type, 28px table rows, one toolbar row on the Dashboard, compact session and scenario lists that fill the column, 80px KPI tiles with the cost explanation in a footnote, a trend chart that fills its panel, one-line empty charts and a collapsed Learn sources list. The Dashboard is about 40% shorter.
 - The server status and version moved into the header.
 
+### Fixed
+
+- On a narrow screen the All sessions audit's tables scroll inside their panels instead of making the page wider.
+
 ## [0.14.0] - 2026-11-13
 
 ### Added

@@ -134,13 +134,18 @@ function bodyClassOf(theme: Theme): string | undefined {
 
 // The last declaration of `property` for `selector`; in a webview,
 // theme-vscode.css's `body.vscode-dark <selector>` rule wins, and in a
-// colour mode theme.css's `html[data-color-mode="…"] <selector>` rule.
+// colour mode theme.css's `html[data-color-mode="…"] <selector>` or
+// `html[data-color-mode] <selector>` rule. Both forms have the same
+// specificity, so the later one in source order wins.
 function declared(theme: Theme, selector: string, property: string): string | undefined {
-  const lookup = (rules: Rule[], wanted: string) =>
-    rules.filter((rule) => rule.selectors.includes(wanted) && rule.declarations.has(property)).at(-1)?.declarations.get(property);
+  const lookup = (rules: Rule[], ...wanted: string[]) =>
+    rules
+      .filter((rule) => wanted.some((one) => rule.selectors.includes(one)) && rule.declarations.has(property))
+      .at(-1)
+      ?.declarations.get(property);
   const base = lookup(standaloneRules, selector);
   const scope = colorModeScope(theme);
-  if (scope) return lookup(standaloneRules, `${scope} ${selector}`) ?? base;
+  if (scope) return lookup(standaloneRules, `${scope} ${selector}`, `html[data-color-mode] ${selector}`) ?? base;
   const bodyClass = bodyClassOf(theme);
   return bodyClass ? (lookup(vscodeRules, `body.${bodyClass} ${selector}`) ?? base) : base;
 }
@@ -409,5 +414,28 @@ describe.each(["standalone-light", "standalone-dark"] as const)("ledger boundari
 
   it.each(PANEL_GROUNDS)("the accent reaches 3:1 on %s", (ground) => {
     expect(ratio(theme, "var(--color-accent)", ground)).toBeGreaterThanOrEqual(GRAPHICS);
+  });
+
+  // L6: a segmented control's focus ring is drawn inside the option, and
+  // keyboard focus lands on the checked one, whose fill is --color-accent-fill.
+  // An accent ring there was 1:1 in dark and 1.3:1 in light: invisible.
+  it("the focus ring on a checked segment reaches 3:1 on its fill", () => {
+    const ring = declared(theme, ".seg-opt:has(input:checked)", "outline-color");
+    expect(ring).toBeDefined();
+    expect(ratio(theme, ring!, "var(--color-accent-fill)")).toBeGreaterThanOrEqual(GRAPHICS);
+  });
+});
+
+// The L3 component rules use the attribute-presence form
+// html[data-color-mode] <selector> (both modes); the harness must resolve
+// them, or a colour they set goes unchecked and the base rule's is checked
+// instead.
+describe("contrast harness resolves the ledger's shared component rules", () => {
+  it.each(["standalone-light", "standalone-dark"] as const)("reads html[data-color-mode] .card-kicker in %s", (theme) => {
+    expect(declared(theme, ".card-kicker", "color")).toBe("var(--color-text-muted)");
+  });
+
+  it("keeps the base rule outside the colour modes", () => {
+    expect(declared("standalone", ".card-kicker", "color")).toBe("var(--color-accent-text)");
   });
 });

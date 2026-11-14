@@ -207,7 +207,7 @@ describe("ledger component rules (dense-ledger-ui.md L3)", () => {
     expect(ledger(".stat-tile-value").get("font-size")).toBe("16px");
   });
 
-  it.each([".insights-narrative", ".explanation-text", ".assumptions-list", ".dialog-body"])(
+  it.each([".insights-narrative", ".explanation-text", ".assumptions-list", ".dialog-body > p"])(
     "sets %s as serif prose",
     (selector) => {
       const declarations = ledger(selector);
@@ -216,6 +216,32 @@ describe("ledger component rules (dense-ledger-ui.md L3)", () => {
       expect(declarations.get("line-height")).toBe("1.5");
     },
   );
+
+  // L6: dialog bodies also hold radios, checkboxes, labels and previews
+  // (statement export, advice export); serif is for prose only (D3).
+  it("keeps dialog controls mono: only the dialog's paragraphs are serif, the body just undimmed", () => {
+    const body = ledger(".dialog-body");
+    expect(body.has("font-family")).toBe(false);
+    expect(body.get("opacity")).toBe("1");
+  });
+
+  // L6: Compare's row headers are project and repository names, set back to
+  // sentence-case body text (.cost-compare-table tbody th); the ledger's
+  // label rule for .table th outranks that, so it restores them.
+  // L6: at 360px the tracked uppercase headers and the Details button's
+  // padding pushed Compare 10px past its scroll box (density.spec.ts).
+  it("tracks Compare's column headers less and slims its Details button so the table fits at 360px", () => {
+    expect(ledger(".cost-compare-table thead th").get("letter-spacing")).toBe("0.06em");
+    expect(ledger(".cost-details-button").get("padding-inline")).toBe("6px");
+  });
+
+  it.each([".cost-compare-table tbody th", ".cost-compare-table tfoot th"])("keeps %s as body text, not a label", (selector) => {
+    const declarations = ledger(selector);
+    expect(declarations.get("text-transform"), selector).toBe("none");
+    expect(declarations.get("letter-spacing")).toBe("normal");
+    expect(declarations.get("color")).toBe("var(--color-text)");
+    expect(declarations.get("font-size")).toBe("12px");
+  });
 
   it("keeps the KPI footnote mono 11px muted", () => {
     const declarations = ledger(".stat-tiles-footnote");

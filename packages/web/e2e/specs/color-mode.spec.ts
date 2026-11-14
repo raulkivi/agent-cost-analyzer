@@ -27,22 +27,24 @@ test("choosing Light persists across a reload, whatever the OS says", async ({ p
   await expect(page.getByRole("radio", { name: "Light" })).toBeChecked();
 });
 
-test("no flash: the attribute is set before React renders anything", async ({ page, app }) => {
+test("no flash: the attribute is set before <body> is parsed", async ({ page, app }) => {
   await page.emulateMedia({ colorScheme: "dark" });
   // Observes `document` because the init script runs before <html> exists.
-  // Notes how much of the app existed when the attribute first appeared.
-  // Zero children in #root means it was set before the first render, so no
-  // frame can paint the wrong scheme. Independent of paint timing.
+  // Notes whether <body> existed when the attribute first appeared. L6
+  // measured main.tsx's module script running 30-180 ms after first paint,
+  // so only a <head> script set before <body> keeps the first frame in the
+  // right scheme. Independent of paint timing.
   await page.addInitScript(() => {
-    const w = window as unknown as { __rootChildrenAtSet?: number };
+    const w = window as unknown as { __bodyAtSet?: boolean };
     new MutationObserver((_records, observer) => {
-      if (document.documentElement.dataset.colorMode === undefined) return;
-      w.__rootChildrenAtSet = document.getElementById("root")?.childElementCount ?? 0;
+      if (document.documentElement?.dataset.colorMode === undefined) return;
+      w.__bodyAtSet = document.body !== null;
       observer.disconnect();
     }).observe(document, { attributes: true, subtree: true, attributeFilter: ["data-color-mode"] });
   });
   await page.goto(app.baseURL);
   await expect(page.getByRole("radiogroup", { name: "Colour theme" })).toBeVisible();
-  const children = await page.evaluate(() => (window as unknown as { __rootChildrenAtSet?: number }).__rootChildrenAtSet);
-  expect(children).toBe(0);
+  await expect(page.locator(html)).toHaveAttribute("data-color-mode", "dark");
+  const bodyAtSet = await page.evaluate(() => (window as unknown as { __bodyAtSet?: boolean }).__bodyAtSet);
+  expect(bodyAtSet).toBe(false);
 });
