@@ -88,6 +88,10 @@ vendor's documented caching rules and real prices, and the result is labelled
 **Simulated** wherever it appears. It's a teaching model, not a prediction of
 your bill.
 
+![Learn mode in the standalone app: the header colour switch changes from Light to Dark, then a scenario is opened and stepped through, with cache-expiry and compaction markers on the turns](images/demo/w1-learn.gif)
+
+The header switch in the GIF changes the colour theme ([Colour theme](#colour-theme)).
+
 ### Choosing a vendor and model
 
 The **Simulate on** picker above the turns table lists models grouped by
@@ -311,6 +315,8 @@ the session's `main.jsonl`.
   the runs it leaves out; the MCP `replay_session` result does, in
   `coverage.subagentRuns` (the run count and their AI Credits).
 
+![A VS Code session with a subagent run: the turns table shows a subagent glyph after the AI Credits, and the Explanation tab lists Subagent runs this turn with the main agent, subagent and turn totals](images/guide-analyze-subagent.png)
+
 ### The three-tab right panel
 
 Analyze mode's right column adds two tabs beyond Explanation, since real
@@ -390,6 +396,8 @@ session's turns, requests and token counts, and runs them through the
 other model's vendor caching rules and prices. Only caching and prices
 change. Every replayed figure is labelled **Simulated**, and the measured
 figures stay as they are, beside it.
+
+![Analyze mode on a Claude Code session: the turn inspector opens, then Replay on another model adds Simulated columns and opens the Replay summary](images/demo/w2-analyze-replay.gif)
 
 **Choose a model.** With a session open, the **Replay on** select sits in
 the session's header row. It starts at **Off (measured only)**. Models are
@@ -1171,6 +1179,12 @@ change to make, its evidence and an estimated saving per week. It is a
 view of the Dashboard's view switch, after **Billing**. It reads the most
 recent sessions in the window from the selected providers (at most 500)
 and computes the report when you open it; nothing is stored.
+
+![The Savings view: the 7, 30 and 90 day windows, a ranked row opened for its detail, and Open in Analyze](images/demo/w3-savings.gif)
+
+![The Savings report at desktop width: two ranked changes in US dollars with their per-week amounts and bars, and a Not analysed list below](images/guide-dashboard-savings.png)
+
+![The Savings report at 360 px: filters stacked, each ranked change with its amount and bar below its text](images/guide-dashboard-savings-360.png)
 
 **The filters.**
 
