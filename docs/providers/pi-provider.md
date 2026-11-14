@@ -183,18 +183,28 @@ pin. If a VM path names anything private, pass it to the redaction CLI with
    expires), and leave at least one tool unused: any tool pi doesn't call
    (owner decision D30, 2026-11-14,
    [savings-increment-3.md](../plans/savings-increment-3.md)). Exit pi.
-4. **Session B, rewind.** Run `pi` again and send 3 prompts with at least one
-   tool call. Then run `/tree` (pi's session tree navigator), select an
-   earlier user message, edit its text and submit it. This creates a second
-   branch in the same file, which is the case the sidecar rule (PR #279) and
-   fork tagging need. Answer the "summarize the branch you leave" prompt with
-   yes, so the file gets a `branch_summary` entry. Send one more prompt on the
-   new branch and exit. (`/fork` instead makes a new file with a
-   `parentSession` header; `/tree` is the in-file case this task wants. Source:
-   pi's `docs/sessions.md` and `docs/session-format.md`, checked 2026-11-14.
-   The exact `/tree` key presses were not run by the task author; if the
-   prompts differ in your pi version, any way of leaving a branch and
-   continuing from an earlier message is fine.)
+4. **Session B, compaction and context edit (owner decision 2026-11-14).** The
+   owner never branches or forks pi sessions; 25 of their sessions have a
+   `compaction` and 6 have `context_edit` entries, which pi appends itself when
+   it recovers from an overflow or length-limited reply (pi 1.5.2
+   `docs/compaction.md`, "Overflow and Length Recovery Ordering"; an omission
+   is `replacement: null`). That recovery can't be triggered on demand, so
+   session B is **one of the owner's existing sessions** that already holds a
+   `context_edit` and a `compaction`, redacted like session A. List the
+   candidates (file names and counts only):
+
+   ```bash
+   python3 -c 'import json,glob,os,collections as c
+   for f in sorted(glob.glob(os.path.expanduser("~/.pi/agent/sessions/**/*.jsonl"),recursive=True)):
+     t=c.Counter(json.loads(l).get("type") for l in open(f) if l.strip())
+     if t["context_edit"] and t["compaction"]: print(f, dict(t))'
+   ```
+
+   Pick the smallest; check that the sidecar log has a record for it (the
+   redaction CLI reports how many it copied). Forks and rewinds stay covered
+   by the synthetic fixture `forked-session.jsonl` only. If the owner prefers
+   a fresh capture instead, run a long session and use `/compact` for the
+   compaction; a `context_edit` then appears only if a recovery happens.
 5. **Find the files.** Sessions: `~/.pi/agent/sessions/--<cwd with slashes as dashes>--/<timestamp>_<uuid>.jsonl`
    (`ls -t ~/.pi/agent/sessions/*demo*/ | head`). Sidecar log:
    `~/.pi/agent/logs/system-prompts.jsonl`, one record per session.
@@ -205,7 +215,7 @@ pin. If a VM path names anything private, pass it to the redaction CLI with
      ~/.pi/agent/sessions/<dir>/<session-A>.jsonl \
      --sidecar ~/.pi/agent/logs/system-prompts.jsonl \
      --name pi-linear --out ~/pi-redacted
-   # same for session B with --name pi-rewind
+   # same for session B with --name pi-compaction
    ```
 
    The CLI copies only that session's sidecar records, runs a leak scan and a
@@ -218,8 +228,8 @@ pin. If a VM path names anything private, pass it to the redaction CLI with
    text of the same length. Add `--mask <word>` and re-run for anything else
    private (a client name that sits in a kept field, say).
 8. **Hand over** the four files in `~/pi-redacted` (`pi-linear.jsonl`,
-   `pi-linear.system-prompts.jsonl`, `pi-rewind.jsonl`,
-   `pi-rewind.system-prompts.jsonl`) to the main session. Never hand over or
+   `pi-linear.system-prompts.jsonl`, `pi-compaction.jsonl`,
+   `pi-compaction.system-prompts.jsonl`) to the main session. Never hand over or
    commit files from `~/.pi/agent`.
 
 ### What the redaction CLI keeps and replaces

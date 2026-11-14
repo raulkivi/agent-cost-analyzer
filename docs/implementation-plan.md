@@ -1343,8 +1343,16 @@ place.
 **Deliverables**:
 - Redacted real `~/.pi/agent/sessions/**/*.jsonl` captures in
   `packages/server/fixtures/pi-agent/`: one linear session and one with a
-  fork or rewind. Capture them with `pi-system-prompt-logger` installed, so
-  each has its `system-prompts.jsonl` record beside it.
+  `compaction` and a `context_edit` (owner decision 2026-11-14: the owner
+  never branches pi sessions; session B is one of their existing sessions
+  with both, since pi writes `context_edit` only on overflow/length
+  recovery). Both with `pi-system-prompt-logger` installed, so each has its
+  `system-prompts.jsonl` record beside it. Forks and rewinds stay covered by
+  the synthetic `forked-session.jsonl`.
+- `context_edit` handled: the provider reads it (today it ignores it) and
+  docs/providers/pi-provider.md documents what it changes — pi says it
+  edits model context only, not raw history or usage — with a failing test
+  against the real fixture first.
 - The real captures' field names diffed against
   `fixtures/pi-agent/schema-v3-session.jsonl`. Each mismatch gets a failing
   test against the real fixture first, then a fix in `usage-extractor.ts`
@@ -1829,7 +1837,7 @@ repo. "Owner step" marks work that needs the owner's hands or accounts.
 | V10 | `release-extension.yml` publishes to Open VSX through trusted publishing, without `OVSX_PAT`; threat-model.md §8 row | C13 | low | Sonnet | V9 |
 | V11 | After a release published by V10, delete the `OVSX_PAT` secret; threat-model.md §5.8 marked done | C13 | low | Owner step | V10 and a 0.x release |
 | V12 | Phase 11 capture instructions and a redaction script for pi session files and the sidecar log (done, PR #288: `npm run fixtures:redact-pi -w packages/server`; steps in [providers/pi-provider.md](providers/pi-provider.md#capturing-a-real-session-for-phase-11)) | C2 | medium | Sonnet | — |
-| V13 | Capture two pi sessions with `pi-system-prompt-logger` installed: one linear, one with a fork or rewind | C2 | low | Owner step | V12 |
+| V13 | Two pi sessions with `pi-system-prompt-logger` installed, local model inside Gondolin: one new linear capture, and one existing session with a `compaction` and a `context_edit` (owner 2026-11-14), both redacted | C2 | low | Owner step | V12 |
 | V14 | Phase 11: real fixtures, field diff, fixes test-first, the open pi decisions put to the owner, architecture.md §6.2.5 and providers/pi-provider.md updated | C2 | high | Opus | V13 |
 | V15 | Plan `docs/plans/npm-package.md`: which workspace publishes, bundle, `bin`, files list, publish job, threat-model rows, README install section | C8 | medium | Opus | — |
 | V16 | Build the npm package: bundled server and web build, `bin`, a CI job that packs it, runs it from the tarball and loads the app | C8 | high | Opus | V15 approved |
