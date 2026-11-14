@@ -4,7 +4,8 @@
 
 Status: approved 2026-11-13; plan steps 10.22 (Phase 0 and Phase 1) and
 10.23 (Phase 2) in [implementation-plan.md](../implementation-plan.md).
-Phase 0 done 2026-11-13; Phase 1 next.
+Phase 0 done 2026-11-13; Phase 1 done 2026-11-14 (step 10.22); Phase 2
+(step 10.23) next.
 
 ## 1. Goal
 
@@ -614,6 +615,14 @@ review rejections.
   owner: (a) no app or panel UI shows the subagent runs a replay left out,
   though the 0.12.0 changelog implies it; (b) the extension README says 18
   Learn sessions, the extension guide 17 Copilot scenarios.
+- 2026-11-14: 1.11 (README, Haiku), 1.12 (User Guide, Sonnet), 1.13
+  (extension README and guide, Sonnet) and 1.14 (process docs, Haiku)
+  merged, first review. Phase 1 exit met: every E and W scene re-records
+  with one command plus `demo:gif`; owner-approved GIFs within budget;
+  README, User Guide, extension README and guide embed them with alt text;
+  `npm test` passes; manual-checks §4 fully automated (1, 2, 5, 6, 8 by the
+  screenshot harness; 3, 4, 7 by the scenes). Step 10.22 done; Phase 2
+  (step 10.23) next.
 - 2026-11-14: owner review: all GIFs and stills approved, with the
   suggested trims. 1.10 done. Media committed (`docs/images/demo/`, 13
   GIFs, 31 MB; stills in `docs/images/vscode/`); 1.11–1.14 started.
