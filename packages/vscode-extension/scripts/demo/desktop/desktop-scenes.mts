@@ -51,21 +51,26 @@ const opening = (prompt: string): DesktopScene["steps"] => [
   step("Start recording", { kind: "startRecording" }, 500),
 ];
 
+// Each view's expand icon sits 54 px above its kicker line, at the chat column's x (measured on the M1 and M6
+// frames, before the pane opens). Claude may show several views, so a scene opens the pane of its own view by
+// clicking at that offset from the view's kicker, not at the best match of the expand icon.
+const PANE_FROM_KICKER = { x: 1086, dy: -54 };
+
 // Enough notches to reach the bottom of any view; the pane stops there, so overshooting is harmless.
 const TO_BOTTOM = 12;
 
-// M2. "Why did ... cost more" most likely makes Claude call explain_cost_change (the waterfall), with periods of
-// its own choosing. Price changes sit in the fixture on 7 and 20 October, so any period around them enables the
-// button. If Claude calls compare_costs instead, the first wait times out: retake. F1 covers the drill-down chain.
+// M2. The prompt names F2's periods (1–6 vs 7–31 October, around the 7 October price change): September has no
+// priced figure in the fixture, so "cost more in October" gave "no earlier figure". If Claude calls another tool
+// first, its view is skipped (the pane opens from the cost change's kicker). F1 covers the drill-down chain.
 const M2: DesktopScene = {
   id: "M2",
   slug: "cost-change",
   title: "Why a project cost more, in Claude Desktop",
   steps: [
-    ...opening("Why did the Customer portal project cost more in October?"),
+    ...opening("How did the Customer portal project's cost change from 1–6 October to 7–31 October, and why?"),
     step("Wait for the cost change view", { kind: "waitFor", template: "cost-change-kicker" }, 1500),
     step("Wait for the answer", { kind: "waitAnswerDone" }, 1500),
-    step("Open the host side pane", { kind: "click", template: "expand" }, 3500),
+    step("Open the host side pane", { kind: "click", template: "cost-change-kicker", at: PANE_FROM_KICKER }, 3500),
     step("Scroll to Price changes", { kind: "scrollPane", clicks: TO_BOTTOM }, 1500),
     step("Open Price changes", { kind: "click", template: "price-changes-button" }, 4000),
     step("Back", { kind: "click", template: "back-to-cost-change" }, 2500),
@@ -81,7 +86,7 @@ const M3: DesktopScene = {
     ...opening("Draft October's statement for the Customer portal project."),
     step("Wait for the statement view", { kind: "waitFor", template: "statement-kicker" }, 1500),
     step("Wait for the answer", { kind: "waitAnswerDone" }, 1500),
-    step("Open the host side pane", { kind: "click", template: "expand" }, 4000),
+    step("Open the host side pane", { kind: "click", template: "statement-kicker", at: PANE_FROM_KICKER }, 4000),
     step("Scroll to the tables", { kind: "scrollPane", clicks: TO_BOTTOM }, 4000),
   ],
 };
@@ -98,10 +103,11 @@ const M4: DesktopScene = {
     ...opening("Show my Claude Code sessions from 30 October so I can pick one to analyse."),
     step("Wait for the session picker", { kind: "waitFor", template: "sessions-kicker" }, 1500),
     step("Wait for the answer", { kind: "waitAnswerDone" }, 1500),
-    step("Open the host side pane", { kind: "click", template: "expand" }, 3000),
+    step("Open the host side pane", { kind: "click", template: "sessions-kicker", at: PANE_FROM_KICKER }, 3000),
     step("Analyse the session", { kind: "click", template: "analyse-button" }, 1500),
-    // Desktop puts the view's "Analyse session <id>" in the composer under a caution note and waits for Enter.
-    step("Send it", { kind: "press", key: "Return" }, 500),
+    // Desktop puts the view's "Analyse session <id>" in the composer under a caution note and waits; keyboard focus
+    // stays in the view, so Return does nothing: click the composer's send button.
+    step("Send it", { kind: "click", template: "composer-send" }, 500),
     step("Wait for the session audit", { kind: "waitFor", template: "audit-kicker" }, 1500),
     step("Wait for the answer", { kind: "waitAnswerDone" }, 3500),
   ],
@@ -117,7 +123,7 @@ const M5: DesktopScene = {
     ...opening("Anything risky in my sessions in October?"),
     step("Wait for the findings view", { kind: "waitFor", template: "findings-kicker" }, 1500),
     step("Wait for the answer", { kind: "waitAnswerDone" }, 1500),
-    step("Open the host side pane", { kind: "click", template: "expand" }, 3000),
+    step("Open the host side pane", { kind: "click", template: "findings-kicker", at: PANE_FROM_KICKER }, 3000),
     step("Filter to anomalies", { kind: "click", template: "kind-anomaly" }, 2500),
     step("Open the evidence", { kind: "click", template: "why-flagged" }, 4000),
   ],
@@ -133,9 +139,8 @@ const M6: DesktopScene = {
     ...opening('What would my Claude Code session "scratch" from 30 October have cost on Claude Haiku 5.5 or GPT-6 Luna?'),
     step("Wait for the model comparison", { kind: "waitFor", template: "replay-kicker" }, 1500),
     step("Wait for the answer", { kind: "waitAnswerDone" }, 1500),
-    // Claude may show a session picker above the comparison, with its own expand icon: click the one 54 px above
-    // the comparison's kicker, at the chat column's expand x (measured on the M1 and M6 frames).
-    step("Open the host side pane", { kind: "click", template: "replay-kicker", at: { x: 1086, dy: -54 } }, 3500),
+    // Claude may show a session picker above the comparison, with its own expand icon.
+    step("Open the host side pane", { kind: "click", template: "replay-kicker", at: PANE_FROM_KICKER }, 3500),
     step("Replay on Haiku", { kind: "click", template: "model-haiku" }, 3500),
     step("Scroll to the chart and assumptions", { kind: "scrollPane", clicks: TO_BOTTOM }, 3500),
     step("Back", { kind: "click", template: "back-to-model-comparison" }, 2000),
@@ -154,7 +159,7 @@ const M7: DesktopScene = {
     ...opening("What would ten more active days on the Mobile app cost?"),
     step("Wait for the estimate view", { kind: "waitFor", template: "estimate-kicker" }, 1500),
     step("Wait for the answer", { kind: "waitAnswerDone" }, 1500),
-    step("Open the host side pane", { kind: "click", template: "expand" }, 4000),
+    step("Open the host side pane", { kind: "click", template: "estimate-kicker", at: PANE_FROM_KICKER }, 4000),
     step("Scroll to the end", { kind: "scrollPane", clicks: TO_BOTTOM }, 3500),
   ],
 };

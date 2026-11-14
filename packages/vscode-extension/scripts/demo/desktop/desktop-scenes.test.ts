@@ -39,7 +39,7 @@ describe("M1", () => {
 
 const ALL = Object.values(DESKTOP_SCENES);
 const prompts: Record<string, RegExp> = {
-  M2: /Customer portal.*October/,
+  M2: /Customer portal.*1.6 October.*7.31 October/,
   M3: /October.*statement.*Customer portal/,
   M4: /Claude Code sessions.*analyse/i,
   M5: /risky.*October/,
@@ -119,10 +119,14 @@ describe("scene specifics", () => {
     expect(steps.indexOf("waitFor:audit-kicker")).toBeGreaterThan(analyse);
     expect(steps.lastIndexOf("waitAnswerDone")).toBeGreaterThan(steps.indexOf("waitFor:audit-kicker"));
   });
-  it("M4 sends the message Analyse put in the composer: Desktop waits for Enter", () => {
+  it("M4 sends the message Analyse put in the composer with the send button: keyboard focus stays in the view", () => {
     const steps = DESKTOP_SCENES.M4!.steps.map((s) => s.action);
     const analyse = steps.findIndex((a) => a.kind === "click" && a.template === "analyse-button");
-    expect(steps[analyse + 1]).toEqual({ kind: "press", key: "Return" });
+    expect(steps[analyse + 1]).toEqual({ kind: "click", template: "composer-send" });
+  });
+  it.each(["M2", "M3", "M4", "M5", "M6", "M7"])("%s opens the pane of its own view, found by its kicker: Claude may show other views", (id) => {
+    const open = DESKTOP_SCENES[id]!.steps.find((s) => s.label === "Open the host side pane")!.action;
+    expect(open).toMatchObject({ kind: "click", template: expect.stringMatching(/-kicker$/), at: { x: 1086, dy: -54 } });
   });
   it("M5 filters before it opens an evidence", () => {
     const steps = order("M5");
