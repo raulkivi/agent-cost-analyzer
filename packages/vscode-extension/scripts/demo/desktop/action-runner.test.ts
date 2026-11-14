@@ -75,6 +75,11 @@ describe("createActionRunner", () => {
     expect(log.filter((l) => l.startsWith("click:"))).toEqual(["click:20,15", "click:20,15"]);
     expect(log.filter((l) => l.startsWith("move:"))).toHaveLength(2);
   });
+  it("clicks at a fixed x and an offset from a template's centre", async () => {
+    const { run, log } = setup((t) => (t === "replay-kicker" ? hit(450, 380) : undefined));
+    await run.perform({ kind: "click", template: "replay-kicker", at: { x: 1086, dy: -54 } });
+    expect(log).toEqual(["click:1086,331"]);
+  });
   it("presses a key", async () => {
     const { run, log } = setup(() => undefined);
     await run.perform({ kind: "press", key: "Return" });

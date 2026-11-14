@@ -9,7 +9,9 @@ export type DesktopAction =
   | { kind: "newChat" }
   | { kind: "prompt"; text: string }
   | { kind: "startRecording" }
-  | { kind: "click"; template: string }
+  // `at` clicks at a fixed x and `dy` from the template's centre, for a target that repeats on screen (an
+  // expand icon per view) but sits at a fixed offset from a unique one (that view's kicker).
+  | { kind: "click"; template: string; at?: { x: number; dy: number } }
   // A key press with nothing typed, e.g. Return to send what a view put in the composer.
   | { kind: "press"; key: string }
   // Wheel-down over the side pane; the views are taller than the pane, and the target is in the last screenful.
@@ -131,7 +133,9 @@ const M6: DesktopScene = {
     ...opening('What would my Claude Code session "scratch" from 30 October have cost on Claude Haiku 5.5 or GPT-6 Luna?'),
     step("Wait for the model comparison", { kind: "waitFor", template: "replay-kicker" }, 1500),
     step("Wait for the answer", { kind: "waitAnswerDone" }, 1500),
-    step("Open the host side pane", { kind: "click", template: "expand" }, 3500),
+    // Claude may show a session picker above the comparison, with its own expand icon: click the one 54 px above
+    // the comparison's kicker, at the chat column's expand x (measured on the M1 and M6 frames).
+    step("Open the host side pane", { kind: "click", template: "replay-kicker", at: { x: 1086, dy: -54 } }, 3500),
     step("Replay on Haiku", { kind: "click", template: "model-haiku" }, 3500),
     step("Scroll to the chart and assumptions", { kind: "scrollPane", clicks: TO_BOTTOM }, 3500),
     step("Back", { kind: "click", template: "back-to-model-comparison" }, 2000),

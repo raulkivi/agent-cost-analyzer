@@ -71,7 +71,8 @@ export function createActionRunner(deps: ActionDeps): ActionRunner {
           return waitForGone("stop", probe("stop"), wait, deps.clock);
         case "click": {
           const match = await waitForMatch(action.template, probe(action.template), wait, deps.clock);
-          return deps.input.click(clickPoint(match)!);
+          const centre = clickPoint(match)!;
+          return deps.input.click(action.at ? { x: action.at.x, y: centre.y + action.at.dy } : centre);
         }
         case "press":
           return deps.input.key(action.key);

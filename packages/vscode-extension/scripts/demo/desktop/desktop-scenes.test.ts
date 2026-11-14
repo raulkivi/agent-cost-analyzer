@@ -82,11 +82,10 @@ describe.each(ALL)("scene $id ($slug)", (scene) => {
     expect(kinds.indexOf("waitAnswerDone")).toBeLessThan(firstClick);
   });
   it("opens the side pane before any in-view click: the pane mounts a fresh view", () => {
-    const clicks = scene.steps.flatMap((s) => (s.action.kind === "click" ? [s.action.template] : []));
-    expect(clicks[0]).toBe("expand");
+    const clicks = scene.steps.filter((s) => s.action.kind === "click");
+    expect(clicks[0]!.label).toBe("Open the host side pane");
   });
   it("lists the templates it needs, each cut or deliberately missing", () => {
-    expect(sceneTemplates(scene)).toContain("expand");
     for (const t of sceneTemplates(scene)) expect(t).toMatch(/^[a-z0-9]+(-[a-z0-9]+)*$/);
   });
   it("keeps the beats after the recording starts within 25 s", () => {
@@ -129,9 +128,14 @@ describe("scene specifics", () => {
     const steps = order("M5");
     expect(steps.indexOf("click:kind-anomaly")).toBeLessThan(steps.indexOf("click:why-flagged"));
   });
+  it("M6 opens the pane of the model comparison, not of the session picker Claude may show above it", () => {
+    const open = DESKTOP_SCENES.M6!.steps.find((s) => s.label === "Open the host side pane")!.action;
+    expect(open).toEqual({ kind: "click", template: "replay-kicker", at: { x: 1086, dy: -54 } });
+  });
   it("M6 replays a model after the pane is open, then goes Back", () => {
     const steps = order("M6");
-    expect(steps.indexOf("click:model-haiku")).toBeGreaterThan(steps.indexOf("click:expand"));
+    const open = DESKTOP_SCENES.M6!.steps.findIndex((s) => s.label === "Open the host side pane");
+    expect(steps.indexOf("click:model-haiku")).toBeGreaterThan(open);
     expect(steps.at(-1)).toBe("click:back-to-model-comparison");
   });
 });
@@ -140,7 +144,8 @@ describe("scroll steps", () => {
   it("only scroll the pane after it is open", () => {
     for (const scene of ALL) {
       const kinds = scene.steps.map((s) => s.action);
-      const open = kinds.findIndex((a) => a.kind === "click" && a.template === "expand");
+      const open = scene.steps.findIndex((s) => s.label === "Open the host side pane");
+      expect(open).toBeGreaterThan(0);
       kinds.forEach((a, i) => {
         if (a.kind === "scrollPane") expect(i).toBeGreaterThan(open);
       });
