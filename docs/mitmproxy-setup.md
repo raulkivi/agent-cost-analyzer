@@ -1,5 +1,9 @@
 # Setting up mitmproxy captures
 
+**Last changed:** 2026-11-14 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+
+Optional: you need this only for coding agents that write no usable local logs (for example tools calling the Anthropic or OpenAI API directly). Copilot Chat, Claude Code and pi are read from their own logs.
+
 How to actually produce a `.har` file the app's `mitmproxy` `LogProvider`
 can read, and drop it where the app looks for it. `architecture.md`
 documents *what* the app does with a capture (§6.2.3, "mitmproxy capture

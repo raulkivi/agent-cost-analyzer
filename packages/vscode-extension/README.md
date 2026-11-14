@@ -19,7 +19,7 @@ Please [report issues](https://github.com/raulkivi/agent-cost-analyzer/issues).
 Independent project; not affiliated with or endorsed by GitHub or
 Microsoft.
 
-Using Claude Code, pi or mitmproxy captures? The standalone app,
+Using Claude Code or pi? The standalone app,
 [Agent Cost Analyzer](https://github.com/raulkivi/agent-cost-analyzer#readme),
 reads those and Copilot Chat.
 
@@ -198,11 +198,10 @@ All commands are in the **AI Credits Analyzer** category.
 - [Changelog](https://github.com/raulkivi/agent-cost-analyzer/blob/main/packages/vscode-extension/CHANGELOG.md)
 - [Report an issue](https://github.com/raulkivi/agent-cost-analyzer/issues)
 
-## Using Claude Code, pi or mitmproxy?
+## Using Claude Code or pi?
 
 This extension reads GitHub Copilot Chat's logs only. For Claude Code CLI
-sessions, pi coding agent sessions or mitmproxy captures of LLM API
-traffic, use
+sessions or pi coding agent sessions, use
 [Agent Cost Analyzer](https://github.com/raulkivi/agent-cost-analyzer#readme),
 the standalone app from the same repository. It has the same views and
 reads VS Code Copilot Chat sessions too.

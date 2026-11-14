@@ -1,6 +1,6 @@
 # Agent Cost Analyzer: setup and data sources
 
-**Last changed:** 2026-11-12 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-14 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 How to install and run the standalone Agent Cost Analyzer app, where it
 finds each provider's logs, which Copilot Chat settings to turn on, and a
@@ -133,7 +133,7 @@ runtime, never hardcoded:
     real install. Multi-profile VS Code setups are not supported on any OS
     (see [architecture.md](architecture.md)).
 
-- **mitmproxy** — reads `.har` capture files you export yourself after
+- **mitmproxy (optional)** — for agents that write no usable local logs; reads `.har` capture files you export yourself after
   recording LLM-provider traffic with mitmproxy (see
   [mitmproxy setup](mitmproxy-setup.md)). There's no OS-level
   discovery here — you manually drop the exported `.har` file into this
@@ -273,7 +273,7 @@ session turn by turn:
   the [plan](plans/analyze-session-replay.md).
 
 - **Analyze mode** — pick one of your own real sessions (VS Code Copilot
-  Chat, a Claude Code session, a mitmproxy capture, or a pi coding agent session — see the **Source**
+  Chat, a Claude Code session or a pi coding agent session, or optionally a mitmproxy capture — see the **Source**
   dropdown in the [User Guide](UserGuide.md#choosing-a-log-provider)) to
   see the same breakdown for what actually happened, plus (for VS Code
   Copilot Chat sessions, once debug logging is enabled, above) a

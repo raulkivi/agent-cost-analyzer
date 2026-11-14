@@ -20,7 +20,7 @@ behavior, and token/AI Credits accounting — so users can:
 - **Learn** the underlying concepts (sessions, turns, caching, token types)
   through guided, interactive scenarios.
 - **Analyze** their own real coding-agent logs, including VS Code Copilot Chat
-  sessions and mitmproxy captures of LLM-provider traffic, to see exactly
+  sessions (and, optionally, mitmproxy captures of LLM-provider traffic), to see exactly
   where tokens and AI Credits went, turn by turn.
 
 The end goal is to help developers use agentic coding tools more effectively
@@ -128,7 +128,7 @@ themes with the "Industry" tokens (Phase 8) as the fallback.
 ## 4. Data sources for Analyze mode
 
 **Decision**: the app only reads data already stored on the local machine.
-Its initial providers are the VS Code local SQLite/debug-log pair and local
+Its initial providers are the VS Code local SQLite/debug-log pair and (optional) local
 mitmproxy captures. It never depends on the cloud-synced store, so it works
 fully offline and requires no `chat.sessionSync.enabled` opt-in.
 
@@ -139,7 +139,7 @@ the in-scope sources are:
 |---|---|---|
 | Local SQLite session store | Turns, files touched, checkpoints (compaction events), session metadata; fast, structured, easy to query | No per-request token counts |
 | Raw per-session debug logs (`main.jsonl` text files under `workspaceStorage/.../debug-logs/<session-id>/`) | Ground-truth append-only event stream the SQLite store is derived from — request/response spans carry the actual token-usage `attrs` that the local SQLite indexer doesn't persist | Verbose; undocumented `attrs` shape per event `type`, so parsing needs to be defensive/version-tolerant |
-| Local mitmproxy capture | Request/response exchanges between VS Code and LLM providers, including token/usage fields exposed by the provider | Capture format and payload shape vary by provider SDK; separate vendor decoders are required for Anthropic, OpenAI, and later vendors |
+| Local mitmproxy capture (optional; for agents without usable local logs) | Request/response exchanges between VS Code and LLM providers, including token/usage fields exposed by the provider | Capture format and payload shape vary by provider SDK; separate vendor decoders are required for Anthropic, OpenAI, and later vendors |
 
 Each source is a log provider that converts its records into the same
 normalized session/turn model before the API returns them. A provider's
