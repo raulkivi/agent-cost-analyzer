@@ -5,8 +5,8 @@
 Status: approved 2026-11-13; plan steps 10.22 (Phase 0 and Phase 1) and
 10.23 (Phase 2) in [implementation-plan.md](../implementation-plan.md).
 Phase 0 done 2026-11-13; Phase 1 done 2026-11-14 (step 10.22); Phase 2
-(step 10.23) started 2026-11-14: spike 2.0 passed (§4.3), 2.1 and 2.2
-done; M1–M7 recorded (2.3), owner review (2.4) open.
+(step 10.23) done 2026-11-14: M1–M7 and F1–F3 recorded, approved and in
+the docs; open: the owner's look at the retaken M6.
 
 ## 1. Goal
 
@@ -865,4 +865,16 @@ review rejections.
   (also on the shared fixture), and Claude points out the mismatch in
   M6's answer: a product bug for the owner. M4's take ends while Claude
   is still analysing, with a findings view in the pane.
+- 2026-11-14: M6's bug (D24) fixed in PR #261 (Sonnet, root cause: the
+  replay took the first request's model as the session's own; the
+  "scratch" session is Sonnet 5.5 then Opus 5.5): `measuredModels` and
+  `isMixedSessionModel` in the comparison, `selfCheck.models`, the Replay
+  view and the web app's self-check name every model, no own-model
+  check for a mixed session. Its follow-up commit (the self-check line)
+  had its tests written with the change, not before: noted. M6 retaken
+  on the fix, 1.38 MB 20 s; its "Self-check failed" (2 of 3 requests)
+  is a true result for the mixed session. 2.5 (Haiku) and 2.6 (Haiku)
+  merged; review fix: 2.5's M1 captions described the planned scene
+  (this week, fullscreen), corrected to October and the side pane.
+  Phase 2 exit met; open: the owner's look at the retaken M6.
 - 2026-11-14: tasks 1.10-1.14 (final takes, owner review, docs embedding) are held until Phase 17 (dense ledger UI, [dense-ledger-ui.md](dense-ledger-ui.md)) merges, owner decision D2 of that plan. The scenes are then retaken once in the new look; the earlier takes serve as drafts only.
