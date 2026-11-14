@@ -161,6 +161,13 @@ Tooling for 1.0 task V12; the capture itself is V13 (owner step), the fixtures
 V14. Never commit or share an unredacted file: sessions hold prompts, tool
 output and file contents.
 
+Capture pi the way the owner uses it (owner decision 2026-11-14): with the
+local model, inside the Gondolin VM container. Gondolin mounts only the
+working directory, so run it from the throwaway directory below. Its paths
+inside the VM and its system-prompt additions are part of what the fixtures
+pin. If a VM path names anything private, pass it to the redaction CLI with
+`--mask <word>`.
+
 1. **Install the logger.** Confirm `~/.pi/agent/extensions/pi-system-prompt-logger.js`
    exists. If not, build and copy it
    ([package README](../../packages/pi-system-prompt-logger/README.md#install)):

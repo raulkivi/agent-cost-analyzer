@@ -1779,7 +1779,7 @@ app installs from npm, and the release path's security gaps are closed.
 | C8 | Standalone app on npm as `agent-cost-analyzer`, run as `npx agent-cost-analyzer` | New step | Plan approved 2026-11-14; build next; the name is free on npm (2026-11-14); owner step NP0 first | A CI job packs the package, runs it from the tarball and loads the app; the 1.0.0 publish comes from npm trusted publishing (OIDC) |
 | C9 | Monthly allowance in the standalone app (MA13) | Step 10.21 | Plan approved 2026-11-14; build next | Its plan's exit criterion |
 | C10 | Classic subagent tool calls in the tool-call audit and security findings | Step 10.20 | Plan approved 2026-11-14; build next | Its plan's exit criterion; [threat-model.md](threat-model.md) §7's residual row closed |
-| C11 | Savings Increment 3: scope (a)-(d) in [plans/savings-report.md](plans/savings-report.md) §2 | Phase 16 | Plan approved 2026-11-14; build next (V23b boards first) | Its plan's exit criterion; the savings real-data check covers pi |
+| C11 | Savings Increment 3: scope (a)-(d) in [plans/savings-report.md](plans/savings-report.md) §2; (a) reduced to pi per-tool unused tools (V27), the pi trace (V28) after 1.0 (owner 2026-11-14) | Phase 16 | Plan approved 2026-11-14; build next (V23b boards first) | Its plan's exit criterion; the savings real-data check covers pi's unused tools |
 | C12 | Only the owner creates or moves `ext-v*` and `app-v*` tags | [threat-model.md](threat-model.md) §5.8 | Open | A tag ruleset, read through the GitHub API, restricts creating, moving and deleting those tags to the owner |
 | C13 | Open VSX trusted publishing; `OVSX_PAT` deleted | threat-model.md §5.8 | Open | A release publishes to Open VSX without `OVSX_PAT`; the secret no longer exists |
 | C14 | Figures priced from a user price version say so where shown | threat-model.md §5.10 | Done 2026-11-14: the web UI (V2, PR #286) and the chat views (V2b) label them | Component and Playwright tests assert the label in the web UI and in every chat view that shows a priced figure |
@@ -1845,8 +1845,8 @@ repo. "Owner step" marks work that needs the owner's hands or accounts.
 | V25 | Increment 3 (d): session titles in the app's report, looked up client-side; never in the MCP tool output or sent to a model | C11 | medium | Sonnet | V23 approved |
 | V26 | Increment 3 (b): per-tool tokens for unused tools (at most 20, names through `savingsName`, marked estimate) | C11 | medium | Sonnet | V23 approved |
 | V27 | Increment 3 (a): O1 per tool for pi | C11 | medium | Sonnet | V14, V23 approved |
-| V28 | Increment 3 (a): a pi request trace (Phase 14 D1) and O2–O4 for pi | C11 | high | Opus | V14, V23 approved |
-| V29 | Increment 3 review and docs; the savings real-data check covers pi | C11 | medium | Opus | V24-V28 |
+| V28 | After 1.0 (owner 2026-11-14: pi runs on a local model, unpriced): a pi request trace (Phase 14 D1) and O2–O4 for pi | — | high | Opus | V14, V23 approved |
+| V29 | Increment 3 review and docs; the savings real-data check covers pi's unused tools | C11 | medium | Opus | V24-V27 |
 | V32 | Plan [plans/claude-code-subagents.md](plans/claude-code-subagents.md): Claude Code subagent transcripts in every total, with spike CS0 (done 2026-11-14), owner decisions D1-D16 and the real-data check (written 2026-11-14; owner review) | C15 | medium | Opus | — |
 | V33 | Build C15 per its plan (CS0b-CS16), ending with the owner's sign-off of the real-data check | C15 | high | Opus, Sonnet per plan task | V32 approved; CS14 also V21 approved |
 | V34 | VB1: the right VS Code install is read (a variant counts only when its folder has `User`); unit tests over temp homes | C16 | low | Sonnet | — |
@@ -1864,10 +1864,10 @@ repo. "Owner step" marks work that needs the owner's hands or accounts.
    comes before any Increment 3 UI code.
 4. Builds: V16-V18 (npm), V20 (MA13), V22 (10.20), V24-V26 (Savings
    Increment 3 without pi).
-5. After Phase 11 (V14): V27, V28, then V29.
+5. After Phase 11 (V14): V27, then V29 (V28 after 1.0).
 6. Release: V30, then V31.
 
-The longest chain is pi: V12 → V13 → V14 → V28 → V29 → V30 → V31.
+The longest chain is pi: V12 → V13 → V14 → V27 → V29 → V30 → V31.
 
 ### Release procedure
 
