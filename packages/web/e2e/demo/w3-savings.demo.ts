@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 import type { Page } from "@playwright/test";
 import { expect, test } from "../support/app-fixture.js";
-import { play, recordScene, Pointer, totalBeatMs, type DemoScene } from "./support/demo-driver.js";
+import { play, presetColorMode, recordScene, Pointer, totalBeatMs, type DemoScene } from "./support/demo-driver.js";
 
 // W3, "Savings" (docs/plans/docs-refresh-and-demo-recordings.md §4.1):
 // Dashboard, Savings tab, the 7/30/90 day windows, then a row's detail and
@@ -57,8 +57,10 @@ export const W3: DemoScene = {
 
 test("W3: the Savings tab, its windows and Open in Analyze", async ({ page, app }) => {
   expect(totalBeatMs(W3)).toBeLessThan(20_000);
+  await presetColorMode(page, "dark");
   await page.goto(app.baseURL);
   await expect(page.getByText("Analyze", { exact: true })).toBeVisible();
+  await expect(page.locator("html")).toHaveAttribute("data-color-mode", "dark");
   const pointer = new Pointer(page);
   await pointer.install();
 

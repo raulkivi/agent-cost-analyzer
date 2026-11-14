@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 import type { Page } from "@playwright/test";
 import { expect, test } from "../support/app-fixture.js";
-import { play, recordScene, Pointer, totalBeatMs, type DemoScene } from "./support/demo-driver.js";
+import { play, presetColorMode, recordScene, Pointer, totalBeatMs, type DemoScene } from "./support/demo-driver.js";
 
 // W2, "Analyze and replay" (docs/plans/docs-refresh-and-demo-recordings.md
 // §4.1): pick a provider and a session, open a turn, replay the session on
@@ -36,8 +36,10 @@ export const W2: DemoScene = {
 
 test("W2: Analyze a Claude Code session and replay it on another model", async ({ page, app }) => {
   expect(totalBeatMs(W2)).toBeLessThan(20_000);
+  await presetColorMode(page, "dark");
   await page.goto(app.baseURL);
   await expect(page.getByText("Analyze", { exact: true })).toBeVisible();
+  await expect(page.locator("html")).toHaveAttribute("data-color-mode", "dark");
   const pointer = new Pointer(page);
   await pointer.install();
 
