@@ -861,6 +861,43 @@ picker.**
 view says so ("known for 12 of 40 turns"), and an estimated figure carries
 an **estimate** tag.
 
+**Recorded examples.** These recordings run in Claude Desktop with made-up
+sample data.
+
+**Cost rollup.** A week's spend across Claude Code, Copilot and pi, opened
+fullscreen, then one top session opened to its turns.
+
+![Cost rollup for the week in Claude Desktop, expanded to fullscreen, then one of the top sessions opened to its list of turns](images/demo/m1-cost-rollup.gif)
+
+**Cost change.** A project's cost between two periods as a waterfall, then
+the price changes behind it.
+
+![Cost-change waterfall for a project between two periods in Claude Desktop, followed by the price-changes timeline opened from it](images/demo/m2-cost-change.gif)
+
+**Statement.** A project's October statement, with totals per currency and
+how many turns each figure covers.
+
+![A project's October statement in Claude Desktop, with totals per currency and the coverage of each figure](images/demo/m3-statement.gif)
+
+**Session picker.** A list of Claude Code sessions. **Analyse** puts a
+request for one session in the chat, and Claude answers it.
+
+![A list of Claude Code sessions in Claude Desktop; clicking Analyse on one fills the chat with a request, which Claude then answers](images/demo/m4-analyse-session.gif)
+
+**Findings.** Findings across providers for October, filtered to anomalies,
+with one finding's evidence opened.
+
+![Findings view in Claude Desktop: severity tiles at the top, a filter set to anomalies, and one finding's evidence opened](images/demo/m5-findings.gif)
+
+**Replay on another model.** A model comparison for a session, then one
+model's replay turn by turn. The figures are **Simulated**.
+
+![Model comparison for a Claude Code session in Claude Desktop, with one model clicked and its session replayed turn by turn](images/demo/m6-replay.gif)
+
+**Estimate.** A cost range for ten more active days, tagged **estimate**.
+
+![Estimate view in Claude Desktop: a cost range for ten more active days, labelled as an estimate](images/demo/m7-estimate.gif)
+
 **Getting the views.** Run `npm run build` in the repo, then register
 `scripts/mcp-server.sh` as above (for Claude Desktop, as the `command` of an
 entry in `claude_desktop_config.json`, then restart it). The script adds
