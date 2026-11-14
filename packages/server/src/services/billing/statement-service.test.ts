@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import { statementAnswerSchema, type ProjectsFile, type Statement } from "@agent-cost-analyzer/domain";
 import { billed, costs, cubeOf, cubeRow } from "../../test-support/cost-cube-fakes.js";
 import type { CostCube } from "../cost-analysis/cost-cube.js";
-import type { SessionRangeFilter } from "../tool-audit/audit-query-service.js";
+import { MAX_ROLLUP_SESSION_LIMIT, type SessionRangeFilter } from "../tool-audit/audit-query-service.js";
 import { PeriodNotEndedError, StatementService, UnknownStatementPeriodError } from "./statement-service.js";
 import type { StatementStore } from "./statement-store.js";
 
@@ -57,15 +57,24 @@ function setup(options: { now?: string; rows?: CostCube["rows"]; priceBookHash?:
 }
 
 describe("StatementService", () => {
-  it("answers the draft for an ended month, which can be issued, reading sessions around it", async () => {
+  it("answers the draft for an ended month, which can be issued, reading every session that can hold its turns", async () => {
     const { service, requests } = setup();
     const answer = statementAnswerSchema.parse(await service.get({ projectId: "portal", period: "2026-10", providerId: "vscode" }));
     expect(answer.statement).toMatchObject({ status: "draft", period: { key: "2026-10", timeZone: "Europe/Tallinn" }, totals: [{ currency: "AI_CREDITS", total: 100 }] });
     expect(answer.canIssue).toEqual({ ok: true });
     expect(answer.issuedPeriods).toEqual([]);
-    // A day either side, for the time zone; sessions are chosen by their start.
-    expect(requests).toEqual([{ providerId: "vscode", since: "2026-09-30", until: "2026-11-01" }]);
+    // Plan §8.5, nothing silently drops out: a session started before the
+    // period can hold turns in it, so any start up to a day after the period
+    // (for the time zone), and as many sessions as a request may read, not
+    // the 50 a view shows by default.
+    expect(requests).toEqual([{ providerId: "vscode", limit: MAX_ROLLUP_SESSION_LIMIT, until: "2026-11-01" }]);
     expect(answer.statement.provenance.projectsFileHash).toMatch(/^[0-9a-f]{12}$/);
+  });
+
+  it("keeps a caller's own session limit", async () => {
+    const { service, requests } = setup();
+    await service.get({ projectId: "portal", period: "2026-10", limit: 20 });
+    expect(requests).toEqual([{ limit: 20, until: "2026-11-01" }]);
   });
 
   it("can't issue a period that hasn't ended, and says why (D15)", async () => {

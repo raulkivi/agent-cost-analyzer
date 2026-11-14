@@ -127,6 +127,19 @@ describe("buildStatement", () => {
     expect(statement.coverage).toEqual({ turns: 3, knownTurns: 1 });
   });
 
+  it("says how many sessions a source's session limit left unread, never a silently smaller statement", () => {
+    const cube = {
+      ...cubeOf([row("2026-10-05T10:00:00Z", { cost: costs({ billed: billed(10) }) })]),
+      providers: [
+        { id: "claude-code", label: "Claude Code CLI", available: true, sessionCount: 500, truncated: true, sessionsLeftOut: 37 },
+        { id: "vscode", label: "VS Code", available: true, sessionCount: 3, truncated: false },
+      ],
+    };
+    const statement = statementSchema.parse(buildStatement(cube, inputs));
+    expect(statement.notRead).toEqual([{ providerId: "claude-code", label: "Claude Code CLI", sessions: 37 }]);
+    expect(buildStatement(cubeOf([]), inputs)).not.toHaveProperty("notRead");
+  });
+
   it("leaves subscription (API-equivalent) use off unless the project includes it (D4)", () => {
     const cube = cubeOf([row("2026-10-05T10:00:00Z", { cost: costs({ priced: priced(2, "v", { uncachedInput: 2, cacheRead: 0, cacheWrite: 0, output: 0 }, true) }) })]);
     const off = buildStatement(cube, inputs);

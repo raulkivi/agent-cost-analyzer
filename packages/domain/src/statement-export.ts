@@ -16,6 +16,11 @@ export interface StatementExportOptions {
 }
 
 const fixed2 = (value: number) => value.toFixed(2);
+
+// One wording for every place a statement names sessions it couldn't read.
+export function notReadText(entry: { label: string; sessions: number }): string {
+  return `${entry.label}: ${entry.sessions} ${entry.sessions === 1 ? "session" : "sessions"} not read (the per-source session limit); their turns are not on this statement`;
+}
 const unitName = (currency: Currency | string) => (currency === "AI_CREDITS" ? "AI Credits" : currency);
 const knownOrBlank = (value: number | null) => (value === null ? "" : String(value));
 
@@ -55,6 +60,7 @@ function toCsv(statement: Statement): string {
     ]),
     ...statement.unknown.map((line) => ["unknown", ...empty(5), String(line.sessions), String(line.turns), ...empty(6), line.reason]),
     ...statement.excluded.map((line) => ["excluded", ...empty(5), String(line.sessions), String(line.turns), ...empty(6), line.reason]),
+    ...(statement.notRead ?? []).map((entry) => ["not-read", ...empty(5), String(entry.sessions), ...empty(7), notReadText(entry)]),
     ...statement.markup
       .filter((markup) => markup.amount > 0)
       .map((markup) => ["markup", "", markup.currency, ...empty(10), fixed2(markup.amount), `${statement.markupPercent ?? 0}% of ${fixed2(markup.base)}`]),
@@ -89,7 +95,8 @@ function toMarkdown(statement: Statement, includeTitles: boolean): string {
   for (const line of statement.excluded) {
     out.push(`${line.turns} ${line.turns === 1 ? "turn" : "turns"} left off (${line.reason}).`);
   }
-  if (statement.unknown.length + statement.excluded.length > 0) out.push("");
+  for (const entry of statement.notRead ?? []) out.push(`${mdCell(notReadText(entry))}.`);
+  if (statement.unknown.length + statement.excluded.length + (statement.notRead?.length ?? 0) > 0) out.push("");
   if (statement.fixedLines.length > 0) {
     out.push(...statement.fixedLines.map((line) => `- ${mdCell(line.label)}: ${fixed2(line.amount)} ${unitName(line.currency)}`), "");
   }
