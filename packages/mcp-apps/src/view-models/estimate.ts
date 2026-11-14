@@ -41,6 +41,8 @@ export interface EstimateViewModel {
   conversionNote: string;
   sample: { unitsText: string; turnsText: string; totalText: string; runRateText: string };
   simulation?: EstimateSimulationView;
+  // 1.0 V2b (threat-model 5.10): the user-added price versions behind the figures.
+  userPriceVersionIds?: string[];
 }
 
 const UNIT_NOUN: Record<EstimateUnit, string> = { activeDays: "active day", sessions: "session" };
@@ -91,5 +93,6 @@ export function toEstimateViewModel(estimate: CostEstimate): EstimateViewModel {
       runRateText: `${perDay} per active day, ${usd(estimate.runRate.perWeekUsd)} per week`,
     },
     ...(estimate.simulation === undefined ? {} : { simulation: simulationView(estimate.simulation) }),
+    ...(estimate.userPriceVersionIds === undefined ? {} : { userPriceVersionIds: [...estimate.userPriceVersionIds] }),
   };
 }

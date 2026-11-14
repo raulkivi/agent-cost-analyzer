@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 import type { Currency } from "@agent-cost-analyzer/domain";
 import type { BreakdownRowView, VendorRowView } from "../../view-models/index.js";
+import { UserPriceTag } from "../UserPriceTag.js";
 import { moneyIn } from "./money-in.js";
 import "./cost-over-time.css";
 
@@ -20,6 +21,7 @@ function Row({ row, currency, kind }: { row: BreakdownRowView; currency: Currenc
       <td>
         <span className={cell.known ? undefined : "view-unknown"}>{cell.text}</span>
         {cell.coverageNote !== undefined && <span className="ct-coverage text-muted">{cell.coverageNote}</span>}
+        <UserPriceTag ids={cell.userPriceVersionIds} />
       </td>
       <td className="text-muted">{share ?? ""}</td>
     </tr>

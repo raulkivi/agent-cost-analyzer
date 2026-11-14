@@ -121,6 +121,8 @@ export interface CostVarianceViewModel {
   hasNotExplained: boolean;
   priceChanges: DocumentedPriceChange[]; // the input carries documented changes only
   priceDrillDown?: PriceDrillDown;
+  // 1.0 V2b (threat-model 5.10): the user-added price versions behind the explained figures.
+  userPriceVersionIds?: string[];
 }
 
 const TOKEN_TYPE_TEXT: Record<VarianceTokenType, string> = {
@@ -260,5 +262,6 @@ export function toCostVarianceViewModel(variance: CostVariance): CostVarianceVie
   const conversion = conversionNoteFor(variance.currency, variance.conversion);
   if (conversion !== undefined) viewModel.conversionNote = conversion;
   if (models.length > 0 && [variance.periodA.since, variance.periodA.until, variance.periodB.since, variance.periodB.until].every(isPlainDate)) viewModel.priceDrillDown = { tool: "get_price_changes", since, until, models };
+  if (variance.userPriceVersionIds !== undefined) viewModel.userPriceVersionIds = [...variance.userPriceVersionIds];
   return viewModel;
 }

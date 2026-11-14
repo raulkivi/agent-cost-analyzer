@@ -8,8 +8,10 @@ import type { ViewBrand } from "../brand/view-brand.js";
 import type { AppHostPort, ToolResult } from "../host/app-host-port.js";
 import type { ClipboardPort } from "../host/clipboard-port.js";
 import { toCostSeriesViewModel } from "../view-models/index.js";
+import { mergeUserPriceIds } from "../view-models/user-price.js";
 import type { CostSeriesViewModel } from "../view-models/index.js";
 import { ErrorBox } from "./SessionCostView.js";
+import { UserPriceTag } from "./UserPriceTag.js";
 import { ViewShell } from "./ViewShell.js";
 import { FullscreenButton } from "./display-mode/FullscreenButton.js";
 import { useDisplayMode } from "./display-mode/use-display-mode.js";
@@ -186,6 +188,7 @@ export function CostOverTimeView({
           <div className="view-section-head">
             <h2>{heading}</h2>
             <span className="text-muted">{`${vm.basis === "preferred" ? "preferred" : vm.basis} basis · ${unit}`}</span>
+            <UserPriceTag ids={mergeUserPriceIds(...vm.chart.points.flatMap((point) => point.cost.map((money) => money.userPriceVersionIds)))} />
           </div>
           {currencies.length > 1 && (
             <fieldset className="ct-currency">

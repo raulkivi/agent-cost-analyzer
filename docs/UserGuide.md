@@ -703,7 +703,9 @@ another:
 
 The views use the product's name and colours and follow the host's light or
 dark theme. They only show what the tool already returned; they read your
-logs and write nothing.
+logs and write nothing. A figure priced from a price version you added is
+labelled **your prices** beside it, with the version id in the label's name, as
+in the app.
 
 **Where they appear.**
 

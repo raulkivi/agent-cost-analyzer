@@ -4,6 +4,7 @@ import type { Currency } from "@agent-cost-analyzer/domain";
 import { useRef } from "react";
 import type { TopSessionView } from "../../view-models/index.js";
 import { useFocusOnMountIfLost } from "../focus.js";
+import { UserPriceTag } from "../UserPriceTag.js";
 import { moneyIn } from "./money-in.js";
 import { unitLabelOf } from "./chart-model.js";
 import "./cost-over-time.css";
@@ -72,6 +73,7 @@ export function ProjectSessions({
                 <td>
                   <span className={cell.known ? undefined : "view-unknown"}>{cell.text}</span>
                   {cell.coverageNote !== undefined && <span className="ct-coverage text-muted">{cell.coverageNote}</span>}
+                  <UserPriceTag ids={cell.userPriceVersionIds} />
                 </td>
               </tr>
             );

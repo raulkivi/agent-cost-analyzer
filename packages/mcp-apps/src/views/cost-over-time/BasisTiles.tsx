@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
 import type { BasisTile } from "../../view-models/index.js";
+import { UserPriceTag } from "../UserPriceTag.js";
 import "./cost-over-time.css";
 
 // The four cost bases (board): the preferred total first, then billed,
@@ -26,6 +27,7 @@ export function BasisTiles({ tiles }: { tiles: BasisTile[] }) {
               <span className={money.known ? "ct-money" : "ct-money view-unknown"}>{money.text}</span>
               {money.coverageNote !== undefined && <span className="ct-note">{money.coverageNote}</span>}
               {money.unknownNote !== undefined && <span className="ct-note">{money.unknownNote}</span>}
+              <UserPriceTag ids={money.userPriceVersionIds} />
             </span>
           ))}
         </div>

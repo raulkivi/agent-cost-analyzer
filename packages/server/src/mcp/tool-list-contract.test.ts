@@ -33,4 +33,23 @@ describe("the standalone MCP server's tool list (SDK 2 migration contract)", () 
     expect(withViews.tools).toHaveLength(23);
     await expect(surfaceFixture({ withoutViews, withViews })).toMatchFileSnapshot("./__snapshots__/tool-list-standalone.json");
   });
+
+  // 1.0 V2b (threat-model 5.10): the chat views label a figure from the field
+  // the tool sends, so every tool a priced-figure view reads must advertise it.
+  it("advertises the user price version marker on every tool a priced-figure view reads", async () => {
+    const { tools } = (await surfaceOf({ appViews })) as { tools: { name: string; outputSchema: unknown }[] };
+    const marker: Record<string, string> = {
+      get_project_cost: "userPriceVersionIds",
+      get_repository_cost: "userPriceVersionIds",
+      compare_costs: "userPriceVersionIds",
+      explain_cost_change: "userPriceVersionIds",
+      estimate_cost: "userPriceVersionIds",
+      get_savings_report: "userPriceVersionIds",
+      get_statement: "userPriced",
+    };
+    for (const [name, field] of Object.entries(marker)) {
+      const tool = tools.find((entry) => entry.name === name);
+      expect(JSON.stringify(tool?.outputSchema), name).toContain(`"${field}"`);
+    }
+  });
 });

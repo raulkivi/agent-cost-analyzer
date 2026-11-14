@@ -8,6 +8,7 @@ import { pluralize } from "../view-models/format.js";
 import { toCostVarianceViewModel } from "../view-models/index.js";
 import type { CostVarianceViewModel, CurrencyBlock } from "../view-models/index.js";
 import { ErrorBox } from "./SessionCostView.js";
+import { UserPriceTag } from "./UserPriceTag.js";
 import { ViewShell } from "./ViewShell.js";
 import { CostChangeWaterfall } from "./cost-change/CostChangeWaterfall.js";
 import { ModelTable } from "./cost-change/ModelTable.js";
@@ -31,12 +32,19 @@ const UNIT: Record<CurrencyBlock["currency"], string> = { AI_CREDITS: "AI Credit
 function Tiles({ vm, block, notExplainedTile }: { vm: CostVarianceViewModel; block: CurrencyBlock; notExplainedTile: boolean }) {
   const [start, , , , end] = block.steps;
   return (
-    <div className="stat-tiles view-tiles">
-      <StatTile label={`${vm.periodA.label} (A)`} value={start?.text ?? ""} note={`priced, ${vm.pricingText}`} />
-      <StatTile label={`${vm.periodB.label} (B)`} value={end?.text ?? ""} note={`priced, ${vm.pricingText}`} />
-      <StatTile label="Change" value={block.changeAmountText} note={block.changePercentText} />
-      {notExplainedTile && vm.hasNotExplained && <StatTile label="Not explained" value={pluralize(vm.notExplained.periodA.turns + vm.notExplained.periodB.turns, "turn")} note="no price for these turns; not counted as 0" />}
-    </div>
+    <>
+      <div className="stat-tiles view-tiles">
+        <StatTile label={`${vm.periodA.label} (A)`} value={start?.text ?? ""} note={`priced, ${vm.pricingText}`} />
+        <StatTile label={`${vm.periodB.label} (B)`} value={end?.text ?? ""} note={`priced, ${vm.pricingText}`} />
+        <StatTile label="Change" value={block.changeAmountText} note={block.changePercentText} />
+        {notExplainedTile && vm.hasNotExplained && <StatTile label="Not explained" value={pluralize(vm.notExplained.periodA.turns + vm.notExplained.periodB.turns, "turn")} note="no price for these turns; not counted as 0" />}
+      </div>
+      {vm.userPriceVersionIds !== undefined && (
+        <p className="cv-note text-muted">
+          <UserPriceTag ids={vm.userPriceVersionIds} /> Costs A and B, the change and its causes use price versions you added.
+        </p>
+      )}
+    </>
   );
 }
 

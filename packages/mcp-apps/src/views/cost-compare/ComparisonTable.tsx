@@ -5,6 +5,7 @@ import { useRef } from "react";
 import type { ChangeView, ComparisonRowView, CostComparisonViewModel, MoneyView } from "../../view-models/index.js";
 import { UNKNOWN_TEXT } from "../../view-models/index.js";
 import { useFocusOnMountIfLost } from "../focus.js";
+import { UserPriceTag } from "../UserPriceTag.js";
 import "./cost-compare.css";
 
 // The comparison table (board CostCompare.dc.html, plan §4.5). A row opens
@@ -46,6 +47,7 @@ function Lines({ views, notes = false }: { views: readonly MoneyView[]; notes?: 
         <span key={view.currency ?? index} className="cc-total">
           <span className={view.known ? "cc-line" : "cc-line view-unknown"}>{figure(view)}</span>
           {notes && view.coverageNote !== undefined && <span className="cc-note text-muted">{view.coverageNote}</span>}
+          <UserPriceTag ids={view.userPriceVersionIds} />
         </span>
       ))}
     </>
@@ -74,6 +76,7 @@ function TotalCell({ row }: { row: ComparisonRowView }) {
             {share !== undefined && view.known && <ShareBar share={share.share} text={share.text} />}
             {view.coverageNote !== undefined && <span className="cc-note text-muted">{view.coverageNote}</span>}
             {view.unknownNote !== undefined && <span className="cc-note text-muted">{view.unknownNote}</span>}
+            <UserPriceTag ids={view.userPriceVersionIds} />
           </span>
         );
       })}
