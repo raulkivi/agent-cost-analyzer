@@ -75,7 +75,7 @@ gantt
     10.23 Claude Desktop demo recordings (100%) :done, p10i, 2026-11-14, 1d
 
     section Simulation and replay
-    13 Vendor-aware Learn simulation (95%) :done, p13, 2026-11-04, 4d
+    13 Vendor-aware Learn simulation (100%) :done, p13, 2026-11-04, 4d
     13.8 owner review (5%)                 :active, p13r, after p13, 1d
     14.0-14.7 replay core, API, mock-ups, UI (89%) :done, p14, 2026-11-07, 1d
     14.8 docs written, owner review (11%)  :active, p14r, after p14, 1d
@@ -111,7 +111,7 @@ gantt
     Extension 0.6.0, App v0.11.0 :milestone, r12, 2026-11-11, 0d
     Extension 0.8.0, App v0.12.0 :milestone, r13, 2026-11-12, 0d
     Extension 0.10.0, App v0.13.0 :milestone, r14, 2026-11-12, 0d
-    Extension 0.12.0, App v0.14.0 (prepared) :milestone, r15, 2026-11-13, 0d
+    Extension 0.12.0, App v0.14.0 :milestone, r15, 2026-11-14, 0d
 ```
 
 ## Not started
@@ -120,16 +120,16 @@ gantt
 
 ## Open items
 
-- Release prepared 2026-11-13: extension 0.12.0 and app 0.14.0 carry steps 10.19 and 10.21 and Phase 16 Increment 1. Owner decision 2026-11-14: fold everything under `[Unreleased]` (Phase 17, PRs #261, #266, #267) into 0.12.0 and 0.14.0 on release day, no new bump. D13-D15 answered 2026-11-14 (savings-report.md §12). Six log readers that split records at U+2028/U+2029 fixed 2026-11-14 (PR #270). The owner approved the savings docs and Phase 17 on 2026-11-14; `[Unreleased]` folded into extension 0.12.0 and app 0.14.0, dated 2026-11-14. Tagged 2026-11-14 on `613724e` (PR #271): `ext-v0.12.0` and `app-v0.14.0`; the real-Copilot gate passed 33 of 33 (1.54 AI Credits) and its evidence note is pushed; the owner accepted the gauge's wdio specs in place of a live real-Copilot check of it. Publishing waits for the owner's approval of the `release` environment. Marketplace listing fixes (chat views, description, tags) go in the next release.
+- Released 2026-11-14: extension 0.12.0 (VS Code Marketplace, Open VSX and GitHub, 15:43 UTC) and app 0.14.0 (GitHub, 14:57 UTC), tagged on `613724e` (PR #271). They carry steps 10.19 and 10.21, Phase 16 Increment 1, Phase 17 and the fixes from PRs #261, #266, #267 and #270 (`[Unreleased]` folded in, no new bump). The real-Copilot gate passed 33 of 33 (1.54 AI Credits); the owner accepted the gauge's wdio specs in place of a live real-Copilot check. Next extension release: the Marketplace listing fixes (PR #272) and the Learn Vendors tab layout fix.
 - Step 10.19 (classic subagent AI Credits, 100%): done 2026-11-13 (SA0 to SA18, 20 of 20 tasks; exit criterion met: `npm run test:real-data` passed 10 of 10 on the owner's logs, 177.64 AI Credits added, owner sign-off 2026-11-13). Before release: the real-Copilot gate. Plan: [classic-subagent-credits-implementation.md](plans/classic-subagent-credits-implementation.md). Step 10.20 (subagent tool calls in the audit) is a follow-up, not planned.
 - Step 10.21 (monthly allowance gauge, 100%): done 2026-11-13 (MA0 to MA12, 14 of 14 tasks; exit criterion met, review in plan §14). Released in extension 0.12.0: the owner accepted the gauge's wdio specs (`monthly-allowance.e2e.ts`, `monthly-allowance-trust.e2e.ts`, green in CI) in place of a live real-Copilot check (2026-11-14). MA13 (standalone app) is a later increment. The Sessions row is hidden while VS Code's filter is active (plan §3.8). Plan: [monthly-allowance.md](plans/monthly-allowance.md).
 - Step 10.22 (extension demo recordings, 100%, 22 of 22 tasks): done 2026-11-14. Phase 0 (PR #255), Phase 1 code (PRs #256, #257) and docs with media; 13 owner-approved GIFs in `docs/images/demo/` (1600x1000), paid E2/E9 takes 0.41 AI Credits. Open follow-ups: the release suite's monthly-allowance spec flakes between midnight and about 01:15 (plan §11); the owner's two Phase 0 findings (plan §11). Next: step 10.23 (Claude Desktop demos). Plan: [docs-refresh-and-demo-recordings.md](plans/docs-refresh-and-demo-recordings.md).
 - Step 10.23 (Claude Desktop demo recordings, 100%, 7 of 7 tasks): done 2026-11-14 (PR #262). Spike 2.0 passed route R1 (Desktop 5.11492.5 driven by `xdotool` and OpenCV template matching in Xvfb, a separate signed-in profile); `npm run demo:record:desktop -w packages/vscode-extension -- M1..M7` and `npm run demo:record -w packages/mcp-apps` (F1–F3) re-record every scene. Ten owner-approved GIFs in `docs/images/demo/` (about 16 MB, D28), embedded in the User Guide and README. Found and fixed: the replay named one model for a session that switched models (PR #261). The owner approved the retaken M6 on 2026-11-14. Plan: [docs-refresh-and-demo-recordings.md](plans/docs-refresh-and-demo-recordings.md).
 - Phase 17 (dense ledger UI, 100%, 14 of 14 tasks): Increment 1 (P0-P7) and Increment 2 (L1-L6) done 2026-11-14; the L6 review fixed 7 findings and recorded 7 (plan §10). Exit criterion met 2026-11-14 with the owner's eyes-on review; ships in app 0.14.0 and extension 0.12.0. The Dashboard on the e2e fixture went from 2,444px to 1,467px tall at 1440x900 (`density.spec.ts`). Increment 1 (P1-P7) is the density pass in every host; Increment 2 (L1-L6) is the standalone ledger theme with light and dark modes. Plan: [dense-ledger-ui.md](plans/dense-ledger-ui.md). Standalone stills outside `screenshots.mts` (landing page, Learn scenario, older guide images) and the VS Code panel stills are retaken with step 10.22's final takes.
-- Phase 16 (savings report, 78%, 18 of 23 tasks): Increment 1 (SR0-SR17) done 2026-11-13, code and docs; SR16 review in plan §16 (5 findings fixed, 3 recorded). Exit criterion met 2026-11-14 (owner sign-off on `npm run test:real-data:savings`, PR #270). The owner approved the docs on 2026-11-14 (D13-D15 answered the same day). Open: the release, then Increment 2 (SR18-SR22: MCP tool and view U18), not started. Plan: [savings-report.md](plans/savings-report.md).
+- Phase 16 (savings report, 78%, 18 of 23 tasks): Increment 1 (SR0-SR17) done 2026-11-13, code and docs; SR16 review in plan §16 (5 findings fixed, 3 recorded). Exit criterion met 2026-11-14 (owner sign-off on `npm run test:real-data:savings`, PR #270). The owner approved the docs on 2026-11-14 (D13-D15 answered the same day). Increment 1 released 2026-11-14 in app 0.14.0 and extension 0.12.0. Next: Increment 2 (SR18-SR22: MCP tool and view U18), not started. Plan: [savings-report.md](plans/savings-report.md).
 - Phase 14: steps 14.0-14.7 built; 14.8's docs written, the owner's review and the §13 exit criterion on real sessions open; the extension guide's replay screenshots open (User Guide's done). Step table: [analyze-session-replay.md](plans/analyze-session-replay.md) §12.
 - Phase 15: owner's review and exit criterion on real data.
-- Phase 13: owner's eyes-on review of step 13.8.
+- Phase 13 (vendor-aware Learn simulation, 100%): done 2026-11-14 with the owner's eyes-on review of step 13.8. Follow-up from that review, in progress: the Vendors tab layout in the narrow side column (model names wrapped, Misses column scrolled off). Calibration stays Claude Code only (owner, 2026-11-14). Plan: [vendor-aware-learn-simulation.md](plans/vendor-aware-learn-simulation.md).
 - Phase 12 (done): the owner's decisions on U5's "Sent" label and Claude Desktop permission prompts ([mcp-apps.md](plans/mcp-apps.md) §6.1); follow-ups in §11. Record: [mcp-apps-handover.md](plans/mcp-apps-handover.md); current state: [session-handover.md](session-handover.md).
 
 ## Steps 10.22 and 10.23 detail — Demo recordings
@@ -194,7 +194,7 @@ gantt
 
 ## Phase 16 detail — Savings report
 
-Schedule view of the task table in [savings-report.md](plans/savings-report.md) §10. Status: Increment 1 18 of 18 code and docs tasks done (SR0-SR17, 2026-11-12 to 2026-11-13); the owner approved the docs and D13-D15 on 2026-11-14; the release is open. Increment 2 (SR18-SR22) is not started; it begins after Increment 1 is released.
+Schedule view of the task table in [savings-report.md](plans/savings-report.md) §10. Status: Increment 1 18 of 18 code and docs tasks done (SR0-SR17, 2026-11-12 to 2026-11-13); the owner approved the docs and D13-D15 on 2026-11-14; released 2026-11-14 in app 0.14.0 and extension 0.12.0. Increment 2 (SR18-SR22) is not started and can start now.
 
 ```mermaid
 %%{init: {
