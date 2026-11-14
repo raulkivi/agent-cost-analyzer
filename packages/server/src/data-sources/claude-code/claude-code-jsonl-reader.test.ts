@@ -79,6 +79,23 @@ describe("readClaudeCodeSessionFile", () => {
     expect(result.rawLineCount).toBe(3);
   });
 
+  // JSON.stringify leaves U+2028 and U+2029 raw inside strings, and Claude Code's
+  // logs hold them (found by the savings real-data check: a session lost a third
+  // of its requests). A record ends at "\n" only; node's readline also splits at
+  // these two characters and at a lone "\r", tearing the record in two.
+  it("keeps a record whole when its text holds U+2028, U+2029 or a lone carriage return", async () => {
+    const filePath = path.join(dir, "separators.jsonl");
+    const user = JSON.stringify({ type: "user", uuid: "u1", parentUuid: null, message: { role: "user", content: "a b c\rd" } });
+    const next = JSON.stringify({ type: "assistant", uuid: "a1", parentUuid: "u1", message: { id: "m1" } });
+    expect(user).toContain(" ");
+    writeFileSync(filePath, `${user}\n${next}\r\n`);
+
+    const result = await readClaudeCodeSessionFile(filePath);
+
+    expect(result.entries.map((entry) => entry.uuid)).toEqual(["u1", "a1"]);
+    expect(result.rawLineCount).toBe(2);
+  });
+
   it("streams the file rather than buffering it whole (a very large file does not throw)", async () => {
     const filePath = path.join(dir, "large.jsonl");
     const line = JSON.stringify({ type: "attachment", uuid: "x", parentUuid: null });
