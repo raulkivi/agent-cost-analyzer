@@ -36,7 +36,7 @@ export const COST_BASIS_INSTRUCTIONS = [
 // Phase 14 step 14.5 (analyze-session-replay.md §9, D7): replays, the same
 // for both products.
 export const REPLAY_INSTRUCTIONS =
-  "Replay on another model: replay_session (one model, per turn) and compare_models_for_session (several, totals) run a session's own request trace through another model's caching rules and prices. Their figures are Simulated, assuming the same conversation and token counts: say \"would have cost about\". Check selfCheck (the replay on the session's own model against its log) and coverage (turns not replayed, with reasons) before relying on them.";
+  "Replay on another model: replay_session (one model, per turn) and compare_models_for_session (several, totals) run a session's own request trace through another model's caching rules and prices. Their figures are Simulated, assuming the same conversation and token counts: say \"would have cost about\". Check selfCheck (the replay on the session's own model against its log) and coverage (turns not replayed, with reasons; in a VS Code Copilot Chat session, coverage.helperRequests counts the helper agents' requests it leaves out, such as the todo list and the conversation summary, whose cost stays in the measured figures) before relying on them.";
 
 // Step 10.19: classic Copilot Chat subagent runs, the same for both products.
 export const SUBAGENT_INSTRUCTIONS =

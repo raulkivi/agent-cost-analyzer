@@ -13,7 +13,10 @@
 // and the bundled price book, with no code from the trace builders, the replay
 // service, the simulator or the pricer. Per sampled session it recomputes:
 //   - the turns, the main agent's requests per turn and the turns left out, by
-//     kind (no request, incomplete counts), and the subagent runs left out;
+//     kind (no request, incomplete counts, helpers only), the subagent runs left
+//     out, and Copilot local's helper agents' requests (debugName other than
+//     panel/editAgent), which the replay leaves out and counts (owner decision
+//     2026-11-14);
 //   - each turn's logged cache read, the read the own-model replay must
 //     reproduce (the session's first request left out, A3) and the recorded
 //     D12 outcome (hit, partial, miss);
@@ -27,9 +30,8 @@
 // count is reported and left out of the per-turn checks.
 //
 // Reported, not asserted: the subagent runs outside the replay that coverage
-// doesn't list (Claude Code's transcripts, Agent Host's sub-agent calls; plan
-// §12.1, 14.8 note), and the helper agents' requests (todo list, summary) that
-// Copilot's local trace keeps in the main chain (analyze-session-replay.md §13).
+// doesn't list (Claude Code's transcripts, plan claude-code-subagents.md;
+// Agent Host's sub-agent calls, plan §12.1, 14.8 note).
 //
 // Output carries counts, short hashes of session ids, model ids, token and
 // money figures and tolerances: never a prompt, response, title, file content
@@ -67,7 +69,6 @@ import { FIXTURE_VENDOR_PROFILES_DIR } from "../src/test-support/vendor-profiles
 import {
   agentHostSessionOf,
   claudeCodeSessionOf,
-  LOCAL_MAIN_AGENT,
   leaksIn,
   priceClaudeCodeTurn,
   rankedModels,
@@ -510,21 +511,38 @@ const say = (line: string) => {
     expect(problems).toEqual([]);
   });
 
-  it("coverage counts the subagent runs left out where the provider reads them (Copilot local); the others are reported", () => {
+  it("coverage counts the subagent runs and helper-agent requests left out where the provider reads them (Copilot local); the others are reported", () => {
     const problems: string[] = [];
+    const helperProblems: string[] = [];
     for (const s of of("VS Code local").filter(comparable)) {
       const runs = s.api.own.coverage.subagentRuns?.runs ?? 0;
       if (runs !== s.oracle.subagentRuns) problems.push(`${tag(s.candidate.id)}: ${runs} runs, oracle ${s.oracle.subagentRuns}`);
+      // The helper agents' requests: their count, and their AI Credits (unknown when one isn't recorded).
+      const helpers = s.api.own.coverage.helperRequests;
+      const expected = s.oracle.leftOut;
+      if ((helpers?.requests ?? 0) !== expected.length) helperProblems.push(`${tag(s.candidate.id)}: ${helpers?.requests ?? 0} helper requests, oracle ${expected.length}`);
+      if (helpers && expected.length > 0) {
+        const allKnown = expected.every((r) => r.nanoAiu !== null);
+        const credits = expected.reduce((n, r) => n + (r.nanoAiu ?? 0), 0) / 1_000_000_000;
+        if (helpers.costAiCredits.known !== allKnown || (helpers.costAiCredits.known && !near(helpers.costAiCredits.value, credits))) helperProblems.push(`${tag(s.candidate.id)}: helper AI Credits differ from the oracle's`);
+      }
+      if (JSON.stringify(s.api.compare.helperRequests) !== JSON.stringify(helpers)) helperProblems.push(`${tag(s.candidate.id)}: the comparison's helper requests differ from the replay's`);
     }
     const local = of("VS Code local").filter(comparable);
     say(`Subagent runs, Copilot local: ${local.reduce((n, s) => n + s.oracle.subagentRuns, 0)} runs in ${local.filter((s) => s.oracle.subagentRuns > 0).length} sessions, coverage.subagentRuns equal per session: ${problems.length === 0 ? "PASS" : "FAIL"}`);
+    const helperCredits = local.reduce((n, s) => n + s.oracle.leftOut.reduce((m, r) => m + (r.nanoAiu ?? 0), 0), 0) / 1_000_000_000;
+    say(`Helper-agent requests, Copilot local: ${local.reduce((n, s) => n + s.oracle.leftOut.length, 0)} in ${local.filter((s) => s.oracle.leftOut.length > 0).length} sessions (${helperCredits.toFixed(4)} AI Credits), left out of the chain; coverage.helperRequests count and AI Credits equal per session: ${helperProblems.length === 0 ? "PASS" : "FAIL"}`);
+    problems.push(...helperProblems);
     const claude = of("Claude Code");
     const host = of("Agent Host");
     const claudeRuns = claude.reduce((n, s) => n + s.candidate.subagentFiles + s.oracle.subagentRuns, 0);
     const hostRuns = host.reduce((n, s) => n + s.oracle.subagentRuns, 0);
-    say(`  Claude Code: ${claudeRuns} subagent transcripts in ${claude.filter((s) => s.candidate.subagentFiles + s.oracle.subagentRuns > 0).length} sessions, outside the replay and not in coverage (the provider doesn't read them; plan §12.1, 14.8 note)`);
+    say(`  Claude Code: ${claudeRuns} subagent transcripts in ${claude.filter((s) => s.candidate.subagentFiles + s.oracle.subagentRuns > 0).length} sessions, outside the replay and not in coverage (the provider doesn't read them; plan claude-code-subagents.md, C15)`);
     say(`  Agent Host: ${hostRuns} sub-agents' calls outside the main chain (D6); only a turn with nothing else is listed, as a turn not replayed`);
-    for (const s of [...claude, ...host]) if (s.api.own.coverage.subagentRuns !== undefined) problems.push(`${s.candidate.kind} ${tag(s.candidate.id)}: unexpected subagentRuns`);
+    for (const s of [...claude, ...host]) {
+      if (s.api.own.coverage.subagentRuns !== undefined) problems.push(`${s.candidate.kind} ${tag(s.candidate.id)}: unexpected subagentRuns`);
+      if (s.api.own.coverage.helperRequests !== undefined) problems.push(`${s.candidate.kind} ${tag(s.candidate.id)}: unexpected helperRequests`);
+    }
     expect(problems).toEqual([]);
   });
 
@@ -590,16 +608,10 @@ const say = (line: string) => {
       }
       say(`  ${kind}: ${rows.length - nulls} self-checks (${nulls} null: own model without a profile or 3+ models), ${passed} passed; ${matching} of ${requests} requests match (${pct(matching, requests)}); oracle: ${agreeing} of ${turnsChecked} single-model turns within tolerance, ${confirmed} passing sessions confirmed turn by turn`);
     }
-    // Finding (reported, not asserted): Copilot's local trace keeps the helper
-    // agents' requests (todo list, conversation summary) in the main chain; a
-    // helper on another vendor's model nulls the self-check, and the request
-    // after a helper's is simulated against the helper's prompt.
-    const local = of("VS Code local").filter(comparable);
-    const withHelpers = local.filter((s) => s.oracle.requests.some((r) => r.agent !== undefined && r.agent !== LOCAL_MAIN_AGENT));
-    const helperRequests = local.reduce((n, s) => n + s.oracle.requests.filter((r) => r.agent !== undefined && r.agent !== LOCAL_MAIN_AGENT).length, 0);
-    say(
-      `  Copilot local finding: ${helperRequests} helper-agent requests (not ${LOCAL_MAIN_AGENT}) inside the replayed chain of ${withHelpers.length} of ${local.length} sessions; ${withHelpers.filter((s) => s.api.own.selfCheck === null).length} of those have no self-check, ${withHelpers.filter((s) => s.api.own.selfCheck?.passed === false).length} a failing one`,
-    );
+    // The chain is the main agent's alone (owner decision 2026-11-14): no helper's request is replayed.
+    for (const s of of("VS Code local").filter(comparable)) {
+      if (s.api.own.coverage.requests !== s.oracle.requests.length) problems.push(`VS Code local ${tag(s.candidate.id)}: ${s.api.own.coverage.requests} chain requests, oracle's main agent ${s.oracle.requests.length}`);
+    }
     const passing = (kinds: Kind[]) => sampled.filter((s) => kinds.includes(s.candidate.kind) && s.api.own.selfCheck?.passed === true).length;
     say(`  §13: a Claude Code session passes: ${passing(["Claude Code"]) > 0 ? "PASS" : "FAIL"}; a Copilot session passes: ${passing(["VS Code local", "Agent Host"]) > 0 ? "PASS" : "FAIL"}; oracle disagreements with a passed self-check: ${problems.length}`);
     expect(problems).toEqual([]);
@@ -625,8 +637,10 @@ const say = (line: string) => {
         if (s.candidate.kind === "Claude Code") {
           const priced = priceClaudeCodeTurn(requests, s.oracle.turnStartMs[turn.turnIndex] ?? requests[0]!.atMs, tables);
           expected = priced.known ? priced.usd : undefined;
-        } else if (requests.every((r) => typeof r.nanoAiu === "number")) {
-          expected = requests.reduce((n, r) => n + (r.nanoAiu as number), 0) / 1_000_000_000;
+        } else {
+          // The turn's billed figure is every request's, the helpers' included.
+          const nanos = [...requests.map((r) => r.nanoAiu ?? null), ...s.oracle.leftOut.filter((r) => r.turn === turn.turnIndex).map((r) => r.nanoAiu)];
+          if (nanos.every((n) => typeof n === "number")) expected = nanos.reduce((n: number, v) => n + (v as number), 0) / 1_000_000_000;
         }
         const cost = turn.measured.cost;
         const isPaired = cost.known && turn.simulated?.cost.known === true;

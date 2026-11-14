@@ -12,7 +12,9 @@
 //   - a request is one LLM call of the session's main agent; a turn opens at a
 //     human message (Claude Code: a user line that is not a tool result, CLI
 //     meta text or a compaction summary; Copilot: a user_message span or a
-//     user.message event of the main agent); a turn with any request lacking
+//     user.message event of the main agent; Copilot local's main agent is
+//     debugName panel/editAgent, its helper agents' requests are left out and
+//     counted, owner decision 2026-11-14); a turn with any request lacking
 //     its token counts, model or time is left out whole ("incomplete"), and a
 //     turn with no request is "no-request";
 //   - prompt = the whole input (uncached + cache read + cache write);
@@ -46,7 +48,15 @@ export interface OracleRequest {
 
 export const LOCAL_MAIN_AGENT = "panel/editAgent";
 
-export type UntracedKind = "no-request" | "incomplete";
+export type UntracedKind = "no-request" | "incomplete" | "helpers-only";
+
+// A helper agent's request (Copilot local), outside the main chain.
+export interface LeftOutRequest {
+  turn: number;
+  cacheRead: number | null;
+  nanoAiu: number | null;
+  agent?: string;
+}
 
 export interface OracleSession {
   turns: number;
@@ -58,6 +68,8 @@ export interface OracleSession {
   subagentRuns: number;
   // The human prompts, for the privacy check only: never printed.
   prompts: string[];
+  // Copilot local: the helper agents' requests of every turn.
+  leftOut: LeftOutRequest[];
 }
 
 const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === "object" && value !== null && !Array.isArray(value);
@@ -66,11 +78,11 @@ const asFinite = (value: unknown): number | undefined => (typeof value === "numb
 const timeOf = (value: unknown): number | undefined => (typeof value === "string" && !Number.isNaN(Date.parse(value)) ? Date.parse(value) : undefined);
 
 // Turns are traced whole or not at all; times never go back.
-function assemble(perTurn: Array<Array<OracleRequest | undefined>>, base: Omit<OracleSession, "turns" | "requests" | "untraced">): OracleSession {
+function assemble(perTurn: Array<Array<OracleRequest | undefined>>, base: Omit<OracleSession, "turns" | "requests" | "untraced" | "leftOut">, leftOut: LeftOutRequest[] = []): OracleSession {
   const requests: OracleRequest[] = [];
   const untraced = new Map<number, UntracedKind>();
   perTurn.forEach((figures, turn) => {
-    if (figures.length === 0) untraced.set(turn, "no-request");
+    if (figures.length === 0) untraced.set(turn, leftOut.some((r) => r.turn === turn) ? "helpers-only" : "no-request");
     else if (figures.some((f) => f === undefined)) untraced.set(turn, "incomplete");
     else
       for (const f of figures as OracleRequest[]) {
@@ -78,7 +90,7 @@ function assemble(perTurn: Array<Array<OracleRequest | undefined>>, base: Omit<O
         requests.push({ ...f, turn, atMs: Math.max(f.atMs, previous?.atMs ?? Number.NEGATIVE_INFINITY) });
       }
   });
-  return { ...base, turns: perTurn.length, requests, untraced };
+  return { ...base, turns: perTurn.length, requests, untraced, leftOut };
 }
 
 // ---------------------------------------------------------------- Claude Code
@@ -159,13 +171,25 @@ export function vscodeLocalSessionOf(envelopes: readonly RawLine[]): OracleSessi
     if (envelope.type === "user_message") turns.push([envelope]);
     else turns.at(-1)?.push(envelope);
   }
+  const agentOf = (span: RawLine) => (isRecord(span.attrs) && typeof span.attrs.debugName === "string" ? span.attrs.debugName : undefined);
+  const isMain = (span: RawLine) => span.type === "llm_request" && agentOf(span) === LOCAL_MAIN_AGENT;
+  const leftOut: LeftOutRequest[] = turns.flatMap((turn, index) =>
+    turn
+      .filter((span) => span.type === "llm_request" && !isMain(span))
+      .map((span) => {
+        const attrs = isRecord(span.attrs) ? span.attrs : {};
+        const agent = agentOf(span);
+        return { turn: index, cacheRead: asCount(attrs.cachedTokens) ?? null, nanoAiu: asFinite(attrs.copilotUsageNanoAiu) ?? null, ...(agent !== undefined ? { agent } : {}) };
+      }),
+  );
   return assemble(
-    turns.map((turn) => turn.filter((e) => e.type === "llm_request").map(localFigures)),
+    turns.map((turn) => turn.filter(isMain).map(localFigures)),
     {
       turnStartMs: turns.map((turn) => (typeof turn[0]!.ts === "number" ? turn[0]!.ts : undefined)),
       subagentRuns: turns.flat().filter((e) => e.type === "child_session_ref").length,
       prompts: turns.map((turn) => (isRecord(turn[0]!.attrs) && typeof turn[0]!.attrs.content === "string" ? turn[0]!.attrs.content : "")),
     },
+    leftOut,
   );
 }
 
@@ -241,6 +265,11 @@ export function turnExpectations(session: OracleSession): Map<number, TurnExpect
     out.set(request.turn, turn);
   });
   for (const [turn, seen] of outcomes) out.get(turn)!.outcome = seen.has("miss") ? "miss" : seen.has("partial") ? "partial" : "hit";
+  // A helper's read is part of the turn's measured figure, never of the chain's.
+  for (const helper of session.leftOut) {
+    const turn = out.get(helper.turn);
+    if (turn) turn.loggedRead += helper.cacheRead ?? 0;
+  }
   return out;
 }
 

@@ -539,7 +539,8 @@ raw logs (Claude Code JSONL, `main.jsonl`, the Copilot CLI's
 `events.jsonl`) and the bundled price book, and recomputes per session:
 
 - the turns, the main agent's requests per turn, the turns left out (no
-  request, incomplete counts) and the subagent runs left out;
+  request, incomplete counts, helpers only), the subagent runs left out and
+  Copilot local's helper agents' requests;
 - each turn's logged cache read, the read the own-model replay must
   reproduce (the first request left out, A3) and the recorded D12 outcome;
 - each turn's measured cost: Claude Code priced from the API price book,
@@ -547,7 +548,8 @@ raw logs (Claude Code JSONL, `main.jsonl`, the Copilot CLI's
 
 It asserts: coverage lists exactly the oracle's turns left out, each with a
 reason, and the oracle's request count; Copilot local's subagent runs equal
-`coverage.subagentRuns`; measured cache reads are exact and measured costs
+`coverage.subagentRuns`, and its helper agents' requests and their AI Credits
+equal `coverage.helperRequests`; measured cache reads are exact and measured costs
 within 1e-9; a self-check that passes is confirmed turn by turn (reads
 within 5%, same outcome), and at least one Claude Code and one Copilot
 session pass; every replay is labelled Simulated with A1-A3 and A5 (A4 never
@@ -557,42 +559,58 @@ the standalone API and (for Copilot) the extension's API give identical
 answers; no answer holds the home path or a prompt's opening words; no
 setting or log changes.
 
-**Run on the owner's machine, 2026-11-14 (all 11 assertions pass), pending
-the owner's sign-off:**
+**Copilot local's chain is the main agent's (owner decision 2026-11-14,
+from the first run's finding).** `buildLocalRequestTrace` keeps only the
+requests of `debugName` `panel/editAgent`, by the rule SR6's cache-break
+trace uses (`MAIN_AGENT_DEBUG_NAME`). The helper agents' requests (the
+todo-list agent `backgroundTodoAgent` on `gpt-4o-mini`, the conversation
+summariser, the language-model wrapper, retries and any span without an
+agent name) each have a prompt of their own, so they aren't part of the main
+agent's cache: the replay leaves them out and lists them as
+`coverage.helperRequests` (count and AI Credits, unknown with a reason when
+one isn't recorded), in a comparison too. Their cost stays in the measured
+figures, so on a session with helpers the measured total includes requests
+no replay simulates; the coverage line says so. A turn with helper
+requests only is not replayed, with that reason. Before the change, a
+helper on another vendor's model made the self-check null (7 of the 10
+sampled sessions), and the requests on either side of a helper's were
+compared across two prompts (all 6 such requests missed D12 in the 12
+single-model sessions among the 40 newest).
+
+**Run on the owner's machine, 2026-11-14, after the change (all 11
+assertions pass), pending the owner's sign-off:**
 
 | Provider | Sessions | Turns | Requests | Self-checks passed | Requests matching |
 |---|---|---|---|---|---|
 | Claude Code | 10 | 105 | 797 | 7 of 10 | 784 of 787 (99.6%) |
-| Copilot local | 10 | 65 | 1,127 | 1 of 3 (7 null) | 197 of 204 (96.6%) |
+| Copilot local | 10 | 65 | 1,084 | 1 of 10 (0 null) | 1,053 of 1,074 (98.0%) |
 | Agent Host | 10 | 25 | 78 | 9 of 9 (1 null) | 63 of 63 (100%) |
 
+Before the change, Copilot local read 1 of 3 (7 null), 197 of 204 (96.6%).
+
 - Coverage: 30 sessions compared turn by turn, 3 turns left out with
-  reasons, request counts equal; 192 measured turn reads exact; 167 turn
-  costs and 10 session totals equal to the oracle (largest relative
-  difference 5.2e-16).
+  reasons, request counts equal; Copilot local's 43 helper-agent requests
+  in 8 sessions (284.34 AI Credits, mostly the summariser's) and 3
+  subagent runs in 2 sessions equal the oracle's; 192 measured turn reads
+  exact; 167 turn costs and 10 session totals equal to the oracle (largest
+  relative difference 5.2e-16).
 - 90 replays and 30 comparisons; 200 MCP and API answer pairs identical;
   440 answers free of home paths and prompts; 550 fingerprints unchanged.
-- Every passing self-check agreed with the oracle turn by turn: 142 of 149
+- Every passing self-check agreed with the oracle turn by turn: 178 of 188
   single-model turns within tolerance, every disagreement in a session
   whose self-check failed.
 
-**Findings, reported by the check and not asserted** (for the owner):
+**What still keeps Copilot local's self-checks from passing** (reported,
+not asserted): over the 28 single-model sessions among the 40 newest, 52
+of 2,899 compared requests miss D12 (98.2% match). 35 of them follow a
+shrinking prompt (25 between two main-agent requests, 10 after a helper's
+request, 9 of those a summary's), 7 more read nothing in the log (a cache
+that expired) and 10 follow an unchanged or growing prompt. A per-session pass needs every request to match, so one
+compaction the scripter reads differently fails the session.
 
-1. **Copilot local: helper agents in the main chain.** The local trace
-   keeps every `llm_request` of `main.jsonl`, so the todo-list agent
-   (`backgroundTodoAgent`, on `gpt-4o-mini`) and the conversation summariser
-   sit in the replayed chain: 43 such requests in 8 of the 10 sessions.
-   A helper on another vendor's model makes the self-check null (7
-   sessions), and the requests on either side of a helper's are compared
-   across two different prompts: in the 12 single-model sessions among the
-   40 newest local ones, all 6 such requests missed D12, against 2 of the
-   other 304. Fixing it needs a
-   decision on where the helpers' cost goes (D6, D11): trace the main agent
-   only (`panel/editAgent`, as SR6's cache-break trace does) and compare the
-   turn on the main agent's own figures, or replay the helpers as chains of
-   their own (D6 option b).
-2. **Claude Code subagent transcripts** (`<session>/subagents/*.jsonl`, 46
-   in 4 sampled sessions) are outside the replay and not in its coverage:
-   the Claude Code provider doesn't read them (nor does the session cost).
-   Agent Host sub-agent calls are left out the same way; only a turn with
-   nothing else shows in coverage (§12.1, the 14.8 note).
+**Not in the replay's coverage: Claude Code subagent transcripts**
+(`<session>/subagents/*.jsonl`, 46 in 4 sampled sessions). The Claude Code
+provider doesn't read them, nor does the session cost; a separate 1.0 plan
+covers them (`docs/plans/claude-code-subagents.md`, criterion C15). Agent
+Host sub-agent calls are left out the same way; only a turn with nothing
+else shows in coverage (§12.1, the 14.8 note).

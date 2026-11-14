@@ -1,10 +1,11 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
 import { createHash } from "node:crypto";
-import type { PromptChangeMarker, RequestTrace, TraceRequest, UntracedTurn } from "@agent-cost-analyzer/domain";
+import { sumTokenCounts, unavailableTokenCount, type HelperRequests, type PromptChangeMarker, type RequestTrace, type TraceRequest, type UntracedTurn } from "@agent-cost-analyzer/domain";
 import type { CacheBreakTrace } from "../log-providers/log-provider.js";
 import type { AgentTraceUsage } from "../agent-traces/agent-traces-reader.js";
 import type { JsonlEnvelope } from "./main-jsonl-reader.js";
+import { extractLlmRequestUsage } from "./llm-request-extractor.js";
 import { groupEnvelopesByUserMessage } from "./session-usage-spans.js";
 
 // Phase 14 step 14.2 (docs/plans/analyze-session-replay.md §4.1, §5): a
@@ -16,6 +17,9 @@ import { groupEnvelopesByUserMessage } from "./session-usage-spans.js";
 export const PROVIDER_ID = "vscode";
 export const NOT_IN_DEBUG_LOG_REASON =
   "Copilot Chat's debug log (main.jsonl) has no request for this turn: logging was off then, or the log couldn't be matched to it.";
+export const HELPER_AGENTS_ONLY_REASON =
+  "This turn's debug log has only requests of Copilot's helper agents (todo list, conversation summary and the like), which a replay leaves out: they have prompts of their own.";
+const HELPER_COST_UNKNOWN_REASON = "The debug log records no AI Credits for at least one helper agent's request.";
 export const UNUSABLE_REQUEST_REASON =
   "A request in this turn's debug log has no complete token counts (input, cached, output), model or time.";
 
@@ -71,14 +75,20 @@ interface TracedSpan {
 // left out rather than put in the wrong turn (as readSession does). Every
 // session turn with no traced request is listed with its reason. `accept`
 // narrows the spans considered (the main agent, for the cache-break trace).
-function tracedSpans(input: LocalRequestTraceInput, accept: (span: JsonlEnvelope) => boolean): { spans: TracedSpan[]; reasons: Map<number, string> } {
+function tracedSpans(input: LocalRequestTraceInput, accept: (span: JsonlEnvelope) => boolean): { spans: TracedSpan[]; reasons: Map<number, string>; others: JsonlEnvelope[] } {
   const spans: TracedSpan[] = [];
   const reasons = new Map<number, string>();
+  const others: JsonlEnvelope[] = [];
   groupEnvelopesByUserMessage(input.envelopes).forEach((group, logTurn) => {
     const turnIndex = input.alignment[logTurn];
     if (turnIndex === null || turnIndex === undefined) return;
-    const requests = group.filter((envelope) => envelope.type === "llm_request" && accept(envelope));
-    if (requests.length === 0) return;
+    const all = group.filter((envelope) => envelope.type === "llm_request");
+    const requests = all.filter(accept);
+    others.push(...all.filter((envelope) => !accept(envelope)));
+    if (requests.length === 0) {
+      if (all.length > 0) reasons.set(turnIndex, HELPER_AGENTS_ONLY_REASON);
+      return;
+    }
     const figures = requests.map((span) => figuresOf(span, input.agentTraceUsage));
     if (figures.some((value) => value === null)) {
       reasons.set(turnIndex, UNUSABLE_REQUEST_REASON);
@@ -86,10 +96,21 @@ function tracedSpans(input: LocalRequestTraceInput, accept: (span: JsonlEnvelope
     }
     requests.forEach((span, position) => spans.push({ turnIndex, span, figures: figures[position]! }));
   });
-  return { spans, reasons };
+  return { spans, reasons, others };
 }
 
-function assemble(input: LocalRequestTraceInput, { spans, reasons }: ReturnType<typeof tracedSpans>): RequestTrace {
+// The other agents' requests of the placed turns, with their AI Credits
+// (unknown, never 0, when one isn't recorded); undefined for none.
+function helperRequestsOf(others: readonly JsonlEnvelope[]): HelperRequests | undefined {
+  if (others.length === 0) return undefined;
+  const credits = others.map((span) => {
+    const aiCredits = extractLlmRequestUsage(span)?.aiCredits;
+    return typeof aiCredits === "number" ? { known: true as const, value: aiCredits } : unavailableTokenCount(HELPER_COST_UNKNOWN_REASON);
+  });
+  return { requests: others.length, costAiCredits: sumTokenCounts(credits, HELPER_COST_UNKNOWN_REASON) };
+}
+
+function assemble(input: LocalRequestTraceInput, { spans, reasons, others }: ReturnType<typeof tracedSpans>): RequestTrace {
   const requests: TraceRequest[] = [];
   for (const { turnIndex, figures } of spans) {
     const previous = requests.at(-1);
@@ -102,11 +123,15 @@ function assemble(input: LocalRequestTraceInput, { spans, reasons }: ReturnType<
     .sort((a, b) => a - b)
     .filter((turnIndex) => !traced.has(turnIndex))
     .map((turnIndex) => ({ turnIndex, reason: reasons.get(turnIndex) ?? NOT_IN_DEBUG_LOG_REASON }));
-  return { sessionId: input.sessionId, providerId: PROVIDER_ID, harness: "vscode-local", requests, notTraced };
+  const helperRequests = helperRequestsOf(others);
+  return { sessionId: input.sessionId, providerId: PROVIDER_ID, harness: "vscode-local", requests, notTraced, ...(helperRequests ? { helperRequests } : {}) };
 }
 
+// The main agent's chain only (owner decision 2026-11-14, plan §13 finding 1):
+// a helper agent's request has a prompt of its own, so it isn't part of the
+// main agent's cache. Its requests are counted in helperRequests instead.
 export function buildLocalRequestTrace(input: LocalRequestTraceInput): RequestTrace {
-  return assemble(input, tracedSpans(input, () => true));
+  return assemble(input, tracedSpans(input, isMainAgent));
 }
 
 // Phase 16 SR6 (docs/plans/savings-report.md §4 O3, §15 a): the cache follows

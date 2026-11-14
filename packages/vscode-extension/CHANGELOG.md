@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The savings report in the chat: `get_savings_report` shows its ranked changes as a view (a range or "up to" per week, coverage, the Simulated section, Not analysed). A row opens in place with its action text and sessions; a session opens its cost or its replay in place, with Back. It sends nothing to the chat.
 
 ### Fixed
+- Replaying a local Copilot Chat session on another model now follows the main agent's requests only. The todo-list agent's and the conversation summary's requests have prompts of their own; they used to be replayed as part of the main agent's cache, which made the self-check unavailable (a helper on another vendor's model) or fail next to them. They are now left out and listed in the replay's coverage with their AI Credits (`coverage.helperRequests` in `replay_session` and `compare_models_for_session`); their cost stays in the measured figures.
 - Learn's Vendors tab fits the panel's side column: one block per model instead of a six-column table, so names no longer wrap and the Misses column is no longer cut off. Sorting moves to a **Sort by** selector.
 
 ### Changed

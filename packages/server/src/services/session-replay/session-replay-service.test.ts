@@ -1097,3 +1097,31 @@ describe("SessionReplayService.replay: subagent runs (step 10.19)", () => {
     expect(folded.selfCheck).toEqual(plain.selfCheck);
   });
 });
+
+// Owner decision 2026-11-14 (plan §13, finding 1): Copilot's local trace is
+// the main agent's chain; the helper agents' requests it leaves out are named
+// in the coverage, and in a comparison, as the subagent runs are.
+describe("SessionReplayService, helper agents' requests outside the replay", () => {
+  const helpers = { requests: 3, costAiCredits: { known: true as const, value: 0.25 } };
+  const serviceWith = (overrides: Partial<RequestTrace>) =>
+    serviceOf([new TraceProvider("vscode", [copilotSession(FOUR_SONNET)], [traceOf("vscode", "vscode-local", FOUR_SONNET, overrides)])]);
+
+  it("names them and their AI Credits in the coverage", async () => {
+    const result = await serviceWith({ helperRequests: helpers }).replay({ sessionId: "s-1", model: "gpt-6.1-sol" });
+    if (result.status !== "ok") throw new Error(result.status);
+    expect(result.value.coverage.helperRequests).toEqual(helpers);
+    expect(sessionReplaySchema.safeParse(result.value).success).toBe(true);
+  });
+
+  it("carries them into a comparison", async () => {
+    const result = await serviceWith({ helperRequests: helpers }).compare({ sessionId: "s-1", models: ["gpt-6.1-sol"] });
+    if (result.status !== "ok") throw new Error(result.status);
+    expect(result.value.helperRequests).toEqual(helpers);
+  });
+
+  it("leaves the coverage without them when the trace has none", async () => {
+    const result = await serviceWith({}).replay({ sessionId: "s-1", model: "gpt-6.1-sol" });
+    if (result.status !== "ok") throw new Error(result.status);
+    expect(result.value.coverage.helperRequests).toBeUndefined();
+  });
+});

@@ -75,6 +75,13 @@ describe("sessionReplaySchema", () => {
     expect(sessionReplaySchema.safeParse(replay({ coverage: { ...replay().coverage, subagentRuns: { runs: -1, costAiCredits: { known: true, value: 1 } } } })).success).toBe(false);
   });
 
+  it("accepts the helper agents' requests outside the replay, and omits them when absent", () => {
+    const helpers = { requests: 4, costAiCredits: { known: true as const, value: 0.5 } };
+    expect(sessionReplaySchema.parse(replay({ coverage: { ...replay().coverage, helperRequests: helpers } })).coverage.helperRequests).toEqual(helpers);
+    expect(sessionReplaySchema.parse(replay()).coverage.helperRequests).toBeUndefined();
+    expect(sessionReplaySchema.safeParse(replay({ coverage: { ...replay().coverage, helperRequests: { requests: 0, costAiCredits: helpers.costAiCredits } } })).success).toBe(false);
+  });
+
   it("passes the self-check only when every request matched", () => {
     expect(sessionReplaySchema.safeParse(replay({ selfCheck: { ...replay().selfCheck!, matching: 1, passed: true } })).success).toBe(false);
     expect(sessionReplaySchema.safeParse(replay({ selfCheck: null })).success).toBe(true);
@@ -132,6 +139,12 @@ describe("sessionReplayComparisonSchema", () => {
     expect(sessionReplayComparisonSchema.parse({ ...comparison, subagentRuns: runs }).subagentRuns).toEqual(runs);
     expect(sessionReplayComparisonSchema.parse(comparison).subagentRuns).toBeUndefined();
     expect(sessionReplayComparisonSchema.safeParse({ ...comparison, subagentRuns: { runs: -1, costAiCredits: runs.costAiCredits } }).success).toBe(false);
+  });
+
+  it("accepts the helper agents' requests left out of the comparison, and omits them when absent", () => {
+    const helpers = { requests: 2, costAiCredits: { known: false as const, reason: "not recorded" } };
+    expect(sessionReplayComparisonSchema.parse({ ...comparison, helperRequests: helpers }).helperRequests).toEqual(helpers);
+    expect(sessionReplayComparisonSchema.parse(comparison).helperRequests).toBeUndefined();
   });
 
   it("accepts the session's total on several models", () => {

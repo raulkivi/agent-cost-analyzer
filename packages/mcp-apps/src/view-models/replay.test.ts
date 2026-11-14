@@ -66,6 +66,15 @@ describe("toReplayViewModel, replay mode", () => {
     expect(full.coverage).toMatchObject({ text: "3 of 3 turns replayed", partial: false, notReplayed: [] });
   });
 
+  it("lists the helper agents' requests the replay leaves out, and nothing without them", () => {
+    const base = replay().coverage;
+    expect(detail().coverage.helperRequestsText).toBeUndefined();
+    const withHelpers = detail({ coverage: { ...base, helperRequests: { requests: 3, costAiCredits: { known: true, value: 0.25 } } } });
+    expect(withHelpers.coverage.helperRequestsText).toBe("3 helper-agent requests not replayed: each has a prompt of its own (todo list, conversation summary)");
+    const one = detail({ coverage: { ...base, helperRequests: { requests: 1, costAiCredits: { known: false, reason: "not recorded" } } } });
+    expect(one.coverage.helperRequestsText).toBe("1 helper-agent request not replayed: each has a prompt of its own (todo list, conversation summary)");
+  });
+
   it("lists the subagent runs the replay leaves out, and nothing without them", () => {
     const base = replay().coverage;
     expect(detail().coverage.subagentRunsText).toBeUndefined();

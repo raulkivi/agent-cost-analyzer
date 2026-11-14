@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import type { Currency, ReplayCoverage, ReplayPricing, ReplaySelfCheck, ReplaySubagentRuns, SimulatedCost } from "@agent-cost-analyzer/domain";
+import type { Currency, HelperRequests, ReplayCoverage, ReplayPricing, ReplaySelfCheck, ReplaySubagentRuns, SimulatedCost } from "@agent-cost-analyzer/domain";
 import { aiCreditsToUsd, formatUsd } from "./ai-credits-usd.js";
 
 // Phase 14 step 14.7: the words and numbers the replay views share (mock-up
@@ -63,14 +63,28 @@ export function subagentRunsCostSentence(runs: ReplaySubagentRuns | undefined): 
   return cost.known ? `Their cost is ${formatReplayAmount(cost.value, "AI_CREDITS")} AI Credits.` : `Their cost is ${UNKNOWN}: ${cost.reason}`;
 }
 
+// Copilot's helper agents' requests the replay leaves out of the main chain
+// (plan §13, finding 1). Nothing for none.
+export function helperRequestsSentence(helpers: HelperRequests | undefined): string | undefined {
+  if (helpers === undefined || helpers.requests === 0) return undefined;
+  return `${helpers.requests} helper-agent ${helpers.requests === 1 ? "request" : "requests"} not replayed: each has a prompt of its own (todo list, conversation summary)`;
+}
+
+// Their AI Credits stay in the measured figures; unknown is never 0.
+export function helperRequestsCostSentence(helpers: HelperRequests | undefined): string | undefined {
+  if (helperRequestsSentence(helpers) === undefined) return undefined;
+  const cost = helpers!.costAiCredits;
+  return cost.known ? `Their cost, ${formatReplayAmount(cost.value, "AI_CREDITS")} AI Credits, stays in the measured figures.` : `Their cost is ${UNKNOWN}: ${cost.reason}`;
+}
+
 export function coverageSentence(coverage: ReplayCoverage): string {
   const base = `${coverage.replayedTurns} of ${coverage.turns} turns replayed`;
   const missing = coverage.notReplayed.reduce((sum, group) => sum + group.turns, 0);
   let sentence = base;
   if (coverage.notReplayed.length === 1 && missing > 0) sentence = `${base}; ${missing} not replayed: ${coverage.notReplayed[0]!.reason}`;
   else if (coverage.notReplayed.length > 1 && missing > 0) sentence = `${base}; ${missing} not replayed, for ${coverage.notReplayed.length} reasons`;
-  const subagents = subagentRunsSentence(coverage.subagentRuns);
-  return subagents === undefined ? sentence : `${sentence}; ${subagents}`;
+  const leftOut = [subagentRunsSentence(coverage.subagentRuns), helperRequestsSentence(coverage.helperRequests)].filter((part): part is string => part !== undefined);
+  return [sentence, ...leftOut].join("; ");
 }
 
 // G4: "Replay matches the log on <model>: N% of compared requests". A failed

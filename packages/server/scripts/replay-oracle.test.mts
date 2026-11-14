@@ -126,7 +126,7 @@ const llm = (minutes: number, input: number, cached: number, output: number, nan
   envelope("llm_request", T0 + minutes * 60_000, { model: "claude-opus-4.8", debugName, inputTokens: input, cachedTokens: cached, outputTokens: output, ...(nano !== undefined ? { copilotUsageNanoAiu: nano } : {}) });
 
 describe("vscodeLocalSessionOf", () => {
-  it("groups llm_request spans by user_message, keeps the billed nano AIU and the agent's name, and counts subagent refs", () => {
+  it("groups the main agent's llm_request spans by user_message, keeps the billed nano AIU, and counts subagent refs and helper requests", () => {
     const session = vscodeLocalSessionOf([
       envelope("session_start", T0),
       llm(0, 9, 0, 1), // before any user message: no turn owns it
@@ -139,19 +139,26 @@ describe("vscodeLocalSessionOf", () => {
       llm(6, 50, 60, 1), // cached > input: unusable
       envelope("user_message", T0 + 7, { content: "last" }),
       llm(8, 140, 130, 2),
+      envelope("user_message", T0 + 9, { content: "summary only" }),
+      llm(10, 150, 140, 3, 100_000_000, "summarizeConversationHistory"),
     ]);
-    expect(session.turns).toBe(4);
-    expect(session.requests.map((r) => [r.turn, r.prompt, r.cacheRead, r.output, r.nanoAiu, r.agent])).toEqual([
-      [0, 100, 0, 10, 2_000_000_000, "panel/editAgent"],
-      [0, 130, 100, 5, 500_000_000, "backgroundTodoAgent"],
-      [3, 140, 130, 2, null, "panel/editAgent"],
+    expect(session.turns).toBe(5);
+    expect(session.requests.map((r) => [r.turn, r.prompt, r.cacheRead, r.output, r.nanoAiu])).toEqual([
+      [0, 100, 0, 10, 2_000_000_000],
+      [3, 140, 130, 2, null],
+    ]);
+    // Owner decision 2026-11-14: helper agents' requests are left out of the chain, and counted.
+    expect(session.leftOut.map((r) => [r.turn, r.cacheRead, r.nanoAiu, r.agent])).toEqual([
+      [0, 100, 500_000_000, "backgroundTodoAgent"],
+      [4, 140, 100_000_000, "summarizeConversationHistory"],
     ]);
     expect([...session.untraced.entries()]).toEqual([
       [1, "no-request"],
       [2, "incomplete"],
+      [4, "helpers-only"],
     ]);
     expect(session.subagentRuns).toBe(1);
-    expect(session.prompts).toEqual(["explain the parser", "now no model call", "broken one", "last"]);
+    expect(session.prompts).toEqual(["explain the parser", "now no model call", "broken one", "last", "summary only"]);
   });
 });
 
@@ -212,6 +219,7 @@ const sessionOf = (requests: OracleRequest[], turns: number): OracleSession => (
   untraced: new Map(),
   subagentRuns: 0,
   prompts: [],
+  leftOut: [],
 });
 
 describe("recordedOutcome", () => {
@@ -241,6 +249,11 @@ describe("turnExpectations", () => {
     expect(expected.get(1)).toBeUndefined();
     expect(expected.get(2)).toEqual({ loggedRead: 500, comparedRead: 500, outcome: "miss", holdsFirstRequest: false, requests: 2 });
     expect(expected.get(3)?.outcome).toBe("hit");
+  });
+
+  it("counts the helper requests' reads in the turn's logged read, never in the compared one", () => {
+    const session = { ...sessionOf([req(0, 1000, 0), req(0, 1100, 1000)], 1), leftOut: [req(0, 200, 150)] };
+    expect(turnExpectations(session).get(0)).toMatchObject({ loggedRead: 1150, comparedRead: 1000, requests: 2 });
   });
 
   it("has no outcome for a turn whose only request is the first", () => {

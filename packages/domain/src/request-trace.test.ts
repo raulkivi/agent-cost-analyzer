@@ -38,6 +38,15 @@ describe("requestTraceSchema", () => {
     }
   });
 
+  it("accepts the helper agents' requests left out of the chain, with their AI Credits known or not, and omits them when absent", () => {
+    const helpers = { requests: 3, costAiCredits: { known: true as const, value: 0.25 } };
+    expect(requestTraceSchema.parse(trace({ helperRequests: helpers })).helperRequests).toEqual(helpers);
+    expect(requestTraceSchema.safeParse(trace({ helperRequests: { requests: 1, costAiCredits: { known: false, reason: "not recorded" } } })).success).toBe(true);
+    expect(requestTraceSchema.parse(trace()).helperRequests).toBeUndefined();
+    expect(requestTraceSchema.safeParse(trace({ helperRequests: { requests: 0, costAiCredits: helpers.costAiCredits } })).success).toBe(false);
+    expect(requestTraceSchema.safeParse(trace({ helperRequests: { ...helpers, debugName: "backgroundTodoAgent" } as never })).success).toBe(false);
+  });
+
   it("rejects 1-hour writes larger than all writes", () => {
     const request = { ...trace().requests[1]!, extendedCacheWrite: 401 };
     expect(requestTraceSchema.safeParse(trace({ requests: [request] })).success).toBe(false);

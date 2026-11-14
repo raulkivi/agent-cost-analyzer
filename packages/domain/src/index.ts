@@ -460,10 +460,12 @@ export {
   traceEventSchema,
   traceRequestSchema,
   untracedTurnSchema,
+  helperRequestsSchema,
   requestTraceSchema,
   type TraceEvent,
   type TraceRequest,
   type UntracedTurn,
+  type HelperRequests,
   type RequestTrace,
   type PromptChangeMarker,
 } from "./request-trace.js";
