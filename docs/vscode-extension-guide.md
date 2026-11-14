@@ -15,8 +15,8 @@ Microsoft.
 This guide covers what is specific to the extension. The analysis views
 themselves are shared with the standalone app and are described in the
 [User Guide](UserGuide.md); this guide links to the right section rather
-than repeating it. If you use Claude Code, the pi coding agent or
-mitmproxy captures, use the standalone app instead (see the
+than repeating it. If you use Claude Code or the pi coding agent,
+use the standalone app instead (see the
 [README](../README.md)).
 
 ![The AI Credits Analyzer panel in Dark Modern: a session's turns with token, cache and AI Credits columns, and the selected turn's explanation](images/vscode/panel-dark.png)

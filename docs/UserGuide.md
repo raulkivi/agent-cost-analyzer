@@ -4,7 +4,7 @@
 
 A walkthrough of the Agent Cost Analyzer's two modes — **Learn** (guided,
 bundled example sessions) and **Analyze** (your own real sessions from VS
-Code Copilot Chat, Claude Code, pi or mitmproxy captures) — with
+Code Copilot Chat, Claude Code or pi, and, optionally, mitmproxy captures) — with
 screenshots of every major feature. For install steps, see the
 [README](../README.md) and [standalone app setup](standalone-app.md); for the app's design/architecture, see
 [architecture.md](architecture.md).
@@ -12,7 +12,7 @@ screenshots of every major feature. For install steps, see the
 **Using VS Code with GitHub Copilot Chat?** The AI Credits Analyzer
 extension shows the same views inside VS Code. See the
 [VS Code extension guide](vscode-extension-guide.md). This guide covers the
-standalone app, which also reads Claude Code, pi and mitmproxy sessions.
+standalone app, which also reads Claude Code and pi sessions.
 
 ## Getting started
 
@@ -205,12 +205,10 @@ header area also holds the **Retention** field described below:
   reason. Tool and vision tokens stay unknown. The Tools tab stays
   unavailable, since the log records no tool definitions. Agent Host
   sessions need none of the settings below.
-- **mitmproxy (HAR capture)** — reads a local mitmproxy HAR capture instead,
-  for Anthropic/OpenAI API traffic recorded outside VS Code. See
-  [mitmproxy-setup.md](mitmproxy-setup.md) for how to record a capture. A
-  single capture is automatically split into separate sessions wherever
-  there's a 30+ minute idle gap between requests, so unrelated runs left
-  recording in the background don't get mixed into one session.
+- **mitmproxy (HAR capture, optional)** — only for coding agents that write
+  no usable local logs, such as tools calling the Anthropic or OpenAI API
+  directly. See [mitmproxy-setup.md](mitmproxy-setup.md). Captures are split
+  into sessions at 30+ minute idle gaps.
 - **Claude Code** — reads the Claude Code CLI's own session files directly
   from `~/.claude/projects/`, one session per file, no capture step needed.
 - **pi coding agent** — reads session logs written by the [pi coding

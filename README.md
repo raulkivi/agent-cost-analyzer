@@ -11,7 +11,7 @@ already write on your own machine and show every session turn by turn:
 - **AI Credits Analyzer** is a VS Code extension for GitHub Copilot Chat and
   its AI Credits.
 - **Agent Cost Analyzer** is a standalone app for Claude Code, GitHub
-  Copilot, the pi coding agent and mitmproxy captures of LLM traffic.
+  Copilot and the pi coding agent.
 
 Both run locally and are read-only. Nothing leaves your machine.
 
@@ -43,7 +43,7 @@ Both run locally and are read-only. Nothing leaves your machine.
 | You use | Install |
 |---|---|
 | GitHub Copilot Chat in VS Code | AI Credits Analyzer, the extension |
-| Claude Code, pi, mitmproxy captures, or several tools at once | Agent Cost Analyzer, the standalone app (it reads Copilot Chat sessions too) |
+| Claude Code, pi, or several tools at once | Agent Cost Analyzer, the standalone app (it reads Copilot Chat sessions too) |
 
 ## Get started: AI Credits Analyzer (VS Code)
 
@@ -76,7 +76,7 @@ npm start
 
 `npm start` runs the app and opens it in your browser at
 http://127.0.0.1:5173. Learn mode works straight away. Switch to Analyze mode
-and pick a source (VS Code Copilot Chat, Claude Code, pi or mitmproxy) to see
+and pick a source (VS Code Copilot Chat, Claude Code or pi) to see
 your own sessions. Claude Code and pi need no setup, because the app reads
 their session files directly.
 
@@ -114,7 +114,7 @@ Claude Desktop shows a month's cost for every provider at once, and opens the vi
   or reports telemetry.
 - They only read: your tools' own session logs (Copilot Chat's session store
   and debug logs, `~/.claude/projects/`, `~/.pi/agent/sessions/`, and
-  mitmproxy captures you export yourself). They never change those files or
+  optionally, mitmproxy captures you export yourself). They never change those files or
   your tools' settings.
 - Exporting a session for AI advice copies metadata only (token usage, cache
   efficiency, tool usage, AI Credits). It never includes your chat text.

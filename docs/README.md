@@ -68,7 +68,7 @@ An npm workspace:
 - [Copilot Chat source investigation](copilot-chat-source-investigation.md) —
   findings from inspecting the Copilot Chat extension's own source for
   richer cache/token-usage log data than `main.jsonl` carries.
-- [mitmproxy setup](mitmproxy-setup.md) — how to install mitmproxy,
+- [mitmproxy setup](mitmproxy-setup.md) — optional: how to install mitmproxy,
   trust its CA, capture LLM-provider traffic, and export it as a `.har`
   file the app's `mitmproxy` provider can read.
 - [Threat model](threat-model.md) — trust boundaries, STRIDE analysis
