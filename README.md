@@ -1,6 +1,6 @@
 # Agent Cost Analyzer
 
-**Last changed:** 2026-11-13 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-14 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 Independent project; not affiliated with or endorsed by GitHub or Microsoft.
 
@@ -15,7 +15,7 @@ already write on your own machine and show every session turn by turn:
 
 Both run locally and are read-only. Nothing leaves your machine.
 
-![The AI Credits Analyzer extension in VS Code: Sessions grouped by day with their AI Credits, a session open in the panel, and today's AI Credits in the status bar](docs/images/vscode/sidebar.png)
+![The AI Credits Analyzer extension in VS Code after a Copilot chat: the new session under Today in Sessions with its AI Credits and tooltip, and today's AI Credits in the status bar](docs/images/demo/e2-chat-cost.gif)
 
 ## What you can find out
 
@@ -80,6 +80,8 @@ and pick a source (VS Code Copilot Chat, Claude Code, pi or mitmproxy) to see
 your own sessions. Claude Code and pi need no setup, because the app reads
 their session files directly.
 
+![The standalone app in Learn mode, switched from Light to Dark: a scenario's turn table with cache reads and writes, and a compaction marker on one turn](docs/images/demo/w1-learn.gif)
+
 ![The standalone app on load, with Learn and Analyze modes](docs/images/landing-page.png)
 
 More: [setup and data sources](docs/standalone-app.md) (where each tool keeps
@@ -93,6 +95,8 @@ Code, Claude Desktop or Copilot Chat and ask "what drove my spend this week?"
 or "which commands failed most?". In hosts that support MCP Apps, such as
 Claude Desktop and VS Code Copilot Chat, the cost and findings answers also
 show interactive views.
+
+![Copilot agent mode answering "What drove my spend this week?" with a cost rollup view in the chat, then one top session drilled down to its turns](docs/images/demo/e9-ask-copilot.gif)
 
 - Extension: turn on the `aiCreditsAnalyzer.mcp.enabled` setting. See
   [the MCP server for Copilot agent mode](docs/vscode-extension-guide.md#the-mcp-server-for-copilot-agent-mode).
