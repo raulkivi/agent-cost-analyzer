@@ -1,6 +1,6 @@
 # VS Code UI automation of the manual checks
 
-**Last changed:** 2026-11-11 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-14 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 Status: **merged to `main` (#117, #121, #127; later specs #139, #157,
 #172); T15 and Q2 closed by the owner's decision D4, 2026-11-11: the job is required and runs in the release workflow (step 10.17 G1, #202)**; §6 records
@@ -616,3 +616,24 @@ The after-chat check of the logged model id (item 4 below) stays. 1.14's chat is
 **Cost:** three short prompts on a $0.10/$0.50 per million model; measured 0.7643 and 0.9313 AI Credits for the three sessions (two runs, 2026-11-11): the agent's system prompt dominates, not the prompts. The views chat adds about 0.55-0.58 AI Credits (G4: 0.46-0.58 over eight runs), so a whole run cost about 1.2-1.3 (1.2356 on the passing run, 2026-11-11). Since A33 the Increment 3 views chat adds about 0.44-0.46 (U5's Analyse only stages its text, so it costs nothing): the whole suite, 33 tests, cost 1.5542 on its passing run (2026-11-11, `5da99bb`). Up to about 2 AI Credits per release run is acceptable (D8), and the run stops sending at `COPILOT_E2E_MAX_AI_CREDITS` (default 3, owner decision D12). Each spec prints what its chats spent (`AI Credits spent by the sessions of this spec`, `... by the views chat`); the release evidence records the sum.
 
 **Owner to do once:** the sign-in step above, then the run command; expected result: 33 tests green (1.4, 2.3, 2.4, the 13 view tests of G4, the two 2.1 and four 1.14 tests of G7, and the 11 Increment 3 view tests of A33). Anything red: attach the output; a stuck chat usually means a dialog or a confirmation in the window (in normal mode nothing auto-confirms them).
+
+## 8. Demo recordings
+
+The demo scenes record the README GIFs and some docs stills. They are recorders, not checks: they never gate a release, and they are not in CI, `test:ui:vscode` or `npm test`. Plan: [docs-refresh-and-demo-recordings.md](docs-refresh-and-demo-recordings.md).
+
+Commands:
+
+- `npm run demo:record -w packages/vscode-extension`: the free scenes (E1, E3–E8, E10) with made-up data. `-- --spec test/ui/demo/<file>` records one scene.
+- `npm run demo:record:copilot -w packages/vscode-extension`: the real-Copilot scenes (E2, E9). Opt-in: set `COPILOT_E2E=1` and `COPILOT_E2E_USER_DATA_DIR` (the signed-in profile from §7), and `COPILOT_E2E_MAX_AI_CREDITS`. A take costs about 0.1–0.3 AI Credits.
+- `npm run demo:record -w packages/web`: the standalone app's scenes (W1–W3). Build the web package first.
+- `npm run demo:gif -w packages/vscode-extension -- <master> [--trim start,duration] [--out-dir dir]`: turns a master into a GIF.
+
+Rules:
+
+- **Frame.** Xvfb at 1600×1000 (`xvfb-run -s "-screen 0 1600x1000x24"`). With no window manager, `scripts/demo/fit-window.py` resizes VS Code to fill it. GIFs stay at 1:1.
+- **Masters and stills.** Masters (MP4/WebM and their JSON) go to `demo-masters/`, git-ignored, or to `AICA_DEMO_MASTERS`. Stills go to `demo-masters/stills/`. Copy approved files into `docs/images/` by hand.
+- **Stills the scenes produce.** `walkthrough.png` (E1), `sidebar.png` (E6), `savings.png` (E5), `allowance.png` (E7) and `mcp-agent-mode.png` (E9). See [vscode-extension-manual-checks.md](vscode-extension-manual-checks.md) §4.
+- **Privacy.** Set `DEMO_FORBIDDEN` in the shell, never in a committed file: a comma-separated list of login and email strings (at least 3 characters each). The home path and username are always forbidden. A scene whose text contains a forbidden term fails and deletes its master.
+- **GIF budget.** At most 20 s, 8 MB, 1:1.
+- **Time of day.** Don't record between 00:00 and 01:15 local time. The fixture's "today" sessions start 12–75 minutes before the run, so they fall on yesterday until then.
+- **Where the scenes live.** `test/ui/demo/` (free, VS Code), `test/ui/demo-copilot/` (real Copilot) and `packages/web/e2e/demo/` (standalone app). The shared driver is `test/ui/demo/support/demo-driver.ts`.
