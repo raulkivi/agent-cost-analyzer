@@ -6,7 +6,7 @@
 // --dry-run launches Desktop, reports template scores and sends nothing.
 // Run it under `flock "$XDG_RUNTIME_DIR/aica-demo.lock"`.
 import { execFileSync } from "node:child_process";
-import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { homedir, tmpdir } from "node:os";
 import path from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
@@ -95,10 +95,7 @@ async function main(): Promise<void> {
       const scores = await probe.scores(names);
       for (const [name, m] of Object.entries(scores)) log(`${name}: score ${m.score} at ${m.x},${m.y}`);
       log(`templates not yet cut: ${needed.filter((n) => !existsSync(templatePath(n))).join(", ") || "none"}`);
-      mkdirSync(mastersDir(), { recursive: true });
-      const frame = path.join(mastersDir(), "desktop-dry-run.png");
-      copyFileSync(path.join(tmp, "frame.png"), frame);
-      log(`frame for review (shows the account; never commit): ${frame}`);
+      // No frame is kept: the new-chat screen shows the owner's name and recent artifacts (D17).
       log("dry run done; nothing was sent");
       finished = true;
       return;
