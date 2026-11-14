@@ -627,7 +627,7 @@ Commands:
 - `npm run demo:record:copilot -w packages/vscode-extension`: the real-Copilot scenes (E2, E9). Opt-in: set `COPILOT_E2E=1` and `COPILOT_E2E_USER_DATA_DIR` (the signed-in profile from §7), and `COPILOT_E2E_MAX_AI_CREDITS`. A take costs about 0.1–0.3 AI Credits.
 - `npm run demo:record -w packages/web`: the standalone app's scenes (W1–W3). Build the web package first.
 - `npm run demo:gif -w packages/vscode-extension -- <master> [--trim start,duration] [--out-dir dir]`: turns a master into a GIF.
-- Fake-host close-ups F1–F3 (MCP App views in the fake host): `npm run build --workspace=packages/mcp-apps && npm run demo:record --workspace=packages/mcp-apps`, optionally with a scene filter. Masters go to `$AICA_DEMO_MASTERS` (default `demo-masters/`); turn one into a GIF with `npm run demo:gif -w packages/vscode-extension -- <master.mp4> [--trim start,dur]`.
+- Fake-host close-ups F1–F3 (MCP App views in the fake host): `npm run build --workspace=packages/mcp-apps && npm run demo:record --workspace=packages/mcp-apps` (one scene: append `-- f3`). Masters go to `$AICA_DEMO_MASTERS` (default `demo-masters/`); turn one into a GIF with `npm run demo:gif -w packages/vscode-extension -- <master.mp4> [--trim start,dur]`.
 - Claude Desktop scenes M1–M7: `npm run demo:record:desktop -w packages/vscode-extension -- M1`. `--dry-run` launches Desktop, reports template scores and sends nothing.
   - Prerequisites: `xdotool`, Xvfb, python3 with OpenCV (`cv2`), and Claude Desktop installed.
   - The signed-in demo profile is `~/.local/share/aica-demo-desktop`; override it with `AICA_DEMO_DESKTOP_PROFILE`.
