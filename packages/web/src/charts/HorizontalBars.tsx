@@ -51,10 +51,8 @@ export function HorizontalBars({ ariaLabel, series: plainSeries, rows, selectedK
   return (
     <div role="group" aria-label={ariaLabel}>
       {rows.length === 0 ? (
-        <div className="chart">
-          {legend && <div className="chart-toolbar">{legend}</div>}
-          <p className="text-muted chart-empty">{emptyText ?? "No data."}</p>
-        </div>
+        // Nothing to key a legend to, so the empty state is one muted line.
+        <p className="text-muted chart-empty">{emptyText ?? "No data."}</p>
       ) : (
         <ViewAsTable table={table} legend={legend}>
           <div className="hbars">
