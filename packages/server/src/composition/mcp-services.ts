@@ -63,6 +63,9 @@ export function createMcpServices(
   // Step 14.5: replay_session, compare_models_for_session and
   // estimate_cost's model (needs the turn pricer too, for measured figures).
   replay?: McpReplayInputs,
+  // The clock port (platform/clock/clock-from-env.ts): the billing pair's
+  // "now"; absent, the real clock.
+  now?: () => Date,
 ): McpServerDeps {
   const insights = createInsightsService(registry, attribution?.dataset, pricer);
   const sessionReplay =
@@ -96,12 +99,14 @@ export function createMcpServices(
             priceBookHash: statements.priceBookHash,
             appVersion: version,
             timeZone: statements.timeZone ?? Intl.DateTimeFormat().resolvedOptions().timeZone,
+            ...(now ? { now } : {}),
           }),
           // Step 15.12: estimates come with statements (the billing group).
           estimates: new EstimateService({
             cubes: new DatasetCostCubeSource(insights),
             projects: { projectName: (id) => attribution.queries.listProjects().projects.find((project) => project.id === id)?.name },
             ...(sessionReplay && replay ? { replay: { sessions: sessionReplay, models: new ReplayModelResolver(replay.profiles) } } : {}),
+            ...(now ? { now } : {}),
           }),
         }
       : {}),

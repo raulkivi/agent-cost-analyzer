@@ -10,6 +10,7 @@ import { loadVendorProfiles } from "../data-sources/vendor-profiles/loader.js";
 import { readAppVersion } from "../composition/app-version.js";
 import { createMcpServer, type McpServerDeps } from "./mcp-server.js";
 import { resolveAppViews } from "./apps/resolve-app-views.js";
+import { clockFromEnv } from "../platform/clock/clock-from-env.js";
 import { parseStdioArgs } from "./stdio-args.js";
 import { FileStatementStore } from "../data-sources/statements/file-statement-store.js";
 import { priceBookHashOf } from "../services/billing/statement-service.js";
@@ -43,7 +44,9 @@ const deps: McpServerDeps = {
   },
   // Phase 14 step 14.5: replay_session, compare_models_for_session and
   // estimate_cost's model, on the same profiles and price book.
-  { profiles: vendorProfiles, priceBook }),
+  { profiles: vendorProfiles, priceBook },
+  // AGENT_COST_ANALYZER_NOW, as the standalone app reads it (server.ts).
+  clockFromEnv()),
   priceBook,
 };
 
