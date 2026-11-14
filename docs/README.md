@@ -147,9 +147,20 @@ An npm workspace:
   log to sibling files next to `main.jsonl`, with measured impact, format
   facts, options and open questions.
 - [Claude Code subagents plan](plans/claude-code-subagents.md) — 1.0
-  criterion C15 (plan in owner review): counting the usage in Claude Code's
+  criterion C15 (approved 2026-11-14): counting the usage in Claude Code's
   `subagents/` transcripts in every total, with the CS0 spike's findings,
   owner decisions and a real-data check.
+- [npm package plan](plans/npm-package.md) — 1.0 criterion C8 (approved
+  2026-11-14): the standalone app on npm as `agent-cost-analyzer`, trusted
+  publishing, and the owner's placeholder publish (NP0).
+- [Monthly allowance in the standalone app](plans/monthly-allowance-standalone.md) —
+  1.0 criterion C9, step 10.21's MA13 (approved 2026-11-14).
+- [Subagent tool-audit plan](plans/subagent-tool-audit.md) — 1.0 criterion
+  C10, step 10.20 (approved 2026-11-14): classic subagent tool calls in the
+  audit and security findings.
+- [Savings Increment 3 plan](plans/savings-increment-3.md) — 1.0 criterion
+  C11 (approved 2026-11-14): pi, per-tool tokens, per-session figures and
+  titles.
 - [Automated pre-release UI gate](plans/release-ui-gate.md) —
   step 10.17 (planned): no hand checklist gates a release; wdio for VS
   Code and Copilot, Playwright for web.

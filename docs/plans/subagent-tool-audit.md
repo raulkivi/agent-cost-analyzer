@@ -2,7 +2,7 @@
 
 **Last changed:** 2026-11-14 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
-Status: **plan written, owner review** (2026-11-14). A 1.0 criterion, C10 in
+Status: **Plan approved 2026-11-14** (D1–D11 accepted). A 1.0 criterion, C10 in
 [implementation-plan.md](../implementation-plan.md#100-release) (tasks V21
 plan, V22 build). Spike ST0 done read-only on the owner's machine (§4).
 Follows step 10.19 D3
@@ -393,6 +393,8 @@ Unknown is never 0. Each row is a tested reason.
   prints category counts only, to check the rules fit Copilot's wording.
 
 ## 8. Owner decisions
+
+Decided 2026-11-14: the owner accepted each recommendation.
 
 | # | Question | Recommendation |
 |---|---|---|

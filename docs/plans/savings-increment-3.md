@@ -2,9 +2,9 @@
 
 **Last changed:** 2026-11-14 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
-**Status: plan, awaiting the owner's approval (task V23 in
+**Status: Plan approved 2026-11-14 (task V23 in
 [implementation-plan.md](../implementation-plan.md#100-release), criterion
-C11).** No code before the owner approves this plan; no UI code before the
+C11).** Decisions D22–D32 accepted. No UI code before the
 owner approves the boards (V23b). Scope decided by the owner 2026-11-14 in
 [savings-report.md](savings-report.md) §2, goal G6. Increments 1 and 2, their
 design, honesty rules and owner decisions D1–D21 are in that plan and are not
@@ -366,6 +366,8 @@ Rows to add to or amend in [threat-model.md](../threat-model.md) §4 and
 | pi branch ids in tool output (R16) | An uncapped id from a file name | Unchanged residual (must round-trip); V28 tests the round trip |
 
 ## 12. Owner decisions
+
+Decided 2026-11-14: the owner accepted each recommendation (D22–D32).
 
 | # | Decision | Recommendation |
 |---|---|---|

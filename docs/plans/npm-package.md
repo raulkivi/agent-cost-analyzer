@@ -2,10 +2,10 @@
 
 **Last changed:** 2026-11-14 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
-Status: **plan, awaiting owner approval.** Task V15 of the
+Status: **Plan approved 2026-11-14** (D1–D10 accepted). Owner step NP0 next: publish the placeholder `agent-cost-analyzer@0.0.0` and `agent-cost-analyser@0.0.0` (deprecated, naming the real package) from the owner's machine with 2FA. Task V15 of the
 [1.0.0 release](../implementation-plan.md#100-release). It splits V16
 (build), V17 (trusted publishing) and V18 (docs) into the tasks in §11.
-No code before the owner approves this plan.
+Build next.
 
 Owner decisions already made (2026-11-14): the package name is
 `agent-cost-analyzer` (free on npm that day), users run it with
@@ -370,6 +370,8 @@ here is the finding to verify, not yet verified.
 | §4 | `agent-cost-analyzer mcp` | As the existing MCP row | **Unchanged.** Same flags and services; the views path defaults to the packaged file. |
 
 ## 6. Owner decisions
+
+Decided 2026-11-14: the owner accepted each recommendation.
 
 | # | Question | Options | Recommendation |
 |---|---|---|---|

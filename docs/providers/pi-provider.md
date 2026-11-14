@@ -171,7 +171,11 @@ output and file contents.
    `mkdir ~/pi-capture-demo && cd ~/pi-capture-demo` with a few harmless files
    (`git init`, a small `hello.ts`). Do not run pi in a real project.
 3. **Session A, linear.** Run `pi`. Send 3 to 5 prompts; at least one must make
-   pi call a tool (for example "read hello.ts and summarise it"). Exit pi.
+   pi call a tool (for example "read hello.ts and summarise it"). In this
+   session wait more than 5 minutes between two prompts (the prompt cache
+   expires), and leave at least one tool unused: any tool pi doesn't call
+   (owner decision D30, 2026-11-14,
+   [savings-increment-3.md](../plans/savings-increment-3.md)). Exit pi.
 4. **Session B, rewind.** Run `pi` again and send 3 prompts with at least one
    tool call. Then run `/tree` (pi's session tree navigator), select an
    earlier user message, edit its text and submit it. This creates a second

@@ -2,7 +2,7 @@
 
 **Last changed:** 2026-11-14 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
-Status: **proposed 2026-11-14, awaiting owner decisions (§9)**. Task MA13 of [monthly-allowance.md](monthly-allowance.md) (step 10.21), 1.0 criterion C9 and build task V20 in [implementation-plan.md](../implementation-plan.md) ("1.0.0 release"). No code before the owner approves this plan.
+Status: **Plan approved 2026-11-14** (D1–D11 accepted). Task MA13 of [monthly-allowance.md](monthly-allowance.md) (step 10.21), 1.0 criterion C9 and build task V20 in [implementation-plan.md](../implementation-plan.md) ("1.0.0 release"). Build next.
 
 ## Contents
 
@@ -245,6 +245,8 @@ TDD in every code task: the failing test is written and seen red first ([CLAUDE.
 Parallelism: MS0 with MS1 to MS6; MS9 with MS6 to MS8; MS10 once MS4 lands.
 
 ## 9. Owner decisions
+
+Decided 2026-11-14: the owner accepted each recommendation.
 
 | # | Question | Options | Recommendation |
 |---|---|---|---|

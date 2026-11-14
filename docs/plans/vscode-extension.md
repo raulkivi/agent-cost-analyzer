@@ -1,6 +1,6 @@
 # VS Code extension: implementation and deployment plan
 
-**Last changed:** 2026-11-13 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-14 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 Status: **code and docs complete (Phase 10, #57-#80); 0.1.0 released
 (`ext-v0.1.0`, 2026-11-03).** Some VS Code manual checks stay open, see
@@ -35,7 +35,7 @@ Progress (2026-10-28):
 | 10.17 | Automated pre-release UI gate: wdio for VS Code and Copilot, Playwright for web | Done 2026-11-11 ([release-ui-gate.md](release-ui-gate.md)) |
 | 10.18 | Copilot Chat sessions from empty windows (debug logs under `globalStorage`) | Done 2026-11-11 |
 | 10.19 | AI Credits of classic Copilot Chat subagents ([classic-subagent-credits-implementation.md](classic-subagent-credits-implementation.md)) | Done 2026-11-13 (SA0 to SA18, exit criterion met on the owner's logs by `npm run test:real-data`); the release is open. Tasks and deviations: the plan's §6 and §15 |
-| 10.20 | Classic subagent tool calls in the tool audit (follow-up from 10.19 D3) | Follow-up, not planned yet |
+| 10.20 | Classic subagent tool calls in the tool audit (follow-up from 10.19 D3) | Planned: [subagent-tool-audit.md](subagent-tool-audit.md), approved 2026-11-14; a 1.0 criterion (C10) |
 | 10.21 | Monthly AI Credits allowance gauge ([monthly-allowance.md](monthly-allowance.md)) | Done 2026-11-13 (MA0 to MA12, exit criterion met); before release, the real-Copilot check of the gauge (release UI gate). MA13 (standalone app) is a later increment |
 
 
