@@ -309,4 +309,15 @@ describe("AppHeader", () => {
     expect(logo).not.toBeNull();
     expect(logo.style.width).toBe("");
   });
+
+  it("shows the colour-theme switch only when the host offers it", () => {
+    const props = { mode: "learn" as const, onModeChange: vi.fn(), hasConfigWarnings: false, onConfigClick: vi.fn() };
+    const { rerender } = render(<AppHeader {...props} />);
+    expect(screen.queryByRole("radiogroup", { name: "Colour theme" })).not.toBeInTheDocument();
+
+    const onColorModeChange = vi.fn();
+    rerender(<AppHeader {...props} colorMode={{ preference: "auto", onChange: onColorModeChange }} />);
+    fireEvent.click(screen.getByRole("radio", { name: "Dark" }));
+    expect(onColorModeChange).toHaveBeenCalledWith("dark");
+  });
 });

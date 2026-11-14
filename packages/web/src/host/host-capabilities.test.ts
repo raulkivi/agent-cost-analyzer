@@ -65,6 +65,18 @@ describe("hostCapabilitiesFor", () => {
   });
 });
 
+describe("colour-mode switch capability (Phase 17 D1)", () => {
+  it("is offered by the standalone browser app", () => {
+    expect(standaloneHostCapabilities().colorMode).toBe(true);
+    expect(hostCapabilitiesFor(new HttpTransport()).colorMode).toBe(true);
+  });
+
+  it("is never offered inside the VS Code webview", () => {
+    const transport: ApiTransport = { call: vi.fn(), command: vi.fn() };
+    expect(hostCapabilitiesFor(transport).colorMode).toBeFalsy();
+  });
+});
+
 describe("current host capabilities", () => {
   afterEach(() => {
     resetHostCapabilities();
