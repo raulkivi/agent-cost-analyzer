@@ -1,6 +1,6 @@
 # Savings report: ranked, quantified fixes
 
-**Last changed:** 2026-11-13 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-14 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 **Status: Increment 1 built (SR0-SR17, 2026-11-13); owner decisions D1-D12 accepted 2026-11-12, D13-D15 to decide; Increment 2 not started.** Phase 16 in
 [implementation-plan.md](../implementation-plan.md) (owner decision D9).
@@ -403,6 +403,48 @@ labelled with its basis, range or "up to", and coverage; the owner checks
 one idle-expiry break and one unused tool by hand against the turn's
 tokens and the price book and finds them equal within rounding; and the
 app writes no file and changes no setting.
+
+### Automated check
+
+`npm run test:real-data:savings` (also part of `npm run test:real-data`) runs
+`packages/server/scripts/savings-exit.real.test.mts` over the machine's own logs. It
+skips unless `REAL_DATA=1` (the npm script sets it), so `npm test` and CI are
+unaffected. It is read-only and prints counts, hashed session ids, model ids,
+token and money figures and tool or MCP-server names, never prompt text, titles
+or paths. It asserts:
+
+- **Same list in both products.** For each VS Code user-data dir, the standalone
+  app's `ApiService` (Copilot provider only) and the extension's compose to the
+  same `getSavingsReport` result, row for row. Claude Code has no extension
+  counterpart (D10), so its report comes from the standalone app alone.
+- **Labels.** Every amount is `priced` with a `range` label (unused tools) or an
+  `upper-bound` label (the cache opportunities and failed calls), names at least
+  one price version, and every row has coverage; the list is ranked by the high
+  end (D3).
+- **One idle-expiry row and one unused-tool row, rebuilt independently.**
+  `scripts/savings-oracle.mts` reads the raw Claude Code JSONL and the bundled
+  price book and vendor-profile JSON, with no code from the detectors, the
+  request-trace builder or the cost pricer (a test checks it imports none). For
+  the top idle-expiry row it finds every break itself and requires the same
+  count, lost tokens, sessions and extra cost; for the top unused-tool row, the
+  same sessions, requests, tokens per request and cost range. Tolerance: tokens
+  and counts exactly; money within 1e-9 relative (floating-point summation order
+  only). The summary prints the row's largest break with its tokens, gap and
+  rates, so the owner can redo the sum by hand.
+- **Nothing written.** Content hashes of the settings files (`~/.claude`,
+  VS Code `settings.json`), the app's config folder and `~/.claude` agents,
+  skills and hooks, and name, size and mtime of the session logs, are equal
+  before and after. D15: the report never opens a session in another provider;
+  the app's active-provider choice lives in its config folder, which is inside
+  the check.
+
+Limits, stated in the output: sessions written in the last 15 minutes are left
+out of the view the products read (their id and content move while the report
+runs); the oracle covers Claude Code only, so when Copilot has no idle-expiry or
+unused-tool row in the window (Agent Host records no per-tool inventory) the two
+hand checks are Claude Code's; `get_savings_report` is not covered until
+Increment 2 exists. The check does not mark the exit criterion met: the owner
+signs it off.
 
 ## 15. SR0 findings (2026-11-12)
 
