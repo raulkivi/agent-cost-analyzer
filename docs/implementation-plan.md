@@ -1,6 +1,6 @@
 # Implementation Plan: Agent Cost Analyzer and AI Credits Analyzer
 
-**Last changed:** 2026-11-13 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-14 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 This plan sequences [architecture.md](architecture.md) into buildable phases.
 Phases 0-9.12 build the standalone app, **Agent Cost Analyzer** (every
@@ -8,8 +8,9 @@ provider). Phase 10 builds **AI Credits Analyzer**, a Copilot-only VS Code
 extension sharing the same code (vision §5). Phase 11 pins the standalone
 app's pi provider against a real captured session, postponed from Phase 9.6.
 Phase 12 adds branded, interactive MCP Apps views for both products.
+Phase 17 makes the UI denser in every host, then gives the standalone app a ledger theme.
 
-**Overall status (2026-11-11):** Phases 0-10 have their code and docs
+**Overall status (2026-11-14):** Phases 0-10 have their code and docs
 merged to `main`. The extension's 0.1.0 is released (tag `ext-v0.1.0`,
 2026-11-03); the latest stable is 0.6.0 (2026-11-11), and 0.5.0 was a
 pre-release (2026-11-10). Open: Phase 10's owner manual checks and decisions (see its
@@ -24,7 +25,9 @@ design in [plans/classic-subagent-credits.md](plans/classic-subagent-credits.md)
 covers classic Copilot Chat subagent AI Credits (done 2026-11-13). Step 10.21
 ([plans/monthly-allowance.md](plans/monthly-allowance.md)) is done and
 Phase 16 ([plans/savings-report.md](plans/savings-report.md)) has its Increment 1 built (the
-owner accepted both plans' decisions on 2026-11-12).
+owner accepted both plans' decisions on 2026-11-12). Phase 17
+([plans/dense-ledger-ui.md](plans/dense-ledger-ui.md)) is planned (P0 done
+2026-11-14); it holds step 10.22 tasks 1.10-1.14 until it merges.
 Each phase has a goal, concrete deliverables, an exit criterion (how you know
 it's done), and its dependencies. Phases are ordered so the riskiest/least
 certain work (real `main.jsonl` parsing) happens after there's already a
@@ -1662,6 +1665,39 @@ Increment 2 (SR18-SR22) is not started.
   (the provider switch from "Open in Analyze"); the exit criterion on real
   data (§14); the release. Increment 2 starts after Increment 1 is released.
 
+## Phase 17 — Dense ledger UI
+
+Full design: [plans/dense-ledger-ui.md](plans/dense-ledger-ui.md).
+
+**Goal**: stop the web UI wasting space, then give the standalone app a
+pi.dev-style "terminal ledger" theme. The Dashboard is 2,444px tall at
+1440x900 on the e2e fixture; it should fit in about 1,470px.
+
+**Deliverables** (tasks P0-P7 and L1-L6 in the plan):
+
+- Increment 1 (P0-P7), density in every host: a smaller token scale, 28px
+  table rows, one toolbar row, compact session list, 80px KPI tiles,
+  full-width trend chart, collapsed empty panels, a Playwright
+  `density.spec.ts`.
+- Increment 2 (L1-L6), standalone app only: `html[data-color-mode]` light and
+  dark palettes, Commit Mono and Source Serif 4 through `@fontsource`, an
+  Auto/Light/Dark switch in the header, ledger component rules, contrast and
+  axe checks in both modes, docs and refreshed screenshots.
+
+**Exit criterion**: the plan's exit criterion: on the e2e fixture at
+1440x900 the Dashboard is at most 1,470px tall, table rows at most 30px, KPI
+tiles at most 80px, the list has no sideways scroll, light and dark both
+pass axe colour contrast, the VS Code panel and MCP views keep their colours
+and fonts, all suites are green and the owner has reviewed it by eye.
+
+**Dependencies**: none blocking (Phase 8's design system is merged). It holds
+step 10.22 tasks 1.10-1.14 (final takes, docs embedding) until it merges
+(owner decision D2, 2026-11-14), so the demos are recorded once in the new
+look.
+
+**Status (2026-11-14)**: planned. P0 (docs) is done; P1-P7 and L1-L6 are not
+started.
+
 ## Summary dependency graph
 
 ![Summary dependency graph](diagrams/summary-dependency-graph.drawio.svg)
@@ -1705,9 +1741,15 @@ flowchart LR
     P13 --&gt; P14["Phase 14<br/>Replay Analyze sessions on another vendor"]
     P911 --&gt; P15["Phase 15<br/>Cost by repository and project"]
     P13 --&gt; P15
+    P15 --&gt; P16["Phase 16<br/>Savings report"]
+    P14 --&gt; P16
+    P8 --&gt; P17["Phase 17<br/>Dense ledger UI"]
+    P17 --&gt;|"holds 10.22 final takes"| P10
 ```
 -->
 
 Phase 12's MVP (the three views) needs only Phases 9.12 and 10. The edges
 from Phases 14 and 15 are for its Increments 2 and 3, whose tools those
-phases added.
+phases added. Phase 16 needs Phases 14 and 15. Phase 17 needs Phase 8; its
+edge to Phase 10 marks that it holds step 10.22's final takes (owner decision
+D2, 2026-11-14), not a build dependency.
