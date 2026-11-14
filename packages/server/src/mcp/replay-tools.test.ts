@@ -57,7 +57,7 @@ const replay: SessionReplay = {
     difference: -0.01,
   },
   coverage: { turns: 1, replayedTurns: 1, requests: 1, replayedRequests: 1, notReplayed: [] },
-  selfCheck: { model: "claude-sonnet-5.5", requests: 0, matching: 0, readTolerancePercent: 5, passed: true },
+  selfCheck: { model: "claude-sonnet-5.5", models: ["claude-sonnet-5.5"], requests: 0, matching: 0, readTolerancePercent: 5, passed: true },
   assumptions: [REPLAY_ASSUMPTIONS.A1],
 };
 
@@ -66,10 +66,11 @@ const comparison: SessionReplayComparison = {
   sessionId: "s-1",
   providerId: "claude-code",
   currency: "USD",
+  measuredModels: ["claude-sonnet-5.5"],
   measured: { value: 0.02, knownTurns: 1, turns: 1 },
   entries: [
-    { model: "claude-sonnet-5.5", vendorId: "anthropic", total: { value: 0.02, knownTurns: 1, turns: 1 }, replayedTurns: 1, isMeasuredModel: true },
-    { model: "claude-haiku-5.5", vendorId: "anthropic", total: { value: 0.01, knownTurns: 1, turns: 1 }, replayedTurns: 1, isMeasuredModel: false },
+    { model: "claude-sonnet-5.5", vendorId: "anthropic", total: { value: 0.02, knownTurns: 1, turns: 1 }, replayedTurns: 1, isMeasuredModel: true, isMixedSessionModel: false },
+    { model: "claude-haiku-5.5", vendorId: "anthropic", total: { value: 0.01, knownTurns: 1, turns: 1 }, replayedTurns: 1, isMeasuredModel: false, isMixedSessionModel: false },
   ],
 };
 
@@ -131,6 +132,22 @@ describe("MCP replay tools (Phase 14 step 14.5, D7)", () => {
     expect(replayTool.inputSchema.required?.sort()).toEqual(["model", "sessionId"]);
     const compareTool = tools.find((tool) => tool.name === "compare_models_for_session")!;
     expect(Object.keys(compareTool.inputSchema.properties ?? {}).sort()).toEqual(["models", "pricing", "provider", "sessionId"]);
+  });
+
+  it("compare_models_for_session names every model a switching session used and flags its own entry as mixed", async () => {
+    const mixed: SessionReplayComparison = {
+      ...comparison,
+      measuredModels: ["claude-sonnet-5.5", "claude-opus-5.5"],
+      entries: [{ ...comparison.entries[0]!, isMeasuredModel: false, isMixedSessionModel: true }, comparison.entries[1]!],
+    };
+    const result = await (await connect(new FakeReplays(undefined, { status: "ok", value: mixed }))).callTool({
+      name: "compare_models_for_session",
+      arguments: { sessionId: "s-1", models: ["claude-haiku-5.5"] },
+    });
+
+    expect(result.isError).toBeFalsy();
+    expect(result.structuredContent).toMatchObject({ measuredModels: ["claude-sonnet-5.5", "claude-opus-5.5"] });
+    expect((result.structuredContent as SessionReplayComparison).entries[0]).toMatchObject({ isMeasuredModel: false, isMixedSessionModel: true });
   });
 
   it("registers neither tool without a replay service", async () => {

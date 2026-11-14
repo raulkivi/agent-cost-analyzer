@@ -72,7 +72,7 @@ describe("U12: replay figures are always Simulated", () => {
   it("calls out every self-check that did not pass", () => {
     fc.assert(
       fc.property(fc.integer({ min: 1, max: 50 }).chain((requests) => fc.tuple(fc.constant(requests), fc.integer({ min: 0, max: requests }))), fc.boolean(), ([requests, matching], missing) => {
-        const selfCheck = missing ? null : { model: "m", requests, matching, readTolerancePercent: 5, passed: matching === requests };
+        const selfCheck = missing ? null : { model: "m", models: ["m"], requests, matching, readTolerancePercent: 5, passed: matching === requests };
         const vm = asReplay(toReplayViewModel({ ...replay(), selfCheck }));
         expect(vm.selfCheck.callout).toBe(selfCheck === null || !selfCheck.passed);
         expect(vm.selfCheck.status).toBe(selfCheck === null ? "missing" : selfCheck.passed ? "passed" : "failed");
@@ -89,7 +89,7 @@ describe("U12: replay figures are always Simulated", () => {
             ...base,
             currency: unit,
             measured: total(measured),
-            entries: values.map((value, index) => ({ model: `m${index}`, vendorId: "v", total: total(value), replayedTurns: 1, isMeasuredModel: index === 0 })),
+            entries: values.map((value, index) => ({ model: `m${index}`, vendorId: "v", total: total(value), replayedTurns: 1, isMeasuredModel: index === 0, isMixedSessionModel: false })),
           }),
         );
         expect(vm.label).toBe("Simulated");

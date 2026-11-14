@@ -62,13 +62,14 @@ export function selfCheckMismatches(
 export function replaySelfCheck(
   trace: RequestTrace,
   simulated: Session,
-  model: string,
+  models: [string, ...string[]],
 ): ReplaySelfCheck {
   // A one-request trace compares nothing (A3), so 0 of 0 match and it passes.
   const requests = Math.max(0, trace.requests.length - 1);
   const matching = requests - selfCheckMismatches(trace, simulated).length;
   return {
-    model,
+    model: models[0],
+    models,
     requests,
     matching,
     readTolerancePercent: REPLAY_READ_TOLERANCE_PERCENT,

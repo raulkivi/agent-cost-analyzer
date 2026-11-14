@@ -9,12 +9,13 @@ import { replay, replayComparison } from "../../view-models/increment3-fixtures.
 
 export const NO_TRACE = "no request trace for the turn";
 
-export const entry = (model: string, value: number | null, knownTurns: number, extra: { own?: boolean; replayedTurns?: number; vendorId?: string } = {}) => ({
+export const entry = (model: string, value: number | null, knownTurns: number, extra: { own?: boolean; mixed?: boolean; replayedTurns?: number; vendorId?: string } = {}) => ({
   model,
   vendorId: extra.vendorId ?? "anthropic",
   total: { value, knownTurns, turns: 42 },
   replayedTurns: extra.replayedTurns ?? knownTurns,
   isMeasuredModel: extra.own ?? false,
+  isMixedSessionModel: extra.mixed ?? false,
 });
 
 // The board's comparison: AI Credits, a floor, an unpriced model, a rise.
@@ -24,6 +25,7 @@ export function boardComparison(overrides: Partial<SessionReplayComparison> = {}
     providerId: "copilot",
     currency: "AI_CREDITS",
     measured: { value: 186.4, knownTurns: 42, turns: 42 },
+    measuredModels: ["claude-sonnet-5.5"],
     entries: [
       entry("claude-sonnet-5.5", 183.9, 42, { own: true }),
       entry("claude-haiku-5.5", 38.2, 42),
@@ -59,7 +61,7 @@ export function boardReplay(overrides: Partial<SessionReplay> = {}): SessionRepl
     ],
     totals: { measured: { value: 12.1, knownTurns: 4, turns: 6 }, simulated: { value: 8.32, knownTurns: 4, turns: 6 }, difference: -3.78 },
     coverage: { turns: 6, replayedTurns: 4, requests: 6, replayedRequests: 4, notReplayed: [{ reason: NO_TRACE, turns: 2 }] },
-    selfCheck: { model: "claude-sonnet-5.5", requests: 44, matching: 37, readTolerancePercent: 5, passed: false },
+    selfCheck: { model: "claude-sonnet-5.5", models: ["claude-sonnet-5.5"], requests: 44, matching: 37, readTolerancePercent: 5, passed: false },
     assumptions: [
       { id: "A1", text: "Same conversation: the other model gets the same prompts.", confidence: "unknown" },
       { id: "A2", text: "Same token counts.", confidence: "documented" },

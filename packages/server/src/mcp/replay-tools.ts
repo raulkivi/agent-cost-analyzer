@@ -44,7 +44,7 @@ export function registerReplayTools(server: McpServer, deps: McpToolDeps, replay
       description:
         "Use to see what one session (id from list_sessions) would have cost on another model: the session's own request trace (token counts only) is run through that model's vendor caching rules and priced, turn by turn beside what the session really cost. " +
         `${SIMULATED_NOTE} ` +
-        "The self-check (selfCheck) is the same replay on the session's own model compared with its log (cache read within 5%): if it didn't pass, trust the figures less; null when the own model has no vendor profile. " +
+        "The self-check (selfCheck) is the same replay on the session's own model compared with its log (cache read within 5%): if it didn't pass, trust the figures less; null when the own model has no vendor profile; models lists every model it ran when the session switched. " +
         "Totals compare like with like (the turns replayed with a known measured and simulated cost); coverage gives the turns and requests not replayed with their reasons, and an unknown figure is null with a reason, never 0. " +
         "A session whose provider's logs can't be replayed yet answers with the reason.",
       inputSchema: z.object({ sessionId: sessionIdArg, model: modelArg, pricing: pricingArg, provider: providerArg(deps.identity) }),
@@ -65,7 +65,7 @@ export function registerReplayTools(server: McpServer, deps: McpToolDeps, replay
       description:
         "Use to compare what one session (id from list_sessions) would have cost on several models: each model's simulated total and replayed turns beside the session's measured total, in one currency. " +
         `${SIMULATED_NOTE} ` +
-        "For the per-turn figures, the coverage reasons and the self-check, call replay_session with one model. A model no vendor profile lists refuses the whole comparison, with the reason.",
+        "For the per-turn figures, the coverage reasons and the self-check, call replay_session with one model. A model no vendor profile lists refuses the whole comparison, with the reason. measuredModels lists the models the session used, in order; when it switched models, the first entry (isMixedSessionModel) is the whole session replayed on its first model, not a measured model.",
       inputSchema: z.object({ sessionId: sessionIdArg, models: modelsArg, pricing: pricingArg, provider: providerArg(deps.identity) }),
       outputSchema: sessionReplayComparisonSchema,
       annotations: READ_ONLY,

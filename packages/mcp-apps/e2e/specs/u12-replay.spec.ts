@@ -45,7 +45,7 @@ function unpricedReplay() {
     ],
     totals: { measured: { value: 4.39, knownTurns: 2, turns: 3 }, simulated: { value: null, knownTurns: 0, turns: 3 }, difference: null },
     coverage: { turns: 3, replayedTurns: 3, requests: 3, replayedRequests: 3, notReplayed: [] },
-    selfCheck: { model: OWN, requests: 44, matching: 44, readTolerancePercent: 5, passed: true },
+    selfCheck: { model: OWN, models: [OWN], requests: 44, matching: 44, readTolerancePercent: 5, passed: true },
   });
 }
 

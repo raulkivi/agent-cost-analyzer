@@ -72,6 +72,7 @@ export interface CompareEntryView {
   vendorId: string;
   vendorText: string;
   isMeasuredModel: boolean;
+  isMixedSessionModel: boolean;
   noteText?: string;
   total: ReplayFigure;
   displayText: string; // "≥ 132.75 AI Credits" for a floor, "Unknown" for none
@@ -241,7 +242,9 @@ function entryView(entry: SessionReplayComparison["entries"][number], measured: 
     vendorId: entry.vendorId,
     vendorText: VENDOR_TEXT[entry.vendorId] ?? entry.vendorId,
     isMeasuredModel: entry.isMeasuredModel,
+    isMixedSessionModel: entry.isMixedSessionModel,
     ...(entry.isMeasuredModel ? { noteText: "the model the session used" } : {}),
+    ...(entry.isMixedSessionModel ? { noteText: "the session's first model; it switched models" } : {}),
     total,
     displayText: partial ? `≥ ${total.text}` : total.text,
     partial,
@@ -255,8 +258,10 @@ function entryView(entry: SessionReplayComparison["entries"][number], measured: 
 // Plan §9.2 Q1: SessionReplayComparison has no selfCheck, so the own-model
 // check is its simulated total against the measured one. A floor or an
 // Unknown is no check, and is called out.
-function ownModelCheck(entry: CompareEntryView | undefined, measured: ReplayFigure, measuredTotal: ReplayTotal): OwnModelCheckView {
+function ownModelCheck(entry: CompareEntryView | undefined, measured: ReplayFigure, measuredTotal: ReplayTotal, switchedModels?: string): OwnModelCheckView {
   const missing = (text: string): OwnModelCheckView => ({ status: "missing", callout: true, text: `No own-model check: ${text}, so these figures are not checked against the log.` });
+  // The first model's whole-session replay is not a check against a log that used several.
+  if (switchedModels !== undefined) return missing(`the session switched models (${switchedModels})`);
   if (entry === undefined) return missing("the session's own model is not among the replayed models");
   if (!entry.total.known) return missing(`the session's own model, ${entry.model}, came out ${UNKNOWN_TEXT} on replay`);
   if (entry.partial) return missing(`the session's own model, ${entry.model}, is known for ${entry.total.coverageNote?.replace("known for ", "") ?? "only some turns"} only`);
@@ -269,7 +274,9 @@ function compareView(comparison: SessionReplayComparison): ReplayCompareViewMode
   const { currency } = comparison;
   const measured = totalFigure(MEASURED_LABEL, comparison.measured, currency);
   const entries = comparison.entries.map((entry) => entryView(entry, comparison.measured, currency));
-  const own = entries.find((entry) => entry.isMeasuredModel);
+  const mixed = comparison.measuredModels.length > 1;
+  const own = entries.find((entry) => (mixed ? entry.isMixedSessionModel : entry.isMeasuredModel));
+  const switchedModels = mixed ? comparison.measuredModels.join(", then ") : undefined;
   return {
     mode: "compare",
     label: SIMULATED_LABEL,
@@ -278,8 +285,8 @@ function compareView(comparison: SessionReplayComparison): ReplayCompareViewMode
     turnsText: pluralize(comparison.measured.turns, "turn"),
     measured,
     measuredCoverageText: comparison.measured.knownTurns === 0 ? "no turn has a measured figure" : `known for ${formatCount(comparison.measured.knownTurns)} of ${formatCount(comparison.measured.turns)} turns`,
-    ...(own === undefined ? {} : { measuredModel: own.model }),
-    ownModelCheck: ownModelCheck(own, measured, comparison.measured),
+    ...(switchedModels !== undefined ? { measuredModel: switchedModels } : own === undefined ? {} : { measuredModel: own.model }),
+    ownModelCheck: ownModelCheck(own, measured, comparison.measured, switchedModels),
     entries,
   };
 }

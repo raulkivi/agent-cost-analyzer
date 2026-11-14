@@ -3,6 +3,9 @@
   "sessionId": "normal-session",
   "providerId": "claude-code",
   "currency": "USD",
+  "measuredModels": [
+    "claude-sonnet-5"
+  ],
   "measured": {
     "value": 0.01613,
     "knownTurns": 2,
@@ -18,7 +21,8 @@
         "turns": 2
       },
       "replayedTurns": 2,
-      "isMeasuredModel": true
+      "isMeasuredModel": true,
+      "isMixedSessionModel": false
     },
     {
       "model": "claude-haiku-5.5",
@@ -29,7 +33,8 @@
         "turns": 2
       },
       "replayedTurns": 2,
-      "isMeasuredModel": false
+      "isMeasuredModel": false,
+      "isMixedSessionModel": false
     },
     {
       "model": "gpt-6.1-sol",
@@ -40,7 +45,8 @@
         "turns": 2
       },
       "replayedTurns": 2,
-      "isMeasuredModel": false
+      "isMeasuredModel": false,
+      "isMixedSessionModel": false
     }
   ]
 }
