@@ -1,6 +1,6 @@
 # Automated pre-release UI gate (step 10.17)
 
-**Last changed:** 2026-11-13 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-14 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 Status: **done 2026-11-11: G0 (#203), G1 (#202), G2 (#207), G3 (#208, #210), G4 (#211), G5 (#205, #206), G6 (#204) and G7 (with the D11 chart fixes) all built; G7's PR is the last to merge.** Owner rule, 2026-11-11: every UI check
 before a release is automated. VS Code and Copilot checks use wdio
@@ -109,7 +109,7 @@ has no Copilot part.
   passed/failed/skipped, `skipReason`), `aiCreditsSpent` (null if unmeasured),
   `ranAt`. Format and judge: `scripts/release-evidence/evidence.mts`.
 - **Blocks a release:** no note; a note that isn't schema-1 JSON; a run on
-  another commit; a dirty tree; a required test (1.4, 2.3, 2.4; since G4 also the 13 view rows; since G7 2.1 and 1.14; since A33 the 11 Increment 3 rows) missing,
+  another commit; a dirty tree; a required test (1.4, 2.3, 2.4; since G4 also the 13 view rows; since G7 2.1 and 1.14; since A33 the 11 Increment 3 rows; since SR21 the 4 savings rows) missing,
   failed or **skipped**; any failed test. Every problem is listed by name
   (`missing-note`, `malformed`, `unknown-schema`, `wrong-commit`,
   `dirty-tree`, `test-missing`, `test-failed`, `test-skipped`).
@@ -437,6 +437,27 @@ the same suite, `test/ui/copilot-e2e/specs/copilot-increment3-views.e2e.ts`
 | A33 narrow | About 360 px and the widest (576 px): no sideways scroll |
 | A33 footer | `Read-only · local logs · v<extension version>`, text selectable |
 | A33 U5.analyse | One press of Analyse on the newest seeded session, inside the run's AI Credits cap: the outcome is `sent` (exactly one new chat request with the fixed text), `staged` (exactly that text in the chat input, no new request) or `fallback` (the row shows the text to type); anything else fails (`analyse-outcome.mts`, unit-tested) |
+
+**G4: U18 savings rows (SR21, 2026-11-14).** The get_savings_report view in the
+same suite, `test/ui/copilot-e2e/specs/copilot-savings-view.e2e.ts` (its own
+spec file, so its own VS Code and chat; one `get_savings_report` call over the
+90-day made-up history). **Written and typechecked, not run:** the owner runs
+the whole suite before tagging, so the expected total is now 37 tests (33 + the
+4 below). The chat adds about 0.5 AI Credits (estimate from the other views
+chats), so a whole run stays near 2, inside the D12 cap of 3. Like its siblings
+it sends through `sendToAgent` (stops at the cap, D12) and skips unsent when
+Copilot calls no tool or runs another model, which blocks the release (D9).
+The made-up history may hold no saving: the U18 row then checks the view's
+frame and the empty line; with a row it also opens it and drills into
+Open cost. `COPILOT_SAVINGS_ROWS` in `REQUIRED_COPILOT_E2E_TESTS` (tests first
+in `evidence.test.ts` and `check.test.ts`; `testIdOf` now reads `SR<n>` ids).
+
+| Test | Checks |
+|---|---|
+| SR21 U18 | Savings kicker, Possible savings, the period and basis line, the two notes, Simulated off says how to ask in text, no Copy or Cancel; with a row: it opens in place (What to change, "Suggestion only", the sessions heading, the Prices line), Open cost opens the session in place (kicker `Savings › Session cost`), Back to savings returns focus to that button; with none: "No savings found in this window."; no new chat request |
+| SR21 themes | U18 in Light Modern, Dark Modern and both High Contrast themes, switched mid-run: each follows, text reaches AA on the chat's ground, a focus ring on Tab |
+| SR21 narrow | About 360 px and 600 px: no sideways scroll |
+| SR21 footer | `Read-only · local logs · v<extension version>`, text selectable |
 
 **U5 in real Copilot Chat (owner's question, §9.2 Q7):** `staged`, in both
 runs that pressed it. VS Code 1.146 accepts the view's message (the button

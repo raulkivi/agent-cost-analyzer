@@ -55,7 +55,11 @@ export const COPILOT_INCREMENT3_ROWS = [
   "A33 U5.analyse",
 ] as const;
 
-export const REQUIRED_COPILOT_E2E_TESTS = [...COPILOT_CHAT_CHECKS, ...COPILOT_VIEW_ROWS, ...COPILOT_EXTENSION_ROWS, ...COPILOT_INCREMENT3_ROWS] as const;
+// SR21 (Phase 16 Increment 2, docs/plans/savings-report.md §10): copilot-savings-view.e2e.ts
+// checks U18, the get_savings_report view, in a real Copilot Chat.
+export const COPILOT_SAVINGS_ROWS = ["SR21 U18", "SR21 themes", "SR21 narrow", "SR21 footer"] as const;
+
+export const REQUIRED_COPILOT_E2E_TESTS = [...COPILOT_CHAT_CHECKS, ...COPILOT_VIEW_ROWS, ...COPILOT_EXTENSION_ROWS, ...COPILOT_INCREMENT3_ROWS, ...COPILOT_SAVINGS_ROWS] as const;
 
 export type EvidenceTestState = "passed" | "failed" | "skipped";
 
@@ -109,9 +113,9 @@ export function copilotTestTitle(id: string, text: string): string {
   return `${id} ${text}`;
 }
 
-// A check id ("2.3") or a checklist row id ("A24 1.1", "A16 U1", "A16 keyboard"; G4).
+// A check id ("2.3") or a checklist row id ("A24 1.1", "SR21 U18", "A16 U1", "A16 keyboard"; G4).
 export function testIdOf(title: string): string | undefined {
-  return /^(\d+\.\d+|A\d+ [A-Za-z0-9.]+) \S/.exec(title)?.[1];
+  return /^(\d+\.\d+|(?:A|SR)\d+ [A-Za-z0-9.]+) \S/.exec(title)?.[1];
 }
 
 type Parsed = { ok: true; evidence: ReleaseEvidence } | { ok: false; problems: Problem[] };
