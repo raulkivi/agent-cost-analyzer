@@ -5,7 +5,8 @@
 Status: approved 2026-11-13; plan steps 10.22 (Phase 0 and Phase 1) and
 10.23 (Phase 2) in [implementation-plan.md](../implementation-plan.md).
 Phase 0 done 2026-11-13; Phase 1 done 2026-11-14 (step 10.22); Phase 2
-(step 10.23) next.
+(step 10.23) started 2026-11-14: spike 2.0 passed (§4.3), 2.2 done; next
+2.1.
 
 ## 1. Goal
 
@@ -179,13 +180,44 @@ Left out:
 
 ### 4.3 Automating the Claude Desktop recordings
 
-Untested. [mcp-apps.md](mcp-apps.md) §"Claude Desktop's permission
-prompts" says "Claude Desktop can't be driven", meaning the test suite
-never tried, not that it was proven impossible. Claude Desktop is
-installed on this machine at `/usr/lib/claude-desktop`. A read of its
-package and Electron fuses (`npx @electron/fuses read`) was blocked by the
-auto-mode permission check on 2026-11-13, so neither the build nor its
-remote-debugging support has been checked.
+**Spike 2.0 result (2026-11-14): R1 passes.** Claude Desktop 5.11492.5
+(Electron, package `claude-desktop`, `/usr/lib/claude-desktop`) was
+driven in Xvfb by `xdotool` 3.20160805 and recorded by x11grab. M1 ran
+from the typed prompt to a drill-down inside the view, the host's side
+pane and fullscreen; `demo:gif` made a 20 s, 1.09 MB GIF. Method:
+
+| Step | How |
+|---|---|
+| Separate profile | `XDG_CONFIG_HOME=<dir>` gives Desktop its own `<dir>/Claude` (data, single-instance lock, `claude_desktop_config.json`); the owner's `~/.config/Claude` is untouched |
+| Test data | That config lists only `ai-credits-analyzer` (`scripts/mcp-server.sh`) with `env` `HOME`, `USERPROFILE`, `XDG_CONFIG_HOME` on a `createFixtureHome` home and `AGENT_COST_ANALYZER_NOW` = `FIXTURE_NOW` |
+| Sign-in | Once, by the owner, with the same `XDG_CONFIG_HOME` on the real desktop (email sign-in); the session survives a restart in Xvfb (the D-Bus keyring is reachable from Xvfb) |
+| Launch | `Xvfb :93 -screen 0 1600x1000x24`, then `DISPLAY=:93 claude-desktop --ozone-platform=x11`; with no window manager the window opens at 1200x800 and `xdotool windowmove 0 0 windowsize 1600 1000` fits it |
+| Mode | The profile opens in Code mode: click the Chat toggle once, collapse the sidebar; Ctrl+N opens a new chat |
+| Prompt | `xdotool type --delay 60`, then Return |
+| Wait and click | Poll a one-frame x11grab PNG, OpenCV `matchTemplate` (`TM_CCOEFF_NORMED`, threshold 0.9) against templates cut from earlier frames (Fullscreen, Always allow, stop button, a session row), click the match centre; "answer done" = the stop-button template gone |
+| Permissions | Each tool asks once per profile. One mouse click on **Always allow** keeps it; the Ctrl+Shift+Enter shortcut needs a second, timed press |
+
+Findings that shape 2.1 and 2.3:
+
+- **Dates:** the model reads "this week" from today's date, not the
+  server's fixed clock, and the fixture's data ends on 2026-10-30. M1's
+  prompt becomes "What did my coding agents cost in October?" (15
+  sessions, 21 turns, three providers); every M prompt names a period
+  inside the fixture.
+- **Privacy:** the new-chat screen shows "Welcome …, <owner's first
+  name>" and the owner's recent artifacts; the device name appears next
+  to the tool status. A take starts recording after the prompt is sent,
+  or trims the GIF past the send; owner frame review (2.4) stays.
+- **Allow prompts:** pre-approve every tool in the profile before final
+  takes, so no prompt covers a view (§10.7: M1 may still show one).
+- **Fullscreen:** the view's **Fullscreen** button and the host's expand
+  icon both open a side pane; its expand icon then fills the window. The
+  view's card stays 640 px wide at the left, the rest blank.
+- **A turn row in fullscreen didn't open**; a likely cause is the
+  `get_turn` permission prompt, which shows in the hidden chat.
+  Pre-approval (above) should settle it; check in 2.1.
+- **Remote debugging (R2) and the Electron fuses** were not checked; R1
+  is enough.
 
 | Route | How | For | Against |
 |---|---|---|---|
@@ -542,7 +574,7 @@ Phase 2 reuses it.
 | `test/ui/copilot-e2e/support/copilot-launch.mts` | 1.2 | `prepareCopilotLaunch(options?: { specs?: string[]; userSettings?: Record<string, unknown>; rootEnv?: string; seedChatHistory?: boolean; tmpPrefix?: string }, deps?): { run: { userDataDir; model; maxAiCredits }; inWorker: boolean; paths: CopilotLaunchPaths; config }`. `config` (specs, `maxInstances`, capabilities, services, `onWorkerStart` keep-extensions, `onWorkerEnd` release-profile) is spread into a wdio config; the caller adds framework, reporters and its own hooks. Defaults: the release suite's specs and `COPILOT_E2E_SETTINGS` (overrides merge on top), `COPILOT_E2E_ROOT_ENV`, history seeded. Not opted in (`COPILOT_E2E` unset): prints the skip and exits 0. Pure helpers: `copilotLaunchPaths`, `copilotUserSettings`, `copilotLaunchVscodeArgs`, `copilotCapability`, `launcherEnv`. The demo config keeps the default `rootEnv`: `sendToAgent` reads `COPILOT_E2E_ROOT_ENV` for the run log and the AI Credits cap. Built 2026-11-13 |
 | `wdio.demo.conf.mts`, `wdio.demo-copilot.conf.mts` | 1.3 | Specs `./test/ui/demo/**/*.demo.ts` (free) and `./test/ui/demo-copilot/**/*.demo.ts` (paid), modelled on `wdio.record.conf.mts`; scripts `demo:record`, `demo:record:copilot` |
 | `test/ui/demo/support/demo-driver.ts` | 1.4 | `type DemoAction = (driver: DemoDriver) => Promise<void>`; `type DemoScene = Scene<DemoAction>`; `class DemoDriver { pointerTo(el); click(el); typeSlowly(text, delayMs = 60); beat(ms); probePrivacy() }` (workbench and webview elements alike); `runDemoScene(scene, { assertEnd? }): Promise<string>` (clears notifications, hides clutter, records, plays, asserts, probes privacy, writes the JSON; discards the MP4 on any failure); `hideWorkbenchClutter()` (CSS: Accounts, title-bar Sign In, window title). `forbiddenTerms(DEMO_FORBIDDEN, { homedir, username })` in `privacy-probe.mts` adds the home path and username by default. Built 2026-11-13 |
-| `scripts/demo/desktop/*.mts` | 2.1 | Pure: `clickPoint(match, minScore)`, `waitForMatch(probe, { timeoutMs, intervalMs }, clock)`, `promptKeystrokes(text, delayMs)`; adapter `xdotool.mts`. The template matcher is chosen by 2.0 and written back here |
+| `scripts/demo/desktop/*.mts` | 2.1 | Pure: `clickPoint(match, minScore)`, `waitForMatch(probe, { timeoutMs, intervalMs }, clock)`, `promptKeystrokes(text, delayMs)`; adapter `xdotool.mts`; template matching by OpenCV `matchTemplate` (`TM_CCOEFF_NORMED`, threshold 0.9) in a small python3 helper the adapter calls (2.0, §4.3) |
 
 ### 10.4 Who runs what, and in which order
 
@@ -758,4 +790,17 @@ review rejections.
   resized without a window manager. Spike 1.0 started first: wdio-vscode-service can't resize the
   window (`setWindowRect` fails: `Browser.getWindowForTarget` unknown).
   `xdotool` is not installed (Phase 2 route R1 needs it).
+- 2026-11-14: wave P2-0. Spike 2.0 (main session) passed route R1;
+  method and findings in §4.3. 2.1's template matcher: OpenCV
+  `matchTemplate` (python3 `cv2` 4.13, present on this machine). 2.2
+  (Sonnet) merged into `claude/demo-phase2`, first review:
+  `npm run demo:record -w packages/mcp-apps` records F1 14.5 s 2.46 MB,
+  F2 16.5 s 2.16 MB, F3 16.0 s 1.67 MB. It records through x11grab in
+  headed Chromium, not `recordVideo` (1.9's finding), with the view's
+  iframe filling the window height at
+  `--force-device-scale-factor=1.15`. Open for the owner (2.4): F2's
+  currency switch is on project cost over time (U9), since the fixture's
+  cost change (U11) is USD only; F3 ends on the estimate's "Not enough
+  history" refusal, whose window follows the real clock, so it can change
+  between takes.
 - 2026-11-14: tasks 1.10-1.14 (final takes, owner review, docs embedding) are held until Phase 17 (dense ledger UI, [dense-ledger-ui.md](dense-ledger-ui.md)) merges, owner decision D2 of that plan. The scenes are then retaken once in the new look; the earlier takes serve as drafts only.

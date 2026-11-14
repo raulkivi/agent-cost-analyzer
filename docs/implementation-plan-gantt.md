@@ -72,7 +72,7 @@ gantt
     10.19 Classic subagent AI Credits (100%) :done, p10f, 2026-11-12, 2d
     10.21 Monthly allowance gauge (100%)   :done, p10g, 2026-11-12, 2d
     10.22 Extension demo recordings (100%)  :done, p10h, 2026-11-13, 3d
-    10.23 Claude Desktop demo recordings (0%, not started) :p10i, after p10h, 3d
+    10.23 Claude Desktop demo recordings (29%) :active, p10i, 2026-11-14, 3d
 
     section Simulation and replay
     13 Vendor-aware Learn simulation (95%) :done, p13, 2026-11-04, 4d
@@ -117,7 +117,7 @@ gantt
 ## Not started
 
 - Phase 11 (0%) — pi provider real-capture verification.
-- Step 10.23 (0%) — Claude Desktop demo recordings; starts after step 10.22's Phase 1 exit.
+- Step 10.23 (29%, 2 of 7 tasks) — Claude Desktop demo recordings, started 2026-11-14. Spike 2.0 passed route R1 (Desktop 5.11492.5 driven by `xdotool` and OpenCV template matching in Xvfb, a separate signed-in profile through `XDG_CONFIG_HOME`); 2.2 F1–F3 fake-host close-ups record with `npm run demo:record -w packages/mcp-apps`, on branch `claude/demo-phase2`. Next: 2.1 (Desktop driver), then 2.3 takes. Open for the owner: F2/F3 content (plan §11).
 
 ## Open items
 
@@ -134,7 +134,7 @@ gantt
 
 ## Steps 10.22 and 10.23 detail — Demo recordings
 
-Schedule view of the task tables in [docs-refresh-and-demo-recordings.md](plans/docs-refresh-and-demo-recordings.md) §6. Status: owner decisions answered 2026-11-13; Phase 0 done; Phase 1 spike 1.0, tooling 1.1-1.5, scenes and stills 1.6a-1.9 done (17 of 22 tasks); final takes, owner review and docs with media 1.10-1.14 done 2026-11-14 (22 of 22 tasks; step 10.22 done). Phase 2 (step 10.23) starts after Phase 1's exit.
+Schedule view of the task tables in [docs-refresh-and-demo-recordings.md](plans/docs-refresh-and-demo-recordings.md) §6. Status: owner decisions answered 2026-11-13; Phase 0 done; Phase 1 spike 1.0, tooling 1.1-1.5, scenes and stills 1.6a-1.9 done (17 of 22 tasks); final takes, owner review and docs with media 1.10-1.14 done 2026-11-14 (22 of 22 tasks; step 10.22 done). Phase 2 (step 10.23) started 2026-11-14: spike 2.0 and F1–F3 tooling 2.2 done (2 of 7 tasks); 2.1 next.
 
 ```mermaid
 %%{init: {
@@ -185,7 +185,10 @@ gantt
     1.11-1.14 Docs with media (100%)               :done, d111, after d110, 1d
 
     section Phase 2 (step 10.23)
-    2.0-2.6 Claude Desktop and fake host (0%, not started) :d20, after d111, 3d
+    2.0 Desktop spike, route R1 (100%)              :done, d20, 2026-11-14, 1d
+    2.2 F1-F3 fake-host close-ups (100%)            :done, d22, 2026-11-14, 1d
+    2.1 Desktop driver (0%)                          :d21, after d20, 1d
+    2.3-2.6 Takes, owner review, docs (0%)           :d23, after d21, 2d
 ```
 
 ## Phase 16 detail — Savings report
