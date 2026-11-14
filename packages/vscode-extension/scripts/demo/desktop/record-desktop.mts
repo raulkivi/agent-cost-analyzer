@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
 // `npm run demo:record:desktop -w packages/vscode-extension -- M1 [--dry-run]`
-// Plays a Claude Desktop scene in Xvfb on the owner's signed-in demo profile over a fresh made-up-data home
+// Plays a Claude Desktop scene in Xvfb on the owner's signed-in demo profile over a fresh made-up-data home (the fixture with realistic Copilot model names, D21)
 // and writes <masters>/<id>-<slug>.mp4 plus .json (docs/plans/docs-refresh-and-demo-recordings.md §4.3).
 // --dry-run launches Desktop, reports template scores and sends nothing.
 // Run it under `flock "$XDG_RUNTIME_DIR/aica-demo.lock"`.
@@ -11,7 +11,6 @@ import { homedir, tmpdir } from "node:os";
 import path from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
 import { fileURLToPath } from "node:url";
-import { createFixtureHome } from "../../../../web/e2e/support/fixture-home.mts";
 import { FIXTURE_NOW } from "../../../../web/e2e/support/fixture-clock.ts";
 import { mastersDir } from "../../../test/ui/demo/support/demo-launch.mts";
 import { FRAME } from "../ffmpeg-args.mts";
@@ -19,6 +18,7 @@ import { sceneOutputs } from "../output-names.mts";
 import { startRecorder, type Recorder } from "../recorder.mts";
 import { assertScene, playScene, totalBeatMs } from "../scene-timeline.mts";
 import { createActionRunner } from "./action-runner.mts";
+import { createDemoDesktopHome } from "./demo-desktop-home.mts";
 import { buildDesktopConfig, type DesktopConfig } from "./desktop-config.mts";
 import { parseDesktopArgs } from "./desktop-args.mts";
 import { DESKTOP_SCENES, sceneTemplates } from "./desktop-scenes.mts";
@@ -89,7 +89,7 @@ async function main(): Promise<void> {
   let finished = false;
   try {
     const home = path.join(tmp, "home");
-    createFixtureHome(home);
+    createDemoDesktopHome(home);
     writeConfig(profile, home);
     session = await startDesktopSession(profile, (display) => new Xdotool(display), log);
     const probe = new ScreenProbe(session.display, path.join(tmp, "frame.png"));

@@ -31,6 +31,11 @@ export class Xdotool {
     await this.xdo(["mousemove", String(point.x), String(point.y), "click", "1"]);
   }
 
+  // Button 5 is wheel-down; X has no scroll-by-pixels, so the caller counts notches.
+  async scrollDown(point: Point, clicks: number): Promise<void> {
+    await this.xdo(["mousemove", String(point.x), String(point.y), "click", "--repeat", String(clicks), "--delay", "60", "5"]);
+  }
+
   async key(chord: string): Promise<void> {
     await this.xdo(["key", "--clearmodifiers", chord]);
   }

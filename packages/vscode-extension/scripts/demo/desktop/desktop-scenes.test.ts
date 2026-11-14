@@ -37,6 +37,112 @@ describe("M1", () => {
   });
 });
 
+const ALL = Object.values(DESKTOP_SCENES);
+const prompts: Record<string, RegExp> = {
+  M2: /Customer portal.*October/,
+  M3: /October.*statement.*Customer portal/,
+  M4: /Claude Code sessions.*analyse/i,
+  M5: /risky.*October/,
+  M6: /scratch.*30 October.*Haiku.*Luna/,
+  M7: /ten more active days.*Mobile app/,
+};
+// Chromium wheel notches are not exact, so a scroll is never the only way to a click target: the target
+// is within the last screenful, and the scene overshoots to the bottom of the view.
+const MAX_SECONDS_AFTER_RECORDING_STARTS = 25;
+
+describe.each(ALL)("scene $id ($slug)", (scene) => {
+  it("is a valid scene", () => {
+    expect(() => assertScene(scene)).not.toThrow();
+  });
+  it("opens a new chat and sends the prompt before the recording starts (D17)", () => {
+    const kinds = scene.steps.map((s) => s.action.kind);
+    expect(kinds.indexOf("newChat")).toBeGreaterThanOrEqual(0);
+    expect(kinds.indexOf("prompt")).toBeGreaterThan(kinds.indexOf("newChat"));
+    expect(kinds.filter((k) => k === "prompt")).toHaveLength(1);
+    expect(kinds.filter((k) => k === "startRecording")).toHaveLength(1);
+    expect(kinds.indexOf("startRecording")).toBeGreaterThan(kinds.indexOf("prompt"));
+  });
+  it("types nothing after the recording starts", () => {
+    const start = scene.steps.findIndex((s) => s.action.kind === "startRecording");
+    expect(scene.steps.slice(start).some((s) => s.action.kind === "prompt")).toBe(false);
+  });
+  it("names a period inside the fixture, never 'this week'", () => {
+    const prompt = scene.steps.find((s) => s.action.kind === "prompt")!.action as { text: string };
+    expect(prompt.text).not.toMatch(/this (week|month)|today|yesterday/i);
+    if (scene.id !== "M7") expect(prompt.text).toMatch(/October|30 October/);
+  });
+  it("never clicks fullscreen (D18)", () => {
+    expect(sceneTemplates(scene).some((t) => /fullscreen/i.test(t))).toBe(false);
+    expect(scene.steps.some((s) => /fullscreen/i.test(s.label))).toBe(false);
+  });
+  it("waits for the view, then for the answer, before the first click", () => {
+    const kinds = scene.steps.map((s) => s.action.kind);
+    const firstClick = kinds.indexOf("click");
+    expect(kinds.indexOf("waitFor", kinds.indexOf("startRecording"))).toBeGreaterThan(kinds.indexOf("startRecording"));
+    expect(kinds.indexOf("waitAnswerDone")).toBeLessThan(firstClick);
+  });
+  it("opens the side pane before any in-view click: the pane mounts a fresh view", () => {
+    const clicks = scene.steps.flatMap((s) => (s.action.kind === "click" ? [s.action.template] : []));
+    expect(clicks[0]).toBe("expand");
+  });
+  it("lists the templates it needs, each cut or deliberately missing", () => {
+    expect(sceneTemplates(scene)).toContain("expand");
+    for (const t of sceneTemplates(scene)) expect(t).toMatch(/^[a-z0-9]+(-[a-z0-9]+)*$/);
+  });
+  it("keeps the beats after the recording starts within 25 s", () => {
+    const start = scene.steps.findIndex((s) => s.action.kind === "startRecording");
+    const beats = scene.steps.slice(start).reduce((sum, s) => sum + s.beatMs, 0);
+    expect(beats / 1000).toBeLessThanOrEqual(MAX_SECONDS_AFTER_RECORDING_STARTS);
+  });
+});
+
+describe("prompts", () => {
+  it.each(Object.entries(prompts))("%s asks its question", (id, pattern) => {
+    const prompt = DESKTOP_SCENES[id]!.steps.find((s) => s.action.kind === "prompt")!.action as { text: string };
+    expect(prompt.text).toMatch(pattern);
+  });
+  it("covers M1 to M7", () => {
+    expect(Object.keys(DESKTOP_SCENES)).toEqual(["M1", "M2", "M3", "M4", "M5", "M6", "M7"]);
+  });
+});
+
+const order = (scene: string) => DESKTOP_SCENES[scene]!.steps.map((s) => (s.action.kind === "click" || s.action.kind === "waitFor" ? `${s.action.kind}:${s.action.template}` : s.action.kind));
+
+describe("scene specifics", () => {
+  it("M2 scrolls the pane to the bottom before it clicks Price changes, then goes Back", () => {
+    const steps = order("M2");
+    expect(steps.indexOf("scrollPane")).toBeLessThan(steps.indexOf("click:price-changes-button"));
+    expect(steps.indexOf("click:back-to-cost-change")).toBeGreaterThan(steps.indexOf("click:price-changes-button"));
+  });
+  it("M4 waits for the session audit after Analyse, which sends a new model turn", () => {
+    const steps = order("M4");
+    const analyse = steps.indexOf("click:analyse-button");
+    expect(steps.indexOf("waitFor:audit-kicker")).toBeGreaterThan(analyse);
+    expect(steps.lastIndexOf("waitAnswerDone")).toBeGreaterThan(steps.indexOf("waitFor:audit-kicker"));
+  });
+  it("M5 filters before it opens an evidence", () => {
+    const steps = order("M5");
+    expect(steps.indexOf("click:kind-anomaly")).toBeLessThan(steps.indexOf("click:why-flagged"));
+  });
+  it("M6 replays a model after the pane is open, then goes Back", () => {
+    const steps = order("M6");
+    expect(steps.indexOf("click:model-haiku")).toBeGreaterThan(steps.indexOf("click:expand"));
+    expect(steps.at(-1)).toBe("click:back-to-model-comparison");
+  });
+});
+
+describe("scroll steps", () => {
+  it("only scroll the pane after it is open", () => {
+    for (const scene of ALL) {
+      const kinds = scene.steps.map((s) => s.action);
+      const open = kinds.findIndex((a) => a.kind === "click" && a.template === "expand");
+      kinds.forEach((a, i) => {
+        if (a.kind === "scrollPane") expect(i).toBeGreaterThan(open);
+      });
+    }
+  });
+});
+
 describe("sceneTemplates", () => {
   it("lists each template once, in first-use order", () => {
     expect(
