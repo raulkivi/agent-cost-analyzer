@@ -39,7 +39,7 @@ describe("M1", () => {
 
 const ALL = Object.values(DESKTOP_SCENES);
 const prompts: Record<string, RegExp> = {
-  M2: /Customer portal.*1 to 6 October.*7 to 31 October/,
+  M2: /Customer portal.*1-6 October.*7-31 October/,
   M3: /October.*statement.*Customer portal/,
   M4: /Claude Code sessions.*analyse/i,
   M5: /risky.*October/,
