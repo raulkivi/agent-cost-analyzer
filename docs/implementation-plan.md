@@ -1363,7 +1363,7 @@ calls the provider provisional.
 **Dependencies**: Phase 9.6 (the provider), Phase 9.8 (the sidecar join).
 Needs pi installed and one real run on the owner's machine.
 
-**Status (2026-11-14)**: capture tooling ready (V12, PR <n>): redaction CLI
+**Status (2026-11-14)**: capture tooling ready (V12, PR #288): redaction CLI
 with a leak scan and a provider check, and the owner's capture steps in
 [providers/pi-provider.md](providers/pi-provider.md#capturing-a-real-session-for-phase-11).
 Next: the owner captures two sessions (V13), then V14. Required for 1.0 (owner,
@@ -1763,7 +1763,7 @@ app installs from npm, and the release path's security gaps are closed.
 | # | Criterion | Phase or step | Status | Exit check |
 |---|---|---|---|---|
 | C1 | Phase 10 closed: 10.9's manual checks superseded by step 10.17's release gate; 10.10's docs review covered by the owner's reviews for 0.12.0 | Phase 10 | Done 2026-11-14 | Phase 10 at 100% in the Gantt |
-| C2 | pi provider pinned against real captures | Phase 11 | Capture tooling ready (PR <n>); owner capture next. The sidecar rule is decided (PR #279) | Phase 11's exit criterion |
+| C2 | pi provider pinned against real captures | Phase 11 | Capture tooling ready (PR #288); owner capture next. The sidecar rule is decided (PR #279) | Phase 11's exit criterion |
 | C3 | Replay of real sessions verified | Phase 14 | Not started (14.0-14.8 built) | A `REAL_DATA` check with an oracle computed from raw logs passes on the owner's logs (plan §13); the owner signs off its output |
 | C4 | Cost by repository and project verified | Phase 15 | Not started (15.0-15.15 built) | A `REAL_DATA` check with an oracle computed from raw logs passes on the owner's logs and projects file (plan §15); the owner signs off its output |
 | C5 | Savings Increment 2 finished | Phase 16 (SR21, SR22) | In progress: SR21 in PR #281 | `npm run test:real-data:savings` also checks `get_savings_report`; the owner signs off its output |
@@ -1816,7 +1816,7 @@ repo. "Owner step" marks work that needs the owner's hands or accounts.
 | V9 | Register the Open VSX trusted publisher for the namespace | C13 | low | Owner step | — |
 | V10 | `release-extension.yml` publishes to Open VSX through trusted publishing, without `OVSX_PAT`; threat-model.md §8 row | C13 | low | Sonnet | V9 |
 | V11 | After a release published by V10, delete the `OVSX_PAT` secret; threat-model.md §5.8 marked done | C13 | low | Owner step | V10 and a 0.x release |
-| V12 | Phase 11 capture instructions and a redaction script for pi session files and the sidecar log (done, PR <n>: `npm run fixtures:redact-pi -w packages/server`; steps in [providers/pi-provider.md](providers/pi-provider.md#capturing-a-real-session-for-phase-11)) | C2 | medium | Sonnet | — |
+| V12 | Phase 11 capture instructions and a redaction script for pi session files and the sidecar log (done, PR #288: `npm run fixtures:redact-pi -w packages/server`; steps in [providers/pi-provider.md](providers/pi-provider.md#capturing-a-real-session-for-phase-11)) | C2 | medium | Sonnet | — |
 | V13 | Capture two pi sessions with `pi-system-prompt-logger` installed: one linear, one with a fork or rewind | C2 | low | Owner step | V12 |
 | V14 | Phase 11: real fixtures, field diff, fixes test-first, the open pi decisions put to the owner, architecture.md §6.2.5 and providers/pi-provider.md updated | C2 | high | Opus | V13 |
 | V15 | Plan `docs/plans/npm-package.md`: which workspace publishes, bundle, `bin`, files list, publish job, threat-model rows, README install section | C8 | medium | Opus | — |
