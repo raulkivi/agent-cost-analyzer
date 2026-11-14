@@ -1,6 +1,6 @@
 # Architecture: Agent Cost Analyzer and AI Credits Analyzer
 
-**Last changed:** 2026-11-13 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-14 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 ## 1. Purpose & scope
 
@@ -22,6 +22,7 @@ before deviating from this document:
    store or any network service. Only local sources reachable through a
    configured log provider — the SQLite session store, local `main.jsonl`
    debug-log files, and local mitmproxy captures — are read (vision §4, §6).
+   Fonts are bundled through `@fontsource` imports (Commit Mono, Source Serif 4; OFL-1.1, notices in `THIRD-PARTY-NOTICES.md`), never fetched from a CDN.
 2. **A local server is required.** The browser cannot read arbitrary local
    files (SQLite DB, `.jsonl` logs) directly, so a small local process must
    read them and serve normalized data to the UI (vision §5).
@@ -267,7 +268,7 @@ SQLite, `main.jsonl`, or scenario fixtures.
 | `components/SystemPromptInspector` | Analyze-mode-only, full-page form (replaces the 3-column layout, not a tab): a three-pane view over the raw captured system-prompt text — a colored hierarchical tag/subtag menu (left), the byte-for-byte raw text with matching per-section background colors (center, scrolls to the clicked menu entry), and a description panel (right) explaining the selected tag, honestly labeled `Sourced` (with links) or `Not independently sourced` per constraint 6's spirit. Built entirely client-side from `lib/system-prompt-parser.ts` (defensive tag-tree parser), `lib/system-prompt-menu.ts` (labels + an 8-hue categorical palette), `lib/system-prompt-text.ts` (lossless colored-segment renderer), and `lib/system-prompt-descriptions.ts` (the tag glossary) — no new API surface, reuses `GET /api/sessions/:id/system-prompt` |
 | `components/ToolInventoryPanel` | Analyze-mode-only: tools loaded vs. tools actually invoked |
 | `components/ConfigWarningBanner` | Dismissible banner shown when `GET /api/config/status` reports unmet prerequisites; renders the exact setting name, current vs. recommended value, and step-by-step fix instructions (§6.3) |
-| `components/ui/*` | Shared design-system primitives (`Blueprint`, `Tag`, `SegmentedControl`) used across the components above, per the "Industry" design tokens in `theme.css` |
+| `components/ui/*` | Shared design-system primitives (`Blueprint`, `Tag`, `SegmentedControl`) used across the components above. `theme.css` has two layers: the `:root` "Industry" token set (the fallback for the VS Code webview and MCP Apps, with `--font-mono` and `--font-prose` mapped to system fonts) and the standalone "ledger" light and dark sets under `html[data-color-mode]` (Phase 17; mono UI, serif prose, square hairline panels, `--color-control-border` for control outlines). The VS Code webview and MCP Apps never get the attribute |
 | `state/session-store` | Holds the currently loaded `Session`, selected turn index, Learn/Analyze `mode`, selected Analyze log-provider id, and right-column `rightTab` (Analyze mode only); the rest of the UI is a pure function of this state |
 | `api-client` | Fetches provider descriptors, selects the active provider, and fetches sessions through the stable REST API; it is the only frontend module that knows an HTTP boundary exists |
 | `charts/*` | D3-based AI Credits sparkline rendered in the center column's header row |
@@ -2923,7 +2924,11 @@ refactored — red-green-refactor, not tests bolted on afterward.
   four repositories and two projects, `e2e/support/fixture-home.mts`) at a
   fixed clock (`AGENT_COST_ANALYZER_NOW`, read by the server's clock port
   `platform/clock/clock-from-env.ts`, and the page's clock), reads figures
-  from the page and runs axe in the browser at every stop. The required
+  from the page and runs axe in the browser at every stop. Two Playwright
+  projects, `light` and `dark` (`colorScheme`), run the axe specs in both
+  colour modes; `color-mode.spec.ts` covers the switch. The web contrast tests
+  (`theme-contrast.test.ts`) resolve the standalone-light and standalone-dark
+  themes beside the Industry `:root`. The required
   `web-e2e` CI job runs it with no retries.
 - Release gate (step 10.17, [release-ui-gate.md](plans/release-ui-gate.md)).
   The extension is gated by its integration suite, its Playwright UI check
@@ -3286,7 +3291,7 @@ open questions:
   ago"), not an absolute date.
 - Keyboard accessibility → in scope: session cards and table rows are
   `tabIndex="0"` with an Enter/Space `onKeyDown` mirroring their `onClick`.
-- Dark theme → stayed out of scope, per the v2 handoff's explicit call.
+- Dark theme → stayed out of scope, per the v2 handoff's explicit call. Phase 17 later brought light and dark modes to the standalone app only (owner decisions D1 and D4, 2026-11-14): an Auto/Light/Dark switch in the header, Auto following `prefers-color-scheme`; see [plans/dense-ledger-ui.md](plans/dense-ledger-ui.md).
 - App icon/favicon → stayed out of scope, deferred to Phase 10.
 - AI Credit formatting precision → up to 6 decimals with trailing zeros
   removed (`2.79598`), matching the nano-AIU source precision without a

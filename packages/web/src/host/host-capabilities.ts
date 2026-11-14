@@ -14,6 +14,10 @@ export interface HostCapabilities {
   copyToClipboard(text: string): Promise<void>;
   openSetting?(settingId: string): Promise<void>;
   openTextDocument?(text: string, language: DocumentLanguage): Promise<void>;
+  // True where the app owns its colours (standalone). The VS Code webview
+  // and MCP views keep their host theme, so the colour-mode switch and
+  // attribute are off there (dense-ledger-ui.md D1).
+  colorMode?: boolean;
 }
 
 interface ClipboardWriter {
@@ -25,7 +29,7 @@ interface ClipboardWriter {
 export function standaloneHostCapabilities(
   clipboard: () => ClipboardWriter = () => navigator.clipboard,
 ): HostCapabilities {
-  return { copyToClipboard: (text) => clipboard().writeText(text) };
+  return { copyToClipboard: (text) => clipboard().writeText(text), colorMode: true };
 }
 
 // Every capability as a host command over the transport (the VS Code

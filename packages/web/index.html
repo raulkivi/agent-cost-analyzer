@@ -3,6 +3,26 @@
   <head>
     <meta charset="UTF-8" />
     <title>Agent Cost Analyzer</title>
+    <script>
+      // The ledger colour mode (dense-ledger-ui.md L2, L6), set before the
+      // first paint: main.tsx is a module script that runs after it, too late
+      // to stop a light frame in dark mode. Mirrors lib/color-mode.ts (key
+      // aca.colorMode; Auto follows prefers-color-scheme), pinned by
+      // color-mode.test.ts. Only the standalone app loads this page: the
+      // VS Code webview builds its own (panel-html.ts), so it never runs there.
+      (function () {
+        var preference = "auto";
+        try {
+          var stored = localStorage.getItem("aca.colorMode");
+          if (stored === "light" || stored === "dark") preference = stored;
+        } catch (error) {
+          // Blocked storage: Auto.
+        }
+        var prefersDark = !!(window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches);
+        var dark = preference === "dark" || (preference === "auto" && prefersDark);
+        document.documentElement.setAttribute("data-color-mode", dark ? "dark" : "light");
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

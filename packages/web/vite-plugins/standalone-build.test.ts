@@ -20,7 +20,7 @@ function listFiles(dir: string, prefix = ""): string[] {
 }
 
 // Builds the standalone app (the default mode) into a temp dir: G12 and
-// constraint 1 say it makes no network call, so Barlow ships with it
+// constraint 1 say it makes no network call, so its fonts ship with it
 // instead of coming from Google Fonts.
 describe("web build in standalone mode (vscode-extension.md G12)", () => {
   let outDir: string;
@@ -47,27 +47,39 @@ describe("web build in standalone mode (vscode-extension.md G12)", () => {
     }
   });
 
-  it("bundles Barlow and Barlow Condensed locally, in the weights theme.css uses", () => {
+  // Phase 17 D3: the ledger theme's fonts, Commit Mono for the UI and
+  // Source Serif 4 for prose, each in the weights it uses and the Latin
+  // subset only. Barlow is gone from the standalone build.
+  it("bundles Commit Mono and Source Serif 4 locally, in the weights the ledger theme uses", () => {
     const css = files
       .filter((name) => name.endsWith(".css"))
       .map((name) => readFileSync(path.join(outDir, name), "utf-8"))
       .join("\n");
 
     for (const [family, weight] of [
-      ["Barlow", 400],
-      ["Barlow", 500],
-      ["Barlow", 700],
-      ["Barlow Condensed", 400],
-      ["Barlow Condensed", 600],
+      ["Commit Mono", 400],
+      ["Commit Mono", 700],
+      ["Source Serif 4", 400],
+      ["Source Serif 4", 600],
     ] as const) {
       expect(css).toMatch(new RegExp(`font-family:\\s*["']?${family}["']?;[^}]*font-weight:\\s*${weight}`));
     }
-    expect(files.some((name) => /barlow-latin-400-normal.*\.woff2$/.test(name))).toBe(true);
-    expect(files.some((name) => /barlow-condensed-latin-600-normal.*\.woff2$/.test(name))).toBe(true);
+    for (const file of [
+      "commit-mono-latin-400-normal",
+      "commit-mono-latin-700-normal",
+      "source-serif-4-latin-400-normal",
+      "source-serif-4-latin-600-normal",
+    ]) {
+      expect(files.some((name) => name.includes(file) && name.endsWith(".woff2")), file).toBe(true);
+    }
   });
 
-  it("ships no Barlow weight that theme.css doesn't use", () => {
-    expect(files.some((name) => /barlow-latin-(100|200|300|600|800|900)-/.test(name))).toBe(false);
-    expect(files.some((name) => /barlow-condensed-latin-(100|200|300|500|700|800|900)-/.test(name))).toBe(false);
+  it("ships no font weight, style or subset the ledger theme doesn't use, and no Barlow", () => {
+    const fonts = files.filter((name) => /\.woff2?$/.test(name));
+
+    expect(fonts.filter((name) => /barlow/i.test(name))).toEqual([]);
+    expect(fonts.filter((name) => /commit-mono-latin-(200|300|500|600)-|commit-mono-.*-italic/.test(name))).toEqual([]);
+    expect(fonts.filter((name) => /source-serif-4-latin-(200|300|500|700|800|900)-|source-serif-4-.*-italic/.test(name))).toEqual([]);
+    expect(fonts.filter((name) => /source-serif-4-(cyrillic|greek|latin-ext|vietnamese)/.test(name))).toEqual([]);
   });
 });
