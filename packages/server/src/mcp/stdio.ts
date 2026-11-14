@@ -32,11 +32,12 @@ const priceBook = createStandalonePriceBook(resolvedAppSettingsDir, attribution.
 // threat-model.md §5.6: list_projects shares client names and billing codes
 // with the chat model only when the user asks for it at launch.
 const { projectBillingDetails, appViewsHtml } = parseStdioArgs(process.argv.slice(2));
+const now = clockFromEnv();
 const deps: McpServerDeps = {
   projectBillingDetails,
   // --app-views-html (scripts/mcp-server.sh passes the built views.html): the views resource and _meta.ui; no file, no views.
   ...resolveAppViews(appViewsHtml, (missing) => console.error(`agent-cost-analyzer MCP server: no app views at ${missing}; starting without them (run npm run build).`)),
-  ...createMcpServices(registry, version, undefined, attribution, createTurnPricer(priceBook), priceBook, {
+  ...createMcpServices(registry, version, undefined, attribution, createTurnPricer(priceBook, now), priceBook, {
     // Step 15.11: get_statement reads the statements the app issued.
     store: new FileStatementStore(resolvedAppSettingsDir),
     projects: attribution.catalog,
@@ -46,7 +47,7 @@ const deps: McpServerDeps = {
   // estimate_cost's model, on the same profiles and price book.
   { profiles: vendorProfiles, priceBook },
   // AGENT_COST_ANALYZER_NOW, as the standalone app reads it (server.ts).
-  clockFromEnv()),
+  now),
   priceBook,
 };
 

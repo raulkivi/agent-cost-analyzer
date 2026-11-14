@@ -67,4 +67,12 @@ describe("createMcpServices clock", () => {
     const late = await servicesAt(() => new Date("2026-12-02T12:00:00.000Z")).statements!.get({ projectId: "portal", period: "2026-11" });
     expect(late?.canIssue.ok).toBe(true);
   });
+
+  it("stamps cost analyses and the dataset they read with the configured clock", async () => {
+    const deps = servicesAt(() => new Date("2026-11-06T12:00:00.000Z"));
+    const documented = await deps.costAnalysis!.getPriceChanges({ kind: "documented" } as never);
+    expect(documented.generatedAt).toBe("2026-11-06T12:00:00.000Z");
+    const observed = await deps.costAnalysis!.getPriceChanges({ kind: "observed" } as never);
+    expect(observed.generatedAt).toBe("2026-11-06T12:00:00.000Z");
+  });
 });

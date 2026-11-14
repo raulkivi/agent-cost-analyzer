@@ -63,11 +63,11 @@ export function createMcpServices(
   // Step 14.5: replay_session, compare_models_for_session and
   // estimate_cost's model (needs the turn pricer too, for measured figures).
   replay?: McpReplayInputs,
-  // The clock port (platform/clock/clock-from-env.ts): the billing pair's
-  // "now"; absent, the real clock.
+  // The clock port (platform/clock/clock-from-env.ts): insights, cost
+  // analyses and the billing pair's "now"; absent, the real clock.
   now?: () => Date,
 ): McpServerDeps {
-  const insights = createInsightsService(registry, attribution?.dataset, pricer);
+  const insights = createInsightsService(registry, attribution?.dataset, pricer, now);
   const sessionReplay =
     replay && pricer
       ? createSessionReplay({ providers: registry, profiles: replay.profiles, priceBook: replay.priceBook, pricer, ...(attribution ? { attribution: attribution.dataset } : {}) })
@@ -87,7 +87,7 @@ export function createMcpServices(
       ? {
           costAnalysis: createCostAnalysis(insights, priceVersions, {
             projectName: (id) => attribution.queries.listProjects().projects.find((project) => project.id === id)?.name,
-          }),
+          }, now),
         }
       : {}),
     ...(attribution && statements
