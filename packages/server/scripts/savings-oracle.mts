@@ -94,19 +94,19 @@ const SYNTHETIC = "<synthetic>";
 
 // A human's turn opens at a user line that is not a tool result, not meta text
 // the CLI injected and not a compaction's summary.
-function opensTurn(line: RawLine): boolean {
+export function opensTurn(line: RawLine): boolean {
   if (line.type !== "user" || line.isMeta === true || line.isCompactSummary === true) return false;
   const content = messageOf(line)?.content;
   if (typeof content === "string") return true;
   return Array.isArray(content) && content.some((block) => !(isRecord(block) && block.type === "tool_result"));
 }
 
-interface Turn {
+export interface Turn {
   lines: RawLine[];
 }
 
 // Lines before the first human message belong to no turn.
-function turnsOf(branch: readonly RawLine[]): Turn[] {
+export function turnsOf(branch: readonly RawLine[]): Turn[] {
   const turns: Turn[] = [];
   for (const line of branch) {
     if (opensTurn(line)) turns.push({ lines: [line] });
@@ -115,14 +115,14 @@ function turnsOf(branch: readonly RawLine[]): Turn[] {
   return turns;
 }
 
-interface Round {
+export interface Round {
   id: string;
   lines: RawLine[];
 }
 
 // One response is written as several lines (one per content block) sharing a
 // message id; synthetic lines are the CLI's own, not requests.
-function roundsOf(turn: Turn): Round[] {
+export function roundsOf(turn: Turn): Round[] {
   const rounds = new Map<string, Round>();
   for (const line of turn.lines) {
     const id = line.type === "assistant" ? messageOf(line)?.id : undefined;
