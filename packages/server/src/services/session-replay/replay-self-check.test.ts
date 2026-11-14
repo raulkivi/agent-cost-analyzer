@@ -68,10 +68,11 @@ describe("replaySelfCheck", () => {
         { cacheRead: 0, outcome: "miss" },
         { cacheRead: 1000, outcome: "hit" },
       ]),
-      "claude-opus-5.5",
+      ["claude-opus-5.5"],
     );
     expect(check).toEqual({
       model: "claude-opus-5.5",
+      models: ["claude-opus-5.5"],
       requests: 1,
       matching: 1,
       readTolerancePercent: REPLAY_READ_TOLERANCE_PERCENT,
@@ -83,7 +84,7 @@ describe("replaySelfCheck", () => {
     const check = replaySelfCheck(
       trace([req(0, 0)]),
       session([{ cacheRead: 7, outcome: "partial" }]),
-      "m",
+      ["m"],
     );
     expect(check).toMatchObject({ requests: 0, matching: 0, passed: true });
   });
@@ -98,7 +99,7 @@ describe("replaySelfCheck", () => {
         { cacheRead: 950, outcome: "hit" }, // 5% below: matches
         { cacheRead: 949, outcome: "hit" }, // beyond 5%: doesn't
       ]),
-      "m",
+      ["m"],
     );
     expect(check).toMatchObject({ requests: 2, matching: 1, passed: false });
     expect(
@@ -123,7 +124,7 @@ describe("replaySelfCheck", () => {
           { cacheRead: 0, outcome: "miss" },
           { cacheRead: 500, outcome: "hit" },
         ]),
-        "m",
+        ["m"],
       ).matching,
     ).toBe(0);
     expect(
@@ -133,7 +134,7 @@ describe("replaySelfCheck", () => {
           { cacheRead: 0, outcome: "miss" },
           { cacheRead: 500, outcome: "partial" },
         ]),
-        "m",
+        ["m"],
       ).matching,
     ).toBe(1);
   });
@@ -147,7 +148,7 @@ describe("replaySelfCheck", () => {
           { cacheRead: 0, outcome: "miss" },
           { cacheRead: read, outcome: "miss" },
         ]),
-        "m",
+        ["m"],
       ).matching;
     expect(miss(0)).toBe(1);
     expect(miss(1)).toBe(0);
@@ -161,7 +162,7 @@ describe("replaySelfCheck", () => {
         { cacheRead: 0, outcome: "miss" },
         { cacheRead: null, outcome: "unknown" },
       ]),
-      "m",
+      ["m"],
     );
     expect(check).toMatchObject({ requests: 1, matching: 0, passed: false });
   });
@@ -171,7 +172,7 @@ describe("replaySelfCheck", () => {
       replaySelfCheck(
         trace([req(0, 0), req(1, 0)]),
         session([{ cacheRead: 0, outcome: "miss" }]),
-        "m",
+        ["m"],
       ),
     ).toThrow(/one simulated turn per request/);
   });
@@ -183,7 +184,7 @@ describe("replaySelfCheck", () => {
         { cacheRead: 0, outcome: "miss" },
         { cacheRead: 0, outcome: "miss" },
       ]),
-      "m",
+      ["m"],
     );
     expect(() => replaySelfCheckSchema.parse(check)).not.toThrow();
   });
@@ -225,9 +226,10 @@ describe("replaySelfCheck over the calibration captures", () => {
       });
       const wrong = KNOWN_DISAGREEMENTS[capture.id] ?? [];
       expect(selfCheckMismatches(t, simulated)).toEqual(wrong);
-      const check = replaySelfCheck(t, simulated, capture.modelId);
+      const check = replaySelfCheck(t, simulated, [capture.modelId]);
       expect(replaySelfCheckSchema.parse(check)).toEqual({
         model: capture.modelId,
+        models: [capture.modelId],
         requests: capture.requests.length - 1,
         matching: capture.requests.length - 1 - wrong.length,
         readTolerancePercent: REPLAY_READ_TOLERANCE_PERCENT,

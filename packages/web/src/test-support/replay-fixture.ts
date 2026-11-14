@@ -38,7 +38,7 @@ export function makeReplay(overrides: Partial<SessionReplay> = {}): SessionRepla
     ],
     totals: { measured: { value: 0.8, knownTurns: 2, turns: 3 }, simulated: { value: 0.48, knownTurns: 2, turns: 3 }, difference: -0.32 },
     coverage: { turns: 3, replayedTurns: 2, requests: 9, replayedRequests: 6, notReplayed: [{ reason: NOT_REPLAYED_REASON, turns: 1 }] },
-    selfCheck: { model: "claude-opus-5.5", requests: 8, matching: 8, readTolerancePercent: 5, passed: true },
+    selfCheck: { model: "claude-opus-5.5", models: ["claude-opus-5.5"], requests: 8, matching: 8, readTolerancePercent: 5, passed: true },
     assumptions: [
       { id: "A1", text: "Same conversation: the other model gets the same prompts. It wouldn't.", confidence: "unknown" },
       { id: "A2", text: "Same token counts: the session's token counts are kept.", confidence: "unknown" },

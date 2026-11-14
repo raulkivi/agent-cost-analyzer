@@ -469,6 +469,7 @@ describe("self-check over every calibration capture (D12)", () => {
       expect(selfCheckMismatches(trace, simulations[1]!)).toEqual(expected);
       expect(result.value.selfCheck).toEqual({
         model: capture.modelId,
+        models: [capture.modelId],
         requests: capture.requests.length - 1,
         matching: capture.requests.length - 1 - expected.length,
         readTolerancePercent: 5,

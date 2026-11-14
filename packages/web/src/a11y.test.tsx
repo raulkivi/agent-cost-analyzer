@@ -593,7 +593,7 @@ describe.each(Object.keys(THEMES) as ThemeName[])("axe: no WCAG 2.2 AA violation
 
     it("the replay table with a turn not replayed, a failed self-check and an unpriced replay", async () => {
       const replay = makeReplay({
-        selfCheck: { model: "claude-opus-5.5", requests: 40, matching: 37, readTolerancePercent: 5, passed: false },
+        selfCheck: { model: "claude-opus-5.5", models: ["claude-opus-5.5"], requests: 40, matching: 37, readTolerancePercent: 5, passed: false },
         pricing: { channel: null, reason: "No price channel is known, so nothing simulated is priced.", asOf: "2026-10-21", requested: "session-channel" },
       });
       render(

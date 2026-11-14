@@ -61,7 +61,7 @@ describe("ReplaySummaryPanel (step 14.7, board 2)", () => {
   });
 
   it("warns when the self-check failed", () => {
-    const { dialog } = renderPanel(makeReplay({ selfCheck: { model: "claude-opus-5.5", requests: 40, matching: 37, readTolerancePercent: 5, passed: false } }));
+    const { dialog } = renderPanel(makeReplay({ selfCheck: { model: "claude-opus-5.5", models: ["claude-opus-5.5"], requests: 40, matching: 37, readTolerancePercent: 5, passed: false } }));
     const check = within(dialog).getByRole("region", { name: "Self-check" });
     expect(check).toHaveTextContent("Replay matches the log on claude-opus-5.5: 93% of compared requests");
     expect(check).toHaveTextContent("37 of 40 compared requests match; 3 disagree.");

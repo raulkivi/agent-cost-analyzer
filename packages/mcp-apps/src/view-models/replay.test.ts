@@ -46,7 +46,7 @@ describe("toReplayViewModel, replay mode", () => {
   });
 
   it("calls out a failed self-check", () => {
-    const vm = detail({ selfCheck: { model: "claude-opus-5.5", requests: 8, matching: 6, readTolerancePercent: 5, passed: false } });
+    const vm = detail({ selfCheck: { model: "claude-opus-5.5", models: ["claude-opus-5.5"], requests: 8, matching: 6, readTolerancePercent: 5, passed: false } });
     expect(vm.selfCheck).toMatchObject({
       status: "failed",
       callout: true,
@@ -109,6 +109,7 @@ describe("toReplayViewModel, compare mode, what U12 shows per model (board Repla
     total: { value, knownTurns, turns: 42 },
     replayedTurns: extra.replayedTurns ?? knownTurns,
     isMeasuredModel: extra.own ?? false,
+    isMixedSessionModel: false,
   });
   const compare = (entries: ReturnType<typeof entry>[], measured = 186.4) => {
     const vm = toReplayViewModel(
@@ -163,6 +164,22 @@ describe("toReplayViewModel, compare mode, what U12 shows per model (board Repla
     });
   });
 
+  it("names every model a switching session used, in order, and makes no own-model check of the first model's replay", () => {
+    const vm = toReplayViewModel(
+      replayComparison({
+        currency: "AI_CREDITS",
+        measured: { value: 186.4, knownTurns: 42, turns: 42 },
+        measuredModels: ["claude-sonnet-5.5", "claude-opus-5.5"],
+        entries: [{ ...entry("claude-sonnet-5.5", 183.9, 42), isMixedSessionModel: true }, entry("cheap", 38.2, 42)],
+      }),
+    );
+    if (vm.mode !== "compare") throw new Error("expected compare mode");
+    expect(vm.measuredModel).toBe("claude-sonnet-5.5, then claude-opus-5.5");
+    expect(vm.entries[0]).toMatchObject({ isMeasuredModel: false, noteText: "the session's first model; it switched models" });
+    expect(vm.ownModelCheck).toMatchObject({ status: "missing", callout: true });
+    expect(vm.ownModelCheck.text).toContain("switched models (claude-sonnet-5.5, then claude-opus-5.5)");
+  });
+
   it("calls out a missing own-model check, and an own model that could not be priced", () => {
     const missing = compare([entry("cheap", 38.2, 42)]);
     expect(missing.measuredModel).toBeUndefined();
@@ -186,9 +203,16 @@ describe("toReplayViewModel, compare mode, what U12 shows per model (board Repla
 
 describe("toReplayViewModel, the self-check box wording (plan §9.2 Q2)", () => {
   it("words a failed check with the counts and 'treat them as rough'", () => {
-    const vm = detail({ selfCheck: { model: "claude-opus-5.5", requests: 44, matching: 37, readTolerancePercent: 5, passed: false } });
+    const vm = detail({ selfCheck: { model: "claude-opus-5.5", models: ["claude-opus-5.5"], requests: 44, matching: 37, readTolerancePercent: 5, passed: false } });
     expect(vm.selfCheck.title).toBe("Self-check failed.");
     expect(vm.selfCheck.detail).toBe("Replaying the session on its own model (claude-opus-5.5) matched 37 of 44 requests within 5 % cache read, so the simulated figures below may be off. Treat them as rough, not as a quote.");
+  });
+
+  it("names every model a switching session's self-check ran, in order", () => {
+    const vm = detail({ selfCheck: { model: "claude-sonnet-5.5", models: ["claude-sonnet-5.5", "claude-opus-5.5"], requests: 3, matching: 2, readTolerancePercent: 5, passed: false } });
+    expect(vm.selfCheck.detail).toBe("Replaying the session on its own models (claude-sonnet-5.5, then claude-opus-5.5) matched 2 of 3 requests within 5 % cache read, so the simulated figures below may be off. Treat them as rough, not as a quote.");
+    const passed = detail({ selfCheck: { model: "claude-sonnet-5.5", models: ["claude-sonnet-5.5", "claude-opus-5.5"], requests: 3, matching: 3, readTolerancePercent: 5, passed: true } });
+    expect(passed.selfCheck.detail).toBe("on claude-sonnet-5.5, then claude-opus-5.5: 3 of 3 requests matched within 5 % cache read.");
   });
 
   it("words a passed and a missing check", () => {

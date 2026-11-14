@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `compare_models_for_session` and the Replay view no longer label a session that switched models (e.g. Sonnet, then Opus) as measured on its first model alone: the result lists `measuredModels` in order, flags the first-model entry `isMixedSessionModel` instead of `isMeasuredModel`, the view says "measured on A, then B" and makes no own-model check; `replay_session`'s `selfCheck` gains `models`, and the self-check line (in the Replay view and the web app) names every model it ran.
 - On a narrow screen the All sessions audit's tables scroll inside their panels instead of making the page wider.
 
 ## [0.14.0] - 2026-11-13

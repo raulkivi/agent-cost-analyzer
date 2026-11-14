@@ -43,12 +43,13 @@ const COMPARISON: SessionReplayComparison = {
   sessionId: "s1",
   providerId: "claude-code",
   currency: "USD",
+  measuredModels: ["claude-opus-5.5"],
   measured: total(4.82),
   entries: [
-    { model: "claude-opus-5.5", vendorId: "anthropic", total: total(4.79), replayedTurns: 11, isMeasuredModel: true },
-    { model: "claude-haiku-5.5", vendorId: "anthropic", total: total(0.97), replayedTurns: 11, isMeasuredModel: false },
-    { model: "grok-4.7", vendorId: "xai", total: total(null), replayedTurns: 11, isMeasuredModel: false },
-    { model: "gpt-6.1-sol", vendorId: "openai", total: total(3.36), replayedTurns: 11, isMeasuredModel: false },
+    { model: "claude-opus-5.5", vendorId: "anthropic", total: total(4.79), replayedTurns: 11, isMeasuredModel: true, isMixedSessionModel: false },
+    { model: "claude-haiku-5.5", vendorId: "anthropic", total: total(0.97), replayedTurns: 11, isMeasuredModel: false, isMixedSessionModel: false },
+    { model: "grok-4.7", vendorId: "xai", total: total(null), replayedTurns: 11, isMeasuredModel: false, isMixedSessionModel: false },
+    { model: "gpt-6.1-sol", vendorId: "openai", total: total(3.36), replayedTurns: 11, isMeasuredModel: false, isMixedSessionModel: false },
   ],
 };
 
@@ -185,7 +186,7 @@ describe("CompareModelsView", () => {
     const profiles = [profile("anthropic", "Anthropic", [...many.map((id) => [id] as [string]), ["extra"]])];
     const comparison: SessionReplayComparison = {
       ...COMPARISON,
-      entries: many.map((model, index) => ({ model, vendorId: "anthropic", total: total(index + 1), replayedTurns: 11, isMeasuredModel: index === 0 })),
+      entries: many.map((model, index) => ({ model, vendorId: "anthropic", total: total(index + 1), replayedTurns: 11, isMeasuredModel: index === 0, isMixedSessionModel: false })),
     };
     await renderReady(comparison, { profiles, initialModels: many.slice(1) });
     expect(screen.getByRole("combobox", { name: "Add model" })).toBeDisabled();

@@ -46,7 +46,7 @@ export function replay(overrides: Partial<SessionReplay> = {}): SessionReplay {
     ],
     totals: { measured: { value: 0.8, knownTurns: 2, turns: 3 }, simulated: { value: 0.48, knownTurns: 2, turns: 3 }, difference: -0.32 },
     coverage: { turns: 3, replayedTurns: 2, requests: 9, replayedRequests: 6, notReplayed: [{ reason: NOT_REPLAYED, turns: 1 }] },
-    selfCheck: { model: "claude-opus-5.5", requests: 8, matching: 8, readTolerancePercent: 5, passed: true },
+    selfCheck: { model: "claude-opus-5.5", models: ["claude-opus-5.5"], requests: 8, matching: 8, readTolerancePercent: 5, passed: true },
     assumptions: [{ id: "A1", text: "Same conversation: the other model gets the same prompts.", confidence: "unknown" }],
     ...overrides,
   });
@@ -58,11 +58,12 @@ export function replayComparison(overrides: Partial<SessionReplayComparison> = {
     sessionId: "s1",
     providerId: "claude-code",
     currency: "USD",
+    measuredModels: ["claude-opus-5.5"],
     measured: { value: 0.8, knownTurns: 2, turns: 3 },
     entries: [
-      { model: "claude-opus-5.5", vendorId: "anthropic", total: { value: 0.8, knownTurns: 2, turns: 3 }, replayedTurns: 2, isMeasuredModel: true },
-      { model: "claude-sonnet-5.5", vendorId: "anthropic", total: { value: 0.48, knownTurns: 2, turns: 3 }, replayedTurns: 2, isMeasuredModel: false },
-      { model: "gpt-6.1-sol", vendorId: "openai", total: { value: null, knownTurns: 0, turns: 3 }, replayedTurns: 0, isMeasuredModel: false },
+      { model: "claude-opus-5.5", vendorId: "anthropic", total: { value: 0.8, knownTurns: 2, turns: 3 }, replayedTurns: 2, isMeasuredModel: true, isMixedSessionModel: false },
+      { model: "claude-sonnet-5.5", vendorId: "anthropic", total: { value: 0.48, knownTurns: 2, turns: 3 }, replayedTurns: 2, isMeasuredModel: false, isMixedSessionModel: false },
+      { model: "gpt-6.1-sol", vendorId: "openai", total: { value: null, knownTurns: 0, turns: 3 }, replayedTurns: 0, isMeasuredModel: false, isMixedSessionModel: false },
     ],
     ...overrides,
   });

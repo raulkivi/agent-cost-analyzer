@@ -46,11 +46,12 @@ describe("replay formatting (step 14.7)", () => {
   });
 
   it("words the self-check both ways, and never rounds a failure up to 100%", () => {
-    const passed = { model: "claude-opus-5.5", requests: 40, matching: 40, readTolerancePercent: 5, passed: true };
+    const passed = { model: "claude-opus-5.5", models: ["claude-opus-5.5"], requests: 40, matching: 40, readTolerancePercent: 5, passed: true };
     expect(selfCheckSentence(passed)).toBe("Replay matches the log on claude-opus-5.5: 100% of compared requests");
     expect(selfCheckSentence({ ...passed, matching: 37, passed: false })).toBe("Replay matches the log on claude-opus-5.5: 93% of compared requests");
     expect(selfCheckSentence({ ...passed, requests: 1000, matching: 999, passed: false })).toBe("Replay matches the log on claude-opus-5.5: 99% of compared requests");
     expect(selfCheckSentence({ ...passed, requests: 0, matching: 0 })).toBe("Replay matches the log on claude-opus-5.5: no request to compare (the first is a cold start)");
+    expect(selfCheckSentence({ ...passed, model: "claude-sonnet-5.5", models: ["claude-sonnet-5.5", "claude-opus-5.5"] })).toBe("Replay matches the log on claude-sonnet-5.5, then claude-opus-5.5: 100% of compared requests");
     expect(selfCheckSentence(null)).toMatch(/^No self-check for this session/);
   });
 

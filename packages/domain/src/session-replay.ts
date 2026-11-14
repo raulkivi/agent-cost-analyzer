@@ -87,8 +87,13 @@ export const replayCoverageSchema = z
 
 // G4: the same script on the session's own model against the log.
 export const replaySelfCheckSchema = z
-  .object({ model: z.string().min(1), requests: count, matching: count, readTolerancePercent: z.number().positive(), passed: z.boolean() })
+  .object({
+    model: z.string().min(1),
+    // Every model the replay ran, in the order the session used them (one more after a switch); `model` is the first.
+    models: z.array(z.string().min(1)).min(1),
+    requests: count, matching: count, readTolerancePercent: z.number().positive(), passed: z.boolean() })
   .strict()
+  .refine((check) => check.models[0] === check.model, { message: "model is the first of models", path: ["model"] })
   .refine((check) => check.matching <= check.requests, { message: "matching cannot exceed requests", path: ["matching"] })
   .refine((check) => check.passed === (check.matching === check.requests), { message: "passed means every request matched", path: ["passed"] });
 
@@ -130,12 +135,27 @@ export const sessionReplayComparisonSchema = z
     sessionId: z.string().min(1),
     providerId: z.string().min(1),
     currency: currencySchema,
+    // The models the session really used, in order; several after a model switch.
+    measuredModels: z.array(z.string().min(1)).min(1),
     measured: replayTotalSchema,
     entries: z
       .array(
         z
-          .object({ model: z.string().min(1), vendorId: z.string().min(1), total: replayTotalSchema, replayedTurns: count, isMeasuredModel: z.boolean() })
-          .strict(),
+          .object({
+            model: z.string().min(1),
+            vendorId: z.string().min(1),
+            total: replayTotalSchema,
+            replayedTurns: count,
+            // The session used only this model.
+            isMeasuredModel: z.boolean(),
+            // The session switched models; this is the first model it used, replayed whole, and `measuredModels` names them all.
+            isMixedSessionModel: z.boolean(),
+          })
+          .strict()
+          .refine((entry) => !(entry.isMeasuredModel && entry.isMixedSessionModel), {
+            message: "an entry is the measured model or a mixed session's, not both",
+            path: ["isMixedSessionModel"],
+          }),
       )
       .min(1)
       .max(MAX_COMPARED_MODELS),

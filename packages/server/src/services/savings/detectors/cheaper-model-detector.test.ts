@@ -43,7 +43,7 @@ function replayOf(request: ReplayRequest, shape: ReplayShape = {}): SessionRepla
     turns: [],
     totals: { measured: total(measured), simulated: total(simulated), difference: simulated === null ? null : simulated - measured },
     coverage: shape.coverage ?? { turns: 2, replayedTurns: 2, requests: 8, replayedRequests: 8, notReplayed: [] },
-    selfCheck: shape.selfCheck === undefined ? { model: "claude-opus-5", requests: 8, matching: 8, readTolerancePercent: 5, passed: true } : shape.selfCheck,
+    selfCheck: shape.selfCheck === undefined ? { model: "claude-opus-5", models: ["claude-opus-5"], requests: 8, matching: 8, readTolerancePercent: 5, passed: true } : shape.selfCheck,
     assumptions: [A1],
   });
 }
@@ -200,7 +200,7 @@ describe("CheaperModelDetector: Not analysed (never 0)", () => {
   });
 
   it("states the self-check's match rate as it is, and an unknown amount when no price version is known", async () => {
-    const comparer = new FakeComparer((request) => ({ status: "ok", value: replayOf(request, { selfCheck: { model: "claude-opus-5", requests: 8, matching: 6, readTolerancePercent: 5, passed: false } }) }));
+    const comparer = new FakeComparer((request) => ({ status: "ok", value: replayOf(request, { selfCheck: { model: "claude-opus-5", models: ["claude-opus-5"], requests: 8, matching: 6, readTolerancePercent: 5, passed: false } }) }));
     const detector = new CheaperModelDetector({ comparer, candidates: candidates("claude-haiku-5.5"), priceVersions: () => [] });
 
     const { opportunities } = await detector.detect(savingsInput([costly("s1", 1)]));
