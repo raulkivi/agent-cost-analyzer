@@ -1779,7 +1779,7 @@ app installs from npm, and the release path's security gaps are closed.
 | C12 | Only the owner creates or moves `ext-v*` and `app-v*` tags | [threat-model.md](threat-model.md) §5.8 | Open | A tag ruleset, read through the GitHub API, restricts creating, moving and deleting those tags to the owner |
 | C13 | Open VSX trusted publishing; `OVSX_PAT` deleted | threat-model.md §5.8 | Open | A release publishes to Open VSX without `OVSX_PAT`; the secret no longer exists |
 | C14 | Figures priced from a user price version say so where shown | threat-model.md §5.10 | Done 2026-11-14: the web UI (V2, PR #286) and the chat views (V2b) label them | Component and Playwright tests assert the label in the web UI and in every chat view that shows a priced figure |
-| C15 | Claude Code subagent usage counted | [plans/claude-code-subagents.md](plans/claude-code-subagents.md) | Plan written, owner review | A `REAL_DATA` check with an oracle computed from raw Claude Code transcripts passes on the owner's logs (plan §10); the owner signs off its output |
+| C15 | Claude Code subagent usage counted | [plans/claude-code-subagents.md](plans/claude-code-subagents.md) | Plan approved 2026-11-14 (D1–D16 accepted); build next | A `REAL_DATA` check with an oracle computed from raw Claude Code transcripts passes on the owner's logs (plan §10); the owner signs off its output |
 
 Not in 1.0.0:
 
@@ -1790,7 +1790,7 @@ Not in 1.0.0:
 ### Per-feature plans
 
 Each larger item gets its own plan before code, approved by the owner.
-Only C15's is written (owner review):
+Only C15's is written (approved 2026-11-14):
 
 | Item | Criterion | Planned file |
 |---|---|---|

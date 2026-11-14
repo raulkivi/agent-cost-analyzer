@@ -2,7 +2,7 @@
 
 **Last changed:** 2026-11-14 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
-Status: **plan written, owner review** (2026-11-14). A 1.0 criterion, C15 in
+Status: **plan approved** (2026-11-14): the owner accepted every recommendation, D1–D16 (§8). A 1.0 criterion, C15 in
 [implementation-plan.md](../implementation-plan.md#100-release) (tasks V32
 plan, V33 build). Spike CS0 done read-only on the owner's machine (§4).
 Built on the patterns of step 10.19
@@ -335,6 +335,8 @@ Unknown is never 0. Each row is a tested reason.
 | Tool audit and security findings | Subagent tool calls (3.7 × the main agents' on this machine) not scanned | Residual until D9's increment; §7 row |
 
 ## 8. Owner decisions
+
+**Decided 2026-11-14:** the owner accepted the recommendation for each of D1–D16 below.
 
 | # | Question | Recommendation |
 |---|---|---|
