@@ -12,19 +12,30 @@
 // savings detectors or the cost pricer). Actual figures come from the two
 // products' own composition roots: the standalone app's ApiService and the
 // extension's, as `GET /api/savings` and the webview's `getSavingsReport` call
-// them. Output carries counts, hashed session ids, dates, model ids, token and
+// them. Increment 2 (SR22): `get_savings_report` is called in-process through
+// each product's MCP server (the standalone stdio server's composition, and the
+// extension's createCopilotMcpServices) and must agree with those reports row
+// for row. Output carries counts, hashed session ids, dates, model ids, token and
 // money figures and tool or MCP-server names (cut to 40 characters), never a
 // prompt, response, title, file content or path. Read-only.
-//
-// Not covered: Increment 2's `get_savings_report` MCP tool (it does not exist yet).
 import { createHash } from "node:crypto";
 import { existsSync, lstatSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync, symlinkSync, mkdirSync } from "node:fs";
 import { homedir, tmpdir } from "node:os";
 import path from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { savingsReportSchema, type SavingsOpportunity, type SavingsReport } from "@agent-cost-analyzer/domain";
+import { Client, InMemoryTransport } from "@modelcontextprotocol/client";
+import { MAX_SAVINGS_NAME_LENGTH, savingsActionText, savingsReportSchema, type SavingsOpportunity, type SavingsReport } from "@agent-cost-analyzer/domain";
+import { composeLogProviders, type LogProviderCompositionOptions } from "../src/composition/compose-log-providers.js";
+import { createCopilotMcpServices } from "../src/composition/create-copilot-mcp-services.js";
 import { createExtensionApiService } from "../src/composition/create-extension-api-service.js";
+import { createStandalonePriceBook } from "../src/composition/create-price-book.js";
 import { createStandaloneApiService } from "../src/composition/create-standalone-api-service.js";
+import { createStandaloneAttribution } from "../src/composition/create-standalone-attribution.js";
+import { createTurnPricer } from "../src/composition/create-turn-pricer.js";
+import { createMcpServices } from "../src/composition/mcp-services.js";
+import { loadVendorProfiles } from "../src/data-sources/vendor-profiles/loader.js";
+import { createMcpServer, type McpServerDeps } from "../src/mcp/mcp-server.js";
+import { DEFAULT_SAVINGS_TOOL_OPPORTUNITIES, MAX_SAVINGS_TOOL_OPPORTUNITIES, MAX_SAVINGS_TOOL_SESSIONS, type SavingsToolOutput } from "../src/mcp/savings-tool-output.js";
 import { resolveCopilotHome } from "../src/data-sources/agent-host/copilot-cli-paths.js";
 import { listWorkspaceDebugLogsDirPaths } from "../src/data-sources/jsonl/session-log-path.js";
 import { copilotChatGlobalStoragePath } from "../src/data-sources/sqlite/copilot-chat-global-storage-path.js";
@@ -68,6 +79,8 @@ const near = (actual: number, expected: number) => Math.abs(actual - expected) <
 const money = (n: number) => n.toFixed(4);
 const short = (s: string) => (s.length > 40 ? `${s.slice(0, 37)}...` : s);
 const sha256 = (file: string) => createHash("sha256").update(readFileSync(file)).digest("hex");
+// A prompt's first characters: long enough not to match a tool name or an id by chance.
+const PROMPT_PROBE = 24;
 
 // ---- the files the app could touch, before and after ------------------------
 
@@ -200,6 +213,85 @@ function composeEdition(userData: string, appSettingsDir: string): Edition {
   return { name: path.basename(userData), userData, standalone, extension };
 }
 
+// ---- get_savings_report through each product's MCP server (Increment 2) ----
+
+// The standalone stdio server's composition (src/mcp/stdio.ts) over the given
+// providers; no statements store, which get_savings_report does not read.
+function standaloneMcpDeps(options: LogProviderCompositionOptions & { appSettingsDir: string }): McpServerDeps {
+  const { registry, resolvedAppSettingsDir } = composeLogProviders(options);
+  const profiles = loadVendorProfiles(FIXTURE_VENDOR_PROFILES_DIR);
+  const attribution = createStandaloneAttribution(registry, resolvedAppSettingsDir, profiles);
+  const priceBook = createStandalonePriceBook(resolvedAppSettingsDir, attribution.catalog);
+  return {
+    ...createMcpServices(registry, "0.0.0-real-data", undefined, attribution, createTurnPricer(priceBook), priceBook, undefined, { profiles, priceBook }),
+    priceBook,
+  };
+}
+
+interface ToolAnswer {
+  structured: SavingsToolOutput;
+  text: string;
+  json: string;
+}
+
+async function callSavingsTool(deps: McpServerDeps, args: Record<string, unknown>): Promise<ToolAnswer> {
+  const server = createMcpServer(deps);
+  const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+  const client = new Client({ name: "savings-exit-real-data", version: "1.0.0" });
+  await Promise.all([server.connect(serverTransport), client.connect(clientTransport)]);
+  try {
+    const result = await client.callTool({ name: "get_savings_report", arguments: args });
+    const content = result.content as { type: string; text: string }[];
+    // The error text is the tool's own fixed message, never log content.
+    if (result.isError === true) throw new Error(`get_savings_report failed: ${content[0]?.text ?? "no text"}`);
+    return { structured: result.structuredContent as unknown as SavingsToolOutput, text: content[0]!.text, json: JSON.stringify(result) };
+  } finally {
+    await client.close();
+  }
+}
+
+// The tool's rows against the report the products' Savings tab shows: the same
+// opportunities in the same order and rank, amounts, evidence and coverage as
+// they are, the fixed action text, and the documented caps. Returns a summary.
+function expectToolAgrees(label: string, report: SavingsReport, answer: ToolAnswer, limit: number): string {
+  const { structured } = answer;
+  const shown = Math.min(limit, report.opportunities.length);
+  expect(structured.window, `${label}: window`).toEqual(report.window);
+  expect(structured.pricing, `${label}: pricing`).toBe(report.pricing);
+  expect(structured.opportunitiesTotal, `${label}: opportunitiesTotal`).toBe(report.opportunities.length);
+  expect(structured.opportunities.length, `${label}: rows shown`).toBe(shown);
+  expect(structured.includeSimulated, `${label}: includeSimulated`).toBe(false);
+  expect(structured.simulated, `${label}: no Simulated rows without includeSimulated`).toEqual([]);
+  expect(structured.simulatedTotal).toBe(report.simulated.length);
+  let sessionsCut = 0;
+  structured.opportunities.forEach((row, index) => {
+    const o = report.opportunities[index]!;
+    const at = `${label} row ${index + 1}`;
+    expect(row.rank, `${at}: rank`).toBe(index + 1);
+    expect(row.key, `${at}: key`).toBe(o.key);
+    expect(row.kind, `${at}: kind`).toBe(o.kind);
+    expect(row.subject, `${at}: subject`).toBe(o.subject);
+    expect(row.perWeek, `${at}: per week`).toEqual(o.perWeek);
+    expect(row.perWindow, `${at}: per window`).toEqual(o.perWindow);
+    expect(row.evidence, `${at}: evidence`).toEqual(o.evidence);
+    expect(row.coverage, `${at}: coverage`).toEqual(o.coverage);
+    expect(row.inferred, `${at}: inferred`).toBe(o.inferred);
+    expect(row.action, `${at}: the fixed action text`).toBe(savingsActionText(o.kind, o.actionParams));
+    // D16: the report's order (largest contribution first), cut to the cap.
+    expect(row.sessions, `${at}: sessions`).toEqual(o.sessions.slice(0, MAX_SAVINGS_TOOL_SESSIONS));
+    expect(row.sessionsTotal, `${at}: sessionsTotal`).toBe(o.sessions.length);
+    expect(row.subject.length).toBeLessThanOrEqual(MAX_SAVINGS_NAME_LENGTH);
+    expect(row.key.length).toBeLessThanOrEqual(MAX_SAVINGS_NAME_LENGTH * 2);
+    expect(row.action.length).toBeLessThan(600);
+    expect(answer.text, `${at}: the text answer lists the row`).toContain(`${index + 1}. [${row.kind}] ${row.subject}:`);
+    if (row.sessionsTotal > row.sessions.length) sessionsCut += 1;
+  });
+  expect(structured.notAnalysed, `${label}: not analysed`).toEqual(report.notAnalysed);
+  expect(structured.sessionsLeftOut, `${label}: left out`).toEqual(report.sessionsLeftOut);
+  if (shown === 0) return `no rows, as the report has none (limit ${limit})`;
+  return `${shown} of ${report.opportunities.length} rows (limit ${limit}), ranks 1..${shown}, ${sessionsCut} rows with sessions cut to ${MAX_SAVINGS_TOOL_SESSIONS}`;
+}
+
 // ---- reading the oracle's side ----------------------------------------------
 
 interface ClaudeSession {
@@ -208,6 +300,24 @@ interface ClaudeSession {
   startedDate: string;
   breaks: OracleIdleBreak[];
   facts: ToolSessionFacts;
+  // The first characters of each typed prompt, to show the tool returns none.
+  // Never printed.
+  promptProbes: string[];
+}
+
+function promptProbesOf(lines: readonly Record<string, unknown>[]): string[] {
+  const probes: string[] = [];
+  for (const line of lines) {
+    if (line.type !== "user") continue;
+    const content = (line.message as { content?: unknown } | undefined)?.content;
+    const parts = Array.isArray(content) ? (content as { type?: unknown; text?: unknown }[]) : [];
+    const texts = typeof content === "string" ? [content] : parts.filter((part) => part?.type === "text" && typeof part.text === "string").map((part) => part.text as string);
+    for (const text of texts) {
+      const trimmed = text.trim();
+      if (trimmed.length >= PROMPT_PROBE) probes.push(trimmed.slice(0, PROMPT_PROBE));
+    }
+  }
+  return probes;
 }
 
 const sinceMs = (date: string) => Date.parse(`${date}T00:00:00Z`);
@@ -223,6 +333,7 @@ function readClaudeSession(file: string, tables: ReturnType<typeof loadBundledTa
     startedDate: started.slice(0, 10),
     breaks: idleBreaksOf(requestsOf(branch), tables),
     facts: toolSessionFactsOf(lines),
+    promptProbes: promptProbesOf(lines),
   };
 }
 
@@ -261,6 +372,9 @@ const say = (line: string) => {
   const tables = loadBundledTables(path.join(FIXTURE_VENDOR_PROFILES_DIR, ".."));
   let claudeReport: SavingsReport;
   const copilotReports: { edition: Edition; standalone: SavingsReport; extension: SavingsReport }[] = [];
+  let claudeTool: ToolAnswer;
+  let claudeToolDefault: ToolAnswer;
+  const copilotTools: { edition: Edition; report: SavingsReport; tool: ToolAnswer }[] = [];
   const claudeSessions: ClaudeSession[] = [];
   let windowSessions: ClaudeSession[] = [];
   const idByFile = new Map<string, string>();
@@ -291,11 +405,25 @@ const say = (line: string) => {
       learnScriptsDir: path.join(FIXTURE_VENDOR_PROFILES_DIR, "..", "learn-scripts"),
     });
     claudeReport = savingsReportSchema.parse(await claudeApp.getSavingsReport({ provider: "claude-code" }));
+    // Increment 2: the same report through the standalone MCP server, at the
+    // largest limit and at the default one.
+    const claudeMcp = standaloneMcpDeps({
+      appSettingsDir,
+      claudeCodeProjectsDirPath: view.dir,
+      piAgentSessionsDirPath: null,
+      mitmproxyCapturesDirPath: null,
+      vscodeSettingsPath: null,
+    });
+    claudeTool = await callSavingsTool(claudeMcp, { provider: "claude-code", limit: MAX_SAVINGS_TOOL_OPPORTUNITIES });
+    claudeToolDefault = await callSavingsTool(claudeMcp, { provider: "claude-code" });
 
     for (const edition of editions) {
       const standalone = savingsReportSchema.parse(await edition.standalone.getSavingsReport({ provider: "vscode" }));
       const extension = savingsReportSchema.parse(await edition.extension.getSavingsReport({}));
       copilotReports.push({ edition, standalone, extension });
+      // The extension's MCP server (the one Copilot Chat calls), over the same paths.
+      const mcp = createCopilotMcpServices({ ...copilotPaths(edition.userData), appVersion: "0.0.0-real-data", vendorProfilesDir: FIXTURE_VENDOR_PROFILES_DIR });
+      copilotTools.push({ edition, report: extension, tool: await callSavingsTool(mcp, { limit: MAX_SAVINGS_TOOL_OPPORTUNITIES }) });
     }
 
     // The oracle's side: every stable session file that could start in the window.
@@ -428,6 +556,44 @@ const say = (line: string) => {
     say(`  by hand: low = tokens x cache-read rate x requests, high = tokens x input rate x requests, per model at the session's first request (rates in ${row!.perWindow.priceVersionIds.length} price versions: ${row!.perWindow.priceVersionIds.join(", ")})`);
   });
 
+  it("get_savings_report lists the same ranked opportunities as the products' reports, capped, with no prompt text (Increment 2)", () => {
+    say("");
+    say(`get_savings_report, Claude Code (standalone MCP server): ${expectToolAgrees("Claude Code", claudeReport, claudeTool, MAX_SAVINGS_TOOL_OPPORTUNITIES)}`);
+    say(`  default limit: ${expectToolAgrees("Claude Code, default limit", claudeReport, claudeToolDefault, DEFAULT_SAVINGS_TOOL_OPPORTUNITIES)}`);
+    for (const { edition, report, tool } of copilotTools) {
+      say(`get_savings_report, Copilot ${edition.name} (extension MCP server): ${expectToolAgrees(`Copilot ${edition.name}`, report, tool, MAX_SAVINGS_TOOL_OPPORTUNITIES)}`);
+    }
+    if (copilotTools.length === 0) say("get_savings_report, Copilot: NOT CHECKED, no VS Code user-data dir on this machine");
+
+    // No prompt text and no local path in what the model gets.
+    const probes = [...new Set(windowSessions.flatMap((s) => s.promptProbes))];
+    for (const answer of [claudeTool, claudeToolDefault, ...copilotTools.map((t) => t.tool)]) {
+      const leaked = probes.filter((probe) => answer.json.includes(JSON.stringify(probe).slice(1, -1)));
+      expect(leaked.length, `${leaked.length} prompt beginnings found in the tool's answer`).toBe(0);
+      expect(answer.json.includes(HOME), "a home-directory path in the tool's answer").toBe(false);
+    }
+    say(`  no prompt text: ${probes.length} distinct prompt beginnings (${PROMPT_PROBE} characters) of the window's Claude Code sessions, none in any answer; no home-directory path`);
+  });
+
+  it("get_savings_report lists a row's sessions largest contribution first (D16), checked on the idle-expiry row against the oracle", () => {
+    const index = claudeTool.structured.opportunities.findIndex((o) => o.kind === "idle-cache-expiry");
+    expect(index, "no idle-expiry row in the tool's answer").toBeGreaterThanOrEqual(0);
+    const row = claudeTool.structured.opportunities[index]!;
+    const ttl = Number(claudeReport.opportunities[index]!.actionParams.minutes);
+    const bySession = new Map<string, number>();
+    for (const s of windowSessions) {
+      for (const b of s.breaks) if (b.ttlMinutes === ttl && b.cost.known) bySession.set(s.id, (bySession.get(s.id) ?? 0) + b.cost.high);
+    }
+    const highs = row.sessions.map((ref) => bySession.get(ref.sessionId) ?? -1);
+    for (let i = 1; i < highs.length; i++) {
+      expect(highs[i]! <= highs[i - 1]! + TOLERANCE * Math.max(1, highs[i - 1]!), `session ${i + 1} contributes more than session ${i}`).toBe(true);
+    }
+    // A session with no priced break has no contribution and goes last (-1 here).
+    const expected = [...[...bySession.values()].sort((a, b) => b - a), ...highs.map(() => -1)].slice(0, row.sessions.length);
+    highs.forEach((high, i) => expect(near(high, expected[i]!), `session ${i + 1}: ${high} vs the oracle's ${expected[i]}`).toBe(true));
+    say(`  D16 order: the idle-expiry row's ${row.sessions.length} sessions shown (of ${row.sessionsTotal}) are the oracle's largest, in order (top ${money(highs[0] ?? 0)} USD)`);
+  });
+
   it("changed no setting and no file", () => {
     const after = fingerprint(settingsFiles, configDirs, stableLogs);
     const changed = before.split("\n").filter((line, i) => line !== after.split("\n")[i]);
@@ -438,6 +604,6 @@ const say = (line: string) => {
     say(`  settings checked: ~/.claude/settings(.local).json, CLAUDE.md, ~/.claude.json, ${userDataDirs.length} VS Code settings.json, the app config dir (${path.basename(appSettingsDir)}, including settings.json with the active provider), ~/.claude agents, skills, hooks`);
     say("  D15: the report never calls 'Open in Analyze'; the app's active-provider state sits in the app config dir, so it is inside the check and unchanged");
     say("");
-    say("Not covered: Increment 2's get_savings_report MCP tool (does not exist yet). Copilot oracle: none, see the Copilot lines above for what the window holds.");
+    say("Copilot oracle: none, see the Copilot lines above for what the window holds.");
   });
 });

@@ -638,9 +638,12 @@ build the server works as before, with text results only.
 | `estimate_cost` | The cost of planned work as a p50–p90 range at today's prices, never one number. With `model`, the same estimate from the project's sessions (up to 200) replayed on that model: **Simulated**, priced on each session's own channel as of its dates, with coverage, self-check counts and assumptions |
 | `replay_session` | One session replayed on another model: per turn and in total what it would have cost beside what it did, with coverage, the self-check on its own model and the assumptions. `pricing` is `session-channel` (the default), `copilot` or `api`. **Simulated** |
 | `compare_models_for_session` | One session's simulated total on up to 10 models, its own included, with how many turns each replayed. Takes the same `pricing`. **Simulated** |
+| `get_savings_report` | The [savings report](#the-savings-report): changes that would have cost less over a window (default the last 30 days), ranked by the high end, each with its amount per week and over the window as a range or "up to", coverage, price versions, up to 10 session ids and the fixed text of what to change. `limit` (default 10, at most 20) cuts the list and says how many there are. Cheaper-model replays only with `includeSimulated` (off by default, slow), listed apart as **Simulated** |
 
 Six prompts start common reviews: `audit_session` (why a session's tool
-calls failed), `review_costs` (what drives your spend and how to cut it),
+calls failed), `review_costs` (what drives your spend and how to cut it; it
+starts from `get_savings_report` and explains its rows as ranked, without a
+total),
 `security_review` (risky agent actions and the guardrails that would
 prevent them), `explain_cost_change` (whether usage, price or mix drove a
 change), `prepare_statement` (a statement's summary and a note to the
@@ -677,7 +680,7 @@ text is redacted and truncated first.
 
 ### Interactive views in the chat
 
-In a chat host that supports MCP Apps, fifteen of the tools above show an
+In a chat host that supports MCP Apps, sixteen of the tools above show an
 interactive view next to their text answer, so you can click through a
 session, a repository or a project instead of asking one question after
 another:
@@ -696,6 +699,7 @@ another:
 | What planned work will cost (standalone only) | `estimate_cost` | A p50–p90 range tagged **estimate**, the history it used, and on another model the replay coverage and self-check. **Simulated** on another model |
 | Why tool calls failed | `get_session_audit`, `get_audit_rollup` | The failure rate, failure categories, recovery cost in tokens, retried commands and calls by tool; over a date range also failed calls per day, top failing commands and the sessions |
 | Which session to look at | `list_sessions` | A list of sessions with an **Analyse** button per row |
+| How to spend less | `get_savings_report` | **Possible savings**: the ranked changes, one list per currency, each with its amount per week as a range or "up to" and a bar, its coverage and the **estimate** or **inferred** tag where it applies; a **Simulated** section; what was not analysed and why |
 
 The views use the product's name and colours and follow the host's light or
 dark theme. They only show what the tool already returned; they read your
@@ -776,6 +780,16 @@ text.
   input and you press send. If the host declines, that row shows the
   text to type instead. A session whose id isn't a plain id gets no
   button. The row itself is not a button.
+- **A savings row** (savings view) opens in place: the amount over the
+  window, the evidence, **What to change** (a suggestion; nothing is
+  changed) and the largest three of its sessions with the price versions.
+  Each session has **Open cost**, which opens its cost view in place, or,
+  on a cheaper-model row, **Open replay**, which opens the replay on that
+  model. **Back to savings** returns with focus on the session you left.
+  The view has no Copy or Cancel button and sends nothing to the chat: to
+  see the cheaper-model replays or more than the rows shown, ask in the
+  chat (for example "show my savings including simulated replays"), as
+  the view says.
 - **Copy title to open in panel** (session cost view, VS Code only) copies
   the session title. Hosts don't let a view open a link into VS Code, so
   there is no link to click. Press Ctrl+Shift+P (Cmd+Shift+P on macOS), run
@@ -1332,6 +1346,12 @@ counts them too.
 
 The report reads `GET /api/savings` (`since`, `until`, `provider`,
 `pricing`, `includeSimulated`).
+
+**In the chat.** The MCP tool `get_savings_report` gives an agent the same
+ranked rows (in VS Code Copilot Chat, Copilot sessions only), cut to the 10
+highest unless it asks for up to 20, with session ids and model ids but no
+session titles or prompts. In a host with MCP Apps it opens the savings view
+([Interactive views in the chat](#interactive-views-in-the-chat)).
 
 ## Charts as tables
 

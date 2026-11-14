@@ -184,6 +184,21 @@ describe("seedChatHistory", () => {
     expect(rollup.daily.length).toBeGreaterThanOrEqual(4);
   });
 
+  // SR22 (savings-report.md §10): U18's G4 row opens a ranked row. The debug
+  // log names its tools file; the seed writes it, so the one tool no turn
+  // calls (create_file) is a priced unused-tools saving in every session.
+  it("gives the savings view a ranked, priced row: the unused create_file tool in every session", async () => {
+    const { userDataDir, copilotHome, history } = seeded({ existingStore: false });
+    const mcp = await serverOver(userDataDir, copilotHome);
+
+    const report = await call<{
+      opportunities: { rank: number; kind: string; subject: string; sessionsTotal: number; perWindow: { known: boolean; label?: string; basis?: string } }[];
+    }>(mcp, "get_savings_report", { ...history.periods.last90Days });
+
+    expect(report.opportunities).toHaveLength(1);
+    expect(report.opportunities[0]).toMatchObject({ rank: 1, kind: "unused-tools", subject: "create_file", sessionsTotal: history.sessionIds.length, perWindow: { known: true, label: "range", basis: "priced" } });
+  });
+
   it("has documented price changes in the last 90 days for the price-changes view", async () => {
     const { userDataDir, copilotHome, history } = seeded({ existingStore: false });
     const mcp = await serverOver(userDataDir, copilotHome);

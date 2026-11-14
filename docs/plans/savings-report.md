@@ -2,7 +2,7 @@
 
 **Last changed:** 2026-11-14 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
-**Status: Increment 2 started 2026-11-14 (SR18 boards approved, SR19 `get_savings_report` merged in PR #275, SR20 U18 view in PR #278, SR21 U18 specs in PR #281; SR22 next). Increment 1 built (SR0-SR17, 2026-11-13); owner decisions D1-D12 accepted 2026-11-12, D13-D15 answered 2026-11-14; Increment 1 exit criterion met 2026-11-14 (owner sign-off on the automated check, §14); the owner approved the docs 2026-11-14; ships in app 0.14.0 and extension 0.12.0; Increment 2 not started.** Phase 16 in
+**Status: Increment 2 built 2026-11-14, 23 of 23 tasks (SR18 boards approved, SR19 `get_savings_report` in PR #275, SR20 U18 view in PR #278, SR21 U18 specs in PR #281, SR22 review and docs in PR #285, §17); its exit check (§14) passed on the owner's logs 2026-11-14 and the owner signed it off the same day (exit criterion met); ships in extension 0.14.0 and app 0.15.0. Increment 1 built (SR0-SR17, 2026-11-13); owner decisions D1-D12 accepted 2026-11-12, D13-D15 answered 2026-11-14; Increment 1 exit criterion met 2026-11-14 (owner sign-off on the automated check, §14); the owner approved the docs 2026-11-14; ships in app 0.14.0 and extension 0.12.0; Increment 2 not started.** Phase 16 in
 [implementation-plan.md](../implementation-plan.md) (owner decision D9).
 
 The question this answers: **"What should I change to spend less, and
@@ -28,6 +28,7 @@ and (Increment 2) as an MCP tool with an MCP App view.
 14. Exit criterion
 15. SR0 findings
 16. SR16 review
+17. SR22 review
 
 ## 1. Why
 
@@ -362,7 +363,7 @@ repo.
 | SR19 | `get_savings_report` in `mcp/savings-tools.ts`, group `savings`, both servers; `mcp/security.test.ts` covers it; `review_costs` updated; tool counts updated in tests; the tool and the prompt declare arguments as `z.object(...)` (SDK 2); the tool-list snapshots (`packages/server/src/mcp/__snapshots__/tool-list-standalone.json` and `packages/vscode-extension/src/mcp/__snapshots__/tool-list-extension.json`) updated on purpose | In-memory client tests green; Claude Code CLI text answer unchanged in shape | medium | Sonnet | SR10 |
 | SR20 | `toSavingsViewModel`, `SavingsView` (U18), router, `APP_VIEW_TOOL_NAMES`, no-forwarding allow-list (`get_session_cost`, `replay_session`), component, axe, keyboard, hostile-text tests; if ext-apps is on 2.1 or later by then, `webMcpBridge: false` and its test ([mcp-sdk-2-migration.md](mcp-sdk-2-migration.md) §9a) **Done 2026-11-14 (PR #278).** | Bundle stays under the 1.2 MiB budget (742 KB before U18, ext-apps 2.0.4) | medium | Sonnet | SR18, SR19 |
 | SR21 | UI specs: Playwright fake host `packages/mcp-apps/e2e/specs/u18-savings.spec.ts` (Claude light and dark); wdio real-Copilot row for U18 in the G4 suite (run by the owner before tagging, release-ui-gate D1, D12 cap) | G5 spec passes in CI; G4 spec written and typechecks. **Done 2026-11-14 (PR #281):** `u18-savings.spec.ts` (10 specs, light and dark) and `copilot-savings-view.e2e.ts` (rows `SR21 U18`, `SR21 themes`, `SR21 narrow`, `SR21 footer`, required in `COPILOT_SAVINGS_ROWS`; written, not run: the owner runs it before tagging); the axe scan found the "Open cost" buttons under the 24 px target size, fixed in `savings.css` | medium | Sonnet | SR20 |
-| SR22 | Review (as A32) and docs: architecture.md §4.1.1/§4.4, threat-model §6.1, both guides' MCP sections, both CHANGELOGs, Gantt | Docs match the code | medium | Opus | SR21 |
+| SR22 | Review (as A32) and docs: architecture.md §4.1.1/§4.4, threat-model §6.1, both guides' MCP sections, both CHANGELOGs, Gantt | Docs match the code. **Done 2026-11-14 (PR #285, §17):** 2 findings fixed (an unknown amount's reason reached the model unredacted; the G4 seed gave U18 no row to open), 6 recorded, SR19's missing red run noted; the real-data check extended to `get_savings_report` (§14) | medium | Opus | SR21 |
 
 ## 11. Threat-model rows to add
 
@@ -438,6 +439,19 @@ reader bug (records torn at U+2028/U+2029).
 below is extended to `get_savings_report`, which must list the same rows
 as the Savings tab; the owner signs off its output. A 1.0 criterion (C5).
 
+**Increment 2's exit check is that test (SR22, 2026-11-14).** It now also
+calls `get_savings_report` in-process through each product's MCP server and
+requires the Savings tab's rows. Run on the owner's logs (16 October to
+14 November): Claude Code 20 of 68 rows at `limit` 20 and 10 of 68 at the
+default, ranks 1 to 20, 6 rows with their sessions cut to 10; Copilot
+`Code` 0 rows and `Code - Insiders` 3 of 3, equal to the extension's
+report; none of 1,243 prompt beginnings and no home path in any answer;
+the idle-expiry row's 10 shown sessions (of 24) are the oracle's largest,
+in order; 1,421 fingerprints unchanged. 8 of 8 tests passed. A first run
+the same evening failed only on `~/.claude.json`, which a running Claude
+Code session rewrites (the app never opens it); the rerun passed. **Met for Increment 2, 2026-11-14:** the owner signed
+off on that output.
+
 ### Automated check
 
 `npm run test:real-data:savings` (also part of `npm run test:real-data`) runs
@@ -465,6 +479,18 @@ or paths. It asserts:
   and counts exactly; money within 1e-9 relative (floating-point summation order
   only). The summary prints the row's largest break with its tokens, gap and
   rates, so the owner can redo the sum by hand.
+- **`get_savings_report` agrees (Increment 2, SR22).** The standalone MCP
+  server (as `mcp/stdio.ts` composes it, Claude Code over the same view) and the
+  extension's (`createCopilotMcpServices`, each VS Code user-data dir) answer
+  `get_savings_report` in-process. At `limit` 20 and at the default 10, the
+  rows equal the report row for row: rank, key, kind, subject, amounts,
+  evidence, coverage, the fixed action text, the first 10 sessions in the
+  report's order with `sessionsTotal`, the not-analysed and left-out lists,
+  and the caps (subject 80, key 160, action under 600). For the idle-expiry
+  row the shown sessions must be the oracle's largest contributions, in
+  order (D16). No 24-character prompt beginning from the window's Claude
+  Code sessions and no home-directory path appears in any answer (the
+  prompts are compared, never printed).
 - **Nothing written.** Content hashes of the settings files (`~/.claude`,
   VS Code `settings.json`), the app's config folder and `~/.claude` agents,
   skills and hooks, and name, size and mtime of the session logs, are equal
@@ -476,9 +502,11 @@ Limits, stated in the output: sessions written in the last 15 minutes are left
 out of the view the products read (their id and content move while the report
 runs); the oracle covers Claude Code only, so when Copilot has no idle-expiry or
 unused-tool row in the window (Agent Host records no per-tool inventory) the two
-hand checks are Claude Code's; `get_savings_report` is not covered until
-Increment 2 exists. The check does not mark the exit criterion met: the owner
-signs it off.
+hand checks are Claude Code's; Simulated rows are not compared (the tool's
+`includeSimulated` is off, as by default). A running Claude Code session
+rewrites `~/.claude.json`, which the nothing-written check hashes, so run it
+with no Claude Code session working. The check does not mark the exit
+criterion met: the owner signs it off.
 
 ## 15. SR0 findings (2026-11-12)
 
@@ -550,3 +578,63 @@ Read-only over the owner's logs: 259 VS Code local sessions (all `Code - Insider
 - For SR17: threat-model.md needs the §11 rows with these results (R1, the 600-character Copy cap, D15).
 
 **Suites at the end of SR16** (all green): `npm test` 8,844 tests (domain 542, web 1,906, mcp-apps 1,657, server 3,547, pi-system-prompt-logger 15, extension 1,177); typecheck, lint and headers:check clean; web e2e 17 passed; MCP Apps e2e 179 passed; extension UI suite (free, xvfb) 17 spec files, 78 tests passed.
+
+## 17. SR22 review
+
+2026-11-14, by Claude Opus 5.5: Increment 2 as a whole, the way A32 and
+SR16 reviewed theirs. Read: SR19 `get_savings_report`
+(`mcp/savings-tools.ts`, `mcp/savings-tool-output.ts`, its registration,
+description and `review_costs`), the D16 order
+(`savings-session-order.ts` and the three detectors that use it), SR20's
+U18 (`view-models/savings.ts`, `views/SavingsView.tsx`, `views/savings/*`,
+the router, `APP_VIEW_TOOL_NAMES`, `no-forwarding.test.ts`) and SR21's
+specs (`u18-savings.spec.ts`, `copilot-savings-view.e2e.ts`), against §7,
+§8, D1–D21, §11 and the security tests.
+
+**Findings.**
+
+| # | Severity | Where | Finding | Status |
+|---|---|---|---|---|
+| R9 | Medium | `server/src/mcp/savings-tool-output.ts` `viewOf` | An unknown amount's reason (`perWeek`, `perWindow`) and an unknown token count's reason went to the model as they were, in the structured result and in the text answer, though coverage reasons were folded, redacted and capped. The reason can quote a logged model id: `price-model-mapper.ts` writes `JSON.stringify(recordedModelId)`, which escapes C0 controls but not bidi or zero-width characters, U+2028, a credential or length | Fixed: `amountOf` and `evidenceOf` pass both through `foldName` and `excerptOf` (600 characters), like the other reasons. Test first (`savings-tools.test.ts`, hostile reason with `\u` escapes), run red, then green |
+| R10 | Medium (test gap) | `vscode-extension/test/ui/copilot-e2e/support/chat-history-seed.mts`, `copilot-savings-view.e2e.ts` | The G4 seeded history gave an empty report (checked without AI Credits: `get_savings_report` over the seed through the extension's MCP server returned 0 rows and nothing under Not analysed). The seed wrote each session's `main.jsonl` but not the `system_prompt_0.json` and `tools_0.json` its spans name, so no session had a tool inventory. The real-Copilot U18 row could only ever reach its empty branch: the row, the drill-down and Back were never run in a real Copilot Chat | Fixed: the seed copies the fixture's two prompt files beside each debug log. The fixture's tools file defines `create_file`, which no turn calls, so the report has one priced unused-tools row over all 8 sessions (0.0134–0.134 AI Credits over 91 days, 21 tokens per request, estimate). A unit test asserts it (`chat-history-seed.test.ts`, red first); the G4 row now asserts the row and opens it and its first session unconditionally. Other G4 assertions are unchanged: of the tools the specs call, only `get_session_cost` answers differently (its context overhead now lists the system prompt and the four tools); costs, turns, findings, audits and replays are the same |
+| R11 | Process | PR #275 (SR19, commit `d152b1da`) | SR19 recorded no failing test run: its tests and code landed in one commit and the PR names no red run, so the TDD rule (architecture.md §11.4) can't be shown for it | Recorded. The tests cover the tool as built; SR22's own changes ran red first |
+| R12 | Low | `savings-tool-output.ts` `savingsToolOutput`, `savingsReportText` | Simulated rows carry `rank` (1..n in their own section) in the structured result and are numbered in the text's Simulated section, though D3 keeps them unranked. The text heads them "not ranked", the tool description says so, and U18 ignores their rank | Recorded: follow-up to drop `rank` from Simulated rows (an output-schema change with both tool-list snapshots) |
+| R13 | Low | `savings-ranker.ts`, `view-models/savings.ts` `groupViews` | The tool ranks across currencies at 1 AI Credit = $0.01 (D3); U18, like the Savings tab, numbers each currency's list from 1. With both currencies in one report, the model's row 2 can be U18's row 1 under US dollars | Recorded: by design (one list per currency, never converted); the text answer says "Ranked by the high end" without per-currency numbers |
+| R14 | Low (wording) | `domain/src/savings-actions.ts` | The templates don't pluralise: "(1 tools, about 21 tokens on each request)", "failed 3 times in 1 sessions". Seen in the G4 seed's row and the hostile-name tests | Recorded for the owner (the wording was reviewed in SR11); a fix changes the golden reports and the specs that quote action text |
+| R15 | Info | `view-models/savings.ts` `gapText` | The "3 had no request trace" form fires only for a reason that starts with a lowercase "no"; the detectors' reasons are capitalised sentences, so real rows read "3 not analysed: <reason>", as the Savings tab's do. Only the fixtures show the board's form | Recorded |
+| R16 | Info | `savings-tool-output.ts` | Session ids go to the model unfolded and uncapped (SR16 R8 stands): they must round-trip to `get_session_cost` and `replay_session`. U18 offers Open cost only for a plain id (`isPlainSessionId`) | Recorded |
+
+**Checked, no finding.**
+
+- §7 honesty: a known amount passes through with its basis, label and price
+  versions; an unknown one keeps its reason and reads "unknown (...)" in the
+  text and "Not priced" in U18, never 0; "up to" and "about ... (Simulated)"
+  come from the label; there is no total (D4). U18's labels ("up to",
+  "estimate", "inferred", "Not priced", "Simulated") come from the view model
+  and the shared `savings-view.ts`, and component tests assert them.
+- §8: arguments `since`, `until`, `provider`, `pricing`, `limit` (1–20,
+  default 10) and `includeSimulated` (default false), `z.object` input
+  schema, read-only annotations, output schema; group `savings` on both
+  servers; the snapshots list 22 and 20 model-visible tools (23 and 21 with
+  `get_turn_series`); `review_costs` calls it first when the group is
+  served.
+- D16: `sessionsByContribution` orders O1, O2–O4 and O5 sessions by their
+  own priced high end, unpriced last; O6 has one session per row. The
+  real-data check confirms the idle-expiry row against the oracle (§14).
+- D17–D21: the Simulated section stays with its text and no control; the
+  truncation sentence is text only; rows carry ids and model ids, no
+  titles; no Cancel; no Copy in U18 (U1's own copy button appears only
+  inside the U1 drill-down, as U1 has it).
+- §11 and threat-model §6.1: U18 makes no host call of its own and adds no
+  message, `updateModelContext` or `openLink`; its drill-downs are the
+  reviewed `DrillDown` and `ReplayDrillDown` sites, with ids from
+  `structuredContent` and a model id that passes `isPlainModelId`
+  (`no-forwarding.test.ts`, `SavingsView.test.tsx`'s press-everything
+  test). Hostile subject, key, action and reasons render as text
+  (`SavingsView.test.tsx`); the tool folds, redacts and caps names and,
+  since R9, every reason (`savings-tools.test.ts`); `mcp/security.test.ts`
+  finds no turn text, title, path or credential with or without replays.
+- CSP: U18 adds TSX and CSS only, no external resource, so the views page's
+  default CSP and `bundle-size.test.ts` hold.
+
+**Suites at the end of SR22**: all green. `npm test` 9,654 tests (domain 547, web 2,239, mcp-apps 1,737, server 3,649 and 19 skipped, pi-system-prompt-logger 15, extension 1,467 and 2 skipped); headers:check, lint and typecheck clean; MCP Apps e2e 199 passed; `npm run test:real-data:savings` 8 of 8 (§14). The real-Copilot G4 suite was not run (it spends AI Credits; the owner runs it before tagging).

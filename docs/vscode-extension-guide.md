@@ -293,6 +293,10 @@ computed when you open the tab or press **Refresh**, can be cancelled, and
 is never stored. It reads the same logs as the other views and makes no
 network request.
 
+With the MCP server on, Copilot agent mode can ask for the same report
+through `get_savings_report` and shows it in the chat
+([Interactive views in Copilot Chat](#interactive-views-in-copilot-chat)).
+
 ## The side bar and status bar
 
 The extension adds an **AI Credits Analyzer** icon to the Activity Bar. Its
@@ -594,9 +598,9 @@ applies. Your user setting always applies.
 
 ### What it offers
 
-Nineteen read-only tools, the standalone app's MCP server's tools without
+Twenty read-only tools, the standalone app's MCP server's tools without
 its billing ones (`get_statement` and `estimate_cost`), over Copilot Chat
-sessions only. A twentieth, `get_turn_series`, is for the interactive views
+sessions only. A twenty-first, `get_turn_series`, is for the interactive views
 below. It is marked app-only, so it is meant for the views, not for the model
 or for you.
 
@@ -621,9 +625,11 @@ or for you.
 | `explain_cost_change` | Why a repository's cost changed between two periods: usage, price and mix effects |
 | `replay_session` | One session replayed on another model: what it would have cost per turn and in total, beside what it did, with coverage and the self-check. **Simulated** |
 | `compare_models_for_session` | One session's simulated total on up to 10 models, its own included. **Simulated** |
+| `get_savings_report` | The [savings report](#the-savings-report): changes that would have cost less over a window (default the last 30 days), ranked, each with its amount per week as a range or "up to", coverage, up to 10 session ids and the fixed text of what to change; the 10 highest unless asked for up to 20. Cheaper-model replays only when asked (`includeSimulated`), listed apart as **Simulated** |
 
-Four prompts start common reviews: `audit_session`, `review_costs`,
-`security_review` and `explain_cost_change`. A `null` figure means the log doesn't record it; the
+Four prompts start common reviews: `audit_session`, `review_costs`
+(which starts from `get_savings_report`), `security_review` and
+`explain_cost_change`. A `null` figure means the log doesn't record it; the
 tools never report it as 0. A session whose latest turn started in the
 last 15 minutes is marked `active`, with a sentence saying its figures
 may still change: a running chat's log is not complete yet. The User Guide's
@@ -632,7 +638,7 @@ more on the tools.
 
 ### Interactive views in Copilot Chat
 
-Thirteen of the tools show an interactive view in the chat, next to the text
+Fourteen of the tools show an interactive view in the chat, next to the text
 answer, when you ask about them in agent mode. VS Code may show a tool's name
 with the server's name in front of it; the tool is the same:
 
@@ -649,6 +655,7 @@ with the server's name in front of it; the tool is the same:
 | When prices changed | `get_price_changes` | A timeline of documented and inferred price changes, with % per token type, sources and, for an inferred change, the weekly billed-against-priced figures |
 | Why tool calls failed | `get_session_audit`, `get_audit_rollup` | The failure rate, failure categories, recovery cost in tokens, retried commands and calls by tool; over a date range also failed calls per day, top failing commands and the sessions |
 | Which session to look at | `list_sessions` | A list of sessions with an **Analyse** button per row |
+| How to spend less | `get_savings_report` | **Possible savings**: the ranked changes, each with its amount per week as a range or "up to" and a bar, its coverage and the **estimate** or **inferred** tag where it applies; a **Simulated** section; what was not analysed and why |
 
 The billing tools (`get_statement`, `estimate_cost`) and their views are in
 the standalone app only.
@@ -682,6 +689,13 @@ What you can click:
   click. The row itself is not a button.
 - **A model** in the replay comparison replays the session on that model in
   place; **Back to model comparison** returns with focus on that model.
+- **A savings row** opens in place: the amount over the window, the
+  evidence, **What to change** (a suggestion; nothing is changed) and the
+  largest three of its sessions with the price versions. **Open cost** opens
+  a session's cost view in place (**Open replay** on a cheaper-model row);
+  **Back to savings** returns with focus on that session. The view has no
+  Copy or Cancel button and sends nothing to the chat; for cheaper-model
+  replays or more rows, ask in the chat, as the view says.
 - **Price changes** in the cost change view opens the price timeline in
   place for its period, filtered to the (up to three) models with the
   largest price effect; **Back to cost change** returns without a new call.
@@ -776,6 +790,8 @@ context, and so to whichever model the chat uses:
 
 - costs: tokens, AI Credits and cache use per session, turn and day;
 - tool calls and their outcomes;
+- the savings report: kinds, amounts, coverage, session and model ids, and
+  tool or program names (redacted, capped), never titles or prompts;
 - findings: security, anomaly and behaviour-change flags, with excerpts;
 - repositories: their remote names (`github.com/org/repo`), never a
   remote's credentials; a local repository by its folder name only;

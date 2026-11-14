@@ -1,6 +1,6 @@
 # MCP Apps MVP: owner's checks (Phase 12, task A16)
 
-**Last changed:** 2026-11-10 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-14 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 These checks take about 45 minutes. You run the shipped U1–U3 views in the two real hosts and confirm the MVP exit criterion ([mcp-apps.md](mcp-apps.md) §8.1). The A0 spike ([mcp-apps-spike.md](mcp-apps-spike.md)) used a throw-away view. This run uses the real build: the `.vsix` for VS Code and `scripts/mcp-server.sh` for Claude Desktop.
 
@@ -22,7 +22,7 @@ You need a few real sessions on this machine: Copilot Chat sessions for VS Code,
 
 ## 1. VS Code Copilot Chat (inline views)
 
-1. Turn on the setting `aiCreditsAnalyzer.mcp.enabled`. Run **MCP: List Servers** and start **AI Credits Analyzer**. It should list **20 tools**, including `get_turn_series`.
+1. Turn on the setting `aiCreditsAnalyzer.mcp.enabled`. Run **MCP: List Servers** and start **AI Credits Analyzer**. It should list **21 tools** (20 before Phase 16 SR19 added `get_savings_report`), including `get_turn_series`.
 2. Open Copilot Chat in **Agent** mode and check that the AI Credits Analyzer tools are enabled in the tools picker.
 3. Use the **Light Modern** theme for the first pass (`Ctrl+K Ctrl+T`).
 
@@ -70,7 +70,7 @@ You need a few real sessions on this machine: Copilot Chat sessions for VS Code,
    ```
 
    The script adds `--app-views-html` itself when `packages/mcp-apps/dist/views.html` exists. Quit Claude Desktop fully and restart it. If you still have the `aca-spike` entry from A0, remove it.
-2. The server should list **22 tools**.
+2. The server should list **23 tools** (22 before Phase 16 SR19 added `get_savings_report`).
 3. Run the same three prompts as in §1. Check the same points, with these differences:
    - U1 shows **no** copy button, because there is no VS Code panel to open.
    - Try fullscreen if Claude offers it.

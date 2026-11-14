@@ -15,8 +15,9 @@ Phase 15 steps 15.4–15.13
 ([cost-by-repository-and-project.md](cost-by-repository-and-project.md))
 added after it was written.
 
-**Tools today.** The standalone server lists 21 model-visible tools. The
-extension's server lists 19: every group except `billing`
+**Tools today.** The standalone server lists 22 model-visible tools (Phase 16
+SR19 added `get_savings_report`, whose view is U18). The
+extension's server lists 20: every group except `billing`
 (`get_statement`, `estimate_cost`; Phase 15 D7). §2 judges every one of
 them for a view.
 

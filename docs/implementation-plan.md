@@ -15,8 +15,8 @@ The [1.0.0 release](#100-release) section lists what both products need for 1.0.
 
 - Released: extension 0.12.0 and app 0.14.0 on 2026-11-14 (tags `ext-v0.12.0` and `app-v0.14.0` on `613724e`).
 - Next release: extension 0.14.0 (stable) and app 0.15.0, carrying Phase 16 Increment 2 and PRs #272 (Marketplace listing), #274 (Learn Vendors tab), #279 (pi system prompt) and #280 (mitmproxy docs).
-- Done: Phases 0-10, 12, 13 and 17; steps 10.19 and 10.21-10.23. Phase 10's manual checks and docs review were closed by the owner on 2026-11-14.
-- Open: Phase 11 (not started); Phases 14 and 15 (exit criteria on real data, now automated checks); Phase 16 Increment 2 (SR18-SR20 merged, SR21 in PR #281, SR22 next).
+- Done: Phases 0-10, 12, 13, 16 and 17; steps 10.19 and 10.21-10.23. Phase 10's manual checks and docs review were closed by the owner on 2026-11-14.
+- Open: Phase 11 (not started); Phases 14 and 15 (exit criteria on real data, now automated checks).
 - 1.0.0: both products together, no target date; criteria and tasks in [1.0.0 release](#100-release) (owner decisions 2026-11-14).
 - Current status of record: [implementation-plan-gantt.md](implementation-plan-gantt.md).
 
@@ -1673,8 +1673,10 @@ Phase 14 (replay, for the cheaper-model detector) for Increment 1; Phase 9.10
 
 **Status (2026-11-14)**: Increment 1 released in app 0.14.0 and
 extension 0.12.0 (exit criterion met 2026-11-14). Increment 2: SR18-SR20
-merged (PRs #276, #275, #278), SR21 in PR #281, SR22 next; it ships in
-extension 0.14.0 and app 0.15.0. Increment 3 is a 1.0 criterion.
+merged (PRs #276, #275, #278), SR21 in PR #281, SR22 in PR #285 (review
+in the plan's §17); its exit check (`npm run test:real-data:savings` with
+`get_savings_report`) passed on the owner's logs and the owner signed it off
+(2026-11-14); it ships in extension 0.14.0 and app 0.15.0. Increment 3 is a 1.0 criterion.
 
 **Status (2026-11-13)**: Increment 1 (SR0-SR17) is built, code and docs;
 Increment 2 (SR18-SR22) is not started.
@@ -1763,7 +1765,7 @@ app installs from npm, and the release path's security gaps are closed.
 | C2 | pi provider pinned against real captures | Phase 11 | Not started; the sidecar rule is decided (PR #279) | Phase 11's exit criterion |
 | C3 | Replay of real sessions verified | Phase 14 | Not started (14.0-14.8 built) | A `REAL_DATA` check with an oracle computed from raw logs passes on the owner's logs (plan §13); the owner signs off its output |
 | C4 | Cost by repository and project verified | Phase 15 | Not started (15.0-15.15 built) | A `REAL_DATA` check with an oracle computed from raw logs passes on the owner's logs and projects file (plan §15); the owner signs off its output |
-| C5 | Savings Increment 2 finished | Phase 16 (SR21, SR22) | In progress: SR21 in PR #281 | `npm run test:real-data:savings` also checks `get_savings_report`; the owner signs off its output |
+| C5 | Savings Increment 2 finished | Phase 16 (SR21, SR22) | Done 2026-11-14: SR21 (PR #281), V5 and V6 (PR #285); the owner signed off the check's output | `npm run test:real-data:savings` also checks `get_savings_report`; the owner signs off its output |
 | C6 | U5's Analyse reads **Added to chat** after a click, with the hint "Press send in the chat to run it."; U2's "Ask about this session" the same | Phase 12 follow-up | Done 2026-11-14 | Component and G5 specs assert the label and hint; the G4 real-Copilot row expects them; both guides use the wording |
 | C7 | Claude Desktop permission prompts | Phase 12 | Done 2026-11-14: risk R4 accepted, no gate row | None |
 | C8 | Standalone app on npm as `agent-cost-analyzer`, run as `npx agent-cost-analyzer` | New step | Not started; the name is free on npm (2026-11-14) | A CI job packs the package, runs it from the tarball and loads the app; the 1.0.0 publish comes from npm trusted publishing (OIDC) |
