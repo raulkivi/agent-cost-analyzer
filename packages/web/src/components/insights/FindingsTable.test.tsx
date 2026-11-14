@@ -48,4 +48,15 @@ describe("FindingsTable", () => {
     renderTable([]);
     expect(screen.getByText("No signals for the current selections.")).toBeInTheDocument();
   });
+
+  it("puts the kind inline after the title, on the same line, as muted text", () => {
+    const { table } = renderTable();
+    const row = within(table!).getAllByRole("row")[1]!;
+    const kind = row.querySelector(".findings-kind");
+    expect(kind).not.toBeNull();
+    expect(kind).toHaveClass("text-muted");
+    expect(kind!.textContent).toMatch(/^ ?· .+ · .+/);
+    expect(kind!.parentElement).toHaveTextContent("Downloaded script piped straight into an interpreter");
+    expect(kind!.parentElement!.tagName).toBe("TD");
+  });
 });

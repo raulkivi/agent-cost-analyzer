@@ -281,3 +281,53 @@ describe("SessionList subagent line", () => {
     expect(screen.getAllByText(/subagent/)).toHaveLength(1);
   });
 });
+
+// Phase 17 P3: compact rows, one frame around the whole list.
+describe("SessionList density", () => {
+  it("draws no Blueprint frame per row, at most the one around the list", () => {
+    const sessions = [makeSession({ id: "s1", title: "A" }), makeSession({ id: "s2", title: "B" })];
+    render(<SessionList mode="learn" sessions={sessions} selectedSessionId={null} onSelect={vi.fn()} />);
+
+    expect(document.querySelectorAll(".blueprint").length).toBeLessThanOrEqual(1);
+    expect(document.querySelectorAll("li .blueprint")).toHaveLength(0);
+  });
+
+  it("puts the kicker and the meta on one line", () => {
+    const sessions = [
+      makeSession({ id: "s1", category: "Prompt caching", costAiCredits: { known: true, value: 8.44 } }),
+    ];
+    render(<SessionList mode="learn" sessions={sessions} selectedSessionId={null} onSelect={vi.fn()} />);
+
+    const kicker = document.querySelector(".card-kicker")!;
+    expect(kicker.parentElement).toHaveClass("session-row-meta");
+    expect(kicker.parentElement).toHaveTextContent("Prompt caching · 2 turns · 8.44 AI Credits");
+  });
+
+  it("marks the open row with a selected class and keeps it a button for keyboards", () => {
+    const sessions = [makeSession({ id: "s1", title: "A" }), makeSession({ id: "s2", title: "B" })];
+    render(<SessionList mode="learn" sessions={sessions} selectedSessionId="s2" onSelect={vi.fn()} />);
+
+    expect(screen.getByRole("button", { name: "B" }).closest("li")).toHaveClass("session-row--selected");
+    expect(screen.getByRole("button", { name: "A" }).closest("li")).not.toHaveClass("session-row--selected");
+  });
+
+  it("selects with Enter on a focused row", async () => {
+    const onSelect = vi.fn();
+    const sessions = [makeSession({ id: "s1", title: "A" })];
+    render(<SessionList mode="learn" sessions={sessions} selectedSessionId={null} onSelect={onSelect} />);
+    screen.getByRole("button", { name: "A" }).focus();
+    await userEvent.setup().keyboard("{Enter}");
+
+    expect(onSelect).toHaveBeenCalledWith(sessions[0]);
+  });
+
+  it("keeps the subagent note as its own line only when present", () => {
+    const sessions = [
+      makeSession({ id: "a", title: "A", subagentSpend: { runs: 2, costAiCredits: { known: true, value: 1.1 } } }),
+      makeSession({ id: "b", title: "B" }),
+    ];
+    render(<SessionList mode="analyze" sessions={sessions} selectedSessionId={null} onSelect={vi.fn()} />);
+
+    expect(document.querySelectorAll(".session-row-note")).toHaveLength(1);
+  });
+});

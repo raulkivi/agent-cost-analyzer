@@ -2,10 +2,12 @@
 // SPDX-License-Identifier: MIT
 // ffmpeg argument lists for the demo recordings. Pure: callers spawn the binary.
 
-// 1200x800 is what fits Xvfb with VS Code at 1x (spike 1.0).
-export const FRAME = { width: 1200, height: 800, fps: 30 } as const;
+// 1600x1000: the owner's review found 1200x800 cut the panel off and forced scrollbars;
+// fit-window.py sizes VS Code to it under Xvfb. GIFs keep the frame at 1:1, so larger files
+// are accepted (owner, 2026-11-14).
+export const FRAME = { width: 1600, height: 1000, fps: 30 } as const;
 
-export const GIF_DEFAULTS = { fps: 12, width: 1200, maxBytes: 4 * 1024 * 1024, maxSeconds: 20 } as const;
+export const GIF_DEFAULTS = { fps: 12, width: 1600, maxBytes: 8 * 1024 * 1024, maxSeconds: 20 } as const;
 
 // The PATH ffprobe is a firejail wrapper that can't read our files (spike 1.0), so default to the real binaries.
 export function ffmpegBinary(env: Record<string, string | undefined>): string {

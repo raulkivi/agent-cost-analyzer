@@ -243,6 +243,8 @@ describe("App", () => {
 
     await waitFor(() => expect(screen.getByText(/status: ok/i)).toBeInTheDocument());
     expect(screen.getByText(/v0\.1\.0/)).toBeInTheDocument();
+    // Lives in the header, not as its own row below it (Phase 17 P2).
+    expect(within(screen.getByRole("banner")).getByText(/status: ok/i)).toBeInTheDocument();
     expect(fetch).toHaveBeenCalledWith("/api/health");
   });
 
@@ -1118,7 +1120,8 @@ describe("App", () => {
 
         fireEvent.click(await screen.findByRole("button", { name: "Open the dashboard" }));
 
-        expect(await screen.findByRole("heading", { name: "Insights" })).toBeInTheDocument();
+        // The toolbar is re-created when the loaded body takes it over, so retry.
+        await waitFor(() => expect(screen.getByRole("heading", { name: "Insights" })).toBeInTheDocument());
         expect(screen.queryByRole("listbox", { name: "Provider" })).not.toBeInTheDocument();
       });
     });

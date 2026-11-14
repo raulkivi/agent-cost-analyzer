@@ -3,6 +3,7 @@
 // What the demo recording configs share (wdio.demo.conf.mts, wdio.demo-copilot.conf.mts;
 // docs/plans/docs-refresh-and-demo-recordings.md §5): the user settings that keep the
 // frame free of first-run clutter, the frame check, and the masters directory.
+import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { FRAME } from "../../../../scripts/demo/ffmpeg-args.mts";
@@ -35,8 +36,18 @@ export const DEMO_VSCODE_ARGS: Record<string, string | boolean> = {
   "disable-features": "CalculateNativeWinOcclusion",
 };
 
-// Spike 1.0: VS Code opens at a fixed 1200x800 without a window manager, so only an
-// Xvfb screen of exactly that size lets the window fill the frame.
+// Without a window manager VS Code opens a fixed-size window (1200x800, or 1440x900 on a
+// larger screen) and never grows it: fit-window.py resizes it to the frame through Xlib.
+export function fitWindowCommand(frame: { width: number; height: number }): [string, string[]] {
+  return ["python3", [path.join(import.meta.dirname, "../../../../scripts/demo/fit-window.py"), String(frame.width), String(frame.height)]];
+}
+
+// Resizes the VS Code window to FRAME and gives the workbench a moment to lay out again.
+export async function fitWindowToFrame(pause: (ms: number) => Promise<unknown>): Promise<void> {
+  const [command, args] = fitWindowCommand(FRAME);
+  execFileSync(command, args, { stdio: "ignore" });
+  await pause(1_500);
+}
 const FRAME_TOLERANCE_PX = 4;
 
 export interface WindowBox {

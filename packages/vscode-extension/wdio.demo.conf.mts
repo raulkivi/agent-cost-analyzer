@@ -21,7 +21,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import process from "node:process";
 import { browser } from "@wdio/globals";
-import { assertWindowFillsFrame, readWindowBox, DEMO_USER_SETTINGS, DEMO_VSCODE_ARGS } from "./test/ui/demo/support/demo-launch.mts";
+import { assertWindowFillsFrame, fitWindowToFrame, readWindowBox, DEMO_USER_SETTINGS, DEMO_VSCODE_ARGS } from "./test/ui/demo/support/demo-launch.mts";
 import { KEEP_EXTENSIONS_MARKER, KeepExtensionsLauncher } from "./scripts/ui-automation/keep-extensions-service.mts";
 import {
   createDemoFixture,
@@ -108,6 +108,7 @@ export const config: WebdriverIO.Config = {
   mochaOpts: { ui: "tdd", timeout: 180_000 },
   outputDir: path.join(import.meta.dirname, "test/ui/out"),
   before: async (capability) => {
+    await fitWindowToFrame((ms) => browser.pause(ms));
     // A wrong Xvfb size must never record garbage.
     await assertWindowFillsFrame(() => browser.execute(readWindowBox));
     // The setup-problem launch (scene E1) enables Copilot Chat itself, after showing the

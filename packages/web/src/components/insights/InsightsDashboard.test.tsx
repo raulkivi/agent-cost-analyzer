@@ -157,7 +157,8 @@ describe("InsightsDashboard", () => {
       await screen.findByRole("group", { name: "Cost" });
       expect(tile("Cost")).toHaveTextContent("0.50 AI Credits + $0.70");
       expect(tile("Cost")).toHaveTextContent("3 of 4 turns known");
-      expect(tile("Cost")).toHaveTextContent("1 AI Credit = $0.01");
+      expect(tile("Cost")).not.toHaveTextContent("1 AI Credit = $0.01");
+      expect(screen.getByTestId("stat-tiles-footnote")).toHaveTextContent("1 AI Credit = $0.01");
     });
 
     it("switches the cost figure to one basis for the view", async () => {
@@ -349,6 +350,82 @@ describe("InsightsDashboard", () => {
   });
   // Phase 15 step 15.9 (plan §11.1): the cost tabs share the list boxes'
   // selections; hidden where the product has no cost analyses (the extension).
+  describe("toolbar", () => {
+    // One wrapping row instead of three stacked ones (Phase 17 P2).
+    it("puts the title, range, view switch and cost basis in one toolbar on Overview", async () => {
+      render(
+        <InsightsDashboard
+          loadDataset={vi.fn().mockResolvedValue(sampleInsightsDataset())}
+          now={NOW}
+          costAnalysis
+          loadCostSeries={vi.fn().mockResolvedValue(sampleCostSeries())}
+          loadCostComparison={vi.fn().mockResolvedValue(sampleCostComparison())}
+        />,
+      );
+      const costBasis = await screen.findByRole("group", { name: "Cost basis for totals" });
+      const toolbar = costBasis.closest(".toolbar") as HTMLElement;
+      expect(toolbar).not.toBeNull();
+      expect(within(toolbar).getByRole("heading", { name: /Insights/ })).toBeInTheDocument();
+      expect(within(toolbar).getByRole("radio", { name: "7 days" })).toBeInTheDocument();
+      expect(within(toolbar).getByRole("radiogroup", { name: "Dashboard view" })).toBeInTheDocument();
+      expect(document.querySelectorAll(".toolbar")).toHaveLength(1);
+    });
+
+    it("shows the title and range in the toolbar while loading and when empty", async () => {
+      const loadDataset = vi.fn().mockReturnValue(new Promise(() => {}));
+      const { unmount } = render(<InsightsDashboard loadDataset={loadDataset} now={NOW} />);
+      const loadingToolbar = screen.getByRole("radio", { name: "7 days" }).closest(".toolbar") as HTMLElement;
+      expect(within(loadingToolbar).getByRole("heading", { name: /Insights/ })).toBeInTheDocument();
+      unmount();
+
+      render(<InsightsDashboard loadDataset={vi.fn().mockResolvedValue({ ...sampleInsightsDataset(), sessions: [] })} now={NOW} />);
+      await screen.findByText(/No sessions in this date range/);
+      expect(document.querySelectorAll(".toolbar")).toHaveLength(1);
+      expect(screen.getByRole("radio", { name: "7 days" }).closest(".toolbar")).not.toBeNull();
+    });
+
+    it("keeps one toolbar, and focus on the chosen range radio, across the reload", async () => {
+      const user = userEvent.setup();
+      let release: (value: unknown) => void = () => {};
+      const loadDataset = vi
+        .fn()
+        .mockResolvedValueOnce(sampleInsightsDataset())
+        .mockReturnValueOnce(new Promise((resolve) => (release = resolve)));
+      render(<InsightsDashboard loadDataset={loadDataset} now={NOW} />);
+      await screen.findByRole("group", { name: "AI Credits" });
+
+      const radio = screen.getByRole("radio", { name: "7 days" });
+      await user.click(radio);
+      expect(radio).toHaveFocus();
+      expect(document.querySelectorAll(".toolbar")).toHaveLength(1);
+
+      release({ ...sampleInsightsDataset(), generatedAt: "2026-10-11T13:00:00.000Z" });
+      await screen.findByRole("group", { name: "AI Credits" });
+      expect(screen.getByRole("radio", { name: "7 days" })).toBe(radio);
+      expect(radio).toHaveFocus();
+      expect(document.querySelectorAll(".toolbar")).toHaveLength(1);
+    });
+
+    it("has no cost basis in the toolbar on another view", async () => {
+      render(
+        <InsightsDashboard
+          loadDataset={vi.fn().mockResolvedValue(sampleInsightsDataset())}
+          now={NOW}
+          costAnalysis
+          loadCostSeries={vi.fn().mockResolvedValue(sampleCostSeries())}
+          loadCostComparison={vi.fn().mockResolvedValue(sampleCostComparison())}
+        />,
+      );
+      await screen.findByRole("group", { name: "AI Credits" });
+      fireEvent.click(within(screen.getByRole("radiogroup", { name: "Dashboard view" })).getByRole("radio", { name: "Cost over time" }));
+      await screen.findByRole("group", { name: "Total cost" });
+      const toolbar = screen.getByRole("radiogroup", { name: "Dashboard view" }).closest(".toolbar") as HTMLElement;
+      expect(toolbar).not.toBeNull();
+      expect(within(toolbar).getByRole("radio", { name: "7 days" })).toBeInTheDocument();
+      expect(screen.queryByRole("group", { name: "Cost basis for totals" })).not.toBeInTheDocument();
+    });
+  });
+
   describe("cost tabs", () => {
     function renderWithCost(loadSeries = vi.fn().mockResolvedValue(sampleCostSeries())) {
       const loadComparison = vi.fn().mockResolvedValue(sampleCostComparison());

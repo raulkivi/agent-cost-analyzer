@@ -1,13 +1,56 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
 import { fireEvent, render, screen, within } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { TrendColumns } from "./TrendColumns.js";
 
 const columns = [
   { key: "2026-10-09", label: "10-09", value: 5, note: "2 of 2 turns known" },
   { key: "2026-10-10", label: "10-10", value: 0.5 },
 ];
+
+// A ResizeObserver reporting `width` for whatever it observes.
+function stubContainerWidth(width: number) {
+  vi.stubGlobal(
+    "ResizeObserver",
+    class {
+      constructor(private readonly callback: ResizeObserverCallback) {}
+      observe(target: Element) {
+        this.callback([{ target, contentRect: { width } } as unknown as ResizeObserverEntry], this as unknown as ResizeObserver);
+      }
+      disconnect() {}
+      unobserve() {}
+    },
+  );
+}
+
+describe("TrendColumns width", () => {
+  afterEach(() => vi.unstubAllGlobals());
+  const svgWidth = (container: HTMLElement) => Number(container.querySelector("svg")!.getAttribute("width"));
+
+  it("fills the container when there are few columns", () => {
+    stubContainerWidth(900);
+    const { container } = render(<TrendColumns ariaLabel="Trend" columns={columns} format={String} />);
+    expect(svgWidth(container)).toBe(900);
+  });
+
+  it("keeps bars capped and centred in their step", () => {
+    stubContainerWidth(900);
+    const { container } = render(<TrendColumns ariaLabel="Trend" columns={columns} format={String} />);
+    const bar = container.querySelector(".chart-column path")!.getAttribute("d")!;
+    const band = Number(container.querySelector(".chart-band")!.getAttribute("width"));
+    expect(band).toBeGreaterThan(26); // wider than the old fixed step
+    expect(bar).toBeTruthy();
+  });
+
+  it("scrolls horizontally instead of squeezing below the minimum step", () => {
+    stubContainerWidth(200);
+    const many = Array.from({ length: 30 }, (_, index) => ({ key: `k${index}`, label: `${index}`, value: index }));
+    const { container } = render(<TrendColumns ariaLabel="Trend" columns={many} format={String} />);
+    expect(svgWidth(container)).toBeGreaterThanOrEqual(30 * 14);
+    expect(svgWidth(container)).toBeGreaterThan(200);
+  });
+});
 
 describe("TrendColumns", () => {
   it("renders one selectable column per point with its value", () => {

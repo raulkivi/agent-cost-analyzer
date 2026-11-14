@@ -13,7 +13,7 @@
 import path from "node:path";
 import { browser } from "@wdio/globals";
 import { prepareCopilotLaunch } from "./test/ui/copilot-e2e/support/copilot-launch.mts";
-import { assertWindowFillsFrame, dropSavedWindowState, readWindowBox, DEMO_USER_SETTINGS } from "./test/ui/demo/support/demo-launch.mts";
+import { assertWindowFillsFrame, DEMO_USER_SETTINGS, dropSavedWindowState, fitWindowToFrame, readWindowBox } from "./test/ui/demo/support/demo-launch.mts";
 
 // Keeps the default root variable: sendToAgent reads it for the run log and the AI Credits cap.
 const launch = prepareCopilotLaunch({
@@ -38,6 +38,7 @@ export const config: WebdriverIO.Config = {
   mochaOpts: { ui: "tdd", timeout: 600_000 },
   outputDir: path.join(import.meta.dirname, "test/ui/out"),
   before: async () => {
+    await fitWindowToFrame((ms) => browser.pause(ms));
     await assertWindowFillsFrame(() => browser.execute(readWindowBox));
   },
 };

@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { AppHeader } from "./AppHeader.js";
 
@@ -18,6 +18,21 @@ describe("AppHeader", () => {
     // display: none can win over it.
     expect((screen.getByText("Session Analyzer").closest(".nav-brand-block") as HTMLElement).style.display).toBe("");
     expect(screen.queryByText("GitHub Copilot Chat")).not.toBeInTheDocument();
+  });
+
+  it("shows the server status inline in the header", () => {
+    render(
+      <AppHeader
+        mode="learn"
+        onModeChange={vi.fn()}
+        hasConfigWarnings={false}
+        onConfigClick={vi.fn()}
+        statusText="status: ok · v1.2.3"
+      />,
+    );
+
+    const status = within(screen.getByRole("banner")).getByText("status: ok · v1.2.3");
+    expect(status).toHaveClass("app-status");
   });
 
   it("keeps the retention field as narrow as its number", () => {
@@ -284,5 +299,14 @@ describe("AppHeader", () => {
       // The mode switch doesn't depend on the product.
       expect(screen.getByLabelText("Analyze")).toBeChecked();
     });
+  });
+
+  it("draws the logo at 24px through the stylesheet", () => {
+    const { container } = render(
+      <AppHeader mode="learn" onModeChange={vi.fn()} hasConfigWarnings={false} onConfigClick={vi.fn()} />,
+    );
+    const logo = container.querySelector(".nav-logo") as HTMLElement;
+    expect(logo).not.toBeNull();
+    expect(logo.style.width).toBe("");
   });
 });

@@ -144,7 +144,7 @@ describe("makeGif", () => {
   it("deletes the GIF and fails when it is over the size limit", async () => {
     const { deps, removed } = fakeDeps({ gifBytes: GIF_DEFAULTS.maxBytes + 1 });
     await expect(makeGif({ input: "/in/e0-test.mp4", outDir: "/out" }, deps)).rejects.toThrow(
-      /GIF is 4\.00 MB; the limit is 4\.00 MB.*--trim.*lower the fps.*MP4/s,
+      /GIF is 8\.00 MB; the limit is 8\.00 MB.*--trim.*lower the fps.*MP4/s,
     );
     expect(removed).toEqual(["/out/e0-test.gif"]);
   });
