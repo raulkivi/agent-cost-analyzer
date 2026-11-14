@@ -110,7 +110,7 @@ async function main(): Promise<void> {
 
     const runner = createActionRunner({
       input: xdo,
-      find: (template) => probe.find(template),
+      find: (template, minX) => probe.find(template, minX),
       startRecording: async () => {
         recorder = startRecorder({ display: session!.display, ...FRAME, out: outputs.mp4 });
         await recorder.ready();
