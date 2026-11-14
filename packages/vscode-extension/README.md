@@ -16,8 +16,8 @@ estimates.
 ![A Copilot agent-mode chat answers; its session appears under Today in the Sessions view with its AI Credits, and the tooltips show the session and the status bar's AI Credits today](https://raw.githubusercontent.com/raulkivi/agent-cost-analyzer/main/docs/images/demo/e2-chat-cost.gif)
 
 Please [report issues](https://github.com/raulkivi/agent-cost-analyzer/issues).
-Independent project; not affiliated with or endorsed by GitHub or
-Microsoft.
+Independent project; not affiliated with or endorsed by GitHub, Microsoft,
+Anthropic or the pi project. Product names are trademarks of their owners.
 
 Using Claude Code or pi? The standalone app,
 [Agent Cost Analyzer](https://github.com/raulkivi/agent-cost-analyzer#readme),

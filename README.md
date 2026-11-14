@@ -2,7 +2,12 @@
 
 **Last changed:** 2026-11-14 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
-Independent project; not affiliated with or endorsed by GitHub or Microsoft.
+[![Works with GitHub Copilot Chat](https://img.shields.io/badge/works_with-GitHub_Copilot_Chat-informational)](docs/UserGuide.md#choosing-a-log-provider)
+[![Works with Claude Code](https://img.shields.io/badge/works_with-Claude_Code-informational)](docs/UserGuide.md#choosing-a-log-provider)
+[![Works with pi](https://img.shields.io/badge/works_with-pi_coding_agent-informational)](docs/UserGuide.md#choosing-a-log-provider)
+
+Independent project; not affiliated with or endorsed by GitHub, Microsoft,
+Anthropic or the pi project. Product names are trademarks of their owners.
 
 See where the tokens and money go when an AI agent writes code for you. This
 repository gives you two products that read the logs your coding agents
