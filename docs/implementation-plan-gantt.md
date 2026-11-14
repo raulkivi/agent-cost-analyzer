@@ -97,7 +97,7 @@ gantt
 
     section 1.0.0
     C1 Phase 10 closed (100%)                 :done, c1, 2026-11-14, 1d
-    C2 Phase 11 pi real captures (0%)         :c2, 2026-11-16, 1d
+    C2 Phase 11 pi real captures (tooling ready) :active, c2, 2026-11-16, 1d
     C3 Phase 14 real-data check (0%)          :c3, 2026-11-16, 1d
     C4 Phase 15 real-data check (0%)          :c4, 2026-11-16, 1d
     C5 Savings Increment 2 finished (100%)    :done, c5, 2026-11-14, 1d
@@ -133,7 +133,7 @@ gantt
 
 ## Not started
 
-- Phase 11 (0%) — pi provider real-capture verification; required for 1.0.0 (criterion C2, owner 2026-11-14).
+- Phase 11 (capture tooling ready, V12; owner capture V13 next) — pi provider real-capture verification; required for 1.0.0 (criterion C2, owner 2026-11-14).
 
 ## Open items
 
