@@ -5,6 +5,7 @@ import { NO_EARLIER_FIGURE, creditsFirst } from "./analysis-common.js";
 import { UNKNOWN_TEXT, coverageNote, formatCount, formatDay, formatTokens, pluralize, valueView } from "./format.js";
 import type { MeasureView } from "./format.js";
 import { formatMoney, formatSignedMoney } from "./money.js";
+import { mergeUserPriceIds } from "./user-price.js";
 
 // U14, a project's statement for a period (docs/plans/mcp-apps.md §2,
 // §4.5). Pure: formats a get_statement result. Lines per basis, currency,
@@ -23,6 +24,8 @@ export interface StatementLineView {
   tokens: Record<"uncachedInput" | "cacheRead" | "cacheWrite" | "reasoning" | "output", MeasureView>;
   amountText: string;
   apiEquivalent: boolean; // subscription use priced at API rates
+  // 1.0 V2b (threat-model 5.10): the user-added price version a priced line used.
+  userPriceVersionIds?: string[];
 }
 
 export interface StatementTotalView {
@@ -31,6 +34,8 @@ export interface StatementTotalView {
   markupText: string;
   fixedText: string;
   totalText: string;
+  // The user-added price versions behind the lines in this currency.
+  userPriceVersionIds?: string[];
 }
 
 export interface GroupView {
@@ -106,12 +111,21 @@ function lineView(line: StatementLine): StatementLineView {
     },
     amountText: formatMoney(line.amount, line.currency),
     apiEquivalent: line.apiEquivalent,
+    ...(line.userPriced === true && line.priceVersionId !== null ? { userPriceVersionIds: [line.priceVersionId] } : {}),
   };
 }
 
-function totalView(total: StatementTotal): StatementTotalView {
+function totalView(total: StatementTotal, lines: readonly StatementLine[]): StatementTotalView {
   const money = (value: number) => formatMoney(value, total.currency);
-  return { currency: total.currency, linesText: money(total.lines), markupText: money(total.markup), fixedText: money(total.fixed), totalText: money(total.total) };
+  const userPriceVersionIds = mergeUserPriceIds(...lines.filter((line) => line.currency === total.currency).map((line) => (line.userPriced === true && line.priceVersionId !== null ? [line.priceVersionId] : undefined)));
+  return {
+    currency: total.currency,
+    linesText: money(total.lines),
+    markupText: money(total.markup),
+    fixedText: money(total.fixed),
+    totalText: money(total.total),
+    ...(userPriceVersionIds === undefined ? {} : { userPriceVersionIds }),
+  };
 }
 
 function coverageView(coverage: Statement["coverage"]): StatementViewModel["coverage"] {
@@ -185,7 +199,7 @@ export function toStatementViewModel(answer: StatementAnswer): StatementViewMode
     statusText: statusText(statement),
     conversionNote: statement.conversion,
     lines: creditsFirst(statement.lines).map(lineView),
-    totals: creditsFirst(statement.totals).map(totalView),
+    totals: creditsFirst(statement.totals).map((total) => totalView(total, statement.lines)),
     fixedLines: statement.fixedLines.map((fixed) => ({ label: fixed.label, amountText: formatMoney(fixed.amount, fixed.currency), currency: fixed.currency })),
     coverage: coverageView(statement.coverage),
     unknown: statement.unknown.map((item) => ({ ...group(item), amountText: UNKNOWN_TEXT })),

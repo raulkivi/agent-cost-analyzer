@@ -14,12 +14,18 @@ export interface MoneyCell {
   text: string;
   known: boolean;
   coverageNote?: string;
+  userPriceVersionIds?: string[]; // 1.0 V2b: a priced figure computed with the user's own price versions
 }
 
 export function moneyIn(money: readonly MoneyView[], currency: Currency | null): MoneyCell {
   const found = currency === null ? undefined : money.find((view) => view.known && view.currency === currency && view.amount !== null);
   if (found?.amount != null && currency !== null) {
-    return { text: formatAmount(found.amount, currency), known: true, ...(found.coverageNote === undefined ? {} : { coverageNote: found.coverageNote }) };
+    return {
+      text: formatAmount(found.amount, currency),
+      known: true,
+      ...(found.coverageNote === undefined ? {} : { coverageNote: found.coverageNote }),
+      ...(found.userPriceVersionIds === undefined ? {} : { userPriceVersionIds: found.userPriceVersionIds }),
+    };
   }
   const knownElsewhere = currency !== null && money.some((view) => view.known);
   return { text: knownElsewhere ? `none in ${unitLabelOf(currency)}` : UNKNOWN_TEXT, known: false };

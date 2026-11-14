@@ -21,6 +21,9 @@ export interface MoneyView {
   basisText: string;
   known: boolean;
   estimate: boolean;
+  // Known priced figures only: the user-added price versions behind it
+  // (1.0 V2b, threat-model 5.10); billed and reported never have it.
+  userPriceVersionIds?: string[];
   coverageNote?: string;
   unknownNote?: string;
 }
@@ -77,14 +80,16 @@ export function moneyViews(total: CostTotal, basis: CostBasisChoice, currency: C
       basisText: basisText(basis),
       known: true,
       estimate: converted.estimated,
+      ...(total.userPriceVersionIds === undefined ? {} : { userPriceVersionIds: [...total.userPriceVersionIds] }),
       ...(note === undefined ? {} : { coverageNote: note }),
     };
   });
 }
 
 // Per-currency measures (cost per session, per turn ...): no coverage of
-// their own; empty means nothing was known.
-export function perCurrencyViews(items: readonly { currency: Currency; amount: number }[], basis: CostBasisChoice, currency: CostCurrencyChoice): MoneyView[] {
+// their own; empty means nothing was known. They take the user price
+// versions of the total they derive from.
+export function perCurrencyViews(items: readonly { currency: Currency; amount: number }[], basis: CostBasisChoice, currency: CostCurrencyChoice, userPriceVersionIds?: readonly string[]): MoneyView[] {
   if (items.length === 0) return [unknownView(basis, currency)];
   return items.map((item): MoneyView => ({
     text: formatMoney(item.amount, item.currency),
@@ -94,5 +99,6 @@ export function perCurrencyViews(items: readonly { currency: Currency; amount: n
     basisText: basisText(basis),
     known: true,
     estimate: false,
+    ...(userPriceVersionIds === undefined || userPriceVersionIds.length === 0 ? {} : { userPriceVersionIds: [...userPriceVersionIds] }),
   }));
 }

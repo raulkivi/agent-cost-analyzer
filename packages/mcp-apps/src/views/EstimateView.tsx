@@ -11,6 +11,7 @@ import type { EstimateViewModel } from "../view-models/index.js";
 import { NoViewState } from "./NoViewState.js";
 import { withoutStop } from "./sentence.js";
 import { ErrorBox } from "./SessionCostView.js";
+import { UserPriceTag } from "./UserPriceTag.js";
 import { ViewShell } from "./ViewShell.js";
 import { RangeBar } from "./estimate/RangeBar.js";
 import { parseCostEstimate } from "./estimate/parse-estimate.js";
@@ -47,7 +48,13 @@ function Tiles({ vm, noun }: { vm: EstimateViewModel; noun: string }) {
   return (
     <div className="stat-tiles view-tiles est-tiles">
       {vm.refused && <StatTile label="Estimate" value={UNKNOWN_TEXT} note="no range without enough history" />}
-      <StatTile label={`Cost per ${noun}`} value={value} note={known ? (vm.simulation ? `p50 – p90, simulated on ${vm.simulation.model}` : "p50 – p90 of the fully priced history") : "Unknown, not 0"} />
+      <StatTile label={`Cost per ${noun}`} value={value} note={
+          <>
+            {known ? (vm.simulation ? `p50 – p90, simulated on ${vm.simulation.model}` : "p50 – p90 of the fully priced history") : "Unknown, not 0"}
+            {known && <UserPriceTag ids={vm.userPriceVersionIds} />}
+          </>
+        }
+      />
       <StatTile label="History used" value={seen.replace(/ seen$/, "")} note={`${priced} · ${vm.sample.turnsText}`} />
       <StatTile label="Planned" value={vm.plannedText} note="from the question" />
     </div>
@@ -61,6 +68,7 @@ function Range({ vm, estimate }: { vm: EstimateViewModel; estimate: CostEstimate
     <section className="est-section" aria-label="Estimated range">
       <h2>{`About ${vm.p50Text} to ${vm.p90Text} USD`}</h2>
       <span className="text-muted">a range, not a forecast of one number</span>
+      <UserPriceTag ids={vm.userPriceVersionIds} />
       <RangeBar p50={p50} p90={p90} label={`Estimated range ${vm.p50Text} to ${vm.p90Text} USD, p50 to p90`} />
       <p className="est-note text-muted">{`Typical (p50) ${vm.p50Text}; high case (p90) ${vm.p90Text}. Half of comparable stretches cost less than the p50, nine in ten less than the p90. USD at ${vm.pricingText}. ${vm.conversionNote}`}</p>
     </section>

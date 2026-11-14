@@ -9,6 +9,7 @@ import type { StatementViewModel } from "../view-models/index.js";
 import { NoViewState } from "./NoViewState.js";
 import { withoutStop } from "./sentence.js";
 import { ErrorBox } from "./SessionCostView.js";
+import { UserPriceTag } from "./UserPriceTag.js";
 import { ViewShell } from "./ViewShell.js";
 import { CurrencyTable, UNIT, bare } from "./statement/CurrencyTable.js";
 import { IssuedDiff } from "./statement/IssuedDiff.js";
@@ -38,7 +39,12 @@ function Tiles({ vm }: { vm: StatementViewModel }) {
           key={total.currency}
           label={`Total, ${UNIT[total.currency]}`}
           value={bare(total.totalText)}
-          note={`lines ${bare(total.linesText)} + markup ${bare(total.markupText)} + fixed ${bare(total.fixedText)}${vm.coverage.partial ? ` · ${vm.coverage.text}` : ""}`}
+          note={
+            <>
+              {`lines ${bare(total.linesText)} + markup ${bare(total.markupText)} + fixed ${bare(total.fixedText)}${vm.coverage.partial ? ` · ${vm.coverage.text}` : ""}`}
+              <UserPriceTag ids={total.userPriceVersionIds} />
+            </>
+          }
         />
       ))}
     </div>

@@ -4,6 +4,7 @@ import type { Currency, SavingsAmount, SavingsCoverage, SavingsEvidence, Savings
 import { amountText, barSegments, CURRENCY_TITLES, KIND_TITLES } from "@agent-cost-analyzer/web/lib/savings/savings-view";
 import { isPlainModelId } from "../views/replay/model-id.js";
 import { pluralize } from "./format.js";
+import { mergeUserPriceIds } from "./user-price.js";
 
 // U18, savings report (docs/plans/savings-report.md §8, decisions D16-D21,
 // boards Savings.dc.html and SavingsStates.dc.html). Pure: formats the
@@ -60,6 +61,8 @@ export interface SavingsRowView {
   sessions: SessionButtonView[];
   sessionsHeading: string;
   priceVersions: string[];
+  // 1.0 V2b (threat-model 5.10): the user-added price versions behind the amounts.
+  userPriceVersionIds?: string[];
   simulation?: { selfCheck: string; replayed: string; assumptions: { id: string; text: string }[] };
 }
 
@@ -169,6 +172,7 @@ function sessionButtons(row: SavingsRowInput): SessionButtonView[] {
 
 function rowView(row: SavingsRowInput, days: number, rank: number | undefined, maxHigh: number): SavingsRowView {
   const { perWeek } = row;
+  const userPriceVersionIds = mergeUserPriceIds(perWeek.known ? perWeek.userPriceVersionIds : undefined, row.perWindow.known ? row.perWindow.userPriceVersionIds : undefined);
   const bar = barSegments(perWeek, maxHigh);
   const shown = Math.min(row.sessions.length, MAX_SESSIONS_SHOWN);
   return {
@@ -191,6 +195,7 @@ function rowView(row: SavingsRowInput, days: number, rank: number | undefined, m
     sessionsHeading: shown < row.sessionsTotal ? `Largest ${shown} of ${row.sessionsTotal} sessions, over the ${days} days` : `${count(row.sessionsTotal, "session")}, over the ${days} days`,
     priceVersions: perWeek.known ? perWeek.priceVersionIds : row.perWindow.known ? row.perWindow.priceVersionIds : [],
     ...(row.simulation === undefined ? {} : { simulation: simulationView(row.simulation) }),
+    ...(userPriceVersionIds === undefined ? {} : { userPriceVersionIds }),
   };
 }
 

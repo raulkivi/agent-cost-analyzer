@@ -70,3 +70,25 @@ describe("perCurrencyViews", () => {
     expect(perCurrencyViews([], "priced", "native")[0]).toMatchObject({ text: "Unknown", known: false, amount: null });
   });
 });
+
+describe("userPriceVersionIds on a money view", () => {
+  const priced = { ...costTotal(10, 4, 5), userPriceVersionIds: ["mine-1"] };
+
+  it("carries the total's user price versions on a known view", () => {
+    expect(moneyViews(priced, "priced", "native")[0]?.userPriceVersionIds).toEqual(["mine-1"]);
+  });
+
+  it("never carries them on a billed or reported total, which has none", () => {
+    expect(moneyViews(costTotal(10, 4, 5), "billed", "native")[0]).not.toHaveProperty("userPriceVersionIds");
+    expect(moneyViews(costTotal(10, 4, 5), "reported", "native")[0]).not.toHaveProperty("userPriceVersionIds");
+  });
+
+  it("never carries them on an unknown view", () => {
+    expect(moneyViews({ ...costTotal(null, 0, 3), userPriceVersionIds: ["mine-1"] }, "priced", "native")[0]).not.toHaveProperty("userPriceVersionIds");
+  });
+
+  it("per-currency measures take the ids of the total they derive from", () => {
+    expect(perCurrencyViews([{ currency: "USD", amount: 1 }], "priced", "native", ["mine-1"])[0]?.userPriceVersionIds).toEqual(["mine-1"]);
+    expect(perCurrencyViews([{ currency: "USD", amount: 1 }], "priced", "native")[0]).not.toHaveProperty("userPriceVersionIds");
+  });
+});

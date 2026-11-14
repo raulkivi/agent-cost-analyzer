@@ -6,6 +6,7 @@ import type { Ref } from "react";
 import type { SavingsRowView, SessionButtonView } from "../../view-models/savings.js";
 import { isPlainSessionId } from "../cost-rollup/AskAboutSession.js";
 import { SimulatedTag } from "../replay/ReplayDetail.js";
+import { UserPriceTag } from "../UserPriceTag.js";
 
 // One row of a ranked list or of the Simulated section (boards Savings.dc.html).
 // The row is one button that opens its detail in place (D16). Everything
@@ -60,6 +61,7 @@ export function SavingsRow({
               </Tag>
             )}
             {row.simulated && <SimulatedTag />}
+            <UserPriceTag ids={row.userPriceVersionIds} />
           </span>
           <span className="text-muted sv-coverage">{row.coverageText}</span>
         </span>

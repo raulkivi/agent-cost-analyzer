@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 import type { Currency } from "@agent-cost-analyzer/domain";
 import type { StatementTotalView, StatementViewModel } from "../../view-models/index.js";
+import { UserPriceTag } from "../UserPriceTag.js";
 import "./statement.css";
 
 // One table per currency, AI Credits first (§9.2 Q13): basis, channel, model,
@@ -46,7 +47,10 @@ export function CurrencyTable({ vm, total }: { vm: StatementViewModel; total: St
                   {line.apiEquivalent && <span className="text-muted"> (API-equivalent)</span>}
                 </td>
                 <td>{line.turnsText.replace(/ turns?$/, "")}</td>
-                <td>{bare(line.amountText)}</td>
+                <td>
+                  {bare(line.amountText)}
+                  <UserPriceTag ids={line.userPriceVersionIds} />
+                </td>
               </tr>
             ))}
             {fixed.map((line, index) => (
@@ -67,7 +71,10 @@ export function CurrencyTable({ vm, total }: { vm: StatementViewModel; total: St
             )}
             <tr className="stm-total">
               <td className="view-left" colSpan={4}>Total</td>
-              <td>{bare(total.totalText)}</td>
+              <td>
+                {bare(total.totalText)}
+                <UserPriceTag ids={total.userPriceVersionIds} />
+              </td>
             </tr>
           </tbody>
         </table>
