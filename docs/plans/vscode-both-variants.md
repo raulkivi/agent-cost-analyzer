@@ -2,7 +2,7 @@
 
 **Last changed:** 2026-11-14 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
-Status: **proposed 2026-11-14, awaiting owner decisions (§9)**. 1.0 criterion C16 (owner, 2026-11-14), found while planning MA13 ([monthly-allowance-standalone.md](monthly-allowance-standalone.md) §3.2, D5). No code before the owner approves this plan.
+Status: **post-1.0 plan; 1.0 takes VB1 only (owner 2026-11-14), done in PR #302.** Decisions D1–D11 stay open until the post-1.0 work starts. 1.0 criterion C16 (owner, 2026-11-14), found while planning MA13 ([monthly-allowance-standalone.md](monthly-allowance-standalone.md) §3.2, D5). No code before the owner approves this plan.
 
 ## Contents
 

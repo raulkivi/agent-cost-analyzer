@@ -1792,7 +1792,7 @@ app installs from npm, and the release path's security gaps are closed.
 | C13 | Open VSX trusted publishing; `OVSX_PAT` deleted | threat-model.md §5.8 | Open | A release publishes to Open VSX without `OVSX_PAT`; the secret no longer exists |
 | C14 | Figures priced from a user price version say so where shown | threat-model.md §5.10 | Done 2026-11-14: the web UI (V2, PR #286) and the chat views (V2b) label them | Component and Playwright tests assert the label in the web UI and in every chat view that shows a priced figure |
 | C15 | Claude Code subagent usage counted | [plans/claude-code-subagents.md](plans/claude-code-subagents.md) | Plan approved 2026-11-14 (D1–D16 accepted); build next | A `REAL_DATA` check with an oracle computed from raw Claude Code transcripts passes on the owner's logs (plan §10); the owner signs off its output |
-| C16 | The right VS Code install is read (a variant counts only when its folder has `User`) | VB1 (owner 2026-11-14) | In progress (VB1) | Unit tests over temp homes (Linux, macOS, Windows paths) |
+| C16 | The right VS Code install is read (a variant counts only when its folder has `User`) | VB1 (owner 2026-11-14) | Done 2026-11-14 (V34, PR #302) | Unit tests over temp homes (Linux, macOS, Windows paths) |
 
 Not in 1.0.0:
 
