@@ -99,6 +99,17 @@ describe("theme.css (vscode-extension.md §3.5)", () => {
       expect(rule(".table td")).toMatch(/padding:\s*4px 8px/);
     });
 
+    it("keeps KPI tiles to an 18px value and 11px label", () => {
+      expect(rule(".stat-tile-value")).toMatch(/font-size:\s*18px/);
+      expect(rule(".stat-tile-label")).toMatch(/font-size:\s*11px/);
+      expect(rule(".stat-tiles-footnote")).toMatch(/font-size:\s*11px/);
+    });
+
+    it("caps the savings row title column so the amount sits beside it", () => {
+      expect(rule(".savings-row-button")).toMatch(/grid-template-columns:\s*auto minmax\(0, 52rem\) minmax\(0, auto\)/);
+      expect(rule(".savings-row-button")).toMatch(/padding:\s*var\(--space-2\) var\(--space-3\)/);
+    });
+
     it("compacts segmented options and inputs", () => {
       expect(rule(".seg-opt")).toMatch(/padding:\s*4px 10px/);
       expect(rule(".input")).toMatch(/min-height:\s*28px/);

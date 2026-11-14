@@ -325,8 +325,15 @@ function DashboardBody({ dataset, crossProvider, costAnalysis, projectsAndBillin
   };
   const kpis = computeKpis(view);
   const cost = costTotalFor(view.turns, costBasis);
-  const inAll = cost.amounts.length > 1 && cost.usd !== null ? ` · about ${formatUsd(cost.usd)} in all at` : " ·";
-  const apiEquivalentNote = cost.apiEquivalentTurns > 0 ? ` · ${cost.apiEquivalentTurns} API-equivalent` : "";
+  // Kept out of the Cost tile: a paragraph there made every tile in the row tall.
+  const costFootnote = [
+    "Cost:",
+    cost.apiEquivalentTurns > 0 ? `${cost.apiEquivalentTurns} API-equivalent turns in the cost.` : null,
+    cost.amounts.length > 1 && cost.usd !== null ? `About ${formatUsd(cost.usd)} in all.` : null,
+    AI_CREDIT_CONVERSION_NOTE,
+  ]
+    .filter(Boolean)
+    .join(" ");
   const fieldsById = new Map(model.fields.map((field) => [field.id, field]));
   const fieldLabel = (fieldId: string) => fieldsById.get(fieldId)?.label ?? fieldId;
   const valueLabel = (fieldId: string, value: string) => fieldsById.get(fieldId)?.display?.(value) ?? value;
@@ -480,7 +487,7 @@ function DashboardBody({ dataset, crossProvider, costAnalysis, projectsAndBillin
             <StatTile
               label="Cost"
               value={formatCostTotal(cost)}
-              note={`${cost.knownTurns} of ${cost.turns} turns known${apiEquivalentNote}${inAll} ${AI_CREDIT_CONVERSION_NOTE}`}
+              note={`${cost.knownTurns} of ${cost.turns} turns known`}
             />
             <StatTile
               label="AI Credits"
@@ -513,6 +520,9 @@ function DashboardBody({ dataset, crossProvider, costAnalysis, projectsAndBillin
               alert={highOrWorse > 0}
             />
           </div>
+          <p className="stat-tiles-footnote" data-testid="stat-tiles-footnote">
+            {costFootnote}
+          </p>
 
           <Blueprint className="audit-section">
             <div className="card-kicker">AI Credits by day</div>
