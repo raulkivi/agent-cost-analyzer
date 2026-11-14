@@ -76,7 +76,7 @@ reads those and Copilot Chat.
   requests and AI Credits, or why they are unknown.
 - **Tool audit.** Every tool call in a session, why failed calls failed,
   and retried commands, plus a roll-up across sessions.
-- **Learn mode.** 18 sample sessions, in the Learn view, that show how
+- **Learn mode.** 17 sample sessions, in the Learn view, that show how
   prompt caching, context compaction, model switches and other events
   change what a turn costs.
 - **MCP server for Copilot agent mode** (off by default). Ask Copilot Chat
