@@ -5,8 +5,8 @@
 Status: approved 2026-11-13; plan steps 10.22 (Phase 0 and Phase 1) and
 10.23 (Phase 2) in [implementation-plan.md](../implementation-plan.md).
 Phase 0 done 2026-11-13; Phase 1 done 2026-11-14 (step 10.22); Phase 2
-(step 10.23) started 2026-11-14: spike 2.0 passed (§4.3), 2.2 done; next
-2.1.
+(step 10.23) started 2026-11-14: spike 2.0 passed (§4.3), 2.1 and 2.2
+done; M1 recorded (draft, owner review open); next M2–M6 (2.3).
 
 ## 1. Goal
 
@@ -810,4 +810,18 @@ review rejections.
   cost change (U11) is USD only; F3 ends on the estimate's "Not enough
   history" refusal, whose window follows the real clock, so it can change
   between takes.
+- 2026-11-14: 2.1 (Sonnet) merged, first review; review fix: the dry run
+  kept a full frame with the owner's name, now dropped. First live M1
+  takes by the main session (4 takes, a few messages each): take 1 timed
+  out on the turn row; the pane mounts a fresh view at the rollup, so the
+  drill-down made in the chat is lost, and M1 now opens the pane first.
+  Take 2 stopped on the composer check (the caret blink lowers one
+  frame's score; it now polls). Take 3 ran but the turn didn't open: the
+  turn toggle is the row's chevron button, so `pane-turn-row` is now the
+  "› 3" crop. Take 4: full flow, no permission prompt, 27.0 s master on
+  Desktop 5.11492.5; GIF `--trim 6.5,20` 1.34 MB, starting as the view
+  arrives. Open for the owner (2.4, §10.7): the trim; the device name
+  "kratt" next to the tool status; Claude's answer mentions the fixture's
+  "fixture-main-model" names. `AICA_DEMO_DEBUG_DIR` keeps the last probed
+  frame of a failed take (it can show the account; never in the repo).
 - 2026-11-14: tasks 1.10-1.14 (final takes, owner review, docs embedding) are held until Phase 17 (dense ledger UI, [dense-ledger-ui.md](dense-ledger-ui.md)) merges, owner decision D2 of that plan. The scenes are then retaken once in the new look; the earlier takes serve as drafts only.
