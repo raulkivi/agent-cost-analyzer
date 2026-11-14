@@ -92,7 +92,7 @@ describe("SavingsView (U18)", () => {
     expect(within(detail).getByText("Breaks")).toBeInTheDocument();
     expect(within(detail).getByText(/Resuming a long session/)).toBeInTheDocument();
     expect(within(detail).getByText("Suggestion only. Nothing is changed.")).toBeInTheDocument();
-    expect(within(detail).getByText("3 of 11 sessions, over the 30 days")).toBeInTheDocument();
+    expect(within(detail).getByText("Largest 3 of 11 sessions, over the 30 days")).toBeInTheDocument();
     expect(within(detail).getByText("4b81d0aa")).toBeInTheDocument();
     expect(within(detail).getByText(/github-copilot@2026-10-01/)).toBeInTheDocument();
     expect(within(detail).queryByRole("button", { name: /copy/i })).toBeNull();

@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
 import { describe, expect, it } from "vitest";
-import { row, savingsOutput, simulatedRow, twoCurrencyOutput, unpriced } from "./savings-fixtures.js";
+import { claudeRow, row, savingsOutput, simulatedRow, twoCurrencyOutput, unpriced } from "./savings-fixtures.js";
 import { toSavingsViewModel } from "./savings.js";
 
 const rowOf = (vm: ReturnType<typeof toSavingsViewModel>, key: string) => [...vm.groups.flatMap((group) => group.rows), ...vm.simulated.rows].find((r) => r.key === key)!;
@@ -74,9 +74,14 @@ describe("toSavingsViewModel", () => {
       ["c07e91d4", "cost", "Open cost"],
       ["e5a3190b", "cost", "Open cost"],
     ]);
-    expect(r.sessionsHeading).toBe("3 of 11 sessions, over the 30 days");
+    expect(r.sessionsHeading).toBe("Largest 3 of 11 sessions, over the 30 days");
     const many = toSavingsViewModel(savingsOutput({ opportunities: [row({ key: "k", kind: "idle-cache-expiry", subject: "m", sessions: ["a", "b", "c", "d", "e"].map((sessionId) => ({ providerId: "vscode", sessionId })) })], opportunitiesTotal: 1 }));
     expect(rowOf(many, "k").sessions).toHaveLength(3);
+  });
+
+  it("heads a list that is not cut by its count, not as the largest", () => {
+    const one = toSavingsViewModel(savingsOutput({ opportunities: [claudeRow], opportunitiesTotal: 1 }));
+    expect(rowOf(one, "idle:opus").sessionsHeading).toBe("1 session, over the 30 days");
   });
 
   it("carries the fixed action text, the evidence and the price versions", () => {

@@ -187,7 +187,8 @@ function rowView(row: SavingsRowInput, days: number, rank: number | undefined, m
     evidence: evidenceRows(row.kind, row.evidence),
     action: row.action,
     sessions: sessionButtons(row),
-    sessionsHeading: `${shown} of ${row.sessionsTotal} sessions, over the ${days} days`,
+    // The server lists sessions largest first (D16), so a cut list is the largest.
+    sessionsHeading: shown < row.sessionsTotal ? `Largest ${shown} of ${row.sessionsTotal} sessions, over the ${days} days` : `${count(row.sessionsTotal, "session")}, over the ${days} days`,
     priceVersions: perWeek.known ? perWeek.priceVersionIds : row.perWindow.known ? row.perWindow.priceVersionIds : [],
     ...(row.simulation === undefined ? {} : { simulation: simulationView(row.simulation) }),
   };
