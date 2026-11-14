@@ -5,7 +5,8 @@
 Status: approved 2026-11-13; plan steps 10.22 (Phase 0 and Phase 1) and
 10.23 (Phase 2) in [implementation-plan.md](../implementation-plan.md).
 Phase 0 done 2026-11-13; Phase 1 done 2026-11-14 (step 10.22); Phase 2
-(step 10.23) next.
+(step 10.23) done 2026-11-14: M1–M7 and F1–F3 recorded, approved and in
+the docs; open: the owner's look at the retaken M6.
 
 ## 1. Goal
 
@@ -82,6 +83,22 @@ recorded.
 | D10 | May the 2.0 spike launch Claude Desktop under the owner's account? | **Recommended: yes, in a separate profile or account** with the sidebar collapsed. | 2.0 |
 | D11 | Assess route R2 (remote debugging) too? | **Recommended: no; R1 first.** R2 needs the owner to allow the blocked fuses read and to accept the terms question. | 2.0 |
 | D12 | Add the F1–F3 fake-host close-ups? | **Recommended: yes.** Free, repeatable, and the fallback if Desktop recording fails. | 2.2 |
+| D13 | F2: the fixture's cost change (U11) is USD only | Answered 2026-11-14: keep the jump cut to project cost over time (U9) for the currency switch. | 2.2 |
+| D14 | F3 ends on the estimate's "Not enough history" refusal, whose window follows the real clock | Answered 2026-11-14: drop the estimate; F3 ends on the statement. The estimate stays in M3. | 2.2 |
+| D15 | Where the signed-in Desktop profile lives | Answered 2026-11-14: `~/.local/share/aica-demo-desktop` (the `XDG_CONFIG_HOME` Desktop runs with), outside the repo, never committed. | 2.1 |
+| D16 | Desktop's tool permission prompt in M1 | Answered 2026-11-14: every tool pre-approved; no take shows the prompt. | 2.1, 2.3 |
+| D17 | The new-chat screen shows the owner's name and recent artifacts | Answered 2026-11-14: a take starts recording after the prompt is sent; no typing is shown. | 2.1 |
+| D18 | Fullscreen leaves the view's 640 px card at the left | Answered 2026-11-14: Desktop takes stop at the side pane; Desktop theme light. | 2.1, 2.3 |
+| D19 | M1's take is 27 s, over the 20 s cap | Answered 2026-11-14: trim the wait for Claude (`--trim 6.5,20` for M1); the question bubble stays on screen. Same approach for M2–M6. | 2.3 |
+| D20 | Desktop shows the device name next to the tool status | Answered 2026-11-14: acceptable. | 2.3 |
+| D21 | Claude's answer names the fixture's "fixture-main-model" models | Answered 2026-11-14: the Desktop takes use a demo variant of the fixture with realistic model names; the shared e2e fixture stays unchanged. M1 is retaken on it with M2–M6. | 2.3 |
+| D22 | Who runs M2–M6 | Answered 2026-11-14: a subagent writes the scenes; the main session records the live takes. | 2.3 |
+| D23 | F1–F3 | Approved 2026-11-14 by the owner as final. | 2.4 |
+| D24 | `compare_models_for_session` names the wrong measured model in M6 | Answered 2026-11-14: fix it first (own branch, tests first), then retake M6. | 2.3 |
+| D25 | M4 ends while Claude is still analysing | Answered 2026-11-14: acceptable. | 2.4 |
+| D26 | Scene changes M2, M4, M7 (§11, 2026-11-14) | Answered 2026-11-14: accepted; §4.2 updated. | 2.3 |
+| D27 | M1–M7 | Approved 2026-11-14 by the owner, apart from M6's retake (D24). | 2.4 |
+| D28 | Media budget (D8) | Answered 2026-11-14: raised; all ten Phase 2 GIFs are committed (about 16 MB). | 2.5 |
 
 
 ## 4. Scenes
@@ -150,11 +167,12 @@ points at the e2e fixture home with the fixed clock (`HOME` and
 | ID | Prompt | Views and interactions | Shows what E9 can't |
 |---|---|---|---|
 | M1 | "What did my coding agents cost this week?" | Cost rollup → **Fullscreen** → top session → open a turn → Back | Claude Code, Copilot and pi together; USD and AI Credits side by side; fullscreen |
-| M2 | "Why did the Customer portal project cost more in October?" | `compare_costs` → project cost over time → top session, Back at each level; cost-change waterfall → **Price changes** → Back | Projects, the three-level chain, usage/price/mix effects, documented and inferred price changes |
-| M3 | "Draft October's statement for Customer portal", then "What would the next feature cost on Sonnet?" | Statement per currency with coverage; estimate p50–p90 tagged **estimate**, **Simulated** on another model | Billing views (standalone only) |
-| M4 | "Which commands failed most this month?" | Audit rollup → session picker → **Analyse** sends "Analyse session <id>" → session audit | A view handing a request back to the chat |
-| M5 | "Anything risky in my sessions this week?" | Findings: severity tiles, kind and severity filters, evidence opened | Findings across providers |
-| M6 | "What would session X have cost on GPT-6 Luna or Haiku?" | Compare models → click a model → replay turn by turn, self-check, turns not replayed | Replay in a chat (E4 shows the panel) |
+| M2 | "How did the Customer portal project's cost change between 1-6 October and 7-31 October, and why?" | Cost-change waterfall → **Price changes** → Back (D26; F1 shows the drill-down chain) | Usage/price/mix effects, documented price changes |
+| M3 | "Show me the Customer portal project's statement for October." | Statement per currency with coverage | Billing views (standalone only) |
+| M4 | "Show my Claude Code sessions from 30 October so I can pick one to analyse." | Session picker → **Analyse** puts "Analyse session <id>" in the composer → send → Claude's analysis (D25, D26) | A view handing a request back to the chat |
+| M5 | "Anything risky in my sessions in October?" | Findings: severity tiles, the Anomaly filter, evidence opened | Findings across providers |
+| M6 | 'What would my Claude Code session "scratch" from 30 October have cost on Claude Haiku 5.5 or GPT-6 Luna?' | Compare models → click a model → replay turn by turn → Back | Replay in a chat (E4 shows the panel) |
+| M7 | "What would ten more active days on the Mobile app cost?" | Estimate p50–p90 tagged **estimate** (D26; the range holds until about 2026-12-26) | Estimates |
 
 Close-ups in the Playwright fake host (`packages/mcp-apps/e2e`), free and
 deterministic. The recording is cropped to the view alone, with no window
@@ -165,7 +183,7 @@ not Claude's app:
 |---|---|---|
 | F1 | Comparison → cost over time → session cost → turn; Back at each level | Drill-down chain, focus return |
 | F2 | Cost change → Price changes → Back; Currency switch | Waterfall colours, price timeline, two currencies |
-| F3 | Compare models → replay; statement; estimate | The M3 and M6 views |
+| F3 | Compare models → replay; statement (D14: no estimate) | The M6 views and M3's statement |
 
 Left out:
 
@@ -179,13 +197,45 @@ Left out:
 
 ### 4.3 Automating the Claude Desktop recordings
 
-Untested. [mcp-apps.md](mcp-apps.md) §"Claude Desktop's permission
-prompts" says "Claude Desktop can't be driven", meaning the test suite
-never tried, not that it was proven impossible. Claude Desktop is
-installed on this machine at `/usr/lib/claude-desktop`. A read of its
-package and Electron fuses (`npx @electron/fuses read`) was blocked by the
-auto-mode permission check on 2026-11-13, so neither the build nor its
-remote-debugging support has been checked.
+**Spike 2.0 result (2026-11-14): R1 passes.** Claude Desktop 5.11492.5
+(Electron, package `claude-desktop`, `/usr/lib/claude-desktop`) was
+driven in Xvfb by `xdotool` 3.20160805 and recorded by x11grab. M1 ran
+from the typed prompt to a drill-down inside the view, the host's side
+pane and fullscreen; `demo:gif` made a 20 s, 1.09 MB GIF. Method:
+
+| Step | How |
+|---|---|
+| Separate profile | `XDG_CONFIG_HOME=<dir>` gives Desktop its own `<dir>/Claude` (data, single-instance lock, `claude_desktop_config.json`); the owner's `~/.config/Claude` is untouched |
+| Test data | That config lists only `ai-credits-analyzer` (`scripts/mcp-server.sh`) with `env` `HOME`, `USERPROFILE`, `XDG_CONFIG_HOME` on a `createFixtureHome` home and `AGENT_COST_ANALYZER_NOW` = `FIXTURE_NOW` |
+| Sign-in | Once, by the owner, with the same `XDG_CONFIG_HOME` on the real desktop (email sign-in); the session survives a restart in Xvfb (the D-Bus keyring is reachable from Xvfb) |
+| Launch | `Xvfb :93 -screen 0 1600x1000x24`, then `DISPLAY=:93 claude-desktop --ozone-platform=x11`; with no window manager the window opens at 1200x800 and `xdotool windowmove 0 0 windowsize 1600 1000` fits it |
+| Mode | The profile opens in Code mode: click the Chat toggle once, collapse the sidebar; Ctrl+N opens a new chat |
+| Prompt | `xdotool type --delay 60`, then Return |
+| Wait and click | Poll a one-frame x11grab PNG, OpenCV `matchTemplate` (`TM_CCOEFF_NORMED`, threshold 0.9) against templates cut from earlier frames (Fullscreen, Always allow, stop button, a session row), click the match centre; "answer done" = the stop-button template gone |
+| Permissions | Each tool asks once per profile. One mouse click on **Always allow** keeps it; the Ctrl+Shift+Enter shortcut needs a second, timed press |
+
+Findings that shape 2.1 and 2.3:
+
+- **Dates:** the model reads "this week" from today's date, not the
+  server's fixed clock, and the fixture's data ends on 2026-10-30. M1's
+  prompt becomes "What did my coding agents cost in October?" (15
+  sessions, 21 turns, three providers); every M prompt names a period
+  inside the fixture.
+- **Privacy:** the new-chat screen shows "Welcome …, <owner's first
+  name>" and the owner's recent artifacts; the device name appears next
+  to the tool status. A take starts recording after the prompt is sent
+  (D17); owner frame review (2.4) stays.
+- **Allow prompts:** pre-approve every tool in the profile before final
+  takes, so no prompt covers a view (D16).
+- **Fullscreen:** the view's **Fullscreen** button and the host's expand
+  icon both open a side pane; its expand icon then fills the window. The
+  view's card stays 640 px wide at the left, the rest blank. Takes stop at
+  the side pane (D18).
+- **A turn row in fullscreen didn't open**; a likely cause is the
+  `get_turn` permission prompt, which shows in the hidden chat.
+  Pre-approval (above) should settle it; check in 2.1.
+- **Remote debugging (R2) and the Electron fuses** were not checked; R1
+  is enough.
 
 | Route | How | For | Against |
 |---|---|---|---|
@@ -542,7 +592,7 @@ Phase 2 reuses it.
 | `test/ui/copilot-e2e/support/copilot-launch.mts` | 1.2 | `prepareCopilotLaunch(options?: { specs?: string[]; userSettings?: Record<string, unknown>; rootEnv?: string; seedChatHistory?: boolean; tmpPrefix?: string }, deps?): { run: { userDataDir; model; maxAiCredits }; inWorker: boolean; paths: CopilotLaunchPaths; config }`. `config` (specs, `maxInstances`, capabilities, services, `onWorkerStart` keep-extensions, `onWorkerEnd` release-profile) is spread into a wdio config; the caller adds framework, reporters and its own hooks. Defaults: the release suite's specs and `COPILOT_E2E_SETTINGS` (overrides merge on top), `COPILOT_E2E_ROOT_ENV`, history seeded. Not opted in (`COPILOT_E2E` unset): prints the skip and exits 0. Pure helpers: `copilotLaunchPaths`, `copilotUserSettings`, `copilotLaunchVscodeArgs`, `copilotCapability`, `launcherEnv`. The demo config keeps the default `rootEnv`: `sendToAgent` reads `COPILOT_E2E_ROOT_ENV` for the run log and the AI Credits cap. Built 2026-11-13 |
 | `wdio.demo.conf.mts`, `wdio.demo-copilot.conf.mts` | 1.3 | Specs `./test/ui/demo/**/*.demo.ts` (free) and `./test/ui/demo-copilot/**/*.demo.ts` (paid), modelled on `wdio.record.conf.mts`; scripts `demo:record`, `demo:record:copilot` |
 | `test/ui/demo/support/demo-driver.ts` | 1.4 | `type DemoAction = (driver: DemoDriver) => Promise<void>`; `type DemoScene = Scene<DemoAction>`; `class DemoDriver { pointerTo(el); click(el); typeSlowly(text, delayMs = 60); beat(ms); probePrivacy() }` (workbench and webview elements alike); `runDemoScene(scene, { assertEnd? }): Promise<string>` (clears notifications, hides clutter, records, plays, asserts, probes privacy, writes the JSON; discards the MP4 on any failure); `hideWorkbenchClutter()` (CSS: Accounts, title-bar Sign In, window title). `forbiddenTerms(DEMO_FORBIDDEN, { homedir, username })` in `privacy-probe.mts` adds the home path and username by default. Built 2026-11-13 |
-| `scripts/demo/desktop/*.mts` | 2.1 | Pure: `clickPoint(match, minScore)`, `waitForMatch(probe, { timeoutMs, intervalMs }, clock)`, `promptKeystrokes(text, delayMs)`; adapter `xdotool.mts`. The template matcher is chosen by 2.0 and written back here |
+| `scripts/demo/desktop/*.mts` | 2.1 | Pure: `clickPoint(match, minScore)`, `waitForMatch(probe, { timeoutMs, intervalMs }, clock)`, `promptKeystrokes(text, delayMs)`; adapter `xdotool.mts`; template matching by OpenCV `matchTemplate` (`TM_CCOEFF_NORMED`, threshold 0.9) in a small python3 helper the adapter calls (2.0, §4.3) |
 
 ### 10.4 Who runs what, and in which order
 
@@ -758,4 +808,73 @@ review rejections.
   resized without a window manager. Spike 1.0 started first: wdio-vscode-service can't resize the
   window (`setWindowRect` fails: `Browser.getWindowForTarget` unknown).
   `xdotool` is not installed (Phase 2 route R1 needs it).
+- 2026-11-14: wave P2-0. Spike 2.0 (main session) passed route R1;
+  method and findings in §4.3. 2.1's template matcher: OpenCV
+  `matchTemplate` (python3 `cv2` 4.13, present on this machine). 2.2
+  (Sonnet) merged into `claude/demo-phase2`, first review:
+  `npm run demo:record -w packages/mcp-apps` records F1 14.5 s 2.46 MB,
+  F2 16.5 s 2.16 MB, F3 16.0 s 1.67 MB. It records through x11grab in
+  headed Chromium, not `recordVideo` (1.9's finding), with the view's
+  iframe filling the window height at
+  `--force-device-scale-factor=1.15`. Open for the owner (2.4): F2's
+  currency switch is on project cost over time (U9), since the fixture's
+  cost change (U11) is USD only; F3 ends on the estimate's "Not enough
+  history" refusal, whose window follows the real clock, so it can change
+  between takes.
+- 2026-11-14: 2.1 (Sonnet) merged, first review; review fix: the dry run
+  kept a full frame with the owner's name, now dropped. First live M1
+  takes by the main session (4 takes, a few messages each): take 1 timed
+  out on the turn row; the pane mounts a fresh view at the rollup, so the
+  drill-down made in the chat is lost, and M1 now opens the pane first.
+  Take 2 stopped on the composer check (the caret blink lowers one
+  frame's score; it now polls). Take 3 ran but the turn didn't open: the
+  turn toggle is the row's chevron button, so `pane-turn-row` is now the
+  "› 3" crop. Take 4: full flow, no permission prompt, 27.0 s master on
+  Desktop 5.11492.5; GIF `--trim 6.5,20` 1.34 MB, starting as the view
+  arrives. Open for the owner (2.4, §10.7): the trim; the device name
+  "kratt" next to the tool status; Claude's answer mentions the fixture's
+  "fixture-main-model" names. `AICA_DEMO_DEBUG_DIR` keeps the last probed
+  frame of a failed take (it can show the account; never in the repo).
+- 2026-11-14: 2.3 (Sonnet) merged, first review: M2–M7 as scene data,
+  `createDemoDesktopHome` (the Copilot test models renamed to
+  claude-sonnet-5.5, claude-haiku-5.5, gemini-3.8-flash, D21), templates
+  cut from the fake host in Claude's light set. Scene changes from §4.2
+  (main session and 2.3): M2 is the cost-change waterfall → Price
+  changes → Back for 1-6 vs 7-31 October (September has no priced
+  figure); M3 is the statement only, asked as "Show me …" ("Draft" made
+  Claude write and open its own Markdown file); M4 starts at the session
+  picker (the fixture's audit rollup has no failures), Analyse, then the
+  send button; M7 is the estimate for the Mobile app (Customer portal has
+  2 priced days and always refuses; the range holds until about
+  2026-12-26, since the window follows the real clock). Live takes by
+  the main session, about 20 in all, each fixing one Desktop behaviour
+  (tests first): Always allow can stay up and a hovered button doesn't
+  match, so the pointer moves off and retries; Desktop puts a view's
+  message in the composer and waits, with focus in the view, so M4
+  clicks send; Claude often shows several views, so each scene opens the
+  pane at a fixed offset (x 1086, 54 px up) from its own view's kicker
+  and then matches templates in the pane only (`match.py --min-x 806`);
+  xdotool dropped an en dash, so prompts are ASCII (tested); fake-host
+  crops of buttons scored 0.83–0.86 live, so Price changes and Why
+  flagged are live crops; the composer check polls past the caret.
+  Final takes M1–M7 without a permission prompt, Desktop 5.11492.5; GIFs
+  trimmed to start 1 s before the view appears (D19): M1 1.57 MB, M2
+  2.34 MB, M4 1.64 MB, M5 1.33 MB, M6 1.35 MB (20 s each), M3 1.01 MB
+  16.4 s, M7 1.08 MB 15.4 s. Found: `compare_models_for_session` names
+  claude-sonnet-5.5 as the measured model of the Opus "scratch" session
+  (also on the shared fixture), and Claude points out the mismatch in
+  M6's answer: a product bug for the owner. M4's take ends while Claude
+  is still analysing, with a findings view in the pane.
+- 2026-11-14: M6's bug (D24) fixed in PR #261 (Sonnet, root cause: the
+  replay took the first request's model as the session's own; the
+  "scratch" session is Sonnet 5.5 then Opus 5.5): `measuredModels` and
+  `isMixedSessionModel` in the comparison, `selfCheck.models`, the Replay
+  view and the web app's self-check name every model, no own-model
+  check for a mixed session. Its follow-up commit (the self-check line)
+  had its tests written with the change, not before: noted. M6 retaken
+  on the fix, 1.38 MB 20 s; its "Self-check failed" (2 of 3 requests)
+  is a true result for the mixed session. 2.5 (Haiku) and 2.6 (Haiku)
+  merged; review fix: 2.5's M1 captions described the planned scene
+  (this week, fullscreen), corrected to October and the side pane.
+  Phase 2 exit met; open: the owner's look at the retaken M6.
 - 2026-11-14: tasks 1.10-1.14 (final takes, owner review, docs embedding) are held until Phase 17 (dense ledger UI, [dense-ledger-ui.md](dense-ledger-ui.md)) merges, owner decision D2 of that plan. The scenes are then retaken once in the new look; the earlier takes serve as drafts only.

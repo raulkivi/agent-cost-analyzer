@@ -98,6 +98,10 @@ show interactive views.
 
 ![Copilot agent mode answering "What drove my spend this week?" with a cost rollup view in the chat, then one top session drilled down to its turns](docs/images/demo/e9-ask-copilot.gif)
 
+Claude Desktop shows a month's cost for every provider at once, and opens the view in a side pane.
+
+![Claude Desktop answering "What did my coding agents cost in October?" with a cost rollup for Claude Code, Copilot and pi, opened in the side pane, then one session and one turn](docs/images/demo/m1-cost-rollup.gif)
+
 - Extension: turn on the `aiCreditsAnalyzer.mcp.enabled` setting. See
   [the MCP server for Copilot agent mode](docs/vscode-extension-guide.md#the-mcp-server-for-copilot-agent-mode).
 - Standalone app: see

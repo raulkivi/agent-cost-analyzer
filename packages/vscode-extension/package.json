@@ -374,6 +374,7 @@
     "demo:gif": "tsx scripts/demo/make-gif.mts",
     "demo:record": "env -u WAYLAND_DISPLAY xvfb-run -a -s \"-screen 0 1600x1000x24\" wdio run wdio.demo.conf.mts",
     "demo:record:copilot": "env -u WAYLAND_DISPLAY xvfb-run -a -s \"-screen 0 1600x1000x24\" wdio run wdio.demo-copilot.conf.mts",
+    "demo:record:desktop": "tsx scripts/demo/desktop/record-desktop.mts",
     "test:ui:vscode": "wdio run wdio.conf.mts",
     "test:ui:vscode:copilot": "wdio run wdio.copilot.conf.mts",
     "record:host-themes": "wdio run wdio.record.conf.mts",

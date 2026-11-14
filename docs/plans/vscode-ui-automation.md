@@ -627,12 +627,23 @@ Commands:
 - `npm run demo:record:copilot -w packages/vscode-extension`: the real-Copilot scenes (E2, E9). Opt-in: set `COPILOT_E2E=1` and `COPILOT_E2E_USER_DATA_DIR` (the signed-in profile from §7), and `COPILOT_E2E_MAX_AI_CREDITS`. A take costs about 0.1–0.3 AI Credits.
 - `npm run demo:record -w packages/web`: the standalone app's scenes (W1–W3). Build the web package first.
 - `npm run demo:gif -w packages/vscode-extension -- <master> [--trim start,duration] [--out-dir dir]`: turns a master into a GIF.
+- Fake-host close-ups F1–F3 (MCP App views in the fake host): `npm run build --workspace=packages/mcp-apps && npm run demo:record --workspace=packages/mcp-apps` (one scene: append `-- f3`). Masters go to `$AICA_DEMO_MASTERS` (default `demo-masters/`); turn one into a GIF with `npm run demo:gif -w packages/vscode-extension -- <master.mp4> [--trim start,dur]`.
+- Claude Desktop scenes M1–M7: `npm run demo:record:desktop -w packages/vscode-extension -- M1`. `--dry-run` launches Desktop, reports template scores and sends nothing.
+  - Prerequisites: `xdotool`, Xvfb, python3 with OpenCV (`cv2`), and Claude Desktop installed.
+  - The signed-in demo profile is `~/.local/share/aica-demo-desktop`; override it with `AICA_DEMO_DESKTOP_PROFILE`.
+  - Sign in once on the real desktop with `XDG_CONFIG_HOME=<profile> claude-desktop`, using email sign-in.
+  - Each take sends a few messages on the owner's Claude plan.
+  - A take whose JSON meta has `retakeNeeded: true` showed a permission prompt: retake it. Pre-approve the tools in the profile first.
+  - `AICA_DEMO_DEBUG_DIR` keeps the last frame of a failed take. That frame can show the account, so never commit it.
+  - Trim each Desktop GIF to start 1 s before the view appears, at most 20 s.
+  - Each take's JSON records the Desktop version. Desktop updates itself and cannot be pinned.
 
 Rules:
 
 - **Frame.** Xvfb at 1600×1000 (`xvfb-run -s "-screen 0 1600x1000x24"`). With no window manager, `scripts/demo/fit-window.py` resizes VS Code to fill it. GIFs stay at 1:1.
 - **Masters and stills.** Masters (MP4/WebM and their JSON) go to `demo-masters/`, git-ignored, or to `AICA_DEMO_MASTERS`. Stills go to `demo-masters/stills/`. Copy approved files into `docs/images/` by hand.
 - **Stills the scenes produce.** `walkthrough.png` (E1), `sidebar.png` (E6), `savings.png` (E5), `allowance.png` (E7) and `mcp-agent-mode.png` (E9). See [vscode-extension-manual-checks.md](vscode-extension-manual-checks.md) §4.
+- **Privacy (Claude Desktop).** A take starts recording after the prompt is sent, and the new-chat screen shows the owner's name. Review every frame before a GIF is committed.
 - **Privacy.** Set `DEMO_FORBIDDEN` in the shell, never in a committed file: a comma-separated list of login and email strings (at least 3 characters each). The home path and username are always forbidden. A scene whose text contains a forbidden term fails and deletes its master.
 - **GIF budget.** At most 20 s, 8 MB, 1:1.
 - **Time of day.** Don't record between 00:00 and 01:15 local time. The fixture's "today" sessions start 12–75 minutes before the run, so they fall on yesterday until then.

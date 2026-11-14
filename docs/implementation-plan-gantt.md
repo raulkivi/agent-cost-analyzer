@@ -72,7 +72,7 @@ gantt
     10.19 Classic subagent AI Credits (100%) :done, p10f, 2026-11-12, 2d
     10.21 Monthly allowance gauge (100%)   :done, p10g, 2026-11-12, 2d
     10.22 Extension demo recordings (100%)  :done, p10h, 2026-11-13, 3d
-    10.23 Claude Desktop demo recordings (0%, not started) :p10i, after p10h, 3d
+    10.23 Claude Desktop demo recordings (100%) :done, p10i, 2026-11-14, 1d
 
     section Simulation and replay
     13 Vendor-aware Learn simulation (95%) :done, p13, 2026-11-04, 4d
@@ -117,7 +117,6 @@ gantt
 ## Not started
 
 - Phase 11 (0%) — pi provider real-capture verification.
-- Step 10.23 (0%) — Claude Desktop demo recordings; starts after step 10.22's Phase 1 exit.
 
 ## Open items
 
@@ -125,6 +124,7 @@ gantt
 - Step 10.19 (classic subagent AI Credits, 100%): done 2026-11-13 (SA0 to SA18, 20 of 20 tasks; exit criterion met: `npm run test:real-data` passed 10 of 10 on the owner's logs, 177.64 AI Credits added, owner sign-off 2026-11-13). Before release: the real-Copilot gate. Plan: [classic-subagent-credits-implementation.md](plans/classic-subagent-credits-implementation.md). Step 10.20 (subagent tool calls in the audit) is a follow-up, not planned.
 - Step 10.21 (monthly allowance gauge, 100%): done 2026-11-13 (MA0 to MA12, 14 of 14 tasks; exit criterion met, review in plan §14). Before release: the real-Copilot check of the gauge in a live window (release UI gate). MA13 (standalone app) is a later increment. The Sessions row is hidden while VS Code's filter is active (plan §3.8). Plan: [monthly-allowance.md](plans/monthly-allowance.md).
 - Step 10.22 (extension demo recordings, 100%, 22 of 22 tasks): done 2026-11-14. Phase 0 (PR #255), Phase 1 code (PRs #256, #257) and docs with media; 13 owner-approved GIFs in `docs/images/demo/` (1600x1000), paid E2/E9 takes 0.41 AI Credits. Open follow-ups: the release suite's monthly-allowance spec flakes between midnight and about 01:15 (plan §11); the owner's two Phase 0 findings (plan §11). Next: step 10.23 (Claude Desktop demos). Plan: [docs-refresh-and-demo-recordings.md](plans/docs-refresh-and-demo-recordings.md).
+- Step 10.23 (Claude Desktop demo recordings, 100%, 7 of 7 tasks): done 2026-11-14 (PR #262). Spike 2.0 passed route R1 (Desktop 5.11492.5 driven by `xdotool` and OpenCV template matching in Xvfb, a separate signed-in profile); `npm run demo:record:desktop -w packages/vscode-extension -- M1..M7` and `npm run demo:record -w packages/mcp-apps` (F1–F3) re-record every scene. Ten owner-approved GIFs in `docs/images/demo/` (about 16 MB, D28), embedded in the User Guide and README. Found and fixed: the replay named one model for a session that switched models (PR #261). Open: the owner's look at the retaken M6. Plan: [docs-refresh-and-demo-recordings.md](plans/docs-refresh-and-demo-recordings.md).
 - Phase 17 (dense ledger UI, 100%, 14 of 14 tasks): Increment 1 (P0-P7) and Increment 2 (L1-L6) done 2026-11-14; the L6 review fixed 7 findings and recorded 7 (plan §10). Open: the owner's eyes-on review (the last exit item), then merge, which unblocks step 10.22's retakes (tasks 1.10-1.14); the Dashboard on the e2e fixture went from 2,444px to 1,467px tall at 1440x900 (`density.spec.ts`). Increment 1 (P1-P7) is the density pass in every host; Increment 2 (L1-L6) is the standalone ledger theme with light and dark modes. It holds step 10.22 tasks 1.10-1.14 until it merges (owner decision D2). Plan: [dense-ledger-ui.md](plans/dense-ledger-ui.md). Standalone stills outside `screenshots.mts` (landing page, Learn scenario, older guide images) and the VS Code panel stills are retaken with step 10.22's final takes.
 - Phase 16 (savings report, 78%, 18 of 23 tasks): Increment 1 (SR0-SR17) done 2026-11-13, code and docs; SR16 review in plan §16 (5 findings fixed, 3 recorded). Open: owner review of the docs and the exit criterion on real data (30 days of Claude Code and Copilot sessions, one idle-expiry break and one unused tool checked by hand), D13-D15 owner decisions (SR7 thresholds, the active-provider switch from "Open in Analyze"), the release, then Increment 2 (SR18-SR22: MCP tool and view U18), not started. Plan: [savings-report.md](plans/savings-report.md).
 - Phase 14: steps 14.0-14.7 built; 14.8's docs written, the owner's review and the §13 exit criterion on real sessions open; the extension guide's replay screenshots open (User Guide's done). Step table: [analyze-session-replay.md](plans/analyze-session-replay.md) §12.
@@ -134,7 +134,7 @@ gantt
 
 ## Steps 10.22 and 10.23 detail — Demo recordings
 
-Schedule view of the task tables in [docs-refresh-and-demo-recordings.md](plans/docs-refresh-and-demo-recordings.md) §6. Status: owner decisions answered 2026-11-13; Phase 0 done; Phase 1 spike 1.0, tooling 1.1-1.5, scenes and stills 1.6a-1.9 done (17 of 22 tasks); final takes, owner review and docs with media 1.10-1.14 done 2026-11-14 (22 of 22 tasks; step 10.22 done). Phase 2 (step 10.23) starts after Phase 1's exit.
+Schedule view of the task tables in [docs-refresh-and-demo-recordings.md](plans/docs-refresh-and-demo-recordings.md) §6. Status: owner decisions answered 2026-11-13; Phase 0 done; Phase 1 spike 1.0, tooling 1.1-1.5, scenes and stills 1.6a-1.9 done (17 of 22 tasks); final takes, owner review and docs with media 1.10-1.14 done 2026-11-14 (22 of 22 tasks; step 10.22 done). Phase 2 (step 10.23) done 2026-11-14 (7 of 7 tasks): M1–M7 and F1–F3 recorded, approved and in the docs; open: the owner's look at the retaken M6.
 
 ```mermaid
 %%{init: {
@@ -185,7 +185,11 @@ gantt
     1.11-1.14 Docs with media (100%)               :done, d111, after d110, 1d
 
     section Phase 2 (step 10.23)
-    2.0-2.6 Claude Desktop and fake host (0%, not started) :d20, after d111, 3d
+    2.0 Desktop spike, route R1 (100%)              :done, d20, 2026-11-14, 1d
+    2.2 F1-F3 fake-host close-ups (100%)            :done, d22, 2026-11-14, 1d
+    2.1 Desktop driver (100%)                        :done, d21, 2026-11-14, 1d
+    2.3 M1-M7 takes (100%)                           :done, d23, 2026-11-14, 1d
+    2.4-2.6 Owner review, docs (100%)                :done, d24, 2026-11-14, 1d
 ```
 
 ## Phase 16 detail — Savings report
