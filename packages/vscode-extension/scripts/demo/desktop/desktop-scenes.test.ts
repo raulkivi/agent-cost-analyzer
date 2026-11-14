@@ -39,7 +39,7 @@ describe("M1", () => {
 
 const ALL = Object.values(DESKTOP_SCENES);
 const prompts: Record<string, RegExp> = {
-  M2: /Customer portal.*1.6 October.*7.31 October/,
+  M2: /Customer portal.*1 to 6 October.*7 to 31 October/,
   M3: /October.*statement.*Customer portal/,
   M4: /Claude Code sessions.*analyse/i,
   M5: /risky.*October/,
@@ -70,6 +70,10 @@ describe.each(ALL)("scene $id ($slug)", (scene) => {
     const prompt = scene.steps.find((s) => s.action.kind === "prompt")!.action as { text: string };
     expect(prompt.text).not.toMatch(/this (week|month)|today|yesterday/i);
     if (scene.id !== "M7") expect(prompt.text).toMatch(/October|30 October/);
+  });
+  it("types only ASCII: xdotool dropped the en dash of \"1–6 October\"", () => {
+    const prompt = scene.steps.find((s) => s.action.kind === "prompt")!.action as { text: string };
+    expect(prompt.text).toMatch(/^[\x20-\x7e]+$/);
   });
   it("never clicks fullscreen (D18)", () => {
     expect(sceneTemplates(scene).some((t) => /fullscreen/i.test(t))).toBe(false);

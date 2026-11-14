@@ -59,7 +59,7 @@ const PANE_FROM_KICKER = { x: 1086, dy: -54 };
 // Enough notches to reach the bottom of any view; the pane stops there, so overshooting is harmless.
 const TO_BOTTOM = 12;
 
-// M2. The prompt names F2's periods (1–6 vs 7–31 October, around the 7 October price change): September has no
+// M2. The prompt names F2's periods (1 to 6 vs 7 to 31 October, ASCII only for xdotool, around the 7 October price change): September has no
 // priced figure in the fixture, so "cost more in October" gave "no earlier figure". If Claude calls another tool
 // first, its view is skipped (the pane opens from the cost change's kicker). F1 covers the drill-down chain.
 const M2: DesktopScene = {
@@ -67,7 +67,7 @@ const M2: DesktopScene = {
   slug: "cost-change",
   title: "Why a project cost more, in Claude Desktop",
   steps: [
-    ...opening("How did the Customer portal project's cost change from 1–6 October to 7–31 October, and why?"),
+    ...opening("How did the Customer portal project's cost change from 1 to 6 October to 7 to 31 October, and why?"),
     step("Wait for the cost change view", { kind: "waitFor", template: "cost-change-kicker" }, 1500),
     step("Wait for the answer", { kind: "waitAnswerDone" }, 1500),
     step("Open the host side pane", { kind: "click", template: "cost-change-kicker", at: PANE_FROM_KICKER }, 3500),
