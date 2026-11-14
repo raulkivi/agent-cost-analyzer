@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- MCP tool `get_savings_report`: the Savings tab's ranked opportunities for a model (kind, amount as a range or "up to" with its basis and price versions, coverage, session ids, fixed action text; at most 20 rows, Simulated cheaper-model rows only with `includeSimulated`), and `review_costs` starts from it.
+
 ## [0.14.0] - 2026-11-14
 
 ### Added

@@ -17,7 +17,7 @@ function isCalendarDate(date: string): boolean {
   return !Number.isNaN(time) && new Date(time).toISOString().slice(0, 10) === date;
 }
 
-const dateArg = z
+export const dateArg = z
   .string()
   .regex(DATE, "must be a calendar date (YYYY-MM-DD)")
   .refine((date) => !DATE.test(date) || isCalendarDate(date), "must be a calendar date (YYYY-MM-DD)");

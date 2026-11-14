@@ -44,16 +44,16 @@ describe("registerAppViews", () => {
     client = undefined;
   });
 
-  it("changes nothing without appViews: no resource, no _meta, no get_turn_series (21 tools)", async () => {
+  it("changes nothing without appViews: no resource, no _meta, no get_turn_series (22 tools)", async () => {
     ({ client } = await connectCostFixture());
     const { tools } = await client.listTools();
-    expect(tools).toHaveLength(21);
+    expect(tools).toHaveLength(22);
     expect(byName(tools, "get_turn_series")).toBeUndefined();
     expect(tools.some((tool) => tool._meta !== undefined)).toBe(false);
     expect(client.getServerCapabilities()?.resources).toBeUndefined();
   });
 
-  it("with appViews, adds only get_turn_series and _meta.ui on exactly the fifteen tools (22 standalone)", async () => {
+  it("with appViews, adds only get_turn_series and _meta.ui on exactly the fifteen tools (23 standalone)", async () => {
     const plain = await connectCostFixture();
     const withViews = await connectCostFixture({ appViews });
     client = withViews.client;
@@ -61,7 +61,7 @@ describe("registerAppViews", () => {
     const after = (await client.listTools()).tools;
     await plain.client.close();
 
-    expect(after).toHaveLength(22);
+    expect(after).toHaveLength(23);
     const strip = (tool: Tools[number]) => ({ ...tool, _meta: undefined });
     expect(after.filter((tool) => tool.name !== "get_turn_series").map(strip)).toEqual(before.map(strip));
     expect(
@@ -126,7 +126,7 @@ describe("registerAppViews", () => {
   it("names the view on the eight Increment 3 tools without changing the tool count", async () => {
     ({ client } = await connectCostFixture({ appViews }));
     const { tools } = await client.listTools();
-    expect(tools).toHaveLength(22);
+    expect(tools).toHaveLength(23);
     for (const name of INCREMENT3_VIEW_TOOLS) {
       expect(byName(tools, name)!._meta, name).toEqual({ ui: { resourceUri: URI }, "ui/resourceUri": URI });
     }
@@ -174,8 +174,8 @@ describe("registerAppViews", () => {
     const before = (await plain.client.listTools()).tools;
     const after = (await client.listTools()).tools;
     await plain.client.close();
-    expect(before).toHaveLength(19);
-    expect(after).toHaveLength(20);
+    expect(before).toHaveLength(20);
+    expect(after).toHaveLength(21);
     const tagged = after.filter((tool) => tool._meta?.ui !== undefined && tool.name !== "get_turn_series").map((tool) => tool.name);
     expect(tagged.sort()).toEqual(VIEW_TOOLS.filter((name) => byName(before, name) !== undefined).sort());
   });
@@ -189,9 +189,9 @@ describe("registerAppViews", () => {
     expect(tools.filter((tool) => tool._meta?.ui !== undefined).map((tool) => tool.name).sort()).toEqual([...expected, "get_turn_series"].sort());
   });
 
-  it("has 20 tools with the extension's groups", async () => {
+  it("has 21 tools with the extension's groups", async () => {
     ({ client } = await connectCostFixture({ appViews, toolGroups: WITHOUT_BILLING_TOOL_GROUPS }));
-    expect((await client.listTools()).tools).toHaveLength(20);
+    expect((await client.listTools()).tools).toHaveLength(21);
   });
 
   it("leaves the three tools' results unchanged", async () => {

@@ -172,7 +172,7 @@ describe("createMcpServer as serveStdio's factory", () => {
           return tools.length;
         }),
       );
-      expect(listed).toEqual([22, 22]);
+      expect(listed).toEqual([23, 23]);
     } finally {
       stdout.mockRestore();
       stderr.mockRestore();

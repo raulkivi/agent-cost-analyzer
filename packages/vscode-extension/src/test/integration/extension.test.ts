@@ -35,7 +35,7 @@ const EXTENSION_ID = "raulkivi.ai-credits-analyzer";
 const WAIT_MS = 30_000;
 // The webview requests the panel makes on its own when it opens.
 const STARTUP_METHODS = ["getHealth", "getProductProfile", "listLearnScenarios", "getConfigStatus", "listSessions"];
-// Step 15.13 (plan §10.1.6): every tool group but billing (D7); Phase 14 step 14.5 adds replay (D5); Phase 12 A13 ships the app views, adding the app-only get_turn_series: 20 tools.
+// Step 15.13 (plan §10.1.6): every tool group but billing (D7); Phase 14 step 14.5 adds replay (D5); Phase 12 A13 ships the app views, adding the app-only get_turn_series: 20 tools; Phase 16 SR19 adds get_savings_report: 21.
 const MCP_TOOLS = [
   "compare_costs",
   "compare_models_for_session",
@@ -46,6 +46,7 @@ const MCP_TOOLS = [
   "get_price_changes",
   "get_project_cost",
   "get_repository_cost",
+  "get_savings_report",
   "get_session_audit",
   "get_session_cost",
   "get_turn",
@@ -168,7 +169,7 @@ suite("AI Credits Analyzer in a real VS Code (step 10.9)", function () {
       assert.deepEqual(await mcpServerDefinitions(), []);
     });
 
-    test("with the setting on, offers one server that lists the 20 tools and answers get_session_cost for the seeded session", async () => {
+    test("with the setting on, offers one server that lists the 21 tools and answers get_session_cost for the seeded session", async () => {
       await setMcpEnabled(true);
       const [definition, ...others] = await waitFor(mcpServerDefinitions, (definitions) => definitions.length > 0, {
         timeoutMs: WAIT_MS,
