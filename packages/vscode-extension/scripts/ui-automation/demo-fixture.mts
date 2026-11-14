@@ -14,6 +14,7 @@ import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { createIntegrationFixture, USER_SETTINGS } from "../integration-fixture.mts";
 import { createGitFolder } from "./git-folder.mts";
+import { todayStartBefore } from "./today-squeeze.mts";
 import {
   agentSessionCredits,
   classicSessionCredits,
@@ -341,16 +342,9 @@ function localDayKey(date: Date): string {
 const TODAY_SPAN_MINUTES = 80;
 
 // A start `daysAgo` days back on the local calendar, at a mid-morning hour (so never in the future);
-// today's sessions start `minutesAgo` minutes before the run, squeezed into the time since local
-// midnight when the run starts less than TODAY_SPAN_MINUTES after it (so they stay on today).
+// today's sessions start `minutesAgo` minutes before the run, squeezed onto today by todayStartBefore.
 function startOf(now: Date, daysAgo: number, slot: number, minutesAgo: number): Date {
-  if (daysAgo === 0) {
-    const midnight = new Date(now);
-    midnight.setHours(0, 0, 0, 0);
-    const sinceMidnight = Math.max(now.getTime() - midnight.getTime() - 1_000, 0);
-    const scale = Math.min(1, sinceMidnight / (TODAY_SPAN_MINUTES * MINUTE_MS));
-    return new Date(now.getTime() - minutesAgo * MINUTE_MS * scale);
-  }
+  if (daysAgo === 0) return todayStartBefore(now, minutesAgo * MINUTE_MS, TODAY_SPAN_MINUTES * MINUTE_MS);
   const day = new Date(now);
   day.setDate(day.getDate() - daysAgo);
   day.setHours(9 + (slot % 8), (slot * 7) % 60, 0, 0);

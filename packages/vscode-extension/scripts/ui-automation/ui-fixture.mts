@@ -11,6 +11,7 @@ import { COPILOT_CLI_FIXTURE_HOME, COPILOT_CLI_FIXTURE_SESSION_IDS, writeCopilot
 import { USAGE_LOG_USER_MESSAGE, USAGE_MAIN_JSONL, USAGE_SESSION_ID, seedSubagentFixtureSession } from "../../../server/src/test-support/copilot-session-store.ts";
 import { SAVINGS_AGENT_HOST_SESSION_ID, SAVINGS_VSCODE_SESSION_ID, writeSavingsAgentHostSession, writeSavingsVscodeSession } from "../../../server/src/test-support/savings-fixtures.ts";
 import { createIntegrationFixture, USER_SETTINGS } from "../integration-fixture.mts";
+import { todayScale, todayStartBefore } from "./today-squeeze.mts";
 
 // VS Code's shared process deletes, 30 s after start-up, every workspaceStorage
 // folder whose name isn't 32 characters long (a folder workspace's id) and that
@@ -41,7 +42,7 @@ export const SUBAGENT_SESSION = {
   title: "Subagent runs session",
   caseName: "run-and-search",
   expectedCredits: 5.1,
-  // How long before the fixture's `now` it started.
+  // How long before the fixture's `now` it started (squeezed after midnight, see today-squeeze.mts).
   agoMs: 30_000,
 };
 export const DANGLING_SESSION = {
@@ -50,6 +51,9 @@ export const DANGLING_SESSION = {
   caseName: "dangling-ref",
   agoMs: 45_000,
 };
+
+// Every session dated before `now` is a "today" session; the largest offset is the savings session's 30 minutes.
+const TODAY_SPAN_MS = 30 * 60 * 1000;
 
 export interface UiFixtureOptions {
   sessionCount?: number;
@@ -106,20 +110,20 @@ export function createUiFixture(rootDir: string, options: UiFixtureOptions = {})
   seedLargeSession(path.join(userDir, "globalStorage", "github.copilot-chat", "session-store.db"), now);
   seedEmptyWindowSession(userDir, now);
   seedSubagentSessions(userDir, now);
-  writeCopilotCliAgentHostStores(userDataDir, now);
+  writeCopilotCliAgentHostStores(userDataDir, now, 60_000 * todayScale(now, TODAY_SPAN_MS));
   // A copy: once enabled, the Copilot Chat built in to VS Code writes its own
   // logs into COPILOT_HOME, which must not be the repo's fixture directory.
   const copilotHome = path.join(rootDir, "copilot-home");
   cpSync(COPILOT_CLI_FIXTURE_HOME, copilotHome, { recursive: true, filter: (source) => path.basename(source) !== "logs" });
 
   // Today, like the other sessions: the monthly allowance spec expects the month's and today's cost to agree.
-  const savingsStart = new Date(now.getTime() - 30 * 60 * 1000);
+  const savingsStart = todayStartBefore(now, 30 * 60 * 1000, TODAY_SPAN_MS);
   writeSavingsVscodeSession({
     sessionStoreDbPath: path.join(userDir, "globalStorage", "github.copilot-chat", "session-store.db"),
     debugLogsDir: path.join(workspaceStorage, WORKSPACE_STORAGE_ID, "GitHub.copilot-chat", "debug-logs"),
     startedAt: savingsStart.toISOString(),
   });
-  writeSavingsAgentHostSession({ userDataDir, copilotHome, startedAtMs: savingsStart.getTime() + 10 * 60 * 1000 });
+  writeSavingsAgentHostSession({ userDataDir, copilotHome, startedAtMs: savingsStart.getTime() + 10 * 60 * 1000 * todayScale(now, TODAY_SPAN_MS) });
 
   return {
     storagePath,
@@ -172,7 +176,7 @@ function seedEmptyWindowSession(userDir: string, now: Date): void {
   const logDir = path.join(userDir, "globalStorage", "github.copilot-chat", "debug-logs", EMPTY_WINDOW_SESSION_ID);
   mkdirSync(logDir, { recursive: true });
   writeFileSync(path.join(logDir, "main.jsonl"), readFileSync(USAGE_MAIN_JSONL, "utf8").replaceAll(USAGE_SESSION_ID, EMPTY_WINDOW_SESSION_ID));
-  const startedAt = new Date(now.getTime() - 120_000).toISOString();
+  const startedAt = todayStartBefore(now, 120_000, TODAY_SPAN_MS).toISOString();
   const db = new DatabaseSync(path.join(userDir, "globalStorage", "github.copilot-chat", "session-store.db"));
   try {
     db.prepare(
@@ -188,7 +192,7 @@ function seedSubagentSessions(userDir: string, now: Date): void {
   const dbPath = path.join(userDir, "globalStorage", "github.copilot-chat", "session-store.db");
   const debugLogsDir = path.join(userDir, "workspaceStorage", WORKSPACE_STORAGE_ID, "GitHub.copilot-chat", "debug-logs");
   for (const session of [SUBAGENT_SESSION, DANGLING_SESSION]) {
-    const startedAt = new Date(now.getTime() - session.agoMs).toISOString();
+    const startedAt = todayStartBefore(now, session.agoMs, TODAY_SPAN_MS).toISOString();
     seedSubagentFixtureSession(dbPath, debugLogsDir, session.caseName, startedAt, session.id);
     const db = new DatabaseSync(dbPath);
     try {
@@ -202,7 +206,7 @@ function seedSubagentSessions(userDir: string, now: Date): void {
 function seedLargeSession(dbPath: string, now: Date): void {
   const db = new DatabaseSync(dbPath);
   try {
-    const startedAt = new Date(now.getTime() - 60_000).toISOString();
+    const startedAt = todayStartBefore(now, 60_000, TODAY_SPAN_MS).toISOString();
     db.prepare(
       "INSERT INTO sessions (id, cwd, repository, branch, host_type, summary, agent_name, agent_description, created_at, updated_at) VALUES (?, '/repo', 'org/repo', 'main', 'desktop', 'Large session', 'GitHub Copilot Chat', 'chat', ?, ?)",
     ).run(LARGE_SESSION_ID, startedAt, startedAt);
