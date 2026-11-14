@@ -5,6 +5,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
+import { contrastRatio, resolveCssColor } from "./lib/contrast.js";
 
 // The ledger theme (dense-ledger-ui.md L1, D1): its palette, dark mode and
 // fonts live in theme.css under html[data-color-mode], which only the
@@ -261,5 +262,26 @@ describe("ledger component rules (dense-ledger-ui.md L3)", () => {
       [...rule.declarations].filter(([property, value]) => property === "font-family" && /(^|[\s,])monospace$/.test(value) && !value.startsWith("var(")).map(() => rule.selectors.join(",")),
     );
     expect(bare).toEqual([]);
+  });
+});
+
+// WCAG 1.4.11: the boundary that identifies a control needs 3:1. The ledger's
+// hairline divider is ~1.3:1, so fields, buttons, segmented controls and chips
+// take --color-control-border (declared in the ledger modes only; the
+// fallback keeps the VS Code webview and MCP views on the divider).
+describe("ledger control boundaries reach 3:1 (dense-ledger-ui.md L4)", () => {
+  it.each(MODES)("%s mode: --color-control-border reaches 3:1 on the ground and on surfaces", (mode) => {
+    const tokens = modeTokens(mode);
+    const border = resolveCssColor(tokens.get("--color-control-border")!);
+    for (const ground of ["--color-bg", "--color-surface"]) {
+      const ratio = contrastRatio(border, resolveCssColor(tokens.get(ground)!));
+      expect(ratio, `${mode} ${ground}`).toBeGreaterThanOrEqual(3);
+    }
+  });
+
+  it.each([".btn", ".btn-secondary", ".seg", ".filter-chip"])("%s draws its border with --color-control-border, falling back to the divider", (selector) => {
+    const declarations = rules.filter((rule) => rule.selectors.includes(selector)).flatMap((rule) => [...rule.declarations]);
+    const border = declarations.filter(([name]) => name === "border" || name === "border-color").map(([, value]) => value);
+    expect(border.at(-1), selector).toContain("var(--color-control-border, var(--color-divider))");
   });
 });

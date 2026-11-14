@@ -22,6 +22,14 @@ export default defineConfig({
   timeout: 60_000,
   expect: { timeout: 10_000 },
   reporter: [["list"]],
+  // Phase 17 L4: every spec runs under both OS colour schemes. The standalone
+  // app's Auto mode follows prefers-color-scheme, so the dark project covers
+  // the dark ledger and the light project the light one. color-mode.spec.ts
+  // emulates the scheme itself, so it runs once, in the light project.
+  projects: [
+    { name: "light", use: { colorScheme: "light" } },
+    { name: "dark", use: { colorScheme: "dark" }, testIgnore: /color-mode\.spec\.ts/ },
+  ],
   use: {
     browserName: "chromium",
     headless: true,
