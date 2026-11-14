@@ -6,7 +6,7 @@ Status: approved 2026-11-13; plan steps 10.22 (Phase 0 and Phase 1) and
 10.23 (Phase 2) in [implementation-plan.md](../implementation-plan.md).
 Phase 0 done 2026-11-13; Phase 1 done 2026-11-14 (step 10.22); Phase 2
 (step 10.23) done 2026-11-14: M1–M7 and F1–F3 recorded, approved and in
-the docs; open: the owner's look at the retaken M6.
+the docs.
 
 ## 1. Goal
 
@@ -865,6 +865,12 @@ review rejections.
   (also on the shared fixture), and Claude points out the mismatch in
   M6's answer: a product bug for the owner. M4's take ends while Claude
   is still analysing, with a findings view in the pane.
+- 2026-11-14: the owner approved the retaken M6; step 10.23 has no open
+  item. Follow-ups merged the same day: the replay coverage lists the
+  subagent runs it leaves out (PR #266, Phase 0 finding a), the extension
+  README's Learn count is 17 (PR #265, finding b), the MCP server uses the
+  configured clock (PR #267), and the release suite's UI fixture keeps
+  today's sessions on today just after midnight (`today-squeeze.mts`).
 - 2026-11-14: M6's bug (D24) fixed in PR #261 (Sonnet, root cause: the
   replay took the first request's model as the session's own; the
   "scratch" session is Sonnet 5.5 then Opus 5.5): `measuredModels` and
