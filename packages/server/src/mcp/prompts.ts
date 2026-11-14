@@ -18,7 +18,7 @@ function userMessage(text: string) {
   return { messages: [{ role: "user" as const, content: { type: "text" as const, text } }] };
 }
 
-export function registerPrompts(server: McpServer, options: { costAnalysis?: boolean; statements?: boolean; estimates?: boolean } = {}): void {
+export function registerPrompts(server: McpServer, options: { costAnalysis?: boolean; statements?: boolean; estimates?: boolean; savings?: boolean } = {}): void {
   server.registerPrompt(
     "audit_session",
     {
@@ -47,7 +47,12 @@ export function registerPrompts(server: McpServer, options: { costAnalysis?: boo
     ({ since, provider }) =>
       userMessage(
         `Review my AI coding-agent spend${scope(since, provider)}. ` +
-          `Call get_cost_rollup${args(since, provider)} first, then get_session_cost on the top 3 sessions and get_turn on their most expensive turns. ` +
+          // Phase 16 SR19 (savings-report.md §8): the ranked rows come from the savings report, not from the model's own ranking of rollups.
+          (options.savings
+            ? `Call get_savings_report${args(since, provider)} first and explain its rows in the order it ranks them: for each, what happens, the amount as given (a range or "up to", priced and not billed, never a single number), the coverage, and the fixed action. ` +
+              "Do not re-rank them or add up their amounts into a total. Treat cheaper-model rows (only with includeSimulated true) as Simulated, never as ranked savings. " +
+              "Then call get_cost_rollup for the spend behind them, and get_session_cost on the sessions the top rows name and get_turn on their most expensive turns. "
+            : `Call get_cost_rollup${args(since, provider)} first, then get_session_cost on the top 3 sessions and get_turn on their most expensive turns. `) +
           "Explain what drives the spend: cache misses (low cache hit ratio, cache-expiry events), large or growing context, compactions, " +
           "model switches, expensive models used for simple turns, unused tools inflating every request, retries after failed tool calls. " +
           "Give concrete, prioritised savings with the evidence (session, turn, figures). " +

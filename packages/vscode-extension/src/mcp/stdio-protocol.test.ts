@@ -54,14 +54,14 @@ describe("the built MCP server bundle's protocol revisions (MCP SDK 2, D1, D4)",
     return peer;
   }
 
-  it.each(["2025-06-18", "2025-11-25"])("answers a 2025-era initialize at %s with that version and lists its 20 tools", async (protocolVersion) => {
+  it.each(["2025-06-18", "2025-11-25"])("answers a 2025-era initialize at %s with that version and lists its 21 tools", async (protocolVersion) => {
     const peer = start();
 
     const initialized = await initializeLegacy(peer, protocolVersion);
     const listed = await peer.request("tools/list");
 
     expect(initialized.result).toMatchObject({ protocolVersion, serverInfo: { name: "ai-credits-analyzer", version: "9.9.9-test" } });
-    expect((listed.result?.tools as unknown[]).length).toBe(20);
+    expect((listed.result?.tools as unknown[]).length).toBe(21);
   }, 60_000);
 
   it("answers server/discover with 2026-07-28 and serves 2026-07-28 requests on the same connection", async () => {
@@ -72,7 +72,7 @@ describe("the built MCP server bundle's protocol revisions (MCP SDK 2, D1, D4)",
 
     expect(discovered.error).toBeUndefined();
     expect(discovered.result?.supportedVersions).toContain(MODERN_PROTOCOL_VERSION);
-    expect((listed.result?.tools as unknown[]).length).toBe(20);
+    expect((listed.result?.tools as unknown[]).length).toBe(21);
   }, 60_000);
 
   it("answers a 2026-07-28 read of the views resource with ttlMs 0", async () => {

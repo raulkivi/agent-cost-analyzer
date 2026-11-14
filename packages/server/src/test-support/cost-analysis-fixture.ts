@@ -9,6 +9,7 @@ import type { LogProviderStatus, RequestTrace, Session, TokenCount, Turn, TurnUs
 import type { RequestTraceReader } from "../data-sources/log-providers/log-provider.js";
 import { loadVendorProfiles } from "../data-sources/vendor-profiles/loader.js";
 import { createSessionReplay } from "../composition/create-session-replay.js";
+import { createSavingsReport } from "../composition/create-savings-report.js";
 import { ReplayModelResolver } from "../services/session-replay/replay-model-resolver.js";
 import { FIXTURE_VENDOR_PROFILES_DIR } from "./vendor-profiles-dir.js";
 import { createCostAnalysis, projectDirectoryOf } from "../composition/create-cost-analysis.js";
@@ -208,7 +209,7 @@ const providerStatus: LogProviderStatus = {
   ],
 };
 
-export type CostFixtureOptions = Pick<McpServerDeps, "toolGroups" | "identity" | "projectBillingDetails" | "appViews"> & {
+export type CostFixtureOptions = Pick<McpServerDeps, "toolGroups" | "identity" | "projectBillingDetails" | "appViews" | "savingsReport"> & {
   // Step 15.13: the security tests' generated home folder, remote and projects.
   home?: string;
   portalApiRemote?: string;
@@ -256,6 +257,9 @@ export function composeCostFixture({ home = FIXTURE_HOME, portalApiRemote, proje
   // Phase 14 step 14.5: replays as both products wire them (createSessionReplay).
   const profiles = loadVendorProfiles(FIXTURE_VENDOR_PROFILES_DIR);
   const sessionReplay = createSessionReplay({ providers: lookup, profiles, priceBook, pricer, attribution: attributor });
+  // Phase 16 SR19: the savings report as both products wire it; the Savings
+  // route (ApiService.getSavingsReport) and get_savings_report share it.
+  const savingsReport = createSavingsReport({ providers: { listProviders: () => providers }, profiles, priceBook, pricer, attribution: attributor, replay: sessionReplay, now: () => FIXTURE_NOW });
   const estimates = new EstimateService({
     cubes: new DatasetCostCubeSource(insights),
     projects: projectDirectoryOf(catalog),
@@ -263,7 +267,7 @@ export function composeCostFixture({ home = FIXTURE_HOME, portalApiRemote, proje
     replay: { sessions: sessionReplay, models: new ReplayModelResolver(profiles) },
   });
   // The cost routes read only costAnalysis, statements and estimates (app.ts passes req.query unchanged).
-  const api = new ApiService({ costAnalysis, statements, estimates } as unknown as ApiServiceDeps);
+  const api = new ApiService({ costAnalysis, statements, estimates, savingsReport } as unknown as ApiServiceDeps);
   const deps: McpServerDeps = {
     auditQueries: new AuditQueryService(lookup),
     analysisQueries: new AnalysisQueryService(lookup, insights, { attribution: attributor, pricer }),
@@ -276,10 +280,11 @@ export function composeCostFixture({ home = FIXTURE_HOME, portalApiRemote, proje
     statements,
     estimates,
     sessionReplay,
+    savingsReport,
     ...options,
   };
   const server = createMcpServer(deps);
-  return { api, server, deps, insights, costAnalysis, statements, sessionReplay };
+  return { api, server, deps, insights, costAnalysis, statements, sessionReplay, savingsReport };
 }
 
 export async function connectCostFixture(options: CostFixtureOptions = {}): Promise<{ client: Client; api: ApiService }> {

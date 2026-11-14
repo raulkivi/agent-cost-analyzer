@@ -126,12 +126,12 @@ describe("createCopilotMcpServices (the extension's MCP server, vscode-extension
 
   // Step 15.13 (plan §10.1.4, §10.1.6): every group but billing (D7).
   // Phase 14 step 14.5 (D5): both serve the replay group.
-  it("lists the standalone server's tools but the billing ones (19 of 21), with the same input and output schemas", async () => {
+  it("lists the standalone server's tools but the billing ones (20 of 22), with the same input and output schemas", async () => {
     const { tools } = await copilot.listTools();
     const standaloneTools = (await standalone.listTools()).tools;
 
-    expect(standaloneTools).toHaveLength(21);
-    expect(tools).toHaveLength(19);
+    expect(standaloneTools).toHaveLength(22);
+    expect(tools).toHaveLength(20);
     for (const name of ["replay_session", "compare_models_for_session"]) {
       expect(tools.map((tool) => tool.name)).toContain(name);
       expect(standaloneTools.map((tool) => tool.name)).toContain(name);

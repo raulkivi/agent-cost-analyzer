@@ -57,11 +57,11 @@ describe("resolveAppViews", () => {
     expect((contents[0] as { text: string }).text).toContain("built views");
   });
 
-  it("still starts and lists the 21 normal tools when the file is missing", async () => {
+  it("still starts and lists the 22 normal tools when the file is missing", async () => {
     ({ client } = await connectCostFixture(resolveAppViews("/nonexistent/views.html", () => undefined)));
 
     const { tools } = await client.listTools();
-    expect(tools).toHaveLength(21);
+    expect(tools).toHaveLength(22);
     expect(tools.some((tool) => tool._meta !== undefined)).toBe(false);
     expect(client.getServerCapabilities()?.resources).toBeUndefined();
   });

@@ -42,12 +42,12 @@ describe("the extension's MCP server tool list (SDK 2 migration contract)", () =
     }
   }
 
-  it("lists the same 19 tools without views and 20 with them, with the same metadata, resource and prompts as on SDK 1", async () => {
+  it("lists the same 20 tools without views and 21 with them, with the same metadata, resource and prompts as on SDK 1", async () => {
     const withoutViews = await surfaceOf(undefined);
     const withViews = await surfaceOf(viewsHtml);
 
-    expect(withoutViews.tools).toHaveLength(19);
-    expect(withViews.tools).toHaveLength(20);
+    expect(withoutViews.tools).toHaveLength(20);
+    expect(withViews.tools).toHaveLength(21);
     await expect(surfaceFixture({ withoutViews, withViews })).toMatchFileSnapshot("./__snapshots__/tool-list-extension.json");
   });
 });
