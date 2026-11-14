@@ -15,8 +15,8 @@ The [1.0.0 release](#100-release) section lists what both products need for 1.0.
 
 - Released: extension 0.12.0 and app 0.14.0 on 2026-11-14 (tags `ext-v0.12.0` and `app-v0.14.0` on `613724e`).
 - Next release: extension 0.14.0 (stable) and app 0.15.0, carrying Phase 16 Increment 2 and PRs #272 (Marketplace listing), #274 (Learn Vendors tab), #279 (pi system prompt) and #280 (mitmproxy docs).
-- Done: Phases 0-10, 12, 13 and 17; steps 10.19 and 10.21-10.23. Phase 10's manual checks and docs review were closed by the owner on 2026-11-14.
-- Open: Phase 11 (not started); Phases 14 and 15 (exit criteria on real data, now automated checks); Phase 16 Increment 2 (SR18-SR22 done; its exit check awaits the owner's sign-off).
+- Done: Phases 0-10, 12, 13, 16 and 17; steps 10.19 and 10.21-10.23. Phase 10's manual checks and docs review were closed by the owner on 2026-11-14.
+- Open: Phase 11 (not started); Phases 14 and 15 (exit criteria on real data, now automated checks).
 - 1.0.0: both products together, no target date; criteria and tasks in [1.0.0 release](#100-release) (owner decisions 2026-11-14).
 - Current status of record: [implementation-plan-gantt.md](implementation-plan-gantt.md).
 
@@ -1673,10 +1673,10 @@ Phase 14 (replay, for the cheaper-model detector) for Increment 1; Phase 9.10
 
 **Status (2026-11-14)**: Increment 1 released in app 0.14.0 and
 extension 0.12.0 (exit criterion met 2026-11-14). Increment 2: SR18-SR20
-merged (PRs #276, #275, #278), SR21 in PR #281, SR22 in PR #PRNUM (review
+merged (PRs #276, #275, #278), SR21 in PR #281, SR22 in PR #285 (review
 in the plan's §17); its exit check (`npm run test:real-data:savings` with
-`get_savings_report`) passed on the owner's logs and awaits the owner's
-sign-off; it ships in extension 0.14.0 and app 0.15.0. Increment 3 is a 1.0 criterion.
+`get_savings_report`) passed on the owner's logs and the owner signed it off
+(2026-11-14); it ships in extension 0.14.0 and app 0.15.0. Increment 3 is a 1.0 criterion.
 
 **Status (2026-11-13)**: Increment 1 (SR0-SR17) is built, code and docs;
 Increment 2 (SR18-SR22) is not started.

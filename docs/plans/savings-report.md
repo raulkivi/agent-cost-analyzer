@@ -2,7 +2,7 @@
 
 **Last changed:** 2026-11-14 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
-**Status: Increment 2 built 2026-11-14, 23 of 23 tasks (SR18 boards approved, SR19 `get_savings_report` in PR #275, SR20 U18 view in PR #278, SR21 U18 specs in PR #281, SR22 review and docs in PR #285, §17); its exit check (§14) passed on the owner's logs 2026-11-14 and awaits the owner's sign-off; ships in extension 0.14.0 and app 0.15.0. Increment 1 built (SR0-SR17, 2026-11-13); owner decisions D1-D12 accepted 2026-11-12, D13-D15 answered 2026-11-14; Increment 1 exit criterion met 2026-11-14 (owner sign-off on the automated check, §14); the owner approved the docs 2026-11-14; ships in app 0.14.0 and extension 0.12.0; Increment 2 not started.** Phase 16 in
+**Status: Increment 2 built 2026-11-14, 23 of 23 tasks (SR18 boards approved, SR19 `get_savings_report` in PR #275, SR20 U18 view in PR #278, SR21 U18 specs in PR #281, SR22 review and docs in PR #285, §17); its exit check (§14) passed on the owner's logs 2026-11-14 and the owner signed it off the same day (exit criterion met); ships in extension 0.14.0 and app 0.15.0. Increment 1 built (SR0-SR17, 2026-11-13); owner decisions D1-D12 accepted 2026-11-12, D13-D15 answered 2026-11-14; Increment 1 exit criterion met 2026-11-14 (owner sign-off on the automated check, §14); the owner approved the docs 2026-11-14; ships in app 0.14.0 and extension 0.12.0; Increment 2 not started.** Phase 16 in
 [implementation-plan.md](../implementation-plan.md) (owner decision D9).
 
 The question this answers: **"What should I change to spend less, and
@@ -449,8 +449,8 @@ report; none of 1,243 prompt beginnings and no home path in any answer;
 the idle-expiry row's 10 shown sessions (of 24) are the oracle's largest,
 in order; 1,421 fingerprints unchanged. 8 of 8 tests passed. A first run
 the same evening failed only on `~/.claude.json`, which a running Claude
-Code session rewrites (the app never opens it); the rerun passed. Pending:
-the owner's sign-off on that output.
+Code session rewrites (the app never opens it); the rerun passed. **Met for Increment 2, 2026-11-14:** the owner signed
+off on that output.
 
 ### Automated check
 

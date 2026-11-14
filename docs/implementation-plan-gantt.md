@@ -90,7 +90,7 @@ gantt
     15.15 owner review, real data (5%)     :active, p15r, after p15, 1d
 
     section Savings
-    16 Savings report (100%, 23 of 23 code tasks, exit awaits sign-off) :active, p16, 2026-11-12, 3d
+    16 Savings report (100%, 23 of 23 tasks)     :done, p16, 2026-11-12, 3d
 
     section UI density
     17 Dense ledger UI (100%, 14 of 14 tasks) :active, p17, 2026-11-14, 5d
@@ -143,7 +143,7 @@ gantt
 - Step 10.22 (extension demo recordings, 100%, 22 of 22 tasks): done 2026-11-14. Phase 0 (PR #255), Phase 1 code (PRs #256, #257) and docs with media; 13 owner-approved GIFs in `docs/images/demo/` (1600x1000), paid E2/E9 takes 0.41 AI Credits. Open follow-ups: the release suite's monthly-allowance spec flakes between midnight and about 01:15 (plan §11); the owner's two Phase 0 findings (plan §11). Next: step 10.23 (Claude Desktop demos). Plan: [docs-refresh-and-demo-recordings.md](plans/docs-refresh-and-demo-recordings.md).
 - Step 10.23 (Claude Desktop demo recordings, 100%, 7 of 7 tasks): done 2026-11-14 (PR #262). Spike 2.0 passed route R1 (Desktop 5.11492.5 driven by `xdotool` and OpenCV template matching in Xvfb, a separate signed-in profile); `npm run demo:record:desktop -w packages/vscode-extension -- M1..M7` and `npm run demo:record -w packages/mcp-apps` (F1–F3) re-record every scene. Ten owner-approved GIFs in `docs/images/demo/` (about 16 MB, D28), embedded in the User Guide and README. Found and fixed: the replay named one model for a session that switched models (PR #261). The owner approved the retaken M6 on 2026-11-14. Plan: [docs-refresh-and-demo-recordings.md](plans/docs-refresh-and-demo-recordings.md).
 - Phase 17 (dense ledger UI, 100%, 14 of 14 tasks): Increment 1 (P0-P7) and Increment 2 (L1-L6) done 2026-11-14; the L6 review fixed 7 findings and recorded 7 (plan §10). Exit criterion met 2026-11-14 with the owner's eyes-on review; ships in app 0.14.0 and extension 0.12.0. The Dashboard on the e2e fixture went from 2,444px to 1,467px tall at 1440x900 (`density.spec.ts`). Increment 1 (P1-P7) is the density pass in every host; Increment 2 (L1-L6) is the standalone ledger theme with light and dark modes. Plan: [dense-ledger-ui.md](plans/dense-ledger-ui.md). Standalone stills outside `screenshots.mts` (landing page, Learn scenario, older guide images) and the VS Code panel stills are retaken with step 10.22's final takes.
-- Phase 16 (savings report, 100%, 23 of 23 code tasks; Increment 2 exit awaits the owner's sign-off): Increment 1 (SR0-SR17) done 2026-11-13, code and docs; SR16 review in plan §16 (5 findings fixed, 3 recorded). Exit criterion met 2026-11-14 (owner sign-off on `npm run test:real-data:savings`, PR #270). The owner approved the docs on 2026-11-14 (D13-D15 answered the same day). Increment 1 released 2026-11-14 in app 0.14.0 and extension 0.12.0. Increment 2 started 2026-11-14: SR18 boards approved (D16-D21), SR19 `get_savings_report` merged (PR #275), SR20 U18 view merged (PR #278), SR21 U18 specs done (PR #281: Playwright G5 spec, real-Copilot G4 rows written, owner runs them before tagging), SR22 review and docs done (PR #PRNUM: plan §17, 2 findings fixed, 6 recorded; the G4 seed now gives U18 a ranked row). Increment 2's exit check, `npm run test:real-data:savings` extended to `get_savings_report`, passed on the owner's logs 2026-11-14 and awaits the owner's sign-off; it ships in extension 0.14.0 and app 0.15.0. Plan: [savings-report.md](plans/savings-report.md).
+- Phase 16 (savings report, 100%, 23 of 23 tasks; Increment 2 exit criterion met 2026-11-14): Increment 1 (SR0-SR17) done 2026-11-13, code and docs; SR16 review in plan §16 (5 findings fixed, 3 recorded). Exit criterion met 2026-11-14 (owner sign-off on `npm run test:real-data:savings`, PR #270). The owner approved the docs on 2026-11-14 (D13-D15 answered the same day). Increment 1 released 2026-11-14 in app 0.14.0 and extension 0.12.0. Increment 2 started 2026-11-14: SR18 boards approved (D16-D21), SR19 `get_savings_report` merged (PR #275), SR20 U18 view merged (PR #278), SR21 U18 specs done (PR #281: Playwright G5 spec, real-Copilot G4 rows written, owner runs them before tagging), SR22 review and docs done (PR #285: plan §17, 2 findings fixed, 6 recorded; the G4 seed now gives U18 a ranked row). Increment 2's exit check, `npm run test:real-data:savings` extended to `get_savings_report`, passed on the owner's logs 2026-11-14; the owner signed it off the same day; it ships in extension 0.14.0 and app 0.15.0. Plan: [savings-report.md](plans/savings-report.md).
 - Phase 14: steps 14.0-14.7 built; 14.8's docs written, the owner's review and the §13 exit criterion on real sessions open; the extension guide's replay screenshots open (User Guide's done). Step table: [analyze-session-replay.md](plans/analyze-session-replay.md) §12.
 - Phase 15: owner's review and exit criterion on real data.
 - Phase 13 (vendor-aware Learn simulation, 100%): done 2026-11-14 with the owner's eyes-on review of step 13.8. Follow-up from that review, fixed 2026-11-14 for the next release: the Vendors tab shows one block per model, so it fits the narrow side column (names no longer wrap, no column scrolls off; `density.spec.ts` at 1440 and 360 px, light and dark). Calibration stays Claude Code only (owner, 2026-11-14). Plan: [vendor-aware-learn-simulation.md](plans/vendor-aware-learn-simulation.md).
@@ -211,7 +211,7 @@ gantt
 
 ## Phase 16 detail — Savings report
 
-Schedule view of the task table in [savings-report.md](plans/savings-report.md) §10. Status: Increment 1 18 of 18 code and docs tasks done (SR0-SR17, 2026-11-12 to 2026-11-13); the owner approved the docs and D13-D15 on 2026-11-14; released 2026-11-14 in app 0.14.0 and extension 0.12.0. Increment 2: SR18 to SR22 done 2026-11-14 (23 of 23 tasks; SR20 PR #278, SR21 PR #281, SR22 PR #PRNUM); its exit check passed on the owner's logs and awaits the owner's sign-off.
+Schedule view of the task table in [savings-report.md](plans/savings-report.md) §10. Status: Increment 1 18 of 18 code and docs tasks done (SR0-SR17, 2026-11-12 to 2026-11-13); the owner approved the docs and D13-D15 on 2026-11-14; released 2026-11-14 in app 0.14.0 and extension 0.12.0. Increment 2: SR18 to SR22 done 2026-11-14 (23 of 23 tasks; SR20 PR #278, SR21 PR #281, SR22 PR #285); its exit check passed on the owner's logs and the owner signed it off (2026-11-14).
 
 ```mermaid
 %%{init: {
@@ -265,7 +265,7 @@ gantt
     SR20 U18 view (100%)                             :done, sr20, after sr19, 1d
     SR21 U18 specs (100%)                            :done, sr21, after sr20, 1d
     SR22 Review and docs, Opus (100%)                :done, sr22, after sr21, 1d
-    Increment 2 exit, owner sign-off                 :active, sr2x, after sr22, 1d
+    Increment 2 exit, owner sign-off (100%)          :done, sr2x, after sr22, 1d
 ```
 
 ## Phase 17 detail — Dense ledger UI
