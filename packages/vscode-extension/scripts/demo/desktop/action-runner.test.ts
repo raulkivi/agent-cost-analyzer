@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 import { describe, expect, it } from "vitest";
 import type { Match } from "./click-point.mts";
-import { createActionRunner, type ActionDeps } from "./action-runner.mts";
+import { createActionRunner, PANE_POINT, type ActionDeps } from "./action-runner.mts";
 
 const hit = (x: number, y: number): Match => ({ x, y, width: 20, height: 10, score: 0.95 });
 
@@ -15,6 +15,7 @@ function setup(screen: (template: string, call: number) => Match | undefined) {
       key: async (k) => void log.push(`key:${k}`),
       type: async (text) => void log.push(`type:${text}`),
       click: async (p) => void log.push(`click:${p.x},${p.y}`),
+      scrollDown: async (p, clicks) => void log.push(`scroll:${p.x},${p.y},${clicks}`),
     },
     find: async (template) => {
       const n = (calls.get(template) ?? 0) + 1;
@@ -43,6 +44,11 @@ describe("createActionRunner", () => {
     const { run, log } = setup((t) => (t === "expand" ? hit(100, 50) : undefined));
     await run.perform({ kind: "click", template: "expand" });
     expect(log).toEqual(["click:110,55"]);
+  });
+  it("scrolls the host's side pane with the wheel", async () => {
+    const { run, log } = setup(() => undefined);
+    await run.perform({ kind: "scrollPane", clicks: 8 });
+    expect(log).toEqual([`scroll:${PANE_POINT.x},${PANE_POINT.y},8`]);
   });
   it("waits until the stop button is gone", async () => {
     const { run } = setup((t, n) => (t === "stop" && n < 3 ? hit(1, 1) : undefined));

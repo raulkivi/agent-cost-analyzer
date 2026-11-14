@@ -19,6 +19,11 @@ describe("Xdotool", () => {
     expect(calls[0]).toMatchObject({ command: "xdotool", args: ["mousemove", "10", "20", "click", "1"] });
     expect(calls[0].env.DISPLAY).toBe(":93");
   });
+  it("scrolls the wheel down at a point", async () => {
+    const { xdo, calls } = setup();
+    await xdo.scrollDown({ x: 1130, y: 520 }, 6);
+    expect(calls[0].args).toEqual(["mousemove", "1130", "520", "click", "--repeat", "6", "--delay", "60", "5"]);
+  });
   it("presses a key chord", async () => {
     const { xdo, calls } = setup();
     await xdo.key("ctrl+n");

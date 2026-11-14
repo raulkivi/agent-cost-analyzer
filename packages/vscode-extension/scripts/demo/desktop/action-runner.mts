@@ -9,6 +9,7 @@ export interface ActionDeps {
     key(chord: string): Promise<void>;
     type(text: string, delayMs: number): Promise<void>;
     click(point: Point): Promise<void>;
+    scrollDown(point: Point, clicks: number): Promise<void>;
   };
   // Best match of a template in a fresh frame, whatever its score.
   find(template: string): Promise<Match | undefined>;
@@ -24,6 +25,8 @@ export interface ActionRunner {
 }
 
 const AFTER_PROMPT_CLICK_MS = 500;
+// Over the host's side pane (the right half of the 1600x1000 frame), where the view sits once it is expanded.
+export const PANE_POINT: Point = { x: 1130, y: 520 };
 
 export function createActionRunner(deps: ActionDeps): ActionRunner {
   let retake = false;
@@ -65,6 +68,8 @@ export function createActionRunner(deps: ActionDeps): ActionRunner {
           const match = await waitForMatch(action.template, probe(action.template), wait, deps.clock);
           return deps.input.click(clickPoint(match)!);
         }
+        case "scrollPane":
+          return deps.input.scrollDown(PANE_POINT, action.clicks);
         case "beat":
           return;
       }
