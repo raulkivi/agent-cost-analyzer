@@ -157,7 +157,8 @@ describe("InsightsDashboard", () => {
       await screen.findByRole("group", { name: "Cost" });
       expect(tile("Cost")).toHaveTextContent("0.50 AI Credits + $0.70");
       expect(tile("Cost")).toHaveTextContent("3 of 4 turns known");
-      expect(tile("Cost")).toHaveTextContent("1 AI Credit = $0.01");
+      expect(tile("Cost")).not.toHaveTextContent("1 AI Credit = $0.01");
+      expect(screen.getByTestId("stat-tiles-footnote")).toHaveTextContent("1 AI Credit = $0.01");
     });
 
     it("switches the cost figure to one basis for the view", async () => {
