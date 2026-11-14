@@ -42,8 +42,8 @@ export default tseslint.config(
             "packages/vscode-extension/wdio.demo-copilot.conf.mts",
           ],
           // Config and script files outside any tsconfig, by design; the SA18
-          // real-data suite and the SA0 scan raised the count past 24.
-          maximumDefaultProjectFileMatchCount_THIS_WILL_SLOW_DOWN_LINTING: 32,
+          // real-data suite and the SA0 scan raised the count past 24, the pi redaction CLI past 32.
+          maximumDefaultProjectFileMatchCount_THIS_WILL_SLOW_DOWN_LINTING: 40,
         },
         tsconfigRootDir: import.meta.dirname,
       },

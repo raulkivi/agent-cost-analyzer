@@ -155,6 +155,99 @@ setting that doesn't apply to pi (or mitmproxy) sessions at all. Fix:
 non-`vscode` session — since superseded by the pi-agent-specific message
 above.
 
+## Capturing a real session for Phase 11
+
+Tooling for 1.0 task V12; the capture itself is V13 (owner step), the fixtures
+V14. Never commit or share an unredacted file: sessions hold prompts, tool
+output and file contents.
+
+1. **Install the logger.** Confirm `~/.pi/agent/extensions/pi-system-prompt-logger.js`
+   exists. If not, build and copy it
+   ([package README](../../packages/pi-system-prompt-logger/README.md#install)):
+   `npm run bundle --workspace=packages/pi-system-prompt-logger`, then copy
+   `packages/pi-system-prompt-logger/dist/pi-system-prompt-logger.js` into
+   `~/.pi/agent/extensions/` and run `/reload` in pi.
+2. **Use a throwaway directory with no secrets**, for example
+   `mkdir ~/pi-capture-demo && cd ~/pi-capture-demo` with a few harmless files
+   (`git init`, a small `hello.ts`). Do not run pi in a real project.
+3. **Session A, linear.** Run `pi`. Send 3 to 5 prompts; at least one must make
+   pi call a tool (for example "read hello.ts and summarise it"). Exit pi.
+4. **Session B, rewind.** Run `pi` again and send 3 prompts with at least one
+   tool call. Then run `/tree` (pi's session tree navigator), select an
+   earlier user message, edit its text and submit it. This creates a second
+   branch in the same file, which is the case the sidecar rule (PR #279) and
+   fork tagging need. Answer the "summarize the branch you leave" prompt with
+   yes, so the file gets a `branch_summary` entry. Send one more prompt on the
+   new branch and exit. (`/fork` instead makes a new file with a
+   `parentSession` header; `/tree` is the in-file case this task wants. Source:
+   pi's `docs/sessions.md` and `docs/session-format.md`, checked 2026-11-14.
+   The exact `/tree` key presses were not run by the task author; if the
+   prompts differ in your pi version, any way of leaving a branch and
+   continuing from an earlier message is fine.)
+5. **Find the files.** Sessions: `~/.pi/agent/sessions/--<cwd with slashes as dashes>--/<timestamp>_<uuid>.jsonl`
+   (`ls -t ~/.pi/agent/sessions/*demo*/ | head`). Sidecar log:
+   `~/.pi/agent/logs/system-prompts.jsonl`, one record per session.
+6. **Redact each session** from the repo root:
+
+   ```bash
+   npm run fixtures:redact-pi -w packages/server -- \
+     ~/.pi/agent/sessions/<dir>/<session-A>.jsonl \
+     --sidecar ~/.pi/agent/logs/system-prompts.jsonl \
+     --name pi-linear --out ~/pi-redacted
+   # same for session B with --name pi-rewind
+   ```
+
+   The CLI copies only that session's sidecar records, runs a leak scan and a
+   check that the pi provider reads the redacted copy like the original, and
+   writes nothing if either fails. It prints counts and key names only.
+7. **Inspect.** Run
+   `grep -rniE "$USER|$(hostname)|/home/|@" ~/pi-redacted` : the only hits
+   should be `/home/user/...` and `user@example.com`. Open the files in an
+   editor if you want; every prompt, answer and tool output is placeholder
+   text of the same length. Add `--mask <word>` and re-run for anything else
+   private (a client name that sits in a kept field, say).
+8. **Hand over** the four files in `~/pi-redacted` (`pi-linear.jsonl`,
+   `pi-linear.system-prompts.jsonl`, `pi-rewind.jsonl`,
+   `pi-rewind.system-prompts.jsonl`) to the main session. Never hand over or
+   commit files from `~/.pi/agent`.
+
+### What the redaction CLI keeps and replaces
+
+Source: `packages/server/scripts/redact-pi-capture-lib.mts` (rules in its
+header; unit-tested).
+
+- **Kept byte-for-byte:** all numbers, booleans and nulls (usage, token and
+  cost figures, epoch timestamps); all keys; string values under structural
+  keys (`type`, `id`, `parentId`, `timestamp`, `role`, `api`, `provider`,
+  `model`, `modelId`, `stopReason`, `name`, `toolName`, `toolCallId`, `kind`,
+  `thinkingLevel`, `customType`, `fromId`, `firstKeptEntryId`, `targetId`,
+  `sessionId`, `capturedAt`, `required`, `mimeType`, `selectedTools`,
+  `skillNames`, `contextFilePaths`).
+- **Replaced with same-length placeholder text:** every other string: user
+  prompts, assistant text, thinking and its signature, tool arguments and
+  results, file contents, summaries, tool descriptions, system-prompt text and
+  sections. Each word becomes a deterministic pronounceable word of the same
+  length; spaces, tabs and line breaks stay, so sizes and line structure hold.
+  Unknown string fields are replaced too, and listed by key name in the
+  output.
+- **Masked everywhere kept:** `cwd` and the capture directory become
+  `/home/user/project`; `/home/<name>` and `/Users/<name>` become `/home/user`;
+  usernames `user`; hostnames `host`; emails `user@example.com`; secrets
+  `[REDACTED]` (`redactSecrets`).
+- **Sidecar:** `systemPrompt` is redacted so pi's in-file sections appear
+  verbatim-redacted inside it, which keeps the PR #279 combine logic matching;
+  `sessionFile` becomes `/home/user/.pi/agent/sessions/--home-user-project--/<name>.jsonl`
+  (the V14 test rewrites it to the fixture path, as `readSystemPromptSidecarIndex`
+  joins on it); `systemPromptChars` is unchanged because lengths are.
+- **Not preserved:** the token estimates the app computes over text (they
+  tokenise placeholder words differently). Real usage figures from pi are
+  preserved exactly.
+- **Verify step:** the CLI reads the original and the redacted copy through
+  `PiAgentLogProvider` and compares branch count, turns per branch, per-turn
+  usage, tool names, fork tagging and system-prompt component labels (which
+  carry the character counts). A unit test runs the same check on
+  `schema-v3-session.jsonl`. The real check happens in V14.
+
 ## Open items (pending real-data verification)
 
 Per architecture.md §6.2.5, this provider is now verified against pi's
