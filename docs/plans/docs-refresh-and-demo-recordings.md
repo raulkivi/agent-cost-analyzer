@@ -614,6 +614,9 @@ review rejections.
   owner: (a) no app or panel UI shows the subagent runs a replay left out,
   though the 0.12.0 changelog implies it; (b) the extension README says 18
   Learn sessions, the extension guide 17 Copilot scenarios.
+- 2026-11-14: owner review: all GIFs and stills approved, with the
+  suggested trims. 1.10 done. Media committed (`docs/images/demo/`, 13
+  GIFs, 31 MB; stills in `docs/images/vscode/`); 1.11–1.14 started.
 - 2026-11-14: paid takes run by the main session at the owner's request
   (03:45 local, cap 3, `DEMO_FORBIDDEN` set in the shell only): E2 passed,
   0.1294 AI Credits, 35.0 s; E9 passed, 0.2829 AI Credits, 43.0 s; 0.41 in

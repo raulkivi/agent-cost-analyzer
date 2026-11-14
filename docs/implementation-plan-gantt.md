@@ -71,7 +71,7 @@ gantt
     10.18 Copilot empty-window sessions (100%) :done, p10e, 2026-11-11, 1d
     10.19 Classic subagent AI Credits (100%) :done, p10f, 2026-11-12, 2d
     10.21 Monthly allowance gauge (100%)   :done, p10g, 2026-11-12, 2d
-    10.22 Extension demo recordings (77%, 17 of 22 tasks) :active, p10h, 2026-11-13, 3d
+    10.22 Extension demo recordings (82%, 18 of 22 tasks) :active, p10h, 2026-11-13, 3d
     10.23 Claude Desktop demo recordings (0%, not started) :p10i, after p10h, 3d
 
     section Simulation and replay
@@ -124,7 +124,7 @@ gantt
 - Release prepared 2026-11-13: extension 0.12.0 and app 0.14.0 carry steps 10.19 and 10.21 and Phase 16 Increment 1. Before tagging: the savings exit criterion on real data, D13-D15, then the real-Copilot gate.
 - Step 10.19 (classic subagent AI Credits, 100%): done 2026-11-13 (SA0 to SA18, 20 of 20 tasks; exit criterion met: `npm run test:real-data` passed 10 of 10 on the owner's logs, 177.64 AI Credits added, owner sign-off 2026-11-13). Before release: the real-Copilot gate. Plan: [classic-subagent-credits-implementation.md](plans/classic-subagent-credits-implementation.md). Step 10.20 (subagent tool calls in the audit) is a follow-up, not planned.
 - Step 10.21 (monthly allowance gauge, 100%): done 2026-11-13 (MA0 to MA12, 14 of 14 tasks; exit criterion met, review in plan §14). Before release: the real-Copilot check of the gauge in a live window (release UI gate). MA13 (standalone app) is a later increment. The Sessions row is hidden while VS Code's filter is active (plan §3.8). Plan: [monthly-allowance.md](plans/monthly-allowance.md).
-- Step 10.22 (extension demo recordings, 77%, 17 of 22 tasks): tasks 1.10-1.14 are held until Phase 17 merges (owner decision D2, 2026-11-14), then retaken once in the new look. Owner accepted D1-D8 and D10-D12 on 2026-11-13 (E11 not recorded). Phase 0 (text fixes 0.1-0.3) done 2026-11-13 (PR #255), to land before the 0.12.0/0.14.0 tags (D1); owner to check two findings in the plan's §11 (replay UI doesn't list left-out subagent runs; Learn count 17 vs 18); then Phase 1: spike 1.0 done (frame 1200x800, plan §5), tooling 1.1-1.5, fixture 1.6a, scenes 1.6b-1.6e, real-Copilot scenes 1.7 (written; owner runs the paid takes) stills 1.8 and app task 1.9 done; next the final takes and owner review (1.10), held until Phase 17 merges; then scenes 1.6a-1.10 and docs 1.11-1.14. Plan: [docs-refresh-and-demo-recordings.md](plans/docs-refresh-and-demo-recordings.md).
+- Step 10.22 (extension demo recordings, 82%, 18 of 22 tasks): Phase 0 done 2026-11-13 (PR #255). Phase 1 code merged (PRs #256, #257: frame 1600x1000). Final takes (1.10) retaken after Phase 17 merged (owner decision D2), W demos dark with the colour switch; paid E2/E9 takes 0.41 AI Credits; owner review passed 2026-11-14. Docs with media (1.11-1.14) in progress on `claude/demo-phase1-media`. Open: the release suite's monthly-allowance spec flakes between midnight and about 01:15 (plan §11); the owner's two Phase 0 findings (plan §11). Plan: [docs-refresh-and-demo-recordings.md](plans/docs-refresh-and-demo-recordings.md).
 - Phase 17 (dense ledger UI, 100%, 14 of 14 tasks): Increment 1 (P0-P7) and Increment 2 (L1-L6) done 2026-11-14; the L6 review fixed 7 findings and recorded 7 (plan §10). Open: the owner's eyes-on review (the last exit item), then merge, which unblocks step 10.22's retakes (tasks 1.10-1.14); the Dashboard on the e2e fixture went from 2,444px to 1,467px tall at 1440x900 (`density.spec.ts`). Increment 1 (P1-P7) is the density pass in every host; Increment 2 (L1-L6) is the standalone ledger theme with light and dark modes. It holds step 10.22 tasks 1.10-1.14 until it merges (owner decision D2). Plan: [dense-ledger-ui.md](plans/dense-ledger-ui.md). Standalone stills outside `screenshots.mts` (landing page, Learn scenario, older guide images) and the VS Code panel stills are retaken with step 10.22's final takes.
 - Phase 16 (savings report, 78%, 18 of 23 tasks): Increment 1 (SR0-SR17) done 2026-11-13, code and docs; SR16 review in plan §16 (5 findings fixed, 3 recorded). Open: owner review of the docs and the exit criterion on real data (30 days of Claude Code and Copilot sessions, one idle-expiry break and one unused tool checked by hand), D13-D15 owner decisions (SR7 thresholds, the active-provider switch from "Open in Analyze"), the release, then Increment 2 (SR18-SR22: MCP tool and view U18), not started. Plan: [savings-report.md](plans/savings-report.md).
 - Phase 14: steps 14.0-14.7 built; 14.8's docs written, the owner's review and the §13 exit criterion on real sessions open; the extension guide's replay screenshots open (User Guide's done). Step table: [analyze-session-replay.md](plans/analyze-session-replay.md) §12.
@@ -134,7 +134,7 @@ gantt
 
 ## Steps 10.22 and 10.23 detail — Demo recordings
 
-Schedule view of the task tables in [docs-refresh-and-demo-recordings.md](plans/docs-refresh-and-demo-recordings.md) §6. Status: owner decisions answered 2026-11-13; Phase 0 done; Phase 1 spike 1.0, tooling 1.1-1.5, scenes and stills 1.6a-1.9 done (17 of 22 tasks); final takes and owner review 1.10 next, held until Phase 17 merges (owner decision D2, 2026-11-14). Phase 2 (step 10.23) starts after Phase 1's exit.
+Schedule view of the task tables in [docs-refresh-and-demo-recordings.md](plans/docs-refresh-and-demo-recordings.md) §6. Status: owner decisions answered 2026-11-13; Phase 0 done; Phase 1 spike 1.0, tooling 1.1-1.5, scenes and stills 1.6a-1.9 done (17 of 22 tasks); final takes and owner review 1.10 done 2026-11-14 (18 of 22 tasks); docs with media 1.11-1.14 in progress. Phase 2 (step 10.23) starts after Phase 1's exit.
 
 ```mermaid
 %%{init: {
@@ -179,10 +179,10 @@ gantt
 
     section Phase 1 recording
     1.6a-1.9 Fixture, scenes, stills, app (100%)    :done, d16, after d11, 2d
-    1.10 Final takes, owner review (0%)            :active, d110, after d16, 1d
+    1.10 Final takes, owner review (100%)          :done, d110, after d16, 1d
 
     section Phase 1 docs
-    1.11-1.14 Docs with media (0%)                 :d111, after d110, 1d
+    1.11-1.14 Docs with media (0%)                 :active, d111, after d110, 1d
 
     section Phase 2 (step 10.23)
     2.0-2.6 Claude Desktop and fake host (0%, not started) :d20, after d111, 3d
