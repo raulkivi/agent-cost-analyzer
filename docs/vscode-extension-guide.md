@@ -1,6 +1,6 @@
 # AI Credits Analyzer: extension guide
 
-**Last changed:** 2026-11-13 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-14 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 AI Credits Analyzer is a VS Code extension that shows where your GitHub
 Copilot Chat tokens and AI Credits go. It reads the logs Copilot Chat
@@ -73,7 +73,7 @@ notification for it. To open it again later, run **AI Credits Analyzer:
 Open Get Started Walkthrough** from the Command Palette, or use the
 **Get started** link in the Sessions view when it's empty.
 
-![The Get started with AI Credits Analyzer walkthrough: five steps, with the Copilot Chat debug logging step open](images/vscode/walkthrough.png)
+![The Get started with AI Credits Analyzer walkthrough: five steps, the first two done, with the Copilot Chat debug logging step open beside its setting switched on](images/vscode/walkthrough.png)
 
 The walkthrough has five steps. Each one is marked done when you make the
 change it describes:
@@ -85,6 +85,8 @@ change it describes:
 | Open your first session | Opens the analyzer panel | You open the panel or a session |
 | Learn how prompt caching saves AI Credits | Opens the panel in Learn mode | You run **Open Learn Mode** |
 | Ask Copilot about your costs (MCP, optional) | Opens `aiCreditsAnalyzer.mcp.enabled` | That setting changes |
+
+![The Get Started walkthrough: Keep at least 200 sessions opens Settings with retention set to 200, Setup flags debug logging and agent traces, Fix Setting opens the setting, and Setup turns green](images/demo/e1-get-started.gif)
 
 ### Turning on debug logging
 
@@ -197,9 +199,13 @@ session logs the Setup check asks for (200 by default). The extension
 stores that value in its own VS Code storage; it doesn't change
 Copilot Chat's setting.
 
+![Opening a session in the panel: the turns table, a subagent marker with Subagent runs this turn, the turn inspector and the System prompt tab](images/demo/e3-read-session.gif)
+
 Copilot Chat's debug log doesn't record whether a tool call succeeded, so
 in the tool audit those calls show as **Unknown**, with the reason, rather
 than counting as successes or failures.
+
+![Show Tool Audit from a session's context menu: failure categories and Unknown outcomes, the All sessions audit, and the Copy Advice Bundle dialog with its Preview](images/demo/e8-tool-audit.gif)
 
 ![The same panel in Light Modern](images/vscode/panel-light.png)
 
@@ -213,6 +219,8 @@ In Analyze, open a Copilot session and pick a model in **Replay on**
 about on that model, beside what it did cost. It works for local and
 Agent Host sessions alike. The replay keeps the session's turns and token
 counts; only caching and prices change.
+
+![Replay on another model: Simulated columns beside the measured ones, the self-check and coverage line, and the Compare models totals](images/demo/e4-replay.gif)
 
 - **Simulated columns.** The turns table gains a dashed
   **Simulated · *model*** group: cache outcome, cache read and cost. A
@@ -261,6 +269,8 @@ a row, the labels (**up to**, range, **estimate**, **inferred**, **Not
 priced**, **Simulated**) and the checks are in the User Guide's
 [The savings report](UserGuide.md#the-savings-report).
 
+![The Savings tab over 7, 30 and 90 days: a row's detail with range and coverage, Copy text, Include simulated and the Not analysed list](images/demo/e5-savings.gif)
+
 What differs in the panel:
 
 - **Window and prices.** Last 7, 30 (default) or 90 days; **As of use** or
@@ -288,7 +298,9 @@ network request.
 The extension adds an **AI Credits Analyzer** icon to the Activity Bar. Its
 side bar has three views: Sessions, Learn and Setup.
 
-![VS Code with the AI Credits Analyzer side bar (Sessions grouped by day with their AI Credits, and the Setup view), a session open in the panel, and today's AI Credits in the status bar](images/vscode/sidebar.png)
+![VS Code with the AI Credits Analyzer side bar (Sessions by day with their AI Credits, and Setup reading No setup problems found), the Dashboard's Compare view open in the panel, and today's AI Credits in the status bar](images/vscode/sidebar.png)
+
+![A Copilot agent-mode chat answers; its session appears under Today in the Sessions view with its AI Credits, and the tooltips show the session and the status bar's AI Credits today](images/demo/e2-chat-cost.gif)
 
 ### Sessions view (`aiCreditsAnalyzer.sessions`)
 
@@ -317,6 +329,8 @@ dates (YYYY-MM-DD), newest first. Sessions with no start time go in an
   are grouped by repository. The choice is remembered in every workspace.
 
 #### Grouped by repository
+
+![The dashboard's Overview, Cost over time and Compare by repository, then the Sessions view grouped by repository and the status bar naming the repository](images/demo/e6-trends.gif)
 
 Each group is the repository a session's folder belongs to: its remote,
 for example `github.com/example/portal-web`, or a repository with no
@@ -348,6 +362,8 @@ When there are no sessions with token data yet, the view says so and
 offers **Open Learn mode** and **Get started**.
 
 ### Learn view (`aiCreditsAnalyzer.learn`)
+
+![The Learn view: opening the Context Compaction scenario, simulating it on another model and stepping through the turns with cache and compaction markers](images/demo/e10-learn.gif)
 
 The 17 bundled Learn scenarios that apply to Copilot, grouped by what they
 teach (prompt caching, cache TTL, compaction, model switches and so on). The
@@ -440,6 +456,10 @@ Set `aiCreditsAnalyzer.monthlyAllowance.aiCredits` to your plan's monthly
 AI Credits allowance. The **Set Monthly AI Credits Allowance** command opens
 that setting in the Settings editor and changes nothing. Until the setting
 is set, the gauge is hidden.
+
+![Setting the monthly AI Credits allowance from the Command Palette and Settings, then the status bar's near-limit gauge with its tooltip and the Sessions row with days left](images/demo/e7-allowance.gif)
+
+![The near-limit gauge: the Sessions row reads 322.54 of 393 AI Credits, near limit, 11 days left, and the status-bar tooltip lists the allowance, percentage used, credits remaining and period start](images/vscode/allowance.png)
 
 A second status-bar item, placed after today's, shows the month to date
 against the allowance:
@@ -552,7 +572,9 @@ commands keep failing, and why?", "did the agent do anything risky this
 week?". It answers from the same local logs, and its numbers match the
 panel's.
 
-![Copilot Chat in agent mode answering "What did my most expensive session in the last 7 days cost, and what drove it?" from the AI Credits Analyzer tools](images/vscode/mcp-agent-mode.png)
+![Copilot Chat in agent mode answering "What drove my spend this week?": the Get cross-session cost rollup tool ran and its cost rollup view shows AI Credits, sessions, turns, daily spend, spend by model and the top sessions in the chat](images/vscode/mcp-agent-mode.png)
+
+![Turning on the MCP setting, then asking Copilot agent mode "What drove my spend this week?": the cost rollup view appears in the chat, and you drill into the top session and a turn, then Back](images/demo/e9-ask-copilot.gif)
 
 ### Turning it on
 

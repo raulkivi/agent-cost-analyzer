@@ -1,6 +1,6 @@
 # AI Credits Analyzer
 
-**Last changed:** 2026-11-13 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-14 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 See where your GitHub Copilot Chat tokens and AI Credits go. AI Credits
 Analyzer reads the logs Copilot Chat writes on your machine and shows each
@@ -12,6 +12,8 @@ useful before you have any data of your own.
 AI Credits are GitHub Copilot's billing unit for premium requests (not
 dollars). The figures come from Copilot Chat's own logs, not from
 estimates.
+
+![A Copilot agent-mode chat answers; its session appears under Today in the Sessions view with its AI Credits, and the tooltips show the session and the status bar's AI Credits today](https://raw.githubusercontent.com/raulkivi/agent-cost-analyzer/main/docs/images/demo/e2-chat-cost.gif)
 
 This is an early pre-release; please
 [report issues](https://github.com/raulkivi/agent-cost-analyzer/issues).
@@ -47,6 +49,8 @@ reads those and Copilot Chat.
   (80 % by default) and when over. The first row of the Sessions view shows
   the same figures with the days left. It shows no notification and
   changes no setting.
+
+  ![Setting a monthly AI Credits allowance from the Command Palette, then the status bar's near-limit gauge with its tooltip and the Sessions row with days left](https://raw.githubusercontent.com/raulkivi/agent-cost-analyzer/main/docs/images/demo/e7-allowance.gif)
 - **Insights dashboard.** Spend by day and model, cache hit ratio, tool
   calls and failures, and signals to review: risky commands, unusual
   sessions and first-time use of a tool or model. **Cost over time** and
@@ -59,6 +63,8 @@ reads those and Copilot Chat.
   a cheaper model. Each row has a range or "up to" figure per week in AI
   Credits, its coverage and **Copy text**. It adds no total and changes no
   setting or file.
+
+  ![The Savings tab over 7, 30 and 90 days: a row's detail with range and coverage, Copy text, Include simulated and the Not analysed list](https://raw.githubusercontent.com/raulkivi/agent-cost-analyzer/main/docs/images/demo/e5-savings.gif)
 - **Replay on another model.** Pick a model in **Replay on** to see what a
   session would have cost about there, beside what it did cost, in
   Simulated columns with a summary of coverage and assumptions. **Compare
@@ -80,6 +86,8 @@ reads those and Copilot Chat.
   and findings tools also show interactive views in the chat: session
   cost, spend by day and model, findings, cost over time, a repository
   comparison, and why a cost changed.
+
+  ![Copilot agent mode answers "What drove my spend this week?" with the cost rollup view in the chat; drilling into the top session and a turn, then Back](https://raw.githubusercontent.com/raulkivi/agent-cost-analyzer/main/docs/images/demo/e9-ask-copilot.gif)
 
 An unknown figure is shown as unknown, never as 0.
 
@@ -105,6 +113,8 @@ An unknown figure is shown as unknown, never as 0.
 4. Chat with Copilot as usual, then select **Refresh** in the **Sessions**
    view and pick a session.
 
+![The Get Started walkthrough: Keep at least 200 sessions opens Settings with retention set to 200, Setup flags debug logging and agent traces, Fix Setting opens the setting, and Setup turns green](https://raw.githubusercontent.com/raulkivi/agent-cost-analyzer/main/docs/images/demo/e1-get-started.gif)
+
 Logging isn't retroactive: sessions from before you turned it on show
 their figures as unknown.
 
@@ -124,9 +134,7 @@ Once VS Code has an Agent Host store, Setup marks the two logging settings
 optional: "Only affects chats run with the Local harness; Agent Host chats
 are unaffected."
 
-![The Get started with AI Credits Analyzer walkthrough: five steps, with the Copilot Chat debug logging step open](https://raw.githubusercontent.com/raulkivi/agent-cost-analyzer/main/docs/images/vscode/walkthrough.png)
-
-![VS Code with the AI Credits Analyzer side bar (Sessions grouped by day with their AI Credits, and the Setup view), a session open in the panel, and today's AI Credits in the status bar](https://raw.githubusercontent.com/raulkivi/agent-cost-analyzer/main/docs/images/vscode/sidebar.png)
+![VS Code with the AI Credits Analyzer side bar (Sessions by day with their AI Credits, and Setup reading No setup problems found), the Dashboard's Compare view open in the panel, and today's AI Credits in the status bar](https://raw.githubusercontent.com/raulkivi/agent-cost-analyzer/main/docs/images/vscode/sidebar.png)
 
 ## Commands
 
