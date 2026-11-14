@@ -614,6 +614,14 @@ review rejections.
   owner: (a) no app or panel UI shows the subagent runs a replay left out,
   though the 0.12.0 changelog implies it; (b) the extension README says 18
   Learn sessions, the extension guide 17 Copilot scenarios.
+- 2026-11-14: PR #257's CI ran at 00:07 UTC and hit two midnight edges.
+  (a) `demo-fixture.test.ts`: today's sessions, placed 12–75 min before the
+  run, fell on yesterday; the fixture now squeezes them into the time since
+  local midnight (test first). (b) The release suite's
+  `monthly-allowance.e2e.ts` ("AI Credits today" equals the month total)
+  fails between local midnight and about 01:15 for the same reason in
+  `ui-fixture.mts`: pre-existing, not 10.22's; follow-up, the job re-run
+  after the window.
 - 2026-11-14: owner review of the 1.10 takes: the 1200×800 frame cut the
   panel off and showed scrollbars; larger files are fine. Frame moved to
   1600×1000 (`fit-window.py` resizes VS Code under Xvfb; W scenes use the
