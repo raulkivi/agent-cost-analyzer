@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Denser panel: smaller spacing, 28px table rows, one toolbar row on the Dashboard, compact KPI tiles with the cost explanation in a footnote, a trend chart that fills its panel and one-line empty charts.
+- Bar labels and code-style text now use the editor font instead of the browser's default monospace.
 
 ## [0.12.0] - 2026-11-13
 

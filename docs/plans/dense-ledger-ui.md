@@ -2,7 +2,7 @@
 
 **Last changed:** 2026-11-14 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
-**Status: Increment 1 (P0-P7) done 2026-11-14; owner decisions D1-D4 accepted 2026-11-14; L1-L6 not started.** Phase 17 in
+**Status: Increment 1 (P0-P7) done 2026-11-14; owner decisions D1-D4 accepted 2026-11-14; Increment 2 L1-L5 done 2026-11-14; L6 review next.** Phase 17 in
 [implementation-plan.md](../implementation-plan.md).
 
 The question this answers: **"Why does the web UI need so much scrolling,
@@ -99,6 +99,22 @@ Baseline on the e2e fixture at 1440x900:
   - Light: parchment `#ebe7e4`, panel `#f4f2f0`.
   - One blue accent plus rust, alpha hairlines, radius 0.
   - Dark-mode series reuse the dark steps from `theme-vscode.css`.
+- Built in Increment 2 beyond the first design:
+  - An extra `--color-control-border` token. The alpha hairlines are too
+    faint for control outlines (3:1 needed), so buttons, inputs, segments and
+    filter chips use it, with `var(--color-divider)` as the fallback outside
+    ledger mode.
+  - Dark-mode overrides for hard-coded alert and list-box colours that the
+    token sets did not reach.
+  - Density tuning L3 needed in ledger mode so the Increment 1 limits still
+    hold: UI text 12px, tables 12px/1.3, tighter stat tile padding, turns
+    table cells 4px and headers 10px.
+  - `colorMode` host capability (`host-capabilities.ts`): true only for the
+    HTTP transport, so the webview and MCP Apps never show the switch or get
+    the attribute. The preference is stored under `localStorage` key
+    `aca.colorMode` (try/catch).
+  - Playwright projects `light` and `dark` (`colorScheme`) run the axe specs;
+    `color-mode.spec.ts` runs in `light` only.
 
 ## 5. Owner decisions
 
@@ -132,11 +148,11 @@ CHANGELOG updates)
 
 | ID | Work | Exit criterion | Complexity | Model | Depends on |
 |---|---|---|---|---|---|
-| L1 | Theme architecture: `html[data-color-mode=dark]` and `[light]` token sets in `theme.css` (palette in §4); `--font-mono` and `--font-prose` tokens; `fonts.ts` imports Commit Mono (400/700) and Source Serif 4 (400/600) and drops Barlow, `package.json` deps updated; `THIRD-PARTY-NOTICES.md` with the OFL notices; `theme-contrast.test.ts` gains standalone-light and standalone-dark themes; a new test that every ledger rule is scoped under `[data-color-mode]` (mirrors the `theme-vscode` scoping test); `standalone-build.test.ts` updated for the new font files | Contrast tests for both modes green; extension and MCP build tests unchanged and green; the `brand.css` test untouched | high | Opus | Increment 1 merged |
-| L2 | Colour-mode switch: pure `resolveColorMode(pref, prefersDark)` in `lib/`; `ColorModeSwitch` (Auto/Light/Dark `SegmentedControl`) in `AppHeader`, HTTP transport only; preference kept in `localStorage` (try/catch); `matchMedia` listener for Auto; attribute set in `main.tsx` before the first render (no flash) | Unit tests for the resolver, the switch and host gating; the webview never gets the attribute | medium | Sonnet | L1 |
-| L3 | Ledger component rules under `[data-color-mode]`: no corner marks; mono uppercase 11px labels with 0.12em tracking (`th`, `.card-kicker`, `.stat-tile-label`, `h6`); mono tabular numbers (`.table td`, `.stat-tile-value`, chart axes, `.hbar-value`); serif prose (`.insights-narrative`, ExplanationPanel body, Learn explanation); mono headings; faint grid texture on `body` only; bare `monospace` uses in `theme.css` become `var(--font-mono)` | `theme.test.ts` rule assertions; contrast green | medium | Sonnet | L1 |
-| L4 | Playwright: a `colorScheme: 'dark'` project running the axe specs with contrast on; `color-mode.spec.ts` covering the switch, persistence, Auto following the emulated scheme and no flash; checks that the MCP views and the VS Code panel don't change (existing mcp-apps e2e and wdio `layout-theme` stay green) | Both colour schemes pass axe; CI green | medium | Sonnet | L2, L3 |
-| L5 | Docs and media: `architecture.md` §4.2 and §13 (dark theme now in scope, standalone); `vision.md` §3.3; Phase 8 marked "superseded for the standalone app by Phase 17"; User Guide colour-mode section; root CHANGELOG `[Unreleased] Added/Changed`; regenerate the app screenshots (`packages/web/e2e/support/screenshots.mts`) and the panel stills (`scripts/ui-check/screenshots.mts`, density only); Gantt: Phase 17 at 100% and step 10.22 un-held | Docs reviewed; images refreshed | medium | Sonnet | L4 |
+| L1 | **Done 2026-11-14.** Theme architecture: `html[data-color-mode=dark]` and `[light]` token sets in `theme.css` (palette in §4); `--font-mono` and `--font-prose` tokens; `fonts.ts` imports Commit Mono (400/700) and Source Serif 4 (400/600) and drops Barlow, `package.json` deps updated; `THIRD-PARTY-NOTICES.md` with the OFL notices; `theme-contrast.test.ts` gains standalone-light and standalone-dark themes; a new test that every ledger rule is scoped under `[data-color-mode]` (mirrors the `theme-vscode` scoping test); `standalone-build.test.ts` updated for the new font files | Contrast tests for both modes green; extension and MCP build tests unchanged and green; the `brand.css` test untouched | high | Opus | Increment 1 merged |
+| L2 | **Done 2026-11-14.** Colour-mode switch: pure `resolveColorMode(pref, prefersDark)` in `lib/`; `ColorModeSwitch` (Auto/Light/Dark `SegmentedControl`) in `AppHeader`, HTTP transport only; preference kept in `localStorage` (try/catch); `matchMedia` listener for Auto; attribute set in `main.tsx` before the first render (no flash) | Unit tests for the resolver, the switch and host gating; the webview never gets the attribute | medium | Sonnet | L1 |
+| L3 | **Done 2026-11-14.** Ledger component rules under `[data-color-mode]`: no corner marks; mono uppercase 11px labels with 0.12em tracking (`th`, `.card-kicker`, `.stat-tile-label`, `h6`); mono tabular numbers (`.table td`, `.stat-tile-value`, chart axes, `.hbar-value`); serif prose (`.insights-narrative`, ExplanationPanel body, Learn explanation); mono headings; faint grid texture on `body` only; bare `monospace` uses in `theme.css` become `var(--font-mono)` | `theme.test.ts` rule assertions; contrast green | medium | Sonnet | L1 |
+| L4 | **Done 2026-11-14.** Playwright: a `colorScheme: 'dark'` project running the axe specs with contrast on; `color-mode.spec.ts` covering the switch, persistence, Auto following the emulated scheme and no flash; checks that the MCP views and the VS Code panel don't change (existing mcp-apps e2e and wdio `layout-theme` stay green) | Both colour schemes pass axe; CI green | medium | Sonnet | L2, L3 |
+| L5 | **Done 2026-11-14.** Docs and media: `architecture.md` §4.2 and §13 (dark theme now in scope, standalone); `vision.md` §3.3; Phase 8 marked "superseded for the standalone app by Phase 17"; User Guide colour-mode section; root CHANGELOG `[Unreleased] Added/Changed`; regenerate the app screenshots (`packages/web/e2e/support/screenshots.mts`) and the panel stills (`scripts/ui-check/screenshots.mts`, density only); Gantt: Phase 17 at 100% and step 10.22 un-held | Docs reviewed; images refreshed | medium | Sonnet | L4 |
 | L6 | Review: `/code-review` at high effort on the branch; live check at 1440x900 and 360px in light and dark against the exit metrics; before/after screenshots in the PR | Findings fixed or recorded in §10 | medium | Opus | L5 |
 
 ## 7. Parallelism and working setup
@@ -181,3 +197,4 @@ After merge, step 10.22 resumes at 1.10 (retakes in the new look).
 ## 11. Session log
 
 - 2026-11-14: plan written and D1-D4 accepted; worktree `../aca-phase17` (branch `claude/phase17-dense-ui`) created; P0 done.
+- 2026-11-14: Increment 2 L1-L4 merged; L5 (docs and media) done: architecture.md, vision.md, implementation-plan.md, User Guide, root CHANGELOG, Gantt, and the standalone app screenshots regenerated in ledger light. The VS Code panel stills (`scripts/ui-check/screenshots.mts`) are not regenerated here: they are retaken with step 10.22's final takes (D2). `screenshots.mts` regenerated 16 images; the other standalone stills (`landing-page.png`, `learn-scenario.png` and the older `guide-*.png`) come from step 10.22's still harness (task 1.9) and still show the Industry look until those retakes. L6 review next.
