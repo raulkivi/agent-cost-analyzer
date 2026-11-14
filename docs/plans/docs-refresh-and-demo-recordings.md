@@ -614,6 +614,14 @@ review rejections.
   owner: (a) no app or panel UI shows the subagent runs a replay left out,
   though the 0.12.0 changelog implies it; (b) the extension README says 18
   Learn sessions, the extension guide 17 Copilot scenarios.
+- 2026-11-14: paid takes run by the main session at the owner's request
+  (03:45 local, cap 3, `DEMO_FORBIDDEN` set in the shell only): E2 passed,
+  0.1294 AI Credits, 35.0 s; E9 passed, 0.2829 AI Credits, 43.0 s; 0.41 in
+  all on claude-haiku-5.5. Privacy probe clean; frames checked by the main
+  session. Suggested trims: E2 `14,20` (answer → Sessions → tooltips,
+  0.59 MB), E9 `21,20` (rollup view → drill-down → Back, 2.02 MB). Stills
+  `e2-sidebar.png` and `mcp-agent-mode.png` taken. E9's top session is the
+  seeded "Placeholder portal-web session 8" (made-up history's title).
 - 2026-11-14: all free takes re-recorded from one build with the ledger
   design (after `npm ci`: Phase 17 changed dependencies, and a stale
   checkout built an old `dist`). All 9 extension scenes and W1–W3 pass.
