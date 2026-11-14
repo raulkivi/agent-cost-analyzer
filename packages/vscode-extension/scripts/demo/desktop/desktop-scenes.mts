@@ -29,8 +29,9 @@ const M1: DesktopScene = {
     step("Start recording", { kind: "startRecording" }, 500),
     step("Wait for the cost rollup view", { kind: "waitFor", template: "row-scratch" }, 1500),
     step("Wait for the answer", { kind: "waitAnswerDone" }, 2500),
-    step("Open the top session", { kind: "click", template: "row-scratch" }, 2500),
+    // The pane mounts a fresh view at the rollup, so the drill-down happens in the pane.
     step("Open the host side pane", { kind: "click", template: "expand" }, 2500),
+    step("Open the top session", { kind: "click", template: "row-scratch" }, 2500),
     step("Open a turn", { kind: "click", template: "pane-turn-row" }, 3000),
     step("Back", { kind: "click", template: "back-link" }, 2500),
   ],

@@ -6,7 +6,7 @@
 // --dry-run launches Desktop, reports template scores and sends nothing.
 // Run it under `flock "$XDG_RUNTIME_DIR/aica-demo.lock"`.
 import { execFileSync } from "node:child_process";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { homedir, tmpdir } from "node:os";
 import path from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
@@ -47,7 +47,14 @@ function desktopVersion(): string {
 
 // Chat mode with the new-chat composer showing; the profile may open in Code mode (§4.3).
 async function reachNewChat(xdo: Xdotool, probe: ScreenProbe): Promise<void> {
-  const composerShown = async () => ((await probe.find("new-chat-composer"))?.score ?? 0) >= 0.9;
+  // Polled for a few seconds: the composer's blinking caret drops a single frame's score below the threshold.
+  const composerShown = async () => {
+    for (let tries = 0; tries < 8; tries++) {
+      if (((await probe.find("new-chat-composer"))?.score ?? 0) >= 0.9) return true;
+      await sleep(400);
+    }
+    return false;
+  };
   if (await composerShown()) return;
   if (existsSync(templatePath("chat-toggle"))) {
     const toggle = await probe.find("chat-toggle");
@@ -123,6 +130,12 @@ async function main(): Promise<void> {
     finished = true;
   } finally {
     if (!finished) await recorder?.discard();
+    // The last probed frame shows why a wait timed out. Only on request, outside the repo: it can show the account.
+    const debugDir = process.env.AICA_DEMO_DEBUG_DIR;
+    if (!finished && debugDir && existsSync(path.join(tmp, "frame.png"))) {
+      mkdirSync(debugDir, { recursive: true });
+      copyFileSync(path.join(tmp, "frame.png"), path.join(debugDir, `${scene.id.toLowerCase()}-failed.png`));
+    }
     await session?.stop();
     rmSync(tmp, { recursive: true, force: true });
   }

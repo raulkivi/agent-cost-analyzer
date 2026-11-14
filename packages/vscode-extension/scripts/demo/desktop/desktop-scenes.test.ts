@@ -31,6 +31,10 @@ describe("M1", () => {
   it("opens the side pane through the host's expand icon", () => {
     expect(sceneTemplates(M1)).toContain("expand");
   });
+  it("opens the side pane before any drill-down: the pane mounts a fresh view, losing the chat view's state", () => {
+    const clicks = M1.steps.flatMap((s) => (s.action.kind === "click" ? [s.action.template] : []));
+    expect(clicks[0]).toBe("expand");
+  });
 });
 
 describe("sceneTemplates", () => {
