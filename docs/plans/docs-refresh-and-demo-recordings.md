@@ -89,6 +89,11 @@ recorded.
 | D16 | Desktop's tool permission prompt in M1 | Answered 2026-11-14: every tool pre-approved; no take shows the prompt. | 2.1, 2.3 |
 | D17 | The new-chat screen shows the owner's name and recent artifacts | Answered 2026-11-14: a take starts recording after the prompt is sent; no typing is shown. | 2.1 |
 | D18 | Fullscreen leaves the view's 640 px card at the left | Answered 2026-11-14: Desktop takes stop at the side pane; Desktop theme light. | 2.1, 2.3 |
+| D19 | M1's take is 27 s, over the 20 s cap | Answered 2026-11-14: trim the wait for Claude (`--trim 6.5,20` for M1); the question bubble stays on screen. Same approach for M2–M6. | 2.3 |
+| D20 | Desktop shows the device name next to the tool status | Answered 2026-11-14: acceptable. | 2.3 |
+| D21 | Claude's answer names the fixture's "fixture-main-model" models | Answered 2026-11-14: the Desktop takes use a demo variant of the fixture with realistic model names; the shared e2e fixture stays unchanged. M1 is retaken on it with M2–M6. | 2.3 |
+| D22 | Who runs M2–M6 | Answered 2026-11-14: a subagent writes the scenes; the main session records the live takes. | 2.3 |
+| D23 | F1–F3 | Approved 2026-11-14 by the owner as final. | 2.4 |
 
 
 ## 4. Scenes
