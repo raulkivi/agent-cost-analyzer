@@ -4,20 +4,30 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { dropSavedWindowState, frameProblem, mastersDir, stillPath } from "./demo-launch.mts";
+import { dropSavedWindowState, fitWindowCommand, frameProblem, mastersDir, stillPath } from "./demo-launch.mts";
+
+describe("fitWindowCommand", () => {
+  // Without a window manager VS Code opens a fixed-size window; any X client may resize it.
+  it("runs the X11 fit script with the frame size", () => {
+    const [command, args] = fitWindowCommand({ width: 1600, height: 1000 });
+    expect(command).toBe("python3");
+    expect(args[0]).toMatch(/scripts[\\/]demo[\\/]fit-window\.py$/);
+    expect(args.slice(1)).toEqual(["1600", "1000"]);
+  });
+});
 
 describe("frameProblem", () => {
   it("accepts a window within a few pixels of the frame", () => {
-    expect(frameProblem({ x: 0, y: 0, width: 1200, height: 800 })).toBeUndefined();
-    expect(frameProblem({ x: 0, y: 0, width: 1199, height: 799 })).toBeUndefined();
+    expect(frameProblem({ x: 0, y: 0, width: 1600, height: 1000 })).toBeUndefined();
+    expect(frameProblem({ x: 0, y: 0, width: 1599, height: 999 })).toBeUndefined();
   });
 
   it("rejects a window that is shifted, as a restored profile opens it", () => {
-    expect(frameProblem({ x: 10, y: 10, width: 1199, height: 799 })).toMatch(/at 10,10/);
+    expect(frameProblem({ x: 10, y: 10, width: 1599, height: 999 })).toMatch(/at 10,10/);
   });
 
   it("names the Xvfb size to use when the window is another size", () => {
-    expect(frameProblem({ x: 0, y: 0, width: 1600, height: 1000 })).toMatch(/1600x1000.*-screen 0 1200x800x24/);
+    expect(frameProblem({ x: 0, y: 0, width: 1440, height: 900 })).toMatch(/1440x900.*-screen 0 1600x1000x24/);
   });
 });
 
