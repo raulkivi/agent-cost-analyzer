@@ -5,8 +5,8 @@ import { FRAME, GIF_DEFAULTS, ffmpegBinary, ffprobeBinary, gifArgs, recordArgs, 
 
 describe("ffmpeg arguments", () => {
   it("fixes the frame and GIF defaults from spike 1.0", () => {
-    expect(FRAME).toEqual({ width: 1200, height: 800, fps: 30 });
-    expect(GIF_DEFAULTS).toEqual({ fps: 12, width: 1200, maxBytes: 4 * 1024 * 1024, maxSeconds: 20 });
+    expect(FRAME).toEqual({ width: 1600, height: 1000, fps: 30 });
+    expect(GIF_DEFAULTS).toEqual({ fps: 12, width: 1600, maxBytes: 8 * 1024 * 1024, maxSeconds: 20 });
   });
 
   it("records an x11grab display without the mouse pointer", () => {

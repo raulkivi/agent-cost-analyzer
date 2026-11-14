@@ -66,6 +66,25 @@ describe("createDemoFixture", () => {
     expect(sessions).toHaveLength(fixture.listedSessionCount);
   });
 
+  // CI runs at any hour: just after midnight, sessions placed minutes before the run used to land
+  // on yesterday, leaving no "today" (no status-bar total).
+  it("keeps today's sessions on today when the run starts just after midnight", async () => {
+    const early = new Date(now);
+    early.setHours(0, 7, 0, 0);
+    const root = mkdtempSync(path.join(tmpdir(), "aica-demo-fx-early-"));
+    try {
+      const f = createDemoFixture(root, { now: early });
+      const sessions = await apiOver(f).listSessions();
+      const midnight = new Date(early);
+      midnight.setHours(0, 0, 0, 0);
+      const today = sessions.filter((session) => Date.parse(session.startedAt ?? "") >= midnight.getTime());
+      expect(today.length).toBeGreaterThanOrEqual(4);
+      expect(today.every((session) => Date.parse(session.startedAt ?? "") <= early.getTime())).toBe(true);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
   it("E3: the read-a-session session has 8 or more turns, subagent runs and a system prompt", async () => {
     const api = apiOver(fixture);
     const session = await api.getSession(fixture.readSession.id);

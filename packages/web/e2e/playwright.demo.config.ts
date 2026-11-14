@@ -9,7 +9,7 @@ import { defineConfig } from "@playwright/test";
 //   npm run build --workspace=packages/web && npm run demo:record --workspace=packages/web
 // Masters go to $AICA_DEMO_MASTERS (default <repo>/demo-masters).
 const executablePath = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE;
-const FRAME = { width: 1200, height: 800 };
+import { FRAME } from "../../vscode-extension/scripts/demo/ffmpeg-args.mts";
 
 export default defineConfig({
   testDir: "./demo",
