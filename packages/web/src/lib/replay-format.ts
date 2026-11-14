@@ -63,7 +63,7 @@ export function selfCheckSentence(check: ReplaySelfCheck | null): string {
   if (check === null) {
     return "No self-check for this session: its own model can't be replayed against the log (it used more than one model the replay can hold, or its model has no vendor profile).";
   }
-  const lead = `Replay matches the log on ${check.model}`;
+  const lead = `Replay matches the log on ${check.models.join(", then ")}`;
   if (check.requests === 0) return `${lead}: no request to compare (the first is a cold start)`;
   const rounded = Math.round((check.matching / check.requests) * 100);
   const percent = check.passed ? rounded : Math.min(rounded, 99);
