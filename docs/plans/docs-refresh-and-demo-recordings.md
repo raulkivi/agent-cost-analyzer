@@ -83,6 +83,12 @@ recorded.
 | D10 | May the 2.0 spike launch Claude Desktop under the owner's account? | **Recommended: yes, in a separate profile or account** with the sidebar collapsed. | 2.0 |
 | D11 | Assess route R2 (remote debugging) too? | **Recommended: no; R1 first.** R2 needs the owner to allow the blocked fuses read and to accept the terms question. | 2.0 |
 | D12 | Add the F1–F3 fake-host close-ups? | **Recommended: yes.** Free, repeatable, and the fallback if Desktop recording fails. | 2.2 |
+| D13 | F2: the fixture's cost change (U11) is USD only | Answered 2026-11-14: keep the jump cut to project cost over time (U9) for the currency switch. | 2.2 |
+| D14 | F3 ends on the estimate's "Not enough history" refusal, whose window follows the real clock | Answered 2026-11-14: drop the estimate; F3 ends on the statement. The estimate stays in M3. | 2.2 |
+| D15 | Where the signed-in Desktop profile lives | Answered 2026-11-14: `~/.local/share/aica-demo-desktop` (the `XDG_CONFIG_HOME` Desktop runs with), outside the repo, never committed. | 2.1 |
+| D16 | Desktop's tool permission prompt in M1 | Answered 2026-11-14: every tool pre-approved; no take shows the prompt. | 2.1, 2.3 |
+| D17 | The new-chat screen shows the owner's name and recent artifacts | Answered 2026-11-14: a take starts recording after the prompt is sent; no typing is shown. | 2.1 |
+| D18 | Fullscreen leaves the view's 640 px card at the left | Answered 2026-11-14: Desktop takes stop at the side pane; Desktop theme light. | 2.1, 2.3 |
 
 
 ## 4. Scenes
@@ -206,13 +212,14 @@ Findings that shape 2.1 and 2.3:
   inside the fixture.
 - **Privacy:** the new-chat screen shows "Welcome …, <owner's first
   name>" and the owner's recent artifacts; the device name appears next
-  to the tool status. A take starts recording after the prompt is sent,
-  or trims the GIF past the send; owner frame review (2.4) stays.
+  to the tool status. A take starts recording after the prompt is sent
+  (D17); owner frame review (2.4) stays.
 - **Allow prompts:** pre-approve every tool in the profile before final
-  takes, so no prompt covers a view (§10.7: M1 may still show one).
+  takes, so no prompt covers a view (D16).
 - **Fullscreen:** the view's **Fullscreen** button and the host's expand
   icon both open a side pane; its expand icon then fills the window. The
-  view's card stays 640 px wide at the left, the rest blank.
+  view's card stays 640 px wide at the left, the rest blank. Takes stop at
+  the side pane (D18).
 - **A turn row in fullscreen didn't open**; a likely cause is the
   `get_turn` permission prompt, which shows in the hidden chat.
   Pre-approval (above) should settle it; check in 2.1.
