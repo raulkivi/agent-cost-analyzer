@@ -172,7 +172,7 @@ not Claude's app:
 |---|---|---|
 | F1 | Comparison → cost over time → session cost → turn; Back at each level | Drill-down chain, focus return |
 | F2 | Cost change → Price changes → Back; Currency switch | Waterfall colours, price timeline, two currencies |
-| F3 | Compare models → replay; statement; estimate | The M3 and M6 views |
+| F3 | Compare models → replay; statement (D14: no estimate) | The M6 views and M3's statement |
 
 Left out:
 
