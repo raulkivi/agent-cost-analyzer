@@ -1988,14 +1988,19 @@ already included in `output` (never added on top). A usage with
 output); any other usage without the field makes the turn's `reasoning`
 unknown.
 
-**Verified against the published schema shipped in the vendored
-`@earendil-works/pi-coding-agent` 0.87.1** (`docs/session-format.md`,
-`docs/message-types.md`, pi-ai `dist/types.d.ts`, `dist/core/
-session-manager.d.ts`/`.js`), pinned by the schema-faithful fixture
-`fixtures/pi-agent/schema-v3-session.jsonl`. Still **not** a real captured
-session (scheduled as implementation-plan.md Phase 11) — the project's
-usual practice of pinning extractors against a
-real, redacted capture remains outstanding for this provider. Consequences:
+**Verified against sessions the real pi wrote** (implementation-plan.md
+Phase 11, 2026-11-14): `scripts/generate-pi-fixtures.mts` drives the
+owner's pi 1.5.2 with a local model through four scenarios (linear with an
+idle gap, compaction, `context_edit` recovery, fork) and commits them,
+redacted, to `fixtures/pi-agent/generated/` with a manifest naming the pi
+version. `describeLogProviderContract` and the provider tests run on them in
+CI; a test pins the fields the provider reads against what pi writes.
+Regenerate after a pi update ([providers/pi-provider.md](providers/pi-provider.md#generating-pi-fixtures)).
+Shapes the generated sessions do not reach (`usage` entries, tool-result
+usage, in-file `/tree` branches and `branch_summary`) stay pinned by the
+schema-faithful `fixtures/pi-agent/schema-v3-session.jsonl`, written from
+the published schema in the vendored package (`docs/session-format.md`,
+`docs/message-types.md`, pi-ai `dist/types.d.ts`). Consequences:
 
 - `tool` and `vision` token counts are `{ known: false }` — confirmed: pi's
   `Usage` has no field separating them from `input`/`output`.
@@ -2009,7 +2014,25 @@ real, redacted capture remains outstanding for this provider. Consequences:
   follow the schema: `text` on `TextContent`, `thinking` on
   `ThinkingContent`, `id`/`name`/`arguments` on `ToolCall`
   (`pi-message.ts`'s `toolCallArgumentsOf` also accepts the pre-schema
-  `args` spelling the older hand-authored fixtures use).
+  `args` spelling the older hand-authored fixtures use). A compaction or
+  branch summary between two rounds shows as its summary text; metadata
+  entries (`context_edit`, model and thinking changes, `usage`) add no
+  message.
+- **`context_edit`** (`context-edits.ts`; `docs/session-format.md`
+  "ContextEditEntry") edits one earlier entry in the model's context only:
+  `replacement: null` omits it, anything else replaces its content, the
+  latest edit on the branch wins. pi 1.5.2 appends omissions itself for a
+  truncated or overflowing attempt and its tool results, then compacts and
+  retries (`docs/compaction.md` "Overflow and Length Recovery Ordering").
+  Raw history and pi's usage totals keep the target, so usage is
+  unchanged: the omitted attempt's tokens still count toward its turn. The
+  turn inspector marks the targeted response or tool call (`contextEdit`
+  on the response round or tool call part, "omitted from later context" or
+  "replaced in later context").
+- `/fork` writes a new file whose header names `parentSession` and which
+  repeats the parent's earlier entries with the same ids and usage, so
+  listing both files counts that usage twice. Not deduplicated (the owner
+  never forks, 2026-11-14).
 - Fork vs. rewind disambiguation is approximate: a turn immediately
   following a tree branch point (an entry claimed as `parentId` by more than
   one other entry) is always tagged `triggeredEvent: "fork"`; a real
@@ -2086,10 +2109,10 @@ it:
   path — the only reliable join key, since `session-id.ts`'s
   `computePiFileHash` is a one-way hash and a `Session.id` can't be reversed
   back to a file path. Records of one file are all kept, in `capturedAt`
-  order (the matcher above chooses per branch) — the sidecar's own
-  `sessionId` field vs. a session file's own `header.id` are an unconfirmed
-  equivalence, so `sessionFile` sidesteps that uncertainty rather than
-  resolving it.
+  order (the matcher above chooses per branch). The sidecar's `sessionId`
+  equals the session header's `id` (confirmed on the Phase 11 generated
+  sessions, pi 1.5.2); the join stays on `sessionFile`, which the provider
+  compares directly with the files it lists.
 - `system-prompt-components.ts`'s `buildPiSystemPromptComponents` turns a
   matched record into `SystemPromptComponent[]`, mirroring
   `buildSystemPromptBreakdown`'s VS Code shape: one `built-in` component
@@ -2525,7 +2548,7 @@ the end-to-end view.
 | Claude Code | Every request round on the active branch, through compactions (§6.2.6) | Yes |
 | VS Code, classic (local harness) | `main.jsonl` request spans aligned to the store; writes from `agent-traces.db`, else `null` and inferred (A4) | Yes |
 | VS Code, Agent Host | The Copilot CLI event log's usage records (§6.2.2.2); writes `null` where flagged unreliable | Yes |
-| pi | — | Not yet (waits for Phase 11's real capture) |
+| pi | — | Not yet (task V28, after 1.0; Phase 11's generated fixtures are in) |
 | mitmproxy | — | Not yet |
 
 Known gaps (plan §12.1, step 14.3): a `/clear` inside a Claude Code file
@@ -3278,18 +3301,18 @@ Carried over from vision §7 plus new ones raised while designing this layer:
   fixtures with computed fields (author ergonomics vs. easy schema
   validation) — leaning JSON validated by the `domain` zod schema so
   non-engineers could in principle contribute scenarios later.
-- Whether a real captured pi session matches the published schema the
-  pi-agent provider (§6.2.5) is now verified against (vendored
-  `@earendil-works/pi-coding-agent` 0.87.1 docs/types) — reasoning comes
-  from `Usage.reasoning`, `ToolResultMessage.usage` shares the `Usage`
-  shape, and vision/tool tokens are confirmed absent; pinning against a
-  real, redacted capture remains the same discipline every other extractor
-  in this app was built under (§7, §11.4); scheduled as implementation-plan.md
-  Phase 11.
+- Whether pi's fork copies should be deduplicated across files (§6.2.5):
+  `/fork` repeats the parent's entries with the same ids, so both files
+  count them. Deferred: the owner never forks (2026-11-14).
 - How aggressively to keep seeded Learn scenarios in sync with
   [agentic-coding-explained.md](agentic-coding-explained.md) as it evolves —
   the vision doc doesn't mandate automated drift-checking, but a periodic
   manual review is worth deciding on explicitly.
+
+**Resolved:** whether a real pi session matches the published schema the
+pi-agent provider (§6.2.5) was built against — yes, for every field the
+provider reads (Phase 11, 2026-11-14, on sessions generated with pi 1.5.2);
+the one gap was `context_edit`, now handled.
 
 **Resolved:** whether the app-owned settings file should ever hold more than
 the active provider id — yes. It now also holds

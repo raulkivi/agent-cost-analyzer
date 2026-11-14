@@ -1,0 +1,195 @@
+{
+  "generator": "packages/server/scripts/generate-pi-fixtures.mts",
+  "piVersion": "1.5.2",
+  "model": {
+    "provider": "llamacpp",
+    "id": "qwen3.8-flash-next:setup6"
+  },
+  "variant": "gondolin",
+  "generatedOn": "2026-11-14",
+  "idleSeconds": 310,
+  "scenarios": [
+    {
+      "id": "s1",
+      "stem": "pi-linear",
+      "status": "ok",
+      "files": [
+        {
+          "file": "pi-linear.jsonl",
+          "sidecar": "pi-linear.system-prompts.jsonl",
+          "sidecarRecords": 1,
+          "counts": {
+            "entryTypes": {
+              "session": 1,
+              "model_change": 1,
+              "thinking_level_change": 1,
+              "message": 19
+            },
+            "messageRoles": {
+              "system": 1,
+              "user": 4,
+              "assistant": 9,
+              "toolResult": 5
+            },
+            "stopReasons": {
+              "toolUse": 5,
+              "stop": 4
+            },
+            "turns": 4,
+            "toolCalls": 5,
+            "compactions": 0,
+            "contextEdits": 0,
+            "malformedLines": 0
+          }
+        }
+      ],
+      "durationSeconds": 338,
+      "title": "linear: 4 prompts, tool calls, one tool left unused, an idle gap"
+    },
+    {
+      "id": "s2",
+      "stem": "pi-compaction",
+      "status": "ok",
+      "note": "compactions: manual:ok, threshold:ok, threshold:ok",
+      "files": [
+        {
+          "file": "pi-compaction.jsonl",
+          "sidecar": "pi-compaction.system-prompts.jsonl",
+          "sidecarRecords": 2,
+          "counts": {
+            "entryTypes": {
+              "session": 1,
+              "model_change": 1,
+              "thinking_level_change": 1,
+              "message": 17,
+              "compaction": 3
+            },
+            "messageRoles": {
+              "system": 1,
+              "user": 4,
+              "assistant": 7,
+              "toolResult": 5
+            },
+            "stopReasons": {
+              "toolUse": 3,
+              "stop": 4
+            },
+            "turns": 4,
+            "toolCalls": 5,
+            "compactions": 3,
+            "contextEdits": 0,
+            "malformedLines": 0
+          }
+        }
+      ],
+      "durationSeconds": 116,
+      "title": "compaction: manual /compact, then a threshold compaction after a restart with a small window"
+    },
+    {
+      "id": "s3",
+      "stem": "pi-context-edit",
+      "status": "ok",
+      "note": "compactions: overflow:ok, overflow:failed",
+      "files": [
+        {
+          "file": "pi-context-edit.jsonl",
+          "sidecar": "pi-context-edit.system-prompts.jsonl",
+          "sidecarRecords": 2,
+          "counts": {
+            "entryTypes": {
+              "session": 1,
+              "model_change": 1,
+              "thinking_level_change": 1,
+              "message": 10,
+              "context_edit": 1,
+              "compaction": 1
+            },
+            "messageRoles": {
+              "system": 1,
+              "user": 3,
+              "assistant": 5,
+              "toolResult": 1
+            },
+            "stopReasons": {
+              "toolUse": 1,
+              "stop": 2,
+              "length": 2
+            },
+            "turns": 3,
+            "toolCalls": 1,
+            "compactions": 1,
+            "contextEdits": 1,
+            "malformedLines": 0
+          }
+        }
+      ],
+      "durationSeconds": 33,
+      "title": "context_edit: a restart with a tight window forces a length stop that pi recovers from"
+    },
+    {
+      "id": "s4",
+      "stem": "pi-fork",
+      "status": "ok",
+      "files": [
+        {
+          "file": "pi-fork-parent.jsonl",
+          "sidecar": "pi-fork-parent.system-prompts.jsonl",
+          "sidecarRecords": 1,
+          "counts": {
+            "entryTypes": {
+              "session": 1,
+              "model_change": 1,
+              "thinking_level_change": 1,
+              "message": 7
+            },
+            "messageRoles": {
+              "system": 1,
+              "user": 2,
+              "assistant": 3,
+              "toolResult": 1
+            },
+            "stopReasons": {
+              "toolUse": 1,
+              "stop": 2
+            },
+            "turns": 2,
+            "toolCalls": 1,
+            "compactions": 0,
+            "contextEdits": 0,
+            "malformedLines": 0
+          }
+        },
+        {
+          "file": "pi-fork.jsonl",
+          "sidecar": "pi-fork.system-prompts.jsonl",
+          "sidecarRecords": 1,
+          "counts": {
+            "entryTypes": {
+              "session": 1,
+              "model_change": 1,
+              "thinking_level_change": 1,
+              "message": 7
+            },
+            "messageRoles": {
+              "system": 1,
+              "user": 2,
+              "assistant": 3,
+              "toolResult": 1
+            },
+            "stopReasons": {
+              "toolUse": 1,
+              "stop": 2
+            },
+            "turns": 2,
+            "toolCalls": 1,
+            "compactions": 0,
+            "contextEdits": 0,
+            "malformedLines": 0
+          }
+        }
+      ],
+      "durationSeconds": 11,
+      "title": "fork: /fork from the second prompt into a new session file"
+    }
+  ]
+}

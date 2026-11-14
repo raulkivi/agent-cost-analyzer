@@ -8,6 +8,8 @@ import { afterEach, describe, expect, it } from "vitest";
 import {
   compareSummaries,
   findLeaks,
+  maskIdentifiers,
+  redactCapture,
   redactSession,
   redactSidecarRecord,
   redactText,
@@ -243,5 +245,49 @@ describe("verify: the pi provider reads the redacted capture like the original",
     const before = await summariseCapture(tmp(), { sessionText: syntheticSession, records: [] });
     const after = await summariseCapture(tmp(), { sessionText: tampered, records: [] });
     expect(compareSummaries(before, after).length).toBeGreaterThan(0);
+  });
+});
+
+describe("extra path masks (generated captures live under a temp dir)", () => {
+  const tempCtx: RedactionContext = {
+    usernames: [],
+    hostnames: [],
+    cwds: ["/tmp/pi-fixtures-x1/home/project"],
+    paths: [
+      { from: "/tmp/pi-fixtures-x1/home", to: "/home/user" },
+      { from: "tmp-pi-fixtures-x1-home", to: "home-user" },
+    ],
+  };
+
+  it("maps each temp path to its placeholder, longest first, after the cwd", () => {
+    expect(maskIdentifiers("/tmp/pi-fixtures-x1/home/project/a.ts", tempCtx)).toBe("/home/user/project/a.ts");
+    expect(maskIdentifiers("/tmp/pi-fixtures-x1/home/.pi/agent/x", tempCtx)).toBe("/home/user/.pi/agent/x");
+    expect(maskIdentifiers("--tmp-pi-fixtures-x1-home-project--", tempCtx)).toBe("--home-user-project--");
+  });
+
+  it("findLeaks flags a temp path that survived", () => {
+    expect(findLeaks("see /tmp/pi-fixtures-x1/home/.pi", tempCtx)).toContain("temp-path");
+    expect(findLeaks("see /home/user/.pi", tempCtx)).toEqual([]);
+  });
+});
+
+describe("redactCapture", () => {
+  it("redacts a session and only its own sidecar records, then runs the leak scan and the provider check", async () => {
+    const header = JSON.parse(syntheticSession.split("\n")[0]) as { id: string };
+    const sessionPath = "/x/sessions/schema.jsonl";
+    const records = [
+      { sessionId: header.id, sessionFile: sessionPath, capturedAt: "2026-08-05T09:00:00.000Z", cwd: "/home/alice/secret-project", systemPromptChars: 3, systemPrompt: "abc" },
+      { sessionId: "someone-else", sessionFile: "/x/sessions/other.jsonl", capturedAt: "2026-08-05T09:00:00.000Z", cwd: "/w", systemPromptChars: 3, systemPrompt: "xyz" },
+    ];
+    const sidecarText = records.map((r) => JSON.stringify(r)).join("\n") + "\n";
+
+    const out = await redactCapture({ sessionText: syntheticSession, sessionPath, sidecarText, stem: "schema", context: ctx });
+
+    expect(out.recordCount).toBe(1);
+    expect(out.leaks).toEqual([]);
+    expect(out.diffs).toEqual([]);
+    expect(out.sidecarText.trim().split("\n")).toHaveLength(1);
+    expect(out.sessionText).not.toMatch(/alice/);
+    expect(out.branchTurns.length).toBeGreaterThan(0);
   });
 });

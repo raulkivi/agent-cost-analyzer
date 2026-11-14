@@ -21,10 +21,12 @@
 //    /home/<name> and /Users/<name> -> /home/user, usernames -> user,
 //    hostnames -> host, emails -> user@example.com, secrets -> [REDACTED]
 //    (redactSecrets). Any `cwd` value becomes /home/user/project.
+//    Extra `paths` (a generated capture's temp dirs) map to their placeholder,
+//    longest first together with the cwds, before the home-path rule.
 //  Unknown string-valued keys are replaced (safe default); the report lists
 //    their names, never their values.
-import { mkdirSync, writeFileSync } from "node:fs";
-import { hostname as osHostname, userInfo } from "node:os";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { hostname as osHostname, tmpdir, userInfo } from "node:os";
 import path from "node:path";
 import { redactSecrets } from "../src/services/tool-audit/output-redactor.js";
 import { PiAgentLogProvider } from "../src/data-sources/pi-agent/pi-agent-log-provider.js";
@@ -36,6 +38,9 @@ export interface RedactionContext {
   usernames: string[];
   hostnames: string[];
   cwds: string[];
+  // Extra path prefixes and their placeholders (generate-pi-fixtures.mts
+  // maps its temp home to /home/user).
+  paths?: { from: string; to: string }[];
 }
 
 export interface RedactionReport {
@@ -118,8 +123,12 @@ function replaceTerms(text: string, terms: string[], replacement: string): strin
 
 export function maskIdentifiers(text: string, ctx: RedactionContext): string {
   let out = redactSecrets(text);
-  for (const cwd of [...ctx.cwds].sort((a, b) => b.length - a.length)) {
-    out = out.split(cwd).join(CWD_PLACEHOLDER);
+  const prefixes = [
+    ...ctx.cwds.map((from) => ({ from, to: CWD_PLACEHOLDER })),
+    ...(ctx.paths ?? []),
+  ].filter((p) => p.from.length > 0);
+  for (const { from, to } of prefixes.sort((a, b) => b.from.length - a.from.length)) {
+    out = out.split(from).join(to);
   }
   out = out.replace(/\/(?:home|Users)\/(?!user(?:[/\s"']|$))[^/\s"']+/g, "/home/user");
   out = out.replace(/[A-Za-z]:\\Users\\[^\\\s"']+/g, "C:\\Users\\user");
@@ -150,6 +159,7 @@ export function deriveContext(headerCwd: string | undefined, extra: Partial<Reda
     usernames: usernames.filter((name) => name !== "user"),
     hostnames: [...(extra.hostnames ?? []), osHostname()].filter((h) => h.length >= 3),
     cwds,
+    ...(extra.paths ? { paths: extra.paths } : {}),
   };
 }
 
@@ -290,13 +300,14 @@ export function redactSidecarRecord(
   return out;
 }
 
-export type LeakKind = "username" | "hostname" | "home-path" | "email";
+export type LeakKind = "username" | "hostname" | "home-path" | "email" | "temp-path";
 
 export function findLeaks(text: string, ctx: RedactionContext): LeakKind[] {
   const leaks = new Set<LeakKind>();
   const has = (terms: string[]): boolean =>
     terms.some((t) => t.length >= 3 && text.toLowerCase().includes(t.toLowerCase()));
   if (has(ctx.usernames)) leaks.add("username");
+  if ((ctx.paths ?? []).some((p) => p.from.length > 0 && text.includes(p.from))) leaks.add("temp-path");
   if (has(ctx.hostnames)) leaks.add("hostname");
   if (/\/(?:home|Users)\/(?!user(?:[/\s"'\\]|$))[^/\s"'\\]+/.test(text) || /[A-Za-z]:\\\\?Users\\\\?(?!user)[^\\\s"']+/.test(text)) {
     leaks.add("home-path");
@@ -384,4 +395,79 @@ export function compareSummaries(before: CaptureSummary, after: CaptureSummary):
     if (a.promptNote !== b.promptNote) diffs.push(`branch ${i}: system-prompt note differs`);
   });
   return diffs;
+}
+
+// ---- the whole redaction of one capture (CLI and generator) ----
+
+function sidecarRecordsFor(sidecarText: string, sessionPath: string, headerId: string | undefined): Record<string, unknown>[] {
+  const records: Record<string, unknown>[] = [];
+  for (const line of sidecarText.split("\n")) {
+    if (!line.trim()) continue;
+    try {
+      const record = JSON.parse(line) as Record<string, unknown>;
+      const sameFile = typeof record.sessionFile === "string" && path.resolve(record.sessionFile) === path.resolve(sessionPath);
+      const sameId = headerId !== undefined && record.sessionId === headerId;
+      if (sameFile || sameId) records.push(record);
+    } catch {
+      // not a record line; skip
+    }
+  }
+  return records;
+}
+
+function headerOf(sessionText: string): { cwd?: string; id?: string } {
+  try {
+    return JSON.parse(sessionText.split("\n")[0]) as { cwd?: string; id?: string };
+  } catch {
+    return {};
+  }
+}
+
+export interface RedactCaptureInput {
+  sessionText: string;
+  // The session file's path as pi wrote it: the sidecar joins on it.
+  sessionPath: string;
+  sidecarText?: string;
+  stem: string;
+  context?: RedactionContext;
+}
+
+export interface RedactCaptureResult {
+  sessionText: string;
+  sidecarText: string;
+  recordCount: number;
+  report: RedactionReport;
+  leaks: LeakKind[];
+  diffs: string[];
+  // Turns per branch as the provider reads the original.
+  branchTurns: number[];
+}
+
+// Redacts one session and its own sidecar records, then scans for leaks and
+// checks the provider reads both copies alike. The caller writes nothing
+// unless `leaks` and `diffs` are empty.
+export async function redactCapture(input: RedactCaptureInput): Promise<RedactCaptureResult> {
+  const header = headerOf(input.sessionText);
+  const ctx = input.context ?? deriveContext(header.cwd);
+  const records = input.sidecarText ? sidecarRecordsFor(input.sidecarText, input.sessionPath, header.id) : [];
+  const session = redactSession(input.sessionText, ctx);
+  const redactedRecords = records.map((r) => redactSidecarRecord(r, session.pieces, ctx, input.stem));
+  const sidecarText = redactedRecords.map((r) => JSON.stringify(r)).join("\n") + (redactedRecords.length ? "\n" : "");
+  const leaks = [...new Set([...findLeaks(session.text, ctx), ...findLeaks(sidecarText, ctx)])];
+  const workDir = mkdtempSync(path.join(tmpdir(), "redact-pi-verify-"));
+  try {
+    const before = await summariseCapture(path.join(workDir, "a"), { sessionText: input.sessionText, records });
+    const after = await summariseCapture(path.join(workDir, "b"), { sessionText: session.text, records: redactedRecords });
+    return {
+      sessionText: session.text,
+      sidecarText,
+      recordCount: records.length,
+      report: session.report,
+      leaks,
+      diffs: compareSummaries(before, after),
+      branchTurns: before.sessions.map((s) => s.turnCount),
+    };
+  } finally {
+    rmSync(workDir, { recursive: true, force: true });
+  }
 }

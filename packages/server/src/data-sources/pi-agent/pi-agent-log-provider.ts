@@ -22,6 +22,7 @@ import { findLeafEntryIds, walkBranch } from "./session-tree.js";
 import { groupBranchEntriesByUserMessage, type PiTurnGroup } from "./turn-grouper.js";
 import { extractToolCalls, extractTurnUsage } from "./usage-extractor.js";
 import { buildTurnInspectorDetail } from "./turn-inspector-builder.js";
+import { latestContextEdits } from "./context-edits.js";
 import { computeBranchSessionId, computePiFileHash, parseBranchSessionId } from "./session-id.js";
 import { resolvePiSystemPrompt } from "./resolve-pi-system-prompt.js";
 import { toolDefinitionTokenLookup, type ToolDefinitionTokenReasons } from "../jsonl/tool-definition-tokens.js";
@@ -291,7 +292,7 @@ export class PiAgentLogProvider implements LogProvider, SystemPromptTextReader {
     if (!group) {
       return null;
     }
-    return buildTurnInspectorDetail(turnIndex, group);
+    return buildTurnInspectorDetail(turnIndex, group, latestContextEdits(branch));
   }
 
   // The SystemPromptTextReader capability over readSystemPromptText below.

@@ -4,6 +4,7 @@ import { useCallback, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import type {
   ContentPlaceholder,
+  ContextEdit,
   MessageContentPart,
   TriggeredEvent,
   Turn,
@@ -158,6 +159,22 @@ function UserMessageView({ parts }: { parts: MessageContentPart[] }) {
   );
 }
 
+const CONTEXT_EDIT_LABELS: Record<ContextEdit["kind"], string> = {
+  omitted: "omitted from later context",
+  replaced: "replaced in later context",
+};
+
+// A later log entry changed what the model saw of this part (pi's
+// context_edit); the part itself and its tokens stay as logged.
+function ContextEditNote({ edit }: { edit: ContextEdit }) {
+  return (
+    <div className="inspector-reasoning inspector-reasoning--row">
+      <Tag variant="outline">{CONTEXT_EDIT_LABELS[edit.kind]}</Tag>
+      <span className="text-muted text-2xs">{edit.note}</span>
+    </div>
+  );
+}
+
 function ToolCallsView({
   toolCalls,
   format,
@@ -179,6 +196,7 @@ function ToolCallsView({
           <ContentPartsView parts={toolCall.args} format={format} maxHeight={140} />
           <SubLabel>Result</SubLabel>
           <ContentPartsView parts={toolCall.result} format={format} maxHeight={140} />
+          {toolCall.contextEdit && <ContextEditNote edit={toolCall.contextEdit} />}
         </div>
       ))}
     </div>
@@ -324,6 +342,7 @@ export function TurnInspector({
                       Response · round {round.response.index}
                     </div>
                     <ContentPartsView parts={round.response.response} format={format} maxHeight={320} />
+                    {round.response.contextEdit && <ContextEditNote edit={round.response.contextEdit} />}
                     {round.response.reasoning && isEncryptedReasoning(round.response.reasoning) && (
                       <div className="inspector-reasoning inspector-reasoning--row">
                         <div className="card-kicker">Reasoning</div>

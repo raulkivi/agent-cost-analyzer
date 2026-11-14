@@ -35,12 +35,14 @@ idle-gap split.
 | [usage-extractor.ts](../../packages/server/src/data-sources/pi-agent/usage-extractor.ts) | Sums every usage carrier in a turn (assistant, toolResult, `usage` entries, compaction, branch_summary) into `uncachedInput`/`output`/`cacheRead`/`cacheWrite`/`reasoning`; also extracts tool calls |
 | [pi-message.ts](../../packages/server/src/data-sources/pi-agent/pi-message.ts) | Type guards/accessors for pi's message shapes (`PiAssistantMessage`, `PiToolResultMessage`, `PiToolCallBlock`) |
 | [turn-inspector-builder.ts](../../packages/server/src/data-sources/pi-agent/turn-inspector-builder.ts) | Builds `TurnInspectorDetail` from a turn's raw entries (Analyze-mode drill-down) |
+| [context-edits.ts](../../packages/server/src/data-sources/pi-agent/context-edits.ts) | `latestContextEdits` (latest `context_edit` per target on a branch) and `contextEditFor` (the inspector's "omitted"/"replaced" mark) |
 | [resolve-pi-agent-sessions-dir.ts](../../packages/server/src/platform/pi-agent-paths/resolve-pi-agent-sessions-dir.ts) | Locates `~/.pi/agent/sessions/` and lists session files for the current cwd |
 | [resolve-pi-system-prompt-log-path.ts](../../packages/server/src/platform/pi-agent-paths/resolve-pi-system-prompt-log-path.ts) | Resolves the optional `pi-system-prompt-logger` sidecar log path (`PI_SYSTEM_PROMPT_LOG_PATH` env override, else `~/.pi/agent/logs/system-prompts.jsonl`) |
 | [system-prompt-sidecar-reader.ts](../../packages/server/src/data-sources/pi-agent/system-prompt-sidecar-reader.ts) | Reads the sidecar JSONL into a `Map` keyed by resolved `sessionFile` path, keeping every record of a file in `capturedAt` order; `system-prompt-sidecar-matcher.ts` picks one per branch (PR #279) |
 | [system-message-replay.ts](../../packages/server/src/data-sources/pi-agent/system-message-replay.ts) | `replaySystemMessages` — replays a branch's `role: "system"` messages (and compaction checkpoints) into the current prompt text, sections and tools, like pi-ai's `getCurrentSystemMessage` |
 | [system-prompt-components.ts](../../packages/server/src/data-sources/pi-agent/system-prompt-components.ts) | `buildPiSystemPromptComponentsFromState` (in-file system prompt) and `buildPiSystemPromptComponents` (sidecar fallback) → `SystemPromptComponent[]`, mirroring `buildSystemPromptBreakdown`'s VS Code shape |
-| `packages/server/fixtures/pi-agent/*.jsonl` | Test fixtures: `schema-v3-session` (follows the published schema in the vendored package: system messages, `arguments`, `thinking`, toolResult usage, a `cache_warm` usage entry, a compaction with usage and `systemMessage`), plus the older hand-authored `normal-session`, `forked-session`, `malformed-lines-session`, `no-usage-session`. No static sidecar-log fixture exists — its `sessionFile` would be checkout-path-dependent, so tests synthesize one into a tmpdir instead |
+| `packages/server/fixtures/pi-agent/*.jsonl` | Test fixtures: `schema-v3-session` (follows the published schema in the vendored package: system messages, `arguments`, `thinking`, toolResult usage, a `cache_warm` usage entry, a compaction with usage and `systemMessage`), plus the older hand-authored `normal-session`, `forked-session`, `malformed-lines-session`, `no-usage-session`. Tests write sidecar logs into a tmpdir, since the join key `sessionFile` is checkout-path-dependent |
+| `packages/server/fixtures/pi-agent/generated/` | Sessions the real pi wrote with a local model, redacted, each with its `.system-prompts.jsonl` records, plus `manifest.json` (see "Generating pi fixtures"); read by `generated-fixtures.test.ts` and `scripts/pi-generated-fixtures.test.mts` |
 
 Each `.ts` above has a matching `.test.ts` (TDD-first, per `architecture.md`
 §11.4); `pi-agent-log-provider.test.ts` also runs the shared
@@ -100,7 +102,7 @@ Knock-on effects in the UI for pi sessions:
   `~/.pi/agent/extensions/pi-system-prompt-logger.js` — this is the actual
   install mechanism; the UI never links to the extension's own README.
 
-## Most recent change (2026-10-09, schema verification)
+## Earlier change (2026-10-09, schema verification)
 
 Checked the provider against the published schema shipped in the vendored
 `@earendil-works/pi-coding-agent` 0.87.1 (`docs/session-format.md`,
@@ -110,7 +112,7 @@ branch_summary, `Usage.reasoning`, `ToolCall.arguments`,
 `ThinkingContent.thinking`, and the in-file system prompt/tool loadout. See
 architecture.md §6.2.5 for the attribution rules.
 
-## Earlier change (2026-09-04, Phase 9.8)
+## Change of 2026-09-04 (Phase 9.8)
 
 Wired `PiAgentLogProvider` to optionally read the `pi-system-prompt-logger`
 sidecar log vendored in Phase 9.7, per two explicit UX requirements: the
@@ -155,82 +157,94 @@ setting that doesn't apply to pi (or mitmproxy) sessions at all. Fix:
 non-`vscode` session — since superseded by the pi-agent-specific message
 above.
 
-## Capturing a real session for Phase 11
+## Generating pi fixtures
 
-Tooling for 1.0 task V12; the capture itself is V13 (owner step), the fixtures
-V14. Never commit or share an unredacted file: sessions hold prompts, tool
-output and file contents.
+The Phase 11 fixtures in `packages/server/fixtures/pi-agent/generated/` are
+written by the owner's real pi with a local model, then redacted and
+committed (owner decision 2026-11-14; replaces the manual capture, 1.0 task
+V13). CI never runs a model: the server test suite reads only the committed
+files (`src/data-sources/pi-agent/generated-fixtures.test.ts`,
+`scripts/pi-generated-fixtures.test.mts`).
 
-Capture pi the way the owner uses it (owner decision 2026-11-14): with the
-local model, inside the Gondolin VM container. Gondolin mounts only the
-working directory, so run it from the throwaway directory below. Its paths
-inside the VM and its system-prompt additions are part of what the fixtures
-pin. If a VM path names anything private, pass it to the redaction CLI with
-`--mask <word>`.
+**Local-model exception.** The repo rule "no local model" has one exception:
+running pi with the local model to generate these fixtures. One pi process
+at a time, nothing else heavy on the model server meanwhile, never for
+coding tasks.
 
-1. **Install the logger.** Confirm `~/.pi/agent/extensions/pi-system-prompt-logger.js`
-   exists. If not, build and copy it
-   ([package README](../../packages/pi-system-prompt-logger/README.md#install)):
-   `npm run bundle --workspace=packages/pi-system-prompt-logger`, then copy
-   `packages/pi-system-prompt-logger/dist/pi-system-prompt-logger.js` into
-   `~/.pi/agent/extensions/` and run `/reload` in pi.
-2. **Use a throwaway directory with no secrets**, for example
-   `mkdir ~/pi-capture-demo && cd ~/pi-capture-demo` with a few harmless files
-   (`git init`, a small `hello.ts`). Do not run pi in a real project.
-3. **Session A, linear.** Run `pi`. Send 3 to 5 prompts; at least one must make
-   pi call a tool (for example "read hello.ts and summarise it"). In this
-   session wait more than 5 minutes between two prompts (the prompt cache
-   expires), and leave at least one tool unused: any tool pi doesn't call
-   (owner decision D30, 2026-11-14,
-   [savings-increment-3.md](../plans/savings-increment-3.md)). Exit pi.
-4. **Session B, compaction and context edit (owner decision 2026-11-14).** The
-   owner never branches or forks pi sessions; 25 of their sessions have a
-   `compaction` and 6 have `context_edit` entries, which pi appends itself when
-   it recovers from an overflow or length-limited reply (pi 1.5.2
-   `docs/compaction.md`, "Overflow and Length Recovery Ordering"; an omission
-   is `replacement: null`). That recovery can't be triggered on demand, so
-   session B is **one of the owner's existing sessions** that already holds a
-   `context_edit` and a `compaction`, redacted like session A. List the
-   candidates (file names and counts only):
+**When to regenerate:** after a pi update (the manifest records the pi
+version; drift shows up as failing provider tests), or when a scenario
+changes.
 
-   ```bash
-   python3 -c 'import json,glob,os,collections as c
-   for f in sorted(glob.glob(os.path.expanduser("~/.pi/agent/sessions/**/*.jsonl"),recursive=True)):
-     t=c.Counter(json.loads(l).get("type") for l in open(f) if l.strip())
-     if t["context_edit"] and t["compaction"]: print(f, dict(t))'
-   ```
+```bash
+npm run fixtures:generate-pi            # full run, 310 s idle gap
+npm run fixtures:generate-pi -- --quick # no idle gap, for development
+```
 
-   Pick the smallest; check that the sidecar log has a record for it (the
-   redaction CLI reports how many it copied). Forks and rewinds stay covered
-   by the synthetic fixture `forked-session.jsonl` only. If the owner prefers
-   a fresh capture instead, run a long session and use `/compact` for the
-   compaction; a `context_edit` then appears only if a recovery happens.
-5. **Find the files.** Sessions: `~/.pi/agent/sessions/--<cwd with slashes as dashes>--/<timestamp>_<uuid>.jsonl`
-   (`ls -t ~/.pi/agent/sessions/*demo*/ | head`). Sidecar log:
-   `~/.pi/agent/logs/system-prompts.jsonl`, one record per session.
-6. **Redact each session** from the repo root:
+Options: `--scenarios s1,s3`, `--idle-seconds <n>`, `--provider`/`--model`
+(default: `defaultProvider`/`defaultModel` from `~/.pi/agent/settings.json`),
+`--pi <command>` (default: the first `pi` on `PATH` outside `node_modules`;
+the repo's vendored pi is older), `--timeout-seconds <n>` per prompt
+(default 900), `--out <dir>`, `--keep-temp` (keeps the unredacted temp home
+for debugging; delete it after), `--gondolin`.
 
-   ```bash
-   npm run fixtures:redact-pi -w packages/server -- \
-     ~/.pi/agent/sessions/<dir>/<session-A>.jsonl \
-     --sidecar ~/.pi/agent/logs/system-prompts.jsonl \
-     --name pi-linear --out ~/pi-redacted
-   # same for session B with --name pi-compaction
-   ```
+**What it does** (`packages/server/scripts/generate-pi-fixtures.mts`, pure
+parts in `generate-pi-fixtures-lib.mts`):
 
-   The CLI copies only that session's sidecar records, runs a leak scan and a
-   check that the pi provider reads the redacted copy like the original, and
-   writes nothing if either fails. It prints counts and key names only.
-7. **Inspect.** Run
-   `grep -rniE "$USER|$(hostname)|/home/|@" ~/pi-redacted` : the only hits
-   should be `/home/user/...` and `user@example.com`. Open the files in an
-   editor if you want; every prompt, answer and tool output is placeholder
-   text of the same length. Add `--mask <word>` and re-run for anything else
-   private (a client name that sits in a kept field, say).
-8. **Hand over** the four files in `~/pi-redacted` (`pi-linear.jsonl`,
-   `pi-linear.system-prompts.jsonl`, `pi-compaction.jsonl`,
-   `pi-compaction.system-prompts.jsonl`) to the main session. Never hand over or
-   commit files from `~/.pi/agent`.
+1. Refuses to run in CI, checks the model server answers, and builds
+   `pi-system-prompt-logger`.
+2. Creates a temp home under the OS temp dir: an agent dir
+   (`PI_CODING_AGENT_DIR`) holding a `models.json` with only the chosen
+   provider and model (copied from `~/.pi/agent/models.json`), a
+   `settings.json` with compaction on, and the logger in `extensions/`; a
+   workspace with three harmless files (`hello.ts`, `notes.md`, `AGENTS.md`)
+   and `git init`. It never copies `auth.json`, sessions, skills,
+   `APPEND_SYSTEM.md` or other extensions. The logger writes to the temp dir
+   (`PI_SYSTEM_PROMPT_LOG_PATH`); `PI_OFFLINE=1` and `--no-mcp` keep pi off
+   the network.
+3. Drives pi in RPC mode (`pi --mode rpc`, `docs/rpc.md`): one process at a
+   time, a timeout per prompt, dialogs cancelled. A restart resumes the same
+   file with `--session <file>` and a new `models.json`.
+4. Redacts every session and its sidecar records with
+   `redact-pi-capture-lib.mts` (`redactCapture`; the temp home is masked to
+   `/home/user`), runs the leak scan and the provider check, and writes
+   `<stem>.jsonl`, `<stem>.system-prompts.jsonl` and `manifest.json` (pi
+   version, model, variant, date, idle gap, per-file counts; no paths). A
+   failed check writes nothing. It prints counts only.
+
+**Scenarios** (stems are fixed, so a rerun replaces the same files):
+
+| Id | Stem | What pi does |
+|---|---|---|
+| S1 | `pi-linear` | 4 prompts with `read`, `bash` and `edit` calls (`write` stays unused) and an idle gap (default 310 s) between prompts 2 and 3 |
+| S2 | `pi-compaction` | 2 prompts, a manual `/compact` (RPC `compact`), a prompt, then a restart whose context window is sized so pi's threshold check compacts around the next prompt |
+| S3 | `pi-context-edit` | 2 prompts, then a restart with a window that leaves the next response about 300 output tokens, far below `maxTokens`: the response stops on `length`, and pi's recovery appends `context_edit` omissions and a compaction and retries (`docs/compaction.md` "Overflow and Length Recovery Ordering"). The run fails if the file has no `context_edit` |
+| S4 | `pi-fork`, `pi-fork-parent` | 2 prompts, then RPC `fork` from the second prompt and a new prompt: a new file with a `parentSession` header. Synthetic coverage; the owner never forks. In-file `/tree` branching has no RPC command and is not generated |
+
+Compaction keeps 64 recent tokens (`keepRecentTokens`), so these short
+sessions have something to summarise. S2 and S3 run in two pi processes, so
+their sidecars hold two records each, which exercises the PR #279 matcher.
+
+**Gondolin variant** (`--gondolin`, off by default): loads
+`~/.pi/agent/extensions/gondolin` with `-e`, so pi's tools run in the
+Gondolin micro-VM, and writes to `generated/gondolin/`. It runs headless: Gondolin adds `find`, `grep` and `ls` to the tool set
+and needed no dialog. Last run 2026-11-14: all four scenarios passed in
+7.5 minutes, committed beside the default ones and covered by the same
+manifest and contract tests.
+
+**Last full run** (2026-11-14, pi 1.5.2, `llamacpp/qwen3.8-flash-next:setup6`, default variant):
+
+| File | Turns | Tool calls | Compactions | `context_edit` | Sidecar records |
+|---|---|---|---|---|---|
+| `pi-linear` | 4 | 4 | 0 | 0 | 1 |
+| `pi-compaction` | 4 | 2 | 2 | 0 | 2 |
+| `pi-context-edit` | 3 | 1 | 1 | 1 | 2 |
+| `pi-fork-parent` | 2 | 1 | 0 | 0 | 1 |
+| `pi-fork` | 2 | 1 | 0 | 0 | 1 |
+
+A full run takes about 7.5 minutes: S1 about 340 s (310 s of it the idle
+gap), S2 to S4 under 2 minutes together. S2 was rerun alone afterwards
+(`--scenarios s2`, 41 s). In S3 the retry after recovery stopped on `length` again, so pi
+gave up after its one compact-and-retry attempt, as designed.
 
 ### What the redaction CLI keeps and replaces
 
@@ -258,7 +272,7 @@ header; unit-tested).
 - **Sidecar:** `systemPrompt` is redacted so pi's in-file sections appear
   verbatim-redacted inside it, which keeps the PR #279 combine logic matching;
   `sessionFile` becomes `/home/user/.pi/agent/sessions/--home-user-project--/<name>.jsonl`
-  (the V14 test rewrites it to the fixture path, as `readSystemPromptSidecarIndex`
+  (the generated-fixture test rewrites it to the fixture path, as `readSystemPromptSidecarIndex`
   joins on it); `systemPromptChars` is unchanged because lengths are.
 - **Not preserved:** the token estimates the app computes over text (they
   tokenise placeholder words differently). Real usage figures from pi are
@@ -267,43 +281,66 @@ header; unit-tested).
   `PiAgentLogProvider` and compares branch count, turns per branch, per-turn
   usage, tool names, fork tagging and system-prompt component labels (which
   carry the character counts). A unit test runs the same check on
-  `schema-v3-session.jsonl`. The real check happens in V14.
+  `schema-v3-session.jsonl`; the generator runs it on every generated file.
 
-## Open items (pending real-data verification)
+## Phase 11 results (2026-11-14, generated fixtures)
 
-Per architecture.md §6.2.5, this provider is now verified against pi's
-published schema as shipped in the vendored package, but still not pinned
-against a real, redacted captured session. Until one is obtained:
+The provider ran test-first against the generated sessions
+(`src/data-sources/pi-agent/generated-fixtures.test.ts`, which also runs
+`describeLogProviderContract` over them). Every field it reads exists in
+what pi 1.5.2 writes (a test pins the list), turn usage sums to every usage
+carrier in each file, and the sidecar combine and PR #279 matcher work on
+real records. Field-name diff against `schema-v3-session.jsonl`:
 
-- `tool`, `vision` token counts stay `{ known: false }` — confirmed: pi's
-  `Usage` has no field for them.
-- `costAiCredits` (per-turn and session-level) stays permanently
-  `{ known: false }` — AI Credits is Copilot's own billing unit with no
-  defined conversion for pi's own cost figures (may never be resolvable).
-- Non-assistant usage is attributed to the turn whose span contains it; a
-  `branch_summary`'s usage therefore lands on the previous turn of the new
-  branch. Whether it should count toward the following turn instead is a
-  judgement call worth revisiting with real data.
-- Fork vs. rewind is approximate: any turn following a tree branch point is
-  tagged `triggeredEvent: "fork"`; a real `branch_summary` entry's more
-  specific intent isn't distinguished yet.
+- New in real files, not read by the provider: `model_change` and
+  `thinking_level_change` before the first prompt (they land in the first
+  turn's `precedingEntries`), user content as `{type: "text"}` blocks,
+  assistant `durationMs`/`rawStopReason`/`responseId`/`thinkingLevel`,
+  `usage.cost.totalFromProvider`, tool-result `details` (edit diffs),
+  compaction `details`/`fromHook`, tool declarations'
+  `constrainedSampling`, and the header's `parentSession` on a fork.
+- `context_edit` entries were not handled. The turn inspector printed them
+  (and a compaction between two rounds) as raw JSON under "Added messages".
+  Fixed: see below.
+- The generated files carry no `usage` entries (pi warms no cache for a
+  local model) and no tool-result usage; the provider's handling of those
+  stays pinned by `schema-v3-session.jsonl`.
 
-**Next step for real-data verification** (implementation-plan.md
-Phase 11): obtain one redacted real
-`~/.pi/agent/sessions/**/*.jsonl` capture, diff its actual field names
-against the fixtures in `packages/server/fixtures/pi-agent/`, and update the
-extractors + this doc + architecture.md §6.2.5 together once confirmed.
+**`context_edit` handling** (decided 2026-11-14). A `context_edit` changes
+only what later requests send; the target stays in raw history and in pi's
+usage totals (`docs/session-format.md` "ContextEditEntry"). So:
 
-**`packages/pi-system-prompt-logger`** (vendored Phase 9.7, consumed
-starting Phase 9.8 — see "System prompt" section above) is a candidate tool
-for unblocking this: installing it into a real pi session and running a
-turn captures a real `sessionId` and `~/.pi/agent/sessions/**/*.jsonl` file
-side by side with its own `system-prompts.jsonl` record, giving both the
-real-session-format capture this section needs *and* a real look at
-`selectedTools`/`skillNames`/`contextFilePaths`/`sessionId`-vs-`header.id`
-semantics — the last of which Phase 9.8's `sessionFile`-based join
-deliberately sidesteps rather than resolves (see architecture.md §6.2.5).
-The rule for a forked/rewound session's records is decided (PR #279,
-2026-11-14): a branch uses the latest record captured at or before its
-last entry, else the earliest. A real fork capture confirms it. Phase 11
-is required for 1.0.0 (owner, 2026-11-14).
+- Usage is unchanged: the omitted attempt's tokens still count toward its
+  turn (they were billed).
+- The turn inspector marks the response or tool result a `context_edit`
+  targets, "omitted from later context" (`replacement: null`) or "replaced
+  in later context", with a note (`contextEdit` on the response round or the
+  tool call, `context-edits.ts`). The latest edit on the branch wins, as in
+  pi.
+- "Added messages" shows a compaction or branch summary as its summary text
+  and leaves metadata entries (`context_edit`, model and thinking changes,
+  `usage`, labels) out.
+- An edit of a user or custom message is not shown; pi's recovery only
+  edits assistant attempts and their tool results.
+
+**Decisions settled by the generated sessions:**
+
+- The sidecar record's `sessionId` equals the session header's `id` (every
+  generated record). The join stays on `sessionFile`.
+- A resumed session (a second pi process on the same file) gets a second
+  sidecar record; the matcher picks the latest at or before the branch end
+  (S2, S3).
+
+## Open items
+
+- Fork double counting: `/fork` writes a new file that repeats the parent's
+  earlier entries with the same ids and usage (S4), so listing both files
+  counts that usage twice. The owner never forks (2026-11-14); not fixed.
+- In-file `/tree` branching and `branch_summary` usage are still pinned
+  only by hand-authored fixtures: pi's RPC mode has no tree navigation
+  command. Which turn a `branch_summary`'s usage counts toward and fork vs.
+  rewind tagging stay as described in architecture.md §6.2.5.
+- `tool`, `vision` token counts stay `{ known: false }`: pi's `Usage` has
+  no field for them.
+- `costAiCredits` stays `{ known: false }`: AI Credits is Copilot's own
+  billing unit.

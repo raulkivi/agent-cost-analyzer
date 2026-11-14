@@ -12,6 +12,7 @@ import {
 } from "./pi-message.js";
 import type { PiRawEntry } from "./pi-jsonl-reader.js";
 import type { PiTurnGroup } from "./turn-grouper.js";
+import { contextEditFor, type PiContextEdit } from "./context-edits.js";
 
 function isThinkingBlock(block: unknown): boolean {
   return typeof block === "object" && block !== null && (block as { type?: unknown }).type === "thinking";
@@ -30,12 +31,22 @@ function blockText(block: unknown): unknown {
   return block;
 }
 
+// What an entry adds to the next request, or undefined when it adds nothing
+// the model sees: a compaction or branch summary is sent as its summary text
+// (docs/session-format.md "Context Building"); context_edit, model and
+// thinking changes, usage, labels and other metadata produce no message.
 function entryText(entry: PiRawEntry): unknown {
   const message = messageOf(entry);
-  if (!message) {
-    return entry;
+  if (message) {
+    return typeof message.content === "string" ? message.content : (message.content ?? message);
   }
-  return typeof message.content === "string" ? message.content : (message.content ?? message);
+  if ((entry.type === "compaction" || entry.type === "branch_summary") && typeof entry.summary === "string") {
+    return entry.summary;
+  }
+  if (entry.type === "custom_message") {
+    return entry.content;
+  }
+  return undefined;
 }
 
 // pi's JSONL entries are already incremental (each is only its own new
@@ -44,7 +55,15 @@ function entryText(entry: PiRawEntry): unknown {
 // Code counterpart, no array-length diffing is needed here: one round per
 // AssistantMessage, and "added since the previous round" is just the
 // entries between the previous assistant message (exclusive) and this one.
-export function buildTurnInspectorDetail(turnIndex: number, group: PiTurnGroup): TurnInspectorDetail {
+// `contextEdits` (latestContextEdits over the whole branch) marks responses
+// and tool results a later context_edit omitted or replaced.
+export function buildTurnInspectorDetail(
+  turnIndex: number,
+  group: PiTurnGroup,
+  contextEdits: Map<string, PiContextEdit> = new Map(),
+): TurnInspectorDetail {
+  const editOf = (entry: PiRawEntry): PiContextEdit | undefined =>
+    typeof entry.id === "string" ? contextEdits.get(entry.id) : undefined;
   const assistantIndices = group.entries
     .map((entry, index) => (assistantMessageOf(entry) ? index : -1))
     .filter((index) => index !== -1);
@@ -68,18 +87,23 @@ export function buildTurnInspectorDetail(turnIndex: number, group: PiTurnGroup):
       }
       const toolCallId = typeof toolResult.toolCallId === "string" ? toolResult.toolCallId : undefined;
       const block = toolCallId ? findToolCallBlock(assistantMessages, toolCallId) : null;
+      const edit = editOf(entry);
       return [
         {
           name: typeof toolResult.toolName === "string" ? toolResult.toolName : "unknown",
           args: [buildContentPart(toolCallArgumentsOf(block) ?? null)],
           result: [buildContentPart(toolResult.content ?? null)],
+          ...(edit ? { contextEdit: contextEditFor(edit, "tool result") } : {}),
         },
       ];
     });
 
     const addedMessages = addedEntries
       .filter((entry) => !toolResultMessageOf(entry))
-      .map((entry) => buildContentPart(entryText(entry)));
+      .map(entryText)
+      .filter((text) => text !== undefined)
+      .map((text) => buildContentPart(text));
+    const responseEdit = editOf(group.entries[assistantIndex]);
 
     const contentBlocks = assistantMessages[roundIndex].content ?? [];
     const reasoningParts = contentBlocks.filter(isThinkingBlock).map((block) => buildContentPart(blockText(block)));
@@ -93,6 +117,7 @@ export function buildTurnInspectorDetail(turnIndex: number, group: PiTurnGroup):
         index: roundIndex,
         response: responseParts,
         ...(reasoningParts.length > 0 ? { reasoning: reasoningParts } : {}),
+        ...(responseEdit ? { contextEdit: contextEditFor(responseEdit, "response") } : {}),
       },
     };
   });
