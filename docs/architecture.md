@@ -1055,7 +1055,10 @@ way that weren't previously documented:
   along. See the Phase 4 note below for how the adapter handles not knowing
   a session's workspace hash ahead of time. `<user-data-dir>` resolution
   (§13's open question, issue #22) is currently: prefer the Insiders
-  folder, fall back to the Stable `Code` folder, on all three OSes —
+  folder, fall back to the Stable `Code` folder, on all three OSes, counting a
+  folder only when it holds a `User` folder (a bare `~/.config/Code` with only
+  "Azure Accounts" is skipped; `listVscodeUserDataRoots()` returns the
+  qualifying roots in that order, `resolveUserDataDir()` the first) —
   `~/.config/Code - Insiders` and `~/.config/Code` on Linux,
   `~/Library/Application Support/Code - Insiders` and `.../Code` on macOS,
   `%APPDATA%\Code - Insiders` and `%APPDATA%\Code` on Windows (falling back

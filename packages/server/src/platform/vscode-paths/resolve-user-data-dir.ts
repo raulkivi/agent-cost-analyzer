@@ -35,16 +35,30 @@ function candidateDirs(
   return [];
 }
 
-export function resolveUserDataDir(options: ResolveUserDataDirOptions = {}): string | null {
+// A variant counts only when its root holds a `User` folder: a bare root (e.g. only
+// "Azure Accounts") is not a VS Code profile. The check goes through `exists`, so a
+// root without `User` is skipped whichever OS path style applies.
+function hasUserFolder(
+  root: string,
+  platform: NodeJS.Platform,
+  exists: (candidate: string) => boolean,
+): boolean {
+  const join = platform === "win32" ? path.win32.join : path.posix.join;
+  return exists(join(root, "User"));
+}
+
+// Qualifying roots in preference order: Insiders first, then Stable.
+export function listVscodeUserDataRoots(options: ResolveUserDataDirOptions = {}): string[] {
   const platform = options.platform ?? process.platform;
   const homeDir = options.homeDir ?? homedir();
   const env = options.env ?? process.env;
   const exists = options.exists ?? existsSync;
 
-  for (const candidate of candidateDirs(platform, homeDir, env)) {
-    if (exists(candidate)) {
-      return candidate;
-    }
-  }
-  return null;
+  return candidateDirs(platform, homeDir, env).filter((root) =>
+    hasUserFolder(root, platform, exists),
+  );
+}
+
+export function resolveUserDataDir(options: ResolveUserDataDirOptions = {}): string | null {
+  return listVscodeUserDataRoots(options)[0] ?? null;
 }
