@@ -586,6 +586,12 @@
           "destructiveHint": false,
           "idempotentHint": true,
           "openWorldHint": false
+        },
+        "_meta": {
+          "ui": {
+            "resourceUri": "ui://agent-cost-analyzer/views.html"
+          },
+          "ui/resourceUri": "ui://agent-cost-analyzer/views.html"
         }
       },
       {

@@ -30,7 +30,9 @@ const INCREMENT3_VIEW_TOOLS = [
   "list_sessions",
 ];
 const BILLING_VIEW_TOOLS = ["get_statement", "estimate_cost"];
-const VIEW_TOOLS = [...MVP_VIEW_TOOLS, ...COST_ANALYSIS_VIEW_TOOLS, ...INCREMENT3_VIEW_TOOLS];
+// SR20: U18 SavingsView for get_savings_report.
+const SAVINGS_VIEW_TOOLS = ["get_savings_report"];
+const VIEW_TOOLS = [...MVP_VIEW_TOOLS, ...COST_ANALYSIS_VIEW_TOOLS, ...INCREMENT3_VIEW_TOOLS, ...SAVINGS_VIEW_TOOLS];
 const URI = "ui://agent-cost-analyzer/views.html";
 
 type Tools = Awaited<ReturnType<Client["listTools"]>>["tools"];
@@ -53,7 +55,7 @@ describe("registerAppViews", () => {
     expect(client.getServerCapabilities()?.resources).toBeUndefined();
   });
 
-  it("with appViews, adds only get_turn_series and _meta.ui on exactly the fifteen tools (23 standalone)", async () => {
+  it("with appViews, adds only get_turn_series and _meta.ui on exactly the sixteen tools (23 standalone)", async () => {
     const plain = await connectCostFixture();
     const withViews = await connectCostFixture({ appViews });
     client = withViews.client;
@@ -132,6 +134,13 @@ describe("registerAppViews", () => {
     }
   });
 
+  it("names the U18 view on get_savings_report without changing the tool count (SR20)", async () => {
+    ({ client } = await connectCostFixture({ appViews }));
+    const { tools } = await client.listTools();
+    expect(tools).toHaveLength(23);
+    expect(byName(tools, "get_savings_report")!._meta).toEqual({ ui: { resourceUri: URI }, "ui/resourceUri": URI });
+  });
+
   // A24 §3 pattern, extended to Increment 3: a client without MCP Apps support reads text alone.
   it("answers the Increment 3 tools with plain text: no HTML, ui:// or view reference", async () => {
     ({ client } = await connectCostFixture({ appViews }));
@@ -162,7 +171,7 @@ describe("registerAppViews", () => {
     ({ client } = await connectCostFixture({ appViews, toolGroups: WITHOUT_BILLING_TOOL_GROUPS }));
     const { tools } = await client.listTools();
     for (const name of BILLING_VIEW_TOOLS) expect(byName(tools, name), name).toBeUndefined();
-    expect(tools.filter((tool) => tool._meta?.ui !== undefined && tool.name !== "get_turn_series")).toHaveLength(13);
+    expect(tools.filter((tool) => tool._meta?.ui !== undefined && tool.name !== "get_turn_series")).toHaveLength(14);
     // Nothing in any tool's _meta points at a billing view either.
     expect(JSON.stringify(tools.map((tool) => tool._meta ?? {}))).not.toMatch(/statement|estimate|billing|U14|U15/i);
   });
@@ -184,7 +193,7 @@ describe("registerAppViews", () => {
     ({ client } = await connectCostFixture({ appViews, toolGroups: MCP_TOOL_GROUPS.filter((group) => group !== "costAnalysis") }));
     const { tools } = await client.listTools();
     for (const name of COST_ANALYSIS_VIEW_TOOLS) expect(byName(tools, name), name).toBeUndefined();
-    const expected = [...MVP_VIEW_TOOLS, ...INCREMENT3_VIEW_TOOLS].filter((name) => byName(tools, name) !== undefined);
+    const expected = [...MVP_VIEW_TOOLS, ...INCREMENT3_VIEW_TOOLS, ...SAVINGS_VIEW_TOOLS].filter((name) => byName(tools, name) !== undefined);
     expect(expected.length).toBeGreaterThan(MVP_VIEW_TOOLS.length);
     expect(tools.filter((tool) => tool._meta?.ui !== undefined).map((tool) => tool.name).sort()).toEqual([...expected, "get_turn_series"].sort());
   });

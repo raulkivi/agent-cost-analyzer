@@ -1,0 +1,54 @@
+/* SPDX-FileCopyrightText: 2026 Raul Kivi
+   SPDX-License-Identifier: MIT
+*/
+/* U18 SavingsView (docs/plans/savings-report.md §8, boards Savings.dc.html).
+   Host tokens only; no colour literals (§5.4). Bars are decoration: solid to
+   the low end, hatched to the high end; the words carry the meaning. */
+
+.sv-section { gap: 6px; }
+.sv-section h2 { margin: 0; font-size: 13px; font-weight: 600; }
+.sv-basis, .sv-note { margin: 0; font-size: 11px; line-height: 1.4; }
+.sv-truncation { margin: 0; font-size: 12px; font-weight: 600; }
+.sv-empty { margin: 0; font-size: 13px; }
+.sv-list { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--color-divider); }
+.sv-row { border-bottom: 1px solid var(--color-divider); min-width: 0; }
+.sv-row-button { display: flex; align-items: flex-start; gap: 8px; width: 100%; padding: 7px 0; border: 0; background: none; font: inherit; color: inherit; text-align: left; cursor: pointer; min-width: 0; }
+.sv-rank { flex: 0 0 18px; width: 18px; height: 18px; border: 1px solid var(--color-divider); border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; color: var(--color-text-muted); margin-top: 1px; }
+.sv-sim-off { border: 1px dashed var(--color-divider); padding: 6px 8px; }
+.sv-main { display: flex; flex-direction: column; gap: 2px; flex: 1 1 auto; min-width: 0; }
+.sv-title { font-size: 13px; font-weight: 600; }
+.sv-subject { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; font-size: 12px; min-width: 0; }
+.sv-subject-text { overflow-wrap: anywhere; }
+.sv-coverage { font-size: 11px; line-height: 1.4; }
+.sv-amount { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; flex: 0 1 auto; min-width: 0; text-align: right; }
+.sv-amount-text { font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.sv-reason { font-size: 11px; line-height: 1.4; max-width: 24ch; overflow-wrap: anywhere; }
+.sv-chevron { flex-shrink: 0; margin-top: 3px; color: var(--color-accent-text); transition: transform 0.12s; }
+.sv-chevron-open { transform: rotate(90deg); }
+.sv-bar { position: relative; display: block; width: 120px; max-width: 100%; height: 8px; border: 1px solid var(--color-text-muted); background: var(--color-divider); overflow: hidden; }
+.sv-bar i { position: absolute; top: 0; bottom: 0; }
+.sv-bar-sure { left: 0; background: var(--color-accent-fill); }
+.sv-bar-maybe { background: repeating-linear-gradient(135deg, var(--color-accent-fill) 0 2px, transparent 2px 5px); }
+.sv-bar-sim .sv-bar-maybe { background: repeating-linear-gradient(135deg, var(--color-accent-fill) 0 1px, transparent 1px 4px); }
+.sv-detail { display: flex; flex-direction: column; gap: 8px; padding: 4px 0 10px 24px; min-width: 0; overflow-wrap: anywhere; }
+.sv-window { margin: 0; font-size: 12px; }
+.sv-kv { display: flex; flex-direction: column; gap: 2px; margin: 0; font-size: 12px; }
+.sv-kv-row { display: flex; gap: 8px; }
+.sv-kv-row dt { flex: 0 0 120px; color: var(--color-text-muted); }
+.sv-kv-row dd { margin: 0; font-variant-numeric: tabular-nums; }
+.sv-block { display: flex; flex-direction: column; gap: 3px; }
+.sv-block h3 { margin: 0; font-size: 12px; font-weight: 600; }
+.sv-action { margin: 0; font-size: 12px; line-height: 1.45; }
+.sv-sessions { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 3px; }
+.sv-sessions li { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; font-size: 12px; }
+.sv-id { font-family: var(--font-mono, ui-monospace, monospace); }
+.sv-na { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; font-size: 12px; }
+.sv-na li { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 2fr) auto; gap: 4px 10px; padding: 5px 0; border-bottom: 1px solid var(--color-divider); overflow-wrap: anywhere; }
+
+@media (max-width: 480px) {
+  .sv-row-button { flex-wrap: wrap; }
+  .sv-amount { align-items: flex-start; text-align: left; flex-basis: 100%; padding-left: 24px; }
+  .sv-detail { padding-left: 0; }
+  .sv-kv-row dt { flex-basis: 96px; }
+  .sv-na li { grid-template-columns: 1fr; }
+}

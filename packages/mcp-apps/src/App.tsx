@@ -17,6 +17,7 @@ import { EstimateView } from "./views/EstimateView.js";
 import { AuditView } from "./views/AuditView.js";
 import { SessionPickerView } from "./views/SessionPickerView.js";
 import { ReplayView } from "./views/ReplayView.js";
+import { SavingsView } from "./views/SavingsView.js";
 import { NoViewState } from "./views/NoViewState.js";
 
 // Depends on the port only (DIP): the host, the brand and the data come in.
@@ -59,6 +60,8 @@ export function App({ port, brand, clipboard }: { port: AppHostPort; brand: View
       return <SessionPickerView port={port} brand={brand} result={result} />;
     case "replay":
       return <ReplayView port={port} brand={brand} result={result} />;
+    case "savings":
+      return <SavingsView port={port} brand={brand} clipboard={clipboard} result={result} />;
     default:
       return <NoViewState brand={brand} />;
   }

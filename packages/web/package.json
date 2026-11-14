@@ -28,6 +28,7 @@
     "./lib/cost/series-model": "./src/lib/cost/series-model.ts",
     "./lib/cost/series-colors": "./src/lib/cost/series-colors.ts",
     "./lib/cost/project-model": "./src/lib/cost/project-model.ts",
+    "./lib/savings/savings-view": "./src/lib/savings/savings-view.ts",
     "./replay/SimulatedBadge": "./src/components/replay/SimulatedBadge.tsx",
     "./replay/ReplayPricingNote": "./src/components/replay/ReplayPricingNote.tsx"
   },

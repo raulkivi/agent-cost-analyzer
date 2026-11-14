@@ -36,6 +36,8 @@ export const APP_VIEW_TOOL_NAMES: readonly string[] = [
   "get_session_audit",
   "get_audit_rollup",
   "list_sessions",
+  // SR20: U18 SavingsView.
+  "get_savings_report",
 ];
 
 export function viewsResourceUri(identity: McpIdentity): string {

@@ -21,6 +21,7 @@ describe("selectView", () => {
     ["get_statement", "statement"],
     ["estimate_cost", "estimate"],
     ["replay_session", "replay"],
+    ["get_savings_report", "savings"],
     ["compare_models_for_session", "replay"],
   ])("routes toolInfo.tool.name %s to %s", (name, view) => {
     expect(selectView({ toolInfo: { tool: { name } } }, undefined)).toEqual({ view });
@@ -45,7 +46,9 @@ describe("selectView", () => {
     ["ai-credits-analyzer-get_price_changes", "price-changes"],
     ["mcp_aicreditsanal_get_price_changes", "price-changes"],
     ["ai-credits-analyzer-replay_session", "replay"],
+    ["ai-credits-analyzer-get_savings_report", "savings"],
     ["mcp_aicreditsanal_compare_models_for_session", "replay"],
+    ["mcp_aicreditsanal_get_savings_report", "savings"],
   ])("routes VS Code's server-prefixed toolCall.toolName %s to %s", (toolName, view) => {
     expect(selectView({ toolCall: { toolName } }, undefined)).toEqual({ view });
   });
@@ -120,6 +123,14 @@ describe("selectView", () => {
     expect(selectView({}, { total: 2, sessions: "x" })).toEqual({ view: "none" });
     expect(selectView({}, { ...rollupShape, ...rollupAudit })).toEqual({ view: "cost-rollup" });
     expect(selectView({}, { ...rollupAudit, topFailingCommands: undefined })).toEqual({ view: "none" });
+  });
+
+  // SR20: get_savings_report, by name and, as a last resort, by its shape.
+  it("routes the savings report shape, and nothing that merely has opportunities", () => {
+    const report = { window: { since: "2026-10-15", until: "2026-11-13", days: 30 }, pricing: "as-of-use", includeSimulated: false, opportunities: [], opportunitiesTotal: 0, simulated: [], simulatedTotal: 0, notAnalysed: [] };
+    expect(selectView({}, report)).toEqual({ view: "savings" });
+    expect(selectView({}, { ...report, notAnalysed: undefined })).toEqual({ view: "none" });
+    expect(selectView({}, { ...report, includeSimulated: "no" })).toEqual({ view: "none" });
   });
 
   // A27: replay_session and compare_models_for_session answer with simulated
