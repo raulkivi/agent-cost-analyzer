@@ -155,6 +155,16 @@ describe("CompareModelsView", () => {
     expect(screen.getByRole("img", { name: /^Simulated total per model, measured \$4\.82: claude-opus-5\.5 \(measured model\) \$4\.79/ })).toBeInTheDocument();
   });
 
+  it("lists the subagent runs the comparison leaves out in the coverage block", async () => {
+    await renderReady({ ...COMPARISON, subagentRuns: { runs: 3, costAiCredits: { known: true, value: 12 } } });
+    expect(screen.getByText("3 subagent runs not replayed: replay covers the main agent only")).toBeInTheDocument();
+  });
+
+  it("shows no subagent line when the comparison has no runs left out", async () => {
+    await renderReady();
+    expect(screen.queryByText(/subagent run/)).toBeNull();
+  });
+
   it("removing a model asks again without it, keeping the own model", async () => {
     await renderReady();
     fireEvent.click(screen.getByRole("button", { name: "Remove grok-4.7 from the comparison" }));

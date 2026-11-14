@@ -326,6 +326,15 @@ describe("ReplayView, replay mode", () => {
     expect(section).toHaveTextContent("Their simulated cost is Unknown, not 0.");
   });
 
+  it("says how many subagent runs the replay leaves out, and nothing without them", () => {
+    const { unmount } = direct();
+    expect(screen.queryByText(/subagent run/)).toBeNull();
+    unmount();
+    const base = boardReplay();
+    direct({ coverage: { ...base.coverage, subagentRuns: { runs: 2, costAiCredits: { known: true, value: 3.5 } } } });
+    expect(screen.getByText("2 subagent runs not replayed: replay covers the main agent only")).toBeInTheDocument();
+  });
+
   it("has no Not replayed section when every turn was replayed", () => {
     const turn = boardReplay().turns[0]!;
     direct({ turns: [turn], coverage: { turns: 1, replayedTurns: 1, requests: 1, replayedRequests: 1, notReplayed: [] }, totals: { measured: { value: 2.09, knownTurns: 1, turns: 1 }, simulated: { value: 1.49, knownTurns: 1, turns: 1 }, difference: -0.6 } });

@@ -70,6 +70,10 @@ export const replayTotalSchema = z
   .refine((total) => total.knownTurns <= total.turns, { message: "knownTurns cannot exceed turns", path: ["knownTurns"] })
   .refine((total) => (total.value === null) === (total.knownTurns === 0), { message: "value is null exactly when no turn is known", path: ["value"] });
 
+// Step 10.19 (D11): subagent runs sit outside the replay (it covers the main
+// agent). Unknown AI Credits keep their reason.
+export const replaySubagentRunsSchema = z.object({ runs: count, costAiCredits: tokenCountSchema }).strict();
+
 export const replayCoverageSchema = z
   .object({
     turns: count,
@@ -77,9 +81,8 @@ export const replayCoverageSchema = z
     requests: count,
     replayedRequests: count,
     notReplayed: z.array(z.object({ reason: z.string().min(1), turns: count }).strict()),
-    // Step 10.19 (D11): subagent runs sit outside the replay (it covers the main
-    // agent); absent when no run was read. Unknown AI Credits keep their reason.
-    subagentRuns: z.object({ runs: count, costAiCredits: tokenCountSchema }).strict().optional(),
+    // Absent when no run was read.
+    subagentRuns: replaySubagentRunsSchema.optional(),
   })
   .strict()
   .refine((coverage) => coverage.replayedTurns <= coverage.turns, { message: "replayedTurns cannot exceed turns", path: ["replayedTurns"] })
@@ -159,6 +162,8 @@ export const sessionReplayComparisonSchema = z
       )
       .min(1)
       .max(MAX_COMPARED_MODELS),
+    // The runs every entry leaves out, as in a single replay's coverage; absent when no run was read.
+    subagentRuns: replaySubagentRunsSchema.optional(),
   })
   .strict();
 
@@ -168,6 +173,7 @@ export type ReplayPriceChannel = z.infer<typeof replayPriceChannelSchema>;
 export type ReplayPricing = z.infer<typeof replayPricingSchema>;
 export type ReplayTurn = z.infer<typeof replayTurnSchema>;
 export type ReplayTotal = z.infer<typeof replayTotalSchema>;
+export type ReplaySubagentRuns = z.infer<typeof replaySubagentRunsSchema>;
 export type ReplayCoverage = z.infer<typeof replayCoverageSchema>;
 export type ReplaySelfCheck = z.infer<typeof replaySelfCheckSchema>;
 export type ReplayAssumption = z.infer<typeof replayAssumptionSchema>;

@@ -33,6 +33,7 @@ export interface SelfCheckView {
 export interface ReplayCoverageView {
   text: string;
   partial: boolean;
+  subagentRunsText?: string; // "2 subagent runs not replayed: replay covers the main agent only"; absent for none
   notReplayed: { reason: string; turnsText: string }[];
 }
 
@@ -156,10 +157,17 @@ function selfCheckView(check: ReplaySelfCheck | null): SelfCheckView {
   };
 }
 
+function subagentRunsText(coverage: ReplayCoverage): string | undefined {
+  const runs = coverage.subagentRuns?.runs ?? 0;
+  return runs === 0 ? undefined : `${pluralize(runs, "subagent run")} not replayed: replay covers the main agent only`;
+}
+
 function coverageView(coverage: ReplayCoverage): ReplayCoverageView {
+  const subagentText = subagentRunsText(coverage);
   return {
     text: `${formatCount(coverage.replayedTurns)} of ${formatCount(coverage.turns)} turns replayed`,
     partial: coverage.replayedTurns < coverage.turns,
+    ...(subagentText === undefined ? {} : { subagentRunsText: subagentText }),
     notReplayed: coverage.notReplayed.map((group) => ({ reason: group.reason, turnsText: pluralize(group.turns, "turn") })),
   };
 }

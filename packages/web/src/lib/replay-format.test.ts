@@ -11,6 +11,7 @@ import {
   replayCostTitle,
   selfCheckSentence,
   splitAssumption,
+  subagentRunsCostSentence,
 } from "./replay-format.js";
 
 describe("replay formatting (step 14.7)", () => {
@@ -43,6 +44,24 @@ describe("replay formatting (step 14.7)", () => {
     expect(
       coverageSentence({ ...replay.coverage, replayedTurns: 0, notReplayed: [{ reason: "a", turns: 1 }, { reason: "b", turns: 2 }] }),
     ).toBe("0 of 3 turns replayed; 3 not replayed, for 2 reasons");
+  });
+
+  it("lists the subagent runs the replay leaves out, and says nothing for none", () => {
+    const replay = makeReplay();
+    const withRuns = (runs: number, costAiCredits = { known: true as const, value: 42.5 }) => ({ ...replay.coverage, subagentRuns: { runs, costAiCredits } });
+    expect(coverageSentence(withRuns(2))).toBe(
+      "2 of 3 turns replayed; 1 not replayed: A request in this turn has no complete usage figures; 2 subagent runs not replayed: replay covers the main agent only",
+    );
+    expect(coverageSentence(withRuns(1))).toContain("; 1 subagent run not replayed: replay covers the main agent only");
+    expect(coverageSentence(withRuns(0))).toBe(coverageSentence(replay.coverage));
+    expect(coverageSentence(replay.coverage)).not.toContain("subagent");
+  });
+
+  it("words the cost of the runs left out, unknown when it is", () => {
+    expect(subagentRunsCostSentence({ runs: 2, costAiCredits: { known: true, value: 42.5 } })).toBe("Their cost is 42.50 AI Credits.");
+    expect(subagentRunsCostSentence({ runs: 2, costAiCredits: { known: false, reason: "a run log is missing" } })).toBe("Their cost is unknown: a run log is missing");
+    expect(subagentRunsCostSentence(undefined)).toBeUndefined();
+    expect(subagentRunsCostSentence({ runs: 0, costAiCredits: { known: true, value: 0 } })).toBeUndefined();
   });
 
   it("words the self-check both ways, and never rounds a failure up to 100%", () => {
