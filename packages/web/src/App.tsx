@@ -703,10 +703,8 @@ export function App({ performanceMarks = pagePerformanceMarks }: AppProps = {}) 
         displayName={productProfile?.displayName}
         providerSelect={features.providerSelect}
         profilePending={!profileSettled}
+        statusText={health ? `status: ${health.status} · v${health.version}` : "Checking server…"}
       />
-      <p className="text-muted app-status" style={{ fontSize: 11, margin: "var(--space-2) var(--space-4) 0" }}>
-        {health ? `status: ${health.status} · v${health.version}` : "Checking server…"}
-      </p>
       {fetchError && (
         <p
           role="alert"
@@ -856,7 +854,7 @@ export function App({ performanceMarks = pagePerformanceMarks }: AppProps = {}) 
                   <AssumptionsPopover assumptions={simulationProfile.assumptions} />
                 </div>
               )}
-              <div style={mode === "analyze" ? { marginTop: "var(--space-3)" } : undefined}>
+              <div className={mode === "analyze" ? "analyze-center-body" : undefined}>
               {showSavings ? (
                 savingsTab
               ) : showDashboard ? (

@@ -412,6 +412,9 @@ a { color: var(--color-accent-text); text-underline-offset: 3px; }
 .insights-listbox-group { display: flex; flex-direction: column; gap: var(--space-2); }
 .insights-main { display: flex; flex-direction: column; gap: var(--space-4); min-width: 0; }
 /* Phase 15 step 15.6: the cost tile's basis switch (Preferred / Billed / Reported / Priced). */
+.toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-4); }
+.app-status--inline { font-size: 11px; margin-left: var(--space-2); }
+.analyze-center-body { margin-top: var(--space-2); }
 .insights-cost-basis { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
 .insights-narrative { margin: 0; padding-left: 1.2em; font-size: 13px; display: flex; flex-direction: column; gap: 4px; }
 /* — Phase 15 step 15.9: the Dashboard's Cost over time and Compare tabs

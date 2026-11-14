@@ -185,6 +185,11 @@ export function InsightsDashboard({
 }: InsightsDashboardProps) {
   const [editingProjects, setEditingProjects] = useState(false);
   const [preset, setPreset] = useState<RangePreset>("30");
+  // View and cost basis live here, beside the one toolbar that controls them,
+  // so the toolbar stays mounted (and keeps focus) across loading and ready.
+  const [dashboardView, setDashboardView] = useState<DashboardView>("overview");
+  const [costBasis, setCostBasis] = useState<CostBasisChoice>("preferred");
+  const [measure, width] = useContainerWidth<HTMLDivElement>();
   const [nowTime] = useState(() => (now ?? new Date()).getTime());
   // The load is cancellable (Cancel on its skeleton): the signal reaches the
   // transport, which stops waiting (and tells the extension host to).
@@ -194,11 +199,24 @@ export function InsightsDashboard({
   );
   const { state, cancel, retry } = useCancellableLoad(loadFor);
 
+  const title = crossProvider ? "Insights across all providers" : "Insights";
+  const bodyShown = state.kind === "ready" && state.data.sessions.length > 0;
+  const viewOptions = viewOptionsFor(costAnalysis, projectsAndBilling, savings !== undefined);
+
+  // A new range starts over on Overview, as the remounted body used to.
+  function changeRange(next: RangePreset) {
+    setPreset(next);
+    setDashboardView("overview");
+    setCostBasis("preferred");
+  }
+
   if (editingProjects) {
     return (
       <ProjectsEditor
         onBack={() => {
           setEditingProjects(false);
+          setDashboardView("overview");
+          setCostBasis("preferred");
           retry();
         }}
         {...(billing.loadProjects ? { loadProjects: billing.loadProjects } : {})}
@@ -209,11 +227,24 @@ export function InsightsDashboard({
   }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-4)" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: "var(--space-3)", flexWrap: "wrap" }}>
-        <h3 style={{ margin: 0 }}>{crossProvider ? "Insights across all providers" : "Insights"}</h3>
-        <SegmentedControl name="insights-range" options={RANGE_OPTIONS} value={preset} onChange={setPreset} />
-      </div>
+    <div ref={measure} style={{ display: "flex", flexDirection: "column", gap: "var(--space-4)" }}>
+      <DashboardToolbar title={title} preset={preset} onPresetChange={changeRange}>
+        {bodyShown && viewOptions.length > 1 && (
+          <ViewSwitch
+            value={dashboardView}
+            onChange={setDashboardView}
+            options={viewOptions}
+            asSelect={width !== undefined && width > 0 && width < VIEW_SELECT_BELOW}
+            note={projectsAndBilling || !costAnalysis ? undefined : PROJECTS_AND_BILLING_ELSEWHERE}
+          />
+        )}
+        {bodyShown && dashboardView === "overview" && (
+          <div className="insights-cost-basis" role="group" aria-label="Cost basis for totals">
+            <span className="text-muted" style={{ fontSize: 12 }}>Cost basis for totals</span>
+            <SegmentedControl name="insights-cost-basis" options={COST_BASIS_OPTIONS} value={costBasis} onChange={setCostBasis} />
+          </div>
+        )}
+      </DashboardToolbar>
       <AsyncView
         status={
           state.kind === "ready"
@@ -246,8 +277,6 @@ export function InsightsDashboard({
           <DashboardBody
             dataset={state.data}
             crossProvider={crossProvider}
-            costAnalysis={costAnalysis}
-            projectsAndBilling={projectsAndBilling}
             now={new Date(nowTime)}
             loadCostSeries={loadCostSeries}
             loadCostComparison={loadCostComparison}
@@ -255,6 +284,8 @@ export function InsightsDashboard({
             loadCostVariance={loadCostVariance}
             billing={billing}
             savings={savings}
+            dashboardView={dashboardView}
+            costBasis={costBasis}
             onEditProjects={() => setEditingProjects(true)}
             key={state.data.generatedAt + preset}
           />
@@ -283,8 +314,6 @@ function providerNotes(dataset: InsightsDataset): string[] {
 interface DashboardBodyProps {
   dataset: InsightsDataset;
   crossProvider: boolean;
-  costAnalysis: boolean;
-  projectsAndBilling: boolean;
   now: Date;
   loadCostSeries?: InsightsDashboardProps["loadCostSeries"];
   loadCostComparison?: InsightsDashboardProps["loadCostComparison"];
@@ -292,6 +321,8 @@ interface DashboardBodyProps {
   loadCostVariance?: InsightsDashboardProps["loadCostVariance"];
   billing: BillingDeps;
   savings?: ReactNode;
+  dashboardView: DashboardView;
+  costBasis: CostBasisChoice;
   onEditProjects: () => void;
 }
 
@@ -306,14 +337,12 @@ function costOrders(dataset: InsightsDataset): CostOrders {
   return { project: (dataset.projects ?? []).map((project) => project.id), repository: [...repositories].sort() };
 }
 
-function DashboardBody({ dataset, crossProvider, costAnalysis, projectsAndBilling, now, loadCostSeries, loadCostComparison, loadProjectCost, loadCostVariance, billing, savings, onEditProjects }: DashboardBodyProps) {
+function DashboardBody({ dataset, crossProvider, now, loadCostSeries, loadCostComparison, loadProjectCost, loadCostVariance, billing, savings, dashboardView, costBasis, onEditProjects }: DashboardBodyProps) {
   const model = useMemo(() => createInsightsModel(dataset), [dataset]);
   const orders = useMemo(() => costOrders(dataset), [dataset]);
-  const [dashboardView, setDashboardView] = useState<DashboardView>("overview");
   const [measure, mainWidth] = useContainerWidth<HTMLDivElement>();
   const engine = useMemo(() => createAssociativeEngine(model), [model]);
   const [history, setHistory] = useState(emptyHistory);
-  const [costBasis, setCostBasis] = useState<CostBasisChoice>("preferred");
   const selections = history.present;
   const evaluation = useMemo(() => engine.evaluate(selections), [engine, selections]);
 
@@ -355,22 +384,10 @@ function DashboardBody({ dataset, crossProvider, costAnalysis, projectsAndBillin
     .join(", ");
   const highOrWorse = kpis.securityFindingsBySeverity.critical + kpis.securityFindingsBySeverity.high;
 
-  const viewOptions = viewOptionsFor(costAnalysis, projectsAndBilling, savings !== undefined);
-  const switchView = (
-    <ViewSwitch
-      value={dashboardView}
-      onChange={setDashboardView}
-      options={viewOptions}
-      asSelect={mainWidth !== undefined && mainWidth > 0 && mainWidth < VIEW_SELECT_BELOW}
-      note={projectsAndBilling || !costAnalysis ? undefined : PROJECTS_AND_BILLING_ELSEWHERE}
-    />
-  );
-
   // The Savings tab has no field list boxes or selections: it is its own report.
   if (dashboardView === "savings" && savings !== undefined) {
     return (
       <div className="insights-main" ref={measure}>
-        {switchView}
         {savings}
       </div>
     );
@@ -402,8 +419,7 @@ function DashboardBody({ dataset, crossProvider, costAnalysis, projectsAndBillin
       </aside>
 
       <div className="insights-main" ref={measure}>
-        {viewOptions.length > 1 && switchView}
-        <CurrentSelections
+                <CurrentSelections
           selections={selections}
           fieldLabel={fieldLabel}
           valueLabel={valueLabel}
@@ -470,11 +486,6 @@ function DashboardBody({ dataset, crossProvider, costAnalysis, projectsAndBillin
               </ul>
             </section>
           </Blueprint>
-
-          <div className="insights-cost-basis" role="group" aria-label="Cost basis for totals">
-            <span className="text-muted" style={{ fontSize: 12 }}>Cost basis for totals</span>
-            <SegmentedControl name="insights-cost-basis" options={COST_BASIS_OPTIONS} value={costBasis} onChange={setCostBasis} />
-          </div>
 
           <div className="stat-tiles">
             <StatTile
@@ -644,6 +655,24 @@ function DashboardBody({ dataset, crossProvider, costAnalysis, projectsAndBillin
           </>
         )}
       </div>
+    </div>
+  );
+}
+
+interface DashboardToolbarProps {
+  title: string;
+  preset: RangePreset;
+  onPresetChange: (preset: RangePreset) => void;
+  children?: ReactNode;
+}
+
+// One wrapping row: title, range, then the body's view switch and cost basis.
+function DashboardToolbar({ title, preset, onPresetChange, children }: DashboardToolbarProps) {
+  return (
+    <div className="toolbar">
+      <h3 style={{ margin: 0 }}>{title}</h3>
+      <SegmentedControl name="insights-range" options={RANGE_OPTIONS} value={preset} onChange={onPresetChange} />
+      {children}
     </div>
   );
 }

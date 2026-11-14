@@ -37,6 +37,8 @@ interface AppHeaderProps {
   // empty and there's no provider select, so the extension never flashes
   // the standalone wordmark or select first (step 10.7, found in 10.5).
   profilePending?: boolean;
+  // Server health line; sits in the header so it costs no row of its own.
+  statusText?: string;
 }
 
 const DEFAULT_DISPLAY_NAME = "Session Analyzer";
@@ -54,6 +56,7 @@ export function AppHeader({
   displayName = DEFAULT_DISPLAY_NAME,
   providerSelect = true,
   profilePending = false,
+  statusText,
 }: AppHeaderProps) {
   return (
     <header className="nav">
@@ -112,6 +115,9 @@ export function AppHeader({
             }}
           />
         </label>
+      )}
+      {statusText !== undefined && (
+        <span className="text-muted app-status app-status--inline">{statusText}</span>
       )}
       {hasConfigWarnings ? (
         <button
