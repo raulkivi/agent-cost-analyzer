@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.15.0] - 2026-11-14
+
 ### Added
 - The chat views label figures priced from a price version you added "your prices", as the app does: cost over time and project cost, compare, cost change, the statement, the estimate and the savings rows. Billed and reported figures never carry it. The VS Code extension reads only the bundled price book, so its views never show the label.
 - Figures priced from a price version you added (`channels.priceVersions` in `projects.json`) are labelled "your prices" in the app, with the version ids in the label's name and tooltip: the Dashboard's Cost tile, Cost over time, Compare, the Project tab, statement lines and the estimate, and the Savings rows. Billed and reported figures never carry it.
