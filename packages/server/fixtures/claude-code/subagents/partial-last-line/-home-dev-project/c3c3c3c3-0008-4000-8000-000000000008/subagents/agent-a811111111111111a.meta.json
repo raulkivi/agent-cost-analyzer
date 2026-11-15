@@ -1,0 +1,7 @@
+{
+  "agentType": "general-purpose",
+  "isBuiltIn": true,
+  "model": "sonnet",
+  "toolUseId": "toolu_pl_call",
+  "spawnDepth": 1
+}
