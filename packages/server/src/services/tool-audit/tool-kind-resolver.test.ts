@@ -20,6 +20,9 @@ describe("resolveToolKind", () => {
     ["mcp__github__get_me", "mcp"],
     ["Task", "subagent"],
     ["Agent", "subagent"],
+    ["searchSubagent", "subagent"],
+    ["search_code_subagent", "subagent"],
+    ["explore_subagent", "subagent"],
     ["manage_todo_list", "other"],
   ])("maps %s to %s", (name, kind) => {
     expect(resolveToolKind(name)).toBe(kind);

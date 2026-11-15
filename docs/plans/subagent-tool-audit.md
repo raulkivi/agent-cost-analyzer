@@ -1,6 +1,6 @@
 # Subagent tool calls in the tool-call audit (step 10.20)
 
-**Last changed:** 2026-11-14 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-15 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 Status: **Plan approved 2026-11-14** (D1–D11 accepted). A 1.0 criterion, C10 in
 [implementation-plan.md](../implementation-plan.md#100-release) (tasks V21
@@ -487,7 +487,7 @@ model in this repo. Specs and the real-data suite are TDD exceptions as in
 | ST2 | Mock-ups (§5.7): Audit tab split and runs table, rollup split, Explanation block, Tools cell tooltip, finding row, U4; known, unread, matched-by-time; light, dark, High Contrast; 320 and 640 px; in `docs/plans/mockups/subagent-tool-audit/` | Owner approves | medium | Sonnet (frontend-design skill) + owner | Plan approved |
 | ST3 | Domain (§5.1): `subagent-run-ids.ts`, `toolCallOriginSchema`, `ToolCallRecord.origin`, audit, rollup, insight row and finding fields | Schema tests: valid, absent = main, depth bounds, hostile label and id rejected; Learn and 10.19 fixtures still parse; CS plan checked against the shape | medium | Sonnet | D1, D8 |
 | ST4 | Fixtures: classic child logs with `ok`/`error` spans (an error text per failure category, a shell call), missing and unreadable log, nested ref, `searchSubagent` without parent call, `explore_subagent` without log, an id in parent and child; Agent Host log with `task` and `search_code_subagent` runs, depth 2, a cancelled run, a refused permission | A test reads each and finds the expected counts | medium | Sonnet | ST0b |
-| ST5 | `tool-kind-resolver.ts`: `searchsubagent`, `search_code_subagent`, `explore_subagent` → `subagent` | Resolver tests | low | Haiku | — |
+| ST5 | **Done 2026-11-15.** `tool-kind-resolver.ts`: `searchsubagent`, `search_code_subagent`, `explore_subagent` → `subagent` | Resolver tests | low | Haiku | — |
 | ST6 | `audit-attrs-projector.ts`, `tool-call-spans.ts`; `buildToolCalls` from spans (D3) | Tests: status mapping, unknown status, `dur`, args bound (50 KB `args` → summary ≤ 300 chars), `result` never kept, list path unchanged | medium | Sonnet | ST3, ST4, D3 |
 | ST7 | `subagent-tool-calls.ts` (§5.2, §5.4, §6) wired into `readClassicSession` | Every classic row of §6 is a test; dedupe property test; no known run with a call left out | high | Opus | ST5, ST6 |
 | ST8 | Agent Host `originOf` and order (§5.3); `subagent.started` kept by the cache | Tests: main, depth 1 and 2, label sources, broken chain, cycle, order | medium | Sonnet | ST3, ST4, D2 |
