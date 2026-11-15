@@ -1,6 +1,6 @@
 # MCP Apps mock-ups (A0b MVP, A17b Increment 2, A25b Increment 3, SR18 savings)
 
-**Last changed:** 2026-11-14 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-15 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 Boards for task A0b in [mcp-apps.md](../../mcp-apps.md) §5.6 and §7. They
 show the MVP views U1, U2 and U3 inside a VS Code Copilot Chat frame and a
@@ -134,3 +134,9 @@ Checks for the savings boards:
   1M tokens as `explain_cost_change` computes them. The extension's
   no-projects text is the real `EXTENSION_NO_PROJECTS_REASON`.
 - All sessions, prompts, findings and figures are invented.
+
+### Savings Increment 3 amendments (V23b)
+
+Amended 2026-11-15 for task V23b in [savings-increment-3.md](../../savings-increment-3.md) §10; **awaiting owner approval** (D32). Open questions are in [../savings-report/README.md](../savings-report/README.md).
+
+- `Savings.dc.html` frame 1: each session's saving now carries its unit ("up to 61.2 AI Credits"). New frames 5 (VS Code Dark Modern) and 6 (Claude Desktop light): the opened "Tools loaded but never used" row with evidence, the per-tool list ("inferred", "estimate", "about", "and 18 more"), the action text, and three sessions with date and saving. Ids only, no titles (D19), and a line saying so. No new control, no Copy, no new host call.
