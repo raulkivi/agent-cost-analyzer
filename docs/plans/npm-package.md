@@ -298,7 +298,8 @@ workflow, does:
 
 - **build** (`contents: read`): today's checks, then `npm pack` once, the
   smoke script on that tarball, and an artifact with the tarball and its
-  SHA-256.
+  SHA-256. A manual `workflow_dispatch` run is a dry run: the build job
+  runs in full and the publish job is skipped.
 - **publish** (`needs: build`, `environment: release`, permissions
   `contents: write` and `id-token: write`): downloads the artifact,
   verifies the SHA-256, sets up Node 22 with
@@ -459,7 +460,7 @@ NP12-NP13 are V18.
 | NP7 | `scripts/npm-package-smoke.mts` and the `npm-package` CI job (§4.8), with the Playwright spec and the MCP client check | Job green on Ubuntu (Node 22.18.0 and 24) | high | Opus | NP6 |
 | NP8 | macOS and Windows: fix what the job finds, test-first | Job green on all three OSes | medium | Sonnet (Opus if the fix crosses modules) | NP7 |
 | NP9 | Add the `npm-package` checks to ruleset 27004539 (D6) | Required, read back through the GitHub API | low | Owner step | NP8 |
-| NP10 | `release-app.yml`: build job packs once and runs the smoke; publish job in `release` with `id-token: write`, exact npm version, SHA-256 check, maintainer check, `npm publish <tarball> --access public`, the tarball on the GitHub Release; `npm audit --omit=dev` gate | The build job runs `npm publish --dry-run <tarball>`; a test tag in a fork runs the build job green and stops at the `release` environment | medium | Sonnet | NP7 |
+| NP10 (done 2026-11-15) | `release-app.yml`: build job packs once and runs the smoke; publish job in `release` with `id-token: write`, exact npm version, SHA-256 check, maintainer check, `npm publish <tarball> --access public`, the tarball on the GitHub Release; `npm audit --omit=dev` gate | The build job runs `npm publish --dry-run <tarball>`; a `workflow_dispatch` dry run on `main` runs the build job green; the publish job runs only on `app-v*` tags (owner 2026-11-15: dry run in this repository, no fork) | medium | Sonnet | NP7 |
 | NP11 | Trusted publisher on npmjs.com; `app-v*` on the `release` environment; first 0.x release within 2 days (D7); then "disallow tokens", revoke tokens, deprecate placeholders | `npm view agent-cost-analyzer@<version> dist.attestations` shows provenance; environment rule read back through the API | low | Owner step | NP10, NP0, V7 |
 | NP12 | Threat-model rows (§5) and §1, §5.8 updates, citing the test names | Rows written; every cited test exists | low | Sonnet | NP10 |
 | NP13 | Docs (§9) | Each doc updated with its header date; doc tests green | low | Sonnet | NP10 |

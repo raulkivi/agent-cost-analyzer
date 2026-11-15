@@ -87,6 +87,20 @@ test("the release attaches the tarball and verifies the tag", () => {
   assert.match(run, /--verify-tag/);
 });
 
+test("a manual dispatch is a dry run: build only, publish never", () => {
+  assert.ok("workflow_dispatch" in workflow.on);
+  assert.deepEqual(workflow.on.push.tags, ["app-v*"]);
+  assert.match(publish.if, /event_name == 'push'/);
+  assert.match(publish.if, /startsWith\(github\.ref, 'refs\/tags\/app-v'\)/);
+  assert.equal(build.if, undefined);
+});
+
+test("the version check still runs on a dispatch, with the tag taken from package.json", () => {
+  const check = build.steps.find((s) => s.id === "check");
+  assert.match(check.run, /workflow_dispatch/);
+  assert.match(check.run, /release-check\.mts "\$TAG" app-v package\.json --also packages\/cli\/package\.json/);
+});
+
 test("third-party actions are pinned to a commit SHA", () => {
   for (const job of [build, publish]) {
     for (const step of job.steps) {

@@ -6,7 +6,9 @@ name: Release Agent Cost Analyzer
 # build job tests and packs once; the publish job, in the `release`
 # environment, publishes exactly that tarball (SHA-256 checked) through npm
 # trusted publishing (OIDC), which also attaches the provenance attestation.
-# No npm token or secret exists. Setup is the owner's, before the first tag:
+# No npm token or secret exists. A manual run (workflow_dispatch) is a dry
+# run: it builds, tests, packs and dry-runs the publish, and skips publish.
+# Setup is the owner's, before the first tag:
 # an npm trusted publisher on the package (user `raulkivi`, repository
 # `agent-cost-analyzer`, workflow `release-app.yml`, environment `release`;
 # npm expires it unused after 2 days) and `app-v*` added to the `release`
@@ -15,6 +17,8 @@ name: Release Agent Cost Analyzer
 on:
   push:
     tags: ["app-v*"]
+  # A dry run: the build job runs in full, the publish job is skipped.
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -44,10 +48,16 @@ jobs:
       - run: npm ci
 
       # The tag must name the root package.json's version and packages/cli's.
+      # A dispatch has no tag, so it checks the two versions against each
+      # other under the tag the current version would get.
       - id: check
         env:
           TAG: ${{ github.ref_name }}
-        run: node packages/vscode-extension/scripts/release-check.mts "$TAG" app-v package.json --also packages/cli/package.json >> "$GITHUB_OUTPUT"
+        run: |
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
+            TAG="app-v$(node -p "require('./package.json').version")"
+          fi
+          node packages/vscode-extension/scripts/release-check.mts "$TAG" app-v package.json --also packages/cli/package.json >> "$GITHUB_OUTPUT"
 
       - run: npm run lint
       - run: npm run typecheck
@@ -129,6 +139,8 @@ jobs:
 
   publish:
     needs: build
+    # Never on a workflow_dispatch dry run, whatever ref it runs on.
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/app-v')
     runs-on: ubuntu-latest
     environment: release
     permissions:
