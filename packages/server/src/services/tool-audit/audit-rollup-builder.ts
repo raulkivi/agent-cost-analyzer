@@ -104,6 +104,7 @@ export function buildAuditRollup(allAudits: SessionAudit[], options: RollupOptio
     ...(options.until ? { until: options.until } : {}),
     sessionCount: audits.length,
     sessionsWithUnknownToolCalls: allAudits.length - audits.length,
+    sessionsWithUnreadSubagentRuns: audits.filter((audit) => audit.subagentRuns?.some((run) => run.totals === null)).length,
     ...(unknownReason ? { toolCallsUnavailableReason: unknownReason } : {}),
     totals,
     failureRate: failureRateOf(totals),
