@@ -3,6 +3,7 @@
 import { z } from "zod";
 import {
   MAX_SAVINGS_NAME_LENGTH,
+  MAX_SAVINGS_TOOLS,
   pricingModeSchema,
   savingsActionText,
   savingsAmountSchema,
@@ -13,13 +14,16 @@ import {
   savingsOpportunityKindSchema,
   savingsSessionRefSchema,
   savingsSimulationSchema,
+  savingsToolSchema,
   savingsWindowSchema,
+  unlistedTools,
   type SavingsActionParams,
   type SavingsAmount,
   type SavingsEvidence,
   type SavingsOpportunity,
   type SavingsReport,
   type SavingsSessionRef,
+  type SavingsTool,
 } from "@agent-cost-analyzer/domain";
 import { foldName, savingsName } from "../services/savings/savings-names.js";
 import { excerptOf } from "../services/tool-audit/output-redactor.js";
@@ -38,6 +42,9 @@ export const MAX_SAVINGS_TOOL_OPPORTUNITIES = 20;
 export const DEFAULT_SAVINGS_TOOL_OPPORTUNITIES = 10;
 // Session ids per opportunity; sessionsTotal says how many there are.
 export const MAX_SAVINGS_TOOL_SESSIONS = 10;
+// V26 (D26): tools per unused-tools row in the result, and in the text answer.
+export const MAX_SAVINGS_TOOL_TOOLS = MAX_SAVINGS_TOOLS;
+export const MAX_SAVINGS_TEXT_TOOLS = 5;
 const MAX_KEY_LENGTH = MAX_SAVINGS_NAME_LENGTH * 2;
 // The fixed sentences (reasons, assumptions) are shorter than this; it only bounds a stray one.
 const MAX_SENTENCE_LENGTH = 600;
@@ -57,6 +64,9 @@ const opportunityViewSchema = z.object({
   action: z.string().min(1),
   inferred: z.boolean(),
   simulation: savingsSimulationSchema.optional(),
+  // unused-tools only (V26).
+  tools: z.array(savingsToolSchema).max(MAX_SAVINGS_TOOL_TOOLS).optional(),
+  toolsTotal: z.number().int().nonnegative().optional(),
 });
 
 const rankedViewSchema = opportunityViewSchema.extend({ rank: z.number().int().positive() });
@@ -110,6 +120,12 @@ function sessionOf(ref: SavingsSessionRef): SavingsSessionRef {
   return { ...ref, ...(ref.perWindow === undefined ? {} : { perWindow: amountOf(ref.perWindow) }) };
 }
 
+// The name is log-derived, so it is folded, redacted and capped again here; an
+// unknown count keeps its reason, folded and capped like the row's.
+function toolOf(tool: SavingsTool): SavingsTool {
+  return { ...tool, name: savingsName(tool.name), tokens: tool.tokens.known ? tool.tokens : { ...tool.tokens, reason: sentence(tool.tokens.reason) } };
+}
+
 function viewOf(opportunity: SavingsOpportunity): OpportunityView {
   const { simulation, sessions } = opportunity;
   return {
@@ -124,6 +140,8 @@ function viewOf(opportunity: SavingsOpportunity): OpportunityView {
     coverage: { ...opportunity.coverage, notAnalysed: opportunity.coverage.notAnalysed.map((entry) => ({ ...entry, reason: sentence(entry.reason) })) },
     action: actionOf(opportunity),
     inferred: opportunity.inferred,
+    ...(opportunity.tools === undefined ? {} : { tools: opportunity.tools.slice(0, MAX_SAVINGS_TOOL_TOOLS).map(toolOf) }),
+    ...(opportunity.toolsTotal === undefined ? {} : { toolsTotal: opportunity.toolsTotal }),
     ...(simulation
       ? {
           simulation: {
@@ -177,13 +195,29 @@ function sessionText(ref: SavingsSessionRef): string {
   return `${ref.sessionId} (${date}, ${saving})`;
 }
 
+const grouped = (value: number) => value.toLocaleString("en-US");
+
+// `Tools (token estimates per request): a (about 600), ..., and 18 more (about 2,500).`
+// The first MAX_SAVINGS_TEXT_TOOLS only; the structured result has up to 20. An
+// unknown count reads "not known", and the rest's tokens are left out when they can't be said.
+function toolsLine(row: OpportunityView): string | null {
+  if (row.tools === undefined || row.tools.length === 0) return null;
+  const shown = row.tools.slice(0, MAX_SAVINGS_TEXT_TOOLS);
+  const listed = shown.map((tool) => `${tool.name} (${tool.tokens.known ? `about ${grouped(tool.tokens.value)}` : "not known"})`);
+  const rest = unlistedTools(shown, row.toolsTotal ?? row.tools.length, row.evidence.tokens);
+  if (rest.count > 0) listed.push(`and ${rest.count} more${rest.tokens === null ? "" : ` (about ${grouped(rest.tokens)})`}`);
+  return `   Tools (token estimates per request): ${listed.join(", ")}.`;
+}
+
 // Ranked rows are numbered; Simulated rows are bullets (R12): they are never ranked.
 function rowText(row: OpportunityView, marker: string): string {
   const coverage = `${row.coverage.sessionsAnalysed} of ${row.coverage.sessionsInWindow} sessions analysed`;
   const shown = row.sessions.map(sessionText).join(", ");
+  const tools = toolsLine(row);
   return [
     `${marker} [${row.kind}] ${row.subject}: ${amountText(row.perWeek, "per week")}; ${amountText(row.perWindow, "over the window")}${row.inferred ? " (cause inferred)" : ""}`,
     `   ${row.action}`,
+    ...(tools === null ? [] : [tools]),
     `   ${coverage}. Sessions: ${shown || "none"}${row.sessionsTotal > row.sessions.length ? ` and ${row.sessionsTotal - row.sessions.length} more` : ""}.`,
   ].join("\n");
 }

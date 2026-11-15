@@ -549,10 +549,31 @@ const say = (line: string) => {
     expect(near(row!.perWeek.high, mine.high / (claudeReport.window.days / 7)), "per-week high").toBe(true);
     expect(row!.perWindow.label).toBe("range");
 
+    // V26: the per-tool list is the oracle's, tool by tool: at most 20, largest first, each an estimate.
+    const listed = row!.tools ?? [];
+    expect(listed.length, "per-tool list").toBeGreaterThan(0);
+    expect(listed.length, "at most 20 tools").toBeLessThanOrEqual(20);
+    expect(row!.toolsTotal, "toolsTotal is the group's tool count").toBe(mine.perTool.length);
+    const oracleTools = new Map(mine.perTool.map((tool) => [tool.name, tool]));
+    for (const tool of listed) {
+      const expected = oracleTools.get(tool.name);
+      expect(expected, `tool ${tool.name} is in the oracle's group`).toBeDefined();
+      expect(tool.tokens.known && tool.tokens.estimated, `${tool.name}: labeled estimate`).toBe(true);
+      expect(tool.tokens.known ? Math.abs(tool.tokens.value - expected!.tokens) : Number.POSITIVE_INFINITY, `${tool.name}: tokens`).toBeLessThanOrEqual(TOKEN_TOLERANCE);
+      expect(tool.sessions, `${tool.name}: sessions that loaded it`).toBe(expected!.sessions);
+    }
+    const tokensOf = (tool: { tokens: { known: boolean; value?: number } }) => (tool.tokens.known ? tool.tokens.value! : -1);
+    expect(listed.map(tokensOf), "largest first").toEqual([...listed.map(tokensOf)].sort((a, b) => b - a));
+    // The listed tools sum to the row's per-request tokens within rounding, or fall short of it by the unlisted tools.
+    const sumListed = listed.reduce((sum, tool) => sum + tokensOf(tool), 0);
+    if (listed.length === row!.toolsTotal) expect(Math.abs(sumListed - reportedTokens), "listed tools sum to the row").toBeLessThanOrEqual(TOKEN_TOLERANCE * listed.length + listed.length);
+    else expect(sumListed, "listed tools do not exceed the row (more than rounding)").toBeLessThanOrEqual(reportedTokens + listed.length);
+
     say("");
     say(`Unused-tool row "${short(row!.key)}": ${row!.evidence.sessions} sessions loaded it, ${row!.evidence.requests} requests, ${reportedTokens} tokens (estimate) in each request`);
     say(`  report: ${money(row!.perWindow.low)}..${money(row!.perWindow.high)} ${row!.perWindow.currency} over ${claudeReport.window.days} days (${money(row!.perWeek.low)}..${money(row!.perWeek.high)} a week), basis ${row!.perWindow.basis}, label ${row!.perWindow.label}, coverage ${row!.coverage.sessionsAnalysed} of ${row!.coverage.sessionsInWindow} sessions`);
     say(`  oracle: ${money(mine.low)}..${money(mine.high)} USD, ${mine.requests} requests, ${mine.tokensPerSession} tokens; ran in no window session; |diff| ${Math.abs(row!.perWindow.high - mine.high).toExponential(2)}`);
+    say(`  per tool: ${listed.length} of ${row!.toolsTotal} tools listed, largest ${listed[0]?.name} (${tokensOf(listed[0]!)} tokens in ${listed[0]?.sessions} sessions), each equal to the oracle's within ${TOKEN_TOLERANCE} tokens`);
     say(`  by hand: low = tokens x cache-read rate x requests, high = tokens x input rate x requests, per model at the session's first request (rates in ${row!.perWindow.priceVersionIds.length} price versions: ${row!.perWindow.priceVersionIds.join(", ")})`);
   });
 

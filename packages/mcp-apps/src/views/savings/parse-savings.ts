@@ -4,6 +4,11 @@ import type { SavingsViewInput } from "../../view-models/savings.js";
 
 const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === "object" && value !== null;
 
+// V26: a per-tool entry the list formats without a guard.
+function isTool(value: unknown): boolean {
+  return isRecord(value) && typeof value.name === "string" && isRecord(value.tokens) && typeof value.sessions === "number";
+}
+
 // A row the view can read: the fields it formats without a guard. The server
 // has already validated the full shape against its output schema (the zod
 // schemas stay out of the bundle), so this checks only what a wrong shape
@@ -22,6 +27,7 @@ function isRow(value: unknown): boolean {
     isRecord(value.perWeek) &&
     isRecord(value.perWindow) &&
     isRecord(value.coverage) &&
+    (value.tools === undefined || (Array.isArray(value.tools) && value.tools.every(isTool))) &&
     Array.isArray(value.coverage.notAnalysed)
   );
 }

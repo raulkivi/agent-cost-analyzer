@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
 import type { Currency, SavingsAmount, SavingsCoverage, SavingsEvidence, SavingsNotAnalysed, SavingsLeftOut, SavingsOpportunity, SavingsSessionRef, SavingsSimulation, SavingsWindow } from "@agent-cost-analyzer/domain";
-import { amountText, barSegments, CURRENCY_TITLES, KIND_TITLES, notPricedReasons, sessionDateText, sessionSavingText } from "@agent-cost-analyzer/web/lib/savings/savings-view";
+import { amountText, barSegments, CURRENCY_TITLES, KIND_TITLES, notPricedReasons, sessionDateText, sessionSavingText, toolListOf, type ToolListView } from "@agent-cost-analyzer/web/lib/savings/savings-view";
 import { isPlainModelId } from "../views/replay/model-id.js";
 import { pluralize } from "./format.js";
 import { mergeUserPriceIds } from "./user-price.js";
@@ -61,6 +61,8 @@ export interface SavingsRowView {
   bar?: { solid: number; hatched: number };
   windowText: string;
   evidence: { label: string; value: string }[];
+  // V26: unused-tools rows only; tool names are logged text: display only.
+  toolList?: ToolListView;
   action: string; // logged text: display only
   sessions: SessionButtonView[];
   sessionsHeading: string;
@@ -182,6 +184,7 @@ function rowView(row: SavingsRowInput, days: number, rank: number | undefined, m
   const bar = barSegments(perWeek, maxHigh);
   const shown = Math.min(row.sessions.length, MAX_SESSIONS_SHOWN);
   const notPriced = notPricedReasons(row.sessions.slice(0, MAX_SESSIONS_SHOWN));
+  const toolList = toolListOf(row);
   return {
     key: row.key,
     ...(rank === undefined ? {} : { rank }),
@@ -196,6 +199,7 @@ function rowView(row: SavingsRowInput, days: number, rank: number | undefined, m
     ...(bar === null ? {} : { bar }),
     windowText: windowText(row.perWindow, days),
     evidence: evidenceRows(row.kind, row.evidence),
+    ...(toolList === null ? {} : { toolList }),
     action: row.action,
     sessions: sessionButtons(row),
     // The server lists sessions largest first (D16), so a cut list is the largest.

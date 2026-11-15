@@ -11,6 +11,7 @@ import {
   perSessionText,
   sessionDateText,
   sessionSavingText,
+  toolListOf,
   amountText,
   windowAmountText,
 } from "../../lib/savings/savings-view.js";
@@ -87,6 +88,46 @@ function Evidence({ opportunity }: { opportunity: SavingsOpportunity }) {
       <dt>Coverage</dt>
       <dd>{coverageText(opportunity.coverage)}</dd>
     </dl>
+  );
+}
+
+// V26 (board Detail): the per-tool list of an unused-tools row. The names come
+// from the log and are shown as text only.
+function ToolList({ opportunity }: { opportunity: SavingsOpportunity }) {
+  const list = toolListOf(opportunity);
+  if (list === null) return null;
+  return (
+    <section aria-label="Tools" className="savings-block">
+      <h5>{list.heading}</h5>
+      <table className="savings-tools">
+        <thead>
+          <tr>
+            <th scope="col">Tool</th>
+            <th scope="col" className="savings-tools-tokens">
+              Tokens <SavingsLabel kind="dash">estimate</SavingsLabel>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {list.tools.map((tool, index) => (
+            <tr key={`${index}:${tool.name}`}>
+              <td>
+                <code className="savings-tool-name">{tool.name}</code>
+                <div className="text-muted savings-tool-loaded">{tool.loadedText}</div>
+              </td>
+              <td className="savings-tools-tokens">{tool.tokensText}</td>
+            </tr>
+          ))}
+          {list.more !== null && (
+            <tr className="text-muted">
+              <td>{list.more.text}</td>
+              <td className="savings-tools-tokens">{list.more.tokensText}</td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+      <p className="text-muted savings-session-note">{list.note}</p>
+    </section>
   );
 }
 
@@ -225,6 +266,7 @@ export function SavingsDetail({ opportunity, days, providerLabel, openSessionLab
         {opportunity.inferred && <p className="text-muted">The group is read from names in the log, so it is a guess.</p>}
       </section>
 
+      <ToolList opportunity={opportunity} />
       <ReplayChecks opportunity={opportunity} />
       <ActionBlock opportunity={opportunity} copyToClipboard={copyToClipboard} />
 

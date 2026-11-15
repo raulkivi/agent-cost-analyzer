@@ -1,10 +1,9 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import type { Session } from "@agent-cost-analyzer/domain";
+import type { AllowanceSettings, Session } from "@agent-cost-analyzer/domain";
 import { describe, expect, it } from "vitest";
 import { upperCaseTranslate as T } from "../l10n/upper-case-translate.js";
 import type { Translate } from "../l10n/localize.js";
-import type { AllowanceSettings } from "../settings/allowance-settings.js";
 import { buildMonthlyAllowance, type MonthlyAllowanceView } from "../status-bar/monthly-allowance.js";
 import { buildSessionsTree, sessionsLoadErrorTree, withAllowanceRow } from "./sessions-tree-model.js";
 

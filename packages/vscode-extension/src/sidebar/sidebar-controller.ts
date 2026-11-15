@@ -1,11 +1,9 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import type { ConfigStatus, RepositoryAttribution, Session } from "@agent-cost-analyzer/domain";
+import { periodOf, type AllowanceSettings, type ConfigStatus, type RepositoryAttribution, type Session } from "@agent-cost-analyzer/domain";
 import { identityTranslate, type Translate } from "../l10n/localize.js";
 import type { Disposable } from "../panel/analyzer-panel.js";
-import type { AllowanceSettings } from "../settings/allowance-settings.js";
 import { buildMonthlyAllowance, type MonthlyAllowanceView } from "../status-bar/monthly-allowance.js";
-import { periodOf } from "../time/billing-period.js";
 import { buildStatusBarState, type StatusBarState } from "../status-bar/status-bar-model.js";
 import { buildLearnTree, learnLoadErrorTree, type LearnTreeNode } from "./learn-tree-model.js";
 import { buildSessionsByRepositoryTree, type RepositoryOf } from "./sessions-by-repository-tree-model.js";

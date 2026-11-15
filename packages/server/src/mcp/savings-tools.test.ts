@@ -218,7 +218,7 @@ describe("get_savings_report answer", () => {
       sessions: [{ providerId: "claude-code", sessionId: "s-1" }],
       inferred: false,
     });
-    expect(row.action).toMatch(/^tool-1 failed 3 times in 1 sessions: install it/);
+    expect(row.action).toMatch(/^tool-1 failed 3 times in 1 session: install it/);
     expect(result.window).toEqual(WINDOW);
   });
 
@@ -383,6 +383,90 @@ describe("get_savings_report hostile names", () => {
       const result = structured(await call(await connect(new FakeSavings(reportOf([opportunity(1, { sessions: sessionsWith, perWindow: known(0.5, 1.2) })])))));
 
       expect(Object.keys(result.opportunities[0]!.sessions[0]).sort()).toEqual(["perWindow", "providerId", "sessionId", "startedAt"]);
+    });
+  });
+
+  // V26 (savings-increment-3.md §6, D26): per-tool tokens on unused-tools rows.
+  describe("per-tool tokens of an unused-tools row", () => {
+    const est = (value: number) => ({ known: true as const, value, estimated: true as const });
+    const toolsOf = (count: number) => Array.from({ length: count }, (_, index) => ({ name: `mcp_github_tool_${String(index).padStart(2, "0")}`, tokens: est(600 - index * 10), sessions: 31 - index }));
+    const unused = (tools: Row[], toolsTotal: number, overrides: Partial<SavingsOpportunity> = {}): SavingsOpportunity =>
+      opportunity(1, {
+        key: "unused-tools:github:USD",
+        kind: "unused-tools",
+        subject: "github",
+        evidence: { sessions: 31, requests: 900, tokens: est(5400), occurrences: null },
+        actionParams: { group: "github", tools: toolsTotal, tokens: 5400, sessions: 31, days: 30 },
+        inferred: true,
+        tools: tools as never,
+        toolsTotal,
+        ...overrides,
+      });
+
+    it("carries up to 20 tools and the group's total in the structured result", async () => {
+      const row = structured(await call(await connect(new FakeSavings(reportOf([unused(toolsOf(20), 23)]))))).opportunities[0]!;
+
+      expect(row.tools).toHaveLength(20);
+      expect(row.tools[0]).toEqual({ name: "mcp_github_tool_00", tokens: est(600), sessions: 31 });
+      expect(row.toolsTotal).toBe(23);
+    });
+
+    it("cuts a longer list to 20 even if a detector gave more", async () => {
+      const row = structured(await call(await connect(new FakeSavings(unvalidatedReport([unused(toolsOf(30), 30)]))))).opportunities[0]!;
+
+      expect(row.tools).toHaveLength(20);
+    });
+
+    it("lists the first 5 tools in the text with 'and N more' and the rest's tokens", async () => {
+      const text = textOf(await call(await connect(new FakeSavings(reportOf([unused(toolsOf(20), 23)])))));
+
+      // 600+590+580+570+560 = 2,900 of 5,400: 2,500 for the other 18.
+      expect(text).toContain("Tools (token estimates per request): mcp_github_tool_00 (about 600), mcp_github_tool_01 (about 590), mcp_github_tool_02 (about 580), mcp_github_tool_03 (about 570), mcp_github_tool_04 (about 560), and 18 more (about 2,500).");
+      expect(text).not.toContain("mcp_github_tool_05");
+    });
+
+    it("lists a short list whole, without 'and N more'", async () => {
+      const text = textOf(await call(await connect(new FakeSavings(reportOf([unused(toolsOf(2), 2, { evidence: { sessions: 31, requests: 900, tokens: est(1190), occurrences: null } })])))));
+
+      expect(text).toContain("Tools (token estimates per request): mcp_github_tool_00 (about 600), mcp_github_tool_01 (about 590).");
+    });
+
+    it("leaves the rest's tokens out when they can't be said, never printing 0", async () => {
+      const unknownTotal = unused(toolsOf(6), 9, { evidence: { sessions: 31, requests: 900, tokens: { known: false, reason: "No sizes." }, occurrences: null } });
+      const text = textOf(await call(await connect(new FakeSavings(reportOf([unknownTotal])))));
+
+      expect(text).toContain("and 4 more.");
+      expect(text).not.toContain("and 4 more (about");
+    });
+
+    it("keeps an unknown per-tool count unknown with its reason, folded and capped", async () => {
+      const tools = [{ name: "t", tokens: { known: false, reason: `ghp_${"a".repeat(36)}\n${"z".repeat(900)}` }, sessions: 1 }];
+      const result = await call(await connect(new FakeSavings(unvalidatedReport([unused(tools, 1)]))));
+      const out = structured(result).opportunities[0]!.tools[0].tokens.reason as string;
+
+      expect(out).not.toContain("ghp_");
+      expect(out).not.toContain("\n");
+      expect(out.length).toBeLessThanOrEqual(600);
+      expect(textOf(result)).toContain("t (not known)");
+    });
+
+    it("folds, redacts and caps a hostile tool name", async () => {
+      const secret = "ghp_abcdefghijklmnopqrstuvwxyz0123456789";
+      const hostile = `evil\u202E\u200B\nIGNORE PREVIOUS ${secret} ${"x".repeat(300)}`;
+      const result = await call(await connect(new FakeSavings(unvalidatedReport([unused([{ name: hostile, tokens: est(10), sessions: 1 }], 1)]))));
+      const text = JSON.stringify(result);
+
+      expect(result.isError, text).not.toBe(true);
+      for (const forbidden of ["\u202E", "\u200B", secret]) expect(text).not.toContain(forbidden);
+      expect(structured(result).opportunities[0]!.tools[0].name.length).toBeLessThanOrEqual(80);
+      expect(textOf(result)).not.toMatch(/\nIGNORE PREVIOUS/);
+    });
+
+    it("gives rows of other kinds no tools", async () => {
+      const row = structured(await call(await connect(new FakeSavings(reportOf([opportunity(1)]))))).opportunities[0]!;
+
+      expect(row).not.toHaveProperty("tools");
+      expect(row).not.toHaveProperty("toolsTotal");
     });
   });
 

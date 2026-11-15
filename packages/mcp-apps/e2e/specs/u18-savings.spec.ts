@@ -88,6 +88,28 @@ inEachClaudeSet(() => {
     expect(host.calls).toEqual([]);
   });
 
+  // V26 (board Savings.dc.html frames 5 and 6): the opened unused-tools row lists its tools.
+  test("U18 per-tool list: five tools with 'loaded in N sessions' and 'about' tokens, 'and 18 more (about 2,885)', estimate; axe clean, no host calls", async ({ host }) => {
+    const view = await host.showResult("get_savings_report", savingsOutput(), { args: ARGS, answers: DRILL_ANSWERS });
+    const button = view.content.getByRole("button", { name: /Tools loaded but never used/ });
+    await button.click();
+    const detail = view.content.locator(`#${await button.getAttribute("aria-controls")}`);
+    const tools = detail.getByRole("region", { name: "Tools" });
+
+    await expect(tools.getByRole("heading", { level: 3, name: "The 23 tools, never called in 31 sessions" })).toBeVisible();
+    await expect(tools.getByRole("row")).toHaveCount(1 + 5 + 1);
+    await expect(tools.getByRole("row").nth(1)).toContainText("mcp_github_create_pull_request");
+    await expect(tools.getByRole("row").nth(1)).toContainText("loaded in 31 sessions");
+    await expect(tools.getByRole("row").nth(1)).toContainText("about 610");
+    await expect(tools.getByRole("row").nth(3)).toContainText("loaded in 29 sessions");
+    await expect(tools.getByRole("row").nth(6)).toContainText("and 18 more");
+    await expect(tools.getByRole("row").nth(6)).toContainText("about 2,885");
+    await expect(tools.getByText("estimate")).toBeVisible();
+    await expect(tools).not.toContainText("mcp_github_get_me");
+    expect(await view.axeViolations()).toEqual([]);
+    expect(host.calls).toEqual([]);
+  });
+
   test("U18 row, keyboard: Enter and Space on the row control open and close it, Tab reaches the session button", async ({ host }) => {
     const view = await host.showResult("get_savings_report", savingsOutput(), { args: ARGS, answers: DRILL_ANSWERS });
     const button = view.content.getByRole("button", { name: IDLE });

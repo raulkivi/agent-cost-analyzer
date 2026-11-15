@@ -66,6 +66,18 @@ export const UNUSED_TOOLS = opportunity({
   perWindow: range(26.7, 165.1),
   coverage: coverage(31, 41, "no tool inventory"),
   actionParams: { group: "github", tools: 23, tokens: 5400, sessions: 31, days: 30 },
+  // V26 (board Detail): the result lists up to 20 of the group's 23 tools; the
+  // view shows 5 and "and 18 more (about 2,885)" = 5,400 minus the five.
+  tools: [
+    { name: "mcp_github_create_pull_request", tokens: { known: true, value: 610, estimated: true }, sessions: 31 },
+    { name: "mcp_github_search_code", tokens: { known: true, value: 540, estimated: true }, sessions: 31 },
+    { name: "mcp_github_list_issues", tokens: { known: true, value: 480, estimated: true }, sessions: 29 },
+    { name: "mcp_github_get_file_contents", tokens: { known: true, value: 455, estimated: true }, sessions: 31 },
+    { name: "mcp_github_list_commits", tokens: { known: true, value: 430, estimated: true }, sessions: 24 },
+    { name: "mcp_github_get_me", tokens: { known: true, value: 300, estimated: true }, sessions: 31 },
+    { name: "mcp_github_fork_repository", tokens: { known: true, value: 200, estimated: true }, sessions: 12 },
+  ],
+  toolsTotal: 23,
 });
 
 export const FAILED_CALLS = opportunity({

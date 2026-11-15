@@ -304,6 +304,17 @@ The domain types in §5 are defined **once** and imported by both the server
 Keeping this in its own package (not duplicated ad hoc in each app) is what
 makes constraint 3 (decoupling) actually enforceable rather than aspirational.
 
+Pure logic that both products must compute the same way lives here too.
+`src/allowance/` (MA13, [plans/monthly-allowance-standalone.md](plans/monthly-allowance-standalone.md)
+§4.1, D8) holds the monthly allowance: the billing period (`periodOf`), day
+keys in the user's zone (`dayKeyOf`, `dayStartInstant`), the known-only sum
+(`knownSum`, `billedCredits`, `knownCredits`), the figures
+(`computeMonthlyAllowance`), the settings type with its defaults, lenient
+read (`lenientAllowanceSettings`) and strict write schema
+(`allowanceSettingsWriteSchema`), and the answer schema
+(`monthlyAllowanceAnswerSchema`). It uses `Intl` and `zod` only, so it runs
+in the extension host, the server and the browser.
+
 ### 4.4 MCP App views package (`packages/mcp-apps`, Phase 12)
 
 Responsibilities: render the cost, findings, replay, price, billing, audit,
@@ -789,7 +800,10 @@ optional `sessionsLeftOut` (over the session cap, unreadable log). A
 tokens, each nullable; unused-tools tokens carry `estimated`), `coverage`,
 `perWeek` and `perWindow` amounts, `actionParams`, an `inferred` flag and,
 for `cheaper-model` only, a `simulation` (the model, the self-check, the
-coverage and assumption A1). A `SavingsAmount` is known (`currency`, `low`,
+coverage and assumption A1). An `unused-tools` opportunity also carries
+`tools` (at most 20 entries `{ name, tokens, sessions }`, largest first, tokens
+an estimate averaged over the sessions that loaded the tool) and `toolsTotal`
+(the group's tool count). A `SavingsAmount` is known (`currency`, `low`,
 `high`, `basis` `priced` or `simulated`, `label` `range`, `upper-bound` or
 `simulated`, the price version ids) or unknown with a reason, never 0.
 Schema refinements keep the labels from being dropped: `low` ≤ `high`; an
@@ -2613,7 +2627,7 @@ view. Nothing is stored and nothing is written.
      sessions of the window and invoked in none. Tokens are
      `estimateTokenCount` over the definition (an estimate, D12). Saving is
      a **range**: tokens × requests × the cache-read price to the uncached
-     price.
+     price. Each tool's tokens are listed too (V26).
    - **O2–O4 cache breaks.** The classifier compares each request's cache
      read with the previous prompt. A break needs lost tokens of at least
      the vendor's `minCacheableTokens` and half the previous prompt (D7).
@@ -3271,16 +3285,20 @@ by repository (§6.4 has the product table):
 **As built (step 10.21, monthly allowance).** A month-to-date AI Credits
 gauge against the user's allowance, in the status bar and the Sessions view
 (plan [plans/monthly-allowance.md](plans/monthly-allowance.md)):
-- **Model.** `status-bar/monthly-allowance.ts` is pure and has no `vscode`
-  import. It takes the cached session summaries, `now`, the time zone and
-  the settings, and returns the level (`normal`, `near`, `over`), the text,
-  tooltip and label. The period comes from `time/billing-period.ts`. The
-  sum is `status-bar/session-credits.ts`, shared with today's item. An
-  unknown session is never 0 and makes the figure "at least".
+- **Model.** The figures are the domain's `computeMonthlyAllowance`
+  (`packages/domain/src/allowance/`, §4.3, MA13 MS1), shared with the
+  standalone app: the period (`periodOf`), the day keys (`dayKeyOf`,
+  `dayStartInstant`) and the sum (`knownSum` with `billedCredits`, also
+  used by today's item). `status-bar/monthly-allowance.ts` is pure and has
+  no `vscode` import. It takes the cached session summaries, `now`, the
+  time zone and the settings, and words the domain's figures: the level
+  (`normal`, `near`, `over`), the text, tooltip and label. An unknown
+  session is never 0 and makes the figure "at least".
 - **Setting.** `aiCreditsAnalyzer.monthlyAllowance.aiCredits`, `.resetDay`
   and `.warnAtPercent`, all `application` scope, so a workspace file cannot
   set them (threat-model §6). `settings/allowance-settings.ts` reads them
-  through `ConfigurationReader` on each call.
+  through `ConfigurationReader` on each call and applies the domain's
+  lenient rules (`lenientAllowanceSettings`).
 - **No-rescan rule.** The gauge reads the sessions the controller already
   holds. A setting change calls `SidebarController.settingsChanged()`,
   which re-renders from that cache: no `listSessions` and no

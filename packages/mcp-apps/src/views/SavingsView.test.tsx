@@ -107,6 +107,25 @@ describe("SavingsView (U18)", () => {
     expect(button).toHaveAttribute("aria-expanded", "false");
   });
 
+  // V26 (board Savings.dc.html frames 5 and 6): per-tool list in the opened unused-tools row.
+  it("lists five tools with 'loaded in N sessions', 'about' tokens and 'and 18 more (about 2,885)' in the opened row", async () => {
+    const user = userEvent.setup();
+    setup();
+    const button = rowButton(/Tools loaded but never used/);
+    await user.click(button);
+    const detail = document.getElementById(button.getAttribute("aria-controls")!)!;
+    const tools = within(within(detail).getByRole("region", { name: "Tools" }));
+
+    expect(tools.getByText("The 23 tools, never called in 31 sessions")).toBeInTheDocument();
+    expect(tools.getByText("mcp_github_create_pull_request")).toBeInTheDocument();
+    expect(tools.getByText("about 610")).toBeInTheDocument();
+    expect(tools.getAllByText("loaded in 31 sessions").length).toBeGreaterThan(0);
+    expect(tools.getByText("estimate")).toBeInTheDocument();
+    expect(tools.getByText("and 18 more")).toBeInTheDocument();
+    expect(tools.getByText("about 2,885")).toBeInTheDocument();
+    expect(tools.queryByText("mcp_github_get_me")).toBeNull();
+  });
+
   // V24 (D19, board Savings.dc.html frames 5 and 6): ids only, each with its date and saving.
   it("shows each session's date and saving beside its id, with Not priced and its reason once, and no title", async () => {
     const user = userEvent.setup();

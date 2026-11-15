@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import { dayKeyOf } from "./local-time.js";
+import { dayKeyOf } from "./day-key.js";
 
 // The billing period containing an instant: a month that starts on the user's
 // reset day (1 to 28, so every month has it) in the user's local time zone.
@@ -18,7 +18,7 @@ function parse(dayKey: string): [number, number, number] {
 }
 
 function keyOf(year: number, monthIndex: number, day: number): string {
-  // Date.UTC normalises a month index outside 0..11 into the neighbouring year.
+  // Date.UTC normalizes a month index outside 0..11 into the neighboring year.
   return new Date(Date.UTC(year, monthIndex, day)).toISOString().slice(0, 10);
 }
 

@@ -101,6 +101,42 @@ export function SavingsRow({
               </>
             )}
           </dl>
+          {row.toolList !== undefined && (
+            <section aria-label="Tools" className="sv-block">
+              <h3>{row.toolList.heading}</h3>
+              <table className="sv-tools">
+                <thead>
+                  <tr>
+                    <th scope="col">Tool</th>
+                    <th scope="col" className="sv-tools-tokens">
+                      Tokens{" "}
+                      <Tag variant="outline" className="view-estimate">
+                        estimate
+                      </Tag>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {row.toolList.tools.map((tool, index) => (
+                    <tr key={`${index}:${tool.name}`}>
+                      <td>
+                        <code className="sv-id sv-tool-name">{tool.name}</code>
+                        <span className="text-muted sv-tool-loaded">{tool.loadedText}</span>
+                      </td>
+                      <td className="sv-tools-tokens">{tool.tokensText}</td>
+                    </tr>
+                  ))}
+                  {row.toolList.more !== null && (
+                    <tr className="text-muted">
+                      <td>{row.toolList.more.text}</td>
+                      <td className="sv-tools-tokens">{row.toolList.more.tokensText}</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+              <p className="text-muted sv-note">{row.toolList.note}</p>
+            </section>
+          )}
           <section aria-label="What to change" className="sv-block">
             <h3>What to change</h3>
             <p className="sv-action">{row.action}</p>
