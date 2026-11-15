@@ -38,6 +38,9 @@ const KIND_BY_NAME: Record<string, ToolKind> = {
   task: "subagent",
   agent: "subagent",
   runsubagent: "subagent",
+  searchsubagent: "subagent",
+  search_code_subagent: "subagent",
+  explore_subagent: "subagent",
 };
 
 export function resolveToolKind(toolName: string): ToolKind {
