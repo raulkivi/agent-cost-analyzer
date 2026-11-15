@@ -1,37 +1,8 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import path from "node:path";
+import { readSettingsFile, writeSettingsFile } from "./settings-file.js";
 
 export const DEFAULT_ACTIVE_PROVIDER_ID = "vscode";
-
-interface AppSettingsFileShape {
-  activeProviderId?: string;
-  minRetainedSessionLogsThreshold?: number;
-}
-
-function readSettingsFile(settingsDir: string): Partial<AppSettingsFileShape> {
-  const filePath = path.join(settingsDir, "settings.json");
-  if (!existsSync(filePath)) {
-    return {};
-  }
-
-  try {
-    return JSON.parse(readFileSync(filePath, "utf-8")) as Partial<AppSettingsFileShape>;
-  } catch {
-    return {};
-  }
-}
-
-// The one file this app ever writes to local disk (architecture.md §11.2).
-// Reads the current contents (if any) before writing so unrelated keys
-// already on disk survive a write of a single key.
-function writeSettingsFile(settingsDir: string, patch: Partial<AppSettingsFileShape>): void {
-  mkdirSync(settingsDir, { recursive: true });
-  const filePath = path.join(settingsDir, "settings.json");
-  const payload: AppSettingsFileShape = { ...readSettingsFile(settingsDir), ...patch };
-  writeFileSync(filePath, JSON.stringify(payload, null, 2) + "\n", "utf-8");
-}
 
 // A missing file (first run) or a corrupt one both degrade to the default
 // provider id rather than crashing startup — this is app-owned config, not
