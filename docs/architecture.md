@@ -771,7 +771,10 @@ optional `sessionsLeftOut` (over the session cap, unreadable log). A
 tokens, each nullable; unused-tools tokens carry `estimated`), `coverage`,
 `perWeek` and `perWindow` amounts, `actionParams`, an `inferred` flag and,
 for `cheaper-model` only, a `simulation` (the model, the self-check, the
-coverage and assumption A1). A `SavingsAmount` is known (`currency`, `low`,
+coverage and assumption A1). An `unused-tools` opportunity also carries
+`tools` (at most 20 entries `{ name, tokens, sessions }`, largest first, tokens
+an estimate averaged over the sessions that loaded the tool) and `toolsTotal`
+(the group's tool count). A `SavingsAmount` is known (`currency`, `low`,
 `high`, `basis` `priced` or `simulated`, `label` `range`, `upper-bound` or
 `simulated`, the price version ids) or unknown with a reason, never 0.
 Schema refinements keep the labels from being dropped: `low` ≤ `high`; an
@@ -2595,7 +2598,7 @@ view. Nothing is stored and nothing is written.
      sessions of the window and invoked in none. Tokens are
      `estimateTokenCount` over the definition (an estimate, D12). Saving is
      a **range**: tokens × requests × the cache-read price to the uncached
-     price.
+     price. Each tool's tokens are listed too (V26).
    - **O2–O4 cache breaks.** The classifier compares each request's cache
      read with the previous prompt. A break needs lost tokens of at least
      the vendor's `minCacheableTokens` and half the previous prompt (D7).

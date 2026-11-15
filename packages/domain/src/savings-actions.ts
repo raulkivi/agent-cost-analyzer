@@ -76,17 +76,21 @@ const FAILURE_ADVICE: Readonly<Record<string, string>> = {
 const DEFAULT_FAILURE_ADVICE = "look at these calls in the tool-call audit and say in your instructions file what to do instead.";
 
 type Values = Record<string, string>;
+// The raw numbers, so a template can choose a singular or a plural noun (R14).
+type Counts = Record<string, number>;
 
-const TEMPLATES: Record<SavingsOpportunityKind, (v: Values) => string> = {
-  "unused-tools": (v) =>
-    `Turn off the tools of ${v.group} in the tool picker (${v.tools} tools, about ${v.tokens} tokens on each request); none of them ran in ${v.sessions} sessions over ${v.days} days.`,
-  "idle-cache-expiry": (v) =>
-    `${v.breaks} breaks longer than the ${v.minutes}-minute cache lifetime resent about ${v.tokens} tokens uncached. Resuming a long session after a break resends all of it: start a new session with a short summary, or run /compact before the break.` +
-    (v.extendedMinutes === undefined ? "" : ` The extended cache lifetime of ${v.extendedMinutes} minutes (the 1-hour option) costs a higher price per cache write.`),
-  "unexplained-cache-break": (v) =>
-    `The cache broke ${v.breaks} times with no idle gap, resending about ${v.tokens} tokens uncached. Edit instructions files and enable or disable tools between sessions, not during one.`,
-  "model-switch": (v) => `Pick the model when the session starts: switching resent ${v.tokens} tokens uncached ${v.times} times.`,
-  "failed-tool-calls": (v) => `${v.name} failed ${v.calls} times in ${v.sessions} sessions: ${Object.hasOwn(FAILURE_ADVICE, v.category) ? FAILURE_ADVICE[v.category] : DEFAULT_FAILURE_ADVICE}`,
+const noun = (count: number | undefined, singular: string) => (count === 1 ? singular : `${singular}s`);
+
+const TEMPLATES: Record<SavingsOpportunityKind, (v: Values, n: Counts) => string> = {
+  "unused-tools": (v, n) =>
+    `Turn off the tools of ${v.group} in the tool picker (${v.tools} ${noun(n.tools, "tool")}, about ${v.tokens} ${noun(n.tokens, "token")} on each request); none of them ran in ${v.sessions} ${noun(n.sessions, "session")} over ${v.days} ${noun(n.days, "day")}.`,
+  "idle-cache-expiry": (v, n) =>
+    `${v.breaks} ${noun(n.breaks, "break")} longer than the ${v.minutes}-minute cache lifetime resent about ${v.tokens} ${noun(n.tokens, "token")} uncached. Resuming a long session after a break resends all of it: start a new session with a short summary, or run /compact before the break.` +
+    (v.extendedMinutes === undefined ? "" : ` The extended cache lifetime of ${v.extendedMinutes} ${noun(n.extendedMinutes, "minute")} (the 1-hour option) costs a higher price per cache write.`),
+  "unexplained-cache-break": (v, n) =>
+    `The cache broke ${v.breaks} ${noun(n.breaks, "time")} with no idle gap, resending about ${v.tokens} ${noun(n.tokens, "token")} uncached. Edit instructions files and enable or disable tools between sessions, not during one.`,
+  "model-switch": (v, n) => `Pick the model when the session starts: switching resent ${v.tokens} ${noun(n.tokens, "token")} uncached ${v.times} ${noun(n.times, "time")}.`,
+  "failed-tool-calls": (v, n) => `${v.name} failed ${v.calls} ${noun(n.calls, "time")} in ${v.sessions} ${noun(n.sessions, "session")}: ${Object.hasOwn(FAILURE_ADVICE, v.category) ? FAILURE_ADVICE[v.category] : DEFAULT_FAILURE_ADVICE}`,
   "cheaper-model": (v) =>
     `Replayed on ${v.model}, the same conversation would have cost about ${v.percent}% of what it did (Simulated; the replay matches the log on its own model for ${v.matchPercent}% of requests). ${v.model} would not have answered the same way.`,
 };
@@ -100,12 +104,17 @@ export function savingsActionText(kind: SavingsOpportunityKind, params: SavingsA
     if (!Object.hasOwn(required, key) && !Object.hasOwn(optional, key)) throw new Error(`savings action ${kind}: unknown parameter "${key}"`);
   }
   const values: Values = {};
+  const counts: Counts = {};
+  const fill = (key: string, type: ParamType) => {
+    values[key] = FORMATTERS[type](kind, key, params[key]);
+    if (type === "number") counts[key] = params[key] as number;
+  };
   for (const [key, type] of Object.entries(required)) {
     if (!Object.hasOwn(params, key)) throw new Error(`savings action ${kind}: missing parameter "${key}"`);
-    values[key] = FORMATTERS[type](kind, key, params[key]);
+    fill(key, type);
   }
   for (const [key, type] of Object.entries(optional)) {
-    if (Object.hasOwn(params, key)) values[key] = FORMATTERS[type](kind, key, params[key]);
+    if (Object.hasOwn(params, key)) fill(key, type);
   }
-  return TEMPLATES[kind](values);
+  return TEMPLATES[kind](values, counts);
 }

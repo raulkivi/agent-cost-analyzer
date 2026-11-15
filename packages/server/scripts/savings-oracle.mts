@@ -449,7 +449,16 @@ export function toolGroupOf(toolName: string): string {
   return match ? match[1]! : folded;
 }
 
+// D26: under an exact mcp__<server>__ group the tool part only; any other name whole.
+export function toolDisplayNameOf(toolName: string): string {
+  const folded = toolName.replace(/\s+/g, " ").trim();
+  const match = /^mcp__(?:[^_](?:.*?[^_])?)__(.+)$/.exec(folded);
+  return match ? match[1]! : folded;
+}
+
 export interface UnusedToolRow {
+  // V26: each tool of the group, its tokens averaged over the sessions that loaded it (rounded).
+  perTool: Array<{ rawName: string; name: string; tokens: number; sessions: number }>;
   // Sessions that loaded the group (and so enter the row), and their requests.
   sessions: number;
   requests: number;
@@ -467,6 +476,7 @@ export interface UnusedToolRow {
 export function unusedToolRowOf(subject: string, sessions: readonly ToolSessionFacts[], tables: ModelTables): UnusedToolRow {
   let ran = false;
   const rows: Array<{ facts: ToolSessionFacts; tokens: number }> = [];
+  const byTool = new Map<string, { total: number; sessions: number }>();
   for (const facts of sessions) {
     if ([...facts.invoked].some((name) => toolGroupOf(name) === subject)) ran = true;
     if (!facts.loaded) continue;
@@ -476,6 +486,8 @@ export function unusedToolRowOf(subject: string, sessions: readonly ToolSessionF
       if (toolGroupOf(name) !== subject) continue;
       loaded = true;
       tokens += count;
+      const sum = byTool.get(name) ?? { total: 0, sessions: 0 };
+      byTool.set(name, { total: sum.total + count, sessions: sum.sessions + 1 });
     }
     if (loaded) rows.push({ facts, tokens });
   }
@@ -504,5 +516,6 @@ export function unusedToolRowOf(subject: string, sessions: readonly ToolSessionF
   }
   const requests = rows.reduce((sum, { facts }) => sum + [...facts.requestsByModel.values()].reduce((a, b) => a + b, 0), 0);
   const tokensPerSession = rows.length === 0 ? 0 : Math.round(rows.reduce((sum, row) => sum + row.tokens, 0) / rows.length);
-  return { sessions: rows.length, requests, tokensPerSession, ran, low, high, pricedSessions };
+  const perTool = [...byTool].map(([rawName, { total, sessions: loadedIn }]) => ({ rawName, name: toolDisplayNameOf(rawName), tokens: Math.round(total / loadedIn), sessions: loadedIn }));
+  return { perTool, sessions: rows.length, requests, tokensPerSession, ran, low, high, pricedSessions };
 }

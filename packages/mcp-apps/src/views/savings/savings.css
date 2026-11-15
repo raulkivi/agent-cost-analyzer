@@ -45,6 +45,12 @@
 .sv-session-saving { margin-left: auto; font-weight: 600; font-variant-numeric: tabular-nums; }
 .sv-open { min-height: 24px; min-width: 24px; } /* WCAG 2.2 target size, caught by the U18 e2e axe scan */
 .sv-id { font-family: var(--font-mono, ui-monospace, monospace); }
+/* V26: per-tool list (board Savings.dc.html frames 5 and 6); long names wrap. */
+.sv-tools { width: 100%; border-collapse: collapse; font-size: 12px; }
+.sv-tools th, .sv-tools td { padding: 3px 0; text-align: left; vertical-align: top; }
+.sv-tools .sv-tools-tokens { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; padding-left: 10px; }
+.sv-tool-name { overflow-wrap: anywhere; }
+.sv-tool-loaded { display: block; font-size: 11px; }
 .sv-na { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; font-size: 12px; }
 .sv-na li { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 2fr) auto; gap: 4px 10px; padding: 5px 0; border-bottom: 1px solid var(--color-divider); overflow-wrap: anywhere; }
 

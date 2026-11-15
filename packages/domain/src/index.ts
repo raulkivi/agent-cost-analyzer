@@ -511,6 +511,9 @@ export { EXTENSION_NO_PROJECTS_REASON } from "./no-projects-reason.js";
 export { parseUnknownProjectIdText, unknownProjectIdText, type UnknownProjectIdAnswer } from "./unknown-project-text.js";
 export {
   MAX_SAVINGS_NAME_LENGTH,
+  MAX_SAVINGS_TOOLS,
+  savingsToolSchema,
+  unlistedTools,
   savingsOpportunityKindSchema,
   savingsBasisSchema,
   savingsLabelSchema,
@@ -539,5 +542,6 @@ export {
   type SavingsReport,
   type SavingsWindow,
   type SavingsSessionRef,
+  type SavingsTool,
 } from "./savings.js";
 export { SAVINGS_ACTION_PARAMS, savingsActionText } from "./savings-actions.js";

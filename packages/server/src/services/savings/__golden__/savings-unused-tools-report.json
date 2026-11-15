@@ -75,7 +75,28 @@
         "sessions": 1,
         "days": 30
       },
-      "inferred": true
+      "inferred": true,
+      "tools": [
+        {
+          "name": "mcp_github_get_issue",
+          "tokens": {
+            "known": true,
+            "value": 100,
+            "estimated": true
+          },
+          "sessions": 1
+        },
+        {
+          "name": "mcp_github_list_prs",
+          "tokens": {
+            "known": true,
+            "value": 50,
+            "estimated": true
+          },
+          "sessions": 1
+        }
+      ],
+      "toolsTotal": 2
     },
     {
       "key": "unused-tools:linear:USD",
@@ -168,7 +189,28 @@
         "sessions": 2,
         "days": 30
       },
-      "inferred": false
+      "inferred": false,
+      "tools": [
+        {
+          "name": "get_issue",
+          "tokens": {
+            "known": true,
+            "value": 500,
+            "estimated": true
+          },
+          "sessions": 2
+        },
+        {
+          "name": "save_issue",
+          "tokens": {
+            "known": true,
+            "value": 300,
+            "estimated": true
+          },
+          "sessions": 2
+        }
+      ],
+      "toolsTotal": 2
     }
   ],
   "notAnalysed": [

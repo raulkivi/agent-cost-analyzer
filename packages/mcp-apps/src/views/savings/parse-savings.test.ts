@@ -25,6 +25,8 @@ describe("parseSavingsReport", () => {
     { ...savingsOutput(), includeSimulated: "yes" },
     { ...savingsOutput(), opportunities: [null] },
     { ...savingsOutput(), opportunities: [{ key: "k" }] },
+    { ...savingsOutput(), opportunities: [{ ...savingsOutput().opportunities[1], tools: "x" }] },
+    { ...savingsOutput(), opportunities: [{ ...savingsOutput().opportunities[1], tools: [{ name: "t" }] }] },
   ])("rejects %j", (value) => {
     expect(parseSavingsReport(value)).toBeUndefined();
   });
