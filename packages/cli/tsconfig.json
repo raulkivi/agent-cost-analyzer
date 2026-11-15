@@ -5,5 +5,5 @@
     "allowJs": true,
     "types": ["node"]
   },
-  "include": ["bin", "test"]
+  "include": ["bin", "src", "test"]
 }
