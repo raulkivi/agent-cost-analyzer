@@ -1,8 +1,8 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
 // Refuses to publish unless the owner is the package's only npm maintainer:
-// `npm view agent-cost-analyzer maintainers --json | node
-// scripts/check-npm-maintainers.mjs raulkivi`. Fails closed on any output it
+// `npm view agent-cost-analyzer maintainers --json > m.json && node
+// scripts/check-npm-maintainers.mjs raulkivi m.json`. Fails closed on any output it
 // can't read, so a registry error never lets a publish through.
 import console from "node:console";
 import { readFileSync } from "node:fs";
@@ -33,12 +33,20 @@ export function checkMaintainers(json, owner) {
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  const owner = process.argv[2];
-  if (owner === undefined) {
-    console.error("usage: check-npm-maintainers.mjs <owner> < maintainers.json");
+  const [owner, file] = process.argv.slice(2);
+  if (owner === undefined || file === undefined) {
+    console.error("usage: check-npm-maintainers.mjs <owner> <maintainers.json>");
     process.exit(2);
   }
-  const { ok, message } = checkMaintainers(readFileSync(0, "utf8"), owner);
+  // A file, not stdin: a synchronous read of a pipe whose writer (npm view)
+  // is still waiting on the registry throws EAGAIN.
+  let json = "";
+  try {
+    json = readFileSync(file, "utf8");
+  } catch {
+    // Unreadable or missing: checkMaintainers("") fails closed below.
+  }
+  const { ok, message } = checkMaintainers(json, owner);
   (ok ? console.log : console.error)(message);
   process.exit(ok ? 0 : 1);
 }

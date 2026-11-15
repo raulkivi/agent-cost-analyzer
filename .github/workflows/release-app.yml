@@ -182,7 +182,9 @@ jobs:
       # The package exists as the owner's placeholder, so this check always
       # applies: refuse to publish to a package anyone else maintains.
       - name: Check the maintainers
-        run: npm view agent-cost-analyzer maintainers --json | node scripts/check-npm-maintainers.mjs raulkivi
+        run: |
+          npm view agent-cost-analyzer maintainers --json > "$RUNNER_TEMP/maintainers.json"
+          node scripts/check-npm-maintainers.mjs raulkivi "$RUNNER_TEMP/maintainers.json"
 
       # No npm token: npm signs in through OIDC and adds provenance.
       - name: Publish to npm

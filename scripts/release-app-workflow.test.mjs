@@ -106,6 +106,14 @@ test("the checksum and the maintainer list are checked before the publish", () =
   assert.ok(sha < npmPublish && maintainers < npmPublish);
 });
 
+test("the maintainer check reads a file, not a pipe from npm view", () => {
+  const run = runs(publish).find((r) => /check-npm-maintainers\.mjs/.test(r));
+  assert.ok(run, "maintainer check step is missing");
+  assert.doesNotMatch(run, /\|\s*node scripts\/check-npm-maintainers/);
+  assert.match(run, /npm view agent-cost-analyzer maintainers --json > "\$RUNNER_TEMP\/maintainers\.json"/);
+  assert.match(run, /check-npm-maintainers\.mjs raulkivi "\$RUNNER_TEMP\/maintainers\.json"/);
+});
+
 test("npm publish takes the downloaded tarball, publicly", () => {
   const download = usesStep(publish, "actions/download-artifact@");
   assert.ok(download);
