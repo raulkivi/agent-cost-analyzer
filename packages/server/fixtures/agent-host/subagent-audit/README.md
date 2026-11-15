@@ -9,9 +9,8 @@ types and field names follow real Copilot CLI 1.0.x logs (plan §4.2, §14.2);
 ids, paths and texts are invented. Integrity test:
 `src/data-sources/jsonl/subagent-audit-fixtures.test.ts`.
 
-The log's own spelling "cancelled" is kept literal. JSON can't carry <!-- codespell:ignore cancelled -->
-comments, so each line with it has an extra top-level `_spelling` string
-holding `codespell:ignore cancelled`; readers ignore it.
+Log values keep the log's own spelling; the spelling check skips fixture
+folders (`.codespellrc`).
 
 | Session | What it holds | Consumer |
 |---|---|---|
