@@ -1,6 +1,6 @@
 # VS Code extension: implementation and deployment plan
 
-**Last changed:** 2026-11-14 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-15 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 Status: **code and docs complete (Phase 10, #57-#80); 0.1.0 released
 (`ext-v0.1.0`, 2026-11-03).** Some VS Code manual checks stay open, see
@@ -2066,14 +2066,15 @@ administrator's Reader access on the Marketplace publisher on 2026-11-02.
   (marketplace.visualstudio.com/manage/publishers/raulkivi); Entra ID
   setup done 2026-10-27.
 - **Open VSX:** agreement signed, namespace created, claim filed and
-  `OVSX_PAT` set (2026-10-27). Step 5's trusted publisher follows the
-  first release.
+  `OVSX_PAT` set (2026-10-27). Step 5 done 2026-11-15: trusted
+  publisher registered, `OVSX_PAT` deleted and its token revoked, 0.14.0
+  published through OIDC.
 - **Listing:** prerequisites in place; `displayName` availability is
   confirmed by the first publish.
 
 Owner follow-ups after the first release and the granted claim:
-- Register the Open VSX trusted publisher, delete `OVSX_PAT` and revoke
-  its token (Open VSX step 5).
+- Done 2026-11-15: register the Open VSX trusted publisher, delete
+  `OVSX_PAT` and revoke its token on open-vsx.org (Open VSX step 5).
 - Remove the Open VSX administrator's Reader access on the Marketplace
   publisher (Open VSX step 3).
 - Delete the temporary client secret on the Entra ID app (Marketplace

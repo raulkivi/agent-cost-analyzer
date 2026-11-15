@@ -1314,8 +1314,9 @@ server (off, on with 9 tools and `get_session_cost`, off again).
    ownership claim (#14833) was granted on 2026-10-28, and the owner revoked the
    Open VSX administrator's Reader access on 2026-11-02.
    The Entra ID app, the `release` environment, the Open VSX namespace,
-   `OVSX_PAT` and the icon are in place. Open VSX trusted publishing,
-   replacing `OVSX_PAT`, is a 1.0 criterion ([1.0.0 release](#100-release)).
+   `OVSX_PAT` and the icon were in place. Open VSX trusted publishing
+   replaced `OVSX_PAT` on 2026-11-15 (1.0 criterion C13,
+   [1.0.0 release](#100-release)).
 4. Done: step 10.13 (Agent Host sessions). Since VS Code 1.143 new
    sessions run through the Agent Host; both products now list them with
    turns, tokens and AI Credits. Manual check 1.4 passes with the default
@@ -1775,8 +1776,9 @@ app installs from npm, and the release path's security gaps are closed.
 - After 1.0.0 they version independently, as today.
 - The extension keeps odd minor = Marketplace pre-release channel
   (`.github/workflows/release-extension.yml`); 1.0.0 is stable.
-- The release before 1.0.0 is extension 0.14.0 (stable) and app 0.15.0:
-  Phase 16 Increment 2 and PRs #272, #274, #279 and #280.
+- The release before 1.0.0 is extension 0.14.0 (stable) and app 0.15.0,
+  released 2026-11-15: Phase 16 Increment 2 and PRs #272, #274, #279 and
+  #280.
 
 ### Criteria
 
@@ -1794,7 +1796,7 @@ app installs from npm, and the release path's security gaps are closed.
 | C10 | Classic subagent tool calls in the tool-call audit and security findings | Step 10.20 | Plan approved 2026-11-14; build next | Its plan's exit criterion; [threat-model.md](threat-model.md) §7's residual row closed |
 | C11 | Savings Increment 3: scope (a)-(d) in [plans/savings-report.md](plans/savings-report.md) §2; (a) reduced to pi per-tool unused tools (V27), the pi trace (V28) after 1.0 (owner 2026-11-14) | Phase 16 | Plan approved 2026-11-14; build next (V23b boards first) | Its plan's exit criterion; the savings real-data check covers pi's unused tools |
 | C12 | Only the owner creates or moves `ext-v*` and `app-v*` tags | [threat-model.md](threat-model.md) §5.8 | Done 2026-11-14: ruleset 27281699 (owner created it, V7; recorded V8) | A tag ruleset, read through the GitHub API, restricts creating, moving and deleting those tags to the owner |
-| C13 | Open VSX trusted publishing; `OVSX_PAT` deleted | threat-model.md §5.8 | Open | A release publishes to Open VSX without `OVSX_PAT`; the secret no longer exists |
+| C13 | Open VSX trusted publishing; `OVSX_PAT` deleted | threat-model.md §5.8 | Done 2026-11-15: the owner registered the trusted publisher (V9) and deleted `OVSX_PAT`; extension 0.14.0 published to Open VSX through OIDC ("Trusted publishing token issued" in the release run) and the `release` environment holds no secrets | A release publishes to Open VSX without `OVSX_PAT`; the secret no longer exists |
 | C14 | Figures priced from a user price version say so where shown | threat-model.md §5.10 | Done 2026-11-14: the web UI (V2, PR #286) and the chat views (V2b) label them | Component and Playwright tests assert the label in the web UI and in every chat view that shows a priced figure |
 | C15 | Claude Code subagent usage counted | [plans/claude-code-subagents.md](plans/claude-code-subagents.md) | Plan approved 2026-11-14 (D1–D16 accepted); build next | A `REAL_DATA` check with an oracle computed from raw Claude Code transcripts passes on the owner's logs (plan §10); the owner signs off its output |
 | C16 | The right VS Code install is read (a variant counts only when its folder has `User`) | VB1 (owner 2026-11-14) | Done 2026-11-14 (V34, PR #302) | Unit tests over temp homes (Linux, macOS, Windows paths) |
@@ -1838,9 +1840,9 @@ repo. "Owner step" marks work that needs the owner's hands or accounts.
 | V6 | Increment 2 exit: `savings-exit.real.test.mts` calls `get_savings_report` through an in-memory MCP client and requires the same rows as the Savings tab | C5 | medium | Sonnet | SR19 (merged) |
 | V7 | Tag ruleset for `ext-v*` and `app-v*`: create, update and delete restricted, the owner the only bypass | C12 | low | Owner step | — |
 | V8 | threat-model.md §5.8 and §8 updated with the ruleset's id, read through the GitHub API | C12 | low | Haiku | V7 |
-| V9 | Register the Open VSX trusted publisher for the namespace | C13 | low | Owner step | — |
-| V10 | `release-extension.yml` publishes to Open VSX through trusted publishing, without `OVSX_PAT`; threat-model.md §8 row | C13 | low | Sonnet | V9 |
-| V11 | After a release published by V10, delete the `OVSX_PAT` secret; threat-model.md §5.8 marked done | C13 | low | Owner step | V10 and a 0.x release |
+| V9 | Register the Open VSX trusted publisher for the namespace (done 2026-11-15) | C13 | low | Owner step | — |
+| V10 | `release-extension.yml` publishes to Open VSX through trusted publishing, without `OVSX_PAT`; threat-model.md §8 row (done 2026-11-15: 0.14.0 published through OIDC; the workflow no longer passes the secret) | C13 | low | Sonnet | V9 |
+| V11 | After a release published by V10, delete the `OVSX_PAT` secret; threat-model.md §5.8 marked done (done 2026-11-15) | C13 | low | Owner step | V10 and a 0.x release |
 | V12 | Phase 11 capture instructions and a redaction script for pi session files and the sidecar log (done, PR #288: `npm run fixtures:redact-pi -w packages/server`; the generator reuses its library) | C2 | medium | Sonnet | — |
 | V13 | Replaced by automated generation (owner 2026-11-14): `npm run fixtures:generate-pi` drives the real pi with the local model ([providers/pi-provider.md](providers/pi-provider.md#generating-pi-fixtures)) | C2 | — | — | V12 |
 | V14 | Phase 11: generated fixtures, field diff, fixes test-first, `context_edit` handling, the open pi decisions put to the owner, architecture.md §6.2.5 and providers/pi-provider.md updated (done, in review) | C2 | high | Opus | V13 |
@@ -1870,9 +1872,9 @@ repo. "Owner step" marks work that needs the owner's hands or accounts.
 
 1. Independent small tasks first: V1, V2, V3, V4. V5 and V6 finish
    Increment 2 before the extension 0.14.0 and app 0.15.0 release.
-2. Owner steps whenever convenient: V7 (then V8), V9 (then V10). V13 is
-   replaced by automated generation. Land V10 before a 0.x release, so 1.0.0 is not Open
-   VSX's first trusted publish; V11 follows that release.
+2. Owner steps: V7, V8, V9, V10 and V11 done (extension 0.14.0 was Open
+   VSX's first trusted publish). V13 is replaced by automated generation.
+   NP0 and V17 (npm) remain.
 3. The four plans (V15, V19, V21, V23) are approved; V23b (the boards)
    comes before any Increment 3 UI code.
 4. Builds: V16-V18 (npm), V20 (MA13), V22 (10.20), V24-V26 (Savings
