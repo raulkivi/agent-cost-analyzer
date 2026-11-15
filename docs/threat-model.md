@@ -202,7 +202,8 @@ code-owner review is not one:
   `gh api repos/raulkivi/agent-cost-analyzer/rulesets/27281699`.
 - **Done 2026-11-15 (1.0 criterion C13):** Open VSX trusted publishing.
   The owner registered the trusted publisher for `release-extension.yml`
-  and the `release` environment and deleted `OVSX_PAT`; extension 0.14.0
+  and the `release` environment, deleted `OVSX_PAT` and revoked its token
+  on open-vsx.org; extension 0.14.0
   published through OIDC, and the workflow no longer passes the secret.
   `gh api repos/raulkivi/agent-cost-analyzer/environments/release/secrets`
   lists none.

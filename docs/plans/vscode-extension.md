@@ -2067,15 +2067,14 @@ administrator's Reader access on the Marketplace publisher on 2026-11-02.
   setup done 2026-10-27.
 - **Open VSX:** agreement signed, namespace created, claim filed and
   `OVSX_PAT` set (2026-10-27). Step 5 done 2026-11-15: trusted
-  publisher registered, `OVSX_PAT` deleted, 0.14.0 published through
-  OIDC.
+  publisher registered, `OVSX_PAT` deleted and its token revoked, 0.14.0
+  published through OIDC.
 - **Listing:** prerequisites in place; `displayName` availability is
   confirmed by the first publish.
 
 Owner follow-ups after the first release and the granted claim:
-- Done 2026-11-15: register the Open VSX trusted publisher and delete
-  `OVSX_PAT` (Open VSX step 5). Not recorded: whether the token itself
-  was revoked on open-vsx.org (*Settings → Access Tokens*).
+- Done 2026-11-15: register the Open VSX trusted publisher, delete
+  `OVSX_PAT` and revoke its token on open-vsx.org (Open VSX step 5).
 - Remove the Open VSX administrator's Reader access on the Marketplace
   publisher (Open VSX step 3).
 - Delete the temporary client secret on the Entra ID app (Marketplace
