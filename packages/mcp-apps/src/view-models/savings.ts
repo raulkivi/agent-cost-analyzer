@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import type { Currency, SavingsAmount, SavingsCoverage, SavingsEvidence, SavingsNotAnalysed, SavingsLeftOut, SavingsOpportunity, SavingsSimulation, SavingsWindow } from "@agent-cost-analyzer/domain";
-import { amountText, barSegments, CURRENCY_TITLES, KIND_TITLES } from "@agent-cost-analyzer/web/lib/savings/savings-view";
+import type { Currency, SavingsAmount, SavingsCoverage, SavingsEvidence, SavingsNotAnalysed, SavingsLeftOut, SavingsOpportunity, SavingsSessionRef, SavingsSimulation, SavingsWindow } from "@agent-cost-analyzer/domain";
+import { amountText, barSegments, CURRENCY_TITLES, KIND_TITLES, notPricedReasons, sessionDateText, sessionSavingText } from "@agent-cost-analyzer/web/lib/savings/savings-view";
 import { isPlainModelId } from "../views/replay/model-id.js";
 import { pluralize } from "./format.js";
 import { mergeUserPriceIds } from "./user-price.js";
@@ -16,8 +16,9 @@ import { mergeUserPriceIds } from "./user-price.js";
 // What get_savings_report returns per row (server/src/mcp/savings-tool-output.ts):
 // the opportunity with its action already rendered and its session list capped.
 export type SavingsRowInput = Omit<SavingsOpportunity, "actionParams" | "sessions"> & {
-  rank: number;
-  sessions: { providerId: string; sessionId: string }[];
+  // Ranked rows only: a Simulated row is never ranked (R12).
+  rank?: number;
+  sessions: SavingsSessionRef[];
   sessionsTotal: number;
   action: string;
 };
@@ -39,6 +40,9 @@ export interface SessionButtonView {
   sessionId: string;
   kind: "cost" | "replay";
   label: "Open cost" | "Open replay";
+  // V24 (D19): the session's date ("Nov 11", "date unknown") and its saving over the window; no title.
+  dateText: string;
+  savingText: string;
   // Replay only: the simulated model, checked to be a plain model id.
   model?: string;
 }
@@ -60,6 +64,8 @@ export interface SavingsRowView {
   action: string; // logged text: display only
   sessions: SessionButtonView[];
   sessionsHeading: string;
+  // The reasons shown sessions could not be priced, said once under the list.
+  notPricedText?: string;
   priceVersions: string[];
   // 1.0 V2b (threat-model 5.10): the user-added price versions behind the amounts.
   userPriceVersionIds?: string[];
@@ -117,7 +123,7 @@ function coverageText(row: SavingsRowInput): string {
 }
 
 function gapText(coverage: SavingsCoverage): string {
-  const gaps = coverage.notAnalysed.map((gap) => (/^no\b/.test(gap.reason) ? `${gap.sessions} had ${gap.reason}` : `${gap.sessions} not analysed: ${gap.reason}`));
+  const gaps = coverage.notAnalysed.map((gap) => `${gap.sessions} not analysed: ${gap.reason}`); // codespell:ignore analysed
   return [`${coverage.sessionsAnalysed} of ${coverage.sessionsInWindow} sessions`, ...gaps].join(" · ");
 }
 
@@ -163,11 +169,11 @@ function simulationView(simulation: SavingsSimulation): NonNullable<SavingsRowVi
 function sessionButtons(row: SavingsRowInput): SessionButtonView[] {
   const model = row.simulation?.model;
   const replayable = model !== undefined && isPlainModelId(model);
-  return row.sessions.slice(0, MAX_SESSIONS_SHOWN).map(({ providerId, sessionId }) =>
-    replayable
-      ? { providerId, sessionId, kind: "replay", label: "Open replay", model }
-      : { providerId, sessionId, kind: "cost", label: "Open cost" },
-  );
+  return row.sessions.slice(0, MAX_SESSIONS_SHOWN).map((ref) => {
+    const { providerId, sessionId } = ref;
+    const when = { dateText: sessionDateText(ref.startedAt), savingText: sessionSavingText(ref) };
+    return replayable ? { providerId, sessionId, kind: "replay", label: "Open replay", model, ...when } : { providerId, sessionId, kind: "cost", label: "Open cost", ...when };
+  });
 }
 
 function rowView(row: SavingsRowInput, days: number, rank: number | undefined, maxHigh: number): SavingsRowView {
@@ -175,6 +181,7 @@ function rowView(row: SavingsRowInput, days: number, rank: number | undefined, m
   const userPriceVersionIds = mergeUserPriceIds(perWeek.known ? perWeek.userPriceVersionIds : undefined, row.perWindow.known ? row.perWindow.userPriceVersionIds : undefined);
   const bar = barSegments(perWeek, maxHigh);
   const shown = Math.min(row.sessions.length, MAX_SESSIONS_SHOWN);
+  const notPriced = notPricedReasons(row.sessions.slice(0, MAX_SESSIONS_SHOWN));
   return {
     key: row.key,
     ...(rank === undefined ? {} : { rank }),
@@ -192,6 +199,7 @@ function rowView(row: SavingsRowInput, days: number, rank: number | undefined, m
     action: row.action,
     sessions: sessionButtons(row),
     // The server lists sessions largest first (D16), so a cut list is the largest.
+    ...(notPriced.length === 0 ? {} : { notPricedText: `Not priced: ${notPriced.join("; ")}` }),
     sessionsHeading: shown < row.sessionsTotal ? `Largest ${shown} of ${row.sessionsTotal} sessions, over the ${days} days` : `${count(row.sessionsTotal, "session")}, over the ${days} days`,
     priceVersions: perWeek.known ? perWeek.priceVersionIds : row.perWindow.known ? row.perWindow.priceVersionIds : [],
     ...(row.simulation === undefined ? {} : { simulation: simulationView(row.simulation) }),

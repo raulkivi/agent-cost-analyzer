@@ -1145,7 +1145,17 @@ main[data-layout="narrow"] .nav { flex-wrap: wrap; gap: var(--space-2); }
 .savings-action-bar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-3); }
 .savings-copy-status { min-height: 1em; font-size: 12px; }
 .savings-sessions { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-1); }
-.savings-sessions li { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2); }
+/* Saving at the right of the first line, id and date under it (boards Detail, Narrow). */
+.savings-sessions li { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: baseline; gap: 1px var(--space-3); padding: var(--space-1) 0; border-bottom: 1px solid var(--color-divider); }
+.savings-session-primary { min-width: 0; font-weight: 600; overflow-wrap: anywhere; }
+.savings-session-saving { font-weight: 600; font-variant-numeric: tabular-nums; text-align: right; }
+.savings-session-meta { min-width: 0; font-size: 12px; color: var(--color-text-muted); overflow-wrap: anywhere; }
+.savings-session-action { text-align: right; }
+.savings-session-note { font-size: 12px; }
+@media (max-width: 640px) {
+  .savings-sessions li { grid-template-columns: minmax(0, 1fr); }
+  .savings-session-saving, .savings-session-action { text-align: left; }
+}
 .savings-versions summary { cursor: pointer; font-weight: 600; }
 .savings-versions ul { margin: var(--space-1) 0 0; padding-left: var(--space-4); }
 @media (max-width: 640px) {

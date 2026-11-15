@@ -591,6 +591,15 @@ const say = (line: string) => {
     // A session with no priced break has no contribution and goes last (-1 here).
     const expected = [...[...bySession.values()].sort((a, b) => b - a), ...highs.map(() => -1)].slice(0, row.sessions.length);
     highs.forEach((high, i) => expect(near(high, expected[i]!), `session ${i + 1}: ${high} vs the oracle's ${expected[i]}`).toBe(true));
+    // V24: each shown session's own saving is the oracle's sum of that session's priced breaks, and its date is given.
+    row.sessions.forEach((ref, i) => {
+      expect(ref.startedAt, `session ${i + 1}: date`).toBeDefined();
+      const theirs = bySession.get(ref.sessionId);
+      if (theirs !== undefined) {
+        expect(ref.perWindow?.known, `session ${i + 1}: saving is known`).toBe(true);
+        if (ref.perWindow?.known) expect(near(ref.perWindow.high, theirs), `session ${i + 1}: saving ${ref.perWindow.high} vs the oracle's ${theirs}`).toBe(true);
+      }
+    });
     say(`  D16 order: the idle-expiry row's ${row.sessions.length} sessions shown (of ${row.sessionsTotal}) are the oracle's largest, in order (top ${money(highs[0] ?? 0)} USD)`);
   });
 

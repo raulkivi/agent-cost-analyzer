@@ -107,6 +107,23 @@ describe("SavingsView (U18)", () => {
     expect(button).toHaveAttribute("aria-expanded", "false");
   });
 
+  // V24 (D19, board Savings.dc.html frames 5 and 6): ids only, each with its date and saving.
+  it("shows each session's date and saving beside its id, with Not priced and its reason once, and no title", async () => {
+    const user = userEvent.setup();
+    setup();
+    const button = rowButton(/Cache lost after an idle gap/);
+    await user.click(button);
+    const detail = document.getElementById(button.getAttribute("aria-controls")!)!;
+    const items = within(detail).getAllByRole("listitem");
+
+    expect(items[0]).toHaveTextContent(/4b81d0aa/);
+    expect(items[0]).toHaveTextContent(/Nov 1[01]/);
+    expect(items[0]).toHaveTextContent("up to 61.2 AI Credits");
+    expect(items[2]).toHaveTextContent("date unknown");
+    expect(items[2]).toHaveTextContent("Not priced");
+    expect(within(detail).getAllByText(/no price for gpt-5\.1-codex on 2026-10-22/)).toHaveLength(1);
+  });
+
   describe("drill-down (D16, D21)", () => {
     it("Open cost calls get_session_cost and shows U1 in place; Back returns focus to that session button", async () => {
       const user = userEvent.setup();
