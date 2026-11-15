@@ -4,6 +4,7 @@
 [codespell]
 builtin = clear,rare,en-GB_to_en-US
 uri-ignore-words-list = *
-skip = *.lock,package-lock.json,*.svg,*.min.js,*.map
+# Fixtures hold recorded or synthetic third-party data verbatim (such as British spellings in Agent Host logs).
+skip = *.lock,package-lock.json,*.svg,*.min.js,*.map,*/fixtures/*
 # Code identifiers codespell splits into words (atLeast, afterAll).
 ignore-words-list = afterall,atleast
