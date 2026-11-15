@@ -35,12 +35,12 @@
       "x": 0,
       "y": 6249,
       "w": 1488,
-      "h": 2957,
+      "h": 2966,
       "title": "4 · Narrow widths, light and dark: 320 and 768 px headers, full-width dialogs"
     },
     "A11y.dc.html": {
       "x": 0,
-      "y": 9326,
+      "y": 9335,
       "w": 1488,
       "h": 1675,
       "title": "5 · Accessibility: aria-labels per state, focus order, announcements, contrast notes"
