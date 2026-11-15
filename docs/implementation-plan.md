@@ -1,6 +1,6 @@
 # Implementation Plan: Agent Cost Analyzer and AI Credits Analyzer
 
-**Last changed:** 2026-11-14 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-15 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 This plan sequences [architecture.md](architecture.md) into buildable phases.
 Phases 0-9.12 build the standalone app, **Agent Cost Analyzer** (every
@@ -1462,7 +1462,7 @@ Increment 3 in 0.8.0 and 0.12.0 (shipped 2026-11-12). Stable extension releases 
 
 **Owner decisions (2026-11-14)** closing [plans/mcp-apps.md](plans/mcp-apps.md) §6.1's two open items:
 - U5's Analyse button reads **Added to chat** after a click (not "Sent"), with the hint "Press send in the chat to run it."; U2's "Ask about this session" gets the same wording. This is a 1.0 task ([1.0.0 release](#100-release)).
-- Claude Desktop's permission prompts: risk R4 accepted, no gate row (the host's own behaviour, seen in the step 10.23 recordings).
+- Claude Desktop's permission prompts: risk R4 accepted, no gate row (the host's own behavior, seen in the step 10.23 recordings).
 
 **Status (2026-11-12)**: done. Increment 3 (A25–A33: views U12, U13, U14/U15, U4, U5 and fullscreen, the A32 review, and A33's checks as specs) released 2026-11-12 in extension 0.8.0 and app 0.12.0, after the real-Copilot gate passed 33 of 33 on `dacf3ed`; the follow-ups are in [plans/mcp-apps.md](plans/mcp-apps.md) §11. The MVP (U1–U3, A0–A16) met its
 exit criterion and shipped in extension 0.4.0 and app 0.10.0. Increment 2
@@ -1535,14 +1535,14 @@ events) of a real Analyze session. Owner decision D18 in
 
 **Deliverables** (steps 14.0–14.8 in the plan): a per-request
 `RequestTrace` for Claude Code and Copilot (D1), a `RequestTraceScripter`
-that generalises 13.5a's `scriptFromCapture` (compaction, clear, model
+that generalizes 13.5a's `scriptFromCapture` (compaction, clear, model
 switch, 1-hour writes), a `SessionReplayService` with a self-check on the
 session's own model, priced on the session's own channel (D2), replay and
 compare routes, RPC methods and MCP tools (`replay_session`,
 `compare_models_for_session`, and `estimate_cost` with a `model`, D7), and
 **Replay on** plus **Compare models** in both products (D4, D5). The
 measured figures always stay visible next to the replay, and the replay is
-labelled **Simulated**.
+labeled **Simulated**.
 
 **Exit criterion**: the plan's §13, checked by an automated `REAL_DATA`
 test over the owner's logs. Its oracle is computed from the raw logs and
@@ -1575,7 +1575,7 @@ on every time chart), and produce frozen billing statements and estimates.
 **Deliverables** (steps 15.0–15.15 in the plan): per-provider workspace and
 turn-time capture, a file-only `RepositoryResolver`, a local projects file
 with `GET/PUT /api/projects`, a price book with `effectiveFrom`/`effectiveTo`
-versions per channel, `CostFigure`s labelled billed/reported/priced, a cost
+versions per channel, `CostFigure`s labeled billed/reported/priced, a cost
 cube with time-series, compare, variance, statement and estimate builders,
 new Dashboard tabs (Cost over time, Compare, Project, Billing), 10 new
 read-only MCP tools and 3 prompts (plan §10.1, each shipped in the step of
@@ -1598,7 +1598,7 @@ plan's §14 table and §14.1 notes have each step's detail:
 
 - 15.0: threat-model rows for the two new write endpoints.
 - 15.1: workspace and turn-time capture in every provider.
-- 15.2: repository resolver and remote URL normaliser.
+- 15.2: repository resolver and remote URL normalizer.
 - 15.3: projects file and its API (`GET/PUT /api/projects`,
   `GET /api/repositories`).
 - 15.4: attribution in the dataset (repository, project, vendor and
@@ -1660,7 +1660,7 @@ Full design: [plans/savings-report.md](plans/savings-report.md).
 **Goal**: answer "what should I change to spend less, and about how much
 would each change save?". One ranked list across sessions and providers,
 each opportunity with the change to make, its evidence, and an estimated
-saving per week as a range or a labelled upper bound. Recommendations are
+saving per week as a range or a labeled upper bound. Recommendations are
 text; the app never changes settings or files (vision §6, owner decision D1).
 
 **Deliverables** (tasks SR0–SR22 in the plan):
@@ -1681,7 +1681,7 @@ text; the app never changes settings or files (vision §6, owner decision D1).
 **Exit criterion**: the plan's §14: over 30 days of real Claude Code and
 Copilot sessions, the Savings tab in both products and (after Increment 2)
 `get_savings_report` list the same ranked opportunities, each amount
-labelled with its basis, range or "up to", and coverage; the owner checks
+labeled with its basis, range or "up to", and coverage; the owner checks
 one idle-expiry break and one unused tool by hand against the turn's tokens
 and the price book; the app writes no file and changes no setting.
 Increment 2's exit (owner decision 2026-11-14): `npm run
@@ -1745,7 +1745,7 @@ pi.dev-style "terminal ledger" theme. The Dashboard is 2,444px tall at
 **Exit criterion**: the plan's exit criterion: on the e2e fixture at
 1440x900 the Dashboard is at most 1,470px tall, table rows at most 30px, KPI
 tiles at most 80px, the list has no sideways scroll, light and dark both
-pass axe colour contrast, the VS Code panel and MCP views keep their colours
+pass axe color contrast, the VS Code panel and MCP views keep their colors
 and fonts, all suites are green and the owner has reviewed it by eye.
 
 **Dependencies**: none blocking (Phase 8's design system is merged). It holds
@@ -1755,7 +1755,7 @@ look.
 
 **Status (2026-11-14)**: Increment 1 (P0-P7) done: the Dashboard on the e2e
 fixture is 1,467px tall at 1440x900 (was 2,444px), checked by
-`packages/web/e2e/specs/density.spec.ts`. Increment 2: L1-L6 done 2026-11-14 (tokens and fonts, colour-mode switch, ledger rules, light and dark Playwright projects, docs and media, review: 7 findings fixed, 7 recorded in the plan's §10). Exit criterion: all met except the owner's eyes-on review. After the merge, step 10.22 resumes at task 1.10 (retakes in the new look).
+`packages/web/e2e/specs/density.spec.ts`. Increment 2: L1-L6 done 2026-11-14 (tokens and fonts, color-mode switch, ledger rules, light and dark Playwright projects, docs and media, review: 7 findings fixed, 7 recorded in the plan's §10). Exit criterion: all met except the owner's eyes-on review. After the merge, step 10.22 resumes at task 1.10 (retakes in the new look).
 
 ## 1.0.0 release
 

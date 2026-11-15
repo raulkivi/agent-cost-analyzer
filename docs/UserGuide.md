@@ -38,7 +38,7 @@ Both modes use the same three-column layout:
   Analyze mode this becomes a three-tab panel (Explanation / System
   prompt / Tools).
 
-### Colour theme
+### Color theme
 
 The header has an **Auto / Light / Dark** switch.
 
@@ -84,13 +84,13 @@ instructions-file edit, extended thinking/reasoning budget, a subagent
 running on a cheaper model, and more. No setup is required — the scenarios
 don't depend on anything on your machine. Their numbers are **simulated**:
 each scenario is replayed on a vendor and model you choose, using that
-vendor's documented caching rules and real prices, and the result is labelled
+vendor's documented caching rules and real prices, and the result is labeled
 **Simulated** wherever it appears. It's a teaching model, not a prediction of
 your bill.
 
-![Learn mode in the standalone app: the header colour switch changes from Light to Dark, then a scenario is opened and stepped through, with cache-expiry and compaction markers on the turns](images/demo/w1-learn.gif)
+![Learn mode in the standalone app: the header color switch changes from Light to Dark, then a scenario is opened and stepped through, with cache-expiry and compaction markers on the turns](images/demo/w1-learn.gif)
 
-The header switch in the GIF changes the colour theme ([Colour theme](#colour-theme)).
+The header switch in the GIF changes the color theme ([Color theme](#color-theme)).
 
 ### Choosing a vendor and model
 
@@ -314,7 +314,7 @@ the session's `main.jsonl`.
   runs' and the total.
 - **Matched by time.** A run's log that no `child_session_ref` names is
   placed on the turn whose prompt window holds its start time. Such a run is
-  labelled "matched by time"; a start time in no single window leaves the
+  labeled "matched by time"; a start time in no single window leaves the
   session's AI Credits unknown.
 - **Unknown, with a reason.** A total is unknown, never lower, when a run's
   log is missing, is not a regular file (for example a symbolic link), can't
@@ -414,7 +414,7 @@ shows an explanatory empty state instead of a blank panel.
 What would this session have cost on another model? A replay keeps the
 session's turns, requests and token counts, and runs them through the
 other model's vendor caching rules and prices. Only caching and prices
-change. Every replayed figure is labelled **Simulated**, and the measured
+change. Every replayed figure is labeled **Simulated**, and the measured
 figures stay as they are, beside it.
 
 ![Analyze mode on a Claude Code session: the turn inspector opens, then Replay on another model adds Simulated columns and opens the Replay summary](images/demo/w2-analyze-replay.gif)
@@ -492,7 +492,7 @@ cost, measured beside simulated.
     though other sessions may have left it warm.
   - **A4, inferred cache writes**: where the log records no cache writes
     (Copilot's local harness without `agent-traces.db`), they are what the
-    vendor's rules say. Greyed out as "not used for this session" when the
+    vendor's rules say. Grayed out as "not used for this session" when the
     log records every write.
   - **A5, same harness**: the session's tools, cache breakpoints and cache
     lifetimes are kept; only the model, its caching rules and prices
@@ -627,7 +627,7 @@ build the server works as before, with text results only.
 | `get_session_audit` | One session's tool-call audit. Set `includeCalls` to also get every classified call |
 | `list_tool_calls` | One session's calls, filtered by status, failure category, tool kind, tool, program or turn, paged with `offset`/`limit` |
 | `get_audit_rollup` | Cross-session tool-call totals, top failing commands and per-day counts for one provider |
-| `list_findings` | Security, anomaly and behaviour-change findings across every provider, most severe first, with what, when, why and redacted evidence |
+| `list_findings` | Security, anomaly and behavior-change findings across every provider, most severe first, with what, when, why and redacted evidence |
 | `list_repositories` | The repositories your sessions ran in, with sessions, turns, AI Credits and project ids; sessions with no repository are grouped by reason. Local repositories are named by folder, never by path |
 | `list_projects` | Your projects from `projects.json` with their repositories and AI Credits; client names and billing codes only if you start the server with `--project-billing-details` (for example `claude mcp add agent-cost-analyzer -- /abs/path/scripts/mcp-server.sh --project-billing-details`) |
 | `get_price_book` | The dated price versions the app prices turns with, per channel and model |
@@ -701,12 +701,12 @@ another:
 | What planned work will cost (standalone only) | `estimate_cost` | A p50–p90 range tagged **estimate**, the history it used, and on another model the replay coverage and self-check. **Simulated** on another model |
 | Why tool calls failed | `get_session_audit`, `get_audit_rollup` | The failure rate, failure categories, recovery cost in tokens, retried commands and calls by tool; over a date range also failed calls per day, top failing commands and the sessions |
 | Which session to look at | `list_sessions` | A list of sessions with an **Analyse** button per row |
-| How to spend less | `get_savings_report` | **Possible savings**: the ranked changes, one list per currency, each with its amount per week as a range or "up to" and a bar, its coverage and the **estimate** or **inferred** tag where it applies; a **Simulated** section; what was not analysed and why |
+| How to spend less | `get_savings_report` | **Possible savings**: the ranked changes, one list per currency, each with its amount per week as a range or "up to" and a bar, its coverage and the **estimate** or **inferred** tag where it applies; a **Simulated** section; what was not analyzed and why |
 
-The views use the product's name and colours and follow the host's light or
+The views use the product's name and colors and follow the host's light or
 dark theme. They only show what the tool already returned; they read your
 logs and write nothing. A figure priced from a price version you added is
-labelled **your prices** beside it, with the version id in the label's name, as
+labeled **your prices** beside it, with the version id in the label's name, as
 in the app.
 
 **Where they appear.**
@@ -828,8 +828,8 @@ views names its basis and its currency.
   between its two periods, and its **Price changes** button opens the price
   timeline described below.
 - **The waterfall.** It goes from the first period's total to the second's
-  through usage, price and mix. A rise uses the host's danger colour, a fall
-  its success colour, and each carries its written sign, so colour is never
+  through usage, price and mix. A rise uses the host's danger color, a fall
+  its success color, and each carries its written sign, so color is never
   the only cue. The three effects add up to the change. Usage is the later
   period's tokens at the earlier period's average price, before any change
   of model; price is the later tokens times the change in unit price; mix is
@@ -862,7 +862,7 @@ picker.**
   replay opens with its self-check. A failed or missing check is an alert
   above the figures ("Treat them as rough, not as a quote"); the figures
   stay. On the per-turn chart, measured is a solid line with filled dots
-  and simulated a dashed line with open diamonds, each labelled; turns not
+  and simulated a dashed line with open diamonds, each labeled; turns not
   replayed are a hatched gap, listed with their reasons below the chart.
 - **Price changes.** Documented and inferred changes share one timeline,
   oldest first, and stay apart by tag, by a solid or dashed diamond and
@@ -886,7 +886,7 @@ picker.**
 - **Tool-call audits.** The failure rate counts only calls whose outcome
   is known; calls with an unknown outcome are counted apart, never as a
   success or a failure, and with none known the rate reads **Unknown**.
-  Recovery cost is in tokens, labelled "tokens, not AI Credits". Sessions
+  Recovery cost is in tokens, labeled "tokens, not AI Credits". Sessions
   whose tool calls aren't recorded are named in a **Left out** tile and are
   in no figure. Commands are shown as written. Nothing in the audit opens
   anything.
@@ -936,7 +936,7 @@ model's replay turn by turn. The figures are **Simulated**.
 
 **Estimate.** A cost range for ten more active days, tagged **estimate**.
 
-![Estimate view in Claude Desktop: a cost range for ten more active days, labelled as an estimate](images/demo/m7-estimate.gif)
+![Estimate view in Claude Desktop: a cost range for ten more active days, labeled as an estimate](images/demo/m7-estimate.gif)
 
 **Getting the views.** Run `npm run build` in the repo, then register
 `scripts/mcp-server.sh` as above (for Claude Desktop, as the `command` of an
@@ -971,16 +971,16 @@ or all time.
 channel, provider, date, hour (UTC), session, model, trigger event, usage data, tool, tool kind, program,
 outcome, failure category, signal type, severity and signal category.
 Click a value to select only it; Ctrl/⌘-click to add or remove values.
-Every other list box then colours its values:
+Every other list box then colors its values:
 
-| Colour | Meaning |
+| Color | Meaning |
 |---|---|
 | Green | Selected |
 | White | Associated with the current selections |
-| Light grey | Alternative: another value in a field you've already filtered |
-| Dark grey | Excluded by the current selections |
+| Light gray | Alternative: another value in a field you've already filtered |
+| Dark gray | Excluded by the current selections |
 
-The grey values answer "which providers had **no** failures?" or "which
+The gray values answer "which providers had **no** failures?" or "which
 models never triggered a signal?" at a glance. Charts are selection
 surfaces too: click a day, a model, a tool, a failure category or a
 program bar to select it. **Current selections** lists every filter.
@@ -991,7 +991,7 @@ What the view shows for the current selection:
 
 - **What happened**: a plain-language summary covering which sessions
   and when, AI Credits and cache share, tool-call failures and their main
-  cause, the most severe signal, anomalies and behaviour changes.
+  cause, the most severe signal, anomalies and behavior changes.
 - **KPI tiles**: AI Credits, sessions, turns, cache hit ratio, output
   tokens, tool calls, failure rate and security signals. Figures that a
   log source didn't record are never counted as 0. Each tile says how many
@@ -1011,7 +1011,7 @@ What the view shows for the current selection:
   - *Anomalies* flag sessions far above the norm for AI Credits, output
     tokens, tool calls or failure rate (robust z-score over at least 8
     sessions). The reason states the value, the median and the sample size.
-  - *Behaviour changes* flag the first use of a program, tool or model
+  - *Behavior changes* flag the first use of a program, tool or model
     after the earliest sessions.
 
   Signals are prompts to look, not verdicts. Mentioning a dangerous
@@ -1068,7 +1068,7 @@ app's settings folder, beside `settings.json`:
 Prices come from a bundled, dated **price book** (GitHub Copilot's table from
 2026-10-01 and the Anthropic, OpenAI and Google APIs'). Add your own contract
 prices under `channels.priceVersions` in `projects.json`. A figure priced
-with one of your versions is labelled **your prices**, with the version id in
+with one of your versions is labeled **your prices**, with the version id in
 the label's accessible name and tooltip: on the Overview's Cost tile, Cost over
 time, Compare, the Project tab, a statement's lines and the estimate, and on
 Savings rows. Billed and reported figures never carry it. A price that isn't
@@ -1120,9 +1120,9 @@ one.
   prices (USD per 1M tokens), the sources and the price version. Esc closes
   it.
 
-A project keeps its colour (its position in `projects.json`) and a
-repository its colour whatever you filter. **No project** and
-**Unattributed** are grey. Focus a chart and use Left/Right, Home and End to
+A project keeps its color (its position in `projects.json`) and a
+repository its color whatever you filter. **No project** and
+**Unattributed** are gray. Focus a chart and use Left/Right, Home and End to
 read each period; the tooltip lists every line with its coverage.
 
 ![Compare at 360 px: the priority columns, a Details button per row, and the indexed growth chart](images/guide-dashboard-compare-360.png)
@@ -1371,12 +1371,12 @@ sparkline, the prompt composition diagram, the tool-audit and dashboard
 columns, the ranked bars, the Compare models bars, and the cost views' charts (where price changes
 are rows of their own and an unknown period reads "unknown"). It swaps the chart for a table of the same
 numbers, and pressing it again returns to the chart. Use it when a chart is
-hard to read (colour, size, a screen reader) or when you want exact values.
+hard to read (color, size, a screen reader) or when you want exact values.
 
-## Long loads and cancelling
+## Long loads and canceling
 
 While the dashboard, the all-sessions audit or a turn's detail loads, a
-progress bar and skeleton show with a **Cancel** button. Cancelling replaces
+progress bar and skeleton show with a **Cancel** button. Canceling replaces
 the view with "Loading cancelled" and a **Retry** button. Nothing is changed
 either way: these views only read your logs. A load that fails shows the
 error with **Try again** and **Copy details**.
