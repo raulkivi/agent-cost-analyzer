@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-**Last changed:** 2026-11-11 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-15 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 Project-specific guidance for working in this repo. Full context lives in
 the docs below — read them before making changes; don't duplicate their
@@ -24,6 +24,11 @@ content here.
   and a **source** link, `https://github.com/raulkivi/agent-cost-analyzer`.
   Add the header only when creating a new document or updating an existing
   one (set the date then); never backfill untouched documents.
+- Spelling: US English (behavior, color, organize, analyze) in docs,
+  comments, UI text and commit messages, matching code identifiers and
+  open-source norms. Keep proper names as they are; convert British
+  spellings in passages you edit. CI (`Spelling` job,
+  [.codespellrc](.codespellrc)) checks commit messages and added lines.
 - Treat the docs above as the source of truth. If an implementation
   decision conflicts with them, update the relevant doc in the same change
   rather than letting it drift.
