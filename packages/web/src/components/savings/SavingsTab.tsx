@@ -2,10 +2,12 @@
 // SPDX-License-Identifier: MIT
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import type { KeyboardEvent } from "react";
-import type { PricingMode, SavingsOpportunity, SavingsReport, SavingsSessionRef } from "@agent-cost-analyzer/domain";
+import type { InsightsDataset, PricingMode, SavingsOpportunity, SavingsReport, SavingsSessionRef } from "@agent-cost-analyzer/domain";
+import { fetchInsights, type InsightsQuery } from "../../api-client/insights.js";
 import { fetchSavingsReport, type SavingsQuery } from "../../api-client/savings.js";
 import { getHostCapabilities } from "../../host/current-host-capabilities.js";
 import { CURRENCY_TITLES, groupByCurrency, KIND_TITLES, type CurrencyGroup } from "../../lib/savings/savings-view.js";
+import { useSessionTitles } from "../../lib/savings/use-session-titles.js";
 import { useCancellableLoad } from "../../lib/use-cancellable-load.js";
 import { useContainerWidth } from "../../lib/use-container-width.js";
 import { AsyncView } from "../ui/AsyncView.js";
@@ -42,6 +44,8 @@ interface SavingsTabProps {
   // Per host: "Open in Analyze" in the app, "Open session" in the extension.
   openSessionLabel?: string;
   onOpenSession?: (session: SavingsSessionRef) => void;
+  // V25: where session titles come from (the insights dataset), loaded when a detail opens.
+  loadInsights?: (query: InsightsQuery, signal: AbortSignal) => Promise<InsightsDataset>;
 }
 
 const DATE = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
@@ -69,6 +73,7 @@ export function SavingsTab({
   copilotOnly = false,
   openSessionLabel = "Open in Analyze",
   onOpenSession,
+  loadInsights = fetchInsights,
 }: SavingsTabProps) {
   const [days, setDays] = useState<number>(DEFAULT_DAYS);
   const [provider, setProvider] = useState("");
@@ -174,6 +179,7 @@ export function SavingsTab({
             providerLabel={providerLabel}
             openSessionLabel={openSessionLabel}
             {...(onOpenSession ? { onOpenSession } : {})}
+            loadInsights={loadInsights}
             copyToClipboard={copyToClipboard}
           />
         )}
@@ -190,6 +196,7 @@ interface SavingsReportViewProps {
   openSessionLabel: string;
   onOpenSession?: (session: SavingsSessionRef) => void;
   copyToClipboard: (text: string) => Promise<void>;
+  loadInsights: (query: InsightsQuery, signal: AbortSignal) => Promise<InsightsDataset>;
 }
 
 function groupTitle(group: CurrencyGroup, providerLabel: (id: string) => string): string {
@@ -200,7 +207,7 @@ function groupTitle(group: CurrencyGroup, providerLabel: (id: string) => string)
   return `${group.providerIds.map(providerLabel).join(", ")} · ${parts.join(", ")}`;
 }
 
-function SavingsReportView({ report, copilotOnly, nothingFound, providerLabel, openSessionLabel, onOpenSession, copyToClipboard }: SavingsReportViewProps) {
+function SavingsReportView({ report, copilotOnly, nothingFound, providerLabel, openSessionLabel, onOpenSession, copyToClipboard, loadInsights }: SavingsReportViewProps) {
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [restoreFocus, setRestoreFocus] = useState<string | null>(null);
   const [measure, width] = useContainerWidth<HTMLDivElement>();
@@ -210,6 +217,7 @@ function SavingsReportView({ report, copilotOnly, nothingFound, providerLabel, o
   const groups = useMemo(() => groupByCurrency(report.opportunities), [report.opportunities]);
   const everything = useMemo<SavingsOpportunity[]>(() => [...report.opportunities, ...report.simulated], [report]);
   const selected = selectedKey === null ? undefined : everything.find((opportunity) => opportunity.key === selectedKey);
+  const titleOf = useSessionTitles(loadInsights, report.window, selected !== undefined);
   const allUnknown = report.opportunities.length > 0 && report.opportunities.every((opportunity) => !opportunity.perWeek.known);
   const simulatedMax = Math.max(0, ...report.simulated.map((opportunity) => (opportunity.perWeek.known ? opportunity.perWeek.high : 0)));
 
@@ -321,6 +329,7 @@ function SavingsReportView({ report, copilotOnly, nothingFound, providerLabel, o
         providerLabel={providerLabel}
         openSessionLabel={openSessionLabel}
         {...(onOpenSession ? { onOpenSession } : {})}
+        titleOf={titleOf}
         copyToClipboard={copyToClipboard}
         onClose={close}
         closeLabel={narrow ? "Back to the list" : "Close detail"}

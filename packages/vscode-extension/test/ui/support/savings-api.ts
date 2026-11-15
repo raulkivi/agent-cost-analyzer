@@ -19,8 +19,8 @@ export function defaultSavingsSince(now: Date): string {
   return new Date(now.getTime() - 30 * DAY_MS).toISOString().slice(0, 10);
 }
 
-export function savingsReportOver(fixture: UiFixture, now: Date = new Date()): Promise<SavingsReport> {
-  const api = createExtensionApiService({
+function apiOver(fixture: UiFixture) {
+  return createExtensionApiService({
     ...copilotLogPathsFromUserDataDir(fixture.userDataDir),
     copilotHome: fixture.copilotHome,
     appSettings: new InMemoryAppSettingsStore(),
@@ -28,5 +28,15 @@ export function savingsReportOver(fixture: UiFixture, now: Date = new Date()): P
     vendorProfilesDir: path.join(SERVER, "fixtures/vendor-profiles"),
     appVersion: "0.0.0-test",
   });
-  return api.getSavingsReport({ since: defaultSavingsSince(now), pricing: "as-of-use", includeSimulated: false });
+}
+
+export function savingsReportOver(fixture: UiFixture, now: Date = new Date()): Promise<SavingsReport> {
+  return apiOver(fixture).getSavingsReport({ since: defaultSavingsSince(now), pricing: "as-of-use", includeSimulated: false });
+}
+
+// V25 (D25): the titles the panel's session list shows are this dataset's, the
+// one the Dashboard loads (the panel's getInsights RPC), over the same window.
+export async function sessionTitlesOver(fixture: UiFixture, now: Date = new Date()): Promise<Map<string, string>> {
+  const dataset = await apiOver(fixture).getInsights({ since: defaultSavingsSince(now), limit: 200 });
+  return new Map(dataset.sessions.map((row) => [row.key, row.title]));
 }

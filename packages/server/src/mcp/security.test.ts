@@ -138,6 +138,25 @@ describe("MCP security across every tool (step 15.13, plan §10.1.5)", () => {
     }
   });
 
+  // V25 (savings-increment-3.md §5, D19, D24): the Savings tab looks titles up
+  // client-side, so no report, RPC answer or MCP result may carry one. The
+  // titles come from the same fixture's insights dataset, not from a literal.
+  it("carries no session title in get_savings_report's structured result, text or the tab's report", async () => {
+    const { client, api } = await connectCostFixture();
+    try {
+      const listed = await Promise.all(["claude-code", "copilot", "pi"].map((provider) => client.callTool({ name: "list_sessions", arguments: { provider } })));
+      const titles = listed.flatMap((result) => ((result.structuredContent as { sessions?: { title: string }[] } | undefined)?.sessions ?? []).map((session) => session.title));
+      expect(titles.length).toBeGreaterThan(0);
+      const results = await Promise.all([false, true].map((includeSimulated) => client.callTool({ name: "get_savings_report", arguments: { includeSimulated, limit: 20 } })));
+      const serialized = [...results.map((result) => JSON.stringify(result)), JSON.stringify(await api.getSavingsReport({}))];
+      for (const text of serialized) {
+        for (const title of titles) expect(text).not.toContain(title);
+      }
+    } finally {
+      await client.close();
+    }
+  });
+
   // threat-model.md §5.6: client names and billing codes reach the model only
   // in a statement, and in list_projects only when the user opted in.
   it("names a project's client and billing code only in get_statement by default", async () => {

@@ -18,7 +18,7 @@ import { PROBE_SCRIPT } from "../../../scripts/ui-check/probe.mts";
 import { expectedListName, expectedRow, expectedSessionSaving } from "../../../../web/e2e/support/savings-text.js";
 import { AnalyzerPanel } from "../support/analyzer-panel.js";
 import { isWithinTolerance, nextGroupFraction } from "../support/panel-width.js";
-import { savingsReportOver } from "../support/savings-api.js";
+import { savingsReportOver, sessionTitlesOver } from "../support/savings-api.js";
 import { clickDetailButton, focusDetailButton, focusedRowIndex, hasProviderFilter, openRow, readDetail, readSavings, waitForSavings } from "../support/savings-view.js";
 import { saveScreenshot } from "../support/screenshots.js";
 import { parseUiFixture, UI_FIXTURE_ENV } from "../support/ui-fixture-env.mts";
@@ -36,6 +36,9 @@ function opportunityOf(kind: SavingsOpportunity["kind"]): { opportunity: Savings
   if (index < 0) throw new Error(`the report has no ${kind} opportunity`);
   return { opportunity: report.opportunities[index]!, index };
 }
+
+// The link's name is the id, then the title when the dataset has one (V25).
+const opensSession = (names: string[], sessionId: string): boolean => names.some((name) => name === `Open session: ${sessionId}` || name.startsWith(`Open session: ${sessionId}: `));
 
 async function openSavings(): Promise<void> {
   await panel.reset();
@@ -122,7 +125,7 @@ suite("Scenario SV1: VS Code, the Savings view (Phase 16 SR15)", () => {
     expect(detail.text).toContain(expectedRow(opportunity).amount);
     expect(detail.text).toContain("Suggestion only. This app does not change settings or files.");
     expect(detail.closeLabel).toBe("Close detail");
-    expect(detail.sessionButtons).toContain(`Open session: ${fixture.savings.localSessionId}`);
+    expect(opensSession(detail.sessionButtons, fixture.savings.localSessionId)).toBe(true);
     // V24: each session's date (the viewer's time zone, this machine's) and saving over the window are the API's.
     for (const session of opportunity.sessions) {
       expect(detail.text).toContain(session.startedAt === undefined ? "date unknown" : new Date(session.startedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" }));
@@ -156,6 +159,27 @@ suite("Scenario SV1: VS Code, the Savings view (Phase 16 SR15)", () => {
     });
   });
 
+  // V25 (D25): Copilot titles from the extension's own dataset, first; the id
+  // stays in the link's name; the savings answer holds no title.
+  test("the unused-tools row's session shows its dataset title first, the id under it", async () => {
+    const titles = await sessionTitlesOver(fixture);
+    const title = (titles.get(`vscode:${fixture.savings.localSessionId}`) ?? "").replace(/\s+/g, " ").trim();
+    expect(title === "" ? "the fixture session has no title" : "").toBe("");
+    expect(JSON.stringify(report)).not.toContain(title);
+
+    await openSavings();
+    const { index } = opportunityOf("unused-tools");
+    await panel.inside(async () => openRow(index));
+    const shown = [...title].slice(0, 120).join("");
+    // The dataset loads when the detail opens, so the title arrives after the row.
+    await browser.waitUntil(async () => (await panel.inside(async () => readDetail())).text.includes(shown), { timeout: WAIT_MS, timeoutMsg: "the session's title did not appear in the detail" });
+    const detail = await panel.inside(async () => readDetail());
+
+    expect(detail.text).toContain(shown);
+    expect(detail.text.indexOf(shown)).toBeLessThan(detail.text.indexOf(fixture.savings.localSessionId));
+    expect(detail.sessionButtons).toContain(`Open session: ${fixture.savings.localSessionId}: ${shown}`);
+  });
+
   test("the failed-calls row's detail has the API's occurrence count and the Agent Host session", async () => {
     await openSavings();
     const { opportunity, index } = opportunityOf("failed-tool-calls");
@@ -163,7 +187,7 @@ suite("Scenario SV1: VS Code, the Savings view (Phase 16 SR15)", () => {
     const detail = await panel.inside(async () => readDetail());
     expect(detail.text).toContain(expectedRow(opportunity).amount);
     expect(detail.text).toContain(`${fixture.savings.failedCallsCount} failed calls`);
-    expect(detail.sessionButtons).toContain(`Open session: ${fixture.savings.agentHostSessionId}`);
+    expect(opensSession(detail.sessionButtons, fixture.savings.agentHostSessionId)).toBe(true);
   });
 
   for (const [theme, bodyClass] of [

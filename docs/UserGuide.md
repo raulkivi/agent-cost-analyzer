@@ -1371,9 +1371,13 @@ whole window, the change to make and the price versions behind it.
   minus the five. The figures can differ from the row's total by a few
   tokens. The chat tool gives the model up to 20 tools and its text answer
   the first five.
-- **Sessions.** Each listed session shows its id, its date (in your time
-  zone) and its own saving over the window, with the row's label ("up to",
-  a range). A session that could not be priced says "Not priced", with the
+- **Sessions.** Each listed session shows its title first, then its id and
+  its date (in your time zone) under it, and its own saving over the window
+  at the right, with the row's label ("up to", a range). The title is the
+  one the Dashboard shows for that session, looked up in your browser; a
+  session without one shows the id alone. A long title is cut to one line
+  and shown in full on hover. Titles never reach the report, the chat or
+  Copy. A session that could not be priced says "Not priced", with the
   reason once under the list, never 0; one whose log has no start says
   "date unknown".
 - **Open in Analyze** opens a session of the row in the turns view. For a

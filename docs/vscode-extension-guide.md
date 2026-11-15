@@ -288,8 +288,11 @@ What differs in the panel:
 - **Tools.** An unused-tools row lists its five largest tools with their
   tokens per request ("about N", an estimate) and "loaded in N sessions",
   then "and N more (about X)", where X is the row's total minus the five.
-- **Sessions.** Each listed session shows its id, its date and its own
-  saving over the window, with the row's label ("up to", a range); a
+- **Sessions.** Each listed session shows its title first, then its id and
+  its date under it, and its own saving over the window, with the row's
+  label ("up to", a range). The title is the Copilot title the Dashboard
+  shows, looked up in the panel; a session without one shows the id alone,
+  and titles never reach the report, the chat or Copy. A
   session that could not be priced says "Not priced" and the reason once
   under the list, and one with no start says "date unknown".
 - **Open session** opens the row's session in the turns view.

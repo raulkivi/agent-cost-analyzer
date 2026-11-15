@@ -15,6 +15,7 @@ import {
   amountText,
   windowAmountText,
 } from "../../lib/savings/savings-view.js";
+import type { SessionTitleOf } from "../../lib/savings/session-titles.js";
 import { UserPriceTag } from "../ui/UserPriceTag.js";
 import { SavingsLabel } from "./SavingsLabel.js";
 
@@ -39,6 +40,8 @@ interface SavingsDetailProps {
   providerLabel: (providerId: string) => string;
   openSessionLabel: string;
   onOpenSession?: (session: SavingsSessionRef) => void;
+  // V25: a session's title from the insights dataset; absent or undefined shows the id alone.
+  titleOf?: SessionTitleOf;
   copyToClipboard: (text: string) => Promise<void>;
   onClose: () => void;
   closeLabel: string;
@@ -193,18 +196,32 @@ function ActionBlock({ opportunity, copyToClipboard }: { opportunity: SavingsOpp
   );
 }
 
-// V24 (boards Detail, Narrow): the id, then the date under it, the saving at the
-// right and the link. V25 puts the session's title on the first line and the id
-// beside the date under it; until then the id is the first line.
-function SessionItem({ session, openSessionLabel, onOpenSession }: { session: SavingsSessionRef; openSessionLabel: string; onOpenSession?: (session: SavingsSessionRef) => void }) {
+// V24, V25 (boards Detail, Narrow; owner answers 2026-11-15): the title first
+// (one line, cut with an ellipsis, in full in the tooltip), the id and date
+// under it, the saving at the right and the link. A session with no title shows
+// the id alone on the first line. The title is text from the log: it is never
+// put in Copy's text, and the id stays in the link's name.
+function SessionItem({ session, openSessionLabel, onOpenSession, titleOf }: { session: SavingsSessionRef; openSessionLabel: string; onOpenSession?: (session: SavingsSessionRef) => void; titleOf?: SessionTitleOf }) {
+  const title = titleOf?.(session);
+  const date = sessionDateText(session.startedAt);
   return (
     <li>
-      <span className="savings-session-primary mono">{session.sessionId}</span>
+      {title === undefined ? (
+        <span className="savings-session-primary mono">{session.sessionId}</span>
+      ) : (
+        <span className="savings-session-primary savings-session-title" title={title}>{title}</span>
+      )}
       <span className="savings-session-saving">{sessionSavingText(session)}</span>
-      <span className="savings-session-meta">{sessionDateText(session.startedAt)}</span>
+      <span className="savings-session-meta">
+        {title === undefined ? date : (
+          <>
+            <span className="mono">{session.sessionId}</span> · {date}
+          </>
+        )}
+      </span>
       {onOpenSession && (
         <span className="savings-session-action">
-          <button type="button" className="btn btn-ghost" aria-label={`${openSessionLabel}: ${session.sessionId}`} onClick={() => onOpenSession(session)}>
+          <button type="button" className="btn btn-ghost" aria-label={`${openSessionLabel}: ${session.sessionId}${title === undefined ? "" : `: ${title}`}`} onClick={() => onOpenSession(session)}>
             {openSessionLabel}
           </button>
         </span>
@@ -213,7 +230,7 @@ function SessionItem({ session, openSessionLabel, onOpenSession }: { session: Sa
   );
 }
 
-export function SavingsDetail({ opportunity, days, providerLabel, openSessionLabel, onOpenSession, copyToClipboard, onClose, closeLabel, focusOnOpen = false }: SavingsDetailProps) {
+export function SavingsDetail({ opportunity, days, providerLabel, openSessionLabel, onOpenSession, titleOf, copyToClipboard, onClose, closeLabel, focusOnOpen = false }: SavingsDetailProps) {
   const closeButton = useRef<HTMLButtonElement>(null);
   useEffect(() => {
     if (focusOnOpen) closeButton.current?.focus();
@@ -276,7 +293,7 @@ export function SavingsDetail({ opportunity, days, providerLabel, openSessionLab
         </h5>
         <ul className="savings-sessions">
           {shown.map((session) => (
-            <SessionItem key={`${session.providerId}/${session.sessionId}`} session={session} openSessionLabel={openSessionLabel} onOpenSession={onOpenSession} />
+            <SessionItem key={`${session.providerId}/${session.sessionId}`} session={session} openSessionLabel={openSessionLabel} onOpenSession={onOpenSession} titleOf={titleOf} />
           ))}
         </ul>
         {more > 0 && <p className="text-muted">and {more} more</p>}
