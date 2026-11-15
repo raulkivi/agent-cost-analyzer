@@ -64,6 +64,15 @@ describe("parseCliArgs", () => {
     expect(parseCliArgs(["mcp", "--port", "1"]).kind).toBe("error");
   });
 
+  // parseStdioArgs matches the switch exactly, so a value would be dropped
+  // and the user's choice silently not applied.
+  it.each(["--project-billing-details=true", "--project-billing-details=false", "--project-billing-details="])(
+    "mcp %s is an error that names the argument, not an ignored switch",
+    (arg) => {
+      expect(parseCliArgs(["mcp", arg])).toEqual({ kind: "error", message: expect.stringContaining(arg) });
+    },
+  );
+
   it("--help and -h show usage", () => {
     expect(parseCliArgs(["--help"])).toEqual({ kind: "help" });
     expect(parseCliArgs(["-h"])).toEqual({ kind: "help" });
