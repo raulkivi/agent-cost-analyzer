@@ -177,6 +177,18 @@ test("the version check still runs on a dispatch, with the tag taken from packag
   assert.match(check.run, /release-check\.mts "\$TAG" app-v package\.json --also packages\/cli\/package\.json/);
 });
 
+test("no release step reads a pipe synchronously or pipes npm output into node (EAGAIN on a slow writer)", () => {
+  for (const wf of [workflow, extension]) {
+    for (const job of Object.values(wf.jobs)) {
+      for (const step of job.steps) {
+        const run = step.run ?? "";
+        assert.doesNotMatch(run, /readFileSync\(0/, step.name ?? run);
+        assert.doesNotMatch(run, /\bnpm\b[^\n]*\|\s*node\b/, step.name ?? run);
+      }
+    }
+  }
+});
+
 test("third-party actions are pinned to a commit SHA", () => {
   for (const job of [build, publish]) {
     for (const step of job.steps) {

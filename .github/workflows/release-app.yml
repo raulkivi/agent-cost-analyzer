@@ -101,13 +101,16 @@ jobs:
       - id: pack
         run: |
           mkdir npm-release
-          npm pack --workspace=packages/cli --pack-destination npm-release --json | node -e 'process.stdout.write("tarball=" + JSON.parse(require("fs").readFileSync(0, "utf8"))[0].filename + "\n")' >> "$GITHUB_OUTPUT"
+          # Into a file, not a pipe: a synchronous stdin read throws EAGAIN when npm is slow (the 0.16.0 publish).
+          npm pack --workspace=packages/cli --pack-destination npm-release --json > "$RUNNER_TEMP/pack-main.json"
+          node -e 'const fs = require("fs"); process.stdout.write("tarball=" + JSON.parse(fs.readFileSync(process.env.RUNNER_TEMP + "/pack-main.json", "utf8"))[0].filename + "\n")' >> "$GITHUB_OUTPUT"
 
       # The look-alike alias, depending on the package above (D3); its version
       # is its own, so the publish job can skip it once it is on npm.
       - id: pack-alias
         run: |
-          npm pack --workspace=packages/cli-alias --pack-destination npm-release --json | node -e 'const p = JSON.parse(require("fs").readFileSync(0, "utf8"))[0]; process.stdout.write("tarball=" + p.filename + "\nversion=" + p.version + "\n")' >> "$GITHUB_OUTPUT"
+          npm pack --workspace=packages/cli-alias --pack-destination npm-release --json > "$RUNNER_TEMP/pack-alias.json"
+          node -e 'const fs = require("fs"); const p = JSON.parse(fs.readFileSync(process.env.RUNNER_TEMP + "/pack-alias.json", "utf8"))[0]; process.stdout.write("tarball=" + p.filename + "\nversion=" + p.version + "\n")' >> "$GITHUB_OUTPUT"
 
       - name: SHA-256
         working-directory: npm-release
