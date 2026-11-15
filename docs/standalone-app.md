@@ -1,6 +1,6 @@
 # Agent Cost Analyzer: setup and data sources
 
-**Last changed:** 2026-11-15 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-16 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 How to install and run the standalone Agent Cost Analyzer app, where it
 finds each provider's logs, which Copilot Chat settings to turn on, and a
@@ -13,9 +13,7 @@ short tour of the app. The screen-by-screen walkthrough is the
 ### Setup via an AI coding agent
 
 Paste this into a coding harness (Claude Code, Copilot, Cursor, etc.) to
-have it install and run the app for you. It uses the npm package, which is
-published from app 0.16.0; before that release, use the clone steps under
-[From source](#from-source-contributors) instead.
+have it install and run the app for you. It uses the npm package.
 
 ```
 Set up and run the Agent Cost Analyzer:
@@ -47,8 +45,6 @@ Set up and run the Agent Cost Analyzer:
   [architecture.md](architecture.md)).
 
 **Run it with npx**
-
-From app 0.16.0 (the first npm release):
 
 ```sh
 npx agent-cost-analyzer

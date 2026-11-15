@@ -1,6 +1,6 @@
 # Security Policy
 
-**Last changed:** 2026-11-15 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-16 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 ## Supported versions
 Only the latest release receives security fixes.
@@ -8,7 +8,7 @@ Only the latest release receives security fixes.
 ## Distribution channels
 The standalone app is published on npm as
 [`agent-cost-analyzer`](https://www.npmjs.com/package/agent-cost-analyzer)
-(from app 0.16.0); the extension is on the VS Code Marketplace and Open VSX.
+(since app 0.16.0); the extension is on the VS Code Marketplace and Open VSX.
 Each release is built by a GitHub Actions workflow from a tag in this
 repository and published through trusted publishing (OIDC), with no
 long-lived publishing token. The npm package has no dependencies and no
