@@ -13,7 +13,19 @@
       "sessions": [
         {
           "providerId": "claude-code",
-          "sessionId": "<claude-code-session>"
+          "sessionId": "<claude-code-session>",
+          "startedAt": "2026-10-30T09:00:00.000Z",
+          "perWindow": {
+            "known": true,
+            "currency": "USD",
+            "low": 0,
+            "high": 0.26520000000000005,
+            "basis": "priced",
+            "label": "upper-bound",
+            "priceVersionIds": [
+              "anthropic-api:claude-opus-5.5:2026-10-01"
+            ]
+          }
         }
       ],
       "evidence": {
@@ -65,7 +77,19 @@
       "sessions": [
         {
           "providerId": "claude-code",
-          "sessionId": "<claude-code-session>"
+          "sessionId": "<claude-code-session>",
+          "startedAt": "2026-10-30T09:00:00.000Z",
+          "perWindow": {
+            "known": true,
+            "currency": "USD",
+            "low": 0,
+            "high": 0.13065000000000002,
+            "basis": "priced",
+            "label": "upper-bound",
+            "priceVersionIds": [
+              "anthropic-api:claude-sonnet-5.5:2026-10-07"
+            ]
+          }
         }
       ],
       "evidence": {

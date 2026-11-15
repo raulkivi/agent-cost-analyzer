@@ -15,11 +15,12 @@ export const unpriced: SavingsAmount = { known: false, reason: "no price for gpt
 
 const cover = (analysed: number, total: number, reason?: string) => ({ sessionsInWindow: total, sessionsAnalysed: analysed, notAnalysed: reason !== undefined && total > analysed ? [{ reason, sessions: total - analysed }] : [] });
 export const refs = (ids: string[], providerId = VSCODE) => ids.map((sessionId) => ({ providerId, sessionId }));
+// V24: a session with its start (midday UTC, the same day in any time zone) and its saving over the window.
+export const dated = (sessionId: string, startedAt: string | undefined, perWindow: SavingsAmount, providerId = VSCODE) => ({ providerId, sessionId, ...(startedAt === undefined ? {} : { startedAt }), perWindow });
 
 export function row(overrides: Partial<SavingsRowInput> & Pick<SavingsRowInput, "key" | "kind" | "subject">): SavingsRowInput {
   return {
-    rank: 1,
-    sessions: refs(["4b81d0aa", "c07e91d4", "e5a3190b"]),
+    sessions: [dated("4b81d0aa", "2026-11-11T12:00:00.000Z", upTo(61.2)), dated("c07e91d4", "2026-11-06T12:00:00.000Z", upTo(40.5)), dated("e5a3190b", undefined, unpriced)],
     sessionsTotal: 11,
     evidence: { sessions: 11, requests: 877, tokens: { known: true, value: 412000 }, occurrences: 11 },
     perWeek: upTo(46),
@@ -31,13 +32,14 @@ export function row(overrides: Partial<SavingsRowInput> & Pick<SavingsRowInput, 
   };
 }
 
-export const idleRow = row({ key: "idle:sonnet", kind: "idle-cache-expiry", subject: "claude-sonnet-5.5" });
+export const idleRow = row({ key: "idle:sonnet", rank: 1, kind: "idle-cache-expiry", subject: "claude-sonnet-5.5" });
 export const unusedRow = row({
   key: "unused:github",
   rank: 2,
   kind: "unused-tools",
   subject: "github MCP server",
   inferred: true,
+  sessions: [dated("4b81d0aa", "2026-11-11T12:00:00.000Z", span(3.9, 24)), dated("c07e91d4", "2026-11-06T12:00:00.000Z", span(2.1, 12.8)), dated("e5a3190b", "2026-11-02T12:00:00.000Z", span(1.6, 9.9))],
   sessionsTotal: 31,
   evidence: { sessions: 31, requests: 877, tokens: { known: true, value: 5400, estimated: true }, occurrences: null },
   perWeek: span(6.2, 38.4),
@@ -50,7 +52,7 @@ export const claudeRow = row({
   key: "idle:opus",
   kind: "idle-cache-expiry",
   subject: "claude-opus-5.5",
-  sessions: refs(["cc-1"], "claude-code"),
+  sessions: [dated("cc-1", "2026-11-02T12:00:00.000Z", upTo(13.8, "USD", ["anthropic-api@2026-09-15"]), "claude-code")],
   sessionsTotal: 1,
   perWeek: upTo(3.2, "USD", ["anthropic-api@2026-09-15"]),
   perWindow: upTo(13.8, "USD", ["anthropic-api@2026-09-15"]),
@@ -58,10 +60,13 @@ export const claudeRow = row({
 });
 export const simulatedRow = row({
   key: "cheaper:haiku",
-  rank: 1,
   kind: "cheaper-model",
   subject: "claude-haiku-5.5",
-  sessions: refs(["9d02e4c1", "e61a77f3", "0b7c35d8"]),
+  sessions: [
+    dated("9d02e4c1", "2026-11-09T12:00:00.000Z", { known: true, currency: "AI_CREDITS", low: 48, high: 52, basis: "simulated", label: "simulated", priceVersionIds: price }),
+    dated("e61a77f3", "2026-11-04T12:00:00.000Z", { known: true, currency: "AI_CREDITS", low: 31, high: 33, basis: "simulated", label: "simulated", priceVersionIds: price }),
+    dated("0b7c35d8", "2026-10-29T12:00:00.000Z", { known: true, currency: "AI_CREDITS", low: 28.1, high: 32.8, basis: "simulated", label: "simulated", priceVersionIds: price }),
+  ],
   sessionsTotal: 5,
   evidence: { sessions: 5, requests: 224, tokens: null, occurrences: 38 },
   perWeek: { known: true, currency: "AI_CREDITS", low: 24.9, high: 27.4, basis: "simulated", label: "simulated", priceVersionIds: price },

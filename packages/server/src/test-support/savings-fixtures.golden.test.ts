@@ -115,11 +115,11 @@ describe("savings fixtures: the Copilot sessions (extension-ui home)", () => {
     expect(kinds).toContain("failed-tool-calls");
     const unused = report.opportunities.find((o) => o.kind === "unused-tools")!;
     expect(unused.subject).toBe("acmedocs");
-    expect(unused.sessions).toEqual([{ providerId: "vscode", sessionId: SAVINGS_VSCODE_SESSION_ID }]);
+    expect(unused.sessions).toMatchObject([{ providerId: "vscode", sessionId: SAVINGS_VSCODE_SESSION_ID, startedAt: expect.any(String), perWindow: { known: true, currency: "AI_CREDITS" } }]);
     expect(unused.evidence.tokens).toMatchObject({ known: true });
     const failed = report.opportunities.find((o) => o.kind === "failed-tool-calls")!;
     expect(failed.subject).toBe("rg");
     expect(failed.evidence.occurrences).toBe(3);
-    expect(failed.sessions).toEqual([{ providerId: "vscode", sessionId: SAVINGS_AGENT_HOST_SESSION_ID }]);
+    expect(failed.sessions).toMatchObject([{ providerId: "vscode", sessionId: SAVINGS_AGENT_HOST_SESSION_ID, startedAt: expect.any(String), perWindow: { known: true, currency: "AI_CREDITS" } }]);
   });
 });

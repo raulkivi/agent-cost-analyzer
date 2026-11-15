@@ -465,14 +465,23 @@ Classic subagent runs (step 10.19, `packages/domain`;
   (`runSubagent-<agent>` or `searchSubagent`), optional `agentName` (at most 64
   characters), `model`, `roundsCount`, the token fields and `costAiCredits`
   as `TokenCount`, optional `startedAt` and `attribution`
-  (`child-session-ref` or `timestamp`).
+  (`child-session-ref` or `timestamp`). Step CS4 adds, for Claude Code runs:
+  label `Agent` or `Agent-<agentType>`, `attribution` `tool-use-id`, optional
+  `parentRunId` (same pattern as `id`; absent: started by the main agent) and
+  optional `extendedCacheWrite` (1-hour cache writes). `ownTurnUsageSchema`
+  gains the same optional `extendedCacheWrite`. `subagentRunIdSchema` and
+  `subagentLabelSchema` are exported so step 10.20's origin shares them.
 - `TurnUsage.subagents` (the runs read) and `TurnUsage.ownUsage` (the main
   agent's own token fields, `costAiCredits` and `model`) are present
   together or not at all. The turn's other fields are everything billed for
   the turn: own plus the runs, unknown when any part is. `tool`, `vision`,
   `model` and `roundsCount` stay the main agent's.
 - `Session.subagentSpend { runs, costAiCredits }`: what the runs added, set
-  by `summarizeSessionUsage` for the list and the detail alike.
+  by `summarizeSessionUsage` for the list and the detail alike. Step CS4 adds
+  optional `tokens` (`SubagentTokens`: four `TokenCount`s) and `cost`
+  (`TurnCostFigures`) here, on `SessionCost.subagents` (tokens as
+  `number | null`) and on `coverage.subagentRuns` of a replay, so a provider
+  without AI Credits shows a figure instead of "unknown".
 - `InsightTurnRow.lines`: `costLineSchema[]`, one per model (the main
   agent's, each run's, and an `unknown`-model line for an unread run), each
   with token figures, `aiCredits`, `cost` (`TurnCostFigures`), `subagent`

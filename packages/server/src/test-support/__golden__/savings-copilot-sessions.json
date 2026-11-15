@@ -13,7 +13,19 @@
       "sessions": [
         {
           "providerId": "vscode",
-          "sessionId": "9a1b2c3d-5555-4e6f-8a07-000000000020"
+          "sessionId": "9a1b2c3d-5555-4e6f-8a07-000000000020",
+          "startedAt": "2026-10-29T10:00:00.000Z",
+          "perWindow": {
+            "known": true,
+            "currency": "AI_CREDITS",
+            "low": 0,
+            "high": 9.76,
+            "basis": "priced",
+            "label": "upper-bound",
+            "priceVersionIds": [
+              "github-copilot:claude-sonnet-5:2026-10-01"
+            ]
+          }
         }
       ],
       "evidence": {
@@ -64,7 +76,19 @@
       "sessions": [
         {
           "providerId": "vscode",
-          "sessionId": "00000000-0000-4000-9000-000000000021"
+          "sessionId": "00000000-0000-4000-9000-000000000021",
+          "startedAt": "2026-10-28T10:00:00.000Z",
+          "perWindow": {
+            "known": true,
+            "currency": "AI_CREDITS",
+            "low": 0.033120000000000004,
+            "high": 0.3312,
+            "basis": "priced",
+            "label": "range",
+            "priceVersionIds": [
+              "github-copilot:claude-sonnet-5:2026-10-01"
+            ]
+          }
         }
       ],
       "evidence": {

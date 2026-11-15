@@ -1,6 +1,6 @@
 # Claude Code subagent usage
 
-**Last changed:** 2026-11-14 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-15 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 Status: **plan approved** (2026-11-14): the owner accepted every recommendation, D1–D16 (§8). A 1.0 criterion, C15 in
 [implementation-plan.md](../implementation-plan.md#100-release) (tasks V32
@@ -160,14 +160,16 @@ Meta keys (all values are flags, ids, enums or aliases except
   `fork-context-ref` line carrying `parentSessionId`, `parentLastUuid`,
   `contextLength`) repeat exactly 1 parent round with the same `message.id`
   and `requestId`; their own rounds are 229. Counting them as-is
-  double-counts 15 rounds. 24 metas say `isFork`; 9 of those copied no
-  round.
+  double-counts 15 rounds. 24 metas say `isFork`; 9 of those copied no session-file
+  round: they are nested forks that copy their parent run's rounds (CS0b,
+  §13.2).
 - **Compaction:** 29 `compact_boundary` entries in session files, 0 in
   transcripts. The provider already follows `logicalParentUuid` across a
   compaction, so an `Agent` call before it stays on the branch.
 - **Resume:** no agent id appears in two session folders; no session file
   holds two `sessionId`s. One `Agent` call's run lives in another session's
-  folder (likely history copied by a resumed or forked session; §13).
+  folder (likely history copied by a resumed or forked session). CS0b could not
+  reproduce it (§13.1).
 
 ### 4.5 Background and continued runs
 
@@ -213,7 +215,7 @@ All optional and additive; Copilot data unchanged.
 | `subagent-transcript-path.ts` | `subagentsDirOf(sessionFilePath)`, `listSubagentTranscripts(dir)` | §5.3 |
 | `subagent-meta.ts` | `parseSubagentMeta(text)` | Keeps `toolUseId`, `agentType` (64 chars, pattern), `isBuiltIn`, `spawnDepth`, `parentAgentId`, `isFork`, `finished`; drops every other key; size cap 64 KB |
 | `round-usage.ts` (extracted from `usage-extractor.ts`) | `sumRoundUsage(rounds)` | One summation for turns and runs, incl. `extendedCacheWrite`; `<synthetic>` excluded as today |
-| `subagent-run-usage.ts` | `extractClaudeCodeRunUsage(entries, meta, parentRequestIds)` | Rounds by `message.id`; skips rounds whose `requestId` or `message.id` is in the parent (fork copies); model = last round's; `roundsCount` = own rounds |
+| `subagent-run-usage.ts` | `extractClaudeCodeRunUsage(entries, meta, parentRequestIds)` | Rounds by `message.id`; skips rounds whose `requestId` or `message.id` is in the parent (fork copies; for a nested fork the parent run's, §13.2); model = last round's; `roundsCount` = own rounds |
 | `subagent-attribution.ts` | `attributeClaudeCodeRuns(runs, parentBranch, turnGroups)` → `{ byTurn, sessionUnknownReasons }` | §5.4 |
 | `subagent-usage-merge.ts` | Reuse or generalise `data-sources/jsonl/subagent-usage-merge.ts` | 10.19 §4.2 sums; sets `subagents` and `ownUsage`; a `null` turn stays `null` |
 | `claude-code-run-cache.ts` | Run summaries keyed by `(path, size, mtimeMs)` | Numbers and ids only; bounded entries (D16) |
@@ -343,7 +345,7 @@ Unknown is never 0. Each row is a tested reason.
 | D1 | A background run keeps going after the user's next prompt (42 % of run usage here). Whole run to the turn whose `Agent` call started it, or each round to the turn in whose time window it ran? | Starting turn: it caused the spend, matches 10.19 and Agent Host, and needs no clock matching. Session, daily and repository totals are the same either way |
 | D2 | A run continued by `SendMessage` from a later turn: the starting turn, or the sending turn? | Starting turn in 1.0; show "continued N times" on the run. Revisit if users ask |
 | D3 | Nested runs (16 seen): fold in, or unknown (10.19 D6)? | Fold in, listed with `parentRunId`, depth cap 8: they are real spend and the link is reliable |
-| D4 | Forked runs repeat the fork point's round: skip rounds whose `requestId` or `message.id` the parent has? | Yes |
+| D4 | Forked runs repeat the fork point's round: skip rounds whose `requestId` or `message.id` the parent has? | Yes. CS0b (§13.2): "the parent" of a nested fork is the parent run's transcript |
 | D5 | Runs started from an `Agent` call off the active branch (after an edit or rewind) | Not counted, like the main agent's off-branch rounds; CS0b counts them, and if material a session-level "off-branch runs" note follows |
 | D6 | Transcript with no link (2 seen) | Match by time to the turn whose window holds its first line, labelled "matched by time" (10.19 D5); else the session is unknown |
 | D7 | `Agent` call whose run lives in another session's folder (1 seen) | Count it only in the session whose folder holds it; this turn lists "counted in another session". Unknown if no folder in the same project has it |
@@ -356,6 +358,7 @@ Unknown is never 0. Each row is a tested reason.
 | D14 | Runs still running (`finished` absent: 67) | Count as of now, as the parent |
 | D15 | Release | The next app release after the build, before 1.0.0, with a CHANGELOG note: Claude Code totals rise about 3 × on heavy subagent use; issued statements show a diff |
 | D16 | List performance (2.5 GB here) | In-memory run-summary cache keyed by path, size and mtime; a budget test with runs |
+| D17 | Off-branch runs (49 calls, 3.35 % of run usage; CS0b §13.4). **Owner decided 2026-11-15** | D5 stands; no session-level "off-branch runs" note in 1.0. CS15 documents that such runs are not counted |
 
 ## 9. Risks
 
@@ -406,11 +409,11 @@ model in this repo. Specs and the real-data suite are TDD exceptions as in
 | ID | Task | Exit | Complexity | Model | Depends on |
 |---|---|---|---|---|---|
 | CS0 | **Done 2026-11-14 (§4).** Spike: read-only inspection of `~/.claude/projects/**/subagents/` | Findings in §4 | medium | Opus | — |
-| CS0b | Close the spike's open points (§13): the run in another session's folder, `isFork` without copied rounds, how a `SendMessage` continuation appears in the transcript, runs off the active branch, a pre-`Agent` version's `Task` layout | §4 and §13 updated; D5–D7 confirmed or changed | low | Sonnet | — |
-| CS1 | Threat-model rows (§7) in `docs/threat-model.md` §4 and §7 before reader code | Rows merged | low | Haiku | Plan approved |
-| CS2 | Mock-up delta for runs without AI Credits: turns-table marker tooltip, Explanation panel block, KPI sub-line, U1, in `docs/plans/mockups/claude-code-subagents/` | Owner approves | medium | Sonnet (frontend-design skill) + owner | Plan approved |
-| CS3 | Synthetic fixtures under `packages/server/fixtures/claude-code/subagents/`: linked run, nested run, fork copy, failed launch, missing transcript, unlinked transcript, symlink (made at test time), cap (generated), partial last line, off-branch call, `<synthetic>` round, 1-hour writes | A test reads each and finds the expected counts | medium | Sonnet | CS0b |
-| CS4 | Domain (§5.1): `label`, `attribution`, `parentRunId`, `extendedCacheWrite` on runs and `ownUsage`; tokens and priced cost on the three summaries | Schema tests: valid, hostile label and id rejected, Copilot and Learn fixtures still parse | medium | Sonnet | D13 |
+| CS0b | **Done 2026-11-15 (§13).** Close the spike's open points (§13): the run in another session's folder, `isFork` without copied rounds, how a `SendMessage` continuation appears in the transcript, runs off the active branch, a pre-`Agent` version's `Task` layout | §4 and §13 updated; D5–D7 confirmed or changed | low | Sonnet | — |
+| CS1 | **Done 2026-11-15 (§4 and §7 rows, planned; verified in CS15).** Threat-model rows (§7) in `docs/threat-model.md` §4 and §7 before reader code | Rows merged | low | Haiku | Plan approved |
+| CS2 | Mock-up delta for runs without AI Credits: turns-table marker tooltip, Explanation panel block, KPI sub-line, U1, in `docs/plans/mockups/claude-code-subagents/` | **Done 2026-11-15: boards approved by the owner (all questions as drawn)** | medium | Sonnet (frontend-design skill) + owner | Plan approved |
+| CS3 | Synthetic fixtures under `packages/server/fixtures/claude-code/subagents/`: linked run, nested run, fork copy, nested fork copy of the parent run (§13.2), failed launch, missing transcript, unlinked transcript, symlink (made at test time), cap (generated), partial last line, off-branch call, `<synthetic>` round, 1-hour writes | A test reads each and finds the expected counts | medium | Sonnet | CS0b |
+| CS4 | **Done 2026-11-15.** Domain (§5.1): `label`, `attribution`, `parentRunId`, `extendedCacheWrite` on runs and `ownUsage`; tokens and priced cost on the three summaries | Schema tests: valid, hostile label and id rejected, Copilot and Learn fixtures still parse | medium | Sonnet | D13 |
 | CS5 | `subagent-transcript-path.ts` (§5.3) | Tests: symlinked folder and file, directory, other names, cap, missing folder | low | Sonnet | CS3 |
 | CS6 | `subagent-meta.ts` allow-list | Tests: dropped keys, caps, malformed JSON, oversize | low | Sonnet | CS3 |
 | CS7 | `round-usage.ts` extracted; `subagent-run-usage.ts` | Existing usage tests unchanged; run tests: sums, 1-hour split, fork copies skipped, `<synthetic>`, missing field, partial line | medium | Sonnet | CS4, CS6 |
@@ -421,7 +424,7 @@ model in this repo. Specs and the real-data suite are TDD exceptions as in
 | CS12 | MCP text: server instructions, `get_turn`, `get_session_cost`, `replay_session` descriptions; tool-list snapshots | `mcp/security.test.ts` passes; snapshots updated on purpose | low | Sonnet | CS11 |
 | CS13 | Web and MCP App U1 per CS2; Playwright spec `packages/web/e2e/specs/claude-code-subagents.spec.ts` and one in `packages/mcp-apps/e2e/specs/` | Component tests with axe; `web-e2e` and `mcp-apps-e2e` pass | medium | Sonnet | CS2, CS11 |
 | CS14 | Tool audit increment (D9): subagent tool calls in the audit and security findings, one shape with step 10.20 | Audit tests; threat-model residual closed | high | Opus | V21 approved, CS10 |
-| CS15 | Docs (§12) | Docs match the code; Gantt updated | medium | Sonnet | CS10–CS14 |
+| CS15 | Docs (§12); D17: say off-branch runs are not counted | Docs match the code; Gantt updated | medium | Sonnet | CS10–CS14 |
 | CS16 | Real-data suite and oracle (§10); owner run and sign-off | §10 passes; owner signs off | medium | Opus (suite), owner | CS15 |
 
 Critical path: CS0b → CS3 → CS5/CS6 → CS7 → CS8 → CS9 → CS10 → CS11 →
@@ -444,16 +447,100 @@ CS13 → CS15 → CS16. CS1, CS2 and CS4 run beside CS3–CS7; CS14 after V21.
   `docs/implementation-plan-gantt.md` (C15 bar, criteria count, Open
   items).
 
-## 13. Not verified
+## 13. Open points (closed by CS0b, 2026-11-15)
 
-- What put one `Agent` call's run in another session's folder (resume,
-  `--fork-session` or a moved file); CS0b.
-- Why 9 `isFork` runs copied no parent round.
-- How a `SendMessage` continuation shows in the transcript (31 transcripts
-  hold more than one prompt; 237 calls named an agent).
-- How many runs hang off `Agent` calls that are off the active branch.
-- The layout on Claude Code versions that named the tool `Task`; only
-  2.1.300–2.1.325 are on this machine.
-- Whether a run's own `/compact` writes a `compact_boundary` (none seen).
+CS0b re-scanned the same `~/.claude/projects` read-only (26 project folders,
+229 session files, 1,271 transcripts: the machine has grown since CS0's 1,235).
+Output was counts, field names, enum values and ids only. Figures below are
+from this re-scan, so some differ slightly from §4.
+
+### 13.1 Run in another session's folder: not reproduced
+
+- 1,254 `Agent` calls in session files: 1,252 have their run (by
+  `meta.toolUseId`) in their own session's folder, 2 have none, **0 are in
+  another session's folder**. Every transcript's `sessionId` equals its
+  folder (0 of 1,271 differ); no session file holds a foreign `sessionId`;
+  no agent id exists in two folders.
+- CS0's "1" is not reproducible on today's data. Cause unknown (a session
+  or folder since cleaned up, or a count artifact of a fork copy: 24
+  `Agent` call ids appear a second time inside fork transcripts, §13.2).
+- **Effect:** D7 stands unchanged as a defensive rule. CS3's "another
+  folder" fixture stays synthetic; there is no real instance to model it on.
+
+### 13.2 `isFork` runs without a copied round: they copy from the parent run
+
+- The 9 are exactly the nested forks (`spawnDepth` 2, `parentAgentId` set,
+  no `fork-context-ref` line). CS0 checked only the parent *session* file;
+  against the parent *run's* transcript they share `message.id` and
+  `requestId` with **105 rounds** (52, 6, 5, 7, 9, 9, 6, 5, 6), keep the
+  copied lines' `uuid`s (32 to 184 shared per file) and also repeat the
+  parent run's `Agent` call ids.
+- Across all files 91 `message.id`s occur in more than one file (65 + 20 in
+  a nested fork and its parent run, 6 in depth-1 forks and the session). In
+  every case one side is a fork: no non-fork transcript copies anything,
+  and `requestId` is equal across the copies. Depth-1 forks (15) repeat 1
+  round from the session file, as in §4.4.
+- **Effect:** D4 stands, but "the parent" must mean the run's parent: the
+  session file for a depth-1 fork, the parent run's transcript for a nested
+  one. CS0's "double-counts 15 rounds" understated it: 120 duplicated
+  rounds in total. CS7 (`parentRequestIds`) and CS8 must build the skip set
+  per run from its parent chain (or, simpler and equivalent, dedupe by
+  `message.id` across the whole session folder, keeping the non-fork
+  copy). CS3 gains a "nested fork copies its parent run's rounds" fixture
+  beside the existing fork copy. Run links come from `meta.toolUseId`, never
+  from counting `tool_use` blocks, so the repeated call ids do not create
+  runs.
+
+### 13.3 How a `SendMessage` continuation appears: same transcript, same id
+
+- 250 `SendMessage` calls in session files; 248 name a run that has a
+  transcript (`recipient_kind` `agent`), 2 name a session or a name.
+- No new file or agent id: the message goes into the **same** transcript.
+  The call's result carries `resumedAgentId` equal to the target in 113
+  cases (`revivedAgentId` also in 111: the run had finished and was revived)
+  and no such key in 134 (the run was still running: the message is queued).
+  3 results have neither (`message`, `success` only).
+- In the recipient's transcript the message shows as a `user` line with
+  `origin.kind` `"coordinator"` (the first prompt-like line after the call
+  in 133 of 248), or a `queued_command` attachment line (176 of 248 have
+  one after the call). The target made rounds after the call in 247 of 248.
+  Other `origin.kind` values on `user` lines: `task-notification` (475
+  lines; a background task finished, not a continuation) and `peer` (3; a
+  subagent hand-back from another run). Rounds after a continuation carry
+  ordinary usage, already inside the run's summed rounds.
+- **Effect:** D2 stands: usage needs no extra rule, the run's total
+  already includes continuation rounds. "Continued N times" is the number
+  of `SendMessage` calls whose `to` is the run's agent id (or
+  `origin.kind: "coordinator"` lines in the transcript); CS8 must not count
+  `task-notification` or `peer` lines as continuations or as new prompts.
+
+### 13.4 Runs off the active branch: 49 calls, 3.4 % of run usage
+
+- 49 of 1,254 `Agent` calls sit off the active branch (chain from the last
+  message by `parentUuid`, following `logicalParentUuid` across a
+  compaction). Each has its run in its own folder. They are in 14 sessions,
+  every one with branching (a parent with more than one child), no dangling
+  `parentUuid`.
+- Their runs hold 2,537 of 67,086 rounds (3.8 %) and 3.35 % of the runs'
+  weighted usage (same rough weights as §4.3).
+- **Effect:** D5 stands (not counted, as the main agent's off-branch
+  rounds). **Owner decided 2026-11-15 (D17):** no session-level note in 1.0;
+  CS15 documents it. The count stays available for the CS16 oracle. CS3's
+  off-branch fixture models a real shape.
+
+### 13.5 Compaction inside a run: still none
+
+- No `system` line, `subtype` or `compact_boundary`/`isCompactSummary` key in
+  any of the 1,271 transcripts (16 contain the string `compact_boundary`
+  only inside text). Unchanged: not seen, so not handled.
+
+## 13a. Not verified
+
+- The layout on Claude Code versions that named the tool `Task`. This
+  machine's versions are 2.1.292 to 2.1.325 and all 1,379 `tool_use` blocks
+  that start a run are named `Agent`; no `Task`. Not checkable here.
+  Recommendation for CS5/CS6 (no decision changed): link runs by
+  `meta.toolUseId` as today, so the tool's name is not needed; a synthetic
+  `Task` fixture is optional.
 - The 71 % share uses a rough price weight, not the price book; CS16 gives
   the priced figure.

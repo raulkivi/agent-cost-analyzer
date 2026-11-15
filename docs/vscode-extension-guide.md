@@ -1,6 +1,6 @@
 # AI Credits Analyzer: extension guide
 
-**Last changed:** 2026-11-14 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-15 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 AI Credits Analyzer is a VS Code extension that shows where your GitHub
 Copilot Chat tokens and AI Credits go. It reads the logs Copilot Chat
@@ -285,6 +285,10 @@ What differs in the panel:
 - **Copy text** uses the same clipboard command as the other copy buttons.
   It copies one line of fixed wording, at most 600 characters. The panel
   never changes a setting or a file because of the report.
+- **Sessions.** Each listed session shows its id, its date and its own
+  saving over the window, with the row's label ("up to", a range); a
+  session that could not be priced says "Not priced" and the reason once
+  under the list, and one with no start says "date unknown".
 - **Open session** opens the row's session in the turns view.
 - **No total.** Opportunities overlap, so none is added up.
 
@@ -625,7 +629,7 @@ or for you.
 | `explain_cost_change` | Why a repository's cost changed between two periods: usage, price and mix effects |
 | `replay_session` | One session replayed on another model: what it would have cost per turn and in total, beside what it did, with coverage and the self-check. **Simulated** |
 | `compare_models_for_session` | One session's simulated total on up to 10 models, its own included. **Simulated** |
-| `get_savings_report` | The [savings report](#the-savings-report): changes that would have cost less over a window (default the last 30 days), ranked, each with its amount per week as a range or "up to", coverage, up to 10 session ids and the fixed text of what to change; the 10 highest unless asked for up to 20. Cheaper-model replays only when asked (`includeSimulated`), listed apart as **Simulated** |
+| `get_savings_report` | The [savings report](#the-savings-report): changes that would have cost less over a window (default the last 30 days), ranked, each with its amount per week as a range or "up to", coverage, up to 10 session ids (each with its date and saving over the window) and the fixed text of what to change; the 10 highest unless asked for up to 20. Cheaper-model replays only when asked (`includeSimulated`), listed apart as **Simulated** |
 
 Four prompts start common reviews: `audit_session`, `review_costs`
 (which starts from `get_savings_report`), `security_review` and
@@ -691,7 +695,8 @@ What you can click:
   place; **Back to model comparison** returns with focus on that model.
 - **A savings row** opens in place: the amount over the window, the
   evidence, **What to change** (a suggestion; nothing is changed) and the
-  largest three of its sessions with the price versions. **Open cost** opens
+  largest three of its sessions, each with its date and its saving over the
+  window (ids only, no titles), and the price versions. **Open cost** opens
   a session's cost view in place (**Open replay** on a cheaper-model row);
   **Back to savings** returns with focus on that session. The view has no
   Copy or Cancel button and sends nothing to the chat; for cheaper-model
