@@ -19,6 +19,9 @@ export interface CliBuildPlan {
   packageDir: string;
   distDir: string;
   metafilePath: string;
+  // The package lists the web and MCP Apps Vite builds write (not shipped).
+  webPackagesPath: string;
+  viewsPackagesPath: string;
   rootNoticesPath: string;
   noticesPath: string;
   copies: CopyStep[];
@@ -34,6 +37,8 @@ export function cliBuildPlan(repoRoot: string): CliBuildPlan {
     packageDir,
     distDir: path.join(packageDir, "dist"),
     metafilePath: cliMetafilePath(packageDir),
+    webPackagesPath: path.join(repoRoot, "packages", "web", "build", "bundled-packages.json"),
+    viewsPackagesPath: path.join(repoRoot, "packages", "mcp-apps", "build", "bundled-packages.json"),
     rootNoticesPath: path.join(repoRoot, "THIRD-PARTY-NOTICES.md"),
     noticesPath: path.join(packageDir, "THIRD-PARTY-NOTICES.md"),
     copies: [
