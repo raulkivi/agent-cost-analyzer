@@ -2769,6 +2769,7 @@ estimate rules, with a `simulation` block. `GET /api/estimates` doesn't take
 | Token estimation | `gpt-tokenizer` (`o200k_base` encoding), pure JS/no native build step | Matches VS Code's own model-catalog encoding for Claude models (§6.2.2 Phase 6 addendum); only ever used to produce an explicitly `estimated: true` `TokenCount`, never a substitute for real usage data |
 | MCP | `@modelcontextprotocol/server`, `client`, `core` 2.4.0 and `@modelcontextprotocol/ext-apps` 2.0.4, pinned exactly | The official TypeScript SDK and MCP Apps library; `serveStdio` serves 2025-era and 2026-07-28 clients (§5, "MCP SDK and transport") |
 | Monorepo tooling | npm workspaces | Small project; avoids adding a build-orchestration tool (Turborepo/Nx) before it's needed |
+| npm package bundle | esbuild (`packages/cli/scripts/build.mts`, `npm run build:cli`, the last step of `npm run build`): one ES module `dist/cli.js` for Node 22.18 with code splitting on, a banner that defines `require` through `createRequire(import.meta.url)` for CommonJS dependencies, `node:` builtins external, not minified, no source maps. The metafile goes to `build/meta.json` (not shipped) and generates `THIRD-PARTY-NOTICES.md` with a license allow-list | The package has no dependencies, so `npx` fetches one tarball; users can read the code they run; the extension bundles the same server code the same way (§12) ([npm-package.md](plans/npm-package.md) §4.2, §4.9) |
 
 These are default choices consistent with the constraints, not locked in —
 see §13 for what's still open.
@@ -2820,7 +2821,10 @@ agent-cost-analyzer/
     pi-system-prompt-logger/ # vendored Pi coding-agent extension: captures the
                               # assembled system prompt to a JSONL sidecar log,
                               # optionally consumed by server/pi-agent (§6.2.5)
-  package.json          # workspaces root
+    cli/              # the npm package `agent-cost-analyzer` (plans/npm-package.md):
+                      # src/ (args, serve, mcp, browser opener), bin/ shim,
+                      # scripts/build.mts → dist/ (bundle, web, views, JSON data)
+  package.json          # workspaces root (private)
 ```
 
 `domain` has no dependency on `server` or `web`; both of those depend on

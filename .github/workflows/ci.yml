@@ -60,6 +60,9 @@ jobs:
       - run: npm run headers:check
       - run: npm run test:scripts
       - run: npm run typecheck
+      # Ends with build:cli (packages/cli/dist). npm test's packages/cli
+      # bundle test runs that build, its notices and `npm pack`; under CI
+      # (set by Actions) a missing dist fails it instead of skipping.
       - run: npm run build
       - run: npm test
 
