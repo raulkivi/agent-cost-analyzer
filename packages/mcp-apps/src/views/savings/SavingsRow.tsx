@@ -118,7 +118,11 @@ export function SavingsRow({
                 const isFocus = focusSession !== undefined && focusSession.providerId === session.providerId && focusSession.sessionId === session.sessionId;
                 return (
                   <li key={`${session.providerId}:${session.sessionId}`}>
-                    <code className="sv-id">{session.sessionId}</code>
+                    <span className="sv-session-main">
+                      <code className="sv-id">{session.sessionId}</code>
+                      <span className="text-muted sv-session-date">{session.dateText}</span>
+                    </span>
+                    <span className="sv-session-saving">{session.savingText}</span>
                     {isPlainSessionId(session.sessionId) && (
                       <button ref={isFocus ? focusRef : undefined} type="button" className="view-link sv-open" aria-label={`${session.label} for session ${session.sessionId}`} onClick={() => onOpenSession(session)}>
                         {session.label}
@@ -128,6 +132,7 @@ export function SavingsRow({
                 );
               })}
             </ul>
+            {row.notPricedText !== undefined && <p className="text-muted sv-note">{row.notPricedText}</p>}
           </section>
           {row.priceVersions.length > 0 && <p className="text-muted sv-note">{`Prices: ${row.priceVersions.join(", ")}, in force on the dates of these requests.`}</p>}
         </div>

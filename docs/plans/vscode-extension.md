@@ -1165,8 +1165,13 @@ axe table tests and two column-chooser guard tests green on first run.
   architecture §12.
 - `vsce package --no-dependencies` (everything is bundled). Add
   `.vscodeignore` (ship only `dist/` minus `meta.json`, `media/`,
-  `README.md`, `LICENSE`, `CHANGELOG.md`, `icon.png`) and a size budget
-  (proposal: under 5 MB).
+  `README.md`, `LICENSE`, `THIRD-PARTY-NOTICES.md`, `CHANGELOG.md`,
+  `icon.png`) and a size budget (proposal: under 5 MB).
+  `THIRD-PARTY-NOTICES.md` is generated (git-ignored) by `scripts/build.mts`
+  from both esbuild metafiles and the webview's and MCP App views' Vite
+  package lists, with the generator shared with the npm package
+  (`scripts/third-party-notices.mts`). The build fails on a missing list, a
+  package without a license file or a license off the allow-list.
 - **Exit:** `<name>-<version>.vsix` installs into a clean VS Code via
   "Install from VSIX…" and passes the 10.4-10.8 exit checks
   with no repo checkout present.

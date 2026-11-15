@@ -3,7 +3,7 @@
 import type { Currency, SavingsActionParams, SavingsAmount, SavingsOpportunity, SavingsOpportunityKind } from "@agent-cost-analyzer/domain";
 import { pricingPolicyFor } from "../../pricing/turn-cost-figures.js";
 import { classifyCacheBreaks, type CacheBreak, type PromptChangeKind } from "../cache-break-classifier.js";
-import { currencyOf, NotAnalysedLedger, perWeek, sumAmount, unknownAmount, type PricedPart } from "../savings-amounts.js";
+import { currencyOf, NotAnalysedLedger, perWeek, sessionRefOf, sumAmount, unknownAmount, type PricedPart } from "../savings-amounts.js";
 import { sessionsByContribution } from "../savings-session-order.js";
 import type { DetectorResult, SavingsDetector, SavingsInput, SavingsSessionInput } from "../savings-detector.js";
 
@@ -21,6 +21,11 @@ const CAUSE_TEXT: Readonly<Record<PromptChangeKind, string>> = {
   "instructions-changed": "Instructions changed",
   "system-prompt-changed": "System prompt changed, cause not recorded",
 };
+
+// A session's own saving: its priced breaks summed, or why it has none.
+function sessionAmount(currency: Currency, parts: readonly PricedPart[] | undefined, failure: string | undefined): SavingsAmount {
+  return parts !== undefined && parts.length > 0 ? sumAmount(currency, parts, "upper-bound") : unknownAmount(failure ?? "No break of this session could be priced.");
+}
 
 interface Found {
   session: SavingsSessionInput;
@@ -98,7 +103,8 @@ export class CacheBreakDetector implements SavingsDetector {
   ): SavingsOpportunity {
     const { descriptor, currency, found } = group;
     const parts: PricedPart[] = [];
-    const contribution = new Map<SavingsSessionInput, number>();
+    const partsOf = new Map<SavingsSessionInput, PricedPart[]>();
+    const failureOf = new Map<SavingsSessionInput, string>();
     const failures = new Map<string, Set<SavingsSessionInput>>();
     for (const { session, channel, cacheBreak } of found) {
       const saving = input.pricer.saving(
@@ -118,8 +124,9 @@ export class CacheBreakDetector implements SavingsDetector {
       );
       if (saving.known) {
         parts.push(saving);
-        contribution.set(session, (contribution.get(session) ?? 0) + saving.high);
+        partsOf.set(session, [...(partsOf.get(session) ?? []), saving]);
       } else {
+        if (!failureOf.has(session)) failureOf.set(session, saving.reason);
         failures.set(saving.reason, (failures.get(saving.reason) ?? new Set()).add(session));
         priceFailures.add(session, saving.reason);
       }
@@ -141,7 +148,7 @@ export class CacheBreakDetector implements SavingsDetector {
       key,
       kind: descriptor.kind,
       subject: descriptor.subject,
-      sessions: sessionsByContribution(sessions.map((entry) => ({ ref: { providerId: entry.providerId, sessionId: entry.session.id }, high: contribution.get(entry) }))),
+      sessions: sessionsByContribution(sessions.map((entry) => sessionRefOf(entry, sessionAmount(currency, partsOf.get(entry), failureOf.get(entry))))),
       evidence: {
         sessions: sessions.length,
         requests: sessions.reduce((total, entry) => total + (entry.trace?.requests.length ?? 0), 0),

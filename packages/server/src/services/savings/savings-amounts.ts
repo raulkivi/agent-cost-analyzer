@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import { unionSorted, type Currency, type SavingsAmount, type SavingsCoverage, type SavingsNotAnalysed, type SavingsOpportunityKind, type SavingsWindow } from "@agent-cost-analyzer/domain";
+import { unionSorted, type Currency, type SavingsAmount, type SavingsCoverage, type SavingsNotAnalysed, type SavingsOpportunityKind, type SavingsSessionRef, type SavingsWindow } from "@agent-cost-analyzer/domain";
 import type { SavingsSessionInput } from "./savings-detector.js";
 
 // Phase 16 SR5: the small arithmetic every detector shares, so no detector
@@ -40,6 +40,19 @@ export function perWeek(amount: SavingsAmount, window: SavingsWindow): SavingsAm
   if (!amount.known) return amount;
   const weeks = window.days / 7;
   return { ...amount, low: amount.low / weeks, high: amount.high / weeks };
+}
+
+// V24: one session's reference on a row, with its start (ISO, absent when the
+// log has none) and its own saving over the window (unknown with its reason
+// when it could not be priced, never 0).
+export function sessionRefOf(session: SavingsSessionInput, perWindow: SavingsAmount): SavingsSessionRef {
+  const started = session.session.startedAt === undefined ? Number.NaN : Date.parse(session.session.startedAt);
+  return {
+    providerId: session.providerId,
+    sessionId: session.session.id,
+    ...(Number.isFinite(started) ? { startedAt: new Date(started).toISOString() } : {}),
+    perWindow,
+  };
 }
 
 export function currencyOf(channel: string): Currency {

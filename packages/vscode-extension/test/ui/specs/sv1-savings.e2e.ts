@@ -15,7 +15,7 @@ import { browser, expect } from "@wdio/globals";
 import type { SavingsOpportunity, SavingsReport } from "@agent-cost-analyzer/domain";
 import { judgeProbe, type Probe } from "../../../scripts/ui-check/judge.mts";
 import { PROBE_SCRIPT } from "../../../scripts/ui-check/probe.mts";
-import { expectedListName, expectedRow } from "../../../../web/e2e/support/savings-text.js";
+import { expectedListName, expectedRow, expectedSessionSaving } from "../../../../web/e2e/support/savings-text.js";
 import { AnalyzerPanel } from "../support/analyzer-panel.js";
 import { isWithinTolerance, nextGroupFraction } from "../support/panel-width.js";
 import { savingsReportOver } from "../support/savings-api.js";
@@ -77,7 +77,7 @@ suite("Scenario SV1: VS Code, the Savings view (Phase 16 SR15)", () => {
       ].sort(),
     );
     expect(opportunityOf("failed-tool-calls").opportunity.evidence.occurrences).toBe(fixture.savings.failedCallsCount);
-    expect(opportunityOf("unused-tools").opportunity.sessions).toEqual([{ providerId: "vscode", sessionId: fixture.savings.localSessionId }]);
+    expect(opportunityOf("unused-tools").opportunity.sessions.map((ref) => [ref.providerId, ref.sessionId])).toEqual([["vscode", fixture.savings.localSessionId]]);
     expect(report.opportunities.every((opportunity) => opportunity.perWeek.known && opportunity.perWeek.currency === "AI_CREDITS")).toBe(true);
 
     await openSavings();
@@ -123,6 +123,11 @@ suite("Scenario SV1: VS Code, the Savings view (Phase 16 SR15)", () => {
     expect(detail.text).toContain("Suggestion only. This app does not change settings or files.");
     expect(detail.closeLabel).toBe("Close detail");
     expect(detail.sessionButtons).toContain(`Open session: ${fixture.savings.localSessionId}`);
+    // V24: each session's date (the viewer's time zone, this machine's) and saving over the window are the API's.
+    for (const session of opportunity.sessions) {
+      expect(detail.text).toContain(session.startedAt === undefined ? "date unknown" : new Date(session.startedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" }));
+      expect(detail.text).toContain(expectedSessionSaving(session.perWindow));
+    }
     // Closed until asked for.
     expect(detail.versionsOpen).toBe(false);
     expect(detail.versionsSummary).toMatch(/^Price versions \(\d+\)$/);

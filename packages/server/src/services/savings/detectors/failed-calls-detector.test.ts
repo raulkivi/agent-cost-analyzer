@@ -172,6 +172,36 @@ describe("FailedCallsDetector: Not analysed (never 0)", () => {
   });
 });
 
+// V24 (savings-increment-3.md §4, D22): each session's date and its own saving.
+describe("FailedCallsDetector: each session's date and saving", () => {
+  it("puts the start and the session's own upper bound on its reference, and the known ones add up to the row", () => {
+    const { opportunities } = detector.detect(savingsInput([input(s1, [priced(0.1), priced(0.2), priced(0.05)]), input(s2, [priced(0.08), priced(0.12)])]));
+    const rg = opportunities.find((o) => o.subject === "rg")!;
+
+    expect(rg.sessions.map((ref) => [ref.sessionId, ref.startedAt])).toEqual([
+      ["s1", "2026-10-15T12:00:00.000Z"],
+      ["s2", "2026-10-16T12:00:00.000Z"],
+    ]);
+    const [first, second] = rg.sessions.map((ref) => ref.perWindow);
+    // s1: turns 0 and 1 (0.10 + 0.20); s2: turn 0 (0.08).
+    expect(first).toMatchObject({ known: true, label: "upper-bound", low: 0, currency: "USD", basis: "priced" });
+    expect(first!.known && first!.high).toBeCloseTo(0.3, 9);
+    expect(second!.known && second!.high).toBeCloseTo(0.08, 9);
+    expect((first!.known ? first!.high : 0) + (second!.known ? second!.high : 0)).toBeCloseTo(rg.perWindow.known ? rg.perWindow.high : Number.NaN, 12);
+    expect(savingsOpportunitySchema.safeParse(rg).success).toBe(true);
+  });
+
+  it("gives a session whose turn cost is unknown an unknown saving with the reason, never 0", () => {
+    const { opportunities } = detector.detect(savingsInput([input(s1, [priced(0.1), priced(0.2), priced(0.05)]), input(s2, [unknown("No price for the model."), priced(0.12)])]));
+    const rg = opportunities.find((o) => o.subject === "rg")!;
+
+    expect(rg.sessions.map((ref) => ref.sessionId)).toEqual(["s1", "s2"]);
+    expect(rg.sessions[1]!.perWindow).toEqual({ known: false, reason: "No price for the model." });
+    expect(rg.perWindow.known && rg.perWindow.high).toBeCloseTo(0.3, 9);
+    expect(savingsOpportunitySchema.safeParse(rg).success).toBe(true);
+  });
+});
+
 describe("FailedCallsDetector: golden report", () => {
   it("over a multi-session window (update with `vitest -u` after checking the diff by hand)", async () => {
     const agentHost: Session = { ...auditSession("ah", "2026-10-15T12:00:00Z", [[]]), providerId: "vscode", copilotHarness: "agent-host", copilotEventLog: { status: "missing", reason: "The Copilot CLI event log is missing." } };

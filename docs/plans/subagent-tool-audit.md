@@ -108,7 +108,9 @@ argument, result or error text was printed.
 - **Parent calls.** The parent's `runSubagent` call (12) is a main-agent
   call of kind `subagent`; `searchSubagent` runs have no parent `tool_call`
   (10.19 design §2.2). `explore_subagent` is called 5 times in `main.jsonl`
-  with no child file and no `child_session_ref`.
+  with no child file and no `child_session_ref`. **Wrong, corrected by
+  ST0b (§14.1):** each call has a `searchSubagent` child log, linked by a
+  `child_session_ref` inside the call's time window.
 
 ### 4.2 Agent Host (Copilot CLI event log)
 
@@ -411,6 +413,8 @@ Decided 2026-11-14: the owner accepted each recommendation.
 | D10 | Order with CS14 | This step builds the shape, builders, MCP and UI with Copilot data; CS14 (after CS10) only adds the Claude Code reader |
 | D11 | Release | The next extension and app release after the build, before 1.0.0. CHANGELOG: audit counts rise in sessions with runs; classic outcomes become known; new findings may appear; Agent Host call order changes |
 | D12 | Run flagged but with known totals | Decided 2026-11-15: totals plus flag. `unreadReason` is required when `totals` is null and may also accompany known totals (a run whose start call is missing); the UI shows the totals and a separate flag line |
+| D13 | Classic failure rules (ST0b §14.3: 82 of 97 error texts unclassified). **Owner decided 2026-11-15** | Add classic-specific rules in `failure-classifier.ts`, each tested with the observed wording: `read_file` "cannot open file ... Unable to read" → `file-not-found`; `grep_search` "Regex parse error" → `invalid-arguments` (existing); `create_file` "File already exists" → new category `already-exists` (no existing category fits; `failureCategorySchema` gains one value); "timed out" without "after" → `timeout`. `screenshot_page` failures and one-offs stay `unclassified` |
+| D14 | Error text "Canceled" (5 seen, user stop recorded as `status: error`). **Owner decided 2026-11-15** | Separate outcome `canceled`: not a failure in failure rates, retries or security findings, but listed and countable in the audit. `toolCallStatusSchema` gains `canceled`; it carries no failure category |
 
 ## 9. Threat-model rows (`docs/threat-model.md`)
 
@@ -484,17 +488,17 @@ model in this repo. Specs and the real-data suite are TDD exceptions as in
 | ID | Task | Exit | Complexity | Model | Depends on |
 |---|---|---|---|---|---|
 | ST0 | **Done 2026-11-14 (§4).** Spike: read-only counts over classic debug logs and Agent Host event logs | Findings in §4 | medium | Opus | — |
-| ST0b | Open points (§14): `explore_subagent` (does it run tools, where are they logged); the cancelled run's 24 vs 26; the server classifier over the 97 classic error texts (category counts only); Copilot Chat 0.74+ still writing child logs | §4 and §14 updated; D5 confirmed or changed | low | Sonnet | — |
+| ST0b | **Done 2026-11-15 (§14).** Open points (§14): `explore_subagent` (does it run tools, where are they logged); the canceled run's 24 vs 26; the server classifier over the 97 classic error texts (category counts only); Copilot Chat 0.74+ still writing child logs | §4 and §14 updated; D5 confirmed or changed | low | Sonnet | — |
 | ST1 | Threat-model rows (§9) in `docs/threat-model.md` §4 before reader code | Rows merged | low | Haiku | Plan approved |
 | ST2 | **Done 2026-11-15: boards approved by the owner.** Mock-ups (§5.7): Audit tab split and runs table, rollup split, Explanation block, Tools cell tooltip, finding row, U4; known, unread, matched-by-time; light, dark, High Contrast; 320 and 640 px; in `docs/plans/mockups/subagent-tool-audit/` | Owner approves | medium | Sonnet (frontend-design skill) + owner | Plan approved |
 | ST3 | **Done 2026-11-15.** Domain (§5.1): `subagent-run-ids.ts`, `toolCallOriginSchema`, `ToolCallRecord.origin`, audit, rollup, insight row and finding fields | Schema tests: valid, absent = main, depth bounds, hostile label and id rejected; Learn and 10.19 fixtures still parse; CS plan checked against the shape | medium | Sonnet | D1, D8 |
-| ST4 | Fixtures: classic child logs with `ok`/`error` spans (an error text per failure category, a shell call), missing and unreadable log, nested ref, `searchSubagent` without parent call, `explore_subagent` without log, an id in parent and child; Agent Host log with `task` and `search_code_subagent` runs, depth 2, a cancelled run, a refused permission | A test reads each and finds the expected counts | medium | Sonnet | ST0b |
+| ST4 | Fixtures: classic child logs with `ok`/`error` spans (an error text per failure category, a shell call), missing and unreadable log, nested ref, `searchSubagent` without parent call, `explore_subagent` linked to its `searchSubagent` log by time window (§14.1) and one without a log, an id in parent and child; Agent Host log with `task` and `search_code_subagent` runs, depth 2, a canceled run, a refused permission | A test reads each and finds the expected counts | medium | Sonnet | ST0b |
 | ST5 | `tool-kind-resolver.ts`: `searchsubagent`, `search_code_subagent`, `explore_subagent` → `subagent` | Resolver tests | low | Haiku | — |
-| ST6 | `audit-attrs-projector.ts`, `tool-call-spans.ts`; `buildToolCalls` from spans (D3) | Tests: status mapping, unknown status, `dur`, args bound (50 KB `args` → summary ≤ 300 chars), `result` never kept, list path unchanged | medium | Sonnet | ST3, ST4, D3 |
+| ST6 | `audit-attrs-projector.ts`, `tool-call-spans.ts`; `buildToolCalls` from spans (D3) | Tests: status mapping (D14: "Canceled" text → `canceled`), unknown status, `dur`, args bound (50 KB `args` → summary ≤ 300 chars), `result` never kept, list path unchanged | medium | Sonnet | ST3, ST4, D3 |
 | ST7 | `subagent-tool-calls.ts` (§5.2, §5.4, §6) wired into `readClassicSession` | Every classic row of §6 is a test; dedupe property test; no known run with a call left out | high | Opus | ST5, ST6 |
 | ST8 | Agent Host `originOf` and order (§5.3); `subagent.started` kept by the cache | Tests: main, depth 1 and 2, label sources, broken chain, cycle, order | medium | Sonnet | ST3, ST4, D2 |
 | ST9 | Builders and queries (§5.5) | `byOrigin` property test; runs table incl. unread; retries per origin; rollup counter; filters | high | Opus | ST3, D4, D6 |
-| ST10 | Findings and savings (§5.6) | Scanner, dataset, behaviour-change and savings tests; finding keys checked unstored | medium | Sonnet | ST9, D7 |
+| ST10 | Findings and savings (§5.6) | D13 rules, each with its observed wording as test; D14 `canceled` excluded from failure rates and findings but visible in the audit. Scanner, dataset, behaviour-change and savings tests; finding keys checked unstored | medium | Sonnet | ST9, D7 |
 | ST11 | HTTP and MCP (§5.8): inputs, outputs, descriptions, instructions, snapshots | `mcp/security.test.ts`; route tests; snapshots updated on purpose | medium | Sonnet | ST9, ST10, D9 |
 | ST12 | Web and extension webview per ST2; Playwright and wdio specs (§11); UI fixture sessions gain child-log tool calls | Component tests with axe, keyboard, hostile text; `web-e2e`, `extension-ui` pass | medium | Sonnet | ST2, ST11 |
 | ST13 | MCP App U4 and findings view per ST2; Playwright spec | View-model and view tests; `mcp-apps-e2e` passes | medium | Sonnet | ST2, ST11 |
@@ -524,13 +528,125 @@ ST12. CS14 starts after ST11 (shape, builders and MCP final) and CS10.
 - `docs/implementation-plan.md` (10.20, C10, V22), `docs/plans/vscode-extension.md`
   and `docs/implementation-plan-gantt.md`: by the main session.
 
-## 14. Not verified
+## 14. Open points (closed by ST0b, 2026-11-15)
 
-- What `explore_subagent` is, whether it runs tools, and where they are
-  logged (5 calls, no child file, no ref).
-- Whether Copilot Chat 0.74 and later still write child logs (10.19 §13).
-- Classic shell calls inside a run: none on this machine; fixtures only.
-- Agent Host nesting deeper than 1, and the cancelled run's 2 extra starts
-  against `totalToolCalls`.
-- How Copilot words classic tool errors, against the classifier's rules
-  (ST0b).
+ST0b re-scanned the same sources read-only: 258 classic `main.jsonl` files
+(`~/.config/Code - Insiders/User/workspaceStorage`), their 17 child logs, and
+85 Agent Host `events.jsonl`. Output was counts, field and tool names, enum
+values and ids only; error texts were classified in memory, never printed
+beyond tool-authored prefixes.
+
+### 14.1 `explore_subagent` runs tools and is logged: ST0 §4.1 was wrong
+
+- All 5 `explore_subagent` calls have a child log. Each call's time window
+  (`ts` to `ts + dur`) holds exactly one `child_session_ref` span in the same
+  `main.jsonl`, starting 2 to 3 ms after the call; its `childLogFile` names a
+  `searchSubagent-*.jsonl` in the folder (5 of 5; attrs `childLogFile`,
+  `childSessionId`, `label`). That ref has **no `parentSpanId`**, which is
+  why ST0 saw "no ref" (the 12 `runSubagent` refs do name their call).
+  So `explore_subagent` is the parent call of the 5 `searchSubagent` runs,
+  not a run without a log; ST0's "searchSubagent runs have no parent
+  `tool_call`" is true only by id: the link is by time window.
+- The 5 child logs hold 84 `tool_call` spans: `file_search` 33, `grep_search`
+  22, `read_file` 18, `semantic_search` 11, all read-only. The call's own
+  attrs are `args` (`description`, `details`, `query`), `result` and, on one
+  `error` span, `error`.
+- **Effect (changes ST4 and the §6 row, not D5):** the §6 row "subagent-kind
+  call with no log and no ref (`explore_subagent`, 5 seen)" matches no real
+  data: the unread-run fallback (D5) stays for a call with no ref in its
+  window, but the real case needs a link rule: a `child_session_ref` with no
+  `parentSpanId` whose `ts` lies inside a subagent-kind call's window
+  belongs to that call (one-to-one here, 5 of 5). ST4's fixture list is
+  updated accordingly (both cases). ST7 reads the 10.19 attribution
+  (`child-session-refs.ts`, orphans by time) and adds this link so the call
+  and its run are one row, not a call plus an orphan. ST5 is unchanged
+  (`explore_subagent` is subagent kind). The "orphans by time" placement
+  from 10.19 D5 is not needed for these 5.
+
+### 14.2 The canceled run: `totalToolCalls` counts completions, not starts
+
+- The run has 26 `tool.execution_start` and 24 `tool.execution_complete`;
+  its `subagent.completed.totalToolCalls` is 24. The 2 extra starts are
+  `bash` calls, each with a `permission.requested`; one permission completed
+  `approved`, the other `approved` then `cancelled`; the session then logs <!-- codespell:ignore cancelled -->
+  `abort` and `session.shutdown`. No completion exists for either call.
+- The other runs: `totalToolCalls` equals both starts and completions
+  (31, 34); the 2 older-CLI runs carry no total.
+- Side facts: `subagent.completed` appears twice for one run (equal totals;
+  the second has `cancelled: true`); `cancelled: true` is also on runs whose <!-- codespell:ignore cancelled -->
+  calls all completed (31 of 31, 34 of 34), so it marks the aborted
+  session, not the cut-off calls. All 5
+  `subagent.started` carry a `toolCallId` of a main-agent call (depth 1
+  only, §14.5).
+- **Effect:** ST8 cross-checks `totalToolCalls` against the run's
+  *completed* calls, not starts, and reads the unfinished starts with the
+  existing outcome rules ("no completion" is unknown or canceled, as for
+  main calls). It dedupes `subagent.completed` by `toolCallId`. ST4's
+  "canceled run" fixture has a real shape: 26 starts, 24 completions,
+  2 `bash` calls with a `cancelled` permission and an `abort`. No decision <!-- codespell:ignore cancelled -->
+  changes.
+
+### 14.3 The server classifier over the 97 classic error texts: 15 of 97
+
+The real `defaultFailureRules` (`failure-classifier.ts`) ran over every
+`tool_call` span with `status: "error"` and a string `attrs.error`: 97 texts
+(86 main agent, 11 child). Classic spans carry no exit code, so only text
+rules can fire.
+
+| Result | Main (86) | Child (11) | Total |
+|---|---|---|---|
+| `file-not-found` (rule `text.file-not-found`) | 14 | 1 | 15 |
+| `unclassified` | 72 | 10 | 82 |
+
+Unclassified, by tool-authored wording (no content kept):
+
+| Wording | Tool | Count |
+|---|---|---|
+| `cannot open file ... Detail: Unable to read ...` | `read_file` | 52 (45 main, 7 child) |
+| `Regex parse error` | `grep_search` | 7 |
+| `Canceled` (user cancellation recorded as an error) | `run_in_terminal` 3, `semantic_search` 2 | 5 |
+| `File already exists` | `create_file` | 5 |
+| `locator.scrollIntoViewIfNeeded`, `Failed to capture screenshot` | `screenshot_page` | 5 |
+| `Codebase search timed out` (the timeout rule needs `timed out after`) | `semantic_search` | 2 |
+| one each | `memory`, `manage_todo_list`, `apply_patch`, `open_browser_page`, `explore_subagent`, `fetch_webpage` | 6 |
+
+- 85 % are `unclassified`. That is allowed (constraint 6: never guessed) but
+  it makes classic failure categories mostly empty unless rules are added.
+  The 52 `read_file` texts contain none of the not-found tokens
+  (`ENOENT`, `does not exist`, `File does not exist`); one mentions a
+  permission problem that no rule words that way.
+- `Canceled` is a user stop, not a tool fault: status `error` alone would
+  count it as a failure.
+- **Owner decided 2026-11-15:** D13 (add the classic rules) and D14 (a separate `canceled` outcome); see §8, ST3, ST6, ST10.
+- **Effect (D3 stands):** ST6 maps `error`
+  spans to failed calls and must handle the `Canceled` text (recommended:
+  outcome canceled/rejected, not failed). Whether to add classic-specific
+  rules (the `read_file` wording, `Regex parse error` as invalid arguments,
+  `timed out`) or accept `unclassified` for these is an owner call; the
+  plan's fixtures (ST4) should hold one text per wording group above
+  whichever way it goes, with the expected category stated in the test.
+  Each new rule must keep the "never guessed" rule: its test is the
+  observed wording.
+
+### 14.4 Copilot Chat 0.74 and later: no evidence either way
+
+- Version per session from the first spans' `copilotVersion`: 0.43 to 0.69
+  in 241 sessions, 16 unknown, one `0.74.2026110901`. All 17 child logs
+  and all 17 `child_session_ref` spans are in 0.61 to 0.68 sessions (0 refs
+  to a missing file); no session at 0.60 or older has a subagent call.
+- The one 0.74 session has no subagent call, so it shows nothing. Still not
+  verified; needs a session on 0.70 or later that runs a subagent. No effect
+  on tasks: ST7's "missing log" rows already cover a version that stops
+  writing child logs.
+
+### 14.5 Shell calls and deeper Agent Host nesting: unchanged
+
+- Classic child logs: 481 `tool_call` spans over seven read-only tools
+  (the ST0 counts), no `run_in_terminal`. Shell cases stay fixture-only.
+- Agent Host: 5 runs, all started by a main-agent call (depth 1); no run is
+  started by a subagent's call. Depth 2 stays fixture-only (ST4, ST8).
+
+## 14a. Not verified
+
+- Copilot Chat 0.70 or later with a subagent run (§14.4).
+- Classic shell calls inside a run and Agent Host depth 2: no real data (§14.5).
