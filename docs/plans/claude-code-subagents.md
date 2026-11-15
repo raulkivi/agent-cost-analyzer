@@ -358,6 +358,7 @@ Unknown is never 0. Each row is a tested reason.
 | D14 | Runs still running (`finished` absent: 67) | Count as of now, as the parent |
 | D15 | Release | The next app release after the build, before 1.0.0, with a CHANGELOG note: Claude Code totals rise about 3 × on heavy subagent use; issued statements show a diff |
 | D16 | List performance (2.5 GB here) | In-memory run-summary cache keyed by path, size and mtime; a budget test with runs |
+| D17 | Off-branch runs (49 calls, 3.35 % of run usage; CS0b §13.4). **Owner decided 2026-11-15** | D5 stands; no session-level "off-branch runs" note in 1.0. CS15 documents that such runs are not counted |
 
 ## 9. Risks
 
@@ -423,7 +424,7 @@ model in this repo. Specs and the real-data suite are TDD exceptions as in
 | CS12 | MCP text: server instructions, `get_turn`, `get_session_cost`, `replay_session` descriptions; tool-list snapshots | `mcp/security.test.ts` passes; snapshots updated on purpose | low | Sonnet | CS11 |
 | CS13 | Web and MCP App U1 per CS2; Playwright spec `packages/web/e2e/specs/claude-code-subagents.spec.ts` and one in `packages/mcp-apps/e2e/specs/` | Component tests with axe; `web-e2e` and `mcp-apps-e2e` pass | medium | Sonnet | CS2, CS11 |
 | CS14 | Tool audit increment (D9): subagent tool calls in the audit and security findings, one shape with step 10.20 | Audit tests; threat-model residual closed | high | Opus | V21 approved, CS10 |
-| CS15 | Docs (§12) | Docs match the code; Gantt updated | medium | Sonnet | CS10–CS14 |
+| CS15 | Docs (§12); D17: say off-branch runs are not counted | Docs match the code; Gantt updated | medium | Sonnet | CS10–CS14 |
 | CS16 | Real-data suite and oracle (§10); owner run and sign-off | §10 passes; owner signs off | medium | Opus (suite), owner | CS15 |
 
 Critical path: CS0b → CS3 → CS5/CS6 → CS7 → CS8 → CS9 → CS10 → CS11 →
@@ -523,9 +524,8 @@ from this re-scan, so some differ slightly from §4.
 - Their runs hold 2,537 of 67,086 rounds (3.8 %) and 3.35 % of the runs'
   weighted usage (same rough weights as §4.3).
 - **Effect:** D5 stands (not counted, as the main agent's off-branch
-  rounds). 3.35 % is small but not nil: whether it earns the session-level
-  "off-branch runs" note D5 anticipates is an owner call; recommended: no
-  note in 1.0, keep the count available for the CS16 oracle. CS3's
+  rounds). **Owner decided 2026-11-15 (D17):** no session-level note in 1.0;
+  CS15 documents it. The count stays available for the CS16 oracle. CS3's
   off-branch fixture models a real shape.
 
 ### 13.5 Compaction inside a run: still none

@@ -411,6 +411,8 @@ Decided 2026-11-14: the owner accepted each recommendation.
 | D9 | MCP default for `origin` | Both: a client that doesn't know `origin` still gets true totals |
 | D10 | Order with CS14 | This step builds the shape, builders, MCP and UI with Copilot data; CS14 (after CS10) only adds the Claude Code reader |
 | D11 | Release | The next extension and app release after the build, before 1.0.0. CHANGELOG: audit counts rise in sessions with runs; classic outcomes become known; new findings may appear; Agent Host call order changes |
+| D12 | Classic failure rules (ST0b §14.3: 82 of 97 error texts unclassified). **Owner decided 2026-11-15** | Add classic-specific rules in `failure-classifier.ts`, each tested with the observed wording: `read_file` "cannot open file ... Unable to read" → `file-not-found`; `grep_search` "Regex parse error" → `invalid-arguments` (existing); `create_file` "File already exists" → new category `already-exists` (no existing category fits; `failureCategorySchema` gains one value); "timed out" without "after" → `timeout`. `screenshot_page` failures and one-offs stay `unclassified` |
+| D13 | Error text "Canceled" (5 seen, user stop recorded as `status: error`). **Owner decided 2026-11-15** | Separate outcome `canceled`: not a failure in failure rates, retries or security findings, but listed and countable in the audit. `toolCallStatusSchema` gains `canceled`; it carries no failure category |
 
 ## 9. Threat-model rows (`docs/threat-model.md`)
 
@@ -487,14 +489,14 @@ model in this repo. Specs and the real-data suite are TDD exceptions as in
 | ST0b | **Done 2026-11-15 (§14).** Open points (§14): `explore_subagent` (does it run tools, where are they logged); the canceled run's 24 vs 26; the server classifier over the 97 classic error texts (category counts only); Copilot Chat 0.74+ still writing child logs | §4 and §14 updated; D5 confirmed or changed | low | Sonnet | — |
 | ST1 | Threat-model rows (§9) in `docs/threat-model.md` §4 before reader code | Rows merged | low | Haiku | Plan approved |
 | ST2 | Mock-ups (§5.7): Audit tab split and runs table, rollup split, Explanation block, Tools cell tooltip, finding row, U4; known, unread, matched-by-time; light, dark, High Contrast; 320 and 640 px; in `docs/plans/mockups/subagent-tool-audit/` | Owner approves | medium | Sonnet (frontend-design skill) + owner | Plan approved |
-| ST3 | Domain (§5.1): `subagent-run-ids.ts`, `toolCallOriginSchema`, `ToolCallRecord.origin`, audit, rollup, insight row and finding fields | Schema tests: valid, absent = main, depth bounds, hostile label and id rejected; Learn and 10.19 fixtures still parse; CS plan checked against the shape | medium | Sonnet | D1, D8 |
+| ST3 | Domain (§5.1): `subagent-run-ids.ts`, `toolCallOriginSchema`, `ToolCallRecord.origin`, audit, rollup, insight row and finding fields | Schema tests (D13: status enum gains `canceled`, no failure category with it; D12: `already-exists` category): valid, absent = main, depth bounds, hostile label and id rejected; Learn and 10.19 fixtures still parse; CS plan checked against the shape | medium | Sonnet | D1, D8 |
 | ST4 | Fixtures: classic child logs with `ok`/`error` spans (an error text per failure category, a shell call), missing and unreadable log, nested ref, `searchSubagent` without parent call, `explore_subagent` linked to its `searchSubagent` log by time window (§14.1) and one without a log, an id in parent and child; Agent Host log with `task` and `search_code_subagent` runs, depth 2, a canceled run, a refused permission | A test reads each and finds the expected counts | medium | Sonnet | ST0b |
 | ST5 | `tool-kind-resolver.ts`: `searchsubagent`, `search_code_subagent`, `explore_subagent` → `subagent` | Resolver tests | low | Haiku | — |
-| ST6 | `audit-attrs-projector.ts`, `tool-call-spans.ts`; `buildToolCalls` from spans (D3) | Tests: status mapping, unknown status, `dur`, args bound (50 KB `args` → summary ≤ 300 chars), `result` never kept, list path unchanged | medium | Sonnet | ST3, ST4, D3 |
+| ST6 | `audit-attrs-projector.ts`, `tool-call-spans.ts`; `buildToolCalls` from spans (D3) | Tests: status mapping (D13: "Canceled" text → `canceled`), unknown status, `dur`, args bound (50 KB `args` → summary ≤ 300 chars), `result` never kept, list path unchanged | medium | Sonnet | ST3, ST4, D3 |
 | ST7 | `subagent-tool-calls.ts` (§5.2, §5.4, §6) wired into `readClassicSession` | Every classic row of §6 is a test; dedupe property test; no known run with a call left out | high | Opus | ST5, ST6 |
 | ST8 | Agent Host `originOf` and order (§5.3); `subagent.started` kept by the cache | Tests: main, depth 1 and 2, label sources, broken chain, cycle, order | medium | Sonnet | ST3, ST4, D2 |
 | ST9 | Builders and queries (§5.5) | `byOrigin` property test; runs table incl. unread; retries per origin; rollup counter; filters | high | Opus | ST3, D4, D6 |
-| ST10 | Findings and savings (§5.6) | Scanner, dataset, behaviour-change and savings tests; finding keys checked unstored | medium | Sonnet | ST9, D7 |
+| ST10 | Findings and savings (§5.6) | D12 rules, each with its observed wording as test; D13 `canceled` excluded from failure rates and findings but visible in the audit. Scanner, dataset, behaviour-change and savings tests; finding keys checked unstored | medium | Sonnet | ST9, D7 |
 | ST11 | HTTP and MCP (§5.8): inputs, outputs, descriptions, instructions, snapshots | `mcp/security.test.ts`; route tests; snapshots updated on purpose | medium | Sonnet | ST9, ST10, D9 |
 | ST12 | Web and extension webview per ST2; Playwright and wdio specs (§11); UI fixture sessions gain child-log tool calls | Component tests with axe, keyboard, hostile text; `web-e2e`, `extension-ui` pass | medium | Sonnet | ST2, ST11 |
 | ST13 | MCP App U4 and findings view per ST2; Playwright spec | View-model and view tests; `mcp-apps-e2e` passes | medium | Sonnet | ST2, ST11 |
@@ -613,7 +615,8 @@ Unclassified, by tool-authored wording (no content kept):
   permission problem that no rule words that way.
 - `Canceled` is a user stop, not a tool fault: status `error` alone would
   count it as a failure.
-- **Effect (D3 stands; owner decision needed on rules):** ST6 maps `error`
+- **Owner decided 2026-11-15:** D12 (add the classic rules) and D13 (a separate `canceled` outcome); see §8, ST3, ST6, ST10.
+- **Effect (D3 stands):** ST6 maps `error`
   spans to failed calls and must handle the `Canceled` text (recommended:
   outcome canceled/rejected, not failed). Whether to add classic-specific
   rules (the `read_file` wording, `Regex parse error` as invalid arguments,
