@@ -13,6 +13,7 @@ import {
   generateNotices,
   isAllowedLicense,
   readBundledPackage,
+  readBundledPackagesList,
   renderNotices,
 } from "../scripts/third-party-notices.mts";
 
@@ -97,7 +98,13 @@ describe("renderNotices", () => {
     packageName: "agent-cost-analyzer",
     packageVersion: "1.2.3",
     packages: [
-      { name: "zod", version: "4.6.7", license: "MIT", licenseTexts: [{ file: "LICENSE", text: "MIT License\n\nCopyright (c) Colin\n" }] },
+      {
+        name: "zod",
+        version: "4.6.7",
+        license: "MIT",
+        licenseTexts: [{ file: "LICENSE", text: "MIT License\n\nCopyright (c) Colin\n" }],
+        parts: ["server", "web", "views"],
+      },
       {
         name: "@scope/thing",
         version: "1.0.0",
@@ -106,6 +113,7 @@ describe("renderNotices", () => {
           { file: "LICENSE", text: "Apache text" },
           { file: "NOTICE", text: "Notice text" },
         ],
+        parts: ["views"],
       },
     ],
     fontsSection: "The fonts.\n\n### SIL Open Font License 1.1\n",
@@ -117,8 +125,8 @@ describe("renderNotices", () => {
     expect(notices).toContain("https://github.com/raulkivi/agent-cost-analyzer");
   });
 
-  it("lists every bundled package, sorted, in a table row with its version and license", () => {
-    expect(notices).toContain("| `@scope/thing` | 1.0.0 | Apache-2.0 |\n| `zod` | 4.6.7 | MIT |");
+  it("lists every bundled package, sorted, in a table row with its version, license and the parts that bundle it", () => {
+    expect(notices).toContain("| `@scope/thing` | 1.0.0 | Apache-2.0 | views |\n| `zod` | 4.6.7 | MIT | server, web, views |");
   });
 
   it("includes each package's license files verbatim", () => {
@@ -157,6 +165,7 @@ describe("reading package folders", () => {
       { "LICENSE.txt": "Apache text", NOTICE: "Notice text", "README.md": "readme", "index.js": "" },
     );
     expect(readBundledPackage(dir)).toEqual({
+      parts: [],
       name: "@scope/thing",
       version: "1.0.0",
       license: "Apache-2.0",
@@ -172,14 +181,31 @@ describe("reading package folders", () => {
     expect(readBundledPackage(dir)).toMatchObject({ license: "ISC", licenseTexts: [{ file: "license.md", text: "ISC text" }] });
   });
 
+  describe("readBundledPackagesList", () => {
+    it("reads the package folders a Vite build recorded", () => {
+      const file = path.join(root, "list.json");
+      writeFileSync(file, JSON.stringify({ packages: [{ name: "a", version: "1.0.0", dir: "/x/a" }, { name: "b", version: "2.0.0", dir: "/x/b" }] }));
+      expect(readBundledPackagesList(file, "web")).toEqual(["/x/a", "/x/b"]);
+    });
+
+    it("fails, naming the part, when the list is missing or malformed", () => {
+      expect(() => readBundledPackagesList(path.join(root, "none.json"), "web")).toThrow(/web.*none\.json/s);
+      const bad = path.join(root, "bad.json");
+      writeFileSync(bad, "{}");
+      expect(() => readBundledPackagesList(bad, "views")).toThrow(/views/);
+    });
+  });
+
   describe("generateNotices", () => {
     const metafileFor = (...relative: string[]) => ({
       inputs: Object.fromEntries(relative.map((r) => [`../node_modules/${r}/index.js`, {}])),
     });
-    const generate = (...relative: string[]) =>
+    const dirOf = (relative: string) => path.join(root, "node_modules", relative);
+    const generate = (server: string[], extra: Record<string, string[]> = {}) =>
       generateNotices({
-        metafile: metafileFor(...relative),
+        metafile: metafileFor(...server),
         workingDir: path.join(root, "cli"),
+        extraParts: Object.entries(extra).map(([label, relative]) => ({ label, dirs: relative.map(dirOf) })),
         rootNotices: ROOT_NOTICES,
         packageName: "agent-cost-analyzer",
         packageVersion: "1.2.3",
@@ -188,16 +214,33 @@ describe("reading package folders", () => {
     it("renders every package of the metafile and the fonts", () => {
       fakePackage("a", { name: "a", version: "1.0.0", license: "MIT" }, { LICENSE: "MIT a" });
       fakePackage("b", { name: "b", version: "2.0.0", license: "(MIT OR GPL-3.0)" }, { LICENCE: "MIT b" }); // codespell:ignore licence
-      const notices = generate("a", "b");
-      expect(notices).toContain("| `a` | 1.0.0 | MIT |\n| `b` | 2.0.0 | (MIT OR GPL-3.0) |");
+      const notices = generate(["a", "b"]);
+      expect(notices).toContain("| `a` | 1.0.0 | MIT | server |\n| `b` | 2.0.0 | (MIT OR GPL-3.0) | server |");
       expect(notices).toContain("The web build bundles the fonts below.");
+    });
+
+    it("merges the server, web and views lists into one entry per package@version, naming each part", () => {
+      fakePackage("a", { name: "a", version: "1.0.0", license: "MIT" }, { LICENSE: "MIT a" });
+      fakePackage("react", { name: "react", version: "19.0.0", license: "MIT" }, { LICENSE: "MIT react" });
+      fakePackage("only-views", { name: "only-views", version: "3.0.0", license: "ISC" }, { LICENSE: "ISC v" });
+      fakePackage("a/node_modules/react", { name: "react", version: "18.0.0", license: "MIT" }, { LICENSE: "MIT old react" });
+      const notices = generate(["a"], { web: ["a", "react"], views: ["react", "only-views", "a/node_modules/react"] });
+      expect(notices).toContain("| `a` | 1.0.0 | MIT | server, web |");
+      expect(notices).toContain("| `only-views` | 3.0.0 | ISC | views |");
+      expect(notices).toContain("| `react` | 18.0.0 | MIT | views |\n| `react` | 19.0.0 | MIT | web, views |");
+      expect(notices.match(/### a 1\.0\.0/g)).toHaveLength(1);
+    });
+
+    it("fails on a package only the web or views build bundles when its license is off the allow-list", () => {
+      fakePackage("gpl", { name: "gpl", version: "1.0.0", license: "GPL-3.0" }, { LICENSE: "GPL" });
+      expect(() => generate([], { web: ["gpl"] })).toThrow(/gpl@1\.0\.0: license GPL-3\.0 is not allowed/);
     });
 
     it("fails, naming each package, when a license is not on the allow-list or has no license file", () => {
       fakePackage("gpl", { name: "gpl", version: "1.0.0", license: "GPL-3.0" }, { LICENSE: "GPL" });
       fakePackage("bare", { name: "bare", version: "1.0.0", license: "MIT" }, {});
-      expect(() => generate("gpl", "bare")).toThrow(/gpl@1\.0\.0: license GPL-3\.0 is not allowed/);
-      expect(() => generate("gpl", "bare")).toThrow(/bare@1\.0\.0: no license file/);
+      expect(() => generate(["gpl", "bare"])).toThrow(/gpl@1\.0\.0: license GPL-3\.0 is not allowed/);
+      expect(() => generate(["gpl", "bare"])).toThrow(/bare@1\.0\.0: no license file/);
     });
   });
 });

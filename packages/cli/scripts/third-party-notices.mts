@@ -1,8 +1,9 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
 // The npm package's THIRD-PARTY-NOTICES.md (npm-package.md §4.9): each npm
-// package esbuild bundled, found through the metafile, with its license
-// files, plus the fonts section of the repository's own notices.
+// package the server bundle (esbuild's metafile), the web app and the MCP App
+// views (their Vite builds' lists) bundle, with its license files and the
+// parts that bundle it, plus the fonts section of the repository's own notices.
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import path from "node:path";
 
@@ -76,6 +77,8 @@ export interface BundledPackage {
   version: string;
   license: string | undefined;
   licenseTexts: LicenseText[];
+  // Which parts of the package bundle it ("server", "web", "views").
+  parts: string[];
 }
 
 const LICENSE_FILE = /^(licen[cs]e|copying|notice)([-._].*)?$/i;
@@ -91,7 +94,23 @@ export function readBundledPackage(dir: string): BundledPackage {
     .filter((file) => LICENSE_FILE.test(file) && statSync(path.join(dir, file)).isFile())
     .sort()
     .map((file) => ({ file, text: readFileSync(path.join(dir, file), "utf8") }));
-  return { name: manifest.name, version: manifest.version, license, licenseTexts };
+  return { name: manifest.name, version: manifest.version, license, licenseTexts, parts: [] };
+}
+
+// The package folders a Vite build recorded (packages/web/vite-plugins/
+// bundled-packages.ts). Fails when the file is missing: that build ran
+// without the plugin, or not at all.
+export function readBundledPackagesList(file: string, part: string): string[] {
+  let parsed: { packages?: { dir?: unknown }[] };
+  try {
+    parsed = JSON.parse(readFileSync(file, "utf8")) as typeof parsed;
+  } catch (error) {
+    throw new Error(`the ${part} build's package list ${file} can't be read (build ${part} first)`, { cause: error });
+  }
+  if (!Array.isArray(parsed.packages) || parsed.packages.some((p) => typeof p.dir !== "string")) {
+    throw new Error(`the ${part} build's package list ${file} has no "packages" array of { dir }`);
+  }
+  return parsed.packages.map((p) => p.dir as string);
 }
 
 // The root THIRD-PARTY-NOTICES.md below its header line, headings one level
@@ -120,7 +139,7 @@ const byNameAndVersion = (a: BundledPackage, b: BundledPackage): number =>
 // No date, so the same bundle always gives the same file.
 export function renderNotices({ packageName, packageVersion, packages, fontsSection }: NoticesInput): string {
   const sorted = [...packages].sort(byNameAndVersion);
-  const rows = sorted.map((p) => `| \`${p.name}\` | ${p.version} | ${p.license ?? "(none)"} |`);
+  const rows = sorted.map((p) => `| \`${p.name}\` | ${p.version} | ${p.license ?? "(none)"} | ${p.parts.join(", ")} |`);
   const texts = sorted.map((p) =>
     [`### ${p.name} ${p.version}`, ...p.licenseTexts.map((t) => `\`${t.file}\`:\n\n\`\`\`\`text\n${t.text.trimEnd()}\n\`\`\`\``)].join("\n\n"),
   );
@@ -128,9 +147,10 @@ export function renderNotices({ packageName, packageVersion, packages, fontsSect
     "# Third-party notices",
     `**Generated for:** ${packageName} ${packageVersion} · **Source:** https://github.com/raulkivi/agent-cost-analyzer`,
     "This package's own code is MIT-licensed (`LICENSE`). Its `dist/` bundles the npm packages below " +
-      "(`packages/cli/scripts/build.mts` lists them from the bundle's esbuild metafile) and the web app's fonts.",
+      "(`packages/cli/scripts/build.mts` lists them from the server bundle's esbuild metafile and the web app's and " +
+      "MCP App views' Vite builds) and the web app's fonts. \"Bundled in\" names the parts: server, web, views.",
     "## Bundled npm packages",
-    ["| Package | Version | License |", "|---|---|---|", ...rows].join("\n"),
+    ["| Package | Version | License | Bundled in |", "|---|---|---|---|", ...rows].join("\n"),
     "## Fonts",
     fontsSection.trimEnd(),
     "## License texts",
@@ -142,6 +162,8 @@ export interface GenerateNoticesInput {
   metafile: MetafileInputs;
   // The metafile's paths are relative to esbuild's absWorkingDir.
   workingDir: string;
+  // The Vite builds' package folders, each under its part's label.
+  extraParts: { label: string; dirs: string[] }[];
   rootNotices: string;
   packageName: string;
   packageVersion: string;
@@ -149,12 +171,19 @@ export interface GenerateNoticesInput {
 
 // Fails the build on a license off the allow-list or a package without a
 // license file, rather than shipping notices that miss one.
-export function generateNotices({ metafile, workingDir, rootNotices, packageName, packageVersion }: GenerateNoticesInput): string {
+export function generateNotices({ metafile, workingDir, extraParts, rootNotices, packageName, packageVersion }: GenerateNoticesInput): string {
   const unique = new Map<string, BundledPackage>();
-  for (const dir of bundledPackageDirs(metafile, workingDir)) {
-    const bundled = readBundledPackage(dir);
-    unique.set(`${bundled.name}@${bundled.version}`, bundled);
-  }
+  const add = (dirs: string[], part: string): void => {
+    for (const dir of dirs) {
+      const bundled = readBundledPackage(dir);
+      const id = `${bundled.name}@${bundled.version}`;
+      const known = unique.get(id) ?? bundled;
+      if (!known.parts.includes(part)) known.parts.push(part);
+      unique.set(id, known);
+    }
+  };
+  add(bundledPackageDirs(metafile, workingDir), "server");
+  for (const { label, dirs } of extraParts) add(dirs, label);
   const problems = [...unique].flatMap(([id, bundled]) => [
     ...(isAllowedLicense(bundled.license) ? [] : [`${id}: license ${bundled.license ?? "(none)"} is not allowed`]),
     ...(bundled.licenseTexts.length > 0 ? [] : [`${id}: no license file in its package folder`]),
