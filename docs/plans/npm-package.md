@@ -2,7 +2,7 @@
 
 **Last changed:** 2026-11-15 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
-Status: **Building** (plan approved 2026-11-14, D1–D10 accepted). Done 2026-11-15: NP0 (the owner published `agent-cost-analyzer@0.0.0` and `agent-cost-analyser@0.0.0` with 2FA through a stored passkey, the owner the only maintainer; `agent-cost-analyser` deprecated with "Use agent-cost-analyzer (with a z)."), NP1 (PR #309), NP2 (#312), NP3 (#310), NP4 (#313), NP5 (#311) and NP6 (#314). Measured: packed 2.73 MB, unpacked 9.98 MB, one 7.6 MB `dist/cli.js` (no chunks: `cli.ts` imports both commands statically). NP6b (notices for the web and views bundles) comes before any real publish. First `npx` version: app 0.16.0 (owner 2026-11-15). Task V15 of the
+Status: **Building** (plan approved 2026-11-14, D1–D10 accepted). Done 2026-11-15: NP12 and NP13 (threat-model rows and docs; PR in progress), NP0 (the owner published `agent-cost-analyzer@0.0.0` and `agent-cost-analyser@0.0.0` with 2FA through a stored passkey, the owner the only maintainer; `agent-cost-analyser` deprecated with "Use agent-cost-analyzer (with a z)."), NP1 (PR #309), NP2 (#312), NP3 (#310), NP4 (#313), NP5 (#311) and NP6 (#314). Measured: packed 2.73 MB, unpacked 9.98 MB, one 7.6 MB `dist/cli.js` (no chunks: `cli.ts` imports both commands statically). NP6b (notices for the web and views bundles) comes before any real publish. First `npx` version: app 0.16.0 (owner 2026-11-15). Task V15 of the
 [1.0.0 release](../implementation-plan.md#100-release). It splits V16
 (build), V17 (trusted publishing) and V18 (docs) into the tasks in §11.
 
@@ -212,7 +212,7 @@ dependency (D8).
 ### 4.6 MCP clients
 
 ```sh
-claude mcp add agent-cost-analyzer -- npx -y agent-cost-analyzer mcp
+claude mcp add agent-cost-analyzer -- npx -y --prefer-offline agent-cost-analyzer mcp
 ```
 
 - `-y` skips npx's install prompt. npm also assumes `--yes` when stdin is
@@ -221,10 +221,17 @@ claude mcp add agent-cost-analyzer -- npx -y agent-cost-analyzer mcp
 - stdout must carry JSON-RPC only. npm's own install messages go to
   stderr; the smoke job asserts that every stdout line parses as JSON-RPC.
 - On Windows, clients that do not resolve `.cmd` files need
-  `cmd /c npx -y agent-cost-analyzer mcp`. The User Guide gives both forms.
+  `cmd /c npx -y --prefer-offline agent-cost-analyzer mcp`. The User Guide
+  gives both forms.
 - Offline use: the docs also give `npm install -g agent-cost-analyzer` and
-  then `agent-cost-analyzer mcp`, which runs without the registry. V16
-  checks what `npx` does offline with a cached copy and the docs state it.
+  then `agent-cost-analyzer mcp`, which runs without the registry and stays
+  the pinned option.
+- **Amended 2026-11-15 (owner, after NP7; amends D10):** the command for MCP
+  clients is `npx -y --prefer-offline agent-cost-analyzer mcp`. NP7 found
+  that with the registry unreachable, plain `npx` waits about 71 s of
+  retries before it runs the cached copy; `--prefer-offline` starts at once.
+  The first command above, `npx -y agent-cost-analyzer mcp`, is the
+  original design.
 
 ### 4.7 Versioning and `npx` caching
 
@@ -385,7 +392,7 @@ Decided 2026-11-14: the owner accepted each recommendation.
 | D7 | Publish 0.x before 1.0.0? | (a) yes, from the first app release after the publish job lands; (b) 1.0.0 is the first real version | **(a).** The 1.0.0 publish is then not the first trusted publish, as V10 does for Open VSX, and early users can try `npx` before 1.0. |
 | D8 | Browser opener | (a) a small module, no dependency; (b) the `open` package | **(a).** Three fixed commands, about 30 lines, testable through an injected spawner; one fewer bundled dependency (architecture §11.6). |
 | D9 | Minify the bundle? | (a) no; (b) yes, as the extension does | **(a),** as long as the size budget holds. Users can read what `npx` runs, and the provenance attestation links the source. Switch to (b) only if over budget. |
-| D10 | MCP client instructions | (a) `npx -y agent-cost-analyzer mcp` first, `npm install -g` for offline or a fixed version; (b) global install only; (c) pin an exact version in the `npx` command | **(a).** One command for most users; the global install covers offline use (architecture constraint 1) and pinning. |
+| D10 | MCP client instructions | (a) `npx -y agent-cost-analyzer mcp` first, `npm install -g` for offline or a fixed version; (b) global install only; (c) pin an exact version in the `npx` command | **(a).** One command for most users; the global install covers offline use (architecture constraint 1) and pinning. **Amended 2026-11-15 (owner):** the command is `npx -y --prefer-offline agent-cost-analyzer mcp`, because NP7 measured about 71 s of registry retries before plain `npx` ran the cached copy with the registry unreachable; on Windows clients that do not resolve `.cmd`, `cmd /c npx -y --prefer-offline agent-cost-analyzer mcp`; `npm install -g` then `agent-cost-analyzer mcp` stays the fully offline and pinned option. |
 
 ## 7. Risks
 
@@ -462,8 +469,8 @@ NP12-NP13 are V18.
 | NP9 | Add the `npm-package` checks to ruleset 27004539 (D6) | Required, read back through the GitHub API | low | Owner step | NP8 |
 | NP10 (done 2026-11-15) | `release-app.yml`: build job packs once and runs the smoke; publish job in `release` with `id-token: write`, exact npm version, SHA-256 check, maintainer check, `npm publish <tarball> --access public`, the tarball on the GitHub Release; `npm audit --omit=dev` gate | The build job runs `npm publish --dry-run <tarball>`; a `workflow_dispatch` dry run on `main` runs the build job green; the publish job runs only on `app-v*` tags (owner 2026-11-15: dry run in this repository, no fork) | medium | Sonnet | NP7 |
 | NP11 | Trusted publisher on npmjs.com; `app-v*` on the `release` environment; first 0.x release within 2 days (D7); then "disallow tokens", revoke tokens, deprecate placeholders | `npm view agent-cost-analyzer@<version> dist.attestations` shows provenance; environment rule read back through the API | low | Owner step | NP10, NP0, V7 |
-| NP12 | Threat-model rows (§5) and §1, §5.8 updates, citing the test names | Rows written; every cited test exists | low | Sonnet | NP10 |
-| NP13 | Docs (§9) | Each doc updated with its header date; doc tests green | low | Sonnet | NP10 |
+| NP12 (done 2026-11-15) | Threat-model rows (§5) and §1, §5.8 updates, citing the test names. Findings: §4 rows for the bin, static serving, the opener and `mcp`; §8 rows for the release, the npm account, look-alike names, install-time code, bundled dependencies and the `npm-package` job. Differences from §5's text: the maintainer check always runs (the placeholder exists); the CSP has one sha256 script hash besides `'self'`; the account uses a passkey (NP0); trusted publisher, `app-v*` on the `release` environment and "disallow tokens" are still owner steps (NP11) | Rows written; every cited test exists | low | Sonnet | NP10 |
+| NP13 (done 2026-11-15) | Docs (§9). `docs/plans/vscode-extension.md` §7.2 already covered the publish (NP10) and is unchanged | Each doc updated with its header date; doc tests green | low | Sonnet | NP10 |
 | NP14 | Review: code and security review of the package and the publish path, full suite, headers, `npm audit signatures` on the published version in a temp project | §8 exit criterion met; commit on `main` | medium | Opus | NP11, NP12, NP13 |
 
 Order: NP0 now (it only needs D2 and D3). NP1-NP5 in parallel after

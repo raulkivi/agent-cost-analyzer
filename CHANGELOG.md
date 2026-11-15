@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Each session in a savings row now shows its date and its own saving over the window, with the row's label ("up to", a range or Simulated), in the Savings tab and in the chat view; a session that could not be priced says "Not priced" with the reason once, and one without a start says "date unknown". `get_savings_report` carries the same two fields per shown session (no title) and prints them as `<id> (<date>, <saving>)`. The tool's Simulated rows no longer have a `rank` and are bullets, not numbers, in its text, and the chat view reads every coverage gap as "N not analysed: reason". <!-- codespell:ignore analysed -->
+- The npm package `agent-cost-analyzer`, from app 0.16.0: `npx agent-cost-analyzer` starts the app on http://127.0.0.1:5199 and opens your browser, with no clone. A running instance is reused, and a busy port moves to the next free one; `--port <n>` takes one port only, `--no-open` skips the browser, `--help` and `--version` do what they say. It needs Node.js 22.18 or newer and has no dependencies and no install scripts. It is published from the release workflow through npm trusted publishing, with a provenance attestation.
+- `agent-cost-analyzer mcp` runs the read-only MCP server over stdio from the same package, with the interactive views included. Register it with `npx -y --prefer-offline agent-cost-analyzer mcp`, or install it globally for offline use.
 
 ## [0.15.0] - 2026-11-15
 
