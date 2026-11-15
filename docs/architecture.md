@@ -2860,6 +2860,17 @@ on `domain` and on `web`'s presentational exports only, never on `server`
   loopback hostname, any port. Only the raw `Host` header is read, never
   `X-Forwarded-Host` (`trust proxy` stays off). The Vite dev server itself
   rejects non-loopback hosts via its own default `server.allowedHosts`.
+- **The npm package's origin (NP4, [plans/npm-package.md](plans/npm-package.md) §4.4).**
+  The `serve` command binds `127.0.0.1` only (`assertLoopbackBindHost`) and
+  composes after listening, so the Host guard allows exactly the bound port
+  (also for `--port 0`). `http/web-app-server.ts`'s `createWebAppServer`
+  puts `http/security-headers.ts` (`X-Content-Type-Options: nosniff` and a
+  `'self'`-only Content-Security-Policy; the web build's one inline script
+  is allowed by its sha256 hash, nothing else is relaxed), the Host guard,
+  the API, then the built web app (`express.static`: no listing, dotfiles
+  ignored, traversal refused, `index.html` for extensionless client routes)
+  on one origin. `GET /api/health` carries `app: "agent-cost-analyzer"` so a
+  second start can recognize a running instance on the default port.
 - **Subagent log names (step 10.19).** `childLogFile` comes from a log file,
   so it is checked against `SUBAGENT_LOG_NAME` (no separator, `runSubagent-`
   or `searchSubagent-` prefix, `.jsonl` suffix) before use, resolved in the

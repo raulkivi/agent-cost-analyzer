@@ -39,7 +39,7 @@ describe("composeStandaloneApp with a package layout", () => {
     const response = await request(composed.app).get("/api/health");
 
     expect(composed.version).toBe(TEMP_LAYOUT.version);
-    expect(response.body).toEqual({ status: "ok", version: TEMP_LAYOUT.version });
+    expect(response.body).toEqual({ app: "agent-cost-analyzer", status: "ok", version: TEMP_LAYOUT.version });
   });
 
   it("reads the learn scripts from the layout", async () => {

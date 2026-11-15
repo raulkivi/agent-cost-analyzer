@@ -7,6 +7,7 @@ import {
 } from "./composition/create-standalone-api-service.js";
 import { ApiError, BadRequestError, statusForApiError } from "./services/api/api-errors.js";
 import { createLoopbackHostGuard } from "./http/loopback-host-guard.js";
+import { APP_ID } from "./app-id.js";
 
 export interface CreateAppOptions extends StandaloneApiServiceOptions {
   // Ports a request's Host header may name (DNS-rebinding guard,
@@ -51,7 +52,8 @@ export function createApp(options: CreateAppOptions = {}): Express {
   app.use(express.json());
 
   app.get("/api/health", route(async (_req, res) => {
-    res.json(await api.getHealth());
+    // `app` lets the CLI tell a running instance of this app from any other server on its port (npm-package.md §4.4).
+    res.json({ app: APP_ID, ...(await api.getHealth()) });
   }));
 
   app.get("/api/product", route(async (_req, res) => {
