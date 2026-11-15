@@ -163,4 +163,17 @@ describe("createWebAppServer", () => {
     const response = await request(server()).get("/").set({ Host: "evil.example" });
     expect(response.headers["x-content-type-options"]).toBe("nosniff");
   });
+
+  // Express renders an error's stack (file paths of the install included)
+  // unless its env is "production", and the package's users set no NODE_ENV.
+  it("answers an error from the API with its status only: no message, no stack", async () => {
+    const api = express();
+    api.get("/api/boom", () => {
+      throw new Error("detail at /home/someone/.npm/_npx/cli.js:1");
+    });
+    const response = await request(createWebAppServer({ api, webDir, allowedHostPorts: [5199] })).get("/api/boom").set(HOST);
+    expect(response.status).toBe(500);
+    expect(response.text).not.toContain("detail");
+    expect(response.text).not.toMatch(/\bat \S/);
+  });
 });

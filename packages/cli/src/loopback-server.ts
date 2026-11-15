@@ -38,10 +38,14 @@ export function listenOnLoopback(port: number): Promise<ListenOutcome<ServerHand
   });
 }
 
-/** True when `GET /api/health` on the port names this app. Any failure is false. */
+/**
+ * True when `GET /api/health` on the port names this app. Any failure is
+ * false, a redirect included: following one would let whatever holds the
+ * port send the probe to another host.
+ */
 export async function isThisApp(port: number, timeoutMs = PROBE_TIMEOUT_MS): Promise<boolean> {
   try {
-    const response = await fetch(`http://${BIND_HOST}:${port}/api/health`, { signal: AbortSignal.timeout(timeoutMs) });
+    const response = await fetch(`http://${BIND_HOST}:${port}/api/health`, { redirect: "error", signal: AbortSignal.timeout(timeoutMs) });
     if (!response.ok) return false;
     const body: unknown = await response.json();
     return typeof body === "object" && body !== null && (body as { app?: unknown }).app === APP_ID;

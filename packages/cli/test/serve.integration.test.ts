@@ -58,16 +58,21 @@ describe("serve, with real sockets", () => {
     return { out, err, opened, signal: () => signal(), done, port: () => Number(/:(\d+) /.exec(out[0] ?? "")?.[1]) };
   }
 
-  const get = (port: number, urlPath: string, host = `127.0.0.1:${port}`) =>
-    new Promise<{ status: number; body: string; headers: Record<string, unknown> }>((resolve, reject) => {
-      const req = httpRequest({ host: "127.0.0.1", port, path: urlPath, headers: { Host: host }, agent: false }, (res) => {
+  type Reply = { status: number; body: string; headers: Record<string, unknown> };
+
+  const send = (port: number, method: string, urlPath: string, host: string, json?: string) =>
+    new Promise<Reply>((resolve, reject) => {
+      const headers = { Host: host, ...(json === undefined ? {} : { "Content-Type": "application/json" }) };
+      const req = httpRequest({ host: "127.0.0.1", port, method, path: urlPath, headers, agent: false }, (res) => {
         let body = "";
         res.on("data", (chunk: Buffer) => (body += chunk));
         res.on("end", () => resolve({ status: res.statusCode ?? 0, body, headers: res.headers }));
       });
       req.on("error", reject);
-      req.end();
+      req.end(json);
     });
+
+  const get = (port: number, urlPath: string, host = `127.0.0.1:${port}`) => send(port, "GET", urlPath, host);
 
   async function occupy(port = 0): Promise<number> {
     const server = createServer((_req, res) => void res.end("not this app"));
@@ -108,6 +113,20 @@ describe("serve, with real sockets", () => {
     expect((await get(port, "/api/health", `127.0.0.1:${port + 1}`)).status).toBe(403);
     expect((await get(port, "/", "evil.example")).status).toBe(403);
     expect((await get(port, "/api/health", `localhost:${port}`)).status).toBe(200);
+    run.signal();
+    await run.done;
+  });
+
+  it("answers a malformed JSON body with 400 and no stack, and names no framework", async () => {
+    const run = start({ port: 0 });
+    await tick();
+    const port = run.port();
+    const response = await send(port, "PUT", "/api/projects", `127.0.0.1:${port}`, "{not json");
+    expect(response.status).toBe(400);
+    expect(response.body).not.toMatch(/SyntaxError|\bat \S/);
+    for (const reply of [response, await get(port, "/"), await get(port, "/api/health")]) {
+      expect(reply.headers["x-powered-by"]).toBeUndefined();
+    }
     run.signal();
     await run.done;
   });

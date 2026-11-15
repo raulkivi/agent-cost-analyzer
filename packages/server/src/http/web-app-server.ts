@@ -34,6 +34,10 @@ export function createWebAppServer({ api, webDir, allowedHostPorts }: WebAppServ
 
   const server = express();
   server.disable("x-powered-by");
+  // Errors reach this app's final handler (the API is mounted in it), which
+  // renders the stack unless the env is "production". It must not depend on
+  // the user's NODE_ENV.
+  server.set("env", "production");
   server.use(createSecurityHeaders(policy));
   server.use(createLoopbackHostGuard({ allowedPorts: allowedHostPorts }));
   server.use(api);
