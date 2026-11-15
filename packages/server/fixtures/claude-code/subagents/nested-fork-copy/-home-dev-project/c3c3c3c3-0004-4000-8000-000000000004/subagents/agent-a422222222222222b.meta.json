@@ -1,0 +1,10 @@
+{
+  "agentType": "general-purpose",
+  "isBuiltIn": true,
+  "model": "sonnet",
+  "finished": true,
+  "toolUseId": "toolu_nf_call",
+  "spawnDepth": 2,
+  "parentAgentId": "a411111111111111a",
+  "isFork": true
+}

@@ -1,7 +1,11 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
 import { z } from "zod";
+import { subagentLabelSchema, subagentRunIdSchema } from "./subagent-run-ids.js";
 import { tokenCountSchema } from "./token-count.js";
+
+// Re-exported so existing imports of the cost side keep working.
+export { subagentLabelSchema, subagentRunIdSchema };
 
 // The main agent's own figures for a turn that also folds in subagent runs
 // (step 10.19, D10). Kept beside the folded total so a per-model line stays
@@ -21,15 +25,6 @@ export const ownTurnUsageSchema = z.object({
 });
 
 export type OwnTurnUsage = z.infer<typeof ownTurnUsageSchema>;
-
-// Shared with the tool-call origin (step 10.20): the id and label are the
-// same text wherever a run is named, so one pattern guards every reader.
-export const subagentRunIdSchema = z.string().regex(/^[A-Za-z0-9_-]{1,128}$/);
-// Copilot classic: runSubagent-<name> / searchSubagent. Claude Code (step
-// CS4): the tool name `Agent`, with the `agentType` after a hyphen.
-export const subagentLabelSchema = z
-  .string()
-  .regex(/^(runSubagent-[A-Za-z0-9_ -]{1,64}|searchSubagent|Agent(-[A-Za-z0-9_.: -]{1,64})?)$/);
 
 // One subagent run (classic Copilot runSubagent / searchSubagent, or a Claude
 // Code `Agent` call) folded into the turn that started it. `id` and `label`

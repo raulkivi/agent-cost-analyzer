@@ -14,7 +14,9 @@ import type { SeriesPattern } from "../charts/chart-parts.js";
 // own fill pattern, so marks never rest on colour alone: success and error
 // were 1.1:1 apart. Every use also pairs the colour with an icon + text label,
 // a legend and a table view.
-export const STATUS_ORDER: ToolCallStatus[] = ["success", "error", "interrupted", "denied", "unknown"];
+// "canceled" (D14) has no chart column yet: the audit UI counts it in step ST12.
+export type ChartedStatus = Exclude<ToolCallStatus, "canceled">;
+export const STATUS_ORDER: ChartedStatus[] = ["success", "error", "interrupted", "denied", "unknown"];
 
 export const STATUS_META: Record<ToolCallStatus, { label: string; icon: string; color: string; pattern: SeriesPattern }> = {
   success: { label: "Succeeded", icon: "✓", color: "var(--color-status-success)", pattern: "solid" },
@@ -22,6 +24,7 @@ export const STATUS_META: Record<ToolCallStatus, { label: string; icon: string; 
   interrupted: { label: "Interrupted", icon: "⏸", color: "var(--color-status-interrupted)", pattern: "dots" },
   denied: { label: "Denied", icon: "⛔", color: "var(--color-status-denied)", pattern: "cross" },
   unknown: { label: "Unknown", icon: "?", color: "var(--color-status-unknown)", pattern: "horizontal" },
+  canceled: { label: "Canceled", icon: "⊘", color: "var(--color-status-unknown)", pattern: "horizontal" },
 };
 
 export const CATEGORY_LABELS: Record<FailureCategory, string> = {
@@ -38,6 +41,7 @@ export const CATEGORY_LABELS: Record<FailureCategory, string> = {
   "test-or-build-failure": "Test/build failure",
   "user-rejected": "Rejected by user",
   "blocked-by-policy": "Blocked by permissions",
+  "already-exists": "Already exists",
   "other-nonzero-exit": "Other non-zero exit",
   unclassified: "Unclassified",
 };

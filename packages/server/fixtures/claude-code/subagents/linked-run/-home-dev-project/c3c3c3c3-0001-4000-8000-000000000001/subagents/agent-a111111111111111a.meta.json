@@ -1,0 +1,13 @@
+{
+  "agentType": "general-purpose",
+  "isBuiltIn": true,
+  "model": "sonnet",
+  "finished": true,
+  "toolUseId": "toolu_lr_call",
+  "spawnDepth": 1,
+  "description": "Made-up task description",
+  "worktreePath": "/home/dev/worktrees/made-up",
+  "spawnedWithWorktree": true,
+  "launchedWithDefaults": true,
+  "requestNonInteractive": false
+}
