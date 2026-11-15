@@ -1,6 +1,6 @@
 # Monthly AI Credits allowance in the standalone app (MA13)
 
-**Last changed:** 2026-11-14 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-15 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 Status: **Plan approved 2026-11-14** (D1–D11 accepted). Task MA13 of [monthly-allowance.md](monthly-allowance.md) (step 10.21), 1.0 criterion C9 and build task V20 in [implementation-plan.md](../implementation-plan.md) ("1.0.0 release"). Build next.
 
@@ -227,7 +227,7 @@ TDD in every code task: the failing test is written and seen red first ([CLAUDE.
 
 | ID | Task | Exit | Complexity | Model | Depends on |
 |---|---|---|---|---|---|
-| MS0 | Mock-up boards (§5), light and dark | Boards in `docs/plans/mockups/monthly-allowance-standalone/`; owner approval recorded here | medium | Sonnet (frontend-design skill) + owner | D2, D3, D4, D6 accepted |
+| MS0 | Mock-up boards (§5), light and dark | Boards in `docs/plans/mockups/monthly-allowance-standalone/`; owner approval recorded here. **Status: boards ready for owner review (2026-11-15).** | medium | Sonnet (frontend-design skill) + owner | D2, D3, D4, D6 accepted |
 | MS1 | Move the pure logic to `packages/domain/src/allowance/`: `periodOf`, `dayKeyOf`, `dayStartInstant`, `knownSum`, `billedCredits`, `knownCredits`, `computeMonthlyAllowance` (figures), `AllowanceSettings`, defaults, the lenient parser, `allowanceSettingsWriteSchema`, `monthlyAllowanceAnswerSchema`. The extension imports them; its `buildMonthlyAllowance` becomes text over the figures | Domain tests green (moved tests red first against the empty module); every extension allowance test unchanged and green; `bundle-load.test.ts` and the bundle-boundary test green | high | Opus | D8 |
 | MS2 | `describeMonthlyAllowance` (shared wording) in domain; the extension's text built from it | Extension strings byte-identical (its tests unchanged); domain wording tests for each state | medium | Sonnet | MS1 |
 | MS3 | `AllowanceSettingsStore` port, `FileAllowanceSettingsStore` over `settings.json`; the shared writer made atomic (temp 0600, rename) | Store contract test (round trip, other keys kept in both orders, corrupt file reads "not set", out-of-range reads default); `app-settings.test.ts` and the `AppSettingsStore` contract still green | medium | Sonnet | MS1, D1, D10 |

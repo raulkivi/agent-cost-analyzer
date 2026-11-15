@@ -1,0 +1,58 @@
+{
+  "v": 3,
+  "createdOnFiles": {
+    "v": 1,
+    "at": "2026-11-15T09:00:00Z"
+  },
+  "title": "Monthly allowance mock-ups (MS0)",
+  "launch": {
+    "view": "canvas"
+  },
+  "pages": [],
+  "boards": {
+    "Header.dc.html": {
+      "x": 0,
+      "y": 0,
+      "w": 1488,
+      "h": 1877,
+      "title": "1 · Header at 1440 px in every gauge state, light and dark: normal, near, over, at least, unknown, no sessions, no logs, not set, focus, Learn mode, no-meter alternative"
+    },
+    "Details.dc.html": {
+      "x": 0,
+      "y": 1997,
+      "w": 1560,
+      "h": 2890,
+      "title": "2 · Details dialog, light and dark: known near, over with reset day, partial, unknown, no sessions, no logs"
+    },
+    "Settings.dc.html": {
+      "x": 0,
+      "y": 5007,
+      "w": 1552,
+      "h": 1122,
+      "title": "3 · Settings dialog, light and dark: not set, filled, server 400, Remove allowance"
+    },
+    "Narrow.dc.html": {
+      "x": 0,
+      "y": 6249,
+      "w": 1488,
+      "h": 2957,
+      "title": "4 · Narrow widths, light and dark: 320 and 768 px headers, full-width dialogs"
+    },
+    "A11y.dc.html": {
+      "x": 0,
+      "y": 9326,
+      "w": 1488,
+      "h": 1675,
+      "title": "5 · Accessibility: aria-labels per state, focus order, announcements, contrast notes"
+    }
+  },
+  "order": [
+    "Header.dc.html",
+    "Details.dc.html",
+    "Settings.dc.html",
+    "Narrow.dc.html",
+    "A11y.dc.html"
+  ],
+  "notes": {},
+  "designSystems": []
+}
