@@ -309,7 +309,8 @@ Pure logic that both products must compute the same way lives here too.
 §4.1, D8) holds the monthly allowance: the billing period (`periodOf`), day
 keys in the user's zone (`dayKeyOf`, `dayStartInstant`), the known-only sum
 (`knownSum`, `billedCredits`, `knownCredits`), the figures
-(`computeMonthlyAllowance`), the settings type with its defaults, lenient
+(`computeMonthlyAllowance`), the shared wording (`describeMonthlyAllowance`,
+with the `Translate` seam), the settings type with its defaults, lenient
 read (`lenientAllowanceSettings`) and strict write schema
 (`allowanceSettingsWriteSchema`), and the answer schema
 (`monthlyAllowanceAnswerSchema`). It uses `Intl` and `zod` only, so it runs

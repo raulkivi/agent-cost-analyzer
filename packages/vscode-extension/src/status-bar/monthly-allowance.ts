@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: MIT
 import {
   computeMonthlyAllowance,
+  describeMonthlyAllowance,
+  type AllowanceDescription,
   type AllowanceLevel,
   type HiddenAllowance,
   type MonthlyAllowanceFigures,
@@ -12,8 +14,9 @@ import { identityTranslate, type Translate } from "../l10n/localize.js";
 // The monthly AI Credits allowance gauge (step 10.21, plan
 // monthly-allowance.md §3.2 to §3.4). Pure and free of `vscode`: the status
 // bar adapter and the Sessions view apply it. The figures are the domain's
-// (`computeMonthlyAllowance`, shared with the standalone app); this module
-// words them for the status bar, its tooltip and the Sessions row.
+// (`computeMonthlyAllowance`, shared with the standalone app) and so are the
+// words (`describeMonthlyAllowance`, MS2); this module adds the status bar's
+// codicons, its "Open Sessions." hint and the Sessions row.
 
 export interface MonthlyAllowance extends MonthlyAllowanceFigures {
   // Status bar text, codicon first and outside the translated message. The
@@ -36,90 +39,30 @@ export interface MonthlyAllowanceInput extends FiguresInput {
 
 const CODICONS: Record<AllowanceLevel, string> = { normal: "$(dashboard)", near: "$(warning)", over: "$(error)" };
 
-// English digit grouping, as the numbers are not translated (no bundle yet).
-const CENTS = new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-const ALLOWANCE = new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 });
-
-// Whole messages per level and bound, so a translator never assembles
-// "at least" from fragments. The figure comes first and the level word last,
-// so truncation keeps the figure (owner decision 1, 2026-11-13); the
-// percentage lives in the tooltip and the aria label only (decision 3).
-function knownFigure(level: AllowanceLevel, atLeast: boolean, used: string, allowance: string, t: Translate): string {
-  if (level === "over") {
-    return atLeast ? t("at least {0} of {1} AI Credits · over", used, allowance) : t("{0} of {1} AI Credits · over", used, allowance);
+function rowLabelOf(description: AllowanceDescription, t: Translate): string {
+  switch (description.state) {
+    case "no-sessions":
+      return t("This month: no sessions");
+    case "unknown":
+      return t("This month: AI Credits unknown");
+    default:
+      return t("This month: {0}", description.statusLine);
   }
-  if (level === "near") {
-    return atLeast ? t("at least {0} of {1} AI Credits · near limit", used, allowance) : t("{0} of {1} AI Credits · near limit", used, allowance);
-  }
-  return atLeast ? t("at least {0} of {1} AI Credits", used, allowance) : t("{0} of {1} AI Credits", used, allowance);
-}
-
-function levelSentence(level: AllowanceLevel, t: Translate): string {
-  if (level === "over") {
-    return `${t("Over the allowance.")} `;
-  }
-  return level === "near" ? `${t("Near limit.")} ` : "";
-}
-
-function coverageText(known: number, total: number, t: Translate): string {
-  return total === 1 ? t("{0} of {1} session this month has cost data", known, total) : t("{0} of {1} sessions this month have cost data", known, total);
-}
-
-function daysLeftText(daysLeft: number, t: Translate): string {
-  return daysLeft === 1 ? t("1 day left") : t("{0} days left", daysLeft);
 }
 
 export function buildMonthlyAllowance({ t = identityTranslate, ...input }: MonthlyAllowanceInput): MonthlyAllowanceView {
   const figures = computeMonthlyAllowance(input);
-  if (figures.level === "hidden") {
-    return figures;
+  const description = describeMonthlyAllowance(figures, { t });
+  if (figures.level === "hidden" || description.state === "hidden") {
+    return { level: "hidden" };
   }
-  const { level, allowance, used, atLeast, percent, remaining, period, coverage: counts, countedSinceKey } = figures;
-  const total = counts.total;
-
-  const allowanceText = ALLOWANCE.format(allowance);
-  const days = daysLeftText(figures.daysLeft, t);
-  const coverage = coverageText(counts.known, total, t);
-  const usedText = used === null ? "" : CENTS.format(used);
-
-  let figure: string;
-  let rowLabel: string;
-  let ariaMain: string;
-  if (total === 0) {
-    figure = t("No sessions this month");
-    rowLabel = t("This month: no sessions");
-    ariaMain = t("No sessions this month, {0} AI Credits allowance, {1}. Open Sessions.", allowanceText, days);
-  } else if (used === null || percent === null) {
-    figure = t("AI Credits this month: unknown");
-    rowLabel = t("This month: AI Credits unknown");
-    ariaMain = t("AI Credits this month: unknown, {0} allowance, {1}, {2}. Open Sessions.", allowanceText, days, coverage);
-  } else {
-    figure = knownFigure(level, atLeast, usedText, allowanceText, t);
-    rowLabel = t("This month: {0}", figure);
-    ariaMain = atLeast
-      ? t("AI Credits this month: at least {0} of {1} allowance, {2} percent, {3}, {4}. Open Sessions.", usedText, allowanceText, percent, days, coverage)
-      : t("AI Credits this month: {0} of {1} allowance, {2} percent, {3}, {4}. Open Sessions.", usedText, allowanceText, percent, days, coverage);
-  }
-
-  const tooltip = [
-    t("Monthly allowance: {0} AI Credits", allowanceText),
-    percent === null ? undefined : atLeast ? t("At least {0} % of the allowance used", percent) : t("{0} % of the allowance used", percent),
-    remaining === null ? undefined : remaining > 0 ? t("Up to {0} AI Credits remain", CENTS.format(remaining)) : t("No AI Credits remain"),
-    days,
-    t("Period started {0}", period.startKey),
-    total === 0 ? undefined : coverage,
-    countedSinceKey === undefined ? undefined : t("Oldest session counted: {0}", countedSinceKey),
-    atLeast ? t("The total may be higher: sessions without cost data are not counted.") : undefined,
-    t("Only sessions recorded on this machine are counted."),
-  ].filter((line): line is string => line !== undefined);
-
   return {
     ...figures,
     // The codicon stays outside the message: a translator must not see it.
-    text: `${CODICONS[level]} ${figure}`,
-    tooltip: tooltip.join("\n"),
-    ariaLabel: `${levelSentence(level, t)}${ariaMain}`,
-    rowLabel,
-    rowDescription: t("· {0}", days),
+    text: `${CODICONS[figures.level]} ${description.statusLine}`,
+    tooltip: description.detailLines.join("\n"),
+    ariaLabel: `${description.ariaLabel} ${t("Open Sessions.")}`,
+    rowLabel: rowLabelOf(description, t),
+    rowDescription: t("· {0}", description.daysLeft),
   };
 }
