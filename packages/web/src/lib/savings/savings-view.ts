@@ -36,14 +36,33 @@ function unit(currency: Currency): string {
   return currency === "AI_CREDITS" ? " AI Credits" : "";
 }
 
+// Half a display step: a value below it shows as zero at the display precision.
+const HALF_STEP: Record<Currency, number> = { AI_CREDITS: 0.05, USD: 0.005 };
+
+// A known amount whose high end shows as zero would read as no saving, so it
+// is written "under 0.1 AI Credits" ("under $0.01"). Ranking uses raw numbers.
+function underText(currency: Currency): string {
+  return `under ${currency === "USD" ? "$0.01" : "0.1 AI Credits"}`;
+}
+
+function showsAsZero(currency: Currency, high: number): boolean {
+  return high < HALF_STEP[currency];
+}
+
 function span(amount: Extract<SavingsAmount, { known: true }>, low = amount.low, high = amount.high): string {
+  if (showsAsZero(amount.currency, high)) return underText(amount.currency);
   return `${figure(amount.currency, low)}–${figure(amount.currency, high)}${unit(amount.currency)}`;
 }
 
-// "6.2–38.4 AI Credits per week", "up to $3.20 per week", or "Not priced".
+function upToText(amount: Extract<SavingsAmount, { known: true }>): string {
+  if (showsAsZero(amount.currency, amount.high)) return underText(amount.currency);
+  return `up to ${figure(amount.currency, amount.high)}${unit(amount.currency)}`;
+}
+
+// "6.2–38.4 AI Credits per week", "up to $3.20 per week", "under 0.1 AI Credits per week", or "Not priced".
 export function amountText(amount: SavingsAmount, per = "per week"): string {
   if (!amount.known) return "Not priced";
-  if (amount.label === "upper-bound") return `up to ${figure(amount.currency, amount.high)}${unit(amount.currency)} ${per}`;
+  if (amount.label === "upper-bound") return `${upToText(amount)} ${per}`;
   return `${span(amount)} ${per}`;
 }
 
@@ -51,7 +70,7 @@ export function amountText(amount: SavingsAmount, per = "per week"): string {
 export function windowAmountText(amount: SavingsAmount, days: number): string {
   if (!amount.known) return "";
   if (amount.label === "upper-bound") {
-    return `No lower bound is claimed. Over the ${days} days: up to ${figure(amount.currency, amount.high)}${unit(amount.currency)}.`;
+    return `No lower bound is claimed. Over the ${days} days: ${upToText(amount)}.`;
   }
   return `Over the ${days} days: ${span(amount)}.`;
 }

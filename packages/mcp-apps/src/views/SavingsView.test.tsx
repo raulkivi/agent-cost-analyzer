@@ -9,7 +9,7 @@ import { FakeAppHostPort } from "../host/fake-app-host-port.js";
 import { axeViolations } from "../test-support/axe.js";
 import { exerciseEveryControl } from "../test-support/exercise-controls.js";
 import { sessionCost, turnSeries } from "../view-models/fixtures.js";
-import { idleRow, refs, row, savingsOutput, simulatedRow, twoCurrencyOutput } from "../view-models/savings-fixtures.js";
+import { idleRow, refs, row, savingsOutput, simulatedRow, span, twoCurrencyOutput } from "../view-models/savings-fixtures.js";
 import type { SavingsViewInput } from "../view-models/savings.js";
 import { turnView } from "../view-models/turn-view-fixture.js";
 import { boardReplay } from "./replay/fixtures.js";
@@ -49,6 +49,13 @@ describe("SavingsView (U18)", () => {
     expect(screen.getByText("6.2–38.4 AI Credits per week")).toBeInTheDocument();
     expect(screen.getByText("up to $3.20 per week")).toBeInTheDocument();
     expect(screen.getByText("Showing the 3 highest of 9 changes. Ask in the chat for more, up to 20.")).toBeInTheDocument();
+  });
+
+  it("shows a saving below the display precision as 'under 0.1', not 0.0–0.0", () => {
+    const tiny = row({ key: "tiny", kind: "unused-tools", subject: "create_file", perWeek: span(0.001, 0.02), perWindow: span(0.004, 0.09) });
+    setup(savingsOutput({ opportunities: [tiny], opportunitiesTotal: 1 }));
+    expect(screen.getByText("under 0.1 AI Credits per week")).toBeInTheDocument();
+    expect(screen.queryByText(/0\.0–0\.0/)).toBeNull();
   });
 
   it("labels inferred, estimate and Not priced, and never prints 0 for an unknown amount", () => {
