@@ -1,6 +1,6 @@
 # Agent Cost Analyzer: setup and data sources
 
-**Last changed:** 2026-11-14 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-15 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 How to install and run the standalone Agent Cost Analyzer app, where it
 finds each provider's logs, which Copilot Chat settings to turn on, and a
@@ -130,7 +130,9 @@ runtime, never hardcoded:
     unavailable, since the log records no tool definitions. These sessions
     need none of the settings below.
   - macOS and Windows paths are implemented but not yet verified against a
-    real install. Multi-profile VS Code setups are not supported on any OS
+    real VS Code install. CI runs the packaged npm app on both OSes against a
+    fixture home: it starts, reads pi and Claude Code sessions and writes
+    only its own settings folder (`npm-package` job). Multi-profile VS Code setups are not supported on any OS
     (see [architecture.md](architecture.md)).
 
 - **mitmproxy (optional)** — for agents that write no usable local logs; reads `.har` capture files you export yourself after
