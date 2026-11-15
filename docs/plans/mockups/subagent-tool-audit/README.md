@@ -5,7 +5,7 @@
 Boards for task ST2 of step 10.20 in
 [subagent-tool-audit.md](../../subagent-tool-audit.md) §5.7. The owner approves
 them before ST12 (web and extension webview) and ST13 (MCP App U4 and findings
-view) start. Status: **drawn, awaiting owner approval.**
+view) start. Status: **approved by the owner 2026-11-15.**
 
 Same `.dc.html` format as `../classic-subagents/`, listed in `canvas.json`. The
 boards reference `./support.js`, which is not in the repo; every state is static
@@ -46,3 +46,7 @@ shown as 0.
 7. Nested runs (Agent Host): "depth 2" text plus an indent (drawn), or a breadcrumb "task-Planner › search_code_subagent"?
 8. Plan inconsistency to settle before ST3: §5.3 says a run whose start call is missing keeps visible totals but is flagged, while §5.1 says `unreadReason` is set only when `totals` is null. Drawn as visible totals plus a flag line.
 9. Unread tile wording: "incl. 83 calls from 3 of 5 subagent runs" (drawn), or a separate note only?
+
+## Owner decisions (2026-11-15)
+
+Approved. Question 1: keep the Calls by agent split bar. Question 5: drop the "Show run's calls" button (removed from `FindingRow.dc.html`). Question 8: totals plus flag; a run whose start call is missing keeps its known totals and carries a separate reason (plan §5.1 and D12 amended). All other questions: as drawn.
