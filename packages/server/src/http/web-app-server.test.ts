@@ -97,6 +97,17 @@ describe("createWebAppServer", () => {
     expect(response.text).toBe(INDEX);
   });
 
+  it("serves the app shell read at start, so it always matches the CSP's inline-script hash", async () => {
+    const app = server();
+    writeFileSync(path.join(webDir, "index.html"), "<script>changed()</script>");
+    for (const url of ["/", "/sessions/abc"]) {
+      const response = await request(app).get(url).set(HOST);
+      expect(response.status).toBe(200);
+      expect(response.headers["content-type"]).toMatch(/text\/html/);
+      expect(response.text).toBe(INDEX);
+    }
+  });
+
   it("answers 404 for a missing asset and an unknown API route", async () => {
     expect((await request(server()).get("/assets/missing.js").set(HOST)).status).toBe(404);
     expect((await request(server()).get("/api/unknown").set(HOST)).status).toBe(404);
