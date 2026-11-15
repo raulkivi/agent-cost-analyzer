@@ -2,10 +2,9 @@
 
 **Last changed:** 2026-11-15 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
-Status: **NP1 done 2026-11-15.** **Plan approved 2026-11-14** (D1–D10 accepted). Owner step NP0 next: publish the placeholder `agent-cost-analyzer@0.0.0` and `agent-cost-analyser@0.0.0` (deprecated, naming the real package) from the owner's machine with 2FA. Task V15 of the
+Status: **Building** (plan approved 2026-11-14, D1–D10 accepted). Done 2026-11-15: NP0 (the owner published `agent-cost-analyzer@0.0.0` and `agent-cost-analyser@0.0.0` with 2FA, the owner the only maintainer; the deprecation of `agent-cost-analyser` is pending), NP1 and NP3. First `npx` version: app 0.16.0 (owner 2026-11-15). Task V15 of the
 [1.0.0 release](../implementation-plan.md#100-release). It splits V16
 (build), V17 (trusted publishing) and V18 (docs) into the tasks in §11.
-Build next.
 
 Owner decisions already made (2026-11-14): the package name is
 `agent-cost-analyzer` (free on npm that day), users run it with
