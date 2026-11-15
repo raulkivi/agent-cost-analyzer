@@ -1,12 +1,9 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import { createApp } from "./app.js";
-import { clockFromEnv } from "./platform/clock/clock-from-env.js";
-import { agentHostCatalogProbe } from "./services/config-check/agent-host-catalog-probe.js";
-import { resolveUserDataDir } from "./platform/vscode-paths/resolve-user-data-dir.js";
-import { checkConfig } from "./services/config-check/config-check.js";
+import { composeStandaloneApp } from "./standalone-app.js";
 import { assertLoopbackBindHost } from "./http/loopback-bind.js";
 
+// The dev entry point (npm run dev): this package's own data, no layout.
 const port = 3001;
 // Loopback-only per architecture.md §11.2 — never expose to other hosts.
 const host = "127.0.0.1";
@@ -16,14 +13,6 @@ assertLoopbackBindHost(host);
 // /api here without changeOrigin, so its own Host (port 5173) arrives as-is.
 const viteDevServerPort = 5173;
 
-const configStatus = checkConfig({ agentHostCatalogPresent: agentHostCatalogProbe(resolveUserDataDir()) });
-if (configStatus.warnings.length > 0) {
-  console.warn("Configuration warnings (see GET /api/config/status for fix steps):");
-  for (const warning of configStatus.warnings) {
-    console.warn(`  [${warning.code}] ${warning.message}`);
-  }
-}
-
-createApp({ allowedHostPorts: [port, viteDevServerPort], now: clockFromEnv() }).listen(port, host, () => {
+composeStandaloneApp({ allowedHostPorts: [port, viteDevServerPort] }).app.listen(port, host, () => {
   console.log(`Server listening on http://${host}:${port}`);
 });

@@ -18,9 +18,14 @@ export function createPriceBook(readProjectsFile: () => ProjectsFile, priceBookD
 }
 
 // The standalone app's and its MCP server's price book: projects.json in the
-// app settings folder (step 15.3).
-export function createStandalonePriceBook(appSettingsDir: string, catalog = new ProjectCatalog(new FileProjectStore(appSettingsDir))): PriceBook {
-  return createPriceBook(() => catalog.load().file);
+// app settings folder (step 15.3). The bundled folder is a package layout's
+// (npm-package.md §4.2); omitted, this package's own.
+export function createStandalonePriceBook(
+  appSettingsDir: string,
+  catalog = new ProjectCatalog(new FileProjectStore(appSettingsDir)),
+  priceBookDir?: string,
+): PriceBook {
+  return createPriceBook(() => catalog.load().file, priceBookDir);
 }
 
 // Step 15.6: the extension's price book, bundled prices only (it has no

@@ -23,7 +23,7 @@ import { createSavingsReport } from "./create-savings-report.js";
 
 // The services createMcpServer takes, over whichever registry a product's
 // composition root built: every provider for the standalone stdio server
-// (mcp/stdio.ts), the Copilot provider only for the extension's
+// (mcp/standalone-mcp-server.ts), the Copilot provider only for the extension's
 // (create-copilot-mcp-services.ts). One wiring, so the two servers answer
 // the same tools the same way and differ only in the data behind them
 // and the identity's wording (vscode-extension.md D7). It imports no provider itself.
