@@ -182,6 +182,47 @@ describe("UnusedToolsDetector: Not analysed (never 0)", () => {
   });
 });
 
+// V24 (savings-increment-3.md §4, D22): each session's date and its own saving.
+describe("UnusedToolsDetector: each session's date and saving", () => {
+  it("puts the start and the session's own range on its reference, and the known ones add up to the row", () => {
+    const [row] = detector.detect(savingsInput([sessionInput(s1), sessionInput(s2)])).opportunities;
+
+    // s2: 20 requests × 800 tokens; s1: 10 requests (cache read 0.2, input 2 per million).
+    expect(row!.sessions.map((ref) => [ref.sessionId, ref.startedAt])).toEqual([
+      ["s2", "2026-10-15T12:00:00.000Z"],
+      ["s1", "2026-10-15T12:00:00.000Z"],
+    ]);
+    const parts = row!.sessions.map((ref) => ref.perWindow);
+    expect(parts[0]).toMatchObject({ known: true, currency: "USD", basis: "priced", label: "range", priceVersionIds: ["anthropic-api:claude-sonnet-5:2026-10-01"] });
+    expect(parts[0]!.known && parts[0]!.high).toBeCloseTo(0.032, 9);
+    expect(parts[0]!.known && parts[0]!.low).toBeCloseTo(0.0032, 9);
+    expect(parts[1]!.known && parts[1]!.high).toBeCloseTo(0.016, 9);
+    const known = parts.flatMap((part) => (part?.known ? [part] : []));
+    expect(known.reduce((sum, part) => sum + part.high, 0)).toBeCloseTo(row!.perWindow.known ? row!.perWindow.high : Number.NaN, 12);
+    expect(known.reduce((sum, part) => sum + part.low, 0)).toBeCloseTo(row!.perWindow.known ? row!.perWindow.low : Number.NaN, 12);
+    expect(savingsOpportunitySchema.safeParse(row).success).toBe(true);
+  });
+
+  it("gives a session that could not be priced an unknown saving with the reason, never 0, and lists it last", () => {
+    const odd = session("odd", { model: "no-such-model", turns: withRounds([3], "no-such-model"), toolInventory: linear() });
+
+    const row = detector.detect(savingsInput([sessionInput(odd), sessionInput(s2)])).opportunities.find((o) => o.subject === "linear");
+
+    expect(row!.sessions.map((ref) => ref.sessionId)).toEqual(["s2", "odd"]);
+    expect(row!.sessions[1]!.perWindow).toEqual({ known: false, reason: expect.any(String) });
+    expect(row!.sessions[0]!.perWindow).toMatchObject({ known: true });
+    expect(savingsOpportunitySchema.safeParse(row).success).toBe(true);
+  });
+
+  it("leaves the date out for a session whose log has none", () => {
+    const undated = session("undated", { turns: withRounds([4]), toolInventory: linear(), startedAt: undefined });
+
+    const [row] = detector.detect(savingsInput([sessionInput(undated)])).opportunities;
+
+    expect(row!.sessions[0]).not.toHaveProperty("startedAt");
+  });
+});
+
 describe("UnusedToolsDetector: golden report", () => {
   it("over a multi-session, multi-provider window (update with `vitest -u` after checking the diff by hand)", async () => {
     const copilot = session("cp", {

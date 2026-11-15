@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 import { MAX_SAVINGS_NAME_LENGTH, toUsd, type SavingsAmount, type SavingsOpportunity, type SessionReplay } from "@agent-cost-analyzer/domain";
 import type { ReplayRequest, ReplayResult } from "../../session-replay/session-replay-service.js";
-import { NotAnalysedLedger, perWeek, unknownAmount } from "../savings-amounts.js";
+import { NotAnalysedLedger, perWeek, sessionRefOf, unknownAmount } from "../savings-amounts.js";
 import type { DetectorResult, SavingsDetector, SavingsInput, SavingsSessionInput } from "../savings-detector.js";
 
 // Phase 16 SR8 (docs/plans/savings-report.md §4 O6, §7, D3, D5): what the
@@ -154,7 +154,7 @@ export class CheaperModelDetector implements SavingsDetector {
       key: `cheaper-model:${session.session.id}:${replay.model}`.slice(0, MAX_SAVINGS_NAME_LENGTH * 2),
       kind: "cheaper-model",
       subject: replay.model.slice(0, MAX_SAVINGS_NAME_LENGTH),
-      sessions: [{ providerId: session.providerId, sessionId: session.session.id }],
+      sessions: [sessionRefOf(session, window)],
       evidence: { sessions: 1, requests: replay.coverage.replayedRequests, tokens: null, occurrences: replay.coverage.replayedTurns },
       perWeek: perWeek(window, input.window),
       perWindow: window,

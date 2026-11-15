@@ -24,6 +24,12 @@ jobs:
         with:
           python-version: '3.13'
       - run: python -m pip install --no-deps --require-hashes -r .github/spelling-requirements.txt
+      # Regression: added lines of .codespellrc (no section header) must be
+      # checked as text, not read by codespell as its own config.
+      - name: Self-test the added-lines checker
+        run: |
+          printf -- '--- a/.codespellrc\n+++ b/.codespellrc\n@@ -7,0 +8,1 @@\n+skip = *.lock\n' \
+            | .github/scripts/check-spelling-diff --config .codespellrc
       - name: Check commit messages
         env:
           BASE: ${{ github.event.pull_request.base.sha }}

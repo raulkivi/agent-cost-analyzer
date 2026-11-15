@@ -57,7 +57,15 @@ export const savingsAmountSchema = z.discriminatedUnion("known", [knownSavingsAm
   }
 });
 
-export const savingsSessionRefSchema = z.object({ providerId: z.string().min(1), sessionId: z.string().min(1) });
+// V24 (docs/plans/savings-increment-3.md §4, D22): the session's start and its
+// own saving over the window. Both are optional and additive: no start time
+// reads "date unknown", and an unknown saving carries its reason, never 0.
+export const savingsSessionRefSchema = z.object({
+  providerId: z.string().min(1),
+  sessionId: z.string().min(1),
+  startedAt: z.iso.datetime({ offset: true }).optional(),
+  perWindow: savingsAmountSchema.optional(),
+});
 
 // Counts behind the saving. Null is unknown, never 0.
 export const savingsEvidenceSchema = z.object({
@@ -132,6 +140,23 @@ export const savingsOpportunitySchema = z
     if (opportunity.kind === "unused-tools" && tokens?.known === true && tokens.estimated !== true) {
       ctx.addIssue({ code: "custom", path: ["evidence", "tokens"], message: "unused-tools tokens are an estimate" });
     }
+    // V24: a session's own saving is part of the row's, so it has the row's
+    // basis, label and currency; a row with no known amount has no known part.
+    opportunity.sessions.forEach((session, index) => {
+      const part = session.perWindow;
+      if (part === undefined || !part.known) return;
+      const row = opportunity.perWindow;
+      const path = ["sessions", index, "perWindow"];
+      if (!row.known) {
+        ctx.addIssue({ code: "custom", path, message: "a known session saving needs a known row amount: the row's is unknown" });
+      } else if (part.currency !== row.currency) {
+        ctx.addIssue({ code: "custom", path: [...path, "currency"], message: "a session saving has the row's currency" });
+      } else if (part.basis !== row.basis) {
+        ctx.addIssue({ code: "custom", path: [...path, "basis"], message: "a session saving has the row's basis" });
+      } else if (part.label !== row.label) {
+        ctx.addIssue({ code: "custom", path: [...path, "label"], message: "a session saving has the row's label" });
+      }
+    });
     // D3: a Simulated saving is never ranked with the priced ones, so the
     // kind and the basis must agree.
     for (const field of ["perWeek", "perWindow"] as const) {
