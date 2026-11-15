@@ -1,6 +1,6 @@
 # npm package for the standalone app (1.0 criterion C8)
 
-**Last changed:** 2026-11-14 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-15 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 Status: **Plan approved 2026-11-14** (D1–D10 accepted). Owner step NP0 next: publish the placeholder `agent-cost-analyzer@0.0.0` and `agent-cost-analyser@0.0.0` (deprecated, naming the real package) from the owner's machine with 2FA. Task V15 of the
 [1.0.0 release](../implementation-plan.md#100-release). It splits V16
@@ -451,7 +451,7 @@ NP12-NP13 are V18.
 | NP0 | Publish the placeholder `agent-cost-analyzer@0.0.0` (D2) and, under D3, `agent-cost-analyser@0.0.0`, from the owner's machine with 2FA; account 2FA on a security key | `npm view` shows both, owner the only maintainer | low | Owner step | D2, D3 decided |
 | NP1 | `packages/cli` workspace: `package.json` (name, `bin`, `files`, `engines`, `type`, `license`, `repository`, no scripts, no dependencies), root renamed (D1), `release-check.mts` and a unit test keep the versions equal; SPDX headers | Tests green; `npm install` and the existing suites unchanged | low | Sonnet | Plan approved |
 | NP2 | Argument parsing (`parseArgs`, pure) and the `bin` shim's Node gate and warning filter | Tests for every row of §4.3 and for Node 21 and 22.17 refusals | medium | Sonnet | NP1 |
-| NP3 | Package-layout injection into the standalone and MCP composition roots (data folders, views, web folder, version path); dev defaults unchanged | Tests: a layout in a temp folder is read; no `import.meta.url` path used when a layout is given | medium | Opus | NP1 |
+| NP3 | Package-layout injection into the standalone and MCP composition roots (data folders, views, web folder, version path); dev defaults unchanged. **Done 2026-11-15:** `PackageLayout` and `npmPackageLayout(packageRoot)` (`composition/package-layout.ts`); `composeStandaloneApp({ layout, allowedHostPorts })` (`standalone-app.ts`) returns `{ app, version }` without listening; `serveStandaloneMcpStdio({ layout, projectBillingDetails, appViewsHtml })` and `createStandaloneMcpServerFactory` (`mcp/standalone-mcp-server.ts`) | Tests: a layout in a temp folder is read; no `import.meta.url` path used when a layout is given | medium | Opus | NP1 |
 | NP4 | `serve`: port choice (D4) incl. reusing a running instance, `createApp` with the bound port, static web, `nosniff` and CSP, start line, signals | supertest and real-listen tests: busy port, `--port` busy, reuse, 403 on another Host, static traversal refused | medium | Sonnet | NP2, NP3 |
 | NP5 | Browser opener (D8) with an injected spawner | Tests per OS: program, argv, no shell, skip rules | low | Sonnet | NP2 |
 | NP6 | Build script: esbuild ESM with splitting and the `require` banner, copies (web, views, JSON-only data), generated `THIRD-PARTY-NOTICES.md` with the licence allow-list test, bundle-load test, size budget | `npm run build` produces `packages/cli/dist`; the bundle runs `--version`, `serve` and `mcp`; notices and budget tests green | high | Opus | NP3, NP4, NP5 |

@@ -32,7 +32,7 @@ export interface LogProviderCompositionOptions {
 // The standalone app's composition root, shared by every entry point that
 // reads sessions (the HTTP app's ApiService in
 // create-standalone-api-service.ts and the stdio MCP server in
-// mcp/stdio.ts): every provider, built by the same per-provider factories
+// mcp/standalone-mcp-server.ts): every provider, built by the same per-provider factories
 // the extension's Copilot-only root (compose-copilot-providers.ts) uses,
 // over the file-backed app settings. Each path is overridable for tests.
 export function composeLogProviders(options: LogProviderCompositionOptions = {}) {

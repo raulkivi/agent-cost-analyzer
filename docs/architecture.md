@@ -1,6 +1,6 @@
 # Architecture: Agent Cost Analyzer and AI Credits Analyzer
 
-**Last changed:** 2026-11-14 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-15 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 ## 1. Purpose & scope
 
@@ -182,6 +182,8 @@ outbound network calls.
 | `mcp/replay-tools.ts` | Phase 14 step 14.5 (D7): the `replay` tool group, `replay_session` and `compare_models_for_session` (read-only, domain output schemas) |
 | `services/savings/` | Phase 16 ([plans/savings-report.md](plans/savings-report.md) §5.2): the savings report, a service of its own and not a finding kind (D2). `SavingsService.report(filter, options, signal)` loads the window's sessions one at a time (at most `MAX_ROLLUP_SESSION_LIMIT`, 500, newest first) through `SavingsSessionLoader`, runs the registered `SavingsDetector` strategies and ranks the result with the pure `SavingsRanker`. Detectors take plain data and return plain data: `UnusedToolsDetector` (O1), `CacheBreakDetector` (O2–O4, over the pure `cache-break-classifier.ts` and `cache-rules.ts`), `FailedCallsDetector` (O5, over `buildSessionAudit`) and `CheaperModelDetector` (O6, over a `ReplayComparer` port, with `cheaper-model-candidates.ts`). `CounterfactualPricer` prices N tokens as one token type versus another through `CostPricer`. `savings-names.ts` (`savingsName`) folds, redacts and caps every log-derived name; `savings-window.ts` is the window (30 days to today by default); `savings-query-params.ts` is the zod query schema shared by HTTP, RPC and MCP; `savings-session-order.ts` (`sessionsByContribution`, D16) lists each opportunity's sessions largest contribution first, for O1, O2–O4 and O5 |
 | `composition/create-savings-report.ts` | Phase 16 SR10: `createSavingsReport`, the one wiring of `SavingsService` over the price book, attribution, turn pricer and session replay, used by the standalone app, the extension and both MCP servers (`mcp-services.ts`, Increment 2) |
+| `composition/package-layout.ts`, `composition/bundled-vendor-profiles.ts` | npm package task NP3 ([plans/npm-package.md](plans/npm-package.md) §4.2 "Paths"): `PackageLayout`, where a packaged build keeps the learn scripts, vendor profiles, price book, MCP App views, web app and the `package.json` whose version it reports; `npmPackageLayout(packageRoot)` is the npm tarball's layout. `loadBundledVendorProfiles` prices the profiles from the layout's price book. Without a layout each loader keeps its `import.meta.url` default, so the dev paths are unchanged |
+| `standalone-app.ts`, `mcp/standalone-mcp-server.ts` | The standalone composition roots, each taking an optional `PackageLayout` (the extension passes its paths the same way, G4): `composeStandaloneApp` runs the startup configuration check (§6.3) and returns `createApp`'s app and the version, without listening; `createStandaloneMcpServerFactory` composes the MCP services once and returns the version and a server factory, and `serveStandaloneMcpStdio` serves it over stdio. `server.ts` and `mcp/stdio.ts` are thin dev entries over them; the npm package's CLI is the other caller |
 | `mcp/savings-tools.ts`, `mcp/savings-tool-output.ts` | Phase 16 SR19 (plan §8): the `savings` tool group, `get_savings_report` (read-only, both servers; `limit` 1–20, default 10; `includeSimulated` off by default). `savingsToolOutput` cuts the report to `limit` rows with their rank and at most 10 session ids each (`sessionsTotal` says how many), renders the fixed action text, and folds, redacts and caps every log-derived string (names through `savingsName`; reasons, including an unknown amount's, through `excerptOf` at 600 characters, SR22). `savingsReportText` is the ranked text answer for a host without views. `review_costs` starts from this tool when the group is served |
 | `mcp/apps/` | Phase 12 ([plans/mcp-apps.md](plans/mcp-apps.md) §4.2): the MCP App views as a tool group. `registerAppViews` registers the one `ui://<server name>/views.html` resource, adds `_meta.ui.resourceUri` to the tools in `APP_VIEW_TOOL_NAMES` that the server actually registered (`captureRegisteredTools` records them, so the other groups don't change) and registers the app-only `get_turn_series`. `ViewSource` is the port for the HTML (`FileViewSource` reads the built file on every call, `InMemoryViewSource` is the test double). `injectBrand` fills the page's `aca-brand` meta with the escaped `ViewBrand` from `toViewBrand(identity, version)`. `resolveAppViews(path, onMissing)` turns a path into the `appViews` option, or into nothing when the file is missing, so both entry points start without the group instead of failing at `resources/read` |
 | `services/cost/turn-series-builder.ts` | Phase 12 A1: `buildTurnSeries` turns a session into the bounded per-turn figures (default 500 turns, at most 2000) that `get_turn_series` returns for the chart. `SessionCost` carries only `topTurns` |
@@ -629,14 +631,17 @@ MCP SDK and transport (since 2026-11-12,
   2.4.0 and `@modelcontextprotocol/ext-apps` 2.0.4, each pinned exactly.
   `@modelcontextprotocol/sdk` 1.x is gone. `packages/server` lists
   `client` because ext-apps needs it as a peer; only tests import it.
-- **`serveStdio`.** Both stdio entries (`packages/server/src/mcp/stdio.ts`,
-  the extension's `src/mcp/stdio.ts`) call `serveStdio` from
-  `@modelcontextprotocol/server/stdio` with a server factory (D1). One
+- **`serveStdio`.** Both stdio entries call `serveStdio` from
+  `@modelcontextprotocol/server/stdio` with a server factory (D1): the
+  standalone one (`packages/server/src/mcp/stdio.ts`) through
+  `serveStandaloneMcpStdio` in `mcp/standalone-mcp-server.ts`, the
+  extension's `src/mcp/stdio.ts` directly. One
   process serves 2025-era clients (`initialize`, e.g. at 2025-06-18 or
   2025-11-25) and MCP 2026-07-28 clients (`server/discover`, then a
   `_meta` envelope on every request).
-- **Server factory.** `() => createMcpServer(deps)` in the standalone
-  entry, `createCopilotMcpServerFactory(options)` in the extension.
+- **Server factory.** `createStandaloneMcpServerFactory(options).createServer`
+  in the standalone entry, `createCopilotMcpServerFactory(options)` in the
+  extension.
   `serveStdio` calls it once per connection plus once for a
   `server/discover` probe it may discard. So the services are composed
   once, outside it, and `createMcpServer` only builds a server: no I/O, no

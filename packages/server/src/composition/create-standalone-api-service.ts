@@ -6,7 +6,6 @@ import { FileStatementStore } from "../data-sources/statements/file-statement-st
 import { priceBookHashOf, StatementService } from "../services/billing/statement-service.js";
 import { EstimateService } from "../services/billing/estimate-service.js";
 import { loadScenarioScripts } from "../data-sources/learn-scripts/loader.js";
-import { loadVendorProfiles } from "../data-sources/vendor-profiles/loader.js";
 import { LearnSimulationService } from "../services/learn-simulation/learn-simulation-service.js";
 import { createSimulatedScenarioCatalog } from "../services/learn-simulation/simulated-scenario-catalog.js";
 import { agentHostCatalogProbe } from "../services/config-check/agent-host-catalog-probe.js";
@@ -16,6 +15,8 @@ import { ApiService } from "../services/api/api-service.js";
 import { AuditQueryService } from "../services/tool-audit/audit-query-service.js";
 import { readAppVersion } from "./app-version.js";
 import { createStandalonePriceBook } from "./create-price-book.js";
+import { loadBundledVendorProfiles } from "./bundled-vendor-profiles.js";
+import type { BundledDataDirs } from "./package-layout.js";
 import { composeLogProviders, type LogProviderCompositionOptions } from "./compose-log-providers.js";
 import { createInsightsService } from "./create-insights-service.js";
 import { createStandaloneAttribution } from "./create-standalone-attribution.js";
@@ -24,14 +25,13 @@ import { createCostAnalysis, projectDirectoryOf } from "./create-cost-analysis.j
 import { createSavingsReport } from "./create-savings-report.js";
 import { createSessionReplay } from "./create-session-replay.js";
 
-export interface StandaloneApiServiceOptions extends LogProviderCompositionOptions {
-  // G4 (vscode-extension.md §2.2): default to this package's own files,
-  // located through import.meta.url.
-  learnScriptsDir?: string;
-  vendorProfilesDir?: string;
+// G4 (vscode-extension.md §2.2): the data folders default to this package's
+// own files, located through import.meta.url; a packaged build passes its
+// layout's (npm-package.md §4.2).
+export interface StandaloneApiServiceOptions extends LogProviderCompositionOptions, BundledDataDirs {
   appVersion?: string;
   // The clock (plan §12.4.1): the real one unless a test or the
-  // usage-scenario suite fixes it (server.ts reads AGENT_COST_ANALYZER_NOW).
+  // usage-scenario suite fixes it (standalone-app.ts reads AGENT_COST_ANALYZER_NOW).
   now?: () => Date;
   // Step 15.11 (D6): the time zone statements bill in; the machine's by default.
   timeZone?: string;
@@ -67,14 +67,14 @@ export function standaloneProductProfile(version: string): ProductProfile {
 // file-backed app settings. The HTTP app (app.ts) is the only caller; the
 // extension builds its own over a Copilot-only registry.
 export function createStandaloneApiService(options: StandaloneApiServiceOptions = {}): ApiService {
-  const { learnScriptsDir, vendorProfilesDir, appVersion: appVersionOption, now, timeZone, ...compositionOptions } = options;
+  const { learnScriptsDir, vendorProfilesDir, priceBookDir, appVersion: appVersionOption, now, timeZone, ...compositionOptions } = options;
   const { registry, appSettings, resolvedVscodeSettingsPath, resolvedAppSettingsDir } = composeLogProviders(compositionOptions);
-  const vendorProfiles = loadVendorProfiles(vendorProfilesDir);
+  const vendorProfiles = loadBundledVendorProfiles({ vendorProfilesDir, priceBookDir });
   // Phase 15: projects.json beside settings.json (step 15.3); the same
   // attribution for the repository list and the dataset (step 15.4).
   const attribution = createStandaloneAttribution(registry, resolvedAppSettingsDir, vendorProfiles);
   // Step 15.5/15.6: one price book for GET /api/price-book and the priced cost basis.
-  const priceBook = createStandalonePriceBook(resolvedAppSettingsDir, attribution.catalog);
+  const priceBook = createStandalonePriceBook(resolvedAppSettingsDir, attribution.catalog, priceBookDir);
   const appVersion = appVersionOption ?? readAppVersion();
   const agentHostUserDataDir =
     compositionOptions.agentHostUserDataDir !== undefined ? compositionOptions.agentHostUserDataDir : resolveUserDataDir();
