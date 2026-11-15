@@ -24,7 +24,9 @@ export function emptyTotals(): OutcomeTotals {
   return { toolCalls: 0, succeeded: 0, failed: 0, interrupted: 0, denied: 0, unknown: 0 };
 }
 
-const TOTALS_KEY: Record<ToolCallStatus, keyof OutcomeTotals> = {
+// "canceled" (D14) has no bucket yet: it counts in toolCalls only, so it is
+// neither a failure nor a success. Step ST9 adds its own counter.
+const TOTALS_KEY: Record<Exclude<ToolCallStatus, "canceled">, keyof OutcomeTotals> = {
   success: "succeeded",
   error: "failed",
   interrupted: "interrupted",
@@ -34,7 +36,10 @@ const TOTALS_KEY: Record<ToolCallStatus, keyof OutcomeTotals> = {
 
 export function addToTotals(totals: OutcomeTotals, call: ToolCallRecord): void {
   totals.toolCalls += 1;
-  totals[TOTALS_KEY[statusOf(call)]] += 1;
+  const status = statusOf(call);
+  if (status !== "canceled") {
+    totals[TOTALS_KEY[status]] += 1;
+  }
 }
 
 export function mergeTotals(target: OutcomeTotals, source: OutcomeTotals): void {
