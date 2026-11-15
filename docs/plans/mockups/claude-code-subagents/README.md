@@ -1,0 +1,36 @@
+# Claude Code subagent mock-ups (CS2)
+
+**Last changed:** 2026-11-15 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+
+Boards for task CS2 of [claude-code-subagents.md](../../claude-code-subagents.md) (1.0 criterion C15). They amend the step 10.19 boards in [../classic-subagents/](../classic-subagents/README.md) for runs that have tokens and a priced cost but no AI Credits. The owner approves them before CS13 (web and MCP App U1) starts. Status: **drawn, awaiting owner approval.**
+
+Same `.dc.html` format and `canvas.json` as the other sets; `./support.js` is not in the repo, and every state is static markup, so each board also opens in a plain browser (serve the folder over HTTP). Light (Industry) and Dark Modern, at 640 px (600 px for U1) and 320 px. All data is invented. PNG captures are in [screenshots/](screenshots/).
+
+Every board follows the 10.19 states and the plan's honesty rules (§6): unknown is never 0; a figure never leaves a run out.
+
+## Boards
+
+| Board | Shows |
+|---|---|
+| [TurnsTable.dc.html](TurnsTable.dc.html) | Fork marker in the Turn cell (the AI Credits column is an em dash for every turn), tooltip `incl. 2.04M tokens, $0.38 priced, from 2 subagent runs`, plus matched by time, unknown run (token cells become em dashes) and one unknown field. 320 px: the tooltip text as a visible line in the details drawer. |
+| [ExplanationPanel.dc.html](ExplanationPanel.dc.html) | Subagent runs block: per run model, requests, tokens, priced cost; main agent / subagent runs / turn totals; share sentence; nested run, "continued 2 times" (D2), "counted in another session" (D7), unknown run, one unknown field. |
+| [KpiSubLine.dc.html](KpiSubLine.dc.html) | AI Credits tile reads n/a; a Priced cost tile carries the D12 sub-line `incl. $9.20 and 31.4M tokens from 14 subagent runs`; unknown with the reason; 3 across and 2 across. |
+| [U1TurnDetail.dc.html](U1TurnDetail.dc.html) | MCP App U1 turn detail: Tokens, Cache read, Priced cost (with sub-line) and AI Credits n/a tiles, then the run list; known and unknown run. |
+
+## Design choices to check
+
+- The marker moves to the Turn cell: the AI Credits cell has no figure to attach it to, and Turn is a required column at every width.
+- AI Credits shows an em dash (table) or n/a (tiles) with the existing reason; it never shows 0.
+- Cost wording is "priced": the figure is tokens × the price book, not a bill. A "Priced" basis chip marks the block.
+- A run with an unknown part never adds a smaller known total: the turn's affected cells and the turn line go unknown; the other runs stay listed.
+- Wording stays "subagent runs"; "matched by time" is in the tooltip, block and run list, not in the KPI sub-line (SA0b decision 2).
+
+## Open questions for the owner
+
+1. Priced cost tile: add it to the session KPIs for providers without AI Credits (drawn), or put the sub-line on another tile?
+2. Marker position: Turn cell (drawn), or beside the Output cell?
+3. Tooltip lists tokens before cost (drawn: `2.04M tokens, $0.38 priced`), or cost first?
+4. One unknown field (for example cache write): that column only goes unknown (drawn), or the whole turn?
+5. "Counted in another session" row (D7) shows "not in this turn" instead of figures: OK?
+6. Show "Priced at Anthropic prices as of <date>" under every block (drawn), or only in the tooltip of the Priced chip?
+7. Dark Modern only, as asked; High Contrast frames were not redrawn. Add them before CS13?
