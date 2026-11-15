@@ -37,3 +37,11 @@ export {
   type AllowanceState,
   type MonthlyAllowanceAnswer,
 } from "./monthly-allowance-answer.js";
+export {
+  describeMonthlyAllowance,
+  type AllowanceDescription,
+  type AllowanceWordingState,
+  type DescribeOptions,
+  type MonthlyAllowanceDescription,
+} from "./describe-monthly-allowance.js";
+export { formatMessage, identityTranslate, type Translate } from "./translate.js";
