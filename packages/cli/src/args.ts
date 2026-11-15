@@ -18,15 +18,19 @@ export interface McpCommand {
 }
 export type CliCommand = ServeCommand | McpCommand | { kind: "help" } | { kind: "version" } | { kind: "error"; message: string };
 
-const MCP_FLAGS = ["--project-billing-details", "--app-views-html"];
+const BILLING_FLAG = "--project-billing-details";
+const VIEWS_FLAG = "--app-views-html";
+
+// Only the views path takes an inline `=value`; parseStdioArgs reads the
+// billing switch bare, so `--project-billing-details=true` would be dropped.
+const isMcpArg = (arg: string): boolean => arg === BILLING_FLAG || arg === VIEWS_FLAG || arg.startsWith(`${VIEWS_FLAG}=`);
 
 function parseMcp(argv: readonly string[]): CliCommand {
   // parseStdioArgs ignores unknown input, so reject it here first.
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i]!;
-    const name = arg.split("=")[0]!;
-    if (!MCP_FLAGS.includes(name)) return { kind: "error", message: `Unknown argument for mcp: ${arg}` };
-    if (arg === "--app-views-html") i++; // its value, validated by parseStdioArgs
+    if (!isMcpArg(arg)) return { kind: "error", message: `Unknown argument for mcp: ${arg}` };
+    if (arg === VIEWS_FLAG) i++; // its value, validated by parseStdioArgs
   }
   try {
     return { kind: "mcp", ...parseStdioArgs(argv) };
