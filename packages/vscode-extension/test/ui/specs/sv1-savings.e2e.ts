@@ -160,9 +160,11 @@ suite("Scenario SV1: VS Code, the Savings view (Phase 16 SR15)", () => {
     await openSavings();
     const { index } = opportunityOf("unused-tools");
     await panel.inside(async () => openRow(index));
+    const shown = [...title].slice(0, 120).join("");
+    // The dataset loads when the detail opens, so the title arrives after the row.
+    await browser.waitUntil(async () => (await panel.inside(async () => readDetail())).text.includes(shown), { timeout: WAIT_MS, timeoutMsg: "the session's title did not appear in the detail" });
     const detail = await panel.inside(async () => readDetail());
 
-    const shown = [...title].slice(0, 120).join("");
     expect(detail.text).toContain(shown);
     expect(detail.text.indexOf(shown)).toBeLessThan(detail.text.indexOf(fixture.savings.localSessionId));
     expect(detail.sessionButtons).toContain(`Open session: ${fixture.savings.localSessionId}: ${shown}`);

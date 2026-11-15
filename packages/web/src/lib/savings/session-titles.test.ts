@@ -23,7 +23,7 @@ describe("sessionTitleLookup", () => {
 
   it("answers undefined for an empty or blank title, so the id shows alone", () => {
     expect(lookup({ providerId: "vscode", sessionId: "s2" })).toBeUndefined();
-    expect(sessionTitleLookup([row("vscode", "s3", " ‏\n ")])({ providerId: "vscode", sessionId: "s3" })).toBeUndefined();
+    expect(sessionTitleLookup([row("vscode", "s3", " \u200f\n ")])({ providerId: "vscode", sessionId: "s3" })).toBeUndefined();
   });
 
   it("answers undefined for every session when there is no dataset", () => {
@@ -31,7 +31,7 @@ describe("sessionTitleLookup", () => {
   });
 
   it("cleans the title it returns", () => {
-    const hostile = sessionTitleLookup([row("vscode", "s1", "a‮b\nc")]);
+    const hostile = sessionTitleLookup([row("vscode", "s1", "a\u202eb\nc")]);
     expect(hostile({ providerId: "vscode", sessionId: "s1" })).toBe("ab c");
   });
 });
@@ -42,14 +42,14 @@ describe("titleText", () => {
   });
 
   it("removes control and bidi format characters", () => {
-    expect(titleText("x‮y⁦z\u0000​")).toBe("xyz");
+    expect(titleText("x\u202ey\u2066z\u0000\u200b")).toBe("xyz");
   });
 
   it("caps at 120 code points without cutting a surrogate pair", () => {
     const cut = titleText("\u{1F600}".repeat(500));
     expect(MAX_TITLE_LENGTH).toBe(120);
     expect([...cut]).toHaveLength(MAX_TITLE_LENGTH);
-    expect(cut).not.toContain("�");
+    expect(cut).not.toContain("\uFFFD");
   });
 
   it("leaves markup as text for React to escape, not as something to strip", () => {
