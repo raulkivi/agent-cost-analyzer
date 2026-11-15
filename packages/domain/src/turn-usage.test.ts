@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
 import { describe, expect, it } from "vitest";
-import { subagentRunUsageSchema, turnUsageSchema } from "./turn-usage.js";
+import { subagentLabelSchema, subagentRunIdSchema, subagentRunUsageSchema, turnUsageSchema } from "./turn-usage.js";
 
 describe("turnUsageSchema", () => {
   it("accepts a turn usage with known and unknown token counts mixed", () => {
@@ -158,6 +158,57 @@ describe("subagentRunUsageSchema", () => {
     ["a negative round count", { roundsCount: -1 }],
   ])("rejects %s", (_name, patch) => {
     expect(subagentRunUsageSchema.safeParse({ ...run, ...patch }).success).toBe(false);
+  });
+});
+
+describe("subagentRunUsageSchema, Claude Code runs (step CS4)", () => {
+  const cc = {
+    ...run,
+    id: "toolu_01AbC",
+    label: "Agent-Explore",
+    attribution: "tool-use-id",
+    parentRunId: "toolu_00Parent",
+    extendedCacheWrite: { known: true, value: 40 },
+  };
+
+  it("accepts the Agent label, tool-use-id attribution, parentRunId and extendedCacheWrite", () => {
+    expect(subagentRunUsageSchema.parse(cc)).toEqual(cc);
+  });
+
+  it("accepts the bare Agent label and an unknown extendedCacheWrite (null stays unknown, never 0)", () => {
+    const bare = { ...cc, label: "Agent", extendedCacheWrite: { known: false, reason: "not recorded" } };
+    expect(subagentRunUsageSchema.parse(bare)).toEqual(bare);
+  });
+
+  it("keeps a Copilot classic run valid without the new fields", () => {
+    const parsed = subagentRunUsageSchema.parse(run);
+    expect(parsed.parentRunId).toBeUndefined();
+    expect(parsed.extendedCacheWrite).toBeUndefined();
+  });
+
+  it.each([
+    ["an Agent label with a path", { label: "Agent-../x" }],
+    ["an Agent label with markup", { label: "Agent-<img onerror=x>" }],
+    ["an Agent label over the length cap", { label: `Agent-${"a".repeat(65)}` }],
+    ["an Agent label with an empty type", { label: "Agent-" }],
+    ["a lowercase agent label", { label: "agent-Explore" }],
+    ["a parentRunId with a slash", { parentRunId: "a/b" }],
+    ["an empty parentRunId", { parentRunId: "" }],
+    ["a parentRunId over the length cap", { parentRunId: "a".repeat(129) }],
+    ["an extendedCacheWrite that is not a token count", { extendedCacheWrite: 5 }],
+  ])("rejects %s", (_name, patch) => {
+    expect(subagentRunUsageSchema.safeParse({ ...cc, ...patch }).success).toBe(false);
+  });
+
+  it("exports the id and label patterns for step 10.20 to share", () => {
+    expect(subagentRunIdSchema.safeParse("call_a/b").success).toBe(false);
+    expect(subagentLabelSchema.safeParse("Agent-Explore").success).toBe(true);
+    expect(subagentLabelSchema.safeParse("searchSubagent").success).toBe(true);
+  });
+
+  it("accepts an extendedCacheWrite on the own usage line", () => {
+    const sample = { ...knownUsage, subagents: [cc], ownUsage: { ...own, extendedCacheWrite: { known: true, value: 10 } } };
+    expect(turnUsageSchema.parse(sample)).toEqual(sample);
   });
 });
 

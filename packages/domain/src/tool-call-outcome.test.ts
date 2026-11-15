@@ -1,11 +1,11 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
 import { describe, expect, it } from "vitest";
-import { failureCategorySchema, toolCallOutcomeSchema, toolCallStatusSchema } from "./tool-call-outcome.js";
+import { failureCategorySchema, isFailedStatus, toolCallOutcomeSchema, toolCallStatusSchema } from "./tool-call-outcome.js";
 
 describe("toolCallStatusSchema", () => {
   it("accepts every audit status", () => {
-    for (const status of ["success", "error", "interrupted", "denied", "unknown"]) {
+    for (const status of ["success", "error", "interrupted", "denied", "unknown", "canceled"]) {
       expect(toolCallStatusSchema.parse(status)).toBe(status);
     }
   });
@@ -20,6 +20,7 @@ describe("failureCategorySchema", () => {
       "dependency-missing",
       "git-state",
       "blocked-by-policy",
+      "already-exists",
       "unclassified",
     ]) {
       expect(failureCategorySchema.parse(category)).toBe(category);
@@ -49,6 +50,23 @@ describe("toolCallOutcomeSchema", () => {
 
   it("rejects a failure category on a successful call", () => {
     expect(() => toolCallOutcomeSchema.parse({ status: "success", failureCategory: "timeout" })).toThrow();
+  });
+
+  it("accepts a canceled call with no failure category (D14: a user stop is not a failure)", () => {
+    expect(toolCallOutcomeSchema.parse({ status: "canceled", reason: "Canceled" })).toEqual({
+      status: "canceled",
+      reason: "Canceled",
+    });
+    expect(() => toolCallOutcomeSchema.parse({ status: "canceled", failureCategory: "other-nonzero-exit" })).toThrow();
+  });
+
+  it("does not count canceled as a failed status", () => {
+    expect(isFailedStatus("canceled")).toBe(false);
+  });
+
+  it("accepts the already-exists category on an error (D13)", () => {
+    const outcome = { status: "error", failureCategory: "already-exists" };
+    expect(toolCallOutcomeSchema.parse(outcome)).toEqual(outcome);
   });
 
   it("rejects an excerpt longer than 200 characters", () => {

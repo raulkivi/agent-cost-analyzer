@@ -1165,8 +1165,13 @@ axe table tests and two column-chooser guard tests green on first run.
   architecture §12.
 - `vsce package --no-dependencies` (everything is bundled). Add
   `.vscodeignore` (ship only `dist/` minus `meta.json`, `media/`,
-  `README.md`, `LICENSE`, `CHANGELOG.md`, `icon.png`) and a size budget
-  (proposal: under 5 MB).
+  `README.md`, `LICENSE`, `THIRD-PARTY-NOTICES.md`, `CHANGELOG.md`,
+  `icon.png`) and a size budget (proposal: under 5 MB).
+  `THIRD-PARTY-NOTICES.md` is generated (git-ignored) by `scripts/build.mts`
+  from both esbuild metafiles and the webview's and MCP App views' Vite
+  package lists, with the generator shared with the npm package
+  (`scripts/third-party-notices.mts`). The build fails on a missing list, a
+  package without a license file or a license off the allow-list.
 - **Exit:** `<name>-<version>.vsix` installs into a clean VS Code via
   "Install from VSIX…" and passes the 10.4-10.8 exit checks
   with no repo checkout present.
@@ -2228,6 +2233,16 @@ suite only, to cover the D4 path derivation for real.
 **Standalone app, on tag `app-v*`.** A GitHub Release with notes only (it
 runs from source), and the root `package.json` version bump. Since the npm package (npm-package.md §4.7) the bump also covers `packages/cli/package.json`, and `release-check.mts --also` refuses a tag whose version differs from it. Its
 changelog sits at the repo root.
+
+`release-app.yml` has two jobs, as the extension's does. **build** runs the
+checks, `npm audit --omit=dev --audit-level=high`, one `npm pack` of
+`packages/cli`, the smoke test and a publish dry run on that tarball. **publish**
+(`release` environment, owner approval) verifies the tarball's SHA-256,
+checks that the owner is the package's only npm maintainer, publishes it
+through npm trusted publishing (OIDC, no token, with provenance) and creates
+the GitHub Release with the tarball attached (npm-package.md §4.10). The
+owner configures the npm trusted publisher and adds `app-v*` to the
+`release` environment's deployment rule first.
 
 - **Permissions:** `contents: write` only on the release jobs (for GitHub
   Releases); everything else stays `contents: read`.

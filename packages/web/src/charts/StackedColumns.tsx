@@ -2,15 +2,14 @@
 // SPDX-License-Identifier: MIT
 import { useId, useState } from "react";
 import { scaleLinear } from "d3-scale";
-import type { ToolCallStatus } from "@agent-cost-analyzer/domain";
-import { STATUS_META, STATUS_ORDER } from "../lib/audit-format.js";
+import { STATUS_META, STATUS_ORDER, type ChartedStatus } from "../lib/audit-format.js";
 import { activateOnEnterOrSpace, ChartLegend, patternFillStyle, roundedTopRectPath, SeriesPatternDef } from "./chart-parts.js";
 import { ViewAsTable } from "./ViewAsTable.js";
 
 export interface StackedColumn {
   key: string;
   label: string;
-  counts: Record<ToolCallStatus, number>;
+  counts: Record<ChartedStatus, number>;
 }
 
 interface StackedColumnsProps {

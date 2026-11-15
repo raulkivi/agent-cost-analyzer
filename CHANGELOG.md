@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Each session in a savings row now shows its date and its own saving over the window, with the row's label ("up to", a range or Simulated), in the Savings tab and in the chat view; a session that could not be priced says "Not priced" with the reason once, and one without a start says "date unknown". `get_savings_report` carries the same two fields per shown session (no title) and prints them as `<id> (<date>, <saving>)`. The tool's Simulated rows no longer have a `rank` and are bullets, not numbers, in its text, and the chat view reads every coverage gap as "N not analysed: reason". <!-- codespell:ignore analysed -->
+
 ## [0.15.0] - 2026-11-15
 
 ### Added

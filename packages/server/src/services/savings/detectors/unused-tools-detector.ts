@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import { estimatedTokenCount, unionSorted, type SavingsAmount, type SavingsOpportunity, type ToolInventoryEntry } from "@agent-cost-analyzer/domain";
-import { currencyOf, NotAnalysedLedger, perWeek, sumAmount, unknownAmount, type PricedPart } from "../savings-amounts.js";
+import { estimatedTokenCount, unionSorted, type SavingsAmount, type SavingsOpportunity, type SavingsSessionRef, type ToolInventoryEntry } from "@agent-cost-analyzer/domain";
+import { currencyOf, NotAnalysedLedger, perWeek, sessionRefOf, sumAmount, unknownAmount, type PricedPart } from "../savings-amounts.js";
 import { sessionsByContribution } from "../savings-session-order.js";
 import type { DetectorResult, SavingsDetector, SavingsInput, SavingsSessionInput } from "../savings-detector.js";
 import { foldName, savingsName } from "../savings-names.js";
@@ -132,16 +132,16 @@ export class UnusedToolsDetector implements SavingsDetector {
       if (rows.length === 0) continue;
 
       const parts: PricedPart[] = [];
-      const contribution = new Map<Usable, number>();
+      const refs: SavingsSessionRef[] = [];
       for (const { entry, tokens } of rows) {
         const part = this.price(input, entry, tokens, currency);
         if (part.known) {
           parts.push(part);
-          contribution.set(entry, part.high);
-        }
-        else {
+          refs.push(sessionRefOf(entry.input, sumAmount(currency as "USD", [part], "range")));
+        } else {
           addExtra(part.reason, entry.input);
           groupFailures.add(entry.input, part.reason);
+          refs.push(sessionRefOf(entry.input, unknownAmount(part.reason)));
         }
       }
       const window: SavingsAmount = parts.length > 0 ? sumAmount(currency as "USD", parts, "range") : unknownAmount([...extra.keys()].sort()[0]!);
@@ -151,7 +151,7 @@ export class UnusedToolsDetector implements SavingsDetector {
         key: `unused-tools:${candidate.group.subject}:${currency}`,
         kind: "unused-tools",
         subject: candidate.group.subject,
-        sessions: sessionsByContribution(rows.map(({ entry }) => ({ ref: { providerId: entry.input.providerId, sessionId: entry.input.session.id }, high: contribution.get(entry) }))),
+        sessions: sessionsByContribution(refs),
         evidence: { sessions: rows.length, requests, tokens: estimatedTokenCount(averageTokens), occurrences: null },
         perWeek: perWeek(window, input.window),
         perWindow: window,

@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Monthly allowance: settings dialog</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+.ap{box-sizing:border-box;font-family:"Commit Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:13px;line-height:1.5;color:var(--text);background:var(--bg)}
+.ap *{box-sizing:border-box}
+.ap h1,.ap h2,.ap h3,.ap h4,.ap p,.ap dl,.ap dd,.ap ul,.ap ol{margin:0;padding:0}
+.ap[data-m="light"]{--bg:#ebe7e4;--surf:#f4f2f0;--text:#252f3d;--mut:#5c5752;--acc:#5b7698;--acct:#4b607c;--accf:#4b607c;--acc100:#dde3ea;--acc800:#34445a;--div:rgba(139,132,125,.4);--ctl:#7d766f;--n100:#e2ddd9;--n800:#45413d;--scrim:rgba(46,43,41,.5);--warn:#a67400;--err:#d6453d;--inv:#e34948;--board:#cfc9c4}
+.ap[data-m="dark"]{--bg:#161d27;--surf:#212730;--text:#ebe7e4;--mut:#9fa4ab;--acc:#6a9fcc;--acct:#7aaad4;--accf:#6a9fcc;--acc100:#243246;--acc800:#b3cde6;--div:rgba(73,80,89,.5);--ctl:#6b737e;--n100:#252f3d;--n800:#c9cdd1;--scrim:rgba(11,15,20,.5);--warn:#e8993a;--err:#e8704f;--inv:#e8704f;--board:#0e131b}
+.ap .mut{color:var(--mut)}.ap .s2{font-size:11px}.ap .mr{margin-right:auto}
+.ap .cap{font-size:11px;color:var(--mut);margin:0 0 5px}
+.ap .sec{padding:18px 24px 22px;display:flex;flex-direction:column;gap:14px;background:var(--board)}
+.ap .sec>h2{font-size:15px;font-weight:700;margin:0 0 2px}
+.ap .strip{background:var(--bg);border:1px solid var(--div)}
+.ap .hdr{display:flex;align-items:center;gap:8px;padding:4px 8px;min-height:38px;flex-wrap:wrap}
+.ap .nw .hdr{flex-wrap:nowrap}
+.ap .nw .brand,.ap .nw .seg,.ap .nw .tag,.ap .nw .fld{flex:none}
+.ap .brand{display:flex;align-items:center;gap:6px;font-weight:700;font-size:18px;letter-spacing:-.015em;white-space:nowrap}
+.ap .logo{position:relative;width:24px;height:24px;background:var(--acc800);flex:none;display:inline-block}
+.ap .logo::after{content:"";position:absolute;inset:-3px;border:1px solid var(--acc);opacity:.7}
+.ap .seg{display:inline-flex;border:1px solid var(--ctl);overflow:hidden;white-space:nowrap}
+.ap .seg>span{padding:3px 10px;font-size:12px}
+.ap .seg>.on,.ap[data-m="light"] .seg>.lt,.ap[data-m="dark"] .seg>.dk{background:var(--accf);color:var(--bg)}
+.ap .fld{display:flex;align-items:center;gap:4px;margin-left:4px}
+.ap .inp{display:inline-flex;align-items:center;gap:6px;min-height:26px;padding:3px 8px;font-size:13px;background:var(--surf);border:1px solid var(--ctl);white-space:nowrap;color:var(--text)}
+.ap .inp.bad{border-color:var(--inv);box-shadow:inset 0 0 0 1px var(--inv)}
+.ap .inp.num{width:100%}
+.ap .stat{font-size:11px;margin-left:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:0 1 auto}
+.ap .tag{display:inline-flex;align-items:center;font-size:11px;letter-spacing:.02em;padding:3px 10px;background:var(--n100);color:var(--n800);white-space:nowrap}
+.ap .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font:inherit;font-weight:700;font-size:13px;line-height:1.2;color:var(--text);background:transparent;border:1px solid var(--ctl);padding:4px 10px;white-space:nowrap}
+.ap .btn.p{background:var(--accf);border-color:var(--accf);color:var(--bg)}
+.ap .btn.g{border-color:transparent;color:var(--acct)}
+.ap .btn.dis{opacity:.45}
+.ap .btn.foc,.ap .inp.foc{outline:2px solid var(--acc);outline-offset:1px}
+.ap .gauge{font-size:12px;font-weight:400;min-height:26px;flex:none}
+.ap .nw .srcsel{max-width:150px}
+.ap .n3{overflow:hidden}
+.ap .n3 .gauge,.ap .n3 .gauge .gt{white-space:normal;text-align:left}
+.ap .n3 .srcsel{max-width:210px}
+.ap .n3 .gauge{flex:1 1 100%;justify-content:flex-start}
+.ap .srcsel{display:block;line-height:18px;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.ap .gauge .gt{overflow:hidden;text-overflow:ellipsis;font-variant-numeric:tabular-nums}
+.ap .gauge .gt b{font-weight:700}
+.ap .gauge.unset{color:var(--mut);border-color:var(--div);font-weight:400}
+.ap .mtr{--c:var(--acc);position:relative;display:inline-block;flex:none;width:56px;height:10px;border:1px solid var(--ctl);background:var(--surf)}
+.ap .mtr.near{--c:var(--warn)}.ap .mtr.over{--c:var(--err)}
+.ap .mtr .fill{position:absolute;left:0;top:0;bottom:0;width:calc(var(--p)*1%);background:var(--c)}
+.ap .mtr .open{position:absolute;top:0;bottom:0;left:calc(var(--p)*1%);width:12px;max-width:calc(100% - var(--p)*1%);background:repeating-linear-gradient(135deg,var(--c) 0 1px,transparent 1px 4px);border-left:1px dashed var(--c)}
+.ap .mtr .th{position:absolute;top:-3px;bottom:-3px;left:calc(var(--w)*1%);width:1px;background:var(--text)}
+.ap .mtr .cap2{position:absolute;right:-5px;top:-3px;bottom:-3px;width:3px;background:var(--c)}
+.ap .mtr.big{display:block;width:100%;height:12px}
+.ap .scale{position:relative;height:14px;font-size:10px;color:var(--mut);margin-top:4px}
+.ap .scale span{position:absolute;transform:translateX(-50%);white-space:nowrap}
+.ap .scale span:first-child{transform:none}.ap .scale span:last-child{transform:translateX(-100%)}
+.ap .tile{background:var(--scrim);padding:18px;display:flex;justify-content:center;align-items:flex-start;border:1px solid var(--div)}
+.ap .dlg{width:100%;background:var(--bg);border:1px solid var(--div);padding:12px 14px;display:flex;flex-direction:column;gap:9px}
+.ap .dlg h3{font-size:18px;font-weight:700;letter-spacing:-.015em}
+.ap .dlg h4{font-size:12px;font-weight:700;margin:4px 0 0}
+.ap .dlg .lead{font-size:14px;font-variant-numeric:tabular-nums}
+.ap .dlg .lead b{font-weight:700}
+.ap .kv{display:grid;grid-template-columns:max-content 1fr;gap:3px 14px;font-size:12px;font-variant-numeric:tabular-nums}
+.ap .kv dt{color:var(--mut)}.ap .kv dd{margin:0}
+.ap .prose{font-family:"Source Serif 4",Georgia,serif;font-size:14px;line-height:1.45}
+.ap .tbl{width:100%;border-collapse:collapse;font-size:12px;font-variant-numeric:tabular-nums}
+.ap .tbl th{text-align:left;font-weight:700;padding:3px 4px;border-bottom:1px solid var(--ctl);font-size:11px;color:var(--mut)}
+.ap .tbl td{padding:3px 4px;border-bottom:1px solid var(--div)}
+.ap .tbl .r,.ap .tbl th.r{text-align:right}
+.ap .lst{font-size:11px;color:var(--mut);list-style:none;display:flex;flex-direction:column;gap:2px}
+.ap .lst li::before{content:"\2013  "}
+.ap .acts{display:flex;justify-content:flex-end;gap:6px;margin-top:4px;flex-wrap:wrap}
+.ap .field{display:flex;flex-direction:column;gap:4px}
+.ap .field>label{font-size:12px;color:var(--mut)}
+.ap .ferr{font-size:12px;font-weight:700}.ap .ferr::before{content:"\2715  "}
+.ap .note{border:1px solid var(--ctl);padding:6px 8px;font-size:12px;background:var(--surf)}
+.ap table.a{width:100%;border-collapse:collapse;font-size:12px}
+.ap table.a th{text-align:left;padding:5px 8px;border-bottom:1px solid var(--ctl);color:var(--mut);font-size:11px}
+.ap table.a td{padding:6px 8px;border-bottom:1px solid var(--div);vertical-align:top}
+.ap .step{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border:1px solid var(--ctl);border-radius:50%;font-size:11px;font-style:normal;background:var(--bg);flex:none}
+.ap .ol{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;align-items:center}
+.ap .ol>span{display:inline-flex;align-items:center;gap:5px}
+</style>
+</helmet>
+<div style="width:1552px"><div class="ap sec" data-m="light"><h2>Settings dialog, ledger light (opens from the details or from “Set monthly allowance”)</h2><div style="display:grid;grid-template-columns:repeat(4,360px);gap:20px;align-items:start"><div><p class="cap">Not set: Remove disabled, defaults filled</p><div class="tile"><div class="dlg" role="dialog" style="max-width:360px"><h3>Monthly allowance</h3><p class="prose">Set it to match your GitHub billing page. Stored in this app’s settings folder only.</p><div class="field"><label for="a1">Monthly allowance (AI Credits)</label><span class="inp num" id="a1"><span class="mut">a number above 0</span></span></div><div class="field"><label for="r1">Reset day (1 to 28)</label><span class="inp num" id="r1">1</span></div><div class="field"><label for="w1">Warn at (percent of allowance)</label><span class="inp num" id="w1">80</span></div><div class="acts" style="align-items:center;justify-content:flex-start"><button class="btn dis" disabled>Remove allowance</button><button class="btn" style="margin-left:auto">Cancel</button><button class="btn p">Save</button></div></div></div></div><div><p class="cap">Filled</p><div class="tile"><div class="dlg" role="dialog" style="max-width:360px"><h3>Monthly allowance</h3><p class="prose">Set it to match your GitHub billing page. Stored in this app’s settings folder only.</p><div class="field"><label for="a2">Monthly allowance (AI Credits)</label><span class="inp num" id="a2">1000</span></div><div class="field"><label for="r2">Reset day (1 to 28)</label><span class="inp num" id="r2">1</span></div><div class="field"><label for="w2">Warn at (percent of allowance)</label><span class="inp num" id="w2">80</span></div><div class="acts" style="align-items:center;justify-content:flex-start"><button class="btn">Remove allowance</button><button class="btn" style="margin-left:auto">Cancel</button><button class="btn p">Save</button></div></div></div></div><div><p class="cap">Server 400: message beside each field, nothing saved</p><div class="tile"><div class="dlg" role="dialog" style="max-width:360px"><h3>Monthly allowance</h3><p class="prose">Set it to match your GitHub billing page. Stored in this app’s settings folder only.</p><div class="field"><label for="a3">Monthly allowance (AI Credits)</label><span class="inp num bad" id="a3" aria-invalid="true">0</span><span class="ferr" role="alert">Allowance must be above 0 and at most 1,000,000,000.</span></div><div class="field"><label for="r3">Reset day (1 to 28)</label><span class="inp num bad" id="r3" aria-invalid="true">29</span><span class="ferr" role="alert">Reset day must be a whole number from 1 to 28.</span></div><div class="field"><label for="w3">Warn at (percent of allowance)</label><span class="inp num" id="w3">80</span></div><div class="note" role="alert">Nothing was saved. The gauge is unchanged.</div><div class="acts" style="align-items:center;justify-content:flex-start"><button class="btn">Remove allowance</button><button class="btn" style="margin-left:auto">Cancel</button><button class="btn p">Save</button></div></div></div></div><div><p class="cap">Remove allowance (one click, no confirm step)</p><div class="tile"><div class="dlg" role="dialog" style="max-width:360px"><h3>Monthly allowance</h3><p class="prose">Set it to match your GitHub billing page. Stored in this app’s settings folder only.</p><div class="field"><label for="a4">Monthly allowance (AI Credits)</label><span class="inp num" id="a4">1000</span></div><div class="field"><label for="r4">Reset day (1 to 28)</label><span class="inp num" id="r4">1</span></div><div class="field"><label for="w4">Warn at (percent of allowance)</label><span class="inp num" id="w4">80</span></div><p class="s2 mut">Remove allowance hides the gauge. The reset day and warn percent are kept.</p><div class="acts" style="align-items:center;justify-content:flex-start"><button class="btn foc">Remove allowance</button><button class="btn" style="margin-left:auto">Cancel</button><button class="btn p">Save</button></div></div></div></div></div></div><div class="ap sec" data-m="dark"><h2>Settings dialog, ledger dark</h2><div style="display:grid;grid-template-columns:repeat(4,360px);gap:20px;align-items:start"><div><p class="cap">Not set: Remove disabled, defaults filled</p><div class="tile"><div class="dlg" role="dialog" style="max-width:360px"><h3>Monthly allowance</h3><p class="prose">Set it to match your GitHub billing page. Stored in this app’s settings folder only.</p><div class="field"><label for="a1">Monthly allowance (AI Credits)</label><span class="inp num" id="a1"><span class="mut">a number above 0</span></span></div><div class="field"><label for="r1">Reset day (1 to 28)</label><span class="inp num" id="r1">1</span></div><div class="field"><label for="w1">Warn at (percent of allowance)</label><span class="inp num" id="w1">80</span></div><div class="acts" style="align-items:center;justify-content:flex-start"><button class="btn dis" disabled>Remove allowance</button><button class="btn" style="margin-left:auto">Cancel</button><button class="btn p">Save</button></div></div></div></div><div><p class="cap">Filled</p><div class="tile"><div class="dlg" role="dialog" style="max-width:360px"><h3>Monthly allowance</h3><p class="prose">Set it to match your GitHub billing page. Stored in this app’s settings folder only.</p><div class="field"><label for="a2">Monthly allowance (AI Credits)</label><span class="inp num" id="a2">1000</span></div><div class="field"><label for="r2">Reset day (1 to 28)</label><span class="inp num" id="r2">1</span></div><div class="field"><label for="w2">Warn at (percent of allowance)</label><span class="inp num" id="w2">80</span></div><div class="acts" style="align-items:center;justify-content:flex-start"><button class="btn">Remove allowance</button><button class="btn" style="margin-left:auto">Cancel</button><button class="btn p">Save</button></div></div></div></div><div><p class="cap">Server 400: message beside each field, nothing saved</p><div class="tile"><div class="dlg" role="dialog" style="max-width:360px"><h3>Monthly allowance</h3><p class="prose">Set it to match your GitHub billing page. Stored in this app’s settings folder only.</p><div class="field"><label for="a3">Monthly allowance (AI Credits)</label><span class="inp num bad" id="a3" aria-invalid="true">0</span><span class="ferr" role="alert">Allowance must be above 0 and at most 1,000,000,000.</span></div><div class="field"><label for="r3">Reset day (1 to 28)</label><span class="inp num bad" id="r3" aria-invalid="true">29</span><span class="ferr" role="alert">Reset day must be a whole number from 1 to 28.</span></div><div class="field"><label for="w3">Warn at (percent of allowance)</label><span class="inp num" id="w3">80</span></div><div class="note" role="alert">Nothing was saved. The gauge is unchanged.</div><div class="acts" style="align-items:center;justify-content:flex-start"><button class="btn">Remove allowance</button><button class="btn" style="margin-left:auto">Cancel</button><button class="btn p">Save</button></div></div></div></div><div><p class="cap">Remove allowance (one click, no confirm step)</p><div class="tile"><div class="dlg" role="dialog" style="max-width:360px"><h3>Monthly allowance</h3><p class="prose">Set it to match your GitHub billing page. Stored in this app’s settings folder only.</p><div class="field"><label for="a4">Monthly allowance (AI Credits)</label><span class="inp num" id="a4">1000</span></div><div class="field"><label for="r4">Reset day (1 to 28)</label><span class="inp num" id="r4">1</span></div><div class="field"><label for="w4">Warn at (percent of allowance)</label><span class="inp num" id="w4">80</span></div><p class="s2 mut">Remove allowance hides the gauge. The reset day and warn percent are kept.</p><div class="acts" style="align-items:center;justify-content:flex-start"><button class="btn foc">Remove allowance</button><button class="btn" style="margin-left:auto">Cancel</button><button class="btn p">Save</button></div></div></div></div></div></div></div>
+</x-dc>
+</body>
+</html>

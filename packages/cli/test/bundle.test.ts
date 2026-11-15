@@ -16,7 +16,7 @@ import { fileURLToPath } from "node:url";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { cliBuildPlan } from "../scripts/build-plan.mts";
 import { packProblems, type PackReport } from "../scripts/pack-check.mts";
-import { bundledPackageDirs, isAllowedLicense, readBundledPackage, readBundledPackagesList } from "../scripts/third-party-notices.mts";
+import { bundledPackageDirs, isAllowedLicense, readBundledPackage, readBundledPackagesList } from "../../../scripts/third-party-notices.mts";
 
 const plan = cliBuildPlan(path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..", ".."));
 const cliJs = path.join(plan.distDir, "cli.js");

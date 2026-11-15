@@ -7,7 +7,19 @@
       "sessions": [
         {
           "providerId": "claude-code",
-          "sessionId": "s2"
+          "sessionId": "s2",
+          "startedAt": "2026-10-16T12:00:00.000Z",
+          "perWindow": {
+            "known": true,
+            "currency": "USD",
+            "low": 0,
+            "high": 0.12,
+            "basis": "priced",
+            "label": "upper-bound",
+            "priceVersionIds": [
+              "anthropic-api:m:2026-10-01"
+            ]
+          }
         }
       ],
       "evidence": {
@@ -63,7 +75,19 @@
       "sessions": [
         {
           "providerId": "vscode",
-          "sessionId": "s1"
+          "sessionId": "s1",
+          "startedAt": "2026-10-15T12:00:00.000Z",
+          "perWindow": {
+            "known": true,
+            "currency": "AI_CREDITS",
+            "low": 0,
+            "high": 30,
+            "basis": "priced",
+            "label": "upper-bound",
+            "priceVersionIds": [
+              "github-copilot:m:2026-10-01"
+            ]
+          }
         }
       ],
       "evidence": {
@@ -119,11 +143,35 @@
       "sessions": [
         {
           "providerId": "claude-code",
-          "sessionId": "s1"
+          "sessionId": "s1",
+          "startedAt": "2026-10-15T12:00:00.000Z",
+          "perWindow": {
+            "known": true,
+            "currency": "USD",
+            "low": 0,
+            "high": 0.30000000000000004,
+            "basis": "priced",
+            "label": "upper-bound",
+            "priceVersionIds": [
+              "anthropic-api:m:2026-10-01"
+            ]
+          }
         },
         {
           "providerId": "claude-code",
-          "sessionId": "s2"
+          "sessionId": "s2",
+          "startedAt": "2026-10-16T12:00:00.000Z",
+          "perWindow": {
+            "known": true,
+            "currency": "USD",
+            "low": 0,
+            "high": 0.08,
+            "basis": "priced",
+            "label": "upper-bound",
+            "priceVersionIds": [
+              "anthropic-api:m:2026-10-01"
+            ]
+          }
         }
       ],
       "evidence": {

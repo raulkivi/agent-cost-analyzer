@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 import { z } from "zod";
 import { failureCategorySchema, toolCallStatusSchema } from "./tool-call-outcome.js";
+import { toolCallOriginSchema } from "./tool-call-origin.js";
 import { toolKindSchema } from "./tool-call-record.js";
 import { triggeredEventSchema } from "./turn.js";
 import { addTurnCostFigures, costBasisTotalsSchema, turnCostFiguresSchema } from "./cost-figure.js";
@@ -243,6 +244,7 @@ export const insightToolCallRowSchema = z.object({
   command: z.string().optional(), // bounded + redacted server-side
   startedAt: z.string().optional(),
   durationMs: z.number().optional(),
+  origin: toolCallOriginSchema.optional(), // absent = main agent (step 10.20)
 });
 
 export type InsightToolCallRow = z.infer<typeof insightToolCallRowSchema>;
@@ -267,6 +269,7 @@ export const insightFindingSchema = z.object({
   at: z.string().optional(), // when (call timestamp, else session start)
   why: z.string(), // why it was flagged
   evidence: z.string().optional(), // redacted excerpt
+  origin: toolCallOriginSchema.optional(), // the call's origin; absent = main agent (step 10.20)
 });
 
 export type InsightFinding = z.infer<typeof insightFindingSchema>;

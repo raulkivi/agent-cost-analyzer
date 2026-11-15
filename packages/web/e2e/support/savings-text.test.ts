@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 import { describe, expect, it } from "vitest";
 import type { SavingsAmount, SavingsOpportunity } from "@agent-cost-analyzer/domain";
-import { expectedAmountText, expectedListName, expectedRow } from "./savings-text.js";
+import { expectedAmountText, expectedListName, expectedRow, expectedSessionDate, expectedSessionSaving } from "./savings-text.js";
 
 const known = (over: Partial<Extract<SavingsAmount, { known: true }>>): SavingsAmount => ({
   known: true,
@@ -26,6 +26,25 @@ describe("expectedAmountText", () => {
 
   it("says Not priced for an unknown amount", () => {
     expect(expectedAmountText({ known: false, reason: "no price" })).toBe("Not priced");
+  });
+});
+
+// V24: what each shown session reads in the detail, written out independently of the tab.
+describe("expectedSessionSaving and expectedSessionDate", () => {
+  it("writes the saving over the window with the row's label and no 'per week'", () => {
+    expect(expectedSessionSaving(known({ currency: "AI_CREDITS", label: "range", low: 3.9, high: 24 }))).toBe("3.9–24.0 AI Credits");
+    expect(expectedSessionSaving(known({ high: 1.2 }))).toBe("up to $1.20");
+  });
+
+  it("says Not priced for an unknown or missing saving", () => {
+    expect(expectedSessionSaving({ known: false, reason: "no price" })).toBe("Not priced");
+    expect(expectedSessionSaving(undefined)).toBe("Not priced");
+  });
+
+  it("writes the UTC day without the year, or 'date unknown'", () => {
+    expect(expectedSessionDate("2026-11-11T09:30:00.000Z")).toBe("Nov 11");
+    expect(expectedSessionDate("2026-11-06T09:30:00.000Z")).toBe("Nov 6");
+    expect(expectedSessionDate(undefined)).toBe("date unknown");
   });
 });
 

@@ -220,6 +220,35 @@ describe("CacheBreakDetector: Not analysed (never 0)", () => {
   });
 });
 
+// V24 (savings-increment-3.md §4, D22): each session's date and its own saving.
+describe("CacheBreakDetector: each session's date and saving", () => {
+  const idle = (id: string, gap: number) => claudeSession(id, [cold(0, 10_000), warm(1, 10_400), cold(gap, 10_600)]);
+
+  it("puts the start and the session's own upper bound on its reference, and the known ones add up to the row", () => {
+    // Two breaks in `twice`, one in `once`: 10,400 lost tokens each, 0.03952 apiece.
+    const twice = claudeSession("twice", [cold(0, 10_000), warm(1, 10_400), cold(91, 10_600), warm(92, 10_800), cold(200, 10_900)]);
+    const { opportunities } = run(idle("once", 91), twice);
+    const [row] = opportunities;
+
+    expect(row!.sessions.map((ref) => ref.sessionId)).toEqual(["twice", "once"]);
+    expect(row!.sessions.every((ref) => ref.startedAt === "2026-10-15T12:00:00.000Z")).toBe(true);
+    const [first, second] = row!.sessions.map((ref) => ref.perWindow);
+    expect(first).toMatchObject({ known: true, currency: "USD", basis: "priced", label: "upper-bound", low: 0 });
+    expect(high(first!)).toBeGreaterThan(high(second!));
+    expect(high(second!)).toBeCloseTo(0.03952, 9);
+    expect(high(first!) + high(second!)).toBeCloseTo(high(row!.perWindow), 12);
+    expect(savingsOpportunitySchema.safeParse(row).success).toBe(true);
+  });
+
+  it("gives a session that could not be priced an unknown saving with the reason, never 0", () => {
+    const odd = claudeSession("odd", [cold(0, 10_000, { model: "no-such-model" }), cold(91, 10_000, { model: "no-such-model" })]);
+
+    const [row] = run(odd).opportunities;
+
+    expect(row!.sessions[0]!.perWindow).toEqual({ known: false, reason: expect.any(String) });
+  });
+});
+
 describe("CacheBreakDetector: golden report", () => {
   it("over a multi-session, multi-provider window with the real vendor profiles (update with `vitest -u` after checking the diff by hand)", async () => {
     const profiles = loadVendorProfiles(path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../../../fixtures/vendor-profiles"));

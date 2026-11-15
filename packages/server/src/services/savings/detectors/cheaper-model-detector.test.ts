@@ -214,6 +214,25 @@ describe("CheaperModelDetector: Not analysed (never 0)", () => {
   });
 });
 
+// V24 (savings-increment-3.md §4, D22): one session per row, so its saving is the row's.
+describe("CheaperModelDetector: the session's date and saving", () => {
+  it("puts the start and a saving equal to the row's Simulated amount on the one session", async () => {
+    const comparer = new FakeComparer((request) => ({ status: "ok", value: replayOf(request, { measured: 1, simulated: 0.1 }) }));
+
+    const { opportunities } = await detectorOf(comparer, candidates("claude-haiku-5.5")).detect(savingsInput([costly("s1", 1)]));
+    const [row] = opportunities;
+
+    expect(row!.sessions).toEqual([{ providerId: "claude-code", sessionId: "s1", startedAt: "2026-10-15T12:00:00.000Z", perWindow: row!.perWindow }]);
+    expect(row!.perWindow).toMatchObject({ known: true, basis: "simulated", label: "simulated" });
+  });
+
+  it("keeps an unknown amount unknown on the session too", async () => {
+    const { opportunities } = await new CheaperModelDetector({ comparer: new FakeComparer(), candidates: candidates("claude-haiku-5.5"), priceVersions: () => [] }).detect(savingsInput([costly("s1", 1)]));
+
+    expect(opportunities[0]!.sessions[0]!.perWindow).toEqual({ known: false, reason: expect.any(String) });
+  });
+});
+
 describe("CheaperModelDetector: golden report", () => {
   it("over a multi-session window (update with `vitest -u` after checking the diff by hand)", async () => {
     const comparer = new FakeComparer((request) =>
