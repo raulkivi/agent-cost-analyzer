@@ -1,0 +1,69 @@
+// SPDX-FileCopyrightText: 2026 Raul Kivi
+// SPDX-License-Identifier: MIT
+import { parseArgs } from "node:util";
+// One source of truth for the mcp flags; esbuild follows the relative import
+// into the bundle (npm-package.md §4.3).
+import { parseStdioArgs } from "../../server/src/mcp/stdio-args.js";
+
+export interface ServeCommand {
+  kind: "serve";
+  /** Absent: the default port with fallbacks. 0: any free port. */
+  port?: number;
+  open: boolean;
+}
+export interface McpCommand {
+  kind: "mcp";
+  projectBillingDetails: boolean;
+  appViewsHtml?: string;
+}
+export type CliCommand = ServeCommand | McpCommand | { kind: "help" } | { kind: "version" } | { kind: "error"; message: string };
+
+const MCP_FLAGS = ["--project-billing-details", "--app-views-html"];
+
+function parseMcp(argv: readonly string[]): CliCommand {
+  // parseStdioArgs ignores unknown input, so reject it here first.
+  for (let i = 0; i < argv.length; i++) {
+    const arg = argv[i]!;
+    const name = arg.split("=")[0]!;
+    if (!MCP_FLAGS.includes(name)) return { kind: "error", message: `Unknown argument for mcp: ${arg}` };
+    if (arg === "--app-views-html") i++; // its value, validated by parseStdioArgs
+  }
+  try {
+    return { kind: "mcp", ...parseStdioArgs(argv) };
+  } catch (error) {
+    return { kind: "error", message: error instanceof Error ? error.message : String(error) };
+  }
+}
+
+function parsePort(text: string): number | undefined {
+  if (!/^\d{1,5}$/.test(text)) return undefined;
+  const port = Number(text);
+  return port <= 65535 ? port : undefined;
+}
+
+export function parseCliArgs(argv: readonly string[]): CliCommand {
+  if (argv[0] === "mcp") return parseMcp(argv.slice(1));
+  let values;
+  try {
+    ({ values } = parseArgs({
+      args: [...argv],
+      allowPositionals: false,
+      strict: true,
+      options: {
+        port: { type: "string" },
+        "no-open": { type: "boolean" },
+        help: { type: "boolean", short: "h" },
+        version: { type: "boolean", short: "v" },
+      },
+    }));
+  } catch (error) {
+    return { kind: "error", message: error instanceof Error ? error.message : String(error) };
+  }
+  if (values.help) return { kind: "help" };
+  if (values.version) return { kind: "version" };
+  const open = !values["no-open"];
+  if (values.port === undefined) return { kind: "serve", open };
+  const port = parsePort(values.port);
+  if (port === undefined) return { kind: "error", message: `--port needs an integer from 0 to 65535, got "${values.port}"` };
+  return { kind: "serve", port, open };
+}
