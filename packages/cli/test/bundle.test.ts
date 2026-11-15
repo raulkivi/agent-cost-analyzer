@@ -79,9 +79,15 @@ describe.runIf(existsSync(cliJs) || inCi)("the built npm package", () => {
   });
 
   it("prints the package version for --version, through the bin shim as well", () => {
-    for (const entry of [cliJs, path.join(plan.packageDir, "bin", "agent-cost-analyzer.js")]) {
+    const shim = path.join(plan.packageDir, "bin", "agent-cost-analyzer.js");
+    for (const entry of [cliJs, shim]) {
       const result = spawnSync(process.execPath, [entry, "--version"], { env: isolatedEnv(), encoding: "utf8" });
-      expect(result.stderr, entry).toBe("");
+      // Node 22 warns that node:sqlite is experimental; only the shim filters
+      // that warning, so dist/cli.js run directly may print it.
+      const otherStderr = result.stderr
+        .split("\n")
+        .filter((line) => line !== "" && !/ExperimentalWarning: SQLite|--trace-warnings/.test(line));
+      expect(entry === shim ? result.stderr : otherStderr.join("\n"), entry).toBe("");
       expect(result.status, entry).toBe(0);
       expect(result.stdout, entry).toBe(`${version}\n`);
     }
