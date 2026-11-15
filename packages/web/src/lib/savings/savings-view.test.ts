@@ -3,7 +3,7 @@
 import { describe, expect, it } from "vitest";
 import { MAX_SAVINGS_NAME_LENGTH, savingsActionText, type SavingsActionParams, type SavingsAmount, type SavingsOpportunityKind } from "@agent-cost-analyzer/domain";
 import { upTo, CLAUDE_IDLE, FAILED_CALLS, IDLE_CACHE, makeSavingsReport, SIMULATED, UNPRICED_ROW, UNUSED_TOOLS, range, UNPRICED } from "../../test-support/savings-fixture.js";
-import { actionTextOf, amountText, barSegments, copyableText, coverageText, groupByCurrency, KIND_TITLES, notPricedReasons, perSessionText, sessionDateText, sessionSavingText, windowAmountText } from "./savings-view.js";
+import { actionTextOf, amountText, barSegments, copyableText, coverageText, groupByCurrency, KIND_TITLES, notPricedReasons, perSessionText, toolListOf, sessionDateText, sessionSavingText, windowAmountText } from "./savings-view.js";
 
 describe("amountText (plan §7: a range or an upper bound, never a bare number)", () => {
   it("writes a range with both ends and the unit", () => {
@@ -204,5 +204,50 @@ describe("copyableText (threat-model §6.1: folded to one line, no control chara
         expect(copyableText(text), kind).toBe(text);
       }
     }
+  });
+});
+
+// V26 (board Detail, owner answers 2026-11-15): five tools, "loaded in N
+// sessions", "about" tokens, and "and 18 more (about 2,885)" = the row's total
+// minus the five listed. Unknown is never 0.
+describe("toolListOf", () => {
+  it("lists the first five with their sessions and tokens, and the rest's count and tokens", () => {
+    const list = toolListOf(UNUSED_TOOLS)!;
+
+    expect(list.heading).toBe("The 23 tools, never called in 31 sessions");
+    expect(list.tools).toHaveLength(5);
+    expect(list.tools[0]).toEqual({ name: "mcp_github_create_pull_request", loadedText: "loaded in 31 sessions", tokensText: "about 610" });
+    expect(list.tools[4]).toEqual({ name: "mcp_github_list_commits", loadedText: "loaded in 24 sessions", tokensText: "about 430" });
+    expect(list.more).toEqual({ text: "and 18 more", tokensText: "about 2,885" });
+    expect(list.note).toBe("Each figure is the average over the sessions that loaded the tool, so the list can differ from the 5,400 per-request total by a few tokens.");
+  });
+
+  it("says 'loaded in 1 session' and names a single tool without a count of more", () => {
+    const one = { ...UNUSED_TOOLS, tools: [{ name: "get_issue", tokens: { known: true as const, value: 500, estimated: true as const }, sessions: 1 }], toolsTotal: 1, evidence: { ...UNUSED_TOOLS.evidence, sessions: 1, tokens: { known: true as const, value: 500, estimated: true as const } } };
+    const list = toolListOf(one)!;
+
+    expect(list.heading).toBe("The tool, never called in 1 session");
+    expect(list.tools[0]!.loadedText).toBe("loaded in 1 session");
+    expect(list.more).toBeNull();
+  });
+
+  it("leaves the rest's tokens out when the row total is unknown, and never writes 0", () => {
+    const list = toolListOf({ ...UNUSED_TOOLS, evidence: { ...UNUSED_TOOLS.evidence, tokens: { known: false, reason: "no sizes" } } })!;
+
+    expect(list.more).toEqual({ text: "and 18 more", tokensText: null });
+    expect(list.note).not.toMatch(/\b0\b/);
+  });
+
+  it("writes an unknown tool count as not known with its reason", () => {
+    const tools = [{ name: "t", tokens: { known: false as const, reason: "no definition size" }, sessions: 2 }];
+    const list = toolListOf({ ...UNUSED_TOOLS, tools, toolsTotal: 1 })!;
+
+    expect(list.tools[0]!.tokensText).toBe("not known: no definition size");
+  });
+
+  it("is null for rows without tools", () => {
+    expect(toolListOf(IDLE_CACHE)).toBeNull();
+    expect(toolListOf({ ...UNUSED_TOOLS, tools: [] })).toBeNull();
+    expect(toolListOf({ ...UNUSED_TOOLS, tools: undefined, toolsTotal: undefined })).toBeNull();
   });
 });

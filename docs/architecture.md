@@ -142,13 +142,26 @@ active into the **same domain shape** (§5) before returning them. This is
 what lets the frontend stay ignorant of where data came from, satisfying
 constraint 3. See §6.2.1 for the provider boundary in detail.
 
+**Packaged entry (npm package, from app 0.16.0).** The diagram shows the dev
+shape: Vite serves the SPA and proxies `/api` to the server. The npm package
+`agent-cost-analyzer` (`packages/cli`, [plans/npm-package.md](plans/npm-package.md))
+runs one Node.js process that serves both on a single loopback origin:
+`npx agent-cost-analyzer` binds `127.0.0.1` (default port 5199, reusing a
+running instance, then the next ten ports), serves the API and the built web
+app from the same Express app, and opens the browser. `agent-cost-analyzer mcp`
+runs the stdio server from the same bundle. Neither starts a proxy or makes an
+outbound call. The diagram stays as drawn for the dev path.
+
 ## 4. Component breakdown
 
 ### 4.1 Local server (backend)
 
 Responsibilities: own both data sources, normalize their output into the
 shared domain model, and expose it over a small REST API. Never makes
-outbound network calls.
+outbound network calls. In the npm package the same server also serves the
+built web app (`http/web-app-server.ts`, same origin, read-only; §11.2), and
+`packages/cli` owns the entry, argument parsing, port choice and browser
+opener around it (§10).
 
 | Module | Responsibility |
 |---|---|
@@ -361,17 +374,22 @@ interface ToolCallRecord {
   roundIndex?: number; // which LLM round in the turn issued it
   filesTouched?: string[]; // Analyze mode only
   tokenCount?: TokenCount; // Analyze mode only
+  origin?: ToolCallOrigin; // step 10.20: absent = main agent
 }
 
 // Phase 9.10 (plans/tool-call-audit.md). "unknown" requires a reason
 // (constraint 6); only error/interrupted/denied carry a failureCategory.
 interface ToolCallOutcome {
-  status: "success" | "error" | "interrupted" | "denied" | "unknown";
+  status: "success" | "error" | "interrupted" | "denied" | "unknown" | "canceled"; // canceled: a user stop, no failureCategory
   reason?: string;
   exitCode?: number; // only when the source states it explicitly
   failureCategory?: FailureCategory; // command-not-found, wrong-directory, invalid-arguments, dependency-missing, git-state, …
   classificationEvidence?: { ruleId: string; excerpt: string /* ≤ 200 chars, redacted */ };
 }
+// ToolCallOrigin = { kind: "main" } | { kind: "subagent", runId, label, depth: 1-8,
+// parentRunId?, startedByCallId? } (tool-call-origin.ts; run id and label patterns
+// in subagent-run-ids.ts, shared with the cost side). SessionAudit.byOrigin /
+// subagentRuns and AuditRollup.byOrigin split the totals by origin.
 // SessionAudit / AuditRollup (packages/domain/src/session-audit.ts) are
 // server-computed aggregates over these records — see §8's audit endpoints.
 // InsightsDataset (packages/domain/src/insights.ts, Phase 9.11) flattens
@@ -771,7 +789,10 @@ optional `sessionsLeftOut` (over the session cap, unreadable log). A
 tokens, each nullable; unused-tools tokens carry `estimated`), `coverage`,
 `perWeek` and `perWindow` amounts, `actionParams`, an `inferred` flag and,
 for `cheaper-model` only, a `simulation` (the model, the self-check, the
-coverage and assumption A1). A `SavingsAmount` is known (`currency`, `low`,
+coverage and assumption A1). An `unused-tools` opportunity also carries
+`tools` (at most 20 entries `{ name, tokens, sessions }`, largest first, tokens
+an estimate averaged over the sessions that loaded the tool) and `toolsTotal`
+(the group's tool count). A `SavingsAmount` is known (`currency`, `low`,
 `high`, `basis` `priced` or `simulated`, `label` `range`, `upper-bound` or
 `simulated`, the price version ids) or unknown with a reason, never 0.
 Schema refinements keep the labels from being dropped: `low` ≤ `high`; an
@@ -2595,7 +2616,7 @@ view. Nothing is stored and nothing is written.
      sessions of the window and invoked in none. Tokens are
      `estimateTokenCount` over the definition (an estimate, D12). Saving is
      a **range**: tokens × requests × the cache-read price to the uncached
-     price.
+     price. Each tool's tokens are listed too (V26).
    - **O2–O4 cache breaks.** The classifier compares each request's cache
      read with the previous prompt. A break needs lost tokens of at least
      the vendor's `minCacheableTokens` and half the previous prompt (D7).
@@ -2865,8 +2886,10 @@ on `domain` and on `web`'s presentational exports only, never on `server`
   `http/loopback-host-guard.ts`'s `createLoopbackHostGuard` (registered
   first in `app.ts`, before any route) answers `403` with a JSON `error`
   unless `Host` is literally `localhost`, `127.0.0.1` or `[::1]` on an
-  allowed port. `server.ts` passes the allowed ports — its own `3001` and
-  the Vite dev server's `5173`, since `vite.config.ts`'s `/api` proxy has no
+  allowed port. The allowed port is the one the server actually bound:
+  `server.ts` passes its own `3001` and the Vite dev server's `5173` in dev,
+  and the packaged `serve` command passes the single port it listened on
+  (also one `--port 0` or the fallback chose), since `vite.config.ts`'s `/api` proxy has no
   `changeOrigin` and forwards the browser's `Host` unchanged (that port is
   pinned with `strictPort` so the allow-list can't drift). `createApp()`
   without `allowedHostPorts` (tests on an ephemeral port) still requires a

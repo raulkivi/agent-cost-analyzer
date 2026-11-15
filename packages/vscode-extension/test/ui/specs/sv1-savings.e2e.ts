@@ -131,6 +131,16 @@ suite("Scenario SV1: VS Code, the Savings view (Phase 16 SR15)", () => {
       expect(detail.text).toContain(session.startedAt === undefined ? "date unknown" : new Date(session.startedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" }));
       expect(detail.text).toContain(expectedSessionSaving(session.perWindow));
     }
+    // V26: the per-tool list is the API's: names, "about" tokens and "loaded in N sessions" for the first five, then "and N more" if the group has more.
+    expect(opportunity.tools?.length).toBeGreaterThan(0);
+    for (const tool of opportunity.tools!.slice(0, 5)) {
+      expect(detail.text).toContain(tool.name);
+      expect(detail.text).toContain(`loaded in ${tool.sessions} ${tool.sessions === 1 ? "session" : "sessions"}`);
+      if (tool.tokens.known) expect(detail.text).toContain(`about ${tool.tokens.value.toLocaleString("en-US")}`);
+    }
+    const unlisted = (opportunity.toolsTotal ?? 0) - Math.min(5, opportunity.tools!.length);
+    if (unlisted > 0) expect(detail.text).toContain(`and ${unlisted} more`);
+    else expect(detail.text).not.toMatch(/and \d+ more/);
     // Closed until asked for.
     expect(detail.versionsOpen).toBe(false);
     expect(detail.versionsSummary).toMatch(/^Price versions \(\d+\)$/);

@@ -53,6 +53,7 @@ function sampleRollup() {
       since: "2026-09-01",
       sessionCount: 2,
       sessionsWithUnknownToolCalls: 1,
+      sessionsWithUnreadSubagentRuns: 0,
       toolCallsUnavailableReason: "not read yet",
       totals,
       failureRate: 0.5,
@@ -78,5 +79,54 @@ describe("auditRollupSchema", () => {
     const { sessionsWithUnknownToolCalls: _omitted, ...rest } = sampleRollup();
     void _omitted;
     expect(auditRollupSchema.parse(rest).sessionsWithUnknownToolCalls).toBe(0);
+  });
+});
+
+describe("subagent fields of the audit (step 10.20)", () => {
+  const run = {
+    runId: "child-1",
+    label: "runSubagent-Explore",
+    depth: 1,
+    turnIndex: 0,
+    totals,
+    failureRate: 2 / 3,
+  };
+  const byOrigin = { main: totals, subagents: { ...totals, runs: 1 } };
+
+  it("accepts byOrigin and subagentRuns, both optional", () => {
+    const audit = { ...sampleAudit(), byOrigin, subagentRuns: [run] };
+    expect(sessionAuditSchema.parse(audit)).toEqual(audit);
+    expect(sessionAuditSchema.parse(sampleAudit()).byOrigin).toBeUndefined();
+  });
+
+  it("accepts a run with known totals and a flag (D12)", () => {
+    const flagged = { ...run, unreadReason: "start call missing from the log" };
+    const audit = { ...sampleAudit(), subagentRuns: [flagged] };
+    expect(sessionAuditSchema.parse(audit).subagentRuns?.[0]).toEqual(flagged);
+  });
+
+  it("accepts an unread run with null totals and a reason (D12)", () => {
+    const unread = { ...run, totals: null, failureRate: null, unreadReason: "log not found" };
+    expect(sessionAuditSchema.parse({ ...sampleAudit(), subagentRuns: [unread] }).subagentRuns?.[0]?.totals).toBeNull();
+  });
+
+  it("rejects null totals without a reason (D12: unread is never silent)", () => {
+    const unread = { ...run, totals: null, failureRate: null };
+    expect(sessionAuditSchema.safeParse({ ...sampleAudit(), subagentRuns: [unread] }).success).toBe(false);
+  });
+
+  it("rejects a hostile run id or label", () => {
+    expect(sessionAuditSchema.safeParse({ ...sampleAudit(), subagentRuns: [{ ...run, runId: "../x" }] }).success).toBe(false);
+    expect(sessionAuditSchema.safeParse({ ...sampleAudit(), subagentRuns: [{ ...run, label: "<b>" }] }).success).toBe(false);
+  });
+
+  it("rejects a run deeper than the bound", () => {
+    expect(sessionAuditSchema.safeParse({ ...sampleAudit(), subagentRuns: [{ ...run, depth: 9 }] }).success).toBe(false);
+  });
+
+  it("carries byOrigin and the unread-run count on the rollup, defaulting the count to 0", () => {
+    const rollup = { ...sampleRollup(), byOrigin, sessionsWithUnreadSubagentRuns: 2 };
+    expect(auditRollupSchema.parse(rollup)).toEqual(rollup);
+    expect(auditRollupSchema.parse(sampleRollup()).sessionsWithUnreadSubagentRuns).toBe(0);
   });
 });

@@ -2,12 +2,14 @@
 // SPDX-License-Identifier: MIT
 import {
   savingsActionText,
+  unlistedTools,
   type Currency,
   type SavingsAmount,
   type SavingsCoverage,
   type SavingsOpportunity,
   type SavingsOpportunityKind,
   type SavingsSessionRef,
+  type SavingsTool,
 } from "@agent-cost-analyzer/domain";
 
 // Phase 16 SR14 (docs/plans/savings-report.md §5.3, §7): the words and numbers
@@ -105,6 +107,41 @@ const DAY = (timeZone?: string) => new Intl.DateTimeFormat("en-US", { month: "sh
 export function sessionDateText(startedAt: string | undefined, timeZone?: string): string {
   const time = startedAt === undefined ? Number.NaN : Date.parse(startedAt);
   return Number.isFinite(time) ? DAY(timeZone).format(time) : "date unknown";
+}
+
+// V26 (board Detail, D26): the unused tools of a row, five of them, each with
+// the sessions that loaded it and its tokens as "about" figures (an estimate),
+// then the rest. The rest's tokens are the row's total minus the five listed;
+// they are left out, never 0, when that can't be said.
+export const MAX_TOOLS_SHOWN = 5;
+
+export interface ToolListView {
+  heading: string;
+  tools: { name: string; loadedText: string; tokensText: string }[];
+  more: { text: string; tokensText: string | null } | null;
+  note: string;
+}
+
+const grouped = (value: number) => value.toLocaleString("en-US");
+const plural = (count: number, noun: string) => `${grouped(count)} ${noun}${count === 1 ? "" : "s"}`;
+
+function toolTokensText(tool: SavingsTool): string {
+  return tool.tokens.known ? `about ${grouped(tool.tokens.value)}` : `not known: ${tool.tokens.reason}`;
+}
+
+export function toolListOf(opportunity: Pick<SavingsOpportunity, "tools" | "toolsTotal" | "evidence">): ToolListView | null {
+  const { tools, evidence } = opportunity;
+  if (tools === undefined || tools.length === 0) return null;
+  const total = opportunity.toolsTotal ?? tools.length;
+  const shown = tools.slice(0, MAX_TOOLS_SHOWN);
+  const rest = unlistedTools(shown, total, evidence.tokens);
+  const rowTotal = evidence.tokens?.known === true ? `${grouped(evidence.tokens.value)} per-request total` : "per-request total";
+  return {
+    heading: `${total === 1 ? "The tool" : `The ${grouped(total)} tools`}, never called in ${plural(evidence.sessions, "session")}`,
+    tools: shown.map((tool) => ({ name: tool.name, loadedText: `loaded in ${plural(tool.sessions, "session")}`, tokensText: toolTokensText(tool) })),
+    more: rest.count === 0 ? null : { text: `and ${grouped(rest.count)} more`, tokensText: rest.tokens === null ? null : `about ${grouped(rest.tokens)}` },
+    note: `Each figure is the average over the sessions that loaded the tool, so the list can differ from the ${rowTotal} by a few tokens.`,
+  };
 }
 
 export function coverageText(coverage: SavingsCoverage): string {

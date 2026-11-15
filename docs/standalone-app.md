@@ -13,18 +13,18 @@ short tour of the app. The screen-by-screen walkthrough is the
 ### Setup via an AI coding agent
 
 Paste this into a coding harness (Claude Code, Copilot, Cursor, etc.) to
-have it install and run the app for you:
+have it install and run the app for you. It uses the npm package, which is
+published from app 0.16.0; before that release, use the clone steps under
+[From source](#from-source-contributors) instead.
 
 ```
 Set up and run the Agent Cost Analyzer:
-1. Clone https://github.com/raulkivi/agent-cost-analyzer.git (or use the
-   existing checkout if already in this repo) and cd into it.
-2. Confirm Node.js 22+ is installed (the server uses node:sqlite).
-3. Run `npm install`, then `npm run dev` to start the API server
-   (127.0.0.1:3001) and web app (127.0.0.1:5173); open the web app URL
-   when both are up.
-4. Check `GET /api/config/status` and report any config warnings.
-5. If Analyze mode needs full per-turn token/cache numbers for Local
+1. Confirm Node.js 22.18 or newer is installed (the server uses node:sqlite).
+2. Run `npx agent-cost-analyzer --no-open` and read the URL from its first
+   line (http://127.0.0.1:5199, or the next free port). Open that URL.
+3. Check `GET /api/config/status` on that origin and report any config
+   warnings.
+4. If Analyze mode needs full per-turn token/cache numbers for Local
    harness chats, add to VS Code's user settings.json and reload the window:
    "github.copilot.chat.agentDebugLog.fileLogging.enabled": true,
    "github.copilot.chat.agentDebugLog.fileLogging.maxRetainedSessionLogs": 200,
@@ -46,7 +46,35 @@ Set up and run the Agent Cost Analyzer:
   not yet verified against a real install (see
   [architecture.md](architecture.md)).
 
-**Install and run**
+**Run it with npx**
+
+From app 0.16.0 (the first npm release):
+
+```sh
+npx agent-cost-analyzer
+```
+
+It starts the app on http://127.0.0.1:5199 and opens your default browser.
+The server binds to your own machine only. Running it again while it is up
+opens the running instance; if another program holds 5199, it takes the next
+free port (up to ten) and prints which. `--port <n>` uses that port only
+(`0` for any free port), `--no-open` skips the browser, and Ctrl+C stops it.
+`npx agent-cost-analyzer@latest` runs the newest release; `--version` shows
+which one runs. The package has no dependencies and no install scripts, and
+the app makes no network call of its own. It writes only its settings
+folder: `~/.config/agent-cost-analyzer` on Linux, `~/Library/Application
+Support/agent-cost-analyzer` on macOS, `%APPDATA%\agent-cost-analyzer` on
+Windows.
+
+The MCP server runs from the same package: `npx -y --prefer-offline
+agent-cost-analyzer mcp` (see the
+[User Guide](UserGuide.md#querying-the-audit-from-claude-code-mcp)).
+
+### From source (contributors)
+
+The clone path runs the Vite dev server and the API with reload. It is also
+where the `cpchat` alias and the pi logger are installed. It needs the whole
+dev tree.
 
 ```sh
 git clone https://github.com/raulkivi/agent-cost-analyzer.git

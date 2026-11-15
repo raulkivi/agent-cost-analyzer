@@ -95,6 +95,22 @@ describe("toSavingsViewModel", () => {
       expect(rowOf(toSavingsViewModel(savingsOutput()), "unused:github").sessions.map((s) => s.savingText)).toEqual(["3.9–24.0 AI Credits", "2.1–12.8 AI Credits", "1.6–9.9 AI Credits"]);
     });
 
+    // V26 (board Savings.dc.html frames 5 and 6): the per-tool list of an unused-tools row.
+    it("gives an unused-tools row its per-tool list: five tools, 'and 18 more (about 2,885)', estimate", () => {
+      const r = rowOf(toSavingsViewModel(savingsOutput()), "unused:github");
+
+      expect(r.toolList).toMatchObject({
+        heading: "The 23 tools, never called in 31 sessions",
+        more: { text: "and 18 more", tokensText: "about 2,885" },
+      });
+      expect(r.toolList!.tools).toHaveLength(5);
+      expect(r.toolList!.tools[0]).toEqual({ name: "mcp_github_create_pull_request", loadedText: "loaded in 31 sessions", tokensText: "about 610" });
+    });
+
+    it("gives other rows no per-tool list", () => {
+      expect(rowOf(toSavingsViewModel(savingsOutput()), "idle:sonnet").toolList).toBeUndefined();
+    });
+
     it("gives a Simulated row's sessions their Simulated saving", () => {
       const vm = toSavingsViewModel(savingsOutput({ includeSimulated: true, simulated: [simulatedRow], simulatedTotal: 1 }));
       expect(vm.simulated.rows[0]!.sessions.map((s) => s.savingText)).toEqual(["48.0–52.0 AI Credits", "31.0–33.0 AI Credits", "28.1–32.8 AI Credits"]);

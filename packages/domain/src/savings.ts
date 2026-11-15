@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 import { z } from "zod";
 import { currencySchema, pricingModeSchema } from "./cost-figure.js";
-import { tokenCountSchema } from "./token-count.js";
+import { tokenCountSchema, type TokenCount } from "./token-count.js";
 
 // Phase 16 step SR1 (docs/plans/savings-report.md §5.2, §7): a ranked list of
 // changes that would cost less, each with an amount that is a range, an upper
@@ -77,6 +77,32 @@ export const savingsEvidenceSchema = z.object({
   occurrences: count.nullable(),
 });
 
+// V26 (docs/plans/savings-increment-3.md §6, D26): one unused tool's definition
+// tokens per request (averaged over the sessions that loaded it) and how many
+// sessions that was. Known tokens are a local-tokenizer estimate (D12); an
+// unknown count carries its reason, never 0.
+export const MAX_SAVINGS_TOOLS = 20;
+export const savingsToolSchema = z.object({
+  name: z.string().min(1).max(MAX_SAVINGS_NAME_LENGTH),
+  tokens: tokenCountSchema,
+  sessions: count.min(1),
+});
+
+// The tools a list leaves out and what they come to: the row's tokens minus the
+// listed ones. Null tokens when that can't be said honestly (the row's total or
+// a listed tool's count is unknown, or the per-tool averages already pass the
+// total): the caller shows the count only, never a 0.
+export function unlistedTools(listed: readonly SavingsTool[], toolsTotal: number, total: TokenCount | null): { count: number; tokens: number | null } {
+  const count = Math.max(0, toolsTotal - listed.length);
+  if (count === 0 || total === null || !total.known) return { count, tokens: null };
+  let sum = 0;
+  for (const tool of listed) {
+    if (!tool.tokens.known) return { count, tokens: null };
+    sum += tool.tokens.value;
+  }
+  return { count, tokens: total.value >= sum ? total.value - sum : null };
+}
+
 export const savingsCoverageSchema = z
   .object({
     sessionsInWindow: count,
@@ -125,8 +151,28 @@ export const savingsOpportunitySchema = z
     inferred: z.boolean(),
     // cheaper-model only.
     simulation: savingsSimulationSchema.optional(),
+    // unused-tools only: the largest tools of the group, and how many it has.
+    tools: z.array(savingsToolSchema).optional(),
+    toolsTotal: count.optional(),
   })
   .superRefine((opportunity, ctx) => {
+    const { tools, toolsTotal } = opportunity;
+    if ((tools !== undefined || toolsTotal !== undefined) && opportunity.kind !== "unused-tools") {
+      ctx.addIssue({ code: "custom", path: ["tools"], message: "only an unused-tools opportunity carries tools" });
+    }
+    if (tools !== undefined) {
+      if (tools.length > MAX_SAVINGS_TOOLS) {
+        ctx.addIssue({ code: "custom", path: ["tools"], message: `at most ${MAX_SAVINGS_TOOLS} tools are listed` });
+      }
+      if (toolsTotal === undefined || toolsTotal < tools.length) {
+        ctx.addIssue({ code: "custom", path: ["toolsTotal"], message: "toolsTotal is the group's tool count, so it is at least the number of tools listed" });
+      }
+      tools.forEach((tool, index) => {
+        if (tool.tokens.known && tool.tokens.estimated !== true) {
+          ctx.addIssue({ code: "custom", path: ["tools", index, "tokens"], message: "per-tool tokens are an estimate" });
+        }
+      });
+    }
     if (opportunity.simulation !== undefined && opportunity.kind !== "cheaper-model") {
       ctx.addIssue({ code: "custom", path: ["simulation"], message: "only a cheaper-model opportunity carries a simulation" });
     }
@@ -210,6 +256,7 @@ export const savingsReportSchema = z
     }
   });
 
+export type SavingsTool = z.infer<typeof savingsToolSchema>;
 export type SavingsOpportunityKind = z.infer<typeof savingsOpportunityKindSchema>;
 export type SavingsBasis = z.infer<typeof savingsBasisSchema>;
 export type SavingsLabel = z.infer<typeof savingsLabelSchema>;

@@ -46,6 +46,17 @@ export const unusedRow = row({
   perWindow: span(26.7, 165.1),
   coverage: cover(31, 41, "no tool inventory"),
   action: "23 tools from github were loaded but never used in 31 sessions over 30 days. Turn the server off where you do not need it.",
+  // V26 (board Savings.dc.html frames 5 and 6): 7 of the 23 tools in the result; the view shows 5.
+  tools: [
+    ["mcp_github_create_pull_request", 610, 31],
+    ["mcp_github_search_code", 540, 31],
+    ["mcp_github_list_issues", 480, 29],
+    ["mcp_github_get_file_contents", 455, 31],
+    ["mcp_github_list_commits", 430, 24],
+    ["mcp_github_get_me", 300, 31],
+    ["mcp_github_fork_repository", 200, 12],
+  ].map(([name, value, sessions]) => ({ name: name as string, tokens: { known: true as const, value: value as number, estimated: true as const }, sessions: sessions as number })),
+  toolsTotal: 23,
 });
 export const unpricedRow = row({ key: "failed:git", rank: 5, kind: "failed-tool-calls", subject: "git", perWeek: unpriced, perWindow: unpriced, coverage: cover(40, 41, "no tool-call audit"), action: "Say in your instructions file which directory to run git from." });
 export const claudeRow = row({

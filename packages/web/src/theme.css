@@ -1154,6 +1154,12 @@ main[data-layout="narrow"] .nav { flex-wrap: wrap; gap: var(--space-2); }
 .savings-session-meta { min-width: 0; font-size: 12px; color: var(--color-text-muted); overflow-wrap: anywhere; }
 .savings-session-action { text-align: right; }
 .savings-session-note { font-size: 12px; }
+/* V26: per-tool list (board Detail); long names wrap, tokens stay on one line. */
+.savings-tools { width: 100%; border-collapse: collapse; }
+.savings-tools th, .savings-tools td { padding: var(--space-1) 0; border-bottom: 1px solid var(--color-divider); text-align: left; vertical-align: top; }
+.savings-tools .savings-tools-tokens { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; padding-left: var(--space-3); }
+.savings-tool-name { overflow-wrap: anywhere; }
+.savings-tool-loaded { font-size: 11px; }
 @media (max-width: 640px) {
   .savings-sessions li { grid-template-columns: minmax(0, 1fr); }
   .savings-session-saving, .savings-session-action { text-align: left; }

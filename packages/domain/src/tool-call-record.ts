@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 import { z } from "zod";
 import { tokenCountSchema } from "./token-count.js";
+import { toolCallOriginSchema } from "./tool-call-origin.js";
 import { toolCallOutcomeSchema } from "./tool-call-outcome.js";
 
 export const toolKindSchema = z.enum([
@@ -37,6 +38,7 @@ export const toolCallRecordSchema = z.object({
   roundIndex: z.number().optional(), // which LLM round in the turn issued it
   filesTouched: z.array(z.string()).optional(), // Analyze mode only
   tokenCount: tokenCountSchema.optional(), // Analyze mode only
+  origin: toolCallOriginSchema.optional(), // absent = main agent (step 10.20)
 });
 
 export type ToolCallRecord = z.infer<typeof toolCallRecordSchema>;

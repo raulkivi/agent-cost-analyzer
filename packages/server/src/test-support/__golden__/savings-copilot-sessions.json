@@ -140,7 +140,28 @@
         "sessions": 1,
         "days": 37
       },
-      "inferred": true
+      "inferred": true,
+      "tools": [
+        {
+          "name": "mcp_acmedocs_fetch",
+          "tokens": {
+            "known": true,
+            "value": 207,
+            "estimated": true
+          },
+          "sessions": 1
+        },
+        {
+          "name": "mcp_acmedocs_search",
+          "tokens": {
+            "known": true,
+            "value": 207,
+            "estimated": true
+          },
+          "sessions": 1
+        }
+      ],
+      "toolsTotal": 2
     }
   ],
   "simulated": [],

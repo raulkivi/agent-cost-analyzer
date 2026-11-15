@@ -16,8 +16,13 @@ standalone app, which also reads Claude Code and pi sessions.
 
 ## Getting started
 
-Run `npm install && npm run dev` from the repo root, then open
-http://127.0.0.1:5173. Learn mode works immediately. Analyze mode lists
+Run `npx agent-cost-analyzer` (Node.js 22.18 or newer). It starts the app on
+http://127.0.0.1:5199 and opens it in your browser; `--no-open` skips the
+browser and `--port <n>` picks the port. The npm package is published from
+app 0.16.0; before that, run `npm install && npm run dev` from a clone of the
+repository and open http://127.0.0.1:5173 (see
+[From source](standalone-app.md#from-source-contributors)). Learn mode works
+immediately. Analyze mode lists
 whatever real Copilot Chat sessions it finds in your local VS Code session
 store — see [Analyze mode](#analyze-mode) below for what to expect there,
 including turning on debug logging for full per-turn numbers.
@@ -605,17 +610,39 @@ failures.
 The analyzer is also available as a local, read-only MCP server, so you
 can ask an agent about your own sessions: "what drove my spend this
 week?", "which commands failed most, and why?", "did my agents do
-anything risky?". Run `npm install` in this repo, then register the
-server:
+anything risky?". From app 0.16.0, register the npm package with your MCP
+client; no clone is needed:
+
+```bash
+claude mcp add agent-cost-analyzer -- npx -y --prefer-offline agent-cost-analyzer mcp
+```
+
+- `-y` skips npx's install prompt. `--prefer-offline` runs the cached copy at
+  once when the npm registry is unreachable; without it, npx waits about a
+  minute of retries first.
+- The package serves the interactive cost views to hosts that can show them
+  (see [Interactive views in the chat](#interactive-views-in-the-chat)).
+  Add `--project-billing-details` after `mcp` to share client names and
+  billing codes.
+- On Windows, a client that does not resolve `.cmd` files needs
+  `cmd /c npx -y --prefer-offline agent-cost-analyzer mcp`: set `cmd` as the
+  command and the rest as its arguments.
+- To run fully offline, or to pin a version, install it once with
+  `npm install -g agent-cost-analyzer` (or `agent-cost-analyzer@<version>`)
+  and register `agent-cost-analyzer mcp` as the command. `npx
+  agent-cost-analyzer@latest` and `agent-cost-analyzer --version` show which
+  version runs.
+
+From a clone (contributors, or before 0.16.0), run `npm install` and
+`npm run build` in the repository, then register the script:
 
 ```bash
 claude mcp add agent-cost-analyzer -- /absolute/path/to/agent-cost-analyzer/scripts/mcp-server.sh
 ```
 
-Run `npm run build` once as well: the script then serves the interactive cost
-views (`packages/mcp-apps/dist/views.html`) to hosts that can show them (see
-[Interactive views in the chat](#interactive-views-in-the-chat)). Without the
-build the server works as before, with text results only.
+The build makes the script serve the views
+(`packages/mcp-apps/dist/views.html`); without it the server returns text
+results only.
 
 | Tool | What it returns |
 |---|---|
@@ -629,7 +656,7 @@ build the server works as before, with text results only.
 | `get_audit_rollup` | Cross-session tool-call totals, top failing commands and per-day counts for one provider |
 | `list_findings` | Security, anomaly and behavior-change findings across every provider, most severe first, with what, when, why and redacted evidence |
 | `list_repositories` | The repositories your sessions ran in, with sessions, turns, AI Credits and project ids; sessions with no repository are grouped by reason. Local repositories are named by folder, never by path |
-| `list_projects` | Your projects from `projects.json` with their repositories and AI Credits; client names and billing codes only if you start the server with `--project-billing-details` (for example `claude mcp add agent-cost-analyzer -- /abs/path/scripts/mcp-server.sh --project-billing-details`) |
+| `list_projects` | Your projects from `projects.json` with their repositories and AI Credits; client names and billing codes only if you start the server with `--project-billing-details` (for example `claude mcp add agent-cost-analyzer -- npx -y --prefer-offline agent-cost-analyzer mcp --project-billing-details`, or `/abs/path/scripts/mcp-server.sh --project-billing-details` from a clone) |
 | `get_price_book` | The dated price versions the app prices turns with, per channel and model |
 | `get_price_changes` | When a model's price changed: documented changes from the price book, and observed GitHub Copilot ones |
 | `get_repository_cost` | One repository's cost over time, by vendor and model, with price-change markers |
@@ -1337,6 +1364,13 @@ whole window, the change to make and the price versions behind it.
   characters. The text is fixed wording with your numbers and names filled
   in; it says what to do, never that anything was done. The report changes
   none of your settings or files.
+- **Tools.** A "Tools loaded but never used" row lists its tools: the
+  five largest with their definition tokens per request ("about N", an
+  estimate, averaged over the sessions that loaded the tool) and "loaded in
+  N sessions", then "and N more (about X)", where X is the row's total
+  minus the five. The figures can differ from the row's total by a few
+  tokens. The chat tool gives the model up to 20 tools and its text answer
+  the first five.
 - **Sessions.** Each listed session shows its title first, then its id and
   its date (in your time zone) under it, and its own saving over the window
   at the right, with the row's label ("up to", a range). The title is the

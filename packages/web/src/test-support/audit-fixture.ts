@@ -81,6 +81,7 @@ export function makeAuditRollup(overrides: Partial<AuditRollup> = {}): AuditRoll
     providerId: "claude-code",
     sessionCount: 2,
     sessionsWithUnknownToolCalls: 0,
+    sessionsWithUnreadSubagentRuns: 0,
     totals: { toolCalls: 10, succeeded: 6, failed: 3, interrupted: 1, denied: 0, unknown: 0 },
     failureRate: 0.4,
     byTool: [{ name: "Bash", calls: 10, failed: 4 }],

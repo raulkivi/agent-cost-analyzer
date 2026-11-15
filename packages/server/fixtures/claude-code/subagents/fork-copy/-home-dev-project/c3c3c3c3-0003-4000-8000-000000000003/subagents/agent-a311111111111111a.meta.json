@@ -1,0 +1,9 @@
+{
+  "agentType": "general-purpose",
+  "isBuiltIn": true,
+  "model": "sonnet",
+  "finished": true,
+  "toolUseId": "toolu_fc_call",
+  "spawnDepth": 1,
+  "isFork": true
+}

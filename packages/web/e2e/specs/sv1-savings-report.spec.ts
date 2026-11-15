@@ -176,6 +176,42 @@ test("SV1: each session shows its dataset title first, the id under it; the savi
   expect(await axeViolations(page)).toEqual([]);
 });
 
+// V26 (board Detail): the fixture home holds no unused MCP server, so the
+// API's answer is replaced by its own first row turned into an unused-tools row.
+test("SV1: an unused-tools row lists its tools, five shown, with 'and N more' and the estimate label", async ({ page, app }) => {
+  const report = await reportFromApi(page, app.baseURL);
+  const base = report.opportunities[0]!;
+  const estimate = (value: number) => ({ known: true as const, value, estimated: true as const });
+  const names = ["create_pull_request", "search_code", "list_issues", "get_file_contents", "list_commits", "get_me", "fork_repository"];
+  const unused: SavingsOpportunity = {
+    ...base,
+    key: "unused-tools:github:USD",
+    kind: "unused-tools",
+    subject: "github",
+    inferred: true,
+    evidence: { sessions: 31, requests: 877, tokens: estimate(5400), occurrences: null },
+    actionParams: { group: "github", tools: 23, tokens: 5400, sessions: 31, days: 30 },
+    tools: names.map((name, index) => ({ name: `mcp_github_${name}`, tokens: estimate(610 - index * 40), sessions: 31 - index })),
+    toolsTotal: 23,
+  };
+  // 610 + 570 + 530 + 490 + 450 = 2,650 of 5,400.
+  await page.route(/\/api\/savings\?/, (route) => route.fulfill({ json: { ...report, opportunities: [unused] } }));
+  const tab = await openSavings(page, app.baseURL);
+
+  await rowOf(tab, unused).getByRole("button").click();
+  const tools = tab.getByRole("region", { name: "Savings detail" }).getByRole("region", { name: "Tools" });
+  await expect(tools.getByRole("heading", { name: "The 23 tools, never called in 31 sessions" })).toBeVisible();
+  await expect(tools.getByRole("row")).toHaveCount(1 + 5 + 1);
+  await expect(tools.getByRole("row").nth(1)).toContainText("mcp_github_create_pull_request");
+  await expect(tools.getByRole("row").nth(1)).toContainText("loaded in 31 sessions");
+  await expect(tools.getByRole("row").nth(1)).toContainText("about 610");
+  await expect(tools.getByRole("row").nth(6)).toContainText("and 18 more");
+  await expect(tools.getByRole("row").nth(6)).toContainText("about 2,750");
+  await expect(tools.getByText("estimate")).toBeVisible();
+  await expect(tools).not.toContainText("mcp_github_get_me");
+  expect(await axeViolations(page)).toEqual([]);
+});
+
 test("SV1: the keyboard opens a row, Escape closes it and gives focus back", async ({ page, app }) => {
   const report = await reportFromApi(page, app.baseURL);
   const tab = await openSavings(page, app.baseURL);

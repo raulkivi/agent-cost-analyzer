@@ -113,6 +113,47 @@ describe("savingsOpportunitySchema", () => {
     expect(() => savingsOpportunitySchema.parse(opportunity({ evidence: { sessions: 1, requests: 40, tokens: { known: true, value: 1200, estimated: false }, occurrences: null } }))).toThrow(/estimate/);
   });
 
+  // V26 (savings-increment-3.md §6): per-tool figures on unused-tools rows.
+  describe("tools", () => {
+    const tool = (name: string, value = 300, sessions = 1) => ({ name, tokens: { known: true as const, value, estimated: true }, sessions });
+
+    it("accepts a per-tool list with its total", () => {
+      expect(() => savingsOpportunitySchema.parse(opportunity({ tools: [tool("a"), tool("b")], toolsTotal: 5 }))).not.toThrow();
+    });
+
+    it("keeps a row without tools valid (additive)", () => {
+      expect(() => savingsOpportunitySchema.parse(opportunity())).not.toThrow();
+    });
+
+    it("rejects tools on any other kind", () => {
+      expect(() => savingsOpportunitySchema.parse(opportunity({ kind: "model-switch", tools: [tool("a")], toolsTotal: 1 }))).toThrow(/unused-tools/);
+    });
+
+    it("rejects more than 20 tools", () => {
+      const tools = Array.from({ length: 21 }, (_, index) => tool(`t${index}`));
+      expect(() => savingsOpportunitySchema.parse(opportunity({ tools, toolsTotal: 21 }))).toThrow(/20/);
+    });
+
+    it("rejects a total below the listed tools, and a list with no total", () => {
+      expect(() => savingsOpportunitySchema.parse(opportunity({ tools: [tool("a"), tool("b")], toolsTotal: 1 }))).toThrow(/toolsTotal/);
+      expect(() => savingsOpportunitySchema.parse(opportunity({ tools: [tool("a")] }))).toThrow(/toolsTotal/);
+    });
+
+    it("rejects a known per-tool token count that is not an estimate", () => {
+      expect(() => savingsOpportunitySchema.parse(opportunity({ tools: [{ name: "a", tokens: { known: true, value: 3 }, sessions: 1 }], toolsTotal: 1 }))).toThrow(/estimate/);
+    });
+
+    it("accepts an unknown per-tool count with its reason, never 0", () => {
+      const unknown = { name: "a", tokens: { known: false as const, reason: "No definition size." }, sessions: 1 };
+      expect(() => savingsOpportunitySchema.parse(opportunity({ tools: [unknown], toolsTotal: 1 }))).not.toThrow();
+    });
+
+    it("rejects a tool listed in no session, and an over-long name", () => {
+      expect(() => savingsOpportunitySchema.parse(opportunity({ tools: [tool("a", 3, 0)], toolsTotal: 1 }))).toThrow();
+      expect(() => savingsOpportunitySchema.parse(opportunity({ tools: [tool("x".repeat(81))], toolsTotal: 1 }))).toThrow();
+    });
+  });
+
   it("rejects an unknown kind", () => {
     expect(() => savingsOpportunitySchema.parse({ ...opportunity(), kind: "other" })).toThrow();
   });
