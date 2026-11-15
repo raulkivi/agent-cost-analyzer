@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import { estimatedTokenCount, unionSorted, type SavingsAmount, type SavingsOpportunity, type SavingsSessionRef, type ToolInventoryEntry } from "@agent-cost-analyzer/domain";
+import { estimatedTokenCount, MAX_SAVINGS_TOOLS, unionSorted, type SavingsAmount, type SavingsOpportunity, type SavingsSessionRef, type SavingsTool, type ToolInventoryEntry } from "@agent-cost-analyzer/domain";
 import { currencyOf, NotAnalysedLedger, perWeek, sessionRefOf, sumAmount, unknownAmount, type PricedPart } from "../savings-amounts.js";
 import { sessionsByContribution } from "../savings-session-order.js";
 import type { DetectorResult, SavingsDetector, SavingsInput, SavingsSessionInput } from "../savings-detector.js";
@@ -33,6 +33,14 @@ function groupOf(rawName: string): Group {
   const loose = /^mcp_([^_]+)_.+$/.exec(toolName);
   if (loose) return { subject: savingsName(loose[1]!), inferred: true };
   return { subject: savingsName(toolName), inferred: false };
+}
+
+// D26: under an exact server only the tool part (the server is the row's
+// subject); an inferred group's boundary is a guess, so its tools keep the whole
+// name, as does a built-in tool.
+function toolNameOf(rawName: string): string {
+  const exact = /^mcp__(?:[^_](?:.*?[^_])?)__(.+)$/.exec(foldName(rawName));
+  return savingsName(exact ? exact[1]! : rawName);
 }
 
 // Requests of a session by model: from the request trace, else the turns'
@@ -120,10 +128,10 @@ export class UnusedToolsDetector implements SavingsDetector {
     for (const [currency, entries] of byCurrency) {
       const extra = new Map<string, Set<SavingsSessionInput>>();
       const addExtra = (reason: string, session: SavingsSessionInput) => extra.set(reason, (extra.get(reason) ?? new Set()).add(session));
-      const rows: { entry: Usable; tokens: number }[] = [];
+      const rows: { entry: Usable; tokens: number; byTool: Map<string, number> }[] = [];
       for (const entry of entries) {
         const tokens = this.groupTokens(candidate, entry.inventory);
-        if (tokens.known) rows.push({ entry, tokens: tokens.value });
+        if (tokens.known) rows.push({ entry, tokens: tokens.value, byTool: tokens.byTool });
         else {
           addExtra(tokens.reason, entry.input);
           groupFailures.add(entry.input, tokens.reason);
@@ -158,22 +166,43 @@ export class UnusedToolsDetector implements SavingsDetector {
         coverage: unusable.coverage(input.sessions.length, extra),
         actionParams: { group: candidate.group.subject, tools: candidate.names.size, tokens: averageTokens, sessions: rows.length, days: input.window.days },
         inferred: candidate.group.inferred,
+        tools: this.toolsOf(rows.map((row) => row.byTool)),
+        toolsTotal: candidate.names.size,
       });
     }
     return result;
   }
 
-  // The group's definition tokens in one session; unknown when any loaded tool's are.
-  private groupTokens(candidate: Candidate, inventory: readonly ToolInventoryEntry[]): { known: true; value: number } | { known: false; reason: string } {
+  // Each tool's tokens averaged over the sessions that loaded it (rounded), the
+  // largest first, at most MAX_SAVINGS_TOOLS. Only sessions whose group size is
+  // known are passed in, so no tool is ever listed with a guessed 0.
+  private toolsOf(sessions: readonly Map<string, number>[]): SavingsTool[] {
+    const sums = new Map<string, { total: number; sessions: number }>();
+    for (const byTool of sessions) {
+      for (const [name, tokens] of byTool) {
+        const sum = sums.get(name) ?? { total: 0, sessions: 0 };
+        sums.set(name, { total: sum.total + tokens, sessions: sum.sessions + 1 });
+      }
+    }
+    return [...sums]
+      .map(([name, { total, sessions: loadedIn }]) => ({ name: toolNameOf(name), tokens: estimatedTokenCount(Math.round(total / loadedIn)), sessions: loadedIn }))
+      .sort((a, b) => (b.tokens.known ? b.tokens.value : 0) - (a.tokens.known ? a.tokens.value : 0) || a.name.localeCompare(b.name))
+      .slice(0, MAX_SAVINGS_TOOLS);
+  }
+
+  // The group's definition tokens in one session, and each tool's; unknown when any loaded tool's are.
+  private groupTokens(candidate: Candidate, inventory: readonly ToolInventoryEntry[]): { known: true; value: number; byTool: Map<string, number> } | { known: false; reason: string } {
     let value = 0;
+    const byTool = new Map<string, number>();
     for (const entry of inventory) {
       if (!entry.loaded || !candidate.names.has(entry.name)) continue;
       const tokens = entry.definitionTokens;
       if (tokens === undefined) return { known: false, reason: "The log records no definition size for these tools." };
       if (!tokens.known) return { known: false, reason: tokens.reason };
       value += tokens.value;
+      byTool.set(entry.name, (byTool.get(entry.name) ?? 0) + tokens.value);
     }
-    return { known: true, value };
+    return { known: true, value, byTool };
   }
 
   // The tokens resent on every request: from cache to uncached input, per model.

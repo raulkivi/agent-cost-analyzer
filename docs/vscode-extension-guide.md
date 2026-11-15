@@ -285,6 +285,9 @@ What differs in the panel:
 - **Copy text** uses the same clipboard command as the other copy buttons.
   It copies one line of fixed wording, at most 600 characters. The panel
   never changes a setting or a file because of the report.
+- **Tools.** An unused-tools row lists its five largest tools with their
+  tokens per request ("about N", an estimate) and "loaded in N sessions",
+  then "and N more (about X)", where X is the row's total minus the five.
 - **Sessions.** Each listed session shows its id, its date and its own
   saving over the window, with the row's label ("up to", a range); a
   session that could not be priced says "Not priced" and the reason once

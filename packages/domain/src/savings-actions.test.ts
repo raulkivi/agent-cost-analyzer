@@ -61,6 +61,24 @@ describe("savingsActionText", () => {
     expect(savingsActionText("unused-tools", { ...SAMPLE["unused-tools"], tools: 999 })).toContain("(999 tools");
   });
 
+  // R14 (savings-increment-3.md): every count in a template agrees with its noun.
+  it("uses the singular for a count of 1 in every template", () => {
+    expect(savingsActionText("unused-tools", { group: "github", tools: 1, tokens: 1, sessions: 1, days: 1 })).toBe(
+      "Turn off the tools of github in the tool picker (1 tool, about 1 token on each request); none of them ran in 1 session over 1 day.",
+    );
+    expect(savingsActionText("idle-cache-expiry", { breaks: 1, minutes: 5, tokens: 1, extendedMinutes: 1 })).toMatch(/^1 break longer than the 5-minute cache lifetime resent about 1 token uncached\./);
+    expect(savingsActionText("idle-cache-expiry", { breaks: 1, minutes: 5, tokens: 1, extendedMinutes: 1 })).toContain("lifetime of 1 minute (");
+    expect(savingsActionText("unexplained-cache-break", { breaks: 1, tokens: 1 })).toMatch(/^The cache broke 1 time with no idle gap, resending about 1 token uncached\./);
+    expect(savingsActionText("model-switch", { times: 1, tokens: 1 })).toBe("Pick the model when the session starts: switching resent 1 token uncached 1 time.");
+    expect(savingsActionText("failed-tool-calls", { ...SAMPLE["failed-tool-calls"], calls: 1, sessions: 1 })).toMatch(/^rg failed 1 time in 1 session:/);
+  });
+
+  it("uses the plural for 0 and for more than 1", () => {
+    expect(savingsActionText("unused-tools", { group: "github", tools: 0, tokens: 0, sessions: 2, days: 30 })).toContain("(0 tools, about 0 tokens on each request); none of them ran in 2 sessions over 30 days.");
+    expect(savingsActionText("model-switch", { times: 2, tokens: 5 })).toContain("resent 5 tokens uncached 2 times.");
+    expect(savingsActionText("model-switch", { times: 2, tokens: 1.5 })).toContain("resent 1.5 tokens");
+  });
+
   it("names the 1-hour cache option only when its lifetime is given", () => {
     const base = savingsActionText("idle-cache-expiry", SAMPLE["idle-cache-expiry"]);
     const withOption = savingsActionText("idle-cache-expiry", { ...SAMPLE["idle-cache-expiry"], extendedMinutes: 60 });

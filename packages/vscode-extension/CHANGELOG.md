@@ -12,9 +12,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- A "Tools loaded but never used" row in the Savings tab and in the chat view now lists its tools: each with its definition tokens per request (an estimate, "about N") and "loaded in N sessions". It shows the five largest and "and N more (about X)", where X is the row's total minus the five. `get_savings_report` carries up to 20 tools and prints the first five.
 - Each session in a savings row now shows its date and its own saving over the window, with the row's label ("up to", a range or Simulated), in the Savings tab and in the chat view; a session that could not be priced says "Not priced" with the reason once, and one without a start says "date unknown". `get_savings_report` carries the same two fields per shown session (no title) and prints them as `<id> (<date>, <saving>)`. The tool's Simulated rows no longer have a `rank` and are bullets, not numbers, in its text, and the chat view reads every coverage gap as "N not analysed: reason". <!-- codespell:ignore analysed -->
 
 ### Fixed
+- Savings action text now agrees with its counts: "1 session", "1 tool", "1 day", "1 break", "1 time", "1 token" and "1 minute" instead of "1 sessions" and so on.
 - The extension now ships third-party license notices (`THIRD-PARTY-NOTICES.md` in the .vsix) for the npm packages it bundles, with their license texts.
 
 ## [0.14.0] - 2026-11-15

@@ -1364,6 +1364,13 @@ whole window, the change to make and the price versions behind it.
   characters. The text is fixed wording with your numbers and names filled
   in; it says what to do, never that anything was done. The report changes
   none of your settings or files.
+- **Tools.** A "Tools loaded but never used" row lists its tools: the
+  five largest with their definition tokens per request ("about N", an
+  estimate, averaged over the sessions that loaded the tool) and "loaded in
+  N sessions", then "and N more (about X)", where X is the row's total
+  minus the five. The figures can differ from the row's total by a few
+  tokens. The chat tool gives the model up to 20 tools and its text answer
+  the first five.
 - **Sessions.** Each listed session shows its id, its date (in your time
   zone) and its own saving over the window, with the row's label ("up to",
   a range). A session that could not be priced says "Not priced", with the

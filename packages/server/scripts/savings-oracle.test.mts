@@ -288,6 +288,23 @@ describe("tool definitions and unused tools", () => {
     expect(unusedToolRowOf("acme", [unused], tables)).toMatchObject({ tokensPerSession: alpha + beta, ran: false });
     expect(unusedToolRowOf("acme", [unused, toolSessionFactsOf(log(["mcp__acme__alpha"]))], tables).ran).toBe(true);
   });
+
+  // V26: each tool's tokens averaged over the sessions that loaded it, rebuilt from the raw log.
+  it("lists each tool of the group with its tokens and the sessions that loaded it, under its exact-server tool part", () => {
+    const unused = toolSessionFactsOf(log([]));
+    const alpha = countTokens("Alpha" + JSON.stringify({ type: "object" }));
+    const beta = countTokens("mcp__acme__beta");
+
+    const row = unusedToolRowOf("acme", [unused, unused], tables);
+
+    expect(row.perTool).toEqual(
+      expect.arrayContaining([
+        { rawName: "mcp__acme__alpha", name: "alpha", tokens: alpha, sessions: 2 },
+        { rawName: "mcp__acme__beta", name: "beta", tokens: beta, sessions: 2 },
+      ]),
+    );
+    expect(row.perTool).toHaveLength(2);
+  });
 });
 
 describe("loadBundledTables", () => {
