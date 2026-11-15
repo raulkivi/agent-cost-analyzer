@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
 import { z } from "zod";
+import { subagentLabelSchema, subagentRunIdSchema } from "./subagent-run-ids.js";
 import { tokenCountSchema } from "./token-count.js";
 import { failureCategorySchema } from "./tool-call-outcome.js";
 import { toolCallRecordSchema } from "./tool-call-record.js";
@@ -39,6 +40,37 @@ export const outcomeCoverageSchema = z.object({
   unknown: z.number(),
   unknownReasons: z.array(z.string()),
 });
+
+// Step 10.20: the totals split by who issued the calls; main + subagents
+// equals the all-calls totals.
+export const originTotalsSchema = z.object({
+  main: outcomeTotalsSchema,
+  subagents: outcomeTotalsSchema.extend({ runs: z.number() }),
+});
+
+export type OriginTotals = z.infer<typeof originTotalsSchema>;
+
+// One subagent run in a session's audit. `totals` null = the run was not
+// read (never 0). `unreadReason` is required then, and may also accompany
+// known totals as a flag (D12: a run whose start call is missing).
+export const auditedRunSchema = z
+  .object({
+    runId: subagentRunIdSchema,
+    label: subagentLabelSchema,
+    depth: z.number().int().min(1).max(8),
+    parentRunId: subagentRunIdSchema.optional(),
+    turnIndex: z.number(),
+    totals: outcomeTotalsSchema.nullable(),
+    failureRate: failureRateSchema,
+    unreadReason: z.string().optional(),
+  })
+  .superRefine((run, ctx) => {
+    if (run.totals === null && !run.unreadReason) {
+      ctx.addIssue({ code: "custom", message: "An unread run must carry a reason.", path: ["unreadReason"] });
+    }
+  });
+
+export type AuditedRun = z.infer<typeof auditedRunSchema>;
 
 export const auditedToolCallSchema = z.object({
   turnIndex: z.number(),
@@ -83,6 +115,9 @@ export const sessionAuditSchema = z.object({
   // Set when the provider doesn't record this session's tool calls at all, so
   // the empty `calls` reads as "not available", never as "no tool calls".
   toolCallsUnavailableReason: z.string().optional(),
+  // Step 10.20: present when the session has any subagent run.
+  byOrigin: originTotalsSchema.optional(),
+  subagentRuns: z.array(auditedRunSchema).optional(),
 });
 
 export type SessionAudit = z.infer<typeof sessionAuditSchema>;
@@ -122,6 +157,8 @@ export const auditRollupSchema = z.object({
     }),
   ),
   outcomeCoverage: outcomeCoverageSchema,
+  byOrigin: originTotalsSchema.optional(),
+  sessionsWithUnreadSubagentRuns: z.number().default(0),
 });
 
 export type AuditRollup = z.infer<typeof auditRollupSchema>;
