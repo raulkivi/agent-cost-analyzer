@@ -245,6 +245,29 @@ describe("sessionSchema", () => {
     expect(sessionSchema.parse(base).subagentSpend).toBeUndefined();
   });
 
+  it("accepts tokens and a priced cost on the subagent spend, and still parses the AI Credits-only shape (step CS4, D13)", () => {
+    const base = {
+      id: "analyze-1", mode: "analyze", title: "t", model: "m", turns: [], turnCount: 0,
+      costAiCredits: { known: false, reason: "none" }, usageDataAvailable: true,
+    };
+    const figure = { known: false, reason: "no price" };
+    const spend = {
+      runs: 2,
+      costAiCredits: { known: false, reason: "Claude Code records no AI Credits" },
+      tokens: {
+        uncachedInput: { known: true, value: 10 },
+        cacheWrite: { known: false, reason: "not recorded" },
+        cacheRead: { known: true, value: 30 },
+        output: { known: true, value: 5 },
+      },
+      cost: { billed: figure, reported: figure, priced: { known: true, amount: 0.5, currency: "USD", basis: "priced" } },
+    };
+    const parsed = sessionSchema.parse({ ...base, subagentSpend: spend });
+    expect(parsed.subagentSpend).toEqual(spend);
+    expect(sessionSchema.safeParse({ ...base, subagentSpend: { ...spend, tokens: { ...spend.tokens, output: 5 } } }).success).toBe(false);
+    expect(sessionSchema.safeParse({ ...base, subagentSpend: { runs: 1, costAiCredits: spend.costAiCredits } }).success).toBe(true);
+  });
+
   it("rejects a subagent spend with a negative or fractional run count", () => {
     const base = {
       id: "s",

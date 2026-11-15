@@ -15,17 +15,29 @@ export const ownTurnUsageSchema = z.object({
   reasoning: tokenCountSchema,
   output: tokenCountSchema,
   costAiCredits: tokenCountSchema,
+  // Step CS4: the own line's 1-hour cache writes, so it keeps its own split.
+  extendedCacheWrite: tokenCountSchema.optional(),
   model: z.string(),
 });
 
 export type OwnTurnUsage = z.infer<typeof ownTurnUsageSchema>;
 
-// One classic Copilot Chat subagent run (runSubagent / searchSubagent) folded
-// into the turn that started it. `id` and `label` come from a log file, so
-// both are pattern- and length-capped: they reach the UI and MCP tools.
+// Shared with the tool-call origin (step 10.20): the id and label are the
+// same text wherever a run is named, so one pattern guards every reader.
+export const subagentRunIdSchema = z.string().regex(/^[A-Za-z0-9_-]{1,128}$/);
+// Copilot classic: runSubagent-<name> / searchSubagent. Claude Code (step
+// CS4): the tool name `Agent`, with the `agentType` after a hyphen.
+export const subagentLabelSchema = z
+  .string()
+  .regex(/^(runSubagent-[A-Za-z0-9_ -]{1,64}|searchSubagent|Agent(-[A-Za-z0-9_.: -]{1,64})?)$/);
+
+// One subagent run (classic Copilot runSubagent / searchSubagent, or a Claude
+// Code `Agent` call) folded into the turn that started it. `id` and `label`
+// come from a log file, so both are pattern- and length-capped: they reach
+// the UI and MCP tools.
 export const subagentRunUsageSchema = z.object({
-  id: z.string().regex(/^[A-Za-z0-9_-]{1,128}$/), // childSessionId (the tool call id)
-  label: z.string().regex(/^(runSubagent-[A-Za-z0-9_ -]{1,64}|searchSubagent)$/),
+  id: subagentRunIdSchema, // childSessionId (the tool call id)
+  label: subagentLabelSchema,
   agentName: z.string().max(64).optional(), // from the run's `subagent` event
   model: z.string(), // latest known model of its requests
   roundsCount: z.number().int().nonnegative(), // its llm_requests
@@ -35,10 +47,16 @@ export const subagentRunUsageSchema = z.object({
   reasoning: tokenCountSchema,
   output: tokenCountSchema,
   costAiCredits: tokenCountSchema,
+  // Step CS4: 1-hour cache writes, the part of cacheWrite priced higher.
+  extendedCacheWrite: tokenCountSchema.optional(),
+  // Step CS4: the run that started this one (nested runs); absent: started by
+  // the main agent. Step 10.20's `origin.parentRunId` has the same shape.
+  parentRunId: subagentRunIdSchema.optional(),
   startedAt: z.string().datetime().optional(),
   // child-session-ref: the parent's own reference placed it; timestamp: an
-  // unreferenced file matched to the turn by time (shown as "matched by time").
-  attribution: z.enum(["child-session-ref", "timestamp"]),
+  // unreferenced file matched to the turn by time (shown as "matched by time");
+  // tool-use-id (Claude Code): the parent's `Agent` call placed it.
+  attribution: z.enum(["child-session-ref", "timestamp", "tool-use-id"]),
 });
 
 export type SubagentRunUsage = z.infer<typeof subagentRunUsageSchema>;

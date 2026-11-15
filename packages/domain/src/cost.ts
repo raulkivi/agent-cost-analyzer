@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 import { z } from "zod";
 import { insightProviderStatusSchema } from "./insights.js";
+import { subagentTokenTotalsSchema } from "./subagent-summary.js";
 import { systemPromptComponentSchema } from "./system-prompt-component.js";
 import { triggeredEventSchema } from "./turn.js";
 import { costBasisTotalsSchema, costReconciliationRowSchema, costTotalSchema, turnCostFiguresSchema } from "./cost-figure.js";
@@ -125,7 +126,14 @@ export const sessionCostSchema = z.object({
   // Copilot Chat). aiCredits is null, with the reason, when any run's is
   // unknown; absent when no run was read.
   subagents: z
-    .object({ runs: z.number().int().nonnegative(), aiCredits: z.number().nullable(), unavailableReason: z.string().optional() })
+    .object({
+      runs: z.number().int().nonnegative(),
+      aiCredits: z.number().nullable(),
+      unavailableReason: z.string().optional(),
+      // Step CS4 (D13): tokens and a priced cost for a provider without AI Credits.
+      tokens: subagentTokenTotalsSchema.optional(),
+      cost: turnCostFiguresSchema.optional(),
+    })
     .optional(),
   unavailableReasons: z.array(z.string()),
 });

@@ -2,14 +2,17 @@
 // extension build has filled media/): the host's dist/extension.js with
 // esbuild's metafile at dist/meta.json, and the MCP child process's
 // dist/mcp-stdio.js with dist/meta-mcp-stdio.json (step 10.8), and the MCP App
-// views copied to dist/mcp-apps/views.html (Phase 12 A13). Then the
+// views copied to dist/mcp-apps/views.html (Phase 12 A13), and the generated
+// THIRD-PARTY-NOTICES.md the .vsix ships. Then the
 // simulation's data goes into media/learn-scripts, media/vendor-profiles and
 // media/price-book, where the composition root reads it (G4).
-import { cpSync, existsSync, mkdirSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import path from "node:path";
 import { build } from "esbuild";
+import { generateNotices, readBundledPackagesList } from "../../../scripts/third-party-notices.mts";
 import { extensionBundleOptions, extensionPackageDir, mcpServerBundleOptions } from "./esbuild-options.mts";
+import { extensionNoticesPlan } from "./notices-plan.mts";
 
 const distDir = path.join(extensionPackageDir, "dist");
 rmSync(distDir, { recursive: true, force: true });
@@ -28,6 +31,28 @@ if (!existsSync(viewsBuild)) {
 }
 mkdirSync(path.join(distDir, "mcp-apps"), { recursive: true });
 cpSync(viewsBuild, path.join(distDir, "mcp-apps", "views.html"));
+
+// The packages the bundles carry: both esbuild metafiles, the webview's and
+// the views' Vite lists. A missing list, a package without a license file or
+// a license off the allow-list fails the build rather than ship notices that
+// miss one. The webview bundles no fonts (G12), so there's no fonts section.
+const noticesPlan = extensionNoticesPlan(extensionPackageDir);
+const manifest = JSON.parse(readFileSync(path.join(extensionPackageDir, "package.json"), "utf8")) as { name: string; version: string };
+writeFileSync(
+  noticesPlan.noticesPath,
+  generateNotices({
+    metafile: extension.metafile,
+    metafileLabel: "host",
+    extraMetafiles: [{ label: "mcp", metafile: mcpServer.metafile }],
+    workingDir: extensionPackageDir,
+    extraParts: [
+      { label: "webview", dirs: readBundledPackagesList(noticesPlan.webviewPackagesPath, "webview") },
+      { label: "views", dirs: readBundledPackagesList(noticesPlan.viewsPackagesPath, "views") },
+    ],
+    packageName: manifest.name,
+    packageVersion: manifest.version,
+  }),
+);
 
 // Fixtures are data, not code, so they're copied rather than bundled.
 const serverDir = path.dirname(createRequire(import.meta.url).resolve("@agent-cost-analyzer/server/package.json"));

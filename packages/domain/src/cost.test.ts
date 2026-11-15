@@ -68,6 +68,21 @@ describe("sessionCostSchema", () => {
     expect(sessionCostSchema.parse(sampleSessionCost())).toEqual(sampleSessionCost());
   });
 
+  it("accepts tokens and a priced cost on the subagent summary, null when unknown (step CS4, D13)", () => {
+    const base = sampleSessionCost();
+    const subagents = {
+      runs: 2,
+      aiCredits: null,
+      unavailableReason: "Claude Code records no AI Credits",
+      tokens: { uncachedInput: 10, cacheWrite: null, cacheRead: 30, output: 5 },
+      cost: turnCost,
+    };
+    expect(sessionCostSchema.parse({ ...base, subagents }).subagents).toEqual(subagents);
+    expect(sessionCostSchema.parse({ ...base, subagents: { runs: 1, aiCredits: 2 } }).subagents).toEqual({ runs: 1, aiCredits: 2 });
+    expect(sessionCostSchema.safeParse({ ...base, subagents: { ...subagents, tokens: { ...subagents.tokens, output: "5" } } }).success).toBe(false);
+    expect(sessionCostSchema.safeParse({ ...base, subagents: { ...subagents, cost: { billed: turnCost.billed } } }).success).toBe(false);
+  });
+
   it("accepts a context overhead that is only an unavailable reason", () => {
     const cost = { ...sampleSessionCost(), contextOverhead: { unavailableReason: "not recorded" } };
     expect(sessionCostSchema.parse(cost).contextOverhead).toEqual({ unavailableReason: "not recorded" });
