@@ -2229,6 +2229,16 @@ suite only, to cover the D4 path derivation for real.
 runs from source), and the root `package.json` version bump. Since the npm package (npm-package.md §4.7) the bump also covers `packages/cli/package.json`, and `release-check.mts --also` refuses a tag whose version differs from it. Its
 changelog sits at the repo root.
 
+`release-app.yml` has two jobs, as the extension's does. **build** runs the
+checks, `npm audit --omit=dev --audit-level=high`, one `npm pack` of
+`packages/cli`, the smoke test and a publish dry run on that tarball. **publish**
+(`release` environment, owner approval) verifies the tarball's SHA-256,
+checks that the owner is the package's only npm maintainer, publishes it
+through npm trusted publishing (OIDC, no token, with provenance) and creates
+the GitHub Release with the tarball attached (npm-package.md §4.10). The
+owner configures the npm trusted publisher and adds `app-v*` to the
+`release` environment's deployment rule first.
+
 - **Permissions:** `contents: write` only on the release jobs (for GitHub
   Releases); everything else stays `contents: read`.
 

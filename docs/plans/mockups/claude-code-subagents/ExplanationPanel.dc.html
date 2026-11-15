@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Explanation panel · subagent runs (Claude Code)</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&amp;family=Barlow+Condensed:wght@500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.board{box-sizing:border-box;padding:28px 32px;display:flex;flex-direction:column;gap:22px;background:#f2f2f3;color:#1d1f20;font-family:Barlow,system-ui,sans-serif;font-size:14px;line-height:1.45}
+.bh{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+.bh h1{margin:0;font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:30px;line-height:1}
+.board .muted{color:#5b5c5e}
+.board code{font-family:ui-monospace,monospace;font-size:.92em}
+.grid{display:grid;gap:28px 32px;align-items:start}
+.cell{display:flex;flex-direction:column;gap:8px;min-width:0}
+.cap{display:flex;flex-direction:column;gap:1px;font-size:13px}
+.cap-k{font-size:11px;color:#416180;font-weight:600}
+.note-c{padding:12px 16px;display:flex;flex-direction:column;gap:4px;font-size:13px;background:#f7f7f8;border:1px solid rgba(29,31,32,.16);max-width:1100px}
+.note-c b{font-family:'Barlow Condensed',sans-serif;font-size:16px}
+
+/* theme tokens: the app's tokens, re-pointed per theme as theme-vscode.css does */
+.th-light{--bg:#f2f2f3;--tx:#1d1f20;--mu:#4c4e4f;--ac:#416180;--dv:rgba(29,31,32,.16);--sf:#e9e9ea;--a100:#eef6ff;--n100:#e7e7ea;--hov:rgba(29,31,32,.05);--focus:#5980a6;--ln:rgba(29,31,32,.09);--pop:#ffffff;--popb:#c8c8c8;color-scheme:light}
+.th-dark{--bg:#1f1f1f;--tx:#cccccc;--mu:#9d9d9d;--ac:#4daafc;--dv:#2b2b2b;--sf:#313131;--a100:#1d3347;--n100:#2b2b2b;--hov:rgba(255,255,255,.06);--focus:#0078d4;--ln:rgba(255,255,255,.08);--pop:#202020;--popb:#454545;color-scheme:dark}
+.th-hc{--bg:#000000;--tx:#ffffff;--mu:#ffffff;--ac:#3794ff;--dv:#6fc3df;--sf:#000000;--a100:#000000;--n100:#000000;--hov:rgba(111,195,223,.2);--focus:#f38518;--ln:#6fc3df;--pop:#000000;--popb:#6fc3df;color-scheme:dark}
+.fr{box-sizing:border-box;background:var(--bg);color:var(--tx);border:1px solid var(--dv);padding:12px;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;font-size:13px;line-height:1.4;display:flex;flex-direction:column;gap:12px}
+.th-light.fr{font-family:Barlow,system-ui,sans-serif;font-size:14px}
+.fr .mu{color:var(--mu)}
+.fr h4{margin:0;font-size:14px;font-weight:600}
+.fr code,.mono{font-family:ui-monospace,Consolas,monospace;font-size:.92em}
+.num{font-variant-numeric:tabular-nums}
+.st{font-size:11px;font-weight:600;color:var(--ac);display:flex;gap:6px;align-items:baseline;margin-bottom:-6px}
+.st span{font-weight:400;color:var(--mu)}
+/* the new marker: a fork glyph + (in the accessible name) the words; never color alone */
+.sa{display:inline-flex;vertical-align:-2px;margin-left:4px;color:var(--ac)}
+.sa svg{width:12px;height:12px}
+.sa.unk{color:var(--tx)}
+.sa.unk svg{stroke-dasharray:2 1.6}
+.unk{font-style:italic;color:var(--mu)}
+.tbl{width:100%;border-collapse:collapse;font-size:13px}
+.tbl th{text-align:left;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--mu);padding:5px 6px;border-bottom:1px solid var(--dv);font-weight:500;white-space:nowrap}
+.tbl td{padding:6px;border-bottom:1px solid var(--ln);vertical-align:top}
+.tbl tr.sel td{background:var(--a100)}
+.th-hc .tbl tr.sel td{outline:1px solid var(--focus);outline-offset:-1px}
+.r{text-align:right}
+.tipl{display:flex;flex-direction:column;gap:6px}
+.tip{background:var(--pop);border:1px solid var(--popb);padding:5px 8px;font-size:12px;display:flex;flex-direction:column;gap:1px;max-width:100%}
+.tip i{font-style:normal;font-size:11px;color:var(--mu)}
+.pill{display:inline-flex;align-items:center;font-size:11px;padding:1px 7px;border:1px solid var(--ac);color:var(--ac);white-space:nowrap}
+.pill.fill{border:0;background:var(--a100);color:var(--tx)}
+.th-hc .pill.fill{border:1px solid var(--dv)}
+.blue{border:1px solid var(--dv);padding:10px 12px;display:flex;flex-direction:column;gap:6px;background:transparent}
+.kick{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ac)}
+.btn{font:inherit;font-size:12px;padding:3px 9px;background:transparent;color:var(--ac);border:1px solid var(--ac)}
+.btn.sec{color:var(--tx);border-color:var(--dv)}
+.sub{border-top:1px solid var(--dv);padding-top:8px;display:flex;flex-direction:column;gap:6px;margin-top:2px}
+.sub .lbl{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--mu)}
+.runs{display:flex;flex-direction:column;gap:6px;margin:0;padding:0;list-style:none}
+.run{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr) auto auto;gap:2px 10px;align-items:baseline;padding:6px 8px;border:1px solid var(--ln)}
+.run.u{border:1px dashed var(--mu)}
+.run .nm{font-weight:600;word-break:break-word}
+.run .md{color:var(--mu)}
+.run .why{grid-column:1/-1;font-size:12px}
+.run .ex{grid-column:1/-1;font-size:12px;color:var(--mu)}
+.n320 .run{grid-template-columns:1fr auto}
+.n320 .run .md{grid-column:1/-1;order:3}
+.tot{display:flex;gap:6px 16px;flex-wrap:wrap;font-size:12px;color:var(--mu)}
+.tot b{color:var(--tx);font-weight:600}
+.tiles{display:grid;gap:8px}
+.tile{display:flex;flex-direction:column;gap:2px;padding:7px 10px;border:1px solid var(--dv)}
+.tile.u{border-style:dashed}
+.tl-l{font-size:11px;color:var(--mu)}
+.tl-v{font-size:24px;font-weight:500;line-height:1.15}
+.tl-n{font-size:11px;color:var(--mu)}
+.tl-v.unk{font-size:20px}
+.note{border:1px solid var(--dv);border-left:3px solid var(--ac);padding:7px 10px;display:flex;flex-direction:column;gap:5px;font-size:12px}
+.rowline{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+
+.tip b{font-weight:600}
+.run .tk{text-align:right}
+.run.ind{margin-left:18px}
+.basis{display:inline-flex;font-size:11px;padding:1px 7px;border:1px solid var(--dv);color:var(--mu)}
+</style>
+</helmet>
+<div class="board" style="width: 1440px; min-height: 100px">
+  <div class="bh"><h1>Explanation panel · Subagent runs, tokens and priced cost</h1><span class="muted"><code>SubagentRunsBlock.tsx</code>: the block keeps its place under the turn's explanation. Columns become model and requests, tokens and priced cost; the totals line reads main agent, subagent runs, turn.</span></div>
+  <div class="note-c"><b>Rules on every frame</b><div>Claude Code has tokens and a priced cost (tokens × the price book, per run model); it has no AI Credits. Every figure here is tokens or priced USD, and the AI Credits cell stays an em dash or n/a with the reason.</div><div>Unknown is never shown as 0: an unknown turn shows em dashes, a dashed marker and the reason; a known figure never leaves a run out.</div><div>The marker is a fork glyph with an accessible name that says the words; color is never the only signal. It appears only when a run exists.</div><div>Frames: Light (Industry tokens, standalone app) and Dark Modern (the VS Code webview's mapped tokens). Data is invented.</div></div>
+  <div class="grid" style="grid-template-columns:640px 640px"><div class="cell"><div class="cap"><span class="cap-k">Light (Industry, standalone) · 640 px</span><span class="muted">Explanation panel block</span></div><div class="fr th-light n640" style="width:640px" data-theme="light"><div class="st">Known<span>turn 3</span></div><div class="blue"><div class="rowline" style="justify-content:space-between"><h4>Subagent runs (2)</h4><span class="basis">Priced</span></div>
+<ul class="runs"><li class="run"><span class="nm">Explore</span><span class="md">claude-haiku-4.5 · 9 requests</span><span class="num tk">1.31M tokens</span><span class="num tk">$0.09</span></li><li class="run"><span class="nm">general-purpose</span><span class="md">claude-sonnet-5.5 · 6 requests</span><span class="num tk">0.73M tokens</span><span class="num tk">$0.29</span></li></ul>
+<div class="tot"><span>Main agent <b>0.50M · $0.21</b></span><span>Subagent runs <b>2.04M · $0.38</b></span><span>Turn <b>2.54M · $0.59</b></span></div>
+<div>Subagent runs are 80% of this turn's tokens and 64% of its priced cost.</div>
+<div class="mu" style="font-size:12px">Priced at Anthropic prices as of 2026-11-14, each run on its own model. Claude Code has no AI Credits.</div></div></div><div style="height:12px"></div><div class="fr th-light n640" style="width:640px" data-theme="light"><div class="st">Matched by time, continued, nested<span>turn 5</span></div><div class="blue"><div class="rowline" style="justify-content:space-between"><h4>Subagent runs (2)</h4><span class="basis">Priced</span></div>
+<ul class="runs"><li class="run"><span class="nm">general-purpose <span class="pill fill">matched by time</span></span><span class="md">claude-sonnet-5.5 · 4 requests</span><span class="num tk">0.30M tokens</span><span class="num tk">$0.10</span><span class="ex">Continued 2 times by later turns; all of it is counted here.</span></li><li class="run ind"><span class="nm">Explore</span><span class="md">claude-haiku-4.5 · 3 requests</span><span class="num tk">0.11M tokens</span><span class="num tk">$0.01</span><span class="ex">Started by general-purpose.</span></li></ul>
+<div class="tot"><span>Main agent <b>0.19M · $0.12</b></span><span>Subagent runs <b>0.41M · $0.11</b></span><span>Turn <b>0.60M · $0.23</b></span></div>
+<div>Subagent runs are 68% of this turn's tokens and 48% of its priced cost.</div>
+<div class="mu" style="font-size:12px">Priced at Anthropic prices as of 2026-11-14, each run on its own model. Claude Code has no AI Credits.</div></div></div><div style="height:12px"></div><div class="fr th-light n640" style="width:640px" data-theme="light"><div class="st">Unknown run<span>turn 7</span></div><div class="blue"><div class="rowline" style="justify-content:space-between"><h4>Subagent runs (2)</h4><span class="basis">Priced</span></div>
+<ul class="runs"><li class="run"><span class="nm">Explore</span><span class="md">claude-haiku-4.5 · 4 requests</span><span class="num tk">0.22M tokens</span><span class="num tk">$0.02</span></li><li class="run u"><span class="nm">Plan</span><span class="md">model unknown · requests unknown</span><span class="num tk">—</span><span class="num tk">—</span><span class="why">The subagent transcript this turn started is missing.</span></li></ul>
+<div class="tot"><span>Main agent <b>0.31M · $0.19</b></span><span>Subagent runs <b>unknown</b></span><span>Turn <b>unknown</b></span></div>
+<div>This turn's tokens and cost are unknown until the Plan run can be read. The Explore run's figures are listed, not added up.</div>
+<div class="mu" style="font-size:12px">Priced at Anthropic prices as of 2026-11-14, each run on its own model. Claude Code has no AI Credits.</div></div></div><div style="height:12px"></div><div class="fr th-light n640" style="width:640px" data-theme="light"><div class="st">One field unknown, and a run counted elsewhere<span>turn 8</span></div><div class="blue"><div class="rowline" style="justify-content:space-between"><h4>Subagent runs (2)</h4><span class="basis">Priced</span></div>
+<ul class="runs"><li class="run u"><span class="nm">Explore</span><span class="md">claude-haiku-4.5 · 2 requests</span><span class="num tk">0.09M tokens</span><span class="num tk">—</span><span class="why">Cache write unknown: a round of this run has no cache-write count, so its priced cost is unknown.</span></li><li class="run"><span class="nm">general-purpose</span><span class="md">counted in another session</span><span class="num tk">not in this turn</span><span class="num tk">not in this turn</span><span class="ex">Its transcript is in session 4f2a91. This turn doesn't include it.</span></li></ul>
+<div class="tot"><span>Main agent <b>88k · $0.04</b></span><span>Subagent runs <b>0.09M · cost unknown</b></span><span>Turn <b>0.18M · cost unknown</b></span></div>
+<div>This turn's tokens are known; its priced cost is unknown until the Explore run's cache write is.</div>
+<div class="mu" style="font-size:12px">Priced at Anthropic prices as of 2026-11-14, each run on its own model. Claude Code has no AI Credits.</div></div></div></div><div class="cell"><div class="cap"><span class="cap-k">Dark Modern (VS Code webview) · 640 px</span><span class="muted">Explanation panel block</span></div><div class="fr th-dark n640" style="width:640px" data-theme="dark"><div class="st">Known<span>turn 3</span></div><div class="blue"><div class="rowline" style="justify-content:space-between"><h4>Subagent runs (2)</h4><span class="basis">Priced</span></div>
+<ul class="runs"><li class="run"><span class="nm">Explore</span><span class="md">claude-haiku-4.5 · 9 requests</span><span class="num tk">1.31M tokens</span><span class="num tk">$0.09</span></li><li class="run"><span class="nm">general-purpose</span><span class="md">claude-sonnet-5.5 · 6 requests</span><span class="num tk">0.73M tokens</span><span class="num tk">$0.29</span></li></ul>
+<div class="tot"><span>Main agent <b>0.50M · $0.21</b></span><span>Subagent runs <b>2.04M · $0.38</b></span><span>Turn <b>2.54M · $0.59</b></span></div>
+<div>Subagent runs are 80% of this turn's tokens and 64% of its priced cost.</div>
+<div class="mu" style="font-size:12px">Priced at Anthropic prices as of 2026-11-14, each run on its own model. Claude Code has no AI Credits.</div></div></div><div style="height:12px"></div><div class="fr th-dark n640" style="width:640px" data-theme="dark"><div class="st">Matched by time, continued, nested<span>turn 5</span></div><div class="blue"><div class="rowline" style="justify-content:space-between"><h4>Subagent runs (2)</h4><span class="basis">Priced</span></div>
+<ul class="runs"><li class="run"><span class="nm">general-purpose <span class="pill fill">matched by time</span></span><span class="md">claude-sonnet-5.5 · 4 requests</span><span class="num tk">0.30M tokens</span><span class="num tk">$0.10</span><span class="ex">Continued 2 times by later turns; all of it is counted here.</span></li><li class="run ind"><span class="nm">Explore</span><span class="md">claude-haiku-4.5 · 3 requests</span><span class="num tk">0.11M tokens</span><span class="num tk">$0.01</span><span class="ex">Started by general-purpose.</span></li></ul>
+<div class="tot"><span>Main agent <b>0.19M · $0.12</b></span><span>Subagent runs <b>0.41M · $0.11</b></span><span>Turn <b>0.60M · $0.23</b></span></div>
+<div>Subagent runs are 68% of this turn's tokens and 48% of its priced cost.</div>
+<div class="mu" style="font-size:12px">Priced at Anthropic prices as of 2026-11-14, each run on its own model. Claude Code has no AI Credits.</div></div></div><div style="height:12px"></div><div class="fr th-dark n640" style="width:640px" data-theme="dark"><div class="st">Unknown run<span>turn 7</span></div><div class="blue"><div class="rowline" style="justify-content:space-between"><h4>Subagent runs (2)</h4><span class="basis">Priced</span></div>
+<ul class="runs"><li class="run"><span class="nm">Explore</span><span class="md">claude-haiku-4.5 · 4 requests</span><span class="num tk">0.22M tokens</span><span class="num tk">$0.02</span></li><li class="run u"><span class="nm">Plan</span><span class="md">model unknown · requests unknown</span><span class="num tk">—</span><span class="num tk">—</span><span class="why">The subagent transcript this turn started is missing.</span></li></ul>
+<div class="tot"><span>Main agent <b>0.31M · $0.19</b></span><span>Subagent runs <b>unknown</b></span><span>Turn <b>unknown</b></span></div>
+<div>This turn's tokens and cost are unknown until the Plan run can be read. The Explore run's figures are listed, not added up.</div>
+<div class="mu" style="font-size:12px">Priced at Anthropic prices as of 2026-11-14, each run on its own model. Claude Code has no AI Credits.</div></div></div><div style="height:12px"></div><div class="fr th-dark n640" style="width:640px" data-theme="dark"><div class="st">One field unknown, and a run counted elsewhere<span>turn 8</span></div><div class="blue"><div class="rowline" style="justify-content:space-between"><h4>Subagent runs (2)</h4><span class="basis">Priced</span></div>
+<ul class="runs"><li class="run u"><span class="nm">Explore</span><span class="md">claude-haiku-4.5 · 2 requests</span><span class="num tk">0.09M tokens</span><span class="num tk">—</span><span class="why">Cache write unknown: a round of this run has no cache-write count, so its priced cost is unknown.</span></li><li class="run"><span class="nm">general-purpose</span><span class="md">counted in another session</span><span class="num tk">not in this turn</span><span class="num tk">not in this turn</span><span class="ex">Its transcript is in session 4f2a91. This turn doesn't include it.</span></li></ul>
+<div class="tot"><span>Main agent <b>88k · $0.04</b></span><span>Subagent runs <b>0.09M · cost unknown</b></span><span>Turn <b>0.18M · cost unknown</b></span></div>
+<div>This turn's tokens are known; its priced cost is unknown until the Explore run's cache write is.</div>
+<div class="mu" style="font-size:12px">Priced at Anthropic prices as of 2026-11-14, each run on its own model. Claude Code has no AI Credits.</div></div></div></div></div><div class="grid" style="grid-template-columns:320px 320px"><div class="cell"><div class="cap"><span class="cap-k">Light · 320 px</span><span class="muted">Known and unknown</span></div><div class="fr th-light n320" style="width:320px" data-theme="light"><div class="st">Known<span>turn 3</span></div><div class="blue"><div class="rowline" style="justify-content:space-between"><h4>Subagent runs (2)</h4><span class="basis">Priced</span></div>
+<ul class="runs"><li class="run"><span class="nm">Explore</span><span class="md">claude-haiku-4.5 · 9 requests</span><span class="num tk">1.31M tokens</span><span class="num tk">$0.09</span></li><li class="run"><span class="nm">general-purpose</span><span class="md">claude-sonnet-5.5 · 6 requests</span><span class="num tk">0.73M tokens</span><span class="num tk">$0.29</span></li></ul>
+<div class="tot"><span>Main agent <b>0.50M · $0.21</b></span><span>Subagent runs <b>2.04M · $0.38</b></span><span>Turn <b>2.54M · $0.59</b></span></div>
+<div>Subagent runs are 80% of this turn's tokens and 64% of its priced cost.</div>
+<div class="mu" style="font-size:12px">Priced at Anthropic prices as of 2026-11-14, each run on its own model. Claude Code has no AI Credits.</div></div></div><div style="height:12px"></div><div class="fr th-light n320" style="width:320px" data-theme="light"><div class="st">Unknown run<span>turn 7</span></div><div class="blue"><div class="rowline" style="justify-content:space-between"><h4>Subagent runs (2)</h4><span class="basis">Priced</span></div>
+<ul class="runs"><li class="run"><span class="nm">Explore</span><span class="md">claude-haiku-4.5 · 4 requests</span><span class="num tk">0.22M tokens</span><span class="num tk">$0.02</span></li><li class="run u"><span class="nm">Plan</span><span class="md">model unknown · requests unknown</span><span class="num tk">—</span><span class="num tk">—</span><span class="why">The subagent transcript this turn started is missing.</span></li></ul>
+<div class="tot"><span>Main agent <b>0.31M · $0.19</b></span><span>Subagent runs <b>unknown</b></span><span>Turn <b>unknown</b></span></div>
+<div>This turn's tokens and cost are unknown until the Plan run can be read. The Explore run's figures are listed, not added up.</div>
+<div class="mu" style="font-size:12px">Priced at Anthropic prices as of 2026-11-14, each run on its own model. Claude Code has no AI Credits.</div></div></div></div><div class="cell"><div class="cap"><span class="cap-k">Dark Modern · 320 px</span><span class="muted">Known and unknown</span></div><div class="fr th-dark n320" style="width:320px" data-theme="dark"><div class="st">Known<span>turn 3</span></div><div class="blue"><div class="rowline" style="justify-content:space-between"><h4>Subagent runs (2)</h4><span class="basis">Priced</span></div>
+<ul class="runs"><li class="run"><span class="nm">Explore</span><span class="md">claude-haiku-4.5 · 9 requests</span><span class="num tk">1.31M tokens</span><span class="num tk">$0.09</span></li><li class="run"><span class="nm">general-purpose</span><span class="md">claude-sonnet-5.5 · 6 requests</span><span class="num tk">0.73M tokens</span><span class="num tk">$0.29</span></li></ul>
+<div class="tot"><span>Main agent <b>0.50M · $0.21</b></span><span>Subagent runs <b>2.04M · $0.38</b></span><span>Turn <b>2.54M · $0.59</b></span></div>
+<div>Subagent runs are 80% of this turn's tokens and 64% of its priced cost.</div>
+<div class="mu" style="font-size:12px">Priced at Anthropic prices as of 2026-11-14, each run on its own model. Claude Code has no AI Credits.</div></div></div><div style="height:12px"></div><div class="fr th-dark n320" style="width:320px" data-theme="dark"><div class="st">Unknown run<span>turn 7</span></div><div class="blue"><div class="rowline" style="justify-content:space-between"><h4>Subagent runs (2)</h4><span class="basis">Priced</span></div>
+<ul class="runs"><li class="run"><span class="nm">Explore</span><span class="md">claude-haiku-4.5 · 4 requests</span><span class="num tk">0.22M tokens</span><span class="num tk">$0.02</span></li><li class="run u"><span class="nm">Plan</span><span class="md">model unknown · requests unknown</span><span class="num tk">—</span><span class="num tk">—</span><span class="why">The subagent transcript this turn started is missing.</span></li></ul>
+<div class="tot"><span>Main agent <b>0.31M · $0.19</b></span><span>Subagent runs <b>unknown</b></span><span>Turn <b>unknown</b></span></div>
+<div>This turn's tokens and cost are unknown until the Plan run can be read. The Explore run's figures are listed, not added up.</div>
+<div class="mu" style="font-size:12px">Priced at Anthropic prices as of 2026-11-14, each run on its own model. Claude Code has no AI Credits.</div></div></div></div></div>
+</div>
+</x-dc>
+</body>
+</html>
