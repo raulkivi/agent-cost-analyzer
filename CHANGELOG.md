@@ -1,6 +1,6 @@
 # Changelog
 
-**Last changed:** 2026-11-14 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-15 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 All notable changes to this project are documented in this file.
 
@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.15.0] - 2026-11-14
+## [0.15.0] - 2026-11-15
 
 ### Added
 - The chat views label figures priced from a price version you added "your prices", as the app does: cost over time and project cost, compare, cost change, the statement, the estimate and the savings rows. Billed and reported figures never carry it. The VS Code extension reads only the bundled price book, so its views never show the label.
@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The savings report in the chat: `get_savings_report` shows its ranked changes as a view (a range or "up to" per week, coverage, the Simulated section, Not analysed). A row opens in place with its action text and sessions; a session opens its cost or its replay in place, with Back. It sends nothing to the chat.
 
 ### Fixed
+- A saving smaller than 0.1 AI Credits (or $0.01) a week now reads "under 0.1 AI Credits per week" ("under $0.01 per week") instead of 0.0–0.0, which looked like no saving. The same goes for the amount over the window and per session; a range that starts at 0.0 but reaches 0.1 or more is unchanged.
 - Copilot Chat sessions whose stored agent name was a helper's (`panel/editAgent`, `summarizeConversationHistory`) are now listed and counted. They are ordinary Chat-panel chats (the store takes the name from one request) and were left out of every view; sessions are now selected by surface (Chat panel), still leaving out the Copilot CLI, the Coding Agent and subagents.
 - An Agent Host session that VS Code titled with the opening of its first prompt (some are, in the catalog and in the session's `customTitle`) now shows as untitled everywhere, so session lists, statements, exports and MCP answers such as `get_statement` no longer carry prompt text. A title you set yourself is kept.
 - The standalone app reads a VS Code install only when its folder has a `User` folder inside. A leftover `~/.config/Code` holding only an "Azure Accounts" folder is no longer picked over a real install, and no longer shows an empty session list.

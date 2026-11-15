@@ -1,6 +1,6 @@
 # User Guide
 
-**Last changed:** 2026-11-14 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-15 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 A walkthrough of the Agent Cost Analyzer's two modes — **Learn** (guided,
 bundled example sessions) and **Analyze** (your own real sessions from VS
@@ -1318,6 +1318,9 @@ sessions; 3 had no request trace").
   `mcp_<server>_<tool>`, and a server name can hold `_`.
 - **Not priced**: no price for that model on that date. It has no bar,
   never counts as 0 and sorts last.
+- **under 0.1 AI Credits** (**under $0.01**): a known saving too small to
+  show at one decimal (two for dollars); it is not zero and ranks by its
+  real size.
 
 Every figure is a counterfactual priced from the price book, so it can't be
 billed. Rows are ranked by the high end, one list per currency (AI Credits

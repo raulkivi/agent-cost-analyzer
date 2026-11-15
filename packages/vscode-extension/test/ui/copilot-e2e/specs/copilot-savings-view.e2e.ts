@@ -142,8 +142,12 @@ suite("U18 savings view in a real Copilot Chat (SR21; opt-in)", function () {
       expect(savings.text).toContain(SEEDED_TITLE);
       expect(savings.text).toContain(SEEDED_SUBJECT);
       expect(savings.text).toMatch(/per week/);
-      // Never a bare 0 for an unknown amount.
-      expect(savings.text).not.toMatch(/\b0 AI Credits per week/);
+      // No amount may display as zero ("0 AI Credits", "0.0 AI Credits", "0.0–0.0"): a saving
+      // below the display precision reads "under 0.1 AI Credits per week".
+      expect(savings.text).not.toMatch(/(?<![\d.])0(\.0+)? AI Credits/);
+      expect(savings.text).not.toMatch(/(?<![\d.])0(\.0+)?\s*[–-]\s*0(\.0+)?\s*AI Credits/);
+      // The seeded row's amount is a nonzero range or upper bound, or "under 0.1".
+      expect(savings.text).toMatch(/under 0\.1 AI Credits per week|(?:up to )?[\d,]*[1-9][\d,]*(?:\.\d)?(?:–[\d,.]+)? AI Credits per week/);
 
       const first = (await browser.$$(ROW).getElements())[0]!;
       expect(await first.getAttribute("aria-expanded")).toBe("false");

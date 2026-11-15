@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
 import { describe, expect, it } from "vitest";
-import { claudeRow, row, savingsOutput, simulatedRow, twoCurrencyOutput, unpriced } from "./savings-fixtures.js";
+import { claudeRow, row, savingsOutput, simulatedRow, span, twoCurrencyOutput, unpriced, upTo } from "./savings-fixtures.js";
 import { toSavingsViewModel } from "./savings.js";
 
 const rowOf = (vm: ReturnType<typeof toSavingsViewModel>, key: string) => [...vm.groups.flatMap((group) => group.rows), ...vm.simulated.rows].find((r) => r.key === key)!;
@@ -27,6 +27,16 @@ describe("toSavingsViewModel", () => {
     expect(rowOf(vm, "idle:sonnet").amountText).toBe("up to 46.0 AI Credits per week");
     expect(rowOf(vm, "unused:github").amountText).toBe("6.2–38.4 AI Credits per week");
     expect(rowOf(vm, "idle:sonnet").windowText).toBe("Over the 30 days: up to 197.8 AI Credits. No lower bound is claimed.");
+  });
+
+  it("writes a known saving below the display precision as 'under', never 0.0–0.0", () => {
+    const tiny = row({ key: "tiny", kind: "unused-tools", subject: "create_file", perWeek: span(0.001, 0.02), perWindow: span(0.004, 0.09) });
+    const bound = row({ key: "bound", kind: "idle-cache-expiry", subject: "gpt-5.5", perWeek: upTo(0.01), perWindow: upTo(0.04) });
+    const vm = toSavingsViewModel(savingsOutput({ opportunities: [tiny, bound], opportunitiesTotal: 2 }));
+    expect(rowOf(vm, "tiny").amountText).toBe("under 0.1 AI Credits per week");
+    expect(rowOf(vm, "tiny").windowText).toBe("Over the 30 days: 0.0–0.1 AI Credits.");
+    expect(rowOf(vm, "bound").amountText).toBe("under 0.1 AI Credits per week");
+    expect(rowOf(vm, "bound").windowText).toBe("Over the 30 days: under 0.1 AI Credits. No lower bound is claimed.");
   });
 
   it("never shows an unknown amount as 0: Not priced, with the reason and no bar, unranked", () => {

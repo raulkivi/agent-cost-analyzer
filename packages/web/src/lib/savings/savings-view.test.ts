@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 import { describe, expect, it } from "vitest";
 import { MAX_SAVINGS_NAME_LENGTH, savingsActionText, type SavingsActionParams, type SavingsOpportunityKind } from "@agent-cost-analyzer/domain";
-import { CLAUDE_IDLE, FAILED_CALLS, IDLE_CACHE, makeSavingsReport, SIMULATED, UNPRICED_ROW, UNUSED_TOOLS, range, UNPRICED } from "../../test-support/savings-fixture.js";
+import { upTo, CLAUDE_IDLE, FAILED_CALLS, IDLE_CACHE, makeSavingsReport, SIMULATED, UNPRICED_ROW, UNUSED_TOOLS, range, UNPRICED } from "../../test-support/savings-fixture.js";
 import { actionTextOf, amountText, barSegments, copyableText, coverageText, groupByCurrency, KIND_TITLES, perSessionText, windowAmountText } from "./savings-view.js";
 
 describe("amountText (plan §7: a range or an upper bound, never a bare number)", () => {
@@ -22,6 +22,20 @@ describe("amountText (plan §7: a range or an upper bound, never a bare number)"
   it("says 'Not priced' with the reason for an unknown amount, never 0", () => {
     expect(amountText(UNPRICED)).toBe("Not priced");
   });
+
+  it("says 'under' when a known amount's high end rounds to zero, never 0.0–0.0", () => {
+    expect(amountText(range(0.001, 0.04))).toBe("under 0.1 AI Credits per week");
+    expect(amountText(range(0, 0))).toBe("under 0.1 AI Credits per week");
+    expect(amountText(upTo(0.04))).toBe("under 0.1 AI Credits per week");
+    expect(amountText(range(0.001, 0.004, "USD"))).toBe("under $0.01 per week");
+    expect(amountText(upTo(0.004, "USD"))).toBe("under $0.01 per week");
+  });
+
+  it("keeps a range whose low end rounds to zero but high end does not", () => {
+    expect(amountText(range(0.01, 3.2))).toBe("0.0–3.2 AI Credits per week");
+    expect(amountText(range(0.05, 0.05))).toBe("0.1–0.1 AI Credits per week");
+    expect(amountText(range(0.001, 0.01, "USD"))).toBe("$0.00–$0.01 per week");
+  });
 });
 
 describe("windowAmountText", () => {
@@ -36,11 +50,20 @@ describe("windowAmountText", () => {
   it("is empty for an unknown amount", () => {
     expect(windowAmountText(UNPRICED, 30)).toBe("");
   });
+
+  it("says 'under' when the high end rounds to zero", () => {
+    expect(windowAmountText(range(0.001, 0.02), 91)).toBe("Over the 91 days: under 0.1 AI Credits.");
+    expect(windowAmountText(upTo(0.002, "USD"), 91)).toBe("No lower bound is claimed. Over the 91 days: under $0.01.");
+  });
 });
 
 describe("perSessionText (a Simulated amount per replayed session)", () => {
   it("divides the window amount by the sessions replayed", () => {
     expect(perSessionText(SIMULATED)).toBe("2.7–3.1 AI Credits per session (5 sessions)");
+  });
+
+  it("says 'under' when the per-session high end rounds to zero", () => {
+    expect(perSessionText({ ...SIMULATED, perWindow: range(0.01, 0.2) })).toBe("under 0.1 AI Credits per session (5 sessions)");
   });
 
   it("is empty when no session was replayed or the amount is unknown", () => {

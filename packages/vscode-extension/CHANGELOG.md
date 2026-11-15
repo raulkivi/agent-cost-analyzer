@@ -1,6 +1,6 @@
 # Changelog
 
-**Last changed:** 2026-11-14 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-15 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 All notable changes to AI Credits Analyzer, the VS Code extension, are
 documented in this file. The standalone app, Agent Cost Analyzer, has its
@@ -11,13 +11,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.14.0] - 2026-11-14
+## [0.14.0] - 2026-11-15
 
 ### Added
 - MCP tool `get_savings_report`: the Savings tab's ranked opportunities for a model (kind, amount as a range or "up to" with its basis and price versions, coverage, session ids, fixed action text; names and reasons redacted and capped; at most 20 rows, Simulated cheaper-model rows only with `includeSimulated`), and `review_costs` starts from it.
 - The savings report in the chat: `get_savings_report` shows its ranked changes as a view (a range or "up to" per week, coverage, the Simulated section, Not analysed). A row opens in place with its action text and sessions; a session opens its cost or its replay in place, with Back. It sends nothing to the chat.
 
 ### Fixed
+- A saving smaller than 0.1 AI Credits (or $0.01) a week now reads "under 0.1 AI Credits per week" ("under $0.01 per week") instead of 0.0–0.0, which looked like no saving. The same goes for the amount over the window and per session; a range that starts at 0.0 but reaches 0.1 or more is unchanged.
 - Copilot Chat sessions whose stored agent name was a helper's (`panel/editAgent`, `summarizeConversationHistory`) are now listed and counted. They are ordinary Chat-panel chats (the store takes the name from one request) and were left out of every view; sessions are now selected by surface (Chat panel), still leaving out the Copilot CLI, the Coding Agent and subagents.
 - An Agent Host session that VS Code titled with the opening of its first prompt (some are, in the catalog and in the session's `customTitle`) now shows as untitled everywhere, so session lists, statements, exports and MCP answers such as `get_statement` no longer carry prompt text. A title you set yourself is kept.
 - Replaying a local Copilot Chat session on another model now follows the main agent's requests only. The todo-list agent's and the conversation summary's requests have prompts of their own; they used to be replayed as part of the main agent's cache, which made the self-check unavailable (a helper on another vendor's model) or fail next to them. They are now left out and listed in the replay's coverage with their AI Credits (`coverage.helperRequests` in `replay_session` and `compare_models_for_session`); their cost stays in the measured figures.
