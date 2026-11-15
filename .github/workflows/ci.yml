@@ -180,6 +180,23 @@ jobs:
           path: packages/cli/smoke/out/
           if-no-files-found: ignore
 
+  # One check for the ruleset to require (npm-package.md NP9): the matrix legs'
+  # names never appear on docs-only PRs, where the matrix is skipped.
+  npm-package-result:
+    name: npm-package-result
+    needs: npm-package
+    if: always()
+    runs-on: ubuntu-latest
+    permissions: {}
+    steps:
+      - env:
+          RESULT: ${{ needs.npm-package.result }}
+        run: |
+          case "$RESULT" in
+            success|skipped) echo "npm-package: $RESULT" ;;
+            *) echo "npm-package: $RESULT"; exit 1 ;;
+          esac
+
   # The AI Credits Analyzer VS Code extension (docs/plans/vscode-extension.md
   # §7.1): its unit tests, then the real-VS Code integration suite on the
   # stable build, under a virtual display.
