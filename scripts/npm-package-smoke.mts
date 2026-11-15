@@ -4,14 +4,14 @@
 // `agent-cost-analyzer` package, check the tarball, install it and run it
 // through `npx` with scripts off and no registry, start the app and check it
 // over HTTP and in Chromium, run `agent-cost-analyzer mcp` through the MCP
-// client SDK, and check that only the app's settings folder changed in the
+// client SDK, run the `agent-cost-analyser` alias installed next to it, and check that only the app's settings folder changed in the // codespell:ignore analyser
 // seeded fixture home. CI's `npm-package` job runs it; the release workflow
 // runs it on the tarball it publishes.
 //
 // Run it locally (Node 22.18 or newer, after `npm ci`):
 //   npx playwright install chromium            # once
 //   npm run smoke:npm-package                  # npm run build, npm pack, then the checks
-//   npm run smoke:npm-package -- --tarball <path.tgz> [--out <dir>] [--keep-temp]
+//   npm run smoke:npm-package -- --tarball <path.tgz> [--alias-tarball <path.tgz>] [--out <dir>] [--keep-temp]
 // Logs and Playwright output go to packages/cli/smoke/out (or --out).
 // The steps live in packages/cli/smoke/ (run.mts; the checks are pure and
 // unit-tested there).
@@ -27,5 +27,5 @@ if (args.kind === "help") {
   process.stderr.write(`${args.message}\n`);
   process.exitCode = 2;
 } else {
-  process.exitCode = await runSmoke({ repoRoot, ...(args.tarball === undefined ? {} : { tarball: args.tarball }), outDir: args.outDir, keepTemp: args.keepTemp });
+  process.exitCode = await runSmoke({ repoRoot, ...(args.tarball === undefined ? {} : { tarball: args.tarball }), ...(args.aliasTarball === undefined ? {} : { aliasTarball: args.aliasTarball }), outDir: args.outDir, keepTemp: args.keepTemp });
 }

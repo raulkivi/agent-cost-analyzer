@@ -39,6 +39,11 @@ describe("installedBin", () => {
     expect(installedBin("darwin", "/tmp/p")).toBe("/tmp/p/node_modules/.bin/agent-cost-analyzer");
     expect(installedBin("win32", "C:\\t\\p")).toBe("C:\\t\\p\\node_modules\\.bin\\agent-cost-analyzer.cmd");
   });
+
+  it("names another bin, such as the alias's", () => {
+    expect(installedBin("linux", "/tmp/p", "agent-cost-analyser")).toBe("/tmp/p/node_modules/.bin/agent-cost-analyser"); // codespell:ignore analyser
+    expect(installedBin("win32", "C:\\t\\p", "agent-cost-analyser")).toBe("C:\\t\\p\\node_modules\\.bin\\agent-cost-analyser.cmd"); // codespell:ignore analyser
+  });
 });
 
 describe("stopAction", () => {

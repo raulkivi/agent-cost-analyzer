@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { test } from "node:test";
 import { parseChecksumLine, verifyChecksumFile } from "./verify-sha256.mjs";
 
@@ -44,4 +44,22 @@ test("fails when the file was changed", () => {
 test("fails when the listed file is missing", () => {
   const file = fixture("x", `${sha("x")}  other.tgz\n`);
   assert.equal(verifyChecksumFile(file).ok, false);
+});
+
+test("checks every line of a file that lists several tarballs", () => {
+  const file = fixture("tarball", "");
+  writeFileSync(join(dirname(file), "two.tgz"), "second");
+  const lines = (second) => `${sha("tarball")}  pkg.tgz\n${sha(second)}  two.tgz\n`;
+  writeFileSync(file, lines("second"));
+  const good = verifyChecksumFile(file);
+  assert.equal(good.ok, true);
+  assert.match(good.message, /pkg\.tgz.*\n.*two\.tgz/);
+  writeFileSync(file, lines("other"));
+  const bad = verifyChecksumFile(file);
+  assert.equal(bad.ok, false);
+  assert.match(bad.message, /two\.tgz/);
+});
+
+test("fails on an empty checksum file", () => {
+  assert.equal(verifyChecksumFile(fixture("x", "")).ok, false);
 });

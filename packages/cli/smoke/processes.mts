@@ -34,9 +34,9 @@ export function invocation(platform: NodeJS.Platform, command: string, args: rea
   return { command: "cmd.exe", args: ["/d", "/s", "/c", `"${line}"`], windowsVerbatimArguments: true };
 }
 
-/** The bin npm links for `agent-cost-analyzer` in a project that installed it. */
-export function installedBin(platform: NodeJS.Platform, projectDir: string): string {
-  const bin = (platform === "win32" ? path.win32 : path.posix).join(projectDir, "node_modules", ".bin", "agent-cost-analyzer");
+/** The bin npm links for `name` (default `agent-cost-analyzer`) in a project that installed its package. */
+export function installedBin(platform: NodeJS.Platform, projectDir: string, name = "agent-cost-analyzer"): string {
+  const bin = (platform === "win32" ? path.win32 : path.posix).join(projectDir, "node_modules", ".bin", name);
   return platform === "win32" ? `${bin}.cmd` : bin;
 }
 

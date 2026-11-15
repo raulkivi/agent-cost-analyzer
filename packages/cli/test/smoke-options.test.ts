@@ -9,17 +9,23 @@ const cwd = path.resolve("/work/repo");
 
 describe("parseSmokeArgs", () => {
   it("builds and packs by default, with logs in packages/cli/smoke/out", () => {
-    expect(parseSmokeArgs([], cwd)).toEqual({ kind: "run", tarball: undefined, outDir: path.join(cwd, "packages", "cli", "smoke", "out"), keepTemp: false });
+    expect(parseSmokeArgs([], cwd)).toEqual({ kind: "run", tarball: undefined, aliasTarball: undefined, outDir: path.join(cwd, "packages", "cli", "smoke", "out"), keepTemp: false });
   });
 
   it("takes an already packed tarball (the release workflow's), a log folder and --keep-temp", () => {
     expect(parseSmokeArgs(["--tarball", "pack/agent-cost-analyzer-1.0.0.tgz", "--out", "logs", "--keep-temp"], cwd)).toEqual({
       kind: "run",
       tarball: path.join(cwd, "pack", "agent-cost-analyzer-1.0.0.tgz"),
+      aliasTarball: undefined,
       outDir: path.join(cwd, "logs"),
       keepTemp: true,
     });
     expect(parseSmokeArgs(["--tarball=/abs/x.tgz"], cwd)).toMatchObject({ tarball: path.resolve("/abs/x.tgz") });
+  });
+
+  it("takes the alias's already packed tarball too", () => {
+    expect(parseSmokeArgs(["--alias-tarball", "pack/alias.tgz"], cwd)).toMatchObject({ kind: "run", aliasTarball: path.join(cwd, "pack", "alias.tgz") });
+    expect(parseSmokeArgs(["--alias-tarball", "alias.zip"], cwd)).toEqual({ kind: "error", message: "--alias-tarball must name a .tgz file: alias.zip" });
   });
 
   it("prints usage for --help", () => {

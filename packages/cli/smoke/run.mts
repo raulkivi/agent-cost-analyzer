@@ -21,6 +21,7 @@ import {
   type McpSurface,
   type StartLine,
 } from "./checks.mts";
+import { aliasProblems, packWorkspace } from "./alias.mts";
 import { appSettingsDirIn, changesOutside, snapshotTree, treeChanges } from "./home.mts";
 import { firstStdoutLine, httpGet, kill, runToEnd, start, stop, withTimeout, type Running } from "./io.mts";
 import { RecordingStdioTransport } from "./mcp-transport.mts";
@@ -31,6 +32,8 @@ export interface SmokeOptions {
   repoRoot: string;
   /** An already packed tarball (the release workflow's); otherwise build and pack. */
   tarball?: string;
+  /** The alias's already packed tarball (the release workflow's); otherwise pack it. */
+  aliasTarball?: string;
   outDir: string;
   keepTemp: boolean;
   platform?: NodeJS.Platform;
@@ -43,7 +46,8 @@ interface Context {
   repoRoot: string;
   outDir: string;
   version: string;
-  dirs: { pack: string; home: string; npmCache: string; project: string; npx: string };
+  dirs: { pack: string; home: string; npmCache: string; project: string; npx: string; alias: string };
+  aliasVersion: string;
   env: Record<string, string>;
   running: Running[];
 }
@@ -186,7 +190,7 @@ async function mcpChecks(context: Context, log: (line: string) => void): Promise
   ];
 }
 
-async function smoke(context: Context, tarballOption: string | undefined, log: (line: string) => void): Promise<void> {
+async function smoke(context: Context, tarballOption: string | undefined, aliasOption: string | undefined, log: (line: string) => void): Promise<void> {
   const { platform, dirs, version } = context;
   let tarball = tarballOption ?? "";
   await step(log, tarballOption === undefined ? "build and pack (npm run build, npm pack)" : `use ${tarballOption}`, async () => {
@@ -233,6 +237,21 @@ async function smoke(context: Context, tarballOption: string | undefined, log: (
   await step(log, "agent-cost-analyzer --no-open --port 0: HTTP checks, the Playwright load spec, Ctrl+C", () => serveChecks(context, log));
   await step(log, "agent-cost-analyzer mcp: initialize, tools/list, resources/list, JSON-RPC alone on stdout", () => mcpChecks(context, log));
 
+  await step(log, "agent-cost-analyser (the alias): tarball, install with the main tarball, --version, --help, mcp initialize", async () => { // codespell:ignore analyser
+    const aliasTarball = aliasOption ?? (await packWorkspace(platform, context.repoRoot, "packages/cli-alias", dirs.pack));
+    if (!existsSync(aliasTarball)) return [`${aliasTarball} does not exist`];
+    return aliasProblems({
+      platform,
+      project: dirs.alias,
+      env: context.env,
+      mainTarball: tarball,
+      aliasTarball,
+      version,
+      aliasVersion: context.aliasVersion,
+      timeoutMs: 5 * MINUTE,
+    });
+  });
+
   await step(log, "the fixture home changed only inside the app's settings folder", () => {
     const allowed = appSettingsDirIn(dirs.home, platform);
     const changes = treeChanges(before, snapshotTree(dirs.home));
@@ -254,14 +273,16 @@ export async function runSmoke(options: SmokeOptions): Promise<number> {
     npmCache: path.join(temp, "npm-cache"),
     project: path.join(temp, "project"),
     npx: path.join(temp, "npx"),
+    alias: path.join(temp, "alias"),
   };
   for (const dir of Object.values(dirs)) mkdirSync(dir, { recursive: true });
-  writeFileSync(path.join(dirs.project, "package.json"), `${JSON.stringify({ name: "npm-package-smoke", private: true }, null, 2)}\n`);
+  for (const dir of [dirs.project, dirs.alias]) writeFileSync(path.join(dir, "package.json"), `${JSON.stringify({ name: "npm-package-smoke", private: true }, null, 2)}\n`);
   const context: Context = {
     platform,
     repoRoot: options.repoRoot,
     outDir: options.outDir,
     version: (JSON.parse(readFileSync(path.join(options.repoRoot, "packages", "cli", "package.json"), "utf8")) as { version: string }).version,
+    aliasVersion: (JSON.parse(readFileSync(path.join(options.repoRoot, "packages", "cli-alias", "package.json"), "utf8")) as { version: string }).version,
     dirs,
     env: isolatedEnv(process.env, { home: dirs.home, npmCache: dirs.npmCache, platform }),
     running: [],
@@ -270,7 +291,7 @@ export async function runSmoke(options: SmokeOptions): Promise<number> {
 
   let code = 0;
   try {
-    await smoke(context, options.tarball, log);
+    await smoke(context, options.tarball, options.aliasTarball, log);
     log("npm-package smoke passed");
   } catch (error) {
     code = 1;
