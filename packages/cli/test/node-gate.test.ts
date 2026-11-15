@@ -1,7 +1,8 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
 import { spawnSync } from "node:child_process";
-import { existsSync, readFileSync } from "node:fs";
+import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
@@ -84,9 +85,17 @@ describe("the bin shim", () => {
     }
   });
 
-  it.skipIf(existsSync(join(cliDir, "dist", "cli.js")))("says clearly that the package is not built when dist/cli.js is missing", () => {
-    const result = spawnSync(process.execPath, [shim], { encoding: "utf-8" });
-    expect(result.status).toBe(1);
-    expect(result.stderr).toContain("dist/cli.js");
+  // A copy of bin/ beside no dist/, so this runs after `npm run build` too.
+  it("says clearly that the package is not built when dist/cli.js is missing", () => {
+    const unbuilt = mkdtempSync(join(tmpdir(), "cli-unbuilt-"));
+    try {
+      cpSync(join(cliDir, "bin"), join(unbuilt, "bin"), { recursive: true });
+      writeFileSync(join(unbuilt, "package.json"), JSON.stringify({ type: "module" }));
+      const result = spawnSync(process.execPath, [join(unbuilt, "bin", "agent-cost-analyzer.js")], { encoding: "utf-8" });
+      expect(result.status).toBe(1);
+      expect(result.stderr).toBe("agent-cost-analyzer: dist/cli.js is missing; this package is not built.\n");
+    } finally {
+      rmSync(unbuilt, { recursive: true, force: true });
+    }
   });
 });
