@@ -25,6 +25,8 @@ test("one code path makes the change set code", () => {
 
 for (const path of [
   "packages/domain/README.md",
+  "packages/cli/package.json",
+  "packages/cli/bin/agent-cost-analyzer.js",
   ".github/workflows/ci.yml",
   "scripts/ci-change-scope.mjs",
   "package.json",

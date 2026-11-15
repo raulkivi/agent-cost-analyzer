@@ -1,15 +1,17 @@
 // Release gate for the workflows (vscode-extension.md §7.2):
-//   node scripts/release-check.mts <tag> <tag-prefix> <package.json> [--engine]
-// Fails unless the tag names the package's version; with --engine, also
+//   node scripts/release-check.mts <tag> <tag-prefix> <package.json> [--engine] [--also <package.json>]...
+// Fails unless the tag names the package's version (and that of each --also
+// manifest: the app tag also names packages/cli); with --engine, also
 // unless engines.vscode is the current stable VS Code (D9, the only network
 // call, and only in CI). Prints `version=` and `prerelease=` lines, the
 // format of $GITHUB_OUTPUT.
 import { readFileSync } from "node:fs";
-import { engineMatchesStable, isPreReleaseVersion, latestStableVersion, versionFromTag } from "./release-checks.mts";
+import { assertSameVersions, engineMatchesStable, isPreReleaseVersion, latestStableVersion, versionFromTag } from "./release-checks.mts";
 
 const [tag, prefix, packageJsonPath, ...flags] = process.argv.slice(2);
+const alsoPaths = flags.flatMap((flag, index) => (flags[index - 1] === "--also" ? [flag] : []));
 if (!tag || !prefix || !packageJsonPath) {
-  console.error("Usage: release-check.mts <tag> <tag-prefix> <package.json> [--engine]");
+  console.error("Usage: release-check.mts <tag> <tag-prefix> <package.json> [--engine] [--also <package.json>]...");
   process.exit(2);
 }
 const manifest = JSON.parse(readFileSync(packageJsonPath, "utf-8")) as { version: string; engines?: { vscode?: string } };
@@ -17,6 +19,8 @@ const version = versionFromTag(tag, prefix);
 if (version !== manifest.version) {
   throw new Error(`Tag ${tag} doesn't match ${packageJsonPath} version ${manifest.version}.`);
 }
+const readVersion = (path: string) => (JSON.parse(readFileSync(path, "utf-8")) as { version: string }).version;
+assertSameVersions(version, alsoPaths.map((path) => ({ path, version: readVersion(path) })));
 if (flags.includes("--engine")) {
   const response = await fetch("https://update.code.visualstudio.com/api/releases/stable");
   if (!response.ok) throw new Error(`VS Code update API answered ${response.status}.`);

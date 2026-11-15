@@ -28,11 +28,11 @@ jobs:
 
       - run: npm ci
 
-      # The tag must name the root package.json's version.
+      # The tag must name the root package.json's version and packages/cli's.
       - id: check
         env:
           TAG: ${{ github.ref_name }}
-        run: node packages/vscode-extension/scripts/release-check.mts "$TAG" app-v package.json >> "$GITHUB_OUTPUT"
+        run: node packages/vscode-extension/scripts/release-check.mts "$TAG" app-v package.json --also packages/cli/package.json >> "$GITHUB_OUTPUT"
 
       - run: npm run lint
       - run: npm run typecheck

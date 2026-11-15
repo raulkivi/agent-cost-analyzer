@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 import { describe, expect, it } from "vitest";
 import {
+  assertSameVersions,
   changelogSection,
   engineMatchesStable,
   isPreReleaseVersion,
@@ -88,5 +89,25 @@ describe("changelogSection", () => {
 
   it("doesn't match a version that only shares a prefix", () => {
     expect(() => changelogSection(changelog, "0.1")).toThrow(/0\.1/);
+  });
+});
+
+describe("assertSameVersions (the npm package has the app's version)", () => {
+  it("accepts manifests that carry the release version", () => {
+    expect(() =>
+      assertSameVersions("0.15.0", [
+        { path: "package.json", version: "0.15.0" },
+        { path: "packages/cli/package.json", version: "0.15.0" },
+      ]),
+    ).not.toThrow();
+  });
+
+  it("names the manifest whose version differs", () => {
+    expect(() =>
+      assertSameVersions("0.16.0", [
+        { path: "package.json", version: "0.16.0" },
+        { path: "packages/cli/package.json", version: "0.15.0" },
+      ]),
+    ).toThrow(/packages\/cli\/package\.json.*0\.15\.0.*0\.16\.0/);
   });
 });
