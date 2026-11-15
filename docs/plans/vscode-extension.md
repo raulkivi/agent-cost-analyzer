@@ -2226,7 +2226,7 @@ suite only, to cover the D4 path derivation for real.
   agents.
 
 **Standalone app, on tag `app-v*`.** A GitHub Release with notes only (it
-runs from source), and the root `package.json` version bump. Its
+runs from source), and the root `package.json` version bump. Since the npm package (npm-package.md §4.7) the bump also covers `packages/cli/package.json`, and `release-check.mts --also` refuses a tag whose version differs from it. Its
 changelog sits at the repo root.
 
 - **Permissions:** `contents: write` only on the release jobs (for GitHub

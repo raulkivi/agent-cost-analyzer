@@ -21,6 +21,16 @@ export function versionFromTag(tag: string, prefix: string): string {
   return version;
 }
 
+// Every listed manifest must carry the version the tag releases (the app's
+// root package.json and the npm package, packages/cli, npm-package.md §4.7).
+export function assertSameVersions(version: string, manifests: { path: string; version: string }[]): void {
+  for (const manifest of manifests) {
+    if (manifest.version !== version) {
+      throw new Error(`${manifest.path} has version ${manifest.version}, but the release is ${version}.`);
+    }
+  }
+}
+
 // An odd minor is published to the Marketplace pre-release channel.
 export function isPreReleaseVersion(version: string): boolean {
   const parsed = parse(version);

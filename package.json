@@ -1,5 +1,5 @@
 {
-  "name": "agent-cost-analyzer",
+  "name": "agent-cost-analyzer-monorepo",
   "private": true,
   "version": "0.15.0",
   "description": "Agent Cost Analyzer: local app to understand and optimize agentic coding costs — learn how prompt caching and token accounting work, analyze your own Copilot Chat, Claude Code, pi and mitmproxy sessions turn by turn, audit tool calls, and export metadata for AI-assisted cost advice. Also builds the Copilot-only AI Credits Analyzer VS Code extension. Monorepo root.",
@@ -23,7 +23,8 @@
     "packages/mcp-apps",
     "packages/server",
     "packages/pi-system-prompt-logger",
-    "packages/vscode-extension"
+    "packages/vscode-extension",
+    "packages/cli"
   ],
   "scripts": {
     "dev": "npm run dev --workspace=packages/server & npm run dev --workspace=packages/web",
@@ -31,8 +32,9 @@
     "configure": "bash scripts/install.sh",
     "unconfigure": "bash scripts/uninstall.sh",
     "build": "npm run build --workspaces --if-present",
-    "test": "npm run test --workspaces --if-present",
-    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present && npm run test:cli",
+    "test:cli": "vitest run --root packages/cli",
+    "typecheck": "npm run typecheck --workspaces --if-present && tsc --noEmit -p packages/cli/tsconfig.json",
     "lint": "eslint .",
     "headers:check": "node scripts/spdx-headers.mjs --check",
     "headers:fix": "node scripts/spdx-headers.mjs --fix",
