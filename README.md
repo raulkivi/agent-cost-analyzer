@@ -1,6 +1,6 @@
 # Agent Cost Analyzer
 
-**Last changed:** 2026-11-14 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-15 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 [![Works with GitHub Copilot Chat](https://img.shields.io/badge/works_with-GitHub_Copilot_Chat-informational)](docs/UserGuide.md#choosing-a-log-provider)
 [![Works with Claude Code](https://img.shields.io/badge/works_with-Claude_Code-informational)](docs/UserGuide.md#choosing-a-log-provider)
@@ -70,7 +70,41 @@ Full steps, commands and settings: the
 
 ## Get started: Agent Cost Analyzer (standalone app)
 
-The app runs from this repository and needs Node.js 22.18 or newer.
+Needs Node.js 22.18 or newer. The npm package is published from app 0.16.0;
+until that release is out, use [From source](#from-source-contributors).
+
+```sh
+npx agent-cost-analyzer
+```
+
+It starts the app on http://127.0.0.1:5199 and opens it in your browser. The
+server listens on your own machine only. If the app is already running, a
+second start opens that one; if another program holds port 5199, it takes the
+next free port and says which. Options:
+
+- `--port <n>` uses that port only (`0` takes any free port).
+- `--no-open` starts without opening a browser.
+- `--help` and `--version` do what they say. `npx agent-cost-analyzer@latest`
+  runs the newest release.
+
+Learn mode works straight away. Switch to Analyze mode and pick a source (VS
+Code Copilot Chat, Claude Code or pi) to see your own sessions. Claude Code
+and pi need no setup, because the app reads their session files directly.
+
+The app writes only its own settings folder: `~/.config/agent-cost-analyzer`
+on Linux (or under `XDG_CONFIG_HOME`),
+`~/Library/Application Support/agent-cost-analyzer` on macOS and
+`%APPDATA%\agent-cost-analyzer` on Windows. It holds your chosen provider,
+the retention threshold, your projects file and issued statements.
+
+![The standalone app in Learn mode, switched from Light to Dark: a scenario's turn table with cache reads and writes, and a compaction marker on one turn](docs/images/demo/w1-learn.gif)
+
+![The standalone app on load, with Learn and Analyze modes](docs/images/landing-page.png)
+
+### From source (contributors)
+
+To work on the app, or to install the pi logger, run it from a clone. This
+needs the whole dev tree (Vite, Playwright, esbuild).
 
 ```sh
 git clone https://github.com/raulkivi/agent-cost-analyzer.git
@@ -79,15 +113,8 @@ npm install
 npm start
 ```
 
-`npm start` runs the app and opens it in your browser at
-http://127.0.0.1:5173. Learn mode works straight away. Switch to Analyze mode
-and pick a source (VS Code Copilot Chat, Claude Code or pi) to see
-your own sessions. Claude Code and pi need no setup, because the app reads
-their session files directly.
-
-![The standalone app in Learn mode, switched from Light to Dark: a scenario's turn table with cache reads and writes, and a compaction marker on one turn](docs/images/demo/w1-learn.gif)
-
-![The standalone app on load, with Learn and Analyze modes](docs/images/landing-page.png)
+`npm start` runs the Vite dev server and the API with reload, and opens
+http://127.0.0.1:5173.
 
 More: [setup and data sources](docs/standalone-app.md) (where each tool keeps
 its logs, the Copilot Chat settings, a one-paste setup prompt for an AI coding
@@ -109,7 +136,9 @@ Claude Desktop shows a month's cost for every provider at once, and opens the vi
 
 - Extension: turn on the `aiCreditsAnalyzer.mcp.enabled` setting. See
   [the MCP server for Copilot agent mode](docs/vscode-extension-guide.md#the-mcp-server-for-copilot-agent-mode).
-- Standalone app: see
+- Standalone app, from app 0.16.0: `claude mcp add agent-cost-analyzer -- npx -y --prefer-offline agent-cost-analyzer mcp`.
+  `--prefer-offline` starts the cached copy at once when the npm registry is
+  unreachable. Other clients, Windows and an offline install: see
   [Querying the audit from Claude Code (MCP)](docs/UserGuide.md#querying-the-audit-from-claude-code-mcp)
   and [Interactive views in the chat](docs/UserGuide.md#interactive-views-in-the-chat).
 
@@ -133,6 +162,7 @@ What the extension reads, file by file:
 - [Extension guide](docs/vscode-extension-guide.md): install, use and
   configure the extension.
 - [Standalone app setup and data sources](docs/standalone-app.md)
+- [npm package](https://www.npmjs.com/package/agent-cost-analyzer) (from app 0.16.0)
 - [Extension changelog](packages/vscode-extension/CHANGELOG.md) and
   [app changelog](CHANGELOG.md)
 - [Releases](https://github.com/raulkivi/agent-cost-analyzer/releases)
