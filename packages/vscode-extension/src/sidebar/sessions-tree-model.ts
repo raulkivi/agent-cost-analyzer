@@ -1,10 +1,10 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import type { Session } from "@agent-cost-analyzer/domain";
+import { dayKeyOf, type Session } from "@agent-cost-analyzer/domain";
 import { COMMAND_IDS } from "../commands/command-ids.js";
 import { identityTranslate, type Translate } from "../l10n/localize.js";
 import type { MonthlyAllowanceView } from "../status-bar/monthly-allowance.js";
-import { dayKeyOf, previousDayKey, timeOfDayOf } from "../time/local-time.js";
+import { previousDayKey, timeOfDayOf } from "../time/local-time.js";
 
 // The Sessions tree as plain data (vscode-extension.md D10, step 10.6). Pure
 // and free of `vscode`: vscode/vscode-sessions-view.ts turns these nodes into

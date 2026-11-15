@@ -1,8 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import type { Session } from "@agent-cost-analyzer/domain";
+import type { AllowanceSettings, Session } from "@agent-cost-analyzer/domain";
 import { describe, expect, it } from "vitest";
-import type { AllowanceSettings } from "../settings/allowance-settings.js";
 import { SidebarController } from "../sidebar/sidebar-controller.js";
 import { registerStatusBar, type StatusBarItemLike, type VscodeStatusBarApi } from "./vscode-status-bar.js";
 

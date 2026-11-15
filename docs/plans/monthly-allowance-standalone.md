@@ -157,11 +157,11 @@ Their tests (`billing-period.test.ts`, `monthly-allowance.test.ts`, `session-cre
 | `settings` | `{ aiCredits, resetDay, warnAtPercent }` as read |
 | `state` | `not-set`, `no-source`, `no-sessions`, `unknown`, `known` |
 | `period` | `{ startKey, endKeyExclusive, timeZone, daysLeft, dayOfPeriod }` |
-| `figures` | with `known`: `level`, `used`, `atLeast`, `percent`, `remaining`, `coverage`, `countedSinceKey`; with `unknown` and `no-sessions`: `coverage` only |
+| `figures` | with `known`: `level`, `used`, `atLeast`, `percent`, `remaining`, `coverage`, `countedSinceKey`; with `unknown`: `coverage` and `countedSinceKey` (the oldest session, as the extension's tooltip shows it); with `no-sessions`: `coverage` only; none with `not-set` and `no-source` |
 | `source` | `{ providerId: "vscode", available, reason?, variant: "VS Code" \| "VS Code Insiders" \| null, byHarness: [{ harness, known, total, used \| null }] }` |
 | `asOf` | the instant computed |
 
-No session id, title, path or repository name is in it.
+No session id, title, path or repository name is in it: every object is strict. The top level stays one object (an MCP tool's output schema must be one), so the schema's refinement, not a union, ties each state to its figures: `not-set` exactly when `aiCredits` is null, `no-source` exactly when the source is unavailable, `known` needs a session with cost data and its "at least" flag matches the coverage, `unknown` has sessions and none with cost data, and a harness has `used` exactly when one of its sessions has cost data.
 
 ### 4.7 Where the gauge shows
 
@@ -228,7 +228,7 @@ TDD in every code task: the failing test is written and seen red first ([CLAUDE.
 | ID | Task | Exit | Complexity | Model | Depends on |
 |---|---|---|---|---|---|
 | MS0 | Mock-up boards (§5), light and dark | Boards in `docs/plans/mockups/monthly-allowance-standalone/`; owner approval recorded here. **Done 2026-11-15: boards approved by the owner (with the two tweaks).** | medium | Sonnet (frontend-design skill) + owner | D2, D3, D4, D6 accepted |
-| MS1 | Move the pure logic to `packages/domain/src/allowance/`: `periodOf`, `dayKeyOf`, `dayStartInstant`, `knownSum`, `billedCredits`, `knownCredits`, `computeMonthlyAllowance` (figures), `AllowanceSettings`, defaults, the lenient parser, `allowanceSettingsWriteSchema`, `monthlyAllowanceAnswerSchema`. The extension imports them; its `buildMonthlyAllowance` becomes text over the figures | Domain tests green (moved tests red first against the empty module); every extension allowance test unchanged and green; `bundle-load.test.ts` and the bundle-boundary test green | high | Opus | D8 |
+| MS1 | **Done 2026-11-15.** Move the pure logic to `packages/domain/src/allowance/`: `periodOf`, `dayKeyOf`, `dayStartInstant`, `knownSum`, `billedCredits`, `knownCredits`, `computeMonthlyAllowance` (figures), `AllowanceSettings`, defaults, the lenient parser, `allowanceSettingsWriteSchema`, `monthlyAllowanceAnswerSchema`. The extension imports them; its `buildMonthlyAllowance` becomes text over the figures | Domain tests green (moved tests red first against the empty module); every extension allowance test unchanged and green; `bundle-load.test.ts` and the bundle-boundary test green | high | Opus | D8 |
 | MS2 | `describeMonthlyAllowance` (shared wording) in domain; the extension's text built from it | Extension strings byte-identical (its tests unchanged); domain wording tests for each state | medium | Sonnet | MS1 |
 | MS3 | `AllowanceSettingsStore` port, `FileAllowanceSettingsStore` over `settings.json`; the shared writer made atomic (temp 0600, rename) | Store contract test (round trip, other keys kept in both orders, corrupt file reads "not set", out-of-range reads default); `app-settings.test.ts` and the `AppSettingsStore` contract still green | medium | Sonnet | MS1, D1, D10 |
 | MS4 | `MonthlyAllowanceService`, the `ApiService` methods, both routes, `ProductFeatures.monthlyAllowance`, the variant label from the resolved user-data dir | `app.monthly-allowance.test.ts`: every state of §4.6; active provider pi still counts VS Code sessions; 400 cases (0, -1, NaN as string, 29, 101, unknown key, form body) write nothing; extension `ApiService` 404; hostile title absent | medium | Sonnet | MS1, MS3 |

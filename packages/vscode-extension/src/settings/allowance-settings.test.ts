@@ -1,12 +1,8 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
+import { DEFAULT_RESET_DAY, DEFAULT_WARN_AT_PERCENT } from "@agent-cost-analyzer/domain";
 import { describe, expect, it } from "vitest";
-import {
-  ALLOWANCE_SETTING_IDS,
-  DEFAULT_RESET_DAY,
-  DEFAULT_WARN_AT_PERCENT,
-  readAllowanceSettings,
-} from "./allowance-settings.js";
+import { ALLOWANCE_SETTING_IDS, readAllowanceSettings } from "./allowance-settings.js";
 
 const reader = (values: Record<string, unknown>) => ({ get: (id: string) => values[id] });
 const withValue = (key: keyof typeof ALLOWANCE_SETTING_IDS, value: unknown) => readAllowanceSettings(reader({ [ALLOWANCE_SETTING_IDS[key]]: value }));

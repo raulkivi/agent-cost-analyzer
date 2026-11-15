@@ -549,3 +549,5 @@ export {
   type SavingsTool,
 } from "./savings.js";
 export { SAVINGS_ACTION_PARAMS, savingsActionText } from "./savings-actions.js";
+// The monthly allowance module lists its exports in its own index.
+export * from "./allowance/index.js";

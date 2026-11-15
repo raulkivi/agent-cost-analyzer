@@ -1,8 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import type { ConfigStatus, Session } from "@agent-cost-analyzer/domain";
+import type { AllowanceSettings, ConfigStatus, Session } from "@agent-cost-analyzer/domain";
 import { describe, expect, it, vi } from "vitest";
-import type { AllowanceSettings } from "../settings/allowance-settings.js";
 import { SidebarController, type SidebarSources } from "./sidebar-controller.js";
 
 const NOW = new Date("2026-10-24T15:00:00Z");

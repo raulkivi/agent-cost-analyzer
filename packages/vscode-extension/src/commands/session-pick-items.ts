@@ -1,9 +1,9 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import type { Session } from "@agent-cost-analyzer/domain";
+import { dayKeyOf, type Session } from "@agent-cost-analyzer/domain";
 import { identityTranslate, type Translate } from "../l10n/localize.js";
 import { formatAiCredits, startOf } from "../sidebar/sessions-tree-model.js";
-import { dayKeyOf, timeOfDayOf } from "../time/local-time.js";
+import { timeOfDayOf } from "../time/local-time.js";
 
 // One row of the Open Session picker; the shape of vscode.QuickPickItem plus
 // the id the row stands for.

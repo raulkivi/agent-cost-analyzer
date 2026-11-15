@@ -1,11 +1,10 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import { isLocalRepositoryKey, repositoryFolderLabel, type ConfigWarning, type Session } from "@agent-cost-analyzer/domain";
+import { dayKeyOf, isLocalRepositoryKey, knownSum, repositoryFolderLabel, type ConfigWarning, type Session } from "@agent-cost-analyzer/domain";
 import type { RepositoryOf } from "../sidebar/sessions-by-repository-tree-model.js";
 import { identityTranslate, type Translate } from "../l10n/localize.js";
 import { COMMAND_IDS, FOCUS_SETUP_VIEW_COMMAND } from "../commands/command-ids.js";
-import { dayKeyOf } from "../time/local-time.js";
-import { knownSum, sessionStartedOn } from "./session-credits.js";
+import { sessionStartedOn } from "./session-credits.js";
 
 // What the status-bar item shows (vscode-extension.md D10, step 10.6). Pure
 // and free of `vscode`: vscode/vscode-status-bar.ts applies it to the item.
