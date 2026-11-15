@@ -1,6 +1,6 @@
 # Subagent tool calls in the tool-call audit (step 10.20)
 
-**Last changed:** 2026-11-14 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-15 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 Status: **Plan approved 2026-11-14** (D1–D11 accepted). A 1.0 criterion, C10 in
 [implementation-plan.md](../implementation-plan.md#100-release) (tasks V21
@@ -204,7 +204,7 @@ const auditedRunSchema = z.object({
   turnIndex: z.number(),
   totals: outcomeTotalsSchema.nullable(),     // null = unread, never 0
   failureRate: failureRateSchema,
-  unreadReason: z.string().optional(),        // set iff totals is null
+  unreadReason: z.string().optional(),        // set when totals is null; may also accompany known totals (flag)
 });
 
 sessionAuditSchema.extend({
@@ -270,7 +270,8 @@ D4); its unread rules from CS §6; the `Agent-…` label (CS4).
   `origin.depth` unknown: the call is listed with `kind: "subagent"`,
   `runId` from its own `parentToolCallId`, depth 1, and the run's
   `unreadReason` "the call that started this subagent run is not in the
-  log", so the run's totals stay visible but flagged.
+  log", so the run's totals stay visible but flagged (§5.1: `unreadReason`
+  may accompany known totals).
 - Order (D2): main-agent calls first in source order, then each run's
   calls in run start order.
 
@@ -409,6 +410,7 @@ Decided 2026-11-14: the owner accepted each recommendation.
 | D9 | MCP default for `origin` | Both: a client that doesn't know `origin` still gets true totals |
 | D10 | Order with CS14 | This step builds the shape, builders, MCP and UI with Copilot data; CS14 (after CS10) only adds the Claude Code reader |
 | D11 | Release | The next extension and app release after the build, before 1.0.0. CHANGELOG: audit counts rise in sessions with runs; classic outcomes become known; new findings may appear; Agent Host call order changes |
+| D12 | Run flagged but with known totals | Decided 2026-11-15: totals plus flag. `unreadReason` is required when `totals` is null and may also accompany known totals (a run whose start call is missing); the UI shows the totals and a separate flag line |
 
 ## 9. Threat-model rows (`docs/threat-model.md`)
 
@@ -484,7 +486,7 @@ model in this repo. Specs and the real-data suite are TDD exceptions as in
 | ST0 | **Done 2026-11-14 (§4).** Spike: read-only counts over classic debug logs and Agent Host event logs | Findings in §4 | medium | Opus | — |
 | ST0b | Open points (§14): `explore_subagent` (does it run tools, where are they logged); the cancelled run's 24 vs 26; the server classifier over the 97 classic error texts (category counts only); Copilot Chat 0.74+ still writing child logs | §4 and §14 updated; D5 confirmed or changed | low | Sonnet | — |
 | ST1 | Threat-model rows (§9) in `docs/threat-model.md` §4 before reader code | Rows merged | low | Haiku | Plan approved |
-| ST2 | Mock-ups (§5.7): Audit tab split and runs table, rollup split, Explanation block, Tools cell tooltip, finding row, U4; known, unread, matched-by-time; light, dark, High Contrast; 320 and 640 px; in `docs/plans/mockups/subagent-tool-audit/` | Owner approves | medium | Sonnet (frontend-design skill) + owner | Plan approved |
+| ST2 | **Done 2026-11-15: boards approved by the owner.** Mock-ups (§5.7): Audit tab split and runs table, rollup split, Explanation block, Tools cell tooltip, finding row, U4; known, unread, matched-by-time; light, dark, High Contrast; 320 and 640 px; in `docs/plans/mockups/subagent-tool-audit/` | Owner approves | medium | Sonnet (frontend-design skill) + owner | Plan approved |
 | ST3 | Domain (§5.1): `subagent-run-ids.ts`, `toolCallOriginSchema`, `ToolCallRecord.origin`, audit, rollup, insight row and finding fields | Schema tests: valid, absent = main, depth bounds, hostile label and id rejected; Learn and 10.19 fixtures still parse; CS plan checked against the shape | medium | Sonnet | D1, D8 |
 | ST4 | Fixtures: classic child logs with `ok`/`error` spans (an error text per failure category, a shell call), missing and unreadable log, nested ref, `searchSubagent` without parent call, `explore_subagent` without log, an id in parent and child; Agent Host log with `task` and `search_code_subagent` runs, depth 2, a cancelled run, a refused permission | A test reads each and finds the expected counts | medium | Sonnet | ST0b |
 | ST5 | `tool-kind-resolver.ts`: `searchsubagent`, `search_code_subagent`, `explore_subagent` → `subagent` | Resolver tests | low | Haiku | — |

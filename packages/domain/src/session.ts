@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
 import { z } from "zod";
+import { turnCostFiguresSchema } from "./cost-figure.js";
+import { subagentTokensSchema } from "./subagent-summary.js";
 import { systemPromptComponentSchema } from "./system-prompt-component.js";
 import { tokenCountSchema } from "./token-count.js";
 import { toolInventoryEntrySchema } from "./tool-inventory-entry.js";
@@ -33,6 +35,10 @@ export type CopilotEventLogStatus = z.infer<typeof copilotEventLogStatusSchema>;
 export const subagentSpendSchema = z.object({
   runs: z.number().int().nonnegative(),
   costAiCredits: tokenCountSchema,
+  // Step CS4 (D13): tokens and a priced cost, so a provider without AI
+  // Credits shows a figure. Absent: not computed (Copilot classic).
+  tokens: subagentTokensSchema.optional(),
+  cost: turnCostFiguresSchema.optional(),
 });
 
 export type SubagentSpend = z.infer<typeof subagentSpendSchema>;
