@@ -1,0 +1,13 @@
+{
+  "v": 3,
+  "createdOnFiles": { "v": 1, "at": "2026-11-15T12:00:00Z" },
+  "title": "Claude Code subagent mock-ups (CS2)",
+  "launch": { "view": "canvas" },
+  "pages": [],
+  "boards": {
+    "TurnsTable.dc.html": { "x": 0, "y": 0, "w": 1440, "h": 1500, "title": "1 · Turns table: marker and tooltip, no AI Credits" },
+    "ExplanationPanel.dc.html": { "x": 0, "y": 1800, "w": 1440, "h": 2400, "title": "2 · Explanation panel: Subagent runs, tokens and priced cost" },
+    "KpiSubLine.dc.html": { "x": 0, "y": 4500, "w": 1440, "h": 2100, "title": "3 · KPI tiles: Priced cost sub-line" },
+    "U1TurnDetail.dc.html": { "x": 0, "y": 6900, "w": 1440, "h": 1900, "title": "4 · MCP App U1 turn detail with runs" }
+  }
+}

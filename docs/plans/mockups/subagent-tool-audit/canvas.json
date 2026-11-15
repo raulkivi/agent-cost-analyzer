@@ -1,0 +1,56 @@
+{
+  "v": 3,
+  "createdOnFiles": {
+    "v": 1,
+    "at": "2026-11-15T12:00:00Z"
+  },
+  "title": "Subagent tool-call audit mock-ups (ST2)",
+  "launch": {
+    "view": "canvas"
+  },
+  "pages": [],
+  "boards": {
+    "AuditTab.dc.html": {
+      "x": 0,
+      "y": 0,
+      "w": 1160,
+      "h": 9493,
+      "title": "1 \u00b7 Audit tab: split, Agent filter and column, runs table"
+    },
+    "AuditRollup.dc.html": {
+      "x": 0,
+      "y": 9793,
+      "w": 1160,
+      "h": 4940,
+      "title": "2 \u00b7 Audit rollup: totals split and unread runs"
+    },
+    "ExplanationBlock.dc.html": {
+      "x": 0,
+      "y": 15033,
+      "w": 1160,
+      "h": 6903,
+      "title": "3 \u00b7 Explanation panel: runs with their calls"
+    },
+    "ToolsCell.dc.html": {
+      "x": 0,
+      "y": 22236,
+      "w": 1160,
+      "h": 2775,
+      "title": "4 \u00b7 Turns table: Tools cell"
+    },
+    "FindingRow.dc.html": {
+      "x": 0,
+      "y": 25311,
+      "w": 1160,
+      "h": 3972,
+      "title": "5 \u00b7 Findings: rows naming the run"
+    },
+    "U4AuditView.dc.html": {
+      "x": 0,
+      "y": 29583,
+      "w": 1160,
+      "h": 4666,
+      "title": "6 \u00b7 MCP App U4 audit view"
+    }
+  }
+}
