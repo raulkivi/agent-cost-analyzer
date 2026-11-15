@@ -154,6 +154,14 @@ describe("GET /api/health", () => {
     expect(response.status).toBe(200);
     expect(response.body).toEqual({ app: "agent-cost-analyzer", status: "ok", version: "0.15.0" });
   });
+
+  // Mounted in the npm package's server (web-app-server.ts), this app's own
+  // default would put the header back on every response it passes through.
+  it("names no framework in an X-Powered-By header", async () => {
+    const response = await request(createApp()).get("/api/health");
+
+    expect(response.headers["x-powered-by"]).toBeUndefined();
+  });
 });
 
 describe("Host header guard (DNS rebinding, architecture.md §11.2)", () => {
