@@ -26,7 +26,7 @@ const base = {
 const known: MonthlyAllowanceAnswer = {
   ...base,
   state: "known",
-  figures: { level: "near", used: 812.4, atLeast: true, percent: 81, remaining: 187.6, coverage: { known: 13, total: 20 }, countedSinceKey: "2026-11-02" }, // codespell:ignore atleast
+  figures: { level: "near", used: 812.4, atLeast: true, percent: 81, remaining: 187.6, coverage: { known: 13, total: 20 }, countedSinceKey: "2026-11-02" },
 };
 const unknown: MonthlyAllowanceAnswer = { ...base, state: "unknown", figures: { coverage: { known: 0, total: 3 }, countedSinceKey: "2026-11-02" } };
 const noSessions: MonthlyAllowanceAnswer = { ...base, state: "no-sessions", figures: { coverage: { known: 0, total: 0 } } };
@@ -51,12 +51,12 @@ describe("monthlyAllowanceAnswerSchema", () => {
   });
 
   it("accepts an exact sum (not 'at least') when every session has cost data", () => {
-    expect(accepts({ ...known, figures: { ...known.figures, atLeast: false, coverage: { known: 20, total: 20 } } })).toBe(true); // codespell:ignore atleast
+    expect(accepts({ ...known, figures: { ...known.figures, atLeast: false, coverage: { known: 20, total: 20 } } })).toBe(true);
   });
 
   describe("unknown is never 0", () => {
     it("rejects a known answer with no session that has cost data", () => {
-      expect(accepts({ ...known, figures: { ...known.figures, used: 0, atLeast: false, coverage: { known: 0, total: 3 } } })).toBe(false); // codespell:ignore atleast
+      expect(accepts({ ...known, figures: { ...known.figures, used: 0, atLeast: false, coverage: { known: 0, total: 3 } } })).toBe(false);
     });
 
     it("rejects a figure (used, percent, remaining or level) in the unknown and no-sessions states", () => {
@@ -72,8 +72,8 @@ describe("monthlyAllowanceAnswerSchema", () => {
     });
 
     it("rejects 'at least' that does not match the coverage", () => {
-      expect(accepts({ ...known, figures: { ...known.figures, atLeast: false } })).toBe(false); // codespell:ignore atleast
-      expect(accepts({ ...known, figures: { ...known.figures, atLeast: true, coverage: { known: 20, total: 20 } } })).toBe(false); // codespell:ignore atleast
+      expect(accepts({ ...known, figures: { ...known.figures, atLeast: false } })).toBe(false);
+      expect(accepts({ ...known, figures: { ...known.figures, atLeast: true, coverage: { known: 20, total: 20 } } })).toBe(false);
     });
 
     it("rejects more known sessions than sessions, in the figures and in a harness", () => {

@@ -121,6 +121,45 @@ describe("savingsOpportunitySchema", () => {
     expect(() => savingsOpportunitySchema.parse(opportunity({ kind: "cheaper-model" }))).toThrow(/simulated/);
   });
 
+  // V24 (savings-increment-3.md §4): each session reference carries its date
+  // and its own saving over the window, with the row's basis, label and currency.
+  describe("session date and saving (V24)", () => {
+    const ref = (extra: Record<string, unknown>) => ({ providerId: "claude-code", sessionId: "s1", ...extra });
+    const withRefs = (...sessions: Record<string, unknown>[]) => opportunity({ sessions: sessions as SavingsOpportunity["sessions"] });
+
+    it("accepts a session with a start time and a saving", () => {
+      const parsed = savingsOpportunitySchema.parse(withRefs(ref({ startedAt: "2026-11-11T09:30:00.000Z", perWindow: { ...range, low: 1, high: 2 } })));
+      expect(parsed.sessions[0]).toEqual(ref({ startedAt: "2026-11-11T09:30:00.000Z", perWindow: { ...range, low: 1, high: 2 } }));
+    });
+
+    it("keeps both fields optional, so a reference without them still parses", () => {
+      expect(() => savingsOpportunitySchema.parse(withRefs(ref({})))).not.toThrow();
+    });
+
+    it("rejects a start time that is not an ISO timestamp", () => {
+      expect(() => savingsOpportunitySchema.parse(withRefs(ref({ startedAt: "yesterday" })))).toThrow();
+    });
+
+    it("accepts an unknown session saving with its reason (never 0)", () => {
+      expect(() => savingsOpportunitySchema.parse(withRefs(ref({ perWindow: { known: false, reason: "No price." } })))).not.toThrow();
+      expect(() => savingsOpportunitySchema.parse(withRefs(ref({ perWindow: { known: false } })))).toThrow();
+    });
+
+    it("rejects a session saving whose label differs from the row's", () => {
+      expect(() => savingsOpportunitySchema.parse(withRefs(ref({ perWindow: { ...upperBound, high: 1 } })))).toThrow(/label/);
+    });
+
+    it("rejects a session saving whose basis or currency differs from the row's", () => {
+      expect(() => savingsOpportunitySchema.parse(withRefs(ref({ perWindow: { ...range, currency: "AI_CREDITS" } })))).toThrow(/currency/);
+      expect(() => savingsOpportunitySchema.parse(withRefs(ref({ perWindow: { ...simulated } })))).toThrow(/basis|simulated/);
+    });
+
+    it("rejects a known session saving under a row whose amount is unknown", () => {
+      const unknown = { known: false, reason: "No price." } as const;
+      expect(() => savingsOpportunitySchema.parse({ ...withRefs(ref({ perWindow: range })), perWeek: unknown, perWindow: unknown })).toThrow(/unknown/);
+    });
+  });
+
   describe("simulation (a cheaper-model replay's self-check, coverage and assumptions)", () => {
     const sim = simulated as SavingsOpportunity["perWeek"];
     const simulation = {

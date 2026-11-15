@@ -70,6 +70,15 @@ inEachClaudeSet(() => {
     await expect(detail.getByRole("heading", { level: 3, name: "Largest 3 of 11 sessions, over the 30 days" })).toBeVisible();
     // The tool lists sessions largest first (D16); the view keeps that order.
     expect(await detail.locator(".sv-id").allTextContents()).toEqual(idleRow.sessions.map((session) => session.sessionId));
+    // V24 (D19): each session's date and saving beside its id; the unpriced one says Not priced, its reason once; no title.
+    const sessions = detail.getByRole("region", { name: "Sessions" });
+    const items = sessions.getByRole("listitem");
+    await expect(items.nth(0)).toContainText("up to 61.2 AI Credits");
+    await expect(items.nth(0)).toContainText(/Nov 1[01]/);
+    await expect(items.nth(1)).toContainText("up to 40.5 AI Credits");
+    await expect(items.nth(2)).toContainText("date unknown");
+    await expect(items.nth(2)).toContainText("Not priced");
+    await expect(sessions.getByText(/no price for gpt-5\.1-codex on 2026-10-22/)).toHaveCount(1);
     await expect(detail).toContainText("Prices: github-copilot@2026-10-01");
     await expect(detail.getByRole("button", { name: /copy/i })).toHaveCount(0);
     expect(await view.axeViolations()).toEqual([]);

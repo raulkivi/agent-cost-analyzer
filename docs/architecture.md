@@ -372,17 +372,22 @@ interface ToolCallRecord {
   roundIndex?: number; // which LLM round in the turn issued it
   filesTouched?: string[]; // Analyze mode only
   tokenCount?: TokenCount; // Analyze mode only
+  origin?: ToolCallOrigin; // step 10.20: absent = main agent
 }
 
 // Phase 9.10 (plans/tool-call-audit.md). "unknown" requires a reason
 // (constraint 6); only error/interrupted/denied carry a failureCategory.
 interface ToolCallOutcome {
-  status: "success" | "error" | "interrupted" | "denied" | "unknown";
+  status: "success" | "error" | "interrupted" | "denied" | "unknown" | "canceled"; // canceled: a user stop, no failureCategory
   reason?: string;
   exitCode?: number; // only when the source states it explicitly
   failureCategory?: FailureCategory; // command-not-found, wrong-directory, invalid-arguments, dependency-missing, git-state, …
   classificationEvidence?: { ruleId: string; excerpt: string /* ≤ 200 chars, redacted */ };
 }
+// ToolCallOrigin = { kind: "main" } | { kind: "subagent", runId, label, depth: 1-8,
+// parentRunId?, startedByCallId? } (tool-call-origin.ts; run id and label patterns
+// in subagent-run-ids.ts, shared with the cost side). SessionAudit.byOrigin /
+// subagentRuns and AuditRollup.byOrigin split the totals by origin.
 // SessionAudit / AuditRollup (packages/domain/src/session-audit.ts) are
 // server-computed aggregates over these records — see §8's audit endpoints.
 // InsightsDataset (packages/domain/src/insights.ts, Phase 9.11) flattens
@@ -476,14 +481,23 @@ Classic subagent runs (step 10.19, `packages/domain`;
   (`runSubagent-<agent>` or `searchSubagent`), optional `agentName` (at most 64
   characters), `model`, `roundsCount`, the token fields and `costAiCredits`
   as `TokenCount`, optional `startedAt` and `attribution`
-  (`child-session-ref` or `timestamp`).
+  (`child-session-ref` or `timestamp`). Step CS4 adds, for Claude Code runs:
+  label `Agent` or `Agent-<agentType>`, `attribution` `tool-use-id`, optional
+  `parentRunId` (same pattern as `id`; absent: started by the main agent) and
+  optional `extendedCacheWrite` (1-hour cache writes). `ownTurnUsageSchema`
+  gains the same optional `extendedCacheWrite`. `subagentRunIdSchema` and
+  `subagentLabelSchema` are exported so step 10.20's origin shares them.
 - `TurnUsage.subagents` (the runs read) and `TurnUsage.ownUsage` (the main
   agent's own token fields, `costAiCredits` and `model`) are present
   together or not at all. The turn's other fields are everything billed for
   the turn: own plus the runs, unknown when any part is. `tool`, `vision`,
   `model` and `roundsCount` stay the main agent's.
 - `Session.subagentSpend { runs, costAiCredits }`: what the runs added, set
-  by `summarizeSessionUsage` for the list and the detail alike.
+  by `summarizeSessionUsage` for the list and the detail alike. Step CS4 adds
+  optional `tokens` (`SubagentTokens`: four `TokenCount`s) and `cost`
+  (`TurnCostFigures`) here, on `SessionCost.subagents` (tokens as
+  `number | null`) and on `coverage.subagentRuns` of a replay, so a provider
+  without AI Credits shows a figure instead of "unknown".
 - `InsightTurnRow.lines`: `costLineSchema[]`, one per model (the main
   agent's, each run's, and an `unknown`-model line for an unread run), each
   with token figures, `aiCredits`, `cost` (`TurnCostFigures`), `subagent`

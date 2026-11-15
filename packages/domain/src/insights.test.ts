@@ -10,6 +10,7 @@ import {
   findingsQueryResultSchema,
   insightFindingSchema,
   insightSessionRowSchema,
+  insightToolCallRowSchema,
   insightsDatasetSchema,
   insightTurnRowSchema,
 } from "./insights.js";
@@ -371,5 +372,21 @@ describe("cost lines per model (step 10.19, plan §4.5)", () => {
   it("accepts a line's vendor, or an unknown vendor with its reason", () => {
     expect(costLineSchema.parse({ ...runLine, vendorId: "anthropic" }).vendorId).toBe("anthropic");
     expect(costLineSchema.parse({ ...runLine, vendorId: null, vendorUnknownReason: "unknown model" }).vendorId).toBeNull();
+  });
+});
+
+describe("tool-call origin on insight rows and findings (step 10.20)", () => {
+  const origin = { kind: "subagent", runId: "child-1", label: "Agent-Explore", depth: 1 } as const;
+
+  it("accepts an origin on a tool-call row and a finding, and leaves old rows valid", () => {
+    const dataset = sampleDataset();
+    expect(insightToolCallRowSchema.parse({ ...dataset.toolCalls[0]!, origin }).origin).toEqual(origin);
+    expect(insightFindingSchema.parse({ ...dataset.findings[0]!, origin }).origin).toEqual(origin);
+    expect(insightToolCallRowSchema.parse(dataset.toolCalls[0]!).origin).toBeUndefined();
+  });
+
+  it("rejects a hostile label on a row", () => {
+    const row = { ...sampleDataset().toolCalls[0]!, origin: { ...origin, label: "<script>" } };
+    expect(insightToolCallRowSchema.safeParse(row).success).toBe(false);
   });
 });

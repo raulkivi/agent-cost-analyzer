@@ -5,7 +5,10 @@ import type { SavingsOpportunity, SavingsReport } from "@agent-cost-analyzer/dom
 import { axeViolations } from "../support/axe.js";
 import { chooseOption, expect, openDashboard, test } from "../support/app-fixture.js";
 import { FIXTURE_NOW } from "../support/fixture-clock.js";
-import { expectedListName, expectedRow } from "../support/savings-text.js";
+import { expectedListName, expectedRow, expectedSessionDate, expectedSessionSaving } from "../support/savings-text.js";
+
+// Dates read in the viewer's time zone; the spec pins it so they are the API's UTC day.
+test.use({ timezoneId: "UTC" });
 
 // Scenario SV1, "Find what to change" (docs/plans/savings-report.md §10 SR15,
 // boards Dashboard, Detail, Narrow): open Dashboard > Savings, read the
@@ -106,6 +109,15 @@ test("SV1: a row opens its detail with the API's figures; Copy puts the action t
   await expect(detail).toContainText("An upper bound: the most it could be. No lower end is claimed.");
   await expect(detail.getByRole("region", { name: "Evidence" })).toContainText(`${opportunity.evidence.sessions}`);
   await expect(detail.getByRole("link", { name: `Open in Analyze: ${sessionId}` }).or(detail.getByRole("button", { name: `Open in Analyze: ${sessionId}` }))).toBeVisible();
+  // V24: each shown session's date and saving are the API's (the browser runs in UTC).
+  const sessions = detail.getByRole("region", { name: "Sessions" });
+  await expect(sessions).toContainText(`saving over the ${report.window.days} days`);
+  for (const [index, session] of opportunity.sessions.slice(0, 5).entries()) {
+    const item = sessions.getByRole("listitem").nth(index);
+    await expect(item).toContainText(session.sessionId);
+    await expect(item).toContainText(expectedSessionDate(session.startedAt));
+    await expect(item).toContainText(expectedSessionSaving(session.perWindow));
+  }
   await expect(detail.getByText("Suggestion only. This app does not change settings or files.")).toBeVisible();
   const versions = detail.locator("details", { hasText: /^Price versions \(\d+\)/ });
   await expect(versions).toBeVisible();

@@ -9,6 +9,8 @@ packages/vscode-extension/media/
 # The npm package's generated files (packages/cli/scripts/build.mts); its dist/ and build/ (metafile) are ignored above
 packages/cli/THIRD-PARTY-NOTICES.md
 packages/cli/LICENSE
+# The extension's generated notices (packages/vscode-extension/scripts/build.mts)
+packages/vscode-extension/THIRD-PARTY-NOTICES.md
 # The packaged extension (npm run package, step 10.9)
 *.vsix
 # The extension's integration-test bundles, and @vscode/test-cli's VS Code downloads

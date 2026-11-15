@@ -26,7 +26,7 @@ export interface MonthlyAllowanceFigures {
   // null when none of them has cost data (unknown is never 0).
   used: number | null;
   // Some sessions have no cost data, so `used` is a lower bound.
-  atLeast: boolean; // codespell:ignore atleast
+  atLeast: boolean;
   // Whole percent, rounded down so it never reads above the level; null
   // with `used`.
   percent: number | null;
@@ -96,7 +96,7 @@ export function computeMonthlyAllowance({ sessions, now, timeZone, settings }: M
     level: levelOf(percentExact, settings.warnAtPercent),
     allowance,
     used,
-    atLeast: used !== null && sum.known < total, // codespell:ignore atleast
+    atLeast: used !== null && sum.known < total,
     percent: used === null ? null : Math.floor(percentExact),
     remaining: used === null ? null : Math.max(0, roundToCents(allowance - used)),
     daysLeft: period.daysLeft,

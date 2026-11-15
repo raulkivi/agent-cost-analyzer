@@ -1,9 +1,9 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
 import { describe, expect, it } from "vitest";
-import { MAX_SAVINGS_NAME_LENGTH, savingsActionText, type SavingsActionParams, type SavingsOpportunityKind } from "@agent-cost-analyzer/domain";
+import { MAX_SAVINGS_NAME_LENGTH, savingsActionText, type SavingsActionParams, type SavingsAmount, type SavingsOpportunityKind } from "@agent-cost-analyzer/domain";
 import { upTo, CLAUDE_IDLE, FAILED_CALLS, IDLE_CACHE, makeSavingsReport, SIMULATED, UNPRICED_ROW, UNUSED_TOOLS, range, UNPRICED } from "../../test-support/savings-fixture.js";
-import { actionTextOf, amountText, barSegments, copyableText, coverageText, groupByCurrency, KIND_TITLES, perSessionText, windowAmountText } from "./savings-view.js";
+import { actionTextOf, amountText, barSegments, copyableText, coverageText, groupByCurrency, KIND_TITLES, notPricedReasons, perSessionText, sessionDateText, sessionSavingText, windowAmountText } from "./savings-view.js";
 
 describe("amountText (plan §7: a range or an upper bound, never a bare number)", () => {
   it("writes a range with both ends and the unit", () => {
@@ -69,6 +69,42 @@ describe("perSessionText (a Simulated amount per replayed session)", () => {
   it("is empty when no session was replayed or the amount is unknown", () => {
     expect(perSessionText({ ...SIMULATED, evidence: { ...SIMULATED.evidence, sessions: 0 } })).toBe("");
     expect(perSessionText({ ...SIMULATED, perWindow: UNPRICED })).toBe("");
+  });
+});
+
+// V24 (savings-increment-3.md §4, §10; boards Detail, States): each session's
+// date and saving over the window, with the row's label, never a bare number.
+describe("sessionDateText", () => {
+  it("writes the day in the viewer's time zone, without the year", () => {
+    expect(sessionDateText("2026-11-11T12:00:00.000Z", "UTC")).toBe("Nov 11");
+    expect(sessionDateText("2026-11-06T23:30:00.000Z", "Asia/Tokyo")).toBe("Nov 7");
+  });
+
+  it("says 'date unknown' when the log gave no start, never an empty cell", () => {
+    expect(sessionDateText(undefined)).toBe("date unknown");
+    expect(sessionDateText("not a date")).toBe("date unknown");
+  });
+});
+
+describe("sessionSavingText", () => {
+  const ref = (perWindow?: SavingsAmount) => ({ providerId: "vscode", sessionId: "s", ...(perWindow === undefined ? {} : { perWindow }) });
+
+  it("writes the saving over the window with the row's label and no 'per week'", () => {
+    expect(sessionSavingText(ref(range(3.9, 24)))).toBe("3.9–24.0 AI Credits");
+    expect(sessionSavingText(ref(upTo(1.2, "USD")))).toBe("up to $1.20");
+  });
+
+  it("says 'Not priced' for an unknown saving or none given, never 0", () => {
+    expect(sessionSavingText(ref(UNPRICED))).toBe("Not priced");
+    expect(sessionSavingText(ref())).toBe("Not priced");
+  });
+});
+
+describe("notPricedReasons", () => {
+  it("lists each distinct reason of an unknown saving once, in order", () => {
+    const unknown = (reason: string) => ({ providerId: "p", sessionId: reason, perWindow: { known: false as const, reason } });
+    expect(notPricedReasons([unknown("a"), { providerId: "p", sessionId: "k", perWindow: range(1, 2) }, unknown("b"), unknown("a")])).toEqual(["a", "b"]);
+    expect(notPricedReasons([{ providerId: "p", sessionId: "k", perWindow: range(1, 2) }])).toEqual([]);
   });
 });
 

@@ -26,6 +26,8 @@ import {
   writeUsageDebugLog,
 } from "../../../server/src/test-support/copilot-session-store.ts";
 
+import { piSessionFolder } from "./pi-session-folder.mts";
+
 export { FIXTURE_NOW } from "./fixture-clock.ts";
 
 const SERVER_FIXTURES = path.resolve(import.meta.dirname, "../../../server/fixtures");
@@ -91,7 +93,7 @@ function piSession(home: string, id: string, cwd: string, turns: PiTurn[]): void
     });
     parent = assistantId;
   });
-  const folder = `--${cwd.replace(/^\//, "").replace(/\//g, "-")}--`;
+  const folder = piSessionFolder(cwd);
   write(path.join(home, ".pi", "agent", "sessions", folder, `${start.replace(/[:.]/g, "-")}_${id}.jsonl`), `${lines.map((line) => JSON.stringify(line)).join("\n")}\n`);
 }
 

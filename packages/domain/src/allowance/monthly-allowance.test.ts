@@ -60,7 +60,7 @@ describe("computeMonthlyAllowance: the month's figures", () => {
       level: "normal",
       allowance: 1000,
       used: 312.4,
-      atLeast: false, // codespell:ignore atleast
+      atLeast: false,
       percent: 31,
       remaining: 687.6,
       daysLeft: 19,
@@ -73,7 +73,7 @@ describe("computeMonthlyAllowance: the month's figures", () => {
   it("never counts an unknown session as 0: the sum is a lower bound ('at least')", () => {
     expect(shown(compute([session(IN, 300), session(LATER, 12.4), session(LATER, null)]))).toMatchObject({
       used: 312.4,
-      atLeast: true, // codespell:ignore atleast
+      atLeast: true,
       percent: 31,
       remaining: 687.6,
       coverage: { known: 2, total: 3 },
@@ -84,7 +84,7 @@ describe("computeMonthlyAllowance: the month's figures", () => {
     expect(shown(compute([session(IN, null), session(LATER, null), session(LAST_MONTH, 40)]))).toMatchObject({
       level: "normal",
       used: null,
-      atLeast: false, // codespell:ignore atleast
+      atLeast: false,
       percent: null,
       remaining: null,
       coverage: { known: 0, total: 2 },
@@ -111,7 +111,7 @@ describe("computeMonthlyAllowance: the month's figures", () => {
   });
 
   it("reads a known 0 as 0 used, which is not unknown", () => {
-    expect(used(0)).toMatchObject({ used: 0, percent: 0, remaining: 1000, atLeast: false, coverage: { known: 1, total: 1 } }); // codespell:ignore atleast
+    expect(used(0)).toMatchObject({ used: 0, percent: 0, remaining: 1000, atLeast: false, coverage: { known: 1, total: 1 } });
   });
 
   it("rounds the sum to cents", () => {
@@ -143,8 +143,8 @@ describe("computeMonthlyAllowance: levels", () => {
   });
 
   it("keeps 'at least' at near and over when some sessions are unknown", () => {
-    expect(shown(compute([session(IN, 812.4), session(LATER, null)]))).toMatchObject({ level: "near", atLeast: true }); // codespell:ignore atleast
-    expect(shown(compute([session(IN, 1042.1), session(LATER, null)]))).toMatchObject({ level: "over", atLeast: true }); // codespell:ignore atleast
+    expect(shown(compute([session(IN, 812.4), session(LATER, null)]))).toMatchObject({ level: "near", atLeast: true });
+    expect(shown(compute([session(IN, 1042.1), session(LATER, null)]))).toMatchObject({ level: "over", atLeast: true });
   });
 
   it("warns at the user's percentage", () => {
@@ -183,7 +183,7 @@ describe("computeMonthlyAllowance: which sessions count", () => {
   });
 
   it("leaves out a session without a start, or with an unreadable one: it cannot be placed in a period", () => {
-    expect(shown(compute([session(IN, 5), session(undefined, 7), session("garbage", 9)]))).toMatchObject({ used: 5, atLeast: false, coverage: { known: 1, total: 1 } }); // codespell:ignore atleast
+    expect(shown(compute([session(IN, 5), session(undefined, 7), session("garbage", 9)]))).toMatchObject({ used: 5, atLeast: false, coverage: { known: 1, total: 1 } });
   });
 
   it("carries no session id or title, which is logged text", () => {

@@ -133,7 +133,7 @@ Their tests (`billing-period.test.ts`, `monthly-allowance.test.ts`, `session-cre
 ### 4.4 What the gauge counts
 
 - **Sessions:** `registry.getProvider("vscode").listSessions()`, whatever provider is active in the app (D5). Claude Code, pi and mitmproxy sessions never count; they record no billed AI Credits.
-- **One figure** for classic, Agent Host, Copilot CLI and empty-window sessions: one GitHub allowance pays for all of them. The details dialog splits it by harness (`copilotHarness`: "local" as "Copilot Chat", "agent-host" as "Agent Host and Copilot CLI"), each with its own known-of-total.
+- **One figure** for classic, Agent Host, Copilot CLI and empty-window sessions: one GitHub allowance pays for all of them. The details dialog splits it by harness (`copilotHarness`: "local" as "Copilot Chat", "agent-host" as "Agent Host and Copilot CLI"), each with its own known-of-total. A harness with no sessions in the period is not listed (owner decision 2026-11-15, MS0 review); `byHarness` omits it too.
 - **One VS Code variant:** the one `resolveUserDataDir()` picked. The details name it with a fixed label ("VS Code Insiders" or "VS Code"), never the path. With both installed the app counts Insiders only; the User Guide says so, and that the extension in each variant counts its own.
 - **Billed only:** `billedCredits` leaves out `estimated` values, which count as unknown (extension MA2).
 - **Whole sessions:** a session's `costAiCredits` is all-or-nothing (constraint 6); one unknown turn makes the session unknown and the sum "at least" (monthly-allowance.md D7, measured on the owner's data in its §14).
@@ -157,7 +157,7 @@ Their tests (`billing-period.test.ts`, `monthly-allowance.test.ts`, `session-cre
 | `settings` | `{ aiCredits, resetDay, warnAtPercent }` as read |
 | `state` | `not-set`, `no-source`, `no-sessions`, `unknown`, `known` |
 | `period` | `{ startKey, endKeyExclusive, timeZone, daysLeft, dayOfPeriod }` |
-| `figures` | with `known`: `level`, `used`, `atLeast`, `percent`, `remaining`, `coverage`, `countedSinceKey`; with `unknown`: `coverage` and `countedSinceKey` (the oldest session, as the extension's tooltip shows it); with `no-sessions`: `coverage` only; none with `not-set` and `no-source` | <!-- codespell:ignore atleast -->
+| `figures` | with `known`: `level`, `used`, `atLeast`, `percent`, `remaining`, `coverage`, `countedSinceKey`; with `unknown`: `coverage` and `countedSinceKey` (the oldest session, as the extension's tooltip shows it); with `no-sessions`: `coverage` only; none with `not-set` and `no-source` |
 | `source` | `{ providerId: "vscode", available, reason?, variant: "VS Code" \| "VS Code Insiders" \| null, byHarness: [{ harness, known, total, used \| null }] }` |
 | `asOf` | the instant computed |
 
@@ -176,7 +176,7 @@ No session id, title, path or repository name is in it: every object is strict. 
   - not set: a muted "Set monthly allowance" button; no figure, no colour, no banner (D6).
 - `aria-label` spells out everything, level sentence first when near or over (the extension's label without "Open Sessions."). Colour and any meter only add to the words. A meter, if the mock-up has one, never looks exact when the sum is "at least" (an open, dashed end) and is absent when unknown.
 - **Click or Enter opens a details dialog**, not a hover tooltip (keyboard and touch): the tooltip's lines (allowance, percent, "up to N remain", days left, period and zone, coverage, oldest session counted, "may be higher", "Only VS Code Copilot sessions recorded on this machine are counted"), the by-harness split, the VS Code variant, the missing-spend list in one line each (monthly-allowance.md §3.5), **Change allowance**, **Recount**. Focus returns to the gauge on close.
-- **Narrow windows:** the gauge keeps its figure and drops the level word to the details at the narrow breakpoint ([dense-ledger-ui.md](dense-ledger-ui.md) layout rules); no horizontal scroll at 320 px.
+- **Narrow windows:** the gauge keeps its figure and, for near and over, a short level word ("near" or "over") next to the meter at the narrow breakpoint ([dense-ledger-ui.md](dense-ledger-ui.md) layout rules); the full "near limit" stays in the details and the `aria-label`; no horizontal scroll at 320 px. Owner decision 2026-11-15 (MS0 review), replacing "drops the level word".
 - **Ledger theme:** mono text, hairline border, light and dark from the existing `[data-color-mode]` tokens; near and over use existing warning and error roles that pass the contrast tests (`theme-contrast.test.ts`). No new colour token unless the mock-up needs one, and then it passes 4.5:1 in both modes.
 - **Not on the Dashboard or in the session list** (D3): the Dashboard's tiles follow its selections, the gauge does not; the session list follows the active provider, the gauge does not.
 
@@ -227,7 +227,7 @@ TDD in every code task: the failing test is written and seen red first ([CLAUDE.
 
 | ID | Task | Exit | Complexity | Model | Depends on |
 |---|---|---|---|---|---|
-| MS0 | Mock-up boards (§5), light and dark | Boards in `docs/plans/mockups/monthly-allowance-standalone/`; owner approval recorded here | medium | Sonnet (frontend-design skill) + owner | D2, D3, D4, D6 accepted |
+| MS0 | Mock-up boards (§5), light and dark | Boards in `docs/plans/mockups/monthly-allowance-standalone/`; owner approval recorded here. **Done 2026-11-15: boards approved by the owner (with the two tweaks).** | medium | Sonnet (frontend-design skill) + owner | D2, D3, D4, D6 accepted |
 | MS1 | **Done 2026-11-15.** Move the pure logic to `packages/domain/src/allowance/`: `periodOf`, `dayKeyOf`, `dayStartInstant`, `knownSum`, `billedCredits`, `knownCredits`, `computeMonthlyAllowance` (figures), `AllowanceSettings`, defaults, the lenient parser, `allowanceSettingsWriteSchema`, `monthlyAllowanceAnswerSchema`. The extension imports them; its `buildMonthlyAllowance` becomes text over the figures | Domain tests green (moved tests red first against the empty module); every extension allowance test unchanged and green; `bundle-load.test.ts` and the bundle-boundary test green | high | Opus | D8 |
 | MS2 | `describeMonthlyAllowance` (shared wording) in domain; the extension's text built from it | Extension strings byte-identical (its tests unchanged); domain wording tests for each state | medium | Sonnet | MS1 |
 | MS3 | `AllowanceSettingsStore` port, `FileAllowanceSettingsStore` over `settings.json`; the shared writer made atomic (temp 0600, rename) | Store contract test (round trip, other keys kept in both orders, corrupt file reads "not set", out-of-range reads default); `app-settings.test.ts` and the `AppSettingsStore` contract still green | medium | Sonnet | MS1, D1, D10 |

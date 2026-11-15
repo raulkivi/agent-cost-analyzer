@@ -6,7 +6,7 @@ import { z } from "zod";
 // is a first-class status rather than an absent field so a provider whose
 // source records no outcome says so explicitly (constraint 6) instead of
 // being counted as a success.
-export const toolCallStatusSchema = z.enum(["success", "error", "interrupted", "denied", "unknown"]);
+export const toolCallStatusSchema = z.enum(["success", "error", "interrupted", "denied", "unknown", "canceled"]);
 
 export type ToolCallStatus = z.infer<typeof toolCallStatusSchema>;
 
@@ -24,6 +24,7 @@ export const failureCategorySchema = z.enum([
   "test-or-build-failure",
   "user-rejected",
   "blocked-by-policy", // harness permission rule / safety check, not the user
+  "already-exists", // create refused: the target exists (step 10.20, D13)
   "other-nonzero-exit",
   "unclassified",
 ]);
@@ -52,10 +53,11 @@ export const toolCallOutcomeSchema = z
     if (outcome.status === "unknown" && !outcome.reason) {
       ctx.addIssue({ code: "custom", message: "An unknown outcome must carry a reason.", path: ["reason"] });
     }
-    if ((outcome.status === "success" || outcome.status === "unknown") && outcome.failureCategory) {
+    if ((outcome.status === "success" || outcome.status === "unknown" || outcome.status === "canceled") &&
+      outcome.failureCategory) {
       ctx.addIssue({
         code: "custom",
-        message: "Only a failed, interrupted or denied call can carry a failure category.",
+        message: "Only an errored, interrupted or denied call can carry a failure category.",
         path: ["failureCategory"],
       });
     }

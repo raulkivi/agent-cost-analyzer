@@ -7,7 +7,19 @@
       "sessions": [
         {
           "providerId": "vscode",
-          "sessionId": "cp"
+          "sessionId": "cp",
+          "startedAt": "2026-10-15T12:00:00.000Z",
+          "perWindow": {
+            "known": true,
+            "currency": "AI_CREDITS",
+            "low": 0.015,
+            "high": 0.14999999999999997,
+            "basis": "priced",
+            "label": "range",
+            "priceVersionIds": [
+              "github-copilot:claude-sonnet-5:2026-10-01"
+            ]
+          }
         }
       ],
       "evidence": {
@@ -72,11 +84,35 @@
       "sessions": [
         {
           "providerId": "claude-code",
-          "sessionId": "s2"
+          "sessionId": "s2",
+          "startedAt": "2026-10-15T12:00:00.000Z",
+          "perWindow": {
+            "known": true,
+            "currency": "USD",
+            "low": 0.0032,
+            "high": 0.032,
+            "basis": "priced",
+            "label": "range",
+            "priceVersionIds": [
+              "anthropic-api:claude-sonnet-5:2026-10-01"
+            ]
+          }
         },
         {
           "providerId": "claude-code",
-          "sessionId": "s1"
+          "sessionId": "s1",
+          "startedAt": "2026-10-15T12:00:00.000Z",
+          "perWindow": {
+            "known": true,
+            "currency": "USD",
+            "low": 0.0016,
+            "high": 0.016,
+            "basis": "priced",
+            "label": "range",
+            "priceVersionIds": [
+              "anthropic-api:claude-sonnet-5:2026-10-01"
+            ]
+          }
         }
       ],
       "evidence": {

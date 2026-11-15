@@ -7,6 +7,7 @@ import {
   type SavingsCoverage,
   type SavingsOpportunity,
   type SavingsOpportunityKind,
+  type SavingsSessionRef,
 } from "@agent-cost-analyzer/domain";
 
 // Phase 16 SR14 (docs/plans/savings-report.md §5.3, §7): the words and numbers
@@ -83,6 +84,27 @@ export function perSessionText(opportunity: SavingsOpportunity): string {
   if (!amount.known || sessions === 0) return "";
   const text = span(amount, amount.low / sessions, amount.high / sessions);
   return `${text} per session (${sessions} ${sessions === 1 ? "session" : "sessions"})`;
+}
+
+// V24 (D22, D23): a session's own saving over the window, in the row's label
+// and unit, without "per week". An unknown or absent saving is "Not priced".
+export function sessionSavingText(ref: SavingsSessionRef): string {
+  return ref.perWindow?.known === true ? amountText(ref.perWindow, "").trim() : "Not priced";
+}
+
+// The distinct reasons the shown sessions could not be priced, each once: the
+// list says them once under itself, not on every row.
+export function notPricedReasons(refs: readonly SavingsSessionRef[]): string[] {
+  return [...new Set(refs.flatMap((ref) => (ref.perWindow?.known === false ? [ref.perWindow.reason] : [])))];
+}
+
+// "Nov 11" in the viewer's time zone (D23; the year is left out inside the
+// window). A start the log lacks is "date unknown", never an empty cell.
+const DAY = (timeZone?: string) => new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", ...(timeZone === undefined ? {} : { timeZone }) });
+
+export function sessionDateText(startedAt: string | undefined, timeZone?: string): string {
+  const time = startedAt === undefined ? Number.NaN : Date.parse(startedAt);
+  return Number.isFinite(time) ? DAY(timeZone).format(time) : "date unknown";
 }
 
 export function coverageText(coverage: SavingsCoverage): string {

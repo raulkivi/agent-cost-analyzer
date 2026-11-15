@@ -74,7 +74,7 @@ export function buildMonthlyAllowance({ t = identityTranslate, ...input }: Month
   if (figures.level === "hidden") {
     return figures;
   }
-  const { level, allowance, used, atLeast, percent, remaining, period, coverage: counts, countedSinceKey } = figures; // codespell:ignore atleast
+  const { level, allowance, used, atLeast, percent, remaining, period, coverage: counts, countedSinceKey } = figures;
   const total = counts.total;
 
   const allowanceText = ALLOWANCE.format(allowance);

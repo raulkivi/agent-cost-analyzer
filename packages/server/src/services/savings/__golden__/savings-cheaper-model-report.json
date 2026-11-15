@@ -7,7 +7,19 @@
       "sessions": [
         {
           "providerId": "claude-code",
-          "sessionId": "cc-big"
+          "sessionId": "cc-big",
+          "startedAt": "2026-10-15T12:00:00.000Z",
+          "perWindow": {
+            "known": true,
+            "currency": "USD",
+            "low": 0.8999999999999999,
+            "high": 0.8999999999999999,
+            "basis": "simulated",
+            "label": "simulated",
+            "priceVersionIds": [
+              "anthropic-api:claude-haiku-5.5:2026-10-07"
+            ]
+          }
         }
       ],
       "evidence": {
@@ -86,7 +98,19 @@
       "sessions": [
         {
           "providerId": "claude-code",
-          "sessionId": "cc-big"
+          "sessionId": "cc-big",
+          "startedAt": "2026-10-15T12:00:00.000Z",
+          "perWindow": {
+            "known": true,
+            "currency": "USD",
+            "low": 1.7,
+            "high": 1.7,
+            "basis": "simulated",
+            "label": "simulated",
+            "priceVersionIds": [
+              "anthropic-api:claude-haiku-5.5:2026-10-07"
+            ]
+          }
         }
       ],
       "evidence": {
@@ -165,7 +189,19 @@
       "sessions": [
         {
           "providerId": "claude-code",
-          "sessionId": "cc-small"
+          "sessionId": "cc-small",
+          "startedAt": "2026-10-15T12:00:00.000Z",
+          "perWindow": {
+            "known": true,
+            "currency": "USD",
+            "low": 0.8999999999999999,
+            "high": 0.8999999999999999,
+            "basis": "simulated",
+            "label": "simulated",
+            "priceVersionIds": [
+              "anthropic-api:claude-haiku-5.5:2026-10-07"
+            ]
+          }
         }
       ],
       "evidence": {
@@ -244,7 +280,19 @@
       "sessions": [
         {
           "providerId": "claude-code",
-          "sessionId": "cc-small"
+          "sessionId": "cc-small",
+          "startedAt": "2026-10-15T12:00:00.000Z",
+          "perWindow": {
+            "known": true,
+            "currency": "USD",
+            "low": 1.7,
+            "high": 1.7,
+            "basis": "simulated",
+            "label": "simulated",
+            "priceVersionIds": [
+              "anthropic-api:claude-haiku-5.5:2026-10-07"
+            ]
+          }
         }
       ],
       "evidence": {

@@ -1,0 +1,9 @@
+{
+  "agentType": "general-purpose",
+  "isBuiltIn": true,
+  "model": "haiku",
+  "finished": true,
+  "toolUseId": "toolu_nr_b",
+  "spawnDepth": 2,
+  "parentAgentId": "a211111111111111a"
+}

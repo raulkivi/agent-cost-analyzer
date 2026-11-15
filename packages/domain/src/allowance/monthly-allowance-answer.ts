@@ -36,7 +36,7 @@ export const knownAllowanceFiguresSchema = z
   .object({
     level: allowanceLevelSchema,
     used: credits,
-    atLeast: z.boolean(), // codespell:ignore atleast
+    atLeast: z.boolean(),
     percent: count, // rounded down
     remaining: credits, // "up to"
     coverage: coverageSchema,
@@ -128,8 +128,8 @@ export const monthlyAllowanceAnswerSchema = z
       if (coverage.known === 0) {
         ctx.addIssue({ code: "custom", path: ["figures", "coverage"], message: "a sum needs a session with cost data" });
       }
-      if (figures.atLeast !== coverage.known < coverage.total) { // codespell:ignore atleast
-        ctx.addIssue({ code: "custom", path: ["figures", "atLeast"], message: "at least exactly when a session has no cost data" }); // codespell:ignore atleast
+      if (figures.atLeast !== coverage.known < coverage.total) {
+        ctx.addIssue({ code: "custom", path: ["figures", "atLeast"], message: "at least exactly when a session has no cost data" });
       }
     }
     if (state === "unknown" && (coverage.known !== 0 || coverage.total === 0 || figures.countedSinceKey === undefined)) {
