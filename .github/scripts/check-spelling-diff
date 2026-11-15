@@ -19,11 +19,15 @@ config=$(readlink -f "$config")
 
 tmp=$(mktemp -d)
 trap 'rm -rf "$tmp"' EXIT
+# The added lines go under $tmp/tree; codespell runs from $tmp, which holds
+# no config file of its own (it would read .codespellrc, setup.cfg or
+# pyproject.toml from its working directory, even a partial one from the diff).
+mkdir "$tmp/tree"
 
 # Each added line goes to its real line number (other lines blank) so that
 # codespell reports positions that match the commit. Hunk counters stop a
 # content line like "+++ x" from being mistaken for a file header.
-awk -v out="$tmp" '
+awk -v out="$tmp/tree" '
 function shq(s) { gsub(/\047/, "\047\\\047\047", s); return "\047" s "\047" }
 function flush(   i, dir) {
   if (file != "" && maxn > 0) {
@@ -66,7 +70,8 @@ END { flush() }
 ' 
 
 rc=0
-(cd "$tmp" && codespell --config "$config" --check-hidden .) || rc=$?
+(cd "$tmp" && codespell --config "$config" --check-hidden tree) > "$tmp/findings" || rc=$?
+sed 's#^tree/#./#' "$tmp/findings"
 case $rc in
   0) exit 0 ;;
   65) exit 1 ;;
