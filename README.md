@@ -1,6 +1,6 @@
 # Agent Cost Analyzer
 
-**Last changed:** 2026-11-15 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-16 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 [![Works with GitHub Copilot Chat](https://img.shields.io/badge/works_with-GitHub_Copilot_Chat-informational)](docs/UserGuide.md#choosing-a-log-provider)
 [![Works with Claude Code](https://img.shields.io/badge/works_with-Claude_Code-informational)](docs/UserGuide.md#choosing-a-log-provider)
@@ -70,8 +70,7 @@ Full steps, commands and settings: the
 
 ## Get started: Agent Cost Analyzer (standalone app)
 
-Needs Node.js 22.18 or newer. The npm package is published from app 0.16.0;
-until that release is out, use [From source](#from-source-contributors).
+Needs Node.js 22.18 or newer.
 
 ```sh
 npx agent-cost-analyzer
@@ -87,6 +86,10 @@ next free port and says which. Options:
 - `--no-open` starts without opening a browser.
 - `--help` and `--version` do what they say. `npx agent-cost-analyzer@latest`
   runs the newest release.
+
+To keep a fixed version, or to start it without the npm registry, install it
+once with `npm install -g agent-cost-analyzer` and run `agent-cost-analyzer`
+(or `agent-cost-analyzer mcp`).
 
 Learn mode works straight away. Switch to Analyze mode and pick a source (VS
 Code Copilot Chat, Claude Code or pi) to see your own sessions. Claude Code
@@ -137,7 +140,7 @@ Claude Desktop shows a month's cost for every provider at once, and opens the vi
 
 - Extension: turn on the `aiCreditsAnalyzer.mcp.enabled` setting. See
   [the MCP server for Copilot agent mode](docs/vscode-extension-guide.md#the-mcp-server-for-copilot-agent-mode).
-- Standalone app, from app 0.16.0: `claude mcp add agent-cost-analyzer -- npx -y --prefer-offline agent-cost-analyzer mcp`.
+- Standalone app: `claude mcp add agent-cost-analyzer -- npx -y --prefer-offline agent-cost-analyzer mcp`.
   `--prefer-offline` starts the cached copy at once when the npm registry is
   unreachable. Other clients, Windows and an offline install: see
   [Querying the audit from Claude Code (MCP)](docs/UserGuide.md#querying-the-audit-from-claude-code-mcp)
@@ -163,7 +166,7 @@ What the extension reads, file by file:
 - [Extension guide](docs/vscode-extension-guide.md): install, use and
   configure the extension.
 - [Standalone app setup and data sources](docs/standalone-app.md)
-- [npm package](https://www.npmjs.com/package/agent-cost-analyzer) (from app 0.16.0)
+- [npm package](https://www.npmjs.com/package/agent-cost-analyzer)
 - [Extension changelog](packages/vscode-extension/CHANGELOG.md) and
   [app changelog](CHANGELOG.md)
 - [Releases](https://github.com/raulkivi/agent-cost-analyzer/releases)

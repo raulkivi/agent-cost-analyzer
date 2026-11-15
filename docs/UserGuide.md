@@ -1,6 +1,6 @@
 # User Guide
 
-**Last changed:** 2026-11-15 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-16 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 A walkthrough of the Agent Cost Analyzer's two modes — **Learn** (guided,
 bundled example sessions) and **Analyze** (your own real sessions from VS
@@ -18,9 +18,8 @@ standalone app, which also reads Claude Code and pi sessions.
 
 Run `npx agent-cost-analyzer` (Node.js 22.18 or newer). It starts the app on
 http://127.0.0.1:5199 and opens it in your browser; `--no-open` skips the
-browser and `--port <n>` picks the port. `npx agent-cost-analyser` (British spelling) also works, as an alias of the same package. The npm package is published from <!-- codespell:ignore analyser -->
-app 0.16.0; before that, run `npm install && npm run dev` from a clone of the
-repository and open http://127.0.0.1:5173 (see
+browser and `--port <n>` picks the port. `npx agent-cost-analyser` (British spelling) also works, as an alias of the same package. To work on the app itself, run it <!-- codespell:ignore analyser -->
+from a clone (see
 [From source](standalone-app.md#from-source-contributors)). Learn mode works
 immediately. Analyze mode lists
 whatever real Copilot Chat sessions it finds in your local VS Code session
@@ -610,7 +609,7 @@ failures.
 The analyzer is also available as a local, read-only MCP server, so you
 can ask an agent about your own sessions: "what drove my spend this
 week?", "which commands failed most, and why?", "did my agents do
-anything risky?". From app 0.16.0, register the npm package with your MCP
+anything risky?". Register the npm package with your MCP
 client; no clone is needed:
 
 ```bash

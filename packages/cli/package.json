@@ -1,6 +1,6 @@
 {
   "name": "agent-cost-analyzer",
-  "version": "0.16.0",
+  "version": "0.16.1",
   "description": "Local app that analyzes agentic coding costs: prompt caching, token accounting, and turn-by-turn Copilot Chat, Claude Code, pi and mitmproxy sessions.",
   "keywords": ["agentic-coding", "cost", "tokens", "copilot", "claude-code", "mcp"],
   "license": "MIT",
