@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- The extension now ships third-party license notices (`THIRD-PARTY-NOTICES.md` in the .vsix) for the npm packages it bundles, with their license texts.
+
 ## [0.14.0] - 2026-11-15
 
 ### Added

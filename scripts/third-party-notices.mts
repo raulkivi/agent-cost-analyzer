@@ -1,9 +1,11 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-// The npm package's THIRD-PARTY-NOTICES.md (npm-package.md §4.9): each npm
-// package the server bundle (esbuild's metafile), the web app and the MCP App
-// views (their Vite builds' lists) bundle, with its license files and the
-// parts that bundle it, plus the fonts section of the repository's own notices.
+// The generated THIRD-PARTY-NOTICES.md of a shipped package (the npm package,
+// npm-package.md §4.9, and the VS Code extension's .vsix): each npm package
+// its esbuild bundles (metafiles) and Vite builds (lists) bundle, with its
+// license files and the parts that bundle it, plus, when asked, the fonts
+// section of the repository's own notices. Shared by packages/cli and
+// packages/vscode-extension.
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import path from "node:path";
 
@@ -130,7 +132,8 @@ export interface NoticesInput {
   packageName: string;
   packageVersion: string;
   packages: BundledPackage[];
-  fontsSection: string;
+  // Left out when the package bundles no fonts.
+  fontsSection?: string;
 }
 
 const byNameAndVersion = (a: BundledPackage, b: BundledPackage): number =>
@@ -146,13 +149,12 @@ export function renderNotices({ packageName, packageVersion, packages, fontsSect
   return [
     "# Third-party notices",
     `**Generated for:** ${packageName} ${packageVersion} · **Source:** https://github.com/raulkivi/agent-cost-analyzer`,
-    "This package's own code is MIT-licensed (`LICENSE`). Its `dist/` bundles the npm packages below " +
-      "(`packages/cli/scripts/build.mts` lists them from the server bundle's esbuild metafile and the web app's and " +
-      "MCP App views' Vite builds) and the web app's fonts. \"Bundled in\" names the parts: server, web, views.",
+    "This package's own code is MIT-licensed (`LICENSE`). It ships the npm packages below, bundled into its " +
+      "files (the build lists them from the esbuild metafiles and the Vite builds' package lists). " +
+      "\"Bundled in\" names the parts that bundle each one.",
     "## Bundled npm packages",
     ["| Package | Version | License | Bundled in |", "|---|---|---|---|", ...rows].join("\n"),
-    "## Fonts",
-    fontsSection.trimEnd(),
+    ...(fontsSection === undefined ? [] : ["## Fonts", fontsSection.trimEnd()]),
     "## License texts",
     ...texts,
   ].join("\n\n") + "\n";
@@ -160,18 +162,33 @@ export function renderNotices({ packageName, packageVersion, packages, fontsSect
 
 export interface GenerateNoticesInput {
   metafile: MetafileInputs;
-  // The metafile's paths are relative to esbuild's absWorkingDir.
+  // The part the first metafile is listed under.
+  metafileLabel?: string;
+  // Further esbuild bundles of the same package, each under its own part.
+  extraMetafiles?: { label: string; metafile: MetafileInputs }[];
+  // The metafiles' paths are relative to esbuild's absWorkingDir.
   workingDir: string;
   // The Vite builds' package folders, each under its part's label.
   extraParts: { label: string; dirs: string[] }[];
-  rootNotices: string;
+  // The repository's own notices, whose fonts section is included; omit for
+  // a package that bundles no fonts.
+  rootNotices?: string;
   packageName: string;
   packageVersion: string;
 }
 
 // Fails the build on a license off the allow-list or a package without a
 // license file, rather than shipping notices that miss one.
-export function generateNotices({ metafile, workingDir, extraParts, rootNotices, packageName, packageVersion }: GenerateNoticesInput): string {
+export function generateNotices({
+  metafile,
+  metafileLabel = "server",
+  extraMetafiles = [],
+  workingDir,
+  extraParts,
+  rootNotices,
+  packageName,
+  packageVersion,
+}: GenerateNoticesInput): string {
   const unique = new Map<string, BundledPackage>();
   const add = (dirs: string[], part: string): void => {
     for (const dir of dirs) {
@@ -182,12 +199,13 @@ export function generateNotices({ metafile, workingDir, extraParts, rootNotices,
       unique.set(id, known);
     }
   };
-  add(bundledPackageDirs(metafile, workingDir), "server");
+  add(bundledPackageDirs(metafile, workingDir), metafileLabel);
+  for (const { label, metafile: more } of extraMetafiles) add(bundledPackageDirs(more, workingDir), label);
   for (const { label, dirs } of extraParts) add(dirs, label);
   const problems = [...unique].flatMap(([id, bundled]) => [
     ...(isAllowedLicense(bundled.license) ? [] : [`${id}: license ${bundled.license ?? "(none)"} is not allowed`]),
     ...(bundled.licenseTexts.length > 0 ? [] : [`${id}: no license file in its package folder`]),
   ]);
   if (problems.length > 0) throw new Error(`THIRD-PARTY-NOTICES.md can't be generated:\n${problems.join("\n")}`);
-  return renderNotices({ packageName, packageVersion, packages: [...unique.values()], fontsSection: fontsSectionOf(rootNotices) });
+  return renderNotices({ packageName, packageVersion, packages: [...unique.values()], fontsSection: rootNotices === undefined ? undefined : fontsSectionOf(rootNotices) });
 }

@@ -9,7 +9,7 @@ import path from "node:path";
 import { build } from "esbuild";
 import { cliBuildPlan, isShippedDataFile, missingInputs } from "./build-plan.mts";
 import { cliBundleOptions } from "./esbuild-options.mts";
-import { generateNotices, readBundledPackagesList } from "./third-party-notices.mts";
+import { generateNotices, readBundledPackagesList } from "../../../scripts/third-party-notices.mts";
 
 const plan = cliBuildPlan(path.resolve(import.meta.dirname, "..", "..", ".."));
 
