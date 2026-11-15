@@ -5,7 +5,7 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { SavingsAmount, SavingsReport } from "@agent-cost-analyzer/domain";
 import type { SavingsQuery } from "../../api-client/savings.js";
-import { IDLE_CACHE, makeSavingsReport, opportunity, SAVINGS_FIXTURE_NOW, UNPRICED_ROW, UNUSED_TOOLS } from "../../test-support/savings-fixture.js";
+import { IDLE_CACHE, makeSavingsReport, opportunity, SAVINGS_FIXTURE_NOW, SIMULATED, UNPRICED_ROW, UNUSED_TOOLS } from "../../test-support/savings-fixture.js";
 import { SavingsTab } from "./SavingsTab.js";
 
 // Phase 16 SR14: the Savings tab against the SR11 boards. Honesty labels are
@@ -270,7 +270,67 @@ describe("SavingsTab: detail", () => {
     expect(links).toHaveLength(5);
     expect(detail).toHaveTextContent("and 3 more");
     fireEvent.click(links[1]!);
-    expect(onOpenSession).toHaveBeenCalledWith({ providerId: "vscode", sessionId: "session-2" });
+    expect(onOpenSession).toHaveBeenCalledWith(expect.objectContaining({ providerId: "vscode", sessionId: "session-2" }));
+  });
+
+  // V24 (boards Detail, States; owner answers 2026-11-15): id, date and saving
+  // per session, "Not priced" in place of an unknown amount with its reason once.
+  describe("each session's date and saving", () => {
+    async function openUnused() {
+      renderTab();
+      await ready();
+      fireEvent.click(within(rowOf("github")).getByRole("button"));
+      return within(screen.getByRole("region", { name: "Savings detail" })).getByRole("region", { name: "Sessions" });
+    }
+    const itemOf = (list: HTMLElement, id: string) => within(list).getAllByRole("listitem").find((item) => item.textContent?.includes(id))!;
+
+    it("shows the id, the date and the saving with its label for each shown session", async () => {
+      const list = await openUnused();
+
+      expect(itemOf(list, "session-1")).toHaveTextContent("session-1");
+      expect(itemOf(list, "session-1")).toHaveTextContent("Nov 11");
+      expect(itemOf(list, "session-1")).toHaveTextContent("3.9–24.0 AI Credits");
+      expect(itemOf(list, "session-2")).toHaveTextContent("Nov 6");
+      expect(itemOf(list, "session-2")).toHaveTextContent("2.1–12.8 AI Credits");
+    });
+
+    it("says 'date unknown' without a start and 'Not priced' for an unknown saving, never 0", async () => {
+      const list = await openUnused();
+
+      expect(itemOf(list, "session-3")).toHaveTextContent("date unknown");
+      expect(itemOf(list, "session-4")).toHaveTextContent("Not priced");
+      expect(itemOf(list, "session-4")).not.toHaveTextContent(/\b0\b/);
+    });
+
+    it("gives the reason for 'Not priced' once under the list, not on every row", async () => {
+      const list = await openUnused();
+
+      expect(within(list).getAllByText(/no price for gpt-5\.1-codex on 2026-10-22/)).toHaveLength(1);
+    });
+
+    it("keeps the link's name as the id so a title (V25) can be added to it", async () => {
+      const list = await openUnused();
+
+      expect(within(list).getByRole("button", { name: "Open in Analyze: session-1" })).toBeInTheDocument();
+    });
+
+    it("says 'saving over the 30 days' once in the heading, not per week", async () => {
+      const list = await openUnused();
+
+      expect(list).toHaveTextContent("saving over the 30 days");
+    });
+
+    it("shows a Simulated row's one session with its Simulated saving", async () => {
+      const simulated = { ...SIMULATED, sessions: [{ providerId: "vscode", sessionId: "sim-1", startedAt: "2026-11-02T12:00:00.000Z", perWindow: SIMULATED.perWindow }] };
+      renderTab({ loadReport: vi.fn().mockResolvedValue(makeSavingsReport({ simulated: [simulated] })) });
+      await ready();
+      fireEvent.click(within(rowOf("claude-haiku-5.5")).getByRole("button"));
+
+      const list = within(screen.getByRole("region", { name: "Savings detail" })).getByRole("region", { name: "Sessions" });
+
+      expect(list).toHaveTextContent("Nov 2");
+      expect(list).toHaveTextContent("13.3–15.5 AI Credits");
+    });
   });
 
   it("says 'Open session' in the extension", async () => {

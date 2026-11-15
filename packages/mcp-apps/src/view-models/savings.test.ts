@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
 import { describe, expect, it } from "vitest";
-import { claudeRow, row, savingsOutput, simulatedRow, span, twoCurrencyOutput, unpriced, upTo } from "./savings-fixtures.js";
+import { claudeRow, dated, refs, row, savingsOutput, simulatedRow, span, twoCurrencyOutput, unpriced, upTo } from "./savings-fixtures.js";
 import { toSavingsViewModel } from "./savings.js";
 
 const rowOf = (vm: ReturnType<typeof toSavingsViewModel>, key: string) => [...vm.groups.flatMap((group) => group.rows), ...vm.simulated.rows].find((r) => r.key === key)!;
@@ -74,7 +74,42 @@ describe("toSavingsViewModel", () => {
   });
 
   it("writes coverage as analysed of in-window sessions with the reasons", () => {
-    expect(rowOf(toSavingsViewModel(savingsOutput()), "idle:sonnet").coverageText).toBe("38 of 41 sessions · 3 had no request trace");
+    expect(rowOf(toSavingsViewModel(savingsOutput()), "idle:sonnet").coverageText).toBe("38 of 41 sessions · 3 not analysed: no request trace"); // codespell:ignore analysed
+  });
+
+  // R15: no special case for a reason that starts with "no": every gap reads "N not analysed: <reason>". codespell:ignore analysed
+  it("writes every gap as 'N not analysed: reason', whatever the reason starts with", () => { // codespell:ignore analysed
+    const gaps = row({ key: "g", kind: "unused-tools", subject: "x", coverage: { sessionsInWindow: 10, sessionsAnalysed: 6, notAnalysed: [{ reason: "no tool inventory", sessions: 3 }, { reason: "The log records no request trace.", sessions: 1 }] } });
+    expect(rowOf(toSavingsViewModel(savingsOutput({ opportunities: [gaps], opportunitiesTotal: 1 })), "g").coverageText).toBe("6 of 10 sessions · 3 not analysed: no tool inventory · 1 not analysed: The log records no request trace."); // codespell:ignore analysed
+  });
+
+  // V24 (boards Savings.dc.html frames 5 and 6, D19): date and saving per shown session, ids only.
+  describe("each shown session's date and saving", () => {
+    it("carries the date and the saving over the window, with the row's label", () => {
+      const r = rowOf(toSavingsViewModel(savingsOutput()), "idle:sonnet");
+      expect(r.sessions.map((s) => [s.sessionId, s.dateText, s.savingText])).toEqual([
+        ["4b81d0aa", expect.stringMatching(/^Nov 1[01]$/), "up to 61.2 AI Credits"],
+        ["c07e91d4", expect.stringMatching(/^Nov [56]$/), "up to 40.5 AI Credits"],
+        ["e5a3190b", "date unknown", "Not priced"],
+      ]);
+      expect(rowOf(toSavingsViewModel(savingsOutput()), "unused:github").sessions.map((s) => s.savingText)).toEqual(["3.9–24.0 AI Credits", "2.1–12.8 AI Credits", "1.6–9.9 AI Credits"]);
+    });
+
+    it("gives a Simulated row's sessions their Simulated saving", () => {
+      const vm = toSavingsViewModel(savingsOutput({ includeSimulated: true, simulated: [simulatedRow], simulatedTotal: 1 }));
+      expect(vm.simulated.rows[0]!.sessions.map((s) => s.savingText)).toEqual(["48.0–52.0 AI Credits", "31.0–33.0 AI Credits", "28.1–32.8 AI Credits"]);
+    });
+
+    it("says the reason a session was not priced once under the list, and nothing when all were priced", () => {
+      const reasoned = row({ key: "n", kind: "failed-tool-calls", subject: "git", sessions: [dated("a", undefined, unpriced), dated("b", "2026-11-02T12:00:00.000Z", unpriced)] });
+      expect(rowOf(toSavingsViewModel(savingsOutput({ opportunities: [reasoned], opportunitiesTotal: 1 })), "n").notPricedText).toBe("Not priced: no price for gpt-5.1-codex on 2026-10-22");
+      expect(rowOf(toSavingsViewModel(savingsOutput({ opportunities: [claudeRow], opportunitiesTotal: 1 })), "idle:opus").notPricedText).toBeUndefined();
+    });
+
+    it("never shows an unknown saving as 0, and a missing one is Not priced", () => {
+      const bare = row({ key: "bare", kind: "idle-cache-expiry", subject: "m", sessions: refs(["x"]) });
+      expect(rowOf(toSavingsViewModel(savingsOutput({ opportunities: [bare], opportunitiesTotal: 1 })), "bare").sessions[0]).toMatchObject({ dateText: "date unknown", savingText: "Not priced" });
+    });
   });
 
   it("lists up to three sessions by id with Open cost, and keeps the total", () => {

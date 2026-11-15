@@ -159,6 +159,9 @@ suite("U18 savings view in a real Copilot Chat (SR21; opt-in)", function () {
       expect(opened.text).toContain("Suggestion only. Nothing is changed.");
       expect(opened.text).toMatch(/(Largest \d+ of \d+ sessions|\d+ sessions?), over the \d+ days/);
       expect(opened.text).toMatch(/Prices: \S+, in force on the dates of these requests\./);
+      // V24 (D19): the seeded row's session shows its date and its saving over the window, no title.
+      expect(opened.text).toMatch(/(?:[A-Z][a-z]{2} \d{1,2}|date unknown)/);
+      expect(opened.text).toMatch(/under 0\.1 AI Credits|(?:up to )?[\d,]*[1-9][\d,]*(?:\.\d)?(?:–[\d,.]+)? AI Credits|Not priced/);
 
       // Open cost: U1 in place, then Back returns focus to the session button.
       // The seeded session ids are plain, so the button is there.

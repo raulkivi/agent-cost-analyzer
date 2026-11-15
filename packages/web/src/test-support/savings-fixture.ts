@@ -49,7 +49,19 @@ export const UNUSED_TOOLS = opportunity({
   subject: "github",
   inferred: true,
   evidence: { sessions: 31, requests: 877, tokens: { known: true, value: 5400, estimated: true }, occurrences: null },
-  sessions: Array.from({ length: 8 }, (_, index) => ({ providerId: "vscode", sessionId: `session-${index + 1}` })),
+  // V24: largest saving first, as the server lists them. Midday UTC dates
+  // fall on the same day in any time zone a test runs in. session-3 has no
+  // start in its log and session-4 could not be priced.
+  sessions: [
+    { providerId: "vscode", sessionId: "session-1", startedAt: "2026-11-11T12:00:00.000Z", perWindow: range(3.9, 24) },
+    { providerId: "vscode", sessionId: "session-2", startedAt: "2026-11-06T12:00:00.000Z", perWindow: range(2.1, 12.8) },
+    { providerId: "vscode", sessionId: "session-3", perWindow: range(1.6, 9.9) },
+    { providerId: "vscode", sessionId: "session-4", startedAt: "2026-11-01T12:00:00.000Z", perWindow: { known: false, reason: "no price for gpt-5.1-codex on 2026-10-22" } },
+    { providerId: "vscode", sessionId: "session-5", startedAt: "2026-10-30T12:00:00.000Z", perWindow: { known: false, reason: "no price for gpt-5.1-codex on 2026-10-22" } },
+    { providerId: "vscode", sessionId: "session-6", startedAt: "2026-10-28T12:00:00.000Z", perWindow: { known: false, reason: "no price for gpt-5.1-codex on 2026-10-22" } },
+    { providerId: "vscode", sessionId: "session-7", startedAt: "2026-10-20T12:00:00.000Z", perWindow: { known: false, reason: "no price for gpt-5.1-codex on 2026-10-22" } },
+    { providerId: "vscode", sessionId: "session-8", startedAt: "2026-10-16T12:00:00.000Z", perWindow: { known: false, reason: "no price for gpt-5.1-codex on 2026-10-22" } },
+  ],
   perWeek: range(6.2, 38.4),
   perWindow: range(26.7, 165.1),
   coverage: coverage(31, 41, "no tool inventory"),

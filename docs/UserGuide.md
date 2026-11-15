@@ -640,7 +640,7 @@ build the server works as before, with text results only.
 | `estimate_cost` | The cost of planned work as a p50–p90 range at today's prices, never one number. With `model`, the same estimate from the project's sessions (up to 200) replayed on that model: **Simulated**, priced on each session's own channel as of its dates, with coverage, self-check counts and assumptions |
 | `replay_session` | One session replayed on another model: per turn and in total what it would have cost beside what it did, with coverage, the self-check on its own model and the assumptions. `pricing` is `session-channel` (the default), `copilot` or `api`. **Simulated** |
 | `compare_models_for_session` | One session's simulated total on up to 10 models, its own included, with how many turns each replayed. Takes the same `pricing`. **Simulated** |
-| `get_savings_report` | The [savings report](#the-savings-report): changes that would have cost less over a window (default the last 30 days), ranked by the high end, each with its amount per week and over the window as a range or "up to", coverage, price versions, up to 10 session ids and the fixed text of what to change. `limit` (default 10, at most 20) cuts the list and says how many there are. Cheaper-model replays only with `includeSimulated` (off by default, slow), listed apart as **Simulated** |
+| `get_savings_report` | The [savings report](#the-savings-report): changes that would have cost less over a window (default the last 30 days), ranked by the high end, each with its amount per week and over the window as a range or "up to", coverage, price versions, up to 10 session ids, each with its date and its saving over the window, and the fixed text of what to change. `limit` (default 10, at most 20) cuts the list and says how many there are. Cheaper-model replays only with `includeSimulated` (off by default, slow), listed apart as **Simulated** |
 
 Six prompts start common reviews: `audit_session` (why a session's tool
 calls failed), `review_costs` (what drives your spend and how to cut it; it
@@ -786,7 +786,8 @@ text.
   button. The row itself is not a button.
 - **A savings row** (savings view) opens in place: the amount over the
   window, the evidence, **What to change** (a suggestion; nothing is
-  changed) and the largest three of its sessions with the price versions.
+  changed) and the largest three of its sessions, each with its date and
+  its saving over the window (ids only, no titles), with the price versions.
   Each session has **Open cost**, which opens its cost view in place, or,
   on a cheaper-model row, **Open replay**, which opens the replay on that
   model. **Back to savings** returns with focus on the session you left.
@@ -1336,6 +1337,11 @@ whole window, the change to make and the price versions behind it.
   characters. The text is fixed wording with your numbers and names filled
   in; it says what to do, never that anything was done. The report changes
   none of your settings or files.
+- **Sessions.** Each listed session shows its id, its date (in your time
+  zone) and its own saving over the window, with the row's label ("up to",
+  a range). A session that could not be priced says "Not priced", with the
+  reason once under the list, never 0; one whose log has no start says
+  "date unknown".
 - **Open in Analyze** opens a session of the row in the turns view. For a
   session of another provider it also switches the selected provider, as
   the Provider select does, and the app saves that choice in its own
