@@ -3,6 +3,7 @@
 import { fileURLToPath } from "node:url";
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
+import { bundledPackagesPlugin } from "./vite-plugins/bundled-packages.js";
 import { omitModulesPlugin } from "./vite-plugins/omit-modules.js";
 import { stripRemoteCssImportsPlugin } from "./vite-plugins/strip-remote-css-imports.js";
 
@@ -29,7 +30,14 @@ const extensionBuild = {
 export default defineConfig(({ mode }) => {
   const extension = mode === "extension";
   return {
-    plugins: [react(), ...(extension ? extensionBuild.plugins : [])],
+    // The standalone app ships in the npm package; the list of npm packages
+    // it bundles feeds that package's third-party notices (npm-package.md §4.9).
+    plugins: [
+      react(),
+      ...(extension
+        ? extensionBuild.plugins
+        : [bundledPackagesPlugin(fileURLToPath(new URL("./build/bundled-packages.json", import.meta.url)))]),
+    ],
     ...(extension ? { base: extensionBuild.base, build: extensionBuild.build } : {}),
     server: {
       host: "127.0.0.1",

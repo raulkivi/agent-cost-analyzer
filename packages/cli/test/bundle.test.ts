@@ -16,7 +16,7 @@ import { fileURLToPath } from "node:url";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { cliBuildPlan } from "../scripts/build-plan.mts";
 import { packProblems, type PackReport } from "../scripts/pack-check.mts";
-import { bundledPackageDirs, isAllowedLicense, readBundledPackage } from "../scripts/third-party-notices.mts";
+import { bundledPackageDirs, isAllowedLicense, readBundledPackage, readBundledPackagesList } from "../scripts/third-party-notices.mts";
 
 const plan = cliBuildPlan(path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..", ".."));
 const cliJs = path.join(plan.distDir, "cli.js");
@@ -136,14 +136,23 @@ describe.runIf(existsSync(cliJs) || inCi)("the built npm package", () => {
     }
   }, 30_000);
 
-  it("names every bundled npm package in THIRD-PARTY-NOTICES.md, each under an allowed license", () => {
+  it("names every npm package of the server bundle, the web app and the MCP App views in THIRD-PARTY-NOTICES.md, each under an allowed license", () => {
     const metafile = JSON.parse(readFileSync(plan.metafilePath, "utf8")) as { inputs: Record<string, unknown> };
     const notices = readFileSync(plan.noticesPath, "utf8");
-    const packages = bundledPackageDirs(metafile, plan.packageDir).map(readBundledPackage);
-    expect(packages.length).toBeGreaterThan(0);
-    for (const bundled of packages) {
-      expect(notices, bundled.name).toContain(`| \`${bundled.name}\` | ${bundled.version} | ${bundled.license} |`);
-      expect(isAllowedLicense(bundled.license), `${bundled.name}: ${bundled.license}`).toBe(true);
+    const parts = [
+      { part: "server", dirs: bundledPackageDirs(metafile, plan.packageDir) },
+      { part: "web", dirs: readBundledPackagesList(plan.webPackagesPath, "web") },
+      { part: "views", dirs: readBundledPackagesList(plan.viewsPackagesPath, "views") },
+    ];
+    for (const { part, dirs } of parts) {
+      expect(dirs.length, part).toBeGreaterThan(0);
+      for (const bundled of dirs.map(readBundledPackage)) {
+        const row = notices.split("\n").find((line) => line.startsWith(`| \`${bundled.name}\` | ${bundled.version} | `));
+        expect(row, `${part}: ${bundled.name}@${bundled.version}`).toBeDefined();
+        expect(row, `${part}: ${bundled.name}`).toContain(`| ${bundled.license} |`);
+        expect(row?.split("|")[4], `${bundled.name} lists ${part}`).toContain(part);
+        expect(isAllowedLicense(bundled.license), `${bundled.name}: ${bundled.license}`).toBe(true);
+      }
     }
   });
 

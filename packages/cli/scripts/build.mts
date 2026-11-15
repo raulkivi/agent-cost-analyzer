@@ -9,7 +9,7 @@ import path from "node:path";
 import { build } from "esbuild";
 import { cliBuildPlan, isShippedDataFile, missingInputs } from "./build-plan.mts";
 import { cliBundleOptions } from "./esbuild-options.mts";
-import { generateNotices } from "./third-party-notices.mts";
+import { generateNotices, readBundledPackagesList } from "./third-party-notices.mts";
 
 const plan = cliBuildPlan(path.resolve(import.meta.dirname, "..", "..", ".."));
 
@@ -30,6 +30,10 @@ writeFileSync(
   generateNotices({
     metafile,
     workingDir: plan.packageDir,
+    extraParts: [
+      { label: "web", dirs: readBundledPackagesList(plan.webPackagesPath, "web") },
+      { label: "views", dirs: readBundledPackagesList(plan.viewsPackagesPath, "views") },
+    ],
     rootNotices: readFileSync(plan.rootNoticesPath, "utf8"),
     packageName: manifest.name,
     packageVersion: manifest.version,
