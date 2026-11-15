@@ -5,3 +5,5 @@
 builtin = clear,rare,en-GB_to_en-US
 uri-ignore-words-list = *
 skip = *.lock,package-lock.json,*.svg,*.min.js,*.map
+# Code identifiers codespell splits into words (atLeast, afterAll).
+ignore-words-list = afterall,atleast
