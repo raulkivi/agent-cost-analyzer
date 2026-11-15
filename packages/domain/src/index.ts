@@ -11,8 +11,6 @@ export {
   turnUsageSchema,
   ownTurnUsageSchema,
   subagentRunUsageSchema,
-  subagentRunIdSchema,
-  subagentLabelSchema,
   type TurnUsage,
   type OwnTurnUsage,
   type SubagentRunUsage,
@@ -31,6 +29,8 @@ export {
   type ToolKind,
   type ShellInvocation,
 } from "./tool-call-record.js";
+export { subagentRunIdSchema, subagentLabelSchema } from "./subagent-run-ids.js";
+export { toolCallOriginSchema, type ToolCallOrigin } from "./tool-call-origin.js";
 export {
   toolCallStatusSchema,
   failureCategorySchema,
@@ -45,12 +45,16 @@ export {
 } from "./tool-call-outcome.js";
 export {
   outcomeTotalsSchema,
+  originTotalsSchema,
+  auditedRunSchema,
   outcomeCoverageSchema,
   auditedToolCallSchema,
   retryGroupSchema,
   sessionAuditSchema,
   auditRollupSchema,
   type OutcomeTotals,
+  type OriginTotals,
+  type AuditedRun,
   type AuditedToolCall,
   type RetryGroup,
   type SessionAudit,
