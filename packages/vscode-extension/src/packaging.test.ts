@@ -45,6 +45,7 @@ describe(".vscodeignore (step 10.9)", () => {
     "CHANGELOG.md",
     "LICENSE",
     "README.md",
+    "THIRD-PARTY-NOTICES.md",
     "dist/extension.js",
     "dist/mcp-apps/views.html",
     "dist/mcp-stdio.js",

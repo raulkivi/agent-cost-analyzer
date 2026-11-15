@@ -7,7 +7,10 @@ import {
   copyableText,
   coverageText,
   KIND_TITLES,
+  notPricedReasons,
   perSessionText,
+  sessionDateText,
+  sessionSavingText,
   amountText,
   windowAmountText,
 } from "../../lib/savings/savings-view.js";
@@ -149,6 +152,26 @@ function ActionBlock({ opportunity, copyToClipboard }: { opportunity: SavingsOpp
   );
 }
 
+// V24 (boards Detail, Narrow): the id, then the date under it, the saving at the
+// right and the link. V25 puts the session's title on the first line and the id
+// beside the date under it; until then the id is the first line.
+function SessionItem({ session, openSessionLabel, onOpenSession }: { session: SavingsSessionRef; openSessionLabel: string; onOpenSession?: (session: SavingsSessionRef) => void }) {
+  return (
+    <li>
+      <span className="savings-session-primary mono">{session.sessionId}</span>
+      <span className="savings-session-saving">{sessionSavingText(session)}</span>
+      <span className="savings-session-meta">{sessionDateText(session.startedAt)}</span>
+      {onOpenSession && (
+        <span className="savings-session-action">
+          <button type="button" className="btn btn-ghost" aria-label={`${openSessionLabel}: ${session.sessionId}`} onClick={() => onOpenSession(session)}>
+            {openSessionLabel}
+          </button>
+        </span>
+      )}
+    </li>
+  );
+}
+
 export function SavingsDetail({ opportunity, days, providerLabel, openSessionLabel, onOpenSession, copyToClipboard, onClose, closeLabel, focusOnOpen = false }: SavingsDetailProps) {
   const closeButton = useRef<HTMLButtonElement>(null);
   useEffect(() => {
@@ -162,6 +185,7 @@ export function SavingsDetail({ opportunity, days, providerLabel, openSessionLab
   const shown = opportunity.sessions.slice(0, MAX_SESSIONS_SHOWN);
   const more = opportunity.sessions.length - shown.length;
   const windowText = windowAmountText(opportunity.perWindow, days);
+  const notPriced = notPricedReasons(shown);
 
   return (
     <section aria-label="Savings detail" className="savings-detail" data-testid="savings-detail">
@@ -205,25 +229,16 @@ export function SavingsDetail({ opportunity, days, providerLabel, openSessionLab
       <ActionBlock opportunity={opportunity} copyToClipboard={copyToClipboard} />
 
       <section aria-label="Sessions" className="savings-block">
-        <h5>Sessions</h5>
+        <h5>
+          Sessions <span className="text-muted savings-session-note">saving over the {days} days</span>
+        </h5>
         <ul className="savings-sessions">
           {shown.map((session) => (
-            <li key={`${session.providerId}/${session.sessionId}`}>
-              <span className="mono">{session.sessionId}</span>
-              {onOpenSession && (
-                <button
-                  type="button"
-                  className="btn btn-ghost"
-                  aria-label={`${openSessionLabel}: ${session.sessionId}`}
-                  onClick={() => onOpenSession(session)}
-                >
-                  {openSessionLabel}
-                </button>
-              )}
-            </li>
+            <SessionItem key={`${session.providerId}/${session.sessionId}`} session={session} openSessionLabel={openSessionLabel} onOpenSession={onOpenSession} />
           ))}
         </ul>
         {more > 0 && <p className="text-muted">and {more} more</p>}
+        {notPriced.length > 0 && <p className="text-muted savings-session-note">Not priced: {notPriced.join("; ")}</p>}
       </section>
 
       {versions.length > 0 && (

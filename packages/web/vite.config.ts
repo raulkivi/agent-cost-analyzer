@@ -30,13 +30,18 @@ const extensionBuild = {
 export default defineConfig(({ mode }) => {
   const extension = mode === "extension";
   return {
-    // The standalone app ships in the npm package; the list of npm packages
-    // it bundles feeds that package's third-party notices (npm-package.md §4.9).
+    // The npm packages each build bundles feed the third-party notices of what
+    // ships it: the standalone app in the npm package (npm-package.md §4.9),
+    // the webview in the .vsix.
     plugins: [
       react(),
       ...(extension
         ? extensionBuild.plugins
-        : [bundledPackagesPlugin(fileURLToPath(new URL("./build/bundled-packages.json", import.meta.url)))]),
+        : []),
+      // Each build writes its own list, so one doesn't overwrite the other.
+      bundledPackagesPlugin(
+        fileURLToPath(new URL(extension ? "./build/bundled-packages-extension.json" : "./build/bundled-packages.json", import.meta.url)),
+      ),
     ],
     ...(extension ? { base: extensionBuild.base, build: extensionBuild.build } : {}),
     server: {

@@ -1,0 +1,3 @@
+# LF everywhere: a Windows checkout with autocrlf would give the npm bin shim
+# CRLF line endings and break its shebang (NP8).
+* text=auto eol=lf

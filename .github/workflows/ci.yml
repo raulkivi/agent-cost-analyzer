@@ -139,8 +139,8 @@ jobs:
   # the tarball, install and run it from the tarball with scripts off and no
   # registry, check it over HTTP, in Chromium and over MCP stdio, and check
   # that it wrote only its own settings folder (scripts/npm-package-smoke.mts).
-  # Node 22.18.0 is the minimum (engines), exact. NP8 adds macos-latest and
-  # windows-latest to `os`; NP9 makes the checks required.
+  # Node 22.18.0 is the minimum (engines), exact, on Linux, macOS and
+  # Windows (NP8); Node 24 on Linux. NP9 makes the checks required.
   npm-package:
     needs: changes
     # Fail safe: run unless the changes job succeeded AND found a docs-only PR.
@@ -148,7 +148,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest]
+        os: [ubuntu-latest, macos-latest, windows-latest]
         node: ["22.18.0"]
         include:
           - os: ubuntu-latest

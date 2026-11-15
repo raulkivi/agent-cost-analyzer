@@ -27,6 +27,24 @@ export function expectedAmountText(amount: SavingsAmount): string {
   return `${figure(amount.currency, amount.low)}–${figure(amount.currency, amount.high)}${suffix} per week`;
 }
 
+// A session's saving over the window (V24): the row's label, no "per week".
+export function expectedSessionSaving(amount: SavingsAmount | undefined): string {
+  if (amount === undefined || !amount.known) return "Not priced";
+  const suffix = amount.currency === "AI_CREDITS" ? " AI Credits" : "";
+  if (amount.label === "upper-bound") return `up to ${figure(amount.currency, amount.high)}${suffix}`;
+  return `${figure(amount.currency, amount.low)}–${figure(amount.currency, amount.high)}${suffix}`;
+}
+
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"] as const;
+
+// The UTC day, as the specs run the browser in UTC; no year (inside the window).
+export function expectedSessionDate(startedAt: string | undefined): string {
+  const time = startedAt === undefined ? Number.NaN : Date.parse(startedAt);
+  if (!Number.isFinite(time)) return "date unknown";
+  const date = new Date(time);
+  return `${MONTHS[date.getUTCMonth()]} ${date.getUTCDate()}`;
+}
+
 const TITLES: Record<SavingsOpportunity["kind"], string> = {
   "unused-tools": "Tools loaded but never used",
   "idle-cache-expiry": "Cache lost after an idle gap",
