@@ -2,7 +2,7 @@
 
 **Last changed:** 2026-11-15 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
-Boards for task CS2 of [claude-code-subagents.md](../../claude-code-subagents.md) (1.0 criterion C15). They amend the step 10.19 boards in [../classic-subagents/](../classic-subagents/README.md) for runs that have tokens and a priced cost but no AI Credits. The owner approves them before CS13 (web and MCP App U1) starts. Status: **drawn, awaiting owner approval.**
+Boards for task CS2 of [claude-code-subagents.md](../../claude-code-subagents.md) (1.0 criterion C15). They amend the step 10.19 boards in [../classic-subagents/](../classic-subagents/README.md) for runs that have tokens and a priced cost but no AI Credits. The owner approves them before CS13 (web and MCP App U1) starts. Status: **approved by the owner 2026-11-15, as drawn.**
 
 Same `.dc.html` format and `canvas.json` as the other sets; `./support.js` is not in the repo, and every state is static markup, so each board also opens in a plain browser (serve the folder over HTTP). Light (Industry) and Dark Modern, at 640 px (600 px for U1) and 320 px. All data is invented. PNG captures are in [screenshots/](screenshots/).
 
@@ -25,12 +25,14 @@ Every board follows the 10.19 states and the plan's honesty rules (§6): unknown
 - A run with an unknown part never adds a smaller known total: the turn's affected cells and the turn line go unknown; the other runs stay listed.
 - Wording stays "subagent runs"; "matched by time" is in the tooltip, block and run list, not in the KPI sub-line (SA0b decision 2).
 
-## Open questions for the owner
+## Owner decisions (2026-11-15)
 
-1. Priced cost tile: add it to the session KPIs for providers without AI Credits (drawn), or put the sub-line on another tile?
-2. Marker position: Turn cell (drawn), or beside the Output cell?
-3. Tooltip lists tokens before cost (drawn: `2.04M tokens, $0.38 priced`), or cost first?
-4. One unknown field (for example cache write): that column only goes unknown (drawn), or the whole turn?
-5. "Counted in another session" row (D7) shows "not in this turn" instead of figures: OK?
-6. Show "Priced at Anthropic prices as of <date>" under every block (drawn), or only in the tooltip of the Priced chip?
-7. Dark Modern only, as asked; High Contrast frames were not redrawn. Add them before CS13?
+Approved as drawn; each question was answered with the drawn choice.
+
+1. Priced cost tile: added to the session KPIs for providers without AI Credits.
+2. Marker stays in the Turn cell.
+3. Tooltip lists tokens before cost.
+4. One unknown field: only that column goes unknown.
+5. "Counted in another session" row (D7) shows "not in this turn".
+6. "Priced at Anthropic prices as of <date>" under every block.
+7. No High Contrast frames needed before CS13.
