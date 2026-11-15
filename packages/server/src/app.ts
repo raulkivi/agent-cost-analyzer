@@ -44,6 +44,8 @@ function route(respond: Respond) {
 // the VS Code extension's message dispatcher behaves identically.
 export function createApp(options: CreateAppOptions = {}): Express {
   const app = express();
+  // Also when mounted in the npm package's server, which disables it too.
+  app.disable("x-powered-by");
   const { allowedHostPorts, ...serviceOptions } = options;
   const api = createStandaloneApiService(serviceOptions);
 
