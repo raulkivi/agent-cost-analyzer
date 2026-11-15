@@ -46,7 +46,7 @@ The standalone app has one theme (Industry, light), so it is drawn light only. T
 
 ## Savings Increment 3 amendments (V23b)
 
-Amended 2026-11-15 for task V23b in [savings-increment-3.md](../../savings-increment-3.md) §10, **awaiting owner approval** before V24-V26's UI code (D32). The Increment 1-2 boards stay approved; only the parts below changed. Names, titles, dates and amounts are invented. The U18 amendments are in [`../mcp-apps/Savings.dc.html`](../mcp-apps/README.md).
+Amended 2026-11-15 for task V23b in [savings-increment-3.md](../../savings-increment-3.md) §10, **approved by the owner 2026-11-15** (answers below); V24-V26's UI code may start (D32). The Increment 1-2 boards stay approved; only the parts below changed. Names, titles, dates and amounts are invented. The U18 amendments are in [`../mcp-apps/Savings.dc.html`](../mcp-apps/README.md).
 
 | Board | Amended |
 | --- | --- |
@@ -56,7 +56,7 @@ Amended 2026-11-15 for task V23b in [savings-increment-3.md](../../savings-incre
 | `VsCodeDark.dc.html`, `VsCodeLight.dc.html`, `VsCodeHC.dc.html` | Copilot titles from the extension's dataset (D25), date, saving, "Open session". High Contrast keeps words and borders, no color cues. |
 | `States.dc.html` | Two new tiles: pi with a request trace (V28, after 1.0) where the unchecked-sessions list used to be, with the shared-prefix coverage reason (D27), `write` unused (V27) and a local model "Not priced"; and the session list edge cases (title not found, "date unknown", one session "Not priced"). |
 
-### Open questions for the owner (V23b)
+### Questions for the owner (V23b), answered 2026-11-15
 
 1. **Session saving per row.** Drawn as the saving over the 30 days (the row's own "Over the 30 days" figure), not per week, as D22 says. A weekly rate of one session is meaningless; keep?
 2. **Title above id.** Drawn title first, id and date under it in muted text. The id is how you ask the tools about that session. Prefer id first?
@@ -67,3 +67,15 @@ Amended 2026-11-15 for task V23b in [savings-increment-3.md](../../savings-incre
 7. **Dates.** "Nov 11" in the viewer's time zone in the views, ISO `2026-11-11` in the tool's text. Year omitted inside the window; add the year for windows over 90 days?
 8. **Board note placement.** The titles boundary is a board note on `Detail.dc.html`, not product copy. Should the app also say once that titles are looked up on this device? Drawn: no.
 9. **pi tile.** Drawn with the V28 trace although V28 is after 1.0, so you can see what replaces the unchecked-sessions list. OK as a post-1.0 reference, or remove it from the 1.0 board set?
+
+**Owner answers (2026-11-15).** All nine questions: keep what is drawn.
+
+- Session saving is over the 30 days, not per week.
+- Title first, then id and date in muted text.
+- A missing title shows the id alone, with no placeholder.
+- "Not priced" replaces the amount; the reason shows once under the list.
+- Five tools and "and 18 more".
+- The "and 18 more" token figure stays (the row total minus the five listed).
+- Dates show without the year inside the window.
+- The titles boundary is a board note only; the app copy does not repeat it.
+- The pi tile stays as a reference for V28, labeled "after 1.0 (V28)" on the board.

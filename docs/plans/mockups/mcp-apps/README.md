@@ -137,6 +137,6 @@ Checks for the savings boards:
 
 ### Savings Increment 3 amendments (V23b)
 
-Amended 2026-11-15 for task V23b in [savings-increment-3.md](../../savings-increment-3.md) §10; **awaiting owner approval** (D32). Open questions are in [../savings-report/README.md](../savings-report/README.md).
+Amended 2026-11-15 for task V23b in [savings-increment-3.md](../../savings-increment-3.md) §10; **approved by the owner 2026-11-15** (D32). The owner's answers are in [../savings-report/README.md](../savings-report/README.md).
 
 - `Savings.dc.html` frame 1: each session's saving now carries its unit ("up to 61.2 AI Credits"). New frames 5 (VS Code Dark Modern) and 6 (Claude Desktop light): the opened "Tools loaded but never used" row with evidence, the per-tool list ("inferred", "estimate", "about", "and 18 more"), the action text, and three sessions with date and saving. Ids only, no titles (D19), and a line saying so. No new control, no Copy, no new host call.
