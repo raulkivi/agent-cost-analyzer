@@ -135,6 +135,51 @@ jobs:
           path: packages/mcp-apps/e2e/out/
           if-no-files-found: ignore
 
+  # The npm package (docs/plans/npm-package.md §4.8, task NP7): pack it, check
+  # the tarball, install and run it from the tarball with scripts off and no
+  # registry, check it over HTTP, in Chromium and over MCP stdio, and check
+  # that it wrote only its own settings folder (scripts/npm-package-smoke.mts).
+  # Node 22.18.0 is the minimum (engines), exact. NP8 adds macos-latest and
+  # windows-latest to `os`; NP9 makes the checks required.
+  npm-package:
+    needs: changes
+    # Fail safe: run unless the changes job succeeded AND found a docs-only PR.
+    if: ${{ !cancelled() && (needs.changes.result != 'success' || needs.changes.outputs.docs_only != 'true') }} # codespell:ignore cancelled
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        node: ["22.18.0"]
+        include:
+          - os: ubuntu-latest
+            node: "24"
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      # Builds and packs, then runs every check against the tarball.
+      - run: npm run smoke:npm-package
+      # The smoke's log, the server's and MCP server's stderr, the MCP stdout
+      # lines, npm's debug logs and Playwright's failure screenshots.
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: failure()
+        with:
+          name: npm-package-smoke-${{ matrix.os }}-node-${{ matrix.node }}
+          path: packages/cli/smoke/out/
+          if-no-files-found: ignore
+
   # The AI Credits Analyzer VS Code extension (docs/plans/vscode-extension.md
   # §7.1): its unit tests, then the real-VS Code integration suite on the
   # stable build, under a virtual display.

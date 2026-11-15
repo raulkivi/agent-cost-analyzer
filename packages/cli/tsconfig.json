@@ -3,11 +3,12 @@
   "compilerOptions": {
     // Type-check only: esbuild bundles src/cli.ts (scripts/build.mts), and
     // Node runs the .mts build scripts directly, which import each other
-    // with their .mts extensions.
+    // with their .mts extensions. The npm-package smoke (smoke/) runs under
+    // tsx, as it imports the server's and the web suite's sources.
     "noEmit": true,
     "allowJs": true,
     "allowImportingTsExtensions": true,
     "types": ["node"]
   },
-  "include": ["bin", "src", "test", "scripts"]
+  "include": ["bin", "src", "test", "scripts", "smoke"]
 }

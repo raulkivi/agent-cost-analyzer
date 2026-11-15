@@ -21,6 +21,8 @@ packages/vscode-extension/test/ui/out/
 packages/web/e2e/out/
 # The MCP App views in a fake host (step 10.17 G5): failure screenshots
 packages/mcp-apps/e2e/out/
+# The npm-package smoke (task NP7): its logs and Playwright output
+packages/cli/smoke/out/
 *.tsbuildinfo
 
 # Test coverage
