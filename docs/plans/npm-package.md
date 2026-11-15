@@ -2,7 +2,7 @@
 
 **Last changed:** 2026-11-15 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
-Status: **Building** (plan approved 2026-11-14, D1–D10 accepted). Done 2026-11-15: NP0 (the owner published `agent-cost-analyzer@0.0.0` and `agent-cost-analyser@0.0.0` with 2FA, the owner the only maintainer; the deprecation of `agent-cost-analyser` is pending), NP1 and NP3. First `npx` version: app 0.16.0 (owner 2026-11-15). Task V15 of the
+Status: **Building** (plan approved 2026-11-14, D1–D10 accepted). Done 2026-11-15: NP0 (the owner published `agent-cost-analyzer@0.0.0` and `agent-cost-analyser@0.0.0` with 2FA through a stored passkey, the owner the only maintainer; `agent-cost-analyser` deprecated with "Use agent-cost-analyzer (with a z)."), NP1 (PR #309), NP2 (#312), NP3 (#310), NP4 (#313), NP5 (#311) and NP6 (#314). Measured: packed 2.73 MB, unpacked 9.98 MB, one 7.6 MB `dist/cli.js` (no chunks: `cli.ts` imports both commands statically). NP6b (notices for the web and views bundles) comes before any real publish. First `npx` version: app 0.16.0 (owner 2026-11-15). Task V15 of the
 [1.0.0 release](../implementation-plan.md#100-release). It splits V16
 (build), V17 (trusted publishing) and V18 (docs) into the tasks in §11.
 
@@ -281,8 +281,9 @@ workflow, does:
 
 - `LICENSE` (MIT) ships unchanged.
 - Each source file under `packages/cli` gets the two-line SPDX header
-  (`npm run headers:fix`). esbuild keeps legal comments, so headers in
-  bundled code survive.
+  (`npm run headers:fix`). esbuild keeps only `@license` and `/*!`
+  comments, not the sources' SPDX lines, so the build's banner puts the
+  SPDX lines at the top of every output file (found in NP6).
 - `THIRD-PARTY-NOTICES.md` in the package is generated at build time from
   the esbuild metafile: each bundled npm package's name, version, licence
   and licence text, plus the fonts section of the root file. A test fails
@@ -449,11 +450,12 @@ NP12-NP13 are V18.
 |---|---|---|---|---|---|
 | NP0 | Publish the placeholder `agent-cost-analyzer@0.0.0` (D2) and, under D3, `agent-cost-analyser@0.0.0`, from the owner's machine with 2FA; account 2FA on a security key | `npm view` shows both, owner the only maintainer | low | Owner step | D2, D3 decided |
 | NP1 (done 2026-11-15) | `packages/cli` workspace: `package.json` (name, `bin`, `files`, `engines`, `type`, `license`, `repository`, no scripts, no dependencies), root renamed (D1), `release-check.mts` and a unit test keep the versions equal; SPDX headers | Tests green; `npm install` and the existing suites unchanged | low | Sonnet | Plan approved |
-| NP2 | Argument parsing (`parseArgs`, pure) and the `bin` shim's Node gate and warning filter | Tests for every row of §4.3 and for Node 21 and 22.17 refusals | medium | Sonnet | NP1 |
+| NP2 (done 2026-11-15) | Argument parsing (`parseArgs`, pure) and the `bin` shim's Node gate and warning filter | Tests for every row of §4.3 and for Node 21 and 22.17 refusals | medium | Sonnet | NP1 |
 | NP3 | Package-layout injection into the standalone and MCP composition roots (data folders, views, web folder, version path); dev defaults unchanged. **Done 2026-11-15:** `PackageLayout` and `npmPackageLayout(packageRoot)` (`composition/package-layout.ts`); `composeStandaloneApp({ layout, allowedHostPorts })` (`standalone-app.ts`) returns `{ app, version }` without listening; `serveStandaloneMcpStdio({ layout, projectBillingDetails, appViewsHtml })` and `createStandaloneMcpServerFactory` (`mcp/standalone-mcp-server.ts`) | Tests: a layout in a temp folder is read; no `import.meta.url` path used when a layout is given | medium | Opus | NP1 |
-| NP4 | `serve`: port choice (D4) incl. reusing a running instance, `createApp` with the bound port, static web, `nosniff` and CSP, start line, signals | supertest and real-listen tests: busy port, `--port` busy, reuse, 403 on another Host, static traversal refused | medium | Sonnet | NP2, NP3 |
-| NP5 | Browser opener (D8) with an injected spawner | Tests per OS: program, argv, no shell, skip rules | low | Sonnet | NP2 |
-| NP6 | Build script: esbuild ESM with splitting and the `require` banner, copies (web, views, JSON-only data), generated `THIRD-PARTY-NOTICES.md` with the licence allow-list test, bundle-load test, size budget | `npm run build` produces `packages/cli/dist`; the bundle runs `--version`, `serve` and `mcp`; notices and budget tests green | high | Opus | NP3, NP4, NP5 |
+| NP4 (done 2026-11-15) | `serve`: port choice (D4) incl. reusing a running instance, `createApp` with the bound port, static web, `nosniff` and CSP, start line, signals | supertest and real-listen tests: busy port, `--port` busy, reuse, 403 on another Host, static traversal refused | medium | Sonnet | NP2, NP3 |
+| NP5 (done 2026-11-15) | Browser opener (D8) with an injected spawner | Tests per OS: program, argv, no shell, skip rules | low | Sonnet | NP2 |
+| NP6 (done 2026-11-15) | Build script: esbuild ESM with splitting and the `require` banner, copies (web, views, JSON-only data), generated `THIRD-PARTY-NOTICES.md` with the license allow-list test, bundle-load test, size budget | `npm run build` produces `packages/cli/dist`; the bundle runs `--version`, `serve` and `mcp`; notices and budget tests green | high | Opus | NP3, NP4, NP5 |
+| NP6b | Notices for the Vite-built web app and MCP App views: both builds emit the npm packages they bundle (name, version, license, license text), the generator adds them to the package's `THIRD-PARTY-NOTICES.md` under the same allow-list; found in NP6 (the Vite bundles carry no license comments, so React, d3 and the others shipped without notices) | The notices test fails when a package bundled into `dist/web` or `views.html` is missing or off the allow-list | medium | Sonnet | NP6 |
 | NP7 | `scripts/npm-package-smoke.mts` and the `npm-package` CI job (§4.8), with the Playwright spec and the MCP client check | Job green on Ubuntu (Node 22.18.0 and 24) | high | Opus | NP6 |
 | NP8 | macOS and Windows: fix what the job finds, test-first | Job green on all three OSes | medium | Sonnet (Opus if the fix crosses modules) | NP7 |
 | NP9 | Add the `npm-package` checks to ruleset 27004539 (D6) | Required, read back through the GitHub API | low | Owner step | NP8 |
