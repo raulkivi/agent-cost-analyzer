@@ -184,17 +184,24 @@ jobs:
   # names never appear on docs-only PRs, where the matrix is skipped.
   npm-package-result:
     name: npm-package-result
-    needs: npm-package
+    # `changes` is needed so a skipped matrix counts as a pass only on a real
+    # docs-only scope; a run canceled before the matrix also leaves it skipped.
+    needs: [changes, npm-package]
     if: always()
     runs-on: ubuntu-latest
     permissions: {}
     steps:
       - env:
+          CHANGES: ${{ needs.changes.result }}
+          DOCS_ONLY: ${{ needs.changes.outputs.docs_only }}
           RESULT: ${{ needs.npm-package.result }}
         run: |
+          echo "changes: $CHANGES (docs_only=$DOCS_ONLY); npm-package: $RESULT"
+          [ "$CHANGES" = success ] || exit 1
           case "$RESULT" in
-            success|skipped) echo "npm-package: $RESULT" ;;
-            *) echo "npm-package: $RESULT"; exit 1 ;;
+            success) ;;
+            skipped) [ "$DOCS_ONLY" = true ] || exit 1 ;;
+            *) exit 1 ;;
           esac
 
   # The AI Credits Analyzer VS Code extension (docs/plans/vscode-extension.md

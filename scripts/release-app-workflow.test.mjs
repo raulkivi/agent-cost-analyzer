@@ -35,6 +35,39 @@ test("build keeps the audit gate, then packs, checksums, smokes and dry-runs", (
   assert.ok(pack >= 0 && sum > pack && smoke > pack && dry > pack);
 });
 
+const extension = parse(readFileSync(new URL("../.github/workflows/release-extension.yml", import.meta.url), "utf8"));
+const uploadIndex = (job) => job.steps.findIndex((s) => s.uses?.startsWith("actions/upload-artifact@") && s.with?.name === "npm-release");
+
+test("no release workflow restores an npm cache", () => {
+  for (const wf of [workflow, extension]) {
+    for (const job of Object.values(wf.jobs)) {
+      for (const step of job.steps.filter((s) => s.uses?.startsWith("actions/setup-node@"))) {
+        assert.equal(step.with?.cache, undefined);
+      }
+    }
+  }
+});
+
+test("the artifact is uploaded right after the pack, checksum and smoke, before any other npm install", () => {
+  const smoke = indexOfRun(build, /smoke:npm-package -- --tarball/);
+  const upload = uploadIndex(build);
+  assert.ok(upload > smoke && upload > indexOfRun(build, /sha256sum/));
+  const later = indexOfRun(build, /npm install -g|npm publish/);
+  assert.ok(later > upload, "no npm install or publish before the upload");
+  // Nothing between the smoke and the upload may install or run another npm.
+  for (const run of runs(build).slice(smoke + 1, upload)) assert.doesNotMatch(run, /\bnpm (run|install|ci|exec|publish|pack)\b|\bnpx\b/);
+});
+
+test("the tarball is re-checked against SHA256SUMS just before the upload", () => {
+  const verify = indexOfRun(build, /verify-sha256\.mjs/);
+  assert.ok(verify > indexOfRun(build, /smoke:npm-package -- --tarball/));
+  assert.ok(verify < uploadIndex(build));
+});
+
+test("the dry run comes after the upload, so it cannot change the artifact", () => {
+  assert.ok(indexOfRun(build, /npm publish --dry-run/) > uploadIndex(build));
+});
+
 test("publish runs in the release environment with OIDC and a scoped write", () => {
   assert.equal(publish.environment, "release");
   assert.deepEqual(publish.permissions, { contents: "write", "id-token": "write" });
