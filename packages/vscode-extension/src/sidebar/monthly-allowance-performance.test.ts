@@ -1,8 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import type { ConfigStatus, Session } from "@agent-cost-analyzer/domain";
+import type { AllowanceSettings, ConfigStatus, Session } from "@agent-cost-analyzer/domain";
 import { describe, expect, it, vi } from "vitest";
-import type { AllowanceSettings } from "../settings/allowance-settings.js";
 import { SidebarController, type SidebarSources } from "./sidebar-controller.js";
 
 // Step 10.21 MA8 (plan monthly-allowance.md §3.6): 5,000 session summaries

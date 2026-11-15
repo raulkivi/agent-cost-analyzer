@@ -1,9 +1,9 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
 import { createHash } from "node:crypto";
-import { isLocalRepositoryKey, redactRepositoryKey, repositoryFolderLabel, type RepositoryAttribution, type Session } from "@agent-cost-analyzer/domain";
+import { dayKeyOf, isLocalRepositoryKey, redactRepositoryKey, repositoryFolderLabel, type RepositoryAttribution, type Session } from "@agent-cost-analyzer/domain";
 import { identityTranslate, type Translate } from "../l10n/localize.js";
-import { dayKeyOf, previousDayKey, timeOfDayOf } from "../time/local-time.js";
+import { previousDayKey, timeOfDayOf } from "../time/local-time.js";
 import { formatAiCredits, groupDescription, startOf, toSessionNode, type GroupNode, type SessionNode } from "./sessions-tree-model.js";
 
 // Phase 15 step 15.14 (plan §11.9, board 7): the Sessions tree grouped by
