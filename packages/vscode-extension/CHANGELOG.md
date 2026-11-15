@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Each session in a savings row now shows its date and its own saving over the window, with the row's label ("up to", a range or Simulated), in the Savings tab and in the chat view; a session that could not be priced says "Not priced" with the reason once, and one without a start says "date unknown". `get_savings_report` carries the same two fields per shown session (no title) and prints them as `<id> (<date>, <saving>)`. The tool's Simulated rows no longer have a `rank` and are bullets, not numbers, in its text, and the chat view reads every coverage gap as "N not analysed: reason". <!-- codespell:ignore analysed -->
+- Each session in a savings row shows its title first, then its id and date under it, in the Savings tab (the standalone app and the extension). The title is looked up in the browser from the session list the Dashboard loads, shown as text on one line (cut at 120 characters, in full on hover); a session without a title shows the id alone. Titles are not in the report, `get_savings_report`, the chat view or Copy.
 
 ### Fixed
 - The extension now ships third-party license notices (`THIRD-PARTY-NOTICES.md` in the .vsix) for the npm packages it bundles, with their license texts.

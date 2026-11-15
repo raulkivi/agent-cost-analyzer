@@ -54,9 +54,11 @@ const full: Session = { ...summary, turns: [makeTurn({ index: 0 })] };
 describe("App: the Savings tab", () => {
   const calls: { method: string; params: Record<string, unknown> }[] = [];
   let profile: ProductProfile;
+  let insights = sampleInsightsDataset();
 
   beforeEach(() => {
     calls.length = 0;
+    insights = sampleInsightsDataset();
     setViewStateStorage(memoryViewStateStorage());
     setApiTransport({
       call: ((method: string, params?: Record<string, unknown>) => {
@@ -70,7 +72,7 @@ describe("App: the Savings tab", () => {
           setActiveLogProvider: { providers: [{ id: "vscode", label: "GitHub Copilot, VS Code", available: true }, { id: "claude-code", label: "Claude Code", available: true }], activeProviderId: "claude-code" },
           listSessions: [summary],
           getSession: full,
-          getInsights: sampleInsightsDataset(),
+          getInsights: insights,
           getSavingsReport: makeSavingsReport(),
           getConfigStatus: { checkedAt: "2026-11-07T00:00:00.000Z", vscodeUserSettingsPath: "/x", loggingEnabled: true, minRetainedSessionLogsThreshold: 200, warnings: [] },
         };
@@ -134,6 +136,37 @@ describe("App: the Savings tab", () => {
     expect(screen.queryByLabelText("Provider")).not.toBeInTheDocument();
     await user.click(within((await screen.findAllByTestId("savings-row"))[0]!).getByRole("button"));
     expect(within(screen.getByRole("region", { name: "Savings detail" })).getAllByRole("button", { name: /^Open session:/ })).not.toHaveLength(0);
+  });
+
+  // V25 (D24, D25): both products show a session's title from the dataset the
+  // panel's getInsights call answers, over the report's window; the id stays in
+  // the link's name.
+  const titled = (providerId: string, sessionId: string, title: string) => ({ ...sampleInsightsDataset().sessions[0]!, key: `${providerId}:${sessionId}`, providerId, sessionId, title });
+
+  it("shows a session's title from the insights dataset in the standalone app", async () => {
+    profile = standalone();
+    insights = { ...sampleInsightsDataset(), sessions: [titled("claude-code", "cc-1", "Tidy the cache layer")] };
+    const user = await openAnalyze();
+    await user.click(await screen.findByLabelText("Dashboard"));
+    await user.click(await screen.findByLabelText("Savings"));
+    await user.click(within((await screen.findAllByTestId("savings-row")).find((row) => row.textContent?.includes("claude-opus-5.5"))!).getByRole("button"));
+
+    const detail = screen.getByRole("region", { name: "Savings detail" });
+    expect(await within(detail).findByText("Tidy the cache layer")).toBeInTheDocument();
+    expect(within(detail).getByRole("button", { name: "Open in Analyze: cc-1: Tidy the cache layer" })).toBeInTheDocument();
+    expect(calls.filter((call) => call.method === "getInsights").some((call) => call.params.limit === 200 && typeof call.params.since === "string")).toBe(true);
+  });
+
+  it("shows a Copilot session's title from the dataset in the extension", async () => {
+    profile = extension({ sessionSidebar: true });
+    insights = { ...sampleInsightsDataset(), sessions: [titled("vscode", "session-1", "Wire the panel")] };
+    const user = await openAnalyze();
+    await user.click(await screen.findByLabelText("Savings"));
+    await user.click(await screen.findByText("github"));
+
+    const detail = screen.getByRole("region", { name: "Savings detail" });
+    expect(await within(detail).findByText("Wire the panel")).toBeInTheDocument();
+    expect(within(detail).getByRole("button", { name: "Open session: session-1: Wire the panel" })).toBeInTheDocument();
   });
 
   it("has no Savings tab when the product does not offer the report", async () => {

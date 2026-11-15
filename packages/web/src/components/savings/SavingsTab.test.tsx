@@ -3,7 +3,7 @@
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { SavingsAmount, SavingsReport } from "@agent-cost-analyzer/domain";
+import type { InsightsDataset, SavingsAmount, SavingsReport } from "@agent-cost-analyzer/domain";
 import type { SavingsQuery } from "../../api-client/savings.js";
 import { IDLE_CACHE, makeSavingsReport, opportunity, SAVINGS_FIXTURE_NOW, SIMULATED, UNPRICED_ROW, UNUSED_TOOLS } from "../../test-support/savings-fixture.js";
 import { SavingsTab } from "./SavingsTab.js";
@@ -333,6 +333,84 @@ describe("SavingsTab: detail", () => {
     });
   });
 
+  // V25 (boards Detail, Narrow, VsCode*; owner answers 2026-11-15; D24, D25):
+  // the title first, the id and date under it; a session the dataset does not
+  // hold shows the id alone. The titles come from the insights dataset, loaded
+  // when a detail opens, in the app and in the extension alike.
+  describe("session titles", () => {
+    const datasetOf = (...titles: [string, string][]) =>
+      ({ sessions: titles.map(([sessionId, title]) => ({ key: `vscode:${sessionId}`, providerId: "vscode", sessionId, title })) }) as unknown as InsightsDataset;
+    async function openUnusedWith(loadInsights: NonNullable<Parameters<typeof SavingsTab>[0]["loadInsights"]>, props: Partial<Parameters<typeof SavingsTab>[0]> = {}) {
+      renderTab({ loadInsights, ...props });
+      await ready();
+      fireEvent.click(within(rowOf("github")).getByRole("button"));
+      return within(screen.getByRole("region", { name: "Savings detail" })).getByRole("region", { name: "Sessions" });
+    }
+    const itemOf = (list: HTMLElement, id: string) => within(list).getAllByRole("listitem").find((item) => item.textContent?.includes(id))!;
+
+    it("asks for the dataset only when a detail opens, over the report's window", async () => {
+      const loadInsights = vi.fn().mockResolvedValue(datasetOf());
+      renderTab({ loadInsights });
+      await ready();
+      expect(loadInsights).not.toHaveBeenCalled();
+
+      fireEvent.click(within(rowOf("github")).getByRole("button"));
+
+      await waitFor(() => expect(loadInsights).toHaveBeenCalledTimes(1));
+      expect(loadInsights).toHaveBeenCalledWith({ since: "2026-10-15", until: "2026-11-13", limit: 200 }, expect.any(AbortSignal));
+    });
+
+    it("shows the title first, then the id and the date, and names the link with both", async () => {
+      const list = await openUnusedWith(vi.fn().mockResolvedValue(datasetOf(["session-1", "Refactor token cache"])));
+
+      const item = await waitFor(() => {
+        const found = itemOf(list, "session-1");
+        expect(found).toHaveTextContent("Refactor token cache");
+        return found;
+      });
+      expect(item.textContent!.indexOf("Refactor token cache")).toBeLessThan(item.textContent!.indexOf("session-1"));
+      expect(item).toHaveTextContent("Nov 11");
+      expect(within(item).getByText("Refactor token cache")).toHaveAttribute("title", "Refactor token cache");
+      expect(within(item).getByRole("button", { name: "Open in Analyze: session-1: Refactor token cache" })).toBeInTheDocument();
+    });
+
+    it("shows the id alone, with no placeholder, for a session the dataset lacks", async () => {
+      const list = await openUnusedWith(vi.fn().mockResolvedValue(datasetOf(["session-1", "Refactor token cache"])));
+      await waitFor(() => expect(itemOf(list, "session-1")).toHaveTextContent("Refactor token cache"));
+
+      const item = itemOf(list, "session-2");
+      expect(item).toHaveTextContent("session-2");
+      expect(item).not.toHaveTextContent(/untitled|unknown title|no title/i);
+      expect(within(item).getByRole("button", { name: "Open in Analyze: session-2" })).toBeInTheDocument();
+    });
+
+    it("shows ids alone, and no error, when the dataset cannot be loaded", async () => {
+      const list = await openUnusedWith(vi.fn().mockRejectedValue(new Error("boom")));
+
+      await waitFor(() => expect(within(list).getByRole("button", { name: "Open in Analyze: session-1" })).toBeInTheDocument());
+      expect(itemOf(list, "session-1")).toHaveTextContent("session-1");
+      expect(screen.queryByText(/boom|could not load/i)).not.toBeInTheDocument();
+    });
+
+    it("shows Copilot titles the same way in the extension (D25)", async () => {
+      const list = await openUnusedWith(vi.fn().mockResolvedValue(datasetOf(["session-2", "Add grouping"])), { copilotOnly: true, openSessionLabel: "Open session" });
+
+      await waitFor(() => expect(itemOf(list, "session-2")).toHaveTextContent("Add grouping"));
+      expect(within(itemOf(list, "session-2")).getByRole("button", { name: "Open session: session-2: Add grouping" })).toBeInTheDocument();
+    });
+
+    it("never puts a title in Copy's text", async () => {
+      const { copyToClipboard } = renderTab({ loadInsights: vi.fn().mockResolvedValue(datasetOf(["session-1", "Refactor token cache"])) });
+      await ready();
+      fireEvent.click(within(rowOf("github")).getByRole("button"));
+      await screen.findByText("Refactor token cache");
+      fireEvent.click(screen.getByRole("button", { name: "Copy text" }));
+
+      await waitFor(() => expect(copyToClipboard).toHaveBeenCalled());
+      expect(copyToClipboard.mock.calls[0]![0]).not.toContain("Refactor");
+    });
+  });
+
   it("says 'Open session' in the extension", async () => {
     renderTab({ openSessionLabel: "Open session" });
     await ready();
@@ -462,6 +540,32 @@ describe("SavingsTab: hostile names are text", () => {
     expect(container.querySelector("img, script")).toBeNull();
     expect(screen.getAllByText(hostile, { exact: false }).length).toBeGreaterThan(2);
     expect((window as unknown as { pwned?: number }).pwned).toBeUndefined();
+  });
+
+  // V25 (§5, threat-model §6.1): a session title is logged text, often the
+  // opening of a prompt. It renders as inert text, on one line, capped at 120.
+  it("renders a hostile session title inert: no markup, no bidi or control characters, one line, capped", async () => {
+    const markup = `<img src=x onerror="alert(1)"><script>window.pwned=1</script>`;
+    const titles: [string, string][] = [
+      ["session-1", markup],
+      ["session-2", `a\u202Eb\u2066c\r\nd\u0007e\u200Bf`],
+      ["session-3", "x".repeat(500)],
+    ];
+    const dataset = { sessions: titles.map(([sessionId, title]) => ({ key: `vscode:${sessionId}`, providerId: "vscode", sessionId, title })) } as unknown as InsightsDataset;
+    const { container } = renderTab({ loadInsights: vi.fn().mockResolvedValue(dataset) });
+    await ready();
+    fireEvent.click(within(rowOf("github")).getByRole("button"));
+    const list = within(screen.getByRole("region", { name: "Savings detail" })).getByRole("region", { name: "Sessions" });
+    await within(list).findByText(markup);
+
+    expect(container.querySelector("img, script")).toBeNull();
+    expect((window as unknown as { pwned?: number }).pwned).toBeUndefined();
+    const items = within(list).getAllByRole("listitem");
+    expect(within(items[1]!).getByText("abc d ef")).toBeInTheDocument();
+    expect(items[1]!.textContent).not.toMatch(/[\p{Cc}\p{Cf}]/u);
+    expect(within(items[2]!).getByText("x".repeat(120))).toBeInTheDocument();
+    expect(items[2]!.textContent).not.toContain("x".repeat(121));
+    for (const link of within(list).getAllByRole("button")) expect(link.getAttribute("aria-label")).not.toMatch(/[\p{Cc}\p{Cf}]/u);
   });
 
   // SR16: what Copy puts on the clipboard from a hostile name is one line,

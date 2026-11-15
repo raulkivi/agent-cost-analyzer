@@ -141,6 +141,41 @@ test("SV1: a row opens its detail with the API's figures; Copy puts the action t
   await expect(detail).toHaveCount(0);
 });
 
+// V25 (D24): titles are looked up in the browser from the insights dataset and
+// shown first; the savings answer itself holds none.
+test("SV1: each session shows its dataset title first, the id under it; the savings answer holds no title", async ({ page, app }) => {
+  const savingsResponse = await page.request.get(`${app.baseURL}/api/savings?since=${SINCE}&pricing=as-of-use&includeSimulated=false`);
+  const savingsText = await savingsResponse.text();
+  const report = JSON.parse(savingsText) as SavingsReport;
+  const insights = await page.request.get(`${app.baseURL}/api/insights?since=${SINCE}&limit=200`);
+  const rows = ((await insights.json()) as { sessions: { key: string; title: string }[] }).sessions;
+  const titleOfKey = new Map(rows.map((row) => [row.key, row.title.replace(/\s+/g, " ").trim()]));
+  const opportunity = report.opportunities.find((candidate) => candidate.kind === "idle-cache-expiry")!;
+  const shown = opportunity.sessions.slice(0, 5);
+  const titles = shown.map((session) => titleOfKey.get(`${session.providerId}:${session.sessionId}`) ?? "");
+  expect(titles.some((title) => title !== ""), "the fixture's session has a title in the dataset").toBe(true);
+  for (const title of titles.filter((candidate) => candidate !== "")) expect(savingsText).not.toContain(title);
+
+  const tab = await openSavings(page, app.baseURL);
+  await rowOf(tab, opportunity).getByRole("button").click();
+  const sessions = tab.getByRole("region", { name: "Savings detail" }).getByRole("region", { name: "Sessions" });
+  for (const [index, session] of shown.entries()) {
+    const item = sessions.getByRole("listitem").nth(index);
+    const title = titles[index]!;
+    if (title === "") {
+      await expect(item).toContainText(session.sessionId);
+      await expect(item.getByRole("button", { name: `Open in Analyze: ${session.sessionId}` })).toBeVisible();
+      continue;
+    }
+    const shownTitle = [...title].slice(0, 120).join("");
+    await expect(item.locator(".savings-session-title")).toHaveText(shownTitle);
+    await expect(item.locator(".savings-session-title")).toHaveAttribute("title", shownTitle);
+    await expect(item.locator(".savings-session-meta")).toContainText(session.sessionId);
+    await expect(item.getByRole("button", { name: `Open in Analyze: ${session.sessionId}: ${shownTitle}` })).toBeVisible();
+  }
+  expect(await axeViolations(page)).toEqual([]);
+});
+
 test("SV1: the keyboard opens a row, Escape closes it and gives focus back", async ({ page, app }) => {
   const report = await reportFromApi(page, app.baseURL);
   const tab = await openSavings(page, app.baseURL);
