@@ -305,7 +305,12 @@ workflow, does:
 
 - **build** (`contents: read`): today's checks, then `npm pack` once, the
   smoke script on that tarball, and an artifact with the tarball and its
-  SHA-256. A manual `workflow_dispatch` run is a dry run: the build job
+  SHA-256, uploaded right after the smoke and before any step that
+  installs another npm. The pinned-npm `npm publish --dry-run` runs after
+  the upload, and no release workflow restores an npm cache, so a poisoned
+  cache or a later step can't rewrite the tarball or `SHA256SUMS`;
+  artifacts are immutable once uploaded, and the publish job's SHA-256 check
+  proves the transfer. A manual `workflow_dispatch` run is a dry run: the build job
   runs in full and the publish job is skipped.
 - **publish** (`needs: build`, `environment: release`, permissions
   `contents: write` and `id-token: write`): downloads the artifact,
