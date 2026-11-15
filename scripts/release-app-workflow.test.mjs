@@ -35,6 +35,41 @@ test("build keeps the audit gate, then packs, checksums, smokes and dry-runs", (
   assert.ok(pack >= 0 && sum > pack && smoke > pack && dry > pack);
 });
 
+test("build packs the alias too, checksums it and smokes both tarballs", () => {
+  const aliasPack = indexOfRun(build, /npm pack --workspace=packages\/cli-alias/);
+  assert.ok(aliasPack > indexOfRun(build, /npm pack --workspace=packages\/cli /));
+  const sum = runs(build)[indexOfRun(build, /sha256sum/)];
+  assert.match(sum, /\$TARBALL/);
+  assert.match(sum, /\$ALIAS_TARBALL/);
+  assert.ok(indexOfRun(build, /sha256sum/) > aliasPack);
+  assert.match(runs(build)[indexOfRun(build, /smoke:npm-package -- --tarball/)], /--alias-tarball "\.\/npm-release\/\$ALIAS_TARBALL"/);
+  assert.ok(build.outputs["alias-tarball"] && build.outputs["alias-version"]);
+});
+
+test("the dry run covers the alias as well", () => {
+  assert.ok(indexOfRun(build, /npm publish --dry-run "\.\/npm-release\/\$ALIAS_TARBALL"/) > uploadIndex(build));
+});
+
+test("the alias is published after the main package, only when its version is not on npm yet", () => {
+  const main = indexOfRun(publish, /npm publish "\$TARBALL"/);
+  const step = publish.steps.find((s) => /npm publish "\$ALIAS_TARBALL"/.test(s.run ?? ""));
+  assert.ok(step, "alias publish step is missing");
+  assert.ok(publish.steps.indexOf(step) > main);
+  assert.match(step.run, /npm view "agent-cost-analyser@\$ALIAS_VERSION" version/); // codespell:ignore analyser
+  assert.match(step.run, /--access public/);
+  assert.match(step.run, /skipping|already/i);
+});
+
+test("the look-alike's maintainer check reads its own file and runs before its publish, in the same step", () => {
+  const step = publish.steps.find((s) => /npm publish "\$ALIAS_TARBALL"/.test(s.run ?? ""));
+  const view = step.run.indexOf('npm view "agent-cost-analyser@$ALIAS_VERSION" version'); // codespell:ignore analyser
+  const maintainers = step.run.indexOf('npm view agent-cost-analyser maintainers --json > "$RUNNER_TEMP/alias-maintainers.json"'); // codespell:ignore analyser
+  const check = step.run.indexOf('check-npm-maintainers.mjs raulkivi "$RUNNER_TEMP/alias-maintainers.json"');
+  const publishIt = step.run.indexOf('npm publish "$ALIAS_TARBALL"');
+  assert.ok(view >= 0 && view < maintainers && maintainers < check && check < publishIt);
+  assert.doesNotMatch(step.run, /\|\s*node scripts\/check-npm-maintainers/);
+});
+
 const extension = parse(readFileSync(new URL("../.github/workflows/release-extension.yml", import.meta.url), "utf8"));
 const uploadIndex = (job) => job.steps.findIndex((s) => s.uses?.startsWith("actions/upload-artifact@") && s.with?.name === "npm-release");
 

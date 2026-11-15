@@ -77,7 +77,8 @@ until that release is out, use [From source](#from-source-contributors).
 npx agent-cost-analyzer
 ```
 
-It starts the app on http://127.0.0.1:5199 and opens it in your browser. The
+It starts the app on http://127.0.0.1:5199 and opens it in your browser.
+`npx agent-cost-analyser` (British spelling) also works: it is an alias of the same package. The <!-- codespell:ignore analyser -->
 server listens on your own machine only. If the app is already running, a
 second start opens that one; if another program holds port 5199, it takes the
 next free port and says which. Options:

@@ -18,7 +18,7 @@ standalone app, which also reads Claude Code and pi sessions.
 
 Run `npx agent-cost-analyzer` (Node.js 22.18 or newer). It starts the app on
 http://127.0.0.1:5199 and opens it in your browser; `--no-open` skips the
-browser and `--port <n>` picks the port. The npm package is published from
+browser and `--port <n>` picks the port. `npx agent-cost-analyser` (British spelling) also works, as an alias of the same package. The npm package is published from <!-- codespell:ignore analyser -->
 app 0.16.0; before that, run `npm install && npm run dev` from a clone of the
 repository and open http://127.0.0.1:5173 (see
 [From source](standalone-app.md#from-source-contributors)). Learn mode works

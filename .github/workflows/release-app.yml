@@ -2,16 +2,18 @@ name: Release Agent Cost Analyzer
 
 # Publishes the standalone app on an `app-v<major>.<minor>.<patch>` tag
 # (vscode-extension.md §7.2, npm-package.md §4.10): the `agent-cost-analyzer`
-# npm package, then a GitHub Release with the same tarball attached. The
+# npm package, then its look-alike alias `agent-cost-analyser` (npm-package.md # codespell:ignore analyser
+# D3; published only while its own version is absent from npm), then a GitHub
+# Release with the main tarball attached. The
 # build job tests and packs once; the publish job, in the `release`
 # environment, publishes exactly that tarball (SHA-256 checked) through npm
 # trusted publishing (OIDC), which also attaches the provenance attestation.
 # No npm token or secret exists. A manual run (workflow_dispatch) is a dry
 # run: it builds, tests, packs and dry-runs the publish, and skips publish.
 # Setup is the owner's, before the first tag:
-# an npm trusted publisher on the package (user `raulkivi`, repository
-# `agent-cost-analyzer`, workflow `release-app.yml`, environment `release`;
-# npm expires it unused after 2 days) and `app-v*` added to the `release`
+# an npm trusted publisher on each of the two packages (user `raulkivi`,
+# repository `agent-cost-analyzer`, workflow `release-app.yml`, environment
+# `release`; npm expires it unused after 2 days) and `app-v*` added to the `release`
 # environment's deployment rule (NP11/V17).
 
 on:
@@ -35,6 +37,8 @@ jobs:
     outputs:
       version: ${{ steps.check.outputs.version }}
       tarball: ${{ steps.pack.outputs.tarball }}
+      alias-tarball: ${{ steps.pack-alias.outputs.tarball }}
+      alias-version: ${{ steps.pack-alias.outputs.version }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -99,18 +103,26 @@ jobs:
           mkdir npm-release
           npm pack --workspace=packages/cli --pack-destination npm-release --json | node -e 'process.stdout.write("tarball=" + JSON.parse(require("fs").readFileSync(0, "utf8"))[0].filename + "\n")' >> "$GITHUB_OUTPUT"
 
+      # The look-alike alias, depending on the package above (D3); its version
+      # is its own, so the publish job can skip it once it is on npm.
+      - id: pack-alias
+        run: |
+          npm pack --workspace=packages/cli-alias --pack-destination npm-release --json | node -e 'const p = JSON.parse(require("fs").readFileSync(0, "utf8"))[0]; process.stdout.write("tarball=" + p.filename + "\nversion=" + p.version + "\n")' >> "$GITHUB_OUTPUT"
+
       - name: SHA-256
         working-directory: npm-release
         env:
           TARBALL: ${{ steps.pack.outputs.tarball }}
-        run: sha256sum "$TARBALL" | tee SHA256SUMS
+          ALIAS_TARBALL: ${{ steps.pack-alias.outputs.tarball }}
+        run: sha256sum "$TARBALL" "$ALIAS_TARBALL" | tee SHA256SUMS
 
       # Install, start and drive the packed tarball in a browser (NP7); the
       # Chromium from the web suite above is the one it uses.
       - name: Smoke test the tarball
         env:
           TARBALL: ${{ steps.pack.outputs.tarball }}
-        run: npm run smoke:npm-package -- --tarball "./npm-release/$TARBALL"
+          ALIAS_TARBALL: ${{ steps.pack-alias.outputs.tarball }}
+        run: npm run smoke:npm-package -- --tarball "./npm-release/$TARBALL" --alias-tarball "./npm-release/$ALIAS_TARBALL"
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: failure()
         with:
@@ -145,7 +157,10 @@ jobs:
       - name: Publish dry run
         env:
           TARBALL: ${{ steps.pack.outputs.tarball }}
-        run: npm publish --dry-run "./npm-release/$TARBALL"
+          ALIAS_TARBALL: ${{ steps.pack-alias.outputs.tarball }}
+        run: |
+          npm publish --dry-run "./npm-release/$TARBALL"
+          npm publish --dry-run "./npm-release/$ALIAS_TARBALL"
 
   publish:
     needs: build
@@ -158,6 +173,8 @@ jobs:
       id-token: write # npm trusted publishing through OIDC
     env:
       TARBALL: ./npm-release/${{ needs.build.outputs.tarball }}
+      ALIAS_TARBALL: ./npm-release/${{ needs.build.outputs.alias-tarball }}
+      ALIAS_VERSION: ${{ needs.build.outputs.alias-version }}
     steps:
       # Only for the scripts/ checks and the repository `gh` needs.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -189,6 +206,19 @@ jobs:
       # No npm token: npm signs in through OIDC and adds provenance.
       - name: Publish to npm
         run: npm publish "$TARBALL" --access public
+
+      # The alias depends on the package above by a range, so it is republished
+      # only when its own version changes. Not on npm yet (404) means publish;
+      # the maintainer check applies as it did to the main package.
+      - name: Publish the alias to npm
+        run: |
+          if npm view "agent-cost-analyser@$ALIAS_VERSION" version > "$RUNNER_TEMP/alias-version.txt" 2>/dev/null && [ -s "$RUNNER_TEMP/alias-version.txt" ]; then # codespell:ignore analyser
+            echo "agent-cost-analyser@$ALIAS_VERSION is already on npm; skipping the alias publish (already published)." # codespell:ignore analyser
+            exit 0
+          fi
+          npm view agent-cost-analyser maintainers --json > "$RUNNER_TEMP/alias-maintainers.json" # codespell:ignore analyser
+          node scripts/check-npm-maintainers.mjs raulkivi "$RUNNER_TEMP/alias-maintainers.json"
+          npm publish "$ALIAS_TARBALL" --access public
 
       - name: GitHub Release
         env:

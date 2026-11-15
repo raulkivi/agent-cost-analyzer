@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- The npm package `agent-cost-analyser` (British spelling) is now a working alias of `agent-cost-analyzer`: `npx agent-cost-analyser` runs the same app, with the same options and the `mcp` command. It has one dependency, the real package, and no install scripts, and is published through the same release workflow with provenance. <!-- codespell:ignore analyser -->
+
 ## [0.16.0] - 2026-11-15
 
 ### Added

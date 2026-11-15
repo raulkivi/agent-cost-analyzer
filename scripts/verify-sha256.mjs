@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-// Checks one `sha256sum`-format line against the file it names, in the same
+// Checks each `sha256sum`-format line against the file it names, in the same
 // folder: `node scripts/verify-sha256.mjs <dir>/SHA256SUMS`. The npm publish
 // job runs it on the downloaded artifact, so the tarball published is the
 // one the build job tested. Exit 1 on a mismatch.
@@ -19,8 +19,8 @@ export function parseChecksumLine(text) {
   return { hash, name };
 }
 
-export function verifyChecksumFile(sumFile) {
-  const { hash, name } = parseChecksumLine(readFileSync(sumFile, "utf8"));
+function verifyLine(sumFile, line) {
+  const { hash, name } = parseChecksumLine(line);
   let content;
   try {
     content = readFileSync(join(dirname(sumFile), name));
@@ -32,6 +32,14 @@ export function verifyChecksumFile(sumFile) {
     return { ok: false, message: `SHA-256 mismatch for ${name}: expected ${hash}, got ${actual}` };
   }
   return { ok: true, message: `${name}: SHA-256 ${hash} verified` };
+}
+
+/** Verifies every line of a `sha256sum` file; ok only when all match and there is at least one. */
+export function verifyChecksumFile(sumFile) {
+  const lines = readFileSync(sumFile, "utf8").split("\n").filter((line) => line !== "");
+  if (lines.length === 0) return { ok: false, message: `${sumFile} lists no files` };
+  const results = lines.map((line) => verifyLine(sumFile, line));
+  return { ok: results.every((result) => result.ok), message: results.map((result) => result.message).join("\n") };
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {

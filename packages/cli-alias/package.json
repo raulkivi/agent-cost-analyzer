@@ -1,0 +1,28 @@
+{
+  "name": "agent-cost-analyser",
+  "version": "0.16.0",
+  "description": "Alias of agent-cost-analyzer (with a z): runs the same app.",
+  "keywords": ["agentic-coding", "cost", "tokens", "copilot", "claude-code", "mcp"],
+  "license": "MIT",
+  "author": "Raul Kivi",
+  "type": "module",
+  "bin": {
+    "agent-cost-analyser": "bin/run.js"
+  },
+  "files": ["bin/"],
+  "engines": {
+    "node": ">=22.18"
+  },
+  "dependencies": {
+    "agent-cost-analyzer": ">=0.16.0 <2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/raulkivi/agent-cost-analyzer.git",
+    "directory": "packages/cli-alias"
+  },
+  "homepage": "https://github.com/raulkivi/agent-cost-analyzer#readme",
+  "bugs": {
+    "url": "https://github.com/raulkivi/agent-cost-analyzer/issues"
+  }
+}

@@ -24,7 +24,8 @@
     "packages/server",
     "packages/pi-system-prompt-logger",
     "packages/vscode-extension",
-    "packages/cli"
+    "packages/cli",
+    "packages/cli-alias"
   ],
   "scripts": {
     "dev": "npm run dev --workspace=packages/server & npm run dev --workspace=packages/web",
@@ -34,9 +35,9 @@
     "build": "npm run build --workspaces --if-present && npm run build:cli",
     "build:cli": "node packages/cli/scripts/build.mts",
     "smoke:npm-package": "tsx scripts/npm-package-smoke.mts",
-    "test": "npm run test --workspaces --if-present && npm run test:cli",
+    "test": "npm run test --workspaces --if-present && npm run test:cli && npm run test:cli-alias",
     "test:cli": "vitest run --root packages/cli",
-    "typecheck": "npm run typecheck --workspaces --if-present && tsc --noEmit -p packages/cli/tsconfig.json",
+    "typecheck": "npm run typecheck --workspaces --if-present && tsc --noEmit -p packages/cli/tsconfig.json && tsc --noEmit -p packages/cli-alias/tsconfig.json",
     "lint": "eslint .",
     "headers:check": "node scripts/spdx-headers.mjs --check",
     "headers:fix": "node scripts/spdx-headers.mjs --fix",
@@ -51,7 +52,8 @@
     "mcp": "bash scripts/mcp-server.sh",
     "scenarios:docs": "npm run scenarios:docs --workspace=packages/server",
     "scenarios:docs:check": "npm run scenarios:docs:check --workspace=packages/server",
-    "vendor-prices:diff": "tsx packages/server/scripts/vendor-prices-diff.mts"
+    "vendor-prices:diff": "tsx packages/server/scripts/vendor-prices-diff.mts",
+    "test:cli-alias": "vitest run --root packages/cli-alias"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
