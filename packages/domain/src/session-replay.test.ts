@@ -75,6 +75,24 @@ describe("sessionReplaySchema", () => {
     expect(sessionReplaySchema.safeParse(replay({ coverage: { ...replay().coverage, subagentRuns: { runs: -1, costAiCredits: { known: true, value: 1 } } } })).success).toBe(false);
   });
 
+  it("accepts tokens and a priced cost on the subagent runs outside the replay (step CS4, D13)", () => {
+    const figure = { known: false as const, reason: "no price" };
+    const subagentRuns = {
+      runs: 2,
+      costAiCredits: { known: false as const, reason: "Claude Code records no AI Credits" },
+      tokens: {
+        uncachedInput: { known: true as const, value: 10 },
+        cacheWrite: { known: false as const, reason: "not recorded" },
+        cacheRead: { known: true as const, value: 30 },
+        output: { known: true as const, value: 5 },
+      },
+      cost: { billed: figure, reported: figure, priced: { known: true as const, amount: 0.5, currency: "USD" as const, basis: "priced" as const } },
+    };
+    const parsed = sessionReplaySchema.parse(replay({ coverage: { ...replay().coverage, subagentRuns } }));
+    expect(parsed.coverage.subagentRuns).toEqual(subagentRuns);
+    expect(sessionReplaySchema.safeParse(replay({ coverage: { ...replay().coverage, subagentRuns: { ...subagentRuns, tokens: { ...subagentRuns.tokens, output: 5 as never } } } })).success).toBe(false);
+  });
+
   it("accepts the helper agents' requests outside the replay, and omits them when absent", () => {
     const helpers = { requests: 4, costAiCredits: { known: true as const, value: 0.5 } };
     expect(sessionReplaySchema.parse(replay({ coverage: { ...replay().coverage, helperRequests: helpers } })).coverage.helperRequests).toEqual(helpers);

@@ -1,9 +1,10 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
 import { z } from "zod";
-import { costBasisSchema, currencySchema } from "./cost-figure.js";
+import { costBasisSchema, currencySchema, turnCostFiguresSchema } from "./cost-figure.js";
 import { helperRequestsSchema } from "./request-trace.js";
 import { cacheOutcomeSchema } from "./simulation.js";
+import { subagentTokensSchema } from "./subagent-summary.js";
 import { tokenCountSchema } from "./token-count.js";
 import { confidenceSchema, harnessSchema } from "./vendor-profile.js";
 
@@ -73,7 +74,10 @@ export const replayTotalSchema = z
 
 // Step 10.19 (D11): subagent runs sit outside the replay (it covers the main
 // agent). Unknown AI Credits keep their reason.
-export const replaySubagentRunsSchema = z.object({ runs: count, costAiCredits: tokenCountSchema }).strict();
+// Step CS4 (D13): tokens and a priced cost beside it, for a provider without AI Credits.
+export const replaySubagentRunsSchema = z
+  .object({ runs: count, costAiCredits: tokenCountSchema, tokens: subagentTokensSchema.optional(), cost: turnCostFiguresSchema.optional() })
+  .strict();
 
 export const replayCoverageSchema = z
   .object({

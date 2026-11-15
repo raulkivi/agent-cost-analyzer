@@ -11,10 +11,18 @@ export {
   turnUsageSchema,
   ownTurnUsageSchema,
   subagentRunUsageSchema,
+  subagentRunIdSchema,
+  subagentLabelSchema,
   type TurnUsage,
   type OwnTurnUsage,
   type SubagentRunUsage,
 } from "./turn-usage.js";
+export {
+  subagentTokensSchema,
+  subagentTokenTotalsSchema,
+  type SubagentTokens,
+  type SubagentTokenTotals,
+} from "./subagent-summary.js";
 export {
   toolCallRecordSchema,
   toolKindSchema,
