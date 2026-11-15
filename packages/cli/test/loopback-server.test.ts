@@ -70,6 +70,19 @@ describe("isThisApp", () => {
     expect(await isThisApp(port)).toBe(false);
   });
 
+  // Another program on the port could otherwise send the probe to any host,
+  // off the machine included (npm-package.md §2: no network call by the app).
+  it("follows no redirect: false, and the redirect target is never asked", async () => {
+    let targetHits = 0;
+    const target = await serveOnEphemeralPort((_req, res) => {
+      targetHits++;
+      res.end(JSON.stringify({ app: "agent-cost-analyzer" }));
+    });
+    const port = await serveOnEphemeralPort((_req, res) => void res.writeHead(302, { Location: `http://localhost:${target}/api/health` }).end());
+    expect(await isThisApp(port)).toBe(false);
+    expect(targetHits).toBe(0);
+  });
+
   it("is false for a server that answers with an error status", async () => {
     const port = await serveOnEphemeralPort((_req, res) => void res.writeHead(403).end(JSON.stringify({ app: "agent-cost-analyzer" })));
     expect(await isThisApp(port)).toBe(false);
