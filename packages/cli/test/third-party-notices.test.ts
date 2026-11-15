@@ -15,7 +15,7 @@ import {
   readBundledPackage,
   readBundledPackagesList,
   renderNotices,
-} from "../scripts/third-party-notices.mts";
+} from "../../../scripts/third-party-notices.mts";
 
 const ROOT_NOTICES = `# Third-party notices
 
@@ -229,6 +229,23 @@ describe("reading package folders", () => {
       expect(notices).toContain("| `only-views` | 3.0.0 | ISC | views |");
       expect(notices).toContain("| `react` | 18.0.0 | MIT | views |\n| `react` | 19.0.0 | MIT | web, views |");
       expect(notices.match(/### a 1\.0\.0/g)).toHaveLength(1);
+    });
+
+    it("merges further esbuild metafiles under their own labels, and leaves the fonts out when there are no root notices", () => {
+      fakePackage("a", { name: "a", version: "1.0.0", license: "MIT" }, { LICENSE: "MIT a" });
+      fakePackage("b", { name: "b", version: "2.0.0", license: "ISC" }, { LICENSE: "ISC b" });
+      const notices = generateNotices({
+        metafile: metafileFor("a"),
+        metafileLabel: "host",
+        extraMetafiles: [{ label: "mcp", metafile: metafileFor("a", "b") }],
+        workingDir: path.join(root, "cli"),
+        extraParts: [],
+        packageName: "ext",
+        packageVersion: "0.1.0",
+      });
+      expect(notices).toContain("| `a` | 1.0.0 | MIT | host, mcp |");
+      expect(notices).toContain("| `b` | 2.0.0 | ISC | mcp |");
+      expect(notices).not.toContain("## Fonts");
     });
 
     it("fails on a package only the web or views build bundles when its license is off the allow-list", () => {

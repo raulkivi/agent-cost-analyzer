@@ -33,6 +33,7 @@ export default tseslint.config(
             "scripts/*.mjs",
             // The npm-package smoke's entry; its steps type-check in packages/cli.
             "scripts/npm-package-smoke.mts",
+            "scripts/third-party-notices.mts",
             "packages/*/vitest.config.ts",
             "packages/*/vite.config.ts",
             "packages/vscode-extension/.vscode-test.mjs",
