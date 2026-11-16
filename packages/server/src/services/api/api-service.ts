@@ -56,6 +56,8 @@ import { parseEstimateQuery, type EstimateQueries } from "../billing/estimate-se
 import type { PriceBookReader } from "../pricing/price-book.js";
 import type { CostAnalysisQueries } from "../cost-analysis/cost-analysis-service.js";
 import { parseSavingsQuery } from "../savings/savings-query-params.js";
+import type { SessionCostSources } from "../analysis/analysis-query-service.js";
+import { withPricedCosts } from "../cost/priced-subagent-usage.js";
 import type { SavingsQueries } from "../savings/savings-service.js";
 import { InvalidSavingsWindowError } from "../savings/savings-window.js";
 import { TooManyComparedModelsError, type ReplayResult, type SessionReplayQueries } from "../session-replay/session-replay-service.js";
@@ -148,6 +150,8 @@ export interface ApiServiceDeps {
   sessionReplay?: SessionReplayQueries;
   // Phase 16 step SR12: the savings report (both products, D10).
   savingsReport?: SavingsQueries;
+  // Step CS13: prices a Claude Code session's usage (no AI Credits) for the UI.
+  sessionPricing?: SessionCostSources;
   auditQueries: ApiAuditQueries;
   insights: ApiInsights;
   settings: Pick<AppSettingsStore, "readMinRetainedSessionLogsThreshold" | "writeMinRetainedSessionLogsThreshold">;
@@ -342,15 +346,16 @@ export class ApiService {
 
   async getSession(sessionId: string): Promise<Session> {
     let session: Session | null;
+    const provider = this.deps.registry.getActiveProvider();
     try {
-      session = await this.deps.registry.getActiveProvider().readSession(sessionId);
+      session = await provider.readSession(sessionId);
     } catch (error) {
       throw failure(`session "${sessionId}"`, error);
     }
     if (!session) {
       throw new NotFoundError(`Unknown session id "${sessionId}"`);
     }
-    return session;
+    return this.deps.sessionPricing ? withPricedCosts(session, provider.id, this.deps.sessionPricing) : session;
   }
 
   // One turn's LLM request/response round-trip(s) (turn-inspector-plan.md

@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 import { z } from "zod";
 import { subagentLabelSchema, subagentRunIdSchema } from "./subagent-run-ids.js";
+import { costFigureSchema } from "./cost-figure.js";
 import { tokenCountSchema } from "./token-count.js";
 
 // Re-exported so existing imports of the cost side keep working.
@@ -21,6 +22,8 @@ export const ownTurnUsageSchema = z.object({
   costAiCredits: tokenCountSchema,
   // Step CS4: the own line's 1-hour cache writes, so it keeps its own split.
   extendedCacheWrite: tokenCountSchema.optional(),
+  // Step CS13: the line's priced cost, set for providers without AI Credits.
+  pricedCost: costFigureSchema.optional(),
   model: z.string(),
 });
 
@@ -44,6 +47,8 @@ export const subagentRunUsageSchema = z.object({
   costAiCredits: tokenCountSchema,
   // Step CS4: 1-hour cache writes, the part of cacheWrite priced higher.
   extendedCacheWrite: tokenCountSchema.optional(),
+  // Step CS13: the run's priced cost (its tokens on its own model).
+  pricedCost: costFigureSchema.optional(),
   // Step CS4: the run that started this one (nested runs); absent: started by
   // the main agent. Step 10.20's `origin.parentRunId` has the same shape.
   parentRunId: subagentRunIdSchema.optional(),
@@ -85,6 +90,9 @@ export const turnUsageSchema = z.object({
   subagents: z.array(subagentRunUsageSchema).optional(),
   // The main agent's own figures; present exactly when `subagents` is.
   ownUsage: ownTurnUsageSchema.optional(),
+  // Step CS13: the turn's priced cost (all lines), set by the API for
+  // providers without AI Credits (Claude Code) so the UI shows a figure.
+  pricedCost: costFigureSchema.optional(),
 }).superRefine((usage, ctx) => {
   if ((usage.subagents === undefined) !== (usage.ownUsage === undefined)) {
     ctx.addIssue({ code: "custom", path: ["ownUsage"], message: "ownUsage is set exactly when subagents is" });

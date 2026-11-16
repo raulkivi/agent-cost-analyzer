@@ -4,7 +4,7 @@ import { useId, useRef, useState } from "react";
 import type { AppHostPort } from "../../host/app-host-port.js";
 import { Tag } from "@agent-cost-analyzer/web/ui/Tag";
 import { toTurnDetailViewModel } from "../../view-models/index.js";
-import type { MeasureView, SubagentSectionViewModel, TopTurnRow, TurnDetailViewModel } from "../../view-models/index.js";
+import type { MeasureView, PricedTurnViewModel, SubagentSectionViewModel, TopTurnRow, TurnDetailViewModel } from "../../view-models/index.js";
 import { callParsed, parseTurnView, useResource } from "./tool-data.js";
 
 // Top turns by the server's ranking (AI Credits or input tokens). A row opens its turn inline: get_turn through the
@@ -77,6 +77,69 @@ function SubagentRuns({ section, aiCredits }: { section: SubagentSectionViewMode
   );
 }
 
+// Step CS13 (board U1TurnDetail): a turn without AI Credits (Claude Code):
+// tokens and a priced cost, the runs' share under it, then each run. An
+// unknown figure reads Unknown with its reason, never 0.
+function PricedTurn({ priced, aiCredits }: { priced: PricedTurnViewModel; aiCredits: MeasureView }) {
+  const headingId = useId();
+  const { section } = priced;
+  return (
+    <div className="view-sa" role="group" aria-label="Tokens and priced cost">
+      <div className="view-turn-credits">
+        <span className="view-label">Tokens</span> <Figure value={priced.tokens} />{" "}
+        <span className="view-label">Priced cost</span> <Figure value={priced.cost} />
+        {priced.costNote !== undefined && (
+          <span className={priced.costNote.known ? "view-sa-note" : "view-sa-note view-unknown"}>
+            <ForkMark known={priced.costNote.known} />
+            {priced.costNote.text}
+          </span>
+        )}{" "}
+        <span className="view-label">AI Credits</span> <span className="text-muted">{aiCredits.text}</span>{" "}
+        <span className="text-muted">{aiCredits.unknownNote}</span>
+      </div>
+      {priced.reason !== undefined && !priced.cost.known && <p className="view-sa-why view-unknown">{priced.reason}</p>}
+      {section !== undefined && (
+        <>
+          <span id={headingId} className="view-label">
+            {section.heading}
+          </span>
+          <ul className="view-sa-runs" aria-labelledby={headingId}>
+            {section.runs.map((run) => (
+              <li key={run.id} className={run.unknown ? "view-sa-run view-sa-run--unknown" : "view-sa-run"}>
+                <span className="view-sa-name">
+                  {run.name}
+                  {run.matchedByTime && <Tag variant="outline">matched by time</Tag>}
+                </span>
+                <span className={run.model === "model unknown" ? "view-unknown" : "text-muted"}>{run.model}</span>
+                <span className="text-muted">{run.requests}</span>
+                <span>
+                  <Figure value={run.tokens} /> {run.tokens.known && <span className="text-muted">tokens</span>} <Figure value={run.cost} />
+                </span>
+                {run.startedBy !== undefined && <span className="view-sa-why text-muted">Started by {run.startedBy}.</span>}
+                {run.reason !== undefined && <span className="view-sa-why">{run.reason}</span>}
+              </li>
+            ))}
+          </ul>
+          <div className="view-sa-totals text-muted">
+            <span>
+              Main agent <b>{section.mainAgent}</b>
+            </span>
+            <span>
+              Subagent runs <b>{section.subagents}</b>
+            </span>
+            <span>
+              Turn <b>{section.turn}</b>
+            </span>
+          </div>
+          {section.share !== undefined && <p className="view-sa-why text-muted">{section.share}</p>}
+          {section.unknownNote !== undefined && <p className="view-sa-why text-muted">{section.unknownNote}</p>}
+          <p className="view-sa-why text-muted">{section.priceNote}</p>
+        </>
+      )}
+    </div>
+  );
+}
+
 function TurnDetail({ detail, onHide }: { detail: TurnDetailViewModel; onHide: () => void }) {
   return (
     <div className="view-turn-detail">
@@ -117,6 +180,7 @@ function TurnDetail({ detail, onHide }: { detail: TurnDetailViewModel; onHide: (
         </div>
       </div>
       {detail.subagents !== undefined && <SubagentRuns section={detail.subagents} aiCredits={detail.aiCredits} />}
+      {detail.priced !== undefined && <PricedTurn priced={detail.priced} aiCredits={detail.aiCredits} />}
       <div className="view-turn-tools">
         <span className="view-label">Tool calls</span> <span className={detail.toolCalls.count === "Unknown" ? "view-unknown" : undefined}>{detail.toolCalls.count}</span>
         {detail.toolCalls.summary && <span className="text-muted"> · {detail.toolCalls.summary}</span>}

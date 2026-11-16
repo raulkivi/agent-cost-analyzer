@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: MIT
 import type { TokenCount, TurnView } from "@agent-cost-analyzer/domain";
 import { formatAiCreditsValue } from "@agent-cost-analyzer/web/lib/format-ai-credits";
+import { pricedBreakdown, pricedTurnFigures } from "@agent-cost-analyzer/web/lib/subagent-priced";
+import type { PricedBreakdown, PricedFigure } from "@agent-cost-analyzer/web/lib/subagent-priced";
 import { eventLabel } from "./session-cost.js";
 import { UNKNOWN_TEXT, formatCount, pluralize } from "./format.js";
 import type { MeasureView } from "./format.js";
@@ -18,6 +20,42 @@ export interface TurnDetailViewModel {
   aiCredits: MeasureView;
   toolCalls: { count: string; summary: string; failed: number };
   subagents?: SubagentSectionViewModel;
+  // Step CS13: a turn without AI Credits (Claude Code): tokens and a priced cost.
+  priced?: PricedTurnViewModel;
+}
+
+// Step CS13 (board U1TurnDetail): the priced figures of a Claude Code turn
+// and, when it started runs, each run's tokens and priced cost.
+export interface PricedRunRowViewModel {
+  id: string;
+  name: string;
+  model: string;
+  requests: string;
+  tokens: MeasureView;
+  cost: MeasureView;
+  unknown: boolean;
+  reason?: string;
+  matchedByTime: boolean;
+  startedBy?: string;
+}
+
+export interface PricedSectionViewModel {
+  heading: string;
+  runs: PricedRunRowViewModel[];
+  mainAgent: string;
+  subagents: string;
+  turn: string;
+  share?: string;
+  unknownNote?: string;
+  priceNote: string;
+}
+
+export interface PricedTurnViewModel {
+  tokens: MeasureView;
+  cost: MeasureView;
+  reason?: string;
+  costNote?: { text: string; known: boolean };
+  section?: PricedSectionViewModel;
 }
 
 // Step 10.19 (board U1TurnDetail): the runs a classic Copilot Chat turn folded in.
@@ -85,6 +123,35 @@ function summariseSubagents(runs: Runs, ownUsage: NonNullable<TurnView["usage"][
   };
 }
 
+const measureOf = (figure: PricedFigure): MeasureView => (figure.known ? { text: figure.text, known: true, estimate: false } : { text: UNKNOWN_TEXT, known: false, estimate: false });
+
+function pricedSection(breakdown: PricedBreakdown): PricedSectionViewModel {
+  const section: PricedSectionViewModel = {
+    heading: `Subagent runs (${formatCount(breakdown.runs.length)})`,
+    runs: breakdown.runs.map(({ tokens, cost, ...run }) => ({ ...run, tokens: measureOf(tokens), cost: measureOf(cost) })),
+    mainAgent: breakdown.main.text,
+    subagents: breakdown.subagents.text,
+    turn: breakdown.turn.text,
+    priceNote: breakdown.priceNote,
+  };
+  if (breakdown.share !== undefined) section.share = breakdown.share;
+  if (breakdown.unknownNote !== undefined) section.unknownNote = breakdown.unknownNote;
+  return section;
+}
+
+function pricedTurn(usage: TurnView["usage"]): PricedTurnViewModel | undefined {
+  const figures = pricedTurnFigures(usage);
+  if (!figures) return undefined;
+  const breakdown = pricedBreakdown(usage);
+  const priced: PricedTurnViewModel = { tokens: measureOf(figures.tokens), cost: measureOf(figures.cost) };
+  if (figures.reason !== undefined) priced.reason = figures.reason;
+  if (breakdown) {
+    priced.costNote = breakdown.costNote;
+    priced.section = pricedSection(breakdown);
+  }
+  return priced;
+}
+
 export function toTurnDetailViewModel(view: TurnView): TurnDetailViewModel {
   const { usage } = view;
   const vm: TurnDetailViewModel = {
@@ -104,6 +171,10 @@ export function toTurnDetailViewModel(view: TurnView): TurnDetailViewModel {
   };
   const eventText = view.explanation || (view.triggeredEvent === undefined ? "" : eventLabel(view.triggeredEvent));
   if (eventText) vm.eventText = eventText;
-  if (usage.subagents !== undefined && usage.ownUsage !== undefined) vm.subagents = summariseSubagents(usage.subagents, usage.ownUsage);
+  const priced = pricedTurn(usage);
+  if (priced) {
+    vm.priced = priced;
+    vm.aiCredits = { text: "n/a", known: true, estimate: false, unknownNote: "Claude Code has no AI Credits" };
+  } else if (usage.subagents !== undefined && usage.ownUsage !== undefined) vm.subagents = summariseSubagents(usage.subagents, usage.ownUsage);
   return vm;
 }

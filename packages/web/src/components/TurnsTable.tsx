@@ -12,6 +12,7 @@ import { formatSimulatedCost, replayCostTitle } from "../lib/replay-format.js";
 import { ALL_TURN_COLUMN_LABELS, ALL_TURN_COLUMNS, columnsApplyingTo, isReplayColumn, type TurnColumnId } from "../lib/turn-columns.js";
 import { CacheOutcomeBadge } from "./learn/CacheOutcomeBadge.js";
 import { SimulatedBadge } from "./replay/SimulatedBadge.js";
+import { isPricedUsage } from "../lib/subagent-priced.js";
 import { SubagentMarker } from "./SubagentMarker.js";
 import { Tag } from "./ui/Tag.js";
 
@@ -56,6 +57,8 @@ function cumulativeCostThrough(turns: Turn[], turnIndex: number): TokenCount {
 // on hover (1 AI credit = $0.01); measured turns don't.
 function CreditsCell({ turn, credits }: { turn: Turn; credits: TokenCount }) {
   const text = formatAiCredits(credits);
+  // No AI Credits (Claude Code): an em dash that says why, never 0.
+  if (isPricedUsage(turn.usage) && !credits.known) return <span title={credits.reason}>{text}</span>;
   if (!turn.simulation || !credits.known) return <>{text}</>;
   return <span title={`≈ ${formatUsd(aiCreditsToUsd(credits.value))}`}>{text}</span>;
 }
@@ -94,7 +97,13 @@ export function SimulatedCostValue({ cost }: { cost: NonNullable<ReplayTurn["sim
 // Each column's value for a turn; the table and the narrow layout's details
 // drawer (TurnMetrics) format it the same way.
 const VALUES: Record<TurnColumnId, (props: CellProps) => ReactNode> = {
-  turn: ({ turn }) => turn.index,
+  // Without AI Credits (Claude Code) the marker sits here: the AI Credits cell has no figure to attach it to.
+  turn: ({ turn }) => (
+    <>
+      {turn.index}
+      {isPricedUsage(turn.usage) && <SubagentMarker turn={turn} />}
+    </>
+  ),
   trigger: ({ turn }) =>
     turn.triggeredEvent ? (
       <Tag variant="outline">{TRIGGER_LABELS[turn.triggeredEvent]}</Tag>
@@ -119,7 +128,7 @@ const VALUES: Record<TurnColumnId, (props: CellProps) => ReactNode> = {
   aiCredits: ({ turn }) => (
     <>
       <CreditsCell turn={turn} credits={turn.usage.costAiCredits} />
-      <SubagentMarker turn={turn} />
+      {!isPricedUsage(turn.usage) && <SubagentMarker turn={turn} />}
     </>
   ),
   cumulative: ({ turn, turns, turnIndex }) => (

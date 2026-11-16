@@ -5,6 +5,8 @@ import { isFailedStatus } from "@agent-cost-analyzer/domain";
 import type { SubagentRunUsage, Turn } from "@agent-cost-analyzer/domain";
 import { formatAiCredits } from "../lib/format-ai-credits.js";
 import { runDisplayName, subagentSummary } from "../lib/subagent-runs.js";
+import { isPricedUsage } from "../lib/subagent-priced.js";
+import { PricedSubagentRunsBlock } from "./PricedSubagentRunsBlock.js";
 import { Tag } from "./ui/Tag.js";
 
 // "unknown" is how the cost lines name a run's model when it wasn't read; a
@@ -61,6 +63,8 @@ export function SubagentRunsBlock({ turn }: { turn: Turn }) {
   const headingId = useId();
   const summary = subagentSummary(turn);
   if (!summary) return null;
+  // Step CS13: no AI Credits (Claude Code): tokens and a priced cost instead.
+  if (isPricedUsage(turn.usage)) return <PricedSubagentRunsBlock turn={turn} />;
   const own = turn.usage.ownUsage?.costAiCredits;
   const unknownText = "unknown";
   const showsUnreadRow = summary.unreadRun && !summary.total.known;
