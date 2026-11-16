@@ -68,6 +68,7 @@ import {
   agentHostTurns,
   claudeCodeTurns,
   copilotClassicTurns,
+  inChatPanelScope,
   emptyCell,
   figuresOf,
   loadBook,
@@ -166,13 +167,12 @@ function buildView(source: string, dir: string, now: number): View {
 
 // ---- Copilot Chat's classic store, read raw ---------------------------------
 
-// The store's sessions of interactive chat: agentic-coding-explained.md §18.2
-// scopes AI Credits to agent_name 'GitHub Copilot Chat' (other surfaces have
-// other billing profiles). The rest are counted, not compared.
-const COPILOT_CHAT_AGENT = "GitHub Copilot Chat";
+// The store's sessions of interactive chat: plan §15.2 selects them by surface
+// (host type 'vscode', or agent_name 'GitHub Copilot Chat'); other surfaces have
+// other billing profiles. The rest are counted, not compared.
 
 interface CopilotRaw {
-  sessions: { session: StoreSession; agent: string | null; turns: StoreTurn[]; mainPath: string | null }[];
+  sessions: { session: StoreSession; inScope: boolean; turns: StoreTurn[]; mainPath: string | null }[];
   logFiles: string[];
   live: number;
 }
@@ -191,7 +191,7 @@ function readCopilotRaw(userData: string | null, now: number): CopilotRaw {
   if (!existsSync(dbPath)) return out;
   const db = new DatabaseSync(dbPath, { readOnly: true });
   try {
-    const sessions = db.prepare("SELECT id, cwd, repository, created_at, agent_name FROM sessions").all() as unknown as (StoreSession & { agent_name: string | null })[];
+    const sessions = db.prepare("SELECT id, cwd, repository, created_at, agent_name, host_type FROM sessions").all() as unknown as (StoreSession & { agent_name: string | null; host_type: string | null })[];
     const turns = db.prepare("SELECT session_id, turn_index, user_message, timestamp FROM turns").all() as unknown as (StoreTurn & { session_id: string })[];
     const roots = debugLogRoots(userData);
     for (const session of sessions) {
@@ -205,8 +205,8 @@ function readCopilotRaw(userData: string | null, now: number): CopilotRaw {
           else out.logFiles.push(file);
         }
       }
-      const { agent_name: agent, ...row } = session;
-      out.sessions.push({ session: row, agent, turns: turns.filter((t) => t.session_id === session.id), mainPath });
+      const { agent_name: agent, host_type: host, ...row } = session;
+      out.sessions.push({ session: row, inScope: inChatPanelScope({ host_type: host, agent_name: agent }), turns: turns.filter((t) => t.session_id === session.id), mainPath });
     }
   } finally {
     db.close();
@@ -563,7 +563,7 @@ const SESSION_TITLE_AT = /\.provenance\.sessions\.\d+\.title$/;
     for (const raw of copilotRaw.sessions) {
       const read = copilotTurnsOf(raw);
       prompts.push(...read.prompts);
-      if (raw.agent === COPILOT_CHAT_AGENT) add(read.turns, raw.session.created_at, counts.copilot);
+      if (raw.inScope) add(read.turns, raw.session.created_at, counts.copilot);
       else if (inWindow(raw.session.created_at)) {
         otherAgents.sessions += 1;
         otherAgents.turns += read.turns.length;
@@ -645,7 +645,7 @@ const SESSION_TITLE_AT = /\.provenance\.sessions\.\d+\.title$/;
     say(`Claude Code: ${counts.claude.sessions} sessions, ${counts.claude.turns} turns (${claudeView.live} live files left out)`);
     say(`pi: ${counts.pi.sessions} files, ${counts.pi.turns} turns (${piView.live} live files left out; ${piForkedFiles} files with forks)`);
     say(`Copilot Chat (classic store): ${counts.copilot.sessions} sessions, ${counts.copilot.turns} turns (${copilotRaw.live} debug-log files written in the last 15 minutes)`);
-    say(`  outside every view by the §18.2 scope (store agent name other than ${COPILOT_CHAT_AGENT}): ${otherAgents.sessions} sessions, ${otherAgents.turns} turns, ${round(otherAgents.credits)} AI Credits in their logs`);
+    say(`  outside every view by the §18.2 scope (store host type other than vscode and agent name other than GitHub Copilot Chat): ${otherAgents.sessions} sessions, ${otherAgents.turns} turns, ${round(otherAgents.credits)} AI Credits in their logs`);
     const hostTurns = attributed.filter((a) => a.turn.provider === "vscode" && agentHostRaw.sessions.some((s) => s.turns.includes(a.turn)));
     const hostCredits = hostTurns.reduce((s, a) => s + (a.turn.billed ?? 0), 0);
     say(`Copilot Agent Host: ${counts.agentHost.sessions} sessions, ${counts.agentHost.turns} turns, ${round(hostCredits)} AI Credits on ${hostTurns.filter((a) => typeof a.turn.billed === "number").length} turns (${agentHostRaw.live} stores or logs written in the last 15 minutes)`);

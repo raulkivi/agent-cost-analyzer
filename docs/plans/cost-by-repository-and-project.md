@@ -2354,3 +2354,10 @@ by surface (host type `vscode`) instead of by agent name.
 
 **Owner's decision, 2026-11-14: "count them".** Store sessions are selected by
 host type `vscode` instead of agent name; implemented in a separate PR.
+The exit check's oracle (`cost-by-project-oracle.mts`, `inChatPanelScope`) reads
+the same rule from the raw store: it went on selecting by agent name after the
+product changed, so the real-data check failed for VS Code until it was updated
+to the surface rule.
+It also dropped a debug-log turn the store has no row for (the second prompt of
+one session), which the product lists and counts; the oracle now counts it too,
+timed at the session start.

@@ -14,6 +14,7 @@ import {
   claudeCodeTurns,
   copilotClassicTurns,
   emptyCell,
+  inChatPanelScope,
   monthOf,
   normaliseRemote,
   piTurns,
@@ -322,6 +323,20 @@ describe("piTurns (pi's own cost as reported, its provider as the channel)", () 
   });
 });
 
+describe("inChatPanelScope (§15.2: store sessions are selected by surface, owner decision 2026-11-14)", () => {
+  it("keeps a Chat-panel session whatever agent name the store took from one request", () => {
+    expect(inChatPanelScope({ host_type: "vscode", agent_name: "panel/editAgent" })).toBe(true);
+    expect(inChatPanelScope({ host_type: "vscode", agent_name: "summarizeConversationHistory" })).toBe(true);
+  });
+  it("keeps the legacy agent-name match", () => {
+    expect(inChatPanelScope({ host_type: null, agent_name: "GitHub Copilot Chat" })).toBe(true);
+  });
+  it("leaves out the CLI, the Coding Agent and subagents", () => {
+    expect(inChatPanelScope({ host_type: "cli", agent_name: "copilot-cli" })).toBe(false);
+    expect(inChatPanelScope({ host_type: null, agent_name: null })).toBe(false);
+  });
+});
+
 describe("alignLogTurns (the debug log's prompts onto the store's turns)", () => {
   it("uses the one offset where every prompt agrees", () => {
     expect(alignLogTurns(["b", "c"], ["a", "b", "c"])).toEqual([1, 2]);
@@ -349,6 +364,16 @@ describe("copilotClassicTurns (store turns, billed from the aligned log turn and
   ].join("\n");
   const sub = [ev("llm_request", 1160, { model: "gpt-5.6-luna", inputTokens: 7, outputTokens: 1, copilotUsageNanoAiu: 500_000_000 })].join("\n");
 
+  it("counts a log turn past the store's last row as a turn of its own, timed at the session's start", () => {
+    const { turns } = copilotClassicTurns({
+      session: { id: "s", cwd: "/w", repository: null, created_at: "2026-10-01T00:00:00Z" },
+      storeTurns: [{ turn_index: 0, user_message: "first", timestamp: "2026-10-01T00:00:01Z" }],
+      mainText: main,
+      subagentFiles: [{ name: "runSubagent-a.jsonl", text: sub }],
+    });
+    expect(turns.map((t) => t.turnKey)).toEqual(["s#0", "s#1"]);
+    expect(turns[1]).toMatchObject({ at: "2026-10-01T00:00:00Z", parts: [{ requests: 1 }], billed: null });
+  });
   it("folds runs into their turn and leaves a turn without credits unknown", () => {
     const { turns } = copilotClassicTurns({
       session: { id: "s", cwd: "/w", repository: null, created_at: "2026-10-01T00:00:00Z" },
