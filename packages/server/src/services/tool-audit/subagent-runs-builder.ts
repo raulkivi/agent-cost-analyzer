@@ -11,6 +11,8 @@ interface RunDraft {
   turnIndex: number;
   calls: ToolCallRecord[];
   reason?: string;
+  // The reader read the run's log in full (Turn.subagentRunsRead).
+  read?: boolean;
 }
 
 function defaultUnreadReason(label: string): string {
@@ -49,12 +51,22 @@ function draftsOf(turn: Turn): RunDraft[] {
     });
     entry.reason = gap.reason;
   }
+  for (const runId of turn.subagentRunsRead ?? []) {
+    const entry = drafts.get(runId);
+    if (entry) {
+      entry.read = true;
+    }
+  }
   return [...drafts.values()];
 }
 
 function rowOf(entry: RunDraft): AuditedRun {
   const { runId, label, depth, parentRunId, turnIndex } = entry;
   const head = { runId, label, depth, ...(parentRunId ? { parentRunId } : {}), turnIndex };
+  if (entry.calls.length === 0 && entry.read && entry.reason === undefined) {
+    // Read in full and made no call: a known 0, not a missing signal.
+    return { ...head, totals: emptyTotals(), failureRate: null };
+  }
   if (entry.calls.length === 0) {
     // No call seen: unknown, never 0 (constraint 6).
     return { ...head, totals: null, failureRate: null, unreadReason: entry.reason ?? defaultUnreadReason(label) };

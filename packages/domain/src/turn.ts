@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 import { z } from "zod";
 import { subagentRunGapSchema } from "./subagent-run-gap.js";
+import { subagentRunIdSchema } from "./subagent-run-ids.js";
 import { toolCallRecordSchema } from "./tool-call-record.js";
 import { turnSimulationSchema } from "./simulation.js";
 import { turnUsageSchema } from "./turn-usage.js";
@@ -36,6 +37,10 @@ export const turnSchema = z.object({
   // Step 10.20: subagent runs this turn started whose tool calls are unknown
   // or flagged, with the reason (§6). Absent when every run was read.
   subagentRunGaps: z.array(subagentRunGapSchema).optional(),
+  // Step 10.20: ids of the runs whose log the reader read in full. A run with
+  // no tool call is known to have made none only when listed here; one with
+  // no signal at all stays unknown, never 0 (constraint 6).
+  subagentRunsRead: z.array(subagentRunIdSchema).max(200).optional(),
   simulation: turnSimulationSchema.optional(),
   // Analyze mode only (Phase 15 step 15.1): when the turn started, as the
   // log records it (ISO 8601), so it can be priced at the price in force then.

@@ -95,6 +95,21 @@ export async function readToolCallRecordsByLogTurn(logPath: string): Promise<Too
   if (!existsSync(logPath)) {
     return [];
   }
+  const envelopes = await streamAuditEnvelopes(logPath);
+  return groupEnvelopesByUserMessage(envelopes).map((group) =>
+    group.filter((envelope) => envelope.type === "tool_call").map(toolCallSpanRecord),
+  );
+}
+
+// A child log's tool_call spans in file order, whatever turn marker they follow
+// (a run is one unit, not a session of turns). Rejects when the file can't be
+// read, so a caller never takes an unreadable log for a run with no calls.
+export async function readToolCallRecords(logPath: string): Promise<ToolCallRecord[]> {
+  const envelopes = await streamAuditEnvelopes(logPath);
+  return envelopes.filter((envelope) => envelope.type === "tool_call").map(toolCallSpanRecord);
+}
+
+async function streamAuditEnvelopes(logPath: string): Promise<JsonlEnvelope[]> {
   const envelopes: JsonlEnvelope[] = [];
   for await (const line of readRecordLines(logPath)) {
     const envelope = parseEnvelopeLine(line, projectAuditAttrs);
@@ -102,7 +117,5 @@ export async function readToolCallRecordsByLogTurn(logPath: string): Promise<Too
       envelopes.push(envelope);
     }
   }
-  return groupEnvelopesByUserMessage(envelopes).map((group) =>
-    group.filter((envelope) => envelope.type === "tool_call").map(toolCallSpanRecord),
-  );
+  return envelopes;
 }

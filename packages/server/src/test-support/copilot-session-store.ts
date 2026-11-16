@@ -63,6 +63,7 @@ export function writeUsageDebugLog(debugLogsDir: string): void {
 }
 
 const SUBAGENT_FIXTURES_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../fixtures/jsonl/subagents");
+const SUBAGENT_AUDIT_FIXTURES_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../fixtures/jsonl/subagent-audit");
 
 // One synthetic classic session from fixtures/jsonl/subagents/<caseName> (step
 // 10.19): its folder, main.jsonl and subagent logs, copied under a debug-logs
@@ -71,9 +72,18 @@ const SUBAGENT_FIXTURES_DIR = path.resolve(path.dirname(fileURLToPath(import.met
 // absent). The session id is the case name unless given: the fixture's orphan
 // runs name the case name as their parentSessionId.
 export function seedSubagentFixtureSession(dbPath: string, debugLogsDir: string, caseName: string, startedAt = "2026-09-21T10:00:00.000Z", sessionId = caseName): string {
+  return seedFixtureSession(SUBAGENT_FIXTURES_DIR, dbPath, debugLogsDir, caseName, startedAt, sessionId);
+}
+
+// The same for step 10.20's audit fixtures (fixtures/jsonl/subagent-audit).
+export function seedSubagentAuditFixtureSession(dbPath: string, debugLogsDir: string, caseName: string, startedAt = "2026-09-21T10:00:00.000Z", sessionId = caseName): string {
+  return seedFixtureSession(SUBAGENT_AUDIT_FIXTURES_DIR, dbPath, debugLogsDir, caseName, startedAt, sessionId);
+}
+
+function seedFixtureSession(fixturesDir: string, dbPath: string, debugLogsDir: string, caseName: string, startedAt: string, sessionId: string): string {
   const sessionDir = path.join(debugLogsDir, sessionId);
   mkdirSync(path.dirname(dbPath), { recursive: true });
-  cpSync(path.join(SUBAGENT_FIXTURES_DIR, caseName), sessionDir, { recursive: true });
+  cpSync(path.join(fixturesDir, caseName), sessionDir, { recursive: true });
   const turnCount = readFileSync(path.join(sessionDir, "main.jsonl"), "utf8")
     .split("\n")
     .filter((line) => line.includes('"type":"user_message"')).length;

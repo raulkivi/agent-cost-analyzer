@@ -6,6 +6,7 @@ import type { DatabaseSync } from "node:sqlite";
 import type {
   RequestTrace,
   Session,
+  SubagentRunGap,
   SystemPromptComponent,
   ToolCallRecord,
   ToolInventoryEntry,
@@ -16,6 +17,7 @@ import { readClassicUsage } from "../../jsonl/classic-usage-reader.js";
 import { resolveMainJsonlPath } from "../../jsonl/session-log-path.js";
 import { collectResponseIds } from "../../jsonl/session-usage-spans.js";
 import { readToolCallRecordsByLogTurn } from "../../jsonl/tool-call-spans.js";
+import { readClassicSubagentAudit } from "../../jsonl/classic-subagent-audit.js";
 import { readMainJsonlEnvelopesForTurn } from "../../jsonl/turn-inspector-reader.js";
 import { buildTurnInspectorDetail } from "./turn-inspector-builder.js";
 import { loadAgentTraceUsageForResponseIds } from "../../agent-traces/agent-traces-reader.js";
@@ -209,6 +211,9 @@ export class VscodeLogProvider implements LogProvider, SystemPromptTextReader, R
       });
       let invokedToolNamesByTurn: string[][] = [];
       let toolCallsByTurn: ToolCallRecord[][] = [];
+      let subagentToolCallsByTurn: ToolCallRecord[][] = [];
+      let subagentRunGapsByTurn: SubagentRunGap[][] = [];
+      let subagentRunsReadByTurn: string[][] = [];
       let systemPrompt: SystemPromptComponent[] = [];
       let toolInventory: ToolInventoryEntry[] = [];
       if (mainJsonlPath && usage.availability === "events-present") {
@@ -216,7 +221,20 @@ export class VscodeLogProvider implements LogProvider, SystemPromptTextReader, R
         ({ systemPrompt, toolInventory } = extras);
         invokedToolNamesByTurn = placeByStoreIndex(extras.invokedToolNamesByTurn, usage.alignment);
         // D3: the detail read streams main.jsonl again with the audit projector.
-        toolCallsByTurn = placeByStoreIndex(await readToolCallRecordsByLogTurn(mainJsonlPath), usage.alignment);
+        const mainCallsByLogTurn = await readToolCallRecordsByLogTurn(mainJsonlPath);
+        toolCallsByTurn = placeByStoreIndex(mainCallsByLogTurn, usage.alignment);
+        if (usage.attribution) {
+          // Step 10.20 (§5.2): the runs 10.19 placed, their child files read a
+          // second time with the audit projector; the list path never gets here.
+          const audit = await readClassicSubagentAudit({
+            attribution: usage.attribution,
+            mainCallsByLogTurn,
+            sessionDir: path.dirname(mainJsonlPath),
+          });
+          subagentToolCallsByTurn = placeByStoreIndex(audit.callsByLogTurn, usage.alignment);
+          subagentRunGapsByTurn = placeByStoreIndex(audit.gapsByLogTurn, usage.alignment);
+          subagentRunsReadByTurn = placeByStoreIndex(audit.readRunIdsByLogTurn, usage.alignment);
+        }
       }
 
       return {
@@ -228,6 +246,9 @@ export class VscodeLogProvider implements LogProvider, SystemPromptTextReader, R
           turnUsages: usage.turnUsages,
           invokedToolNamesByTurn,
           toolCallsByTurn,
+          subagentToolCallsByTurn,
+          subagentRunGapsByTurn,
+          subagentRunsReadByTurn,
           systemPrompt,
           toolInventory,
           subagentRuns: usage.attribution,
