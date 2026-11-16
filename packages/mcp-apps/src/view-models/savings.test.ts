@@ -212,6 +212,16 @@ describe("toSavingsViewModel", () => {
     expect(left.leftOut).toEqual([{ providerLabel: "GitHub Copilot", reason: "over the session cap", sessionsText: "12 sessions" }]);
   });
 
+  // V29: the pi provider's id is "pi-agent"; since V27 its rows reach U18.
+  it("names pi by its label, not its provider id, in a group and in the sessions left unchecked", () => {
+    const piRow = row({ key: "unused-tools:write:unpriced", kind: "unused-tools", subject: "write", perWeek: unpriced, perWindow: unpriced, sessions: [{ providerId: "pi-agent", sessionId: "0123456789abcdef" }] });
+    const vm = toSavingsViewModel(
+      savingsOutput({ opportunities: [piRow], opportunitiesTotal: 1, notAnalysed: [{ kind: "unused-tools", providerId: "pi-agent", reason: "The log records no tool inventory for this session.", sessions: 2 }] }),
+    );
+    expect(vm.groups[0]!.subtitle).toBe("pi · 0 changes, 1 not priced");
+    expect(vm.notAnalysed[0]!.providerLabel).toBe("pi");
+  });
+
   it("falls back to the provider id for an unknown provider", () => {
     const vm = toSavingsViewModel(savingsOutput({ opportunities: [row({ key: "k", kind: "idle-cache-expiry", subject: "m", sessions: [{ providerId: "newtool", sessionId: "s1" }] })], opportunitiesTotal: 1 }));
     expect(vm.groups[0]!.subtitle).toBe("newtool · 1 change");

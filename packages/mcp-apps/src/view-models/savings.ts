@@ -95,7 +95,7 @@ export interface SavingsViewModel {
 
 const MAX_SESSIONS_SHOWN = 3;
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"] as const;
-const PROVIDER_LABELS: Readonly<Record<string, string>> = { vscode: "GitHub Copilot", "agent-host": "Agent Host", "claude-code": "Claude Code", pi: "pi" };
+const PROVIDER_LABELS: Readonly<Record<string, string>> = { vscode: "GitHub Copilot", "agent-host": "Agent Host", "claude-code": "Claude Code", "pi-agent": "pi" };
 // Copilot bills in AI Credits; the other providers' savings are priced in dollars.
 const AI_CREDIT_PROVIDERS: ReadonlySet<string> = new Set(["vscode", "agent-host"]);
 const CURRENCY_ORDER: readonly Currency[] = ["AI_CREDITS", "USD"];

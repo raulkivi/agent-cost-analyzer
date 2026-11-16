@@ -1,6 +1,6 @@
 # Changelog
 
-**Last changed:** 2026-11-15 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-16 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 All notable changes to this project are documented in this file.
 
@@ -12,6 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - The savings report now lists unused tools for pi sessions: each tool a pi session declared and never ran, with its definition tokens per request (an estimate) and the requests it was declared for, including a tool pi dropped or added mid-session. pi on a local model has no price, so its rows say "Not priced" with the reason and rank last; their tokens and requests are shown, never a made-up dollar figure. A branch of a forked pi file counts the requests it shares with an earlier branch once. Sessions without a system message in the file (only the logger's record) stay under Not analysed. <!-- codespell:ignore analysed -->
 - Any session whose model has no known price channel, not only pi, now gets its unused-tools row with "Not priced" and the reason, instead of being left under Not analysed. <!-- codespell:ignore analysed -->
+
+### Fixed
+- The chat's savings view names pi "pi" in a currency list's heading and in the list of sessions it could not check, instead of its provider id "pi-agent".
 
 ## [0.16.1] - 2026-11-16
 
