@@ -30,6 +30,7 @@ export {
   type ShellInvocation,
 } from "./tool-call-record.js";
 export { subagentRunIdSchema, subagentLabelSchema } from "./subagent-run-ids.js";
+export { subagentRunGapSchema, type SubagentRunGap } from "./subagent-run-gap.js";
 export { toolCallOriginSchema, type ToolCallOrigin } from "./tool-call-origin.js";
 export {
   toolCallStatusSchema,

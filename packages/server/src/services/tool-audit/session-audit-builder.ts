@@ -16,12 +16,16 @@ import {
   emptyTotals,
   failureRateOf,
   isFailedCall,
+  isSubagentCall,
   normalizeCommand,
+  originKeyOf,
   RankedCounter,
   rankCategories,
   statusOf,
+  tallyByOrigin,
   unknownReasonOf,
 } from "./outcome-tally.js";
+import { buildSubagentRuns } from "./subagent-runs-builder.js";
 import { toolCallsUnavailableReason } from "./tool-calls-availability.js";
 
 const NO_AFFECTED_TURNS_REASON = "No turn contained a failed tool call.";
@@ -76,20 +80,25 @@ function perTurn(session: Session): SessionAudit["perTurn"] {
 }
 
 // A retry is the exact same (whitespace-normalized) shell command issued
-// again after an earlier attempt failed. Deliberately exact: fuzzier
-// "similar command" matching would be a guess about intent.
+// again after an earlier attempt failed, by the same agent: the main agent or
+// one subagent run (D6), so one agent's failure is never "retried" by another.
+// Deliberately exact: fuzzier "similar command" matching would be a guess
+// about intent.
 function findRetries(calls: AuditedToolCall[]): RetryGroup[] {
-  const attemptsByCommand = new Map<string, AuditedToolCall[]>();
+  const attemptsByCommand = new Map<string, { command: string; attempts: AuditedToolCall[] }>();
   for (const audited of calls) {
     if (!audited.call.shell) {
       continue;
     }
-    const key = normalizeCommand(audited.call.shell.command);
-    attemptsByCommand.set(key, [...(attemptsByCommand.get(key) ?? []), audited]);
+    const command = normalizeCommand(audited.call.shell.command);
+    const key = `${originKeyOf(audited.call)}\u0000${command}`;
+    const group = attemptsByCommand.get(key) ?? { command, attempts: [] };
+    group.attempts.push(audited);
+    attemptsByCommand.set(key, group);
   }
 
   const retries: RetryGroup[] = [];
-  for (const [command, attempts] of attemptsByCommand) {
+  for (const { command, attempts } of attemptsByCommand.values()) {
     const firstFailure = attempts.findIndex((a) => isFailedCall(a.call));
     if (attempts.length < 2 || firstFailure === -1 || firstFailure === attempts.length - 1) {
       continue;
@@ -115,7 +124,9 @@ function failureRecoveryCost(session: Session): SessionAudit["failureRecoveryCos
   const failedRounds = new Set<string>();
   const affected: Turn[] = [];
   for (const turn of session.turns) {
-    const failures = turn.toolCalls.filter(isFailedCall);
+    // Main-agent rounds only (D6): a subagent's round index counts its own
+    // requests, and its recovery is already inside its usage (step 10.19).
+    const failures = turn.toolCalls.filter((call) => !isSubagentCall(call) && isFailedCall(call));
     if (failures.length === 0) {
       continue;
     }
@@ -143,6 +154,9 @@ export function buildSessionAudit(session: Session): SessionAudit {
       unknownReasons.add(unknownReasonOf(call));
     }
   }
+  const runs = buildSubagentRuns(session);
+  runs.forEach((run) => run.totals === null && run.unreadReason && unknownReasons.add(run.unreadReason));
+  const split = tallyByOrigin(calls.map(({ call }) => call));
 
   return {
     sessionId: session.id,
@@ -158,5 +172,6 @@ export function buildSessionAudit(session: Session): SessionAudit {
     failureRecoveryCost: failureRecoveryCost(session),
     outcomeCoverage: { known: totals.toolCalls - totals.unknown, unknown: totals.unknown, unknownReasons: [...unknownReasons] },
     ...(unavailableReason ? { toolCallsUnavailableReason: unavailableReason } : {}),
+    ...(runs.length > 0 ? { byOrigin: { main: split.main, subagents: { ...split.subagents, runs: runs.length } }, subagentRuns: runs } : {}),
   };
 }

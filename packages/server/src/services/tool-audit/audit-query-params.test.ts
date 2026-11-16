@@ -22,6 +22,20 @@ describe("parseToolCallFilterQuery", () => {
     expect(parseToolCallFilterQuery({ offset: "-1" }).ok).toBe(false);
   });
 
+  it("parses the origin list and a run id (step 10.20)", () => {
+    expect(parseToolCallFilterQuery({ origin: "subagent", runId: "child-1" })).toEqual({
+      ok: true,
+      value: { origin: ["subagent"], runId: "child-1" },
+    });
+    expect(parseToolCallFilterQuery({ origin: "main,subagent" })).toEqual({ ok: true, value: { origin: ["main", "subagent"] } });
+  });
+
+  it("rejects an unknown origin and a hostile run id", () => {
+    expect(parseToolCallFilterQuery({ origin: "robot" }).ok).toBe(false);
+    expect(parseToolCallFilterQuery({ runId: "../etc" }).ok).toBe(false);
+    expect(parseToolCallFilterQuery({ runId: "a".repeat(129) }).ok).toBe(false);
+  });
+
   it("returns an empty filter for no params", () => {
     expect(parseToolCallFilterQuery({})).toEqual({ ok: true, value: {} });
   });

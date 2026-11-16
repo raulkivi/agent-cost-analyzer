@@ -42,6 +42,29 @@ export function addToTotals(totals: OutcomeTotals, call: ToolCallRecord): void {
   }
 }
 
+// Who issued a call, as a grouping key: "main" or one subagent run. The run
+// key is prefixed so a run whose id happens to be "main" can't merge with the
+// main agent (run ids allow any [A-Za-z0-9_-]{1,128}).
+export const MAIN_ORIGIN_KEY = "main";
+
+export function originKeyOf(call: ToolCallRecord): string {
+  return call.origin?.kind === "subagent" ? `run:${call.origin.runId}` : MAIN_ORIGIN_KEY;
+}
+
+export function isSubagentCall(call: ToolCallRecord): boolean {
+  return call.origin?.kind === "subagent";
+}
+
+// The totals split by who issued the calls. Pure counting: main plus
+// subagents always equals the all-calls totals (a property test).
+export function tallyByOrigin(calls: ToolCallRecord[]): { main: OutcomeTotals; subagents: OutcomeTotals } {
+  const split = { main: emptyTotals(), subagents: emptyTotals() };
+  for (const call of calls) {
+    addToTotals(isSubagentCall(call) ? split.subagents : split.main, call);
+  }
+  return split;
+}
+
 export function mergeTotals(target: OutcomeTotals, source: OutcomeTotals): void {
   for (const key of Object.keys(target) as (keyof OutcomeTotals)[]) {
     target[key] += source[key];

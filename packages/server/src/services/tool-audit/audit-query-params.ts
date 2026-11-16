@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
 import { z } from "zod";
-import { failureCategorySchema, toolCallStatusSchema, toolKindSchema } from "@agent-cost-analyzer/domain";
+import { failureCategorySchema, subagentRunIdSchema, toolCallStatusSchema, toolKindSchema } from "@agent-cost-analyzer/domain";
 import type { SessionRangeFilter, ToolCallFilter } from "./audit-query-service.js";
 
 // Field schemas shared by the HTTP query parser below and the MCP tool
@@ -13,6 +13,8 @@ export const isoDateBoundSchema = z
 export const limitSchema = z.number().int().positive().max(1000);
 export const turnIndexSchema = z.number().int().nonnegative();
 export const offsetSchema = z.number().int().nonnegative();
+// Step 10.20: the `origin` filter values (main agent or a subagent's call).
+export const toolCallOriginKindSchema = z.enum(["main", "subagent"]);
 
 type ParseResult<T> = { ok: true; value: T } | { ok: false; error: string };
 
@@ -46,6 +48,8 @@ const toolCallFilterSchema = z.object({
   kind: z.array(toolKindSchema).optional(),
   program: z.string().optional(),
   turnIndex: turnIndexSchema.optional(),
+  origin: z.array(toolCallOriginKindSchema).optional(),
+  runId: subagentRunIdSchema.optional(),
   offset: offsetSchema.optional(),
   limit: limitSchema.optional(),
 });
@@ -73,6 +77,8 @@ export function parseToolCallFilterQuery(query: Query): ParseResult<ToolCallFilt
         kind: list(query, "kind"),
         program: stringParam(query, "program"),
         turnIndex: integer(query, "turn"),
+        origin: list(query, "origin"),
+        runId: stringParam(query, "runId"),
         offset: integer(query, "offset"),
         limit: integer(query, "limit"),
       }),

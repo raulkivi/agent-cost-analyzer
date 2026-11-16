@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
 import { z } from "zod";
+import { subagentRunGapSchema } from "./subagent-run-gap.js";
 import { toolCallRecordSchema } from "./tool-call-record.js";
 import { turnSimulationSchema } from "./simulation.js";
 import { turnUsageSchema } from "./turn-usage.js";
@@ -32,6 +33,9 @@ export const turnSchema = z.object({
   // the empty values read as unknown, not as empty (constraint 6).
   textUnavailableReason: z.string().optional(),
   toolCallsUnavailableReason: z.string().optional(),
+  // Step 10.20: subagent runs this turn started whose tool calls are unknown
+  // or flagged, with the reason (§6). Absent when every run was read.
+  subagentRunGaps: z.array(subagentRunGapSchema).optional(),
   simulation: turnSimulationSchema.optional(),
   // Analyze mode only (Phase 15 step 15.1): when the turn started, as the
   // log records it (ISO 8601), so it can be priced at the price in force then.

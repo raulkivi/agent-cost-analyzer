@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import type { AuditRollup, FailureCategory, OutcomeTotals, SessionAudit } from "@agent-cost-analyzer/domain";
+import type { AuditRollup, FailureCategory, OriginTotals, OutcomeTotals, SessionAudit } from "@agent-cost-analyzer/domain";
 import {
   addToTotals,
   emptyTotals,
@@ -78,6 +78,24 @@ function daily(audits: SessionAudit[]): AuditRollup["daily"] {
   return [...byDate.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([date, row]) => ({ date, ...row }));
 }
 
+// Present when any counted session has a subagent run (read or not).
+function originTotals(audits: SessionAudit[]): OriginTotals | undefined {
+  if (!audits.some((audit) => audit.byOrigin)) {
+    return undefined;
+  }
+  const merged: OriginTotals = { main: emptyTotals(), subagents: { ...emptyTotals(), runs: 0 } };
+  for (const audit of audits) {
+    // A session without runs is all main-agent calls, so main + subagents
+    // still equals the rollup's totals.
+    mergeTotals(merged.main, audit.byOrigin?.main ?? audit.totals);
+    if (audit.byOrigin) {
+      // mergeTotals walks the target's keys, so `runs` is summed with the counts.
+      mergeTotals(merged.subagents, audit.byOrigin.subagents);
+    }
+  }
+  return merged;
+}
+
 // Pure: many SessionAudits in, one cross-session AuditRollup out.
 // Sessions whose tool calls are unknown (constraint 6) are left out of every
 // count and rate and only reported.
@@ -98,12 +116,15 @@ export function buildAuditRollup(allAudits: SessionAudit[], options: RollupOptio
     audit.outcomeCoverage.unknownReasons.forEach((reason) => unknownReasons.add(reason));
   }
 
+  const byOrigin = originTotals(audits);
+
   return {
     ...(options.providerId ? { providerId: options.providerId } : {}),
     ...(options.since ? { since: options.since } : {}),
     ...(options.until ? { until: options.until } : {}),
     sessionCount: audits.length,
     sessionsWithUnknownToolCalls: allAudits.length - audits.length,
+    ...(byOrigin ? { byOrigin } : {}),
     sessionsWithUnreadSubagentRuns: audits.filter((audit) => audit.subagentRuns?.some((run) => run.totals === null)).length,
     ...(unknownReason ? { toolCallsUnavailableReason: unknownReason } : {}),
     totals,
