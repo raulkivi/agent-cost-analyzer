@@ -33,7 +33,8 @@ including turning on debug logging for full per-turn numbers.
 Both modes use the same three-column layout:
 
 - **Header** (top) — brand mark, the **Learn / Analyze** mode switch, and
-  a **Config** button.
+  a **Config** button. In Analyze mode it also holds the
+  [monthly allowance](#monthly-allowance) gauge.
 - **Left column** — a searchable list of scenarios (Learn) or sessions
   (Analyze). Click a card to load it.
 - **Center column** — the selected session's **turns table** (one row per
@@ -666,6 +667,7 @@ results only.
 | `estimate_cost` | The cost of planned work as a p50–p90 range at today's prices, never one number. With `model`, the same estimate from the project's sessions (up to 200) replayed on that model: **Simulated**, priced on each session's own channel as of its dates, with coverage, self-check counts and assumptions |
 | `replay_session` | One session replayed on another model: per turn and in total what it would have cost beside what it did, with coverage, the self-check on its own model and the assumptions. `pricing` is `session-channel` (the default), `copilot` or `api`. **Simulated** |
 | `compare_models_for_session` | One session's simulated total on up to 10 models, its own included, with how many turns each replayed. Takes the same `pricing`. **Simulated** |
+| `get_monthly_allowance` | How much of your monthly AI Credits [allowance](#monthly-allowance) is used so far this billing period, the same answer as the app's header: used, remaining ("up to"), coverage, the by-harness split and the period. Read-only; it cannot change the allowance, and it answers that none is set until you set one in the app |
 | `get_savings_report` | The [savings report](#the-savings-report): changes that would have cost less over a window (default the last 30 days), ranked by the high end, each with its amount per week and over the window as a range or "up to", coverage, price versions, up to 10 session ids, each with its date and its saving over the window, and the fixed text of what to change. `limit` (default 10, at most 20) cuts the list and says how many there are. Cheaper-model replays only with `includeSimulated` (off by default, slow), listed apart as **Simulated** |
 
 Six prompts start common reviews: `audit_session` (why a session's tool
@@ -986,6 +988,77 @@ build.
 
 ![The session cost view in Claude Desktop: AI Credits, input tokens, cache hit and output tiles, AI Credits per turn, the top turns and the context overhead](images/mcp-apps/claude-light-u1.png)
 
+### Monthly allowance
+
+The header shows how much of your monthly AI Credits allowance you have
+used. It appears in Analyze mode only, whichever log provider is selected,
+because it always reads your GitHub Copilot Chat sessions from VS Code on
+this machine. Claude Code, pi and mitmproxy sessions record no AI Credits and
+are not counted. Learn mode has no gauge. The VS Code extension has the same
+gauge in its status bar (see the
+[extension guide](vscode-extension-guide.md#monthly-allowance-gauge)).
+
+**Set it.** Until you set an allowance the header shows **Set monthly
+allowance**. Click it and fill in the dialog:
+
+- **Monthly allowance (AI Credits)**: your plan's amount; match it to your
+  GitHub billing page. The app suggests no amount.
+- **Reset day (1 to 28)**: the day your billing period starts. The default is
+  1.
+- **Warn at (percent of allowance)**: when the gauge turns to "near limit".
+  The default is 80.
+
+Nothing is saved if a field is out of range; the dialog says which. The
+values live in the app's `settings.json`
+([settings folder](#cost-by-repository-and-project)), under
+`monthlyAllowance`, and nothing is sent anywhere. To change them, click the
+gauge, then **Change allowance**. **Remove allowance** hides the gauge at
+once, with no confirmation; it keeps the reset day and warn percent, so typing the
+number again brings it back.
+
+**Read it.** The header gives the figure first and the level last, in words:
+`812.40 of 1,000 AI Credits · near limit`. Color only adds to the words.
+In the [narrow layout](#narrow-and-medium-windows) the text shortens to the figure plus "near" or "over". Click
+the gauge for the details: the percentage used, what remains, the days left,
+the period with its time zone, how many sessions have cost data, and the
+split between **Copilot Chat** and **Agent Host and Copilot CLI** sessions
+(a split with no sessions in the period is left out). The source row says
+**VS Code** or **VS Code Insiders**, whichever the app reads. **Recount**
+reads the logs again.
+
+| State | The header says |
+|---|---|
+| Not set | **Set monthly allowance**, no figure |
+| Normal, below your warn percent | `812.40 of 1,000 AI Credits` |
+| Near limit, from your warn percent | `…AI Credits · near limit` |
+| Over, 100 % or more | `…AI Credits · over` |
+| Some sessions have no cost data | `at least 812.40 of 1,000 AI Credits`; the meter ends open, the total may be higher and the remainder is "up to" |
+| No session has cost data | `AI Credits this month: unknown`; no total and no percentage, because unknown is not 0 |
+| No Copilot session started this period | `No sessions this month` |
+| No Copilot Chat logs on this machine | `AI Credits this month: no Copilot logs` |
+
+**What counts.** Only billed AI Credits that Copilot recorded, summed over
+the sessions of the current billing period. A session counts wholly in the
+period it started in, in your local time zone, and a session without cost
+data is left out, never counted as 0. These are not counted, and the
+details dialog's **Not counted** list says so:
+
+- sessions whose logs Copilot already pruned;
+- spend made elsewhere: github.com chat, the cloud agent, other machines;
+- Claude Code, pi and mitmproxy sessions.
+
+The gauge shows the month to date against your allowance and nothing more:
+there is no projection or run rate. Because of the gaps above, treat it as a
+lower bound that can trail your GitHub billing page.
+
+**Ask your AI chat.** The MCP tool `get_monthly_allowance` gives the same
+answer ([MCP tools](#querying-the-audit-from-claude-code-mcp)). It is
+read-only and cannot change the allowance.
+
+The gauge has a screen-reader label per state and both dialogs trap focus,
+close with Escape and return focus to the gauge. Screenshots of the gauge
+and its dialogs are not in this guide yet.
+
 ### The insights dashboard
 
 **Dashboard**, the fourth view on Analyze mode's center switch, works like
@@ -1118,7 +1191,7 @@ a view here and, in the extension, a view of its own.
 
 The filters sit in one row: the date range first (**This month**, **Last
 month**, **Last 90 days**, **This year**), then, on Cost over time, the
-bucket (**Day**, **Week**, **Month**, in UTC), the unit (**AI Credits** or
+bucket (**Day**, **Week**, **Month**, in UTC; the [monthly allowance](#monthly-allowance) counts in your local time zone, so a session near midnight can fall in different days), the unit (**AI Credits** or
 **USD**) and the pricing (**As of use** or **Today's prices**). Figures in
 the other unit are converted at GitHub's documented 1 AI Credit = $0.01, and
 the view says so. Totals use each turn's preferred basis (billed, then

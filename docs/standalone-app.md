@@ -62,6 +62,13 @@ folder: `~/.config/agent-cost-analyzer` on Linux, `~/Library/Application
 Support/agent-cost-analyzer` on macOS, `%APPDATA%\agent-cost-analyzer` on
 Windows.
 
+Its `settings.json` holds the selected log provider, the retained-logs
+threshold from the Config area and, once you set a monthly AI Credits
+allowance in the header, a `monthlyAllowance` object (`aiCredits`, `resetDay`,
+`warnAtPercent`; see [Monthly allowance](UserGuide.md#monthly-allowance)).
+The app saves it atomically and keeps the keys it does not own. A missing or
+unreadable file reads as defaults, so deleting it resets the allowance.
+
 The MCP server runs from the same package: `npx -y --prefer-offline
 agent-cost-analyzer mcp` (see the
 [User Guide](UserGuide.md#querying-the-audit-from-claude-code-mcp)).
