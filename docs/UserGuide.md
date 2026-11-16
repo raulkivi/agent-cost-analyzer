@@ -459,9 +459,7 @@ turns table's Rounds column); each shows one Request/Response card pair,
 tool-call name/arguments/result on the request side and reasoning shown
 inline where captured on the response side. Oversized text and file/image
 content is collapsed into small placeholder chips instead of being dumped
-inline, to keep the view readable:
-
-![The turn inspector open on Round 0 of a 13-round turn, with tool-call request detail on the left and the model's reasoning/response on the right](images/guide-turn-inspector.png)
+inline, to keep the view readable.
 
 If a turn has no captured round-trip data (for example, it predates
 enabling debug logging, or its data has since aged out), the inspector
