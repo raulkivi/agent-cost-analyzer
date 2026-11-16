@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
 import type { AuditRollup, OutcomeTotals, SessionAudit, TokenCount } from "@agent-cost-analyzer/domain";
+import { canceledTextOf, knownCallsOf, runCounts, SCOPE_NOTE, sublineOf, subagentsSection } from "./audit-subagents.js";
+import type { AgentScope, SubagentsSection } from "./audit-subagents.js";
 import { formatCount, formatDay, periodText, pluralize, UNKNOWN_TEXT } from "./format.js";
 
 // U4, tool-call audit (docs/plans/mcp-apps.md §4.5, board ToolCallAudit.dc.html).
@@ -18,6 +20,7 @@ export interface AuditTile {
   text: string;
   known: boolean;
   note?: string;
+  subline?: string; // "incl. 83 calls from 3 subagent runs" (step 10.20)
 }
 
 export interface CategoryRow {
@@ -50,6 +53,9 @@ export interface SessionAuditViewModel {
   metaText: string;
   unavailableReason?: string;
   tiles: { toolCalls: AuditTile; failed: AuditTile; failureRate: AuditTile; unknown: AuditTile };
+  canceledText?: string; // D14: a user stop, apart from failures
+  subagents?: SubagentsSection; // present when the session has subagent runs
+  scopeNote?: string; // set when a filter is on: the sections that still count every agent
   categories: CategoryBars;
   recovery: {
     unitLabel: string;
@@ -70,6 +76,7 @@ export interface AuditRollupViewModel {
   sessionsText: string;
   unavailableReason?: string;
   tiles: { toolCalls: AuditTile; failed: AuditTile; failureRate: AuditTile };
+  unreadNote?: string; // sessions whose subagent runs were not read
   leftOut?: { text: string; note: string };
   daily: { points: DayPoint[]; maxValue: number | null };
   categories: CategoryBars;
@@ -150,17 +157,42 @@ function recoveryOf(audit: SessionAudit, outcomesKnown: boolean): SessionAuditVi
   };
 }
 
-export function toSessionAuditViewModel(audit: SessionAudit): SessionAuditViewModel {
+export type { AgentScope, ScopeOption, AuditRunRow, SubagentsSection } from "./audit-subagents.js";
+
+// The tiles for the chosen agent filter. "All" keeps the server's all-calls
+// figures; the others come from byOrigin. A filter on subagents with no run
+// read has no figures, so its tiles say Unknown, never 0.
+function scopedTiles(audit: SessionAudit, scope: AgentScope, unavailable: boolean, turns: number): SessionAuditViewModel["tiles"] {
+  const origin = audit.byOrigin;
+  const counts = runCounts(audit);
+  if (origin === undefined || scope === "all") {
+    const subline = origin === undefined ? undefined : sublineOf(origin.subagents.toolCalls, counts.total, counts.read);
+    const toolCalls: AuditTile = unavailable ? unknownTile() : { text: formatCount(audit.totals.toolCalls), known: true, ...(turns > 0 ? { note: `across ${pluralize(turns, "turn")}` } : {}), ...(subline === undefined ? {} : { subline }) };
+    return { toolCalls, ...outcomeTiles(audit.totals, audit.failureRate, audit.outcomeCoverage.known, unavailable) };
+  }
+  if (scope === "subagents" && counts.read === 0) {
+    return { toolCalls: unknownTile("no subagent run was read"), ...outcomeTiles(origin.subagents, null, 0, true) };
+  }
+  const totals = scope === "main" ? origin.main : origin.subagents;
+  const known = knownCallsOf(totals);
+  return {
+    toolCalls: { text: formatCount(totals.toolCalls), known: true, note: scope === "main" ? "main agent only" : "read subagent runs only" },
+    ...outcomeTiles(totals, known > 0 ? failedOf(totals) / known : null, known, false),
+  };
+}
+
+export function toSessionAuditViewModel(audit: SessionAudit, scope: AgentScope = "all"): SessionAuditViewModel {
   const unavailable = audit.toolCallsUnavailableReason !== undefined;
   const turns = audit.perTurn.length;
+  const origin = audit.byOrigin;
+  const effectiveScope = origin === undefined ? "all" : scope;
+  const scopedTotals = origin === undefined || effectiveScope === "all" ? audit.totals : effectiveScope === "main" ? origin.main : origin.subagents;
+  const canceledText = canceledTextOf(scopedTotals);
   const started = formatDay(audit.startedAt);
   const vm: SessionAuditViewModel = {
     title: audit.title === undefined || audit.title.trim() === "" ? `Session ${audit.sessionId}` : audit.title,
     metaText: [`session ${audit.sessionId}`, started].filter((part) => part !== undefined).join(" · "),
-    tiles: {
-      toolCalls: unavailable ? unknownTile() : { text: formatCount(audit.totals.toolCalls), known: true, ...(turns > 0 ? { note: `across ${pluralize(turns, "turn")}` } : {}) },
-      ...outcomeTiles(audit.totals, audit.failureRate, audit.outcomeCoverage.known, unavailable),
-    },
+    tiles: scopedTiles(audit, effectiveScope, unavailable, turns),
     categories: categoryBars(audit.byFailureCategory, audit.failureRate !== null),
     recovery: recoveryOf(audit, audit.failureRate !== null),
     retries: audit.retries.map((retry) => ({
@@ -172,6 +204,9 @@ export function toSessionAuditViewModel(audit: SessionAudit): SessionAuditViewMo
     byTool: [...audit.byTool].sort((a, b) => b.calls - a.calls).map((tool) => ({ name: tool.name, callsText: formatCount(tool.calls), failedText: formatCount(tool.failed) })),
   };
   if (audit.toolCallsUnavailableReason !== undefined) vm.unavailableReason = audit.toolCallsUnavailableReason;
+  if (canceledText !== undefined) vm.canceledText = canceledText;
+  if (origin !== undefined) vm.subagents = subagentsSection(audit, origin, effectiveScope);
+  if (origin !== undefined && effectiveScope !== "all") vm.scopeNote = SCOPE_NOTE;
   return vm;
 }
 
@@ -226,6 +261,11 @@ export function toAuditRollupViewModel(rollup: AuditRollup): AuditRollupViewMode
       ...(sessions.length > MAX_SESSIONS ? { shownNote: `${MAX_SESSIONS} of ${sessions.length} shown` } : {}),
     },
   };
+  const origin = rollup.byOrigin;
+  const subline = origin === undefined ? undefined : sublineOf(origin.subagents.toolCalls, origin.subagents.runs, origin.subagents.runs);
+  if (subline !== undefined) vm.tiles.toolCalls.subline = subline;
+  const unreadSessions = rollup.sessionsWithUnreadSubagentRuns;
+  if (unreadSessions > 0) vm.unreadNote = `${pluralize(unreadSessions, "session")} ${unreadSessions === 1 ? "has" : "have"} subagent runs that were not read; those calls aren't counted.`;
   if (period !== undefined) vm.periodText = period;
   if (leftOut !== undefined) vm.leftOut = leftOut;
   if (rollup.toolCallsUnavailableReason !== undefined) vm.unavailableReason = rollup.toolCallsUnavailableReason;

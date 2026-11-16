@@ -103,6 +103,8 @@
 /* Kind, session and day under the finding: only where their columns are
    hidden. */
 .fv-row-meta { display: none; font-size: 11px; }
+/* Names the subagent run (step 10.20); a long label wraps, never widens the table. */
+.fv-origin { margin-top: 1px; font-size: 11px; overflow-wrap: anywhere; }
 
 @media (max-width: 480px) {
   /* Five columns pushed Session and When out of view at 360px (A14 visual

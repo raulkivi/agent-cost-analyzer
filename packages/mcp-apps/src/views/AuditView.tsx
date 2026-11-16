@@ -1,9 +1,10 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import type { ViewBrand } from "../brand/view-brand.js";
 import type { ToolResult } from "../host/app-host-port.js";
 import { toAuditRollupViewModel, toSessionAuditViewModel } from "../view-models/index.js";
+import type { AgentScope } from "../view-models/index.js";
 import { ErrorBox } from "./SessionCostView.js";
 import { ViewShell } from "./ViewShell.js";
 import { AuditRollupBody } from "./audit/AuditRollupBody.js";
@@ -44,10 +45,11 @@ export function AuditView({ brand, result }: { brand: ViewBrand; result: ToolRes
 }
 
 function LoadedSessionAudit({ audit, brand }: { audit: Parameters<typeof toSessionAuditViewModel>[0]; brand: ViewBrand }) {
-  const vm = useMemo(() => toSessionAuditViewModel(audit), [audit]);
+  const [scope, setScope] = useState<AgentScope>("all");
+  const vm = useMemo(() => toSessionAuditViewModel(audit, scope), [audit, scope]);
   return (
     <ViewShell brand={brand} kicker={KICKER} title={vm.title} meta={vm.metaText}>
-      <SessionAuditBody vm={vm} />
+      <SessionAuditBody vm={vm} onScope={setScope} />
     </ViewShell>
   );
 }

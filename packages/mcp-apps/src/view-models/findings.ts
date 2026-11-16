@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import type { FindingKind, FindingSeverity, FindingsQueryResult } from "@agent-cost-analyzer/domain";
+import type { EnrichedFinding, FindingKind, FindingSeverity, FindingsQueryResult } from "@agent-cost-analyzer/domain";
 import { formatCount, formatDay, pluralize } from "./format.js";
 
 // U3, findings (docs/plans/mcp-apps.md §4.3). Pure: formats a list_findings
@@ -44,6 +44,7 @@ export interface FindingRow {
   sessionTitle: string;
   turnText?: string;
   whenText?: string;
+  originText?: string; // "by subagent run Explore (turn 4)"; absent for the main agent
   detail: { why: string; evidence?: string }; // logged text: display only
 }
 
@@ -75,6 +76,14 @@ const KIND_LABEL: Record<FindingKind, string> = {
   "price-change": "Price change",
 };
 const KINDS: readonly FindingKind[] = ["security", "anomaly", "behavior-change", "price-change"];
+
+// A finding from a subagent call names the run (plan §5.7). The label is
+// logged text: shown as text, never sent to the model.
+function originTextOf(origin: EnrichedFinding["origin"], turnIndex: number | undefined): string | undefined {
+  if (origin === undefined || origin.kind !== "subagent") return undefined;
+  const parts = [turnIndex === undefined ? undefined : `turn ${turnIndex}`, origin.depth > 1 ? `depth ${origin.depth}` : undefined].filter((part) => part !== undefined);
+  return `by subagent run ${origin.label}${parts.length === 0 ? "" : ` (${parts.join(", ")})`}`;
+}
 
 export function toFindingsViewModel(result: FindingsQueryResult, filter: FindingsFilter): FindingsViewModel {
   const kinds = filter.kind ?? [];
@@ -111,6 +120,7 @@ export function toFindingsViewModel(result: FindingsQueryResult, filter: Finding
     rows: result.findings.map((finding): FindingRow => {
       const turnText = finding.turnIndex === undefined ? undefined : `turn ${finding.turnIndex}`;
       const whenText = formatDay(finding.at);
+      const originText = originTextOf(finding.origin, finding.turnIndex);
       return {
         key: finding.key,
         title: finding.title,
@@ -124,6 +134,7 @@ export function toFindingsViewModel(result: FindingsQueryResult, filter: Finding
         sessionTitle: finding.sessionTitle,
         ...(turnText === undefined ? {} : { turnText }),
         ...(whenText === undefined ? {} : { whenText }),
+        ...(originText === undefined ? {} : { originText }),
         detail: { why: finding.why, ...(finding.evidence === undefined ? {} : { evidence: finding.evidence }) },
       };
     }),

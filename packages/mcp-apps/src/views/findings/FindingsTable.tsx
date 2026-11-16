@@ -43,6 +43,11 @@ function FindingRowView({ row, open, onToggle }: { row: FindingRow; open: boolea
           </div>
           {/* Shown instead of the Kind, Session and When columns on a
               narrow host (findings.css), so the table fits 360px. */}
+          {row.originText !== undefined && (
+            <div className="fv-origin fv-muted" title="The tool call came from a subagent run, not the main agent">
+              {row.originText}
+            </div>
+          )}
           <div className="fv-row-meta fv-muted">{[row.kindLabel, row.sessionTitle, row.turnText, row.whenText].filter((part) => part !== undefined && part !== "").join(" · ")}</div>
           <div className="fv-detail">
             <button type="button" className="fv-link" aria-expanded={open} aria-controls={open ? detailId : undefined} onClick={onToggle}>
