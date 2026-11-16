@@ -355,6 +355,18 @@ function breakCost(model: string, atMs: number, lost: number, tables: ModelTable
   return { cost: { known: true, low: 0, high, versionId: version.id }, rates: { writeUsdPerM, inputUsdPerM: tier.inputUsdPerM, cacheReadUsdPerM: tier.cachedInputUsdPerM } };
 }
 
+// One session's breaks as the report counts them (D36): their extra costs summed,
+// or null when any is unpriced (an upper bound that leaves a break out is no upper
+// bound; the session goes under the row's coverage instead).
+export function countedBreakCost(breaks: readonly OracleIdleBreak[]): number | null {
+  let sum = 0;
+  for (const found of breaks) {
+    if (!found.cost.known) return null;
+    sum += found.cost.high;
+  }
+  return sum;
+}
+
 export function idleBreaksOf(requests: readonly OracleRequest[], tables: ModelTables): OracleIdleBreak[] {
   const found: OracleIdleBreak[] = [];
   requests.forEach((request, position) => {

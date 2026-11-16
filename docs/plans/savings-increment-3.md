@@ -2,16 +2,17 @@
 
 **Last changed:** 2026-11-16 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
-**Status: Plan approved 2026-11-14 (task V23 in
+**Status: Done 2026-11-16: exit criterion met, owner sign-off.** Plan approved 2026-11-14 (task V23 in
 [implementation-plan.md](../implementation-plan.md#100-release), criterion
-C11).** Decisions D22–D32 accepted. No UI code before the
+C11). Decisions D22–D32 accepted. No UI code before the
 owner approves the boards (V23b). **Scope change 2026-11-14 (owner):** the
 owner runs pi only on a local model (unpriced), so V28 (the pi request trace
 and O2–O4 for pi, §7.2) moves after 1.0; V27 (pi O1 per tool, wasted tokens
 shown, amounts "Not priced" with the reason) stays in 1.0. **V24–V27 done
 2026-11-15/16; V29 (review, docs, exit check) done 2026-11-16 (§17): 6
-findings fixed, 6 recorded; the exit check (§14) passed on the owner's logs,
-and the owner's sign-off of its output is pending.** Scope decided by the owner 2026-11-14 in
+findings fixed, R23 and R24 decided by the owner and fixed (D35, D36), 4
+recorded; the exit check (§14) passed on the owner's logs and the owner
+signed off its output.** Scope decided by the owner 2026-11-14 in
 [savings-report.md](savings-report.md) §2, goal G6. Increments 1 and 2, their
 design, honesty rules and owner decisions D1–D21 are in that plan and are not
 repeated here; decisions in this plan continue its numbering from D22.
@@ -413,7 +414,7 @@ waits for V28 (after 1.0).
 
 ## 12. Owner decisions
 
-Decided 2026-11-14: the owner accepted each recommendation (D22–D32).
+Decided 2026-11-14: the owner accepted each recommendation (D22–D32). D33–D36 are owner decisions of 2026-11-16.
 
 | # | Decision | Recommendation |
 |---|---|---|
@@ -430,6 +431,8 @@ Decided 2026-11-14: the owner accepted each recommendation (D22–D32).
 | D32 | Mock-ups | Amend the existing boards (§10) and approve them once (V23b) before V24–V26's UI code; the server halves of V24 and V26 may start before |
 | D33 | Unused tools of a session whose model has no known price (V27) | Owner 2026-11-16: every provider gets its own `unused-tools:<group>:unpriced` row, amount "Not priced" with the channel's reason, ranked last, instead of leaving the session under Not analysed | <!-- codespell:ignore analysed -->
 | D34 | Row's `requests` when a tool was added mid-session (V27, `loadedRequests`) | Owner 2026-11-16: the row shows the session's request count; the money weights each tool by the requests it was declared, so requests × tokens may not multiply to the money for those rows (documented, rare: 2 of 125 owner branches, none in the window) |
+| D35 | "and N more (about X)" on an unused-tools row (R23) | Owner 2026-11-16: "(about X)" only when every listed tool was loaded in every session of the row; otherwise "and N more" alone. The same rule in the web detail, the extension webview, U18 and the tool's text (`unlistedTools` takes the row's session count); the tool's structured result has no rest figure. Unknown, never 0 |
+| D36 | A cache-break row's session with a priced and an unpriced break (R24) | Owner 2026-11-16: matches O5. The session is left out of the row's amount and listed under its coverage with the price reason; its own saving is unknown with that reason. Amount and coverage agree |
 
 ## 13. Risks
 
@@ -514,7 +517,7 @@ and pi's per-tool sum (§17 R20). By assertion group:
 
 A first run minutes earlier failed only the last group, on `~/.claude.json`,
 which a running Claude Code session rewrites (the app never opens it; as in
-SR22); the rerun passed. **The owner has not yet signed off this output.**
+SR22); the rerun passed. The owner signed off this output on 2026-11-16 (13 of 13, commit 2e937993).
 
 ## 15. Tasks
 
@@ -596,8 +599,8 @@ main plan, §9, §11, §14, D22–D34, the approved boards (the V23b answers in
 | R20 | Medium (test gap) | `server/scripts/savings-exit.real.test.mts` | §14 (c) and (d) were not fully in the real-data check. A listed session's date only had to exist, not equal its session's start. Nothing checked that the known per-session savings add up to the row's. V25's task row named a no-title assertion, but none was written. pi's per-tool sum was not checked. V26's PR said its per-tool assertions were not run | Fixed (62b5ef84): dates and sums over every row of every report the check builds; titles from each product's insights dataset (D24's source) searched in every report and tool answer, never printed; pi's per-tool sum. Run on the owner's logs (§14) |
 | R21 | Medium (test gap) | `server/src/mcp/security.test.ts` (V25's title test) | The test searches `get_savings_report` and the tab's report for every session title, but the cost fixture's savings report has no row (checked: 0 opportunities). No session reference could carry a title, so the test could not fail | Fixed (c4bf5132): `composition/savings-no-titles.test.ts` runs the standalone composition over SR13's Claude Code savings session (two rows that list it) and finds its title in neither answer. The `sv1` Playwright spec already checked `/api/savings` over rows |
 | R22 | Low (test gap) | R16, §9 | R16's pi branch-id round trip was V28's test. V28 moved after 1.0, but V27 puts pi rows, and so branch ids, in the 1.0 tool | Fixed (58670243): `composition/pi-savings-branch-ids.test.ts` passes each row's `<hash>__branch__<leaf>` id to `get_session_cost` unchanged. It passed on its first run: a gap closed, not a defect |
-| R23 | Low (design, owner) | `unused-tools-detector.ts` `toolsOf`; `domain/src/savings.ts` `unlistedTools`; `web/src/lib/savings/savings-view.ts` `toolListOf` | A tool's figure is its average over the sessions that loaded it; the row's is over all of its sessions. When a tool was loaded in only some of them, its figure is more than its share of the row's average. Then the list's note ("can differ from the per-request total by a few tokens") is off by more than rounding, and "and N more (about X)", X = the row's total minus the listed tools, understates the rest (`unlistedTools` drops X only when the listed sum passes the total). §6's "at most one token per tool" holds only when every tool was in every session. The owner approved X as drawn (V23b question 6) | Recorded for the owner. Recommendation: show X only when every listed tool was loaded in all of the row's sessions (`tool.sessions` = `evidence.sessions`), else the count alone, and word the note for that case. The User Guide now says when the few-tokens bound holds. On the owner's logs the check's per-tool assertions passed |
-| R24 | Low (design, owner) | `cache-break-detector.ts` `opportunityOf`, `sessionAmount` | A session with one priced and one unpriced break keeps an "up to" of its priced breaks only, while the row's coverage leaves it out with the price reason. The row's own amount has done the same since SR6. O5 instead leaves such a session out of the amount ("an upper bound that leaves a turn out is no upper bound"). V24 makes the partial figure visible per session | Recorded for the owner. Recommendation: make O2–O4 match O5 (such a session's saving is unknown with the reason, and its breaks leave the row's amount), or keep it and label it "priced breaks only". On the owner's logs every idle-expiry break was priced |
+| R23 | Low (design, owner) | `unused-tools-detector.ts` `toolsOf`; `domain/src/savings.ts` `unlistedTools`; `web/src/lib/savings/savings-view.ts` `toolListOf` | A tool's figure is its average over the sessions that loaded it; the row's is over all of its sessions. When a tool was loaded in only some of them, its figure is more than its share of the row's average. Then the list's note ("can differ from the per-request total by a few tokens") is off by more than rounding, and "and N more (about X)", X = the row's total minus the listed tools, understates the rest (`unlistedTools` drops X only when the listed sum passes the total). §6's "at most one token per tool" holds only when every tool was in every session. The owner approved X as drawn (V23b question 6) | Decided (D35) and fixed 2026-11-16: X is shown only when every listed tool was loaded in all of the row's sessions (`tool.sessions` = `evidence.sessions`), else the count alone. `unlistedTools` takes the row's session count; tests red first in the domain, the web view, U18's view model and the tool's text. The User Guide says when the few-tokens bound holds. On the owner's logs the check's per-tool assertions passed |
+| R24 | Low (design, owner) | `cache-break-detector.ts` `opportunityOf`, `sessionAmount` | A session with one priced and one unpriced break keeps an "up to" of its priced breaks only, while the row's coverage leaves it out with the price reason. The row's own amount has done the same since SR6. O5 instead leaves such a session out of the amount ("an upper bound that leaves a turn out is no upper bound"). V24 makes the partial figure visible per session | Decided (D36) and fixed 2026-11-16: O2–O4 match O5. Such a session's saving is unknown with the reason, and its breaks leave the row's amount, so amount and coverage agree. Detector test red first; the goldens did not change (none holds such a session); the oracle's `countedBreakCost` and the real-data check follow the rule. On the owner's logs every idle-expiry break was priced |
 | R25 | Low (performance) | `web/src/lib/savings/use-session-titles.ts` | The first detail opened per window loads the whole insights dataset again for the titles: every provider, up to 200 sessions each, each session parsed and the findings run. The server keeps no copy, so on a large window the titles arrive seconds later (the check's summary times the same load), while the list shows ids | Recorded. Options for the owner after 1.0: reuse the Dashboard's dataset when the windows match, or a titles-only listing (D24 chose the dataset over a new route) |
 | R26 | Info | `savings-tool-output.ts` `sessionText` | The text answer prints a session's date as the UTC day of its start; the views show the viewer's day (D23). Near midnight one session can read a day apart in the chat text and in U18 | Recorded: by design (V23b question 7: ISO dates in the tool's text) |
 | R27 | Info | `unused-tools-detector.ts` `requestsByModel`, `pi-agent/shared-prefix.ts` | D27 counts a shared prefix under the first branch in leaf order. If that branch is not in the report (past the 500-session cap; the window cannot split a file's branches, which share the header's start), the prefix is counted in neither branch | Recorded. No forked pi file on the owner's logs |

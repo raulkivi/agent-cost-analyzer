@@ -101,7 +101,7 @@ inEachClaudeSet(() => {
     await expect(tools.getByRole("row").nth(1)).toContainText("mcp_github_create_pull_request");
     await expect(tools.getByRole("row").nth(1)).toContainText("loaded in 31 sessions");
     await expect(tools.getByRole("row").nth(1)).toContainText("about 610");
-    await expect(tools.getByRole("row").nth(3)).toContainText("loaded in 29 sessions");
+    await expect(tools.getByRole("row").nth(3)).toContainText("loaded in 31 sessions");
     await expect(tools.getByRole("row").nth(6)).toContainText("and 18 more");
     await expect(tools.getByRole("row").nth(6)).toContainText("about 2,885");
     await expect(tools.getByText("estimate")).toBeVisible();

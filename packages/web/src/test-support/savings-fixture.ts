@@ -71,9 +71,9 @@ export const UNUSED_TOOLS = opportunity({
   tools: [
     { name: "mcp_github_create_pull_request", tokens: { known: true, value: 610, estimated: true }, sessions: 31 },
     { name: "mcp_github_search_code", tokens: { known: true, value: 540, estimated: true }, sessions: 31 },
-    { name: "mcp_github_list_issues", tokens: { known: true, value: 480, estimated: true }, sessions: 29 },
+    { name: "mcp_github_list_issues", tokens: { known: true, value: 480, estimated: true }, sessions: 31 },
     { name: "mcp_github_get_file_contents", tokens: { known: true, value: 455, estimated: true }, sessions: 31 },
-    { name: "mcp_github_list_commits", tokens: { known: true, value: 430, estimated: true }, sessions: 24 },
+    { name: "mcp_github_list_commits", tokens: { known: true, value: 430, estimated: true }, sessions: 31 },
     { name: "mcp_github_get_me", tokens: { known: true, value: 300, estimated: true }, sessions: 31 },
     { name: "mcp_github_fork_repository", tokens: { known: true, value: 200, estimated: true }, sessions: 12 },
   ],

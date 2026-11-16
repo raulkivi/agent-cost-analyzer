@@ -217,7 +217,7 @@ describe("toolListOf", () => {
     expect(list.heading).toBe("The 23 tools, never called in 31 sessions");
     expect(list.tools).toHaveLength(5);
     expect(list.tools[0]).toEqual({ name: "mcp_github_create_pull_request", loadedText: "loaded in 31 sessions", tokensText: "about 610" });
-    expect(list.tools[4]).toEqual({ name: "mcp_github_list_commits", loadedText: "loaded in 24 sessions", tokensText: "about 430" });
+    expect(list.tools[4]).toEqual({ name: "mcp_github_list_commits", loadedText: "loaded in 31 sessions", tokensText: "about 430" });
     expect(list.more).toEqual({ text: "and 18 more", tokensText: "about 2,885" });
     expect(list.note).toBe("Each figure is the average over the sessions that loaded the tool, so the list can differ from the 5,400 per-request total by a few tokens.");
   });
@@ -229,6 +229,15 @@ describe("toolListOf", () => {
     expect(list.heading).toBe("The tool, never called in 1 session");
     expect(list.tools[0]!.loadedText).toBe("loaded in 1 session");
     expect(list.more).toBeNull();
+  });
+
+  // R23, D35: "(about X)" only when every listed tool was loaded in every session of the row.
+  it("leaves the rest's tokens out when a listed tool was loaded in only some of the row's sessions", () => {
+    const tools = UNUSED_TOOLS.tools!.map((tool, index) => (index === 2 ? { ...tool, sessions: 29 } : tool));
+    const list = toolListOf({ ...UNUSED_TOOLS, tools })!;
+
+    expect(list.tools[2]!.loadedText).toBe("loaded in 29 sessions");
+    expect(list.more).toEqual({ text: "and 18 more", tokensText: null });
   });
 
   it("leaves the rest's tokens out when the row total is unknown, and never writes 0", () => {

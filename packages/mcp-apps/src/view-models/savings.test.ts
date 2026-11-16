@@ -107,6 +107,15 @@ describe("toSavingsViewModel", () => {
       expect(r.toolList!.tools[0]).toEqual({ name: "mcp_github_create_pull_request", loadedText: "loaded in 31 sessions", tokensText: "about 610" });
     });
 
+    // R23, D35: "(about X)" only when every listed tool was loaded in every session of the row.
+    it("leaves the rest's tokens out when a listed tool was loaded in only some of the row's sessions", () => {
+      const input = savingsOutput();
+      const partial = input.opportunities.map((o) => (o.key === "unused:github" ? { ...o, tools: o.tools!.map((tool, index) => (index === 1 ? { ...tool, sessions: 24 } : tool)) } : o));
+      const r = rowOf(toSavingsViewModel({ ...input, opportunities: partial }), "unused:github");
+
+      expect(r.toolList!.more).toEqual({ text: "and 18 more", tokensText: null });
+    });
+
     it("gives other rows no per-tool list", () => {
       expect(rowOf(toSavingsViewModel(savingsOutput()), "idle:sonnet").toolList).toBeUndefined();
     });

@@ -1318,7 +1318,9 @@ and computes the report when you open it; nothing is stored.
 | A cheaper model | A replay of one of your 5 most expensive sessions on up to 3 cheaper models of the same vendor | **Simulated** (below) |
 
 A cache break counts when the lost tokens are at least the vendor's
-minimum cacheable size and half of the previous prompt. Failed calls where
+minimum cacheable size and half of the previous prompt. A session with a
+break that has no price is left out of the row's amount and listed under
+its coverage with the reason, so the amount and the coverage agree. Failed calls where
 the user said no, and failing test or build runs, are not counted: they are
 choices and the work itself.
 
@@ -1368,12 +1370,13 @@ whole window, the change to make and the price versions behind it.
 - **Tools.** A "Tools loaded but never used" row lists its tools: the
   five largest with their definition tokens per request ("about N", an
   estimate, averaged over the sessions that loaded the tool) and "loaded in
-  N sessions", then "and N more (about X)", where X is the row's total
-  minus the five. When every tool was loaded in every session of the row,
-  the figures differ from the row's total by a few tokens of rounding; a
-  tool loaded in only some sessions counts for more in the list than in the
-  total. The chat tool gives the model up to 20 tools and its text answer
-  the first five.
+  N sessions", then "and N more". "(about X)", the row's total minus the
+  five, is shown only when every one of the five was loaded in every
+  session of the row; then the figures differ from the row's total by a few
+  tokens of rounding. A tool loaded in only some sessions counts for more
+  in the list than in the total, so the rest's tokens are left out. The
+  chat tool gives the model up to 20 tools and its text answer the first
+  five.
 - **Sessions.** Each listed session shows its title first, then its id and
   its date (in your time zone) under it, and its own saving over the window
   at the right, with the row's label ("up to", a range). The title is the

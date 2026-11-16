@@ -45,7 +45,7 @@ import { resolveAppSettingsDir } from "../src/platform/app-settings-dir/resolve-
 import type { ApiService } from "../src/services/api/api-service.js";
 import { InMemoryAppSettingsStore } from "../src/test-support/in-memory-app-settings-store.js";
 import { FIXTURE_VENDOR_PROFILES_DIR } from "../src/test-support/vendor-profiles-dir.js";
-import { activeBranchOf, idleBreaksOf, loadBundledTables, parseJsonl, piBranchesOf, piUnusedToolRowOf, requestsOf, toolSessionFactsOf, unusedToolRowOf, type OracleIdleBreak, type PiBranchFacts, type ToolSessionFacts } from "./savings-oracle.mjs";
+import { activeBranchOf, countedBreakCost, idleBreaksOf, loadBundledTables, parseJsonl, piBranchesOf, piUnusedToolRowOf, requestsOf, toolSessionFactsOf, unusedToolRowOf, type OracleIdleBreak, type PiBranchFacts, type ToolSessionFacts } from "./savings-oracle.mjs";
 
 const REAL_DATA = process.env.REAL_DATA === "1";
 const HOME = homedir();
@@ -610,9 +610,12 @@ const say = (line: string) => {
     expect(row, "no idle-expiry opportunity in the window: nothing to check").toBeDefined();
     const ttl = Number(row!.actionParams.minutes);
     const mine = windowSessions.flatMap((s) => s.breaks.filter((b) => b.ttlMinutes === ttl).map((b) => ({ session: s, brk: b })));
-    const priced = mine.filter((m) => m.brk.cost.known);
+    // D36: a session with any unpriced break is left out of the amount (and listed under coverage).
+    const costOfSession = new Map<string, number | null>();
+    for (const id of new Set(mine.map((m) => m.session.id))) costOfSession.set(id, countedBreakCost(mine.filter((m) => m.session.id === id).map((m) => m.brk)));
+    const priced = mine.filter((m) => costOfSession.get(m.session.id) !== null);
     const lost = mine.reduce((sum, m) => sum + m.brk.lostTokens, 0);
-    const high = priced.reduce((sum, m) => sum + (m.brk.cost.known ? m.brk.cost.high : 0), 0);
+    const high = [...costOfSession.values()].reduce<number>((sum, cost) => sum + (cost ?? 0), 0);
     const rowSessionIds = new Set(row!.sessions.map((s) => s.sessionId));
     const oracleSessionIds = new Set(mine.map((m) => m.session.id));
 
@@ -623,6 +626,9 @@ const say = (line: string) => {
     expect(oracleSessionIds, "sessions with a break").toEqual(rowSessionIds);
     expect(row!.perWindow.low).toBe(0);
     expect(near(row!.perWindow.high, high), `window high ${row!.perWindow.high} vs oracle ${high}`).toBe(true);
+    // D36: the sessions the oracle leaves out are the ones the row's coverage lists as not analyzed.
+    const leftOut = [...costOfSession.values()].filter((cost) => cost === null).length;
+    expect(row!.coverage.sessionsAnalysed, "coverage agrees with the amount").toBeLessThanOrEqual(row!.coverage.sessionsInWindow - leftOut);
     expect(near(row!.perWeek.high, high / (claudeReport.window.days / 7)), "per-week high").toBe(true);
 
     const top = [...priced].sort((a, b) => (b.brk.cost.known ? b.brk.cost.high : 0) - (a.brk.cost.known ? a.brk.cost.high : 0))[0]!;
@@ -631,7 +637,7 @@ const say = (line: string) => {
     say("");
     say(`Idle-expiry row "${row!.key}": ${row!.evidence.occurrences} breaks in ${rowSessionIds.size} sessions, ${row!.evidence.tokens?.known ? row!.evidence.tokens.value : "?"} tokens lost`);
     say(`  report: up to ${money(row!.perWindow.high)} ${row!.perWindow.currency} over ${claudeReport.window.days} days (${money(row!.perWeek.high)} a week), low 0, basis ${row!.perWindow.basis}, label ${row!.perWindow.label}, versions ${row!.perWindow.priceVersionIds.join(",")}`);
-    say(`  oracle: up to ${money(high)} USD (${priced.length} of ${mine.length} breaks priced), ${lost} tokens, same sessions; |diff| ${Math.abs(row!.perWindow.high - high).toExponential(2)}, tolerance ${TOLERANCE} relative`);
+    say(`  oracle: up to ${money(high)} USD (${priced.length} of ${mine.length} breaks in fully priced sessions), ${lost} tokens, same sessions; |diff| ${Math.abs(row!.perWindow.high - high).toExponential(2)}, tolerance ${TOLERANCE} relative`);
     say(`  biggest break to check by hand: session ${top.session.id}, turn ${top.brk.turn}, ${top.brk.at}, model ${top.brk.model}`);
     say(`    gap ${top.brk.gapMinutes.toFixed(1)} min > ${top.brk.ttlMinutes} min lifetime; previous prompt ${top.brk.previousPrompt}, this prompt ${top.brk.prompt}, cache read ${top.brk.cacheRead}, lost ${top.brk.lostTokens}`);
     say(`    price ${top.brk.cost.known ? top.brk.cost.versionId : "?"}: 1-hour write ${r.writeUsdPerM}/M, input ${r.inputUsdPerM}/M, cache read ${r.cacheReadUsdPerM}/M`);
@@ -790,7 +796,8 @@ const say = (line: string) => {
     const ttl = Number(claudeReport.opportunities[index]!.actionParams.minutes);
     const bySession = new Map<string, number>();
     for (const s of windowSessions) {
-      for (const b of s.breaks) if (b.ttlMinutes === ttl && b.cost.known) bySession.set(s.id, (bySession.get(s.id) ?? 0) + b.cost.high);
+      const cost = countedBreakCost(s.breaks.filter((b) => b.ttlMinutes === ttl));
+      if (cost !== null && s.breaks.some((b) => b.ttlMinutes === ttl)) bySession.set(s.id, cost);
     }
     const highs = row.sessions.map((ref) => bySession.get(ref.sessionId) ?? -1);
     for (let i = 1; i < highs.length; i++) {

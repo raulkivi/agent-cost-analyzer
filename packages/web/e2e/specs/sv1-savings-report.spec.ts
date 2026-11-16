@@ -194,7 +194,7 @@ test("SV1: an unused-tools row lists its tools, five shown, with 'and N more' an
     tools: names.map((name, index) => ({ name: `mcp_github_${name}`, tokens: estimate(610 - index * 40), sessions: 31 - index })),
     toolsTotal: 23,
   };
-  // 610 + 570 + 530 + 490 + 450 = 2,650 of 5,400.
+  // Four of the five listed tools were loaded in fewer than the row's 31 sessions (R23, D35): no tokens for the rest.
   await page.route(/\/api\/savings\?/, (route) => route.fulfill({ json: { ...report, opportunities: [unused] } }));
   const tab = await openSavings(page, app.baseURL);
 
@@ -206,7 +206,7 @@ test("SV1: an unused-tools row lists its tools, five shown, with 'and N more' an
   await expect(tools.getByRole("row").nth(1)).toContainText("loaded in 31 sessions");
   await expect(tools.getByRole("row").nth(1)).toContainText("about 610");
   await expect(tools.getByRole("row").nth(6)).toContainText("and 18 more");
-  await expect(tools.getByRole("row").nth(6)).toContainText("about 2,750");
+  await expect(tools.getByRole("row").nth(6)).not.toContainText("about");
   await expect(tools.getByText("estimate")).toBeVisible();
   await expect(tools).not.toContainText("mcp_github_get_me");
   expect(await axeViolations(page)).toEqual([]);

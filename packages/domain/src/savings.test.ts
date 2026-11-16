@@ -291,3 +291,18 @@ describe("domain index", () => {
     expect(domain.savingsAmountSchema).toBe(savingsAmountSchema);
   });
 });
+
+// R23, D35 (savings-increment-3.md §17): the tokens of "and N more" are shown
+// only when every listed tool was loaded in every session of the row.
+describe("unlistedTools", () => {
+  const tool = (sessions: number, value = 300) => ({ name: "t", tokens: { known: true as const, value, estimated: true as const }, sessions });
+  const total = { known: true as const, value: 1000, estimated: true as const };
+
+  it("gives the row's total less the listed tools when each was loaded in all of the row's sessions", () => {
+    expect(domain.unlistedTools([tool(5), tool(5)], 4, total, 5)).toEqual({ count: 2, tokens: 400 });
+  });
+
+  it("leaves the tokens out, never 0, when a listed tool was loaded in only some of the sessions", () => {
+    expect(domain.unlistedTools([tool(5), tool(4)], 4, total, 5)).toEqual({ count: 2, tokens: null });
+  });
+});

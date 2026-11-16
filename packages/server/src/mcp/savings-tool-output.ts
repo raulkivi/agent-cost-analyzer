@@ -206,7 +206,7 @@ function toolsLine(row: OpportunityView): string | null {
   if (row.tools === undefined || row.tools.length === 0) return null;
   const shown = row.tools.slice(0, MAX_SAVINGS_TEXT_TOOLS);
   const listed = shown.map((tool) => `${tool.name} (${tool.tokens.known ? `about ${grouped(tool.tokens.value)}` : "not known"})`);
-  const rest = unlistedTools(shown, row.toolsTotal ?? row.tools.length, row.evidence.tokens);
+  const rest = unlistedTools(shown, row.toolsTotal ?? row.tools.length, row.evidence.tokens, row.evidence.sessions);
   if (rest.count > 0) listed.push(`and ${rest.count} more${rest.tokens === null ? "" : ` (about ${grouped(rest.tokens)})`}`);
   return `   Tools (token estimates per request): ${listed.join(", ")}.`;
 }
