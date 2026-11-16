@@ -584,6 +584,19 @@ describe("buildSession", () => {
       }
     });
 
+    it("never shows fewer calls than the name list: an empty span read leaves the names standing", () => {
+      const session = buildSession({
+        sessionRow,
+        turnRows,
+        fileRows: [],
+        mainJsonlAvailability: "missing",
+        invokedToolNamesByTurn: [["read_file", "manage_todo_list"], []],
+        toolCallsByTurn: [[], []],
+      });
+
+      expect(session.turns[0].toolCalls.map((call) => call.name)).toEqual(["read_file", "manage_todo_list"]);
+    });
+
     it("prefers spans over the name list for a turn that has both", () => {
       const session = buildSession({
         sessionRow,

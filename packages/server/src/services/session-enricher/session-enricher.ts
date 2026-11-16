@@ -343,9 +343,14 @@ export function buildSession(enrichment: AnalyzeEnrichment): Session {
     reasonForAvailability(mainJsonlAvailability),
   );
   const fileRowsByTurn = groupFileRowsByTurn(fileRows);
+  // A turn whose log names calls never shows fewer than the name list: an
+  // empty span read does not hide them.
+  const invokedCallsAt = (index: number): ToolCallRecord[] => {
+    const spans = toolCallsByTurn[index];
+    return spans !== undefined && spans.length > 0 ? spans : nameOnlyCalls(invokedToolNamesByTurn[index] ?? []);
+  };
   const buildAt = (index: number, row: TurnRow | undefined) =>
-    buildTurn(index, row, fileRowsByTurn, turnUsages[index], fallbackTokenCount,
-      toolCallsByTurn[index] ?? nameOnlyCalls(invokedToolNamesByTurn[index] ?? []));
+    buildTurn(index, row, fileRowsByTurn, turnUsages[index], fallbackTokenCount, invokedCallsAt(index));
 
   const storeTurnIndices = turnRows.map((row) => row.turn_index);
   // Stable sort: the store's own rows keep their order.
