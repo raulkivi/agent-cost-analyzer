@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 import { describe, expect, it } from "vitest";
 import { AuditQueryService } from "./audit-query-service.js";
-import { FakeProvider, lookup, sampleSessions as sessions, session } from "../../test-support/audit-fakes.js";
+import { FakeProvider, lookup, sampleSessions as sessions, session, shell } from "../../test-support/audit-fakes.js";
 
 describe("AuditQueryService", () => {
   it("lists sessions most recent first, filtered by date range and limit", async () => {
@@ -89,5 +89,57 @@ describe("AuditQueryService", () => {
   it("caps the rollup's session count", async () => {
     const service = new AuditQueryService(lookup(new FakeProvider("fake", sessions)));
     expect((await service.getRollup({ limit: 1 })).sessionCount).toBe(1);
+  });
+
+  describe("origin filters (step 10.20)", () => {
+    const inRun = (command: string, runId: string) => ({
+      ...shell(command, "success"),
+      origin: { kind: "subagent" as const, runId, label: "searchSubagent", depth: 1 },
+    });
+    const withRuns = session("runs", "2026-09-28T10:00:00Z", [
+      [shell("main one", "success"), inRun("run a1", "ra"), inRun("run a2", "ra")],
+      [{ ...shell("main two", "success"), origin: { kind: "main" as const } }, inRun("run b1", "rb")],
+    ]);
+    const service = () => new AuditQueryService(lookup(new FakeProvider("fake", [withRuns])));
+    const commands = (result: Awaited<ReturnType<AuditQueryService["listToolCalls"]>>) => result?.calls.map((c) => c.call.argsSummary);
+
+    it("returns main and subagent calls by default, so a client that ignores origin gets true totals (D9)", async () => {
+      expect((await service().listToolCalls("runs", {}))?.total).toBe(5);
+    });
+
+    it("filters to the main agent, treating a record without origin as main", async () => {
+      expect(commands(await service().listToolCalls("runs", { origin: ["main"] }))).toEqual(["main one", "main two"]);
+    });
+
+    it("filters to subagent calls", async () => {
+      expect(commands(await service().listToolCalls("runs", { origin: ["subagent"] }))).toEqual(["run a1", "run a2", "run b1"]);
+    });
+
+    it("returns both when both origins are named", async () => {
+      expect((await service().listToolCalls("runs", { origin: ["main", "subagent"] }))?.total).toBe(5);
+    });
+
+    it("filters to one run by id", async () => {
+      expect(commands(await service().listToolCalls("runs", { runId: "ra" }))).toEqual(["run a1", "run a2"]);
+      expect((await service().listToolCalls("runs", { runId: "nope" }))?.total).toBe(0);
+    });
+
+    it("never returns a main call for a run id, even with origin main", async () => {
+      expect((await service().listToolCalls("runs", { runId: "ra", origin: ["main"] }))?.total).toBe(0);
+    });
+
+    it("combines with the other filters and with paging", async () => {
+      const result = await service().listToolCalls("runs", { origin: ["subagent"], turnIndex: 0, offset: 1, limit: 1 });
+
+      expect(result?.total).toBe(2);
+      expect(commands(result)).toEqual(["run a2"]);
+    });
+
+    it("returns the audit's run rows from getSessionAudit", async () => {
+      const audit = await service().getSessionAudit("runs");
+
+      expect(audit?.subagentRuns?.map((r) => r.runId)).toEqual(["ra", "rb"]);
+      expect(audit?.byOrigin?.subagents).toMatchObject({ toolCalls: 3, runs: 2 });
+    });
   });
 });

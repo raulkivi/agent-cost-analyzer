@@ -6,6 +6,7 @@ import type {
   FailureCategory,
   Session,
   SessionAudit,
+  ToolCallOrigin,
   ToolCallStatus,
   ToolKind,
 } from "@agent-cost-analyzer/domain";
@@ -40,9 +41,16 @@ export interface ToolCallFilter {
   kind?: ToolKind[];
   program?: string;
   turnIndex?: number;
+  // Step 10.20: who issued the call. Absent = both (D9), so a client that
+  // doesn't know `origin` still gets true totals. `runId` names one subagent
+  // run and so never matches a main-agent call.
+  origin?: ToolCallOriginKind[];
+  runId?: string;
   offset?: number;
   limit?: number;
 }
+
+export type ToolCallOriginKind = ToolCallOrigin["kind"];
 
 export const DEFAULT_ROLLUP_SESSION_LIMIT = 50;
 export const MAX_ROLLUP_SESSION_LIMIT = 500;
@@ -72,7 +80,9 @@ function matches(audited: AuditedToolCall, filter: ToolCallFilter): boolean {
     (!filter.tool || call.name === filter.tool) &&
     (!filter.kind || filter.kind.includes(call.kind ?? resolveToolKind(call.name))) &&
     (!filter.program || call.shell?.program === filter.program) &&
-    (filter.turnIndex === undefined || audited.turnIndex === filter.turnIndex)
+    (filter.turnIndex === undefined || audited.turnIndex === filter.turnIndex) &&
+    (!filter.origin || filter.origin.includes(call.origin?.kind ?? "main")) &&
+    (filter.runId === undefined || (call.origin?.kind === "subagent" && call.origin.runId === filter.runId))
   );
 }
 
