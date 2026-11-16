@@ -446,17 +446,21 @@ Claude Code row closes with CS14.
 
 ## 11. Exit criterion
 
-A `REAL_DATA` suite, `packages/server/scripts/st-subagent-tool-audit.real.test.mts`,
-part of `npm run test:real-data`, passes on the owner's logs and the owner
-signs off its output (as SA18). Read-only; prints session ids, dates,
-counts, tool names and enum values only.
+A `REAL_DATA` suite, `packages/server/scripts/tool-audit-exit.real.test.mts`
+(`npm run test:real-data:tool-audit`, also part of `npm run test:real-data`),
+passes on the owner's logs and the owner signs off its output (as SA18).
+Read-only; prints session ids, counts and enum values only. Run it with
+`REAL_DATA=1`; `REAL_DATA_USER_DATA` names the VS Code user-data dirs
+(default `~/.config/Code` and `~/.config/Code - Insiders`), and Agent Host
+logs come from `~/.copilot`.
 
-- **Oracle:** an independent lib (`subagent-tool-audit-lib.mts`, tested)
-  that reads the raw `debug-logs` folders and `events.jsonl` files and
-  shares no code with the server: classic `tool_call` spans per child file
-  and per `main.jsonl` by `status`; Agent Host `tool.execution_start` with
-  an `agentId`, grouped by `parentToolCallId`, with `success` from the
-  completion.
+- **Oracle:** an independent lib (`subagent-tool-audit-oracle.mts`, tested in
+  `subagent-tool-audit-oracle.test.mts`, which also checks it imports
+  nothing) that reads the raw `debug-logs` folders and `events.jsonl` files
+  and shares no code with the server: classic `tool_call` spans per child file
+  and per `main.jsonl` by `status`; Agent Host calls (a `toolCallId` in a
+  request or a `tool.execution_start`) with an `agentId`, grouped by
+  `parentToolCallId`, with `success` from the completion.
 - **Actual:** the extension composition (as SA18), MCP over an in-memory
   client.
 - **Asserts, per session with runs:** `list_tool_calls` with
@@ -477,6 +481,15 @@ counts, tool names and enum values only.
   `packages/mcp-apps/e2e/specs/` (U4 and the findings view, both theme
   sets, axe); wdio `packages/vscode-extension/test/ui/specs/subagent-tool-audit.e2e.ts`
   (the panel's Audit tab over the seeded classic session with runs).
+
+**Run 2026-11-16 (ST15, counts only).** 192 sessions listed: 119 classic, 73
+Agent Host. Classic: 13 sessions with 17 runs and 481 subagent calls, 5 runs
+placed by time, 7,200 main-agent calls (7,204 over every raw log, whether the
+server lists the session or not). Agent Host: 3 listed sessions with 3 runs
+and 82 calls (139 calls in 5 runs over all 85 event logs). All 11 check
+groups pass. Not exercised by this machine's data, so covered by the unit and
+fixture tests only: an unread run, a nested ref, a run flagged for a broken
+chain, a security finding from a subagent call. Claude Code runs are CS16's.
 
 ## 12. Tasks
 
