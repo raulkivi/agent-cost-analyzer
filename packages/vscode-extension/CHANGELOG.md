@@ -1,6 +1,6 @@
 # Changelog
 
-**Last changed:** 2026-11-15 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-16 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 All notable changes to AI Credits Analyzer, the VS Code extension, are
 documented in this file. The standalone app, Agent Cost Analyzer, has its
@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Savings action text now agrees with its counts: "1 session", "1 tool", "1 day", "1 break", "1 time", "1 token" and "1 minute" instead of "1 sessions" and so on.
 - The extension now ships third-party license notices (`THIRD-PARTY-NOTICES.md` in the .vsix) for the npm packages it bundles, with their license texts.
+- `get_savings_report`'s text answer says "1 of 1 session" and "1 session." instead of "1 of 1 sessions" and "1 sessions." in a row's coverage and in the lists of sessions not checked or left out.
 
 ## [0.14.0] - 2026-11-15
 

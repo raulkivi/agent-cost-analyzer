@@ -268,6 +268,22 @@ describe("get_savings_report answer", () => {
     expect(textOf(result)).toMatch(/Left out.*7 sessions/s);
   });
 
+  // V29 (R14 for the text answer): a count of one reads in the singular.
+  it("writes one session as 'session', not 'sessions', in coverage and in the lists of sessions left out", async () => {
+    const one = { sessionsInWindow: 1, sessionsAnalysed: 1, notAnalysed: [] };
+    const report = savingsReportSchema.parse({
+      ...reportOf([opportunity(1, { coverage: one })]),
+      notAnalysed: [{ kind: "unused-tools", providerId: "claude-code", reason: "No tool inventory in the log.", sessions: 1 }],
+      sessionsLeftOut: [{ providerId: "claude-code", reason: "The session's log could not be read.", sessions: 1 }],
+    });
+    const text = textOf(await call(await connect(new FakeSavings(report))));
+
+    expect(text).toContain("1 of 1 session analysed."); // codespell:ignore analysed
+    expect(text).toContain("- unused-tools, claude-code: 1 session. No tool inventory in the log.");
+    expect(text).toContain("- claude-code: 1 session. The session's log could not be read.");
+    expect(text).not.toMatch(/\b1 (of 1 )?sessions\b/);
+  });
+
   it("passes the SDK's output-schema check with Simulated rows", async () => {
     const result = await call(await connect(new FakeSavings(reportOf([opportunity(1)], [cheaper]))), { includeSimulated: true });
     expect(result.isError, JSON.stringify(result.content)).not.toBe(true);

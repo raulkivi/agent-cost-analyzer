@@ -196,6 +196,8 @@ function sessionText(ref: SavingsSessionRef): string {
 }
 
 const grouped = (value: number) => value.toLocaleString("en-US");
+// "1 session", "3 sessions" (R14, V29).
+const sessionsNoun = (count: number) => (count === 1 ? "session" : "sessions");
 
 // `Tools (token estimates per request): a (about 600), ..., and 18 more (about 2,500).`
 // The first MAX_SAVINGS_TEXT_TOOLS only; the structured result has up to 20. An
@@ -211,7 +213,7 @@ function toolsLine(row: OpportunityView): string | null {
 
 // Ranked rows are numbered; Simulated rows are bullets (R12): they are never ranked.
 function rowText(row: OpportunityView, marker: string): string {
-  const coverage = `${row.coverage.sessionsAnalysed} of ${row.coverage.sessionsInWindow} sessions analysed`;
+  const coverage = `${row.coverage.sessionsAnalysed} of ${row.coverage.sessionsInWindow} ${sessionsNoun(row.coverage.sessionsInWindow)} analysed`; // codespell:ignore analysed
   const shown = row.sessions.map(sessionText).join(", ");
   const tools = toolsLine(row);
   return [
@@ -241,10 +243,10 @@ export function savingsReportText(output: SavingsToolOutput): string {
     lines.push("", "Cheaper-model replays were not run; pass includeSimulated true to add them.");
   }
   if (output.notAnalysed.length > 0) {
-    lines.push("", "Not analysed:", ...output.notAnalysed.map((entry) => `- ${entry.kind}, ${entry.providerId}: ${entry.sessions} sessions. ${entry.reason}`));
+    lines.push("", "Not analysed:", ...output.notAnalysed.map((entry) => `- ${entry.kind}, ${entry.providerId}: ${entry.sessions} ${sessionsNoun(entry.sessions)}. ${entry.reason}`)); // codespell:ignore analysed
   }
   if (output.sessionsLeftOut?.length) {
-    lines.push("", "Left out of the whole report:", ...output.sessionsLeftOut.map((entry) => `- ${entry.providerId}: ${entry.sessions} sessions. ${entry.reason}`));
+    lines.push("", "Left out of the whole report:", ...output.sessionsLeftOut.map((entry) => `- ${entry.providerId}: ${entry.sessions} ${sessionsNoun(entry.sessions)}. ${entry.reason}`));
   }
   return lines.join("\n");
 }

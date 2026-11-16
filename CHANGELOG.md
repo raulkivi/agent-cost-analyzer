@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - The chat's savings view names pi "pi" in a currency list's heading and in the list of sessions it could not check, instead of its provider id "pi-agent".
+- `get_savings_report`'s text answer says "1 of 1 session" and "1 session." instead of "1 of 1 sessions" and "1 sessions." in a row's coverage and in the lists of sessions not checked or left out.
 
 ## [0.16.1] - 2026-11-16
 
