@@ -45,6 +45,7 @@
 .au-run-turn { flex-shrink: 0; font-size: 11px; }
 .au-run-depth, .au-run-reason { font-size: 11px; line-height: 1.35; overflow-wrap: anywhere; }
 .au-run-figs { font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.au-pill { align-self: flex-start; font-size: 11px; padding: 0 6px; border: 1px solid currentColor; border-radius: var(--radius-sm); }
 .au-flag { font-weight: 600; }
 
 @media (max-width: 480px) {

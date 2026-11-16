@@ -71,6 +71,25 @@ test("10.20: the Tool audit tab splits calls by agent, filters them, and lists t
   expect(await axeViolations(page, { exclude: ['ul[aria-label="Sessions"]'] })).toEqual([]);
 });
 
+// The fixture's read run is an explore_subagent run linked to its call by the
+// call's time window (plan §14.1), so the reader placed it by time (§6).
+test("10.20: a run placed by time says so in the runs table, and an unread run does not", async ({ page, app }) => {
+  await openToolAudit(page, app.baseURL, AUDIT_READ_SESSION_TITLE);
+
+  const runs = page.getByRole("table", { name: "Subagent runs" });
+  await expect(runs.getByText("matched by time")).toHaveCount(1);
+  await expect(runs.locator("tbody tr", { hasText: "33.3%" })).toContainText("matched by time");
+  await expect(runs.locator("tbody tr.audit-run--unread")).not.toContainText("matched by time");
+
+  // The API says the same, so the pill is not drawn from the label.
+  const audit = (await (await page.request.get(`${app.baseURL}/api/sessions/${await sessionId(page)}/audit?provider=${PROVIDER}`)).json()) as {
+    subagentRuns: { matchedByTime?: boolean; totals: unknown }[];
+  };
+  expect(audit.subagentRuns.filter((run) => run.matchedByTime === true)).toHaveLength(1);
+
+  expect(await axeViolations(page, { exclude: ['ul[aria-label="Sessions"]'] })).toEqual([]);
+});
+
 test("10.20: a user stop is counted as canceled, not as a failure", async ({ page, app }) => {
   await openToolAudit(page, app.baseURL, AUDIT_SHELL_SESSION_TITLE);
 

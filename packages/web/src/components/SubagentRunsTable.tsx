@@ -42,6 +42,7 @@ function RunRow({ run }: { run: AuditedRun }) {
     <td style={{ paddingLeft: `${(run.depth - 1) * 12 + 8}px` }}>
       <span title={run.label}>{run.label}</span>
       {depth && <span className="text-muted"> {depth}</span>}
+      {run.matchedByTime && <span className="tag tag-outline" style={{ marginLeft: 8 }}>matched by time</span>}
     </td>
   );
   if (run.totals === null) {

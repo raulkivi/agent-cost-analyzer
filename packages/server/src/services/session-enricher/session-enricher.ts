@@ -269,6 +269,7 @@ function buildTurn(
   subagentCalls: readonly ToolCallRecord[] = [],
   subagentRunGaps: readonly SubagentRunGap[] = [],
   subagentRunsRead: readonly string[] = [],
+  subagentRunsByTime: readonly string[] = [],
 ): Turn {
   const explanation = usage ? buildAnalyzeExplanation(usage) : STUB_EXPLANATION;
   return {
@@ -283,6 +284,7 @@ function buildTurn(
     ],
     ...(subagentRunGaps.length > 0 ? { subagentRunGaps: [...subagentRunGaps] } : {}),
     ...(subagentRunsRead.length > 0 ? { subagentRunsRead: [...subagentRunsRead] } : {}),
+    ...(subagentRunsByTime.length > 0 ? { subagentRunsByTime: [...subagentRunsByTime] } : {}),
     usage: usage ?? buildUnavailableUsage(fallbackTokenCount),
     ...(row?.timestamp ? { startedAt: row.timestamp } : {}),
     ...(row
@@ -338,6 +340,7 @@ export interface AnalyzeEnrichment extends Partial<AnalyzeModeExtras> {
   subagentToolCallsByTurn?: ToolCallRecord[][];
   subagentRunGapsByTurn?: SubagentRunGap[][];
   subagentRunsReadByTurn?: string[][];
+  subagentRunsByTimeByTurn?: string[][];
   subagentRuns?: SessionSubagentRuns;
 }
 
@@ -353,6 +356,7 @@ export function buildSession(enrichment: AnalyzeEnrichment): Session {
     subagentToolCallsByTurn = [],
     subagentRunGapsByTurn = [],
     subagentRunsReadByTurn = [],
+    subagentRunsByTimeByTurn = [],
     systemPrompt = [],
     toolInventory = [],
     subagentRuns,
@@ -379,6 +383,7 @@ export function buildSession(enrichment: AnalyzeEnrichment): Session {
       subagentToolCallsByTurn[index],
       subagentRunGapsByTurn[index],
       subagentRunsReadByTurn[index],
+      subagentRunsByTimeByTurn[index],
     );
 
   const storeTurnIndices = turnRows.map((row) => row.turn_index);

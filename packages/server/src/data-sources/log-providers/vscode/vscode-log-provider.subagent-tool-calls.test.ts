@@ -104,6 +104,18 @@ describe("VscodeLogProvider: classic subagent tool calls", () => {
     expect(missing!.turns[0].subagentRunsRead).toBeUndefined();
   });
 
+  it("lists a run linked to its call by the call's time window as placed by time, not one linked by its span", async () => {
+    seedSubagentAuditFixtureSession(dbPath, debugLogsDir, "explore-linked");
+    seedSubagentAuditFixtureSession(dbPath, debugLogsDir, "shared-span-id");
+
+    const explore = await provider().readSession("explore-linked");
+    const linked = await provider().readSession("shared-span-id");
+
+    expect(explore!.turns[0].subagentRunsByTime).toHaveLength(1);
+    expect(linked!.turns[0].subagentRunsByTime).toBeUndefined();
+    expect(sessionSchema.safeParse(explore).success).toBe(true);
+  });
+
   it("a session with no run has no gaps and no origin", async () => {
     seedSubagentAuditFixtureSession(dbPath, debugLogsDir, "missing-log");
     const detail = await provider().readSession("missing-log");

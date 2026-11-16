@@ -105,6 +105,13 @@ describe("subagent fields of the audit (step 10.20)", () => {
     expect(sessionAuditSchema.parse(audit).subagentRuns?.[0]).toEqual(flagged);
   });
 
+  it("accepts a run placed by time (10.19 D5) and treats the flag as optional", () => {
+    const byTime = { ...run, matchedByTime: true };
+    expect(sessionAuditSchema.parse({ ...sampleAudit(), subagentRuns: [byTime] }).subagentRuns?.[0]?.matchedByTime).toBe(true);
+    expect(sessionAuditSchema.parse({ ...sampleAudit(), subagentRuns: [run] }).subagentRuns?.[0]?.matchedByTime).toBeUndefined();
+    expect(sessionAuditSchema.safeParse({ ...sampleAudit(), subagentRuns: [{ ...run, matchedByTime: "yes" }] }).success).toBe(false);
+  });
+
   it("accepts an unread run with null totals and a reason (D12)", () => {
     const unread = { ...run, totals: null, failureRate: null, unreadReason: "log not found" };
     expect(sessionAuditSchema.parse({ ...sampleAudit(), subagentRuns: [unread] }).subagentRuns?.[0]?.totals).toBeNull();

@@ -27,6 +27,7 @@ export interface AuditRunRow {
   rateText: string;
   figuresText: string; // "41 calls · 4 failed · 1 unknown · 10.0 %"; "calls unknown" for an unread run
   reason?: string; // logged text
+  matchedByTime?: true; // the reader placed the run by time, not by a link (10.19 D5)
 }
 
 export interface AgentSplitPart {
@@ -86,7 +87,13 @@ export function unreadNoteOf(unread: number): string | undefined {
 function runRow(run: AuditedRun, labels: ReadonlyMap<string, string>): AuditRunRow {
   const parent = run.parentRunId === undefined ? undefined : labels.get(run.parentRunId);
   const depthText = run.depth > 1 ? `depth ${run.depth}${parent === undefined ? "" : ` · in ${parent}`}` : undefined;
-  const base = { key: run.runId, label: run.label, turnText: `turn ${run.turnIndex}`, ...(depthText === undefined ? {} : { depthText }) };
+  const base = {
+    key: run.runId,
+    label: run.label,
+    turnText: `turn ${run.turnIndex}`,
+    ...(depthText === undefined ? {} : { depthText }),
+    ...(run.matchedByTime === true ? { matchedByTime: true as const } : {}),
+  };
   if (run.totals === null) {
     return { ...base, kind: "unread", callsText: UNKNOWN_TEXT, failedText: UNKNOWN_TEXT, unknownText: UNKNOWN_TEXT, rateText: UNKNOWN_TEXT, figuresText: "calls unknown", ...(run.unreadReason === undefined ? {} : { reason: run.unreadReason }) };
   }

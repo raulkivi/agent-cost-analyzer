@@ -96,6 +96,7 @@ interface SubagentAuditOptions {
   unread?: boolean; // adds two unread runs: a missing log, and a tool that writes none
   flagged?: boolean; // the Plan run keeps its totals and carries a flag (D12)
   nested?: boolean; // adds task-Planner and its depth-2 child
+  byTime?: boolean; // the second Explore run was placed by time (10.19 D5)
 }
 
 // Invented session of the ST2 boards: 214 calls, 131 by the main agent and 83
@@ -113,7 +114,7 @@ export function subagentAudit(options: SubagentAuditOptions = {}): SessionAudit 
   const runs = [
     run("run-explore-1", "Agent-Explore", 3, outcome(41, 4, 1)),
     run("run-plan", "Agent-Plan", 3, outcome(22, 1, 0), options.flagged === true ? { unreadReason: "The call that started this run is missing from the log." } : {}),
-    run("run-explore-2", "Agent-Explore", 9, outcome(20, 4, 0)),
+    run("run-explore-2", "Agent-Explore", 9, outcome(20, 4, 0), options.byTime === true ? { matchedByTime: true } : {}),
     ...(options.nested === true ? [run("run-planner", "task-Planner", 5, outcome(1, 0, 0)), run("run-search", "search_code_subagent", 5, outcome(1, 0, 0), { depth: 2, parentRunId: "run-planner" })] : []),
     ...(options.unread === true
       ? [

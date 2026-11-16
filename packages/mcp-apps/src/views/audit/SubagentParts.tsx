@@ -59,6 +59,7 @@ function RunItem({ run }: { run: AuditRunRow }) {
         <b className="au-command">{run.label}</b>
         <span className="au-run-turn text-muted">{run.turnText}</span>
       </div>
+      {run.matchedByTime === true && <span className="au-pill">matched by time</span>}
       {run.depthText !== undefined && <div className="au-run-depth text-muted">{run.depthText}</div>}
       <div className={run.kind === "unread" ? "au-run-figs text-muted" : "au-run-figs"}>{run.figuresText}</div>
       {run.reason !== undefined && (

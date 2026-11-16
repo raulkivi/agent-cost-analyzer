@@ -248,6 +248,41 @@ describe("SessionAuditPanel", () => {
       expect(within(unread).getAllByRole("cell")).toHaveLength(3);
     });
 
+    describe("a run placed by time (10.19 D5)", () => {
+      const byTime = (runId: string) => {
+        const audit = makeSubagentAudit();
+        return {
+          ...audit,
+          subagentRuns: audit.subagentRuns!.map((run) => (run.runId === runId ? { ...run, matchedByTime: true } : run)),
+        };
+      };
+      const renderByTime = (runId: string) => renderPanel({ loadAudit: vi.fn().mockResolvedValue(byTime(runId)) });
+
+      it("says 'matched by time' on that run's row only, as text", async () => {
+        renderByTime("run-b");
+        const table = await screen.findByRole("table", { name: "Subagent runs" });
+        const rows = within(table).getAllByRole("row").slice(1);
+        expect(within(table).getAllByText("matched by time")).toHaveLength(1);
+        expect(rows[1]).toHaveTextContent("matched by time");
+        expect(rows[0]).not.toHaveTextContent("matched by time");
+      });
+
+      it("says it on an unread run too", async () => {
+        renderByTime("run-c");
+        const table = await screen.findByRole("table", { name: "Subagent runs" });
+        expect(within(table).getByText("matched by time")).toBeInTheDocument();
+      });
+
+      it("leaves a hostile label as text and has no axe violations", async () => {
+        renderByTime("run-a");
+        const table = await screen.findByRole("table", { name: "Subagent runs" });
+        expect(within(table).getAllByText(HOSTILE_LABEL).length).toBeGreaterThan(0);
+        expect(within(table).getByText("matched by time")).toBeInTheDocument();
+        expect(document.querySelector("img")).toBeNull();
+        expect(await axeViolations(document.body)).toEqual([]);
+      });
+    });
+
     it("counts canceled calls apart from failures (D14)", async () => {
       renderSubagents();
       const tile = await screen.findByRole("group", { name: "Canceled" });

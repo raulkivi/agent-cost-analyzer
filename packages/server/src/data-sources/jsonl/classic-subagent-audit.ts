@@ -20,6 +20,9 @@ export interface ClassicSubagentAudit {
   gapsByLogTurn: SubagentRunGap[][];
   // Per log turn, the runs whose log was read in full (Turn.subagentRunsRead).
   readRunIdsByLogTurn: string[][];
+  // Per log turn, the runs placed by time (Turn.subagentRunsByTime): orphans, and
+  // refs linked to their call by its time window (§6, §14.1).
+  byTimeRunIdsByLogTurn: string[][];
   // Every run whose calls are unknown, turn or not; a run no turn owns shows
   // only here.
   unread: UnreadRun[];
@@ -47,6 +50,9 @@ export async function readClassicSubagentAudit({
     gapsByLogTurn: gapsByLogTurn(unread, logTurnCount),
     readRunIdsByLogTurn: Array.from({ length: logTurnCount }, (_, turn) =>
       read.read.filter((run) => run.logTurn === turn).map((run) => run.runId),
+    ),
+    byTimeRunIdsByLogTurn: Array.from({ length: logTurnCount }, (_, turn) =>
+      (plan.runsByTurn.get(turn) ?? []).filter((run) => run.matchedByTime).map((run) => run.runId),
     ),
     unread,
   };

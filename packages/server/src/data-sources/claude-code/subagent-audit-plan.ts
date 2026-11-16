@@ -20,6 +20,8 @@ export interface AuditRunRef {
   parentRunId?: string;
   /** The call that started the run, when its meta names one. */
   startedByCallId?: string;
+  /** CS8 placed the run by time, not by a link (attribution `timestamp`). */
+  matchedByTime?: true;
 }
 
 export interface UnreadAuditRun extends AuditRunRef {
@@ -74,6 +76,7 @@ export function planClaudeCodeAudit(
       depth: tooDeep ? MAX_CLAUDE_CODE_RUN_DEPTH : depth,
       ...(depth > 1 && usage.parentRunId !== undefined ? { parentRunId: usage.parentRunId } : {}),
       ...(meta?.toolUseId !== undefined && CALL_ID.test(meta.toolUseId) ? { startedByCallId: meta.toolUseId } : {}),
+      ...(usage.attribution === "timestamp" ? { matchedByTime: true as const } : {}),
     };
 
     const reason = tooDeep
