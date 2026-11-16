@@ -31,6 +31,8 @@ import { resolveSessionWorkspace, resolveTurnStartedAt, resolveTurnWorkspace } f
 import { ClaudeCodeRunTranscriptCache } from "./claude-code-run-cache.js";
 import { claudeCodeSubagentSpend } from "./session-subagent-spend.js";
 import { foldClaudeCodeSubagentUsage } from "./session-subagent-usage.js";
+import { readClaudeCodeSubagentAudit, type ClaudeCodeSubagentAuditReader } from "./claude-code-subagent-audit.js";
+import { folderRunEntriesLoader } from "./subagent-audit-transcript-loader.js";
 import { describeTurnUsage } from "../../services/turn-usage-sentence.js";
 
 const PROVIDER_ID = "claude-code";
@@ -41,6 +43,8 @@ export interface ClaudeCodeLogProviderOptions {
   projectsDirPath: string | null;
   /** Run summaries shared by the list and the detail; tests inject one to count reads. */
   runCache?: ClaudeCodeRunTranscriptCache;
+  /** CS14: reads the subagent runs' tool calls for the detail read; tests inject one to count reads. */
+  subagentAudit?: ClaudeCodeSubagentAuditReader;
 }
 
 function reasonOf(tokenCount: TokenCount): string {
@@ -145,9 +149,11 @@ export class ClaudeCodeLogProvider implements LogProvider, RequestTraceReader, C
   readonly label = "Claude Code CLI";
 
   private readonly runCache: ClaudeCodeRunTranscriptCache;
+  private readonly subagentAudit: ClaudeCodeSubagentAuditReader;
 
   constructor(private readonly options: ClaudeCodeLogProviderOptions) {
     this.runCache = options.runCache ?? new ClaudeCodeRunTranscriptCache();
+    this.subagentAudit = options.subagentAudit ?? readClaudeCodeSubagentAudit;
   }
 
   private listSessionFilePaths(): string[] {
@@ -170,7 +176,14 @@ export class ClaudeCodeLogProvider implements LogProvider, RequestTraceReader, C
 
   // The list and the detail both come through here, so the subagent runs
   // counted in a session's totals are the same in both.
-  private async buildSession(filePath: string, entries: ClaudeCodeRawEntry[], sessionFilePaths: string[]): Promise<Session> {
+  // `withSubagentAudit` is the detail read only (CS14): the list never opens a
+  // transcript for its tool calls.
+  private async buildSession(
+    filePath: string,
+    entries: ClaudeCodeRawEntry[],
+    sessionFilePaths: string[],
+    withSubagentAudit: boolean,
+  ): Promise<Session> {
     const activeLeafUuid = resolveActiveLeafUuid(entries);
     const branch = activeLeafUuid ? walkBranch(entries, activeLeafUuid) : [];
     const forkPointIds = findForkPointIds(entries);
@@ -179,7 +192,7 @@ export class ClaudeCodeLogProvider implements LogProvider, RequestTraceReader, C
     const resultIndex = indexToolResults(entries);
     const workspace = resolveSessionWorkspace(branch);
 
-    const { usages, notesByTurn, sessionUnknownReasons } = await foldClaudeCodeSubagentUsage(
+    const { usages, notesByTurn, sessionUnknownReasons, attribution, runs } = await foldClaudeCodeSubagentUsage(
       {
         sessionFilePath: filePath,
         siblingSessionFilePaths: sessionFilePaths,
@@ -191,7 +204,7 @@ export class ClaudeCodeLogProvider implements LogProvider, RequestTraceReader, C
       this.runCache,
     );
 
-    const turns: Turn[] = groups.map((group, index) => {
+    const mainTurns: Turn[] = groups.map((group, index) => {
       const usage = usages[index]!;
       const triggeredEvent = triggeredEventFor(group, forkPointIds, compactedRequestIds);
       const startedAt = resolveTurnStartedAt(group);
@@ -210,6 +223,7 @@ export class ClaudeCodeLogProvider implements LogProvider, RequestTraceReader, C
     });
 
     const subagentSpend = claudeCodeSubagentSpend(usages, sessionUnknownReasons);
+    const turns = withSubagentAudit ? await this.withSubagentToolCalls(mainTurns, { filePath, attribution, runs }) : mainTurns;
     const knownUsageTurns = turns.filter((turn) => turn.usage.output.known);
     // The model of the last turn that made a request: a turn with none (a
     // local command, or only a "<synthetic>" line) has model "unknown".
@@ -218,7 +232,7 @@ export class ClaudeCodeLogProvider implements LogProvider, RequestTraceReader, C
     const startedAt = resolveStartedAt(branch);
     const toolInventory = buildClaudeCodeToolInventory(
       entries,
-      turns.map((turn) => turn.toolCalls.map((call) => call.name)),
+      mainTurns.map((turn) => turn.toolCalls.map((call) => call.name)),
     );
 
     return {
@@ -238,14 +252,40 @@ export class ClaudeCodeLogProvider implements LogProvider, RequestTraceReader, C
     };
   }
 
-  private async buildSessionFromFile(filePath: string, sessionFilePaths: string[]): Promise<Session> {
+  // CS14: the runs' calls follow the main agent's in each turn that started them.
+  private async withSubagentToolCalls(
+    turns: Turn[],
+    { filePath, attribution, runs }: Pick<Parameters<ClaudeCodeSubagentAuditReader>[0], "attribution" | "runs"> & { filePath: string },
+  ): Promise<Turn[]> {
+    const audit = await this.subagentAudit({
+      attribution,
+      runs,
+      mainCallIds: new Set(turns.flatMap((turn) => turn.toolCalls.flatMap((call) => (call.id === undefined ? [] : [call.id])))),
+      turnCount: turns.length,
+      loadEntries: folderRunEntriesLoader(filePath),
+    });
+    return turns.map((turn, index) => {
+      const calls = audit.callsByTurn[index] ?? [];
+      const gaps = audit.gapsByTurn[index] ?? [];
+      // Turn.subagentRunsRead holds at most 200 ids; a run left out reads as unknown, never 0.
+      const read = (audit.readRunIdsByTurn[index] ?? []).slice(0, 200);
+      return {
+        ...turn,
+        toolCalls: [...turn.toolCalls, ...calls],
+        ...(gaps.length > 0 ? { subagentRunGaps: gaps } : {}),
+        ...(read.length > 0 ? { subagentRunsRead: read } : {}),
+      };
+    });
+  }
+
+  private async buildSessionFromFile(filePath: string, sessionFilePaths: string[], withSubagentAudit: boolean): Promise<Session> {
     const { entries } = await readClaudeCodeSessionFile(filePath);
-    return await this.buildSession(filePath, entries, sessionFilePaths);
+    return await this.buildSession(filePath, entries, sessionFilePaths, withSubagentAudit);
   }
 
   async listSessions(): Promise<Session[]> {
     const filePaths = this.listSessionFilePaths();
-    const sessions = await Promise.all(filePaths.map((filePath) => this.buildSessionFromFile(filePath, filePaths)));
+    const sessions = await Promise.all(filePaths.map((filePath) => this.buildSessionFromFile(filePath, filePaths, false)));
     return sessions
       // The inventory is detail (Analyze), not part of a session summary.
       .map((session) => ({ ...session, turns: [], toolInventory: undefined }))
@@ -258,7 +298,7 @@ export class ClaudeCodeLogProvider implements LogProvider, RequestTraceReader, C
     if (!filePath) {
       return null;
     }
-    return this.buildSessionFromFile(filePath, filePaths);
+    return this.buildSessionFromFile(filePath, filePaths, true);
   }
 
   // Phase 14 step 14.2: the same active branch and turn grouping as

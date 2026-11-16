@@ -7,6 +7,7 @@ import { markSessionUsageUnknown } from "./session-unknown-usage.js";
 import {
   attributeClaudeCodeRuns,
   SUBAGENT_TRANSCRIPT_MISSING_REASON,
+  type ClaudeCodeRunInput,
   type ClaudeCodeSubagentAttribution,
 } from "./subagent-attribution.js";
 import { readSubagentFolder } from "./subagent-folder-reader.js";
@@ -33,6 +34,10 @@ export interface SubagentFoldResult {
   /** Runs whose call is off the active branch: not counted, kept for the oracle. */
   offBranchRunIds: readonly string[];
   sessionUnknownReasons: readonly string[];
+  /** What the usage fold placed, for the tool audit (CS14) to read the same runs. */
+  attribution: ClaudeCodeSubagentAttribution;
+  /** The folder's runs with their allow-listed metas. */
+  runs: readonly ClaudeCodeRunInput[];
 }
 
 const hasMissingRun = (attribution: ClaudeCodeSubagentAttribution): boolean =>
@@ -74,5 +79,7 @@ export async function foldClaudeCodeSubagentUsage(
     notesByTurn: new Map([...attribution.byTurn].filter(([, { notes }]) => notes.length > 0).map(([turn, { notes }]) => [turn, notes])),
     offBranchRunIds: attribution.offBranchRunIds,
     sessionUnknownReasons: attribution.sessionUnknownReasons,
+    attribution,
+    runs,
   };
 }

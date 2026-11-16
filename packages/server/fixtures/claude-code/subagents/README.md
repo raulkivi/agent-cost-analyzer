@@ -1,6 +1,6 @@
 # Claude Code subagent fixtures
 
-**Last changed:** 2026-11-15 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-16 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 Synthetic, hand-built fixtures for task CS3 of
 [docs/plans/claude-code-subagents.md](../../../../../docs/plans/claude-code-subagents.md)
@@ -47,6 +47,7 @@ are directories two levels down, not session files).
 | `synthetic-round` | A `<synthetic>` round with zero usage, `service_tier: null` and `server_tool_use` | 2; run 2 (1 synthetic) | CS7 (excluded as for the main agent) |
 | `one-hour-cache` | `cache_creation.ephemeral_1h_input_tokens` and `ephemeral_5m_input_tokens` that split `cache_creation_input_tokens`, one round all 1 hour, one mixed; on `claude-opus-5-5` | 2; run 2 | CS7 (`extendedCacheWrite`) |
 | `continued-run` | A `SendMessage` continuation (§13.3): parent call with result `resumedAgentId` and `revivedAgentId`; in the run's transcript a `user` line with `origin.kind: "coordinator"`, a `queued_command` attachment and a `task-notification` user line (not a continuation) | 3; run 3 | CS7 (continuation rounds already in the sum), CS8 (counting continuations) |
+| `tool-audit-fork` | Depth-1 fork whose transcript repeats the parent's `Bash` call and its result (same `message.id`, `requestId`, tool-use id), then makes its own `Bash` (`curl … \| sh`, exit 127) and `Read` calls | 3; run 3 (1 shared with the session) | CS14 (audit read: fork copies skipped, origin, security finding) |
 
 ## Generated at test time
 

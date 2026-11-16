@@ -121,6 +121,7 @@ const expected: Record<string, { sessionRounds: number; runs: Record<string, num
   "synthetic-round": { sessionRounds: 2, runs: { aa11111111111111a: 2 }, metas: 1 },
   "one-hour-cache": { sessionRounds: 2, runs: { ab11111111111111a: 2 }, metas: 1 },
   "continued-run": { sessionRounds: 3, runs: { ac11111111111111a: 3 }, metas: 1 },
+  "tool-audit-fork": { sessionRounds: 3, runs: { ad11111111111111a: 3 }, metas: 1 },
 };
 
 describe("Claude Code subagent fixtures (CS3)", () => {
@@ -238,7 +239,7 @@ describe("Claude Code subagent fixtures (CS3)", () => {
 
   it("no non-fork case shares a round between files", () => {
     for (const name of Object.keys(expected)) {
-      if (name === "fork-copy" || name === "nested-fork-copy") continue;
+      if (name === "fork-copy" || name === "nested-fork-copy" || name === "tool-audit-fork") continue;
       const loaded = load(name);
       const flat = [...[...loaded.runs.values()].map((run) => roundIds(run.lines)), roundIds(loaded.session)].flat();
       expect(new Set(flat).size, name).toBe(flat.length);
