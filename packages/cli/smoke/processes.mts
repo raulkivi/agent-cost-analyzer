@@ -82,6 +82,8 @@ export function isolatedEnv(
     ...fixtureHomeEnv(options.home, options.platform),
     npm_config_cache: options.npmCache,
     npm_config_registry: DEAD_REGISTRY,
+    // A refused fetch is final: npm's default retries back off for about a minute per install.
+    npm_config_fetch_retries: "0",
     npm_config_update_notifier: "false",
     npm_config_audit: "false",
     npm_config_fund: "false",

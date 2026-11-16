@@ -261,6 +261,24 @@ Decided 2026-11-14: the owner accepted each recommendation.
 | D9 | Notification | none; opt-in | **None**, as the extension's D6. |
 | D10 | Atomic settings write | (a) temp 0600 and rename for `settings.json` in this step; (b) as today | **(a).** A second reader process (MCP) and a user value now depend on the file. |
 | D11 | Real-data check scope | current period only; current and the two previous full periods | **Current and two previous**, through the service's injected clock: more sessions and both period edges checked, no wait for a month to pass. |
+| D12 | The gauge's `aria-label` wording (MS8 review) | (a) the domain's sentence alone (level sentence first when near or over); (b) the visible button text first, then the domain's sentence | **(b), owner-accepted 2026-11-16.** WCAG 2.5.3 (Label in Name): the accessible name starts with the text drawn on the button, so a voice-control user can say what they see. Not set has no label of its own; the visible text is the name. Implemented in `AllowanceGauge.tsx`. |
+| D13 | MS10's source for the Agent Host bill | (a) `session.db`'s `turn_usage` as the bill, `events.jsonl` as the cross-check; (b) `events.jsonl` as the bill | **(a), owner-accepted 2026-11-16** with the MS10 sign-off (13 of 13 checks pass). `session.db` records usage for every Agent Host session; `events.jsonl` does so only for newer Copilot CLI logs. §11.1 has the rule. |
+
+### 9.1 MS8 fixes
+
+Three defects found while writing the Playwright spec, fixed in MS8 (PR #361):
+
+- **`aria-label` order.** The label began with the full domain sentence, not the visible text (WCAG 2.5.3). It now starts with the visible text (D12).
+- **Field error text contrast.** Error text in the red status color missed 4.5:1 on the light ground. The text uses `--color-text`; the red stays on the field border and the leading mark, which only need 3:1.
+- **Remove hint flicker.** The hint under the fields appeared on hover or focus of **Remove allowance** and pushed the buttons down from under the pointer. A fixed-height slot now holds its room; screen readers always read the hint (`aria-describedby`).
+
+### 9.2 MS13 review
+
+Findings and checks are in the MS13 pull request. Results worth keeping here:
+
+- The 100 kB body limit applies to `PUT /api/config/monthly-allowance` (413, nothing written), and malformed JSON is a 400. `setMonthlyAllowance` rejects non-objects, out-of-range, non-integer, non-finite, unknown-key and `__proto__` input, and its message never echoes a value.
+- `npm run test:cli-alias` was slow, not hung: the alias depends on the real package, npm asked the dead registry for it and waited out its retry back-off (about 70 s per install) before using the tarball. The smoke environment now sets `fetch-retries` to 0 (3 s).
+- The standalone app has no High Contrast theme (VS Code's `vscode-high-contrast` body class applies only in the extension's webview, which has no gauge). The meter fills pass 3:1 on both grounds and are decorative (`aria-hidden`); every level is also in words.
 
 ## 10. Risks
 

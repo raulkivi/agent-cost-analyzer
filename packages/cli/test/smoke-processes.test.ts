@@ -90,6 +90,8 @@ describe("isolatedEnv", () => {
       LOCALAPPDATA: "/tmp/h/AppData/Local",
       npm_config_cache: "/tmp/c",
       npm_config_registry: DEAD_REGISTRY,
+      // A refused fetch is final: npm's default retries back off for about a minute per install.
+      npm_config_fetch_retries: "0",
       npm_config_update_notifier: "false",
       npm_config_audit: "false",
       npm_config_fund: "false",
