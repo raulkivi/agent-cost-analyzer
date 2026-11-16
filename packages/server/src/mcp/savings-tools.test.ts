@@ -139,6 +139,15 @@ describe("get_savings_report registration", () => {
     expect(tool.description).toMatch(/not billed/i);
   });
 
+  // V29: the fields V24 and V26 added, and how to read them, are in the description the model reads.
+  it("says what each listed session and an unused-tools row's tool list carry", async () => {
+    const { tools } = await (await connect(new FakeSavings(reportOf([])))).listTools();
+    const description = tools.find((candidate) => candidate.name === "get_savings_report")!.description;
+
+    expect(description).toMatch(/each with its start and its own saving over the window \(not per week\)/);
+    expect(description).toMatch(/up to 20 of its tools with estimated definition tokens per request/);
+  });
+
   it("is registered only in the savings group and only with the service", async () => {
     const withoutService = await (await connect()).listTools();
     expect(withoutService.tools.map((tool) => tool.name)).not.toContain("get_savings_report");
