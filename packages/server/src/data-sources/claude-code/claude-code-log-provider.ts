@@ -29,6 +29,7 @@ import { computeClaudeCodeFileHash, resolveClaudeCodeSessionFilePath } from "./s
 import { resolveClaudeCodeTitle } from "./title-resolver.js";
 import { resolveSessionWorkspace, resolveTurnStartedAt, resolveTurnWorkspace } from "./workspace-resolver.js";
 import { ClaudeCodeRunTranscriptCache } from "./claude-code-run-cache.js";
+import { claudeCodeSubagentSpend } from "./session-subagent-spend.js";
 import { foldClaudeCodeSubagentUsage } from "./session-subagent-usage.js";
 import { describeTurnUsage } from "../../services/turn-usage-sentence.js";
 
@@ -178,7 +179,7 @@ export class ClaudeCodeLogProvider implements LogProvider, RequestTraceReader, C
     const resultIndex = indexToolResults(entries);
     const workspace = resolveSessionWorkspace(branch);
 
-    const { usages, notesByTurn } = await foldClaudeCodeSubagentUsage(
+    const { usages, notesByTurn, sessionUnknownReasons } = await foldClaudeCodeSubagentUsage(
       {
         sessionFilePath: filePath,
         siblingSessionFilePaths: sessionFilePaths,
@@ -208,6 +209,7 @@ export class ClaudeCodeLogProvider implements LogProvider, RequestTraceReader, C
       };
     });
 
+    const subagentSpend = claudeCodeSubagentSpend(usages, sessionUnknownReasons);
     const knownUsageTurns = turns.filter((turn) => turn.usage.output.known);
     // The model of the last turn that made a request: a turn with none (a
     // local command, or only a "<synthetic>" line) has model "unknown".
@@ -229,6 +231,7 @@ export class ClaudeCodeLogProvider implements LogProvider, RequestTraceReader, C
       turnCount: turns.length,
       costAiCredits: unavailableTokenCount(NO_AI_CREDITS_REASON),
       usageDataAvailable: knownUsageTurns.length > 0,
+      ...(subagentSpend ? { subagentSpend } : {}),
       ...(startedAt ? { startedAt } : {}),
       workspace,
       ...(toolInventory ? { toolInventory } : {}),

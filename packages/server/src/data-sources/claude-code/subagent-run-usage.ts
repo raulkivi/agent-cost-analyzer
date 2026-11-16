@@ -6,7 +6,7 @@ import { groupTurnRequestRounds, type ClaudeCodeRound } from "./round-grouper.js
 import { modelOf, sumRoundUsage } from "./round-usage.js";
 import type { SubagentMeta } from "./subagent-meta.js";
 
-const NO_AI_CREDITS_REASON =
+export const NO_AI_CREDITS_REASON =
   "AI Credits are GitHub Copilot's own billing unit — a Claude Code CLI session has no AI Credits conversion.";
 
 // Same shape as the domain's `startedAt` (z.string().datetime(): UTC, Z suffix).
