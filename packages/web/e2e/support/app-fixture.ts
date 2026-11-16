@@ -14,6 +14,11 @@ import { FIXTURE_NOW } from "./fixture-clock.js";
 // on this machine is read. The server's clock and the page's clock are both
 // fixed at FIXTURE_NOW, so "last 90 days" is the same on every run.
 
+// MS8: the allowance a test starts with in the fixture's settings.json; null
+// (the default) is not set, as most specs expect. `allowanceSessions` adds the
+// Copilot sessions inside the fixed clock's period (fixture-home.mts).
+export type AllowanceSeed = { aiCredits: number; resetDay: number; warnAtPercent: number } | null;
+
 const webDir = path.resolve(import.meta.dirname, "../..");
 const tsx = path.resolve(webDir, "../../node_modules/.bin/tsx");
 
@@ -21,8 +26,8 @@ const tsx = path.resolve(webDir, "../../node_modules/.bin/tsx");
 // fixture home.
 const OUTSIDE_HOME = ["XDG_CONFIG_HOME", "APPDATA", "COPILOT_HOME", "CLAUDE_CONFIG_DIR", "PI_CODING_AGENT_DIR"];
 
-async function startServer(home: string, noProjects: boolean): Promise<{ baseURL: string; child: ChildProcess }> {
-  const env: NodeJS.ProcessEnv = { ...process.env, HOME: home, USERPROFILE: home, AGENT_COST_ANALYZER_NOW: FIXTURE_NOW, ...(noProjects ? { AGENT_COST_E2E_NO_PROJECTS: "1" } : {}) };
+async function startServer(home: string, noProjects: boolean, allowance: AllowanceSeed, allowanceSessions: boolean): Promise<{ baseURL: string; child: ChildProcess }> {
+  const env: NodeJS.ProcessEnv = { ...process.env, HOME: home, USERPROFILE: home, AGENT_COST_ANALYZER_NOW: FIXTURE_NOW, ...(noProjects ? { AGENT_COST_E2E_NO_PROJECTS: "1" } : {}), ...(allowance ? { AGENT_COST_E2E_ALLOWANCE: JSON.stringify(allowance) } : {}), ...(allowanceSessions ? { AGENT_COST_E2E_ALLOWANCE_SESSIONS: "1" } : {}) };
   for (const name of OUTSIDE_HOME) delete env[name];
   const child = spawn(tsx, ["e2e/support/serve.mts"], { cwd: webDir, env, stdio: ["ignore", "pipe", "pipe"] });
   let stderr = "";
@@ -49,11 +54,13 @@ async function startServer(home: string, noProjects: boolean): Promise<{ baseURL
 // Step 15.11: `home` and `appSettingsDir` let a scenario change files the
 // way a user would (a late log, a price-book update); `noProjects` starts
 // with no projects file (S1).
-export const test = base.extend<{ noProjects: boolean; app: { baseURL: string; home: string; appSettingsDir: string } }>({
+export const test = base.extend<{ noProjects: boolean; allowance: AllowanceSeed; allowanceSessions: boolean; app: { baseURL: string; home: string; appSettingsDir: string } }>({
   noProjects: [false, { option: true }],
-  app: async ({ noProjects }, use) => {
+  allowance: [null, { option: true }],
+  allowanceSessions: [false, { option: true }],
+  app: async ({ noProjects, allowance, allowanceSessions }, use) => {
     const home = mkdtempSync(path.join(os.tmpdir(), "aca-e2e-"));
-    const { baseURL, child } = await startServer(home, noProjects);
+    const { baseURL, child } = await startServer(home, noProjects, allowance, allowanceSessions);
     try {
       await use({ baseURL, home, appSettingsDir: path.join(home, ".config", "agent-cost-analyzer") });
     } finally {

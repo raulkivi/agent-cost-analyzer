@@ -164,9 +164,12 @@ export function AllowanceSettingsDialog({ answer, onSave, onDone, onClose }: All
           </div>
         )}
         {/* Always read by screen readers; drawn only while Remove is focused or hovered. */}
-        <p id={ids.hint} className={removeHinted ? "allowance-hint" : "allowance-hint sr-only"}>
-          Remove allowance hides the gauge. The reset day and warn percent are kept.
-        </p>
+        {/* The slot keeps the hint's room, so showing it never moves the buttons from under the pointer. */}
+        <div className="allowance-hint-slot">
+          <p id={ids.hint} className={removeHinted ? "allowance-hint" : "allowance-hint sr-only"}>
+            Remove allowance hides the gauge. The reset day and warn percent are kept.
+          </p>
+        </div>
         <div className="dialog-actions allowance-actions allowance-actions--settings">
           <button
             type="button"

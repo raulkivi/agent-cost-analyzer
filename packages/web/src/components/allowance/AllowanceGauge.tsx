@@ -21,6 +21,9 @@ export function AllowanceGauge({ view, narrow, onOpen, ref }: AllowanceGaugeProp
   const notSet = view.state === "not-set";
   const meter = view.meter ? <AllowanceMeter meter={view.meter} level={view.level} /> : null;
   const stacked = narrow && view.meter !== undefined;
+  // WCAG 2.5.3 (Label in Name): the accessible name starts with the text drawn
+  // on the button, then the full sentence the domain words for screen readers.
+  const visibleText = stacked ? `${view.figureText} ${view.shortLevelWord ?? ""}`.trim() : view.headerText;
   return (
     <button
       ref={ref}
@@ -28,7 +31,7 @@ export function AllowanceGauge({ view, narrow, onOpen, ref }: AllowanceGaugeProp
       className={`btn btn-secondary allowance-gauge${notSet ? " allowance-gauge--unset" : ""}${narrow ? " allowance-gauge--narrow" : ""}`}
       aria-haspopup="dialog"
       // Not set has no label of its own: the visible text is the name.
-      aria-label={notSet ? undefined : view.ariaLabel}
+      aria-label={notSet ? undefined : `${visibleText}. ${view.ariaLabel}`}
       onClick={onOpen}
     >
       {stacked ? (

@@ -54,7 +54,7 @@ describe("MonthlyAllowance: the gauge in each state (§4.7)", () => {
     await shown(nearAnswer());
 
     expect(gauge()).toHaveTextContent("812.40 of 1,000 AI Credits · near limit");
-    expect(gauge()).toHaveAccessibleName(/^Near limit\. AI Credits this month: 812\.40 of 1,000 allowance, 81 percent/);
+    expect(gauge()).toHaveAccessibleName(/^812\.40 of 1,000 AI Credits · near limit\. Near limit\. AI Credits this month: 812\.40 of 1,000 allowance, 81 percent/);
   });
 
   it("over: the cap sticks out past a full meter", async () => {
@@ -142,7 +142,8 @@ describe("MonthlyAllowance: narrow layout (§4.7, owner decision 2026-11-15)", (
     expect(within(gauge()).getByText("near").tagName).toBe("B");
     expect(gauge()).not.toHaveTextContent("near limit");
     expect(container.querySelector(".allowance-gauge-meter-row .allowance-meter")).not.toBeNull();
-    expect(gauge()).toHaveAccessibleName(/^Near limit\./);
+    // Label in Name (WCAG 2.5.3): the drawn text comes first, the level sentence follows.
+    expect(gauge()).toHaveAccessibleName(/^at least 812\.40 of 1,000 AI Credits near\. Near limit\. AI Credits this month: at least 812\.40/);
   });
 
   it("over keeps the short word 'over'", async () => {
