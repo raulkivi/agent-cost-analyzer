@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
 import { z } from "zod";
+import { monthlyAllowanceAnswerSchema } from "./allowance/monthly-allowance-answer.js";
 import { savingsReportSchema } from "./savings.js";
 import { MAX_COMPARED_MODELS, sessionReplayComparisonSchema, sessionReplaySchema } from "./session-replay.js";
 
@@ -48,6 +49,9 @@ export const apiMethodSchema = z.enum([
   "compareSessionReplay",
   // Phase 16 step SR12: the savings report. Read-only.
   "getSavingsReport",
+  // MS6: the standalone app's monthly allowance; the extension answers 404.
+  "getMonthlyAllowance",
+  "setMonthlyAllowance",
 ]);
 
 export type ApiMethod = z.infer<typeof apiMethodSchema>;
@@ -160,6 +164,9 @@ export const apiMethodParamsSchemas = {
       includeSimulated: z.boolean().optional(),
     })
     .strict(),
+  getMonthlyAllowance: noParams,
+  // ApiService validates the settings itself (allowanceSettingsWriteSchema).
+  setMonthlyAllowance: z.object({ settings: z.unknown() }),
   getCostVariance: z.object({
     groupBy: z.string(),
     id: z.string().min(1),
@@ -177,6 +184,8 @@ export const apiMethodResultSchemas = {
   getSessionReplay: sessionReplaySchema,
   compareSessionReplay: sessionReplayComparisonSchema,
   getSavingsReport: savingsReportSchema,
+  getMonthlyAllowance: monthlyAllowanceAnswerSchema,
+  setMonthlyAllowance: monthlyAllowanceAnswerSchema,
 } as const satisfies Partial<Record<ApiMethod, z.ZodType>>;
 
 // webview -> host (vscode-extension.md §4). `params` stays unknown here: the
