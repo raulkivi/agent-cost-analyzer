@@ -21,8 +21,41 @@ function sumParts(parts: readonly TokenCount[]): TokenCount {
 }
 
 function ownUsageOf(usage: TurnUsage): OwnTurnUsage {
-  const { uncachedInput, cacheWrite, cacheRead, tool, vision, reasoning, output, costAiCredits, model } = usage;
-  return { uncachedInput, cacheWrite, cacheRead, tool, vision, reasoning, output, costAiCredits, model };
+  const { uncachedInput, cacheWrite, cacheRead, tool, vision, reasoning, output, costAiCredits, extendedCacheWrite, model } = usage;
+  return {
+    uncachedInput,
+    cacheWrite,
+    cacheRead,
+    tool,
+    vision,
+    reasoning,
+    output,
+    costAiCredits,
+    ...(extendedCacheWrite === undefined ? {} : { extendedCacheWrite }),
+    model,
+  };
+}
+
+const NOT_RECORDED_REASON =
+  "The log does not split this part's cache writes by lifetime, so how many were 1-hour writes is unknown.";
+
+// The 1-hour part of cacheWrite is recorded by Claude Code (turn and runs) and
+// not by Copilot. It is folded only when some part records it, and a part
+// that doesn't makes the total unknown: not recorded is never 0 (constraint 6).
+function foldExtendedCacheWrite(
+  usage: TurnUsage,
+  runs: readonly SubagentRunUsage[],
+  unread: readonly TokenCount[],
+): { extendedCacheWrite?: TokenCount } {
+  if (usage.extendedCacheWrite === undefined && runs.every((run) => run.extendedCacheWrite === undefined)) return {};
+  const missing = unavailableTokenCount(NOT_RECORDED_REASON);
+  return {
+    extendedCacheWrite: sumParts([
+      ...unread,
+      usage.extendedCacheWrite ?? missing,
+      ...runs.map((run) => run.extendedCacheWrite ?? missing),
+    ]),
+  };
 }
 
 function foldRuns(usage: TurnUsage, runs: readonly SubagentRunUsage[], unreadReason: string | undefined): TurnUsage {
@@ -32,17 +65,24 @@ function foldRuns(usage: TurnUsage, runs: readonly SubagentRunUsage[], unreadRea
   const folded = Object.fromEntries(
     SUMMED_FIELDS.map((field) => [field, sumParts([...unread, usage[field], ...runs.map((run) => run[field])])]),
   ) as Record<SummedField, TokenCount>;
-  return { ...usage, ...folded, subagents: [...runs], ownUsage: ownUsageOf(usage) };
+  return {
+    ...usage,
+    ...folded,
+    ...foldExtendedCacheWrite(usage, runs, unread),
+    subagents: [...runs],
+    ownUsage: ownUsageOf(usage),
+  };
 }
 
-// Folds each log turn's classic subagent runs into its usage (step 10.19,
-// design §4.2). The summed figures become everything billed for the turn:
+// Folds each turn's subagent runs into its usage (step 10.19, design §4.2;
+// Claude Code, CS9: the same fold, plus the 1-hour cache writes). The summed figures become everything billed for the turn:
 // own + Σ runs, unknown when any part is; cacheWrite and reasoning are thus
 // known only when the turn's and every run's agent-traces join is. tool,
 // vision, model and roundsCount stay the main agent's (D1); `ownUsage` keeps
 // its own figures (D10). A null turn (no usable request of its own) stays
 // null: a run doesn't make it known. Both maps are keyed by 0-based log turn,
-// as attributeSubagentRuns returns them.
+// as attributeSubagentRuns returns them
+// (Claude Code: the turn index, see mergeClaudeCodeSubagentUsage).
 export function mergeSubagentUsage(
   turnUsages: readonly (TurnUsage | null)[],
   byLogTurn: ReadonlyMap<number, readonly SubagentRunUsage[]>,

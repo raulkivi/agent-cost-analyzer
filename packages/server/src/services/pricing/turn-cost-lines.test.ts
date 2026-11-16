@@ -57,3 +57,40 @@ describe("turnLinesOf", () => {
     expect(lines).toHaveLength(2);
   });
 });
+
+// CS9: Claude Code lines. Each line carries its own 1-hour cache writes, so a
+// run's 1-hour writes are priced at the 1-hour rate, not the 5-minute one.
+describe("turnLinesOf, extendedCacheWrite (CS9)", () => {
+  it("gives the own line its own extendedCacheWrite, not the folded total, and each run line its own", () => {
+    const usage = folded(own({ extendedCacheWrite: known(150) }), [
+      run({ extendedCacheWrite: known(15) }),
+      run({ id: "toolu_run2", extendedCacheWrite: known(0) }),
+    ]);
+
+    const lines = turnLinesOf(usage)!;
+
+    expect(usage.extendedCacheWrite).toEqual(known(165));
+    expect(lines.map((line) => line.usage.extendedCacheWrite)).toEqual([known(150), known(15), known(0)]);
+  });
+
+  it("keeps Copilot lines without extendedCacheWrite", () => {
+    const lines = turnLinesOf(folded(own(), [run()]))!;
+
+    for (const line of lines) expect(line.usage).not.toHaveProperty("extendedCacheWrite");
+  });
+
+  it("gives an unknown extendedCacheWrite to a line that records none when the row has one", () => {
+    const lines = turnLinesOf(folded(own({ extendedCacheWrite: known(150) }), [run()]))!;
+
+    expect(lines[0]!.usage.extendedCacheWrite).toEqual(known(150));
+    expect(lines[1]!.usage.extendedCacheWrite?.known).toBe(false);
+  });
+
+  it("gives the unread line the remainder of extendedCacheWrite, unknown with the reason", () => {
+    const usage = folded(own({ extendedCacheWrite: known(150) }), [run({ extendedCacheWrite: known(15) })], "The subagent log is missing.");
+
+    const unread = turnLinesOf(usage)![2]!;
+
+    expect(unread.usage.extendedCacheWrite).toEqual({ known: false, reason: "The subagent log is missing." });
+  });
+});

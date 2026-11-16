@@ -20,24 +20,27 @@ export const UNREAD_RUNS_MODEL = "unknown";
 
 const NOT_READ_FOR_RUNS_REASON = "Tool and vision tokens are not read for subagent runs.";
 const SUMMED_FIELDS = ["uncachedInput", "cacheWrite", "cacheRead", "reasoning", "output", "costAiCredits"] as const;
-type SummedField = (typeof SUMMED_FIELDS)[number];
+type SummedField = (typeof SUMMED_FIELDS)[number] | "extendedCacheWrite";
+const NOT_RECORDED_PER_LINE_REASON =
+  "The log does not split this line's cache writes by lifetime, so how many were 1-hour writes is unknown.";
 
 const notRead = unavailableTokenCount(NOT_READ_FOR_RUNS_REASON);
 
 // What the folded turn holds beyond its lines: unknown wherever the turn is,
 // else the remainder (0 when the lines account for all of it).
 function unreadLine(usage: TurnUsage, lines: readonly TurnLine[]): TurnLine | undefined {
-  const missing = SUMMED_FIELDS.some((field) => !usage[field].known && lines.every((line) => line.usage[field].known));
+  const fields: SummedField[] = usage.extendedCacheWrite === undefined ? [...SUMMED_FIELDS] : [...SUMMED_FIELDS, "extendedCacheWrite"];
+  const missing = fields.some((field) => !usage[field]!.known && lines.every((line) => line.usage[field]!.known));
   if (!missing) return undefined;
   const remainder = (field: SummedField): TokenCount => {
-    const total = usage[field];
+    const total = usage[field]!;
     if (!total.known) return total;
     return { known: true, value: lines.reduce((rest, line) => rest - (line.usage[field] as { value: number }).value, total.value) };
   };
   return {
     subagent: true,
     usage: {
-      ...(Object.fromEntries(SUMMED_FIELDS.map((field) => [field, remainder(field)])) as Record<SummedField, TokenCount>),
+      ...(Object.fromEntries(fields.map((field) => [field, remainder(field)])) as Record<SummedField, TokenCount>),
       tool: notRead,
       vision: notRead,
       model: UNREAD_RUNS_MODEL,
@@ -49,12 +52,16 @@ function unreadLine(usage: TurnUsage, lines: readonly TurnLine[]): TurnLine | un
 export function turnLinesOf(usage: TurnUsage): TurnLine[] | undefined {
   const { ownUsage, subagents } = usage;
   if (ownUsage === undefined || subagents === undefined) return undefined;
+  // Each line takes its own 1-hour cache writes; the folded total is the row's,
+  // not the own line's. Set only where the row records the split.
+  const splitRecorded = usage.extendedCacheWrite !== undefined;
+  const notRecorded = unavailableTokenCount(NOT_RECORDED_PER_LINE_REASON);
   const ownLine: TurnLine = {
     subagent: false,
     usage: {
       ...ownUsage,
       ...(usage.roundsCount !== undefined ? { roundsCount: usage.roundsCount } : {}),
-      ...(usage.extendedCacheWrite !== undefined ? { extendedCacheWrite: usage.extendedCacheWrite } : {}),
+      ...(splitRecorded ? { extendedCacheWrite: ownUsage.extendedCacheWrite ?? notRecorded } : {}),
       ...(usage.reportedCostUsd !== undefined ? { reportedCostUsd: usage.reportedCostUsd } : {}),
     },
   };
@@ -72,6 +79,7 @@ export function turnLinesOf(usage: TurnUsage): TurnLine[] | undefined {
         costAiCredits: run.costAiCredits,
         model: run.model,
         roundsCount: run.roundsCount,
+        ...(splitRecorded ? { extendedCacheWrite: run.extendedCacheWrite ?? notRecorded } : {}),
       },
     }),
   );
