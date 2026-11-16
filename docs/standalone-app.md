@@ -202,7 +202,9 @@ runtime, never hardcoded:
   its active branch. Per-turn usage, including cache read/write and
   reasoning tokens, comes from the file; the system prompt and tool
   inventory tabs stay empty for Claude Code sessions. Subagent transcripts
-  (`<session-id>/subagents/`) aren't read (see
+  (`<session-id>/subagents/`) are read and counted in the turn that started
+  each run (tokens and priced cost; no AI Credits). Runs started from an
+  abandoned branch aren't counted (see
   [architecture.md §6.2.6](architecture.md#626-claude-code-cli-provider-flow)).
 
 ## Enabling GitHub Copilot Chat debug logging
