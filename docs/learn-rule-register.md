@@ -1,5 +1,7 @@
 # Learn simulation: rule register (Phase 13, step 13.0)
 
+**Last changed:** 2026-11-16 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+
 Status: **draft for owner review** (2026-11-04); owner decisions recorded 2026-11-04. Exit criterion of step 13.0:
 every vendor × rule cell has a source id or is marked unknown, and the owner
 signs off the rules, the cheaper-sibling list and the model-id mapping.
@@ -303,15 +305,18 @@ Copilot-log id column: ids seen in repo tests/fixtures (Agent Host `usage.model`
 | Claude Opus 4.8 (fast mode) (preview) | Anthropic | claude-opus-4.8-fast | unknown (likely a separate id or a mode flag) | 10.00 / 1.00 / 12.50 / 50.00 | none | - | yes (YAML says release_status GA despite "(preview)" in name) |
 | Claude Fable 5 | Anthropic | claude-fable-5 | [inferred] | 10.00 / 1.00 / 12.50 / 50.00 | none | - | yes |
 | Claude Fable 5.1 | Anthropic | claude-fable-5.1 | [inferred] | 10.00 / 0.25 / 12.50 / 50.00 | none | - | yes |
+| Claude Fable 5.2 | Anthropic | claude-fable-5.2 | [inferred] | 8.00 / 0.20 / 10.00 / 40.00 | none | - | yes (added 2026-11-16, GitHub table 0b4f884) |
 | Gemini 3.8 Flash | Google | gemini-3.8-flash | unknown | 0.75 / 0.075 / - / 3.75 | none | footnote `gemini-flash-promo`: promotional price through 2026-12-31 (post-promo Copilot price unknown) | yes |
 | Gemini 4 Argon | Google | gemini-4-argon | unknown | 2.00 / 0.10 / - / 10.00 | none | 2026-12-01 | yes |
+| Gemini 4 Carbon | Google | gemini-4-carbon | unknown | 2.00 / 0.10 / - / 10.00 | none | 2026-12-01; GitHub states 4.00 / 0.20 / - / 20.00 from then | yes (added 2026-11-16, GitHub table d8541d4) |
+| Gemini 4 Hydrogen | Google | gemini-4-hydrogen | unknown | 1.50 / 0.075 / - / 7.50 | none | - | yes (added 2026-11-16, GitHub table 63ea423) |
 | Grok 4.5 | xAI | grok-4.5 | unknown | 2.00 / 0.50 / - / 6.00; >200K: 4.00 / 1.00 / - / 12.00 | 200K | - | yes |
 | Grok 4.6 | xAI | grok-4.6 | unknown | same as Grok 4.5 | 200K | - | yes |
 | Grok 4.7 | xAI | grok-4.7 | unknown | same as Grok 4.5 | 200K | - | yes |
 | MAI-Code-1.1-Flash | Microsoft | mai-code-1.1-flash | unknown | 0.20 / 0.02 / - / 1.20 | none | - | NO, disabled (D1) |
 | Kimi K3 | Moonshot AI | kimi-k3 | unknown | 3.00 / 0.30 / - / 15.00 | none | - | NO, disabled (D1) |
 
-Count: OpenAI 10, Anthropic 12, Google 2, xAI 3, Microsoft 1, Moonshot AI 1 = 29; 27 simulated. Matches plan section 6.
+Count: OpenAI 10, Anthropic 13, Google 4, xAI 3, Microsoft 1, Moonshot AI 1 = 32; 30 simulated. Matched plan section 6 at 29 (2026-11-04); the 2026-11-16 additions are Claude Fable 5.2, Gemini 4 Carbon and Gemini 4 Hydrogen.
 
 Notes
 - Anthropic YAML rows carry no threshold/tier except Haiku 5.5; GitHub's rendered page checked 2026-11-04 and agrees (Haiku 5.5 "Default" ≤ 100K and "Long context" > 100K; all other Anthropic rows "Default" / "Not applicable").
@@ -326,6 +331,7 @@ Scenario numbering: the plan (section 2, D4) names the two-model scenarios as 4 
 |---|---|---|
 | Claude Opus 4.8 (fast) | claude-opus-4.8 | same model, standard speed; 5x cheaper |
 | Claude Fable 5 / 5.1 | claude-opus-5.5 | next tier down, $4/$20 vs $10/$50 |
+| Claude Fable 5.2 | claude-opus-5.5 | next tier down, $4/$20 vs $8/$40 |
 | Claude Opus 5.5 | claude-sonnet-5.5 | $2/$10 |
 | Claude Opus 5 | claude-sonnet-5 | same generation, $2/$10 |
 | Claude Opus 4.8 | claude-sonnet-4.6 | $3/$15, closest older Sonnet |
@@ -345,7 +351,9 @@ Scenario numbering: the plan (section 2, D4) names the two-model scenarios as 4 
 | GPT-5.3-Codex | gpt-5.4-nano | $0.20/$1.25 |
 | GPT-5.4 nano | gpt-6-luna | $0.10/$0.50 |
 | Gemini 4 Argon | gemini-3.8-flash | $0.75/$3.75; price is promo-dependent |
-| Gemini 3.8 Flash | none | only other Google model is dearer |
+| Gemini 4 Carbon | gemini-4-hydrogen | $1.50/$7.50 vs $2/$10 (Carbon is promo-priced to 2026-12-01) |
+| Gemini 4 Hydrogen | gemini-3.8-flash | $0.75/$3.75; price is promo-dependent |
+| Gemini 3.8 Flash | none | cheapest Google model |
 | Grok 4.5 / 4.6 / 4.7 | none | all three have identical prices; no cheaper xAI model exists. Owner decision: hide two-model scenarios for xAI, or allow same-model "switch" |
 
 ### (c) Mismatches with repo

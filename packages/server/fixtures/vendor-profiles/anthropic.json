@@ -264,6 +264,20 @@
         "anthropic-pc-pricing-1h",
         "anthropic-pc-limitations-512"
       ]
+    },
+    {
+      "modelId": "claude-fable-5.2",
+      "displayName": "Claude Fable 5.2",
+      "vendorId": "anthropic",
+      "releaseStatus": "GA",
+      "cheaperSiblingId": "claude-opus-5.5",
+      "sourceIds": [
+        "gh-pricing-table",
+        "gh-models-pricing-anthropic",
+        "anthropic-pc-pricing-1h",
+        "anthropic-pc-pricing-fable-5.2",
+        "anthropic-pc-limitations-512-fable-5.2"
+      ]
     }
   ],
   "assumptions": [
@@ -288,9 +302,12 @@
       "confidence": "unknown"
     },
     {
-      "text": "On Claude Fable 5.1, Fable 5, Opus 5.5, Opus 4.8, Opus 5, Sonnet 5.5 and Haiku 5.5, a system instruction added partway through a conversation keeps the system and message caches. This isn't available on Claude Sonnet 5.",
+      "text": "On Claude Fable 5.2, Fable 5.1, Fable 5, Opus 5.5, Opus 4.8, Opus 5, Sonnet 5.5 and Haiku 5.5, a system instruction added partway through a conversation keeps the system and message caches. This isn't available on Claude Sonnet 5.",
       "confidence": "documented",
-      "sourceIds": ["anthropic-pc-mid-conversation-system"]
+      "sourceIds": [
+        "anthropic-pc-mid-conversation-system",
+        "anthropic-pc-mid-conversation-system-fable-5.2"
+      ]
     },
     {
       "text": "Whether Copilot adds instructions as mid-conversation system messages isn't documented. The simulation applies the top-level system rule.",
@@ -493,6 +510,27 @@
       "url": "https://platform.claude.com/docs/en/build-with-claude/prompt-caching#what-invalidates-the-cache",
       "quote": "Switching between `speed: \"fast\"` and standard speed invalidates system and message caches",
       "checkedAt": "2026-11-04"
+    },
+    {
+      "id": "anthropic-pc-limitations-512-fable-5.2",
+      "title": "Anthropic: Prompt caching, cache limitations (512 tokens, Claude Fable 5.2)",
+      "url": "https://platform.claude.com/docs/en/build-with-claude/prompt-caching#cache-limitations",
+      "quote": "512 tokens for Claude Fable 5.2, Claude Mythos 5.2, Claude Fable 5.1, Claude Mythos 5.1, Claude Opus 5.5, Claude Opus 5, Claude Sonnet 5.5, Claude Fable 5, Claude Mythos 5, and Claude Haiku 5.5",
+      "checkedAt": "2026-11-16"
+    },
+    {
+      "id": "anthropic-pc-pricing-fable-5.2",
+      "title": "Anthropic: Prompt caching, pricing table (Claude Fable 5.2)",
+      "url": "https://platform.claude.com/docs/en/build-with-claude/prompt-caching#pricing",
+      "quote": "Cache hits and refreshes on Claude Fable 5.2, Claude Mythos 5.2, Claude Fable 5.1, and Claude Mythos 5.1 are priced at 0.025x the base input price.",
+      "checkedAt": "2026-11-16"
+    },
+    {
+      "id": "anthropic-pc-mid-conversation-system-fable-5.2",
+      "title": "Anthropic: Prompt caching (mid-conversation system instructions, Claude Fable 5.2)",
+      "url": "https://platform.claude.com/docs/en/build-with-claude/prompt-caching",
+      "quote": "On Claude Fable 5.2, Claude Mythos 5.2, Claude Fable 5.1, Claude Mythos 5.1, Claude Fable 5, Claude Mythos 5, Claude Opus 5.5, Claude Opus 5, Claude Opus 4.8, Claude Sonnet 5.5, and Claude Haiku 5.5, you can add a new system instruction partway through a conversation without invalidating the system or message caches.",
+      "checkedAt": "2026-11-16"
     },
     {
       "id": "anthropic-pc-mid-conversation-system",
