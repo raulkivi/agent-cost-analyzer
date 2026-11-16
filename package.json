@@ -48,6 +48,7 @@
     "test:real-data:replay": "npm run test:real-data:replay --workspace=packages/server",
     "test:real-data:cost-by-project": "npm run test:real-data:cost-by-project --workspace=packages/server",
     "test:real-data:allowance": "npm run test:real-data:allowance --workspace=packages/server",
+    "test:real-data:tool-audit": "npm run test:real-data:tool-audit --workspace=packages/server",
     "test:scripts": "node --test scripts/*.test.mjs",
     "format": "prettier --write .",
     "mcp": "bash scripts/mcp-server.sh",
