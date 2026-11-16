@@ -201,9 +201,12 @@ Copilot Chat's setting.
 
 ![Opening a session in the panel: the turns table, a subagent marker with Subagent runs this turn, the turn inspector and the System prompt tab](images/demo/e3-read-session.gif)
 
-Copilot Chat's debug log doesn't record whether a tool call succeeded, so
-in the tool audit those calls show as **Unknown**, with the reason, rather
-than counting as successes or failures.
+Copilot Chat's debug log records each tool call's status, so the tool audit
+shows known outcomes, including the calls of subagent runs (an **Agent**
+filter, a **Calls by agent** split and a **Subagent runs** table; see
+[Auditing tool calls](UserGuide.md#auditing-tool-calls)). A call whose status
+the log doesn't state shows as **Unknown**, with the reason, rather than
+counting as a success or a failure.
 
 ![Show Tool Audit from a session's context menu: failure categories and Unknown outcomes, the All sessions audit, and the Copy Advice Bundle dialog with its Preview](images/demo/e8-tool-audit.gif)
 
@@ -625,9 +628,9 @@ or for you.
 | `get_turn` | One turn's prompt and response (redacted, truncated), usage and tool calls |
 | `get_session_cost` | One session's tokens and AI Credits, cache hit ratio, spend per model and the most expensive turns |
 | `get_cost_rollup` | Spend by model and day, and the most expensive sessions |
-| `get_session_audit` | One session's tool-call audit |
+| `get_session_audit` | One session's tool-call audit, split by main agent and subagent runs |
 | `list_tool_calls` | One session's tool calls, filtered and paged |
-| `get_audit_rollup` | Tool-call totals, top failing commands and per-day counts across sessions |
+| `get_audit_rollup` | Tool-call totals split by main agent and subagents, top failing commands and per-day counts across sessions |
 | `list_findings` | Security, anomaly and behaviour-change findings, with redacted evidence |
 | `list_repositories` | The repositories your Copilot sessions ran in, with sessions, turns and AI Credits (folder names only for local ones) |
 | `list_projects` | No projects here: projects are edited in the standalone Agent Cost Analyzer app, and it says so |
@@ -781,7 +784,10 @@ basis and its currency.
 - **Tool-call audits.** The failure rate counts only calls with a known
   outcome; unknown outcomes are counted apart, and with none known the rate
   reads **Unknown**. Recovery cost is in tokens, "tokens, not AI Credits".
-  Commands are shown as written, and nothing in the audit opens anything.
+  A subagent run whose calls can't be read is an unread run with its reason,
+  never 0 calls. Commands are shown as written (a subagent call's prompt
+  shows here but never in MCP output), and nothing in the audit opens
+  anything.
 - **The session picker** shows title, short id, start, turns, model and
   repository, and no cost.
 

@@ -17,7 +17,7 @@ and designs the audit shape that Claude Code's CS14 reuses
   next to `main.jsonl`. Step 10.19 reads those files for usage only.
 - The tool audit (`get_session_audit`, `list_tool_calls`,
   `get_audit_rollup`, the Audit tab), the security findings and the
-  behaviour-change findings see only the main agent's calls. The parent's
+  behavior-change findings see only the main agent's calls. The parent's
   `runSubagent` call is listed; what the run did is not.
 - Agent Host turns already list their subagents' tool calls, but nothing
   marks them as a subagent's: a user can't tell who ran `bash`, and a
@@ -35,7 +35,7 @@ and designs the audit shape that Claude Code's CS14 reuses
 Goals:
 
 - Every tool call a classic or Agent Host subagent run made is in the audit,
-  the rollups, the security findings and the behaviour-change findings,
+  the rollups, the security findings and the behavior-change findings,
   counted once.
 - Each audited call says who made it: the main agent, or which subagent run
   at which nesting depth.
@@ -242,7 +242,7 @@ D4); its unread rules from CS §6; the `Agent-…` label (CS4).
 | File | Exports | Rule |
 |---|---|---|
 | `audit-attrs-projector.ts` | `AUDIT_ATTRS_KEYS`, `projectAuditAttrs` | A second projector (as `turn-inspector-reader.ts` has its own): keeps `args` cut to `MAX_ARGS_SUMMARY_LENGTH` before parsing and `error` cut to 2 KB; never `result`. Used only on the audit read path (`readSession`), never by `listSessions` |
-| `tool-call-spans.ts` | `toolCallSpanRecord(envelope)` → `ToolCallRecord` | `status: "ok"` → success, `"error"` → error with `attrs.error` through `buildToolCallOutcome` (so the failure classifier and redactor run); any other value → unknown "unrecognised span status"; `dur` → `durationMs`; `args` → `summarizeToolArgs`, `shell.command` and `program` for shell kinds |
+| `tool-call-spans.ts` | `toolCallSpanRecord(envelope)` → `ToolCallRecord` | `status: "ok"` → success, `"error"` → error with `attrs.error` through `buildToolCallOutcome` (so the failure classifier and redactor run); any other value → unknown "unrecognized span status"; `dur` → `durationMs`; `args` → `summarizeToolArgs`, `shell.command` and `program` for shell kinds |
 | `session-enricher.ts` (changed) | `buildToolCalls` | Main-agent records come from the spans (D3); `session_files` paths still fill `filesTouched` by name and order |
 | `subagent-tool-calls.ts` | `readSubagentToolCalls(runsByTurn, sessionDir)` → `{ byTurn: Map<number, ToolCallRecord[]>, unread: UnreadRun[] }` | Reads each run 10.19's attribution placed, through `subagent-log-path.ts` and `subagent-log-source.ts`; every record gets `origin` (`depth: 1`; `startedByCallId` = the ref's `parentSpanId`, the parent's `runSubagent` span, when present) |
 
@@ -299,12 +299,12 @@ D4); its unread rules from CS §6; the `Agent-…` label (CS4).
   `title` and `why` stay the rule's, and the UI and MCP name the run from
   `origin`.
 - `insights-dataset-builder.ts` `toolCallRow` copies `origin`; the
-  behaviour-change detector's "first use of a program or tool" names the
+  behavior-change detector's "first use of a program or tool" names the
   run when the first use was a subagent's.
 - `anomaly-detector.ts` failure outliers use all calls (they are the
   session's real failures).
 - Savings detectors (`failed-calls`, `unused-tools`) read main-agent calls
-  only in 1.0, with "N subagent calls not analysed" in the row's coverage
+  only in 1.0, with "N subagent calls not analyzed" in the row's coverage
   (D7, matching CS D10).
 
 ### 5.7 UI
@@ -365,7 +365,7 @@ Unknown is never 0. Each row is a tested reason.
 | Case | Effect |
 |---|---|
 | Run read, every span with `status` | Calls listed with outcomes; run totals known |
-| Span `status` other than `ok`/`error`, or absent | That call's outcome unknown "unrecognised span status" |
+| Span `status` other than `ok`/`error`, or absent | That call's outcome unknown "unrecognized span status" |
 | Child log missing (ref present) | Run `totals: null`, reason "The subagent log `<label>` this turn started is missing, so its tool calls are unknown." Session counts stay the read calls; `sessionsWithUnreadSubagentRuns` + 1; coverage names it |
 | Child log not a regular file, name rejected, unreadable, or 0 parsable lines | As missing, with 10.19's reason text |
 | Folder over 200 subagent files | Every run unread, reason "too many subagent logs to read" |
@@ -404,7 +404,7 @@ Decided 2026-11-14: the owner accepted each recommendation.
 | D4 | A session with an unread run in rollups | Keep it in every count, flagged by `sessionsWithUnreadSubagentRuns` and its reasons: its main-agent calls are known, and dropping the session would hide more than it shows |
 | D5 | A subagent-kind call with no log (`explore_subagent`) | List an unread run with the reason, so the audit never claims the run made no calls; ST0b checks whether such tools run tools at all |
 | D6 | Retries and failure-recovery cost | Retries only within one origin (main, or one run). Recovery cost stays main-agent rounds; the run's own recovery is inside its usage (10.19) |
-| D7 | Savings detectors | Main agent only in 1.0, coverage "N subagent calls not analysed" (as CS D10) |
+| D7 | Savings detectors | Main agent only in 1.0, coverage "N subagent calls not analyzed" (as CS D10) |
 | D8 | Nesting | Shape carries depth 1-8 and `parentRunId`; classic nested refs stay unread (10.19 D6) until seen; Agent Host follows its chain |
 | D9 | MCP default for `origin` | Both: a client that doesn't know `origin` still gets true totals |
 | D10 | Order with CS14 | This step builds the shape, builders, MCP and UI with Copilot data; CS14 (after CS10) only adds the Claude Code reader |
@@ -415,11 +415,11 @@ Decided 2026-11-14: the owner accepted each recommendation.
 
 ## 9. Threat-model rows (`docs/threat-model.md`)
 
-Add to §4 before reader code (ST1), rewrite as verified in ST14:
+Added to §4 before reader code (ST1) and rewritten as verified in ST14 (tests named in the threat model):
 
 | Component | Threat | Finding to record |
 |---|---|---|
-| Audit attrs projector (`audit-attrs-projector.ts`) | Information disclosure: `args` and `error` of classic spans (main and child) now kept | Mitigated: audit read path only, never the list path; `args` cut before parsing and summarised; `error` cut, redacted and excerpted (≤ 200 chars) by the existing redactor; `result` never kept; the advice bundle still gets counts only (F10); tests |
+| Audit attrs projector (`audit-attrs-projector.ts`) | Information disclosure: `args` and `error` of classic spans (main and child) now kept | Mitigated: audit read path only, never the list path; `args` cut before parsing and summarized; `error` cut, redacted and excerpted (≤ 200 chars) by the existing redactor; `result` never kept; the advice bundle still gets counts only (F10); tests |
 | Classic subagent tool-call reader (`subagent-tool-calls.ts`) | Path traversal and denial of service | Mitigated: only files 10.19's `subagent-log-path.ts` resolves (bare names, same folder, `lstat`, cap 200), streamed line by line; tests |
 | `origin.label`, `runId`, `parentRunId`, `startedByCallId` reaching UI and MCP | Hostile text, prompt injection through an agent name | Mitigated: shared id and label patterns and caps; React text nodes; MCP output is data; hostile-text tests in web, U4 and `mcp/security.test.ts` |
 | Agent Host origin (`agent-host-turn-content-builder.ts`) | A crafted `parentToolCallId` loop | Mitigated: depth cap 8 and cycle guard; test |
@@ -524,6 +524,40 @@ ST12. CS14 starts after ST11 (shape, builders and MCP final) and CS10.
 - `docs/terminology.md`: "origin", "main agent".
 - `docs/implementation-plan.md` (10.20, C10, V22), `docs/plans/vscode-extension.md`
   and `docs/implementation-plan-gantt.md`: by the main session.
+
+## 13a. As built (ST14, 2026-11-16)
+
+Where the build differs from the plan above, the code is the truth:
+
+- **Carriers on `Turn`.** Three optional per-turn fields carry what the
+  classic and Agent Host readers know about runs: `subagentRunGaps` (a run
+  whose calls are unknown or flagged, with the §6 reason; ST7, ST8, ST9),
+  `subagentRunsRead` (run ids read in full, max 200, so a run with no call is a
+  known 0; ST7) and `subagentRunsByTime` (run ids placed by time window, max
+  200; PR #386). `subagent-runs-builder.ts` turns them into `AuditedRun` rows
+  (`matchedByTime` on the row).
+- **`outcomeTotals.canceled` is optional.** Absent means none, so older
+  clients and fixtures stay valid; the builders always set it (ST10).
+- **`run:<id>` origin keys.** The tally keys `byOrigin` by `main` and
+  `run:<runId>` (`outcome-tally.ts`); sessions without runs count as main in
+  the rollup.
+- **Label pattern widened in ST8**, not ST3: `task-<agentName>` and
+  `search_code_subagent`. An Agent Host name the pattern rejects falls back
+  to `task`. Both MCP tool-list snapshots changed on purpose.
+- **Agent filter in the UIs is client-side.** The web UI, the extension
+  webview and the MCP App views filter the loaded audit by origin and read
+  the tiles from `byOrigin`; none sends a new request. The HTTP and MCP
+  `origin` and `runId` inputs of `list_tool_calls` are for other clients.
+- **MCP blanks subagent call arguments.** `publicAuditedCall`
+  (`mcp/audit-call-output.ts`, ST11) blanks a subagent-kind call's
+  `argsSummary` (the subagent's prompt) and cuts call rows to the record
+  fields; `get_turn` omits that call's `command`. The local UI shows both.
+- **Known limitations** (ST7). An orphan run that can't be placed has no
+  session-level carrier, so the rollup's unread-run counter misses it. The
+  reasons for "name rejected", "not a regular file", "unreadable" and "0
+  parsable lines" reuse step 10.19's texts, which mention AI Credits.
+- **Rollup rows** gained optional `subagentCalls` and `unreadSubagentRuns`
+  (ST12) for the Subagent calls column.
 
 ## 14. Open points (closed by ST0b, 2026-11-15)
 
