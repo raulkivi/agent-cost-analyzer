@@ -28,6 +28,8 @@ import { buildTurnInspectorDetail } from "./turn-inspector-builder.js";
 import { computeClaudeCodeFileHash, resolveClaudeCodeSessionFilePath } from "./session-id.js";
 import { resolveClaudeCodeTitle } from "./title-resolver.js";
 import { resolveSessionWorkspace, resolveTurnStartedAt, resolveTurnWorkspace } from "./workspace-resolver.js";
+import { ClaudeCodeRunTranscriptCache } from "./claude-code-run-cache.js";
+import { foldClaudeCodeSubagentUsage } from "./session-subagent-usage.js";
 import { describeTurnUsage } from "../../services/turn-usage-sentence.js";
 
 const PROVIDER_ID = "claude-code";
@@ -36,6 +38,8 @@ const NO_AI_CREDITS_REASON =
 
 export interface ClaudeCodeLogProviderOptions {
   projectsDirPath: string | null;
+  /** Run summaries shared by the list and the detail; tests inject one to count reads. */
+  runCache?: ClaudeCodeRunTranscriptCache;
 }
 
 function reasonOf(tokenCount: TokenCount): string {
@@ -139,7 +143,11 @@ export class ClaudeCodeLogProvider implements LogProvider, RequestTraceReader, C
   readonly id = PROVIDER_ID;
   readonly label = "Claude Code CLI";
 
-  constructor(private readonly options: ClaudeCodeLogProviderOptions) {}
+  private readonly runCache: ClaudeCodeRunTranscriptCache;
+
+  constructor(private readonly options: ClaudeCodeLogProviderOptions) {
+    this.runCache = options.runCache ?? new ClaudeCodeRunTranscriptCache();
+  }
 
   private listSessionFilePaths(): string[] {
     return this.options.projectsDirPath ? listClaudeCodeSessionFiles(this.options.projectsDirPath) : [];
@@ -159,7 +167,9 @@ export class ClaudeCodeLogProvider implements LogProvider, RequestTraceReader, C
     return { available: true };
   }
 
-  private buildSession(filePath: string, entries: ClaudeCodeRawEntry[]): Session {
+  // The list and the detail both come through here, so the subagent runs
+  // counted in a session's totals are the same in both.
+  private async buildSession(filePath: string, entries: ClaudeCodeRawEntry[], sessionFilePaths: string[]): Promise<Session> {
     const activeLeafUuid = resolveActiveLeafUuid(entries);
     const branch = activeLeafUuid ? walkBranch(entries, activeLeafUuid) : [];
     const forkPointIds = findForkPointIds(entries);
@@ -168,8 +178,20 @@ export class ClaudeCodeLogProvider implements LogProvider, RequestTraceReader, C
     const resultIndex = indexToolResults(entries);
     const workspace = resolveSessionWorkspace(branch);
 
+    const { usages, notesByTurn } = await foldClaudeCodeSubagentUsage(
+      {
+        sessionFilePath: filePath,
+        siblingSessionFilePaths: sessionFilePaths,
+        sessionEntries: entries,
+        branch,
+        turnGroups: groups,
+        turnUsages: groups.map(extractTurnUsage),
+      },
+      this.runCache,
+    );
+
     const turns: Turn[] = groups.map((group, index) => {
-      const usage = extractTurnUsage(group);
+      const usage = usages[index]!;
       const triggeredEvent = triggeredEventFor(group, forkPointIds, compactedRequestIds);
       const startedAt = resolveTurnStartedAt(group);
       const turnWorkspace = resolveTurnWorkspace(group, workspace);
@@ -181,7 +203,7 @@ export class ClaudeCodeLogProvider implements LogProvider, RequestTraceReader, C
         assistantResponse: extractAssistantResponseText(group),
         toolCalls: extractToolCalls(group, resultIndex),
         usage,
-        explanation: buildTurnExplanation(usage),
+        explanation: [buildTurnExplanation(usage), ...(notesByTurn.get(index) ?? [])].join(" "),
         ...(triggeredEvent ? { triggeredEvent } : {}),
       };
     });
@@ -213,13 +235,14 @@ export class ClaudeCodeLogProvider implements LogProvider, RequestTraceReader, C
     };
   }
 
-  private async buildSessionFromFile(filePath: string): Promise<Session> {
+  private async buildSessionFromFile(filePath: string, sessionFilePaths: string[]): Promise<Session> {
     const { entries } = await readClaudeCodeSessionFile(filePath);
-    return this.buildSession(filePath, entries);
+    return await this.buildSession(filePath, entries, sessionFilePaths);
   }
 
   async listSessions(): Promise<Session[]> {
-    const sessions = await Promise.all(this.listSessionFilePaths().map((filePath) => this.buildSessionFromFile(filePath)));
+    const filePaths = this.listSessionFilePaths();
+    const sessions = await Promise.all(filePaths.map((filePath) => this.buildSessionFromFile(filePath, filePaths)));
     return sessions
       // The inventory is detail (Analyze), not part of a session summary.
       .map((session) => ({ ...session, turns: [], toolInventory: undefined }))
@@ -227,11 +250,12 @@ export class ClaudeCodeLogProvider implements LogProvider, RequestTraceReader, C
   }
 
   async readSession(sessionId: string): Promise<Session | null> {
-    const filePath = resolveClaudeCodeSessionFilePath(this.listSessionFilePaths(), sessionId);
+    const filePaths = this.listSessionFilePaths();
+    const filePath = resolveClaudeCodeSessionFilePath(filePaths, sessionId);
     if (!filePath) {
       return null;
     }
-    return this.buildSessionFromFile(filePath);
+    return this.buildSessionFromFile(filePath, filePaths);
   }
 
   // Phase 14 step 14.2: the same active branch and turn grouping as
