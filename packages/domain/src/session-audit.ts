@@ -16,6 +16,10 @@ export const outcomeTotalsSchema = z.object({
   interrupted: z.number(),
   denied: z.number(),
   unknown: z.number(),
+  // D14: a user stop. Counted in toolCalls, never a failure or an unknown
+  // outcome, and left out of the failure rate. Absent = none (older clients
+  // and fixtures); the builders always set it.
+  canceled: z.number().optional(),
 });
 
 export type OutcomeTotals = z.infer<typeof outcomeTotalsSchema>;

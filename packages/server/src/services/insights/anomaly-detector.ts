@@ -67,7 +67,9 @@ const METRICS: Metric[] = [
       if (session.toolCallsUnavailable) {
         return null;
       }
-      const known = callsOfSession(index, session).filter((call) => call.status !== "unknown");
+      // Subagent calls count (they are the session's real failures); a
+      // canceled call (D14) is a user stop, neither a result nor a failure.
+      const known = callsOfSession(index, session).filter((call) => call.status !== "unknown" && call.status !== "canceled");
       return known.length >= MIN_KNOWN_OUTCOMES
         ? known.filter((call) => isFailedStatus(call.status)).length / known.length
         : null;

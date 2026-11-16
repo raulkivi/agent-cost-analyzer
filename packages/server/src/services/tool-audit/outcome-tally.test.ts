@@ -18,12 +18,25 @@ describe("a canceled call (D14)", () => {
     expect(isFailedCall(canceled)).toBe(false);
   });
 
-  it("counts as a call without becoming a success, failure or unknown", () => {
+  it("counts as a call in its own canceled bucket, not a success, failure or unknown", () => {
     const totals = emptyTotals();
     addToTotals(totals, canceled);
 
-    expect(totals).toEqual({ ...emptyTotals(), toolCalls: 1 });
-    expect(failureRateOf(totals)).toBe(0);
+    expect(totals).toEqual({ ...emptyTotals(), toolCalls: 1, canceled: 1 });
+  });
+
+  it("is left out of the failure rate: no known outcome gives null, not 0%", () => {
+    const totals = emptyTotals();
+    addToTotals(totals, canceled);
+    expect(failureRateOf(totals)).toBeNull();
+  });
+
+  it("does not dilute the failure rate of the calls with a result", () => {
+    const totals = emptyTotals();
+    addToTotals(totals, canceled);
+    addToTotals(totals, { name: "x", argsSummary: "", outcome: { status: "error" } });
+    addToTotals(totals, { name: "x", argsSummary: "", outcome: { status: "success" } });
+    expect(failureRateOf(totals)).toBe(0.5);
   });
 });
 

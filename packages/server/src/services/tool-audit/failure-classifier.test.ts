@@ -97,3 +97,24 @@ describe("classifyFailure (other shells and tools)", () => {
     expect(defaultFailureRules.length).toBeGreaterThan(5);
   });
 });
+
+// Step 10.20 D13: classic (VS Code Copilot Chat) failure wording. Each text
+// is the tool-authored wording seen in real logs (ST0b section 14.3), with
+// paths and details replaced.
+describe("classifyFailure (classic wording, D13)", () => {
+  it.each([
+    ["file-read", "cannot open file:///work/src/a.ts. Detail: Unable to read file '/work/src/a.ts'", "file-not-found", "text.classic-file-unreadable"],
+    ["search", "Regex parse error: unclosed group", "invalid-arguments", "text.classic-regex-parse-error"],
+    ["file-write", "File already exists: /work/src/new.ts", "already-exists", "text.already-exists"],
+    ["search", "Codebase search timed out", "timeout", "text.timeout"],
+  ] as const)("%s: %j -> %s", (kind, text, category, ruleId) => {
+    const result = classifyFailure({ kind, text });
+    expect(result.failureCategory).toBe(category);
+    expect(result.evidence.ruleId).toBe(ruleId);
+  });
+
+  it("leaves one-off classic failures unclassified (never guessed)", () => {
+    expect(classifyFailure({ kind: "other", text: "Failed to capture screenshot" }).failureCategory).toBe("unclassified");
+    expect(classifyFailure({ kind: "other", text: "locator.scrollIntoViewIfNeeded: Timeout 30000ms" }).failureCategory).toBe("unclassified");
+  });
+});

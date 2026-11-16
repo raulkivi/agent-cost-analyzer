@@ -33,6 +33,8 @@ export class SecurityScanner implements FindingDetector {
         for (const turn of session.turns) {
           const turnKey = turnKeyOf(sessionKey, turn.index);
           turn.toolCalls.forEach((call, callIndex) => {
+            // D14: a user stop is not a security event; the call is still in the audit.
+            if (statusOf(call) === "canceled") return;
             const toolCallKey = toolCallKeyOf(turnKey, callIndex);
             const at = call.startedAt ?? session.startedAt;
             for (const { rule, evidence } of matchSecurityRules(subjectOf(call), this.rules)) {
@@ -49,6 +51,7 @@ export class SecurityScanner implements FindingDetector {
                 ...(at ? { at } : {}),
                 why: rule.why,
                 evidence: excerptOf(evidence, MAX_EVIDENCE_EXCERPT_LENGTH),
+                ...(call.origin ? { origin: call.origin } : {}),
               });
             }
           });

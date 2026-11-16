@@ -5,6 +5,7 @@ import { currencyOf, NotAnalysedLedger, perWeek, sessionRefOf, sumAmount, unknow
 import { sessionsByContribution } from "../savings-session-order.js";
 import type { DetectorResult, SavingsDetector, SavingsInput, SavingsSessionInput } from "../savings-detector.js";
 import { foldName, savingsName } from "../savings-names.js";
+import { withSubagentCallsNote } from "../subagent-calls-note.js";
 
 // Phase 16 SR5 (docs/plans/savings-report.md §4 O1, §6): tools (and MCP
 // servers) loaded in sessions of the window and invoked in none of them. Each
@@ -189,7 +190,7 @@ export class UnusedToolsDetector implements SavingsDetector {
         evidence: { sessions: rows.length, requests, tokens: estimatedTokenCount(averageTokens), occurrences: null },
         perWeek: perWeek(window, input.window),
         perWindow: window,
-        coverage: unusable.coverage(input.sessions.length, extra),
+        coverage: withSubagentCallsNote(unusable.coverage(input.sessions.length, extra), rows.map(({ entry }) => entry.input)),
         actionParams: { group: candidate.group.subject, tools: candidate.names.size, tokens: averageTokens, sessions: rows.length, days: input.window.days },
         inferred: candidate.group.inferred,
         tools: this.toolsOf(rows.map((row) => row.byTool)),
